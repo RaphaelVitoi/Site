@@ -1,0 +1,105 @@
+﻿﻿{
+  "version": "4.0",
+  "updatedAt": "2026-03-13T07:05:05.0000000-03:00",
+  "checksum": "diverse_task_examples_checksum",
+  "tasks": [
+    {
+      "id": "HEARTBEAT-8392",
+      "description": "Verificação de vitalidade do sistema",
+      "status": "pending",
+      "timestamp": "2026-03-12T12:35:00.0000000-03:00"
+    },
+    {
+      "id": "FEAT-20260314-100001",
+      "id": "SENTINELA-20260313-063000",
+      "description": "Vigília Sentinela - Ciclo Contínuo (Autopoiese)",
+      "status": "pending",
+      "timestamp": "2026-03-13T06:30:00.0000000-03:00",
+      "agent": "@maverick"
+    },
+    {
+      "id": "BUG-20260313-183000",
+      "description": "Corrigir bug de layout na página de perfil do usuário",
+      "status": "running",
+      "timestamp": "2026-03-13T18:30:00.0000000-03:00",
+      "agent": "@implementor",
+      "priority": "normal"
+    },
+    {
+      "id": "DOC-20260312-090000",
+      "description": "Escrever documentação da API pública",
+      "status": "completed",
+      "timestamp": "2026-03-12T09:00:00.0000000-03:00",
+      "completedAt": "2026-03-12T17:00:00.0000000-03:00",
+      "agent": "@curator",
+      "priority": "normal"
+    },
+    {
+      "id": "AUDIT-20260311-140000",
+      "description": "Realizar auditoria de segurança no código da aplicação",
+      "status": "failed",
+      "timestamp": "2026-03-11T14:00:00.0000000-03:00",
+      "agent": "@auditor",
+      "priority": "high",
+      "retries": 2,
+      "error": "Falha ao validar certificado SSL"
+    },
+    {
+      "id": "REFACT-20260310-120000",
+      "description": "Refatorar módulo de pagamento para melhorar a performance",
+      "status": "pending",
+      "timestamp": "2026-03-10T12:00:00.0000000-03:00",
+      "agent": "@implementor",
+      "priority": "normal"
+    },
+    {
+      "id": "SENTINELA-20260309-060000",
+      "description": "Monitoramento contínuo da infraestrutura",
+      "status": "running",
+      "timestamp": "2026-03-09T06:00:00.0000000-03:00",
+      "agent": "@maverick",
+      "priority": "high"
+    },
+    {
+      "id": "RESEARCH-20260308-100000",
+      "description": "Pesquisar novas tecnologias para melhorar a experiência do usuário",
+      "status": "completed",
+      "timestamp": "2026-03-08T10:00:00.0000000-03:00",
+      "completedAt": "2026-03-08T18:00:00.0000000-03:00",
+      "agent": "@pesquisador",
+      "priority": "normal"
+    },
+    {
+      "id": "PLAN-20260307-140000",
+      "description": "Planejar a implementação de um novo sistema de cache",
+      "status": "pending",
+      "timestamp": "2026-03-07T14:00:00.0000000-03:00",
+      "agent": "@planner",
+      "priority": "normal"
+    },
+    {
+      "id": "UI-20260306-160000",
+      "description": "Melhorar o design da página inicial",
+      "status": "pending",
+      "timestamp": "2026-03-06T16:00:00.0000000-03:00",
+      "agent": "@curator",
+      "priority": "normal"
+    },
+    {
+      "id": "FEAT-20260314-100001",
+      "description": "Implementar sistema de autenticação OAuth2",
+      "status": "pending",
+      "timestamp": "2026-03-14T10:00:00.0000000-03:00",
+      "agent": "@implementor",
+      "priority": "high"
+    },
+    {
+      "id": "TASK-20260313-065000",
+      "description": "Refatoração do Site",
+      "status": "running",
+      "timestamp": "2026-03-13T06:50:00.0000000-03:00",
+      "agent": "@implementor",
+      "priority": "normal"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+# ==============================================================================
+# PROTOCOLO VITOI 3.2 - BLINDAGEM DE CONTEXTO (FRICÇÃO ZERO E SHANNON ECONOMY)
+# ==============================================================================
+
+# 1. INFRAESTRUTURA, CACHE E DEPENDÊNCIAS (Densidade Zero)
+.venv/
+node_modules/
+target/
+build/
+dist/
+out/
+.next/
+.next-dev/
+.next-build/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.tox/
+.idea/
+*.egg-info/
+
+# 2. BANCOS DE DADOS E VETORES (Opacidade Binária)
+.chroma_db/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# 3. BINÁRIOS, WASM E MEDIA (Ruído Inútil para LLM)
+*.wasm
+*.py[cod]
+*$py.class
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.mp4
+*.woff2
+*.ttf
+*.tar.gz
+*.zip
+
+# 4. LOGS, BACKUPS E TELEMETRIA SOTA
+.claude/logs/
+.claude/.archive/
+_backups/
+NEXUS_SOTA_BACKUP_*/
+logs/
+temp/
+tmp/
+*.log
+*.bak
+*.csv
+*.jsonl
+
+# 5. LOCKFILES E AMBIENTE (Prevenção de Vazamento/Ruído)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+*.tsbuildinfo
+.python-version
+.env
+.env.*
+
+# 6. EXCEÇÕES ESTRATÉGICAS (Permitidos)
+!manifest.json
+!agents_manifest.json
+!intentmap.json
+!system_config.json

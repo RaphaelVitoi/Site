@@ -1,0 +1,51 @@
+{
+    "tasks": {
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                ".env*"
+            ],
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**",
+                "dist/**"
+            ]
+        },
+        "sota:audit": {
+            "dependsOn": [
+                "build",
+                "lint",
+                "typecheck:audit"
+            ],
+            "cache": false
+        },
+        "typecheck:audit": {
+            "dependsOn": [
+                "^build"
+            ]
+        },
+        "test": {
+            "dependsOn": [
+                "build"
+            ],
+            "outputs": [
+                "coverage/**"
+            ]
+        },
+        "lint": {
+            "dependsOn": [
+                "^lint"
+            ]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "seed": {
+            "cache": false
+        }
+    }
+}

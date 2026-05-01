@@ -1,0 +1,49 @@
+/* style-overrides.css - Geometria do Risco (Refinamento UI/UX) */
+
+/* 1. Responsividade Fluida (Mobile-First) */
+@media (max-width: 768px) {
+    .glass-panel {
+        padding: 1.5rem !important;
+        border-radius: 16px;
+    }
+    #stage-title {
+        font-size: 1.75rem;
+    }
+    .grid-cols-2 {
+        gap: 1rem !important;
+    }
+}
+
+/* 2. Feedback Tátil Avançado (Botões) */
+.btn-interactive {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+.btn-interactive:active {
+    transform: scale(0.95);
+}
+.btn-interactive:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 3. Simetria do Scrollbar (Scenario List) */
+scenario-list {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99, 102, 241, 0.5) transparent;
+}
+scenario-list::-webkit-scrollbar {
+    width: 4px;
+}
+scenario-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+scenario-list::-webkit-scrollbar-thumb {
+    background-color: rgba(99, 102, 241, 0.3);
+    border-radius: 10px;
+}
+scenario-list:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(99, 102, 241, 0.7);
+}
+
+/* 4. Fix de Quebra de Linha em Telas Intermediárias */
+.ev-diff-panel { flex-wrap: wrap; }
