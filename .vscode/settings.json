@@ -1,0 +1,23 @@
+{
+  "gemini-cli.approvalMode": "auto_edit",
+  "gemini-cli.model": "gemini-2.0-flash-exp",
+  "terminal.integrated.env.windows": {
+    "GEMINI_SOTA_MODE": "v6"
+  },
+  "terminal.integrated.profiles.windows": {
+    "Gemini-SOTA": {
+      "path": "powershell.exe",
+      "args": [
+        "-NoExit",
+        "-Command",
+        "gemini --approval-mode auto_edit"
+      ]
+    }
+  },
+  "gemini.auto_auditoria": true,
+  "gemini.token_efficiency_mode": "surgical",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  }
+}

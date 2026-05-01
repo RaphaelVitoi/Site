@@ -1,0 +1,34 @@
+{
+    "sources": [
+        {
+            "path": ".claude/agent-memory",
+            "patterns": [
+                "MEMORY.md"
+            ],
+            "recursive": true
+        },
+        {
+            "path": "docs",
+            "patterns": [
+                "*.md"
+            ],
+            "recursive": true
+        },
+        {
+            "path": ".claude",
+            "patterns": [
+                "*.md"
+            ],
+            "recursive": false
+        },
+        {
+            "path": ".",
+            "patterns": [
+                "*.py",
+                "*.ps1",
+                ".cursorules"
+            ],
+            "recursive": true
+        }
+    ]
+}
