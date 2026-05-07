@@ -33,7 +33,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         stack: error.stack,
         componentStack: errorInfo.componentStack
       }
-    } ).catch( console.error );
+    } );
 
     console.error( 'Uncaught error in component tree:', error, errorInfo );
   }

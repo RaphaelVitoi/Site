@@ -1,6 +1,8 @@
 import logging
 import subprocess
 
+logger = logging.getLogger(__name__)
+
 
 def send_toast(title: str, message: str):
     try:
@@ -12,6 +14,13 @@ def send_toast(title: str, message: str):
         $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
         [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Nexus Worker").Show($toast)
         """
-        subprocess.Popen(["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps_code])
-    except Exception as e:
-        logging.error(f"Falha ao disparar Toast: {e}")
+        subprocess.Popen([
+            "powershell",
+            "-NoProfile",
+            "-WindowStyle",
+            "Hidden",
+            "-Command",
+            ps_code,
+        ])
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Falha ao disparar Toast: {e}")

@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { SotaMarkdown } from '@/components/ui/SotaMarkdown';
 
 /**
  * IDENTITY: Módulo de Teste Prático - Gamificação Visceral do ICM
@@ -262,9 +263,9 @@ function ActiveScenarioStep( {
                         borderTop: `3px solid ${choiceData.isCorrect ? 'var(--accent-emerald)' : 'var(--accent-danger)'}`
                     } }
                 >
-                    <p style={ { margin: '0 0 1rem', fontSize: '0.95rem', color: 'var(--text-light)', lineHeight: 1.6 } }>
-                        { choiceData.feedback }
-                    </p>
+                    <div style={ { margin: '0 0 1rem' } }>
+                        <SotaMarkdown content={choiceData.feedback} />
+                    </div>
                     <div style={ { display: 'flex', gap: '2rem', fontFamily: 'monospace', flexWrap: 'wrap' } }>
                         <div>
                             <span style={ { display: 'block', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' } }>Expectativa (P)</span>
@@ -315,7 +316,7 @@ export default function IcmQuizVisceral() {
                 }
             } )
             .catch( ( error: unknown ) => {
-                console.warn( "[Quiz] Falha ao sincronizar cenarios:", error instanceof Error ? error.message : String( error ) );
+                console.warn( "[Quiz] Falha ao sincronizar cenarios:", error instanceof Error ? error.message : error );
                 if ( isMounted ) setScenarios( FALLBACK_SCENARIOS );
             } );
 

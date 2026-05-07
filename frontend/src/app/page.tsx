@@ -17,20 +17,20 @@ export default function Home ()
         A Geometria do Risco: ICM Pós-Flop, Risk Premium e a nova fronteira do Poker de Alta Performance.
       </p>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-20">
+      <div className="flex flex-col sm:flex-row gap-4 mb-16">
         <Link href="/aulas/icm-masterclass" className="px-8 py-3.5 rounded-full bg-accent-indigo text-white font-black uppercase tracking-widest text-xs hover:bg-accent-indigo-light hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] transition-all">
           Conhecer o Método
         </Link>
-        <Link href="/simulador" className="px-8 py-3.5 rounded-full bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all">
-          Acessar Motor ICM
+        <Link href="/dashboard" className="px-8 py-3.5 rounded-full bg-accent-emerald/20 border border-accent-emerald/30 text-accent-emerald-light font-black uppercase tracking-widest text-xs hover:bg-accent-emerald/30 hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] transition-all">
+          Telemetria do Orquestrador
         </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
         <FeatureCard title="Motor ICM" icon="fa-microchip" href="/simulador" desc="Simulador SOTA de Distorções" />
-        <FeatureCard title="Psicologia High Stakes" icon="fa-brain" href="/psicologia-hs" desc="Filtros Cognitivos e Mindset" />
+        <FeatureCard title="Dashboards AGN" icon="fa-satellite-dish" href="/dashboard" desc="Monitoramento Quântico" />
         <FeatureCard title="Biblioteca Epistêmica" icon="fa-book-journal-whills" href="/biblioteca" desc="Acervo de Teorias e Protocolos" />
-        <FeatureCard title="Oráculo Híbrido" icon="fa-satellite-dish" href="/dashboard" desc="Telemetria e Inteligência" />
+        <FeatureCard title="Protocolo Sniper" icon="fa-crosshairs" href="/sniper" desc="Conselheiro Analítico" />
       </div>
     </div>
   );

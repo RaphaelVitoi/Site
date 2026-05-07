@@ -1,31 +1,36 @@
 import ast
-import os
 import logging
+import os
 import sys
-from typing import Tuple
 
 # Integração com o Log Central do Dashboard Noir
 logging.basicConfig(
-    filename='.vitoi_history.log',
+    filename=".vitoi_history.log",
     level=logging.INFO,
-    format='%(asctime)s | %(levelname)s | %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
+
+logger = logging.getLogger(__name__)
+
 
 def _is_decision_node(node: ast.AST) -> bool:
     """
     Verifica se o nó AST representa um ponto de decisão lógica.
     """
-    decision_types = (ast.If, ast.While, ast.For, ast.AsyncFor, ast.And, ast.Or, ast.ExceptHandler)
+    decision_types = (
+        ast.If,
+        ast.While,
+        ast.For,
+        ast.AsyncFor,
+        ast.And,
+        ast.Or,
+        ast.ExceptHandler,
+    )
     return isinstance(node, decision_types)
 
-def _is_function_node(node: ast.AST) -> bool:
-    """
-    Verifica se o nó AST representa a definição de uma função.
-    """
-    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
 
-def calcular_metrics(node: ast.AST) -> Tuple[int, int, int]:
+def calcular_metrics(node: ast.AST) -> tuple[int, int, int]:
     """
     Calcula Complexidade Ciclomática e Densidade de Documentação em um AST.
     """
@@ -36,21 +41,30 @@ def calcular_metrics(node: ast.AST) -> Tuple[int, int, int]:
         if _is_decision_node(n):
             vg += 1
 
-        if _is_function_node(n):
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions += 1
             doc = ast.get_docstring(n)
             if doc:
-                doc_lines += len(doc.split('\n'))
+                doc_lines += len(doc.split("\n"))
     return vg, doc_lines, functions
+
 
 def _is_ignored_dir(root: str) -> bool:
     """
     Verifica se o diretório faz parte das pastas de dependências ignoradas.
     """
-    ignore_list = ['.venv', '.git', '__pycache__', 'node_modules', '.archive', '.backups']
+    ignore_list = [
+        ".venv",
+        ".git",
+        "__pycache__",
+        "node_modules",
+        ".archive",
+        ".backups",
+    ]
     return any(d in root for d in ignore_list)
 
-def _analisar_arquivo(path: str) -> Tuple[int, int, int, int]:
+
+def _analisar_arquivo(path: str) -> tuple[int, int, int, int]:
     """
     Abre o arquivo, gera sua Árvore Sintática e computa suas métricas de invariância.
     Retorna uma tupla na forma (vg, docs, funcs, loc).
@@ -62,20 +76,25 @@ def _analisar_arquivo(path: str) -> Tuple[int, int, int, int]:
         if not content.strip():
             return 0, 0, 0, 0
 
-        loc = len(content.split('\n'))
+        loc = len(content.split("\n"))
         tree = ast.parse(content)
         vg, docs, funcs = calcular_metrics(tree)
         return vg, docs, funcs, loc
 
     except SyntaxError as e:
-        logging.error(f"Erro de Sintaxe em {path}: {e}")
-        print(f" [!] Pulando {os.path.basename(path)}: Erro de sintaxe (possível corrupção).")
+        logger.error(f"Erro de Sintaxe em {path}: {e}")
+        print(
+            f" [!] Pulando {os.path.basename(path)}: Erro de sintaxe (possível corrupção)."
+        )
         return 0, 0, 0, 0
-    except Exception as e:
-        logging.error(f"Falha ao ler {path}: {e}")
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Falha ao ler {path}: {e}")
         return 0, 0, 0, 0
 
-def calcular_indice_saude(total_vg: int, total_funcs: int, total_docs: int, total_loc: int) -> float:
+
+def calcular_indice_saude(
+    total_vg: int, total_funcs: int, total_docs: int, total_loc: int
+) -> float:
     """
     Calcula o Índice de Saúde de Invariância (Ih) baseado na fórmula matemática.
     """
@@ -84,6 +103,7 @@ def calcular_indice_saude(total_vg: int, total_funcs: int, total_docs: int, tota
 
     ih = 100 - ((total_vg / total_funcs) * 5) + ((total_docs / total_loc) * 20)
     return float(max(0, min(100, ih)))
+
 
 def auditoria_total(diretorio: str) -> None:
     """
@@ -117,11 +137,17 @@ def auditoria_total(diretorio: str) -> None:
 
     ih = calcular_indice_saude(total_vg, total_funcs, total_docs, total_loc)
 
-    status = "SOTA" if ih > 85 else "ESTÁVEL" if ih > 70 else "DÍVIDA TÉCNICA ALTA"
+    if ih > 85:
+        status = "SOTA"
+    elif ih > 70:
+        status = "ESTÁVEL"
+    else:
+        status = "DÍVIDA TÉCNICA ALTA"
     msg = f"Auditoria Concluída: Ih={ih:.2f} | Status: {status} | Analisados: {arquivos_analisados} arquivos."
 
     print(f"[VITOI] {msg}")
-    logging.info(msg)
+    logger.info(msg)
+
 
 if __name__ == "__main__":
     caminho = sys.argv[1] if len(sys.argv) > 1 else "."

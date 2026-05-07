@@ -96,7 +96,7 @@ export function downloadHRCJson ( json: string, filename: string = 'vitoi_scenar
   // SOTA: Check de SSR nativo para evitar explosão de APIs do DOM no Next.js Server
   if ( globalThis.window === undefined || globalThis.document === undefined ) return;
 
-  const blob = new Blob( [ json ], { type: 'application/json' } );
+  const blob = new Blob( [ json ], { type: 'application/json;charset=utf-8' } );
   const url = URL.createObjectURL( blob );
   const link = document.createElement( 'a' );
   link.href = url;

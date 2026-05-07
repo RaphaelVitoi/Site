@@ -1,16 +1,16 @@
 """
 Worker Startup -- Inicializacao conjunta do Worker, API e Watchdog.
 """
+
 import asyncio
 import logging
 
 import aiosqlite
 
 from database.queue_manager import QueueManager
+from monitoring.watchdog import system_watchdog
 from web.server import start_api_server
 from worker.loop import start_worker
-from monitoring.watchdog import system_watchdog
-
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +21,9 @@ async def start_worker_and_api():
     # antes de handlers/worker dependerem de helpers dinamicos.
     import task_executor as _task_executor
 
-    if hasattr(_task_executor, "_sync_runtime"):
-        _task_executor._sync_runtime()
+    sync_fn = getattr(_task_executor, "_sync_runtime", None)
+    if sync_fn:
+        sync_fn()
 
     manager = QueueManager()
 
@@ -38,14 +39,9 @@ async def start_worker_and_api():
             await db.execute("PRAGMA mmap_size=2147483648;")
             await db.execute("PRAGMA cache_size=-64000;")
             await db.commit()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"[SISTEMA] Falha ao configurar SQLite WAL: {e}")
 
-    try:
-        await asyncio.gather(
-            start_api_server(manager),
-            start_worker(manager),
-            system_watchdog(manager)
-        )
-    except asyncio.CancelledError:
-        pass
+    await asyncio.gather(
+        start_api_server(manager), start_worker(manager), system_watchdog(manager)
+    )

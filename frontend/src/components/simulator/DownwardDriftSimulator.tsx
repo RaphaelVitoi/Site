@@ -8,7 +8,8 @@
  */
 
 import { calculateRioTension, calculateUtilityEV } from "@/lib/perspectiva";
-import { useMemo, useState } from "react";
+import { useMounted } from "@/hooks/useMounted";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     CartesianGrid,
     Label,
@@ -22,7 +23,35 @@ import {
 import { useSotaSync } from './hooks/useSotaSync';
 
 export function DownwardDriftSimulator() {
+    const isMounted = useMounted();
     const { physics, updatePhysics, isHydrated } = useSotaSync();
+
+    const workerRef = useRef<Worker | null>(null);
+    const [multiwayRioMatrix, setMultiwayRioMatrix] = useState<Float32Array | null>(null);
+    const [activePlayers, setActivePlayers] = useState<number>(3);
+    const maxPlayers = 9;
+    const sprLevels = 20;
+
+    useEffect(() => {
+        workerRef.current = new Worker(new URL('./workers/insolvency.worker.ts', import.meta.url), { type: 'module' });
+
+        workerRef.current.onmessage = (e) => {
+            if (e.data.type === 'MULTIWAY_RIO_RESULT') {
+                setMultiwayRioMatrix(e.data.matrix);
+            }
+        };
+
+        // Ignição do Profiler N^2 na VRAM
+        workerRef.current.postMessage({
+            type: 'MULTIWAY_RIO',
+            maxPlayers,
+            sprLevels,
+            baseTension: 0.15,
+            id: 'drift_rio'
+        });
+
+        return () => workerRef.current?.terminate();
+    }, []);
 
     const [baseRioLiability] = useState( 15 );
 
@@ -37,8 +66,18 @@ export function DownwardDriftSimulator() {
         let firstCrossover = null;
 
         for ( let invested = 0; invested <= physics.heroStack; invested += 2 ) {
-            const simIpTension = calculateRioTension( invested, physics.pot, physics.heroStack, 'IP', baseRioLiability );
-            const simOopTension = calculateRioTension( invested, physics.pot, physics.heroStack, 'OOP', baseRioLiability );
+            let simIpTension = calculateRioTension( invested, physics.pot, physics.heroStack, 'IP', baseRioLiability );
+            let simOopTension = calculateRioTension( invested, physics.pot, physics.heroStack, 'OOP', baseRioLiability );
+
+            // SOTA: Injeção O(1) do Multiway RIO Profiler da VRAM (WASM)
+            if (multiwayRioMatrix) {
+                const spr = Math.max(1, Math.min(sprLevels, Math.round((physics.heroStack - invested) / Math.max(0.1, physics.pot + invested))));
+                const rioIndex = (activePlayers - 1) * sprLevels + (spr - 1);
+                const dynamicRio = multiwayRioMatrix[rioIndex] ?? 0;
+                simIpTension += dynamicRio;
+                simOopTension += dynamicRio;
+            }
+
             const pctInvested = ( invested / physics.heroStack ) * 100;
 
             if ( firstCrossover === null && simOopTension >= 1 ) firstCrossover = pctInvested;
@@ -57,9 +96,18 @@ export function DownwardDriftSimulator() {
         }
 
         return { potEntrapment: entrapment, chartData: data, crossoverPoint: firstCrossover };
-    }, [physics.heroInvested, physics.pot, physics.heroStack, baseRioLiability, physics.referenceStatus] );
+    }, [physics.heroInvested, physics.pot, physics.heroStack, baseRioLiability, physics.referenceStatus, multiwayRioMatrix, activePlayers] );
 
-    if ( !isHydrated ) return null;
+    // SOTA Guard: Previne CLS (Cumulative Layout Shift) e blinda o Recharts (ResponsiveContainer)
+    // e a FFI do WebWorker contra colapsos de assimetria DOM/Node.js durante o SSR.
+    if ( !isMounted || !isHydrated ) {
+        return (
+            <div className="glass-panel p-8 flex flex-col items-center justify-center min-h-125 border-accent-indigo/10 max-w-5xl mx-auto bg-black/20 animate-pulse rounded-2xl">
+                <i className="fa-solid fa-chart-line text-accent-indigo text-4xl mb-4 opacity-50" />
+                <div className="text-text-muted text-xs font-black uppercase tracking-widest font-mono">Sincronizando Telemetria Drift...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="glass-panel p-8 space-y-8 animate-sota-in border-accent-indigo/10 max-w-5xl mx-auto">
@@ -94,6 +142,13 @@ export function DownwardDriftSimulator() {
                         </div>
                         <input type="range" min="0" max={ physics.heroStack } value={ physics.heroInvested } onChange={ e => updatePhysics( { heroInvested: Number( e.target.value ) } ) } className="w-full h-1 bg-white/10 rounded-full appearance-none accent-accent-amber cursor-pointer" />
                     </div>
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-end mb-1">
+                            <span className="text-label opacity-50">Jogadores (Multiway N²)</span>
+                            <span className="text-sm font-black font-mono text-accent-danger">{ activePlayers }</span>
+                        </div>
+                        <input type="range" min="2" max="9" value={ activePlayers } onChange={ e => setActivePlayers( Number( e.target.value ) ) } className="w-full h-1 bg-white/10 rounded-full appearance-none accent-accent-danger cursor-pointer" />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -110,8 +165,8 @@ export function DownwardDriftSimulator() {
 
             <div className="pt-8 border-t border-white/5">
                 <h3 className="text-label text-center mb-8 opacity-40">Curva de Aprisionamento Fractal</h3>
-                <div className="h-72 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
+                <div className="relative h-72 w-full min-h-72">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                         <LineChart data={ chartData }>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" vertical={ false } />
                             <XAxis dataKey="investedPct" hide />

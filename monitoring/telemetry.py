@@ -1,9 +1,10 @@
 """
 Telemetria e Auditoria -- Toast notifications e economic log.
 """
+
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from core.schemas import Task
@@ -24,8 +25,16 @@ def send_toast(title: str, message: str, status: str = "success"):
         [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Nexus Worker").Show($toast)
         """
         import subprocess
-        subprocess.Popen(["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps_code])
-    except Exception as e:
+
+        subprocess.Popen([
+            "powershell",
+            "-NoProfile",
+            "-WindowStyle",
+            "Hidden",
+            "-Command",
+            ps_code,
+        ])
+    except OSError as e:
         logger.error(f"Falha ao disparar Toast: {e}")
 
 
@@ -33,10 +42,14 @@ def _write_economic_log_sync(task: Task, duration_secs: float, status: str):
     """Grava o log economico de forma sincrona (executado em thread separada)."""
     audit_dir = Path(".claude/logs/audit")
     audit_dir.mkdir(parents=True, exist_ok=True)
-    log_file = audit_dir / f"economic_audit_{datetime.now().strftime('%Y-%m')}.log"
+    log_file = (
+        audit_dir / f"economic_audit_{datetime.now(timezone.utc).strftime('%Y-%m')}.log"
+    )
 
-    priority = task.metadata.get("priority", "medium").upper() if task.metadata else "MEDIUM"
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    priority = (
+        task.metadata.get("priority", "medium").upper() if task.metadata else "MEDIUM"
+    )
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
     log_entry = (
         f"[{timestamp}] | LVL:{priority} | AGENT:{task.agent} | STAT:{status}"
@@ -45,7 +58,7 @@ def _write_economic_log_sync(task: Task, duration_secs: float, status: str):
     try:
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(log_entry)
-    except Exception as e:
+    except OSError as e:
         logger.error(f"[LOG] Falha ao escrever log economico (I/O isolado): {e}")
 
 
@@ -56,6 +69,8 @@ def write_economic_log(task: Task, duration_secs: float, status: str):
     """
     try:
         loop = asyncio.get_running_loop()
-        loop.run_in_executor(None, _write_economic_log_sync, task, duration_secs, status)
+        loop.run_in_executor(
+            None, _write_economic_log_sync, task, duration_secs, status
+        )
     except RuntimeError:
         _write_economic_log_sync(task, duration_secs, status)

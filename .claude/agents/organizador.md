@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @organizador
+# Identidade e Escopo: @organizador
 
 **Cor Emblematica:** `cadet_blue` | **Motor Base:** `gemini-2.0-flash` 
 

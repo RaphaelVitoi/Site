@@ -2,10 +2,10 @@
     "system_info": {
         "workspace_path": "c:\\Users\\Raphael\\OneDrive\\Documentos\\Site",
         "settings_local": ".claude\\settings.local.json",
-        "version": "1.0.2",
-        "last_sync": "2025-05-20T14:30:00Z",
+        "version": "1.0.3",
+        "last_sync": "2025-05-06T08:50:00Z",
         "environment": "production",
-        "sota_level": "v3-alpha"
+        "sota_level": "v3-final"
     },
     "protected_agents_from_cleanup": [
         "@maverick",
@@ -16,7 +16,8 @@
         "@skillmaster",
         "@bibliotecario",
         "@sequenciador",
-        "@historian"
+        "@historian",
+        "@auditor"
     ],
     "handoff_pipeline": {
         "@dispatcher": "@architect",
@@ -33,7 +34,7 @@
     "workflow_flags": {
         "enable_dynamic_fallback": true,
         "enable_dispatcher_schema_retry": true,
-        "enable_security_gate": false,
+        "enable_security_gate": true,
         "enable_domain_validation_gate": true,
         "enable_strategy_gate": true,
         "enable_research_gate": true,

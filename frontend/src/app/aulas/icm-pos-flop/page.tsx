@@ -93,9 +93,9 @@ export default function IcmPosFlopPage() {
       <div className="sota-container mb-12">
         <SprPipeline
           stages={ [
-            { name: 'PRE', potSize: 2.5, rpValue: 24.0 } as any,
+          { name: 'PRE', potSize: 2.5, rpValue: 24 } as any,
             { name: 'FLOP', potSize: 7.5, rpValue: 18.5 } as any,
-            { name: 'TURN', potSize: 22.5, rpValue: 12.0 } as any,
+          { name: 'TURN', potSize: 22.5, rpValue: 12 } as any,
             { name: 'RIVER', potSize: 67.5, rpValue: 4.5 } as any,
           ] }
           activeStage={ 1 }

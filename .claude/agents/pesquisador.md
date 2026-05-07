@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @pesquisador
+# Identidade e Escopo: @pesquisador
 
 **Cor Emblematica:** `medium_orchid` | **Motor Base:** `gemini-2.5-pro` 
 

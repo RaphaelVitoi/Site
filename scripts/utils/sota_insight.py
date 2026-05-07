@@ -4,9 +4,11 @@ ROLE: Ferramenta de linha de comando para agentes lerem arquivos em 'chunks' (fa
       extraindo a ontologia (IDENTITY/ROLE) e mapeando o efeito cascata (BINDINGS).
 PRINCIPLE: Antevisão Semântica e Fricção Zero.
 """
-import re
+
 import argparse
+import re
 from pathlib import Path
+
 
 def scan_file(filepath: str, chunk: int = 1, size: int = 50):
     path = Path(filepath)
@@ -14,7 +16,7 @@ def scan_file(filepath: str, chunk: int = 1, size: int = 50):
         print(f"[ERRO] Arquivo não encontrado: {filepath}")
         return
 
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
     total_lines = len(lines)
@@ -22,13 +24,15 @@ def scan_file(filepath: str, chunk: int = 1, size: int = 50):
     end = start + size
     target_lines = lines[start:end]
 
-    print(f"=== [SOTA INSIGHT] Lendo {path.name} (Linhas {start+1} a {min(end, total_lines)} de {total_lines}) ===")
+    print(
+        f"=== [SOTA INSIGHT] Lendo {path.name} (Linhas {start + 1} a {min(end, total_lines)} de {total_lines}) ==="
+    )
 
     if chunk == 1:
         header = "".join(target_lines)
-        identity = re.search(r'IDENTITY:\s*(.+)', header, re.IGNORECASE)
-        role = re.search(r'ROLE:\s*(.+)', header, re.IGNORECASE)
-        binding = re.search(r'BINDING:\s*(.+)', header, re.IGNORECASE)
+        identity = re.search(r"IDENTITY:\s*(.+)", header, re.IGNORECASE)
+        role = re.search(r"ROLE:\s*(.+)", header, re.IGNORECASE)
+        binding = re.search(r"BINDING:\s*(.+)", header, re.IGNORECASE)
 
         print("\n[ONTOLOGIA DO COMPONENTE]")
         print(f"IDENTITY : {identity.group(1).strip() if identity else 'Desconhecida'}")
@@ -36,13 +40,20 @@ def scan_file(filepath: str, chunk: int = 1, size: int = 50):
         print(f"BINDING  : {binding.group(1).strip() if binding else 'Desconhecido'}")
 
     print("\n[CONTEÚDO BRUTO - CHUNK]")
-    for i, line in enumerate(target_lines, start=start+1):
+    for i, line in enumerate(target_lines, start=start + 1):
         print(f"{i:04d} | {line.rstrip()}")
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Skill de leitura recursiva de contexto para Agentes VITOI.")
-    parser.add_argument('filepath', help="Caminho absoluto ou relativo do arquivo.")
-    parser.add_argument('--chunk', type=int, default=1, help="Fatia de leitura (default: 1).")
-    parser.add_argument('--size', type=int, default=50, help="Tamanho da fatia em linhas (default: 50).")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Skill de leitura recursiva de contexto para Agentes VITOI."
+    )
+    parser.add_argument("filepath", help="Caminho absoluto ou relativo do arquivo.")
+    parser.add_argument(
+        "--chunk", type=int, default=1, help="Fatia de leitura (default: 1)."
+    )
+    parser.add_argument(
+        "--size", type=int, default=50, help="Tamanho da fatia em linhas (default: 50)."
+    )
     args = parser.parse_args()
     scan_file(args.filepath, args.chunk, args.size)

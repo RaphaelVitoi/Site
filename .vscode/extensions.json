@@ -2,17 +2,20 @@
     "recommendations": [
         "google.geminicodeassist",
         "rooveterinaryinc.roo-cline",
+        "cline.cline",
         "ms-python.python",
         "ms-python.vscode-pylance",
         "ms-python.debugpy",
         "charliermarsh.ruff",
-        "ms-azuretools.vscode-docker",
-        "ms-mssql.mssql",
-        "google.gcloud-code",
         "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "ms-vscode.powershell",
+        "ms-azuretools.vscode-docker",
         "yzhang.markdown-all-in-one",
         "streetsidesoftware.code-spell-checker",
-        "alefragnani.project-manager",
-        "saoudrizwan.claude-dev"
+        "alefragnani.project-manager"
     ]
 }

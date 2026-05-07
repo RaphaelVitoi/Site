@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @dispatcher
+# Identidade e Escopo: @dispatcher
 
 **Cor Emblematica:** `steel_blue1` | **Motor Base:** `gemini-2.0-flash` 
 

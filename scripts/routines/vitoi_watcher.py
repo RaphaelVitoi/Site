@@ -1,12 +1,16 @@
 import time
-import sys
-from watchdog.observers import Observer
+
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
 
 class VitoiContextHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        if event.src_path.endswith(".py"):
-            print(f"[ANTEVISÃO] Mudança detectada: {event.src_path}. Atualizando Grafo de Dependências...")
+        if str(event.src_path).endswith(".py"):
+            print(
+                f"[ANTEVISÃO] Mudança detectada: {event.src_path}. Atualizando Grafo de Dependências..."
+            )
+
 
 if __name__ == "__main__":
     path = "."

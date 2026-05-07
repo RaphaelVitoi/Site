@@ -1,43 +1,31 @@
-# ==========================================
-# MULTI-STAGE SOTA BUILD (Next.js Standalone)
-# ==========================================
-FROM node:22-alpine3.21 AS base
+FROM node:22-alpine3.20 AS base
 
-# 1. Instalacao de Dependencias
+# Stage 1: Resolucao de Dependencias O(1)
 FROM base AS deps
-RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-# 2. Compilacao (Build & Prisma)
+# Stage 2: Compilacao (Build) e Purificacao Standalone
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Gera o cliente Prisma imperativamente antes do build
-RUN npx prisma generate && \
-    npm run build
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
 
-# 3. Runner (Imagem Final de Friccao Zero)
+# Stage 3: Runtime SOTA (Friccao Zero)
 FROM base AS runner
 WORKDIR /app
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-# O modo standalone requer a copia manual dos estaticos, mas economiza ~90% de RAM/Disco
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Preserva o schema Prisma e o SQLite para operacoes read-only (se aplicavel)
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-
-USER nextjs
 EXPOSE 3000
-ENV PORT 3000
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
 CMD ["node", "server.js"]

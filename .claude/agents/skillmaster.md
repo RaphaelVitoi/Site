@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @skillmaster
+# Identidade e Escopo: @skillmaster
 
 **Cor Emblematica:** `dark_khaki` | **Motor Base:** `gemini-2.0-flash` 
 

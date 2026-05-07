@@ -20,6 +20,13 @@
             "command": "powershell -File $ProjectRoot/scripts/maintenance/run_maverick_sentinel.ps1 -TaskId SENTINEL-CRON-$(Get-Date -Format 'yyyyMMdd')",
             "intervalHours": 24,
             "active": true
+        },
+        {
+            "id": "predictive-forest-training-daily",
+            "description": "Treina o motor SOTA de Random Forest com os dados recentes de telemetria do Quiz.",
+            "command": "python $ProjectRoot/task_executor.py train-predictive",
+            "intervalHours": 24,
+            "active": true
         }
     ]
 }

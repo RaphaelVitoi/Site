@@ -1,12 +1,15 @@
 import init, { calculate_equity_monte_carlo_binary } from '../../../../wasm-equity/pkg/vitoi_equity_engine.js';
 import { expandPokerRange, maskToBytes, rangeToBitmask } from './rangeParser';
 
+// SOTA: Injeção de tipagem para o bundler (Next.js) em contexto de WebWorker
+declare var process: { env: { [ key: string ]: string | undefined; }; };
+
 let initialized = false;
 
 // SOTA: A instância do Web Worker atua como ponte de Fricção Zero para o motor combinatório em Rust.
 globalThis.onmessage = async ( e: MessageEvent ) =>
 {
-    const { heroRange, villainRange, board, id } = e.data;
+    const { heroRange, villainRange, board, id, kappa = 1 } = e.data;
 
     try
     {
@@ -32,7 +35,8 @@ globalThis.onmessage = async ( e: MessageEvent ) =>
         const iterations = 10000;
         const seed = Math.floor( Math.random() * 4294967296 ); // SOTA: Injeção de Semente Absoluta (Resolve o pânico de entropia)
 
-        const equity = calculate_equity_monte_carlo_binary( heroMask, villainMask, cleanBoard, iterations, seed );
+        // SOTA: Casting dinâmico blindando o compilador TS caso a FFI local gerada (d.ts) esteja fora de sincronia com a injeção do 6º parâmetro no Rust.
+        const equity = ( calculate_equity_monte_carlo_binary as any )( heroMask, villainMask, cleanBoard, iterations, seed, kappa );
 
         // Honestidade Intelectual: Interceptando os contratos de entropia do Rust
         if ( equity === -1 ) throw new Error( "Sintaxe inválida: Hero (Ex: AhKh, AKs, QQ)." );
@@ -44,8 +48,15 @@ globalThis.onmessage = async ( e: MessageEvent ) =>
         globalThis.postMessage( { equity: Math.round( equity * 100 ), id } );
     } catch ( error: unknown )
     {
-        // SOTA: Bypass de Error Overlay do Next.js dentro do Worker
-        const errorMessage = error instanceof Error ? error.message : String( error );
+        // SOTA: Extração de mensagem de erro robusta para contornar o Error Overlay do Next.js
+        let errorMessage = "Erro desconhecido no motor WASM.";
+        if ( typeof error === 'string' )
+        {
+            errorMessage = error;
+        } else if ( error instanceof Error )
+        {
+            errorMessage = error.message;
+        }
         console.warn( "[SOTA Worker] Falha silenciada na inferência WASM:", errorMessage );
         globalThis.postMessage( { error: errorMessage, id } ); // SOTA: Não sobrescreve a equidade em caso de falha matemática
     }

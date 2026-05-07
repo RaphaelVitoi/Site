@@ -55,19 +55,19 @@ export default function PsicologiaHSPage () {
       <JsonLd data={articleSchema} />
 
       {/* Header Central de Página */}
-      <div className="max-w-[1200px] mx-auto px-6 pt-12">
+      <div className="max-w-300 mx-auto px-6 pt-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
           <div>
-            <h1 className="text-[clamp(2rem,5vw,3rem)] font-black m-0 tracking-tighter bg-gradient-to-r from-text-bright to-text-dim bg-clip-text text-transparent font-heading">
+            <h1 className="text-[clamp(2rem,5vw,3rem)] font-black m-0 tracking-tighter bg-linear-to-r from-text-bright to-text-dim bg-clip-text text-transparent font-heading">
               Psicologia High Stakes
             </h1>
-            <p className="m-0 mt-4 text-[0.9rem] text-text-muted leading-relaxed max-w-[580px]">
+            <p className="m-0 mt-4 text-[0.9rem] text-text-muted leading-relaxed max-w-145">
               A Fenomenologia da Incerteza. Exegese crítica das heurísticas de ICM, vieses cognitivos e a mecânica do colapso humano sob pressão.
             </p>
             <div className="flex flex-wrap items-center gap-4 mt-6">
               <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-indigo/10 border border-accent-indigo/20 text-[0.65rem] font-bold text-accent-indigo-light uppercase tracking-widest font-mono">
                 <span className="w-2 h-2 rounded-full bg-accent-emerald shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                Hub Ativo
+                <span>Hub Ativo</span>
               </span>
               <span className="text-[0.7rem] text-text-dim font-bold font-mono uppercase tracking-widest">
                 Análise Comportamental
@@ -89,7 +89,7 @@ export default function PsicologiaHSPage () {
         title="A Fenomenologia da Incerteza"
         description="Uma exegese crítica das heurísticas de ICM e da arquitetura de solvers em ambientes de informação imperfeita."
       />
-      <div className="max-w-[1200px] mx-auto px-6 pb-12">
+      <div className="max-w-300 mx-auto px-6 pb-12">
         <GlassPanel className="p-8 sm:p-12 lg:p-16">
           <div className="prose prose-invert prose-lg max-w-none text-text-muted font-body">
             <p>A estratégia de torneios multimesa (MTT) exige uma reavaliação radical do risco: o valor nominal das fichas é substituído por uma métrica de valor monetário extrínseco, definida pelo Independent Chip Model (ICM). Esta análise investiga as estruturas de decisão pós-flop contrastando as implementações algorítmicas do GTO Wizard e do Hold&apos;em Resources Calculator (HRC).</p>
@@ -135,7 +135,7 @@ export default function PsicologiaHSPage () {
         title="Ontologia do Risk Premium"
         description="O limite superior de defesa onde o defensor é impedido de realizar sua equidade devido ao risco existencial."
       />
-      <div className="max-w-[1200px] mx-auto px-6 pb-12">
+      <div className="max-w-300 mx-auto px-6 pb-12">
         <GlassPanel className="p-8 sm:p-12 lg:p-16">
           <div className="prose prose-invert prose-lg max-w-none text-text-muted font-body">
             <h3 className="text-text-bright font-heading">O Teto do RP</h3>
@@ -157,7 +157,7 @@ export default function PsicologiaHSPage () {
         title="Heurísticas e Responsabilidade"
         description="A maestria reside na harmonia entre a frieza do código binário e a profundidade da reflexão humana."
       />
-      <div className="max-w-[1200px] mx-auto px-6 pb-12">
+      <div className="max-w-300 mx-auto px-6 pb-12">
         <GlassPanel className="p-8 sm:p-12 lg:p-16">
           <div className="prose prose-invert prose-lg max-w-none text-text-muted font-body text-center">
             <p className="text-2xl font-light leading-relaxed max-w-3xl mx-auto italic text-text-bright">
@@ -176,11 +176,11 @@ export default function PsicologiaHSPage () {
         title="Protocolos Psicológicos"
         description="Mergulhe nas anomalias cognitivas que distorcem a matemática pura."
       />
-      <div className="max-w-[1200px] mx-auto px-6 pb-24">
+      <div className="max-w-300 mx-auto px-6 pb-24">
         <PsychologyHub posts={ fallbackPosts } />
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-6 pb-12">
+      <div className="max-w-300 mx-auto px-6 pb-12">
         <ContentFooter
           shareTitle={ pageTitle }
           shareUrl={ pageUrl }

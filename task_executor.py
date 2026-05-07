@@ -12,15 +12,19 @@ from rich.logging import RichHandler
 
 # SOTA 8.0: Importa o novo cerebro de arbitragem
 import core.config as _core_config
+from agents.execution import (
+    AGENT_ARCHITECT,
+    AGENT_CHICO,
+    AGENT_CURATOR,
+    AGENT_DISPATCHER,
+    AGENT_IMPLEMENTOR,
+    AGENT_MAVERICK,
+)
 from core.schemas import Task
 from database.queue_manager import QueueManager
 
 # Constants for SonarLint compliance
 MODEL_GEMINI_FLASH = "gemini-2.0-flash"
-AGENT_MAVERICK = "@maverick"
-AGENT_CHICO = "@chico"
-AGENT_IMPLEMENTOR = "@implementor"
-AGENT_DISPATCHER = "@dispatcher"
 
 # Configuracao estetica e persistente de Log (Estado da Arte)
 console = Console()
@@ -40,7 +44,7 @@ if not logger.handlers:
         rich_tracebacks=True,
         markup=True,
         show_path=False,
-        tracebacks_show_locals=True,
+        tracebacks_show_locals=False,  # [SEC] Desabilitado para evitar vazamento de API Keys (locals dump)
     )
     rich_handler.setFormatter(logging.Formatter("%(message)s", datefmt="[%X]"))
     logger.addHandler(rich_handler)
@@ -110,7 +114,7 @@ def _intelligent_route_task(
     # FIX: A Hierarquia Absoluta e inviolavel. O Tier 1 (@chico) nao sofre downgrade por complexidade.
     if explicit_agent not in [
         AGENT_DISPATCHER,
-        "@architect",
+        AGENT_ARCHITECT,
         AGENT_MAVERICK,
         AGENT_CHICO,
     ]:
@@ -146,9 +150,9 @@ def _intelligent_route_task(
             weight for term, weight in frontend_terms.items() if term in desc_lower
         )
         if frontend_score >= _core_config.HEURISTIC_THRESHOLD:
-            metadata.setdefault("observers", []).append("@curator")
+            metadata.setdefault("observers", []).append(AGENT_CURATOR)
             logger.info(
-                f"[ROUTING SOTA] Front-end detectado (score {frontend_score}). Anexando @curator como Sentinela Estético."
+                f"[ROUTING SOTA] Front-end detectado (score {frontend_score}). Anexando {AGENT_CURATOR} como Sentinela Estético."
             )
 
     if explicit_agent and explicit_agent in _core_config.VALID_AGENTS:
@@ -189,12 +193,12 @@ class DynamicYieldManager:
         # Se atingiu o teto e continua bloqueada, aciona o @chico (Arbitragem de Deadlock)
         if yield_time >= self.max_yield_seconds and attempts % 3 == 0:
             logger.warning(
-                f"[STARVATION] Tarefa {task.id} em deadlock aparente. Acionando @chico para intervencao."
+                f"[STARVATION] Tarefa {task.id} em deadlock aparente. Acionando {AGENT_CHICO} para intervencao."
             )
             alert_task = Task(
                 id=f"DEADLOCK-{int(time.time())}",
                 description=f"A tarefa {task.id} (Agente: {task.agent}) esta sofrendo starvation devido a dependencias lentas ou nao resolvidas (Tentativa {attempts}). Arbitrar fila e resolver possivel deadlock.",
-                agent="@chico",
+                agent=AGENT_CHICO,
                 status="pending",
                 timestamp=datetime.now(timezone.utc).isoformat(),
                 metadata={"priority": "high", "blocked_task": task.id},
@@ -225,6 +229,23 @@ if __name__ == "__main__":
         explicit = sys.argv[3] if len(sys.argv) > 3 and sys.argv[3].strip() else None
         agent, meta = _intelligent_route_task(desc, explicit)
         print(json.dumps({"agent": agent, "metadata": meta}))
+        sys.exit(0)
+
+    if len(sys.argv) >= 2 and sys.argv[1] == "train-predictive":
+        from predictive_forest import PredictiveForestEngine
+
+        logger.info("=== [SISTEMA] Iniciando Calibracao Preditiva (Random Forest) ===")
+        engine = PredictiveForestEngine()
+        if engine.train_model():
+            sys.exit(0)
+        sys.exit(1)
+
+    if len(sys.argv) >= 2 and sys.argv[1] == "predictive-profile":
+        from predictive_forest import PredictiveForestEngine
+
+        engine = PredictiveForestEngine()
+        profile = engine.get_predictive_profile()
+        print(json.dumps(profile))
         sys.exit(0)
 
     from cli.commands import run_cli

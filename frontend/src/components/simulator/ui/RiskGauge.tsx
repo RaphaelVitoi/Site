@@ -1,13 +1,7 @@
-/**
- * IDENTITY: Risk Gauge SOTA (Didática Visceral)
- * PATH: src/components/simulator/ui/RiskGauge.tsx
- * ROLE: Visualização do Risk Premium. Reage a limiares críticos.
- */
-
 'use client';
 
 import { motion } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useId } from 'react';
 
 export interface RiskGaugeProps {
   value: number;
@@ -15,7 +9,6 @@ export interface RiskGaugeProps {
   pos?: string;
   stack?: string;
   stackTooltip?: string;
-  color?: 'indigo' | 'rose' | 'pink' | 'emerald' | 'amber';
   threshold?: number;
   opponentValue?: number;
 }
@@ -32,8 +25,8 @@ function GaugeCenter( { isDeathZone, isPredatorZone, isCritical, safeValue, stro
   if ( isDeathZone ) {
     return (
       <>
-        <motion.i animate={ { scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] } } transition={ { duration: 2, repeat: Infinity } } className="fa-solid fa-biohazard text-2xl" style={ { color: strokeColor } } />
-        <span style={ { fontSize: '0.5rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: strokeColor } }>CRITICAL</span>
+        <motion.i animate={ { scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] } } transition={ { duration: 2, repeat: Infinity } } className="fa-solid fa-biohazard text-[1.75rem]" style={ { color: strokeColor, textShadow: `0 0 15px ${strokeColor}` } } />
+        <span style={ { fontSize: '0.5rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: strokeColor, marginTop: '4px' } }>CRITICAL</span>
       </>
     );
   }
@@ -41,8 +34,8 @@ function GaugeCenter( { isDeathZone, isPredatorZone, isCritical, safeValue, stro
   if ( isPredatorZone ) {
     return (
       <>
-        <motion.i animate={ { scale: [1, 1.1, 1] } } transition={ { duration: 3, repeat: Infinity } } className="fa-solid fa-crosshairs text-2xl" style={ { color: strokeColor } } />
-        <span style={ { fontSize: '0.5rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: strokeColor } }>ATTACK</span>
+        <motion.i animate={ { scale: [1, 1.15, 1] } } transition={ { duration: 3, repeat: Infinity } } className="fa-solid fa-crosshairs text-[1.75rem]" style={ { color: strokeColor, textShadow: `0 0 15px ${strokeColor}` } } />
+        <span style={ { fontSize: '0.5rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: strokeColor, marginTop: '4px' } }>ATTACK</span>
       </>
     );
   }
@@ -50,18 +43,67 @@ function GaugeCenter( { isDeathZone, isPredatorZone, isCritical, safeValue, stro
   return (
     <>
       <div style={ { display: 'flex', alignItems: 'baseline', lineHeight: 1 } }>
-        <span style={ { fontFamily: 'monospace', fontSize: '1.55rem', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1, color: isCritical ? 'var(--accent-red-strong)' : 'var(--text-main)' } }>
+        <span style={ { fontFamily: 'monospace', fontSize: '1.65rem', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1, color: isCritical ? 'var(--color-accent-danger)' : 'var(--color-text-main)', textShadow: `0 0 10px ${isCritical ? 'var(--color-accent-danger)' : 'transparent'}` } }>
           { safeValue.toFixed( 1 ) }
         </span>
-        <span style={ { fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 700, lineHeight: 1, marginLeft: '1px', color: isCritical ? 'var(--accent-red-strong)' : 'var(--text-muted)' } }>
+        <span style={ { fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 800, lineHeight: 1, marginLeft: '1px', color: isCritical ? 'var(--color-accent-danger)' : 'var(--color-text-muted)' } }>
           %
         </span>
       </div>
-      <span style={ { fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: strokeColor } }>
+      <span style={ { fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: strokeColor, marginTop: '2px' } }>
         RP
       </span>
     </>
   );
+}
+
+function getGaugeColors(isDeathZone: boolean, isPredatorZone: boolean, isCritical: boolean, rpDiff: number) {
+  if (isDeathZone) {
+    return {
+      startColor: '#ff0033',
+      endColor: '#990000',
+      strokeColor: 'var(--color-accent-danger)',
+      trackColor: 'rgba(255,0,50,0.15)'
+    };
+  }
+  if (isPredatorZone) {
+    return {
+      startColor: 'var(--color-accent-emerald)',
+      endColor: '#34d399',
+      strokeColor: 'var(--color-accent-emerald)',
+      trackColor: 'rgba(16,185,129,0.1)'
+    };
+  }
+  if (isCritical) {
+    return {
+      startColor: 'var(--color-accent-danger)',
+      endColor: 'var(--color-accent-rose)',
+      strokeColor: 'var(--color-accent-danger)',
+      trackColor: 'rgba(225,29,72,0.1)'
+    };
+  }
+  if (rpDiff > 10) {
+    return {
+      startColor: '#f59e0b',
+      endColor: '#ea580c',
+      strokeColor: 'var(--color-accent-amber)',
+      trackColor: 'rgba(245,158,11,0.1)'
+    };
+  }
+  if (rpDiff > 4) {
+    return {
+      startColor: '#8b5cf6',
+      endColor: '#d946ef',
+      strokeColor: 'var(--color-accent-violet)',
+      trackColor: 'rgba(139,92,246,0.1)'
+    };
+  }
+  return {
+    startColor: '#0ea5e9',
+    endColor: '#38bdf8',
+    strokeColor: 'var(--color-accent-sky)',
+    trackColor: 'rgba(14,165,233,0.1)'
+  };
 }
 
 export default function RiskGauge( {
@@ -70,12 +112,13 @@ export default function RiskGauge( {
   pos = '--',
   stack = '--',
   stackTooltip,
-  color = 'indigo',
   threshold = 20,
   opponentValue = 0,
 }: Readonly<RiskGaugeProps> ) {
   const hasLoggedEasterEgg = useRef( false );
   const [showTooltip, setShowTooltip] = useState( false );
+  const baseId = useId().replaceAll(":", "");
+  const gradId = `gaugeGrad-${baseId}`;
 
   // Cálculos de Threshold SOTA
   const safeValue = Number.isNaN( value ) ? 0 : value;
@@ -85,15 +128,20 @@ export default function RiskGauge( {
   const isDeathZone = safeValue >= 41; // SOTA: Teto de Nash Provado (41%)
   const isPredatorZone = safeOpponentValue >= 41 && safeValue < 25;
 
-  // Colorimetria Semântica
-  const baseColor = color ? `var(--accent-${color})` : 'var(--accent-indigo)';
-  let strokeColor = baseColor;
-  if ( isCritical ) strokeColor = 'var(--accent-red-strong)';
-  if ( isDeathZone ) strokeColor = 'var(--accent-neon-red)';
-  if ( isPredatorZone ) strokeColor = 'var(--accent-emerald)'; // Emerald-500
+  const rpDiff = Math.abs( safeValue - safeOpponentValue );
+  const { startColor, endColor, strokeColor, trackColor } = getGaugeColors(isDeathZone, isPredatorZone, isCritical, rpDiff);
 
-  // Dash array para a animação do SVG (Baseado num RP máximo prático de ~26% para o círculo fechar visualmente)
-  const dash = Math.min( 100, Math.max( 0, ( safeValue / 26 ) * 100 ) );
+  // Comprimento do path para preencher o arco.
+  // Vamos usar pathLength do framer-motion variando de 0 a (safeValue / maxVisualRp).
+  const maxVisualRp = 30;
+  const targetPathLength = Math.min( 1, Math.max( 0.01, safeValue / maxVisualRp ) );
+
+  let gaugeFilter: string | string[] = `drop-shadow(0 0 8px ${startColor}80)`;
+  if ( isDeathZone ) {
+    gaugeFilter = [`drop-shadow(0 0 10px ${startColor})`, `drop-shadow(0 0 25px ${endColor})`, `drop-shadow(0 0 10px ${startColor})`];
+  } else if ( isPredatorZone ) {
+    gaugeFilter = [`drop-shadow(0 0 8px ${startColor}80)`, `drop-shadow(0 0 15px ${endColor})`, `drop-shadow(0 0 8px ${startColor}80)`];
+  }
 
   // Easter Egg Filosófico (@maverick)
   useEffect( () => {
@@ -110,47 +158,41 @@ export default function RiskGauge( {
     }
   }, [isDeathZone] );
 
-  // Animações Framer Motion Dinâmicas
-  const pulseAnimation = useMemo( () => {
-    if ( isDeathZone ) {
-      return {
-        strokeWidth: [2.5, 4.5, 2.5],
-        strokeOpacity: [1, 0.6, 1],
-        filter: [`drop-shadow(0 0 8px ${strokeColor}80)`, `drop-shadow(0 0 15px ${strokeColor})`, `drop-shadow(0 0 8px ${strokeColor}80)`],
-        transition: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-      };
-    }
-    if ( isPredatorZone ) {
-      return {
-        strokeWidth: [2.5, 3.5, 2.5],
-        strokeOpacity: [0.8, 1, 0.8],
-        filter: [`drop-shadow(0 0 8px ${strokeColor}60)`, `drop-shadow(0 0 12px ${strokeColor})`, `drop-shadow(0 0 8px ${strokeColor}60)`],
-        transition: { duration: 3, repeat: Infinity, ease: "easeInOut" }
-      };
-    }
-    return {
-      strokeWidth: 2.5,
-      strokeOpacity: 1,
-      filter: `drop-shadow(0 0 8px ${strokeColor}80)`,
-      transition: { duration: 0.5, ease: "easeOut" }
-    };
-  }, [isDeathZone, isPredatorZone, strokeColor] );
-
   return (
     <div className="flex flex-col items-center font-sans">
-      <div className="relative w-full max-w-35 aspect-square mx-auto mb-2">
+      <div className="relative w-full max-w-35 aspect-square mx-auto mb-3">
         <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+          <defs>
+            <linearGradient id={gradId} x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor={startColor} />
+              <stop offset="100%" stopColor={endColor} />
+            </linearGradient>
+          </defs>
+
+          {/* Track de Fundo */}
           <path
-            className="fill-none stroke-white/10"
-            strokeWidth="2"
+            className="fill-none"
+            stroke={trackColor}
+            strokeWidth="2.5"
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
+
+          {/* Arco Preenchendo com Linear Gradient e Glow */}
           <motion.path
             className="fill-none"
-            stroke={ strokeColor }
+            stroke={`url(#${gradId})`}
             strokeLinecap="round"
-            initial={ { strokeDasharray: "0, 100", strokeWidth: 2.5, strokeOpacity: 1 } }
-            animate={ { strokeDasharray: `${dash}, 100`, ...(pulseAnimation as any) } }
+            initial={{ pathLength: 0, strokeWidth: 3, opacity: 0 }}
+            animate={{
+                pathLength: targetPathLength,
+                opacity: 1,
+                filter: gaugeFilter
+            }}
+            transition={{
+                pathLength: { duration: 1.5, type: "spring", bounce: 0.2 },
+                filter: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+                opacity: { duration: 0.5 }
+            }}
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
         </svg>
@@ -166,19 +208,13 @@ export default function RiskGauge( {
         </div>
       </div>
 
-      <div className="text-center">
-        <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{ label }</div>
-        <div className="font-serif text-xl font-bold text-white mt-1">{ pos }</div>
+      <div className="text-center z-10 relative">
+        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-text-muted">{ label }</div>
+        <div className="font-serif text-2xl font-black text-white mt-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{ pos }</div>
         <button
-          className="font-mono text-xs text-slate-300 mt-1"
+          className="font-mono text-[0.7rem] font-bold text-text-dim mt-1.5 hover:text-white transition-colors group relative"
           type="button"
-          style={ {
-            position: 'relative',
-            display: 'inline-block',
-            cursor: stackTooltip ? 'help' : 'default',
-            textDecoration: stackTooltip ? 'underline dotted' : 'none',
-            textUnderlineOffset: '2px',
-          } }
+          style={ { cursor: stackTooltip ? 'help' : 'default' } }
           onMouseEnter={ () => stackTooltip && setShowTooltip( true ) }
           onMouseLeave={ () => setShowTooltip( false ) }
           onFocus={ () => stackTooltip && setShowTooltip( true ) }
@@ -191,30 +227,13 @@ export default function RiskGauge( {
           } }
           tabIndex={ stackTooltip ? 0 : undefined }
         >
-          { stack }
+          <span style={{ borderBottom: stackTooltip ? '1px dotted rgba(255,255,255,0.4)' : undefined, paddingBottom: '2px' }}>{ stack }</span>
           { stackTooltip && showTooltip && (
-            <div style={ {
-              position: 'absolute',
-              bottom: 'calc(100% + 6px)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '240px',
-              padding: '0.6rem 0.8rem',
-              background: 'rgba(2, 6, 23, 0.97)',
-              border: '1px solid rgba(99,102,241,0.25)',
-              borderRadius: '6px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
-              fontSize: '0.65rem',
-              lineHeight: 1.55,
-              color: 'var(--text-muted)',
-              fontFamily: 'var(--font-body, sans-serif)',
-              textAlign: 'left',
-              zIndex: 100,
-              pointerEvents: 'none',
-              fontStyle: 'normal',
-              textDecoration: 'none',
-            } }>
-              { stackTooltip }
+            <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-64 p-4 bg-black/95 backdrop-blur-md border border-white/10 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.8)] text-left pointer-events-none z-99999">
+              <p className="text-[0.7rem] text-text-light leading-relaxed font-sans font-medium m-0 normal-case tracking-normal">
+                  { stackTooltip }
+              </p>
+              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-black border-r border-b border-white/10 rotate-45" />
             </div>
           ) }
         </button>

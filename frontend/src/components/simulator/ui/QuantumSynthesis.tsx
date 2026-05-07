@@ -104,7 +104,7 @@ export default function QuantumSynthesis( {
         </div>
       </div>
 
-      <p className={ `mb-6 text-sm text-text-light leading-relaxed border-l-4 ${narrativeBorder} pl-5 ${narrativeBg}` }>
+      <p className={ `mb-6 text-sm text-text-light leading-relaxed border-l-4 ${narrativeBorder} pl-5 py-2 backdrop-blur-sm rounded-r-lg ${narrativeBg}` }>
         { narrativeText }
       </p>
 
@@ -149,13 +149,13 @@ export default function QuantumSynthesis( {
 }
 
 function ForceCard( { label, value, desc, active, textColor = "text-accent-emerald" }: Readonly<{ label: string, value: string, desc: string, active: boolean, textColor?: string }> ) {
-  const bgClass = active ? 'bg-white/3' : 'bg-white/1';
-  const borderClass = active ? 'border-white/10' : 'border-white/5';
+  const bgClass = active ? 'bg-gradient-to-br from-white/5 to-transparent' : 'bg-white/5';
+  const borderClass = active ? 'border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.02)]' : 'border-white/5';
   const opacityClass = active ? 'opacity-100' : 'opacity-40';
   const finalTextColor = active ? textColor : 'text-text-darker';
 
   return (
-    <div className={ `p-4 rounded-2xl border transition-all duration-500 ${bgClass} ${borderClass} ${opacityClass}` }>
+    <div className={ `p-5 rounded-2xl border transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:border-white/20 ${bgClass} ${borderClass} ${opacityClass}` }>
       <span className="text-[0.5rem] text-text-dim uppercase font-black block mb-1 tracking-widest">{ label }</span>
       <span className={ `text-base font-black block font-heading tracking-tighter ${finalTextColor}` }>{ value }</span>
       <span className="text-[0.55rem] text-text-darker leading-tight block mt-1.5">{ desc }</span>

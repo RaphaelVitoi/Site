@@ -50,7 +50,7 @@ export default function MotorDiluicaoPage() {
                 { street: 'FLOP / TURN', spr: 'SPR 2-6', rp: '≈60%', status: 'Foco: Amortização', color: 'bg-accent-indigo' },
                 { street: 'RIVER', spr: 'SPR < 1', rp: '<10%', status: 'Foco: Equidade Bruta', color: 'bg-accent-emerald' }
               ].map( ( s ) => (
-                <div key={ s.street } className="relative p-8 rounded-3xl bg-white/[0.03] border border-white/10 overflow-hidden group">
+                <div key={ s.street } className="relative p-8 rounded-3xl bg-white/3 border border-white/10 overflow-hidden group">
                   <div className={ `absolute top-0 right-0 w-32 h-32 ${s.color} opacity-5 blur-3xl -mr-16 -mt-16 group-hover:opacity-20 transition-opacity` } />
                   <span className="text-[0.5rem] font-black text-text-darker uppercase tracking-[0.3em] mb-2 block">{ s.street }</span>
                   <h4 className="text-2xl font-black text-text-bright mb-4">{ s.spr }</h4>

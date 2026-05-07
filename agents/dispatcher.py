@@ -17,6 +17,9 @@ from llm.orchestrator import call_llm_api
 
 logger = logging.getLogger(__name__)
 
+AGENT_DISPATCHER = "@dispatcher"
+AGENT_IMPLEMENTOR = "@implementor"
+
 
 class DispatcherSubtask(BaseModel):
     description: str = Field(min_length=5)
@@ -28,9 +31,9 @@ class DispatcherSubtask(BaseModel):
     @classmethod
     def validate_known_agent(cls, v: str) -> str:
         if not isinstance(v, str) or not v.startswith("@"):
-            return "@implementor"
+            return AGENT_IMPLEMENTOR
         if v not in te.VALID_AGENTS:
-            return "@implementor"
+            return AGENT_IMPLEMENTOR
         return v
 
     @field_validator("depends_on")
@@ -99,7 +102,10 @@ def _parse_dispatcher_subtasks_strict(response_text: str) -> list[DispatcherSubt
     try:
         # Tentativa 1: Parse direto do bloco limpo
         loaded = json.loads(cleaned)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        logger.debug(
+            f"Tentativa 1 de parse JSON falhou: {e}. Iniciando extrator de matriz..."
+        )
         try:
             # Tentativa 2: Extrator original de matriz por pilha (ignora texto ao redor)
             raw_json = _extract_dispatcher_json_array(response_text)
@@ -145,7 +151,7 @@ async def _retry_dispatcher_schema_once(
     retry_task = Task(
         id=f"{task.id}-DISPATCHER-RETRY",
         description=f"Retry schema dispatcher para {task.id}",
-        agent="@dispatcher",
+        agent=AGENT_DISPATCHER,
         timestamp=datetime.now(timezone.utc).isoformat(),
         metadata={"priority": "high", "origin_task_id": task.id},
     )

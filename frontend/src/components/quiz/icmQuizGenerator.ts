@@ -3,6 +3,7 @@ import { QuizQuestion } from '@/components/quiz/types';
 export interface SimulatorState {
     stacks: number[];
     prizes: number[];
+    predictiveProfile?: Record<string, number>;
 }
 
 export function generateDynamicICMQuiz( state: SimulatorState ): QuizQuestion[] {
@@ -100,6 +101,17 @@ export function generateDynamicICMQuiz( state: SimulatorState ): QuizQuestion[] 
             correctOptionId: 'opt1',
             explanation: 'O Princípio da Externalidade Positiva ensina que o desastre alheio é lucro seu. Stacks medianos devem jogar de forma estanque (Downward Drift acentuado) evitando esbarrões no Chip Leader, pois o simples ato de esperar a morte do short injeta $EV passivamente em suas stacks.',
             category: 'Sobrevivência Crítica (FGS)'
+        } );
+    }
+
+    // SOTA: Aplicação do Random Forest (CFR) para reordenação dinâmica
+    if ( state.predictiveProfile ) {
+        const profile = state.predictiveProfile;
+        questions.sort( ( a, b ) => {
+            const weightA = profile[ a.category ?? '' ] ?? 0.5;
+            const weightB = profile[ b.category ?? '' ] ?? 0.5;
+            // Pesos maiores indicam deficiência probabilística detectada pela Random Forest
+            return weightB - weightA;
         } );
     }
 

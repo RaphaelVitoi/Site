@@ -1,55 +1,39 @@
 import { NextResponse } from 'next/server';
-
-import prisma from '@/lib/prisma';
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite';
+import path from 'node:path';
 import { TelemetryPayloadSchema } from '@/lib/schemas';
 
 export async function POST(request: Request) {
     try {
-        const payload = await request.json();
-        const validated = TelemetryPayloadSchema.safeParse(payload);
+        const body = await request.json();
+        const data = TelemetryPayloadSchema.parse(body);
 
-        if (!validated.success) {
-            return NextResponse.json(
-                { success: false, error: 'Contrato semantico violado.' },
-                { status: 400 },
-            );
-        }
+        // Resolvendo o path absoluto para o banco de dados principal do Kernel Python
+        const dbPath = path.resolve(process.cwd(), '../queue/tasks.db');
 
-        const data = validated.data;
-        
-        // SOTA: Persistência Fire-and-Forget. 
-        // Não aguardamos o Prisma para responder ao cliente (Latência O(1)).
-        (async () => {
-            try {
-                const event = await (prisma as any).telemetryEvent.create({
-                    data: {
-                        category: data.category,
-                        scenarioContext: data.scenarioContext ? JSON.stringify(data.scenarioContext) : null,
-                        userAction: data.userAction || null,
-                        optimalAction: data.optimalAction || null,
-                        evLoss: data.evLoss ?? 0,
-                        isCorrect: data.isCorrect ?? true,
-                        latency: data.latency ?? 0,
-                        componentName: data.componentName,
-                        metadata: data.metadata ? JSON.stringify(data.metadata) : null,
-                    },
-                });
+        const db = await open({
+            filename: dbPath,
+            driver: sqlite3.Database
+        });
 
-                if ((data.evLoss ?? 0) > 10) {
-                    console.warn(`[SOTA-CRITICAL-MISPLAY] Event ID: ${event.id} | EV Loss: ${data.evLoss}%`);
-                }
-            } catch (err) {
-                console.error('[TELEMETRY API] Background persistence failure', err);
-            }
-        })();
-
-        // Resposta imediata
-        return NextResponse.json({ success: true, message: 'Evento despachado para persistência.' });
-    } catch (error) {
-        console.error('[TELEMETRY API] Payload malformed', error);
-        return NextResponse.json(
-            { success: false, error: 'Falha na termodinamica de persistencia.' },
-            { status: 500 },
+        await db.run(
+            `INSERT INTO telemetry_logs (type, category, time_ms, is_correct, ev_loss, user_id, timestamp) 
+             VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+            [
+                data.componentName, 
+                data.category, 
+                data.latency || 0, 
+                data.isCorrect ? 1 : 0, 
+                data.evLoss, 
+                'local'
+            ]
         );
+        await db.close();
+
+        return NextResponse.json({ status: 'SUCCESS' });
+    } catch (error) {
+        console.error('[TELEMETRY] Erro Catastrófico ao salvar telemetria:', error);
+        return NextResponse.json({ status: 'ERROR', error: String(error) }, { status: 500 });
     }
 }

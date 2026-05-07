@@ -10,6 +10,7 @@
 
 import type { SprStage } from '../engine/types';
 import AnimatedNumber from './AnimatedNumber';
+import { useSotaSync } from '../hooks/useSotaSync';
 
 interface SprPipelineProps {
   /** Estágios do pipeline de dissipação de RP */
@@ -18,12 +19,16 @@ interface SprPipelineProps {
   activeStage?: number;
 }
 
-const OPACITY_LEVELS = [1, 0.7, 0.5, 0.3];
+const OPACITY_CLASSES = ['opacity-100', 'opacity-70', 'opacity-50', 'opacity-30'];
 
 export default function SprPipeline({
   stages,
   activeStage = 0,
 }: Readonly<SprPipelineProps>) {
+  const { physics, isHydrated } = useSotaSync();
+
+  if ( !isHydrated ) return null;
+
   return (
     <div className="glass-panel p-6 border-white/5 relative overflow-hidden group">
       <div className="flex justify-between items-center mb-8">
@@ -31,6 +36,11 @@ export default function SprPipeline({
           <i className="fa-solid fa-water text-accent-sky text-xs" />
           <span>Dissipação Estrutural (Pot Entrapment)</span>
         </h4>
+        <div className="flex items-center gap-2">
+          <span className="text-[0.55rem] font-mono text-accent-sky uppercase tracking-widest bg-accent-sky/10 px-2 py-0.5 rounded border border-accent-sky/20 shadow-inner">
+            Sync: { physics.referenceStatus }
+          </span>
+        </div>
       </div>
 
       <div className="relative flex justify-between items-center py-4 px-2">
@@ -39,21 +49,31 @@ export default function SprPipeline({
 
         {stages.map((stage, idx) => {
           const isActive = idx === activeStage;
-          const opacity = OPACITY_LEVELS[idx] ?? 0.3;
           const isDeathZone = stage.rpValue >= 35;
           const isGold = stage.rpValue >= 20 && !isDeathZone;
 
-          const valueColor = isDeathZone ? 'text-accent-danger' : isGold ? 'text-accent-gold' : 'text-accent-emerald';
-          const ringColor = isDeathZone ? 'ring-accent-danger/30' : isGold ? 'ring-accent-gold/30' : 'ring-accent-emerald/30';
-          const bgActive = isDeathZone ? 'bg-accent-danger/10' : isGold ? 'bg-accent-gold/10' : 'bg-accent-emerald/10';
+          let valueColor = 'text-accent-emerald';
+          let ringColor = 'ring-accent-emerald/30';
+          let bgActive = 'bg-accent-emerald/10';
+          if (isDeathZone) {
+            valueColor = 'text-accent-danger';
+            ringColor = 'ring-accent-danger/30';
+            bgActive = 'bg-accent-danger/10';
+          } else if (isGold) {
+            valueColor = 'text-accent-gold';
+            ringColor = 'ring-accent-gold/30';
+            bgActive = 'bg-accent-gold/10';
+          }
+
+          const opacityClass = isActive ? 'opacity-100' : (OPACITY_CLASSES[idx] ?? 'opacity-30');
+          const activeClasses = isActive ? `border-white/20 ring-4 ${ringColor} ${bgActive}` : 'border-white/10';
 
           return (
             <div
               key={stage.name}
-              className={`relative z-10 flex flex-col items-center gap-2 transition-all duration-500 ${isActive ? 'scale-110' : 'scale-100 hover:scale-105'}`}
-              style={{ opacity: isActive ? 1 : opacity }}
+              className={`relative z-10 flex flex-col items-center gap-2 transition-all duration-500 ${isActive ? 'scale-110' : 'scale-100 hover:scale-105'} ${opacityClass}`}
             >
-              <div className={`w-14 h-14 rounded-full flex flex-col items-center justify-center border-2 bg-bg-deep backdrop-blur-md ${isActive ? `border-white/20 ring-4 ${ringColor} ${bgActive}` : 'border-white/10'}`}>
+              <div className={`w-14 h-14 rounded-full flex flex-col items-center justify-center border-2 bg-bg-deep backdrop-blur-md ${activeClasses}`}>
                 <span className="text-[0.55rem] text-text-dim font-black uppercase tracking-tighter leading-none mb-0.5">{stage.name}</span>
                 <span className={`text-sm font-black font-mono tracking-tighter ${valueColor}`}>
                   <AnimatedNumber value={stage.rpValue} suffix="%" decimals={1} />

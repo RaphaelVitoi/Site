@@ -90,10 +90,10 @@ describe( 'Direção das distorções ICM', () => {
     expect( pressured.ip.check.center ).toBeGreaterThan( base.ip.check.center );
   } );
 
-  test( 'ΔRP positivo: OOP call aumenta (k_oop_call = +7.3)', () => {
+  test( 'ΔRP positivo: OOP call cai por risco de ressuscitar o IP', () => {
     const base = solveIcmDistortion( 10, 10, NEUTRO, 1 );
     const pressured = solveIcmDistortion( 20, 10, NEUTRO, 1 );
-    expect( pressured.oop.call.center ).toBeGreaterThan( base.oop.call.center );
+    expect( pressured.oop.call.center ).toBeLessThan( base.oop.call.center );
   } );
 
   test( 'ΔRP negativo (OOP sob mais pressão): apostas IP sobem', () => {

@@ -47,19 +47,26 @@ export function SotaGlobalSyncProvider( { children }: { readonly children: React
 
     // Hidratação (Client-Side) garantindo sincronia sem flicker
     useEffect( () => {
-        if ( storedPhysics ) {
-            setPhysics( storedPhysics );
+        if ( !isHydrated ) {
+            if ( storedPhysics ) {
+                setPhysics( storedPhysics );
+            }
+            setIsHydrated( true );
         }
-        setIsHydrated( true );
-    }, [storedPhysics] );
+    }, [storedPhysics, isHydrated] );
 
     const updatePhysics = React.useCallback( ( partial: Partial<SotaPhysicsState> ) => {
         setPhysics( prev => {
-            const newState = { ...prev, ...partial };
-            setStoredPhysics( newState ); // Persiste no LocalStorage debounceado
-            return newState;
+            return { ...prev, ...partial };
         } );
-    }, [setStoredPhysics] );
+    }, [] );
+
+    // SOTA: Isolamento de Side-Effects (Fricção Zero)
+    // Removemos a mutação de I/O de dentro do 'setPhysics', garantindo que o State Updater seja Puro.
+    // Impede que o React Strict Mode ou o Concurrent Mode disparem escritas redundantes durante Stress Tests.
+    useEffect(() => {
+        if (isHydrated) setStoredPhysics(physics);
+    }, [physics, isHydrated, setStoredPhysics]);
 
     const contextValue = React.useMemo( () => ( {
         physics,

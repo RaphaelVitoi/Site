@@ -1,6 +1,7 @@
 'use client';
 
 import { buildNexusClientUrl } from '@/lib/api-contract';
+import { useMemo } from 'react';
 import useSWR from 'swr';
 
 // SOTA: Fetcher isolado para lidar com o motor assincrono
@@ -31,10 +32,10 @@ export default function Dashboard ()
     const { data: statusData, error: statusError, isLoading: statusLoading } = useSWR<TaskStatus[]>( buildNexusClientUrl( '/status' ), fetcher, { refreshInterval: 3000 } );
     const { data: keysData } = useSWR<KeyHealthSummary>( buildNexusClientUrl( '/key-health-summary' ), fetcher, { refreshInterval: 10000 } );
 
-    const pendingTasks = Array.isArray( statusData ) ? statusData.filter( ( t: TaskStatus ) => t.status === 'pending' ).length : 0;
-    const activeWorkers = Array.isArray( statusData ) ? statusData.filter( ( t: TaskStatus ) => t.status === 'processing' ).length : 0;
-    const recentTasks = Array.isArray( statusData ) ? statusData.slice( 0, 10 ) : [];
-    const onlineKeys = keysData ? Math.round( ( keysData.online_rate ?? 0 ) * ( keysData.total_keys ?? 0 ) ) : 0;
+    const pendingTasks = useMemo( () => Array.isArray( statusData ) ? statusData.filter( ( t: TaskStatus ) => t.status === 'pending' ).length : 0, [ statusData ] );
+    const activeWorkers = useMemo( () => Array.isArray( statusData ) ? statusData.filter( ( t: TaskStatus ) => t.status === 'processing' ).length : 0, [ statusData ] );
+    const recentTasks = useMemo( () => Array.isArray( statusData ) ? statusData.slice( 0, 10 ) : [], [ statusData ] );
+    const onlineKeys = useMemo( () => keysData ? Math.round( ( keysData.online_rate ?? 0 ) * ( keysData.total_keys ?? 0 ) ) : 0, [ keysData ] );
 
     return (
         <div className="container pt-16 pb-20 max-w-6xl mx-auto">

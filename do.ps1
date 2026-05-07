@@ -133,7 +133,7 @@ $ContextAssemblerPath = Join-Path $ScriptDirectory 'scripts\routines\Invoke-Cont
 $PythonCmd = if ($TestMode -and $Global:TestPythonCmd) {
     $Global:TestPythonCmd
 }
-elseif (Test-Path "$ScriptDirectory\.venv\Scripts\python.exe") {
+elseif (Test-Path -LiteralPath "$ScriptDirectory\.venv\Scripts\python.exe") {
     "$ScriptDirectory\.venv\Scripts\python.exe"
 }
 else {
@@ -159,7 +159,7 @@ function Get-FileContentSOTA([string]$Path) {
 function Write-CryptoAuditSOTA {
     param([string]$Action, [string]$Target)
     $LogDir = Join-Path $ScriptDirectory '.claude\logs'
-    if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir | Out-Null }
+    if (-not (Test-Path -LiteralPath $LogDir)) { New-Item -ItemType Directory -Path $LogDir | Out-Null }
     $AuditLogPath = Join-Path $LogDir 'crypto_audit.log'
     $Timestamp = (Get-Date -Format 'o')
     $User = [Environment]::UserName
@@ -172,7 +172,7 @@ function Write-CryptoAuditSOTA {
 }
 
 $SafeCommandModulePath = Join-Path $ScriptDirectory 'scripts\utils\Invoke-SafeCommand.ps1'
-if (Test-Path $SafeCommandModulePath) {
+if (Test-Path -LiteralPath $SafeCommandModulePath) {
     . $SafeCommandModulePath
 }
 else {
@@ -185,7 +185,7 @@ else {
 
 if (-not $TestMode) {
     function Invoke-ContextAssembler {
-        if (Test-Path $ContextAssemblerPath) {
+        if (Test-Path -LiteralPath $ContextAssemblerPath) {
             . $ContextAssemblerPath
             return Invoke-ContextAssembler @args
         }
@@ -205,7 +205,7 @@ if (-not $TestMode) {
         )
         Write-Host "=== [SISTEMA] $Message ===" -ForegroundColor Magenta
         $ScriptPath = Join-Path $ScriptDirectory $ScriptName
-        if (Test-Path $ScriptPath) {
+        if (Test-Path -LiteralPath $ScriptPath) {
             if ($Arguments) {
                 & $ScriptPath @Arguments
             }
@@ -293,7 +293,7 @@ if ($Watch) {
 
     $IngestionManifestPath = Join-Path $PSScriptRoot 'rag_ingestion_manifest.json'
     $WatchPatterns = @('*.md', '*.docx', '*.py', '*.ts', '*.tsx', '*.ps1')
-    if (Test-Path $IngestionManifestPath) {
+    if (Test-Path -LiteralPath $IngestionManifestPath) {
         try {
             $ManifestData = Get-FileContentSOTA -Path $IngestionManifestPath | ConvertFrom-Json
             $Exts = @()
@@ -386,7 +386,7 @@ if ($Chaos) {
     $env:TS_NODE_COMPILER_OPTIONS = '{"module":"CommonJS"}'
 
     $ChaosScript = Join-Path $ScriptDirectory 'scripts\tests\chaos-core.ts'
-    if (-not (Test-Path $ChaosScript)) {
+    if (-not (Test-Path -LiteralPath $ChaosScript)) {
         Write-Error "[FAIL] O motor de Engenharia do Caos nao foi encontrado em: $ChaosScript. Certifique-se de cria-lo antes de acionar a infeccao."
         exit 1
     }
@@ -545,7 +545,7 @@ if ($Web -or $Ola) {
 
         $InjectFile = {
             param([string]$Title, [string]$Path)
-            if (Test-Path $Path) {
+        if (Test-Path -LiteralPath $Path) {
                 [void]$contextBuilder.AppendLine("`n=================================================================`n")
                 [void]$contextBuilder.AppendLine("## $Title")
                 [void]$contextBuilder.AppendLine("=================================================================`n")
@@ -559,7 +559,7 @@ if ($Web -or $Ola) {
 
         # 1. Base Arquitetural
         $globalInstrPath = Join-Path $ClaudeDir 'GLOBAL_INSTRUCTIONS.md'
-        if (-not (Test-Path $globalInstrPath)) { $globalInstrPath = Join-Path $ScriptDirectory 'GLOBAL_INSTRUCTIONS.md' }
+        if (-not (Test-Path -LiteralPath $globalInstrPath)) { $globalInstrPath = Join-Path $ScriptDirectory 'GLOBAL_INSTRUCTIONS.md' }
         &$InjectFile 'INSTRUCOES GLOBAIS' $globalInstrPath
         &$InjectFile 'COSMOVISAO (FILOSOFIA)' (Join-Path $ClaudeDir 'COSMOVISAO.md')
         &$InjectFile 'INVARIANTES ARQUITETURAIS' (Join-Path $ClaudeDir 'ARCHITECTURAL_INVARIANTS.md')
@@ -570,8 +570,8 @@ if ($Web -or $Ola) {
 
         # 3. Injeta Perfis dos Agentes
         $AgentsDir = Join-Path $ClaudeDir 'agents'
-        if (Test-Path $AgentsDir) {
-            $AgentFiles = Get-ChildItem -Path $AgentsDir -Filter *.md
+        if (Test-Path -LiteralPath $AgentsDir) {
+            $AgentFiles = Get-ChildItem -LiteralPath $AgentsDir -Filter *.md
             if ($AgentFiles) {
                 [void]$contextBuilder.AppendLine("`n---`n`n# PERFIS DOS AGENTES (IDENTIDADES)`n")
                 foreach ($File in $AgentFiles) {
@@ -582,8 +582,8 @@ if ($Web -or $Ola) {
 
         # 4. Injeta Memorias Individuais
         $AgentMemoryDir = Join-Path $ClaudeDir 'agent-memory'
-        if (Test-Path $AgentMemoryDir) {
-            $MemoryFiles = Get-ChildItem -Path $AgentMemoryDir -Filter MEMORY.md -Recurse
+        if (Test-Path -LiteralPath $AgentMemoryDir) {
+            $MemoryFiles = Get-ChildItem -LiteralPath $AgentMemoryDir -Filter MEMORY.md -Recurse
             if ($MemoryFiles) {
                 [void]$contextBuilder.AppendLine("`n---`n`n# MEMORIAS DOS AGENTES (ESTADO ATUAL E APRENDIZADOS)`n")
                 foreach ($File in $MemoryFiles) {
@@ -674,6 +674,7 @@ if ($InjectGeminiSettings) {
 
         # Configurando chaves segmentadas e Persona SOTA
         $KeysToInject = [ordered]@{
+            'css.lint.unknownAtRules'                               = 'ignore'
             'gemini.codeAssist.customSystemInstructions'            = $SotaPayload
             'gemini.codeAssist.system.enableExtendedChainOfThought' = $true
             'gemini.codeAssist.system.verbosityLevel'               = 'maximum_density'
@@ -731,6 +732,12 @@ if ($Description) {
     if ($DescText -match '(?s)^(@[a-zA-Z0-9_-]+)\s+(.*)') {
         $ExplicitAgent = $Matches[1]
         $DescText = $Matches[2]
+    }
+
+    if ($ExplicitAgent -eq '@gemma') {
+        Write-Host "=== [SISTEMA] INTERCEPTACAO LOCAL: INVOCANDO MOTOR GEMMA ===" -ForegroundColor Magenta
+        & $PythonCmd (Join-Path $ScriptDirectory 'frontend\src\app\run_inference.py') $DescText
+        exit $LASTEXITCODE
     }
 
     # --- SOTA: Roteamento Semântico Local via Kernel Python ---

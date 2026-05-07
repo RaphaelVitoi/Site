@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @architect
+# Identidade e Escopo: @architect
 
 **Cor Emblematica:** `dark_orange` | **Motor Base:** `gemini-2.5-pro` 
 

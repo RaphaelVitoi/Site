@@ -28,9 +28,6 @@ __pycache__/
 *.sqlite3
 
 # 3. BINÁRIOS, WASM E MEDIA (Ruído Inútil para LLM)
-*.wasm
-*.py[cod]
-*$py.class
 *.png
 *.jpg
 *.jpeg
@@ -61,7 +58,6 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 *.tsbuildinfo
-.python-version
 .env
 .env.*
 

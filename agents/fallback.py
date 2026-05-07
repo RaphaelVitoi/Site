@@ -1,10 +1,10 @@
 """
 Fallback do Dispatcher -- Plano de contingencia quando o @dispatcher nao retorna JSON valido.
 """
+
 import json
 import logging
-from datetime import datetime
-from typing import Dict
+from datetime import datetime, timezone
 
 import core.runtime as te
 from core.schemas import Task
@@ -14,15 +14,27 @@ from utils.text import enforce_pure_ascii
 
 logger = logging.getLogger(__name__)
 
+AGENT_ARCHITECT = "@architect"
+AGENT_CURATOR = "@curator"
+AGENT_IMPLEMENTOR = "@implementor"
+AGENT_MAVERICK = "@maverick"
+AGENT_PESQUISADOR = "@pesquisador"
+AGENT_PLANNER = "@planner"
+AGENT_SECURITYCHIEF = "@securitychief"
+AGENT_VALIDADOR = "@validador"
+AGENT_VERIFIER = "@verifier"
+
+
 def _feature_enabled(flag_name: str) -> bool:
     """Resolve flag com prioridade para task_executor quando presente (facilita testes)."""
     try:
         import task_executor as _task_executor  # import local para evitar ciclo no startup
+
         fn = getattr(_task_executor, "_feature_enabled", None)
         if callable(fn):
             return bool(fn(flag_name))
-    except Exception:
-        pass
+    except Exception as e:  # noqa: BLE001
+        logger.debug(f"Bypass local de task_executor falhou em _feature_enabled: {e}")
 
     fn = getattr(te, "_feature_enabled", None)
     if callable(fn):
@@ -30,17 +42,18 @@ def _feature_enabled(flag_name: str) -> bool:
     return False
 
 
-def _heuristic_terms(group_name: str) -> Dict[str, int]:
+def _heuristic_terms(group_name: str) -> dict[str, int]:
     """Resolve termos heurísticos com fallback para task_executor (testability)."""
     try:
         import task_executor as _task_executor
+
         fn = getattr(_task_executor, "_heuristic_terms", None)
         if callable(fn):
             res = fn(group_name)
             if isinstance(res, dict):
                 return res
-    except Exception:
-        pass
+    except Exception as e:  # noqa: BLE001
+        logger.debug(f"Bypass local de task_executor falhou em _heuristic_terms: {e}")
 
     fn = getattr(te, "_heuristic_terms", None)
     if callable(fn):
@@ -49,7 +62,10 @@ def _heuristic_terms(group_name: str) -> Dict[str, int]:
             return res
     return {}
 
-def _process_conditional_injection(injection: dict, context_blob: str, route_agents: list, reason_codes: list) -> None:
+
+def _process_conditional_injection(
+    injection: dict, context_blob: str, route_agents: list, reason_codes: list
+) -> None:
     gate = injection.get("gate")
     heuristic_group = injection.get("heuristic")
     agent_to_inject = injection.get("agent")
@@ -69,6 +85,7 @@ def _process_conditional_injection(injection: dict, context_blob: str, route_age
         if reason_code not in reason_codes:
             reason_codes.append(reason_code)
 
+
 def _get_fallback_route(task: Task) -> tuple[list, list]:
     """Computa a rota de fallback dinamicamente baseada em heurísticas e configuração."""
     description = enforce_pure_ascii((task.description or "").lower())
@@ -76,7 +93,16 @@ def _get_fallback_route(task: Task) -> tuple[list, list]:
     context_blob = f"{description} {metadata_blob}"
 
     fallback_config = te.SYSTEM_CONFIG.get("dispatcher_fallback_config", {})
-    base_pipeline = fallback_config.get("base_pipeline", ["@architect", "@planner", "@implementor", "@verifier", "@curator"])
+    base_pipeline = fallback_config.get(
+        "base_pipeline",
+        [
+            AGENT_ARCHITECT,
+            AGENT_PLANNER,
+            AGENT_IMPLEMENTOR,
+            AGENT_VERIFIER,
+            AGENT_CURATOR,
+        ],
+    )
     conditional_injections = fallback_config.get("conditional_injections", [])
 
     route_agents = list(base_pipeline)
@@ -84,48 +110,51 @@ def _get_fallback_route(task: Task) -> tuple[list, list]:
 
     if _feature_enabled("enable_dynamic_fallback"):
         for injection in conditional_injections:
-            _process_conditional_injection(injection, context_blob, route_agents, reason_codes)
+            _process_conditional_injection(
+                injection, context_blob, route_agents, reason_codes
+            )
 
     # SOTA: Remove duplicatas preservando a ordem
     route_agents = list(dict.fromkeys(route_agents))
     return route_agents, reason_codes
 
+
 def _generate_fallback_specs(task_id: str, route_agents: list) -> list:
     """Gera as especificações (prompts e dependências) para cada etapa da rota de fallback."""
     stage_prompts = {
-        "@architect": (
+        AGENT_ARCHITECT: (
             f"Fallback automatico do dispatcher para a tarefa base {task_id}. "
             f"Analise '.claude/task_results/{task_id}.md' e consolide um blueprint arquitetural objetivo "
             f"com escopo, restricoes e criterios de sucesso."
         ),
-        "@maverick": (
+        AGENT_MAVERICK: (
             f"Refine estrategicamente a direcao da tarefa base {task_id}, validando tradeoffs, riscos e antevisao "
             f"antes da fase de planejamento detalhado."
         ),
-        "@pesquisador": (
+        AGENT_PESQUISADOR: (
             f"Execute pesquisa aplicada para a tarefa base {task_id}: referencias externas, benchmark e dados de apoio "
             f"para reduzir incerteza antes da implementacao."
         ),
-        "@planner": (
+        AGENT_PLANNER: (
             f"Detalhe o plano executavel da tarefa base {task_id}, com milestones, dependencias e criterios de aceite."
         ),
-        "@securitychief": (
+        AGENT_SECURITYCHIEF: (
             f"Audite vetores de seguranca da tarefa base {task_id} (auth, segredos, permissao, superficie de ataque) "
             f"e entregue diretrizes obrigatorias para implementacao segura."
         ),
-        "@validador": (
+        AGENT_VALIDADOR: (
             f"Valide premissas de dominio da tarefa base {task_id} (regras, calculos e consistencia tecnica) "
             f"antes da implementacao."
         ),
-        "@implementor": (
+        AGENT_IMPLEMENTOR: (
             f"Execute a implementacao da tarefa base {task_id} conforme plano aprovado, preservando routing, integridade "
             f"e estabilidade sistemica."
         ),
-        "@verifier": (
+        AGENT_VERIFIER: (
             f"Valide funcionalmente a entrega da tarefa base {task_id} (task -> queue -> worker -> resposta) e reporte "
             f"riscos residuais com criterio tecnico."
         ),
-        "@curator": (
+        AGENT_CURATOR: (
             f"Curadoria final da tarefa base {task_id} apos verificacao: refinar clareza, consistencia e alinhamento "
             f"estrategico sem alterar o comportamento funcional."
         ),
@@ -136,10 +165,13 @@ def _generate_fallback_specs(task_id: str, route_agents: list) -> list:
         fallback_specs.append({
             "suffix": f"SUB-{idx}",
             "agent": agent,
-            "description": stage_prompts.get(agent, f"Execute a sua etapa para a tarefa base {task_id}."),
-            "depends_on": [idx - 2] if idx > 1 else []
+            "description": stage_prompts.get(
+                agent, f"Execute a sua etapa para a tarefa base {task_id}."
+            ),
+            "depends_on": [idx - 2] if idx > 1 else [],
         })
     return fallback_specs
+
 
 async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
     """
@@ -165,7 +197,9 @@ async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
             if code not in existing_reasons:
                 existing_reasons.append(code)
         meta["reason_codes"] = existing_reasons
-        depends_on = [created_ids[idx] for idx in spec["depends_on"] if idx < len(created_ids)]
+        depends_on = [
+            created_ids[idx] for idx in spec["depends_on"] if idx < len(created_ids)
+        ]
         if depends_on:
             meta["depends_on"] = depends_on
 
@@ -173,8 +207,8 @@ async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
             id=sub_id,
             description=spec["description"],
             agent=spec["agent"],
-            timestamp=datetime.now().isoformat(),
-            metadata=meta
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            metadata=meta,
         )
         await manager.add_task(new_task)
 

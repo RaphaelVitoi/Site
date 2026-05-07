@@ -61,12 +61,12 @@ export const SCENARIOS: Scenario[] = [
         context: "BTN (CL) abre, SB call, BB (Hero) decisão",
         data: {
             ip: { pos: "BTN", stack: "85bb", rp: 10.5, morph: "Maniaco (CL)" },
-            oop: { pos: "BB", stack: "12bb", rp: 42.0, morph: "Paralisado" }
+            oop: { pos: "BB", stack: "12bb", rp: 42, morph: "Paralisado" }
         },
         content: `
             <h3 class="text-xl text-white font-bold mb-4 font-editorial">Pressão Máxima de ICM</h3>
             <p class="text-slate-300 mb-4 text-sm leading-relaxed">
-                Cenário de pesadelo: Bolha do ITM. O Chip Leader (BTN) abre any-two. O SB (que te cobre) paga flat. 
+                Cenário de pesadelo: Bolha do ITM. O Chip Leader (BTN) abre any-two. O SB (que te cobre) paga flat.
                 O pote é gigante, mas seu <strong>Risk Premium é de 42%</strong>.
                 <br><br>
                 A matemática aqui desafia a lógica: mesmo com "Pot Odds" excelentes, seu "Bubble Factor" exige que você folde mãos como <strong>TT</strong> e <strong>AQo</strong>. A sobrevivência vale mais que o acúmulo.
@@ -82,15 +82,15 @@ export const TOY_GAMES: Scenario[] = [
         label: "O Franco-Atirador (Blind War)",
         context: "SB (Hero) vs BB",
         data: {
-            ip: { pos: "SB", stack: "50bb", rp: 12.0, morph: "Chipleader" },
-            oop: { pos: "BB", stack: "12bb", rp: 45.0, morph: "Short Stack" }
+            ip: { pos: "SB", stack: "50bb", rp: 12, morph: "Chipleader" },
+            oop: { pos: "BB", stack: "12bb", rp: 45, morph: "Short Stack" }
         },
         content: `
             <h3 class="text-xl text-white font-bold mb-4 font-editorial">Licença para Matar</h3>
             <p class="text-slate-300 mb-4 text-sm leading-relaxed">
                 <strong>Predator Mode Ativado:</strong> Você é o Chipleader no SB. O BB tem 12bb e um Risk Premium de 45% (Death Zone).
                 <br><br>
-                Matematicamente, ele não pode pagar com quase nada porque cair antes dos stacks de 8bb e 9bb é catastrófico. 
+                Matematicamente, ele não pode pagar com quase nada porque cair antes dos stacks de 8bb e 9bb é catastrófico.
                 Seu range de shove aqui deve ser <strong>100% (Any Two Cards)</strong>.
             </p>
         `
@@ -101,8 +101,8 @@ export const TOY_GAMES: Scenario[] = [
         label: "O Bully do Botão",
         context: "Bolha do ITM: BTN vs Blinds",
         data: {
-            ip: { pos: "BTN", stack: "80bb", rp: 5.0, morph: "Bully" },
-            oop: { pos: "SB", stack: "20bb", rp: 42.0, morph: "Pressionado" }
+            ip: { pos: "BTN", stack: "80bb", rp: 5, morph: "Bully" },
+            oop: { pos: "SB", stack: "20bb", rp: 42, morph: "Pressionado" }
         },
         content: `
             <h3 class="text-xl text-white font-bold mb-4 font-editorial">Agressão Impune</h3>
@@ -110,7 +110,7 @@ export const TOY_GAMES: Scenario[] = [
                 Estamos na Bolha. Você tem 80bb e os blinds têm 20bb/18bb.
                 Seu Risk Premium é ínfimo (5%). O deles é massivo (>40%).
                 <br><br>
-                Isso cria uma assimetria brutal. O solver sugere agressão desproporcional. 
+                Isso cria uma assimetria brutal. O solver sugere agressão desproporcional.
                 Observe como o medidor do oponente entra na <strong>Death Zone</strong> enquanto o seu brilha em <strong>Predator Mode</strong>.
             </p>
         `

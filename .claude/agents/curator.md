@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @curator
+# Identidade e Escopo: @curator
 
 **Cor Emblematica:** `light_coral` | **Motor Base:** `gemini-2.5-pro` 
 

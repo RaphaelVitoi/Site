@@ -1,9 +1,9 @@
 import asyncio
+import importlib
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
-import importlib
 
 import pytest
 from aiohttp import web
@@ -12,7 +12,6 @@ from agents.execution import _inject_task_docs
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from web import handlers, middleware
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -43,7 +42,9 @@ def local_tmp_dir():
 
 
 @pytest.mark.asyncio
-async def test_auth_middleware_blocks_browser_origin_when_token_is_not_configured(monkeypatch):
+async def test_auth_middleware_blocks_browser_origin_when_token_is_not_configured(
+    monkeypatch,
+):
     monkeypatch.setattr(middleware, "API_SECRET_TOKEN", "")
     request = DummyRequest(
         method="POST",
@@ -52,6 +53,7 @@ async def test_auth_middleware_blocks_browser_origin_when_token_is_not_configure
     )
 
     async def handler(_request):
+        await asyncio.sleep(0)
         return web.json_response({"status": "ok"})
 
     response = await middleware.auth_middleware(request, handler)
@@ -64,6 +66,7 @@ async def test_cors_middleware_does_not_reflect_wildcard_for_untrusted_origin():
     request = DummyRequest(headers={"Origin": "https://evil.example"})
 
     async def handler(_request):
+        await asyncio.sleep(0)
         return web.json_response({"status": "ok"})
 
     response = await middleware.cors_middleware(request, handler)
@@ -71,7 +74,9 @@ async def test_cors_middleware_does_not_reflect_wildcard_for_untrusted_origin():
     assert response.headers.get("Access-Control-Allow-Origin") != "*"
 
 
-def test_inject_task_docs_ignores_markdown_paths_outside_workspace(local_tmp_dir, monkeypatch):
+def test_inject_task_docs_ignores_markdown_paths_outside_workspace(
+    local_tmp_dir, monkeypatch
+):
     workspace = local_tmp_dir / "workspace"
     workspace.mkdir()
     docs_dir = workspace / "docs" / "tasks" / "safe"
@@ -104,7 +109,7 @@ async def test_add_task_rejects_duplicate_ids(local_tmp_dir):
 
     await manager.add_task(task)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=".*"):
         await manager.add_task(task)
 
 
@@ -116,11 +121,16 @@ async def test_handle_rag_ingest_preserves_existing_bg_tasks(monkeypatch):
         await asyncio.sleep(0)
 
     async def fake_get_rag_async():
+        await asyncio.sleep(0)
         return SimpleNamespace(ingest_all_memories=fake_ingest)
 
     monkeypatch.setattr(handlers._te, "get_rag_async", fake_get_rag_async)
     monkeypatch.setattr(handlers._te, "SYSTEM_PROMPT_CACHE", {})
-    monkeypatch.setattr(handlers, "_read_file_cached_internal", SimpleNamespace(cache_clear=lambda: None))
+    monkeypatch.setattr(
+        handlers,
+        "_read_file_cached_internal",
+        SimpleNamespace(cache_clear=lambda: None),
+    )
 
     app = {"bg_tasks": {existing_task}}
     request = SimpleNamespace(app=app)
@@ -129,7 +139,7 @@ async def test_handle_rag_ingest_preserves_existing_bg_tasks(monkeypatch):
 
     assert existing_task in app["bg_tasks"]
 
-    for task in list(app["bg_tasks"]):
+    for task in app["bg_tasks"].copy():
         task.cancel()
 
 
@@ -155,10 +165,18 @@ def test_memory_rag_no_longer_imports_task_executor_for_llm_access():
 
 
 def test_frontend_uses_canonical_nexus_api_contract():
-    logger_source = (REPO_ROOT / "frontend" / "src" / "lib" / "logger.ts").read_text(encoding="utf-8", errors="ignore")
-    dashboard_source = (REPO_ROOT / "frontend" / "src" / "components" / "nexus" / "Dashboard.tsx").read_text(encoding="utf-8", errors="ignore")
-    quiz_source = (REPO_ROOT / "frontend" / "src" / "components" / "quiz" / "QuizQuestion.tsx").read_text(encoding="utf-8", errors="ignore")
-    rag_route_source = (REPO_ROOT / "frontend" / "src" / "app" / "api" / "rag" / "route.ts").read_text(encoding="utf-8", errors="ignore")
+    logger_source = (REPO_ROOT / "frontend" / "src" / "lib" / "logger.ts").read_text(
+        encoding="utf-8", errors="ignore"
+    )
+    dashboard_source = (
+        REPO_ROOT / "frontend" / "src" / "components" / "nexus" / "Dashboard.tsx"
+    ).read_text(encoding="utf-8", errors="ignore")
+    quiz_source = (
+        REPO_ROOT / "frontend" / "src" / "components" / "quiz" / "QuizQuestion.tsx"
+    ).read_text(encoding="utf-8", errors="ignore")
+    rag_route_source = (
+        REPO_ROOT / "frontend" / "src" / "app" / "api" / "rag" / "route.ts"
+    ).read_text(encoding="utf-8", errors="ignore")
 
     assert "NEXT_PUBLIC_API_URL" not in logger_source
     assert "localhost:8000" not in logger_source
@@ -174,11 +192,27 @@ def test_client_components_do_not_import_server_telemetry_module():
     client_files = [
         REPO_ROOT / "frontend" / "src" / "components" / "ErrorBoundary.tsx",
         REPO_ROOT / "frontend" / "src" / "components" / "quiz" / "QuizEngine.tsx",
-        REPO_ROOT / "frontend" / "src" / "components" / "simulator" / "hooks" / "useQuantumEngine.ts",
-        REPO_ROOT / "frontend" / "src" / "components" / "simulator" / "hooks" / "useSotaTelemetry.tsx",
+        REPO_ROOT
+        / "frontend"
+        / "src"
+        / "components"
+        / "simulator"
+        / "hooks"
+        / "useQuantumEngine.ts",
+        REPO_ROOT
+        / "frontend"
+        / "src"
+        / "components"
+        / "simulator"
+        / "hooks"
+        / "useSotaTelemetry.tsx",
     ]
-    telemetry_client = (REPO_ROOT / "frontend" / "src" / "lib" / "telemetry-client.ts").read_text(encoding="utf-8", errors="ignore")
-    telemetry_route = (REPO_ROOT / "frontend" / "src" / "app" / "api" / "telemetry" / "route.ts").read_text(encoding="utf-8", errors="ignore")
+    telemetry_client = (
+        REPO_ROOT / "frontend" / "src" / "lib" / "telemetry-client.ts"
+    ).read_text(encoding="utf-8", errors="ignore")
+    telemetry_route = (
+        REPO_ROOT / "frontend" / "src" / "app" / "api" / "telemetry" / "route.ts"
+    ).read_text(encoding="utf-8", errors="ignore")
 
     assert "fetch('/api/telemetry'" in telemetry_client
     assert "TelemetryPayloadSchema" in telemetry_route

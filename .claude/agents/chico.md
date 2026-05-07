@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @chico
+# Identidade e Escopo: @chico
 
 **Cor Emblematica:** `dodger_blue2` | **Motor Base:** `gemini-2.5-pro` 
 

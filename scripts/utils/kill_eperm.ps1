@@ -13,8 +13,16 @@ $FrontendDir = Join-Path $ProjectRoot 'frontend'
 Write-Host '=== INICIANDO PROTOCOLO ANTI-EPERM SOTA (OBLITERACAO ABSOLUTA) ===' -ForegroundColor Red
 
 # 1. Matar processos ofensores (Node)
-Write-Host '[1/5] Aniquilando processos Node.js fantasmas...' -ForegroundColor Yellow
-Stop-Process -Name 'node' -Force -ErrorAction SilentlyContinue
+Write-Host '[1/5] Aniquilando processos Node.js fantasmas (Scoping Cirurgico Chico SOTA)...' -ForegroundColor Yellow
+try {
+    $CurrentPathEscaped = [regex]::Escape($PWD.Path) -replace '\\\\', '\\'
+    $NodeProcs = Get-CimInstance -ClassName Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.CommandLine -match $CurrentPathEscaped }
+    if ($NodeProcs) {
+        foreach ($proc in $NodeProcs) { Stop-Process -Id $proc.ProcessId -Force -ErrorAction SilentlyContinue }
+    }
+} catch {
+    Write-Warning "[AVISO] Nao foi possivel realizar o scoping cirurgico de processos Node. Prosseguindo sem matar."
+}
 Start-Sleep -Seconds 1
 
 # 2. Neutralizar o OneDrive (O arqui-inimigo dos locks no Windows)

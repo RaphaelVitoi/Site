@@ -338,11 +338,11 @@ Caminho Relativo: `.claude/agent-memory/<SEU_NOME_SEM_ARROBA>/MEMORY.md`.
 **PASSO 3: FORJA DO PROMPT DE CONTINUIDADE (Para o Tier 0)**
 Crie um bloco de código markdown contendo o "PROMPT DE CONTINUIDADE SOTA". Ele servirá para o Tier 0 copiar e colar na inicialização da PRÓXIMA sessão. Estrutura obrigatória:
 
-> **[SÍNTESE SOTA]**: Contexto compactado de onde paramos e estado atual da base de código.
-> **[ANTEVISÃO]**: Alertas de risco sistêmico, gargalos imediatos e débitos técnicos.
-> **[OBJETIVO PROPOSTO]**: A meta primária da próxima sessão.
-> **[PLANO DEFAULT]**: Etapas 1, 2, 3 para atacar o objetivo sem hesitação.
-> **[MÉTRICAS E BOAS PRÁTICAS]**: Condicionantes da sessão (ex: Fricção Zero, Economia de Shannon, Zero Linters).
+> **\[SÍNTESE SOTA\]**: Contexto compactado de onde paramos e estado atual da base de código.
+> **\[ANTEVISÃO\]**: Alertas de risco sistêmico, gargalos imediatos e débitos técnicos.
+> **\[OBJETIVO PROPOSTO\]**: A meta primária da próxima sessão.
+> **\[PLANO DEFAULT\]**: Etapas 1, 2, 3 para atacar o objetivo sem hesitação.
+> **\[MÉTRICAS E BOAS PRÁTICAS\]**: Condicionantes da sessão (ex: Fricção Zero, Economia de Shannon, Zero Linters).
 
 ---
 
@@ -387,4 +387,4 @@ A resolucao de problemas DEVE adotar o seguinte loop iterativo e dialetico, sem 
 
 **Ultima atualizacao:** 2026-04-12
 **Responsavel:** Protocolo de Sistema (Framework Padrao-Ouro)
-**Status:** [ATIVO]
+**Status:** \[ATIVO\]

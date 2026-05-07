@@ -1,9 +1,8 @@
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 import aiofiles
 
@@ -12,13 +11,19 @@ from core.schemas import Task
 from database.queue_manager import QueueManager
 from engine.llm_api import call_llm_api
 
+logger = logging.getLogger(__name__)
+
 rag_engine = None
+
+
 def get_rag():
     global rag_engine
     if rag_engine is None:
         from memory_rag import MemoryRAG
+
         rag_engine = MemoryRAG()
     return rag_engine
+
 
 def _read_global_context() -> str:
     global_file = Path(".claude/GLOBAL_INSTRUCTIONS.md")
@@ -27,22 +32,38 @@ def _read_global_context() -> str:
             return f.read() + "\n\n"
     return ""
 
-def _build_infra_ctx(task: Optional[Task], task_files: Optional[list]) -> str:
+
+def _build_infra_ctx(task: Task | None, task_files: list | None) -> str:
     infra_ctx = ""
     successfully_read_files = []
 
     docs_to_read = [
         ("COSMOVISAO FILOSOFICA", [".claude/COSMOVISAO.md"]),
         ("IDENTIDADE DO USUARIO", [".claude/CLAUDE.md"]),
-        ("LIDERANCA E GOVERNANCA", [".claude/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"]),
-        ("TEMPLO DO APRENDIZADO GENERATIVO", [".claude/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"]),
-        ("MANUAL DO WORKFLOW", ["docs/MANUAL_WORKFLOW_AGENTES.md", "docs/tasks/MANUAL_WORKFLOW_AGENTES.md"]),
+        (
+            "LIDERANCA E GOVERNANCA",
+            [".claude/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"],
+        ),
+        (
+            "TEMPLO DO APRENDIZADO GENERATIVO",
+            [".claude/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"],
+        ),
+        (
+            "MANUAL DO WORKFLOW",
+            [
+                "docs/MANUAL_WORKFLOW_AGENTES.md",
+                "docs/tasks/MANUAL_WORKFLOW_AGENTES.md",
+            ],
+        ),
         ("INDICE MESTRE", ["docs/INDEX_MESTRE.md", "docs/tasks/INDEX_MESTRE.md"]),
         ("GUIA DE DEPLOY E STACK", ["docs/DEPLOY.md", "DEPLOY.md"]),
         ("INVENTARIO DE FERRAMENTAS", ["docs/INVENTARIO_FERRAMENTAS.md"]),
-        ("PROTOCOLO DE ROTEAMENTO HOLOGRAFICO", [".claude/HOLOGRAPHIC_ROUTING_PROTOCOL.md"]),
+        (
+            "PROTOCOLO DE ROTEAMENTO HOLOGRAFICO",
+            [".claude/HOLOGRAPHIC_ROUTING_PROTOCOL.md"],
+        ),
         ("ARQUITETURA DO CEREBRO HIBRIDO", [".claude/HYBRID_BRAIN_ARCHITECTURE.md"]),
-        ("MANIFESTO DE COERENCIA E HARMONIA", [".claude/COHERENCE_MANIFEST.md"])
+        ("MANIFESTO DE COERENCIA E HARMONIA", [".claude/COHERENCE_MANIFEST.md"]),
     ]
 
     for doc_name, doc_paths in docs_to_read:
@@ -86,7 +107,10 @@ def _build_infra_ctx(task: Optional[Task], task_files: Optional[list]) -> str:
 
     return infra_ctx
 
-def get_agent_system_prompt(agent_name: str, task: Optional[Task] = None, task_files: Optional[list] = None) -> str:
+
+def get_agent_system_prompt(
+    agent_name: str, task: Task | None = None, task_files: list | None = None
+) -> str:
     agent_clean = agent_name.replace("@", "")
 
     global_ctx = _read_global_context()
@@ -96,9 +120,12 @@ def get_agent_system_prompt(agent_name: str, task: Optional[Task] = None, task_f
     agent_prompt = f"Voce e o agente especialista {agent_name}."
     if agent_file.exists():
         with open(agent_file, "r", encoding="utf-8") as f:
-            agent_prompt = f"=== SUA IDENTIDADE ESPECIFICA ({agent_name}) ===\n" + f.read()
+            agent_prompt = (
+                f"=== SUA IDENTIDADE ESPECIFICA ({agent_name}) ===\n" + f.read()
+            )
 
     return global_ctx + infra_ctx + agent_prompt
+
 
 def _read_memory_and_context(agent_clean: str) -> tuple[str, str]:
     agent_memory = ""
@@ -114,12 +141,22 @@ def _read_memory_and_context(agent_clean: str) -> tuple[str, str]:
             project_context = f.read()
 
     if len(project_context) > 6000:
-        project_context = project_context[:6000] + "\n\n... [Contexto truncado para otimizacao de tokens. Consulte o @bibliotecario se precisar de historico.]"
+        project_context = (
+            project_context[:6000]
+            + "\n\n... [Contexto truncado para otimizacao de tokens. Consulte o @bibliotecario se precisar de historico.]"
+        )
     return agent_memory, project_context
 
+
 def _extract_paths_to_check(description: str) -> list[Path]:
-    file_mentions = re.findall(r'[\w\./\\-]+\.(?:md|py|ps1|js|ts|tsx|json|css|html|txt)', description, re.IGNORECASE)
-    folder_mentions = re.findall(r'docs[\\/]tasks[\\/][\w-]+', description, re.IGNORECASE)
+    file_mentions = re.findall(
+        r"[\w\./\\-]+\.(?:md|py|ps1|js|ts|tsx|json|css|html|txt)",
+        description,
+        re.IGNORECASE,
+    )
+    folder_mentions = re.findall(
+        r"docs[\\/]tasks[\\/][\w-]+", description, re.IGNORECASE
+    )
     paths = [Path(p) for p in file_mentions]
     for folder in folder_mentions:
         folder_path = Path(folder)
@@ -127,16 +164,20 @@ def _extract_paths_to_check(description: str) -> list[Path]:
             paths.extend(list(folder_path.glob("*.*")))
     return paths
 
-def _read_and_append_doc(p: Path, title: str, task_docs: str, successfully_read: list) -> str:
+
+def _read_and_append_doc(
+    p: Path, title: str, task_docs: str, successfully_read: list
+) -> str:
     try:
         with open(p, "r", encoding="utf-8") as f:
             content = f.read()
             if content not in task_docs:
                 task_docs += f"\n=== {title}: {p.as_posix()} ===\n{content}\n"
                 successfully_read.append(p.resolve().as_posix())
-    except Exception as e:
-        logging.warning(f"Falha ao ler artefato referenciado {p}: {e}")
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"Falha ao ler artefato referenciado {p}: {e}")
     return task_docs
+
 
 def _process_slug_docs(slug: str, task_docs: str, successfully_read: list) -> str:
     task_dir = Path(f"docs/tasks/{slug}")
@@ -144,11 +185,30 @@ def _process_slug_docs(slug: str, task_docs: str, successfully_read: list) -> st
         return task_docs
     for doc_file in task_dir.glob("*.*"):
         if doc_file.suffix.lower() in {".md", ".json", ".txt"}:
-            task_docs = _read_and_append_doc(doc_file, "ARTEFATO", task_docs, successfully_read)
+            task_docs = _read_and_append_doc(
+                doc_file, "ARTEFATO", task_docs, successfully_read
+            )
     return task_docs
 
-def _process_referenced_paths(paths_to_check: list[Path], slug: Optional[str], task_docs: str, successfully_read: list) -> str:
-    valid_suffixes = {".md", ".py", ".ps1", ".js", ".ts", ".tsx", ".json", ".css", ".html", ".txt"}
+
+def _process_referenced_paths(
+    paths_to_check: list[Path],
+    slug: str | None,
+    task_docs: str,
+    successfully_read: list,
+) -> str:
+    valid_suffixes = {
+        ".md",
+        ".py",
+        ".ps1",
+        ".js",
+        ".ts",
+        ".tsx",
+        ".json",
+        ".css",
+        ".html",
+        ".txt",
+    }
     for p in paths_to_check:
         if not (p.exists() and p.is_file()):
             continue
@@ -156,8 +216,11 @@ def _process_referenced_paths(paths_to_check: list[Path], slug: Optional[str], t
             continue
         if p.suffix.lower() not in valid_suffixes:
             continue
-        task_docs = _read_and_append_doc(p, "ARTEFATO REFERENCIADO", task_docs, successfully_read)
+        task_docs = _read_and_append_doc(
+            p, "ARTEFATO REFERENCIADO", task_docs, successfully_read
+        )
     return task_docs
+
 
 def _inject_task_docs_engine(task: Task) -> tuple[str, list[str]]:
     task_docs = ""
@@ -168,42 +231,67 @@ def _inject_task_docs_engine(task: Task) -> tuple[str, list[str]]:
         task_docs = _process_slug_docs(slug, task_docs, successfully_read_task_files)
 
     paths_to_check = _extract_paths_to_check(task.description)
-    task_docs = _process_referenced_paths(paths_to_check, slug, task_docs, successfully_read_task_files)
+    task_docs = _process_referenced_paths(
+        paths_to_check, slug, task_docs, successfully_read_task_files
+    )
 
     return task_docs, successfully_read_task_files
 
-async def _process_dispatcher_result(task: Task, manager: QueueManager, response_text: str) -> None:
+
+async def _process_dispatcher_result(
+    task: Task, manager: QueueManager, response_text: str
+) -> None:
     try:
         clean_json = response_text.replace("```json", "").replace("```", "").strip()
-        subtasks = json.loads(clean_json[clean_json.find('['):clean_json.rfind(']')+1])
+        subtasks = json.loads(
+            clean_json[clean_json.find("[") : clean_json.rfind("]") + 1]
+        )
         created_ids = []
         for i, st in enumerate(subtasks):
-            sub_id = f"{task.id}-SUB-{i+1}"
+            sub_id = f"{task.id}-SUB-{i + 1}"
             created_ids.append(sub_id)
             meta = task.metadata.copy() if task.metadata else {}
             if "depends_on" in st:
-                meta["depends_on"] = [created_ids[idx] for idx in st["depends_on"] if idx < len(created_ids)]
+                meta["depends_on"] = [
+                    created_ids[idx]
+                    for idx in st["depends_on"]
+                    if idx < len(created_ids)
+                ]
             new_task = Task(
                 id=sub_id,
                 description=st.get("description", "Sub-tarefa gerada"),
                 agent=st.get("agent", "@implementor"),
-                timestamp=datetime.now().isoformat(),
-                metadata=meta
+                timestamp=datetime.now(timezone.utc).isoformat(),
+                metadata=meta,
             )
             await manager.add_task(new_task)
-        logging.info(f"[{task.id}] Dispatcher gerou {len(subtasks)} tarefas em Grafo (DAG). Multithreading ativado.")
-    except Exception as e:
-        logging.error(f"[{task.id}] Falha ao interpretar matriz do Dispatcher: {e}")
+        logger.info(
+            f"[{task.id}] Dispatcher gerou {len(subtasks)} tarefas em Grafo (DAG). Multithreading ativado."
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"[{task.id}] Falha ao interpretar matriz do Dispatcher: {e}")
 
-def _build_user_prompt(task: Task, project_context: str, collective_memory: str, agent_memory: str, task_docs: str, agent_clean: str) -> str:
+
+def _build_user_prompt(
+    task: Task,
+    project_context: str,
+    collective_memory: str,
+    agent_memory: str,
+    task_docs: str,
+    agent_clean: str,
+) -> str:
     user_prompt = f"== CONTEXTO DO PROJETO ==\n{project_context}\n\n"
     if collective_memory:
         user_prompt += f"{collective_memory}\n"
     if agent_memory:
         user_prompt += f"== SUA MEMORIA ACUMULADA ({task.agent}) ==\n{agent_memory}\n\n"
-    user_prompt += f"== DIRETRIZ DA TAREFA ==\nID: {task.id}\nDescricao:\n{task.description}\n\n"
+    user_prompt += (
+        f"== DIRETRIZ DA TAREFA ==\nID: {task.id}\nDescricao:\n{task.description}\n\n"
+    )
     if task_docs:
-        user_prompt += f"== MATERIAIS DE FUNDACAO DA TAREFA (PRDs/SPECs) =={task_docs}\n\n"
+        user_prompt += (
+            f"== MATERIAIS DE FUNDACAO DA TAREFA (PRDs/SPECs) =={task_docs}\n\n"
+        )
     user_prompt += "Execute esta tarefa embasado nos materiais de fundacao acima, no contexto do projeto e em sua memoria."
 
     if task.agent not in ["@dispatcher", "@bibliotecario"]:
@@ -212,6 +300,7 @@ def _build_user_prompt(task: Task, project_context: str, collective_memory: str,
 
     user_prompt += "\n\n[DIRETRIZ DE LLM] Ao final da sua resposta, analise a tarefa e o contexto. Recomende qual modelo Paid Tier (Claude Opus 4.6 Versão Estendida, Claude 3.5 Sonnet, Gemini 3.1 Pro, ou API local) seria o mais adequado para a *proxima* etapa. Justifique a escolha com base na arquitetura do modelo (Opus para raciocinio profundo, Sonnet para codigo rapido, Gemini para contexto longo/multimodal). Se for ideal ir para a interface Web, recomende ao usuario rodar a Membrana com a flag '-Web' e especifique qual modelo ele deve selecionar no menu interativo."
     return user_prompt
+
 
 async def process_agent_task(task: Task, manager: QueueManager):
     agent_clean = task.agent.replace("@", "")
@@ -222,18 +311,22 @@ async def process_agent_task(task: Task, manager: QueueManager):
     try:
         # SOTA: Await the query memory if it is an async task
         collective_memory = await get_rag().query_memory(task.description)
-    except Exception as e:
-        logging.warning(f"Erro na Memória Coletiva (RAG): {e}")
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"Erro na Memória Coletiva (RAG): {e}")
 
-    user_prompt = _build_user_prompt(task, project_context, collective_memory, agent_memory, task_docs, agent_clean)
+    user_prompt = _build_user_prompt(
+        task, project_context, collective_memory, agent_memory, task_docs, agent_clean
+    )
     system_prompt = get_agent_system_prompt(task.agent, task, task_files)
 
     cached_response = await manager.get_llm_cache(task.agent, user_prompt)
     if cached_response:
-        logging.info(f"[{task.agent}] Cache hit para a prompt. Usando resposta armazenada.")
+        logger.info(
+            f"[{task.agent}] Cache hit para a prompt. Usando resposta armazenada."
+        )
         return cached_response
     else:
-        logging.info(f"[{task.agent}] Cache miss para a prompt. Chamando API LLM.")
+        logger.info(f"[{task.agent}] Cache miss para a prompt. Chamando API LLM.")
 
     response_text = await call_llm_api(task, system_prompt, user_prompt, manager)
 

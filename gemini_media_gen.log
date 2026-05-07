@@ -120,3 +120,235 @@
 2026-05-01 13:13:46,318 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
 2026-05-01 13:13:46,321 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
 2026-05-01 13:13:46,328 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-01 19:54:48,014 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-01 19:54:48,015 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-01 19:54:48,043 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-01 19:54:49,490 | httpx | INFO | HTTP Request: GET https://pypi.org/pypi/fastmcp/json "HTTP/1.1 200 OK"
+2026-05-01 19:54:49,708 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-01 19:54:49,712 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-01 19:54:49,756 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-01 19:56:12,819 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-01 19:56:12,820 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-01 19:56:12,827 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-01 19:56:12,885 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-01 19:56:12,888 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-01 19:56:12,895 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-01 21:41:31,808 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-01 21:41:31,808 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-01 21:41:31,830 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-01 21:41:31,986 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-01 21:41:31,989 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-01 21:41:32,028 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-01 21:44:15,528 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-01 21:44:15,528 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-01 21:44:15,536 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-01 21:50:33,973 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-01 21:50:33,973 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-01 21:50:33,980 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-01 21:50:34,029 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-01 21:50:34,035 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-01 21:50:34,044 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-01 21:58:53,923 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-01 21:58:53,924 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-01 21:58:53,930 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-01 22:04:41,528 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-01 22:04:41,528 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-01 22:04:41,534 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-01 22:04:41,582 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-01 22:04:41,586 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-01 22:04:41,593 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-02 20:21:57,618 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-02 20:21:57,619 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-02 20:21:57,625 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-02 20:21:58,868 | httpx | INFO | HTTP Request: GET https://pypi.org/pypi/fastmcp/json "HTTP/1.1 200 OK"
+2026-05-02 20:21:58,918 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-02 20:21:58,922 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-02 20:21:58,929 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-02 20:29:43,250 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-02 20:29:43,250 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-02 20:29:43,257 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-02 20:29:43,316 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-02 20:29:43,320 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-02 20:29:43,334 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-02 20:43:26,040 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-02 20:43:26,041 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-02 20:43:26,046 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-02 20:43:26,088 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-02 20:43:26,091 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-02 20:43:26,097 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-02 20:50:02,007 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-02 20:50:02,008 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-02 20:50:02,014 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-02 20:50:02,056 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-02 20:50:02,060 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-02 20:50:02,066 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-02 20:56:14,039 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-02 20:56:14,039 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-02 20:56:14,044 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-02 20:56:14,076 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-02 20:56:14,078 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-02 20:56:14,084 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-02 21:04:48,388 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-02 21:04:48,388 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-02 21:04:48,393 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-02 21:04:48,435 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-02 21:04:48,438 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-02 21:04:48,444 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-02 22:28:18,791 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-02 22:28:18,791 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-02 22:28:18,797 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-02 22:28:18,839 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-02 22:28:18,842 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-02 22:28:18,849 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-02 23:49:57,337 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-02 23:49:57,338 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-02 23:49:57,343 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-02 23:49:57,386 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-02 23:49:57,390 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-02 23:49:57,396 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-02 23:58:26,130 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-02 23:58:26,131 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-02 23:58:26,136 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-02 23:58:26,175 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-02 23:58:26,178 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-02 23:58:26,184 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-05 07:59:40,340 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-05 07:59:40,342 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-05 07:59:40,361 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-05 07:59:41,647 | httpx | INFO | HTTP Request: GET https://pypi.org/pypi/fastmcp/json "HTTP/1.1 200 OK"
+2026-05-05 07:59:41,839 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-05 07:59:41,842 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-05 07:59:41,878 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-05 08:55:21,824 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-05 08:55:21,824 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-05 08:55:21,829 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-05 08:55:21,872 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-05 08:55:21,874 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-05 08:55:21,880 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-05 09:01:33,421 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-05 09:01:33,421 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-05 09:01:33,426 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-05 09:01:33,467 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-05 09:01:33,470 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-05 09:01:33,477 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-05 13:45:43,352 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-05 13:45:43,353 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-05 13:45:43,359 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-05 13:45:43,418 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-05 13:45:43,421 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-05 13:45:43,435 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-05 13:46:09,220 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-05 13:46:09,220 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-05 13:46:09,226 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-05 13:46:09,273 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-05 13:46:09,276 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-05 13:46:09,282 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-05 19:29:20,518 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-05 19:29:20,519 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-05 19:29:20,525 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-05 19:29:20,575 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-05 19:29:20,579 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-05 19:29:20,586 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-05 19:32:04,041 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-05 19:32:04,041 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-05 19:32:04,047 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-05 19:32:04,091 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-05 19:32:04,094 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-05 19:32:04,100 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-05 23:58:42,081 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-05 23:58:42,082 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-05 23:58:42,089 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-05 23:58:42,619 | httpx | INFO | HTTP Request: GET https://pypi.org/pypi/fastmcp/json "HTTP/1.1 200 OK"
+2026-05-05 23:58:42,682 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-05 23:58:42,685 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-05 23:58:42,697 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 00:01:18,217 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 00:01:18,217 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 00:01:18,223 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 00:01:18,284 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 00:01:18,287 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 00:01:18,294 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 01:37:31,794 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 01:37:31,794 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 01:37:31,800 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 01:37:31,850 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 01:37:31,853 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 01:37:31,859 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 01:58:22,263 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 01:58:22,263 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 01:58:22,269 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 01:58:22,336 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 01:58:22,341 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 01:58:22,346 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 01:59:36,247 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 01:59:36,247 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 01:59:36,253 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 01:59:36,302 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 01:59:36,305 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 01:59:36,313 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 02:02:25,890 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 02:02:25,890 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 02:02:25,896 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 02:02:25,949 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 02:02:25,952 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 02:02:25,959 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 02:13:25,850 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 02:13:25,851 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 02:13:25,878 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 02:13:26,086 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 02:13:26,091 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 02:13:26,155 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 03:41:27,803 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 03:41:27,803 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 03:41:27,810 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 03:41:27,854 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 03:41:27,857 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 03:41:27,863 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 07:00:53,010 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 07:00:53,010 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 07:00:53,032 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 07:00:53,215 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 07:00:53,218 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 07:00:53,255 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 07:11:18,759 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 07:11:18,760 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 07:11:18,767 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 07:11:18,828 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 07:11:18,833 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 07:11:18,843 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 07:55:58,266 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 07:55:58,266 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 07:55:58,277 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 07:55:58,331 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 07:55:58,335 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 07:55:58,345 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 08:06:35,569 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 08:06:35,570 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 08:06:35,575 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 08:07:54,448 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 08:07:54,449 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 08:07:54,455 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 08:16:51,367 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 08:16:51,367 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 08:16:51,373 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 08:16:51,419 | mcp.server.lowlevel.server | INFO | Processing request of type ListPromptsRequest
+2026-05-06 08:16:51,422 | mcp.server.lowlevel.server | INFO | Processing request of type ListToolsRequest
+2026-05-06 08:16:51,430 | mcp.server.lowlevel.server | INFO | Processing request of type ListResourcesRequest
+2026-05-06 08:47:37,737 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 08:47:37,737 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 08:47:37,743 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 08:49:40,940 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 08:49:40,940 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 08:49:40,946 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 09:01:12,051 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 09:01:12,051 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 09:01:12,057 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 09:05:14,587 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 09:05:14,587 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 09:05:14,593 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 09:18:56,727 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 09:18:56,727 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 09:18:56,733 | gemini_media_gen | INFO | start gemini media mcp server...
+2026-05-06 09:22:54,588 | gemini_media_gen | INFO | --- Log level set to INFO ---
+2026-05-06 09:22:54,589 | gemini_media_gen | INFO | --- Logging to file: gemini_media_gen.log ---
+2026-05-06 09:22:54,595 | gemini_media_gen | INFO | start gemini media mcp server...

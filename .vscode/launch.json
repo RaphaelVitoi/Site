@@ -18,5 +18,11 @@
             "console": "integratedTerminal",
             "justMyCode": false
         }
+    ],
+    "compounds": [
+        {
+            "name": "SOTA: Ecossistema Híbrido (Next.js + Python)",
+            "configurations": [ "SOTA: Next.js (Frontend)", "SOTA: Python Worker (Backend)" ]
+        }
     ]
 }
