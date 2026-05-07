@@ -1,14 +1,15 @@
 'use client';
 
 /**
- * IDENTITY: Palco do Cenário SOTA Quantum
+ * IDENTITY: Palco do Cenário SOTA Quantum v4.2
  * PATH: src/components/simulator/panels/ScenarioStage.tsx
- * ROLE: Exibir a narrativa tática e os medidores de risco (Risk Gauges).
- * PRINCIPLE: Harmonia Visual & Rigor Matemático.
+ * ROLE: Exibir a narrativa tática e os medidores de risco.
+ * BINDING: [engine/types.ts, engine/utils.ts, ui/RiskGauge]
  */
 
 import type { Scenario } from '../engine/types';
 import RiskGauge from '../ui/RiskGauge';
+import { calcBF } from '@/components/simulator/engine/utils';
 
 const MORPH_TOOLTIPS: Record<string, string> = {
   'Valor Estrito': 'Aposta quase exclusivamente por valor. O RP alto torna blefes matematicamente insolventes.',
@@ -21,76 +22,78 @@ const MORPH_TOOLTIPS: Record<string, string> = {
   'Defesa Base': 'Equilíbrio padrão em ChipEV. MDF opera sem distorção monetária.',
 };
 
-const calcBF = ( rp: number ): string => {
-  if ( rp >= 100 ) return '∞';
-  if ( rp === 0 ) return '1.00';
-  return ( 100 / ( 100 - rp ) ).toFixed( 2 );
-};
+interface ScenarioStageProps {
+  scenario: Scenario;
+  effectiveIpRp?: number;
+  effectiveOopRp?: number;
+}
 
-export default function ScenarioStage( { scenario }: Readonly<{ scenario: Scenario }> ) {
+export default function ScenarioStage( { scenario, effectiveIpRp = scenario.ipRp, effectiveOopRp = scenario.oopRp }: Readonly<ScenarioStageProps> ) {
   const ipMorph = scenario.ipMorph ?? '--';
   const oopMorph = scenario.oopMorph ?? '--';
   const isNodelockB20 = scenario.name?.includes( 'B20' ) || scenario.narrativeTitle?.includes( 'B20' );
 
   return (
-    <div className="glass-panel p-8 animate-sota-in border-accent-indigo/10 flex flex-col gap-8">
+    <div className="glass-panel p-8 sm:p-10 lg:p-12 animate-sota-in rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-indigo/5 blur-3xl rounded-full pointer-events-none" />
 
-      {/* HEADER DO PALCO */ }
-      <div className="flex flex-col md:flex-row justify-between items-start gap-6">
-        <div className="space-y-2">
-          <h2 className="text-xl font-black text-text-bright uppercase tracking-tighter leading-none">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-8 border-b border-white/5 pb-8">
+        <div className="space-y-3">
+          <h2 className="text-2xl font-black text-text-bright uppercase tracking-tighter leading-none">
             { isNodelockB20 ? 'Ancoragem: Block Bet (20%)' : scenario.narrativeTitle }
           </h2>
-          <div className="text-label opacity-50">
+          <div className="text-[0.65rem] font-black uppercase tracking-[0.25em] text-text-darker flex items-center gap-2">
             <i className="fa-solid fa-layer-group text-accent-indigo" /> { scenario.narrativeSubtitle }
           </div>
         </div>
-        <div className="px-4 py-1.5 rounded-xl bg-accent-rose/10 border border-accent-rose/30 text-[0.6rem] font-black text-accent-rose-light uppercase tracking-widest">
+        <div className="px-5 py-2 rounded-2xl bg-accent-rose/10 border border-accent-rose/20 text-[0.65rem] font-black text-accent-rose-light uppercase tracking-widest shadow-lg flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-accent-rose animate-pulse" />
           { scenario.verdict }
         </div>
       </div>
 
-      {/* CONTEXTO TÁTICO */ }
-      <div className={ `p-6 rounded-2xl border ${isNodelockB20 ? 'bg-accent-indigo/5 border-accent-indigo/20' : 'bg-black/20 border-white/5'} text-sm leading-relaxed` }>
-        <p className="text-text-muted font-medium italic">
-          &quot;{ isNodelockB20 ? 'A dinâmica foi travada via Nodelock. Agressor forçado a apostar pequeno para absorver fold equity sem inflar as RIOs.' : scenario.theory }&quot;
-        </p>
+      <div className={ `p-8 rounded-3xl border transition-all duration-500 shadow-inner ${isNodelockB20 ? 'bg-accent-indigo/5 border-accent-indigo/20' : 'bg-black/40 border-white/5 hover:border-white/10'} text-[0.85rem] leading-relaxed` }>
+        { isNodelockB20 ? (
+          <p className="text-text-muted font-medium italic m-0">
+            &quot;A dinâmica foi travada via Nodelock. Agressor forçado a apostar pequeno para absorver fold equity sem inflar as RIOs.&quot;
+          </p>
+        ) : (
+          <div 
+            className="text-text-muted font-medium italic prose prose-invert max-w-none prose-p:m-0 prose-p:inline"
+            dangerouslySetInnerHTML={{ __html: scenario.theory }}
+          />
+        )}
       </div>
 
-      {/* RISK GAUGES: SIMETRIA QUÂNTICA */ }
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
 
-        {/* IP */ }
-        <div className="flex flex-col items-center gap-4 group">
+        <div className="flex flex-col items-center gap-6 group">
           <RiskGauge
-            value={ scenario.ipRp }
+            value={ effectiveIpRp }
             label="Agressor (IP)"
             pos={ scenario.ipPos }
             stack={ ipMorph }
             stackTooltip={ MORPH_TOOLTIPS[ipMorph] }
-            color="indigo"
-            opponentValue={ scenario.oopRp }
+            opponentValue={ effectiveOopRp }
           />
-          <div className="bg-bg-deep/60 px-4 py-2 rounded-xl border border-white/5 text-center group-hover:border-accent-indigo/30 transition-all">
-            <span className="text-[0.55rem] font-black text-text-darker uppercase tracking-widest block mb-1">Impacto Posicional</span>
-            <span className="text-xs font-mono font-bold text-accent-indigo-light">{ scenario.ipRp.toFixed( 1 ) }% RP · { calcBF( scenario.ipRp ) }x BF</span>
+          <div className="bg-black/60 px-6 py-3 rounded-2xl border border-white/5 text-center group-hover:border-accent-indigo/30 transition-all shadow-lg">
+            <span className="text-[0.55rem] font-black text-text-darker uppercase tracking-[0.3em] block mb-2">Impacto Posicional</span>
+            <span className="text-[0.8rem] font-mono font-black text-accent-indigo-light tracking-tight">{ effectiveIpRp.toFixed( 1 ) }% RP <span className="opacity-30 mx-2">|</span> { calcBF( effectiveIpRp ).toFixed(2) }x BF</span>
           </div>
         </div>
 
-        {/* OOP */ }
-        <div className="flex flex-col items-center gap-4 group">
+        <div className="flex flex-col items-center gap-6 group">
           <RiskGauge
-            value={ scenario.oopRp }
+            value={ effectiveOopRp }
             label="Defensor (OOP)"
             pos={ scenario.oopPos }
             stack={ oopMorph }
             stackTooltip={ MORPH_TOOLTIPS[oopMorph] }
-            color="rose"
-            opponentValue={ scenario.ipRp }
+            opponentValue={ effectiveIpRp }
           />
-          <div className="bg-bg-deep/60 px-4 py-2 rounded-xl border border-white/5 text-center group-hover:border-accent-rose/30 transition-all">
-            <span className="text-[0.55rem] font-black text-text-darker uppercase tracking-widest block mb-1">Vulnerabilidade</span>
-            <span className="text-xs font-mono font-bold text-accent-rose-light">{ scenario.oopRp.toFixed( 1 ) }% RP · { calcBF( scenario.oopRp ) }x BF</span>
+          <div className="bg-black/60 px-6 py-3 rounded-2xl border border-white/5 text-center group-hover:border-accent-rose/30 transition-all shadow-lg">
+            <span className="text-[0.55rem] font-black text-text-darker uppercase tracking-[0.3em] block mb-2">Vulnerabilidade</span>
+            <span className="text-[0.8rem] font-mono font-black text-accent-rose-light tracking-tight">{ effectiveOopRp.toFixed( 1 ) }% RP <span className="opacity-30 mx-2">|</span> { calcBF( effectiveOopRp ).toFixed(2) }x BF</span>
           </div>
         </div>
 

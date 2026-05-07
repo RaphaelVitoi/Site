@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @maverick
+# Identidade e Escopo: @maverick
 
 **Cor Emblematica:** `deep_pink3` | **Motor Base:** `gemini-2.5-pro` 
 

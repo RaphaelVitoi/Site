@@ -41,3 +41,7 @@ prisma/.env
 .DS_Store
 Thumbs.db
 .continue/
+
+
+#Ignore vscode AI rules
+.github\instructions\codacy.instructions.md

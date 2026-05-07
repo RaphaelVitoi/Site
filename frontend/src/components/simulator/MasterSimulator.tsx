@@ -8,19 +8,28 @@
  * BINDING: [hooks/*, panels/*, ui/*, engine/*, simulator.module.css]
  */
 
-import type { ChipEvFreqs, StreetChipEvFreqs } from '@/components/simulator/engine/types';
+import { SotaMetricsContext, SotaSpotContext, SotaWasmContext } from '@/components/simulator/SotaContext';
+import { useMounted } from '../../hooks/useMounted';
+import { calculateActionMetrics, calculateBaseFgsErosion, createSpotData, performTourScrollAndHighlight } from '@/components/simulator/engine/utils';
+import { useFrequencyPropagation } from '@/components/simulator/hooks/useFrequencyPropagation';
 import { useQuantumEngine } from '@/components/simulator/hooks/useQuantumEngine';
 import { useScenario } from '@/components/simulator/hooks/useScenario';
-import { SotaMetricsContext, SotaSpotContext, SotaWasmContext } from '@/components/simulator/SotaContext';
+import { useSimulatorState } from '@/components/simulator/hooks/useSimulatorState';
+import { GuideToolbar } from '@/components/simulator/ui/GuideToolbar';
+import { NashDistortionViz } from '@/components/simulator/ui/NashDistortionViz';
 import ScenarioSelector from '@/components/simulator/ui/ScenarioSelector';
+import { SpatialControls } from '@/components/simulator/ui/SpatialControls';
+import type { HeroPosition } from '@/components/simulator/engine/types';
 import SimulatorHeader from '@/components/simulator/ui/SimulatorHeader';
 import SimulatorNavigation from '@/components/simulator/ui/SimulatorNavigation';
 import SimulatorTour, { type Step as TourStep } from '@/components/simulator/ui/SimulatorTour';
-import { SotaTooltip } from '@/components/simulator/ui/SotaTooltip';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { calculateRioTension, computeQuantumMetrics } from '@/lib/perspectiva';
+import { downloadHRCJson, generateHRCJson } from '@/lib/hrcExport';
+import { computeQuantumMetrics } from '@/lib/perspectiva';
 import dynamic from 'next/dynamic';
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import useSWR from 'swr';
+import { InsolvencyMatrix } from './InsolvencyMatrix';
 
 // SOTA: next/dynamic com ssr: false blinda o ecossistema. Erradica o loop de recompilação do Turbopack
 // na troca de rotas e previne Hydration Mismatch em componentes baseados em Workers/WASM.
@@ -36,149 +45,11 @@ const TheoryPanel = dynamic( () => import( '@/components/simulator/panels/Theory
 const ScenarioStage = dynamic( () => import( '@/components/simulator/panels/ScenarioStage' ), { ssr: false } );
 const MatchupSelector = dynamic( () => import( '@/components/simulator/panels/MatchupSelector' ), { ssr: false } );
 const RangeMatrix = dynamic( () => import( '@/components/simulator/panels/RangeMatrix' ), { ssr: false } );
+const CfrRegretPanel = dynamic( () => import( '@/components/simulator/panels/CfrRegretPanel' ), { ssr: false } );
 
-export type ActiveTool = 'scenario' | 'calculator' | 'matchup' | 'comparar' | 'perspectiva' | 'posflop';
-export type HeroPosition = 'IP' | 'SB' | 'BB';
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-const GuideToolbar = () => (
-    <div className="flex flex-wrap items-center gap-4 bg-bg-panel/40 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-[inset_0_1px_4px_rgba(255,255,255,0.05)] mb-8 animate-sota-in">
-        <span className="text-label mr-2 opacity-50">Guia SOTA:</span>
-        <SotaTooltip align="left" title="Delta (Δ)" desc="Diferença matemática absoluta entre dois estados.">
-            <span className="text-[0.7rem] font-bold text-text-muted cursor-help hover:text-accent-indigo flex items-center gap-1.5 transition-colors">
-                <i className="fa-solid fa-triangle-exclamation text-[0.6rem]"></i> Δ Delta
-            </span>
-        </SotaTooltip>
-        <SotaTooltip align="center" title="Pontos Percentuais (p.p.)" desc="Diferença aritmética real entre porcentagens.">
-            <span className="text-[0.7rem] font-bold text-text-muted cursor-help hover:text-accent-indigo flex items-center gap-1.5 transition-colors">
-                <i className="fa-solid fa-percent text-[0.6rem]"></i> p.p.
-            </span>
-        </SotaTooltip>
-        <div className="w-px h-4 bg-white/10 mx-2"></div>
-        <SotaTooltip align="right" title="Física Sincronizada" desc="A mesa respira em tempo real. Cada ajuste de stack altera a gravidade de todos os simuladores.">
-            <span className="text-[0.7rem] font-bold text-accent-emerald flex items-center gap-1.5 uppercase tracking-tighter">
-                <span className="animate-pulse">●</span> Quantum Sync Active
-            </span>
-        </SotaTooltip>
-    </div>
-);
-
-interface SpatialControlsProps
-{
-    heroPosition: HeroPosition;
-    handleHeroPositionChange: ( e: React.ChangeEvent<HTMLSelectElement> ) => void;
-    heroInvested: number;
-    setHeroInvested: ( v: number ) => void;
-    currentPot: number;
-    setCurrentPot: ( v: number ) => void;
-    activePlayers: number;
-    setActivePlayers: ( v: number ) => void;
-    isPredictive: boolean;
-    setIsPredictive: ( v: boolean ) => void;
-}
-
-const SpatialControls = ( {
-    heroPosition,
-    handleHeroPositionChange,
-    heroInvested,
-    setHeroInvested,
-    currentPot,
-    setCurrentPot,
-    activePlayers,
-    setActivePlayers,
-    isPredictive,
-    setIsPredictive
-}: SpatialControlsProps ) =>
-{
-    const isMultiway = activePlayers > 2;
-
-    return (
-        <div className="p-6 mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 items-end relative backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl bg-bg-panel/30">
-            <div className="absolute top-4 right-6 flex items-center gap-2">
-                <span className="text-[0.55rem] font-black text-text-darker uppercase tracking-widest">Modo Antevisão</span>
-                <button
-                    onClick={ () => setIsPredictive( !isPredictive ) }
-                    className={ `w-8 h-4 rounded-full transition-all relative ${ isPredictive ? 'bg-accent-emerald' : 'bg-bg-deep border border-white/10' }` }
-                >
-                    <div className={ `absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${ isPredictive ? 'left-4.5' : 'left-0.5' }` } />
-                </button>
-            </div>
-
-            <div className="space-y-2">
-                <SotaTooltip align="left" title="Ponto Zero" desc="Sua desvantagem estrutural inicial.">
-                    <label htmlFor="sim-hero-pos" className="text-[0.65rem] font-black uppercase tracking-widest text-text-muted cursor-help hover:text-accent-indigo transition-colors">Posição (Ponto Zero)</label>
-                </SotaTooltip>
-                <select
-                    id="sim-hero-pos"
-                    value={ heroPosition }
-                    onChange={ handleHeroPositionChange }
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs font-bold text-text-bright focus:bg-black/60 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/50 transition-all shadow-inner outline-none cursor-pointer"
-                >
-                    <option value="BB">Big Blind [-1 BB]</option>
-                    <option value="SB">Small Blind [-0.5 BB]</option>
-                    <option value="IP">Outras Posições [0 BB]</option>
-                </select>
-            </div>
-
-            <div className="space-y-2">
-                <SotaTooltip align="center" title="Investimento" desc="O abismo do seu EV de Fold.">
-                    <label htmlFor="sim-hero-invest" className="text-[0.65rem] font-black uppercase tracking-widest text-text-muted cursor-help hover:text-accent-indigo transition-colors">Sunk Cost (Investido)</label>
-                </SotaTooltip>
-                <div className="relative group">
-                    <input
-                        id="sim-hero-invest"
-                        type="number" step="0.5" value={ heroInvested }
-                        onChange={ e => setHeroInvested( Number( e.target.value ) ) }
-                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs font-mono tabular-nums text-text-bright focus:bg-black/60 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/50 transition-all shadow-inner outline-none"
-                    />
-                    <span className="absolute right-3 top-2.5 text-[0.6rem] text-text-darker font-bold">BB</span>
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                <SotaTooltip align="center" title="Dead Money" desc="O oxigênio do torneio.">
-                    <label htmlFor="sim-current-pot" className="text-[0.65rem] font-black uppercase tracking-widest text-text-muted cursor-help hover:text-accent-indigo transition-colors">Pote Atual</label>
-                </SotaTooltip>
-                <div className="relative">
-                    <input
-                        id="sim-current-pot"
-                        type="number" step="0.5" value={ currentPot }
-                        onChange={ e => setCurrentPot( Number( e.target.value ) ) }
-                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs font-mono tabular-nums text-text-bright focus:bg-black/60 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/50 transition-all shadow-inner outline-none"
-                    />
-                    <span className="absolute right-3 top-2.5 text-[0.6rem] text-text-darker font-bold">BB</span>
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                <SotaTooltip align="right" title="Entropia Multiway" desc="Ações escalam quadraticamente o RIO.">
-                    <label htmlFor="sim-active-players" className={ `text-[0.65rem] font-black uppercase tracking-widest cursor-help transition-colors ${ isMultiway ? 'text-accent-danger hover:text-accent-rose' : 'text-text-muted hover:text-accent-indigo' }` }>Jogadores</label>
-                </SotaTooltip>
-                <input
-                    id="sim-active-players"
-                    type="number" min="2" max="9" value={ activePlayers }
-                    onChange={ e => setActivePlayers( Number( e.target.value ) ) }
-                    className={ `w-full bg-black/40 rounded-lg p-2.5 text-xs font-black focus:bg-black/60 focus:ring-1 transition-all shadow-inner outline-none ${ isMultiway ? 'border-accent-danger/40 text-accent-danger focus:border-accent-danger focus:ring-accent-danger/50' : 'border-white/10 text-text-bright focus:border-accent-indigo focus:ring-accent-indigo/50' }` }
-                />
-            </div>
-
-            <div className="space-y-2">
-                <SotaTooltip align="right" title="FGS Control" desc={ isPredictive ? "Cálculo Automático via Motor SOTA." : "Ajuste manual da erosão de stack." }>
-                    <label htmlFor="sim-fgs-control" className="text-[0.65rem] font-black uppercase tracking-widest text-text-muted cursor-help hover:text-accent-indigo transition-colors">FGS / Erosão</label>
-                </SotaTooltip>
-                <div className="flex gap-2">
-                    <input
-                        id="sim-fgs-control"
-                        type="range" disabled={ isPredictive }
-                        className={ `flex-1 h-1.5 mt-4 rounded-full appearance-none transition-opacity ${ isPredictive ? 'opacity-20 cursor-not-allowed' : 'bg-white/10 accent-accent-indigo cursor-pointer' }` }
-                    />
-                    <span className={ `text-[0.65rem] font-mono font-bold w-10 text-center ${ isPredictive ? 'text-accent-emerald' : 'text-text-muted' }` }>
-                        { isPredictive ? 'AUTO' : 'MAN' }
-                    </span>
-                </div>
-            </div>
-        </div>
-    );
-};
+export type ActiveTool = 'scenario' | 'calculator' | 'matchup' | 'comparar' | 'perspectiva' | 'posflop' | 'cfr';
 
 function LoadingFallback ()
 {
@@ -189,243 +60,52 @@ function LoadingFallback ()
     );
 }
 
-// SOTA: Entanglement Quântico Verdadeiro (A Árvore Viva) extraído para Fricção Zero
-function _applyFrequencyPropagation ( sourceDeltas: Partial<ChipEvFreqs>, targetFreqs: ChipEvFreqs, attenuation: number ): ChipEvFreqs
-{
-    const target = { ...targetFreqs };
-
-    // Reação do OOP: Foldar mais no Flop = Range mais FORTE no Turn (Menos Fold, Mais Raise)
-    if ( sourceDeltas.oop_fold )
-    {
-        target.oop_fold = Math.max( 0, target.oop_fold - ( sourceDeltas.oop_fold * attenuation * 0.8 ) );
-        target.oop_raise = Math.max( 0, target.oop_raise + ( sourceDeltas.oop_fold * attenuation * 0.4 ) );
-        target.ip_check = Math.max( 0, target.ip_check + ( sourceDeltas.oop_fold * attenuation * 0.5 ) );
-        target.ip_bet_large = Math.max( 0, target.ip_bet_large - ( sourceDeltas.oop_fold * attenuation * 0.5 ) );
-    }
-    if ( sourceDeltas.oop_raise )
-    {
-        target.oop_raise = Math.max( 0, target.oop_raise - ( sourceDeltas.oop_raise * attenuation * 0.5 ) );
-        target.oop_fold = Math.max( 0, target.oop_fold + ( sourceDeltas.oop_raise * attenuation * 0.3 ) );
-        target.ip_check = Math.max( 0, target.ip_check + ( sourceDeltas.oop_raise * attenuation * 0.6 ) );
-    }
-
-    // Reação do IP: Apostar grande significa polarizar o range (Mais passividade no Turn)
-    if ( sourceDeltas.ip_bet_large )
-    {
-        target.ip_bet_large = Math.max( 0, target.ip_bet_large - ( sourceDeltas.ip_bet_large * attenuation * 0.6 ) );
-        target.ip_check = Math.max( 0, target.ip_check + ( sourceDeltas.ip_bet_large * attenuation * 0.6 ) );
-        target.oop_fold = Math.max( 0, target.oop_fold + ( sourceDeltas.ip_bet_large * attenuation * 0.4 ) );
-    }
-    if ( sourceDeltas.ip_check )
-    {
-        target.ip_bet_small = Math.max( 0, target.ip_bet_small + ( sourceDeltas.ip_check * attenuation * 0.5 ) );
-        target.oop_raise = Math.max( 0, target.oop_raise + ( sourceDeltas.ip_check * attenuation * 0.3 ) );
-    }
-
-    // Normalização para preservar o tecido da realidade (100%)
-    const ipSum = target.ip_check + target.ip_bet_small + target.ip_bet_large;
-    if ( ipSum > 0 )
-    {
-        target.ip_check = ( target.ip_check / ipSum ) * 100;
-        target.ip_bet_small = ( target.ip_bet_small / ipSum ) * 100;
-        target.ip_bet_large = ( target.ip_bet_large / ipSum ) * 100;
-    }
-
-    const oopSum = target.oop_call + target.oop_fold + target.oop_raise;
-    if ( oopSum > 0 )
-    {
-        target.oop_call = ( target.oop_call / oopSum ) * 100;
-        target.oop_fold = ( target.oop_fold / oopSum ) * 100;
-        target.oop_raise = ( target.oop_raise / oopSum ) * 100;
-    }
-
-    return target;
-}
-
-// SOTA: Isolamento de Funções Puras para Erradicar Complexidade Ciclomática
-function _calculateFreqDeltas ( oldFreqs: ChipEvFreqs, newFreqs: ChipEvFreqs ): { deltas: Partial<ChipEvFreqs>, hasChange: boolean; }
-{
-    const deltas: Partial<ChipEvFreqs> = {};
-    let hasChange = false;
-    for ( const key of Object.keys( newFreqs ) as Array<keyof ChipEvFreqs> )
-    {
-        const d = newFreqs[ key ] - oldFreqs[ key ];
-        deltas[ key ] = d;
-        if ( Math.abs( d ) > 0.1 ) hasChange = true;
-    }
-    return { deltas, hasChange };
-}
-
-function _propagateFrequencies ( prev: StreetChipEvFreqs, street: keyof StreetChipEvFreqs, deltas: Partial<ChipEvFreqs> ): StreetChipEvFreqs
-{
-    const next: StreetChipEvFreqs = {
-        flop: { ...prev.flop },
-        turn: { ...prev.turn },
-        river: { ...prev.river }
-    };
-
-    const propagate = ( targetStreet: keyof StreetChipEvFreqs, attenuation: number ) =>
-    {
-        next[ targetStreet ] = _applyFrequencyPropagation( deltas, next[ targetStreet ], attenuation );
-    };
-
-    if ( street === 'flop' )
-    {
-        propagate( 'turn', 0.4 ); // Preditiva Forte
-        propagate( 'river', 0.15 ); // Preditiva Difusa
-    } else if ( street === 'turn' )
-    {
-        propagate( 'flop', 0.3 ); // Retroativa Forte
-        propagate( 'river', 0.35 ); // Preditiva Forte
-    } else if ( street === 'river' )
-    {
-        propagate( 'turn', 0.4 ); // Retroativa Forte
-        propagate( 'flop', 0.15 ); // Retroativa Difusa
-    }
-    return next;
-}
-
-interface ActionMetricsParams
-{
-    heroInvested: number;
-    currentPot: number;
-    bfForDash: number;
-    rpForDash: number;
-    quantumPerspectiva: Record<string, any> | null;
-    heroRawStack: number;
-    heroPosition: HeroPosition;
-    baseFgsErosion: number;
-    apiQuantumMetrics?: Record<string, any> | null;
-    activePlayers: number;
-}
-
-function _calculateActionMetrics ( params: ActionMetricsParams )
-{
-    const { heroInvested, currentPot, bfForDash, rpForDash, quantumPerspectiva, heroRawStack, heroPosition, baseFgsErosion, apiQuantumMetrics, activePlayers } = params;
-    const fallbackFold = quantumPerspectiva ? quantumPerspectiva.dynamicEvFold : -heroInvested * ( 1 + ( rpForDash / 200 ) );
-    const foldPerspectiva = apiQuantumMetrics?.adjustedEvFold ?? fallbackFold;
-    const fallbackCall = quantumPerspectiva ? quantumPerspectiva.perspectivaPct : ( currentPot * 0.3 );
-    const callPerspectiva = apiQuantumMetrics?.perspectiva ?? fallbackCall;
-    const callChipEv = quantumPerspectiva ? ( quantumPerspectiva.deltaWinPct * 0.5 + quantumPerspectiva.deltaLosePct * 0.5 ) : currentPot * 0.3;
-    const opponents = Math.max( 1, activePlayers - 1 );
-    const multiwayMultiplier = Math.pow( opponents, 2 );
-    const baseRioLiability = ( quantumPerspectiva ? quantumPerspectiva.rioLiability : rpForDash ) * multiwayMultiplier;
-    const posType = heroPosition === 'IP' ? 'IP' : 'OOP';
-    let rioTension = 1;
-    if ( apiQuantumMetrics?.ci == null || apiQuantumMetrics.ci >= 1 ) rioTension = calculateRioTension( heroInvested, currentPot, heroRawStack, posType, baseRioLiability );
-    const raiseTension = calculateRioTension( heroInvested, currentPot, heroRawStack, posType, rpForDash, 0.6 );
-    return {
-        fold: { chipEv: -heroInvested, perspectiva: foldPerspectiva, fgsImpact: baseFgsErosion, tension: 0 },
-        call: { chipEv: callChipEv, perspectiva: callPerspectiva, fgsImpact: baseFgsErosion * 0.5, tension: rioTension },
-        raise: { chipEv: currentPot * 0.8, perspectiva: callPerspectiva * bfForDash, fgsImpact: Math.abs( baseFgsErosion ), tension: raiseTension }
-    };
-}
-
-function _performTourScrollAndHighlight ( step: TourStep, setTourSpotlight: ( rect: DOMRect | null ) => void )
-{
-    if ( step.openDetails )
-    {
-        const detailsEl = document.querySelector( '#anchor-aula12 details' ) as HTMLDetailsElement;
-        if ( detailsEl ) detailsEl.open = true;
-    }
-    setTimeout( () =>
-    {
-        const el = document.getElementById( step.targetId );
-        if ( el )
-        {
-            setTourSpotlight( el.getBoundingClientRect() );
-            el.scrollIntoView( { behavior: 'smooth', block: 'center' } );
-            el.classList.add( 'pulse-border' );
-        }
-    }, 150 );
-}
-
-function _calculateBaseFgsErosion ( quantumPerspectiva: Record<string, any> | null, blindsRisingSoon: boolean, anteSize: number, heroPosition: HeroPosition ): number
-{
-    if ( quantumPerspectiva ) return quantumPerspectiva.dynamicEvFold - quantumPerspectiva.deltaFoldPct;
-    if ( blindsRisingSoon )
-    {
-        const timeErosion = -( anteSize / 100 ) * 3;
-        // SOTA: Inversão Gravitacional de Órbita (FGS t-3)
-        // O IP (UTG) caminha para a guilhotina (BB na próxima mão). Punição Máxima.
-        // O SB caminha para a segurança absoluta (BTN na próxima mão). Punição Zero.
-        const penaltyMap: Record<string, number> = { IP: -1.5, BB: -0.5, SB: 0 };
-        return timeErosion + ( penaltyMap[ heroPosition ] ?? 0 );
-    }
-    return 0;
-}
-
-function _createSpotData ( {
-    heroUpdatedStack,
-    villainUpdatedStack,
-    isIp,
-    currentPot,
-    bfForDash,
-    rpForDash,
-    quantumPerspectiva,
-    isBaseline,
-    baseFgsErosion,
-    apiQuantumMetrics,
-    street,
-    board,
-    heroRange,
-    villainRange
-}: {
-    heroUpdatedStack: number;
-    villainUpdatedStack: number;
-    isIp: boolean;
-    currentPot: number;
-    bfForDash: number;
-    rpForDash: number;
-    quantumPerspectiva: any;
-    isBaseline: boolean;
-    baseFgsErosion: number;
-    apiQuantumMetrics: any;
-    street: string;
-    board: string;
-    heroRange: string;
-    villainRange: string;
-} )
-{
-    return {
-        heroStack: heroUpdatedStack,
-        villainStack: villainUpdatedStack,
-        heroRole: isIp ? 'Agressor (IP)' : 'Defensor (OOP)',
-        villainRole: isIp ? 'Defensor (OOP)' : 'Agressor (IP)',
-        pot: currentPot,
-        betSize: currentPot * 0.5,
-        bubbleFactor: bfForDash,
-        riskPremium: rpForDash,
-        chipEv: quantumPerspectiva ? quantumPerspectiva.currentEquityPct : 0,
-        fgsProjection: baseFgsErosion,
-        fgsHealth: quantumPerspectiva ? quantumPerspectiva.fgsHealth : 1,
-        isBaseline,
-        apiQuantumMetrics,
-        street,
-        board,
-        heroRange,
-        villainRange
-    };
-}
-
 export default function MasterSimulator ()
 {
+    // SOTA: Mount Guard absoluto para obliterar erros de assimetria DOM/WASM
+    const isMounted = useMounted();
+
     const { scenario, setScenario, scenarios } = useScenario();
     const [ isPending, startTransition ] = useTransition();
-    const [ aggressionFactor, setAggressionFactor ] = useState( 1 );
-    const [ pkoValue, setPkoValue ] = useState( 0 );
-    const [ isNearPayjump, setIsNearPayjump ] = useState( false );
-    const [ blindsRisingSoon, setBlindsRisingSoon ] = useState( false );
-    const [ streetFreqs, setStreetFreqs ] = useState<StreetChipEvFreqs>( scenario.defaultStreetFreqs );
-    const [ activeTool, setActiveTool ] = useState<ActiveTool>( 'scenario' );
-    const [ sidebarOpen, setSidebarOpen ] = useState( true );
-    const [ anteSize ] = useState<number>( 12.5 );
-    const [ heroPosition, setHeroPosition ] = useState<HeroPosition>( 'BB' );
-    const [ heroInvested, setHeroInvested ] = useState<number>( 1.125 );
-    const [ currentPot, setCurrentPot ] = useState<number>( 2.5 );
-    const [ activePlayers, setActivePlayers ] = useState<number>( 2 );
+
+    // SOTA: Ingestão passiva e assíncrona do Perfil Preditivo CFR
+    const { data: predictiveData } = useSWR('/api/predictive-profile', fetcher, { revalidateOnFocus: false });
+
+    // SOTA v4.2: Estado Modularizado
+    const {
+        aggressionFactor, setAggressionFactor,
+        pkoValue, setPkoValue,
+        isNearPayjump, setIsNearPayjump,
+        blindsRisingSoon, setBlindsRisingSoon,
+        streetFreqs, setStreetFreqs,
+        activeTool, setActiveTool,
+        sidebarOpen, setSidebarOpen,
+        anteSize,
+        heroPosition, setHeroPosition,
+        heroInvested, setHeroInvested,
+        currentPot, setCurrentPot,
+        activePlayers, setActivePlayers,
+        isPredictive, setIsPredictive,
+        resetState
+    } = useSimulatorState(scenario);
+
+    // SOTA v4.2: Lógica de Propagação Extraída
+    const { handleStreetFreqChange } = useFrequencyPropagation(setStreetFreqs);
+
     const [ tourSpotlight, setTourSpotlight ] = useState<DOMRect | null>( null );
-    const [ isPredictive, setIsPredictive ] = useState<boolean>( true );
+    const tourTimerRef = useRef<ReturnType<typeof setTimeout> | null>( null );
+
+    const tourSpotlightProps = useMemo( () => {
+        if ( !tourSpotlight ) return { style: {} };
+        return {
+            style: {
+                top: tourSpotlight.top - 8,
+                left: tourSpotlight.left - 8,
+                width: tourSpotlight.width + 16,
+                height: tourSpotlight.height + 16,
+            }
+        };
+    }, [ tourSpotlight ] );
 
     // SOTA: Travas matemáticas estritas contra divisão por zero e colapso de estado
     const safeCurrentPot = Math.max( 0.1, currentPot );
@@ -467,8 +147,10 @@ export default function MasterSimulator ()
     // SOTA: Render Shield para Injeção de Dependências.
     // Impede o recálculo catastrófico do Motor Quântico durante mutações de UI (ex: sidebarOpen).
     const quantumConfig = useMemo( () => ( {
-        scenario, pkoValue, isNearPayjump, blindsRisingSoon, streetFreqs, aggressionFactor, heroIsIp: heroPosition === 'IP', heroPosition, anteSize, heroInvestedBb: safeHeroInvested, currentPotBb: safeCurrentPot, activePlayers: safeActivePlayers
-    } ), [ scenario, pkoValue, isNearPayjump, blindsRisingSoon, streetFreqs, aggressionFactor, heroPosition, anteSize, safeHeroInvested, safeCurrentPot, safeActivePlayers ] );
+        scenario, pkoValue, isNearPayjump, blindsRisingSoon, streetFreqs, aggressionFactor, heroIsIp: heroPosition === 'IP', heroPosition, anteSize, heroInvestedBb: safeHeroInvested, currentPotBb: safeCurrentPot, activePlayers: safeActivePlayers, isPredictive
+    } ), [ scenario, pkoValue, isNearPayjump, blindsRisingSoon, streetFreqs, aggressionFactor, heroPosition, anteSize, safeHeroInvested, safeCurrentPot, safeActivePlayers, isPredictive ] );
+
+    const deferredQuantumConfig = useDeferredValue( quantumConfig );
 
     // --- MOTOR DE PROPAGACAO MATEMATICA E DISTORCAO ICM SOTA ---
     const {
@@ -476,7 +158,7 @@ export default function MasterSimulator ()
         effectiveSprData, nashFlop, nashTurn, nashRiver, streetRps, quantumPerspectiva,
         insolvencyMatrixData, isCalculatingInsolvency, nashResults,
         dispatchInsolvencyMatrix, dispatchIcmDistortion
-    } = useQuantumEngine( quantumConfig );
+    } = useQuantumEngine( deferredQuantumConfig );
 
     // SOTA: Matemática Quântica nativa no cliente (Fricção Zero Absoluta).
     // Erradica a dependência do backend Python e resolve o ERR_CONNECTION_REFUSED instantaneamente.
@@ -506,11 +188,11 @@ export default function MasterSimulator ()
 
     // SOTA: Centralização termodinâmica para erradicar complexidade ciclomática (Lei de Shannon)
     const baseFgsErosion = useMemo(
-        () => _calculateBaseFgsErosion( quantumPerspectiva, blindsRisingSoon, anteSize, heroPosition ),
+        () => calculateBaseFgsErosion( quantumPerspectiva, blindsRisingSoon, anteSize, heroPosition ),
         [ quantumPerspectiva, blindsRisingSoon, anteSize, heroPosition ]
     );
 
-    const spotData = useMemo( () => _createSpotData( {
+    const spotData = useMemo( () => createSpotData( {
         heroUpdatedStack,
         villainUpdatedStack,
         isIp,
@@ -529,7 +211,7 @@ export default function MasterSimulator ()
 
     const actionMetrics = useMemo( () =>
     {
-        return _calculateActionMetrics( { heroInvested: safeHeroInvested, currentPot: safeCurrentPot, bfForDash, rpForDash, quantumPerspectiva, heroRawStack, heroPosition, baseFgsErosion, apiQuantumMetrics, activePlayers: safeActivePlayers } );
+        return calculateActionMetrics( { heroInvested: safeHeroInvested, currentPot: safeCurrentPot, bfForDash, rpForDash, quantumPerspectiva, heroRawStack, heroPosition, baseFgsErosion, apiQuantumMetrics, activePlayers: safeActivePlayers } );
     }, [ safeHeroInvested, safeCurrentPot, bfForDash, rpForDash, quantumPerspectiva, heroRawStack, heroPosition, baseFgsErosion, apiQuantumMetrics, safeActivePlayers ] );
 
     const handleScenarioSelect = useCallback( ( id: string ) =>
@@ -537,35 +219,37 @@ export default function MasterSimulator ()
         startTransition( () =>
         {
             setScenario( id );
-            setActiveTool( 'scenario' );
-            setAggressionFactor( 1 );
-            setPkoValue( 0 );
-            setIsNearPayjump( false );
-            setBlindsRisingSoon( false );
             const next = scenarios.find( ( s: any ) => s.id === id );
-            if ( next ) setStreetFreqs( next.defaultStreetFreqs );
+            if ( next ) resetState(next);
         } );
-    }, [ setScenario, scenarios ] );
+    }, [ setScenario, scenarios, resetState ] );
 
-    const handleStreetFreqChange = useCallback( ( street: keyof StreetChipEvFreqs, freqs: ChipEvFreqs ) =>
-    {
-        setStreetFreqs( ( prev: StreetChipEvFreqs ) =>
-        {
-            const { deltas, hasChange } = _calculateFreqDeltas( prev[ street ], freqs );
-            if ( !hasChange ) return { ...prev, [ street ]: freqs };
-            const next = _propagateFrequencies( prev, street, deltas );
-            next[ street ] = { ...freqs };
 
-            return next;
-        } );
+    useEffect( () => {
+        return () => { if ( tourTimerRef.current ) clearTimeout( tourTimerRef.current ); };
     }, [] );
-
 
     const handleTourStep = useCallback( ( step: TourStep ) =>
     {
         if ( step.id === 's-0' ) handleScenarioSelect( 'tg-7' );
-        _performTourScrollAndHighlight( step, setTourSpotlight );
+
+        if ( tourTimerRef.current ) clearTimeout( tourTimerRef.current );
+        tourTimerRef.current = performTourScrollAndHighlight( step, setTourSpotlight );
     }, [ handleScenarioSelect ] );
+
+    const handleExportHRC = useCallback( () =>
+    {
+        if ( !scenario?.stacks ) return;
+        const players = scenario.stacks.map( ( stack: number, i: number ) => ( {
+            id: String( i + 1 ),
+            name: `Jogador ${ i + 1 }`,
+            stack
+        } ) );
+        // SOTA: Preserva fallback da baseline de premiações 9-handed se não houver ICM estrito.
+        const prizes = ( scenario.prizes?.length > 0 ) ? scenario.prizes : [ 237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47 ];
+        const json = generateHRCJson( players, prizes, pkoValue );
+        downloadHRCJson( json, `sota_${ scenario.id }_${ players.length }p.json` );
+    }, [ scenario, pkoValue ] );
 
     const handleHeroPositionChange = useCallback( ( e: React.ChangeEvent<HTMLSelectElement> ) =>
     {
@@ -576,10 +260,11 @@ export default function MasterSimulator ()
         if ( pos === 'BB' ) newInvested += 1;
         else if ( pos === 'SB' ) newInvested += 0.5;
         setHeroInvested( newInvested );
-    }, [ anteSize ] );
+    }, [ anteSize, setHeroPosition, setHeroInvested ] );
 
     const closeTour = useCallback( () =>
     {
+        if ( tourTimerRef.current ) clearTimeout( tourTimerRef.current );
         setTourSpotlight( null );
         document.querySelectorAll( '.pulse-border' ).forEach( el => el.classList.remove( 'pulse-border' ) );
     }, [] );
@@ -621,8 +306,9 @@ export default function MasterSimulator ()
             marginInstability: apiQuantumMetrics.marginInstability,
             isSolvent: apiQuantumMetrics.isSolvent,
             isActionable: apiQuantumMetrics.isActionable
-        } : null
-    } ), [ quantumPerspectiva, apiQuantumMetrics ] );
+        } : null,
+        predictiveProfile: predictiveData?.profile || null
+    } ), [ quantumPerspectiva, apiQuantumMetrics, predictiveData ] );
 
     const wasmContextValue = useMemo( () => ( {
         nativeRangeMetric,
@@ -638,8 +324,8 @@ export default function MasterSimulator ()
         const toolContents: Record<ActiveTool, React.ReactNode> = {
             scenario: (
                 <Suspense fallback={ <LoadingFallback /> }>
-                    <ScenarioStage scenario={ scenario } />
-                    <GuideToolbar />
+                    <ScenarioStage scenario={ scenario } effectiveIpRp={ finalIpRp } effectiveOopRp={ finalOopRp } />
+                    <GuideToolbar onExport={ handleExportHRC } />
                     <SpatialControls
                         heroPosition={ heroPosition } handleHeroPositionChange={ handleHeroPositionChange }
                         heroInvested={ heroInvested } setHeroInvested={ setHeroInvested }
@@ -661,8 +347,32 @@ export default function MasterSimulator ()
                             onBlindsToggle={ setBlindsRisingSoon }
                         />
                     ) }
-                    <div className="mb-8 p-6 rounded-2xl bg-bg-panel/40 backdrop-blur-xl border border-white/10 shadow-2xl animate-sota-in">
-                        <RangeMatrix ipRp={ finalIpRp } oopRp={ finalOopRp } scenarioId={ scenario.id } />
+                    <div className="mb-16 glass-panel animate-sota-in p-8 sm:p-10 lg:p-12 rounded-4xl bg-bg-panel/60 backdrop-blur-2xl border border-white/10 shadow-2xl flex flex-col gap-12">
+                        <div className="flex flex-col gap-6">
+                            <h3 className="text-sm font-black text-white uppercase tracking-[0.25em] flex items-center gap-3 m-0">
+                                <div className="w-2 h-2 rounded-full bg-accent-emerald shadow-[0_0_10px_var(--accent-emerald)]" />
+                                Diagnóstico de Insolvência
+                            </h3>
+                            <InsolvencyMatrix />
+                        </div>
+
+                        { nashResults?.flop && (
+                            <div className="flex flex-col gap-6">
+                                <h3 className="text-sm font-black text-white uppercase tracking-[0.25em] flex items-center gap-3 m-0">
+                                    <div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)]" />
+                                    Distorção por Street
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                                    <NashDistortionViz streetName="Flop" nashData={ nashResults.flop } />
+                                    <NashDistortionViz streetName="Turn" nashData={ nashResults.turn } />
+                                    <NashDistortionViz streetName="River" nashData={ nashResults.river } />
+                                </div>
+                            </div>
+                        ) }
+                        
+                        <div className="pt-8 border-t border-white/5">
+                            <RangeMatrix ipRp={ finalIpRp } oopRp={ finalOopRp } scenarioId={ scenario.id } />
+                        </div>
                     </div>
                     <TheoryPanel
                         scenario={ scenario }
@@ -672,27 +382,28 @@ export default function MasterSimulator ()
                     />
                 </Suspense>
             ),
-            calculator: <Suspense fallback={ <LoadingFallback /> }><EquityCalculator /></Suspense>,
-            matchup: <Suspense fallback={ <LoadingFallback /> }><MatchupSelector /></Suspense>,
-            comparar: <Suspense fallback={ <LoadingFallback /> }><ComparisonRadar scenarios={ scenarios } currentId={ scenario.id } nashFlop={ nashFlop } /></Suspense>,
-            perspectiva: <Suspense fallback={ <LoadingFallback /> }><PerspectivePanel initialStacks={ scenario.stacks } initialPrizes={ scenario.prizes } anteSize={ anteSize } heroInvestedBb={ safeHeroInvested } currentPotBb={ safeCurrentPot } /></Suspense>,
-            posflop: <Suspense fallback={ <LoadingFallback /> }><PostFlopPanel anteSize={ anteSize } /></Suspense>
+            calculator: <Suspense fallback={ <LoadingFallback /> }><EquityCalculator key={`calc-${scenario.id}`} /></Suspense>,
+            matchup: <Suspense fallback={ <LoadingFallback /> }><MatchupSelector key={`match-${scenario.id}`} /></Suspense>,
+            comparar: <Suspense fallback={ <LoadingFallback /> }><ComparisonRadar key={`comp-${scenario.id}`} scenarios={ scenarios } currentId={ scenario.id } nashFlop={ nashFlop } /></Suspense>,
+            perspectiva: <Suspense fallback={ <LoadingFallback /> }><PerspectivePanel key={`persp-${scenario.id}`} initialStacks={ scenario.stacks } initialPrizes={ scenario.prizes } anteSize={ anteSize } heroInvestedBb={ safeHeroInvested } currentPotBb={ safeCurrentPot } initialActivePlayers={ safeActivePlayers } initialPkoValue={ pkoValue } initialIsNearPayjump={ isNearPayjump } initialBlindsRising={ blindsRisingSoon } /></Suspense>,
+            posflop: <Suspense fallback={ <LoadingFallback /> }><PostFlopPanel key={`pf-${scenario.id}`} anteSize={ anteSize } scenarioId={ scenario.id } initialStacks={ scenario.stacks } initialPrizes={ scenario.prizes } heroIsIp={ isIp } activePlayers={ safeActivePlayers } effectiveSprData={ effectiveSprData } pkoValue={ pkoValue } { ...( isIp ? { ipLabel: heroPosition } : { oopLabel: heroPosition } ) } /></Suspense>,
+            cfr: <Suspense fallback={ <LoadingFallback /> }><CfrRegretPanel key={`cfr-${scenario.id}`} initialPot={safeCurrentPot} initialStack={Math.min(heroUpdatedStack, villainUpdatedStack)} initialEquity={nativeRangeMetric.equity} /></Suspense>
         };
         return toolContents[ activeTool ] || null;
-    }, [ activeTool, scenario, heroPosition, handleHeroPositionChange, heroInvested, setHeroInvested, currentPot, setCurrentPot, activePlayers, setActivePlayers, isPredictive, setIsPredictive, nashFlop, nashTurn, nashRiver, streetRps, streetFreqs, aggressionFactor, pkoValue, isNearPayjump, blindsRisingSoon, isBaseline, handleStreetFreqChange, finalIpRp, finalOopRp, effectiveSprData, scenarios, anteSize, safeHeroInvested, safeCurrentPot ] );
+    }, [ activeTool, scenario, heroPosition, handleHeroPositionChange, heroInvested, setHeroInvested, currentPot, setCurrentPot, activePlayers, setActivePlayers, isPredictive, setIsPredictive, nashFlop, nashTurn, nashRiver, streetRps, streetFreqs, aggressionFactor, pkoValue, isNearPayjump, blindsRisingSoon, isBaseline, handleStreetFreqChange, finalIpRp, finalOopRp, effectiveSprData, scenarios, anteSize, safeHeroInvested, safeCurrentPot, handleExportHRC, nashResults?.flop, nashResults?.turn, nashResults?.river, setAggressionFactor, setPkoValue, setIsNearPayjump, setBlindsRisingSoon, isIp, safeActivePlayers, heroUpdatedStack, villainUpdatedStack, nativeRangeMetric.equity ] );
+
+    // SOTA Guard: Early return previne arvore DOM assimetrica e inicialização prematura do Worker
+    if (!isMounted) {
+        return <LoadingFallback />;
+    }
 
     return (
         <SotaSpotContext.Provider value={ spotContextValue }>
             <SotaMetricsContext.Provider value={ metricsContextValue }>
                 <SotaWasmContext.Provider value={ wasmContextValue }>
-                    <div className="min-h-screen bg-bg-base relative overflow-x-hidden">
+                    <div className="min-h-screen bg-bg-base relative">
                         { tourSpotlight && (
-                            <div className="tour-spotlight" style={ {
-                                top: tourSpotlight.top - 8,
-                                left: tourSpotlight.left - 8,
-                                width: tourSpotlight.width + 16,
-                                height: tourSpotlight.height + 16,
-                            } } />
+                            <div className="tour-spotlight" {...tourSpotlightProps} />
                         ) }
 
                         <SimulatorHeader
@@ -705,45 +416,66 @@ export default function MasterSimulator ()
                             onToggleSidebar={ () => setSidebarOpen( !sidebarOpen ) }
                         />
 
-                        <section className="sota-container mt-12 mb-16 animate-sota-in">
-                            <SectionHeader step="01" label="Referencial" title="Âncora Empírica (Aula 1.2)" description="Dados que fundamentam o motor." />
+                    <section className="sota-container mt-12 mb-16 animate-sota-in" aria-label="Referencial Empírico">
+                            <div className="max-w-4xl mx-auto mb-6 text-center">
+                                <SectionHeader step="01" label="Referencial" title="Âncora Empírica (Aula 1.2)" description="Dados reais e fundamentos absolutos do motor de simulação." />
+                                <p className="text-[0.8rem] text-text-dim leading-relaxed mt-4">
+                                    Esta camada estabelece a <strong className="text-text-light">Topologia do Torneio</strong>. O motor ingere a estrutura de premiação e os stacks reais da Mesa Final para erguer as fundações matemáticas do cálculo de <em>Bubble Factor</em> e <em>Risk Premium</em>. Sem o Referencial, não há perspectiva.
+                                </p>
+                            </div>
                             <Suspense fallback={ <LoadingFallback /> }>
                                 <ReferencialAula12 />
                             </Suspense>
                         </section>
 
-                        <section className="sota-container mb-16">
-                            <SectionHeader step="02" label="Framework" title="Lente de Perspectiva Matemática" description="A decomposição do spot através do ecossistema da mesa." />
+                    <section className="sota-container mb-16" aria-label="Framework de Perspectiva Matemática">
+                            <div className="max-w-4xl mx-auto mb-6 text-center">
+                                <SectionHeader step="02" label="Framework" title="Lente de Perspectiva Matemática (PM)" description="A decomposição cirúrgica do spot através da lente do ecossistema SOTA." />
+                                <p className="text-[0.8rem] text-text-dim leading-relaxed mt-4">
+                                    A <strong>Métrica Soberana (PM)</strong> mede a verdadeira utilidade de uma ação, subtraindo o custo irrevogável (Sunk Cost) da expectativa purificada. A lente integra a Realização Posicional (R) e a punição gravitacional (FGS e RIO multiway), revelando a fronteira de Insolvência e a tensão sistêmica (Risk Premium).
+                                </p>
+                            </div>
                             <Suspense fallback={ <LoadingFallback /> }>
                                 <div className="space-y-8 px-4 sm:px-0">
-                                    <PmLensPanel anteSize={ anteSize } heroInvested={ safeHeroInvested } currentPot={ safeCurrentPot } activePlayers={ safeActivePlayers } heroPosition={ heroPosition } blindsRisingSoon={ blindsRisingSoon } initialStacks={ scenario.stacks } initialPrizes={ scenario.prizes } />
+                                    <PmLensPanel key={`pmlens-${scenario.id}`} anteSize={ anteSize } heroInvested={ safeHeroInvested } currentPot={ safeCurrentPot } activePlayers={ safeActivePlayers } heroPosition={ heroPosition } blindsRisingSoon={ blindsRisingSoon } initialStacks={ scenario.stacks } initialPrizes={ scenario.prizes } pkoValue={ pkoValue } />
                                     <SimulatorQuizWidget simulatorState={ scenario } />
                                 </div>
                             </Suspense>
                         </section>
 
-                        <section className="sota-container mb-24">
-                            <SectionHeader step="03" label="Laboratório" title="Motor ICM de Distorções" description="Explore as refrações dinâmicas de equilíbrio GTO." />
+                    <section className="sota-container mb-24" aria-label="Laboratório ICM">
+                            <div className="max-w-4xl mx-auto mb-10 text-center">
+                                <SectionHeader step="03" label="Laboratório" title="Motor ICM de Distorções" description="Explore as refrações dinâmicas de equilíbrio GTO no multiverso de ranges." />
+                                <p className="text-[0.8rem] text-text-dim leading-relaxed mt-4">
+                                    O orquestrador quântico (WebGPU/WASM) tritura a árvore de jogo em tempo real. Manipule os parâmetros de Agressão, Bounty (PKO) e o Modulador de Entropia (Fator Ψ) para observar como o <em>Nash Equilibrium</em> se curva, dilata ou colapsa diante de oponentes humanos imprevisíveis.
+                                </p>
+                            </div>
 
-                            <div className={ `grid gap-8 items-start ${ sidebarOpen ? 'grid-cols-1 lg:grid-cols-4' : 'grid-cols-1' }` }>
+                            <div className={ `grid gap-8 items-start ${ sidebarOpen ? 'grid-cols-1 lg:grid-cols-[320px_1fr]' : 'grid-cols-1' }` }>
                                 { sidebarOpen && (
-                                    <aside className="lg:col-span-1 lg:sticky lg:top-24">
+                                    <aside className="lg:sticky lg:top-24">
                                         <ScenarioSelector scenarios={ scenarios } activeId={ scenario.id } onSelect={ handleScenarioSelect } />
                                     </aside>
                                 ) }
 
-                                <main className={ `flex flex-col gap-8 min-w-0 transition-all duration-300 ${ sidebarOpen ? 'lg:col-span-3' : 'lg:col-span-4' }` }>
+                            <main className="flex flex-col gap-8 min-w-0 transition-all duration-300" role="main" aria-label="Painel de Ferramentas do Simulador">
                                     <SimulatorNavigation activeTool={ activeTool } onSelectTool={ setActiveTool } />
                                     <div className={ `transition-opacity duration-200 ${ isPending ? 'opacity-50' : 'opacity-100' }` }>
                                         { activeToolContent }
                                     </div>
+
                                 </main>
                             </div>
                         </section>
 
-                        <footer className="border-t border-white/5 bg-bg-panel/20">
-                            <div className="sota-container py-12 px-6">
-                                <p className="text-label opacity-30">Motor SOTA v4.1 · Raphael Vitoi</p>
+                        <footer className="border-t border-white/5 py-16 mt-16 relative overflow-hidden">
+                            <div className="sota-container px-6 flex flex-col items-center justify-center gap-6 relative z-10">
+                                <div className="text-center space-y-2">
+                                    <p className="text-[0.65rem] font-black text-text-light uppercase tracking-[0.4em] m-0 opacity-80">Motor SOTA v4.2</p>
+                                    <div className="w-8 h-px bg-white/10 mx-auto" />
+                                    <p className="text-[0.55rem] font-medium text-text-darker uppercase tracking-widest m-0">Estado da Arte em Teoria de Jogo</p>
+                                </div>
+                                <p className="text-[0.5rem] font-bold text-text-dim uppercase tracking-widest m-0 mt-2">© 2026 Raphael Vitoi · All Rights Reserved</p>
                             </div>
                         </footer>
 

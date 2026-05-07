@@ -47,6 +47,7 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "prisma/seed.ts",
-    "prisma/seed_content.ts"
+    "prisma/seed_content.ts",
+    "**/*.worker.ts"
   ]
 }

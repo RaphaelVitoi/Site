@@ -139,14 +139,23 @@ export default async function BibliotecaPage() {
       </div>
 
       <div className="mt-16">
-        <SectionHeader
-          step="DOC"
-          label="Doutrina"
-          title="Ensaios & Hipóteses"
-          description="Decomposições analíticas sobre o colapso cognitivo do EV e a insolvência estratégica do MDF tradicional."
-        />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12 border-b border-white/5 pb-8">
+          <SectionHeader
+            step="DOC"
+            label="Doutrina"
+            title="Ensaios & Hipóteses"
+            description="Decomposições analíticas sobre o colapso cognitivo do EV e a insolvência estratégica do MDF tradicional."
+          />
+          <div className="glass-panel px-6 py-4 rounded-2xl flex items-center gap-4 bg-accent-indigo/5 border-accent-indigo/20">
+             <i className="fa-solid fa-radar text-accent-indigo-light animate-pulse text-xl"></i>
+             <div className="text-left">
+               <div className="text-[0.65rem] font-black text-accent-indigo-light uppercase tracking-widest">Base de Conhecimento</div>
+               <div className="text-sm font-medium text-text-muted">{articles.length} Artefatos Indexados</div>
+             </div>
+          </div>
+        </div>
 
-        <div className="sota-container mt-12">
+        <div className="sota-container">
           <AnimatedArticleGrid articles={ articles } />
         </div>
       </div>

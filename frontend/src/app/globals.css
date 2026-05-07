@@ -50,11 +50,22 @@
     :root {
         /* Altura do Header fixa para sincronia de scroll */
         --header-height: 80px;
-        --container-width: 1200px;
+        --container-width: 1600px;
     }
 
-    html {
+    html,
+    body {
         @apply scroll-smooth antialiased;
+        scrollbar-width: none;
+        /* Firefox */
+        -ms-overflow-style: none;
+        /* IE/Edge */
+    }
+
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+        display: none;
+        /* Chrome/Safari/Opera */
     }
 
     /* SOTA: As cores de fundo, texto e seleção estão injetadas nativamente como utilitárias
@@ -78,7 +89,7 @@
     select,
     input,
     button {
-        @apply outline-none transition-all duration-200;
+        @apply outline-none transition duration-200;
     }
 }
 
@@ -86,7 +97,7 @@
 
     /* O Vidro Perfeito (Abstração SOTA - Padrão Ouro) */
     .glass-panel {
-        @apply backdrop-blur-2xl rounded-3xl relative overflow-hidden transition-all duration-500;
+        @apply backdrop-blur-2xl rounded-3xl relative transition duration-500 p-8;
         background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, rgba(2, 6, 23, 0.8) 100%);
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -94,7 +105,7 @@
 
     /* Pílula Flutuante para Navegações */
     .sota-glass-pill {
-        @apply backdrop-blur-xl rounded-full relative transition-all duration-300;
+        @apply backdrop-blur-xl rounded-full relative transition duration-300;
         background: linear-gradient(180deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 10px 30px -10px rgba(0, 0, 0, 0.5);
@@ -106,7 +117,7 @@
     }
 
     .hub-card {
-        @apply backdrop-blur-xl border border-white/5 p-8 rounded-3xl transition-all duration-500 relative flex flex-col gap-4;
+        @apply backdrop-blur-xl border border-white/5 p-8 rounded-3xl transition duration-500 relative flex flex-col gap-4;
         background: linear-gradient(180deg, rgba(30, 41, 59, 0.2) 0%, rgba(15, 23, 42, 0.4) 100%);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
     }
@@ -126,7 +137,7 @@
 
     /* Container Padronizado (Geometria Áurea) */
     .sota-container {
-        @apply w-full max-w-(--container-width) mx-auto px-6 sm:px-12;
+        @apply w-full max-w-400 mx-auto px-6 sm:px-8 xl:px-12;
     }
 
     /* O Botão Primário SOTA */
@@ -141,7 +152,7 @@
 
     /* Call to Action dos Cards do Hub */
     .card-cta {
-        @apply mt-auto text-xs font-black uppercase tracking-widest flex items-center opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all;
+        @apply mt-auto text-xs font-black uppercase tracking-widest flex items-center opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition;
     }
 
     /* Mobile Nav Styles */

@@ -1,4 +1,10 @@
 {
-	"servers": {},
-	"inputs": []
+    "mcpServers": {
+        "nexus-sota-bridge": {
+            "command": "C:\\Users\\Raphael\\.gemini\\Site\\.venv\\Scripts\\python.exe",
+            "args": [
+                "C:\\Users\\Raphael\\.gemini\\Site\\mcp-bridge\\server.py"
+            ]
+        }
+    }
 }

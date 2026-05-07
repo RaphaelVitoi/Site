@@ -1,18 +1,96 @@
 export const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
-export const BF_PLAYERS = ['UTG', 'EP', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
-export const BF_STACKS = [10, 20, 30, 40, 50, 60, 70, 80];
-export const BF_MATRIX = new Array( 8 ).fill( new Array( 8 ).fill( 1.5 ) );
-export const RP_MATRIX = new Array( 8 ).fill( new Array( 8 ).fill( 10 ) );
-export const BUBBLE_PLAYERS = BF_PLAYERS;
-export const BUBBLE_STACKS = BF_STACKS;
-export const BUBBLE_BF_MATRIX = BF_MATRIX;
-export const BUBBLE_RP_MATRIX = RP_MATRIX;
-export const EG_PLAYERS = BF_PLAYERS;
-export const EG_STACKS = BF_STACKS;
-export const EG_BF_MATRIX = BF_MATRIX;
-export const EG_RP_MATRIX = RP_MATRIX;
-export const TABLE_PLAYERS = [{ name: 'BTN', stack: 40, angle: 0, highlight: true }];
-export const PRIZES = [{ pos: '1', val: 1000 }];
-export const TOTAL_POOL = 10000;
-export const BTN_FREQS = new Array( 13 ).fill( new Array( 13 ).fill( 33 ) );
-export const BB_FREQS = new Array( 13 ).fill( new Array( 13 ).fill( 50 ) );
+
+export const BF_PLAYERS = ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO'];
+export const BF_STACKS = [56.2, 42.1, 35.8, 31.4, 28.9, 24.5, 18.2, 12.4, 9.7];
+
+export const BF_MATRIX = [
+  [1, 1.42, 1.48, 1.55, 1.62, 1.71, 1.85, 2.12, 2.45],
+  [1.38, 1, 1.52, 1.59, 1.68, 1.78, 1.94, 2.25, 2.61],
+  [1.44, 1.49, 1, 1.63, 1.72, 1.84, 2.02, 2.38, 2.78],
+  [1.52, 1.56, 1.61, 1, 1.78, 1.91, 2.11, 2.52, 2.96],
+  [1.59, 1.64, 1.69, 1.75, 1, 1.99, 2.22, 2.68, 3.17],
+  [1.68, 1.73, 1.79, 1.86, 1.94, 1, 2.35, 2.87, 3.42],
+  [1.81, 1.87, 1.95, 2.03, 2.13, 2.25, 1, 3.12, 3.75],
+  [2.05, 2.14, 2.24, 2.36, 2.49, 2.65, 2.85, 1, 4.25],
+  [2.35, 2.48, 2.62, 2.78, 2.97, 3.21, 3.52, 3.98, 1]
+];
+
+export const RP_MATRIX = BF_MATRIX.map(row => row.map(val => val === 1 ? 0 : Math.round((1 - 1/val) * 1000) / 10));
+
+export const BUBBLE_PLAYERS = ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO'];
+export const BUBBLE_STACKS = [65.4, 45.2, 38.1, 32.5, 28.4, 22.8, 18.5, 14.5, 8.2];
+export const BUBBLE_BF_MATRIX = [
+  [1, 1.15, 1.18, 1.25, 1.32, 1.35, 1.40, 1.45, 1.55],
+  [1.52, 1, 1.58, 1.65, 1.70, 1.78, 1.90, 2.12, 2.30],
+  [1.64, 1.68, 1, 1.75, 1.82, 1.92, 2.10, 2.35, 2.50],
+  [1.70, 1.75, 1.80, 1, 1.95, 2.05, 2.25, 2.50, 2.70],
+  [1.80, 1.85, 1.92, 2.00, 1, 2.10, 2.30, 2.65, 2.85],
+  [1.85, 1.91, 1.98, 2.05, 2.15, 1, 2.45, 2.78, 3.00],
+  [2.00, 2.10, 2.20, 2.30, 2.40, 2.55, 1, 3.10, 3.35],
+  [2.12, 2.25, 2.38, 2.52, 2.65, 2.80, 3.00, 1, 3.45],
+  [2.65, 2.85, 3.12, 3.30, 3.48, 3.70, 3.95, 4.20, 1]
+];
+export const BUBBLE_RP_MATRIX = BUBBLE_BF_MATRIX.map(row => row.map(val => val === 1 ? 0 : Math.round((1 - 1/val) * 1000) / 10));
+
+export const EG_PLAYERS = ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO'];
+export const EG_STACKS = [30, 30, 30, 30, 30, 30, 30, 30, 30];
+export const EG_BF_MATRIX = new Array(9).fill(0).map((_, r) => new Array(9).fill(0).map((_, c) => r === c ? 1 : 1.0183));
+export const EG_RP_MATRIX = EG_BF_MATRIX.map(row => row.map(val => val === 1 ? 0 : Math.round((1 - 1/val) * 1000) / 10));
+
+export const TABLE_PLAYERS = [
+  { name: 'BTN', stack: 40, angle: 90, highlight: true },
+  { name: 'SB', stack: 25.5, angle: 130, highlight: false },
+  { name: 'BB', stack: 55, angle: 170, highlight: true },
+  { name: 'UTG', stack: 32.1, angle: 210, highlight: false },
+  { name: 'UTG+1', stack: 18.4, angle: 250, highlight: false },
+  { name: 'MP', stack: 44.2, angle: 290, highlight: false },
+  { name: 'LJ', stack: 35, angle: 330, highlight: false },
+  { name: 'HJ', stack: 12.8, angle: 10, highlight: false },
+  { name: 'CO', stack: 28.9, angle: 50, highlight: false },
+];
+
+export const PRIZES = [
+  { pos: '1º', val: 241.5 },
+  { pos: '2º', val: 168.2 },
+  { pos: '3º', val: 120.4 },
+  { pos: '4º', val: 89.6 },
+  { pos: '5º', val: 66.8 },
+  { pos: '6º', val: 50.1 },
+  { pos: '7º', val: 38.2 },
+  { pos: '8º', val: 29.5 },
+  { pos: '9º', val: 23.4 },
+];
+
+export const TOTAL_POOL = 1260;
+
+export const BTN_FREQS = [
+  [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+  [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+  [100, 100, 100, 100, 100, 100, 80, 50, 20, 10, 0, 0, 0],
+  [100, 100, 100, 100, 100, 100, 80, 50, 0, 0, 0, 0, 0],
+  [100, 100, 100, 100, 100, 100, 80, 0, 0, 0, 0, 0, 0],
+  [100, 100, 100, 100, 100, 100, 50, 0, 0, 0, 0, 0, 0],
+  [100, 100, 50, 30, 20, 10, 100, 0, 0, 0, 0, 0, 0],
+  [100, 80, 20, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0],
+  [100, 50, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0],
+  [100, 20, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0],
+  [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0],
+  [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0],
+  [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100]
+];
+
+export const BB_FREQS = [
+  [  0,   0,   0,   0, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+  [  0,   0,   0, 100, 100, 100, 100, 100, 100, 100,  80,  50,  20],
+  [  0,   0,   0, 100, 100, 100, 100, 100, 100,  80,  50,   0,   0],
+  [  0, 100, 100,  50, 100, 100, 100, 100,  80,   0,   0,   0,   0],
+  [100, 100, 100, 100, 100, 100, 100,  80,   0,   0,   0,   0,   0],
+  [100, 100, 100, 100, 100, 100, 100,   0,   0,   0,   0,   0,   0],
+  [100, 100, 100, 100, 100, 100, 100,   0,   0,   0,   0,   0,   0],
+  [100, 100, 100, 100, 100,  50,   0, 100,   0,   0,   0,   0,   0],
+  [100, 100, 100,  50,   0,   0,   0,   0, 100,   0,   0,   0,   0],
+  [100, 100,  50,   0,   0,   0,   0,   0,   0, 100,   0,   0,   0],
+  [100,  80,   0,   0,   0,   0,   0,   0,   0,   0, 100,   0,   0],
+  [100,  50,   0,   0,   0,   0,   0,   0,   0,   0,   0, 100,   0],
+  [100,  20,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 100]
+];

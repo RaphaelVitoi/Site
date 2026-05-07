@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @historian
+# Identidade e Escopo: @historian
 
 **Cor Emblematica:** `grey53` | **Motor Base:** `gemini-2.5-pro` 
 

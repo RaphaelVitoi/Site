@@ -13,6 +13,7 @@ export default function SimulatorNavigation ( { activeTool, onSelectTool }: Simu
         { id: 'matchup', label: 'Matchups', icon: 'fa-people-arrows' },
         { id: 'comparar', label: 'Radar', icon: 'fa-bullseye' },
         { id: 'posflop', label: 'Pos-Flop', icon: 'fa-layer-group' },
+        { id: 'cfr', label: 'CFR & IA', icon: 'fa-network-wired' },
     ];
 
     return (

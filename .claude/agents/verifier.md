@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @verifier
+# Identidade e Escopo: @verifier
 
 **Cor Emblematica:** `sea_green3` | **Motor Base:** `gemini-2.0-flash` 
 

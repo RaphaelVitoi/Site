@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @securitychief
+# Identidade e Escopo: @securitychief
 
 **Cor Emblematica:** `sienna` | **Motor Base:** `gemini-2.5-pro` 
 

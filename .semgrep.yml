@@ -1,0 +1,27 @@
+rules:
+  - id: sota-fastapi-auth-enforcement
+    languages:
+      - python
+    message: "[SOTA SECURITY] Rota FastAPI exposta sem blindagem. Todas as rotas devem validar autenticação injetando 'Depends()' nos argumentos ou no decorador."
+    patterns:
+      # Captura qualquer declaração de rota FastAPI
+      - pattern: |
+          @app.$METHOD(...)
+          async def $FUNC(...):
+            ...
+      # Filtro 1: Permite se a dependência estiver no decorador
+      - pattern-not: |
+          @app.$METHOD(..., dependencies=[...], ...)
+          async def $FUNC(...):
+            ...
+      # Filtro 2: Permite se houver injeção de Depends nos parâmetros
+      - pattern-not: |
+          @app.$METHOD(...)
+          async def $FUNC(..., $VAR = Depends(...), ...):
+            ...
+      # Filtro 3: Ignora a rota raiz (Health Check público)
+      - pattern-not: |
+          @app.get("/")
+          async def root_health_check(...):
+            ...
+    severity: ERROR

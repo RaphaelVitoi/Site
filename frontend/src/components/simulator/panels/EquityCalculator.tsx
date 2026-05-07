@@ -1,21 +1,22 @@
 'use client';
 
 /**
- * IDENTITY: Calculadora Malmuth-Harville de Equidade ICM
+ * IDENTITY: Calculadora Malmuth-Harville de Equidade ICM v4.2
  * PATH: src/components/simulator/panels/EquityCalculator.tsx
  * ROLE: Inputs manuais de stacks + payouts + hand parser -> cálculo ICM real.
- * BINDING: [lib/icmEngine.ts, lib/handParser.ts, simulator.module.css]
+ * BINDING: [lib/icmEngine.ts, lib/handParser.ts, components/simulator/hooks/*, components/simulator/ui/*]
  */
 
-import { useCallback, useMemo, useState } from 'react';
-import { parseHandHistory } from '../../../lib/handParser';
-import { downloadHRCJson, generateHRCJson } from '../../../lib/hrcExport';
-import { calculateMalmuthHarville, type ICMPlayer } from '../../../lib/icmEngine';
-import { logger } from '../../../lib/logger';
+import { useCallback, useContext, useDeferredValue, useMemo, useState } from 'react';
+import { parseHandHistory } from '@/lib/handParser';
+import { downloadHRCJson, generateHRCJson } from '@/lib/hrcExport';
+import type { ICMPlayer } from '@/lib/icmEngine';
+import { SotaWasmContext } from '../SotaContext';
+import { useIcmCalculations } from '../hooks/useIcmCalculations';
+import { InsolvencyRioPanel } from '../ui/InsolvencyRioPanel';
 import AnimatedNumber from '../ui/AnimatedNumber';
-import styles from './EquityCalculator.module.css';
+import React from 'react';
 
-// Presets de cenários rápidos
 const PRESETS = [
   { label: 'HU (2p)', stacks: [ 50, 50 ], prizes: [ 65, 35 ] },
   { label: '3-Way', stacks: [ 40, 35, 25 ], prizes: [ 50, 30, 20 ] },
@@ -23,11 +24,14 @@ const PRESETS = [
   { label: 'Bolha (4p)', stacks: [ 45, 25, 18, 12 ], prizes: [ 50, 30, 20 ] },
 ];
 
-export default function EquityCalculator () {
-  const [ players, setPlayers ] = useState<ICMPlayer[]>( [
-    { id: '1', name: 'Jogador 1', stack: 40 },
-    { id: '2', name: 'Jogador 2', stack: 55 },
-  ] );
+export default function EquityCalculator ()
+{
+  const [ players, setPlayers ] = useState<ICMPlayer[]>(
+    [
+      { id: '1', name: 'Jogador 1', stack: 40 },
+      { id: '2', name: 'Jogador 2', stack: 55 },
+    ]
+  );
   const [ prizes, setPrizes ] = useState<number[]>( [ 65, 35 ] );
   const [ handText, setHandText ] = useState( '' );
   const [ showParser, setShowParser ] = useState( false );
@@ -35,58 +39,43 @@ export default function EquityCalculator () {
   const [ heroId, setHeroId ] = useState<string | null>( '1' );
   const [ pkoValue, setPkoValue ] = useState( 0 );
 
-  // Cálculo ICM memoizado
-  const results = useMemo(
-    () => {
-      const res = calculateMalmuthHarville( players, prizes );
+  const wasmContext = useContext( SotaWasmContext );
+  const insolvency = wasmContext?.insolvencyMatrixData as any;
 
-      // SOTA Audit: Loga métrica de conservação de valor
-      const totalEq = res.reduce( ( sum, r ) => sum + r.equityPercent, 0 );
-      logger.metric( 'EquityCalculator', 'icm_total_equity', totalEq, { playerCount: players.length } );
+  const deferredPlayers = useDeferredValue( players );
+  const deferredPrizes = useDeferredValue( prizes );
 
-      return res;
-    },
-    [ players, prizes ]
-  );
+  // SOTA v4.2: Orquestração de Cálculo Modularizada
+  const { results, isWorkerCalculating, totalChips, totalPrizes } = useIcmCalculations({
+    players: deferredPlayers, prizes: deferredPrizes
+  });
 
-  const totalChips = useMemo(
-    () => players.reduce( ( sum, p ) => sum + p.stack, 0 ),
-    [ players ]
-  );
+  const isCalculatingICM = players !== deferredPlayers || prizes !== deferredPrizes || isWorkerCalculating;
 
-  const totalPrizes = useMemo(
-    () => prizes.reduce( ( sum, p ) => sum + p, 0 ),
-    [ prizes ]
-  );
-
-  // Exportar para HRC
-  const handleExportHRC = useCallback( () => {
+  const handleExportHRC = useCallback( () =>
+  {
     const json = generateHRCJson( players, prizes, pkoValue );
-    downloadHRCJson( json, `vitoi_spot_${players.length}p.json` );
+    downloadHRCJson( json, `vitoi_spot_${ players.length }p.json` );
   }, [ players, prizes, pkoValue ] );
 
-  // Bubble Factor range: menor e maior BF entre jogadores
-  const { bfRange, bfRangeColor } = useMemo( () => {
-    if ( results.length < 2 || totalChips === 0 ) return { bfRange: '-', bfRangeColor: 'var(--text-darker)' };
-    const bfs = results.map( r => {
+  const { bfRange, bfRangeColor } = useMemo( () =>
+  {
+    if ( results.length < 2 || totalChips === 0 ) return { bfRange: '-', bfRangeColor: 'text-text-darker' };
+    const bfs = results.map( r =>
+    {
       const chip = ( players.find( p => p.id === r.id )?.stack ?? 0 ) / totalChips * 100;
       return chip > 0 ? r.equityPercent / chip : 1;
     } );
     const min = Math.min( ...bfs );
     const max = Math.max( ...bfs );
-    let color = 'var(--sim-color-emerald)';
-    if ( max > 1.3 )
-    {
-      color = 'var(--sim-color-rose)';
-    } else if ( max > 1.1 )
-    {
-      color = 'var(--sim-color-amber)';
-    }
-    return { bfRange: `${min.toFixed( 2 )}-${max.toFixed( 2 )}`, bfRangeColor: color };
+    let color = 'text-accent-emerald';
+    if ( max > 1.3 ) color = 'text-accent-danger';
+    else if ( max > 1.1 ) color = 'text-accent-amber';
+    return { bfRange: `${ min.toFixed( 2 ) }-${ max.toFixed( 2 ) }`, bfRangeColor: color };
   }, [ results, players, totalChips ] );
 
-  // Insight: quem mais ganha/perde com ICM vs proporcional
-  const icmInsight = useMemo( () => {
+  const icmInsight = useMemo( () =>
+  {
     if ( results.length < 2 || totalChips === 0 ) return null;
     let maxGain = { name: '', delta: -Infinity };
     let maxLoss = { name: '', delta: Infinity };
@@ -101,54 +90,54 @@ export default function EquityCalculator () {
     {
       return 'Equidade ICM próxima da proporcional — pressão ICM baixa neste spot.';
     }
-    return `${maxGain.name} ganha +${maxGain.delta.toFixed( 1 )}% com ICM vs proporcional. ${maxLoss.name} perde ${Math.abs( maxLoss.delta ).toFixed( 1 )}%. Short stacks acumulam equity desproporcional ao risco.`;
+    return `${ maxGain.name } ganha +${ maxGain.delta.toFixed( 1 ) }% com ICM vs proporcional. ${ maxLoss.name } perde ${ Math.abs( maxLoss.delta ).toFixed( 1 ) }%. Short stacks acumulam equity desproporcional ao risco.`;
   }, [ results, players, totalChips ] );
 
-  // Adicionar jogador
-  const addPlayer = useCallback( () => {
+  const addPlayer = useCallback( () =>
+  {
     setPlayers( prev => [
       ...prev,
-      { id: Date.now().toString(), name: `Jogador ${prev.length + 1}`, stack: 20 },
+      { id: Date.now().toString() + Math.random().toString(36).substring(2), name: `Jogador ${ prev.length + 1 }`, stack: 20 },
     ] );
   }, [] );
 
-  // Remover jogador
-  const removePlayer = useCallback( ( id: string ) => {
+  const removePlayer = useCallback( ( id: string ) =>
+  {
     setPlayers( prev => prev.filter( p => p.id !== id ) );
     if ( heroId === id ) setHeroId( null );
   }, [ heroId ] );
 
-  // Atualizar stack
-  const updateStack = useCallback( ( id: string, stack: number ) => {
+  const updateStack = useCallback( ( id: string, stack: number ) =>
+  {
     setPlayers( prev => prev.map( p => p.id === id ? { ...p, stack } : p ) );
   }, [] );
 
-  // Atualizar nome
-  const updateName = useCallback( ( id: string, name: string ) => {
+  const updateName = useCallback( ( id: string, name: string ) =>
+  {
     setPlayers( prev => prev.map( p => p.id === id ? { ...p, name } : p ) );
   }, [] );
 
-  // Atualizar prêmio
-  const updatePrize = useCallback( ( idx: number, value: number ) => {
+  const updatePrize = useCallback( ( idx: number, value: number ) =>
+  {
     setPrizes( prev => prev.map( ( p, i ) => i === idx ? value : p ) );
   }, [] );
 
-  // Adicionar prêmio
-  const addPrize = useCallback( () => {
+  const addPrize = useCallback( () =>
+  {
     setPrizes( prev => [ ...prev, 10 ] );
   }, [] );
 
-  // Remover prêmio
-  const removePrize = useCallback( () => {
+  const removePrize = useCallback( () =>
+  {
     setPrizes( prev => prev.length > 1 ? prev.slice( 0, -1 ) : prev );
   }, [] );
 
-  // Carregar preset
-  const loadPreset = useCallback( ( preset: typeof PRESETS[ 0 ] ) => {
+  const loadPreset = useCallback( ( preset: typeof PRESETS[ 0 ] ) =>
+  {
     setPlayers(
       preset.stacks.map( ( stack, i ) => ( {
         id: String( i + 1 ),
-        name: `Jogador ${i + 1}`,
+        name: `Jogador ${ i + 1 }`,
         stack,
       } ) )
     );
@@ -156,308 +145,214 @@ export default function EquityCalculator () {
     setHeroId( '1' );
   }, [] );
 
-  // Parse hand history
-  const parseHand = useCallback( () => {
+  const parseHand = useCallback( () =>
+  {
     setParserError( null );
-    try {
+    try
+    {
       let parsed = parseHandHistory( handText );
       if ( parsed.length >= 2 )
       {
-        // SOTA: Limita a captura estritamente à Mesa Final (máx 9 players).
-        // Protege o motor Malmuth-Harville de colapso termodinâmico O(N!) caso o usuário cole um lobby dump.
         if ( parsed.length > 9 ) parsed = parsed.slice( 0, 9 );
-
         setPlayers( parsed );
         setShowParser( false );
         setHandText( '' );
         setHeroId( parsed[ 0 ].id );
       } else
       {
-        setParserError( 'Não foi possível identificar pelo menos 2 jogadores. Verifique o formato (ex: "Seat 1: Nome (15000 in chips)").' );
+        setParserError( 'Não foi possível identificar pelo menos 2 jogadores.' );
       }
-    } catch ( error: unknown ) {
-      console.error( '[EquityCalculator] Hand parser error:', String( error ) );
-      setParserError( 'Falha catastrófica ao decodificar a Hand History. Verifique se o texto contém lixo invisível ou formatação corrompida.' );
+    } catch ( error: unknown )
+    {
+      console.error( '[HandParser] Erro ao decodificar Hand History:', error );
+      setParserError( 'Falha ao decodificar a Hand History.' );
     }
   }, [ handText ] );
 
   return (
-    <div className={ styles.calcPanel }>
-      {/* Header */ }
-      <div className={ styles.calcHeader }>
-        <h3 className={ styles.calcTitle }>
-          Calculadora Malmuth-Harville
-        </h3>
-        <div className={ styles.calcHeaderActions }>
-          <button
-            onClick={ handleExportHRC }
-            className={ styles.calcBtnOutline }
-            title="Exportar cenário para HRC JSON"
-          >
-            <i className="fa-solid fa-file-export" style={ { marginRight: '4px' } } />
-            <span>HRC</span>
-          </button>
-          <button
-            onClick={ () => setShowParser( !showParser ) }
-            className={ `${styles.calcBtnOutline} ${showParser ? styles.calcBtnOutlineActive : ''}` }
-          >
-            <i className="fa-solid fa-paste" style={ { marginRight: '4px' } } />
-            <span>Parser</span>
-          </button>
+    <div className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-indigo/5 blur-3xl rounded-full pointer-events-none" />
+
+      <div className="flex justify-between items-start border-b border-white/5 pb-6">
+        <div>
+          <h3 className="text-[0.75rem] font-black text-text-main uppercase tracking-[0.2em] m-0">Calculadora Malmuth-Harville</h3>
+          <p className="m-0 mt-1.5 text-[0.6rem] text-text-dim font-medium uppercase tracking-wider">Aproximação de Equidade por Malha de Combinações</p>
+        </div>
+        <div className="flex gap-2">
+            <button onClick={ () => setShowParser( !showParser ) } className={`px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all border ${showParser ? 'bg-accent-indigo text-white border-accent-indigo shadow-lg' : 'bg-black/40 border-white/5 text-text-muted hover:bg-white/5 hover:text-white'}`}>
+                <i className="fa-solid fa-code mr-1.5" /> {showParser ? 'Config Manual' : 'Parser HH'}
+            </button>
+            <button onClick={ handleExportHRC } className="px-4 py-2 rounded-xl bg-black/40 border border-white/5 text-text-muted text-[0.6rem] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white transition-all">
+                <i className="fa-solid fa-file-export mr-1.5" /> Export HRC
+            </button>
         </div>
       </div>
 
-      {/* Hand history parser */ }
-      { showParser && (
-        <div className={ styles.calcParserContainer }>
-          <p className={ styles.calcParserLabel }>
-            Cole uma hand history (PokerStars / Hand2Note):
-          </p>
-          <textarea
-            value={ handText }
-            onChange={ ( e ) => setHandText( e.target.value ) }
-            placeholder={ 'Seat 1: Jogador1 (15000 in chips)\nSeat 2: Jogador2 (25000 in chips)' }
-            rows={ 4 }
-            className={ styles.calcParserTextarea }
-          />
-          { parserError && (
-            <div className={ styles.calcParserError }>
-              <i className="fa-solid fa-triangle-exclamation" style={ { marginRight: '6px' } } />
-              { parserError }
-            </div>
-          ) }
+      <div className="flex flex-wrap gap-3">
+        { PRESETS.map( ( p ) => (
           <button
-            onClick={ parseHand }
-            disabled={ !handText.trim() }
-            className={ `${styles.calcParserBtn} ${handText.trim() ? styles.calcParserBtnActive : ''}` }
+            key={ p.label }
+            onClick={ () => loadPreset( p ) }
+            className="px-4 py-2 rounded-xl bg-black/40 border border-white/5 text-text-muted text-[0.65rem] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white hover:border-white/20 transition-all shadow-inner"
           >
-            Decodificar
+            { p.label }
           </button>
+        ) ) }
+      </div>
+
+      { showParser ? (
+        <div className="space-y-4 animate-sota-in">
+           <div className="flex items-center gap-3 mb-2">
+             <div className="w-1.5 h-1.5 rounded-full bg-accent-indigo shadow-[0_0_8px_var(--accent-indigo)]" />
+             <p className="text-[0.65rem] font-black text-text-muted uppercase tracking-[0.2em] m-0">Parser de Hand History</p>
+           </div>
+           <textarea
+             value={ handText }
+             onChange={ ( e ) => setHandText( e.target.value ) }
+             placeholder="Cole aqui o Hand History do PokerStars, Winamax ou 888poker..."
+             className="w-full h-48 bg-black/40 border border-white/10 rounded-2xl p-5 text-[0.75rem] font-mono text-text-light placeholder:text-text-darker focus:outline-none focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/30 transition-all shadow-inner resize-none scrollbar-hide"
+           />
+           { parserError && <div className="p-4 bg-accent-danger/10 border border-accent-danger/20 rounded-xl text-accent-danger text-xs font-medium">{ parserError }</div> }
+           <button onClick={ parseHand } className="w-full py-4 rounded-2xl bg-accent-indigo text-white text-[0.75rem] font-black uppercase tracking-widest hover:bg-indigo-500 shadow-lg shadow-accent-indigo/20 transition-all active:scale-[0.98]">
+             Processar Estrutura de Stacks
+           </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center px-1">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-text-darker" />
+                    <p className="text-[0.65rem] font-black text-text-muted uppercase tracking-[0.2em] m-0">Stacks dos Jogadores</p>
+                </div>
+                <button onClick={ addPlayer } className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-accent-emerald text-[0.6rem] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all flex items-center gap-1.5">
+                    <i className="fa-solid fa-plus text-[0.5rem]" /> Jogador
+                </button>
+            </div>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+              { players.map( ( p ) => (
+                <div key={ p.id } className={`group flex items-center gap-3 p-3 rounded-2xl border transition-all ${heroId === p.id ? 'bg-accent-indigo/10 border-accent-indigo/30 shadow-[0_0_20px_rgba(99,102,241,0.1)]' : 'bg-black/40 border-white/5 hover:border-white/10'}`}>
+                   <button onClick={() => setHeroId(p.id)} className={`w-10 h-10 rounded-xl flex items-center justify-center text-[0.6rem] font-black uppercase tracking-tighter border transition-all ${heroId === p.id ? 'bg-accent-indigo text-white border-accent-indigo' : 'bg-black/60 text-text-darker border-white/5 hover:text-text-muted'}`}>
+                     {heroId === p.id ? 'HERO' : 'VILL'}
+                   </button>
+                   <input type="text" value={ p.name } onChange={ ( e ) => updateName( p.id, e.target.value ) } className="flex-1 bg-transparent border-none text-[0.75rem] font-bold text-text-light focus:outline-none focus:ring-0" />
+                   <div className="flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-xl border border-white/5 shadow-inner">
+                        <input type="number" value={ p.stack } onChange={ ( e ) => updateStack( p.id, Number.parseFloat( e.target.value ) || 0 ) } className="w-16 bg-transparent border-none text-[0.75rem] font-mono font-black text-right text-white focus:outline-none focus:ring-0" />
+                        <span className="text-[0.6rem] text-text-darker font-black uppercase">BB</span>
+                   </div>
+                   { players.length > 2 && (
+                    <button onClick={ () => removePlayer( p.id ) } className="w-8 h-8 rounded-lg bg-white/0 text-text-darker hover:bg-accent-danger/10 hover:text-accent-danger transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center">
+                        <i className="fa-solid fa-trash-can text-xs" />
+                    </button>
+                   )}
+                </div>
+              ) ) }
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="flex justify-between items-center px-1">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-text-darker" />
+                    <p className="text-[0.65rem] font-black text-text-muted uppercase tracking-[0.2em] m-0">Estrutura de Payouts (%)</p>
+                </div>
+                <button onClick={ addPrize } className="px-3 py-1.5 rounded-lg bg-accent-amber/10 border border-accent-amber/20 text-accent-amber text-[0.6rem] font-black uppercase tracking-widest hover:bg-accent-amber/20 transition-all flex items-center gap-1.5">
+                    <i className="fa-solid fa-plus text-[0.5rem]" /> Posição
+                </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+              { prizes.map( ( val, i ) => (
+                <div key={ `prize-${ i }` } className="flex items-center gap-2 p-2.5 rounded-xl bg-black/40 border border-white/5 group">
+                  <span className="w-6 text-[0.65rem] font-black text-text-darker">{ i + 1 }º</span>
+                  <input type="number" value={ val } onChange={ ( e ) => updatePrize( i, Number.parseFloat( e.target.value ) || 0 ) } className="flex-1 bg-black/60 border border-white/5 rounded-lg px-3 py-1.5 text-[0.75rem] font-mono font-black text-right text-accent-emerald focus:outline-none focus:border-accent-emerald shadow-inner" />
+                  { i === prizes.length - 1 && prizes.length > 1 && (
+                    <button onClick={ removePrize } className="w-8 h-8 rounded-lg text-text-darker hover:text-accent-danger transition-colors flex items-center justify-center">
+                      <i className="fa-solid fa-circle-minus text-xs" />
+                    </button>
+                  ) }
+                </div>
+              ) ) }
+            </div>
+            <div className={`mt-4 p-4 rounded-2xl border flex justify-between items-center font-mono ${totalPrizes === 100 ? 'bg-accent-emerald/5 border-accent-emerald/20 text-accent-emerald' : 'bg-accent-amber/5 border-accent-amber/20 text-accent-amber'}`}>
+                <span className="text-[0.6rem] font-black uppercase tracking-widest">Soma Total:</span>
+                <span className="text-[0.8rem] font-black">{totalPrizes.toFixed(1)}%</span>
+            </div>
+          </div>
         </div>
       ) }
 
-      {/* Presets rápidos */ }
-      <div className={ styles.calcPresetContainer }>
-        { PRESETS.map( ( preset ) => (
-          <button
-            key={ preset.label }
-            onClick={ () => loadPreset( preset ) }
-            className={ styles.calcPresetBtn }
-          >
-            { preset.label }
-          </button>
-        ) ) }
-      </div>
-
-      {/* Grid: Stacks | Payouts */ }
-      <div className={ styles.calcGrid2Col }>
-        {/* Stacks */ }
-        <div className={ styles.calcSection }>
-          <h4 className={ styles.calcSectionTitle }>
-            Stacks (bb)
-          </h4>
-          { players.map( ( p ) => (
-            <div key={ p.id } className={ styles.calcRow }>
-              <button
-                type="button"
-                onClick={ () => setHeroId( p.id ) }
-                style={ {
-                  cursor: 'pointer',
-                  color: heroId === p.id ? 'var(--accent-indigo)' : 'var(--bg-subtle)',
-                  fontSize: '0.65rem',
-                  background: 'transparent',
-                  border: 'none',
-                  padding: 0,
-                } }
-                title="Definir como Hero"
-              >
-                <i className={ `fa-solid ${heroId === p.id ? 'fa-circle-user' : 'fa-user'}` } />
-              </button>
-              <input
-                id={ `player-name-${p.id}` }
-                name={ `player-name-${p.id}` }
-                value={ p.name }
-                onChange={ ( e ) => updateName( p.id, e.target.value ) }
-                className={ styles.calcInputText }
-              />
-              <input
-                id={ `player-stack-${p.id}` }
-                name={ `player-stack-${p.id}` }
-                type="number"
-                value={ p.stack }
-                onChange={ ( e ) => updateStack( p.id, Math.max( 0, Number.parseInt( e.target.value ) || 0 ) ) }
-                className={ styles.calcInputNumber }
-              />
-              { players.length > 2 && (
-                <button onClick={ () => removePlayer( p.id ) } className={ styles.calcBtnRemove }>
-                  &times;
-                </button>
-              ) }
-            </div>
-          ) ) }
-          <button onClick={ addPlayer } className={ styles.calcBtnAdd }>
-            + Jogador
-          </button>
-        </div>
-
-        {/* Payouts */ }
-        <div className={ styles.calcSection }>
-          <h4 className={ styles.calcSectionTitle }>
-            Payouts (%)
-          </h4>
-          { prizes.map( ( prize, idx ) => (
-            <div key={ `prize-${idx + 1}-${prize}` } className={ styles.calcRow }>
-              <span className={ styles.calcPrizeIndex }>
-                { idx + 1 }&ordm;
-              </span>
-              <input
-                id={ `prize-${idx}` }
-                name={ `prize-${idx}` }
-                type="number"
-                value={ prize }
-                onChange={ ( e ) => updatePrize( idx, Math.max( 0, Number.parseFloat( e.target.value ) || 0 ) ) }
-                className={ styles.calcPrizeInput }
-              />
-            </div>
-          ) ) }
-          <div className={ styles.calcBtnPrizeGroup }>
-            <button onClick={ addPrize } className={ styles.calcBtnPrizeAdd }>
-              + Prêmio
-            </button>
-            { prizes.length > 1 && (
-              <button onClick={ removePrize } className={ styles.calcBtnPrizeRemove }>
-                &minus;
-              </button>
-            ) }
-          </div>
-        </div>
-      </div>
-
-      {/* Resumo */ }
-      <div className={ styles.calcStatGrid }>
-        { [
-          { label: 'Jogadores', value: String( players.length ), color: 'var(--sim-text-main)' },
-          { label: 'Fichas', value: String( totalChips ), color: 'var(--sim-color-indigo-light)' },
-          { label: 'Pool', value: `${totalPrizes.toFixed( 1 )}%`, color: 'var(--sim-color-emerald)' },
-          { label: 'BF Range', value: bfRange, color: bfRangeColor },
-        ].map( ( stat ) => (
-          <div key={ stat.label } className={ styles.calcStatCard }>
-            <div className={ styles.calcStatLabel }>
-              { stat.label }
-            </div>
-            <div className={ styles.calcStatValue } style={ { color: stat.color } }>
-              { stat.value }
-            </div>
-          </div>
-        ) ) }
-      </div>
-
-      {/* PKO Bounty Slider */ }
-      <div style={ {
-        background: pkoValue > 0 ? 'rgba(245, 158, 11, 0.05)' : 'rgba(15, 23, 42, 0.4)',
-        border: pkoValue > 0 ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '12px',
-        padding: '0.85rem 1.25rem',
-      } }>
-        <div style={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' } }>
-          <span style={ { fontSize: '0.58rem', fontWeight: 900, color: pkoValue > 0 ? 'var(--accent-amber)' : 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em' } }>
-            PKO Bounty Weight
-          </span>
-          <span className="font-mono tabular-nums" style={ { fontSize: '0.75rem', fontWeight: 800, color: pkoValue > 0 ? 'var(--accent-amber)' : 'var(--text-darker)' } }>
-            { pkoValue === 0 ? 'OFF' : `${Math.round( pkoValue * 100 )}%` }
-          </span>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="0.8"
-          step="0.05"
-          value={ pkoValue }
-          onChange={ ( e ) => setPkoValue( Number.parseFloat( e.target.value ) ) }
-          style={ { width: '100%', accentColor: 'var(--accent-amber)', cursor: 'pointer' } }
-        />
-        <p style={ { margin: '0.4rem 0 0', fontSize: '0.55rem', color: 'var(--text-darker)', lineHeight: 1.4 } }>
-          Reduz o peso do Prize Pool (ICM) e aumenta o peso da Probabilidade de Vitória (Bounty Pool).
-        </p>
-      </div>
-
-      {/* Resultados */ }
-      <div className={ styles.calcResultPanel }>
-        <h4 className={ styles.calcResultTitle }>
-          { pkoValue > 0 ? 'Equidade Ajustada (ICM + PKO)' : 'Equidade ICM' }
-        </h4>
-        { results.map( ( r ) => {
-          const chipPercent = totalChips > 0
-            ? ( ( players.find( p => p.id === r.id )?.stack ?? 0 ) / totalChips ) * 100
-            : 0;
-
-          // Cálculo PKO simplificado: blend entre ICM e WinProb baseado no pkoValue
-          const equityPKO = pkoValue > 0
-            ? ( 1 - pkoValue ) * r.equityPercent + pkoValue * ( r.winProb * 100 )
-            : r.equityPercent;
-
-          const delta = equityPKO - chipPercent;
-          let deltaClass = styles.calcResultDeltaNeu;
-          if ( delta > 0.5 )
-          {
-            deltaClass = styles.calcResultDeltaPos;
-          } else if ( delta < -0.5 )
-          {
-            deltaClass = styles.calcResultDeltaNeg;
-          }
-          const deltaSign = delta > 0 ? '+' : '';
-          const isHero = r.id === heroId;
-
-          return (
-            <div key={ r.id } className={ styles.calcResultRow }>
-              <div className={ styles.calcResultHeader }>
-                <span className={ styles.calcResultName }>
-                  { isHero && <span className={ styles.calcHeroBadge }>Hero</span> }
-                  { r.name }
-                </span>
-                <div className={ styles.calcResultValues }>
-                  { pkoValue > 0 && (
-                    <span className="font-mono tabular-nums" style={ { fontSize: '0.58rem', color: 'var(--accent-amber)', fontWeight: 700, marginRight: '4px' } } title="Win Prob (Bounty Weight)">
-                      W: { ( r.winProb * 100 ).toFixed( 1 ) }%
-                    </span>
-                  ) }
-                  <span className={ styles.calcResultChips }>
-                    { chipPercent.toFixed( 1 ) }% chips
-                  </span>
-                  <span className={ styles.calcResultEquity }>
-                    <AnimatedNumber value={ equityPKO } suffix="%" />
-                  </span>
-                  <span className={ `${styles.calcResultDelta} ${deltaClass}` }>
-                    { deltaSign }{ delta.toFixed( 1 ) }%
-                  </span>
+      <div className="pt-10 border-t border-white/5 flex flex-col gap-8">
+         <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-1 p-6 bg-black/40 border border-white/5 rounded-3xl shadow-inner space-y-4">
+                <div className="flex justify-between items-center">
+                    <span className="text-[0.6rem] font-black text-text-muted uppercase tracking-widest">Resumo de Equidade</span>
+                    {isCalculatingICM && <div className="w-2 h-2 rounded-full bg-accent-indigo animate-ping" />}
                 </div>
-              </div>
-              {/* Barras: cinza = fichas, indigo = ICM/PKO */ }
-              <div className={ styles.calcResultBarContainer }>
-                <div
-                  className={ styles.calcResultBarChips }
-                  style={ { width: `${chipPercent}%` } }
-                />
-                <div
-                  className={ styles.calcResultBarEquity }
-                  style={ {
-                    width: `${equityPKO}%`,
-                    opacity: isHero ? 1 : 0.8,
-                    background: pkoValue > 0 ? 'linear-gradient(90deg, var(--accent-indigo), var(--accent-amber))' : 'var(--accent-indigo)'
-                  } }
-                />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-black/60 p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
+                        <span className="text-[0.5rem] text-text-darker uppercase font-black tracking-widest">Variação Bubble Factor</span>
+                        <div className={`text-xl font-black font-mono tracking-tighter ${bfRangeColor}`}>{ bfRange }</div>
+                    </div>
+                    <div className="bg-black/60 p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
+                        <span className="text-[0.5rem] text-text-darker uppercase font-black tracking-widest">Urgência de Sobrevivência</span>
+                        <div className="text-xl font-black font-mono tracking-tighter text-white">Alta</div>
+                    </div>
+                </div>
             </div>
-          );
-        } ) }
+            
+            { icmInsight && (
+                <div className="flex-1 p-6 bg-accent-indigo/5 border border-accent-indigo/10 rounded-3xl flex items-start gap-4">
+                    <i className="fa-solid fa-lightbulb text-accent-indigo-light text-lg mt-1" />
+                    <p className="text-[0.7rem] text-text-muted leading-relaxed m-0 font-medium">
+                        <strong className="text-white uppercase tracking-widest text-[0.6rem] block mb-2">ICM Insight SOTA</strong>
+                        { icmInsight }
+                    </p>
+                </div>
+            ) }
+         </div>
 
-        {/* Insight ICM vs ChipEV */ }
-        { icmInsight && (
-          <div className={ styles.calcInsightBox }>
-            <i className={ `fa-solid fa-lightbulb ${styles.calcInsightIcon}` } />
-            { icmInsight }
-          </div>
-        ) }
+         <div className="overflow-x-auto scrollbar-hide">
+            <table className="w-full border-collapse">
+                <thead>
+                    <tr className="border-b border-white/5">
+                        <th className="px-4 py-4 text-left text-[0.6rem] font-black text-text-dim uppercase tracking-widest">Jogador</th>
+                        <th className="px-4 py-4 text-right text-[0.6rem] font-black text-text-dim uppercase tracking-widest w-24">Stack (BB)</th>
+                        <th className="px-4 py-4 text-right text-[0.6rem] font-black text-text-dim uppercase tracking-widest w-24">Prop. (%)</th>
+                        <th className="px-4 py-4 text-right text-[0.6rem] font-black text-text-dim uppercase tracking-widest w-24">ICM Eq (%)</th>
+                        <th className="px-4 py-4 text-right text-[0.6rem] font-black text-text-dim uppercase tracking-widest w-24">Delta</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                    { results.map( r => {
+                        const player = players.find( p => p.id === r.id );
+                        const chipPct = player ? ( player.stack / totalChips ) * 100 : 0;
+                        const delta = r.equityPercent - chipPct;
+                        return (
+                            <tr key={ r.id } className={`group transition-colors ${heroId === r.id ? 'bg-accent-indigo/5' : 'hover:bg-white/5'}`}>
+                                <td className="px-4 py-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-1.5 h-1.5 rounded-full ${heroId === r.id ? 'bg-accent-indigo' : 'bg-text-darker'}`} />
+                                        <span className="text-[0.75rem] font-bold text-text-light">{ r.name }</span>
+                                    </div>
+                                </td>
+                                <td className="px-4 py-4 text-right font-mono text-[0.75rem] text-text-dim">{ player?.stack.toFixed( 1 ) }</td>
+                                <td className="px-4 py-4 text-right font-mono text-[0.75rem] text-text-darker">{ chipPct.toFixed( 1 ) }%</td>
+                                <td className="px-4 py-4 text-right font-mono text-[0.8rem] font-black text-white">
+                                    <AnimatedNumber value={ r.equityPercent } decimals={ 2 } />%
+                                </td>
+                                <td className={`px-4 py-4 text-right font-mono text-[0.75rem] font-black ${delta >= 0 ? 'text-accent-emerald' : 'text-accent-danger'}`}>
+                                    { delta >= 0 ? '+' : '' }{ delta.toFixed( 1 ) }%
+                                </td>
+                            </tr>
+                        );
+                    } ) }
+                </tbody>
+            </table>
+         </div>
+
+         <div className={ `mt-4 transition-[opacity,filter,transform] duration-300 ${ isCalculatingICM ? 'opacity-50 blur-[1px] scale-[0.99]' : 'opacity-100 blur-none scale-100' }` }>
+            <InsolvencyRioPanel insolvency={ insolvency } isCalculating={ wasmContext?.isCalculatingInsolvency ?? false } />
+         </div>
       </div>
     </div>
   );

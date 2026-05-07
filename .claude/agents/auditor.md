@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @auditor
+# Identidade e Escopo: @auditor
 
 **Cor Emblematica:** `indian_red` | **Motor Base:** `gemini-2.5-pro` 
 

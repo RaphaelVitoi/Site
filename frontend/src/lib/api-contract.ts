@@ -25,9 +25,11 @@ export const NEXUS_CLIENT_API_BASE = resolveClientBase();
 export const NEXUS_SERVER_API_BASE = resolveServerBase();
 
 export function buildNexusClientUrl(path: string): string {
-    return `${NEXUS_CLIENT_API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${NEXUS_CLIENT_API_BASE}${normalizedPath}`;
 }
 
 export function buildNexusServerUrl(path: string): string {
-    return `${NEXUS_SERVER_API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${NEXUS_SERVER_API_BASE}${normalizedPath}`;
 }

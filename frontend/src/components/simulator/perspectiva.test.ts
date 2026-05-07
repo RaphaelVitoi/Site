@@ -72,7 +72,7 @@ describe( 'calculatePerspectivaVitoi - Validação de Teoremas SOTA (D1 a D6)', 
         expect( resShort.amortizedEdge ).toBeLessThan( resDeep.amortizedEdge );
     } );
 
-    it( 'Teorema D5: Teto de Nash de 41% — Invariância estrutural sob pressão extrema', () => {
+    it( 'Teorema D5: Teto de Nash Orgânico — Invariância estrutural sob pressão extrema (Sem Hard-cap)', () => {
         // Cenário de pressão absurda: Pote minúsculo, investimento gigante (Sunk Cost), BF alto
         const extremeInput: PerspectivaInput = {
             ...baseInput,
@@ -83,8 +83,10 @@ describe( 'calculatePerspectivaVitoi - Validação de Teoremas SOTA (D1 a D6)', 
 
         const res = calculatePerspectivaVitoi( extremeInput );
 
-        // Mesmo com pressão infinita, o teto não deve ultrapassar 41%
-        expect( ( res as any ).threshEq ).toBeLessThanOrEqual( 0.41 );
+        // O teto agora flui organicamente pela equação, compensando RIO e Passivo,
+        // sem a necessidade de travas artificiais (estabilizando tipicamente < 50%).
+        expect( ( res as any ).threshEq ).toBeLessThanOrEqual( 0.5 );
+        expect( ( res as any ).threshEq ).toBeGreaterThan( 0 );
     } );
 
     it( 'Teorema D6: Alerta de Pot Entrapment Severo', () => {

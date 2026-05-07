@@ -14,7 +14,7 @@ $RawProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $ProjectRoot = (Get-Item $RawProjectRoot).FullName
 
 # Valida que o ProjectRoot resolve corretamente e contem o arquivo do.ps1
-if (-not (Test-Path (Join-Path $ProjectRoot 'do.ps1'))) {
+if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'do.ps1'))) {
     Write-Error "ProjectRoot invalido ou incompleto: '$ProjectRoot'. Certifique-se de que o script esta em scripts\setup e o arquivo do.ps1 existe na raiz."
     exit 1
 }
@@ -23,12 +23,12 @@ Write-Host "[SOTA] ProjectRoot ancorado: $ProjectRoot" -ForegroundColor DarkCyan
 
 # Cria diretorio do profile se nao existir
 $ProfileDir = Split-Path $ProfilePath
-if (-not (Test-Path $ProfileDir)) {
+if (-not (Test-Path -LiteralPath $ProfileDir)) {
     New-Item -ItemType Directory -Path $ProfileDir -Force | Out-Null
 }
 
 # Backup do perfil anterior
-if (Test-Path $ProfilePath) {
+if (Test-Path -LiteralPath $ProfilePath) {
     Copy-Item -Path $ProfilePath -Destination "$ProfilePath.bak" -Force
     Write-Host "[INFO] Backup salvo em: $ProfilePath.bak" -ForegroundColor DarkCyan
 }
@@ -39,7 +39,7 @@ $Template = @'
 
 # === START NEXUS SYSTEM ENVIRONMENT ===
 $Global:NexusProjectRoot = "__PROJECT_ROOT__"
-$Global:NexusPythonExe = if (Test-Path "$Global:NexusProjectRoot\.venv\Scripts\python.exe") { "$Global:NexusProjectRoot\.venv\Scripts\python.exe" } else { "python.exe" }
+$Global:NexusPythonExe = if (Test-Path -LiteralPath "$Global:NexusProjectRoot\.venv\Scripts\python.exe") { "$Global:NexusProjectRoot\.venv\Scripts\python.exe" } else { "python.exe" }
 
 # SOTA: Suspensao do OneDrive disparada pela instanciacao do VSCode
 if ($env:TERM_PROGRAM -eq 'vscode') {
@@ -164,37 +164,30 @@ function stop-worker {
     Write-Host "[SOTA] Paralisando o Orquestrador Hibrido..." -ForegroundColor Yellow
     $PidFilePath = Join-Path $Global:NexusProjectRoot ".nexus_worker.pid"
 
-    if (Test-Path $PidFilePath) {
+    if (Test-Path -LiteralPath $PidFilePath) {
         try {
-            $rawPid = Get-Content $PidFilePath -Raw
+            $rawPid = (Get-Content -LiteralPath $PidFilePath -Raw).Trim()
             if ($rawPid -match '^\d+$') {
                 $workerPid = [int]$rawPid
-                $process = Get-Process -Id $workerPid -ErrorAction Ignore
+                $process = Get-Process -Id $workerPid -ErrorAction SilentlyContinue
                 if ($process) {
-                    Write-Host "[INFO] Tentando parada graciosa (SIGINT) para o processo PID: $workerPid..." -ForegroundColor DarkGray
-                    try {
-                        # SOTA: Usa Stop-Process com timeout para garantir que o worker encerre os DB handles
-                        Stop-Process -Id $workerPid -ErrorAction Stop | Out-Null
-                        $process | Wait-Process -Timeout 10 -ErrorAction Stop
-                        Write-Host "[OK] Orquestrador SOTA offline (parada graciosa)." -ForegroundColor Green
-                    } catch {
-                        Write-Warning "[AVISO] Parada graciosa falhou ou demorou. Forçando o encerramento..."
-                        Stop-Process -Id $workerPid -Force -ErrorAction SilentlyContinue
-                        Write-Host "[OK] Orquestrador SOTA offline (parada forçada)." -ForegroundColor Green
-                    }
+                    Write-Host "[SEC] Obliterando processo Worker (PID $workerPid) com precisao cirurgica..." -ForegroundColor DarkGray
+                    Stop-Process -Id $workerPid -Force -ErrorAction SilentlyContinue
+                    $process | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue
+                    Write-Host "[OK] Orquestrador SOTA offline. (Friccao Zero)" -ForegroundColor Green
                 } else {
-                    Write-Warning "[AVISO] PID ($workerPid) encontrado em .nexus_worker.pid, mas o processo nao existe. Removendo arquivo obsoleto."
+                    Write-Host "[SEC] Worker (PID $workerPid) nao esta mais em execucao. Limpando artefato." -ForegroundColor DarkGray
                 }
             } else {
                 Write-Warning "[AVISO] Arquivo PID malformado. Removendo..."
             }
-            Remove-Item $PidFilePath -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $PidFilePath -Force -ErrorAction SilentlyContinue
         } catch {
-            Write-Error "Erro ao tentar parar o worker via PID: $_"
+            Write-Error "Erro ao tentar obliterar o worker via PID: $_"
         }
     }
     else {
-        Write-Host "[INFO] Nenhum arquivo PID encontrado. Assumindo que o Orquestrador SOTA já está offline." -ForegroundColor DarkGray
+        Write-Host "[INFO] Arquivo PID ausente. Nenhum worker ativo detectado pela ancora." -ForegroundColor DarkGray
     }
 }
 
@@ -362,9 +355,9 @@ function nexus-watch { & "$Global:NexusProjectRoot\do.ps1" -Watch }
 function nexus-reflect { & "$Global:NexusProjectRoot\do.ps1" -Reflect }
 function nexus-map {
     $MapPath = Join-Path $Global:NexusProjectRoot "docs\SOTA_REFERENCE_ARCHITECTURE.md"
-    if (Test-Path $MapPath) {
+    if (Test-Path -LiteralPath $MapPath) {
         # Usa um pager para textos longos, se disponivel, ou apenas exibe.
-            Get-Content $MapPath
+            Get-Content -LiteralPath $MapPath
     } else {
         Write-Warning "O Mapa do Ecossistema (SOTA_REFERENCE_ARCHITECTURE.md) ainda nao foi gerado."
         Write-Host "Execute 'nexus-schedule' e aguarde o @organizador cria-lo, ou acione manualmente." -ForegroundColor Yellow
@@ -372,8 +365,8 @@ function nexus-map {
 }
 function nexus-scripts {
     $DashboardPath = Join-Path $Global:NexusProjectRoot "docs\SCRIPTS_E_COMANDOS_DASHBOARD.md"
-    if (Test-Path $DashboardPath) {
-            Get-Content $DashboardPath
+    if (Test-Path -LiteralPath $DashboardPath) {
+            Get-Content -LiteralPath $DashboardPath
     } else {
         Write-Warning "Dashboard de scripts/comandos nao encontrado."
     }

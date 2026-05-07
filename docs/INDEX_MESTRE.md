@@ -40,6 +40,7 @@
 
 ## 4. Relatórios de Auditoria
 
+- [`docs/audits/2026-05-05_pmlens_multiway_audit.md`](audits/2026-05-05_pmlens_multiway_audit.md) -> Auditoria PM Lens Multiway e Correções TS | STATUS: Concluído e SOTA-Compliant
 - [`docs/security/reports/2026-04-13-ia-integration-audit.md`](security/reports/2026-04-13-ia-integration-audit.md) -> Auditoria IA SOTA (GTO/CFR) 2026-04-13 | STATUS: APROVADO (Low Risk)
 - [`docs/reports/AUDITORIA_SISTEMA_20260328.md`](reports/AUDITORIA_SISTEMA_20260328.md) -> Auditoria completa 2026-03-28 | 42 itens | 10 problemas corrigidos | APROVADO
 - [`docs/reports/AUDITORIA_COMPLETA_20260320.md`](reports/AUDITORIA_COMPLETA_20260320.md) -> Auditoria full-stack 2026-03-20

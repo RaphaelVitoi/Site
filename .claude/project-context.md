@@ -52,8 +52,10 @@ O publico-alvo e composto por alunos, leitores e entusiastas das areas de Raphae
 
 * Ecossistema de agentes (19 entidades: Raphael + 18 Agentes IA) totalmente funcional e interconectado.
 * Arquitetura de Cerebro Hibrido ativa (IDE Assistant + Background Executor).
-* Ferramentas interativas (Toy-Games ICM V1) em producao. O Laboratorio de ICM Universal (V2) está com seu motor matemático sendo desenhado do zero para integrar o "Vetor de Manutenção de Monopólio".
-* Esquizofrenia Documental Curada: As menções fantasmas aos endpoints `/api/icm/evaluate` e `/api/fgs/projection` foram erradicadas após constatação de inexistência física.
+* SOTA v8.0 / Razor: Ecossistema otimizado para Windows com isolamento de extensões via venv dedicado, erradicando poluição de protocolo MCP.
+* MCP Connectivity: Restabelecida conexão com `geminiMediaServer` e `gemini-deep-research`. Ponte `nexus-sota-bridge` operacional.
+* Motor Matemático SOTA v4.2: Integridade validada com `mathematical-integrity.test.ts`. `nashDistortion.worker.ts` restaurado e funcional.
+* Esquizofrenia Documental Curada: As menções fantasmas aos endpoints `/api/icm/evaluate` e `/api/fgs/projection` foram erradicadas.
 * Fluxo de trabalho v6.4 "Quartetos Dinamicos & Economia Generalizada" ativo.
 * PROTOCOLO DE EXCLUSAO SEGURA implementado e ativo.
 * `.claude/GLOBAL_INSTRUCTIONS.md`: Confirmado presente e operacional em `C:\Users\Raphael\OneDrive\Documentos\Site\.claude\GLOBAL_INSTRUCTIONS.md`. A premissa de sua ausencia na tarefa TASK-20260329-093629-SUB-1 foi uma inconsistencia documental corrigida.
@@ -77,3 +79,4 @@ Em resposta a uma tentativa de comando destrutivo (`rm -rf /`), foi implementado
 | CHICO        | Auditoria SOTA Concluida            | 2026-03-20 | Infraestrutura legada aniquilada. Motor SQLite SOTA, OneDrive blindado e RAG Hibrido validados. Transicao para Fase de Produto.                                                                              |
 | @organizador | Inconsistencia Documental Corrigida | 2026-03-29 | Confirmada a presenca de GLOBAL_INSTRUCTIONS.md. A tarefa de localizacao/restauracao foi baseada em premissa incorreta.                                                                                      |
 | CHICO        | Expurgacao SOTA e Gatekeeper SSRF   | 2026-04-09 | Remocao das alucinacoes `/api/icm/evaluate` e `/api/fgs/projection`. Auditoria de seguranca aplicada em `/api/route.ts`. Consolidacao teorica do Vetor de Manutencao de Monopolio e Instabilidade da Margem. |
+| CHICO        | Otimização SOTA v8.0 / Razor        | 2026-05-06 | Restauração de conectividade MCP (Media, Research, Bridge). Correção de hooks React e restauração do motor de distorção Nash. Validação matemática completa via Jest.                                         |

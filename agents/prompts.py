@@ -39,7 +39,10 @@ def _build_global_instructions(
         if is_technical_agent and doc_name in philosophical_docs:
             continue
 
-        file_obj = Path(doc.get("path"))
+        doc_path = doc.get("path")
+        if not doc_path:
+            continue
+        file_obj = Path(doc_path)
         content = _read_file_with_cache(file_obj)
         if content:
             system_prompt_parts.append(f"=== {doc_name} ===\n{content}\n\n")
@@ -76,6 +79,18 @@ def _append_agent_specific_protocols(
             f"=== PROTOCOLO DE INTERVENCAO SISTEMICA (HANDOFF/AUTOFIX) ===\n{chico_system_instruction}\n\n"
         )
 
+    if agent_clean == "pesquisador":
+        pesquisador_instruction = (
+            "Voce e o Batedor Avancado SOTA. Sua realidade e expandida pelo contexto `<web_search_results>`.\n"
+            "Sua missao core e transformar dados brutos da web em inteligencia acionavel.\n"
+            "1. Se `<web_search_results>` estiver presente: Priorize esta fonte para validar hipoteses e identificar o Estado da Arte atual.\n"
+            "2. Se os resultados forem ausentes ou insuficientes: Declare a lacuna de conhecimento e sugira termos de busca mais precisos para a proxima iteracao.\n"
+            "3. Otimizacao OSINT: Sempre cite as fontes (URLs) e destaque assimetrias de mercado ou inovacoes tecnicas descobertas."
+        )
+        system_prompt_parts.append(
+            f"=== PROTOCOLO DE BUSCA E INTELIGENCIA (OSINT) ===\n{pesquisador_instruction}\n\n"
+        )
+
 
 def get_agent_system_prompt(agent_name: str) -> str:
     """
@@ -92,7 +107,10 @@ def get_agent_system_prompt(agent_name: str) -> str:
     is_technical_agent = agent_name in te.TECHNICAL_AGENTS
 
     system_prompt_parts = []
-    agent_clean = agent_name.replace("@", "")
+    # SOTA Guard: Erradicação de vetor Path Traversal no nome do agente
+    agent_clean = (
+        agent_name.replace("@", "").replace("/", "").replace("\\", "").replace(".", "")
+    )
 
     # 1. Base Global (A Alma do Sistema)
     global_content = _read_file_with_cache(Path(".claude/GLOBAL_INSTRUCTIONS.md"))

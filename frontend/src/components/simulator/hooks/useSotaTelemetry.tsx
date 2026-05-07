@@ -1,4 +1,4 @@
-﻿'use client';
+﻿﻿'use client';
 
 /**
  * IDENTITY: SOTA Telemetry Hook (Nervous System)
@@ -39,11 +39,7 @@ export function useSotaTelemetry( componentName: string ) {
             latency: 0 // Será calculado após a execução
         };
 
-        const result = await logTelemetryEvent( payload );
-
-        if ( !result.success ) {
-            console.warn( '[SOTA-TELEMETRY] Failed to persist event, but continuing for Zero Friction UX.' );
-        }
+        logTelemetryEvent( payload );
 
         const endTime = performance.now();
         const latency = endTime - startTime;
@@ -58,8 +54,6 @@ export function useSotaTelemetry( componentName: string ) {
                 metadata: { type: 'slow_persistence_warning' }
             } );
         }
-
-        return result;
     }, [physics, componentName] );
 
     return { track };

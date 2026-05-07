@@ -44,6 +44,9 @@ export interface ChipEvFreqs {
   oop_raise: number;
 }
 
+export type HeroPosition = 'IP' | 'SB' | 'BB';
+export type ActiveTool = 'scenario' | 'calculator' | 'matchup' | 'comparar' | 'perspectiva' | 'posflop';
+
 // Street pós-flop em que o cálculo de frequências ICM está sendo aplicado
 export type Street = 'flop' | 'turn' | 'river';
 
@@ -85,6 +88,13 @@ export interface IcmDistortionResult {
     oopRp: number;
     chipEvFreqs: ChipEvFreqs;
   };
+}
+
+// SOTA: Restrição e Ancoragem forçada do Motor de Distorção
+export interface NodelockConstraint {
+  type: 'block_bet' | 'overbet' | 'check_100';
+  sizePct: number; // ex: 0.20 para B20
+  freqOverride: number; // ex: 1.0 para Nodelock absoluto
 }
 
 // Cenário completo do simulador

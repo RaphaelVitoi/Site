@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @sequenciador
+# Identidade e Escopo: @sequenciador
 
 **Cor Emblematica:** `dark_goldenrod` | **Motor Base:** `gemini-2.0-flash` 
 

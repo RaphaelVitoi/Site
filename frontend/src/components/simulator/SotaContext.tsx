@@ -50,6 +50,7 @@ export interface ISotaMetricsContext
         isSolvent: boolean;
         isActionable: boolean;
     } | null;
+    predictiveProfile?: Record<string, number> | null;
 }
 
 // Contexto do Motor WASM / Equity (Muda frequentemente durante o cálculo - Fricção Zero)
@@ -63,9 +64,13 @@ export interface ISotaWasmContext
     dispatchIcmPerspectiva?: ( input: unknown, onResult: ( res: unknown ) => void ) => void;
 
     // SOTA: Matriz de Insolvência (WASM)
-    insolvencyMatrixData?: unknown[] | null;
+    insolvencyMatrixData?: import('./hooks/useQuantumEngine').InsolvencyMetrics | null;
     isCalculatingInsolvency?: boolean;
-    dispatchInsolvencyMatrix?: ( villainRange: string, board: string, rpFactor: number, heroInvested: number, currentPot: number, activePlayers: number ) => void;
+    dispatchInsolvencyMatrix?: ( villainRange: string, board: string, rpFactor: number, heroInvested: number, currentPot: number, activePlayers: number, kappaOverride?: number, heroRange?: string, betSizing?: number ) => void; // NOSONAR
+
+    // SOTA: Distorção de Nash e Despacho ICM (WASM)
+    nashResults?: import('./hooks/useQuantumEngine').NashDistortionResults | null;
+    dispatchIcmDistortion?: ( payload: import('./hooks/useQuantumEngine').DistortionPayload ) => void;
 }
 
 export const SotaSpotContext = createContext<ISotaSpotContext | null>( null );

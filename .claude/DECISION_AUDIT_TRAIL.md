@@ -7,3 +7,4 @@
 | DAT-002 | 2026-03-14 | Roteamento Next.js 15 Async Params | Raphael (CEO) | Evitar runtime errors no Vercel causados pelo novo SOTA do Next. | @architect |
 | DAT-003 | 2026-03-15 | Implementacao de Quartetos de LLM | @maverick | Otimizar latencia e custo sem perder inteligencia cognitiva. | CHICO |
 | DAT-004 | 2026-03-15 | Conclusao do Plano 10/10 | Raphael (CEO) | O projeto exigia a eliminacao de todas as pendencias e minor gaps para atingir a perfeicao documental e operacional. | @maverick, CHICO |
+| DAT-005 | 2026-05-06 | Isolamento de Extensões via Venv | CHICO | Protocolo MCP estava corrompido por poluição no stdout das ferramentas. O uso de venvs dedicados e --quiet limpa o canal de comunicação. | @maverick, @architect |

@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @implementor
+# Identidade e Escopo: @implementor
 
 **Cor Emblematica:** `spring_green4` | **Motor Base:** `gemini-2.5-pro` 
 

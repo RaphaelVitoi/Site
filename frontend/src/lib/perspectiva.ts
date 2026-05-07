@@ -22,6 +22,7 @@ export type StackTier = 'micro' | 'short' | 'mid' | 'big' | 'chipleader';
 export interface PerspectivaResult
 {
   // Layer 1: ICMev (Snapshot)
+  handEquity: number;
   currentEquityPct: number;
   deltaWinPct: number;
   deltaLosePct: number;
@@ -47,7 +48,7 @@ export interface PerspectivaResult
   // Metadados
   isActionBetterThanFold: boolean;
   diagnostico: string;
-  bountyPower?: number;
+  bountyPower: number;
 
   // Detalhes posicionais (M-H)
   currentMapaICM: number[];
@@ -181,25 +182,23 @@ export function classifyTier ( stack: number, stacks: number[] ): StackTier
 
 function _buildSimulatedStacks ( stacks: number[], heroIdx: number, villainIdx: number, potSize: number, heroCost: number )
 {
-  const stacksWin = stacks.map( ( s, i ) => ( i === heroIdx ? ( s || 0 ) + potSize : ( s || 0 ) ) );
-  const stacksLose = stacks.map( ( s, i ) =>
-  {
-    if ( i === heroIdx ) return Math.max( 0, ( s || 0 ) - heroCost );
-    if ( i === villainIdx ) return ( s || 0 ) + potSize + heroCost;
-    return ( s || 0 );
-  } );
-  const stacksFold = stacks.map( ( s, i ) =>
-  {
-    if ( i === heroIdx ) return Math.max( 0, ( s || 0 ) - heroCost );
-    if ( i === villainIdx ) return ( s || 0 ) + potSize;
-    return ( s || 0 );
-  } );
+  const stacksWin = [...stacks];
+  stacksWin[ heroIdx ] = ( stacksWin[ heroIdx ] || 0 ) + potSize;
+
+  const stacksLose = [...stacks];
+  stacksLose[ heroIdx ] = Math.max( 0, ( stacksLose[ heroIdx ] || 0 ) - heroCost );
+  stacksLose[ villainIdx ] = ( stacksLose[ villainIdx ] || 0 ) + potSize + heroCost;
+
+  const stacksFold = [...stacks];
+  stacksFold[ heroIdx ] = Math.max( 0, ( stacksFold[ heroIdx ] || 0 ) - heroCost );
+  stacksFold[ villainIdx ] = ( stacksFold[ villainIdx ] || 0 ) + potSize;
+
   return { stacksWin, stacksLose, stacksFold };
 }
 
 function _calculateSnapshot ( input: PerspectivaInput, totalPrizes: number )
 {
-  const { stacks, prizes, heroIdx, villainIdx, potSize, heroCost, bountyValue = 0 } = input;
+  const { stacks, prizes, heroIdx, villainIdx, potSize, heroCost } = input;
   const current = calculateMapaICM( stacks, prizes );
   const currentEquity = current.equities[ heroIdx ] ?? 0;
   const currentEquityPct = ( currentEquity / totalPrizes ) * 100;
@@ -216,7 +215,7 @@ function _calculateSnapshot ( input: PerspectivaInput, totalPrizes: number )
     current,
     currentEquityPct,
     stacksWin,
-    deltaWinPct: ( ( winEq / totalPrizes ) * 100 + bountyValue ) - currentEquityPct,
+    deltaWinPct: ( ( winEq / totalPrizes ) * 100 ) - currentEquityPct, // PURE CHIP DELTA: Bounty isolado da base de ICM.
     deltaLosePct: ( ( loseEq / totalPrizes ) * 100 ) - currentEquityPct,
     deltaFoldPct: ( ( foldEq / totalPrizes ) * 100 ) - currentEquityPct,
     perspWin,
@@ -373,19 +372,23 @@ export function calculatePerspectivaVitoi ( input: PerspectivaInput ): Perspecti
   const baselineEquity = heroCost / ( potSize + heroCost );
   const bayesianWinProb = baselineEquity + kappa * ( winProb - baselineEquity );
 
-  // A EQUAÇÃO UNIFICADA: PM = [(Equity * R) * Valuation] - [EV_fold + RIO_mw]
-  // Aqui adaptada para os Deltas calculados. Valuation atua apenas sobre o ganho (evitando dupla contagem):
-  const expectativaReal = ( bayesianWinProb * deltaWinPct * R * valuation * fgsHealth ) + ( ( 1 - bayesianWinProb ) * deltaLosePct );
+  // A EQUAÇÃO UNIFICADA SOTA (Blindagem Dimensional)
+  // Fichas (Chips) sofrem inflacao nao-linear (Valuation, FGS). Cash (Bounty) possui utilidade estritamente linear.
+  const bountyValue = input.bountyValue ?? 0;
+  const chipExpectativa = ( bayesianWinProb * deltaWinPct * R * valuation * fgsHealth ) + ( ( 1 - bayesianWinProb ) * deltaLosePct );
+  const bountyExpectativa = bayesianWinProb * bountyValue * R; // Exige vitoria e Realizacao(R), mas imune a Valuation/FGS.
+  const expectativaReal = chipExpectativa + bountyExpectativa;
   const perspectivaPct = ( expectativaReal * amortizedEdge ) - ( dynamicEvFold + rioLiability );
 
   // SOTA: Cálculo do Teto de Nash (Equidade de Indiferença)
-  // PROVA MATEMÁTICA: Estruturalmente impossível necessitar > 41% no River em MTTs standard.
-  const denom = ( deltaWinPct * R * valuation * fgsHealth - deltaLosePct ) * amortizedEdge;
+  // OBSERVAÇÃO EMPÍRICA: A matemática raramente exige > 41% no River em MTTs reais.
+  // O motor permite que a equação defina o teto organicamente, sem hard-cap artificial.
+  const denom = ( deltaWinPct * R * valuation * fgsHealth - deltaLosePct + (bountyValue * R) ) * amortizedEdge;
   let threshEq = 0.5; // Fallback
   if ( Math.abs( denom ) > 1e-6 )
   {
     const rawThresh = ( dynamicEvFold + rioLiability - deltaLosePct * amortizedEdge ) / denom;
-    threshEq = Math.max( 0, Math.min( 0.41, rawThresh ) ); // Teto de Nash de 41%
+    threshEq = Math.max( 0, Math.min( 1, rawThresh ) ); // Deixa a matemática fluir organicamente
   }
 
   const potOddsPct = ( potSize / ( potSize + heroCost ) ) * 100;
@@ -399,12 +402,14 @@ export function calculatePerspectivaVitoi ( input: PerspectivaInput ): Perspecti
   const diagnostico = _buildDiagnostico( perspectivaPct, rioLiability, payjumpBonus, edgePenalty, input.investidoAcumulado, stackHero, kappa );
 
   return {
+    handEquity: bayesianWinProb,
     currentEquityPct, deltaWinPct, deltaLosePct, deltaFoldPct,
     valuation, rioLiability,
     fgsHealth, survivalPressure, dynamicEvFold,
     perspectivaPct, amortizedEdge, ci, marginInstability,
     threshEq, // Novo: Equidade Limite Projetada
     realizationFactor: R,
+    bountyPower: bountyValue,
     isActionBetterThanFold: perspectivaPct > 0,
     diagnostico,
     currentMapaICM: current.positionProbs[ heroIdx ],
@@ -488,47 +493,45 @@ export function computeQuantumMetrics ( quantumPerspectiva: PerspectivaResult | 
 {
   if ( !quantumPerspectiva ) return { amortizedEdgeMultiplier: 1, rioMw: 0, adjustedEvFold: 0, esperanca: 0, expectativa: 0, perspectiva: 0, threshEq: null, ci: null, marginInstability: 0, isSolvent: false, isActionable: false };
 
-  // SOTA FIX: Normalização dimensional. currentEquityPct vem em base 100 (%), a matemática da probabilidade exige base 1 (0 a 1).
-  const rawEq = quantumPerspectiva.currentEquityPct ?? 50;
-  const eq = rawEq > 1 ? rawEq / 100 : rawEq;
+  // SOTA FIX: Dimensionalidade Restaurada e Coerência Teórica com o Core Engine.
+  const eq = quantumPerspectiva.handEquity ?? 0.5;
   const deltaWinPct = quantumPerspectiva.deltaWinPct ?? 0;
   const deltaLosePct = quantumPerspectiva.deltaLosePct ?? 0;
   const evFoldPct = quantumPerspectiva.dynamicEvFold ?? 0;
   const rFactor = quantumPerspectiva.realizationFactor ?? 1;
   const fgsHealth = quantumPerspectiva.fgsHealth ?? 1;
-  const deltaHabilidade = 50;
-  const sEff = Math.min( stacks[ 0 ] ?? 40, stacks[ 1 ] ?? 40 ); // SOTA: Auto-healing na inferência de stacks locais
-  const k = 0.05;
-  const baseRioPct = 0.15;
+  const valuation = quantumPerspectiva.valuation ?? 1;
+  const amortizedEdge = quantumPerspectiva.amortizedEdge ?? 1;
 
-  const amortizedEdgeMultiplier = 1 + ( ( deltaHabilidade / 100 ) * ( 1 - Math.exp( -k * sEff ) ) );
-  const adjustedDeltaWin = deltaWinPct * amortizedEdgeMultiplier;
+  const sEff = Math.min( stacks[ 0 ] ?? 40, stacks[ 1 ] ?? 40 );
 
   const opponents = Math.max( 1, activePlayers - 1 );
   // SOTA: Escalonamento Quadrático (x^2) para Multiway (Morte do Anti-Smoothing)
   const mwFactor = Math.pow( opponents, 2 );
+  const baseRioPct = 0.15;
   const baseRio = heroInvested * baseRioPct;
   const rioMw = baseRio * mwFactor;
 
-  // SOTA: O Fold não sofre RIO. O RIO é o passivo estrutural de continuar na mão.
-  // Aplicar RIO ao fold invertia a gravidade, mascarando o Pot Entrapment.
   const adjustedEvFold = evFoldPct;
 
-  const esperanca = ( eq * adjustedDeltaWin ) + ( ( 1 - eq ) * deltaLosePct );
-  const expectativa = ( eq * adjustedDeltaWin * rFactor * fgsHealth ) + ( ( 1 - eq ) * deltaLosePct );
+  const bountyPower = quantumPerspectiva.bountyPower ?? 0;
+  const chipEsperanca = ( eq * deltaWinPct ) + ( ( 1 - eq ) * deltaLosePct );
+  const esperanca = chipEsperanca + (eq * bountyPower);
+
+  const chipExpectativa = ( eq * deltaWinPct * rFactor * valuation * fgsHealth ) + ( ( 1 - eq ) * deltaLosePct );
+  const bountyExpectativa = eq * bountyPower * rFactor;
+  const expectativaReal = chipExpectativa + bountyExpectativa;
 
   // SOTA: Equação de Perspectiva Matemática (Diferencial de Abismo)
-  // PM = (Expectativa - RIO) - EV_Fold
-  const perspectiva = expectativa - rioMw - evFoldPct;
+  // PM = (Expectativa * Edge) - EV_Fold - RIO
+  const perspectiva = ( expectativaReal * amortizedEdge ) - ( evFoldPct + rioMw );
 
-  const denom = ( adjustedDeltaWin * rFactor * fgsHealth ) - deltaLosePct;
+  const denom = ( deltaWinPct * rFactor * valuation * fgsHealth - deltaLosePct + (bountyPower * rFactor) ) * amortizedEdge;
   let threshEq = null;
-  // SOTA: A Equidade Limite (Teto) DEVE subir para compensar o passivo do RIO.
-  // PROVA MATEMÁTICA: O Teto de Equidade no River sob Pressão de ICM é estruturalmente bloqueado em ~41%.
   if ( Math.abs( denom ) > 1e-6 )
   {
-    const rawThresh = ( evFoldPct + rioMw - deltaLosePct ) / denom;
-    threshEq = Math.max( 0, Math.min( 0.41, rawThresh ) ); // Teto de Nash travado em 41%
+    const rawThresh = ( evFoldPct + rioMw - deltaLosePct * amortizedEdge ) / denom;
+    threshEq = Math.max( 0, Math.min( 1, rawThresh ) ); // Teto livre
   }
 
   let ci = null;
@@ -538,7 +541,7 @@ export function computeQuantumMetrics ( quantumPerspectiva: PerspectivaResult | 
   const marginInstability = Math.max( 0.01, 1 / sEff ) * 100;
 
   return {
-    amortizedEdgeMultiplier, rioMw, adjustedEvFold, esperanca, expectativa, perspectiva, threshEq, ci, marginInstability,
+    amortizedEdgeMultiplier: amortizedEdge, rioMw, adjustedEvFold, esperanca, expectativa: expectativaReal, perspectiva, threshEq, ci, marginInstability,
     isSolvent: ci !== null && ci >= 1,
     isActionable: perspectiva > 0
   };

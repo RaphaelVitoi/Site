@@ -1,9 +1,12 @@
+import shutil
 import sys
 import zipfile
-import shutil
 from pathlib import Path
 
-def _process_media_files(docx_zip: zipfile.ZipFile, media_files: list, public_dir: Path) -> list:
+
+def _process_media_files(
+    docx_zip: zipfile.ZipFile, media_files: list, public_dir: Path
+) -> list:
     """Middleware isolado para purificacao e copia binaria SOTA."""
     extracted = []
     for item in media_files:
@@ -17,6 +20,7 @@ def _process_media_files(docx_zip: zipfile.ZipFile, media_files: list, public_di
             shutil.copyfileobj(source, target)
         extracted.append(filename)
     return extracted
+
 
 def extract_media(docx_path: str, slug: str):
     docx_file = Path(docx_path)
@@ -36,9 +40,9 @@ def extract_media(docx_path: str, slug: str):
     extracted_images = []
 
     try:
-        with zipfile.ZipFile(docx_file, 'r') as docx_zip:
+        with zipfile.ZipFile(docx_file, "r") as docx_zip:
             file_list = docx_zip.namelist()
-            media_files = [f for f in file_list if f.startswith('word/media/')]
+            media_files = [f for f in file_list if f.startswith("word/media/")]
 
             if not media_files:
                 print("[INFO] Nenhuma imagem encontrada no documento.")
@@ -46,13 +50,16 @@ def extract_media(docx_path: str, slug: str):
 
             extracted_images = _process_media_files(docx_zip, media_files, public_dir)
 
-        print(f"\n[SUCESSO] {len(extracted_images)} imagem(ns) extraída(s) com Fricção Zero!")
+        print(
+            f"\n[SUCESSO] {len(extracted_images)} imagem(ns) extraída(s) com Fricção Zero!"
+        )
         print("\n=== SINTAXE MARKDOWN SOTA PARA INJEÇÃO ===")
         for img in extracted_images:
             print(f"![Descrição do Gráfico](/images/aulas/{slug}/{img})")
 
     except zipfile.BadZipFile:
         print("[ERRO] O arquivo fornecido não é um .docx válido.")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:

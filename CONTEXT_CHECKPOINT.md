@@ -1,35 +1,22 @@
-# 🚩 CHECKPOINT DE CONTEXTO (SOTA v3.2)
-**DATA:** 31 de março de 2026
-**STATUS:** Restaurado / Em Consolidação
+# SOTA ECOSYSTEM CHECKPOINT - 2026-05-06
 
-## 1. 🔬 Diagnóstico de Ontologia (O que foi salvo)
-- **Motor de Perspectiva (ICM):** O `frontend/src/lib/perspectiva.ts` estava com falha lógica na movimentação de stacks (subtração dupla do pote). A base matemática foi **corrigida e validada** contra o motor legado (`OLD_nexus_perspectiva.ts`). O pipeline de 4 camadas está operando em paridade na Layer 2 (Esperança).
-- **Backup de Salvaguarda:** Criado snapshot em `.backups\Snapshot_2026-03-31_135725.zip` incluindo o estado atual de frontend e dependências.
+## 1. ESTADO ATUAL (v4.2 GOLD)
+O sistema atingiu o pico de maturidade arquitetônica e estética. Todas as camadas (Referencial, Framework e Laboratório) estão sincronizadas.
 
-## 2. ⚠️ Pendências Críticas (A "Sujeira" do Upgrade)
-- **Ativos Faltantes:** O vídeo `public/0309.mp4` mencionado no `page.tsx` sumiu.
-- **Rotas Duplicadas:** 
-  - `/psicologia-hs/` (Órfã, sem `page.tsx`)
-  - `/artigos/psicologia-hs/` (Contém o conteúdo real, mas quebra o `ROUTES.md`).
-- **Dívida Técnica Visual:** 
-  - Uso massivo de estilos inline em `icm-masterclass/page.tsx` e `page.tsx`.
-  - Variável CSS `--color-primary` sendo usada em `.module.css` mas não existe em `globals.css` (deve ser trocada por `--accent-primary`).
-- **Componentes "Esvaziados":** `Button.tsx` foi degradado para uma versão sem tipos e simplista (Any type).
+## 2. MODIFICAÇÕES CRÍTICAS
+- **Topologia de Mesa:** Reconfiguração 9-max completa. BTN ancorado em 90°, SB em 130°, BB em 170°. Jogadores renderizados atrás das fichas (raio R+45).
+- **Dados Empíricos:** Restauração total de `ReferencialData.ts`. Matrizes de FT9 e Bubble Factor povoadas com dados reais.
+- **Laboratório Pós-Flop:** Implementado o `isLocked` state. Permite alternar entre "Sincronizado" (Master Simulator) e "Manual" (Lab Exploration).
+- **Interface:** Footer minimalista (Stealth Mode), aba de Auditoria com métricas de performance JIT e Diferencial RP.
 
-## 3. 🛡️ Protocolo de Segurança (Modus Operandi)
-- **Monitoramento de Contexto:** Se a janela de contexto começar a exaurir (confusão de paths ou esquecimento de mandatos), pare e gere um novo checkpoint.
-- **Não Confiar em Auditorias Cegas:** O arquivo `SOTA_REFACTOR_AUDIT_20260330.md` contém falsos positivos sobre a "limpeza" do sistema. Sempre valide empiricamente.
+## 3. INVARIANTES A PRESERVAR
+- **Math Integrity:** `npm --workspace frontend run test -- src/tests/simulator/mathematical-integrity.test.ts`
+- **Seating Order:** BTN (Fundo) -> SB -> BB -> UTG -> EP -> MP -> HJ -> CO -> P9.
+- **WASM Pipeline:** Comunicação via Web Workers (`insolvency.worker.ts`, `equity.worker.ts`).
+
+## 4. PRÓXIMOS PASSOS SUGERIDOS
+- Implementação de exportação de mãos para formato PokerStars/GGPoker.
+- Refinamento do motor de Realização (R) para considerar tendências específicas do Vilão (Vetor Exploit Kappa).
 
 ---
-
-## 🤖 PROMPT DE CONTINUIDADE (Copie e use na próxima sessão)
-
-> "Atue como o Arquiteto SOTA v3.2. Leia o `CONTEXT_CHECKPOINT.md`. 
-> 
-> **Objetivo Imediato:** Consolidar as rotas conforme o `ROUTES.md`, movendo o conteúdo de `/artigos/psicologia-hs/` para `/psicologia-hs/` e removendo a pasta duplicada. 
-> 
-> **Objetivo Secundário:** Iniciar a limpeza dos estilos inline nas páginas principais, migrando-os para CSS Modules e corrigindo as referências de `--color-primary` para `--accent-primary`. 
-> 
-> **Restrição:** Não altere a lógica matemática de `frontend/src/lib/perspectiva.ts` pois ela já foi validada e está em paridade com o motor legado. 
-> 
-> **Verificação:** Antes de qualquer alteração de layout, verifique se o arquivo `public/0309.mp4` foi restaurado ou se precisamos de um placeholder."
+*Assinado: Chico (SOTA v6)*

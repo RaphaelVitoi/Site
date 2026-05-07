@@ -51,6 +51,87 @@ class MemoryRAG:
             embedding_function=self.emb_fn,  # type: ignore
         )
 
+    def _hard_split_sentence(
+        self, sentence: str, chunk_size: int, overlap: int
+    ) -> list[str]:
+        """Aplica quebra brusca com heuristica de espaco para strings sem pontuacao."""
+        chunks = []
+        start = 0
+        while start < len(sentence):
+            end = start + chunk_size
+            if end < len(sentence):
+                last_space = sentence.rfind(" ", start, end)
+                if last_space > start + (chunk_size // 2):
+                    end = last_space
+            chunks.append(sentence[start:end].strip())
+            start = end - overlap
+        return chunks
+
+    def _slide_buffer(
+        self,
+        buffer: list[str],
+        current_len: int,
+        next_len: int,
+        chunk_size: int,
+        overlap: int,
+    ) -> int:
+        """Ajusta o buffer de frases preservando a sobreposicao semantica."""
+        while buffer and current_len > overlap:
+            removed = buffer.pop(0)
+            current_len -= len(removed) + 1
+        if current_len + next_len + 1 > chunk_size:
+            buffer.clear()
+            current_len = 0
+        return current_len
+
+    def _handle_oversized_sentence(
+        self,
+        sentence: str,
+        chunks: list[str],
+        buffer: list[str],
+        chunk_size: int,
+        overlap: int,
+    ) -> int:
+        """Processa frases colossalmente longas e anexa ao resultado."""
+        if buffer:
+            chunks.append(" ".join(buffer))
+            buffer.clear()
+        chunks.extend(self._hard_split_sentence(sentence, chunk_size, overlap))
+        return 0
+
+    def _chunk_long_paragraph(
+        self, paragraph: str, chunk_size: int, overlap: int
+    ) -> list[str]:
+        """Processa paragrafos longos preservando integridade semantica de frases e formulas."""
+        sentences = paragraph.replace(". ", ".[SPLIT]").split("[SPLIT]")
+        chunks = []
+        buffer = []
+        current_len = 0
+
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if not sentence:
+                continue
+
+            if len(sentence) > chunk_size:
+                current_len = self._handle_oversized_sentence(
+                    sentence, chunks, buffer, chunk_size, overlap
+                )
+                continue
+
+            if current_len + len(sentence) + (1 if buffer else 0) > chunk_size:
+                chunks.append(" ".join(buffer))
+                current_len = self._slide_buffer(
+                    buffer, current_len, len(sentence), chunk_size, overlap
+                )
+
+            buffer.append(sentence)
+            current_len += len(sentence) + (1 if len(buffer) > 1 else 0)
+
+        if buffer:
+            chunks.append(" ".join(buffer))
+        return chunks
+
     def _chunk_text(
         self, text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP
     ) -> list[str]:
@@ -75,48 +156,7 @@ class MemoryRAG:
             if len(p) <= chunk_size:
                 all_chunks.append(p)
             else:
-                # Semantic Chunking: Preserva a integridade de formulas e raciocinios matematicos
-                sentences = p.replace(". ", ".[SPLIT]").split("[SPLIT]")
-                buffer = []
-                current_len = 0
-
-                for sentence in sentences:
-                    sentence = sentence.strip()
-                    if not sentence:
-                        continue
-
-                    if len(sentence) > chunk_size:
-                        if buffer:
-                            all_chunks.append(" ".join(buffer))
-                            buffer = []
-                            current_len = 0
-
-                        # Hard split com heuristica de espaco para nao amputar variaveis SOTA (ex: EV_fold)
-                        start = 0
-                        while start < len(sentence):
-                            end = start + chunk_size
-                            if end < len(sentence):
-                                last_space = sentence.rfind(" ", start, end)
-                                if last_space > start + (chunk_size // 2):
-                                    end = last_space
-                            all_chunks.append(sentence[start:end].strip())
-                            start = end - overlap
-                        continue
-
-                    if current_len + len(sentence) + (1 if buffer else 0) > chunk_size:
-                        all_chunks.append(" ".join(buffer))
-                        while buffer and current_len > overlap:
-                            removed = buffer.pop(0)
-                            current_len -= len(removed) + 1
-                        if current_len + len(sentence) + 1 > chunk_size:
-                            buffer = []
-                            current_len = 0
-
-                    buffer.append(sentence)
-                    current_len += len(sentence) + (1 if len(buffer) > 1 else 0)
-
-                if buffer:
-                    all_chunks.append(" ".join(buffer))
+                all_chunks.extend(self._chunk_long_paragraph(p, chunk_size, overlap))
 
         return all_chunks
 
@@ -164,7 +204,7 @@ class MemoryRAG:
             def _read_docx_sync():
                 from docx import Document  # type: ignore
 
-                doc = Document(file_path)
+                doc = Document(str(file_path))
                 return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
 
             try:
@@ -208,7 +248,9 @@ class MemoryRAG:
 
     async def _purge_obsolete_memories(self, all_generated_ids: set) -> None:
         try:
-            existing_data = await asyncio.to_thread(self.collection.get)
+            # SOTA Guard: include=[] previne OOM (Out of Memory) e colapso de I/O no SQLite.
+            # Extrai estritamente os IDs, barrando o carregamento dos vetores e textos na RAM.
+            existing_data = await asyncio.to_thread(self.collection.get, include=[])
             existing_ids = set(existing_data.get("ids", []))
             ids_to_delete = list(existing_ids - all_generated_ids)
             if ids_to_delete:
@@ -295,8 +337,10 @@ class MemoryRAG:
                         expanded_queries = json.loads(match.group(0))
                         if expanded_queries:
                             return [question] + expanded_queries
-                    except json.JSONDecodeError:
-                        pass
+                    except json.JSONDecodeError as e:
+                        logger.debug(
+                            f"[RAG] Falha ao decodificar JSON na expansao de query: {e}"
+                        )
         except Exception as e:  # noqa: BLE001
             logger.error(f"[RAG] Erro inesperado na expansao de query: {e}")
         return [question]  # Retorna a original em caso de falha
@@ -337,6 +381,50 @@ class MemoryRAG:
         scored_docs.sort(key=lambda x: x["score"], reverse=True)
         return scored_docs[:n_results]
 
+    def _process_query_result_row(
+        self,
+        docs_row: list[str],
+        metas_row: list,
+        dists_row: list[float],
+        unique_docs: dict,
+    ) -> None:
+        for j, doc in enumerate(docs_row):
+            current_meta = (
+                metas_row[j]
+                if metas_row and j < len(metas_row)
+                else {"agent": "Unknown", "source": "N/A"}
+            )
+            current_dist = dists_row[j] if dists_row and j < len(dists_row) else 0.0
+
+            if doc not in unique_docs:
+                unique_docs[doc] = {"meta": current_meta, "dist": current_dist}
+            else:
+                unique_docs[doc]["dist"] = min(unique_docs[doc]["dist"], current_dist)
+
+    def _flatten_and_deduplicate_results(
+        self, results: Any
+    ) -> tuple[list[str], list, list[float]]:
+        """SOTA: Achatamento e Deduplicacao Vetorial (Matriz Bidimensional)"""
+        res_docs = results.get("documents")
+        if not res_docs:
+            return [], [], []
+
+        unique_docs = {}
+        res_metas = results.get("metadatas") or []
+        res_dists = results.get("distances") or []
+
+        for i, docs_row in enumerate(res_docs):
+            if not docs_row:
+                continue
+            metas_row = res_metas[i] if i < len(res_metas) else []
+            dists_row = res_dists[i] if i < len(res_dists) else []
+            self._process_query_result_row(docs_row, metas_row, dists_row, unique_docs)
+
+        documents = list(unique_docs.keys())
+        metadatas = [val["meta"] for val in unique_docs.values()]
+        distances = [val["dist"] for val in unique_docs.values()]
+        return documents, metadatas, distances
+
     async def query_memory(
         self, question: str, n_results: int = 3, local_only: bool = False
     ) -> str:
@@ -352,21 +440,11 @@ class MemoryRAG:
                 include=["documents", "metadatas", "distances"],
             )
 
-            res_docs = results.get("documents")
-            if not res_docs or not res_docs[0]:
+            documents, metadatas, distances = self._flatten_and_deduplicate_results(
+                results
+            )
+            if not documents:
                 return ""
-
-            documents = res_docs[0]
-            res_metas = results.get("metadatas")
-            metadatas = (
-                res_metas[0]
-                if res_metas and res_metas[0]
-                else [{"agent": "Unknown", "source": "N/A"}] * len(documents)
-            )
-            res_dists = results.get("distances")
-            distances = (
-                res_dists[0] if res_dists and res_dists[0] else [0.0] * len(documents)
-            )
 
             top_docs = self._rank_documents(
                 question, documents, metadatas, distances, n_results

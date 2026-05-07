@@ -1,41 +1,78 @@
 # engine/math_rio.py
-from typing import Dict, List
+from typing import Any
 
-def calculate_rio_risk(pot_odds: float, hand_strength: float, structural_passivity: float) -> Dict[str, any]:
+
+def calculate_rio_risk(
+    hero_invested: float,
+    current_pot: float,
+    hero_raw_stack: float,
+    hero_position: str,
+    active_players: int,
+) -> dict[str, Any]:
     """
-    Calcula o risco de Reverse Implied Odds (RIO).
-    RIO_Risk = Structural_Passivity * (1 - Hand_Strength) / Pot_Odds
-    Se RIO_Risk > Threshold, a Perspectiva Matematica exige o Fold.
+    Calcula o risco de Reverse Implied Odds (RIO) usando a Lei Multiway SOTA.
+    O risco cresce quadraticamente com o numero de oponentes (Pot Entrapment).
     """
-    # Fator de punicao estrutural (passivo estrutural)
-    rio_factor = structural_passivity * (1.0 - hand_strength)
-    
-    # Ajuste por Pot Odds (quanto maior a pot odds, mais 'toleravel' e o RIO, mas ate certo ponto)
-    adjusted_risk = rio_factor / max(0.1, pot_odds)
-    
-    decision = "CALL" if adjusted_risk < 0.25 else "FOLD"
-    
+    opponents = max(1, active_players - 1)
+    rio_mw = hero_invested * 0.15 * (opponents**2)
+
+    bet_to_call = current_pot * 0.5
+    pot_entrapment = (hero_invested + bet_to_call) / max(0.1, hero_raw_stack)
+    downward_drift = 1.25 if hero_position in ["OOP", "BB", "SB"] else 0.85
+
+    rio_tension = min(1.0, (rio_mw / 100.0) + (pot_entrapment * downward_drift))
+    decision = "FOLD" if rio_tension > 0.6 else "CALL"
+
     return {
-        "rio_risk_score": round(adjusted_risk, 3),
-        "rio_factor": round(rio_factor, 3),
+        "rio_risk_score": round(rio_tension, 3),
+        "rio_factor": round(rio_mw, 3),
+        "pot_entrapment": round(pot_entrapment, 3),
         "decision": decision,
-        "rationale": f"Risco RIO de {adjusted_risk:.3f} detectado devido ao Passivo Estrutural."
+        "rationale": f"Tensao RIO de {rio_tension:.3f} detectada (Entrapment: {pot_entrapment:.2f}, Multiway: {active_players}p).",
     }
 
-def get_bb_vs_utg_rio_table() -> List[Dict[str, any]]:
+
+def get_bb_vs_utg_rio_table() -> list[dict[str, Any]]:
     """
     Gera a tabela de perigos de RIO para BB vs UTG.
     Baseado nos axiomas VITOI de Passivo Estrutural.
     """
     scenarios = [
-        {"hand": "KJo", "strength": 0.45, "odds": 4.0, "passivity": 0.8}, # Alta passividade (UTG range forte)
-        {"hand": "ATo", "strength": 0.52, "odds": 4.0, "passivity": 0.7},
-        {"hand": "76s", "strength": 0.38, "odds": 4.0, "passivity": 0.4},  # Baixa passividade (Hand limpa/conectada)
+        {
+            "hand": "KJo",
+            "invested": 2.0,
+            "pot": 5.5,
+            "stack": 30.0,
+            "pos": "OOP",
+            "players": 2,
+        },
+        {
+            "hand": "ATo",
+            "invested": 4.0,
+            "pot": 12.0,
+            "stack": 30.0,
+            "pos": "OOP",
+            "players": 3,
+        },  # Multiway perigoso
+        {
+            "hand": "76s",
+            "invested": 1.0,
+            "pot": 4.0,
+            "stack": 40.0,
+            "pos": "IP",
+            "players": 2,
+        },
     ]
-    
+
     results = []
     for s in scenarios:
-        risk = calculate_rio_risk(s["odds"], s["strength"], s["passivity"])
+        risk = calculate_rio_risk(
+            float(s["invested"]),
+            float(s["pot"]),
+            float(s["stack"]),
+            str(s["pos"]),
+            int(s["players"]),
+        )
         results.append({**s, **risk})
-        
+
     return results

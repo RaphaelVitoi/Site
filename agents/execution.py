@@ -32,6 +32,11 @@ from llm.budget import (
     WEB_SEARCH_CACHE_TTL,
     APIBudgetExhaustedError,
     APIKeysExhaustedError,
+    _block_key,
+    _is_key_blocked,
+    _key_fingerprint,
+    _key_identifier,
+    _rank_keys_by_health,
     web_search_cache,
 )
 from llm.orchestrator import _compress_context, call_llm_api
@@ -44,8 +49,26 @@ from utils.text import enforce_pure_ascii
 
 logger = logging.getLogger(__name__)
 
+# Mapeamento Global de Entidades SOTA
 AGENT_MAVERICK = "@maverick"
+AGENT_CHICO = "@chico"
+AGENT_ARCHITECT = "@architect"
+AGENT_PLANNER = "@planner"
 AGENT_DISPATCHER = "@dispatcher"
+AGENT_PESQUISADOR = "@pesquisador"
+AGENT_PROMPTER = "@prompter"
+AGENT_AUDITOR = "@auditor"
+AGENT_IMPLEMENTOR = "@implementor"
+AGENT_VERIFIER = "@verifier"
+AGENT_CURATOR = "@curator"
+AGENT_VALIDADOR = "@validador"
+AGENT_ORGANIZADOR = "@organizador"
+AGENT_SEQUENCIADOR = "@sequenciador"
+AGENT_SECURITYCHIEF = "@securitychief"
+AGENT_BIBLIOTECARIO = "@bibliotecario"
+AGENT_SKILLMASTER = "@skillmaster"
+AGENT_HISTORIAN = "@historian"
+
 WORKSPACE_ROOT = Path.cwd().resolve()
 ALLOWED_TASK_DOC_ROOTS = (
     WORKSPACE_ROOT / "docs",
@@ -119,7 +142,8 @@ def _resolve_allowed_task_doc_path(candidate: Path) -> Path | None:
 
 def _process_slug_docs(slug: str) -> str:
     docs = ""
-    task_dir = (WORKSPACE_ROOT / "docs" / "tasks" / slug).resolve(strict=False)
+    safe_slug = Path(slug).name
+    task_dir = (WORKSPACE_ROOT / "docs" / "tasks" / safe_slug).resolve(strict=False)
     try:
         task_dir.relative_to(WORKSPACE_ROOT / "docs" / "tasks")
     except ValueError:
@@ -159,7 +183,8 @@ def _inject_task_docs(task: Task) -> str:
 
 def _needs_web_search(agent: str, normalized_desc: str) -> bool:
     return (
-        _calculate_heuristic_score(
+        agent == AGENT_PESQUISADOR
+        or _calculate_heuristic_score(
             normalized_desc, te._heuristic_terms("research_terms")
         )
         > te.HEURISTIC_THRESHOLD
@@ -171,21 +196,21 @@ def _needs_web_search(agent: str, normalized_desc: str) -> bool:
             > te.HEURISTIC_THRESHOLD
         )
         or (
-            agent == "@bibliotecario"
+            agent == AGENT_BIBLIOTECARIO
             and _calculate_heuristic_score(
                 normalized_desc, te._heuristic_terms("web_infra_terms")
             )
             > te.HEURISTIC_THRESHOLD
         )
         or (
-            agent == "@chico"
+            agent == AGENT_CHICO
             and _calculate_heuristic_score(
                 normalized_desc, te._heuristic_terms("orchestration_terms")
             )
             > te.HEURISTIC_THRESHOLD
         )
         or (
-            agent in ("@validador", "@verifier", "@auditor")
+            agent in (AGENT_VALIDADOR, AGENT_VERIFIER, AGENT_AUDITOR)
             and _calculate_heuristic_score(
                 normalized_desc, te._heuristic_terms("domain_terms")
             )
@@ -194,35 +219,62 @@ def _needs_web_search(agent: str, normalized_desc: str) -> bool:
     )
 
 
-async def _fetch_web_search(task: Task, session) -> str:
+async def _fetch_web_search(task: Task, manager: QueueManager, session) -> str:
     web_context = ""
-    if TAVILY_KEYS:
-        logger.info(
-            f"[[{te._c(task.agent)}]{task.agent}[/]] [dim]Tentando provedor primario (Tavily)...[/]"
-        )
-        web_context = await call_tavily_search(
-            session, TAVILY_KEYS[0], task.description, max_results=3
-        )
+    
+    # SOTA: Rotacao de Chaves e Health Gate para Busca Web
+    tavily_keys = await _rank_keys_by_health("tavily", TAVILY_KEYS, manager)
+    for key in tavily_keys:
+        if await _is_key_blocked(_key_identifier("tavily", key)):
+            continue
+        
+        logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] [dim]Tentando busca via Tavily...[/]")
+        t0 = time.monotonic()
+        web_context = await call_tavily_search(session, key, task.description, max_results=3)
+        
+        latency_ms = int((time.monotonic() - t0) * 1000)
+        key_hash = _key_fingerprint("tavily", key)
+        
+        if web_context:
+            await manager.record_key_usage_metric("tavily", key_hash, "success", latency_ms, agent=task.agent, task_id=task.id)
+            return web_context
+        else:
+            await manager.record_key_usage_metric("tavily", key_hash, "error", latency_ms, agent=task.agent, task_id=task.id)
+            await _block_key(_key_identifier("tavily", key))
 
-    if not web_context and PERPLEXITY_KEYS:
-        logger.info(
-            f"[[{te._c(task.agent)}]{task.agent}[/]] [dim]Fallback para provedor secundario (Perplexity)...[/]"
-        )
-        web_context = await call_perplexity_search(
-            session, PERPLEXITY_KEYS[0], task.description
-        )
-    return web_context or ""
+    perplexity_keys = await _rank_keys_by_health("perplexity", PERPLEXITY_KEYS, manager)
+    for key in perplexity_keys:
+        if await _is_key_blocked(_key_identifier("perplexity", key)):
+            continue
+
+        logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] [dim]Fallback para Perplexity...[/]")
+        t0 = time.monotonic()
+        web_context = await call_perplexity_search(session, key, task.description)
+        
+        latency_ms = int((time.monotonic() - t0) * 1000)
+        key_hash = _key_fingerprint("perplexity", key)
+        
+        if web_context:
+            await manager.record_key_usage_metric("perplexity", key_hash, "success", latency_ms, agent=task.agent, task_id=task.id)
+            return web_context
+        else:
+            await manager.record_key_usage_metric("perplexity", key_hash, "error", latency_ms, agent=task.agent, task_id=task.id)
+            await _block_key(_key_identifier("perplexity", key))
+            
+    return ""
 
 
-async def _execute_web_search(task: Task) -> tuple[str, int]:
+async def _execute_web_search(task: Task, manager: QueueManager) -> tuple[str, int]:
     normalized_description = enforce_pure_ascii((task.description or "").lower())
 
+    # SOTA: Injeção de Diretivas via Metadados (Evita poluição da descrição original)
     if (
-        task.agent == "@verifier"
+        task.agent == AGENT_VERIFIER
         and task.metadata
         and task.metadata.get("priority") in ["high", "critical"]
     ):
-        task.description += "\n\n[DIRETRIZ DE AUDITORIA SOTA 8.0] Alem da validacao funcional, voce DEVE realizar uma busca externa..."
+        # Para o Verifier, mantemos no corpo pois ele precisa auditar a instrucao
+        task.description += "\n\n[DIRETRIZ DE AUDITORIA SOTA] Realize uma busca externa para validar a veracidade tecnica."
 
     if not (TAVILY_KEYS or PERPLEXITY_KEYS) or not _needs_web_search(
         task.agent, normalized_description
@@ -241,7 +293,7 @@ async def _execute_web_search(task: Task) -> tuple[str, int]:
                 f"[[{te._c(task.agent)}]{task.agent}[/]] [bold blue]WEB[/] Acionando busca web autonoma..."
             )
             session = await get_global_http_session()
-            web_context = await _fetch_web_search(task, session)
+            web_context = await _fetch_web_search(task, manager, session)
             if web_context:
                 web_search_cache[cache_key] = (web_context, time.monotonic())
 
@@ -448,9 +500,10 @@ def _assemble_prompt(
 
 def _read_agent_and_project_contexts(agent_clean: str) -> tuple[str, str]:
     agent_memory = ""
+    safe_agent = Path(agent_clean).name
 
     base_agent_dir = Path(".claude/agent-memory").resolve()
-    memory_file = (base_agent_dir / agent_clean / "MEMORY.md").resolve()
+    memory_file = (base_agent_dir / safe_agent / "MEMORY.md").resolve()
     if memory_file.exists() and memory_file.is_relative_to(base_agent_dir):
         agent_memory = _read_file_with_cache(memory_file) or ""
 
@@ -468,7 +521,7 @@ def _read_agent_and_project_contexts(agent_clean: str) -> tuple[str, str]:
 
 def _escalate_security_cognition(task: Task) -> None:
     priority = task.metadata.get("priority", "medium") if task.metadata else "medium"
-    if task.agent == "@securitychief" and priority in ["high", "critical"]:
+    if task.agent == AGENT_SECURITYCHIEF and priority in ["high", "critical"]:
         if task.metadata is None:
             task.metadata = {}
         task.metadata["model_override"] = "gemini-1.5-pro"
@@ -482,13 +535,13 @@ async def process_agent_task(
 ) -> str:
     """Motor de orquestracao SOTA descentralizado."""
     agent_clean = task.agent.replace("@", "")
-    strategic_agents = (AGENT_MAVERICK, "@pesquisador", "@architect")
+    strategic_agents = (AGENT_MAVERICK, AGENT_PESQUISADOR, AGENT_ARCHITECT)
     n_rag_results = 7 if task.agent in strategic_agents else 3
 
     agent_memory, project_context = _read_agent_and_project_contexts(agent_clean)
     task_docs = _inject_task_docs(task)
 
-    web_context, web_ms = await _execute_web_search(task)
+    web_context, web_ms = await _execute_web_search(task, manager)
     if web_ms > 0:
         timing_metrics["web_search_ms"] = web_ms
 
@@ -630,7 +683,7 @@ async def _handle_api_budget_exhaustion(
     notification_id = f"BUDGET-ALERT-{now.strftime('%Y%m%d')}"
     notification_desc = "ALERTA CRITICO: O orcamento diario de API foi esgotado. O sistema entrara em hibernacao ate o proximo ciclo."
     await _create_system_task(
-        manager, notification_id, notification_desc, "@chico", "critical"
+        manager, notification_id, notification_desc, AGENT_CHICO, "critical"
     )
     raise e
 
@@ -697,9 +750,6 @@ async def _handle_task_failure(
         resonance_id = f"RESONANCE-{task.id}"
         resonance_desc = f"[AUDITORIA FRACTAL | LEI ZERO]\nA tarefa '{task.id}' quebrou. Steelmaning do bug obrigatorio."
         await _create_system_task(
-            manager, resonance_id, resonance_desc, "@maverick", "high"
-        )
-        await _create_system_task(
             manager, resonance_id, resonance_desc, AGENT_MAVERICK, "high"
         )
 
@@ -719,7 +769,7 @@ async def _process_observers_and_handoff(task: Task, manager: QueueManager) -> N
     if not next_agent:
         return
 
-    if autonomy_mode == "partial" and next_agent == "@implementor":
+    if autonomy_mode == "partial" and next_agent == AGENT_IMPLEMENTOR:
         logger.info(
             f"[AUTONOMIA PARCIAL] Fluxo pausado. A etapa critica do {next_agent} exige comando manual."
         )
@@ -763,9 +813,10 @@ async def _notify_observers(task: Task, manager: QueueManager) -> None:
 
 def _save_task_result_sync(task_id: str, agent: str, response_text: str) -> None:
     """Descarrega a gravacao em disco do resultado para uma thread limpa."""
+    safe_task_id = Path(task_id).name
     result_dir = Path(".claude/task_results")
     result_dir.mkdir(parents=True, exist_ok=True)
-    with open(result_dir / f"{task_id}.md", "w", encoding="utf-8") as f:
+    with open(result_dir / f"{safe_task_id}.md", "w", encoding="utf-8") as f:
         f.write(f"# Resposta: {task_id} ({agent})\n\n{response_text}")
 
 
@@ -838,40 +889,6 @@ async def execute_task_workflow(task: Task, manager: QueueManager):
 
         if task.agent == AGENT_DISPATCHER:
             await _process_dispatcher_output(task, manager, response_text)
-
-        await manager.update_task_status(task.id, "completed")
-
-        try:
-            await asyncio.to_thread(
-                _set_task_completed_at_sync, manager.db_path, task.id
-            )
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"[SISTEMA] Falha ao registrar completedAt: {e}")
-
-        logger.info(
-            f"[bold green][OK] SIMETRIA ALCANCADA[/] [cyan]{task.id}[/] concluida por [{te._c(task.agent)}]{task.agent}[/]"
-        )
-
-        duration = time.time() - start_time
-        final_metadata: dict[str, Any] = {
-            "workflow_duration_ms": int(duration * 1000),
-            "workflow_status": "completed",
-        }
-        if modified_files:
-            final_metadata["files_changed"] = modified_files
-        final_metadata.update(timing_metrics)
-        await manager.update_task_metadata(task.id, final_metadata, merge=True)
-        write_economic_log(task, duration, "COMPLETED")
-
-        priority = (
-            task.metadata.get("priority", "medium") if task.metadata else "medium"
-        )
-        if priority in ["high", "critical"]:
-            send_toast(
-                f"Simetria ({priority.upper()})",
-                f"A tarefa critica foi concluida pelo {task.agent}.",
-                "success",
-            )
 
         await _finish_task_success(
             task, manager, start_time, modified_files, timing_metrics

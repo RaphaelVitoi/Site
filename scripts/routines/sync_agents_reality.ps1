@@ -17,7 +17,24 @@ if (-not (Test-Path $ManifestPath)) {
 $Manifest = Get-Content $ManifestPath -Raw | ConvertFrom-Json
 $AgentNames = $Manifest.PSObject.Properties.Name
 
+# SOTA: Resiliencia contra colisoes de I/O (Locks de VSCode, Antivirus, NexusFileWatcher)
+function Write-TextSOTA {
+    param([string]$Path, [string]$Content, [System.Text.Encoding]$Encoding)
+    for ($i = 0; $i -lt 5; $i++) {
+        try {
+            [System.IO.File]::WriteAllText($Path, $Content, $Encoding)
+            return
+        }
+        catch {
+            if ($i -eq 4) { throw }
+            Start-Sleep -Milliseconds 100
+        }
+    }
+}
+
 Write-Host '=== VERIFICANDO ALINHAMENTO FRACTAL DOS 18 AGENTES ===' -ForegroundColor Cyan
+
+$Utf8NoBom = New-Object System.Text.UTF8Encoding $false
 
 foreach ($Agent in $AgentNames) {
     $AgentProps = $Manifest.$Agent
@@ -28,10 +45,15 @@ foreach ($Agent in $AgentNames) {
     $MemoryDir = Join-Path $ProjectRoot ".claude\agent-memory\$Agent"
     $MemoryPath = Join-Path $MemoryDir 'MEMORY.md'
 
+    $AgentDir = Split-Path $AgentDocPath
+    if (-not (Test-Path $AgentDir)) {
+        New-Item -ItemType Directory -Path $AgentDir -Force | Out-Null
+    }
+
     # SOBRESCRITA SOTA: O Manifesto e a fonte absoluta. A identidade base SEMPRE e atualizada.
     $RoutingPattern = if ($AgentProps.routing_pattern) { $AgentProps.routing_pattern } else { 'N/A' }
     $Template = "# Identidade e Escopo: @$Agent`n`n**Cor Emblematica:** ``$Color`` | **Motor Base:** ``$Model`` `n`n$($AgentProps.identidade)`n`n## Competencias`n$($AgentProps.competencias)`n`n## Sinergia`n$($AgentProps.sinergia)`n`n## Gatilho de Roteamento (routing_pattern)`n``$RoutingPattern``"
-    Set-Content -Path $AgentDocPath -Value $Template -Encoding UTF8
+    Write-TextSOTA -Path $AgentDocPath -Content $Template -Encoding $Utf8NoBom
     Write-Host "[ + ] Identidade sincronizada para @$Agent" -ForegroundColor Green
 
     if (-not (Test-Path $MemoryDir)) {
@@ -40,7 +62,7 @@ foreach ($Agent in $AgentNames) {
 
     if (-not (Test-Path $MemoryPath)) {
         $MemTemplate = "# MEMORIA SIMBIOTICA - @$Agent`n`n> **Status:** Ativo e Otimizado (``$Model``) | **Aura:** ``$Color`` `n> **Padroes:** $($AgentProps.padroes)`n`n## Reflexoes e Insight SOTA`n- A aguardar a primeira interacao expansiva no novo Kernel.`n`n## Propostas Evolutivas`n- $($AgentProps.proposta)"
-        Set-Content -Path $MemoryPath -Value $MemTemplate -Encoding UTF8
+        Write-TextSOTA -Path $MemoryPath -Content $MemTemplate -Encoding $Utf8NoBom
         Write-Host "[ + ] Memoria base criada para @$Agent" -ForegroundColor Green
     }
 }

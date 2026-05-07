@@ -69,7 +69,7 @@ export class RiskGauge extends HTMLElement {
         `;
     }
 
-    render() {
+    render() { // NOSONAR
         const value = Number.parseFloat( this.getAttribute( 'value' ) );
         const label = this.getAttribute( 'label' ) || '--';
         const pos = this.getAttribute( 'pos' ) || '--';

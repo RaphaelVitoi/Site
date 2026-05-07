@@ -7,41 +7,61 @@
  * PRINCIPLE: Fricção Zero & Simetria (Sem scrollbars, máxima fluidez).
  */
 
-import {
-    calculateBayesianUpdate,
-    classifyVillainRandomForest,
-    generateGeometricPath,
-    simulateCfrRegretMatching,
-} from '@/lib/ai-models';
-import { useMemo, useState, useContext } from 'react';
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell, // NOSONAR
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    XAxis, YAxis
-} from 'recharts';
+import
+    {
+        calculateBayesianUpdate,
+        classifyVillainRandomForest,
+        generateGeometricPath,
+        simulateCfrRegretMatching,
+    } from '@/lib/ai-models';
+import { useMemo, useState, useContext, useEffect } from 'react';
+import
+    {
+        Cell, // NOSONAR
+        Pie,
+        PieChart,
+        PolarAngleAxis,
+        PolarGrid,
+        PolarRadiusAxis,
+        Radar,
+        RadarChart,
+        ResponsiveContainer,
+        Tooltip
+    } from 'recharts';
 import { SectionHeader } from '../ui/SectionHeader';
 import { useSotaSync } from './hooks/useSotaSync';
 import { SotaSpotContext } from './SotaContext';
 
-export function GtoCfrSimulator() {
+export function GtoCfrSimulator ()
+{
     const { physics, isHydrated } = useSotaSync();
     const spot = useContext( SotaSpotContext );
 
     const villainStats = useMemo( () => ( { vpip: 25, pfr: 20, agg: 3 } ), [] );
-    const [actionProb, setActionProb] = useState( { val: 0.7, blf: 0.3 } );
-    const [priorBelief, setPriorBelief] = useState( 0.3 );
+    const [ actionProb, setActionProb ] = useState( { val: 0.7, blf: 0.3 } );
+    const [ priorBelief, setPriorBelief ] = useState( 0.3 );
 
-    const COLORS = ['var(--accent-indigo)', 'var(--accent-emerald)', 'var(--accent-amber)', 'var(--accent-danger)'];
+    // SOTA: Debouncing de inputs de range para evitar colapso de UI em threads intensivas
+    const [ debouncedPrior, setDebouncedPrior ] = useState( 0.3 );
+    const [ debouncedBlf, setDebouncedBlf ] = useState( 0.3 );
+
+    useEffect( () =>
+    {
+        const handler = setTimeout( () =>
+        {
+            setDebouncedPrior( priorBelief );
+            setDebouncedBlf( actionProb.blf );
+        }, 150 );
+        return () => clearTimeout( handler );
+    }, [ priorBelief, actionProb.blf ] );
+
+    const COLORS = [ 'var(--accent-indigo)', 'var(--accent-emerald)', 'var(--accent-amber)', 'var(--accent-danger)' ];
 
     // Cálculos otimizados para Economia de Shannon (Antevisão Matemática)
-    const geometricPath = useMemo( () => generateGeometricPath( physics.pot, physics.heroStack, 3 ), [physics.pot, physics.heroStack] );
-    const posteriorBelief = useMemo( () => calculateBayesianUpdate( priorBelief, actionProb.val, actionProb.blf ), [priorBelief, actionProb] );
-    const cfrStrategy = useMemo( () => {
+    const geometricPath = useMemo( () => generateGeometricPath( physics.pot, physics.heroStack, 3 ), [ physics.pot, physics.heroStack ] );
+    const posteriorBelief = useMemo( () => calculateBayesianUpdate( debouncedPrior, actionProb.val, debouncedBlf ), [ debouncedPrior, actionProb.val, debouncedBlf ] );
+    const cfrStrategy = useMemo( () =>
+    {
         // SOTA: Sincronia com a Métrica Soberana (PM)
         const evs = {
             'FOLD': spot?.actionMetrics?.fold?.perspectiva ?? 0,
@@ -49,9 +69,9 @@ export function GtoCfrSimulator() {
             'RAISE (GTO)': spot?.actionMetrics?.raise?.perspectiva ?? 0
         };
         return simulateCfrRegretMatching( evs );
-    }, [spot?.actionMetrics] );
+    }, [ spot?.actionMetrics ] );
 
-    const archetype = useMemo( () => classifyVillainRandomForest( villainStats.vpip, villainStats.pfr, villainStats.agg, 'polarized' ), [villainStats] );
+    const archetype = useMemo( () => classifyVillainRandomForest( villainStats.vpip, villainStats.pfr, villainStats.agg, 'polarized' ), [ villainStats ] );
 
     if ( !isHydrated ) return null;
 
@@ -70,26 +90,27 @@ export function GtoCfrSimulator() {
                 <div className="glass-panel p-6 border-accent-indigo/10 flex flex-col gap-4">
                     <div className="flex justify-between items-start">
                         <h3 className="text-sm font-black text-text-bright uppercase tracking-widest flex items-center gap-2">
-                            <i className="fa-solid fa-route text-accent-indigo text-xs" />
-                            <span>A* Geometric</span>
+                            <i className="fa-solid fa-satellite-dish text-accent-indigo text-xs" />
+                            <span>Radar de A*</span>
                         </h3>
                         <span className="text-label text-accent-indigo/50">Optimal Sizing</span>
                     </div>
 
-                    <div className="h-40 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={ geometricPath }>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" vertical={ false } />
-                                <XAxis dataKey="street" hide />
-                                <YAxis hide domain={ [0, 'dataMax + 10'] } />
-                                <Bar dataKey="betSize" fill="var(--accent-indigo)" radius={ [4, 4, 0, 0] } />
-                            </BarChart>
+                    <div className="relative h-48 w-full min-h-48 mt-2">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={ 1 } minHeight={ 1 }>
+                            <RadarChart data={ geometricPath } cx="50%" cy="50%" outerRadius="70%">
+                                <PolarGrid stroke="rgba(255,255,255,0.1)" strokeDasharray="3 3" />
+                                <PolarAngleAxis dataKey="street" tick={{ fill: '#818cf8', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-mono)' }} />
+                                <PolarRadiusAxis angle={90} domain={[0, 'dataMax + 10']} tick={false} axisLine={false} />
+                                <Radar name="Bet Size" dataKey="betSize" stroke="var(--accent-indigo)" fill="var(--accent-indigo)" fillOpacity={0.4} strokeWidth={2} />
+                                <Tooltip contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '8px', fontSize: '10px' }} itemStyle={{ color: 'var(--accent-indigo)', fontWeight: 'bold' }} />
+                            </RadarChart>
                         </ResponsiveContainer>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2">
                         { geometricPath.map( ( node ) => (
-                            <div key={ `path-${node.street}` } className="bg-white/5 p-2 rounded-lg border border-white/5 text-center">
+                            <div key={ `path-${ node.street }` } className="bg-white/5 p-2 rounded-lg border border-white/5 text-center">
                                 <div className="text-[0.5rem] text-text-darker font-black uppercase tracking-tighter">{ node.street }</div>
                                 <div className="text-xs font-mono text-accent-indigo font-bold">{ node.betSize.toFixed( 1 ) }bb</div>
                             </div>
@@ -145,11 +166,11 @@ export function GtoCfrSimulator() {
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-8 items-center">
-                        <div className="w-32 h-32 shrink-0 relative">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="w-32 h-32 shrink-0 relative min-w-32 min-h-32">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={ 1 } minHeight={ 1 }>
                                 <PieChart>
                                     <Pie data={ cfrStrategy } innerRadius={ 35 } outerRadius={ 45 } paddingAngle={ 4 } dataKey="strategy" stroke="none">
-                                        { cfrStrategy.map( ( item, index ) => <Cell key={ `cell-${item.action}` } fill={ COLORS[index % COLORS.length] } /> ) }{/* NOSONAR */ }
+                                        { cfrStrategy.map( ( item, index ) => <Cell key={ `cell-${ item.action }` } fill={ COLORS[ index % COLORS.length ] } /> ) }{/* NOSONAR */ }
                                     </Pie>
                                 </PieChart>
                             </ResponsiveContainer>
@@ -159,17 +180,20 @@ export function GtoCfrSimulator() {
                         </div>
 
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-                            { cfrStrategy.map( ( item, index ) => (
-                                <div key={ `strat-${item.action}` } className="space-y-1">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[0.6rem] font-black text-text-muted font-mono uppercase tracking-tighter">{ item.action }</span>
-                                        <span className="text-[0.7rem] font-black text-text-bright">{ item.strategy.toFixed( 1 ) }%</span>
+                            { cfrStrategy.map( ( item, index ) => {
+                                const barProps = { style: { transform: `translateX(-${ 100 - item.strategy }%)`, backgroundColor: COLORS[ index % COLORS.length ] } };
+                                return (
+                                    <div key={ `strat-${ item.action }` } className="space-y-1">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[0.6rem] font-black text-text-muted font-mono uppercase tracking-tighter">{ item.action }</span>
+                                            <span className="text-[0.7rem] font-black text-text-bright">{ item.strategy.toFixed( 1 ) }%</span>
+                                        </div>
+                                        <div className="w-full h-1.5 bg-white/3 rounded-full overflow-hidden border border-white/5 relative">
+                                            <div className="absolute inset-0 w-full h-full transition-transform duration-1000 origin-left" {...barProps}></div>
+                                        </div>
                                     </div>
-                                    <div className="w-full h-1.5 bg-white/3 rounded-full overflow-hidden border border-white/5">
-                                        <div className="h-full rounded-full transition-all duration-1000" style={ { width: `${item.strategy}%`, backgroundColor: COLORS[index % COLORS.length] } }></div>
-                                    </div>
-                                </div>
-                            ) ) }
+                                );
+                            } ) }
                         </div>
                     </div>
                 </div>

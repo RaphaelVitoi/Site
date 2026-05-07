@@ -8,15 +8,15 @@ interface SniperBadgeProps {
   stackEff: number;
 }
 
-export function SniperBadge({ pm, ci, stackEff }: SniperBadgeProps) {
+export function SniperBadge({ pm, ci, stackEff }: Readonly<SniperBadgeProps>) {
   const isReady = pm > 0 && ci !== null && ci >= 1 && stackEff >= 20 && stackEff <= 50;
-  
+
   if (!isReady) return null;
 
   return (
-    <SotaTooltip 
-      title="Status: Sniper Ready" 
-      content="Ação validada pelo Protocolo Smart Sniper: Entrada tardia dentro da Zona de Domínio com solvência matemática confirmada." 
+    <SotaTooltip
+      title="Status: Sniper Ready"
+      content="Ação validada pelo Protocolo Smart Sniper: Entrada tardia dentro da Zona de Domínio com solvência matemática confirmada."
       theme="indigo"
     >
       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-emerald/10 border border-accent-emerald/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] animate-pulse">

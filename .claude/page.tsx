@@ -19,7 +19,7 @@ function getReadTime( text: string ): number {
 function getExcerpt( text: string ): string {
     if ( !text ) return '';
     // Limpeza de entropia do markdown para resumo limpo
-    const cleanText = text.replace( /[#*`_\[\]]/g, '' ).trim();
+    const cleanText = text.replaceAll( /[#*`_[\]]/g, '' ).trim();
     return cleanText.length > 140 ? cleanText.substring( 0, 140 ) + '...' : cleanText;
 }
 
@@ -37,8 +37,7 @@ export default async function BlogPage() {
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-6">
                         <span className="flex items-center gap-2 px-3 py-1 rounded-md bg-accent-indigo/10 border border-accent-indigo/20 text-[0.65rem] font-black text-accent-indigo-light uppercase tracking-widest font-mono">
-                            <span className="w-1.5 h-1.5 rounded-full bg-accent-indigo animate-pulse" />
-                            Sistema Cortex
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent-indigo animate-pulse" />{ ' ' }Sistema Cortex
                         </span>
                         <span className="text-[0.65rem] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">
                             Base de Conhecimento

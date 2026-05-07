@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @planner
+# Identidade e Escopo: @planner
 
 **Cor Emblematica:** `orange3` | **Motor Base:** `gemini-2.5-pro` 
 

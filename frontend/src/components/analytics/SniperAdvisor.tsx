@@ -7,7 +7,7 @@ interface SniperAdvisorProps {
   evLoss: number;
 }
 
-export function SniperAdvisor({ topVazamento, evLoss }: SniperAdvisorProps) {
+export function SniperAdvisor({ topVazamento, evLoss }: Readonly<SniperAdvisorProps>) {
   if (!topVazamento || evLoss === 0) return null;
 
   const getRecommendation = () => {
@@ -24,7 +24,7 @@ export function SniperAdvisor({ topVazamento, evLoss }: SniperAdvisorProps) {
   };
 
   return (
-    <GlassPanel className="p-8 border-accent-indigo/30 bg-gradient-to-r from-accent-indigo/10 to-transparent mb-8">
+    <GlassPanel className="p-8 border-accent-indigo/30 bg-linear-to-r from-accent-indigo/10 to-transparent mb-8">
       <div className="flex items-start gap-6">
         <div className="p-4 bg-accent-indigo/20 rounded-2xl">
           <i className="fa-solid fa-crosshairs text-3xl text-accent-indigo-light" />

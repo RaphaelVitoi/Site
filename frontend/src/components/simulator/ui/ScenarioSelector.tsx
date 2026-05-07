@@ -87,15 +87,21 @@ export default function ScenarioSelector ( {
                   title={ `${sc.name} — ${sc.narrativeSubtitle}` }
                 >
                   <div
-                    className={ `${styles.scenarioIconBox} ${isActive ? styles.scenarioIconBoxActive : ''}` }
+                    className={ `${styles.scenarioIconBox} ${isActive ? styles.scenarioIconBoxActive : ''} relative` }
                   >
                     <i className={ `fa-solid ${sc.icon}` } />
+                    {isActive && (
+                      <div className={styles.scenarioDots}>
+                        <div className={styles.aggressorDot} title="Agressor" />
+                        <div className={styles.defenderDot} title="Defensor" />
+                      </div>
+                    )}
                   </div>
                   <div className={`${styles.scenarioBtnText} min-w-0 flex-1`}>
-                    <span className={`${styles.scenarioBtnSub} truncate block`}>
+                    <span className={`${styles.scenarioBtnSub} block`}>
                       { sc.narrativeSubtitle }
                     </span>
-                    <span className={`${styles.scenarioBtnName} truncate block`}>
+                    <span className={`${styles.scenarioBtnName} block`}>
                       { sc.name }
                     </span>
                   </div>

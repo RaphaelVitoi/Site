@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @validador
+# Identidade e Escopo: @validador
 
 **Cor Emblematica:** `gold3` | **Motor Base:** `gemini-2.5-pro` 
 

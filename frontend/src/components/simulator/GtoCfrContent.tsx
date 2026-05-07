@@ -72,6 +72,10 @@ export function GtoCfrContent ( { initialState = DEFAULT_STATE }: GtoCfrContentP
         return { fold: 1 / 3, call: 1 / 3, raise: 1 / 3 };
     }, [ draft.fold, draft.call, draft.raise ] );
 
+    const foldProps = { style: { transform: `translateX(-${ 100 - (cfrStrategy.fold * 100) }%)` } };
+    const callProps = { style: { transform: `translateX(-${ 100 - (cfrStrategy.call * 100) }%)` } };
+    const raiseProps = { style: { transform: `translateX(-${ 100 - (cfrStrategy.raise * 100) }%)` } };
+
     return (
         <div className="space-y-16">
             {/* GLOBAL TOOLBAR: UNDO/REDO */ }
@@ -86,11 +90,11 @@ export function GtoCfrContent ( { initialState = DEFAULT_STATE }: GtoCfrContentP
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={ undo } disabled={ historyIndex === 0 } className="w-10 h-10 flex items-center justify-center bg-black/40 border border-white/5 rounded-xl text-text-muted hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Desfazer">
-                        <i className="fa-solid fa-rotate-left"></i>
+                    <button onClick={ undo } disabled={ historyIndex === 0 } aria-label="Desfazer alteração" className="w-10 h-10 flex items-center justify-center bg-black/40 border border-white/5 rounded-xl text-text-muted hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Desfazer">
+                        <i className="fa-solid fa-rotate-left" aria-hidden="true"></i>
                     </button>
-                    <button onClick={ redo } disabled={ historyIndex === history.length - 1 } className="w-10 h-10 flex items-center justify-center bg-black/40 border border-white/5 rounded-xl text-text-muted hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Refazer">
-                        <i className="fa-solid fa-rotate-right"></i>
+                    <button onClick={ redo } disabled={ historyIndex === history.length - 1 } aria-label="Refazer alteração" className="w-10 h-10 flex items-center justify-center bg-black/40 border border-white/5 rounded-xl text-text-muted hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Refazer">
+                        <i className="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -152,15 +156,15 @@ export function GtoCfrContent ( { initialState = DEFAULT_STATE }: GtoCfrContentP
                             <div className="space-y-5">
                                 <div>
                                     <div className="flex justify-between text-xs mb-1.5 font-mono font-bold"><span className="text-text-muted uppercase tracking-widest">Fold</span><span className="text-white">{ ( cfrStrategy.fold * 100 ).toFixed( 1 ) }%</span></div>
-                                    <div className="h-2 bg-bg-deep rounded-full overflow-hidden"><div className="h-full bg-text-darker transition-all duration-500 ease-out" style={ { width: `${ cfrStrategy.fold * 100 }%` } }></div></div>
+                                    <div className="h-2 bg-bg-deep rounded-full overflow-hidden relative"><div className="absolute inset-0 w-full h-full bg-text-darker transition-transform duration-500 ease-out origin-left" {...foldProps}></div></div>
                                 </div>
                                 <div>
                                     <div className="flex justify-between text-xs mb-1.5 font-mono font-bold"><span className="text-text-muted uppercase tracking-widest">Aposta Pequena / Call</span><span className="text-white">{ ( cfrStrategy.call * 100 ).toFixed( 1 ) }%</span></div>
-                                    <div className="h-2 bg-bg-deep rounded-full overflow-hidden"><div className="h-full bg-accent-emerald transition-all duration-500 ease-out shadow-[0_0_10px_rgba(52,211,153,0.5)]" style={ { width: `${ cfrStrategy.call * 100 }%` } }></div></div>
+                                    <div className="h-2 bg-bg-deep rounded-full overflow-hidden relative"><div className="absolute inset-0 w-full h-full bg-accent-emerald transition-transform duration-500 ease-out shadow-[0_0_10px_rgba(52,211,153,0.5)] origin-left" {...callProps}></div></div>
                                 </div>
                                 <div>
                                     <div className="flex justify-between text-xs mb-1.5 font-mono font-bold"><span className="text-text-muted uppercase tracking-widest">Aposta Grande / Raise</span><span className="text-white">{ ( cfrStrategy.raise * 100 ).toFixed( 1 ) }%</span></div>
-                                    <div className="h-2 bg-bg-deep rounded-full overflow-hidden"><div className="h-full bg-accent-rose transition-all duration-500 ease-out shadow-[0_0_10px_rgba(244,63,94,0.5)]" style={ { width: `${ cfrStrategy.raise * 100 }%` } }></div></div>
+                                    <div className="h-2 bg-bg-deep rounded-full overflow-hidden relative"><div className="absolute inset-0 w-full h-full bg-accent-rose transition-transform duration-500 ease-out shadow-[0_0_10px_rgba(244,63,94,0.5)] origin-left" {...raiseProps}></div></div>
                                 </div>
                             </div>
                             <p className="text-text-muted text-[0.65rem] text-center mt-4 border-t border-white/5 pt-4">

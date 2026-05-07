@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @bibliotecario
+# Identidade e Escopo: @bibliotecario
 
 **Cor Emblematica:** `light_sea_green` | **Motor Base:** `gemini-2.0-flash` 
 

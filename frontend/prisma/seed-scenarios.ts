@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 
-export async function seedScenarios( prisma: PrismaClient ) {
+export async function seedScenarios ( prisma: PrismaClient )
+{
     console.log( '[SEED] Injetando Cenários de Simulação...' );
 
     const defaultFreqs = JSON.stringify( {
@@ -26,21 +27,26 @@ export async function seedScenarios( prisma: PrismaClient ) {
             narrativeTitle: 'Colisão Simétrica SOTA',
             narrativeSubtitle: 'O Vácuo do ChipEV puro.',
             theory: '<p>Este cenário representa o equilíbrio em um ambiente sem pressão monetária (ChipEV). Ambos os jogadores possuem a mesma tolerância ao risco.</p>',
-            stacks: JSON.stringify( [40, 40] ),
-            prizes: JSON.stringify( [100] ),
+            stacks: JSON.stringify( [ 40, 40 ] ),
+            prizes: JSON.stringify( [ 100 ] ),
             ipPos: 'BTN',
             oopPos: 'BB',
             ipRp: 0,
             oopRp: 0,
             sprData: sprData,
             defaultStreetFreqs: defaultFreqs,
-            isPublished: true
+            isPublished: true,
+            exploit: JSON.stringify( [ "N/A (ChipEV Simétrico)" ] ),
+            verdict: "Equilíbrio Puro",
+            ipMorph: "Linear Padrão",
+            oopMorph: "Linear Padrão"
         }
     } );
-    console.log( `  [+] Cenário Base injetado: ${tg7.name}` );
+    console.log( `  [+] Cenário Base injetado: ${ tg7.name }` );
 
     const existingQuiz = await prisma.icmQuiz.findFirst( { where: { scenarioId: tg7.id } } );
-    if ( !existingQuiz ) {
+    if ( !existingQuiz )
+    {
         await prisma.icmQuiz.create( {
             data: {
                 scenarioId: tg7.id,
@@ -52,6 +58,6 @@ export async function seedScenarios( prisma: PrismaClient ) {
                 ] )
             }
         } );
-        console.log( `  [+] Quiz Visceral injetado para: ${tg7.name}` );
+        console.log( `  [+] Quiz Visceral injetado para: ${ tg7.name }` );
     }
 }

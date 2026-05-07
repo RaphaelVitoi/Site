@@ -66,13 +66,15 @@ export function solveIcmDistortion (
   const k_oop_raise = -9;
 
   // --- APLICACAO: DEFENSOR (OOP) ---
-  // OOP recebe pressão baseado em deltaRp (se positivo, IP pressiona OOP, Call sobe)
-  // Raise deve cair (comprime ambas as direções, abs)
-  const deltaCall = ( deltaRp > 0 ? ( deltaRp / 10 ) * k_oop_call : 0 );
+  // SOTA: O OOP sempre retrai o range de Call/Raise sob qualquer assimetria ICM.
+  // 1. Se deltaRp < 0 (OOP sob pressão): Aversão ao Risco reduz Call.
+  // 2. Se deltaRp > 0 (IP sob pressão): Risco de Ressurreição reduz Call (evitar dobrar o IP).
+  const absDelta = Math.abs( deltaRp );
+  const deltaCall = -Math.pow( absDelta / 10, bExponent ) * k_oop_call;
   const rawCall = Math.max( 0, chipEvFreqs.oop_call + deltaCall );
 
   const absRpRaise = Math.abs( deltaRp );
-  const deltaRaise = ( absRpRaise / 10 ) * k_oop_raise;
+  const deltaRaise = -Math.pow( absRpRaise / 10, bExponent ) * Math.abs( k_oop_raise );
   const rawRaise = Math.max( 0, chipEvFreqs.oop_raise + deltaRaise );
 
   const rawRaiseModulated = rawRaise * safeFactor;
@@ -89,11 +91,12 @@ export function solveIcmDistortion (
   const oopRaise: FreqResult = { center: raiseCenter, spread, delta: raiseCenter - chipEvFreqs.oop_raise };
 
   // --- APLICACAO: AGRESSOR (IP) ---
-  // IP recebe pressao baseada no Delta (se for negativo, OOP tem vantagem, bets sobem)
-  const deltaBetSmall = ( deltaRp / 10 ) * k_ip_bet_small;
+  // IP recebe pressao baseada no Delta (se for positivo, IP sob pressão, bets caem. se negativo, OOP sob pressão, bets sobem)
+  const signDelta = Math.sign( deltaRp ) || 1;
+  const deltaBetSmall = signDelta * Math.pow( absDelta / 10, bExponent ) * k_ip_bet_small;
   const rawBetSmall = Math.max( 0, chipEvFreqs.ip_bet_small + deltaBetSmall );
 
-  const deltaBetLarge = ( deltaRp / 10 ) * k_ip_bet_large;
+  const deltaBetLarge = signDelta * Math.pow( absDelta / 10, bExponent ) * k_ip_bet_large;
   const rawBetLarge = Math.max( 0, chipEvFreqs.ip_bet_large + deltaBetLarge );
 
   const rawSmallModulated = rawBetSmall * safeFactor;

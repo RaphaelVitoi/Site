@@ -23,7 +23,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Equilíbrio Linear',
     narrativeSubtitle: 'ChipEV Puro (Referencial 0)',
     icon: 'fa-gear', color: 'slate',
-    theory: `<p>Referencial zero. A utilidade das fichas é linear — cada chip vale exatamente 1 chip, sem assimetria. O MDF é cumprido com exatidão porque não há pressão externa. Todo desvio do Alpha (frequência mínima de defesa) é punido imediatamente pelo oponente racional: se você folda demais, ele blefa mais; se você defende demais, ele corta blefes.</p>`,
+    theory: `Referencial zero. A utilidade das fichas é linear — cada chip vale exatamente 1 chip, sem assimetria. O MDF é cumprido com exatidão porque não há pressão externa. Todo desvio do Alpha (frequência mínima de defesa) é punido imediatamente pelo oponente racional: se você folda demais, ele blefa mais; se você defende demais, ele corta blefes.`,
     exploit: [ 'Referencial Zero: Use para calibrar sua percepção básica.', 'Compare: qualquer cenário com RP > 0 mostra quanto o ICM distorce esse equilíbrio linear.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 0 }, { name: 'FLOP', potSize: 7.5, rpValue: 0 }, { name: 'TURN', potSize: 22.5, rpValue: 0 }, { name: 'RIVER', potSize: 67.5, rpValue: 0 } ],
     defaultStreetFreqs: {
@@ -46,7 +46,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Dogma do EV Fold = 0',
     narrativeSubtitle: 'ICM Tradicional',
     icon: 'fa-camera', color: 'blue',
-    theory: `<p>O ICM EV calcula o valor monetário da stack <em>como se o torneio terminasse agora</em>. É um snapshot financeiro — correto no instante, mas cego para o fluxo. Não captura o salto de blinds iminente, a posição na próxima mão, nem o impacto futuro de ganhar ou perder o pot. O EV_fold é tratado como zero, quando na realidade pode ser positivo (payjumps passivos) ou violentamente negativo (pot entrapment pós-flop). É a base necessária, mas insuficiente.</p>`,
+    theory: `O ICM EV calcula o valor monetário da stack <em>como se o torneio terminasse agora</em>. É um snapshot financeiro — correto no instante, mas cego para o fluxo. Não captura o salto de blinds iminente, a posição na próxima mão, nem o impacto futuro de ganhar ou perder o pot. O EV_fold é tratado como zero, quando na realidade pode ser positivo (payjumps passivos) ou violentamente negativo (pot entrapment pós-flop). É a base necessária, mas insuficiente.`,
     exploit: [ 'Identifique a Rigidez: O modelo ignora blinds subindo e posição futura.', 'O EV_fold nunca é zero em torneios — use o threshold correto.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 18.5 }, { name: 'FLOP', potSize: 7.5, rpValue: 14.2 }, { name: 'TURN', potSize: 22.5, rpValue: 8.4 }, { name: 'RIVER', potSize: 25, rpValue: 3.1 } ],
     defaultStreetFreqs: {
@@ -69,7 +69,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'A Assimetria de Sobrevivência',
     narrativeSubtitle: 'Mid vs Big Stack',
     icon: 'fa-scale-unbalanced', color: 'rose',
-    theory: `<p>O BTN (40bb, RP 21.4%) paga mais caro por cada erro do que o BB (55bb, RP 12.9%). A assimetria de ΔRP (+8.5pp a favor do BB) permite ao BB ser mais agressivo — ele pode absorver perdas que destruiriam o BTN. Os hero-bluffs do BTN custam mais em $EV do que valem: a agressão é estrangulada pelo próprio RP do agressor. O overfold do BTN não é fraqueza — é equilíbrio estrutural.</p>`,
+    theory: `O BTN (40bb, RP 21.4%) paga mais caro por cada erro do que o BB (55bb, RP 12.9%). A assimetria de ΔRP (+8.5pp a favor do BB) permite ao BB ser mais agressivo — ele pode absorver perdas que destruiriam o BTN. Os hero-bluffs do BTN custam mais em $EV do que valem: a agressão é estrangulada pelo próprio RP do agressor. O overfold do BTN não é fraqueza — é equilíbrio estrutural.`,
     exploit: [ 'Aceite o overfold estratégico como BTN.', 'Como BB: explore com thin value — o BTN não pode punir.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 12.9 }, { name: 'FLOP', potSize: 7.5, rpValue: 10.4 }, { name: 'TURN', potSize: 22.5, rpValue: 5.8 }, { name: 'RIVER', potSize: 40, rpValue: 2.6 } ],
     defaultStreetFreqs: {
@@ -92,7 +92,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'A Mútua Destruição Assegurada',
     narrativeSubtitle: 'Colisão de Gigantes',
     icon: 'fa-handshake', color: 'indigo',
-    theory: `<p>Vice CL (65bb, RP 24.5%) vs CL (70bb, RP 23.5%). Ambos carregam RP acima de 20% — zona onde 3-bets e overbets se tornam suicídio mútuo. A Perspectiva de ambos é alta; qualquer colisão all-in destrói a posição de quem perder e danifica a de quem ganhar (pelo Risco de Ressurreição do rival). O Pacto Silencioso é a passividade mútua racional: calls substituem raises, bets encolhem, e a guerra se limita a potes controlados.</p>`,
+    theory: `Vice CL (65bb, RP 24.5%) vs CL (70bb, RP 23.5%). Ambos carregam RP acima de 20% — zona onde 3-bets e overbets se tornam suicídio mútuo. A Perspectiva de ambos é alta; qualquer colisão all-in destrói a posição de quem perder e danifica a de quem ganhar (pelo Risco de Ressurreição do rival). O Pacto Silencioso é a passividade mútua racional: calls substituem raises, bets encolhem, e a guerra se limita a potes controlados.`,
     exploit: [ 'Supressão de 3-bet: Transforme valor em calls.', 'Small bets dominam — large bets são vetadas pelo RP mútuo.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 23.5 }, { name: 'FLOP', potSize: 8, rpValue: 22 }, { name: 'TURN', potSize: 24, rpValue: 14.7 }, { name: 'RIVER', potSize: 65, rpValue: 11.8 } ],
     defaultStreetFreqs: {
@@ -115,7 +115,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Peso de Agir Primeiro',
     narrativeSubtitle: 'A Dinâmica do Shove',
     icon: 'fa-fire-flame-curved', color: 'amber',
-    theory: `<p>O open-shove de 20bb não é apenas uma aposta — é uma <strong>transferência de peso volitivo</strong>. O agressor acopla Fold Equity ao RP e retira do BB a capacidade de re-agressão. O defensor colapsa para overfold matemático forçado pelo custo binário da eliminação. O BB (RP 19.5%) precisa de equity significativamente acima dos pot odds para justificar o call — o "fardo" do ICM é transferido inteiramente para quem defende.</p>`,
+    theory: `O open-shove de 20bb não é apenas uma aposta — é uma <strong>transferência de peso volitivo</strong>. O agressor acopla Fold Equity ao RP e retira do BB a capacidade de re-agressão. O defensor colapsa para overfold matemático forçado pelo custo binário da eliminação. O BB (RP 19.5%) precisa de equity significativamente acima dos pot odds para justificar o call — o "fardo" do ICM é transferido inteiramente para quem defende.`,
     exploit: [ 'Alpha Real: Expanda o range de shove até o teto matemático.', 'O defensor carrega o fardo — cada mão que ele folda é lucro estrutural.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 19.5 }, { name: 'FLOP', potSize: 7, rpValue: 13 }, { name: 'TURN', potSize: 14, rpValue: 5.5 }, { name: 'RIVER', potSize: 20, rpValue: 1.9 } ],
     defaultStreetFreqs: {
@@ -138,7 +138,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Colapso do MDF',
     narrativeSubtitle: 'Condensado vs Polar',
     icon: 'fa-heart-crack', color: 'sky',
-    theory: `<p>O CL (80bb, RP 4.5%) enfrenta o Mid (30bb, RP 22%). O MDF do Mid exigiria defesa de ~67% dos bluffs, mas sob RP de 22%, a defesa real colapsa. O Mid precisa de equity muito acima do breakeven para justificar calls — o "bluffcatcher" que em ChipEV seria lucrativo torna-se insolvente. O CL pode overbluffar sistematicamente porque o custo da perda para ele é mínimo (RP 4.5%) enquanto o custo do call para o Mid é catastrófico.</p>`,
+    theory: `O CL (80bb, RP 4.5%) enfrenta o Mid (30bb, RP 22%). O MDF do Mid exigiria defesa de ~67% dos bluffs, mas sob RP de 22%, a defesa real colapsa. O Mid precisa de equity muito acima do breakeven para justificar calls — o "bluffcatcher" que em ChipEV seria lucrativo torna-se insolvente. O CL pode overbluffar sistematicamente porque o custo da perda para ele é mínimo (RP 4.5%) enquanto o custo do call para o Mid é catastrófico.`,
     exploit: [ 'Overbluff Sistemático: o defensor é inelástico.', 'Thin value agressivo: o Mid não pode punir com raise.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 22 }, { name: 'FLOP', potSize: 8, rpValue: 16.4 }, { name: 'TURN', potSize: 24, rpValue: 5.3 }, { name: 'RIVER', potSize: 30, rpValue: 2.2 } ],
     defaultStreetFreqs: {
@@ -161,7 +161,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Minitorneio de Sobrevivência',
     narrativeSubtitle: 'Micro vs Micro',
     icon: 'fa-person-falling-burst', color: 'emerald',
-    theory: `<p>Dois micro-stacks (12bb e 10bb) com RP baixo (8.5% e 7.5%) — paradoxalmente, a Perspectiva deles é mínima a proteger. Mas gigantes na mesa (80bb, 70bb, 60bb) elevam o EV do fold: cada eliminação de outro short gera payjumps passivos sem investimento. O "minitorneio de sobrevivência" entre shorts não é sobre ganhar fichas — é sobre outlasting. Quem joga ChipEV aqui sangra equity sistêmica.</p>`,
+    theory: `Dois micro-stacks (12bb e 10bb) com RP baixo (8.5% e 7.5%) — paradoxalmente, a Perspectiva deles é mínima a proteger. Mas gigantes na mesa (80bb, 70bb, 60bb) elevam o EV do fold: cada eliminação de outro short gera payjumps passivos sem investimento. O "minitorneio de sobrevivência" entre shorts não é sobre ganhar fichas — é sobre outlasting. Quem joga ChipEV aqui sangra equity sistêmica.`,
     exploit: [ 'Cada vizinho moribundo que cai vale um payjump gratuito.', 'Evite colisões entre shorts — o EV do fold pode ser positivo.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 7.5 }, { name: 'FLOP', potSize: 6, rpValue: 4.5 }, { name: 'TURN', potSize: 10, rpValue: 1.5 }, { name: 'RIVER', potSize: 12, rpValue: 0.9 } ],
     defaultStreetFreqs: {
@@ -184,7 +184,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Limite do God Mode',
     narrativeSubtitle: 'Dominância Absoluta',
     icon: 'fa-crown', color: 'fuchsia',
-    theory: `<p>O CL (90bb, RP 12%) parece invencível, mas carrega um risco orgânico: dobrar o vice (25bb → 50bb) <strong>devolve a complexidade da árvore de decisão ao oponente</strong> (Risco de Ressurreição). O vice com 50bb ganha ferramentas (3bet, float, multi-barrel) que com 25bb não tinha. Paradoxalmente, o CL deve extrair thin value agressivo de quem se auto-restringe pelo RP, mas evitar confrontos que criem um rival com arsenal restaurado.</p>`,
+    theory: `O CL (90bb, RP 12%) parece invencível, mas carrega um risco orgânico: dobrar o vice (25bb → 50bb) <strong>devolve a complexidade da árvore de decisão ao oponente</strong> (Risco de Ressurreição). O vice com 50bb ganha ferramentas (3bet, float, multi-barrel) que com 25bb não tinha. Paradoxalmente, o CL deve extrair thin value agressivo de quem se auto-restringe pelo RP, mas evitar confrontos que criem um rival com arsenal restaurado.`,
     exploit: [ 'Thin Value Mandatório: extraia de quem se auto-restringe.', 'Cuidado com Ressurreição: dobrar o vice cria um rival perigoso.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 21 }, { name: 'FLOP', potSize: 7.5, rpValue: 14.5 }, { name: 'TURN', potSize: 22.5, rpValue: 1.9 }, { name: 'RIVER', potSize: 25, rpValue: 1.2 } ],
     defaultStreetFreqs: {
@@ -207,7 +207,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Parasita Silencioso',
     narrativeSubtitle: 'Mid-Stack vs Chip Leader',
     icon: 'fa-virus', color: 'fuchsia',
-    theory: `<p>O Mid (35bb, RP 38%) especula contra o CL (80bb, RP 8.2%) com custo controlado. O investimento é pequeno (flat call, não 3-bet), mas se acertar, a Expectativa explode: vira o novo CL, mitiga o principal adversário, e ganha leverage futuro. As Implied Odds aqui são de ICM, não de pot — o ganho não é medido em fichas, mas em ΔPerspectiva. O CL perde RP mínimo se o Mid acertar; o Mid ganha ferramentas de pressão amplificadas.</p>`,
+    theory: `O Mid (35bb, RP 38%) especula contra o CL (80bb, RP 8.2%) com custo controlado. O investimento é pequeno (flat call, não 3-bet), mas se acertar, a Expectativa explode: vira o novo CL, mitiga o principal adversário, e ganha leverage futuro. As Implied Odds aqui são de ICM, não de pot — o ganho não é medido em fichas, mas em ΔPerspectiva. O CL perde RP mínimo se o Mid acertar; o Mid ganha ferramentas de pressão amplificadas.`,
     exploit: [ 'Implied Odds de ICM: pague pouco para monsterizar.', 'Flat > 3bet: controle o custo de entrada.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 8.2 }, { name: 'FLOP', potSize: 7, rpValue: 6.8 }, { name: 'TURN', potSize: 18, rpValue: 3.5 }, { name: 'RIVER', potSize: 35, rpValue: 1.2 } ],
     defaultStreetFreqs: {
@@ -230,7 +230,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'A Algema do ICM',
     narrativeSubtitle: 'IP forçado a B20',
     icon: 'fa-anchor', color: 'blue',
-    theory: `<p>Quando o ΔRP algema o IP a usar apenas B20 (20% do pote), a iniciativa pós-flop é destruída. O IP não pode escalonar para barrel grande no turn/river — o BB sabe disso e expande a defesa massivamente. O BB defende hiper-amplo porque sabe que não há ameaça de escalonamento: o sizing fixo do IP remove incerteza, e o BB pode flotar com ranges que seriam indefensáveis contra sizing variável. A Downward Drift atinge seu extremo operacional.</p>`,
+    theory: `Quando o ΔRP algema o IP a usar apenas B20 (20% do pote), a iniciativa pós-flop é destruída. O IP não pode escalonar para barrel grande no turn/river — o BB sabe disso e expande a defesa massivamente. O BB defende hiper-amplo porque sabe que não há ameaça de escalonamento: o sizing fixo do IP remove incerteza, e o BB pode flotar com ranges que seriam indefensáveis contra sizing variável. A Downward Drift atinge seu extremo operacional.`,
     exploit: [ 'Sticky BB: defenda hiper-amplo contra B20.', 'IP perde leverage — check-backs sobem drasticamente.' ],
     sprData: [ { name: 'PRE', potSize: 5.63, rpValue: 12.9 }, { name: 'FLOP', potSize: 11.2, rpValue: 8.5 }, { name: 'TURN', potSize: 22.4, rpValue: 4.2 }, { name: 'RIVER', potSize: 44.8, rpValue: 1.1 } ],
     defaultStreetFreqs: {
@@ -253,7 +253,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'Licença para Matar',
     narrativeSubtitle: 'SB vs BB Death Zone',
     icon: 'fa-crosshairs', color: 'emerald',
-    theory: `<p>O SB (CL, 50bb, RP 12%) enfrenta o BB (12bb, RP 45%). Com RP de 45%, o BB precisa de equity absurda para justificar qualquer call — está na Death Zone. O CL pode shover ranges extremamente amplos (potencialmente any two cards) porque a Fold Equity é massiva: o BB colapsa em paralisia estrutural. Mesmo quando o BB acerta o call, o CL sobrevive confortavelmente. A assimetria é tão brutal que o campo gravitacional do ICM paralisa o defensor.</p>`,
+    theory: `O SB (CL, 50bb, RP 12%) enfrenta o BB (12bb, RP 45%). Com RP de 45%, o BB precisa de equity absurda para justificar qualquer call — está na Death Zone. O CL pode shover ranges extremamente amplos (potencialmente any two cards) porque a Fold Equity é massiva: o BB colapsa em paralisia estrutural. Mesmo quando o BB acerta o call, o CL sobrevive confortavelmente. A assimetria é tão brutal que o campo gravitacional do ICM paralisa o defensor.`,
     exploit: [ 'Shove ranges extremamente amplos — o BB é paralisado.', 'O custo de estar errado para o CL é mínimo (RP 12%).' ],
     sprData: [ { name: 'PRE', potSize: 1.5, rpValue: 45 }, { name: 'FLOP', potSize: 4, rpValue: 30 }, { name: 'TURN', potSize: 8, rpValue: 15 }, { name: 'RIVER', potSize: 12, rpValue: 9 } ],
     defaultStreetFreqs: {
@@ -276,7 +276,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'Agressão Impune',
     narrativeSubtitle: 'Bolha do ITM',
     icon: 'fa-skull-crossbones', color: 'rose',
-    theory: `<p>Na bolha do ITM, o BTN (CL, 80bb, RP 5%) joga quase ChipEV enquanto os Blinds (RP 42%) carregam pressão extrema. A assimetria é a mais brutal do framework: o CL perde pouco quando errado e ganha muito quando certo, enquanto os Blinds perdem tudo quando erram e ganham pouco quando acertam. A agressão do CL é impune — cada fold dos Blinds é lucro garantido, e cada call deles é uma aposta de sobrevivência contra odds esmagadoras.</p>`,
+    theory: `Na bolha do ITM, o BTN (CL, 80bb, RP 5%) joga quase ChipEV enquanto os Blinds (RP 42%) carregam pressão extrema. A assimetria é a mais brutal do framework: o CL perde pouco quando errado e ganha muito quando certo, enquanto os Blinds perdem tudo quando erram e ganham pouco quando acertam. A agressão do CL é impune — cada fold dos Blinds é lucro garantido, e cada call deles é uma aposta de sobrevivência contra odds esmagadoras.`,
     exploit: [ 'Agressão impune: o custo da perda é mínimo (RP 5%).', 'Cada fold dos Blinds é lucro estrutural garantido.' ],
     sprData: [ { name: 'PRE', potSize: 1.5, rpValue: 42 }, { name: 'FLOP', potSize: 5, rpValue: 31.5 }, { name: 'TURN', potSize: 15, rpValue: 9.5 }, { name: 'RIVER', potSize: 20, rpValue: 4.2 } ],
     defaultStreetFreqs: {

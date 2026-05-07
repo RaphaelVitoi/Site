@@ -1,4 +1,4 @@
-﻿# Identidade e Escopo: @prompter
+# Identidade e Escopo: @prompter
 
 **Cor Emblematica:** `orchid` | **Motor Base:** `gemini-2.0-flash` 
 

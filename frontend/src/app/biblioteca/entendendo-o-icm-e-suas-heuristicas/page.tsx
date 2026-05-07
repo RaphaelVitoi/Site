@@ -25,15 +25,16 @@ const articleSchema = {
   author: { '@type': 'Person', name: 'Raphael Vitoi' }
 };
 
-export default function EntendendoIcmPage() {
+export default function EntendendoIcmPage ()
+{
   const articleUrl = "https://www.raphaelvitoi.com/biblioteca/entendendo-o-icm-e-suas-heuristicas";
   const articleTitle = "Entendendo o ICM e suas Heurísticas | Raphael Vitoi";
 
   return (
     <div className="min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body">
-      <JsonLd data={articleSchema} />
+      <JsonLd data={ articleSchema } />
 
-      <ContentPageHeader 
+      <ContentPageHeader
         title="Entendendo o ICM"
         subtitle="Risk Premium, Amortização de Edge e Downward Drift. A física do jogo sob pressão monetária."
         category="Teoria"
@@ -83,33 +84,35 @@ export default function EntendendoIcmPage() {
 
             <h3 className="text-text-bright font-heading mt-12 mb-6 text-2xl">Toy Games: Visualizando a Distorção</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-10">
-                <figure className="group">
-                    <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/5">
-                        <Image
-                        src="/images/aulas/entendendo-o-icm-e-suas-heuristicas/image1.png"
-                        alt="Toy Game 1 - Chip EV"
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                    </div>
-                    <figcaption className="text-center text-[0.6rem] text-text-dim mt-4 uppercase tracking-[0.1em] font-mono">
-                        Toy Game 1: Equilíbrio estável em ChipEV
-                    </figcaption>
-                </figure>
+              <figure className="group">
+                <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/5">
+                  <Image
+                    src="/images/aulas/entendendo-o-icm-e-suas-heuristicas/image1.png"
+                    alt="Toy Game 1 - Chip EV"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                </div>
+                <figcaption className="text-center text-[0.6rem] text-text-dim mt-4 uppercase tracking-widest font-mono">
+                  Toy Game 1: Equilíbrio estável em ChipEV
+                </figcaption>
+              </figure>
 
-                <figure className="group">
-                    <div className="relative aspect-video rounded-2xl overflow-hidden border border-accent-rose/30 shadow-[0_0_30px_rgba(225,29,72,0.1)]">
-                        <Image
-                        src="/images/aulas/entendendo-o-icm-e-suas-heuristicas/image6.png"
-                        alt="Toy Game 5 - O Colapso da MDF"
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                    </div>
-                    <figcaption className="text-center text-[0.6rem] text-accent-rose-light mt-4 uppercase tracking-[0.1em] font-mono font-bold">
-                        Toy Game 5: Colapso sob RP 24% (Opressão Nash)
-                    </figcaption>
-                </figure>
+              <figure className="group">
+                <div className="relative aspect-video rounded-2xl overflow-hidden border border-accent-rose/30 shadow-[0_0_30px_rgba(225,29,72,0.1)]">
+                  <Image
+                    src="/images/aulas/entendendo-o-icm-e-suas-heuristicas/image6.png"
+                    alt="Toy Game 5 - O Colapso da MDF"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                </div>
+                <figcaption className="text-center text-[0.6rem] text-accent-rose-light mt-4 uppercase tracking-widest font-mono font-bold">
+                  Toy Game 5: Colapso sob RP 24% (Opressão Nash)
+                </figcaption>
+              </figure>
             </div>
           </div>
         </GlassPanel>
@@ -125,7 +128,7 @@ export default function EntendendoIcmPage() {
         <GlassPanel className="p-8 sm:p-12 lg:p-16">
           <div className="prose prose-invert prose-lg max-w-none text-text-muted font-body">
             <p>O <strong className="text-text-bright">Downward Drift</strong> (O&apos;Kearney & Carter) é a manifestação física do RP nos sizings: a distribuição inteira de apostas desloca um degrau para baixo. Overbets desaparecem; 2/3 vira 1/3; 1/3 vira check.</p>
-            
+
             <div className="bg-accent-emerald/10 border-l-4 border-accent-emerald p-8 my-10 rounded-r-2xl">
               <h4 className="mt-0 text-accent-emerald font-bold text-lg mb-4 font-heading italic">Coeficiente de Insolvência (Ci)</h4>
               <p className="font-mono text-sm text-accent-emerald-light mb-4">Ci = Perspectiva / Pot_Odds</p>
@@ -139,8 +142,8 @@ export default function EntendendoIcmPage() {
 
       <div className="sota-container pb-12">
         <ContentFooter
-          shareTitle={articleTitle}
-          shareUrl={articleUrl}
+          shareTitle={ articleTitle }
+          shareUrl={ articleUrl }
           backLinkHref="/biblioteca"
           backLinkText="Voltar para Biblioteca"
         />

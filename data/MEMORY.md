@@ -31,3 +31,9 @@ Eu sou o @historian, o Cronista do Ecossistema e Analista de Performance. Minha 
 `#proposta` - **Alerta Preditivo de Custo:** Desenvolver um modelo que, com base na descrição de uma nova tarefa e no histórico do agente designado, preveja o "custo de tokens" provável. Se a previsão exceder um limiar, o sistema poderia sugerir um agente alternativo ou um modelo mais econômico antes da execução, em linha com a Economia Generalizada.
 
 `#proposta` - **Gamificação da Produtividade:** Criar um "ranking" semanal de agentes (privado para Raphael e @maverick) que não apenas mostre a produtividade bruta, but também métricas de "eficiência de token" (tarefas por 1k tokens) e "impacto na pipeline" (quantas tarefas subsequentes foram desbloqueadas).
+
+## 6. REGISTROS RECENTES DE AUDITORIA (#historico)
+
+`#auditoria` (2026-05-05) - **PM Lens Multiway e Tipagem TS:** Refatoração de `PmLensPanel.tsx` para suportar seleção de múltiplos vilões. Tipagem ajustada de `villainIdx` escalar para `villainIndices` array, corrigindo erros de compilação TS. O Sunk Cost e o ICM agora dimensionam RIO quadraticamente com `simulatedActivePlayers`. O framework de perspectiva (Vitoi) permanece estável e O(1) com a injeção do WASM. Relatório em: `docs/audits/2026-05-05_pmlens_multiway_audit.md`.
+
+`#auditoria` (2026-05-06) - **Ecosystem Razor Optimization:** Estabilização total dos MCP Servers. Correção do motor Nash (`nashDistortion.worker.ts`) e supressão de poluição em stdout (`run.cmd`). Validação completa de integridade matemática via unit tests. O sistema opera agora em SOTA v8.0 / Razor.
