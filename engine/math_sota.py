@@ -1,5 +1,4 @@
 import math
-from typing import Any
 
 
 def calculate_geometric_sizing(
@@ -24,6 +23,9 @@ def cfr_mock_strategy(regrets: dict[str, float]) -> dict[str, float]:
     Simula uma iteracao de Regret Matching.
     Converte regrets acumulados em uma mixed strategy baseada em pesos positivos.
     """
+    if not regrets:
+        return {}
+
     positive_regrets = {action: max(0.0, r) for action, r in regrets.items()}
     total_positive_regret = sum(positive_regrets.values())
 
@@ -48,34 +50,51 @@ def calculate_rio_tension(
     hero_raw_stack: float,
     hero_position: str,
     base_rio_liability: float,
+    active_players: int = 2,
+    human_noise_factor: float = 0.0,
     mitigation_factor: float = 1.0,
 ) -> float:
-    """Física Base do Poker: Aprisionamento ao Pote e Downward Drift."""
+    """Física Base do Poker: Aprisionamento ao Pote, Downward Drift e Multiway Noise SOTA."""
     bet_to_call = current_pot * 0.5
     pot_entrapment = (hero_invested + bet_to_call) / max(0.1, hero_raw_stack)
     downward_drift = 1.25 if hero_position == "OOP" else 0.85
 
+    # SOTA: Assimetria multiplicadora MW ancorada no Table Draw (humanNoiseFactor)
+    opponents = max(1, active_players - 1)
+    mw_noise_multiplier = math.pow(opponents, 1.0 + human_noise_factor)
+
     return min(
         1.0,
-        (base_rio_liability / 100.0)
+        ((base_rio_liability * mw_noise_multiplier) / 100.0)
         + (pot_entrapment * downward_drift * mitigation_factor),
     )
 
 
 def calculate_utility_ev(
-    raw_ev: float, status: str = "baseline", loss_aversion_base: float = 2.25
+    raw_ev: float,
+    stack_eff: float = 100.0,
+    status: str = "baseline",
+    loss_aversion_base: float = 2.25,
 ) -> float:
-    """Aplica a Curva de Utilidade da Teoria do Prospecto (Kahneman & Tversky)."""
-    lambda_val = loss_aversion_base
+    """
+    SOTA: Curva de Utilidade da Teoria do Prospecto ancorada ao logaritmo do stack efetivo.
+    A aversão à perda escala dinamicamente, refletindo a gravidade da sobrevivência (FGS).
+    """
+    # Normaliza o escalar de Kahneman (2.25) para a zona de conforto (100bb).
+    # Stacks críticos (ex: 10bb, ln(10)~2.3) sofrem o dobro da aversão à perda base.
+    safe_stack = max(2.718, stack_eff)
+    stack_modifier = math.log(100.0) / math.log(safe_stack)
+
+    lambda_val = loss_aversion_base * stack_modifier
     alpha = 0.88
     beta = 0.88
 
     if status == "tilt":
-        lambda_val, beta = 1.5, 0.95
+        lambda_val, beta = lambda_val * 0.66, 0.95
     elif status == "protecting":
-        lambda_val, alpha = 3.0, 0.75
+        lambda_val, alpha = lambda_val * 1.33, 0.75
     elif status == "bubble":
-        lambda_val = 4.5
+        lambda_val = lambda_val * 2.0
 
     return (
         math.pow(raw_ev, alpha)
@@ -95,30 +114,40 @@ def compute_quantum_metrics(
     hero_invested: float,
     current_pot: float,
     stack_eff: float,
-) -> dict[str, Any]:
+    human_noise_factor: float = 0.0,
+    edge_base: float = 1.0,
+) -> dict[str, float | bool | None]:
     """SOTA: A Equação Unificada. Calcula PM, Esperança, Expectativa e Coeficiente de Insolvência (Ci)."""
     eq = current_equity_pct / 100.0 if current_equity_pct > 1.0 else current_equity_pct
 
-    amortized_edge = 1.0 + ((50.0 / 100.0) * (1.0 - math.exp(-0.05 * stack_eff)))
+    # SOTA: Amortização da Edge (Colapso Mecânico)
+    # A árvore de decisão é podada em S=10bb, neutralizando a habilidade. Er(S) é proporcional a log(S).
+    safe_stack_edge = max(2.718, stack_eff)
+    edge_scale = math.log(safe_stack_edge) / math.log(60.0)
+    amortized_edge = edge_base * edge_scale
+
     adjusted_delta_win = delta_win_pct * amortized_edge
 
-    # Escalonamento Quadrático Multiway (x²)
-    rio_mw = (hero_invested * 0.15) * math.pow(max(1, active_players - 1), 2)
+    # Escalonamento SOTA: Multiway (x²) injetado com o Table Draw Noise
+    rio_mw = (hero_invested * 0.15) * math.pow(
+        max(1, active_players - 1), 2.0 + human_noise_factor
+    )
 
     esperanca = (eq * adjusted_delta_win) + ((1.0 - eq) * delta_lose_pct)
 
-    # SOTA: O passivo da derrota também sofre dilatação no ICM (FGS_health invertido).
-    adjusted_delta_lose = delta_lose_pct * (1.0 / max(0.1, fgs_health))
+    # SOTA: O passivo da derrota sofre dilatação no ICM e aversão dinâmica via Teoria do Prospecto.
+    base_delta_lose = delta_lose_pct * (1.0 / max(0.1, fgs_health))
+    prospect_delta_lose = calculate_utility_ev(base_delta_lose, stack_eff=stack_eff)
 
     expectativa = (eq * adjusted_delta_win * realization_factor * fgs_health) + (
-        (1.0 - eq) * adjusted_delta_lose
+        (1.0 - eq) * prospect_delta_lose
     )
     perspectiva = expectativa - rio_mw - dynamic_ev_fold
 
-    denom = (adjusted_delta_win * realization_factor * fgs_health) - adjusted_delta_lose
+    denom = (adjusted_delta_win * realization_factor * fgs_health) - prospect_delta_lose
     thresh_eq = (
-        # SOTA: Limite de 41% removido. Nash Ceiling em bolhas extremas pode exigir até 99% de equity.
-        max(0.0, min(0.99, (dynamic_ev_fold + rio_mw - adjusted_delta_lose) / denom))
+        # SOTA: Limite de 41% removido. Teto do RP em bolhas extremas pode exigir até 99% de equity.
+        max(0.0, min(0.99, (dynamic_ev_fold + rio_mw - prospect_delta_lose) / denom))
         if abs(denom) > 1e-6
         else None
     )
