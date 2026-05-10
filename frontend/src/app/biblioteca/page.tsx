@@ -20,13 +20,14 @@ export const metadata = {
 
 export default async function BibliotecaPage() {
   // Busca do banco
-  const articleList = await ( prisma as any ).article?.findMany( {
-    orderBy: { publishedAt: 'desc' }
+  const articleList = await prisma.content.findMany( {
+    where: { category: { in: ['Artigo', 'Ensaio'] } },
+    orderBy: { createdAt: 'desc' }
   } ).catch( () => [] ) || [];
 
-  const dbArticles = articleList.map( ( item: any ) => {
-    const excerpt = item.content
-      ? String( item.content ).replaceAll( /[#*`>[\n]/g, ' ' ).replaceAll( /\s+/g, ' ' ).trim().substring( 0, 120 ) + '...'
+  const dbArticles = articleList.map( ( item ) => {
+    const excerpt = item.body
+      ? String( item.body ).replaceAll( /[#*`>[\n]/g, ' ' ).replaceAll( /\s+/g, ' ' ).trim().substring( 0, 120 ) + '...'
       : 'Documento estrutural da Mente Coletiva VITOI.';
 
     return {
@@ -34,12 +35,28 @@ export default async function BibliotecaPage() {
       tags: ['SOTA', 'Dinamico'],
       title: item.title,
       description: excerpt,
-      readingTime: item.readTime || 'Leitura SOTA',
+      readingTime: 'Leitura SOTA',
       isNew: true
     };
   } );
 
   const staticArticles = [
+    {
+      href: '/biblioteca/axioma-ev-fold-dinamico',
+      tags: ['Teoria', 'ICM'],
+      title: 'Axioma do EV do Fold',
+      description: 'Por que foldar quase nunca tem EV zero e como o ICM pode tornar o fold matematicamente positivo.',
+      readingTime: '10 min',
+      isNew: true
+    },
+    {
+      href: '/biblioteca/teto-equidade-river-icm',
+      tags: ['Matemática', 'Nash'],
+      title: 'O Teto de Equidade',
+      description: 'Prova Clínica: Por que é estruturalmente impossível precisar de mais de 41% de equidade para pagar no river.',
+      readingTime: '15 min',
+      isNew: true
+    },
     {
       href: '/biblioteca/downward-drift-sota',
       tags: ['ICM', 'Teoria'],

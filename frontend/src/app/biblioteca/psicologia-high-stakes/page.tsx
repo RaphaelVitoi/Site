@@ -6,7 +6,7 @@
  */
 
 import ContentFooter from '@/components/content/ContentFooter';
-import PsychologyHub, { SpecPost } from '@/components/content/PsychologyHub';
+import PsychologyHub, { type SpecPost } from '@/components/content/PsychologyHub';
 import JsonLd from '@/components/seo/JsonLd';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { SectionHeader } from '@/components/ui/SectionHeader';
