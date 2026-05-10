@@ -91,7 +91,7 @@ export function DownwardDriftSimulator() {
                 oopTension: Number( ( simOopTension * 100 ).toFixed( 1 ) ),
                 chipEv: Number( fakeChipEv.toFixed( 1 ) ),
                 utilityEv: Number( fakeUtilityEv.toFixed( 1 ) ),
-                nashCeiling: Math.min( 41, 20 + ( ( invested / ( physics.pot + invested ) ) * 30 ) )
+                threshold: Math.min( 50, 20 + ( ( invested / ( physics.pot + invested ) ) * 30 ) )
             } );
         }
 
@@ -110,8 +110,9 @@ export function DownwardDriftSimulator() {
     }
 
     return (
-        <div className="glass-panel p-8 space-y-8 animate-sota-in border-accent-indigo/10 max-w-5xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+        <div className="glass-panel p-8 sm:p-10 lg:p-12 space-y-8 animate-sota-in border-accent-indigo/10 max-w-5xl mx-auto relative overflow-hidden shadow-2xl">
+            <div className="absolute -top-32 -right-32 w-64 h-64 bg-accent-indigo/10 blur-[100px] rounded-full pointer-events-none" />
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4 relative z-10">
                 <div>
                     <h2 className="text-xl font-black text-text-bright uppercase tracking-tighter flex items-center gap-3">
                         <i className="fa-solid fa-chart-line text-accent-indigo" />
@@ -126,7 +127,7 @@ export function DownwardDriftSimulator() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
                 <div className="space-y-6 bg-black/20 p-6 rounded-2xl border border-white/5">
                     <div className="space-y-2">
                         <div className="flex justify-between items-end mb-1">
@@ -163,10 +164,10 @@ export function DownwardDriftSimulator() {
                 </div>
             </div>
 
-            <div className="pt-8 border-t border-white/5">
+            <div className="pt-8 border-t border-white/5 relative z-10">
                 <h3 className="text-label text-center mb-8 opacity-40">Curva de Aprisionamento Fractal</h3>
                 <div className="relative h-72 w-full min-h-72">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
                         <LineChart data={ chartData }>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" vertical={ false } />
                             <XAxis dataKey="investedPct" hide />
@@ -182,7 +183,7 @@ export function DownwardDriftSimulator() {
                             <Line type="monotone" name="Tensão IP" dataKey="ipTension" stroke="var(--accent-indigo)" strokeWidth={ 3 } dot={ false } />
                             <Line type="monotone" name="Tensão OOP" dataKey="oopTension" stroke="var(--accent-danger)" strokeWidth={ 3 } dot={ false } />
                             <Line type="monotone" name="Utilidade" dataKey="utilityEv" stroke="var(--accent-amber)" strokeWidth={ 2 } strokeDasharray="5 5" dot={ false } />
-                            <Line type="monotone" name="Teto Nash" dataKey="nashCeiling" stroke="var(--accent-sky)" strokeWidth={ 2 } strokeDasharray="3 3" dot={ false } />
+                            <Line type="monotone" name="Teto do RP" dataKey="threshold" stroke="var(--accent-sky)" strokeWidth={ 2 } strokeDasharray="3 3" dot={ false } />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>

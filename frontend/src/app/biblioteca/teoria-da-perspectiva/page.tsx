@@ -55,8 +55,51 @@ export default function ProspectTheoryPage() {
               </div>
             </div>
 
+            <h2 className="text-3xl font-black text-text-bright tracking-tighter uppercase font-heading mb-8 mt-24 border-l-4 border-accent-amber pl-6">
+              2. A Hierarquia Cognitiva da Decisão
+            </h2>
+            <p>A tomada de decisão não é plana; ela evolui em camadas de complexidade até atingir a Perspectiva Absoluta:</p>
+
+            <div className="space-y-6 my-12">
+              <div className="bg-white/2 p-8 rounded-3xl border border-white/5">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-sm text-slate-400">01</span>
+                  <h4 className="text-text-bright font-black uppercase tracking-widest text-sm">ICMev (Métrica Estática)</h4>
+                </div>
+                <p className="text-sm italic">&quot;O que eu tenho agora?&quot;</p>
+                <p className="text-xs text-text-muted mt-2">Uma aproximação grosseira e isolada, como se o torneio acabasse na mão atual. O ponto de partida binário.</p>
+              </div>
+
+              <div className="bg-accent-indigo/5 p-8 rounded-3xl border border-accent-indigo/20">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="w-10 h-10 rounded-full bg-accent-indigo/20 flex items-center justify-center font-black text-sm text-accent-indigo-light">02</span>
+                  <h4 className="text-accent-indigo-light font-black uppercase tracking-widest text-sm">Esperança Matemática (Lógica)</h4>
+                </div>
+                <p className="text-sm italic">&quot;O que eu posso buscar?&quot;</p>
+                <p className="text-xs text-text-muted mt-2">Antevisão de controle de mesa, ferramentas de edge e mitigação proativa de ameaças (nêmesis).</p>
+              </div>
+
+              <div className="bg-accent-emerald/5 p-8 rounded-3xl border border-accent-emerald/20">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="w-10 h-10 rounded-full bg-accent-emerald/20 flex items-center justify-center font-black text-sm text-accent-emerald-light">03</span>
+                  <h4 className="text-accent-emerald-light font-black uppercase tracking-widest text-sm">Expectativa Matemática (Preditiva)</h4>
+                </div>
+                <p className="text-sm italic">&quot;Qual o impacto no meu futuro estratégico?&quot;</p>
+                <p className="text-xs text-text-muted mt-2">Projeção preditiva do Future Game Simulation (FGS). Como a colisão afeta meu valuation futuro e sobrevivência.</p>
+              </div>
+
+              <div className="bg-accent-rose/10 p-8 rounded-3xl border border-accent-rose/30 shadow-[0_0_30px_rgba(244,63,94,0.1)]">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="w-10 h-10 rounded-full bg-accent-rose/20 flex items-center justify-center font-black text-sm text-accent-rose">04</span>
+                  <h4 className="text-accent-rose font-black uppercase tracking-widest text-sm">Perspectiva Matemática (A Síntese)</h4>
+                </div>
+                <p className="text-sm italic">O Juízo Final.</p>
+                <p className="text-xs text-text-muted mt-2">O output definitivo que absorve a abstração e entrega uma decisão calibrada ao fluxo sistêmico completo.</p>
+              </div>
+            </div>
+
             <h2 className="text-3xl font-black text-text-bright tracking-tighter uppercase font-heading mb-8 mt-24 border-l-4 border-accent-emerald pl-6">
-              2. Estados Psicológicos no Nexus
+              3. Estados Psicológicos no Nexus
             </h2>
             <p>Mapeamos quatro perfis comportamentais fundamentais baseados na literatura de <em>behavioral finance</em> adaptada ao poker:</p>
 

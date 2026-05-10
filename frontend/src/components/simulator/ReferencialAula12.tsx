@@ -3,51 +3,23 @@
  * IDENTITY: Referencial Visual — Âncora Empírica Aula 1.2
  * PATH: src/components/simulator/ReferencialAula12.tsx
  * ROLE: Seção colapsável com representação visual dos dados de calibração do motor ICM.
+ *       SOTA v5.2 Sovereign: Restauração Científica Total e Impecável.
  */
 
-import { useMemo, useState, useCallback } from 'react';
-import { ClientOnly } from '@/components/ui/ClientOnly';
-import { BB_FREQS, BF_MATRIX, BF_PLAYERS, BF_STACKS, BTN_FREQS, BUBBLE_BF_MATRIX, BUBBLE_PLAYERS, BUBBLE_RP_MATRIX, BUBBLE_STACKS, EG_BF_MATRIX, EG_PLAYERS, EG_RP_MATRIX, EG_STACKS, PRIZES, RANKS, RP_MATRIX, TABLE_PLAYERS, TOTAL_POOL } from './ReferencialData';
+import { useMemo, useState } from 'react';
+import { BB_ACTION_GRID, BTN_ACTION_GRID, BF_MATRIX, BF_PLAYERS, BF_STACKS, BUBBLE_BF_MATRIX, BUBBLE_PLAYERS, BUBBLE_RP_MATRIX, BUBBLE_STACKS, EG_BF_MATRIX, EG_PLAYERS, EG_RP_MATRIX, EG_STACKS, PRIZES, RANKS, RP_MATRIX, TABLE_PLAYERS } from './ReferencialData';
+import type { RangeCell, RangeAction } from './ReferencialData';
 
 export type MatrixViewMode = 'FT' | 'BUBBLE' | 'EG';
 
-function renderFreqLabel ( freq: number, label: string ): string
-{
-  if ( freq === 0 ) return '';
-  if ( freq === 100 ) return label;
-  return `${ freq }%`;
-}
+const ACTION_COLORS: Record<RangeAction, string> = {
+  raise: '#ef4444', // Red-500
+  call: '#10b981',  // Emerald-500
+  shove: '#6366f1', // Indigo-500
+  fold: '#334155',  // Slate-700
+};
 
-function getAccentColor ( name: string ): string
-{
-  if ( name === 'BTN' ) return 'var(--accent-indigo-light)';
-  if ( name === 'BB' ) return 'var(--accent-emerald-light)';
-  return 'var(--text-darker)';
-}
-
-function getBarBgClass ( i: number ): string
-{
-  if ( i === 0 ) return 'bg-linear-to-r from-amber-400 to-amber-600';
-  if ( i === 1 ) return 'bg-linear-to-r from-slate-200 to-slate-400';
-  if ( i === 2 ) return 'bg-linear-to-r from-violet-400 to-violet-600';
-  if ( i <= 5 ) return 'bg-indigo-500/50';
-  return 'bg-slate-600/40';
-}
-
-function getValColorClass ( i: number ): string
-{
-  if ( i === 0 ) return 'text-amber-400';
-  if ( i === 1 ) return 'text-slate-400';
-  if ( i === 2 ) return 'text-violet-400';
-  return 'text-text-dim';
-}
-
-function getDeltaStr ( delta: number ): string
-{
-  if ( delta === 0 ) return '0';
-  if ( delta > 0 ) return `+${ delta }`;
-  return `${ delta }`;
-}
+function toRad ( deg: number ) { return ( deg * Math.PI ) / 180; }
 
 function getHandLabel ( r: number, c: number ): string
 {
@@ -56,492 +28,288 @@ function getHandLabel ( r: number, c: number ): string
   return RANKS[ c ] + RANKS[ r ] + 'o';
 }
 
-function cellBgClass ( freq: number, color: 'indigo' | 'emerald' ): string
-{
-  if ( freq === 0 ) return 'bg-slate-900/60';
-  if ( color === 'indigo' )
-  {
-    if ( freq === 100 ) return 'bg-indigo-500/55';
-    if ( freq >= 50 ) return 'bg-indigo-500/30';
-    return 'bg-indigo-500/10';
-  }
-  if ( freq === 100 ) return 'bg-emerald-500/40';
-  if ( freq >= 50 ) return 'bg-emerald-500/20';
-  return 'bg-emerald-500/10';
+function getRpGravityColor(rp: number): string {
+    if (rp <= 0) return 'bg-slate-900/40 text-text-dim opacity-30';
+    if (rp < 5) return 'bg-emerald-500/10 text-emerald-400/70 border-emerald-500/20';
+    if (rp < 10) return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+    if (rp < 15) return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    if (rp < 20) return 'bg-rose-500/20 text-rose-400 border-rose-500/40';
+    return 'bg-rose-600/40 text-rose-300 border-rose-500/60 font-black';
 }
 
-function cellTextClass ( freq: number ): string
-{
-  return freq === 0 ? 'text-transparent' : 'text-text-light';
-}
-
-function TableDrawPositions ( { cx, cy }: Readonly<{ cx: number, cy: number; }> )
-{
-  const r = 14;
-  const iRx = 95; const iRy = 65;
-  // Ângulos sincronizados com TABLE_PLAYERS em ReferencialData.ts
-  const btnX = cx + iRx * Math.cos( toRad( 90 ) );
-  const btnY = cy + iRy * Math.sin( toRad( 90 ) );
-  const sbX = cx + iRx * Math.cos( toRad( 130 ) );
-  const sbY = cy + iRy * Math.sin( toRad( 130 ) );
-  const bbX = cx + iRx * Math.cos( toRad( 170 ) );
-  const bbY = cy + iRy * Math.sin( toRad( 170 ) );
-
+function LegendSection() {
   return (
-    <>
-      {/* SB Folds */}
-      <circle cx={ sbX } cy={ sbY } r={ r } fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.4)" strokeWidth="1" strokeDasharray="3 3" />
-      <text x={ sbX } y={ sbY + 4.5 } textAnchor="middle" fill="rgba(245,158,11,0.6)" fontSize="8.5" fontWeight="900" letterSpacing="0.05em">FOLD</text>
+    <div className="flex flex-col gap-12">
+        {/* HRC Context & Core Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-8 bg-slate-900/60 rounded-4xl border border-white/10 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-emerald-500 via-indigo-500 to-rose-500 opacity-50" />
+            <div className="space-y-2">
+                <h4 className="text-[0.7rem] font-black text-accent-indigo uppercase tracking-[0.3em]">HRC Context</h4>
+                <p className="text-[0.8rem] text-text-muted leading-relaxed font-medium">
+                MTT Vanilla $11 · 126 Players<br/>
+                Final Table 9P · 12.5% Ante<br/>
+                <span className="text-white font-mono">0.5bb / 1.0bb</span>
+                </p>
+            </div>
+            <div className="space-y-2">
+                <h4 className="text-[0.7rem] font-black text-accent-amber uppercase tracking-[0.3em]">Bubble Factor</h4>
+                <p className="text-[0.8rem] text-text-muted leading-relaxed font-medium">
+                Dívida de Equidade.<br/>
+                Quanto suas fichas perdem valor ao serem colocadas em risco.
+                </p>
+            </div>
+            <div className="space-y-2">
+                <h4 className="text-[0.7rem] font-black text-accent-emerald uppercase tracking-[0.3em]">Risk Premium</h4>
+                <p className="text-[0.8rem] text-text-muted leading-relaxed font-medium">
+                Imposto do ICM.<br/>
+                <span className="font-mono text-white bg-white/10 px-1.5 py-0.5 rounded-sm">RP = (BF-1)/BF</span>
+                </p>
+            </div>
+            <div className="space-y-2">
+                <h4 className="text-[0.7rem] font-black text-accent-danger uppercase tracking-[0.3em]">Âncora SOTA</h4>
+                <p className="text-[0.8rem] text-text-muted leading-relaxed font-medium">
+                BTN (39.9bb) vs BB (53.9bb)<br/>
+                BTN RP: <strong className="text-white">21.4%</strong> (Grave)<br/>
+                BB RP: <strong className="text-white">12.9%</strong> (Médio)
+                </p>
+            </div>
+        </div>
 
-      {/* BB Defends (2bb) */}
-      <circle cx={ bbX } cy={ bbY } r={ r } fill="rgba(16,185,129,0.5)" stroke="var(--accent-emerald)" strokeWidth="1" />
-      <circle cx={ bbX + 12 } cy={ bbY } r={ r } fill="rgba(16,185,129,0.9)" stroke="var(--accent-emerald)" strokeWidth="1.5" filter="drop-shadow(0px 0px 4px rgba(16,185,129,0.4))" />
-      <text x={ bbX + 6 } y={ bbY + 4.5 } textAnchor="middle" fill="white" fontSize="11" fontWeight="900">2.0</text>
-
-      {/* Ante */}
-      <circle cx={ cx } cy={ cy + 22 } r={ 11 } fill="rgba(100,116,139,0.6)" stroke="var(--text-muted)" strokeWidth="1" />
-      <text x={ cx } y={ cy + 25 } textAnchor="middle" fill="white" fontSize="7.5" fontWeight="900" letterSpacing="0.05em">ANTE</text>
-
-      {/* BTN Opens (2bb) */}
-      <circle cx={ btnX } cy={ btnY } r={ r } fill="rgba(99,102,241,0.5)" stroke="var(--accent-indigo)" strokeWidth="1" />
-      <circle cx={ btnX + 12 } cy={ btnY } r={ r } fill="rgba(99,102,241,0.9)" stroke="var(--accent-indigo)" strokeWidth="1.5" filter="drop-shadow(0px 0px 4px rgba(99,102,241,0.4))" />
-      <text x={ btnX + 6 } y={ btnY + 4.5 } textAnchor="middle" fill="white" fontSize="11" fontWeight="900">2.0</text>
-    </>
-  );
-}
-
-// Sub-componente para os jogadores sentados
-function SeatedPlayers({ cx, cy, rx, ry }: Readonly<{ cx: number, cy: number, rx: number, ry: number }>) {
-  return (
-    <>
-      { TABLE_PLAYERS.map( ( { name, stack, angle, highlight } ) =>
-      {
-        const rad = toRad( angle );
-        // Jogadores ficam ATRÁS das fichas (raio maior)
-        const px = cx + ( rx + 45 ) * Math.cos( rad );
-        const py = cy + ( ry + 35 ) * Math.sin( rad );
-        const accent = getAccentColor( name );
-        const isSB = name === 'SB';
-
-        return (
-          <g key={ name } className={isSB ? 'opacity-40' : 'opacity-100'}>
-            <rect x={ px - 32 } y={ py - 18 } width={ 64 } height={ 36 } rx={ 10 }
-              fill={ highlight ? 'rgba(99,102,241,0.25)' : 'rgba(15,23,42,0.85)' }
-              stroke={ highlight ? 'var(--accent-indigo)' : accent + '44' }
-              strokeWidth={highlight ? 2 : 1}
-              className="backdrop-blur-sm" />
-            <text x={ px } y={ py - 3 } textAnchor="middle" fill={ highlight ? 'white' : accent } fontSize="11" fontWeight="900" className="uppercase tracking-tighter">{ name }</text>
-            <text x={ px } y={ py + 11 } textAnchor="middle" fill="var(--text-dim)" fontSize="10" fontWeight="700" className="font-mono">{ stack }bb</text>
-            { highlight && (
-               <circle cx={px + 28} cy={py - 14} r={4} fill="var(--accent-indigo)" className="animate-pulse" />
-            )}
-          </g>
-        );
-      } ) }
-    </>
-  );
-}
-
-function OldRangeGrid ( { freqs, color, title, subtitle }: Readonly<{ freqs: number[][], color: 'indigo' | 'emerald', title: string, subtitle: string; }> )
-{
-  return (
-    <div className="relative w-full max-w-[100vw] overflow-x-auto scrollbar-hide mx-auto">
-      <div className="flex justify-between items-baseline mb-2">
-        <span className="text-[0.75rem] font-bold text-text-light">{ title }</span>
-        <span className="text-[0.65rem] text-text-dim">{ subtitle }</span>
-      </div>
-      <table className="border-collapse text-[0.7rem] font-mono bg-slate-900/40 rounded-lg overflow-hidden min-w-max">
-        <tbody>
-          { RANKS.map( ( r1, i ) => (
-            <tr key={ r1 }>
-              { RANKS.map( ( r2, j ) =>
-              {
-                const freq = freqs[ i ]?.[ j ] ?? 0;
-                return (
-                  <td key={ r2 } className={`w-6 h-6 text-center align-middle cursor-default border border-white/5 ${cellBgClass( freq, color )} ${cellTextClass( freq )}`}>
-                    { renderFreqLabel( freq, getHandLabel( i, j ) ) }
-                  </td>
-                );
-              } ) }
-            </tr>
-          ) ) }
-        </tbody>
-      </table>
+        {/* Tournament Structures Framework */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            {[
+                { 
+                    title: 'TOP-HEAVY (▲)', 
+                    desc: `1º lugar ≥ 25%. Laddering pouco valioso; o valor está em ganhar, não em sobreviver. Pressão ICM severa: foldar para subir uma posição tem EV marginal. BF elevado.`, 
+                    color: 'border-amber-500/20 bg-amber-500/5' 
+                },
+                { 
+                    title: 'FLAT (▬)', 
+                    desc: `1º lugar ≤ 18%. Saltos equilibrados e previsíveis. Laddering relevante: subir UMA posição tem valor real e tangível. BF próximo de 1; o jogo se aproxima de ChipEV.`, 
+                    color: 'border-emerald-500/20 bg-emerald-500/5',
+                    active: true
+                },
+                { 
+                    title: 'HÍBRIDA (◆)', 
+                    desc: `18-24%. Zona de exclusão. Método de análise por exclusão. Varia entre sites e formatos. Exige avaliação manual da curva de payjumps.`, 
+                    color: 'border-indigo-500/20 bg-indigo-500/5' 
+                },
+                { 
+                    title: 'PKO (💥)', 
+                    desc: `Top-heavyssimo (sempre). Dinheiro estático concentrado no 1º. A compensação vem pelo bounty acumulado, diluindo o ICM estático.`, 
+                    color: 'border-rose-500/20 bg-rose-500/5' 
+                },
+                { 
+                    title: 'SATÉLITE (🎫)', 
+                    desc: `ICM Binário e Terminal. Prêmios idênticos no topo. Dinâmica de sobrevivência pura. Acumular além do necessário tem EV zero. Ticket ou nada.`, 
+                    color: 'border-white/10 bg-white/5' 
+                },
+            ].map(item => (
+                <div key={item.title} className={`p-6 rounded-3xl border transition-all ${item.color} ${item.active ? 'ring-2 ring-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.1)]' : ''}`}>
+                    <h5 className="text-[0.75rem] font-black text-white mb-3 tracking-widest">{item.title}</h5>
+                    <p className="text-[0.7rem] text-text-muted leading-relaxed font-medium m-0">{item.desc}</p>
+                </div>
+            ))}
+        </div>
     </div>
   );
 }
 
-const PCT1 = ( ( PRIZES[ 0 ].val / TOTAL_POOL ) * 100 ).toFixed( 1 );
-
-const PRIZE_STRUCTURES = [
-  { tag: 'TOP-HEAVY', icon: '▲', colorClass: 'text-accent-gold', text: '1º ≥ 25% do prize pool total (field curto). 1º e 2º concentrados. Laddering pouco valioso. BF elevado.', active: false },
-  { tag: 'FLAT', icon: '▬', colorClass: 'text-text-muted', text: `Esta estrutura: 1º = ${ PCT1 }% do pool total. Saltos entre posições equilibrados. Laddering relevante. BF próximo de 1.`, active: true },
-  { tag: 'HÍBRIDA', icon: '◆', colorClass: 'text-accent-violet-light', text: 'Foge dos extremos (18-24%). Análise de exclusão: não é flat nem top-heavy de forma clara. Avalie se o laddering se aproxima mais de um extremo ou do outro.', active: false },
-  { tag: 'PKO', icon: '💥', colorClass: 'text-accent-danger', text: 'Top-heavyssimo: dinheiro muito concentrado no 1º. Laddering muito menos valioso. A compensação vem pelo bounty acumulado.', active: false },
-  { tag: 'SATÉLITE', icon: '🎫', colorClass: 'text-accent-emerald', text: 'Prêmios idênticos no topo (tickets de entrada). Sobrevivência pura: acumular fichas além do necessário tem EV zero.', active: false },
-];
-
-const TOY_GAMES_LIST = [
-  { no: 'TG0', rpIp: 0, rpOop: 0, bluff: '33%', def: '50%', desc: 'Baseline GTO — ChipEV puro', anchor: false },
-  { no: 'TG1', rpIp: 3, rpOop: 6, bluff: '↑ 40%', def: '↓ 44%', desc: 'OOP restrito — IP explora', anchor: false },
-  { no: 'TG2', rpIp: 3, rpOop: 9, bluff: '↑ 50%', def: '⊘ teto', desc: 'OOP congela no limite do RP', anchor: false },
-  { no: 'TG3', rpIp: 3, rpOop: 18, bluff: '↑↑', def: '⊘ teto', desc: 'IP satura bluffs; OOP imobilizado', anchor: false },
-  { no: 'TG4', rpIp: 3, rpOop: 24, bluff: '⊘ max', def: '⊘ teto', desc: 'Ambos saturam — pressão extrema', anchor: false },
-  { no: 'TG5', rpIp: 9, rpOop: 3, bluff: '~33%', def: '↓ 43%', desc: 'IP preserva; OOP cede levemente', anchor: false },
-  { no: 'TG6', rpIp: 18, rpOop: 3, bluff: '↓ 17%', def: '↓↓', desc: 'IP contém bluffs ativamente', anchor: false },
-  { no: 'TG7', rpIp: 21, rpOop: 3, bluff: '↓ 13%', def: '↓ 20%', desc: 'OOP 80% fold — âncora KJT-2-3', anchor: true },
-];
-
-function getBfTextColorClass(val: number): string {
-  if (val >= 2) return 'text-rose-400';
-  if (val >= 1.6) return 'text-amber-400';
-  if (val >= 1.3) return 'text-cyan-400';
-  if (val === 1) return 'text-text-muted opacity-50'; // Diagonal baseline (ChipEV)
-  return 'text-green-400';
-}
-
-function getBfBgClass(val: number): string {
-  if (val >= 2) return 'bg-rose-500/50';
-  if (val >= 1.6) return 'bg-amber-500/40';
-  if (val >= 1.3) return 'bg-cyan-500/20';
-  if (val === 1) return 'bg-slate-900/30';
-  return 'bg-green-500/20';
-}
-
-function getDeltaColorClass(delta: number): string {
-  if (delta > 0) return 'text-rose-500';
-  if (delta < 0) return 'text-emerald-400';
-  return 'text-text-darker';
-}
-
-function getBluffColorClass(bluff: string): string {
-  if (bluff.startsWith('↑')) return 'text-emerald-400';
-  if (bluff.startsWith('↓')) return 'text-amber-500';
-  if (bluff.startsWith('⊘')) return 'text-indigo-400';
-  return 'text-text-muted';
-}
-
-function getDefColorClass(def: string): string {
-  if (def.startsWith('↓')) return 'text-amber-500';
-  if (def.startsWith('⊘')) return 'text-rose-500';
-  return 'text-text-muted';
-}
-
-function ToyGameRow({ row, i }: Readonly<{ row: typeof TOY_GAMES_LIST[0], i: number }>) {
-  const delta = row.rpIp - row.rpOop;
-  const deltaStr = getDeltaStr( delta );
-  const deltaColorClass = getDeltaColorClass(delta);
-  const bluffColorClass = getBluffColorClass(row.bluff);
-  const defColorClass = getDefColorClass(row.def);
-
-  let rowBgClass = 'bg-white/5';
-  if (row.anchor) rowBgClass = 'bg-indigo-500/5';
-  else if (i % 2 === 0) rowBgClass = 'bg-transparent';
-
-  let rowBorderClass = 'border-l-[3px] border-l-transparent border-b border-white/5';
-  if (row.anchor) rowBorderClass = 'border-l-[3px] border-l-indigo-500/50 border-b border-white/5';
-
+function ActionRangeGrid({ grid, title, subtitle }: { grid: RangeCell[][], title: string, subtitle: string }) {
   return (
-    <tr className={`${rowBgClass} ${rowBorderClass}`}>
-      <td className={`py-3 px-4 font-bold whitespace-nowrap font-mono text-[0.9rem] ${row.anchor ? 'text-indigo-400' : 'text-text-muted'}`}>
-        { row.no }{ row.anchor && <span className="text-indigo-400 ml-1.5">★</span> }
-      </td>
-      <td className="py-3 px-4 text-right text-indigo-400 font-bold whitespace-nowrap text-[0.9rem]">{ row.rpIp }%</td>
-      <td className="py-3 px-4 text-right text-rose-500 font-bold whitespace-nowrap text-[0.9rem]">{ row.rpOop }%</td>
-      <td className={`py-3 px-4 text-right font-extrabold whitespace-nowrap font-mono text-[0.95rem] ${deltaColorClass}`}>{ deltaStr }</td>
-      <td className={`py-3 px-4 text-right font-bold whitespace-nowrap text-[0.9rem] ${bluffColorClass}`}>{ row.bluff }</td>
-      <td className={`py-3 px-4 text-right font-bold whitespace-nowrap text-[0.9rem] ${defColorClass}`}>{ row.def }</td>
-      <td className={`py-3 px-4 font-normal text-[0.9rem] ${row.anchor ? 'text-indigo-300' : 'text-text-muted'}`}>{ row.desc }</td>
-    </tr>
-  );
-}
-
-function BfMatrixRow({ row, r, mPlayers, mStacks, mRp, activeBtnIdx, activeBbIdx }: Readonly<{ row: number[], r: number, mPlayers: string[], mStacks: number[], mRp: number[][], activeBtnIdx: number, activeBbIdx: number }>) {
-  return (
-    <tr>
-      <td className="py-2 px-2.5 text-text-muted font-bold text-[0.9rem] whitespace-nowrap border-r border-white/5">
-        { mPlayers[ r ] }<br /><span className="text-text-dim font-medium text-[0.85rem]">{ mStacks[ r ] }</span>
-      </td>
-      { row.map( ( val: number, c: number ) => {
-        const rp = mRp[ r ][ c ];
-        const textColorClass = getBfTextColorClass(val);
-        const bgClass = getBfBgClass(val);
-                const isHighlight = r === activeBbIdx && c === activeBtnIdx;
-                const borderClass = isHighlight ? 'border-2 border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.6)] z-10 relative' : 'border border-white/5';
-        return (
-                  <td key={ mPlayers[ c ] } className={`py-2.5 px-2 text-center min-w-17.5 ${borderClass} leading-snug align-middle ${bgClass}`}>
-                    { val === 1 ? <div className="text-text-dim text-[0.8rem] font-bold">1.00</div> : (
-              <>
-                <div className={`${textColorClass} ${val >= 1.6 ? 'font-extrabold' : 'font-bold'} text-[0.95rem]`}>{ val.toFixed( 2 ) }</div>
-                <div className={`${textColorClass} text-[0.85rem] font-semibold mt-1.5 border-t border-white/5 pt-1`}>{ rp }%</div>
-              </>
-            ) }
-          </td>
-        );
-      } ) }
-    </tr>
-  );
-}
-
-function toRad ( deg: number ) { return ( deg * Math.PI ) / 180; }
-
-function BoardAndTableLeft({ rpBtn, rpBb }: Readonly<{ rpBtn: number, rpBb: number }>) {
-  const W = 500; const H = 340;
-  const rx = 170; const ry = 100;
-  const cx = W / 2; const cy = H / 2;
-
-  const riskAdvantage = rpBtn - rpBb;
-
-  return (
-    <div className="flex flex-col gap-6">
-      {/* Board */}
-      <div>
-        <p className="m-0 mb-3 text-[0.95rem] font-bold text-text-muted uppercase tracking-[0.08em]">Board</p>
-        <div className="flex gap-2">
-          { [
-            { rank: 'K', suit: '♦', colorClass: 'text-sky-400', borderClass: 'border-sky-400/30' },
-            { rank: 'J', suit: '♣', colorClass: 'text-emerald-400', borderClass: 'border-emerald-400/30' },
-            { rank: 'T', suit: '♠', colorClass: 'text-text-light', borderClass: 'border-white/30' },
-            { rank: '2', suit: '♦', colorClass: 'text-sky-400', borderClass: 'border-sky-400/30' },
-            { rank: '3', suit: '♦', colorClass: 'text-sky-400', borderClass: 'border-sky-400/30' },
-          ].map( ( { rank, suit, colorClass, borderClass } ) => (
-            <div key={ rank + suit } className={`w-16 h-22 rounded-lg bg-slate-900/90 border ${borderClass} flex flex-col items-center justify-center gap-1`}>
-              <span className={`text-[1.6rem] font-black leading-none ${colorClass}`}>{ rank }</span>
-              <span className={`text-[1.4rem] leading-none ${colorClass}`}>{ suit }</span>
-            </div>
-          ) ) }
-        </div>
+    <div className="flex flex-col gap-5 group/grid">
+      <div className="flex flex-col gap-1">
+        <h4 className="m-0 text-[1.1rem] font-black text-white uppercase tracking-tight">{ title }</h4>
+        <p className="m-0 text-[0.7rem] font-bold text-text-darker uppercase tracking-[0.15em]">{ subtitle }</p>
       </div>
-
-      {/* Mesa oval */}
-      <div>
-        <p className="m-0 mb-3 text-[0.95rem] font-bold text-text-muted uppercase tracking-[0.08em]">Table Draw — Final Table 9P</p>
-        <svg viewBox={ `0 0 ${ W } ${ H }` } className="block w-full max-w-125 mx-auto">
-          <ellipse cx={ cx } cy={ cy } rx={ rx } ry={ ry } fill="rgba(22,101,52,0.35)" stroke="rgba(34,197,94,0.2)" strokeWidth="2" />
-          <ellipse cx={ cx } cy={ cy } rx={ rx - 14 } ry={ ry - 12 } fill="none" stroke="rgba(34,197,94,0.08)" strokeWidth="1" />
-          <text x={ cx } y={ cy - 40 } textAnchor="middle" fill="var(--text-muted)" fontSize="15" fontWeight="600">Pot: 5.63bb</text>
-          <SeatedPlayers cx={cx} cy={cy} rx={rx} ry={ry} />
-          <TableDrawPositions cx={ cx } cy={ cy } />
-        </svg>
-        <div className="flex gap-x-6 gap-y-2.5 flex-wrap mt-4">
-          { ( [
-            { id: 'SB', colorClass: 'bg-amber-500', textClass: 'text-amber-500', text: '0.5bb · obrig.' },
-            { id: 'BB', colorClass: 'bg-emerald-500', textClass: 'text-emerald-500', text: '1bb · obrig.' },
-            { id: 'ANTE', colorClass: 'bg-slate-400', textClass: 'text-slate-400', text: '1.125bb · dead' },
-            { id: 'BTN', colorClass: 'bg-indigo-400', textClass: 'text-indigo-400', text: '2bb · open' },
-          ] as const ).map( ( { id, colorClass, textClass, text } ) => (
-            <div key={ id } className="flex items-center gap-1">
-              <span className={`w-2.5 h-2.5 rounded-full inline-block shrink-0 ${colorClass}`} />
-              <span className={`text-[0.85rem] font-bold ${textClass}`}>{ id }</span>
-              <span className="text-[0.85rem] text-text-dim">{ text }</span>
-            </div>
-          ) ) }
-        </div>
-      </div>
-
-      {/* Insight de Risk Advantage */}
-      <div className="py-5 px-6 bg-slate-900/40 rounded-lg border-l-[3px] border-emerald-500/50">
-        <p className="m-0 text-[0.95rem] text-text-muted leading-relaxed">
-          Ambos os RPs são bem significativos. O <strong className="text-text-bright">Risk Advantage</strong> (subtração entre ambos os RPs) para o BTN é <strong className={riskAdvantage > 0 ? "text-accent-emerald" : "text-rose-400"}>
-            {riskAdvantage > 0 ? '+' : ''}{riskAdvantage.toFixed(1)}%
-          </strong>. Essa é a métrica da proporção do quanto ele pode ser agressivo vs o BB de forma geral.
-        </p>
-      </div>
-
-      {/* Insight de RIO e EV_Fold (Perspectiva Matemática SOTA) */}
-      <div className="py-5 px-6 bg-slate-900/40 rounded-lg border-l-[3px] border-rose-400">
-        <p className="m-0 text-[0.95rem] text-text-muted leading-relaxed">
-          <strong className="text-rose-400">Perspectiva Matemática (RIO):</strong> O EV do fold <strong>NUNCA</strong> é 0. As pot odds geram pseudo-densidade que mascara o <strong className="text-text-bright">Passivo Estrutural</strong> das Reverse Implied Odds. Em cenários multiway, as RIO crescem exponencialmente (<span className="font-mono">x²</span>), tornando o call uma armadilha fatal de valuation.
-        </p>
-      </div>
-
-      {/* Insight de Lucro Real (PMev) */}
-      <div className="py-5 px-6 bg-slate-900/40 rounded-lg border-l-[3px] border-amber-400">
-        <p className="m-0 text-[0.95rem] text-text-muted leading-relaxed">
-          <strong className="text-amber-400">PMev — A Ilusão do Min-Cash:</strong> O investimento inicial é negativo (-$11). O prêmio da bolha (23º lugar) é $16.76. O <strong>Ganho Real</strong> é apenas <strong className="text-text-bright">$5.76</strong>. A bolha é a ponte para zerar o prejuízo, mas a partir do ITM, a relevância de um payjump é estritamente proporcional à diferença de Ganho Real. Payjumps marginais são negligenciados em favor da alavancagem para a cravada; payjumps gigantes redefinem a aversão ao risco.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function RiskAndPrizesRight({ rpBtn, rpBb, btnStack, bbStack }: Readonly<{ rpBtn: number, rpBb: number, btnStack: number, bbStack: number }>) {
-  const riskAdvantage = rpBtn - rpBb;
-  return (
-    <div className="flex flex-col gap-6">
-      {/* RP + Ranges pré-flop */}
-      <div className="flex gap-12 flex-wrap items-start">
-        <div className="min-w-60 max-w-85">
-          <p className="m-0 mb-3 text-[0.95rem] font-bold text-text-muted uppercase tracking-[0.08em]">Risk Premium</p>
-          <div className="flex flex-col gap-2">
-            { [
-              { label: `BTN (${btnStack}bb)`, rp: rpBtn, colorClass: 'text-indigo-400', bgClass: 'bg-indigo-400' },
-              { label: `BB  (${bbStack}bb)`, rp: rpBb, colorClass: 'text-emerald-400', bgClass: 'bg-emerald-400' },
-            ].map( ( { label, rp, colorClass, bgClass } ) => {
-              const widthProps = { style: { width: `${ ( rp / 30 ) * 100 }%` } };
+      <div className="p-3 bg-slate-950/60 rounded-[2rem] border border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl relative overflow-hidden transition-all duration-500 hover:border-white/20">
+        {/* Glow de Fundo */}
+        <div className="absolute inset-0 bg-radial-[at_center_center] from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover/grid:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+        
+        <div 
+          className="grid gap-[2px] w-full aspect-square relative z-10"
+          style={{ gridTemplateColumns: 'repeat(13, 1fr)' }}
+        >
+            { grid.flat().map( ( cell, i ) => {
+              const r = Math.floor(i / 13);
+              const c = i % 13;
+              const isEmpty = !cell.raise && !cell.call && !cell.shove && (!cell.fold || cell.fold === 100);
+              
               return (
-                <div key={ label } className="flex items-center gap-2 mb-2 last:mb-0">
-                  <span className="text-[0.85rem] text-text-dim w-22.5 shrink-0">{ label }</span>
-                  <div className="flex-1 h-2.5 rounded-full bg-white/5 overflow-hidden">
-                    <div className={`h-full rounded-full ${bgClass}`} {...widthProps} />
-                  </div>
-                  <span className={`text-[0.85rem] font-bold w-12 text-right ${colorClass}`}>{ rp }%</span>
+                <div key={ i } className={`relative group/cell overflow-hidden rounded-[4px] aspect-square transition-all duration-300 ${isEmpty ? 'bg-slate-900/40 border border-white/5' : 'bg-slate-950/80 border border-white/10 hover:z-20 hover:scale-[1.15] hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]'}`}>
+                    <div className="absolute inset-0 flex flex-col">
+                        {(['shove', 'raise', 'call', 'fold'] as RangeAction[]).map(action => (
+                            cell[action] && (!isEmpty || action !== 'fold') ? (
+                                <div key={action} 
+                                     style={{ 
+                                         height: `${cell[action]}%`, 
+                                         backgroundColor: ACTION_COLORS[action] 
+                                     }} 
+                                     className="w-full opacity-90 group-hover/cell:opacity-100 transition-opacity" />
+                            ) : null
+                        ))}
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className={`text-[0.45rem] lg:text-[0.55rem] font-black font-mono transition-colors drop-shadow-md select-none ${isEmpty ? 'text-white/10 group-hover/cell:text-white/30' : 'text-white/50 group-hover/cell:text-white'}`}>
+                        { getHandLabel( r, c ) }
+                      </span>
+                    </div>
                 </div>
               );
             } ) }
-            <p className="m-0 mt-2 text-[0.85rem] text-text-dim">
-              Risk Advantage BTN <strong className={riskAdvantage > 0 ? "text-accent-emerald" : "text-rose-400"}>
-                {riskAdvantage > 0 ? '+' : ''}{riskAdvantage.toFixed(1)}%
-              </strong>
-            </p>
-          </div>
         </div>
-        <div className="min-w-50">
-          <p className="m-0 mb-3 text-[0.95rem] font-bold text-text-muted uppercase tracking-[0.08em]">Ranges pré-flop</p>
-          <div className="text-[0.9rem] text-text-muted flex flex-col gap-1.5 leading-relaxed">
-            <div><span className="text-indigo-400 font-bold">BTN</span> abre 33.6% · minirraise 2bb</div>
-            <div className="text-[0.85rem] text-text-dim pl-2">fold 66.4%</div>
-            <div className="mt-1.5"><span className="text-emerald-400 font-bold">BB</span> defende 82.9%</div>
-            <div className="text-[0.85rem] text-text-dim pl-2">fold 17.1% · call 64.4% · 3bet 10.2% · shove 8.4%</div>
-          </div>
+      </div>
+    </div>
+  );
+}
+
+function BoardAndTableLeft({ rpBtn: _rpBtn, rpBb: _rpBb }: Readonly<{ rpBtn: number, rpBb: number }>) {
+  const W = 540; const H = 380;
+  const rx = 180; const ry = 110;
+  const cx = W / 2; const cy = H / 2;
+
+  return (
+    <div className="flex flex-col gap-12">
+      <div>
+        <p className="m-0 mb-6 text-[0.8rem] font-black text-text-darker uppercase tracking-[0.3em]">Board Reference</p>
+        <div className="flex justify-center gap-4">
+          { [
+            { rank: 'K', suit: '♦', colorClass: 'text-sky-400', borderClass: 'border-sky-400/40', bg: 'bg-sky-950/20' },
+            { rank: 'J', suit: '♣', colorClass: 'text-emerald-400', borderClass: 'border-emerald-400/40', bg: 'bg-emerald-950/20' },
+            { rank: 'T', suit: '♠', colorClass: 'text-slate-100', borderClass: 'border-slate-100/40', bg: 'bg-slate-800/40' },
+            { rank: '2', suit: '♦', colorClass: 'text-sky-400', borderClass: 'border-sky-400/40', bg: 'bg-sky-950/20' },
+            { rank: '3', suit: '♦', colorClass: 'text-sky-400', borderClass: 'border-sky-400/40', bg: 'bg-sky-950/20' },
+          ].map( ( { rank, suit, colorClass, borderClass, bg } ) => (
+            <div key={ rank + suit } className={`w-20 h-28 rounded-2xl ${bg} border-2 ${borderClass} flex flex-col items-center justify-center gap-1 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.8)] backdrop-blur-2xl group hover:-translate-y-2 transition-transform duration-500 relative overflow-hidden`}>
+              <div className="absolute inset-0 bg-linear-to-b from-white/10 to-transparent opacity-50" />
+              <span className={`text-[2.4rem] font-black leading-none drop-shadow-md relative z-10 ${colorClass}`}>{ rank }</span>
+              <span className={`text-[1.6rem] leading-none drop-shadow-md relative z-10 ${colorClass}`}>{ suit }</span>
+            </div>
+          ) ) }
         </div>
       </div>
 
-      {/* Prêmios */}
-      <div className="mt-2">
-        <p className="m-0 mb-3 text-[0.95rem] font-bold text-text-muted uppercase tracking-[0.08em]">Estrutura de Prêmios — MTT $11 · 126 entradas</p>
-        <div className="flex flex-col gap-1.5">
-          { PRIZES.map( ( { pos, val }, i ) =>
-          {
-            const poolPct = ( val / TOTAL_POOL ) * 100;
-            const barBgClass = getBarBgClass(i);
-            const valColorClass = getValColorClass(i);
-            const widthProps = { style: { width: `${ poolPct }%` } };
+      <div className="relative">
+        <p className="m-0 mb-6 text-[0.8rem] font-black text-text-darker uppercase tracking-[0.3em]">Geometric Topology</p>
+        <div className="bg-slate-950/80 rounded-5xl border border-white/10 p-8 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)] overflow-hidden backdrop-blur-3xl relative">
+            {/* Ambient Backlight */}
+            <div className="absolute inset-0 bg-radial-[at_center_center] from-indigo-500/5 to-transparent pointer-events-none" />
+            <svg width="100%" height="100%" viewBox={`0 0 ${ W } ${ H }`} className="overflow-visible drop-shadow-2xl">
+              <defs>
+                <radialGradient id="feltGrad" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#0f172a" />
+                  <stop offset="80%" stopColor="#020617" />
+                  <stop offset="100%" stopColor="#000000" />
+                </radialGradient>
+                <linearGradient id="railGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#334155" />
+                  <stop offset="50%" stopColor="#1e293b" />
+                  <stop offset="100%" stopColor="#0f172a" />
+                </linearGradient>
+                <filter id="tableGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="12" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                <filter id="chipShadow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="8" stdDeviation="6" floodOpacity="0.6" />
+                </filter>
+              </defs>
+              
+              {/* Outer Glow */}
+              <ellipse cx={ cx } cy={ cy } rx={ rx + 15 } ry={ ry + 15 } fill="transparent" stroke="rgba(99, 102, 241, 0.15)" strokeWidth="20" filter="url(#tableGlow)" />
+              {/* Table Rail */}
+              <ellipse cx={ cx } cy={ cy } rx={ rx + 12 } ry={ ry + 12 } fill="url(#railGrad)" stroke="#475569" strokeWidth="2" filter="url(#chipShadow)" />
+              {/* Table Felt */}
+              <ellipse cx={ cx } cy={ cy } rx={ rx } ry={ ry } fill="url(#feltGrad)" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+              
+              {/* Center Details */}
+              <circle cx={cx} cy={cy} r="40" fill="transparent" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="4 4" />
+              <circle cx={cx} cy={cy} r="30" fill="transparent" stroke="rgba(255,255,255,0.02)" strokeWidth="2" />
+              <text x={cx} y={cy + 4} textAnchor="middle" fill="currentColor" className="text-[0.65rem] font-black text-white/10 uppercase tracking-[0.8em]">SOTA</text>
+              
+              { TABLE_PLAYERS.map( ( p ) => {
+                const angle = p.angle;
+                const x = cx + rx * Math.cos( toRad( angle ) );
+                const y = cy + ry * Math.sin( toRad( angle ) );
+                const isHero = p.name === 'BB';
+                const isVillain = p.name === 'BTN';
+                const accent = isHero ? 'text-emerald-400' : (isVillain ? 'text-indigo-400' : 'text-text-muted');
+                const strokeColor = isHero ? "#10b981" : (isVillain ? "#6366f1" : "#334155");
+
+                return (
+                  <g key={ p.name } className="group/player transition-all hover:scale-110 cursor-default" style={{ transformOrigin: `${x}px ${y}px` }}>
+                    {/* Position specific glow */}
+                    {(isHero || isVillain) && (
+                      <circle cx={ x } cy={ y } r="38" fill="transparent" stroke={isHero ? "rgba(16, 185, 129, 0.3)" : "rgba(99, 102, 241, 0.3)"} strokeWidth="3" filter="url(#tableGlow)" />
+                    )}
+                    
+                    {/* Chip Base */}
+                    <circle cx={ x } cy={ y } r="32" fill="#020617" stroke={strokeColor} strokeWidth="4" filter="url(#chipShadow)" />
+                    {/* Chip Inner Ring */}
+                    <circle cx={ x } cy={ y } r="26" fill="transparent" stroke={isHero ? "rgba(16, 185, 129, 0.3)" : (isVillain ? "rgba(99, 102, 241, 0.3)" : "rgba(255,255,255,0.05)")} strokeWidth="2" strokeDasharray="3 3" />
+                    
+                    <text x={ x } y={ y - 2 } textAnchor="middle" fill="currentColor" className={`text-[0.85rem] font-black uppercase ${accent} drop-shadow-md`}>{ p.name }</text>
+                    <text x={ x } y={ y + 12 } textAnchor="middle" fill="currentColor" className={`text-[0.65rem] font-mono font-bold ${isHero ? 'text-emerald-200/80' : (isVillain ? 'text-indigo-200/80' : 'text-slate-400/80')}`}>{ p.stack }bb</text>
+                  </g>
+                );
+              } ) }
+            </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RiskAndPrizesRight({ rpBtn: _rpBtn, rpBb: _rpBb, btnStack: _btnStack, bbStack: _bbStack }: Readonly<{ rpBtn: number, rpBb: number, btnStack: number, bbStack: number }>) {
+  return (
+    <div className="flex flex-col gap-12">
+      <div className="space-y-6">
+        <p className="m-0 text-[0.8rem] font-black text-text-darker uppercase tracking-[0.3em]">Financial Structure (FLAT)</p>
+        <div className="bg-slate-900/40 rounded-5xl border border-white/5 p-10 space-y-7 shadow-inner">
+          { PRIZES.map( ( { pos, val, jump }, i ) => {
+            const widthProps = { style: { width: `${ ( val / PRIZES[ 0 ].val ) * 100 }%` } };
+            const barBgClass = i === 0 ? 'bg-linear-to-r from-amber-400 to-amber-600' : (i === 1 ? 'bg-linear-to-r from-slate-200 to-slate-400' : (i === 2 ? 'bg-linear-to-r from-violet-400 to-violet-600' : 'bg-white/10'));
+            const valColorClass = i === 0 ? 'text-amber-400' : (i === 1 ? 'text-slate-400' : (i === 2 ? 'text-violet-400' : 'text-text-muted'));
+
             return (
-              <div key={ pos } className="flex items-center gap-2">
-                <span className="text-[0.85rem] text-text-dim w-7 text-right shrink-0">{ pos }</span>
+              <div key={ pos } className="flex items-center gap-6 group/jump">
+                <span className="text-[0.75rem] font-black text-text-darker w-6 font-mono">{ pos }</span>
                 <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden">
-                  <div className={`h-full rounded-full ${barBgClass}`} {...widthProps} />
+                  <div className={`h-full rounded-full transition-all duration-1000 ${barBgClass}`} {...widthProps} />
                 </div>
-                <div className="flex gap-2 items-baseline w-22.5 justify-end shrink-0">
-                  <span className="text-[0.75rem] text-text-darker font-mono">{ poolPct.toFixed( 1 ) }%</span>
-                  <span className={`text-[0.85rem] w-13 text-right ${valColorClass} ${i < 3 ? 'font-bold' : 'font-medium'}`}>${ val }</span>
+                <div className="flex items-center gap-4 w-32 justify-end">
+                   {jump > 0 && <span className="text-[0.65rem] font-bold text-emerald-500/40 opacity-0 group-hover/jump:opacity-100 transition-opacity">Δ{jump.toFixed(1)}</span>}
+                   <span className={`text-[0.85rem] font-black font-mono ${valColorClass}`}>${ val.toFixed(2) }</span>
                 </div>
               </div>
             );
           } ) }
         </div>
+      </div>
 
-        <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
-          { PRIZE_STRUCTURES.map( ( { tag, icon, colorClass, text, active } ) => (
-            <div key={ tag } className={`flex flex-col gap-1.5 py-3 px-3.5 rounded-lg border ${active ? 'bg-white/10 border-white/30 shadow-[0_0_8px_rgba(255,255,255,0.1)]' : 'bg-white/5 border-white/10'} ${colorClass}`}>
-              <div className="flex items-center gap-2">
-                <span className="text-base leading-none">{ icon }</span>
-                <span className="text-[0.85rem] font-extrabold uppercase tracking-wider">{ tag }</span>
-                { active && <span className="ml-auto text-[0.75rem] font-bold uppercase tracking-widest opacity-90">↑ ref</span> }
-              </div>
-              <span className="text-[0.85rem] text-text-muted leading-relaxed">{ text }</span>
+      <div className="space-y-6">
+        <p className="m-0 text-[0.8rem] font-black text-text-darker uppercase tracking-[0.3em]">HRC Decision Tree Specs</p>
+        <div className="bg-slate-900/60 rounded-5xl border border-white/10 p-10 space-y-8 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent-indigo/5 blur-3xl rounded-full" />
+            <div className="flex items-start gap-6">
+                <div className="w-1.5 h-12 bg-accent-indigo rounded-full shrink-0" />
+                <div className="space-y-2">
+                    <h5 className="text-[0.8rem] font-black text-white uppercase tracking-widest">Sizing Drift Logic</h5>
+                    <p className="text-[0.75rem] text-text-muted leading-relaxed m-0 font-medium">
+                        No contexto de ICM severo, cbets elevadas migram para <strong className="text-white">abordagens de menor sizing (20-50%)</strong>. Esta prática é quase inexistente em cenários ChipEV tradicionais.
+                    </p>
+                </div>
             </div>
-          ) ) }
+            <div className="flex items-start gap-6">
+                <div className="w-1.5 h-12 bg-accent-emerald rounded-full shrink-0" />
+                <div className="space-y-2">
+                    <h5 className="text-[0.8rem] font-black text-white uppercase tracking-widest">Nash Equilibrium Precision</h5>
+                    <p className="text-[0.75rem] text-text-muted leading-relaxed m-0 font-medium">
+                        Simulações HRC apresentam um <strong className="text-white">e-Nash reduzido</strong>, eliminando os ruídos operacionais comuns no GTO Wizard e garantindo maior estabilidade estratégica.
+                    </p>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function RangesDuel({ rpBtn, rpBb }: Readonly<{ rpBtn: number, rpBb: number }>) {
-  return (
-    <div className="mt-4">
-      <p className="m-0 mb-5 text-[1.05rem] font-bold text-text-muted uppercase tracking-[0.08em] text-center">
-        Duelo de Ranges: BTN (Agressor) vs BB (Defensor)
-      </p>
-      <div className="flex flex-row flex-wrap justify-center gap-10 items-center pb-4">
-        <div className="flex-none">
-          <OldRangeGrid freqs={ BTN_FREQS } color="indigo" title={`BTN (RFI) · RP ${rpBtn}%`} subtitle="33.6% open" />
-        </div>
-        <div className="flex-none">
-          <OldRangeGrid freqs={ BB_FREQS } color="emerald" title={`BB (Defesa) · RP ${rpBb}%`} subtitle="82.9% continue" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function IcmRulers({ matrixView, setMatrixView, matrixData, activeBtnIdx, activeBbIdx }: Readonly<{ matrixView: MatrixViewMode, setMatrixView: (v: MatrixViewMode) => void, matrixData: { mPlayers: string[], mStacks: number[], mBf: number[][], mRp: number[][] }, activeBtnIdx: number, activeBbIdx: number }>) {
-  const isFT = matrixView === 'FT';
-  const isBubble = matrixView === 'BUBBLE';
-  const isEG = matrixView === 'EG';
-  const { mPlayers, mStacks, mBf, mRp } = matrixData;
-
-  return (
-    <div className="mt-6">
-      {/* Título */}
-      <div className="flex items-baseline justify-between flex-wrap gap-4 mb-5">
-        <div className="flex items-baseline gap-4">
-          <p className="m-0 text-[1.05rem] font-bold text-text-muted uppercase tracking-[0.08em]">Réguas do ICM:</p>
-          <p className="m-0 text-[0.9rem] text-text-dim">Multiplicadores de Dor e Teto de Risco</p>
-        </div>
-        <div className="flex bg-slate-900/60 rounded-md p-1 border border-white/5">
-          <button onClick={ () => setMatrixView( 'FT' ) } className={`px-3 py-1.5 text-[0.8rem] rounded border-none cursor-pointer transition-all duration-200 ${isFT ? 'font-extrabold text-text-light bg-indigo-500/20' : 'font-medium text-text-dim bg-transparent hover:text-white'}`}>FT (Aula 1.2)</button>
-          <button onClick={ () => setMatrixView( 'BUBBLE' ) } className={`px-3 py-1.5 text-[0.8rem] rounded border-none cursor-pointer transition-all duration-200 ${isBubble ? 'font-extrabold text-text-light bg-amber-500/20' : 'font-medium text-text-dim bg-transparent hover:text-white'}`}>Bolha (26 Left)</button>
-          <button onClick={ () => setMatrixView( 'EG' ) } className={`px-3 py-1.5 text-[0.8rem] rounded border-none cursor-pointer transition-all duration-200 ${isEG ? 'font-extrabold text-text-light bg-emerald-500/20' : 'font-medium text-text-dim bg-transparent hover:text-white'}`}>Early Game (3ª Mão)</button>
-        </div>
-      </div>
-
-      {/* Legenda BF + RP */}
-      <div className="flex flex-col gap-4 mb-6 py-6 px-7 bg-slate-900/50 rounded-lg border-l-[3px] border-amber-500/30">
-        <div className="grid grid-cols-[minmax(40px,max-content)_1fr] gap-x-6 gap-y-4 items-center">
-          <div className="contents">
-            <span className="text-[0.9rem] font-extrabold text-text-light whitespace-nowrap text-right">BF</span>
-            <span className="text-[0.9rem] text-text-muted leading-relaxed">
-              Multiplicador ICM: quanto os pot odds crescem sob risco de eliminação. <span className="text-text-light font-mono text-[0.85rem]">BF = 1/(1−RP)</span>.
-            </span>
-          </div>
-          <div className="contents">
-            <span className="text-[0.9rem] font-extrabold text-text-light whitespace-nowrap text-right">RP</span>
-            <span className="text-[0.9rem] text-text-muted leading-relaxed">
-              Equity adicional (%) exigida acima dos pot odds para um call. Linha = Defensor · Coluna = Agressor.
-            </span>
-          </div>
-        </div>
-        {/* Escala de cor unificada — BF determina o nível; RP herda a mesma cor */}
-        <div className="flex items-center gap-5 flex-wrap pt-4 border-t border-white/5">
-          <span className="text-[0.85rem] font-bold text-text-dim uppercase tracking-[0.08em] whitespace-nowrap">Intensidade</span>
-          <div className="flex gap-6 flex-wrap items-center">
-            { [
-              { bgClass: 'bg-rose-500/50', borderClass: 'border-rose-400', colorClass: 'text-rose-400', label: 'BF > 2.0', desc: 'crítico' },
-              { bgClass: 'bg-amber-500/40', borderClass: 'border-amber-400', colorClass: 'text-amber-400', label: '1.6–2.0', desc: 'elevado' },
-              { bgClass: 'bg-cyan-500/20', borderClass: 'border-cyan-400', colorClass: 'text-cyan-400', label: '1.3–1.6', desc: 'moderado' },
-              { bgClass: 'bg-green-500/20', borderClass: 'border-green-400', colorClass: 'text-green-400', label: '< 1.3', desc: 'baixo' },
-            ].map( ( { bgClass, borderClass, colorClass, label, desc } ) => (
-              <div key={ label } className="flex items-center gap-2">
-                <span className={`w-3 h-3 rounded-sm border shrink-0 inline-block ${bgClass} ${borderClass}`} />
-                <span className={`text-[0.85rem] font-bold whitespace-nowrap font-mono ${colorClass}`}>{ label }</span>
-                <span className="text-[0.85rem] text-text-dim whitespace-nowrap">{ desc }</span>
-              </div>
-            ) ) }
-          </div>
-        </div>
-      </div>
-
-      <div className="overflow-x-auto scrollbar-hide">
-        <table className="border-collapse text-[0.85rem]">
-          <thead>
-            <tr>
-                      <th className="py-2 px-2.5 text-left"></th>
-              { mPlayers.map( ( p, i ) => (
-                <th key={ p } className="py-2 px-2.5 text-text-muted font-bold text-[0.9rem] text-center whitespace-nowrap">
-                          { p }<br/><span className="text-text-dim font-medium text-[0.85rem]">{ mStacks[ i ] }</span>
-                </th>
-              ) ) }
-            </tr>
-          </thead>
-          <tbody>
-            { mBf.map( ( row, r ) => (
-              <BfMatrixRow key={ mPlayers[ r ] } row={row} r={r} mPlayers={mPlayers} mStacks={mStacks} mRp={mRp} activeBtnIdx={activeBtnIdx} activeBbIdx={activeBbIdx} />
-            ) ) }
-          </tbody>
-        </table>
       </div>
     </div>
   );
@@ -550,95 +318,68 @@ function IcmRulers({ matrixView, setMatrixView, matrixData, activeBtnIdx, active
 function ToyGamesFramework() {
   return (
     <div className="mt-6">
-      <div className="flex items-baseline gap-4 mb-5">
-        <p className="m-0 text-[1.05rem] font-bold text-text-muted uppercase tracking-[0.08em]">Toy Games</p>
-        <p className="m-0 text-[0.9rem] text-text-dim">Framework Teórico — ΔRP como eixo de distorção</p>
+      <div className="flex flex-col gap-1 mb-12">
+          <p className="m-0 text-2xl font-black text-white uppercase tracking-tighter">Strategic Toy Games</p>
+          <p className="m-0 text-[0.8rem] font-bold text-text-darker uppercase tracking-[0.2em]">Framework Teórico — ΔRP as Distortion Axis</p>
       </div>
 
-      {/* Legenda conceitual */}
-      <div className="grid grid-cols-[minmax(140px,max-content)_1fr] gap-x-6 gap-y-4 items-center mb-6 py-6 px-7 bg-slate-900/50 rounded-lg border-l-[3px] border-indigo-500/30">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
         { [
           {
             term: 'Toy game',
-            def: 'Modelo simplificado que isola o ΔRP para demonstrar seu efeito sobre frequências de equilíbrio. Lente didática de causa e efeito — não representa spots reais.',
+            def: 'Lente didática de causa e efeito que isola o ΔRP para demonstrar seu efeito sobre frequências de equilíbrio.',
           },
           {
             term: 'Baseline GTO (TG0)',
-            def: 'Equilíbrio sem distorção ICM: RP = 0% para ambos. Bluff IP = 33% · Def OOP = 50% (MDF). Referência para medir todos os desvios.',
+            def: 'Equilíbrio ChipEV Puro: RP = 0%. Bluff IP = 33% · Def OOP = 50% (MDF). Referência para todos os desvios SOTA.',
           },
           {
             term: 'ΔRP = IP_RP − OOP_RP',
-            def: 'Eixo central. Positivo → IP mais constringido (bluffs menores, OOP defende mais). Negativo → IP com vantagem de agressão.',
-          },
-          {
-            term: '⊘ teto / ⊘ max',
-            def: 'Saturação: teto = defesa OOP congelada pelo RP. max = bluff IP no limite do BF. Além desses pontos qualquer ajuste é EV−.',
-          },
-          {
-            term: 'RIO / EV_fold',
-            def: 'Reverse Implied Odds e Valor de Desistência. EV_fold nunca é 0. RIO é a antimatéria das pot odds, escalonando via entropia logarítmica em potes Multiway.',
+            def: 'Eixo central. Positivo → IP constringido (overfold OOP). Negativo → IP com Licença de Agressão.',
           },
         ].map( ( { term, def } ) => (
-          <div key={ term } className="contents">
-            <span className="text-[0.9rem] font-extrabold text-indigo-400 whitespace-nowrap text-right">{ term }</span>
-            <span className="text-[0.9rem] text-text-muted leading-relaxed">{ def }</span>
-          </div>
-        ) ) }
-      </div>
-      <div className="overflow-x-auto scrollbar-hide">
-        <table className="w-full border-collapse text-[0.9rem] text-text-light">
-          <thead>
-            <tr className="border-b border-white/5">
-              <th className="py-3 px-4 text-left font-bold text-text-dim text-[0.85rem] uppercase tracking-[0.08em] whitespace-nowrap">Nó</th>
-              <th className="py-3 px-4 text-right font-bold text-indigo-400 text-[0.85rem] uppercase tracking-[0.08em] whitespace-nowrap">RP IP</th>
-              <th className="py-3 px-4 text-right font-bold text-rose-500 text-[0.85rem] uppercase tracking-[0.08em] whitespace-nowrap">RP OOP</th>
-              <th className="py-3 px-4 text-right font-bold text-emerald-500 text-[0.85rem] uppercase tracking-[0.08em] whitespace-nowrap">ΔRP</th>
-              <th className="py-3 px-4 text-right font-bold text-text-muted text-[0.85rem] uppercase tracking-[0.08em] whitespace-nowrap">Bluff IP</th>
-              <th className="py-3 px-4 text-right font-bold text-text-muted text-[0.85rem] uppercase tracking-[0.08em] whitespace-nowrap">Def OOP</th>
-              <th className="py-3 px-4 text-left font-bold text-text-dim text-[0.85rem] uppercase tracking-[0.08em]">Efeito</th>
-            </tr>
-          </thead>
-          <tbody>
-            { TOY_GAMES_LIST.map( ( row, i ) => <ToyGameRow key={row.no} row={row} i={i} /> ) }
-          </tbody>
-        </table>
-      </div>
-      {/* Glossário de Símbolos Refinado */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-x-6 gap-y-4 mt-6 pt-6 border-t border-white/5">
-        { [
-          { sym: '↑ / ↓', desc: 'Acima / abaixo do baseline GTO (33% bluff · 50% def)' },
-          { sym: '↑↑ / ↓↓', desc: 'Desvio acentuado — dinâmica dominante' },
-          { sym: '⊘ teto', desc: 'Defesa congelada pelo RP do OOP — fold sustentável' },
-          { sym: '⊘ max', desc: 'Bluff IP saturado — limite imposto pelo BF' },
-          { sym: 'ΔRP', desc: 'IP_RP − OOP_RP · Positivo = IP constringido' },
-        ].map( ( { sym, desc } ) => (
-          <div key={ sym } className="flex items-start gap-3">
-            <span className="text-[0.8rem] font-extrabold text-indigo-400 bg-indigo-500/10 border border-indigo-500/25 py-0.5 px-2 rounded font-mono whitespace-nowrap mt-px">{ sym }</span>
-            <span className="text-[0.85rem] text-text-muted leading-relaxed">{ desc }</span>
+          <div key={ term } className="p-8 bg-slate-900/50 rounded-4xl border border-indigo-500/10 hover:border-indigo-500/30 transition-all group">
+            <span className="text-[0.9rem] font-black text-indigo-400 uppercase tracking-[0.2em] block mb-4 group-hover:translate-x-1 transition-transform">{ term }</span>
+            <span className="text-[0.9rem] text-text-muted leading-relaxed font-medium">{ def }</span>
           </div>
         ) ) }
       </div>
 
-      {/* Citações e Referências */}
-      <div className="mt-8 py-5 px-6 bg-slate-900/40 rounded-lg border-l-[3px] border-slate-500/50 flex flex-col gap-2.5">
-        <div className="flex items-baseline gap-2">
-          <span className="text-indigo-400 text-[0.8rem]">★</span>
-          <span className="text-[0.9rem] text-text-muted">
-            <strong className="text-text-light font-semibold">Divergência Arquitetônica:</strong> HRC Pós-Flop (nosso cânone) considera o Bunching Effect total e a irradiação de TODAS as stacks, enquanto solvers isolados (GTO Wizard) operam com mais &quot;ruído&quot; e e-Nash menos estável.
-          </span>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-indigo-400 text-[0.8rem]">★</span>
-          <span className="text-[0.9rem] text-text-muted">
-            <strong className="text-text-light font-semibold">Âncora empírica:</strong> 93 nodes HRC vs GTO Wizard, Raphael Vitoi 2024
-          </span>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-indigo-400 text-[0.8rem]">★</span>
-          <span className="text-[0.9rem] text-text-muted">
-            <strong className="text-text-light font-semibold">Downward Drift:</strong> Dara O&apos;Kearney &amp; Barry Carter, <em>Endgame Poker Strategy: The ICM Book</em>, D&amp;B Publishing
-          </span>
-        </div>
+      <div className="overflow-x-auto scrollbar-hide rounded-5xl border border-white/5 shadow-3xl">
+        <table className="w-full border-collapse bg-slate-900/40">
+          <thead>
+            <tr className="border-b border-white/10 bg-slate-900/80">
+              <th className="py-5 px-8 text-left font-black text-text-darker text-[0.8rem] uppercase tracking-widest whitespace-nowrap">Node</th>
+              <th className="py-5 px-8 text-right font-black text-indigo-400 text-[0.8rem] uppercase tracking-widest whitespace-nowrap">RP IP</th>
+              <th className="py-5 px-8 text-right font-black text-rose-500 text-[0.8rem] uppercase tracking-widest whitespace-nowrap">RP OOP</th>
+              <th className="py-5 px-8 text-right font-black text-emerald-500 text-[0.8rem] uppercase tracking-widest whitespace-nowrap">ΔRP</th>
+              <th className="py-5 px-8 text-right font-black text-text-muted text-[0.8rem] uppercase tracking-widest whitespace-nowrap">Bluff IP</th>
+              <th className="py-5 px-8 text-right font-black text-text-muted text-[0.8rem] uppercase tracking-widest whitespace-nowrap">Def OOP</th>
+              <th className="py-5 px-8 text-left font-black text-text-darker text-[0.8rem] uppercase tracking-widest">Effect</th>
+            </tr>
+          </thead>
+          <tbody className="bg-slate-900/10">
+            {[
+                { no: 'TG0', rpi: 0, rpo: 0, delta: 0, bluff: 33, def: 50, effect: 'Baseline GTO (MDF Perfeito)' },
+                { no: 'TG1', rpi: 3, rpo: 6, delta: -3, bluff: 37, def: 44, effect: 'Efeito Batata Quente (OOP absorve risco)' },
+                { no: 'TG2', rpi: 3, rpo: 9, delta: -6, bluff: 42, def: 40, effect: 'Teto do RP (OOP atinge piso de defesa)' },
+                { no: 'TG3', rpi: 3, rpo: 18, delta: -15, bluff: 48, def: 40, effect: 'Defesa Inelástica (Pacto Silencioso)' },
+                { no: 'TG4', rpi: 9, rpo: 3, delta: 6, bluff: 30, def: 35, effect: 'Contra-intuitividade: Defensor coberto folda MAIS' },
+                { no: 'TG5', rpi: 18, rpo: 3, delta: 15, bluff: 25, def: 28, effect: 'Vantagem de Risco: IP impõe custo de colisão' },
+                { no: 'TG6', rpi: 21, rpo: 3, delta: 18, bluff: 20, def: 22, effect: 'Agressão Impune (Bolha/Terminal)' },
+            ].map((row, i) => (
+                <tr key={ row.no } className={`border-b border-white/5 transition-colors hover:bg-indigo-500/5 ${i % 2 === 0 ? 'bg-white/[0.02]' : ''}`}>
+                    <td className="py-5 px-8 font-black text-white text-[0.85rem]">{ row.no }</td>
+                    <td className="py-5 px-8 text-right font-mono text-indigo-300 font-bold">{ row.rpi }%</td>
+                    <td className="py-5 px-8 text-right font-mono text-rose-400 font-bold">{ row.rpo }%</td>
+                    <td className="py-5 px-8 text-right font-mono font-black text-white">{ row.delta > 0 ? `+${row.delta}` : (row.delta === 0 ? '0' : row.delta) }%</td>
+                    <td className="py-5 px-8 text-right font-mono text-text-dim">{ row.bluff }%</td>
+                    <td className="py-5 px-8 text-right font-mono text-text-dim">{ row.def }%</td>
+                    <td className="py-5 px-8 text-[0.8rem] text-text-muted font-medium">{ row.effect }</td>
+                </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -646,7 +387,7 @@ function ToyGamesFramework() {
 
 export default function ReferencialAula12 ()
 {
-  const [ matrixView, setMatrixView ] = useState<MatrixViewMode>( 'FT' );
+  const [ matrixView ] = useState<MatrixViewMode>( 'FT' );
 
   const matrixData = useMemo( () =>
   {
@@ -658,17 +399,8 @@ export default function ReferencialAula12 ()
     }
   }, [ matrixView ] );
 
-  // Mapeamento Posicional SOTA: Translação dinâmica do Table Draw para a Matriz O(1)
-  const btnStack = TABLE_PLAYERS.find(p => p.name === 'BTN')?.stack || 40;
-  const bbStack = TABLE_PLAYERS.find(p => p.name === 'BB')?.stack || 55;
-
-  const getClosestIndex = useCallback((stack: number, stacks: number[]) => {
-      return stacks.reduce((closest, current, idx) => Math.abs(current - stack) < Math.abs(stacks[closest] - stack) ? idx : closest, 0);
-  }, []);
-
-  const activeBtnIdx = useMemo(() => getClosestIndex(btnStack, matrixData.mStacks), [matrixData.mStacks, btnStack, getClosestIndex]);
-  const activeBbIdx = useMemo(() => getClosestIndex(bbStack, matrixData.mStacks), [matrixData.mStacks, bbStack, getClosestIndex]);
-
+  const activeBtnIdx = 6;
+  const activeBbIdx = 8;
   const rpBb = matrixData.mRp[activeBbIdx]?.[activeBtnIdx] ?? 0;
   const rpBtn = matrixData.mRp[activeBtnIdx]?.[activeBbIdx] ?? 0;
   const bfBb = matrixData.mBf[activeBbIdx]?.[activeBtnIdx] ?? 1;
@@ -678,75 +410,174 @@ export default function ReferencialAula12 ()
   const pressureDelta = Math.abs(rpBb - rpBtn).toFixed(1);
 
   return (
-    <div id="anchor-aula12" className="max-w-7xl mx-auto px-6">
-      <details className="border-b border-white/5 group">
-        <summary className="cursor-pointer list-none flex items-center gap-3 py-5 text-[1.05rem] text-text-dim font-semibold tracking-widest select-none outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo rounded-lg">
-          <span className="text-[0.85rem] uppercase tracking-widest text-text-muted group-open:text-accent-indigo transition-colors">▶ Referencial</span>
-          <span className="font-normal text-text-dim group-open:text-text-light transition-colors">
-            — Âncora Empírica (Aula 1.2) · KJT-2-3 · BTN {rpBtn}% RP vs BB {rpBb}% RP
-          </span>
+    <div id="anchor-aula12" className="w-full">
+      <details className="group" open>
+        <summary className="cursor-pointer list-none flex items-center justify-between gap-4 p-12 lg:p-16 hover:bg-white/5 transition-all select-none outline-none border-b border-white/5">
+          <div className="flex items-center gap-8">
+            <div className="w-14 h-14 rounded-3xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo group-open:bg-accent-indigo group-open:text-white transition-all shadow-xl">
+                <i className="fa-solid fa-chevron-right group-open:rotate-90 text-xl" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+                <span className="text-[0.7rem] font-black uppercase tracking-[0.5em] text-accent-indigo-light opacity-80">Reference Layer 01</span>
+                <h3 className="text-xl sm:text-2xl font-black text-white m-0 tracking-tight uppercase">Âncora Científica SOTA v5.2 Gold</h3>
+            </div>
+          </div>
+          <div className="hidden md:flex items-center gap-8 text-[0.7rem] font-black uppercase text-text-darker">
+             <div className="flex flex-col items-end leading-none gap-1">
+                <span className="opacity-50">BTN Anchor</span>
+                <span className="text-white text-lg font-mono">{rpBtn.toFixed(1)}%</span>
+             </div>
+             <div className="w-px h-10 bg-white/10" />
+             <div className="flex flex-col items-end leading-none gap-1">
+                <span className="opacity-50">BB Anchor</span>
+                <span className="text-white text-lg font-mono">{rpBb.toFixed(1)}%</span>
+             </div>
+          </div>
         </summary>
 
-        <div className="flex flex-col gap-12 pb-12 pt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] gap-12 w-full">
-            <BoardAndTableLeft rpBtn={rpBtn} rpBb={rpBb} />
-            <RiskAndPrizesRight rpBtn={rpBtn} rpBb={rpBb} btnStack={btnStack} bbStack={bbStack} />
-          </div>
-          <RangesDuel rpBtn={rpBtn} rpBb={rpBb} />
-          <IcmRulers matrixView={matrixView} setMatrixView={setMatrixView} matrixData={matrixData} activeBtnIdx={activeBtnIdx} activeBbIdx={activeBbIdx} />
-          <ToyGamesFramework />
+        <div className="flex flex-col gap-24 p-12 lg:p-16 animate-sota-in bg-linear-to-b from-black/20 to-transparent">
           
-          <div className="mt-8 pt-8 border-t border-white/5">
-            <div className="glass-panel border border-white/10 p-0 overflow-hidden relative group rounded-2xl">
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-linear-to-bl from-accent-indigo/10 to-accent-danger/5 blur-[120px] pointer-events-none rounded-full transform translate-x-1/3 -translate-y-1/3" />
-              
-              <div className="p-8 relative z-10">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)]" />
-                    <h3 className="text-lg font-black text-white m-0 tracking-tight uppercase">
-                        Diagnóstico Topológico
+          <LegendSection />
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-24 w-full">
+            <div className="space-y-20">
+                <BoardAndTableLeft rpBtn={rpBtn} rpBb={rpBb} />
+            </div>
+            <div className="space-y-20">
+                <RiskAndPrizesRight rpBtn={rpBtn} rpBb={rpBb} btnStack={BF_STACKS[6]} bbStack={BF_STACKS[8]} />
+            </div>
+          </div>
+
+          <div className="pt-24 border-t border-white/5">
+            <div className="flex items-center justify-center gap-4 mb-12">
+                <div className="h-px flex-1 bg-linear-to-r from-transparent to-white/10" />
+                <h3 className="text-xl sm:text-2xl font-black text-white m-0 tracking-[0.3em] uppercase text-center">
+                    Topological Range Equilibrium
+                </h3>
+                <div className="h-px flex-1 bg-linear-to-l from-transparent to-white/10" />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start justify-items-center">
+                <div className="w-full max-w-140">
+                    <ActionRangeGrid grid={ BTN_ACTION_GRID } title="BTN Opening Range (33.6%)" subtitle="HRC Scientific NAI · Status: Aggression License" />
+                </div>
+                <div className="w-full max-w-140">
+                    <ActionRangeGrid grid={ BB_ACTION_GRID } title="BB Reaction Range (82.9%)" subtitle="HRC Scientific Def · Status: Asymmetric Pressure" />
+                </div>
+            </div>
+          </div>
+
+          <div className="pt-24 border-t border-white/5">
+            <div className="flex flex-col gap-1 mb-10">
+              <p className="m-0 text-2xl font-black text-white uppercase tracking-tighter">ICM Rulers Matrix</p>
+              <p className="m-0 text-[0.8rem] font-bold text-text-darker uppercase tracking-[0.2em]">Malmuth-Harville Cross Reorganization</p>
+            </div>
+            <div className="overflow-x-auto scrollbar-hide rounded-5xl border border-white/5 shadow-4xl">
+                <table className="border-collapse w-full">
+                    <thead>
+                        <tr className="bg-slate-900/95 backdrop-blur-2xl">
+                            <th className="py-5 px-6 text-left border-r border-white/10 sticky left-0 z-30 bg-slate-900">
+                                <div className="text-[0.6rem] font-black text-indigo-400/70 uppercase text-center leading-tight">Hero<br/>(Def)</div>
+                            </th>
+                            { matrixData.mPlayers.map( ( p, i ) => (
+                                <th key={ p } className="py-5 px-6 text-text-muted font-black text-[0.8rem] text-center whitespace-nowrap uppercase tracking-tighter border-b border-white/10">
+                                    <div className="text-white mb-1">{ p }</div>
+                                    <div className="text-text-darker font-mono text-[0.7rem]">{ matrixData.mStacks[ i ].toFixed(1) }bb</div>
+                                </th>
+                            ) ) }
+                        </tr>
+                    </thead>
+                    <tbody className="bg-slate-900/40">
+                        { matrixData.mBf.map((row, r) => (
+                            <tr key={r} className={`border-b border-white/5 transition-colors ${r === activeBbIdx ? 'bg-indigo-500/10' : 'hover:bg-white/5'}`}>
+                                <td className="py-4 px-6 border-r border-white/10 sticky left-0 z-20 bg-slate-900 shadow-xl text-center">
+                                    <div className="text-[0.8rem] font-black text-white uppercase">{matrixData.mPlayers[r]}</div>
+                                    <div className="text-[0.6rem] font-mono text-text-darker">{matrixData.mStacks[r]}bb</div>
+                                </td>
+                                { row.map((bf, c) => {
+                                    const rp = matrixData.mRp[r][c];
+                                    const gravity = getRpGravityColor(rp);
+                                    const isActiveMatch = r === activeBbIdx && c === activeBtnIdx;
+                                    return (
+                                        <td key={c} className={`py-4 px-2 text-center transition-all ${isActiveMatch ? 'ring-2 ring-inset ring-indigo-500 z-10' : ''}`}>
+                                            { r === c ? <div className="w-1.5 h-1.5 rounded-full bg-white/10 mx-auto" /> : (
+                                                <div className={`flex flex-col gap-1.5 p-3 rounded-2xl border ${gravity} shadow-sm group/cell hover:scale-110 transition-transform`}>
+                                                    <div className="text-[0.9rem] font-black font-mono leading-none tracking-tighter">
+                                                        { rp.toFixed( 1 ) }%
+                                                    </div>
+                                                    <div className="text-[0.6rem] font-bold opacity-50 uppercase tracking-widest leading-none">
+                                                        BF { bf.toFixed( 2 ) }x
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+          </div>
+
+          <div className="pt-24 border-t border-white/5">
+            <ToyGamesFramework />
+          </div>
+
+          <div className="pt-24 border-t border-white/5">
+            <div className="glass-panel border border-white/10 p-0 overflow-hidden relative group rounded-6xl bg-black/40 text-left shadow-5xl">
+              <div className="absolute top-0 right-0 w-250 h-200 bg-linear-to-bl from-accent-indigo/20 to-accent-danger/10 blur-[200px] pointer-events-none rounded-full transform translate-x-1/4 -translate-y-1/4 opacity-40" />
+
+              <div className="p-16 sm:p-20 lg:p-24 relative z-10">
+                <div className="flex items-center gap-6 mb-16">
+                    <div className="w-4 h-4 rounded-full bg-accent-indigo shadow-[0_0_25px_var(--accent-indigo)]" />
+                    <h3 className="text-3xl sm:text-4xl font-black text-white m-0 tracking-tight uppercase">
+                        SOTA Topological Audit
                     </h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="flex flex-col gap-4 justify-center">
-                    <h4 className="text-[0.75rem] font-black text-white uppercase tracking-widest">
-                        Assimetria de Risco Identificada
-                    </h4>
-                    <p className="text-[0.7rem] text-text-muted leading-relaxed m-0">
-                        Neste embate, o {isBBUnderPressure ? 'BB' : 'BTN'} sofre uma pressão assimétrica. A diferença de Risk Premium é de <strong className="text-accent-indigo-light">{pressureDelta}%</strong>. 
-                        Isso significa que o {isBBUnderPressure ? 'BB' : 'BTN'} precisa de uma mão matematicamente <strong className="text-accent-danger">mais forte</strong> para pagar um All-In do que o oponente precisa para blefar.
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 text-left items-center">
+                  <div className="flex flex-col gap-10 justify-center">
+                    <div className="space-y-3">
+                        <h4 className="text-[1rem] font-black text-white uppercase tracking-[0.4em]">
+                            Risk Asymmetry Detection
+                        </h4>
+                        <div className="h-1.5 w-24 bg-accent-indigo rounded-full" />
+                    </div>
+                    <p className="text-[1.1rem] text-text-muted leading-relaxed m-0 font-medium max-w-xl">
+                        Nesta topologia 9P, o {isBBUnderPressure ? 'BB' : 'BTN'} sofre uma pressão assimétrica catastrófica. A <strong className="text-white">Gravidade da Distância</strong> entre RPs ({pressureDelta}%) 
+                        desloca o equilíbrio para um regime de <strong className="text-accent-emerald">Exploração Forçada</strong>.
                     </p>
-                    <div className="bg-black/40 border border-white/5 rounded-xl p-5 mt-2">
-                        <div className="flex justify-between items-center mb-3">
-                            <span className="text-[0.65rem] font-black uppercase tracking-widest text-text-dim">BF BTN</span>
-                            <span className="text-sm font-mono font-black text-white">{bfBtn.toFixed(2)}x</span>
+                    <div className="bg-black/60 border border-white/10 rounded-4xl p-12 mt-2 shadow-inner grid grid-cols-2 gap-12">
+                        <div className="flex flex-col gap-4">
+                            <span className="text-[0.7rem] font-black uppercase tracking-widest text-text-darker">BF BTN (Agressor)</span>
+                            <span className="text-4xl font-mono font-black text-white">{bfBtn.toFixed(2)}x</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-danger">BF BB</span>
-                            <span className="text-sm font-mono font-black text-accent-danger">{bfBb.toFixed(2)}x</span>
+                        <div className="flex flex-col gap-4">
+                            <span className="text-[0.7rem] font-black uppercase tracking-widest text-accent-danger/60">BF BB (Defensor)</span>
+                            <span className="text-4xl font-mono font-black text-accent-danger">{bfBb.toFixed(2)}x</span>
                         </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-4">
-                    <div className="bg-bg-deep/50 border border-white/5 rounded-xl p-5 hover:bg-black/60 transition-all hover:border-white/10">
-                        <h4 className="text-[0.65rem] font-black text-accent-amber uppercase tracking-widest mb-2 flex items-center gap-2">
-                            <i className="fa-solid fa-triangle-exclamation" /> 
-                            Vulnerabilidade RIO
+                  <div className="flex flex-col gap-10">
+                    <div className="bg-white/5 border border-white/10 rounded-5xl p-12 hover:bg-white/10 transition-all hover:border-white/20 shadow-3xl group/diag relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-3 h-full bg-accent-amber opacity-50" />
+                        <h4 className="text-[0.9rem] font-black text-accent-amber uppercase tracking-widest mb-6 flex items-center gap-4 leading-none">
+                            <i className="fa-solid fa-triangle-exclamation text-2xl" /> Structural Vulnerability (RIO)
                         </h4>
-                        <p className="text-[0.6rem] text-text-dim leading-relaxed m-0">
-                            O range do BB contém diversas mãos marginais (ex: K2s, J8o) que, apesar de acertarem o board <span className="font-mono text-white">K-J-T-2-3</span>, sofrem de <strong>Reverse Implied Odds severas</strong>. O custo de continuar na mão sem o nuts é inflado pelo Bubble Factor de {bfBb.toFixed(2)}x.
+                        <p className="text-[1rem] text-text-muted leading-relaxed m-0 font-medium">
+                            O range do BB contém mãos marginais que, apesar do acerto, sofrem de <strong className="text-white">Reverse Implied Odds severas</strong>. O custo de colisão é inflado pelo Bubble Factor de {bfBb.toFixed(2)}x, tornando o call um erro de valuation sistêmico.
                         </p>
                     </div>
 
-                    <div className="bg-bg-deep/50 border border-white/5 rounded-xl p-5 hover:bg-black/60 transition-all hover:border-white/10">
-                        <h4 className="text-[0.65rem] font-black text-accent-emerald uppercase tracking-widest mb-2 flex items-center gap-2">
-                            <i className="fa-solid fa-bullseye" /> 
-                            Diretriz de Exploração
+                    <div className="bg-white/5 border border-white/10 rounded-5xl p-12 hover:bg-white/10 transition-all hover:border-white/20 shadow-3xl group/diag relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-3 h-full bg-accent-emerald opacity-50" />
+                        <h4 className="text-[0.9rem] font-black text-accent-emerald uppercase tracking-widest mb-6 flex items-center gap-4 leading-none">
+                            <i className="fa-solid fa-bullseye text-2xl" /> Exploitation Directive
                         </h4>
-                        <p className="text-[0.6rem] text-text-dim leading-relaxed m-0">
-                            Como o BTN opera com um Risk Premium menor ({rpBtn}%), ele possui a <strong className="text-accent-emerald-light">Licença de Agressão</strong>. O limiar de equidade exigido (ThreshEq) para seus blefes é descontado, tornando apostas polarizadas no River (como shove com Q9) altamente lucrativas (EV+).
+                        <p className="text-[1rem] text-text-muted leading-relaxed m-0 font-medium">
+                            Com um Risk Premium menor ({rpBtn.toFixed(1)}%), o BTN opera sob regime de <strong className="text-white">Agressão Descontada</strong>. O limiar de equidade é reduzido, tornando o overshove no River matematicamente inquestionável.
                         </p>
                     </div>
                   </div>

@@ -10,7 +10,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePerspectiveCalculations } from '@/components/simulator/hooks/usePerspectiveCalculations';
 import { PerspectiveChart } from '@/components/simulator/ui/PerspectiveChart';
 import { SotaTooltip } from '@/components/simulator/ui/SotaTooltip';
-import React from 'react';
 
 const DEFAULT_STACKS = [ 9.4, 52.4, 22.2, 7, 44.3, 24.3, 40, 13.4, 55 ];
 const DEFAULT_PRIZES = [ 237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47 ];
@@ -72,161 +71,187 @@ export default function PerspectivePanel ( {
   });
 
   return (
-    <div className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
+    <div className="glass-panel flex flex-col gap-12 p-6 sm:p-8 lg:p-12 xl:p-16 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-500">
       <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-indigo/5 blur-3xl rounded-full pointer-events-none" />
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-white/5 gap-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-8 border-b border-white/5 gap-8">
         <div>
-          <h3 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.2em] m-0">
-            Perspectiva Matemática &middot; <span className="text-text-muted">v4.2 Quantum</span>
+          <h3 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.3em] m-0 flex items-center gap-3">
+             <div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)]" />
+             Perspectiva Matemática &middot; <span className="text-text-muted">v4.2 Quantum</span>
           </h3>
-          <p className="text-[0.65rem] text-text-dim mt-2 m-0 leading-relaxed max-w-md font-medium uppercase tracking-wider">
-            Física da Decisão: Piso Dinâmico (EV_fold) e Dívida RIO.
+          <p className="text-[0.65rem] text-text-dim mt-2 m-0 leading-relaxed max-w-md font-medium uppercase tracking-widest">
+            Física da Decisão: Piso Dinâmico (EV_fold) e Dívida RIO
           </p>
         </div>
-        <div className={ `text-[0.6rem] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl border transition-all shadow-lg flex items-center gap-2 ${ isNearPayjump ? 'bg-emerald-500/10 border-emerald-500/20 text-accent-emerald' : 'bg-black/40 border-white/5 text-text-darker' }` }>
-          <div className={`w-1.5 h-1.5 rounded-full ${isNearPayjump ? 'bg-accent-emerald animate-pulse' : 'bg-text-darker'}`} />
+        <div className={ `text-[0.65rem] font-black uppercase tracking-[0.2em] px-6 py-3 rounded-2xl border transition-all shadow-2xl flex items-center gap-4 ${ isNearPayjump ? 'bg-emerald-500/10 border-emerald-500/20 text-accent-emerald shadow-emerald-500/5' : 'bg-black/40 border-white/5 text-text-darker' }` }>
+          <div className={`w-2 h-2 rounded-full ${isNearPayjump ? 'bg-accent-emerald shadow-[0_0_8px_var(--accent-emerald)] animate-pulse' : 'bg-text-darker'}`} />
           { isNearPayjump ? "LADDERING ATIVO" : "EQUILÍBRIO ESTÁVEL" }
         </div>
       </div>
 
       {/* CONTROLES QUANTUM */ }
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 bg-black/40 p-6 sm:p-8 rounded-3xl border border-white/5 shadow-inner">
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <label htmlFor="perspective-opponents" className="text-[0.6rem] text-text-muted uppercase font-black tracking-widest">Oponentes</label>
-            <span className="text-[0.65rem] font-mono font-black text-accent-danger bg-black/60 px-2 py-0.5 rounded border border-white/5">{ numPlayers }{ numPlayers > 2 ? ' MW' : ' HU' }</span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 bg-black/40 p-8 lg:p-12 rounded-4xl border border-white/5 shadow-inner">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center px-1">
+            <label htmlFor="perspective-opponents" className="text-[0.6rem] text-text-muted uppercase font-black tracking-[0.25em]">Oponentes</label>
+            <span className="text-[0.7rem] font-mono font-black text-accent-danger bg-black/60 px-3 py-1 rounded-xl border border-white/10 shadow-lg">{ numPlayers }{ numPlayers > 2 ? ' MW' : ' HU' }</span>
           </div>
-          <input id="perspective-opponents" type="range" min="2" max="5" step="1" value={ numPlayers } onChange={ ( e ) => setNumPlayers( Number.parseInt( e.target.value ) ) } className="w-full h-1 accent-accent-danger bg-white/10 rounded-full appearance-none cursor-pointer" />
+          <input id="perspective-opponents" type="range" min="2" max="5" step="1" value={ numPlayers } onChange={ ( e ) => setNumPlayers( Number.parseInt( e.target.value ) ) } className="w-full h-1.5 accent-accent-danger bg-white/10 rounded-full appearance-none cursor-pointer" />
         </div>
 
-        <div className="flex flex-col gap-3 justify-center bg-black/40 p-5 rounded-2xl border border-white/5 shadow-lg">
-          <label htmlFor="perspective-payjump" className="text-[0.6rem] text-text-muted uppercase font-black tracking-widest flex items-center gap-3 cursor-pointer group">
-            <input id="perspective-payjump" type="checkbox" checked={ isNearPayjump } onChange={ ( e ) => setIsNearPayjump( e.target.checked ) } className="w-4 h-4 accent-accent-emerald rounded-lg bg-black/60 border-white/10" />
+        <div className="flex flex-col gap-4 justify-center bg-black/40 p-6 rounded-3xl border border-white/5 shadow-2xl">
+          <label htmlFor="perspective-payjump" className="text-[0.65rem] text-text-muted uppercase font-black tracking-[0.2em] flex items-center gap-4 cursor-pointer group active:scale-95 transition-all">
+            <input id="perspective-payjump" type="checkbox" checked={ isNearPayjump } onChange={ ( e ) => setIsNearPayjump( e.target.checked ) } className="w-5 h-5 accent-accent-emerald rounded-xl bg-black/60 border-white/10 cursor-pointer" />
             <span className="group-hover:text-white transition-colors">Perto de Payjump</span>
           </label>
-          <label htmlFor="perspective-blinds" className="text-[0.6rem] text-text-muted uppercase font-black tracking-widest flex items-center gap-3 cursor-pointer group">
-            <input id="perspective-blinds" type="checkbox" checked={ blindsRising } onChange={ ( e ) => setBlindsRising( e.target.checked ) } className="w-4 h-4 accent-accent-danger rounded-lg bg-black/60 border-white/10" />
+          <label htmlFor="perspective-blinds" className="text-[0.65rem] text-text-muted uppercase font-black tracking-[0.2em] flex items-center gap-4 cursor-pointer group active:scale-95 transition-all">
+            <input id="perspective-blinds" type="checkbox" checked={ blindsRising } onChange={ ( e ) => setBlindsRising( e.target.checked ) } className="w-5 h-5 accent-accent-danger rounded-xl bg-black/60 border-white/10 cursor-pointer" />
             <span className="group-hover:text-white transition-colors">Blinds Subindo</span>
           </label>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <label htmlFor="perspective-pko" className="text-[0.6rem] text-text-muted uppercase font-black tracking-widest">PKO Bounty</label>
-            <span className="text-[0.65rem] font-mono font-black text-accent-gold bg-black/60 px-2 py-0.5 rounded border border-white/5">{ Math.round( bountyValue * 100 ) }%</span>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center px-1">
+            <label htmlFor="perspective-pko" className="text-[0.6rem] text-text-muted uppercase font-black tracking-[0.25em]">PKO Bounty</label>
+            <span className="text-[0.7rem] font-mono font-black text-accent-gold bg-black/60 px-3 py-1 rounded-xl border border-white/10 shadow-lg">{ Math.round( bountyValue * 100 ) }%</span>
           </div>
-          <input id="perspective-pko" type="range" min="0" max="0.1" step="0.005" value={ bountyValue } onChange={ ( e ) => setBountyValue( Number.parseFloat( e.target.value ) ) } className="w-full h-1 accent-accent-gold bg-white/10 rounded-full appearance-none cursor-pointer" />
+          <input id="perspective-pko" type="range" min="0" max="0.1" step="0.005" value={ bountyValue } onChange={ ( e ) => setBountyValue( Number.parseFloat( e.target.value ) ) } className="w-full h-1.5 accent-accent-gold bg-white/10 rounded-full appearance-none cursor-pointer" />
         </div>
 
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <label htmlFor="perspective-kappa" className="text-[0.6rem] text-text-muted uppercase font-black tracking-widest">Credibilidade κ</label>
-            <span className="text-[0.65rem] font-mono font-black text-accent-pink bg-black/60 px-2 py-0.5 rounded border border-white/5">{ Math.round( kappa * 100 ) }%</span>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center px-1">
+            <label htmlFor="perspective-kappa" className="text-[0.6rem] text-text-muted uppercase font-black tracking-[0.25em]">Credibilidade κ</label>
+            <span className="text-[0.7rem] font-mono font-black text-accent-pink bg-black/60 px-3 py-1 rounded-xl border border-white/10 shadow-lg">{ Math.round( kappa * 100 ) }%</span>
           </div>
-          <input id="perspective-kappa" type="range" min="0" max="1" step="0.05" value={ kappa } onChange={ ( e ) => setKappa( Number.parseFloat( e.target.value ) ) } className="w-full h-1 accent-accent-pink bg-white/10 rounded-full appearance-none cursor-pointer" />
+          <input id="perspective-kappa" type="range" min="0" max="1" step="0.05" value={ kappa } onChange={ ( e ) => setKappa( Number.parseFloat( e.target.value ) ) } className="w-full h-1.5 accent-accent-pink bg-white/10 rounded-full appearance-none cursor-pointer" />
         </div>
 
-        <div className="hidden sm:block h-px bg-white/5 col-span-1 my-auto" />
-
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <label htmlFor="perspective-equity" className="text-[0.6rem] text-text-muted uppercase font-black tracking-widest">Equity</label>
-            <span className="text-[0.65rem] font-mono font-black text-accent-indigo bg-black/60 px-2 py-0.5 rounded border border-white/5">{ Math.round( winProb * 100 ) }%</span>
-          </div>
-          <input id="perspective-equity" type="range" min="0" max="1" step="0.01" value={ winProb } onChange={ ( e ) => setWinProb( Number.parseFloat( e.target.value ) ) } className="w-full h-1 accent-accent-indigo bg-white/10 rounded-full appearance-none cursor-pointer" />
+        <div className="bg-black/60 p-6 rounded-3xl border border-white/5 flex flex-col justify-center items-center shadow-2xl relative overflow-hidden group/sunk">
+          <div className="absolute inset-0 bg-linear-to-b from-accent-amber/5 to-transparent pointer-events-none" />
+          <span className="text-[0.6rem] text-text-darker uppercase font-black tracking-[0.3em] mb-2 relative z-10 group-hover/sunk:text-text-dim transition-colors">Sunk Cost &middot; Pot</span>
+          <div className="text-xl font-black text-accent-amber font-mono tabular-nums tracking-tighter relative z-10">-{ heroCost.toFixed( 2 ) }bb <span className="text-text-darker mx-1">/</span> { potSize.toFixed( 1 ) }bb</div>
         </div>
 
-        <div className="bg-black/60 p-5 rounded-2xl border border-white/5 flex flex-col justify-center shadow-lg">
-          <span className="text-[0.55rem] text-text-darker uppercase font-black tracking-[0.25em] mb-2">Sunk Cost / Pot</span>
-          <div className="text-[0.8rem] font-black text-accent-amber font-mono tabular-nums tracking-tighter">-{ heroCost.toFixed( 2 ) }bb / { potSize.toFixed( 1 ) }bb</div>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center px-1">
+            <label htmlFor="perspective-equity" className="text-[0.6rem] text-text-muted uppercase font-black tracking-[0.25em]">Equity Estimada</label>
+            <span className="text-[0.7rem] font-mono font-black text-accent-indigo bg-black/60 px-3 py-1 rounded-xl border border-white/10 shadow-lg">{ Math.round( winProb * 100 ) }%</span>
+          </div>
+          <input id="perspective-equity" type="range" min="0" max="1" step="0.01" value={ winProb } onChange={ ( e ) => setWinProb( Number.parseFloat( e.target.value ) ) } className="w-full h-1.5 accent-accent-indigo bg-white/10 rounded-full appearance-none cursor-pointer" />
         </div>
 
-        <div className="space-y-4 col-span-1 sm:col-span-2">
-          <div className="flex justify-between items-center">
-            <label htmlFor="perspective-realization" className="text-[0.6rem] text-text-muted uppercase font-black tracking-widest">Realização R</label>
-            <span className="text-[0.65rem] font-mono font-black text-accent-emerald bg-black/60 px-2 py-0.5 rounded border border-white/5">{ realization }x</span>
+        <div className="space-y-6 md:col-span-3 pt-4">
+          <div className="flex justify-between items-center px-1">
+            <label htmlFor="perspective-realization" className="text-[0.6rem] text-text-muted uppercase font-black tracking-[0.25em]">Fator de Realização Posicional (R)</label>
+            <span className="text-[0.7rem] font-mono font-black text-accent-emerald bg-black/60 px-4 py-1.5 rounded-xl border border-white/10 shadow-lg">{ realization.toFixed(2) }x</span>
           </div>
-          <input id="perspective-realization" type="range" min="0.5" max="1.5" step="0.05" value={ realization } onChange={ ( e ) => setRealization( Number.parseFloat( e.target.value ) ) } className="w-full h-1 accent-accent-emerald bg-white/10 rounded-full appearance-none cursor-pointer" />
+          <input id="perspective-realization" type="range" min="0.5" max="1.5" step="0.05" value={ realization } onChange={ ( e ) => setRealization( Number.parseFloat( e.target.value ) ) } className="w-full h-2 accent-accent-emerald bg-white/10 rounded-full appearance-none cursor-pointer shadow-inner" />
         </div>
       </div>
 
 
       {/* PIPELINE DE TRANSMUTAÇÃO QUANTUM */ }
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-8 scrollbar-hide">
         <SotaTooltip title="LAYER 1: ICMev (Snapshot)" content="A fotografia estática. Fichas convertidas em equidade de prêmio (Malmuth-Harville). Ignora completamente a variância, a posição e o tempo. Útil como base, perigoso como conclusão." align="left" theme="indigo">
-          <div className="p-6 md:p-8 rounded-2xl border-l-[6px] border-l-text-darker bg-linear-to-r from-slate-900/80 to-bg-panel/40 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg transition-all duration-300 hover:bg-slate-800/90 hover:shadow-2xl hover:-translate-y-1 gap-4 md:gap-0 border border-white/5 hover:border-white/10">
-            <div>
-              <span className="text-[0.75rem] font-black text-text-muted uppercase tracking-[0.2em] mb-2 block">LAYER 1: ICMev</span>
-              <span className="text-[0.75rem] text-text-dim leading-relaxed">Perspectiva base e ingênua.</span>
+          <div className="p-8 lg:p-10 rounded-3xl border border-white/5 border-l-8 border-l-text-darker bg-black/40 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center shadow-2xl transition-all duration-500 hover:bg-black/60 hover:-translate-y-1.5 group/layer">
+            <div className="space-y-2">
+              <span className="text-[0.8rem] font-black text-text-muted uppercase tracking-[0.3em] group-hover/layer:text-text-light transition-colors">LAYER 1 &middot; ICMev</span>
+              <p className="text-[0.75rem] text-text-darker leading-relaxed m-0 font-medium">Perspectiva base e ingênua (Física Newtoniana).</p>
             </div>
-            <span className="text-2xl font-black text-text-light tabular-nums font-mono">{ result.currentEquityPct.toFixed( 2 ) }%</span>
+            <div className="flex flex-col items-start md:items-end gap-1">
+                <span className="text-[0.6rem] uppercase font-black tracking-widest text-text-darker">Base Equity</span>
+                <span className="text-3xl font-black text-text-muted tabular-nums font-mono tracking-tighter group-hover/layer:text-text-light transition-colors">{ result.currentEquityPct.toFixed( 2 ) }%</span>
+            </div>
           </div>
         </SotaTooltip>
 
         <SotaTooltip title="LAYER 2: Esperança Matemática" content="A injeção da Lógica. O Valuation corrige a assimetria (fichas ganhas vs perdidas) e a Dívida RIO pune a insolvência de múltiplos jogadores no pote." align="left" theme="indigo">
-          <div className="p-6 md:p-8 rounded-2xl border-l-[6px] border-l-accent-amber bg-linear-to-r from-slate-900/80 to-bg-panel/40 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg transition-all duration-300 hover:bg-slate-800/90 hover:shadow-2xl hover:-translate-y-1 gap-4 md:gap-0 border border-white/5 hover:border-white/10">
-            <div className="flex flex-col gap-1">
-              <span className="text-[0.75rem] font-black text-accent-amber uppercase tracking-[0.2em]">LAYER 2: ESPERANÇA MATEMÁTICA</span>
-              <span className="text-[0.75rem] text-text-dim font-medium tracking-wide">
-                Valuation: <strong className="text-amber-400 font-mono bg-amber-500/10 px-2 py-0.5 rounded">{ result.valuation.toFixed( 2 ) }x</strong>
-                <span className="mx-3 opacity-30">|</span>
-                Dívida RIO: <strong className="text-amber-400 font-mono bg-amber-500/10 px-2 py-0.5 rounded">-{ result.rioLiability.toFixed( 2 ) }%</strong>
-              </span>
+          <div className="p-8 lg:p-10 rounded-3xl border border-white/5 border-l-8 border-l-accent-amber bg-black/40 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center shadow-2xl transition-all duration-500 hover:bg-black/60 hover:-translate-y-1.5 group/layer">
+            <div className="flex flex-col gap-4">
+              <span className="text-[0.8rem] font-black text-accent-amber uppercase tracking-[0.3em]">LAYER 2 &middot; ESPERANÇA MATEMÁTICA</span>
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex flex-col gap-1">
+                    <span className="text-[0.6rem] uppercase font-black text-text-darker tracking-widest">Valuation Factor</span>
+                    <strong className="text-accent-amber font-mono text-lg font-black bg-accent-amber/10 px-3 py-1 rounded-xl border border-accent-amber/20">{ result.valuation.toFixed( 2 ) }x</strong>
+                </div>
+                <div className="w-px h-10 bg-white/5" />
+                <div className="flex flex-col gap-1">
+                    <span className="text-[0.6rem] uppercase font-black text-text-darker tracking-widest">Dívida RIO</span>
+                    <strong className="text-accent-amber font-mono text-lg font-black bg-accent-amber/10 px-3 py-1 rounded-xl border border-accent-amber/20">-{ result.rioLiability.toFixed( 2 ) }%</strong>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col items-start md:items-end">
-              <span className="text-[0.6rem] uppercase tracking-widest text-text-dim mb-1">Explosão</span>
-              <span className="text-2xl font-black text-accent-amber tabular-nums font-mono">{ ( ( result.valuation - 1 ) * 100 ).toFixed( 0 ) }%</span>
+            <div className="flex flex-col items-start md:items-end gap-1 mt-6 md:mt-0">
+              <span className="text-[0.6rem] uppercase font-black tracking-widest text-text-darker">Assimetria</span>
+              <span className="text-4xl font-black text-accent-amber tabular-nums font-mono tracking-tighter shadow-accent-amber/10">{ ( ( result.valuation - 1 ) * 100 ).toFixed( 0 ) }%</span>
             </div>
           </div>
         </SotaTooltip>
 
         <SotaTooltip title="LAYER 3: Expectativa Preditiva" content="A Psicologia do Tempo. FGS mede a urgência da sobrevivência (t-3 blinds) e o Piso Dinâmico estabelece o verdadeiro custo do fold." align="left" theme="indigo">
-          <div className="p-6 md:p-8 rounded-2xl border-l-[6px] border-l-accent-emerald bg-linear-to-r from-slate-900/80 to-bg-panel/40 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg transition-all duration-300 hover:bg-slate-800/90 hover:shadow-2xl hover:-translate-y-1 gap-4 md:gap-0 border border-white/5 hover:border-white/10">
-            <div className="flex flex-col gap-1">
-              <span className="text-[0.75rem] font-black text-accent-emerald uppercase tracking-[0.2em]">LAYER 3: EXPECTATIVA MATEMÁTICA</span>
-              <span className="text-[0.75rem] text-text-dim font-medium tracking-wide">
-                Piso (EV_fold): <strong className="text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded">{ result.dynamicEvFold.toFixed( 2 ) }%</strong>
-                <span className="mx-3 opacity-30">|</span>
-                FGS Health: <strong className="text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded">{ result.fgsHealth.toFixed( 2 ) }x</strong>
-              </span>
+          <div className="p-8 lg:p-10 rounded-3xl border border-white/5 border-l-8 border-l-accent-emerald bg-black/40 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center shadow-2xl transition-all duration-500 hover:bg-black/60 hover:-translate-y-1.5 group/layer">
+            <div className="flex flex-col gap-4">
+              <span className="text-[0.8rem] font-black text-accent-emerald uppercase tracking-[0.3em]">LAYER 3 &middot; EXPECTATIVA PREDITIVA</span>
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex flex-col gap-1">
+                    <span className="text-[0.6rem] uppercase font-black text-text-darker tracking-widest">Piso (EV_fold)</span>
+                    <strong className="text-accent-emerald font-mono text-lg font-black bg-accent-emerald/10 px-3 py-1 rounded-xl border border-accent-emerald/20">{ result.dynamicEvFold.toFixed( 2 ) }%</strong>
+                </div>
+                <div className="w-px h-10 bg-white/5" />
+                <div className="flex flex-col gap-1">
+                    <span className="text-[0.6rem] uppercase font-black text-text-darker tracking-widest">FGS Health</span>
+                    <strong className="text-accent-emerald font-mono text-lg font-black bg-accent-emerald/10 px-3 py-1 rounded-xl border border-accent-emerald/20">{ result.fgsHealth.toFixed( 2 ) }x</strong>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col items-start md:items-end">
-              <span className="text-[0.6rem] uppercase tracking-widest text-text-dim mb-1">Status</span>
-              <span className="text-xl font-black text-accent-emerald uppercase tracking-widest">{ result.isActionBetterThanFold ? "Soberano" : "Insolvente" }</span>
+            <div className="flex flex-col items-start md:items-end gap-1 mt-6 md:mt-0">
+              <span className="text-[0.6rem] uppercase font-black tracking-widest text-text-darker">Status Orgânico</span>
+              <span className="text-2xl font-black text-accent-emerald uppercase tracking-[0.2em] drop-shadow-[0_0_10px_rgba(16,185,129,0.2)]">{ result.isActionBetterThanFold ? "Soberano" : "Insolvente" }</span>
             </div>
           </div>
         </SotaTooltip>
 
         <SotaTooltip title="LAYER 4: Perspectiva Matemática" content="A Síntese Máxima SOTA. Se o valor é positivo, a utilidade da colisão supera o piso estrutural do fold e a erosão do tempo, justificando a agressão." align="left" theme="indigo">
-          <div className="p-8 md:p-10 rounded-2xl border-l-[8px] border-l-accent-indigo-light bg-linear-to-br from-accent-indigo/10 via-slate-900/90 to-bg-panel/60 backdrop-blur-xl border border-accent-indigo/30 shadow-[0_15px_50px_rgba(99,102,241,0.15)] flex flex-col gap-6 transition-transform duration-500 hover:-translate-y-2">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-0">
-              <div className="flex flex-col gap-2">
-                <span className="text-[0.85rem] font-black text-accent-indigo-light uppercase tracking-[0.25em] mb-1">LAYER 4: PERSPECTIVA MATEMÁTICA (PM)</span>
-                <span className="text-[0.75rem] text-text-light font-medium tracking-wide flex flex-wrap gap-y-2">
-                  <span className="mr-4">Edge Amortizada: <strong className="text-indigo-300 font-mono bg-indigo-500/20 px-2 py-0.5 rounded ml-1">{ result.amortizedEdge.toFixed( 2 ) }x</strong></span>
-                  <span className="mr-4">Cᵢ: <strong className="text-indigo-300 font-mono bg-indigo-500/20 px-2 py-0.5 rounded ml-1">{ result.ci.toFixed( 2 ) }</strong></span>
-                  <span>κ: <strong className="text-indigo-300 font-mono bg-indigo-500/20 px-2 py-0.5 rounded ml-1">{ Math.round( kappa * 100 ) }%</strong></span>
-                </span>
+          <div className="p-10 lg:p-12 xl:p-16 rounded-4xl border border-accent-indigo/30 border-l-10 border-l-accent-indigo bg-linear-to-br from-accent-indigo/10 via-slate-950/90 to-bg-panel/60 backdrop-blur-2xl shadow-3xl flex flex-col gap-10 transition-all duration-700 hover:-translate-y-2 group/pm">
+            <div className="absolute inset-0 bg-radial-[at_center_center] from-accent-indigo/5 to-transparent pointer-events-none" />
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 relative z-10">
+              <div className="flex flex-col gap-6">
+                <span className="text-[0.9rem] font-black text-accent-indigo-light uppercase tracking-[0.4em] mb-2 group-hover/pm:tracking-[0.45em] transition-all duration-700">LAYER 4 &middot; PERSPECTIVA (PM)</span>
+                <div className="flex flex-wrap items-center gap-8">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[0.6rem] uppercase font-black text-text-darker tracking-widest">Edge Amortizada</span>
+                    <strong className="text-white font-mono text-xl font-black bg-white/5 px-4 py-1.5 rounded-2xl border border-white/10 shadow-inner">{ result.amortizedEdge.toFixed( 2 ) }x</strong>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[0.6rem] uppercase font-black text-text-darker tracking-widest">Insolvência Cᵢ</span>
+                    <strong className="text-white font-mono text-xl font-black bg-white/5 px-4 py-1.5 rounded-2xl border border-white/10 shadow-inner">{ result.ci.toFixed( 2 ) }</strong>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[0.6rem] uppercase font-black text-text-darker tracking-widest">Axioma Psi (κ)</span>
+                    <strong className="text-white font-mono text-xl font-black bg-white/5 px-4 py-1.5 rounded-2xl border border-white/10 shadow-inner">{ Math.round( kappa * 100 ) }%</strong>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col items-start md:items-end">
-                <span className="text-[0.65rem] uppercase tracking-[0.2em] text-text-dim mb-2">Métrica Soberana</span>
-                <span className={ `text-4xl md:text-5xl font-black tabular-nums font-mono tracking-tighter ${ result.isActionBetterThanFold ? 'text-accent-emerald drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'text-accent-danger drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]' }` }>
+              <div className="flex flex-col items-start md:items-end gap-3">
+                <span className="text-[0.7rem] uppercase tracking-[0.3em] font-black text-text-dim mb-1">Métrica Soberana</span>
+                <span className={ `text-6xl lg:text-7xl font-black tabular-nums font-mono tracking-tighter drop-shadow-2xl transition-all duration-700 ${ result.isActionBetterThanFold ? 'text-accent-emerald group-hover/pm:drop-shadow-[0_0_30px_rgba(16,185,129,0.4)]' : 'text-accent-danger group-hover/pm:drop-shadow-[0_0_30px_rgba(244,63,94,0.4)]' }` }>
                   { result.perspectivaPct > 0 ? '+' : '' }{ result.perspectivaPct.toFixed( 2 ) }%
                 </span>
               </div>
             </div>
             { Math.abs( result.perspectivaPct ) <= 5 && (
-              <div className="mt-2 p-5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-[0.75rem] text-accent-pink-light font-medium leading-relaxed flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0">
-                    <i className="fa-solid fa-triangle-exclamation text-rose-400"></i>
+              <div className="mt-4 p-8 bg-rose-500/10 border border-rose-500/20 rounded-3xl text-[0.85rem] text-accent-pink-light font-medium leading-relaxed flex flex-col gap-5 shadow-2xl relative overflow-hidden group/marginal">
+                <div className="absolute inset-0 bg-linear-to-r from-accent-rose/5 to-transparent pointer-events-none" />
+                <div className="flex items-center gap-5 relative z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-accent-rose/20 border border-accent-rose/30 flex items-center justify-center shrink-0 shadow-lg">
+                    <i className="fa-solid fa-triangle-exclamation text-accent-rose-light text-xl animate-pulse"></i>
                   </div>
-                  <strong className="uppercase tracking-widest text-[0.7rem] text-rose-300">Zona Marginal (EV Instável)</strong>
+                  <strong className="uppercase tracking-[0.3em] text-[0.75rem] font-black text-accent-rose-light">Zona Marginal &middot; <span className="text-text-darker">Equilíbrio Instável</span></strong>
                 </div>
-                <p className="m-0 pl-11">Decisão altamente sensível à imprecisão de range.</p>
-                <div className="mt-2 pl-11 text-text-bright font-medium italic opacity-90 border-l-2 border-rose-500/40 ml-1 py-1 px-3">
-                  &quot;O tamanho do desvio (exploit) deve ser proporcional à credibilidade da sua informação.&quot; — Axioma Lipe Piv
+                <p className="m-0 pl-16 opacity-80 leading-relaxed font-medium">Decisão altamente sensível à imprecisão de range e entropia informacional.</p>
+                <div className="mt-2 pl-12 text-text-bright font-bold italic border-l-4 border-accent-rose/40 ml-4 py-2 px-6 bg-black/20 rounded-r-2xl">
+                  &quot;O tamanho do desvio (exploit) deve ser estritamente proporcional à credibilidade da sua informação.&quot; — Axioma Lipe Piv
                 </div>
               </div>
             ) }
@@ -235,21 +260,42 @@ export default function PerspectivePanel ( {
       </div>
 
       {/* EQUITY CURVES CHART */ }
-      <div className="w-full">
+      <div className="w-full h-100 bg-black/40 rounded-4xl border border-white/5 p-8 shadow-inner overflow-hidden">
         <PerspectiveChart chartData={chartData} />
       </div>
 
       {/* DIAGNÓSTICO SOTA */ }
-      <div className="p-6 bg-linear-to-br from-accent-indigo/10 to-transparent backdrop-blur-sm border-l-4 border-l-accent-indigo rounded-xl text-xs text-indigo-100/80 leading-relaxed shadow-lg border border-white/5">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-2 h-2 rounded-full bg-accent-indigo animate-pulse"></div>
-          <strong className="text-indigo-300 uppercase tracking-widest font-black text-[0.6rem]">Síntese Quantum</strong>
+      <div className="p-10 bg-linear-to-br from-accent-indigo/10 via-black/40 to-black/60 backdrop-blur-xl border border-white/10 border-l-10 border-l-accent-indigo rounded-4xl text-[0.85rem] text-indigo-100/90 leading-relaxed shadow-3xl group/diag hover:border-accent-indigo/30 transition-all duration-700 relative overflow-hidden">
+        <div className="absolute inset-0 bg-radial-[at_center_center] from-accent-indigo/5 to-transparent pointer-events-none" />
+        <div className="flex items-center gap-4 mb-6 relative z-10">
+          <div className="w-2.5 h-2.5 rounded-full bg-accent-indigo shadow-[0_0_15px_var(--accent-indigo)] animate-pulse"></div>
+          <strong className="text-accent-indigo-light uppercase tracking-[0.4em] font-black text-[0.7rem]">Síntese do Orquestrador Quantum</strong>
         </div>
-        <p className="m-0">{ result.diagnostico }</p>
-        <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap gap-x-6 gap-y-2">
-          <span className="text-text-muted font-bold"><span className="text-text-darker mr-1.5 uppercase tracking-tighter">Protocolo:</span> { result.isActionBetterThanFold ? "A utilidade da colisão neutraliza a erosão do tempo." : "A omissão estratégica preserva o capital sistêmico." }</span>
+        <p className="m-0 relative z-10 font-medium leading-loose max-w-5xl">{ result.diagnostico }</p>
+        <div className="mt-8 pt-8 border-t border-white/5 flex flex-wrap gap-x-12 gap-y-4 relative z-10">
+          <div className="flex items-center gap-3">
+              <span className="text-[0.6rem] text-text-darker uppercase font-black tracking-widest">Protocolo SOTA</span>
+              <span className="text-white font-black uppercase tracking-widest text-[0.7rem] bg-white/5 px-4 py-1.5 rounded-xl border border-white/10 shadow-lg">{ result.isActionBetterThanFold ? "Agressão Dominante" : "Omissão Estratégica" }</span>
+          </div>
+          <div className="flex items-center gap-3">
+              <span className="text-[0.6rem] text-text-darker uppercase font-black tracking-widest">Diretriz</span>
+              <span className="text-text-muted font-bold italic">{ result.isActionBetterThanFold ? "A utilidade da colisão neutraliza a erosão do tempo." : "A omissão preserva o capital sistêmico da órbita." }</span>
+          </div>
         </div>
-        { isNearPayjump && <div className="mt-4 p-4 bg-amber-500/10 rounded-lg border border-amber-500/30 text-accent-gold font-bold leading-relaxed shadow-lg shadow-amber-500/5"><i className="fa-solid fa-bolt-lightning mr-3"></i>[EXTREMA AVERSÃO AO RISCO]: A pressão de payjump induz o overfold. A inversão de EVs negativos da teoria pura exige um desvio (exploit) estritamente proporcional à credibilidade dessa leitura (Axioma Lipe Piv).</div> }
+        { isNearPayjump && (
+            <div className="mt-10 p-8 bg-amber-500/10 rounded-3xl border border-amber-500/30 text-accent-gold font-bold leading-relaxed shadow-3xl shadow-amber-500/5 relative overflow-hidden group/payjump">
+              <div className="absolute top-0 right-0 p-6 opacity-10 group-hover/payjump:opacity-20 transition-opacity">
+                <i className="fa-solid fa-bolt-lightning text-6xl"></i>
+              </div>
+              <div className="flex items-center gap-4 mb-4 relative z-10">
+                <i className="fa-solid fa-bolt-lightning text-xl text-accent-amber animate-pulse"></i>
+                <span className="uppercase tracking-[0.3em] text-[0.75rem] font-black">Extrema Aversão ao Risco Identificada</span>
+              </div>
+              <p className="m-0 relative z-10 text-[0.9rem] leading-relaxed">
+                A pressão de payjump induz o overfold estrutural. A inversão de EVs da teoria pura exige um desvio (exploit) estritamente proporcional à credibilidade informacional (Axioma Lipe Piv).
+              </p>
+            </div>
+        ) }
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState, useId } from 'react';
@@ -125,11 +125,11 @@ export default function RiskGauge( {
   const safeOpponentValue = Number.isNaN( opponentValue ) ? 0 : opponentValue;
 
   const isCritical = safeValue >= threshold;
-  const isDeathZone = safeValue >= 41; // SOTA: Teto de Nash Provado (41%)
+  const isDeathZone = safeValue >= 41; // SOTA: Heurística de Pressão Crítica (Horizonte de 41%)
   const isPredatorZone = safeOpponentValue >= 41 && safeValue < 25;
 
   const rpDiff = Math.abs( safeValue - safeOpponentValue );
-  const { startColor, endColor, strokeColor, trackColor } = getGaugeColors(isDeathZone, isPredatorZone, isCritical, rpDiff);
+  const { startColor, endColor, strokeColor } = getGaugeColors(isDeathZone, isPredatorZone, isCritical, rpDiff);
 
   // Comprimento do path para preencher o arco.
   // Vamos usar pathLength do framer-motion variando de 0 a (safeValue / maxVisualRp).
@@ -147,10 +147,10 @@ export default function RiskGauge( {
   useEffect( () => {
     if ( isDeathZone && !hasLoggedEasterEgg.current ) {
       const msg = [
-        "%c SINGULARIDADE ICM DETECTADA (RP > 41%) ",
+        "%c ALERTA DE PRESSÃO CRÍTICA (RP > 41%) ",
         "color: var(--accent-neon-red); font-weight: bold; font-size: 12px; background: #200010; padding: 4px; border: 1px solid var(--accent-neon-red);",
-        "\nNeste nível de pressão (Teto de Nash), a matemática sugere que a coragem é apenas uma forma elaborada de suicídio financeiro.",
-        "A estrutura dos prêmios impede que a fricção ultrapasse esse horizonte de eventos.",
+        "\nNeste nível de pressão (Hipótese do Teto do RP), a matemática sugere que a coragem é frequentemente uma forma de suicídio financeiro.",
+        "A estrutura dos prêmios tende a impedir que a fricção ultrapasse esse horizonte de eventos.",
         "Survival > Accumulation."
       ];
       setTimeout( () => console.log( msg[0], msg[1], msg[2], msg[3], msg[4] ), 500 );
@@ -159,30 +159,37 @@ export default function RiskGauge( {
   }, [isDeathZone] );
 
   return (
-    <div className="flex flex-col items-center font-sans">
-      <div className="relative w-full max-w-35 aspect-square mx-auto mb-3">
-        <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+    <div className="flex flex-col items-center font-sans group/gauge">
+      <div className="relative w-full max-w-40 aspect-square mx-auto mb-5">
+        <div className="absolute inset-0 bg-slate-950/80 rounded-full border border-white/5 shadow-[inset_0_4px_10px_rgba(0,0,0,0.8),_0_20px_40px_-10px_rgba(0,0,0,0.5)] backdrop-blur-md" />
+        <div className="absolute inset-2 bg-black/60 rounded-full shadow-[inset_0_4px_15px_rgba(0,0,0,0.9)]" />
+        
+        <svg viewBox="0 0 36 36" className="absolute inset-0 w-full h-full -rotate-90 scale-90">
           <defs>
             <linearGradient id={gradId} x1="0%" y1="100%" x2="100%" y2="0%">
               <stop offset="0%" stopColor={startColor} />
               <stop offset="100%" stopColor={endColor} />
             </linearGradient>
+            <filter id={`glow-${baseId}`} x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
           </defs>
 
-          {/* Track de Fundo */}
+          {/* Track de Fundo Metálico */}
           <path
             className="fill-none"
-            stroke={trackColor}
-            strokeWidth="2.5"
+            stroke="rgba(255,255,255,0.03)"
+            strokeWidth="3"
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
 
           {/* Arco Preenchendo com Linear Gradient e Glow */}
           <motion.path
-            className="fill-none"
+            className="fill-none drop-shadow-2xl"
             stroke={`url(#${gradId})`}
             strokeLinecap="round"
-            initial={{ pathLength: 0, strokeWidth: 3, opacity: 0 }}
+            initial={{ pathLength: 0, strokeWidth: 3.5, opacity: 0 }}
             animate={{
                 pathLength: targetPathLength,
                 opacity: 1,
@@ -194,10 +201,11 @@ export default function RiskGauge( {
                 opacity: { duration: 0.5 }
             }}
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+            filter={`url(#glow-${baseId})`}
           />
         </svg>
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center" style={ { gap: '3px' } }>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={ { gap: '2px' } }>
           <GaugeCenter
             isDeathZone={ isDeathZone }
             isPredatorZone={ isPredatorZone }
@@ -208,11 +216,11 @@ export default function RiskGauge( {
         </div>
       </div>
 
-      <div className="text-center z-10 relative">
-        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-text-muted">{ label }</div>
-        <div className="font-serif text-2xl font-black text-white mt-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{ pos }</div>
+      <div className="text-center z-10 relative bg-slate-900/40 p-4 rounded-3xl border border-white/5 shadow-inner backdrop-blur-xl group-hover/gauge:bg-slate-900/60 transition-colors w-full">
+        <div className="text-[10px] font-black uppercase tracking-[0.25em] text-text-muted mb-1">{ label }</div>
+        <div className="font-serif text-3xl font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] tracking-tight">{ pos }</div>
         <button
-          className="font-mono text-[0.7rem] font-bold text-text-dim mt-1.5 hover:text-white transition-colors group relative"
+          className="font-mono text-[0.65rem] font-bold text-text-darker mt-2 hover:text-white transition-colors group relative bg-black/40 px-3 py-1.5 rounded-lg border border-white/5 w-full"
           type="button"
           style={ { cursor: stackTooltip ? 'help' : 'default' } }
           onMouseEnter={ () => stackTooltip && setShowTooltip( true ) }
@@ -227,13 +235,13 @@ export default function RiskGauge( {
           } }
           tabIndex={ stackTooltip ? 0 : undefined }
         >
-          <span style={{ borderBottom: stackTooltip ? '1px dotted rgba(255,255,255,0.4)' : undefined, paddingBottom: '2px' }}>{ stack }</span>
+          <span className="truncate block">{ stack }</span>
           { stackTooltip && showTooltip && (
-            <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-64 p-4 bg-black/95 backdrop-blur-md border border-white/10 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.8)] text-left pointer-events-none z-99999">
+            <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-64 p-4 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.9)] text-left pointer-events-none z-[99999]">
               <p className="text-[0.7rem] text-text-light leading-relaxed font-sans font-medium m-0 normal-case tracking-normal">
                   { stackTooltip }
               </p>
-              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-black border-r border-b border-white/10 rotate-45" />
+              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-r border-b border-white/10 rotate-45" />
             </div>
           ) }
         </button>
@@ -241,3 +249,4 @@ export default function RiskGauge( {
     </div>
   );
 }
+

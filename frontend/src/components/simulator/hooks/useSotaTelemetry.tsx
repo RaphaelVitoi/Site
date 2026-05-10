@@ -8,7 +8,7 @@
  */
 
 import { logTelemetryEvent } from '@/lib/telemetry-client';
-import { TelemetryCategorySchema, TelemetryPayload } from '@/lib/schemas';
+import { TelemetryCategorySchema, type TelemetryPayload } from '@/lib/schemas';
 import { useCallback } from 'react';
 import { useSotaSync } from './useSotaSync';
 

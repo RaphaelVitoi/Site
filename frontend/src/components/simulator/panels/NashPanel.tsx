@@ -1,12 +1,13 @@
 'use client';
 
 /**
- * IDENTITY: Painel de Frequências ICM Quantum v4.2
+ * IDENTITY: Painel de Frequências ICM Quantum v4.2 Gold
  * PATH: src/components/simulator/panels/NashPanel.tsx
- * ROLE: Exibe a distorção GTO através do Organismo SOTA.
+ * ROLE: Exibe a distorção GTO através do Organismo SOTA com estética high-fidelity.
  * BINDING: [engine/types.ts, components/simulator/ui/*]
  */
 
+import { motion } from 'framer-motion';
 import { useState } from 'react';
 import type { ChipEvFreqs, IcmDistortionResult, StreetChipEvFreqs } from '../engine/types';
 import { ActionRow } from '../ui/ActionRow';
@@ -46,9 +47,9 @@ export default function NashPanel ( {
   const [ activeStreet, setActiveStreet ] = useState<'flop' | 'turn' | 'river'>( 'flop' );
 
   const streetData = {
-    flop: { nash: nashFlop, freqs: streetFreqs.flop, rps: streetRps.flop, label: 'FLOP', color: 'var(--accent-indigo-light)' },
-    turn: { nash: nashTurn, freqs: streetFreqs.turn, rps: streetRps.turn, label: 'TURN', color: 'var(--accent-emerald)' },
-    river: { nash: nashRiver, freqs: streetFreqs.river, rps: streetRps.river, label: 'RIVER', color: 'var(--accent-danger)' },
+    flop: { nash: nashFlop, freqs: streetFreqs.flop, rps: streetRps.flop, label: 'FLOP', color: 'var(--color-accent-indigo-light)' },
+    turn: { nash: nashTurn, freqs: streetFreqs.turn, rps: streetRps.turn, label: 'TURN', color: 'var(--color-accent-emerald)' },
+    river: { nash: nashRiver, freqs: streetFreqs.river, rps: streetRps.river, label: 'RIVER', color: 'var(--color-accent-danger)' },
   };
 
   const current = streetData[ activeStreet ];
@@ -56,117 +57,188 @@ export default function NashPanel ( {
   const deltaRp = isBaseline ? 0 : current.nash.deltaRp;
   const ipRp = isBaseline ? 0 : current.rps.ip;
   const oopRp = isBaseline ? 0 : current.rps.oop;
-  const deltaRpProps = { style: { color: deltaRp > 0 ? 'var(--accent-amber)' : 'var(--accent-emerald)' } };
 
   return (
-    <div className="glass-panel flex flex-col gap-8 p-6 sm:p-8 lg:p-10 transition-all duration-300 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden">
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-indigo/5 blur-3xl rounded-full pointer-events-none" />
+    <div className="glass-panel flex flex-col gap-12 p-10 sm:p-12 lg:p-16 transition-all duration-700 rounded-4xl bg-bg-panel/80 backdrop-blur-3xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] relative overflow-hidden group/nash">
+      <div className="absolute -top-32 -right-32 w-64 h-64 bg-accent-indigo/10 blur-[120px] rounded-full pointer-events-none group-hover/nash:bg-accent-indigo/15 transition-all duration-1000" />
+      <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-accent-rose/5 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="flex justify-between items-start border-b border-white/5 pb-6">
-        <div className="max-w-[70%]">
-          <h3 className="m-0 text-[0.75rem] font-black text-text-main uppercase tracking-[0.2em]">Frequências ICM Quantum</h3>
-          <p className="m-0 mt-1.5 text-[0.6rem] text-text-dim font-medium">Motor SOTA v4.2 &middot; Organismo Sistêmico de Valuation.</p>
+      {/* Header com Status do Motor */}
+      <div className="flex flex-col md:flex-row justify-between items-start border-b border-white/5 pb-10 gap-8 relative z-10">
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+             <div className="w-2.5 h-2.5 rounded-full bg-accent-indigo shadow-[0_0_15px_var(--accent-indigo)] animate-pulse" />
+             <h3 className="m-0 text-[0.8rem] font-black text-white uppercase tracking-[0.4em]">
+                Frequências ICM Quantum
+             </h3>
+          </div>
+          <p className="m-0 text-[0.65rem] text-text-dim font-medium uppercase tracking-[0.2em] flex items-center gap-3 leading-none">
+            <span className="text-accent-indigo-light font-black">Motor SOTA v4.2</span>
+            <span className="opacity-20 text-white">|</span>
+            <span>Organismo de Valuation</span>
+          </p>
         </div>
-        <span className="px-3 py-1 rounded-lg bg-slate-900/80 border border-white/10 text-[0.65rem] font-black font-mono tabular-nums whitespace-nowrap shadow-inner" {...deltaRpProps}>
-          ΔRP { deltaRp >= 0 ? '+' : '' }{ deltaRp.toFixed( 1 ) }
-        </span>
+
+        <div className="flex items-center gap-3">
+            <span className="text-[0.55rem] font-black text-text-darker uppercase tracking-[0.3em]">Instabilidade δ</span>
+            <div className={`px-5 py-2.5 rounded-2xl bg-slate-950/80 border border-white/10 text-[0.85rem] font-black font-mono tabular-nums whitespace-nowrap shadow-2xl flex items-center gap-3 transition-colors ${deltaRp > 0 ? 'text-accent-amber' : 'text-accent-emerald'}`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${deltaRp > 0 ? 'bg-accent-amber animate-pulse' : 'bg-accent-emerald'}`} />
+              { deltaRp >= 0 ? '+' : '' }{ deltaRp.toFixed( 1 ) }%
+            </div>
+        </div>
       </div>
 
-      <div id="quantum-controls" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* Toggles Táticos */}
+      <div id="quantum-controls" className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative z-10">
         <button
             onClick={ () => onPayjumpToggle( !isNearPayjump ) }
             aria-pressed={isNearPayjump}
-            className={`py-3 px-4 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all cursor-pointer border ${isNearPayjump ? 'bg-accent-emerald/10 border-accent-emerald text-accent-emerald shadow-[0_0_20px_rgba(16,185,129,0.2)]' : 'bg-white/5 border-white/5 text-text-muted hover:bg-white/10 hover:border-white/20'}`}
+            className={`py-5 px-8 rounded-3xl text-[0.7rem] font-black uppercase tracking-[0.25em] transition-all duration-500 cursor-pointer border flex items-center justify-center gap-4 group/btn active:scale-95 shadow-2xl ${isNearPayjump ? 'bg-accent-emerald/10 border-accent-emerald/40 text-accent-emerald shadow-emerald-500/10' : 'bg-slate-900/40 border-white/5 text-text-muted hover:bg-slate-900/60 hover:border-white/20'}`}
         >
-          { isNearPayjump ? '✓ Payjump Iminente' : 'Perto de Payjump?' }
+          <div className={`w-2 h-2 rounded-full transition-all duration-500 ${isNearPayjump ? 'bg-accent-emerald shadow-[0_0_12px_var(--accent-emerald)] scale-110' : 'bg-text-darker group-hover/btn:bg-text-muted'}`} />
+          { isNearPayjump ? 'Payjump Iminente' : 'Salto de Prêmios' }
         </button>
+
         <button
             onClick={ () => onBlindsToggle( !blindsRisingSoon ) }
             aria-pressed={blindsRisingSoon}
-            className={`py-3 px-4 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all cursor-pointer border ${blindsRisingSoon ? 'bg-accent-danger/10 border-accent-danger text-accent-danger shadow-[0_0_20px_rgba(225,29,72,0.2)]' : 'bg-white/5 border-white/5 text-text-muted hover:bg-white/10 hover:border-white/20'}`}
+            className={`py-5 px-8 rounded-3xl text-[0.7rem] font-black uppercase tracking-[0.25em] transition-all duration-500 cursor-pointer border flex items-center justify-center gap-4 group/btn active:scale-95 shadow-2xl ${blindsRisingSoon ? 'bg-accent-danger/10 border-accent-danger/40 text-accent-danger shadow-rose-500/10' : 'bg-slate-900/40 border-white/5 text-text-muted hover:bg-slate-900/60 hover:border-white/20'}`}
         >
-          { blindsRisingSoon ? '⚠ Blinds Subindo' : 'Salto de Blinds?' }
+          <div className={`w-2 h-2 rounded-full transition-all duration-500 ${blindsRisingSoon ? 'bg-accent-danger shadow-[0_0_12px_var(--accent-danger)] animate-pulse scale-110' : 'bg-text-darker group-hover/btn:bg-text-muted'}`} />
+          { blindsRisingSoon ? 'Blinds Subindo' : 'Custo de Órbita' }
         </button>
       </div>
 
-      <div className="flex gap-3">
+      {/* Street Selector - Estética High-End */}
+      <div className="flex gap-4 p-2 bg-slate-950/60 rounded-4xl border border-white/5 shadow-inner relative z-10 overflow-x-auto scrollbar-hide">
         { ( [ 'flop', 'turn', 'river' ] as const ).map( s => {
           const d = streetData[ s ];
           const isActive = s === activeStreet;
-          const btnProps = { style: {
-            borderColor: isActive ? d.color : 'rgba(255,255,255,0.03)',
-            color: isActive ? d.color : 'var(--text-darker)',
-            boxShadow: isActive ? `0 10px 25px -10px ${d.color}` : 'none'
-          } };
           const avgRp = isBaseline ? 0 : ( d.rps.ip + d.rps.oop ) / 2;
+
           return (
             <button
                 key={ s }
                 type="button"
                 onClick={ () => setActiveStreet( s ) }
-                className={`flex-1 flex flex-col items-center gap-1 py-3 px-1 rounded-2xl border transition-all duration-500 ease-out cursor-pointer ${isActive ? 'bg-white/5 -translate-y-1 scale-[1.02]' : 'bg-black/20 opacity-50 hover:opacity-100 hover:bg-white/5'}`}
-                {...btnProps}
+                className={`flex-1 flex flex-col items-center gap-2 py-5 px-4 rounded-3xl border transition-all duration-700 ease-out cursor-pointer min-w-30 ${isActive ? 'bg-slate-900/90 border-white/10 -translate-y-1.5 shadow-2xl scale-[1.02]' : 'bg-transparent border-transparent text-text-darker opacity-40 hover:opacity-100 hover:text-text-muted'}`}
+                style={isActive ? { boxShadow: `0 20px 40px -10px ${d.color}20` } : {}}
             >
-              <span className="text-[0.65rem] font-black uppercase tracking-[0.2em]">{ d.label }</span>
-              <span className="text-[0.55rem] font-bold font-mono tabular-nums opacity-90 tracking-tight">RP { avgRp.toFixed( 1 ) }%</span>
+              <span className={`text-[0.75rem] font-black uppercase tracking-[0.3em] ${isActive ? 'text-white' : 'text-text-darker'}`}>{ d.label }</span>
+              <div className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full" style={{ backgroundColor: d.color }} />
+                  <span className={`text-[0.6rem] font-mono font-black tabular-nums tracking-tighter ${isActive ? 'text-text-muted' : 'text-text-darker'}`}>RP { avgRp.toFixed( 1 ) }%</span>
+              </div>
             </button>
           );
         } ) }
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 bg-black/40 rounded-2xl border border-white/5 shadow-inner">
-        <div className="flex flex-col gap-1">
-          <span className="text-[0.55rem] text-text-darker uppercase font-black tracking-[0.2em] block">Pressão IP (Agressor)</span>
-          <span className="text-xl font-black font-mono tabular-nums tracking-tighter" style={{ color: current.color } as React.CSSProperties}>{ ipRp.toFixed( 1 ) }%</span>
-        </div>
-        <div className="flex flex-col gap-1 sm:items-end sm:text-right">
-          <span className="text-[0.55rem] text-text-darker uppercase font-black tracking-[0.2em] block">Pressão OOP (Defensor)</span>
-          <span className="text-xl font-black font-mono tabular-nums tracking-tighter text-accent-amber">{ oopRp.toFixed( 1 ) }%</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <div className="w-full overflow-x-auto scrollbar-hide">
-          <div className="min-w-0 space-y-2">
-            <div className="text-[0.6rem] font-black text-accent-indigo-light uppercase tracking-[0.25em] px-1 pb-2 border-b border-accent-indigo/20 flex items-center gap-2">
-               <div className="w-1.5 h-1.5 rounded-full bg-accent-indigo" /> IP — Agressor
-            </div>
-            <ActionRow label="Check" chipEv={ current.freqs.ip_check } result={ current.nash.ip.check } field="ip_check" accent="var(--accent-indigo-light)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
-            <ActionRow label="Bet S" chipEv={ current.freqs.ip_bet_small } result={ current.nash.ip.bet_small } field="ip_bet_small" accent="var(--accent-indigo-light)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
-            <ActionRow label="Bet L" chipEv={ current.freqs.ip_bet_large } result={ current.nash.ip.bet_large } field="ip_bet_large" accent="var(--accent-indigo-light)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
+      {/* Dashboards de Pressão */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+        <div className="flex flex-col gap-4 p-8 bg-slate-900/40 rounded-4xl border border-white/5 shadow-inner hover:border-accent-indigo/30 hover:bg-slate-900/60 transition-all duration-500 group/ip">
+          <div className="flex justify-between items-center px-1">
+              <span className="text-[0.6rem] text-text-darker uppercase font-black tracking-[0.4em] group-hover/ip:text-accent-indigo-light transition-colors">Pressão Agressor (IP)</span>
+              <i className="fa-solid fa-bolt text-accent-indigo/20 group-hover/ip:text-accent-indigo/60 transition-colors text-xs" />
+          </div>
+          <div className="flex items-baseline gap-3">
+            <span className="text-4xl font-black font-mono tabular-nums tracking-tighter text-white" style={{ textShadow: `0 0 20px ${current.color}40` }}>{ ipRp.toFixed( 1 ) }</span>
+            <span className="text-[0.7rem] font-black text-text-darker uppercase tracking-widest">RP %</span>
+          </div>
+          <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden mt-2">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(100, ipRp * 2.5)}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="h-full bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)]"
+              />
           </div>
         </div>
 
-        <div className="w-full overflow-x-auto scrollbar-hide xl:mb-0">
-          <div className="min-w-0 space-y-2">
-            <div className="text-[0.6rem] font-black text-accent-danger uppercase tracking-[0.25em] px-1 pb-2 border-b border-accent-danger/20 flex items-center gap-2">
-               <div className="w-1.5 h-1.5 rounded-full bg-accent-danger" /> OOP — Defensor
-            </div>
-            <ActionRow label="Call" chipEv={ current.freqs.oop_call } result={ current.nash.oop.call } field="oop_call" accent="var(--accent-danger)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
-            <ActionRow label="Fold" chipEv={ current.freqs.oop_fold } result={ current.nash.oop.fold } field="oop_fold" accent="var(--accent-danger)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
-            <ActionRow label="Raise" chipEv={ current.freqs.oop_raise } result={ current.nash.oop.raise } field="oop_raise" accent="var(--accent-danger)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
+        <div className="flex flex-col gap-4 p-8 bg-slate-900/40 rounded-4xl border border-white/5 shadow-inner hover:border-accent-amber/30 hover:bg-slate-900/60 transition-all duration-500 group/oop md:items-end md:text-right">
+          <div className="flex flex-row-reverse md:flex-row justify-between items-center px-1 w-full">
+              <i className="fa-solid fa-shield-halved text-accent-amber/20 group-hover/oop:text-accent-amber/60 transition-colors text-xs" />
+              <span className="text-[0.6rem] text-text-darker uppercase font-black tracking-[0.4em] group-hover/oop:text-accent-amber transition-colors">Pressão Defensor (OOP)</span>
+          </div>
+          <div className="flex items-baseline gap-3">
+            <span className="text-4xl font-black font-mono tabular-nums tracking-tighter text-accent-amber" style={{ textShadow: '0 0 20px rgba(245,158,11,0.2)' }}>{ oopRp.toFixed( 1 ) }</span>
+            <span className="text-[0.7rem] font-black text-text-darker uppercase tracking-widest">RP %</span>
+          </div>
+          <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden mt-2 flex justify-end">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(100, oopRp * 2.5)}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="h-full bg-accent-amber shadow-[0_0_10px_var(--accent-amber)]"
+              />
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+      {/* Grid de Estratégias */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-16 relative z-10">
+        <div className="w-full space-y-6">
+            <div className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.4em] px-2 pb-5 border-b border-accent-indigo/20 flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <div className="w-3 h-3 rounded-full bg-accent-indigo shadow-[0_0_12px_var(--accent-indigo)]" />
+                  IP &middot; Estratégia de Agressão
+               </div>
+               <i className="fa-solid fa-crosshairs text-[0.65rem] opacity-30" />
+            </div>
+            <div className="space-y-4 px-1">
+                <ActionRow label="Check" chipEv={ current.freqs.ip_check } result={ current.nash.ip.check } field="ip_check" accent="var(--color-accent-indigo-light)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
+                <ActionRow label="Bet S" chipEv={ current.freqs.ip_bet_small } result={ current.nash.ip.bet_small } field="ip_bet_small" accent="var(--color-accent-indigo-light)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
+                <ActionRow label="Bet L" chipEv={ current.freqs.ip_bet_large } result={ current.nash.ip.bet_large } field="ip_bet_large" accent="var(--color-accent-indigo-light)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
+            </div>
+        </div>
+
+        <div className="w-full space-y-6">
+            <div className="text-[0.75rem] font-black text-accent-rose uppercase tracking-[0.4em] px-2 pb-5 border-b border-accent-rose/20 flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <div className="w-3 h-3 rounded-full bg-accent-rose shadow-[0_0_12px_var(--accent-rose)]" />
+                  OOP &middot; Estratégia de Defesa
+               </div>
+               <i className="fa-solid fa-shield text-[0.65rem] opacity-30" />
+            </div>
+            <div className="space-y-4 px-1">
+                <ActionRow label="Call" chipEv={ current.freqs.oop_call } result={ current.nash.oop.call } field="oop_call" accent="var(--color-accent-rose)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
+                <ActionRow label="Fold" chipEv={ current.freqs.oop_fold } result={ current.nash.oop.fold } field="oop_fold" accent="var(--color-accent-rose)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
+                <ActionRow label="Raise" chipEv={ current.freqs.oop_raise } result={ current.nash.oop.raise } field="oop_raise" accent="var(--color-accent-rose)" freqs={ current.freqs } onChange={ ( f ) => onStreetFreqChange( activeStreet, f ) } />
+            </div>
+        </div>
+      </div>
+
+      {/* Moduladores de Entropia */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-8 relative z-10">
           <SotaTooltip align="left" title="Agressividade Humana (Fator Ψ)" content="Modulador bayesiano SOTA. Se o oponente real desvia do equilíbrio (ex: paga demais ou blefa de menos), a distribuição de Nash é forçada a se contrair ou expandir." theme="indigo">
-            <div className="bg-black/40 border border-white/5 rounded-2xl p-5 transition-all hover:border-accent-indigo/30 group shadow-inner">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-[0.65rem] font-black text-text-dim uppercase tracking-[0.15em]">Fator Ψ</span>
-                <span className="font-mono tabular-nums text-[0.8rem] font-black text-accent-emerald bg-black/60 px-2 py-1 rounded-lg border border-white/10">{ aggressionFactor.toFixed( 1 ) }×</span>
+            <div className="bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-8 transition-all hover:bg-slate-900/60 hover:border-accent-indigo/30 group/Ψ shadow-inner relative overflow-hidden">
+              <div className="absolute inset-0 bg-radial-[at_top_right] from-accent-indigo/5 to-transparent pointer-events-none" />
+              <div className="flex justify-between items-center mb-8 px-1 relative z-10">
+                <div className="space-y-1">
+                    <span className="text-[0.7rem] font-black text-text-muted uppercase tracking-[0.3em] group-hover/Ψ:text-white transition-colors">Modulador Ψ</span>
+                    <p className="text-[0.55rem] text-text-darker uppercase font-black tracking-widest m-0">Agressividade Relativa</p>
+                </div>
+                <div className="px-5 py-2 rounded-2xl bg-black/60 border border-white/10 shadow-2xl flex items-center gap-3">
+                   <span className="font-mono tabular-nums text-[1rem] font-black text-accent-emerald">{ aggressionFactor.toFixed( 1 ) }<span className="text-[0.6rem] ml-1 opacity-50">×</span></span>
+                </div>
               </div>
-              <input id="nash-aggression" name="nash-aggression" type="range" min="0.5" max="1.5" step="0.1" value={ aggressionFactor } onChange={ ( e ) => onAggressionChange( Number.parseFloat( e.target.value ) ) } className="w-full accent-accent-indigo h-1 bg-white/5 rounded-full appearance-none cursor-pointer" aria-label="Fator de Agressão Humana" />
+              <input id="nash-aggression" name="nash-aggression" type="range" min="0.5" max="1.5" step="0.1" value={ aggressionFactor } onChange={ ( e ) => onAggressionChange( Number.parseFloat( e.target.value ) ) } className="w-full accent-accent-indigo h-2 bg-white/5 rounded-full appearance-none cursor-pointer mb-2 relative z-10" aria-label="Fator de Agressão Humana" />
             </div>
           </SotaTooltip>
 
           <SotaTooltip align="right" title="Bounty Power" content="Diluidor de Risk Premium. A recompensa imediata (bounty) infla a utilidade do Call, destruindo o Teto de Risco do ICM tradicional." theme="indigo">
-            <div className={`bg-black/40 border rounded-2xl p-5 transition-all hover:border-accent-amber/30 group shadow-inner ${pkoValue > 0 ? 'border-accent-amber/30 shadow-lg shadow-accent-amber/5' : 'border-white/5'}`}>
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-[0.65rem] font-black text-text-dim uppercase tracking-[0.15em]">PKO Power</span>
-                <span className="font-mono tabular-nums text-[0.8rem] font-black text-accent-gold bg-black/60 px-2 py-1 rounded-lg border border-white/10">{ pkoValue === 0 ? 'OFF' : `${Math.round( pkoValue * 100 )}%` }</span>
+            <div className={`bg-slate-900/40 border rounded-[2.5rem] p-8 transition-all hover:bg-slate-900/60 hover:border-accent-amber/30 group/pko shadow-inner relative overflow-hidden ${pkoValue > 0 ? 'border-accent-amber/30 shadow-emerald-500/5' : 'border-white/5'}`}>
+              <div className="absolute inset-0 bg-radial-[at_top_left] from-accent-amber/5 to-transparent pointer-events-none" />
+              <div className="flex justify-between items-center mb-8 px-1 relative z-10">
+                <div className="space-y-1">
+                    <span className="text-[0.7rem] font-black text-text-muted uppercase tracking-[0.3em] group-hover/pko:text-white transition-colors">Bounty Influx</span>
+                    <p className="text-[0.55rem] text-text-darker uppercase font-black tracking-widest m-0">Pressão Progressiva</p>
+                </div>
+                <div className="px-5 py-2 rounded-2xl bg-black/60 border border-white/10 shadow-2xl flex items-center gap-3">
+                   <span className="font-mono tabular-nums text-[1rem] font-black text-accent-gold">{ pkoValue === 0 ? '0.0' : `${Math.round( pkoValue * 100 )}` }<span className="text-[0.6rem] ml-1 opacity-50">%</span></span>
+                </div>
               </div>
-              <input id="nash-pko" name="nash-pko" type="range" min="0" max="0.8" step="0.05" value={ pkoValue } onChange={ ( e ) => onPkoChange( Number.parseFloat( e.target.value ) ) } className="w-full accent-accent-amber h-1 bg-white/5 rounded-full appearance-none cursor-pointer" aria-label="Força do PKO Bounty" />
+              <input id="nash-pko" name="nash-pko" type="range" min="0" max="0.8" step="0.05" value={ pkoValue } onChange={ ( e ) => onPkoChange( Number.parseFloat( e.target.value ) ) } className="w-full accent-accent-amber h-2 bg-white/5 rounded-full appearance-none cursor-pointer mb-2 relative z-10" aria-label="Força do PKO Bounty" />
             </div>
           </SotaTooltip>
       </div>

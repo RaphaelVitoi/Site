@@ -36,6 +36,7 @@ interface MatrixJobPayload
     activePlayers: number;
     kappa?: number;
     betSizing?: number;
+    humanNoiseFactor?: number;
     id: number;
 }
 
@@ -46,6 +47,7 @@ interface DistortionJobPayload
     ipRpTurn: number; oopRpTurn: number; freqTurn: ChipEvFreqs;
     ipRpRiver: number; oopRpRiver: number; freqRiver: ChipEvFreqs;
     topologicAggression: number; activePlayers: number;
+    humanNoiseFactor?: number;
     pots: [ number, number, number ]; // Flop, Turn, River
     id: number;
 }
@@ -353,7 +355,7 @@ async function runGpuMatrix(
     pipeline: GPUComputePipeline,
     lutBuffer: GPUBuffer | null
 ): Promise<number[]> {
-    const { heroRange = "AhKd", villainRange = "100%", board = "", rpFactor = 0, heroInvested = 0, currentPot = 0, activePlayers = 2, kappa = 1, betSizing = 0.5 } = p;
+    const { heroRange = "AhKd", villainRange = "100%", board = "", rpFactor = 0, heroInvested = 0, currentPot = 0, activePlayers = 2, kappa = 1, betSizing = 0.5, humanNoiseFactor = 0 } = p;
     const iterations = 10000;
 
     // Expansão O(1) do Range do Vilão para buffers binários
@@ -466,7 +468,15 @@ async function runGpuMatrix(
     const trueInsolvencyEv = (winRate * futurePot) - futureCost;
 
     // Risco Inflacionário (O tamanho da aposta agrava o RIO e o Risk Premium)
-    const riskIndex = Math.min(1, (rpFactor / 100) * loseRate * (1 + betSizing));
+    const opponents = Math.max(1, activePlayers - 1);
+    const mwNoiseMultiplier = Math.pow(opponents, 1 + humanNoiseFactor);
+    const riskIndex = Math.min(1, (rpFactor / 100) * loseRate * (1 + betSizing) * mwNoiseMultiplier);
+
+    // SOTA: Prevenção Cirúrgica de Memory Leak na VRAM (Fricção Zero)
+    paramBuffer.destroy();
+    maskBuffer.destroy();
+    resultBuffer.destroy();
+    readBuffer.destroy();
 
     return [
         winRate, loseRate, tieRate,
@@ -476,7 +486,7 @@ async function runGpuMatrix(
 }
 
 function runJitMatrix(p: MatrixJobPayload): number[] {
-    const { rpFactor = 0, heroInvested = 0, currentPot = 0, betSizing = 0.5 } = p;
+    const { rpFactor = 0, heroInvested = 0, currentPot = 0, betSizing = 0.5, activePlayers = 2, humanNoiseFactor = 0 } = p;
     let wins = 0;
     const iters = 2000; // Carga otimizada para a thread síncrona
     for( let i = 0; i < iters; i++ ) {
@@ -494,7 +504,10 @@ function runJitMatrix(p: MatrixJobPayload): number[] {
     const futurePot = currentPot + projectedBet;
     const futureCost = heroInvested + projectedBet;
     const trueInsolvencyEv = (winRate * futurePot) - futureCost;
-    const riskIndex = Math.min(1, (rpFactor / 100) * loseRate * (1 + betSizing));
+
+    const opponents = Math.max(1, activePlayers - 1);
+    const mwNoiseMultiplier = Math.pow(opponents, 1 + humanNoiseFactor);
+    const riskIndex = Math.min(1, (rpFactor / 100) * loseRate * (1 + betSizing) * mwNoiseMultiplier);
 
     return [
         winRate, loseRate, 0,
@@ -560,10 +573,12 @@ async function handleMultiwayRio(payload: MultiwayRioJobPayload) {
 }
 
 function handleDistortionJob(payload: DistortionJobPayload, id: string | number) {
+    const hnf = payload.humanNoiseFactor ?? 0;
+    // SOTA: Injeta a entropia humana diretamente na agressao topologica para respeitar a assinatura (3-4 args).
     const nashResults = {
-        flop: solveIcmDistortion( payload.ipRpFlop, payload.oopRpFlop, payload.freqFlop, payload.topologicAggression ),
-        turn: solveIcmDistortion( payload.ipRpTurn, payload.oopRpTurn, payload.freqTurn, payload.topologicAggression ),
-        river: solveIcmDistortion( payload.ipRpRiver, payload.oopRpRiver, payload.freqRiver, payload.topologicAggression ),
+        flop: solveIcmDistortion( payload.ipRpFlop, payload.oopRpFlop, payload.freqFlop, payload.topologicAggression * (1 + hnf) ),
+        turn: solveIcmDistortion( payload.ipRpTurn, payload.oopRpTurn, payload.freqTurn, payload.topologicAggression * (1 + hnf) ),
+        river: solveIcmDistortion( payload.ipRpRiver, payload.oopRpRiver, payload.freqRiver, payload.topologicAggression * (1 + hnf) ),
     };
     globalThis.postMessage( { type: 'DISTORTION', nashResults, id } );
 }

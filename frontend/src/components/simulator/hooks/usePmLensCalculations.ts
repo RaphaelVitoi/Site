@@ -113,7 +113,8 @@ export function usePmLensCalculations({
                 kappa,
                 numPlayersInPot: simulatedActivePlayers,
                 heroPosition: absoluteHeroPos,
-                blindsRisingSoon
+                blindsRisingSoon,
+                investidoAcumulado: street.cumulative
             };
 
             let res = calculatePerspectivaVitoi(input);

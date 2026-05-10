@@ -1,11 +1,23 @@
 'use client';
 
+import type { InsolvencyMetrics } from '../hooks/useQuantumEngine';
+
 interface InsolvencyRioPanelProps {
-    insolvency: any;
+    insolvency: InsolvencyMetrics | null;
     isCalculating: boolean;
+    error?: string;
 }
 
-export const InsolvencyRioPanel = ({ insolvency, isCalculating }: InsolvencyRioPanelProps) => {
+export const InsolvencyRioPanel = ({ insolvency, isCalculating, error }: InsolvencyRioPanelProps) => {
+    if (error) {
+        return (
+            <div className="p-4 mt-6 rounded-xl border border-red-500/30 bg-red-950/20 flex flex-col items-center justify-center shadow-inner">
+                <span className="text-[0.65rem] font-black text-red-400 uppercase tracking-widest mb-1">Payload Rejeitado (HTTP 400)</span>
+                <span className="text-xs font-mono text-red-200/70 text-center">{error}</span>
+            </div>
+        );
+    }
+
     if (isCalculating) return <div className="p-4 mt-6 rounded-xl border border-white/5 bg-bg-deep flex items-center justify-center text-xs font-bold text-text-darker uppercase tracking-widest animate-pulse shadow-inner">Calculando Termodinâmica WASM...</div>;
     if (!insolvency) return null;
 

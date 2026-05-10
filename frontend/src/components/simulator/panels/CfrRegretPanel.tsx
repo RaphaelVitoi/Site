@@ -7,7 +7,6 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import React from 'react';
 
 // SOTA: Despacho Estático de Renderização para redução de complexidade ciclomática (SonarLint S3776)
 function renderHeatmap(ctx: CanvasRenderingContext2D, matrix: Float32Array, nodes: number, w: number, h: number) {
@@ -72,10 +71,11 @@ export interface CfrRegretPanelProps {
 export default function CfrRegretPanel({ initialPot = 2.5, initialStack = 40, initialEquity = 55 }: Readonly<CfrRegretPanelProps>) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [kappa, setKappa] = useState<number>(0.85);
-  const [nodes, setNodes] = useState<number>(13);
+  const [nodes] = useState<number>(13);
   const [pot, setPot] = useState<number>(initialPot);
   const [stack, setStack] = useState<number>(initialStack);
   const [equity, setEquity] = useState<number>(initialEquity);
+  const workerRef = useRef<Worker | null>(null);
 
   // SOTA: Fricção Zero. Envia os estados para dentro da API do requestAnimationFrame sem dar re-render na function base
   const paramsRef = useRef({ kappa: 0.85, nodes: 13, pot: initialPot, stack: initialStack, equity: initialEquity });
@@ -97,22 +97,34 @@ export default function CfrRegretPanel({ initialPot = 2.5, initialStack = 40, in
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
+    workerRef.current ??= new Worker(new URL('../workers/cfr.worker.ts', import.meta.url), { type: 'module' });
+
     let animId: number;
     let t = 0;
-    const matrix = new Float32Array(paramsRef.current.nodes * paramsRef.current.nodes);
     const path: {x: number, y: number}[] = [];
+
+    workerRef.current.onmessage = (e: MessageEvent) => {
+      const { matrix } = e.data;
+      const { nodes: n } = paramsRef.current;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      renderHeatmap(ctx, matrix, n, canvas.width, canvas.height);
+      renderPathfinding(ctx, path, t, canvas.width, canvas.height);
+      updateSizingDom(path, paramsRef.current);
+    };
 
     const loop = () => {
       t += 0.01;
-      const { nodes: n, kappa: k } = paramsRef.current;
-      
-      // Simulação SOTA de convergência CFR
-      for (let i = 0; i < matrix.length; i++) {
-        const row = Math.floor(i / n);
-        const col = i % n;
-        const noise = Math.sin(t + row * 0.5) * Math.cos(t + col * 0.5) * 0.1;
-        matrix[i] = Math.max(0, Math.min(1, matrix[i] * k + noise + Math.random() * 0.02));
-      }
+
+      // SOTA: Delega o cálculo do Regret Matching Real para o Web Worker
+      workerRef.current?.postMessage({
+        id: 'cfr_tick',
+        nodes: paramsRef.current.nodes,
+        pot: paramsRef.current.pot,
+        stack: paramsRef.current.stack,
+        equity: paramsRef.current.equity,
+        kappa: paramsRef.current.kappa
+      });
 
       // Pathfinding A* Mock (Visual Only)
       if (path.length === 0 || Math.random() > 0.95) {
@@ -126,16 +138,15 @@ export default function CfrRegretPanel({ initialPot = 2.5, initialStack = 40, in
         }
       }
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      renderHeatmap(ctx, matrix, n, canvas.width, canvas.height);
-      renderPathfinding(ctx, path, t, canvas.width, canvas.height);
-      updateSizingDom(path, paramsRef.current);
-
-      animId = requestAnimationFrame(loop);
+      animId = setTimeout(loop, 33) as unknown as number; // 30fps para simetria I/O
     };
 
     loop();
-    return () => cancelAnimationFrame(animId);
+    return () => {
+      clearTimeout(animId);
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
   }, []);
 
   return (
@@ -216,7 +227,7 @@ export default function CfrRegretPanel({ initialPot = 2.5, initialStack = 40, in
         </div>
 
         <div className="flex flex-col gap-6">
-            <div className="relative aspect-square w-full max-w-[450px] mx-auto rounded-3xl overflow-hidden border border-white/10 bg-black/60 shadow-2xl group">
+            <div className="relative aspect-square w-full max-w-112.5 mx-auto rounded-3xl overflow-hidden border border-white/10 bg-black/60 shadow-2xl group">
                 <div className="absolute inset-0 bg-radial-[at_center_center] from-accent-indigo/10 to-transparent pointer-events-none" />
                 <canvas ref={ canvasRef } width={ 450 } height={ 450 } className="w-full h-full cursor-crosshair group-hover:scale-[1.02] transition-transform duration-700" />
                 <div className="absolute top-4 left-4 flex gap-2">

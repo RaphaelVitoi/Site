@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * IDENTITY: Radar de Comparação Multi-Cenário SOTA v4.2
+ * IDENTITY: Radar de Topologia SOTA v4.2 Gold
  * PATH: src/components/simulator/panels/ComparisonRadar.tsx
- * ROLE: Selecionar 2 cenários e comparar via radar chart (Recharts).
- * BINDING: [src/lib/schemas.ts, hooks/*, ui/*, simulator.module.css]
+ * ROLE: Visualização Multidimensional de Tensões Sistêmicas e Equilíbrio de Nash.
+ * AESTHETIC: SOTA Gold Standard (Glows, Precision SVG, Glassmorphism).
  */
 
 import { useCallback, useState } from 'react';
@@ -34,7 +34,7 @@ interface ComparisonRadarProps
 
 export default function ComparisonRadar ( { scenarios, currentId, nashFlop }: Readonly<ComparisonRadarProps> )
 {
-  const { physics } = useSotaSync();
+  const { physics: _physics } = useSotaSync();
   const [ compareId, setCompareId ] = useState<string>( '' );
 
   // SOTA v4.2: Orquestração de Cálculo Modularizada
@@ -50,102 +50,138 @@ export default function ComparisonRadar ( { scenarios, currentId, nashFlop }: Re
   const handleClear = useCallback( () => setCompareId( '' ), [] );
 
   return (
-    <div className="glass-panel p-6 sm:p-8 lg:p-12 flex flex-col h-full animate-sota-in overflow-hidden relative rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-300">
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-indigo/5 blur-3xl rounded-full pointer-events-none" />
+    <div className="glass-panel p-6 sm:p-10 flex flex-col h-full animate-sota-in relative rounded-[2.5rem] bg-bg-panel/40 backdrop-blur-2xl border border-white/5 shadow-2xl transition-all duration-700 hover:border-white/10 overflow-visible">
+      {/* Subtle depth layers */}
+      <div className="absolute top-0 right-0 w-48 h-48 bg-accent-indigo/5 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent-rose/5 blur-[100px] rounded-full pointer-events-none" />
 
-      <div className="flex items-start justify-between mb-8 border-b border-white/5 pb-6">
-        <div>
-          <h3 className="text-[0.75rem] font-black text-text-main uppercase tracking-[0.2em] flex items-center gap-3 m-0">
-            <div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)]" />
-            Radar SOTA
+      {/* Compact Header */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-8 border-b border-white/5 pb-6 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--color-accent-indigo)]" />
+          <h3 className="text-[0.7rem] font-black text-white uppercase tracking-[0.3em] m-0">
+            Radar Topológico
           </h3>
-          <p className="text-[0.65rem] font-mono text-text-dim mt-1.5 uppercase tracking-widest m-0 flex items-center gap-2">
-            Física Ativa: <span className="text-text-muted font-bold">{ physics.position }</span> <span className="opacity-30">|</span> <span className="text-text-muted font-bold">{ physics.referenceStatus }</span>
-          </p>
         </div>
-        <div className="mt-0.5">
-          <SotaTooltip align="right" title="Mapeamento Multidimensional" content="Analisa as tensões estruturais de dois cenários simultaneamente. A área preenchida representa o tamanho do passivo sistêmico e a urgência de fold." theme="indigo">
-            <i className="fa-solid fa-circle-info text-text-darker hover:text-accent-indigo transition-colors cursor-help text-base" />
-          </SotaTooltip>
+        <div className="flex items-center gap-4">
+           <SotaTooltip align="right" title="Mapeamento" content="Geometria visual das tensões ICM." theme="indigo">
+              <button className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-text-darker hover:text-accent-indigo transition-all cursor-help shadow-lg active:scale-95">
+                  <i className="fa-solid fa-radar text-sm" />
+              </button>
+           </SotaTooltip>
         </div>
       </div>
 
-      <div className="mb-8 bg-black/40 border border-white/5 p-5 sm:p-6 rounded-3xl flex flex-col gap-4 transition-all hover:border-accent-indigo/20 shadow-inner">
-        <label htmlFor="comparison-radar-select" className="text-[0.65rem] text-text-muted font-black uppercase tracking-[0.2em] flex items-center gap-2">
-          <i className="fa-solid fa-layer-group text-accent-indigo text-[0.6rem]"></i> Overlay Analítico (Cenário B)
-        </label>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <select
-            id="comparison-radar-select"
-            value={ compareId }
-            onChange={ handleScenarioChange }
-            className="flex-1 lg:max-w-md bg-slate-950/80 border border-white/10 rounded-xl text-text-bright p-3 text-[0.75rem] font-bold focus:ring-1 focus:ring-accent-indigo outline-none transition-all cursor-pointer shadow-lg"
-          >
-            <option value="">Nenhum cenário sobreposto</option>
-            { scenarios
-              .filter( s => s.id !== currentId )
-              .map( s => (
-                <option key={ s.id } value={ s.id }>{ s.name }</option>
-              ) ) }
-          </select>
-          { compareId && (
-            <button
-              onClick={ handleClear }
-              className="px-5 py-3 rounded-xl bg-accent-danger/10 border border-accent-danger/20 text-accent-danger text-[0.65rem] font-black uppercase tracking-widest hover:bg-accent-danger/20 transition-all flex items-center gap-2 active:scale-95 shadow-lg"
+      {/* Compact Selector */}
+      <div className="mb-8 bg-slate-950/20 border border-white/5 p-6 rounded-3xl flex flex-col gap-4 shadow-inner relative group/select">
+        <div className="flex items-center justify-between">
+            <label htmlFor="comparison-radar-select" className="text-[0.55rem] text-text-muted font-black uppercase tracking-[0.2em] flex items-center gap-2">
+              <i className="fa-solid fa-layer-group text-accent-indigo/60" /> Injetar Overlay
+            </label>
+        </div>
+        <div className="flex gap-4">
+          <div className="relative flex-1">
+            <select
+              id="comparison-radar-select"
+              value={ compareId }
+              onChange={ handleScenarioChange }
+              className="w-full bg-slate-900/40 border border-white/5 rounded-xl text-text-muted px-4 py-3 text-[0.75rem] font-bold focus:ring-1 focus:ring-accent-indigo/30 focus:border-accent-indigo/30 outline-none transition-all cursor-pointer appearance-none pr-10"
             >
-              <i className="fa-solid fa-xmark"></i> <span>Limpar</span>
+              <option value="" className="bg-bg-deep text-text-dim">Cenário de Comparação...</option>
+              { scenarios
+                .filter( s => s.id !== currentId )
+                .map( s => (
+                  <option key={ s.id } value={ s.id } className="bg-bg-deep">{ s.name }</option>
+                ) ) }
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-darker">
+                <i className="fa-solid fa-chevron-down text-[0.6rem]" />
+            </div>
+          </div>
+          { compareId && (
+            <button onClick={ handleClear } className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10 text-accent-rose/60 hover:bg-rose-500/10 transition-all shadow-md active:scale-95">
+              <i className="fa-solid fa-xmark text-xs" />
             </button>
           ) }
         </div>
       </div>
 
-      <div className="grow min-h-[400px] flex flex-col relative py-4">
-        <ResponsiveContainer width="100%" height="100%" minWidth={ 1 } minHeight={ 1 }>
-          <RadarChart data={ radarData } cx="50%" cy="50%" outerRadius="65%">
-            <PolarGrid stroke="rgba(255, 255, 255, 0.1)" strokeDasharray="3 3" />
+      {/* Main Visualization - Precision Focus */}
+      <div className="grow relative overflow-visible flex items-center justify-center">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={ radarData } cx="50%" cy="50%" outerRadius="75%" margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+            <defs>
+                <linearGradient id="gradIndigo" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-accent-indigo)" stopOpacity={0.6}/>
+                    <stop offset="100%" stopColor="var(--color-accent-indigo)" stopOpacity={0.1}/>
+                </linearGradient>
+                <linearGradient id="gradRose" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-accent-rose)" stopOpacity={0.5}/>
+                    <stop offset="100%" stopColor="var(--color-accent-rose)" stopOpacity={0.05}/>
+                </linearGradient>
+            </defs>
+
+            <PolarGrid stroke="rgba(255, 255, 255, 0.05)" radialLines={true} />
+
             <PolarAngleAxis
               dataKey="axis"
-              tick={ { fill: '#94a3b8', fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-mono)' } }
+              tick={ { fill: '#64748b', fontSize: 11, fontWeight: 800, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' } }
             />
+
             <PolarRadiusAxis
               angle={ 90 }
-              tick={ { fill: '#334155', fontSize: 9, fontFamily: 'var(--font-mono)' } }
+              tick={false}
               domain={ [ 0, 100 ] }
+              axisLine={false}
             />
+
             <Radar
               name={ currentScenario?.name ?? 'Atual' }
               dataKey="A"
-              stroke="#818cf8"
-              fill="#818cf8"
-              fillOpacity={ 0.3 }
-              strokeWidth={ 2 }
-              animationDuration={ 1000 }
+              stroke="var(--color-accent-indigo)"
+              fill="url(#gradIndigo)"
+              strokeWidth={ 3 }
+              strokeOpacity={0.8}
+              animationDuration={ 1500 }
             />
+
             { compareScenario && (
               <Radar
                 name={ compareScenario.name }
                 dataKey="B"
-                stroke="#fb7185"
-                fill="#fb7185"
-                fillOpacity={ 0.2 }
+                stroke="var(--color-accent-rose)"
+                fill="url(#gradRose)"
                 strokeWidth={ 2 }
-                animationDuration={ 1000 }
+                strokeDasharray="4 4"
+                strokeOpacity={0.6}
+                animationDuration={ 1500 }
               />
             ) }
-            <Tooltip content={ <RadarTooltip /> } allowEscapeViewBox={ { x: true, y: true } } wrapperStyle={ { zIndex: 100 } } />
+
+            <Tooltip
+                content={ <RadarTooltip /> }
+                allowEscapeViewBox={ { x: true, y: true } }
+                wrapperStyle={ { zIndex: 1000 } }
+            />
+
             <Legend
-              wrapperStyle={ { paddingTop: '20px', fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' } }
+              verticalAlign="bottom"
+              align="center"
+              wrapperStyle={ {
+                paddingTop: '20px',
+                fontSize: '0.65rem',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.2em',
+                color: '#64748b'
+              } }
+              iconType="circle"
+              iconSize={10}
             />
           </RadarChart>
         </ResponsiveContainer>
-
-        <div className="mt-4 p-4 bg-accent-indigo/5 border border-accent-indigo/10 rounded-xl flex items-start gap-3">
-          <i className="fa-solid fa-satellite-dish text-accent-indigo mt-0.5 text-xs"></i>
-          <p className="text-[0.65rem] text-text-light leading-relaxed m-0 font-medium">
-            A topologia do radar mapeia as métricas de tensão. <strong className="text-white">RP IP/OOP</strong> medem a Aversão ao Risco (Punição ICM). <strong className="text-white">Bluff/Defesa</strong> expõem as frequências de Nash. <strong className="text-white">SPR Decay</strong> indica a velocidade de diluição da stack pós-flop. Expansões poligonais maiores sinalizam ambientes de maior hostilidade termodinâmica.
-          </p>
-        </div>
       </div>
     </div>
   );
 }
+
