@@ -42,6 +42,54 @@ export default async function BibliotecaPage() {
 
   const staticArticles = [
     {
+      href: '/biblioteca/toy-games',
+      tags: ['Interativo', 'Lab'],
+      title: 'Toy Games: Predator Mode',
+      description: 'Laboratório de isolamento tático: sinta a impunidade de agredir quando o oponente está na zona de ruptura.',
+      readingTime: 'Interativo',
+      isNew: true
+    },
+    {
+      href: '/biblioteca/heuristica-icm-pos-flop-aula',
+      tags: ['Aula', 'Masterclass'],
+      title: 'Masterclass 1.2: ICM no Pós-Flop',
+      description: 'Heurísticas de ICM no Pós-Flop: A ciência por trás da dissipação do Risk Premium e do Bunching Effect.',
+      readingTime: '25 min',
+      isNew: true
+    },
+    {
+      href: '/biblioteca/geometria-do-risco',
+      tags: ['SOTA', 'Arquétipos'],
+      title: 'A Geometria do Risco',
+      description: 'A desconstrução definitiva do pós-flop sob ICM e os 5 arquétipos clínicos de colisão entre stacks.',
+      readingTime: '18 min',
+      isNew: true
+    },
+    {
+      href: '/biblioteca/manifesto-sota-axiomas',
+      tags: ['Doutrina', 'Psicologia'],
+      title: 'Manifesto SOTA: Axiomas',
+      description: 'A fundação teórica unindo Teoria dos Jogos e Psicologia de Sistemas. Factor Ψ, Antevisão e a falácia das Pot Odds.',
+      readingTime: '12 min',
+      isNew: true
+    },
+    {
+      href: '/biblioteca/falacia-equilibrio-pedagogia',
+      tags: ['Pedagogia', 'Mindset'],
+      title: 'A Falácia do Equilíbrio',
+      description: 'Por que o aprendizado tradicional de poker está falhando e como o Downward Drift mudou o jogo.',
+      readingTime: '12 min',
+      isNew: true
+    },
+    {
+      href: '/biblioteca/laboratorio-chipev-vs-icmev',
+      tags: ['Solver', 'Divergência'],
+      title: 'Laboratório: ChipEV vs ICMev',
+      description: 'Divergência Clínica: Comparativo prático entre árvores de decisão ChipEV e ICMev no pós-flop.',
+      readingTime: '15 min',
+      isNew: true
+    },
+    {
       href: '/biblioteca/axioma-ev-fold-dinamico',
       tags: ['Teoria', 'ICM'],
       title: 'Axioma do EV do Fold',
