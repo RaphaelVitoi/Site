@@ -50,6 +50,30 @@ export default async function BibliotecaPage() {
       isNew: true
     },
     {
+      href: '/biblioteca/insolvencia-das-pot-odds',
+      tags: ['Teoria', 'SOTA'],
+      title: 'A Insolvência das Pot Odds',
+      description: 'O veneno mascarado pelo preço barato. Por que pot odds são um distrator sistêmico e como as RIO colapsam o sistema.',
+      readingTime: '15 min',
+      isNew: true
+    },
+    {
+      href: '/biblioteca/risco-de-ressurreicao',
+      tags: ['Estratégia', 'ICM'],
+      title: 'O Risco de Ressurreição',
+      description: 'Por que dobrar um short-stack é um erro sistêmico que devolve a complexidade da árvore ao oponente.',
+      readingTime: '12 min',
+      isNew: true
+    },
+    {
+      href: '/biblioteca/fator-psi-maluquice-humana',
+      tags: ['Psicologia', 'MDA'],
+      title: 'O Fator Ψ (Psi)',
+      description: 'A Taxa de Maluquice Humana: Como integrar a frequência de erro emocional e tilt na tomada de decisão soberana.',
+      readingTime: '10 min',
+      isNew: true
+    },
+    {
       href: '/biblioteca/heuristica-icm-pos-flop-aula',
       tags: ['Aula', 'Masterclass'],
       title: 'Masterclass 1.2: ICM no Pós-Flop',

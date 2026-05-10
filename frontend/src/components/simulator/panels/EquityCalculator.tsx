@@ -14,8 +14,8 @@ import type { ICMPlayer } from '@/lib/icmEngine';
 import { SotaWasmContext } from '../SotaContext';
 import { useIcmCalculations } from '../hooks/useIcmCalculations';
 import { InsolvencyRioPanel } from '../ui/InsolvencyRioPanel';
+import type { InsolvencyMetrics } from '../hooks/useQuantumEngine';
 import AnimatedNumber from '../ui/AnimatedNumber';
-import React from 'react';
 
 const PRESETS = [
   { label: 'HU (2p)', stacks: [ 50, 50 ], prizes: [ 65, 35 ] },
@@ -37,10 +37,10 @@ export default function EquityCalculator ()
   const [ showParser, setShowParser ] = useState( false );
   const [ parserError, setParserError ] = useState<string | null>( null );
   const [ heroId, setHeroId ] = useState<string | null>( '1' );
-  const [ pkoValue, setPkoValue ] = useState( 0 );
+  const [ pkoValue ] = useState( 0 );
 
   const wasmContext = useContext( SotaWasmContext );
-  const insolvency = wasmContext?.insolvencyMatrixData as any;
+  const insolvency: InsolvencyMetrics | null = wasmContext?.insolvencyMatrixData ?? null;
 
   const deferredPlayers = useDeferredValue( players );
   const deferredPrizes = useDeferredValue( prizes );
@@ -229,7 +229,7 @@ export default function EquityCalculator ()
                     <i className="fa-solid fa-plus text-[0.5rem]" /> Jogador
                 </button>
             </div>
-            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+            <div className="space-y-2 max-h-100 overflow-y-auto pr-2 scrollbar-hide">
               { players.map( ( p ) => (
                 <div key={ p.id } className={`group flex items-center gap-3 p-3 rounded-2xl border transition-all ${heroId === p.id ? 'bg-accent-indigo/10 border-accent-indigo/30 shadow-[0_0_20px_rgba(99,102,241,0.1)]' : 'bg-black/40 border-white/5 hover:border-white/10'}`}>
                    <button onClick={() => setHeroId(p.id)} className={`w-10 h-10 rounded-xl flex items-center justify-center text-[0.6rem] font-black uppercase tracking-tighter border transition-all ${heroId === p.id ? 'bg-accent-indigo text-white border-accent-indigo' : 'bg-black/60 text-text-darker border-white/5 hover:text-text-muted'}`}>
@@ -260,9 +260,9 @@ export default function EquityCalculator ()
                     <i className="fa-solid fa-plus text-[0.5rem]" /> Posição
                 </button>
             </div>
-            <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+            <div className="grid grid-cols-2 gap-2 max-h-100 overflow-y-auto pr-2 scrollbar-hide">
               { prizes.map( ( val, i ) => (
-                <div key={ `prize-${ i }` } className="flex items-center gap-2 p-2.5 rounded-xl bg-black/40 border border-white/5 group">
+                <div key={ `prize-pos-${ i }` /* NOSONAR */ } className="flex items-center gap-2 p-2.5 rounded-xl bg-black/40 border border-white/5 group">
                   <span className="w-6 text-[0.65rem] font-black text-text-darker">{ i + 1 }º</span>
                   <input type="number" value={ val } onChange={ ( e ) => updatePrize( i, Number.parseFloat( e.target.value ) || 0 ) } className="flex-1 bg-black/60 border border-white/5 rounded-lg px-3 py-1.5 text-[0.75rem] font-mono font-black text-right text-accent-emerald focus:outline-none focus:border-accent-emerald shadow-inner" />
                   { i === prizes.length - 1 && prizes.length > 1 && (
@@ -299,7 +299,7 @@ export default function EquityCalculator ()
                     </div>
                 </div>
             </div>
-            
+
             { icmInsight && (
                 <div className="flex-1 p-6 bg-accent-indigo/5 border border-accent-indigo/10 rounded-3xl flex items-start gap-4">
                     <i className="fa-solid fa-lightbulb text-accent-indigo-light text-lg mt-1" />

@@ -1,11 +1,19 @@
 'use client';
 
-import { useContext, useMemo, useState } from 'react';
+/**
+ * IDENTITY: Painel de Fundamentação Teórica SOTA v4.2 Gold
+ * PATH: src/components/simulator/panels/TheoryPanel.tsx
+ * ROLE: Agregação de diretrizes doutrinárias, matrizes de diluição e auditoria sistêmica.
+ * AESTHETIC: SOTA Gold Standard (Depth Layers, High-Contrast Typography, Glassmorphism).
+ */
+
+import { useContext, useMemo } from 'react';
 import { SotaWasmContext } from '../SotaContext';
 import type { Scenario, SprStage } from '@/components/simulator/engine/types';
 import { BubbleFactorDiagnostic } from '@/components/simulator/ui/BubbleFactorDiagnostic';
 import { SotaMarkdown } from '@/components/ui/SotaMarkdown';
 import CfrRegretPanel from './CfrRegretPanel';
+import BayesianBeliefPanel from './BayesianBeliefPanel';
 
 interface TheoryPanelProps
 {
@@ -16,22 +24,8 @@ interface TheoryPanelProps
   effectiveOopRp?: number;
 }
 
-type TabId = 'theory' | 'ranges' | 'bubble' | 'spr' | 'exploit' | 'quiz' | 'cfr';
-
-const TABS: { id: TabId; label: string; icon: string; }[] = [
-  { id: 'theory', label: 'Fundamento', icon: 'fa-book-journal-whills' },
-  { id: 'ranges', label: 'Ranges SOTA', icon: 'fa-border-all' },
-  { id: 'bubble', label: 'Pressão / RP', icon: 'fa-gauge-high' },
-  { id: 'spr', label: 'Diluição (SPR)', icon: 'fa-water' },
-  { id: 'exploit', label: 'Vetor Exploit', icon: 'fa-crosshairs' },
-  { id: 'cfr', label: 'CFR & A*', icon: 'fa-network-wired' },
-  { id: 'quiz', label: 'Auditoria', icon: 'fa-microscope' },
-];
-
 export default function TheoryPanel ( { scenario, effectiveSprData, effectiveStacks, effectiveIpRp = 0, effectiveOopRp = 0 }: Readonly<TheoryPanelProps> )
 {
-  const [ activeTab, setActiveTab ] = useState<TabId>( 'theory' );
-
   const activeSprData = useMemo( () => effectiveSprData ?? scenario.sprData ?? [], [ effectiveSprData, scenario.sprData ] );
   const preflopPot = useMemo( () => activeSprData.find( s => s.name === 'PRE' || s.name === 'FLOP' )?.potSize || 2.5, [ activeSprData ] );
   const effStack = useMemo( () => Math.min( effectiveStacks?.[ 0 ] || scenario.stacks[ 0 ] || 40, effectiveStacks?.[ 1 ] || scenario.stacks[ 1 ] || 40 ), [ effectiveStacks, scenario.stacks ] );
@@ -40,62 +34,70 @@ export default function TheoryPanel ( { scenario, effectiveSprData, effectiveSta
   const equity = wasmContext?.nativeRangeMetric?.equity ?? 55;
 
   return (
-    <div className="glass-panel w-full p-6 sm:p-8 lg:p-12 flex flex-col gap-8 sm:gap-10 animate-sota-in mt-8 bg-bg-panel/80 backdrop-blur-2xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] rounded-4xl relative overflow-hidden">
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-accent-indigo/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-accent-rose/10 blur-[120px] rounded-full pointer-events-none" />
+    <div className="glass-panel w-full p-10 lg:p-16 flex flex-col gap-24 animate-sota-in mt-12 bg-bg-panel/80 backdrop-blur-3xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] rounded-4xl relative overflow-hidden group/theory-root">
+      {/* Camadas de Profundidade Quântica */}
+      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-accent-indigo/10 blur-[150px] rounded-full pointer-events-none group-hover/theory-root:bg-accent-indigo/15 transition-all duration-1000" />
+      <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-accent-rose/5 blur-[150px] rounded-full pointer-events-none" />
 
-      <div className="relative z-10 flex w-full overflow-x-auto scrollbar-hide pb-4 border-b border-white/5 gap-3 snap-x">
-        { TABS.map( tab => (
-          <button
-            key={ tab.id }
-            onClick={ () => setActiveTab( tab.id ) }
-                aria-selected={activeTab === tab.id}
-                role="tab"
-            className={ `shrink-0 snap-start px-5 py-3 rounded-xl text-[0.65rem] font-black uppercase tracking-[0.15em] transition-all duration-300 ease-out whitespace-nowrap flex items-center gap-2.5 justify-center ${ activeTab === tab.id ? 'bg-linear-to-r from-accent-indigo to-indigo-700 text-white shadow-[0_10px_20px_-10px_rgba(99,102,241,0.6)] -translate-y-0.5 border border-accent-indigo-light/40' : 'bg-black/30 border border-white/5 text-text-muted hover:text-white hover:bg-white/10 hover:shadow-lg hover:border-white/20 hover:-translate-y-0.5' }` }
-          >
-            <i className={ `fa-solid ${ tab.icon } ${activeTab === tab.id ? 'text-white' : 'text-accent-indigo-light/60'}` }></i> { tab.label }
-          </button>
-        ) ) }
-      </div>
+      {/* SEÇÃO 1: DOUTRINA */}
+      <section className="relative z-10 w-full flex flex-col gap-10">
+        <div className="flex items-center justify-between border-b border-white/5 pb-6">
+            <h3 className="text-2xl font-black text-white uppercase tracking-[0.3em] m-0 flex items-center">
+                <i className="fa-solid fa-book-journal-whills text-accent-indigo mr-5 shadow-[0_0_15px_var(--accent-indigo)]"></i> 
+                Fundamentação Teórica
+            </h3>
+            <span className="text-[0.55rem] font-black text-text-darker uppercase tracking-[0.4em]">Protocolo SOTA v4.2</span>
+        </div>
 
-      <div className="relative z-10 w-full animate-sota-in" role="tabpanel">
-        { activeTab === 'theory' && (
-          <div className="flex flex-col gap-10 animate-sota-in w-full">
-            {/* SOTA AST: Ingestão de Teoria Dinâmica via Prisma Markdown */}
-            { (scenario as any).theory && (
-              <div className="p-8 lg:p-12 bg-black/40 border border-white/5 border-l-[6px] border-l-accent-indigo rounded-3xl shadow-inner relative overflow-hidden group transition-all duration-500 hover:border-l-accent-indigo-light hover:bg-black/60">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-accent-indigo/5 blur-[80px] rounded-full pointer-events-none transition-all group-hover:bg-accent-indigo/10" />
-                <h4 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.25em] mb-8 flex items-center gap-3">
-                  <i className="fa-solid fa-book-open-reader text-lg"></i> Fundamentação Teórica
-                </h4>
-                <div className="text-[0.85rem] md:text-[0.9rem] text-text-muted leading-relaxed">
-                  <SotaMarkdown content={(scenario as any).theory} />
+        { scenario.theory && (
+          <div className="p-10 lg:p-12 bg-slate-950/40 border border-accent-indigo/20 rounded-4xl shadow-inner relative overflow-hidden group transition-all hover:bg-slate-950/60 hover:border-accent-indigo/40">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-accent-indigo/5 blur-[100px] rounded-full pointer-events-none transition-all group-hover:bg-accent-indigo/10" />
+            <div className="flex items-center gap-4 mb-8">
+                <div className="w-10 h-10 rounded-xl bg-accent-indigo/10 border border-accent-indigo/20 flex items-center justify-center text-accent-indigo-light">
+                    <i className="fa-solid fa-book-open-reader text-lg"></i>
                 </div>
-              </div>
-            )}
-            <BubbleFactorDiagnostic ipRp={ effectiveIpRp } oopRp={ effectiveOopRp } />
+                <h4 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.3em] m-0">Doutrina Analítica</h4>
+            </div>
+            <div className="leading-relaxed relative z-10">
+                <SotaMarkdown content={scenario.theory} />
+            </div>
+            <div className="absolute bottom-6 right-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i className="fa-solid fa-brain text-6xl text-accent-indigo" />
+            </div>
           </div>
-        ) }
+        )}
+        <BubbleFactorDiagnostic ipRp={ effectiveIpRp } oopRp={ effectiveOopRp } />
+      </section>
 
-        { activeTab === 'spr' && (
-          <div className="space-y-6 animate-sota-in">
-            <h4 className="text-xs font-black text-accent-sky uppercase tracking-[0.25em] mb-4 flex items-center justify-center gap-3">
-              <i className="fa-solid fa-water text-accent-sky"></i> Matriz Dinâmica de Diluição
-            </h4>
-            <div className="w-full flex justify-center">
-              <div className="w-full max-w-3xl overflow-hidden rounded-2xl border border-accent-sky/20 bg-[#06101a]/80 backdrop-blur-md shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
-                <div className="overflow-x-auto scrollbar-hide">
-                  <table className="w-full text-left text-[0.7rem] font-mono tabular-nums">
-                  <thead className="bg-accent-sky/15 text-accent-sky-light uppercase tracking-widest border-b border-accent-sky/30">
+      {/* SEÇÃO 2: DILUIÇÃO (SPR) */}
+      <section className="relative z-10 w-full flex flex-col gap-10">
+        <div className="flex items-center justify-between border-b border-white/5 pb-6">
+            <h3 className="text-2xl font-black text-white uppercase tracking-[0.3em] m-0 flex items-center">
+                <i className="fa-solid fa-water text-accent-sky mr-5 shadow-[0_0_15px_var(--color-accent-sky)]"></i> 
+                Matriz de Diluição (SPR)
+            </h3>
+            <div className="flex gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-sky animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-sky/40" />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-sky/20" />
+            </div>
+        </div>
+
+        <div className="w-full flex justify-center group/spr">
+          <div className="w-full max-w-4xl overflow-hidden rounded-[2.5rem] border border-white/5 bg-slate-950/60 backdrop-blur-2xl shadow-3xl relative transition-all hover:border-accent-sky/30">
+            <div className="absolute inset-0 bg-linear-to-b from-accent-sky/5 to-transparent pointer-events-none" />
+            <div className="overflow-x-auto scrollbar-hide relative z-10">
+              <table className="w-full text-left text-[0.75rem] font-mono tabular-nums">
+                <thead className="bg-accent-sky/5 text-accent-sky-light uppercase tracking-[0.3em] border-b border-white/5">
                     <tr>
-                      <th className="p-4 pl-6 font-black tracking-[0.2em]">Street</th>
-                      <th className="p-4 font-black tracking-[0.2em]">Pote</th>
-                      <th className="p-4 font-black tracking-[0.2em] text-center">Stack Res.</th>
-                      <th className="p-4 font-black tracking-[0.2em] text-center">SPR</th>
-                      <th className="p-4 font-black tracking-[0.2em] text-right pr-6">RP Res.</th>
+                      <th className="p-6 pl-10 font-black">Street</th>
+                      <th className="p-6 font-black">Pote (BB)</th>
+                      <th className="p-6 font-black text-center">Stack Res.</th>
+                      <th className="p-6 font-black text-center">Fator SPR</th>
+                      <th className="p-6 font-black text-right pr-10">RP Residual</th>
                     </tr>
-                  </thead>
-                  <tbody className="text-text-muted divide-y divide-white/5">
+                </thead>
+                <tbody className="text-text-muted divide-y divide-white/5">
                     { activeSprData.map( ( stage: SprStage ) =>
                     {
                       const investido = Math.max( 0, ( stage.potSize - preflopPot ) / 2 );
@@ -104,211 +106,195 @@ export default function TheoryPanel ( { scenario, effectiveSprData, effectiveSta
                       const sprText = sprValue === Infinity ? 'inf' : sprValue.toFixed( 1 );
                       const isDeath = stage.rpValue >= 35;
                       return (
-                        <tr key={ stage.name } className={ `hover:bg-white/10 transition-colors duration-200 ${ isDeath ? 'bg-accent-danger/10' : '' }` }>
-                          <td className="p-4 pl-6 font-bold text-accent-sky uppercase tracking-widest">{ stage.name }</td>
-                          <td className="p-4 font-bold text-white text-sm">{ stage.potSize.toFixed( 1 ) }<span className="text-[0.55rem] text-text-darker ml-1">bb</span></td>
-                          <td className="p-4 text-center font-medium opacity-90">{ residual.toFixed( 1 ) }<span className="text-[0.55rem] text-text-darker ml-1">bb</span></td>
-                          <td className={ `p-4 text-center font-black text-sm ${ sprValue >= 1 ? 'text-emerald-400' : 'text-rose-400' }` }>{ sprText }</td>
-                          <td className={ `p-4 text-right pr-6 font-black text-sm ${ isDeath ? 'text-accent-danger' : 'text-accent-amber' }` }>{ stage.rpValue.toFixed( 1 ) }%</td>
+                        <tr key={ stage.name } className={ `hover:bg-white/5 transition-all duration-300 ${ isDeath ? 'bg-accent-danger/5' : '' }` }>
+                          <td className="p-6 pl-10 font-black text-accent-sky uppercase tracking-widest">{ stage.name }</td>
+                          <td className="p-6 font-black text-white text-base">{ stage.potSize.toFixed( 1 ) }</td>
+                          <td className="p-6 text-center font-bold text-text-dim">{ residual.toFixed( 1 ) }</td>
+                          <td className={ `p-6 text-center font-black text-base ${ sprValue >= 1 ? 'text-accent-emerald' : 'text-accent-rose' }` }>
+                            { sprText }
+                          </td>
+                          <td className={ `p-6 text-right pr-10 font-black text-base ${ isDeath ? 'text-accent-danger' : 'text-accent-amber' }` }>
+                            { stage.rpValue.toFixed( 1 ) }%
+                          </td>
                         </tr>
                       );
                     } ) }
-                  </tbody>
-                </table>
-                </div>
-              </div>
-            </div>
-            <p className="text-center text-text-dim text-xs font-medium italic mt-2">
-              O SPR atua como freio natural contra a inércia da pressão do ICM. Pot Entrapment consolida RPs residuais.
-            </p>
-          </div>
-        ) }
-
-        { activeTab === 'ranges' && (
-          <div className="flex justify-center w-full animate-sota-in">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
-               <div className="p-8 bg-black/40 border border-accent-indigo/20 rounded-3xl shadow-inner relative overflow-hidden group hover:border-accent-indigo/50 transition-all duration-500">
-                 <div className="absolute top-0 right-0 w-40 h-40 bg-accent-indigo/10 blur-3xl rounded-full pointer-events-none" />
-                 <h4 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.25em] mb-5 flex items-center gap-3">
-                   <i className="fa-solid fa-crosshairs text-lg"></i> Especulação Assimétrica
-                 </h4>
-                 <p className="text-[0.8rem] text-text-muted leading-relaxed mb-6">
-                   Sob a lente do ICM SOTA, os ranges transcendem o mero ChipEV. A gravidade financeira exige <strong>Realização Tarditória</strong> e agressão implacável quando as condições de alavancagem permitem.
-                 </p>
-                 <ul className="text-[0.75rem] text-text-muted space-y-4 list-none p-0">
-                   <li className="flex gap-4 items-start">
-                     <i className="fa-solid fa-arrow-right text-accent-indigo mt-0.5"></i>
-                     <span className="leading-relaxed"><strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem]">CL (Agressor Absoluto)</strong> Utiliza blocker effect para inflar a fold equity. Pressiona o teto de RP dos adversários sem sofrer o rebote da insolvência.</span>
-                   </li>
-                   <li className="flex gap-4 items-start">
-                     <i className="fa-solid fa-arrow-right text-accent-indigo mt-0.5"></i>
-                     <span className="leading-relaxed"><strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem]">Conexão Tardia</strong> Mãos suited connector e gappers valorizam-se exponencialmente pela capacidade de realização no River (nut-making potential).</span>
-                   </li>
-                 </ul>
-               </div>
-
-               <div className="p-8 bg-black/40 border border-accent-rose/20 rounded-3xl shadow-inner relative overflow-hidden group hover:border-accent-rose/50 transition-all duration-500">
-                 <div className="absolute top-0 left-0 w-40 h-40 bg-accent-rose/10 blur-3xl rounded-full pointer-events-none" />
-                 <h4 className="text-[0.75rem] font-black text-accent-rose-light uppercase tracking-[0.25em] mb-5 flex items-center gap-3">
-                   <i className="fa-solid fa-shield-halved text-lg"></i> Colapso do Defensor
-                 </h4>
-                 <p className="text-[0.8rem] text-text-muted leading-relaxed mb-6">
-                   O Short Stack ou Middle Stack sofre o peso gravitacional da mesa inteira. O MDF (Minimum Defense Frequency) ditado pelo ChipEV desmorona para um Overfold Estrutural forçado pelo ICM.
-                 </p>
-                 <ul className="text-[0.75rem] text-text-muted space-y-4 list-none p-0">
-                   <li className="flex gap-4 items-start">
-                     <i className="fa-solid fa-arrow-right text-accent-rose mt-0.5"></i>
-                     <span className="leading-relaxed"><strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem]">Teto de RP Intransponível</strong> Mãos marginais que seriam call lucrativo em cash game ou ChipEV tornam-se <em>suicídio financeiro</em> evidente.</span>
-                   </li>
-                   <li className="flex gap-4 items-start">
-                     <i className="fa-solid fa-arrow-right text-accent-rose mt-0.5"></i>
-                     <span className="leading-relaxed"><strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem]">Condensação Defensiva</strong> A defesa restringe-se a blockers de nut absolutos ou pocket pairs de alta resistência contra agressões multi-barrel.</span>
-                   </li>
-                 </ul>
-               </div>
+                </tbody>
+              </table>
             </div>
           </div>
-        ) }
+        </div>
+        <p className="text-center text-text-darker text-[0.65rem] font-black uppercase tracking-[0.4em] mt-2 italic px-10">
+          O SPR funciona como o amortecedor termodinâmico da agressão. <span className="text-text-muted">A dissipação de RP sinaliza o ponto de equilíbrio de Nash.</span>
+        </p>
+      </section>
 
-        { activeTab === 'bubble' && (
-          <div className="flex flex-col items-center justify-center space-y-10 animate-sota-in p-8">
-            <div className="text-center max-w-3xl">
-               <h4 className="text-[0.9rem] font-black text-white uppercase tracking-[0.25em] mb-5 flex justify-center items-center gap-3">
-                 <i className="fa-solid fa-compress text-accent-amber text-xl"></i> Física da Pressão
-               </h4>
-               <p className="text-[0.85rem] text-text-muted leading-relaxed">
-                 O <strong>Risk Premium (RP)</strong> funciona como um teto mecânico e gravitacional intransponível. Em um spot onde o seu RP é de 25%, você <em>paga 25% a mais</em> por cada erro em EV. A inércia da bolha força todos, exceto o Chip Leader isolado, a descartar brutalmente a porção inferior de seus ranges de continuação.
-               </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full max-w-5xl">
-               <div className="bg-bg-panel border border-white/5 p-8 rounded-3xl text-center shadow-lg transition-transform hover:-translate-y-1">
-                 <div className="text-accent-emerald text-4xl mb-4"><i className="fa-solid fa-feather"></i></div>
-                 <h5 className="text-[0.7rem] font-black text-white uppercase tracking-widest mb-3">RP &lt; 10%</h5>
-                 <p className="text-[0.75rem] text-text-dim leading-relaxed">MDF fluído, próximo ao ChipEV padrão. A agressão flui sem consequências matemáticas catastróficas.</p>
-               </div>
-               <div className="bg-bg-panel border border-accent-amber/20 p-8 rounded-3xl text-center shadow-[0_0_30px_rgba(245,158,11,0.1)] transition-transform hover:-translate-y-1">
-                 <div className="text-accent-amber text-4xl mb-4 animate-pulse"><i className="fa-solid fa-weight-hanging"></i></div>
-                 <h5 className="text-[0.7rem] font-black text-white uppercase tracking-widest mb-3">RP 15-25%</h5>
-                 <p className="text-[0.75rem] text-text-dim leading-relaxed">Zona de atrito. Draws marginais e bluff-catchers médios tornam-se folds compulsórios. Sunk cost domina.</p>
-               </div>
-               <div className="bg-bg-panel border border-accent-danger/30 p-8 rounded-3xl text-center shadow-[0_0_35px_rgba(225,29,72,0.15)] transition-transform hover:-translate-y-1">
-                 <div className="text-accent-danger text-4xl mb-4"><i className="fa-solid fa-skull"></i></div>
-                 <h5 className="text-[0.7rem] font-black text-white uppercase tracking-widest mb-3">RP &gt; 30%</h5>
-                 <p className="text-[0.75rem] text-text-dim leading-relaxed">Death Zone gravitacional. Requer nut absolutos. Qualquer exposição de stack pre-flop é matematicamente paralisante.</p>
-               </div>
-            </div>
-          </div>
-        ) }
+      {/* SEÇÃO 3: RANGES SOTA */}
+      <section className="relative z-10 w-full flex flex-col gap-10">
+        <div className="flex items-center justify-between border-b border-white/5 pb-6">
+            <h3 className="text-2xl font-black text-white uppercase tracking-[0.3em] m-0 flex items-center">
+                <i className="fa-solid fa-border-all text-accent-violet mr-5 shadow-[0_0_15px_var(--color-accent-violet)]"></i> 
+                Morfologia de Ranges
+            </h3>
+            <i className="fa-solid fa-dna text-text-darker text-sm" />
+        </div>
 
-        { activeTab === 'exploit' && (
-          <div className="space-y-8 animate-sota-in max-w-4xl mx-auto flex justify-center">
-            <div className="p-10 bg-linear-to-br from-bg-panel to-black/80 border border-white/10 rounded-4xl shadow-2xl w-full">
-               <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
-                 <h4 className="text-[0.85rem] font-black text-accent-emerald-light uppercase tracking-[0.25em] m-0 flex items-center gap-3">
-                   <i className="fa-solid fa-brain text-xl"></i> Axioma Psi (Fator Kappa κ)
-                 </h4>
-                 <div className="px-4 py-1.5 bg-accent-emerald/10 border border-accent-emerald/30 rounded-xl text-accent-emerald text-[0.65rem] font-black uppercase tracking-widest shadow-inner">
-                   Desvio Analítico Humano
+        <div className="flex justify-center w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl">
+               <div className="p-10 bg-slate-900/40 border border-accent-indigo/10 rounded-4xl shadow-inner relative overflow-hidden group hover:border-accent-indigo/40 hover:bg-slate-900/60 transition-all duration-700">
+                 <div className="absolute top-0 right-0 w-56 h-56 bg-accent-indigo/10 blur-[100px] rounded-full pointer-events-none" />
+                 <div className="flex items-center gap-4 mb-8">
+                     <div className="w-10 h-10 rounded-xl bg-accent-indigo/10 border border-accent-indigo/20 flex items-center justify-center text-accent-indigo-light">
+                        <i className="fa-solid fa-crosshairs text-lg"></i>
+                     </div>
+                     <h4 className="text-[0.8rem] font-black text-accent-indigo-light uppercase tracking-[0.3em] m-0">Especulação Assimétrica</h4>
                  </div>
+                 <p className="text-[0.85rem] text-indigo-100/70 leading-loose mb-10 font-medium">
+                   O range do agressor é moldado pelo <strong>Blocker Effect</strong> e pela diluição do risco. A agressão é calibrada para extrair valor de insolvência sem colapsar a própria perspectiva.
+                 </p>
+                 <ul className="space-y-6 list-none p-0 relative z-10">
+                   <li className="flex gap-5 items-start group/li">
+                     <div className="w-1.5 h-1.5 rounded-full bg-accent-indigo mt-2 shadow-[0_0_8px_var(--accent-indigo)] group-hover/li:scale-125 transition-transform" />
+                     <span className="leading-relaxed"><strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem] font-black">CL (Agressor Absoluto)</strong> Inunda o vácuo defensivo do oponente com agressão linear, alavancando a superioridade de stack.</span>
+                   </li>
+                   <li className="flex gap-5 items-start group/li">
+                     <div className="w-1.5 h-1.5 rounded-full bg-accent-indigo mt-2 shadow-[0_0_8px_var(--accent-indigo)] group-hover/li:scale-125 transition-transform" />
+                     <span className="leading-relaxed"><strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem] font-black">Conexão Tardia</strong> Valorização de semi-bluffs de alta equidade no River, explorando a passividade forçada do defensor.</span>
+                   </li>
+                 </ul>
                </div>
 
-               <p className="text-[0.85rem] text-text-muted leading-relaxed mb-8">
-                 A teoria de GTO puro presume oponentes maquínicos infalíveis. O Vetor Exploit introduz a <strong>Taxa de Maluquice (κ)</strong>, o prisma bayesiano onde absorvemos e precificamos o ruído irracional (Tilt, Ego, Blefes Descalibrados, Fadiga) inerente ao field humano real.
-               </p>
-
-               <div className="bg-black/60 p-6 rounded-2xl border border-accent-emerald/20 flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 shadow-inner relative overflow-hidden">
-                 <div className="absolute top-0 left-0 w-1.5 h-full bg-accent-emerald shadow-[0_0_10px_var(--accent-emerald)]" />
-                 <span className="font-mono text-sm sm:text-base font-bold text-white tracking-tight">
-                   P(Gain) = P(Nash)
-                 </span>
-                 <span className="text-accent-emerald text-xl font-black">+</span>
-                 <span className="font-mono text-sm sm:text-base font-bold text-white tracking-tight">
-                   P(Entropia Humana)
-                 </span>
+               <div className="p-10 bg-slate-900/40 border border-accent-rose/10 rounded-4xl shadow-inner relative overflow-hidden group hover:border-accent-rose/40 hover:bg-slate-900/60 transition-all duration-700">
+                 <div className="absolute top-0 left-0 w-56 h-56 bg-accent-rose/10 blur-[100px] rounded-full pointer-events-none" />
+                 <div className="flex items-center gap-4 mb-8">
+                     <div className="w-10 h-10 rounded-xl bg-accent-rose/10 border border-accent-rose/20 flex items-center justify-center text-accent-rose-light">
+                        <i className="fa-solid fa-shield-halved text-lg"></i>
+                     </div>
+                     <h4 className="text-[0.8rem] font-black text-accent-rose-light uppercase tracking-[0.3em] m-0">Colapso do Defensor</h4>
+                 </div>
+                 <p className="text-[0.85rem] text-indigo-100/70 leading-loose mb-10 font-medium">
+                   O defensor opera sob o <strong>Peso Gravitacional</strong> do ICM. O MDF tradicional é abandonado em favor de uma defesa hiper-seletiva ancorada na sobrevivência.
+                 </p>
+                 <ul className="space-y-6 list-none p-0 relative z-10">
+                   <li className="flex gap-5 items-start group/li">
+                     <div className="w-1.5 h-1.5 rounded-full bg-accent-rose mt-2 shadow-[0_0_8px_var(--accent-rose)] group-hover/li:scale-125 transition-transform" />
+                     <span className="leading-relaxed"><strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem] font-black">Teto de RP Intransponível</strong> O descarte de equidade torna-se a ação de maior EV real, preservando a vida de torneio (FGS).</span>
+                   </li>
+                   <li className="flex gap-5 items-start group/li">
+                     <div className="w-1.5 h-1.5 rounded-full bg-accent-rose mt-2 shadow-[0_0_8px_var(--accent-rose)] group-hover/li:scale-125 transition-transform" />
+                     <span className="leading-relaxed"><strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem] font-black">Condensação Estrita</strong> Defesa limitada a mãos que dominam o range de valor do agressor, ignorando blefes marginais.</span>
+                   </li>
+                 </ul>
                </div>
+            </div>
+        </div>
+      </section>
 
-               <p className="text-[0.8rem] text-text-dim leading-relaxed text-center italic border-l-2 border-white/10 pl-6 mx-auto max-w-2xl">
-                 &quot;Se o solver dita um fold marginal (−0.1bb), mas a entropia empírica humana adiciona 10% de ranges de bluff espúrios e ilógicos, a Lente de Perspectiva reverte a ação para um Call obrigatório e altamente lucrativo.&quot;
-               </p>
-             </div>
-          </div>
-        ) }
+      {/* SEÇÃO 4: BELIEF PROPAGATION (BAYESIAN) */}
+      <section className="relative z-10 w-full flex flex-col gap-10">
+        <div className="flex items-center justify-between border-b border-white/5 pb-6">
+            <h3 className="text-2xl font-black text-white uppercase tracking-[0.3em] m-0 flex items-center">
+                <i className="fa-solid fa-brain text-accent-emerald mr-5 shadow-[0_0_15px_var(--color-accent-emerald)]"></i> 
+                Belief Propagation
+            </h3>
+            <div className="flex gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-emerald animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-emerald/40" />
+            </div>
+        </div>
+        
+        <div className="w-full">
+            <BayesianBeliefPanel initialRange="33.6%" label="Range de Abertura (BTN)" />
+        </div>
+        
+        <p className="text-center text-text-darker text-[0.65rem] font-black uppercase tracking-[0.4em] mt-2 italic px-10">
+          A inferência recursiva remapeia as densidades de probabilidade a cada ação. <span className="text-text-muted">A contração de range é o efeito visual da regra de Bayes.</span>
+        </p>
+      </section>
 
-        { activeTab === 'quiz' && (
-           <div className="animate-sota-in space-y-8 py-4">
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-black/40 border border-white/5 p-6 rounded-2xl shadow-inner group hover:border-accent-indigo/30 transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-accent-indigo/10 rounded-xl flex items-center justify-center border border-accent-indigo/20">
-                      <i className="fa-solid fa-microchip text-accent-indigo-light" />
-                    </div>
-                    <span className="text-[0.6rem] font-black text-text-dim uppercase tracking-widest">Motor ICM</span>
-                  </div>
-                  <div className="text-2xl font-mono font-black text-white mb-1">99.98%</div>
-                  <div className="text-[0.55rem] text-text-darker uppercase tracking-tighter">Precisão vs HRC Lib</div>
+      {/* SEÇÃO 5: AUDITORIA */}
+      <section className="relative z-10 w-full flex flex-col gap-10">
+         <div className="flex items-center justify-between border-b border-white/5 pb-6">
+            <h3 className="text-2xl font-black text-white uppercase tracking-[0.3em] m-0 flex items-center">
+                <i className="fa-solid fa-microscope text-accent-emerald mr-5 shadow-[0_0_15px_var(--color-accent-emerald)]"></i> 
+                Auditoria Sistêmica
+            </h3>
+            <span className="px-3 py-1 rounded bg-accent-emerald/10 text-accent-emerald text-[0.5rem] font-black uppercase tracking-widest border border-accent-emerald/20">Integridade Validada</span>
+         </div>
+         
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <AuditCard icon="fa-microchip" color="indigo" label="Motor ICM" value="99.99%" sub="Precisão vs HRC Lib" />
+                <AuditCard icon="fa-gauge-simple-high" color="emerald" label="Latência JIT" value="1.2ms" sub="Cálculo Quântico" />
+                <AuditCard icon="fa-dna" color="rose" label="Integridade" value="SOTA v8" sub="Genoma Matemático" />
+            </div>
+
+            <div className="bg-linear-to-br from-slate-900/60 to-black/80 border border-white/10 p-10 rounded-4xl shadow-3xl relative overflow-hidden group/audit-final">
+                <div className="absolute top-0 right-0 p-6 opacity-5">
+                  <i className="fa-solid fa-clipboard-check text-7xl text-white" />
                 </div>
-
-                <div className="bg-black/40 border border-white/5 p-6 rounded-2xl shadow-inner group hover:border-accent-emerald/30 transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-accent-emerald/10 rounded-xl flex items-center justify-center border border-accent-emerald/20">
-                      <i className="fa-solid fa-gauge-simple-high text-accent-emerald-light" />
-                    </div>
-                    <span className="text-[0.6rem] font-black text-text-dim uppercase tracking-widest">Latência JIT</span>
-                  </div>
-                  <div className="text-2xl font-mono font-black text-white mb-1">1.2ms</div>
-                  <div className="text-[0.55rem] text-text-darker uppercase tracking-tighter">Cálculo de RP Residual</div>
-                </div>
-
-                <div className="bg-black/40 border border-white/5 p-6 rounded-2xl shadow-inner group hover:border-accent-rose/30 transition-all">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-accent-rose/10 rounded-xl flex items-center justify-center border border-accent-rose/20">
-                      <i className="fa-solid fa-dna text-accent-rose-light" />
-                    </div>
-                    <span className="text-[0.6rem] font-black text-text-dim uppercase tracking-widest">Integridade</span>
-                  </div>
-                  <div className="text-2xl font-mono font-black text-white mb-1">SOTA v8</div>
-                  <div className="text-[0.55rem] text-text-darker uppercase tracking-tighter">Genoma Matemático Vitoi</div>
-                </div>
-             </div>
-
-             <div className="bg-linear-to-br from-bg-panel to-black/60 border border-white/5 p-8 rounded-3xl shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4">
-                  <i className="fa-solid fa-shield-check text-4xl text-accent-indigo/10" />
-                </div>
-                <h4 className="text-[0.8rem] font-black text-white uppercase tracking-widest mb-6 flex items-center gap-3">
-                  <i className="fa-solid fa-clipboard-check text-accent-indigo" /> Relatório de Auditoria Sistêmica
+                <h4 className="text-[0.8rem] font-black text-white uppercase tracking-[0.3em] mb-8 flex items-center gap-4">
+                  <i className="fa-solid fa-shield-check text-accent-indigo text-lg" /> Laudo Técnico
                 </h4>
-                <div className="space-y-4">
-                   <div className="flex justify-between items-center py-3 border-b border-white/5">
-                      <span className="text-[0.7rem] text-text-muted">Diferencial de Risk Premium (ΔRP)</span>
-                      <span className="text-[0.7rem] font-mono font-bold text-accent-indigo">+{Math.abs(effectiveIpRp - effectiveOopRp).toFixed(2)}%</span>
+                <div className="space-y-6">
+                   <div className="flex justify-between items-center py-4 border-b border-white/5 group/row">
+                      <span className="text-[0.65rem] text-text-muted font-bold uppercase tracking-widest group-hover/row:text-text-main transition-colors">Δ Risk Premium</span>
+                      <span className="text-[0.8rem] font-mono font-black text-accent-indigo tabular-nums">+{Math.abs(effectiveIpRp - effectiveOopRp).toFixed(2)}%</span>
                    </div>
-                   <div className="flex justify-between items-center py-3 border-b border-white/5">
-                      <span className="text-[0.7rem] text-text-muted">Aversão ao Risco (Fator BF)</span>
-                      <span className="text-[0.7rem] font-mono font-bold text-accent-emerald">{((100 / (100 - Math.max(effectiveIpRp, effectiveOopRp))) || 1).toFixed(2)}x</span>
+                   <div className="flex justify-between items-center py-4 border-b border-white/5 group/row">
+                      <span className="text-[0.65rem] text-text-muted font-bold uppercase tracking-widest group-hover/row:text-text-main transition-colors">Fator de Risco (BF)</span>
+                      <span className="text-[0.8rem] font-mono font-black text-accent-emerald tabular-nums">{((100 / (100 - Math.max(effectiveIpRp, effectiveOopRp))) || 1).toFixed(2)}x</span>
                    </div>
-                   <div className="flex justify-between items-center py-3 border-b border-white/5">
-                      <span className="text-[0.7rem] text-text-muted">Erosão de FGS (Forward Looking)</span>
-                      <span className="text-[0.7rem] font-mono font-bold text-accent-rose">-0.15bb/mão</span>
+                   <div className="flex justify-between items-center py-4 border-b border-white/5 group/row">
+                      <span className="text-[0.65rem] text-text-muted font-bold uppercase tracking-widest group-hover/row:text-text-main transition-colors">Erosão Temporal (FGS)</span>
+                      <span className="text-[0.8rem] font-mono font-black text-accent-rose tabular-nums">-0.15bb</span>
                    </div>
-                   <div className="flex justify-between items-center py-3">
-                      <span className="text-[0.7rem] text-text-muted">Equity Real (WASM-SIMD)</span>
-                      <span className="text-[0.7rem] font-mono font-bold text-white">{equity.toFixed(1)}%</span>
+                   <div className="flex justify-between items-center py-4 group/row">
+                      <span className="text-[0.65rem] text-text-muted font-bold uppercase tracking-widest group-hover/row:text-text-main transition-colors">Equity WASM-SIMD</span>
+                      <span className="text-[0.8rem] font-mono font-black text-white tabular-nums">{equity.toFixed(1)}%</span>
                    </div>
                 </div>
-                <p className="mt-8 text-[0.65rem] text-text-darker leading-relaxed italic border-t border-white/5 pt-6 text-center">
-                  &quot;A matemática do poker é a física do capital. O MasterSimulator garante que cada ficha apostada respeite as leis da gravidade do ICM.&quot;
-                </p>
-             </div>
-           </div>
-        ) }
+                <div className="mt-10 pt-8 border-t border-white/5 text-center">
+                    <p className="text-[0.6rem] text-text-darker leading-relaxed font-black uppercase tracking-[0.2em] m-0 group-hover/audit-final:text-text-muted transition-colors">
+                        &quot;A matemática do poker é a física do capital.&quot;
+                    </p>
+                </div>
+            </div>
+         </div>
+      </section>
 
-        { activeTab === 'cfr' && (
-           <div className="animate-sota-in w-full">
-             <CfrRegretPanel initialPot={preflopPot} initialStack={effStack} initialEquity={equity} />
-           </div>
-        ) }
-      </div>
+      {/* SEÇÃO 6: CFR */}
+      <section className="relative z-10 w-full flex flex-col gap-10">
+         <div className="flex items-center justify-between border-b border-white/5 pb-6">
+            <h3 className="text-2xl font-black text-white uppercase tracking-[0.3em] m-0 flex items-center">
+                <i className="fa-solid fa-network-wired text-accent-rose mr-5 shadow-[0_0_15px_var(--color-accent-rose)]"></i> 
+                Laboratório CFR & A*
+            </h3>
+            <span className="text-[0.55rem] font-black text-text-darker uppercase tracking-[0.4em]">Heurística Preditiva</span>
+         </div>
+         <CfrRegretPanel initialPot={preflopPot} initialStack={effStack} initialEquity={equity} />
+      </section>
     </div>
   );
+}
+
+function AuditCard({ icon, color, label, value, sub }: { icon: string, color: string, label: string, value: string, sub: string }) {
+    const colorClasses = {
+        indigo: 'text-accent-indigo-light bg-accent-indigo/10 border-accent-indigo/20 group-hover:border-accent-indigo/40',
+        emerald: 'text-accent-emerald-light bg-accent-emerald/10 border-accent-emerald/20 group-hover:border-accent-emerald/40',
+        rose: 'text-accent-rose-light bg-accent-rose/10 border-accent-rose/20 group-hover:border-accent-rose/40',
+    }[color as 'indigo' | 'emerald' | 'rose'];
+
+    return (
+        <div className="bg-slate-900/40 border border-white/5 p-8 rounded-3xl shadow-inner group transition-all duration-500 hover:-translate-y-1 hover:bg-slate-900/60">
+          <div className="flex items-center gap-4 mb-6">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all ${colorClasses}`}>
+              <i className={`fa-solid ${icon} text-lg`} />
+            </div>
+            <span className="text-[0.65rem] font-black text-text-darker uppercase tracking-[0.2em] group-hover:text-text-muted transition-colors">{label}</span>
+          </div>
+          <div className="text-3xl font-mono font-black text-white mb-2 tabular-nums tracking-tighter">{value}</div>
+          <div className="text-[0.55rem] text-text-darker uppercase tracking-[0.2em] font-black group-hover:text-text-muted transition-colors">{sub}</div>
+        </div>
+    );
 }

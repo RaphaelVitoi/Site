@@ -101,6 +101,7 @@ export function useGemmaStream() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    model: process.env.NEXT_PUBLIC_OLLAMA_MODEL || 'gemma',
                     messages: [
                         { role: 'system', content: VITOI_SYSTEM_PROMPT },
                         { role: 'user', content: prompt }

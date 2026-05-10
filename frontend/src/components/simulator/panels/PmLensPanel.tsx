@@ -12,7 +12,6 @@
  * BINDING: [lib/perspectiva.ts, components/simulator/hooks/*, components/simulator/ui/*]
  */
 
-import { GlassPanel } from '@/components/ui/GlassPanel';
 import { formatCi, formatPct, getPmColorClass, getVerdictText } from '@/components/simulator/engine/utils';
 import { useDebouncedLocalStorage } from '@/components/simulator/hooks/useDebouncedLocalStorage';
 import { usePmLensCalculations } from '@/components/simulator/hooks/usePmLensCalculations';
@@ -171,13 +170,15 @@ export default function PmLensPanel ( { anteSize: _anteSize = 12.5, heroInvested
   }, [] );
 
   return (
-    <GlassPanel className="flex flex-col gap-6 p-8 mt-8">
+    <div className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-indigo/5 blur-3xl rounded-full pointer-events-none" />
+
       {/* Header */ }
-      <div className="flex flex-col gap-2 pb-4 border-b border-white/5">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="text-[0.6rem] font-black text-accent-indigo-light uppercase tracking-widest bg-accent-indigo/10 border border-accent-indigo/20 px-2.5 py-1 rounded-md">PM Lens</span>
-            <h3 className="text-sm font-black text-white tracking-widest uppercase m-0">Framework PM — Referencial Aula 1.2</h3>
+      <div className="flex flex-col gap-2 pb-6 border-b border-white/5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)]" />
+            <h3 className="text-[0.75rem] font-black text-text-main tracking-[0.2em] uppercase m-0">Framework PM &middot; <span className="text-text-muted">Lente de Perspectiva</span></h3>
           </div>
           <SniperBadge
             pm={ streetMetrics[ 0 ]?.PM ?? 0 }
@@ -185,30 +186,30 @@ export default function PmLensPanel ( { anteSize: _anteSize = 12.5, heroInvested
             stackEff={ Math.min( initialStacks[ heroIdx ] ?? 0, initialStacks[ primaryVillainIdx ] ?? 0 ) }
           />
         </div>
-        <p className="text-xs text-text-muted leading-relaxed m-0 font-medium italic">
-          Telemetria Contínua de Sunk Cost. Motor ICM isolado (SOTA Offloading).
+        <p className="text-[0.65rem] text-text-dim mt-2 m-0 font-medium uppercase tracking-wider">
+          Telemetria Contínua de Sunk Cost &middot; Motor ICM Isolado (SOTA Offloading)
         </p>
       </div>
 
       {/* Controles */ }
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(300px,400px)] xl:grid-cols-[1fr_minmax(350px,450px)] gap-8">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col xl:flex-row gap-6 xl:gap-10">
-            <div className="flex-1">
-              <div className="mb-3">
-                <div className="text-[0.65rem] text-text-muted font-black uppercase tracking-widest mb-1">Hero (Agressor)</div>
-                <p className="text-[0.45rem] text-text-darker max-w-40 leading-tight m-0 uppercase tracking-widest">Define a margem (SPR) e resistência estrutural.</p>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(350px,450px)] gap-12">
+        <div className="flex flex-col gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center px-1">
+                <span className="text-[0.6rem] text-text-muted font-black uppercase tracking-[0.2em]">Hero (Agressor)</span>
+                <span className="text-[0.45rem] text-text-darker font-black uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded">SPR Active</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5 overflow-x-auto scrollbar-hide pb-2">
                 { DEFAULT_PLAYERS.slice( 0, initialStacks.length ).map( ( p, i ) => ( <SelectBtn key={ p } label={ `${ p } ${ initialStacks[ i ] }bb` } active={ heroIdx === i } impossible={ villainIndices.includes( i ) } onClick={ () => setHeroIdx( i ) } /> ) ) }
               </div>
             </div>
-            <div className="flex-1">
-              <div className="mb-3">
-                <div className="text-[0.65rem] text-text-muted font-black uppercase tracking-widest mb-1">Villain(s) - Multiway</div>
-                <p className="text-[0.45rem] text-text-darker max-w-40 leading-tight m-0 uppercase tracking-widest">O Passivo (RIO) escala quadraticamente (N²).</p>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center px-1">
+                <span className="text-[0.6rem] text-text-muted font-black uppercase tracking-[0.2em]">Villain(s) - Multiway</span>
+                <span className="text-[0.45rem] text-text-darker font-black uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded">N² Complexity</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5 overflow-x-auto scrollbar-hide pb-2">
                 { DEFAULT_PLAYERS.slice( 0, initialStacks.length ).map( ( p, i ) => (
                   <SelectBtn key={ p } label={ `${ p } ${ initialStacks[ i ] }bb` } active={ villainIndices.includes( i ) } impossible={ i === heroIdx } onClick={ () => toggleVillain( i ) } />
                 ) ) }
@@ -216,154 +217,176 @@ export default function PmLensPanel ( { anteSize: _anteSize = 12.5, heroInvested
             </div>
           </div>
 
-          <div className="bg-bg-deep/50 border border-white/5 rounded-xl p-5 flex flex-col gap-4">
-            <h4 className="text-[0.65rem] text-text-muted font-black uppercase tracking-widest m-0">Alavancas de Realização (Abstração SOTA)</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <div className={ `flex flex-col mb-2 ${ isHeroIP ? 'text-accent-indigo-light' : 'text-accent-danger' }` }>
-                  <div className="flex justify-between items-center text-[0.6rem] font-black uppercase tracking-widest mb-1">
+          <div className="bg-black/40 border border-white/5 rounded-3xl p-8 flex flex-col gap-8 shadow-inner">
+            <h4 className="text-[0.65rem] text-text-muted font-black uppercase tracking-[0.25em] m-0 flex items-center gap-2">
+                <i className="fa-solid fa-sliders text-accent-indigo text-[0.6rem]" /> Alavancas de Realização
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+              <div className="space-y-5">
+                <div className={ `flex flex-col gap-1 ${ isHeroIP ? 'text-accent-indigo-light' : 'text-accent-danger' }` }>
+                  <div className="flex justify-between items-center text-[0.6rem] font-black uppercase tracking-widest">
                     <span>Realização (R)</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       { customR !== null && (
-                        <button onClick={ () => setCustomR( null ) } className="bg-transparent border-none text-text-dim cursor-pointer p-0 text-[0.65rem] hover:text-white transition-colors" title="Resetar para Auto">
-                          <i className="fa-solid fa-rotate-left"></i> Auto
+                        <button onClick={ () => setCustomR( null ) } className="bg-black/40 border border-white/5 text-text-dim cursor-pointer px-2 py-0.5 rounded-lg text-[0.55rem] hover:text-white transition-all uppercase tracking-tighter" title="Resetar para Auto">
+                          <i className="fa-solid fa-rotate-left mr-1"></i> Auto
                         </button>
                       ) }
-                      <span className="font-mono text-white">{ Math.round( realizationFactor * 100 ) }%</span>
+                      <span className="font-mono font-black text-white bg-black/60 px-2 py-0.5 rounded border border-white/5">{ Math.round( realizationFactor * 100 ) }%</span>
                     </div>
                   </div>
-                  <p className="text-[0.45rem] text-text-darker max-w-35 leading-tight m-0 uppercase tracking-widest">Ajuste de under/over realization. R&lt;1 = perda de EQ.</p>
                 </div>
-                <input type="range" min={ 0.1 } max={ 2 } step={ 0.05 } value={ realizationFactor } onChange={ e => setCustomR( Number( e.target.value ) ) } className={ `w-full cursor-pointer ${ isHeroIP ? 'accent-accent-indigo' : 'accent-accent-danger' }` } aria-label="Fator de Realização" title="Fator de Realização" />
+                <input type="range" min={ 0.1 } max={ 2 } step={ 0.05 } value={ realizationFactor } onChange={ e => setCustomR( Number( e.target.value ) ) } className={ `w-full h-1 appearance-none bg-white/5 rounded-full cursor-pointer ${ isHeroIP ? 'accent-accent-indigo' : 'accent-accent-danger' }` } />
+                <p className="text-[0.45rem] text-text-darker leading-tight m-0 uppercase tracking-[0.15em] font-black">Ajuste de under/over realization. R&lt;1 = perda de EQ.</p>
               </div>
 
-              <div>
-                <div className="flex flex-col mb-2 text-accent-amber">
-                  <div className="flex justify-between items-center text-[0.6rem] font-black uppercase tracking-widest mb-1">
+              <div className="space-y-5">
+                <div className="flex flex-col gap-1 text-accent-amber">
+                  <div className="flex justify-between items-center text-[0.6rem] font-black uppercase tracking-widest">
                     <span>Villain AggFactor</span>
-                    <span className="font-mono text-white">{ aggFactor.toFixed(2) }x</span>
+                    <span className="font-mono font-black text-white bg-black/60 px-2 py-0.5 rounded border border-white/5">{ aggFactor.toFixed(2) }x</span>
                   </div>
-                  <p className="text-[0.45rem] text-text-darker max-w-35 leading-tight m-0 uppercase tracking-widest">Agg extrema OOP destrói sua Realização (R).</p>
                 </div>
-                <input type="range" min={ 0.1 } max={ 3 } step={ 0.1 } value={ aggFactor } onChange={ e => setAggFactor( Number( e.target.value ) ) } className="w-full cursor-pointer accent-accent-amber" aria-label="Agressividade do Vilão" title="Agressividade do Vilão" />
+                <input type="range" min={ 0.1 } max={ 3 } step={ 0.1 } value={ aggFactor } onChange={ e => setAggFactor( Number( e.target.value ) ) } className="w-full h-1 appearance-none bg-white/5 rounded-full cursor-pointer accent-accent-amber" />
+                <p className="text-[0.45rem] text-text-darker leading-tight m-0 uppercase tracking-[0.15em] font-black">Agg extrema OOP destrói sua Realização (R).</p>
               </div>
             </div>
             { customR === null && (
-              <p className="text-[0.6rem] text-text-dim m-0 leading-relaxed">
-                <strong className="text-text-muted">Motor R Automático ativado:</strong> Calculando mitigação por SPR ({spr.toFixed(1)}), Posição ({absoluteHeroPos}) e Pressão de Agg ({aggFactor.toFixed(1)}x).
-              </p>
+              <div className="p-4 bg-accent-indigo/5 border border-accent-indigo/10 rounded-2xl flex items-center gap-3">
+                 <div className="w-1.5 h-1.5 rounded-full bg-accent-indigo animate-pulse" />
+                 <p className="text-[0.6rem] text-text-muted m-0 leading-relaxed font-medium">
+                   <strong className="text-white uppercase tracking-widest mr-2">Motor R Ativo:</strong> SPR {spr.toFixed(1)} &middot; Pos {absoluteHeroPos} &middot; Agg {aggFactor.toFixed(1)}x
+                 </p>
+              </div>
             ) }
           </div>
 
           {/* SOTA: Nodelock B20 */}
-          <div className="bg-bg-deep/50 border border-white/5 rounded-xl p-5 flex flex-col gap-4 mt-2">
+          <div className="bg-black/40 border border-white/5 rounded-3xl p-8 flex flex-col gap-6 shadow-inner">
              <div className="flex justify-between items-center">
-                 <h4 className="text-[0.65rem] text-text-muted font-black uppercase tracking-widest m-0">Tática de Ancoragem (Nodelock)</h4>
+                 <h4 className="text-[0.65rem] text-text-muted font-black uppercase tracking-[0.25em] m-0 flex items-center gap-2">
+                    <i className="fa-solid fa-anchor text-accent-indigo text-[0.6rem]" /> Tática de Ancoragem
+                 </h4>
                  <button
                     onClick={() => setActiveNodelock(prev => prev ? null : { type: 'block_bet', sizePct: 0.2, freqOverride: 1 })}
                     aria-pressed={!!activeNodelock}
-                    className={`px-3 py-1.5 rounded-lg text-[0.6rem] font-black uppercase tracking-widest transition-all cursor-pointer border ${activeNodelock ? 'bg-accent-indigo/20 border-accent-indigo/40 text-accent-indigo-light shadow-[0_0_10px_rgba(99,102,241,0.2)]' : 'bg-transparent border-white/10 text-text-dim hover:text-white hover:border-white/30'}`}
+                    className={`px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all cursor-pointer border active:scale-95 ${activeNodelock ? 'bg-accent-indigo/20 border-accent-indigo text-accent-indigo-light shadow-lg' : 'bg-transparent border-white/10 text-text-dim hover:text-white hover:border-white/30'}`}
                  >
-                    {activeNodelock ? 'Block Bet 20% ATIVO' : 'Ativar Block Bet 20%'}
+                    {activeNodelock ? 'Nodelock B20 Ativo' : 'Ativar Block Bet 20%'}
                  </button>
              </div>
              {activeNodelock && (
-                 <p className="text-[0.6rem] text-accent-indigo-light m-0 leading-relaxed font-medium italic">
-                    <strong className="font-bold not-italic">Nodelock Aplicado:</strong> O crescimento do SPR foi mitigado (+40% por street em vez do Padrão Geométrico). Fator de Realização bonificado em +0.15. Métrica ajustada pelo Axioma Lipe Piv (Credibilidade <span className="font-mono">{Math.min(1, kappa + 0.3).toFixed(2)}x</span>).
+                 <p className="text-[0.65rem] text-accent-indigo-light m-0 leading-relaxed font-medium italic border-l-2 border-accent-indigo/30 pl-4 py-1">
+                    A estrutura SPR foi mitigada (+40%/street). Axioma Lipe Piv acionado (κ: <span className="font-mono font-black">{Math.min(1, kappa + 0.3).toFixed(2)}x</span>).
                  </p>
              )}
           </div>
         </div>
 
-        <div className="bg-bg-deep/80 backdrop-blur-md border border-white/5 rounded-xl p-6 flex flex-col gap-5 shadow-2xl shadow-black/50">
-          <div className="grid grid-cols-1 gap-6">
-            <div className="flex flex-col">
-              <div className="flex justify-between items-center text-[0.6rem] text-text-muted hover:text-white transition-colors font-black uppercase tracking-widest mb-1">
+        <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-4xl p-8 flex flex-col gap-8 shadow-2xl relative overflow-hidden group/sidebar">
+          <div className="absolute inset-0 bg-radial-[at_center_center] from-accent-indigo/5 to-transparent pointer-events-none" />
+          
+          <div className="relative z-10 space-y-8">
+            <div className="flex flex-col gap-5">
+              <div className="flex justify-between items-center text-[0.65rem] text-text-muted group-hover/sidebar:text-white transition-colors font-black uppercase tracking-[0.2em]">
                 <span>Equity Bruta</span>
-                <span className="text-white font-mono">{ equity }%</span>
+                <span className="text-white font-mono bg-black/40 px-2 py-0.5 rounded border border-white/5 shadow-inner">{ equity }%</span>
               </div>
-              <p className="text-[0.45rem] text-text-darker max-w-45 leading-tight m-0 mb-2 uppercase tracking-widest">No vácuo. Cega para FGS, RIO e Pressão ICM.</p>
-              <input type="range" min={ 0 } max={ 100 } value={ equity } onChange={ e => ecosystem?.setManualEquity?.( Number( e.target.value ) ) } className="w-full accent-text-muted cursor-pointer" aria-label="Equity Bruta" title="Equity Bruta" />
+              <input type="range" min={ 0 } max={ 100 } value={ equity } onChange={ e => ecosystem?.setManualEquity?.( Number( e.target.value ) ) } className="w-full h-1.5 appearance-none bg-white/5 rounded-full cursor-pointer accent-text-muted" />
+              <p className="text-[0.45rem] text-text-darker leading-tight m-0 uppercase tracking-widest font-black">No vácuo &middot; Cega para FGS, RIO e Pressão ICM.</p>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="flex flex-col">
-              <div className="flex justify-between items-center text-[0.6rem] text-accent-amber hover:text-accent-gold transition-colors font-black uppercase tracking-widest mb-1">
-                <span>Bounty PKO</span>
-                <span className="font-mono">{ Math.round( pkoValue * 100 ) }%</span>
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-[0.6rem] text-accent-amber font-black uppercase tracking-widest">
+                  <span>Bounty PKO</span>
+                  <span className="font-mono text-white bg-black/40 px-2 py-0.5 rounded">{ Math.round( pkoValue * 100 ) }%</span>
+                </div>
+                <input type="range" min={ 0 } max={ 0.8 } step={ 0.05 } value={ pkoValue } onChange={ e => setPkoValue( Number( e.target.value ) ) } className="w-full h-1 appearance-none bg-white/5 rounded-full cursor-pointer accent-accent-amber" />
               </div>
-              <p className="text-[0.45rem] text-text-darker max-w-35 leading-tight m-0 mb-2 uppercase tracking-widest">Afrouxa a pressão de ICM se cobrimos o vilão.</p>
-              <input type="range" min={ 0 } max={ 0.8 } step={ 0.05 } value={ pkoValue } onChange={ e => setPkoValue( Number( e.target.value ) ) } className="w-full accent-accent-amber cursor-pointer" aria-label="Bounty PKO" title="Bounty PKO" />
-            </div>
-            <div className="flex flex-col">
-              <div className="flex justify-between items-center text-[0.6rem] text-accent-pink hover:text-accent-pink-light transition-colors font-black uppercase tracking-widest mb-1">
-                <span>Credibilidade κ</span>
-                <span className="font-mono">{ Math.round( kappa * 100 ) }%</span>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-[0.6rem] text-accent-pink font-black uppercase tracking-widest">
+                  <span>κ Credibilidade</span>
+                  <span className="font-mono text-white bg-black/40 px-2 py-0.5 rounded">{ Math.round( kappa * 100 ) }%</span>
+                </div>
+                <input type="range" min={ 0 } max={ 1 } step={ 0.05 } value={ kappa } onChange={ e => setKappa( Number.parseFloat( e.target.value ) ) } className="w-full h-1 appearance-none bg-white/5 rounded-full cursor-pointer accent-accent-pink" />
               </div>
-              <p className="text-[0.45rem] text-text-darker max-w-35 leading-tight m-0 mb-2 uppercase tracking-widest">Chance do vilão jogar Nash sem ceder ao Tilt.</p>
-              <input type="range" min={ 0 } max={ 1 } step={ 0.05 } value={ kappa } onChange={ e => setKappa( Number( e.target.value ) ) } className="w-full accent-accent-pink cursor-pointer" aria-label="Credibilidade Kappa" title="Credibilidade Kappa" />
             </div>
-          </div>
 
-          <div className="mt-2 p-4 bg-black/40 border border-white/10 rounded-xl flex flex-col gap-3 shadow-inner">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input type="text" placeholder="Hero (ex: 22+)" value={ heroRange } onChange={ e => setHeroRange( e.target.value ) } className="w-full bg-bg-base/80 backdrop-blur-sm border border-white/10 text-white text-[0.65rem] font-mono px-4 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-accent-indigo focus:border-accent-indigo transition-all placeholder:text-text-darker shadow-inner" />
-              <input type="text" placeholder="Vilão (ex: ATo+)" value={ villainRange } onChange={ e => setVillainRange( e.target.value ) } className="w-full bg-bg-base/80 backdrop-blur-sm border border-white/10 text-white text-[0.65rem] font-mono px-4 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-accent-indigo focus:border-accent-indigo transition-all placeholder:text-text-darker shadow-inner" />
-            </div>
-            <div className="grid grid-cols-[1fr_minmax(120px,max-content)] gap-3">
-              <input type="text" placeholder="Board (ex: Ah Td 7c)" value={ board } onChange={ e => setBoard( e.target.value ) } className="w-full bg-bg-base/80 backdrop-blur-sm border border-white/10 text-accent-emerald-light text-[0.65rem] font-mono px-4 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-accent-emerald focus:border-accent-emerald transition-all placeholder:text-text-darker shadow-inner" />
-
-              <div className="flex flex-col justify-center bg-bg-base/80 backdrop-blur-sm border border-white/10 rounded-lg p-2 hover:border-white/20 transition-all">
-                <p className="text-[0.45rem] text-text-darker leading-tight m-0 mb-1 uppercase tracking-widest text-center">Sizing (Agressão)</p>
-                <select value={ betSizing } onChange={ e => setBetSizing( Number( e.target.value ) ) } className="w-full bg-transparent text-[0.65rem] font-mono font-black text-text-muted uppercase outline-none px-2 cursor-pointer text-center" aria-label="Sizing Profile" title="Sizing Profile">
-                  <option value={0.33}>33% Pot</option>
-                  <option value={0.5}>50% Pot</option>
-                  <option value={0.75}>75% Pot</option>
-                  <option value={1.2}>120% Pot</option>
-                </select>
+            <div className="p-6 bg-black/40 border border-white/10 rounded-3xl flex flex-col gap-4 shadow-inner">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <span className="text-[0.45rem] text-text-darker uppercase font-black tracking-widest pl-1">Hero Range</span>
+                    <input type="text" placeholder="AhKd" value={ heroRange } onChange={ e => setHeroRange( e.target.value ) } className="w-full bg-slate-900/80 border border-white/5 text-white text-[0.7rem] font-mono px-4 py-2.5 rounded-xl focus:ring-1 focus:ring-accent-indigo outline-none transition-all placeholder:text-text-darker shadow-inner" />
+                </div>
+                <div className="space-y-2">
+                    <span className="text-[0.45rem] text-text-darker uppercase font-black tracking-widest pl-1">Villain Range</span>
+                    <input type="text" placeholder="100%" value={ villainRange } onChange={ e => setVillainRange( e.target.value ) } className="w-full bg-slate-900/80 border border-white/5 text-white text-[0.7rem] font-mono px-4 py-2.5 rounded-xl focus:ring-1 focus:ring-accent-indigo outline-none transition-all placeholder:text-text-darker shadow-inner" />
+                </div>
               </div>
-            </div>
-            <div className="w-full mt-1">
-              <button onClick={ handleCalculateEquity } disabled={ isCalculatingEq || !heroRange || !villainRange } className="w-full py-2.5 bg-linear-to-r from-accent-indigo/20 to-accent-indigo/30 text-accent-indigo-light border border-accent-indigo/40 rounded-lg text-[0.65rem] font-black uppercase tracking-widest hover:from-accent-indigo/30 hover:to-indigo-500/40 hover:shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                { isCalculatingEq ? 'Triturando VRAM...' : 'Injetar GTO (WebGPU)' }
-              </button>
-              <p className="text-[0.45rem] text-text-darker leading-tight m-0 mt-2 uppercase tracking-widest text-center">Invoca Compute Shader p/ Monte Carlo O(1).</p>
+              
+              <div className="grid grid-cols-[1fr_120px] gap-4">
+                <div className="space-y-2">
+                    <span className="text-[0.45rem] text-text-darker uppercase font-black tracking-widest pl-1">Board Structural</span>
+                    <input type="text" placeholder="Ah Td 7c" value={ board } onChange={ e => setBoard( e.target.value ) } className="w-full bg-slate-900/80 border border-white/5 text-accent-emerald-light text-[0.7rem] font-mono px-4 py-2.5 rounded-xl focus:ring-1 focus:ring-accent-emerald outline-none transition-all placeholder:text-text-darker shadow-inner" />
+                </div>
+                <div className="space-y-2">
+                    <span className="text-[0.45rem] text-text-darker uppercase font-black tracking-widest text-center block">Sizing</span>
+                    <div className="relative">
+                        <select value={ betSizing } onChange={ e => setBetSizing( Number( e.target.value ) ) } className="w-full bg-slate-900/80 border border-white/5 text-white text-[0.65rem] font-mono font-black px-3 py-2.5 rounded-xl outline-none appearance-none cursor-pointer text-center">
+                            <option value={0.33}>33%</option>
+                            <option value={0.5}>50%</option>
+                            <option value={0.75}>75%</option>
+                            <option value={1.2}>120%</option>
+                        </select>
+                    </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button onClick={ handleCalculateEquity } disabled={ isCalculatingEq || !heroRange || !villainRange } className="w-full py-4 bg-accent-indigo text-white border border-accent-indigo-light/20 rounded-2xl text-[0.7rem] font-black uppercase tracking-widest hover:bg-indigo-500 shadow-xl shadow-accent-indigo/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                  { isCalculatingEq ? 'Triturando VRAM...' : 'Injetar GTO (WebGPU)' }
+                </button>
+                <p className="text-[0.45rem] text-text-darker leading-tight m-0 mt-3 uppercase tracking-widest text-center font-black">Invoca Compute Shader p/ Monte Carlo O(1)</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Grid de Cartões por Street */ }
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
         { streetMetrics.map( s => (
-          <div key={ s.name } className="bg-linear-to-b from-bg-panel/60 to-bg-deep/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex flex-col gap-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:shadow-[0_16px_48px_rgba(99,102,241,0.15)] hover:-translate-y-1 hover:border-white/20 transition-all duration-300 group relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="flex justify-between items-center border-b border-white/5 pb-3">
-              <span className="text-[0.85rem] font-black text-white tracking-widest uppercase">{ s.name }</span>
-              <span className={ `px-2 py-1 rounded text-[0.55rem] font-black uppercase tracking-widest ${ s.PM > 0 ? 'bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20' : 'bg-accent-danger/10 text-accent-danger border border-accent-danger/20' }` }>
+          <div key={ s.name } className="bg-black/40 backdrop-blur-xl border border-white/5 rounded-3xl p-8 flex flex-col gap-6 shadow-2xl hover:border-accent-indigo/30 hover:-translate-y-1.5 transition-all duration-500 group/card relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-accent-indigo/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500" />
+            
+            <div className="flex justify-between items-center border-b border-white/5 pb-4">
+              <span className="text-[0.8rem] font-black text-white tracking-[0.2em] uppercase">{ s.name }</span>
+              <span className={ `px-3 py-1 rounded-lg text-[0.55rem] font-black uppercase tracking-widest shadow-lg ${ s.PM > 0 ? 'bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20' : 'bg-accent-danger/10 text-accent-danger border border-accent-danger/20' }` }>
                 { getVerdictText( s.loading, s.PM ) }
               </span>
             </div>
-            <div className="flex flex-col gap-1.5 flex-1">
+            
+            <div className="flex flex-col gap-3 flex-1">
               <MetricRow label="Sunk Cost" value={ `-${ s.heroCost.toFixed( 2 ) }bb` } colorClass="text-text-dim" loading={ s.loading } tooltipDesc="Fichas investidas não lhe pertencem mais. Elas ditam a profundidade do custo irrecuperável de desistir." />
               <MetricRow label="Piso (EV_fold)" value={ `${ s.evFold.toFixed( 2 ) }%` } colorClass="text-accent-danger" loading={ s.loading } tooltipDesc="A Esperança de simplesmente desistir e ceder o pote. Qualquer ação deve superar matematicamente esta âncora." />
               <MetricRow label="Passivo (RIO)" value={ `${ s.rio.toFixed( 2 ) }%` } colorClass="text-accent-amber" loading={ s.loading } tooltipDesc="O custo passivo de 'acertar e continuar perdendo'. Infla geometricamente (x²) em cenários Multiway." />
               <MetricRow label="FGS Health" value={ `${ s.fgsHealth.toFixed( 2 ) }x` } colorClass="text-accent-violet" loading={ s.loading } tooltipDesc="Punição gravitacional na órbita. Antecipa o dano do Big Blind iminente, forçando agressão para não morrer cego." />
               <MetricRow label="Insolvência (Cᵢ)" value={ formatCi( s.loading, s.ci ) } colorClass={ s.ci !== null && s.ci < 1 ? 'text-accent-danger' : 'text-accent-emerald' } loading={ s.loading } tooltipDesc="Se Cᵢ < 1, as Pot Odds mentem. A mão não possui equidade suficiente para superar o passivo do RIO e do ICM." />
             </div>
-            <div className="mt-2 pt-3 border-t border-white/5 flex flex-col gap-1">
+
+            <div className="mt-2 pt-4 border-t border-white/5 flex flex-col gap-2">
               <div className="flex justify-between items-center">
-                <span className="text-[0.65rem] font-black text-text-muted group-hover:text-white uppercase tracking-widest transition-colors">Perspectiva</span>
-                <span className={ `text-[1.2rem] font-black font-mono ${ s.loading ? 'text-text-darker' : getPmColorClass( s.PM ) }` }>{ s.loading ? '...' : formatPct( s.PM ) }</span>
+                <span className="text-[0.6rem] font-black text-text-muted group-hover/card:text-white uppercase tracking-[0.2em] transition-colors">Perspectiva</span>
+                <span className={ `text-2xl font-black font-mono tabular-nums tracking-tighter ${ s.loading ? 'text-text-darker' : getPmColorClass( s.PM ) }` }>{ s.loading ? '...' : formatPct( s.PM ) }</span>
               </div>
-              <p className="text-[0.45rem] text-text-darker leading-tight m-0 uppercase tracking-widest">
-                PM = (Exp × Edge) − (EV_Fold + RIO).
+              <p className="text-[0.45rem] text-text-darker leading-tight m-0 uppercase tracking-widest font-black text-right">
+                PM = (Exp × R) − (EV_Fold + RIO)
               </p>
             </div>
           </div>
         ) ) }
       </div>
-    </GlassPanel>
+    </div>
   );
 }

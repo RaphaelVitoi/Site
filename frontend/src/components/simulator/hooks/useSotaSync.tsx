@@ -1,6 +1,6 @@
 'use client';
 
-import { ReferencePointStatus } from '@/lib/perspectiva';
+import { type ReferencePointStatus } from '@/lib/perspectiva';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useDebouncedLocalStorage } from './useDebouncedLocalStorage';
 

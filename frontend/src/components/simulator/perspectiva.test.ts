@@ -72,7 +72,7 @@ describe( 'calculatePerspectivaVitoi - Validação de Teoremas SOTA (D1 a D6)', 
         expect( resShort.amortizedEdge ).toBeLessThan( resDeep.amortizedEdge );
     } );
 
-    it( 'Teorema D5: Teto de Nash Orgânico — Invariância estrutural sob pressão extrema (Sem Hard-cap)', () => {
+    it( 'Teorema D5: Teto do RP Orgânico — Invariância estrutural sob pressão extrema (Sem Hard-cap)', () => {
         // Cenário de pressão absurda: Pote minúsculo, investimento gigante (Sunk Cost), BF alto
         const extremeInput: PerspectivaInput = {
             ...baseInput,

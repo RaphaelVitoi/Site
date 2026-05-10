@@ -9,7 +9,7 @@ import { SotaMarkdown } from '@/components/ui/SotaMarkdown';
 import ContentFooter from '@/components/content/ContentFooter';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { GlassPanel } from '@/components/ui/GlassPanel';
-import DownwardDriftSimulator from '@/components/simulator/DownwardDriftSimulator';
+import { DownwardDriftSimulator } from '@/components/simulator/DownwardDriftSimulator';
 
 const introduction = `
 # A GEOMETRIA DO RISCO

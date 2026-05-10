@@ -129,3 +129,30 @@ export interface Scenario {
   defaultStreetFreqs: StreetChipEvFreqs;
   quiz: ScenarioQuiz;
 }
+
+// SOTA: ICM Lab DTOs (Paridade exata com LabManager -> get_tournaments)
+export interface TournamentScenario {
+  id: string;
+  tournamentId: string;
+  name: string;
+  description?: string;
+  playersRemaining: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Tournament {
+  id: string;
+  name: string;
+  buyIn: number;
+  prizePool: number;
+  startDate: string;
+  endDate?: string;
+  scenarios?: TournamentScenario[];
+}
+
+export interface IcmLabResponse<T> {
+  status: 'SUCCESS' | 'ERROR';
+  data?: T;
+  error?: string;
+}

@@ -1,5 +1,11 @@
 'use client';
 
+/**
+ * IDENTITY: Sniper Badge
+ * ROLE: Componente visual para sinalizar solvência matemática via Protocolo Smart Sniper.
+ * COMPLIANCE: React 19 (Server/Client Component safe, direct props passing).
+ */
+
 import { SotaTooltip } from '../ui/SotaTooltip';
 
 interface SniperBadgeProps {
