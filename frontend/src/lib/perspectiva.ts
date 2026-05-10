@@ -1,4 +1,4 @@
-/**
+﻿﻿/**
  * IDENTITY: Motor de Perspectiva Matemática SOTA v4.0 (VITOI - QUANTUM)
  * PATH: src/lib/perspectiva.ts
  * ROLE: Core algorítmico da Equação Unificada SOTA.
@@ -72,6 +72,7 @@ export interface PerspectivaInput
 
   // Parâmetros Quantum (v4.0)
   numPlayersInPot?: number; // Para RIO_mw
+  humanNoiseFactor?: number; // SOTA: Table Draw Noise
   isNearPayjump?: boolean;  // Para EV_fold positivo
   blindsRisingSoon?: boolean; // Para Erosão de stack
   currentEquityPct?: number; // Para Delta Fold Pct
@@ -228,6 +229,7 @@ function _calculateValuationAndRio ( current: MapaICMResult, deltaWinPct: number
   const villainIdx = input.villainIdx;
   const potSize = input.potSize;
   const numPlayersInPot = input.numPlayersInPot ?? 2;
+  const humanNoiseFactor = input.humanNoiseFactor ?? 0;
 
   const currentVillainEq = current.equities[ villainIdx ] ?? 0;
   const winVillainEq = perspWin.equities[ villainIdx ] ?? 0;
@@ -246,7 +248,7 @@ function _calculateValuationAndRio ( current: MapaICMResult, deltaWinPct: number
   }
 
   const opponents = Math.max( 1, numPlayersInPot - 1 );
-  const rioPenaltyFactor = Math.pow( opponents, 2 ); // Cresce N^2
+  const rioPenaltyFactor = Math.pow( opponents, 2 + humanNoiseFactor ); // Cresce Exponencialmente SOTA N^(2+f)
   const volatilityMultiplier = stackHero > 0 ? Math.pow( numPlayersInPot / ( Math.max( 1, stackHero / 5 ) ), 2 ) : 1;
 
   const rioPenaltyChips = potSize * rioPenaltyFactor * ( 0.15 + ( volatilityMultiplier * 0.05 ) );
@@ -313,9 +315,11 @@ function _calculateAmortizedEdge ( input: PerspectivaInput, stackHero: number, s
   const ratio = stackHero / ( stackVillain || 1 );
   const edgePenalty = ( !isVacuum && isVillainShort && ratio > 3 ) ? 0.3 : 1;
   const effectiveStackForEdge = input.spr === undefined ? stackHero : Math.max( 2, input.spr * 5 );
-  const edgeScale = effectiveStackForEdge > 15
-    ? Math.log10( effectiveStackForEdge ) / Math.log10( 60 )
-    : 0.4 + ( survivalPressure * 0.2 );
+  
+  // SOTA: Amortização da Edge (Colapso Mecânico)
+  // A árvore de decisão é podada em S=10bb. Er(S) é proporcional a log(S).
+  const safeStackEdge = Math.max(2.718, effectiveStackForEdge);
+  const edgeScale = Math.log(safeStackEdge) / Math.log(60);
 
   return { edgePenalty, amortizedEdge: input.edgeBase * edgePenalty * edgeScale };
 }
@@ -372,30 +376,40 @@ export function calculatePerspectivaVitoi ( input: PerspectivaInput ): Perspecti
   const baselineEquity = heroCost / ( potSize + heroCost );
   const bayesianWinProb = baselineEquity + kappa * ( winProb - baselineEquity );
 
+  // SOTA: O passivo da derrota sofre dilatação no ICM e aversão dinâmica via Teoria do Prospecto.
+  const effectiveStack = Math.min( stackHero, stackVillain );
+  const baseDeltaLose = deltaLosePct * (1 / Math.max(0.1, fgsHealth));
+  const prospectDeltaLose = calculateUtilityEV(baseDeltaLose, 'baseline', 2.25, effectiveStack);
+
   // A EQUAÇÃO UNIFICADA SOTA (Blindagem Dimensional)
   // Fichas (Chips) sofrem inflacao nao-linear (Valuation, FGS). Cash (Bounty) possui utilidade estritamente linear.
   const bountyValue = input.bountyValue ?? 0;
-  const chipExpectativa = ( bayesianWinProb * deltaWinPct * R * valuation * fgsHealth ) + ( ( 1 - bayesianWinProb ) * deltaLosePct );
+  const chipExpectativa = ( bayesianWinProb * deltaWinPct * R * valuation * fgsHealth ) + ( ( 1 - bayesianWinProb ) * prospectDeltaLose );
   const bountyExpectativa = bayesianWinProb * bountyValue * R; // Exige vitoria e Realizacao(R), mas imune a Valuation/FGS.
   const expectativaReal = chipExpectativa + bountyExpectativa;
   const perspectivaPct = ( expectativaReal * amortizedEdge ) - ( dynamicEvFold + rioLiability );
 
-  // SOTA: Cálculo do Teto de Nash (Equidade de Indiferença)
-  // OBSERVAÇÃO EMPÍRICA: A matemática raramente exige > 41% no River em MTTs reais.
+  // SOTA: Cálculo do Teto do RP (Equidade de Indiferença)
   // O motor permite que a equação defina o teto organicamente, sem hard-cap artificial.
-  const denom = ( deltaWinPct * R * valuation * fgsHealth - deltaLosePct + (bountyValue * R) ) * amortizedEdge;
+  const denom = ( deltaWinPct * R * valuation * fgsHealth - prospectDeltaLose + (bountyValue * R) ) * amortizedEdge;
   let threshEq = 0.5; // Fallback
   if ( Math.abs( denom ) > 1e-6 )
   {
-    const rawThresh = ( dynamicEvFold + rioLiability - deltaLosePct * amortizedEdge ) / denom;
+    const rawThresh = ( dynamicEvFold + rioLiability - prospectDeltaLose * amortizedEdge ) / denom;
     threshEq = Math.max( 0, Math.min( 1, rawThresh ) ); // Deixa a matemática fluir organicamente
   }
 
-  const potOddsPct = ( potSize / ( potSize + heroCost ) ) * 100;
-  const ci = perspectivaPct / ( potOddsPct || 1 );
+  // SOTA: Coeficiente de Insolvência (Ci)
+  // Ci = Equity Real / Equidade de Indiferença (Threshold)
+  // Se Ci < 1, a mão é matematicamente insolvente sob a ótica da Perspectiva.
+  let ci = 0.5;
+  if ( threshEq > 0 ) {
+    ci = bayesianWinProb / threshEq;
+  } else if ( perspectivaPct > 0 ) {
+    ci = 1.5;
+  }
 
   // SOTA: Instabilidade de EVs (Mutação da Margem)
-  const effectiveStack = Math.min( stackHero, stackVillain );
   const marginInstability = Math.max( 0.01, 1 / Math.max( 2, effectiveStack ) ) * 100;
 
   // Diagnóstico
@@ -420,12 +434,14 @@ export function calculatePerspectivaVitoi ( input: PerspectivaInput ): Perspecti
 
 // === FÍSICA BASE DO POKER (FATOR DE APRISIONAMENTO SOTA) ===
 
-export function calculateRioTension (
+export function calculateRioTension ( // NOSONAR
   heroInvested: number,
   currentPot: number,
   heroRawStack: number,
   heroPosition: 'IP' | 'OOP',
   baseRioLiability: number,
+  activePlayers: number = 2,
+  humanNoiseFactor: number = 0,
   mitigationFactor: number = 1
 ): number
 {
@@ -433,7 +449,10 @@ export function calculateRioTension (
   const potEntrapment = ( heroInvested + betToCall ) / Math.max( 0.1, heroRawStack );
   const downwardDrift = heroPosition === 'OOP' ? 1.25 : 0.85;
 
-  return Math.min( 1, ( baseRioLiability / 100 ) + ( potEntrapment * downwardDrift * mitigationFactor ) );
+  const opponents = Math.max( 1, activePlayers - 1 );
+  const mwNoiseMultiplier = Math.pow( opponents, 1 + humanNoiseFactor );
+
+  return Math.min( 1, ( (baseRioLiability * mwNoiseMultiplier) / 100 ) + ( potEntrapment * downwardDrift * mitigationFactor ) );
 }
 
 // === PROSPECT THEORY (KAHNEMAN & TVERSKY) ===
@@ -448,10 +467,14 @@ export type ReferencePointStatus = 'baseline' | 'tilt' | 'protecting' | 'bubble'
 export function calculateUtilityEV (
   rawEv: number,
   status: ReferencePointStatus = 'baseline',
-  lossAversionBase: number = 2.25
+  lossAversionBase: number = 2.25,
+  stackEff: number = 100
 ): number
 {
-  let lambda = lossAversionBase; // Multiplicador de aversão à perda
+  const safeStack = Math.max( 2.718, stackEff );
+  const stackModifier = Math.log( 100 ) / Math.log( safeStack );
+
+  let lambda = lossAversionBase * stackModifier; // Multiplicador de aversão à perda (Dinâmico ao FGS)
   let alpha = 0.88; // Concavidade de ganhos
   let beta = 0.88; // Convexidade de perdas
 
@@ -460,17 +483,17 @@ export function calculateUtilityEV (
   {
     case 'tilt':
       // "Stuck" (perdendo): Busca o risco. A dor adicional diminui, e a aversão à perda cai (chasing losses)
-      lambda = 1.5;
+      lambda = lambda * 0.66;
       beta = 0.95; // Mais próximo da linearidade nas perdas
       break;
     case 'protecting':
       // Acima do Buy-in: Protegendo o lucro. Extrema aversão à perda.
-      lambda = 3;
+      lambda = lambda * 1.33;
       alpha = 0.75; // Ganhos adicionais valem muito menos
       break;
     case 'bubble':
       // Sobrevivência extrema: O valor da ficha perdida é astronômico
-      lambda = 4.5;
+      lambda = lambda * 2;
       break;
     case 'baseline':
     default:
@@ -489,7 +512,7 @@ export function calculateUtilityEV (
 }
 
 // SOTA: Desacoplamento da termodinâmica para erradicar complexidade ciclomática na renderização
-export function computeQuantumMetrics ( quantumPerspectiva: PerspectivaResult | null, activePlayers: number, heroInvested: number, currentPot: number, stacks: number[] )
+export function computeQuantumMetrics ( quantumPerspectiva: PerspectivaResult | null, activePlayers: number, heroInvested: number, currentPot: number, stacks: number[], humanNoiseFactor: number = 0 )
 {
   if ( !quantumPerspectiva ) return { amortizedEdgeMultiplier: 1, rioMw: 0, adjustedEvFold: 0, esperanca: 0, expectativa: 0, perspectiva: 0, threshEq: null, ci: null, marginInstability: 0, isSolvent: false, isActionable: false };
 
@@ -506,19 +529,22 @@ export function computeQuantumMetrics ( quantumPerspectiva: PerspectivaResult | 
   const sEff = Math.min( stacks[ 0 ] ?? 40, stacks[ 1 ] ?? 40 );
 
   const opponents = Math.max( 1, activePlayers - 1 );
-  // SOTA: Escalonamento Quadrático (x^2) para Multiway (Morte do Anti-Smoothing)
-  const mwFactor = Math.pow( opponents, 2 );
+  // SOTA: Escalonamento SOTA (x^(2+f)) para Multiway integrado com Ruído Humano
+  const mwFactor = Math.pow( opponents, 2 + humanNoiseFactor );
   const baseRioPct = 0.15;
   const baseRio = heroInvested * baseRioPct;
   const rioMw = baseRio * mwFactor;
 
   const adjustedEvFold = evFoldPct;
 
+  const baseDeltaLose = deltaLosePct * (1 / Math.max(0.1, fgsHealth));
+  const prospectDeltaLose = calculateUtilityEV(baseDeltaLose, 'baseline', 2.25, sEff);
+
   const bountyPower = quantumPerspectiva.bountyPower ?? 0;
   const chipEsperanca = ( eq * deltaWinPct ) + ( ( 1 - eq ) * deltaLosePct );
   const esperanca = chipEsperanca + (eq * bountyPower);
 
-  const chipExpectativa = ( eq * deltaWinPct * rFactor * valuation * fgsHealth ) + ( ( 1 - eq ) * deltaLosePct );
+  const chipExpectativa = ( eq * deltaWinPct * rFactor * valuation * fgsHealth ) + ( ( 1 - eq ) * prospectDeltaLose );
   const bountyExpectativa = eq * bountyPower * rFactor;
   const expectativaReal = chipExpectativa + bountyExpectativa;
 
@@ -526,17 +552,16 @@ export function computeQuantumMetrics ( quantumPerspectiva: PerspectivaResult | 
   // PM = (Expectativa * Edge) - EV_Fold - RIO
   const perspectiva = ( expectativaReal * amortizedEdge ) - ( evFoldPct + rioMw );
 
-  const denom = ( deltaWinPct * rFactor * valuation * fgsHealth - deltaLosePct + (bountyPower * rFactor) ) * amortizedEdge;
+  const denom = ( deltaWinPct * rFactor * valuation * fgsHealth - prospectDeltaLose + (bountyPower * rFactor) ) * amortizedEdge;
   let threshEq = null;
   if ( Math.abs( denom ) > 1e-6 )
   {
-    const rawThresh = ( evFoldPct + rioMw - deltaLosePct * amortizedEdge ) / denom;
+    const rawThresh = ( evFoldPct + rioMw - prospectDeltaLose * amortizedEdge ) / denom;
     threshEq = Math.max( 0, Math.min( 1, rawThresh ) ); // Teto livre
   }
 
   let ci = null;
-  const potOdds = ( currentPot + heroInvested ) > 0 ? heroInvested / ( currentPot + heroInvested ) : 0;
-  if ( threshEq !== null && threshEq > 0 ) ci = potOdds / threshEq;
+  if ( threshEq !== null && threshEq > 0 ) ci = eq / threshEq;
 
   const marginInstability = Math.max( 0.01, 1 / sEff ) * 100;
 
