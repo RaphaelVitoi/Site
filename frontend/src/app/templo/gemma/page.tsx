@@ -12,8 +12,33 @@ import { GlassPanel } from '@/components/ui/GlassPanel';
 import { SotaButton } from '@/components/ui/SotaButton';
 import { useSotaSync } from '@/components/simulator/hooks/useSotaSync';
 
+interface Message {
+  role: 'user' | 'assistant' | 'telemetry';
+  content: string;
+  snapshot?: any;
+}
+
+function TelemetryCard({ snapshot }: { snapshot: any }) {
+  return (
+    <div className="my-4 p-4 bg-slate-900/60 border border-accent-indigo/20 rounded-xl font-mono text-[0.7rem] relative overflow-hidden group">
+      <div className="absolute top-0 left-0 w-1 h-full bg-accent-indigo" />
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-accent-indigo-light font-black uppercase tracking-tighter">Telemetria de Oráculo</span>
+        <span className="text-[0.6rem] text-text-muted">ACTIVE SNAPSHOT</span>
+      </div>
+      <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+        <div>STACK: <span className="text-white">{snapshot.heroStack}bb</span></div>
+        <div>POT: <span className="text-white">{snapshot.pot}bb</span></div>
+        <div>POS: <span className="text-white">{snapshot.position}</span></div>
+        <div>STATUS: <span className="text-white">{snapshot.referenceStatus}</span></div>
+      </div>
+    </div>
+  );
+}
+
 export default function GemmaPortal() {
   const [prompt, setPrompt] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'offline' | 'online' | 'thinking'>('offline');
@@ -28,11 +53,38 @@ export default function GemmaPortal() {
       .catch(() => setStatus('offline'));
   }, []);
 
+  // Auto-scroll
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [response, messages, loading]);
+
   async function handleConsult() {
     if (!prompt.trim()) return;
+    
+    const userMsg = prompt.trim();
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setPrompt('');
     setLoading(true);
     setStatus('thinking');
     setResponse('');
+
+    // Physics Snapshot Integration (Mock for context)
+    if (isSyncHydrated) {
+      setMessages(prev => [...prev, { 
+        role: 'telemetry', 
+        content: 'SNAPSHOT_TRIGGERED',
+        snapshot: {
+          heroStack: 100,
+          pot: 20,
+          position: 'BTN',
+          referenceStatus: 'STABLE'
+        }
+      }]);
+    }
+
+    let fullResponse = '';
 
     try {
       const res = await fetch('http://127.0.0.1:11434/generate', {
@@ -41,7 +93,7 @@ export default function GemmaPortal() {
           'Content-Type': 'application/json',
           'X-Vitoi-Auth': 'sota-token-2026'
         },
-        body: JSON.stringify({ prompt, max_tokens: 1024 })
+        body: JSON.stringify({ prompt: userMsg, max_tokens: 1024 })
       });
 
       if (!res.ok) throw new Error('Servidor Offline');
@@ -55,14 +107,19 @@ export default function GemmaPortal() {
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
           setResponse(prev => prev + chunk);
-          if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-          }
+          fullResponse += chunk;
         }
       }
+      
+      // Commit response to history
+      if (fullResponse) {
+        setMessages(prev => [...prev, { role: 'assistant', content: fullResponse }]);
+      }
+      setResponse('');
       setStatus('online');
     } catch (error) {
-      setResponse('ERRO: O motor @gemma4 está em hibernação ou offline no seu PC. Inicie via `nexus-cli start-gemma`.');
+      const errorMsg = 'ERRO: O motor @gemma4 está em hibernação ou offline no seu PC. Inicie via `nexus-cli start-gemma`.';
+      setMessages(prev => [...prev, { role: 'assistant', content: errorMsg }]);
       setStatus('offline');
     } finally {
       setLoading(false);
@@ -95,16 +152,48 @@ export default function GemmaPortal() {
 
           <div 
             ref={scrollRef}
-            className="min-h-[300px] max-h-[500px] overflow-y-auto bg-black/40 rounded-xl p-6 mb-6 font-mono text-sm leading-relaxed border border-white/5 selection:bg-accent-indigo/30"
+            className="min-h-[400px] max-h-[600px] overflow-y-auto bg-black/40 rounded-xl p-6 mb-6 font-mono text-sm leading-relaxed border border-white/5 selection:bg-accent-indigo/30"
           >
-            {response ? (
-              <div className="whitespace-pre-wrap animate-in fade-in duration-500">{response}</div>
-            ) : (
+            {messages.length === 0 && !response && !loading ? (
               <div className="text-text-muted italic flex items-center justify-center h-full">
                 Aguardando pulso estratégico...
               </div>
+            ) : (
+              <div className="space-y-6">
+                {messages.map((msg, i) => (
+                  <div key={i} className={`animate-in fade-in duration-300 ${msg.role === 'user' ? 'opacity-80' : ''}`}>
+                    {msg.role === 'user' && (
+                      <div className="text-accent-indigo-light text-[0.6rem] font-black uppercase mb-1 tracking-widest">VOCÊ</div>
+                    )}
+                    {msg.role === 'assistant' && (
+                      <div className="text-accent-emerald-light text-[0.6rem] font-black uppercase mb-1 tracking-widest">ORÁCULO</div>
+                    )}
+                    
+                    {msg.role === 'telemetry' ? (
+                      <TelemetryCard snapshot={msg.snapshot} />
+                    ) : (
+                      <div className="whitespace-pre-wrap">{msg.content}</div>
+                    )}
+                  </div>
+                ))}
+                
+                {response && (
+                  <div className="animate-in fade-in duration-300">
+                    <div className="text-accent-emerald-light text-[0.6rem] font-black uppercase mb-1 tracking-widest">ORÁCULO</div>
+                    <div className="whitespace-pre-wrap">{response}</div>
+                  </div>
+                )}
+                
+                {loading && !response && (
+                  <div className="flex items-center gap-2 text-text-muted animate-pulse">
+                    <div className="w-1.5 h-1.5 bg-accent-indigo rounded-full" />
+                    <span className="text-[0.6rem] font-black uppercase">Sincronizando Probabilidades...</span>
+                  </div>
+                )}
+                
+                {loading && <span className="inline-block w-2 h-4 bg-accent-indigo ml-1 animate-pulse" />}
+              </div>
             )}
-            {loading && <span className="inline-block w-2 h-4 bg-accent-indigo ml-1 animate-pulse" />}
           </div>
 
           <div className="relative">
