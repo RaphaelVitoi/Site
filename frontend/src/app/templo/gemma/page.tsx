@@ -43,7 +43,7 @@ export default function GemmaPortal() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'offline' | 'online' | 'thinking'>('offline');
   
-  const { isHydrated: isSyncHydrated } = useSotaSync();
+  const { physics, isHydrated: isSyncHydrated } = useSotaSync();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,23 +64,21 @@ export default function GemmaPortal() {
     if (!prompt.trim()) return;
     
     const userMsg = prompt.trim();
+    const currentPhysics = { ...physics };
+    
+    // 1. Append user message
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setPrompt('');
     setLoading(true);
     setStatus('thinking');
     setResponse('');
 
-    // Physics Snapshot Integration (Mock for context)
+    // 2. Append Telemetry Snapshot (if hydrated)
     if (isSyncHydrated) {
       setMessages(prev => [...prev, { 
         role: 'telemetry', 
         content: 'SNAPSHOT_TRIGGERED',
-        snapshot: {
-          heroStack: 100,
-          pot: 20,
-          position: 'BTN',
-          referenceStatus: 'STABLE'
-        }
+        snapshot: currentPhysics
       }]);
     }
 
@@ -93,7 +91,11 @@ export default function GemmaPortal() {
           'Content-Type': 'application/json',
           'X-Vitoi-Auth': 'sota-token-2026'
         },
-        body: JSON.stringify({ prompt: userMsg, max_tokens: 1024 })
+        body: JSON.stringify({ 
+          prompt: userMsg, 
+          max_tokens: 1024,
+          physics_snapshot: currentPhysics 
+        })
       });
 
       if (!res.ok) throw new Error('Servidor Offline');
@@ -111,7 +113,7 @@ export default function GemmaPortal() {
         }
       }
       
-      // Commit response to history
+      // 3. Commit response to history
       if (fullResponse) {
         setMessages(prev => [...prev, { role: 'assistant', content: fullResponse }]);
       }
@@ -127,7 +129,7 @@ export default function GemmaPortal() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-bright font-body pb-24">
+    <div className="min-h-screen bg-bg-base text-text-bright font-body pb-24 sota-grain">
       <ContentPageHeader
         title="Oráculo de Borda"
         subtitle="Conexão soberana com o motor Gemma 4 operando localmente no seu hardware."
@@ -136,7 +138,13 @@ export default function GemmaPortal() {
       />
 
       <div className="sota-container -mt-12 relative z-10 max-w-4xl">
-        <GlassPanel className="p-8 mb-8 border-accent-indigo/30">
+        <GlassPanel 
+          className={`p-8 mb-8 border-accent-indigo/30 transition-all duration-700 ${
+            status === 'online' ? 'shadow-[0_0_50px_-12px_rgba(16,185,129,0.2)]' : 
+            status === 'thinking' ? 'shadow-[0_0_50px_-12px_rgba(99,102,241,0.2)]' : 
+            'shadow-[0_0_50px_-12px_rgba(244,63,94,0.2)]'
+          }`}
+        >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className={`w-3 h-3 rounded-full animate-pulse ${status === 'online' ? 'bg-accent-emerald' : status === 'thinking' ? 'bg-accent-indigo' : 'bg-rose-500'}`} />
@@ -152,7 +160,7 @@ export default function GemmaPortal() {
 
           <div 
             ref={scrollRef}
-            className="min-h-[400px] max-h-[600px] overflow-y-auto bg-black/40 rounded-xl p-6 mb-6 font-mono text-sm leading-relaxed border border-white/5 selection:bg-accent-indigo/30"
+            className="min-h-[400px] max-h-[600px] overflow-y-auto bg-black/40 rounded-xl p-6 mb-6 font-mono text-sm leading-relaxed border border-white/5 selection:bg-accent-indigo/30 scroll-smooth"
           >
             {messages.length === 0 && !response && !loading ? (
               <div className="text-text-muted italic flex items-center justify-center h-full">
