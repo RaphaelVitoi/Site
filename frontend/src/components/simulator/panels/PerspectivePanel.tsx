@@ -9,7 +9,7 @@
 import { usePerspectiveCalculations } from "@/components/simulator/hooks/usePerspectiveCalculations";
 import { PerspectiveChart } from "@/components/simulator/ui/PerspectiveChart";
 import { SotaTooltip } from "@/components/simulator/ui/SotaTooltip";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { WasmTelemetryWidget } from "./WasmTelemetryWidget";
 
 const DEFAULT_STACKS = [9.4, 52.4, 22.2, 7, 44.3, 24.3, 40, 13.4, 55];
@@ -66,12 +66,43 @@ export default function PerspectivePanel({
   const [isNearPayjump, setIsNearPayjump] = useState(initialIsNearPayjump);
   const [blindsRising, setBlindsRising] = useState(initialBlindsRising);
   const [kappa, setKappa] = useState(0.5);
-  const [wasmLogs] = useState<string[]>([
+  const [wasmLogs, setWasmLogs] = useState<string[]>([
     "> [SOTA ENGINE] Inicializando cálculo de cenário: GOLD_STANDARD",
-    "> [SOLVER] Mapeando topologia via WASM FFI (RIO Exponencial)...",
-    "> [MATH] Invocando FFI: solve_unified_equation_v4_6(stacks, prizes, kappa)",
-    "> [INFO] Colapso de Edge detectado. Convergência estável.",
+    "> [SOLVER] Aguardando acoplamento do WebWorker (WASM FFI)...",
   ]);
+  const workerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    // SOTA: Delegação O(1) para a Thread do WebWorker, blindando a Main Thread do React
+    workerRef.current ??= new Worker(
+      new URL(
+        "@/components/simulator/workers/insolvency.worker.ts",
+        import.meta.url,
+      ),
+      { type: "module" },
+    );
+
+    workerRef.current.onmessage = (e: MessageEvent) => {
+      if (e.data?.type === "WASM_LOG") {
+        setWasmLogs((prev) => {
+          const newLogs = [...prev, e.data.payload];
+          return newLogs.length > 50
+            ? newLogs.slice(newLogs.length - 50)
+            : newLogs;
+        });
+      } else if (e.data?.type === "WASM_RESULT") {
+        setWasmLogs((prev) => [
+          ...prev,
+          `> [INFO] Convergência de Nash alcançada. Fricção Zero.`,
+        ]);
+      }
+    };
+
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     setNumPlayers(initialActivePlayers);
@@ -85,6 +116,18 @@ export default function PerspectivePanel({
     initialIsNearPayjump,
     initialBlindsRising,
   ]);
+
+  // Engatilha o re-cálculo e telemetria sempre que os parâmetros quânticos mudarem
+  useEffect(() => {
+    setWasmLogs((prev) => [
+      ...prev,
+      `> [MATH] Invocando FFI: solve_unified_equation_v4_6(stacks, prizes, ${kappa.toFixed(2)})`,
+    ]);
+    workerRef.current?.postMessage({
+      type: "CALCULATE_PERSPECTIVE",
+      payload: { stacks, prizes, kappa, numPlayers, bountyValue },
+    });
+  }, [stacks, prizes, kappa, numPlayers, bountyValue]);
 
   const potSize = currentPotBb;
   const foldEvBb = useMemo(
@@ -470,7 +513,7 @@ export default function PerspectivePanel({
                 </span>
               </div>
             </div>
-            {Math.abs(result.perspectivaPct) <= (10 * (1 - kappa)) && (
+            {Math.abs(result.perspectivaPct) <= 10 * (1 - kappa) && (
               <div className="mt-2 p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-[0.8rem] text-accent-pink-light font-medium leading-relaxed flex flex-col gap-3 shadow-2xl relative overflow-hidden group/marginal">
                 <div className="absolute inset-0 bg-linear-to-r from-accent-rose/5 to-transparent pointer-events-none" />
                 <div className="flex items-center gap-4 relative z-10">
