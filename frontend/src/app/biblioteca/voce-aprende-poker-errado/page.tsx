@@ -1,109 +1,73 @@
 /**
- * IDENTITY: A Amortização da Edge (A Falácia da Superioridade)
+ * IDENTITY: A Amortização da Edge GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/voce-aprende-poker-errado/page.tsx
- * ROLE: Artigo aprofundado sobre a compressão da vantagem técnica em stacks curtas.
- * BINDING: [layout.tsx, globals.css, SectionHeader, GlassPanel, ResurrectionRiskSimulator]
+ * ROLE: Artigo técnico demonstrando como a variância e a profundidade de stack amortecem a superioridade técnica.
+ * VERSION: v6.2.1 GOLD
  */
 
-import ContentFooter from '@/components/content/ContentFooter';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { GlassPanel } from '@/components/ui/GlassPanel';
-import { ContentPageHeader } from '@/components/layout/ContentPageHeader';
-import JsonLd from '@/components/seo/JsonLd';
-import ResurrectionRiskSimulator from '@/components/simulator/ResurrectionRiskSimulator';
+import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
+import PerspectivePanel from '@/components/simulator/panels/PerspectivePanel';
+import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 
-export const metadata = {
-    title: 'A Amortização da Edge | Raphael Vitoi',
-    description: 'Por que a distância entre um jogador de elite e um amador diminui drasticamente quando a árvore de decisões é podada. O paradoxo da stack curta.',
-};
+const content = `
+# A Amortização da Edge
 
-const articleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'TechArticle',
-    headline: 'A Amortização da Edge: O Paradoxo da Stack Curta',
-    description: 'Uma investigação sobre como a profundidade da stack condiciona a vantagem técnica e como o ICM neutraliza a superioridade estratégica.',
-    author: { '@type': 'Person', name: 'Raphael Vitoi' }
-};
+A maior falácia do desenvolvimento de jogadores de poker é a crença de que a "Edge" (vantagem técnica) é uma constante universal. Na **Perspectiva Matemática**, a Edge é elástica e estritamente condicionada à complexidade da árvore de decisões.
+
+Você aprende poker errado quando ignora que a matemática do jogo muda brutalmente dependendo do "espaço de manobra" (stack depth) disponível.
+
+---
+
+## 1. A Geometria da Árvore de Decisão
+
+A superioridade técnica só pode ser exercida se houver ferramentas para tal. Em um pote com **100bb**, o jogo é de *Alta Resolução*. Você possui 3bets, 4bets, check-raises, overbets, e múltiplas *streets* para induzir o oponente ao erro.
+
+Quando a profundidade de stack efetivo cai para a faixa de **10bb a 15bb**, o jogo torna-se de *Baixa Resolução*. A árvore é podada para uma mecânica quase binária: **Push ou Fold**.
+
+---
+
+## 2. O Escudo da Variância
+
+Em stacks curtos, o jogador amador é protegido da própria inabilidade. Se um jogador fraco tem duas opções pré-flop, a margem de erro dele é minimizada. E mesmo quando ele erra feio (pagando um all-in com mão dominada), a matemática crua do baralho frequentemente o "salva" com 30% a 40% de equidade.
+
+A variância atua como um **amortecedor da sua Edge**. O lucro maciço que você extrairia manobrando-o no pós-flop é aniquilado pela brutal simplicidade do cenário pré-flop.
+
+---
+
+## 3. O Colapso e a Abstenção
+
+Observe no Laboratório de Perspectiva abaixo como essa interação é precificada. Em cenários onde sua *Edge Relativa* é alta (você domina a mesa), a Métrica Soberana exige que você preserve o seu capital contra colisões de alta variância.
+
+O solver GTO padrão pode gritar para você pagar (ChipEV marginalmente positivo), mas a Perspectiva exige a abstenção do risco em favor de uma oportunidade mais complexa, onde a sua Edge possa ser integralmente convertida em lucro sem o escudo da variância para salvar o oponente.
+`;
 
 export default function AmortizacaoEdgePage() {
-    const articleUrl = "https://www.raphaelvitoi.com/biblioteca/voce-aprende-poker-errado";
-    const articleTitle = "A Amortização da Edge | Raphael Vitoi";
+	return (
+		<div className="min-h-screen bg-bg-base text-text-bright pb-24">
+			<ContentPageHeader
+				title="A Amortização da Edge"
+				subtitle="Por que você aprende poker errado: A degradação da superioridade técnica em ecossistemas de baixa resolução."
+				category="Laboratórios & Exegese"
+				icon="fa-shield-halved"
+			/>
 
-    return (
-        <div className="min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body">
-            <JsonLd data={articleSchema} />
+			<div className="sota-container py-12 md:py-24">
+				<div className="max-w-5xl mx-auto flex flex-col gap-16">
+					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-indigo shadow-2xl group transition-colors hover:border-l-accent-emerald">
+						<SotaMarkdown content={content} />
+					</GlassPanel>
 
-            <ContentPageHeader 
-                title="Amortização da Edge"
-                subtitle="Por que a distância entre um jogador de elite e um amador diminui drasticamente quando ambos têm 10 big blinds."
-                category="Filosofia"
-                icon="fa-infinity"
-            />
-
-            <SectionHeader
-                step="01"
-                label="Fenomenologia"
-                title="O Colapso da Árvore Fractal"
-                description="A complexidade é a arma do forte. A simplicidade forçada é o escudo do fraco."
-            />
-            <div className="sota-container pb-12">
-                <GlassPanel className="p-8 sm:p-12 lg:p-16">
-                    <div className="prose prose-invert prose-lg max-w-none text-text-muted font-body">
-                        <p>Com 100 big blinds, o poker é uma árvore fractal. Cada street é um universo de possibilidades onde o jogador de elite prospera pela <strong className="text-text-bright text-shadow-glow">Superioridade Processual</strong>. Ele navega o labirinto; o amador se perde nele.</p>
-                        <p>Com 10 big blinds, essa árvore é podada com um machado. O jogo regride para decisões binárias pré-flop. O amador é <strong className="text-text-bright">protegido de sua própria inabilidade</strong> pela pobreza de suas opções. Ele não pode errar no river se nunca chega lá.</p>
-                        
-                        <div className="bg-accent-emerald/10 border-l-4 border-accent-emerald p-8 my-10 rounded-r-2xl">
-                            <h4 className="mt-0 text-accent-emerald font-bold text-lg mb-4 font-heading italic">O Paradoxo da Vulnerabilidade</h4>
-                            <p className="text-text-main m-0 leading-relaxed text-sm">
-                                O short stack não tem &quot;fichas para pensar&quot;. Sua vulnerabilidade força uma simplicidade que amortiza a edge do oponente. Tentar esmagar um short stack com manobras complexas é como tentar usar um supercomputador para jogar jogo da velha: o poder extra é inútil.
-                            </p>
-                        </div>
-                    </div>
-                </GlassPanel>
-            </div>
-
-            <SectionHeader
-                step="02"
-                label="Simulação"
-                title="O Risco da Ressurreição"
-                description="O ganho marginal em ChipEV não precifica a ressurreição de um oponente taticamente neutralizado."
-            />
-            <div className="sota-container pb-12">
-                <div className="mb-12">
-                    <ResurrectionRiskSimulator />
-                </div>
-                
-                <GlassPanel className="p-8 sm:p-12 lg:p-16">
-                    <div className="prose prose-invert prose-lg max-w-none text-text-muted font-body">
-                        <p>Imagine o Chip Leader (100bb) pagando um all-in de 10bb do Short Stack. O ChipEV diz que é lucrativo. A <strong className="text-text-bright">Perspectiva Matemática</strong> discorda: ao pagar e perder, você devolve a complexidade (stack) ao oponente que estava neutralizado.</p>
-                    </div>
-                </GlassPanel>
-            </div>
-
-            <SectionHeader
-                step="03"
-                label="Veredito"
-                title="Responsabilidade Sistêmica"
-                description="A maestria não está em ter uma edge, mas em entender a topografia onde ela pode ser aplicada."
-            />
-            <div className="sota-container pb-24">
-                <GlassPanel className="p-8 sm:p-12 lg:p-16">
-                    <div className="prose prose-invert prose-lg max-w-none text-text-muted font-body text-center">
-                        <p className="text-2xl font-light leading-relaxed max-w-3xl mx-auto italic text-text-bright">
-                            &quot;Sua tarefa não é provar superioridade; é evitar as colisões de variância pura onde sua habilidade é amortizada e o resultado se aproxima de um cara ou coroa.&quot;
-                        </p>
-                    </div>
-                </GlassPanel>
-            </div>
-
-            <div className="sota-container pb-12">
-                <ContentFooter
-                    shareTitle={articleTitle}
-                    shareUrl={articleUrl}
-                    backLinkHref="/biblioteca"
-                    backLinkText="Voltar para Biblioteca"
-                />
-            </div>
-        </div>
-    );
+					<div className="w-full relative z-10">
+						<PerspectivePanel
+							initialStacks={[15, 35, 45, 20]}
+							initialPrizes={[1000, 600, 350, 200]}
+							initialActivePlayers={4}
+							currentPotBb={16.5}
+						/>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

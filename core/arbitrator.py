@@ -1,3 +1,5 @@
+"""Modulo de Arbitragem Universal (DAG) SOTA."""
+
 import logging
 import math
 import time
@@ -8,25 +10,28 @@ from core.schemas import Task
 
 
 class CyclicDependencyError(ValueError):
-    """Exceção levantada quando um ciclo irresolvível é detectado no Grafo topológico."""
+    """Excecao levantada quando um ciclo irresolvivel e detectado no Grafo topologico."""
+
 
 logger = logging.getLogger(__name__)
 
+
 class UniversalArbitrator:
     """
-    Centraliza a inteligência de decisão sistêmica (PAB SOTA 8.0),
+    Centraliza a inteligencia de decisao sistemica (PAB SOTA 8.0),
     desacoplando agentes de infraestrutura.
     """
+
     # Coeficientes da Teoria de Filas SOTA
     PRIORITY_SCALARS: ClassVar[dict[str, float]] = {
         "critical": 10000.0,
         "high": 5000.0,
         "medium": 1000.0,
         "low": 100.0,
-        "normal": 1000.0
+        "normal": 1000.0,
     }
     TIME_DECAY_ALPHA: ClassVar[float] = 1.5  # Multiplicador de segundos em espera
-    PROPAGATION_GAMMA: ClassVar[float] = 0.8 # Desconto de profundidade topológica
+    PROPAGATION_GAMMA: ClassVar[float] = 0.8  # Desconto de profundidade topologica
 
     _dag_cache_map: ClassVar[dict[str, dict[str, Any]]] = {}
     _dag_cache_hash: ClassVar[int] = 0
@@ -42,7 +47,7 @@ class UniversalArbitrator:
                 "in_degree": 0,
                 "out_edges": [],
                 "base_weight": cls._calculate_base_weight(task),
-                "total_utility": 0.0
+                "total_utility": 0.0,
             }
         task_ids = set(graph.keys())
         for task in pending_tasks:
@@ -63,8 +68,13 @@ class UniversalArbitrator:
             if node_id in memo:
                 return memo[node_id]
             if node_id in recursion_stack:
-                logger.critical(f"[SISTEMA] Entropia Detectada: Ciclo infinito no DAG envolvendo {node_id}")
-                raise CyclicDependencyError(f"Ciclo topológico detectado na tarefa {node_id}")
+                logger.critical(
+                    "[SISTEMA] Entropia Detectada: Ciclo infinito no DAG envolvendo %s",
+                    node_id,
+                )
+                raise CyclicDependencyError(
+                    f"Ciclo topologico detectado na tarefa {node_id}"
+                )
 
             recursion_stack.add(node_id)
             node_data = graph[node_id]
@@ -73,7 +83,9 @@ class UniversalArbitrator:
             for child_id in node_data["out_edges"]:
                 child_in_degree = graph[child_id]["in_degree"]
                 child_utility = dfs_utility(child_id)
-                inherited_weight += cls.PROPAGATION_GAMMA * (child_utility / max(1, child_in_degree))
+                inherited_weight += cls.PROPAGATION_GAMMA * (
+                    child_utility / max(1, child_in_degree)
+                )
 
             final_utility = node_data["base_weight"] + inherited_weight
 
@@ -88,13 +100,15 @@ class UniversalArbitrator:
                 try:
                     data["total_utility"] = dfs_utility(t_id)
                 except CyclicDependencyError:
-                    data["total_utility"] = -1.0 # Punição severa para ciclos isolados
+                    data["total_utility"] = -1.0  # Punicao severa para ciclos isolados
 
     @classmethod
-    def build_dependency_map(cls, pending_tasks: list[Task]) -> dict[str, dict[str, Any]]:
+    def build_dependency_map(
+        cls, pending_tasks: list[Task]
+    ) -> dict[str, dict[str, Any]]:
         """
-        Constrói o DAG de dependências em O(V + E) e propaga a Função de Utilidade
-        do Caminho Crítico usando Busca em Profundidade (DFS) reversa com Memoization.
+        Constroi o DAG de dependencias em O(V + E) e propaga a Funcao de Utilidade
+        do Caminho Critico usando Busca em Profundidade (DFS) reversa com Memoization.
         """
         if not pending_tasks:
             return {}
@@ -102,7 +116,10 @@ class UniversalArbitrator:
         current_hash = hash(tuple(t.id for t in pending_tasks))
         current_time = time.monotonic()
 
-        if cls._dag_cache_hash == current_hash and (current_time - cls._dag_cache_time) < cls.CACHE_TTL_SECONDS:
+        if (
+            cls._dag_cache_hash == current_hash
+            and (current_time - cls._dag_cache_time) < cls.CACHE_TTL_SECONDS
+        ):
             return cls._dag_cache_map
 
         graph = cls._build_graph(pending_tasks)
@@ -116,13 +133,15 @@ class UniversalArbitrator:
 
     @classmethod
     def _calculate_base_weight(cls, task: Task) -> float:
-        """Calcula a variável isolada do vértice: P(v) + \\alpha * \\Delta T(v)"""
-        priority_str = (task.metadata.get("priority", "medium") if task.metadata else "medium").lower()
+        """Calcula a variavel isolada do vertice: P(v) + alpha * Delta T(v)"""
+        priority_str = str(
+            task.metadata.get("priority", "medium") if task.metadata else "medium"
+        ).lower()
         base_prio = cls.PRIORITY_SCALARS.get(priority_str, 1000.0)
 
         try:
             created_dt = datetime.fromisoformat(task.timestamp)
-            # SOTA: Normalização Absoluta para offset-aware, suprimindo o TypeError
+            # SOTA: Normalizacao Absoluta para offset-aware, suprimindo o TypeError
             if created_dt.tzinfo is None:
                 created_dt = created_dt.replace(tzinfo=timezone.utc)
             now = datetime.now(timezone.utc)
@@ -131,8 +150,10 @@ class UniversalArbitrator:
             # SOTA: Crescimento Sublinear (Achatamento Logaritmico)
             # Evita inversao de prioridade: tarefas antigas de baixa utilidade nao
             # suplantarao tarefas criticas apenas por acumularem tempo de espera linear.
-            time_bonus = math.log1p(wait_seconds) * (base_prio * 0.05) * cls.TIME_DECAY_ALPHA
-        except Exception:  # noqa: BLE001
+            time_bonus = (
+                math.log1p(wait_seconds) * (base_prio * 0.05) * cls.TIME_DECAY_ALPHA
+            )
+        except Exception:  # pylint: disable=broad-exception-caught
             time_bonus = 0.0
 
         return base_prio + time_bonus
@@ -140,19 +161,19 @@ class UniversalArbitrator:
     @classmethod
     def extract_optimal_task(cls, pending_tasks: list[Task]) -> Task | None:
         """
-        Orquestra a fila priorizada. Complexidade de tempo estrita O(V) via varredura linear e complexidade espacial O(1).
+        Orquestra a fila priorizada. Complexidade de tempo estrita O(V).
         """
         if not pending_tasks:
             return None
 
         try:
             dag_map = cls.build_dependency_map(pending_tasks)
-        except CyclicDependencyError as e:
-            logger.error(f"Falha ao construir matriz de utilidade: {e}")
-            return None # Retorna ao Watchdog para quebra de ciclo
+        except CyclicDependencyError:
+            logger.exception("Falha ao construir matriz de utilidade")
+            return None  # Retorna ao Watchdog para quebra de ciclo
 
         optimal_task = None
-        max_utility = -float('inf')
+        max_utility = -float("inf")
 
         for data in dag_map.values():
             if data["in_degree"] == 0 and data["total_utility"] > max_utility:
@@ -160,7 +181,10 @@ class UniversalArbitrator:
                 optimal_task = data["task"]
 
         if not optimal_task:
-            logger.warning("[NEXUS ORCHESTRATOR] Deadlock Operacional: Nenhuma tarefa possui in_degree=0.")
+            logger.warning(
+                "[NEXUS ORCHESTRATOR] Deadlock Operacional: "
+                "Nenhuma tarefa possui in_degree=0."
+            )
             return None
 
         return optimal_task
@@ -168,29 +192,45 @@ class UniversalArbitrator:
     @staticmethod
     async def get_search_provider(query: str) -> str:
         """
-        Heurística SOTA: Identifica o melhor provedor de busca por intenção,
-        antes da falha, para roteamento semântico.
+        Heuristica SOTA: Identifica o melhor provedor de busca por intencao,
+        antes da falha, para roteamento semantico.
         """
-        tech_terms = ["error", "docs", "api", "version", "syntax", "implementation", "python", "react", "next.js", "docker", "bug", "config"]
+        tech_terms = [
+            "error",
+            "docs",
+            "api",
+            "version",
+            "syntax",
+            "implementation",
+            "python",
+            "react",
+            "next.js",
+            "docker",
+            "bug",
+            "config",
+        ]
         if any(t in query.lower() for t in tech_terms):
-            return "perplexity" # Superior em documentação viva e técnica
-        return "tavily" # Superior em crawling de superfície e mercado
+            return "perplexity"  # Superior em documentacao viva e tecnica
+        return "tavily"  # Superior em crawling de superficie e mercado
 
     @staticmethod
     def should_compress(raw_text: str) -> bool:
         """
-        Implementação da Lei de Shannon. A compressão só ocorre se o ganho
+        Implementacao da Lei de Shannon. A compressao so ocorre se o ganho
         informacional justificar o custo computacional.
-        Por enquanto, uma heurística de volume é suficiente.
+        Por enquanto, uma heuristica de volume e suficiente.
         """
         return len(raw_text) > 4000
 
     @staticmethod
     def _get_mermaid_node_details(task: Task) -> tuple[str, str, str]:
-        node_id_mermaid = task.id.replace('-', '_')
+        node_id_mermaid = task.id.replace("-", "_")
         status_color = {
-            "pending": "#FFC107", "running": "#03A9F4", "completed": "#4CAF50",
-            "failed": "#F44336", "cancelled": "#9E9E9E"
+            "pending": "#FFC107",
+            "running": "#03A9F4",
+            "completed": "#4CAF50",
+            "failed": "#F44336",
+            "cancelled": "#9E9E9E",
         }.get(task.status, "#9E9E9E")
 
         description_display = task.description
@@ -203,7 +243,7 @@ class UniversalArbitrator:
     @staticmethod
     def generate_dependency_mermaid_graph(tasks: list[Task]) -> str:
         """
-        Gera uma string de definição de grafo Mermaid para visualização das dependências.
+        Gera uma string de definicao de grafo Mermaid para visualizacao das dependencias.
         """
         if not tasks:
             return "graph TD\n    A[Nenhuma tarefa pendente]"
@@ -218,17 +258,27 @@ class UniversalArbitrator:
         mermaid_links: list[str] = []
         task_id_to_node_id: dict[str, str] = {}
         for task in tasks:
-            node_id_mermaid, node_label, status_color = UniversalArbitrator._get_mermaid_node_details(task)
+            node_id_mermaid, node_label, status_color = (
+                UniversalArbitrator._get_mermaid_node_details(task)
+            )
             task_id_to_node_id[task.id] = node_id_mermaid
             mermaid_nodes[node_id_mermaid] = f'{node_id_mermaid}("{node_label}")'
-            mermaid_links.append(f'style {node_id_mermaid} fill:{status_color},stroke:#333,stroke-width:2px')
+            mermaid_links.append(
+                f"style {node_id_mermaid} fill:{status_color},stroke:#333,stroke-width:2px"
+            )
 
-        # Criar links de dependência
+        # Criar links de dependencia
         for task_id, data in dag_map.items():
-            dependencies = data["task"].metadata.get("depends_on", []) if data["task"].metadata else []
+            dependencies = (
+                data["task"].metadata.get("depends_on", [])
+                if data["task"].metadata
+                else []
+            )
             for dep_id in dependencies:
                 if dep_id in task_id_to_node_id and task_id in task_id_to_node_id:
-                    mermaid_links.append(f'{task_id_to_node_id[dep_id]} --> {task_id_to_node_id[task_id]}')
+                    mermaid_links.append(
+                        f"{task_id_to_node_id[dep_id]} --> {task_id_to_node_id[task_id]}"
+                    )
 
         graph_definition = "graph TD\n"
         # Add nodes

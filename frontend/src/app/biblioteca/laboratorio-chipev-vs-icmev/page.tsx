@@ -1,89 +1,67 @@
 /**
- * IDENTITY: Laboratório: ChipEV vs ICMev Pós-Flop
+ * IDENTITY: Laboratório ChipEV vs ICMev GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/laboratorio-chipev-vs-icmev/page.tsx
- * ROLE: Artigo técnico comparativo entre solvers (GTO Wizard vs HRC).
+ * ROLE: Artigo técnico demonstrando a diferença prática entre valor esperado de fichas e valor esperado monetário.
+ * VERSION: v6.2.1 GOLD
  */
 
-import { ContentPageHeader } from '@/components/layout/ContentPageHeader';
-import { SotaMarkdown } from '@/components/ui/SotaMarkdown';
-import ContentFooter from '@/components/content/ContentFooter';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { GlassPanel } from '@/components/ui/GlassPanel';
-import Image from 'next/image';
+import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
+import EquityCalculator from '@/components/simulator/panels/EquityCalculator';
+import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 
 const content = `
-# Laboratório: ChipEV vs ICMev Pós-Flop
+# Laboratório: ChipEV vs ICMev
 
-Este estudo clínico compara as árvores de decisão pós-flop entre o modelo linear (**GTO Wizard - ChipEV**) e o modelo utilitário (**HRC - ICMev**) em um cenário de Mesa Final (9-max).
-
----
-
-## 1. Divergência de Arquitetura
-
-Embora os inputs pré-flop sejam idênticos, a forma como os motores processam o pós-flop diverge drasticamente:
-
-*   **Bunching Effect:** O HRC leva em conta as cartas descartadas por todos os 7 jogadores que deram fold, alterando a densidade do range restante. O GTO Wizard foca apenas no heads-up ativo.
-*   **Valuation Context:** O GTO Wizard olha apenas para a stack efetiva. O HRC analisa a topografia completa da mesa (stacks dos observadores), o que é vital para o cálculo do ICMev real.
+A transição do **ChipEV** (Expected Value em Fichas) para o **ICMev** (Independent Chip Model Expected Value) é o rito de passagem para o poker de alta performance. Ignorar essa assimetria é aceitar a ruína a longo prazo em torneios.
 
 ---
 
-## 2. O Caso Clínico: BTN vs BB (FT 11$ Vanilla)
+## 1. A Ilusão da Proporcionalidade (ChipEV)
 
-**Configuração:**
-*   **Stacks:** BTN (38bb) vs BB (53bb)
-*   **Risk Premium:** BU (21.4%) | BB (12.9%)
-*   **Risk Advantage:** +8.5% a favor do BTN.
+No início de um torneio (ou em Cash Games), as fichas têm um valor linear. Se você dobra o seu stack, você dobra a sua equidade no jogo. O modelo **ChipEV** assume que 10% das fichas do torneio equivalem a 10% da premiação.
 
-### Comparação de Frequências (Flop)
-
-No ChipEV, o agressor mantém frequências de c-bet mais elevadas e sizings polarizados. No ICMev, observamos:
-1.  **Aumento substancial de Checks:** A preservação de valuation desencoraja inflar o pote sem vantagem absoluta.
-2.  **Migração para Small Sizings:** O uso de 20% a 25% do pote torna-se a norma para controlar a variância da stack.
+A falácia dessa métrica em estágios avançados (Mesa Final, Bolha) é letal. O ChipEV ignora a estrutura de *payouts* e o fato de que a última ficha que você possui (sua "vida" no torneio) vale infinitamente mais do que a primeira ficha que você ganha do oponente.
 
 ---
 
-## 3. Visualização de Dados (Solver Analysis)
+## 2. A Gravidade do ICM (Malmuth-Harville)
 
-Abaixo, observamos a mutação da matriz de defesa do BB quando o Risk Premium de 12.9% é injetado:
+O **ICMev** não mede fichas; ele mede o **Valuation Real ($)** do seu stack com base na probabilidade matemática de você terminar em cada posição premiada.
 
-![Matriz de Defesa BB - ICMev](/images/aulas/entendendo-o-icm-e-suas-heuristicas/image10.png)
-
-*Observação: Note o overfold estrutural em mãos que seriam calls automáticos em ChipEV (ex: KJo em certos boards).*
-
-### A Linha de X-Raise
-Quando o BB aplica o Check-Raise sob ICM, o range do BTN (IP) torna-se "pegajoso" (sticky) para proteger a equidade investida, mas colapsa no River perante agressões que ameaçam a sobrevivência total.
+**Os Axiomas do ICM:**
+1. Fichas ganhas valem *menos* do que fichas perdidas (Risco Premium).
+2. O Chip Leader sofre menos pressão (Bubble Factor menor) e, portanto, pode agredir ranges mais amplos.
+3. Stacks médios (Mid-stacks) são reféns da sobrevivência, não podendo colidir entre si sem destruir o próprio *valuation* em favor do Chip Leader ou do Short Stack.
 
 ---
 
-## 4. Conclusões de Laboratório
+## 3. O Laboratório de Distorção
 
-O aumento na frequência de checks e a preferência por sizings menores destacam a influência do **Axioma da Sobrevivência**. O entendimento detalhado desta dissipação de Risk Premium por street é o que separa o profissional AHSD do regular de tabelas decoradas.
+Utilize a Calculadora Malmuth-Harville abaixo. Modifique a estrutura de premiação e os stacks dos jogadores. Observe a coluna **Delta**: ela revela o abismo entre o que as suas fichas representam (Prop. %) e o seu verdadeiro valor financeiro (ICM Eq %).
 `;
 
-export default function LaboratorioComparativoPage() {
-  return (
-    <div className="min-h-screen bg-bg-base text-text-bright">
-      <ContentPageHeader
-        title="Laboratório SOTA"
-        subtitle="Divergência Clínica: Comparativo entre ChipEV (GTO Wizard) e ICMev (HRC) no pós-flop."
-        category="Estudo de Caso"
-        icon="fa-flask-vial"
-      />
+export default function ChipEvVsIcmEvPage() {
+	return (
+		<div className="min-h-screen bg-bg-base text-text-bright pb-24">
+			<ContentPageHeader
+				title="Laboratório ChipEV vs ICMev"
+				subtitle="A distinção fundamental entre acumular plástico (fichas) e proteger patrimônio (valuation) na mesa final."
+				category="Mecânica & ICM"
+				icon="fa-scale-unbalanced"
+			/>
 
-      <div className="sota-container py-12 md:py-24">
-        <div className="max-w-4xl mx-auto">
-          <GlassPanel className="p-8 lg:p-12">
-            <SotaMarkdown content={content} />
-          </GlassPanel>
-        </div>
-      </div>
+			<div className="sota-container py-12 md:py-24">
+				<div className="max-w-5xl mx-auto flex flex-col gap-16">
+					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-indigo shadow-2xl group transition-colors hover:border-l-accent-emerald">
+						<SotaMarkdown content={content} />
+					</GlassPanel>
 
-      <ContentFooter 
-        shareTitle="Laboratório: ChipEV vs ICMev | Raphael Vitoi"
-        shareUrl="https://www.raphaelvitoi.com/biblioteca/laboratorio-chipev-vs-icmev"
-        backLinkHref="/biblioteca" 
-        backLinkText="Voltar para Biblioteca"
-      />
-    </div>
-  );
+					<div className="w-full relative z-10">
+						<EquityCalculator />
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

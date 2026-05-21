@@ -153,7 +153,7 @@
 
 ### Camada 5: Documentos Operacionais
 
-- **COHERENCE_MANIFEST.md** - Matriz de coerencia; integracao dos 18 agentes (7 linear + 4 consultivo + 2 super + 3 operacional + 1 entrada) nas 4 camadas
+- **COHERENCE_MANIFEST.md** - Matriz de coerencia; integracao dos 19 agentes (7 linear + 5 consultivo + 2 super + 4 operacional + 1 entrada) nas 4 camadas
 - **MODUS_OPERANDI.md** - Principios e Leis Operacionais referenciados pelos agentes de manutencao.
 - **DISTRIBUTION_MATRIX.md** - Mapa de autoridade documental; quem decide o que
 - **ESTADO_ARTE_APRENDIZADO_GENERATIVO.md** - Templo do Aprendizado Generativo (7 modos, metacognicao)
@@ -166,8 +166,8 @@
 
 ### Camada 6: Especializacao de Agentes
 
-- **agents/** - 18 definicoes de agentes (architect, planner, pesquisador, prompter, auditor, implementor, verifier, curator, validador, securitychief, bibliotecario, maverick, chico, organizador, sequenciador, skillmaster, dispatcher)
-- **agent-memory/*/MEMORY.md** - Inteligencia acumulada individual (18 diretorios ativos)
+- **agents/** - 19 definicoes de agentes (architect, planner, pesquisador, prompter, auditor, implementor, verifier, curator, validador, securitychief, bibliotecario, gemma4, maverick, chico, organizador, sequenciador, skillmaster, historian, dispatcher)
+- **agent-memory/*/MEMORY.md** - Inteligencia acumulada individual (19 diretorios ativos)
 
 ---
 

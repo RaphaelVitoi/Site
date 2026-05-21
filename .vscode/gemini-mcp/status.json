@@ -1,0 +1,15 @@
+{
+  "updatedAt": 1778503846212,
+  "running": 0,
+  "queued": 0,
+  "maxWorkers": 5,
+  "queueLimit": 200,
+  "cliStatus": {
+    "state": "ok",
+    "message": "Gemini CLI available (0.42.0-nightly.20260507.ga809bc7c5)",
+    "version": "0.42.0-nightly.20260507.ga809bc7c5",
+    "lastChecked": 1778503845958,
+    "mode": "cli"
+  },
+  "tasks": []
+}

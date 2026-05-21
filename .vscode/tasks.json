@@ -18,7 +18,7 @@
                 "panel": "shared"
             },
             "isBackground": true,
-            "problemMatcher": [ ]
+            "problemMatcher": []
         },
         {
             "label": "SOTA: Servidor Frontend (Turbopack)",
@@ -26,16 +26,14 @@
             "command": "npm",
             "args": [
                 "run",
-                "dev",
-                "--workspace",
-                "frontend"
+                "dev"
             ],
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
             },
             "isBackground": true,
-            "problemMatcher": [ ]
+            "problemMatcher": []
         },
         {
             "label": "SOTA: Compilação WASM Engine (Rust)",

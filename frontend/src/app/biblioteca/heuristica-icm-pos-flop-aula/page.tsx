@@ -1,15 +1,16 @@
 /**
- * IDENTITY: Masterclass 1.2 - Heurísticas de ICM no Pós-Flop
+ * IDENTITY: Masterclass 1.2 GOLD - Heurísticas de ICM no Pós-Flop
  * PATH: src/app/biblioteca/heuristica-icm-pos-flop-aula/page.tsx
  * ROLE: Aula técnica completa com imagens de solver e comparativos.
+ * VERSION: v6.2.1 GOLD
  */
 
-import { ContentPageHeader } from '@/components/layout/ContentPageHeader';
-import { SotaMarkdown } from '@/components/ui/SotaMarkdown';
-import ContentFooter from '@/components/content/ContentFooter';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { GlassPanel } from '@/components/ui/GlassPanel';
-import Image from 'next/image';
+import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
+import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
+import ContentFooter from '@/components/ui/layout/ContentFooter';
+import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { ROUTES } from '@/constants/routes';
+import { SITE_CONFIG } from '@/constants/site';
 
 const content = `
 # Masterclass 1.2: Entendendo o ICM e suas Heurísticas
@@ -64,29 +65,29 @@ O HRC Pós-Flop introduz uma variável que o GTO Wizard ignora: o impacto das ca
 `;
 
 export default function MasterclassLessonPage() {
-  return (
-    <div className="min-h-screen bg-bg-base text-text-bright">
-      <ContentPageHeader
-        title="Masterclass 1.2"
-        subtitle="Heurísticas de ICM no Pós-Flop: A ciência por trás da dissipação do Risk Premium."
-        category="Aula Técnica"
-        icon="fa-chalkboard-user"
-      />
+	return (
+		<div className="min-h-screen bg-bg-base text-text-bright">
+			<ContentPageHeader
+				title="Masterclass 1.2"
+				subtitle="Heurísticas de ICM no Pós-Flop: A ciência por trás da dissipação do Risk Premium."
+				category="Aula Técnica"
+				icon="fa-chalkboard-user"
+			/>
 
-      <div className="sota-container py-12 md:py-24">
-        <div className="max-w-4xl mx-auto">
-          <GlassPanel className="p-8 lg:p-12">
-            <SotaMarkdown content={content} />
-          </GlassPanel>
-        </div>
-      </div>
+			<div className="sota-container py-12 md:py-24">
+				<div className="max-w-4xl mx-auto">
+					<GlassPanel className="p-8 lg:p-12">
+						<SotaMarkdown content={content} />
+					</GlassPanel>
+				</div>
+			</div>
 
-      <ContentFooter 
-        shareTitle="Masterclass 1.2: ICM no Pós-Flop | Raphael Vitoi"
-        shareUrl="https://www.raphaelvitoi.com/biblioteca/heuristica-icm-pos-flop-aula"
-        backLinkHref="/biblioteca" 
-        backLinkText="Voltar para Biblioteca"
-      />
-    </div>
-  );
+			<ContentFooter
+				shareTitle={`Masterclass 1.2: ICM no Pós-Flop | ${SITE_CONFIG.author}`}
+				shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.HEURISTICA_POS_FLOP}`}
+				backLinkHref={ROUTES.BIBLIOTECA}
+				backLinkText="Voltar para Biblioteca"
+			/>
+		</div>
+	);
 }

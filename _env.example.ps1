@@ -13,3 +13,6 @@ $env:PERPLEXITY_API_KEY = 'pplx-...'
 
 # Segurança da API Local SOTA
 $env:API_SECRET_TOKEN = 'VITOI_SOTA_TOKEN_GERADO_AQUI'
+
+# Armazenamento Externo (Sincronização Nativa)
+$env:GOOGLE_DRIVE_REPORT_PATH = 'G:\Meu Drive\Nexus_Reports' # Substitua pelo caminho absoluto real do seu Drive

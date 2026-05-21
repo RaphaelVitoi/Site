@@ -1,3 +1,12 @@
+"""
+SOTA Global Session Manager.
+Gerencia as sessoes HTTP globais (aiohttp) e primitivas de sincronizacao (Semaphore/Lock)
+para garantir resiliencia de conexao e prevencao de vazamento de I/O em ambientes assincronos.
+"""
+
+# pylint: disable=global-statement, broad-exception-caught
+# ruff: noqa: S310
+# ruff: noqa: S310
 import asyncio
 import json
 import socket
@@ -9,15 +18,16 @@ from typing import Any
 import aiohttp
 import certifi
 
-_global_http_session: aiohttp.ClientSession | None = None
-_global_http_session_lock = None  # Lazy - instanciado sob o event loop ativo
+_GLOBAL_HTTP_SESSION: aiohttp.ClientSession | None = None
+_GLOBAL_HTTP_SESSION_LOCK = None  # Lazy - instanciado sob o event loop ativo
 
 # Lazy Initialization das Primitivas Asyncio.
 # A instanciacao direta no modulo viola o escopo do loop de eventos.
 API_CONCURRENCY_SEMAPHORE = None
 
 
-def get_api_semaphore():
+def get_api_semaphore() -> asyncio.Semaphore:
+    """Retorna o semaforo global que limita a concorrencia da API."""
     global API_CONCURRENCY_SEMAPHORE
     if API_CONCURRENCY_SEMAPHORE is None:
         API_CONCURRENCY_SEMAPHORE = asyncio.Semaphore(20)
@@ -25,11 +35,12 @@ def get_api_semaphore():
 
 
 async def get_global_http_session() -> aiohttp.ClientSession:
-    global _global_http_session, _global_http_session_lock
-    if _global_http_session_lock is None:
-        _global_http_session_lock = asyncio.Lock()
-    async with _global_http_session_lock:
-        if _global_http_session is None or _global_http_session.closed:
+    """Retorna a sessao HTTP aiohttp global, instanciando-a de forma lazy se necessario."""
+    global _GLOBAL_HTTP_SESSION, _GLOBAL_HTTP_SESSION_LOCK
+    if _GLOBAL_HTTP_SESSION_LOCK is None:
+        _GLOBAL_HTTP_SESSION_LOCK = asyncio.Lock()
+    async with _GLOBAL_HTTP_SESSION_LOCK:
+        if _GLOBAL_HTTP_SESSION is None or _GLOBAL_HTTP_SESSION.closed:
             ssl_context = ssl.create_default_context(cafile=certifi.where())
             ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
             connector = aiohttp.TCPConnector(
@@ -37,25 +48,30 @@ async def get_global_http_session() -> aiohttp.ClientSession:
                 family=socket.AF_INET,
                 limit=60,  # teto global (semaphore=20 + gordura de infra)
                 limit_per_host=20,  # espelha API_CONCURRENCY_SEMAPHORE
-                keepalive_timeout=5,  # SOTA: Reduzido para 5s para evitar que a API drope a conexao tcp prematuramente (Connection closed)
+                # SOTA: Reduzido para 5s previne TCP drop pela API (Connection closed)
+                keepalive_timeout=5,
                 ttl_dns_cache=300,  # renova IPs de load balancers a cada 5 min
                 enable_cleanup_closed=True,
             )
             default_headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/123.0.0.0 Safari/537.36"
+                ),
                 "Accept": "application/json, text/plain, */*",
                 "Connection": "keep-alive",
             }
             # SOTA: Timeouts intrinsecos de socket para evitar paralisia I/O (TCP Drop).
-            # connect=15s (teto maximo do handshake), sock_read=300s (tempo limite sem receber bytes vivos).
+            # connect=15s (teto do handshake), sock_read=300s (limite sem receber bytes vivos).
             global_timeout = aiohttp.ClientTimeout(total=600, connect=15, sock_read=300)
-            _global_http_session = aiohttp.ClientSession(
+            _GLOBAL_HTTP_SESSION = aiohttp.ClientSession(
                 trust_env=True,
                 connector=connector,
                 headers=default_headers,
                 timeout=global_timeout,
             )
-        return _global_http_session
+        return _GLOBAL_HTTP_SESSION
 
 
 def _sync_fallback_request(
@@ -82,7 +98,8 @@ def _sync_fallback_request(
             return r.getcode(), r.read().decode("utf-8")
     except urllib.error.HTTPError as e:
         # SOTA: O objeto HTTPError mantem o socket aberto.
-        # O uso do Context Manager garante o fechamento do File Descriptor instantaneamente no Windows.
+        # O uso do Context Manager garante o fechamento do File Descriptor
+        # instantaneamente no Windows.
         with e:
             try:
                 error_body = e.read().decode("utf-8", errors="ignore")

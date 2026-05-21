@@ -1,27 +1,54 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
+import { ROUTES } from '@/constants/routes';
+import { SITE_CONFIG } from '@/constants/site';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://pokerracional.com';
-  const now = new Date();
+	const base = SITE_CONFIG.baseUrl;
+	const now = new Date();
 
-  return [
-    { url: base, lastModified: now, changeFrequency: 'weekly', priority: 1 },
-    { url: `${base}/quem-sou`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/biblioteca`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${base}/biblioteca/paradoxo-valuation`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/biblioteca/hermeneutica-blefe`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/biblioteca/motor-diluicao`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/aulas/leitura-icm`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/aulas/icm-masterclass`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/aulas/icm-pos-flop`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/aulas/conceitos-icm`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/simulador`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${base}/laboratorio-icm`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/artigos/smart-sniper`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/artigos/validacao-smart-sniper`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/artigos/estado-da-arte`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/psicologia-hs`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/biblioteca/entendendo-o-icm-e-suas-heuristicas`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/biblioteca/voce-aprende-poker-errado`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-  ];
+	// Mapeia todas as rotas estáticas da biblioteca para o sitemap
+	const libraryRoutes = Object.values(ROUTES.LIBRARY).map((route) => ({
+		url: `${base}${route}`,
+		lastModified: now,
+		changeFrequency: 'monthly' as const,
+		priority: 0.8,
+	}));
+
+	// Mapeia aulas
+	const classesRoutes = Object.values(ROUTES.AULAS).map((route) => ({
+		url: `${base}${route}`,
+		lastModified: now,
+		changeFrequency: 'monthly' as const,
+		priority: 0.9,
+	}));
+
+	return [
+		{ url: base, lastModified: now, changeFrequency: 'weekly', priority: 1 },
+		{
+			url: `${base}${ROUTES.QUEM_SOU}`,
+			lastModified: now,
+			changeFrequency: 'monthly',
+			priority: 0.7,
+		},
+		{
+			url: `${base}${ROUTES.BIBLIOTECA}`,
+			lastModified: now,
+			changeFrequency: 'weekly',
+			priority: 0.8,
+		},
+		{
+			url: `${base}${ROUTES.SIMULADOR}`,
+			lastModified: now,
+			changeFrequency: 'weekly',
+			priority: 0.9,
+		},
+		{
+			url: `${base}${ROUTES.DASHBOARD}`,
+			lastModified: now,
+			changeFrequency: 'weekly',
+			priority: 0.8,
+		},
+		...libraryRoutes,
+		...classesRoutes,
+	];
 }

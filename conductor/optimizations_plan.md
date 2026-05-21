@@ -1,6 +1,7 @@
 # Plano de Otimização do Ecossistema Gemini CLI (Chico Sota v6)
 
 ## Objetivo
+
 Auditar, configurar e otimizar extensões, MCP servers e Skills vinculados à Gemini CLI para operarem em sua versão mais potente e eficiente (SOTA Razor).
 
 ## Escopo e Passos de Implementação
@@ -26,6 +27,7 @@ Auditar, configurar e otimizar extensões, MCP servers e Skills vinculados à Ge
    - Validar acesso a bancos de dados, infraestrutura e ferramentas de desenvolvimento (Jules, Driftx, etc.).
 
 ## Critérios de Sucesso
+
 - Apenas ferramentas e servidores MCP necessários e em estado de arte (SOTA) estarão ativos.
 - Remoção completa de redundâncias.
 - Validação de que comandos CLI da Gemini sobre extensões e MCPs rodam sem erros e dentro do modelo de custo/eficiência esperado.

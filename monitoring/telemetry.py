@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from core.schemas import Task
+from utils.text import enforce_pure_ascii
 
 logger = logging.getLogger(__name__)
 
@@ -20,22 +21,28 @@ def send_toast(title: str, message: str, status: str = "success"):
         [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
         [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom, ContentType = WindowsRuntime] | Out-Null
         $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
-        $xml.LoadXml("<toast><visual><binding template='ToastText02'><text id='1'>{title}</text><text id='2'>{message}</text></binding></visual></toast>")
+        $xml.LoadXml("<toast><visual><binding template='ToastText02'>"
+                     "<text id='1'>{title}</text><text id='2'>{message}</text>"
+                     "</binding></visual></toast>")
         $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
         [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Nexus Worker").Show($toast)
         """
-        import subprocess
+        import shutil  # pylint: disable=import-outside-toplevel
+        import subprocess  # pylint: disable=import-outside-toplevel # noqa: S404
 
-        subprocess.Popen([
-            "powershell",
-            "-NoProfile",
-            "-WindowStyle",
-            "Hidden",
-            "-Command",
-            ps_code,
-        ])
+        ps_path = shutil.which("powershell") or "powershell"
+        subprocess.Popen(  # noqa: S603
+            [
+                ps_path,
+                "-NoProfile",
+                "-WindowStyle",
+                "Hidden",
+                "-Command",
+                ps_code,
+            ]
+        )
     except OSError as e:
-        logger.error(f"Falha ao disparar Toast: {e}")
+        logger.exception("Falha ao disparar Toast: %s", e)
 
 
 def _write_economic_log_sync(task: Task, duration_secs: float, status: str):
@@ -47,7 +54,7 @@ def _write_economic_log_sync(task: Task, duration_secs: float, status: str):
     )
 
     priority = (
-        task.metadata.get("priority", "medium").upper() if task.metadata else "MEDIUM"
+        str(task.metadata.get("priority", "medium")).upper() if task.metadata else "MEDIUM"
     )
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -55,11 +62,12 @@ def _write_economic_log_sync(task: Task, duration_secs: float, status: str):
         f"[{timestamp}] | LVL:{priority} | AGENT:{task.agent} | STAT:{status}"
         f" | DUR:{duration_secs:.1f}s | ID:{task.id} | DESC:{task.description[:60]}...\n"
     )
+    log_entry = enforce_pure_ascii(log_entry)
     try:
-        with open(log_file, "a", encoding="utf-8") as f:
+        with open(log_file, "a", encoding="ascii", errors="backslashreplace") as f:
             f.write(log_entry)
     except OSError as e:
-        logger.error(f"[LOG] Falha ao escrever log economico (I/O isolado): {e}")
+        logger.exception("[LOG] Falha ao escrever log economico (I/O isolado): %s", e)
 
 
 def write_economic_log(task: Task, duration_secs: float, status: str):

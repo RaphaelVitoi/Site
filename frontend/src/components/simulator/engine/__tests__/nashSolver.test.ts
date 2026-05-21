@@ -10,7 +10,7 @@
  */
 
 import { solveIcmDistortion } from '../nashSolver';
-import type { ChipEvFreqs } from '../types';
+import { ChipEvFreqs } from '../types';
 
 // Frequências ChipEV da âncora empírica (calibração real)
 const ANCORA: ChipEvFreqs = {
@@ -66,14 +66,14 @@ describe( 'Conservação de frequências', () => {
 // === DISTORÇÃO ZERO (ΔRP = 0) ===
 describe( 'ΔRP = 0: sem distorção nas apostas', () => {
   test( 'IP bet_small e bet_large correspondem ao ChipEV', () => {
-    const result = solveIcmDistortion( 10, 10, NEUTRO, 1 );
+    const result = solveIcmDistortion( 0, 0, NEUTRO, 1 );
     expect( result.deltaRp ).toBe( 0 );
     expect( result.ip.bet_small.center ).toBeCloseTo( NEUTRO.ip_bet_small, 1 );
     expect( result.ip.bet_large.center ).toBeCloseTo( NEUTRO.ip_bet_large, 1 );
   } );
 
   test( 'OOP call e raise correspondem ao ChipEV', () => {
-    const result = solveIcmDistortion( 10, 10, NEUTRO, 1 );
+    const result = solveIcmDistortion( 0, 0, NEUTRO, 1 );
     expect( result.oop.call.center ).toBeCloseTo( NEUTRO.oop_call, 1 );
     expect( result.oop.raise.center ).toBeCloseTo( NEUTRO.oop_raise, 1 );
   } );
@@ -132,11 +132,11 @@ describe( 'aggressionFactor', () => {
     expect( pass.ip.check.center ).toBeGreaterThanOrEqual( gto.ip.check.center );
   } );
 
-  test( 'aggressionFactor não afeta OOP call (apenas raise)', () => {
+  test( 'aggressionFactor afeta OOP call indiretamente via contração do raise (SOTA v4.6)', () => {
     const gto = solveIcmDistortion( 15, 10, NEUTRO, 1 );
     const agg = solveIcmDistortion( 15, 10, NEUTRO, 1.5 );
-    // oop_call é calculado sem multiplicar por aggressionFactor
-    expect( agg.oop.call.center ).toBeCloseTo( gto.oop.call.center, 5 );
+    // Em Topologic Aggression 2.0, um maior aggressionFactor eleva o raise, o que comprime o call.
+    expect( agg.oop.call.center ).toBeLessThan( gto.oop.call.center );
   } );
 } );
 

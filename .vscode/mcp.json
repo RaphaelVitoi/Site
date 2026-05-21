@@ -1,4 +1,5 @@
 {
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "mcpServers": {
         "nexus-sota-bridge": {
             "command": "C:\\Users\\Raphael\\.gemini\\Site\\.venv\\Scripts\\python.exe",

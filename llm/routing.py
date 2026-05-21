@@ -1,3 +1,9 @@
+"""
+SOTA Routing module.
+Responsible for heuristic routing, model scoring, and health gating.
+"""
+
+# pylint: disable=protected-access
 import logging
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -15,6 +21,8 @@ FREE_TIER_MARKER = ":free"
 
 def _infer_provider_for_model(model: str) -> str | None:
     model_l = str(model).lower()
+    if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
+        return "local"
     if "claude" in model_l or model_l.startswith("anthropic/"):
         return "anthropic"
     if "gemini" in model_l:
@@ -75,15 +83,15 @@ def _reorder_models_for_economy(
 
 
 def _inject_openrouter_alternatives(models: list[str]) -> list[str]:
-    OPENROUTER_ALTERNATIVE_MODELS = te.OPENROUTER_ALTERNATIVE_MODELS
-    if not OPENROUTER_ALTERNATIVE_MODELS:
-        OPENROUTER_ALTERNATIVE_MODELS = (
+    openrouter_alternative_models = te.OPENROUTER_ALTERNATIVE_MODELS
+    if not openrouter_alternative_models:
+        openrouter_alternative_models = (
             "meta-llama/llama-3.3-70b-instruct:free",
             "meta-llama/llama-3.1-8b-instruct:free",
         )
     merged = list(models)
     insert_at = len(merged)
-    for candidate in OPENROUTER_ALTERNATIVE_MODELS:
+    for candidate in openrouter_alternative_models:
         candidate = str(candidate).strip()
         if not candidate or candidate in merged:
             continue
@@ -163,8 +171,14 @@ async def _apply_model_health_gate(
             and stats["success_rate_pct"] < min_success_rate_pct
         ):
             logger.warning(
-                f"[[{te._c(task.agent)}]{task.agent}[/]] Model gate removeu {provider}:{model} "
-                f"(attempts={stats['attempts']}, success_rate={stats['success_rate_pct']}%)."
+                "[[%s]%s[/]] Model gate removeu %s:%s "
+                "(attempts=%s, success_rate=%s%%).",
+                te._c(task.agent),
+                task.agent,
+                provider,
+                model,
+                stats["attempts"],
+                stats["success_rate_pct"],
             )
         else:
             # Mantem o modelo se tiver poucas tentativas ou uma taxa de sucesso aceitavel.
@@ -173,6 +187,8 @@ async def _apply_model_health_gate(
     if filtered:
         return filtered
     logger.warning(
-        f"[[{te._c(task.agent)}]{task.agent}[/]] Model gate removeu todas as opcoes; mantendo rota original."
+        "[[%s]%s[/]] Model gate removeu todas as opcoes; mantendo rota original.",
+        te._c(task.agent),
+        task.agent,
     )
     return models

@@ -30,5 +30,15 @@ Este projeto evoluiu de um simulador de poker estático para um ecossistema din�
 - **Performance Web**: Cálculos pesados de ICM usam Web Workers ou fallback Monte Carlo para manter 60fps.
 - **Tipagem**: Manter 100% de cobertura TypeScript via `tsconfig.audit.json`.
 
+## MANDATO DE AUDITORIA SOTA PROATIVA (FRONTEND)
+
+Toda auditoria no frontend deve ser uma intervenção de SOBERANIA:
+1. **Tipagem Estrita:** Erradicar `any` e supressões de erro (`@ts-ignore`). Validar contra `tsconfig.audit.json`.
+2. **Higiene de Estado:** Identificar e corrigir vazamentos de memória em Hooks e re-renders desnecessários.
+3. **Segurança UI:** Bloquear `dangerouslySetInnerHTML` sem sanitização e auditar exposição de segredos em variáveis de ambiente expostas (`NEXT_PUBLIC_`).
+4. **Paridade de Schema:** Sincronizar Zod Schemas (`src/lib/schemas.ts`) com Pydantic Schemas do Backend.
+5. **Arquitetura:** Aplicar a Navalha SOTA para fundir componentes redundantes e promover a reusabilidade.
+6. **Performance Quantum:** Otimizar Core Web Vitals e garantir 60fps em simuladores pesados via Web Workers.
+
 ---
 *Este documento é a base de contexto para o agente Gemini CLI.*

@@ -1,0 +1,8 @@
+{
+    "mode": "full",
+    "sandbox_default": false,
+    "god_mode_agents": [
+        "@chico",
+        "@gemma4"
+    ]
+}

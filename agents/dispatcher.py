@@ -22,6 +22,8 @@ AGENT_IMPLEMENTOR = "@implementor"
 
 
 class DispatcherSubtask(BaseModel):
+    """Representa uma sub-tarefa validada do Dispatcher."""
+
     description: str = Field(min_length=5)
     agent: str = Field(..., pattern=r"^@[\w]+$")
     depends_on: list[int] = Field(default_factory=list)
@@ -30,6 +32,7 @@ class DispatcherSubtask(BaseModel):
     @field_validator("agent", mode="before")
     @classmethod
     def validate_known_agent(cls, v: str) -> str:
+        """Valida se o agente pertence ao manifesto de agentes SOTA."""
         if not isinstance(v, str) or not v.startswith("@"):
             return AGENT_IMPLEMENTOR
         if v not in te.VALID_AGENTS:
@@ -39,6 +42,7 @@ class DispatcherSubtask(BaseModel):
     @field_validator("depends_on")
     @classmethod
     def validate_depends_on(cls, deps: list[int]) -> list[int]:
+        """Garante a sanidade logica dos indices de dependencia."""
         if any(idx < 0 for idx in deps):
             raise ValueError("depends_on nao pode conter indices negativos.")
         return deps
@@ -104,15 +108,17 @@ def _parse_dispatcher_subtasks_strict(response_text: str) -> list[DispatcherSubt
         loaded = json.loads(cleaned)
     except json.JSONDecodeError as e:
         logger.debug(
-            f"Tentativa 1 de parse JSON falhou: {e}. Iniciando extrator de matriz..."
+            "Tentativa 1 de parse JSON falhou: %s. Iniciando extrator de matriz...", e
         )
         try:
             # Tentativa 2: Extrator original de matriz por pilha (ignora texto ao redor)
             raw_json = _extract_dispatcher_json_array(response_text)
             loaded = json.loads(raw_json)
-        except Exception as e:  # noqa: BLE001
+        except Exception as inner_e:  # pylint: disable=broad-exception-caught
             # SOTA (Correcao 2): Removida a regex destrutiva que corrompia literais.
-            raise ValueError(f"Falha irrevogavel no parser JSON estrutural: {e!s}")
+            raise ValueError(
+                f"Falha irrevogavel no parser JSON estrutural: {inner_e!s}"
+            ) from inner_e
 
     loaded = _normalize_loaded_json(loaded)
 
@@ -127,18 +133,18 @@ def _parse_dispatcher_subtasks_strict(response_text: str) -> list[DispatcherSubt
 async def _retry_dispatcher_schema_once(
     task: Task, manager: QueueManager, invalid_response: str
 ) -> list[DispatcherSubtask] | None:
-    if not te._feature_enabled("enable_dispatcher_schema_retry"):
+    if not te._feature_enabled("enable_dispatcher_schema_retry"):  # pylint: disable=protected-access
         return None
 
-    retry_limit = te._agent_sla_value(task.agent, "dispatcher_schema_retries", 1)
+    retry_limit = te._agent_sla_value(task.agent, "dispatcher_schema_retries", 1)  # pylint: disable=protected-access
     if retry_limit <= 0:
         return None
 
     schema_prompt = (
         "Corrija a saida anterior para JSON valido ESTRITO. "
-        "Retorne APENAS um array JSON de objetos com chaves: "
-        "description (string), agent (@agente_valido), depends_on (array de indices inteiros), metadata (objeto). "
-        "Sem markdown, sem comentarios, sem texto extra."
+        "Retorne APENAS um array JSON de objetos com chaves: description (string), "
+        "agent (@agente_valido), depends_on (array de indices inteiros), "
+        "metadata (objeto). Sem markdown, sem comentarios, sem texto extra."
     )
     user_prompt = (
         f"TAREFA BASE:\nID: {task.id}\nDescricao: {task.description}\n\n"
@@ -156,15 +162,13 @@ async def _retry_dispatcher_schema_once(
         metadata={"priority": "high", "origin_task_id": task.id},
     )
     logger.warning(
-        f"[{task.id}] Retry unico do dispatcher ativado para corrigir schema JSON."
+        "[%s] Retry unico do dispatcher ativado para corrigir schema JSON.", task.id
     )
     fixed_response = await call_llm_api(
         retry_task, system_prompt, user_prompt, manager, require_json=True
     )
     try:
         return _parse_dispatcher_subtasks_strict(fixed_response)
-    except Exception as retry_error:  # noqa: BLE001
-        logger.error(
-            f"[{task.id}] Retry do dispatcher nao normalizou schema: {retry_error}"
-        )
+    except Exception:  # pylint: disable=broad-exception-caught
+        logger.exception("[%s] Retry do dispatcher nao normalizou schema", task.id)
         return None

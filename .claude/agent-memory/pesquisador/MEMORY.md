@@ -14,7 +14,7 @@ AnAlise competitiva profunda, OSINT, sAntese de dados brutos, mapeamento de assi
 
 ## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado)
 
-`#padrao` - A informaAAo vital (edge) nAo estA em livros didAticos; ela estA escondida nas entrelinhas das heurAsticas e na tensAo do mercado. O A3bvio A inAotil.
+`#padrao` - A informacao vital (edge) nAo estA em livros didAticos; ela estA escondida nas entrelinhas das heurAsticas e na tensAo do mercado. O A3bvio A inAotil.
 `#aprendizado` - AderAancia estrita ao `CORTEX_SHIELD` A fundamental. Se um artefato A referenciado mas nAo fornecido, a Aonica aAAo correta A declarar sua ausAancia.
 
 ## 4. SINERGIA E HARMONIA (#relacionamento)

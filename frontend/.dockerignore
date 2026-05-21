@@ -1,0 +1,7 @@
+# SOTA Dockerignore - Frontend
+node_modules
+.next
+.git
+coverage
+.env*
+tests/*.log

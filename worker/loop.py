@@ -1,6 +1,7 @@
 """
 Worker Loop -- Daemon principal de processamento de tarefas (NEXUS ORCHESTRATOR).
 """
+# pylint: disable=broad-exception-caught, global-statement, protected-access, invalid-name, missing-function-docstring, line-too-long
 
 import asyncio
 import logging
@@ -27,16 +28,18 @@ from llm.budget import (
     get_telemetry_lock,
 )
 
+__all__ = ["start_worker"]
+
 # SOTA: Otimizacao de FFI e Throttle de Terminal (Economia Generalizada)
 if os.name == "nt":
     import ctypes
 
-    _SetConsoleTitleW = ctypes.windll.kernel32.SetConsoleTitleW
-    _SetConsoleTitleW.argtypes = [ctypes.c_wchar_p]
+    _SET_CONSOLE_TITLE_W = ctypes.windll.kernel32.SetConsoleTitleW
+    _SET_CONSOLE_TITLE_W.argtypes = [ctypes.c_wchar_p]
 else:
-    _SetConsoleTitleW = None
+    _SET_CONSOLE_TITLE_W = None
 
-_last_status_update = 0.0
+_LAST_STATUS_UPDATE = 0.0
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -53,10 +56,11 @@ async def _recover_zombies(manager: QueueManager) -> None:
             await db.commit()
             if recovered_count > 0:
                 logger.warning(
-                    f"[CRASH RECOVERY SOTA] {recovered_count} tarefas presas no limbo ('running') foram resgatadas para 'pending'."
+                    "[CRASH RECOVERY SOTA] %d tarefas presas no limbo ('running') foram resgatadas para 'pending'.",
+                    recovered_count,
                 )
     except Exception as e:  # noqa: BLE001
-        logger.error(f"[SISTEMA] Falha ao executar Crash Recovery no SQLite: {e}")
+        logger.error("[SISTEMA] Falha ao executar Crash Recovery no SQLite: %s", e)
 
 
 async def _handle_hibernation(manager: QueueManager, status_line) -> bool:
@@ -69,7 +73,8 @@ async def _handle_hibernation(manager: QueueManager, status_line) -> bool:
         hibernation_until = datetime.fromisoformat(hibernation_ts)
         if datetime.now(timezone.utc) < hibernation_until.replace(tzinfo=timezone.utc):
             status_line.update(
-                f"[red]HIBERNACAO[/] Orcamento de API esgotado. Retorno as {hibernation_until.strftime('%H:%M')}."
+                f"[red]HIBERNACAO[/] Orcamento de API esgotado. "
+                f"Retorno as {hibernation_until.strftime('%H:%M')}."
             )
             await asyncio.sleep(60)
             return True
@@ -86,7 +91,8 @@ async def _handle_hibernation(manager: QueueManager, status_line) -> bool:
                 GEMINI_MODEL_KEY_BLOCKLIST.clear()
                 ROUTE_FAILURE_COUNTS.clear()
             logger.info(
-                "[SISTEMA IMUNOLOGICO] Hibernacao concluida. Amnesia de bloqueios induzida. Rotas, chaves e rate limits restaurados para Friccao Zero."
+                "[SISTEMA IMUNOLOGICO] Hibernacao concluida. Amnesia de bloqueios induzida. "
+                "Rotas, chaves e rate limits restaurados para Friccao Zero."
             )
     except (ValueError, TypeError):
         await manager.set_system_state(
@@ -99,34 +105,37 @@ def _update_terminal_status(
     counts: dict, running_tasks_count: int, status_line
 ) -> None:
     """Atualiza o terminal com metricas operacionais de forma otimizada (Throttle anti-overhead)."""
-    global _last_status_update
+    global _LAST_STATUS_UPDATE  # pylint: disable=global-statement
     now = time.monotonic()
-    if now - _last_status_update < 1.0:
+    if now - _LAST_STATUS_UPDATE < 1.0:
         return
-    _last_status_update = now
+    _LAST_STATUS_UPDATE = now
 
     pending_count = counts.get("pending", 0)
-    if _SetConsoleTitleW:
+    if _SET_CONSOLE_TITLE_W:
         current_time = datetime.now(timezone.utc).astimezone().strftime("%H:%M:%S")
-        _SetConsoleTitleW(
-            f"NEXUS WORKER | Pendentes: {pending_count} | Rodando: {running_tasks_count} | Pulso: {current_time}"
+        _SET_CONSOLE_TITLE_W(
+            f"NEXUS WORKER | Pendentes: {pending_count} | "
+            f"Rodando: {running_tasks_count} | Pulso: {current_time}"
         )
 
     if status_line:
         status_line.update(
-            f"[bold]Vigilia de Guardiao Absoluta SOTA[/] | Em Suspensao: [yellow]{pending_count}[/] | Corpos Ativos: [magenta]{running_tasks_count}[/] | Completas: [green]{counts.get('completed', 0)}[/]"
+            "[bold]Vigilia de Guardiao Absoluta SOTA[/] | Em Suspensao: "
+            f"[yellow]{pending_count}[/] | Corpos Ativos: [magenta]{running_tasks_count}[/] | "
+            f"Completas: [green]{counts.get('completed', 0)}[/]"
         )
 
 
 def _format_display_id(task_id: str) -> str:
     if task_id.startswith("NOTIFY-"):
-        return f"[bold orange3]🔔 {task_id}[/]"
+        return f"[bold orange3] {task_id}[/]"
     elif task_id.startswith("AUTOFIX-"):
-        return f"[bold red]💉 {task_id}[/]"
+        return f"[bold red] {task_id}[/]"
     elif task_id.startswith("RESONANCE-"):
-        return f"[bold magenta]🌀 {task_id}[/]"
+        return f"[bold magenta] {task_id}[/]"
     elif task_id.startswith("HANDOFF-"):
-        return f"[bold cyan]🤝 {task_id}[/]"
+        return f"[bold cyan] {task_id}[/]"
     return task_id
 
 
@@ -162,7 +171,12 @@ async def _process_task_error(
         await manager.update_task_status(task.id, "pending")
         return True
 
-    logger.error(f"[[{te._c(task.agent)}]{task.agent}[/]] Falha catastrofica: {e}")
+    logger.error(
+        "[[%s]%s] Falha catastrofica: %s",
+        getattr(te, "_c", lambda x: "")(task.agent),
+        task.agent,
+        e,
+    )
     return False
 
 
@@ -187,7 +201,10 @@ async def _handle_deadlock(pending_tasks: list, manager: QueueManager) -> None:
     ):
         alert_task = Task(
             id=f"DEADLOCK-DAG-{int(time.time())}",
-            description="O Arbitrador Universal detectou um Deadlock Topologico (Ciclo in_degree > 0). Arbitrar a fila, remover dependencias circulares e restaurar fluxo.",
+            description=(
+                "O Arbitrador Universal detectou um Deadlock Topologico (Ciclo in_degree > 0). "
+                "Arbitrar a fila, remover dependencias circulares e restaurar fluxo."
+            ),
             agent="@chico",
             status="pending",
             timestamp=datetime.now(timezone.utc).isoformat(),
@@ -221,7 +238,10 @@ async def _dispatch_optimal_task(
     if task:
         display_id = _format_display_id(str(task.id))
         logger.info(
-            f"[bold magenta][>] ESPACO DE ENTRADA VITAL REQUISITADO:[/] [{te._c(task.agent)}]{task.agent}[/] (ID: {display_id})"
+            "[bold magenta][>] ESPACO DE ENTRADA VITAL REQUISITADO:[/] [%s]%s[/] (ID: %s)",
+            te._c(task.agent),
+            task.agent,
+            display_id,
         )
         await manager.update_task_status(task.id, "running")
 
@@ -238,14 +258,15 @@ async def _cleanup_worker(manager: QueueManager, running_tasks: set) -> None:
     """Mitigacao de orfanizacao de tarefas e processos zombies no encerramento."""
     if running_tasks:
         logger.info(
-            f"[SISTEMA] Cancelando {len(running_tasks)} tarefas em andamento (Graceful Shutdown)..."
+            "[SISTEMA] Cancelando %d tarefas em andamento (Graceful Shutdown)...",
+            len(running_tasks),
         )
         for task_future in running_tasks.copy():
             task_future.cancel()
         try:
-            await asyncio.wait(running_tasks, timeout=5.0)
+            _ = await asyncio.wait(running_tasks, timeout=5.0)
         except Exception as e:  # noqa: BLE001
-            logger.warning(f"[SISTEMA] Cancelamento interrompido: {e}")
+            logger.warning("[SISTEMA] Cancelamento interrompido: %s", e)
         try:
             async with aiosqlite.connect(manager.db_path) as db:
                 await db.execute(
@@ -257,24 +278,25 @@ async def _cleanup_worker(manager: QueueManager, running_tasks: set) -> None:
             )
         except Exception as e:  # noqa: BLE001
             logger.error(
-                f"[SISTEMA] Falha ao curar estado zombie no banco de dados: {e}"
+                "[SISTEMA] Falha ao curar estado zombie no banco de dados: %s", e
             )
 
     if te.PID_FILE and te.PID_FILE.exists():
         try:
             te.PID_FILE.unlink()  # type: ignore
-        except OSError:
+        except OSError:  # noqa: BLE001
             pass
 
     import llm.session as _llm_session_mod
 
-    session = _llm_session_mod._global_http_session
-    if session and not session.closed:
-        await session.close()
-        await asyncio.sleep(
-            0.250
-        )  # SOTA: Respiro para expurgo de sockets e conexoes SSL do aiohttp
-    _llm_session_mod._global_http_session = None
+    if hasattr(_llm_session_mod, "_global_http_session"):
+        session = getattr(_llm_session_mod, "_global_http_session", None)
+        if session and not session.closed:
+            await session.close()
+            await asyncio.sleep(
+                0.250
+            )  # SOTA: Respiro para expurgo de sockets e conexoes SSL do aiohttp
+        setattr(_llm_session_mod, "_global_http_session", None)  # noqa: B010
 
 
 async def start_worker(manager: QueueManager | None = None):
@@ -288,7 +310,7 @@ async def start_worker(manager: QueueManager | None = None):
                 await f.write(str(os.getpid()))
         except OSError as e:
             logger.error(
-                f"Nao foi possivel escrever o arquivo PID em {te.PID_FILE}: {e}"
+                "Nao foi possivel escrever o arquivo PID em %s: %s", te.PID_FILE, e
             )
 
     # 1. Limpa o terminal para o God Mode Visual
@@ -305,9 +327,16 @@ async def start_worker(manager: QueueManager | None = None):
     failed = counts.get("failed", 0)
 
     # Painel de Boas-vindas SOTA
-    header = "[bold cyan]NEXUS ORCHESTRATOR[/] | [magenta]Kernel SOTA v7.1 (Manifestacao Maxima / Roteamento Assicrono)[/]\n"
-    header += "[dim]A desorganizacao e a entropia findam nas correntes deste circuito. Abencado sob a Cosmologia Vitoi Absoluta.[/]\n\n"
-    header += f"Ramificacoes Pendentes Atuais: [yellow]{pending}[/] | Entregas Imaculadas: [green]{completed}[/] | Falhas: [red]{failed}[/]"
+    header = (
+        "[bold cyan]NEXUS ORCHESTRATOR[/] | "
+        "[magenta]Kernel SOTA v7.1 (Manifestacao Maxima / Roteamento Assicrono)[/]\n"
+    )
+    header += (
+        "[dim]A desorganizacao e a entropia findam nas correntes deste circuito. "
+        "Abencado sob a Cosmologia Vitoi Absoluta.[/]\n\n"
+    )
+    header += f"Ramificacoes Pendentes Atuais: [yellow]{pending}[/] | "
+    header += f"Entregas Imaculadas: [green]{completed}[/] | Falhas: [red]{failed}[/]"
     console.print(
         Panel(
             header,
@@ -339,7 +368,7 @@ async def start_worker(manager: QueueManager | None = None):
                 await _dispatch_optimal_task(manager, semaphore, running_tasks)
             except Exception as inner_e:  # noqa: BLE001
                 logger.error(
-                    f"[bold red]FATAL[/] Arritmia no loop central do worker: {inner_e}"
+                    "[bold red]FATAL[/] Arritmia no loop central do worker: %s", inner_e
                 )
                 await asyncio.sleep(5)
     except (KeyboardInterrupt, asyncio.CancelledError):

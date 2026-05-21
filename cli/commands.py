@@ -1,3 +1,4 @@
+# pylint: disable=missing-module-docstring, missing-function-docstring, missing-class-docstring, broad-exception-caught, logging-fstring-interpolation, line-too-long, unused-argument, deprecated-argument, unused-variable, too-many-lines, invalid-name, redefined-outer-name, unspecified-encoding, protected-access
 """
 CLI Commands -- Interface de linha de comando do Nexus Orchestrator.
 Todos os comandos db-*, check-keys, gemini-health, worker e query.
@@ -15,6 +16,9 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+# Injeta o diretorio raiz (Site) no sys.path para permitir execucoes diretas
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import aiofiles
 import aiohttp
@@ -71,13 +75,14 @@ async def _cmd_get_budget(manager: QueueManager) -> dict:
 
 
 async def _format_notify_row(t: Task, manager: QueueManager) -> tuple:
-    st_color = {
+    st_dict: dict[str, str] = {
         "completed": "green",
         "failed": "red",
         "pending": "yellow",
         "running": "magenta",
-    }.get(t.status, "white")
-    pri = t.metadata.get("priority", "normal") if t.metadata else "normal"
+    }
+    st_color = st_dict.get(str(t.status), "white")
+    pri = str(t.metadata.get("priority", "normal")) if t.metadata else "normal"
     pri_color = {
         "critical": "bold red",
         "high": "orange3",
@@ -296,17 +301,19 @@ async def _cmd_route_health(manager: QueueManager, window_minutes: int) -> list:
             if is_cooldown_candidate
             else None
         )
-        result.append({
-            "provider": provider,
-            "model": model,
-            "successes": successes,
-            "failures": failures,
-            "threshold": threshold,
-            "cooldown_minutes": cooldown_minutes,
-            "cooldown_candidate": is_cooldown_candidate,
-            "candidate_until": candidate_until,
-            "last_event": r["last_event"],
-        })
+        result.append(
+            {
+                "provider": provider,
+                "model": model,
+                "successes": successes,
+                "failures": failures,
+                "threshold": threshold,
+                "cooldown_minutes": cooldown_minutes,
+                "cooldown_candidate": is_cooldown_candidate,
+                "candidate_until": candidate_until,
+                "last_event": r["last_event"],
+            }
+        )
     return result
 
 
@@ -406,10 +413,12 @@ async def _cmd_check_integrity(manager: QueueManager) -> dict:
                             "SELECT 1 FROM tasks WHERE id = ?", (dep_id,)
                         ) as dep_cursor:
                             if await dep_cursor.fetchone() is None:
-                                report["orphan_dependencies"].append({
-                                    "task_id": task_id,
-                                    "missing_dependency": dep_id,
-                                })
+                                report["orphan_dependencies"].append(
+                                    {
+                                        "task_id": task_id,
+                                        "missing_dependency": dep_id,
+                                    }
+                                )
     except Exception as e:  # noqa: BLE001
         report["error"] = str(e)
     return report
@@ -755,9 +764,6 @@ async def _test_api_key(session, provider, key, provider_id, semaphore):
 
 
 async def _cmd_verify_keys(manager: QueueManager):
-    from rich.console import Console
-    from rich.table import Table
-
     c = Console()
     t = Table(
         title="[bold cyan]NEXUS ORCHESTRATOR - Auditoria de Chaves SOTA[/]",
@@ -934,13 +940,14 @@ def _print_tasks_table(tasks: list) -> None:
     table.add_column("Descricao", style="white", max_width=75, overflow="ellipsis")
     table.add_column("Criacao", style="dim")
     for t in tasks[:50]:
-        st_color = {
+        st_dict: dict[str, str] = {
             "completed": "green",
             "failed": "red",
             "pending": "yellow",
             "running": "magenta",
-        }.get(t.status, "white")
-        pri = t.metadata.get("priority", "normal") if t.metadata else "normal"
+        }
+        st_color = st_dict.get(str(t.status), "white")
+        pri = str(t.metadata.get("priority", "normal")) if t.metadata else "normal"
         pri_color = {
             "critical": "bold red",
             "high": "orange3",
@@ -1198,21 +1205,23 @@ async def _cli_ingest(argv: list, manager: QueueManager) -> None:
     try:
         project_root = Path(__file__).resolve().parent.parent
         dropzone = project_root / ".claude" / "dropzone"
-        dropzone.mkdir(parents=True, exist_ok=True)
+        await asyncio.to_thread(dropzone.mkdir, parents=True, exist_ok=True)
 
         # SOTA: Validacao estrita de Path Traversal (Security Report Fix)
         # Sanitizacao: Extrai apenas o nome do arquivo para impedir ../ ou caminhos absolutos
         # Ref: https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.name
         # [SEC] Chico SOTA: Esta sanitizacao garante que o filepath nunca saia da dropzone.
         filename = Path(argv[2]).name
-        filepath = (dropzone / filename).resolve()
+        filepath = await asyncio.to_thread((dropzone / filename).resolve)
 
         if not filepath.is_relative_to(dropzone):
             print(
                 f"ERROR: [SEC] Escopo Invalido. O arquivo '{filepath.name}' deve estar estritamente dentro da dropzone ('{dropzone.relative_to(project_root)}')."
             )
             sys.exit(1)
-        if not filepath.is_file():
+
+        is_file = await asyncio.to_thread(filepath.is_file)
+        if not is_file:
             print("ERROR: [SEC] O alvo especificado nao e um arquivo valido.")
             sys.exit(1)
         async with aiofiles.open(filepath, "r", encoding="utf-8") as f:
@@ -1221,7 +1230,7 @@ async def _cli_ingest(argv: list, manager: QueueManager) -> None:
 
         await apply_god_mode(content, manager)
         print(f"SUCCESS: Ingestion completed from {filepath}.")
-        os.remove(filepath)
+        await asyncio.to_thread(filepath.unlink, missing_ok=True)
     except Exception as e:  # noqa: BLE001
         print(f"ERROR: Ingestion failed - {e}")
         sys.exit(1)

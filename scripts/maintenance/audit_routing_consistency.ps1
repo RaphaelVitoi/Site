@@ -8,7 +8,7 @@
 #>
 
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
-$RoutesMdPath = Join-Path $ProjectRoot 'frontend\ROUTES.md'
+$RoutesMdPath = Join-Path $ProjectRoot 'ROUTES.md'
 $AppDir = Join-Path $ProjectRoot 'frontend\src\app'
 
 Write-Host '=== [ORGANIZADOR] INICIANDO AUDITORIA DE CONSISTÊNCIA DE ROTAS ===' -ForegroundColor Cyan
@@ -18,17 +18,51 @@ Write-Host '[1/3] Lendo o mapa de rotas canônico (ROUTES.md)...' -ForegroundCol
 $declaredRoutes = [System.Collections.Generic.List[string]]::new()
 $inRoutesSection = $false
 $routesContent = Get-Content $RoutesMdPath
+$currentParent = ""
 
 foreach ($line in $routesContent) {
     if ($line -match '```') {
         $inRoutesSection = -not $inRoutesSection
         continue
     }
-    if ($inRoutesSection -and $line.Trim() -match '^/') {
-        $route = ($line.Split(' ')).Trim()
-        # Ignorar rotas dinâmicas genéricas e a raiz por enquanto
-        if ($route -ne '/' -and -not ($route -like '*/[slug]/')) {
-            $declaredRoutes.Add($route)
+    if ($inRoutesSection) {
+        $trimmed = $line.Trim()
+        if ($trimmed -match '^#') {
+            continue
+        }
+        
+        # Match lines starting with '/' (with optional leading spaces, e.g. parent routes)
+        if ($line -match '^\s*/') {
+            $tokens = $trimmed -split '\s+'
+            $route = $tokens[0]
+            
+            if ($route -like '*/') {
+                $currentParent = $route
+                if ($route -ne '/' -and -not ($route -like '*/[slug]/')) {
+                    $declaredRoutes.Add($route)
+                }
+            } else {
+                $currentParent = ""
+                $routeWithSlash = "$route/"
+                if ($routeWithSlash -ne '/' -and -not ($routeWithSlash -like '*/[slug]/')) {
+                    $declaredRoutes.Add($routeWithSlash)
+                }
+            }
+        }
+        # Match indented lines (sub-routes) starting with word chars, brackets, etc.
+        elseif ($line -match '^\s+[\w\[\(#]' -and $currentParent -ne "") {
+            $tokens = $trimmed -split '\s+'
+            $subRoute = $tokens[0]
+            # Ignore comments and non-route entries like page.tsx
+            if ($subRoute -match '^#' -or $subRoute -like '*page.tsx*') {
+                continue
+            }
+            if ($subRoute -like '*/') {
+                $route = "$currentParent$subRoute"
+                if (-not ($route -like '*/[slug]/')) {
+                    $declaredRoutes.Add($route)
+                }
+            }
         }
     }
 }

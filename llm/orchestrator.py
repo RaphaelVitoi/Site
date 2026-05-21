@@ -1,3 +1,5 @@
+# pylint: disable=missing-module-docstring, broad-exception-caught, logging-fstring-interpolation, protected-access, line-too-long, invalid-name
+
 import logging
 import time
 from collections.abc import Callable
@@ -29,9 +31,9 @@ from llm.session import get_global_http_session
 logger = logging.getLogger(__name__)
 
 # =========================================================================
-# INVARIÂNCIA MODULAR SOTA: Helpers de Isolamento para Redução de Entropia
-# Todas as lógicas originais foram puramente envelopadas em funções menores
-# para garantir Zero-Regression e baixar a Complexidade Ciclomática (V(G)).
+# INVARIANCIA MODULAR SOTA: Helpers de Isolamento para Reducao de Entropia
+# Todas as logicas originais foram puramente envelopadas em funcoes menores
+# para garantir Zero-Regression e baixar a Complexidade Ciclomatica (V(G)).
 # =========================================================================
 
 
@@ -223,8 +225,9 @@ async def _compress_context(
         COMPRESSION_CIRCUIT_BREAKER["last_failure"] = time.time()
         return text
     except Exception as e:  # noqa: BLE001
+        safe_err = str(e).encode("ascii", "backslashreplace").decode("ascii")
         logger.warning(
-            f"[[{_c(task_agent)}]{task_agent}[/]] Falha na compressao cognitiva. Usando contexto original: {e}"
+            f"[[{_c(task_agent)}]{task_agent}[/]] Falha na compressao cognitiva. Usando contexto original: {safe_err}"
         )
         COMPRESSION_CIRCUIT_BREAKER["consecutive_failures"] += 1
         COMPRESSION_CIRCUIT_BREAKER["last_failure"] = time.time()
@@ -308,6 +311,21 @@ async def call_llm_api(
                 task,
                 manager,
                 provider_retries,
+                request_timeout,
+                require_json=require_json,
+                **kwargs,
+            )
+        elif provider == "local":
+            response = await _try_provider(
+                session,
+                "local",
+                model,
+                system_prompt,
+                user_prompt,
+                ["local-dummy-key"],
+                task,
+                manager,
+                1,  # Retries minimos para local
                 request_timeout,
                 require_json=require_json,
                 **kwargs,

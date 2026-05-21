@@ -16,7 +16,7 @@ Um agente ativado carrega consigo, simultaneamente:
 - **A filosofia fundante do sistema** (`COSMOVISAO.md`)
 - **O padrao operacional global** (`GLOBAL_INSTRUCTIONS.md`)
 - **O contexto decisorio do projeto** (`project-context.md`)
-- **O manifesto completo dos 18 agentes** (`data/agents_manifest.json`)
+- **O manifesto completo dos 19 agentes** (`data/agents_manifest.json`)
 - **Sua propria inteligencia acumulada** (`.claude/agent-memory/<agente>/MEMORY.md`)
 - **A memoria coletiva semantica** (ChromaDB via `memory_rag.py`)
 
@@ -241,7 +241,7 @@ Indicadores de degradacao:
 
 - MEMORYs com templates vazios ou conteudo corrompido (ex: codigo Python em arquivo .md)
 - `routing_map.json` com data de 2023 em producao de 2026
-- Agentes com "17 agentes" documentados quando ha 18 no manifesto
+- Agentes com "18 agentes" documentados quando ha 19 no manifesto
 - intentmap.json com drift em relacao ao agents_manifest.json
 - Propostas democraticas acumuladas em MEMORYs sem ciclo de revisao
 

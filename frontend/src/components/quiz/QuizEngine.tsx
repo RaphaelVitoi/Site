@@ -1,96 +1,143 @@
-﻿﻿// Arquivo: frontend/src/components/quiz/QuizEngine.tsx
+'use client';
+
+/**
+ * IDENTITY: Quiz Engine SOTA v4.2 Gold
+ * PATH: src/components/quiz/QuizEngine.tsx
+ * ROLE: Orquestrador de avaliação cognitiva.
+ * AESTHETIC: SOTA Gold Standard (Symmetry, Depth, Motion).
+ */
 
 import { logTelemetryEvent } from '@/lib/telemetry-client';
+import { AnimatePresence, motion } from 'framer-motion';
 import React, { useMemo, useState } from 'react';
 import { QuizProgress } from './QuizProgress';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizResults } from './QuizResults';
-import { QuizQuestion as QuizQuestionType } from './types';
+import {
+	resolveTelemetryCategory,
+	type QuizQuestion as QuizQuestionType,
+	type TelemetryCategory,
+} from './types';
 
-interface QuizEngineProps
-{
-    questions: QuizQuestionType[];
-    onQuizRestart?: () => void;
+interface QuizEngineProps {
+	questions: QuizQuestionType[];
+	onQuizRestart?: () => void;
+	onAnswer?: (isCorrect: boolean, evLoss: number, category: TelemetryCategory) => void;
 }
 
 const EMPTY_QUESTIONS: QuizQuestionType[] = [];
 
-export const QuizEngine: React.FC<QuizEngineProps> = ( { questions, onQuizRestart } ) =>
-{
-    // Blindagem SOTA: Garante que questions sempre será iterável e lida com dados corrompidos.
-    const safeQuestions = useMemo( () => ( Array.isArray( questions ) ? questions : EMPTY_QUESTIONS ), [ questions ] );
+export const QuizEngine: React.FC<QuizEngineProps> = ({ questions, onQuizRestart, onAnswer }) => {
+	const safeQuestions = useMemo(
+		() => (Array.isArray(questions) ? questions : EMPTY_QUESTIONS),
+		[questions],
+	);
+	const [currentIndex, setCurrentIndex] = useState(0);
+	const [answers, setAnswers] = useState<Record<string, string>>({});
 
-    // O(1) State Complexity: Usamos um Dicionário de Respostas em vez de Arrays mapeados
-    const [ currentIndex, setCurrentIndex ] = useState( 0 );
-    const [ answers, setAnswers ] = useState<Record<string, string>>( {} );
+	const isFinished = currentIndex >= safeQuestions.length;
 
-    const isFinished = currentIndex >= safeQuestions.length;
+	const score = useMemo(() => {
+		return safeQuestions.reduce((acc, q) => {
+			return acc + (answers[q.id] === q.correctOptionId ? 1 : 0);
+		}, 0);
+	}, [answers, safeQuestions]);
 
-    // Avaliação em tempo real O(N) apenas no total de respostas preenchidas
-    const score = useMemo( () =>
-    {
-        return safeQuestions.reduce( ( acc, q ) =>
-        {
-            return acc + ( answers[ q.id ] === q.correctOptionId ? 1 : 0 );
-        }, 0 );
-    }, [ answers, safeQuestions ] );
+	const handleSelectOption = (optionId: string) => {
+		const currentQ = safeQuestions[currentIndex];
+		if (!currentQ) return;
+		setAnswers((prev) => ({ ...prev, [currentQ.id]: optionId }));
 
-    const handleSelectOption = ( optionId: string ) =>
-    {
-        const currentQ = safeQuestions[ currentIndex ];
-        if ( !currentQ ) return;
-        setAnswers( prev => ( { ...prev, [ currentQ.id ]: optionId } ) );
+		const isCorrect = optionId === currentQ.correctOptionId;
+		const evLoss = isCorrect ? 0 : 0.5;
+		const telemetryCategory = resolveTelemetryCategory(currentQ.category);
 
-        // ==========================================
-        // TELEMETRIA SOTA: Disparo em Fricção Zero
-        // ==========================================
-        const isCorrect = optionId === currentQ.correctOptionId;
-        logTelemetryEvent( {
-            category: ( currentQ.category || "Fundamentos SOTA" ) as "quiz" | "simulator" | "performance" | "error" | "Risk Premium" | "Fundamentos SOTA" | "Bolha" | "Pós-Flop",
-            metadata: { questionId: currentQ.id, questionText: currentQ.text },
-            userAction: optionId,
-            optimalAction: currentQ.correctOptionId,
-            evLoss: isCorrect ? 0 : 0.5, // Sangria fixa didática de 0.5% por erro
-            isCorrect: isCorrect
-        } );
-    };
+		logTelemetryEvent({
+			category: telemetryCategory,
+			metadata: { questionId: currentQ.id, questionText: currentQ.text },
+			userAction: optionId,
+			optimalAction: currentQ.correctOptionId,
+			evLoss,
+			isCorrect,
+		});
+		if (onAnswer) {
+			onAnswer(isCorrect, evLoss, telemetryCategory);
+		}
+	};
 
-    const handleNext = () => setCurrentIndex( prev => prev + 1 );
-    const handleRestart = () =>
-    {
-        setAnswers( {} );
-        setCurrentIndex( 0 );
-        if ( onQuizRestart ) onQuizRestart();
-    };
+	const handleNext = () => setCurrentIndex((prev) => prev + 1);
+	const handleRestart = () => {
+		setAnswers({});
+		setCurrentIndex(0);
+		if (onQuizRestart) onQuizRestart();
+	};
 
-    if ( safeQuestions.length === 0 ) return null;
+	if (safeQuestions.length === 0) return null;
 
-    return (
-        <div className="glass-panel max-w-3xl mx-auto overflow-hidden shadow-[0_10px_40px_-10px_rgba(0,0,0,0.4)]"> {/* NOSONAR */}
-            { isFinished ? (
-                <QuizResults score={ score } total={ safeQuestions.length } onRestart={ handleRestart } />
-            ) : (
-                <>
-                    <QuizProgress current={ currentIndex } total={ safeQuestions.length } score={ score } />
+	const currentQuestion = safeQuestions[currentIndex];
+	if (!isFinished && !currentQuestion) return null;
 
-                    <QuizQuestion
-                        question={ safeQuestions[ currentIndex ] }
-                        selectedOptionId={ safeQuestions[ currentIndex ] ? ( answers[ safeQuestions[ currentIndex ].id ] || '' ) : '' }
-                        onSelectOption={ handleSelectOption }
-                    />
+	return (
+		<div className="max-w-4xl mx-auto flex flex-col gap-12">
+			<AnimatePresence mode="wait">
+				{isFinished ? (
+					<motion.div
+						key="results"
+						initial={{ opacity: 0, scale: 0.95 }}
+						animate={{ opacity: 1, scale: 1 }}
+						exit={{ opacity: 0, scale: 1.05 }}
+						className="glass-panel rounded-[3rem] bg-bg-panel/60 border border-white/10 shadow-2xl overflow-hidden relative"
+					>
+						<div className="absolute inset-0 bg-radial-[at_top_right] from-accent-indigo/10 to-transparent pointer-events-none" />
+						<QuizResults
+							score={score}
+							total={safeQuestions.length}
+							onRestart={handleRestart}
+						/>
+					</motion.div>
+				) : (
+					<motion.div
+						key="quiz"
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						className="flex flex-col gap-10"
+					>
+						<QuizProgress
+							current={currentIndex}
+							total={safeQuestions.length}
+							score={score}
+						/>
 
-                    <div className="px-8 pb-8 pt-0 flex justify-end min-h-20"> {/* NOSONAR */}
-                        { safeQuestions[ currentIndex ] && answers[ safeQuestions[ currentIndex ].id ] && (
-                            <button
-                                onClick={ handleNext } /* NOSONAR */
-                                className="px-6 py-2.5 bg-accent-indigo/15 text-accent-indigo-light border border-accent-indigo/30 rounded-md cursor-pointer font-bold transition-all uppercase tracking-widest text-xs flex items-center gap-2 hover:bg-accent-indigo/25" /* NOSONAR */
-                            >
-                                { currentIndex === safeQuestions.length - 1 ? 'Ver Impacto' : 'Avançar' } <i className="fa-solid fa-arrow-right" /> {/* NOSONAR */}
-                            </button>
-                        ) }
-                    </div>
-                </>
-            ) }
-        </div>
-    );
+						<div className="glass-panel rounded-4xl bg-bg-panel/60 border border-white/5 shadow-2xl overflow-hidden relative group/engine">
+							<div className="absolute inset-0 bg-radial-[at_top_left] from-accent-indigo/5 to-transparent pointer-events-none" />
+
+							{currentQuestion && (
+								<QuizQuestion
+									question={currentQuestion}
+									selectedOptionId={answers[currentQuestion.id] || ''}
+									onSelectOption={handleSelectOption}
+								/>
+							)}
+
+							<div className="px-10 pb-10 pt-0 flex justify-end min-h-24">
+								{currentQuestion && answers[currentQuestion.id] && (
+									<motion.button
+										initial={{ opacity: 0, x: 20 }}
+										animate={{ opacity: 1, x: 0 }}
+										onClick={handleNext}
+										className="px-8 py-4 bg-accent-indigo text-white border border-accent-indigo-light/20 rounded-2xl cursor-pointer font-black transition-all uppercase tracking-widest text-[0.7rem] flex items-center gap-4 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] active:scale-95"
+									>
+										{currentIndex === safeQuestions.length - 1
+											? 'Analisar Perfil'
+											: 'Sincronizar'}
+										<i className="fa-solid fa-arrow-right-long" />
+									</motion.button>
+								)}
+							</div>
+						</div>
+					</motion.div>
+				)}
+			</AnimatePresence>
+		</div>
+	);
 };

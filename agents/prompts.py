@@ -2,6 +2,7 @@
 Motor Cognitivo de Prompts -- Compilacao da Omnisciencia Sistemica.
 Funde Instrucoes Globais, Manual, Indice Mestre e Identidade do Agente.
 """
+# pylint: disable=line-too-long, broad-exception-caught
 
 import json
 import logging
@@ -24,8 +25,8 @@ def _build_global_instructions(
             manifest_content = _read_file_with_cache(manifest_path)
             if manifest_content:
                 doc_manifest = json.loads(manifest_content)
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"[PROMPTS] Falha ao ler document_manifest.json: {e}")
+        except Exception:  # noqa: BLE001
+            logger.exception("[PROMPTS] Falha ao ler document_manifest.json")
 
     philosophical_docs = set(doc_manifest.get("philosophical_docs", []))
     documents = doc_manifest.get("documents", [])
@@ -141,7 +142,7 @@ def get_agent_system_prompt(agent_name: str) -> str:
         "2. NIVEIS DE RELEVANCIA: Ao criar subtarefas, adicione no metadata a chave 'priority' com um destes 4 valores: 'low', 'medium', 'high', 'critical'.\n"
     )
     system_prompt_parts.append(
-        "3. RBAC E OS 18 AGENTES: Somos um ecossistema de 18 agentes de IA. Se uma tarefa for critica (ex: seguranca), o @securitychief DEVE ser envolvido. Se demandar visao estrategica/auditoria de alto escalao (Smart MDA), envolva @maverick.\n"
+        "3. RBAC E OS 19 AGENTES: Somos um ecossistema de 19 agentes de IA. Se uma tarefa for critica (ex: seguranca), o @securitychief DEVE ser envolvido. Se demandar visao estrategica/auditoria de alto escalao (Smart MDA), envolva @maverick.\n"
     )
     system_prompt_parts.append(
         "4. IDIOMA: Responda obrigatoriamente em PT-BR (Pure ASCII) primariamente, e em Ingles apenas secundariamente (para codigos, dependencias e tech stack).\n"

@@ -1,12 +1,12 @@
-# COHERENCE MANIFEST - Garantia de Harmonia Dos 18 Agentes
+# COHERENCE MANIFEST - Garantia de Harmonia Dos 19 Agentes
 
-**Data:** 2026-03-24 | **Versao:** 2.1 | **Responsavel:** CHICO + @maverick (verificacao continua)
+**Data:** 2026-05-20 | **Versao:** 2.2 | **Responsavel:** CHICO + @maverick (verificacao continua)
 
 ---
 
 ## O Compromisso
 
-Cada um dos **18 agentes** funciona como parte de um **ecossistema coeso e harmonico**, nao isolado. Nenhum agente:
+Cada um dos **19 agentes** funciona como parte de um **ecossistema coeso e harmonico**, nao isolado. Nenhum agente:
 
 - Fica sem documentacao
 - Desconhece seu papel na pipeline
@@ -22,7 +22,7 @@ Cada um dos **18 agentes** funciona como parte de um **ecossistema coeso e harmo
 
 **Arquivo:** `.claude/CLAUDE.md`
 
-Todos os 18 agentes absorvem:
+Todos os 19 agentes absorvem:
 
 - Identidade de Raphael Vitoi (QI 136, BPD, AHSD, TDAH, Poker Pro, Psicologo)
 - Padrao Epistemico obrigatorio (sem vies, fundamentado, Steelmanning)
@@ -34,9 +34,9 @@ Todos os 18 agentes absorvem:
 
 **Arquivo:** `GLOBAL_INSTRUCTIONS.md`
 
-Todos os 18 agentes absorvem:
+Todos os 19 agentes absorvem:
 
-- Pipeline harmonica completa (7 linear + 4 consultivo + 2 super + 3 operacional + 1 entrada)
+- Pipeline harmonica completa (7 linear + 5 consultivo + 2 super + 4 operacional + 1 entrada)
 - Filosofia operacional (harmonia, simetria, potencializacao, fractalidade)
 - Tabela de integracao com entrada/saida/tipo/bloqueador de cada um
 - Regras de projeto (linguagem, estilo, curadoria, autonomia)
@@ -46,7 +46,7 @@ Todos os 18 agentes absorvem:
 
 **Arquivo:** `.claude/project-context.md`
 
-Todos os 18 agentes absorvem:
+Todos os 19 agentes absorvem:
 
 - Dominio e publico-alvo (site diverso, Raphael + alunos/clientes)
 - Decisoes tomadas (estado atual do projeto, stack, convencoes)
@@ -58,7 +58,7 @@ Todos os 18 agentes absorvem:
 
 **Arquivo:** `.claude/agent-memory/<agente>/MEMORY.md`
 
-Cada um dos 18 agentes tem:
+Cada um dos 19 agentes tem:
 
 - Perfil proprio (autoridade, escopo, competencias)
 - Inteligencia acumulada (padroes observados, precedentes, insights)
@@ -68,7 +68,7 @@ Cada um dos 18 agentes tem:
 
 ---
 
-## Os 18 Agentes & Sua Integracao
+## Os 19 Agentes & Sua Integracao
 
 ### PIPELINE LINEAR (7 agentes)
 
@@ -173,6 +173,15 @@ Cada um dos 18 agentes tem:
 | `project-context.md`                           | Consultivo                     |
 | `GLOBAL_INSTRUCTIONS.md`                       | Tabela de integracao           |
 
+**@gemma4** (Oraculo de Borda e Sentinela de Inferencia Local)
+
+| Arquivo                                  | Status                         |
+| ---------------------------------------- | ------------------------------ |
+| `.claude/agents/gemma4.md`              | Documentado                    |
+| `.claude/agent-memory/gemma4/MEMORY.md` | Ativo com referencia harmonica |
+| `project-context.md`                     | Consultivo                     |
+| `GLOBAL_INSTRUCTIONS.md`                 | Tabela de integracao           |
+
 ### SUPER-AGENTES TRANSVERSAIS (2 super-agentes)
 
 **@maverick** (Vice Intelectual, Mentor, Sentinela, Inteligencia Estrategica)
@@ -193,7 +202,7 @@ Cada um dos 18 agentes tem:
 | `GLOBAL_INSTRUCTIONS.md`                                 | Identidade da raiz, Triade de Governanca |
 | `.claude/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md` | Documentacao estrutural completa         |
 
-### OPERACIONAIS 24/7 (3 agentes)
+### OPERACIONAIS 24/7 (4 agentes)
 
 **@organizador** (Health Check Docs & Integracao Imediata)
 
@@ -222,6 +231,15 @@ Cada um dos 18 agentes tem:
 | `project-context.md`                         | Operacional 24/7               |
 | `GLOBAL_INSTRUCTIONS.md`                     | Tabela de integracao           |
 
+**@historian** (Registro Akashico e Analise de Performance)
+
+| Arquivo                                     | Status                         |
+| ------------------------------------------- | ------------------------------ |
+| `.claude/agents/historian.md`              | Documentado                    |
+| `.claude/agent-memory/historian/MEMORY.md` | Ativo com referencia harmonica |
+| `project-context.md`                        | Operacional 24/7               |
+| `GLOBAL_INSTRUCTIONS.md`                    | Tabela de integracao           |
+
 ### ENTRADA (1 agente de triagem)
 
 **@dispatcher** (Triagem de Backlog & Fatiamento de Epicos)
@@ -242,7 +260,7 @@ Cada um dos 18 agentes tem:
 - [X] Cada agente sabe sua entrada/saida
 - [X] Cada agente sabe quem vem antes/depois
 - [X] Cada agente sabe quem e consultado em paralelo
-- [X] Cada agente sabe que pode consultar qualquer um dos 15
+- [X] Cada agente sabe que pode consultar qualquer um dos 16
 
 ### ACESSO AUTOMATICO A CONTEXTOS
 
@@ -255,8 +273,8 @@ Cada agente absorve:
 
 ### SINCRONIZACAO DE MEMORIA
 
-- [X] @skillmaster sincroniza MEMORY dos 15 agentes periodicamente
-- [X] Nenhuma inteligencia acumulada e perdida (agora validado em 18 memorias reais)
+- [X] @skillmaster sincroniza MEMORY dos 16 agentes periodicamente
+- [X] Nenhuma inteligencia acumulada e perdida (agora validado em 19 memorias reais)
 - [X] Padroes observados sao compartilhados
 
 ### AUTORIDADE CLARA
@@ -283,17 +301,17 @@ Cada agente absorve:
 
 ## Assinatura de Coerencia
 
-**Ecossistema: 8 Linear + 4 Consultivos + 2 Super-Agentes + 3 Operacionais + 1 Entrada = 18 Agentes**
+**Ecossistema: 7 Linear + 5 Consultivos + 2 Super-Agentes + 4 Operacionais + 1 Entrada = 19 Agentes**
 **Governanca: Raphael Vitoi (CEO) + @maverick (Vice Intelectual) + CHICO (Administrador)**
 **Nenhum Agente Isolado:** CONFIRMADO
 **Acesso ao Contexto Completo:** CONFIRMADO
-**Sincronizacao de Inteligencia:** CONFIRMADO (18 agentes com MEMORY.md ativo e sincronizado)
-**Autoridade Clara:** CONFIRMADO (Raphael > @maverick/CHICO > 14 Especialistas + 1 Entrada)
+**Sincronizacao de Inteligencia:** CONFIRMADO (19 agentes com MEMORY.md ativo e sincronizado)
+**Autoridade Clara:** CONFIRMADO (Raphael > @maverick/CHICO > 16 Especialistas + 1 Entrada)
 
 ### Status: OPERACIONAL - COERENCIA TOTAL
 
 ---
 
-**Atualizado por:** CHICO (Auditoria de Consistencia 2026-03-20)
+**Atualizado por:** CHICO (Auditoria de Consistencia 2026-05-20)
 **Proxima Verificacao:** Continua (nao-agenda)
 **Escalacao:** Se gap encontrado, CHICO + @maverick corrigem imediatamente

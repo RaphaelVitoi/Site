@@ -1,86 +1,64 @@
 /**
- * IDENTITY: O Risco de Ressurreição
+ * IDENTITY: Risco de Ressurreição GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/risco-de-ressurreicao/page.tsx
- * ROLE: Artigo técnico sobre o valor estratégico de manter oponentes neutralizados.
+ * ROLE: Artigo técnico demonstrando o custo estratégico de dar call em short stacks na bolha.
+ * VERSION: v6.2.1 GOLD
  */
 
-import { ContentPageHeader } from '@/components/layout/ContentPageHeader';
-import { SotaMarkdown } from '@/components/ui/SotaMarkdown';
-import ContentFooter from '@/components/content/ContentFooter';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { GlassPanel } from '@/components/ui/GlassPanel';
+import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import ResurrectionRiskSimulator from '@/components/simulator/ResurrectionRiskSimulator';
+import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 
 const content = `
-# O Risco de Ressurreição
-### Por que dobrar um Short Stack é um erro sistêmico
+# O Paradoxo da Ressurreição
 
-No paradigma GTO/ICM puro, o call é frequentemente justificado por uma fração positiva de EV ($+0.05bb$ ou similar). Contudo, a **Perspectiva Matemática** introduz uma variável estratégica superior: o valor da neutralização do oponente.
+No xadrez do poker de alta performance, a eliminação de um oponente não é apenas a captura de fichas; é a conquista de **Capital Estrutural**. A presença de um short stack agonizando na bolha gera uma *Zona de Pressão* que engessa os stacks medianos, permitindo que o Chip Leader opere com quase total impunidade.
 
----
-
-## 1. O Colapso da Árvore de Decisão
-
-Um oponente com 10bb está confinado à simplicidade binária do Push/Fold. Sua capacidade de exercer edge (vantagem técnica) é nula; ele não pode errar no pós-flop se o jogo termina antes do flop.
-
-Quando você (Chip Leader) paga um shove marginal e perde, você não apenas perde fichas nominais; você devolve a ele a **Complexidade da Árvore**.
-
-*   **10bb:** Inofensivo (Software limitado).
-*   **20bb:** Perigoso (Pode abrir, c-betar, aplicar pressão de fold).
+O **Risco da Ressurreição** é a falha letal de ignorar essa dinâmica em favor de um call matematicamente marginal.
 
 ---
 
-## 2. A Amortização da Edge pela Variância
+## 1. A Ilusão das Pot Odds no Vácuo
 
-O jogador fraco é "menos ruim" com 10bb porque o conhecimento de Push/Fold é comoditizado. O erro de um call marginal contra ele é "perdoado" pela variância estatística em ~40% das vezes. 
+Quando um short stack com 5bb empurra all-in, as pot odds geralmente gritam "Call". Você precisa de apenas 35-40% de equidade. O erro do jogador mediano é analisar esse call como uma transação isolada.
 
-Manter o oponente com 10bb tem um valor de **Controle de Sistema** superior ao ganho aritmético do call. Ao dobrá-lo, você restaura as ferramentas de erro que a stack curta havia retirado dele.
-
----
-
-## 3. O Kingmaker: Um Desastre Tático
-
-Pagar o Vice-Líder é o maior erro de Perspectiva. Se você o dobra, você cria um monstro com alavancagem suficiente para usurpar sua coroa. 
-
-O Future Game Simulation (FGS) penaliza essa agressividade, mas a Antevisão Humana deve ser ainda mais rigorosa: **não crie carrascos**.
+O que o cálculo ChipEV ignora:
+*   **Fear Equity:** O short stack é a sua arma contra os outros jogadores. Enquanto ele viver, os stacks medianos não podem se mover contra você.
+*   **Custo de Oportunidade:** Dobrar o short stack (de 5bb para 11bb) devolve a ele a "Fold Equity". Ele deixa de ser um zumbi e volta a ser um predador com capacidade de roubar blinds e de exercer pressão reativa.
 
 ---
 
-## 4. Conclusão SOTA
+## 2. A Amortização da Edge e o Fator Ψ
 
-"O verdadeiro erro na bolha não é o call matemático; é o call que devolve a complexidade ao oponente que estava neutralizado pela simplicidade."
+A Perspectiva Matemática exige a inclusão do **Fator Ψ (Axioma Psicológico)**. Se a mesa estiver sob estresse emocional (Maluquice Humana), a sua *Edge Relativa* é brutalmente penalizada ao se envolver em colisões desnecessárias de alta variância.
 
-Mantenha os mortos-vivos no cemitério estratégico. Proteja seu Valuation e sua hegemonia de mesa.
+A matemática SOTA prova que o *Fold EV* contra um short stack na bolha é ativamente positivo. A preservação do seu status de "Predador Absoluto" tem um Valuation infinitamente superior à equidade fracionária das cartas.
+
+Teste o laboratório abaixo. Modifique o Stack do Chip Leader e perceba como a barra de "Break-Even SOTA" exige muito mais equidade real do que as pot odds ilusórias sugerem.
 `;
 
 export default function RiscoRessurreicaoPage() {
-  return (
-    <div className="min-h-screen bg-bg-base text-text-bright">
-      <ContentPageHeader
-        title="Risco de Ressurreição"
-        subtitle="O valor invisível de manter oponentes neutralizados e por que ignorar um EV marginal pode ser a jogada soberana."
-        category="Estratégia"
-        icon="fa-skull-crossbones"
-      />
+	return (
+		<div className="min-h-screen bg-bg-base text-text-bright pb-24">
+			<ContentPageHeader
+				title="Risco de Ressurreição"
+				subtitle="A métrica invisível da Fear Equity: O custo catastrófico de dobrar um short stack e destruir o equilíbrio de pressão da mesa."
+				category="Valuation & Risco"
+				icon="fa-skull-crossbones"
+			/>
 
-      <div className="sota-container py-12 md:py-24">
-        <div className="mb-16">
-          <ResurrectionRiskSimulator />
-        </div>
+			<div className="sota-container py-12 md:py-24">
+				<div className="max-w-5xl mx-auto flex flex-col gap-16">
+					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-amber shadow-2xl group transition-colors hover:border-l-accent-rose">
+						<SotaMarkdown content={content} />
+					</GlassPanel>
 
-        <div className="max-w-4xl mx-auto">
-          <GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-emerald">
-            <SotaMarkdown content={content} />
-          </GlassPanel>
-        </div>
-      </div>
-
-      <ContentFooter 
-        shareTitle="O Risco de Ressurreição | Raphael Vitoi"
-        shareUrl="https://www.raphaelvitoi.com/biblioteca/risco-de-ressurreicao"
-        backLinkHref="/biblioteca" 
-        backLinkText="Voltar para Biblioteca"
-      />
-    </div>
-  );
+					<div className="w-full relative z-10">
+						<ResurrectionRiskSimulator />
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

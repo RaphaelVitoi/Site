@@ -1,3 +1,5 @@
+# pylint: disable=missing-module-docstring, broad-exception-caught, logging-fstring-interpolation, try-except-raise, line-too-long
+
 import asyncio
 import functools
 import json
@@ -16,15 +18,15 @@ def _normalize_gemini_model(model: str) -> str:
     """Helper SOTA: Normaliza modelos legados e experimentais Gemini para a linha estavel."""
     model_l = str(model).lower()
 
-    # Suporte nativo para a série 2.x
+    # Suporte nativo para a serie 2.x
     if "2.0" in model_l or "2.5" in model_l:
         return model
 
-    # Normaliza pro models experimentais para 1.5-pro se não for 2.x
+    # Normaliza pro models experimentais para 1.5-pro se nao for 2.x
     if "pro" in model_l and any(v in model_l for v in ("3.1", "3.0")):
         return "gemini-1.5-pro"
 
-    # Bloqueia a serie 3.x experimental (que ainda não existe estavelmente), forçando o downgrade para 2.0-flash
+    # Bloqueia a serie 3.x experimental (que ainda nao existe estavelmente), forcando o downgrade para 2.0-flash
     if any(v in model_l for v in ("3.1", "3.0")):
         return "gemini-2.0-flash"
 
@@ -86,7 +88,7 @@ async def _execute_primary_request(
     headers: dict,
     request_kwargs: dict,
 ) -> tuple[str, dict]:
-    """Canal principal de IO assíncrono."""
+    """Canal principal de IO assincrono."""
     response = None
     try:
         async with session.post(
@@ -126,7 +128,7 @@ async def call_gemini(
 ) -> tuple[str, dict]:
     """Cortex de Execucao da API Gemini SOTA."""
     # SOTA: Multi-Bucket Rate Limiter (Lei de Shannon). Respeita as cotas individuais (Pro vs Flash).
-    from llm.budget import get_rate_limiter_for_model
+    from llm.budget import get_rate_limiter_for_model  # pylint: disable=import-outside-toplevel
 
     rate_limiter = get_rate_limiter_for_model(model)
     if rate_limiter.tokens < 1:
@@ -142,11 +144,15 @@ async def call_gemini(
     request_kwargs: dict = (
         {"timeout": client_timeout} if client_timeout is not None else {}
     )
+    timeout_val = (
+        client_timeout.total if client_timeout and client_timeout.total else 60.0
+    )
 
     async with get_api_semaphore():
         try:
-            return await _execute_primary_request(
-                session, url, data, headers, request_kwargs
+            return await asyncio.wait_for(
+                _execute_primary_request(session, url, data, headers, request_kwargs),
+                timeout=timeout_val + 5.0,
             )
         except RuntimeError:
             # Erros semanticos (ex: 400, 403, 404, 429 tratados) sobem diretamente

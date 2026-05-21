@@ -4,7 +4,7 @@
             "name": "SOTA: Next.js (Frontend)",
             "type": "node-terminal",
             "request": "launch",
-            "command": "npm run dev --workspace frontend",
+            "command": "npm run dev",
             "cwd": "${workspaceFolder}"
         },
         {
@@ -22,7 +22,10 @@
     "compounds": [
         {
             "name": "SOTA: Ecossistema Híbrido (Next.js + Python)",
-            "configurations": [ "SOTA: Next.js (Frontend)", "SOTA: Python Worker (Backend)" ]
+            "configurations": [
+                "SOTA: Next.js (Frontend)",
+                "SOTA: Python Worker (Backend)"
+            ]
         }
     ]
 }

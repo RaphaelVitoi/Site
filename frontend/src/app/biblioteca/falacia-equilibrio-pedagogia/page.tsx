@@ -1,79 +1,80 @@
 /**
- * IDENTITY: A Falácia do Equilíbrio (Pedagogia Poker)
+ * IDENTITY: A Falácia do Equilíbrio GOLD
  * PATH: src/app/biblioteca/falacia-equilibrio-pedagogia/page.tsx
- * ROLE: Artigo sobre a evolução do aprendizado de poker e o fim do edge pré-flop.
+ * ROLE: Artigo pedagógico sobre a ineficiência do estudo puramente teórico.
+ * VERSION: v6.2.1 GOLD
  */
 
-import { ContentPageHeader } from '@/components/layout/ContentPageHeader';
-import { SotaMarkdown } from '@/components/ui/SotaMarkdown';
-import ContentFooter from '@/components/content/ContentFooter';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { GlassPanel } from '@/components/ui/GlassPanel';
+import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
+import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
+import ContentFooter from '@/components/ui/layout/ContentFooter';
+import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { ROUTES } from '@/constants/routes';
+import { SITE_CONFIG } from '@/constants/site';
 
 const content = `
-# A Falácia do Equilíbrio: Por que você aprende Poker errado
+# A Falácia do Equilíbrio
+### Por que o aprendizado tradicional está falhando
 
-O Poker evoluiu, e o seu edge no pré-flop está desaparecendo. Hoje, solvers resolveram as tabelas de Push/Fold. O gap de habilidade entre você e o oponente médio nessa área é mínimo. O dinheiro real está sendo ganho e perdido silenciosamente na **Nova Fronteira: O ICM Pós-Flop**.
-
----
-
-## 1. O Custo Invisível do ChipEV
-
-Dados recentes revelam uma verdade brutal: jogar uma estratégia padrão de ChipEV (focada apenas em acumular fichas) em spots de mesa final custa, em média, **10% a 12% de todo o seu ROI**. 
-
-Em potes 3-bet? O erro pode custar mais de **30% do valor da jogada**. Você grindou 8 horas para chegar na FT e devolve o lucro em duas c-bets mal calibradas porque usou a matemática linear no universo não-linear do ICM.
+Muitos jogadores acreditam que "estudar poker" é decorar tabelas de Nash ou replicar frequências de solver em spots que eles nunca encontrarão. No mundo real, a obsessão pelo equilíbrio é uma armadilha cognitiva.
 
 ---
 
-## 2. A Heurística do Downward Drift
+## 1. O Mapa não é o Território
 
-O "Downward Drift" é o ajuste automático de sizings e frequências para a realidade do ICM. 
-*   **Contração de Ranges:** Sua equidade mínima para call aumenta.
-*   **Rebaixamento de Sizings:** Apostas grandes tornam-se polarizadas demais e arriscam valuation de stack desnecessário.
-*   **Aversão à Colisão:** O valor de "passar a vez" (inércia) muitas vezes supera o ganho marginal de fichas.
+O GTO (Game Optimal Theory) é um mapa. Se o território (a mesa) está inundado ou em chamas, seguir o mapa cegamente levará ao desastre. O equilíbrio assume que todos os jogadores estão jogando de forma ideal — o que é **estatisticamente impossível** em qualquer MTT.
 
 ---
 
-## 3. A Mesa como Organismo (Antevisão)
+## 2. A Ilusão da Frequência
 
-Dominar a **Antevisão** significa olhar para a mesa e ver o "campo de força" do Risk Premium antes mesmo de receber as cartas. 
+Se um solver diz para dar check com AA em 14.5% das vezes num board específico, e você tenta replicar isso sem entender o **porquê** sistêmico, você está apenas imitando um comportamento sem capturar a essência da decisão.
 
-A maestria não está mais nas cartas que você recebe, mas na precisão com que você avalia o risco sistêmico de jogá-las. O Poker não é sobre "ganhar o pote", é sobre gerir a **Perspectiva de Capital** da sua stack em relação ao prêmio final.
+No paradigma SOTA, focamos na **Lógica Vetorial**: por que a mão quer ir pro check? É proteção? É trap? É controle de SPR sob ICM?
 
 ---
 
-## 4. Conclusões para o Aluno SOTA
+## 3. O Downward Drift e a Morte das Estratégias Estáticas
 
-Profissionalismo no Poker Racional não é um salário, é uma maneira de se conectar a um sistema complexo. 
-1.  **Esqueça o Snapshot:** O ICM não é um botão que liga na bolha. Ele é um fluxo constante.
-2.  **Solvers são Mapas, não Territórios:** Use-os para isolar variáveis, mas lembre-se que humanos apresentam défices crônicos de agressão no river.
-3.  **Proteja sua Alavancagem:** Perder fichas para o vice-líder é pior do que ganhar fichas do short-stack. O Kingmaker é um desastre tático.
+Conforme a pressão do ICM aumenta, os ranges sofrem um colapso gravitacional que chamamos de **Downward Drift**. O equilíbrio de Nash para 100bb é inútil quando você tem 25bb e um payjump de $10.000 à frente.
+
+O aprendizado soberano foca na **Adaptação Elástica**: quão longe você pode desviar do equilíbrio para maximizar seu EV real contra humanos falhos.
+
+---
+
+## 4. O Caminho do Operador
+
+1.  **Fundação:** Entender o GTO como base de segurança.
+2.  **Percepção:** Identificar o desvio populacional (Factor Ψ).
+3.  **Execução:** Aplicar a Perspectiva Matemática para extrair o máximo valor da entropia.
+
+"A excelência não é decorar a resposta certa, mas saber fazer a pergunta correta quando a matemática colapsa."
 `;
 
 export default function FalaciaEquilibrioPage() {
-  return (
-    <div className="min-h-screen bg-bg-base text-text-bright">
-      <ContentPageHeader
-        title="A Falácia do Equilíbrio"
-        subtitle="Por que o aprendizado tradicional de poker está falhando e como o Downward Drift mudou o jogo."
-        category="Pedagogia"
-        icon="fa-graduation-cap"
-      />
+	return (
+		<div className="min-h-screen bg-bg-base text-text-bright">
+			<ContentPageHeader
+				title="A Falácia do Equilíbrio"
+				subtitle="Por que o aprendizado tradicional de poker está falhando e como a visão sistêmica muda o jogo."
+				category="Pedagogia SOTA"
+				icon="fa-graduation-cap"
+			/>
 
-      <div className="sota-container py-12 md:py-24">
-        <div className="max-w-4xl mx-auto">
-          <GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-amber">
-            <SotaMarkdown content={content} />
-          </GlassPanel>
-        </div>
-      </div>
+			<div className="sota-container py-12 md:py-24">
+				<div className="max-w-4xl mx-auto">
+					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-indigo">
+						<SotaMarkdown content={content} />
+					</GlassPanel>
+				</div>
+			</div>
 
-      <ContentFooter 
-        shareTitle="A Falácia do Equilíbrio | Raphael Vitoi"
-        shareUrl="https://www.raphaelvitoi.com/biblioteca/falacia-equilibrio-pedagogia"
-        backLinkHref="/biblioteca" 
-        backLinkText="Voltar para Biblioteca"
-      />
-    </div>
-  );
+			<ContentFooter
+				shareTitle={`A Falácia do Equilíbrio | ${SITE_CONFIG.author}`}
+				shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.FALACIA_EQUILIBRIO}`}
+				backLinkHref={ROUTES.BIBLIOTECA}
+				backLinkText="Voltar para Biblioteca"
+			/>
+		</div>
+	);
 }

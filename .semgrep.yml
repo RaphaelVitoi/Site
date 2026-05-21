@@ -19,9 +19,44 @@ rules:
           @app.$METHOD(...)
           async def $FUNC(..., $VAR = Depends(...), ...):
             ...
+
+  - id: sota-nextjs-auth-enforcement
+    languages:
+      - typescript
+    message: "[SOTA SECURITY] Endpoint Next.js API exposto sem blindagem 'auth()'. Todos os routes devem validar a sessao."
+    patterns:
+      - pattern: |
+          export async function $METHOD(...) {
+            ...
+          }
+      - pattern-not: |
+          export async function $METHOD(...) {
+            ...
+            const $SESSION = await auth();
+            if (!$SESSION) { ... }
+            ...
+          }
       # Filtro 3: Ignora a rota raiz (Health Check público)
       - pattern-not: |
           @app.get("/")
           async def root_health_check(...):
             ...
     severity: ERROR
+
+  - id: sota-secrets-hardcoded
+    languages:
+      - python
+      - typescript
+      - javascript
+    message: '[SOTA SECURITY] Exposição detectada de segredo hardcoded (p/secrets).'
+    patterns:
+      - pattern-regex: "(?i)(api_key|password|secret|token)\\s*=\\s*['\"][a-zA-Z0-9]{15,}['\"]"
+    severity: ERROR
+
+  - id: sota-nextjs-dangerous-html
+    languages:
+      - typescript
+      - javascript
+    message: '[SOTA SECURITY] Uso de dangerouslySetInnerHTML pode causar XSS (p/nextjs, p/typescript).'
+    pattern: dangerouslySetInnerHTML={...}
+    severity: WARNING

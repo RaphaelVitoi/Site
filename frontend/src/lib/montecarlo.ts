@@ -6,62 +6,72 @@
  */
 
 export interface MonteCarloConfig {
-    iterations?: number;
+	iterations?: number;
 }
 
 function pickWinner(
-    numPlayers: number,
-    stacks: number[],
-    availablePlayers: number,
-    isBusted: boolean[] | null,
-    remainingTotalChips: number
+	numPlayers: number,
+	stacks: number[],
+	availablePlayers: number,
+	isBusted: boolean[] | null,
+	remainingTotalChips: number,
 ): number {
-    const r = Math.random() * remainingTotalChips;
-    let cumulative = 0;
-    for ( let playerIdx = 0; playerIdx < numPlayers; playerIdx++ ) {
-        const isActive = isBusted ? !isBusted[playerIdx] : ( availablePlayers & ( 1 << playerIdx ) ) !== 0;
-        if ( isActive ) {
-            cumulative += stacks[playerIdx] || 0;
-            if ( r <= cumulative ) return playerIdx;
-        }
-    }
-    for ( let playerIdx = 0; playerIdx < numPlayers; playerIdx++ ) {
-        const isActive = isBusted ? !isBusted[playerIdx] : ( availablePlayers & ( 1 << playerIdx ) ) !== 0;
-        if ( isActive ) return playerIdx;
-    }
-    return -1;
+	const r = Math.random() * remainingTotalChips;
+	let cumulative = 0;
+	for (let playerIdx = 0; playerIdx < numPlayers; playerIdx++) {
+		const isActive = isBusted
+			? !isBusted[playerIdx]
+			: (availablePlayers & (1 << playerIdx)) !== 0;
+		if (isActive) {
+			cumulative += stacks[playerIdx] || 0;
+			if (r <= cumulative) return playerIdx;
+		}
+	}
+	for (let playerIdx = 0; playerIdx < numPlayers; playerIdx++) {
+		const isActive = isBusted
+			? !isBusted[playerIdx]
+			: (availablePlayers & (1 << playerIdx)) !== 0;
+		if (isActive) return playerIdx;
+	}
+	return -1;
 }
 
 function runSingleMonteCarloIteration(
-    numPlayers: number,
-    stacks: number[],
-    activePrizes: number[],
-    totalChips: number,
-    totalEquity: number[]
+	numPlayers: number,
+	stacks: number[],
+	activePrizes: number[],
+	totalChips: number,
+	totalEquity: number[],
 ) {
-    let remainingTotalChips = totalChips;
-    let availablePlayers = ( 1 << numPlayers ) - 1; // Bitmask (funciona rápido até 31 jogadores)
+	let remainingTotalChips = totalChips;
+	let availablePlayers = (1 << numPlayers) - 1; // Bitmask (funciona rápido até 31 jogadores)
 
-    // Se N > 30, usamos array de booleans (fallback de segurança)
-    const isBusted = numPlayers > 30 ? new Array( numPlayers ).fill( false ) : null;
+	// Se N > 30, usamos array de booleans (fallback de segurança)
+	const isBusted = numPlayers > 30 ? new Array(numPlayers).fill(false) : null;
 
-    for ( const prize of activePrizes ) {
-        if ( remainingTotalChips <= 0 ) break;
+	for (const prize of activePrizes) {
+		if (remainingTotalChips <= 0) break;
 
-        const winnerIdx = pickWinner( numPlayers, stacks, availablePlayers, isBusted, remainingTotalChips );
+		const winnerIdx = pickWinner(
+			numPlayers,
+			stacks,
+			availablePlayers,
+			isBusted,
+			remainingTotalChips,
+		);
 
-        // Distribui o prêmio e remove o jogador da pool
-        if ( winnerIdx !== -1 ) {
-            totalEquity[winnerIdx] += prize || 0;
-            remainingTotalChips -= stacks[winnerIdx] || 0;
+		// Distribui o prêmio e remove o jogador da pool
+		if (winnerIdx !== -1) {
+			totalEquity[winnerIdx] = (totalEquity[winnerIdx] ?? 0) + (prize || 0);
+			remainingTotalChips -= stacks[winnerIdx] || 0;
 
-            if ( numPlayers > 30 && isBusted ) {
-                isBusted[winnerIdx] = true;
-            } else {
-                availablePlayers &= ~( 1 << winnerIdx ); // Limpa o bit
-            }
-        }
-    }
+			if (numPlayers > 30 && isBusted) {
+				isBusted[winnerIdx] = true;
+			} else {
+				availablePlayers &= ~(1 << winnerIdx); // Limpa o bit
+			}
+		}
+	}
 }
 
 /**
@@ -75,27 +85,27 @@ function runSingleMonteCarloIteration(
  * @returns Array de Equities monetárias para cada jogador
  */
 export function calculateIcmMonteCarlo(
-    stacks: number[],
-    prizes: number[],
-    config: MonteCarloConfig = {}
+	stacks: number[],
+	prizes: number[],
+	config: MonteCarloConfig = {},
 ): number[] {
-    const iterations = config.iterations || 10000;
-    const numPlayers = stacks.length;
+	const iterations = config.iterations || 10000;
+	const numPlayers = stacks.length;
 
-    // Se há mais prêmios que jogadores, trunca os prêmios
-    const activePrizes = prizes.slice( 0, numPlayers );
-    const totalEquity = new Array( numPlayers ).fill( 0 );
+	// Se há mais prêmios que jogadores, trunca os prêmios
+	const activePrizes = prizes.slice(0, numPlayers);
+	const totalEquity = new Array(numPlayers).fill(0);
 
-    // Se todos os stacks são 0, ou não há prêmios
-    const totalChips = stacks.reduce( ( a, b ) => a + b, 0 );
-    if ( totalChips <= 0 || activePrizes.length === 0 ) {
-        return totalEquity;
-    }
+	// Se todos os stacks são 0, ou não há prêmios
+	const totalChips = stacks.reduce((a, b) => a + b, 0);
+	if (totalChips <= 0 || activePrizes.length === 0) {
+		return totalEquity;
+	}
 
-    for ( let i = 0; i < iterations; i++ ) {
-        runSingleMonteCarloIteration( numPlayers, stacks, activePrizes, totalChips, totalEquity );
-    }
+	for (let i = 0; i < iterations; i++) {
+		runSingleMonteCarloIteration(numPlayers, stacks, activePrizes, totalChips, totalEquity);
+	}
 
-    // Tira a média
-    return totalEquity.map( e => e / iterations );
+	// Tira a média
+	return totalEquity.map((e) => e / iterations);
 }

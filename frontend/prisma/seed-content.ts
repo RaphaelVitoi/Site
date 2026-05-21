@@ -20,7 +20,7 @@ export async function seedContent( prisma: PrismaClient ) {
     console.log( `  [+] Lição SOTA injetada: ${lesson.title}` );
 
     const contentId = crypto.randomUUID ? crypto.randomUUID() : 'c' + Math.random().toString( 36 ).substring( 2, 15 );
-    const contentFalacia = await ( prisma as any ).content.upsert( {
+    const contentFalacia = await ( prisma as PrismaClient & { content: { upsert: (arg: unknown) => Promise<{ title: string }> } } ).content.upsert( {
         where: { slug: 'falacia-das-pot-odds-e-perspectiva' },
         update: {},
         create: {
