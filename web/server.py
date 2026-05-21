@@ -26,9 +26,11 @@ except Exception:  # noqa: BLE001 - fallback de resiliencia para ambientes sem m
 from web.handlers import (
     handle_add_task,
     handle_ask_oracle,
+    handle_bucket_op,
     handle_frontend_logs,
     handle_get_db_summary,
     handle_get_key_health_summary,
+    handle_get_resource_usage,
     handle_get_state,
     handle_get_status,
     handle_get_system_status,
@@ -36,9 +38,15 @@ from web.handlers import (
     handle_get_tournaments,
     handle_health,
     handle_rag_ingest,
+    handle_rag_query,
     handle_set_state,
 )
-from web.middleware import auth_middleware, cors_middleware, rate_limit_middleware
+from web.middleware import (
+    auth_middleware,
+    cookie_middleware,
+    cors_middleware,
+    rate_limit_middleware,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +65,13 @@ async def handle_predictive_profile(_request: web.Request) -> web.Response:
 
 async def start_api_server(manager: QueueManager, port: int = 17042):
     """Inicializa, configura rotas e executa o servidor web SOTA na porta especificada."""
-    app = web.Application(middlewares=[cors_middleware, rate_limit_middleware, auth_middleware])
+    app = web.Application(middlewares=[cors_middleware, rate_limit_middleware, auth_middleware, cookie_middleware])
     app['manager'] = manager
     app['lab_manager'] = LabManager() # Instancia o DAO do Laboratorio SOTA
     app['audit_engine'] = AuditEngine(manager) # Instancia o Motor de Auditoria SOTA
     app['start_time'] = time.time()
     app.add_routes([
+        web.get('/ping', handle_ping),
         web.get('/db-summary', handle_get_db_summary),
         web.get('/health', handle_health),
         web.post('/add', handle_add_task),
@@ -77,6 +86,9 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
         web.post('/api/logs/frontend', handle_frontend_logs),
         web.post('/ingest', handle_rag_ingest),
         web.get('/predictive-profile', handle_predictive_profile),
+        web.get('/resources', handle_get_resource_usage),
+        web.post('/rag/query', handle_rag_query),
+        web.post('/buckets', handle_bucket_op),
     ])
 
     runner = web.AppRunner(app)

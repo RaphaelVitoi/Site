@@ -173,6 +173,30 @@ async def auth_middleware(request, handler):
 
 
 @web.middleware
+async def cookie_middleware(request, handler):
+    """
+    SOTA v6.2.1 GOLD: Middleware de Cookies para Gestao Isomorfica de Sessao.
+    Garante que estados de IA sejam persistidos de forma segura no Browser.
+    """
+    session_id = request.cookies.get("SOTA_SESSION_ID")
+    if not session_id:
+        session_id = secrets.token_urlsafe(32)
+        
+    response = await handler(request)
+    
+    # Injeta cookie de sessao se nao existir ou se for renovado
+    if not request.cookies.get("SOTA_SESSION_ID"):
+        response.set_cookie(
+            "SOTA_SESSION_ID", 
+            session_id, 
+            httponly=True, 
+            secure=True, 
+            samesite="Strict",
+            max_age=3600 * 24 * 7 # 7 dias
+        )
+    return response
+
+@web.middleware
 async def cors_middleware(request, handler):
     """Injeta cabecalhos CORS em requisicoes de origens confiaveis."""
     origin = request.headers.get("Origin")
