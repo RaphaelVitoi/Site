@@ -28,6 +28,13 @@ def _get_bg_tasks(app) -> set:
     return app["bg_tasks"]
 
 
+from utils.harmonizer import harmonizer
+
+@harmonizer.ultra_fast_async
+async def handle_ping(_request: web.Request) -> web.Response:
+    """Heartbeat SOTA para monitoramento de latencia de rede."""
+    return web.json_response({"status": "PONG", "timestamp": time.time()})
+
 async def handle_add_task(request):
     """Lida com a adicao de novas tarefas a fila."""
     manager = request.app["manager"]
@@ -288,6 +295,67 @@ async def handle_rag_ingest(request) -> web.Response:
         logger.error("Falha ao disparar ingestao RAG: %s", e)
         return web.json_response({"error": str(e)}, status=500)
 
+
+from utils.cache import cache as sota_cache
+from utils.storage import buckets as sota_buckets
+from utils.resources import ResourceGuard
+from shared.types.schemas import RAGQuery, SOTAMetrics
+
+async def handle_get_resource_usage(_request: web.Request) -> web.Response:
+    """SOTA v6.2.1 GOLD: Monitoramento de VRAM e RAM em tempo real."""
+    try:
+        usage = {
+            "ram": ResourceGuard.get_ram_usage(),
+            "vram": ResourceGuard.get_vram_usage(),
+            "is_healthy": ResourceGuard.check_health()
+        }
+        return web.json_response({"status": "SUCCESS", "usage": usage})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_rag_query(request: web.Request) -> web.Response:
+    """SOTA v6.2.1 GOLD: Consulta RAG com Caching de Multi-Tier."""
+    try:
+        data = await request.json()
+        query_data = RAGQuery.model_validate(data)
+        
+        # Check Cache Tier 1/2
+        cache_key = f"rag_query:{query_data.query}:{query_data.top_k}"
+        cached_result = sota_cache.get(cache_key)
+        if cached_result:
+            return web.json_response({"status": "SUCCESS", "answer": cached_result, "cached": True})
+
+        rag = await _te.get_rag_async()
+        answer = await rag.query_memory(query_data.query, n_results=query_data.top_k, local_only=True)
+        
+        # Save to Cache
+        sota_cache.set(cache_key, answer)
+        
+        return web.json_response({"status": "SUCCESS", "answer": answer, "cached": False})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_bucket_op(request: web.Request) -> web.Response:
+    """SOTA v6.2.1 GOLD: Operacoes de Bucketing (Storage Abstraction)."""
+    try:
+        data = await request.json()
+        op = data.get("op") # 'upload' or 'download'
+        bucket = data.get("bucket", "default")
+        filename = data.get("filename")
+        
+        if op == "upload":
+            content = data.get("content", "").encode()
+            sota_buckets.upload_file(bucket, filename, content)
+            return web.json_response({"status": "SUCCESS", "message": f"File {filename} uploaded to {bucket}"})
+        elif op == "download":
+            content = sota_buckets.download_file(bucket, filename)
+            if content:
+                return web.json_response({"status": "SUCCESS", "content": content.decode()})
+            return web.json_response({"error": "File not found"}, status=404)
+        
+        return web.json_response({"error": "Invalid operation"}, status=400)
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
 
 async def handle_frontend_logs(request) -> web.Response:
     """Endpoint para processar logs e eventos vindos do Frontend SOTA."""
