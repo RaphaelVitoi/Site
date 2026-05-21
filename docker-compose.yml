@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: .claude/Dockerfile.backend
+      dockerfile: Dockerfile.backend
     ports:
       - "8000:8000"
       - "17042:17042"
@@ -19,6 +19,13 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
+      - AUTH_SECRET_FILE=/run/secrets/auth_secret
+    secrets:
+      - auth_secret
     ports:
       - "3000:3000"
     restart: always
+
+secrets:
+  auth_secret:
+    file: ./.claude/secrets/auth_secret.txt

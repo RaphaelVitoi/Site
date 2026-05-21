@@ -1,0 +1,19 @@
+import { useEffect, useState } from 'react';
+export function useDebouncedLocalStorage<T>( key: string, initialValue: T, _delay: number = 500 ): [T, ( val: T ) => void] {
+    const [value, setValue] = useState<T>( initialValue );
+    useEffect( () => {
+        try {
+            const item = window.localStorage.getItem( key );
+            if ( item ) setValue( JSON.parse( item ) );
+        } catch ( error ) {
+            console.warn( error );
+        } catch ( error: unknown ) {
+            console.warn( "[useDebouncedLocalStorage] Parse error:", error instanceof Error ? error.message : String(error) );
+        }
+    }, [key] );
+    const setDebouncedValue = ( newValue: T ) => {
+        setValue( newValue );
+        window.localStorage.setItem( key, JSON.stringify( newValue ) );
+    };
+    return [value, setDebouncedValue];
+}

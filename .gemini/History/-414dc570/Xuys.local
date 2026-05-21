@@ -1,0 +1,3 @@
+# Arquivo de Variaveis de Ambiente (Ignorado pelo Git)
+# Mantenha suas chaves aqui. O task_executor.py le este arquivo diretamente.
+$env:GEMINI_API_KEY_11 = 

@@ -1,0 +1,57 @@
+﻿﻿{
+    "@verifier": {
+        "pattern": "test|bug|qa|falha|erro|quebr|repar|validar|funcional"
+    },
+    "@skillmaster": {
+        "pattern": "backup|manuten|atualiz|cron|tarefa|rotina|limpeza|otimizacao|agend"
+    },
+    "@prompter": {
+        "pattern": "prompt|contexto|instrucao|comando|linguagem|diretriz|formato|otimiz|refin"
+    },
+    "@validador": {
+        "pattern": "matematic|icm|nash|gto|teoria|calculo|ev|roi|prova|evidencia|verificacao|consistencia|validar|precisao"
+    },
+    "@planner": {
+        "pattern": "planej|prd|spec|especifica|passo a passo|roadmap|milestone|etapas"
+    },
+    "@historian": {
+        "pattern": "relatorio|produtividade|custo|analise de log|historico|performance|metricas|tendencia|insights|dados"
+    },
+    "@sequenciador": {
+        "pattern": "sequenci|ordem|dependencia|cadencia|fluxo|deadlock|bloqueio|pipeline|workflow"
+    },
+    "@securitychief": {
+        "pattern": "vulnerab|xss|acesso|autentica|login|senha|rbac|permissao|auth|vazamento|firewall|cripto|ameaca|risco|seguranca|privacidade"
+    },
+    "@implementor": {
+        "pattern": "codar|implement|criar|script|python|frontend|backend|react|next"
+    },
+    "@maverick": {
+        "pattern": "estrategi|inova|sentinela|ideia|analise|risco|filosofia|reflexao|disrup|meta|dilema|paradoxo|cosmovisao|principios|visao|futuro"
+    },
+    "@organizador": {
+        "pattern": "organiz|documenta|arquiv|sync|limp|estrutura|padronizacao|gerenciamento|homeostase|diretorio"
+    },
+    "@bibliotecario": {
+        "pattern": "rag|memori|historic|lembr|chroma|vetor|conhecimento|dados|informacao|contexto|documentos"
+    },
+    "@auditor": {
+        "pattern": "audit|revis|check|seguran|integridade|conformidade|compliance|etica|governanca|qualidade"
+    },
+    "@dispatcher": {
+        "pattern": "backlog|ideias|priorizacao|organizar|epico|multiplas|frentes|lista"
+    },
+    "@curator": {
+        "pattern": "estetic|ux|ui|texto|copy|seo|trafego|keyword|tom|voz|narrativa|experiencia|design|arte"
+    },
+    "@chico": {
+        "pattern": "sintese|consenso|democrat|harmonia|mediacao|conflito|orquestra|gerenc|infraestrutura|automacao|log|monitoramento|api|sistema|admin"
+    },
+    "@pesquisador": {
+        "pattern": "pesquis|busc|mercado|quem|referencia|concorrent|web|internet|sota|tendencia|analise"
+    },
+    "@architect": {
+        "pattern": "design|conceito|estrutura|fundacao|visao|topologia|blueprint|arquitetura|macro|esquema|diagrama|fluxo|desenh|projeto"
+    }
+}
+{}

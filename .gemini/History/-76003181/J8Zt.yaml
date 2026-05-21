@@ -1,0 +1,16 @@
+name: Pokerserver
+version: 0.0.1
+mcpServers:
+  - name: github-vitoi
+    command: npx
+    args:
+      - -y
+      - "@modelcontextprotocol/server-github"
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}$
+models:
+  - name: "Gemini 2.5 Pro (Fix 404)"
+    provider: "google-sdk"
+    model: "gemini-2.5-pro" # Remova o "google/" da frente se existir
+    apiKey: ${GEMINI_API_KEY}
+    apiBase: "https://generativelanguage.googleapis.com/v1beta" # Force o v1beta

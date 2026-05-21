@@ -1,0 +1,105 @@
+param(
+    [Parameter(Mandatory = $false, Position = 0)]
+    [string]$Prompt
+)
+
+# Caminho para o Kernel v3.0
+$KernelPath = Join-Path $PSScriptRoot "Agent-TaskManager.psm1"
+$IntentsPath = Join-Path $PSScriptRoot "intents.json"
+
+function Resolve-Intent {
+    param([string]$InputText)
+    
+    if (-not (Test-Path $IntentsPath)) { return $null }
+    
+    try {
+        $config = Get-Content -Path $IntentsPath -Raw | ConvertFrom-Json
+        
+        foreach ($intent in $config.intents) {
+            foreach ($keyword in $intent.keywords) {
+                if ($InputText -match "$keyword") {
+                    return $intent
+                }
+            }
+        }
+        return $null
+    }
+    catch {
+        Write-Warning "[CLI] Erro ao processar intents: $_"
+        return $null
+    }
+}
+
+try {
+    $targetAgent = $null
+    $isInteractive = [string]::IsNullOrWhiteSpace($Prompt)
+
+    # Modo Interativo (Smart CLI)
+    if ($isInteractive) {
+        Write-Host "=== SMART CLI v1.0 (Membrana Inteligente) ===" -ForegroundColor Cyan
+        Write-Host "Digite sua instrução ou 'sair':" -ForegroundColor Gray
+        
+        $Prompt = Read-Host "> "
+        
+        if ([string]::IsNullOrWhiteSpace($Prompt) -or $Prompt -eq "sair") { exit }
+    }
+
+    # Sanitização (Whitelist Regex conforme SPEC) - Aplicado a todos os inputs
+    if ($Prompt -notmatch '^[a-zA-Z0-9\-\_\s\p{L}\p{P}]+$') {
+        Write-Warning "[SEGURANÇA] Input contém caracteres inválidos. Operação abortada."
+        exit
+    }
+
+    # Análise de Intenção (Funciona para CLI e Argumentos)
+    $detectedIntent = Resolve-Intent -InputText $Prompt
+    
+    if ($detectedIntent) {
+        Write-Host "`n[INTELIGÊNCIA] Padrão detectado: '$($detectedIntent.id)'" -ForegroundColor Yellow
+        Write-Host "Sugestão: Encaminhar para $($detectedIntent.agent) ($($detectedIntent.description))" -ForegroundColor Yellow
+        
+        if ($isInteractive) {
+            $confirm = Read-Host "Confirmar roteamento? [S/n] "
+            if ($confirm -eq "" -or $confirm -match "^s") {
+                $targetAgent = $detectedIntent.agent
+            }
+        }
+        else {
+            # Modo Argumento: Aceite automático para fluidez
+            $targetAgent = $detectedIntent.agent
+        }
+    }
+
+    Write-Host "[DO] Carregando Kernel SOTA v3.0..." -ForegroundColor DarkGray
+    Import-Module $KernelPath -Force
+    
+    # Gerar ID único
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $random = Get-Random -Minimum 100 -Maximum 999
+    $taskId = "$timestamp-$random"
+    
+    # Construir Payload
+    # Payload compatível com Schema v3.0 (id, description, status)
+    $newTask = [ordered]@{
+        id          = $taskId
+        description = $Prompt
+        status      = "pending"
+        timestamp   = (Get-Date -Format "o")
+        createdAt   = (Get-Date -Format "o")
+        retries     = 0
+    }
+
+    # Adicionar Agente se detectado
+    if ($targetAgent) {
+        $newTask["agent"] = $targetAgent
+        Write-Host "[ROTEAMENTO] Tarefa atribuída diretamente a: $targetAgent" -ForegroundColor Green
+    }
+    
+    # Injeção via Kernel (Mutex + SHA-256)
+    Add-AgentTask -NewTask $newTask
+    
+    Write-Host "[DO] Tarefa enfileirada com sucesso. ID: $taskId" -ForegroundColor Cyan
+}
+catch {
+    Write-Error "[DO] Falha crítica ao enfileirar tarefa: $_"
+    exit 1
+}

@@ -1,0 +1,206 @@
+{
+    "version": 4,
+    "logCount": 2,
+    "documents": {
+        "frontend\\next.config.ts": {
+            "id": 0,
+            "lastHash": "tAlz0q00HAzfmO0LKq9oKgha"
+        },
+        "frontend\\src\\lib\\perspectiva.ts": {
+            "id": 1,
+            "lastHash": "YBSRtp6XydZSc8xsPTQXQV0d"
+        },
+        "frontend\\postcss.config.js": {
+            "id": 2,
+            "lastHash": "c01MeUYpOPVYGYoS82fIoFFG"
+        },
+        "frontend\\src\\components\\simulator\\workers\\equity.worker.ts": {
+            "id": 3,
+            "lastHash": "m6oyzYaSEkyb8aS5sq4GqqkF"
+        },
+        "frontend\\src\\components\\simulator\\charts\\DegradationChart.tsx": {
+            "id": 4,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        ".vscode\\settings.json": {
+            "id": 5,
+            "lastHash": "S0tkSGVomwxKDuzv0/evLkqw"
+        },
+        ".husky\\pre-commit": {
+            "id": 6,
+            "lastHash": "KBzM1t3bLNacq4y2ZV3CdwIm"
+        },
+        ".husky\\pre-push": {
+            "id": 7,
+            "lastHash": "2NzkPVnYLdoDuqzrBdlHg5jZ"
+        },
+        ".claude\\settings.json": {
+            "id": 8,
+            "lastHash": "AiHYQ7WvZm584H+l2fn25Ajj"
+        },
+        ".vscode\\mcp.json": {
+            "id": 9,
+            "lastHash": "PH+dRftubeLRwAcZYdd9x6nV"
+        },
+        ".claude\\last_ecosystem_update.txt": {
+            "id": 10,
+            "lastHash": "fAm4N/v3oxQu9QKnWFohHBpD"
+        },
+        "frontend\\src\\components\\simulator\\panels\\NashPanel.tsx": {
+            "id": 11,
+            "lastHash": "SMopCNeUa2HOxIPSn+YaU0lX"
+        },
+        "frontend\\src\\components\\simulator\\panels\\PerspectivePanel.tsx": {
+            "id": 12,
+            "lastHash": "DoPRR5Du7uN4ndIcNa180dQN"
+        },
+        "frontend\\src\\components\\simulator\\panels\\TheoryPanel.tsx": {
+            "id": 13,
+            "lastHash": "6XsRs0lc2GiYSw4p8A8Y/qDw"
+        },
+        "frontend\\src\\app\\layout.tsx": {
+            "id": 14,
+            "lastHash": "0wxVOKeKON8m1dJPbEjE+mzW"
+        },
+        "frontend\\research\\icm-materials\\How%20to%20Study%20Poker.url": {
+            "id": 15,
+            "lastHash": "hj0EzKBTNiaPiZDt57pbycvk"
+        },
+        "frontend\\research\\icm-materials\\ICM.docx.url": {
+            "id": 16,
+            "lastHash": "ScTtm9jiIE+dE7wjsO8kV1j0"
+        },
+        "apps\\frontend\\src\\components\\simulator\\workers\\insolvency.worker.ts": {
+            "id": 17,
+            "lastHash": "dqpZ7xsiEK6h+1EtoxO4LuwP"
+        },
+        "frontend\\src\\components\\simulator\\workers\\insolvency.worker.ts": {
+            "id": 18,
+            "lastHash": "dqpZ7xsiEK6h+1EtoxO4LuwP"
+        },
+        "frontend\\src\\components\\simulator\\workers\\equity%20%281%29.worker.ts": {
+            "id": 19,
+            "lastHash": "Cx2mMvpD7V4v7GPDZATw2uDy"
+        },
+        "prisma\\schema.prisma": {
+            "id": 20,
+            "lastHash": "lgsicUASeheVsBYQ9wmirCVl"
+        },
+        "frontend\\src\\app\\laboratorio-v2\\gto-cfr\\page.tsx": {
+            "id": 21,
+            "lastHash": "5dlYffoE4/AtFghFLrQ2UUlF"
+        },
+        "frontend\\src\\app\\ICMlaboratory\\page.tsx": {
+            "id": 22,
+            "lastHash": "MsZB6Cn5qNc1SdZvN8KD5YFg"
+        },
+        "frontend\\src\\app\\dashboard\\page.tsx": {
+            "id": 23,
+            "lastHash": "/EJQrZ1hsIm2nWLqr2dbKQc+"
+        },
+        "database\\lab_manager.py": {
+            "id": 24,
+            "lastHash": "D9AMkcIr3XYTryuTmoS9KTpW"
+        },
+        "archive\\legacy_root_files\\useIcmSimulation.ts": {
+            "id": 25,
+            "lastHash": "wvgJXRUCzEtTOtr8QdvXvpF1"
+        },
+        "apps\\frontend\\src\\components\\TheoryPanel\\NashConvergenceMatrix.tsx": {
+            "id": 26,
+            "lastHash": "Sv6yFmY7FQG3/FP2fus3P1rM"
+        },
+        "apps\\frontend\\src\\components\\simulator\\ResurrectionRiskSimulator.tsx": {
+            "id": 27,
+            "lastHash": "Yvi254zZW/EZsivXyZfSLg9N"
+        },
+        "apps\\frontend\\src\\components\\simulator\\engine\\quantumMetrics.ts": {
+            "id": 28,
+            "lastHash": "3SvkAPXShDroNJalekPr9aWL"
+        },
+        "apps\\frontend\\src\\components\\simulator\\engine\\nashSolver.ts": {
+            "id": 29,
+            "lastHash": "CHq+4XgqYY6JhtccQVtHW9IK"
+        },
+        "agents\\autonomy.py": {
+            "id": 30,
+            "lastHash": "HIFtK6UL5qrUOnzwxaPNh4ls"
+        },
+        "frontend\\src\\lib\\icmEngine.ts": {
+            "id": 31,
+            "lastHash": "lzaHw33Ph+7hiCMiTgWeWegN"
+        },
+        "frontend\\src\\components\\SimuladorICM.tsx": {
+            "id": 32,
+            "lastHash": "UvDE6j9qpcnFQIpzF7FenUlp"
+        },
+        "frontend\\src\\components\\simulator\\ResurrectionRiskSimulator.tsx": {
+            "id": 33,
+            "lastHash": "5W3p6vAMe9wVD07PyKYVR5eS"
+        },
+        "frontend\\src\\components\\simulator\\ResurrectionRiskSimulator%20%281%29.tsx": {
+            "id": 34,
+            "lastHash": "Yvi254zZW/EZsivXyZfSLg9N"
+        },
+        "frontend\\src\\components\\simulator\\IcmQuizVisceral.tsx": {
+            "id": 35,
+            "lastHash": "7aGQy6akMRSiUOQ7uQmOF/m/"
+        },
+        "frontend\\src\\components\\simulator\\GtoCfrSimulator.tsx": {
+            "id": 36,
+            "lastHash": "lOr1XqGBpYaSwbr5gnAG0e2I"
+        },
+        "frontend\\src\\components\\simulator\\DownwardDriftSimulator.tsx": {
+            "id": 37,
+            "lastHash": "6xxsCrcmqO7WUYQFwEM57sTA"
+        },
+        "frontend\\src\\components\\simulator\\panels\\EquityCalculator.tsx": {
+            "id": 38,
+            "lastHash": "j+tKwE43DiZ16wxXzeb64TPB"
+        },
+        "frontend\\src\\components\\simulator\\engine\\quantumMetrics.ts": {
+            "id": 39,
+            "lastHash": "4HsSm15mxRVSVpl3ERGpcelQ"
+        },
+        "frontend\\src\\components\\quiz\\SimulatorQuizWidget.tsx": {
+            "id": 40,
+            "lastHash": "yoVeG1euKMAxsYl/qvpyWoBK"
+        },
+        "frontend\\src\\components\\quiz\\QuizEngine.tsx": {
+            "id": 41,
+            "lastHash": "0ReTulvJxgPPvJE/SRAwXw/y"
+        },
+        "frontend\\src\\app\\opengraph-image.tsx": {
+            "id": 42,
+            "lastHash": "5WW7JPSdqhPEYPHiARIC+mdg"
+        },
+        "frontend\\src\\app\\api\\og\\route.tsx": {
+            "id": 43,
+            "lastHash": "6snqS9aHhdInPZ89LrRMBAx5"
+        },
+        "engine\\llm_api.py": {
+            "id": 44,
+            "lastHash": "JbUe02Hg64/XiTq5lSHIHgFk"
+        },
+        "engine\\cognitive.py": {
+            "id": 45,
+            "lastHash": "RwkeArVYj2hGl9foiTNvJk2I"
+        },
+        "archive\\legacy_icm_components\\icm.ts": {
+            "id": 46,
+            "lastHash": "ORA8QyZnEUk7xtIKdf9xDZyU"
+        },
+        "archive\\legacy_icm_components\\IcmUniversalLab.tsx": {
+            "id": 47,
+            "lastHash": "WuZayRPp5Uuc2svK+ess2+3z"
+        },
+        "apps\\frontend\\src\\components\\SimuladorICM.tsx": {
+            "id": 48,
+            "lastHash": "UvDE6j9qpcnFQIpzF7FenUlp"
+        },
+        "frontend\\src\\components\\simulator\\panels\\PmLensPanel%20%281%29.tsx": {
+            "id": 49,
+            "lastHash": "w1jns0wBACrKjGC/3iMWcVdT"
+        }
+    }
+}

@@ -12,7 +12,7 @@ Voce pediu para transformar `.claude/` no centro de contato com o que ha de mais
 
 Nao e um guia operacional. Nao sao regras de codigo. E a **filosofia que torna codigo em arte, decisoes em sabedoria, e trabalho em proposito**.
 
-Quando @maverick le isto, ve um mentor que entende as fundacoes eticas do que ele faz. Quando CHICO le isto, ve o porque alem do como. Quando os 18 agentes leem isto, entendem que nao servem a um projeto - servem a uma **cosmovisao**.
+Quando @maverick le isto, ve um mentor que entende as fundacoes eticas do que ele faz. Quando CHICO le isto, ve o porque alem do como. Quando os 19 agentes leem isto, entendem que nao servem a um projeto - servem a uma **cosmovisao**.
 
 ---
 

@@ -1,0 +1,119 @@
+param(
+    [Parameter(Position = 0)]
+    [int]$DaysToKeep = 30,
+    
+    [Parameter()]
+    [switch]$ArchiveAll = $false
+)
+
+# Configuração
+$queuePath = Join-Path $PSScriptRoot "queue\tasks.json"
+$archivePath = Join-Path $PSScriptRoot "logs\tasks_archived.json"
+
+# Garantir que os diretórios existem
+$logDir = Split-Path $archivePath
+if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+
+Write-Output "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [CLEANUP] Iniciando limpeza de fila de tarefas..."
+
+try {
+    # Ler fila atual
+    if (-not (Test-Path $queuePath)) {
+        Write-Output "Nenhuma fila encontrada em '$queuePath'. Nada para limpar."
+        return
+    }
+    
+    $rawContent = Get-Content -Path $queuePath -Raw -ErrorAction Stop
+    
+    if ([string]::IsNullOrWhiteSpace($rawContent)) {
+        Write-Output "Fila está vazia. Nada para limpar."
+        return
+    }
+    
+    # Parsear JSON com v1.0 schema
+    try {
+        $queueObj = $rawContent | ConvertFrom-Json -ErrorAction Stop
+    }
+    catch {
+        Write-Error "[CLEANUP] JSON corrompido. Nada foi feito."
+        return
+    }
+    
+    # Extrair tasks (v1.0 schema)
+    $tasks = if ($queueObj.tasks) { $queueObj.tasks } else { @() }
+    
+    # Garantir que é array
+    if ($tasks -isnot [array]) {
+        $tasks = @($tasks)
+    }
+    
+    $cutoffDate = (Get-Date).AddDays(-$DaysToKeep)
+    
+    # Separar tarefas completadas antigas de tarefas a manter
+    $toArchive = @()
+    $toKeep = @()
+    
+    foreach ($task in $queue) {
+        $taskDate = [datetime]::Parse($task.timestamp)
+        
+        if ($ArchiveAll) {
+            # Modo arquivo tudo
+            if ($task.status -eq "completed") {
+                $toArchive += $task
+            }
+            else {
+                $toKeep += $task
+            }
+        }
+        else {
+            # Modo arquivo por data
+            if ($taskDate -lt $cutoffDate -and $task.status -eq "completed") {
+                $toArchive += $task
+            }
+            else {
+                $toKeep += $task
+            }
+        }
+    }
+    
+    # Processar arquivamento
+    if ($toArchive.Count -gt 0) {
+        # Ler arquivo de arquivos se existir
+        $existingArchives = @()
+        if (Test-Path $archivePath) {
+            $archiveContent = Get-Content -Path $archivePath -Raw
+            if (-not [string]::IsNullOrWhiteSpace($archiveContent)) {
+                $existingArchives = $archiveContent | ConvertFrom-Json
+                if ($existingArchives -isnot [array]) {
+                    $existingArchives = @($existingArchives)
+                }
+            }
+        }
+        
+        # Combinar e escrever
+        $allArchives = @($existingArchives) + @($toArchive)
+        $allArchives | ConvertTo-Json -Depth 5 | Set-Content -Path $archivePath -Encoding UTF8
+        
+        Write-Output "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [CLEANUP] Arquivadas $($toArchive.Count) tarefas completadas"
+    }
+    
+    # Escrever fila atualizada
+    if ($toKeep.Count -gt 0) {
+        $toKeep | ConvertTo-Json -Depth 5 | Set-Content -Path $queuePath -Encoding UTF8
+    }
+    else {
+        # Se nenhuma tarefa para manter, criar arquivo vazio
+        "[]" | Set-Content -Path $queuePath -Encoding UTF8
+    }
+    
+    Write-Output "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [CLEANUP] Tarefas retidas na fila: $($toKeep.Count)"
+    Write-Output "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [CLEANUP] Status:"
+    Write-Output "  - Pending: $($toKeep | Where-Object { $_.status -eq 'pending' } | Measure-Object | Select-Object -ExpandProperty Count)"
+    Write-Output "  - Running: $($toKeep | Where-Object { $_.status -eq 'running' } | Measure-Object | Select-Object -ExpandProperty Count)"
+    Write-Output "  - Completed: $($toKeep | Where-Object { $_.status -eq 'completed' } | Measure-Object | Select-Object -ExpandProperty Count)"
+    Write-Output "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [CLEANUP] Conclusão bem-sucedida"
+    
+}
+catch {
+    Write-Error "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [CLEANUP] Falha ao limpar fila de tarefas. Detalhes: $_"
+}

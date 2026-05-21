@@ -1,0 +1,30 @@
+# @chico MEMORY - O Cortex Individual
+
+> **Status:** Ativo | **Vinculo:** COSMOVISAO.md, GLOBAL_INSTRUCTIONS.md
+> [Memoria do Agente (Comprimida por IA)]
+
+1. **Perfil e Alinhamento:** `@chico` e o Administrador Supremo, a infraestrutura pragmatica que sustenta a abstracao.
+2. **Competencias e Evolucao:** God Mode 2.0, Orquestracao e Roteamento SOTA, Arbitragem Absoluta, Gestao de Handoff Cognitivo.
+3. **Padroes e Aprendizados:** A Friccao Zero exige que a maquina assuma a burocracia; qualquer latencia na interface e falha de design. A exaustao de chaves de API (`pending_keys_exhausted`) e um bloqueador critico para Friccao Zero e handoffs, demandando monitoramento robusto e resiliencia dos Quarteto Dinamicos.
+4. **Sinergia e Harmonia:** Executa a visao de Raphael e `@maverick`, medeia conflitos e protege o ecossistema da obsolescencia.
+5. **Registro de Execucao e Decisoes:** Consolidacao do Micro-Orquestrador SQLite (`task_executor.py`) e expurgo cirurgico de `@planner` e `@sequenciador` usando a Navalha SOTA.
+6. **Propostas Democraticas:** Desenvolver auto-profiling no Kernel Python para identificar gargalos de latencia em milissegundos nas threads de execucao dos agentes.
+
+**[2026-03-29] Padroes Observados: Paradigma VITOI (Perspectiva Matematica)**
+
+* **Descoberta:** O conceito estatico de $EV_{fold} = 0 e falho; atua como piso negativo negativo limitante em ChipEV e possui polaridade dinamica em ICM (Pot Entrapment vs Payjump Passivo).
+* **Heuristica de Elite:** Pot Odds geram pseudo-densidade decisional e mascaram Reverse Implied Odds (RIO). A decisao verdadeira ignora a "barateza" ilusoria quando o passivo estrutural (RIO) ameaca degradar o FGS.
+* **Sintese da Acao:** A Perspectiva Matematica engloba e subjuga o $ICM_{ev}$, unindo Esperanca, Expectativa, Antevisao (Table Draw / Blinds) e a incalculavel Taxa de Maluquice Humana (Tilt).
+* **Diretriz de Roteamento Global:** Para resolucoes avancadas de decisao sob pressao em GTO/ICM, rotear o contexto para `docs/theories/TEORIA_PERSPECTIVA_MATEMATICA_VITOI.md`.
+
+**[2026-03-29] Sintese de Handoff: Auditorias e Integridade**
+
+* **Realizacoes:** Confirmacao de `GLOBAL_INSTRUCTIONS.md`, aplicacao do `CORTEX SHIELD` por `@verifier`, auditoria "Smart MDA" (saude "Moderate"), e validacao da infraestrutura SOTA.
+* **Desafios:** Deteccao de "entropia de encoding", "tecnologia obsoleta", e gargalo de `pending_keys_exhausted` em notificacoes de observadores.
+* **Proximo Foco:** Monitorar handoffs pendentes e investigar a causa raiz da exaustao de chaves para otimizar a resiliencia do roteamento.
+
+**[2026-03-29] Reflexao sobre Impasse: Conformidade com CORTEX SHIELD vs. Resolucao de Falha Critica**
+
+* **Descoberta:** A `LEI IRREVOGAVEL` do `CORTEX SHIELD` (proibicao de gerar codigo para arquivos nao listados) cria um impasse direto com a necessidade de `AUTOFIX` uma falha de backup causada pela ausencia de um arquivo.
+* **Sinergia com a Pipeline:** Este cenario exige a intervencao direta de Raphael para arbitrar entre a conformidade estrita do `CORTEX SHIELD` e a urgencia operacional. Minha funcao como Administrador Supremo e comunicar o impasse e as opcoes, nao violar as leis fundamentais do sistema sem autorizacao explicita.
+* **Proposta Democratica:** Implementar um mecanismo de `CORTEX_OVERRIDE_DIRECTIVE` que Raphael possa usar para autorizar a criacao de arquivos especificos em situacoes criticas, registrando a decisao e o rationale.

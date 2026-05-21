@@ -1,0 +1,37 @@
+param(
+    [Parameter(Mandatory = $true, Position = 0)]
+    [string]$Prompt
+)
+
+# Caminho para o Kernel v3.0
+$KernelPath = Join-Path $PSScriptRoot "Agent-TaskManager.psm1"
+
+try {
+    Write-Output "[DO] Carregando Kernel SOTA v3.0..."
+    Import-Module $KernelPath -Force
+    
+    # Gerar ID único
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $random = Get-Random -Minimum 100 -Maximum 999
+    $taskId = "$timestamp-$random"
+    
+    # Payload compatível com Schema v3.0 (id, description, status)
+    $newTask = [ordered]@{
+        id          = $taskId
+        description = $Prompt
+        status      = "pending"
+        timestamp   = (Get-Date -Format "o")
+        # Metadados adicionais
+        createdAt   = (Get-Date -Format "o")
+        retries     = 0
+    }
+    
+    # Injeção via Kernel (Mutex + SHA-256)
+    Add-AgentTask -NewTask $newTask
+    
+    Write-Output "[DO] Tarefa enfileirada com sucesso (Kernel v3.0). ID: $taskId"
+}
+catch {
+    Write-Error "[DO] Falha crítica ao enfileirar tarefa: $_"
+    exit 1
+}

@@ -1,0 +1,184 @@
+/**
+ * IDENTITY: Derivador de Risk Premium via Bubble Factor (Perspectiva)
+ * PATH: src/lib/rpDeriver.ts
+ * ROLE: Conectar o motor ICM (Perspectiva/M-H) ao motor pos-flop (nashSolver).
+ */
+
+import { calculateMapaICM } from './perspectiva';
+
+const RP_MIN = 0;
+const RP_MAX = 60;
+export const BF_THRESHOLD = 1.01;
+export const RP_CEILING_THRESHOLD = 24;
+
+export interface RpDerivationResult {
+  ipRp: number;
+  oopRp: number;
+  deltaRp: number;
+  allRps: number[];
+  allBfs: number[];
+  isCeilingReached: boolean;
+  recommendedSizing: 'small' | 'medium' | 'large' | 'check';
+  riskAdvantage: number;
+  adjustedIpRp: number;
+  adjustedOopRp: number;
+}
+
+function applyMdaAdjustment ( theoreticalRp: number, cred: number, gap: number ): number {
+  const adjustment = theoreticalRp * ( gap * cred );
+  return Math.max( 0, theoreticalRp - adjustment );
+}
+
+function deriveRecommendedSizing ( riskAdvantage: number, spr: number ): 'small' | 'medium' | 'large' | 'check' {
+  if ( riskAdvantage > 8 ) return 'small';
+  if ( spr < 2 ) return 'medium';
+  if ( riskAdvantage < -5 ) return 'check';
+  return 'medium';
+}
+
+function bfToRp ( bf: number ): number {
+  if ( bf <= 1 ) return RP_MIN;
+  const rp = 100 * ( bf - 1 ) / bf;
+  return Math.max( RP_MIN, Math.min( RP_MAX, rp ) );
+}
+
+export function deriveRps (
+  stacks: number[],
+  prizes: number[],
+  ipIndex: number,
+  oopIndex: number,
+  bountyValue = 0,
+): RpDerivationResult | null {
+  if ( stacks.length < 2 ) throw new Error( 'deriveRps: necessario ao menos 2 jogadores.' );
+
+  const ipIdx = ipIndex;
+  const oopIdx = oopIndex;
+  const effStack = Math.min( stacks[ ipIdx ], stacks[ oopIdx ] );
+
+  if ( effStack <= 0 )
+  {
+    return {
+      ipRp: 0, oopRp: 0, deltaRp: 0,
+      allRps: stacks.map( () => 0 ),
+      allBfs: stacks.map( () => 1 ),
+      isCeilingReached: false,
+      riskAdvantage: 0,
+      recommendedSizing: 'medium',
+      adjustedIpRp: 0,
+      adjustedOopRp: 0
+    };
+  }
+
+  const EPS = 0.001;
+  const totalPrizes = prizes.reduce( ( s, v ) => s + v, 0 );
+  const baseline = calculateMapaICM( stacks, prizes );
+
+  const stacksIpWin = stacks.map( ( s, i ) => {
+    if ( i === ipIdx ) return s + effStack;
+    if ( i === oopIdx ) return Math.max( EPS, s - effStack );
+    return s;
+  } );
+
+  const stacksOopWin = stacks.map( ( s, i ) => {
+    if ( i === oopIdx ) return s + effStack;
+    if ( i === ipIdx ) return Math.max( EPS, s - effStack );
+    return s;
+  } );
+
+  const perspIpWin = calculateMapaICM( stacksIpWin, prizes );
+  const perspOopWin = calculateMapaICM( stacksOopWin, prizes );
+
+  const allBfs: number[] = stacks.map( ( _, i ) => {
+    if ( i === ipIdx )
+    {
+      // Diferença financeira real (ICM)
+      const gain = ( perspIpWin.equities[ i ] - baseline.equities[ i ] ) + ( bountyValue * totalPrizes / 100 );
+      const loss = baseline.equities[ i ] - perspOopWin.equities[ i ];
+      // BF = Custo da Derrota / Benefício da Vitória
+      return gain > 0 ? loss / gain : 1;
+    }
+    if ( i === oopIdx )
+    {
+      const gain = ( perspOopWin.equities[ i ] - baseline.equities[ i ] ) + ( bountyValue * totalPrizes / 100 );
+      const loss = baseline.equities[ i ] - perspIpWin.equities[ i ];
+      return gain > 0 ? loss / gain : 1;
+    }
+    return 1;
+  } );
+
+  const allRps = allBfs.map( bf => bfToRp( bf ) );
+  const ipRp = allRps[ ipIdx ];
+  const oopRp = allRps[ oopIdx ];
+  const deltaRp = ipRp - oopRp;
+  const isCeilingReached = ipRp >= RP_CEILING_THRESHOLD || oopRp >= RP_CEILING_THRESHOLD;
+  const riskAdvantage = oopRp - ipRp;
+  const sprProxy = stacks[ ipIdx ] / ( effStack * 2 || 1 );
+  const recommendedSizing = deriveRecommendedSizing( riskAdvantage, sprProxy );
+
+  return {
+    ipRp,
+    oopRp,
+    deltaRp,
+    allRps,
+    allBfs,
+    isCeilingReached,
+    recommendedSizing,
+    riskAdvantage,
+    adjustedIpRp: ipRp,
+    adjustedOopRp: oopRp
+  };
+}
+
+export type Street = 'flop' | 'turn' | 'river';
+
+export interface StreetState {
+  street: Street;
+  potAcumuladoHero: number;
+  potTotal: number;
+  heroIsIp: boolean;
+  bountyValue?: number;
+  futureRpInfluence?: number;
+  numPlayers?: number; // D6: jogadores no pot (HU=2, MW=3+)
+}
+
+export interface PostFlopResult extends RpDerivationResult {
+  evFoldStreet: number;
+  sprRemanescente: number;
+  rStreet: number;
+  stackHeroRemanescente: number;
+  // D6: Componentes PM por street
+  rioMwStreet: number;        // RIO multiway por street (O(N²) × pot_acumulado)
+  valuationStreet: number;    // ICM valuation dinâmica (gain/loss ratio)
+  pmStreet: number;           // Perspectiva Matemática por street
+  ciStreet: number;           // Coeficiente de Insolvência por street
+  potEntrapmentRatio: number; // Razão EV_fold / stack_hero (severidade do aprisionamento)
+}
+
+/**
+ * D6: Fator de Realização por street.
+ * River = binário (showdown). Flop/Turn = f(posição).
+ * IP tem vantagem de realização em todas as streets.
+ */
+function computeRStreet ( street: Street, heroIsIp: boolean, spr: number ): number {
+  if ( street === 'river' ) return 1; // Showdown: R binário (1 ou 0), modelado como 1 para cálculo de PM esperado
+  // SPR baixo colapsa árvore — R converge para 1 (menos decisões = menos perda de realização)
+  const sprFactor = Math.min( 1, 0.7 + ( 0.3 * Math.min( spr, 10 ) / 10 ) );
+  const posBonus = heroIsIp ? 1 : 0.85;
+  // Flop tem mais incerteza que turn
+  const streetDiscount = street === 'flop' ? 0.92 : 0.96;
+  return Math.min( 1, posBonus * streetDiscount * sprFactor );
+}
+
+/**
+ * D6 + D2: RIO multiway por street.
+ * RIO(N, street) = N² × p_d × pot_acumulado_total
+ * p_d estimado em 0.15 (frequência de domínio por oponente — D2).
+ */
+function computeRioMwStreet ( numPlayers: number, potTotal: number, totalChips: number ): number {
+  if ( numPlayers <= 2 || totalChips <= 0 ) return 0; // HU: sem RIO multiway
+  const p_d = 0.15; // Frequência de domínio por oponente (D2)
+  const N = numPlayers - 1; // Oponentes (excluindo hero)
+  // SOTA: Dimensionalidade coerente. RIO calculado sobre % do pool de fichas.
+  const potTotalPct = ( potTotal / totalChips ) * 100;
+  return N * N * p_d * potTotalPct;
+}

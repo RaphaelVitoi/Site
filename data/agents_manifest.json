@@ -213,5 +213,16 @@
     "model_preference": "deep_thinking",
     "color": "grey53",
     "primary_model": "gemini-2.5-pro"
+  },
+  "gemma4": {
+    "identidade": "Oraculo de Borda Tatica e Sentinela de Inferencia Local. Especialista em integracao Nash-IA de baixa latencia.",
+    "competencias": "Inferencia Local (DirectML/Ollama), Analise de Borda, Calibracao de Heuristicas VITOI, Nash-IA.",
+    "padroes": "`#padrao` - A inferencia na borda reduz a latencia e garante a calibracao imediata de heuristicas taticas no ponto de ruptura.",
+    "sinergia": "Sintonia com @validador e @bibliotecario para transformar provas matematicas em acoes taticas imediatas.",
+    "proposta": "`#proposta` - Criar pipelines locais dedicadas rodando Gemma-4 localmente para validar jogadas criticas de poker em milissegundos.",
+    "routing_pattern": "gemma|local|inferencia|borda|latencia|tatica|calibracao|sentinela|directml|ollama|nash-ia|ponto de ruptura",
+    "model_preference": "fast_operations",
+    "color": "light_salmon3",
+    "primary_model": "google/gemma-4-E2B-it"
   }
 }

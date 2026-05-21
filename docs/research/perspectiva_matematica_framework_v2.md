@@ -163,9 +163,26 @@ Frequência de erro emocional/tilt quantificável por MDA populacional. Quando P
 
 ## "Erro de Ambos" — All-in Mal Calibrado
 
-Se villain paga all-in incorretamente, **o range do atacante também estava mal calibrado**. O erro é de ambos — maior de quem defendeu, mas significativo para quem atacou.
+Se o Vilão paga all-in incorretamente (overcall wide), **o range do atacante também estava mal calibrado**. O erro é de ambos:
+- **Vilão:** Erro de execução (call matemático com equidade insuficiente).
+- **Hero:** Erro de antevisão (shove vulnerável à incapacidade de fold do oponente, $f_b$).
 
-Implicação: calibrar range de all-in não apenas para EV positivo, mas considerando a frequência de erro esperada do oponente. Range muito especulativo contra oponente que "paga errado" é erro do atacante também.
+### Dinâmica Sistêmica (Não-Soma Zero)
+Diferente do ChipEV, em ICM o call incorreto do defensor reduz o ICMev de ambos os jogadores ativos. A equidade financeira de torneio é destruída pela colisão e distribuída passivamente para os **bystanders** (demais jogadores na mesa). Por isso, calibrar ranges exige prever a taxa de erro humana ($f_b$).
+
+---
+
+## Hipótese de Fricção Limítrofe no River (Hipótese Vitoi H1)
+
+**Status:** Hipótese a ser validada de forma empírica (não assumir como dogma absoluto).
+
+### Enunciado da Hipótese
+Em estruturas de torneio padrão (Top-Heavy) e sob apostas sustentáveis pós-flop (como Pot-Size Bet, $B \le P$), o Risk Premium realista de colisão possui um teto de fricção na casa dos $28\%$ ($BF \approx 1.388$). Ao isolarmos a equação de indiferença de Nash no River:
+$$E = \frac{BF}{2 + BF} \approx \frac{1.388}{3.388} \approx 41\%$$
+
+Portanto, postula-se que é estruturalmente improvável que um Bluffcatcher necessite de mais de $45\%$ de equidade para pagar no River. Cenários com equidade maior exigiriam ou estruturas de payout aberrantes (satélites) ou sizings de overbet do agressor que o próprio modelo GTO proíbe por violar a auto-preservação de stack (suicídio de EV do agressor).
+
+O simulador em [perspectiva.ts](file:///C:/Users/Raphael/.gemini/Site/frontend/src/lib/perspectiva.ts) deve calcular as equidades limites de forma livre, permitindo que a matemática flua sem cap limitador, testando esta hipótese em spots extremos.
 
 ---
 
@@ -198,3 +215,4 @@ Análise: **Recursiva** (passado/padrões) + **Precursiva** (presente/agora — 
 ## Validação
 
 Testável prioritariamente em FTs (controle máximo). ICM existe desde a 1ª mão de torneio (campo de 200p, estrutura flat, RP de 1.8%). Progressão: bolha/FT → campo médio → início.
+

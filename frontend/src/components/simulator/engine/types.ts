@@ -44,7 +44,7 @@ export interface ChipEvFreqs {
   oop_raise: number;
 }
 
-export type HeroPosition = 'IP' | 'SB' | 'BB';
+export type HeroPosition = 'IP' | 'SB' | 'BB' | 'OOP';
 export type ActiveTool = 'scenario' | 'calculator' | 'matchup' | 'comparar' | 'perspectiva' | 'posflop';
 
 // Street pós-flop em que o cálculo de frequências ICM está sendo aplicado
@@ -156,3 +156,19 @@ export interface IcmLabResponse<T> {
   data?: T;
   error?: string;
 }
+
+export interface QuantumMetrics {
+  amortizedEdgeMultiplier: number;
+  rioMw: number;
+  adjustedEvFold: number;
+  esperanca: number;
+  expectativa: number;
+  perspectiva: number;
+  threshEq: number | null;
+  ci: number | null;
+  marginInstability: number;
+  isSolvent: boolean;
+  isActionable: boolean;
+  bayesianWinProb?: number;
+}
+

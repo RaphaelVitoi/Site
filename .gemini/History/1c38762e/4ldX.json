@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "lib": [ "ESNext", "WebWorker" ],
+        "strict": true,
+        "skipLibCheck": true
+    },
+    "include": [ "**/*.worker.ts" ]
+}

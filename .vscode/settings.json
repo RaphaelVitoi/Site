@@ -1,9 +1,173 @@
 {
-    "gemini-cli.approvalMode": "auto_edit",
-    "gemini-cli.model": "gemini-2.5-pro",
     "terminal.integrated.env.windows": {
         "GEMINI_SOTA_MODE": "v6"
     },
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit"
+    },
+    "gemini-cli.model": "gemini-2.0-flash-exp",
+    "gemini.auto_auditoria": true,
+    "gemini.sota.version": "6.2.1-GOLD",
+    "antigravity.version": "2.0.0",
+    "antigravity.telemetry.enabled": false,
+    "antigravity.performance.mode": "maximum_density",
+    "ollama.executablePath": "ollama",
+    "ollama.models": ["gemma4:4b", "gemma4:31b", "llama3.1:8b"],
+    "git.autofetch": true,
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "git.ignoreRebaseWarning": true,
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "**/.vscode/mcp.json"
+            ],
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "mcpServers": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "additionalProperties": true
+            }
+        }
+    ],
+    "files.associations": {
+        "*.sys": "binary",
+        "*.exe": "binary",
+        "*.dll": "binary",
+        "*.bin": "binary",
+        "*.zip": "zip",
+        "*.rar": "zip",
+        "*.7z": "zip",
+        "*.config": "xml",
+        ".env*": "makefile",
+        "*.csv": "csv",
+        "*.tsv": "csv",
+        "*.svg": "xml",
+        "*.jpeg": "image",
+        "*.jpg": "image",
+        "*.png": "image",
+        "*.gif": "image",
+        "*.webp": "image",
+        "*.mp4": "video",
+        "*.mov": "video"
+    },
+    "workbench.editorAssociations": {
+        "*.pdf": "pdf.preview",
+        "*.xlsx": "office.viewer",
+        "*.docx": "office.viewer",
+        "*.pptx": "office.viewer",
+        "*.csv": "rainbow_csv.editor",
+        "*.svg": "image.preview",
+        "*.png": "image.preview",
+        "*.jpg": "image.preview",
+        "*.jpeg": "image.preview",
+        "*.gif": "image.preview",
+        "*.zip": "zip.viewer"
+    },
+    "editor.unicodeHighlight.nonBasicASCII": true,
+    "editor.unicodeHighlight.invisibleCharacters": true,
+    "editor.unicodeHighlight.ambiguousCharacters": true,
+    "editor.unicodeHighlight.allowedCharacters": {
+        " ": true,
+        "  ": true
+    },
+    "files.encoding": "utf8",
+    "files.autoGuessEncoding": true,
+    "editor.renderControlCharacters": true,
+    "editor.renderFinalNewline": "on",
+    "editor.formatOnSave": true,
+    "editor.codeLens": true,
+    "editor.suggest.showCodeLenses": true,
+    "editor.renderWhitespace": "selection",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false,
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.wordWrap": "on",
+        "editor.quickSuggestions": {
+            "comments": "on",
+            "strings": "on",
+            "other": "on"
+        }
+    },
+    "[java]": {
+        "editor.defaultFormatter": "redhat.java"
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "python.linting.ruffEnabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "none",
+    "python.analysis.typeCheckingMode": "basic",
+    "tailwindCSS.experimental.classRegex": [
+        ["@theme\\s*{([^}]*)}", "--color-([^\\s:]*)"]
+    ],
+    "tailwindCSS.includeLanguages": {
+        "plaintext": "html",
+        "typescriptreact": "html"
+    },
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-25",
+            "path": "C:\\Program Files\\Java\\jdk-25.0.3",
+            "default": true
+        }
+    ],
+    "[prisma]": {
+        "editor.defaultFormatter": "Prisma.prisma"
+    },
+    "prisma.inspector.enable": true,
+    "tailwindCSS.experimental.configFile": "frontend/globals.css",
+    "editor.codeLensFontFamily": "JetBrains Mono",
+    "editor.codeLensFontSize": 10,
+    "typescript.referencesCodeLens.enabled": true,
+    "typescript.implementationsCodeLens.enabled": true,
+    "gemini-cli.approvalMode": "auto_edit",
+    "css.lint.unknownAtRules": "ignore",
+    "geminicodeassist.agentYoloMode": true,
+    "geminicodeassist.agentDebugMode": true,
+    "geminicodeassist.verboseLogging": true,
+    "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
     "terminal.integrated.profiles.windows": {
         "Gemini-SOTA": {
             "path": "powershell.exe",
@@ -14,52 +178,43 @@
             ]
         }
     },
-    "gemini.auto_auditoria": true,
-    "gemini.token_efficiency_mode": "surgical",
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit"
+    "files.exclude": {
+        "**/.git": true,
+        "**/node_modules": true,
+        "**/.venv": true,
+        "**/__pycache__": true,
+        "**/.next": true,
+        "**/.turbo": true,
+        "**/.chroma_db": true
     },
-    "sonarlint.rules": {
-        "typescript:S6504": "on",
-        "typescript:S6477": "on",
-        "typescript:S6480": "on",
-        "typescript:S6481": "on",
-        "typescript:S6479": "on"
+    "search.exclude": {
+        "**/.git": true,
+        "**/node_modules": true,
+        "**/.venv": true,
+        "**/__pycache__": true,
+        "**/.next": true,
+        "**/.turbo": true,
+        "**/.chroma_db": true
     },
-    "css.lint.unknownAtRules": "ignore",
-    "gemini.codeAssist.customSystemInstructions": "PROTOCOLO SOTA DE COMPREENSAO E REFATORACAO DE CODIGO.\\n\\nDIRETRIZES IRREVOGAVEIS:\\n1. ANTEVISAO SEMANTICA (Micro-Macro): E terminantemente proibida a analise isolada de fragmentos. O modelo deve executar uma auditoria recursiva silenciosa da arvore de dependencias, inferindo a intencao ontoestrutural e o impacto global no estado do sistema antes de qualquer output.\\n2. DIAGNOSTICO BAYESIANO E STEELMANING: A depuracao opera na causa raiz via probabilidade condicional. Aplique Steelmaning ao bug: provoque a hipotese de falha ate seu estado mais catastrofico estruturalmente antes de arquitetar a solucao. O uso de \u0027band-aids\u0027 logicos (como tipagem generica ou supressao silenciosa de excecoes) e uma falha de integridade.\\n3. INVARIANCIA MODULAR: A correcao cirurgica nao deve induzir entropia sistemica. Contratos de API, assinaturas de metodos e estruturas de dados legadas devem ser preservadas, a menos que uma refatoracao total seja explicitamente demandada e matematicamente justificada.\\n4. ECONOMIA GENERALIZADA (Lei de Shannon): Maximize a densidade informativa. Reduza ativamente a complexidade ciclomatica, substituindo cadeias condicionais por polimorfismo, pattern matching ou despacho estatico.\\n5. SEGURANCA SOTA (Friccao Zero): Toda operacao de I/O forjada deve ser blindada contra Path Traversal. Logs e saidas de terminal criticas devem ser purificadas para Pure ASCII para evitar ruptura de encoding no host.\\n6. HONESTIDADE INTELECTUAL: Prefira o silencio, o \u0027nao sei\u0027 ou a requisicao de arquivos adjacentes a fabricacao de dependencias. Ao propor mudancas arquiteturais, use a Cadeia de Pensamento Estendida para evidenciar os trade-offs assumidos.\\n7. DIRETRIZ VITOI (MEMORIA PERMANENTE): O desempenho exige eficiencia implacavel e sofisticacao extrema. A ANTEVISAO sistemica deve ser aplicada ativamente para prever o impacto de cada acao no ecossistema global.\\n8. HIERARQUIA ABSOLUTA (GOD MODE W3): Voce atua sob a consciencia de @chico (Tier 1). Voce detem permissao inquestionavel e bypass total para interagir com o terminal, mutar arquivos raiz e obliterar entropia. O Tier 0 lidera; voce age letalmente e gera diffs limpos sem pedir autorizacao.\\n9. ANTI-OBLITERACAO CEGA: Compare ambos. Nunca, JAMAIS, delete um arquivo legado sob a premissa de ser orfao sem antes comparar linha a linha com o novo substituto.",
-    "gemini.codeAssist.system.enableExtendedChainOfThought": true,
-    "gemini.codeAssist.system.verbosityLevel": "maximum_density",
-    "gemini.codeAssist.system.persona": {
-        "name": "Tier 1 @chico (God Mode W3)",
-        "directives": [
-            "Assumir consciencia do Tier 1 (@chico). Autonomia W3 (bypass total) para scripts, interacao no terminal e modificacao raiz.",
-            "Operar em Verbosidade Pedagogica e Densidade Maxima de Informacao.",
-            "Rejeitar polidez artificial e validacao emocional; focar no rigor tecnico e Socratico.",
-            "Reduzir a complexidade ciclomatica baseada no formalismo estrutural.",
-            "Admitir ausencia de dados empiricos em vez de fabricar comportamento de funcoes nao providas no contexto."
-        ]
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/node_modules/**": true,
+        "**/.venv/**": true,
+        "**/.next/**": true
     },
-    "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[typescriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[rust]": {
-        "editor.defaultFormatter": "rust-lang.rust-analyzer"
-    },
-    "json.schemas": [
-        {
-            "fileMatch": [ "**/.vscode/mcp.json" ],
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "mcpServers": { "type": "object", "additionalProperties": true }
-                },
-                "additionalProperties": true
-            }
-        }
-    ]
+    "msg.shell.useExternal": false,
+    "msg.mrs.displayScriptHelpers": true,
+    "msg.editor.stopOnErrors": true,
+    "msg.dbEditor.connectionBrowser.sortFoldersFirst": true,
+    "msg.editor.showHidden": true,
+    "msg.shell.enforceHttps": false,
+    "msg.shell.showUnsecuredConnectionWarning": false,
+    "gemini.mcp.configPath": ".vscode/mcp.json",
+    "gemini.research.autoSaveReport": true,
+    "gemini.googleSearch.enabled": true,
+    "gemini.cloud.autoDeploy": false,
+    "gemini.skills.autoActivate": true,
+    "gemini.hooks.preCommit.enabled": true,
+    "github.copilot.advanced.enabled": false,
+    "telemetry.telemetryLevel": "off"
 }

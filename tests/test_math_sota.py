@@ -1,9 +1,14 @@
+"""
+Testes unitarios para os calculos numericos SOTA (Geometric Sizing, CFR).
+"""
+
 import pytest
 
 from engine.math_sota import calculate_geometric_sizing, cfr_mock_strategy
 
 
 def test_geometric_sizing_returns_correct_fraction():
+    """Valida se o fracionamento geometrico de apostas retorna os valores corretos."""
     # Pot: 100, Target Pot: 1000, Streets: 3 (Flop, Turn, River)
     fraction = calculate_geometric_sizing(100, 1000, 3)
     # Expected: (1000/100)^(1/3) = 2.154 => 1+2f = 2.154 => f = 0.577
@@ -11,6 +16,7 @@ def test_geometric_sizing_returns_correct_fraction():
 
 
 def test_cfr_mock_strategy_balances_regrets():
+    """Garante que a estrategia baseada em CFR lida corretamente com os arrependimentos."""
     regrets = {"fold": 10.0, "call": 20.0, "raise": -5.0}
     strategy = cfr_mock_strategy(regrets)
     # Positive regrets: fold=10, call=20, raise=0. Total = 30.

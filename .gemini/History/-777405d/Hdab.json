@@ -1,0 +1,52 @@
+{
+    "sources": [
+        {
+            "path": ".claude/agent-memory",
+            "patterns": [
+                "MEMORY.md"
+            ],
+            "recursive": true
+        },
+        {
+            "path": "docs",
+            "patterns": [
+                "*.md"
+            ],
+            "recursive": true
+        },
+        {
+            "path": ".claude",
+            "patterns": [
+                "*.md"
+            ],
+            "recursive": false
+        },
+        {
+            "path": ".",
+            "patterns": [
+                "*.py",
+                "*.ps1",
+                ".cursorules"
+            ],
+            "recursive": true
+        },
+        {
+            "path": "frontend/src/app/artigos",
+            "patterns": [
+                "*.tsx",
+                "*.md"
+            ],
+            "recursive": true
+        },
+        {
+            "path": "frontend/public/docs",
+            "patterns": [
+                "*.pdf",
+                "*.docx",
+                "*.csv",
+                "*.xlsx"
+            ],
+            "recursive": true
+        }
+    ]
+}

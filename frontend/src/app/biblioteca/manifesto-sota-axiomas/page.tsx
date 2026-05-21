@@ -1,14 +1,16 @@
 /**
- * IDENTITY: Manifesto SOTA: Axiomas da Perspectiva
+ * IDENTITY: Manifesto SOTA: Axiomas da Perspectiva GOLD
  * PATH: src/app/biblioteca/manifesto-sota-axiomas/page.tsx
  * ROLE: Artigo de síntese polifórmica unindo Teoria dos Jogos e Psicologia de Sistemas.
+ * VERSION: v6.2.1 GOLD
  */
 
-import { ContentPageHeader } from '@/components/layout/ContentPageHeader';
-import { SotaMarkdown } from '@/components/ui/SotaMarkdown';
-import ContentFooter from '@/components/content/ContentFooter';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { GlassPanel } from '@/components/ui/GlassPanel';
+import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
+import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
+import ContentFooter from '@/components/ui/layout/ContentFooter';
+import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { ROUTES } from '@/constants/routes';
+import { SITE_CONFIG } from '@/constants/site';
 
 const content = `
 # Manifesto SOTA: Axiomas da Perspectiva Matemática
@@ -50,7 +52,18 @@ O prejuízo nasce do descompasso entre o preço de entrada (Odds) e o custo de s
 
 ---
 
-## 4. O Fator Ψ (A Taxa de Maluquice Humana)
+## 4. O Axioma Lipe Piv (A Regressão Bayesiana da Equidade)
+
+A crença ingênua de que a Equidade da sua mão é um valor fixo (ex: 55%) é o caminho para a insolvência estratégica. O **Axioma Lipe Piv** introduz a Credibilidade Informacional (κ) na equação:
+
+> **Eq_real = Baseline_PotOdds + κ * (Eq_Hand - Baseline_PotOdds)**
+
+*   **κ (Kappa):** Mede a força da sua leitura. Se κ = 1, você confia plenamente no seu range. Se κ = 0, você regride ao baseline matemático de sobrevivência.
+*   **Significado:** Em cenários de incerteza (entropia), a matemática SOTA força sua equidade real em direção ao teto do RP, impedindo o "Hero Call" suicida sem provas cabais.
+
+---
+
+## 5. O Fator Ψ (A Taxa de Maluquice Humana)
 
 Ignorar o desvio emocional populacional é um erro fatal. A decisão no River deve integrar a **Frequência de Bobagem Humana** ($f_b$):
 
@@ -60,37 +73,45 @@ Se a probabilidade do oponente ter o nuts é de 4%, mas a taxa estatística de "
 
 ---
 
-## 5. Antevisão e Table Draw
+## 6. O Axioma da Sinergia Cognitiva (O Paradoxo do Oráculo)
 
-O Future Game Simulation (FGS) tradicional é cego para o relógio. O motor SOTA integra variáveis de sistemas abertos:
-*   **Erosão Antecipada (t-3):** O salto de blinds iminente altera o EV_fold presente.
-*   **Urgecia Posicional:** Ser UTG agora e BB na próxima mão cria uma assimetria de urgência que força a agressão antecipada para evitar a "morte por inanição".
+A verdadeira inteligência não reside apenas no cálculo (WASM/GPU) nem apenas na intuição (Heurística Humana), mas na colisão entre ambos. O **Paradoxo do Oráculo** estabelece que o GTO é o mapa, mas o Operador é o território.
+
+*   **Cálculo Determinístico:** Processa a física estrita do pote.
+*   **Análise Heurística (@gemma):** Processa a entropia do comportamento.
+*   **Síntese:** A decisão soberana emerge quando o cálculo de Nash é filtrado pela probabilidade da bobagem humana (Fator Ψ).
+
+---
+
+## 7. Persistência Estratégica: A Memória do Operador
+
+No ecossistema SOTA, o aprendizado não é volátil. Cada desvio (exploit) calculado e cada cenário resolvido tornam-se parte do **Registro Akashico** do usuário. A evolução do jogador é medida pela capacidade de seu sistema pessoal de armazenar e recuperar padrões de dominância (A* Pathfinding).
 `;
 
 export default function ManifestoAxiomasPage() {
-  return (
-    <div className="min-h-screen bg-bg-base text-text-bright">
-      <ContentPageHeader
-        title="Manifesto SOTA"
-        subtitle="Axiomas da Perspectiva: A união entre Teoria dos Jogos e Psicologia de Sistemas."
-        category="Doutrina"
-        icon="fa-scroll"
-      />
+	return (
+		<div className="min-h-screen bg-bg-base text-text-bright">
+			<ContentPageHeader
+				title="Manifesto SOTA"
+				subtitle="Axiomas da Perspectiva: A união entre Teoria dos Jogos e Psicologia de Sistemas."
+				category="Doutrina"
+				icon="fa-scroll"
+			/>
 
-      <div className="sota-container py-12 md:py-24">
-        <div className="max-w-4xl mx-auto">
-          <GlassPanel className="p-10 lg:p-16 border-t-8 border-t-accent-indigo">
-            <SotaMarkdown content={content} />
-          </GlassPanel>
-        </div>
-      </div>
+			<div className="sota-container py-12 md:py-24">
+				<div className="max-w-4xl mx-auto">
+					<GlassPanel className="p-10 lg:p-16 border-t-8 border-t-accent-indigo">
+						<SotaMarkdown content={content} />
+					</GlassPanel>
+				</div>
+			</div>
 
-      <ContentFooter 
-        shareTitle="Manifesto SOTA | Raphael Vitoi"
-        shareUrl="https://www.raphaelvitoi.com/biblioteca/manifesto-sota-axiomas"
-        backLinkHref="/biblioteca" 
-        backLinkText="Voltar para Biblioteca"
-      />
-    </div>
-  );
+			<ContentFooter
+				shareTitle={`Manifesto SOTA | ${SITE_CONFIG.author}`}
+				shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.MANIFESTO_SOTA}`}
+				backLinkHref={ROUTES.BIBLIOTECA}
+				backLinkText="Voltar para Biblioteca"
+			/>
+		</div>
+	);
 }

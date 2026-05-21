@@ -1,0 +1,29 @@
+{
+    "sources": [
+        {
+            "path": ".claude",
+            "patterns": [
+                "*.md"
+            ]
+        },
+        {
+            "path": ".",
+            "patterns": [
+                "GLOBAL_INSTRUCTIONS.md"
+            ]
+        },
+        {
+            "path": "docs",
+            "patterns": [
+                "*.md"
+            ]
+        },
+        {
+            "path": "frontend/research",
+            "patterns": [
+                "*.txt",
+                "*.md"
+            ]
+        }
+    ]
+}

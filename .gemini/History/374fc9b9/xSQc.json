@@ -1,0 +1,9 @@
+1. O JDK como "Motor Cognitivo" da ExtensãoA extensão Language Support for Java™ by Red Hat que você instalou é, na verdade, um cliente para o Eclipse JDT.LS (Java Development Language Server).A Extensão: É a interface (UI), o "corpo" que você vê no VS Code.O JDK (OpenJDK 1.8): É o cérebro. Sem o JDK, a extensão é um editor de texto cego. Ela utiliza os binários que configuramos (javac, java, jar) para realizar a Análise Estática e a Introspecção de Tipos.$$Utilidade\_Total = \text{Extensão (Interface)
+} \times \text{JDK (Processamento)
+}$${
+  "dependencies": {
+    "rechart": "^0.0.1",
+    "recharts": "^3.8.1",
+    "swr": "^2.4.1"
+  }
+}

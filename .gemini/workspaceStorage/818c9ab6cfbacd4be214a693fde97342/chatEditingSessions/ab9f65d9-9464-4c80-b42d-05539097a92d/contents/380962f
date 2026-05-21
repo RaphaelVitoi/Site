@@ -1,0 +1,421 @@
+<#
+.SYNOPSIS
+    Micro-Kernel SOTA Completo para Orquestração de Tarefas (v3.0 Master).
+    
+.DESCRIPTION
+    Motor transacional com Mutex, Assinatura SHA-256, Permuta Atómica e Expurgo Determinístico.
+    Implementação de máquina de estados finita com proteção criptográfica de integridade.
+
+.NOTES
+    #Requires -Version 5.1
+    
+#>
+#Requires -Version 5.1
+
+# -------------------------------------------------------------------
+# CONFIGURAÇÃO (Imutável)
+# -------------------------------------------------------------------
+$Script:QueuePath = Join-Path $PSScriptRoot "queue\tasks.json"
+$Script:ArchivePath = Join-Path $PSScriptRoot "logs\tasks_archived.json"
+$Script:LogPath = Join-Path $PSScriptRoot "logs\task_log.md"
+$Script:SchemaVersion = "3.0"
+$Script:MutexName = "Global\AgentTaskQueue_Mutex_Master"
+
+# Garantir estrutura de diretórios
+@(
+    (Split-Path $Script:QueuePath -Parent),
+    (Split-Path $Script:ArchivePath -Parent),
+    (Split-Path $Script:LogPath -Parent)
+) | ForEach-Object {
+    if (-not (Test-Path $_)) { New-Item -ItemType Directory -Path $_ -Force | Out-Null }
+}
+
+# -------------------------------------------------------------------
+# KERNEL: Mutex Control & Criptografia SHA-256
+# -------------------------------------------------------------------
+
+function Invoke-WithMutex {
+    <#
+    .SYNOPSIS
+        Executa ação com proteção de Mutex (Kernel-level exclusion).
+        Evita race conditions e corrupção de dados sob concorrência.
+    #>
+    param([scriptblock]$Action)
+    
+    $mutex = $null
+    try {
+        $mutex = New-Object System.Threading.Mutex($false, $Script:MutexName)
+        
+        if ($mutex.WaitOne([TimeSpan]::FromSeconds(15))) {
+            try {
+                & $Action
+            }
+            finally {
+                $mutex.ReleaseMutex()
+            }
+        }
+        else {
+            throw "[KERNEL] ❌ TIMEOUT: Mutex ocupado por >15s. Deadlock sistémico evitado."
+        }
+    }
+    finally {
+        if ($null -ne $mutex) {
+            $mutex.Dispose()
+        }
+    }
+}
+
+function Get-PayloadHash {
+    <#
+    .SYNOPSIS
+        Gera assinatura SHA-256 de string JSON (para integridade criptográfica).
+    #>
+    param([string]$JsonString)
+    
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($JsonString)
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    
+    try {
+        $hashBytes = $sha256.ComputeHash($bytes)
+        return [System.BitConverter]::ToString($hashBytes).Replace("-", "").ToLower()
+    }
+    finally {
+        $sha256.Dispose()
+    }
+}
+
+# -------------------------------------------------------------------
+# VALIDAÇÃO DE SCHEMA (Pre-Flight Check)
+# -------------------------------------------------------------------
+
+function Test-TaskSchema {
+    <#
+    .SYNOPSIS
+        Valida se uma tarefa respeita o schema obrigatório (FSM).
+    #>
+    param([Parameter(Mandatory = $true)][object]$TaskPayload)
+    
+    $requiredKeys = @("id", "status", "timestamp", "description")
+    foreach ($key in $requiredKeys) {
+        if ($null -eq $TaskPayload.$key -or [string]::IsNullOrWhiteSpace($TaskPayload.$key)) {
+            Write-Warning "[SCHEMA] ❌ Propriedade '$key' ausente ou vazia."
+            return $false
+        }
+    }
+    
+    if ($TaskPayload.status -notmatch '^(pending|running|completed|failed|archived|cancelled)$') {
+        Write-Warning "[SCHEMA] ❌ Status '$($TaskPayload.status)' inválido."
+        return $false
+    }
+    
+    try {
+        [datetime]::Parse($TaskPayload.timestamp) | Out-Null
+    }
+    catch {
+        Write-Warning "[SCHEMA] ❌ Timestamp '$($TaskPayload.timestamp)' não é ISO 8601 válido."
+        return $false
+    }
+    
+    return $true
+}
+
+# -------------------------------------------------------------------
+# LEITURA SEGURA (Read-Only Query)
+# -------------------------------------------------------------------
+
+function Read-TaskQueue {
+    <#
+    .SYNOPSIS
+        Lê a fila de tarefas com validação segura.
+    #>
+    
+    if (-not (Test-Path $Script:QueuePath)) {
+        return @()
+    }
+    
+    try {
+        $raw = [System.IO.File]::ReadAllText($Script:QueuePath, [System.Text.Encoding]::UTF8)
+        
+        if ([string]::IsNullOrWhiteSpace($raw)) {
+            return @()
+        }
+        
+        $payload = $raw | ConvertFrom-Json -ErrorAction Stop
+        
+        # Retrocompatibilidade
+        if ($null -ne $payload.tasks) {
+            return @($payload.tasks)
+        }
+        else {
+            return @($payload)
+        }
+    }
+    catch {
+        Write-Error "[QUEUE-READ] ❌ Falha ao ler fila: $($_.Exception.Message)"
+        return @()
+    }
+}
+
+# -------------------------------------------------------------------
+# TRANSAÇÃO 1: ADICIONAR TAREFA (Com Assinatura Criptográfica)
+# -------------------------------------------------------------------
+
+function Add-AgentTask {
+    <#
+    .SYNOPSIS
+        Adiciona tarefa com validação de schema e escrita atómica (Mutex + SHA-256).
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$TaskId,
+        [Parameter(Mandatory = $true)][ValidateLength(1, 500)][string]$Description,
+        [Parameter(Mandatory = $false)][ValidateSet("pending", "running", "completed", "failed", "archived", "cancelled")][string]$Status = "pending",
+        [Parameter(Mandatory = $false)][string]$Agent = $null,
+        [Parameter(Mandatory = $false)][hashtable]$Metadata = @{}
+    )
+    
+    $newTask = @{
+        id          = $TaskId
+        status      = $Status
+        timestamp   = (Get-Date -Format "o")
+        description = $Description
+        agent       = $Agent
+        metadata    = $Metadata
+    }
+    
+    # PRE-FLIGHT: Validar schema
+    if (-not (Test-TaskSchema $newTask)) {
+        throw "[ADD-TASK] ❌ ABORT: Payload violou integridade do Schema."
+    }
+    
+    Invoke-WithMutex {
+        # Auditoria Imediata
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        $auditEntry = "[$timestamp] [ENQUEUED] $($newTask.id) - Status: $($newTask.status)"
+        
+        try {
+            Add-Content -Path $Script:LogPath -Value $auditEntry -ErrorAction Stop
+        }
+        catch {
+            Write-Warning "[AUDIT] ⚠️ Falha a registar auditoria: $($_.Exception.Message)"
+        }
+        
+        # Ler fila ativa
+        $queue = Read-TaskQueue
+        $queue += $newTask
+        
+        # Gera Assinatura Criptográfica
+        $tasksJson = $queue | ConvertTo-Json -Depth 10 -Compress
+        $checksum = Get-PayloadHash $tasksJson
+        
+        $wrapper = [ordered]@{
+            version   = $Script:SchemaVersion
+            updatedAt = (Get-Date -Format "o")
+            checksum  = $checksum
+            tasks     = $queue
+        }
+        
+        # Atomic Swap
+        $tempFile = "$($Script:QueuePath).tmp"
+        
+        try {
+            $finalJson = $wrapper | ConvertTo-Json -Depth 10
+            [System.IO.File]::WriteAllText($tempFile, $finalJson, [System.Text.Encoding]::UTF8)
+            Move-Item -Path $tempFile -Destination $Script:QueuePath -Force
+            
+            Write-Output "[ADD-TASK] ✅ Tarefa '$TaskId' enfileirada (Total: $($queue.Count))"
+        }
+        catch {
+            if (Test-Path $tempFile) {
+                Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
+            }
+            throw "[ADD-TASK] ❌ Falha na escrita atómica: $($_.Exception.Message)"
+        }
+    }
+}
+
+# -------------------------------------------------------------------
+# TRANSAÇÃO 2: EXPURGO (CLEANUP) PROTEGIDO POR MUTEX
+# -------------------------------------------------------------------
+
+function Invoke-TaskCleanup {
+    <#
+    .SYNOPSIS
+        Arquiva talefas antigas e força, com limite de buffer + checksums.
+    #>
+    param([int]$DaysToKeep = 30, [int]$MaxActive = 50)
+    
+    Invoke-WithMutex {
+        if (-not (Test-Path $Script:QueuePath)) {
+            Write-Output "[CLEANUP] Fila vazia. Nada a fazer."
+            return
+        }
+        
+        $raw = [System.IO.File]::ReadAllText($Script:QueuePath, [System.Text.Encoding]::UTF8)
+        if ([string]::IsNullOrWhiteSpace($raw)) {
+            Write-Output "[CLEANUP] Fila vazia. Nada a fazer."
+            return
+        }
+        
+        $payload = $raw | ConvertFrom-Json
+        $queue = if ($null -ne $payload.tasks) { @($payload.tasks) } else { @($payload) }
+        
+        if ($queue.Count -eq 0) {
+            return
+        }
+        
+        $cutoff = (Get-Date).AddDays(-$DaysToKeep)
+        
+        # Lógica determinística de separação
+        $toArchive = @()
+        $toKeep = @()
+        
+        foreach ($task in $queue) {
+            $taskDate = [datetime]::Parse($task.timestamp)
+            
+            if (($task.status -in @("completed", "failed", "archived", "cancelled")) -and ($taskDate -lt $cutoff)) {
+                $toArchive += $task
+            }
+            else {
+                $toKeep += $task
+            }
+        }
+        
+        # Force Expurgo se buffer estourar
+        if ($toKeep.Count -gt $MaxActive) {
+            $overflow = $toKeep.Count - $MaxActive
+            $toArchive += $toKeep[0..($overflow - 1)]
+            $toKeep = $toKeep[$overflow..($toKeep.Count - 1)]
+            
+            Write-Warning "[CLEANUP] ⚠️ Buffer excedido ($($toKeep.Count + $overflow) > $MaxActive). Arquivadas $overflow tarefas adicionais."
+        }
+        
+        if ($toArchive.Count -eq 0) {
+            Write-Output "[CLEANUP] Nenhuma tarefa elegível para arquivo."
+            return
+        }
+        
+        # FASE 1: Ler arquivo morto
+        $archived = @()
+        if (Test-Path $Script:ArchivePath) {
+            try {
+                $archiveRaw = [System.IO.File]::ReadAllText($Script:ArchivePath, [System.Text.Encoding]::UTF8)
+                if (-not [string]::IsNullOrWhiteSpace($archiveRaw)) {
+                    $archivePayload = $archiveRaw | ConvertFrom-Json -ErrorAction SilentlyContinue
+                    $archived = @($archivePayload.tasks)
+                }
+            }
+            catch {
+                Write-Warning "[CLEANUP] ⚠️ Falha ao ler arquivo morto: $($_.Exception.Message). Continuando..."
+            }
+        }
+        
+        # FASE 2: Arquivo Morto com Checksum
+        $newArchiveQueue = $archived + $toArchive
+        $archiveTasksJson = $newArchiveQueue | ConvertTo-Json -Depth 10 -Compress
+        $archiveChecksum = Get-PayloadHash $archiveTasksJson
+        
+        $archiveWrapper = [ordered]@{
+            version   = $Script:SchemaVersion
+            updatedAt = (Get-Date -Format "o")
+            checksum  = $archiveChecksum
+            tasks     = $newArchiveQueue
+        }
+        
+        $tempArchive = "$($Script:ArchivePath).tmp"
+        
+        try {
+            [System.IO.File]::WriteAllText($tempArchive, ($archiveWrapper | ConvertTo-Json -Depth 10), [System.Text.Encoding]::UTF8)
+            Move-Item -Path $tempArchive -Destination $Script:ArchivePath -Force
+        }
+        catch {
+            if (Test-Path $tempArchive) {
+                Remove-Item $tempArchive -Force -ErrorAction SilentlyContinue
+            }
+            throw "[CLEANUP] ❌ Falha ao arquivar: $($_.Exception.Message)"
+        }
+        
+        # FASE 3: Nova Fila Ativa com Checksum
+        $keepTasksJson = $toKeep | ConvertTo-Json -Depth 10 -Compress
+        $keepChecksum = Get-PayloadHash $keepTasksJson
+        
+        $queueWrapper = [ordered]@{
+            version   = $Script:SchemaVersion
+            updatedAt = (Get-Date -Format "o")
+            checksum  = $keepChecksum
+            tasks     = $toKeep
+        }
+        
+        $tempQueue = "$($Script:QueuePath).tmp"
+        
+        try {
+            [System.IO.File]::WriteAllText($tempQueue, ($queueWrapper | ConvertTo-Json -Depth 10), [System.Text.Encoding]::UTF8)
+            Move-Item -Path $tempQueue -Destination $Script:QueuePath -Force
+            
+            "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [CLEANUP] SUCCESS - Arquivadas $($toArchive.Count) tarefas. Assinaturas renovadas." | Add-Content -Path $Script:LogPath
+            
+            Write-Output "[CLEANUP] ✅ Limpeza bem-sucedida."
+            Write-Output "  - Arquivadas: $($toArchive.Count)"
+            Write-Output "  - Mantidas na fila ativa: $($toKeep.Count)"
+        }
+        catch {
+            if (Test-Path $tempQueue) {
+                Remove-Item $tempQueue -Force -ErrorAction SilentlyContinue
+            }
+            throw "[CLEANUP] ❌ Falha na escrita da fila: $($_.Exception.Message)"
+        }
+    }
+}
+
+# -------------------------------------------------------------------
+# CONSULTAS (Read-Only)
+# -------------------------------------------------------------------
+
+function Get-AgentTaskStatus {
+    <#
+    .SYNOPSIS
+        Consulta status de tarefas (read-only).
+    #>
+    param(
+        [Parameter(Mandatory = $false)][string]$TaskId = $null,
+        [Parameter(Mandatory = $false)][ValidateSet("pending", "running", "completed", "failed", "archived", "cancelled")][string]$Status = $null
+    )
+    
+    $queue = Read-TaskQueue
+    
+    if ($queue.Count -eq 0) {
+        Write-Output "[STATUS] Fila vazia."
+        return $null
+    }
+    
+    if ($TaskId) {
+        $task = $queue | Where-Object { $_.id -eq $TaskId }
+        return $task
+    }
+    
+    if ($Status) {
+        return @($queue | Where-Object { $_.status -eq $Status })
+    }
+    
+    Write-Output "[STATUS] Resumo da Fila:"
+    Write-Output "  Total: $($queue.Count)"
+    Write-Output "  Pending: $(($queue | Where-Object { $_.status -eq 'pending' }).Count)"
+    Write-Output "  Running: $(($queue | Where-Object { $_.status -eq 'running' }).Count)"
+    Write-Output "  Completed: $(($queue | Where-Object { $_.status -eq 'completed' }).Count)"
+    Write-Output "  Failed: $(($queue | Where-Object { $_.status -eq 'failed' }).Count)"
+    
+    return $queue
+}
+
+# -------------------------------------------------------------------
+# EXPORTAR API PÚBLICA DO KERNEL
+# -------------------------------------------------------------------
+
+Export-ModuleMember -Function @(
+    'Test-TaskSchema',
+    'Read-TaskQueue',
+    'Add-AgentTask',
+    'Invoke-TaskCleanup',
+    'Get-AgentTaskStatus',
+    'Invoke-WithMutex',
+    'Get-PayloadHash'
+)

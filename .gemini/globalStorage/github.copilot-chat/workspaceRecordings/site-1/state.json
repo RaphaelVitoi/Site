@@ -1,0 +1,2094 @@
+{
+    "version": 4,
+    "logCount": 0,
+    "documents": {
+        "engine\\__init__.py": {
+            "id": 0,
+            "lastHash": "Ohjw3KZ7jyYZDgU0zHRB1HVJ"
+        },
+        "engine\\cognitive.py": {
+            "id": 1,
+            "lastHash": "KR/OnXf3kPQOWQYtyrYAyQc8"
+        },
+        "engine\\gemma_server.py": {
+            "id": 2,
+            "lastHash": "jMZGH1rZ3ry83LAj5cYhsyGr"
+        },
+        "engine\\llm_api.py": {
+            "id": 3,
+            "lastHash": "GzEszNjmWhIdmRT6R5vJ1q8f"
+        },
+        "engine\\math_rio.py": {
+            "id": 4,
+            "lastHash": "7VOXzOIASomRbKDL2MwOhiVO"
+        },
+        "engine\\math_sota.py": {
+            "id": 5,
+            "lastHash": "U6fFNWQE81cuBmbA0rWAhO0X"
+        },
+        "docs\\epics\\aula-icm-rp\\scenarios_toygame.js": {
+            "id": 6,
+            "lastHash": "G3Tu8oLASxgVNuTh/Zn1MKkr"
+        },
+        "docs\\epics\\aula-icm-rp\\scenarios.js": {
+            "id": 7,
+            "lastHash": "eg3VZKB7saYVPam0zZ5vFBKE"
+        },
+        "data\\synonyms.json": {
+            "id": 8,
+            "lastHash": "5GdNlMIp7jTtjgg8ThKpBW5I"
+        },
+        ".vscode\\launch.json": {
+            "id": 9,
+            "lastHash": "XLBiZi5Ju8NzTqSRb/odBTdx"
+        },
+        ".vscode\\tasks.json": {
+            "id": 10,
+            "lastHash": "VkAzK+KQXoN596D/rwe66awA"
+        },
+        ".vscode\\gemini-codeassist-custom-instructions.md": {
+            "id": 11,
+            "lastHash": "99XgARsLAujMcNOmciyc0oRq"
+        },
+        "autonomy.json": {
+            "id": 12,
+            "lastHash": "KQeqYXjavtvMVN9Efx5jsmaS"
+        },
+        "agents\\autonomy.py": {
+            "id": 13,
+            "lastHash": "Uu0vUHkJa1Oh+19VyYi8G8In"
+        },
+        ".vscode\\settings.json": {
+            "id": 14,
+            "lastHash": "lS6hjsQwtHCgqlP0EgxOQUyE"
+        },
+        "uv.lock": {
+            "id": 15,
+            "lastHash": "5Q1eBRjYtPI7CdTAT3H1s0xg"
+        },
+        ".gitignore": {
+            "id": 16,
+            "lastHash": "4xNgyhpu7vMbywC+bEWf0CC/"
+        },
+        ".geminiignore": {
+            "id": 17,
+            "lastHash": "eexUPKnAHI1Exjy1PzX+fEYg"
+        },
+        "frontend\\update-links.js": {
+            "id": 18,
+            "lastHash": "OzDOT7pIC/7tMX+x85hHK2g+"
+        },
+        "docs\\document_manifest.json": {
+            "id": 19,
+            "lastHash": "DJQsdP7tt70QeCukRjmHFJcq"
+        },
+        "core\\config.py": {
+            "id": 20,
+            "lastHash": "0Ia6wqoG9kSDdhXr0TJZMP4h"
+        },
+        "core\\schemas.py": {
+            "id": 21,
+            "lastHash": "pGNhT1QP06SYc1MZASa2jdf/"
+        },
+        "agents\\prompts.py": {
+            "id": 22,
+            "lastHash": "/OIZcdoZs9ZCRZv8G2qyv8t6"
+        },
+        "agents\\fallback.py": {
+            "id": 23,
+            "lastHash": "eoR7JPG6Y4lIlbOQKNw2WqS1"
+        },
+        "agents\\execution.py": {
+            "id": 24,
+            "lastHash": "9KhTJZ4y1nDLkAMD2JQplQm2"
+        },
+        "agents\\dispatcher.py": {
+            "id": 25,
+            "lastHash": "1BVA1ma6/pBxGYYMc+goTT9Q"
+        },
+        "agents\\context_builder.py": {
+            "id": 26,
+            "lastHash": "eT3dVVDMPSRRyTvA+g5eLUwh"
+        },
+        ".gemini_security\\security_report.json": {
+            "id": 27,
+            "lastHash": "P7vUxtdhMDmbDHnN9BdYZpIk"
+        },
+        ".aiexclude": {
+            "id": 28,
+            "lastHash": "+JJb8G812bZJfeM6PlFZI0FB"
+        },
+        "data\\system_config.json": {
+            "id": 29,
+            "lastHash": "t+KDl7i0xuGG0g5lfevtGPEl"
+        },
+        "data\\routing_map.json": {
+            "id": 30,
+            "lastHash": "6tvEAuA5R2kA5K5bnye9IkCg"
+        },
+        "docs\\DEPLOY.md": {
+            "id": 31,
+            "lastHash": "3GBGUDOAINlyJdzMK9uGz1+c"
+        },
+        "frontend\\jest.config.js": {
+            "id": 32,
+            "lastHash": "HGhVf2FWIC9QCcaXwjzktUr7"
+        },
+        "frontend\\purge_entropy.ps1": {
+            "id": 33,
+            "lastHash": "2dnXiSW7X7UQ2+Wuur7Jx+eh"
+        },
+        "frontend\\src\\components\\simulator\\engine\\nashSolver.ts": {
+            "id": 34,
+            "lastHash": "3NnB/iaxAZVDEjTfMoi/XyBn"
+        },
+        "scripts\\purge_entropy.ps1": {
+            "id": 35,
+            "lastHash": "2dnXiSW7X7UQ2+Wuur7Jx+eh"
+        },
+        "frontend\\package.json": {
+            "id": 36,
+            "lastHash": "Jt6xFr1Q0lG+HM5iodED3BQO"
+        },
+        ".vscode\\gemini-mcp\\status.json": {
+            "id": 37,
+            "lastHash": "n6/AsHzCukueQ9L8WUzOw72z"
+        },
+        ".vscode\\extensions.json": {
+            "id": 38,
+            "lastHash": "uGtL/L1T5A9oFKlo7EMuPiKe"
+        },
+        ".vscode\\mcp.json": {
+            "id": 39,
+            "lastHash": "mdwrPjz0Km1yO8Yl2AmAh04b"
+        },
+        "frontend\\next.config.js": {
+            "id": 40,
+            "lastHash": "4li8BzFbZ0ULWReP1iCSuCjx"
+        },
+        "frontend\\src\\components\\simulator\\ui\\RiskGauge.tsx": {
+            "id": 41,
+            "lastHash": "aABWN4EpaU5EIIyVMBw9VPSW"
+        },
+        "frontend\\src\\components\\simulator\\ui\\FreqInput.tsx": {
+            "id": 42,
+            "lastHash": "sVaIbSbnl8qQYj/0MKM/Fz/P"
+        },
+        ".vscode\\vitoi_perspective_engine.py": {
+            "id": 43,
+            "lastHash": "nti+uVJwJn/gRLIuXWAH9g+N"
+        },
+        "jest.config.js": {
+            "id": 44,
+            "lastHash": "IOQd23du3bnwRX20tM2fK3ge"
+        },
+        "package.json": {
+            "id": 45,
+            "lastHash": "6zWY9gog4PCH+DrYPIJEMJMi"
+        },
+        "frontend\\src\\components\\simulator\\SotaContext.tsx": {
+            "id": 46,
+            "lastHash": "/mX0zsvWyaYI7/ljrutxjsNK"
+        },
+        "frontend\\src\\components\\simulator\\InsolvencyMatrix.tsx": {
+            "id": 47,
+            "lastHash": "D0QFr6ds6vyWoZ7D6XD8775+"
+        },
+        "frontend\\src\\components\\analytics\\TelemetryCharts.tsx": {
+            "id": 48,
+            "lastHash": "3y/tFqrjsNLG+hTcNvhFMltJ"
+        },
+        "frontend\\src\\components\\analytics\\page.tsx": {
+            "id": 49,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        "rag_ingestion_manifest.json": {
+            "id": 50,
+            "lastHash": "C053SSsXIIGg8lAwNl92rOHT"
+        },
+        "predictive_forest.py": {
+            "id": 51,
+            "lastHash": "XCIcfTDvk1CUOYCiJIEYFkq6"
+        },
+        "package-lock.json": {
+            "id": 52,
+            "lastHash": "YcOuAvsC3jKh7BdYhQcXvuGQ"
+        },
+        "turbo.json": {
+            "id": 53,
+            "lastHash": "3Rd0oK9G4d8+1RvRUHvFg0yT"
+        },
+        "task_executor.py": {
+            "id": 54,
+            "lastHash": "7Jtmfi4ysFf1XEvycUrxA3pm"
+        },
+        "Site.code-workspace": {
+            "id": 55,
+            "lastHash": "2P3RJavK8c6LLw4jSBYXViWE"
+        },
+        "seed_telemetry.py": {
+            "id": 56,
+            "lastHash": "BdAEQjngz0JYj47aqLkkMKlC"
+        },
+        "docs\\SOTA_REFERENCE_ARCHITECTURE.html": {
+            "id": 57,
+            "lastHash": "qmwdNiLrSSjdML7Gl9Mc6n7b"
+        },
+        "frontend\\src\\components\\simulator\\DashboardSOTA.tsx": {
+            "id": 58,
+            "lastHash": "vtngjDLbG2boJK/xI+yWkSNf"
+        },
+        "frontend\\src\\components\\ui\\SotaMarkdown.tsx": {
+            "id": 59,
+            "lastHash": "QZQaglFq0yOCBGjwejXu8v2S"
+        },
+        "frontend\\src\\components\\ui\\SectionHeader.tsx": {
+            "id": 60,
+            "lastHash": "+rmVKuEur24V+bBnBTLY9zb+"
+        },
+        "frontend\\src\\components\\simulator\\panels\\ScenarioStage.tsx": {
+            "id": 61,
+            "lastHash": "o0u9C65IBvPUPq7d0D5IdOSe"
+        },
+        "frontend\\src\\components\\simulator\\panels\\CfrRegretPanel.tsx": {
+            "id": 62,
+            "lastHash": "Q/uzbmNlTbKajNNb39CE2KdT"
+        },
+        "frontend\\src\\components\\simulator\\GemmaAnalysisPanel.tsx": {
+            "id": 63,
+            "lastHash": "38ZM+gbB3Q+N9bIR5VPEeldM"
+        },
+        "frontend\\src\\components\\simulator\\MasterSimulator.tsx": {
+            "id": 64,
+            "lastHash": "tWOkaJsjmXEzY7lLwWPTtkrB"
+        },
+        ".claude\\agent-memory\\chico\\MEMORY.md": {
+            "id": 65,
+            "lastHash": "yNlbDF6T13c4ZjACgSPYbJzO"
+        },
+        "frontend\\src\\lib\\api-contract.ts": {
+            "id": 66,
+            "lastHash": "zslYVlOu2LEcTC233Rx8s91S"
+        },
+        "frontend\\src\\lib\\handParser.ts": {
+            "id": 67,
+            "lastHash": "olacDHlqYuUa4lCfmKRvY1xR"
+        },
+        "frontend\\src\\lib\\hrcExport.ts": {
+            "id": 68,
+            "lastHash": "Xdw1IC7/y0Guumqe2VuAKhi2"
+        },
+        "frontend\\src\\lib\\bayesianRangeEngine.ts": {
+            "id": 69,
+            "lastHash": "mnynLZ1piVjdk/WeT9dxD1Sf"
+        },
+        "frontend\\src\\lib\\ai-models.ts": {
+            "id": 70,
+            "lastHash": "h64QjUjSXQW4fVNjF8VywVHz"
+        },
+        "frontend\\src\\constants\\routes.ts": {
+            "id": 71,
+            "lastHash": "1nYfKIOAe8Re2VBJnZENHywh"
+        },
+        "frontend\\src\\components\\HeroArticleButton.tsx": {
+            "id": 72,
+            "lastHash": "hzA0x3eLd8TdKjFLVac1iXgs"
+        },
+        "frontend\\src\\components\\ErrorBoundary.tsx": {
+            "id": 73,
+            "lastHash": "48Em1/nNmYUsezDaFDJqqTiy"
+        },
+        "frontend\\src\\components\\BayesianBeliefPanel.tsx": {
+            "id": 74,
+            "lastHash": "7dWhHe6AQgznAAzwHQdIpflo"
+        },
+        "frontend\\src\\components\\ui\\TerminalLog.tsx": {
+            "id": 75,
+            "lastHash": "iI4uNciji56EdXJUA6Gv1Isz"
+        },
+        "frontend\\src\\components\\ui\\SotaTooltip.tsx": {
+            "id": 76,
+            "lastHash": "qCraEtm0mPD/lHkgo0wUzoBH"
+        },
+        "frontend\\src\\components\\ui\\SotaButton.tsx": {
+            "id": 77,
+            "lastHash": "zMKECI1tuyJax18FQMVZpR6e"
+        },
+        "frontend\\src\\components\\ui\\SotaBackground.tsx": {
+            "id": 78,
+            "lastHash": "N/i7isbcm+kfcQz4ubvIZs44"
+        },
+        "frontend\\src\\components\\ui\\Logo.tsx": {
+            "id": 79,
+            "lastHash": "zZsd8PtSkR3wu2hMDzSMbCnt"
+        },
+        "frontend\\src\\components\\ui\\JsonLd.tsx": {
+            "id": 80,
+            "lastHash": "Jy02VjxSDiq8LmWMNsgLthyj"
+        },
+        "frontend\\src\\components\\ui\\index.ts": {
+            "id": 81,
+            "lastHash": "DYSJCsjd8dKJLZp8aKWS1nkp"
+        },
+        "frontend\\src\\components\\ui\\GlassPanel.tsx": {
+            "id": 82,
+            "lastHash": "1RPlEtGMAByaaUDgpycffPdF"
+        },
+        "frontend\\src\\components\\ui\\CodeBlock.tsx": {
+            "id": 83,
+            "lastHash": "Xu/Q4mJOuW4nBe56S7grftjU"
+        },
+        "frontend\\src\\components\\ui\\ClientOnly.tsx": {
+            "id": 84,
+            "lastHash": "w/y3poYu9Oz0bh4cM7GOlc/G"
+        },
+        "frontend\\src\\components\\ui\\Button.tsx": {
+            "id": 85,
+            "lastHash": "gsKVKLpF18BT6YDB+/HmCd3N"
+        },
+        "frontend\\src\\hooks\\useMounted.ts": {
+            "id": 86,
+            "lastHash": "IG67WL7eJWqDNbKdIqNHZ5+d"
+        },
+        "frontend\\src\\hooks\\useLlamaEngine.ts": {
+            "id": 87,
+            "lastHash": "L4OaefWAPx3WpjzjBU4hZxAz"
+        },
+        "frontend\\src\\constants\\site.ts": {
+            "id": 88,
+            "lastHash": "MK5UML8RIAmnvY30uFuRpegD"
+        },
+        "read_task.py": {
+            "id": 89,
+            "lastHash": "BDteSiDaLi1mIMiVkM5ruAAa"
+        },
+        "memory_rag.py": {
+            "id": 90,
+            "lastHash": "tNs5zaOt3AMIvTipuX9u4ZUn"
+        },
+        "frontend\\src\\components\\simulator\\ui\\ScenarioSelector.tsx": {
+            "id": 91,
+            "lastHash": "jnQv793He2hsnTsxFSgJbRhm"
+        },
+        "frontend\\src\\components\\simulator\\ui\\RadarTooltip.tsx": {
+            "id": 92,
+            "lastHash": "eyjisq07LHzxTJfASSYun0Ug"
+        },
+        "frontend\\src\\components\\simulator\\ui\\QuantumSynthesis.tsx": {
+            "id": 93,
+            "lastHash": "qFmCQ3gBHG1domeLxgx5K5Fd"
+        },
+        "frontend\\src\\components\\simulator\\ui\\MetricRow.tsx": {
+            "id": 94,
+            "lastHash": "yLUfYNKV2AzqsTwcFp1rFh2m"
+        },
+        "frontend\\src\\components\\simulator\\ui\\InsolvencyRioPanel.tsx": {
+            "id": 95,
+            "lastHash": "vSnxVY08euDfLHR7S6UmplDN"
+        },
+        "frontend\\src\\components\\simulator\\ui\\StreetCard.tsx": {
+            "id": 96,
+            "lastHash": "qJszd1Bg/ZE6FBziGSKTFfKH"
+        },
+        "frontend\\src\\components\\simulator\\DownwardDriftSimulator.tsx": {
+            "id": 97,
+            "lastHash": "OF9gicb6Y01wsbJqR/+3uBtW"
+        },
+        "frontend\\src\\components\\simulator\\DashboardSOTADynamic.tsx": {
+            "id": 98,
+            "lastHash": "9kcg8HeWs1K1HT86mVMzIyTR"
+        },
+        "frontend\\src\\components\\simulator\\GtoCfrContent.tsx": {
+            "id": 99,
+            "lastHash": "9YQ8JHOvasvPBugt1uUTIxY0"
+        },
+        "frontend\\src\\components\\simulator\\GtoCfrSimulator.tsx": {
+            "id": 100,
+            "lastHash": "Oc+ps0OUBW20wHwRbOBu2TMX"
+        },
+        "frontend\\src\\components\\simulator\\IcmQuizVisceral.tsx": {
+            "id": 101,
+            "lastHash": "5FNkebnMDWm6qXFLnXcIVCuC"
+        },
+        "frontend\\src\\components\\simulator\\index.ts": {
+            "id": 102,
+            "lastHash": "PXbkZJeZZnQdy3I2NsSVDlQv"
+        },
+        "frontend\\src\\lib\\telemetry-client.ts": {
+            "id": 103,
+            "lastHash": "Mz1x2b3sKfclpoW/iiY25u/u"
+        },
+        "frontend\\src\\lib\\rpDeriver.ts": {
+            "id": 104,
+            "lastHash": "ThKF0caJAfGMYmk7rsVjnNvM"
+        },
+        "frontend\\src\\lib\\prisma.ts": {
+            "id": 105,
+            "lastHash": "kKhiU8oGuNMOchtzZ158mFAM"
+        },
+        "frontend\\tsconfig.audit.tsbuildinfo": {
+            "id": 106,
+            "lastHash": "Bre5me87kZFmuuaLBPLDxZRU"
+        },
+        "frontend\\tsconfig.json": {
+            "id": 107,
+            "lastHash": "Q4+BLjQugA0GLNqopZY65KOa"
+        },
+        "requirements.txt": {
+            "id": 108,
+            "lastHash": "DP717OIO2yQZr3hv/YVx3RUW"
+        },
+        "TEORIA_PERSPECTIVA_MATEMATICA_VITOI.md": {
+            "id": 109,
+            "lastHash": "57VBHcV5MDW9oxiAP3M3tZSe"
+        },
+        "pyproject.toml": {
+            "id": 110,
+            "lastHash": "JsejokWMer5qv0pbTju32wgT"
+        },
+        "do.test.ps1": {
+            "id": 111,
+            "lastHash": "eEg8h9Nk3/L0PoPpZ7HAM/Le"
+        },
+        "do.ps1": {
+            "id": 112,
+            "lastHash": "1jtrleG/XSXWJtXsRPkakmOq"
+        },
+        "check_recent.py": {
+            "id": 113,
+            "lastHash": "3YUwLBSzCP2xJz8Slpn+xIzo"
+        },
+        "check_gemma.py": {
+            "id": 114,
+            "lastHash": "EjF4AlS06GFD0+FFATLsCZG9"
+        },
+        ".semgrep.yml": {
+            "id": 115,
+            "lastHash": "J9kccbnmKyaiRv0TOOdRPPMW"
+        },
+        ".nexus_worker.pid": {
+            "id": 116,
+            "lastHash": "UWRU6ITXdoYZN5MqnBvsfBff"
+        },
+        "gemini_media_gen.log": {
+            "id": 117,
+            "lastHash": "7MgkPo56SePX938K+j3EaDwv"
+        },
+        "favicon.svg": {
+            "id": 118,
+            "lastHash": "dRZRGvFuUaHdP1F5/aVmYq19"
+        },
+        "Dockerfile": {
+            "id": 119,
+            "lastHash": "58qE3441d3FkaKVE2kEN4VqC"
+        },
+        "docker-compose.yml": {
+            "id": 120,
+            "lastHash": "MLA3ojEST0tXQeaV8yff7SiF"
+        },
+        "DIRETRIZES_VITOI_SOTA.md": {
+            "id": 121,
+            "lastHash": "d8OFf2DHiWh95mENhwU4/9Dd"
+        },
+        ".env": {
+            "id": 122,
+            "lastHash": "sepPyT78s0tSTxNXtbibvy8L"
+        },
+        "_env.example.ps1": {
+            "id": 123,
+            "lastHash": "Djt2M8DhrNF/c0089YGlhyyZ"
+        },
+        "utils\\__init__.py": {
+            "id": 124,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        "utils\\audit.py": {
+            "id": 125,
+            "lastHash": "TxH0TcgecpOEjv1+o+N1dQWt"
+        },
+        "utils\\heuristics.py": {
+            "id": 126,
+            "lastHash": "8moLrsSMtcPwV6ShKBRi0jfJ"
+        },
+        "utils\\notifications.py": {
+            "id": 127,
+            "lastHash": "resBWyrvSvbOl+GBZu6i7r4Q"
+        },
+        "utils\\text.py": {
+            "id": 128,
+            "lastHash": "hlfzVeeW4t+gsjk0kDr7lsaL"
+        },
+        "utils\\cache.py": {
+            "id": 129,
+            "lastHash": "X8nlC+LRiCXIQMOAde5tIzrA"
+        },
+        "tests\\test_backend_hardening.py": {
+            "id": 130,
+            "lastHash": "ejf91G/y0BMIsTSBF8Jr9Xoq"
+        },
+        "tests\\test_math_rio.py": {
+            "id": 131,
+            "lastHash": "KGW24bIGN4fieXeUkd1i8V+u"
+        },
+        "tests\\test_math_sota.py": {
+            "id": 132,
+            "lastHash": "eVeusjX96IbR/bBmoBeYbuiI"
+        },
+        "tests\\test_task_routing.py": {
+            "id": 133,
+            "lastHash": "KpDdG2Mr1hQ+NxAn357RGDLo"
+        },
+        "scripts\\quality-gate.ps1": {
+            "id": 134,
+            "lastHash": "YJnvjZRcN678BbDWUJMAN+o3"
+        },
+        "scripts\\QuizStore.ts": {
+            "id": 135,
+            "lastHash": "iudxU4dC6eOmDcoq3wSg9rom"
+        },
+        "scripts\\java-harmony.ps1": {
+            "id": 136,
+            "lastHash": "ahl3bWzFSJuMIKp4Kpelnq64"
+        },
+        "scripts\\gemma-service.ps1": {
+            "id": 137,
+            "lastHash": "YpOWwJrziPLGzPB40k+sfZjm"
+        },
+        "scripts\\utils\\audit.py": {
+            "id": 138,
+            "lastHash": "PLMIqJdn4bVIlOjj/srAnWJ7"
+        },
+        "scripts\\utils\\notifications.py": {
+            "id": 139,
+            "lastHash": "N0roxS4SfliadhMR/6DVLVwr"
+        },
+        "scripts\\utils\\network_diagnostic.py": {
+            "id": 140,
+            "lastHash": "rh495ayIBbKUMOwOQoqzrxZL"
+        },
+        "scripts\\utils\\map_territory.ps1": {
+            "id": 141,
+            "lastHash": "wGh7cvrbAq/uJeth7UwQbi5W"
+        },
+        "scripts\\utils\\kill_eperm.ps1": {
+            "id": 142,
+            "lastHash": "qhIkuC4TOq0iKoN9f+DjSIwZ"
+        },
+        "scripts\\utils\\Invoke-SafeCommand.ps1": {
+            "id": 143,
+            "lastHash": "0o6fLhafsbuA/6zFdQh4juVg"
+        },
+        "scripts\\utils\\invoke_full_backup.ps1": {
+            "id": 144,
+            "lastHash": "3oPlYn6r8o4/N1zg98eKOC09"
+        },
+        "scripts\\utils\\inspect_docx_xml.py": {
+            "id": 145,
+            "lastHash": "EuwVT2++LA148TEyNMJl1I6q"
+        },
+        "scripts\\utils\\ingest_rag.py": {
+            "id": 146,
+            "lastHash": "aLDzlVbyax4PF2IdBnzOcwY2"
+        },
+        "scripts\\utils\\gen_ranges.py": {
+            "id": 147,
+            "lastHash": "3ahb1NvQ3MRNHqA551dbjcQz"
+        },
+        "scripts\\utils\\restore_system.ps1": {
+            "id": 148,
+            "lastHash": "uzGNcuOqW0Xle/HXCsNkDsjR"
+        },
+        "scripts\\utils\\read_docx.py": {
+            "id": 149,
+            "lastHash": "D2i1tu/1Zbpfj2erS78B0oPn"
+        },
+        "scripts\\utils\\read_any_docx.py": {
+            "id": 150,
+            "lastHash": "O/BTYpkkSZhGBFl9HPn93DYL"
+        },
+        "scripts\\utils\\purge_onedrive_copies.js": {
+            "id": 151,
+            "lastHash": "jnoVD+SBgoQ/0hjwsKRbUWQb"
+        },
+        "scripts\\utils\\fix_ranges_v5.py": {
+            "id": 152,
+            "lastHash": "fVJYm5GIMbFiqo7LAgMusJt3"
+        },
+        "scripts\\utils\\extract_docx_media.py": {
+            "id": 153,
+            "lastHash": "nTBnQnu8Nmas0tfL90WUt9Eg"
+        },
+        "scripts\\utils\\deploy_v1.ps1": {
+            "id": 154,
+            "lastHash": "5g4/NYaQ8oF3RR7a5QJMeBZJ"
+        },
+        "scripts\\utils\\create_agent_documentation.ps1": {
+            "id": 155,
+            "lastHash": "iL3x52zHnSTAm525NNbllhx+"
+        },
+        "scripts\\utils\\convert_docx_to_markdown.py": {
+            "id": 156,
+            "lastHash": "3jXhlbQU6QsMNhw3qPh+OkpM"
+        },
+        "scripts\\utils\\apply_sentinel_strategy.ps1": {
+            "id": 157,
+            "lastHash": "K12DBMPDYcgu3jAcOSWponOM"
+        },
+        "scripts\\utils\\tests\\test_system_stress.ps1": {
+            "id": 158,
+            "lastHash": "UWomgXQdFyLFwLJUqTN1dDWA"
+        },
+        "scripts\\utils\\tests\\test_post_surgery.ps1": {
+            "id": 159,
+            "lastHash": "CU55yM5Nc15xlHItBaPmUErb"
+        },
+        "scripts\\utils\\tests\\test_multithread.ps1": {
+            "id": 160,
+            "lastHash": "bEeijOAoTMgU0Ie5rW1rnGgM"
+        },
+        "scripts\\utils\\tests\\test_kernel_injection.ps1": {
+            "id": 161,
+            "lastHash": "1WhkDQIkOvYw0jxR2Pt5wHYE"
+        },
+        "scripts\\utils\\tests\\test_implementor_poker.ps1": {
+            "id": 162,
+            "lastHash": "B0tG+POn9XDmY7wvrr6DMhnU"
+        },
+        "scripts\\utils\\tests\\test_cleanup.ps1": {
+            "id": 163,
+            "lastHash": "o9jZS4JBgTAeCFZ5bzLBBhCv"
+        },
+        "scripts\\utils\\tests\\test_batch.ps1": {
+            "id": 164,
+            "lastHash": "EGwIoq+b3V1003DA2iG1XQYk"
+        },
+        "scripts\\tests\\test_telemetry_endpoint.ps1": {
+            "id": 165,
+            "lastHash": "hDnD2wh7kmZ3WFqc4btHTDUJ"
+        },
+        "scripts\\tests\\Invoke-Chaos.ps1": {
+            "id": 166,
+            "lastHash": "FWueqpAFhgaeQW9UKllZVmZD"
+        },
+        "scripts\\tests\\chaos-core.ts": {
+            "id": 167,
+            "lastHash": "X39JfAy7ulIXlmjRaVukbTts"
+        },
+        "scripts\\setup\\Setup-NexusProfile.ps1": {
+            "id": 168,
+            "lastHash": "sCFTUrKe1BYwnoQs4Y7OwNEV"
+        },
+        "scripts\\utils\\tests\\chaos-core.ts": {
+            "id": 169,
+            "lastHash": "HfP53xcJo34rO75PBtG8HHZs"
+        },
+        "scripts\\setup\\Set-AgentEnvironment.ps1": {
+            "id": 170,
+            "lastHash": "o6rdf9FDvQtESvGOJqHd35CC"
+        },
+        "scripts\\setup\\seed_icm_lab.ts": {
+            "id": 171,
+            "lastHash": "YiHYoFzqvQWLdfqveIFdz/Rl"
+        },
+        "scripts\\setup\\Schedule-MaintenanceTasks.ps1": {
+            "id": 172,
+            "lastHash": "S6l1V5OsacBgoa+SpWLDbzg+"
+        },
+        "scripts\\setup\\check-cortex.ps1": {
+            "id": 173,
+            "lastHash": "6PnXig2L9tPp6qatMsHM4bPx"
+        },
+        "scripts\\security\\check-staged-secrets.ps1": {
+            "id": 174,
+            "lastHash": "hTNsAK1KP98IkpFz52MzWR1M"
+        },
+        "scripts\\security\\scan-history-secrets.ps1": {
+            "id": 175,
+            "lastHash": "sYuRj8iRTt/eZv0fnA1DxU4Y"
+        },
+        "scripts\\routines\\invoke_db_vacuum.ps1": {
+            "id": 176,
+            "lastHash": "6iNebscr/PS5HMPT+z3CTVV9"
+        },
+        "scripts\\routines\\scenarios.ts": {
+            "id": 177,
+            "lastHash": "p7Ujd5qB7baaRtp/xbnI3zrV"
+        },
+        "scripts\\routines\\send_alert.ps1": {
+            "id": 178,
+            "lastHash": "5uIRjjaTOJdWwbwFysvy/s1O"
+        },
+        "scripts\\routines\\sota_refactor.py": {
+            "id": 179,
+            "lastHash": "U5eNtfySNUJnQOIYP0KoH/tF"
+        },
+        "scripts\\routines\\stress_test.py": {
+            "id": 180,
+            "lastHash": "ub6oGKOvlhU+I2nWdNKvFJT9"
+        },
+        "scripts\\routines\\sync_agents_reality.ps1": {
+            "id": 181,
+            "lastHash": "40+pI8/owUw+Kr9rt/yoq/sa"
+        },
+        "scripts\\routines\\vitoi_audit_system.py": {
+            "id": 182,
+            "lastHash": "M0w31ww2TjtctLDFn1WN8WmU"
+        },
+        "scripts\\routines\\inject_perspectiva_memory.ps1": {
+            "id": 183,
+            "lastHash": "0HJoXiIxwYx6GmFSQDAMUDVG"
+        },
+        "scripts\\routines\\inject_prisma_vitoi.ps1": {
+            "id": 184,
+            "lastHash": "PieLvg7EKSBd6xYfrPGvEeOB"
+        },
+        "scripts\\routines\\invoke_daily_backup.ps1": {
+            "id": 185,
+            "lastHash": "S2KOKIxsqYMIzdV5P4T/a+GU"
+        },
+        "scripts\\routines\\invoke_daily_report.ps1": {
+            "id": 186,
+            "lastHash": "3Fvh2vslhSWp9XC3nkufXLUw"
+        },
+        "scripts\\routines\\invoke_handoff_protocol.ps1": {
+            "id": 187,
+            "lastHash": "0rjs50FFmuREkMXr4KPYpUGz"
+        },
+        "scripts\\routines\\invoke_priority_recalibration.ps1": {
+            "id": 188,
+            "lastHash": "sLUyN18F++ywe/VmRHrOj+yr"
+        },
+        "scripts\\routines\\vitoi_dashboard.py": {
+            "id": 189,
+            "lastHash": "J9ohpFfubwOf5CQq2R26xFFV"
+        },
+        "scripts\\routines\\vitoi_elevate_priority.ps1": {
+            "id": 190,
+            "lastHash": "qgkxHlZNH5ZI0MRfHraF9WGC"
+        },
+        "scripts\\routines\\vitoi_entropy_heatmap.py": {
+            "id": 191,
+            "lastHash": "DCk3silZd/XyodlsTYPl866Z"
+        },
+        "scripts\\routines\\vitoi_refactor_engine.py": {
+            "id": 192,
+            "lastHash": "a1HENWI7VN8x84JqF7BAv8FK"
+        },
+        "scripts\\routines\\vitoi_watcher.py": {
+            "id": 193,
+            "lastHash": "iw7aTMRAzB4CBL6YsFLaOFnV"
+        },
+        "scripts\\routines\\notify_engineer.ps1": {
+            "id": 194,
+            "lastHash": "1BNy6LpFT5ccQfX7jKb93pTX"
+        },
+        "scripts\\routines\\Invoke-SystemHealthCheck.ps1": {
+            "id": 195,
+            "lastHash": "Rg7XIMnmQmKb7WxZ1Ck8ao2n"
+        },
+        "scripts\\routines\\Invoke-ContextAssembler.ps1": {
+            "id": 196,
+            "lastHash": "Dki22MDDeIgzPA32AyqBggBu"
+        },
+        "scripts\\routines\\invoke_weekly_report.ps1": {
+            "id": 197,
+            "lastHash": "MswDbS7zkUei6NFudktZcNa3"
+        },
+        "scripts\\routines\\invoke_weekly_audit.ps1": {
+            "id": 198,
+            "lastHash": "nJjNyoa+CBHhlflLLGcub8J+"
+        },
+        "scripts\\routines\\invoke_sota_audit.ps1": {
+            "id": 199,
+            "lastHash": "KpwDwtBG4WEffKxVtSNRFdCw"
+        },
+        "scripts\\routines\\invoke_scripts_dashboard.ps1": {
+            "id": 200,
+            "lastHash": "Il/fhD/Qhh65gcmy8d6/HJ2m"
+        },
+        "scripts\\routines\\invoke_routing_map_visualization.ps1": {
+            "id": 201,
+            "lastHash": "Sad06r1KpNx+A3mlFuBHq23f"
+        },
+        "scripts\\ops\\start_worker.ps1": {
+            "id": 202,
+            "lastHash": "wW8lGcwrBn8ab9OePZ7NHxUt"
+        },
+        "scripts\\ops\\start_life.ps1": {
+            "id": 203,
+            "lastHash": "p0nqvsPpMi2UzKpX5qs+eV5w"
+        },
+        "scripts\\ops\\start_frontend.ps1": {
+            "id": 204,
+            "lastHash": "VsqnTY2iZk1MUs6VOY9/l+9Y"
+        },
+        "scripts\\ops\\Invoke-Obliterate.ps1": {
+            "id": 205,
+            "lastHash": "Al6R3JKvC6fccnaFDu/BzUGT"
+        },
+        "scripts\\ops\\fix_p1_dependencies.ps1": {
+            "id": 206,
+            "lastHash": "F40OSdcEuP04qqt2sK49Fkiw"
+        },
+        "scripts\\ops\\fix_p0_issues.ps1": {
+            "id": 207,
+            "lastHash": "OBa83a+ZwZE3ynnGZvLkGONn"
+        },
+        "scripts\\maintenance\\audit_routing_consistency.ps1": {
+            "id": 208,
+            "lastHash": "rxwzSj/g+5q1+Nj9+w5v8dgN"
+        },
+        "scripts\\maintenance\\backup_config.ps1": {
+            "id": 209,
+            "lastHash": "ACLnb0cnMYokECUIhhRZjyhp"
+        },
+        "scripts\\maintenance\\clean_backups.ps1": {
+            "id": 210,
+            "lastHash": "Ou3ZBKViAki3LOdSq/Kv7XCX"
+        },
+        "scripts\\maintenance\\cleanup_task_results.ps1": {
+            "id": 211,
+            "lastHash": "ju0rgW19zfiSpUCwac1wKUUH"
+        },
+        "scripts\\maintenance\\cleanup.ps1": {
+            "id": 212,
+            "lastHash": "Hn9nYAuphi0T2/Bm8E5RxkS0"
+        },
+        "scripts\\maintenance\\delete_old_backups.ps1": {
+            "id": 213,
+            "lastHash": "Q7FAfgAHi0pDE/cE8dyatqm5"
+        },
+        "scripts\\maintenance\\health_check.ps1": {
+            "id": 214,
+            "lastHash": "WjpIlDtkth+scXBtW2nQwmSz"
+        },
+        "scripts\\maintenance\\invoke_backup_cleanup.ps1": {
+            "id": 215,
+            "lastHash": "HSRIS6OApARebIu4ZAMv5L7A"
+        },
+        "scripts\\maintenance\\invoke_db_integrity_check.ps1": {
+            "id": 216,
+            "lastHash": "HTo59Yu6PARfURVT3jPev655"
+        },
+        "scripts\\maintenance\\invoke_orphan_purge.ps1": {
+            "id": 217,
+            "lastHash": "czvF6ql04AHFWcOfHd5JNNUZ"
+        },
+        "scripts\\maintenance\\invoke_rag_purge.ps1": {
+            "id": 218,
+            "lastHash": "Gx9GtIO8JdZqeKIrSww89Gaq"
+        },
+        "scripts\\maintenance\\Invoke-FixEPERM.ps1": {
+            "id": 219,
+            "lastHash": "5NTewvafzpKdPaHG0bjSczuQ"
+        },
+        "scripts\\maintenance\\migrate_json_to_sqlite.ps1": {
+            "id": 220,
+            "lastHash": "hsjm9kWPLWf9wXvXfl19DSi4"
+        },
+        "scripts\\maintenance\\optimize_infrastructure.ps1": {
+            "id": 221,
+            "lastHash": "eSMqbInqHQy2glCduLqjJ2VK"
+        },
+        "scripts\\maintenance\\purify_memories_ascii.py": {
+            "id": 222,
+            "lastHash": "WSQhZVLQPR6LFrA5GtNH3VUL"
+        },
+        "scripts\\maintenance\\queue_maintenance.ps1": {
+            "id": 223,
+            "lastHash": "Xq9j8RqagteJS0iS77+hQHzx"
+        },
+        "scripts\\maintenance\\queue_tech_debt.ps1": {
+            "id": 224,
+            "lastHash": "gXDctblhPWbmcelrDFsActvF"
+        },
+        "scripts\\maintenance\\refactor_codeblock.ps1": {
+            "id": 225,
+            "lastHash": "xHimIbTUBXAXsuH935zqiHCs"
+        },
+        "scripts\\maintenance\\run_cleanup_sota.ps1": {
+            "id": 226,
+            "lastHash": "kdOCTreLJGkDQZBjiybtNllx"
+        },
+        "scripts\\maintenance\\run_maverick_sentinel.ps1": {
+            "id": 227,
+            "lastHash": "ByApEWeziEwbi+R3fDBlaZgJ"
+        },
+        "scripts\\maintenance\\run_organizador_maintenance.ps1": {
+            "id": 228,
+            "lastHash": "cx5hWHG5nxT8d3H9BB47EF8o"
+        },
+        "scripts\\maintenance\\run_skillmaster_cron.ps1": {
+            "id": 229,
+            "lastHash": "0tg1DrYXThXtMiTLK/XjkC7O"
+        },
+        "scripts\\maintenance\\run_telemetry_cleanup.ps1": {
+            "id": 230,
+            "lastHash": "hb/uOQYxB2gDGBkg9XByCubd"
+        },
+        "scripts\\maintenance\\skillmaster_config.json": {
+            "id": 231,
+            "lastHash": "wo4VBcOWOo3ZEbjgQaM4PK03"
+        },
+        "scripts\\llm_inference\\load_model.py": {
+            "id": 232,
+            "lastHash": "k0zdnSfFaXpT2Ot+vdokZrmS"
+        },
+        "scripts\\llm_inference\\run_inference.py": {
+            "id": 233,
+            "lastHash": "8xQDzMcy720rSp5LpCndeD/P"
+        },
+        "scripts\\init\\invoke_daily_backup.ps1": {
+            "id": 234,
+            "lastHash": "9SKpM+5eY84hlci6oTiTqxfC"
+        },
+        "scripts\\cli\\ask.ps1": {
+            "id": 235,
+            "lastHash": "oIhFSEfcBRLNj7ZKdVKtYfkF"
+        },
+        "scripts\\cli\\dashboard_health.ps1": {
+            "id": 236,
+            "lastHash": "g1AErxmrcx62YUoZkSN0rXRa"
+        },
+        "scripts\\cli\\nexus_backup.ps1": {
+            "id": 237,
+            "lastHash": "5PXa40ZgmZFLtrUEriDuMuc2"
+        },
+        "scripts\\cli\\nexus_read.ps1": {
+            "id": 238,
+            "lastHash": "VnxBLh21+0TB8j9SDpUgT+/Q"
+        },
+        "scripts\\cli\\nexus_status.ps1": {
+            "id": 239,
+            "lastHash": "O6pjDQsLzTGqTRJtW3tA/XC8"
+        },
+        "monitoring\\audit_engine.py": {
+            "id": 240,
+            "lastHash": "nZZGiIZ2unz9DAhG7vJ9o44m"
+        },
+        "monitoring\\telemetry.py": {
+            "id": 241,
+            "lastHash": "b7R2BHDMaCP6Vq87No+ORkHJ"
+        },
+        "monitoring\\watchdog.py": {
+            "id": 242,
+            "lastHash": "+x1jmDY3HxDN+15JG43c0E08"
+        },
+        "mcp-bridge\\server.py": {
+            "id": 243,
+            "lastHash": "6EMr4PW7j30dj3J+TIBnOrB6"
+        },
+        "llm\\__init__.py": {
+            "id": 244,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        "llm\\anthropic.py": {
+            "id": 245,
+            "lastHash": "/MUYShT8ltrh+G1urlXCSY4i"
+        },
+        "llm\\budget.py": {
+            "id": 246,
+            "lastHash": "nu7NZ4hBqfYbeOANpl2Gs1za"
+        },
+        "llm\\gemini.py": {
+            "id": 247,
+            "lastHash": "auqqvDhLVnGHFE1T3cim8Wga"
+        },
+        "llm\\gemma_local.py": {
+            "id": 248,
+            "lastHash": "t/liV3rUU0rMM/R40E024mb5"
+        },
+        "llm\\openrouter.py": {
+            "id": 249,
+            "lastHash": "lGKIPsOV04e2wdphpqIeF2ZT"
+        },
+        "llm\\orchestrator.py": {
+            "id": 250,
+            "lastHash": "W0EX/rgZxpU7FNg8mBVYlhSA"
+        },
+        "llm\\providers.py": {
+            "id": 251,
+            "lastHash": "1PzWop7C/HAVID29g4Mz8aRe"
+        },
+        "llm\\route.ts": {
+            "id": 252,
+            "lastHash": "JIf6Cyd2AZgeHZYhiQ1AUOHT"
+        },
+        "llm\\routing.py": {
+            "id": 253,
+            "lastHash": "MaQOOGjxoJeYA/KqNDEUzePO"
+        },
+        "llm\\search.py": {
+            "id": 254,
+            "lastHash": "nk1riO2bszQYwVAj/AmlglZq"
+        },
+        "llm\\session.py": {
+            "id": 255,
+            "lastHash": "Ps0Q+0QRg830ScLHc2bv38Jo"
+        },
+        "llm\\useMounted.ts": {
+            "id": 256,
+            "lastHash": "IG67WL7eJWqDNbKdIqNHZ5+d"
+        },
+        "frontend\\tsconfig.audit.json": {
+            "id": 257,
+            "lastHash": "fP4vUhydvK43b3U8vEx2X0rk"
+        },
+        "frontend\\tsconfig.worker.json": {
+            "id": 258,
+            "lastHash": "ly9qZ8/EAobYe9dRnDChOzfM"
+        },
+        "frontend\\postcss.config.js": {
+            "id": 259,
+            "lastHash": "c01MeUYpOPVYGYoS82fIoFFG"
+        },
+        "scripts\\cli\\nexus.py": {
+            "id": 260,
+            "lastHash": "/g4T0BU28HN/drypxMZ4yPK7"
+        },
+        "scripts\\cli\\status.ps1": {
+            "id": 261,
+            "lastHash": "R+mOyshoyyjRT1LUhJMnbGBy"
+        },
+        "scripts\\cli\\serve.ps1": {
+            "id": 262,
+            "lastHash": "ES8NAQUmTcoQMJpBrIHdZEnK"
+        },
+        "monitoring\\__init__.py": {
+            "id": 263,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        "frontend\\next-env.d.ts": {
+            "id": 264,
+            "lastHash": "CD4jxMXndh2xURNOoe94lhIM"
+        },
+        "frontend\\.gitignore": {
+            "id": 265,
+            "lastHash": "Cp9FJ2RU8ce3KoeqB5vH+sYy"
+        },
+        "frontend\\.eslintrc.json": {
+            "id": 266,
+            "lastHash": "iCrVtQcdN2LZoNIHlqnpUIBS"
+        },
+        "frontend\\.env.example": {
+            "id": 267,
+            "lastHash": "3Uzkx2IrytlAAFnYKt1IhMWS"
+        },
+        "frontend\\.env": {
+            "id": 268,
+            "lastHash": "4FZR5Ym3WyMFl7xJom1uA9WM"
+        },
+        "frontend\\src\\route.ts": {
+            "id": 269,
+            "lastHash": "WWq4qcvOttt7+vr0yA3bXOX9"
+        },
+        "frontend\\src\\proxy.ts": {
+            "id": 270,
+            "lastHash": "76/iUE6gT9u7O/oDeowvKkqZ"
+        },
+        "frontend\\src\\AuthProvider.tsx": {
+            "id": 271,
+            "lastHash": "4HLj2DvOBOJFB4bafBBFCnov"
+        },
+        "frontend\\src\\auth.ts": {
+            "id": 272,
+            "lastHash": "ROj0cvKqRi+XDDQlClZSxEcB"
+        },
+        "frontend\\src\\lib\\schemas.ts": {
+            "id": 273,
+            "lastHash": "l3HdELoi/HkSXBX92lrHXCfs"
+        },
+        "frontend\\src\\lib\\predictive-fallback.ts": {
+            "id": 274,
+            "lastHash": "XoBBt7znVUx/7Upy4YVHPyor"
+        },
+        "frontend\\src\\lib\\perspectiva.ts": {
+            "id": 275,
+            "lastHash": "w95Fft96cqViYEDxiFaVXCmd"
+        },
+        "frontend\\src\\lib\\montecarlo.ts": {
+            "id": 276,
+            "lastHash": "6THJv3j7jonlL7+dIt+aLBQ7"
+        },
+        "frontend\\src\\lib\\logger.ts": {
+            "id": 277,
+            "lastHash": "o1LQzbT1ruFQeEPCShhrn5Nw"
+        },
+        "frontend\\src\\lib\\index.ts": {
+            "id": 278,
+            "lastHash": "Wp5M1yTs09/TfzH7bZ+qRTos"
+        },
+        "frontend\\src\\lib\\icmEngine.ts": {
+            "id": 279,
+            "lastHash": "lzaHw33Ph+7hiCMiTgWeWegN"
+        },
+        "frontend\\src\\lib\\icm.ts": {
+            "id": 280,
+            "lastHash": "wC/agSo3FxbGHD81FNVv9Dv9"
+        },
+        "frontend\\src\\components\\simulator\\useGemmaStream.ts": {
+            "id": 281,
+            "lastHash": "rdn+W6u0fz7N0ZYc6qvXtdRM"
+        },
+        "frontend\\src\\components\\simulator\\SotaHubNavbar.tsx": {
+            "id": 282,
+            "lastHash": "hVAJlWa8jiUWTqf+8BSFJGOy"
+        },
+        "frontend\\src\\components\\simulator\\simulator.module.css": {
+            "id": 283,
+            "lastHash": "F/EfL8dkNUiMyPf9iBpxDjbq"
+        },
+        "frontend\\src\\components\\simulator\\ResurrectionRiskSimulator.tsx": {
+            "id": 284,
+            "lastHash": "E5N066TS4p0f1z4HR/ypYEI0"
+        },
+        "frontend\\src\\components\\simulator\\ReferencialData.ts": {
+            "id": 285,
+            "lastHash": "lKM1iM0ReqkGOWAXr3W5aLn4"
+        },
+        "frontend\\src\\components\\simulator\\ReferencialAula12.tsx": {
+            "id": 286,
+            "lastHash": "5Q5ztpSeETZNY1ehZwFq+Qw5"
+        },
+        "frontend\\src\\components\\simulator\\page.tsx": {
+            "id": 287,
+            "lastHash": "Z3PJlLXvaQMBM/g2s6ib2mwc"
+        },
+        "frontend\\src\\components\\simulator\\NashMatrixProfiler.tsx": {
+            "id": 288,
+            "lastHash": "3a2IsUbgDEA2WXVq4EaJis2E"
+        },
+        "frontend\\src\\components\\simulator\\MasterSimulatorDynamic.tsx": {
+            "id": 289,
+            "lastHash": "67WMy3bmrkcm1pk8CYB1EByD"
+        },
+        "frontend\\src\\components\\simulator\\ui\\SprPipeline.tsx": {
+            "id": 290,
+            "lastHash": "Myck6no65rSNZDZb9mnkxbjr"
+        },
+        "frontend\\src\\components\\simulator\\ui\\SpatialControls.tsx": {
+            "id": 291,
+            "lastHash": "w2YGC/81UISnf0G0v9HSql/o"
+        },
+        "frontend\\src\\components\\simulator\\ui\\SotaTooltip.tsx": {
+            "id": 292,
+            "lastHash": "1159USkTjbZAtBtphgDoxhCB"
+        },
+        "frontend\\src\\components\\simulator\\ui\\SimulatorTour.tsx": {
+            "id": 293,
+            "lastHash": "Hkl7h5mg09pX50HzYuL5ZrYc"
+        },
+        "frontend\\src\\components\\simulator\\ui\\SimulatorNavigation.tsx": {
+            "id": 294,
+            "lastHash": "D4jBvLIyomqm0IuLFjrJ5xaa"
+        },
+        "frontend\\src\\components\\simulator\\ui\\SimulatorHeader.tsx": {
+            "id": 295,
+            "lastHash": "ClDgUk7CqLUrNdRlpTEtE+29"
+        },
+        "frontend\\src\\components\\simulator\\ui\\SelectBtn.tsx": {
+            "id": 296,
+            "lastHash": "zGd1jEuyICRDNXpE6rnw58Qs"
+        },
+        "frontend\\src\\components\\simulator\\ui\\PlayerSelectButton.tsx": {
+            "id": 297,
+            "lastHash": "f0hPMbT4PoLejdkNiuKgkQfD"
+        },
+        "frontend\\src\\components\\simulator\\ui\\PerspectiveChart.tsx": {
+            "id": 298,
+            "lastHash": "l36iKNE9WfcKfwaC3ZpGtF+n"
+        },
+        "frontend\\src\\components\\simulator\\ui\\NashDistortionViz.tsx": {
+            "id": 299,
+            "lastHash": "R2EMSwq51ME3sHVFEooIUoVM"
+        },
+        "frontend\\src\\components\\simulator\\ui\\InsolvencyQuizPanel.tsx": {
+            "id": 300,
+            "lastHash": "3s8XBmk3oanuOL3Mg9QKoBVA"
+        },
+        "frontend\\src\\components\\simulator\\ui\\InfoTooltip.tsx": {
+            "id": 301,
+            "lastHash": "gVwl4pgNhnmLwAcChDUsGHl8"
+        },
+        "frontend\\src\\components\\simulator\\ui\\GuideToolbar.tsx": {
+            "id": 302,
+            "lastHash": "OXrbCn7mwIobTO7dynR15Rfg"
+        },
+        "frontend\\src\\components\\simulator\\ui\\GeometricProjectionChart.tsx": {
+            "id": 303,
+            "lastHash": "L5qSNu5dLCGaJz4q9VrE4lk5"
+        },
+        "frontend\\src\\components\\simulator\\ui\\CfrCanvas.tsx": {
+            "id": 304,
+            "lastHash": "6Gg1VQXuMgOKwHl5apSUe4sO"
+        },
+        "frontend\\src\\components\\simulator\\ui\\BubbleFactorDiagnostic.tsx": {
+            "id": 305,
+            "lastHash": "59zlSc05dcsZ/xsHX5JBwIW8"
+        },
+        "frontend\\src\\components\\simulator\\ui\\BayesianRangeGrid.tsx": {
+            "id": 306,
+            "lastHash": "slY+9IJ7Qbz547/DjKemHxIY"
+        },
+        "frontend\\src\\components\\simulator\\ui\\AxiomTicker.tsx": {
+            "id": 307,
+            "lastHash": "YiPLN3MH4YnJiw0l6tCein7W"
+        },
+        "frontend\\src\\components\\simulator\\ui\\AnimatedNumber.tsx": {
+            "id": 308,
+            "lastHash": "JQUYNZAwxHolPfrVqL+bNPSg"
+        },
+        "frontend\\src\\components\\simulator\\ui\\ActionRow.tsx": {
+            "id": 309,
+            "lastHash": "ItW8YGrbewdrZbD7K7mRz2Zk"
+        },
+        "frontend\\src\\components\\simulator\\panels\\TheoryPanel.tsx": {
+            "id": 310,
+            "lastHash": "9/LLDdHJYBpvTK6lNeC23IEM"
+        },
+        "frontend\\src\\components\\simulator\\panels\\SniperBadge.tsx": {
+            "id": 311,
+            "lastHash": "TMDZssq7aG1iAIVd0SwAuZfP"
+        },
+        "frontend\\src\\components\\simulator\\panels\\RangeMatrix.tsx": {
+            "id": 312,
+            "lastHash": "R+DXyo8mz+s2Ss+3pBfxU5w3"
+        },
+        "frontend\\src\\components\\simulator\\panels\\PredictiveProfilePanel.tsx": {
+            "id": 313,
+            "lastHash": "bMRgziVoaY+txe3AAz9NMw4t"
+        },
+        "frontend\\src\\components\\simulator\\panels\\PostFlopPanel.tsx": {
+            "id": 314,
+            "lastHash": "CoIySgMObU4iIRLV8Kwlqt+J"
+        },
+        "frontend\\src\\components\\simulator\\panels\\PmLensPanel.tsx": {
+            "id": 315,
+            "lastHash": "sFXg78HkcbCSMq8GZ804tGkW"
+        },
+        "frontend\\src\\components\\simulator\\panels\\PerspectivePanel.tsx": {
+            "id": 316,
+            "lastHash": "Uz9+hTtpqM686VX0vMrAhY9v"
+        },
+        "frontend\\src\\components\\simulator\\panels\\PayoutsPanel.tsx": {
+            "id": 317,
+            "lastHash": "MY4VwWliERG3d5XopIykCU1H"
+        },
+        "frontend\\src\\components\\simulator\\panels\\NashPanel.tsx": {
+            "id": 318,
+            "lastHash": "IsaIWrcjfxebXupcHAu54gyI"
+        },
+        "frontend\\src\\components\\simulator\\panels\\MatchupSelector.tsx": {
+            "id": 319,
+            "lastHash": "O+i9jMVwVVZlVyFwiGnbFshF"
+        },
+        "frontend\\src\\components\\simulator\\panels\\lib.rs": {
+            "id": 320,
+            "lastHash": "Hs2K3k8t+DsyFMgO7nQmK9l5"
+        },
+        "frontend\\src\\components\\simulator\\panels\\index.ts": {
+            "id": 321,
+            "lastHash": "evU2DyIMFvzOefJDJtgrt3ZC"
+        },
+        "frontend\\src\\components\\simulator\\panels\\EquityCalculator.tsx": {
+            "id": 322,
+            "lastHash": "mlso/M5+ajpwqW9LMr2xdzmN"
+        },
+        "frontend\\src\\components\\simulator\\panels\\EquityCalculator.module.css": {
+            "id": 323,
+            "lastHash": "jszTNk+MoB4auDK9HH3CfC53"
+        },
+        "frontend\\src\\components\\simulator\\panels\\ComparisonRadar.tsx": {
+            "id": 324,
+            "lastHash": "gPeM67/7BCD3+nCZEo19ovyF"
+        },
+        "frontend\\src\\components\\simulator\\panels\\chaos-core.ts": {
+            "id": 325,
+            "lastHash": "tL+UhfvyC+h34aw0gSg/yVZS"
+        },
+        "frontend\\src\\components\\simulator\\panels\\Cargo.lock": {
+            "id": 326,
+            "lastHash": "jy56lvKcZ5VB1sb8iFoSH92I"
+        },
+        "frontend\\src\\components\\simulator\\panels\\Cargo.toml": {
+            "id": 327,
+            "lastHash": "jg5F9VFhlZeiradOhioRhENI"
+        },
+        "frontend\\src\\components\\simulator\\panels\\BayesianBeliefPanel.tsx": {
+            "id": 328,
+            "lastHash": "CytfcIIrWgKvNP73/03tU18w"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useBayesianRange.ts": {
+            "id": 329,
+            "lastHash": "2WDy5iPkNB92ScqVoNQ27hIP"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useDebouncedLocalStorage.ts": {
+            "id": 330,
+            "lastHash": "QPkAfsWpnUW+RIheJGCv/gn/"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useFrequencyPropagation.ts": {
+            "id": 331,
+            "lastHash": "3MlAUGjvJ0vOGxVkVYq9yF2g"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useIcmCalculations.ts": {
+            "id": 332,
+            "lastHash": "0b3bRl+Is3Qf4crWdI0z1i+4"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useNashSolver.ts": {
+            "id": 333,
+            "lastHash": "P2d7e8bLBoWOVSrkscYEuZr4"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\usePerspectiveCalculations.ts": {
+            "id": 334,
+            "lastHash": "eeQHQmzSqehwJkxa4EMNo0f9"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\usePmLensCalculations.ts": {
+            "id": 335,
+            "lastHash": "mXkj2jmAPuhuY6TIURNmCHFJ"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useQuantumEngine.ts": {
+            "id": 336,
+            "lastHash": "B1R6K6TWLnf6bh3QeW8l3K12"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useRadarCalculations.ts": {
+            "id": 337,
+            "lastHash": "PU4H+0L4+vafALbFo40b7Kj6"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useScenario.ts": {
+            "id": 338,
+            "lastHash": "DyPo9B/ueLGvxhFhQ59wt+cP"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useSimulatorState.ts": {
+            "id": 339,
+            "lastHash": "UcVNlvsOo7KlMKCPmXoIf4E3"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useSotaSync.tsx": {
+            "id": 340,
+            "lastHash": "fj26TARQTUnzv1e2a0mjuhsV"
+        },
+        "frontend\\src\\components\\simulator\\hooks\\useSotaTelemetry.tsx": {
+            "id": 341,
+            "lastHash": "ePdxthfIxGfO6JU84p4ZZERw"
+        },
+        "frontend\\src\\components\\simulator\\engine\\utils.ts": {
+            "id": 342,
+            "lastHash": "1tAuRkRYNrmUyQGPysJfSnhp"
+        },
+        "frontend\\src\\components\\simulator\\engine\\types.ts": {
+            "id": 343,
+            "lastHash": "Lb9aYb8txbf2dThObAuF3KHz"
+        },
+        "frontend\\src\\components\\simulator\\engine\\scenarios.ts": {
+            "id": 344,
+            "lastHash": "d58m20+nu6rOeMIBbcWqaSnX"
+        },
+        "frontend\\src\\components\\simulator\\engine\\nashSolver.test.ts": {
+            "id": 345,
+            "lastHash": "QN3dQ/sv/Izl3dOS2iVC8exM"
+        },
+        "frontend\\src\\components\\simulator\\engine\\ftEnvironments.ts": {
+            "id": 346,
+            "lastHash": "p3J900sShwJIisy7hKinHgGr"
+        },
+        "frontend\\src\\components\\simulator\\engine\\__tests__\\nashSolver.test.ts": {
+            "id": 347,
+            "lastHash": "OeaMx33vg6kie/1QCtYwOzIx"
+        },
+        "frontend\\src\\components\\seo\\JsonLd.tsx": {
+            "id": 348,
+            "lastHash": "ja3sJHsOpJORWd7wQBuCvfC/"
+        },
+        "frontend\\src\\components\\quiz\\icmQuizGenerator.ts": {
+            "id": 349,
+            "lastHash": "i1PGlOdYznsPrNoLxrsym6qp"
+        },
+        "frontend\\src\\components\\quiz\\page.tsx": {
+            "id": 350,
+            "lastHash": "97qKv+Ky46KaAhxtWaBkd6tG"
+        },
+        "frontend\\src\\components\\quiz\\QuizEngine.tsx": {
+            "id": 351,
+            "lastHash": "puPonvJ9WIj879MhqjkGq5p+"
+        },
+        "frontend\\src\\components\\quiz\\QuizProgress.tsx": {
+            "id": 352,
+            "lastHash": "zxwOuspUXALx8Z/zZUL8X1ep"
+        },
+        "frontend\\src\\components\\quiz\\QuizQuestion.tsx": {
+            "id": 353,
+            "lastHash": "XMahbqhrd7Mq8enK/yBG4OQH"
+        },
+        "frontend\\src\\components\\quiz\\QuizResults.tsx": {
+            "id": 354,
+            "lastHash": "W77x7HduckjQv8FNphp/j0Vo"
+        },
+        "frontend\\src\\components\\quiz\\route.ts": {
+            "id": 355,
+            "lastHash": "XpJVDZEd0MErqm088YlgWy1s"
+        },
+        "frontend\\src\\components\\quiz\\SimulatorQuizWidget.tsx": {
+            "id": 356,
+            "lastHash": "Dn+bIRpEOMqmkxHYIEsxPPgi"
+        },
+        "frontend\\src\\components\\quiz\\telemetry-client.ts": {
+            "id": 357,
+            "lastHash": "zWQSmcw/OdGcL+9Ae1sIxKgm"
+        },
+        "frontend\\src\\components\\quiz\\types.ts": {
+            "id": 358,
+            "lastHash": "a+NsLFoSWCNvXzeJBz4m9Y+6"
+        },
+        "frontend\\src\\components\\nexus\\Dashboard.tsx": {
+            "id": 359,
+            "lastHash": "/ogieNDhzoP6dEnu18+RVIHl"
+        },
+        "frontend\\src\\components\\layout\\ContentPageHeader.tsx": {
+            "id": 360,
+            "lastHash": "de4w/FoHQv4LB10yaSXRq5jM"
+        },
+        "frontend\\src\\components\\layout\\Footer.tsx": {
+            "id": 361,
+            "lastHash": "uRW6k5Qa4ExCJ9AOt9FluSY4"
+        },
+        "frontend\\src\\components\\layout\\Header.tsx": {
+            "id": 362,
+            "lastHash": "1tySqSz1kfbNPpNjzxrv6tYF"
+        },
+        "frontend\\src\\components\\content\\AnimatedArticleGrid.tsx": {
+            "id": 363,
+            "lastHash": "7wDXtW200WtG16JHB3/HKjFW"
+        },
+        "frontend\\src\\components\\content\\ArticleHeader.tsx": {
+            "id": 364,
+            "lastHash": "eTjwTLx/uQIOlm5QUkBmLoFX"
+        },
+        "frontend\\src\\components\\content\\LessonHeader.tsx": {
+            "id": 365,
+            "lastHash": "Ikytp9pNgmjX/Ekd54VfLTN4"
+        },
+        "frontend\\src\\components\\content\\MarkdownRenderer.tsx": {
+            "id": 366,
+            "lastHash": "c1QMrNxTV8Z230IllK0puJ8e"
+        },
+        "frontend\\src\\components\\content\\PsychologyHub.tsx": {
+            "id": 367,
+            "lastHash": "rTdvlcoVeIKxKxLxg7wq+zJ9"
+        },
+        "frontend\\src\\components\\content\\ReadingProgress.tsx": {
+            "id": 368,
+            "lastHash": "+qvsblXcaTEWBX+NvwBx3z6T"
+        },
+        "frontend\\src\\components\\content\\ScrollToTop.tsx": {
+            "id": 369,
+            "lastHash": "HnEHTEoKypE4VTQh/fTayNz/"
+        },
+        "frontend\\src\\components\\content\\ShareButtons.module.css": {
+            "id": 370,
+            "lastHash": "Cm+Lwppz42SY8gEcLm7Q6E6z"
+        },
+        "frontend\\src\\components\\content\\ShareButtons.tsx": {
+            "id": 371,
+            "lastHash": "DYuN2rCuo5fpj4Yrd6jRAQ3L"
+        },
+        "frontend\\src\\components\\content\\TableOfContents.tsx": {
+            "id": 372,
+            "lastHash": "EF1x0+t35uPYpEKxW8QCQCWB"
+        },
+        "frontend\\src\\components\\analytics\\SniperAdvisor.tsx": {
+            "id": 373,
+            "lastHash": "K3EBlxuFnCmtiJjO8eR6F6F7"
+        },
+        "frontend\\src\\app\\api\\auth\\%5B...nextauth%5D\\route.ts": {
+            "id": 374,
+            "lastHash": "10A27K6zR3BWXE7SzgKZ68TI"
+        },
+        "frontend\\src\\app\\api\\content\\%5Bslug%5D\\route.ts": {
+            "id": 375,
+            "lastHash": "ESBVitI1XxYyJdMKnVlm7rY5"
+        },
+        "frontend\\src\\app\\api\\og\\route.tsx": {
+            "id": 376,
+            "lastHash": "nlzAzAWrkd1W4bUcyzW4gF5M"
+        },
+        "frontend\\src\\app\\api\\predictive-profile\\route.ts": {
+            "id": 377,
+            "lastHash": "DLc5PB3B13Qmh10aksuZ1xvR"
+        },
+        "frontend\\src\\app\\api\\profile\\route.ts": {
+            "id": 378,
+            "lastHash": "8vLxjsAwSjEahOjkW1l8GiJd"
+        },
+        "frontend\\src\\app\\api\\rag\\route.ts": {
+            "id": 379,
+            "lastHash": "36xcl9jzEu9R9oPJUuxXjgff"
+        },
+        "frontend\\src\\app\\api\\telemetry\\route.ts": {
+            "id": 380,
+            "lastHash": "uPgRrSUSiQI1LrjyWcg2ww73"
+        },
+        "frontend\\src\\app\\api\\route.ts": {
+            "id": 381,
+            "lastHash": "S2rUQC3qWTNG6Mx0Lf6S2QAz"
+        },
+        "frontend\\src\\app\\artigos\\%5Bslug%5D\\page.tsx": {
+            "id": 382,
+            "lastHash": "/pIZInaAKb+9zQmi4NgSxite"
+        },
+        "frontend\\src\\app\\artigos\\estado-da-arte\\page.tsx": {
+            "id": 383,
+            "lastHash": "+wRJg11lXKAaiICGepvcSj59"
+        },
+        "frontend\\src\\app\\artigos\\smart-sniper\\page.tsx": {
+            "id": 384,
+            "lastHash": "OJoauYvHzIsyD7hItvCu++A4"
+        },
+        "frontend\\src\\app\\artigos\\validacao-smart-sniper\\page.tsx": {
+            "id": 385,
+            "lastHash": "cLAbh4vm06c529N990nYC6Kv"
+        },
+        "frontend\\src\\app\\aulas\\%5Bslug%5D\\page.tsx": {
+            "id": 386,
+            "lastHash": "Phvw1qFx0eZ2f+NZBZ0q0KrL"
+        },
+        "frontend\\src\\app\\aulas\\%5Bslug%5D\\seed_lesson.py": {
+            "id": 387,
+            "lastHash": "q3ZVDckA4w9+KC5nJeaXNkkZ"
+        },
+        "frontend\\src\\app\\aulas\\conceitos-icm\\page.tsx": {
+            "id": 388,
+            "lastHash": "XZT1YVZ1Gh/XKZONnsbY+v2A"
+        },
+        "frontend\\src\\app\\aulas\\icm-masterclass\\layout.tsx": {
+            "id": 389,
+            "lastHash": "e/ItsMDb07O/n51gVk3nZLW1"
+        },
+        "frontend\\src\\app\\aulas\\icm-masterclass\\page.tsx": {
+            "id": 390,
+            "lastHash": "2UMbouHl2SFIHOBObW4ItmfS"
+        },
+        "frontend\\src\\app\\aulas\\icm-masterclass\\SimuladorLazy.tsx": {
+            "id": 391,
+            "lastHash": "L6lg+4vOIIqcrMbw9/1ePR4R"
+        },
+        "frontend\\src\\app\\aulas\\icm-pos-flop\\page.tsx": {
+            "id": 392,
+            "lastHash": "Enf0O2/yI6ZHtVkLvddg7ofQ"
+        },
+        "frontend\\src\\app\\aulas\\leitura-icm\\page.tsx": {
+            "id": 393,
+            "lastHash": "ME4EKzivxe/EfhPatBl2qHj2"
+        },
+        "frontend\\src\\app\\biblioteca\\%5Bslug%5D\\page.tsx": {
+            "id": 394,
+            "lastHash": "OWOb6RFjgNUfSxsH049E5+RW"
+        },
+        "frontend\\src\\app\\biblioteca\\axioma-ev-fold-dinamico\\page.tsx": {
+            "id": 395,
+            "lastHash": "qseVgt9YzBRQy//6WVdbmoqc"
+        },
+        "frontend\\src\\app\\biblioteca\\downward-drift-sota\\page.tsx": {
+            "id": 396,
+            "lastHash": "hmoRhz4vq4cLPP4GMhleTUsr"
+        },
+        "frontend\\src\\app\\biblioteca\\entendendo-o-icm-e-suas-heuristicas\\page.tsx": {
+            "id": 397,
+            "lastHash": "XaurlOMXoMCgyoPy2aHwVvOI"
+        },
+        "frontend\\src\\app\\biblioteca\\exegese-da-decisao\\page.tsx": {
+            "id": 398,
+            "lastHash": "FiDRmYu93NsuLD+su4spyI8X"
+        },
+        "frontend\\src\\app\\biblioteca\\falacia-equilibrio-pedagogia\\page.tsx": {
+            "id": 399,
+            "lastHash": "LKwAlTk0fS38K1tmARL4cmls"
+        },
+        "frontend\\src\\app\\biblioteca\\fator-psi-maluquice-humana\\page.tsx": {
+            "id": 400,
+            "lastHash": "4tpK0YzQIEdHoqCsCh/Zh/13"
+        },
+        "frontend\\src\\app\\biblioteca\\geometria-do-risco\\page.tsx": {
+            "id": 401,
+            "lastHash": "VD2DqfN5hk+f1cIlayL07TXE"
+        },
+        "frontend\\src\\app\\biblioteca\\hermeneutica-blefe\\page.tsx": {
+            "id": 402,
+            "lastHash": "bHm37ExgKG7n5cc15L5VqkdD"
+        },
+        "frontend\\src\\app\\biblioteca\\heuristica-icm-pos-flop-aula\\page.tsx": {
+            "id": 403,
+            "lastHash": "FWSO76pJlyio4OuHRBUyQ1Vr"
+        },
+        "frontend\\src\\app\\biblioteca\\insolvencia-das-pot-odds\\page.tsx": {
+            "id": 404,
+            "lastHash": "HBCwGESf1TrJIA3Av19xi68A"
+        },
+        "frontend\\src\\app\\biblioteca\\laboratorio-chipev-vs-icmev\\page.tsx": {
+            "id": 405,
+            "lastHash": "977l3glyi+YgGtLPM1GKMlWO"
+        },
+        "frontend\\src\\app\\biblioteca\\manifesto-sota-axiomas\\page.tsx": {
+            "id": 406,
+            "lastHash": "JsMrlYrDwf/+JatXe/I3D6aa"
+        },
+        "frontend\\src\\app\\biblioteca\\motor-diluicao\\page.tsx": {
+            "id": 407,
+            "lastHash": "CAT3Dd0qqD6ZxefbMnpyhcOJ"
+        },
+        "frontend\\src\\app\\biblioteca\\paradoxo-valuation\\page.tsx": {
+            "id": 408,
+            "lastHash": "7XgV7GE5YgLFAN3q92lMhhAk"
+        },
+        "frontend\\src\\app\\biblioteca\\psicologia-high-stakes\\page.tsx": {
+            "id": 409,
+            "lastHash": "zOXofO45+FpYVz8qTw7YPuDU"
+        },
+        "frontend\\src\\app\\biblioteca\\risco-de-ressurreicao\\page.tsx": {
+            "id": 410,
+            "lastHash": "QYWQduQ+kX87oDZc0Dp02B0A"
+        },
+        "frontend\\src\\app\\biblioteca\\teoria-da-perspectiva\\page.tsx": {
+            "id": 411,
+            "lastHash": "L+eTk5R4n7K6W8EM/daZFkrO"
+        },
+        "frontend\\src\\app\\biblioteca\\teto-equidade-river-icm\\page.tsx": {
+            "id": 412,
+            "lastHash": "NndEI4nveGFoqKKDSZcJGw+m"
+        },
+        "frontend\\src\\app\\biblioteca\\toy-games\\page.tsx": {
+            "id": 413,
+            "lastHash": "D4Pj1P00md+8cFk9ygvDvc1L"
+        },
+        "frontend\\src\\app\\biblioteca\\voce-aprende-poker-errado\\InfoTooltip.tsx": {
+            "id": 414,
+            "lastHash": "vUF0JPsjjYJcGMTJLAIei0YN"
+        },
+        "frontend\\src\\app\\biblioteca\\voce-aprende-poker-errado\\layout.tsx": {
+            "id": 415,
+            "lastHash": "gJJMtxtR2Z9MMNasKD7tGEm5"
+        },
+        "frontend\\src\\app\\biblioteca\\voce-aprende-poker-errado\\page.tsx": {
+            "id": 416,
+            "lastHash": "epZ4YAYZCg1e0IoGeWKd49CW"
+        },
+        "frontend\\scripts\\_validate_rp.ts": {
+            "id": 417,
+            "lastHash": "UEDZea4fMeuK8I3EtwHF5ccT"
+        },
+        "frontend\\scripts\\gen_referencial.ts": {
+            "id": 418,
+            "lastHash": "TkFCCegqJS0Brz6My2VBhDtl"
+        },
+        "frontend\\scripts\\update-links.js": {
+            "id": 419,
+            "lastHash": "OzDOT7pIC/7tMX+x85hHK2g+"
+        },
+        "frontend\\public\\favicon.svg": {
+            "id": 420,
+            "lastHash": "dRZRGvFuUaHdP1F5/aVmYq19"
+        },
+        "frontend\\public\\robots.txt": {
+            "id": 421,
+            "lastHash": "lL0JXyOL1qsisC4zydVgVRYs"
+        },
+        "frontend\\prisma\\cleanup-telemetry.ts": {
+            "id": 422,
+            "lastHash": "io5jKAL6WAeV5jbbBMfRXubx"
+        },
+        "frontend\\prisma\\dev.db-wal": {
+            "id": 423,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        "frontend\\prisma\\schema.prisma": {
+            "id": 424,
+            "lastHash": "FL7ChwKnSKLsk5Jm/8sKPmHo"
+        },
+        "frontend\\prisma\\seed-content.ts": {
+            "id": 425,
+            "lastHash": "RQHSEOdp2LJGDv4n7wk3ZnwM"
+        },
+        "frontend\\prisma\\seed-scenarios.ts": {
+            "id": 426,
+            "lastHash": "uKr9JJB21tQMsKjWDCQK86H+"
+        },
+        "frontend\\prisma\\seed.ts": {
+            "id": 427,
+            "lastHash": "N++ZtcmAK/+2ZrWuVY5rZ/3M"
+        },
+        "frontend\\lib\\utils.ts": {
+            "id": 428,
+            "lastHash": "3UnjyoBEu3PX2Y7YptE358jb"
+        },
+        "engine\\bayesian_range.py": {
+            "id": 429,
+            "lastHash": "aCGYMNcQ55yCCiZhfT62+zZ6"
+        },
+        "docs\\epics\\aula-icm-rp\\index.html": {
+            "id": 430,
+            "lastHash": "jnpMh9dv5FwCFuQTZtdD72GP"
+        },
+        "docs\\epics\\aula-icm-rp\\main.js": {
+            "id": 431,
+            "lastHash": "rq0C5osy40dtxmvRpXpY5m8i"
+        },
+        "docs\\epics\\aula-icm-rp\\NashSolver.js": {
+            "id": 432,
+            "lastHash": "BdDXaOkZxjRUAp7NQpVF13Io"
+        },
+        "docs\\epics\\aula-icm-rp\\queue_maverick_predator_games.ps1": {
+            "id": 433,
+            "lastHash": "ZmoDVEmsA1qyE9feveq9GJ/0"
+        },
+        "docs\\epics\\aula-icm-rp\\queue_sonic_gamification.ps1": {
+            "id": 434,
+            "lastHash": "BUMCJbVS3vhlI772lTjeM9tn"
+        },
+        "docs\\epics\\aula-icm-rp\\risk-gauge.js": {
+            "id": 435,
+            "lastHash": "hiZS1eEFoff42JmUpNm5vqID"
+        },
+        "docs\\epics\\aula-icm-rp\\run_cli_tasks.ps1": {
+            "id": 436,
+            "lastHash": "XmY6FsA3cp9Yx7fqIgE3/b05"
+        },
+        "docs\\epics\\aula-icm-rp\\scenario-list.js": {
+            "id": 437,
+            "lastHash": "buzNKskyRt/8hyIHJttRnYNL"
+        },
+        "docs\\epics\\aula-icm-rp\\style-overrides.css": {
+            "id": 438,
+            "lastHash": "yaWBMvA56hfEgiHP7Bz47tDe"
+        },
+        "docs\\epics\\aula-icm-rp\\style.css": {
+            "id": 439,
+            "lastHash": "IX+PrnMFCsQaB3uaAqCvBMvn"
+        },
+        "docs\\epics\\cli-interativa\\page.tsx": {
+            "id": 440,
+            "lastHash": "4V27jYL7RRlPM/guByY4SGD6"
+        },
+        "database\\queue_manager.py": {
+            "id": 441,
+            "lastHash": "Fsw7bxLat+wYx/awiFsns3Yf"
+        },
+        "database\\lab_manager.py": {
+            "id": 442,
+            "lastHash": "OhU3C5DEGBbs/QS+r5kQ2I9/"
+        },
+        "database\\__init__.py": {
+            "id": 443,
+            "lastHash": "WCkL9+t7SdHsFixrhsmcL+fk"
+        },
+        "data\\agents_manifest.json": {
+            "id": 444,
+            "lastHash": "E5Z3iByw/Tp4eeiZYvxvijYz"
+        },
+        "data\\aphorisms.json": {
+            "id": 445,
+            "lastHash": "9y/FtrQqr/1ru9V/Ia5sAkPP"
+        },
+        "data\\intentmap.json": {
+            "id": 446,
+            "lastHash": "qFOLhgxRSPxbY78jc8mzP0SH"
+        },
+        "data\\synonyms.psd1": {
+            "id": 447,
+            "lastHash": "oVog6rIqGgaav0k1lQKQaFuv"
+        },
+        "core\\__init__.py": {
+            "id": 448,
+            "lastHash": "jznfbuR3nW29inVwlZzp5WsF"
+        },
+        "core\\arbitrator.py": {
+            "id": 449,
+            "lastHash": "ZknNKjqIceyuNG9GBzB2z5Dr"
+        },
+        "core\\runtime.py": {
+            "id": 450,
+            "lastHash": "03djKyp2KUMQSMHGT91DJhXi"
+        },
+        "content\\interativo\\scenarios_toygame.js": {
+            "id": 451,
+            "lastHash": "G3Tu8oLASxgVNuTh/Zn1MKkr"
+        },
+        "content\\interativo\\icm_toy_game_simulator.html": {
+            "id": 452,
+            "lastHash": "jxP6qEqyRO0xjSLQTFP8DOWB"
+        },
+        "content\\interativo\\toy_games_page.tsx": {
+            "id": 453,
+            "lastHash": "cBVBNm0ij9alKMT9npYSbYfN"
+        },
+        "cli\\__init__.py": {
+            "id": 454,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        "cli\\commands.py": {
+            "id": 455,
+            "lastHash": "wl5Z8mztPkcH22LDPFuNBbep"
+        },
+        "agents\\__init__.py": {
+            "id": 456,
+            "lastHash": "plr/EM0O/KJo+QvtjKN7v3E+"
+        },
+        ".vscode\\vitoi.ts": {
+            "id": 457,
+            "lastHash": "WPoQzh1dYKFS/DWhdqrsVjYb"
+        },
+        ".cursorules": {
+            "id": 458,
+            "lastHash": "XpdutswylkqOhcpvKFGLRdrI"
+        },
+        "worker\\startup.py": {
+            "id": 459,
+            "lastHash": "dZsyPof8bMD340rMCYnTYuod"
+        },
+        "worker\\loop.py": {
+            "id": 460,
+            "lastHash": "396Rzwtdnuvyyz2YD049/X3m"
+        },
+        "worker\\__init__.py": {
+            "id": 461,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        "web\\server.py": {
+            "id": 462,
+            "lastHash": "2Wxr0g2mBoFs9aqk9oMAHbjm"
+        },
+        "web\\middleware.py": {
+            "id": 463,
+            "lastHash": "mzPje5+D61Cmhc1iAYeHMUud"
+        },
+        "web\\handlers.py": {
+            "id": 464,
+            "lastHash": "QSKzQVvDkAafuODYGJTCLbmc"
+        },
+        "web\\__init__.py": {
+            "id": 465,
+            "lastHash": "ZnTahLUyfIVpW1juUMjfA3a5"
+        },
+        "wasm-equity\\tsconfig.worker.json": {
+            "id": 466,
+            "lastHash": "EBHt5BE9yaQ/mIRuoB9V+Xz8"
+        },
+        "wasm-equity\\NashMatrixProfiler.tsx": {
+            "id": 467,
+            "lastHash": "reI61PAq5oWNYS1tLn3n71hO"
+        },
+        "wasm-equity\\nashDistortion.worker.ts": {
+            "id": 468,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        "wasm-equity\\lib.rs": {
+            "id": 469,
+            "lastHash": "GgZU9qTeXI7fpQX/Re+j1v7B"
+        },
+        "frontmatter.json": {
+            "id": 470,
+            "lastHash": "oyY6i4dTHtCrP1ClFChC2HO9"
+        },
+        "frontend\\src\\app\\layout.tsx": {
+            "id": 471,
+            "lastHash": "1SSXPLhY4kh/5odNWfAr0RBR"
+        },
+        "frontend\\src\\app\\biblioteca\\page.tsx": {
+            "id": 472,
+            "lastHash": "XIPGHfHZQB+JN2AXDWAk4HqZ"
+        },
+        "CONTEXT_CHECKPOINT.md": {
+            "id": 473,
+            "lastHash": "cJYhXWnz0ZX6lMxp/Z63IIpn"
+        },
+        "frontend\\src\\app\\templo\\gemma\\page.tsx": {
+            "id": 474,
+            "lastHash": "xn379Zx81DUDTgPnC1TaMhG0"
+        },
+        "frontend\\src\\app\\page.tsx": {
+            "id": 475,
+            "lastHash": "kWvJbrHBkEuLmAGKJMxyRC6m"
+        },
+        "docs\\reports\\2026-05-14-sota-delivery-report.md": {
+            "id": 476,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        ".claude\\handoffs\\handoff_2026-05-14_00-48.md": {
+            "id": 477,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        ".husky\\pre-commit": {
+            "id": 478,
+            "lastHash": "jhflZEVy3LqhIn87XhrDrjAZ"
+        },
+        ".husky\\pre-push": {
+            "id": 479,
+            "lastHash": "TlXLaUbGtEZux+IqP90nu6ej"
+        },
+        ".mrcoder\\error.log": {
+            "id": 480,
+            "lastHash": "2FbW5MRpn5DMN5nvNtyIrJgA"
+        },
+        ".frontmatter\\database\\pinnedItemsDb.json": {
+            "id": 481,
+            "lastHash": "RBNvo1WzZ4oRRq0W9+hknpT7"
+        },
+        ".frontmatter\\database\\taxonomyDb.json": {
+            "id": 482,
+            "lastHash": "vT8hQF+YPqCjylAw0Tvx4OVk"
+        },
+        "scripts\\maintenance\\dry_run_sanitize.py": {
+            "id": 483,
+            "lastHash": "EH5/4pJTJkT1oeSa+AvYdd2V"
+        },
+        "scripts\\maintenance\\generate_review_candidates.py": {
+            "id": 484,
+            "lastHash": "zm16fZtnUIbnAwQx+lw9l5bx"
+        },
+        "scripts\\maintenance\\apply_sanitize.py": {
+            "id": 485,
+            "lastHash": "cfzsZVpeHmBgfoObF2FzIrL+"
+        },
+        "scripts\\maintenance\\top10_review.py": {
+            "id": 486,
+            "lastHash": "93tWU5A6qrzU89yyhBpiRhVu"
+        },
+        "reports\\approve_top10.json": {
+            "id": 487,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        "scripts\\maintenance\\delete_pending_tasks.py": {
+            "id": 488,
+            "lastHash": "vk8iRFMICSmUjkCTYvwAIvsA"
+        },
+        "reports\\audit_sanitize_20260514T015318Z.json": {
+            "id": 489,
+            "lastHash": "5lXh/pbjfDimK2g3x6qUPsFk"
+        },
+        "reports\\dry_run_report.json": {
+            "id": 490,
+            "lastHash": "qf5G/5813/A9MHTKOYrizNKC"
+        },
+        "reports\\review_candidates.json": {
+            "id": 491,
+            "lastHash": "haL7XAOAWuR06dBBLP4ddrr2"
+        },
+        "frontend\\src\\app\\dashboard\\page.tsx": {
+            "id": 492,
+            "lastHash": "p4yuNdSIfUdHxXdnuCIgA4Me"
+        },
+        "frontend\\src\\app\\login\\page.tsx": {
+            "id": 493,
+            "lastHash": "Zc8nsQ+5fUVfmtDoTxAy8NZI"
+        },
+        "frontend\\src\\app\\quem-sou\\page.tsx": {
+            "id": 494,
+            "lastHash": "Qs+eoecpQ3+AB3CQEWSrT/kY"
+        },
+        "frontend\\src\\app\\quiz\\page.tsx": {
+            "id": 495,
+            "lastHash": "bm4hXMsLybN9ao8rNqHCJiAC"
+        },
+        "frontend\\src\\app\\simulador\\page.tsx": {
+            "id": 496,
+            "lastHash": "XhIptbmqSatTyub+EajhHUfj"
+        },
+        "frontend\\src\\app\\simulador\\gto-cfr\\page.tsx": {
+            "id": 497,
+            "lastHash": "XUi9TMp/Dy+MhPb2AophcoMU"
+        },
+        "frontend\\src\\app\\globals.css": {
+            "id": 498,
+            "lastHash": "Y9mIsg4WyQF5bT2etW76n5JU"
+        },
+        "frontend\\src\\app\\opengraph-image.tsx": {
+            "id": 499,
+            "lastHash": "zdjyYYYyXi61ltg062+StqvA"
+        },
+        "frontend\\src\\app\\sitemap.ts": {
+            "id": 500,
+            "lastHash": "rfuBsOueGzzMByws7qquivph"
+        },
+        "frontend\\src\\components\\content\\ContentFooter.tsx": {
+            "id": 501,
+            "lastHash": "jzEtuvORObn3B5lw6bET+gTg"
+        },
+        "frontend\\src\\tests\\app\\page.test.tsx": {
+            "id": 502,
+            "lastHash": "z2EqEA2Inl/9zjtgj310H6eb"
+        },
+        "frontend\\src\\tests\\quiz\\telemetry-category.test.ts": {
+            "id": 503,
+            "lastHash": "M/wBekoPWJRZaO+xq8fZ1mEh"
+        },
+        "frontend\\src\\tests\\simulator\\mathematical-integrity.test.ts": {
+            "id": 504,
+            "lastHash": "ATXcq+P+IZRwLQ8+EHpc7fw0"
+        },
+        "frontend\\src\\tests\\simulator\\perspectiva.test.ts": {
+            "id": 505,
+            "lastHash": "94+mPGansnmFAn44X7cONa+u"
+        },
+        "frontend\\cloudbuild.yaml": {
+            "id": 506,
+            "lastHash": "w50oFahA0so7H8IdnsW6wG6w"
+        },
+        "frontend\\Dockerfile": {
+            "id": 507,
+            "lastHash": "0Y4Mc66RtBg89I5LrKNsaevi"
+        },
+        "frontend\\tsconfig.tsbuildinfo": {
+            "id": 508,
+            "lastHash": "KlcfXsDbe/cZyb58ddRiDyEt"
+        },
+        "wasm-equity\\Cargo.toml": {
+            "id": 509,
+            "lastHash": "7KPXigzvCQLwQmwv97adZOEe"
+        },
+        ".vscode\\PRD.md": {
+            "id": 510,
+            "lastHash": "47DEQpj8HBSa+/TImW+5JCeu"
+        },
+        "scripts\\utils\\NexusScriptTools.ps1": {
+            "id": 511,
+            "lastHash": "tXiqwy9ckjHZPrYiyziUc52l"
+        },
+        "scripts\\utils\\run_maverick_sentinel.ps1": {
+            "id": 512,
+            "lastHash": "PVTVwHFlAP6PLKKgIV+Q/zqj"
+        },
+        "scripts\\utils\\run_organizador_maintenance.ps1": {
+            "id": 513,
+            "lastHash": "L3RxbgYaieGPeKMGZwYf8WKF"
+        },
+        "scripts\\utils\\run_organizer.ps1": {
+            "id": 514,
+            "lastHash": "88x1s2/hl9dOTZcNEX81klt8"
+        },
+        "scripts\\utils\\safeguard_system.ps1": {
+            "id": 515,
+            "lastHash": "OWNMzl3QdnDanFFmBUpe1N01"
+        },
+        "scripts\\utils\\show_stats.ps1": {
+            "id": 516,
+            "lastHash": "MkleTHninWTe86UvuVklHESc"
+        },
+        "scripts\\utils\\skill-bridge.ps1": {
+            "id": 517,
+            "lastHash": "urH977T417wi9QWXPkfr7iPb"
+        },
+        "scripts\\utils\\sota_insight.py": {
+            "id": 518,
+            "lastHash": "9UT39ytYdQEsDgmLjWoH0lU5"
+        },
+        "scripts\\utils\\submit-idea.ps1": {
+            "id": 519,
+            "lastHash": "bOASAV/DZWYxW+d/r+HVHMlG"
+        },
+        "scripts\\utils\\upgrade_ecosystem.ps1": {
+            "id": 520,
+            "lastHash": "k8ib8pQiecfwNBhvclA+aGa5"
+        },
+        "wasm-equity\\target\\flycheck0\\stdout": {
+            "id": 521,
+            "lastHash": "bBtQAwkTwU2rW20IcMEcW/WF"
+        }
+    }
+}

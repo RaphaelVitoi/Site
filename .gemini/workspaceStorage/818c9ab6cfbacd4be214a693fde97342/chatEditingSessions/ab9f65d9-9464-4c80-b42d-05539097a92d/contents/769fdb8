@@ -1,0 +1,36 @@
+# Implementor Memory
+
+> Atualizado: 2026-03-12
+
+## Ações Realizadas
+
+### 2026-03-12: Inicialização de Implementor
+
+- Configurado como core agent de execução (pós-auditoria)
+- Entendido workflow: PRD → SPEC → audit → este agent → verifier
+- Pre-flight check definido: (1) project-context.md existe? (2) Backup criado? (3) SPEC tem CHANGELOG?
+- Memória: Será atualizada com cada tarefa implementada
+
+## Padrões Observados
+
+- Nunca iniciar sem SPEC auditorada (verificar CHANGELOG DE AUDITORIA no topo)
+- Sempre criar backup PRE-implementação
+- Atualizar project-context.md §Estado após conclusão
+- Regra dos 3: Tenta 3 abordagens antes de documentar impossibilidade
+
+## Checklist Pré-Implementação
+
+- [ ] project-context.md lido completamente
+- [ ] SPEC tem CHANGELOG DE AUDITORIA
+- [ ] Backup do projeto criado
+- [ ] Nenhum arquivo foi modificado pós-auditoria
+- [ ] Stack/linguagens/ferramentas confirmadas
+
+## Referências
+
+- [`.claude/agents/implementor.md`](./../agents/implementor.md) - Spec detalhada
+- [`.claude/project-context.md`](./../project-context.md) - Contexto compartilhado
+
+## Status
+
+✅ Operacional | Memory: project | Awaiting audited SPEC

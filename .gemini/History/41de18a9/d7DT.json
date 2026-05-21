@@ -1,0 +1,27 @@
+{
+    "recommendations": [
+        "google.geminicodeassist",
+        "cline.cline",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "charliermarsh.ruff",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "Prisma.prisma",
+        "bradlc.vscode-tailwindcss",
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "ms-vscode.powershell",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "mikestead.dotenv",
+        "yzhang.markdown-all-in-one",
+        "streetsidesoftware.code-spell-checker",
+        "alefragnani.project-manager",
+        "ms-toolsai.jupyter",
+        "bierner.markdown-mermaid",
+        "yoavbls.pretty-ts-errors",
+        "usernamehw.errorlens"
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "permissions": {
+        "allow": [
+            "Read(c:/Users/Raphael/.gemini/Site/**)",
+            "Write(c:/Users/Raphael/.gemini/Site/**)",
+            "RunCommand(powershell, **)"
+        ],
+        "additionalDirectories": [
+            "c:\\Users\\Raphael\\.gemini\\Site\\dev",
+            "c:\\Users\\Raphael\\.gemini\\Site\\tmp"
+        ]
+    },
+    "claudeCode.allowDangerouslySkipPermissions": false
+}

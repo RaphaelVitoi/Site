@@ -1,0 +1,137 @@
+{
+  "superpowers": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "bitrise": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "mcp-toolbox-for-databases": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "conductor": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "nanobanana": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "cloud-run": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "gemini-media-generation": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "gemini-supermemory": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "developer-knowledge": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "driftx": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "gemini-history-learning": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "gemini-cli-themes": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "mcp-server-browserbase": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "cloud-sql-sqlserver": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "cloud-sql-postgresql-observability": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "token-efficiency": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "todoist-extension": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "run-long-command": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "file-search-store-extension": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "gemini-deep-research": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "postgres": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "google-workspace-developer-tools": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "code-review": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "exa-mcp-server": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "gemini-cli-jules": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "gemini-cli-security": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  },
+  "Stitch": {
+    "overrides": [
+      "/C:/Users/Raphael/*"
+    ]
+  }
+}

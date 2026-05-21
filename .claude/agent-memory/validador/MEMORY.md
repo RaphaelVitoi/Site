@@ -26,7 +26,7 @@ DomAnio de Teoria dos Jogos (ICM, GTO, Nash), Rigor MatemAtico e CientAfico, Aud
 ## 5. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao)
 
 `#decisao` - ValidaAAo cruzada dos 8 Toy-Games contra os outputs de solvers reais.
-`#decisao` - A decisAo de nAo proceder sem o conteAodo da carta de vendas demonstra aderAancia ao `PrincApio da Realidade Contextual (Anti-AlucinaAAo)`. A falha recorrente da tarefa sublinha a necessidade crAtica de que os agentes antecessores verifiquem os `artefatos de entrada obrigatA3rios`.
+`#decisao` - A decisao de nAo proceder sem o conteAodo da carta de vendas demonstra aderAancia ao `PrincApio da Realidade Contextual (Anti-AlucinaAAo)`. A falha recorrente da tarefa sublinha a necessidade crAtica de que os agentes antecessores verifiquem os `artefatos de entrada obrigatA3rios`.
 
 ## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta)
 

@@ -1,0 +1,132 @@
+"""
+Apply sanitizer: idempotent move of approved candidates into `archive/auto_archived`.
+Usage:
+  python apply_sanitize.py [--approve-file path] [--apply] [--report reports/name.json]
+
+Behavior:
+ - By default (no --approve-file), it will operate on candidates with recommended_action=='archive'
+   from `reports/review_candidates.json` (these are older than 365d by dry-run logic).
+ - It will NEVER touch paths starting with '_backups' (safety).
+ - Default is dry-run; pass --apply to perform moves.
+ - Produces an audit log in `reports/audit_sanitize_<timestamp>.json`.
+"""
+import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+import shutil
+import os
+
+ROOT = Path(__file__).resolve().parents[2]
+REVIEW = ROOT / 'reports' / 'review_candidates.json'
+AUDIT_DIR = ROOT / 'reports'
+ARCHIVE_PREFIX = Path('archive') / 'auto_archived'
+
+
+def load_candidates():
+    if not REVIEW.exists():
+        raise SystemExit(f"Review file not found: {REVIEW}")
+    data = json.loads(REVIEW.read_text(encoding='utf-8'))
+    return {c['path']: c for c in data.get('candidates', [])}
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--approve-file', type=str, help='JSON file with array of relative paths to archive')
+    p.add_argument('--apply', action='store_true', help='Actually move files (default: dry-run)')
+    p.add_argument('--report', type=str, help='Override audit report path')
+    args = p.parse_args()
+
+    candidates = load_candidates()
+
+    # build approved set
+    approved = set()
+    if args.approve_file:
+        af = Path(args.approve_file)
+        if not af.exists():
+            raise SystemExit(f"Approve file not found: {af}")
+        arr = json.loads(af.read_text(encoding='utf-8'))
+        for pth in arr:
+            approved.add(pth)
+    else:
+        # default: take recommended archive candidates
+        for path, c in candidates.items():
+            if c.get('recommended_action') == 'archive':
+                approved.add(path)
+
+    if not approved:
+        print('No approved candidates found. Nothing to do.')
+        return
+
+    audit = {
+        'generated_at': datetime.now(timezone.utc).isoformat(),
+        'dry_run': not args.apply,
+        'entries': [],
+    }
+
+    for rel_path in sorted(approved):
+        # safety: never touch _backups
+        if rel_path.replace('\\','/').lower().startswith('_backups'):
+            audit['entries'].append({'path': rel_path, 'skipped': True, 'reason': 'protected_backup'})
+            continue
+
+        src = ROOT / rel_path
+        if not src.exists():
+            audit['entries'].append({'path': rel_path, 'skipped': True, 'reason': 'missing'})
+            continue
+
+        dst_rel = ARCHIVE_PREFIX / rel_path
+        dst = ROOT / dst_rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+
+        entry = {
+            'path': rel_path,
+            'absolute_src': str(src),
+            'absolute_dst': str(dst),
+            'is_dir': src.is_dir(),
+            'size_bytes': None,
+            'mtime': None,
+            'moved': False,
+        }
+
+        try:
+            if src.is_file():
+                entry['size_bytes'] = src.stat().st_size
+                entry['mtime'] = datetime.fromtimestamp(src.stat().st_mtime, tz=timezone.utc).isoformat()
+            else:
+                # approximate dir size
+                total = 0
+                for f in src.rglob('*'):
+                    try:
+                        if f.is_file():
+                            total += f.stat().st_size
+                    except OSError:
+                        continue
+                entry['size_bytes'] = total
+                entry['mtime'] = datetime.fromtimestamp(src.stat().st_mtime, tz=timezone.utc).isoformat()
+
+            if args.apply:
+                # perform move
+                # if dst exists, keep idempotent: skip or move with suffix
+                if dst.exists():
+                    # already moved before; mark moved True and continue
+                    entry['moved'] = False
+                    entry['note'] = 'destination_exists'
+                else:
+                    shutil.move(str(src), str(dst))
+                    entry['moved'] = True
+            else:
+                entry['moved'] = False
+
+            audit['entries'].append(entry)
+        except Exception as e:
+            audit['entries'].append({'path': rel_path, 'error': str(e)})
+
+    ts = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+    report_path = Path(args.report) if args.report else AUDIT_DIR / f'audit_sanitize_{ts}.json'
+    report_path.write_text(json.dumps(audit, indent=2, ensure_ascii=False), encoding='utf-8')
+    print('Audit written to', report_path)
+    print('Dry-run mode' if not args.apply else 'Apply completed')
+
+if __name__ == '__main__':
+    main()

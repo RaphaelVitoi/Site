@@ -1,0 +1,18 @@
+{
+  "@maverick": "estrategi|arquitetura|inova|sentinela|ideia",
+  "@planner": "planej|prd|spec|especifica|desenh|projeto",
+  "@auditor": "audit|revis",
+  "@implementor": "codar|implement|criar|script|python|frontend|backend",
+  "@verifier": "test|bug|qa|falha|erro",
+  "@curator": "estetic|ux|ui|texto|copy",
+  "@validador": "matematic|icm|nash|gto|teoria",
+  "@organizador": "organiz|documenta|arquiv",
+  "@pesquisador": "pesquis|busc|mercado|quem",
+  "@prompter": "prompt|contexto",
+  "@securitychief": "seguran|vulnerab|xss",
+  "@seo": "seo|trafego|keyword",
+  "@bibliotecario": "rag|memori|historic|lembr",
+  "@sequenciador": "fila|prioridad|orquestr",
+  "@skillmaster": "backup|limpez|manuten|atualiz",
+  "@novoagente": "analise|dados|relatorio|insights"
+}

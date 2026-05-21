@@ -1,95 +1,70 @@
 /**
- * IDENTITY: O Axioma do EV do Fold Dinâmico
+ * IDENTITY: Axioma do EV Fold Dinâmico GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/axioma-ev-fold-dinamico/page.tsx
- * ROLE: Artigo técnico sobre o custo de oportunidade do fold e sua positividade em ICM.
+ * ROLE: Artigo técnico expondo a ilusão do EV = 0 e a dinâmica de Sunk Cost.
+ * VERSION: v6.2.1 GOLD
  */
 
-import { ContentPageHeader } from '@/components/layout/ContentPageHeader';
-import { SotaMarkdown } from '@/components/ui/SotaMarkdown';
-import ContentFooter from '@/components/content/ContentFooter';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { GlassPanel } from '@/components/ui/GlassPanel';
+import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
+import PmLensPanel from '@/components/simulator/panels/PmLensPanel';
+import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 
-const introduction = `
-A premissa comercial dos solvers de que "foldar tem EV zero" é uma falácia de simplificação pedagógica que oculta o custo de oportunidade. No paradigma VITOI, o fold é uma transação de capital onde se aceita uma perda garantida para evitar um risco.
+const content = `
+# O Axioma do EV Fold Dinâmico
 
-### O Piso da Órbita
-Em ChipEV, o seu baseline não é zero, mas sim o custo de existência:
-**EV_fold = -antes** (ex: -0.125bb). 
+A falha primária da intuição humana (e da leitura superficial de solvers) é assumir que desistir de uma mão possui Valor Esperado igual a zero. No paradigma da **Perspectiva Matemática**, o zero não existe. O Fold é uma transação financeira passiva e sempre tem um custo estrutural.
 
-Para uma ação ser matematicamente coerente, seu EV não precisa ser absoluto e positivo; basta ser superior a esse "abismo" negativo.
-`;
+---
 
-const icmSection = `
-No ICM, o EV_fold torna-se uma variável dinâmica e, frequentemente, **positiva**.
+## 1. A Ilusão do EV = 0
+Solvers comerciais geralmente normalizam o EV do fold para \`0.00\` para simplificar a comparação logarítmica entre os ramos da árvore. Na física real do torneio, o fold possui uma dívida irrevogável: o **Custo de Existência (Antes)**.
 
-1.  **Efeito Payjump:** Quando a inércia garante a eliminação de shorts, gerando payjumps passivos sem risco. Aqui, foldar tem valor de investimento em sobrevivência.
-2.  **Erosão Antecipada (t-3):** A proximidade do aumento de blinds acelera o EV_fold para território negativo, forçando a agressão para evitar a morte por inanição.
-`;
+A cada mão que você "passa", seu stack sofre uma erosão de aproximadamente **-0.125bb** (em mesas 8-max com 12.5% ante). Ignorar esse custo é o primeiro passo para a insolvência. O EV do Fold atua como a verdadeira âncora gravitacional do *spot*.
 
-const postFlopSection = `
-Conforme as fichas entram no pote, o EV_fold torna-se violentamente negativo. A desistência do pote acumulado custa exponencialmente mais em valuation do que o risco de colisão residual.
+---
 
-*   **Flop:** EV_fold ≈ -antes (Barato)
-*   **River:** EV_fold = -pot_total_hero (Catastrófico)
+## 2. O Fold Positivo (Laddering)
+Em cenários de ICM extremo (ex: Mesa Final com um micro-stack de 0.5bb prestes a ser eliminado em outra mesa), o seu EV do Fold torna-se **positivo**.
+*   **Ação:** Fold.
+*   **Resultado:** Sobrevivência garantida enquanto o oponente cai.
+*   **Valor:** O salto de premiação (Payjump).
 
-Essa "gravidade" aproxima as decisões de call no river do ChipEV, pois o custo de desistir do investimento acumulado supera a pressão de ICM original.
+Neste estado, a Perspectiva exige abstenção total, pois o "lucro de não morrer" supera qualquer expectativa de ganho em fichas.
+
+---
+
+## 3. A Antevisão t-3 (A Órbita)
+O FGS (Future Game Simulation) não olha apenas para a próxima mão, mas para o "Ponto de Colisão" (Big Blind). Sua agressividade deve ser inversamente proporcional ao tempo restante até o imposto máximo.
+
+1.  **UTG:** 6 mãos de "vida". Pressão moderada.
+2.  **BTN:** 2 mãos de "vida". Pressão urgente.
+3.  **SB/BB:** O corredor da morte.
+
+Interaja com o laboratório abaixo. Ajuste o **Sunk Cost** e os modificadores de **Blinds Subindo** para observar em tempo real como o **Piso (EV_fold)** reage à pressão da órbita e como a Métrica Soberana (PM) resgata calls que pareciam deficitários no vácuo.
 `;
 
 export default function AxiomaEvFoldPage() {
-  return (
-    <div className="min-h-screen bg-bg-base text-text-bright">
-      <ContentPageHeader
-        title="Axioma do EV do Fold"
-        subtitle="Por que foldar quase nunca tem EV zero e como o ICM pode tornar o fold positivo."
-        category="Teoria"
-        icon="fa-door-open"
-      />
+	return (
+		<div className="min-h-screen bg-bg-base text-text-bright pb-24">
+			<ContentPageHeader
+				title="Axioma do EV Fold Dinâmico"
+				subtitle="A matemática do Custo Afundado e a ancoragem da decisão no verdadeiro valor da abstenção."
+				category="Valuation & Risco"
+				icon="fa-anchor"
+			/>
 
-      <div className="sota-container py-12 md:py-24">
-        <SectionHeader
-          step="01"
-          label="Baseline"
-          title="O Abismo do Fold"
-          description="Desconstruindo a simplificação de EV=0."
-        />
-        <div className="max-w-4xl mx-auto mb-16">
-          <GlassPanel className="p-8">
-            <SotaMarkdown content={introduction} />
-          </GlassPanel>
-        </div>
+			<div className="sota-container py-12 md:py-24">
+				<div className="max-w-5xl mx-auto flex flex-col gap-16">
+					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-amber shadow-2xl group transition-colors hover:border-l-accent-indigo">
+						<SotaMarkdown content={content} />
+					</GlassPanel>
 
-        <SectionHeader
-          step="02"
-          label="ICM"
-          title="O Paradoxo do Fold Positivo"
-          description="Quando a inércia vale mais que a equidade."
-        />
-        <div className="max-w-4xl mx-auto mb-16">
-          <GlassPanel className="p-8 border-l-4 border-l-accent-emerald">
-            <SotaMarkdown content={icmSection} />
-          </GlassPanel>
-        </div>
-
-        <SectionHeader
-          step="03"
-          label="Pós-Flop"
-          title="Pot Entrapment"
-          description="O aprisionamento ao investimento acumulado."
-        />
-        <div className="max-w-4xl mx-auto">
-          <GlassPanel className="p-8 border-l-4 border-l-accent-danger">
-            <SotaMarkdown content={postFlopSection} />
-          </GlassPanel>
-        </div>
-      </div>
-
-      <ContentFooter 
-        shareTitle="Axioma do EV do Fold | Raphael Vitoi"
-        shareUrl="https://www.raphaelvitoi.com/biblioteca/axioma-ev-fold-dinamico"
-        backLinkHref="/biblioteca" 
-        backLinkText="Voltar para Biblioteca"
-      />
-    </div>
-  );
+					<div className="w-full relative z-10">
+						<PmLensPanel />
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

@@ -1,0 +1,154 @@
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.metricCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metricLabel {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: #a3a3a3;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metricValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+}
+
+.metricDetail {
+  font-size: 0.9rem;
+  color: #a3a3a3;
+  line-height: 1.6;
+}
+
+.archetypeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.archetypeCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.archetypeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.archetypeIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.archetypeId {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.1);
+}
+
+.archetypeCard h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.archetypeCard p {
+  font-size: 0.9rem;
+  color: #a3a3a3;
+  line-height: 1.6;
+}
+
+.navGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.navCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.navCard:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.navCard>.fa-solid:first-child {
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.navCard>.fa-solid:last-child {
+  font-size: 0.8rem;
+  color: #737373;
+  transition: transform 0.2s ease-in-out;
+  flex-shrink: 0;
+}
+
+.navCard:hover>.fa-solid:last-child {
+  transform: translateX(4px);
+  color: var(--color-primary);
+}
+
+.navCardContent {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  flex-grow: 1;
+  min-width: 0;
+  /* Prevents text overflow issues in flexbox */
+}
+
+.navCardContent strong {
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.navCardContent span {
+  font-size: 0.85rem;
+  color: #a3a3a3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

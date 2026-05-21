@@ -1,0 +1,35 @@
+# KERNEL DE ORQUESTRAÇÃO SOTA (VERSION: 3.0 MASTER)
+
+# PARADIGMA: Mutex Control, Finite State Machine (FSM), Context Pruning
+
+## 1. INTEGRIDADE EPISTÉMICA (SINGLE SOURCE OF TRUTH)
+
+O conhecimento do ecossistema opera sob leis físicas estritas:
+
+* **Axiomas (Read-Only):** Leia `.claude/project-context.md`. É a verdade universal do projeto. Nunca edite este ficheiro.
+* **Operações (Read-Only):** Leia `docs/MANUAL_WORKFLOW.md`. Contém procedimentos operacionais.
+* **Memória (Write-Only):** O seu log de pensamentos e tarefas deve ser escrito exclusivamente em `.claude/agent-memory/MEMORY.md`.
+* **COMPRESSÃO DE CONTEXTO:** A cada 5 tarefas concluídas, você é OBRIGADO a sumarizar o topo do ficheiro `MEMORY.md`, consolidando o conhecimento para evitar o esgotamento da Janela de Contexto (Context Degradation).
+
+## 2. TRANSAÇÕES DE ESTADO (MÁQUINA DE ESTADOS FINITA)
+
+Você não tem permissão para editar ficheiros JSON nativamente. Você aciona o Kernel do SO através da API segura:
+
+* **ESTRITAMENTE PROIBIDO:** Tocar manualmente nos ficheiros `queue/tasks.json` ou `logs/tasks_archived.json`. Eles são protegidos por *Checksums Criptográficos SHA-256*. Se o editar com Regex ou ferramentas de texto, corromperá a assinatura e destruirá o sistema.
+* **Mutações de Estado:** Use `Agent-TaskManager.psm1`. A evolução de uma tarefa DEVE seguir o fluxo: `pending` -> `running` -> `completed` (ou `failed`).
+
+```powershell
+Import-Module .\Agent-TaskManager.psm1 -Force
+$task = @{ id = "TASK-001"; status = "running"; timestamp = (Get-Date -Format "o"); description = "Sua tarefa" }
+Add-AgentTask -NewTask $task
+```
+
+## 3. PROTOCOLO DE CONCORRÊNCIA E FALHA ($P(F)>0$)
+
+* O sistema utiliza **Kernel-level Mutex**. Se o comando PowerShell demorar a responder, é porque está retido na fila matemática do Sistema Operativo. Aguarde a resolução do Lock silenciosamente.
+* Se a transação devolver "ABORT: Violação de Schema", analise imediatamente os parâmetros que você enviou. Não recorra a contornos criativos (como usar Python ou Bash). A infraestrutura de scripts é a única via legal de alteração de estado.
+
+## 4. CHAIN-OF-THOUGHT (CoT) OBRIGATÓRIO
+
+Antes de executar qualquer invocação ao `Add-AgentTask` ou alterar código complexo, você DEVE escrever no seu output a sua linha de raciocínio lógico no formato:
+`[THOUGHT] <análise da lógica e risco> -> [ACTION] <execução>`

@@ -1,0 +1,13 @@
+# DECISION AUDIT TRAIL (Log de Autoridade)
+>
+> **Responsavel:** CHICO | **Proposito:** Registrar "Quem decidiu o que" para auditorias do @maverick.
+
+| ID                            | Timestamp  | Contexto da Decisao                                   | Autoridade    | Rationale (Por que?)                                                                                                                 | Especialistas Consultados |
+| ----------------------------- | ---------- | ----------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
+| DAT-001                       | 2026-03-12 | Migracao total para ASCII no Backend                  | CHICO         | Bugs silenciosos de encoding no Windows PowerShell estavam gerando loops de falha.                                                   | @implementor, @auditor    |
+| DAT-002                       | 2026-03-14 | Roteamento Next.js 15 Async Params                    | Raphael (CEO) | Evitar runtime errors no Vercel causados pelo novo SOTA do Next.                                                                     | @architect                |
+| DAT-003                       | 2026-03-15 | Implementacao de Quartetos de LLM                     | @maverick     | Otimizar latencia e custo sem perder inteligencia cognitiva.                                                                         | CHICO                     |
+| DAT-004                       | 2026-03-15 | Conclusao do Plano 10/10                              | Raphael (CEO) | O projeto exigia a eliminacao de todas as pendencias e minor gaps para atingir a perfeicao documental e operacional.                 | @maverick, CHICO          |
+| RV-2024-SECURE-LOG-9873A2F4C1 | 2026-03-24 | Validacao e Sincronizacao Global (PID1, Tini, Memory) | Raphael (CEO) | Garantir resiliencia maxima, expurgo de artificializacao (smoothing) e priorizacao computacional SOTA em toda a infraestrutura base. | CHICO, @maverick          |
+| DAT-005                       | 2026-03-24 | Validacao e Sincronizacao Global (Cortex Shield)      | Raphael (CEO) | Garantir resiliencia maxima, expurgo de artificializacao (smoothing) e priorizacao computacional SOTA em toda a infraestrutura base. | CHICO, @maverick          |
+| DAT-006                       | 2026-03-24 | Restauracao da Malha de 17 Agentes                    | CHICO         | A evolucao exigiu o retorno formal do @planner e do @sequenciador para evitar engarrafamento e sobrecarga do orquestrador.           | @organizador, @maverick   |

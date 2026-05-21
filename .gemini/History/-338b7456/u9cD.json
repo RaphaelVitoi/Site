@@ -1,0 +1,59 @@
+{
+  "version": "1.0",
+  "permissions": {
+    "description": "Operações permitidas com referência simbólica para reutilização",
+    "allow": [
+      "agent_sync",
+      "backup_queue",
+      "cleanup_archive"
+    ]
+  },
+  "operations": {
+    "agent_sync": {
+      "description": "Sincronizar agentes personalizados para o workspace",
+      "type": "Bash",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "Copy-Item -Path '.claude\\agents' -Destination '.claude\\' -Recurse -Force"
+      ]
+    },
+    "backup_queue": {
+      "description": "Fazer backup da fila de tarefas com timestamp",
+      "type": "Bash",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "Copy-Item -Path 'queue\\tasks.json' -Destination \"logs\\tasks_backup_$(Get-Date -Format 'yyyy-MM-dd').json\" -Force"
+      ]
+    },
+    "cleanup_archive": {
+      "description": "Executar limpeza e arquivamento de tarefas antigas",
+      "type": "Bash",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        ".\\cleanup.ps1 -DaysToKeep 30"
+      ]
+    }
+  },
+  "scheduling": {
+    "description": "Tarefas agendadas para manutenção periódica",
+    "tasks": [
+      {
+        "name": "monthly_backup",
+        "operation": "backup_queue",
+        "frequency": "monthly",
+        "dayOfMonth": 1,
+        "timeOfDay": "02:00"
+      },
+      {
+        "name": "monthly_cleanup",
+        "operation": "cleanup_archive",
+        "frequency": "monthly",
+        "dayOfMonth": 1,
+        "timeOfDay": "02:15"
+      }
+    ]
+  }
+}

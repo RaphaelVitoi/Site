@@ -1,0 +1,17 @@
+{
+    "geminicodeassist.agentDebugMode": true,
+    "geminicodeassist.agentYoloMode": true,
+    "geminicodeassist.codeGenerationPaneViewEnabled": true,
+    "geminicodeassist.outlines.automaticOutlineGeneration": true,
+    "geminicodeassist.verboseLogging": true,
+    "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
+    "gemini-cli.debug.logging.enabled": true,
+    "yaml.schemas": {
+        "file:///c%3A/Users/Raphael/.vscode/extensions/continue.continue-1.2.17-win32-x64/config-yaml-schema.json": [
+            ".continue/**/*.yaml",
+            "file:///c%3A/dev/.continue/agents/new-config-1.yaml",
+            "file:///c%3A/Users/Raphael/.continue/config.yaml",
+            "file:///c%3A/dev/.continue/mcpServers/new-mcp-server.yaml"
+        ]
+    }
+}

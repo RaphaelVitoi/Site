@@ -66,6 +66,11 @@
         {
             "name": "MANIFESTO DE COERENCIA E HARMONIA",
             "path": ".claude/COHERENCE_MANIFEST.md"
+        },
+        {
+            "name": "TEORIA SOTA CONVENCIONAL (PERSPECTIVA E ESPERANCA)",
+            "path": "docs/architecture/THEORY_SOTA_CONVENCIONAL.md"
         }
     ]
 }
+

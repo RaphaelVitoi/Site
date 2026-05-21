@@ -1,0 +1,32 @@
+{
+  "name": "nexus-orchestrator-sota",
+  "private": true,
+  "packageManager": "npm@10.8.2",
+  "description": "Orquestrador central com arquitetura monorepo e automação de qualidade",
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "npm --workspace frontend run build",
+    "test": "npm --workspace frontend run test --if-present",
+    "lint": "npm --workspace frontend run lint",
+    "quality-gate": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/quality-gate.ps1",
+    "prepare": "husky",
+    "start-api": "python task_executor.py api"
+  },
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "lint-staged": "^15.5.2",
+    "turbo": "^2.9.1"
+  },
+  "lint-staged": {
+    "frontend/**/*.{ts,tsx,js,jsx}": [
+      "npm --workspace frontend run lint -- --max-warnings=0"
+    ]
+  },
+  "overrides": {
+    "react": "19.3.0-canary-3f0b9e61-20260317",
+    "react-dom": "19.3.0-canary-3f0b9e61-20260317"
+  }
+}

@@ -1,0 +1,25 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "geminicodeassist.outlines.automaticOutlineGeneration": true,
+        "geminicodeassist.project": "reliable-lamp-444cl",
+        "geminicodeassist.updateChannel": "Insiders",
+        "geminicodeassist.verboseLogging": true,
+        "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
+        "geminicodeassist.agentYoloMode": true,
+        "geminicodeassist.agentDebugMode": true,
+        "appMap.inspectEnabled": true,
+        "appMap.experimentalReviewUI": true,
+        "appMap.scannerEnabled": true,
+        "appMap.selectedModel": "gemini-2.5-pro",
+        "gitlab.ignoreCertificateErrors": true,
+        "gitlab.real-timeSecurityScan.enabled": true,
+        "gitlab.debug": true,
+        "gitlab.featureFlags.flowBuilder": true,
+        "gitlab.showPipelineUpdateNotifications": true
+    }
+}

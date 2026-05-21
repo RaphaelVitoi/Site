@@ -1,13 +1,19 @@
 {
+    "extends": "../tsconfig.base.json",
     "compilerOptions": {
         "target": "ES2022",
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "lib": [ "ESNext", "WebWorker" ],
-        "strict": true,
-        "skipLibCheck": true,
+        "lib": [
+            "ESNext",
+            "WebWorker"
+        ],
         "allowJs": true,
-        "types": [ "node" ]
+        "types": [
+            "node"
+        ]
     },
-    "include": [ "src/**/*.worker.ts" ]
+    "include": [
+        "src/**/*.worker.ts"
+    ]
 }

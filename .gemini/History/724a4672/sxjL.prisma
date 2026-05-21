@@ -1,0 +1,35 @@
+// Prisma Schema - Site Raphael Vitoi
+// Banco SQLite local para desenvolvimento
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  readTime  Int      @default(5)
+  tags      String   @default("[]") // JSON array serializado (SQLite nao suporta arrays nativos)
+  slug      String?  @unique
+  excerpt   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamento com Categoria (1:N)
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  posts       Post[]
+}

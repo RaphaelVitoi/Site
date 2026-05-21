@@ -1,6 +1,7 @@
 """
 Web Server -- Micro-servidor SOTA (aiohttp) com routing e ciclo de vida.
 """
+# pylint: disable=broad-exception-caught
 import asyncio
 import logging
 import time
@@ -14,10 +15,12 @@ try:
     from monitoring.audit_engine import AuditEngine  # type: ignore
 except Exception:  # noqa: BLE001 - fallback de resiliencia para ambientes sem modulo opcional
     class AuditEngine:
+        """Fallback mock para o Motor de Auditoria."""
         def __init__(self, manager):
             self.manager = manager
 
         async def process_frontend_events(self, events):
+            """Processamento emulando operacao assincrona (noop)."""
             _ = events
             await asyncio.sleep(0)
 from web.handlers import (
@@ -40,7 +43,20 @@ from web.middleware import auth_middleware, cors_middleware, rate_limit_middlewa
 logger = logging.getLogger(__name__)
 
 
+async def handle_predictive_profile(_request: web.Request) -> web.Response:
+    """Endpoint Proxy para expor o perfil preditivo ao front-end."""
+    from predictive_forest import PredictiveForestEngine
+
+    def _get_profile():
+        engine = PredictiveForestEngine()
+        return engine.get_predictive_profile()
+
+    profile = await asyncio.to_thread(_get_profile)
+    return web.json_response({"profile": profile})
+
+
 async def start_api_server(manager: QueueManager, port: int = 17042):
+    """Inicializa, configura rotas e executa o servidor web SOTA na porta especificada."""
     app = web.Application(middlewares=[cors_middleware, rate_limit_middleware, auth_middleware])
     app['manager'] = manager
     app['lab_manager'] = LabManager() # Instancia o DAO do Laboratorio SOTA
@@ -60,6 +76,7 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
         web.get('/lab/tournaments', handle_get_tournaments),
         web.post('/api/logs/frontend', handle_frontend_logs),
         web.post('/ingest', handle_rag_ingest),
+        web.get('/predictive-profile', handle_predictive_profile),
     ])
 
     runner = web.AppRunner(app)
@@ -67,10 +84,15 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
     site = web.TCPSite(runner, '127.0.0.1', port, reuse_address=True)
     try:
         await site.start()
-        logger.info(f"Micro-Servidor SOTA API (aiohttp) escutando em http://127.0.0.1:{port}")
+        logger.info("Micro-Servidor SOTA API (aiohttp) escutando em http://127.0.0.1:%d", port)
         # Roda indefinidamente
         await asyncio.Event().wait()
     except OSError as e:
-        logger.error(f"Falha ao iniciar o Micro-Servidor SOTA na porta {port}: {e}. (A porta pode estar em uso)")
+        logger.error(
+            "Falha ao iniciar o Micro-Servidor SOTA na porta %d: %s. "
+            "(A porta pode estar em uso)",
+            port,
+            e,
+        )
     finally:
         await runner.cleanup()

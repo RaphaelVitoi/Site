@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "SOTA: Next.js (Frontend)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm run dev --workspace frontend",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SOTA: Python Worker (Backend)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/task_executor.py",
+            "args": [
+                "worker"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

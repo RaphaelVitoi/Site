@@ -1,0 +1,142 @@
+Mar 30, 2026 12:28:07 PM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Mar 31, 2026 1:09:49 PM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 03, 2026 11:51:19 AM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 03, 2026 1:42:15 PM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 05, 2026 7:06:34 PM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 07, 2026 5:09:15 PM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 07, 2026 9:10:06 PM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 08, 2026 9:28:22 PM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 10, 2026 8:23:29 PM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 10, 2026 11:23:33 PM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 11, 2026 12:30:27 AM org.eclipse.lemminx.commons.ParentProcessWatcher run
+WARNING: Parent process stopped running, forcing server exit
+Apr 11, 2026 12:30:35 AM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 11, 2026 1:56:55 PM org.eclipse.lemminx.commons.ParentProcessWatcher run
+WARNING: Parent process stopped running, forcing server exit
+Apr 11, 2026 1:57:34 PM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 12, 2026 12:37:20 AM org.eclipse.lemminx.XMLLanguageServer initialize
+INFO: Initializing XML Language server
+LemMinX Server info:
+ - Version : 0.31.0
+ - Native Image
+ - VM Version : 17.0.9
+ - Git de7f529 - [maven-release-plugin] prepare release 0.31.0
+Apr 12, 2026 12:42:26 AM org.eclipse.lemminx.extensions.contentmodel.participants.diagnostics.XMLValidator doDiagnostics
+SEVERE: Unexpected XMLValidator error
+java.util.MissingResourceException: Can't find bundle for base name org.apache.xerces.impl.msg.XIncludeMessages, locale en_US
+	at java.base@17.0.9/java.util.ResourceBundle.throwMissingResourceException(ResourceBundle.java:2045)
+	at java.base@17.0.9/java.util.ResourceBundle.getBundleImpl(ResourceBundle.java:1683)
+	at java.base@17.0.9/java.util.ResourceBundle.getBundleImpl(ResourceBundle.java:1586)
+	at java.base@17.0.9/java.util.ResourceBundle.getBundleImpl(ResourceBundle.java:1549)
+	at java.base@17.0.9/java.util.ResourceBundle.getBundle(ResourceBundle.java:932)
+	at org.apache.xerces.xinclude.XIncludeMessageFormatter.formatMessage(Unknown Source)
+	at org.eclipse.lemminx.extensions.xerces.AbstractLSPErrorReporter.getMessage(AbstractLSPErrorReporter.java:130)
+	at org.eclipse.lemminx.extensions.xerces.AbstractReferencedGrammarLSPErrorReporter.getMessage(AbstractReferencedGrammarLSPErrorReporter.java:214)
+	at org.eclipse.lemminx.extensions.xerces.AbstractLSPErrorReporter.reportError(AbstractLSPErrorReporter.java:87)
+	at org.apache.xerces.impl.XMLErrorReporter.reportError(Unknown Source)
+	at org.apache.xerces.xinclude.XIncludeHandler.reportError(Unknown Source)
+	at org.apache.xerces.xinclude.XIncludeHandler.reportFatalError(Unknown Source)
+	at org.apache.xerces.xinclude.XIncludeHandler.reportFatalError(Unknown Source)
+	at org.apache.xerces.xinclude.XIncludeHandler.reportFatalError(Unknown Source)
+	at org.apache.xerces.xinclude.XIncludeHandler.endDocument(Unknown Source)
+	at org.apache.xerces.impl.dtd.XMLDTDValidator.endDocument(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentScannerImpl.endEntity(Unknown Source)
+	at org.apache.xerces.impl.XMLEntityManager.endEntity(Unknown Source)
+	at org.apache.xerces.impl.XMLEntityScanner.load(Unknown Source)
+	at org.apache.xerces.impl.XMLEntityScanner.skipSpaces(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentScannerImpl$PrologDispatcher.dispatch(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentFragmentScannerImpl.scanDocument(Unknown Source)
+	at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+	at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+	at org.apache.xerces.parsers.XMLParser.parse(Unknown Source)
+	at org.apache.xerces.parsers.AbstractSAXParser.parse(Unknown Source)
+	at org.eclipse.lemminx.extensions.contentmodel.participants.diagnostics.XMLValidator.doDiagnostics(XMLValidator.java:132)
+	at org.eclipse.lemminx.extensions.contentmodel.participants.diagnostics.ContentModelDiagnosticsParticipant.doDiagnostics(ContentModelDiagnosticsParticipant.java:58)
+	at org.eclipse.lemminx.services.XMLDiagnostics.doExtensionsDiagnostics(XMLDiagnostics.java:67)
+	at org.eclipse.lemminx.services.XMLDiagnostics.doDiagnostics(XMLDiagnostics.java:49)
+	at org.eclipse.lemminx.services.XMLLanguageService.doDiagnostics(XMLLanguageService.java:190)
+	at org.eclipse.lemminx.services.XMLLanguageService.publishDiagnostics(XMLLanguageService.java:204)
+	at org.eclipse.lemminx.XMLTextDocumentService.validate(XMLTextDocumentService.java:720)
+	at org.eclipse.lemminx.XMLTextDocumentService.lambda$new$2(XMLTextDocumentService.java:207)
+	at org.eclipse.lemminx.commons.ModelValidatorDelayer.lambda$validateWithDelay$0(ModelValidatorDelayer.java:69)
+	at java.base@17.0.9/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+	at java.base@17.0.9/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base@17.0.9/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304)
+	at java.base@17.0.9/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base@17.0.9/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base@17.0.9/java.lang.Thread.run(Thread.java:840)
+	at org.graalvm.nativeimage.builder/com.oracle.svm.core.thread.PlatformThreads.threadStartRoutine(PlatformThreads.java:807)
+	at org.graalvm.nativeimage.builder/com.oracle.svm.core.windows.WindowsPlatformThreads.osThreadStartRoutine(WindowsPlatformThreads.java:179)
+

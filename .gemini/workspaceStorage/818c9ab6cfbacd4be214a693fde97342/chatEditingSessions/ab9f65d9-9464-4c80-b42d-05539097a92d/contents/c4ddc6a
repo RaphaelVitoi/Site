@@ -1,0 +1,42 @@
+<#
+.SYNOPSIS
+    Módulo Padrão-Ouro para Gestão de Estado do Agente (Tasks).
+    
+.DESCRIPTION
+    Implemente validação de schema, transações atómicas e auditoria para o ecossistema
+    de fila de tarefas. Substitui: do.ps1, status.ps1, cleanup.ps1 (operações de leitura/escrita).
+    
+.NOTES
+    Teoria de Sistemas: Assume que P(F) > 0. O sistema não evita falha, mas garante
+    recuperação atómica. Análise Bayesiana: estrutura rígida reduz entropia de erro a ~0%.
+
+#>
+
+# -------------------------------------------------------------------
+# CONFIGURAÇÃO (Imutável)
+# -------------------------------------------------------------------
+$Script:QueuePath = Join-Path $PSScriptRoot "queue\tasks.json"
+$Script:ArchivePath = Join-Path $PSScriptRoot "logs\tasks_archived.json"
+$Script:LogPath = Join-Path $PSScriptRoot "logs\task_log.md"
+$Script:SchemaVersion = "1.1"
+
+# Garantir estrutura de diretórios
+@(
+    (Split-Path $Script:QueuePath -Parent),
+    (Split-Path $Script:ArchivePath -Parent),
+    (Split-Path $Script:LogPath -Parent)
+) | ForEach-Object {
+    if (-not (Test-Path $_)) { New-Item -ItemType Directory -Path $_ -Force | Out-Null }
+}
+
+# -------------------------------------------------------------------
+# TÓPICO 4: VALIDAÇÃO DE SCHEMA (Pre-Flight Check)
+# Probabilidade de erro cai a ~0% com estrutura estrita
+# -------------------------------------------------------------------
+function Test-TaskSchema {
+    <#
+    .SYNOPSIS
+        Valida se uma tarefa respeita o schema obrigatório.
+    .PARAMETER TaskPayload
+        Objeto da tarefa a validar.
+    .RETURNS

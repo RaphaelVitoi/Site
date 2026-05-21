@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
 }
 
 model IcmScenario {
@@ -31,6 +31,9 @@ model IcmScenario {
   quizzes            IcmQuiz[]
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+
+  @@index([category])
+  @@index([isPublished])
 }
 
 model IcmQuiz {
@@ -52,6 +55,8 @@ model Lesson {
   tags          String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([type])
 }
 
 model Content {
@@ -64,6 +69,9 @@ model Content {
   isPublished Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isPublished])
 }
 
 model TelemetryEvent {
@@ -79,4 +87,29 @@ model TelemetryEvent {
   componentName   String
   metadata        String?
   createdAt       DateTime @default(now())
+
+  @@index([category])
+  @@index([userId])
+}
+
+model VitoiPerspectiveMetric {
+  id                        String   @id @default(cuid())
+  scenarioId                String?
+  chipEvFold                Float
+  icmValuation              Float
+  timeToBlindJumpMinutes    Float
+  payjumpProximityFactor    Float
+  positionalUrgency         Float
+  multiwayOpponents         Float
+  reverseImpliedOddsPenalty Float
+  stackDepthBb              Float
+  humanNoiseFactor          Float
+  technicalSuperiority      Float
+  potOddsRatio              Float
+  perspectiveUtility        Float
+  insolvencyCoefficient     Float?
+  isViable                  Boolean
+  createdAt                 DateTime @default(now())
+
+  @@index([scenarioId])
 }

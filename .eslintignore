@@ -1,0 +1,9 @@
+wasm-equity/pkg/
+memory/MEMORY.html
+**/*.wasm
+**/pkg/
+**/wasm-*/
+**/*wasm*/**
+**/*_bg.js
+**/*_bg.wasm
+engine/

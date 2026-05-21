@@ -1,0 +1,41 @@
+{
+    "project_slug": "aula-icm-rp",
+    "domain": "Poker - Matemática de Torneios (ICM, Risk Premium)",
+    "audience": {
+        "description": "Jogadores profissionais de poker, avg BI intermediário (AVG 109-530)",
+        "assumed_knowledge": [
+            "EV básico",
+            "Ranges",
+            "Sizing",
+            "Conceitos de stack depth"
+        ],
+        "unassumed_knowledge": [
+            "Álgebra linear",
+            "Cálculo",
+            "Teoria de jogos formal"
+        ]
+    },
+    "authorized_sources": [
+        "GTO Wizard Blog",
+        "Dara O'Kearney",
+        "Barry Carter",
+        "ICMIZER 3",
+        "HRC"
+    ],
+    "key_terminology": {
+        "ICM": "Independent Chip Model - modelo que converte stacks em equity monetária.",
+        "RP": "Risk Premium - custo adicional em equity de torneio ao entrar em pots marginais.",
+        "cEV": "Chip Expected Value - valor esperado medido em fichas.",
+        "$EV": "Dollar Expected Value - valor esperado medido em dinheiro, ajustado por ICM.",
+        "Downward Drift": "Heurística onde, sob pressão ICM, ações descem um degrau na escala de agressividade."
+    },
+    "key_decisions": [
+        {
+            "decision": "A aula será um documento .md único, estruturado em 5 módulos.",
+            "justification": "Alinhado com a SPEC e PRD, focado em conteúdo denso e autônomo.",
+            "agent": "@planner",
+            "date": "2026-03-08"
+        }
+    ],
+    "handoff_log": []
+}

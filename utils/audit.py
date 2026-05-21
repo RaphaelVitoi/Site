@@ -1,3 +1,5 @@
+"""Modulo de auditoria e telemetria financeira."""
+
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -5,6 +7,7 @@ from core.schemas import Task
 
 
 def write_economic_log(task: Task, duration_secs: float, status: str):
+    """Grava logs economicos sobre as tasks realizadas."""
     audit_dir = Path(".claude/logs/audit")
     audit_dir.mkdir(parents=True, exist_ok=True)
     log_file = (
@@ -12,10 +15,14 @@ def write_economic_log(task: Task, duration_secs: float, status: str):
     )
 
     priority = (
-        task.metadata.get("priority", "medium").upper() if task.metadata else "MEDIUM"
+        str(task.metadata.get("priority", "medium")).upper() if task.metadata else "MEDIUM"
     )
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
-    log_entry = f"[{timestamp}] | LVL:{priority} | AGENT:{task.agent} | STAT:{status} | DUR:{duration_secs:.1f}s | ID:{task.id} | DESC:{task.description[:60]}...\n"
+    desc = str(task.description[:60])
+    log_entry = (
+        f"[{timestamp}] | LVL:{priority} | AGENT:{task.agent} | STAT:{status} "
+        f"| DUR:{duration_secs:.1f}s | ID:{task.id} | DESC:{desc}...\n"
+    )
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(log_entry)

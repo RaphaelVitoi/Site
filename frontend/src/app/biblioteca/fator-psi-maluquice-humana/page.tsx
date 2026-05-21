@@ -1,81 +1,64 @@
 /**
- * IDENTITY: O Fator Psi (Ψ) - Maluquice Humana
+ * IDENTITY: Fator Ψ (Maluquice Humana) GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/fator-psi-maluquice-humana/page.tsx
- * ROLE: Artigo técnico-psicológico sobre a precificação do erro emocional.
+ * ROLE: Artigo técnico demonstrando a quantificação do fator psicológico no poker.
+ * VERSION: v6.2.1 GOLD
  */
 
-import { ContentPageHeader } from '@/components/layout/ContentPageHeader';
-import { SotaMarkdown } from '@/components/ui/SotaMarkdown';
-import ContentFooter from '@/components/content/ContentFooter';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { GlassPanel } from '@/components/ui/GlassPanel';
+import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
+import PredictiveProfilePanel from '@/components/simulator/panels/PredictiveProfilePanel';
+import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 
 const content = `
-# O Fator Ψ (Psi): A Taxa de Maluquice Humana
+# O Fator Ψ (Maluquice Humana)
 
-No Poker de laboratório, assumimos que o oponente é uma máquina fria de GTO. Na realidade das Mesas Finais, as decisões são atravessadas pela **"taxa de besteira emocional"**.
-
----
-
-## 1. O Erro da Resiliência Espelhada
-
-Ignorar o desvio emocional populacional é um erro fatal na teoria básica. Se pensarmos que o oponente tem a mesma edge e resiliência que nós, erraremos o call no River 100% das vezes.
-
-Todos os jogadores, em menor ou maior grau, possuem uma frequência de **"Bobagem Humana"** ($f_b$).
+O poker não é jogado no vácuo contra supercomputadores perfeitos. Ele é jogado contra humanos suscetíveis ao cansaço, ao medo e ao ego. Na **Perspectiva Matemática**, essa irracionalidade não é um ruído a ser ignorado; é uma variável quantificável que chamamos de **Fator Ψ (Psi)**.
 
 ---
 
-## 2. A Equação do Call Soberano
+## 1. A Falácia do Equilíbrio de Nash no Vácuo
 
-A probabilidade de um call ser vencedor não é apenas a frequência de bluffs teóricos, mas sim a soma da integridade do range com a entropia do oponente:
+A Teoria dos Jogos (GTO) assume que ambos os jogadores são agentes perfeitamente racionais buscando maximizar a própria utilidade. A realidade empírica, no entanto, demonstra que os jogadores frequentemente escolhem opções subótimas devido a vieses cognitivos (ex: *Sunk Cost Fallacy* ou aversão extrema ao risco na bolha).
 
-> **P(Call Ganho) = P(Nuts Representado) + P(Tilt / Bluff Irracional)**
-
-Se a probabilidade do oponente ter os combos de topo é de **4%**, mas a taxa estatística de erro cognitivo naquele spot é de **10%**, o call é obrigatório por Perspectiva, mesmo que o GTO dite o fold.
+Quando um oponente desvia do Equilíbrio de Nash, a sua resposta não deve ser manter a estratégia GTO estática. A estratégia ideal (Maximal Exploitative Strategy - MES) exige que você ajuste suas frequências para punir ativamente esse desvio.
 
 ---
 
-## 3. O Fator Ψ como Amortecedor
+## 2. Quantificando a Entropia
 
-Embora as Reverse Implied Odds (RIO) em Multiway sejam brutais ($x^2$), o Fator Ψ atua como um leve amortecedor. Se o oponente é "maluco", a probabilidade dele estar blefando de forma errada empurra a utilidade do seu call para cima.
+O Fator Ψ atua como um modulador sobre as probabilidades matemáticas cruas. Se as pot odds exigem 30% de equidade para um call, mas o Perfil Preditivo do oponente indica um "Excesso de Agressão" (frequência alta de blefes ilógicos), a utilidade do seu call aumenta vertiginosamente.
 
-No entanto, o benefício da "besteira" deve ser rigorosamente maior que a dívida catastrófica do sistema (RIO + ICM).
+A "maluquice" deixa de ser uma reclamação ("ele não podia ter pago com isso!") e passa a ser uma oportunidade de arbitragem. O lucro do jogador de elite nasce exatamente da diferença entre a ação GTO teórica e a ação irracional executada pelo oponente.
 
 ---
 
-## 4. Aplicação Prática: O "Tilt-Lock"
+## 3. A Assinatura Bayesiana
 
-Quando você identifica que um oponente atingiu o ponto de ruptura emocional:
-1.  **Expanda a Defesa:** Seu threshold de call cai drasticamente.
-2.  **Reduza o Blefe:** Contra jogadores em tilt, o range de call deles torna-se inelástico. A Thin Value (valor fino) torna-se sua ferramenta soberana.
-
-"A matemática serve para precificar o custo da habilidade. O Fator Ψ serve para precificar o custo da fraqueza humana."
+Observe o **Perfil Preditivo** abaixo. Ele não é uma suposição; é o resultado da inferência de *Random Forest* analisando a sua telemetria (ou a tendência populacional). Ele mapeia as principais falhas da psique sob pressão. Se você (ou seu oponente) apresenta altos níveis de Aversão ao Risco ou Miopia de Payjump, a Teoria SOTA ajustará a agressão contra você.
 `;
 
 export default function FatorPsiPage() {
-  return (
-    <div className="min-h-screen bg-bg-base text-text-bright">
-      <ContentPageHeader
-        title="O Fator Psi (Ψ)"
-        subtitle="Maluquice Humana: Como integrar a frequência de erro emocional e tilt na tomada de decisão de elite."
-        category="Psicologia"
-        icon="fa-brain"
-      />
+	return (
+		<div className="min-h-screen bg-bg-base text-text-bright pb-24">
+			<ContentPageHeader
+				title="O Fator Ψ"
+				subtitle="A quantificação matemática da irracionalidade humana e a exploração sistemática de vieses cognitivos sob pressão."
+				category="Psicologia Preditiva"
+				icon="fa-brain"
+			/>
 
-      <div className="sota-container py-12 md:py-24">
-        <div className="max-w-4xl mx-auto">
-          <GlassPanel className="p-8 lg:p-12 border-t-8 border-t-accent-rose">
-            <SotaMarkdown content={content} />
-          </GlassPanel>
-        </div>
-      </div>
+			<div className="sota-container py-12 md:py-24">
+				<div className="max-w-5xl mx-auto flex flex-col gap-16">
+					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-rose shadow-2xl group transition-colors hover:border-l-accent-indigo">
+						<SotaMarkdown content={content} />
+					</GlassPanel>
 
-      <ContentFooter 
-        shareTitle="O Fator Psi (Ψ) | Raphael Vitoi"
-        shareUrl="https://www.raphaelvitoi.com/biblioteca/fator-psi-maluquice-humana"
-        backLinkHref="/biblioteca" 
-        backLinkText="Voltar para Biblioteca"
-      />
-    </div>
-  );
+					<div className="w-full relative z-10">
+						<PredictiveProfilePanel />
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

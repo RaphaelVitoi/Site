@@ -1,0 +1,25 @@
+mcpServers:
+  - name: "github-vitoi"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env:
+      # Use a variável de ambiente que definimos ou cole o novo token aqui se preferir
+      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}$
+
+models:
+  - name: "Gemini 3.1 Pro (Cérebro)"
+    provider: "google-sdk"
+    model: "gemini-1.5-pro" # Otimizado para raciocínio complexo/poker/psicologia
+    apiKey: "GEMINI_API_KEY" # Se funcionou hardcoded, mantenha assim por enquanto
+    roles:
+      - chat
+      - tool_use # Permite usar o MCP do GitHub
+
+  - name: "Gemini 2.0 Flash (Escrita/Código)"
+    provider: "google-sdk"
+    model: "gemini-1.5-flash"
+    apiKey: "GEMINI_API_KEY"
+    roles:
+      - edit
+      - apply
+      - autocomplete

@@ -1,6 +1,7 @@
 """
 Web Handlers -- Endpoints HTTP do micro-servidor SOTA.
 """
+# pylint: disable=broad-exception-caught
 
 import asyncio
 import json
@@ -21,12 +22,14 @@ logger = logging.getLogger(__name__)
 
 
 def _get_bg_tasks(app) -> set:
+    """Recupera ou inicializa o set de background tasks no app aiohttp."""
     if "bg_tasks" not in app:
         app["bg_tasks"] = set()
     return app["bg_tasks"]
 
 
 async def handle_add_task(request):
+    """Lida com a adicao de novas tarefas a fila."""
     manager = request.app["manager"]
     try:
         post_data = await request.json()
@@ -40,6 +43,7 @@ async def handle_add_task(request):
 
 
 async def handle_get_status(request):
+    """Retorna o status das tarefas na fila (todas ou filtradas)."""
     manager = request.app["manager"]
     try:
         status = request.query.get("status", None)
@@ -52,6 +56,7 @@ async def handle_get_status(request):
 
 
 async def handle_get_key_health_summary(request):
+    """Retorna o relatorio de saude e latencia das chaves de API."""
     manager = request.app["manager"]
     try:
         raw_window = request.query.get("window_minutes", "180")
@@ -88,6 +93,7 @@ async def handle_get_key_health_summary(request):
 
 
 async def handle_get_task_result(request):
+    """Obtem o resultado de uma tarefa finalizada a partir do disco."""
     try:
         task_id = request.query.get("id", "").strip()
         if not task_id:
@@ -127,6 +133,7 @@ async def handle_get_task_result(request):
 
 
 async def handle_get_state(request):
+    """Recupera uma variavel de estado dinamico do sistema."""
     manager = request.app["manager"]
     try:
         key = request.query.get("key")
@@ -139,6 +146,7 @@ async def handle_get_state(request):
 
 
 async def handle_set_state(request):
+    """Define uma variavel de estado dinamico do sistema."""
     manager = request.app["manager"]
     try:
         data = await request.json()
@@ -175,7 +183,7 @@ async def handle_ask_oracle(request):
         answer = await rag.query_memory(question, n_results=n_results, local_only=True)
         return web.json_response({"status": "SUCCESS", "answer": answer})
     except Exception as e:  # noqa: BLE001
-        logger.error(f"Falha na consulta ao Oraculo: {e}")
+        logger.error("Falha na consulta ao Oraculo: %s", e)
         return web.json_response({"error": str(e)}, status=500)
 
 
@@ -211,7 +219,7 @@ async def handle_get_db_summary(request: web.Request) -> web.Response:
             "budget": budget,
         })
     except Exception as e:  # noqa: BLE001
-        logger.error(f"Falha ao obter sumario do DB: {e}")
+        logger.error("Falha ao obter sumario do DB: %s", e)
         return web.json_response({"status": "error", "error": str(e)}, status=500)
 
 
@@ -240,7 +248,7 @@ async def handle_get_system_status(_request: web.Request) -> web.Response:  # NO
         }
         return web.json_response(status_data, status=200)
     except Exception as e:  # noqa: BLE001
-        logger.error(f"Falha ao coletar status do sistema: {e}")
+        logger.error("Falha ao coletar status do sistema: %s", e)
         return web.json_response(
             {"error": f"Falha ao coletar status: {e!s}"}, status=500
         )
@@ -277,7 +285,7 @@ async def handle_rag_ingest(request) -> web.Response:
             "message": "Ingestao RAG iniciada em background.",
         })
     except Exception as e:  # noqa: BLE001
-        logger.error(f"Falha ao disparar ingestao RAG: {e}")
+        logger.error("Falha ao disparar ingestao RAG: %s", e)
         return web.json_response({"error": str(e)}, status=500)
 
 
@@ -297,5 +305,5 @@ async def handle_frontend_logs(request) -> web.Response:
             task.add_done_callback(bg_tasks.discard)
         return web.json_response({"status": "SUCCESS", "processed": len(events)})
     except Exception as e:  # noqa: BLE001
-        logger.error(f"Falha ao processar logs do frontend: {e}")
+        logger.error("Falha ao processar logs do frontend: %s", e)
         return web.json_response({"error": str(e)}, status=500)

@@ -1,0 +1,20 @@
+{
+  "@maverick": [ "pensar", "filosofia", "conceito", "viso", "estrategia", "socratico", "dilema", "paradoxo", "cosmovisao", "principios" ],
+  "@planner": [ "arquitet", "estrutura", "diagrama", "planejamento", "milestone", "roadmap", "etapas" ],
+  "@implementor": [ "codigo", "program", "dev", "desenvolv", "forjar", "script", "frontend", "backend", "react", "next" ],
+  "@validador": [ "equidade", "payoff", "calculo", "solver", "matematica", "gto", "prova", "evidencia", "verificacao", "consistencia" ],
+  "@curator": [ "design", "visceral", "belez", "cyber", "estetica", "copy", "ux", "ui", "seo" ],
+  "@verifier": [ "quebrou", "funciona", "corrig", "fix", "teste", "bug", "qa", "falha", "erro" ],
+  "@skillmaster": [ "cron", "lixo", "purge", "manutencao", "backup", "rotina", "limpeza" ],
+  "@pesquisador": [ "google", "informacao", "descobrir", "saber", "pesquisa", "mercado", "web", "internet", "sota", "tendencia" ],
+  "@chico": [ "admin", "gerenc", "orquestra", "control", "sistema", "automacao", "infraestrutura", "log", "monitoramento", "api" ],
+  "@architect": [ "arquitet", "design", "estrutura", "sistema", "projeto", "blueprint", "topologia", "fundacao" ],
+  "@dispatcher": [ "dispatch", "tarefa", "dividir", "prioriz", "fila", "backlog", "epico", "multiplas" ],
+  "@prompter": [ "prompt", "instrucao", "contexto", "linguagem", "comando", "diretriz", "formato" ],
+  "@auditor": [ "auditar", "seguranca", "revisar", "verificar", "compliance", "integridade", "etica", "governanca" ],
+  "@organizador": [ "organiz", "documento", "arquivo", "limp", "sync", "estrutura", "padronizacao", "gerenciamento" ],
+  "@sequenciador": [ "sequenc", "ordem", "fluxo", "dependencia", "pipeline", "cadencia", "deadlock" ],
+  "@securitychief": [ "seguranca", "acesso", "protecao", "rbac", "vulnerabilidade", "xss", "autenticacao", "vazamento" ],
+  "@bibliotecario": [ "memoria", "rag", "vetorial", "chroma", "conhecimento", "dados", "informacao", "contexto" ],
+  "@historian": [ "historico", "log", "performance", "metricas", "relatorio", "produtividade", "custo", "analise" ]
+}

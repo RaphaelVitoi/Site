@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  simulations Simulation[]
+}
+
+model Simulation {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  status      String    @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
+  scenario    Scenario  @relation(fields: [scenarioId], references: [id])
+  scenarioId  String
+  results     Result[]
+  user        User?     @relation(fields: [userId], references: [id])
+  userId      String?
+  snapshots   AnalysisSnapshot[]
+}
+
+model Scenario {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String?
+  payouts     Json // Ex: [1000, 600, 400]
+  stacks      Json // Ex: [50000, 35000, 20000, 15000, 10000]
+  blinds      String? // Ex: "500/1000"
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  simulations Simulation[]
+}
+
+model Result {
+  id           String     @id @default(cuid())
+  simulation   Simulation @relation(fields: [simulationId], references: [id])
+  simulationId String
+  action       String // Ex: "Hero (SB) Push 20bb"
+  chipEv       Float?
+  icmEv        Float
+  icmEquity    Float? // A equidade em % do prize pool
+  ranges       Json? // Opcional: para armazenar os ranges de maos
+  createdAt    DateTime   @default(now())
+}
+
+model AnalysisSnapshot {
+  id           String     @id @default(cuid())
+  name         String
+  description  String?
+  simulation   Simulation @relation(fields: [simulationId], references: [id])
+  simulationId String
+  resultData   Json // Um snapshot dos resultados no momento da criacao
+  createdAt    DateTime   @default(now())
+}

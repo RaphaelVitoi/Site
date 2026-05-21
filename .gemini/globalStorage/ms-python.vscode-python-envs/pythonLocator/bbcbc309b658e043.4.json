@@ -1,0 +1,36 @@
+{
+  "environment": {
+    "executable": "C:\\Users\\Raphael\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\\python.exe",
+    "prefix": "C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0",
+    "version": "3.11.9.final.0",
+    "is64Bit": true,
+    "symlinks": [
+      "C:\\Users\\Raphael\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\\python.exe",
+      "C:\\Users\\Raphael\\AppData\\Local\\Microsoft\\WindowsApps\\python3.11.exe"
+    ]
+  },
+  "symlinks": [
+    [
+      "C:\\Users\\Raphael\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\\python.exe",
+      {
+        "secs_since_epoch": 1740148604,
+        "nanos_since_epoch": 308837000
+      },
+      {
+        "secs_since_epoch": 1740148604,
+        "nanos_since_epoch": 308837000
+      }
+    ],
+    [
+      "C:\\Users\\Raphael\\AppData\\Local\\Microsoft\\WindowsApps\\python3.11.exe",
+      {
+        "secs_since_epoch": 1740148604,
+        "nanos_since_epoch": 299861100
+      },
+      {
+        "secs_since_epoch": 1740148604,
+        "nanos_since_epoch": 299861100
+      }
+    ]
+  ]
+}

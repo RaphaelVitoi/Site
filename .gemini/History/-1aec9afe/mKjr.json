@@ -1,0 +1,20 @@
+{
+  "@maverick": [ "pensar", "filosofia", "conceito", "viso" ],
+  "@planner": [ "arquitet", "estrutura", "diagrama" ],
+  "@implementor": [ "codigo", "program", "dev", "desenvolv", "forjar" ],
+  "@validador": [ "equidade", "payoff", "calculo", "solver" ],
+  "@curator": [ "design", "visceral", "belez", "cyber" ],
+  "@verifier": [ "quebrou", "funciona", "corrig", "fix" ],
+  "@skillmaster": [ "cron", "lixo", "purge" ],
+  "@pesquisador": [ "google", "informacao", "descobrir", "saber" ],
+  "@chico": [ "admin", "gerenc", "orquestra", "control", "sistema" ],
+  "@architect": [ "arquitet", "design", "estrutura", "sistema", "projeto" ],
+  "@dispatcher": [ "dispatch", "tarefa", "dividir", "prioriz", "fila" ],
+  "@prompter": [ "prompt", "instrucao", "contexto", "linguagem" ],
+  "@auditor": [ "auditar", "seguranca", "revisar", "verificar" ],
+  "@organizador": [ "organiz", "documento", "arquivo", "limp" ],
+  "@sequenciador": [ "sequenc", "ordem", "fluxo", "dependencia" ],
+  "@securitychief": [ "seguranca", "acesso", "protecao", "rbac" ],
+  "@bibliotecario": [ "memoria", "rag", "vetorial", "chroma" ],
+  "@historian": [ "historico", "log", "performance", "metricas" ]
+}

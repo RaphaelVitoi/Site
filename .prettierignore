@@ -1,0 +1,17 @@
+wasm-equity/pkg/
+memory/MEMORY.html
+engine/
+**/*_bg.js
+**/*_bg.wasm
+dist/
+build/
+.next/
+node_modules/
+.venv/
+__pycache__/
+coverage/
+.turbo/
+.chroma_db/
+*.db
+*.sqlite
+.gemini_security/

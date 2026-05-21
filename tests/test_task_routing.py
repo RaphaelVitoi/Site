@@ -1,3 +1,9 @@
+"""
+Testes para validacao do sistema de roteamento de agentes no Task Executor.
+"""
+
+# pylint: disable=protected-access
+
 import pytest
 
 # Importar o módulo e as classes necessárias
@@ -66,7 +72,7 @@ def patch_dependencies(monkeypatch):
     monkeypatch.setattr(task_executor._core_config, "VALID_AGENTS", MOCK_VALID_AGENTS)
 
     # Mock para a função que verifica as flags de feature
-    def mock_feature_enabled(flag_name: str) -> bool:
+    def mock_feature_enabled(_flag_name: str) -> bool:
         # Para os testes, vamos assumir que todas as flags estão ativadas
         return True
 
@@ -74,7 +80,7 @@ def patch_dependencies(monkeypatch):
         task_executor._core_config, "feature_enabled", mock_feature_enabled
     )
 
-    MOCK_HEURISTICS = {
+    mock_heuristics = {
         "strategic_terms": {"estrateg": 3},
         "research_terms": {"pesquisa": 2},
         "security_terms": {"auth": 3, "seguranca": 3},
@@ -84,7 +90,7 @@ def patch_dependencies(monkeypatch):
     }
 
     def mock_heuristic_terms(group_name: str) -> dict:
-        return MOCK_HEURISTICS.get(group_name, {})
+        return mock_heuristics.get(group_name, {})
 
     monkeypatch.setattr(
         task_executor._core_config, "heuristic_terms", mock_heuristic_terms
@@ -112,7 +118,9 @@ def test_intelligent_route_task_heuristic_routing():
 def test_intelligent_route_task_frontend_observer():
     """Testa se tarefas de frontend ganham o @curator como observer."""
     agent, meta = _intelligent_route_task(
-        "Ajustar o frontend em next.js", "@implementor"
+        "Ajustar o layout e a interface do frontend em next.js para suportar a "
+        "visualizacao correta e otimizada dos paineis de telemetria",
+        "@implementor",
     )
     assert agent == "@implementor"
     assert "@curator" in meta.get("observers", [])

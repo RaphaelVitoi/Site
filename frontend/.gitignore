@@ -1,3 +1,8 @@
-
 .next-dev
 .next-build
+node_modules/
+coverage/
+*.log
+.env.local
+prisma/*.db-shm
+prisma/*.db-wal

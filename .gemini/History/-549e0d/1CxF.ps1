@@ -1,0 +1,6 @@
+# Example environment file (do not commit real keys)
+$env:GEMINI_PROJETO1_KEY_1 = 'REPLACE_ME'
+$env:GEMINI_PROJETO2_KEY_2 = 'REPLACE_ME'
+$env:OPENROUTER_PROJETO1_KEY_1 = 'REPLACE_ME'
+$env:OPENROUTER_PROJETO2_KEY_1 = 'REPLACE_ME'
+$env:API_SECRET_TOKEN = 'REPLACE_ME'

@@ -1,0 +1,82 @@
+{
+  "@dispatcher": {
+    "pattern": "backlog|ideias|priorizacao|organizar|epico|multiplas|frentes|lista",
+    "priority": 4
+  },
+  "@architect": {
+    "pattern": "design|conceito|estrutura|fundacao|visao|topologia|blueprint|arquitetura|macro|esquema|diagrama|fluxo",
+    "priority": 3
+  },
+  "@architecter": {
+    "pattern": "architecter|architecture|architect|blueprint|system design|macro design|estrutura|arquitetura",
+    "priority": 3
+  },
+  "@maverick": {
+    "pattern": "estrategi|inova|sentinela|ideia|analise|risco|filosofia|reflexao",
+    "priority": 1
+  },
+  "@planner": {
+    "pattern": "planej|prd|spec|especifica|desenh|projeto",
+    "priority": 3
+  },
+  "@auditor": {
+    "pattern": "audit|revis",
+    "priority": 2
+  },
+  "@implementor": {
+    "pattern": "codar|implement|criar|script|python|frontend|backend",
+    "priority": 2
+  },
+  "@verifier": {
+    "pattern": "test|bug|qa|falha|erro",
+    "priority": 2
+  },
+  "@curator": {
+    "pattern": "estetic|ux|ui|texto|copy",
+    "priority": 1
+  },
+  "@validador": {
+    "pattern": "matematic|icm|nash|gto|teoria",
+    "priority": 2
+  },
+  "@organizador": {
+    "pattern": "organiz|documenta|arquiv",
+    "priority": 2
+  },
+  "@pesquisador": {
+    "pattern": "pesquis|busc|mercado|quem",
+    "priority": 2
+  },
+  "@prompter": {
+    "pattern": "prompt|contexto",
+    "priority": 1
+  },
+  "@securitychief": {
+    "pattern": "seguran|vulnerab|xss",
+    "priority": 2
+  },
+  "@seo": {
+    "pattern": "seo|trafego|keyword",
+    "priority": 1
+  },
+  "@bibliotecario": {
+    "pattern": "rag|memori|historic|lembr",
+    "priority": 1
+  },
+  "@sequenciador": {
+    "pattern": "fila|prioridad|orquestr",
+    "priority": 3
+  },
+  "@skillmaster": {
+    "pattern": "backup|limpez|manuten|atualiz",
+    "priority": 1
+  },
+  "@chico": {
+    "pattern": "sintese|consenso|democrat|harmonia|mediacao|conflito",
+    "priority": 2
+  },
+  "@guardian": {
+    "pattern": "acesso|autentica|login|senha|rbac|permissao|auth",
+    "priority": 2
+  }
+}

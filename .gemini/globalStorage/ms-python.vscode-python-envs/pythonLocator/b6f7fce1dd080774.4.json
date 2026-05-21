@@ -1,0 +1,24 @@
+{
+  "environment": {
+    "executable": "c:\\Users\\Raphael\\.gemini\\Site\\frontend\\.venv\\Scripts\\python.exe",
+    "prefix": "c:\\Users\\Raphael\\.gemini\\Site\\frontend\\.venv",
+    "version": "3.12.10.final.0",
+    "is64Bit": true,
+    "symlinks": [
+      "c:\\Users\\Raphael\\.gemini\\Site\\frontend\\.venv\\Scripts\\python.exe"
+    ]
+  },
+  "symlinks": [
+    [
+      "c:\\Users\\Raphael\\.gemini\\Site\\frontend\\.venv\\Scripts\\python.exe",
+      {
+        "secs_since_epoch": 1778116434,
+        "nanos_since_epoch": 583720100
+      },
+      {
+        "secs_since_epoch": 1778116434,
+        "nanos_since_epoch": 583720100
+      }
+    ]
+  ]
+}

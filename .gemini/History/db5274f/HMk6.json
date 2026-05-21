@@ -1,0 +1,39 @@
+﻿﻿{
+  "deep_thinking": [
+    "gemini-3.1-pro",
+    "gemini-2.5-pro",
+    "deepseek/deepseek-r1:free"
+  ],
+  "fast_operations": [
+    "gemini-3.1-flash",
+    "gemini-2.5-flash",
+    "meta-llama/llama-3.1-8b-instruct"
+  ],
+  "agent_map": {
+    "@maverick": "fast_operations",
+    "@architect": "fast_operations",
+    "@planner": "fast_operations",
+    "@auditor": "fast_operations",
+    "@implementor": "fast_operations",
+    "@verifier": "fast_operations",
+    "@securitychief": "fast_operations",
+    "@curator": "fast_operations",
+    "@validador": "fast_operations",
+    "@chico": "fast_operations",
+    "@skillmaster": "fast_operations",
+    "@dispatcher": "fast_operations",
+    "@sequenciador": "fast_operations",
+    "@pesquisador": "deep_thinking",
+    "@organizador": "fast_operations",
+    "@prompter": "fast_operations",
+    "@bibliotecario": "deep_thinking"
+  },
+  "metadata": {
+    "last_updated": "2023-10-27",
+    "version": "1.1",
+    "environment": "production",
+    "routing_logic": "weighted_round_robin",
+    "fallback_model": "gemini-2.5-flash",
+    "retry_limit": 3
+  }
+}

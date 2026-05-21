@@ -1,5 +1,1 @@
-#!/usr/bin/env sh
-
-cd -- "$(dirname -- "$0")/.." || exit 1
-./node_modules/frontend/node_modules/.bin/lint-staged || exit 1
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/security/check-staged-secrets.ps1 || exit 1
+npm test

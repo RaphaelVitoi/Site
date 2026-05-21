@@ -424,38 +424,40 @@ pub fn solve_icm_distortion_v2(
     pot_size: f64,
     street_idx: u32,
     fold: f64,
-    call: f64,
+    _call: f64,
     raise: f64,
 ) -> js_sys::Float64Array {
-    // Cálculo de Gravidade (G): ln(pot/7.5). 7.5bb é o baseline de SRP.
+    // SOTA v6.2.1: Cálculo de Gravidade (G): ln(pot/7.5)
     let gravity = (pot_size / 7.5).ln().max(0.0);
-    
-    // Amortecimento (Damping): Reduz a sensibilidade da agressão em potes gigantes
-    let damping = 1.0 / (1.0 + gravity * 0.12);
+
+    // Sincronia GOLD: Amortecimento de 0.15 para inércia estratégica
+    let damping = 1.0 / (1.0 + gravity * 0.15);
     let effective_aggression = 1.0 + (topologic_aggression - 1.0) * damping;
-    
-    let pressure = (oop_rp + ip_rp) / 2.0;
-    
-    // Downward Drift: Pressão RP converte Raise em Small Bet ou Check/Call
-    // Escala com a street e com a gravidade
-    let drift_base = 0.004 * (street_idx as f64 + 1.0);
-    let drift_penalty = raise * (pressure * drift_base * (1.0 + gravity * 0.5));
-    
-    let raise_shift = raise * (effective_aggression - 1.0) 
-                      - drift_penalty 
-                      - (pressure * 0.003 * active_players as f64);
-                      
+
+    // Pressão com peso assimétrico no Delta (SOTA v4.6.1)
+    let delta_rp = (ip_rp - oop_rp).abs();
+    let pressure = (oop_rp + ip_rp) / 2.0 + delta_rp * 0.3;
+
+    // Downward Drift: Penalização Multiway Quadrática (N^2.0) conforme Derivação 2
+    let drift_base = 0.005 * (street_idx as f64 + 1.0);
+    let mw_multiplier = ((active_players as f64 - 1.0).max(1.0)).powf(2.0);
+    let drift_penalty = raise * (pressure * drift_base * (1.0 + gravity * 0.4) * mw_multiplier);
+
+    let raise_shift = raise * (effective_aggression - 1.0)
+        - drift_penalty
+        - (pressure * 0.004 * active_players as f64);
+
     let mut new_raise = (raise + raise_shift).max(0.0);
-    
-    // Fold Shift: Limitado pelo Teto de RP (D5/D6)
-    // O teto impede que o fold suba indefinidamente em situações de pot commitment
-    let max_fold_allowed = 0.88 - (gravity * 0.05).min(0.3); 
-    let fold_shift = fold * (pressure * 0.012) + (raise - new_raise).max(0.0);
+
+    // Fold Shift: Teto Dinâmico de RP (D6) sincronizado com Frontend
+    // O teto impede o fold infinito devido à gravidade do pote (pago para ver sobrevivência)
+    let max_fold_allowed = (0.90 - (gravity * 0.04) + (pressure * 0.001)).min(0.92);
+    let fold_shift = fold * (pressure * 0.015) + (raise - new_raise).max(0.0);
     let mut new_fold = (fold + fold_shift).max(0.0).min(max_fold_allowed);
-    
+
     let mut new_call = (1.0 - new_fold - new_raise).max(0.0);
     let total = new_fold + new_call + new_raise;
-    
+
     if total > 0.0 {
         new_fold /= total;
         new_call /= total;

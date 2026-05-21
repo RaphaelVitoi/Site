@@ -32,8 +32,10 @@ async def _create_watchdog_task(
                 metadata={"priority": priority},
             )
             await manager.add_task(alert_task)
-    except Exception as e:  # noqa: BLE001
-        logger.error(f"[WATCHDOG] Falha ao criar tarefa de alerta '{task_id}': {e}")
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.exception(
+            "[WATCHDOG] Falha ao criar tarefa de alerta '%s': %s", task_id, e
+        )
 
 
 async def _get_last_metrics(manager: QueueManager) -> dict:
@@ -53,11 +55,19 @@ def _calculate_failure_rate(
     last_timestamp_str = last_metrics.get("timestamp")
 
     if last_timestamp_str and last_failed is not None:
-        time_delta = now - datetime.fromisoformat(last_timestamp_str)
-        minutes_delta = time_delta.total_seconds() / 60
-        recent_failures = max(0, current_failed - last_failed)
-        if minutes_delta > 0:
-            return recent_failures / minutes_delta, recent_failures
+        try:
+            last_ts = datetime.fromisoformat(last_timestamp_str)
+            # SOTA: Garantia de Coerence Temporal (Blindagem contra mismatch naive/aware)
+            if last_ts.tzinfo is None:
+                last_ts = last_ts.replace(tzinfo=timezone.utc)
+
+            time_delta = now - last_ts
+            minutes_delta = time_delta.total_seconds() / 60
+            recent_failures = max(0, current_failed - last_failed)
+            if minutes_delta > 0:
+                return recent_failures / minutes_delta, recent_failures
+        except (ValueError, TypeError):
+            pass
     return 0.0, 0
 
 
@@ -89,7 +99,8 @@ async def _process_watchdog_triggers(
         f"- Pendentes: {current_pending}\n"
         f"- Falhas Recentes: {recent_failures}\n"
         f"- Taxa de Falha: {failure_rate:.2f}/min\n\n"
-        f"Diretriz para @maverick: Inspecione a raiz desta entropia, corrija as inconsistencias e restaure a harmonia do fluxo para garantir operacao em capacidade maxima."
+        f"Diretriz para @maverick: Inspecione a raiz desta entropia, corrija as inconsistencias "
+        f"e restaure a harmonia do fluxo para garantir operacao em capacidade maxima."
     )
     await _create_watchdog_task(manager, alert_id, desc, "@maverick", "critical")
 
@@ -124,7 +135,7 @@ async def system_watchdog(manager: QueueManager):
     while True:
         try:
             await _run_watchdog_cycle(manager)
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"[WATCHDOG] Falha no monitoramento 24/7: {e}")
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.exception("[WATCHDOG] Falha no monitoramento 24/7: %s", e)
 
         await asyncio.sleep(300)  # O coracao do vigia bate a cada 5 minutos

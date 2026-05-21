@@ -1,0 +1,307 @@
+# PROTOCOLO EPISTÉMICO E DIRETRIZES DO AGENTE
+
+# Framework Padrão-Ouro: Orquestração de Agentes e Resiliência Sistémica
+
+# Escopo: Determinismo, Recuperação de Falhas, Zero Entropia Documental
+
+# Data: 2026-03-12
+
+# Referência: Teoria de Sistemas + Análise Bayesiana de Risco
+
+---
+
+## 🔵 PRINCÍPIO FUNDAMENTAL
+
+**Pressuposto:** A probabilidade de falha é $P(F) > 0$. Logo, o sistema não deve apenas
+evitar a falha, mas garantir recuperação atómica quando a falha ocorrer.
+
+**Corolário:** A entropia documental é equivalente ao risco de falha. Zero redundância
+de informação = zero probabilidade de contradição no contexto.
+
+---
+
+## 1. INTEGRIDADE EPISTÉMICA (Single Source of Truth)
+
+A duplicação de informações contextuais é **terminantemente proibida**.
+
+### 1.1 Hierarquia de Leitura (Read-Only Contexts)
+
+**[LEITURA OBRIGATÓRIA]**
+
+- **`.claude/project-context.md`**
+  - O QUÊ foi decidido e POR QUÊ
+  - Contém: Domínio, Público-alvo, Decisões Estruturais, Estado Atual, Handoff Log
+  - Frequência: LER ao INÍCIO de cada tarefa
+  
+- **`docs/MANUAL_WORKFLOW_AGENTES.md`**
+  - COMO usar o sistema (sintaxe, operações, agentes)
+  - Referência técnica operacional
+  - Frequência: Consultar conforme necessário
+  
+- **`.claude/DISTRIBUTION_MATRIX.md`**
+  - QUEM atualiza O QUÊ e QUANDO (autoridade canônica por tópico)
+  - Mapa de referências cruzadas (permitidas vs bloqueadas)
+  - **NUNCA duplicar informação entre docs. Sempre referenciar.**
+
+### 1.2 Hierarquia de Escrita (Write-Only Contexts)
+
+**[ESCRITA OBRIGATÓRIA]**
+
+Cada agente escreve APENAS em seu contexto designado:
+
+| Contexto | Localização | Quem Escreve | Frequência |
+|----------|-----------|------------|----------|
+| Memória Operacional | `.claude/agent-memory/<agente>/MEMORY.md` | Respectivo agente | Apó cada tarefa |
+| Auditoria | `logs/task_log.md` | Agent-TaskManager.psm1 (automático) | Real-time |
+| Decisões Globais | `.claude/project-context.md` | @pesquisador (apenas) | Após decisão confirmada |
+| Handoff Entre Agentes | `.claude/project-context.md` Handoff Log | Todos agentes (append-only) | Ao final de execução |
+
+**Regra de Ouro:** Se você precisa ESCREVER informação estrutural (decisão, padrão, protocolo),
+escreva SOMENTE em seu MEMORY.md. A síntese global é responsabilidade exclusiva do @pesquisador.
+
+---
+
+## 2. MANIPULAÇÃO DE TAREFAS (I/O DETERMINÍSTICO)
+
+### 2.1 Proibição de Escrita Direta
+
+**Proibido:**
+
+```powershell
+# ❌ NÃO FAÇA ISTO
+$queue = Get-Content queue\tasks.json | ConvertFrom-Json
+$queue.tasks += @{ ... }
+$queue | ConvertTo-Json | Set-Content queue\tasks.json
+```
+
+**Obrigatório:**
+
+```powershell
+# ✅ SEMPRE USE O MÓDULO
+Import-Module .\Agent-TaskManager.psm1
+Add-AgentTask -TaskId "20260312-120000-001" -Description "Processar dados" -Status "pending"
+```
+
+### 2.2 Operações Atómicas Garantidas
+
+O módulo `Agent-TaskManager.psm1` garante:
+
+1. **Validação de Schema (Pre-Flight)** - Nenhuma tarefa malformada entra na fila
+2. **Escrita Atómica (Atomic Swap)** - Temp → Move (operação indivisível)
+3. **Auditoria Automática** - Cada operação fica registada em task_log.md
+4. **Rollback em Falha** - Se escrita falhar, ficheiro anterior é restaurado
+
+### 2.3 Exemplos de Uso
+
+```powershell
+# Enfileirar tarefa
+Add-AgentTask `
+  -TaskId "20260312-143000-987" `
+  -Description "Pesquisa sobre ICM em torneios KO" `
+  -Status "pending" `
+  -Agent "@pesquisador" `
+  -Metadata @{ domain = "poker"; priority = "high" }
+
+# Consultar status
+Get-AgentTaskStatus                    # Resumo
+Get-AgentTaskStatus -TaskId "20260312-143000-987"
+Get-AgentTaskStatus -Status "completed"
+
+# Limpeza automática
+Invoke-TaskCleanup -DaysToKeep 30 -MaxActive 50
+```
+
+---
+
+## 3. PROIBIÇÃO DE ENVIESAMENTO (Rigor Epistemológico)
+
+### 3.1 Abordagem Bayesiana
+
+Em todas as análises arquitetônicas ou técnicas, adote uma abordagem não-enviesada,
+lógica e baseada em **probabilidade de falha** (Risk Premium Sistémico).
+
+**Checklist antes de qualquer decisão:**
+
+- [ ] Qual é P(esta solução falhar)?
+- [ ] Como o sistema se recupera se falha ocorrer?
+- [ ] Há suposições tácitas? (Perigoso!)
+- [ ] Que evidências fundamentam esta decisão?
+
+### 3.2 Princípio da Admissão de Incerteza
+
+**Obrigatório:** Se os dados em MEMORY.md forem insuficientes para tomar uma decisão
+assertiva, **devolva o estado explicitamente:**
+
+```
+"Não é possível ter certeza por ausência de evidências."
+"Apenas indicios sugerem que..."
+"Baseado em P(X) > 0.7, recomendo..."
+```
+
+**Nunca gere suposições para preencher lacunas de contexto.** A lacuna persiste até
+que evidência a preencha.
+
+### 3.3 Rastreabilidade de Claims
+
+Toda recomendação ou análise deve incluir:
+
+1. **Claim:** O que se afirma
+2. **Evidência:** Que dados/observações sustentam
+3. **Confiança:** P(claim | evidência)
+4. **Alternativas:** Que outrasinterpretações são possíveis?
+5. **Refutação:** O que provaria que está errado?
+
+---
+
+## 4. CICLO DE VIDA DE TAREFA (Workflow Determinístico)
+
+Cada tarefa passa por estados bem-definidos:
+
+```
+pending → running → completed   (sucesso)
+          ↓
+          failed → archived     (falha terminal)
+          ↓
+          cancelled             (cancelamento)
+```
+
+### 4.1 Transições Válidas
+
+- `pending` → `running` (agente começa execução)
+- `running` → `completed` (sucesso)
+- `running` → `failed` (erro não-recuperável)
+- `completed` ou `failed` → `archived` (após cleanup, 30+ dias)
+- Qualquer → `cancelled` (cancelamento manual)
+
+### 4.2 Proibição de Transições Inválidas
+
+**Proibido:**
+
+```
+completed → running  (Não volte atrás)
+failed → pending     (Crie nova tarefa, não resuscite)
+```
+
+---
+
+## 5. FORMATO NORMATIVO DE MEMÓRIA (MEMORY.md)
+
+Cada agente mantem seu histórico em `.claude/agent-memory/<agente>/MEMORY.md`:
+
+### 5.1 Estrutura Obrigatória
+
+```markdown
+# Memória de [AGENTE]
+
+## Ações Realizadas
+
+- [Tarefa ID] - Descrição breve
+  - Resultado: sucesso/parcial/falha
+  - Aprendizado: Uma lição de 1-2 frases
+
+## Padrões Observados
+
+- Padrão 1: Quando X acontece, Y segue com P(Y|X) = ?
+- Padrão 2: ...
+
+## Referências de Contexto
+
+- `.claude/project-context.md` - Estado global
+- `.claude/DISTRIBUTION_MATRIX.md` - Autoridade documental
+- ... (outras)
+```
+
+### 5.2 Atualizar Apó Cada Tarefa
+
+Não deixe MEMORY.md vazio. Ao fim de cada execução:
+
+1. Adicione entrada a "Ações Realizadas"
+2. Se repetível, documente em "Padrões Observados"
+3. Cite fontes/referências usadas
+
+---
+
+## 6. VERIFICAÇÃO DE SAÚDE SISTÉMICA (Healthchecks)
+
+### 6.1 Daily (Automático via @skillmaster)
+
+```powershell
+# Executar DIARIAMENTE às 2 AM
+Invoke-TaskCleanup -DaysToKeep 30 -MaxActive 50
+```
+
+### 6.2 Weekly (Manual - @organizador)
+
+```powershell
+# Verificar integridade de documentação
+# Referências cruzadas válidas?
+# Zero redundância?
+```
+
+### 6.3 Ad-Hoc (Quando necessário)
+
+```powershell
+# Se suspeita de corrupção
+Test-TaskQueueIntegrity
+Verify-AgentEnvironment
+```
+
+---
+
+## 7. TRATAMENTO DE EXCEÇÕES (Recuperação Atómica)
+
+### 7.1 Cenários de Falha Previstos
+
+| Cenário | Sintoma | Recuperação |
+|---------|---------|------------|
+| Corrupção JSON | ConvertFrom-Json falha | Restaurar backup anterior |
+| Escrita incompleta | Ficheiro .tmp permanece | Limpar .tmp + rollback |
+| Memory.md desatualizada | Inconsistência de padrão | Re-sync via @skillmaster |
+| Loop infinito de agente | Tarefa > 1h em "running" | @sequenciador cancela + timeout |
+
+### 7.2 Protocolo de Recuperação
+
+1. **Detetar:** Qual componente falhou?
+2. **Isolar:** Qual é o escopo da falha? (tarefa? agente? sistema?)
+3. **Recuperar:** Usar Atomic Swap para restaurar estado anterior
+4. **Documentar:** Registar incidente em task_log.md + MEMORY.md
+
+---
+
+## 8. MATRIZ DE DECISÃO RÁPIDA
+
+Quando em dúvida, responda:
+
+| Pergunta | Resposta | Ação |
+|----------|----------|------|
+| Preciso ler contexto? | Sim | Abra `.claude/project-context.md` |
+| Preciso consultar sintaxe? | Sim | Abra `docs/MANUAL_WORKFLOW_AGENTES.md` |
+| Qualquer tarefa nova? | Sim | Adicione via `Add-AgentTask` (Agent-TaskManager) |
+| Preciso escrever descoberta? | Sim | Escreva em `.claude/agent-memory/<agente>/MEMORY.md` |
+| Redundância documentada? | Sim | Consulte `.claude/DISTRIBUTION_MATRIX.md` antes |
+| Tenho certeza de claim? | Não | Declare "Não é possível ter certeza" + cite evidência parcial |
+
+---
+
+## 9. SANÇÕES E APLICAÇÃO
+
+**Violações desta protocolo:**
+
+1. **Escrita direta em tasks.json** → Rollback automático + erro
+2. **Duplicação de informação** → Refactoring automático pelo @organizador
+3. **Afirmação sem evidência** → Rejeição + solicitação de baseline
+4. **Modificação não-autorizada de project-context.md** → Conflict detection + halt
+
+---
+
+## 10. VERSÃO E HISTÓRICO
+
+| Versão | Data | Mudanças |
+|--------|------|----------|
+| 1.0 | 2026-03-12 | Criação inicial - Framework Padrão-Ouro |
+
+---
+
+**Última atualização:** 2026-03-12  
+**Responsável:** Protocolo de Sistema (Framework Padrão-Ouro)  
+**Status:** ✅ ATIVO

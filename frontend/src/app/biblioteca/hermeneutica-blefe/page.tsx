@@ -1,134 +1,58 @@
-'use client';
-
 /**
- * IDENTITY: Hermenêutica do Blefe SOTA Quantum
+ * IDENTITY: Hermenêutica do Blefe GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/hermeneutica-blefe/page.tsx
- * ROLE: Artigo técnico-filosófico sobre leitura de intenções via Lacan.
- * PRINCIPLE: Sofisticação Estética & Rigor Teórico.
+ * ROLE: Artigo técnico sobre a desconstrução semântica e bayesiana do blefe.
+ * VERSION: v6.2.1 GOLD
  */
 
-import ContentFooter from '@/components/content/ContentFooter';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { GlassPanel } from '@/components/ui/GlassPanel';
-import { ContentPageHeader } from '@/components/layout/ContentPageHeader';
+import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
+import BayesianBeliefPanel from '@/components/simulator/panels/BayesianBeliefPanel';
+import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
+
+const content = `
+# A Hermenêutica do Blefe
+
+O blefe no poker de alta performance não é um ato de intuição isolada ou coragem descabida; é a **injeção proposital de entropia** no modelo mental do oponente. A Hermenêutica do Blefe trata da arte de interpretar e forjar narrativas que distorçam a Atualização Bayesiana da mesa.
+
+---
+
+## 1. A Semântica da Agressão Ilegítima
+
+Todo bet conta uma história. A agressão ilegítima (blefe) é bem-sucedida quando a sua "história" é matematicamente indistinguível da agressão por valor. O GTO prescreve frequências exatas para tornar o oponente indiferente, mas a **Perspectiva Matemática** exige que você encontre falhas de interpretação (hermenêutica) no oponente.
+
+Se o seu oponente superestima a sua taxa de blefe (Alta *P(Bluff)* no Prior dele), a utilidade intrínseca do seu blefe cai a zero, mas o valor extraído pelas suas mãos de valor (Nuts) explode exponencialmente.
+
+---
+
+## 2. Contração Bayesiana e o "Fator Ψ"
+
+O ser humano não processa o teorema de Bayes com precisão natural. Quando submetido à pressão do ICM, a mente do oponente sofre um "drift" interpretativo: o medo da eliminação (Fator Ψ) altera o limiar de aceitação do blefe.
+
+Interaja com o laboratório bayesiano abaixo. Ajuste a probabilidade percebida de blefe (*Likelihood*) e observe como a densidade de probabilidade (a Crença) do oponente se altera brutalmente após uma agressão no River. O blefe de elite ataca diretamente essa margem de erro perceptiva.
+`;
 
 export default function HermeneuticaBlefePage() {
-  const articleUrl = "https://www.raphaelvitoi.com/biblioteca/hermeneutica-blefe";
-  const articleTitle = "Hermenêutica do Blefe | Raphael Vitoi";
+	return (
+		<div className="min-h-screen bg-bg-base text-text-bright pb-24">
+			<ContentPageHeader
+				title="A Hermenêutica do Blefe"
+				subtitle="A desconstrução bayesiana da agressão ilegítima e a exploração sistemática da entropia cognitiva do oponente."
+				category="Psicologia Preditiva"
+				icon="fa-masks-theater"
+			/>
 
-  return (
-    <div className="min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body">
+			<div className="sota-container py-12 md:py-24">
+				<div className="max-w-5xl mx-auto flex flex-col gap-16">
+					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-rose shadow-2xl group transition-colors hover:border-l-accent-indigo">
+						<SotaMarkdown content={content} />
+					</GlassPanel>
 
-      <ContentPageHeader
-        title="Hermenêutica do Blefe"
-        subtitle="A estrutura simbólica da mentira estratégica — lendo intenções através da lente de Lacan e Ricoeur."
-        category="Psicologia"
-        icon="fa-mask"
-      />
-
-      {/* Seção 01: Fundação */}
-      <SectionHeader
-        step="01"
-        label="Fundação"
-        title="Hermenêutica como Ferramenta"
-        description="O poker é um texto. Cada ação é um signo que remete a outro signo."
-      />
-      <div className="sota-container pb-12">
-        <GlassPanel className="p-8 sm:p-12 lg:p-16">
-          <div className="prose prose-invert prose-lg max-w-none text-text-muted">
-            <p>Hermenêutica é a teoria da interpretação. Paul Ricoeur a definiu como &quot;a teoria das operações do entendimento em relação à interpretação de textos&quot;.</p>
-            <p>O poker é um texto. Cada ação — aposta, check, timing, sizing — é um signo que remete a outro signo. O problema do jogador é: <strong>como extrair sentido de uma cadeia de significantes cujo referente está ocultado?</strong></p>
-
-            <div className="bg-accent-emerald/10 border-l-4 border-accent-emerald p-8 my-10 rounded-r-2xl shadow-lg shadow-emerald-900/10">
-              <h4 className="mt-0 text-accent-emerald font-bold text-lg mb-4 font-heading italic">O Axioma Central</h4>
-              <p className="m-0 leading-relaxed text-sm italic">
-                &quot;O inconsciente está estruturado como uma linguagem.&quot; — Jacques Lacan.
-                <br/><br/>
-                O jogador não pode blefar de forma limpa. O inconsciente vaza. A questão é saber onde e como decodificá-lo.
-              </p>
-            </div>
-          </div>
-        </GlassPanel>
-      </div>
-
-      {/* Seção 02: Semiologia */}
-      <SectionHeader
-        step="02"
-        label="Semiologia"
-        title="O Significante e o Blefe"
-        description="O blefe é um ato de falsificação simbólica. Mas a cadeia resiste e produz deslizamentos."
-      />
-      <div className="sota-container pb-12">
-        <GlassPanel className="p-8 sm:p-12 lg:p-16">
-          <div className="prose prose-invert prose-lg max-w-none text-text-muted">
-            <p>No poker, o bet de 75% do pot é um significante. Seu significado não é absoluto — ele depende do contexto (board, posição, stack depth), exatamente como uma palavra depende da frase.</p>
-
-            <h3 className="text-text-bright font-heading mt-12 mb-6 text-2xl">Matriz de Deslizamento (Glissement)</h3>
-            <div className="overflow-hidden rounded-2xl border border-white/5 bg-black/20 my-10">
-                <table className="w-full text-left text-sm font-body">
-                    <thead className="bg-white/5 text-text-bright uppercase text-[0.6rem] tracking-widest border-b border-white/5">
-                        <tr>
-                            <th className="py-4 px-6">Signo (Ação)</th>
-                            <th className="py-4 px-6">Significado Pretendido</th>
-                            <th className="py-4 px-6 text-accent-rose">Deslizamento (Real)</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                        <tr className="hover:bg-white/2 transition-colors">
-                            <td className="py-4 px-6 font-bold text-text-main">Bet rápido no river</td>
-                            <td className="py-4 px-6">Valor / Confiança</td>
-                            <td className="py-4 px-6 text-accent-rose-light">Automático (Blefe preparado)</td>
-                        </tr>
-                        <tr className="hover:bg-white/2 transition-colors">
-                            <td className="py-4 px-6 font-bold text-text-main">Pausa longa antes de bet</td>
-                            <td className="py-4 px-6">Cálculo de valor</td>
-                            <td className="py-4 px-6 text-accent-rose-light">Encenação; o blefe não exige cálculo</td>
-                        </tr>
-                        <tr className="hover:bg-white/2 transition-colors">
-                            <td className="py-4 px-6 font-bold text-text-main">Conversa durante pot</td>
-                            <td className="py-4 px-6">Descontração</td>
-                            <td className="py-4 px-6 text-accent-rose-light">Dissociação defensiva</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-          </div>
-        </GlassPanel>
-      </div>
-
-      {/* Seção 03: Psicanálise */}
-      <SectionHeader
-        step="03"
-        label="Psicanálise"
-        title="O Gozo do Blefador"
-        description="O blefador compulsivo não blefa por +EV. Ele blefa pela satisfação de enganar."
-      />
-      <div className="sota-container pb-12">
-        <GlassPanel className="p-8 sm:p-12 lg:p-16">
-          <div className="prose prose-invert prose-lg max-w-none text-text-muted">
-            <p>O conceito lacaniano de <em>jouissance</em> (gozo) designa uma satisfação além do prazer. No poker, o blefador compulsivo blefa pelo <strong>gozo do ato</strong>: a confirmação de existência através do reconhecimento do Outro (o oponente que foldou).</p>
-
-            <div className="bg-accent-indigo/10 border-l-4 border-accent-indigo p-8 my-10 rounded-r-2xl">
-              <h4 className="mt-0 text-accent-indigo font-bold text-lg mb-4 font-heading italic">O Imperativo do Gozo</h4>
-              <p className="text-text-main m-0 leading-relaxed text-sm">
-                O tell não está na mão específica — está no padrão comportamental. O gozo tem frequência. Ele volta. Identificar essa necessidade estrutural é a chave para a exploração máxima.
-              </p>
-            </div>
-          </div>
-        </GlassPanel>
-      </div>
-
-      {/* Footer & Navigation */}
-      <div className="sota-container pb-24">
-        <div className="pt-12 border-t border-white/5">
-            <ContentFooter
-                shareTitle={articleTitle}
-                shareUrl={articleUrl}
-                backLinkHref="/biblioteca"
-                backLinkText="Voltar para a Biblioteca"
-            />
-        </div>
-      </div>
-    </div>
-  );
+					<div className="w-full relative z-10">
+						<BayesianBeliefPanel initialRange="20.5%" label="Agressor (River Jam)" />
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

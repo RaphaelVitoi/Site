@@ -1,254 +1,214 @@
 /**
- * IDENTITY: Biblioteca Analítica
+ * IDENTITY: Index da Biblioteca SOTA (O Arquivo Akashico)
  * PATH: src/app/biblioteca/page.tsx
- * ROLE: Índice de artigos e ensaios. Agregação dinâmica (Prisma) e estática.
- * BINDING: [layout.tsx, globals.css, AnimatedArticleGrid]
+ * ROLE: Organizar e exibir todos os artigos teóricos, mecânicos e laboratórios interativos documentados.
  */
 
-import AnimatedArticleGrid from '@/components/content/AnimatedArticleGrid';
-import { HeroArticleButton } from '@/components/HeroArticleButton';
-import { ContentPageHeader } from '@/components/layout/ContentPageHeader';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import prisma from '@/lib/prisma';
+import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
+import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
-
-export const metadata = {
-  title: 'Biblioteca | Raphael Vitoi',
-  description: 'Artigos, ensaios e análises aprofundadas sobre a teoria do poker, ICM e psicologia high-stakes.',
+type ArticleItem = {
+	title: string;
+	slug: string;
+	isLab?: boolean;
 };
 
-export default async function BibliotecaPage() {
-  // Busca do banco
-  const articleList = await prisma.content.findMany( {
-    where: { category: { in: ['Artigo', 'Ensaio'] } },
-    orderBy: { createdAt: 'desc' }
-  } ).catch( () => [] ) || [];
+type LibraryCategory = {
+	title: string;
+	icon: string;
+	colorClass: string;
+	articles: ArticleItem[];
+};
 
-  const dbArticles = articleList.map( ( item ) => {
-    const excerpt = item.body
-      ? String( item.body ).replaceAll( /[#*`>[\n]/g, ' ' ).replaceAll( /\s+/g, ' ' ).trim().substring( 0, 120 ) + '...'
-      : 'Documento estrutural da Mente Coletiva VITOI.';
+// SOTA: Mapeamento de Rotas baseado exclusivamente na fonte da verdade (ROUTES.md)
+const LIBRARY_CATEGORIES: LibraryCategory[] = [
+	{
+		title: 'Fundamentos SOTA',
+		icon: 'fa-book-journal-whills',
+		colorClass:
+			'text-accent-indigo border-accent-indigo/30 shadow-[0_0_15px_rgba(99,102,241,0.15)]',
+		articles: [
+			{ title: 'Manifesto SOTA: Axiomas', slug: 'manifesto-sota-axiomas' },
+			{ title: 'Hierarquia da Decisão', slug: 'hierarquia-da-decisao' },
+			{ title: 'Estado da Arte GOLD', slug: 'estado-da-arte' },
+			{ title: 'Protocolo Smart Sniper', slug: 'smart-sniper' },
+			{ title: 'Validação Smart Sniper', slug: 'validacao-smart-sniper' },
+		],
+	},
+	{
+		title: 'Mecânica & ICM',
+		icon: 'fa-gears',
+		colorClass:
+			'text-accent-emerald border-accent-emerald/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]',
+		articles: [
+			{
+				title: 'Downward Drift & Compressão',
+				slug: 'downward-drift-sota',
+				isLab: true,
+			},
+			{ title: 'Geometria do Risco', slug: 'geometria-do-risco' },
+			{
+				title: 'Entendendo o ICM e Heurísticas',
+				slug: 'entendendo-o-icm-e-suas-heuristicas',
+			},
+			{
+				title: 'Heurística ICM Pós-Flop',
+				slug: 'heuristica-icm-pos-flop-aula',
+			},
+			{ title: 'Motor de Diluição', slug: 'motor-diluicao' },
+			{ title: 'Teto Equidade River ICM', slug: 'teto-equidade-river-icm' },
+			{ title: 'Estruturas de Torneio', slug: 'estruturas-de-torneio' },
+		],
+	},
+	{
+		title: 'Valuation & Risco',
+		icon: 'fa-scale-unbalanced',
+		colorClass:
+			'text-accent-amber border-accent-amber/30 shadow-[0_0_15px_rgba(245,158,11,0.15)]',
+		articles: [
+			{ title: 'Paradoxo da Valuation', slug: 'paradoxo-valuation' },
+			{ title: 'Axioma do EV Fold Dinâmico', slug: 'axioma-ev-fold-dinamico' },
+			{ title: 'Insolvência das Pot Odds', slug: 'insolvencia-das-pot-odds' },
+			{ title: 'Risco de Ressurreição', slug: 'risco-de-ressurreicao' },
+		],
+	},
+	{
+		title: 'Psicologia Preditiva',
+		icon: 'fa-brain',
+		colorClass: 'text-accent-rose border-accent-rose/30 shadow-[0_0_15px_rgba(244,63,94,0.15)]',
+		articles: [
+			{
+				title: 'Fator Ψ (Maluquice Humana)',
+				slug: 'fator-psi-maluquice-humana',
+			},
+			{ title: 'Hermenêutica do Blefe', slug: 'hermeneutica-blefe' },
+			{ title: 'Psicologia High Stakes', slug: 'psicologia-high-stakes' },
+		],
+	},
+	{
+		title: 'Laboratórios & Exegese',
+		icon: 'fa-microscope',
+		colorClass: 'text-accent-sky border-accent-sky/30 shadow-[0_0_15px_rgba(14,165,233,0.15)]',
+		articles: [
+			{ title: 'Exegese da Decisão', slug: 'exegese-da-decisao', isLab: true },
+			{
+				title: 'A Amortização da Edge',
+				slug: 'voce-aprende-poker-errado',
+				isLab: true,
+			},
+			{ title: 'Teoria da Perspectiva', slug: 'teoria-da-perspectiva' },
+			{ title: 'Falácia do Equilíbrio', slug: 'falacia-equilibrio-pedagogia' },
+			{
+				title: 'Laboratório ChipEV vs ICMev',
+				slug: 'laboratorio-chipev-vs-icmev',
+			},
+			{ title: 'Toy Games (Predator Mode)', slug: 'toy-games' },
+			{ title: 'Nós de Calibragem (Âncora)', slug: 'nos-de-calibragem' },
+		],
+	},
+];
 
-    return {
-      href: `/biblioteca/${item.slug}`,
-      tags: ['SOTA', 'Dinamico'],
-      title: item.title,
-      description: excerpt,
-      readingTime: 'Leitura SOTA',
-      isNew: true
-    };
-  } );
+export default function BibliotecaIndexPage() {
+	return (
+		<div className="min-h-screen bg-bg-base text-text-bright pb-24">
+			<ContentPageHeader
+				title="A Mente Coletiva"
+				subtitle="O repositório sagrado (Registro Akáshico) de toda a doutrina, laboratórios quânticos e manifestos arquiteturais de Raphael Vitoi."
+				category="Biblioteca SOTA"
+				icon="fa-book-open"
+			/>
 
-  const staticArticles = [
-    {
-      href: '/biblioteca/toy-games',
-      tags: ['Interativo', 'Lab'],
-      title: 'Toy Games: Predator Mode',
-      description: 'Laboratório de isolamento tático: sinta a impunidade de agredir quando o oponente está na zona de ruptura.',
-      readingTime: 'Interativo',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/insolvencia-das-pot-odds',
-      tags: ['Teoria', 'SOTA'],
-      title: 'A Insolvência das Pot Odds',
-      description: 'O veneno mascarado pelo preço barato. Por que pot odds são um distrator sistêmico e como as RIO colapsam o sistema.',
-      readingTime: '15 min',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/risco-de-ressurreicao',
-      tags: ['Estratégia', 'ICM'],
-      title: 'O Risco de Ressurreição',
-      description: 'Por que dobrar um short-stack é um erro sistêmico que devolve a complexidade da árvore ao oponente.',
-      readingTime: '12 min',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/fator-psi-maluquice-humana',
-      tags: ['Psicologia', 'MDA'],
-      title: 'O Fator Ψ (Psi)',
-      description: 'A Taxa de Maluquice Humana: Como integrar a frequência de erro emocional e tilt na tomada de decisão soberana.',
-      readingTime: '10 min',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/heuristica-icm-pos-flop-aula',
-      tags: ['Aula', 'Masterclass'],
-      title: 'Masterclass 1.2: ICM no Pós-Flop',
-      description: 'Heurísticas de ICM no Pós-Flop: A ciência por trás da dissipação do Risk Premium e do Bunching Effect.',
-      readingTime: '25 min',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/geometria-do-risco',
-      tags: ['SOTA', 'Arquétipos'],
-      title: 'A Geometria do Risco',
-      description: 'A desconstrução definitiva do pós-flop sob ICM e os 5 arquétipos clínicos de colisão entre stacks.',
-      readingTime: '18 min',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/manifesto-sota-axiomas',
-      tags: ['Doutrina', 'Psicologia'],
-      title: 'Manifesto SOTA: Axiomas',
-      description: 'A fundação teórica unindo Teoria dos Jogos e Psicologia de Sistemas. Factor Ψ, Antevisão e a falácia das Pot Odds.',
-      readingTime: '12 min',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/falacia-equilibrio-pedagogia',
-      tags: ['Pedagogia', 'Mindset'],
-      title: 'A Falácia do Equilíbrio',
-      description: 'Por que o aprendizado tradicional de poker está falhando e como o Downward Drift mudou o jogo.',
-      readingTime: '12 min',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/laboratorio-chipev-vs-icmev',
-      tags: ['Solver', 'Divergência'],
-      title: 'Laboratório: ChipEV vs ICMev',
-      description: 'Divergência Clínica: Comparativo prático entre árvores de decisão ChipEV e ICMev no pós-flop.',
-      readingTime: '15 min',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/axioma-ev-fold-dinamico',
-      tags: ['Teoria', 'ICM'],
-      title: 'Axioma do EV do Fold',
-      description: 'Por que foldar quase nunca tem EV zero e como o ICM pode tornar o fold matematicamente positivo.',
-      readingTime: '10 min',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/teto-equidade-river-icm',
-      tags: ['Matemática', 'Nash'],
-      title: 'O Teto de Equidade',
-      description: 'Prova Clínica: Por que é estruturalmente impossível precisar de mais de 41% de equidade para pagar no river.',
-      readingTime: '15 min',
-      isNew: true
-    },
-    {
-      href: '/biblioteca/downward-drift-sota',
-      tags: ['ICM', 'Teoria'],
-      title: 'Downward Drift SOTA',
-      description: 'Como a assimetria do Risk Premium força a contração de ranges e o rebaixamento de sizings sob pressão ICM.',
-      readingTime: '12 min',
-      isNew: true
-    },
-    {
-      href: '/artigos/estado-da-arte',
-      tags: ['Metagame', 'Tendencias'],
-      title: 'Estado da Arte 2025',
-      description: 'Donk Bet meta, Efeito de Irradiação, IA vs HRC Pro. Tendências High Stakes.',
-      readingTime: '8 min',
-      isNew: false
-    },
-    {
-      href: '/artigos/smart-sniper',
-      tags: ['Gestao', 'Metodologia'],
-      title: 'Protocolo Smart Sniper',
-      description: 'Gestão de carreira, rotina semanal, estratégia de domingo e validação Monte Carlo.',
-      readingTime: '12 min',
-      isNew: false
-    },
-    {
-      href: '/artigos/validacao-smart-sniper',
-      tags: ['Ciencia', 'Matematica'],
-      title: 'Validação Científica',
-      description: 'Monte Carlo, Índice de Sharpe, Barbell Strategy e modelagem cognitiva (Yerkes-Dodson).',
-      readingTime: '15 min',
-      isNew: false
-    },
-    {
-      href: '/artigos/psicologia-hs',
-      tags: ['Psicologia', 'Mindset'],
-      title: 'Psicologia High Stakes',
-      description: 'A Fenomenologia da Incerteza: Exegese crítica das heurísticas de ICM e controle de tilt.',
-      readingTime: '10 min',
-      isNew: false
-    },
-    {
-      href: '/biblioteca/entendendo-o-icm-e-suas-heuristicas',
-      tags: ['ICM', 'Teoria'],
-      title: 'Entendendo o ICM e suas Heurísticas',
-      description: 'Risk Premium, Downward Drift, Toy Games e a Perspectiva Matemática aplicada ao pós-flop.',
-      readingTime: '15 min',
-      isNew: false
-    },
-    {
-      href: '/biblioteca/hermeneutica-blefe',
-      tags: ['Psicologia', 'Teoria'],
-      title: 'Hermenêutica do Blefe',
-      description: 'Lendo as intenções do oponente através da lente do excesso de gozo e da psicanálise lacaniana.',
-      readingTime: '10 min',
-      isNew: false
-    },
-    {
-      href: '/biblioteca/paradoxo-valuation',
-      tags: ['ICM', 'Teoria'],
-      title: 'O Paradoxo do Valuation no ICM',
-      description: 'Por que acumular fichas pode diminuir sua esperança matemática em spots específicos.',
-      readingTime: '8 min',
-      isNew: false
-    },
-    {
-      href: '/biblioteca/voce-aprende-poker-errado',
-      tags: ['Pedagogia', 'Teoria'],
-      title: 'A Amortização da Edge',
-      description: 'Por que a distância entre um jogador de elite e um amador diminui com 10 big blinds.',
-      readingTime: '8 min',
-      isNew: false
-    },
-    {
-      href: '/biblioteca/motor-diluicao',
-      tags: ['ICM', 'Motor'],
-      title: 'O Motor de Diluição',
-      description: 'Como o Risk Premium afeta os ranges de call de forma não-linear. Dissipação de RP por street.',
-      readingTime: '10 min',
-      isNew: false
-    },
-  ];
+			<div className="sota-container py-12 md:py-24">
+				{/* Trilha de Aprendizado Recomendada */}
+				<section className="mb-20">
+					<div className="flex flex-col md:flex-row items-center justify-between gap-8 p-10 rounded-[2.5rem] bg-linear-to-r from-accent-indigo/10 via-accent-violet/5 to-transparent border border-accent-indigo/20 shadow-2xl relative overflow-hidden group">
+						<div className="absolute top-0 right-0 w-64 h-64 bg-accent-indigo/5 blur-[100px] rounded-full -mr-32 -mt-32 group-hover:bg-accent-indigo/10 transition-colors duration-1000" />
+						<div className="relative z-10 flex-1">
+							<span className="px-3 py-1 rounded-full bg-accent-indigo text-white text-[0.6rem] font-black uppercase tracking-[0.2em] mb-4 inline-block">
+								SOTA Pathfinding
+							</span>
+							<h2 className="text-3xl font-black text-white uppercase tracking-tighter m-0 mb-4 text-glow-indigo transition-all duration-500">
+								Trilha de Aprendizado Soberana
+							</h2>
+							<p className="text-text-muted text-sm max-w-xl leading-relaxed">
+								Para neófitos e veteranos: siga a ordem exegética desenhada para a
+								reconstrução total da sua percepção de risco e valor.
+							</p>
+						</div>
+						<div className="relative z-10 flex flex-wrap gap-3">
+							<PathBadge
+								step="1"
+								label="Manifesto"
+								href="/biblioteca/manifesto-sota-axiomas"
+							/>
+							<PathBadge
+								step="2"
+								label="ICM Heuristics"
+								href="/biblioteca/entendendo-o-icm-e-suas-heuristicas"
+							/>
+							<PathBadge
+								step="3"
+								label="Risk Geometry"
+								href="/biblioteca/geometria-do-risco"
+							/>
+							<PathBadge step="4" label="Masterclass" href="/aulas/icm-masterclass" />
+						</div>
+					</div>
+				</section>
 
-  const articles = [...dbArticles, ...staticArticles];
+				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+					{LIBRARY_CATEGORIES.map((category) => (
+						<GlassPanel
+							key={category.title}
+							className={`p-8 border-t-4 bg-slate-900/40 hover:bg-slate-900/60 transition-colors ${category.colorClass}`}
+						>
+							<div className="flex items-center gap-4 mb-6">
+								<i className={`fa-solid ${category.icon} text-xl`} />
+								<h2 className="text-[1.1rem] font-black uppercase tracking-widest m-0">
+									{category.title}
+								</h2>
+							</div>
+							<div className="flex flex-col gap-3">
+								{category.articles.map((article) => (
+									<Link
+										key={article.slug}
+										href={`/biblioteca/${article.slug}`}
+										className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 transition-all group"
+									>
+										<div className="w-1.5 h-1.5 rounded-full bg-text-darker group-hover:bg-white transition-colors" />
+										<span className="text-[0.8rem] font-bold text-text-muted group-hover:text-white transition-colors uppercase tracking-widest">
+											{article.title}
+										</span>
+										{article.isLab && (
+											<span className="ml-auto px-2 py-0.5 rounded bg-accent-indigo/20 text-accent-indigo-light text-[0.55rem] font-black uppercase tracking-widest border border-accent-indigo/30">
+												LAB
+											</span>
+										)}
+									</Link>
+								))}
+							</div>
+						</GlassPanel>
+					))}
+				</div>
+			</div>
+		</div>
+	);
+}
 
-  return (
-    <div className="min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body pb-24">
-
-      <ContentPageHeader
-        title="Biblioteca Analítica"
-        subtitle="O acervo de fundamentação teórica da Perspectiva Matemática. Artigos e diretrizes que alimentam a inteligência do framework VITOI."
-        category="Arquivo"
-        icon="fa-atom"
-      />
-
-      <div className="sota-container -mt-12">
-        <HeroArticleButton />
-      </div>
-
-      <div className="mt-16">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12 border-b border-white/5 pb-8">
-          <SectionHeader
-            step="DOC"
-            label="Doutrina"
-            title="Ensaios & Hipóteses"
-            description="Decomposições analíticas sobre o colapso cognitivo do EV e a insolvência estratégica do MDF tradicional."
-          />
-          <div className="glass-panel px-6 py-4 rounded-2xl flex items-center gap-4 bg-accent-indigo/5 border-accent-indigo/20">
-             <i className="fa-solid fa-radar text-accent-indigo-light animate-pulse text-xl"></i>
-             <div className="text-left">
-               <div className="text-[0.65rem] font-black text-accent-indigo-light uppercase tracking-widest">Base de Conhecimento</div>
-               <div className="text-sm font-medium text-text-muted">{articles.length} Artefatos Indexados</div>
-             </div>
-          </div>
-        </div>
-
-        <div className="sota-container">
-          <AnimatedArticleGrid articles={ articles } />
-        </div>
-      </div>
-
-    </div>
-  );
+function PathBadge({ step, label, href }: { step: string; label: string; href: string }) {
+	return (
+		<Link
+			href={href}
+			className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-bg-panel/40 border border-white/5 hover:border-accent-indigo/40 hover:bg-bg-panel/60 transition-all group/badge"
+		>
+			<span className="w-6 h-6 rounded-lg bg-accent-indigo/10 flex items-center justify-center text-[0.65rem] font-black text-accent-indigo-light border border-accent-indigo/20 group-hover/badge:bg-accent-indigo group-hover/badge:text-white transition-colors">
+				{step}
+			</span>
+			<span className="text-[0.7rem] font-black uppercase tracking-widest text-text-dim group-hover/badge:text-white transition-colors">
+				{label}
+			</span>
+			<i className="fa-solid fa-chevron-right text-[0.6rem] text-text-darker group-hover/badge:translate-x-0.5 transition-transform" />
+		</Link>
+	);
 }

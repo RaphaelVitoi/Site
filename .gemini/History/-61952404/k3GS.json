@@ -1,0 +1,25 @@
+{
+    "jobs": [
+        {
+            "id": "db-cleanup-weekly",
+            "description": "Arquiva tarefas antigas (com mais de 30 dias) do banco de dados para manter a performance.",
+            "command": "& \"$ProjectRoot\\.venv\\Scripts\\python.exe\" \"$ProjectRoot\\task_executor.py\" db-cleanup 30", // Use .ps1 script's command if needed
+            "intervalHours": 168,
+            "active": true
+        },
+        {
+            "id": "rag-ingest-daily",
+            "description": "Sincroniza a memoria coletiva (RAG) com os documentos mais recentes do projeto.",
+            "command": "& \"$ProjectRoot\\.venv\\Scripts\\python.exe\" \"$ProjectRoot\\memory_rag.py\" ingest",
+            "intervalHours": 24, //Consider making this lower to allow for more consistent RAG sync
+            "active": true
+        },
+        {
+            "id": "maverick-sentinel-daily",
+            "description": "Aciona a sentinela @maverick para uma varredura sistemica em busca de pontos cegos e riscos.",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"$ProjectRoot\\scripts\\maintenance\\run_maverick_sentinel.ps1\" -TaskId \"SENTINEL-CRON-$(Get-Date -Format 'yyyyMMdd')\"",
+            "intervalHours": 24,
+            "active": true
+        }
+    ]
+}
