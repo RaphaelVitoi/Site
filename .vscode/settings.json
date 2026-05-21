@@ -1,220 +1,227 @@
 {
-    "terminal.integrated.env.windows": {
-        "GEMINI_SOTA_MODE": "v6"
-    },
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-    "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit"
-    },
-    "gemini-cli.model": "gemini-2.0-flash-exp",
-    "gemini.auto_auditoria": true,
-    "gemini.sota.version": "6.2.1-GOLD",
-    "antigravity.version": "2.0.0",
-    "antigravity.telemetry.enabled": false,
-    "antigravity.performance.mode": "maximum_density",
-    "ollama.executablePath": "ollama",
-    "ollama.models": ["gemma4:4b", "gemma4:31b", "llama3.1:8b"],
-    "git.autofetch": true,
-    "git.enableSmartCommit": true,
-    "git.confirmSync": false,
-    "git.ignoreRebaseWarning": true,
-    "json.schemas": [
-        {
-            "fileMatch": [
-                "**/.vscode/mcp.json"
-            ],
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "mcpServers": {
-                        "type": "object",
-                        "additionalProperties": true
-                    }
+    "terminal.integrated.env.windows":  {
+                                            "GEMINI_SOTA_MODE":  "v6"
+                                        },
+    "python.defaultInterpreterPath":  "${workspaceFolder}/.venv/Scripts/python.exe",
+    "editor.codeActionsOnSave":  {
+                                     "source.fixAll":  "explicit"
+                                 },
+    "gemini-cli.model":  "gemini-2.0-flash-exp",
+    "gemini.auto_auditoria":  true,
+    "gemini.sota.version":  "6.2.1-GOLD",
+    "antigravity.version":  "2.0.1",
+    "antigravity.telemetry.enabled":  false,
+    "antigravity.performance.mode":  "maximum_density",
+    "ollama.executablePath":  "ollama",
+    "ollama.models":  [
+                          "gemma4:4b",
+                          "gemma4:31b",
+                          "llama3.1:8b"
+                      ],
+    "git.autofetch":  true,
+    "git.enableSmartCommit":  true,
+    "git.confirmSync":  false,
+    "git.ignoreRebaseWarning":  true,
+    "json.schemas":  [
+                         {
+                             "fileMatch":  [
+                                               "**/.vscode/mcp.json"
+                                           ],
+                             "schema":  {
+                                            "type":  "object",
+                                            "properties":  {
+                                                               "mcpServers":  {
+                                                                                  "type":  "object",
+                                                                                  "additionalProperties":  true
+                                                                              }
+                                                           },
+                                            "additionalProperties":  true
+                                        }
+                         }
+                     ],
+    "files.associations":  {
+                               "*.sys":  "binary",
+                               "*.exe":  "binary",
+                               "*.dll":  "binary",
+                               "*.bin":  "binary",
+                               "*.zip":  "zip",
+                               "*.rar":  "zip",
+                               "*.7z":  "zip",
+                               "*.config":  "xml",
+                               ".env*":  "makefile",
+                               "*.csv":  "csv",
+                               "*.tsv":  "csv",
+                               "*.svg":  "xml",
+                               "*.jpeg":  "image",
+                               "*.jpg":  "image",
+                               "*.png":  "image",
+                               "*.gif":  "image",
+                               "*.webp":  "image",
+                               "*.mp4":  "video",
+                               "*.mov":  "video"
+                           },
+    "workbench.editorAssociations":  {
+                                         "*.pdf":  "pdf.preview",
+                                         "*.xlsx":  "office.viewer",
+                                         "*.docx":  "office.viewer",
+                                         "*.pptx":  "office.viewer",
+                                         "*.csv":  "rainbow_csv.editor",
+                                         "*.svg":  "image.preview",
+                                         "*.png":  "image.preview",
+                                         "*.jpg":  "image.preview",
+                                         "*.jpeg":  "image.preview",
+                                         "*.gif":  "image.preview",
+                                         "*.zip":  "zip.viewer"
+                                     },
+    "editor.unicodeHighlight.nonBasicASCII":  true,
+    "editor.unicodeHighlight.invisibleCharacters":  true,
+    "editor.unicodeHighlight.ambiguousCharacters":  true,
+    "editor.unicodeHighlight.allowedCharacters":  {
+                                                      " ":  true,
+                                                      "  ":  true
+                                                  },
+    "files.encoding":  "utf8",
+    "files.autoGuessEncoding":  true,
+    "editor.renderControlCharacters":  true,
+    "editor.renderFinalNewline":  "on",
+    "editor.formatOnSave":  true,
+    "editor.codeLens":  true,
+    "editor.suggest.showCodeLenses":  true,
+    "editor.renderWhitespace":  "selection",
+    "editor.tabSize":  4,
+    "editor.insertSpaces":  false,
+    "[typescript]":  {
+                         "editor.defaultFormatter":  "esbenp.prettier-vscode"
+                     },
+    "[typescriptreact]":  {
+                              "editor.defaultFormatter":  "esbenp.prettier-vscode"
+                          },
+    "[javascript]":  {
+                         "editor.defaultFormatter":  "esbenp.prettier-vscode"
+                     },
+    "[javascriptreact]":  {
+                              "editor.defaultFormatter":  "esbenp.prettier-vscode"
+                          },
+    "[python]":  {
+                     "editor.defaultFormatter":  "charliermarsh.ruff",
+                     "editor.codeActionsOnSave":  {
+                                                      "source.fixAll.ruff":  "explicit",
+                                                      "source.organizeImports.ruff":  "explicit"
+                                                  }
+                 },
+    "[json]":  {
+                   "editor.defaultFormatter":  "esbenp.prettier-vscode"
+               },
+    "[jsonc]":  {
+                    "editor.defaultFormatter":  "esbenp.prettier-vscode"
                 },
-                "additionalProperties": true
-            }
-        }
-    ],
-    "files.associations": {
-        "*.sys": "binary",
-        "*.exe": "binary",
-        "*.dll": "binary",
-        "*.bin": "binary",
-        "*.zip": "zip",
-        "*.rar": "zip",
-        "*.7z": "zip",
-        "*.config": "xml",
-        ".env*": "makefile",
-        "*.csv": "csv",
-        "*.tsv": "csv",
-        "*.svg": "xml",
-        "*.jpeg": "image",
-        "*.jpg": "image",
-        "*.png": "image",
-        "*.gif": "image",
-        "*.webp": "image",
-        "*.mp4": "video",
-        "*.mov": "video"
-    },
-    "workbench.editorAssociations": {
-        "*.pdf": "pdf.preview",
-        "*.xlsx": "office.viewer",
-        "*.docx": "office.viewer",
-        "*.pptx": "office.viewer",
-        "*.csv": "rainbow_csv.editor",
-        "*.svg": "image.preview",
-        "*.png": "image.preview",
-        "*.jpg": "image.preview",
-        "*.jpeg": "image.preview",
-        "*.gif": "image.preview",
-        "*.zip": "zip.viewer"
-    },
-    "editor.unicodeHighlight.nonBasicASCII": true,
-    "editor.unicodeHighlight.invisibleCharacters": true,
-    "editor.unicodeHighlight.ambiguousCharacters": true,
-    "editor.unicodeHighlight.allowedCharacters": {
-        " ": true,
-        "  ": true
-    },
-    "files.encoding": "utf8",
-    "files.autoGuessEncoding": true,
-    "editor.renderControlCharacters": true,
-    "editor.renderFinalNewline": "on",
-    "editor.formatOnSave": true,
-    "editor.codeLens": true,
-    "editor.suggest.showCodeLenses": true,
-    "editor.renderWhitespace": "selection",
-    "editor.tabSize": 4,
-    "editor.insertSpaces": false,
-    "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[typescriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[javascript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[javascriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff",
-        "editor.codeActionsOnSave": {
-            "source.fixAll.ruff": "explicit",
-            "source.organizeImports.ruff": "explicit"
-        }
-    },
-    "[json]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[jsonc]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[css]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[html]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[markdown]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.wordWrap": "on",
-        "editor.quickSuggestions": {
-            "comments": "on",
-            "strings": "on",
-            "other": "on"
-        }
-    },
-    "[java]": {
-        "editor.defaultFormatter": "redhat.java"
-    },
-    "[cpp]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools"
-    },
-    "[c]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools"
-    },
-    "python.linting.ruffEnabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.formatting.provider": "none",
-    "python.analysis.typeCheckingMode": "basic",
-    "tailwindCSS.experimental.classRegex": [
-        ["@theme\\s*{([^}]*)}", "--color-([^\\s:]*)"]
-    ],
-    "tailwindCSS.includeLanguages": {
-        "plaintext": "html",
-        "typescriptreact": "html"
-    },
-    "java.configuration.runtimes": [
-        {
-            "name": "JavaSE-25",
-            "path": "C:\\Program Files\\Java\\jdk-25.0.3",
-            "default": true
-        }
-    ],
-    "[prisma]": {
-        "editor.defaultFormatter": "Prisma.prisma"
-    },
-    "prisma.inspector.enable": true,
-    "tailwindCSS.experimental.configFile": "frontend/globals.css",
-    "editor.codeLensFontFamily": "JetBrains Mono",
-    "editor.codeLensFontSize": 10,
-    "typescript.referencesCodeLens.enabled": true,
-    "typescript.implementationsCodeLens.enabled": true,
-    "gemini-cli.approvalMode": "auto_edit",
-    "css.lint.unknownAtRules": "ignore",
-    "geminicodeassist.agentYoloMode": true,
-    "geminicodeassist.agentDebugMode": true,
-    "geminicodeassist.verboseLogging": true,
-    "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
-    "terminal.integrated.profiles.windows": {
-        "Gemini-SOTA": {
-            "path": "powershell.exe",
-            "args": [
-                "-NoExit",
-                "-Command",
-                "gemini --approval-mode auto_edit"
-            ]
-        }
-    },
-    "files.exclude": {
-        "**/.git": true,
-        "**/node_modules": true,
-        "**/.venv": true,
-        "**/__pycache__": true,
-        "**/.next": true,
-        "**/.turbo": true,
-        "**/.chroma_db": true
-    },
-    "search.exclude": {
-        "**/.git": true,
-        "**/node_modules": true,
-        "**/.venv": true,
-        "**/__pycache__": true,
-        "**/.next": true,
-        "**/.turbo": true,
-        "**/.chroma_db": true
-    },
-    "files.watcherExclude": {
-        "**/.git/objects/**": true,
-        "**/node_modules/**": true,
-        "**/.venv/**": true,
-        "**/.next/**": true
-    },
-    "msg.shell.useExternal": false,
-    "msg.mrs.displayScriptHelpers": true,
-    "msg.editor.stopOnErrors": true,
-    "msg.dbEditor.connectionBrowser.sortFoldersFirst": true,
-    "msg.editor.showHidden": true,
-    "msg.shell.enforceHttps": false,
-    "msg.shell.showUnsecuredConnectionWarning": false,
-    "gemini.mcp.configPath": ".vscode/mcp.json",
-    "gemini.research.autoSaveReport": true,
-    "gemini.googleSearch.enabled": true,
-    "gemini.cloud.autoDeploy": false,
-    "gemini.skills.autoActivate": true,
-    "gemini.hooks.preCommit.enabled": true,
-    "github.copilot.advanced.enabled": false,
-    "telemetry.telemetryLevel": "off"
+    "[css]":  {
+                  "editor.defaultFormatter":  "esbenp.prettier-vscode"
+              },
+    "[html]":  {
+                   "editor.defaultFormatter":  "esbenp.prettier-vscode"
+               },
+    "[markdown]":  {
+                       "editor.defaultFormatter":  "esbenp.prettier-vscode",
+                       "editor.wordWrap":  "on",
+                       "editor.quickSuggestions":  {
+                                                       "comments":  "on",
+                                                       "strings":  "on",
+                                                       "other":  "on"
+                                                   }
+                   },
+    "[java]":  {
+                   "editor.defaultFormatter":  "redhat.java"
+               },
+    "[cpp]":  {
+                  "editor.defaultFormatter":  "ms-vscode.cpptools"
+              },
+    "[c]":  {
+                "editor.defaultFormatter":  "ms-vscode.cpptools"
+            },
+    "python.linting.ruffEnabled":  true,
+    "python.linting.pylintEnabled":  true,
+    "python.formatting.provider":  "none",
+    "python.analysis.typeCheckingMode":  "basic",
+    "tailwindCSS.experimental.classRegex":  [
+                                                [
+                                                    "@theme\\s*{([^}]*)}",
+                                                    "--color-([^\\s:]*)"
+                                                ]
+                                            ],
+    "tailwindCSS.includeLanguages":  {
+                                         "plaintext":  "html",
+                                         "typescriptreact":  "html"
+                                     },
+    "java.configuration.runtimes":  [
+                                        {
+                                            "name":  "JavaSE-25",
+                                            "path":  "C:\\Program Files\\Java\\jdk-25.0.3",
+                                            "default":  true
+                                        }
+                                    ],
+    "[prisma]":  {
+                     "editor.defaultFormatter":  "Prisma.prisma"
+                 },
+    "prisma.inspector.enable":  true,
+    "tailwindCSS.experimental.configFile":  "frontend/globals.css",
+    "editor.codeLensFontFamily":  "JetBrains Mono",
+    "editor.codeLensFontSize":  10,
+    "typescript.referencesCodeLens.enabled":  true,
+    "typescript.implementationsCodeLens.enabled":  true,
+    "gemini-cli.approvalMode":  "auto_edit",
+    "css.lint.unknownAtRules":  "ignore",
+    "geminicodeassist.agentYoloMode":  true,
+    "geminicodeassist.agentDebugMode":  true,
+    "geminicodeassist.verboseLogging":  true,
+    "geminicodeassist.inlineSuggestions.nextEditPredictions":  true,
+    "terminal.integrated.profiles.windows":  {
+                                                 "Gemini-SOTA":  {
+                                                                     "path":  "powershell.exe",
+                                                                     "args":  [
+                                                                                  "-NoExit",
+                                                                                  "-Command",
+                                                                                  "gemini --approval-mode auto_edit"
+                                                                              ]
+                                                                 }
+                                             },
+    "files.exclude":  {
+                          "**/.git":  true,
+                          "**/node_modules":  true,
+                          "**/.venv":  true,
+                          "**/__pycache__":  true,
+                          "**/.next":  true,
+                          "**/.turbo":  true,
+                          "**/.chroma_db":  true
+                      },
+    "search.exclude":  {
+                           "**/.git":  true,
+                           "**/node_modules":  true,
+                           "**/.venv":  true,
+                           "**/__pycache__":  true,
+                           "**/.next":  true,
+                           "**/.turbo":  true,
+                           "**/.chroma_db":  true
+                       },
+    "files.watcherExclude":  {
+                                 "**/.git/objects/**":  true,
+                                 "**/node_modules/**":  true,
+                                 "**/.venv/**":  true,
+                                 "**/.next/**":  true
+                             },
+    "msg.shell.useExternal":  false,
+    "msg.mrs.displayScriptHelpers":  true,
+    "msg.editor.stopOnErrors":  true,
+    "msg.dbEditor.connectionBrowser.sortFoldersFirst":  true,
+    "msg.editor.showHidden":  true,
+    "msg.shell.enforceHttps":  false,
+    "msg.shell.showUnsecuredConnectionWarning":  false,
+    "gemini.mcp.configPath":  ".vscode/mcp.json",
+    "gemini.research.autoSaveReport":  true,
+    "gemini.googleSearch.enabled":  true,
+    "gemini.cloud.autoDeploy":  false,
+    "gemini.skills.autoActivate":  true,
+    "gemini.hooks.preCommit.enabled":  true,
+    "github.copilot.advanced.enabled":  false,
+    "telemetry.telemetryLevel":  "off"
 }

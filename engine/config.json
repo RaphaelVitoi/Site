@@ -1,0 +1,19 @@
+{
+    "cache":  {
+                  "ttl":  3600,
+                  "backend":  "memory",
+                  "enabled":  true
+              },
+    "isomorphism":  {
+                        "shared_types_path":  "C:\\Users\\Raphael\\.gemini\\Site\\shared\\types",
+                        "zod_to_pydantic":  true
+                    },
+    "resources":  {
+                      "ram_reserve_gb":  4,
+                      "vram_limit_gb":  12
+                  },
+    "bucketing":  {
+                      "root":  "C:\\Users\\Raphael\\.gemini\\Site\\buckets",
+                      "provider":  "local"
+                  }
+}
