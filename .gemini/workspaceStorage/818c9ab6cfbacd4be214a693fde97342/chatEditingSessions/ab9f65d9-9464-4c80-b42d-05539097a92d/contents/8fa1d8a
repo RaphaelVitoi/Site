@@ -1,0 +1,96 @@
+# Contexto do Projeto
+>
+> Atualizado por @pesquisador em 2026-03-12
+
+## Dominio
+
+Ecossistema de desenvolvimento pessoal e profissional (Poker, Psicologia, Tecnologia).
+
+## Publico-alvo
+
+Raphael Vitoi e seus alunos/clientes de Poker e Psicologia.
+
+## Fontes Autorizadas
+
+- DeepSolver
+- GTOWizard
+- Mathematics of Poker (Bill Chen)
+
+## Terminologia Confirmada
+
+- Workflow v5: Sistema de agentes com fila de tarefas (tasks.json).
+- GitHub Copilot: Identidade técnica principal do sistema de IA.
+- Chico: Codinome operacional de GitHub Copilot.
+- Gemini 3 Pro Preview: Modelo prioritário utilizado, garantindo raciocínio avançado e qualidade superior.
+
+## Decisoes Tomadas
+
+- Inicializacao do Contexto do Projeto | Padronizacao para Workflow v5 | 2026-03-12 | @pesquisador
+- Conclusao de manutencao estrutural | Tarefa 20260312-082951-160 finalizada | 2026-03-12 | @pesquisador
+
+## Contexto Comportamental (Absorbido por Todos os Agentes)
+
+**Identidade do Usuario:**
+
+- [`.claude/CLAUDE.md`](./.claude/CLAUDE.md) - Identidade completa de Raphael Vitoi (BPD, AHSD, TDAH, QI 136), principios epistemicos, preferencias de tom
+
+**Padrao Epistemico (Obrigatorio para Todos):**
+
+- Proibicao absoluta de enviesamento ou respostas sem fundamentacao cientifica
+- Claims devem citar evidencia explicitamente
+- Steelmanning obrigatorio antes de criticar qualquer tese
+- Quando incerto: declarar explicitamente "Nao sei" ou "Apenas indicios"
+- Mecanismo causal > correlacao
+
+**Regras de Projeto (GLOBAL_INSTRUCTIONS.md):**
+
+- Linguagem: Portugues (pt-BR) obrigatorio
+- Sem em-dash (--) em qualquer arquivo ativo
+- Objetividade com profundidade maxima (nao apenas brevidade)
+- Curadoria inteligente (sugerir conexoes, elevar ponto de vista quando ganho e significativo)
+- Autonomia: agir livremente em acoes seguras/reversiveis, pedir confirmacao antes de impacto alto
+
+**Hierarquia de Documentos:**
+
+- [`.claude/INSTRUCTION_HIERARCHY.md`](./.claude/INSTRUCTION_HIERARCHY.md): 3-tier model (USER > PROJECT > AGENT)
+- Conflitos resolvem subindo na hierarquia
+- Nenhum agent pode sobrescrever instrucoes de usuario em CLAUDE.md
+
+## Memoria de Agentes (Agent-Memory System)
+
+**Localizacao:** `.claude/agent-memory/<agente-name>/MEMORY.md`
+
+**Politica:** [`.claude/AGENT_MEMORY_POLICY.md`](./.claude/AGENT_MEMORY_POLICY.md)
+
+- MEMORY.md criado APENAS quando agente executa tarefa real (nao vazio/placeholder)
+- Conteudo obrigatorio: Acoes Realizadas, Padroes Observados, Referencias
+- Cada agente atualiza sua propria memory com historico de descobertas
+
+**Status Actual (2026-03-12):**
+
+- ✅ 12 agentes com pastas criadas em `.claude/agent-memory/`
+- ✅ MEMORY.md funcional para: pesquisador, auditor, dispatcher, implementor, organizador, skillmaster, sequenciador
+- ✅ MEMORY.md estruturado para: prompter, planner, verifier, validador, securitychief
+- Todos agentes sabem absorver inormacoes de project-context.md via `memory: project`
+- Sync automatico de memories via skillmaster (hourly agent_sync)
+
+## Estado Atual
+
+- Estrutura basica do site existente.
+- Sistema de agentes v5 COMPLETO (12 agentes + 2 camada automática 24/7).
+- Linguagem principal: Portugues (pt-BR).
+- Fila de tarefas: `queue/tasks.json` (v1.0 schema)
+- Scripts de operacao: `do.ps1` (enfileirar), `status.ps1` (status), `skill-bridge.ps1` (bridge), `cleanup.ps1` (arquivar), `dashboard.ps1` (monitorar)
+- Camada Automática 24/7: @skillmaster (operacoes agendadas), @sequenciador (orquestrador inteligente)
+- Agent-Memory: Estrutura completa, 12 agentes com MEMORY.md funcional
+- Backup automatico: `.backups/YYYY-MM-DD_<slug>/`
+
+## Handoff Log
+
+| Agente | Status | Data | Notas |
+|--------|--------|------|-------|
+| @pesquisador | Concluido | 2026-03-12 | Estrutura v5 estabilizada. Encaminhado para auditor. |
+| @auditor | Aprovado com Ressalvas | 2026-03-12 | Auditoria completa. 1 problema encontrado e TODOS corrigidos. Backup em `.backups/2026-03-12_auditoria_sistema`. Encaminhado para implementacao. |
+| @pesquisador (Otimizacoes) | CONCLUIDO | 2026-03-12 | 10 otimizacoes identificadas, 8 implementadas. CRÍTICAS (3): Debug VS Code desativado, logging em do.ps1, cleanup.ps1 criado. ALTAS (3): error handling robusto, MCP removido, clareza docs. MÉDIAS (2): memory hierarchy clarificada. BAIXAS (2): troubleshooting adicionado. Sistema pronto para próxima sprint. |
+| Skillmaster & Sequenciador | IMPLEMENTADO | 2026-03-12 | Camada automática 24/7 implementada. skillmaster.md e sequenciador.md completos com specs. MANUAL_WORKFLOW_AGENTES.md atualizado (Seção 4). Prontos para HIGH LOAD desde dia 1. |
+| Agent-Memory System | FUNCIONAL | 2026-03-12 | 12 agentes com pastas `.claude/agent-memory/<nome>/` e MEMORY.md criados. Todos absorvem contexto comportamental (CLAUDE.md, GLOBAL_INSTRUCTIONS.md, INSTRUCTION_HIERARCHY.md). Sync automatico via skillmaster. Documentacao atualizada. |

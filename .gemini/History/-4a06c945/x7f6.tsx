@@ -1,0 +1,153 @@
+import { cache } from 'react';
+import { notFound } from 'next/navigation';
+import fs from 'fs/promises';
+import path from 'path';
+import MarkdownRenderer from '@/components/content/MarkdownRenderer';
+import LessonHeader from '@/components/content/LessonHeader';
+import TableOfContents from '@/components/content/TableOfContents';
+import ContentFooter from '@/components/content/ContentFooter';
+
+interface LessonPageProps {
+    readonly params: Promise<{
+        slug: string;
+    }>;
+}
+
+// Lê o arquivo .md correspondente ao slug na pasta existente docs/epics/
+const getLesson = cache(async (slug: string) => {
+    try {
+        const basePath = path.join(process.cwd(), '..', 'docs', 'epics');
+        let filePath = path.join(basePath, `${slug}.md`);
+
+        try {
+            // Tenta achar o arquivo direto (ex: docs/epics/slug.md)
+            await fs.access(filePath);
+        } catch {
+            // Fallback para o padrão aninhado (ex: docs/epics/aula-icm-rp/aula-icm-rp.md)
+            filePath = path.join(basePath, slug, `${slug}.md`);
+        }
+
+        const fileContents = await fs.readFile(filePath, 'utf8');
+
+        // Parser nativo e ultraleve de Frontmatter (YAML-like)
+        const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/;
+        const match = fileContents.match(frontmatterRegex);
+
+        let body = fileContents;
+        const metadata: Record<string, string> = {};
+
+        if (match) {
+            const frontmatterStr = match[1];
+            body = match[2];
+
+            frontmatterStr.split('\n').forEach(line => {
+                const colonIndex = line.indexOf(':');
+                if (colonIndex !== -1) {
+                    const key = line.slice(0, colonIndex).trim();
+                    const value = line.slice(colonIndex + 1).trim().replace(/^['"]|['"]$/g, '');
+                    if (key) metadata[key] = value;
+                }
+            });
+        }
+
+        // Fallback para o H1 antigo se não houver title no frontmatter
+        const titleMatch = body.match(/^#\s+(.*)/m);
+        const title = metadata.title || (titleMatch ? titleMatch[1].trim() : 'Aula sem título');
+        const description = metadata.description || '';
+        const category = metadata.category || 'Aula • Masterclass';
+        const keywords = metadata.keywords || metadata.tags || '';
+        const author = metadata.author || 'Raphael Vitoi';
+        const date = metadata.date || '';
+
+        // Extirpa o H1 do conteúdo renderizado para não duplicar com o cabeçalho
+        body = body.replace(/^#\s+.*\n?/, '').trim();
+
+        // Extrai headers (H2 e H3) para a Tabela de Conteúdo
+        const toc: { level: number, text: string, slug: string }[] = [];
+        const tocRegex = /^(##|###)\s+(.+)$/gm;
+        let tocMatch;
+        while ((tocMatch = tocRegex.exec(body)) !== null) {
+            const level = tocMatch[1].length;
+            const text = tocMatch[2].trim();
+
+            // Cria um slug idêntico ao gerado pelo plugin rehype-slug
+            const headerSlug = text.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
+                .replace(/[^\w\s-]/g, '') // Remove pontuações
+                .replace(/[\s_-]+/g, '-') // Transforma espaços em hifens
+                .replace(/^-+|-+$/g, ''); // Limpa hifens sobrando
+
+            toc.push({ level, text, slug: headerSlug });
+        }
+
+        return { title, description, category, keywords, author, date, body, toc };
+    } catch {
+        return null;
+    }
+});
+
+export async function generateMetadata({ params }: LessonPageProps) {
+    const { slug } = await params;
+    const lesson = await getLesson(slug);
+
+    if (!lesson) return { title: 'Aula não encontrada | Poker Racional' };
+
+    const url = `https://www.pokerracional.com/aulas/${slug}`;
+    const seoTitle = `${lesson.title} | Poker Racional`;
+    const seoDesc = lesson.description || `Leia a aula ${lesson.title} no Poker Racional.`;
+
+    return {
+        title: seoTitle,
+        description: seoDesc,
+        keywords: lesson.keywords ? lesson.keywords.split(',').map(k => k.trim()) : ['Poker', 'ICM', 'Teoria dos Jogos', 'Raphael Vitoi'],
+        authors: [{ name: lesson.author }],
+        alternates: { canonical: url },
+        openGraph: {
+            title: seoTitle,
+            description: seoDesc,
+            url: url,
+            type: 'article',
+            publishedTime: lesson.date || undefined,
+            authors: [lesson.author],
+        }
+    };
+}
+
+export default async function LessonPage({ params }: LessonPageProps) {
+    const { slug } = await params;
+    const lesson = await getLesson(slug);
+
+    if (!lesson) notFound();
+
+    const lessonUrl = `https://www.pokerracional.com/aulas/${slug}`;
+
+    return (
+        <main className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+            <article className="animate-fade-up">
+                <LessonHeader
+                    title={lesson.title}
+                    category={lesson.category}
+                    date={lesson.date}
+                    author={lesson.author}
+                />
+
+                <div className="glass-panel p-6 md:p-10 border border-white/10 shadow-2xl shadow-emerald-500/10 rounded-xl animate-fade-up animation-delay-200">
+                    {lesson.toc && lesson.toc.length > 0 && (
+                        <TableOfContents toc={lesson.toc} />
+                    )}
+
+                    <div className="prose prose-invert prose-emerald max-w-none">
+                        <MarkdownRenderer content={lesson.body} />
+                    </div>
+                </div>
+
+                <ContentFooter
+                    shareTitle={lesson.title}
+                    shareUrl={lessonUrl}
+                    backLinkHref="/aulas"
+                    backLinkText="Voltar para Aulas"
+                />
+            </article>
+        </main>
+    );
+}

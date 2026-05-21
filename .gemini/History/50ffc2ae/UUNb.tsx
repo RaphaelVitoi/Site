@@ -1,0 +1,145 @@
+"use client";
+
+import { useState } from "react";
+import { useGemmaStream } from "./useGemmaStream";
+
+interface GemmaAnalysisProps {
+  heroPos: string;
+  villainPos: string;
+  potSize: number;
+  heroStack: number;
+  villainStack: number;
+  icmContext?: {
+    payjumpDist?: string;
+    bubbleFactor?: number;
+  };
+}
+
+export function GemmaAnalysisPanel({
+  heroPos,
+  villainPos,
+  potSize,
+  heroStack,
+  villainStack,
+  icmContext,
+}: Readonly<GemmaAnalysisProps>) {
+  const [selectedModel, setSelectedModel] = useState<
+    "auto" | "gemma4:4b" | "gemma4:31b"
+  >("auto");
+  const { streamedText, isStreaming, error, generateAnalysis } =
+    useGemmaStream();
+
+  const handleInjectAnalysis = () => {
+    const prompt = `
+[DIRETRIZ DO SISTEMA]
+Você é o Analista Matemático de Elite focado no Paradigma VITOI (Perspectiva Matemática).
+Sua análise deve ser rigorosa, cirúrgica e ignorar a falácia das Pot Odds, priorizando EV do Fold, Reverse Implied Odds (RIO) e Controle de Risco (FGS).
+
+[CENÁRIO DA COLISÃO]
+- Posições: Hero (${heroPos}) vs Villain (${villainPos})
+- Pote Atual: ${potSize} bbs
+- Stack Hero: ${heroStack} bbs
+- Stack Villain: ${villainStack} bbs
+- Fator ICM: ${icmContext?.bubbleFactor || "ChipEV Puro"}
+
+Comporte-se de maneira técnica. Escreva em 2 parágrafos densos:
+1. O Risco Estrutural (Avalie o Pot Entrapment e o impacto das RIO caso o board conecte as partes marginais do range).
+2. Veredito de Perspectiva (A utilidade real da ação no fluxo do torneio versus o incentivo isolado).
+`;
+    const targetModelOverride =
+      selectedModel === "auto" ? undefined : selectedModel;
+    generateAnalysis(prompt, 512, targetModelOverride); // Token limit ajustado para a densidade máxima
+  };
+
+  return (
+    <div
+      className={`flex flex-col gap-4 mt-6 p-5 rounded-lg bg-[#0c0f12]/80 backdrop-blur-lg border transition-all duration-500 shadow-2xl ${isStreaming ? "border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]" : "border-[#1e252d]"}`}
+    >
+      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-3 gap-4">
+        <div className="flex items-center gap-2">
+          <span
+            className={`w-2 h-2 rounded-full ${isStreaming ? "bg-emerald-400 animate-ping" : "bg-emerald-400/50"}`}
+          />
+          <h3 className="text-[13px] font-mono font-bold tracking-widest uppercase text-emerald-400/90">
+            Oráculo Gemma (Local)
+          </h3>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex bg-slate-950/80 p-1 rounded-lg border border-white/10 shadow-inner">
+            <button
+              onClick={() => setSelectedModel("auto")}
+              disabled={isStreaming}
+              className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded transition-all duration-300 ${
+                selectedModel === "auto"
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                  : "text-slate-500 hover:text-slate-300 border border-transparent"
+              }`}
+            >
+              Auto
+            </button>
+            <button
+              onClick={() => setSelectedModel("gemma4:4b")}
+              disabled={isStreaming}
+              className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded transition-all duration-300 ${
+                selectedModel === "gemma4:4b"
+                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                  : "text-slate-500 hover:text-slate-300 border border-transparent"
+              }`}
+              title="Baixa Latência (DirectML/CUDA Edge)"
+            >
+              4B (Fast)
+            </button>
+            <button
+              onClick={() => setSelectedModel("gemma4:31b")}
+              disabled={isStreaming}
+              className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded transition-all duration-300 ${
+                selectedModel === "gemma4:31b"
+                  ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                  : "text-slate-500 hover:text-slate-300 border border-transparent"
+              }`}
+              title="Deep Thinking & RAG Completo"
+            >
+              31B (Deep)
+            </button>
+          </div>
+          <button
+            onClick={handleInjectAnalysis}
+            disabled={isStreaming}
+            className="px-4 py-1.5 text-[11px] font-mono font-bold tracking-wider text-white bg-blue-600/50 hover:bg-blue-500/70 rounded border border-blue-500/30 disabled:opacity-40 transition-all duration-200"
+          >
+            {isStreaming ? (
+              <span className="flex items-center gap-2">
+                <i className="fa-solid fa-atom animate-spin" /> SINTETIZANDO...
+              </span>
+            ) : (
+              "INJETAR PERSPECTIVA"
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div className="min-h-25 text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-wrap relative">
+        {error && (
+          <div className="text-red-400 p-3 bg-red-950/30 rounded border border-red-500/20 text-xs">
+            {error}
+          </div>
+        )}
+        {!error && !streamedText && isStreaming && (
+          <span className="text-emerald-400/50 italic text-xs animate-pulse">
+            Estabelecendo handshake com a Mente Local...
+          </span>
+        )}
+        {!error && !streamedText && !isStreaming && (
+          <span className="text-gray-600 italic text-xs flex items-center gap-2">
+            <i className="fa-solid fa-terminal" /> Aguardando gatilho de injeção
+            SOTA...
+          </span>
+        )}
+        {streamedText}
+        {isStreaming && streamedText && (
+          <span className="inline-block w-2 h-3 ml-1 bg-emerald-400 animate-pulse align-baseline" />
+        )}
+      </div>
+    </div>
+  );
+}

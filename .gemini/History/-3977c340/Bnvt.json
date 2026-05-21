@@ -1,0 +1,15 @@
+﻿﻿﻿﻿﻿﻿{
+  "protected_agents_from_cleanup": [
+    "@maverick",
+    "@chico",
+    "@architect"
+  ],
+  "handoff_pipeline": {
+    "@architect": "@pesquisador",
+    "@pesquisador": "@prompter",
+    "@prompter": "@auditor",
+    "@auditor": "@implementor",
+    "@implementor": "@verifier",
+    "@verifier": "@curator"
+  }
+}

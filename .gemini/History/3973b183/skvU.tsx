@@ -1,0 +1,88 @@
+'use client';
+
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
+
+const Header = () => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Fecha o menu mobile ao navegar
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
+
+  const closeMobile = () => setMobileOpen(false);
+
+  return (
+    <>
+      <header className="main-header">
+        <div className="container">
+          <h1 className="logo">
+            <Link href="/">Poker<span className="accent">Racional</span></Link>
+          </h1>
+          <nav>
+            <ul>
+              <li><Link href="/">Início</Link></li>
+              <li><Link href="/aula-icm">Geometria do Risco</Link></li>
+              <li><Link href="/leitura-icm">ICM</Link></li>
+              <li><Link href="/psicologia-hs">Psicologia</Link></li>
+              <li><Link href="/biblioteca">Biblioteca</Link></li>
+              <li><Link href="/quem-sou">Quem Sou</Link></li>
+              <li><Link href="/tools/simulador"><span className="fa-solid fa-flask"></span> Motor ICM</Link></li>
+            </ul>
+          </nav>
+          <button className="hamburger-btn" onClick={() => setMobileOpen(true)} aria-label="Menu">
+            <span className="fa-solid fa-bars"></span>
+          </button>
+        </div>
+      </header>
+
+      {/* Menu Mobile Fullscreen */}
+      <div className={`mobile-nav ${mobileOpen ? 'open' : ''}`}>
+        <button className="mobile-nav-close" onClick={closeMobile} aria-label="Fechar menu">
+          <span className="fa-solid fa-xmark"></span>
+        </button>
+
+        <span className="mobile-nav-section-title">Conteúdo</span>
+        <Link href="/" onClick={closeMobile}>
+          <span className="fa-solid fa-house"></span> Início
+        </Link>
+        <Link href="/aula-icm" onClick={closeMobile}>
+          <span className="fa-solid fa-chalkboard-user"></span> Geometria do Risco
+        </Link>
+        <Link href="/leitura-icm" onClick={closeMobile}>
+          <span className="fa-solid fa-file-lines"></span> Entendendo o ICM
+        </Link>
+        <Link href="/artigos/estado-da-arte" onClick={closeMobile}>
+          <span className="fa-solid fa-lightbulb"></span> Estado da Arte 2025
+        </Link>
+        <Link href="/artigos/smart-sniper" onClick={closeMobile}>
+          <span className="fa-solid fa-bullseye"></span> Protocolo Smart Sniper
+        </Link>
+        <Link href="/psicologia-hs" onClick={closeMobile}>
+          <span className="fa-solid fa-brain"></span> Psicologia High Stakes
+        </Link>
+
+        <span className="mobile-nav-section-title">Laboratório</span>
+        <Link href="/tools/simulador" onClick={closeMobile}>
+          <span className="fa-solid fa-flask"></span> Motor ICM
+        </Link>
+
+        <span className="mobile-nav-section-title">Mais</span>
+        <Link href="/biblioteca" onClick={closeMobile}>
+          <span className="fa-solid fa-book"></span> Biblioteca Epistêmica
+        </Link>
+        <Link href="/quem-sou" onClick={closeMobile}>
+          <span className="fa-solid fa-user"></span> Quem Sou
+        </Link>
+      </div>
+    </>
+  );
+};
+
+export default Header;

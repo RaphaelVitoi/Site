@@ -1,0 +1,20 @@
+schema: v1
+name: My Config
+version: 1.0.0
+models:
+  - provider: 'google-sdk'
+    model: 'gemini-2.5-pro-latest'
+    name: 'Gemini 2.5 Pro (Análise)'
+    apiKey: 'AIzaSyCdprQOHYf-altAoQMYYMDjyVcsw_BcP9c'
+    roles:
+      - chat
+    completionOptions:
+      temperature: 0.1
+  - provider: 'google-sdk'
+    model: 'gemini-2.5-flash-latest'
+    name: 'Gemini 2.5 Flash (Velocidade)'
+    apiKey: 'AIzaSyCdprQOHYf-altAoQMYYMDjyVcsw_BcP9c'
+    roles:
+      - edit
+      - apply
+      - autocomplete

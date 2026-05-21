@@ -1,0 +1,57 @@
+// Prisma Schema - Site Raphael Vitoi
+// Banco SQLite local para desenvolvimento
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  readTime  Int      @default(5)
+  tags      String   @default("[]") // JSON array serializado (SQLite nao suporta arrays nativos)
+  slug      String?  @unique
+  excerpt   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- [SOTA] MOTOR UNIVERSAL DE CONTEUDO ---
+model Content {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  category    String   // 'biblioteca', 'aulas', 'artigos'
+  title       String
+  description String?
+  body        String   // Markdown ou HTML
+  authorId    String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, slug])
+}
+
+// ==========================================
+// PROJETO PANÓPTICO: TELEMETRIA E APRENDIZADO
+// ==========================================
+model TelemetryEvent {
+  id              String   @id @default(uuid())
+  userId          String   @default("anonymous") // Evoluir para ID real com NextAuth
+  category        String   
+  scenarioContext String   
+  userAction      String   
+  optimalAction   String   
+  evLoss          Float    
+  isCorrect       Boolean  
+  createdAt       DateTime @default(now())
+
+  @@index([category])
+  @@index([userId, createdAt])
+}

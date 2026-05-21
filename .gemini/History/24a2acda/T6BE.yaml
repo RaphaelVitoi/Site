@@ -1,0 +1,26 @@
+name: My Config
+version: 1.0.0
+schema: v1
+models:
+  - name: "Gemini 2.5 Pro (Razão e Síntese)"
+    provider: "google-sdk"
+    model: "gemini-2.5-pro"
+    apiKey: "AIzaSyBnLdYEYn-8UphmG1eZ_GHASnNgI_BaB7w"
+    roles:
+      - chat # Uso exclusivo para diálogos e análise complexa
+    completionOptions:
+      temperature: 0.2 # Rigor lógico aumentado
+      topP: 0.8
+      topK: 40
+
+  - name: "Gemini 2.5 Flash (Execução e Código)"
+    provider: "google-sdk"
+    model: "gemini-2.5-flash"
+    apiKey: "AIzaSyBnLdYEYn-8UphmG1eZ_GHASnNgI_BaB7w"
+    roles:
+      - edit
+      - apply
+      - autocomplete # Otimizado para velocidade
+    autocompleteOptions:
+      debounceDelay: 200 # Resposta rápida para o seu ritmo de digitação
+      maxPromptTokens: 1024

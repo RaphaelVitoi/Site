@@ -1,0 +1,18 @@
+{
+    "jobs": [
+        {
+            "id": "db-cleanup-weekly",
+            "description": "Arquiva tarefas antigas (com mais de 30 dias) do banco de dados para manter a performance.",
+            "command": "python $ProjectRoot/task_executor.py db-cleanup 30",
+            "intervalHours": 168,
+            "active": true
+        },
+        {
+            "id": "rag-ingest-daily",
+            "description": "Sincroniza a memoria coletiva (RAG) com os documentos mais recentes do projeto.",
+            "command": "python $ProjectRoot/memory_rag.py ingest",
+            "intervalHours": 24,
+            "active": true
+        }
+    ]
+}

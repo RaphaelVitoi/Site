@@ -1,0 +1,29 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "VITOI 3.2: Sentinela de Contexto (Watcher)",
+            "type": "shell",
+            "command": ".\\.venv\\Scripts\\python.exe .\\scripts\\routines\\vitoi_watcher.py",
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "VITOI 3.2: Executar Auto-Refatoracao (Fatiamento)",
+            "type": "shell",
+            "command": ".\\.venv\\Scripts\\python.exe .\\scripts\\routines\\vitoi_refactor_engine.py \"${file}\"",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

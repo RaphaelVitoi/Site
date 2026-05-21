@@ -1,0 +1,52 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "VITOI 3.2: Sentinela de Contexto (Watcher)",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "${workspaceFolder}/scripts/routines/vitoi_watcher.py"
+            ],
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
+            "isBackground": true
+        },
+        {
+            "label": "VITOI 3.2: Dashboard Noir (Monitor de Entropia)",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "${workspaceFolder}/scripts/routines/vitoi_dashboard.py"
+            ],
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "group": "vitoi_suite",
+                "focus": false,
+                "close": false
+            }
+        },
+        {
+            "label": "VITOI 3.2: Auto-Refatoração (Fatiamento)",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": [
+                "${workspaceFolder}/scripts/routines/vitoi_refactor_engine.py",
+                "${file}"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}

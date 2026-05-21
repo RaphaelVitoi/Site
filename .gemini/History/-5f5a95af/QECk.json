@@ -1,0 +1,104 @@
+{
+  "version": "1.0",
+  "permissions": {
+    "description": "Operacoes delegadas ao Orquestrador SOTA (do.ps1)",
+    "allow": [
+      "sota_sync",
+      "sota_backup",
+      "sota_audit",
+      "sota_db_check",
+      "sota_train_predictive",
+      "sota_omni_access"
+    ]
+  },
+  "operations": {
+    "sota_backup": {
+      "description": "Acionar Salvaguarda Integral do Ecossistema",
+      "type": "Bash",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\do.ps1",
+        "-Backup"
+      ]
+    },
+    "sota_sync": {
+      "description": "Sincroniza Manifesto dos Agentes para a Realidade Fisica",
+      "type": "Bash",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\do.ps1",
+        "-SyncAgents"
+      ]
+    },
+    "sota_audit": {
+      "description": "Dispara Auditoria Adaptativa SOTA (Smart MDA)",
+      "type": "Bash",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\do.ps1",
+        "-Audit",
+        "Auditoria Global de Integridade"
+      ]
+    },
+    "sota_db_check": {
+      "description": "Inspeciona integridade do DAL (SQLite)",
+      "type": "Bash",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\do.ps1",
+        "-CheckDB"
+      ]
+    },
+    "sota_train_predictive": {
+      "description": "Treina a Mente Preditiva (Random Forest) com base na telemetria recente",
+      "type": "Bash",
+      "command": "python",
+      "args": [
+        "task_executor.py",
+        "train-predictive"
+      ]
+    },
+    "sota_omni_access": {
+      "description": "Acesso Administrativo Local (C:)",
+      "type": "Bash",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass"
+      ]
+    }
+  },
+  "scheduling": {
+    "description": "Tarefas agendadas para manutencao periodica",
+    "tasks": [
+      {
+        "name": "daily_report",
+        "operation": "sota_backup",
+        "frequency": "daily",
+        "timeOfDay": "23:59"
+      },
+      {
+        "name": "predictive_calibration",
+        "operation": "sota_train_predictive",
+        "frequency": "hourly"
+      }
+    ]
+  }
+}

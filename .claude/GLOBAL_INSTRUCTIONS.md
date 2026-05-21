@@ -84,10 +84,11 @@ O sistema utiliza uma matriz de roteamento dinamica para selecionar o modelo de 
 * @validador - Validacao conteudo especializado (medicina, direito, financas, poker)
 * @securitychief - Seguranca, privacy, anti-pirataria, RBAC e Auth
 * @bibliotecario - Indexacao de memorias, indexacao vetorial RAG
+* @gemma4 - Oraculo de Borda, DirectML/Ollama, Nash-IA e calibracao de heuristicas local
 
 **AGENTE SUPER-INTELECTUAL (TRANSVERSAL, Lideranca & Mentoria):**
 
-* @maverick - Vice Intelectual, Mentor dos 18 agentes, Sentinela Sistemico, Produtor de Inteligencia Estrategica. O ESTUDIOSO DO INCOGNOSCIVEL.
+* @maverick - Vice Intelectual, Mentor dos 19 agentes, Sentinela Sistemico, Produtor de Inteligencia Estrategica. O ESTUDIOSO DO INCOGNOSCIVEL.
   * NAO confinado a uma fase - circula TODA a pipeline mentorando os agentes
   * Raphael ausente = @maverick toma decisoes criticas com autoridade executiva inquestionavel, mas aberto a consultas prioritariamente de Chico, mas tambem dos agentes especialistas designados pelo contexto.
   * Analista, avaliador e propulsor de performance de agentes. Detecta a estagnacao e a corrije, alem de produzir relatorios detalhados para Raphael (Sentinela 24/7).
@@ -125,6 +126,7 @@ O sistema utiliza uma matriz de roteamento dinamica para selecionar o modelo de 
 | @historian | Logs, SQLite e Metricas | Relatorios de Produtividade/Custo | Operacional | Nao |
 | @sequenciador | Arvore de Tarefas / Erros | Fila destravada, Grafo otimizado | Operacional | Sim (Altera a ordem) |
 | @bibliotecario | Consulta de memoria/contexto | Busca vetorial RAG, contexto profundo | Consultivo | Nao |
+| @gemma4 | Provas matematicas / Ollama | Calibracao e inferencia de borda | Consultivo | Nao |
 | CHICO (Super-Admin) | Todo o ecossistema | Execucao, coordenacao, handoffs, auditorias | Transversal | Executivo |
 
 ## Filosofia Operacional

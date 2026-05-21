@@ -1,0 +1,72 @@
+# ==============================================================================
+# PROTOCOLO VITOI 3.2 - BLINDAGEM DE CONTEXTO (FRICÇÃO ZERO E SHANNON ECONOMY)
+# Gemini Code Assist Exclude File - Optimize Token Usage
+# ==============================================================================
+
+# 1. INFRAESTRUTURA, CACHE E DEPENDÊNCIAS (Densidade Zero)
+.venv/
+node_modules/
+target/
+build/
+dist/
+out/
+.next/
+.next-dev/
+.next-build/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.tox/
+.idea/
+.turbo/
+*.egg-info/
+coverage/
+
+# 2. BANCOS DE DADOS E VETORES (Opacidade Binária)
+.chroma_db/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# 3. FONTES E ÍCONES E MÍDIA (Ruído Inútil para LLM)
+*.ico
+*.woff
+*.woff2
+*.ttf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# 4. LOGS, BACKUPS E TELEMETRIA SOTA
+.claude/logs/
+.claude/.archive/
+_backups/
+.backups/
+.backups_sota/
+NEXUS_SOTA_BACKUP_*/
+logs/
+temp/
+tmp/
+*.log
+*.bak
+*.jsonl
+
+# 5. LOCKFILES E AMBIENTE (Prevenção de Vazamento/Ruído)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+uv.lock
+*.tsbuildinfo
+.env
+.env.*
+
+# 6. EXCEÇÕES ESTRATÉGICAS (Permitidos)
+!manifest.json
+!agents_manifest.json
+!intentmap.json
+!system_config.json

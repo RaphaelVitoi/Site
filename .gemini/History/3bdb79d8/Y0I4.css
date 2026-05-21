@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        /* Paleta de Cores - State of the Art (Sincronizada com Simulador) */
+        --bg-body: #020617;
+        /* Slate 950 */
+        --bg-panel: #0f172a;
+        /* Slate 900 */
+        --bg-card: rgba(15, 23, 42, 0.6);
+        --bg-card-hover: rgba(30, 41, 59, 0.8);
+
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+
+        /* Accents */
+        --accent-primary: #6366f1;
+        /* Indigo 500 */
+        --accent-secondary: #e11d48;
+        /* Rose 600 */
+        --accent-sky: #0ea5e9;
+        /* Sky 500 */
+        --accent-emerald: #10b981;
+        /* Emerald 500 */
+
+        --glass-border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        -webkit-font-smoothing: antialiased;
+
+        /* Background Pattern - State of the Art (Geometria Holográfica) */
+        background-image:
+            radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.05), transparent 40%),
+            radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.05), transparent 40%),
+            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        background-attachment: fixed;
+    }
+
+    /* Tipografia Base Tipificada para HTML Limpo */
+    h1,
+    h2,
+    h3,
+    h4 {
+        @apply font-bold tracking-tight text-white leading-tight;
+    }
+
+    p {
+        @apply text-slate-400 leading-relaxed mb-6;
+    }
+}
+
+@layer components {
+    /* ==================================================================== */
+    /* COMPONENTES LEGADOS TRANSMUTADOS PARA TAILWIND (@apply)              */
+    /* ==================================================================== */
+
+    .hub-grid {
+        @apply grid gap-8 mt-12;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    .hub-card {
+        @apply flex flex-col h-full p-10 rounded-xl relative overflow-hidden transition-all duration-300;
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        border: var(--glass-border);
+    }
+
+    .hub-card:hover {
+        @apply -translate-y-1 shadow-[0_20px_40px_-10px_rgba(0, 0, 0, 0.5)];
+        background: var(--bg-card-hover);
+        border-color: var(--accent-primary);
+    }
+
+    .card-cta {
+        @apply inline-block mt-6 text-sm font-bold uppercase tracking-widest transition-all duration-200;
+        color: var(--accent-primary);
+    }
+
+    .hub-card:hover .card-cta {
+        @apply text-white translate-x-1;
+    }
+
+    /* Manifesto / Artigos */
+    .article-container {
+        @apply max-w-4xl mx-auto my-8 p-12 rounded-xl border border-white/5;
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.4) 0%, rgba(30, 41, 59, 0.1) 100%);
+        backdrop-filter: blur(12px);
+    }
+
+    .article-container blockquote {
+        @apply border-l-4 border-indigo-500 pl-6 my-8 italic text-slate-300;
+    }
+
+    .callout {
+        @apply p-6 my-8 rounded-r-md border-l-4 border-indigo-500 bg-indigo-500/10;
+    }
+
+    /* Tabelas */
+    table {
+        @apply w-full border-collapse my-8 rounded-md overflow-hidden border border-white/5 bg-slate-900/50;
+    }
+
+    th {
+        @apply p-4 text-left text-sm uppercase tracking-wider font-bold bg-slate-900/90 text-indigo-400 border-b border-white/5;
+    }
+
+    td {
+        @apply p-4 text-base text-slate-400 border-b border-slate-800/50 align-top;
+    }
+
+    tr:hover td {
+        @apply bg-white/[0.02];
+    }
+}

@@ -1,0 +1,106 @@
+{
+    "version": "3.0",
+    "updatedAt": "2026-03-13T07:05:00.0000000-03:00",
+    "checksum": "archived_batch_20260313_hot_cold_strategy",
+    "tasks": [
+        {
+            "id": "20260312-082951-160",
+            "status": "completed",
+            "timestamp": "2026-03-12T08:29:51.1908654-03:00",
+            "description": "analise a sua propria estrutura atual.",
+            "createdAt": "2026-03-12T08:29:51Z",
+            "completedAt": "2026-03-12T12:30:00Z",
+            "retries": 0
+        },
+        {
+            "id": "20260312-100018-224",
+            "status": "cancelled",
+            "timestamp": "2026-03-12T10:00:18.7276647-03:00",
+            "description": "Teste de integridade - 2026-03-12",
+            "createdAt": "2026-03-12T10:00:18.7276647-03:00",
+            "completedAt": "2026-03-12T14:30:00.0000000-03:00",
+            "retries": 0
+        },
+        {
+            "id": "20260312-124500-777",
+            "description": "Verificar se todos os agentes possuem o arquivo MEMORY.md conforme a Regra 4",
+            "status": "completed",
+            "timestamp": "2026-03-12T12:50:00.0000000-03:00",
+            "createdAt": "2026-03-12T12:45:00.0000000-03:00",
+            "completedAt": "2026-03-12T12:50:00.0000000-03:00"
+        },
+        {
+            "id": "20260312-130500-123",
+            "description": "Maverick, assuma o posto de sentinela e realize a primeira varredura sistêmica em busca de pontos cegos.",
+            "status": "completed",
+            "timestamp": "2026-03-12T13:10:00.0000000-03:00",
+            "createdAt": "2026-03-12T13:05:00.1234567-03:00",
+            "completedAt": "2026-03-12T13:10:00.0000000-03:00",
+            "retries": 0
+        },
+        {
+            "id": "SENTINELA-20260312-131000",
+            "description": "Vigília Sentinela - Ciclo Contínuo (Auto-Agendado)",
+            "status": "completed",
+            "timestamp": "2026-03-12T13:50:00.0000000-03:00",
+            "completedAt": "2026-03-12T13:50:00.0000000-03:00"
+        },
+        {
+            "id": "INOVACAO-CLI-20260312",
+            "description": "Planejar e especificar a 'CLI Inteligente' (Smart do.ps1) baseada no conceito do Maverick. O objetivo é criar um roteador interativo no terminal PowerShell.",
+            "status": "completed",
+            "timestamp": "2026-03-12T13:50:05.0000000-03:00",
+            "agent": "@planner",
+            "completedAt": "2026-03-12T13:50:05.0000000-03:00"
+        },
+        {
+            "id": "20260312-134000-888",
+            "description": "Planner, inicie o planejamento da CLI Inteligente baseando-se no conceito do Maverick.",
+            "status": "cancelled",
+            "timestamp": "2026-03-12T13:40:00.0000000-03:00",
+            "createdAt": "2026-03-12T13:40:00.0000000-03:00",
+            "completedAt": "2026-03-13T06:30:00.0000000-03:00",
+            "retries": 0
+        },
+        {
+            "id": "PLAN-20260312135000",
+            "description": "Planejar implementação baseada na visão do Maverick: Vigília Sentinela - Ciclo Contínuo (Auto-Agendado)",
+            "status": "completed",
+            "timestamp": "2026-03-12T13:50:00.0000000-03:00",
+            "agent": "@planner",
+            "metadata": {
+                "source": "maverick_autopoiesis",
+                "related_to": "SENTINELA-20260312-131000"
+            },
+            "completedAt": "2026-03-12T13:50:00.0000000-03:00"
+        },
+        {
+            "id": "SENTINELA-20260312135005",
+            "description": "Vigília Sentinela - Ciclo Contínuo (Autopoiese)",
+            "status": "completed",
+            "timestamp": "2026-03-12T13:50:05.0000000-03:00",
+            "agent": "@maverick",
+            "completedAt": "2026-03-13T06:30:00.0000000-03:00"
+        },
+        {
+            "id": "AUDIT-20260312135010",
+            "description": "Auditar planos gerados para: cli-interativa",
+            "status": "completed",
+            "timestamp": "2026-03-12T13:50:10.0000000-03:00",
+            "agent": "@auditor",
+            "metadata": {
+                "target_dir": "C:\\Users\\Raphael\\OneDrive\\Documentos\\Site\\docs\\tasks\\cli-interativa"
+            },
+            "completedAt": "2026-03-12T13:50:15.0000000-03:00"
+        },
+        {
+            "id": "20260312-140500-999",
+            "description": "Implementor, inicie a construção da CLI Inteligente seguindo a SPEC auditada.",
+            "status": "completed",
+            "timestamp": "2026-03-12T14:20:00.0000000-03:00",
+            "createdAt": "2026-03-12T14:05:00.0000000-03:00",
+            "retries": 0,
+            "completedAt": "2026-03-12T14:20:00.0000000-03:00"
+        }
+    ]
+}

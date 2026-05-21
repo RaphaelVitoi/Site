@@ -1,0 +1,43 @@
+{
+    "intents": [
+        {
+            "id": "security_audit",
+            "agent": "@securitychief",
+            "keywords": [
+                "segurança",
+                "security",
+                "vulnerabilidade",
+                "audit",
+                "xss",
+                "injection"
+            ],
+            "description": "Auditoria de segurança e vulnerabilidades"
+        },
+        {
+            "id": "system_status",
+            "agent": "@sequenciador",
+            "keywords": [
+                "status",
+                "fila",
+                "queue",
+                "monitor",
+                "dashboard"
+            ],
+            "description": "Verificar estado do sistema"
+        },
+        {
+            "id": "cleanup",
+            "agent": "@skillmaster",
+            "keywords": [
+                "limpar",
+                "cleanup",
+                "arquivar",
+                "purge",
+                "lixo"
+            ],
+            "description": "Limpeza e manutenção de arquivos"
+        }
+    ],
+    "fallback_agent": "@dispatcher",
+    "version": "1.0"
+}

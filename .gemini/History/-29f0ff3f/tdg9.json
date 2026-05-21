@@ -1,0 +1,18 @@
+{
+    "projects": [
+        {
+            "project_slug": "aula-icm-rp",
+            "description": "Aula completa sobre ICM e Risk Premium em Final Tables, com componente interativo.",
+            "status": "in_development",
+            "last_update": "2026-03-12T03:17:05Z",
+            "key_outputs": [
+                "docs/tasks/aula-icm-rp/aula-icm-rp.md",
+                "components/interactive/icm_toy_game_simulator.html"
+            ],
+            "significant_inputs": [
+                "Instrução para corrigir dados numéricos e adicionar módulos interativos e de casos reais."
+            ]
+        }
+    ],
+    "global_learnings": []
+}

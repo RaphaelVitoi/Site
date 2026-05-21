@@ -1,0 +1,16 @@
+# Bloqueio de Visão da IA (Redução de Latência e Poluição de Contexto)
+.backups/
+.backups_sota/
+logs/
+.claude/logs/
+.claude/task_results/
+.chroma_db/
+queue/
+archive/
+*.db
+*.db-wal
+*.sqlite
+node_modules/
+.venv/
+__pycache__/
+.git/

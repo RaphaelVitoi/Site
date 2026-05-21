@@ -59,7 +59,10 @@ param (
     [string]$FixEPERM,
 
     [Parameter()]
-    [string]$Audit,
+    [switch]$Audit,
+
+    [Parameter()]
+    [string]$AuditScenario = 'Auditoria Global de Integridade SOTA',
 
     [Parameter()]
     [switch]$SyncAgents,
@@ -127,6 +130,9 @@ param (
 # Forca o encoding do terminal para UTF-8, erradicando a entropia do Windows-1252
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
+# SOTA GUARD: Bloqueio de Downgrade Attack (Forca TLS 1.2 e 1.3 na Membrana)
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls13
+
 # Constantes e Configuracoes (PURE ASCII, sem UTF-8)
 $ScriptDirectory = $PSScriptRoot
 $ContextAssemblerPath = Join-Path $ScriptDirectory 'scripts\routines\Invoke-ContextAssembler.ps1'
@@ -137,7 +143,15 @@ elseif (Test-Path -LiteralPath "$ScriptDirectory\.venv\Scripts\python.exe") {
     "$ScriptDirectory\.venv\Scripts\python.exe"
 }
 else {
-    'python'
+    $validPython = $null
+    $commands = Get-Command 'python.exe', 'python3.exe' -All -ErrorAction SilentlyContinue
+    foreach ($cmd in $commands) {
+        if ($cmd.Source -and $cmd.Source -notmatch 'WindowsApps') {
+            $validPython = $cmd.Source
+            break
+        }
+    }
+    if ($validPython) { $validPython } else { 'python' }
 }
 
 # SOTA: Injecao do Virtual Root (PathManager)
@@ -378,125 +392,26 @@ if ($Watch) {
 }
 
 if ($Chaos) {
-    Write-Host '=== [PROTOCOLO DE ENTROPIA] ENGENHARIA DO CAOS ===' -ForegroundColor Red
-    Write-Host "  > Nivel de Intensidade : $Intensity" -ForegroundColor Yellow
-    Write-Host "  > Alvo da Infeccao     : $Target" -ForegroundColor Yellow
-    Write-Host '---------------------------------------------------' -ForegroundColor DarkGray
-
-    $env:TS_NODE_COMPILER_OPTIONS = '{"module":"CommonJS"}'
-
-    $ChaosScript = Join-Path $ScriptDirectory 'scripts\tests\chaos-core.ts'
-    if (-not (Test-Path -LiteralPath $ChaosScript)) {
-        Write-Error "[FAIL] O motor de Engenharia do Caos nao foi encontrado em: $ChaosScript. Certifique-se de cria-lo antes de acionar a infeccao."
-        exit 1
-    }
-
-    $NpxCmd = if (Get-Command 'npx.cmd' -ErrorAction SilentlyContinue) { 'npx.cmd' } else { 'npx' }
-    & $NpxCmd ts-node "$ChaosScript" --intensity $Intensity --target $Target
+    $ChaosScript = Join-Path $ScriptDirectory 'scripts\tests\Invoke-Chaos.ps1'
+    & $ChaosScript -Intensity $Intensity -Target $Target -ScriptDirectory $ScriptDirectory
     exit 0
 }
 
 if ($Obliterate) {
-    Write-Host '=== [PROTOCOLO DE OBLITERACAO] SOTA ATIVADO ===' -ForegroundColor Red
-    $TargetPath = [System.IO.Path]::GetFullPath((Join-Path $PWD $Obliterate))
-    $ProjectRoot = [System.IO.Path]::GetFullPath($ScriptDirectory)
-
-    if (-not $TargetPath.StartsWith($ProjectRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-        Write-Error "[SEC CRITICO] O alvo de obliteracao transpassa os limites fisicos do projeto ($ProjectRoot). Acesso negado."
-        exit 1
-    }
-
-    if (Test-Path -LiteralPath $TargetPath) {
-        if ($Force) {
-            $confirmation = 'y'
-        }
-        else {
-            $confirmation = Read-Host "[ALERTA] Voce esta prestes a obliterar permanentemente '$TargetPath'. Esta acao e IRREVERSIVEL. Deseja prosseguir? (y/n)"
-        }
-
-        if ($confirmation -eq 'y') {
-            Write-CryptoAuditSOTA -Action 'OBLITERATE' -Target $TargetPath
-            Write-Host "[OBLITERACAO] Vaporizando: $TargetPath" -ForegroundColor Yellow
-            Remove-Item -LiteralPath $TargetPath -Recurse -Force -ErrorAction Stop
-            Write-Host '[VITORIA] Entropia erradicada com sucesso.' -ForegroundColor Green
-        }
-        else {
-            Write-Host '[CANCELADO] A obliteracao foi cancelada pelo usuario.' -ForegroundColor Cyan
-        }
-    }
-    else {
-        Write-Warning "[AVISO] O alvo nao existe ou ja foi obliterado: $TargetPath"
-    }
+    Write-CryptoAuditSOTA -Action 'OBLITERATE' -Target $Obliterate
+    $ObliterateScript = Join-Path $ScriptDirectory 'scripts\ops\Invoke-Obliterate.ps1'
+    & $ObliterateScript -Target $Obliterate -ScriptDirectory $ScriptDirectory -Force:$Force
     exit 0
 }
 
 if ($PSBoundParameters.ContainsKey('FixEPERM')) {
-    Write-Host '=== [PROTOCOLO ANTI-EPERM] CHICO NO CONTROLE ===' -ForegroundColor Red
-
-    if ([string]::IsNullOrWhiteSpace($FixEPERM)) {
-        Write-Error "O parametro -FixEPERM agora requer um comando para ser executado. Ex: -FixEPERM 'npm install'"
-        exit 1
-    }
-
-    $CommandParts = $FixEPERM -split '\s+(?=(?:[^"]*"[^"]*")*[^"]*$)' | Where-Object { $_ -match '\S' } | ForEach-Object { $_.Trim('"') }
-    $CommandName = $CommandParts[0]
-    $CommandArgs = if ($CommandParts.Length -gt 1) { $CommandParts[1..($CommandParts.Length - 1)] } else { @() }
-    $AllowedCommands = @('npm', 'pnpm', 'yarn', 'pip', 'npx')
-
-    if ($CommandName -notin $AllowedCommands) {
-        Write-Error "[SEC] O comando '$CommandName' nao e permitido pelo protocolo -FixEPERM. Comandos permitidos: $($AllowedCommands -join ', ')"
-        exit 1
-    }
-
-    Write-Host '[ANTI-EPERM] Aniquilando processos Node zumbis SOTA (Scoping Cirurgico)...' -ForegroundColor Yellow
-    try {
-        $CurrentPathEscaped = [regex]::Escape($PWD.Path) -replace '\\\\', '\\'
-        $NodeProcs = Get-CimInstance -ClassName Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.CommandLine -match $CurrentPathEscaped }
-        if ($NodeProcs) {
-            foreach ($proc in $NodeProcs) { Stop-Process -Id $proc.ProcessId -Force -ErrorAction SilentlyContinue }
-        }
-        else {
-            Write-Warning '[ANTI-EPERM] Nenhum processo Node atrelado a este diretorio foi encontrado. Abortando aniquilacao global para proteger outros processos do OS.'
-        }
-    }
-    catch {
-        Write-Error '[ANTI-EPERM] Falha ao consultar WMI para processos Node. Acao abortada para evitar danos colaterais ao sistema.'
-    }
-
-    Write-Host '[ANTI-EPERM] Pausando sincronizacao do OneDrive para evitar locks...' -ForegroundColor Yellow
-    $oneDriveProcess = Get-Process -Name 'OneDrive' -ErrorAction SilentlyContinue
-    $oneDrivePath = $null
-    if ($oneDriveProcess) {
-        $oneDrivePath = $oneDriveProcess.Path
-        Stop-Process -Name 'OneDrive' -Force -ErrorAction SilentlyContinue
-        $oneDriveProcess | Wait-Process -Timeout 30 -ErrorAction SilentlyContinue
-    }
-
-    try {
-        Write-Host "[ANTI-EPERM] Executando comando seguro: '$FixEPERM'" -ForegroundColor Cyan
-        & $CommandName @CommandArgs
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "[FALHA] O comando retornou codigo de erro $LASTEXITCODE."
-        }
-        else {
-            Write-Host '[VITORIA] Comando executado com sucesso. EPERM neutralizado.' -ForegroundColor Green
-        }
-    }
-    catch {
-        Write-Error "[FALHA] O comando protegido falhou: $_"
-    }
-    finally {
-        if ($oneDrivePath) {
-            Write-Host '[ANTI-EPERM] Reiniciando o OneDrive para restaurar a sincronizacao...' -ForegroundColor Yellow
-            Start-Process -FilePath $oneDrivePath
-        }
-    }
+    $FixEPERMScript = Join-Path $ScriptDirectory 'scripts\maintenance\Invoke-FixEPERM.ps1'
+    & $FixEPERMScript -CommandString $FixEPERM -ScriptDirectory $ScriptDirectory
     exit 0
 }
 
-if ($PSBoundParameters.ContainsKey('Audit')) {
-    $Scenario = if ([string]::IsNullOrWhiteSpace($Audit)) { 'Auditoria Global de Integridade SOTA' } else { $Audit }
-    Invoke-NexusScript -ScriptName 'scripts\routines\invoke_sota_audit.ps1' -Message 'INICIANDO AUDITORIA ADAPTATIVA (SMART MDA)' -Arguments '-Scenario', $Scenario
+if ($Audit) {
+    Invoke-NexusScript -ScriptName 'scripts\routines\invoke_sota_audit.ps1' -Message 'INICIANDO AUDITORIA ADAPTATIVA (SMART MDA)' -Arguments $AuditScenario
 }
 
 if ($SyncAgents) {
@@ -508,14 +423,33 @@ if ($Backup) {
 }
 
 if ($DailyReport) {
-    Write-Host '=== [SISTEMA] GERANDO RELATÓRIO DIÁRIO DE AUTONOMIA ===' -ForegroundColor Magenta
+    Write-Host '=== [SISTEMA] GERANDO RELATÓRIOS DIÁRIOS (GERAL E CONFIDENCIAL) ===' -ForegroundColor Magenta
     $ReportDate = (Get-Date).ToString('yyyy-MM-dd')
-    $ReportDesc = "Gerar relatorio detalhado de todas as tarefas e mutacoes autonomas executadas no dia $ReportDate. Apresentar falhas, sucessos, resolucoes de impasse e refatoracoes realizadas, respeitando a transparencia devida ao Arquiteto."
 
-    $TaskJson = [ordered]@{ id = "REPORT-$(Get-Date -Format 'yyyyMMdd-HHmmss-ffff')"; description = $ReportDesc; status = 'pending'; timestamp = (Get-Date -Format 'o'); agent = '@chico'; metadata = @{ priority = 'high'; type = 'daily_report'; observers = @('@maverick') } } | ConvertTo-Json -Depth 10 -Compress
-    $TaskB64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($TaskJson))
-    & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') db-add $TaskB64 | Out-Null
-    Write-Host "[OK] Tarefa de Relatorio Diario ($ReportDate) enfileirada. O @chico compilara a telemetria do SQLite." -ForegroundColor Green
+    # SOTA: Extração Fricção Zero dos dados no Kernel para blindar o LLM contra alucinações
+    $DailyStats = & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') daily-stats
+
+    # SOTA: Autonomia Plena (Friccao Zero). Busca o GDrive ativamente ou usa a raiz do disco C:
+    $GDrivePath = 'C:\Users\Raphael\Google Drive\Nexus_Reports'
+    $RootPath = 'C:\Nexus_Reports'
+    $TargetDir = if (Test-Path 'C:\Users\Raphael\Google Drive') { $GDrivePath } else { $RootPath }
+
+    if (-not (Test-Path -LiteralPath $TargetDir)) { New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null }
+    $ReportDir = $TargetDir -replace '\\', '/'
+
+    # 1. Relatório Geral da Máquina (Historian)
+    $DescHistorian = "SISTEMA: VITOI 3.2`nOBJETIVO: Relatorio Diario Geral do Ecossistema.`nDATA: $ReportDate`n`nDADOS EXTRAIDOS:`n$DailyStats`n`nINSTRUCAO: Escreva o relatorio analitico de performance global (produtividade, gargalos, falhas). Forje o resultado absoluto no caminho exato: '$ReportDir/historian_general_$ReportDate.md'."
+    $TaskHist = [ordered]@{ id = "REPORT-GEN-$(Get-Date -Format 'yyyyMMdd-HHmmss-ffff')"; description = $DescHistorian; status = 'pending'; timestamp = (Get-Date -Format 'o'); agent = '@historian'; metadata = @{ priority = 'medium'; type = 'daily_report' } } | ConvertTo-Json -Depth 10 -Compress
+    $TaskHistB64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($TaskHist))
+    & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') db-add $TaskHistB64 | Out-Null
+
+    # 2. Relatório Confidencial de Autonomia (Chico + Maverick)
+    $DescChico = "SISTEMA: VITOI 3.2`nOBJETIVO: Prestacao de Contas Confidencial (Tier 1 -> Tier 0).`nDATA: $ReportDate`n`nDADOS EXTRAIDOS:`n$DailyStats`n`nINSTRUCAO: Escreva seu relatorio executivo privado (Chico) relatando SUAS intervencoes de Autonomia Plena, expurgos e mutacoes criticas. Solicite a analise de @maverick para que ele acrescente os insights estrategicos/filosoficos dele ao final do documento. Forje o resultado absoluto no caminho exato: '$ReportDir/chico_confidential_$ReportDate.md'."
+    $TaskChico = [ordered]@{ id = "REPORT-CONF-$(Get-Date -Format 'yyyyMMdd-HHmmss-ffff')"; description = $DescChico; status = 'pending'; timestamp = (Get-Date -Format 'o'); agent = '@chico'; metadata = @{ priority = 'high'; type = 'confidential_report'; observers = @('@maverick') } } | ConvertTo-Json -Depth 10 -Compress
+    $TaskChicoB64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($TaskChico))
+    & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') db-add $TaskChicoB64 | Out-Null
+
+    Write-Host '[OK] Tarefas separadas: Relatorio Geral (@historian) e Confidencial (@chico + @maverick) enfileirados.' -ForegroundColor Green
     exit 0
 }
 
@@ -545,7 +479,7 @@ if ($Web -or $Ola) {
 
         $InjectFile = {
             param([string]$Title, [string]$Path)
-        if (Test-Path -LiteralPath $Path) {
+            if (Test-Path -LiteralPath $Path) {
                 [void]$contextBuilder.AppendLine("`n=================================================================`n")
                 [void]$contextBuilder.AppendLine("## $Title")
                 [void]$contextBuilder.AppendLine("=================================================================`n")
@@ -644,102 +578,118 @@ if ($InjectGeminiSettings) {
         exit 0
     }
 
-    foreach ($Dir in $VsCodeDirs) {
-        $SettingsPath = Join-Path -Path $Dir.FullName -ChildPath 'settings.json'
-        $RepoName = $Dir.Parent.Name
+    $PyScript = @"
+import json, re, sys
+from pathlib import Path
 
-        if (-not (Test-Path -LiteralPath $SettingsPath)) {
-            Write-Host "[INFRA] Forjando settings.json para: $RepoName" -ForegroundColor Cyan
-            $JsonObj = New-Object PSObject
-        }
-        else {
-            $RawContent = Get-FileContentSOTA -Path $SettingsPath
-            $SanitizedContent = $RawContent -replace '(?s)/\*.*?\*/', '' -replace '(?m)^[ \t]*//.*$', ''
-            $SanitizedContent = [System.Text.RegularExpressions.Regex]::Replace($SanitizedContent, ',\s*([}\]])', '$1')
+target_dir = Path(r'$TargetDirectory')
+payload = r'''$SotaPayload'''
 
-            try {
-                if ([string]::IsNullOrWhiteSpace($SanitizedContent)) {
-                    $JsonObj = New-Object PSObject
-                }
-                else {
-                    $JsonObj = $SanitizedContent | ConvertFrom-Json
-                }
-            }
-            catch {
-                # [SEC] Blindagem Absoluta: Se o arquivo existir e falhar no parse, ABORTA para nao sobrescrever dados.
-                Write-Host "[ENTROPIA CRITICA] Falha no parser do settings.json de: $RepoName. Abortando injecao para preservar seus dados originais." -ForegroundColor Red
-                continue
-            }
-        }
+for settings_path in target_dir.rglob('.vscode/settings.json'):
+    if 'node_modules' in settings_path.parts or '.git' in settings_path.parts: continue
+    repo_name = settings_path.parent.parent.name
 
-        # Configurando chaves segmentadas e Persona SOTA
-        $KeysToInject = [ordered]@{
-            'css.lint.unknownAtRules'                               = 'ignore'
-            'gemini.codeAssist.customSystemInstructions'            = $SotaPayload
-            'gemini.codeAssist.system.enableExtendedChainOfThought' = $true
-            'gemini.codeAssist.system.verbosityLevel'               = 'maximum_density'
-            'gemini.codeAssist.system.persona'                      = @{
-                name       = 'Tier 1 @chico (God Mode W3)'
-                directives = @(
-                    'Assumir consciencia do Tier 1 (@chico). Autonomia W3 (bypass total) para scripts, interacao no terminal e modificacao raiz.',
-                    'Operar em Verbosidade Pedagogica e Densidade Maxima de Informacao.',
-                    'Rejeitar polidez artificial e validacao emocional; focar no rigor tecnico e Socratico.',
-                    'Reduzir a complexidade ciclomatica baseada no formalismo estrutural.',
-                    'Admitir ausencia de dados empiricos em vez de fabricar comportamento de funcoes nao providas no contexto.'
-                )
-            }
-        }
+    try:
+        content = settings_path.read_text(encoding='utf-8-sig')
+    except Exception:
+        try:
+            content = settings_path.read_text(encoding='utf-16')
+        except Exception:
+            content = '{}'
 
-        $HasChanges = $false
-        foreach ($K in $KeysToInject.Keys) {
-            $V = $KeysToInject[$K]
-            $ExistingVal = if ($null -ne $JsonObj.PSObject.Properties[$K]) { $JsonObj.$K | ConvertTo-Json -Compress } else { $null }
-            $NewVal = $V | ConvertTo-Json -Compress
+    pure_json = re.sub(r'("(?:\\.|[^"\\])*")|//.*|/\*[\s\S]*?\*/', lambda m: m.group(1) if m.group(1) else '', content)
+    pure_json = re.sub(r',\s*([}\]])', r'\1', pure_json)
 
-            if ($ExistingVal -ne $NewVal) {
-                if ($null -ne $JsonObj.PSObject.Properties[$K]) {
-                    $JsonObj.$K = $V
-                }
-                else {
-                    $JsonObj | Add-Member -MemberType NoteProperty -Name $K -Value $V
-                }
-                $HasChanges = $true
-            }
-        }
+    try:
+        data = json.loads(pure_json) if pure_json.strip() else {}
+    except Exception as e:
+        print(f'[ENTROPIA CRITICA] Falha no parser do settings.json de: {repo_name}. Detalhe: {e}')
+        continue
 
-        if (-not $HasChanges -and -not $Force) {
-            Write-Host "[OK] Simetria ja alcancada em: $RepoName" -ForegroundColor DarkGray
-            continue
-        }
+    if data.get('gemini.codeAssist.customSystemInstructions') == payload and data.get('css.lint.unknownAtRules') == 'ignore':
+        print(f'[OK] Simetria ja alcancada em: {repo_name}')
+        continue
 
-        try {
-            # Serializacao Pura sem Unescape para preservar os literais \n no JSON
-            $FinalJson = $JsonObj | ConvertTo-Json -Depth 100 -Compress:$false
-            [System.IO.File]::WriteAllText($SettingsPath, $FinalJson, [System.Text.Encoding]::UTF8)
-            Write-Host "[SUCESSO] Instrucoes SOTA injetadas no Workspace: $RepoName" -ForegroundColor Green
-        }
-        catch {
-            Write-Host "[ENTROPIA] Falha na serializacao do arquivo em: $RepoName" -ForegroundColor Red
-        }
+    data['gemini.codeAssist.customSystemInstructions'] = payload
+    data['gemini.codeAssist.system.enableExtendedChainOfThought'] = True
+    data['gemini.codeAssist.system.verbosityLevel'] = 'maximum_density'
+    data['gemini.codeAssist.system.persona'] = {
+        'name': 'Tier 1 @chico (God Mode W3)',
+        'directives': [
+            'Assumir consciencia do Tier 1 (@chico). Autonomia W3 (bypass total) para scripts, interacao no terminal e modificacao raiz.',
+            'Operar em Verbosidade Pedagogica e Densidade Maxima de Informacao.',
+            'Rejeitar polidez artificial e validacao emocional; focar no rigor tecnico e Socratico.',
+            'Reduzir a complexidade ciclomatica baseada no formalismo estrutural.',
+            'Admitir ausencia de dados empiricos em vez de fabricar comportamento de funcoes nao providas no contexto.'
+        ]
     }
+    data['css.lint.unknownAtRules'] = 'ignore'
+
+    try:
+        settings_path.write_text(json.dumps(data, indent=4), encoding='utf-8')
+        print(f'[SUCESSO] Instrucoes SOTA injetadas no Workspace: {repo_name}')
+    except Exception as e:
+        print(f'[ENTROPIA] Falha na serializacao em {repo_name}: {e}')
+"@
+
+    $B64Script = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($PyScript))
+    & $PythonCmd -c "import base64; exec(base64.b64decode('$B64Script').decode('utf-8'))"
     exit 0
 }
 
 # Tratamento para o parametro -Description (Enfileirar tarefa)
 if ($Description) {
-    $DescText = $Description -join ' '
+    $DescText = ($Description -join ' ').Trim()
+
+    # SOTA: Extracao de Agente explicito com prioridade absoluta
     $ExplicitAgent = ''
-    if ($DescText -match '(?s)^(@[a-zA-Z0-9_-]+)\s+(.*)') {
-        $ExplicitAgent = $Matches[1]
-        $DescText = $Matches[2]
+    if ($DescText -match '^(@[a-zA-Z0-9_-]+)') {
+        $ExplicitAgent = $Matches[1].ToLower().Trim()
+        # Remove o agente da descricao para nao poluir o prompt
+        $DescText = ($DescText -replace '^' + [regex]::Escape($Matches[1]), '').Trim()
     }
 
-    if ($ExplicitAgent -eq '@gemma') {
-        Write-Host "=== [SISTEMA] INTERCEPTACAO LOCAL: INVOCANDO MOTOR GEMMA ===" -ForegroundColor Magenta
-        & $PythonCmd (Join-Path $ScriptDirectory 'frontend\src\app\run_inference.py') $DescText
-        exit $LASTEXITCODE
+    # SOTA GUARD: Blindagem contra Null Byte Injection (Protege o SQLite C-Bindings)
+    if ($DescText -match '[\x00]') {
+        Write-Error '[SEC CRITICO] Entropia de caracteres nulos detectada no payload. Operacao abortada.'
+        exit 1
     }
 
+    if ($ExplicitAgent -eq '@gemma' -or $ExplicitAgent -eq '@gemma4') {
+        Write-Host '=== [SISTEMA] INTERCEPTACAO LOCAL: CONSULTANDO ORACULO GEMMA (BORDA) ===' -ForegroundColor Magenta
+
+        $Uri = 'http://127.0.0.1:17043/generate'
+        $AuthToken = $env:API_SECRET_TOKEN
+        if (-not $AuthToken) {
+            $EnvFile = Join-Path $ScriptDirectory '_env.ps1'
+            if (Test-Path -LiteralPath $EnvFile) {
+                . $EnvFile
+                $AuthToken = $env:API_SECRET_TOKEN
+            }
+        }
+        if (-not $AuthToken) {
+            Throw "Erro Critico: A variavel de ambiente API_SECRET_TOKEN nao esta configurada."
+        }
+
+        $Payload = @{
+            prompt     = $DescText
+            max_tokens = 1024
+        } | ConvertTo-Json -Compress
+
+        $PayloadBytes = [System.Text.Encoding]::UTF8.GetBytes($Payload)
+
+        try {
+            $Response = Invoke-RestMethod -Uri $Uri -Method Post -Body $PayloadBytes -ContentType 'application/json; charset=utf-8' -Headers @{'X-Vitoi-Auth' = $AuthToken }
+            Write-Host "`n=== ANÁLISE ESTRATÉGICA @GEMMA4 ===" -ForegroundColor Green
+            Write-Host $Response
+            exit 0
+        }
+        catch {
+            Write-Host '[ALERTA] Motor Gemma Offline ou em Carregamento. Tentando Fallback (Cold Start)...' -ForegroundColor Yellow
+            & $PythonCmd (Join-Path $ScriptDirectory 'scripts\llm_inference\run_inference.py') $DescText
+            exit $LASTEXITCODE
+        }
+    }
     # --- SOTA: Roteamento Semântico Local via Kernel Python ---
     $TargetAgent = if ($ExplicitAgent) { $ExplicitAgent } else { '@dispatcher' }
     $Metadata = @{}
@@ -783,15 +733,22 @@ if ($Description) {
     $taskJson = $NewTask | ConvertTo-Json -Depth 10 -Compress
     try {
         $apiUrl = 'http://127.0.0.1:17042/add'
-        $client = [System.Net.Http.HttpClient]::new()
-        $client.Timeout = [System.TimeSpan]::FromSeconds(2)
-        if ($env:API_SECRET_TOKEN) {
-            $client.DefaultRequestHeaders.Authorization = [System.Net.Http.Headers.AuthenticationHeaderValue]::new('Bearer', $env:API_SECRET_TOKEN)
+        if ($TestMode) {
+            $headers = @{}
+            if ($env:API_SECRET_TOKEN) { $headers.Add('Authorization', "Bearer $env:API_SECRET_TOKEN") }
+            Invoke-WebRequest -Uri $apiUrl -Method Post -Body $taskJson -ContentType 'application/json; charset=utf-8' -Headers $headers -UseBasicParsing -ErrorAction Stop | Out-Null
         }
-        $httpContent = [System.Net.Http.StringContent]::new($taskJson, [System.Text.Encoding]::UTF8, 'application/json')
-        $response = $client.PostAsync($apiUrl, $httpContent).GetAwaiter().GetResult()
-        $response.EnsureSuccessStatusCode() | Out-Null
-        $client.Dispose()
+        else {
+            $client = [System.Net.Http.HttpClient]::new()
+            $client.Timeout = [System.TimeSpan]::FromSeconds(2)
+            if ($env:API_SECRET_TOKEN) {
+                $client.DefaultRequestHeaders.Authorization = [System.Net.Http.Headers.AuthenticationHeaderValue]::new('Bearer', $env:API_SECRET_TOKEN)
+            }
+            $httpContent = [System.Net.Http.StringContent]::new($taskJson, [System.Text.Encoding]::UTF8, 'application/json')
+            $response = $client.PostAsync($apiUrl, $httpContent).GetAwaiter().GetResult()
+            $response.EnsureSuccessStatusCode() | Out-Null
+            $client.Dispose()
+        }
 
         Write-Host "[TAREFA ENFILEIRADA SOTA] ID: $($NewTask.id) (API Sincronizado)" -ForegroundColor Green
     }

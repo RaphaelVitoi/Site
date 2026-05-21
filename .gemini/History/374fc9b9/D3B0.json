@@ -1,0 +1,27 @@
+{
+  "name": "nexus-orchestrator-sota",
+  "private": true,
+  "description": "Orquestrador central com arquitetura monorepo e automação de qualidade",
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "prepare": "husky",
+    "start-api": "python task_executor.py api"
+  },
+  "devDependencies": {
+    "husky": "^8.0.0",
+    "lint-staged": "^15.4.3",
+    "turbo": "^2.4.0"
+  },
+  "lint-staged": {
+    "frontend/**/*.{ts,tsx,js,jsx}": [
+      "turbo run build --filter=frontend",
+      "turbo run test --filter=frontend -- --findRelatedTests --passWithNoTests"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+# Bloqueio de Visão da IA (Redução de Latência e Poluição de Contexto)
+.backups/
+logs/
+queue/
+node_modules/
+.venv/
+__pycache__/
+.git/

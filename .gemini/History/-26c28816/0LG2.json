@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "name": "SOTA: Next.js (Frontend)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm run dev --workspace frontend",
+            "command": "npm run dev",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SOTA: Python Worker (Backend)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/task_executor.py",
+            "args": [
+                "worker"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ],
+    "compounds": [
+        {
+            "name": "SOTA: Ecossistema Híbrido (Next.js + Python)",
+            "configurations": [ "SOTA: Next.js (Frontend)", "SOTA: Python Worker (Backend)" ]
+        }
+    ]
+}

@@ -1,0 +1,24 @@
+{
+    "sources": [
+        {
+            "path": ".claude",
+            "patterns": [
+                "*.md"
+            ]
+        },
+        {
+            "path": "docs",
+            "patterns": [
+                "*.md"
+            ]
+        },
+        {
+            "path": "frontend/research",
+            "patterns": [
+                "*.txt",
+                "*.md",
+                "*.docx"
+            ]
+        }
+    ]
+}

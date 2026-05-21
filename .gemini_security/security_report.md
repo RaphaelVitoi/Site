@@ -7,6 +7,7 @@
 ---
 
 ## 1. Summary
+
 The audit focused on the newly implemented mathematical models for GTO/CFR, their integration into the Nexus CLI, and the corresponding frontend dashboard. The overall security posture is **Strong**, with minor low-severity findings related to path handling in the CLI.
 
 ---
@@ -14,6 +15,7 @@ The audit focused on the newly implemented mathematical models for GTO/CFR, thei
 ## 2. Findings
 
 ### VULN-001: Potential Path Traversal in `_cli_ingest`
+
 - **ID:** VULN-001
 - **Vulnerability:** Path Traversal
 - **Vulnerability Type:** Security
@@ -24,6 +26,7 @@ The audit focused on the newly implemented mathematical models for GTO/CFR, thei
 - **Recommendation:** Implement path validation to ensure the target file is within an allowed directory (e.g., the project root or a specific `dropzone/`).
 
 ### VULN-002: Insecure Process Termination Fallback
+
 - **ID:** VULN-002
 - **Vulnerability:** Overly Broad Process Killing
 - **Vulnerability Type:** Security
@@ -36,6 +39,7 @@ The audit focused on the newly implemented mathematical models for GTO/CFR, thei
 ---
 
 ## 3. Checklist Verification
+
 1. Is the vulnerability present in executable, non-test code? **Yes**
 2. Can I point to the specific line(s) of code that introduce the flaw? **Yes**
 3. Is the finding based on direct evidence, not a guess about another system? **Yes**

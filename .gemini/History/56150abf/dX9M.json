@@ -1,0 +1,16 @@
+{
+    "@auditor": "(audit|confer|revis|compliance|check|arquitetura técnica)",
+    "@verifier": "(teste|qa|qualidade|revisar codigo|revisao final|verifier|verific)",
+    "@validador": "(validar conteudo|especialista|medicina|direito|financas|poker expert|valid)",
+    "@maverick": "(ideia|inova|pensar|estratégia|analis|sentinela|invent|melhorar)",
+    "@planner": "(planej|estrutur|spec|prd|roadmap|arquitetur|como fazer)",
+    "@implementor": "(cria|codific|implement|bug|fix|erro|script|codigo|js|html|css|layout|design|imersiv|refinar|ui|ux)",
+    "@pesquisador": "(pesquisa|busca|encontr|estado da arte|compar|lista|o que é)",
+    "@curator": "(etica|estetica|tom|texto|copy|revisao text|identidade|visual)",
+    "@dispatcher": "(epico|projeto|multiplas|fatiar|distribuir|despachar|orquestrar)",
+    "@seo": "(seo|ranqueamento|google|palavras-chave|keywords|serp|organico|busca)",
+    "@skillmaster": "(backup|sync|limp|agendad|cron|daemon|manuten|skillmaster|operac)",
+    "@securitychief": "(privacidade|lgpd|gdpr|pirataria|vulnerabilidade|seguranca de dados|security)",
+    "@prompter": "(prompt|instrucao|engenharia de prompt|refinar prompt)",
+    "@organizador": "(organiza|documenta|indice|estrutura de pastas|limpar arquivos)"
+}

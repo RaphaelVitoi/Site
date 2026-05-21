@@ -1,43 +1,56 @@
+/**
+ * IDENTITY: Bayesian Range Hook
+ * PATH: src/components/simulator/hooks/useBayesianRange.ts
+ * ROLE: Orquestração de estado React para o motor de inferência bayesiana.
+ */
 import { useState, useCallback, useMemo } from 'react';
-import { type RangeBelief, updateRangeBelief, createInitialBelief } from '@/lib/bayesianRangeEngine';
-import { expandPokerRange } from '../workers/rangeParser';
+import {
+	generateUniformBelief,
+	updateBelief,
+	type BeliefVector,
+	type ActionLikelihood,
+} from '@/lib/bayesianRangeEngine';
 
-export function useBayesianRange(initialRangeStr: string = "33.6%") {
-    const [history, setHistory] = useState<RangeBelief[]>([]);
-    
-    const initialBelief = useMemo(() => {
-        const expanded = expandPokerRange(initialRangeStr);
-        const combos = expanded.split(',').map(s => s.trim());
-        return createInitialBelief(combos);
-    }, [initialRangeStr]);
+export function useBayesianRange() {
+	const [history, setHistory] = useState<BeliefVector[]>([]);
 
-    const currentBelief = useMemo(() => {
-        if (history.length === 0) return initialBelief;
-        return history[history.length - 1];
-    }, [history, initialBelief]);
+	// SOTA: O Prior base assume distribuição uniforme para o laboratório inicial
+	const [baseBelief] = useState<BeliefVector>(generateUniformBelief());
 
-    const applyAction = useCallback((likelihoods: { [hand: string]: number }) => {
-        setHistory(prev => {
-            const current = prev.length > 0 ? prev[prev.length - 1] : initialBelief;
-            const next = updateRangeBelief(current, likelihoods);
-            return [...prev, next];
-        });
-    }, [initialBelief]);
+	const currentBelief = history.at(-1) ?? baseBelief;
 
-    const undoAction = useCallback(() => {
-        setHistory(prev => prev.slice(0, -1));
-    }, []);
+	const maxBelief = useMemo(() => {
+		return Math.max(...Object.values(currentBelief));
+	}, [currentBelief]);
 
-    const resetBelief = useCallback(() => {
-        setHistory([]);
-    }, []);
+	const applyAction = useCallback(
+		(likelihood: ActionLikelihood) => {
+			setHistory((prev) => {
+				const prior = prev.at(-1) ?? baseBelief;
+				const posterior = updateBelief(prior, likelihood);
+				return [...prev, posterior];
+			});
+		},
+		[baseBelief],
+	);
 
-    return {
-        currentBelief,
-        history,
-        applyAction,
-        undoAction,
-        resetBelief,
-        maxBelief: useMemo(() => Math.max(...Object.values(currentBelief)), [currentBelief])
-    };
+	const undoAction = useCallback(() => {
+		setHistory((prev) => {
+			if (prev.length === 0) return prev;
+			return prev.slice(0, -1);
+		});
+	}, []);
+
+	const resetBelief = useCallback(() => {
+		setHistory([]);
+	}, []);
+
+	return {
+		currentBelief,
+		maxBelief,
+		history,
+		applyAction,
+		undoAction,
+		resetBelief,
+	};
 }

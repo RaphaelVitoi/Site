@@ -10,24 +10,33 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "npm run dev --workspace=frontend",
     "build": "npm --workspace frontend run build",
     "lint": "npm --workspace frontend run lint",
+    "test": "npm --workspace frontend run test",
+    "test:coverage": "npm --workspace frontend run test:coverage",
+    "typecheck": "tsc --build frontend/tsconfig.json",
+    "format": "prettier --write .",
     "sota:audit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/quality-gate.ps1",
     "sota:api": "python task_executor.py api",
     "prepare": "husky"
   },
   "devDependencies": {
-    "husky": "^8.0.3",
-    "lint-staged": "^15.5.2",
-    "turbo": "^2.9.1"
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "husky": "^9.1.7",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.8.3",
+    "turbo": "^2.9.14"
   },
   "lint-staged": {
     "frontend/**/*.{ts,tsx,js,jsx}": [
       "npm --workspace frontend run lint -- --max-warnings=0"
+    ],
+    "**/*.{py,log,txt,config}": [
+      "python scripts/check_ascii.py"
     ]
-  },
-  "dependencies": {
-    "@prisma/client": "^5.22.0"
   }
 }

@@ -1,0 +1,33 @@
+name: Pokerserver
+version: 0.0.1
+mcpServers:
+  - name: github-vitoi
+    command: npx
+    args:
+      - -y
+      - "@modelcontextprotocol/server-github"
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}$
+models:
+  - name: "Gemini 2.5 Pro (Razão e Síntese)"
+    provider: "google-sdk"
+    model: "gemini-2.5-pro"
+    apiKey: "SUA_CHAVE_AQUI"
+    roles:
+      - chat # Uso exclusivo para diálogos e análise complexa
+    completionOptions:
+      temperature: 0.2 # Rigor lógico aumentado
+      topP: 0.8
+      topK: 40
+
+  - name: "Gemini 2.5 Flash (Execução e Código)"
+    provider: "google-sdk"
+    model: "gemini-2.5-flash"
+    apiKey: "SUA_CHAVE_AQUI"
+    roles:
+      - edit
+      - apply
+      - autocomplete # Otimizado para velocidade
+    autocompleteOptions:
+      debounceDelay: 200 # Resposta rápida para o seu ritmo de digitação
+      maxPromptTokens: 1024

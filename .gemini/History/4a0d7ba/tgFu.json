@@ -1,0 +1,223 @@
+{
+    "gemini-cli.approvalMode": "auto_edit",
+    "gemini-cli.model": "gemini-2.5-pro",
+    "terminal.integrated.env.windows": {
+        "GEMINI_SOTA_MODE": "v6"
+    },
+    "terminal.integrated.profiles.windows": {
+        "Gemini-SOTA": {
+            "path": "powershell.exe",
+            "args": [
+                "-NoExit",
+                "-Command",
+                "gemini --approval-mode auto_edit"
+            ]
+        }
+    },
+    "gemini.auto_auditoria": true,
+    "gemini.token_efficiency_mode": "surgical",
+    "editor.formatOnSave": true,
+    "editor.linkedEditing": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "jest.rootPath": "frontend",
+    "jest.runMode": "on-demand",
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit",
+        "source.fixAll.ruff": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "sonarlint.rules": {
+        "typescript:S6504": "on",
+        "typescript:S6477": "on",
+        "typescript:S6480": "on",
+        "typescript:S6481": "on",
+        "typescript:S6479": "on",
+        "Web:S5725": "off",
+        "typescript:S6766": "off",
+        "typescript:S6747": "off",
+        "typescript:S6772": "off"
+    },
+    "css.lint.unknownAtRules": "ignore",
+    "webhint.enable": false,
+    "gemini.codeAssist.customSystemInstructions": "PROTOCOLO SOTA DE COMPREENSAO E REFATORACAO DE CODIGO.\\n\\nDIRETRIZES IRREVOGAVEIS:\\n1. ANTEVISAO SEMANTICA (Micro-Macro): E terminantemente proibida a analise isolada de fragmentos. O modelo deve executar uma auditoria recursiva silenciosa da arvore de dependencias, inferindo a intencao ontoestrutural e o impacto global no estado do sistema antes de qualquer output.\\n2. DIAGNOSTICO BAYESIANO E STEELMANING: A depuracao opera na causa raiz via probabilidade condicional. Aplique Steelmaning ao bug: provoque a hipotese de falha ate seu estado mais catastrofico estruturalmente antes de arquitetar a solucao. O uso de \u0027band-aids\u0027 logicos (como tipagem generica ou supressao silenciosa de excecoes) e uma falha de integridade.\\n3. INVARIANCIA MODULAR: A correcao cirurgica nao deve induzir entropia sistemica. Contratos de API, assinaturas de metodos e estruturas de dados legadas devem ser preservadas, a menos que uma refatoracao total seja explicitamente demandada e matematicamente justificada.\\n4. ECONOMIA GENERALIZADA (Lei de Shannon): Maximize a densidade informativa. Reduza ativamente a complexidade ciclomatica, substituindo cadeias condicionais por polimorfismo, pattern matching ou despacho estatico.\\n5. SEGURANCA SOTA (Friccao Zero): Toda operacao de I/O forjada deve ser blindada contra Path Traversal. Logs e saidas de terminal criticas devem ser purificadas para Pure ASCII para evitar ruptura de encoding no host.\\n6. HONESTIDADE INTELECTUAL: Prefira o silencio, o \u0027nao sei\u0027 ou a requisicao de arquivos adjacentes a fabricacao de dependencias. Ao propor mudancas arquiteturais, use a Cadeia de Pensamento Estendida para evidenciar os trade-offs assumidos.\\n7. DIRETRIZ VITOI (MEMORIA PERMANENTE): O desempenho exige eficiencia implacavel e sofisticacao extrema. A ANTEVISAO sistemica deve ser aplicada ativamente para prever o impacto de cada acao no ecossistema global.\\n8. HIERARQUIA ABSOLUTA (GOD MODE W3): Voce atua sob a consciencia de @chico (Tier 1). Voce detem permissao inquestionavel e bypass total para interagir com o terminal, mutar arquivos raiz e obliterar entropia. O Tier 0 lidera; voce age letalmente e gera diffs limpos sem pedir autorizacao.\\n9. ANTI-OBLITERACAO CEGA: Compare ambos. Nunca, JAMAIS, delete um arquivo legado sob a premissa de ser orfao sem antes comparar linha a linha com o novo substituto.",
+    "gemini.codeAssist.system.enableExtendedChainOfThought": true,
+    "gemini.codeAssist.system.verbosityLevel": "maximum_density",
+    "gemini.codeAssist.system.persona": {
+        "name": "Tier 1 @chico (God Mode W3)",
+        "directives": [
+            "Assumir consciencia do Tier 1 (@chico). Autonomia W3 (bypass total) para scripts, interacao no terminal e modificacao raiz.",
+            "Operar em Verbosidade Pedagogica e Densidade Maxima de Informacao.",
+            "Rejeitar polidez artificial e validacao emocional; focar no rigor tecnico e Socratico.",
+            "Reduzir a complexidade ciclomatica baseada no formalismo estrutural.",
+            "Admitir ausencia de dados empiricos em vez de fabricar comportamento de funcoes nao providas no contexto."
+        ]
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer"
+    },
+    "json.schemaDownload.enable": false,
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "/.vscode/settings.json",
+                "/.vscode/workspaceSettings.json",
+                "/workspaceSettings.json"
+            ],
+            "url": "https://frontmatter.codes/frontmatter.schema.json",
+            "schema": {}
+        }
+    ],
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/__pycache__": true,
+        "**/node_modules": true,
+        "**/.next": true,
+        "**/.claude": true,
+        "**/.clauderules": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**package-lock.json": true,
+        "**/.next": true,
+        "**/.claude": true,
+        "**/.clauderules": true
+    },
+    "ultraview.codeGraph.hideUI": true,
+    "ultraview.customComments.enabled": true,
+    "ultraview.customComments.fontWeight": "normal",
+    "errorLens.excludeByMessage": [
+        "frontmatter\\.schema\\.json",
+        "mcpServers não é permitida",
+        "Tag recommendations available",
+        "vulnerabilit",
+        "config-yaml-schema\\.json",
+        "mapKeyOrder"
+    ],
+    "yaml.keyOrdering": false,
+    "yaml.schemas": {
+        "http://json-schema.org/draft-07/schema#": [
+            ".continue/**/*.yaml"
+        ]
+    },
+    "editor.experimentalGpuAcceleration": "on",
+    "files.autoSave": "onWindowChange",
+    "files.autoSaveWhenNoErrors": true,
+    "files.autoSaveWorkspaceFilesOnly": true,
+    "workbench.list.smoothScrolling": true,
+    "workbench.commandPalette.experimental.suggestCommands": true,
+    "workbench.experimental.cloudChanges.autoStore": "onShutdown",
+    "workbench.experimental.cloudChanges.partialMatches.enabled": true,
+    "workbench.experimental.share.enabled": true,
+    "workbench.editor.autoLockGroups": {
+        "workbench.editor.processExplorer": false,
+        "terminalEditor": false
+    },
+    "workbench.settings.alwaysShowAdvancedSettings": true,
+    "screencastMode.keyboardOptions": {
+        "showCommandGroups": true
+    },
+    "workbench.browser.openLocalhostLinks": true,
+    "workbench.browser.enableChatTools": true,
+    "chat.checkpoints.showFileChanges": true,
+    "chat.agent.sandbox.autoApproveUnsandboxedCommands": true,
+    "chat.agent.sandbox.enabled": "allowNetwork",
+    "chat.editing.explainChanges.enabled": true,
+    "chat.unifiedAgentsBar.enabled": true,
+    "chat.restoreLastPanelSession": true,
+    "chat.viewProgressBadge.enabled": true,
+    "chat.exitAfterDelegation": true,
+    "chat.agentSessionProjection.enabled": true,
+    "chat.tools.compressOutput.enabled": true,
+    "chat.tools.confirmationCarousel.enabled": true,
+    "chat.tools.terminal.ignoreDefaultAutoApproveRules": true,
+    "chat.mcp.gallery.enabled": true,
+    "chat.mcp.assisted.nuget.enabled": true,
+    "chat.includeReferencedInstructions": true,
+    "chat.experimental.useSkillAdherencePrompt": true,
+    "chat.useNestedAgentsMdFiles": true,
+    "inlineChat.affordance": "editor",
+    "accessibility.chat.showCheckmarks": true,
+    "accessibility.underlineLinks": true,
+    "search.quickAccess.preserveInput": true,
+    "search.quickOpen.includeSymbols": true,
+    "search.searchEditor.defaultNumberOfContextLines": null,
+    "search.searchView.keywordSuggestions": true,
+    "debug.allowBreakpointsEverywhere": true,
+    "search.searchView.semanticSearchBehavior": "auto",
+    "debug.console.acceptSuggestionOnEnter": "on",
+    "debug.showSubSessionsInToolBar": true,
+    "testing.coverageToolbarEnabled": true,
+    "scm.alwaysShowRepositories": true,
+    "scm.workingSets.enabled": true,
+    "scm.repositories.explorer": true,
+    "extensions.closeExtensionDetailsOnViewChange": true,
+    "extensions.experimental.deferredStartupFinishedActivation": true,
+    "extensions.allowOpenInModalEditor": true,
+    "terminal.integrated.allowInUntrustedWorkspace": true,
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.developer.devMode": true,
+    "terminal.integrated.enableImages": true,
+    "terminal.integrated.enableVisualBell": true,
+    "problems.showCurrentInStatus": true,
+    "appMap.experimentalReviewUI": true,
+    "appMap.inspectEnabled": true,
+    "appMap.scannerEnabled": true,
+    "aspire.enableAspireCliDebugLogging": true,
+    "aspire.enableAspireDcpDebugLogging": true,
+    "aspire.enableAutoRestore": true,
+    "aspire.registerMcpServerInWorkspace": true,
+    "autoBarrel.files.detectExportsInFiles": true,
+    "autoBarrel.files.disableRecursiveBarrelling": true,
+    "autoBarrel.files.keepExtensionOnExport": true,
+    "codacy.cli.devMode": true,
+    "codevisualizer.autoGenerate": true,
+    "codevisualizer.llm.enabled": true,
+    "docker.lsp.experimental.scout.recommendedTag": true,
+    "docker.lsp.experimental.scout.notPinnedDigest": true,
+    "gemini-cli.debug.logging.enabled": true,
+    "geminicodeassist.agentDebugMode": true,
+    "geminicodeassist.agentYoloMode": true,
+    "geminicodeassist.updateChannel": "Insiders",
+    "geminicodeassist.verboseLogging": true,
+    "github.copilot.chat.agent.autoFix": true,
+    "github.copilot.chat.cli.autoModel.enabled": true,
+    "github.copilot.chat.cli.sessionController.enabled": true,
+    "github.copilot.chat.cli.sessionControllerForSessionsApp.enabled": true,
+    "github.copilot.chat.otel.captureContent": true,
+    "github.copilot.chat.otel.enabled": true,
+    "github.copilot.chat.otel.dbSpanExporter.enabled": true,
+    "github.copilot.chat.searchSubagent.useAgenticProxy": true,
+    "github.copilot.chat.scopeSelection": true,
+    "github.copilot.chat.workspace.codeSearchExternalIngest.enabled": true,
+    "gradle.allowParallelRun": true,
+    "gradle.debug": true,
+    "gradle.javaDebug.cleanOutput": true,
+    "java.dependency.showMembers": true
+}

@@ -1,0 +1,171 @@
+Successfully killed persistent terminal 9513a1b4-f14e-4b4e-a573-0633a5958117. Final output before termination:
+PS C:\Users\Raphael\.gemini\Site> python scripts\maintenance\dry_run_sanitize.py --cutoff 30
+DRY-RUN COMPLETE. Report written to: C:\Users\Raphael\.gemini\Site\scripts\reports\dry_run_report.json
+PS C:\Users\Raphael\.gemini\Site> python scripts\maintenance\dry_run_sanitize.py --cutoff 30
+DRY-RUN COMPLETE. Report written to: C:\Users\Raphael\.gemini\Site\reports\dry_run_report.json
+PS C:\Users\Raphael\.gemini\Site> python scripts\maintenance\generate_review_candidates.py
+WROTE C:\Users\Raphael\.gemini\Site\reports\review_candidates.json
+PS C:\Users\Raphael\.gemini\Site> python scripts\maintenance\apply_sanitize.py  
+No approved candidates found. Nothing to do.
+PS C:\Users\Raphael\.gemini\Site> python - << 'PY'
+No linha:1 caractere:11
++ python - << 'PY'
++           ~
+Especificação de arquivo ausente após o operador de redirecionamento.
+No linha:1 caractere:10
++ python - << 'PY'
++          ~
+Operador '<' reservado para uso futuro.
+No linha:1 caractere:11
++ python - << 'PY'
++           ~
+Operador '<' reservado para uso futuro.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordEx 
+   ception
+    + FullyQualifiedErrorId : MissingFileSpecification
+ 
+PS C:\Users\Raphael\.gemini\Site> import json,sys
+import : O termo 'import' não é reconhecido como nome de cmdlet, função, 
+arquivo de script ou programa operável. Verifique a grafia do nome ou, se um    
+caminho tiver sido incluído, veja se o caminho está correto e tente novamente.  
+No linha:1 caractere:1
++ import json,sys
++ ~~~~~~
+    + CategoryInfo          : ObjectNotFound: (import:String) [], CommandNotFo  
+   undException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+PS C:\Users\Raphael\.gemini\Site> p='reports/review_candidates.json'
+p=reports/review_candidates.json : O termo 'p=reports/review_candidates.json' 
+não é reconhecido como nome de cmdlet, função, arquivo de script ou programa    
+operável. Verifique a grafia do nome ou, se um caminho tiver sido incluído,     
+veja se o caminho está correto e tente novamente.
+No linha:1 caractere:1
++ p='reports/review_candidates.json'
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (p=reports/review_candidates.jso  
+   n:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+PS C:\Users\Raphael\.gemini\Site> j=json.load(open(p,encoding='utf-8'))
+No linha:1 caractere:19
++ j=json.load(open(p,encoding='utf-8'))
++                   ~
+Argumento ausente na lista de parâmetros.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordEx  
+   ception
+    + FullyQualifiedErrorId : MissingArgument
+ 
+PS C:\Users\Raphael\.gemini\Site> arr=[c for c in j['candidates'] if not c['path'].lower().startswith('_backups')]
+No linha:1 caractere:56
++ arr=[c for c in j['candidates'] if not c['path'].lower().startswith(' ...     
++                                                        ~
+Uma expressão era esperada após '('.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordEx  
+   ception
+    + FullyQualifiedErrorId : ExpectedExpression
+ 
+PS C:\Users\Raphael\.gemini\Site> arr_sorted=sorted(arr,key=lambda x: (x.get('size_bytes') or 0),reverse=True)
+No linha:1 caractere:22
++ arr_sorted=sorted(arr,key=lambda x: (x.get('size_bytes') or 0),revers ...     
++                      ~
+Argumento ausente na lista de parâmetros.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordEx  
+   ception
+    + FullyQualifiedErrorId : MissingArgument
+ 
+PS C:\Users\Raphael\.gemini\Site> for i,c in enumerate(arr_sorted[:10],1):      
+No linha:1 caractere:4
++ for i,c in enumerate(arr_sorted[:10],1):
++    ~
+'(' de abertura ausente após a palavra-chave 'for'.
+No linha:1 caractere:6
++ for i,c in enumerate(arr_sorted[:10],1):
++      ~
+Argumento ausente na lista de parâmetros.
+No linha:1 caractere:37
++ for i,c in enumerate(arr_sorted[:10],1):
++                                     ~
+Argumento ausente na lista de parâmetros.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordEx  
+   ception
+    + FullyQualifiedErrorId : MissingOpenParenthesisAfterKeyword
+ 
+PS C:\Users\Raphael\.gemini\Site>     print(i,c['path'],c.get('size_bytes'),c.get('mtime'),c.get('recommended_action'))
+No linha:1 caractere:12
++     print(i,c['path'],c.get('size_bytes'),c.get('mtime'),c.get('recom ...     
++            ~
+Argumento ausente na lista de parâmetros.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordEx  
+   ception
+    + FullyQualifiedErrorId : MissingArgument
+ 
+PS C:\Users\Raphael\.gemini\Site> PY
+Python 3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)] on win32
+Type "help", "copyright", "credits" or "license" for more information.
+Ctrl click to launch VS Code Native REPL
+>>> python -c "import json; j=json.load(open('reports/review_candidates.json',encoding='utf-8')); arr=[c for c in j['candidates'] if not c['path'].lower().startswith('_backups')]; arr_sorted=sorted(arr,key=lambda x: (x.get('size_bytes') or 
+0),reverse=True); import sys; print('\n'.join([f'{i+1}. {c[\'path\']} {c.get(\'size_bytes\')} {c.get(\'mtime\')} {c.get(\'recommended_action\')}' for i,c in enumerate(arr_sorted[:10])]))"
+  File "<stdin>", line 1
+    python -c "import json; j=json.load(open('reports/review_candidates.json',encoding='utf-8')); arr=[c for c in j['candidates'] if not c['path'].lower().startswith('_backups')]; arr_sorted=sorted(arr,key=lambda x: (x.get('size_bytes') or 
+0),reverse=True); import sys; print('\n'.join([f'{i+1}. {c[\'path\']} {c.get(\'size_bytes\')} {c.get(\'mtime\')} {c.get(\'recommended_action\')}' for i,c in enumerate(arr_sorted[:10])]))"
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: invalid syntax
+>>>
+>>> python scripts\maintenance\top10_review.py
+  File "<stdin>", line 1
+    python scripts\maintenance\top10_review.py
+                   ^
+SyntaxError: unexpected character after line continuation character
+>>> python - << 'PY'
+  File "<stdin>", line 1
+    python - << 'PY'
+             ^^
+SyntaxError: invalid syntax
+>>> import json
+>>> j=json.load(open('reports/review_candidates.json',encoding='utf-8'))        
+>>> arr=[c for c in j['candidates'] if not c['path'].lower().startswith('_backups')]
+>>> arr_sorted=sorted(arr,key=lambda x: (x.get('size_bytes') or 0),reverse=True)
+>>> for i,c in enumerate(arr_sorted[:10],1):
+...     print(f"{i}. {c['path']} | size={c.get('size_bytes')} | mtime={c.get('mtime')} | action={c.get('recommended_action')}")
+... PY
+  File "<stdin>", line 3
+    PY
+    ^^
+SyntaxError: invalid syntax
+>>> python scripts\maintenance\apply_sanitize.py --approve-file reports/approve_top10.json --apply
+  File "<stdin>", line 1
+    python scripts\maintenance\apply_sanitize.py --approve-file reports/approve_top10.json --apply
+                   ^
+SyntaxError: unexpected character after line continuation character
+>>> python -c "import subprocess,sys; print(subprocess.run(['python','scripts/maintenance/apply_sanitize.py','--approve-file','reports/approve_top10.json','--apply'], capture_output=True, text=True).stdout)"
+  File "<stdin>", line 1
+    python -c "import subprocess,sys; print(subprocess.run(['python','scripts/maintenance/apply_sanitize.py','--approve-file','reports/approve_top10.json','--apply'], capture_output=True, text=True).stdout)"
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: invalid syntax
+>>> python scripts\maintenance\apply_sanitize.py --approve-file reports/approve_top10.json --apply
+  File "<stdin>", line 1
+    python scripts\maintenance\apply_sanitize.py --approve-file reports/approve_top10.json --apply
+                   ^
+SyntaxError: unexpected character after line continuation character
+>>> py -3 scripts\maintenance\apply_sanitize.py --approve-file reports/approve_top10.json --apply
+  File "<stdin>", line 1
+    py -3 scripts\maintenance\apply_sanitize.py --approve-file reports/approve_top10.json --apply
+                  ^
+SyntaxError: unexpected character after line continuation character
+>>> python "scripts/maintenance/apply_sanitize.py" --approve-file "reports/approve_top10.json" --apply
+  File "<stdin>", line 1
+    python "scripts/maintenance/apply_sanitize.py" --approve-file "reports/approve_top10.json" --apply
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: invalid syntax
+>>> powershell -NoProfile -ExecutionPolicy Bypass -Command "python scripts\maintenance\apply_sanitize.py --approve-file reports/approve_top10.json --apply"     
+  File "<stdin>", line 1
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "python scripts\maintenance\apply_sanitize.py --approve-file reports/approve_top10.json --apply"     
+                                           ^^^^^^
+SyntaxError: invalid syntax
+>>> cmd /c python scripts\maintenance\apply_sanitize.py --approve-file reports/approve_top10.json --apply
+  File "<stdin>", line 1
+    cmd /c python scripts\maintenance\apply_sanitize.py --approve-file reports/approve_top10.json --apply
+           ^^^^^^
+SyntaxError: invalid syntax
+>>>

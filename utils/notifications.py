@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess
 
 logger = logging.getLogger(__name__)
@@ -14,8 +15,10 @@ def send_toast(title: str, message: str):
         $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
         [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Nexus Worker").Show($toast)
         """
-        subprocess.Popen([
-            "powershell",
+        system32 = os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32")
+        powershell_path = os.path.join(system32, "WindowsPowerShell", "v1.0", "powershell.exe")
+        subprocess.Popen([  # noqa: S603
+            powershell_path,
             "-NoProfile",
             "-WindowStyle",
             "Hidden",

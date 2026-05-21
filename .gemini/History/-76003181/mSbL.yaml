@@ -1,0 +1,24 @@
+name: Pokerserver
+version: 0.0.1
+mcpServers:
+  - name: "github-vitoi"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}$
+models:
+  - name: "Gemini 3.1 Pro (Cérebro)"
+    provider: "google-sdk"
+    model: "gemini-2.5-pro"
+    apiKey: "AIzaSyCCtOVqyOqn2w50VpTqnAlcWQMmKInWxRY"
+    roles:
+      - chat
+      - tool_use
+  - name: "Gemini 2.5 Flash (Escrita/Código)"
+    provider: "google-sdk"
+    model: "gemini-2.5-flash"
+    apiKey: "AIzaSyCCtOVqyOqn2w50VpTqnAlcWQMmKInWxRY"
+    roles:
+      - edit
+      - apply
+      - autocomplete

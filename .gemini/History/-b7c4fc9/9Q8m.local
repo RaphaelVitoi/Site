@@ -1,0 +1,7 @@
+# Local overrides for Next.js frontend (do not commit real secrets)
+# Keep values in KEY=VALUE format (dotenv), never in PowerShell syntax.
+# Example:
+# NEXT_PUBLIC_APP_ENV=local
+# Configurações do Motor Neural Local (Ollama)
+NEXT_PUBLIC_OLLAMA_URL="http://127.0.0.1:11434"
+NEXT_PUBLIC_OLLAMA_MODEL="gemma"

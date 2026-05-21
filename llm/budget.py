@@ -1,3 +1,7 @@
+# pylint: disable=missing-module-docstring, missing-function-docstring, broad-exception-caught, logging-fstring-interpolation, global-statement, line-too-long
+
+from utils.env_loader import load_env
+
 import asyncio
 import hashlib
 import logging
@@ -5,10 +9,10 @@ import os
 import re
 import time
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Any
 
 from database.queue_manager import QueueManager
+from core.schemas import Task
 
 # =================================================
 # ORCAMENTO COGNITIVO E HIBERNACAO (Logistica SOTA)
@@ -31,29 +35,10 @@ logger = logging.getLogger(__name__)
 # =================================================
 
 
-def _load_env_keys() -> dict[str, str]:
-    """Le chaves de forma implacavel de _env.ps1 ou .env para garantir operacao SOTA."""
-    keys = {}
-    base_dir = Path(__file__).parent.parent.resolve()
-    for file_name in ["_env.ps1", ".env"]:
-        env_path = base_dir / file_name
-        if env_path.exists():
-            try:
-                with open(env_path, "r", encoding="utf-8", errors="ignore") as f:
-                    for line in f:
-                        match = re.search(
-                            r'(?:\$env:|\$)?([\w]+)\s*[:=]\s*[\'"]?([^\'"\s#]+)[\'"]?',
-                            line,
-                        )
-                        if match:
-                            keys[match.group(1)] = match.group(2).strip()
-            except Exception as e:  # noqa: BLE001
-                logger.warning(f"Aviso ao ler {file_name}: {e}")
-    return keys
 
 
 # Carregamento unico das chaves de API para evitar I/O repetitivo
-ENV_KEYS = _load_env_keys()
+ENV_KEYS = load_env()
 ALL_ENV_VARS = {**os.environ, **ENV_KEYS}
 
 
@@ -131,26 +116,30 @@ GEMINI_ALL_KEYS_WITH_POOLS = _collect_keys_with_pool(
 )
 
 ANTHROPIC_KEYS = list(
-    dict.fromkeys([
-        v
-        for k, v in ALL_ENV_VARS.items()
-        if _is_real_key_value(v) and k.upper().startswith("ANTHROPIC")
-    ])
+    dict.fromkeys(
+        [
+            v
+            for k, v in ALL_ENV_VARS.items()
+            if _is_real_key_value(v) and k.upper().startswith("ANTHROPIC")
+        ]
+    )
 )
 OPENROUTER_KEYS = list(
-    dict.fromkeys([
-        v
-        for k, v in ALL_ENV_VARS.items()
-        if _is_real_key_value(v)
-        and (
-            k.upper().startswith("OPENROUTER")
-            or k.upper().startswith("DEEPSEEK")
-            or k.upper().startswith("LLAMA")
-        )
-        and "MODELS" not in k.upper()
-        and "," not in v
-        and "/" not in v
-    ])
+    dict.fromkeys(
+        [
+            v
+            for k, v in ALL_ENV_VARS.items()
+            if _is_real_key_value(v)
+            and (
+                k.upper().startswith("OPENROUTER")
+                or k.upper().startswith("DEEPSEEK")
+                or k.upper().startswith("LLAMA")
+            )
+            and "MODELS" not in k.upper()
+            and "," not in v
+            and "/" not in v
+        ]
+    )
 )
 TAVILY_KEYS = _collect_keys(("TAVILY",))
 PERPLEXITY_KEYS = _collect_keys(("PERPLEXITY",))
@@ -255,6 +244,12 @@ def _gemini_key_pool_for_model(model: str) -> list[str]:
 
 
 def _is_semantic_gemini_error(err: Exception) -> bool:
+    """
+    SOTA: Identifica erros semanticos que justificam a quarentena de uma chave.
+    Erros como 4xx (Bad Request, Auth), 429 (Quota) indicam um problema com a
+    chave/requisicao, nao uma falha transiente do servidor (5xx), que deve ser
+    tratada com retries, e nao com quarentena.
+    """
     msg = str(err).lower()
     semantic_markers = (
         "http 400",
@@ -324,6 +319,26 @@ def _score_key_from_stats(stats: dict[str, Any]) -> float:
     return (success_rate * 100.0) - (latency_penalty * 15.0) - (failure_penalty * 10.0)
 
 
+async def is_cognitive_hibernation_active(manager: QueueManager, task: Task) -> bool:
+    """
+    SOTA Guard: Verifica se o ecossistema esta sob contencao cognitiva (Hibernacao).
+    Operacoes puramente estaticas/locais (SQLite, limpeza, etc) furam o bloqueio,
+    garantindo que o organismo continue se auto-limpando.
+    """
+    if task.metadata and task.metadata.get("skip_llm"):
+        return False
+
+    state = await manager.get_system_state("hibernation_until")
+    if state:
+        try:
+            hibernation_end = datetime.fromisoformat(state)
+            if datetime.now(timezone.utc) < hibernation_end:
+                return True
+        except ValueError:
+            pass
+    return False
+
+
 async def _rank_keys_by_health(
     provider: str, keys: list[str], manager: QueueManager
 ) -> list[str]:
@@ -389,7 +404,7 @@ class AsyncTokenBucket:
                 # SOTA: Dispara Alerta Proativo (Toast) se a cota secar para evitar silent failures
                 if self.starvation_events % 5 == 1:
                     try:
-                        from monitoring.telemetry import send_toast
+                        from monitoring.telemetry import send_toast  # pylint: disable=import-outside-toplevel
 
                         send_toast(
                             "[WARN] Rate Limit Fallback SOTA",

@@ -1,0 +1,30 @@
+{
+    "version":  "1.0",
+    "createdAt":  "2026-03-12T12:30:00Z",
+    "lastModified":  "2026-03-12T10:00:18.7596921-03:00",
+    "metadata":  {
+                     "description":  "Fila de tarefas do Workflow v5",
+                     "maxRetries":  3,
+                     "archiveThresholdDays":  30
+                 },
+    "tasks":  [
+                  {
+                      "id":  "20260312-082951-160",
+                      "prompt":  "analise a sua propria estrutura atual.",
+                      "status":  "completed",
+                      "timestamp":  "2026-03-12T08:29:51.1908654-03:00",
+                      "createdAt":  "2026-03-12T08:29:51Z",
+                      "completedAt":  "2026-03-12T12:30:00Z",
+                      "retries":  0
+                  },
+                  {
+                      "id":  "20260312-100018-224",
+                      "timestamp":  "2026-03-12T10:00:18.7276647-03:00",
+                      "prompt":  "Teste de integridade - 2026-03-12",
+                      "retries":  0,
+                      "completedAt":  null,
+                      "status":  "pending",
+                      "createdAt":  "2026-03-12T10:00:18.7276647-03:00"
+                  }
+              ]
+}

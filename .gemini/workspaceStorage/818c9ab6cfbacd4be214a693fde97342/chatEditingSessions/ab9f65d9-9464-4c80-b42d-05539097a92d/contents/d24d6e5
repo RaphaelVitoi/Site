@@ -1,0 +1,156 @@
+<#
+.SYNOPSIS
+    Micro-Kernel SOTA Completo para Orquestração de Tarefas (v3.0).
+    Implementa Mutex, Assinatura SHA-256, Permuta Atómica e Expurgo Determinístico.
+#>
+#Requires -Version 5.1
+
+$Script:QueuePath = Join-Path $PSScriptRoot "queue\tasks.json"
+$Script:ArchivePath = Join-Path $PSScriptRoot "logs\tasks_archived.json"
+$Script:LogPath = Join-Path $PSScriptRoot "logs\task_log.md"
+$Script:MutexName = "Global\AgentTaskQueue_Mutex_Master"
+
+# -------------------------------------------------------------------
+# KERNEL: Mutex Control & Criptografia
+# -------------------------------------------------------------------
+function Invoke-WithMutex {
+    param([scriptblock]$Action)
+    $mutex = New-Object System.Threading.Mutex($false, $Script:MutexName)
+    try {
+        if ($mutex.WaitOne([TimeSpan]::FromSeconds(15))) {
+            try { & $Action } finally { $mutex.ReleaseMutex() }
+        }
+        else { throw "TIMEOUT KERNEL: Deadlock sistémico evitado. Mutex ocupado." }
+    }
+    finally { $mutex.Dispose() }
+}
+
+function Get-PayloadHash([string]$JsonString) {
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($JsonString)
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    $hashBytes = $sha256.ComputeHash($bytes)
+    $sha256.Dispose()
+    return [System.BitConverter]::ToString($hashBytes).Replace("-", "").ToLower()
+}
+
+# -------------------------------------------------------------------
+# VALIDAÇÃO DE SCHEMA (FSM)
+# -------------------------------------------------------------------
+function Test-TaskSchema {
+    param([Parameter(Mandatory = $true)][object]$TaskPayload)
+    if (-not $TaskPayload.id -or -not $TaskPayload.description) { return $false }
+    if ($TaskPayload.status -notmatch '^(pending|running|completed|failed)$') { return $false }
+    return $true
+}
+
+# -------------------------------------------------------------------
+# TRANSAÇÃO 1: ADICIONAR/ATUALIZAR TAREFA
+# -------------------------------------------------------------------
+function Add-AgentTask {
+    param([Parameter(Mandatory = $true)][object]$NewTask)
+
+    if (-not (Test-TaskSchema -TaskPayload $NewTask)) { throw "ABORT: Violação de Schema." }
+
+    Invoke-WithMutex {
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        "[$timestamp][ENQUEUED] $($NewTask.id) - $($NewTask.status)" | Add-Content -Path $Script:LogPath
+
+        $queue = @()
+        if (Test-Path $Script:QueuePath) {
+            try {
+                $raw = [System.IO.File]::ReadAllText($Script:QueuePath, [System.Text.Encoding]::UTF8)
+                if (-not [string]::IsNullOrWhiteSpace($raw)) {
+                    $payload = $raw | ConvertFrom-Json
+                    $queue = if ($null -ne $payload.tasks) { @($payload.tasks) } else { @($payload) }
+                }
+            }
+            catch {
+                # AUTOPOIESE: Detecção de Entropia e Auto-Cura
+                $corruptFile = "$($Script:QueuePath).corrupt.$(Get-Date -Format 'yyyyMMddHHmmss')"
+                Move-Item -Path $Script:QueuePath -Destination $corruptFile -Force
+                
+                $msg = "[KERNEL][AUTO-HEALING] Corrupção detectada. Entropia isolada em '$corruptFile'. Sistema regenerado."
+                $msg | Add-Content -Path $Script:LogPath
+                $queue = @()
+            }
+        }
+        
+        # Lógica Upsert: Remove versão anterior da tarefa (se existir) para permitir atualização de status
+        $queue = @($queue | Where-Object { $_.id -ne $NewTask.id })
+        $queue += $NewTask
+        
+        # Gera Assinatura Criptográfica do Array de Tarefas
+        $tasksJson = $queue | ConvertTo-Json -Depth 10 -Compress:$true
+        $checksum = Get-PayloadHash $tasksJson
+        
+        $wrapper = [ordered]@{
+            version   = "3.0"
+            updatedAt = (Get-Date -Format "o")
+            checksum  = $checksum
+            tasks     = $queue
+        }
+        
+        $tempFile = "$($Script:QueuePath).tmp"
+        $finalJson = $wrapper | ConvertTo-Json -Depth 10 -Compress:$false
+        [System.IO.File]::WriteAllText($tempFile, $finalJson, [System.Text.Encoding]::UTF8)
+        Move-Item -Path $tempFile -Destination $Script:QueuePath -Force
+    }
+}
+
+# -------------------------------------------------------------------
+# TRANSAÇÃO 2: EXPURGO (CLEANUP) PROTEGIDO POR MUTEX
+# -------------------------------------------------------------------
+function Invoke-TaskCleanup {
+    param([int]$DaysToKeep = 30, [int]$MaxActive = 50)
+
+    Invoke-WithMutex {
+        if (-not (Test-Path $Script:QueuePath)) { return }
+        $raw = [System.IO.File]::ReadAllText($Script:QueuePath, [System.Text.Encoding]::UTF8)
+        if ([string]::IsNullOrWhiteSpace($raw)) {
+            return 
+        }
+        
+        $payload = $raw | ConvertFrom-Json
+        $queue = if ($null -ne $payload.tasks) { @($payload.tasks) } else { @($payload) }
+        $cutoff = (Get-Date).AddDays(-$DaysToKeep)
+
+        $toArchive = @($queue.Where({ $_.status -in @("completed", "failed") -and [datetime]$_.timestamp -lt $cutoff }))
+        $toKeep = @($queue.Where({ $toArchive.id -notcontains $_.id }))
+
+        if ($toKeep.Count -gt $MaxActive) {
+            $overflow = $toKeep.Count - $MaxActive
+            $toArchive += $toKeep[0..($overflow - 1)]
+            $toKeep = $toKeep[$overflow..($toKeep.Count - 1)]
+        }
+
+        if ($toArchive.Count -gt 0) {
+            # Arquivo Morto
+            $archived = @()
+            if (Test-Path $Script:ArchivePath) { 
+                $archivedRaw = [System.IO.File]::ReadAllText($Script:ArchivePath, [System.Text.Encoding]::UTF8)
+                $archived = @(($archivedRaw | ConvertFrom-Json).tasks)
+            }
+            
+            $newArchiveQueue = $archived + $toArchive
+            $archiveChecksum = Get-PayloadHash ($newArchiveQueue | ConvertTo-Json -Depth 10 -Compress:$true)
+            $archiveWrapper = [ordered]@{ version = "3.0"; updatedAt = (Get-Date -Format "o"); checksum = $archiveChecksum; tasks = $newArchiveQueue }
+            
+            $tempArchive = "$($Script:ArchivePath).tmp"
+            [System.IO.File]::WriteAllText($tempArchive, ($archiveWrapper | ConvertTo-Json -Depth 10), [System.Text.Encoding]::UTF8)
+            Move-Item -Path $tempArchive -Destination $Script:ArchivePath -Force
+
+            # Nova Fila Ativa
+            $keepChecksum = Get-PayloadHash ($toKeep | ConvertTo-Json -Depth 10 -Compress:$true)
+            $queueWrapper = [ordered]@{ version = "3.0"; updatedAt = (Get-Date -Format "o"); checksum = $keepChecksum; tasks = $toKeep }
+            
+            $tempQueue = "$($Script:QueuePath).tmp"
+            [System.IO.File]::WriteAllText($tempQueue, ($queueWrapper | ConvertTo-Json -Depth 10), [System.Text.Encoding]::UTF8)
+            Move-Item -Path $tempQueue -Destination $Script:QueuePath -Force
+
+            "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] [CLEANUP] Movidas $($toArchive.Count) tarefas. Assinaturas renovadas." | Add-Content -Path $Script:LogPath
+        }
+    }
+}
+
+# Exporta estritamente a API do Kernel
+Export-ModuleMember -Function Test-TaskSchema, Add-AgentTask, Invoke-TaskCleanup

@@ -1,5 +1,8 @@
+# pylint: disable=missing-module-docstring, missing-function-docstring, line-too-long
+
 # engine/math_rio.py
-from typing import Any
+from typing import Union
+from .math_sota import calculate_rio_risk_v2
 
 
 def calculate_rio_risk(
@@ -8,36 +11,29 @@ def calculate_rio_risk(
     hero_raw_stack: float,
     hero_position: str,
     active_players: int,
-) -> dict[str, Any]:
+    human_noise_factor: float = 0.0,
+) -> dict[str, Union[float, str]]:
     """
-    Calcula o risco de Reverse Implied Odds (RIO) usando a Lei Multiway SOTA.
-    O risco cresce quadraticamente com o numero de oponentes (Pot Entrapment).
+    Legado: Wrapper para o motor SOTA v4.6 unificado.
+    Mantem compatibilidade com assinaturas anteriores enquanto usa a fisica de elite.
     """
-    opponents = max(1, active_players - 1)
-    rio_mw = hero_invested * 0.15 * (opponents**2)
 
-    bet_to_call = current_pot * 0.5
-    pot_entrapment = (hero_invested + bet_to_call) / max(0.1, hero_raw_stack)
-    downward_drift = 1.25 if hero_position in ["OOP", "BB", "SB"] else 0.85
-
-    rio_tension = min(1.0, (rio_mw / 100.0) + (pot_entrapment * downward_drift))
-    decision = "FOLD" if rio_tension > 0.6 else "CALL"
-
-    return {
-        "rio_risk_score": round(rio_tension, 3),
-        "rio_factor": round(rio_mw, 3),
-        "pot_entrapment": round(pot_entrapment, 3),
-        "decision": decision,
-        "rationale": f"Tensao RIO de {rio_tension:.3f} detectada (Entrapment: {pot_entrapment:.2f}, Multiway: {active_players}p).",
-    }
+    return calculate_rio_risk_v2(
+        hero_invested=hero_invested,
+        current_pot=current_pot,
+        hero_raw_stack=hero_raw_stack,
+        hero_position=hero_position,
+        active_players=active_players,
+        human_noise_factor=human_noise_factor,
+    )
 
 
-def get_bb_vs_utg_rio_table() -> list[dict[str, Any]]:
+def get_bb_vs_utg_rio_table() -> list[dict[str, Union[float, str, int]]]:
     """
     Gera a tabela de perigos de RIO para BB vs UTG.
     Baseado nos axiomas VITOI de Passivo Estrutural.
     """
-    scenarios = [
+    scenarios: list[dict[str, float | str | int]] = [
         {
             "hand": "KJo",
             "invested": 2.0,
@@ -45,6 +41,7 @@ def get_bb_vs_utg_rio_table() -> list[dict[str, Any]]:
             "stack": 30.0,
             "pos": "OOP",
             "players": 2,
+            "noise": 0.0,
         },
         {
             "hand": "ATo",
@@ -53,7 +50,8 @@ def get_bb_vs_utg_rio_table() -> list[dict[str, Any]]:
             "stack": 30.0,
             "pos": "OOP",
             "players": 3,
-        },  # Multiway perigoso
+            "noise": 0.4,
+        },
         {
             "hand": "76s",
             "invested": 1.0,
@@ -61,10 +59,11 @@ def get_bb_vs_utg_rio_table() -> list[dict[str, Any]]:
             "stack": 40.0,
             "pos": "IP",
             "players": 2,
+            "noise": 0.0,
         },
     ]
 
-    results = []
+    results: list[dict[str, float | str | int]] = []
     for s in scenarios:
         risk = calculate_rio_risk(
             float(s["invested"]),
@@ -72,6 +71,7 @@ def get_bb_vs_utg_rio_table() -> list[dict[str, Any]]:
             float(s["stack"]),
             str(s["pos"]),
             int(s["players"]),
+            float(s["noise"]),
         )
         results.append({**s, **risk})
 

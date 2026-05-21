@@ -1,0 +1,236 @@
+'use client';
+
+/**
+ * IDENTITY: Motor SOTA de Quiz e Fixação
+ * PATH: src/components/simulator/ui/QuizEngine.tsx
+ * ROLE: Validar o conhecimento do aluno sobre o cenário atual.
+ * BINDING: [engine/types.ts, simulator.module.css]
+ */
+
+import { fetchEngineQuizzes } from '@/app/actions/quizActions';
+import { useEffect, useState } from 'react';
+import type { Quiz } from '../engine/types';
+import styles from '../simulator.module.css';
+
+interface QuizEngineProps {
+  quiz?: Quiz | Quiz[];
+  scenarioId?: string;
+}
+
+export default function QuizEngine ( { quiz, scenarioId }: Readonly<QuizEngineProps> ) {
+  const normalizeQuiz = ( q?: Quiz | Quiz[] ): Quiz[] | undefined => {
+    if ( !q ) return undefined;
+    return Array.isArray( q ) ? q : [ q ];
+  };
+
+  const [ activeQuiz, setActiveQuiz ] = useState<Quiz[] | undefined>( quiz ? normalizeQuiz( quiz ) : [] );
+  const [ currentQuestionIdx, setCurrentQuestionIdx ] = useState( 0 );
+  const [ selectedOptionId, setSelectedOptionId ] = useState<string | null>( null );
+  const [ showExplanation, setShowExplanation ] = useState( false );
+  const [ score, setScore ] = useState( 0 );
+  const [ isFinished, setIsFinished ] = useState( false );
+
+  // Sincroniza a prop quiz com o state caso o cenário mude na sidebar
+  useEffect( () => {
+    if ( quiz )
+    {
+      setActiveQuiz( normalizeQuiz( quiz ) );
+    } else if ( scenarioId )
+    {
+      fetchEngineQuizzes( scenarioId ).then( ( data: Quiz[] ) => {
+        if ( data && data.length > 0 ) setActiveQuiz( data );
+      } );
+    }
+  }, [ quiz, scenarioId ] );
+
+  // Reset da UI de perguntas quando os dados do quiz ativo mudam
+  useEffect( () => {
+    setCurrentQuestionIdx( 0 );
+    setSelectedOptionId( null );
+    setShowExplanation( false );
+    setScore( 0 );
+    setIsFinished( false );
+  }, [ activeQuiz ] );
+
+  if ( !activeQuiz || activeQuiz.length === 0 )
+  {
+    return (
+      <div style={ { color: 'var(--text-dim)', fontSize: '0.8rem', fontStyle: 'italic', textAlign: 'center', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' } }>
+        <p style={ { margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' } }>Sincronizando Mente Coletiva...</p>
+        <div style={ { display: 'flex', gap: '6px' } }>
+          <div style={ { width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-indigo)', animation: 'pulse 1.5s infinite' } } />
+          <div style={ { width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-indigo)', animation: 'pulse 1.5s infinite 0.2s' } } />
+          <div style={ { width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-indigo)', animation: 'pulse 1.5s infinite 0.4s' } } />
+        </div>
+      </div>
+    );
+  }
+
+  const currentQuestion = activeQuiz[ currentQuestionIdx ];
+
+  // Trava de segurança: Previne crash no milissegundo entre a mudança de dados e o reset do useEffect
+  if ( !currentQuestion ) return null;
+
+  const handleOptionSelect = ( optionId: string, isCorrect: boolean ) => {
+    if ( selectedOptionId !== null ) return; // Evita duplo clique e travamento
+
+    setSelectedOptionId( optionId );
+    setShowExplanation( true );
+
+    if ( isCorrect )
+    {
+      setScore( ( prev ) => prev + 1 );
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if ( currentQuestionIdx < activeQuiz.length - 1 )
+    {
+      setCurrentQuestionIdx( ( prev ) => prev + 1 );
+      setSelectedOptionId( null );
+      setShowExplanation( false );
+    } else
+    {
+      setIsFinished( true );
+    }
+  };
+
+  if ( isFinished )
+  {
+    const percentage = Math.round( ( score / activeQuiz.length ) * 100 );
+    const passed = percentage >= 70;
+
+    return (
+      <div className={ styles.quizContainer } style={ { textAlign: 'center', padding: '2rem 1rem' } }>
+        <h3 style={ { fontSize: '1.2rem', color: passed ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginBottom: '1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' } }>
+          { passed ? 'Avaliação SOTA Concluída' : 'Atenção Necessária' }
+        </h3>
+        <p style={ { fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '1.5rem' } }>
+          Você acertou <strong style={ { color: 'var(--text-main)' } }>{ score }</strong> de <strong style={ { color: 'var(--text-main)' } }>{ activeQuiz.length }</strong> questões ({ percentage }%).
+        </p>
+
+        { passed ? (
+          <p style={ { fontSize: '0.75rem', color: 'var(--text-dim)', fontStyle: 'italic', lineHeight: 1.5 } }>
+            A entropia foi mitigada. Seu entendimento das pressões de ICM neste spot está consolidado.
+          </p>
+        ) : (
+          <p style={ { fontSize: '0.75rem', color: 'var(--text-dim)', fontStyle: 'italic', lineHeight: 1.5 } }>
+            Recomendamos invocar o <strong>Oráculo AI</strong> ou reler a aba de <strong>Fundamento</strong>. A letalidade do ICM não perdoa falhas.
+          </p>
+        ) }
+
+        <button
+          onClick={ () => {
+            setCurrentQuestionIdx( 0 );
+            setSelectedOptionId( null );
+            setShowExplanation( false );
+            setScore( 0 );
+            setIsFinished( false );
+          } }
+          className={ styles.toolButton }
+          style={ { marginTop: '2rem', display: 'inline-flex', justifyContent: 'center' } }
+        >
+          Refazer Quiz <i className="fa-solid fa-rotate-right" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={ styles.quizContainer }>
+      <div style={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' } }>
+        <span style={ { fontSize: '0.65rem', fontWeight: 800, color: 'var(--accent-indigo-light)', textTransform: 'uppercase', letterSpacing: '0.1em' } }>
+          Questão { currentQuestionIdx + 1 } de { activeQuiz.length }
+        </span>
+        <span style={ { fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-dim)', background: 'rgba(15,23,42,0.6)', padding: '4px 8px', borderRadius: '6px' } }>
+          Score: <span style={ { color: 'var(--accent-emerald)', marginLeft: '4px' } }>{ score }</span>
+        </span>
+      </div>
+
+      <h4 className={ styles.quizQuestion }>
+        { currentQuestion.question }
+      </h4>
+
+      <div className={ styles.quizOptions }>
+        { currentQuestion.options.map( ( option, index: number ) => {
+          // Fallback para IDs caso não existam no payload (A, B, C...)
+          const optionId = option.id || String.fromCodePoint( 65 + index );
+          const isSelected = selectedOptionId === optionId;
+          const isCorrect = option.isCorrect;
+
+          let stateClass = '';
+          if ( selectedOptionId !== null )
+          {
+            if ( isCorrect ) stateClass = styles.quizCorrect;
+            else if ( isSelected ) stateClass = styles.quizWrong;
+            else stateClass = styles.quizDisabled;
+          }
+
+          let indicatorContent = <span style={ { color: 'var(--accent-indigo-light)', fontWeight: 700 } }>{ optionId.toUpperCase() }</span>;
+          if ( selectedOptionId !== null )
+          {
+            if ( isCorrect )
+            {
+              indicatorContent = <i className={ `fa-solid fa-check ${styles.quizCheckIcon}` } />;
+            } else if ( isSelected )
+            {
+              indicatorContent = <i className={ `fa-solid fa-xmark ${styles.quizXIcon}` } />;
+            } else
+            {
+              indicatorContent = <span style={ { opacity: 0.3 } }>{ optionId.toUpperCase() }</span>;
+            }
+          }
+
+          return (
+            <button
+              key={ optionId }
+              onClick={ () => handleOptionSelect( optionId, isCorrect ) }
+              disabled={ selectedOptionId !== null }
+              className={ `${styles.quizOption} ${stateClass}` }
+            >
+              <div className={ styles.quizOptionIndicator }>
+                { indicatorContent }
+              </div>
+              <span className={ styles.quizOptionText }>{ option.text }</span>
+            </button>
+          );
+        } ) }
+      </div>
+
+      { showExplanation && (
+        <div className={ styles.quizExplanation }>
+          <div className={ styles.quizExplanationBar } />
+          <h5 className={ styles.quizExplanationTitle }>Por que esta é a resposta?</h5>
+          <p className={ styles.quizExplanationText }>
+            { currentQuestion.explanation }
+          </p>
+
+          <button
+            onClick={ handleNextQuestion }
+            style={ {
+              marginTop: '1.5rem',
+              padding: '0.6rem 1.25rem',
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, var(--accent-indigo), var(--accent-indigo-mid))',
+              color: 'var(--text-main)',
+              border: 'none',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+            } }
+            className={ styles.aiSubmitButton }
+          >
+            { currentQuestionIdx < activeQuiz.length - 1 ? 'Próxima Questão' : 'Ver Resultados' } <i className="fa-solid fa-arrow-right" />
+          </button>
+        </div>
+      ) }
+    </div>
+  );
+}

@@ -1,0 +1,14 @@
+{
+  "name": "nexus-orchestrator-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev"
+  },
+  "workspaces": [
+    "frontend",
+    "services/*"
+  ],
+  "devDependencies": {
+    "turbo": "^2.0.9"
+  }
+}

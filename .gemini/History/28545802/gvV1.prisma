@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  simulations Simulation[]
+}
+
+model Simulation {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  status      String    @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
+  scenario    Scenario  @relation(fields: [scenarioId], references: [id])
+  scenarioId  String
+  results     Result[]
+  user        User?     @relation(fields: [userId], references: [id])
+  userId      String?
+  snapshots   AnalysisSnapshot[]
+}
+
+model Scenario {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String?
+  payouts     Json // Ex: [1000, 600, 400]
+  stacks      Json // Ex: [50000, 35000, 20000, 15000, 10000]
+  blinds      String? // Ex: "500/1000"
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  simulations Simulation[]
+}
+
+model Result {
+  id           String     @id @default(cuid())
+  simulation   Simulation @relation(fields: [simulationId], references: [id])
+  simulationId String
+  action       String // Ex: "Hero (SB) Push 20bb"
+  chipEv       Float?
+  icmEv        Float
+  icmEquity    Float? // A equidade em % do prize pool
+  ranges       Json? // Opcional: para armazenar os ranges de maos
+  createdAt    DateTime   @default(now())
+}
+
+// ==========================================
+// LABORATÓRIO SOTA: MOTOR ICM V2
+// ==========================================
+
+model IcmScenario {
+  id                String    @id @default(cuid())
+  slug              String    @unique
+  name              String
+  category          String    // 'clinical', 'baseline', 'toyGame'
+
+  // Narrativa Didática
+  narrativeTitle    String
+  narrativeSubtitle String
+  theory            String    // Conteúdo HTML/Rich Text do fundamento
+  exploit           String    // JSON Array: Vetor de exploração (Strings)
+  verdict           String    // Ex: "FOLD ESTRUTURAL"
+
+  // Parâmetros de Jogo
+  stacks            String    // JSON Array: [9.4, 52.4, 22.2, ...]
+  prizes            String    // JSON Array: [237.34, 170.96, ...]
+
+  // Atores e Pressão de Risco
+  ipPos             String    // Ex: "BTN"
+  oopPos            String    // Ex: "BB"
+  ipRp              Float     // Risk Premium Baseline IP
+  oopRp             Float     // Risk Premium Baseline OOP
+  ipMorph           String    // Morfologia IP (Ex: "Polar Máximo")
+  oopMorph          String    // Morfologia OOP (Ex: "Zona de Paralisia")
+
+  // Dados Termodinâmicos (JSON Tipado)
+  sprData           String    // JSON Array: [{ name: "PRE", potSize: 2.5, rpValue: 20 }, ...]
+  defaultStreetFreqs String   // JSON Object: { flop: { ip_check: 30, ... }, turn: ... }
+
+  // Metadados CMS
+  isPublished       Boolean   @default(false)
+  authorId          String?
+
+  // Relações Educacionais
+  quizzes           IcmQuiz[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([category])
+}
+
+model IcmQuiz {
+  id              String       @id @default(cuid())
+  question        String
+  explanation     String       // Por que a resposta está correta (Insight)
+  options         String       // JSON Array: [{ id: "A", text: "...", isCorrect: false }, ...]
+
+  scenarioId      String
+  scenario        IcmScenario  @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime     @default(now())
+}
+
+model AnalysisSnapshot {
+  id           String     @id @default(cuid())
+  name         String
+  description  String?
+  simulation   Simulation @relation(fields: [simulationId], references: [id])
+  simulationId String
+  resultData   Json // Um snapshot dos resultados no momento da criacao
+  createdAt    DateTime   @default(now())
+}

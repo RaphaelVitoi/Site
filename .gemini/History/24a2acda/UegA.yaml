@@ -1,0 +1,18 @@
+models:
+  - name: "Gemini 2.5 Pro (Análise)"
+    provider: "google-sdk"
+    model: "gemini-2.5-pro-latest" # O sufixo -latest garante a versão estável da linha 2.5
+    apiKey: "C
+    roles:
+      - chat
+    completionOptions:
+      temperature: 0.1 # Rigor analítico para AHSD
+
+  - name: "Gemini 2.5 Flash (Velocidade)"
+    provider: "google-sdk"
+    model: "gemini-2.5-flash-latest"
+    apiKey: "SUA_CHAVE_AQUI"
+    roles:
+      - edit
+      - apply
+      - autocomplete

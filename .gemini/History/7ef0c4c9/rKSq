@@ -1,0 +1,22 @@
+models:
+  - name: "Gemini 2.5 Pro (Raciocínio)"
+    provider: google-sdk
+    model: google/gemini-2.5-pro
+    apiKey: "SUA_NOVA_CHAVE_AQUI"
+    roles:
+      - chat
+    completionOptions:
+      temperature: 0.1 # Menor variância para lógica pura
+
+  - name: "Gemini 2.0 Flash (Produção)"
+    provider: google-sdk
+    model: google/gemini-2.0-flash
+    apiKey: "SUA_NOVA_CHAVE_AQUI"
+    roles:
+      - chat
+      - edit
+      - apply
+      - autocomplete
+    autocompleteOptions:
+      debounceDelay: 350 # Aumentado para evitar 429 durante digitação rápida
+      maxPromptTokens: 512 # Redução de carga por requisição

@@ -1,0 +1,30 @@
+# Contexto do Projeto
+> Atualizado por @pesquisador em 2026-03-12
+
+## Dominio
+Ecossistema de desenvolvimento pessoal e profissional (Poker, Psicologia, Tecnologia).
+
+## Publico-alvo
+Raphael Vitoi e seus alunos/clientes de Poker e Psicologia.
+
+## Fontes Autorizadas
+- DeepSolver
+- GTOWizard
+- Mathematics of Poker (Bill Chen)
+
+## Terminologia Confirmada
+- Workflow v5: Sistema de agentes com fila de tarefas (tasks.json).
+- Chico: Identidade operacional do sistema de IA.
+
+## Decisoes Tomadas
+- Inicializacao do Contexto do Projeto | Padronizacao para Workflow v5 | 2026-03-12 | @pesquisador
+
+## Estado Atual
+- Estrutura basica do site existente.
+- Sistema de agentes em transicao para v5.
+- Linguagem principal: Portugues (pt-BR).
+
+## Handoff Log
+| Agente | Status | Data | Notas |
+|--------|--------|------|-------|
+| @pesquisador | Em progresso | 2026-03-12 | Corrigindo instrucoes globais e inicializando docs. |

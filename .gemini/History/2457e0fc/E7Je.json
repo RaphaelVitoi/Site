@@ -1,0 +1,29 @@
+{
+    "sources": [
+        {
+            "path": ".claude/agent-memory",
+            "patterns": [ "MEMORY.md" ],
+            "recursive": true
+        },
+        {
+            "path": "docs",
+            "patterns": [ "*.md", "*.docx" ],
+            "recursive": true
+        },
+        {
+            "path": "content",
+            "patterns": [ "*.docx" ],
+            "recursive": true
+        },
+        {
+            "path": ".claude",
+            "patterns": [ "COSMOVISAO.md", "CLAUDE.md", "project-context.md", "GLOBAL_INSTRUCTIONS.md", "ESTADO_ARTE_APRENDIZADO_GENERATIVO.md" ],
+            "recursive": false
+        },
+        {
+            "path": ".",
+            "patterns": [ "*.py", "*.ts", "*.tsx", "*.ps1" ],
+            "recursive": true
+        }
+    ]
+}

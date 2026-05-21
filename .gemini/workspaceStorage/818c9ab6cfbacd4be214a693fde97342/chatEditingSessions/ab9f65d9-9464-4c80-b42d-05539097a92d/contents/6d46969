@@ -1,0 +1,59 @@
+param(
+    [Parameter(Mandatory = $true, Position = 0)]
+    [string]$Prompt
+)
+
+# Caminho para a fila de tarefas
+$queuePath = Join-Path $PSScriptRoot "queue\tasks.json"
+
+# Garantir que o diretório da fila exista
+$queueDir = Split-Path $queuePath
+if (-not (Test-Path $queueDir)) { New-Item -ItemType Directory -Path $queueDir -Force | Out-Null }
+
+# Gerar um ID de tarefa único
+$timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$random = Get-Random -Minimum 100 -Maximum 999
+$taskId = "$timestamp-$random"
+
+# Criar o novo objeto de tarefa
+$task = @{
+    id        = $taskId
+    prompt    = $Prompt
+    status    = "pending"
+    timestamp = (Get-Date -Format "o") # Formato ISO 8601
+}
+
+# Ler, atualizar e escrever o arquivo JSON
+try {
+    $rawContent = Get-Content -Path $queuePath -Raw -ErrorAction SilentlyContinue
+
+    if ([string]::IsNullOrWhiteSpace($rawContent)) {
+        $queue = @()
+    }
+    else {
+        $queue = $rawContent | ConvertFrom-Json
+    }
+
+    # Ensure $queue is always an array
+    if ($queue -isnot [array]) {
+        $queue = @($queue)
+    }
+    
+    $queue += $task
+    
+    $queue | ConvertTo-Json -Depth 5 | Set-Content -Path $queuePath
+    
+    # Registrar no task log
+    $logPath = Join-Path $PSScriptRoot "logs\task_log.md"
+    $logDir = Split-Path $logPath
+    if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+    
+    $logEntry = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [ENQUEUED] $taskId - Prompt: $($Prompt.Substring(0, [Math]::Min(80, $Prompt.Length)))..."
+    Add-Content -Path $logPath -Value $logEntry -Encoding UTF8
+    
+    Write-Output "Tarefa enfileirada com sucesso. ID: $taskId"
+    
+}
+catch {
+    Write-Error "Falha ao processar a fila de tarefas em '$queuePath'. Detalhes: $_"
+}

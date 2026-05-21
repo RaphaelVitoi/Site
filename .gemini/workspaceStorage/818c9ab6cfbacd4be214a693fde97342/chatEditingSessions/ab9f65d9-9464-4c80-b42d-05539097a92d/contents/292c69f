@@ -1,0 +1,109 @@
+param(
+    [Parameter(Mandatory = $true, Position = 0)]
+    [string]$Prompt
+)
+
+# Caminho para a fila de tarefas
+$queuePath = Join-Path $PSScriptRoot "queue\tasks.json"
+
+# Garantir que o diretório da fila exista
+$queueDir = Split-Path $queuePath
+if (-not (Test-Path $queueDir)) { New-Item -ItemType Directory -Path $queueDir -Force | Out-Null }
+
+# Gerar um ID de tarefa único
+$timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$random = Get-Random -Minimum 100 -Maximum 999
+$taskId = "$timestamp-$random"
+
+# Criar o novo objeto de tarefa (v1.0 schema)
+$task = @{
+    id          = $taskId
+    prompt      = $Prompt
+    status      = "pending"
+    timestamp   = (Get-Date -Format "o")
+    createdAt   = (Get-Date -Format "o")
+    completedAt = $null
+    retries     = 0
+}
+
+# Ler, atualizar e escrever o arquivo JSON
+try {
+    $rawContent = Get-Content -Path $queuePath -Raw -ErrorAction SilentlyContinue
+
+    if ([string]::IsNullOrWhiteSpace($rawContent)) {
+        # Criar estrutura v1.0 vazia
+        $queueObj = @{
+            version      = "1.0"
+            createdAt    = (Get-Date -Format "o")
+            lastModified = (Get-Date -Format "o")
+            metadata     = @{
+                description          = "Fila de tarefas do Workflow v5"
+                maxRetries           = 3
+                archiveThresholdDays = 30
+            }
+            tasks        = @()
+        }
+    }
+    else {
+        # Validar JSON antes de converter
+        try {
+            $queueObj = $rawContent | ConvertFrom-Json -ErrorAction Stop
+        }
+        catch {
+            Write-Warning "JSON corrompido detectado. Criando backup em '$queuePath.corrupt'"
+            Copy-Item -Path $queuePath -Destination "$queuePath.corrupt" -Force
+            $queueObj = @{
+                version      = "1.0"
+                createdAt    = (Get-Date -Format "o")
+                lastModified = (Get-Date -Format "o")
+                metadata     = @{
+                    description          = "Fila de tarefas do Workflow v5"
+                    maxRetries           = 3
+                    archiveThresholdDays = 30
+                }
+                tasks        = @()
+            }
+        }
+    }
+
+    # Validar estrutura v1.0 e migrar se necessário (backward compatibility)
+    if ([string]::IsNullOrWhiteSpace($queueObj.version)) {
+        # Migração de estrutura antiga
+        $oldTasks = if ($queueObj -is [array]) { $queueObj } else { @($queueObj) }
+        $queueObj = @{
+            version      = "1.0"
+            createdAt    = (Get-Date -Format "o")
+            lastModified = (Get-Date -Format "o")
+            metadata     = @{
+                description          = "Fila de tarefas do Workflow v5"
+                maxRetries           = 3
+                archiveThresholdDays = 30
+            }
+            tasks        = @($oldTasks | ForEach-Object { 
+                    if ($_.retries -eq $null) { $_.retries = 0 }
+                    if ($_.createdAt -eq $null) { $_.createdAt = $_.timestamp }
+                    $_
+                })
+        }
+    }
+    
+    # Adicionar nova tarefa ao array
+    $queueObj.tasks += $task
+    $queueObj.lastModified = (Get-Date -Format "o")
+    
+    # Backup antes de escrever
+    if (Test-Path $queuePath) {
+        Copy-Item -Path $queuePath -Destination "$queuePath.backup" -Force
+    }
+    
+    $queueObj | ConvertTo-Json -Depth 10 | Set-Content -Path $queuePath -Encoding UTF8
+    
+    Write-Output "Tarefa enfileirada com sucesso. ID: $taskId"
+    Write-Output "[INFO] Backup da fila feito em: $queuePath.backup"
+    
+}
+catch {
+    Write-Error "[ERRO] Falha crítica ao processar fila de tarefas em '$queuePath'. Detalhes: $_"
+    Write-Error "[ERRO] Tarefa NÃO foi enfileirada. Verifique a integridade do arquivo e tente novamente."
+    exit 1
+}

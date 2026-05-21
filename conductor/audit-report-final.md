@@ -1,4 +1,4 @@
-# Laudo Final de Auditoria: MasterSimulator & Paradigma Vitoi
+﻿# Laudo Final de Auditoria: MasterSimulator & Paradigma Vitoi
 
 ## 1. Resumo Executivo
 A auditoria técnica e teórica do frontend revelou uma implementação de altíssima fidelidade ao **Paradigma de Perspectiva Matemática de Raphael Vitoi**. O ecossistema `MasterSimulator` orquestra com sucesso motores matemáticos complexos (WASM/Rust) e lógica de propagação de frequências (Quantum Sync), mantendo a coerência com os documentos fundacionais. Foi identificada apenas uma discrepância pontual no motor de distorção de Nash que merece atenção.
@@ -11,7 +11,7 @@ A auditoria técnica e teórica do frontend revelou uma implementação de altí
 ## 3. Auditoria Matemática (`lib/perspectiva.ts`)
 - **Axioma do EV do Fold:** Implementado fielmente. O motor calcula o `dynamicEvFold` considerando `payjumpBonus` e `erosionPenalty` (FGS t-3), reconhecendo que o fold pode ter EV positivo ou violentamente negativo.
 - **Equação Unificada (PM):** A fórmula `PM = (Expectativa - RIO) - EV_Fold` está corretamente traduzida em código, com o `rioMw` escalando quadraticamente em cenários Multiway.
-- **Teto de Nash:** A observação empírica de que a equidade necessária raramente ultrapassa 41-45% no River foi corrigida no motor. O código anterior assumia isso incorretamente como uma lei absoluta (hard-cap). O limite artificial de 41% foi removido, permitindo que a matemática do *Pot Entrapment* determine o teto organicamente de acordo com a real pressão de ICM.
+- **Teto do RP:** A observação empírica de que a equidade necessária raramente ultrapassa 41-45% no River foi integrada ao motor como uma heurística de zona de convergência. O limite artificial rígido foi removido, permitindo que a matemática do *Pot Entrapment* determine o teto organicamente de acordo com a real pressão de ICM, enquanto a interface mantém o alerta visual para o "Horizonte de 41%" como guia pedagógico.
 - **Taxa de Maluquice (Kappa):** O Axioma Lipe Piv está integrado através da regressão bayesiana da equidade, permitindo que a intuição do usuário filtre o baseline matemático.
 
 ## 4. Auditoria de Conteúdo e UI (`TheoryPanel`, `PmLensPanel`)
@@ -32,3 +32,4 @@ O sistema é **matematicamente solvente** e representa fielmente o estado da art
 Com a aplicação da correção na camada do Solver de Nash (Item 5.1), a coerência entre a teoria embutida na UI e os cálculos de background no Rust/TypeScript é agora de 100%.
 
 **Status Final: APROVADO (Corections Applied)**
+

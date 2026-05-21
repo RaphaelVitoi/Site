@@ -10,7 +10,7 @@ import aiosqlite
 from database.queue_manager import QueueManager
 from monitoring.watchdog import system_watchdog
 from web.server import start_api_server
-from worker.loop import start_worker
+from worker.loop import start_worker  # type: ignore[attr-defined]
 
 logger = logging.getLogger(__name__)
 

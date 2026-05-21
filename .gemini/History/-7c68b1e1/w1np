@@ -1,0 +1,43 @@
+# Dependencias
+node_modules/
+.venv/
+__pycache__/
+
+# Build
+.next/
+frontend/.next/
+frontend/.next-build/
+
+# Binarios pesados
+*.docx
+*.mp4
+content/pesquisa/
+
+# Backups locais
+.backups/
+.backups_sota/
+
+# ChromaDB (banco vetorial - nao pertence ao git)
+.chroma_db/
+.claude/agent-memory/.chroma_db/
+
+# Banco de dados local
+*.db
+*.db-journal
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# IDE configs (nao pertence ao repo)
+.continue/
+
+# Logs
+logs/
+.claude/logs/
+
+# Task results
+.claude/task_results/
+
+# Arquivo historico local
+.claude/.archive/

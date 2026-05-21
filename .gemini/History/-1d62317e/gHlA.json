@@ -1,0 +1,14 @@
+{
+    "recommendations": [
+        "google.geminicodeassist",
+        "anthropic.claude-code",
+        "streetsidesoftware.code-spell-checker",
+        "bradlc.vscode-tailwindcss",
+        "Prisma.prisma",
+        "rust-lang.rust-analyzer",
+        "ms-python.vscode-pylance",
+        "ms-python.python",
+        "ms-python.vscode-python-envs",
+        "dbaeumer.vscode-eslint"
+    ]
+}

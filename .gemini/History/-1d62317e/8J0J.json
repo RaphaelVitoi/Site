@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "google.geminicodeassist",
+        "ms-azuretools.vscode-azureresourcegroups",
+        "midudev.better-svg",
+        "anthropic.claude-code",
+        "codacy-app.codacy",
+        "streetsidesoftware.code-spell-checker"
+    ]
+}

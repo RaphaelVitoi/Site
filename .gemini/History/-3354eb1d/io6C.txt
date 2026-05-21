@@ -1,0 +1,11 @@
+manifest.txt
+
+Arquivo: GLOBAL_INSTRUCTIONS.md
+Caminho Original: c:\Users\Raphael\OneDrive\Documentos\Site\GLOBAL_INSTRUCTIONS.md
+Motivo: Correção de identidade e modelo do agente.
+Timestamp: 2026-03-12THH:MM:SSZ
+
+Arquivo: MANUAL_WORKFLOW_AGENTES.md
+Caminho Original: c:\Users\Raphael\OneDrive\Documentos\Site\docs\MANUAL_WORKFLOW_AGENTES.md
+Motivo: Correção de identidade e modelo do agente, e adição do CHANGELOG DE AUDITORIA.
+Timestamp: 2026-03-12THH:MM:SSZ

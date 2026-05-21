@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+@plugin "@tailwindcss/typography";
+
+/*
+ * IDENTITY: SOTA Global Aesthetics Framework
+ * ROLE: Infraestrutura de Design System, Resets e Geometria Visual.
+ * PRINCIPLE: Economia de Shannon (Máxima expressividade com mínima entropia).
+ */
+
+@layer base {
+    :root {
+        /* Altura do Header fixa para sincronia de scroll */
+        --header-height: 80px;
+        --container-width: 1200px;
+    }
+
+    html {
+        @apply scroll-smooth antialiased;
+    }
+
+    body {
+        /* Fundo Dinâmico SOTA Pattern */
+        background-image:
+            radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.05), transparent 40%),
+            radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.05), transparent 40%),
+            linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        background-attachment: fixed;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        @apply font-black tracking-tighter;
+        font-family: var(--font-heading);
+        color: var(--color-text-bright, #f8fafc);
+    }
+
+    /* Otimização de Parágrafos para Leitura Densa */
+    p {
+        @apply leading-relaxed tracking-tight;
+    }
+
+    /* Reset global de inputs e selects para Fricção Zero */
+    select,
+    input,
+    button {
+        @apply outline-none transition-all duration-200;
+    }
+}
+
+@layer components {
+
+    /* O Vidro Perfeito (Abstração SOTA) */
+    .glass-panel {
+        @apply backdrop-blur-2xl border border-white/10 rounded-[2rem];
+        background-color: rgba(15, 23, 42, 0.8);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .hub-card {
+        @apply backdrop-blur-xl border border-white/5 p-8 rounded-3xl transition-all duration-500 relative overflow-hidden flex flex-col gap-4;
+        background-color: rgba(15, 23, 42, 0.4);
+    }
+
+    .hub-card:hover {
+        @apply -translate-y-2;
+        border-color: rgba(99, 102, 241, 0.3);
+        background-color: rgba(15, 23, 42, 0.6);
+        box-shadow: 0 0 40px rgba(99, 102, 241, 0.15);
+    }
+
+    /* Utilitário de Texto SOTA (Alta Densidade) */
+    .text-label {
+        @apply font-mono text-[0.6rem] font-black uppercase tracking-[0.25em] flex items-center gap-2;
+        color: var(--color-text-muted, #94a3b8);
+    }
+
+    /* Container Padronizado (Geometria Áurea) */
+    .sota-container {
+        @apply w-full max-w-(--container-width) mx-auto px-6 sm:px-12;
+    }
+}
+
+/* Animações de Entrada Quantum */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-sota-in {
+    animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+        filter: blur(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+.animate-fade-up {
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pulseGlow {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.4));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.8));
+    }
+}
+
+.pulse-glow {
+    animation: pulseGlow 3s infinite;
+}

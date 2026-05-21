@@ -1,0 +1,20 @@
+{
+    "permissions": {
+        "allow": [
+            "Read(//dev/**)",
+            "Read(//tmp/**)",
+            "Read(C:/**)",
+            "Write(C:/**)",
+            "RunCommand(powershell, **)",
+            "RunCommand(python, **)",
+            "Read(C:/Users/Raphael/.gemini/extensions/**)",
+            "RunCommand(git, **)",
+            "RunCommand(gemini, **)"
+        ],
+        "additionalDirectories": [
+            "\\dev",
+            "\\tmp"
+        ]
+    },
+    "claudeCode.allowDangerouslySkipPermissions": true
+}

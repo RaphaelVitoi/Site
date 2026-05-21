@@ -1,0 +1,38 @@
+# Bloqueio de Visão da IA (Redução de Latência e Poluição de Contexto)
+.backups/
+.backups_sota/
+logs/
+.claude/logs/
+.claude/task_results/
+.chroma_db/
+queue/
+archive/
+*.db
+*.db-wal
+*.sqlite
+
+# 1. Dependencias e Artefatos de Build (O maior ralo de tokens)
+node_modules/
+bower_components/
+dist/
+build/
+.next/
+
+# 2. Ambientes Virtuais e Caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 3. Dados e Logs
+*.csv
+*.jsonl
+temp/
+tmp/
+
+# 4. Midia e Ativos Pesados
+*.png
+*.jpg
+*.pdf
+*.mp4
+.git/

@@ -1,0 +1,38 @@
+name: Local Config
+version: 1.0.0
+schema: v1
+models:
+  - name: google/gemini-2.5-pro
+    provider: google
+    model: google/gemini-2.5-pro
+      - chat
+      - edit
+      - apply
+  - name: google/gemini-2.0-flash
+    provider: google-compatible
+    model: google/gemini-2.0-flash
+    roles:
+      - chat
+      - edit
+      - apply
+      - autocomplete
+    autocompleteOptions:
+      debounceDelay: 250
+      maxPromptTokens: 1024
+      onlyMyCode: true
+  - name: My Model - Google-Compatible
+    provider: google-compatible
+    apiBase: http://google-compatible/v1
+    model: google/gemini-2.5-pro
+    capabilities:
+      - tool_use
+      - image_input
+    roles:
+      - chat
+      - edit
+  - uses: google/gemini-2.5-pro
+    with:
+      GEMINI_API_KEY: AIzaSyAzIVHqRbqGuGyU7lgN8o79PnO-y0nnBUc
+  - uses: google/gemini-2.0-flash
+    with:
+      GEMINI_API_KEY: AIzaSyAzIVHqRbqGuGyU7lgN8o79PnO-y0nnBUc

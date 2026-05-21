@@ -1,6 +1,7 @@
 """
 Fallback do Dispatcher -- Plano de contingencia quando o @dispatcher nao retorna JSON valido.
 """
+# pylint: disable=protected-access, import-outside-toplevel
 
 import json
 import logging
@@ -30,15 +31,16 @@ def _feature_enabled(flag_name: str) -> bool:
     try:
         import task_executor as _task_executor  # import local para evitar ciclo no startup
 
-        fn = getattr(_task_executor, "_feature_enabled", None)
-        if callable(fn):
-            return bool(fn(flag_name))
-    except Exception as e:  # noqa: BLE001
-        logger.debug(f"Bypass local de task_executor falhou em _feature_enabled: {e}")
+        attr = "_feature_enabled"
+        if hasattr(_task_executor, attr):
+            func = getattr(_task_executor, attr)
+            return bool(func(flag_name))
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.debug("Bypass local de task_executor falhou em _feature_enabled: %s", e)
 
-    fn = getattr(te, "_feature_enabled", None)
-    if callable(fn):
-        return bool(fn(flag_name))
+    if hasattr(te, "_feature_enabled"):
+        func = te._feature_enabled
+        return bool(func(flag_name))
     return False
 
 
@@ -47,17 +49,18 @@ def _heuristic_terms(group_name: str) -> dict[str, int]:
     try:
         import task_executor as _task_executor
 
-        fn = getattr(_task_executor, "_heuristic_terms", None)
-        if callable(fn):
-            res = fn(group_name)
+        attr = "_heuristic_terms"
+        if hasattr(_task_executor, attr):
+            func = getattr(_task_executor, attr)
+            res = func(group_name)
             if isinstance(res, dict):
                 return res
-    except Exception as e:  # noqa: BLE001
-        logger.debug(f"Bypass local de task_executor falhou em _heuristic_terms: {e}")
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.debug("Bypass local de task_executor falhou em _heuristic_terms: %s", e)
 
-    fn = getattr(te, "_heuristic_terms", None)
-    if callable(fn):
-        res = fn(group_name)
+    if hasattr(te, "_heuristic_terms"):
+        func = te._heuristic_terms
+        res = func(group_name)
         if isinstance(res, dict):
             return res
     return {}
@@ -123,53 +126,56 @@ def _generate_fallback_specs(task_id: str, route_agents: list) -> list:
     """Gera as especificações (prompts e dependências) para cada etapa da rota de fallback."""
     stage_prompts = {
         AGENT_ARCHITECT: (
-            f"Fallback automatico do dispatcher para a tarefa base {task_id}. "
-            f"Analise '.claude/task_results/{task_id}.md' e consolide um blueprint arquitetural objetivo "
-            f"com escopo, restricoes e criterios de sucesso."
+            f"Fallback automatico do dispatcher para a tarefa base {task_id}. \n"
+            f"Analise '.claude/task_results/{task_id}.md' e consolide um blueprint \n"
+            f"arquitetural objetivo com escopo, restricoes e criterios de sucesso."
         ),
         AGENT_MAVERICK: (
-            f"Refine estrategicamente a direcao da tarefa base {task_id}, validando tradeoffs, riscos e antevisao "
-            f"antes da fase de planejamento detalhado."
+            f"Refine estrategicamente a direcao da tarefa base {task_id}, validando \n"
+            f"tradeoffs, riscos e antevisao antes da fase de planejamento detalhado."
         ),
         AGENT_PESQUISADOR: (
-            f"Execute pesquisa aplicada para a tarefa base {task_id}: referencias externas, benchmark e dados de apoio "
-            f"para reduzir incerteza antes da implementacao."
+            f"Execute pesquisa aplicada para a tarefa base {task_id}: referencias \n"
+            f"externas, benchmark e dados de apoio para reduzir incerteza antes."
         ),
         AGENT_PLANNER: (
-            f"Detalhe o plano executavel da tarefa base {task_id}, com milestones, dependencias e criterios de aceite."
+            f"Detalhe o plano executavel da tarefa base {task_id}, com milestones, \n"
+            f"dependencias e criterios de aceite."
         ),
         AGENT_SECURITYCHIEF: (
-            f"Audite vetores de seguranca da tarefa base {task_id} (auth, segredos, permissao, superficie de ataque) "
-            f"e entregue diretrizes obrigatorias para implementacao segura."
+            f"Audite vetores de seguranca da tarefa base {task_id} (auth, segredos, \n"
+            f"permissao, superficie) e entregue diretrizes obrigatorias para implementacao."
         ),
         AGENT_VALIDADOR: (
-            f"Valide premissas de dominio da tarefa base {task_id} (regras, calculos e consistencia tecnica) "
-            f"antes da implementacao."
+            f"Valide premissas de dominio da tarefa base {task_id} (regras, calculos \n"
+            f"e consistencia tecnica) antes da implementacao."
         ),
         AGENT_IMPLEMENTOR: (
-            f"Execute a implementacao da tarefa base {task_id} conforme plano aprovado, preservando routing, integridade "
-            f"e estabilidade sistemica."
+            f"Execute a implementacao da tarefa base {task_id} conforme plano aprovado, \n"
+            f"preservando routing, integridade e estabilidade sistemica."
         ),
         AGENT_VERIFIER: (
-            f"Valide funcionalmente a entrega da tarefa base {task_id} (task -> queue -> worker -> resposta) e reporte "
-            f"riscos residuais com criterio tecnico."
+            f"Valide funcionalmente a entrega da tarefa base {task_id} (task -> queue -> \n"
+            f"worker -> resposta) e reporte riscos residuais com criterio tecnico."
         ),
         AGENT_CURATOR: (
-            f"Curadoria final da tarefa base {task_id} apos verificacao: refinar clareza, consistencia e alinhamento "
-            f"estrategico sem alterar o comportamento funcional."
+            f"Curadoria final da tarefa base {task_id} apos verificacao: refinar \n"
+            f"clareza, consistencia e alinhamento sem alterar o comportamento funcional."
         ),
     }
 
     fallback_specs = []
     for idx, agent in enumerate(route_agents, start=1):
-        fallback_specs.append({
-            "suffix": f"SUB-{idx}",
-            "agent": agent,
-            "description": stage_prompts.get(
-                agent, f"Execute a sua etapa para a tarefa base {task_id}."
-            ),
-            "depends_on": [idx - 2] if idx > 1 else [],
-        })
+        fallback_specs.append(
+            {
+                "suffix": f"SUB-{idx}",
+                "agent": agent,
+                "description": stage_prompts.get(
+                    agent, f"Execute a sua etapa para a tarefa base {task_id}."
+                ),
+                "depends_on": [idx - 2] if idx > 1 else [],
+            }
+        )
     return fallback_specs
 
 
@@ -220,6 +226,8 @@ async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
     await manager.update_task_metadata(task.id, metadata_patch, merge=True)
 
     logger.info(
-        f"[bold yellow][RECOVERY][/] Dispatcher fallback ativado em [cyan]{task.id}[/] com cadeia "
-        f"[bold]{' -> '.join(route_agents)}[/]."
+        "[bold yellow][RECOVERY][/] Dispatcher fallback ativado em [cyan]%s[/] com "
+        "cadeia [bold]%s[/].",
+        task.id,
+        " -> ".join(route_agents),
     )
