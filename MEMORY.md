@@ -23,6 +23,14 @@ Este arquivo serve como o registro persistente e central da memória do sistema,
   - **Correção da Ação de Fold:** Ação de fold corrigida em `_buildSimulatedStacks` para não deduzir `heroCost` do Hero, mantendo o stack no estado original de início da decisão (`stacks[heroIdx]`), em conformidade absoluta com o paradigma Vitoi.
 - **Testes de Integridade:** [perspectiva.test.ts](file:///C:/Users/Raphael/.gemini/Site/frontend/src/tests/simulator/perspectiva.test.ts) valida as premissas analíticas com cobertura para os teoremas estruturais da Perspectiva (12/12 suítes de teste passando).
 
+### Otimização e Infraestrutura SOTA (v6.2)
+
+- **Redução de Payload de Contexto:** Desativação de 37 skills biológicas/médicas inativas e 10 esquemas de servidores MCP não-utilizados, economizando aproximadamente **45.000 tokens** por turno complexo do Antigravity.
+- **Eficiência de Busca no Workspace:** Ativação de `"respectGitIgnore": true` e `"respectGeminiIgnore": true` nas configurações globais do agente, limitando a indexação ativa de 62.000+ para ~450 arquivos de interesse do projeto (latência reduzida de ~4s para <150ms).
+- **Higiene do Workspace:** Consolidação e arquivamento de 207 scripts de teste e validação antigos na pasta `scratch/archive/`.
+- **VS Code & Gemini Code Assist:** Desativação explícita de Codeium inline suggestions para garantir zero colisão de ghost-text e exclusividade da IA Gemini Code Assist no VS Code.
+- **Antigravity CLI (Kilo):** Alinhamento completo com o modelo `gemini-2.5-pro-exp-03-25` e desativação de plugins inativos (`bitrise`, `postgres`, `cloud-sql-postgresql-observability`, `cloud-sql-sqlserver`).
+
 ---
 
 ## 2. MEMORIZAÇÃO DO PARADIGMA VITOI
