@@ -8,76 +8,76 @@
  * AESTHETIC: SOTA GOLD Standard (Precision Alignment, Visual Hierarchy, Glassmorphism).
  */
 
-import { useFrequencyPropagation } from '@/components/simulator/hooks/useFrequencyPropagation';
-import { useInsolvencyRadar } from '@/components/simulator/hooks/useInsolvencyRadar';
-import { useQuantumEngine } from '@/components/simulator/hooks/useQuantumEngine';
-import { useScenario } from '@/components/simulator/hooks/useScenario';
-import { useSimulatorState } from '@/components/simulator/hooks/useSimulatorState';
-import { useSotaSync } from '@/components/simulator/hooks/useSotaSync';
+import { useFrequencyPropagation } from './hooks/useFrequencyPropagation';
+import { useInsolvencyRadar } from './hooks/useInsolvencyRadar';
+import { useQuantumEngine } from './hooks/useQuantumEngine';
+import { useScenario } from './hooks/useScenario';
+import { useSimulatorState } from './hooks/useSimulatorState';
+import { useSotaSync } from './hooks/useSotaSync';
 import {
 	SotaMetricsContext,
 	SotaSpotContext,
 	SotaWasmContext,
-} from '@/components/simulator/SotaContext';
-import { GuideToolbar } from '@/components/simulator/ui/GuideToolbar';
-import { NashDistortionViz } from '@/components/simulator/ui/NashDistortionViz';
-import ScenarioSelector from '@/components/simulator/ui/ScenarioSelector';
-import SimulatorHeader from '@/components/simulator/ui/SimulatorHeader';
-import SimulatorNavigation from '@/components/simulator/ui/SimulatorNavigation';
-import SimulatorTour from '@/components/simulator/ui/SimulatorTour';
-import { useSimulatorTour } from '@/components/simulator/hooks/useSimulatorTour';
-import { useMasterCalculations } from '@/components/simulator/hooks/useMasterCalculations';
-import { useMasterSpotLogic } from '@/components/simulator/hooks/useMasterSpotLogic';
-import { useMasterHandlers } from '@/components/simulator/hooks/useMasterHandlers';
-import { SpatialControls } from '@/components/simulator/ui/SpatialControls';
-import { SectionHeader } from '@/components/ui/layout/SectionHeader';
-import { useMounted } from '@/hooks/useMounted';
+} from './SotaContext';
+import { GuideToolbar } from './ui/GuideToolbar';
+import { NashDistortionViz } from './ui/NashDistortionViz';
+import ScenarioSelector from './ui/ScenarioSelector';
+import SimulatorHeader from './ui/SimulatorHeader';
+import SimulatorNavigation from './ui/SimulatorNavigation';
+import SimulatorTour from './ui/SimulatorTour';
+import { useSimulatorTour } from './hooks/useSimulatorTour';
+import { useMasterCalculations } from './hooks/useMasterCalculations';
+import { useMasterSpotLogic } from './hooks/useMasterSpotLogic';
+import { useMasterHandlers } from './hooks/useMasterHandlers';
+import { SpatialControls } from './ui/SpatialControls';
+import { SectionHeader } from '../ui/layout/SectionHeader';
+import { useMounted } from '../../hooks/useMounted';
 import dynamic from 'next/dynamic';
 import { Suspense, useEffect, useMemo, useDeferredValue, useTransition } from 'react';
 import useSWR from 'swr';
 import { useLlamaEngine } from '../../hooks/useLlamaEngine';
 
 // SOTA: Dynamic imports with ssr: false for WASM/Worker safety
-const EquityCalculator = dynamic(() => import('@/components/simulator/panels/EquityCalculator'), {
+const EquityCalculator = dynamic(() => import('./panels/EquityCalculator'), {
 	ssr: false,
 });
-const ComparisonRadar = dynamic(() => import('@/components/simulator/panels/ComparisonRadar'), {
+const ComparisonRadar = dynamic(() => import('./panels/ComparisonRadar'), {
 	ssr: false,
 });
-const PerspectivePanel = dynamic(() => import('@/components/simulator/panels/PerspectivePanel'), {
+const PerspectivePanel = dynamic(() => import('./panels/PerspectivePanel'), {
 	ssr: false,
 });
-const PostFlopPanel = dynamic(() => import('@/components/simulator/panels/PostFlopPanel'), {
+const PostFlopPanel = dynamic(() => import('./panels/PostFlopPanel'), {
 	ssr: false,
 });
-const PmLensPanel = dynamic(() => import('@/components/simulator/panels/PmLensPanel'), {
+const PmLensPanel = dynamic(() => import('./panels/PmLensPanel'), {
 	ssr: false,
 });
-const ReferencialAula12 = dynamic(() => import('@/components/simulator/ReferencialAula12'), {
+const ReferencialAula12 = dynamic(() => import('./ReferencialAula12'), {
 	ssr: false,
 });
 const SimulatorQuizWidget = dynamic(
-	() => import('@/components/quiz/SimulatorQuizWidget').then((m) => m.SimulatorQuizWidget),
+	() => import('../quiz/SimulatorQuizWidget').then((m) => m.SimulatorQuizWidget),
 	{ ssr: false },
 );
-const NashPanel = dynamic(() => import('@/components/simulator/panels/NashPanel'), { ssr: false });
-const TheoryPanel = dynamic(() => import('@/components/simulator/panels/TheoryPanel'), {
+const NashPanel = dynamic(() => import('./panels/NashPanel'), { ssr: false });
+const TheoryPanel = dynamic(() => import('./panels/TheoryPanel'), {
 	ssr: false,
 });
-const ScenarioStage = dynamic(() => import('@/components/simulator/panels/ScenarioStage'), {
+const ScenarioStage = dynamic(() => import('./panels/ScenarioStage'), {
 	ssr: false,
 });
-const MatchupSelector = dynamic(() => import('@/components/simulator/panels/MatchupSelector'), {
+const MatchupSelector = dynamic(() => import('./panels/MatchupSelector'), {
 	ssr: false,
 });
-const RangeMatrix = dynamic(() => import('@/components/simulator/panels/RangeMatrix'), {
+const RangeMatrix = dynamic(() => import('./panels/RangeMatrix'), {
 	ssr: false,
 });
-const CfrRegretPanel = dynamic(() => import('@/components/simulator/panels/CfrRegretPanel'), {
+const CfrRegretPanel = dynamic(() => import('./panels/CfrRegretPanel'), {
 	ssr: false,
 });
-const DashboardSOTA = dynamic(() => import('@/components/simulator/DashboardSOTA'), { ssr: false });
-const InsolvencyRadar = dynamic(() => import('@/components/simulator/ui/InsolvencyRadar'), {
+const DashboardSOTA = dynamic(() => import('./DashboardSOTA'), { ssr: false });
+const InsolvencyRadar = dynamic(() => import('./ui/InsolvencyRadar'), {
 	ssr: false,
 });
 

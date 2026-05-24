@@ -4,9 +4,7 @@
 import math
 
 
-def calculate_geometric_sizing(
-    current_pot: float, target_pot: float, remaining_streets: int
-) -> float:
+def calculate_geometric_sizing(current_pot: float, target_pot: float, remaining_streets: int) -> float:
     """
     Calcula a fracao do pote (f) necessaria para apostar nas streets restantes
     e atingir o target_pot (geralmente All-in no river).
@@ -17,8 +15,7 @@ def calculate_geometric_sizing(
 
     growth_factor = target_pot / current_pot
     one_plus_two_f = math.pow(growth_factor, 1.0 / remaining_streets)
-    f = (one_plus_two_f - 1.0) / 2.0
-    return f
+    return (one_plus_two_f - 1.0) / 2.0
 
 
 def cfr_mock_strategy(regrets: dict[str, float]) -> dict[str, float]:
@@ -33,12 +30,10 @@ def cfr_mock_strategy(regrets: dict[str, float]) -> dict[str, float]:
     total_positive_regret = sum(positive_regrets.values())
 
     if total_positive_regret > 0:
-        return {
-            action: r / total_positive_regret for action, r in positive_regrets.items()
-        }
+        return {action: r / total_positive_regret for action, r in positive_regrets.items()}
 
     n = len(regrets)
-    return {action: 1.0 / n for action in regrets}
+    return dict.fromkeys(regrets, 1.0 / n)
 
 
 def solve_icm_distortion_v2(
@@ -49,7 +44,7 @@ def solve_icm_distortion_v2(
     pot_size: float,
     street_idx: int,
     fold: float,
-    call: float,
+    call: float,  # noqa: ARG001
     raise_val: float,
 ) -> dict[str, float]:
     """
@@ -72,11 +67,7 @@ def solve_icm_distortion_v2(
     drift_base = 0.004 * (float(street_idx) + 1.0)
     drift_penalty = raise_val * (pressure * drift_base * (1.0 + gravity * 0.5))
 
-    raise_shift = (
-        raise_val * (effective_aggression - 1.0)
-        - drift_penalty
-        - (pressure * 0.003 * float(active_players))
-    )
+    raise_shift = raise_val * (effective_aggression - 1.0) - drift_penalty - (pressure * 0.003 * float(active_players))
 
     new_raise = max(0.0, raise_val + raise_shift)
 
@@ -114,9 +105,7 @@ def calculate_rio_tension(
 
     bet_to_call = current_pot * 0.5
     # O aprisionamento escala com o custo relativo do call e a gravidade acumulada
-    pot_entrapment = ((hero_invested + bet_to_call) / max(0.1, hero_raw_stack)) * (
-        1.0 + gravity * 0.1
-    )
+    pot_entrapment = ((hero_invested + bet_to_call) / max(0.1, hero_raw_stack)) * (1.0 + gravity * 0.1)
 
     downward_drift = 1.25 if hero_position == "OOP" else 0.85
 
@@ -126,8 +115,7 @@ def calculate_rio_tension(
 
     return min(
         1.0,
-        ((base_rio_liability * mw_noise_multiplier) / 100.0)
-        + (pot_entrapment * downward_drift * mitigation_factor),
+        ((base_rio_liability * mw_noise_multiplier) / 100.0) + (pot_entrapment * downward_drift * mitigation_factor),
     )
 
 
@@ -167,11 +155,7 @@ def calculate_utility_ev(
     elif status == "bubble":
         lambda_val = lambda_val * 2.0
 
-    return (
-        math.pow(raw_ev, alpha)
-        if raw_ev >= 0
-        else -lambda_val * math.pow(abs(raw_ev), beta)
-    )
+    return math.pow(raw_ev, alpha) if raw_ev >= 0 else -lambda_val * math.pow(abs(raw_ev), beta)
 
 
 def compute_quantum_metrics(
@@ -201,9 +185,7 @@ def compute_quantum_metrics(
     edge_scale = math.log(safe_stack_edge) / math.log(60.0)
     amortized_edge = edge_base * edge_scale
 
-    bayesian_win_prob = calculate_bayesian_win_prob(
-        eq, action_strength=0.5, range_density=0.5
-    )
+    bayesian_win_prob = calculate_bayesian_win_prob(eq, action_strength=0.5, range_density=0.5)
 
     # SOTA: Divida RIO com Ponderacao Quadratica e Volatilidade
     if active_players <= 2:
@@ -211,20 +193,14 @@ def compute_quantum_metrics(
     else:
         opponents = max(1, active_players - 1)
         rio_penalty_factor = math.pow(opponents, 2.0 + human_noise_factor)
-        volatility_multiplier = math.pow(
-            active_players / (max(1.0, stack_eff / 5.0)), 2.0
-        )
+        volatility_multiplier = math.pow(active_players / (max(1.0, stack_eff / 5.0)), 2.0)
         # SOTA: RIO Liability sincronizado com a fisica dimensional do Frontend
-        rio_penalty_chips = (
-            current_pot * rio_penalty_factor * (0.15 + (volatility_multiplier * 0.05))
-        )
+        rio_penalty_chips = current_pot * rio_penalty_factor * (0.15 + (volatility_multiplier * 0.05))
         rio_mw = rio_penalty_chips * icm_per_chip
 
     # SOTA: O passivo da derrota sofre dilatacao no ICM e aversao dinamica
     base_delta_lose = delta_lose_pct * (1.0 / max(0.1, fgs_health))
-    prospect_delta_lose = calculate_utility_ev(
-        base_delta_lose, stack_eff=stack_eff, fgs_health=fgs_health
-    )
+    prospect_delta_lose = calculate_utility_ev(base_delta_lose, stack_eff=stack_eff, fgs_health=fgs_health)
 
     # A EQUACAO UNIFICADA SOTA (Blindagem Dimensional)
     # Skill (Amortized Edge) e Valuation escalam cirurgicamente o vetor de ganho.
@@ -244,16 +220,10 @@ def compute_quantum_metrics(
         + (bounty_value * realization_factor)
     )
     thresh_eq = (
-        max(0.0, min(0.99, (dynamic_ev_fold + rio_mw - prospect_delta_lose) / denom))
-        if abs(denom) > 1e-6
-        else None
+        max(0.0, min(0.99, (dynamic_ev_fold + rio_mw - prospect_delta_lose) / denom)) if abs(denom) > 1e-6 else None
     )
 
-    pot_odds = (
-        hero_invested / (current_pot + hero_invested)
-        if (current_pot + hero_invested) > 0
-        else 0.0
-    )
+    pot_odds = hero_invested / (current_pot + hero_invested) if (current_pot + hero_invested) > 0 else 0.0
 
     if thresh_eq is not None and thresh_eq > 1e-6:
         ci = bayesian_win_prob / thresh_eq
@@ -354,9 +324,7 @@ def calculate_bayesian_win_prob(
 
     # Teorema de Bayes: Posterior = (Likelihood * Prior) / Normalizador
     numerator = likelihood * prior_equity
-    denominator = (likelihood * prior_equity) + (
-        (1.0 - action_strength) * (1.0 - prior_equity)
-    )
+    denominator = (likelihood * prior_equity) + ((1.0 - action_strength) * (1.0 - prior_equity))
 
     posterior = numerator / max(0.0001, denominator)
 

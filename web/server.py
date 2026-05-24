@@ -46,6 +46,7 @@ from web.middleware import (
     cookie_middleware,
     cors_middleware,
     rate_limit_middleware,
+    security_headers_middleware,
 )
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,13 @@ async def handle_predictive_profile(_request: web.Request) -> web.Response:
 
 async def start_api_server(manager: QueueManager, port: int = 17042):
     """Inicializa, configura rotas e executa o servidor web SOTA na porta especificada."""
-    app = web.Application(middlewares=[cors_middleware, rate_limit_middleware, auth_middleware, cookie_middleware])
+    app = web.Application(middlewares=[
+        cors_middleware, 
+        rate_limit_middleware, 
+        auth_middleware, 
+        cookie_middleware,
+        security_headers_middleware
+    ])
     app['manager'] = manager
     app['lab_manager'] = LabManager() # Instancia o DAO do Laboratorio SOTA
     app['audit_engine'] = AuditEngine(manager) # Instancia o Motor de Auditoria SOTA

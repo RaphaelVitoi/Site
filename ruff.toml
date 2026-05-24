@@ -1,0 +1,41 @@
+# ==============================================================================
+# NEXUS ORCHESTRATOR — ruff.toml SOTA v6 GOLD
+# Protocolo VITOI 3.2 — Blindagem ASCII & Zero Entropia
+# ==============================================================================
+
+target-version = "py312"
+line-length = 120
+respect-gitignore = true
+
+[lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "W",      # pycodestyle warnings
+    "S",      # bandit (security)
+    "B",      # flake8-bugbear
+    "I",      # isort (imports)
+    "UP",     # pyupgrade
+    "SIM",    # simplify
+    "TID",    # tidy-imports
+    "FAST",   # FastAPI
+    "ASYNC",  # async checks
+    "T20",    # check for prints
+    "LOG",    # logging best practices
+    "N",      # naming conventions
+]
+ignore = [
+    "E501",   # line length (handled by formatter)
+    "T201",   # allow prints in task_executor/scripts
+    "S101",   # allow assert in tests
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
+
+[lint.isort]
+known-first-party = ["core", "engine", "agents", "utils", "api", "database"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]

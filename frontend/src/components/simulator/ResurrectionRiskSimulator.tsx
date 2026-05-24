@@ -8,7 +8,7 @@
  */
 
 import { useState, useMemo, use } from 'react';
-import { calculateMapaICM, calculateAmortizedEdge } from '@/lib/perspectiva';
+import { calculateMapaICM, calculateAmortizedEdge } from '../../lib/perspectiva';
 import { useSotaSync } from './hooks/useSotaSync';
 import { SotaMetricsContext } from './SotaContext';
 import {

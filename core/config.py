@@ -8,7 +8,7 @@ import os
 import sys
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -47,7 +47,7 @@ def load_json_config(file_path: Path, default_value: Any = None) -> Any:
 
     if file_path.exists():
         try:
-            with open(file_path, "r", encoding="utf-8-sig") as f:
+            with open(file_path, encoding="utf-8-sig") as f:
                 content = f.read().lstrip("\ufeff").strip()
                 return json.loads(content)
         except (OSError, json.JSONDecodeError) as e:
@@ -305,14 +305,14 @@ def _key_identifier(provider: str, key: str) -> str:
 def _is_key_blocked(provider_key: str) -> bool:
     expiry = KEY_BLOCKLIST.get(provider_key)
     if expiry:
-        if expiry > datetime.now(timezone.utc):
+        if expiry > datetime.now(UTC):
             return True
         KEY_BLOCKLIST.pop(provider_key, None)
     return False
 
 
 def _block_key(provider_key: str):
-    KEY_BLOCKLIST[provider_key] = datetime.now(timezone.utc) + KEY_BLOCK_DURATION
+    KEY_BLOCKLIST[provider_key] = datetime.now(UTC) + KEY_BLOCK_DURATION
 
 
 # ==========================================
@@ -361,6 +361,36 @@ _telemetry_thread.start()
 atexit.register(_flush_telemetry_buffer)
 
 
+class SecretMaskingFilter(logging.Filter):
+    """Filtro SOTA para ofuscar chaves de API e segredos nos logs."""
+
+    def __init__(self, name: str = ""):
+        super().__init__(name)
+        # Padrao para chaves: sk-..., gsk-..., anthropic-..., google-..., etc.
+        import re
+        self.secret_pattern = re.compile(
+            r"(sk-[a-zA-Z0-9]{20,}|AIza[a-zA-Z0-9\-_]{35}|xox[pb]-[0-9]{12}-[a-zA-Z0-9]{12,}|"
+            r"ghp_[a-zA-Z0-9]{36}|(?:api[-_])?key[=:][\s\"']?([a-zA-Z0-9\-_]{20,})[\s\"']?)",
+            re.IGNORECASE
+        )
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.msg, str):
+            record.msg = self.secret_pattern.sub("[REDACTED_SECRET]", record.msg)
+        if record.args:
+            if isinstance(record.args, dict):
+                record.args = {
+                    k: (self.secret_pattern.sub("[REDACTED_SECRET]", v) if isinstance(v, str) else v)
+                    for k, v in record.args.items()
+                }
+            elif isinstance(record.args, tuple):
+                record.args = tuple(
+                    self.secret_pattern.sub("[REDACTED_SECRET]", v) if isinstance(v, str) else v
+                    for v in record.args
+                )
+        return True
+
+
 class AsciiEnforcementFilter(logging.Filter):
     """Filtro global SOTA para forcar Pure ASCII em todos os logs emitidos."""
 
@@ -385,5 +415,7 @@ class AsciiEnforcementFilter(logging.Filter):
         return True
 
 
-# Registra o filtro de forma global no root logger
-logging.getLogger().addFilter(AsciiEnforcementFilter())
+# Registra os filtros de forma global no root logger
+root_logger = logging.getLogger()
+root_logger.addFilter(SecretMaskingFilter())
+root_logger.addFilter(AsciiEnforcementFilter())

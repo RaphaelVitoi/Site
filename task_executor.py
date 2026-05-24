@@ -1,20 +1,25 @@
-# pylint: disable=logging-fstring-interpolation, broad-exception-caught, redefined-outer-name, line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name
+# pylint: disable=logging-fstring-interpolation, broad-exception-caught, redefined-outer-name, line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, import-outside-toplevel
 
+import asyncio
+import contextlib
+from datetime import UTC, datetime
 import json
 import logging
+import logging.handlers
 import os
+from pathlib import Path
+import shutil
+import sqlite3
 import sys
 import time
-import asyncio
-from datetime import datetime, timezone
-import contextlib
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import aiofiles
 from rich.console import Console
 from rich.logging import RichHandler
 
-# SOTA 8.0: Importa o novo cerebro de arbitragem
 import core.config as _core_config
 from agents.execution import (
     AGENT_ARCHITECT,
@@ -24,6 +29,7 @@ from agents.execution import (
     AGENT_IMPLEMENTOR,
     AGENT_MAVERICK,
 )
+import core.config as _core_config
 from core.schemas import Task
 from database.queue_manager import QueueManager
 
@@ -31,15 +37,11 @@ from database.queue_manager import QueueManager
 MODEL_GEMINI_FLASH = "gemini-2.0-flash"
 DB_PATH_CLAUDE = ".claude/tasks.db"
 DB_PATH_QUEUE = "queue/tasks.db"
-ERR_DB_CORRUPTED = (
-    "[ENTROPIA] Banco de dados de tarefas SOTA nao encontrado ou corrompido."
-)
+ERR_DB_CORRUPTED = "[ENTROPIA] Banco de dados de tarefas SOTA nao encontrado ou corrompido."
 
 
 def _resolve_tasks_db_path() -> Path | None:
     """SOTA: Resolve o caminho do banco de dados priorizando a fila assincrona."""
-    import sqlite3
-
     # Prioridade SOTA: Pipeline Assincrono (queue) > Contexto Claude > Root (Legado)
     for candidate in [DB_PATH_QUEUE, DB_PATH_CLAUDE, "tasks.db"]:
         p = Path(candidate)
@@ -47,9 +49,7 @@ def _resolve_tasks_db_path() -> Path | None:
             try:
                 with contextlib.closing(sqlite3.connect(p)) as conn:
                     cursor = conn.cursor()
-                    cursor.execute(
-                        "SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'"
-                    )
+                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'")
                     if cursor.fetchone():
                         return p
             except sqlite3.Error:
@@ -80,8 +80,6 @@ if not logger.handlers:
     rich_handler.setFormatter(logging.Formatter("%(message)s", datefmt="[%X]"))
     logger.addHandler(rich_handler)
 
-    import logging.handlers
-
     class SotaLogFormatter(logging.Formatter):
         """SOTA: Erradicacao de CRLF Injection em disco preservando a arvore de Tracebacks."""
 
@@ -101,9 +99,7 @@ if not logger.handlers:
         errors="backslashreplace",
     )
     rotating_handler.setFormatter(
-        SotaLogFormatter(
-            "%(asctime)s - [%(levelname)s] - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-        )
+        SotaLogFormatter("%(asctime)s - [%(levelname)s] - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
     )
     logger.addHandler(rotating_handler)
 
@@ -165,9 +161,7 @@ def _check_frontend_observer(description: str, metadata: dict[str, Any]) -> None
         return
     desc_lower = description.lower()
     frontend_terms = _core_config.heuristic_terms("web_infra_terms")
-    frontend_score = sum(
-        weight for term, weight in frontend_terms.items() if term in desc_lower
-    )
+    frontend_score = sum(weight for term, weight in frontend_terms.items() if term in desc_lower)
     if frontend_score >= _core_config.HEURISTIC_THRESHOLD:
         metadata.setdefault("observers", []).append(AGENT_CURATOR)
         logger.info(
@@ -176,9 +170,7 @@ def _check_frontend_observer(description: str, metadata: dict[str, Any]) -> None
 
 
 # SOTA: Roteamento Semantico e Auto-Escalonamento
-def _intelligent_route_task(
-    description: str, explicit_agent: str | None = None
-) -> tuple[str, dict[str, Any]]:
+def _intelligent_route_task(description: str, explicit_agent: str | None = None) -> tuple[str, dict[str, Any]]:
     """
     Intercepta o roteamento para aplicar a Lei da Friccao Zero.
     """
@@ -241,14 +233,10 @@ class DynamicYieldManager:
     def __init__(self):
         self.blocked_tasks: dict[str, int] = {}
         self.max_yield_seconds = 300.0  # 5 minutos de teto
-        self.max_tracked_tasks = (
-            1000  # SOTA: Teto absoluto anti-vazamento (LRU Bounded)
-        )
+        self.max_tracked_tasks = 1000  # SOTA: Teto absoluto anti-vazamento (LRU Bounded)
         self.lock = asyncio.Lock()
 
-    async def _check_orphan_dependencies(
-        self, deps: list[str], manager: QueueManager
-    ) -> bool:
+    async def _check_orphan_dependencies(self, deps: list[str], manager: QueueManager) -> bool:
         """Auxiliar SOTA: Valida se alguma dependencia referenciada eh orfa."""
         if not deps:
             return False
@@ -260,9 +248,7 @@ class DynamicYieldManager:
         task_ids = {t.id for t in all_tasks}
         return any(dep_id not in task_ids for dep_id in deps)
 
-    async def _analyze_deadlock(
-        self, deps: list[str], manager: QueueManager
-    ) -> tuple[bool, str]:
+    async def _analyze_deadlock(self, deps: list[str], manager: QueueManager) -> tuple[bool, str]:
         """Auxiliar SOTA: Analisa os nos bloqueadores e acusa deadlock real."""
         deps_status_details = []
         is_deadlock = False
@@ -277,11 +263,7 @@ class DynamicYieldManager:
                     deps_status_details.append(f"{dep_id} (INEXISTENTE)")
                     is_deadlock = True
 
-        deps_info = (
-            ", ".join(deps_status_details)
-            if deps_status_details
-            else "Nenhuma/Fantasma"
-        )
+        deps_info = ", ".join(deps_status_details) if deps_status_details else "Nenhuma/Fantasma"
         return is_deadlock or not deps_status_details, deps_info
 
     async def apply_yield(self, task: Task, manager: QueueManager) -> float:
@@ -298,10 +280,7 @@ class DynamicYieldManager:
                 return 0.0  # Aborta instantaneamente sem aplicar yield time
 
             # SOTA FIX: Memory Leak Prevention (FIFO Eviction)
-            if (
-                len(self.blocked_tasks) >= self.max_tracked_tasks
-                and task.id not in self.blocked_tasks
-            ):
+            if len(self.blocked_tasks) >= self.max_tracked_tasks and task.id not in self.blocked_tasks:
                 oldest_task = next(iter(self.blocked_tasks))
                 del self.blocked_tasks[oldest_task]
 
@@ -327,7 +306,7 @@ class DynamicYieldManager:
                         description=f"A tarefa {task.id} (Agente: {task.agent}) atingiu limite de starvation. Diagnostico de dependencias: {deps_info}. Requer intervencao cirurgica (God Mode).",
                         agent=AGENT_CHICO,
                         status="pending",
-                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        timestamp=datetime.now(UTC).isoformat(),
                         metadata={"priority": "high", "blocked_task": task.id},
                     )
                     await manager.add_task(alert_task)
@@ -381,21 +360,15 @@ def _cli_predictive_profile() -> None:
 
 async def _process_telemetry_file(path: Path) -> list[dict]:
     """SOTA: Processador atomico de buffer linear."""
-    import aiofiles
-
     data = []
-    async with aiofiles.open(
-        path, "r", encoding="ascii", errors="backslashreplace"
-    ) as f:
+    async with aiofiles.open(path, encoding="ascii", errors="backslashreplace") as f:
         async for line in f:
             content = line.strip()
             if content:
                 try:
                     data.append(json.loads(content))
                 except json.JSONDecodeError as e:
-                    logger.warning(
-                        f"[HISTORIAN] Entropia isolada: linha de telemetria corrompida ignorada ({e})"
-                    )
+                    logger.warning(f"[HISTORIAN] Entropia isolada: linha de telemetria corrompida ignorada ({e})")
     return data
 
 
@@ -420,8 +393,6 @@ async def _read_telemetry_dump() -> list[dict]:
         return []
 
     try:
-        import shutil
-
         processing_path = dump_path.with_suffix(".jsonl.processing")
         # SOTA: Offload de I/O bloqueante para Thread Pool, impedindo asfixia do Event Loop
         await asyncio.to_thread(shutil.move, str(dump_path), str(processing_path))
@@ -437,25 +408,15 @@ def _build_profile(fail_rate: float, engine: Any) -> dict:
     try:
         pred_profile = engine.get_predictive_profile()
     except Exception as e:
-        logger.debug(
-            f"[HISTORIAN] Falha ao extrair perfil preditivo (fallback acionado): {e}"
-        )
+        logger.debug(f"[HISTORIAN] Falha ao extrair perfil preditivo (fallback acionado): {e}")
         pred_profile = {}
     return {
-        "Aversao ao Risco": pred_profile.get(
-            "Aversao ao Risco", round(0.85 - (fail_rate * 0.1), 2)
-        ),
-        "Pot Entrapment": pred_profile.get(
-            "Pot Entrapment", round(0.65 + (fail_rate * 0.2), 2)
-        ),
+        "Aversao ao Risco": pred_profile.get("Aversao ao Risco", round(0.85 - (fail_rate * 0.1), 2)),
+        "Pot Entrapment": pred_profile.get("Pot Entrapment", round(0.65 + (fail_rate * 0.2), 2)),
         "Miopia de Payjump": pred_profile.get("Miopia de Payjump", 0.90),
-        "Excesso de Agressao": pred_profile.get(
-            "Excesso de Agressao", round(0.30 + (fail_rate * 0.15), 2)
-        ),
+        "Excesso de Agressao": pred_profile.get("Excesso de Agressao", round(0.30 + (fail_rate * 0.15), 2)),
         "Passivo Estrutural (RIO)": pred_profile.get("Passivo Estrutural (RIO)", 0.75),
-        "Desvio de Nash": pred_profile.get(
-            "Desvio de Nash", round(0.45 + (fail_rate * 0.1), 2)
-        ),
+        "Desvio de Nash": pred_profile.get("Desvio de Nash", round(0.45 + (fail_rate * 0.1), 2)),
     }
 
 
@@ -492,8 +453,6 @@ async def _generate_historian_reports_async(qm: Any) -> None:
 
 
 def _cli_historian_reports() -> None:
-    from database.queue_manager import QueueManager
-
     qm = QueueManager()
     try:
         asyncio.run(_generate_historian_reports_async(qm))
@@ -503,12 +462,10 @@ def _cli_historian_reports() -> None:
 
 
 def _cli_daily_stats() -> None:
-    from database.queue_manager import QueueManager
-
     async def _generate_daily_stats(qm: Any) -> None:
         try:
             tasks = await qm.get_tasks()
-            today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            today_str = datetime.now(UTC).strftime("%Y-%m-%d")
             today_tasks = [t for t in tasks if t.timestamp.startswith(today_str)]
 
             stats = {
@@ -558,11 +515,7 @@ def _extract_dependencies(meta_str: str | None) -> list[str]:
 
 
 def _cli_db_audit_dag() -> None:
-    import sqlite3
-
-    logger.info(
-        "=== [SISTEMA] Iniciando Auditoria Estrutural de DAGs (Friccao Zero) ==="
-    )
+    logger.info("=== [SISTEMA] Iniciando Auditoria Estrutural de DAGs (Friccao Zero) ===")
     db_path = _resolve_tasks_db_path()
     if not db_path:
         logger.error(ERR_DB_CORRUPTED)
@@ -579,18 +532,12 @@ def _cli_db_audit_dag() -> None:
                     if dep not in task_ids:
                         orphans.append((t_id, dep))
             if orphans:
-                logger.error(
-                    f"[ENTROPIA DETECTADA] {len(orphans)} bloqueios orfaos localizados:"
-                )
+                logger.error(f"[ENTROPIA DETECTADA] {len(orphans)} bloqueios orfaos localizados:")
                 for task_id, dep_id in orphans:
-                    logger.error(
-                        f"  -> Tarefa {task_id} aguarda dependencia inexistente: {dep_id}"
-                    )
+                    logger.error(f"  -> Tarefa {task_id} aguarda dependencia inexistente: {dep_id}")
                 sys.exit(1)
             else:
-                logger.info(
-                    "[OK] Malha DAG integra. Zero tarefas aguardando dependencias fantasmas."
-                )
+                logger.info("[OK] Malha DAG integra. Zero tarefas aguardando dependencias fantasmas.")
                 sys.exit(0)
     except sqlite3.Error:
         logger.exception("[FALHA] Erro ao auditar DAL.")
@@ -598,11 +545,7 @@ def _cli_db_audit_dag() -> None:
 
 
 def _cli_db_purge_orphans() -> None:
-    import sqlite3
-
-    logger.info(
-        "=== [SISTEMA] Iniciando Expurgo de Tarefas 'failed' com Dependencias Orfas ==="
-    )
+    logger.info("=== [SISTEMA] Iniciando Expurgo de Tarefas 'failed' com Dependencias Orfas ===")
     db_path = _resolve_tasks_db_path()
     if not db_path:
         logger.error(ERR_DB_CORRUPTED)
@@ -644,8 +587,6 @@ def _cli_db_purge_orphans() -> None:
 
 
 def _cli_db_vacuum() -> None:
-    import sqlite3
-
     logger.info("=== [SISTEMA] Iniciando Otimizacao de Banco de Dados (VACUUM) ===")
     db_path = _resolve_tasks_db_path()
     if not db_path:
@@ -653,9 +594,7 @@ def _cli_db_vacuum() -> None:
         sys.exit(1)
     try:
         with contextlib.closing(sqlite3.connect(db_path, timeout=60.0)) as conn:
-            logger.info(
-                f"Executando VACUUM em {db_path}. Isso pode levar alguns minutos..."
-            )
+            logger.info(f"Executando VACUUM em {db_path}. Isso pode levar alguns minutos...")
             # SOTA: Grava estatisticas de uso em disco para otimizar o Query Planner antes da reconstrucao do arquivo.
             conn.execute("PRAGMA optimize;")
             conn.execute("VACUUM;")

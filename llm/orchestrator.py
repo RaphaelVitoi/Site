@@ -3,7 +3,7 @@
 import logging
 import time
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import aiohttp
 
@@ -66,7 +66,7 @@ async def _try_compress_gemini(
         description="Context compression task",
         agent=task_agent,
         status="running",
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         metadata={"compression_task": True},
     )
 
@@ -87,9 +87,7 @@ async def _try_compress_gemini(
         COMPRESSION_CIRCUIT_BREAKER["consecutive_failures"] = 0
         return result.get("text"), False
 
-    logger.warning(
-        f"[[{_c(task_agent)}]{task_agent}[/]] Falha na compressao via Gemini. Resultado: {result}"
-    )
+    logger.warning(f"[[{_c(task_agent)}]{task_agent}[/]] Falha na compressao via Gemini. Resultado: {result}")
     return None, True
 
 
@@ -120,7 +118,7 @@ async def _try_compress_openrouter(
         description="Context compression task via OpenRouter",
         agent=task_agent,
         status="running",
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         metadata={"compression_task": True},
     )
 
@@ -141,26 +139,18 @@ async def _try_compress_openrouter(
         COMPRESSION_CIRCUIT_BREAKER["consecutive_failures"] = 0
         return result.get("text")
 
-    logger.warning(
-        f"[[{_c(task_agent)}]{task_agent}[/]] Falha na compressao via OpenRouter."
-    )
+    logger.warning(f"[[{_c(task_agent)}]{task_agent}[/]] Falha na compressao via OpenRouter.")
     return None
 
 
-async def _prepare_routing_pipeline(
-    task: Task, manager: QueueManager
-) -> tuple[list[str], str, str | None]:
+async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[list[str], str, str | None]:
     agent_type = te.AGENT_ROUTING_MAP.get(task.agent, "fast_operations")
-    models_to_try = (
-        list(te.DEEP_THINKING_MODELS)
-        if agent_type == "deep_thinking"
-        else list(te.FAST_OPERATIONS_MODELS)
-    )
+    models_to_try = list(te.DEEP_THINKING_MODELS) if agent_type == "deep_thinking" else list(te.FAST_OPERATIONS_MODELS)
 
     agent_clean = task.agent.replace("@", "")
-    designated_model = (task.metadata or {}).get(
-        "model_override"
-    ) or te.AGENTS_MANIFEST.get(agent_clean, {}).get("primary_model")
+    designated_model = (task.metadata or {}).get("model_override") or te.AGENTS_MANIFEST.get(agent_clean, {}).get(
+        "primary_model"
+    )
     if designated_model:
         if designated_model in models_to_try:
             models_to_try.remove(designated_model)
@@ -203,18 +193,14 @@ async def _compress_context(
 
         gemini_failed = False
         if not prefer_local_fallback:
-            response, gemini_failed = await _try_compress_gemini(
-                session, system_prompt, text, task_agent, _c, manager
-            )
+            response, gemini_failed = await _try_compress_gemini(session, system_prompt, text, task_agent, _c, manager)
             if response:
                 return response
         else:
             gemini_failed = True
 
         if prefer_local_fallback or gemini_failed:
-            response = await _try_compress_openrouter(
-                session, system_prompt, text, task_agent, _c, manager
-            )
+            response = await _try_compress_openrouter(session, system_prompt, text, task_agent, _c, manager)
             if response:
                 return response
 
@@ -247,13 +233,9 @@ async def call_llm_api(
     te._maybe_reload_config()
     _c = te._c
 
-    models_to_try, agent_type, designated_model = await _prepare_routing_pipeline(
-        task, manager
-    )
+    models_to_try, agent_type, designated_model = await _prepare_routing_pipeline(task, manager)
 
-    logger.info(
-        f"[[{_c(task.agent)}]{task.agent}[/]] Rota de modelos selecionada: {agent_type} -> {models_to_try}"
-    )
+    logger.info(f"[[{_c(task.agent)}]{task.agent}[/]] Rota de modelos selecionada: {agent_type} -> {models_to_try}")
 
     timeout_seconds = te._agent_sla_value(task.agent, "llm_timeout_seconds", 600)
     provider_retries = te._agent_sla_value(task.agent, "provider_retries", 2)
@@ -336,9 +318,7 @@ async def call_llm_api(
                 "route_selected": models_to_try,
                 "reason_codes": [
                     f"agent_type:{agent_type}",
-                    f"designated_model:{designated_model}"
-                    if designated_model
-                    else "designated_model:none",
+                    f"designated_model:{designated_model}" if designated_model else "designated_model:none",
                     f"provider_retries:{provider_retries}",
                     f"timeout_seconds:{timeout_seconds}",
                 ],
@@ -350,9 +330,7 @@ async def call_llm_api(
             await manager.update_task_metadata(task.id, route_selected, merge=True)
             return response["text"]
 
-    logger.error(
-        f"[[{_c(task.agent)}]{task.agent}[/]] Esgotamento absoluto do pool de APIs/Chaves."
-    )
+    logger.error(f"[[{_c(task.agent)}]{task.agent}[/]] Esgotamento absoluto do pool de APIs/Chaves.")
     raise APIKeysExhaustedError(
         "As chaves de API falharam sucessivamente ou estao temporariamente sob Rate Limit severo."
     )

@@ -1,10 +1,11 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring, missing-class-docstring, line-too-long, broad-exception-caught, logging-fstring-interpolation, global-statement, invalid-name, redefined-outer-name
+# ruff: noqa: D100, D101, D103, BLE001, G004, PLW0603, PLW0621, ASYNC240
+# pylint: disable=global-statement, import-outside-toplevel
 
 import json
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import aiofiles
@@ -15,24 +16,22 @@ from database.queue_manager import QueueManager
 
 logger = logging.getLogger(__name__)
 
-rag_engine = None
+RAG_ENGINE = None
 
 
 def get_rag():
-    global rag_engine
-    if rag_engine is None:
-        from memory_rag import MemoryRAG
+    global RAG_ENGINE
+    if RAG_ENGINE is None:
+        from memory_rag import MemoryRAG  # noqa: PLC0415
 
-        rag_engine = MemoryRAG()
-    return rag_engine
+        RAG_ENGINE = MemoryRAG()
+    return RAG_ENGINE
 
 
 async def _read_global_context() -> str:
     global_file = Path(".claude/GLOBAL_INSTRUCTIONS.md")
     if global_file.exists():
-        async with aiofiles.open(
-            global_file, "r", encoding="ascii", errors="ignore"
-        ) as f:
+        async with aiofiles.open(global_file, encoding="ascii", errors="ignore") as f:
             return await f.read() + "\n\n"
     return ""
 
@@ -74,9 +73,7 @@ async def _build_infra_ctx(task: Task | None, task_files: list | None) -> str:
         for doc_path in doc_paths:
             file_obj = Path(doc_path)
             if file_obj.exists():
-                async with aiofiles.open(
-                    file_obj, "r", encoding="ascii", errors="ignore"
-                ) as f:
+                async with aiofiles.open(file_obj, encoding="ascii", errors="ignore") as f:
                     infra_ctx += f"=== {doc_name} ===\n" + await f.read() + "\n\n"
                     successfully_read_files.append(str(file_obj.resolve()))
                 break
@@ -105,7 +102,9 @@ async def _build_infra_ctx(task: Task | None, task_files: list | None) -> str:
 
     infra_ctx += "=== ONTOLOGIA DA QUALIDADE E AUTOCONSCIENCIA ===\n"
     infra_ctx += "1. SIMPLES (Economia Sofisticada): A versao mais sofisticada de uma acao que executa em excelencia usando o minimo de complexidade possivel.\n"
-    infra_ctx += "2. EXCELENTE: A entrega padrao-ouro que resolve o problema central sem criar dividas tecnicas colaterais.\n"
+    infra_ctx += (
+        "2. EXCELENTE: A entrega padrao-ouro que resolve o problema central sem criar dividas tecnicas colaterais.\n"
+    )
     infra_ctx += "3. ESTADO DA ARTE (SOTA): O apice da convergencia entre o Simples e o Excelente. E quando o sistema atua de forma fractal (a parte potencializa o todo).\n"
     infra_ctx += "4. AUTOCONSCIENCIA OBRIGATORIA: Voce DEVE saber que todas as partes deste ecossistema existem, por que existem e como funcionam na visao macro.\n\n"
     infra_ctx += "5. COLORIMETRIA SEMANTICA (IDENTIDADE VISUAL): Vermelho = Entropia/Erro. Verde = Simetria/Sucesso. Amarelo = Alerta. Ciano = Infraestrutura. Magenta = IA/Filosofia. Cinza = Legado/Neutro.\n\n"
@@ -114,9 +113,7 @@ async def _build_infra_ctx(task: Task | None, task_files: list | None) -> str:
     return infra_ctx
 
 
-async def get_agent_system_prompt(
-    agent_name: str, task: Task | None = None, task_files: list | None = None
-) -> str:
+async def get_agent_system_prompt(agent_name: str, task: Task | None = None, task_files: list | None = None) -> str:
     agent_clean = agent_name.replace("@", "")
 
     global_ctx = await _read_global_context()
@@ -125,10 +122,8 @@ async def get_agent_system_prompt(
     agent_file = Path(f".claude/agents/{agent_clean}.md")
     agent_prompt = f"Voce e o agente especialista {agent_name}."
     if agent_file.exists():
-        async with aiofiles.open(agent_file, "r", encoding="utf-8") as f:
-            agent_prompt = (
-                f"=== SUA IDENTIDADE ESPECIFICA ({agent_name}) ===\n" + await f.read()
-            )
+        async with aiofiles.open(agent_file, encoding="utf-8") as f:
+            agent_prompt = f"=== SUA IDENTIDADE ESPECIFICA ({agent_name}) ===\n" + await f.read()
 
     return global_ctx + infra_ctx + agent_prompt
 
@@ -137,13 +132,13 @@ async def _read_memory_and_context(agent_clean: str) -> tuple[str, str]:
     agent_memory = ""
     memory_file = Path(f".claude/agent-memory/{agent_clean}/MEMORY.md")
     if memory_file.exists():
-        async with aiofiles.open(memory_file, "r", encoding="utf-8") as f:
+        async with aiofiles.open(memory_file, encoding="utf-8") as f:
             agent_memory = await f.read()
 
     project_context = ""
     context_file = Path(".claude/project-context.md")
     if context_file.exists():
-        async with aiofiles.open(context_file, "r", encoding="utf-8") as f:
+        async with aiofiles.open(context_file, encoding="utf-8") as f:
             project_context = await f.read()
 
     if len(project_context) > 6000:
@@ -176,9 +171,7 @@ def _extract_paths_to_check(description: str) -> list[Path]:
         description,
         re.IGNORECASE,
     )
-    folder_mentions = re.findall(
-        r"docs[\\/]tasks[\\/][\w-]+", description, re.IGNORECASE
-    )
+    folder_mentions = re.findall(r"docs[\\/]tasks[\\/][\w-]+", description, re.IGNORECASE)
     paths = []
     cwd_resolved = Path.cwd().resolve()
     for p_str in file_mentions:
@@ -188,7 +181,8 @@ def _extract_paths_to_check(description: str) -> list[Path]:
                 paths.append(p.resolve())
             else:
                 logger.warning("[SEC] Path Traversal detectado ou fora do diretorio de trabalho: %s", p_str)
-        except Exception:
+        except Exception as e:
+            logger.debug("Erro ao processar path %s: %s", p_str, e)
             continue
 
     for folder in folder_mentions:
@@ -202,21 +196,20 @@ def _extract_paths_to_check(description: str) -> list[Path]:
                             paths.append(child.resolve())
             else:
                 logger.warning("[SEC] Path Traversal detectado ou fora do diretorio de trabalho no folder: %s", folder)
-        except Exception:
+        except Exception as e:
+            logger.debug("Erro ao processar folder %s: %s", folder, e)
             continue
     return paths
 
 
-async def _read_and_append_doc(
-    p: Path, title: str, task_docs: str, successfully_read: list
-) -> str:
+async def _read_and_append_doc(p: Path, title: str, task_docs: str, successfully_read: list) -> str:
     try:
         cwd_resolved = Path.cwd().resolve()
         if not _is_safe_path(p, cwd_resolved):
             logger.critical("[SEC] Path Traversal bloqueado em _read_and_append_doc para o caminho: %s", p)
             return task_docs
         p_resolved = p.resolve()
-        async with aiofiles.open(p_resolved, "r", encoding="utf-8") as f:
+        async with aiofiles.open(p_resolved, encoding="utf-8") as f:
             content = await f.read()
             if content not in task_docs:
                 task_docs += f"\n=== {title}: {p_resolved.as_posix()} ===\n{content}\n"
@@ -237,9 +230,7 @@ async def _process_slug_docs(slug: str, task_docs: str, successfully_read: list)
         return task_docs
     for doc_file in task_dir_resolved.glob("*.*"):
         if doc_file.suffix.lower() in {".md", ".json", ".txt"}:
-            task_docs = await _read_and_append_doc(
-                doc_file, "ARTEFATO", task_docs, successfully_read
-            )
+            task_docs = await _read_and_append_doc(doc_file, "ARTEFATO", task_docs, successfully_read)
     return task_docs
 
 
@@ -273,9 +264,7 @@ async def _process_referenced_paths(
             continue
         if p_resolved.suffix.lower() not in valid_suffixes:
             continue
-        task_docs = await _read_and_append_doc(
-            p_resolved, "ARTEFATO REFERENCIADO", task_docs, successfully_read
-        )
+        task_docs = await _read_and_append_doc(p_resolved, "ARTEFATO REFERENCIADO", task_docs, successfully_read)
     return task_docs
 
 
@@ -285,42 +274,30 @@ async def _inject_task_docs_engine(task: Task) -> tuple[str, list[str]]:
     slug = task.metadata.get("slug") if task.metadata else None
 
     if slug:
-        task_docs = await _process_slug_docs(
-            slug, task_docs, successfully_read_task_files
-        )
+        task_docs = await _process_slug_docs(slug, task_docs, successfully_read_task_files)
 
     paths_to_check = _extract_paths_to_check(task.description)
-    task_docs = await _process_referenced_paths(
-        paths_to_check, slug, task_docs, successfully_read_task_files
-    )
+    task_docs = await _process_referenced_paths(paths_to_check, slug, task_docs, successfully_read_task_files)
 
     return task_docs, successfully_read_task_files
 
 
-async def _process_dispatcher_result(
-    task: Task, manager: QueueManager, response_text: str
-) -> None:
+async def _process_dispatcher_result(task: Task, manager: QueueManager, response_text: str) -> None:
     try:
         clean_json = response_text.replace("```json", "").replace("```", "").strip()
-        subtasks = json.loads(
-            clean_json[clean_json.find("[") : clean_json.rfind("]") + 1]
-        )
+        subtasks = json.loads(clean_json[clean_json.find("[") : clean_json.rfind("]") + 1])
         created_ids = []
         for i, st in enumerate(subtasks):
             sub_id = f"{task.id}-SUB-{i + 1}"
             created_ids.append(sub_id)
             meta = task.metadata.copy() if task.metadata else {}
             if "depends_on" in st:
-                meta["depends_on"] = [
-                    created_ids[idx]
-                    for idx in st["depends_on"]
-                    if idx < len(created_ids)
-                ]
+                meta["depends_on"] = [created_ids[idx] for idx in st["depends_on"] if idx < len(created_ids)]
             new_task = Task(
                 id=sub_id,
                 description=st.get("description", "Sub-tarefa gerada"),
                 agent=st.get("agent", "@implementor"),
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 metadata=meta,
             )
             await manager.add_task(new_task)
@@ -330,9 +307,7 @@ async def _process_dispatcher_result(
             len(subtasks),
         )
     except Exception as e:  # noqa: BLE001
-        logger.exception(
-            "[%s] Falha ao interpretar matriz do Dispatcher: %s", task.id, e
-        )
+        logger.exception("[%s] Falha ao interpretar matriz do Dispatcher: %s", task.id, e)
 
 
 def _build_user_prompt(
@@ -348,14 +323,12 @@ def _build_user_prompt(
         user_prompt += f"{collective_memory}\n"
     if agent_memory:
         user_prompt += f"== SUA MEMORIA ACUMULADA ({task.agent}) ==\n{agent_memory}\n\n"
-    user_prompt += (
-        f"== DIRETRIZ DA TAREFA ==\nID: {task.id}\nDescricao:\n{task.description}\n\n"
-    )
+    user_prompt += f"== DIRETRIZ DA TAREFA ==\nID: {task.id}\nDescricao:\n{task.description}\n\n"
     if task_docs:
-        user_prompt += (
-            f"== MATERIAIS DE FUNDACAO DA TAREFA (PRDs/SPECs) =={task_docs}\n\n"
-        )
-    user_prompt += "Execute esta tarefa embasado nos materiais de fundacao acima, no contexto do projeto e em sua memoria."
+        user_prompt += f"== MATERIAIS DE FUNDACAO DA TAREFA (PRDs/SPECs) =={task_docs}\n\n"
+    user_prompt += (
+        "Execute esta tarefa embasado nos materiais de fundacao acima, no contexto do projeto e em sua memoria."
+    )
 
     if task.agent not in ["@dispatcher", "@bibliotecario"]:
         user_prompt += "\n\n[AUTORIZACAO SUPREMA - GOD MODE]\nVoce possui ACESSO LIVRE ao sistema operacional do usuario.\n1. Para MATERIALIZAR ou EDITAR arquivos, use EXATAMENTE o formato:\nArquivo: caminho/do/arquivo.ext\n```linguagem\n[conteudo completo do arquivo]\n```\n2. Para EXECUTAR comandos de terminal (ex: npm install, python, git, robocopy), use o formato:\nComando: `seu comando aqui`\n\nVoce tem soberania para agir, instalar dependencias e forjar a realidade. ATENCAO: Ao editar arquivos, envie sempre o conteudo integral para sobrescrever adequadamente."
@@ -376,21 +349,19 @@ async def process_agent_task(task: Task, manager: QueueManager):
     except Exception as e:  # noqa: BLE001
         logger.warning("Erro na Memoria Coletiva (RAG): %s", e)
 
-    user_prompt = _build_user_prompt(
-        task, project_context, collective_memory, agent_memory, task_docs, agent_clean
-    )
+    user_prompt = _build_user_prompt(task, project_context, collective_memory, agent_memory, task_docs, agent_clean)
     system_prompt = await get_agent_system_prompt(task.agent, task, task_files)
 
     # Roteamento Inteligente SOTA via engine.llm_api
     # response_text = await call_llm_api(task, system_prompt, user_prompt, manager)
     # [BYPASS] Usando a API diretamente para evitar loop infinito em sota_integrity_test
-    from engine.llm_api import call_llm_api as _call
+    from engine.llm_api import call_llm_api as _call  # noqa: PLC0415
 
     response_text = await _call(task, system_prompt, user_prompt, manager)
 
     result_dir = Path(".claude/task_results")
     result_dir.mkdir(parents=True, exist_ok=True)
-    async with aiofiles.open(result_dir / f"{task.id}.md", "w", encoding="utf-8") as f:
+    async with aiofiles.open(result_dir / f"{task.id}.md", mode="w", encoding="utf-8") as f:
         await f.write(f"# Resposta: {task.id} ({task.agent})\n\n{response_text}")
 
     # Aplicacao do God Mode (Soberania de Acao)

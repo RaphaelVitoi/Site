@@ -197,6 +197,25 @@ async def cookie_middleware(request, handler):
     return response
 
 @web.middleware
+async def security_headers_middleware(request, handler):
+    """
+    SOTA: Injeta cabecalhos de isolamento de origem para habilitar SharedArrayBuffer e WebGPU.
+    Essencial para a performance Zero-Copy do motor matemático WASM.
+    """
+    try:
+        response = await handler(request)
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+        # Hardening Adicional
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        return response
+    except web.HTTPException as ex:
+        ex.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        ex.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+        raise
+
+@web.middleware
 async def cors_middleware(request, handler):
     """Injeta cabecalhos CORS em requisicoes de origens confiaveis."""
     origin = request.headers.get("Origin")

@@ -1,9 +1,9 @@
 # ==============================================================================
 # PROTOCOLO VITOI 3.2 - BLINDAGEM DE CONTEXTO (FRICÇÃO ZERO E SHANNON ECONOMY)
-# Gemini CLI Ignore File - Optimize Token Usage
+# .geminiignore SOTA v6 GOLD — Optimized Token Efficiency
 # ==============================================================================
 
-# 1. INFRAESTRUTURA, CACHE E DEPENDÊNCIAS (Densidade Zero)
+# 1. INFRAESTRUTURA, CACHE E DEPENDÊNCIAS
 **/.venv/
 **/node_modules/
 **/target/
@@ -17,14 +17,13 @@
 **/.mypy_cache/
 **/.pytest_cache/
 **/.ruff_cache/
-**/.tox/
-**/.idea/
+**/.eslintcache
+**/.prettiercache
 **/.turbo/
 **/*.egg-info/
 **/coverage/
-**/worker/Java/
 
-# 2. BANCOS DE DADOS E VETORES (Opacidade Binária)
+# 2. BANCOS DE DADOS E VETORES (OPACIDADE)
 .chroma_db/
 *.db
 *.db-shm
@@ -32,7 +31,7 @@
 *.sqlite
 *.sqlite3
 
-# 3. FONTES E ÍCONES E MÍDIA (Ruído Inútil para LLM)
+# 3. MÍDIA E BINÁRIOS (RUÍDO PARA LLM)
 *.ico
 *.woff
 *.woff2
@@ -42,8 +41,11 @@
 *.jpeg
 *.gif
 *.svg
+*.pdf
+*.mp4
+*.wasm
 
-# 4. LOGS, BACKUPS E TELEMETRIA SOTA
+# 4. LOGS, BACKUPS E TELEMETRIA
 **/_backups/
 **/.backups/
 **/.backups_sota/
@@ -55,7 +57,7 @@
 *.bak
 *.jsonl
 
-# 5. LOCKFILES E AMBIENTE (Prevenção de Vazamento/Ruído)
+# 5. LOCKFILES E AMBIENTE
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
@@ -63,9 +65,12 @@ uv.lock
 *.tsbuildinfo
 .env
 .env.*
+_env.ps1
 
-# 6. EXCEÇÕES ESTRATÉGICAS (Permitidos)
+# 6. EXCEÇÕES ESTRATÉGICAS (NÚCLEO DE INTELIGÊNCIA)
 !manifest.json
 !agents_manifest.json
 !intentmap.json
 !system_config.json
+!GEMINI.md
+!MEMORY.md

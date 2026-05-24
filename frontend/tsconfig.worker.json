@@ -1,19 +1,16 @@
 {
-    "extends": "../tsconfig.base.json",
-    "compilerOptions": {
-        "target": "ES2022",
-        "module": "ESNext",
-        "moduleResolution": "bundler",
-        "lib": [
-            "ESNext",
-            "WebWorker"
-        ],
-        "allowJs": true,
-        "types": [
-            "node"
-        ]
-    },
-    "include": [
-        "src/**/*.worker.ts"
-    ]
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"composite": true,
+		"rootDir": "./src",
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"lib": ["ESNext", "WebWorker"],
+		"allowJs": true,
+		"outDir": "./dist-workers",
+		"types": ["node"]
+	},
+	"include": ["**/*.worker.ts", "**/*.worker.js"],
+	"exclude": ["node_modules", "backups"]
 }

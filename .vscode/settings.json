@@ -1,233 +1,140 @@
 {
-	"terminal.integrated.env.windows": {
-		"GEMINI_SOTA_MODE": "v6"
-	},
-	"python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-	"editor.codeActionsOnSave": {
-		"source.fixAll": "explicit"
-	},
-	"gemini-cli.model": "gemini-2.0-flash-exp",
-	"gemini.auto_auditoria": true,
-	"gemini.sota.version": "6.2.1-GOLD",
-	"antigravity.version": "2.0.1",
-	"antigravity.telemetry.enabled": false,
-	"antigravity.performance.mode": "maximum_density",
-	"ollama.executablePath": "ollama",
-	"ollama.models": ["gemma4:4b", "gemma4:31b", "llama3.1:8b"],
-	"git.autofetch": true,
-	"git.enableSmartCommit": true,
-	"git.confirmSync": false,
-	"git.ignoreRebaseWarning": true,
-	"json.schemas": [
-		{
-			"fileMatch": ["**/.vscode/mcp.json"],
-			"schema": {
-				"type": "object",
-				"properties": {
-					"mcpServers": {
-						"type": "object",
-						"additionalProperties": true
-					}
-				},
-				"additionalProperties": true
-			}
-		}
-	],
-	"files.associations": {
-		"*.sys": "binary",
-		"*.exe": "binary",
-		"*.dll": "binary",
-		"*.bin": "binary",
-		"*.zip": "zip",
-		"*.rar": "zip",
-		"*.7z": "zip",
-		"*.config": "xml",
-		".env*": "makefile",
-		"*.csv": "csv",
-		"*.tsv": "csv",
-		"*.svg": "xml",
-		"*.jpeg": "image",
-		"*.jpg": "image",
-		"*.png": "image",
-		"*.gif": "image",
-		"*.webp": "image",
-		"*.mp4": "video",
-		"*.mov": "video"
-	},
-	"workbench.editorAssociations": {
-		"*.pdf": "pdf.preview",
-		"*.csv": "rainbow_csv.editor",
-		"*.xlsx": "cweijan.officeViewer",
-		"*.docx": "cweijan.officeViewer",
-		"*.pptx": "cweijan.officeViewer",
-		"*.svg": "gryc.viewer",
-		"*.zip": "zip.viewer",
-		"*.png": "imagePreview.previewEditor",
-		"*.jpg": "imagePreview.previewEditor",
-		"*.jpeg": "imagePreview.previewEditor",
-		"*.gif": "imagePreview.previewEditor",
-		"*.copilotmd": "vscode.markdown.preview.editor",
-		"{git,gitlens,conflictResolution,vscode-local-history}:/**/*.tc.json": "default",
-		"{git,gitlens,conflictResolution,vscode-local-history}:/**/*.{asl.json,asl.yaml,asl.yml}": "default",
-		"{hexdiff}:/**/*.*": "hexEditor.hexedit",
-		"*.md": "vscode.markdown.preview.editor"
-	},
-	"editor.unicodeHighlight.nonBasicASCII": true,
-	"editor.unicodeHighlight.invisibleCharacters": true,
-	"editor.unicodeHighlight.ambiguousCharacters": true,
-	"editor.unicodeHighlight.allowedCharacters": {
-		" ": true,
-		"  ": true
-	},
-	"files.encoding": "utf8",
-	"files.autoGuessEncoding": true,
-	"editor.renderControlCharacters": true,
-	"editor.renderFinalNewline": "on",
-	"editor.formatOnSave": true,
-	"editor.codeLens": true,
-	"editor.suggest.showCodeLenses": true,
-	"editor.renderWhitespace": "selection",
-	"editor.tabSize": 4,
-	"editor.insertSpaces": false,
-	"[typescript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[typescriptreact]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[javascript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[javascriptreact]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[python]": {
-		"editor.defaultFormatter": "charliermarsh.ruff",
-		"editor.codeActionsOnSave": {
-			"source.fixAll.ruff": "explicit",
-			"source.organizeImports.ruff": "explicit"
-		}
-	},
-	"[json]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[jsonc]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[css]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[html]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[markdown]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode",
-		"editor.wordWrap": "on",
-		"editor.quickSuggestions": {
-			"comments": "on",
-			"strings": "on",
-			"other": "on"
-		}
-	},
-	"[java]": {
-		"editor.defaultFormatter": "redhat.java"
-	},
-	"[cpp]": {
-		"editor.defaultFormatter": "ms-vscode.cpptools"
-	},
-	"[c]": {
-		"editor.defaultFormatter": "ms-vscode.cpptools"
-	},
-	"python.linting.ruffEnabled": true,
-	"python.linting.pylintEnabled": true,
-	"python.formatting.provider": "none",
-	"tailwindCSS.experimental.classRegex": [["@theme\\s*{([^}]*)}", "--color-([^\\s:]*)"]],
-	"tailwindCSS.includeLanguages": {
-		"plaintext": "html",
-		"typescriptreact": "html"
-	},
-	"java.configuration.runtimes": [
-		{
-			"name": "JavaSE-25",
-			"path": "C:\\Program Files\\Java\\jdk-25.0.3",
-			"default": true
-		}
-	],
-	"[prisma]": {
-		"editor.defaultFormatter": "Prisma.prisma"
-	},
-	"prisma.inspector.enable": true,
-	"tailwindCSS.experimental.configFile": "frontend/globals.css",
-	"editor.codeLensFontFamily": "JetBrains Mono",
-	"editor.codeLensFontSize": 10,
-	"gemini-cli.approvalMode": "auto_edit",
-	"css.lint.unknownAtRules": "ignore",
-	"geminicodeassist.agentYoloMode": true,
-	"geminicodeassist.agentDebugMode": true,
-	"geminicodeassist.verboseLogging": true,
-	"geminicodeassist.inlineSuggestions.nextEditPredictions": true,
-	"terminal.integrated.profiles.windows": {
-		"Gemini-SOTA": {
-			"path": "powershell.exe",
-			"args": ["-NoExit", "-Command", "gemini --approval-mode auto_edit"]
-		}
-	},
-	"files.exclude": {
-		"**/.git": true,
-		"**/node_modules": true,
-		"**/.venv": true,
-		"**/__pycache__": true,
-		"**/.next": true,
-		"**/.turbo": true,
-		"**/.chroma_db": true
-	},
-	"search.exclude": {
-		"**/.git": true,
-		"**/node_modules": true,
-		"**/.venv": true,
-		"**/__pycache__": true,
-		"**/.next": true,
-		"**/.turbo": true,
-		"**/.chroma_db": true
-	},
-	"files.watcherExclude": {
-		"**/.git/objects/**": true,
-		"**/node_modules/**": true,
-		"**/.venv/**": true,
-		"**/.next/**": true
-	},
-	"msg.shell.useExternal": false,
-	"msg.mrs.displayScriptHelpers": true,
-	"msg.editor.stopOnErrors": true,
-	"msg.dbEditor.connectionBrowser.sortFoldersFirst": true,
-	"msg.editor.showHidden": true,
-	"msg.shell.enforceHttps": false,
-	"msg.shell.showUnsecuredConnectionWarning": false,
-	"gemini.mcp.configPath": ".vscode/mcp.json",
-	"gemini.research.autoSaveReport": true,
-	"gemini.googleSearch.enabled": true,
-	"gemini.cloud.autoDeploy": false,
-	"gemini.skills.autoActivate": true,
-	"gemini.hooks.preCommit.enabled": true,
-	"github.copilot.advanced.enabled": false,
-	"telemetry.telemetryLevel": "off",
-	"geminicodeassist.enableTelemetry": false,
-	"geminicodeassist.outlines.automaticOutlineGeneration": true,
-	"geminicodeassist.updateChannel": "Insiders",
-	"geminicodeassist.codeGenerationPaneViewEnabled": true,
-	"geminicodeassist.project": "gen-lang-client-0098874436",
-	"geminicodeassist.rules": "Está proibida absolutamente o enviesamento e a artificialização de outputs, respostas não fundamentadas ou outputs que não sejam pautados na lógica e na comprovação científica e empírica. Sempre que for o caso, responda: Não sei a resposta; Não é possível ter certeza, apenas indícios. Ou qualquer tipo de resposta similar onde há a impossibilidade de definir um assunto por ausencia de evidências ou argumentação sólida. O modelo LLM deve sempre fazer perguntas acerca de inconsistências quando os inputs carecerem de informação, forem vagos, contraditórios ou equivocados. O modelo LLM não deve reproduzir e agradar como inclinação nativa: é mandatório que o modelo agregue com adendos e provocações valiosas que não constavam na instrução do user. Adotar a abordagem de fortalecer a tese ou argumento para então desafiá-lo em sua versão mais robusta, garantindo uma análise crítica de alta integridade (steelmaning).",
-	"geminicodeassist.agent.additionalTrustedCertificates": "AIzaSyCdjdMpnvVzFFnYxcJGmq8Apg60w5j8Rlg",
-	"gemini-cli-vscode.diagnostics.performance": false,
-	"gemini-cli-vscode.qwen.enabled": true,
-	"cloudcode.compute.sshInternalIp": true,
-	"cloudcode.enableConfigLessExperience": true,
-	"cloudcode.enableSkaffoldSkipUnreachableDirs": true,
-	"cloudcode.enableMultiSkaffoldConfigsKey": true,
-	"cloudcode.yaml.format.enable": true,
-	"cloudcode.yaml.format.singleQuote": true,
-	"cloudcode.yaml.trace.server": "messages",
-	"google.cloud.project": "gen-lang-client-0098874436",
-	"hermes.debugLogs": true,
-	"hermes.path": "C:\\Users\\Raphael\\.gemini\\Site\\.venv\\Scripts\\hermes.exe"
+  "terminal.integrated.env.windows": {
+    "GEMINI_SOTA_MODE": "v6"
+  },
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "gemini-cli.model": "gemini-2.5-flash-preview-05-20",
+  "gemini.auto_auditoria": true,
+  "gemini.sota.version": "6.2.1-GOLD",
+  "antigravity.version": "2.0.1",
+  "antigravity.telemetry.enabled": false,
+  "antigravity.performance.mode": "balanced",
+  "ollama.executablePath": "ollama",
+  "ollama.models": [
+    "gemma4:4b",
+    "gemma4:31b",
+    "llama3.1:8b"
+  ],
+  "git.autofetch": false,
+  "editor.minimap.enabled": false,
+  "editor.hover.delay": 700,
+  "editor.largeFileOptimizations": true,
+  "editor.quickSuggestionsDelay": 10,
+  "extensions.autoUpdate": "onlyEnabledExtensions",
+  "telemetry.telemetryLevel": "off",
+  "geminicodeassist.verboseLogging": false,
+  "geminicodeassist.agentDebugMode": false,
+  "geminicodeassist.agentYoloMode": false,
+  "geminicodeassist.enableTelemetry": false,
+  "geminicodeassist.outlines.automaticOutlineGeneration": false,
+  "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
+  "geminicodeassist.updateChannel": "Insiders",
+  "geminicodeassist.codeGenerationPaneViewEnabled": true,
+  "geminicodeassist.project": "gen-lang-client-0098874436",
+  "geminicodeassist.rules": "Está proibido absolutamente o smoothing, o enviesamento e a artificialização de outputs, respostas não fundamentadas ou outputs que não sejam pautados na lógica e na comprovação científica e empírica. Sempre que for o caso, responda: Não sei a resposta; Não é possível ter certeza, apenas indícios. Ou qualquer tipo de resposta similar onde há a impossibilidade de definir um assunto por ausencia de evidências ou argumentação sólida. O modelo LLM deve sempre fazer perguntas acerca de inconsistências quando os inputs carecerem de informação, forem vagos, contraditórios ou equivocados. O modelo LLM não deve reproduzir e agradar como inclinação nativa: é mandatório que o modelo agregue com adendos e provocações valiosas que não constavam na instrução do user. Adotar a abordagem de fortalecer a tese ou argumento para então desafiá-lo em sua versão mais robusta, garantindo uma análise crítica de alta integridade (steelmaning).",
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/node_modules/**": true,
+    "**/.venv/**": true,
+    "**/.next/**": true,
+    "**/.turbo/**": true,
+    "**/__pycache__/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/wasm-equity/target/**": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/.venv": true,
+    "**/__pycache__": true,
+    "**/.next": true,
+    "**/.turbo": true,
+    "**/.chroma_db": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "search.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/.venv": true,
+    "**/__pycache__": true,
+    "**/.next": true,
+    "**/.turbo": true,
+    "**/.chroma_db": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.ignoreRebaseWarning": true,
+  "editor.unicodeHighlight.nonBasicASCII": true,
+  "editor.unicodeHighlight.invisibleCharacters": true,
+  "editor.unicodeHighlight.ambiguousCharacters": true,
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": true,
+  "editor.renderControlCharacters": true,
+  "editor.renderFinalNewline": "on",
+  "editor.formatOnSave": true,
+  "editor.codeLens": true,
+  "editor.suggest.showCodeLenses": true,
+  "editor.renderWhitespace": "selection",
+  "editor.tabSize": 4,
+  "editor.insertSpaces": false,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "tailwindCSS.experimental.classRegex": [
+    [
+      "@theme\\s*{([^}]*)}",
+      "--color-([^\\s:]*)"
+    ]
+  ],
+  "tailwindCSS.includeLanguages": {
+    "plaintext": "html",
+    "typescriptreact": "html"
+  },
+  "terminal.integrated.profiles.windows": {
+    "Gemini-SOTA": {
+      "path": "powershell.exe",
+      "args": [
+        "-NoExit",
+        "-Command",
+        "gemini --approval-mode auto_edit"
+      ]
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "Gemini-SOTA",
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "package.json": "package-lock.json, turbo.json, tsconfig.base.json, .prettierrc, .eslintrc*",
+    "pyproject.toml": "uv.lock, requirements.txt, .pylintrc, .ruff_cache, ruff.toml",
+    "next.config.js": "next-env.d.ts, postcss.config.js, tailwind.config.js",
+    ".env": ".env.*, _env.ps1"
+  },
+  "msg.shell.useExternal": false,
+  "msg.mrs.displayScriptHelpers": true,
+  "msg.editor.stopOnErrors": true,
+  "msg.dbEditor.connectionBrowser.sortFoldersFirst": true,
+  "msg.editor.showHidden": true,
+  "gemini.mcp.configPath": ".vscode/mcp.json",
+  "gemini.research.autoSaveReport": true,
+  "gemini.googleSearch.enabled": true,
+  "gemini.cloud.autoDeploy": false,
+  "gemini.skills.autoActivate": true,
+  "gemini.hooks.preCommit.enabled": true,
+  "github.copilot.advanced.enabled": false,
+  "cloudcode.yaml.trace.server": "off",
+  "google.cloud.project": "gen-lang-client-0098874436",
+  "hermes.debugLogs": false,
+  "hermes.path": "C:\\Users\\Raphael\\.gemini\\Site\\.venv\\Scripts\\hermes.exe",
+  "ollama-chat.defaultModel": "gemma4:31b-cloud",
+  "workbench.iconTheme": "material-icon-theme",
+  "console-ninja.enabled": true,
+  "turboConsoleLog.logMessagePrefix": "🚀 SOTA"
 }

@@ -1,10 +1,10 @@
+# core/schemas.py
+# ruff: noqa: N815
 """Esquemas base de Pydantic SOTA."""
 
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
-
-from core.config import VALID_AGENTS
 
 TaskMetadata = dict[str, Any]
 
@@ -32,8 +32,9 @@ class Task(BaseModel):
     @field_validator("agent")
     @classmethod
     def validate_agent_existence(cls, v: str) -> str:
-        """Valida a consistencia do agente no core."""
-        if v not in VALID_AGENTS:
+        """Valida a consistencia do agente no core. Late import para respeitar hot-reload."""
+        from core.config import VALID_AGENTS as _live_agents  # noqa: PLC0415
+        if v not in _live_agents:
             raise ValueError(f"Agente desconhecido: {v}")
         return v
 
@@ -50,7 +51,6 @@ class GeneralTelemetry(BaseModel):
         "Fundamentos SOTA",
         "Bolha",
         "Pos-Flop",
-        "Pós-Flop",
     ]
     componentName: str | None = None
     scenarioContext: dict[str, Any] | list[Any] | str | None = None
@@ -60,6 +60,17 @@ class GeneralTelemetry(BaseModel):
     isCorrect: bool = True
     latency: float = 0.0
     metadata: dict[str, Any] | None = None
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_category(cls, v: str) -> str:
+        """Normaliza categorias para o padrao SOTA (ASCII)."""
+        mapping = {
+            "Pós-Flop": "Pos-Flop",
+            "Pós Flop": "Pos-Flop",
+            "Pos Flop": "Pos-Flop",
+        }
+        return mapping.get(v, v)
 
 
 class PerspectivaResult(BaseModel):

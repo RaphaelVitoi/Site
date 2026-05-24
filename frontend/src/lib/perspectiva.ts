@@ -461,7 +461,7 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 	// Layer 0: Validação Semântica SOTA (Antevisão de Erros)
 	const validation = PerspectivaInputSchema.safeParse(input);
 	if (!validation.success) {
-		if (process.env.NODE_ENV !== 'production') {
+		if (process.env['NODE_ENV'] !== 'production') {
 			console.warn(
 				'[VITOI-QUANTUM] Sanitizing input due to validation mismatch:',
 				validation.error.issues,
@@ -607,7 +607,7 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 		loseMapaICM: perspLose.positionProbs[heroIdx] ?? [],
 	};
 
-	if (process.env.NODE_ENV !== 'production') {
+	if (process.env['NODE_ENV'] !== 'production') {
 		PerspectivaResultSchema.parse(result);
 	}
 

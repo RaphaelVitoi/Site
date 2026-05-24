@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger';
 
 // SOTA: Dependência estrita de variáveis de ambiente do runtime (Segurança Proativa)
 function getGeminiKey() {
-	return process.env.GEMINI_API_KEY || null;
+	return process.env['GEMINI_API_KEY'] || null;
 }
 
 function getSystemPrompt(mode?: string): string {
@@ -38,8 +38,8 @@ Mantenha a resposta focada, utilizando no máximo 3 parágrafos curtos.`;
 async function fetchRagContext(prompt: string): Promise<string> {
 	try {
 		const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-		if (process.env.API_SECRET_TOKEN) {
-			headers['Authorization'] = `Bearer ${process.env.API_SECRET_TOKEN}`;
+		if (process.env['API_SECRET_TOKEN']) {
+			headers['Authorization'] = `Bearer ${process.env['API_SECRET_TOKEN']}`;
 		}
 
 		const oracleRes = await fetch(buildNexusServerUrl('/ask-oracle'), {

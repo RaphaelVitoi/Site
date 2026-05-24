@@ -4,14 +4,12 @@ Controla o nivel de agencia do sistema: stop, default, partial, full.
 """
 
 import asyncio
-import functools
 import json
 import logging
 import os
 import re
 import shlex
 import shutil
-import subprocess  # noqa: S404
 import time
 from pathlib import Path
 
@@ -50,7 +48,7 @@ def _read_legacy_autonomy_config() -> str:
     config_path = Path("autonomy.json")
     if config_path.exists():
         try:
-            with open(config_path, "r", encoding="utf-8-sig") as f:
+            with open(config_path, encoding="utf-8-sig") as f:
                 data = json.loads(f.read().lstrip("\ufeff"))
                 return data.get("mode", "stop")
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -83,24 +81,52 @@ async def get_autonomy_mode(manager: QueueManager) -> str:
 
 
 async def _forge_files(text: str, effective_mode: str, agent_name: str) -> list[str]:
-    """Isola a materialização em disco e blindagem contra Path Traversal."""
+    """Isola a materializacao em disco e blindagem contra Path Traversal."""
+    # SOTA SEC: Sandbox mode nao permite materializacao em disco nativo.
+    # Apenas modos com privilegio de escrita direta (partial, full, full_restricted) passam.
+    if effective_mode == "sandbox":
+        logger.warning(
+            "[GOD MODE SANDBOX] Materializacao em disco nativo bloqueada no modo sandbox. "
+            "Arquivos devem ser escritos dentro do container Docker."
+        )
+        return []
+
     modified_files = []
     pattern = r"(?:Arquivo|File|Caminho|Path):\s*`?([^\n`]+)`?\s*\n+```[a-z]*\n(.*?)```"
+
+    # SOTA SEC: Allowlist de caracteres validos para caminhos de arquivo.
+    # Bloqueia injecao de whitespace, null bytes, unicode de controle e outros vetores.
+    safe_path_re = re.compile(r"^[a-zA-Z0-9_/\\\-. :]+$")
 
     for match in re.finditer(pattern, text, re.DOTALL | re.IGNORECASE):
         filepath = match.group(1).strip()
         content = match.group(2)
+
+        # SOTA SEC: Rejeita imediatamente caminhos com caracteres fora do allowlist.
+        if not safe_path_re.match(filepath):
+            logger.error(
+                "[SEC] Filepath rejeitado por conter caracteres invalidos (possivel injecao): %s",
+                filepath.encode("ascii", "backslashreplace").decode("ascii"),
+            )
+            continue
+
+        # SOTA SEC: Rejeita caminhos com sequencia de traversal explicita.
+        if ".." in filepath:
+            logger.error("[SEC] Path traversal explicito bloqueado: %s", filepath)
+            continue
+
         try:
             base_path = Path(__file__).parent.parent.absolute()
-            target_path = Path(filepath).absolute()
+            target_path = Path(filepath).resolve()  # noqa: ASYNC240
 
+            # Verificacao definitiva de confinamento dentro da raiz do projeto.
             if not target_path.is_relative_to(base_path):
                 logger.error("[SEC] Bloqueio de escrita fora da raiz: %s", filepath)
                 continue
 
-            target_path_str = os.path.normpath(str(target_path))
+            target_path_str = os.path.normpath(str(target_path))  # noqa: ASYNC240
             is_protected = any(
-                os.path.normpath(p) in target_path_str for p in PROTECTED_KERNEL_PATHS
+                os.path.normpath(p) in target_path_str for p in PROTECTED_KERNEL_PATHS  # noqa: ASYNC240
             )
             privileged_agents = ["@chico", "@gemma4"]
             if is_protected:
@@ -128,6 +154,7 @@ async def _forge_files(text: str, effective_mode: str, agent_name: str) -> list[
             logger.exception("[FAIL] Falha ao forjar %s", filepath)
 
     return modified_files
+
 
 
 def _validate_command(cmd: str, effective_mode: str, agent_name: str) -> bool:
@@ -201,24 +228,29 @@ async def _run_native_command(cmd: str) -> None:
             if executable:
                 cmd_parts[0] = executable
 
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(
-        None,
-        functools.partial(
-            subprocess.run,
-            cmd_parts,
-            shell=False,
-            capture_output=True,
-            text=True,
-            timeout=300,
-            check=False,
-        ),
+    if not cmd_parts:
+        return
+
+    process = await asyncio.create_subprocess_exec(
+        *cmd_parts,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
 
-    if result.returncode == 0:
+    try:
+        _, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=300)
+    except TimeoutError as exc:
+        process.kill()
+        await process.communicate()
+        error_msg = f"O comando nativo excedeu o tempo limite (300s): {cmd}"
+        logger.error("[FAIL] %s", error_msg)
+        raise RuntimeError(error_msg) from exc
+
+    if process.returncode == 0:
         logger.info("[OK] Comando executado: %s", cmd)
     else:
-        error_msg = f"Codigo {result.returncode} - {result.stderr.strip()}"
+        stderr_str = stderr_bytes.decode(errors="replace").strip()
+        error_msg = f"Codigo {process.returncode} - {stderr_str}"
         logger.error("[FAIL] Falha no comando '%s': %s", cmd, error_msg)
         raise RuntimeError(f"O comando nativo falhou: {cmd}\nDetalhes: {error_msg}")
 
@@ -242,27 +274,28 @@ async def _run_sandboxed_command(cmd: str, agent_name: str) -> None:
         "-c",
         cmd,
     ]
-    loop = asyncio.get_running_loop()
+    process = None
     try:
-        result = await loop.run_in_executor(
-            None,
-            functools.partial(
-                subprocess.run,
-                cmd_parts,
-                shell=False,
-                capture_output=True,
-                text=True,
-                timeout=120,
-                check=False,
-            ),
+        process = await asyncio.create_subprocess_exec(
+            *cmd_parts,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
-        if result.returncode == 0:
+        _, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=120)
+
+        if process.returncode == 0:
             logger.info("[OK] Casa de Maquinas executou com sucesso: %s", cmd)
         else:
-            error_msg = f"Codigo {result.returncode} - {result.stderr.strip()}"
+            stderr_str = stderr_bytes.decode(errors="replace").strip()
+            error_msg = f"Codigo {process.returncode} - {stderr_str}"
             logger.warning(
                 "[SANDBOX FAIL] Comando contido na Casa de Maquinas: %s", error_msg
             )
+    except TimeoutError:
+        if process:
+            process.kill()
+            await process.communicate()
+        logger.warning("[SANDBOX FAIL] Tempo limite excedido (120s) na Casa de Maquinas: %s", cmd)
     except FileNotFoundError:
         logger.error(
             "[SANDBOX FATAL] Docker ausente. Nao foi possivel instanciar a Casa de Maquinas."
@@ -309,15 +342,15 @@ async def _read_autonomy_levers() -> tuple[list[str], bool]:
     god_mode_agents = [AGENT_CHICO, "@gemma4"]
     sandbox_default = True
     config_path = Path("autonomy.json")
-    if config_path.exists():
+    if config_path.exists():  # noqa: ASYNC240
         try:
-            async with aiofiles.open(config_path, "r", encoding="utf-8-sig") as f:
+            async with aiofiles.open(config_path, encoding="utf-8-sig") as f:
                 content = await f.read()
                 cfg = json.loads(content.lstrip("\ufeff"))
                 god_mode_agents = cfg.get("god_mode_agents", god_mode_agents)
                 sandbox_default = cfg.get("sandbox_default", sandbox_default)
-        except Exception:  # noqa: S110 # pylint: disable=broad-exception-caught
-            pass
+        except Exception as e:  # noqa: S110 # pylint: disable=broad-exception-caught
+            logger.warning("[AUTONOMY] Falha ao processar autonomia no autonomy.json. Retornando ao fallback. Erro: %s", e)
     return god_mode_agents, sandbox_default
 
 

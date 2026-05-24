@@ -3,6 +3,7 @@
 Context Builder -- Modulo especializado na construcao e compressao de contexto para agentes SOTA.
 """
 
+import asyncio
 import hashlib
 import logging
 import re
@@ -14,6 +15,7 @@ from agents.prompts import get_agent_system_prompt
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
+    COMPRESSION_CIRCUIT_BREAKER,
     PERPLEXITY_KEYS,
     TAVILY_KEYS,
     WEB_SEARCH_CACHE_TTL,
@@ -25,6 +27,7 @@ from llm.budget import (
     web_search_cache,
 )
 from llm.orchestrator import _compress_context
+from llm.search import call_perplexity_search, call_tavily_search
 from llm.session import get_global_http_session
 from utils.cache import _read_file_with_cache
 from utils.heuristics import _calculate_heuristic_score
@@ -51,39 +54,41 @@ AGENT_VERIFIER = "@verifier"
 AGENT_AUDITOR = "@auditor"
 
 
-def _extract_task_file_mentions(description: str) -> list[Path]:
-    md_mentions = re.findall(r"[\w\./\\-]+\.md", description, re.IGNORECASE)
-    folder_mentions = re.findall(
-        r"docs[\\/]tasks[\\/][\w-]+", description, re.IGNORECASE
-    )
+async def _extract_task_file_mentions(description: str) -> list[Path]:
+    def sync_extract():
+        md_mentions = re.findall(r"[\w\./\\-]+\.md", description, re.IGNORECASE)
+        folder_mentions = re.findall(r"docs[\\/]tasks[\\/][\w-]+", description, re.IGNORECASE)
 
-    paths_to_check = [Path(p) for p in md_mentions]
-    for folder in folder_mentions:
-        folder_path = Path(folder)
-        if folder_path.exists() and folder_path.is_dir():
-            paths_to_check.extend(list(folder_path.glob("*.md")))
-    return paths_to_check
+        paths_to_check = [Path(p) for p in md_mentions]
+        for folder in folder_mentions:
+            folder_path = Path(folder)
+            if folder_path.exists() and folder_path.is_dir():
+                paths_to_check.extend(list(folder_path.glob("*.md")))
+        return paths_to_check
+    return await asyncio.to_thread(sync_extract)
 
 
-def _resolve_allowed_task_doc_path(candidate: Path) -> Path | None:
-    try:
-        resolved = candidate.resolve(strict=True)
-    except OSError:
-        return None
-
-    if resolved.suffix.lower() != ".md" or not resolved.is_file():
-        return None
-
-    for allowed_root in ALLOWED_TASK_DOC_ROOTS:
+async def _resolve_allowed_task_doc_path(candidate: Path) -> Path | None:
+    def sync_resolve():
         try:
-            resolved.relative_to(allowed_root)
-            return resolved
-        except ValueError:
-            continue
-    return None
+            resolved = candidate.resolve(strict=True)
+        except OSError:
+            return None
+
+        if resolved.suffix.lower() != ".md" or not resolved.is_file():
+            return None
+
+        for allowed_root in ALLOWED_TASK_DOC_ROOTS:
+            try:
+                resolved.relative_to(allowed_root)
+                return resolved
+            except ValueError:
+                continue
+        return None
+    return await asyncio.to_thread(sync_resolve)
 
 
-def _process_slug_docs(slug: str) -> str:
+async def _process_slug_docs(slug: str) -> str:
     docs = ""
     safe_slug = Path(slug).name
     task_dir = (WORKSPACE_ROOT / "docs" / "tasks" / safe_slug).resolve(strict=False)
@@ -92,33 +97,33 @@ def _process_slug_docs(slug: str) -> str:
     except ValueError:
         return docs
 
-    if task_dir.exists() and task_dir.is_dir():
-        for md_file in task_dir.glob("*.md"):
-            allowed_path = _resolve_allowed_task_doc_path(md_file)
+    is_valid_dir = await asyncio.to_thread(lambda: task_dir.exists() and task_dir.is_dir())
+    if is_valid_dir:
+        md_files = await asyncio.to_thread(lambda: list(task_dir.glob("*.md")))
+        for md_file in md_files:
+            allowed_path = await _resolve_allowed_task_doc_path(md_file)
             if allowed_path is None:
                 continue
-            content = _read_file_with_cache(allowed_path)
+            content = await asyncio.to_thread(_read_file_with_cache, str(allowed_path))
             if content:
                 docs += f"\n=== ARTEFATO: {allowed_path.relative_to(WORKSPACE_ROOT).as_posix()} ===\n{content}\n"
     return docs
 
 
-def _inject_task_docs(task: Task) -> str:
+async def _inject_task_docs(task: Task) -> str:
     task_docs = ""
     slug = task.metadata.get("slug") if task.metadata else None
     if slug:
-        task_docs += _process_slug_docs(slug)
+        task_docs += await _process_slug_docs(slug)
 
-    paths_to_check = _extract_task_file_mentions(task.description or "")
+    paths_to_check = await _extract_task_file_mentions(task.description or "")
 
     for p in paths_to_check:
-        allowed_path = _resolve_allowed_task_doc_path(p)
+        allowed_path = await _resolve_allowed_task_doc_path(p)
         if allowed_path is not None:
-            if slug and allowed_path.parent == (
-                WORKSPACE_ROOT / "docs" / "tasks" / str(slug)
-            ):
+            if slug and allowed_path.parent == (WORKSPACE_ROOT / "docs" / "tasks" / str(slug)):
                 continue
-            content = _read_file_with_cache(allowed_path)
+            content = await asyncio.to_thread(_read_file_with_cache, str(allowed_path))
             if content and content not in task_docs:
                 task_docs += f"\n=== ARTEFATO REFERENCIADO: {allowed_path.relative_to(WORKSPACE_ROOT).as_posix()} ===\n{content}\n"
     return task_docs
@@ -169,8 +174,6 @@ def _needs_web_search(agent: str, normalized_desc: str) -> bool:
 
 async def _fetch_web_search(task: Task, manager: QueueManager, session) -> str:
     web_context = ""
-
-    from llm.search import call_perplexity_search, call_tavily_search
 
     search_strategies = [
         ("tavily", TAVILY_KEYS, call_tavily_search, {"max_results": 3}),
@@ -224,16 +227,12 @@ async def _fetch_web_search(task: Task, manager: QueueManager, session) -> str:
 async def _execute_web_search(task: Task, manager: QueueManager) -> tuple[str, int]:
     normalized_description = enforce_pure_ascii((task.description or "").lower())
 
-    if (
-        task.agent == AGENT_VERIFIER
-        and task.metadata
-        and task.metadata.get("priority") in ["high", "critical"]
-    ):
-        task.description += "\n\n[DIRETRIZ DE AUDITORIA SOTA] Realize uma busca externa para validar a veracidade tecnica."
+    if task.agent == AGENT_VERIFIER and task.metadata and task.metadata.get("priority") in ["high", "critical"]:
+        task.description += (
+            "\n\n[DIRETRIZ DE AUDITORIA SOTA] Realize uma busca externa para validar a veracidade tecnica."
+        )
 
-    if not (TAVILY_KEYS or PERPLEXITY_KEYS) or not _needs_web_search(
-        task.agent, normalized_description
-    ):
+    if not (TAVILY_KEYS or PERPLEXITY_KEYS) or not _needs_web_search(task.agent, normalized_description):
         return "", -1
 
     try:
@@ -254,9 +253,7 @@ async def _execute_web_search(task: Task, manager: QueueManager) -> tuple[str, i
             if web_context:
                 web_search_cache[cache_key] = (web_context, time.monotonic())
 
-        return web_context, int(
-            (time.monotonic() - t0_web) * 1000
-        ) if web_context else -1
+        return web_context, int((time.monotonic() - t0_web) * 1000) if web_context else -1
     except Exception:
         logger.exception("Falha ao executar busca web")
         return "", -1
@@ -266,9 +263,7 @@ async def _query_collective_memory(task: Task, n_rag_results: int) -> tuple[str,
     try:
         t0 = time.monotonic()
         rag = te.get_rag()
-        collective_memory = await rag.query_memory(
-            task.description, n_results=n_rag_results, local_only=True
-        )
+        collective_memory = await rag.query_memory(task.description, n_results=n_rag_results, local_only=True)
         return collective_memory, int((time.monotonic() - t0) * 1000)
     except Exception:  # pylint: disable=broad-exception-caught
         logger.exception("Falha ao consultar RAG")
@@ -278,14 +273,10 @@ async def _query_collective_memory(task: Task, n_rag_results: int) -> tuple[str,
 async def _apply_context_compression(
     project_context: str, agent_memory: str, task: Task, manager: QueueManager
 ) -> tuple[str, str, int]:
-    from llm.budget import COMPRESSION_CIRCUIT_BREAKER
-
     total_compression_time = 0.0
     t0_compress = time.monotonic()
 
-    recent_failure = (
-        time.time() - COMPRESSION_CIRCUIT_BREAKER["last_failure"]
-    ) < 900  # Ultimos 15 min
+    recent_failure = (time.time() - COMPRESSION_CIRCUIT_BREAKER["last_failure"]) < 900  # Ultimos 15 min
     frequent_failures = COMPRESSION_CIRCUIT_BREAKER["consecutive_failures"] >= 3
     prefer_local_fallback = recent_failure and frequent_failures
 
@@ -304,9 +295,7 @@ async def _apply_context_compression(
             prefer_local_fallback=prefer_local_fallback,
         )
         if len(project_context) < original_ctx_len:
-            project_context = (
-                f"[Contexto do Projeto (Comprimido por IA)]\n{project_context}"
-            )
+            project_context = f"[Contexto do Projeto (Comprimido por IA)]\n{project_context}"
         total_compression_time += time.monotonic() - t0_compress
         t0_compress = time.monotonic()
 
@@ -341,17 +330,11 @@ def _add_context_sections(
 ) -> str:
     sections = [f"<project_context>\n{project_context}\n</project_context>\n\n"]
     if web_context:
-        sections.append(
-            f"<web_search_results>\n{web_context}\n</web_search_results>\n\n"
-        )
+        sections.append(f"<web_search_results>\n{web_context}\n</web_search_results>\n\n")
     if collective_memory:
-        sections.append(
-            f"<retrieved_memory>\n{collective_memory}\n</retrieved_memory>\n\n"
-        )
+        sections.append(f"<retrieved_memory>\n{collective_memory}\n</retrieved_memory>\n\n")
     if agent_memory:
-        sections.append(
-            f"<agent_memory persona='{task.agent}'>\n{agent_memory}\n</agent_memory>\n\n"
-        )
+        sections.append(f"<agent_memory persona='{task.agent}'>\n{agent_memory}\n</agent_memory>\n\n")
 
     if task_docs:
         sections.append(f"<task_documents>\n{task_docs}\n</task_documents>\n\n")
@@ -359,15 +342,11 @@ def _add_context_sections(
     sections.append(
         f"<task_directive>\n<task_id>{task.id}</task_id>\n<description>{task.description}</description>\n</task_directive>\n\n"
     )
-    sections.append(
-        "Execute esta tarefa embasado nos materiais de fundacao e contexto fornecidos acima."
-    )
+    sections.append("Execute esta tarefa embasado nos materiais de fundacao e contexto fornecidos acima.")
     return "".join(sections)
 
 
-def _add_autonomy_and_guidelines(
-    user_prompt: str, task: Task, agent_clean: str, autonomy_mode: str
-) -> str:
+def _add_autonomy_and_guidelines(user_prompt: str, task: Task, agent_clean: str, autonomy_mode: str) -> str:
     prompt_parts = [user_prompt]
     if task.agent in (AGENT_DISPATCHER, "@bibliotecario"):
         return _finalize_prompt(prompt_parts, agent_clean)
@@ -394,9 +373,7 @@ def _add_autonomy_and_guidelines(
             "Voce tem soberania para agir, instalar dependencias e forjar a realidade."
         )
 
-    prompt_parts.append(
-        f"\n\n[TETRALOGIA DE GOVERNANCA VITOI 3.2] Nivel Atual: {autonomy_mode.upper()}\n"
-    )
+    prompt_parts.append(f"\n\n[TETRALOGIA DE GOVERNANCA VITOI 3.2] Nivel Atual: {autonomy_mode.upper()}\n")
     mode_descriptions = {
         "stop": "Foco: O Observador Passivo. Isolamento absoluto de escrita. Use este modo para discussoes teoricas "
         "de GTO, insights filosoficos e analise exploratoria sem alterar o estado do sistema.\n",
@@ -426,9 +403,7 @@ def _add_autonomy_and_guidelines(
 
 
 def _finalize_prompt(prompt_parts: list[str], agent_clean: str) -> str:
-    primary_model = te.AGENTS_MANIFEST.get(agent_clean, {}).get(
-        "primary_model", "gemini-2.5-flash"
-    )
+    primary_model = te.AGENTS_MANIFEST.get(agent_clean, {}).get("primary_model", "gemini-2.5-flash")
     prompt_parts.append(
         f"\n\n[DIRETRIZ DE LLM SOTA] Ao final da sua resposta, recomende ativamente o modelo {primary_model} para as "
         f"proximas etapas que exijam sua atuacao ou perfil cognitivo, justificando com base na Economia Generalizada. "
@@ -450,7 +425,7 @@ def _finalize_prompt(prompt_parts: list[str], agent_clean: str) -> str:
     return "".join(prompt_parts)
 
 
-def _assemble_prompt(
+async def _assemble_prompt(
     task: Task,
     project_context: str,
     web_context: str,
@@ -460,10 +435,8 @@ def _assemble_prompt(
     agent_clean: str,
     autonomy_mode: str = "default",
 ) -> tuple[str, str]:
-    prompt_base = _add_context_sections(
-        project_context, web_context, collective_memory, agent_memory, task, task_docs
-    )
-    system_prompt = get_agent_system_prompt(task.agent)
+    prompt_base = _add_context_sections(project_context, web_context, collective_memory, agent_memory, task, task_docs)
+    system_prompt = await get_agent_system_prompt(task.agent)
 
     user_prompt = enforce_pure_ascii(prompt_base)
     system_prompt = enforce_pure_ascii(system_prompt)
@@ -477,28 +450,25 @@ def _assemble_prompt(
             "Mantenha foco estritamente tecnico-operacional e neutro."
         )
 
-    user_prompt = _add_autonomy_and_guidelines(
-        user_prompt, task, agent_clean, autonomy_mode
-    )
+    user_prompt = _add_autonomy_and_guidelines(user_prompt, task, agent_clean, autonomy_mode)
     return system_prompt, user_prompt
 
 
-def _read_agent_and_project_contexts(agent_clean: str) -> tuple[str, str]:
-    agent_memory = ""
-    safe_agent = Path(agent_clean).name
+async def _read_agent_and_project_contexts(agent_clean: str) -> tuple[str, str]:
+    def sync_read():
+        agent_memory = ""
+        safe_agent = Path(agent_clean).name
 
-    base_agent_dir = Path(".claude/agent-memory").resolve()
-    memory_file = (base_agent_dir / safe_agent / "MEMORY.md").resolve()
-    if memory_file.exists() and memory_file.is_relative_to(base_agent_dir):
-        agent_memory = _read_file_with_cache(memory_file) or ""
+        base_agent_dir = Path(".claude/agent-memory").resolve()
+        memory_file = (base_agent_dir / safe_agent / "MEMORY.md").resolve()
+        if memory_file.exists() and memory_file.is_relative_to(base_agent_dir):
+            agent_memory = _read_file_with_cache(str(memory_file)) or ""
 
-    project_context = ""
-    context_file = Path(".claude/project-context.md")
-    if context_file.exists():
-        project_context = _read_file_with_cache(context_file) or ""
-    if len(project_context) > 20000:
-        project_context = (
-            project_context[:20000]
-            + "\n\n... [Contexto massivo truncado. Consulte o @bibliotecario se precisar de historico profundo.]"
-        )
-    return agent_memory, project_context
+        project_context = ""
+        context_file = Path(".claude/project-context.md")
+        if context_file.exists():
+            project_context = _read_file_with_cache(str(context_file)) or ""
+        if len(project_context) > 20000:
+            project_context = project_context[:20000] + "\n\n... [Contexto massivo truncado. Consulte o @bibliotecario se precisar de historico profundo.]"
+        return agent_memory, project_context
+    return await asyncio.to_thread(sync_read)

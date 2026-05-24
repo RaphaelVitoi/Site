@@ -376,21 +376,35 @@ pub fn solve_insolvency_matrix_binary(
 /// SOTA: FFI Zero-Copy O(1) para Distorção Quântica
 #[wasm_bindgen]
 pub fn solve_icm_distortion_zerocopy(payload: &[f64]) -> js_sys::Float64Array {
+    // [SOTA GUARD] Previne WASM Trap se o buffer TS/JS enviar dados truncados
+    if payload.len() < 7 {
+        panic!("SOTA GUARD: Payload zerocopy inconsistente. Esperado pelo menos 7 elementos.");
+    }
+
     let ip_rp = payload[0];
     let oop_rp = payload[1];
     let _kappa = payload[2];
     let topologic_aggression = payload[3];
     let active_players = payload[4] as u32;
     let fold = payload[5];
-    let raise = payload[7];
+    let raise = payload[6]; // Realinhado de 7 para 6 (extirpacao do 'call')
+
+    // [SOTA GUARD] Blindagem da Integridade do Espaco de Probabilidade
+    if fold < 0.0 || raise < 0.0 || (fold + raise) > 1.0001 {
+        panic!(
+            "Inconsistencia vetorial SOTA: fold ({}) + raise ({}) excedem 1.0",
+            fold, raise
+        );
+    }
 
     let pressure = (oop_rp + ip_rp) / 2.0;
 
+    // SOTA v4.6 GOLD: Unificacao de constantes para paridade absoluta com motor Python/v2
     let raise_shift =
-        raise * (topologic_aggression - 1.0) - (pressure * 0.005 * active_players as f64);
+        raise * (topologic_aggression - 1.0) - (pressure * 0.003 * active_players as f64);
     let mut new_raise = (raise + raise_shift).max(0.0);
 
-    let fold_shift = fold * (pressure * 0.015) + (raise - new_raise).max(0.0);
+    let fold_shift = fold * (pressure * 0.012) + (raise - new_raise).max(0.0);
     let mut new_fold = (fold + fold_shift).max(0.0).min(1.0);
 
     let mut new_call = (1.0 - new_fold - new_raise).max(0.0);
@@ -424,35 +438,40 @@ pub fn solve_icm_distortion_v2(
     pot_size: f64,
     street_idx: u32,
     fold: f64,
-    _call: f64,
     raise: f64,
 ) -> js_sys::Float64Array {
-    // SOTA v6.2.1: Cálculo de Gravidade (G): ln(pot/7.5)
+    // [SOTA GUARD] Blindagem da Integridade do Espaco de Probabilidade
+    if fold < 0.0 || raise < 0.0 || (fold + raise) > 1.0001 {
+        panic!(
+            "Inconsistencia vetorial SOTA: fold ({}) + raise ({}) excedem 1.0",
+            fold, raise
+        );
+    }
+
+    // Cálculo de Gravidade (G): ln(pot/7.5). 7.5bb é o baseline de SRP.
     let gravity = (pot_size / 7.5).ln().max(0.0);
 
-    // Sincronia GOLD: Amortecimento de 0.15 para inércia estratégica
-    let damping = 1.0 / (1.0 + gravity * 0.15);
+    // Amortecimento (Damping): Reduz a sensibilidade da agressão em potes gigantes
+    let damping = 1.0 / (1.0 + gravity * 0.12);
     let effective_aggression = 1.0 + (topologic_aggression - 1.0) * damping;
 
-    // Pressão com peso assimétrico no Delta (SOTA v4.6.1)
-    let delta_rp = (ip_rp - oop_rp).abs();
-    let pressure = (oop_rp + ip_rp) / 2.0 + delta_rp * 0.3;
+    let pressure = (oop_rp + ip_rp) / 2.0;
 
-    // Downward Drift: Penalização Multiway Quadrática (N^2.0) conforme Derivação 2
-    let drift_base = 0.005 * (street_idx as f64 + 1.0);
-    let mw_multiplier = ((active_players as f64 - 1.0).max(1.0)).powf(2.0);
-    let drift_penalty = raise * (pressure * drift_base * (1.0 + gravity * 0.4) * mw_multiplier);
+    // Downward Drift: Pressão RP converte Raise em Small Bet ou Check/Call
+    // Escala com a street e com a gravidade
+    let drift_base = 0.004 * (street_idx as f64 + 1.0);
+    let drift_penalty = raise * (pressure * drift_base * (1.0 + gravity * 0.5));
 
     let raise_shift = raise * (effective_aggression - 1.0)
         - drift_penalty
-        - (pressure * 0.004 * active_players as f64);
+        - (pressure * 0.003 * active_players as f64);
 
     let mut new_raise = (raise + raise_shift).max(0.0);
 
-    // Fold Shift: Teto Dinâmico de RP (D6) sincronizado com Frontend
-    // O teto impede o fold infinito devido à gravidade do pote (pago para ver sobrevivência)
-    let max_fold_allowed = (0.90 - (gravity * 0.04) + (pressure * 0.001)).min(0.92);
-    let fold_shift = fold * (pressure * 0.015) + (raise - new_raise).max(0.0);
+    // Fold Shift: Limitado pelo Teto de RP (D5/D6)
+    // O teto impede que o fold suba indefinidamente em situações de pot commitment
+    let max_fold_allowed = 0.88 - (gravity * 0.05).min(0.3);
+    let fold_shift = fold * (pressure * 0.012) + (raise - new_raise).max(0.0);
     let mut new_fold = (fold + fold_shift).max(0.0).min(max_fold_allowed);
 
     let mut new_call = (1.0 - new_fold - new_raise).max(0.0);
@@ -487,22 +506,28 @@ pub fn solve_icm_distortion_binary(
 ) -> JsValue {
     let fold_val =
         js_sys::Reflect::get(&freqs, &JsValue::from_str("fold")).unwrap_or(JsValue::from_f64(0.0));
-    let call_val =
-        js_sys::Reflect::get(&freqs, &JsValue::from_str("call")).unwrap_or(JsValue::from_f64(0.0));
     let raise_val =
         js_sys::Reflect::get(&freqs, &JsValue::from_str("raise")).unwrap_or(JsValue::from_f64(0.0));
 
     let fold = fold_val.as_f64().unwrap_or(0.0);
-    let _call = call_val.as_f64().unwrap_or(0.0);
     let raise = raise_val.as_f64().unwrap_or(0.0);
+
+    // [SOTA GUARD] Blindagem da Integridade do Espaco de Probabilidade
+    if fold < 0.0 || raise < 0.0 || (fold + raise) > 1.0001 {
+        panic!(
+            "Inconsistencia vetorial SOTA: fold ({}) + raise ({}) excedem 1.0",
+            fold, raise
+        );
+    }
 
     let pressure = (oop_rp + ip_rp) / 2.0;
 
+    // SOTA v4.6 GOLD: Unificacao de constantes para paridade absoluta com motor Python/v2
     let raise_shift =
-        raise * (topologic_aggression - 1.0) - (pressure * 0.005 * active_players as f64);
+        raise * (topologic_aggression - 1.0) - (pressure * 0.003 * active_players as f64);
     let mut new_raise = (raise + raise_shift).max(0.0);
 
-    let fold_shift = fold * (pressure * 0.015) + (raise - new_raise).max(0.0);
+    let fold_shift = fold * (pressure * 0.012) + (raise - new_raise).max(0.0);
     let mut new_fold = (fold + fold_shift).max(0.0).min(1.0);
 
     let mut new_call = (1.0 - new_fold - new_raise).max(0.0);

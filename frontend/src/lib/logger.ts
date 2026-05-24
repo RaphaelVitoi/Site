@@ -86,7 +86,7 @@ class SOTALogger {
 			critical: '\x1b[41m',
 			metric: '\x1b[36m',
 		};
-		if (process.env.NODE_ENV !== 'production') {
+		if (process.env['NODE_ENV'] !== 'production') {
 			console.log(
 				`${colors[level]}[${level.toUpperCase()}] [${component}] ${message}\x1b[0m`,
 				data || '',
@@ -99,7 +99,7 @@ class SOTALogger {
 
 	private async flush() {
 		if (this.isProcessing || this.queue.length === 0) return;
-		if (process.env.NODE_ENV === 'development') return; // Friccao Zero Absoluta: aniquila a tentativa de rede local.
+		if (process.env['NODE_ENV'] === 'development') return; // Friccao Zero Absoluta: aniquila a tentativa de rede local.
 		this.isProcessing = true;
 
 		const events = [...this.queue];
@@ -112,7 +112,7 @@ class SOTALogger {
 				body: JSON.stringify({ events }),
 			});
 		} catch (err) {
-			if (process.env.NODE_ENV !== 'production') {
+			if (process.env['NODE_ENV'] !== 'production') {
 				console.error('[Logger] Failed to flush logs', err);
 			}
 		} finally {

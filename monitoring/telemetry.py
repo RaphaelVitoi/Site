@@ -4,7 +4,9 @@ Telemetria e Auditoria -- Toast notifications e economic log.
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+import shutil
+import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
 
 from core.schemas import Task
@@ -27,9 +29,6 @@ def send_toast(title: str, message: str, status: str = "success"):
         $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
         [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Nexus Worker").Show($toast)
         """
-        import shutil  # pylint: disable=import-outside-toplevel
-        import subprocess  # pylint: disable=import-outside-toplevel # noqa: S404
-
         ps_path = shutil.which("powershell") or "powershell"
         subprocess.Popen(  # noqa: S603
             [
@@ -49,14 +48,10 @@ def _write_economic_log_sync(task: Task, duration_secs: float, status: str):
     """Grava o log economico de forma sincrona (executado em thread separada)."""
     audit_dir = Path(".claude/logs/audit")
     audit_dir.mkdir(parents=True, exist_ok=True)
-    log_file = (
-        audit_dir / f"economic_audit_{datetime.now(timezone.utc).strftime('%Y-%m')}.log"
-    )
+    log_file = audit_dir / f"economic_audit_{datetime.now(UTC).strftime('%Y-%m')}.log"
 
-    priority = (
-        str(task.metadata.get("priority", "medium")).upper() if task.metadata else "MEDIUM"
-    )
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    priority = str(task.metadata.get("priority", "medium")).upper() if task.metadata else "MEDIUM"
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
 
     log_entry = (
         f"[{timestamp}] | LVL:{priority} | AGENT:{task.agent} | STAT:{status}"
@@ -77,8 +72,6 @@ def write_economic_log(task: Task, duration_secs: float, status: str):
     """
     try:
         loop = asyncio.get_running_loop()
-        loop.run_in_executor(
-            None, _write_economic_log_sync, task, duration_secs, status
-        )
+        loop.run_in_executor(None, _write_economic_log_sync, task, duration_secs, status)
     except RuntimeError:
         _write_economic_log_sync(task, duration_secs, status)

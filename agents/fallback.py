@@ -5,7 +5,7 @@ Fallback do Dispatcher -- Plano de contingencia quando o @dispatcher nao retorna
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import core.runtime as te
 from core.schemas import Task
@@ -66,9 +66,7 @@ def _heuristic_terms(group_name: str) -> dict[str, int]:
     return {}
 
 
-def _process_conditional_injection(
-    injection: dict, context_blob: str, route_agents: list, reason_codes: list
-) -> None:
+def _process_conditional_injection(injection: dict, context_blob: str, route_agents: list, reason_codes: list) -> None:
     gate = injection.get("gate")
     heuristic_group = injection.get("heuristic")
     agent_to_inject = injection.get("agent")
@@ -113,9 +111,7 @@ def _get_fallback_route(task: Task) -> tuple[list, list]:
 
     if _feature_enabled("enable_dynamic_fallback"):
         for injection in conditional_injections:
-            _process_conditional_injection(
-                injection, context_blob, route_agents, reason_codes
-            )
+            _process_conditional_injection(injection, context_blob, route_agents, reason_codes)
 
     # SOTA: Remove duplicatas preservando a ordem
     route_agents = list(dict.fromkeys(route_agents))
@@ -170,9 +166,7 @@ def _generate_fallback_specs(task_id: str, route_agents: list) -> list:
             {
                 "suffix": f"SUB-{idx}",
                 "agent": agent,
-                "description": stage_prompts.get(
-                    agent, f"Execute a sua etapa para a tarefa base {task_id}."
-                ),
+                "description": stage_prompts.get(agent, f"Execute a sua etapa para a tarefa base {task_id}."),
                 "depends_on": [idx - 2] if idx > 1 else [],
             }
         )
@@ -203,9 +197,7 @@ async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
             if code not in existing_reasons:
                 existing_reasons.append(code)
         meta["reason_codes"] = existing_reasons
-        depends_on = [
-            created_ids[idx] for idx in spec["depends_on"] if idx < len(created_ids)
-        ]
+        depends_on = [created_ids[idx] for idx in spec["depends_on"] if idx < len(created_ids)]
         if depends_on:
             meta["depends_on"] = depends_on
 
@@ -213,7 +205,7 @@ async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
             id=sub_id,
             description=spec["description"],
             agent=spec["agent"],
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             metadata=meta,
         )
         await manager.add_task(new_task)
@@ -226,8 +218,7 @@ async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
     await manager.update_task_metadata(task.id, metadata_patch, merge=True)
 
     logger.info(
-        "[bold yellow][RECOVERY][/] Dispatcher fallback ativado em [cyan]%s[/] com "
-        "cadeia [bold]%s[/].",
+        "[bold yellow][RECOVERY][/] Dispatcher fallback ativado em [cyan]%s[/] com cadeia [bold]%s[/].",
         task.id,
         " -> ".join(route_agents),
     )

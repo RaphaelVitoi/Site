@@ -1,8 +1,9 @@
 /** @format */
 
 import init, {
-	calculate_equity_monte_carlo_binary,
-} from '../../../../wasm-equity/pkg/vitoi_equity_engine.js';
+  calculate_equity_monte_carlo_binary,
+} from '../../../engine/wasm/vitoi_equity_engine.js';
+
 import { expandPokerRange, maskToBytes, rangeToBitmask } from './rangeParser';
 
 // SOTA: Injeção de tipagem para o bundler (Next.js) em contexto de WebWorker

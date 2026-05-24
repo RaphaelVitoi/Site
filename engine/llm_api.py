@@ -1,17 +1,17 @@
 """Modulo Orquestrador SOTA de APIs de Inferencia e Circuit Breaker."""
 
-from utils.env_loader import load_env
-
+import asyncio
 import logging
 import os
 import time
-import asyncio
 from collections.abc import Callable
 from typing import Any
 
 import aiohttp
+
 from core.config import (
     AGENT_ROUTING_MAP,
+    AGENTS_MANIFEST,
     DEEP_THINKING_MODELS,
     FAST_OPERATIONS_MODELS,
     KEY_BLOCKLIST,
@@ -21,6 +21,7 @@ from core.config import (
 )
 from core.schemas import Task
 from database.queue_manager import QueueManager
+from utils.env_loader import load_env
 
 # SOTA: Circuit Breaker de Provedores (Impede pingar APIs caidas)
 PROVIDER_FAILURE_COUNTS: dict = {}
@@ -43,23 +44,16 @@ async def call_gemini(
     """Invoca o provedor Gemini via REST API."""
     if not api_key:
         api_key = os.environ.get("API_SECRET_TOKEN", "")
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{model}:generateContent?key={api_key}"
-    )
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     headers = {"Content-Type": CONTENT_TYPE_JSON}
     data = {
         "system_instruction": {"parts": [{"text": system_prompt}]},
         "contents": [{"parts": [{"text": user_prompt}]}],
     }
-    async with session.post(
-        url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)
-    ) as response:
+    async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
         if not response.ok:
             error_text = await response.text()
-            raise RuntimeError(
-                f"HTTP {response.status}: {response.reason} - {error_text}"
-            )
+            raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
         result = await response.json()
         text = result["candidates"][0]["content"]["parts"][0]["text"]
         usage = result.get("usageMetadata", {})
@@ -86,14 +80,10 @@ async def call_anthropic(
         "system": system_prompt,
         "messages": [{"role": "user", "content": user_prompt}],
     }
-    async with session.post(
-        url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)
-    ) as response:
+    async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
         if not response.ok:
             error_text = await response.text()
-            raise RuntimeError(
-                f"HTTP {response.status}: {response.reason} - {error_text}"
-            )
+            raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
         result = await response.json()
         text = result["content"][0]["text"]
         usage = result.get("usage", {})
@@ -117,14 +107,10 @@ async def call_openrouter(
             {"role": "user", "content": user_prompt},
         ],
     }
-    async with session.post(
-        url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)
-    ) as response:
+    async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
         if not response.ok:
             error_text = await response.text()
-            raise RuntimeError(
-                f"HTTP {response.status}: {response.reason} - {error_text}"
-            )
+            raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
         result = await response.json()
         text = result["choices"][0]["message"]["content"]
         usage = result.get("usage", {})
@@ -151,14 +137,10 @@ async def call_gemma_local(
         "max_tokens": 1024,
         "model": model,  # O Proxy SOTA julgara o roteamento se for um valor generico
     }
-    async with session.post(
-        url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)
-    ) as response:
+    async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
         if not response.ok:
             error_text = await response.text()
-            raise RuntimeError(
-                f"HTTP {response.status}: {response.reason} - {error_text}"
-            )
+            raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
         text = await response.text()
         usage = {
             "prompt_tokens": len(user_prompt) // 4,
@@ -167,9 +149,7 @@ async def call_gemma_local(
         return text, usage
 
 
-async def _evaluate_api_error(
-    error_msg: str, provider_name: str, provider_key: str, block_on_429: bool
-) -> str:
+async def _evaluate_api_error(error_msg: str, provider_name: str, provider_key: str, block_on_429: bool) -> str:
     """Retorna 'abort_provider', 'abort_key', ou 'retry'."""
     if any(err in error_msg for err in ["500", "502", "503", "504", "timeout"]):
         async with circuit_breaker_lock:
@@ -184,16 +164,11 @@ async def _evaluate_api_error(
                 )
                 return "abort_provider"
         return "retry"
-    if any(
-        err in error_msg
-        for err in ["401", "403", "unauthorized", "credit", "balance", "402"]
-    ):
+    if any(err in error_msg for err in ["401", "403", "unauthorized", "credit", "balance", "402"]):
         _block_key(provider_key)
         return "abort_key"
     if "429" in error_msg:
-        if block_on_429 and any(
-            q_err in error_msg for q_err in ["quota", "limit", "exhausted"]
-        ):
+        if block_on_429 and any(q_err in error_msg for q_err in ["quota", "limit", "exhausted"]):
             _block_key(provider_key)
         return "abort_key"
     if "404" in error_msg:
@@ -227,9 +202,7 @@ async def _execute_provider_attempt(
         )
 
         start_time = time.perf_counter()
-        response_text, usage = await api_call_func(
-            session, model, system_prompt, user_prompt, key
-        )
+        response_text, usage = await api_call_func(session, model, system_prompt, user_prompt, key)
         latency = time.perf_counter() - start_time
         logger.info(
             "[%s] [SOTA TELEMETRY] %s via %s consolidou resposta em %.2fs",
@@ -242,9 +215,7 @@ async def _execute_provider_attempt(
         await manager.update_llm_cache(model, user_prompt, response_text)
         prompt_tokens = usage.get(usage_keys[0], 0)
         completion_tokens = usage.get(usage_keys[1], 0)
-        await manager.record_api_usage(
-            task.id, task.agent, model, provider_name, prompt_tokens, completion_tokens
-        )
+        await manager.record_api_usage(task.id, task.agent, model, provider_name, prompt_tokens, completion_tokens)
 
         # Reseta o Circuit Breaker em caso de sucesso
         async with circuit_breaker_lock:
@@ -300,9 +271,7 @@ async def _try_single_key(
             key_index,
             error_msg,
         )
-        action = await _evaluate_api_error(
-            error_msg, provider_name, provider_key, block_on_429_quota
-        )
+        action = await _evaluate_api_error(error_msg, provider_name, provider_key, block_on_429_quota)
         if action == "abort_provider":
             return None, "abort_provider"
         if action == "abort_key":
@@ -409,14 +378,10 @@ async def _dispatch_provider_call(
         if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
             # Invocacao Local (SOTA Edge)
             try:
-                res, _ = await call_gemma_local(
-                    session, model, system_prompt, user_prompt
-                )
+                res, _ = await call_gemma_local(session, model, system_prompt, user_prompt)
                 return res
             except Exception as e:  # pylint: disable=broad-exception-caught
-                logger.warning(
-                    "Falha no Motor Gemma Local: %s. Tentando roteamento externo...", e
-                )
+                logger.warning("Falha no Motor Gemma Local: %s. Tentando roteamento externo...", e)
 
         if "/" in model or "deepseek" in model or "llama" in model:
             return await _try_provider(
@@ -471,35 +436,21 @@ def _extract_provider_keys(
         dict.fromkeys(
             v
             for k, v in all_env_vars.items()
-            if v
-            and (k.upper().startswith("GEMINI") or k.upper().startswith("GOOGLE"))
-            and "CLI" not in k.upper()
+            if v and (k.upper().startswith("GEMINI") or k.upper().startswith("GOOGLE")) and "CLI" not in k.upper()
         )
     )
-    anthropic_keys = list(
-        dict.fromkeys(
-            v
-            for k, v in all_env_vars.items()
-            if v and k.upper().startswith("ANTHROPIC")
-        )
-    )
+    anthropic_keys = list(dict.fromkeys(v for k, v in all_env_vars.items() if v and k.upper().startswith("ANTHROPIC")))
     openrouter_keys = list(
         dict.fromkeys(
             v
             for k, v in all_env_vars.items()
-            if v
-            and (
-                k.upper().startswith("OPENROUTER")
-                or k.upper().startswith("OPEN_ROUTER")
-            )
+            if v and (k.upper().startswith("OPENROUTER") or k.upper().startswith("OPEN_ROUTER"))
         )
     )
     return gemini_keys, anthropic_keys, openrouter_keys
 
 
-async def call_llm_api(
-    task: Task, system_prompt: str, user_prompt: str, manager: QueueManager
-) -> str:
+async def call_llm_api(task: Task, system_prompt: str, user_prompt: str, manager: QueueManager) -> str:
     """Ponto de entrada SOTA que orquestra e delega a cognicao as LLMs configuradas."""
     models_to_try = []
 
@@ -508,8 +459,6 @@ async def call_llm_api(
         models_to_try.append(task.metadata["model_override"])
 
     # 2. Primary Model from agents manifest
-    from core.config import AGENTS_MANIFEST
-
     agent_clean = task.agent.replace("@", "")
     if agent_clean in AGENTS_MANIFEST:
         primary_model = AGENTS_MANIFEST[agent_clean].get("primary_model")
@@ -518,11 +467,7 @@ async def call_llm_api(
 
     # 3. Add default category models as fallback
     agent_type = AGENT_ROUTING_MAP.get(task.agent, "fast_operations")
-    fallback_list = (
-        list(DEEP_THINKING_MODELS)
-        if agent_type == "deep_thinking"
-        else list(FAST_OPERATIONS_MODELS)
-    )
+    fallback_list = list(DEEP_THINKING_MODELS) if agent_type == "deep_thinking" else list(FAST_OPERATIONS_MODELS)
     for model_name in fallback_list:
         if model_name not in models_to_try:
             models_to_try.append(model_name)

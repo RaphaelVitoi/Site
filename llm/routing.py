@@ -6,7 +6,7 @@ Responsible for heuristic routing, model scoring, and health gating.
 # pylint: disable=protected-access
 import logging
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import aiosqlite
 
@@ -105,9 +105,7 @@ def _inject_openrouter_alternatives(models: list[str]) -> list[str]:
 async def _get_model_recent_health(
     provider: str, model: str, manager: QueueManager, window_minutes: int
 ) -> dict[str, float]:
-    cutoff = (
-        datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
-    ).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(minutes=window_minutes)).isoformat()
     async with aiosqlite.connect(manager.db_path) as db:
         db.row_factory = sqlite3.Row
         async with db.execute(
@@ -132,9 +130,7 @@ async def _get_model_recent_health(
     }
 
 
-async def _apply_model_health_gate(
-    models: list[str], manager: QueueManager, task: Task
-) -> list[str]:
+async def _apply_model_health_gate(models: list[str], manager: QueueManager, task: Task) -> list[str]:
     if not bool(te._health_gate_value("enabled", True)):
         return models
 
@@ -142,11 +138,7 @@ async def _apply_model_health_gate(
     min_attempts = int(te._health_gate_value("min_attempts", 3))
     min_success_rate_pct = float(te._health_gate_value("min_success_rate_pct", 10.0))
     drop_only_free_models = bool(te._health_gate_value("drop_only_free_models", True))
-    protected_models = {
-        str(m).strip().lower()
-        for m in te._health_gate_value("protect_models", [])
-        if str(m).strip()
-    }
+    protected_models = {str(m).strip().lower() for m in te._health_gate_value("protect_models", []) if str(m).strip()}
 
     filtered: list[str] = []
     for model in models:
@@ -166,13 +158,9 @@ async def _apply_model_health_gate(
 
         # Logica de verificacao de saude para modelos elegiveis.
         stats = await _get_model_recent_health(provider, model, manager, window_minutes)
-        if (
-            stats["attempts"] >= min_attempts
-            and stats["success_rate_pct"] < min_success_rate_pct
-        ):
+        if stats["attempts"] >= min_attempts and stats["success_rate_pct"] < min_success_rate_pct:
             logger.warning(
-                "[[%s]%s[/]] Model gate removeu %s:%s "
-                "(attempts=%s, success_rate=%s%%).",
+                "[[%s]%s[/]] Model gate removeu %s:%s (attempts=%s, success_rate=%s%%).",
                 te._c(task.agent),
                 task.agent,
                 provider,

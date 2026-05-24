@@ -1,7 +1,6 @@
 """
 Teste de estresse para validacao da sanitizacao de prompts no sistema SOTA.
 """
-import pytest
 
 # Simula a logica de sanitizacao implementada no hook useGemmaStream.ts
 def sanitize_prompt(prompt: str) -> str:

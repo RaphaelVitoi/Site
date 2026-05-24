@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReferencePointStatus } from '@/lib/perspectiva';
+import type { ReferencePointStatus } from '../../lib/perspectiva';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSotaSync } from './hooks/useSotaSync';

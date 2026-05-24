@@ -1,9 +1,10 @@
 /** @format */
 
 import init, {
-	solve_insolvency_matrix_binary,
-	solve_icm_distortion_v2,
-} from '../../../../wasm-equity/pkg/vitoi_equity_engine.js';
+  solve_insolvency_matrix_binary,
+  solve_icm_distortion_v2,
+} from '../../../engine/wasm/vitoi_equity_engine.js';
+
 import { maskToBytes, rangeToBitmask } from './rangeParser';
 
 // SOTA: Injeção de tipagem para o bundler (Next.js) em contexto de WebWorker
@@ -64,7 +65,7 @@ globalThis.onmessage = async (e: MessageEvent<WorkerMessage>) => {
 
 	try {
 		if (!initPromise) {
-			const isDev = process.env.NODE_ENV === 'development';
+			const isDev = process.env['NODE_ENV'] === 'development';
 			const cacheBuster = isDev ? `?v=${Date.now()}` : '';
 			initPromise = init(`/wasm/vitoi_equity_engine_bg.wasm${cacheBuster}`);
 		}
@@ -139,6 +140,7 @@ globalThis.onmessage = async (e: MessageEvent<WorkerMessage>) => {
 						data.freqFlop.oop_fold / 100,
 						data.freqFlop.oop_call / 100,
 						data.freqFlop.oop_raise / 100,
+						data.humanNoiseFactor,
 					),
 					data.freqFlop,
 					data.ipRpFlop,
@@ -155,6 +157,7 @@ globalThis.onmessage = async (e: MessageEvent<WorkerMessage>) => {
 						data.freqTurn.oop_fold / 100,
 						data.freqTurn.oop_call / 100,
 						data.freqTurn.oop_raise / 100,
+						data.humanNoiseFactor,
 					),
 					data.freqTurn,
 					data.ipRpTurn,
@@ -171,6 +174,7 @@ globalThis.onmessage = async (e: MessageEvent<WorkerMessage>) => {
 						data.freqRiver.oop_fold / 100,
 						data.freqRiver.oop_call / 100,
 						data.freqRiver.oop_raise / 100,
+						data.humanNoiseFactor,
 					),
 					data.freqRiver,
 					data.ipRpRiver,

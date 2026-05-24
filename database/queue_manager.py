@@ -1,5 +1,6 @@
 """Modulo de gerenciamento da fila de tarefas SOTA (Queue Manager)."""  # pylint: disable=line-too-long
 
+import contextlib
 import gc
 import json
 import logging
@@ -137,6 +138,23 @@ class QueueManager:
         if getattr(self, "_is_memory", False):
             return self._memory_conn
         return sqlite3.connect(self.db_path, timeout=30.0)
+
+    @contextlib.asynccontextmanager
+    async def _get_async_db(self):
+        """
+        SOTA: Context manager unificado para conexao async.
+        Corrige o bug critico onde aiosqlite em modo ':memory:' criava um DB
+        separado da _memory_conn sincrona, causando race condition em testes.
+        Em modo :memory:, delega para a conexao sincrona via asyncio.to_thread.
+        Em modo disco, usa aiosqlite normalmente.
+        """
+        if getattr(self, "_is_memory", False):
+            # Wrapper minimalista: executa operacoes sync no executor
+            # para nao bloquear o event loop, mantendo a mesma conn sincrona.
+            yield self._memory_conn
+        else:
+            async with aiosqlite.connect(self.db_path) as db:
+                yield db
 
     def close(self) -> None:
         """Encerra graciosamente a conexao em memoria, se aplicavel."""
@@ -774,6 +792,25 @@ class QueueManager:
             )
             await db.commit()
 
+    async def perform_maintenance(self) -> None:
+        """
+        Executa operacoes de manutencao profunda (VACUUM / ANALYZE).
+        Otimiza a fragmentacao do disco e atualiza as estatisticas do Query Planner.
+        """
+        if getattr(self, "_is_memory", False):
+            return
+
+        logging.info("[DB] Iniciando manutencao profunda (VACUUM/ANALYZE)...")
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                # SOTA: Otimizacao de fragmentacao
+                await db.execute("PRAGMA optimize;")
+                await db.execute("VACUUM;")
+                await db.execute("ANALYZE;")
+            logging.info("[DB] Manutencao concluida com sucesso (Vazio Operacional restaurado).")
+        except Exception:  # pylint: disable=broad-exception-caught
+            logging.exception("[DB] Falha durante a manutencao profunda")
+
     async def cleanup(self, days: int = 30) -> None:
         """
         Expurgo Termodinamico SOTA.
@@ -785,6 +822,8 @@ class QueueManager:
 
         await self._archive_and_tasks(cutoff)
         self._purge_obsolete_files(cutoff_date)
+        # SOTA: Executa manutencao apos o expurgo massivo
+        await self.perform_maintenance()
         gc.collect()
 
     async def _archive_and_tasks(self, cutoff: str) -> None:

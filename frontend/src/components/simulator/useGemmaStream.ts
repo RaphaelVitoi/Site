@@ -65,7 +65,7 @@ export function useGemmaStream() {
 			bufferRef.current = '';
 
 			// SOTA: Roteamento centralizado para o Proxy Python SOTA (onde o RAG e System Prompt são injetados)
-			const proxyUrl = process.env.NEXT_PUBLIC_SOTA_PROXY_URL || 'http://127.0.0.1:17043';
+			const proxyUrl = process.env['NEXT_PUBLIC_SOTA_PROXY_URL'] || 'http://127.0.0.1:17043';
 
 			// SOTA: Sanitização de Prompt - Remove tentativas de manipulação de instrução (jailbreak) com suporte a sufixos
 			const sanitizedPrompt = prompt
@@ -84,8 +84,8 @@ export function useGemmaStream() {
 					predictive_profile: predictiveProfile,
 				};
 
-				const token = process.env.NEXT_PUBLIC_SOTA_API_TOKEN;
-				if (!token && process.env.NODE_ENV !== 'development') {
+				const token = process.env['NEXT_PUBLIC_SOTA_API_TOKEN'];
+				if (!token && process.env['NODE_ENV'] !== 'development') {
 					throw new Error(
 						'NEXT_PUBLIC_SOTA_API_TOKEN não configurado no ambiente de produção.',
 					);

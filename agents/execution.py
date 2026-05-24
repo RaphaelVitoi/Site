@@ -9,11 +9,13 @@ import logging
 import os
 import sqlite3
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import agents.context_builder as cb
 import core.runtime as te
+import engine.cognitive as local_engine
 from agents.autonomy import apply_god_mode, get_autonomy_mode
 from agents.dispatcher import (
     DispatcherSubtask,
@@ -28,14 +30,8 @@ from llm.budget import (
     APIKeysExhaustedError,
     is_cognitive_hibernation_active,
 )
-from llm.orchestrator import call_llm_api
+from llm.orchestrator import _prepare_routing_pipeline, call_llm_api
 from monitoring.telemetry import send_toast, write_economic_log
-
-# SOTA: Modularização do Context Builder
-import agents.context_builder as cb
-
-# SOTA: Importacao do Motor Cognitivo Local (Pure Engine)
-import engine.cognitive as local_engine
 
 logger = logging.getLogger(__name__)
 
@@ -74,35 +70,30 @@ async def _create_system_task(
                 id=task_id,
                 description=description,
                 agent=agent,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 metadata={"priority": priority},
             )
             await manager.add_task(system_task)
-            logger.info(
-                f"[SISTEMA IMUNOLOGICO] Tarefa de sistema '{task_id}' para {agent} criada com sucesso."
-            )
+            logger.info(f"[SISTEMA IMUNOLOGICO] Tarefa de sistema '{task_id}' para {agent} criada com sucesso.")
             return True
     except Exception as e:  # noqa: BLE001
-        logger.critical(
-            f"[SISTEMA IMUNOLOGICO] FALHA CRITICA ao criar tarefa de sistema '{task_id}': {e}"
-        )
+        logger.critical(f"[SISTEMA IMUNOLOGICO] FALHA CRITICA ao criar tarefa de sistema '{task_id}': {e}")
     return False
 
 
 def _escalate_security_cognition(task: Task) -> None:
     priority = task.metadata.get("priority", "medium") if task.metadata else "medium"
     if task.agent == AGENT_SECURITYCHIEF and priority in ["high", "critical"]:
-        if task.metadata is None:
-            task.metadata = {}
-        task.metadata["model_override"] = "gemini-1.5-pro"
+        # SOTA: model_copy e o padrao correto do Pydantic v2 para mutacao segura.
+        # Evita falha silenciosa em models frozen e AttributeError em v2 strict.
+        new_metadata = {**(task.metadata or {}), "model_override": "gemini-1.5-pro"}
+        object.__setattr__(task, "metadata", new_metadata)
         logger.info(
             f"[[{te._c(task.agent)}]{task.agent}[/]] [bold red]CRITICAL SEC[/]: Escalando cognicao de seguranca para gemini-1.5-pro."
         )
 
 
-async def process_agent_task(
-    task: Task, manager: QueueManager, timing_metrics: dict[str, float]
-) -> str:
+async def process_agent_task(task: Task, manager: QueueManager, timing_metrics: dict[str, float]) -> str:
     """Motor de orquestracao SOTA descentralizado."""
     # SOTA: Avaliação Antecipada de Bypass Cognitivo
     if task.metadata and task.metadata.get("skip_llm"):
@@ -115,13 +106,6 @@ async def process_agent_task(
     strategic_agents = (AGENT_MAVERICK, AGENT_PESQUISADOR, AGENT_ARCHITECT)
     n_rag_results = 7 if task.agent in strategic_agents else 3
 
-    agent_memory, project_context = cb._read_agent_and_project_contexts(agent_clean)
-    task_docs = cb._inject_task_docs(task)
-
-    web_context, web_ms = await cb._execute_web_search(task, manager)
-    if web_ms > 0:
-        timing_metrics["web_search_ms"] = web_ms
-
     # SOTA: Friccao Zero. Erradicacao de buscas RAG ociosas para agentes operacionais.
     operational_agents = (
         AGENT_DISPATCHER,
@@ -130,21 +114,38 @@ async def process_agent_task(
         AGENT_HISTORIAN,
         AGENT_ORGANIZADOR,
     )
-    collective_memory = ""
-    if task.agent not in operational_agents:
-        collective_memory, rag_ms = await cb._query_collective_memory(
-            task, n_rag_results
-        )
-        if rag_ms > 0:
-            timing_metrics["rag_query_ms"] = rag_ms
 
+    # Função encapsulada auxiliar para condicionar a busca RAG dentro do gather
+    async def _fetch_collective_memory() -> tuple[str, int]:
+        if task.agent not in operational_agents:
+            return await cb._query_collective_memory(task, n_rag_results)
+        return "", -1
+
+    # SOTA: Aglutinacao de I/O Independente. Busca Web, RAG e Leituras Fisicas em paralelo.
+    (
+        (agent_memory, project_context),
+        task_docs,
+        (web_context, web_ms),
+        (collective_memory, rag_ms)
+    ) = await asyncio.gather(
+        cb._read_agent_and_project_contexts(agent_clean),
+        cb._inject_task_docs(task),
+        cb._execute_web_search(task, manager),
+        _fetch_collective_memory()
+    )
+
+    timing_metrics = timing_metrics or {}
+
+    if web_ms > 0:
+        timing_metrics["web_search_ms"] = web_ms
+    if rag_ms > 0:
+        timing_metrics["rag_query_ms"] = rag_ms
     _escalate_security_cognition(task)
 
     # SOTA: Bypass de compressao (LLM) onerosa para operacionais. Truncamento linear direto no array de chars.
     if task.agent in operational_agents and len(project_context) > 6000:
         project_context = (
-            project_context[:6000]
-            + "\n\n[TRUNCADO SOTA: AGENTE OPERACIONAL PRESCINDE DE CONTEXTO MASSIVO]"
+            project_context[:6000] + "\n\n[TRUNCADO SOTA: AGENTE OPERACIONAL PRESCINDE DE CONTEXTO MASSIVO]"
         )
     elif task.agent not in operational_agents:
         project_context, agent_memory, comp_ms = await cb._apply_context_compression(
@@ -154,7 +155,7 @@ async def process_agent_task(
             timing_metrics["context_compression_ms"] = comp_ms
 
     autonomy_mode = await get_autonomy_mode(manager)
-    system_prompt, user_prompt = cb._assemble_prompt(
+    system_prompt, user_prompt = await cb._assemble_prompt(
         task,
         project_context,
         web_context,
@@ -165,60 +166,39 @@ async def process_agent_task(
         autonomy_mode,
     )
 
-    from llm.orchestrator import _prepare_routing_pipeline
-
     models_to_try, _, _ = await _prepare_routing_pipeline(task, manager)
-    cached_response = await manager.get_first_cached_response(
-        models_to_try, user_prompt
-    )
+    cached_response = await manager.get_first_cached_response(models_to_try, user_prompt)
     if cached_response:
-        logger.info(
-            f"[{te._c(task.agent)}]{task.agent}[/] [dim]Cache hit. Usando sabedoria armazenada.[/]"
-        )
+        logger.info(f"[{te._c(task.agent)}]{task.agent}[/] [dim]Cache hit. Usando sabedoria armazenada.[/]")
         return cached_response
 
     # Gatekeeper do Orcamento Cognitivo
     budget_ok = await manager.check_and_increment_usage()
     if not budget_ok:
-        raise APIBudgetExhaustedError(
-            "O orcamento diario de chamadas a API foi esgotado."
-        )
+        raise APIBudgetExhaustedError("O orcamento diario de chamadas a API foi esgotado.")
 
     # Call LLM API
     require_json = task.agent == "@dispatcher"
-    response_text = await call_llm_api(
-        task, system_prompt, user_prompt, manager, require_json=require_json
-    )
-    return response_text
+    return await call_llm_api(task, system_prompt, user_prompt, manager, require_json=require_json)
 
 
-async def _process_dispatcher_output(
-    task: Task, manager: QueueManager, response_text: str
-) -> None:
+async def _process_dispatcher_output(task: Task, manager: QueueManager, response_text: str) -> None:
     try:
         parsed_subtasks = _parse_dispatcher_subtasks_strict(response_text)
-        await _enqueue_subtasks(
-            task, manager, parsed_subtasks, "dispatcher_json_validated"
-        )
+        await _enqueue_subtasks(task, manager, parsed_subtasks, "dispatcher_json_validated")
         logger.info(
             f"[bold blue][>] ESTRATEGIA[/] [cyan]{task.id}[/] fragmentada em [bold]{len(parsed_subtasks)}[/] sub-tarefas interdependentes."
         )
     except Exception:  # noqa: BLE001
         logger.exception(f"[{task.id}] Falha ao interpretar matriz do Dispatcher")
-        retry_subtasks = await _retry_dispatcher_schema_once(
-            task, manager, response_text
-        )
+        retry_subtasks = await _retry_dispatcher_schema_once(task, manager, response_text)
         if retry_subtasks:
-            await _enqueue_subtasks(
-                task, manager, retry_subtasks, "dispatcher_schema_retry_success"
-            )
+            await _enqueue_subtasks(task, manager, retry_subtasks, "dispatcher_schema_retry_success")
             logger.info(
                 f"[bold blue][>] ESTRATEGIA[/] [cyan]{task.id}[/] normalizada via retry de schema com [bold]{len(retry_subtasks)}[/] sub-tarefas."
             )
         else:
-            await manager.update_task_metadata(
-                task.id, {"reason_codes": ["dispatcher_parse_failed"]}, merge=True
-            )
+            await manager.update_task_metadata(task.id, {"reason_codes": ["dispatcher_parse_failed"]}, merge=True)
             await _create_dispatcher_fallback_plan(task, manager)
 
 
@@ -228,23 +208,23 @@ async def _enqueue_subtasks(
     subtasks: list[DispatcherSubtask],
     reason_code: str,
 ) -> None:
-    created_ids = []
+    created_ids = [f"{task.id}-SUB-{i + 1}" for i in range(len(subtasks))]
     agents_list = [sub.agent for sub in subtasks]
-    for i, st in enumerate(subtasks):
-        sub_id = f"{task.id}-SUB-{i + 1}"
-        created_ids.append(sub_id)
 
+    tasks_to_insert = []
+
+    for i, st in enumerate(subtasks):
+        sub_id = created_ids[i]
         meta = task.metadata.copy() if task.metadata else {}
         meta["route_selected"] = agents_list
+
         reason_codes = list(meta.get("reason_codes", []))
         if reason_code not in reason_codes:
             reason_codes.append(reason_code)
         meta["reason_codes"] = reason_codes
 
         if st.depends_on:
-            meta["depends_on"] = [
-                created_ids[idx] for idx in st.depends_on if idx < len(created_ids)
-            ]
+            meta["depends_on"] = [created_ids[idx] for idx in st.depends_on if idx < len(created_ids)]
         if st.metadata:
             meta.update(st.metadata)
 
@@ -252,33 +232,30 @@ async def _enqueue_subtasks(
             id=sub_id,
             description=st.description,
             agent=st.agent,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             metadata=meta,
         )
-        await manager.add_task(new_task)
+        tasks_to_insert.append(manager.add_task(new_task))
+
+    if tasks_to_insert:
+        await asyncio.gather(*tasks_to_insert)
 
 
 async def _handle_api_budget_exhaustion(task: Task, manager: QueueManager):
-    logger.error(
-        f"[bold red][!] ORCAMENTO ESGOTADO[/] Falha na tarefa [cyan]{task.id}[/]."
-    )
+    logger.error(f"[bold red][!] ORCAMENTO ESGOTADO[/] Falha na tarefa [cyan]{task.id}[/].")
     await manager.update_task_status(task.id, "pending")
-    await manager.update_task_metadata(
-        task.id, {"workflow_status": "pending_budget_exhausted"}, merge=True
-    )
+    await manager.update_task_metadata(task.id, {"workflow_status": "pending_budget_exhausted"}, merge=True)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     tomorrow = now.date() + timedelta(days=1)
-    hibernation_target = datetime.combine(
-        tomorrow, datetime.min.time(), tzinfo=timezone.utc
-    )
+    hibernation_target = datetime.combine(tomorrow, datetime.min.time(), tzinfo=UTC)
     await manager.set_system_state("hibernation_until", hibernation_target.isoformat())
 
     notification_id = f"BUDGET-ALERT-{now.strftime('%Y%m%d')}"
-    notification_desc = "ALERTA CRITICO: O orcamento diario de API foi esgotado. O sistema entrara em hibernacao ate o proximo ciclo."
-    await _create_system_task(
-        manager, notification_id, notification_desc, AGENT_CHICO, "critical"
+    notification_desc = (
+        "ALERTA CRITICO: O orcamento diario de API foi esgotado. O sistema entrara em hibernacao ate o proximo ciclo."
     )
+    await _create_system_task(manager, notification_id, notification_desc, AGENT_CHICO, "critical")
 
 
 async def _handle_api_keys_exhaustion(task: Task, manager: QueueManager):
@@ -286,11 +263,9 @@ async def _handle_api_keys_exhaustion(task: Task, manager: QueueManager):
         f"[bold yellow][!] CHAVES TEMPORARIAMENTE EXAURIDAS[/] [cyan]{task.id}[/] devolvida e preservada na fila."
     )
     await manager.update_task_status(task.id, "pending")
-    await manager.update_task_metadata(
-        task.id, {"workflow_status": "pending_keys_exhausted"}, merge=True
-    )
+    await manager.update_task_metadata(task.id, {"workflow_status": "pending_keys_exhausted"}, merge=True)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     resume_time = now + timedelta(minutes=3)
     await manager.set_system_state("hibernation_until", resume_time.isoformat())
 
@@ -329,15 +304,11 @@ async def _handle_task_failure(
 
     duration = time.monotonic() - start_time
     write_economic_log(task, duration, "FAILED")
-    send_toast(
-        "Entropia Sistemica (CRITICAL)", f"Falha na tarefa do {task.agent}.", "error"
-    )
+    send_toast("Entropia Sistemica (CRITICAL)", f"Falha na tarefa do {task.agent}.", "error")
 
     is_system_task = task.id.startswith(("AUTOFIX", "RESONANCE", "HANDOFF"))
     if not is_system_task:
-        safe_response = (
-            response_text[:1000].encode("ascii", "backslashreplace").decode("ascii")
-        )
+        safe_response = response_text[:1000].encode("ascii", "backslashreplace").decode("ascii")
         fix_id = f"AUTOFIX-{task.id}"
         fix_desc = f"[AUTO-CORRECAO SOTA | LEI ZERO]\nA tarefa '{task.id}' falhou. Diagnostico Bayesiano exigido.\nErro: {safe_err_msg}\nResposta original: {safe_response}"
         if await _create_system_task(manager, fix_id, fix_desc, task.agent, "critical"):
@@ -346,21 +317,17 @@ async def _handle_task_failure(
             )
 
         resonance_id = f"RESONANCE-{task.id}"
-        resonance_desc = f"[AUDITORIA FRACTAL | LEI ZERO]\nA tarefa '{task.id}' quebrou. Steelmaning do bug obrigatorio."
-        await _create_system_task(
-            manager, resonance_id, resonance_desc, AGENT_MAVERICK, "high"
+        resonance_desc = (
+            f"[AUDITORIA FRACTAL | LEI ZERO]\nA tarefa '{task.id}' quebrou. Steelmaning do bug obrigatorio."
         )
+        await _create_system_task(manager, resonance_id, resonance_desc, AGENT_MAVERICK, "high")
 
 
 async def _process_observers_and_handoff(task: Task, manager: QueueManager) -> None:
     await _notify_observers(task, manager)
 
     autonomy_mode = await get_autonomy_mode(manager)
-    if (
-        autonomy_mode == "off"
-        or task.id.startswith("AUTOFIX")
-        or task.agent == AGENT_DISPATCHER
-    ):
+    if autonomy_mode == "off" or task.id.startswith("AUTOFIX") or task.agent == AGENT_DISPATCHER:
         return
 
     next_agent = te.HANDOFF_PIPELINE.get(task.agent)
@@ -368,9 +335,7 @@ async def _process_observers_and_handoff(task: Task, manager: QueueManager) -> N
         return
 
     if autonomy_mode == "partial" and next_agent == AGENT_IMPLEMENTOR:
-        logger.info(
-            f"[AUTONOMIA PARCIAL] Fluxo pausado. A etapa critica do {next_agent} exige comando manual."
-        )
+        logger.info(f"[AUTONOMIA PARCIAL] Fluxo pausado. A etapa critica do {next_agent} exige comando manual.")
         return
 
     handoff_id = f"HANDOFF-{task.id[-10:]}-{next_agent.strip('@').upper()}"
@@ -379,12 +344,10 @@ async def _process_observers_and_handoff(task: Task, manager: QueueManager) -> N
             id=handoff_id,
             description=f"O agente {task.agent} concluiu sua etapa. Analise '.claude/task_results/{task.id}.md' e execute a sua.",
             agent=next_agent,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
         await manager.add_task(new_task)
-        logger.info(
-            f"[bold magenta][->] HANDOFF[/] O bastao foi passado para [{te._c(next_agent)}]{next_agent}[/]"
-        )
+        logger.info(f"[bold magenta][->] HANDOFF[/] O bastao foi passado para [{te._c(next_agent)}]{next_agent}[/]")
 
 
 async def _notify_observers(task: Task, manager: QueueManager) -> None:
@@ -399,7 +362,7 @@ async def _notify_observers(task: Task, manager: QueueManager) -> None:
                 id=notification_id,
                 description=f"[NOTIFICACAO DE SENTINELA]\nA tarefa epica '{task.id}' foi concluida. Audite o resultado.",
                 agent=observer,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 metadata={
                     "reference_task": task.id,
                     "priority": "high",
@@ -422,7 +385,7 @@ def _set_task_completed_at_sync(db_path: str | os.PathLike[str], task_id: str) -
     with sqlite3.connect(db_path) as db:
         db.execute(
             "UPDATE tasks SET completedAt = ? WHERE id = ?",
-            (datetime.now(timezone.utc).isoformat(), task_id),
+            (datetime.now(UTC).isoformat(), task_id),
         )
         db.commit()
 
@@ -478,16 +441,12 @@ async def execute_task_workflow(task: Task, manager: QueueManager):
 
     # --- SOTA DELEGATION: Oraculo de Borda (@gemma4) ---
     if task.agent == "@gemma4" or task.agent == "@gemma":
-        logger.info(
-            f"[[{te._c(task.agent)}]{task.agent}[/]] Delegando para o Motor Cognitivo Local (Pure Engine)..."
-        )
+        logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] Delegando para o Motor Cognitivo Local (Pure Engine)...")
         try:
             await local_engine.process_agent_task(task, manager)
             return
         except Exception:
-            logger.exception(
-                "Falha no Motor Local. Tentando workflow padrão como fallback..."
-            )
+            logger.exception("Falha no Motor Local. Tentando workflow padrão como fallback...")
 
     start_time = time.monotonic()
     timing_metrics = {}
@@ -495,27 +454,21 @@ async def execute_task_workflow(task: Task, manager: QueueManager):
     try:
         await manager.update_task_metadata(
             task.id,
-            {"workflow_started_at": datetime.now(timezone.utc).isoformat()},
+            {"workflow_started_at": datetime.now(UTC).isoformat()},
             merge=True,
         )
         response_text = await process_agent_task(task, manager, timing_metrics)
 
-        await asyncio.to_thread(
-            _save_task_result_sync, task.id, task.agent, response_text
-        )
+        await asyncio.to_thread(_save_task_result_sync, task.id, task.agent, response_text)
 
         modified_files = await apply_god_mode(response_text, manager)
 
         if task.agent == AGENT_DISPATCHER:
             await _process_dispatcher_output(task, manager, response_text)
 
-        await _finish_task_success(
-            task, manager, start_time, modified_files, timing_metrics
-        )
+        await _finish_task_success(task, manager, start_time, modified_files, timing_metrics)
         await _process_observers_and_handoff(task, manager)
         gc.collect()
 
     except Exception as e:  # noqa: BLE001
-        await _handle_task_failure(
-            e, task, manager, start_time, timing_metrics, response_text
-        )
+        await _handle_task_failure(e, task, manager, start_time, timing_metrics, response_text)

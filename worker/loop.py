@@ -4,10 +4,11 @@ Worker Loop -- Daemon principal de processamento de tarefas (NEXUS ORCHESTRATOR)
 # pylint: disable=broad-exception-caught, global-statement, protected-access, invalid-name, missing-function-docstring, line-too-long
 
 import asyncio
+import contextlib
 import logging
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import aiofiles
 import aiosqlite
@@ -15,6 +16,8 @@ from rich.console import Console
 from rich.panel import Panel
 
 import core.runtime as te
+import llm.session as _llm_session_mod
+import task_executor as task_exec
 from agents.execution import execute_task_workflow
 from core.arbitrator import UniversalArbitrator
 from core.schemas import Task
@@ -71,29 +74,34 @@ async def _handle_hibernation(manager: QueueManager, status_line) -> bool:
 
     try:
         hibernation_until = datetime.fromisoformat(hibernation_ts)
-        if datetime.now(timezone.utc) < hibernation_until.replace(tzinfo=timezone.utc):
+        # SOTA: Correcao de tzinfo — apenas adiciona UTC se o datetime for naive.
+        # .replace(tzinfo=UTC) num datetime tz-aware substitui sem converter, gerando
+        # comparacao incorreta. A forma correta e testar tzinfo antes de substituir.
+        if hibernation_until.tzinfo is None:
+            hibernation_until = hibernation_until.replace(tzinfo=UTC)
+        if datetime.now(UTC) < hibernation_until:
             status_line.update(
                 f"[red]HIBERNACAO[/] Orcamento de API esgotado. "
                 f"Retorno as {hibernation_until.strftime('%H:%M')}."
             )
             await asyncio.sleep(60)
             return True
-        else:
-            # SOTA: Reset absoluto da memoria de bloqueios ao acordar da hibernacao
-            await manager.set_system_state("hibernation_until", "")
-            for limiter in _RATE_LIMITERS.values():
-                limiter.tokens = float(limiter.capacity)
-                limiter.last_fill = time.monotonic()
-                limiter.starvation_events = 0
-            async with get_telemetry_lock():
-                ROUTE_BLOCKLIST.clear()
-                KEY_BLOCKLIST.clear()
-                GEMINI_MODEL_KEY_BLOCKLIST.clear()
-                ROUTE_FAILURE_COUNTS.clear()
-            logger.info(
-                "[SISTEMA IMUNOLOGICO] Hibernacao concluida. Amnesia de bloqueios induzida. "
-                "Rotas, chaves e rate limits restaurados para Friccao Zero."
-            )
+
+        # SOTA: Reset absoluto da memoria de bloqueios ao acordar da hibernacao
+        await manager.set_system_state("hibernation_until", "")
+        for limiter in _RATE_LIMITERS.values():
+            limiter.tokens = float(limiter.capacity)
+            limiter.last_fill = time.monotonic()
+            limiter.starvation_events = 0
+        async with get_telemetry_lock():
+            ROUTE_BLOCKLIST.clear()
+            KEY_BLOCKLIST.clear()
+            GEMINI_MODEL_KEY_BLOCKLIST.clear()
+            ROUTE_FAILURE_COUNTS.clear()
+        logger.info(
+            "[SISTEMA IMUNOLOGICO] Hibernacao concluida. Amnesia de bloqueios induzida. "
+            "Rotas, chaves e rate limits restaurados para Friccao Zero."
+        )
     except (ValueError, TypeError):
         await manager.set_system_state(
             "hibernation_until", ""
@@ -113,7 +121,7 @@ def _update_terminal_status(
 
     pending_count = counts.get("pending", 0)
     if _SET_CONSOLE_TITLE_W:
-        current_time = datetime.now(timezone.utc).astimezone().strftime("%H:%M:%S")
+        current_time = datetime.now(UTC).astimezone().strftime("%H:%M:%S")
         _SET_CONSOLE_TITLE_W(
             f"NEXUS WORKER | Pendentes: {pending_count} | "
             f"Rodando: {running_tasks_count} | Pulso: {current_time}"
@@ -130,11 +138,11 @@ def _update_terminal_status(
 def _format_display_id(task_id: str) -> str:
     if task_id.startswith("NOTIFY-"):
         return f"[bold orange3] {task_id}[/]"
-    elif task_id.startswith("AUTOFIX-"):
+    if task_id.startswith("AUTOFIX-"):
         return f"[bold red] {task_id}[/]"
-    elif task_id.startswith("RESONANCE-"):
+    if task_id.startswith("RESONANCE-"):
         return f"[bold magenta] {task_id}[/]"
-    elif task_id.startswith("HANDOFF-"):
+    if task_id.startswith("HANDOFF-"):
         return f"[bold cyan] {task_id}[/]"
     return task_id
 
@@ -144,8 +152,6 @@ async def _process_task_error(
 ) -> bool:
     error_str = str(e).lower()
     error_class = type(e).__name__
-
-    import task_executor as task_exec
 
     if error_class == "APIKeysExhaustedError" or "exhaust" in error_str:
         yield_time = task_exec.global_yield_manager.apply_exhaustion_yield(task)
@@ -173,7 +179,7 @@ async def _process_task_error(
 
     logger.error(
         "[[%s]%s] Falha catastrofica: %s",
-        getattr(te, "_c", lambda x: "")(task.agent),
+        getattr(te, "_c", lambda _: "")(task.agent),
         task.agent,
         e,
     )
@@ -184,10 +190,8 @@ async def _task_wrapper(task: Task, manager: QueueManager, sem: asyncio.Semaphor
     released = False
     try:
         await execute_task_workflow(task, manager)
-        import task_executor as task_exec
-
         if hasattr(task_exec, "global_yield_manager"):
-            task_exec.global_yield_manager.clear_yield(task.id)
+            await task_exec.global_yield_manager.clear_yield(task.id)
     except Exception as e:  # noqa: BLE001
         released = await _process_task_error(e, task, manager, sem)
     finally:
@@ -207,7 +211,7 @@ async def _handle_deadlock(pending_tasks: list, manager: QueueManager) -> None:
             ),
             agent="@chico",
             status="pending",
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             metadata={"priority": "critical"},
         )
         await manager.add_task(alert_task)
@@ -282,12 +286,8 @@ async def _cleanup_worker(manager: QueueManager, running_tasks: set) -> None:
             )
 
     if te.PID_FILE and te.PID_FILE.exists():
-        try:
+        with contextlib.suppress(OSError):
             te.PID_FILE.unlink()  # type: ignore
-        except OSError:  # noqa: BLE001
-            pass
-
-    import llm.session as _llm_session_mod
 
     if hasattr(_llm_session_mod, "_global_http_session"):
         session = getattr(_llm_session_mod, "_global_http_session", None)

@@ -122,7 +122,7 @@ export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ n
 		let isCancelled = false;
 
 		async function initWebGPU() {
-			const navigatorGpu = (navigator as unknown as Record<string, unknown>).gpu as
+			const navigatorGpu = (navigator as unknown as Record<string, unknown>)['gpu'] as
 				| {
 						requestAdapter(options?: Record<string, unknown>): Promise<{
 							requestDevice(): Promise<SotaGpuDevice>;

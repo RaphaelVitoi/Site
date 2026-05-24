@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Optional
 
 class SOTAMetrics(BaseModel):
     """Isomorfismo SOTA: Schema compartilhado para metrica de IA."""

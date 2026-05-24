@@ -5,7 +5,7 @@ Dispatcher -- Parser e retry de schema JSON para decomposicao de tarefas.
 import json
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
@@ -90,35 +90,27 @@ def _normalize_loaded_json(loaded: Any) -> list:
 def _validate_dependencies(parsed: list[DispatcherSubtask]) -> None:
     for i, subtask in enumerate(parsed):
         if any(dep >= i for dep in subtask.depends_on):
-            raise ValueError(
-                f"Subtarefa {i} possui dependencia futura invalida: {subtask.depends_on}"
-            )
+            raise ValueError(f"Subtarefa {i} possui dependencia futura invalida: {subtask.depends_on}")
 
 
 def _parse_dispatcher_subtasks_strict(response_text: str) -> list[DispatcherSubtask]:
     # SOTA: Limpeza robusta contra ruidos markdown e artefatos verbosos do LLM
     cleaned = response_text.strip()
-    cleaned = re.sub(
-        r"(^```(?:json)?)|(```$)", "", cleaned, flags=re.IGNORECASE | re.MULTILINE
-    ).strip()
+    cleaned = re.sub(r"(^```(?:json)?)|(```$)", "", cleaned, flags=re.IGNORECASE | re.MULTILINE).strip()
 
     loaded = None
     try:
         # Tentativa 1: Parse direto do bloco limpo
         loaded = json.loads(cleaned)
     except json.JSONDecodeError as e:
-        logger.debug(
-            "Tentativa 1 de parse JSON falhou: %s. Iniciando extrator de matriz...", e
-        )
+        logger.debug("Tentativa 1 de parse JSON falhou: %s. Iniciando extrator de matriz...", e)
         try:
             # Tentativa 2: Extrator original de matriz por pilha (ignora texto ao redor)
             raw_json = _extract_dispatcher_json_array(response_text)
             loaded = json.loads(raw_json)
         except Exception as inner_e:  # pylint: disable=broad-exception-caught
             # SOTA (Correcao 2): Removida a regex destrutiva que corrompia literais.
-            raise ValueError(
-                f"Falha irrevogavel no parser JSON estrutural: {inner_e!s}"
-            ) from inner_e
+            raise ValueError(f"Falha irrevogavel no parser JSON estrutural: {inner_e!s}") from inner_e
 
     loaded = _normalize_loaded_json(loaded)
 
@@ -151,22 +143,17 @@ async def _retry_dispatcher_schema_once(
         f"SAIDA INVALIDA A CORRIGIR:\n{invalid_response[:8000]}\n\n{schema_prompt}"
     )
     system_prompt = (
-        "Voce e um normalizador de schema JSON para o dispatcher. "
-        "A resposta deve ser exclusivamente JSON valido."
+        "Voce e um normalizador de schema JSON para o dispatcher. A resposta deve ser exclusivamente JSON valido."
     )
     retry_task = Task(
         id=f"{task.id}-DISPATCHER-RETRY",
         description=f"Retry schema dispatcher para {task.id}",
         agent=AGENT_DISPATCHER,
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         metadata={"priority": "high", "origin_task_id": task.id},
     )
-    logger.warning(
-        "[%s] Retry unico do dispatcher ativado para corrigir schema JSON.", task.id
-    )
-    fixed_response = await call_llm_api(
-        retry_task, system_prompt, user_prompt, manager, require_json=True
-    )
+    logger.warning("[%s] Retry unico do dispatcher ativado para corrigir schema JSON.", task.id)
+    fixed_response = await call_llm_api(retry_task, system_prompt, user_prompt, manager, require_json=True)
     try:
         return _parse_dispatcher_subtasks_strict(fixed_response)
     except Exception:  # pylint: disable=broad-exception-caught

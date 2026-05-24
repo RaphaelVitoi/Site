@@ -7,23 +7,23 @@
 
 'use client';
 
-import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
-import { useSotaSync } from '@/components/simulator/hooks/useSotaSync';
-import { useGemmaStream } from '@/components/simulator/useGemmaStream';
-import { GlassPanel } from '@/components/ui/layout/GlassPanel';
-import { SotaButton } from '@/components/ui/layout/SotaButton';
+import { ContentPageHeader } from '../../../components/ui/layout/ContentPageHeader';
+import { useSotaSync } from '../../../components/simulator/hooks/useSotaSync';
+import { useGemmaStream } from '../../../components/simulator/useGemmaStream';
+import { GlassPanel } from '../../../components/ui/layout/GlassPanel';
+import { SotaButton } from '../../../components/ui/layout/SotaButton';
 import { useEffect, useRef, useState } from 'react';
 
 interface Message {
 	id: string;
 	role: 'user' | 'assistant' | 'telemetry';
 	content: string;
-	snapshot?: import('@/lib/schemas').PhysicsSnapshot;
+	snapshot?: import('../../../lib/schemas').PhysicsSnapshot;
 }
 
 function TelemetryCard({
 	snapshot,
-}: Readonly<{ snapshot: import('@/lib/schemas').PhysicsSnapshot }>) {
+}: Readonly<{ snapshot: import('../../../lib/schemas').PhysicsSnapshot }>) {
 	return (
 		<div className="my-4 p-4 bg-slate-900/60 border border-accent-indigo/20 rounded-xl font-mono text-[0.7rem] relative overflow-hidden group">
 			<div className="absolute top-0 left-0 w-1 h-full bg-accent-indigo" />

@@ -85,7 +85,8 @@ async def test_cors_middleware_does_not_reflect_wildcard_for_untrusted_origin():
     assert response.headers.get("Access-Control-Allow-Origin") != "*"
 
 
-def test_inject_task_docs_ignores_markdown_paths_outside_workspace(
+@pytest.mark.asyncio
+async def test_inject_task_docs_ignores_markdown_paths_outside_workspace(
     local_tmp_dir, monkeypatch
 ):
     """Garante que a injecao de documentos de tarefas ignore caminhos fora do workspace."""
@@ -104,7 +105,7 @@ def test_inject_task_docs_ignores_markdown_paths_outside_workspace(
         timestamp=datetime.now(timezone.utc).isoformat(),
     )
 
-    injected = _inject_task_docs(task)
+    injected = await _inject_task_docs(task)
 
     assert "TOP SECRET" not in injected
 

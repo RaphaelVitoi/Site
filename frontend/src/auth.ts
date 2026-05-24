@@ -8,7 +8,7 @@ import Google from 'next-auth/providers/google';
 
 // SOTA Gold: Verificador de Integridade de Ambiente
 const getAuthSecret = () => {
-	const secret = process.env.AUTH_SECRET;
+	const secret = process.env['AUTH_SECRET'];
 	if (!secret) {
 		throw new Error(
 			'[FATAL] AUTH_SECRET não configurado. Abortando (Insolvência de Ambiente).',
@@ -23,11 +23,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 	secret: getAuthSecret(),
 	providers: [
 		Google({
-			clientId: process.env.AUTH_GOOGLE_ID || '',
-			clientSecret: process.env.AUTH_GOOGLE_SECRET || '',
+			clientId: process.env['AUTH_GOOGLE_ID'] || '',
+			clientSecret: process.env['AUTH_GOOGLE_SECRET'] || '',
 		}),
 		Discord,
 	],
 	pages: { signIn: '/login' },
-	trustHost: process.env.AUTH_TRUST_HOST === 'true',
+	trustHost: process.env['AUTH_TRUST_HOST'] === 'true',
 });

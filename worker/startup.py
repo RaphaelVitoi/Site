@@ -1,3 +1,4 @@
+# pylint: disable=import-outside-toplevel
 """
 Worker Startup -- Inicializacao conjunta do Worker, API e Watchdog.
 """
@@ -7,6 +8,7 @@ import logging
 
 import aiosqlite
 
+import task_executor as _task_executor
 from database.queue_manager import QueueManager
 from monitoring.watchdog import system_watchdog
 from web.server import start_api_server
@@ -19,8 +21,6 @@ async def start_worker_and_api():
     """Inicia o Worker, Servidor de API e o Watchdog de Supervisao Ativa 24/7."""
     # Garante que core.runtime esteja sincronizado com a fonte de verdade do task_executor
     # antes de handlers/worker dependerem de helpers dinamicos.
-    import task_executor as _task_executor
-
     sync_fn = getattr(_task_executor, "_sync_runtime", None)
     if sync_fn:
         sync_fn()
@@ -42,6 +42,4 @@ async def start_worker_and_api():
     except Exception as e:  # noqa: BLE001
         logger.error(f"[SISTEMA] Falha ao configurar SQLite WAL: {e}")
 
-    await asyncio.gather(
-        start_api_server(manager), start_worker(manager), system_watchdog(manager)
-    )
+    await asyncio.gather(start_api_server(manager), start_worker(manager), system_watchdog(manager))

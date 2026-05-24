@@ -1,11 +1,14 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring, missing-class-docstring, line-too-long, broad-exception-caught, logging-fstring-interpolation, unused-argument
+# ruff: noqa: D100, D101, D103, BLE001, G004, ARG001, ARG002
 
-from utils.env_loader import load_env
-
+import asyncio
 import json
 import logging
 import os
-from typing import Annotated, Optional
+import socket
+import subprocess  # noqa: S404
+import time
+from collections.abc import AsyncGenerator
+from typing import Annotated, TypedDict
 
 import aiohttp
 from fastapi import Depends, FastAPI, HTTPException, Request, Security
@@ -14,10 +17,13 @@ from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
+# Sourcing global ASCII log purification filter for Uvicorn
+from core.config import AsciiEnforcementFilter  # type: ignore
+from utils.env_loader import load_env  # type: ignore
+from utils.harmonizer import harmonizer  # type: ignore
+
 logger = logging.getLogger(__name__)
 
-# Sourcing global ASCII log purification filter for Uvicorn
-from core.config import AsciiEnforcementFilter
 for log_name in ["uvicorn", "uvicorn.access", "uvicorn.error"]:
     logging.getLogger(log_name).addFilter(AsciiEnforcementFilter())
 
@@ -51,18 +57,16 @@ Voce e um motor de analise de poker SOTA (State-of-the-Art). Sua resposta DEVE s
 api_key_header = APIKeyHeader(name="X-Vitoi-Auth", auto_error=True)
 
 
-def verify_sota_auth(api_key: Annotated[str, Security(api_key_header)]):
+def verify_sota_auth(api_key: Annotated[str, Security(api_key_header)]) -> str:
     if api_key != API_SECRET_TOKEN:
-        raise HTTPException(
-            status_code=403, detail="Acesso Negado: Criptografia SOTA exigida."
-        )
+        raise HTTPException(status_code=403, detail="Acesso Negado: Criptografia SOTA exigida.")
     return api_key
 
 
 # ==============================================================================
 
 
-app = FastAPI(title="SOTA Inference Proxy (Gemma 4 via Ollama)")
+app = FastAPI(title="SOTA Inference Proxy (Gemma 4 via llama.cpp)")
 
 
 # ==============================================================================
@@ -72,9 +76,7 @@ try:
     import chromadb
 
     chroma_client = chromadb.PersistentClient(
-        path=os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../data/chroma_db")
-        )
+        path=os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/chroma_db"))
     )
     rag_collection = chroma_client.get_or_create_collection(name="research_docs")
     RAG_AVAILABLE = True
@@ -93,32 +95,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-OLLAMA_URL = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 # SOTA: Apontado para a instancia de 31B Cloud ativa no seu terminal
 MODEL_ID = os.environ.get("SOTA_LOCAL_MODEL", "gemma4:31b")
 
 
 class PhysicsSnapshot(BaseModel):
     heroStack: float
-    villain1Stack: Optional[float] = None
-    villain2Stack: Optional[float] = None
+    villain1Stack: float | None = None
+    villain2Stack: float | None = None
     pot: float
     heroInvested: float
-    edgeFactor: Optional[float] = 1.0
+    edgeFactor: float | None = 1.0
     position: str
     referenceStatus: str
 
 
+class CognitiveProfile(TypedDict, total=False):
+    """Perfil cognitivo do usuario para adaptacao de prompt."""
+
+    aggression_factor: float
+    vpip: float
+    pfr: float
+    tilt_level: float
+    open_raise_freq: float
+    three_bet_freq: float
+
+
 class InferenceRequest(BaseModel):
     prompt: str
-    system_prompt: Optional[str] = None
-    physics_snapshot: Optional[PhysicsSnapshot] = None
-    predictive_profile: Optional[dict] = None
+    system_prompt: str | None = None
+    physics_snapshot: PhysicsSnapshot | None = None
+    predictive_profile: CognitiveProfile | None = None
     max_tokens: int = 1024
-    model: Optional[str] = None
+    model: str | None = None
 
 
-def _format_snapshot_block(snapshot: Optional[PhysicsSnapshot]) -> str:
+def _format_snapshot_block(snapshot: PhysicsSnapshot | None) -> str:
     if not snapshot:
         return ""
     return f"""
@@ -132,7 +144,7 @@ Psychological Status: {snapshot.referenceStatus}
 """
 
 
-def _format_predictive_profile(profile: Optional[dict]) -> str:
+def _format_predictive_profile(profile: CognitiveProfile | None) -> str:
     if not profile:
         return ""
     prof_str = "\n".join([f"- {k}: {v}" for k, v in profile.items()])
@@ -154,7 +166,7 @@ CLOUD_MODEL_MAP = {
 }
 
 
-def normalize_model(model_name: Optional[str]) -> str:
+def normalize_model(model_name: str | None) -> str:
     if not model_name:
         return "gemma4:4b"
     model_lower = model_name.lower().strip()
@@ -167,9 +179,7 @@ def normalize_model(model_name: Optional[str]) -> str:
 
 
 # SOTA: Roteamento Assimetrico Dinamico (Auto-Routing)
-def _determine_optimal_model(
-    prompt: str, requested_model: Optional[str], has_rag: bool
-) -> str:
+def _determine_optimal_model(prompt: str, requested_model: str | None, has_rag: bool) -> str:
     # Se o frontend exigiu um modelo especifico que nao seja generico, respeite a override.
     if requested_model and requested_model not in ["gemma", "gemma4"]:
         return normalize_model(requested_model)
@@ -191,14 +201,10 @@ def _get_rag_context(prompt: str) -> str:
             distances = results.get("distances")
 
             if docs is not None and docs[0] and distances is not None and distances[0]:
-                strictness_threshold = (
-                    1.1  # ChromaDB L2 Default: Menor e mais proximo. > 1.1 e ruido.
-                )
+                strictness_threshold = 1.1  # ChromaDB L2 Default: Menor e mais proximo. > 1.1 e ruido.
 
                 valid_docs = [
-                    doc
-                    for doc, dist in zip(docs[0], distances[0], strict=True)
-                    if dist <= strictness_threshold
+                    doc for doc, dist in zip(docs[0], distances[0], strict=True) if dist <= strictness_threshold
                 ]
 
                 if not valid_docs:
@@ -227,11 +233,11 @@ def _get_rag_context(prompt: str) -> str:
 
 
 @app.get("/")
-def root_health_check():
+def root_health_check() -> dict[str, str]:
     return {
         "status": "Motor SOTA Operacional",
         "modelo": MODEL_ID,
-        "backend": "Ollama GGUF",
+        "backend": "llama.cpp GGUF",
     }
 
 
@@ -240,17 +246,16 @@ def _extract_chunk(line: bytes) -> str:
     if not line:
         return ""
     try:
-        return json.loads(line.decode("utf-8")).get("response", "")
+        return str(json.loads(line.decode("utf-8")).get("response", ""))
     except Exception:
         return ""
 
 
-import time
-
-RATE_LIMIT_STORE = {}
+RATE_LIMIT_STORE: dict[str, float] = {}
 RATE_LIMIT_SECONDS = 1
 
-def rate_limit(request: Request):
+
+def rate_limit(request: Request) -> str:
     client_ip = request.client.host if request.client else "unknown"
     now = time.time()
     if client_ip in RATE_LIMIT_STORE:
@@ -260,13 +265,72 @@ def rate_limit(request: Request):
     RATE_LIMIT_STORE[client_ip] = now
     return client_ip
 
+
+LLAMA_SERVER_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "llama_cpp/llama-server.exe"))
+LLAMA_PORT = 17045
+
+
+def is_port_open(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+def ensure_llama_server() -> bool:
+    if is_port_open(LLAMA_PORT):
+        logger.info("[LLAMA.CPP] Server ja esta rodando na porta %d", LLAMA_PORT)
+        return True
+
+    if not os.path.exists(LLAMA_SERVER_PATH):
+        logger.error("[LLAMA.CPP] Binario nao encontrado em %s", LLAMA_SERVER_PATH)
+        return False
+
+    logger.info("[LLAMA.CPP] Iniciando llama-server na porta %d...", LLAMA_PORT)
+    cmd = [
+        LLAMA_SERVER_PATH,
+        "-hf",
+        "bartowski/gemma-2-2b-it-GGUF",
+        "-hff",
+        "gemma-2-2b-it-Q4_K_M.gguf",
+        "--port",
+        str(LLAMA_PORT),
+        "-c",
+        "4096",
+        "-ngl",
+        "99",
+    ]
+    try:
+        subprocess.Popen(  # noqa: S603
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+        for _ in range(20):
+            time.sleep(0.5)
+            if is_port_open(LLAMA_PORT):
+                logger.info("[LLAMA.CPP] Server iniciado com sucesso!")
+                return True
+        logger.warning("[LLAMA.CPP] Timeout aguardando o server subir.")
+    except Exception as e:
+        logger.error("[LLAMA.CPP] Falha ao iniciar subprocesso: %s", e)
+    return False
+
+
+@harmonizer.ultra_fast_async
+async def _get_rag_context_async(prompt: str) -> str:
+    """SOTA: Interface assincrona harmonizada para o RAG do Oracle."""
+    return await asyncio.to_thread(_get_rag_context, prompt)
+
+
 @app.post("/generate", dependencies=[Depends(rate_limit)])
+@harmonizer.ultra_fast_async
 async def generate_response(
     req: InferenceRequest,
     request: Request,
-    auth: Annotated[str, Depends(verify_sota_auth)],
-):
-    rag_context = _get_rag_context(req.prompt)
+    _auth: Annotated[str, Depends(verify_sota_auth)],  # noqa: ARG001
+) -> StreamingResponse:
+    rag_context = await _get_rag_context_async(req.prompt)
     snapshot_block = _format_snapshot_block(req.physics_snapshot)
     profile_block = _format_predictive_profile(req.predictive_profile)
 
@@ -276,18 +340,11 @@ async def generate_response(
         logger.warning(
             "O parametro 'system_prompt' e obsoleto e foi ignorado por seguranca. O prompt do sistema padrao foi aplicado."
         )
-    final_prompt = (
-        sys_prompt
-        + rag_context
-        + snapshot_block
-        + profile_block
-        + "[CENARIO/PERGUNTA]:\n"
-        + req.prompt
-    )
+    final_prompt = sys_prompt + rag_context + snapshot_block + profile_block + "[CENARIO/PERGUNTA]:\n" + req.prompt
 
     target_model = _determine_optimal_model(req.prompt, req.model, bool(rag_context))
 
-    async def token_generator():
+    async def token_generator() -> AsyncGenerator[str]:
         # SOTA: Hybrid cloud/local routing for Gemma 4 31B Cloud / 4B Local
         is_cloud = target_model == "gemma4:31b"
 
@@ -308,39 +365,52 @@ async def generate_response(
         )
 
         if not is_cloud:
-            logger.info(
-                "[ROTEAMENTO LOCAL] Direcionando %s para Ollama Local...", target_model
-            )
-            payload = {
-                "model": target_model,
-                "prompt": final_prompt,
-                "stream": True,
-                "options": {"temperature": 0.0, "num_predict": req.max_tokens},
-            }
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(
-                        f"{OLLAMA_URL}/api/generate",
-                        json=payload,
-                        timeout=aiohttp.ClientTimeout(total=5),
-                    ) as resp:
+            logger.info("[ROTEAMENTO LOCAL] Direcionando %s para llama.cpp Local...", target_model)
+            if ensure_llama_server():
+                payload = {
+                    "prompt": final_prompt,
+                    "stream": True,
+                    "temperature": 0.0,
+                    "n_predict": req.max_tokens,
+                }
+                try:
+                    async with (
+                        aiohttp.ClientSession() as session,
+                        session.post(
+                            f"http://127.0.0.1:{LLAMA_PORT}/completion",
+                            json=payload,
+                            timeout=aiohttp.ClientTimeout(total=60),
+                        ) as resp,
+                    ):
                         if resp.status == 200:
                             async for line in resp.content:
                                 if await request.is_disconnected():
                                     break
-                                chunk = _extract_chunk(line)
-                                if chunk:
-                                    yield chunk
+                                line_str = line.decode("utf-8").strip()
+                                if not line_str:
+                                    continue
+                                if line_str.startswith("data: "):
+                                    try:
+                                        data_json = json.loads(line_str[6:])
+                                        chunk = data_json.get("content", "")
+                                        if chunk:
+                                            yield chunk
+                                    except Exception:  # noqa: S112
+                                        continue
                             return
                         else:
                             logger.warning(
-                                "[ROTEAMENTO LOCAL] Ollama local falhou com status %s. Redirecionando para Fallback Cloud...",
+                                "[ROTEAMENTO LOCAL] llama.cpp falhou com status %s. Redirecionando para Fallback Cloud...",
                                 resp.status,
                             )
-            except Exception as e:
+                except Exception as e:
+                    logger.warning(
+                        "[ROTEAMENTO LOCAL] Erro ao conectar ao llama.cpp local (%s). Redirecionando para Fallback Cloud...",
+                        e,
+                    )
+            else:
                 logger.warning(
-                    "[ROTEAMENTO LOCAL] Erro ao conectar ao Ollama local (%s). Redirecionando para Fallback Cloud...",
-                    e,
+                    "[ROTEAMENTO LOCAL] Falha ao garantir llama-server online. Redirecionando para Fallback Cloud..."
                 )
 
         cloud_model = CLOUD_MODEL_MAP.get(target_model, "gemma-4-31b-it")
@@ -360,46 +430,40 @@ async def generate_response(
                 "Authorization": f"Bearer {gemini_key}",
                 "Content-Type": "application/json",
             }
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(
                     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
                     json=cloud_payload,
                     headers=headers,
                     timeout=aiohttp.ClientTimeout(total=60),
-                ) as resp:
-                    if resp.status != 200:
-                        err_txt = await resp.text()
-                        yield f"[ENTROPIA CLOUD HTTP {resp.status}]: Falha na conexao com Google AI Studio. Detalhes: {err_txt}"
-                        return
-                    async for line in resp.content:
-                        if await request.is_disconnected():
+                ) as resp,
+            ):
+                if resp.status != 200:
+                    err_txt = await resp.text()
+                    yield f"[ENTROPIA CLOUD HTTP {resp.status}]: Falha na conexao com Google AI Studio. Detalhes: {err_txt}"
+                    return
+                async for line in resp.content:
+                    if await request.is_disconnected():
+                        break
+                    line_str = line.decode("utf-8").strip()
+                    if not line_str:
+                        continue
+                    if line_str.startswith("data: "):
+                        data_content = line_str[6:].strip()
+                        if data_content == "[DONE]":
                             break
-                        line_str = line.decode("utf-8").strip()
-                        if not line_str:
+                        try:
+                            data_json = json.loads(data_content)
+                            chunk = data_json["choices"][0]["delta"].get("content", "")
+                            if chunk:
+                                yield chunk
+                        except Exception as e:
+                            logger.debug("[CLOUD] Erro ao decodificar chunk JSON: %s", e)
                             continue
-                        if line_str.startswith("data: "):
-                            data_content = line_str[6:].strip()
-                            if data_content == "[DONE]":
-                                break
-                            try:
-                                data_json = json.loads(data_content)
-                                chunk = data_json["choices"][0]["delta"].get(
-                                    "content", ""
-                                )
-                                if chunk:
-                                    yield chunk
-                            except Exception as e:
-                                logger.debug(
-                                    "[CLOUD] Erro ao decodificar chunk JSON: %s", e
-                                )
-                                continue
         elif openrouter_key:
             logger.info("[ROTEAMENTO CLOUD] Direcionando para OpenRouter...")  # noqa: G004
-            openrouter_model = (
-                "google/gemma-4-31b-it"
-                if target_model == "gemma4:31b"
-                else "google/gemma-2-27b-it"
-            )
+            openrouter_model = "google/gemma-4-31b-it" if target_model == "gemma4:31b" else "google/gemma-2-27b-it"
             cloud_payload = {
                 "model": openrouter_model,
                 "messages": [{"role": "user", "content": final_prompt}],
@@ -411,39 +475,37 @@ async def generate_response(
                 "Authorization": f"Bearer {openrouter_key}",
                 "Content-Type": "application/json",
             }
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(
                     "https://openrouter.ai/api/v1/chat/completions",
                     json=cloud_payload,
                     headers=headers,
                     timeout=aiohttp.ClientTimeout(total=60),
-                ) as resp:
-                    if resp.status != 200:
-                        err_txt = await resp.text()
-                        yield f"[ENTROPIA CLOUD HTTP {resp.status}]: Falha na conexao com OpenRouter. Detalhes: {err_txt}"
-                        return
-                    async for line in resp.content:
-                        if await request.is_disconnected():
+                ) as resp,
+            ):
+                if resp.status != 200:
+                    err_txt = await resp.text()
+                    yield f"[ENTROPIA CLOUD HTTP {resp.status}]: Falha na conexao com OpenRouter. Detalhes: {err_txt}"
+                    return
+                async for line in resp.content:
+                    if await request.is_disconnected():
+                        break
+                    line_str = line.decode("utf-8").strip()
+                    if not line_str:
+                        continue
+                    if line_str.startswith("data: "):
+                        data_content = line_str[6:].strip()
+                        if data_content == "[DONE]":
                             break
-                        line_str = line.decode("utf-8").strip()
-                        if not line_str:
+                        try:
+                            data_json = json.loads(data_content)
+                            chunk = data_json["choices"][0]["delta"].get("content", "")
+                            if chunk:
+                                yield chunk
+                        except Exception as e:
+                            logger.debug("[CLOUD] Erro ao decodificar chunk JSON: %s", e)
                             continue
-                        if line_str.startswith("data: "):
-                            data_content = line_str[6:].strip()
-                            if data_content == "[DONE]":
-                                break
-                            try:
-                                data_json = json.loads(data_content)
-                                chunk = data_json["choices"][0]["delta"].get(
-                                    "content", ""
-                                )
-                                if chunk:
-                                    yield chunk
-                            except Exception as e:
-                                logger.debug(
-                                    "[CLOUD] Erro ao decodificar chunk JSON: %s", e
-                                )
-                                continue
         else:
             yield "[ENTROPIA CRITICA]: Nenhum motor (local ou cloud) esta disponivel para atender esta requisicao."
 

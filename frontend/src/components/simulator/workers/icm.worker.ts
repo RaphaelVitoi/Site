@@ -35,9 +35,12 @@ globalThis.onmessage = (e: MessageEvent<IcmMessageData>) => {
 		const f64Results = new Float64Array(buffer);
 
 		for (let i = 0; i < icmResults.length; i++) {
-			f64Results[i * 3 + 0] = icmResults[i].equity;
-			f64Results[i * 3 + 1] = icmResults[i].equityPercent;
-			f64Results[i * 3 + 2] = icmResults[i].winProb;
+			const res = icmResults[i];
+			if (res) {
+				f64Results[i * 3 + 0] = res.equity;
+				f64Results[i * 3 + 1] = res.equityPercent;
+				f64Results[i * 3 + 2] = res.winProb;
+			}
 		}
 
 		if (buffer instanceof SharedArrayBuffer) {

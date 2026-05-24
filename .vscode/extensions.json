@@ -1,27 +1,42 @@
 {
-    "recommendations": [
-        "google.geminicodeassist",
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "ms-python.debugpy",
-        "charliermarsh.ruff",
-        "esbenp.prettier-vscode",
-        "dbaeumer.vscode-eslint",
-        "Prisma.prisma",
-        "bradlc.vscode-tailwindcss",
-        "rust-lang.rust-analyzer",
-        "tamasfe.even-better-toml",
-        "ms-vscode.powershell",
-        "ms-azuretools.vscode-docker",
-        "eamodio.gitlens",
-        "mikestead.dotenv",
-        "yzhang.markdown-all-in-one",
-        "streetsidesoftware.code-spell-checker",
-        "alefragnani.project-manager",
-        "ms-toolsai.jupyter",
-        "bierner.markdown-mermaid",
-        "yoavbls.pretty-ts-errors",
-        "usernamehw.errorlens",
-        "ms-ceintl.vscode-language-pack-pt-br"
-    ]
+  "recommendations": [
+    // ── NUCLEO SOTA (IA & ORQUESTRACAO) ──────────────────────────────
+    "google.geminicodeassist",
+    "alefragnani.project-manager",
+
+    // ── BACKEND (PYTHON SOTA) ────────────────────────────────────────
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff",
+    "ms-python.debugpy",
+
+    // ── FRONTEND (NEXT.JS & UI) ──────────────────────────────────────
+    "ms-vscode.vscode-typescript-next",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "yoavbls.pretty-ts-errors",
+
+    // ── INFRA & TOOLS ────────────────────────────────────────────────
+    "ms-azuretools.vscode-docker",
+    "ms-vscode.powershell",
+    "tamasfe.even-better-toml",
+    "mikestead.dotenv",
+    "qwtel.sqlite-viewer",
+
+    // ── GIT & QUALIDADE ──────────────────────────────────────────────
+    "eamodio.gitlens",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+
+    // ── DOCUMENTACAO ─────────────────────────────────────────────────
+    "yzhang.markdown-all-in-one",
+    "bierner.markdown-mermaid"
+  ],
+  "unwantedRecommendations": [
+    "GitHub.copilot",
+    "GitHub.copilot-chat",
+    "TabNine.tabnine-vscode",
+    "VisualStudioExptTeam.vscodeintellicode"
+  ]
 }

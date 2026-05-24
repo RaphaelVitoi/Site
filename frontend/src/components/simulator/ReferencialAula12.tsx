@@ -163,11 +163,11 @@ function ActionRangeGrid({
 	grid,
 	title,
 	subtitle,
-}: {
+}: Readonly<{
 	grid: RangeCell[][];
 	title: string;
 	subtitle: string;
-}) {
+}>) {
 	return (
 		<div className="flex flex-col gap-5 group/grid">
 			<div className="flex flex-col gap-1">
@@ -178,17 +178,18 @@ function ActionRangeGrid({
 					{subtitle}
 				</p>
 			</div>
-			<div className="p-3 bg-slate-950/60 rounded-[2rem] border border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl relative overflow-hidden transition-all duration-500 hover:border-white/20">
+			<div className="p-3 bg-slate-950/60 rounded-4xl border border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl relative overflow-hidden transition-all duration-500 hover:border-white/20">
 				{/* Glow de Fundo */}
 				<div className="absolute inset-0 bg-radial-[at_center_center] from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover/grid:opacity-100 transition-opacity duration-1000 pointer-events-none" />
 
 				<div
-					className="grid gap-[2px] w-full aspect-square relative z-10"
+					className="grid gap-0.5 w-full aspect-square relative z-10"
 					style={{ gridTemplateColumns: 'repeat(13, 1fr)' }}
 				>
 					{grid.flat().map((cell, i) => {
 						const r = Math.floor(i / 13);
 						const c = i % 13;
+						const handLabel = getHandLabel(r, c);
 						const isEmpty =
 							!cell.raise &&
 							!cell.call &&
@@ -197,8 +198,8 @@ function ActionRangeGrid({
 
 						return (
 							<div
-								key={i}
-								className={`relative group/cell overflow-hidden rounded-[4px] aspect-square transition-all duration-300 ${isEmpty ? 'bg-slate-900/40 border border-white/5' : 'bg-slate-950/80 border border-white/10 hover:z-20 hover:scale-[1.15] hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]'}`}
+								key={handLabel}
+								className={`relative group/cell overflow-hidden rounded-sm aspect-square transition-all duration-300 ${isEmpty ? 'bg-slate-900/40 border border-white/5' : 'bg-slate-950/80 border border-white/10 hover:z-20 hover:scale-[1.15] hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]'}`}
 							>
 								<div className="absolute inset-0 flex flex-col">
 									{(['shove', 'raise', 'call', 'fold'] as RangeAction[]).map(
@@ -509,22 +510,20 @@ function RiskAndPrizesRight({}: Readonly<{
 						const widthProps = {
 							style: { width: `${(val / (PRIZES[0]?.val ?? 1)) * 100}%` },
 						};
-						const barBgClass =
-							i === 0
-								? 'bg-linear-to-r from-amber-400 to-amber-600'
-								: i === 1
-									? 'bg-linear-to-r from-slate-200 to-slate-400'
-									: i === 2
-										? 'bg-linear-to-r from-violet-400 to-violet-600'
-										: 'bg-white/10';
-						const valColorClass =
-							i === 0
-								? 'text-amber-400'
-								: i === 1
-									? 'text-slate-400'
-									: i === 2
-										? 'text-violet-400'
-										: 'text-text-muted';
+
+						let barBgClass = 'bg-white/10';
+						let valColorClass = 'text-text-muted';
+
+						if (i === 0) {
+							barBgClass = 'bg-linear-to-r from-amber-400 to-amber-600';
+							valColorClass = 'text-amber-400';
+						} else if (i === 1) {
+							barBgClass = 'bg-linear-to-r from-slate-200 to-slate-400';
+							valColorClass = 'text-slate-400';
+						} else if (i === 2) {
+							barBgClass = 'bg-linear-to-r from-violet-400 to-violet-600';
+							valColorClass = 'text-violet-400';
+						}
 
 						return (
 							<div key={pos} className="flex items-center gap-6 group/jump">
@@ -729,39 +728,40 @@ function ToyGamesFramework() {
 								def: 22,
 								effect: 'Agressão Impune (Bolha/Terminal)',
 							},
-						].map((row, i) => (
-							<tr
-								key={row.no}
-								className={`border-b border-white/5 transition-colors hover:bg-indigo-500/5 ${i % 2 === 0 ? 'bg-white/[0.02]' : ''}`}
-							>
-								<td className="py-5 px-8 font-black text-white text-[0.85rem]">
-									{row.no}
-								</td>
-								<td className="py-5 px-8 text-right font-mono text-indigo-300 font-bold">
-									{row.rpi}%
-								</td>
-								<td className="py-5 px-8 text-right font-mono text-rose-400 font-bold">
-									{row.rpo}%
-								</td>
-								<td className="py-5 px-8 text-right font-mono font-black text-white">
-									{row.delta > 0
-										? `+${row.delta}`
-										: row.delta === 0
-											? '0'
-											: row.delta}
-									%
-								</td>
-								<td className="py-5 px-8 text-right font-mono text-text-dim">
-									{row.bluff}%
-								</td>
-								<td className="py-5 px-8 text-right font-mono text-text-dim">
-									{row.def}%
-								</td>
-								<td className="py-5 px-8 text-[0.8rem] text-text-muted font-medium">
-									{row.effect}
-								</td>
-							</tr>
-						))}
+						].map((row, i) => {
+							const rowBg = i % 2 === 0 ? 'bg-white/2' : '';
+							const deltaLabel =
+								row.delta > 0 ? `+${row.delta}` : row.delta === 0 ? '0' : row.delta;
+
+							return (
+								<tr
+									key={row.no}
+									className={`border-b border-white/5 transition-colors hover:bg-indigo-500/5 ${rowBg}`}
+								>
+									<td className="py-5 px-8 font-black text-white text-[0.85rem]">
+										{row.no}
+									</td>
+									<td className="py-5 px-8 text-right font-mono text-indigo-300 font-bold">
+										{row.rpi}%
+									</td>
+									<td className="py-5 px-8 text-right font-mono text-rose-400 font-bold">
+										{row.rpo}%
+									</td>
+									<td className="py-5 px-8 text-right font-mono font-black text-white">
+										{deltaLabel}%
+									</td>
+									<td className="py-5 px-8 text-right font-mono text-text-dim">
+										{row.bluff}%
+									</td>
+									<td className="py-5 px-8 text-right font-mono text-text-dim">
+										{row.def}%
+									</td>
+									<td className="py-5 px-8 text-[0.8rem] text-text-muted font-medium">
+										{row.effect}
+									</td>
+								</tr>
+							);
+						})}
 					</tbody>
 				</table>
 			</div>
@@ -913,48 +913,57 @@ export default function ReferencialAula12() {
 									</tr>
 								</thead>
 								<tbody className="bg-slate-900/40">
-									{matrixData.mBf.map((row, r) => (
-										<tr
-											key={r}
-											className={`border-b border-white/5 transition-colors ${r === activeBbIdx ? 'bg-indigo-500/10' : 'hover:bg-white/5'}`}
-										>
-											<td className="py-4 px-6 border-r border-white/10 sticky left-0 z-20 bg-slate-900 shadow-xl text-center">
-												<div className="text-[0.8rem] font-black text-white uppercase">
-													{matrixData.mPlayers[r]}
-												</div>
-												<div className="text-[0.6rem] font-mono text-text-darker">
-													{matrixData.mStacks[r]?.toFixed(1) ?? '0.0'}bb
-												</div>
-											</td>
-											{row.map((bf, c) => {
-												const rp = matrixData.mRp[r]?.[c] ?? 0;
-												const gravity = getRpGravityColor(rp);
-												const isActiveMatch =
-													r === activeBbIdx && c === activeBtnIdx;
-												return (
-													<td
-														key={c}
-														className={`py-4 px-2 text-center transition-all ${isActiveMatch ? 'ring-2 ring-inset ring-indigo-500 z-10' : ''}`}
-													>
-														{r === c ? (
-															<div className="w-1.5 h-1.5 rounded-full bg-white/10 mx-auto" />
-														) : (
-															<div
-																className={`flex flex-col gap-1.5 p-3 rounded-2xl border ${gravity} shadow-sm group/cell hover:scale-110 transition-transform`}
-															>
-																<div className="text-[0.9rem] font-black font-mono leading-none tracking-tighter">
-																	{rp.toFixed(1)}%
+									{matrixData.mBf.map((row, r) => {
+										const playerName = matrixData.mPlayers[r];
+										const playerStack = matrixData.mStacks[r];
+										const isRowActive = r === activeBbIdx;
+
+										return (
+											<tr
+												key={playerName}
+												className={`border-b border-white/5 transition-colors ${isRowActive ? 'bg-indigo-500/10' : 'hover:bg-white/5'}`}
+											>
+												<td className="py-4 px-6 border-r border-white/10 sticky left-0 z-20 bg-slate-900 shadow-xl text-center">
+													<div className="text-[0.8rem] font-black text-white uppercase">
+														{playerName}
+													</div>
+													<div className="text-[0.6rem] font-mono text-text-darker">
+														{playerStack?.toFixed(1) ?? '0.0'}bb
+													</div>
+												</td>
+												{row.map((bf, c) => {
+													const rp = matrixData.mRp[r]?.[c] ?? 0;
+													const gravity = getRpGravityColor(rp);
+													const isActiveMatch =
+														r === activeBbIdx && c === activeBtnIdx;
+													const columnPlayerName =
+														matrixData.mPlayers[c];
+
+													return (
+														<td
+															key={`${playerName}-${columnPlayerName}`}
+															className={`py-4 px-2 text-center transition-all ${isActiveMatch ? 'ring-2 ring-inset ring-indigo-500 z-10' : ''}`}
+														>
+															{r === c ? (
+																<div className="w-1.5 h-1.5 rounded-full bg-white/10 mx-auto" />
+															) : (
+																<div
+																	className={`flex flex-col gap-1.5 p-3 rounded-2xl border ${gravity} shadow-sm group/cell hover:scale-110 transition-transform`}
+																>
+																	<div className="text-[0.9rem] font-black font-mono leading-none tracking-tighter">
+																		{rp.toFixed(1)}%
+																	</div>
+																	<div className="text-[0.6rem] font-bold opacity-50 uppercase tracking-widest leading-none">
+																		BF {bf.toFixed(2)}x
+																	</div>
 																</div>
-																<div className="text-[0.6rem] font-bold opacity-50 uppercase tracking-widest leading-none">
-																	BF {bf.toFixed(2)}x
-																</div>
-															</div>
-														)}
-													</td>
-												);
-											})}
-										</tr>
-									))}
+															)}
+														</td>
+													);
+												})}
+											</tr>
+										);
+									})}
 								</tbody>
 							</table>
 						</div>

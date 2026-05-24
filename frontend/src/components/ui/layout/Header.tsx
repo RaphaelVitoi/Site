@@ -79,7 +79,7 @@ const Header = () => {
 	useEffect(() => {
 		// SOTA: Verificacao periodica da borda local
 		const checkGemma = () => {
-			const proxyUrl = process.env.NEXT_PUBLIC_SOTA_PROXY_URL || 'http://127.0.0.1:17043';
+			const proxyUrl = process.env['NEXT_PUBLIC_SOTA_PROXY_URL'] || 'http://127.0.0.1:17043';
 			fetch(proxyUrl)
 				.then((res) => setGemmaOnline(res.ok))
 				.catch(() => setGemmaOnline(false));

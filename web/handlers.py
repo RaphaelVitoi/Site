@@ -299,7 +299,7 @@ async def handle_rag_ingest(request) -> web.Response:
 from utils.cache import cache as sota_cache
 from utils.storage import buckets as sota_buckets
 from utils.resources import ResourceGuard
-from shared.types.schemas import RAGQuery, SOTAMetrics
+from shared.types.schemas import RAGQuery
 
 async def handle_get_resource_usage(_request: web.Request) -> web.Response:
     """SOTA v6.2.1 GOLD: Monitoramento de VRAM e RAM em tempo real."""

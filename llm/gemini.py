@@ -7,6 +7,7 @@ import logging
 
 import aiohttp
 
+from llm.budget import get_rate_limiter_for_model
 from llm.session import _sync_fallback_request, get_api_semaphore
 
 logger = logging.getLogger(__name__)
@@ -36,13 +37,9 @@ def _normalize_gemini_model(model: str) -> str:
     return model
 
 
-def _build_gemini_payload(
-    system_prompt: str, user_prompt: str, require_json: bool, **kwargs
-) -> dict:
+def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bool, **kwargs) -> dict:
     """Constroi a carga util da API absorvendo a prevencao de falhas de chaves Free-Tier."""
-    final_user_prompt = (
-        f"{system_prompt}\n\n---\n\n{user_prompt}" if system_prompt else user_prompt
-    )
+    final_user_prompt = f"{system_prompt}\n\n---\n\n{user_prompt}" if system_prompt else user_prompt
     gen_config = {
         "temperature": kwargs.get("temperature", 0.2),
         "maxOutputTokens": kwargs.get("max_tokens", 8192),
@@ -59,19 +56,13 @@ async def _execute_native_fallback(
     url: str, data: dict, client_timeout: aiohttp.ClientTimeout | None
 ) -> tuple[str, dict]:
     """Mecanismo de fallback sincronizado rodando isolado para neutralizar TCP Drops."""
-    logger.warning(
-        "[MOTOR DUAL] Aiohttp interceptado. Orbitando para Bypass Nativo (urllib)..."
-    )
+    logger.warning("[MOTOR DUAL] Aiohttp interceptado. Orbitando para Bypass Nativo (urllib)...")
     fallback_headers = {"Content-Type": APP_JSON}
-    timeout_seconds = (
-        client_timeout.total if client_timeout and client_timeout.total else 60.0
-    )
+    timeout_seconds = client_timeout.total if client_timeout and client_timeout.total else 60.0
     loop = asyncio.get_running_loop()
     status, raw_text = await loop.run_in_executor(
         None,
-        functools.partial(
-            _sync_fallback_request, url, data, fallback_headers, timeout_seconds
-        ),
+        functools.partial(_sync_fallback_request, url, data, fallback_headers, timeout_seconds),
     )
     if status == 200:
         result = json.loads(raw_text)
@@ -91,9 +82,7 @@ async def _execute_primary_request(
     """Canal principal de IO assincrono."""
     response = None
     try:
-        async with session.post(
-            url, json=data, headers=headers, **request_kwargs
-        ) as response:
+        async with session.post(url, json=data, headers=headers, **request_kwargs) as response:
             if response.status == 429:
                 retry_delay_s = 0.0
                 try:
@@ -103,9 +92,7 @@ async def _execute_primary_request(
                             retry_delay_s = float(str(detail["retryDelay"]).rstrip("s"))
                 except Exception:  # noqa: BLE001, S110
                     pass
-                raise RuntimeError(
-                    f"HTTP 429: RESOURCE_EXHAUSTED retry_after={retry_delay_s:.0f}s"
-                )
+                raise RuntimeError(f"HTTP 429: RESOURCE_EXHAUSTED retry_after={retry_delay_s:.0f}s")
             response.raise_for_status()
             result = await response.json()
             text = result["candidates"][0]["content"]["parts"][0]["text"]
@@ -128,8 +115,6 @@ async def call_gemini(
 ) -> tuple[str, dict]:
     """Cortex de Execucao da API Gemini SOTA."""
     # SOTA: Multi-Bucket Rate Limiter (Lei de Shannon). Respeita as cotas individuais (Pro vs Flash).
-    from llm.budget import get_rate_limiter_for_model  # pylint: disable=import-outside-toplevel
-
     rate_limiter = get_rate_limiter_for_model(model)
     if rate_limiter.tokens < 1:
         logger.info(
@@ -141,12 +126,8 @@ async def call_gemini(
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     headers = {"Content-Type": APP_JSON}
     data = _build_gemini_payload(system_prompt, user_prompt, require_json, **kwargs)
-    request_kwargs: dict = (
-        {"timeout": client_timeout} if client_timeout is not None else {}
-    )
-    timeout_val = (
-        client_timeout.total if client_timeout and client_timeout.total else 60.0
-    )
+    request_kwargs: dict = {"timeout": client_timeout} if client_timeout is not None else {}
+    timeout_val = client_timeout.total if client_timeout and client_timeout.total else 60.0
 
     async with get_api_semaphore():
         try:
@@ -157,6 +138,6 @@ async def call_gemini(
         except RuntimeError:
             # Erros semanticos (ex: 400, 403, 404, 429 tratados) sobem diretamente
             raise
-        except (aiohttp.ClientError, asyncio.TimeoutError, ConnectionResetError):
+        except (aiohttp.ClientError, TimeoutError, ConnectionResetError):
             # Exaustao da pilha aiohttp leva ao bypass nativo via urllib thread
             return await _execute_native_fallback(url, data, client_timeout)

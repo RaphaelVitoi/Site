@@ -11,7 +11,7 @@ export const metadata = {
 async function getOrchestratorTelemetry() {
 	try {
 		// Busca telemetria SOTA da API do Orquestrador Python (Latência Zero SSR)
-		const token = process.env.API_SECRET_TOKEN || '';
+		const token = process.env['API_SECRET_TOKEN'] || '';
 		const res = await fetch(buildNexusServerUrl('/db-summary'), {
 			headers: token ? { Authorization: `Bearer ${token}` } : {},
 			next: { revalidate: 15 }, // SSR caching dinâmico
@@ -43,7 +43,7 @@ async function getPredictiveProfile() {
 	try {
 		// SOTA: Fricção Zero. Substitui o subprocesso CLI pesado por um fetch direto
 		// ao motor aiohttp, unificando a topologia de comunicação no SSR.
-		const token = process.env.API_SECRET_TOKEN || '';
+		const token = process.env['API_SECRET_TOKEN'] || '';
 		const res = await fetch(buildNexusServerUrl('/predictive-profile'), {
 			headers: token ? { Authorization: `Bearer ${token}` } : {},
 			next: { revalidate: 15 },
