@@ -41,8 +41,13 @@
     "**/__pycache__/**": true,
     "**/dist/**": true,
     "**/build/**": true,
-    "**/wasm-equity/target/**": true
+    "**/wasm-equity/target/**": true,
+    "**/.gemini/**": true
   },
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1500,
+  "files.hotExit": "onExit",
+  "files.useExperimentalFileWatcher": false,
   "files.exclude": {
     "**/.git": true,
     "**/node_modules": true,
