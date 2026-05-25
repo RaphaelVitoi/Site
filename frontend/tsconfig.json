@@ -40,7 +40,8 @@
     "**/*.test.tsx",
     "src/tests",
     "prisma/seed.ts",
-    "**/*.worker.ts",
+    "src/.archive/**",
+    "src/components/simulator/workers/**",
     "wasm-equity/target"
   ],
   "references": [

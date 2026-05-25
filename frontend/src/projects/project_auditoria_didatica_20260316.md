@@ -18,11 +18,11 @@ type: project
 
 Ao comparar o arquivo de RiskGeometryMasterclass.tsx original com o nashSolver.ts novo, descobri que **os coeficientes foram alterados**:
 
-| Coeficiente | Original (HRC-validado) | Novo (errado) | Status |
-|-------------|-------------------------|---------------|--------|
-| defense ipRp | 0.3 | 0.2 | ❌ -33% |
-| bluff oopRp | 1.1 | 0.8 | ❌ -27% |
-| bluff ipRp | 0.8 | 1.3 | ❌ +63% |
+| Coeficiente  | Original (HRC-validado) | Novo (errado) | Status  |
+|--------------|-------------------------|---------------|---------|
+| defense ipRp | 0.3                     | 0.2           | ❌ -33% |
+| bluff oopRp  | 1.1                     | 0.8           | ❌ -27% |
+| bluff ipRp   | 0.8                     | 1.3           | ❌ +63% |
 
 **Causa:** Provavelmente alteração inadvertida durante refatoração anterior.
 
@@ -68,6 +68,7 @@ let bluff = safeOopRp >= 40
 ### Arquivos de Teste Criados
 
 `frontend/src/components/simulator/engine/__tests__/nashSolver.test.ts`
+
 - 8 cenários de teste
 - Validação de Death Zone
 - Validação de agressividade
@@ -75,11 +76,13 @@ let bluff = safeOopRp >= 40
 ## Impacto
 
 ### Antes (Errado)
+
 - Sniper: 73.2% bluff (não refletia "ATC")
 - Paradoxo: ~33% bluff (muito bluff, deveria ser ~30%)
 - Conceitos pedagógicos distorcidos
 
 ### Depois (Correto)
+
 - Sniper: 100% bluff (ATC, alinhado com pedagogia)
 - Paradoxo: 30.4% bluff (agressão contida, correto)
 - Conceitos pedagógicos alinhados com HRC
@@ -117,6 +120,7 @@ let bluff = safeOopRp >= 40
 ## Rastreabilidade
 
 **Coeficientes originais vêm de:**
+
 - Arquivo: `archive/legacy_icm_components/RiskGeometryMasterclass.tsx:263`
 - Método de validação: Hold'em Resource Calculator (HRC)
 - Validador: Raphael Vitoi (educador profissional desde 2013, conhecimento profundo de ICM)

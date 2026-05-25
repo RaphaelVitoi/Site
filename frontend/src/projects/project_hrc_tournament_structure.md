@@ -4,7 +4,7 @@ description: Dados do torneio usado como ancora empirica (Aula 1.2, 93 nodes HRC
 type: project
 ---
 
-## Torneio de Referencia (HRC - Aula 1.2)
+# Torneio de Referencia (HRC - Aula 1.2)
 
 - **Jogadores:** 126
 - **Chips totais:** 378,000
@@ -15,16 +15,16 @@ type: project
 ### Estrutura de Premios Completa
 
 | Pos | Premio | Pos | Premio |
-|-----|--------|-----|--------|
-| 1 | 237.34 | 10 | 26.39 |
-| 2 | 170.96 | 11 | 26.39 |
-| 3 | 135.17 | 12 | 26.39 |
-| 4 | 109.99 | 13 | 26.39 |
-| 5 | 90.28 | 14-23 | 16.76 |
-| 6 | 73.95 | | |
-| 7 | 59.92 | | |
-| 8 | 47.56 | | |
-| 9 | 36.47 | | |
+|-------|--------|-------|--------|
+| 1     | 237.34 | 10    | 26.39  |
+| 2     | 170.96 | 11    | 26.39  |
+| 3     | 135.17 | 12    | 26.39  |
+| 4     | 109.99 | 13    | 26.39  |
+| 5     | 90.28  | 14-23 | 16.76  |
+| 6     | 73.95  |       |        |
+| 7     | 59.92  |       |        |
+| 8     | 47.56  |       |        |
+| 9     | 36.47  |       |        |
 
 ### Premios da FT (usados nos cenarios)
 

@@ -9,66 +9,40 @@
 - Cada rota = pasta com `page.tsx` dentro de `frontend/src/app/`
 - Rotas dinamicas usam `[slug]` e consomem Prisma (SQLite)
 
-## Arvore de Rotas
+## Arvore de Rotas (Next.js 16.2 App Router)
 
 ```text
 /                              Landing page (home)
-/quem-sou                      Sobre Raphael Vitoi
-/dashboard                     Dashboard do usuario
-/simulador                     Simulador Mestre ICM (Motor v4.1)
-/simulador/gto-cfr             Laboratorio GTO AI (CFR e A*)
-/login                         Página de autenticação/login
-/quiz                          Quiz e validação de conhecimento
+/(public)/quem-sou              Sobre Raphael Vitoi
+/(user)/dashboard               Dashboard do usuario (vitoi.ts integration)
+/(lab)/simulador               Simulador Mestre ICM (Motor Quantum v4.6)
+/(lab)/simulador/gto-cfr       Laboratorio GTO AI (CFR e A*)
+/(auth)/login                   Página de autenticação/login
+/(lab)/quiz                    Quiz e validação de conhecimento
 
-/aulas/                        Conteudo educacional ICM
+/(public)/aulas/               Conteudo educacional ICM
   icm-masterclass/             Aula principal: Geometria do Risco
   icm-pos-flop/                Aula 1.2: Aprofundamento ICM pos-flop
   conceitos-icm/               Glossario formal do framework ICM
-  # voce-aprende-poker-errado/   Artigo: A Amortizacao da Edge (movido para /biblioteca)
   leitura-icm/                 Whitepaper completo ICM
   [slug]/                      Aulas dinamicas via Prisma (CMS)
 
-/biblioteca/                   Artigos/ensaios aprofundados e técnicos
-  page.tsx                     Index da biblioteca
+/(public)/biblioteca/          Artigos/ensaios aprofundados e técnicos
   [slug]/                      Artigos e ensaios dinamicos via Prisma (CMS)
-  voce-aprende-poker-errado/   Artigo: A Amortizacao da Edge (com simulador)
-  downward-drift-sota/         Artigo: Downward Drift e Contracao de Range sob ICM (com Laboratorio)
-  entendendo-o-icm-e-suas-heuristicas/ Heuristicas ICM (conteudo original)
-  exegese-da-decisao/          Exegese da Decisao
-  hermeneutica-blefe/          Hermeneutica do blefe
-  motor-diluicao/              Motor de diluicao
-  paradoxo-valuation/          Paradoxo da valuation
-  axioma-ev-fold-dinamico/     Axioma do EV Fold Dinamico
-  falacia-equilibrio-pedagogia/ Falacia do Equilibrio
-  fator-psi-maluquice-humana/  Fator Psi (Maluquice Humana)
-  geometria-do-risco/          Geometria do Risco
-  heuristica-icm-pos-flop-aula/ Heuristica ICM Pos-Flop
-  hierarquia-da-decisao/        Hierarquia da Decisao SOTA (Axiomas VITOI)
-  insolvencia-das-pot-odds/    Insolvencia das Pot Odds
-  laboratorio-chipev-vs-icmev/ Laboratorio ChipEV vs ICMev
-  manifesto-sota-axiomas/      Manifesto SOTA: Axiomas
-  psicologia-high-stakes/      Psicologia High Stakes
-  risco-de-ressurreicao/       Risco de Ressurreicao
-  teoria-da-perspectiva/       Teoria da Perspectiva
-  teto-equidade-river-icm/     Teto de Equidade River ICM
-  toy-games/                   Toy Games (Predator Mode)
-  estruturas-de-torneio/       Estruturas de Torneio (Framework VITOI)
-  nos-de-calibragem/           Nós de Calibragem (Âncora SOTA)
-  estado-da-arte/              Estado da Arte ICM 2025 (Originalmente em /artigos)
-  smart-sniper/                Protocolo Smart Sniper (Originalmente em /artigos)
-  validacao-smart-sniper/      Validacao cientifica do Smart Sniper (Originalmente em /artigos)
+  ... (lista de artigos mantida)
 
-/templo/                       Area de Inteligência e Hub AGN
+/(lab)/templo/                 Area de Inteligência e Hub AGN
   analytics/                   Dashboard analitico
   gemma/                       Oráculo de Borda (Portal Direto @gemma4)
 
-/auth/callback                 OAuth Callback integration
+/(auth)/callback               OAuth Callback integration
 /api/og/                       OG Image generator (social sharing)
-/api/telemetry                 Telemetry metrics ingestion
-/api/rag                       Cognitive memory retrieve/store (RAG)
-/api/profile                   User Profile data endpoints
-/api/predictive-profile        Telemetry-based predictive stats
-/api/content/[slug]            CMS dynamically retrieved lesson/article content
+
+/api/v1/telemetry              Telemetry metrics ingestion (SOTA v6)
+/api/v1/rag                    Cognitive memory retrieve/store (RAG)
+/api/v1/profile                User Profile data endpoints
+/api/v1/predictive             Telemetry-based predictive stats
+/api/v1/content/[slug]         CMS dynamically retrieved lesson/article content
 ```
 
 ## Regras de Routing

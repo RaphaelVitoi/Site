@@ -12,58 +12,60 @@ import { calculateMalmuthHarville } from '../../../lib/icmEngine';
 export const __ICM_WORKER__ = true;
 
 interface IcmMessageData {
-	players: ICMPlayer[];
-	prizes: number[];
-	totalPool?: number;
-	id: string | number;
+  players: ICMPlayer[];
+  prizes: number[];
+  totalPool?: number;
+  id: string | number;
 }
 
 globalThis.onmessage = (e: MessageEvent<IcmMessageData>) => {
-	const { players, prizes, totalPool, id } = e.data;
+  const { players, prizes, totalPool, id } = e.data;
 
-	try {
-		// Executa o motor SOTA (Malmuth-Harville ou MCMC dependendo de N)
-		const icmResults = calculateMalmuthHarville(players, prizes, totalPool);
+  if (id === undefined || !players || !prizes) {
+    console.warn('[SOTA ICM Worker] Invalid payload discarded.');
+    return;
+  }
 
-		// SOTA: Fricção Zero (Zero-Copy O(1) Memory Transfer)
-		// Empacotando as 3 métricas matemáticas contínuas (equity, equityPercent, winProb)
-		const buffer =
-			typeof SharedArrayBuffer === 'undefined'
-				? new ArrayBuffer(icmResults.length * 3 * 8)
-				: new SharedArrayBuffer(icmResults.length * 3 * 8);
+  try {
+    // Executa o motor SOTA (Malmuth-Harville ou MCMC dependendo de N)
+    const icmResults = calculateMalmuthHarville(players, prizes, totalPool);
 
-		const f64Results = new Float64Array(buffer);
+    // SOTA: Fricção Zero (Zero-Copy O(1) Memory Transfer)
+    // Empacotando as 3 métricas matemáticas contínuas (equity, equityPercent, winProb)
+    const buffer =
+      typeof SharedArrayBuffer === 'undefined'
+        ? new ArrayBuffer(icmResults.length * 3 * 8)
+        : new SharedArrayBuffer(icmResults.length * 3 * 8);
 
-		for (let i = 0; i < icmResults.length; i++) {
-			const res = icmResults[i];
-			if (res) {
-				f64Results[i * 3 + 0] = res.equity;
-				f64Results[i * 3 + 1] = res.equityPercent;
-				f64Results[i * 3 + 2] = res.winProb;
-			}
-		}
+    const f64Results = new Float64Array(buffer);
 
-		if (buffer instanceof SharedArrayBuffer) {
-			(globalThis as unknown as Worker).postMessage({
-				id,
-				type: 'ICM_RESULT',
-				payload: f64Results,
-			});
-		} else {
-			(globalThis as unknown as Worker).postMessage(
-				{ id, type: 'ICM_RESULT', payload: f64Results },
-				[buffer],
-			);
-		}
-	} catch (error: unknown) {
-		let errorMessage = 'Erro desconhecido no motor ICM.';
-		if (typeof error === 'string') {
-			errorMessage = error;
-		} else if (error instanceof Error) {
-			errorMessage = error.message;
-		}
+    for (let i = 0; i < icmResults.length; i++) {
+      const res = icmResults[i];
+      if (res) {
+        f64Results[i * 3 + 0] = res.equity;
+        f64Results[i * 3 + 1] = res.equityPercent;
+        f64Results[i * 3 + 2] = res.winProb;
+      }
+    }
 
-		console.warn('[SOTA ICM Worker] Falha matemática:', errorMessage);
-		(globalThis as unknown as Worker).postMessage({ error: errorMessage, id });
-	}
+    if (buffer instanceof SharedArrayBuffer) {
+      (globalThis as unknown as Worker).postMessage({
+        id,
+        type: 'ICM_RESULT',
+        payload: f64Results,
+      });
+    } else {
+      (globalThis as unknown as Worker).postMessage({ id, type: 'ICM_RESULT', payload: f64Results }, [buffer]);
+    }
+  } catch (error: unknown) {
+    let errorMessage = 'Erro desconhecido no motor ICM.';
+    if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    console.warn('[SOTA ICM Worker] Falha matemática:', errorMessage);
+    (globalThis as unknown as Worker).postMessage({ error: errorMessage, id });
+  }
 };

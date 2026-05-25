@@ -45,7 +45,7 @@ def _feature_enabled(flag_name: str) -> bool:
 
 
 def _heuristic_terms(group_name: str) -> dict[str, int]:
-    """Resolve termos heurísticos com fallback para task_executor (testability)."""
+    """Resolve termos heuristicos com fallback para task_executor (testability)."""
     try:
         import task_executor as _task_executor
 
@@ -88,7 +88,7 @@ def _process_conditional_injection(injection: dict, context_blob: str, route_age
 
 
 def _get_fallback_route(task: Task) -> tuple[list, list]:
-    """Computa a rota de fallback dinamicamente baseada em heurísticas e configuração."""
+    """Computa a rota de fallback dinamicamente baseada em heuristicas e configuracao."""
     description = enforce_pure_ascii((task.description or "").lower())
     metadata_blob = json.dumps(task.metadata or {}, ensure_ascii=True).lower()
     context_blob = f"{description} {metadata_blob}"
@@ -119,7 +119,7 @@ def _get_fallback_route(task: Task) -> tuple[list, list]:
 
 
 def _generate_fallback_specs(task_id: str, route_agents: list) -> list:
-    """Gera as especificações (prompts e dependências) para cada etapa da rota de fallback."""
+    """Gera as especificacoes (prompts e dependencias) para cada etapa da rota de fallback."""
     stage_prompts = {
         AGENT_ARCHITECT: (
             f"Fallback automatico do dispatcher para a tarefa base {task_id}. \n"

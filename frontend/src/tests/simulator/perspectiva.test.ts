@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /// <reference types="jest" />
 
 import {
@@ -90,7 +91,7 @@ describe('calculatePerspectivaVitoi - Validação de Teoremas SOTA (D1 a D6)', (
 				investidoAcumulado: config.investidoAcumulado,
 			};
 			const res = calculatePerspectivaVitoi(input);
-			console.log(
+			  console.log(
 				`CONFIG: potSize=${config.potSize}, heroCost=${config.heroCost}, investidoAcumulado=${config.investidoAcumulado} -> threshEq=${res.threshEq}, foldEq=${res.deltaFoldPct}, winEq=${res.deltaWinPct}`,
 			);
 		}
@@ -117,3 +118,4 @@ describe('calculatePerspectivaVitoi - Validação de Teoremas SOTA (D1 a D6)', (
 		expect(resEntrapment.diagnostico).toContain('Pot Entrapment Severo');
 	});
 });
+

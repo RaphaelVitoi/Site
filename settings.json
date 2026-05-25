@@ -5,7 +5,6 @@
       "Read(//c/Users/Raphael/.gemini/Site/**)",
       "Read(//c/Users/Raphael/Downloads/**)",
       "Read(//c/Program Files/**)",
-
       // ── GIT ─────────────────────────────────────────────────────────
       "Bash(git status:*)",
       "Bash(git add:*)",
@@ -18,7 +17,6 @@
       "Bash(git filter-repo:*)",
       "Bash(gh auth:*)",
       "Bash(gh:*)",
-
       // ── NODE / NPM ───────────────────────────────────────────────────
       "Bash(npm run:*)",
       "Bash(npm install:*)",
@@ -29,7 +27,6 @@
       "Bash(npx tsx:*)",
       "Bash(npx kill-port:*)",
       "Bash(npx prisma:*)",
-
       // ── PYTHON ──────────────────────────────────────────────────────
       "Bash(python -c \":*)",
       "Bash(python -m:*)",
@@ -39,12 +36,10 @@
       "Bash(pip install:*)",
       "Bash(where python:*)",
       "Bash(where python3:*)",
-
       // ── POWERSHELL ──────────────────────────────────────────────────
       "Bash(powershell.exe:*)",
       "Bash(powershell -ExecutionPolicy Bypass:*)",
       "Bash(powershell -NoProfile:*)",
-
       // ── FERRAMENTAS DO SISTEMA ───────────────────────────────────────
       "Bash(ruff:*)",
       "Bash(where:*)",
@@ -57,13 +52,11 @@
       "Bash(where java:*)",
       "Bash(reg query:*)",
       "Bash(docker:*)",
-
       // ── FILESYSTEM OPERACIONAL ───────────────────────────────────────
       "Bash(mkdir:*)",
       "Bash(grep:*)",
       "Bash(find:*)",
       "Bash(xargs:*)",
-
       // ── WEB ─────────────────────────────────────────────────────────
       "WebSearch",
       "WebFetch(domain:blog.gtowizard.com)"
@@ -72,7 +65,7 @@
       "C:\\Users\\Raphael\\.gemini\\Site"
     ]
   },
-  "model": "claude-opus-4-5",
+  "model": "gemini-2.5-pro",
   "language": "portuguese",
   "effortLevel": "high",
   "autoUpdatesChannel": "latest"

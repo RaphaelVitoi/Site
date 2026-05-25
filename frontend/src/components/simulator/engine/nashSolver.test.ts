@@ -1,9 +1,10 @@
+/* eslint-disable no-console */
 /** @format */
 
 /// <reference types="jest" />
 
 import { solveIcmDistortion } from './nashSolver';
-import { ChipEvFreqs } from './types';
+import type { ChipEvFreqs } from './types';
 
 describe('solveIcmDistortion - Auditoria de Coerência Teórica', () => {
 	const baselineFreqs: ChipEvFreqs = {
@@ -37,3 +38,4 @@ describe('solveIcmDistortion - Auditoria de Coerência Teórica', () => {
 		expect(res.oop.call.center).toBeLessThan(baselineFreqs.oop_call);
 	});
 });
+

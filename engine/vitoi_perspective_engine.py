@@ -1,12 +1,12 @@
-"""Módulo de Perspectiva Matemática VITOI."""
+"""Modulo de Perspectiva Matematica VITOI."""
 
 import math
 
 
 class VitoiPerspectiveEngine:
     """
-    SOTA: Motor Híbrido de Perspectiva Matemática (VITOI 3.2).
-    Substitui a métrica estática de Pot Odds e o FGS Limitado pela Antevisão de Fluxo.
+    SOTA: Motor Hibrido de Perspectiva Matematica (VITOI 3.2).
+    Substitui a metrica estatica de Pot Odds e o FGS Limitado pela Antevisao de Fluxo.
     """
 
     @staticmethod
@@ -17,14 +17,16 @@ class VitoiPerspectiveEngine:
         position: str,
     ) -> float:
         """
-        Calcula o baseline dinâmico (Custo de Existência na Órbita).
+        Calcula o baseline dinamico (Custo de Existencia na Orbita).
+        :param base_antes: Custo base dos antes pagos na orbita.
         :param payjump_proximity_factor: 1.0 (longe) a 0.0 (bolha). Inverte a polaridade do EV fold.
-        :param time_to_blind_minutes: Antevisão t-3. Acelera a erosão antecipada.
+        :param time_to_blind_minutes: Antevisao t-3. Acelera a erosao antecipada.
+        :param position: A posicao atual do Hero na mesa (e.g. 'UTG', 'BB').
         """
-        # Fator de Antevisão Posicional (UTG hoje -> BB amanhã)
+        # Fator de Antevisao Posicional (UTG hoje -> BB amanha)
         positional_penalty = 0.5 if position.upper() == "UTG" else 0.0
 
-        # Erosão Antecipada: Iminência de salto de blinds encarece a espera
+        # Erosao Antecipada: Iminencia de salto de blinds encarece a espera
         time_penalty = 0.0
         if 0 < time_to_blind_minutes <= 3.0:
             time_penalty = (3.0 - time_to_blind_minutes) * 0.25
@@ -32,7 +34,7 @@ class VitoiPerspectiveEngine:
         # Efeito Payjump (Passivo Positivo): Passar a vez ganha utilidade
         payjump_bonus = (1.0 - payjump_proximity_factor) * 2.5
 
-        # Baseline é -antes, ajustado pelas vetoriais sistêmicas
+        # Baseline e -antes, ajustado pelas vetoriais sistemicas
         ev_fold = (-base_antes) - time_penalty - positional_penalty + payjump_bonus
         return round(ev_fold, 4)
 
@@ -41,7 +43,7 @@ class VitoiPerspectiveEngine:
         multiway_opponents: int, base_rio: float
     ) -> float:
         """
-        O Passivo Estrutural de Colisão. Em Multiway, as Reverse Implied Odds
+        O Passivo Estrutural de Colisao. Em Multiway, as Reverse Implied Odds
         crescem em coeficiente exponencial (x^2).
         """
         if multiway_opponents <= 1:
@@ -53,13 +55,13 @@ class VitoiPerspectiveEngine:
         stack_depth_bb: float, technical_superiority: float, human_noise_factor: float
     ) -> float:
         """
-        Amortização de Edge pela Profundidade de Stack.
-        A árvore de decisão colapsa logaritmicamente para a Invariância de Nash em ~10bb.
+        Amortizacao de Edge pela Profundidade de Stack.
+        A arvore de decisao colapsa logaritmicamente para a Invariancia de Nash em ~10bb.
         """
         if stack_depth_bb <= 0:
             return 0.0
 
-        # Complexidade Sistêmica: Poda da Árvore
+        # Complexidade Sistemica: Poda da Arvore
         tree_complexity = math.log10(max(stack_depth_bb, 1.0))
 
         effective_edge = technical_superiority * tree_complexity
@@ -79,12 +81,12 @@ class VitoiPerspectiveEngine:
         structural_liability: float,
     ) -> float:
         """
-        SÍNTESE FINAL: PM = [(Equity x R) x Valuation] - [EV_fold(t, d_pj, pos) + RIO_mw]
-        Se o resultado for menor que 0, a ação representa Insolvência Estratégica,
-        mesmo que Pot Odds ou ChipEV puros digam o contrário.
+        SINTESE FINAL: PM = [(Equity x R) x Valuation] - [EV_fold(t, d_pj, pos) + RIO_mw]
+        Se o resultado for menor que 0, a acao representa Insolvencia Estrategica,
+        mesmo que Pot Odds ou ChipEV puros digam o contrario.
         """
         base_value = (equity * realization_factor) * valuation_stack
-        # O custo é a desistência mais a vulnerabilidade invisível
+        # O custo e a desistencia mais a vulnerabilidade invisivel
         cost_and_liability = ev_fold_dynamic + structural_liability
 
         return round(base_value - cost_and_liability, 4)

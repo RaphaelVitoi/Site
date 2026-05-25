@@ -1,8 +1,9 @@
+/* eslint-disable no-console */
 import type { PrismaClient } from '@prisma/client';
 
 export async function seedScenarios ( prisma: PrismaClient )
 {
-    console.log( '[SEED] Injetando Cenários de Simulação...' );
+      console.log( '[SEED] Injetando Cenários de Simulação...' );
 
     const defaultFreqs = JSON.stringify( {
         flop: { ip_check: 40, ip_bet_small: 30, ip_bet_large: 30, oop_call: 40, oop_fold: 40, oop_raise: 20 },
@@ -42,7 +43,7 @@ export async function seedScenarios ( prisma: PrismaClient )
             oopMorph: "Linear Padrão"
         }
     } );
-    console.log( `  [+] Cenário Base injetado: ${ tg7.name }` );
+      console.log( `  [+] Cenário Base injetado: ${ tg7.name }` );
 
     const existingQuiz = await prisma.icmQuiz.findFirst( { where: { scenarioId: tg7.id } } );
     if ( !existingQuiz )
@@ -58,6 +59,7 @@ export async function seedScenarios ( prisma: PrismaClient )
                 ] )
             }
         } );
-        console.log( `  [+] Quiz Visceral injetado para: ${ tg7.name }` );
+          console.log( `  [+] Quiz Visceral injetado para: ${ tg7.name }` );
     }
 }
+

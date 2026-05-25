@@ -1,16 +1,37 @@
 {
-	"extends": "../tsconfig.base.json",
-	"compilerOptions": {
-		"composite": true,
-		"rootDir": "./src",
-		"target": "ES2022",
-		"module": "ESNext",
-		"moduleResolution": "bundler",
-		"lib": ["ESNext", "WebWorker"],
-		"allowJs": true,
-		"outDir": "./dist-workers",
-		"types": ["node"]
-	},
-	"include": ["**/*.worker.ts", "**/*.worker.js"],
-	"exclude": ["node_modules", "backups"]
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "./src",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": [
+      "ESNext",
+      "WebWorker"
+    ],
+    "allowJs": true,
+    "outDir": "./dist-workers",
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "src/components/simulator/workers/**/*.ts",
+    "src/lib/icmEngine.ts",
+    "src/lib/perspectiva.ts",
+    "src/lib/montecarlo.ts",
+    "src/lib/schemas.ts",
+    "src/lib/engine/**/*.ts",
+    "src/lib/text-utils.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "backups"
+  ]
 }

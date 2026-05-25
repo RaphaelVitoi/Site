@@ -47,7 +47,7 @@ def _process_paragraph(
 
                     web_path = f"/images/aulas/{slug}/{image_filename}"
                     markdown_image_tag = (
-                        f"\n\n![Descrição da imagem: {image_filename}]({web_path})\n\n"
+                        f"\n\n![Descricao da imagem: {image_filename}]({web_path})\n\n"
                     )
                     paragraph_parts.append(markdown_image_tag)
     return "".join(paragraph_parts)
@@ -56,18 +56,18 @@ def _process_paragraph(
 def convert_docx_to_markdown(docx_path_str: str, slug: str):
     """
     Extrai texto e imagens de um arquivo .docx, mantendo a ordem, e gera um arquivo Markdown.
-    As imagens são salvas em um diretório público e referenciadas no Markdown.
+    As imagens sao salvas em um diretorio publico e referenciadas no Markdown.
     """
     docx_path = Path(docx_path_str)
-    # Blindagem SOTA: Garante que o caminho é um arquivo, não um diretório.
+    # Blindagem SOTA: Garante que o caminho e um arquivo, nao um diretorio.
     if not docx_path.is_file():
-        print(f"[ERRO] O caminho fornecido não é um arquivo válido: {docx_path}")
+        print(f"[ERRO] O caminho fornecido nao e um arquivo valido: {docx_path}")
         return
 
     base_path = Path(__file__).parent
     image_output_dir = base_path / "frontend" / "public" / "images" / "aulas" / slug
     image_output_dir.mkdir(parents=True, exist_ok=True)
-    print(f"[INFO] Imagens serão salvas em: {image_output_dir}")
+    print(f"[INFO] Imagens serao salvas em: {image_output_dir}")
 
     markdown_content = []
 
@@ -94,14 +94,14 @@ def convert_docx_to_markdown(docx_path_str: str, slug: str):
         with open(output_md_path, "w", encoding="utf-8") as f:
             f.write(final_markdown)
 
-        print("\n[SUCESSO] Conversão concluída!")
-        print(f"O conteúdo Markdown foi salvo em: {output_md_path}")
+        print("\n[SUCESSO] Conversao concluida!")
+        print(f"O conteudo Markdown foi salvo em: {output_md_path}")
         print(
-            "\nAgora você pode copiar este conteúdo para o seu `seed_lesson.py` ou usá-lo diretamente no banco de dados."
+            "\nAgora voce pode copiar este conteudo para o seu `seed_lesson.py` ou usa-lo diretamente no banco de dados."
         )
 
     except Exception as e:  # noqa: BLE001
-        print(f"[ERRO FATAL] Falha durante a conversão: {e}")
+        print(f"[ERRO FATAL] Falha durante a conversao: {e}")
 
 
 if __name__ == "__main__":

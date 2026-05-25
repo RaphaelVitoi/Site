@@ -51,6 +51,7 @@ class GeneralTelemetry(BaseModel):
         "Fundamentos SOTA",
         "Bolha",
         "Pos-Flop",
+        "Pós-Flop",
     ]
     componentName: str | None = None
     scenarioContext: dict[str, Any] | list[Any] | str | None = None
@@ -67,10 +68,38 @@ class GeneralTelemetry(BaseModel):
         """Normaliza categorias para o padrao SOTA (ASCII)."""
         mapping = {
             "Pós-Flop": "Pos-Flop",
-            "Pós Flop": "Pos-Flop",
             "Pos Flop": "Pos-Flop",
         }
         return mapping.get(v, v)
+
+
+class SOTAMetrics(BaseModel):
+    """Isomorfismo SOTA: Schema compartilhado para metrica de IA."""
+
+    esperanca: float = Field(..., description="Vetor de ganho esperado (PM)")
+    expectativa: float = Field(..., description="Vetor bruto de EV")
+    perspectiva: float = Field(..., description="Expectativa ajustada por risco RIO")
+    ci: float = Field(..., description="Coeficiente de Insolvencia")
+    is_solvent: bool
+    is_actionable: bool
+
+
+class RAGQuery(BaseModel):
+    """Schema para consultas RAG (Retrieval Augmented Generation)."""
+
+    query: str
+    top_k: int = 5
+    threshold: float = 0.75
+    metadata_filter: dict[str, Any] | None = None
+
+
+class LLMConfig(BaseModel):
+    """Configuracao de hardware para VRAM e RAM."""
+
+    vram_limit_gb: int = 12
+    ram_reserve_gb: int = 4
+    gpu_layers: int = 32
+    context_window: int = 8192
 
 
 class PerspectivaResult(BaseModel):
@@ -105,7 +134,7 @@ class InsolvencyMetrics(BaseModel):
 
     potOddsRatio: float
     perspectiveUtility: float
-    insolvencyCoefficient: float
+    insolvencyCoefficient: float | None = None
     isViable: bool
 
 

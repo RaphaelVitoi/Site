@@ -10,7 +10,7 @@
  */
 
 import { solveIcmDistortion } from '../nashSolver';
-import { ChipEvFreqs } from '../types';
+import type { ChipEvFreqs } from '../types';
 
 // Frequências ChipEV da âncora empírica (calibração real)
 const ANCORA: ChipEvFreqs = {

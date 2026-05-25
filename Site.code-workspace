@@ -20,16 +20,14 @@
         "files.trimFinalNewlines": true,
         "files.trimTrailingWhitespace": true,
         "files.autoSave": "onFocusChange",
-
         // ── NUCLEO DE INTELIGENCIA (GEMINI) ─────────────────────────
         "gemini-cli.approvalMode": "auto_edit",
-        "gemini-cli.model": "gemini-2.5-flash-preview-05-20",
+        "gemini-cli.model": "gemini-2.5-pro",
         "geminicodeassist.outlines.automaticOutlineGeneration": false,
         "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
         "geminicodeassist.verboseLogging": false,
         "geminicodeassist.agentDebugMode": false,
         "geminicodeassist.rules": "Excelência SOTA: Proibida a artificialização. Priorizar lógica, ciência e SteelManning Protocol. Blindagem ASCII no Backend.",
-
         // ── PARIDADE BACKEND (RUFF) ──────────────────────────────────
         "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
         "[python]": {
@@ -40,15 +38,27 @@
             },
             "editor.formatOnSave": true
         },
-
         // ── PARIDADE FRONTEND (PRETTIER/ESLINT) ──────────────────────
         "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-        "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+        "[typescript]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[typescriptreact]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
         "eslint.useFlatConfig": true,
-        "eslint.workingDirectories": [{ "directory": "frontend", "changeProcessCWD": true }],
-        "tailwindCSS.experimental.classRegex": [["@theme\\s*{([^}]*)}", "--color-([^\\s:]*)"]],
-
+        "eslint.workingDirectories": [
+            {
+                "directory": "frontend",
+                "changeProcessCWD": true
+            }
+        ],
+        "tailwindCSS.experimental.classRegex": [
+            [
+                "@theme\\s*{([^}]*)}",
+                "--color-([^\\s:]*)"
+            ]
+        ],
         // ── BLINDAGEM DE WATCHER (SISTEMA INTEGRADO) ────────────────
         "files.watcherExclude": {
             "**/.git/objects/**": true,
@@ -71,16 +81,18 @@
             "**/dist": true,
             "**/build": true
         },
-
         // ── TERMINAL SOTA ───────────────────────────────────────────
         "terminal.integrated.defaultProfile.windows": "Gemini-SOTA",
         "terminal.integrated.profiles.windows": {
             "Gemini-SOTA": {
                 "path": "powershell.exe",
-                "args": ["-NoExit", "-Command", "gemini --approval-mode auto_edit"]
+                "args": [
+                    "-NoExit",
+                    "-Command",
+                    "gemini --approval-mode auto_edit"
+                ]
             }
         },
-
         // ── ESTETICA & ORGANIZACAO ──────────────────────────────────
         "workbench.iconTheme": "material-icon-theme",
         "explorer.fileNesting.enabled": true,

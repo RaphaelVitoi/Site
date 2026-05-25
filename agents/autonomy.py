@@ -19,9 +19,9 @@ from database.queue_manager import QueueManager
 
 logger = logging.getLogger(__name__)
 
-# TETRALOGIA DE GOVERNANÇA VITOI 3.2
-# W0 (stop) ⊂ W1 (default) ⊂ W2 (partial - Tier 3)
-# ⊂ W2.5 (full_restricted - Tier 2) ⊂ W3 (full - Tier 1)
+# TETRALOGIA DE GOVERNANCA VITOI 3.2
+# W0 (stop) \u2282 W1 (default) \u2282 W2 (partial - Tier 3)
+# \u2282 W2.5 (full_restricted - Tier 2) \u2282 W3 (full - Tier 1)
 VALID_AUTONOMY_MODES = {"stop", "default", "partial", "full", "sandbox"}
 PROTECTED_KERNEL_PATHS = [  # pylint: disable=line-too-long
     ".git",
@@ -43,8 +43,8 @@ _AUTONOMY_CACHE = {"mode": "stop", "timestamp": 0.0}
 
 
 def _read_legacy_autonomy_config() -> str:
-    """Lê a configuração mitigando o aninhamento de tratamento de erro.
-    (SOTA v6: Diretórios legados do Claude desligados)."""
+    """Le a configuracao mitigando o aninhamento de tratamento de erro.
+    (SOTA v6: Diretorios legados do Claude desligados)."""
     config_path = Path("autonomy.json")
     if config_path.exists():
         try:
@@ -177,8 +177,8 @@ def _validate_command(cmd: str, effective_mode: str, agent_name: str) -> bool:
         "pnpm add",
     ]
 
-    # SOTA: Expansão implacável dos vetores de bypass
-    # (sub-expressões, backticks, redirecionamentos).
+    # SOTA: Expansao implacavel dos vetores de bypass
+    # (sub-expressoes, backticks, redirecionamentos).
     if effective_mode not in ["full", "full_restricted"] and any(
         char in cmd for char in [";", "|", "&&", "&", "$", "`", ">", "<"]
     ):
@@ -307,7 +307,7 @@ async def _run_sandboxed_command(cmd: str, agent_name: str) -> None:
 
 
 async def _execute_commands(text: str, effective_mode: str, agent_name: str) -> None:
-    """Isola a orquestração segura de sub-processos do terminal."""
+    """Isola a orquestracao segura de sub-processos do terminal."""
     if effective_mode in ["stop", "default"]:
         logger.warning(
             "[SEC] Execucao de terminal bloqueada por hardware-lock no modo '%s'.",
@@ -379,7 +379,7 @@ async def apply_god_mode(
     text: str, manager: QueueManager, agent_name: str | None = None
 ) -> list[str]:
     """
-    Orquestrador VITOI 3.2 de Autonomia (Córtex de Execução).
+    Orquestrador VITOI 3.2 de Autonomia (Cortex de Execucao).
     Aplica a hierarquia de privilegios de Tier 0 a Tier 3 dinamicamente.
     """
     god_mode_agents, sandbox_default = await _read_autonomy_levers()
@@ -388,7 +388,7 @@ async def apply_god_mode(
     # Deducao dinamica de identidade caso nao seja provida explicitamente pela DAG
     if not agent_name:
         running_tasks = await manager.get_tasks(status="running")
-        # SOTA: Obliteração da escalada de privilégios (Zero-Trust).
+        # SOTA: Obliteracao da escalada de privilegios (Zero-Trust).
         # Fallback para Tier inferior.
         agent_name = running_tasks[0].agent if running_tasks else "@dispatcher"
 
@@ -398,7 +398,7 @@ async def apply_god_mode(
 
     if effective_mode == "stop":
         logger.warning(
-            "[GOD MODE] W0 (Stop) ativo. Observação pura. Nenhuma mutação permitida."
+            "[GOD MODE] W0 (Stop) ativo. Observacao pura. Nenhuma mutacao permitida."
         )
         return []
 
@@ -407,7 +407,7 @@ async def apply_god_mode(
     if effective_mode == "default":
         logger.info(
             "[GOD MODE] W1 (Default) ativo. Homeostase. "
-            "Arquivos forjados, execução de comandos bloqueada."
+            "Arquivos forjados, execucao de comandos bloqueada."
         )
         return modified_files
 

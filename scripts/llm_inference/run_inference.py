@@ -9,10 +9,10 @@ import torch
 logger = logging.getLogger(__name__)
 
 # ==============================================================================
-# [SOTA BYPASS] RESOLUÇÃO DO DEADLOCK ARQUITETURAL (Gemma 4 x AMD DirectML)
+# [SOTA BYPASS] RESOLUCAO DO DEADLOCK ARQUITETURAL (Gemma 4 x AMD DirectML)
 # ==============================================================================
 # Transformers 4.49+ exige PyTorch 2.5+, mas AMD DirectML exige PyTorch 2.4.1.
-# Silenciamos o registro de operações FP8 incompatíveis para evitar o crash.
+# Silenciamos o registro de operacoes FP8 incompativeis para evitar o crash.
 if hasattr(torch.library, "custom_op"):
     _original_custom_op = torch.library.custom_op
 
@@ -34,7 +34,7 @@ if hasattr(torch.library, "register_fake"):
     torch.library.register_fake = _patched_register_fake
 # ==============================================================================
 
-# Tentativa de importação do DirectML para placas AMD
+# Tentativa de importacao do DirectML para placas AMD
 torch_directml = None
 DML_AVAILABLE = False
 try:
@@ -56,7 +56,7 @@ from engine.math_sota import compute_quantum_metrics  # noqa: E402
 
 MODEL_ID = "google/gemma-2-2b-it"  # Reduzido para 2B para contornar gargalo de VRAM
 
-# Detecção de hardware SOTA (NVIDIA, AMD, CPU)
+# Deteccao de hardware SOTA (NVIDIA, AMD, CPU)
 DEVICE = "cpu"
 DTYPE = torch.bfloat16
 
@@ -107,7 +107,7 @@ user_prompt = " ".join(sys.argv[1:]).strip() if len(sys.argv) > 1 else None
 if user_prompt:
     prompt_context = user_prompt
 else:
-    # Simulando uma situação de mesa para o Motor SOTA (Fallback)
+    # Simulando uma situacao de mesa para o Motor SOTA (Fallback)
     metricas = compute_quantum_metrics(
         current_equity_pct=45.0,
         delta_win_pct=15.0,
@@ -121,35 +121,35 @@ else:
         stack_eff=30.0,
     )
     prompt_context = f"""
-Atue como o motor de governança SOTA (State-of-the-Art). Analise esta situação sob a ótica dos axiomas VITOI:
+Atue como o motor de governanca SOTA (State-of-the-Art). Analise esta situacao sob a otica dos axiomas VITOI:
 - Perspectiva (Expectativa): {metricas["perspectiva"]:.2f}
-- Coeficiente de Insolvência (Ci): {metricas["ci"]:.2f}
-- Insolvente: {"Sim" if not metricas["is_solvent"] else "Não"}
+- Coeficiente de Insolvencia (Ci): {metricas["ci"]:.2f}
+- Insolvente: {"Sim" if not metricas["is_solvent"] else "Nao"}
 
 Diretrizes de Resposta:
-1. Priorize a sobrevivência e a preservação do RIO (Return on Investment) sobre o EV simples.
-2. Se Ci < 1, identifique o Hero como tecnicamente 'Insolvente' e sugira uma linha de contenção (evitar o All-in).
-3. Se Perspectiva > 0 e Ci >= 1, sugira uma linha de agressão quantizada.
-4. Finalize com um diagnóstico tático de 3 pontos.
+1. Priorize a sobrevivencia e a preservacao do RIO (Return on Investment) sobre o EV simples.
+2. Se Ci < 1, identifique o Hero como tecnicamente 'Insolvente' e sugira uma linha de contencao (evitar o All-in).
+3. Se Perspectiva > 0 e Ci >= 1, sugira uma linha de agressao quantizada.
+4. Finalize com um diagnostico tatico de 3 pontos.
 """
 
 mensagens = [{"role": "user", "content": prompt_context}]
 
-# 3. Gerar resposta estratégica
+# 3. Gerar resposta estrategica
 prompt = tokenizer.apply_chat_template(
     mensagens, tokenize=False, add_generation_prompt=True
 )
 inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)  # type: ignore
 
-print("2. Gerando análise estratégica SOTA...")
+print("2. Gerando analise estrategica SOTA...")
 outputs = model.generate(  # type: ignore
     **inputs, max_new_tokens=1024, use_cache=True, do_sample=False
 )
 
-# Fatiar a saída para ignorar o prompt original e pegar apenas os novos tokens
+# Fatiar a saida para ignorar o prompt original e pegar apenas os novos tokens
 input_length = inputs["input_ids"].shape[1]
 generated_tokens = outputs[0][input_length:]
 resposta = tokenizer.decode(generated_tokens, skip_special_tokens=True)
 
-print("\n=== ANÁLISE ESTRATÉGICA SOTA ===")
+print("\n=== ANALISE ESTRATEGICA SOTA ===")
 print(resposta)

@@ -73,4 +73,6 @@ def _read_file_with_cache(path: str) -> str:
     return val
 
 # Global Instance
-cache = SOTACache(cache_dir="C:/Users/Raphael/.gemini/Site/temp/cache")
+# SOTA: Pathing dinamico para garantir portabilidade entre Local e Docker
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+cache = SOTACache(cache_dir=os.path.join(BASE_DIR, "temp", "cache"))

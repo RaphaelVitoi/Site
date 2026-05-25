@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://raphaelvitoi.github.io/sitemap.xml

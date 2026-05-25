@@ -1,2 +1,0 @@
-# Configuração do Banco de Dados SOTA (SQLite Local)
-DATABASE_URL="file:./dev.db"

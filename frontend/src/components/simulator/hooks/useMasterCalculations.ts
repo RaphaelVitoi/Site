@@ -39,17 +39,29 @@ export function useMasterCalculations({
 			type: 'module',
 		});
 
-		worker.onmessage = (e: MessageEvent) => {
-			if (e.data.error) {
-				console.warn('[SotaEcosystem] Entropia WASM:', e.data.error);
+		worker.onmessage = (e: MessageEvent<{ equity?: number; error?: string; id: number }>) => {
+			if (e.data.error || e.data.equity === undefined) {
+				console.warn('[SotaEcosystem] Entropia WASM:', e.data.error || 'Missing equity in payload');
 				setNativeRangeMetric((prev) => ({ ...prev, isCalculating: false }));
 			} else {
 				setNativeRangeMetric({ equity: e.data.equity, isCalculating: false });
 			}
 		};
 		equityWorkerRef.current = worker;
+
+		// SOTA FIX: Acionando o Motor Fantasma
+		// O worker precisa ser alimentado inicialmente para sair da trava de 50%.
+		if (Array.isArray(scenario.stacks) && scenario.stacks.length > 0) {
+			setNativeRangeMetric((prev) => ({ ...prev, isCalculating: true }));
+			worker.postMessage({
+				heroRange: 'random',
+				villainRange: 'random',
+				board: ''
+			});
+		}
+
 		return () => worker.terminate();
-	}, []);
+	}, [scenario.stacks]);
 
 	// SOTA v6: Sincronizacao da Mente Bayesiana via Nexus Proxy
 	useEffect(() => {

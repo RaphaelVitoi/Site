@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 'use client';
 
 /**
@@ -185,11 +186,11 @@ describe('SOTA v4.2 Mathematical Integrity Audit', () => {
 			const result = deriveRps(stacks, prizes, 6, 8);
 
 			if (result) {
-				console.log('--- AULA 1.2 DEBUG ---');
-				console.log('IP RP (BTN):', result.ipRp);
-				console.log('OOP RP (BB):', result.oopRp);
-				console.log('IP BF:', result.allBfs[6]);
-				console.log('OOP BF:', result.allBfs[8]);
+				  console.log('--- AULA 1.2 DEBUG ---');
+				  console.log('IP RP (BTN):', result.ipRp);
+				  console.log('OOP RP (BB):', result.oopRp);
+				  console.log('IP BF:', result.allBfs[6]);
+				  console.log('OOP BF:', result.allBfs[8]);
 
 				// Calibração SOTA v4.2: O motor M-H pode dar pequenas variações conforme a precisão da recursão
 				expect(result.ipRp).toBeGreaterThan(15); // Margem de segurança para calibração
@@ -200,3 +201,4 @@ describe('SOTA v4.2 Mathematical Integrity Audit', () => {
 		});
 	});
 });
+

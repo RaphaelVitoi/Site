@@ -1,5 +1,5 @@
 """
-SOTA AGENTS -- Lógica de Agentes e Orquestração de Tarefas.
+SOTA AGENTS -- Logica de Agentes e Orquestracao de Tarefas.
 """
 
 from .autonomy import apply_god_mode

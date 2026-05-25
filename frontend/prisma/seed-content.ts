@@ -1,10 +1,11 @@
+/* eslint-disable no-console */
 /// <reference types="node" />
 
 import type { PrismaClient } from '@prisma/client';
 import crypto from 'node:crypto';
 
 export async function seedContent( prisma: PrismaClient ) {
-    console.log( '[SEED] Injetando Conteúdo da Biblioteca e Lições...' );
+      console.log( '[SEED] Injetando Conteúdo da Biblioteca e Lições...' );
 
     const lesson = await prisma.lesson.upsert( {
         where: { slug: 'aula-1-2-referencial' },
@@ -17,7 +18,7 @@ export async function seedContent( prisma: PrismaClient ) {
             tags: 'icm, referencial'
         }
     } );
-    console.log( `  [+] Lição SOTA injetada: ${lesson.title}` );
+      console.log( `  [+] Lição SOTA injetada: ${lesson.title}` );
 
     const contentId = crypto.randomUUID ? crypto.randomUUID() : 'c' + Math.random().toString( 36 ).substring( 2, 15 );
     const contentFalacia = await ( prisma as PrismaClient & { content: { upsert: (arg: unknown) => Promise<{ title: string }> } } ).content.upsert( {
@@ -38,5 +39,6 @@ export async function seedContent( prisma: PrismaClient ) {
         console.warn( '  [AVISO] Tabela Content ausente ou falha de tipagem. Conteúdo não injetado.' );
     } );
 
-    if ( contentFalacia ) console.log( `  [+] Artigo da Biblioteca SOTA injetado: ${contentFalacia.title}` );
+    if ( contentFalacia )   console.log( `  [+] Artigo da Biblioteca SOTA injetado: ${contentFalacia.title}` );
 }
+

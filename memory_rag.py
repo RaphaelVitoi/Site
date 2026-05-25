@@ -31,7 +31,7 @@ CHROMA_PATH = Path(__file__).parent / CHROMA_DB_DIR
 OLLAMA_BASE_URL = "http://127.0.0.1:11434"
 EMBEDDING_MODEL = "nomic-embed-text"  # Requer: ollama pull nomic-embed-text
 
-# MED-06: Removido logging.basicConfig() para evitar sobrescrever a configuração SOTA global.
+# MED-06: Removido logging.basicConfig() para evitar sobrescrever a configuracao SOTA global.
 logger = logging.getLogger(__name__)
 
 # =================================================
@@ -226,7 +226,7 @@ class MemoryRAG:
                 manifest_content = await f.read()
                 # SOTA: Expurgar comentarios // sem corromper URLs dentro de strings (ex: "http://...")
                 manifest_content = re.sub(
-                    r'("(?:\\.|[^"\\])*")|//.*',
+                    r'("(?:\\.|[^"\\])*")|(//.*)',
                     lambda m: m.group(1) if m.group(1) else "",
                     manifest_content,
                 )
@@ -350,11 +350,11 @@ class MemoryRAG:
 
     async def _process_single_file(self, file_path: Path, file_info: str = "") -> list[str]:
         # SOTA: Trava de Seguranca Termodinamica (Impede OOM por leitura de arquivos colossais)
-        MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB limite
+        max_file_size_bytes = 10 * 1024 * 1024  # 10 MB limite
         file_size = await asyncio.to_thread(lambda: file_path.stat().st_size)
-        if file_size > MAX_FILE_SIZE_BYTES:
+        if file_size > max_file_size_bytes:
             logger.warning(
-                f"[RAG] Rejeicao de arquivo colossal (>{MAX_FILE_SIZE_BYTES} bytes) para evitar vazamento assincrono: {file_path.name}"
+                f"[RAG] Rejeicao de arquivo colossal (>{max_file_size_bytes} bytes) para evitar vazamento assincrono: {file_path.name}"
             )
             return []
 
@@ -374,13 +374,13 @@ class MemoryRAG:
 
         if chunks:
             # SOTA: Batching Absoluto contra Morte Termica de RAM/SQLite
-            BATCH_SIZE = 500
-            for i in range(0, len(chunks), BATCH_SIZE):
+            batch_size = 500
+            for i in range(0, len(chunks), batch_size):
                 await asyncio.to_thread(
                     self.collection.upsert,
-                    documents=chunks[i : i + BATCH_SIZE],
-                    metadatas=metadatas[i : i + BATCH_SIZE],
-                    ids=ids[i : i + BATCH_SIZE],
+                    documents=chunks[i : i + batch_size],
+                    metadatas=metadatas[i : i + batch_size],
+                    ids=ids[i : i + batch_size],
                 )
                 # SOTA: Flush do Event Loop para permitir ao Garbage Collector coletar as matrizes WASM
                 await asyncio.sleep(0.01)
@@ -423,9 +423,9 @@ class MemoryRAG:
 
             if ids_to_delete:
                 # SOTA: Evita Memory Spike e Erro de Parametros Limite no SQLite do Chroma
-                BATCH_SIZE = 500
-                for i in range(0, len(ids_to_delete), BATCH_SIZE):
-                    await asyncio.to_thread(self.collection.delete, ids=ids_to_delete[i : i + BATCH_SIZE])
+                batch_size = 500
+                for i in range(0, len(ids_to_delete), batch_size):
+                    await asyncio.to_thread(self.collection.delete, ids=ids_to_delete[i : i + batch_size])
                     await asyncio.sleep(0.01)
                 logger.info(f"Expurgados {len(ids_to_delete)} fragmentos obsoletos (Limpeza de Entropia).")
         except Exception:  # noqa: BLE001
@@ -539,14 +539,12 @@ class MemoryRAG:
                 lexical_score * HYBRID_SEARCH_LEXICAL_WEIGHT
             )
 
-            scored_docs.append(
-                {
-                    "doc": doc,
-                    "agent": metadatas[i]["agent"],
-                    "source": metadatas[i].get("source", "N/A"),
-                    "score": hybrid_score,
-                }
-            )
+            scored_docs.append({
+                "doc": doc,
+                "agent": metadatas[i]["agent"],
+                "source": metadatas[i].get("source", "N/A"),
+                "score": hybrid_score,
+            })
 
         # 3. Reranking e Selecao Final
         scored_docs.sort(key=lambda x: x["score"], reverse=True)

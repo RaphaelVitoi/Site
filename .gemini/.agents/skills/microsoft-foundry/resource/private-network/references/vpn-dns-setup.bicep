@@ -11,16 +11,13 @@
 @description('Name of the existing VNet from the Foundry deployment')
 param vnetName string
 
-@description('Resource group of the existing VNet. Defaults to the deployment resource group.')
-param vnetResourceGroup string = resourceGroup().name
+@description('Location for all resources.')
+param location string = resourceGroup().location
 
 // ── Existing VNet ──
 resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
   name: vnetName
-  scope: resourceGroup(vnetResourceGroup)
 }
-
-var location = vnet.location
 
 @description('CIDR for GatewaySubnet — agent must compute from available VNet space')
 param gatewaySubnetCidr string
@@ -42,12 +39,12 @@ param suffix string
 // The intake step (az cloud show) warns users before reaching this template.
 var aadAudience = 'c632b3df-fb67-4d84-bdcf-b95ad541b5c8'
 var aadIssuer = 'https://sts.windows.net/${aadTenantId}/'
-var aadTenant = 'https://login.microsoftonline.com/${aadTenantId}/'
+var aadTenant = '${environment().authentication.loginEndpoint}${aadTenantId}/'
 
 // ── Add subnets ──
 resource gatewaySubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
-  parent: vnet
   name: 'GatewaySubnet'
+  parent: vnet
   properties: {
     addressPrefix: gatewaySubnetCidr
     defaultOutboundAccess: false
@@ -57,8 +54,9 @@ resource gatewaySubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = 
 // NOTE: NRMS policy may auto-deploy an NSG on this subnet.
 // Ensure the NSG allows inbound UDP/TCP port 53 (DNS) from the VPN client address pool.
 resource dnsResolverSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
-  parent: vnet
   name: 'dns-resolver-inbound'
+  parent: vnet
+  dependsOn: [gatewaySubnet] // serialize subnet updates
   properties: {
     addressPrefix: dnsResolverSubnetCidr
     defaultOutboundAccess: false
@@ -71,17 +69,16 @@ resource dnsResolverSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01
       }
     ]
   }
-  dependsOn: [gatewaySubnet] // serialize subnet updates
 }
 
 // ── Public IP for VPN Gateway ──
 resource vpnGatewayPip 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   name: 'vpn-gateway-pip-${suffix}'
   location: location
+  zones: ['1', '2', '3']
   sku: {
     name: 'Standard'
   }
-  zones: ['1', '2', '3']
   properties: {
     publicIPAllocationMethod: 'Static'
   }

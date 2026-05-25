@@ -8,7 +8,7 @@ class VitoiContextHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if str(event.src_path).endswith(".py"):
             print(
-                f"[ANTEVISÃO] Mudança detectada: {event.src_path}. Atualizando Grafo de Dependências..."
+                f"[ANTEVISAO] Mudanca detectada: {event.src_path}. Atualizando Grafo de Dependencias..."
             )
 
 

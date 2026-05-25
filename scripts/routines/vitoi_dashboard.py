@@ -12,7 +12,7 @@ DIM_WHITE = "dim white"
 
 
 def gerar_tabela_logs(n_linhas=15):
-    """Lê o log e gera uma tabela formatada em escala de cinza."""
+    """Le o log e gera uma tabela formatada em escala de cinza."""
     log_file = ".vitoi_history.log"
     table = Table(
         expand=True,
@@ -22,8 +22,8 @@ def gerar_tabela_logs(n_linhas=15):
     )
 
     table.add_column("Timestamp", style=DIM_WHITE, width=20)
-    table.add_column("Nível", width=10)
-    table.add_column("Mensagem Semântica", style="italic white")
+    table.add_column("Nivel", width=10)
+    table.add_column("Mensagem Semantica", style="italic white")
 
     if not os.path.exists(log_file):
         return table
@@ -37,7 +37,7 @@ def gerar_tabela_logs(n_linhas=15):
             partes = linha.strip().split(" | ")
             if len(partes) == 3:
                 ts, level, msg = partes
-                # Mapeamento Estético Monocromático
+                # Mapeamento Estetico Monocromatico
                 if "INFO" in level:
                     color = "white"
                 elif "ERROR" in level:
@@ -81,5 +81,5 @@ if __name__ == "__main__":
         render_dashboard()
     except KeyboardInterrupt:
         console.print(
-            "\n[VITOI] Encerrando visualização. Logs preservados.", style=DIM_WHITE
+            "\n[VITOI] Encerrando visualizacao. Logs preservados.", style=DIM_WHITE
         )

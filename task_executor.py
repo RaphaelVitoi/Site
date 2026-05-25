@@ -2,12 +2,10 @@
 
 import asyncio
 import contextlib
-from datetime import UTC, datetime
 import json
 import logging
 import logging.handlers
 import os
-from pathlib import Path
 import shutil
 import sqlite3
 import sys
@@ -29,7 +27,6 @@ from agents.execution import (
     AGENT_IMPLEMENTOR,
     AGENT_MAVERICK,
 )
-import core.config as _core_config
 from core.schemas import Task
 from database.queue_manager import QueueManager
 

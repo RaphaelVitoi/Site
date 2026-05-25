@@ -8,7 +8,7 @@ MODEL_ID = "google/gemma-4-E2B-it"
 processor = AutoProcessor.from_pretrained(MODEL_ID)
 model = AutoModelForCausalLM.from_pretrained(
     MODEL_ID,
-    torch_dtype="auto",  # Correção: no transformers geralmente se usa torch_dtype="auto"
+    torch_dtype="auto",  # Correcao: no transformers geralmente se usa torch_dtype="auto"
     device_map="auto",
 )
 

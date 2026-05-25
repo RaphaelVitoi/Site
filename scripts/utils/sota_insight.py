@@ -2,7 +2,7 @@
 IDENTITY: SOTA Context Scanner (Skill de Leitura Recursiva)
 ROLE: Ferramenta de linha de comando para agentes lerem arquivos em 'chunks' (fatias),
       extraindo a ontologia (IDENTITY/ROLE) e mapeando o efeito cascata (BINDINGS).
-PRINCIPLE: Antevisão Semântica e Fricção Zero.
+PRINCIPLE: Antevisao Semantica e Friccao Zero.
 """
 
 import argparse
@@ -13,7 +13,7 @@ from pathlib import Path
 def scan_file(filepath: str, chunk: int = 1, size: int = 50):
     path = Path(filepath)
     if not path.exists():
-        print(f"[ERRO] Arquivo não encontrado: {filepath}")
+        print(f"[ERRO] Arquivo nao encontrado: {filepath}")
         return
 
     with open(path, "r", encoding="utf-8") as f:
@@ -39,7 +39,7 @@ def scan_file(filepath: str, chunk: int = 1, size: int = 50):
         print(f"ROLE     : {role.group(1).strip() if role else 'Desconhecido'}")
         print(f"BINDING  : {binding.group(1).strip() if binding else 'Desconhecido'}")
 
-    print("\n[CONTEÚDO BRUTO - CHUNK]")
+    print("\n[CONTEUDO BRUTO - CHUNK]")
     for i, line in enumerate(target_lines, start=start + 1):
         print(f"{i:04d} | {line.rstrip()}")
 

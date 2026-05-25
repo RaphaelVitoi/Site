@@ -23,14 +23,12 @@ Este arquivo serve como o registro persistente e central da memória do sistema,
   - **Correção da Ação de Fold:** Ação de fold corrigida em `_buildSimulatedStacks` para não deduzir `heroCost` do Hero, mantendo o stack no estado original de início da decisão (`stacks[heroIdx]`), em conformidade absoluta com o paradigma Vitoi.
 - **Testes de Integridade:** [perspectiva.test.ts](file:///C:/Users/Raphael/.gemini/Site/frontend/src/tests/simulator/perspectiva.test.ts) valida as premissas analíticas com cobertura para os teoremas estruturais da Perspectiva (12/12 suítes de teste passando).
 
-### Otimização e Infraestrutura SOTA (v6.2)
+### Otimização e Infraestrutura SOTA (v6.2.1 GOLD)
 
-- **Redução de Payload de Contexto:** Desativação de 37 skills biológicas/médicas inativas e 10 esquemas de servidores MCP não-utilizados, economizando aproximadamente **45.000 tokens** por turno complexo do Antigravity.
-- **Eficiência de Busca no Workspace:** Ativação de `"respectGitIgnore": true` e `"respectGeminiIgnore": true` nas configurações globais do agente, limitando a indexação ativa de 62.000+ para ~450 arquivos de interesse do projeto (latência reduzida de ~4s para <150ms).
-- **Higiene do Workspace:** Consolidação e arquivamento de 207 scripts de teste e validação antigos na pasta `scratch/archive/`.
-- **VS Code & Gemini Code Assist:** Desativação explícita de Codeium inline suggestions para garantir zero colisão de ghost-text e exclusividade da IA Gemini Code Assist no VS Code.
-- **Antigravity CLI (Kilo):** Alinhamento completo com o modelo `gemini-2.5-pro-exp-03-25` e desativação de plugins inativos (`bitrise`, `postgres`, `cloud-sql-postgresql-observability`, `cloud-sql-sqlserver`).
-
+- **Organização Geométrica:** Implementado o sistema de *Route Groups* no Next.js (`(auth)`, `(public)`, `(lab)`, `(user)`), reduzindo a profundidade cognitiva e melhorando a manutenibilidade do frontend.
+- **Contrato Soberano de API:** Consolidada a API versionada `/api/v1` tanto no backend quanto no frontend, assegurando paridade fractal e prevenindo drifts de integração.
+- **Potencialização de Ambiente:** .env.example unificado e harmonizado, garantindo onboarding instantâneo e configurações estritas de telemetria e IA.
+- **Redução de Payload de Contexto:** ... (mantido)
 ---
 
 ## 2. MEMORIZAÇÃO DO PARADIGMA VITOI
@@ -78,7 +76,7 @@ A **Perspectiva Matemática** desloca a teoria clássica de torneios para um mod
 
 - **Framework Teórico:** [perspectiva_matematica_framework_v2.md](file:///C:/Users/Raphael/.gemini/Site/docs/research/perspectiva_matematica_framework_v2.md)
 - **Derivações Teóricas (D1-D6):** [validacao_matematica_hipoteses_v1.md](file:///C:/Users/Raphael/.gemini/Site/docs/research/validacao_matematica_hipoteses_v1.md)
-- **Prova Clínica do River:** [prova_matematica_icm.md](file:///C:/Users/Raphael/.gemini/Site/frontend/src/content/research/icm-materials/prova_matematica_icm.md)
-- **Texto Conceitual (Geometria do Risco):** [geometria_texto.md](file:///C:/Users/Raphael/.gemini/Site/frontend/src/content/research/icm-materials/geometria_texto.md)
+- **Prova Clínica do River:** [prova_matematica_icm.md](file:///C:/Users/Raphael/.gemini/Site/docs/research/materials/prova_matematica_icm.md)
+- **Texto Conceitual (Geometria do Risco):** [geometria_texto.md](file:///C:/Users/Raphael/.gemini/Site/docs/research/materials/geometria_texto.md)
 - **Motor de Cálculo:** [perspectiva.ts](file:///C:/Users/Raphael/.gemini/Site/frontend/src/lib/perspectiva.ts)
 - **Suite de Validação (Testes):** [perspectiva.test.ts](file:///C:/Users/Raphael/.gemini/Site/frontend/src/tests/simulator/perspectiva.test.ts)

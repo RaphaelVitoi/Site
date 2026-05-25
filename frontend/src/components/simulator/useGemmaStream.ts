@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { PhysicsSnapshot, InferenceRequest } from '@/lib/schemas';
+import { logger } from '@/lib/logger';
 
 async function processSSEStream(
 	stream: ReadableStream<Uint8Array>,
@@ -19,7 +20,10 @@ async function processSSEStream(
 			}
 		}
 	} finally {
-		await reader.cancel().catch((e) => console.warn('[ENTROPIA] Erro ao cancelar reader:', e));
+		await reader.cancel().catch((e) => {
+			 
+			console.warn('[ENTROPIA] Erro ao cancelar reader:', e);
+		});
 		reader.releaseLock();
 	}
 }
@@ -129,10 +133,10 @@ export function useGemmaStream() {
 				return bufferRef.current;
 			} catch (err: unknown) {
 				if (err instanceof Error && err.name === 'AbortError') {
-					console.log('[ENTROPIA] Stream abortado (Cleanup/Cancelamento).');
+					logger.info('Engine:GemmaStream', 'Stream abortado (Cleanup/Cancelamento).');
 					return;
 				}
-				console.error('[ENTROPIA] Falha no Stream:', err);
+				logger.error('Engine:GemmaStream', 'Falha no Stream', { error: err });
 				const errorMessage = err instanceof Error ? err.message : '';
 				// SOTA Fallback: Suavização heurística do erro TypeError de I/O em navegadores
 				if (

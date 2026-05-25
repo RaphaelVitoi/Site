@@ -3,17 +3,17 @@
 import type { HeroPosition } from '@/components/simulator/engine/types';
 import { SotaTooltip } from '@/components/simulator/ui/SotaTooltip';
 import React from 'react';
+import type { SotaPhysicsState } from '../hooks/useSotaSync';
 
 interface SpatialControlsProps {
 	heroPosition: HeroPosition;
 	handleHeroPositionChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 	heroInvested: number;
-	setHeroInvested: (v: number) => void;
 	currentPot: number;
-	setCurrentPot: (v: number) => void;
 	activePlayers: number;
-	setActivePlayers: (v: number) => void;
 	isPredictive: boolean;
+	onUpdatePhysics: (partial: Partial<SotaPhysicsState>) => void;
+	setActivePlayers: (v: number) => void;
 	setIsPredictive: (v: boolean) => void;
 }
 
@@ -21,12 +21,11 @@ export const SpatialControls = ({
 	heroPosition,
 	handleHeroPositionChange,
 	heroInvested,
-	setHeroInvested,
 	currentPot,
-	setCurrentPot,
 	activePlayers,
-	setActivePlayers,
 	isPredictive,
+	onUpdatePhysics,
+	setActivePlayers,
 	setIsPredictive,
 }: Readonly<SpatialControlsProps>) => {
 	const isMultiway = activePlayers > 2;
@@ -96,7 +95,7 @@ export const SpatialControls = ({
 						type="number"
 						step="0.5"
 						value={heroInvested}
-						onChange={(e) => setHeroInvested(Number(e.target.value))}
+						onChange={(e) => onUpdatePhysics({ heroInvested: Number(e.target.value) })}
 						className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs font-mono tabular-nums text-text-bright focus:bg-black/60 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/50 transition-all shadow-inner outline-none"
 					/>
 					<span className="absolute right-3 top-2.5 text-[0.6rem] text-text-darker font-bold">
@@ -120,7 +119,7 @@ export const SpatialControls = ({
 						type="number"
 						step="0.5"
 						value={currentPot}
-						onChange={(e) => setCurrentPot(Number(e.target.value))}
+						onChange={(e) => onUpdatePhysics({ pot: Number(e.target.value) })}
 						className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs font-mono tabular-nums text-text-bright focus:bg-black/60 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/50 transition-all shadow-inner outline-none"
 					/>
 					<span className="absolute right-3 top-2.5 text-[0.6rem] text-text-darker font-bold">

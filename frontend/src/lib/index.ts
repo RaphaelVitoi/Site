@@ -9,3 +9,4 @@ export * from './montecarlo';
 export * from './logger';
 export * from './schemas';
 export * from './telemetry-client';
+export * from './text-utils';

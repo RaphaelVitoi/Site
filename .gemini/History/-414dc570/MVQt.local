@@ -1,4 +1,0 @@
-# Arquivo de Variaveis de Ambiente (Ignorado pelo Git)
-# Mantenha suas chaves aqui. O task_executor.py le este arquivo diretamente.
-$env:GEMINI_FLASH_KEY_8 = "AIzaSyBW8EzuB0YB2E7f9mF4FS-maiip-ElPtTM" 
-$env:GEMINI_PRO_KEY_8 = "AIzaSyBcBsN6tIJMox4kGHPB8gine2IYtjHYS_Q"

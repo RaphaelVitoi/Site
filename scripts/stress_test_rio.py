@@ -1,19 +1,19 @@
 """
-Script de stress test para avaliar a métrica de RIO (Reverse Implied Odds) em diferentes cenários.
+Script de stress test para avaliar a metrica de RIO (Reverse Implied Odds) em diferentes cenarios.
 """
 
 import math
 import sys
 import os
 
-# Adiciona o diretório atual ao path para importar o motor
+# Adiciona o diretorio atual ao path para importar o motor
 sys.path.append(os.getcwd())
 
 from engine.math_sota import calculate_rio_risk_v2
 
 def run_rio_stress_test():
-    """Executa a simulação de estresse para a tabela de perigos de RIO."""
-    print("# SIMULAÇÃO DE ESTRESSE: TABELA DE PERIGOS DE RIO (SOTA v6)")
+    """Executa a simulacao de estresse para a tabela de perigos de RIO."""
+    print("# SIMULACAO DE ESTRESSE: TABELA DE PERIGOS DE RIO (SOTA v6)")
     print("-" * 80)
     print(
         f"{'Players':<8} | {'Stack':<8} | {'Pot':<8} | {'Invested':<10} | {'Ci':<8} | "
@@ -21,10 +21,10 @@ def run_rio_stress_test():
     )
     print("-" * 80)
 
-    # Variáveis de controle baseadas na Derivação 2 (RIO O(N^2))
+    # Variaveis de controle baseadas na Derivacao 2 (RIO O(N^2))
     player_counts = [2, 3, 4, 5, 6]
     stacks = [15.0, 30.0, 60.0]
-    # Simula um cenário de call no flop/turn
+    # Simula um cenario de call no flop/turn
     scenarios = [
         {"pot": 5.0, "invested": 2.5},   # Bet 1/2 pot
         {"pot": 10.0, "invested": 5.0},  # Bet 1/2 pot (pote maior)
@@ -34,14 +34,14 @@ def run_rio_stress_test():
     for n in player_counts:
         for s in stacks:
             for sc in scenarios:
-                # SOTA v6.2.1: Cálculo de Gravidade e Damping
+                # SOTA v6.2.1: Calculo de Gravidade e Damping
                 gravity = math.log(max(1.0, sc["pot"] / 7.5))
                 damping = 1.0 / (1.0 + gravity * 0.15)
 
-                # Curvatura de Nash: Mede o "drift" da agressão
+                # Curvatura de Nash: Mede o "drift" da agressao
                 nash_curvature = damping * (1.0 / (1.0 + (n - 1) * 0.2))
 
-                # Usamos a função unificada de risco que já calcula a tensão RIO e o Ci
+                # Usamos a funcao unificada de risco que ja calcula a tensao RIO e o Ci
                 risk_data = calculate_rio_risk_v2(
                     hero_invested=sc["invested"],
                     current_pot=sc["pot"],
@@ -61,7 +61,7 @@ def run_rio_stress_test():
                 )
 
     print("-" * 80)
-    print("Fim da Simulação de Estresse.")
+    print("Fim da Simulacao de Estresse.")
 
 if __name__ == "__main__":
     run_rio_stress_test()

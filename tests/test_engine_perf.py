@@ -1,5 +1,5 @@
 """
-Testes de performance e estabilidade numérica do motor SOTA.
+Testes de performance e estabilidade numerica do motor SOTA.
 """
 
 import time

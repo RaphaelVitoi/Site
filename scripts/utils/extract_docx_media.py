@@ -25,7 +25,7 @@ def _process_media_files(
 def extract_media(docx_path: str, slug: str):
     docx_file = Path(docx_path)
     if not docx_file.exists() or not docx_file.is_file():
-        print(f"[ERRO] Arquivo não encontrado: {docx_path}")
+        print(f"[ERRO] Arquivo nao encontrado: {docx_path}")
         return
 
     # Diretorio de destino absoluto baseado na raiz do projeto
@@ -35,7 +35,7 @@ def extract_media(docx_path: str, slug: str):
     public_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"[INFO] Analisando arquivo: {docx_file.name}")
-    print(f"[INFO] Diretório de destino: {public_dir}")
+    print(f"[INFO] Diretorio de destino: {public_dir}")
 
     extracted_images = []
 
@@ -51,14 +51,14 @@ def extract_media(docx_path: str, slug: str):
             extracted_images = _process_media_files(docx_zip, media_files, public_dir)
 
         print(
-            f"\n[SUCESSO] {len(extracted_images)} imagem(ns) extraída(s) com Fricção Zero!"
+            f"\n[SUCESSO] {len(extracted_images)} imagem(ns) extraida(s) com Friccao Zero!"
         )
-        print("\n=== SINTAXE MARKDOWN SOTA PARA INJEÇÃO ===")
+        print("\n=== SINTAXE MARKDOWN SOTA PARA INJECAO ===")
         for img in extracted_images:
-            print(f"![Descrição do Gráfico](/images/aulas/{slug}/{img})")
+            print(f"![Descricao do Grafico](/images/aulas/{slug}/{img})")
 
     except zipfile.BadZipFile:
-        print("[ERRO] O arquivo fornecido não é um .docx válido.")
+        print("[ERRO] O arquivo fornecido nao e um .docx valido.")
 
 
 if __name__ == "__main__":

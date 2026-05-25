@@ -109,9 +109,10 @@ def calculate_rio_tension(
 
     downward_drift = 1.25 if hero_position == "OOP" else 0.85
 
-    # SOTA: Assimetria multiplicadora MW ancorada no Table Draw (humanNoiseFactor)
+    # SOTA FIX: Dissonancia Dimensional corrigida. RIO Multiway cresce em O(N^2)
+    # Assimetria multiplicadora MW ancorada no Table Draw (human_noise_factor)
     opponents = max(1, active_players - 1)
-    mw_noise_multiplier = math.pow(opponents, 1.0 + human_noise_factor)
+    mw_noise_multiplier = math.pow(opponents, 2.0 + human_noise_factor)
 
     return min(
         1.0,
@@ -171,31 +172,43 @@ def compute_quantum_metrics(
     stack_eff: float,
     **kwargs: float,
 ) -> dict[str, float | bool | None]:
-    """SOTA v4.6 GOLD: A Equacao Unificada. Calcula PM, Esperanca, Expectativa e Coeficiente de Insolvencia (Ci)."""
+    """SOTA v7.0 GOLD: A Equacao Unificada. Calcula PM, Esperanca, Expectativa e Risk Advantage."""
     human_noise_factor: float = kwargs.get("human_noise_factor", 0.0)
     edge_base: float = kwargs.get("edge_base", 1.0)
     bounty_value: float = kwargs.get("bounty_value", 0.0)
     valuation: float = kwargs.get("valuation", 1.0)
     icm_per_chip: float = kwargs.get("icm_per_chip", 0.05)
+    hero_rp: float = kwargs.get("hero_rp", 15.0)
+    villain_rp: float = kwargs.get("villain_rp", 15.0)
+
+    # SOTA: Risk Advantage (BTN vs BB Study)
+    # A disparidade de RPs autoriza opressao tecnica mesmo com menos fichas.
+    risk_advantage = villain_rp - hero_rp
+    advantage_multiplier = 1.0 + (risk_advantage / 100.0)
+
+    # SOTA: Bounty Offset (PKO)
+    # O bounty atua como um 'Seguro de Colisao', reduzindo o RP efetivo do Hero.
+    bounty_rp_offset = (bounty_value / max(1.0, current_pot)) * 10.0
+    effective_hero_rp = max(0.0, hero_rp - bounty_rp_offset)
 
     eq = current_equity_pct / 100.0 if current_equity_pct > 1.0 else current_equity_pct
 
-    # SOTA: Amortizacao da Edge (Colapso Mecanico)
+    # SOTA: Amortizacao da Edge escalada pelo Risk Advantage
     safe_stack_edge = max(2.718, stack_eff)
-    edge_scale = math.log(safe_stack_edge) / math.log(60.0)
+    edge_scale = (math.log(safe_stack_edge) / math.log(60.0)) * advantage_multiplier
     amortized_edge = edge_base * edge_scale
 
     bayesian_win_prob = calculate_bayesian_win_prob(eq, action_strength=0.5, range_density=0.5)
 
-    # SOTA: Divida RIO com Ponderacao Quadratica e Volatilidade
+    # SOTA: Divida RIO recalibrada pelo Effective Hero RP
     if active_players <= 2:
         rio_mw = 0.0
     else:
         opponents = max(1, active_players - 1)
         rio_penalty_factor = math.pow(opponents, 2.0 + human_noise_factor)
         volatility_multiplier = math.pow(active_players / (max(1.0, stack_eff / 5.0)), 2.0)
-        # SOTA: RIO Liability sincronizado com a fisica dimensional do Frontend
-        rio_penalty_chips = current_pot * rio_penalty_factor * (0.15 + (volatility_multiplier * 0.05))
+        # SOTA: RP elevado em MW gera asfixia estrutural
+        rio_penalty_chips = current_pot * rio_penalty_factor * (0.15 + (volatility_multiplier * 0.05)) * (effective_hero_rp / 15.0)
         rio_mw = rio_penalty_chips * icm_per_chip
 
     # SOTA: O passivo da derrota sofre dilatacao no ICM e aversao dinamica

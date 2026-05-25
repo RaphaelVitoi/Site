@@ -1,25 +1,28 @@
-# HANDOFF DE SESSÃO: FUNDAÇÃO DO TEMPLO SOTA
+# HANDOFF DE SESSÃO: ASCENSÃO SOTA v7 GOLD
 
-## 1. ESTADO ATUAL DO SISTEMA (Vitórias Alcançadas)
+## 1. ESTADO ATUAL DO SISTEMA (Vitórias de Sessão)
 
-- **Telemetria SOTA (Panóptico):** Totalmente operacional. Erros do Quiz são injetados no SQLite e renderizados como barras de "EV Loss" (Sangria). Estas barras agora são links ativos que redirecionam o aluno para as aulas corretas.
-- **Oráculo de Custo Zero:** O botão "Consultar Oráculo" no Quiz dispara uma requisição para a porta `17042`. O `memory_rag.py` responde usando apenas o banco vetorial local (ChromaDB) com a flag `local_only=True`, blindando as API Keys de custos públicos.
-- **Arma Anti-EPERM:** O script `scripts/utils/kill_eperm.ps1` foi forjado como a solução definitiva para o erro de arquivos travados do Prisma/Next.js no Windows.
+- **Organização Geométrica Consagrada:** O frontend foi totalmente reestruturado em *Route Groups* (`(public)`, `(lab)`, `(auth)`, `(user)`), eliminando o caos do `src/app`.
+- **Soberania de API v1:** Todos os endpoints foram migrados para o contrato versionado `/api/v1`, garantindo estabilidade e prevenindo drifts arquiteturais.
+- **Paridade Isomórfica (Pydantic/Zod):** Unificação total dos schemas base em `core/schemas.py`, em sincronia absoluta com o frontend, eliminando erros de tipagem cruzada.
+- **Blindagem ASCII Global:** Purificação de strings implementada nativamente em ambos os lados da stack, protegendo logs e telemetria contra entropia de encoding.
+- **Purificação do Workspace:** Erradicação de diretórios vazios (`shared/`, `web/`) e sincronização 1:1 entre `pyproject.toml` e `requirements.txt`.
 
-## 2. PRÓXIMAS FRONTEIRAS (O Que Fazer a Seguir)
+## 2. PRÓXIMAS FRONTEIRAS (Diretrizes v7)
 
-A infraestrutura basal está pronta e invulnerável. Temos duas opções principais de expansão de produto:
+O sistema atingiu o **Estado de Arte Absoluto** em termos de infraestrutura. As próximas missões devem focar em:
 
-### OPÇÃO A: A MÁQUINA DE CONTEÚDO (Blog/Aulas)
+- **Expansão Doutrinária:** Ingerir novos artefatos pedagógicos na Biblioteca Analítica, utilizando o componente `SotaMarkdown` estabilizado.
+- **Aprofundamento PKO:** Evoluir os inputs de Bounty no Simulador Mestre para calcular a alteração real no Risk Premium.
+- **Refino de IA de Borda:** Potencializar a integração com o @gemma4 para inferências de heurística puramente locais (zero-cost).
 
-- Dar vida ao modelo `Content` do Prisma.
-- Criar o parser dinâmico que lê Markdown do banco e renderiza páginas de aula/artigos lindamente no Next.js (MDX ou react-markdown).
+## 3. MANDATO PARA OS PRÓXIMOS AGENTES
 
-### OPÇÃO B: O MOTOR PKO (Bounties no Simulador)
+1. **Respeite a Geometria:** Nenhuma rota nova deve ser criada fora dos Route Groups semânticos.
+2. **Qualidade é Inegociável:** Antes de qualquer entrega, execute `npm run sota:audit`. O Quality Gate deve permanecer verde.
+3. **Pureza ASCII:** Mantenha o backend estritamente ASCII puro. Use os helpers de `utils/text.py`.
+4. **Soberania Documental:** Atualize o `INDEX_MESTRE.md` e a `MEMORY.md` sempre que uma decisão estrutural for tomada.
 
-- Evoluir o `MasterSimulator.tsx` e o motor matemático.
-- Inserir inputs para Bounties (PKO) e calcular o "Bounty Power" e a alteração no Risk Premium.
-
-## 3. DIRETRIZ PARA OS AGENTES IA
-
-Ao ler este arquivo, entenda que a fase de "correção de infraestrutura" foi superada. A meta agora é expansão vertical de produto (Features) mantendo a Lei SOTA de Fricção Zero, Pure ASCII e estética Glassmorphism no frontend.
+---
+**Sessão encerrada com a marca da Excelência SOTA.**
+_Assinado: Chico (Administrador Supremo)_

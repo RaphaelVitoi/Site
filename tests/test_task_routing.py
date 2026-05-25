@@ -6,13 +6,13 @@ Testes para validacao do sistema de roteamento de agentes no Task Executor.
 
 import pytest
 
-# Importar o módulo e as classes necessárias
+# Importar o modulo e as classes necessarias
 import task_executor
 from task_executor import (
     _intelligent_route_task,
 )
 
-# Mock AGENTS_MANIFEST para garantir que os agentes existam para validação
+# Mock AGENTS_MANIFEST para garantir que os agentes existam para validacao
 MOCK_AGENTS_MANIFEST = {
     "architect": {
         "routing_pattern": "design|conceito",
@@ -65,15 +65,15 @@ MOCK_VALID_AGENTS = [f"@{name}" for name in MOCK_AGENTS_MANIFEST]
 @pytest.fixture(autouse=True)
 def patch_dependencies(monkeypatch):
     """
-    Usa o monkeypatch do pytest para substituir as dependências globais
-    do módulo task_executor durante os testes.
+    Usa o monkeypatch do pytest para substituir as dependencias globais
+    do modulo task_executor durante os testes.
     """
     # Garante que os testes usem a nossa lista de agentes mockada
     monkeypatch.setattr(task_executor._core_config, "VALID_AGENTS", MOCK_VALID_AGENTS)
 
-    # Mock para a função que verifica as flags de feature
+    # Mock para a funcao que verifica as flags de feature
     def mock_feature_enabled(_flag_name: str) -> bool:
-        # Para os testes, vamos assumir que todas as flags estão ativadas
+        # Para os testes, vamos assumir que todas as flags estao ativadas
         return True
 
     monkeypatch.setattr(
@@ -127,7 +127,7 @@ def test_intelligent_route_task_frontend_observer():
 
 
 # ---------------------------------------------------------------------------
-# Teste de validação de modelos: elimina a classe de bug "modelo fantasma"
+# Teste de validacao de modelos: elimina a classe de bug "modelo fantasma"
 # ---------------------------------------------------------------------------
 
 KNOWN_VALID_MODEL_PREFIXES = (
@@ -171,25 +171,25 @@ def _collect_models_from_manifest() -> list:
 
 
 def test_routing_map_sem_modelos_fantasma():
-    """Nenhum modelo em routing_map.json pode corresponder a padrões inválidos."""
+    """Nenhum modelo em routing_map.json pode corresponder a padroes invalidos."""
     models = _collect_models_from_routing_map()
     assert models, "routing_map.json deve ter pelo menos um modelo"
     for model in models:
         for ghost in GHOST_MODEL_PATTERNS:
             assert ghost not in model, (
-                f"Modelo fantasma detectado em routing_map.json: '{model}' contém '{ghost}'. "
+                f"Modelo fantasma detectado em routing_map.json: '{model}' contem '{ghost}'. "
                 "Atualizar para gemini-2.5-pro ou gemini-2.5-flash."
             )
 
 
 def test_agents_manifest_sem_modelos_fantasma():
-    """Nenhum primary_model em agents_manifest.json pode corresponder a padrões inválidos."""
+    """Nenhum primary_model em agents_manifest.json pode corresponder a padroes invalidos."""
     models = _collect_models_from_manifest()
     assert models, "agents_manifest.json deve ter pelo menos um primary_model"
     for model in models:
         for ghost in GHOST_MODEL_PATTERNS:
             assert ghost not in model, (
-                f"Modelo fantasma detectado em agents_manifest.json: '{model}' contém '{ghost}'."
+                f"Modelo fantasma detectado em agents_manifest.json: '{model}' contem '{ghost}'."
             )
 
 
@@ -202,5 +202,5 @@ def test_routing_map_modelos_conhecidos():
         )
         assert known, (
             f"Modelo desconhecido em routing_map.json: '{model}'. "
-            f"Prefixos válidos: {KNOWN_VALID_MODEL_PREFIXES}"
+            f"Prefixos validos: {KNOWN_VALID_MODEL_PREFIXES}"
         )

@@ -9,7 +9,6 @@ import type {
 import type { ActiveTool } from '../MasterSimulator';
 
 export function useSimulatorState(initialScenario: Scenario) {
-	const [aggressionFactor, setAggressionFactor] = useState(1);
 	const [pkoValue, setPkoValue] = useState(0);
 	const [isNearPayjump, setIsNearPayjump] = useState(false);
 	const [blindsRisingSoon, setBlindsRisingSoon] = useState(false);
@@ -19,29 +18,29 @@ export function useSimulatorState(initialScenario: Scenario) {
 	const [activeTool, setActiveTool] = useState<ActiveTool>('scenario');
 	const [sidebarOpen, setSidebarOpen] = useState(true);
 	const [anteSize] = useState<number>(12.5);
-	const [heroPosition, setHeroPosition] = useState<HeroPosition>('BB');
-	const [heroInvested, setHeroInvested] = useState<number>(1.125);
-	const [currentPot, setCurrentPot] = useState<number>(2.5);
 	const [activePlayers, setActivePlayers] = useState<number>(2);
 	const [isPredictive, setIsPredictive] = useState<boolean>(true);
+	
+	const [aggressionFactor, setAggressionFactor] = useState<number>(1);
+	const [heroPosition, setHeroPosition] = useState<HeroPosition>('BB');
+	const [heroInvested, setHeroInvested] = useState<number>(1);
+	const [currentPot, setCurrentPot] = useState<number>(2.5);
 
 	const resetState = useCallback((scenario: Scenario) => {
-		setAggressionFactor(1);
 		setPkoValue(0);
 		setIsNearPayjump(false);
 		setBlindsRisingSoon(false);
 		setStreetFreqs(scenario.defaultStreetFreqs);
 		setActiveTool('scenario');
-		setHeroPosition('BB');
-		setHeroInvested(1.125);
-		setCurrentPot(2.5);
 		setActivePlayers(2);
 		setIsPredictive(true);
+		setAggressionFactor(1);
+		setHeroPosition('BB');
+		setHeroInvested(1);
+		setCurrentPot(2.5);
 	}, []);
 
 	return {
-		aggressionFactor,
-		setAggressionFactor,
 		pkoValue,
 		setPkoValue,
 		isNearPayjump,
@@ -55,16 +54,18 @@ export function useSimulatorState(initialScenario: Scenario) {
 		sidebarOpen,
 		setSidebarOpen,
 		anteSize,
+		activePlayers,
+		setActivePlayers,
+		isPredictive,
+		setIsPredictive,
+		aggressionFactor,
+		setAggressionFactor,
 		heroPosition,
 		setHeroPosition,
 		heroInvested,
 		setHeroInvested,
 		currentPot,
 		setCurrentPot,
-		activePlayers,
-		setActivePlayers,
-		isPredictive,
-		setIsPredictive,
 		resetState,
 	};
 }

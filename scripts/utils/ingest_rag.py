@@ -5,7 +5,7 @@ from pathlib import Path
 try:
     import chromadb
 except ImportError:
-    print("[ENTROPIA] chromadb não instalado. Execute: pip install chromadb")
+    print("[ENTROPIA] chromadb nao instalado. Execute: pip install chromadb")
     sys.exit(1)
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -18,10 +18,10 @@ def ingest_research_docs():
     db_path = base_dir / "data" / "chroma_db"
 
     if not research_dir.exists():
-        logger.error(f"[ERRO] Diretório de pesquisa não encontrado: {research_dir}")
+        logger.error(f"[ERRO] Diretorio de pesquisa nao encontrado: {research_dir}")
         return
 
-    logger.info("=== [SOTA] INICIANDO INGESTÃO VETORIAL ===")
+    logger.info("=== [SOTA] INICIANDO INGESTAO VETORIAL ===")
     logger.info(f"Alvo: {research_dir}")
 
     client = chromadb.PersistentClient(path=str(db_path))
@@ -46,12 +46,12 @@ def ingest_research_docs():
                 logger.warning(f"  ! Falha ao ler {file_path.name}: {e}")
 
     if documents:
-        logger.info(f"Gravando {len(documents)} vetores na coleção 'research_docs'...")
-        # upsert impede duplicação se você rodar o script novamente após editar os textos
+        logger.info(f"Gravando {len(documents)} vetores na colecao 'research_docs'...")
+        # upsert impede duplicacao se voce rodar o script novamente apos editar os textos
         collection.upsert(documents=documents, ids=ids, metadatas=metadatas)
-        logger.info("=== INGESTÃO CONCLUÍDA COM FRICÇÃO ZERO ===")
+        logger.info("=== INGESTAO CONCLUIDA COM FRICCAO ZERO ===")
     else:
-        logger.info("Nenhum artefato textual encontrado para ingestão.")
+        logger.info("Nenhum artefato textual encontrado para ingestao.")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,0 @@
-name: PokerPlayer
-version: 1.0.0
-schema: v1
-mcpServers:
-  - name: "github-vitoi"
-    command: "npx"
-    args: ["-y", "@modelcontextprotocol/server-github"]
-    env:
-      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}$

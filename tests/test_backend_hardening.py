@@ -17,7 +17,7 @@ from aiohttp import web
 from agents.context_builder import _inject_task_docs  # type: ignore
 from core.schemas import Task
 from database.queue_manager import QueueManager
-from web import handlers, middleware
+from api.v1 import handlers, middleware
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -188,7 +188,7 @@ def test_frontend_uses_canonical_nexus_api_contract():
         encoding="utf-8", errors="ignore"
     )
     dashboard_source = (
-        REPO_ROOT / "frontend" / "src" / "app" / "dashboard" / "page.tsx"
+        REPO_ROOT / "frontend" / "src" / "app" / "(user)" / "dashboard" / "page.tsx"
     ).read_text(encoding="utf-8", errors="ignore")
     quiz_source = (
         REPO_ROOT
@@ -196,11 +196,12 @@ def test_frontend_uses_canonical_nexus_api_contract():
         / "src"
         / "app"
         / "api"
-        / "predictive-profile"
+        / "v1"
+        / "predictive"
         / "route.ts"
     ).read_text(encoding="utf-8", errors="ignore")
     rag_route_source = (
-        REPO_ROOT / "frontend" / "src" / "app" / "api" / "rag" / "route.ts"
+        REPO_ROOT / "frontend" / "src" / "app" / "api" / "v1" / "rag" / "route.ts"
     ).read_text(encoding="utf-8", errors="ignore")
 
     assert "NEXT_PUBLIC_API_URL" not in logger_source
@@ -242,10 +243,10 @@ def test_client_components_do_not_import_server_telemetry_module():
         REPO_ROOT / "frontend" / "src" / "lib" / "telemetry-client.ts"
     ).read_text(encoding="utf-8", errors="ignore")
     telemetry_route = (
-        REPO_ROOT / "frontend" / "src" / "app" / "api" / "telemetry" / "route.ts"
+        REPO_ROOT / "frontend" / "src" / "app" / "api" / "v1" / "telemetry" / "route.ts"
     ).read_text(encoding="utf-8", errors="ignore")
 
-    assert "fetch('/api/telemetry'" in telemetry_client
+    assert "fetch('/api/v1/telemetry'" in telemetry_client
     assert "PerspectiveMetricSchema" in telemetry_route
 
     for file_path in client_files:

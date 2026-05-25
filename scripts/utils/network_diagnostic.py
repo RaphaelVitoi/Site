@@ -1,4 +1,4 @@
-"""Módulo para diagnóstico de conectividade de rede para a API Gemini."""
+"""Modulo para diagnostico de conectividade de rede para a API Gemini."""
 
 import sys
 from pathlib import Path

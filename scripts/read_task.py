@@ -1,4 +1,4 @@
-"""Script auxiliar para leitura rápida de tarefas específicas no banco de dados SQLite."""
+"""Script auxiliar para leitura rapida de tarefas especificas no banco de dados SQLite."""
 
 import sqlite3
 

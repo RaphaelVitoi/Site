@@ -95,10 +95,10 @@ def _escalate_security_cognition(task: Task) -> None:
 
 async def process_agent_task(task: Task, manager: QueueManager, timing_metrics: dict[str, float]) -> str:
     """Motor de orquestracao SOTA descentralizado."""
-    # SOTA: Avaliação Antecipada de Bypass Cognitivo
+    # SOTA: Avaliacao Antecipada de Bypass Cognitivo
     if task.metadata and task.metadata.get("skip_llm"):
         logger.info(
-            f"[[{te._c(task.agent)}]{task.agent}[/]] [bold green]BYPASS COGNITIVO[/] Operação estática de I/O identificada. Contornando LLM."
+            f"[[{te._c(task.agent)}]{task.agent}[/]] [bold green]BYPASS COGNITIVO[/] Operacao estatica de I/O identificada. Contornando LLM."
         )
         return task.description
 
@@ -115,7 +115,7 @@ async def process_agent_task(task: Task, manager: QueueManager, timing_metrics: 
         AGENT_ORGANIZADOR,
     )
 
-    # Função encapsulada auxiliar para condicionar a busca RAG dentro do gather
+    # Funcao encapsulada auxiliar para condicionar a busca RAG dentro do gather
     async def _fetch_collective_memory() -> tuple[str, int]:
         if task.agent not in operational_agents:
             return await cb._query_collective_memory(task, n_rag_results)
@@ -126,12 +126,12 @@ async def process_agent_task(task: Task, manager: QueueManager, timing_metrics: 
         (agent_memory, project_context),
         task_docs,
         (web_context, web_ms),
-        (collective_memory, rag_ms)
+        (collective_memory, rag_ms),
     ) = await asyncio.gather(
         cb._read_agent_and_project_contexts(agent_clean),
         cb._inject_task_docs(task),
         cb._execute_web_search(task, manager),
-        _fetch_collective_memory()
+        _fetch_collective_memory(),
     )
 
     timing_metrics = timing_metrics or {}
@@ -427,14 +427,14 @@ async def _finish_task_success(
         )
 
 
-async def execute_task_workflow(task: Task, manager: QueueManager):
+async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
     """
     Orquestrador de Fluxo Funcional SOTA. Processa de maneira limpa o ciclo de vida.
     """
-    # SOTA Guard: Bloqueio de Hibernação Inteligente
+    # SOTA Guard: Bloqueio de Hibernacao Inteligente
     if await is_cognitive_hibernation_active(manager, task):
         logger.warning(
-            f"[{te._c(task.agent)}]{task.agent}[/] Hibernação cognitiva ativa. Preservando tarefa [cyan]{task.id}[/]."
+            f"[{te._c(task.agent)}]{task.agent}[/] Hibernacao cognitiva ativa. Preservando tarefa [cyan]{task.id}[/]."
         )
         await manager.update_task_status(task.id, "pending")
         return
@@ -446,7 +446,7 @@ async def execute_task_workflow(task: Task, manager: QueueManager):
             await local_engine.process_agent_task(task, manager)
             return
         except Exception:
-            logger.exception("Falha no Motor Local. Tentando workflow padrão como fallback...")
+            logger.exception("Falha no Motor Local. Tentando workflow padrao como fallback...")
 
     start_time = time.monotonic()
     timing_metrics = {}

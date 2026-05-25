@@ -590,7 +590,7 @@ def test_circuit_breaker():
     for i in range(5):
         is_safe, reason = quota.check_quota()
         if not is_safe:
-            console.print(f"[bold red]🚫 CIRCUITO ABERTO:[/] {reason}. Pausando...")
+            console.print(f"[bold red]\U0001f6ab CIRCUITO ABERTO:[/] {reason}. Pausando...")
             time.sleep(10)
             continue
         try:
@@ -600,7 +600,7 @@ def test_circuit_breaker():
             quota.log_request(50)
             console.print(f"Sessao {i + 1}: Sucesso!")
         except Exception as e:  # noqa: BLE001
-            console.print(f"[bold red]🔥 FALHA:[/] {str(e)[:50]}")
+            console.print(f"[bold red]\U0001f525 FALHA:[/] {str(e)[:50]}")
         time.sleep(2)
 
 
@@ -638,7 +638,7 @@ class VITOIWatcher(FileSystemEventHandler):
         if os.path.getsize(src_path_str) // 4 > 8000:
             self.last[src_path_str] = time.time()
             console.print(
-                f"\n[bold red]⚠️ ENTROPIA DETECTADA:[/] {os.path.basename(src_path_str)} excedeu limite de tokens!"
+                f"\n[bold red]\u26a0\ufe0f ENTROPIA DETECTADA:[/] {os.path.basename(src_path_str)} excedeu limite de tokens!"
             )
 
 
@@ -700,7 +700,7 @@ def run_refactor_engine(file_path):
         client = genai.Client(api_key=api_key)
         res = client.models.generate_content(
             model="gemini-2.5-pro",
-            contents=f"SISTEMA: VITOI 3.2. TAREFA: Divida em modulos logicos SRP.\nCÓDIGO:\n{content}",
+            contents=f"SISTEMA: VITOI 3.2. TAREFA: Divida em modulos logicos SRP.\nCODIGO:\n{content}",
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=RefactorOutput,

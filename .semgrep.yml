@@ -3,6 +3,7 @@ rules:
     languages:
       - python
     message: "[SOTA SECURITY] Rota FastAPI exposta sem blindagem. Todas as rotas devem validar autenticação injetando 'Depends()' nos argumentos ou no decorador."
+    severity: ERROR
     patterns:
       # Captura qualquer declaração de rota FastAPI
       - pattern: |

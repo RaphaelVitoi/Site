@@ -1,4 +1,4 @@
-# .CLAUDE/ - O CORACAO FILOSOFICO, ETICO E ESTETICO
+# .CLAUDE/ - O CORACAO FILOSOFICO, ETICO E ESTETICO (v7.0.0 GOLD)
 
 **Guia de Navegacao para Agentes (e Humanos)**
 

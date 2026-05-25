@@ -14,18 +14,21 @@ type: reference
 ## Achados Quantitativos Centrais
 
 ### Experimento 1 — Online $530 (buy-in efetivo: $500)
+
 - 165 entrants, 52 players left quando reg fechou
 - Stack inicial: 25k. Média da mesa: 79.327
 - Valor ICM da stack inicial: **~$581**
 - Prêmio: **$81 ou +16% acima do buy-in**
 
 ### Experimento 2 — Live $5.000 (buy-in efetivo: $4.650), Day 2
+
 - 170→189 jogadores (19 late entries overnight)
 - Stack inicial: 25k. Média no início do Day 2: 68.519
 - Valor ICM da stack inicial: **~$5.117**
 - Prêmio: **$467 ou +10% acima do buy-in**
 
 ### Experimento 3 — Live $9.400 (buy-in efetivo: ~$9.400), Day 2
+
 - 90→100 jogadores (10 late entries overnight), 60k starting stack
 - Campo ~50% restante quando late reg abriu
 - Valor ICM da stack: **~$9.844**
@@ -36,6 +39,7 @@ type: reference
 ## Mecanismo: Quem Perde e Quanto
 
 Cada late entry dilui todos os stacks existentes proporcionalmente. No Experimento 3:
+
 - Perda média por jogador: **0.28% do valor ICM da stack**
 - A perda percentual é **uniforme** entre todos os jogadores — CL perde mais em termos absolutos mas a mesma % que os curtos
 - O valor "ganho" pelo late entry **emana diretamente dos jogadores já no torneio**
@@ -46,10 +50,10 @@ Cada late entry dilui todos os stacks existentes proporcionalmente. No Experimen
 ## Variável Determinante: Proporção do Campo Restante
 
 | Campo restante | Prêmio ICM do late entry |
-|---------------|--------------------------|
-| ~1/3 do campo (Exp. 2) | +10% |
-| ~1/2 do campo (Exp. 3) | +4.7% |
-| ~1/3 (Exp. 1, online) | +16% |
+|------------------------|--------------------------|
+| ~1/3 do campo (Exp. 2) | +10%                     |
+| ~1/2 do campo (Exp. 3) | +4.7%                    |
+| ~1/3 (Exp. 1, online)  | +16%                     |
 
 Quanto menor a fração do campo ainda em jogo, maior o prêmio ICM de entrar tarde.
 
@@ -65,6 +69,7 @@ Heurística derivada: fechamento quando **média de stacks ≈ 2x o starting sta
 ## Observação Estratégica (Seleção de Mesa por Profs)
 
 Profissionais usam a distribuição de chips como critério de game selection no late reg:
+
 - Chips concentrados em recreativos → entram (EV positivo de exploração)
 - Chips concentrados em profissionais → pulam (EV negativo)
 

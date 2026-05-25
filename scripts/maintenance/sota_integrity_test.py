@@ -1,6 +1,6 @@
 """
-Módulo de Testes de Integridade SOTA (Zero-Regression)
-Responsável por validar I/O de Banco de Dados, RAG Vetorial e Motor Quântico.
+Modulo de Testes de Integridade SOTA (Zero-Regression)
+Responsavel por validar I/O de Banco de Dados, RAG Vetorial e Motor Quantico.
 """
 
 import sys
@@ -92,7 +92,7 @@ def _test_quantum_physics_parity() -> str:
 
     start = time.time()
     try:
-        # Cenário de Teste: 20bb stack, 3 players no pot
+        # Cenario de Teste: 20bb stack, 3 players no pot
         res = compute_quantum_metrics(
             current_equity_pct=50.0,
             delta_win_pct=10.0,
@@ -113,21 +113,21 @@ def _test_quantum_physics_parity() -> str:
 
         if rio_mw is None or expectativa is None or perspectiva is None:
             raise ValueError(
-                "O motor quântico retornou Nulo (None) para métricas cruciais."
+                "O motor quantico retornou Nulo (None) para metricas cruciais."
             )
 
-        # 1. Validar Amortização de Edge (log(20)/log(60) ~ 0.73)
+        # 1. Validar Amortizacao de Edge (log(20)/log(60) ~ 0.73)
         # 2. Validar RIO MW (Exponencial N^(2+f))
         if rio_mw <= 0:
-            raise ValueError("Dívida RIO não calculada para Multiway.")
+            raise ValueError("Divida RIO nao calculada para Multiway.")
 
         # SOTA FIX: A Perspectiva deve ser exatamente (Expectativa - RIO - EV_Fold)
-        # Como EV_Fold é negativo (-1.0), ela soma 1.0 e subtrai o RIO (~0.53)
+        # Como EV_Fold e negativo (-1.0), ela soma 1.0 e subtrai o RIO (~0.53)
         expected_persp = expectativa - (rio_mw + (-1.0))
 
         if abs(perspectiva - expected_persp) >= 1e-6:
             raise ValueError(
-                f"Divergência vetorial na Perspectiva: {perspectiva} != {expected_persp}"
+                f"Divergencia vetorial na Perspectiva: {perspectiva} != {expected_persp}"
             )
 
         return f"[PASS] Quantum Physics Parity (SOTA v4.3): {time.time() - start:.4f}s"

@@ -3,7 +3,7 @@ import sys
 
 
 def calcular_complexidade(node):
-    """Calcula V(G) = E - N + 2P simplificado por nós de decisão."""
+    """Calcula V(G) = E - N + 2P simplificado por nos de decisao."""
     v_g = 1  # Base
     for n in ast.walk(node):
         if isinstance(
@@ -24,10 +24,10 @@ def analisar_arquivo(caminho):
         if isinstance(node, ast.FunctionDef):
             complexity = calcular_complexidade(node)
             status = "SOTA" if complexity <= 5 else "ENTROPIA ALTA"
-            print(f"Função: [{node.name}] | V(G): {complexity} | Status: {status}")
+            print(f"Funcao: [{node.name}] | V(G): {complexity} | Status: {status}")
 
             if complexity > 5:
-                print("  [!] Sugestão: Fatiar lógica ou usar Dicionário de Despacho.")
+                print("  [!] Sugestao: Fatiar logica ou usar Dicionario de Despacho.")
 
 
 if __name__ == "__main__":

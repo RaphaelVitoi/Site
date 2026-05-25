@@ -104,7 +104,7 @@ async def get_agent_system_prompt(agent_name: str) -> str:
 
     def sync_compile() -> str:
         system_prompt_parts = []
-        # SOTA Guard: Erradicação de vetor Path Traversal no nome do agente
+        # SOTA Guard: Erradicacao de vetor Path Traversal no nome do agente
         agent_clean = agent_name.replace("@", "").replace("/", "").replace("\\", "").replace(".", "")
 
         # 1. Base Global (A Alma do Sistema)

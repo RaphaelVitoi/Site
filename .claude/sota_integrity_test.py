@@ -1,4 +1,4 @@
-"""Módulo de testes de integridade da infraestrutura SOTA (Zero-Regression)."""
+"""Modulo de testes de integridade da infraestrutura SOTA (Zero-Regression)."""
 
 import sys
 import asyncio
