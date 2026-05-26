@@ -1,9 +1,9 @@
 """Modulo de Arbitragem Universal (DAG) SOTA."""
 
+from datetime import UTC, datetime
 import logging
 import math
 import time
-from datetime import datetime, timezone
 from typing import Any, ClassVar
 
 from core.schemas import Task
@@ -33,9 +33,7 @@ class UniversalArbitrator:
     TIME_DECAY_ALPHA: ClassVar[float] = 1.5  # Multiplicador de segundos em espera
     PROPAGATION_GAMMA: ClassVar[float] = 0.8  # Desconto de profundidade topologica
 
-    _dag_cache_map: ClassVar[dict[str, dict[str, Any]]] = {}
-    _dag_cache_hash: ClassVar[int] = 0
-    _dag_cache_time: ClassVar[float] = 0.0
+    _dag_cache: ClassVar[dict[int, tuple[dict[str, dict[str, Any]], float]]] = {}
     CACHE_TTL_SECONDS: ClassVar[float] = 3.0
 
     @classmethod
@@ -113,21 +111,26 @@ class UniversalArbitrator:
         if not pending_tasks:
             return {}
 
-        current_hash = hash(tuple(t.id for t in pending_tasks))
+        current_hash = hash(tuple(sorted([t.id for t in pending_tasks])))
         current_time = time.monotonic()
 
-        if (
-            cls._dag_cache_hash == current_hash
-            and (current_time - cls._dag_cache_time) < cls.CACHE_TTL_SECONDS
-        ):
-            return cls._dag_cache_map
+        if current_hash in cls._dag_cache:
+            cache_map, cache_time = cls._dag_cache[current_hash]
+            if (current_time - cache_time) < cls.CACHE_TTL_SECONDS:
+                return cache_map
 
         graph = cls._build_graph(pending_tasks)
         cls._compute_utilities(graph)
 
-        cls._dag_cache_map = graph
-        cls._dag_cache_hash = current_hash
-        cls._dag_cache_time = current_time
+        # Previne vazamento infinito de memoria no dicionario estatico
+        if len(cls._dag_cache) >= 100:
+            cls._dag_cache = {
+                h: (g, t)
+                for h, (g, t) in cls._dag_cache.items()
+                if (current_time - t) < cls.CACHE_TTL_SECONDS
+            }
+
+        cls._dag_cache[current_hash] = (graph, current_time)
 
         return graph
 
@@ -143,8 +146,8 @@ class UniversalArbitrator:
             created_dt = datetime.fromisoformat(task.timestamp)
             # SOTA: Normalizacao Absoluta para offset-aware, suprimindo o TypeError
             if created_dt.tzinfo is None:
-                created_dt = created_dt.replace(tzinfo=timezone.utc)
-            now = datetime.now(timezone.utc)
+                created_dt = created_dt.replace(tzinfo=UTC)
+            now = datetime.now(UTC)
 
             wait_seconds = max(0, (now - created_dt).total_seconds())
             # SOTA: Crescimento Sublinear (Achatamento Logaritmico)

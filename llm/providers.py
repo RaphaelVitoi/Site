@@ -5,15 +5,15 @@ This module abstracts LLM routing and calling strategies to decouple
 API requests from resilience and circuit breaker logic.
 """
 
+from abc import ABC, abstractmethod
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass
 import logging
 import os
 import random
 import re
 import time
-from abc import ABC, abstractmethod
-from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any, cast
 
 import aiohttp
@@ -254,12 +254,19 @@ class GemmaLocalStrategy(LLMProviderStrategy):
         )
 
 
+# Singletons de Strategies instanciados no nivel do modulo para evitar overhead de alocacao
+_STRATEGY_GEMINI = GeminiStrategy()
+_STRATEGY_ANTHROPIC = AnthropicStrategy()
+_STRATEGY_OPENROUTER = OpenRouterStrategy()
+_STRATEGY_LOCAL = GemmaLocalStrategy()
+
+
 def _get_provider_strategy(provider: str) -> LLMProviderStrategy | None:
     strategies = {
-        "gemini": GeminiStrategy(),
-        "anthropic": AnthropicStrategy(),
-        "openrouter": OpenRouterStrategy(),
-        "local": GemmaLocalStrategy(),
+        "gemini": _STRATEGY_GEMINI,
+        "anthropic": _STRATEGY_ANTHROPIC,
+        "openrouter": _STRATEGY_OPENROUTER,
+        "local": _STRATEGY_LOCAL,
     }
     return strategies.get(provider)
 

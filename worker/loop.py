@@ -5,21 +5,18 @@ Worker Loop -- Daemon principal de processamento de tarefas (NEXUS ORCHESTRATOR)
 
 import asyncio
 import contextlib
+from datetime import UTC, datetime
 import logging
 import os
 import time
-from datetime import UTC, datetime
 
 import aiofiles
-import aiosqlite
 from rich.console import Console
 from rich.panel import Panel
 
-import core.runtime as te
-import llm.session as _llm_session_mod
-import task_executor as task_exec
 from agents.execution import execute_task_workflow
 from core.arbitrator import UniversalArbitrator
+import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
@@ -30,6 +27,8 @@ from llm.budget import (
     ROUTE_FAILURE_COUNTS,
     get_telemetry_lock,
 )
+import llm.session as _llm_session_mod
+import task_executor as task_exec
 
 __all__ = ["start_worker"]
 
@@ -43,6 +42,7 @@ else:
     _SET_CONSOLE_TITLE_W = None
 
 _LAST_STATUS_UPDATE = 0.0
+MAX_CONCURRENT_TASKS = 4  # Externalizado: ajuste aqui para escalar o paralelismo
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -51,10 +51,8 @@ console = Console()
 async def _recover_zombies(manager: QueueManager) -> None:
     """SOTA: Crash Recovery (Resgate de zumbis apos morte abrupta do processo)."""
     try:
-        async with aiosqlite.connect(manager.db_path) as db:
-            cursor = await db.execute(
-                "UPDATE tasks SET status = 'pending' WHERE status = 'running'"
-            )
+        async with manager._get_async_db() as db:
+            cursor = await db.execute("UPDATE tasks SET status = 'pending' WHERE status = 'running'")
             recovered_count = cursor.rowcount
             await db.commit()
             if recovered_count > 0:
@@ -81,8 +79,7 @@ async def _handle_hibernation(manager: QueueManager, status_line) -> bool:
             hibernation_until = hibernation_until.replace(tzinfo=UTC)
         if datetime.now(UTC) < hibernation_until:
             status_line.update(
-                f"[red]HIBERNACAO[/] Orcamento de API esgotado. "
-                f"Retorno as {hibernation_until.strftime('%H:%M')}."
+                f"[red]HIBERNACAO[/] Orcamento de API esgotado. Retorno as {hibernation_until.strftime('%H:%M')}."
             )
             await asyncio.sleep(60)
             return True
@@ -103,15 +100,11 @@ async def _handle_hibernation(manager: QueueManager, status_line) -> bool:
             "Rotas, chaves e rate limits restaurados para Friccao Zero."
         )
     except (ValueError, TypeError):
-        await manager.set_system_state(
-            "hibernation_until", ""
-        )  # Reseta estado invalido
+        await manager.set_system_state("hibernation_until", "")  # Reseta estado invalido
     return False
 
 
-def _update_terminal_status(
-    counts: dict, running_tasks_count: int, status_line
-) -> None:
+def _update_terminal_status(counts: dict, running_tasks_count: int, status_line) -> None:
     """Atualiza o terminal com metricas operacionais de forma otimizada (Throttle anti-overhead)."""
     global _LAST_STATUS_UPDATE  # pylint: disable=global-statement
     now = time.monotonic()
@@ -123,8 +116,7 @@ def _update_terminal_status(
     if _SET_CONSOLE_TITLE_W:
         current_time = datetime.now(UTC).astimezone().strftime("%H:%M:%S")
         _SET_CONSOLE_TITLE_W(
-            f"NEXUS WORKER | Pendentes: {pending_count} | "
-            f"Rodando: {running_tasks_count} | Pulso: {current_time}"
+            f"NEXUS WORKER | Pendentes: {pending_count} | Rodando: {running_tasks_count} | Pulso: {current_time}"
         )
 
     if status_line:
@@ -147,9 +139,7 @@ def _format_display_id(task_id: str) -> str:
     return task_id
 
 
-async def _process_task_error(
-    e: Exception, task: Task, manager: QueueManager, sem: asyncio.Semaphore
-) -> bool:
+async def _process_task_error(e: Exception, task: Task, manager: QueueManager, sem: asyncio.Semaphore) -> bool:
     error_str = str(e).lower()
     error_class = type(e).__name__
 
@@ -200,9 +190,7 @@ async def _task_wrapper(task: Task, manager: QueueManager, sem: asyncio.Semaphor
 
 
 async def _handle_deadlock(pending_tasks: list, manager: QueueManager) -> None:
-    if pending_tasks and not any(
-        t.agent == "@chico" and "DEADLOCK-DAG" in t.id for t in pending_tasks
-    ):
+    if pending_tasks and not any(t.agent == "@chico" and "DEADLOCK-DAG" in t.id for t in pending_tasks):
         alert_task = Task(
             id=f"DEADLOCK-DAG-{int(time.time())}",
             description=(
@@ -215,14 +203,10 @@ async def _handle_deadlock(pending_tasks: list, manager: QueueManager) -> None:
             metadata={"priority": "critical"},
         )
         await manager.add_task(alert_task)
-        logger.error(
-            "[STARVATION FATAL] Ciclo Topologico detectado na fila. @chico acionado para arbitrar."
-        )
+        logger.error("[STARVATION FATAL] Ciclo Topologico detectado na fila. @chico acionado para arbitrar.")
 
 
-async def _dispatch_optimal_task(
-    manager: QueueManager, semaphore: asyncio.Semaphore, running_tasks: set
-) -> None:
+async def _dispatch_optimal_task(manager: QueueManager, semaphore: asyncio.Semaphore, running_tasks: set) -> None:
     """Extrai e despacha a tarefa de maior utilidade usando o Grafo Topologico CPU."""
     pending_tasks = await manager.get_tasks(status="pending")
     if not pending_tasks:
@@ -231,13 +215,7 @@ async def _dispatch_optimal_task(
         return
 
     loop = asyncio.get_running_loop()
-    task = (
-        await loop.run_in_executor(
-            None, UniversalArbitrator.extract_optimal_task, pending_tasks
-        )
-        if loop
-        else None
-    )
+    task = await loop.run_in_executor(None, UniversalArbitrator.extract_optimal_task, pending_tasks) if loop else None
 
     if task:
         display_id = _format_display_id(str(task.id))
@@ -272,18 +250,12 @@ async def _cleanup_worker(manager: QueueManager, running_tasks: set) -> None:
         except Exception as e:  # noqa: BLE001
             logger.warning("[SISTEMA] Cancelamento interrompido: %s", e)
         try:
-            async with aiosqlite.connect(manager.db_path) as db:
-                await db.execute(
-                    "UPDATE tasks SET status = 'pending' WHERE status = 'running'"
-                )
+            async with manager._get_async_db() as db:
+                await db.execute("UPDATE tasks SET status = 'pending' WHERE status = 'running'")
                 await db.commit()
-            logger.info(
-                "[SISTEMA] Tarefas orfas revertidas para 'pending'. Zumbis erradicados."
-            )
+            logger.info("[SISTEMA] Tarefas orfas revertidas para 'pending'. Zumbis erradicados.")
         except Exception as e:  # noqa: BLE001
-            logger.error(
-                "[SISTEMA] Falha ao curar estado zombie no banco de dados: %s", e
-            )
+            logger.error("[SISTEMA] Falha ao curar estado zombie no banco de dados: %s", e)
 
     if te.PID_FILE and te.PID_FILE.exists():
         with contextlib.suppress(OSError):
@@ -293,9 +265,7 @@ async def _cleanup_worker(manager: QueueManager, running_tasks: set) -> None:
         session = getattr(_llm_session_mod, "_global_http_session", None)
         if session and not session.closed:
             await session.close()
-            await asyncio.sleep(
-                0.250
-            )  # SOTA: Respiro para expurgo de sockets e conexoes SSL do aiohttp
+            await asyncio.sleep(0.250)  # SOTA: Respiro para expurgo de sockets e conexoes SSL do aiohttp
         setattr(_llm_session_mod, "_global_http_session", None)  # noqa: B010
 
 
@@ -306,12 +276,10 @@ async def start_worker(manager: QueueManager | None = None):
     # SOTA: Escreve o PID para permitir parada graciosa e robusta via stop-worker
     if te.PID_FILE:
         try:
-            async with aiofiles.open(te.PID_FILE, "w") as f:
+            async with aiofiles.open(te.PID_FILE, mode="w", encoding="utf-8") as f:  # type: ignore
                 await f.write(str(os.getpid()))
         except OSError as e:
-            logger.error(
-                "Nao foi possivel escrever o arquivo PID em %s: %s", te.PID_FILE, e
-            )
+            logger.error("Nao foi possivel escrever o arquivo PID em %s: %s", te.PID_FILE, e)
 
     # 1. Limpa o terminal para o God Mode Visual
     cmd = "cls" if os.name == "nt" else "clear"
@@ -328,8 +296,7 @@ async def start_worker(manager: QueueManager | None = None):
 
     # Painel de Boas-vindas SOTA
     header = (
-        "[bold cyan]NEXUS ORCHESTRATOR[/] | "
-        "[magenta]Kernel SOTA v7.1 (Manifestacao Maxima / Roteamento Assicrono)[/]\n"
+        "[bold cyan]NEXUS ORCHESTRATOR[/] | [magenta]Kernel SOTA v7.1 (Manifestacao Maxima / Roteamento Assicrono)[/]\n"
     )
     header += (
         "[dim]A desorganizacao e a entropia findam nas correntes deste circuito. "
@@ -352,7 +319,7 @@ async def start_worker(manager: QueueManager | None = None):
     )
     status_line.start()
 
-    semaphore = asyncio.Semaphore(4)
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
     running_tasks = set()
 
     try:
@@ -367,9 +334,7 @@ async def start_worker(manager: QueueManager | None = None):
                 await semaphore.acquire()
                 await _dispatch_optimal_task(manager, semaphore, running_tasks)
             except Exception as inner_e:  # noqa: BLE001
-                logger.error(
-                    "[bold red]FATAL[/] Arritmia no loop central do worker: %s", inner_e
-                )
+                logger.error("[bold red]FATAL[/] Arritmia no loop central do worker: %s", inner_e)
                 await asyncio.sleep(5)
     except (KeyboardInterrupt, asyncio.CancelledError):
         status_line.stop()

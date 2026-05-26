@@ -2,10 +2,10 @@
 Dispatcher -- Parser e retry de schema JSON para decomposicao de tarefas.
 """
 
+from datetime import UTC, datetime
 import json
 import logging
 import re
-from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
@@ -140,7 +140,7 @@ async def _retry_dispatcher_schema_once(
     )
     user_prompt = (
         f"TAREFA BASE:\nID: {task.id}\nDescricao: {task.description}\n\n"
-        f"SAIDA INVALIDA A CORRIGIR:\n{invalid_response[:8000]}\n\n{schema_prompt}"
+        f"SAIDA INVALIDA A CORRIGIR:\n{invalid_response[:16000]}\n\n{schema_prompt}"
     )
     system_prompt = (
         "Voce e um normalizador de schema JSON para o dispatcher. A resposta deve ser exclusivamente JSON valido."

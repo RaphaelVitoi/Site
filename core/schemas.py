@@ -14,27 +14,23 @@ class Task(BaseModel):
 
     id: str
     description: str
-    status: Literal["pending", "running", "completed", "failed", "cancelled"] = (
-        "pending"
-    )
+    status: Literal["pending", "running", "completed", "failed", "cancelled"] = "pending"
     timestamp: str
     agent: str = Field(..., pattern=r"^@[\w]+$")
     completedAt: str | None = None
     model: str | None = None
     metadata: dict[str, Any] = Field(
         default_factory=dict,
-        description=(
-            "Metadados da tarefa, incluindo 'observers' "
-            "para notificacoes e telemetria SOTA."
-        ),
+        description=("Metadados da tarefa, incluindo 'observers' para notificacoes e telemetria SOTA."),
     )
 
     @field_validator("agent")
     @classmethod
     def validate_agent_existence(cls, v: str) -> str:
         """Valida a consistencia do agente no core. Late import para respeitar hot-reload."""
-        from core.config import VALID_AGENTS as _live_agents  # noqa: PLC0415
-        if v not in _live_agents:
+        from core.config import VALID_AGENTS as _LIVE_AGENTS  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+
+        if v not in _LIVE_AGENTS:
             raise ValueError(f"Agente desconhecido: {v}")
         return v
 
@@ -51,7 +47,6 @@ class GeneralTelemetry(BaseModel):
         "Fundamentos SOTA",
         "Bolha",
         "Pos-Flop",
-        "Pós-Flop",
     ]
     componentName: str | None = None
     scenarioContext: dict[str, Any] | list[Any] | str | None = None
@@ -147,12 +142,8 @@ class PerspectiveMetric(BaseModel):
         ...,
         description="timeToBlindJumpMinutes, payjumpProximityFactor, positionalUrgency",
     )
-    structuralLiabilities: dict[str, float] = Field(
-        ..., description="multiwayOpponents, reverseImpliedOddsPenalty"
-    )
-    edgeRelative: dict[str, float] = Field(
-        ..., description="stackDepthBb, humanNoiseFactor, technicalSuperiority"
-    )
+    structuralLiabilities: dict[str, float] = Field(..., description="multiwayOpponents, reverseImpliedOddsPenalty")
+    edgeRelative: dict[str, float] = Field(..., description="stackDepthBb, humanNoiseFactor, technicalSuperiority")
     insolvency: InsolvencyMetrics
 
     def flatten(self) -> dict[str, Any]:

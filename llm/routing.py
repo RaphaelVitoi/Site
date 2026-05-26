@@ -4,11 +4,9 @@ Responsible for heuristic routing, model scoring, and health gating.
 """
 
 # pylint: disable=protected-access
+from datetime import UTC, datetime, timedelta
 import logging
 import sqlite3
-from datetime import UTC, datetime, timedelta
-
-import aiosqlite
 
 import core.runtime as te
 from core.schemas import Task
@@ -106,7 +104,7 @@ async def _get_model_recent_health(
     provider: str, model: str, manager: QueueManager, window_minutes: int
 ) -> dict[str, float]:
     cutoff = (datetime.now(UTC) - timedelta(minutes=window_minutes)).isoformat()
-    async with aiosqlite.connect(manager.db_path) as db:
+    async with manager._get_async_db() as db:
         db.row_factory = sqlite3.Row
         async with db.execute(
             """

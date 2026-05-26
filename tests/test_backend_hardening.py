@@ -1,135 +1,161 @@
 """
-Testes de integridade e hardening do backend, cobrindo middlewares e manipulacao de tarefas.
+Testes de integridade e hardening do backend — middlewares, queue e task executor.
+Marcadores: unit (sem I/O externo), integration (requer servicos).
 """
 
 # pylint: disable=redefined-outer-name, protected-access, line-too-long
 
 import asyncio
+from datetime import UTC, datetime
 import importlib
-from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
-import pytest
 from aiohttp import web
+import pytest
 
 from agents.context_builder import _inject_task_docs  # type: ignore
+from api.v1 import handlers, middleware
 from core.schemas import Task
 from database.queue_manager import QueueManager
-from api.v1 import handlers, middleware
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-class DummyRequest:
-    """Mock para simular requisicoes aiohttp nos testes de middleware."""
-
-    def __init__(self, *, method="GET", headers=None, remote="127.0.0.1", app=None):
-        self.method = method
-        self.headers = headers or {}
-        self.remote = remote
-        self.app = app or {}
-
+# ==============================================================================
+# Fixtures
+# ==============================================================================
 
 @pytest.fixture
 def local_tmp_dir():
-    """Fixture que cria e gerencia um diretorio temporario isolado para os testes."""
-    root = Path.cwd() / ".pytest_tmp"
-    root.mkdir(exist_ok=True)
-    path = root / f"case_{uuid4().hex}"
-    path.mkdir()
+    """Diretorio temporario isolado dentro da raiz do projeto para evitar fallbacks de seguranca."""
+    import shutil
+    base_tmp = REPO_ROOT / ".pytest_tmp"
+    base_tmp.mkdir(parents=True, exist_ok=True)
+    path = base_tmp / f"case_{uuid4().hex}"
+    path.mkdir(parents=True, exist_ok=True)
+    yield path
     try:
-        yield path
-    finally:
-        for item in sorted(path.rglob("*"), reverse=True):
-            if item.is_file():
-                item.unlink(missing_ok=True)
-            elif item.is_dir():
-                item.rmdir()
-        path.rmdir()
+        shutil.rmtree(path, ignore_errors=True)
+    except Exception:
+        pass
 
+
+def _make_task(task_id: str, description: str = "desc") -> Task:
+    """Factory de Task com timestamp UTC automatico."""
+    return Task(
+        id=task_id,
+        description=description,
+        agent="@chico",
+        timestamp=datetime.now(UTC).isoformat(),
+    )
+
+
+# ==============================================================================
+# Middleware de Autenticacao
+# ==============================================================================
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_auth_middleware_blocks_browser_origin_when_token_is_not_configured(
     monkeypatch,
-):
-    """Valida se o middleware de autenticacao bloqueia origens de navegador sem token configurado."""
+) -> None:
+    """Middleware bloqueia origens de navegador quando nenhum token esta configurado."""
     monkeypatch.setattr(middleware, "API_SECRET_TOKEN", "")
-    request = DummyRequest(
+    request = SimpleNamespace(
         method="POST",
         headers={"Origin": "https://evil.example"},
         remote="127.0.0.1",
+        app={},
     )
 
     async def handler(_request):
-        await asyncio.sleep(0)
         return web.json_response({"status": "ok"})
 
     response = await middleware.auth_middleware(request, handler)
-
     assert response.status == 403
 
 
 @pytest.mark.asyncio
-async def test_cors_middleware_does_not_reflect_wildcard_for_untrusted_origin():
-    """Verifica se o middleware CORS nao reflete o wildcard (*) para origens nao confiaveis."""
-    request = DummyRequest(headers={"Origin": "https://evil.example"})
+@pytest.mark.unit
+async def test_cors_middleware_does_not_reflect_wildcard_for_untrusted_origin() -> None:
+    """CORS nao reflete wildcard (*) para origens nao confiaveis."""
+    request = SimpleNamespace(
+        method="GET",
+        headers={"Origin": "https://evil.example"},
+        remote="127.0.0.1",
+        app={},
+    )
 
     async def handler(_request):
-        await asyncio.sleep(0)
         return web.json_response({"status": "ok"})
 
     response = await middleware.cors_middleware(request, handler)
-
     assert response.headers.get("Access-Control-Allow-Origin") != "*"
 
 
+# ==============================================================================
+# Path Traversal via Task Docs
+# ==============================================================================
+
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_inject_task_docs_ignores_markdown_paths_outside_workspace(
-    local_tmp_dir, monkeypatch
-):
-    """Garante que a injecao de documentos de tarefas ignore caminhos fora do workspace."""
+    local_tmp_dir: Path, monkeypatch
+) -> None:
+    """Injecao de docs rejeita caminhos fora do workspace (Path Traversal)."""
     workspace = local_tmp_dir / "workspace"
     workspace.mkdir()
-    docs_dir = workspace / "docs" / "tasks" / "safe"
-    docs_dir.mkdir(parents=True)
     outside_file = local_tmp_dir / "secret.md"
     outside_file.write_text("TOP SECRET", encoding="utf-8")
     monkeypatch.chdir(workspace)
 
-    task = Task(
-        id="TASK-EXT-DOC",
-        description="../secret.md",
-        agent="@chico",
-        timestamp=datetime.now(timezone.utc).isoformat(),
-    )
-
+    task = _make_task("TASK-EXT-DOC", "../secret.md")
     injected = await _inject_task_docs(task)
 
     assert "TOP SECRET" not in injected
 
 
+# ==============================================================================
+# Queue Manager
+# ==============================================================================
+
 @pytest.mark.asyncio
-async def test_add_task_rejects_duplicate_ids(local_tmp_dir):
-    """Testa se o gerenciador de filas rejeita a adicao de tarefas com IDs duplicados."""
+@pytest.mark.unit
+async def test_add_task_rejects_duplicate_ids(local_tmp_dir: Path) -> None:
+    """QueueManager rejeita adicao de tarefas com IDs duplicados (UNIQUE constraint)."""
     manager = QueueManager(str(local_tmp_dir / "tasks.db"))
-    task = Task(
-        id="TASK-DUP",
-        description="Primeira versao",
-        agent="@chico",
-        timestamp=datetime.now(timezone.utc).isoformat(),
-    )
+    task = _make_task("TASK-DUP")
 
     await manager.add_task(task)
 
-    with pytest.raises(Exception, match=".*"):
+    with pytest.raises(Exception, match=r"(?i)UNIQUE|duplicate|already|constraint"):
         await manager.add_task(task)
 
 
 @pytest.mark.asyncio
-async def test_handle_rag_ingest_preserves_existing_bg_tasks(monkeypatch):
-    """Assegura que a rota de ingestao RAG preserve tarefas em background pre-existentes."""
+@pytest.mark.unit
+async def test_queue_manager_cache_lookup_matches_real_model_key(
+    local_tmp_dir: Path,
+) -> None:
+    """Cache do LLM associa corretamente a chave de modelo ao resultado cacheado."""
+    manager = QueueManager(str(local_tmp_dir / "tasks.db"))
+
+    await manager.update_llm_cache("gemini-2.5-flash", "prompt-x", "cached")
+    cached = await manager.get_llm_cache("@chico", "prompt-x")
+
+    assert cached == "cached"
+
+
+# ==============================================================================
+# RAG Ingest Handler
+# ==============================================================================
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_handle_rag_ingest_preserves_existing_bg_tasks(monkeypatch) -> None:
+    """Rota de ingestao RAG nao cancela tarefas bg pre-existentes."""
     existing_task = asyncio.create_task(asyncio.sleep(0))
 
     async def fake_ingest():
@@ -149,41 +175,35 @@ async def test_handle_rag_ingest_preserves_existing_bg_tasks(monkeypatch):
 
     app = {"bg_tasks": {existing_task}}
     request = SimpleNamespace(app=app)
-
     await handlers.handle_rag_ingest(request)
 
     assert existing_task in app["bg_tasks"]
 
-    for task in app["bg_tasks"].copy():
-        task.cancel()
+    for t in app["bg_tasks"].copy():
+        t.cancel()
 
 
-@pytest.mark.asyncio
-async def test_queue_manager_cache_lookup_matches_real_model_key(local_tmp_dir):
-    """Verifica se a busca no cache do LLM no QueueManager associa corretamente a chave ao modelo."""
-    manager = QueueManager(str(local_tmp_dir / "tasks.db"))
+# ==============================================================================
+# Contratos de Modulo (importacao e contratos de API)
+# ==============================================================================
 
-    await manager.update_llm_cache("gemini-2.5-flash", "prompt-x", "cached")
-
-    cached = await manager.get_llm_cache("@chico", "prompt-x")
-
-    assert cached == "cached"
-
-
-def test_core_runtime_exposes_start_worker_entrypoint():
-    """Valida se o runtime do core expoe a funcao de entrada correta (start_worker_and_api)."""
+@pytest.mark.unit
+def test_core_runtime_exposes_start_worker_entrypoint() -> None:
+    """core.runtime deve expor a funcao de entrada start_worker_and_api."""
     runtime = importlib.import_module("core.runtime")
     assert hasattr(runtime, "start_worker_and_api")
 
 
-def test_memory_rag_no_longer_imports_task_executor_for_llm_access():
-    """Confirma que o modulo de RAG nao importa o task_executor evitando dependencia circular."""
+@pytest.mark.unit
+def test_memory_rag_no_longer_imports_task_executor_for_llm_access() -> None:
+    """memory_rag.py nao deve importar task_executor (evita dependencia circular)."""
     content = (REPO_ROOT / "memory_rag.py").read_text(encoding="utf-8", errors="ignore")
     assert "from task_executor import" not in content
 
 
-def test_frontend_uses_canonical_nexus_api_contract():
-    """Garante que o codigo do frontend interage com a API Nexus usando o contrato canonico."""
+@pytest.mark.unit
+def test_frontend_uses_canonical_nexus_api_contract() -> None:
+    """Frontend usa o contrato canonico api-contract sem hardcode de localhost."""
     logger_source = (REPO_ROOT / "frontend" / "src" / "lib" / "logger.ts").read_text(
         encoding="utf-8", errors="ignore"
     )
@@ -191,14 +211,7 @@ def test_frontend_uses_canonical_nexus_api_contract():
         REPO_ROOT / "frontend" / "src" / "app" / "(user)" / "dashboard" / "page.tsx"
     ).read_text(encoding="utf-8", errors="ignore")
     quiz_source = (
-        REPO_ROOT
-        / "frontend"
-        / "src"
-        / "app"
-        / "api"
-        / "v1"
-        / "predictive"
-        / "route.ts"
+        REPO_ROOT / "frontend" / "src" / "app" / "api" / "v1" / "predictive" / "route.ts"
     ).read_text(encoding="utf-8", errors="ignore")
     rag_route_source = (
         REPO_ROOT / "frontend" / "src" / "app" / "api" / "v1" / "rag" / "route.ts"
@@ -214,30 +227,14 @@ def test_frontend_uses_canonical_nexus_api_contract():
     assert "api-contract" in rag_route_source
 
 
-def test_client_components_do_not_import_server_telemetry_module():
-    """Certifica que os componentes React client-side nao importem modulos server-side vazando dados."""
+@pytest.mark.unit
+def test_client_components_do_not_import_server_telemetry_module() -> None:
+    """Componentes React client-side nao importam modulos server-side de telemetria."""
     client_files = [
-        REPO_ROOT
-        / "frontend"
-        / "src"
-        / "components"
-        / "analytics"
-        / "ErrorBoundary.tsx",
+        REPO_ROOT / "frontend" / "src" / "components" / "analytics" / "ErrorBoundary.tsx",
         REPO_ROOT / "frontend" / "src" / "components" / "quiz" / "QuizEngine.tsx",
-        REPO_ROOT
-        / "frontend"
-        / "src"
-        / "components"
-        / "simulator"
-        / "hooks"
-        / "useQuantumEngine.ts",
-        REPO_ROOT
-        / "frontend"
-        / "src"
-        / "components"
-        / "simulator"
-        / "hooks"
-        / "useSotaTelemetry.tsx",
+        REPO_ROOT / "frontend" / "src" / "components" / "simulator" / "hooks" / "useQuantumEngine.ts",
+        REPO_ROOT / "frontend" / "src" / "components" / "simulator" / "hooks" / "useSotaTelemetry.tsx",
     ]
     telemetry_client = (
         REPO_ROOT / "frontend" / "src" / "lib" / "telemetry-client.ts"

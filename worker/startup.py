@@ -6,12 +6,10 @@ Worker Startup -- Inicializacao conjunta do Worker, API e Watchdog.
 import asyncio
 import logging
 
-import aiosqlite
-
-import task_executor as _task_executor
+from api.v1.server import start_api_server
 from database.queue_manager import QueueManager
 from monitoring.watchdog import system_watchdog
-from web.server import start_api_server
+import task_executor as _task_executor
 from worker.loop import start_worker  # type: ignore[attr-defined]
 
 logger = logging.getLogger(__name__)
@@ -30,7 +28,7 @@ async def start_worker_and_api():
     # SOTA: Ativacao persistente do modo WAL (Write-Ahead Logging)
     # Otimiza o disco para latencia zero em altissima concorrencia assincrona.
     try:
-        async with aiosqlite.connect(manager.db_path) as db:
+        async with manager._get_async_db() as db:
             await db.execute("PRAGMA journal_mode=WAL;")
             await db.execute("PRAGMA synchronous=NORMAL;")
             await db.execute("PRAGMA wal_autocheckpoint=1000;")
@@ -42,4 +40,4 @@ async def start_worker_and_api():
     except Exception as e:  # noqa: BLE001
         logger.error(f"[SISTEMA] Falha ao configurar SQLite WAL: {e}")
 
-    await asyncio.gather(start_api_server(manager), start_worker(manager), system_watchdog(manager))
+    await asyncio.gather(start_api_server(manager), start_worker(manager), system_watchdog(manager))  # type: ignore

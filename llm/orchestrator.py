@@ -1,9 +1,9 @@
 # pylint: disable=missing-module-docstring, broad-exception-caught, logging-fstring-interpolation, protected-access, line-too-long, invalid-name
 
-import logging
-import time
 from collections.abc import Callable
 from datetime import UTC, datetime
+import logging
+import time
 
 import aiohttp
 
@@ -188,7 +188,10 @@ async def _compress_context(
 
     _c = te._c
     try:
-        system_prompt = "Voce e um especialista em sumarizacao. Resuma o texto a seguir de forma densa e informativa, preservando todos os pontos criticos, nomes de arquivos, decisoes chave e a intencao original. O output deve ser em portugues (Pure ASCII)."
+        system_prompt = te.SYSTEM_CONFIG.get(
+            "compression_system_prompt",
+            "Voce e um especialista em sumarizacao. Resuma o texto a seguir de forma densa e informativa, preservando todos os pontos criticos, nomes de arquivos, decisoes chave e a intencao original. O output deve ser em portugues (Pure ASCII)."
+        )
         session = await get_global_http_session()
 
         gemini_failed = False

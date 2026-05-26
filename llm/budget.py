@@ -2,12 +2,13 @@
 
 import asyncio
 import contextlib
+from datetime import UTC, datetime, timedelta
 import hashlib
 import logging
 import os
 import re
+import threading
 import time
-from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from core.schemas import Task
@@ -132,7 +133,8 @@ TAVILY_KEYS = _collect_keys(("TAVILY",))
 PERPLEXITY_KEYS = _collect_keys(("PERPLEXITY",))
 API_SECRET_TOKEN = ALL_ENV_VARS.get("API_SECRET_TOKEN", "")
 
-# Cache para resultados da WebSearch
+# Cache para resultados da WebSearch (bounded: max 256 entradas)
+_WEB_SEARCH_CACHE_MAX = 256
 web_search_cache: dict[str, Any] = {}
 # Tempo de vida do cache em segundos (ex: 3600 = 1 hora)
 WEB_SEARCH_CACHE_TTL = 3600
@@ -160,15 +162,18 @@ SYSTEM_PROMPT_CACHE: dict[str, str] = {}
 AUTONOMY_MODE_CACHE = {"mode": "off", "timestamp": 0.0}
 
 
-# Trava de Seguranca Global para variaveis de telemetria
-_TELEMETRY_LOCK = None
+# Trava de Seguranca Global para variaveis de telemetria mapeada por Event Loop
+# SOTA: Garante prevencao contra falhas de cross-loop bounds em Runtime
+_TELEMETRY_LOCKS: dict[int, asyncio.Lock] = {}
+_TELEMETRY_THREADING_LOCK = threading.Lock()
 
 
-def get_telemetry_lock():
-    global _TELEMETRY_LOCK
-    if _TELEMETRY_LOCK is None:
-        _TELEMETRY_LOCK = asyncio.Lock()
-    return _TELEMETRY_LOCK
+def get_telemetry_lock() -> asyncio.Lock:
+    loop_id = id(asyncio.get_running_loop())
+    with _TELEMETRY_THREADING_LOCK:
+        if loop_id not in _TELEMETRY_LOCKS:
+            _TELEMETRY_LOCKS[loop_id] = asyncio.Lock()
+        return _TELEMETRY_LOCKS[loop_id]
 
 
 def _key_identifier(provider: str, key: str) -> str:

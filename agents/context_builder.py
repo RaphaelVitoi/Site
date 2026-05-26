@@ -6,15 +6,16 @@ Context Builder -- Modulo especializado na construcao e compressao de contexto p
 import asyncio
 import hashlib
 import logging
+from pathlib import Path
 import re
 import time
-from pathlib import Path
 
-import core.runtime as te
 from agents.prompts import get_agent_system_prompt
+import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
+    _WEB_SEARCH_CACHE_MAX,
     COMPRESSION_CIRCUIT_BREAKER,
     PERPLEXITY_KEYS,
     TAVILY_KEYS,
@@ -251,6 +252,13 @@ async def _execute_web_search(task: Task, manager: QueueManager) -> tuple[str, i
             session = await get_global_http_session()
             web_context = await _fetch_web_search(task, manager, session)
             if web_context:
+                # Bounded eviction: remove o mais antigo quando atingir o limite.
+                if len(web_search_cache) >= _WEB_SEARCH_CACHE_MAX:
+                    try:
+                        oldest_key = next(iter(web_search_cache))
+                        web_search_cache.pop(oldest_key, None)
+                    except StopIteration:
+                        pass
                 web_search_cache[cache_key] = (web_context, time.monotonic())
 
         return web_context, int((time.monotonic() - t0_web) * 1000) if web_context else -1

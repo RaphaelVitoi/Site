@@ -4,27 +4,28 @@ Execution -- Orquestracao central de execucao de tarefas e workflow completo.
 """
 
 import asyncio
+from datetime import UTC, datetime, timedelta
 import gc
 import logging
 import os
+from pathlib import Path
+import re
 import sqlite3
 import time
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from typing import Any
 
-import agents.context_builder as cb
-import core.runtime as te
-import engine.cognitive as local_engine
 from agents.autonomy import apply_god_mode, get_autonomy_mode
+import agents.context_builder as cb
 from agents.dispatcher import (
     DispatcherSubtask,
     _parse_dispatcher_subtasks_strict,
     _retry_dispatcher_schema_once,
 )
 from agents.fallback import _create_dispatcher_fallback_plan
+import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
+import engine.cognitive as local_engine
 from llm.budget import (
     APIBudgetExhaustedError,
     APIKeysExhaustedError,
@@ -374,7 +375,8 @@ async def _notify_observers(task: Task, manager: QueueManager) -> None:
 
 def _save_task_result_sync(task_id: str, agent: str, response_text: str) -> None:
     """Descarrega a gravacao em disco do resultado para uma thread limpa."""
-    safe_task_id = Path(task_id).name
+    # Blindagem SOTA: apenas alfanum, hifens, underscores e pontos sao permitidos.
+    safe_task_id = re.sub(r"[^\w\-\.]", "_", Path(task_id).name)[:128]
     result_dir = Path(".claude/task_results")
     result_dir.mkdir(parents=True, exist_ok=True)
     with open(result_dir / f"{safe_task_id}.md", "w", encoding="utf-8") as f:
@@ -382,7 +384,8 @@ def _save_task_result_sync(task_id: str, agent: str, response_text: str) -> None
 
 
 def _set_task_completed_at_sync(db_path: str | os.PathLike[str], task_id: str) -> None:
-    with sqlite3.connect(db_path) as db:
+    is_uri = isinstance(db_path, str) and db_path.startswith("file:")
+    with sqlite3.connect(db_path, uri=is_uri) as db:
         db.execute(
             "UPDATE tasks SET completedAt = ? WHERE id = ?",
             (datetime.now(UTC).isoformat(), task_id),
