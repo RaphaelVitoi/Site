@@ -1,5 +1,5 @@
-/**
- * SOTA v6.2.1 GOLD: Global Components barrel exports.
+﻿/**
+ * SOTA v7.0 GOLD: Global Components barrel exports.
  * Provides clean access to React components.
  */
 
@@ -57,3 +57,4 @@ export { default as TableOfContents } from './ui/layout/TableOfContents';
 
 // SEO
 export { default as JsonLd } from './seo/JsonLd';
+

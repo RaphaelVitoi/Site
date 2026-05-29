@@ -1,7 +1,7 @@
 ---
-title: "Entendendo o ICM e suas heurísticas"
-description: "Aprenda como interpretar o RP e de que maneira podemos usá-lo a nosso favor pós-flop."
-category: "ICM • Risk Premium • Toy Games"
+title: "Entendendo o ICM e suas heuristicas"
+description: "Aprenda como interpretar o RP e de que maneira podemos usa-lo a nosso favor pos-flop."
+category: "ICM  Risk Premium  Toy Games"
 keywords: "ICM, Risk Premium, Toy Games, Teoria dos Jogos, Raphael Vitoi, Poker"
 author: "Raphael Vitoi"
 date: "2026-03-29"

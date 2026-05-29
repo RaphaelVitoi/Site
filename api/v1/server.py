@@ -85,26 +85,28 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
     app["lab_manager"] = LabManager()  # Instancia o DAO do Laboratorio SOTA
     app["audit_engine"] = AuditEngine(manager)  # Instancia o Motor de Auditoria SOTA
     app["start_time"] = time.time()
-    app.add_routes([
-        web.get("/ping", handle_ping),
-        web.get("/db-summary", handle_get_db_summary),
-        web.get("/health", handle_health),
-        web.post("/add", handle_add_task),
-        web.get("/status", handle_get_status),
-        web.get("/key-health-summary", handle_get_key_health_summary),
-        web.get("/task-result", handle_get_task_result),
-        web.get("/state", handle_get_state),
-        web.post("/state", handle_set_state),
-        web.post("/ask-oracle", handle_ask_oracle),
-        web.get("/system-status", handle_get_system_status),
-        web.get("/lab/tournaments", handle_get_tournaments),
-        web.post("/api/logs/frontend", handle_frontend_logs),
-        web.post("/ingest", handle_rag_ingest),
-        web.get("/predictive-profile", handle_predictive_profile),
-        web.get("/resources", handle_get_resource_usage),
-        web.post("/rag/query", handle_rag_query),
-        web.post("/buckets", handle_bucket_op),
-    ])
+    app.add_routes(
+        [
+            web.get("/ping", handle_ping),
+            web.get("/db-summary", handle_get_db_summary),
+            web.get("/health", handle_health),
+            web.post("/add", handle_add_task),
+            web.get("/status", handle_get_status),
+            web.get("/key-health-summary", handle_get_key_health_summary),
+            web.get("/task-result", handle_get_task_result),
+            web.get("/state", handle_get_state),
+            web.post("/state", handle_set_state),
+            web.post("/ask-oracle", handle_ask_oracle),
+            web.get("/system-status", handle_get_system_status),
+            web.get("/lab/tournaments", handle_get_tournaments),
+            web.post("/api/logs/frontend", handle_frontend_logs),
+            web.post("/ingest", handle_rag_ingest),
+            web.get("/predictive-profile", handle_predictive_profile),  # type: ignore
+            web.get("/resources", handle_get_resource_usage),
+            web.post("/rag/query", handle_rag_query),
+            web.post("/buckets", handle_bucket_op),
+        ]
+    )
 
     runner = web.AppRunner(app)
     await runner.setup()

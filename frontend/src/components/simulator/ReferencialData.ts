@@ -1,7 +1,7 @@
-/**
- * IDENTITY: Repositório de Dados Referenciais SOTA v6.2.1 GOLD
+﻿/**
+ * IDENTITY: RepositÃ³rio de Dados Referenciais SOTA v7.0 GOLD
  * PATH: src/components/simulator/ReferencialData.ts
- * ROLE: Constantes e matrizes de calibração purificadas para validação do motor.
+ * ROLE: Constantes e matrizes de calibraÃ§Ã£o purificadas para validaÃ§Ã£o do motor.
  */
 
 export const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
@@ -33,15 +33,15 @@ export const RP_MATRIX = [
 ];
 
 export const PRIZES = [
-	{ pos: '1º', val: 237.34, jump: 66.38 },
-	{ pos: '2º', val: 170.96, jump: 35.79 },
-	{ pos: '3º', val: 135.17, jump: 25.18 },
-	{ pos: '4º', val: 109.99, jump: 19.71 },
-	{ pos: '5º', val: 90.28, jump: 16.33 },
-	{ pos: '6º', val: 73.95, jump: 14.03 },
-	{ pos: '7º', val: 59.92, jump: 12.36 },
-	{ pos: '8º', val: 47.56, jump: 11.09 },
-	{ pos: '9º', val: 36.47, jump: 0 },
+	{ pos: '1Âº', val: 237.34, jump: 66.38 },
+	{ pos: '2Âº', val: 170.96, jump: 35.79 },
+	{ pos: '3Âº', val: 135.17, jump: 25.18 },
+	{ pos: '4Âº', val: 109.99, jump: 19.71 },
+	{ pos: '5Âº', val: 90.28, jump: 16.33 },
+	{ pos: '6Âº', val: 73.95, jump: 14.03 },
+	{ pos: '7Âº', val: 59.92, jump: 12.36 },
+	{ pos: '8Âº', val: 47.56, jump: 11.09 },
+	{ pos: '9Âº', val: 36.47, jump: 0 },
 ];
 
 export const TOTAL_POOL = 1260;
@@ -474,3 +474,4 @@ export const EG_BF_MATRIX = new Array(9)
 export const EG_RP_MATRIX = EG_BF_MATRIX.map((row) =>
 	row.map((val) => (val === 1 ? 0 : Math.round((1 - 1 / val) * 1000) / 10)),
 );
+

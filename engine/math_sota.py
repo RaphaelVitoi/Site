@@ -181,34 +181,40 @@ def compute_quantum_metrics(
     hero_rp: float = kwargs.get("hero_rp", 15.0)
     villain_rp: float = kwargs.get("villain_rp", 15.0)
 
-    # SOTA: Risk Advantage (BTN vs BB Study)
-    # A disparidade de RPs autoriza opressao tecnica mesmo com menos fichas.
-    risk_advantage = villain_rp - hero_rp
-    advantage_multiplier = 1.0 + (risk_advantage / 100.0)
-
-    # SOTA: Bounty Offset (PKO)
-    # O bounty atua como um 'Seguro de Colisao', reduzindo o RP efetivo do Hero.
+    # SOTA: Bounty Offset (PKO) - O bounty atua como um 'Seguro de Colisao'
+    # Conforme Manifesto v7: Subtrai do RP do Hero.
     bounty_rp_offset = (bounty_value / max(1.0, current_pot)) * 10.0
-    effective_hero_rp = max(0.0, hero_rp - bounty_rp_offset)
+    effective_hero_rp = max(0.01, hero_rp - bounty_rp_offset)
+
+    # SOTA: Risk Advantage (BTN vs BB Study)
+    # Conforme Aula 1.2: Delta RP = VillainRP - HeroRP_effective
+    risk_advantage = villain_rp - effective_hero_rp
+    advantage_multiplier = 1.0 + (risk_advantage / 100.0)
 
     eq = current_equity_pct / 100.0 if current_equity_pct > 1.0 else current_equity_pct
 
     # SOTA: Amortizacao da Edge escalada pelo Risk Advantage
+    # A arvore de decisao e podada em S=10bb. Er(S) e proporcional a log(S).
     safe_stack_edge = max(2.718, stack_eff)
     edge_scale = (math.log(safe_stack_edge) / math.log(60.0)) * advantage_multiplier
     amortized_edge = edge_base * edge_scale
 
     bayesian_win_prob = calculate_bayesian_win_prob(eq, action_strength=0.5, range_density=0.5)
 
-    # SOTA: Divida RIO recalibrada pelo Effective Hero RP
+    # SOTA: Divida RIO recalibrada pelo Fator Psi (Entropia) e Effective Hero RP
     if active_players <= 2:
         rio_mw = 0.0
     else:
         opponents = max(1, active_players - 1)
+        # SOTA GOLD: Passivo Estrutural cresce em taxa quadratica (x^(2+f))
         rio_penalty_factor = math.pow(opponents, 2.0 + human_noise_factor)
         volatility_multiplier = math.pow(active_players / (max(1.0, stack_eff / 5.0)), 2.0)
-        # SOTA: RP elevado em MW gera asfixia estrutural
-        rio_penalty_chips = current_pot * rio_penalty_factor * (0.15 + (volatility_multiplier * 0.05)) * (effective_hero_rp / 15.0)
+
+        # Damping sintonizado com TS
+        damping = 0.15 + (human_noise_factor * 0.05)
+        rio_penalty_chips = (
+            current_pot * rio_penalty_factor * (damping + (volatility_multiplier * 0.05)) * (effective_hero_rp / 15.0)
+        )
         rio_mw = rio_penalty_chips * icm_per_chip
 
     # SOTA: O passivo da derrota sofre dilatacao no ICM e aversao dinamica
@@ -251,6 +257,8 @@ def compute_quantum_metrics(
         "esperanca": perspectiva,  # Alinhado com o frontend: Esperanca ~ PM
         "expectativa": expectativa,
         "perspectiva": perspectiva,
+        "risk_advantage": risk_advantage,
+        "advantage_multiplier": advantage_multiplier,
         "rio_mw": rio_mw,
         "thresh_eq": thresh_eq,
         "pot_odds": pot_odds,

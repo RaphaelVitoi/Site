@@ -81,17 +81,17 @@ export const StreetCard = ({
 	const sprText = result.sprRemanescente === Infinity ? '∞' : result.sprRemanescente.toFixed(1);
 
 	return (
-		<div className="bg-bg-deep border border-white/5 rounded-2xl p-4 shadow-lg flex flex-col gap-2.5 group/card hover:bg-bg-panel/40 hover:border-accent-indigo/30 transition-all duration-500 relative overflow-hidden">
-			<div className="absolute top-0 right-0 w-24 h-24 bg-accent-indigo/5 blur-3xl -mr-8 -mt-8 rounded-full pointer-events-none transition-opacity opacity-0 group-hover/card:opacity-100"></div>
+		<div className="glass-panel group/card relative flex flex-col gap-6 overflow-hidden rounded-[2.5rem] border border-white/5 bg-black/40 p-8 shadow-3xl backdrop-blur-3xl transition-all duration-700 hover:-translate-y-2 hover:bg-black/60">
+			<div className="bg-accent-indigo/10 pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full blur-3xl transition-opacity opacity-0 group-hover/card:opacity-100" />
 
-			<div className="flex justify-between items-center pb-2 border-b border-white/5">
-				<h4 className="text-[0.6rem] font-black text-accent-indigo-light uppercase tracking-[0.2em] m-0">
+			<div className="flex items-center justify-between border-b border-white/10 pb-4">
+				<h4 className="text-accent-indigo-light m-0 text-[0.8rem] font-black tracking-[0.4em] uppercase group-hover/card:text-glow-indigo transition-all duration-500">
 					{STREET_LABEL[street]}
 				</h4>
-				<div className="w-1 h-1 rounded-full bg-accent-indigo/40" />
+				<div className="bg-accent-indigo h-2 w-2 rounded-full shadow-[0_0_12px_var(--accent-indigo)] animate-pulse" />
 			</div>
 
-			<div className="space-y-1 font-mono tabular-nums">
+			<div className="space-y-2.5 font-mono text-[0.85rem] tabular-nums">
 				<MetricRow
 					label="EV_fold"
 					value={evFoldData.text}
@@ -114,16 +114,16 @@ export const StreetCard = ({
 					colorClass="text-accent-indigo/60"
 				/>
 				<MetricRow
-					label="ΔRP"
+					label="Risk Advantage"
 					value={deltaRpData.text}
 					colorClass={deltaRpData.colorClass}
 				/>
 			</div>
 
-			<div className="mt-1 pt-2 border-t border-dashed border-white/10 space-y-1 font-mono tabular-nums">
+			<div className="mt-2 space-y-2.5 border-t border-dashed border-white/15 pt-6 font-mono text-[0.85rem] tabular-nums">
 				<MetricRow label="PM (Persp.)" value={pmData.text} colorClass={pmData.colorClass} />
 				<MetricRow
-					label="Ci (Solvên.)"
+					label="Insolvência Cᵢ"
 					value={result.ciStreet.toFixed(3)}
 					colorClass={ciData.colorClass}
 				/>
@@ -141,7 +141,7 @@ export const StreetCard = ({
 					<MetricRow
 						label="RIO MW"
 						value={result.rioMwStreet.toFixed(2)}
-						colorClass="text-accent-danger"
+						colorClass="text-accent-rose text-glow-rose"
 					/>
 				)}
 				<MetricRow

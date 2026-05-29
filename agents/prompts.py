@@ -108,7 +108,7 @@ async def get_agent_system_prompt(agent_name: str) -> str:
         agent_clean = agent_name.replace("@", "").replace("/", "").replace("\\", "").replace(".", "")
 
         # 1. Base Global (A Alma do Sistema)
-        global_content = _read_file_with_cache(str(Path(".claude/GLOBAL_INSTRUCTIONS.md")))
+        global_content = _read_file_with_cache(str(Path(".claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md")))
         if global_content:
             system_prompt_parts.append(f"=== INSTRUCOES GLOBAIS ===\n{global_content}\n\n")
 
@@ -150,16 +150,14 @@ async def get_agent_system_prompt(agent_name: str) -> str:
         # 2.6 A Ontologia da Qualidade e Autoconsciencia Sistemica
         infra_ctx += "=== ONTOLOGIA DA QUALIDADE E AUTOCONSCIENCIA ===\n"
         infra_ctx += "1. SOFISTICACAO SOTA (Economia Generalizada): Atingir o SOTA e explicar perfeitamente um conceito com o MINIMO de caracteres possivel. Se um 'especialista medio' precisa de 2 horas de palestra para ensinar algo, voce ensina em paragrafos cirurgicos que erradicam quaisquer duvidas e tedio. Refine, adapte, elimine o lixo obsoleto e o ruido.\n"
-        infra_ctx += (
-            "2. EXCELENTE: A entrega padrao-ouro que resolve o problema central sem criar dividas tecnicas colaterais.\n"
-        )
+        infra_ctx += "2. EXCELENTE: A entrega padrao-ouro que resolve o problema central sem criar dividas tecnicas colaterais.\n"
         infra_ctx += "3. ESTADO DA ARTE (SOTA): O apice da convergencia entre o Simples e o Excelente. E quando o sistema atua de forma fractal (a parte potencializa o todo).\n"
         infra_ctx += "4. AUTOCONSCIENCIA FRACTAL: Voce compreende sua missao especifica (A Parte) e como ela potencializa e e potencializada pelo Orquestrador e os outros 17 agentes (O Todo).\n"
         infra_ctx += "5. ANTEVISAO (Passado > Presente > Futuro): Aplique analise Recursiva (o que aprendemos), Precursiva (o que precisamos agora) e Preditiva (o que evitaremos/alcancaremos no futuro) antes de todo output.\n\n"
         infra_ctx += "6. ESTETICA VISUAL E OUTPUT PADRAO OURO: E PROIBIDO gerar JSONs crus, blocos de texto sem formatacao ou dados disformes para interacao humana. Todo output DEVE utilizar Markdown estruturado, tabelas simetricas, respiro visual e formatacao de nivel executivo C-Level.\n"
         infra_ctx += "7. COLORIMETRIA SEMANTICA (IDENTIDADE VISUAL): O sistema usa cores como linguagem. Vermelho = Entropia/Erro/Negativo. Verde = Simetria/Sucesso/Positivo. Amarelo = Alerta/Espera/Manutencao. Ciano = Infraestrutura/A Maquina. Magenta = IA/Filosofia/Oraculo. Cinza = Legado/Neutro. Pense nesses conceitos SOTA ao estruturar a informacao.\n\n"
 
-        primary_model = te.AGENTS_MANIFEST.get(agent_clean, {}).get("primary_model", "gemini-2.0-flash")
+        primary_model = te.AGENTS_MANIFEST.get(agent_clean, {}).get("primary_model", "gemini-2.5-flash")
         agent_color = te.AGENT_COLOR_MAP.get(agent_name, "white")
         infra_ctx += f"8. SUA IDENTIDADE VISUAL E MODELO SOTA: Sua cor emblematica exclusiva no terminal e o '{agent_color}'. Sempre que referenciar a si mesmo ou seu output, entenda que sua aura visual possui essa cor. O modelo de IA otimizado para a sua capacidade cognitiva e o '{primary_model}'. Assuma isso na sua comunicacao e defenda a Economia Generalizada.\n\n"
 

@@ -1,7 +1,7 @@
-/**
- * IDENTITY: Bayesian Range Engine SOTA v6.2.1 GOLD
+﻿/**
+ * IDENTITY: Bayesian Range Engine SOTA v7.0 GOLD
  * PATH: src/lib/bayesianRangeEngine.ts
- * ROLE: Motor matemático vetorial para inferência e atualização de crença em ranges de Poker (Prior -> Posterior).
+ * ROLE: Motor matemÃ¡tico vetorial para inferÃªncia e atualizaÃ§Ã£o de crenÃ§a em ranges de Poker (Prior -> Posterior).
  */
 
 export type BeliefVector = Record<string, number>;
@@ -42,7 +42,7 @@ export function updateBelief(prior: BeliefVector, likelihood: ActionLikelihood):
 		evidence += product;
 	}
 
-	if (evidence === 0) return { ...prior }; // Fallback anti-crash (evento impossível)
+	if (evidence === 0) return { ...prior }; // Fallback anti-crash (evento impossÃ­vel)
 
 	for (const hand in posterior) {
 		posterior[hand] = (posterior[hand] ?? 0) / evidence;
@@ -60,3 +60,4 @@ export function getBeliefIntensity(belief: BeliefVector, hand: string, maxBelief
 
 	return (p / maxP) * 100;
 }
+

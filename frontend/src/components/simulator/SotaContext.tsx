@@ -45,6 +45,8 @@ export interface ISotaMetricsContext {
 		perspectiva: number;
 		threshEq: number | null;
 		ci: number | null;
+		riskAdvantage?: number;
+		bountyPower?: number;
 		marginInstability: number;
 		isSolvent: boolean;
 		isActionable: boolean;

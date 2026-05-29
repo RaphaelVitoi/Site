@@ -5,7 +5,7 @@ import sqlite3
 import string
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -38,18 +38,14 @@ def load_markdown_body(file_path: Path) -> str:
     Le o conteudo do arquivo bruto apontado fisicamente, eliminando fragilidade de saltos relativos.
     """
     if not file_path.exists():
-        print(
-            f"[ERRO] O arquivo {file_path.resolve()} nao foi encontrado na infraestrutura."
-        )
+        print(f"[ERRO] O arquivo {file_path.resolve()} nao foi encontrado na infraestrutura.")
         sys.exit(1)
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         return f.read().strip()
 
 
-def upsert_lesson(
-    cursor: sqlite3.Cursor, slug: str, title: str, markdown_body: str, now_iso: str
-) -> None:
+def upsert_lesson(cursor: sqlite3.Cursor, slug: str, title: str, markdown_body: str, now_iso: str) -> None:
     """
     Atualiza ou insere a entidade 'Lesson' no banco de dados.
     """
@@ -81,20 +77,14 @@ def upsert_lesson(
                 now_iso,
             ),
         )
-        print(
-            f"[SUCESSO] Aula SOTA injetada na Maquina de Conteudo! Rota-alvo: /aulas/{slug}"
-        )
+        print(f"[SUCESSO] Aula SOTA injetada na Maquina de Conteudo! Rota-alvo: /aulas/{slug}")
 
 
-def upsert_content(
-    cursor: sqlite3.Cursor, slug: str, title: str, markdown_body: str, now_iso: str
-) -> None:
+def upsert_content(cursor: sqlite3.Cursor, slug: str, title: str, markdown_body: str, now_iso: str) -> None:
     """
     Sincroniza a entidade no Motor Universal 'Content' para aparecer na biblioteca.
     """
-    description = (
-        "Compreenda o ICM e suas heuristicas atraves da analise de RPs e Toy Games."
-    )
+    description = "Compreenda o ICM e suas heuristicas atraves da analise de RPs e Toy Games."
     cursor.execute("SELECT id FROM Content WHERE slug = ?", (slug,))
     content_row = cursor.fetchone()
 
@@ -132,9 +122,7 @@ def main() -> None:
     Orquestrador principal SOTA: Conecta no DB e injeta a aula.
     """
     if len(sys.argv) < 4:
-        print(
-            "Uso: python seed_lesson.py <slug> <titulo_entre_aspas> <caminho_do_arquivo_de_texto>"
-        )
+        print("Uso: python seed_lesson.py <slug> <titulo_entre_aspas> <caminho_do_arquivo_de_texto>")
         print(
             'Exemplo: python seed_lesson.py amortizacao-da-edge "A Amortizacao da Edge" "../../../research/icm-materials/icmteoriaadicionalpt1.txt"'
         )
@@ -148,7 +136,7 @@ def main() -> None:
     slug = sys.argv[1]
     title = sys.argv[2]
     txt_path = Path(sys.argv[3]).resolve()
-    now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    now_iso = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
     markdown_body = load_markdown_body(txt_path)
 

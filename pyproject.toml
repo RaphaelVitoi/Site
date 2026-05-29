@@ -57,6 +57,9 @@ dependencies = [
     "PyYAML>=6.0.2,<7.0.0",
     "tqdm>=4.67.0,<5.0.0",
     "rich>=15.0.0,<16.0.0",
+    "typer>=0.15.0",
+    "pyperclip>=1.9.0",
+    "loguru>=0.7.0",
     "python-dateutil>=2.9.0,<3.0.0",
     "tenacity>=9.1.0,<10.0.0",
 
@@ -68,6 +71,9 @@ dependencies = [
     # ── INFRA & MONITORAMENTO ─────────────────────────────────────────
     "psutil>=7.2.0,<8.0.0",
 ]
+
+[project.scripts]
+nexus = "scripts.cli.nexus:app"
 
 [project.optional-dependencies]
 # Instalado com: uv sync --extra dev
@@ -154,7 +160,8 @@ line-length = 120
 exclude = [
     ".gemini", ".venv", "__pycache__", "node_modules",
     ".next", "frontend", "archive", ".backups", "_backups",
-    "nexus_orchestrator.egg-info",
+    "nexus_orchestrator.egg-info", "skills", "plugins",
+    "temp/nexus_zone",
 ]
 
 [tool.ruff.lint]
@@ -235,3 +242,18 @@ reportReturnType = "error"
 reportArgumentType = "error"
 reportIndexIssue = "warning"
 useLibraryCodeForTypes = true
+
+# ==============================================================================
+# MYPY — Type Checker Estático
+# ==============================================================================
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+disallow_untyped_defs = false
+exclude = [
+    "^\\.venv/",
+    "^\\.gemini/",
+]

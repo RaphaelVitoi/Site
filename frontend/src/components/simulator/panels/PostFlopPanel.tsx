@@ -190,7 +190,7 @@ export default function PostFlopPanel({
   const [stacks, setStacks] = useState<number[]>(DEFAULT_PRESET.stacks);
   const [prizes, setPrizes] = useState<number[]>(DEFAULT_PRESET.prizes);
 
-  // SOTA: Acoplamento do Motor WebGPU (WASM) e InteligÃªncia HÃ­brida (PmLens)
+  // SOTA: Acoplamento do Motor WebGPU (WASM) e Inteligência Híbrida (PmLens)
   const wasmCtx = useContext(SotaWasmContext);
   const metricsCtx = useContext(SotaMetricsContext);
 
@@ -200,7 +200,7 @@ export default function PostFlopPanel({
   const pm = metricsCtx?.apiQuantumMetrics?.perspectiva ?? null;
   const ci = metricsCtx?.apiQuantumMetrics?.ci ?? null;
 
-  // SincronizaÃ§Ã£o Inteligente SOTA
+  // Sincronização Inteligente SOTA
   useEffect(() => {
     if (!isMasterControlled || !isLocked) return;
 
@@ -262,8 +262,8 @@ export default function PostFlopPanel({
   const ipStack = stacks[ipIdx] ?? 1;
   const oopStack = stacks[oopIdx] ?? 1;
   const minActiveStack = Math.min(ipStack, oopStack);
-  const resolvedIpLabel = ipLabel ?? (heroIsIp ? 'HERO' : 'VILÃƒO');
-  const resolvedOopLabel = oopLabel ?? (heroIsIp ? 'VILÃƒO' : 'HERO');
+  const resolvedIpLabel = ipLabel ?? (heroIsIp ? 'HERO' : 'VILÃO');
+  const resolvedOopLabel = oopLabel ?? (heroIsIp ? 'VILÃO' : 'HERO');
 
   const potTotalFlop = potFlop * 2;
   const potTotalTurn = potTurn * 2;
@@ -340,31 +340,31 @@ export default function PostFlopPanel({
   const { winRateText, winRateClass, riskIndexText, riskIndexClass } = getGpuMetricsClassText();
 
   return (
-    <div className="glass-panel bg-bg-panel/90 hover:border-accent-indigo/40 relative flex flex-col gap-6 overflow-hidden rounded-4xl border border-white/10 p-6 shadow-2xl backdrop-blur-2xl transition-all duration-500 sm:p-8 lg:p-10">
+    <div className="glass-panel bg-bg-panel/80 relative flex flex-col gap-10 overflow-hidden rounded-4xl border border-white/10 p-8 shadow-2xl backdrop-blur-3xl transition-all duration-500 lg:p-12">
       <div className="bg-accent-indigo/5 pointer-events-none absolute top-0 right-0 h-64 w-64 rounded-full blur-[100px]" />
 
       <div className="relative z-10 flex flex-col items-start justify-between gap-6 xl:flex-row xl:items-center">
         <div className="max-w-2xl">
           <div className="mb-2 flex items-center gap-3">
-            <span className="text-accent-indigo-light bg-accent-indigo/10 border-accent-indigo/20 rounded-md border px-2 py-0.5 text-[0.55rem] font-black tracking-widest uppercase shadow-inner">
+            <span className="text-accent-indigo-light bg-accent-indigo/10 border-accent-indigo/30 rounded-md border px-2 py-0.5 text-[0.55rem] font-black tracking-[0.3em] uppercase shadow-inner">
               Post-Flop Analyzer
             </span>
-            <h3 className="group-hover/pfp:text-glow-indigo m-0 text-base font-black tracking-tight text-white uppercase transition-all duration-500 sm:text-lg">
-              LaboratÃ³rio de Perspectiva <span className="text-accent-indigo font-mono opacity-60">v6.2.1</span>
+            <h3 className="group-hover/pfp:text-glow-indigo m-0 text-base font-black tracking-[0.3em] text-white uppercase transition-all duration-500 sm:text-lg">
+              Laboratório de Perspectiva &middot; <span className="text-text-muted">v7.0 GOLD</span>
             </h3>
-          </div>
-          <p className="text-text-muted mt-1.5 mb-0 text-[0.7rem] leading-relaxed font-medium">
+            </div>
+            <p className="text-text-muted mt-1.5 mb-0 text-[0.7rem] leading-relaxed font-medium">
             Mapeamento termodinâmico de EV_fold e Risk Premium. O descarte ({' '}
-            <code className="text-accent-danger/80">Fold</code> ) possui valor intrÃ­nseco de sobrevivÃªncia baseado no
-            Payjump e na inÃ©rcia da mesa.
-          </p>
+            <code className="text-accent-danger font-black px-1.5 py-0.5 rounded bg-accent-danger/10">Fold</code> ) possui valor intrínseco de sobrevivência baseado no
+            Payjump e na inércia da mesa.
+            </p>
         </div>
 
         <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-black/40 p-1.5 shadow-inner">
           <button
             onClick={() => setIsLocked(!isLocked)}
             {...{ 'aria-pressed': isLocked }}
-            className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-[0.55rem] font-black tracking-widest uppercase transition-all ${isLocked ? 'bg-accent-indigo text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'text-text-dim bg-transparent hover:text-white'}`}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-[0.55rem] font-black tracking-[0.2em] uppercase transition-all ${isLocked ? 'bg-accent-indigo text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'text-text-dim bg-transparent hover:text-white'}`}
           >
             <i className={`fa-solid ${isLocked ? 'fa-link' : 'fa-link-slash'} text-[0.6rem]`} />
             {isLocked ? 'Sincronizado' : 'Manual (Lab)'}
@@ -372,7 +372,7 @@ export default function PostFlopPanel({
           <button
             onClick={addPhantom}
             aria-label="Adicionar Phantom Stack"
-            className="text-text-dim flex items-center gap-2 rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 text-[0.55rem] font-black tracking-widest uppercase transition-all hover:bg-white/10 hover:text-white"
+            className="text-text-dim flex items-center gap-2 rounded-lg border border-white/5 bg-white/5 px-4 py-2 text-[0.55rem] font-black tracking-[0.2em] uppercase transition-all hover:bg-white/10 hover:text-white"
           >
             <i className="fa-solid fa-plus text-[0.6rem]" /> Phantom
           </button>
@@ -387,18 +387,18 @@ export default function PostFlopPanel({
       </div>
 
       <div className="relative z-10 grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="flex flex-col gap-5 lg:col-span-4">
-          <div className="space-y-2">
-            <span className="text-text-darker flex items-center gap-2 px-1 text-[0.55rem] font-black tracking-[0.2em] uppercase">
-              <i className="fa-solid fa-flask-vial text-accent-indigo" /> Presets de LaboratÃ³rio
+        <div className="flex flex-col gap-6 lg:col-span-4">
+          <div className="space-y-3">
+            <span className="text-text-darker flex items-center gap-2 px-1 text-[0.55rem] font-black tracking-[0.3em] uppercase">
+              <i className="fa-solid fa-flask-vial text-accent-indigo" /> Presets de Laboratório
             </span>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {PRESETS.map((p, i) => (
                 <button
                   key={p.label}
                   onClick={() => handlePresetChange(i)}
                   {...{ 'aria-pressed': presetIdx === i }}
-                  className={`rounded-lg border px-3 py-2 text-[0.55rem] font-black transition-all duration-300 ${presetIdx === i ? 'bg-accent-indigo border-accent-indigo-light text-white shadow-lg' : 'text-text-muted border-white/5 bg-slate-800/40 hover:border-white/10 hover:text-white'}`}
+                  className={`rounded-xl border px-4 py-2.5 text-[0.55rem] font-black transition-all duration-500 ${presetIdx === i ? 'bg-accent-indigo border-accent-indigo-light text-white shadow-lg' : 'text-text-muted border-white/5 bg-slate-800/40 hover:border-white/10 hover:text-white'}`}
                 >
                   {p.label}
                 </button>
@@ -406,11 +406,11 @@ export default function PostFlopPanel({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <span className="text-text-darker flex items-center gap-2 px-1 text-[0.55rem] font-black tracking-[0.2em] uppercase">
+          <div className="space-y-3">
+            <span className="text-text-darker flex items-center gap-2 px-1 text-[0.55rem] font-black tracking-[0.3em] uppercase">
               <i className="fa-solid fa-arrows-left-right text-accent-sky" /> Posicionamento Hero
             </span>
-            <div className="flex gap-1.5 rounded-xl border border-white/5 bg-black/40 p-1 shadow-inner">
+            <div className="flex gap-2 rounded-2xl border border-white/5 bg-black/40 p-1.5 shadow-inner">
               {[true, false].map((isIp) => (
                 <button
                   key={String(isIp)}
@@ -419,7 +419,7 @@ export default function PostFlopPanel({
                     setIsLocked(false);
                   }}
                   {...{ 'aria-pressed': heroIsIp === isIp }}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-[0.55rem] font-black transition-all ${heroIsIp === isIp ? 'from-accent-sky border-accent-sky-light bg-linear-to-r to-sky-700 text-white shadow-md' : 'text-text-dim border-transparent bg-transparent hover:text-white'}`}
+                  className={`flex-1 rounded-xl border px-4 py-2.5 text-[0.55rem] font-black transition-all duration-500 ${heroIsIp === isIp ? 'from-accent-sky border-accent-sky-light bg-linear-to-r to-sky-700 text-white shadow-md' : 'text-text-dim border-transparent bg-transparent hover:text-white'}`}
                 >
                   {isIp ? 'IP (Hero)' : 'OOP (Hero)'}
                 </button>
@@ -427,11 +427,11 @@ export default function PostFlopPanel({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <span className="text-text-darker flex items-center gap-2 px-1 text-[0.55rem] font-black tracking-[0.2em] uppercase">
+          <div className="space-y-3">
+            <span className="text-text-darker flex items-center gap-2 px-1 text-[0.55rem] font-black tracking-[0.3em] uppercase">
               <i className="fa-solid fa-users-viewfinder text-accent-violet" /> Entropia Multiway
             </span>
-            <div className="flex gap-1 rounded-xl border border-white/5 bg-black/40 p-1 shadow-inner">
+            <div className="flex gap-2 rounded-2xl border border-white/5 bg-black/40 p-1.5 shadow-inner">
               {[2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
@@ -440,7 +440,7 @@ export default function PostFlopPanel({
                     setIsLocked(false);
                   }}
                   {...{ 'aria-pressed': numPlayers === n }}
-                  className={`flex-1 rounded-lg border py-1.5 text-[0.6rem] font-black transition-all ${numPlayers === n ? 'bg-accent-violet border-accent-violet text-black' : 'text-text-muted border-transparent bg-transparent hover:text-white'}`}
+                  className={`flex-1 rounded-xl border py-2 text-[0.6rem] font-black transition-all duration-500 ${numPlayers === n ? 'bg-accent-violet border-accent-violet text-black' : 'text-text-muted border-transparent bg-transparent hover:text-white'}`}
                 >
                   {n}
                   {n > 2 ? ' MW' : ' HU'}
@@ -450,7 +450,7 @@ export default function PostFlopPanel({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 rounded-3xl border border-white/5 bg-black/40 p-5 shadow-inner sm:grid-cols-3 lg:col-span-8">
+        <div className="grid grid-cols-1 gap-8 rounded-4xl border border-white/5 bg-black/40 p-8 shadow-inner sm:grid-cols-3 lg:col-span-8">
           <PotControl
             label="FLOP"
             val={potFlop}
@@ -487,7 +487,7 @@ export default function PostFlopPanel({
         </div>
       </div>
 
-      <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="relative z-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         {results.map(([street, result]) =>
           result ? (
             <StreetCard
@@ -502,52 +502,52 @@ export default function PostFlopPanel({
           ) : (
             <div
               key={street}
-              className="flex flex-col items-center justify-center rounded-2xl border border-white/5 bg-black/40 p-8 text-center opacity-30 shadow-inner"
+              className="flex flex-col items-center justify-center rounded-3xl border border-white/5 bg-black/40 p-10 text-center opacity-30 shadow-inner"
             >
-              <i className="fa-solid fa-ban text-text-darker mb-3 text-xl"></i>
-              <span className="text-text-darker text-[0.6rem] font-black tracking-widest uppercase">
-                {STREET_LABEL[street]} - VÃ¡cuo de Dados
+              <i className="fa-solid fa-ban text-text-darker mb-4 text-2xl"></i>
+              <span className="text-text-darker text-[0.6rem] font-black tracking-[0.3em] uppercase">
+                {STREET_LABEL[street]} &middot; Vácuo de Dados
               </span>
             </div>
           ),
         )}
       </div>
 
-      {/* SOTA: InteligÃªncia HÃ­brida & WebGPU Telemetry (IntegraÃ§Ã£o PmLens) */}
-      <div className="bg-bg-deep/80 group relative mt-2 overflow-hidden rounded-3xl border border-white/10 p-5 shadow-2xl backdrop-blur-md lg:p-7">
+      {/* SOTA: Inteligência Híbrida & WebGPU Telemetry (Integração PmLens) */}
+      <div className="bg-bg-deep/80 group relative mt-4 overflow-hidden rounded-4xl border border-white/10 p-8 shadow-2xl backdrop-blur-3xl lg:p-10">
         <div className="bg-accent-emerald/5 pointer-events-none absolute top-0 right-0 h-64 w-64 rounded-full blur-[100px]" />
         <div className="from-accent-emerald/5 pointer-events-none absolute top-0 right-0 h-full w-32 bg-linear-to-l to-transparent" />
 
-        <div className="relative z-10 mb-4 flex flex-col items-start justify-between gap-4 border-b border-white/5 pb-4 md:flex-row md:items-center">
-          <div className="flex items-center gap-3">
+        <div className="relative z-10 mb-6 flex flex-col items-start justify-between gap-6 border-b border-white/5 pb-6 md:flex-row md:items-center">
+          <div className="flex items-center gap-4">
             <div
-              className={`h-1.5 w-1.5 rounded-full ${isCalculatingWasm ? 'bg-accent-emerald animate-pulse shadow-[0_0_10px_var(--accent-emerald)]' : 'bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)]'}`}
+              className={`h-2 w-2 rounded-full ${isCalculatingWasm ? 'bg-accent-emerald animate-pulse shadow-[0_0_12px_var(--accent-emerald)]' : 'bg-accent-indigo shadow-[0_0_12px_var(--accent-indigo)]'}`}
             ></div>
-            <strong className="text-[0.7rem] font-black tracking-widest text-white uppercase">
-              InteligÃªncia HÃ­brida (WASM + PM Lens)
+            <strong className="text-[0.75rem] font-black tracking-[0.3em] text-white uppercase">
+              Inteligência Híbrida &middot; <span className="text-text-muted">WASM + PM Lens</span>
             </strong>
             <span
-              className={`rounded border px-2 py-0.5 font-mono text-[0.55rem] tabular-nums ${isLocked ? 'bg-accent-indigo/10 border-accent-indigo/30 text-accent-indigo-light' : 'text-text-muted border-white/10 bg-white/5'}`}
+              className={`rounded-lg border px-3 py-1 font-mono text-[0.55rem] font-black tabular-nums ${isLocked ? 'bg-accent-indigo/10 border-accent-indigo/30 text-accent-indigo-light' : 'text-text-muted border-white/10 bg-white/5'}`}
             >
-              {isLocked ? 'Sincronizado' : 'VÃ¡cuo (Lab)'}
+              {isLocked ? 'SINCRONIZADO' : 'VÁCUO (LAB)'}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-4">
             {pm !== null && (
-              <div className="flex items-center gap-2 rounded-lg border border-white/5 bg-black/40 px-2.5 py-1 shadow-inner">
-                <span className="text-text-dim text-[0.55rem] font-black tracking-widest uppercase">PM Global:</span>
-                <span className={`font-mono text-[0.7rem] font-black tabular-nums ${getPmColorClass(pm)}`}>
+              <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-black/40 px-4 py-2 shadow-inner">
+                <span className="text-text-dim text-[0.6rem] font-black tracking-[0.2em] uppercase">PM Global:</span>
+                <span className={`font-mono text-[0.8rem] font-black tabular-nums ${getPmColorClass(pm)}`}>
                   {formatPct(pm)}
                 </span>
               </div>
             )}
             {ci !== null && (
-              <div className="flex items-center gap-2 rounded-lg border border-white/5 bg-black/40 px-2.5 py-1 shadow-inner">
-                <span className="text-text-dim text-[0.55rem] font-black tracking-widest uppercase">
-                  InsolvÃªncia (Cáµ¢):
+              <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-black/40 px-4 py-2 shadow-inner">
+                <span className="text-text-dim text-[0.6rem] font-black tracking-[0.2em] uppercase">
+                  Insolvência (Cᵢ):
                 </span>
                 <span
-                  className={`font-mono text-[0.7rem] font-black tabular-nums ${ci < 1 ? 'text-accent-danger' : 'text-accent-emerald'}`}
+                  className={`font-mono text-[0.8rem] font-black tabular-nums ${ci < 1 ? 'text-accent-danger' : 'text-accent-emerald'}`}
                 >
                   {formatCi(false, ci)}
                 </span>
@@ -556,20 +556,20 @@ export default function PostFlopPanel({
           </div>
         </div>
 
-        <div className="relative z-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div className="flex flex-col gap-2.5">
-            <span className="text-accent-emerald-light flex items-center gap-2 text-[0.6rem] font-black tracking-widest uppercase">
+        <div className="relative z-10 grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="flex flex-col gap-4">
+            <span className="text-accent-emerald-light flex items-center gap-2 text-[0.6rem] font-black tracking-[0.3em] uppercase">
               <i className="fa-solid fa-microchip" /> Motor WebGPU
             </span>
-            <div className="flex h-full flex-col justify-center gap-3.5 rounded-xl border border-white/5 bg-black/50 p-3.5 shadow-inner">
+            <div className="flex h-full flex-col justify-center gap-5 rounded-2xl border border-white/5 bg-black/50 p-5 shadow-inner">
               <div className="flex items-center justify-between">
-                <span className="text-text-muted text-[0.6rem] font-bold tracking-widest uppercase">Win Rate Real</span>
-                <span className={`font-mono text-[0.8rem] font-black tabular-nums ${winRateClass}`}>{winRateText}</span>
+                <span className="text-text-muted text-[0.65rem] font-bold tracking-[0.2em] uppercase">Win Rate Real</span>
+                <span className={`font-mono text-[0.9rem] font-black tabular-nums ${winRateClass}`}>{winRateText}</span>
               </div>
               <div className="h-px w-full bg-white/5" />
               <div className="flex items-center justify-between">
-                <span className="text-text-muted text-[0.6rem] font-bold tracking-widest uppercase">A* Risk Infl.</span>
-                <span className={`font-mono text-[0.8rem] font-black tabular-nums ${riskIndexClass}`}>
+                <span className="text-text-muted text-[0.65rem] font-bold tracking-[0.2em] uppercase">A* Risk Infl.</span>
+                <span className={`font-mono text-[0.9rem] font-black tabular-nums ${riskIndexClass}`}>
                   {riskIndexText}
                 </span>
               </div>
@@ -577,24 +577,24 @@ export default function PostFlopPanel({
           </div>
 
           <div className="flex flex-col justify-center md:col-span-2">
-            <div className="mb-1.5 flex items-center gap-2">
-              <span className="text-text-muted text-[0.6rem] font-black tracking-widest uppercase">
-                Sinergia SistÃªmica
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-text-muted text-[0.6rem] font-black tracking-[0.3em] uppercase">
+                Sinergia Sistêmica
               </span>
             </div>
-            <p className="text-text-dim m-0 text-[0.7rem] leading-relaxed font-medium italic">
-              A Perspectiva MatemÃ¡tica (PM) atua sobre{' '}
-              <code className="text-accent-danger bg-accent-danger/10 rounded px-1 font-bold">EV_fold</code> e{' '}
-              <code className="text-accent-indigo-light bg-accent-indigo/10 rounded px-1 font-bold">Risk Premium</code>.
-              A <span className="text-accent-danger font-bold">InsolvÃªncia (Cáµ¢)</span> desmascara a ilusÃ£o do
-              ChipEV, enquanto o Motor WebGPU injeta Pathfinding A*, mitigando o viÃ©s do vÃ¡cuo pÃ³s-flop.
+            <p className="text-text-dim m-0 text-[0.8rem] leading-relaxed font-medium italic opacity-90">
+              A Perspectiva Matemática (PM) atua sobre{' '}
+              <code className="text-accent-danger bg-accent-danger/10 rounded px-1.5 py-0.5 font-bold">EV_fold</code> e{' '}
+              <code className="text-accent-indigo-light bg-accent-indigo/10 rounded px-1.5 py-0.5 font-bold">Risk Premium</code>.
+              A <span className="text-accent-danger font-bold">Insolvência (Cᵢ)</span> desmascara a ilusão do
+              ChipEV, enquanto o Motor WebGPU injeta Pathfinding A*, mitigando o viés do vácuo pós-flop.
             </p>
             {!isLocked && (
               <button
                 onClick={() => setIsLocked(true)}
-                className="bg-accent-emerald/10 text-accent-emerald-light border-accent-emerald/30 hover:bg-accent-emerald/20 mt-3 self-start rounded-lg border px-3 py-1.5 text-[0.55rem] font-black tracking-widest uppercase transition-all hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                className="bg-accent-emerald/10 text-accent-emerald-light border-accent-emerald/30 hover:bg-accent-emerald/20 mt-6 self-start rounded-xl border px-5 py-2.5 text-[0.55rem] font-black tracking-[0.3em] uppercase transition-all hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95"
               >
-                <i className="fa-solid fa-link mr-1" /> Reacoplar
+                <i className="fa-solid fa-link mr-2" /> Reacoplar
               </button>
             )}
           </div>

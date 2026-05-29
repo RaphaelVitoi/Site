@@ -121,10 +121,13 @@ async def auth_middleware(request, handler):
     if not API_SECRET_TOKEN and not SUPABASE_JWT_SECRET:
         # Sem token explicito e sem Supabase configurado,
         # aceitamos apenas clientes locais nao-browser
-        if not _is_loopback(request.remote):
+        if not _is_loopback(getattr(request, "remote", None)):
             return web.json_response({"error": "Acesso restrito a clientes locais."}, status=403)
         if origin and not _origin_is_trusted(origin):
-            return web.json_response({"error": "Origin nao confiavel para operacao sem token."}, status=403)
+            return web.json_response(
+                {"error": "Origin nao confiavel para operacao sem token (Security Token not configured)."},
+                status=403,
+            )
         return await handler(request)
 
     auth_header = request.headers.get("Authorization")

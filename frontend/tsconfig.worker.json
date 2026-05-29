@@ -23,6 +23,7 @@
   },
   "include": [
     "src/components/simulator/workers/**/*.ts",
+    "src/components/simulator/engine/types.ts",
     "src/lib/icmEngine.ts",
     "src/lib/perspectiva.ts",
     "src/lib/montecarlo.ts",

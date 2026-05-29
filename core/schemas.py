@@ -28,7 +28,8 @@ class Task(BaseModel):
     @classmethod
     def validate_agent_existence(cls, v: str) -> str:
         """Valida a consistencia do agente no core. Late import para respeitar hot-reload."""
-        from core.config import VALID_AGENTS as _LIVE_AGENTS  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel
+        from core.config import VALID_AGENTS as _LIVE_AGENTS
 
         if v not in _LIVE_AGENTS:
             raise ValueError(f"Agente desconhecido: {v}")
@@ -50,7 +51,7 @@ class GeneralTelemetry(BaseModel):
     ]
     componentName: str | None = None
     scenarioContext: dict[str, Any] | list[Any] | str | None = None
-    userAction: str | None = None
+    userAction: str | None = None  # noqa: N815
     optimalAction: str | None = None
     evLoss: float = 0.0
     isCorrect: bool = True
@@ -62,7 +63,7 @@ class GeneralTelemetry(BaseModel):
     def normalize_category(cls, v: str) -> str:
         """Normaliza categorias para o padrao SOTA (ASCII)."""
         mapping = {
-            "Pós-Flop": "Pos-Flop",
+            "Pos-Flop": "Pos-Flop",
             "Pos Flop": "Pos-Flop",
         }
         return mapping.get(v, v)

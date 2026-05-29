@@ -1,5 +1,6 @@
 # pylint: disable=logging-fstring-interpolation, broad-exception-caught, redefined-outer-name, line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, wrong-import-position, import-outside-toplevel
 # pyright: reportMissingImports=false
+# ruff: noqa: F821, F401
 
 import os
 import sys
@@ -22,6 +23,7 @@ import aiofiles
 
 from llm.budget import GEMINI_KEYS, OPENROUTER_KEYS
 from llm.gemini import call_gemini
+from llm.gemma_local import call_gemma_local
 from llm.openrouter import call_openrouter
 from llm.session import get_global_http_session
 
@@ -84,6 +86,10 @@ def ingest_drive_pdfs(drive_path: str):
     logger.info("[SOTA RAG] Ingestao concluida e indexada. A Mente Coletiva foi hidratada.")
 
 
+# SOTA: Filtro de Relevancia Baseline
+MIN_RELEVANCE_SCORE = 0.65
+
+
 class MemoryRAG:
     def __init__(self, memory_dir: str = ".claude/agent-memory"):
         try:
@@ -94,10 +100,12 @@ class MemoryRAG:
             return
 
         self.memory_dir = Path(memory_dir)
-        db_path = str(self.memory_dir / CHROMA_DB_DIR)
-        self.client = chromadb.PersistentClient(path=db_path)
+        self.client = chromadb.EphemeralClient()
 
-        self.emb_fn = embedding_functions.ONNXMiniLM_L6_V2()
+        self.emb_fn = embedding_functions.OllamaEmbeddingFunction(
+            url=f"{OLLAMA_BASE_URL}/api/embeddings",
+            model_name=EMBEDDING_MODEL,
+        )
 
         try:
             self.collection = self.client.get_or_create_collection(
@@ -191,6 +199,38 @@ class MemoryRAG:
             chunks.append(" ".join(buffer))
         return chunks
 
+    def _evaluate_semantic_coefficient(self, chunk: str) -> bool:
+        """
+        SOTA: Filtro de Densidade Semantica.
+        Rejeita dados brutos e exige que a base de conhecimento seja ancorada em conceitos textuais (linguagem natural).
+        Logs de tasks e ruidos de terminal sao obliterados aqui.
+        """
+        if len(chunk) < 50:
+            return False  # Fragmento muito curto. Sem entropia util.
+
+        # 1. Blocklist de Inutilidades (Logs, Dumps de Task, Traces)
+        useless_patterns = r"(?i)(\[INFO\]|\[DEBUG\]|\[ERROR\]|\[WARN\]|Traceback \(most recent|Process Group PGID|\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}|Task id:|--- FILE CONTENT|Status: Showing lines)"
+        if re.search(useless_patterns, chunk):
+            return False
+
+        # 2. Ancoragem Conceitual (Inicio do chunk deve ser texto)
+        # Extrai os primeiros 80 caracteres. Se nao for linguagem natural (desordenado/matematica pura), ignoramos o chunk.
+        intro = chunk[:80].strip()
+        alpha_count = sum(c.isalpha() for c in intro)
+
+        if len(intro) > 0 and (alpha_count / len(intro)) < 0.45:
+            # Se menos de 45% do inicio sao letras, provavel dump de matriz ou dados brutos sem introducao.
+            return False
+
+        # 3. Validacao Estrutural Basica: Pelo menos uma das primeiras 5 palavras deve ser alfabetica pura.
+        words = intro.split()
+        if len(words) >= 3:
+            alpha_words = sum(1 for w in words[:5] if re.match(r"^[A-Za-zA-ÿ]+$", w))
+            if alpha_words == 0:
+                return False
+
+        return True
+
     def _chunk_text(self, text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
         """Quebra o texto em fragmentos, respeitando os limites semanticos (paragrafos e frases)."""
         if overlap >= chunk_size:
@@ -213,7 +253,8 @@ class MemoryRAG:
             else:
                 all_chunks.extend(self._chunk_long_paragraph(p, chunk_size, overlap))
 
-        return all_chunks
+        # SOTA: Purificacao via Coeficiente Semantico antes da vetorizacao
+        return [c for c in all_chunks if self._evaluate_semantic_coefficient(c)]
 
     async def _read_manifest(self, manifest_path: Path) -> dict:
         exists = await asyncio.to_thread(manifest_path.exists)
@@ -235,8 +276,33 @@ class MemoryRAG:
             logger.exception("[RAG] Falha ao ler ou parsear o manifesto de ingestao.")
             return {}
 
+    def _is_ignored_by_ragignore(self, file_path: Path, ignore_patterns: set) -> bool:
+        """Avalia se o arquivo bate com as regras do .ragignore."""
+        path_str = file_path.as_posix()
+        for pattern in ignore_patterns:
+            if pattern.startswith("*"):
+                if file_path.match(pattern):
+                    return True
+            elif pattern.endswith("/"):
+                # Bloqueia pastas exatas no path
+                dir_name = pattern.strip("/")
+                if dir_name in file_path.parts:
+                    return True
+            elif pattern in path_str:
+                return True
+        return False
+
     async def _collect_target_files_async(self, manifest: dict, base_path: Path) -> set:
         target_files = []
+        ignore_patterns = set()
+
+        # SOTA: Leitura do .ragignore para prevencao termodinamica de ingestao de lixo
+        ragignore_path = base_path / ".ragignore"
+        if await asyncio.to_thread(ragignore_path.exists):
+            async with aiofiles.open(ragignore_path, encoding="utf-8") as f:
+                lines = await f.readlines()
+                ignore_patterns = {line.strip() for line in lines if line.strip() and not line.startswith("#")}
+
         for source in manifest.get("sources", []):
             source_path_str = source.get("path", ".")
             source_path = await asyncio.to_thread((base_path / source_path_str).resolve)
@@ -249,7 +315,10 @@ class MemoryRAG:
 
             for pattern in source.get("patterns", []):
                 files = await asyncio.to_thread(lambda p=pattern, sp=source_path: list(sp.rglob(p)))
-                target_files.extend(files)
+                for f in files:
+                    if not self._is_ignored_by_ragignore(f, ignore_patterns):
+                        target_files.append(f)
+
         return set(target_files)
 
     async def _extract_docx(self, file_path: Path) -> str:
@@ -467,7 +536,7 @@ class MemoryRAG:
                 logger.info("[RAG] Tentando expansao de query via Gemini (Free Tier)...")
                 response, _ = await call_gemini(
                     session,
-                    "gemini-2.0-flash",
+                    "gemini-2.5-flash",
                     system_prompt,
                     user_prompt,
                     GEMINI_KEYS[0],
@@ -483,7 +552,7 @@ class MemoryRAG:
                 logger.info("[RAG] Tentando expansao de query via OpenRouter (Fallback)...")
                 response, _ = await call_openrouter(
                     session,
-                    "google/gemini-2.0-flash",
+                    "google/gemini-2.5-flash",
                     system_prompt,
                     user_prompt,
                     OPENROUTER_KEYS[0],
@@ -539,16 +608,27 @@ class MemoryRAG:
                 lexical_score * HYBRID_SEARCH_LEXICAL_WEIGHT
             )
 
-            scored_docs.append({
-                "doc": doc,
-                "agent": metadatas[i]["agent"],
-                "source": metadatas[i].get("source", "N/A"),
-                "score": hybrid_score,
-            })
+            scored_docs.append(
+                {
+                    "doc": doc,
+                    "agent": metadatas[i]["agent"],
+                    "source": metadatas[i].get("source", "N/A"),
+                    "score": hybrid_score,
+                }
+            )
 
         # 3. Reranking e Selecao Final
         scored_docs.sort(key=lambda x: x["score"], reverse=True)
-        return scored_docs[:n_results]
+
+        # SOTA: Filtro Pratico de Relevancia (Corte da Entropia)
+        filtered_docs = [doc for doc in scored_docs if doc["score"] >= MIN_RELEVANCE_SCORE]
+
+        if not filtered_docs and scored_docs:
+            logger.warning(
+                f"[RAG] Fragmentos localizados, mas todos descartados pelo Filtro de Relevancia (Score < {MIN_RELEVANCE_SCORE}). Prevencao de alucinacao ativa."
+            )
+
+        return filtered_docs[:n_results]
 
     def _process_query_result_row(
         self,
@@ -622,12 +702,26 @@ class MemoryRAG:
             return await self._zero_latency_lexical_fallback()
 
     async def _extract_causal_graph(self, session, system_prompt: str, user_prompt: str) -> str:
+        try:
+            logger.info("[RAG] Forjando Grafo Causal (Knowledge Graph) via Oraculo Gemma Local (SOTA)...")
+            response, _ = await call_gemma_local(
+                session=session,
+                _model="gemma4:4b",
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                key="local",
+                max_tokens=1024,
+            )
+            return response
+        except Exception as e:
+            logger.warning(f"[RAG] Falha na forja do Grafo Causal via Gemma Local: {e}. Tentando fallback para Cloud.")
+
         if GEMINI_KEYS:
             try:
                 logger.info("[RAG] Forjando Grafo Causal (Knowledge Graph) via Gemini...")
                 response, _ = await call_gemini(
                     session,
-                    "gemini-2.0-flash",
+                    "gemini-2.5-flash",
                     system_prompt,
                     user_prompt,
                     GEMINI_KEYS[0],
@@ -641,7 +735,7 @@ class MemoryRAG:
                 logger.info("[RAG] Forjando Grafo Causal via OpenRouter (Fallback)...")
                 response, _ = await call_openrouter(
                     session,
-                    "google/gemini-2.0-flash",
+                    "google/gemini-2.5-flash",
                     system_prompt,
                     user_prompt,
                     OPENROUTER_KEYS[0],

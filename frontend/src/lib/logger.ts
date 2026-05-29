@@ -1,9 +1,9 @@
-/**
+﻿/**
  * IDENTITY: SOTA Frontend Logger
  * PATH: src/lib/logger.ts
- * ROLE: Capturar eventos, erros e métricas de performance do frontend e enviá-los para o motor de auditoria (task_executor).
+ * ROLE: Capturar eventos, erros e mÃ©tricas de performance do frontend e enviÃ¡-los para o motor de auditoria (task_executor).
  * BINDING: [web/handlers.py (handle_frontend_logs)]
- * TELEOLOGY: Monitoramento em tempo real de anomalias matemáticas e de UI, garantindo a integridade SOTA v6.2.1 GOLD.
+ * TELEOLOGY: Monitoramento em tempo real de anomalias matemÃ¡ticas e de UI, garantindo a integridade SOTA v7.0 GOLD.
  */
 
 import { buildNexusClientUrl } from '@/lib/api-contract';
@@ -116,3 +116,4 @@ class SOTALogger {
 }
 
 export const logger = SOTALogger.getInstance();
+

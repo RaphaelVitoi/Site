@@ -2,7 +2,7 @@
  * IDENTITY: Hierarquia da Decisão SOTA GOLD
  * PATH: src/app/biblioteca/hierarquia-da-decisao/page.tsx
  * ROLE: Artigo técnico definindo as camadas de resolução do pensamento VITOI.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

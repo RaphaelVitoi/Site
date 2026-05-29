@@ -1,17 +1,18 @@
+"""Module for loading environment variables."""
+
+import logging
 import os
 from pathlib import Path
-from typing import Dict
-import logging
 
 logger = logging.getLogger(__name__)
 
 
-def load_env() -> Dict[str, str]:
+def load_env() -> dict[str, str]:
     """
     Carrega as variaveis de ambiente a partir de .env e _env.ps1 na raiz do projeto.
     Atualiza o os.environ global de forma robusta e sem truncamentos.
     """
-    keys: Dict[str, str] = {}
+    keys: dict[str, str] = {}
     base_dir = Path(__file__).parent.parent.resolve()
 
     for file_name in ["_env.ps1", ".env"]:
@@ -22,7 +23,7 @@ def load_env() -> Dict[str, str]:
             content = env_path.read_text(encoding="utf-8", errors="replace")
             for line in content.splitlines():
                 line = line.strip()
-                if not line or line.startswith("#") or line.startswith("//"):
+                if not line or line.startswith(("#", "//")):
                     continue
 
                 key = ""
@@ -54,16 +55,10 @@ def load_env() -> Dict[str, str]:
                 # Limpeza robusta do valor preservando espacos internos
                 if value.startswith('"'):
                     end_idx = value.find('"', 1)
-                    if end_idx != -1:
-                        value = value[1:end_idx]
-                    else:
-                        value = value[1:]
+                    value = value[1:end_idx] if end_idx != -1 else value[1:]
                 elif value.startswith("'"):
                     end_idx = value.find("'", 1)
-                    if end_idx != -1:
-                        value = value[1:end_idx]
-                    else:
-                        value = value[1:]
+                    value = value[1:end_idx] if end_idx != -1 else value[1:]
                 else:
                     # Remove comentarios de fim de linha
                     comment_idx = value.find("#")
@@ -72,7 +67,7 @@ def load_env() -> Dict[str, str]:
 
                 keys[key] = value
                 os.environ[key] = value
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.warning("Falha ao carregar arquivo %s: %s", file_name, e)
 
     return keys

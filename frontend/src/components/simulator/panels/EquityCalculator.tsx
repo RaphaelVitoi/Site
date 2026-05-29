@@ -1,9 +1,9 @@
-﻿'use client';
+'use client';
 
 /**
- * IDENTITY: Calculadora Malmuth-Harville de Equidade ICM v6.2.1 GOLD
+ * IDENTITY: Calculadora Malmuth-Harville de Equidade ICM v7.0 GOLD
  * PATH: src/components/simulator/panels/EquityCalculator.tsx
- * ROLE: Inputs manuais de stacks + payouts + hand parser -> cÃ¡lculo ICM real.
+ * ROLE: Inputs manuais de stacks + payouts + hand parser -> cálculo ICM real.
  * BINDING: [lib/icmEngine.ts, lib/handParser.ts, components/simulator/hooks/*, components/simulator/ui/*]
  */
 
@@ -46,7 +46,7 @@ export default function EquityCalculator() {
 	const deferredPlayers = useDeferredValue(players);
 	const deferredPrizes = useDeferredValue(prizes);
 
-	// SOTA v4.2: OrquestraÃ§Ã£o de CÃ¡lculo Modularizada
+	// SOTA v4.2: Orquestração de Cálculo Modularizada
 	const { results, isWorkerCalculating, totalChips, totalPrizes } = useIcmCalculations({
 		players: deferredPlayers,
 		prizes: deferredPrizes,
@@ -89,7 +89,7 @@ export default function EquityCalculator() {
 			if (delta < maxLoss.delta) maxLoss = { name: r.name, delta };
 		}
 		if (Math.abs(maxGain.delta) < 0.5 && Math.abs(maxLoss.delta) < 0.5) {
-			return 'Equidade ICM prÃ³xima da proporcional â€” pressÃ£o ICM baixa neste spot.';
+			return 'Equidade ICM próxima da proporcional — pressão ICM baixa neste spot.';
 		}
 		return `${maxGain.name} ganha +${maxGain.delta.toFixed(1)}% com ICM vs proporcional. ${maxLoss.name} perde ${Math.abs(maxLoss.delta).toFixed(1)}%. Short stacks acumulam equity desproporcional ao risco.`;
 	}, [results, players, totalChips]);
@@ -161,7 +161,7 @@ export default function EquityCalculator() {
 				setHandText('');
 				setHeroId(firstPlayer.id);
 			} else {
-				setParserError('NÃ£o foi possÃ­vel identificar pelo menos 2 jogadores.');
+				setParserError('Não foi possível identificar pelo menos 2 jogadores.');
 			}
 		} catch (error: unknown) {
 			console.error('[HandParser] Erro ao decodificar Hand History:', error);
@@ -179,7 +179,7 @@ export default function EquityCalculator() {
 						Calculadora Malmuth-Harville
 					</h3>
 					<p className="m-0 mt-1.5 text-[0.6rem] text-text-dim font-medium uppercase tracking-wider text-glow-indigo transition-all duration-500">
-						AproximaÃ§Ã£o de Equidade por Malha de CombinaÃ§Ãµes
+						Aproximação de Equidade por Malha de Combinações
 					</p>
 				</div>
 				<div className="flex gap-2">
@@ -321,7 +321,7 @@ export default function EquityCalculator() {
 								onClick={addPrize}
 								className="px-3 py-1.5 rounded-lg bg-accent-amber/10 border border-accent-amber/20 text-accent-amber text-[0.6rem] font-black uppercase tracking-widest hover:bg-accent-amber/20 transition-all flex items-center gap-1.5"
 							>
-								<i className="fa-solid fa-plus text-[0.5rem]" /> PosiÃ§Ã£o
+								<i className="fa-solid fa-plus text-[0.5rem]" /> Posição
 							</button>
 						</div>
 						<div className="grid grid-cols-2 gap-2 max-h-100 overflow-y-auto pr-2 scrollbar-hide">
@@ -331,12 +331,12 @@ export default function EquityCalculator() {
 									className="flex items-center gap-2 p-2.5 rounded-xl bg-black/40 border border-white/5 group"
 								>
 									<span className="w-6 text-[0.65rem] font-black text-text-darker">
-										{i + 1}Âº
+										{i + 1}º
 									</span>
 									<input
 										type="number"
-										aria-label="PremiaÃ§Ã£o"
-										title="PremiaÃ§Ã£o"
+										aria-label="Premiação"
+										title="Premiação"
 										placeholder="0"
 										value={val}
 										onChange={(e) =>
@@ -347,8 +347,8 @@ export default function EquityCalculator() {
 									{i === prizes.length - 1 && prizes.length > 1 && (
 										<button
 											onClick={removePrize}
-											aria-label="Remover PrÃªmio"
-											title="Remover PrÃªmio"
+											aria-label="Remover Prêmio"
+											title="Remover Prêmio"
 											className="w-8 h-8 rounded-lg text-text-darker hover:text-accent-danger transition-colors flex items-center justify-center"
 										>
 											<i className="fa-solid fa-circle-minus text-xs" />
@@ -385,7 +385,7 @@ export default function EquityCalculator() {
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<div className="bg-black/60 p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
 								<span className="text-[0.5rem] text-text-darker uppercase font-black tracking-widest">
-									VariaÃ§Ã£o Bubble Factor
+									Variação Bubble Factor
 								</span>
 								<div
 									className={`text-xl font-black font-mono tracking-tighter ${bfRangeColor}`}
@@ -395,7 +395,7 @@ export default function EquityCalculator() {
 							</div>
 							<div className="bg-black/60 p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
 								<span className="text-[0.5rem] text-text-darker uppercase font-black tracking-widest">
-									UrgÃªncia de SobrevivÃªncia
+									Urgência de Sobrevivência
 								</span>
 								<div className="text-xl font-black font-mono tracking-tighter text-white">
 									Alta

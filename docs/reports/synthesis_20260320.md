@@ -1,11 +1,11 @@
 # SINTESE DE AUTOPOIESE: A FORJA DA INFRAESTRUTURA V3.2
 
-> **Data:** 20 de Março de 2026
+> **Data:** 20 de Marco de 2026
 > **Arquiteto:** Raphael Vitoi (CEO)
 > **Sistema:** CHICO
-> **Status:** Fundação SOTA Concluída
+> **Status:** Fundacao SOTA Concluida
 
-## Verdades Estruturais Extraídas
+## Verdades Estruturais Extraidas
 
 1. **O Gargalo 429:** A latencia progressiva e um sintoma de Throttling de Rede (Rate Limit), nao de hardware. Motores de IA background exigem cegueira seletiva (`.aiexclude`) para nao engolir o proprio cache.
 2. **A Interrupcao Ativa (Watcher):** O monitoramento deve impedir a acao destrutiva. O `vitoi_watcher.py` automatiza a auditoria de arquivos extensos (>8000 tokens) e sugere fatiamento antes do envio.

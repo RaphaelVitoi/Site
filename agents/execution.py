@@ -4,28 +4,28 @@ Execution -- Orquestracao central de execucao de tarefas e workflow completo.
 """
 
 import asyncio
-from datetime import UTC, datetime, timedelta
 import gc
 import logging
 import os
-from pathlib import Path
 import re
 import sqlite3
 import time
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
-from agents.autonomy import apply_god_mode, get_autonomy_mode
 import agents.context_builder as cb
+import core.runtime as te
+import engine.cognitive as local_engine
+from agents.autonomy import apply_god_mode, get_autonomy_mode
 from agents.dispatcher import (
     DispatcherSubtask,
     _parse_dispatcher_subtasks_strict,
     _retry_dispatcher_schema_once,
 )
 from agents.fallback import _create_dispatcher_fallback_plan
-import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
-import engine.cognitive as local_engine
 from llm.budget import (
     APIBudgetExhaustedError,
     APIKeysExhaustedError,
@@ -87,10 +87,10 @@ def _escalate_security_cognition(task: Task) -> None:
     if task.agent == AGENT_SECURITYCHIEF and priority in ["high", "critical"]:
         # SOTA: model_copy e o padrao correto do Pydantic v2 para mutacao segura.
         # Evita falha silenciosa em models frozen e AttributeError em v2 strict.
-        new_metadata = {**(task.metadata or {}), "model_override": "gemini-1.5-pro"}
+        new_metadata = {**(task.metadata or {}), "model_override": "gemini-2.5-pro"}
         object.__setattr__(task, "metadata", new_metadata)
         logger.info(
-            f"[[{te._c(task.agent)}]{task.agent}[/]] [bold red]CRITICAL SEC[/]: Escalando cognicao de seguranca para gemini-1.5-pro."
+            f"[[{te._c(task.agent)}]{task.agent}[/]] [bold red]CRITICAL SEC[/]: Escalando cognicao de seguranca para gemini-2.5-pro."
         )
 
 

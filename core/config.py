@@ -2,14 +2,14 @@
 # pylint: disable=broad-exception-caught, global-statement, line-too-long
 
 import atexit
-from datetime import UTC, datetime, timedelta
 import json
 import logging
 import os
-from pathlib import Path
 import sys
 import threading
 import time
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 from utils.env_loader import load_env
@@ -24,7 +24,7 @@ PATH_AGENTS_MANIFEST = BASE_DIR / "data/agents_manifest.json"
 PATH_INTENTMAP = BASE_DIR / "data/intentmap.json"
 PATH_SYSTEM_CONFIG = BASE_DIR / "data/system_config.json"
 PATH_ROUTING_MAP = BASE_DIR / "data/routing_map.json"
-MODEL_GEMINI_FLASH = "gemini-2.0-flash"
+MODEL_GEMINI_FLASH = "gemini-2.5-flash"
 
 
 def load_json_config(file_path: Path, default_value: Any = None) -> Any:
@@ -286,7 +286,10 @@ def _block_key(provider_key: str):
 # ==========================================
 _TELEMETRY_BUFFER: list[dict[str, Any]] = []
 _TELEMETRY_LOCK = threading.Lock()
-PATH_TELEMETRY_DUMP = BASE_DIR / ".claude/logs/wasm_telemetry_dump.jsonl"
+PATH_NEXUS_ZONE = BASE_DIR / "temp/nexus_zone"
+PATH_TELEMETRY_DUMP = PATH_NEXUS_ZONE / "logs/wasm_telemetry_dump.jsonl"
+PATH_AUDIT_LOGS = PATH_NEXUS_ZONE / "logs/audit"
+PATH_PID_FILE = PATH_NEXUS_ZONE / "nexus_worker.pid"
 
 
 def push_wasm_telemetry(payload: dict[str, Any]) -> None:

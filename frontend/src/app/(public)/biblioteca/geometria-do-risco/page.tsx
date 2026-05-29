@@ -2,7 +2,7 @@
  * IDENTITY: Geometria do Risco GOLD
  * PATH: src/app/biblioteca/geometria-do-risco/page.tsx
  * ROLE: Artigo conceitual sobre a estrutura tridimensional do risco.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

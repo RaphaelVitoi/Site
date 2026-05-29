@@ -15,7 +15,7 @@
 /                              Landing page (home)
 /(public)/quem-sou              Sobre Raphael Vitoi
 /(user)/dashboard               Dashboard do usuario (vitoi.ts integration)
-/(lab)/simulador               Simulador Mestre ICM (Motor Quantum v4.6)
+/(lab)/simulador               Simulador Mestre ICM (Motor v7.0 GOLD)
 /(lab)/simulador/gto-cfr       Laboratorio GTO AI (CFR e A*)
 /(auth)/login                   Página de autenticação/login
 /(lab)/quiz                    Quiz e validação de conhecimento
@@ -38,7 +38,7 @@
 /(auth)/callback               OAuth Callback integration
 /api/og/                       OG Image generator (social sharing)
 
-/api/v1/telemetry              Telemetry metrics ingestion (SOTA v6)
+/api/v1/telemetry              Telemetry metrics ingestion (SOTA v7.0 GOLD)
 /api/v1/rag                    Cognitive memory retrieve/store (RAG)
 /api/v1/profile                User Profile data endpoints
 /api/v1/predictive             Telemetry-based predictive stats

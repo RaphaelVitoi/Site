@@ -5,15 +5,15 @@ This module abstracts LLM routing and calling strategies to decouple
 API requests from resilience and circuit breaker logic.
 """
 
-from abc import ABC, abstractmethod
 import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass
 import logging
 import os
 import random
 import re
 import time
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any, cast
 
 import aiohttp
@@ -39,7 +39,19 @@ from llm.budget import (
 )
 from llm.gemini import call_gemini
 from llm.gemma_local import call_gemma_local
-from llm.openrouter import call_openrouter
+
+try:
+    from llm.openrouter import call_openrouter
+
+    OPENROUTER_AVAILABLE = True
+except Exception as exc:  # noqa: BLE001
+    call_openrouter = None  # type: ignore[assignment] # pylint: disable=invalid-name
+    OPENROUTER_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "OpenRouter module unavailable; provider disabled: %s",
+        exc,
+    )
+
 from utils.text import enforce_pure_ascii
 
 # =========================================================================
@@ -81,8 +93,8 @@ class LLMProviderStrategy(ABC):
 
     async def check_quarantine(
         self,
-        _model: str,  # noqa: ARG002
-        _key: str,  # noqa: ARG002
+        _model: str,
+        _key: str,
     ) -> bool:
         """
         Permite que provedores implementem suas proprias
@@ -93,10 +105,10 @@ class LLMProviderStrategy(ABC):
 
     async def handle_semantic_error(
         self,
-        _e: Exception,  # noqa: ARG002
-        _model: str,  # noqa: ARG002
-        _key: str,  # noqa: ARG002
-    ) -> None:  # noqa: B027 / B027 is a default implementation rule
+        _e: Exception,
+        _model: str,
+        _key: str,
+    ) -> None:
         """Bloqueia a chave com base em erros especificos."""
         await asyncio.sleep(0)
 
@@ -177,7 +189,7 @@ class AnthropicStrategy(LLMProviderStrategy):
         user_prompt: str,
         key: str,
         client_timeout: aiohttp.ClientTimeout | None,
-        require_json: bool,  # noqa: ARG002
+        require_json: bool,
         **kwargs: Any,
     ) -> tuple[str, dict[str, Any]]:
         """Executes Anthropic API call."""
@@ -207,6 +219,8 @@ class OpenRouterStrategy(LLMProviderStrategy):
         **kwargs: Any,
     ) -> tuple[str, dict[str, Any]]:
         """Executes OpenRouter API call."""
+        if call_openrouter is None:
+            raise RuntimeError("OpenRouter module unavailable.")
         return await call_openrouter(
             session,
             model,
@@ -248,7 +262,7 @@ class GemmaLocalStrategy(LLMProviderStrategy):
             system_prompt,
             user_prompt,
             key,
-            client_timeout,
+            timeout=client_timeout,
             require_json=require_json,
             **kwargs,
         )
@@ -260,15 +274,17 @@ _STRATEGY_ANTHROPIC = AnthropicStrategy()
 _STRATEGY_OPENROUTER = OpenRouterStrategy()
 _STRATEGY_LOCAL = GemmaLocalStrategy()
 
+# Tabela Hash O(1) imutavel. Evita alocacao de dicionario no Event Loop a cada inferencia.
+_STRATEGIES_MAP = {
+    "gemini": _STRATEGY_GEMINI,
+    "anthropic": _STRATEGY_ANTHROPIC,
+    "openrouter": _STRATEGY_OPENROUTER,
+    "local": _STRATEGY_LOCAL,
+}
+
 
 def _get_provider_strategy(provider: str) -> LLMProviderStrategy | None:
-    strategies = {
-        "gemini": _STRATEGY_GEMINI,
-        "anthropic": _STRATEGY_ANTHROPIC,
-        "openrouter": _STRATEGY_OPENROUTER,
-        "local": _STRATEGY_LOCAL,
-    }
-    return strategies.get(provider)
+    return _STRATEGIES_MAP.get(provider)
 
 
 @dataclass
@@ -295,15 +311,15 @@ async def _handle_chaos_injection(task: Task, c_func: Callable[[str], str]) -> N
         return
     try:
         chaos_lambda = float(chaos_lambda_str)
-        if random.random() < chaos_lambda:  # noqa: S311
-            chaos_type = random.choice(["503", "TIMEOUT", "LATENCY"])  # noqa: S311
+        if random.random() < chaos_lambda:
+            chaos_type = random.choice(["503", "TIMEOUT", "LATENCY"])
             if chaos_type == "LATENCY":
                 logger.warning(
                     "[[%s]%s[/]] [bold red]CHAOS INJECTED:[/] Latencia artificial",
                     c_func(task.agent),
                     task.agent,
                 )
-                await asyncio.sleep(random.uniform(3.0, 7.0))  # noqa: S311
+                await asyncio.sleep(random.uniform(3.0, 7.0))
             elif chaos_type == "TIMEOUT":
                 logger.warning(
                     "[[%s]%s[/]] [bold red]CHAOS INJECTED:[/] Timeout simulado",
@@ -377,7 +393,11 @@ async def _process_successful_call(
 
 
 async def _handle_timeout_error(
-    strategy: LLMProviderStrategy, ctx: ProviderContext, key_hash: str, route_key: str, retries_left: int
+    strategy: LLMProviderStrategy,
+    ctx: ProviderContext,
+    key_hash: str,
+    route_key: str,
+    retries_left: int,
 ) -> bool:
     # SOTA: A penalidade de latencia reflete estritamente o limite do SLA
     # configurado, imune a atrasos do Event Loop
@@ -460,7 +480,7 @@ async def _handle_429_error(
 
     if delay <= 65 and rate_limit_retries_left > 0:
         rate_limit_retries_left -= 1
-        jitter = random.uniform(1.0, 3.0)  # noqa: S311
+        jitter = random.uniform(1.0, 3.0)
         sleep_time = float(delay) + jitter
         logger.info(
             "[[%s]%s[/]] 429 rate-limit em %s. Aguardando %.2fs... (%d retries de 429 restantes)",
@@ -481,9 +501,9 @@ async def _handle_429_error(
         ctx.model,
     )
     if delay <= 65:
-        await asyncio.sleep(float(delay) + random.uniform(1.0, 3.0))  # noqa: S311
+        await asyncio.sleep(float(delay) + random.uniform(1.0, 3.0))
     else:
-        await asyncio.sleep(random.uniform(2.0, 4.0))  # noqa: S311
+        await asyncio.sleep(random.uniform(2.0, 4.0))
     return False, general_retries_left, rate_limit_retries_left
 
 
@@ -701,7 +721,7 @@ async def _try_provider(
     if not keys:
         return None
 
-    _c = _te._c  # noqa: SLF001
+    _c = _te._c
     strategy = _get_provider_strategy(provider)
     if not strategy:
         logger.error("Provedor desconhecido: %s", provider)

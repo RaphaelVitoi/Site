@@ -1,9 +1,9 @@
 # pylint: disable=missing-module-docstring, broad-exception-caught, logging-fstring-interpolation, protected-access, line-too-long, invalid-name
 
-from collections.abc import Callable
-from datetime import UTC, datetime
 import logging
 import time
+from collections.abc import Callable
+from datetime import UTC, datetime
 
 import aiohttp
 
@@ -46,8 +46,8 @@ async def _try_compress_gemini(
     manager: QueueManager,
 ) -> tuple[str | None, bool]:
     """Tenta a compressao via Gemini, mas usando o motor de resiliencia SOTA (_try_provider)."""
-    gemini_compression_keys = _gemini_key_pool_for_model("gemini-2.0-flash")
-    gemini_model = "gemini-2.0-flash"
+    gemini_compression_keys = _gemini_key_pool_for_model("gemini-2.5-flash")
+    gemini_model = "gemini-2.5-flash"
     route_gemini = _route_identifier("gemini", gemini_model)
 
     if not gemini_compression_keys or await _is_route_blocked(route_gemini):
@@ -190,7 +190,7 @@ async def _compress_context(
     try:
         system_prompt = te.SYSTEM_CONFIG.get(
             "compression_system_prompt",
-            "Voce e um especialista em sumarizacao. Resuma o texto a seguir de forma densa e informativa, preservando todos os pontos criticos, nomes de arquivos, decisoes chave e a intencao original. O output deve ser em portugues (Pure ASCII)."
+            "Voce e um especialista em sumarizacao. Resuma o texto a seguir de forma densa e informativa, preservando todos os pontos criticos, nomes de arquivos, decisoes chave e a intencao original. O output deve ser em portugues (Pure ASCII).",
         )
         session = await get_global_http_session()
 

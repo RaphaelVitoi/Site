@@ -1,0 +1,39 @@
+# =================================================
+# SOTA RAG Ignore List (.ragignore)
+# Arquivos e repositorios que carregam entropia ou nao
+# possuem valor semantico para a Mente Coletiva.
+# =================================================
+
+# Repositorios e Ambientes
+.git/
+.venv/
+node_modules/
+__pycache__/
+
+# Builds e Caches
+.next/
+dist/
+build/
+coverage/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.chroma_db/
+.nexus_runtime/
+
+# Logs e Temporarios
+logs/
+temp/
+tmp/
+*.log
+
+# Bancos de Dados Brutos
+*.sqlite3
+*.db
+
+# Artefatos Compilados
+*.pyc
+*.pyo
+*.pyd
+*.exe
+*.dll

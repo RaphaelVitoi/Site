@@ -7,9 +7,7 @@ from watchdog.observers import Observer
 class VitoiContextHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if str(event.src_path).endswith(".py"):
-            print(
-                f"[ANTEVISAO] Mudanca detectada: {event.src_path}. Atualizando Grafo de Dependencias..."
-            )
+            print(f"[ANTEVISAO] Mudanca detectada: {event.src_path}. Atualizando Grafo de Dependencias...")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
  * IDENTITY: A Falácia do Equilíbrio GOLD
  * PATH: src/app/biblioteca/falacia-equilibrio-pedagogia/page.tsx
  * ROLE: Artigo pedagógico sobre a ineficiência do estudo puramente teórico.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

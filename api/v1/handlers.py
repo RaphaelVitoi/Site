@@ -125,11 +125,13 @@ async def handle_get_task_result(request):
                 status=400 if content == "INVALID_PATH" else 404,
             )
 
-        return web.json_response({
-            "status": "SUCCESS",
-            "id": task_id,
-            "content": content,
-        })
+        return web.json_response(
+            {
+                "status": "SUCCESS",
+                "id": task_id,
+                "content": content,
+            }
+        )
     except Exception as e:  # noqa: BLE001
         return web.json_response({"error": str(e)}, status=500)
 
@@ -197,12 +199,14 @@ async def handle_health(request):
 
         agents_count = len(_te.AGENTS_MANIFEST)
 
-        return web.json_response({
-            "status": "ok",
-            "uptime_s": uptime_s,
-            "tasks": counts,
-            "agents": agents_count,
-        })
+        return web.json_response(
+            {
+                "status": "ok",
+                "uptime_s": uptime_s,
+                "tasks": counts,
+                "agents": agents_count,
+            }
+        )
     except Exception as e:  # noqa: BLE001
         return web.json_response({"status": "error", "error": str(e)}, status=500)
 
@@ -214,10 +218,12 @@ async def handle_get_db_summary(request: web.Request) -> web.Response:
         # SOTA: Centraliza a leitura de metricas via API para evitar lock de DB
         counts = await manager.get_task_counts()
         budget = await manager.get_daily_budget_usage()
-        return web.json_response({
-            "tasks": counts,
-            "budget": budget,
-        })
+        return web.json_response(
+            {
+                "tasks": counts,
+                "budget": budget,
+            }
+        )
     except Exception as e:  # noqa: BLE001
         logger.exception("Falha ao obter sumario do DB: %s", e)
         return web.json_response({"status": "error", "error": str(e)}, status=500)
@@ -270,10 +276,13 @@ async def handle_rag_ingest(request) -> web.Response:
         task = asyncio.create_task(rag.ingest_all_memories())
         bg_tasks.add(task)
         task.add_done_callback(bg_tasks.discard)
-        return web.json_response({
-            "status": "SUCCESS",
-            "message": "Ingestao RAG iniciada em background.",
-        })
+        return web.json_response(
+            {
+                "status": "SUCCESS",
+                "message": "Ingestao RAG iniciada em background.",
+            },
+            status=202,
+        )
     except Exception as e:  # noqa: BLE001
         logger.exception("Falha ao disparar ingestao RAG: %s", e)
         return web.json_response({"error": str(e)}, status=500)
@@ -331,7 +340,7 @@ async def handle_bucket_op(request: web.Request) -> web.Response:
             content = data.get("content", "").encode()
             sota_buckets.upload_file(bucket, filename, content)
             return web.json_response({"status": "SUCCESS", "message": f"File {filename} uploaded to {bucket}"})
-        elif op == "download":
+        if op == "download":
             content = sota_buckets.download_file(bucket, filename)
             if content:
                 return web.json_response({"status": "SUCCESS", "content": content.decode()})

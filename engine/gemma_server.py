@@ -1,21 +1,29 @@
-# ruff: noqa: D100, D101, D103, BLE001, G004, ARG001, ARG002
+# ruff: noqa: D100, D101, D103, BLE001, G004, ARG001, ARG002, E402, I001
+# pylint: disable=wrong-import-position
 
 import asyncio
+from collections.abc import AsyncGenerator
 import json
 import logging
 import os
 import socket
 import subprocess  # noqa: S404
+import sys
 import time
-from collections.abc import AsyncGenerator
+from pathlib import Path
 from typing import Annotated, TypedDict
+
+# SOTA: Garantir que o root do projeto esteja no sys.path para execucao direta
+PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
 import aiohttp
 from fastapi import Depends, FastAPI, HTTPException, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # Sourcing global ASCII log purification filter for Uvicorn
 from core.config import AsciiEnforcementFilter  # type: ignore
@@ -85,7 +93,7 @@ except Exception as e:  # noqa: BLE001
     logger.warning("[INFRA] ChromaDB nao inicializado. RAG desativado: %s", e)
 # ==============================================================================
 
-ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")]
 
 app.add_middleware(
     CORSMiddleware,
@@ -100,14 +108,17 @@ MODEL_ID = os.environ.get("SOTA_LOCAL_MODEL", "gemma4:31b")
 
 
 class PhysicsSnapshot(BaseModel):
-    heroStack: float
-    villain1Stack: float | None = None
-    villain2Stack: float | None = None
+    hero_stack: float = Field(alias="heroStack")
+    villain1_stack: float | None = Field(default=None, alias="villain1Stack")
+    villain2_stack: float | None = Field(default=None, alias="villain2Stack")
     pot: float
-    heroInvested: float
-    edgeFactor: float | None = 1.0
+    hero_invested: float = Field(alias="heroInvested")
+    edge_factor: float | None = Field(default=1.0, alias="edgeFactor")
     position: str
-    referenceStatus: str
+    reference_status: str = Field(alias="referenceStatus")
+    hero_rp: float = Field(default=15.0, alias="heroRp")
+    villain_rp: float = Field(default=15.0, alias="villainRp")
+    bounty_value: float = Field(default=0.0, alias="bountyValue")
 
 
 class CognitiveProfile(TypedDict, total=False):
@@ -135,11 +146,14 @@ def _format_snapshot_block(snapshot: PhysicsSnapshot | None) -> str:
         return ""
     return f"""
 [SOTA_SNAPSHOT_ACTIVE]
-Hero Stack: {snapshot.heroStack}bb
+Hero Stack: {snapshot.hero_stack}bb
 Pot Size: {snapshot.pot}bb
-Hero Invested: {snapshot.heroInvested}bb
+Hero Invested: {snapshot.hero_invested}bb
 Position: {snapshot.position}
-Psychological Status: {snapshot.referenceStatus}
+Psychological Status: {snapshot.reference_status}
+Hero RP: {snapshot.hero_rp}
+Villain RP: {snapshot.villain_rp}
+Bounty Value: {snapshot.bounty_value}
 [END_SNAPSHOT]
 """
 
@@ -200,7 +214,8 @@ def _get_rag_context(prompt: str) -> str:
             docs = results.get("documents")
             distances = results.get("distances")
 
-            if docs is not None and docs[0] and distances is not None and distances[0]:
+            # SOTA FIX: Protecao robusta contra listas vazias ou nulas do ChromaDB
+            if docs and distances and len(docs) > 0 and len(distances) > 0 and docs[0]:
                 strictness_threshold = 1.1  # ChromaDB L2 Default: Menor e mais proximo. > 1.1 e ruido.
 
                 valid_docs = [
@@ -208,23 +223,21 @@ def _get_rag_context(prompt: str) -> str:
                 ]
 
                 if not valid_docs:
-                    logger.info(  # noqa: G004
-                        "[RAG] Todos os fragmentos foram bloqueados pelo strictness_threshold."
-                    )
+                    logger.info("[RAG] Todos os fragmentos foram bloqueados pelo strictness_threshold.")
                     return ""
 
                 top_docs = valid_docs[:3]
                 docs_str = "\n---\n".join(top_docs)
 
                 # SOTA: Log explicito dos fragmentos RAG no terminal do backend para auditoria epistemologica
-                logger.info(  # HIGH-08
+                logger.info(
                     "=== [RAG INJECTED FRAGMENTS: %d CHUNKS (Threshold < %s)] ===",
                     len(top_docs),
                     strictness_threshold,
                 )
                 for i, d in enumerate(top_docs):
                     logger.info("Fragment %d:\n%s...[TRUNCADO]\n", i + 1, d[:200])
-                logger.info("=====================================================")  # noqa: G004
+                logger.info("=====================================================")
 
                 return f"\n\n[CONTEXTO EPISTEMICO RECUPERADO (RAG)]:\n{docs_str}\n\nIntegre o conhecimento absoluto acima em sua analise sempre que for matematicamente relevante.\n\n"
     except Exception:  # noqa: BLE001
@@ -239,16 +252,6 @@ def root_health_check() -> dict[str, str]:
         "modelo": MODEL_ID,
         "backend": "llama.cpp GGUF",
     }
-
-
-def _extract_chunk(line: bytes) -> str:
-    """Decodifica e extrai a resposta do buffer preservando a simplicidade cognitiva O(1)."""
-    if not line:
-        return ""
-    try:
-        return str(json.loads(line.decode("utf-8")).get("response", ""))
-    except Exception:
-        return ""
 
 
 RATE_LIMIT_STORE: dict[str, float] = {}
@@ -266,7 +269,8 @@ def rate_limit(request: Request) -> str:
     return client_ip
 
 
-LLAMA_SERVER_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "llama_cpp/llama-server.exe"))
+llama_server_name = "llama_cpp/llama-server.exe" if os.name == "nt" else "llama_cpp/llama-server"
+LLAMA_SERVER_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), llama_server_name))
 LLAMA_PORT = 17045
 
 
@@ -335,12 +339,23 @@ async def generate_response(
     profile_block = _format_predictive_profile(req.predictive_profile)
 
     # CRIT-05 / SEC-005: Prompt Injection via req.system_prompt. Override removido.
-    sys_prompt = VITOI_SYSTEM_PROMPT
+    sys_prompt = VITOI_SYSTEM_PROMPT.replace("**TAREFA:**", "").strip()
     if req.system_prompt is not None:
         logger.warning(
             "O parametro 'system_prompt' e obsoleto e foi ignorado por seguranca. O prompt do sistema padrao foi aplicado."
         )
-    final_prompt = sys_prompt + rag_context + snapshot_block + profile_block + "[CENARIO/PERGUNTA]:\n" + req.prompt
+
+    # SOTA: Arquitetura de Prompt de 3 Camadas (Doutrina -> Contexto -> Dados -> Instrucao)
+    final_prompt = (
+        sys_prompt
+        + "\n\n"
+        + rag_context
+        + snapshot_block
+        + profile_block
+        + "\n**TAREFA:**\n"
+        + "[CENARIO/PERGUNTA]:\n"
+        + req.prompt
+    )
 
     target_model = _determine_optimal_model(req.prompt, req.model, bool(rag_context))
 
@@ -363,6 +378,8 @@ async def generate_response(
             or ENV_KEYS.get("OPENROUTER_API_KEY")
             or ENV_KEYS.get("OPENROUTER_API_KEY_1")
         )
+
+        success = False
 
         if not is_cloud:
             logger.info("[ROTEAMENTO LOCAL] Direcionando %s para llama.cpp Local...", target_model)
@@ -397,21 +414,22 @@ async def generate_response(
                                             yield chunk
                                     except Exception:  # noqa: S112
                                         continue
-                            return
+                            success = True
                         else:
                             logger.warning(
-                                "[ROTEAMENTO LOCAL] llama.cpp falhou com status %s. Redirecionando para Fallback Cloud...",
+                                "[ROTEAMENTO LOCAL] llama.cpp falhou com status %s. Tentando Fallback...",
                                 resp.status,
                             )
                 except Exception as e:
                     logger.warning(
-                        "[ROTEAMENTO LOCAL] Erro ao conectar ao llama.cpp local (%s). Redirecionando para Fallback Cloud...",
+                        "[ROTEAMENTO LOCAL] Erro ao conectar ao llama.cpp local (%s). Tentando Fallback...",
                         e,
                     )
             else:
-                logger.warning(
-                    "[ROTEAMENTO LOCAL] Falha ao garantir llama-server online. Redirecionando para Fallback Cloud..."
-                )
+                logger.warning("[ROTEAMENTO LOCAL] Falha ao garantir llama-server online. Tentando Fallback...")
+
+        if success:
+            return
 
         cloud_model = CLOUD_MODEL_MAP.get(target_model, "gemma-4-31b-it")
         if gemini_key:
@@ -430,40 +448,50 @@ async def generate_response(
                 "Authorization": f"Bearer {gemini_key}",
                 "Content-Type": "application/json",
             }
-            async with (
-                aiohttp.ClientSession() as session,
-                session.post(
-                    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-                    json=cloud_payload,
-                    headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=60),
-                ) as resp,
-            ):
-                if resp.status != 200:
-                    err_txt = await resp.text()
-                    yield f"[ENTROPIA CLOUD HTTP {resp.status}]: Falha na conexao com Google AI Studio. Detalhes: {err_txt}"
-                    return
-                async for line in resp.content:
-                    if await request.is_disconnected():
-                        break
-                    line_str = line.decode("utf-8").strip()
-                    if not line_str:
-                        continue
-                    if line_str.startswith("data: "):
-                        data_content = line_str[6:].strip()
-                        if data_content == "[DONE]":
-                            break
-                        try:
-                            data_json = json.loads(data_content)
-                            chunk = data_json["choices"][0]["delta"].get("content", "")
-                            if chunk:
-                                yield chunk
-                        except Exception as e:
-                            logger.debug("[CLOUD] Erro ao decodificar chunk JSON: %s", e)
-                            continue
-        elif openrouter_key:
-            logger.info("[ROTEAMENTO CLOUD] Direcionando para OpenRouter...")  # noqa: G004
-            openrouter_model = "google/gemma-4-31b-it" if target_model == "gemma4:31b" else "google/gemma-2-27b-it"
+            try:
+                async with (
+                    aiohttp.ClientSession() as session,
+                    session.post(
+                        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+                        json=cloud_payload,
+                        headers=headers,
+                        timeout=aiohttp.ClientTimeout(total=60),
+                    ) as resp,
+                ):
+                    if resp.status == 200:
+                        async for line in resp.content:
+                            if await request.is_disconnected():
+                                break
+                            line_str = line.decode("utf-8").strip()
+                            if not line_str:
+                                continue
+                            if line_str.startswith("data: "):
+                                data_content = line_str[6:].strip()
+                                if data_content == "[DONE]":
+                                    break
+                                try:
+                                    data_json = json.loads(data_content)
+                                    chunk = data_json["choices"][0]["delta"].get("content", "")
+                                    if chunk:
+                                        yield chunk
+                                except Exception as e:
+                                    logger.debug("[CLOUD] Erro ao decodificar chunk JSON: %s", e)
+                                    continue
+                        success = True
+                    else:
+                        err_txt = await resp.text()
+                        logger.warning(
+                            "[ROTEAMENTO CLOUD] Google AI Studio falhou: %s. Tentando OpenRouter...", err_txt
+                        )
+            except Exception as e:
+                logger.warning("[ROTEAMENTO CLOUD] Erro no Google AI Studio: %s. Tentando OpenRouter...", e)
+
+        if success:
+            return
+
+        if openrouter_key:
+            logger.info("[ROTEAMENTO CLOUD] Direcionando para OpenRouter...")
+            openrouter_model = "google/gemma-4-31b-it" if target_model == "gemma4:31b" else "google/gemma-4-e2b-it"
             cloud_payload = {
                 "model": openrouter_model,
                 "messages": [{"role": "user", "content": final_prompt}],
@@ -475,37 +503,41 @@ async def generate_response(
                 "Authorization": f"Bearer {openrouter_key}",
                 "Content-Type": "application/json",
             }
-            async with (
-                aiohttp.ClientSession() as session,
-                session.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    json=cloud_payload,
-                    headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=60),
-                ) as resp,
-            ):
-                if resp.status != 200:
-                    err_txt = await resp.text()
-                    yield f"[ENTROPIA CLOUD HTTP {resp.status}]: Falha na conexao com OpenRouter. Detalhes: {err_txt}"
-                    return
-                async for line in resp.content:
-                    if await request.is_disconnected():
-                        break
-                    line_str = line.decode("utf-8").strip()
-                    if not line_str:
-                        continue
-                    if line_str.startswith("data: "):
-                        data_content = line_str[6:].strip()
-                        if data_content == "[DONE]":
-                            break
-                        try:
-                            data_json = json.loads(data_content)
-                            chunk = data_json["choices"][0]["delta"].get("content", "")
-                            if chunk:
-                                yield chunk
-                        except Exception as e:
-                            logger.debug("[CLOUD] Erro ao decodificar chunk JSON: %s", e)
-                            continue
+            try:
+                async with (
+                    aiohttp.ClientSession() as session,
+                    session.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        json=cloud_payload,
+                        headers=headers,
+                        timeout=aiohttp.ClientTimeout(total=60),
+                    ) as resp,
+                ):
+                    if resp.status == 200:
+                        async for line in resp.content:
+                            if await request.is_disconnected():
+                                break
+                            line_str = line.decode("utf-8").strip()
+                            if not line_str:
+                                continue
+                            if line_str.startswith("data: "):
+                                data_content = line_str[6:].strip()
+                                if data_content == "[DONE]":
+                                    break
+                                try:
+                                    data_json = json.loads(data_content)
+                                    chunk = data_json["choices"][0]["delta"].get("content", "")
+                                    if chunk:
+                                        yield chunk
+                                except Exception as e:
+                                    logger.debug("[CLOUD] Erro ao decodificar chunk JSON: %s", e)
+                                    continue
+                        success = True
+                    else:
+                        err_txt = await resp.text()
+                        yield f"[ENTROPIA CLOUD HTTP {resp.status}]: Falha na conexao com OpenRouter. Detalhes: {err_txt}"
+            except Exception as e:
+                yield f"[ENTROPIA CLOUD]: Erro catastrofico no OpenRouter: {e}"
         else:
             yield "[ENTROPIA CRITICA]: Nenhum motor (local ou cloud) esta disponivel para atender esta requisicao."
 
@@ -514,6 +546,15 @@ async def generate_response(
 
 if __name__ == "__main__":
     import uvicorn
+
+    if os.name != "nt":
+        try:
+            import uvloop
+
+            uvloop.install()
+            logger.info("[INFRA] uvloop instalado e ativo como motor assincrono de alta performance.")
+        except ImportError:
+            logger.warning("[INFRA] uvloop nao detectado. Rodando sob o loop asyncio padrao.")
 
     # SOTA: Movido para a porta 17043 para nao colidir com o endpoint nativo do Ollama (11434)
     uvicorn.run(app, host="127.0.0.1", port=17043)

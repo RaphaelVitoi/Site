@@ -490,7 +490,7 @@ async def call_llm_api(task: Task, system_prompt: str, user_prompt: str, manager
         else:
             models_to_try.extend(
                 [
-                    "google/gemini-2.0-flash",
+                    "google/gemini-2.5-flash",
                     "meta-llama/llama-3.1-8b-instruct",
                 ]
             )

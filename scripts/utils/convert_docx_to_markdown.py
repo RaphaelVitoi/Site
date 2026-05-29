@@ -23,9 +23,7 @@ def _extract_image_mapping(rels_tree) -> dict:
     }
 
 
-def _process_paragraph(
-    p, docx_zip: zipfile.ZipFile, id_to_image: dict, image_output_dir: Path, slug: str
-) -> str:
+def _process_paragraph(p, docx_zip: zipfile.ZipFile, id_to_image: dict, image_output_dir: Path, slug: str) -> str:
     """Processa um paragrafo e lida com o parse de texto e ancoragem de imagens extraidas."""
     paragraph_parts = []
     for r in p.findall("w:r", namespaces=ns):
@@ -46,9 +44,7 @@ def _process_paragraph(
                         shutil.copyfileobj(source, target_file)
 
                     web_path = f"/images/aulas/{slug}/{image_filename}"
-                    markdown_image_tag = (
-                        f"\n\n![Descricao da imagem: {image_filename}]({web_path})\n\n"
-                    )
+                    markdown_image_tag = f"\n\n![Descricao da imagem: {image_filename}]({web_path})\n\n"
                     paragraph_parts.append(markdown_image_tag)
     return "".join(paragraph_parts)
 
@@ -82,9 +78,7 @@ def convert_docx_to_markdown(docx_path_str: str, slug: str):
             body = doc_tree.find("w:body", namespaces=ns)
 
             for p in body.findall("w:p", namespaces=ns):
-                processed_text = _process_paragraph(
-                    p, docx_zip, id_to_image, image_output_dir, slug
-                )
+                processed_text = _process_paragraph(p, docx_zip, id_to_image, image_output_dir, slug)
                 if processed_text:
                     markdown_content.append(processed_text)
 
@@ -106,8 +100,6 @@ def convert_docx_to_markdown(docx_path_str: str, slug: str):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print(
-            'Uso: python convert_docx_to_markdown.py "<caminho_para_o_docx>" "<slug_da_aula>"'
-        )
+        print('Uso: python convert_docx_to_markdown.py "<caminho_para_o_docx>" "<slug_da_aula>"')
         sys.exit(1)
     convert_docx_to_markdown(sys.argv[1], sys.argv[2])

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: SOTA Content Header SOTA v4.2 Gold
+ * IDENTITY: SOTA Content Header SOTA v7.0 GOLD
  * PATH: src/components/layout/ContentPageHeader.tsx
  * ROLE: Prover identidade visual, título e apresentação consistente para páginas de conteúdo.
  * AESTHETIC: SOTA Gold Standard (Glows, Shimmer, Depth Layers).

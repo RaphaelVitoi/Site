@@ -2,7 +2,7 @@
  * IDENTITY: Masterclass 1.2 GOLD - Heurísticas de ICM no Pós-Flop
  * PATH: src/app/biblioteca/heuristica-icm-pos-flop-aula/page.tsx
  * ROLE: Aula técnica completa com imagens de solver e comparativos.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

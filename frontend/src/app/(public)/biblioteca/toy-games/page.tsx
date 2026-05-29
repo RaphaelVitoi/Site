@@ -2,7 +2,7 @@
  * IDENTITY: Toy Games GOLD (Predator Mode)
  * PATH: src/app/biblioteca/toy-games/page.tsx
  * ROLE: Artigo técnico demonstrando abstrações matemáticas GTO (Polaridade, Nuts Advantage).
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: Palco do Cenário SOTA Quantum v6.2.1 GOLD
+ * IDENTITY: Palco do Cenário SOTA Quantum v7.0 GOLD
  * PATH: src/components/simulator/panels/ScenarioStage.tsx
  * ROLE: Exibir a narrativa tática e os medidores de risco com refinamento estético extremo.
  * BINDING: [engine/types.ts, engine/utils.ts, ui/RiskGauge]
@@ -32,66 +32,66 @@ export default function ScenarioStage({
 		scenario.name?.includes('B20') || scenario.narrativeTitle?.includes('B20');
 
 	return (
-		<div className="glass-panel p-10 sm:p-12 lg:p-16 animate-sota-in rounded-4xl bg-bg-panel/80 backdrop-blur-3xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] relative transition-all duration-700 hover:border-white/20 group/stage">
+		<div className="glass-panel animate-sota-in relative transition-all duration-700 hover:border-white/20 group/stage">
 			{/* Depth Layers Gold */}
 			<div className="absolute inset-0 overflow-hidden rounded-4xl pointer-events-none">
-				<div className="absolute -top-32 -right-32 w-64 h-64 bg-accent-indigo/10 blur-[120px] rounded-full pointer-events-none group-hover/stage:bg-accent-indigo/20 transition-all duration-1000" />
-				<div className="absolute -bottom-32 -left-32 w-64 h-64 bg-accent-emerald/5 blur-[120px] rounded-full pointer-events-none" />
+				<div className="absolute -top-32 -right-32 w-80 h-84 bg-accent-indigo/10 blur-[140px] rounded-full pointer-events-none group-hover/stage:bg-accent-indigo/20 transition-all duration-1000" />
+				<div className="absolute -bottom-32 -left-32 w-80 h-84 bg-accent-emerald/5 blur-[140px] rounded-full pointer-events-none" />
 			</div>
 
 			{/* Header Refinado com Hierarquia Clara */}
-			<div className="flex flex-col md:flex-row justify-between items-start gap-10 border-b border-white/5 pb-12 relative z-10">
-				<div className="space-y-5">
-					<div className="flex items-center gap-4">
-						<div className="w-2.5 h-2.5 rounded-full bg-accent-indigo shadow-[0_0_15px_var(--accent-indigo)] animate-pulse" />
-						<h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter leading-none m-0">
+			<div className="flex flex-col md:flex-row justify-between items-start gap-12 border-b border-white/5 pb-12 relative z-10">
+				<div className="space-y-6">
+					<div className="flex items-center gap-5">
+						<div className="w-2.5 h-2.5 rounded-full bg-accent-indigo shadow-[0_0_20px_var(--accent-indigo)] animate-pulse" />
+						<h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none m-0">
 							{isNodelockB20 ? 'Ancoragem: Block Bet (20%)' : scenario.narrativeTitle}
 						</h2>
 					</div>
-					<div className="px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 inline-flex items-center gap-3">
-						<i className="fa-solid fa-layer-group text-accent-indigo text-[0.7rem]" />
-						<span className="text-[0.65rem] font-black uppercase tracking-[0.3em] text-text-muted">
+					<div className="px-5 py-2 rounded-xl bg-white/5 border border-white/10 inline-flex items-center gap-4">
+						<i className="fa-solid fa-layer-group text-accent-indigo text-[0.8rem]" />
+						<span className="text-[0.7rem] font-black uppercase tracking-[0.4em] text-text-muted">
 							{scenario.narrativeSubtitle}
 						</span>
 					</div>
 				</div>
 
-				<div className="flex flex-col items-end gap-3">
-					<span className="text-[0.55rem] font-black text-text-darker uppercase tracking-[0.4em]">
-						Diagnóstico SOTA
+				<div className="flex flex-col items-end gap-4">
+					<span className="text-[0.6rem] font-black text-text-darker uppercase tracking-[0.5em]">
+						Diagnóstico SOTA GOLD
 					</span>
-					<div className="px-6 py-3 rounded-2xl bg-accent-rose/10 border border-accent-rose/20 text-[0.7rem] font-black text-accent-rose-light uppercase tracking-widest shadow-2xl flex items-center gap-3 active:scale-95 transition-transform">
-						<div className="w-2 h-2 rounded-full bg-accent-rose animate-pulse shadow-[0_0_10px_var(--accent-rose)]" />
+					<div className="px-8 py-4 rounded-2xl bg-accent-rose/10 border border-accent-rose/20 text-[0.75rem] font-black text-accent-rose-light uppercase tracking-[0.3em] shadow-2xl flex items-center gap-4 active:scale-95 transition-transform">
+						<div className="w-2 h-2 rounded-full bg-accent-rose animate-pulse shadow-[0_0_12px_var(--accent-rose)]" />
 						{scenario.verdict}
 					</div>
 				</div>
 			</div>
 
 			{/* Box de Teoria com Estética High-End */}
-			<div className="my-12 relative group/theory">
-				<div className="absolute -inset-0.5 bg-linear-to-r from-accent-indigo/20 via-transparent to-accent-rose/20 rounded-3xl opacity-0 group-hover/theory:opacity-100 transition-opacity duration-700 blur-sm" />
+			<div className="my-14 relative group/theory">
+				<div className="absolute -inset-1 bg-linear-to-r from-accent-indigo/20 via-transparent to-accent-rose/20 rounded-[2.5rem] opacity-0 group-hover/theory:opacity-100 transition-opacity duration-1000 blur-md" />
 				<div
-					className={`relative p-10 rounded-3xl border transition-all duration-700 shadow-inner ${isNodelockB20 ? 'bg-accent-indigo/10 border-accent-indigo/30 shadow-accent-indigo/5' : 'bg-slate-950/40 border-white/5 hover:bg-slate-950/60 hover:border-white/10'} text-[0.95rem] leading-loose`}
+					className={`relative p-12 rounded-[2rem] border transition-all duration-700 shadow-inner ${isNodelockB20 ? 'bg-accent-indigo/10 border-accent-indigo/30 shadow-accent-indigo/5' : 'bg-slate-950/50 border-white/5 hover:bg-slate-950/70 hover:border-white/10'} text-[1.05rem] leading-relaxed`}
 				>
 					{isNodelockB20 ? (
-						<p className="text-indigo-100/80 font-medium italic m-0">
+						<p className="text-indigo-100/90 font-medium italic m-0">
 							&quot;A dinâmica foi travada via Nodelock. Agressor forçado a apostar
 							pequeno para absorver fold equity sem inflar as RIOs.&quot;
 						</p>
 					) : (
-						<div className="text-indigo-100/80 font-medium italic italic-sota-markdown">
+						<div className="text-indigo-100/90 font-medium italic italic-sota-markdown">
 							<SotaMarkdown content={scenario.theory} />
 						</div>
 					)}
-					<div className="absolute bottom-4 right-6 flex items-center gap-2 opacity-30 group-hover/theory:opacity-60 transition-opacity">
-						<i className="fa-solid fa-quote-right text-accent-indigo text-lg" />
+					<div className="absolute bottom-6 right-8 flex items-center gap-3 opacity-30 group-hover/theory:opacity-60 transition-opacity">
+						<i className="fa-solid fa-quote-right text-accent-indigo text-2xl" />
 					</div>
 				</div>
 			</div>
 
 			{/* Grid de Medidores - Simetria SOTA */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-16 pt-6 relative z-10">
-				<div className="flex flex-col items-center gap-10 group/ip transition-all duration-500">
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-20 pt-8 relative z-10">
+				<div className="flex flex-col items-center gap-12 group/ip transition-all duration-500">
 					<RiskGauge
 						value={effectiveIpRp}
 						label="Agressor (IP)"
@@ -100,26 +100,26 @@ export default function ScenarioStage({
 						opponentValue={effectiveOopRp}
 						{...(dynamicDeathZone === undefined ? {} : { dynamicDeathZone })}
 					/>
-					<div className="bg-slate-900/60 px-10 py-5 rounded-2xl border border-white/5 text-center group-hover/ip:border-accent-indigo/40 group-hover/ip:bg-slate-900/80 transition-all shadow-2xl relative overflow-hidden">
+					<div className="bg-slate-900/60 px-12 py-6 rounded-3xl border border-white/5 text-center group-hover/ip:border-accent-indigo/40 group-hover/ip:bg-slate-900/80 transition-all shadow-2xl relative overflow-hidden">
 						<div className="absolute inset-0 bg-radial-[at_center_center] from-accent-indigo/10 to-transparent opacity-0 group-hover/ip:opacity-100 transition-opacity" />
-						<span className="text-[0.6rem] font-black text-text-darker uppercase tracking-[0.4em] block mb-3 group-hover/ip:text-accent-indigo-light transition-colors relative z-10">
+						<span className="text-[0.65rem] font-black text-text-darker uppercase tracking-[0.5em] block mb-4 group-hover/ip:text-accent-indigo-light transition-colors relative z-10">
 							Impacto Posicional
 						</span>
-						<div className="flex items-center justify-center gap-4 relative z-10">
-							<span className="text-[0.9rem] font-mono font-black text-white tracking-tighter">
+						<div className="flex items-center justify-center gap-6 relative z-10">
+							<span className="text-[1.1rem] font-mono font-black text-white tracking-tighter">
 								{effectiveIpRp.toFixed(1)}%{' '}
-								<span className="text-text-darker text-[0.6rem] ml-1">RP</span>
+								<span className="text-text-darker text-[0.7rem] ml-1">RP</span>
 							</span>
-							<div className="w-px h-6 bg-white/10" />
-							<span className="text-[0.9rem] font-mono font-black text-white tracking-tighter">
+							<div className="w-px h-8 bg-white/10" />
+							<span className="text-[1.1rem] font-mono font-black text-white tracking-tighter">
 								{calcBF(effectiveIpRp).toFixed(2)}x{' '}
-								<span className="text-text-darker text-[0.6rem] ml-1">BF</span>
+								<span className="text-text-darker text-[0.7rem] ml-1">BF</span>
 							</span>
 						</div>
 					</div>
 				</div>
 
-				<div className="flex flex-col items-center gap-10 group/oop transition-all duration-500">
+				<div className="flex flex-col items-center gap-12 group/oop transition-all duration-500">
 					<RiskGauge
 						value={effectiveOopRp}
 						label="Defensor (OOP)"
@@ -127,20 +127,20 @@ export default function ScenarioStage({
 						stack={oopMorph}
 						opponentValue={effectiveIpRp}
 					/>
-					<div className="bg-slate-900/60 px-10 py-5 rounded-2xl border border-white/5 text-center group-hover/oop:border-accent-rose/40 group-hover/oop:bg-slate-900/80 transition-all shadow-2xl relative overflow-hidden">
+					<div className="bg-slate-900/60 px-12 py-6 rounded-3xl border border-white/5 text-center group-hover/oop:border-accent-rose/40 group-hover/oop:bg-slate-900/80 transition-all shadow-2xl relative overflow-hidden">
 						<div className="absolute inset-0 bg-radial-[at_center_center] from-accent-rose/10 to-transparent opacity-0 group-hover/oop:opacity-100 transition-opacity" />
-						<span className="text-[0.6rem] font-black text-text-darker uppercase tracking-[0.4em] block mb-3 group-hover/oop:text-accent-rose-light transition-colors relative z-10">
+						<span className="text-[0.65rem] font-black text-text-darker uppercase tracking-[0.5em] block mb-4 group-hover/oop:text-accent-rose-light transition-colors relative z-10">
 							Vulnerabilidade
 						</span>
-						<div className="flex items-center justify-center gap-4 relative z-10">
-							<span className="text-[0.9rem] font-mono font-black text-white tracking-tighter">
+						<div className="flex items-center justify-center gap-6 relative z-10">
+							<span className="text-[1.1rem] font-mono font-black text-white tracking-tighter">
 								{effectiveOopRp.toFixed(1)}%{' '}
-								<span className="text-text-darker text-[0.6rem] ml-1">RP</span>
+								<span className="text-text-darker text-[0.7rem] ml-1">RP</span>
 							</span>
-							<div className="w-px h-6 bg-white/10" />
-							<span className="text-[0.9rem] font-mono font-black text-white tracking-tighter">
+							<div className="w-px h-8 bg-white/10" />
+							<span className="text-[1.1rem] font-mono font-black text-white tracking-tighter">
 								{calcBF(effectiveOopRp).toFixed(2)}x{' '}
-								<span className="text-text-darker text-[0.6rem] ml-1">BF</span>
+								<span className="text-text-darker text-[0.7rem] ml-1">BF</span>
 							</span>
 						</div>
 					</div>

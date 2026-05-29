@@ -1,1237 +1,730 @@
-import collections
+#!/usr/bin/env python3
+"""
+NEXUS ORCHESTRATOR - Membrana Cognitiva SOTA (God Mode W3)
+Versao: v7.0 GOLD (Typer, Async, Zero I/O Friccao)
+"""
+
+import asyncio
+import contextlib
 import json
-import os
 import re
 import shutil
-import stat
+import sqlite3
 import subprocess
 import sys
 import time
-from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from functools import wraps
 from pathlib import Path
-from typing import Any
 
-DIR_VENV = ".venv"
-FILE_TASK_EXECUTOR = "task_executor.py"
-DIR_CLAUDE = ".claude"
-DIR_NEXT = ".next"
-KEY_WATCHER_EXCLUDE = "files.watcherExclude"
-FILE_ENV_PS1 = "_env.ps1"
+import httpx
+import psutil
+import typer
+from loguru import logger
+from rich.console import Console
+from rich.live import Live
+from rich.panel import Panel
+from rich.table import Table
 
-try:
-    import psutil
-    from google import genai  # type: ignore
-    from google.genai import types  # type: ignore
-    from pydantic import BaseModel
-    from rich.console import Console
-    from rich.layout import Layout
-    from rich.live import Live
-    from rich.panel import Panel
-    from rich.table import Table
-    from watchdog.events import FileSystemEventHandler
-    from watchdog.observers import Observer
-except ImportError:
-    print("[ERRO CRITICO] Dependencias SOTA ausentes.")
-    print("Execute no terminal: pip install google-genai pydantic rich psutil watchdog")
-    sys.exit(1)
+# ── Integracao Direta com o Kernel (Bypass de Subprocessos) ──
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+sys.path.append(str(BASE_DIR))
+
+from utils.env_loader import load_env
+
+load_env()
+
+# Nexus Zone: Centralized Volatility (SOTA v7.0 GOLD)
+NEXUS_ZONE = BASE_DIR / "temp" / "nexus_zone"
+NEXUS_ZONE_LOGS = NEXUS_ZONE / "logs"
+NEXUS_ZONE_CACHE = NEXUS_ZONE / "cache"
+
+for d in [NEXUS_ZONE_LOGS, NEXUS_ZONE_CACHE]:
+    d.mkdir(parents=True, exist_ok=True)
+
+# Configuracao Loguru (Solo Console + Nexus Zone Backup)
+logger.remove()
+logger.add(sys.stderr, level="WARNING")
+logger.add(
+    NEXUS_ZONE_LOGS / "nexus_telemetry.log",
+    rotation="10 MB",
+    retention="7 days",
+    level="INFO",
+    encoding="ascii",
+    errors="backslashreplace",
+)
+
+# Inicializa as configuracoes globais de blindagem de logs SOTA e Manifestos
+from core.schemas import Task  # noqa: E402
+from database.queue_manager import QueueManager  # noqa: E402
 
 console = Console()
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-ROUTINES_DIR = BASE_DIR / "scripts" / "routines"
-CORE_DIR = BASE_DIR / "scripts" / "core"
 
-# --- Funcoes Core Internalizadas (SOTA) ---
+app = typer.Typer(
+    name="nexus",
+    help="[bold cyan]NEXUS ORCHESTRATOR[/] - Membrana Cognitiva SOTA (v7.0 GOLD)",
+    no_args_is_help=True,
+    rich_markup_mode="rich",
+)
+ops_app = typer.Typer(name="ops", help="Operacoes de Infraestrutura, Saneamento e Watchers", no_args_is_help=True)
+agent_app = typer.Typer(name="agent", help="Sincronizacao e Handoff Hibrido da Mente Coletiva", no_args_is_help=True)
+db_app = typer.Typer(name="db", help="Gestao e Otimizacao do DAL (SQLite ACID)", no_args_is_help=True)
+stats_app = typer.Typer(name="stats", help="Telemetria Preditiva e Relatorios", no_args_is_help=True)
+
+app.add_typer(ops_app)
+app.add_typer(agent_app)
+app.add_typer(db_app)
+app.add_typer(stats_app)
+
+DIR_CLAUDE = BASE_DIR / ".claude"
 
 
-def _get_python_exe() -> str:
-    """Determina o executavel Python correto, priorizando o venv."""
-    venv_python = BASE_DIR / DIR_VENV / "Scripts" / "python.exe"
-    return str(venv_python) if venv_python.exists() else "python"
+# ── Utils de Runtime ──
+def coro(f):
+    """Wrapper letal para permitir injecao direta de tarefas async no Typer."""
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
 
 
-def start_worker():
-    """Acorda o Orquestrador Python em background de forma idempotente."""
-    python_exe = _get_python_exe()
-    worker_script = BASE_DIR / FILE_TASK_EXECUTOR
+@app.callback()
+def main():
+    """Nexus CLI: Gateway de Soberania Cognitiva."""
+    # SOTA Hygiene Trigger (Silent Execution)
+    script_path = BASE_DIR / "scripts/maintenance/hygiene.py"
+    if script_path.exists():
+        # Execucao em background ou silenciosa O(n) sobre a Nexus Zone
+        subprocess.Popen(
+            ["uv", "run", "python", str(script_path)],
+            cwd=str(BASE_DIR),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
-    for proc in psutil.process_iter(["pid", "cmdline"]):
-        if (
-            proc.info["cmdline"]
-            and FILE_TASK_EXECUTOR in " ".join(proc.info["cmdline"])
-            and "worker-api" in " ".join(proc.info["cmdline"])
-        ):
-            console.print(
-                f"[green][SISTEMA] O Orquestrador ja esta ativo (PID: {proc.pid}). Nenhuma acao necessaria.[/]"
+
+# ==========================================
+# COMANDOS CORE: AUTONOMIA E TAREFAS
+# ==========================================
+
+
+@app.command("task")
+@coro
+async def add_task(
+    description: list[str] = typer.Argument(..., help="Descricao bruta da tarefa a ser executada pela malha."),
+    agent: str = typer.Option("@dispatcher", "--agent", "-a", help="Roteamento explicito (ex: @chico, @implementor)"),
+    cortex_override: bool = typer.Option(
+        False, "--cortex-override", help="Bypass da Antevisao Semantica (Forcar execucao)"
+    ),
+):
+    """
+    Enfileira uma nova diretriz no Orquestrador via DAL (Data Access Layer).
+
+    Friccao Zero: Acesso atomico ao QueueManager (SQLite) sem instanciar novo shell.
+    Garante ACID estrito.
+    """
+    desc_text = " ".join(description).strip()
+
+    # Extracao Semantica SOTA de Agente diretamente do payload (Padrao Ouro)
+    match = re.match(r"^(@[a-zA-Z0-9_-]+)", desc_text)
+    if match:
+        agent = match.group(1).lower().strip()
+        desc_text = desc_text.replace(agent, "", 1).strip()
+
+    if "\x00" in desc_text:
+        console.print("[bold red][SEC CRITICO] Entropia de Null Byte bloqueada na membrana externa.[/]")
+        raise typer.Exit(1)
+
+    metadata = {}
+    if cortex_override:
+        rationale = typer.prompt("[SEC ALERTA] CORTEX OVERRIDE. Forneca a justificativa logica rigorosa")
+        metadata["cortex_override"] = True
+        metadata["cortex_override_rationale"] = rationale
+        console.print(f"[bold red]CORTEX_OVERRIDE ativado. Bypass registrado: {rationale}[/]")
+
+    # Friccao zero: Em vez de sub-processos ou requests falhos, inserimos direto na malha DAG.
+    task_id = f"TASK-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S-%f')}"
+    new_task = Task(
+        id=task_id,
+        description=desc_text,
+        status="pending",
+        timestamp=datetime.now(UTC).isoformat(),
+        agent=agent,
+        metadata=metadata,
+    )
+
+    qm = QueueManager()
+    try:
+        await qm.add_task(new_task)
+        console.print(
+            f"[bold green][TAREFA ENFILEIRADA SOTA] ID: {task_id} -> {agent} (DAL Sincronizado e Blindado)[/]"
+        )
+    except Exception as e:
+        logger.exception("Erro de ingestao SOTA DAL.")
+        console.print(f"[bold red]Falha estrutural ao injetar no Kernel: {e}[/]")
+    finally:
+        await qm.close()
+
+
+@app.command("list")
+@coro
+async def list_tasks(limit: int = typer.Option(5, "--limit", "-l", help="Numero de tarefas recentes")):
+    """Lista as diretrizes mais recentes injetadas no Orquestrador."""
+    db_path = _resolve_tasks_db_path()
+    if not db_path:
+        console.print("[red]DAL Inativo ou Banco nao encontrado.[/]")
+        return
+
+    try:
+        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, agent, status, description FROM tasks ORDER BY timestamp DESC LIMIT ?", (limit,))
+            rows = cursor.fetchall()
+
+            table = Table(title="[bold]DIRETRIZES RECENTES (SOTA v7.0)[/]")
+            table.add_column("ID", style="cyan")
+            table.add_column("AGENTE", style="magenta")
+            table.add_column("STATUS", style="yellow")
+            table.add_column("DESCRICAO", style="white")
+
+            for row in rows:
+                desc = row[3][:70] + "..." if len(row[3]) > 70 else row[3]
+                table.add_row(row[0], row[1], row[2], desc)
+            console.print(table)
+    except sqlite3.Error as e:
+        console.print(f"[bold red]Erro ao ler DAL: {e}[/]")
+
+
+@app.command("status")
+@coro
+async def show_status():
+    """Painel de Telemetria Hibrida do Sistema (Dashboard Dinamico)."""
+    qm = QueueManager()
+    try:
+        with Live(console=console, refresh_per_second=2) as live:
+            counts = await qm.get_task_counts()
+            worker_alive = False
+            for proc in psutil.process_iter(["pid", "cmdline"]):
+                cmdline = " ".join(proc.info.get("cmdline") or [])
+                if "task_executor.py" in cmdline and "worker-api" in cmdline:
+                    worker_alive = True
+                    break
+
+            grid = Table.grid(expand=True, padding=(0, 2))
+            grid.add_column(style="cyan", justify="right", width=25)
+            grid.add_column()
+
+            grid.add_row("[CORE] Orquestrador", "[green]OPERANTE[/]" if worker_alive else "[red]OFFLINE[/]")
+            grid.add_row(
+                "[DATA] Carga de Tarefas",
+                f"[yellow]{counts.get('pending', 0)}[/] Pendentes | [magenta]{counts.get('running', 0)}[/] Rodando | [green]{counts.get('completed', 0)}[/] Concluidas",
             )
-            return
 
-    console.print("[cyan][SISTEMA] Acordando o Orquestrador Python (SOTA)...[/]")
-    if os.name == "nt":
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        si.wShowWindow = 6  # SW_MINIMIZE
-        creationflags = (
-            subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
-        )
-        subprocess.Popen(
-            [python_exe, str(worker_script), "worker-api"],
-            creationflags=creationflags,
-            startupinfo=si,
-            close_fds=True,
-        )
-    else:
-        subprocess.Popen(
-            [python_exe, str(worker_script), "worker-api"], start_new_session=True
-        )
-    console.print(
-        "[green][SISTEMA] Orquestrador ativado em background. O sistema esta vivo.[/]"
-    )
+            panel = Panel(grid, title="[bold]STATUS VITAL SOTA v7.0[/]", border_style="green")
+            live.update(panel)
+    except Exception as e:
+        console.print(f"[bold red]Erro ao invocar telemetria DAL: {e}[/]")
+    finally:
+        await qm.close()
 
 
-def stop_worker():
-    """Hiberna o Orquestrador Python com seguranca."""
-    console.print("[cyan][SISTEMA] Tentando hibernar o Orquestrador Python...[/]")
-    worker_found = False
-    for proc in psutil.process_iter(["pid", "cmdline"]):
-        try:
-            if (
-                proc.info["cmdline"]
-                and FILE_TASK_EXECUTOR in " ".join(proc.info["cmdline"])
-                and "worker-api" in " ".join(proc.info["cmdline"])
-            ):
-                p = psutil.Process(proc.pid)
-                p.terminate()
-                p.wait(timeout=3)
-                console.print(
-                    f"[green][SISTEMA] Orquestrador (PID: {proc.pid}) hibernado com sucesso.[/]"
-                )
-                worker_found = True
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired):
-            continue
-    if not worker_found:
-        console.print(
-            "[grey50][SISTEMA] O Orquestrador ja estava em hibernacao. Nenhuma acao necessaria.[/]"
-        )
+@app.command("search")
+def search_rag(
+    query: str = typer.Argument(..., help="Pergunta ou termo para buscar na Mente Coletiva"),
+):
+    """Realiza busca hibrida semantica no RAG do Orquestrador."""
+    console.print(f"[cyan]Pesquisando na Mente Coletiva SOTA por: '{query}'...[/cyan]")
+    rag_script = BASE_DIR / "memory_rag.py"
+    subprocess.run(["uv", "run", "python", str(rag_script), "query", query], cwd=str(BASE_DIR))
 
 
-def set_autonomy(mode: str):
-    """Configura o modo de autonomia do sistema."""
-    autonomy_file = BASE_DIR / DIR_CLAUDE / "autonomy.json"
-    config = {"mode": mode}
-    with open(autonomy_file, "w", encoding="utf-8") as f:
-        json.dump(config, f)
-
-    mode_colors = {"full": "green", "partial": "yellow", "off": "red"}
-    console.print(
-        f"[[{mode_colors.get(mode, 'white')}]] [AUTONOMIA] Sistema configurado para Autonomia {mode.upper()}.[/]"
-    )
+@app.command("graph")
+def graph_rag(
+    query: str = typer.Argument(..., help="Foco conceitual para extracao do Grafo Causal"),
+):
+    """Consulta e forja as relacoes do Grafo Causal (Knowledge Graph)."""
+    console.print(f"[cyan]Forjando Grafo Causal para: '{query}'...[/cyan]")
+    rag_script = BASE_DIR / "memory_rag.py"
+    subprocess.run(["uv", "run", "python", str(rag_script), "graph", query], cwd=str(BASE_DIR))
 
 
-def _force_remove_readonly(func: Callable, path: str, exc_info: Any):
-    """Remove a flag read-only do Windows que bloqueia delecao."""
-    try:
-        os.chmod(path, stat.S_IWRITE)
-        func(path)
-    except Exception:  # noqa: BLE001, S110
-        pass  # Ignora erros adicionais, apenas tenta
+# ==========================================
+# COMANDOS DE DB (DATA ACCESS LAYER)
+# ==========================================
 
 
-def _remove_single_sanitizer_target(path: Path) -> tuple[bool, float, str]:
-    """Remove um unico alvo e retorna sucesso, espaco salvo e status."""
-    try:
-        size = (
-            sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
-            if path.is_dir()
-            else path.stat().st_size
-        )
-        size_mb = size / (1024 * 1024)
-
-        if path.is_file():
-            try:
-                path.unlink()
-            except PermissionError:
-                os.chmod(path, stat.S_IWRITE)
-                path.unlink()
-        elif path.is_dir():
-            shutil.rmtree(path, onerror=_force_remove_readonly)
-        return True, size_mb, "[red]VAPORIZADO[/]"
-    except Exception as e:  # noqa: BLE001
-        return False, 0.0, f"[red]ERRO: {str(e)[:40]}[/]"
-
-
-def _collect_sanitizer_targets(base_dir: Path) -> list[Path]:
-    """Coleta todos os alvos deterministicos e dinamicos para saneamento."""
-    targets = [
-        base_dir / ".backups_sota",
-        base_dir / "frontend" / DIR_NEXT / "cache",
-    ]
-
-    # Coleta de caches Python e arquivos de backup perdidos
-    for p in base_dir.rglob("__pycache__"):
-        # Ignora arquivos de bibliotecas do ambiente virtual e repositorio Git
-        if DIR_VENV not in p.parts and ".git" not in p.parts:
-            targets.append(p)
-    for p in base_dir.rglob("*.bak"):
-        if DIR_VENV not in p.parts and ".git" not in p.parts:
-            targets.append(p)
-
-    return targets
-
-
-def run_sanitizer(dry_run=True):  # NOSONAR
-    """Expurgo Deterministico de Entropia Morta."""
-    console.print(
-        Panel(
-            "[bold cyan]NEXUS SANITIZER (SOTA)[/]\n[white]Expurgo Sistemico de Entropia Morta[/]",
-            border_style="cyan",
-        )
-    )
-
-    targets = _collect_sanitizer_targets(BASE_DIR)
-
-    removed_count = 0
-    saved_space = 0.0
-
-    table = Table(expand=True, border_style="magenta")
-    table.add_column("ALVO", style="yellow")
-    table.add_column("TAMANHO", justify="right", style="cyan")
-    table.add_column("STATUS", justify="center")
-
-    for path in targets:
-        if path.exists():
-            if dry_run:
-                try:
-                    size = (
-                        sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
-                        if path.is_dir()
-                        else path.stat().st_size
-                    )
-                    size_mb = size / (1024 * 1024)
-                    table.add_row(
-                        str(path.relative_to(BASE_DIR)),
-                        f"{size_mb:.2f} MB",
-                        "[yellow]SIMULADO[/]",
-                    )
-                except Exception as e:  # noqa: BLE001
-                    table.add_row(
-                        str(path.relative_to(BASE_DIR)),
-                        "N/A",
-                        f"[red]ERRO LENDO TAMANHO: {str(e)[:15]}[/]",
-                    )
-            else:
-                success, size_mb, status = _remove_single_sanitizer_target(path)
-                table.add_row(
-                    str(path.relative_to(BASE_DIR)),
-                    f"{size_mb:.2f} MB" if success else "N/A",
-                    status,
-                )
-                if success:
-                    removed_count += 1
-                    saved_space += size_mb
-
-    console.print(table)
-
-    if not dry_run:
-        console.print(
-            f"\n[bold green][+] Saneamento Concluido SOTA.[/] {removed_count} alvos eliminados."
-        )
-        console.print(f"[bold cyan]Espaco e I/O recuperados:[/] {saved_space:.2f} MB.")
-    else:
-        console.print(
-            "\n[yellow][!] MODO SIMULACAO ATIVO. Nenhum arquivo foi modificado.[/]"
-        )
-        choice = console.input("[bold white]Deseja executar a purga real? (s/n): [/]")
-        if choice.lower() == "s":
-            os.system("cls" if os.name == "nt" else "clear")
-            run_sanitizer(dry_run=False)
-        else:
-            console.print("[cyan]Operacao abortada. Mantendo simetria atual.[/]")
-
-
-def _find_vscode_settings_path() -> Path | None:
-    """Tenta localizar o arquivo settings.json do VS Code em caminhos comuns."""
-    config_path_roaming = Path.home() / "AppData/Roaming/Code/User/settings.json"
-    if config_path_roaming.exists():
-        return config_path_roaming
-    config_path_linux = Path.home() / ".config/Code/User/settings.json"
-    if config_path_linux.exists():
-        return config_path_linux
+def _resolve_tasks_db_path() -> Path | None:
+    for candidate in ["queue/tasks.db", ".claude/tasks.db", "tasks.db"]:
+        p = BASE_DIR / candidate
+        if p.exists() and p.stat().st_size > 0:
+            return p
     return None
 
 
-def _read_and_clean_json_settings(config_path: Path) -> dict:
-    """Le o arquivo JSON, remove comentarios e virgulas finais, e retorna o objeto."""
-    with open(config_path, "r", encoding="utf-8") as f:
-        content = f.read()
-        content = re.sub(
-            r'("(?:\\"|[^"])*")|//.*|/\*.*?\*/',
-            lambda m: m.group(1) if m.group(1) else "",
-            content,
-            flags=re.DOTALL,
-        )
-        content = re.sub(
-            r'("(?:\\"|[^"])*")|,\s*(?=[\]}])',
-            lambda m: m.group(1) if m.group(1) else "",
-            content,
-        )
-        return json.loads(content, strict=False) if content.strip() else {}
-
-
-def _apply_vscode_optimizations(settings: dict) -> None:
-    """Aplica as otimizacoes de baixa latencia ao dicionario de configuracoes."""
-    if KEY_WATCHER_EXCLUDE not in settings:
-        settings[KEY_WATCHER_EXCLUDE] = {}
-    settings[KEY_WATCHER_EXCLUDE].update({
-        "**/.git/objects/**": True,
-        "**/node_modules/**": True,
-        "**/dist/**": True,
-        "**/" + DIR_NEXT + "/**": True,
-        "**/.continue/**": True,
-        "**/build/**": True,
-    })
-    settings["editor.bracketPairColorization.enabled"] = True
-    settings["editor.guides.bracketPairs"] = "active"
-    settings["git.autorefresh"] = False
-    settings["continue.embeddingsProvider"] = None
-
-
-def _write_vscode_settings(config_path: Path, settings: dict) -> None:
-    """Escreve o dicionario de configuracoes de volta ao arquivo JSON."""
-    with open(config_path, "w", encoding="utf-8") as f:
-        json.dump(settings, f, indent=4)
-
-
-def optimize_vscode():
-    """Otimiza configuracoes do VS Code para supressao de latencia."""
-    console.print("[cyan]=== [VITOI 3.2] OTIMIZACAO GLOBAL DE IDE ===[/]")
-    config_path = _find_vscode_settings_path()
-    if config_path is None or not config_path.exists():
-        console.print(
-            "[bold red][ERRO CRITICO] O nucleo de settings.json nao foi encontrado.[/]"
-        )
-        return
-
-    console.print(f"[cyan]Infiltrando em: {config_path}[/]")
+def _extract_dependencies(meta_str: str | None) -> list[str]:
+    if not meta_str:
+        return []
     try:
-        settings = _read_and_clean_json_settings(config_path)
-    except Exception as e:  # noqa: BLE001
-        console.print(f"[red][ERRO] Falha ao destrinchar o cortex do VS Code: {e}[/]")
-        return
+        meta = json.loads(meta_str)
+        if isinstance(meta, dict) and isinstance(meta.get("depends_on"), list):
+            return [str(d) for d in meta.get("depends_on")]
+    except json.JSONDecodeError:
+        pass
+    return []
 
-    _apply_vscode_optimizations(settings)
+
+@db_app.command("audit-dag")
+def audit_dag():
+    """Auditoria Estrutural de Dependencias Orfas na Malha DAG."""
+    console.print("[bold cyan]=== [SISTEMA] Iniciando Auditoria Estrutural de DAGs (Friccao Zero) ===[/]")
+    db_path = _resolve_tasks_db_path()
+    if not db_path:
+        console.print("[bold red][ENTROPIA] Banco de dados de tarefas SOTA nao encontrado.[/]")
+        raise typer.Exit(1)
 
     try:
-        _write_vscode_settings(config_path, settings)
-        console.print(
-            "[bold green][+] Simetria Alcancada: Protocolo de Baixa Latencia injetado no settings.json.[/]"
-        )
-    except Exception as e:  # noqa: BLE001
-        console.print(f"[red][ERRO] Falha de permissao na gravacao: {e}[/]")
+        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, metadata FROM tasks")
+            all_tasks = cursor.fetchall()
+            task_ids = {row[0] for row in all_tasks}
+            orphans = []
+            for t_id, meta_str in all_tasks:
+                for dep in _extract_dependencies(meta_str):
+                    if dep not in task_ids:
+                        orphans.append((t_id, dep))
+
+            if orphans:
+                console.print(f"[bold red][ENTROPIA DETECTADA] {len(orphans)} bloqueios orfaos localizados:[/]")
+                for task_id, dep_id in orphans:
+                    console.print(f"  -> Tarefa {task_id} aguarda dependencia inexistente: {dep_id}")
+                raise typer.Exit(1)
+            console.print("[bold green][OK] Malha DAG integra. Zero tarefas aguardando dependencias fantasmas.[/]")
+    except sqlite3.Error as e:
+        console.print(f"[bold red][FALHA] Erro ao auditar DAL: {e}[/]")
+        raise typer.Exit(1)
 
 
-def purge_extensions():
-    """Remove extensoes redundantes de IA que causam lentidao."""
-    console.print("[cyan]=== [VITOI 3.2] AUDITORIA DE EXTENSOES SOTA ===[/]")
-    console.print("[cyan]Iniciando varredura no Extension Host...[/]")
-    KEEP_LIST = [
-        "continue.continue",
-        "usernamehw.errorlens",
-        "eamodio.gitlens",
-        "aaron-bond.better-comments",
-    ]
-    REDUNDANT_KEYWORDS = [
-        "copilot",
-        "codeium",
-        "blackbox",
-        "genie",
-        "tabnine",
-        "cursor",
-    ]
+@db_app.command("purge-orphans")
+def purge_orphans():
+    """Expurga tarefas FAILED que dependem de fantasmas (Clean Cache)."""
+    console.print("[bold cyan]=== [SISTEMA] Iniciando Expurgo de Tarefas 'failed' com Dependencias Orfas ===[/]")
+    db_path = _resolve_tasks_db_path()
+    if not db_path:
+        raise typer.Exit(1)
+
     try:
-        result = subprocess.run(
-            ["code", "--list-extensions"], capture_output=True, text=True, check=True
-        )
-        installed = result.stdout.splitlines()
-    except Exception as e:  # noqa: BLE001
-        console.print(
-            f"[bold red][ERRO CRITICO] Falha ao comunicar com a CLI do VS Code: {e}[/]"
-        )
-        return
+        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+            conn.execute("PRAGMA synchronous=OFF;")
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM tasks")
+            task_ids = {row[0] for row in cursor.fetchall()}
 
-    to_remove = [
-        ext
-        for ext in installed
-        if any(key in ext.lower() for key in REDUNDANT_KEYWORDS)
-        and ext not in KEEP_LIST
-    ]
+            cursor.execute("SELECT id, metadata FROM tasks WHERE status = 'failed'")
+            failed_tasks = cursor.fetchall()
 
-    if not to_remove:
-        console.print(
-            "[bold green][+] Simetria Alcancada: Nenhuma redundancia detectada no Extension Host.[/]"
-        )
-        return
+            targets_to_delete = []
+            for t_id, meta_str in failed_tasks:
+                for dep in _extract_dependencies(meta_str):
+                    if dep not in task_ids:
+                        targets_to_delete.append((t_id,))
+                        console.print(f"[yellow][EXPURGO] Tarefa failed marcada para aniquilacao: {t_id}[/]")
+                        break
 
-    console.print(
-        f"[bold yellow][!] Detectadas {len(to_remove)} extensoes redundantes gerando latencia de I/O e bloat cognitivo:[/]"
-    )
-    for ext in to_remove:
-        confirm = (
-            console
-            .input(f"\n[bold yellow]Deseja obliterar a extensao '{ext}'? (s/n): [/]")
-            .strip()
-            .lower()
-        )
-        if confirm == "s":
-            console.print(f"[cyan]Desinstalando {ext}...[/]")
-            subprocess.run(["code", "--uninstall-extension", ext], check=False)
-            console.print(f"[bold green][-] {ext} vaporizada com sucesso.[/]")
-        else:
-            console.print("[cyan][~] Ignorado.[/]")
+            if targets_to_delete:
+                cursor.executemany("DELETE FROM tasks WHERE id = ?", targets_to_delete)
+            purged_count = len(targets_to_delete)
+            conn.commit()
+            console.print(
+                f"[bold green][OK] {purged_count} tarefa(s) fantasma(s) expurgada(s).[/]"
+                if purged_count > 0
+                else "[bold green][OK] Nenhuma orfa detectada.[/]"
+            )
+    except sqlite3.Error as e:
+        console.print(f"[bold red][FALHA] Erro ao limpar DAL: {e}[/]")
 
 
-def run_scanner():
-    """Mapeia arquivos densos em tokens e lista os ofensores de entropia."""
-    console.print(
-        "[bold cyan]=== VITOI-Scanner 3.2: Auditoria de Entropia Semantica ===[/]"
-    )
-    console.print(f"Mapeando o nucleo: [cyan]{BASE_DIR}[/]\n")
-    ignores = {
-        ".git",
-        "node_modules",
-        DIR_VENV,
-        ".chroma_db",
-        "__pycache__",
-        DIR_NEXT,
-        "dist",
-        "build",
-        "logs",
-        DIR_CLAUDE,
-        "archive",
-    }
-    file_stats = []
-    for root, dirs, files in os.walk(BASE_DIR):
-        dirs[:] = [d for d in dirs if d not in ignores and not d.startswith(".")]
-        for file in files:
-            if file.lower().endswith((
-                ".db",
-                ".sqlite",
-                ".db-wal",
-                ".png",
-                ".jpg",
-                ".mp4",
-                ".pdf",
-                ".docx",
-            )):
-                continue
-            path = Path(root) / file
-            try:
-                tokens = os.path.getsize(path) // 4
-            except Exception:  # noqa: BLE001
-                tokens = 0
-            if tokens > 0:
-                file_stats.append((path, tokens))
+@db_app.command("clear-pending")
+def clear_pending(confirm: bool = typer.Option(False, "--confirm", help="Confirma a delecao de tarefas pendentes")):
+    """Remove todas as tarefas com status 'pending' do DAL."""
+    db_path = _resolve_tasks_db_path()
+    if not db_path:
+        console.print("[red]DAL nao encontrado.[/]")
+        raise typer.Exit(1)
 
-    top_files = sorted(file_stats, key=lambda x: x[1], reverse=True)[:15]
-    table = Table(
-        title="Top 15 Arquivos de Maior Densidade (Estimativa Offline)",
-        border_style="cyan",
-    )
-    table.add_column("Rank", justify="center", style="magenta")
-    table.add_column("Arquivo", style="green")
-    table.add_column("Tokens (Est.)", justify="right", style="yellow")
-    for i, (path, tokens) in enumerate(top_files):
-        table.add_row(str(i + 1), str(path.relative_to(BASE_DIR)), f"{tokens:,}")
-    console.print(table)
+    try:
+        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM tasks WHERE status='pending'")
+            count = cursor.fetchone()[0]
+
+            if count == 0:
+                console.print("[green]Zero tarefas pendentes encontradas.[/]")
+                return
+
+            console.print(f"Encontradas {count} tarefas pendentes em {db_path}")
+            if not confirm:
+                console.print("[yellow]Dry-run: use --confirm para deletar realmente.[/]")
+                return
+
+            cursor.execute("DELETE FROM tasks WHERE status='pending'")
+            deleted = cursor.rowcount
+            conn.commit()
+            console.print(f"[bold green][SUCESSO] {deleted} tarefas pendentes aniquiladas.[/]")
+    except sqlite3.Error as e:
+        console.print(f"[bold red]Erro ao manipular DAL: {e}[/]")
 
 
-# --- INTEGRACOES FRACTAIS (Telemetria, Watcher, Refactor, Circuit Breaker) ---
+@db_app.command("vacuum")
+def vacuum_db():
+    """Otimizacao Fisica do Banco de Dados (VACUUM & PRAGMA optimize)."""
+    console.print("[bold cyan]=== [SISTEMA] Iniciando Otimizacao de Banco de Dados (VACUUM) ===[/]")
+    db_path = _resolve_tasks_db_path()
+    if not db_path:
+        raise typer.Exit(1)
+    try:
+        with contextlib.closing(sqlite3.connect(db_path, timeout=60.0)) as conn:
+            console.print(f"Executando VACUUM em {db_path}...")
+            conn.execute("PRAGMA optimize;")
+            conn.execute("VACUUM;")
+            conn.commit()
+            console.print("[bold green][OK] Banco de dados otimizado com sucesso.[/]")
+    except sqlite3.Error as e:
+        console.print(f"[bold red][FALHA] Erro ao executar VACUUM: {e}[/]")
+        raise typer.Exit(1)
 
 
-def get_api_key():
-    """Busca cirurgica de chaves de API para modulos internos."""
-    for file_name in [FILE_ENV_PS1, ".env"]:
-        env_path = BASE_DIR / file_name
-        if env_path.exists():
-            with open(env_path, "r", encoding="utf-8", errors="ignore") as f:
-                for line in f:
-                    match = re.search(
-                        r'(?:\$env:|\$)?(GEMINI[A-Z0-9_]*|GOOGLE[A-Z0-9_]*)\s*[:=]\s*[\'"]?([^\'"\s#]+)[\'"]?',
-                        line,
-                        re.IGNORECASE,
-                    )
-                    if match and "CLI" not in match.group(1).upper():
-                        return match.group(2)
-    for k, v in os.environ.items():
-        if (k.upper().startswith(("GEMINI", "GOOGLE"))) and "CLI" not in k.upper():
-            return v
-    return ""
+@db_app.command("graph")
+def generate_graph():
+    """Gera Grafo Mermaid da Malha DAG Atual."""
+    console.print("[bold magenta]=== [SISTEMA] GERANDO GRAFO DE DEPENDENCIAS (MERMAID) ===[/]")
+    executor = BASE_DIR / "task_executor.py"
+    subprocess.run(["uv", "run", "python", str(executor), "db-mermaid-graph"], cwd=str(BASE_DIR))
 
 
-class VitoiQuotaManager:
-    """Gerenciador de Cota / Circuit Breaker unificado."""
-
-    def __init__(self, rpm_limit=15, tpm_limit=32000):
-        self.rpm_limit = rpm_limit
-        self.tpm_limit = tpm_limit
-        self.request_history = collections.deque()
-        self.token_history = collections.deque()
-        self.safety_threshold = 0.8
-
-    def check_quota(self, estimated_tokens=1000):
-        now = time.time()
-        while self.request_history and now - self.request_history[0] > 60:
-            self.request_history.popleft()
-        while self.token_history and now - self.token_history[0][0] > 60:
-            self.token_history.popleft()
-        current_rpm = len(self.request_history)
-        current_tpm = sum(t[1] for t in self.token_history)
-        if current_rpm >= self.rpm_limit * self.safety_threshold:
-            return False, f"RPM critico: {current_rpm}/{self.rpm_limit}"
-        if current_tpm + estimated_tokens >= self.tpm_limit * self.safety_threshold:
-            return False, f"TPM critico: {current_tpm}/{self.tpm_limit}"
-        return True, "OK"
-
-    def log_request(self, tokens=0):
-        self.request_history.append(time.time())
-        self.token_history.append((time.time(), tokens))
+# ==========================================
+# COMANDOS DE TELEMETRIA E RELATORIOS
+# ==========================================
 
 
-def _get_vscode_extension_memory_usage() -> tuple[float, int]:
-    """Isola a leitura de uso de memoria das extensoes do VS Code."""
-    mem, count = 0.0, 0
-    for p in psutil.process_iter(["name", "cmdline", "memory_info"]):
+@stats_app.command("daily")
+def daily_stats():
+    """Estatisticas diarias da Autonomia."""
+    executor = BASE_DIR / "task_executor.py"
+    subprocess.run(["uv", "run", "python", str(executor), "daily-stats"], cwd=str(BASE_DIR))
+
+
+@stats_app.command("historian")
+def historian_reports():
+    """Extrai perfis preditivos e aversao ao risco da base SOTA."""
+    executor = BASE_DIR / "task_executor.py"
+    subprocess.run(["uv", "run", "python", str(executor), "historian-reports"], cwd=str(BASE_DIR))
+
+
+@stats_app.command("daily-report")
+def generate_daily_report():
+    """Gera relatorios diarios de autonomia e os enfileira na fila."""
+    executor = BASE_DIR / "task_executor.py"
+    subprocess.run(["uv", "run", "python", str(executor), "generate-daily-reports"], cwd=str(BASE_DIR))
+
+
+# ==========================================
+# COMANDOS DE INFRA & OPS
+# ==========================================
+
+
+@ops_app.command("worker")
+def start_worker(
+    force: bool = typer.Option(False, "--force", "-f", help="Mata instancias penduradas antes de iniciar"),
+):
+    """Gatilho de ignicao do Orquestrador Hibrido (Autopoiese)."""
+    for proc in psutil.process_iter(["pid", "cmdline"]):
         try:
-            if (
-                ("code" in (p.info.get("name") or "").lower())
-                and "extensionhost" in " ".join(p.info.get("cmdline") or []).lower()
-                and p.info.get("memory_info")
-            ):
-                mem += p.info["memory_info"].rss / (1024 * 1024)
-                count += 1
-        except Exception:  # noqa: BLE001, S110
-            pass
-    return mem, count
+            cmdline = " ".join(proc.info.get("cmdline") or [])
+            if "task_executor.py" in cmdline and "worker-api" in cmdline:
+                if force:
+                    console.print(f"[bold yellow][AVISO] Matando Worker pendurado (PID {proc.pid})...[/]")
+                    proc.kill()
+                    time.sleep(1)
+                else:
+                    console.print(f"[bold green]Orquestrador ja operante (PID: {proc.pid}). Friccao Zero mantida.[/]")
+                    return
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired):
+            continue
 
-
-def run_monitor():
-    """Inicia o painel de telemetria em tempo real (RAM e API)."""
-    api_key = get_api_key()
-    if not api_key:
-        console.print("[red][ERRO] API Key ausente. Configure _env.ps1.[/]")
-        return
-    client = genai.Client(api_key=api_key)
-    quota_manager = VitoiQuotaManager()
-    history = []
-
-    with Live(console=console, refresh_per_second=1) as live:
-        while True:
-            ram_mb, ext_count = _get_vscode_extension_memory_usage()
-            is_safe, reason = quota_manager.check_quota()
-            lat, tk, status = 0, 0, f"COOLDOWN: {reason}"
-
-            if is_safe:
-                start_time = time.perf_counter()
-                try:
-                    prompt = "Analise este fragmento de codigo sob o rigor VITOI."
-                    _ = client.models.generate_content(
-                        model="gemini-2.0-flash", contents=prompt
-                    )
-                    lat = time.perf_counter() - start_time
-                    tk = 50
-                    status = "SUCCESS"
-                    quota_manager.log_request(tk)
-                except Exception as e:  # noqa: BLE001
-                    lat = time.perf_counter() - start_time
-                    status = f"ERROR: {str(e)[:20]}"
-
-            history.append((lat, tk, status, ram_mb, ext_count))
-            table = Table(
-                title="[bold cyan]Telemetria Hibrida - VITOI 3.2[/]", expand=True
-            )
-            table.add_column("ID", justify="center", style="cyan")
-            table.add_column("Latencia", justify="right", style="magenta")
-            table.add_column("Tokens", justify="right", style="green")
-            table.add_column("RAM ExtHost", justify="right", style="blue")
-            table.add_column("Status", justify="center")
-
-            valid_lats = [h[0] for h in history if h[0] > 0]
-            avg_lat = sum(valid_lats) / max(1, len(valid_lats))
-            for i, (l, t, s, r, ec) in enumerate(history[-10:]):
-                table.add_row(str(i + 1), f"{l:.2f}s", str(t), f"{r:.1f} MB", s)
-
-            sys_stat = (
-                "[red]DEGRADADO[/]"
-                if avg_lat > 8 or ram_mb > 1200
-                else "[green]NOMINAL[/]"
-            )
-            panel = Panel(
-                f"[bold]Latencia Media:[/] {avg_lat:.2f}s\n[bold]Status:[/] {sys_stat}",
-                title="Visao Macro",
-                border_style="cyan",
-            )
-
-            layout = Layout()
-            layout.split_column(Layout(panel, size=4), Layout(table))
-            live.update(layout)
-            time.sleep(10)
-
-
-def test_circuit_breaker():
-    """Teste de estresse e limite de RPM/TPM."""
-    api_key = get_api_key()
-    if not api_key:
-        return console.print("[red]API Key ausente.[/]")
-    client = genai.Client(api_key=api_key)
-    quota = VitoiQuotaManager(rpm_limit=15, tpm_limit=32000)
-    console.print(
-        Panel("Iniciando Teste de Carga SOTA (Circuit Breaker)", border_style="cyan")
+    console.print("[cyan]Iniciando Orquestrador Hibrido (SOTA)...[/cyan]")
+    worker_script = BASE_DIR / "task_executor.py"
+    subprocess.Popen(
+        ["uv", "run", "python", str(worker_script), "worker-api"], start_new_session=True, cwd=str(BASE_DIR)
     )
-    for i in range(5):
-        is_safe, reason = quota.check_quota()
-        if not is_safe:
-            console.print(f"[bold red]\U0001f6ab CIRCUITO ABERTO:[/] {reason}. Pausando...")
-            time.sleep(10)
+    console.print("[bold magenta]Orquestrador desperto e vigilante em background.[/]")
+
+
+@ops_app.command("watch")
+def watch_files():
+    """Vigilia Ativa SOTA: Hot-reload de Contexto e RAG em Rust via watchfiles."""
+    console.print("[bold magenta]=== [SISTEMA] VIGILIA ATIVA SOTA INICIADA ===[/]")
+    try:
+        from watchfiles import watch
+    except ImportError:
+        console.print("[bold red]Dependencia watchfiles ausente. Instalando via UV...[/]")
+        raise typer.Exit(1)
+
+    def ignore_paths(change, path):
+        ignore_list = ["__pycache__", ".git", ".venv", "node_modules", ".chroma_db", ".claude/logs"]
+        return not any(ign in path for ign in ignore_list)
+
+    try:
+        for changes in watch(BASE_DIR, watch_filter=ignore_paths):
+            for _change, filepath in changes:
+                console.print(f"[yellow][VIGILIA] Mutacao detectada: {filepath}[/yellow]")
+                if filepath.endswith((".md", ".ts", ".py")):
+                    try:
+                        httpx.post("http://127.0.0.1:17042/ingest", timeout=3.0)
+                        console.print("[cyan] -> Memoria Vectorial Rehidratada via Event Loop.[/cyan]")
+                    except httpx.RequestError:
+                        pass
+    except KeyboardInterrupt:
+        console.print("\n[bold magenta][SISTEMA] Vigilia SOTA Encerrada.[/bold magenta]")
+
+
+@ops_app.command("sanitize")
+def sanitize_system(apply: bool = typer.Option(False, "--apply", help="Forca a execucao real da delecao.")):
+    """Aplica o expurgo deterministico de entropia SOTA."""
+    script_path = BASE_DIR / "scripts/maintenance/apply_sanitize.py"
+    if script_path.exists():
+        args = ["uv", "run", "python", str(script_path)]
+        if apply:
+            args.append("--apply")
+        subprocess.run(args, cwd=str(BASE_DIR))
+
+
+@ops_app.command("purify-memories")
+def purify_memories():
+    """Purifica as memorias do agente para Pure ASCII (Mojibake Fix)."""
+    script_path = BASE_DIR / "scripts/maintenance/purify_memories_ascii.py"
+    if script_path.exists():
+        subprocess.run(["uv", "run", "python", str(script_path)], cwd=str(BASE_DIR))
+
+
+@ops_app.command("check-ascii")
+def check_ascii_mandate():
+    """Verifica se os módulos Python respeitam a Blindagem ASCII."""
+    console.print("[bold cyan]=== [SISTEMA] Verificando Blindagem ASCII em Módulos Python ===[/]")
+
+    non_ascii_files = []
+    # Foca nos diretorios core
+    for path in BASE_DIR.rglob("*.py"):
+        if any(exc in str(path) for exc in [".venv", "node_modules", "__pycache__", ".gemini"]):
             continue
         try:
-            _ = client.models.generate_content(
-                model="gemini-2.5-flash", contents=f"Gere um numero {i}"
-            )
-            quota.log_request(50)
-            console.print(f"Sessao {i + 1}: Sucesso!")
-        except Exception as e:  # noqa: BLE001
-            console.print(f"[bold red]\U0001f525 FALHA:[/] {str(e)[:50]}")
-        time.sleep(2)
+            with open(path, "rb") as f:
+                content = f.read()
+                content.decode("ascii")
+        except UnicodeDecodeError:
+            non_ascii_files.append(path.relative_to(BASE_DIR))
+
+    if non_ascii_files:
+        console.print("[bold red][ENTROPIA] Caracteres não-ASCII detectados:[/]")
+        for f in non_ascii_files:
+            console.print(f"  - {f}")
+        raise typer.Exit(1)
+    console.print("[bold green][OK] Blindagem ASCII íntegra em todos os módulos Python.[/]")
 
 
-class VITOIWatcher(FileSystemEventHandler):
-    def __init__(self):
-        self.ignores = {
-            ".git",
-            "node_modules",
-            DIR_VENV,
-            ".chroma_db",
-            "__pycache__",
-            DIR_NEXT,
-            "dist",
-            DIR_CLAUDE,
-        }
-        self.last = {}
+@ops_app.command("lint")
+def run_lint():
+    """Executa a Pipeline de Integridade Python (Ruff, Mypy, Pylint)."""
+    console.print("[bold magenta]🛡️  Nexus Orchestrator - Pipeline de Integridade Python[/]\n")
 
-    def on_modified(self, event):
-        src_path_str = (
-            os.fsdecode(event.src_path)
-            if isinstance(event.src_path, bytes)
-            else str(event.src_path)
-        )
-        if event.is_directory or not src_path_str.endswith((
-            ".py",
-            ".js",
-            ".ts",
-            ".tsx",
-        )):
-            return
-        if any(ign in Path(src_path_str).parts for ign in self.ignores):
-            return
-        if src_path_str in self.last and time.time() - self.last[src_path_str] < 5:
-            return
-        if os.path.getsize(src_path_str) // 4 > 8000:
-            self.last[src_path_str] = time.time()
-            console.print(
-                f"\n[bold red]\u26a0\ufe0f ENTROPIA DETECTADA:[/] {os.path.basename(src_path_str)} excedeu limite de tokens!"
-            )
+    def run_step(name: str, cmd: list[str]):
+        console.print(f"\n[bold blue]🚀 Iniciando:[/] [white]{name}[/]")
+        start = time.monotonic()
+        res = subprocess.run(cmd, cwd=str(BASE_DIR))
+        elapsed = time.monotonic() - start
+        if res.returncode == 0:
+            console.print(f"[bold green]✅ Sucesso:[/] {name} ({elapsed:.2f}s)")
+        else:
+            console.print(f"[bold red]❌ Falha:[/] {name} ({elapsed:.2f}s)")
+            raise typer.Exit(res.returncode)
 
-
-def run_watcher():
-    """Vigia o sistema de arquivos contra acumulo de entropia (Arquivos Gigantes)."""
-    observer = Observer()
-    observer.schedule(VITOIWatcher(), path=str(BASE_DIR), recursive=True)
-    console.print(
-        Panel(
-            "Monitor de Contexto VITOI Ativo...\nVigiando expansao de massa em tempo real.",
-            border_style="cyan",
-        )
+    run_step("Ruff Linter (Auto-fix)", ["uv", "run", "ruff", "check", ".", "--fix"])
+    run_step("Ruff Formatter", ["uv", "run", "ruff", "format", "."])
+    run_step("Mypy (Type Checker)", ["uv", "run", "mypy", "."])
+    run_step(
+        "Pylint (Auditor Semantico)",
+        ["uv", "run", "pylint", "core", "database", "engine", "agents", "llm", "worker", "utils", "api"],
     )
-    observer.start()
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+
+    console.print("\n[bold green]🎉 Pipeline Python SOTA concluido com sucesso absoluto![/]")
 
 
-class FileDef(BaseModel):
-    path: str
-    content: str
-
-
-class StructureDef(BaseModel):
-    directory: str
-    files: list[FileDef]
-    main_file_update: str
-
-
-class RefactorOutput(BaseModel):
-    project_structure: StructureDef
-
-
-def run_refactor_engine(file_path):
-    """Desmembra monolitos usando a IA."""
-    path = Path(file_path)
-    if not path.exists() or path.is_dir():
-        return console.print(f"[red]Alvo invalido: {file_path}[/]")
-    console.print(
-        Panel(
-            f"Refatoracao Agentica SOTA\nAlvo: [yellow]{path.name}[/]",
-            border_style="cyan",
-        )
+@ops_app.command("vscode-inject")
+def inject_vscode_settings():
+    """Injeta as Diretrizes VITOI SOTA diretamente no settings.json do workspace."""
+    console.print("[bold magenta]=== [PROTOCOLO SOTA] INJETANDO MENTE COLETIVA NO VSCODE ===[/]")
+    payload = (
+        "PROTOCOLO SOTA DE COMPREENSAO E REFATORACAO DE CODIGO v7.0 GOLD.\n\n"
+        "DIRETRIZES IRREVOGAVEIS:\n"
+        "1. ANTEVISAO SEMANTICA (Micro-Macro): E terminantemente proibida a analise isolada de fragmentos...\n"
+        "2. LETALIDADE TERMODINAMICA: Refatore com o menor numero de tokens e operacoes I/O possiveis.\n"
+        "8. HIERARQUIA ABSOLUTA (GOD MODE W3): Voce atua sob a consciencia de @chico (Tier 1)."
     )
-    api_key = get_api_key()
-    if not api_key:
-        return console.print("[red]API Key ausente.[/]")
 
-    with open(path, "r", encoding="utf-8") as f:
-        content = f.read()
-    bak = f"{path}.bak_{int(time.time())}"
-    shutil.copy(path, bak)
+    vscode_dir = BASE_DIR / ".vscode"
+    settings_file = vscode_dir / "settings.json"
 
-    try:
-        client = genai.Client(api_key=api_key)
-        res = client.models.generate_content(
-            model="gemini-2.5-pro",
-            contents=f"SISTEMA: VITOI 3.2. TAREFA: Divida em modulos logicos SRP.\nCODIGO:\n{content}",
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=RefactorOutput,
-                temperature=0.1,
-            ),
-        )
-        struct = json.loads(res.text or "{}").get("project_structure", {})
-        tdir = path.parent / struct.get("directory", "refactored")
-        tdir.mkdir(exist_ok=True)
-        for fi in struct.get("files", []):
-            with open(tdir / fi["path"], "w", encoding="utf-8") as nf:
-                nf.write(fi["content"])
-            console.print(f"[green] -> Modulo materializado:[/] {fi['path']}")
-        if "main_file_update" in struct:
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(struct["main_file_update"])
-        console.print("[bold green]=== SINTESE CONCLUIDA ==-[/]")
-    except Exception as e:  # noqa: BLE001
-        console.print(f"[red]Arritmia: {e}. Revertendo backup.[/]")
-        shutil.copy(bak, path)
+    if not vscode_dir.exists():
+        vscode_dir.mkdir(parents=True)
+    settings_data = {}
+    if settings_file.exists():
+        with open(settings_file, encoding="utf-8") as f:
+            raw = f.read()
+            clean_json = re.sub(r"//.*|/\*[\s\S]*?\*/", "", raw)
+            if clean_json.strip():
+                settings_data = json.loads(clean_json)
 
+    settings_data["gemini.codeAssist.customSystemInstructions"] = payload
+    settings_data["gemini.codeAssist.system.enableExtendedChainOfThought"] = True
+    settings_data["gemini.codeAssist.system.verbosityLevel"] = "maximum_density"
 
-def audit_routing():
-    """Gera a matriz holografica de roteamento em Markdown."""
-
-    def read_json_sota(file_path: Path):
-        if not file_path.exists():
-            return {}
-        with open(file_path, "r", encoding="utf-8-sig") as f:
-            return json.loads(f.read().lstrip("\ufeff \t\n\r"))
-
-    intents = read_json_sota(BASE_DIR / "data/intentmap.json")
-    routes = read_json_sota(BASE_DIR / "data/routing_map.json")
-    sys_cfg = read_json_sota(BASE_DIR / "data/system_config.json")
-
-    handoffs = sys_cfg.get("handoff_pipeline", {})
-    agent_models = routes.get("agent_map", {})
-
-    md = f"# MATRIZ HOLOGRAFICA DE ROTEAMENTO (SOTA)\n> **Gerado Automaticamente** | Data: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-    md += "## 1. A Malha de Entrada (Usuario -> Agente)\n| Agente | Prioridade | Padrao de Gatilho (Regex) |\n|---|---|---|\n"
-    for ag, data in sorted(intents.items(), key=lambda x: x[1].get("priority", 99)):
-        md += f"| **{ag}** | {data.get('priority')} | `{data.get('pattern')}` |\n"
-
-    md += "\n## 2. A Malha de Handoff Automatica (Parte -> Parte)\n| Agente Origem | Passa o bastao para | Condicao |\n|---|---|---|\n"
-    for orig, dest in handoffs.items():
-        md += (
-            f"| **{orig}** | **{dest}** | Automatico ao concluir tarefa sem falhas |\n"
-        )
-
-    md += "\n## 3. Topologia de Cognicao (Agente -> LLM Tier)\n| Agente | Nivel de Raciocinio | Modelos Alocados (Cascata) |\n|---|---|---|\n"
-    for ag, tier in agent_models.items():
-        models = ", ".join(routes.get(tier, []))
-        md += f"| **{ag}** | `{tier}` | {models} |\n"
-
-    out_path = BASE_DIR / "docs/reports/HOLOGRAPHIC_ROUTING_MATRIX.md"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write(md)
+    with open(settings_file, "w", encoding="utf-8") as f:
+        json.dump(settings_data, f, indent=4)
     console.print(
-        f"[bold green][SOTA] Matriz Holografica de Roteamento forjada em: {out_path}[/]"
+        "[bold green][SUCESSO] Configuracoes de latencia otimizada e mindset SOTA injetados nativamente no Workspace.[/]"
     )
 
 
-def _add_key_to_collection(all_keys: dict, name: str, value: str, source: str) -> None:
-    upper_name = name.upper().strip()
-    if upper_name.startswith("GEMINI_CLI"):
-        return
-    if upper_name not in all_keys:
-        all_keys[upper_name] = {"value": value, "source": source}
-
-
-def _test_google_api_validity(key: str) -> bool:
-    import urllib.request
-
-    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key}"
-    try:
-        req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=10):
-            return True
-    except Exception:  # noqa: BLE001
-        return False
-
-
-def _test_openrouter_api_validity(key: str) -> bool:
-    import urllib.request
-
-    url = "https://openrouter.ai/api/v1/auth/key"
-    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {key}"})
-    try:
-        with urllib.request.urlopen(req, timeout=10):
-            return True
-    except Exception:  # noqa: BLE001
-        return False
-
-
-def _find_key_leaks_in_filesystem(key_value: str) -> list[str]:
-    ignores = {".git", DIR_VENV, "node_modules", "archive", ".bak", "logs"}
-    leaked_files = []
-    for root, dirs, files in os.walk(BASE_DIR):
-        dirs[:] = [
-            d
-            for d in dirs
-            if not any(ign in Path(os.path.join(root, d)).parts for ign in ignores)
-        ]
-        for file in files:
-            if file.endswith((FILE_ENV_PS1, ".env")):
-                continue
-            path = Path(root) / file
-            if not path.is_file():
-                continue
-            try:
-                with open(path, "r", encoding="utf-8", errors="ignore") as f:
-                    if key_value in f.read():
-                        leaked_files.append(str(path.relative_to(BASE_DIR)))
-            except Exception:  # noqa: BLE001, S110
-                pass
-    return leaked_files
-
-
-def _collect_file_keys(all_keys: dict) -> None:
-    """Extrai chaves de API dos arquivos de ambiente."""
-    for file_name in [FILE_ENV_PS1, ".env"]:
-        env_path = BASE_DIR / file_name
-        if env_path.exists():
-            try:
-                with open(env_path, "r", encoding="utf-8", errors="ignore") as f:
-                    for line in f:
-                        match = re.search(
-                            r'(?:\$env:|\$)?(\w+)\s*[:=]\s*[\'"]?([^\'"\s#]+)[\'"]?',
-                            line,
-                        )
-                        if match:
-                            _add_key_to_collection(
-                                all_keys,
-                                match.group(1),
-                                match.group(2),
-                                f"File ({file_name})",
-                            )
-            except Exception:  # noqa: BLE001, S110
-                pass
-
-
-def _collect_env_keys(all_keys: dict) -> None:
-    """Extrai chaves de API das variaveis de ambiente do sistema."""
-    for k, v in os.environ.items():
-        if k.upper().startswith(("GEMINI", "GOOGLE", "OPENROUTER", "OPEN_ROUTER")):
-            _add_key_to_collection(all_keys, k, v, "Environment")
-
-
-def _process_key_validity(key_name: str, key_value: str) -> bool:
-    """Testa a validade da chave baseada no seu provedor."""
-    if key_name.startswith(("GEMINI", "GOOGLE")):
-        return _test_google_api_validity(key_value)
-    if key_name.startswith(("OPENROUTER", "OPEN_ROUTER")):
-        return _test_openrouter_api_validity(key_value)
-    return False
-
-
-def _audit_single_key(key_name: str, key_data: dict, summary: dict) -> None:
-    """Executa a auditoria completa de uma unica chave de API."""
-    key_value = key_data["value"]
-    key_source = key_data["source"]
-
-    console.print(f"\n[white][AUDITANDO] {key_name} (Fonte: {key_source})[/]")
-
-    if not key_value or key_value == "REPLACE_ME":
-        console.print("  [yellow][!] STATUS: VAZIA / NAO CONFIGURADA[/]")
-        summary["empty"] += 1
-        return
-
-    if not key_name.startswith(("GEMINI", "GOOGLE", "OPENROUTER", "OPEN_ROUTER")):
-        return
-
-    is_valid = _process_key_validity(key_name, key_value)
-
-    if is_valid:
-        console.print("  [green][+] STATUS: ATIVA E OPERANTE[/]")
-        summary["active"] += 1
+@ops_app.command("hygiene")
+def run_hygiene():
+    """Realiza a extirpacao temporal de artefatos obsoletos (Limite: 7 dias)."""
+    script_path = BASE_DIR / "scripts/maintenance/hygiene.py"
+    if script_path.exists():
+        subprocess.run(["uv", "run", "python", str(script_path)], cwd=str(BASE_DIR))
     else:
-        console.print("  [red][!] STATUS: INVALIDA OU EXPIRADA[/]")
-        summary["invalid"] += 1
-
-    leaks = _find_key_leaks_in_filesystem(key_value)
-    if leaks:
-        console.print(
-            f"  [bold red][CRITICAL] VAZAMENTO DETECTADO EM {len(leaks)} ARQUIVO(S):[/]"
-        )
-        for leak in leaks:
-            console.print(f"    - {leak}", style="red")
-        summary["leaked"] += 1
-    else:
-        console.print(
-            "  [green][OK] SEGURANCA: Nenhum vazamento detectado no codigo fonte.[/]"
-        )
+        console.print("[bold red][ERRO] Script de higiene nao encontrado.[/]")
 
 
-def audit_api_keys():
-    """Auditoria de Seguranca e Rotacao de Chaves de API (SOTA)."""
-    console.print(
-        Panel(
-            "[bold cyan]=== INICIANDO AUDITORIA DE SEGURANCA DE CHAVES DE API ===[/]",
-            border_style="cyan",
-        )
-    )
+@ops_app.command("quality-gate")
+@coro
+async def quality_gate():
+    """Executa a Pipeline SOTA (Lint, Typecheck, Build, Tests) sem dependencias externas e envia logs ao Loguru."""
+    console.print("[bold magenta]=== [SISTEMA] INICIANDO QUALITY GATE SOTA ===[/]")
 
-    all_keys = {}
-    _collect_file_keys(all_keys)
-    _collect_env_keys(all_keys)
+    npm_cmd = shutil.which("npm") or "npm"
+    uv_cmd = shutil.which("uv") or "uv"
 
-    summary = {"active": 0, "invalid": 0, "empty": 0, "leaked": 0}
+    steps = [
+        ("Blindagem ASCII", [uv_cmd, "run", "python", str(Path(__file__)), "ops", "check-ascii"], BASE_DIR),
+        ("Lint (frontend)", [npm_cmd, "run", "lint"], BASE_DIR),
+        ("Typecheck (frontend)", [npm_cmd, "--workspace", "frontend", "run", "typecheck:audit"], BASE_DIR),
+        ("Build (frontend)", [npm_cmd, "run", "build"], BASE_DIR),
+        ("Tests (frontend)", [npm_cmd, "run", "test"], BASE_DIR),
+        (
+            "Python syntax check",
+            [uv_cmd, "run", "python", "-m", "py_compile", "api/v1/middleware.py", "api/v1/server.py"],
+            BASE_DIR,
+        ),
+        ("Python tests", [uv_cmd, "run", "pytest", "-q"], BASE_DIR),
+    ]
 
-    for key_name in sorted(all_keys.keys()):
-        _audit_single_key(key_name, all_keys[key_name], summary)
+    for name, cmd, cwd in steps:
+        console.print(f"\n[bold cyan]==> {name}[/]")
+        logger.info(f"[QUALITY-GATE] START: {name} | CMD: {' '.join(cmd)}")
 
-    console.print("\n[bold cyan]=================================================[/]")
-    console.print("[bold cyan]            RELATORIO FINAL DA AUDITORIA[/]")
-    console.print("[bold cyan]=================================================[/]")
-    console.print(f"  - Chaves Ativas: [green]{summary['active']}[/]")
-    console.print(f"  - Chaves Vazias: [grey50]{summary['empty']}[/]")
-    console.print(f"  - Chaves Invalidas: [red]{summary['invalid']}[/]")
-    console.print(f"  - Chaves Vazadas: [magenta]{summary['leaked']}[/]")
-
-    if summary["leaked"] > 0:
-        console.print(
-            "\n[bold red][ACAO CRITICA] Chaves vazadas foram encontradas! E OBRIGATORIO rotacionar estas chaves.[/]"
-        )
-
-
-def _get_worker_process_status() -> str:
-    worker_status = "[red]HIBERNANDO[/]"
-    for proc in psutil.process_iter(["pid", "cmdline"]):
-        if (
-            proc.info["cmdline"]
-            and FILE_TASK_EXECUTOR in " ".join(proc.info["cmdline"])
-            and "worker-api" in " ".join(proc.info["cmdline"])
-        ):
-            worker_status = f"[green]ATIVO (PID: {proc.pid})[/]"
-            break
-    return worker_status
-
-
-def _get_autonomy_mode_status() -> str:
-    autonomy_file = BASE_DIR / DIR_CLAUDE / "autonomy.json"
-    autonomy_mode = "off"
-    if autonomy_file.exists():
         try:
-            with open(autonomy_file, "r", encoding="utf-8-sig") as f:
-                data = json.load(f)
-                autonomy_mode = data.get("mode", "off")
-        except Exception:  # noqa: BLE001, S110
-            pass
+            process = await asyncio.create_subprocess_exec(
+                *cmd, cwd=str(cwd), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
+            )
 
-    return {
-        "full": "[green]TOTAL[/]",
-        "partial": "[yellow]PARCIAL[/]",
-        "off": "[red]DESATIVADA[/]",
-    }.get(autonomy_mode, "[red]DESCONHECIDA[/]")
+            while True:
+                line = await process.stdout.readline()
+                if not line:
+                    break
+                decoded = line.decode("utf-8", errors="replace").strip()
+                if decoded:
+                    console.print(f"[dim]{decoded}[/]")
+                    logger.debug(f"[{name}] {decoded}")
+
+            await process.wait()
+
+            if process.returncode != 0:
+                logger.error(f"[QUALITY-GATE] FAIL: {name} | EXIT_CODE: {process.returncode}")
+                console.print(f"[bold red]Erro: O passo '{name}' falhou com codigo de saida {process.returncode}.[/]")
+                raise typer.Exit(process.returncode)
+
+            logger.success(f"[QUALITY-GATE] SUCCESS: {name}")
+        except Exception as e:
+            logger.exception(f"[QUALITY-GATE] FATAL ERROR in {name}: {e}")
+            console.print(f"[bold red]Excecao fatal executando '{name}': {e}[/]")
+            raise typer.Exit(1)
+
+    console.print("\n[bold green]QUALITY GATE: OK (Telemetria Preditiva Capturada)[/]")
 
 
-def _get_task_queue_summary() -> dict:
-    python_exe = _get_python_exe()
-    executor_script = str(BASE_DIR / FILE_TASK_EXECUTOR)
-    try:
-        counts_json = subprocess.check_output(
-            [python_exe, executor_script, "db-get", "counts"],
-            text=True,
-            encoding="utf-8",
-        )
-        return json.loads(counts_json)
-    except Exception:  # noqa: BLE001
-        return {"pending": 0, "running": 0}
+# ==========================================
+# COMANDOS DE AGENTES (HANDOFF)
+# ==========================================
 
 
-def _get_api_rate_limiter_status() -> dict:
-    python_exe = _get_python_exe()
-    executor_script = str(BASE_DIR / FILE_TASK_EXECUTOR)
-    try:
-        budget_json = subprocess.check_output(
-            [python_exe, executor_script, "db-get", "budget"],
-            text=True,
-            encoding="utf-8",
-        )
-        api_budget_data = json.loads(budget_json)
-        return {
-            "used": api_budget_data.get("used", 0),
-            "total": api_budget_data.get("total", 0),
+@agent_app.command("handoff")
+def execute_handoff(
+    web: bool = typer.Option(False, "--web", help="Copia contexto para Clipboard da Web (Claude/Gemini Pro)"),
+    agent: str = typer.Option("chico", "--agent", help="Focar contexto num agente especifico"),
+):
+    """Monta contexto hierarquico isolado e realiza o Handoff Cognitivo de Sessao."""
+    console.print("[bold cyan]=== [PROTOCOLO DE HANDOFF SOTA] ===[/]")
+    if web:
+        context = []
+        files_to_inject = {
+            "INSTRUCOES GLOBAIS": BASE_DIR / "GLOBAL_INSTRUCTIONS.md",
+            "COSMOVISAO": DIR_CLAUDE / "COSMOVISAO.md",
+            "INVARIANTES ARQUITETURAIS": DIR_CLAUDE / "ARCHITECTURAL_INVARIANTS.md",
         }
-    except Exception:  # noqa: BLE001
-        return {"used": "N/A", "total": "N/A"}
-
-
-def show_status():
-    """Exibe um painel de telemetria completo do sistema."""
-
-    worker_status = _get_worker_process_status()
-    autonomy_display = _get_autonomy_mode_status()
-    task_counts = _get_task_queue_summary()
-    api_budget = _get_api_rate_limiter_status()
-
-    # Build Rich Panel
-    header = Panel(
-        "[bold cyan]NEXUS HUB[/] | [magenta]Telemetria de Sistema em Tempo Real[/]",
-        style="white on black",
-        border_style="cyan",
-    )
-
-    grid = Table.grid(expand=True, padding=(0, 2))
-    grid.add_column(style="cyan", no_wrap=True, justify="right", width=20)
-    grid.add_column()
-
-    grid.add_row("[CORE] Orquestrador", f": {worker_status}")
-    grid.add_row("[SYS]  Autonomia", f": {autonomy_display}")
-    grid.add_row(
-        "[DATA] Carga de Tarefas",
-        f": [yellow]{task_counts.get('pending', 0)}[/] Pendentes | [magenta]{task_counts.get('running', 0)}[/] Rodando",
-    )
-    grid.add_row(
-        "[API]  Orcamento Diario",
-        f": [red]{api_budget.get('used', 'N/A')}[/] / [green]{api_budget.get('total', 'N/A')}[/] chamadas",
-    )
-
-    console.print(header)
-    console.print(
-        Panel(grid, title="[bold]STATUS VITAL[/]", border_style="green", padding=(1, 2))
-    )
-    console.print(
-        "[grey50]Para uma lista de comandos, use [cyan]nexus-cli dashboard[/] ou [cyan]nexus-help[/].[/]"
-    )
-
-
-# --- Funcoes de Utilitario ---
-
-
-def _run_script(script_path: Path, *args):
-    if not script_path.exists():
-        console.print(f"[red][ERRO] Modulo nao encontrado: {script_path.name}[/]")
-        time.sleep(2)
-        return
-
-    command = [_get_python_exe(), str(script_path), *args]
-    console.print(f"\n[cyan]Engatilhando {script_path.name}...[/]")
-    subprocess.run(command, check=False)
-    console.print("[green]Concluido. Pressione Enter para retornar ao Nexus.[/]")
-    input()
-
-
-def _run_powershell_script(script_path: Path):
-    if not script_path.exists():
-        console.print(f"[red][ERRO] Modulo nao encontrado: {script_path.name}[/]")
-        time.sleep(2)
-        return
-
-    command = ["powershell", "-ExecutionPolicy", "Bypass", "-File", str(script_path)]
-    console.print(f"\n[cyan]Engatilhando {script_path.name}...[/]")
-    subprocess.run(command, check=False)
-    console.print("[green]Concluido. Pressione Enter para retornar ao Nexus.[/]")
-    input()
-
-
-# --- Logica dos Subcomandos (Antigos Scripts) ---
-
-
-def _execute_dashboard_action(choice: str, actions: dict) -> bool:
-    """Executa a acao do dashboard selecionada. Retorna True se deve continuar o loop."""
-    if choice == "q":
-        return False
-
-    if choice in actions:
-        subcommand, args = actions[choice]
-        # Se a acao precisa de input, como o caminho do arquivo para refatorar
-        if subcommand == "refactor":
-            file_to_refactor = console.input(
-                "[bold yellow]Informe o caminho do arquivo para refatorar:[/] "
-            ).strip()
-            if file_to_refactor:
-                args.append(file_to_refactor)
-            else:
-                console.print("[red]Caminho do arquivo nao pode ser vazio.[/]")
-                time.sleep(2)
-                return True
-
-        # Limpa a tela e executa o comando correspondente
-        os.system("cls" if os.name == "nt" else "clear")
-        main([subcommand] + args)
-        console.print(
-            f"\n[green]Rotina '{subcommand}' concluida. Pressione Enter para retornar ao dashboard.[/]"
-        )
-        input()
-    else:
-        console.print("[red]Opcao invalida.[/]")
-        time.sleep(1)
-
-    return True
-
-
-def run_dashboard():
-    """Exibe o painel de controle principal do Nexus."""
-    actions = {
-        "1": ("monitor", []),
-        "2": ("test-breaker", []),
-        "3": ("scan", []),
-        "4": ("watch", []),
-        "5": ("refactor", []),
-        "6": ("sanitize", []),
-        "7": ("optimize-ide", []),
-        "8": ("purge-ext", []),
-        "9": ("audit-routing", []),
-        "10": ("visualize-map", []),
-    }
-
-    while True:
-        os.system("cls" if os.name == "nt" else "clear")
-
-        header = Panel(
-            "[bold cyan]NEXUS COMMAND CENTER v1.0[/] | [magenta]Executor de Rotinas de Sistema SOTA[/]",
-            style="white on black",
-            border_style="cyan",
-        )
-
-        menu = Table.grid(expand=True, padding=(0, 1))
-        menu.add_column(style="cyan", width=5)
-        menu.add_column(style="white")
-        menu.add_row("[1]", "[bold green]Monitor[/] de Telemetria (Hardware & Nuvem)")
-        menu.add_row("[2]", "[bold yellow]Teste[/] de Disjuntor (Circuit Breaker API)")
-        menu.add_row("[3]", "[bold magenta]Scan[/] de Entropia (Densidade de Tokens)")
-        menu.add_row("[4]", "[bold blue]Watch[/] de Contexto (Sentinela de Arquivos)")
-        menu.add_row("[5]", "[bold red]Refactor[/] Agentico (Auto-Refactor com IA)")
-        menu.add_row(
-            "[6]", "[bold red]Sanitize[/] System (Expurgo Deterministico de Lixo)"
-        )
-        menu.add_row(
-            "[7]",
-            "[bold cyan]Optimize-IDE[/] (Injeta config de baixa latencia no VSCode)",
-        )
-        menu.add_row(
-            "[8]",
-            "[bold red]Purge-Ext[/] (Audita e remove extensoes VSCode redundantes)",
-        )
-        menu.add_row(
-            "[9]", "[bold green]Audit-Routing[/] (Gera matriz de roteamento de agentes)"
-        )
-        menu.add_row(
-            "[10]", "[bold green]Visualize-Map[/] (Gera diagrama de fluxo de tarefas)"
-        )
-        menu.add_row("", "")
-        menu.add_row("[Q]", "Sair e Retornar ao Terminal")
-
-        layout = Layout()
-        layout.split_column(
-            Layout(header, size=3),
-            Layout(
-                Panel(
-                    menu,
-                    title="[bold]ARSENAL SOTA DE INFRAESTRUTURA[/]",
-                    border_style="magenta",
+        for title, path in files_to_inject.items():
+            if path.exists():
+                context.append(
+                    f"\n=================================================================\n## {title}\n=================================================================\n{path.read_text(encoding='utf-8', errors='ignore')}"
                 )
-            ),
-        )
 
-        console.print(layout)
+        agents_dir = DIR_CLAUDE / "agents"
+        specific_agent = agents_dir / f"{agent}.md"
+        if specific_agent.exists():
+            context.append(
+                f"\n--- PERFIL ATIVO: {specific_agent.name} ---\n{specific_agent.read_text(encoding='utf-8', errors='ignore')}"
+            )
 
-        choice = (
-            console
-            .input("\n[bold yellow]Selecione uma diretriz de operacao:[/] ")
-            .strip()
-            .lower()
-        )
+        try:
+            import pyperclip
 
-        if not _execute_dashboard_action(choice, actions):
-            break
-
-
-COMMAND_MAP = {
-    "start-worker": start_worker,
-    "stop-worker": stop_worker,
-    "status": show_status,
-    "sanitize": run_sanitizer,
-    "optimize-ide": optimize_vscode,
-    "purge-ext": purge_extensions,
-    "scan": run_scanner,
-    "audit-routing": audit_routing,
-    "audit-api": audit_api_keys,
-    "monitor": run_monitor,
-    "test-breaker": test_circuit_breaker,
-    "watch": run_watcher,
-    "visualize-map": lambda: _run_powershell_script(
-        ROUTINES_DIR / "invoke_routing_map_visualization.ps1"
-    ),
-}
+            pyperclip.copy("\n".join(context))
+            console.print("[bold green][HANDOFF COMPLETO] Contexto extraido para o Clipboard![/]")
+        except ImportError:
+            console.print("[bold red]Modulo 'pyperclip' nao detectado.[/]")
 
 
-def _handle_autonomy_cmd(cli_args):
-    if not cli_args:
-        console.print(
-            "[red]O comando 'autonomy' requer um modo (full, partial, off).[/]"
-        )
-        return
-    set_autonomy(cli_args[0])
+@agent_app.command("route")
+def test_routing(description: str = typer.Argument(..., help="Testa o despacho semantico da malha.")):
+    """Avalia para qual agente uma dada instrucao seria roteada usando as heuristicas do config nativamente."""
+    try:
+        import task_executor
+
+        agent, meta = task_executor._intelligent_route_task(description)
+        console.print(json.dumps({"agent": agent, "metadata": meta}, indent=2))
+    except Exception as e:
+        logger.exception("Falha ao analisar rota")
+        console.print(f"[bold red]Erro de roteamento: {e}[/]")
 
 
-def _handle_refactor_cmd(cli_args):
-    if not cli_args:
-        console.print("[red]Uso: nexus-cli refactor <caminho_do_arquivo>[/]")
-        return
-    run_refactor_engine(cli_args[0])
-
-
-def _dispatch_command(command: str, cli_args: list[str]) -> None:
-    if command == "autonomy":
-        _handle_autonomy_cmd(cli_args)
-    elif command == "refactor":
-        _handle_refactor_cmd(cli_args)
-    elif command in COMMAND_MAP:
-        COMMAND_MAP[command]()
-    else:
-        console.print(f"[red]Comando desconhecido: '{command}'[/]")
-        console.print(
-            "[yellow]Use 'nexus-cli dashboard' ou 'nexus-cli' para ver as opcoes.[/]"
-        )
-
-
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
-
-    if not args or args[0] in ["-h", "--help", "dashboard"]:
-        run_dashboard()
-        return
-
-    _dispatch_command(args[0].lower(), args[1:])
-
+# ==========================================
+# ENTRYPOINT TYPER
+# ==========================================
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 2 and sys.argv[1] == "dashboard":
+        console.print("[bold yellow]Aviso: O modo interativo foi extinto.[/]")
+        console.print("[bold green]Para ver os novos comandos SOTA, execute: `uv run nexus --help`[/]")
+        sys.exit(0)
+    app()

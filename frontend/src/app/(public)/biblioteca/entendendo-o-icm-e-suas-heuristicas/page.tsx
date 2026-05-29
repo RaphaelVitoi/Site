@@ -2,7 +2,7 @@
  * IDENTITY: Entendendo o ICM e suas Heurísticas GOLD
  * PATH: src/app/biblioteca/entendendo-o-icm-e-suas-heuristicas/page.tsx
  * ROLE: Artigo técnico sobre Risk Premium, Amortização de Edge e Downward Drift.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import ContentFooter from '@/components/ui/layout/ContentFooter';

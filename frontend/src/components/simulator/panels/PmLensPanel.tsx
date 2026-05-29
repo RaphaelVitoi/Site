@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: PM Lens — Framework PM incidindo sobre o Referencial SOTA v6.2.1 GOLD
+ * IDENTITY: PM Lens — Framework PM incidindo sobre o Referencial SOTA v7.0 GOLD
  * PATH: src/components/simulator/panels/PmLensPanel.tsx
  * ROLE: Dado o FT real e a equity da mão fornecida pelo usuário, calcula por street:
  *         EV_fold = −heroCost  [1ª ordem — dominante]
@@ -198,8 +198,7 @@ export default function PmLensPanel({
 
   const spr = Math.max(0.1, (initialStacks[heroIdx] || 10) / Math.max(1, currentPot));
 
-  // SOTA v6.2.1: A Realizacao (R) e agora uma resultante da fisica unificada.
-  // Mantemos o baseline posicional puro, deixando o damping para o motor.
+  // SOTA v7.0 GOLD: A Realizacao (R) e agora uma resultante da fisica unificada.
   const posBaseline = isHeroIP ? 1 : 0.85;
   const defaultR = Math.max(0.1, Math.min(1.5, posBaseline));
 
@@ -254,7 +253,7 @@ export default function PmLensPanel({
   const [heroRange, setHeroRange] = useState('AhKd');
   const [villainRange, setVillainRange] = useState('100%');
 
-  // SOTA v4.2: OrquestraÃ§Ã£o de CÃ¡lculo Modularizada
+  // SOTA v7.0: Orquestração de Cálculo Modularizada
   const { streetMetrics } = usePmLensCalculations({
     initialStacks,
     initialPrizes,
@@ -335,7 +334,7 @@ export default function PmLensPanel({
 
   const handleCalculateEquity = () => {
     if (ecosystem?.dispatchInsolvencyMatrix && heroRange && villainRange) {
-      // SOTA: Acopla a TensÃ£o SistÃªmica (RP) baseando-se na vantagem posicional
+      // SOTA: Acopla a Tensão Sistêmica (RP) baseando-se na vantagem posicional
       const rpFactor = isHeroIP ? 15 : 25;
       ecosystem.dispatchInsolvencyMatrix({
         villainRange,
@@ -362,17 +361,22 @@ export default function PmLensPanel({
   }, []);
 
   return (
-    <div className="glass-panel bg-bg-panel/80 relative flex flex-col gap-10 overflow-hidden rounded-4xl border border-white/10 p-6 shadow-2xl backdrop-blur-xl transition-all duration-300 sm:p-8 lg:p-12">
-      <div className="bg-accent-indigo/5 pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full blur-3xl" />
+    <div className="glass-panel animate-sota-in relative flex flex-col gap-12 overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)]">
+      <div className="bg-accent-indigo/5 pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full blur-3xl" />
 
       {/* Header */}
-      <div className="flex flex-col gap-2 border-b border-white/5 pb-6">
-        <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-4">
-            <div className="bg-accent-indigo h-2 w-2 rounded-full shadow-[0_0_10px_var(--accent-indigo)]" />
-            <h3 className="text-text-main m-0 text-[0.75rem] font-black tracking-[0.2em] uppercase">
-              Framework PM &middot; <span className="text-text-muted">Lente de Perspectiva</span>
-            </h3>
+      <div className="flex flex-col gap-4 border-b border-white/5 pb-10">
+        <div className="flex flex-col items-start justify-between gap-8 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-6">
+            <div className="bg-accent-indigo h-3 w-3 rounded-full shadow-[0_0_20px_var(--accent-indigo)] animate-pulse" />
+            <div>
+              <h3 className="text-white m-0 text-[0.9rem] font-black tracking-[0.45em] uppercase">
+                Framework PM <span className="text-text-darker ml-2">&middot; Lente de Perspectiva</span>
+              </h3>
+              <p className="text-text-muted m-0 mt-2 text-[0.6rem] font-black tracking-[0.3em] uppercase">
+                Telemetria Sistêmica de Sunk Cost &middot; <span className="text-accent-indigo-light">SOTA v7.0 GOLD</span>
+              </p>
+            </div>
           </div>
           <SniperBadge
             pm={streetMetrics[0]?.PM ?? 0}
@@ -380,25 +384,22 @@ export default function PmLensPanel({
             stackEff={Math.min(initialStacks[heroIdx] ?? 0, initialStacks[primaryVillainIdx] ?? 0)}
           />
         </div>
-        <p className="text-text-dim m-0 mt-2 text-[0.65rem] font-medium tracking-wider uppercase">
-          Telemetria Contínua de Sunk Cost &middot; Motor ICM Isolado (SOTA Offloading)
-        </p>
       </div>
 
       {/* Controles */}
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_minmax(350px,450px)]">
-        <div className="flex flex-col gap-10">
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
-            <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_minmax(380px,480px)]">
+        <div className="flex flex-col gap-12">
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+            <div className="space-y-5">
               <div className="flex items-center justify-between px-1">
-                <span className="text-text-muted text-[0.6rem] font-black tracking-[0.2em] uppercase">
+                <span className="text-text-muted text-[0.65rem] font-black tracking-[0.3em] uppercase">
                   Hero (Agressor)
                 </span>
-                <span className="text-text-darker rounded bg-black/40 px-2 py-0.5 text-[0.45rem] font-black tracking-widest uppercase">
+                <span className="text-text-darker rounded-md bg-black/40 px-2.5 py-1 text-[0.5rem] font-black tracking-widest uppercase">
                   SPR Active
                 </span>
               </div>
-              <div className="scrollbar-hide flex flex-wrap gap-2.5 overflow-x-auto pb-2">
+              <div className="scrollbar-hide flex flex-wrap gap-2.5 overflow-x-auto pb-4">
                 {DEFAULT_PLAYERS.slice(0, initialStacks.length).map((p, i) => (
                   <SelectBtn
                     key={p}
@@ -410,16 +411,16 @@ export default function PmLensPanel({
                 ))}
               </div>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="flex items-center justify-between px-1">
-                <span className="text-text-muted text-[0.6rem] font-black tracking-[0.2em] uppercase">
+                <span className="text-text-muted text-[0.65rem] font-black tracking-[0.3em] uppercase">
                   Villain(s) - Multiway
                 </span>
-                <span className="text-text-darker rounded bg-black/40 px-2 py-0.5 text-[0.45rem] font-black tracking-widest uppercase">
+                <span className="text-text-darker rounded-md bg-black/40 px-2.5 py-1 text-[0.5rem] font-black tracking-widest uppercase">
                   N² Complexity
                 </span>
               </div>
-              <div className="scrollbar-hide flex flex-wrap gap-2.5 overflow-x-auto pb-2">
+              <div className="scrollbar-hide flex flex-wrap gap-2.5 overflow-x-auto pb-4">
                 {DEFAULT_PLAYERS.slice(0, initialStacks.length).map((p, i) => (
                   <SelectBtn
                     key={p}
@@ -433,26 +434,26 @@ export default function PmLensPanel({
             </div>
           </div>
 
-          <div className="flex flex-col gap-8 rounded-3xl border border-white/5 bg-black/40 p-8 shadow-inner">
-            <h4 className="text-text-muted m-0 flex items-center gap-2 text-[0.65rem] font-black tracking-[0.25em] uppercase">
-              <i className="fa-solid fa-sliders text-accent-indigo text-[0.6rem]" /> Alavancas de Realização
+          <div className="flex flex-col gap-10 rounded-4xl border border-white/5 bg-black/40 p-10 shadow-inner">
+            <h4 className="text-text-muted m-0 flex items-center gap-3 text-[0.7rem] font-black tracking-[0.3em] uppercase">
+              <i className="fa-solid fa-sliders text-accent-indigo text-[0.7rem]" /> Alavancas de Realização
             </h4>
-            <div className="grid grid-cols-1 gap-10 sm:grid-cols-2">
-              <div className="space-y-5">
-                <div className={`flex flex-col gap-1 ${isHeroIP ? 'text-accent-indigo-light' : 'text-accent-danger'}`}>
-                  <div className="flex items-center justify-between text-[0.6rem] font-black tracking-widest uppercase">
+            <div className="grid grid-cols-1 gap-12 sm:grid-cols-2">
+              <div className="space-y-6">
+                <div className={`flex flex-col gap-2 ${isHeroIP ? 'text-accent-indigo-light' : 'text-accent-danger'}`}>
+                  <div className="flex items-center justify-between text-[0.65rem] font-black tracking-widest uppercase">
                     <span>Realização (R)</span>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       {customR !== null && (
                         <button
                           onClick={() => setCustomR(null)}
-                          className="text-text-dim cursor-pointer rounded-lg border border-white/5 bg-black/40 px-2 py-0.5 text-[0.55rem] tracking-tighter uppercase transition-all hover:text-white"
+                          className="text-text-dim cursor-pointer rounded-lg border border-white/5 bg-black/40 px-3 py-1 text-[0.6rem] tracking-tighter uppercase transition-all hover:text-white"
                           title="Resetar para Auto"
                         >
                           <i className="fa-solid fa-rotate-left mr-1"></i> Auto
                         </button>
                       )}
-                      <span className="rounded border border-white/5 bg-black/60 px-2 py-0.5 font-mono font-black text-white">
+                      <span className="rounded-lg border border-white/5 bg-black/60 px-3 py-1 font-mono font-black text-white shadow-2xl">
                         {Math.round(realizationFactor * 100)}%
                       </span>
                     </div>
@@ -466,18 +467,18 @@ export default function PmLensPanel({
                   step={0.05}
                   value={realizationFactor}
                   onChange={(e) => setCustomR(Number(e.target.value))}
-                  className={`h-1 w-full cursor-pointer appearance-none rounded-full bg-white/5 ${isHeroIP ? 'accent-accent-indigo' : 'accent-accent-danger'}`}
+                  className={`h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/5 ${isHeroIP ? 'accent-accent-indigo' : 'accent-accent-danger'}`}
                 />
-                <p className="text-text-darker m-0 text-[0.45rem] leading-tight font-black tracking-[0.15em] uppercase">
+                <p className="text-text-darker m-0 text-[0.5rem] leading-tight font-black tracking-[0.2em] uppercase">
                   Ajuste de under/over realization. R&lt;1 = perda de EQ.
                 </p>
               </div>
 
-              <div className="space-y-5">
-                <div className="text-accent-amber flex flex-col gap-1">
-                  <div className="flex items-center justify-between text-[0.6rem] font-black tracking-widest uppercase">
+              <div className="space-y-6">
+                <div className="text-accent-amber flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-[0.65rem] font-black tracking-widest uppercase">
                     <span>Villain AggFactor</span>
-                    <span className="rounded border border-white/5 bg-black/60 px-2 py-0.5 font-mono font-black text-white">
+                    <span className="rounded-lg border border-white/5 bg-black/60 px-3 py-1 font-mono font-black text-white shadow-2xl">
                       {aggFactor.toFixed(2)}x
                     </span>
                   </div>
@@ -490,18 +491,18 @@ export default function PmLensPanel({
                   step={0.1}
                   value={aggFactor}
                   onChange={(e) => setAggFactor(Number(e.target.value))}
-                  className="accent-accent-amber h-1 w-full cursor-pointer appearance-none rounded-full bg-white/5"
+                  className="accent-accent-amber h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/5"
                 />
-                <p className="text-text-darker m-0 text-[0.45rem] leading-tight font-black tracking-[0.15em] uppercase">
+                <p className="text-text-darker m-0 text-[0.5rem] leading-tight font-black tracking-[0.2em] uppercase">
                   Agg extrema OOP destrói sua Realização (R).
                 </p>
               </div>
             </div>
             {customR === null && (
-              <div className="bg-accent-indigo/5 border-accent-indigo/10 flex items-center gap-3 rounded-2xl border p-4">
-                <div className="bg-accent-indigo h-1.5 w-1.5 animate-pulse rounded-full" />
-                <p className="text-text-muted m-0 text-[0.6rem] leading-relaxed font-medium">
-                  <strong className="mr-2 tracking-widest text-white uppercase">Motor R Ativo:</strong> SPR{' '}
+              <div className="bg-accent-indigo/5 border-accent-indigo/10 flex items-center gap-4 rounded-2xl border p-5">
+                <div className="bg-accent-indigo h-2 w-2 animate-pulse rounded-full" />
+                <p className="text-text-muted m-0 text-[0.7rem] leading-relaxed font-medium">
+                  <strong className="mr-3 tracking-[0.3em] text-white uppercase">Motor R Ativo:</strong> SPR{' '}
                   {spr.toFixed(1)} &middot; Pos {absoluteHeroPos} &middot; Agg {aggFactor.toFixed(1)}x
                 </p>
               </div>
@@ -509,24 +510,24 @@ export default function PmLensPanel({
           </div>
 
           {/* SOTA: Nodelock B20 */}
-          <div className="flex flex-col gap-6 rounded-3xl border border-white/5 bg-black/40 p-8 shadow-inner">
+          <div className="flex flex-col gap-8 rounded-4xl border border-white/5 bg-black/40 p-10 shadow-inner">
             <div className="flex items-center justify-between">
-              <h4 className="text-text-muted m-0 flex items-center gap-2 text-[0.65rem] font-black tracking-[0.25em] uppercase">
-                <i className="fa-solid fa-anchor text-accent-indigo text-[0.6rem]" /> Tática de Ancoragem
+              <h4 className="text-text-muted m-0 flex items-center gap-3 text-[0.7rem] font-black tracking-[0.3em] uppercase">
+                <i className="fa-solid fa-anchor text-accent-indigo text-[0.7rem]" /> Tática de Ancoragem
               </h4>
               <button
                 onClick={() =>
                   setActiveNodelock((prev) => (prev ? null : { type: 'block_bet', sizePct: 0.2, freqOverride: 1 }))
                 }
                 {...{ 'aria-pressed': !!activeNodelock }}
-                className={`cursor-pointer rounded-xl border px-4 py-2 text-[0.6rem] font-black tracking-widest uppercase transition-all active:scale-95 ${activeNodelock ? 'bg-accent-indigo/20 border-accent-indigo text-accent-indigo-light shadow-lg' : 'text-text-dim border-white/10 bg-transparent hover:border-white/30 hover:text-white'}`}
+                className={`cursor-pointer rounded-xl border px-6 py-3 text-[0.65rem] font-black tracking-widest uppercase transition-all active:scale-95 ${activeNodelock ? 'bg-accent-indigo/20 border-accent-indigo text-accent-indigo-light shadow-[0_0_20px_rgba(99,102,241,0.2)]' : 'text-text-dim border-white/10 bg-transparent hover:border-white/30 hover:text-white'}`}
               >
                 {activeNodelock ? 'Nodelock B20 Ativo' : 'Ativar Block Bet 20%'}
               </button>
             </div>
             {activeNodelock && (
-              <p className="text-accent-indigo-light border-accent-indigo/30 m-0 border-l-2 py-1 pl-4 text-[0.65rem] leading-relaxed font-medium italic">
-                A estrutura SPR foi mitigada (+40%/street). Axioma Lipe Piv acionado (Îº:{' '}
+              <p className="text-accent-indigo-light border-accent-indigo/30 m-0 border-l-2 py-2 pl-6 text-[0.75rem] leading-relaxed font-medium italic">
+                A estrutura SPR foi mitigada (+40%/street). Axioma Lipe Piv acionado (κ:{' '}
                 <span className="font-mono font-black">{Math.min(1, kappa + 0.3).toFixed(2)}x</span>
                 ).
               </p>
@@ -534,14 +535,14 @@ export default function PmLensPanel({
           </div>
         </div>
 
-        <div className="group/sidebar relative flex flex-col gap-8 overflow-hidden rounded-4xl border border-white/10 bg-black/60 p-8 shadow-2xl backdrop-blur-xl">
-          <div className="from-accent-indigo/5 pointer-events-none absolute inset-0 bg-radial-[at_center_center] to-transparent" />
+        <div className="group/sidebar relative flex flex-col gap-10 overflow-hidden rounded-5xl border border-white/10 bg-black/60 p-10 shadow-3xl backdrop-blur-2xl">
+          <div className="from-accent-indigo/10 pointer-events-none absolute inset-0 bg-radial-[at_center_center] to-transparent" />
 
-          <div className="relative z-10 space-y-8">
-            <div className="flex flex-col gap-5">
-              <div className="text-text-muted flex items-center justify-between text-[0.65rem] font-black tracking-[0.2em] uppercase transition-colors group-hover/sidebar:text-white">
+          <div className="relative z-10 space-y-10">
+            <div className="flex flex-col gap-6">
+              <div className="text-text-muted flex items-center justify-between text-[0.7rem] font-black tracking-[0.3em] uppercase transition-colors group-hover/sidebar:text-white">
                 <span>Equity Bruta</span>
-                <span className="rounded border border-white/5 bg-black/40 px-2 py-0.5 font-mono text-white shadow-inner">
+                <span className="rounded-lg border border-white/5 bg-black/40 px-3 py-1 font-mono text-[0.9rem] text-white shadow-inner">
                   {equity}%
                 </span>
               </div>
@@ -552,18 +553,18 @@ export default function PmLensPanel({
                 max={100}
                 value={equity}
                 onChange={(e) => ecosystem?.setManualEquity?.(Number(e.target.value))}
-                className="accent-text-muted h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/5"
+                className="accent-text-muted h-2 w-full cursor-pointer appearance-none rounded-full bg-white/5"
               />
-              <p className="text-text-darker m-0 text-[0.45rem] leading-tight font-black tracking-widest uppercase">
+              <p className="text-text-darker m-0 text-[0.55rem] leading-tight font-black tracking-[0.2em] uppercase">
                 No vácuo &middot; Cega para FGS, RIO e Pressão ICM.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="text-accent-amber flex items-center justify-between text-[0.6rem] font-black tracking-widest uppercase">
+            <div className="grid grid-cols-2 gap-10">
+              <div className="space-y-5">
+                <div className="text-accent-amber flex items-center justify-between text-[0.65rem] font-black tracking-widest uppercase">
                   <span>Bounty PKO</span>
-                  <span className="rounded bg-black/40 px-2 py-0.5 font-mono text-white">
+                  <span className="rounded-lg bg-black/40 px-3 py-1 font-mono text-white">
                     {Math.round(pkoValue * 100)}%
                   </span>
                 </div>
@@ -575,13 +576,13 @@ export default function PmLensPanel({
                   step={0.05}
                   value={pkoValue}
                   onChange={(e) => setPkoValue(Number(e.target.value))}
-                  className="accent-accent-amber h-1 w-full cursor-pointer appearance-none rounded-full bg-white/5"
+                  className="accent-accent-amber h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/5"
                 />
               </div>
-              <div className="space-y-4">
-                <div className="text-accent-pink flex items-center justify-between text-[0.6rem] font-black tracking-widest uppercase">
-                  <span>Îº Credibilidade</span>
-                  <span className="rounded bg-black/40 px-2 py-0.5 font-mono text-white">
+              <div className="space-y-5">
+                <div className="text-accent-pink flex items-center justify-between text-[0.65rem] font-black tracking-widest uppercase">
+                  <span>κ Credibilidade</span>
+                  <span className="rounded-lg bg-black/40 px-3 py-1 font-mono text-white">
                     {Math.round(kappa * 100)}%
                   </span>
                 </div>
@@ -593,15 +594,15 @@ export default function PmLensPanel({
                   step={0.05}
                   value={kappa}
                   onChange={(e) => setKappa(Number.parseFloat(e.target.value))}
-                  className="accent-accent-pink h-1 w-full cursor-pointer appearance-none rounded-full bg-white/5"
+                  className="accent-accent-pink h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/5"
                 />
               </div>
             </div>
 
-            <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-black/40 p-6 shadow-inner">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <span className="text-text-darker pl-1 text-[0.45rem] font-black tracking-widest uppercase">
+            <div className="flex flex-col gap-6 rounded-4xl border border-white/10 bg-black/40 p-8 shadow-inner">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <span className="text-text-darker pl-2 text-[0.55rem] font-black tracking-widest uppercase">
                     Hero Range
                   </span>
                   <input
@@ -610,11 +611,11 @@ export default function PmLensPanel({
                     placeholder="AhKd"
                     value={heroRange}
                     onChange={(e) => setHeroRange(e.target.value)}
-                    className="focus:ring-accent-indigo placeholder:text-text-darker w-full rounded-xl border border-white/5 bg-slate-900/80 px-4 py-2.5 font-mono text-[0.7rem] text-white shadow-inner transition-all outline-none focus:ring-1"
+                    className="focus:ring-accent-indigo placeholder:text-text-darker w-full rounded-xl border border-white/5 bg-slate-900/80 px-5 py-3 font-mono text-[0.8rem] text-white shadow-inner transition-all outline-none focus:ring-1"
                   />
                 </div>
-                <div className="space-y-2">
-                  <span className="text-text-darker pl-1 text-[0.45rem] font-black tracking-widest uppercase">
+                <div className="space-y-3">
+                  <span className="text-text-darker pl-2 text-[0.55rem] font-black tracking-widest uppercase">
                     Villain Range
                   </span>
                   <input
@@ -623,14 +624,14 @@ export default function PmLensPanel({
                     placeholder="100%"
                     value={villainRange}
                     onChange={(e) => setVillainRange(e.target.value)}
-                    className="focus:ring-accent-indigo placeholder:text-text-darker w-full rounded-xl border border-white/5 bg-slate-900/80 px-4 py-2.5 font-mono text-[0.7rem] text-white shadow-inner transition-all outline-none focus:ring-1"
+                    className="focus:ring-accent-indigo placeholder:text-text-darker w-full rounded-xl border border-white/5 bg-slate-900/80 px-5 py-3 font-mono text-[0.8rem] text-white shadow-inner transition-all outline-none focus:ring-1"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-[1fr_120px] gap-4">
-                <div className="space-y-2">
-                  <span className="text-text-darker pl-1 text-[0.45rem] font-black tracking-widest uppercase">
+              <div className="grid grid-cols-[1fr_130px] gap-6">
+                <div className="space-y-3">
+                  <span className="text-text-darker pl-2 text-[0.55rem] font-black tracking-widest uppercase">
                     Board Structural
                   </span>
                   <input
@@ -639,11 +640,11 @@ export default function PmLensPanel({
                     placeholder="Ah Td 7c"
                     value={board}
                     onChange={(e) => setBoard(e.target.value)}
-                    className="text-accent-emerald-light focus:ring-accent-emerald placeholder:text-text-darker w-full rounded-xl border border-white/5 bg-slate-900/80 px-4 py-2.5 font-mono text-[0.7rem] shadow-inner transition-all outline-none focus:ring-1"
+                    className="text-accent-emerald-light focus:ring-accent-emerald placeholder:text-text-darker w-full rounded-xl border border-white/5 bg-slate-900/80 px-5 py-3 font-mono text-[0.8rem] shadow-inner transition-all outline-none focus:ring-1"
                   />
                 </div>
-                <div className="space-y-2">
-                  <span className="text-text-darker block text-center text-[0.45rem] font-black tracking-widest uppercase">
+                <div className="space-y-3">
+                  <span className="text-text-darker block text-center text-[0.55rem] font-black tracking-widest uppercase">
                     Sizing
                   </span>
                   <div className="relative">
@@ -651,7 +652,7 @@ export default function PmLensPanel({
                       aria-label="Tamanho da Aposta"
                       value={betSizing}
                       onChange={(e) => setBetSizing(Number(e.target.value))}
-                      className="w-full cursor-pointer appearance-none rounded-xl border border-white/5 bg-slate-900/80 px-3 py-2.5 text-center font-mono text-[0.65rem] font-black text-white outline-none"
+                      className="w-full cursor-pointer appearance-none rounded-xl border border-white/5 bg-slate-900/80 px-4 py-3 text-center font-mono text-[0.75rem] font-black text-white outline-none transition-all hover:border-white/20"
                     >
                       <option value="0.33">33%</option>
                       <option value="0.5">50%</option>
@@ -662,15 +663,15 @@ export default function PmLensPanel({
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-4">
                 <button
                   onClick={handleCalculateEquity}
                   disabled={isCalculatingEq || !heroRange || !villainRange}
-                  className="bg-accent-indigo border-accent-indigo-light/20 shadow-accent-indigo/20 w-full rounded-2xl border py-4 text-[0.7rem] font-black tracking-widest text-white uppercase shadow-xl transition-all hover:bg-indigo-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-accent-indigo border-accent-indigo-light/30 shadow-accent-indigo/20 w-full rounded-2xl border py-5 text-[0.8rem] font-black tracking-[0.3em] text-white uppercase shadow-2xl transition-all hover:bg-indigo-500 hover:shadow-indigo-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isCalculatingEq ? 'Triturando VRAM...' : 'Injetar GTO (WebGPU)'}
                 </button>
-                <p className="text-text-darker m-0 mt-3 text-center text-[0.45rem] leading-tight font-black tracking-widest uppercase">
+                <p className="text-text-darker m-0 mt-4 text-center text-[0.55rem] leading-tight font-black tracking-widest uppercase">
                   Invoca Compute Shader p/ Monte Carlo O(1)
                 </p>
               </div>
@@ -686,24 +687,24 @@ export default function PmLensPanel({
       )}
 
       {/* Grid de Cartões por Street */}
-      <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
         {streetMetrics.map((s) => (
           <div
             key={s.name}
-            className="hover:border-accent-indigo/30 group/card relative flex flex-col gap-6 overflow-hidden rounded-3xl border border-white/5 bg-black/40 p-8 shadow-2xl backdrop-blur-xl transition-all duration-500 hover:-translate-y-1.5"
+            className="hover:border-accent-indigo/40 group/card relative flex flex-col gap-8 overflow-hidden rounded-4xl border border-white/5 bg-black/40 p-10 shadow-3xl backdrop-blur-2xl transition-all duration-700 hover:-translate-y-2 hover:bg-black/60"
           >
-            <div className="via-accent-indigo/20 absolute top-0 left-0 h-1 w-full bg-linear-to-r from-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover/card:opacity-100" />
+            <div className="via-accent-indigo/30 absolute top-0 left-0 h-1.5 w-full bg-linear-to-r from-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover/card:opacity-100" />
 
-            <div className="flex items-center justify-between border-b border-white/5 pb-4">
-              <span className="text-[0.8rem] font-black tracking-[0.2em] text-white uppercase">{s.name}</span>
+            <div className="flex items-center justify-between border-b border-white/5 pb-6">
+              <span className="text-[0.9rem] font-black tracking-[0.3em] text-white uppercase">{s.name}</span>
               <span
-                className={`rounded-lg px-3 py-1 text-[0.55rem] font-black tracking-widest uppercase shadow-lg ${s.PM > 0 ? 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20 border' : 'bg-accent-danger/10 text-accent-danger border-accent-danger/20 border'}`}
+                className={`rounded-xl px-4 py-1.5 text-[0.6rem] font-black tracking-[0.2em] uppercase shadow-2xl ${s.PM > 0 ? 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20 border' : 'bg-accent-danger/10 text-accent-danger border-accent-danger/20 border'}`}
               >
                 {getVerdictText(s.loading, s.PM)}
               </span>
             </div>
 
-            <div className="flex flex-1 flex-col gap-3">
+            <div className="flex flex-1 flex-col gap-4">
               <MetricRow
                 label="Sunk Cost"
                 value={`-${s.heroCost.toFixed(2)}bb`}

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: O Protocolo Smart Sniper v6.2.1 GOLD
+ * IDENTITY: O Protocolo Smart Sniper v7.0 GOLD
  * PATH: src/app/biblioteca/smart-sniper/page.tsx
  * ROLE: Manual de gestão de carreira e alta performance sob o Paradigma SOTA.
  * AESTHETIC: SOTA Gold Standard (Visual Hierarchy, Symmetry, Glassmorphism).

@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(powershell -Command \"Copy-Item -Path ''C:\\\\Users\\\\Raphael\\\\.claude\\\\agents'' -Destination ''C:\\\\Users\\\\Raphael\\\\OneDrive\\\\Documentos\\\\Site\\\\.claude\\\\'' -Recurse -Force\")"
-    ]
-  }
-}

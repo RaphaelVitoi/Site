@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: Quiz Question v4.2 Gold
+ * IDENTITY: Quiz Question v7.0 GOLD
  * PATH: src/components/quiz/QuizQuestion.tsx
  * ROLE: Renderizador de questões com feedback gamificado.
  */

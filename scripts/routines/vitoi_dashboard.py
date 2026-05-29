@@ -28,7 +28,7 @@ def gerar_tabela_logs(n_linhas=15):
     if not os.path.exists(log_file):
         return table
 
-    with open(log_file, "r") as f:
+    with open(log_file) as f:
         linhas = f.readlines()[-n_linhas:]
 
     for linha in linhas:
@@ -80,6 +80,4 @@ if __name__ == "__main__":
     try:
         render_dashboard()
     except KeyboardInterrupt:
-        console.print(
-            "\n[VITOI] Encerrando visualizacao. Logs preservados.", style=DIM_WHITE
-        )
+        console.print("\n[VITOI] Encerrando visualizacao. Logs preservados.", style=DIM_WHITE)

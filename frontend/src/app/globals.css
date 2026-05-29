@@ -5,6 +5,7 @@
 @theme {
     --color-bg-base: #0f172a;
     --color-bg-deep: #020617;
+    --color-bg-panel: #1e293b;
     --color-bg-elevated: #1e293b;
     --color-text-main: #cbd5e1;
     --color-text-bright: #f8fafc;
@@ -25,10 +26,31 @@
     --color-accent-violet: #8b5cf6;
     --color-accent-sky: #0ea5e9;
     --color-accent-pink: #ec4899;
-    --color-accent-fuchsia: #e879f9;
-    --color-accent-blue: #60a5fa;
-    --color-accent-cyan: #67e8f9;
-    --color-accent-orange: #fb923c;
+
+    --radius-4xl: 2rem;
+    --radius-5xl: 3rem;
+
+    --animate-fade-in: fade-in 0.5s ease-out forwards;
+    --animate-fade-up: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    --animate-sota-in: sota-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    --animate-shimmer: shimmer 2s infinite linear;
+
+    @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes sota-in {
+        from { opacity: 0; transform: scale(0.98) translateY(10px); filter: blur(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+    }
+    @keyframes shimmer {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(100%); }
+    }
 
     --background-image-glass-gradient: linear-gradient(180deg, rgba(30, 41, 59, 0.35) 0%, rgba(15, 23, 42, 0.15) 100%);
     --background-image-sota-pattern: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.05), transparent 40%), radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.05), transparent 40%);
@@ -54,17 +76,22 @@
     }
 
     html,
-    body {
+    body,
+    div,
+    section,
+    main,
+    aside,
+    pre,
+    code {
         @apply scroll-smooth antialiased;
-        scrollbar-width: none;
+        scrollbar-width: none !important;
         /* Firefox */
-        -ms-overflow-style: none;
+        -ms-overflow-style: none !important;
         /* IE/Edge */
     }
 
-    html::-webkit-scrollbar,
-    body::-webkit-scrollbar {
-        display: none;
+    *::-webkit-scrollbar {
+        display: none !important;
         /* Chrome/Safari/Opera */
     }
 
@@ -102,10 +129,10 @@
 
     /* O Vidro Perfeito (Abstração SOTA - Padrão Ouro) */
     .glass-panel {
-        @apply backdrop-blur-2xl rounded-3xl relative transition duration-500 p-8;
-        background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, rgba(2, 6, 23, 0.8) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        @apply backdrop-blur-3xl rounded-4xl relative transition duration-700 p-8 lg:p-12;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.7) 0%, rgba(2, 6, 23, 0.9) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 40px 80px -20px rgba(0, 0, 0, 0.7);
     }
 
     /* Pílula Flutuante para Navegações */
@@ -132,8 +159,18 @@
         text-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
     }
 
-    .text-glow-emerald {
-        text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    .text-glow-rose {
+        text-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+    }
+
+    .sota-label-gold {
+        @apply font-mono text-[0.65rem] font-black uppercase tracking-[0.4em] flex items-center gap-3;
+        color: var(--color-accent-gold);
+        text-shadow: 0 0 12px rgba(251, 191, 36, 0.3);
+    }
+
+    .sota-input-base {
+        @apply bg-slate-950/60 border border-white/10 rounded-xl px-5 py-3.5 text-[0.9rem] font-mono tabular-nums font-black text-white focus:bg-slate-950/80 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/40 transition-all shadow-inner outline-none hover:border-white/20;
     }
 
     .bg-grain {
@@ -174,7 +211,13 @@
 
     /* Container Padronizado (Geometria Áurea) */
     .sota-container {
-        @apply w-full max-w-400 mx-auto px-6 sm:px-8 xl:px-12;
+        @apply w-full mx-auto px-6 sm:px-10 lg:px-16;
+        max-width: var(--container-width, 1600px);
+    }
+
+    /* Utilitário de Respiro SOTA (Padrão Ouro) */
+    .sota-panel-gap {
+        @apply flex flex-col gap-12 lg:gap-20;
     }
 
     /* O Botão Primário SOTA */
@@ -276,4 +319,52 @@
     100% {
         transform: translateX(100%);
     }
+}
+
+/* ── Light Page Scope ──────────────────────────────────────────────────────
+   Overrides dark-mode defaults for ethereal white pages (landing, quem-sou).
+   Use class="light-page" on the root div of those pages.
+   ──────────────────────────────────────────────────────────────────────── */
+.light-page {
+    background: #F5F3EE !important;
+    color: #1C1B1A !important;
+    font-family: var(--font-garamond), Georgia, serif !important;
+}
+
+/* Headings */
+.light-page h1,
+.light-page h2,
+.light-page h3,
+.light-page h4 {
+    color: #0D0C0A !important;
+    font-family: var(--font-playfair), Georgia, serif !important;
+    font-weight: 700 !important;
+}
+
+/* Body copy */
+.light-page p {
+    color: inherit;
+}
+
+/* Links inside body text — neutralise browser/global blue */
+.light-page a:not([class]) {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Catch all links within light-page that aren't explicitly styled */
+.light-page a {
+    text-decoration-color: transparent;
+}
+
+/* Focus ring adapted to light bg */
+.light-page :focus-visible {
+    ring-color: #111110;
+    ring-offset-color: #F5F4F0;
+}
+
+/* Scrollbar remains hidden */
+.light-page {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }

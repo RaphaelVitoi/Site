@@ -2,7 +2,7 @@
  * IDENTITY: A Insolvência das Pot Odds GOLD
  * PATH: src/app/biblioteca/insolvencia-das-pot-odds/page.tsx
  * ROLE: Artigo técnico sobre a falência das métricas lineares em sistemas complexos.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

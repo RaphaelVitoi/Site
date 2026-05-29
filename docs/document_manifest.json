@@ -9,15 +9,15 @@
     "documents": [
         {
             "name": "INSTRUCOES GLOBAIS",
-            "path": ".claude/GLOBAL_INSTRUCTIONS.md"
+            "path": ".claude/GOVERNANÇA/GLOBAL_INSTRUCTIONS.md"
         },
         {
             "name": "COSMOVISAO FILOSOFICA (GUIA ETICO/INTELECTUAL)",
-            "path": ".claude/COSMOVISAO.md"
+            "path": ".claude/ESSENCIA MORAL/COSMOVISAO.md"
         },
         {
             "name": "ARQUITETURA DE REFERENCIA SOTA (FONTE DA VERDADE)",
-            "path": "docs/SOTA_REFERENCE_ARCHITECTURE.md"
+            "path": ".claude/ARQUITETURA/SOTA_REFERENCE_ARCHITECTURE.md"
         },
         {
             "name": "MANIFESTO DOS AGENTES (VERDADE UNICA DE FUNCAO EXECUTIVA)",
@@ -25,47 +25,47 @@
         },
         {
             "name": "STATUS RUNTIME DE CHAVES E ROTEAMENTO",
-            "path": ".claude/RUNTIME_KEYS_ROUTING_STATUS.md"
+            "path": ".claude/RELATORIOS/RUNTIME_KEYS_ROUTING_STATUS.md"
         },
         {
             "name": "IDENTIDADE DO USUARIO",
-            "path": ".claude/CLAUDE.md"
+            "path": ".claude/PROPOSITOS/CLAUDE.md"
         },
         {
             "name": "LIDERANCA E GOVERNANCA",
-            "path": ".claude/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"
+            "path": ".claude/GOVERNANÇA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"
         },
         {
             "name": "TEMPLO DO APRENDIZADO GENERATIVO",
-            "path": ".claude/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"
+            "path": ".claude/ESSENCIA MORAL/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"
         },
         {
             "name": "MANUAL DO WORKFLOW",
-            "path": "docs/MANUAL_WORKFLOW_AGENTES.md"
+            "path": ".claude/MODUSOPERANDI/MANUAL_WORKFLOW_AGENTES.md"
         },
         {
             "name": "INDICE MESTRE",
-            "path": "docs/INDEX_MESTRE.md"
+            "path": ".claude/MODUSOPERANDI/INDEX_MESTRE.md"
         },
         {
             "name": "GUIA DE DEPLOY E STACK",
-            "path": "docs/DEPLOY.md"
+            "path": ".claude/DEPLOY/DEPLOY.md"
         },
         {
             "name": "INVENTARIO DE FERRAMENTAS",
-            "path": "docs/INVENTARIO_FERRAMENTAS.md"
+            "path": ".claude/RELATORIOS/INVENTARIO_FERRAMENTAS.md"
         },
         {
             "name": "PROTOCOLO DE ROTEAMENTO HOLOGRAFICO",
-            "path": ".claude/HOLOGRAPHIC_ROUTING_PROTOCOL.md"
+            "path": ".claude/MODUSOPERANDI/HOLOGRAPHIC_ROUTING_PROTOCOL.md"
         },
         {
             "name": "ARQUITETURA DO CEREBRO HIBRIDO",
-            "path": ".claude/HYBRID_BRAIN_ARCHITECTURE.md"
+            "path": ".claude/ARQUITETURA/HYBRID_BRAIN_ARCHITECTURE.md"
         },
         {
             "name": "MANIFESTO DE COERENCIA E HARMONIA",
-            "path": ".claude/COHERENCE_MANIFEST.md"
+            "path": ".claude/GOVERNANÇA/COHERENCE_MANIFEST.md"
         },
         {
             "name": "TEORIA SOTA CONVENCIONAL (PERSPECTIVA E ESPERANCA)",

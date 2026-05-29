@@ -3,6 +3,8 @@
     "allow": [
       // ── LEITURA ─────────────────────────────────────────────────────
       "Read(//c/Users/Raphael/.gemini/Site/**)",
+      "Read(//wsl.localhost/Ubuntu/root/Site/**)",
+      "Read(//wsl$/Ubuntu/root/Site/**)",
       "Read(//c/Users/Raphael/Downloads/**)",
       "Read(//c/Program Files/**)",
       // ── GIT ─────────────────────────────────────────────────────────
@@ -62,11 +64,15 @@
       "WebFetch(domain:blog.gtowizard.com)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\Raphael\\.gemini\\Site"
+      "C:\\Users\\Raphael\\.gemini\\Site",
+      "\\\\wsl.localhost\\Ubuntu\\root\\Site",
+      "\\\\wsl$\\Ubuntu\\root\\Site"
     ]
   },
   "model": "gemini-2.5-pro",
   "language": "portuguese",
   "effortLevel": "high",
+  "respectGitIgnore": true,
+  "respectGeminiIgnore": true,
   "autoUpdatesChannel": "latest"
 }

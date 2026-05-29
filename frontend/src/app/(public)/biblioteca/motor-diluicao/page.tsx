@@ -2,7 +2,7 @@
  * IDENTITY: O Motor de Diluição de Edge GOLD
  * PATH: src/app/biblioteca/motor-diluicao/page.tsx
  * ROLE: Artigo técnico sobre a perda de vantagem em potes multiway.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

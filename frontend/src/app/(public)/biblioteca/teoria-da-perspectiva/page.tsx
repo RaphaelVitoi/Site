@@ -2,7 +2,7 @@
  * IDENTITY: Teoria da Perspectiva no Poker GOLD
  * PATH: src/app/biblioteca/teoria-da-perspectiva/page.tsx
  * ROLE: Artigo fundamentando a base científica do framework VITOI (Kahneman & Tversky).
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

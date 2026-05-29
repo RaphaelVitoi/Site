@@ -2,7 +2,7 @@
  * IDENTITY: Paradoxo da Valuation GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/paradoxo-valuation/page.tsx
  * ROLE: Artigo técnico expondo a não linearidade das fichas e o risco assimétrico em torneios.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

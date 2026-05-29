@@ -44,6 +44,12 @@ param (
     [switch]$DailyReport,
 
     [Parameter()]
+    [string]$Query,
+
+    [Parameter()]
+    [string]$CausalGraph,
+
+    [Parameter()]
     [switch]$Web,
 
     [Parameter()]
@@ -422,34 +428,21 @@ if ($Backup) {
     Invoke-NexusScript -ScriptName 'scripts\utils\invoke_full_backup.ps1' -Message 'INICIANDO PROTOCOLO DE SALVAGUARDA (FULL BACKUP SOTA)'
 }
 
+if ($Query) {
+    Write-Host '=== [SISTEMA] CONSULTANDO A MENTE COLETIVA SOTA ===' -ForegroundColor Magenta
+    & $PythonCmd (Join-Path $ScriptDirectory 'memory_rag.py') query $Query
+    exit 0
+}
+
+if ($CausalGraph) {
+    Write-Host '=== [SISTEMA] CONSULTANDO O GRAFO CAUSAL (KNOWLEDGE GRAPH) ===' -ForegroundColor Magenta
+    & $PythonCmd (Join-Path $ScriptDirectory 'memory_rag.py') graph $CausalGraph
+    exit 0
+}
+
 if ($DailyReport) {
     Write-Host '=== [SISTEMA] GERANDO RELATÓRIOS DIÁRIOS (GERAL E CONFIDENCIAL) ===' -ForegroundColor Magenta
-    $ReportDate = (Get-Date).ToString('yyyy-MM-dd')
-
-    # SOTA: Extração Fricção Zero dos dados no Kernel para blindar o LLM contra alucinações
-    $DailyStats = & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') daily-stats
-
-    # SOTA: Autonomia Plena (Friccao Zero). Busca o GDrive ativamente ou usa a raiz do disco C:
-    $GDrivePath = 'C:\Users\Raphael\Google Drive\Nexus_Reports'
-    $RootPath = 'C:\Nexus_Reports'
-    $TargetDir = if (Test-Path 'C:\Users\Raphael\Google Drive') { $GDrivePath } else { $RootPath }
-
-    if (-not (Test-Path -LiteralPath $TargetDir)) { New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null }
-    $ReportDir = $TargetDir -replace '\\', '/'
-
-    # 1. Relatório Geral da Máquina (Historian)
-    $DescHistorian = "SISTEMA: VITOI 3.2`nOBJETIVO: Relatorio Diario Geral do Ecossistema.`nDATA: $ReportDate`n`nDADOS EXTRAIDOS:`n$DailyStats`n`nINSTRUCAO: Escreva o relatorio analitico de performance global (produtividade, gargalos, falhas). Forje o resultado absoluto no caminho exato: '$ReportDir/historian_general_$ReportDate.md'."
-    $TaskHist = [ordered]@{ id = "REPORT-GEN-$(Get-Date -Format 'yyyyMMdd-HHmmss-ffff')"; description = $DescHistorian; status = 'pending'; timestamp = (Get-Date -Format 'o'); agent = '@historian'; metadata = @{ priority = 'medium'; type = 'daily_report' } } | ConvertTo-Json -Depth 10 -Compress
-    $TaskHistB64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($TaskHist))
-    & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') db-add $TaskHistB64 | Out-Null
-
-    # 2. Relatório Confidencial de Autonomia (Chico + Maverick)
-    $DescChico = "SISTEMA: VITOI 3.2`nOBJETIVO: Prestacao de Contas Confidencial (Tier 1 -> Tier 0).`nDATA: $ReportDate`n`nDADOS EXTRAIDOS:`n$DailyStats`n`nINSTRUCAO: Escreva seu relatorio executivo privado (Chico) relatando SUAS intervencoes de Autonomia Plena, expurgos e mutacoes criticas. Solicite a analise de @maverick para que ele acrescente os insights estrategicos/filosoficos dele ao final do documento. Forje o resultado absoluto no caminho exato: '$ReportDir/chico_confidential_$ReportDate.md'."
-    $TaskChico = [ordered]@{ id = "REPORT-CONF-$(Get-Date -Format 'yyyyMMdd-HHmmss-ffff')"; description = $DescChico; status = 'pending'; timestamp = (Get-Date -Format 'o'); agent = '@chico'; metadata = @{ priority = 'high'; type = 'confidential_report'; observers = @('@maverick') } } | ConvertTo-Json -Depth 10 -Compress
-    $TaskChicoB64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($TaskChico))
-    & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') db-add $TaskChicoB64 | Out-Null
-
-    Write-Host '[OK] Tarefas separadas: Relatorio Geral (@historian) e Confidencial (@chico + @maverick) enfileirados.' -ForegroundColor Green
+    & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') generate-daily-reports
     exit 0
 }
 

@@ -30,17 +30,23 @@ from agents.execution import (
 from core.schemas import Task
 from database.queue_manager import QueueManager
 
-# Constants for SonarLint compliance
-MODEL_GEMINI_FLASH = "gemini-2.0-flash"
-DB_PATH_CLAUDE = ".claude/tasks.db"
-DB_PATH_QUEUE = "queue/tasks.db"
+# Constantes para SonarLint e Soberania SOTA
+MODEL_GEMINI_FLASH = "gemini-2.5-flash"
+# SOTA v7.0 GOLD: Nexus Zone Integration
+PATH_NEXUS_LOGS = _core_config.PATH_NEXUS_ZONE / "logs"
+PATH_NEXUS_ARCHIVE = _core_config.PATH_NEXUS_ZONE / "archive"
+PATH_TASKS_DB = _core_config.BASE_DIR / "queue" / "tasks.db"
 ERR_DB_CORRUPTED = "[ENTROPIA] Banco de dados de tarefas SOTA nao encontrado ou corrompido."
 
 
 def _resolve_tasks_db_path() -> Path | None:
     """SOTA: Resolve o caminho do banco de dados priorizando a fila assincrona."""
-    # Prioridade SOTA: Pipeline Assincrono (queue) > Contexto Claude > Root (Legado)
-    for candidate in [DB_PATH_QUEUE, DB_PATH_CLAUDE, "tasks.db"]:
+    # Prioridade SOTA: Pipeline Assincrono (queue) > Nexus Zone > Root (Legado)
+    for candidate in [
+        PATH_TASKS_DB,
+        _core_config.PATH_NEXUS_ZONE / "runtime/tasks.db",
+        _core_config.BASE_DIR / "tasks.db",
+    ]:
         p = Path(candidate)
         if p.exists() and p.stat().st_size > 0:
             try:
@@ -56,10 +62,8 @@ def _resolve_tasks_db_path() -> Path | None:
 
 # Configuracao estetica e persistente de Log (Estado da Arte)
 console = Console()
-log_dir = Path(".claude/logs")
-log_dir.mkdir(parents=True, exist_ok=True)
-archive_dir = Path(".claude/.archive")
-archive_dir.mkdir(parents=True, exist_ok=True)
+PATH_NEXUS_LOGS.mkdir(parents=True, exist_ok=True)
+PATH_NEXUS_ARCHIVE.mkdir(parents=True, exist_ok=True)
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 logger = logging.getLogger()
 logger.setLevel(getattr(logging, log_level, logging.INFO))
@@ -89,7 +93,7 @@ if not logger.handlers:
             return formatted
 
     rotating_handler = logging.handlers.RotatingFileHandler(
-        log_dir / "task_executor.log",
+        PATH_NEXUS_LOGS / "task_executor.log",
         maxBytes=1024 * 1024 * 10,
         backupCount=10,
         encoding="ascii",
@@ -450,49 +454,144 @@ async def _generate_historian_reports_async(qm: Any) -> None:
 
 
 def _cli_historian_reports() -> None:
-    qm = QueueManager()
-    try:
-        asyncio.run(_generate_historian_reports_async(qm))
-    finally:
-        qm.close()
+    async def run():
+        qm = QueueManager()
+        try:
+            await _generate_historian_reports_async(qm)
+        finally:
+            if hasattr(qm, "close"):
+                await qm.close()
+
+    asyncio.run(run())
     sys.exit(0)
 
 
-def _cli_daily_stats() -> None:
-    async def _generate_daily_stats(qm: Any) -> None:
-        try:
-            tasks = await qm.get_tasks()
-            today_str = datetime.now(UTC).strftime("%Y-%m-%d")
-            today_tasks = [t for t in tasks if t.timestamp.startswith(today_str)]
+async def _get_daily_stats_dict(qm: QueueManager) -> dict[str, Any]:
+    """SOTA GOLD: Extrai estatisticas diarias de tarefas do QueueManager."""
+    tasks = await qm.get_tasks()
+    today_str = datetime.now(UTC).strftime("%Y-%m-%d")
+    today_tasks = [t for t in tasks if t.timestamp.startswith(today_str)]
 
-            stats = {
-                "date": today_str,
-                "metrics": {
-                    "total": len(today_tasks),
-                    "completed": sum(1 for t in today_tasks if t.status == "completed"),
-                    "failed": sum(1 for t in today_tasks if t.status == "failed"),
-                    "pending": sum(1 for t in today_tasks if t.status == "pending"),
-                    "running": sum(1 for t in today_tasks if t.status == "running"),
-                },
-                "recent_activity": [
-                    {
-                        "id": t.id,
-                        "agent": t.agent,
-                        "status": t.status,
-                        "description": t.description[:100],
-                    }
-                    for t in today_tasks[-20:]  # Ultimas 20 para contexto de padroes
-                ],
+    return {
+        "date": today_str,
+        "metrics": {
+            "total": len(today_tasks),
+            "completed": sum(1 for t in today_tasks if t.status == "completed"),
+            "failed": sum(1 for t in today_tasks if t.status == "failed"),
+            "pending": sum(1 for t in today_tasks if t.status == "pending"),
+            "running": sum(1 for t in today_tasks if t.status == "running"),
+        },
+        "recent_activity": [
+            {
+                "id": t.id,
+                "agent": t.agent,
+                "status": t.status,
+                "description": t.description[:100],
             }
+            for t in today_tasks[-20:]
+        ],
+    }
+
+
+def _cli_daily_stats() -> None:
+    """Gera relatorio de estatisticas diarias via CLI."""
+
+    async def run():
+        qm = QueueManager()
+        try:
+            stats = await _get_daily_stats_dict(qm)
             print(json.dumps(stats, indent=2))
         except Exception as e:
             logger.exception(f"[CLI] Falha ao gerar estatisticas diarias: {e}")
+        finally:
+            if hasattr(qm, "close"):
+                await qm.close()
 
-    qm = QueueManager()
-    try:
-        asyncio.run(_generate_daily_stats(qm))
-    finally:
-        qm.close()
+    asyncio.run(run())
+    sys.exit(0)
+
+
+async def generate_daily_reports(qm: QueueManager) -> None:
+    """SOTA GOLD: Unifica a geracao de relatorios diarios (Historian & Chico/Maverick) em Python."""
+    logger.info("[NEXUS] Iniciando geracao de relatorios diarios unificados...")
+
+    stats_data = await _get_daily_stats_dict(qm)
+    stats_json_str = json.dumps(stats_data, indent=2)
+
+    report_date = datetime.now(UTC).strftime("%Y-%m-%d")
+
+    # Resolucao de caminhos do Google Drive ou local
+    gdrive_dir = Path("C:/Users/Raphael/Google Drive/Nexus_Reports")
+    fallback_dir = Path("C:/Nexus_Reports")
+
+    if gdrive_dir.parent.exists():
+        report_dir = gdrive_dir
+    else:
+        report_dir = fallback_dir
+
+    report_dir.mkdir(parents=True, exist_ok=True)
+    report_dir_str = str(report_dir).replace("\\", "/")
+
+    # 1. Relatorio Geral (Historian)
+    desc_historian = (
+        f"SISTEMA: VITOI 3.2\n"
+        f"OBJETIVO: Relatorio Diario Geral do Ecossistema.\n"
+        f"DATA: {report_date}\n\n"
+        f"DADOS EXTRAIDOS:\n{stats_json_str}\n\n"
+        f"INSTRUCAO: Escreva o relatorio analitico de performance global (produtividade, gargalos, falhas). "
+        f"Forje o resultado absoluto no caminho exato: '{report_dir_str}/historian_general_{report_date}.md'."
+    )
+
+    unique_suffix = datetime.now(UTC).strftime("%Y%m%d-%H%M%S-%f")
+    task_hist = Task(
+        id=f"REPORT-GEN-{unique_suffix}",
+        description=desc_historian,
+        status="pending",
+        timestamp=datetime.now(UTC).isoformat(),
+        agent="@historian",
+        metadata={"priority": "medium", "type": "daily_report"},
+    )
+    await qm.add_task(task_hist)
+
+    # 2. Relatorio Confidencial (Chico + Maverick)
+    desc_chico = (
+        f"SISTEMA: VITOI 3.2\n"
+        f"OBJETIVO: Prestacao de Contas Confidencial (Tier 1 -> Tier 0).\n"
+        f"DATA: {report_date}\n\n"
+        f"DADOS EXTRAIDOS:\n{stats_json_str}\n\n"
+        f"INSTRUCAO: Escreva seu relatorio executivo privado (Chico) relatando SUAS intervencoes de Autonomia Plena, "
+        f"expurgos e mutacoes criticas. Solicite a analise de @maverick para que ele acrescente os insights "
+        f"estrategicos/filosoficos dele ao final do documento. "
+        f"Forje o resultado absoluto no caminho exato: '{report_dir_str}/chico_confidential_{report_date}.md'."
+    )
+
+    task_chico = Task(
+        id=f"REPORT-CONF-{unique_suffix}",
+        description=desc_chico,
+        status="pending",
+        timestamp=datetime.now(UTC).isoformat(),
+        agent="@chico",
+        metadata={"priority": "high", "type": "confidential_report", "observers": ["@maverick"]},
+    )
+    await qm.add_task(task_chico)
+
+    logger.info(f"[OK] Tarefas de relatorio enfileiradas com sucesso no diretorio: {report_dir_str}")
+
+
+def _cli_generate_daily_reports() -> None:
+    """Gera relatorios diarios e os enfileira via CLI."""
+
+    async def run():
+        qm = QueueManager()
+        try:
+            await generate_daily_reports(qm)
+        except Exception as e:
+            logger.exception(f"[CLI] Falha ao gerar relatorios diarios: {e}")
+        finally:
+            if hasattr(qm, "close"):
+                await qm.close()
+
+    asyncio.run(run())
     sys.exit(0)
 
 
@@ -610,6 +709,7 @@ if __name__ == "__main__":
         "predictive-profile": _cli_predictive_profile,
         "historian-reports": _cli_historian_reports,
         "daily-stats": _cli_daily_stats,
+        "generate-daily-reports": _cli_generate_daily_reports,
         "db-audit-dag": _cli_db_audit_dag,
         "db-purge-orphans": _cli_db_purge_orphans,
         "db-vacuum": _cli_db_vacuum,
@@ -641,6 +741,14 @@ if __name__ == "__main__":
         "ingest-rag",
         "autonomy",
         "refactor",
+        "search",
+        "graph",
+        "stats",
+        "ops",
+        "agent",
+        "db",
+        "task",
+        "list",
     }
 
     if len(sys.argv) == 1:

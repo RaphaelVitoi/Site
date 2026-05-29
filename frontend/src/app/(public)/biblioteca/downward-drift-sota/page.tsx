@@ -2,7 +2,7 @@
  * IDENTITY: O Downward Drift no ICM GOLD
  * PATH: src/app/biblioteca/downward-drift-sota/page.tsx
  * ROLE: Artigo técnico sobre a compressão de sizings em situações de pressão monetária.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import ContentFooter from '@/components/ui/layout/ContentFooter';

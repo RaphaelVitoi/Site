@@ -1,10 +1,14 @@
+"""Global Harmonizer for orchestrating async tasks and latency reduction."""
+
 import asyncio
-import time
-from typing import Callable
-from functools import wraps
+import inspect
 import logging
+import time
+from collections.abc import Callable
+from functools import wraps
 
 logger = logging.getLogger(__name__)
+
 
 class SOTAHarmonizer:
     """
@@ -22,17 +26,17 @@ class SOTAHarmonizer:
             start = time.perf_counter()
             try:
                 # SOTA: Prioridade computacional via ThreadPool para tarefas bloqueantes
-                if asyncio.iscoroutinefunction(func):
+                if inspect.iscoroutinefunction(func):
                     result = await func(*args, **kwargs)
                 else:
                     result = await asyncio.to_thread(func, *args, **kwargs)
 
                 latency = (time.perf_counter() - start) * 1000
                 if latency > 100:  # Alerta de latencia > 100ms
-                    logger.warning(f"SOTA Latency Warning: {func.__name__} took {latency:.2f}ms")
+                    logger.warning("SOTA Latency Warning: %s took %.2fms", func.__name__, latency)
                 return result
-            except Exception as e:
-                logger.error(f"SOTA Harmonizer Error in {func.__name__}: {e}")
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.error("SOTA Harmonizer Error in %s: %s", func.__name__, e)
                 raise
 
         return wrapper
@@ -52,4 +56,3 @@ class SOTAHarmonizer:
 
 
 harmonizer = SOTAHarmonizer()
-

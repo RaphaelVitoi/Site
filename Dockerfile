@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
 # Estágio Final: Imagem de Runtime Purificada
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 
 # Porta contratual do Cloud Run
 ENV PORT=8080

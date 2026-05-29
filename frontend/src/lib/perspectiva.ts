@@ -1,7 +1,7 @@
-/**
- * IDENTITY: Motor de Perspectiva Matemática SOTA v6.2.1 GOLD (VITOI - GOLD)
+﻿/**
+ * IDENTITY: Motor de Perspectiva MatemÃ¡tica SOTA v7.0 GOLD (VITOI - GOLD)
  * PATH: src/lib/perspectiva.ts
- * ROLE: Core algorítmico da Equação Unificada SOTA (Purificada).
+ * ROLE: Core algorÃ­tmico da EquaÃ§Ã£o Unificada SOTA (Purificada).
  *       PM = [(Equity * R) * Valuation] - [EV_fold(t, dpj, pos) + RIO_mw]
  *
  * @format
@@ -9,6 +9,7 @@
 
 import { calculateIcmMonteCarlo } from './montecarlo';
 import { PerspectivaInputSchema, PerspectivaResultSchema } from './schemas';
+import type { QuantumMetrics } from '@/components/simulator/engine/types';
 
 // === TIPOS E INTERFACES ===
 
@@ -28,19 +29,20 @@ export interface PerspectivaResult {
   deltaLosePct: number;
   deltaFoldPct: number;
 
-  // Layer 2: Esperança (Lógica)
-  valuation: number; // Coeficiente de explosão financeira das fichas
-  rioLiability: number; // Dívida matemática por multiway/RIO
+  // Layer 2: EsperanÃ§a (LÃ³gica)
+  valuation: number; // Coeficiente de explosÃ£o financeira das fichas
+  rioLiability: number; // DÃ­vida matemÃ¡tica por multiway/RIO
 
   // Layer 3: Expectativa (Preditiva)
   fgsHealth: number;
   survivalPressure: number;
   dynamicEvFold: number; // O piso real (pode ser positivo via laddering)
 
-  // Layer 4: Perspectiva (A Síntese Final)
+  // Layer 4: Perspectiva (A SÃ­ntese Final)
   perspectivaPct: number; // PM Final
   amortizedEdge: number;
-  ci: number; // Coeficiente de Insolvência (PM / PotOdds)
+  riskAdvantage: number; // SOTA v7.0 GOLD: Vantagem de Risco (%)
+  ci: number; // Coeficiente de InsolvÃªncia (PM / PotOdds)
   marginInstability: number; // Incerteza % baseada no stack efetivo
   threshEq: number; // Novo: Equidade Limite Projetada
   realizationFactor: number; // SOTA: Exportar o R calculado dinamicamente
@@ -69,13 +71,13 @@ export interface PerspectivaInput {
   bountyValue?: number; // PKO
   kappa?: number; // Axioma Lipe Piv (Credibilidade da Informacao)
 
-  // Parâmetros Quantum (v6.2.1)
+  // ParÃ¢metros Quantum (v7.0 GOLD)
   numPlayersInPot?: number; // Para RIO_mw
   humanNoiseFactor?: number; // SOTA: Table Draw Noise
   isNearPayjump?: boolean; // Para EV_fold positivo
-  blindsRisingSoon?: boolean; // Para Erosão de stack
+  blindsRisingSoon?: boolean; // Para ErosÃ£o de stack
   currentEquityPct?: number; // Para Delta Fold Pct
-  heroPosition?: string; // SOTA: Antevisão Posicional
+  heroPosition?: string; // SOTA: AntevisÃ£o Posicional
 
   // Parametros Opcionais de Teoremas
   spr?: number;
@@ -83,13 +85,13 @@ export interface PerspectivaInput {
   blindCost?: number;
 }
 
-// === MOTOR ICM (Malmuth-Harville / Monte Carlo Estocástico) ===
+// === MOTOR ICM (Malmuth-Harville / Monte Carlo EstocÃ¡stico) ===
 const _icmCache = new Map<string, MapaICMResult>();
 
 export function calculateMapaICM(stacks: number[], prizes: number[]): MapaICMResult {
   const n = stacks.length;
 
-  // SOTA: Monte Carlo Fallback para evitar explosão combinatória (O(2^N))
+  // SOTA: Monte Carlo Fallback para evitar explosÃ£o combinatÃ³ria (O(2^N))
   // Adaptado de bibliotecas Open Source para fields maiores
   if (n > 10) {
     const totalChips = stacks.reduce((s, v) => s + v, 0);
@@ -97,7 +99,7 @@ export function calculateMapaICM(stacks: number[], prizes: number[]): MapaICMRes
       iterations: 20000,
     });
 
-    // Probs aproximadas (não totalmente precisas via MCMC, mas suficientes para fallback)
+    // Probs aproximadas (nÃ£o totalmente precisas via MCMC, mas suficientes para fallback)
     const positionProbs = Array.from({ length: n }, () => new Array(Math.min(n, prizes.length)).fill(0));
 
     if (totalChips > 0 && prizes.length > 0) {
@@ -218,7 +220,7 @@ export function classifyTier(stack: number, stacks: number[]): StackTier {
   return 'big';
 }
 
-// --- HELPERS DE REDUÇÃO DE ENTROPIA COGNITIVA (SOTA v6.2.1 GOLD) ---
+// --- HELPERS DE REDUÃ‡ÃƒO DE ENTROPIA COGNITIVA (SOTA v7.0 GOLD) ---
 
 function _buildSimulatedStacks(
   stacks: number[],
@@ -268,28 +270,30 @@ function _calculateValuationAndRio(
   const valuation = Math.max(0.1, Math.min(2, rawValuation));
 
   // SOTA v7.0: Calculo de Risk Premium (RP) real para Risk Advantage
-  // RP = (Eq_atual - Eq_perda) / Eq_atual
-  const heroRp = currentHeroEq > 0 ? (currentHeroEq - loseHeroEq) / currentHeroEq : 0.15;
-  const villainRp = currentVillainEq > 0 ? (currentVillainEq - winVillainEq) / currentVillainEq : 0.15;
+  // RP = (Eq_atual - Eq_perda) / Eq_atual (Escala Percentual % - SOTA GOLD)
+  const heroRp = currentHeroEq > 0 ? ((currentHeroEq - loseHeroEq) / currentHeroEq) * 100 : 15.0;
+  const villainRp = currentVillainEq > 0 ? ((currentVillainEq - winVillainEq) / currentVillainEq) * 100 : 15.0;
 
   // SOTA: Bounty Offset (PKO) - O bounty "paga" parte do risco.
+  // Calibrado para escala percentual: 1% do ratio Bounty/Pot reduz o RP sacrifice.
   const bountyRpOffset = (bountyValue / Math.max(1, potSize)) * 10;
   const effectiveHeroRp = Math.max(0.01, heroRp - bountyRpOffset);
 
   const riskAdvantage = villainRp - effectiveHeroRp;
 
-  // Se HU, RIO é zero. Apenas MW possui passivo estrutural.
+  // Se HU, RIO Ã© zero. Apenas MW possui passivo estrutural.
   if (numPlayersInPot <= 2) {
     return { valuation, rioLiability: 0, riskAdvantage };
   }
 
   const opponents = Math.max(1, numPlayersInPot - 1);
-  const rioPenaltyFactor = Math.pow(opponents, 2);
+  // SOTA GOLD: Passivo Estrutural cresce em taxa quadratica (x^(2+f))
+  const rioPenaltyFactor = Math.pow(opponents, 2 + humanNoiseFactor);
   const volatilityMultiplier = stackHero > 0 ? Math.pow(2 / Math.max(1, stackHero / 5), 2) : 1;
 
-  // SOTA v7.0: Penalidade RIO escalada pelo Effective Hero RP
+  // SOTA v7.0: Penalidade RIO sintonizada com Python (Damping Psi-injected)
   const damping = 0.15 + humanNoiseFactor * 0.05;
-  const rioPenaltyChips = potSize * rioPenaltyFactor * (damping + volatilityMultiplier * 0.05) * (effectiveHeroRp / 0.15);
+  const rioPenaltyChips = potSize * rioPenaltyFactor * (damping + volatilityMultiplier * 0.05) * (effectiveHeroRp / 15.0);
   const icmPerChip = currentVillainEq > 0 ? ((currentVillainEq / totalPrizes) * 100) / (current.totalChips / 2) : 0.05;
   const rioLiability = rioPenaltyChips * icmPerChip;
 
@@ -308,8 +312,8 @@ function _calculateFoldPressure(input: PerspectivaInput, stacksWin: number[], de
   const fgsHealth = isVacuum ? 1 : 1 + tierBonus + survivalPressure * 0.2;
   const payjumpBonus = isNearPayjump && !isVacuum ? Math.max(1.2, Math.abs(deltaFoldPct) + 0.25) : 0;
 
-  // SOTA FIX: Falácia Orbital Corrigida (FGS t-3)
-  // A distância real até o BB dita a erosão. BTN é 'IP' mas tem a órbita inteira viva. UTG morre amanhã.
+  // SOTA FIX: FalÃ¡cia Orbital Corrigida (FGS t-3)
+  // A distÃ¢ncia real atÃ© o BB dita a erosÃ£o. BTN Ã© 'IP' mas tem a Ã³rbita inteira viva. UTG morre amanhÃ£.
   let erosionPenalty = 0;
   if (blindsRisingSoon && !isVacuum) {
     const baseErosion = Math.abs(deltaFoldPct * 0.5) + 0.1;
@@ -348,8 +352,8 @@ function _resolveRealizationFactor(
   const spr = input.spr ?? effectiveStack / (potSize || 1);
   let R = input.realizationFactor;
 
-  // SOTA v6.2.1: Damping de Realizacao Baseado em Agressao (Fisica Unificada)
-  // SOTA FIX: O humanNoiseFactor é uma taxa (0 a 1). Ativação a partir de 0.15 (15% de entropia).
+  // SOTA v7.0 GOLD: Damping de Realizacao Baseado em Agressao (Fisica Unificada)
+  // SOTA FIX: O humanNoiseFactor Ã© uma taxa (0 a 1). AtivaÃ§Ã£o a partir de 0.15 (15% de entropia).
   if (input.humanNoiseFactor !== undefined && input.humanNoiseFactor > 0.15) {
     const aggPenalty = 1 - input.humanNoiseFactor * 0.5;
     R *= Math.max(0.1, aggPenalty);
@@ -379,8 +383,8 @@ export function calculateAmortizedEdge(
   const edgePenalty = !isVacuum && isVillainShort && ratio > 3 ? 0.3 : 1;
   const effectiveStackForEdge = spr === undefined ? stackHero : Math.max(2, spr * 5);
 
-  // SOTA: Amortização da Edge (Colapso Mecânico)
-  // A árvore de decisão é podada em S=10bb. Er(S) é proporcional a log(S).
+  // SOTA: AmortizaÃ§Ã£o da Edge (Colapso MecÃ¢nico)
+  // A Ã¡rvore de decisÃ£o Ã© podada em S=10bb. Er(S) Ã© proporcional a log(S).
   const safeStackEdge = Math.max(2.718, effectiveStackForEdge);
   const edgeScale = Math.log(safeStackEdge) / Math.log(60);
 
@@ -407,27 +411,27 @@ function _buildDiagnostico(params: {
     kappa,
     humanNoiseFactor,
   } = params;
-  let diagnostico = perspectivaPct > 0 ? 'Ação Soberana.' : 'Insolvência de Perspectiva.';
+  let diagnostico = perspectivaPct > 0 ? 'AÃ§Ã£o Soberana.' : 'InsolvÃªncia de Perspectiva.';
   if (rioLiability > 1) diagnostico += ' Alerta: Colapso Multiway.';
   if (payjumpBonus > 0) diagnostico += ' Laddering favorece o Fold.';
-  if (edgePenalty < 1) diagnostico += ' Punição: Restaurando árvore do oponente.';
+  if (edgePenalty < 1) diagnostico += ' PuniÃ§Ã£o: Restaurando Ã¡rvore do oponente.';
   if (investidoAcumulado && investidoAcumulado > stackHero * 0.3) diagnostico += ' Alerta: Pot Entrapment Severo.';
   if (Math.abs(perspectivaPct) <= 5 && kappa < 0.4)
-    diagnostico += ' Credibilidade Baixa: Intuição filtrada pelo Baseline Matemático.';
+    diagnostico += ' Credibilidade Baixa: IntuiÃ§Ã£o filtrada pelo Baseline MatemÃ¡tico.';
 
   // SOTA v4.5: Fator PSI (Maluquice Humana)
   if (humanNoiseFactor > 0.3)
-    diagnostico += ` Fator Ψ Elevado (${(humanNoiseFactor * 100).toFixed(0)}%): Entropia do oponente detectada.`;
-  if (perspectivaPct > 15 && stackHero > 40) diagnostico += ' Predador Ativo: Exploração Forçada.';
+    diagnostico += ` Fator Î¨ Elevado (${(humanNoiseFactor * 100).toFixed(0)}%): Entropia do oponente detectada.`;
+  if (perspectivaPct > 15 && stackHero > 40) diagnostico += ' Predador Ativo: ExploraÃ§Ã£o ForÃ§ada.';
 
   return diagnostico;
 }
 
-// === A EQUAÇÃO UNIFICADA SOTA ===
+// === A EQUAÃ‡ÃƒO UNIFICADA SOTA ===
 
 /**
  * SOTA v6: Bayesian Range Reading.
- * Atualiza a equidade base (prior) com a força da ação observada (likelihood).
+ * Atualiza a equidade base (prior) com a forÃ§a da aÃ§Ã£o observada (likelihood).
  */
 export function calculateBayesianWinProb(
   priorEquity: number,
@@ -435,7 +439,7 @@ export function calculateBayesianWinProb(
   rangeDensity: number = 0.5,
   potOddPressure: number = 0,
 ): number {
-  // Likelihood: Probabilidade daquela ação ser tomada dada a força da mão
+  // Likelihood: Probabilidade daquela aÃ§Ã£o ser tomada dada a forÃ§a da mÃ£o
   const likelihood = Math.pow(actionStrength, Math.max(0.05, rangeDensity));
 
   // Teorema de Bayes: Posterior = (Likelihood * Prior) / Normalizador
@@ -444,14 +448,14 @@ export function calculateBayesianWinProb(
 
   const posterior = numerator / Math.max(0.0001, denominator);
 
-  // Pressão de Pot Odds atua como um 'Prior Shift'
+  // PressÃ£o de Pot Odds atua como um 'Prior Shift'
   const posteriorWithPressure = posterior * (1 + potOddPressure * 0.05);
 
   return Math.min(0.99, Math.max(0.01, posteriorWithPressure));
 }
 
 export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaResult {
-  // Layer 0: Validação Semântica SOTA (Antevisão de Erros)
+  // Layer 0: ValidaÃ§Ã£o SemÃ¢ntica SOTA (AntevisÃ£o de Erros)
   const validation = PerspectivaInputSchema.safeParse(input);
   if (!validation.success) {
     if (process.env['NODE_ENV'] !== 'production') {
@@ -473,7 +477,7 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
     humanNoiseFactor = 0,
   } = input;
 
-  // Garantia de Estabilidade Numérica (Shannon Economy)
+  // Garantia de Estabilidade NumÃ©rica (Shannon Economy)
   const totalPrizes = prizes.reduce((s, v) => s + v, 0);
   const stackHero = Math.max(0.001, stacks[heroIdx] || 0);
   const stackVillain = Math.max(0.001, stacks[villainIdx] || 0);
@@ -519,9 +523,10 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
     stacksWin,
     deltaFoldPct,
   );
-  // SOTA v7.0 GOLD: Amortização da Edge escalada pelo Risk Advantage
-  // A EdgeBase é potencializada se o Hero tiver vantagem de risco (Risk Advantage > 0).
-  const advantageMultiplier = 1 + riskAdvantage;
+  // SOTA v7.0 GOLD: AmortizaÃ§Ã£o da Edge escalada pelo Risk Advantage
+  // A EdgeBase Ã© potencializada se o Hero tiver vantagem de risco (Risk Advantage > 0).
+  // Escala restaurada: 1 + (Advantage % / 100)
+  const advantageMultiplier = 1 + riskAdvantage / 100;
   const { edgePenalty, amortizedEdge: baseAmortizedEdge } = calculateAmortizedEdge(
     input.edgeBase,
     stackHero,
@@ -531,40 +536,40 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
   );
   const amortizedEdge = baseAmortizedEdge * advantageMultiplier;
 
-  // Axioma Lipe Piv: Regressão Bayesiana da Equidade
+  // Axioma Lipe Piv: RegressÃ£o Bayesiana da Equidade
   // SOTA v6: Bayesian Range Reading (Non-linear upgrade)
   const bayesianWinProb = calculateBayesianWinProb(winProb, 0.5, kappa);
 
-  // SOTA: O passivo da derrota sofre dilatação no ICM e aversão dinâmica via Teoria do Prospecto.
+  // SOTA: O passivo da derrota sofre dilataÃ§Ã£o no ICM e aversÃ£o dinÃ¢mica via Teoria do Prospecto.
   const effectiveStack = Math.min(stackHero, stackVillain);
   const baseDeltaLose = deltaLosePct * (1 / Math.max(0.1, fgsHealth));
   const prospectDeltaLose = calculateUtilityEV(baseDeltaLose, 'baseline', 2.25, effectiveStack);
 
-  // A EQUAÇÃO UNIFICADA SOTA (Blindagem Dimensional)
+  // A EQUAÃ‡ÃƒO UNIFICADA SOTA (Blindagem Dimensional)
   // Fichas (Chips) sofrem inflacao nao-linear (Valuation, FGS). Cash (Bounty) possui utilidade estritamente linear.
-  // SOTA v7.0: O bounty Expectativa exige vitória E Realização (R).
+  // SOTA v7.0: O bounty Expectativa exige vitÃ³ria E RealizaÃ§Ã£o (R).
   const bountyExpectativa = bayesianWinProb * bountyValue * R;
 
-  // SOTA: Amortização da Edge aplicada cirurgicamente ao vetor de ganho.
+  // SOTA: AmortizaÃ§Ã£o da Edge aplicada cirurgicamente ao vetor de ganho.
   const chipWinExpectativa = bayesianWinProb * deltaWinPct * R * valuation * fgsHealth * amortizedEdge;
-  const chipLoseExpectativa = (1 - bayesianWinProb) * prospectDeltaLose; // Perda é física.
+  const chipLoseExpectativa = (1 - bayesianWinProb) * prospectDeltaLose; // Perda Ã© fÃ­sica.
 
   const expectativaReal = chipWinExpectativa + chipLoseExpectativa + bountyExpectativa;
   const perspectivaPct = expectativaReal - (dynamicEvFold + rioLiability);
 
-  // SOTA: Cálculo do Teto do RP (Equidade de Indiferença)
-  // O motor permite que a equação defina o teto organicamente, sem hard-cap artificial.
+  // SOTA: CÃ¡lculo do Teto do RP (Equidade de IndiferenÃ§a)
+  // O motor permite que a equaÃ§Ã£o defina o teto organicamente, sem hard-cap artificial.
   const denom = deltaWinPct * R * valuation * fgsHealth * amortizedEdge - prospectDeltaLose + bountyValue * R;
   let threshEq = 0.5; // Fallback
   if (Math.abs(denom) > 1e-6) {
     const rawThresh = (dynamicEvFold + rioLiability - prospectDeltaLose) / denom;
-    threshEq = Math.max(0, Math.min(0.99, rawThresh)); // Deixa a matemática fluir organicamente
+    threshEq = Math.max(0, Math.min(0.99, rawThresh)); // Deixa a matemÃ¡tica fluir organicamente
   }
 
-  // SOTA: Coeficiente de Insolvência (Ci)
-  // Correção Dimensional: Ci é a razão entre dois multiplicadores adimensionais
-  // Ci = (Equidade Real Realizável) / (Equidade de Indiferença Exigida pela Perspectiva)
-  // Se Ci < 1, a mão é matematicamente insolvente (armadilha de pot odds).
+  // SOTA: Coeficiente de InsolvÃªncia (Ci)
+  // CorreÃ§Ã£o Dimensional: Ci Ã© a razÃ£o entre dois multiplicadores adimensionais
+  // Ci = (Equidade Real RealizÃ¡vel) / (Equidade de IndiferenÃ§a Exigida pela Perspectiva)
+  // Se Ci < 1, a mÃ£o Ã© matematicamente insolvente (armadilha de pot odds).
   let ci = 0.5;
   if (threshEq > 0) {
     ci = bayesianWinProb / threshEq;
@@ -572,10 +577,10 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
     ci = 1.5;
   }
 
-  // SOTA: Instabilidade de EVs (Mutação da Margem)
+  // SOTA: Instabilidade de EVs (MutaÃ§Ã£o da Margem)
   const marginInstability = Math.max(0.01, 1 / Math.max(2, effectiveStack)) * 100;
 
-  // Diagnóstico
+  // DiagnÃ³stico
   const diagnostico = _buildDiagnostico({
     perspectivaPct,
     rioLiability,
@@ -600,6 +605,7 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
     dynamicEvFold,
     perspectivaPct,
     amortizedEdge,
+    riskAdvantage,
     ci,
     marginInstability,
     threshEq, // Novo: Equidade Limite Projetada
@@ -620,14 +626,14 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 }
 
 /**
- * Calcula a Gravidade Estratégica (G) baseada no tamanho do pote.
- * G = ln(pot / 7.5). 7.5bb é o baseline de SRP.
+ * Calcula a Gravidade EstratÃ©gica (G) baseada no tamanho do pote.
+ * G = ln(pot / 7.5). 7.5bb Ã© o baseline de SRP.
  */
 export function calculateGravity(potSize: number): number {
   return Math.max(0, Math.log(Math.max(1, potSize / 7.5)));
 }
 
-// === FÍSICA BASE DO POKER (FATOR DE APRISIONAMENTO SOTA) ===
+// === FÃSICA BASE DO POKER (FATOR DE APRISIONAMENTO SOTA) ===
 
 export function calculateRioTension( // NOSONAR
   heroInvested: number,
@@ -641,12 +647,13 @@ export function calculateRioTension( // NOSONAR
 ): number {
   const gravity = calculateGravity(currentPot);
   const betToCall = currentPot * 0.5;
-  // SOTA v4.6: O aprisionamento escala com o custo relativo do call e a gravidade acumulada (G)
+  // SOTA v7.0 GOLD: O aprisionamento escala com o custo relativo do call e a gravidade acumulada (G)
   const potEntrapment = ((heroInvested + betToCall) / Math.max(0.1, heroRawStack)) * (1 + gravity * 0.1);
   const downwardDrift = heroPosition === 'OOP' ? 1.25 : 0.85;
 
   const opponents = Math.max(1, activePlayers - 1);
-  const mwNoiseMultiplier = Math.pow(opponents, 1 + humanNoiseFactor);
+  // SOTA GOLD: Passivo Estrutural cresce em taxa quadratica (x^(2+f))
+  const mwNoiseMultiplier = Math.pow(opponents, 2 + humanNoiseFactor);
 
   return Math.min(1, (baseRioLiability * mwNoiseMultiplier) / 100 + potEntrapment * downwardDrift * mitigationFactor);
 }
@@ -657,8 +664,8 @@ export type ReferencePointStatus = 'baseline' | 'tilt' | 'protecting' | 'bubble'
 
 /**
  * Aplica a Curva de Utilidade (Value Function) da Teoria do Prospecto.
- * Ganhos são côncavos (retorno marginal decrescente).
- * Perdas são convexas e mais inclinadas (Loss Aversion).
+ * Ganhos sÃ£o cÃ´ncavos (retorno marginal decrescente).
+ * Perdas sÃ£o convexas e mais inclinadas (Loss Aversion).
  */
 export function calculateUtilityEV(
   rawEv: number,
@@ -670,28 +677,28 @@ export function calculateUtilityEV(
   const safeStack = Math.max(2.718, stackEff);
   const stackModifier = Math.log(100) / Math.log(safeStack);
 
-  // SOTA: Lambda agora é impulsionado inversamente pela saúde do FGS (Future Game Simulation)
-  // Se fgsHealth < 1 (Risco de Bust alto), a aversão à perda cresce exponencialmente.
+  // SOTA: Lambda agora Ã© impulsionado inversamente pela saÃºde do FGS (Future Game Simulation)
+  // Se fgsHealth < 1 (Risco de Bust alto), a aversÃ£o Ã  perda cresce exponencialmente.
   const fgsModifier = 1 / Math.max(0.1, Math.pow(fgsHealth, 2));
   let lambda = lossAversionBase * stackModifier * fgsModifier;
 
   let alpha = 0.88; // Concavidade de ganhos
   let beta = 0.88; // Convexidade de perdas
 
-  // O "Reference Point" altera o quão intensa é a dor da perda ou a busca pelo risco
+  // O "Reference Point" altera o quÃ£o intensa Ã© a dor da perda ou a busca pelo risco
   switch (status) {
     case 'tilt':
-      // "Stuck" (perdendo): Busca o risco. A dor adicional diminui, e a aversão à perda cai (chasing losses)
+      // "Stuck" (perdendo): Busca o risco. A dor adicional diminui, e a aversÃ£o Ã  perda cai (chasing losses)
       lambda = lambda * 0.66;
-      beta = 0.95; // Mais próximo da linearidade nas perdas
+      beta = 0.95; // Mais prÃ³ximo da linearidade nas perdas
       break;
     case 'protecting':
-      // Acima do Buy-in: Protegendo o lucro. Extrema aversão à perda.
+      // Acima do Buy-in: Protegendo o lucro. Extrema aversÃ£o Ã  perda.
       lambda = lambda * 1.33;
       alpha = 0.75; // Ganhos adicionais valem muito menos
       break;
     case 'bubble':
-      // Sobrevivência extrema: O valor da ficha perdida é astronômico
+      // SobrevivÃªncia extrema: O valor da ficha perdida Ã© astronÃ´mico
       lambda = lambda * 2;
       break;
     case 'baseline':
@@ -700,16 +707,16 @@ export function calculateUtilityEV(
   }
 
   if (rawEv >= 0) {
-    // Área de Ganhos
+    // Ãrea de Ganhos
     return Math.pow(rawEv, alpha);
   } else {
-    // Área de Perdas
+    // Ãrea de Perdas
     return -lambda * Math.pow(Math.abs(rawEv), beta);
   }
 }
 
-// SOTA: Seletor de Métricas Quantum (Erradicação de redundância matemática na UI)
-export function computeQuantumMetrics(quantumPerspectiva: PerspectivaResult | null) {
+// SOTA: Seletor de MÃ©tricas Quantum (ErradicaÃ§Ã£o de redundÃ¢ncia matemÃ¡tica na UI)
+export function computeQuantumMetrics(quantumPerspectiva: PerspectivaResult | null): QuantumMetrics {
   if (!quantumPerspectiva)
     return {
       amortizedEdgeMultiplier: 1,
@@ -720,23 +727,27 @@ export function computeQuantumMetrics(quantumPerspectiva: PerspectivaResult | nu
       perspectiva: 0,
       threshEq: null,
       ci: null,
+      riskAdvantage: 0,
       marginInstability: 0,
       isSolvent: false,
       isActionable: false,
     };
 
-  // SOTA: Extração direta do motor core (PerspectivaResult) para garantir consistência absoluta.
+  // SOTA: ExtraÃ§Ã£o direta do motor core (PerspectivaResult) para garantir consistÃªncia absoluta.
   return {
     amortizedEdgeMultiplier: quantumPerspectiva.amortizedEdge,
     rioMw: quantumPerspectiva.rioLiability,
     adjustedEvFold: quantumPerspectiva.dynamicEvFold,
-    esperanca: quantumPerspectiva.perspectivaPct, // Alinhado: Esperança agora é o PM base
+    esperanca: quantumPerspectiva.perspectivaPct, // Alinhado: EsperanÃ§a agora Ã© o PM base
     expectativa: quantumPerspectiva.deltaWinPct,
     perspectiva: quantumPerspectiva.perspectivaPct,
     threshEq: quantumPerspectiva.threshEq,
     ci: quantumPerspectiva.ci,
+    riskAdvantage: quantumPerspectiva.riskAdvantage,
     marginInstability: quantumPerspectiva.marginInstability,
     isSolvent: quantumPerspectiva.ci >= 1,
     isActionable: quantumPerspectiva.perspectivaPct > 0,
+    bayesianWinProb: quantumPerspectiva.handEquity,
   };
 }
+

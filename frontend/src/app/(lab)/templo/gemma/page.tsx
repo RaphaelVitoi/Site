@@ -2,7 +2,7 @@
  * IDENTITY: Oráculo de Borda (Gemma 4 Portal GOLD)
  * PATH: src/app/templo/gemma/page.tsx
  * ROLE: Interface direta para comunicação com o agente local @gemma4.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 'use client';

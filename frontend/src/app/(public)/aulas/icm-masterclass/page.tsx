@@ -1,9 +1,9 @@
-/**
+﻿/**
  * IDENTITY: Geometria do Risco SOTA GOLD
  * PATH: src/app/aulas/icm-masterclass/page.tsx
- * ROLE: Framework matemático do ICM pós-flop. Teoria densa e colapso da MDF.
- * PRINCIPLE: Excelência Teórica & Fluidez Sofisticada.
- * VERSION: v6.2.1 GOLD
+ * ROLE: Framework matemÃ¡tico do ICM pÃ³s-flop. Teoria densa e colapso da MDF.
+ * PRINCIPLE: ExcelÃªncia TeÃ³rica & Fluidez Sofisticada.
+ * VERSION: v7.0 GOLD
  */
 
 import ContentFooter from '@/components/ui/layout/ContentFooter';
@@ -15,15 +15,15 @@ import { SectionHeader } from '@/components/ui/layout/SectionHeader';
 export const metadata = {
 	title: 'Geometria do Risco GOLD | Raphael Vitoi',
 	description:
-		'O framework matemático do ICM pós-flop v6.2.1: Risk Premium, ΔRP, Perspectiva Matemática e o colapso da MDF.',
+		'O framework matemÃ¡tico do ICM pÃ³s-flop v7.0 GOLD: Risk Premium, Î”RP, Perspectiva MatemÃ¡tica e o colapso da MDF.',
 };
 
 const articleSchema = {
 	'@context': 'https://schema.org',
 	'@type': 'TechArticle',
-	headline: 'Geometria do Risco GOLD: O Framework Matemático do ICM Pós-Flop',
+	headline: 'Geometria do Risco GOLD: O Framework MatemÃ¡tico do ICM PÃ³s-Flop',
 	description:
-		'Uma desconstrução profunda da física do poker sob pressão de ICM, introduzindo conceitos de Risk Premium e Perspectiva Matemática.',
+		'Uma desconstruÃ§Ã£o profunda da fÃ­sica do poker sob pressÃ£o de ICM, introduzindo conceitos de Risk Premium e Perspectiva MatemÃ¡tica.',
 	author: { '@type': 'Person', name: 'Raphael Vitoi' },
 };
 
@@ -31,32 +31,32 @@ const metrics = [
 	{
 		label: 'Assimetria Fundamental',
 		value: 'Fichas perdidas > ganhas',
-		detail: 'A base da stack vale mais que o topo — concavidade irredutível. É a origem de toda distorção no equilíbrio.',
+		detail: 'A base da stack vale mais que o topo â€” concavidade irredutÃ­vel. Ã‰ a origem de toda distorÃ§Ã£o no equilÃ­brio.',
 	},
 	{
 		label: 'Risk Premium (RP)',
 		value: '0% a ~24%',
-		detail: 'Equity adicional necessária para justificar um call. Acima deste teto, a defesa racional colapsa.',
+		detail: 'Equity adicional necessÃ¡ria para justificar um call. Acima deste teto, a defesa racional colapsa.',
 	},
 	{
 		label: 'Bubble Factor (BF)',
 		value: 'Multiplicador da Dor',
-		detail: 'O coeficiente que escala o custo da eliminação. BF = 100 / (100 - RP).',
+		detail: 'O coeficiente que escala o custo da eliminaÃ§Ã£o. BF = 100 / (100 - RP).',
 	},
 	{
-		label: 'ΔRP — Diferencial',
-		value: 'RP_IP − RP_OOP',
-		detail: 'O diferencial que dita quem detém a iniciativa e quem é forçado à passividade estrutural.',
+		label: 'Î”RP â€” Diferencial',
+		value: 'RP_IP âˆ’ RP_OOP',
+		detail: 'O diferencial que dita quem detÃ©m a iniciativa e quem Ã© forÃ§ado Ã  passividade estrutural.',
 	},
 	{
 		label: 'Downward Drift',
-		value: 'RP↑ → Sizing↓',
-		detail: 'A migração gravitacional dos sizings para faixas menores conforme a pressão monetária aumenta.',
+		value: 'RPâ†‘ â†’ Sizingâ†“',
+		detail: 'A migraÃ§Ã£o gravitacional dos sizings para faixas menores conforme a pressÃ£o monetÃ¡ria aumenta.',
 	},
 	{
 		label: 'Regra de Ouro',
-		value: 'RPs nunca são iguais',
-		detail: 'Em qualquer colisão, um jogador detém vantagem estrutural de risco. A neutralidade é uma ilusão.',
+		value: 'RPs nunca sÃ£o iguais',
+		detail: 'Em qualquer colisÃ£o, um jogador detÃ©m vantagem estrutural de risco. A neutralidade Ã© uma ilusÃ£o.',
 	},
 ];
 
@@ -70,18 +70,18 @@ export default function AulaICMPage() {
 
 			<ContentPageHeader
 				title="Geometria do Risco"
-				subtitle="A desconstrução do pós-flop sob a ótica do ICM. O mapeamento estrutural da colisão e a física da Perspectiva Matemática."
+				subtitle="A desconstruÃ§Ã£o do pÃ³s-flop sob a Ã³tica do ICM. O mapeamento estrutural da colisÃ£o e a fÃ­sica da Perspectiva MatemÃ¡tica."
 				category="Masterclass"
 				icon="fa-shapes"
 			/>
 
 			<div className="sota-container -mt-8 pb-12">
 				<blockquote className="border-l-4 border-accent-indigo pl-8 py-4 italic text-text-muted text-xl bg-white/2 rounded-r-2xl">
-					&quot;O poker é uma ciência de informação incompleta jogada por humanos falhos.
-					Num cenário de extrema pressão financeira, as fichas deixam de ser plástico e
-					passam a representar a perspectiva de sobrevivência.&quot;{' '}
+					&quot;O poker Ã© uma ciÃªncia de informaÃ§Ã£o incompleta jogada por humanos falhos.
+					Num cenÃ¡rio de extrema pressÃ£o financeira, as fichas deixam de ser plÃ¡stico e
+					passam a representar a perspectiva de sobrevivÃªncia.&quot;{' '}
 					<cite className="block mt-4 text-[0.6rem] font-black text-text-darker uppercase tracking-widest not-italic font-mono">
-						— Raphael Vitoi, A Geometria do Risco
+						â€” Raphael Vitoi, A Geometria do Risco
 					</cite>
 				</blockquote>
 			</div>
@@ -90,7 +90,7 @@ export default function AulaICMPage() {
 				step="01"
 				label="Fundamentos"
 				title="Grandezas do Sistema"
-				description="RP, BF, ΔRP e Downward Drift não são metáforas — são grandezas calculáveis que governam o equilíbrio de Nash."
+				description="RP, BF, Î”RP e Downward Drift nÃ£o sÃ£o metÃ¡foras â€” sÃ£o grandezas calculÃ¡veis que governam o equilÃ­brio de Nash."
 			/>
 
 			<div className="sota-container pb-12">
@@ -117,20 +117,20 @@ export default function AulaICMPage() {
 			<SectionHeader
 				step="02"
 				label="Doutrina"
-				title="A Ilusão do Vácuo"
-				description="Por que solvers tradicionais não resolvem mesas finais e como a matemática oculta subverte a teoria clássica."
+				title="A IlusÃ£o do VÃ¡cuo"
+				description="Por que solvers tradicionais nÃ£o resolvem mesas finais e como a matemÃ¡tica oculta subverte a teoria clÃ¡ssica."
 			/>
 
 			<div className="sota-container pb-12">
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted">
 						<p>
-							Solvers maximizam ChipEV — assumem que cada ficha vale o mesmo. Em cash
-							game, isso é correto. Em torneio, é sistematicamente falso: a última
+							Solvers maximizam ChipEV â€” assumem que cada ficha vale o mesmo. Em cash
+							game, isso Ã© correto. Em torneio, Ã© sistematicamente falso: a Ãºltima
 							ficha (base da stack) vale mais do que a primeira (topo). O{' '}
 							<strong className="text-text-bright">Risk Premium</strong> quantifica
-							essa assimetria por jogador, por spot. Ignorar o RP não é &ldquo;jogar
-							GTO&rdquo; — é jogar um jogo diferente do que está acontecendo.
+							essa assimetria por jogador, por spot. Ignorar o RP nÃ£o Ã© &ldquo;jogar
+							GTO&rdquo; â€” Ã© jogar um jogo diferente do que estÃ¡ acontecendo.
 						</p>
 
 						<div className="bg-accent-amber/10 border-l-4 border-accent-amber p-8 my-10 rounded-r-2xl">
@@ -140,37 +140,37 @@ export default function AulaICMPage() {
 							<p className="text-text-main m-0 leading-relaxed text-sm">
 								Um pote heads-up com 9 jogadores ativos{' '}
 								<strong className="text-text-bright">
-									continua sujeito a pressões letais de ICM
+									continua sujeito a pressÃµes letais de ICM
 								</strong>
 								. Apenas no confronto final (Top 2), o modelo reverte para ChipEV
-								puro. Fora isso, a sombra dos outros adversários impõe uma lei
-								marcial matemática.
+								puro. Fora isso, a sombra dos outros adversÃ¡rios impÃµe uma lei
+								marcial matemÃ¡tica.
 							</p>
 						</div>
 
 						<p>
 							O <strong className="text-text-bright">Downward Drift</strong>{' '}
-							(O&apos;Kearney &amp; Carter) é o mecanismo de transmissão: sob RP
-							crescente, a distribuição de apostas migra para sizes menores. Overbets
+							(O&apos;Kearney &amp; Carter) Ã© o mecanismo de transmissÃ£o: sob RP
+							crescente, a distribuiÃ§Ã£o de apostas migra para sizes menores. Overbets
 							desaparecem. 2/3 pot vira 1/3. 1/3 vira check. A{' '}
-							<strong className="text-text-bright">Perspectiva Matemática</strong>{' '}
+							<strong className="text-text-bright">Perspectiva MatemÃ¡tica</strong>{' '}
 							governa o quanto de risco cada jogador pode absorver por street.
 						</p>
 					</div>
 				</GlassPanel>
 			</div>
 
-			{/* ARQUÉTIPOS CLÍNICOS DO ICM */}
+			{/* ARQUÃ‰TIPOS CLÃNICOS DO ICM */}
 			<SectionHeader
 				step="03"
 				label="Morfologia"
-				title="Os 5 Arquétipos Clínicos"
-				description="Padrões comportamentais GTO contra-intuitivos ditados pela gravidade da utilidade não-linear."
+				title="Os 5 ArquÃ©tipos ClÃ­nicos"
+				description="PadrÃµes comportamentais GTO contra-intuitivos ditados pela gravidade da utilidade nÃ£o-linear."
 			/>
 
 			<div className="sota-container pb-12">
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-					{/* Arquétipo I */}
+					{/* ArquÃ©tipo I */}
 					<div className="p-8 rounded-3xl bg-white/2 border border-white/5 border-t-4 border-t-accent-emerald hover:border-accent-emerald/30 hover:bg-white/4 transition-all group flex flex-col">
 						<div className="flex items-center gap-4 mb-6">
 							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-emerald/10 flex items-center justify-center text-accent-emerald text-xl group-hover:scale-110 transition-transform duration-500">
@@ -181,13 +181,13 @@ export default function AulaICMPage() {
 									O Pacto Silencioso
 								</h3>
 								<p className="text-[0.65rem] font-black text-accent-emerald-light uppercase tracking-widest m-0">
-									Evitação de Ruína
+									EvitaÃ§Ã£o de RuÃ­na
 								</p>
 							</div>
 						</div>
 						<div className="space-y-4 text-sm text-text-muted leading-relaxed flex-1">
 							<p>
-								<strong className="text-text-main font-bold">Cenário:</strong> Chip
+								<strong className="text-text-main font-bold">CenÃ¡rio:</strong> Chip
 								Leader (70bb) vs Vice Chip Leader (65bb) numa mesa repleta de
 								micro-stacks (10bb a 15bb).
 							</p>
@@ -199,17 +199,17 @@ export default function AulaICMPage() {
 							<div className="mt-4 p-4 rounded-xl bg-accent-emerald/5 border border-accent-emerald/10">
 								<p className="m-0 text-accent-emerald-light italic">
 									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic opacity-70">
-										Resolução Nash:
+										ResoluÃ§Ã£o Nash:
 									</strong>{' '}
-									A agressividade pré-flop desaparece. Ranges de flat call inflam
+									A agressividade prÃ©-flop desaparece. Ranges de flat call inflam
 									massivamente, incluindo o topo (AK/QQ). Slowplays tornam-se
-									vitais para não engordar o SPR para níveis irreversíveis.
+									vitais para nÃ£o engordar o SPR para nÃ­veis irreversÃ­veis.
 								</p>
 							</div>
 						</div>
 					</div>
 
-					{/* Arquétipo II */}
+					{/* ArquÃ©tipo II */}
 					<div className="p-8 rounded-3xl bg-white/2 border border-white/5 border-t-4 border-t-accent-rose hover:border-accent-rose/30 hover:bg-white/4 transition-all group flex flex-col">
 						<div className="flex items-center gap-4 mb-6">
 							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-rose/10 flex items-center justify-center text-accent-rose text-xl group-hover:scale-110 transition-transform duration-500">
@@ -226,30 +226,30 @@ export default function AulaICMPage() {
 						</div>
 						<div className="space-y-4 text-sm text-text-muted leading-relaxed flex-1">
 							<p>
-								<strong className="text-text-main font-bold">Cenário:</strong> BTN
+								<strong className="text-text-main font-bold">CenÃ¡rio:</strong> BTN
 								(40bb) abre, BB (54bb - Chip Leader) defende.
 							</p>
 							<p>
 								<strong className="text-text-main font-bold">O Paradoxo:</strong> O
 								BTN acredita que pode punir o BB. Mas o Risk Premium de ida (21.4%)
-								é quase o dobro do de volta (12.9%). O BTN aposta a vida; o BB
+								Ã© quase o dobro do de volta (12.9%). O BTN aposta a vida; o BB
 								aposta fichas.
 							</p>
 							<div className="mt-4 p-4 rounded-xl bg-accent-rose/5 border border-accent-rose/10">
 								<p className="m-0 text-accent-rose-light italic">
 									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic opacity-70">
-										Resolução Nash:
+										ResoluÃ§Ã£o Nash:
 									</strong>{' '}
-									A agressão do BTN é estrangulada. A matemática corta sua
-									frequência de blefe, forçando-o a abandonar potes marginais para
-									evitar suicídio financeiro. O BB impõe o ritmo pela imunidade à
+									A agressÃ£o do BTN Ã© estrangulada. A matemÃ¡tica corta sua
+									frequÃªncia de blefe, forÃ§ando-o a abandonar potes marginais para
+									evitar suicÃ­dio financeiro. O BB impÃµe o ritmo pela imunidade Ã 
 									morte.
 								</p>
 							</div>
 						</div>
 					</div>
 
-					{/* Arquétipo III */}
+					{/* ArquÃ©tipo III */}
 					<div className="p-8 rounded-3xl bg-white/2 border border-white/5 border-t-4 border-t-accent-amber hover:border-accent-amber/30 hover:bg-white/4 transition-all group flex flex-col">
 						<div className="flex items-center gap-4 mb-6">
 							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-amber/10 flex items-center justify-center text-accent-amber text-xl group-hover:scale-110 transition-transform duration-500">
@@ -260,34 +260,34 @@ export default function AulaICMPage() {
 									Guerra na Lama
 								</h3>
 								<p className="text-[0.65rem] font-black text-accent-amber-light uppercase tracking-widest m-0">
-									Sobrevivência dos Shorts
+									SobrevivÃªncia dos Shorts
 								</p>
 							</div>
 						</div>
 						<div className="space-y-4 text-sm text-text-muted leading-relaxed flex-1">
 							<p>
-								<strong className="text-text-main font-bold">Cenário:</strong> Dois
+								<strong className="text-text-main font-bold">CenÃ¡rio:</strong> Dois
 								jogadores com ~10bb numa mesa de colossos (80bb+).
 							</p>
 							<p>
 								<strong className="text-text-main font-bold">O Paradoxo:</strong> O
-								senso comum dita que, à beira da morte, deveriam jogar soltos (RP
+								senso comum dita que, Ã  beira da morte, deveriam jogar soltos (RP
 								0%).
 							</p>
 							<div className="mt-4 p-4 rounded-xl bg-accent-amber/5 border border-accent-amber/10">
 								<p className="m-0 text-accent-amber-light italic">
 									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic opacity-70">
-										Resolução Nash:
+										ResoluÃ§Ã£o Nash:
 									</strong>{' '}
 									Falso. O laddering passivo impera. Foldar rende dinheiro limpo a
 									cada vez que um vizinho sucumbe. O RP ancora em ~10%. O push com
-									lixo técnico é punido duramente pela matemática.
+									lixo tÃ©cnico Ã© punido duramente pela matemÃ¡tica.
 								</p>
 							</div>
 						</div>
 					</div>
 
-					{/* Arquétipo IV */}
+					{/* ArquÃ©tipo IV */}
 					<div className="p-8 rounded-3xl bg-white/2 border border-white/5 border-t-4 border-t-accent-indigo hover:border-accent-indigo/30 hover:bg-white/4 transition-all group flex flex-col">
 						<div className="flex items-center gap-4 mb-6">
 							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-indigo/10 flex items-center justify-center text-accent-indigo text-xl group-hover:scale-110 transition-transform duration-500">
@@ -295,7 +295,7 @@ export default function AulaICMPage() {
 							</div>
 							<div>
 								<h3 className="text-xl font-black text-text-bright uppercase tracking-tighter m-0">
-									Ameaça Orgânica
+									AmeaÃ§a OrgÃ¢nica
 								</h3>
 								<p className="text-[0.65rem] font-black text-accent-indigo-light uppercase tracking-widest m-0">
 									Efeito Kingmaker (FGS)
@@ -304,29 +304,29 @@ export default function AulaICMPage() {
 						</div>
 						<div className="space-y-4 text-sm text-text-muted leading-relaxed flex-1">
 							<p>
-								<strong className="text-text-main font-bold">Cenário:</strong> Chip
-								Leader absoluto (90bb) ataca o Vice-Líder (25bb).
+								<strong className="text-text-main font-bold">CenÃ¡rio:</strong> Chip
+								Leader absoluto (90bb) ataca o Vice-LÃ­der (25bb).
 							</p>
 							<p>
 								<strong className="text-text-main font-bold">O Paradoxo:</strong> O
-								CL é imortal na mão, logo seu RP deveria ser 0% para esmagar sem
-								restrição.
+								CL Ã© imortal na mÃ£o, logo seu RP deveria ser 0% para esmagar sem
+								restriÃ§Ã£o.
 							</p>
 							<div className="mt-4 p-4 rounded-xl bg-accent-indigo/5 border border-accent-indigo/10">
 								<p className="m-0 text-accent-indigo-light italic">
 									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic opacity-70">
-										Resolução Nash:
+										ResoluÃ§Ã£o Nash:
 									</strong>{' '}
-									O ecossistema FGS impõe um RP substancial (~12%) ao CL. Se o
-									Vice dobrar, salta para 50bb, armando o único rival capaz de
-									usurpar a coroa. O solver protege o God Mode barrando a criação
-									de monstros desnecessários.
+									O ecossistema FGS impÃµe um RP substancial (~12%) ao CL. Se o
+									Vice dobrar, salta para 50bb, armando o Ãºnico rival capaz de
+									usurpar a coroa. O solver protege o God Mode barrando a criaÃ§Ã£o
+									de monstros desnecessÃ¡rios.
 								</p>
 							</div>
 						</div>
 					</div>
 
-					{/* Arquétipo V (Span Completo) */}
+					{/* ArquÃ©tipo V (Span Completo) */}
 					<div className="p-8 rounded-3xl bg-linear-to-br from-white/5 to-transparent border border-white/5 border-t-4 border-t-accent-violet hover:border-accent-violet/30 hover:from-white/10 transition-all md:col-span-2 group flex flex-col sm:flex-row items-center sm:items-start gap-8">
 						<div className="w-16 h-16 shrink-0 rounded-full bg-accent-violet/10 flex items-center justify-center text-accent-violet text-2xl group-hover:scale-110 transition-transform duration-500">
 							<i className="fa-solid fa-fire-flame-curved" />
@@ -334,39 +334,39 @@ export default function AulaICMPage() {
 						<div className="space-y-4 text-sm text-text-muted leading-relaxed flex-1 text-center sm:text-left">
 							<div>
 								<h3 className="text-xl font-black text-text-bright uppercase tracking-tighter m-0">
-									Transferência de Risco
+									TransferÃªncia de Risco
 								</h3>
 								<p className="text-[0.65rem] font-black text-accent-violet-light uppercase tracking-widest m-0">
 									Efeito Batata Quente
 								</p>
 							</div>
 							<p>
-								<strong className="text-text-main font-bold">Cenário:</strong> Um
+								<strong className="text-text-main font-bold">CenÃ¡rio:</strong> Um
 								jogador aplica um Open-Shove de 20bb sobre as blinds.
 							</p>
 							<p>
 								<strong className="text-accent-violet-light font-bold">
-									A Dinâmica SOTA:
+									A DinÃ¢mica SOTA:
 								</strong>{' '}
-								Ao empurrar todas as fichas, o agressor não investe apenas o seu
-								próprio Risk Premium; ele acopla-lhe a monumental Fold Equity de uma
-								decisão final. O agressor transfere instantaneamente o peso volitivo
-								do torneio para o defensor. Privado de re-agressão, o limite de dor
-								do defensor colapsa, obrigando ranges perfeitamente defensáveis a um{' '}
-								<strong className="text-text-bright">overfold matemático</strong>{' '}
-								ditado pelo pavor da eliminação num único call.
+								Ao empurrar todas as fichas, o agressor nÃ£o investe apenas o seu
+								prÃ³prio Risk Premium; ele acopla-lhe a monumental Fold Equity de uma
+								decisÃ£o final. O agressor transfere instantaneamente o peso volitivo
+								do torneio para o defensor. Privado de re-agressÃ£o, o limite de dor
+								do defensor colapsa, obrigando ranges perfeitamente defensÃ¡veis a um{' '}
+								<strong className="text-text-bright">overfold matemÃ¡tico</strong>{' '}
+								ditado pelo pavor da eliminaÃ§Ã£o num Ãºnico call.
 							</p>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			{/* O FIM DA MDF E A INÉRCIA HUMANA */}
+			{/* O FIM DA MDF E A INÃ‰RCIA HUMANA */}
 			<SectionHeader
 				step="04"
-				label="Inércia Humana"
+				label="InÃ©rcia Humana"
 				title="O Fim da MDF"
-				description="A diluição das frequências GTO sob a gravidade esmagadora da pressão utilitária."
+				description="A diluiÃ§Ã£o das frequÃªncias GTO sob a gravidade esmagadora da pressÃ£o utilitÃ¡ria."
 			/>
 
 			<div className="sota-container pb-12">
@@ -375,64 +375,64 @@ export default function AulaICMPage() {
 						<h3 className="text-text-bright font-heading">O Colapso do Bluffcatcher</h3>
 						<p>
 							Quando enfrentamos uma aposta de pote inteiro no river, as regras
-							básicas do ChipEV ditam que devemos defender, pelo menos, 50% das vezes
-							(Minimum Defense Frequency). Mas o ecossistema ICM impõe o{' '}
+							bÃ¡sicas do ChipEV ditam que devemos defender, pelo menos, 50% das vezes
+							(Minimum Defense Frequency). Mas o ecossistema ICM impÃµe o{' '}
 							<strong className="text-accent-rose">Teto de Dor</strong>.
 						</p>
 						<p>
-							Um range condensado (composto por bluffcatchers que não vencem apostas
-							de valor) é incapaz de suportar um RP elevado. A necessidade de retenção
-							de equidade é suplantada pela dor financeira da eliminação. A defesa
-							quebra vertiginosamente dos 50% para a casa dos 30% a 38%. O OOP é
-							forçado àquilo que os leigos chamam de overfold, mas que na realidade é
+							Um range condensado (composto por bluffcatchers que nÃ£o vencem apostas
+							de valor) Ã© incapaz de suportar um RP elevado. A necessidade de retenÃ§Ã£o
+							de equidade Ã© suplantada pela dor financeira da eliminaÃ§Ã£o. A defesa
+							quebra vertiginosamente dos 50% para a casa dos 30% a 38%. O OOP Ã©
+							forÃ§ado Ã quilo que os leigos chamam de overfold, mas que na realidade Ã©
 							uma{' '}
-							<strong className="text-text-bright">Abstenção Estrutural GTO</strong>.
+							<strong className="text-text-bright">AbstenÃ§Ã£o Estrutural GTO</strong>.
 						</p>
 
 						<h3 className="text-text-bright font-heading mt-10">
-							A Especulação Assimétrica
+							A EspeculaÃ§Ã£o AssimÃ©trica
 						</h3>
 						<p>
 							A complexidade final reside no &quot;Fator Humano&quot;. O solver GTO
-							baseia-se na premissa robótica de que o Agressor terá a frieza letal
-							para disparar agressões avassaladoras em 3 streets. Os humanos, contudo,
-							apresentam um crônico défice de agressão no Turn e no River.
+							baseia-se na premissa robÃ³tica de que o Agressor terÃ¡ a frieza letal
+							para disparar agressÃµes avassaladoras em 3 streets. Os humanos, contudo,
+							apresentam um crÃ´nico dÃ©fice de agressÃ£o no Turn e no River.
 						</p>
 
 						<div className="bg-bg-elevated/50 border border-white/5 p-8 my-10 rounded-2xl">
 							<h4 className="mt-0 text-accent-indigo-light font-bold text-lg mb-4 font-heading italic">
-								Node-Locking Empírico
+								Node-Locking EmpÃ­rico
 							</h4>
 							<p className="text-text-main leading-relaxed m-0 text-sm">
-								Se sabemos que o vilão irá travar a sua agressão antes do all-in
-								final, a nossa resposta estratégica altera-se. Adotamos uma{' '}
-								<strong className="text-accent-emerald">Expansão Passiva</strong>:
+								Se sabemos que o vilÃ£o irÃ¡ travar a sua agressÃ£o antes do all-in
+								final, a nossa resposta estratÃ©gica altera-se. Adotamos uma{' '}
+								<strong className="text-accent-emerald">ExpansÃ£o Passiva</strong>:
 								aumentamos a grelha de calls baseados em Implied Odds de ICM.
-								Especulamos barato sabendo que o Teto Absoluto do RP nunca será
-								forçado e que poderemos extrair fortunas caso a textura da board nos
-								forneça os nuts absolutos.
+								Especulamos barato sabendo que o Teto Absoluto do RP nunca serÃ¡
+								forÃ§ado e que poderemos extrair fortunas caso a textura da board nos
+								forneÃ§a os nuts absolutos.
 							</p>
 						</div>
 					</div>
 				</GlassPanel>
 			</div>
 
-			{/* CONCLUSÃO E ADAPTAÇÃO */}
+			{/* CONCLUSÃƒO E ADAPTAÃ‡ÃƒO */}
 			<SectionHeader
 				step="05"
-				label="Conclusão"
-				title="A Arte da Adaptação"
-				description="A vantagem competitiva moderna não reside em decorar tabelas, mas em compreender a Elasticidade do Risco."
+				label="ConclusÃ£o"
+				title="A Arte da AdaptaÃ§Ã£o"
+				description="A vantagem competitiva moderna nÃ£o reside em decorar tabelas, mas em compreender a Elasticidade do Risco."
 			/>
 
 			<div className="sota-container pb-12">
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted">
 						<p>
-							Os Solvers assumem uma simetria de perfeição e falham em calcular a
-							fadiga mental, o tilt, o medo de errar e o verdadeiro edge pós-flop do
-							humano falível. A verdadeira vantagem reside na{' '}
-							<strong className="text-text-bright">Tríade da Adaptação</strong>:
+							Os Solvers assumem uma simetria de perfeiÃ§Ã£o e falham em calcular a
+							fadiga mental, o tilt, o medo de errar e o verdadeiro edge pÃ³s-flop do
+							humano falÃ­vel. A verdadeira vantagem reside na{' '}
+							<strong className="text-text-bright">TrÃ­ade da AdaptaÃ§Ã£o</strong>:
 						</p>
 
 						<ul className="space-y-6 list-none pl-0 mt-10">
@@ -442,11 +442,11 @@ export default function AulaICMPage() {
 								</span>
 								<div>
 									<strong className="text-text-bright block mb-1 font-heading">
-										O Colapso do Teto de Agressão
+										O Colapso do Teto de AgressÃ£o
 									</strong>
 									<p className="m-0 text-sm leading-relaxed">
 										Saber quando um oponente que atua como &quot;calling
-										station&quot; destrói por completo a capacidade matemática
+										station&quot; destrÃ³i por completo a capacidade matemÃ¡tica
 										do seu blefe.
 									</p>
 								</div>
@@ -457,12 +457,12 @@ export default function AulaICMPage() {
 								</span>
 								<div>
 									<strong className="text-text-bright block mb-1 font-heading">
-										A Exploração do Pacto
+										A ExploraÃ§Ã£o do Pacto
 									</strong>
 									<p className="m-0 text-sm leading-relaxed">
 										Compreender o momento exato em que o &quot;Pacto
 										Silencioso&quot; lhe permite roubar potes a gigantes
-										aterrorizados pela sombra da eliminação mútua.
+										aterrorizados pela sombra da eliminaÃ§Ã£o mÃºtua.
 									</p>
 								</div>
 							</li>
@@ -476,17 +476,17 @@ export default function AulaICMPage() {
 									</strong>
 									<p className="m-0 text-sm leading-relaxed">
 										Saber quando a &quot;Guerra na Lama&quot; lhe exige expandir
-										a variância para alcançar os lugares cimeiros sem temer o
-										salto de premiação marginal.
+										a variÃ¢ncia para alcanÃ§ar os lugares cimeiros sem temer o
+										salto de premiaÃ§Ã£o marginal.
 									</p>
 								</div>
 							</li>
 						</ul>
 
 						<p className="mt-12 text-center text-lg italic text-text-main border-t border-white/5 pt-12">
-							No poker de elite, a matemática propõe a base teórica; contudo, será
-							sempre a sua sensibilidade na interpretação do ecossistema que ditará o
-							campeão.
+							No poker de elite, a matemÃ¡tica propÃµe a base teÃ³rica; contudo, serÃ¡
+							sempre a sua sensibilidade na interpretaÃ§Ã£o do ecossistema que ditarÃ¡ o
+							campeÃ£o.
 						</p>
 					</div>
 				</GlassPanel>
@@ -503,3 +503,4 @@ export default function AulaICMPage() {
 		</div>
 	);
 }
+

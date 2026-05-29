@@ -5,18 +5,20 @@ Worker Loop -- Daemon principal de processamento de tarefas (NEXUS ORCHESTRATOR)
 
 import asyncio
 import contextlib
-from datetime import UTC, datetime
 import logging
 import os
 import time
+from datetime import UTC, datetime
 
 import aiofiles
 from rich.console import Console
 from rich.panel import Panel
 
+import core.runtime as te
+import llm.session as _llm_session_mod
+import task_executor as task_exec
 from agents.execution import execute_task_workflow
 from core.arbitrator import UniversalArbitrator
-import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
@@ -27,8 +29,6 @@ from llm.budget import (
     ROUTE_FAILURE_COUNTS,
     get_telemetry_lock,
 )
-import llm.session as _llm_session_mod
-import task_executor as task_exec
 
 __all__ = ["start_worker"]
 

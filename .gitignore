@@ -39,6 +39,8 @@ queue/tasks.db
 logs/
 *.log
 temp/
+triage/
+inspo/
 temp_media/
 *.pid
 .nexus_worker.pid
@@ -53,9 +55,12 @@ htmlcov/
 # 5. BACKUPS E ARCHIVES (PURA HIGIENE) ─────────────────────────────────────────
 _backups/
 .backups/
+.worktrees/
+.private-journal/
 .backups_sota/
 archive/
 NEXUS_SOTA_BACKUP_*/
+.claude/
 .claude/logs/
 .claude/task_results/
 .claude/.archive/

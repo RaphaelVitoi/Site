@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCallback } from 'react';
 import type { Scenario, HeroPosition } from '../engine/types';
@@ -17,9 +17,9 @@ interface UseMasterHandlersParams {
 }
 
 /**
- * IDENTITY: Hook de Handlers Mestre (SOTA v4.6)
+ * IDENTITY: Hook de Handlers Mestre (SOTA v7.0 GOLD)
  * PATH: src/components/simulator/hooks/useMasterHandlers.ts
- * ROLE: Orquestra eventos de interface, exportação e transições de estado.
+ * ROLE: Orquestra eventos de interface, exportaÃ§Ã£o e transiÃ§Ãµes de estado.
  */
 export function useMasterHandlers({
 	scenario,
@@ -79,3 +79,4 @@ export function useMasterHandlers({
 		handleHeroPositionChange,
 	};
 }
+

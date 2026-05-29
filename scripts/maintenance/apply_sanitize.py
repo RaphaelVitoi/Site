@@ -14,7 +14,7 @@ Behavior:
 import argparse
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -57,7 +57,7 @@ def get_dir_size_and_mtime(src):
                 total += f.stat().st_size
         except OSError:
             continue
-    mtime = datetime.fromtimestamp(src.stat().st_mtime, tz=timezone.utc).isoformat()
+    mtime = datetime.fromtimestamp(src.stat().st_mtime, tz=UTC).isoformat()
     return total, mtime
 
 
@@ -75,16 +75,12 @@ def process_single_candidate(rel_path, apply_mode, audit):
     """Process a single approved candidate for archiving."""
     # safety: never touch _backups
     if rel_path.replace("\\", "/").lower().startswith("_backups"):
-        audit["entries"].append(
-            {"path": rel_path, "skipped": True, "reason": "protected_backup"}
-        )
+        audit["entries"].append({"path": rel_path, "skipped": True, "reason": "protected_backup"})
         return
 
     src = ROOT / rel_path
     if not src.exists():
-        audit["entries"].append(
-            {"path": rel_path, "skipped": True, "reason": "missing"}
-        )
+        audit["entries"].append({"path": rel_path, "skipped": True, "reason": "missing"})
         return
 
     dst_rel = ARCHIVE_PREFIX / rel_path
@@ -104,9 +100,7 @@ def process_single_candidate(rel_path, apply_mode, audit):
     try:
         if src.is_file():
             entry["size_bytes"] = src.stat().st_size
-            entry["mtime"] = datetime.fromtimestamp(
-                src.stat().st_mtime, tz=timezone.utc
-            ).isoformat()
+            entry["mtime"] = datetime.fromtimestamp(src.stat().st_mtime, tz=UTC).isoformat()
         else:
             entry["size_bytes"], entry["mtime"] = get_dir_size_and_mtime(src)
 
@@ -128,9 +122,7 @@ def main():
         type=str,
         help="JSON file with array of relative paths to archive",
     )
-    p.add_argument(
-        "--apply", action="store_true", help="Actually move files (default: dry-run)"
-    )
+    p.add_argument("--apply", action="store_true", help="Actually move files (default: dry-run)")
     p.add_argument("--report", type=str, help="Override audit report path")
     args = p.parse_args()
 
@@ -142,7 +134,7 @@ def main():
         return
 
     audit = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "dry_run": not args.apply,
         "entries": [],
     }
@@ -150,13 +142,9 @@ def main():
     for rel_path in sorted(approved):
         process_single_candidate(rel_path, args.apply, audit)
 
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    report_path = (
-        Path(args.report) if args.report else AUDIT_DIR / f"audit_sanitize_{ts}.json"
-    )
-    report_path.write_text(
-        json.dumps(audit, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
+    ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    report_path = Path(args.report) if args.report else AUDIT_DIR / f"audit_sanitize_{ts}.json"
+    report_path.write_text(json.dumps(audit, indent=2, ensure_ascii=False), encoding="utf-8")
     print("Audit written to", report_path)
     print("Dry-run mode" if not args.apply else "Apply completed")
 

@@ -136,9 +136,7 @@ Diretrizes de Resposta:
 mensagens = [{"role": "user", "content": prompt_context}]
 
 # 3. Gerar resposta estrategica
-prompt = tokenizer.apply_chat_template(
-    mensagens, tokenize=False, add_generation_prompt=True
-)
+prompt = tokenizer.apply_chat_template(mensagens, tokenize=False, add_generation_prompt=True)
 inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)  # type: ignore
 
 print("2. Gerando analise estrategica SOTA...")

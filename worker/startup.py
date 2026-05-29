@@ -6,10 +6,10 @@ Worker Startup -- Inicializacao conjunta do Worker, API e Watchdog.
 import asyncio
 import logging
 
+import task_executor as _task_executor
 from api.v1.server import start_api_server
 from database.queue_manager import QueueManager
 from monitoring.watchdog import system_watchdog
-import task_executor as _task_executor
 from worker.loop import start_worker  # type: ignore[attr-defined]
 
 logger = logging.getLogger(__name__)

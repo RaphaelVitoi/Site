@@ -2,7 +2,7 @@
  * IDENTITY: Psicologia High Stakes GOLD
  * PATH: src/app/biblioteca/psicologia-high-stakes/page.tsx
  * ROLE: Ensaio sobre a fenomenologia da incerteza e controle cognitivo.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

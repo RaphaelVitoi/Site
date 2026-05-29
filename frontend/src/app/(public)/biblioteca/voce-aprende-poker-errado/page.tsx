@@ -2,7 +2,7 @@
  * IDENTITY: A Amortização da Edge GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/voce-aprende-poker-errado/page.tsx
  * ROLE: Artigo técnico demonstrando como a variância e a profundidade de stack amortecem a superioridade técnica.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

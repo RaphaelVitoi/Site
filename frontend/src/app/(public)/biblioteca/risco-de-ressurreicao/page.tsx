@@ -2,7 +2,7 @@
  * IDENTITY: Risco de Ressurreição GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/risco-de-ressurreicao/page.tsx
  * ROLE: Artigo técnico demonstrando o custo estratégico de dar call em short stacks na bolha.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

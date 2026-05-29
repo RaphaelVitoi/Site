@@ -1,3 +1,0 @@
-{
-  "content": "[{\"type\":\"text\",\"content\":\"The following template variables are available for this session:\\n- VSCODE_USER_PROMPTS_FOLDER: c:\\\\Users\\\\Raphael\\\\AppData\\\\Roaming\\\\Code\\\\User\\\\prompts\\n- VSCODE_TARGET_SESSION_LOG: c:\\\\Users\\\\Raphael\\\\AppData\\\\Roaming\\\\Code\\\\User\\\\workspaceStorage\\\\ae523d5c2eca270bcc86e79e657eeb92\\\\GitHub.copilot-chat\\\\debug-logs\\\\dcc5ed67-dd84-447f-b65d-4a0d557fb285\\nWhen a skill or instruction references {{VSCODE_VARIABLE_NAME}}, substitute the corresponding value above.\"}]"
-}

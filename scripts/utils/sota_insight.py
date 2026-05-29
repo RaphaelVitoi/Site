@@ -16,7 +16,7 @@ def scan_file(filepath: str, chunk: int = 1, size: int = 50):
         print(f"[ERRO] Arquivo nao encontrado: {filepath}")
         return
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         lines = f.readlines()
 
     total_lines = len(lines)
@@ -24,9 +24,7 @@ def scan_file(filepath: str, chunk: int = 1, size: int = 50):
     end = start + size
     target_lines = lines[start:end]
 
-    print(
-        f"=== [SOTA INSIGHT] Lendo {path.name} (Linhas {start + 1} a {min(end, total_lines)} de {total_lines}) ==="
-    )
+    print(f"=== [SOTA INSIGHT] Lendo {path.name} (Linhas {start + 1} a {min(end, total_lines)} de {total_lines}) ===")
 
     if chunk == 1:
         header = "".join(target_lines)
@@ -45,15 +43,9 @@ def scan_file(filepath: str, chunk: int = 1, size: int = 50):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Skill de leitura recursiva de contexto para Agentes VITOI."
-    )
+    parser = argparse.ArgumentParser(description="Skill de leitura recursiva de contexto para Agentes VITOI.")
     parser.add_argument("filepath", help="Caminho absoluto ou relativo do arquivo.")
-    parser.add_argument(
-        "--chunk", type=int, default=1, help="Fatia de leitura (default: 1)."
-    )
-    parser.add_argument(
-        "--size", type=int, default=50, help="Tamanho da fatia em linhas (default: 50)."
-    )
+    parser.add_argument("--chunk", type=int, default=1, help="Fatia de leitura (default: 1).")
+    parser.add_argument("--size", type=int, default=50, help="Tamanho da fatia em linhas (default: 50).")
     args = parser.parse_args()
     scan_file(args.filepath, args.chunk, args.size)

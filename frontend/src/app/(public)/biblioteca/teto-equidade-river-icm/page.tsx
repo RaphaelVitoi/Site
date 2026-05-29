@@ -2,7 +2,7 @@
  * IDENTITY: Teto Equidade River ICM GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/teto-equidade-river-icm/page.tsx
  * ROLE: Artigo técnico expondo a barreira invisível de valuation na última street.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

@@ -1,17 +1,17 @@
 """Modulo de gerenciamento da fila de tarefas SOTA (Queue Manager)."""  # pylint: disable=line-too-long
 
 import asyncio
-from collections.abc import Iterable
 import contextlib
-from datetime import UTC, datetime, timedelta
 import gc
 import json
 import logging
 import os
-from pathlib import Path
 import sqlite3
-from typing import Any
 import uuid
+from collections.abc import Iterable
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import Any
 
 import aiosqlite
 
@@ -97,7 +97,7 @@ class QueueManager:
                 desired_resolved.relative_to(base_resolved)
             except ValueError:
                 if not str(desired_resolved).lower().startswith(str(base_resolved).lower()):
-                    fallback = self.base_path / ".nexus_runtime" / "queue" / desired_path.name
+                    fallback = _core_config.PATH_NEXUS_ZONE / "runtime" / "queue" / desired_path.name
                     fallback.parent.mkdir(parents=True, exist_ok=True)
                     logger.warning(
                         "[DB] Caminho padrao resolve fora da raiz. Usando fallback local: %s",
@@ -112,7 +112,8 @@ class QueueManager:
             probe.unlink(missing_ok=True)
             return desired_path
         except OSError:
-            fallback = self.base_path / ".nexus_runtime" / "queue" / desired_path.name
+            fallback = _core_config.PATH_NEXUS_ZONE / "runtime" / "queue" / desired_path.name
+
             fallback.parent.mkdir(parents=True, exist_ok=True)
             fallback_probe = fallback.parent / ".write_probe"
             fallback_probe.write_text("ok", encoding="ascii")
@@ -174,7 +175,7 @@ class QueueManager:
                 self._memory_conn_async = await aiosqlite.connect(self.db_path, uri=True)
 
             async with self._get_async_db_context() as conn:
-            # SOTA PRAGMAs: Maximizacao de concorrencia e uso eficiente de memoria
+                # SOTA PRAGMAs: Maximizacao de concorrencia e uso eficiente de memoria
                 await conn.execute("PRAGMA journal_mode=WAL;")
                 await conn.execute("PRAGMA synchronous=NORMAL;")
                 await conn.execute("PRAGMA busy_timeout=5000;")
@@ -207,7 +208,7 @@ class QueueManager:
             """)
                 await conn.execute("CREATE INDEX IF NOT EXISTS idx_status_time ON tasks (status, timestamp)")
 
-            # SOTA: Partial Expression Index para Extracao O(1) na Fila DAG com 10.000+ Tarefas
+                # SOTA: Partial Expression Index para Extracao O(1) na Fila DAG com 10.000+ Tarefas
                 await conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_sota_dag_extraction ON tasks (
                     status,
@@ -247,12 +248,12 @@ class QueueManager:
                 )
             """)
                 await conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_key_usage_provider_hash_time ON key_usage_metrics (provider, key_hash, timestamp)"
-            )
+                    "CREATE INDEX IF NOT EXISTS idx_key_usage_provider_hash_time ON key_usage_metrics (provider, key_hash, timestamp)"
+                )
 
                 await conn.execute(
-                "CREATE TABLE IF NOT EXISTS daily_usage ( date TEXT PRIMARY KEY, call_count INTEGER NOT NULL )"
-            )
+                    "CREATE TABLE IF NOT EXISTS daily_usage ( date TEXT PRIMARY KEY, call_count INTEGER NOT NULL )"
+                )
                 await conn.execute("CREATE TABLE IF NOT EXISTS system_state ( key TEXT PRIMARY KEY, value TEXT )")
 
                 await conn.commit()
@@ -434,6 +435,127 @@ class QueueManager:
             await db.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
             await db.commit()
 
+    async def recover_stalled_tasks(self, max_running_minutes: int = 15) -> int:
+        """
+        SOTA GOLD Auto-Cura: Detecta e recupera tarefas travadas no status 'running'.
+        Reseta para 'pending' incrementando retentativas, ou falha se ultrapassar o limite de 3.
+        """
+        cutoff = (datetime.now(UTC) - timedelta(minutes=max_running_minutes)).isoformat()
+        recovered_count = 0
+        async with self._get_async_db() as db:
+            await db.execute("BEGIN EXCLUSIVE")
+            db.row_factory = sqlite3.Row
+            async with db.execute(
+                "SELECT id, metadata, description FROM tasks WHERE status = 'running' AND timestamp < ?",
+                (cutoff,),
+            ) as cursor:
+                stalled_rows = await cursor.fetchall()
+
+            for row in stalled_rows:
+                task_id = row["id"]
+                desc = row["description"]
+                meta = {}
+                if row["metadata"]:
+                    try:
+                        meta = json.loads(row["metadata"])
+                    except Exception:
+                        pass
+
+                retries = int(meta.get("retry_count", 0)) + 1
+                meta["retry_count"] = retries
+
+                if retries < 3:
+                    new_status = "pending"
+                    meta["last_stall_reason"] = f"Recuperado apos {max_running_minutes} minutos travado."
+                    logger.warning(
+                        "[AUTO-HEAL] Tarefa '%s' ressucitada. Retentativa %d/3.",
+                        task_id,
+                        retries,
+                    )
+                    with contextlib.suppress(ImportError):
+                        from monitoring.telemetry import send_toast
+
+                        send_toast(
+                            "[WARN] Auto-Cura SOTA",
+                            f"Tarefa '{desc[:30]}' ressuscitada (Tenta {retries}/3)",
+                            "warning",
+                        )
+                else:
+                    new_status = "failed"
+                    meta["last_stall_reason"] = (
+                        "Processamento abortado: Limite maximo de retentativas de travamento atingido."
+                    )
+                    logger.error(
+                        "[AUTO-HEAL] Tarefa '%s' falhou definitivamente apos %d travamentos.",
+                        task_id,
+                        retries,
+                    )
+
+                new_timestamp = datetime.now(UTC).isoformat()
+                await db.execute(
+                    "UPDATE tasks SET status = ?, timestamp = ?, metadata = ? WHERE id = ?",
+                    (new_status, new_timestamp, json.dumps(meta, ensure_ascii=True), task_id),
+                )
+                recovered_count += 1
+
+            await db.commit()
+        return recovered_count
+
+    async def promote_starved_tasks(self, max_wait_hours: int = 2) -> int:
+        """
+        SOTA GOLD Anti-Starvation: Promove a prioridade de tarefas pendentes ha muito tempo.
+        Evita que tarefas 'low' ou 'medium' fiquem bloqueadas indefinidamente por tarefas criticas.
+        """
+        cutoff = (datetime.now(UTC) - timedelta(hours=max_wait_hours)).isoformat()
+        promoted_count = 0
+        async with self._get_async_db() as db:
+            await db.execute("BEGIN EXCLUSIVE")
+            db.row_factory = sqlite3.Row
+            async with db.execute(
+                "SELECT id, priority, metadata FROM tasks WHERE status = 'pending' AND timestamp < ? AND priority != 'critical'",
+                (cutoff,),
+            ) as cursor:
+                starved_rows = await cursor.fetchall()
+
+            priority_map = {
+                "low": "medium",
+                "normal": "high",
+                "medium": "high",
+                "high": "critical",
+            }
+
+            for row in starved_rows:
+                task_id = row["id"]
+                current_priority = row["priority"] or "normal"
+                new_priority = priority_map.get(current_priority, "critical")
+
+                meta = {}
+                if row["metadata"]:
+                    try:
+                        meta = json.loads(row["metadata"])
+                    except Exception:
+                        pass
+
+                meta["original_priority"] = current_priority
+                meta["priority"] = new_priority
+                meta["promoted_at"] = datetime.now(UTC).isoformat()
+
+                await db.execute(
+                    "UPDATE tasks SET priority = ?, metadata = ? WHERE id = ?",
+                    (new_priority, json.dumps(meta, ensure_ascii=True), task_id),
+                )
+                promoted_count += 1
+                logger.info(
+                    "[ANTI-STARVATION] Tarefa '%s' promovida de '%s' para '%s' (Espera > %d horas).",
+                    task_id,
+                    current_priority,
+                    new_priority,
+                    max_wait_hours,
+                )
+
+            await db.commit()
+        return promoted_count
+
     async def get_tasks(self, status: str | None = None, since_hours: int | None = None) -> list[Task]:
         """Varredura historica da fila com filtros de estado e temporalidade."""
         async with self._get_async_db() as db:
@@ -485,12 +607,29 @@ class QueueManager:
                 rows = await cursor.fetchall()
                 return [{"day": r["day"], "count": r["count"]} for r in rows]
 
+    def _canonicalize_prompt(self, prompt: str) -> str:
+        """SOTA GOLD: Normaliza o prompt reduzindo espacos redundantes e quebras de linha."""
+        if not prompt:
+            return ""
+        # 1. Normalizar quebras de linha
+        p = prompt.replace("\r\n", "\n").replace("\r", "\n")
+        # 2. Substituir sequencias longas de espacos e tabulacoes por um unico espaco, preservando quebras de linha
+        import re
+
+        p = re.sub(r"[ \t]+", " ", p)
+        # 3. Remover espacos no inicio e fim de cada linha
+        p = "\n".join(line.strip() for line in p.split("\n"))
+        # 4. Remover multiplas linhas vazias consecutivas
+        p = re.sub(r"\n+", "\n", p)
+        return p.strip()
+
     async def get_llm_cache(self, model: str, prompt: str) -> str | None:
         """Consulta otimizada a Memoria Cache (Evita chamadas redundantes e gastos de API)."""
+        canon_prompt = self._canonicalize_prompt(prompt)
         async with self._get_async_db() as db:
             async with db.execute(
                 "SELECT response FROM llm_cache WHERE model = ? AND prompt = ?",
-                (model, prompt),
+                (model, canon_prompt),
             ) as cursor:
                 row = await cursor.fetchone()
                 if row is not None:
@@ -498,7 +637,7 @@ class QueueManager:
             if model.startswith("@"):
                 async with db.execute(
                     "SELECT response FROM llm_cache WHERE prompt = ? ORDER BY timestamp DESC LIMIT 1",
-                    (prompt,),
+                    (canon_prompt,),
                 ) as cursor:
                     row = await cursor.fetchone()
                     if row is not None:
@@ -518,6 +657,7 @@ class QueueManager:
         if response is None:
             logger.warning("[CACHE] Ingestao rejeitada: Resposta nula identificada.")
             return
+        canon_prompt = self._canonicalize_prompt(prompt)
         timestamp = datetime.now(UTC).isoformat()
         async with self._get_async_db() as db:
             await db.execute(
@@ -525,7 +665,7 @@ class QueueManager:
                 INSERT OR REPLACE INTO llm_cache (model, prompt, response, timestamp)
                 VALUES (?, ?, ?, ?)
             """,
-                (model, prompt, response, timestamp),
+                (model, canon_prompt, response, timestamp),
             )
             await db.commit()
 
@@ -673,18 +813,30 @@ class QueueManager:
         for row in rows:
             attempts = int(row["attempts"] or 0)
             successes = int(row["successes"] or 0)
+            failures = int(row["failures"] or 0)
             success_rate = (successes / attempts) if attempts else 0.0
-            report.append({
-                "provider": row["provider"],
-                "key_hash": row["key_hash"],
-                "attempts": attempts,
-                "successes": successes,
-                "failures": int(row["failures"] or 0),
-                "success_rate": round(success_rate, 4),
-                "avg_latency_ms": float(row["avg_latency_ms"]) if row["avg_latency_ms"] is not None else None,
-                "avg_tokens": float(row["avg_tokens"]) if row["avg_tokens"] is not None else None,
-                "last_seen": row["last_seen"],
-            })
+
+            avg_latency = float(row["avg_latency_ms"]) if row["avg_latency_ms"] is not None else 1200.0
+            latency_penalty = min(avg_latency / 50.0, 20.0)
+            failure_penalty = min(failures * 5.0, 30.0)
+            health_score = max(0.0, min(100.0, (success_rate * 100.0) - latency_penalty - failure_penalty))
+            is_anomaly = (failures / attempts > 0.3) or (avg_latency > 3000.0)
+
+            report.append(
+                {
+                    "provider": row["provider"],
+                    "key_hash": row["key_hash"],
+                    "attempts": attempts,
+                    "successes": successes,
+                    "failures": failures,
+                    "success_rate": round(success_rate, 4),
+                    "avg_latency_ms": float(row["avg_latency_ms"]) if row["avg_latency_ms"] is not None else None,
+                    "avg_tokens": float(row["avg_tokens"]) if row["avg_tokens"] is not None else None,
+                    "last_seen": row["last_seen"],
+                    "health_score": round(health_score, 2),
+                    "is_anomaly": is_anomaly,
+                }
+            )
         return report
 
     async def get_daily_budget_usage(self) -> int:

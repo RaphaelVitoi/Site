@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 async def call_gemma_local(
     session: aiohttp.ClientSession,
-    model: str,  # pylint: disable=unused-argument # NOSONAR
+    _model: str,  # pylint: disable=unused-argument # NOSONAR
     system_prompt: str,
     user_prompt: str,
     key: str,  # pylint: disable=unused-argument # NOSONAR
@@ -35,9 +35,7 @@ async def call_gemma_local(
     headers = {"X-Vitoi-Auth": auth_token, "Content-Type": "application/json"}
 
     try:
-        async with session.post(
-            url, json=payload, headers=headers, timeout=timeout
-        ) as response:
+        async with session.post(url, json=payload, headers=headers, timeout=timeout) as response:
             if response.status != 200:
                 error_text = await response.text()
                 raise RuntimeError(f"Gemma Local Error {response.status}: {error_text}")
@@ -55,9 +53,7 @@ async def call_gemma_local(
             return text, usage
 
     except aiohttp.ClientConnectorError as e:
-        raise ConnectionError(
-            "Motor Gemma Offline. Inicie via 'nexus-cli start-gemma'."
-        ) from e
+        raise ConnectionError("Motor Gemma Offline. Inicie via 'nexus-cli start-gemma'.") from e
     except Exception as e:
         logger.exception("[GEMMA-LOCAL] Erro na inferencia: %s", e)
         raise

@@ -4,9 +4,9 @@ Responsible for heuristic routing, model scoring, and health gating.
 """
 
 # pylint: disable=protected-access
-from datetime import UTC, datetime, timedelta
 import logging
 import sqlite3
+from datetime import UTC, datetime, timedelta
 
 import core.runtime as te
 from core.schemas import Task
@@ -35,15 +35,15 @@ def _score_local_preference(m: str) -> int:
         return 0
     if "deepseek-r1" in m:
         return 1
-    if "gemini-2.0-flash" in m:
+    if "gemini-2.5-flash" in m:
         return 2
     return 10
 
 
 def _score_standard_preference(m: str, model: str) -> int:
-    if "gemini-2.0-flash" in m:
+    if "gemini-2.5-flash" in m:
         return 0
-    if "gemini-2.5-pro" in m or "gemini-1.5-pro" in m:
+    if "gemini-2.5-pro" in m:
         return 1
     if "deepseek-r1" in m:
         return 2

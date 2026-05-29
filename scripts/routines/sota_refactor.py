@@ -83,6 +83,4 @@ if __name__ == "__main__":
             print(f"[ERRO] '{raw_input}' nao e um inteiro valido para o processamento.")
             logger.warning(f"Input invalido rejeitado: {sys.argv[1]}")
     else:
-        print(
-            "[VITOI] Uso: .\\.venv\\Scripts\\python.exe .\\scripts\\routines\\sota_refactor.py [valor]"
-        )
+        print("[VITOI] Uso: .\\.venv\\Scripts\\python.exe .\\scripts\\routines\\sota_refactor.py [valor]")

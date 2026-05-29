@@ -3,7 +3,7 @@
 'use client';
 
 /**
- * IDENTITY: Dashboard SOTA v4.6 GOLD
+ * IDENTITY: Dashboard SOTA v7.0 GOLD
  * PATH: src/components/simulator/DashboardSOTA.tsx
  * ROLE: Orquestrador de Telemetria e Assinatura Cognitiva.
  * AESTHETIC: SOTA Gold Standard (Visual Symmetry, Glassmorphism, Tabular Nums).

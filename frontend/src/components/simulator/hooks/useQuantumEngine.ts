@@ -1,4 +1,4 @@
-/** @format */
+﻿/** @format */
 
 import { calculatePerspectivaVitoi } from '@/lib/perspectiva';
 import { derivePostFlopRps, deriveRps, type PostFlopResult } from '@/lib/rpDeriver';
@@ -6,718 +6,733 @@ import { logTelemetryEvent } from '@/lib/telemetry-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { solveIcmDistortion } from '../engine/nashSolver';
 import type {
-	ChipEvFreqs,
-	HeroPosition,
-	IcmDistortionResult,
-	NodelockConstraint,
-	Scenario,
-	SprStage,
-	StreetChipEvFreqs,
+  ChipEvFreqs,
+  HeroPosition,
+  IcmDistortionResult,
+  NodelockConstraint,
+  Scenario,
+  SprStage,
+  StreetChipEvFreqs,
 } from '../engine/types';
 
 export interface InsolvencyPayload {
-	villainRange: string;
-	board: string;
-	rpFactor: number;
-	heroInvested: number;
-	currentPot: number;
-	activePlayers: number;
-	kappaOverride?: number;
-	heroRange?: string;
-	betSizing?: number;
+  villainRange: string;
+  board: string;
+  rpFactor: number;
+  heroInvested: number;
+  currentPot: number;
+  activePlayers: number;
+  kappaOverride?: number;
+  heroRange?: string;
+  betSizing?: number;
 }
 
 export interface QuantumEngineParams {
-	scenario: Scenario;
-	pkoValue: number;
-	isNearPayjump: boolean;
-	blindsRisingSoon: boolean;
-	streetFreqs: StreetChipEvFreqs;
-	aggressionFactor: number;
-	heroIsIp?: boolean;
-	heroPosition?: HeroPosition;
-	anteSize?: number;
-	heroInvestedBb?: number;
-	currentPotBb?: number;
-	activePlayers?: number;
-	kappaValue?: number;
-	activeNodelock?: NodelockConstraint | null;
-	isPredictive?: boolean;
-	predictiveProfile?: Record<string, number> | null;
+  scenario: Scenario;
+  pkoValue: number;
+  isNearPayjump: boolean;
+  blindsRisingSoon: boolean;
+  streetFreqs: StreetChipEvFreqs;
+  aggressionFactor: number;
+  heroIsIp?: boolean;
+  heroPosition?: HeroPosition;
+  anteSize?: number;
+  heroInvestedBb?: number;
+  currentPotBb?: number;
+  activePlayers?: number;
+  kappaValue?: number;
+  activeNodelock?: NodelockConstraint | null;
+  isPredictive?: boolean;
+  predictiveProfile?: Record<string, number> | null;
 }
 
 export interface DistortionPayload {
-	ipRpFlop: number;
-	oopRpFlop: number;
-	freqFlop: ChipEvFreqs;
-	ipRpTurn: number;
-	oopRpTurn: number;
-	freqTurn: ChipEvFreqs;
-	ipRpRiver: number;
-	oopRpRiver: number;
-	freqRiver: ChipEvFreqs;
-	topologicAggression: number;
-	activePlayers: number;
-	pots: [number, number, number];
+  ipRpFlop: number;
+  oopRpFlop: number;
+  freqFlop: ChipEvFreqs;
+  ipRpTurn: number;
+  oopRpTurn: number;
+  freqTurn: ChipEvFreqs;
+  ipRpRiver: number;
+  oopRpRiver: number;
+  freqRiver: ChipEvFreqs;
+  topologicAggression: number;
+  activePlayers: number;
+  pots: [number, number, number];
+}
+
+export interface MultiwayPayload {
+  rangesData: Float64Array; // SOTA Zero-Copy Array
+  numPlayers: number;
+  boardMask: number;
+  targetIterations: number;
+  seed?: number;
 }
 
 export interface NashDistortionResults {
-	flop?: IcmDistortionResult;
-	turn?: IcmDistortionResult;
-	river?: IcmDistortionResult;
+  flop?: IcmDistortionResult;
+  turn?: IcmDistortionResult;
+  river?: IcmDistortionResult;
 }
 
 export interface InsolvencyMetrics {
-	winRate: number;
-	loseRate: number;
-	tieRate: number;
-	trueInsolvencyEv: number;
-	riskIndex: number;
+  winRate: number;
+  loseRate: number;
+  tieRate: number;
+  trueInsolvencyEv: number;
+  riskIndex: number;
 }
 
 interface InsolvencyWorkerResponse {
-	id: number;
-	error?: string;
-	type?: 'DISTORTION' | 'MATRIX';
-	nashResults?: NashDistortionResults;
-	matrix?: number[];
+  id: number;
+  error?: string;
+  type?: 'DISTORTION' | 'MATRIX' | 'MULTIWAY_MATRIX';
+  nashResults?: NashDistortionResults;
+  matrix?: number[];
+  multiwayResult?: Float64Array;
 }
 
 export function useQuantumEngine({
-	scenario,
-	pkoValue = 0,
-	isNearPayjump = false,
-	blindsRisingSoon = false,
-	streetFreqs = {
-		flop: {} as ChipEvFreqs,
-		turn: {} as ChipEvFreqs,
-		river: {} as ChipEvFreqs,
-	},
-	aggressionFactor = 1,
-	heroIsIp = false,
-	heroPosition = 'IP',
-	anteSize = 12.5,
-	heroInvestedBb,
-	currentPotBb,
-	activePlayers = 2,
-	kappaValue = 1,
-	activeNodelock = null,
-	isPredictive = true,
-	predictiveProfile = null,
+  scenario,
+  pkoValue = 0,
+  isNearPayjump = false,
+  blindsRisingSoon = false,
+  streetFreqs = {
+    flop: {} as ChipEvFreqs,
+    turn: {} as ChipEvFreqs,
+    river: {} as ChipEvFreqs,
+  },
+  aggressionFactor = 1,
+  heroIsIp = false,
+  heroPosition = 'IP',
+  anteSize = 12.5,
+  heroInvestedBb,
+  currentPotBb,
+  activePlayers = 2,
+  kappaValue = 1,
+  activeNodelock = null,
+  isPredictive = true,
+  predictiveProfile = null,
 }: Readonly<QuantumEngineParams>) {
-	const ipIndex = 0;
-	const oopIndex = 1;
+  const ipIndex = 0;
+  const oopIndex = 1;
 
-	// SOTA FIX: Selagem de Referências (Evita vazamento de rerenders e GC Thrashing O(N^3))
-	const stableStacksStr = scenario.stacks?.join('|') || '';
-	const stableStacks = useMemo(() => scenario.stacks || [], [stableStacksStr]);
+  // SOTA FIX: Selagem de ReferÃªncias (Evita vazamento de rerenders e GC Thrashing O(N^3))
+  const stableStacksStr = scenario.stacks?.join('|') || '';
+  const stableStacks = useMemo(() => scenario.stacks || [], [stableStacksStr]);
 
-	const stablePrizesStr = scenario.prizes?.join('|') || '';
-	const stablePrizes = useMemo(() => scenario.prizes || [], [stablePrizesStr]);
+  const stablePrizesStr = scenario.prizes?.join('|') || '';
+  const stablePrizes = useMemo(() => scenario.prizes || [], [stablePrizesStr]);
 
-	const stableSprDataStr = scenario.sprData?.map((s) => `${s.name}:${s.potSize}`).join('|') || '';
-	const stableSprData = useMemo(() => scenario.sprData || [], [stableSprDataStr]);
+  const stableSprDataStr = scenario.sprData?.map((s) => `${s.name}:${s.potSize}`).join('|') || '';
+  const stableSprData = useMemo(() => scenario.sprData || [], [stableSprDataStr]);
 
-	// SOTA FIX: Selagem Profunda para o objeto complexo de Frequências (Evita default param leakage)
-	const stableStreetFreqsStr = JSON.stringify(streetFreqs);
+  // SOTA FIX: Selagem Profunda para o objeto complexo de FrequÃªncias (Evita default param leakage)
+  const stableStreetFreqsStr = JSON.stringify(streetFreqs);
 
-	const stableStreetFreqs = useMemo(() => streetFreqs, [stableStreetFreqsStr]);
+  const stableStreetFreqs = useMemo(() => streetFreqs, [stableStreetFreqsStr]);
 
-	const numPlayers = useMemo(() => stableStacks.length || 2, [stableStacks]);
-	const anteInBb = useMemo(() => anteSize / 100, [anteSize]);
+  const numPlayers = useMemo(() => stableStacks.length || 2, [stableStacks]);
+  const anteInBb = useMemo(() => anteSize / 100, [anteSize]);
 
-	// SOTA: Fallback de Sobrevivência. Se o Lab omitir prêmios, injetamos a FT 9-max baseline para garantir a Perspectiva.
-	const resolvedPrizes = useMemo(() => {
-		return stablePrizes.length > 0
-			? stablePrizes
-			: [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
-	}, [stablePrizes]);
+  // SOTA: Fallback de SobrevivÃªncia. Se o Lab omitir prÃªmios, injetamos a FT 9-max baseline para garantir a Perspectiva.
+  const resolvedPrizes = useMemo(() => {
+    return stablePrizes.length > 0 ? stablePrizes : [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
+  }, [stablePrizes]);
 
-	// SOTA: Economia Generalizada (Cálculo único de baseline para o ciclo de renderização)
-	const isBaseline = useMemo(
-		() => scenario.category === 'baseline' || resolvedPrizes.length <= 1,
-		[scenario.category, resolvedPrizes.length],
-	);
+  // SOTA: Economia Generalizada (CÃ¡lculo Ãºnico de baseline para o ciclo de renderizaÃ§Ã£o)
+  const isBaseline = useMemo(
+    () => scenario.category === 'baseline' || resolvedPrizes.length <= 1,
+    [scenario.category, resolvedPrizes.length],
+  );
 
-	// SOTA: Estados e Refs do Web Worker de Insolvência
-	const [insolvencyMatrixData, setInsolvencyMatrixData] = useState<InsolvencyMetrics | null>(
-		null,
-	);
-	const [isCalculatingInsolvency, setIsCalculatingInsolvency] = useState(false);
-	const [nashResults, setNashResults] = useState<NashDistortionResults | null>(null);
-	const insolvencyWorkerRef = useRef<Worker | null>(null);
+  // SOTA: Estados e Refs do Web Worker de InsolvÃªncia
+  const [insolvencyMatrixData, setInsolvencyMatrixData] = useState<InsolvencyMetrics | null>(null);
+  const [isCalculatingInsolvency, setIsCalculatingInsolvency] = useState(false);
+  const [nashResults, setNashResults] = useState<NashDistortionResults | null>(null);
+  const insolvencyWorkerRef = useRef<Worker | null>(null);
 
-	const lastRequestIdRef = useRef<number>(0);
-	const matrixTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const distortionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // SOTA: Refatoração para Mutabilidade Silenciosa. Elimina VDOM Thrashing e GC Churn.
+  const multiwayTensorRef = useRef<Float64Array | null>(null);
+  const [isCalculatingMultiway, setIsCalculatingMultiway] = useState(false);
 
-	// Inicialização do Web Worker
-	useEffect(() => {
-		const worker = new Worker(new URL('../workers/insolvency.worker.ts', import.meta.url), {
-			type: 'module',
-		});
-		insolvencyWorkerRef.current = worker;
+  const lastRequestIdRef = useRef<number>(0);
+  const matrixTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const distortionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const multiwayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-		worker.onmessage = (e: MessageEvent<InsolvencyWorkerResponse>) => {
-			// Validação de versão: Ignora resultados de requisições antigas
-			if (e.data.id !== lastRequestIdRef.current) return;
+  // InicializaÃ§Ã£o do Web Worker
+  useEffect(() => {
+    const worker = new Worker(new URL('../workers/insolvency.worker.ts', import.meta.url), {
+      type: 'module',
+    });
+    insolvencyWorkerRef.current = worker;
 
-			if (e.data.error) {
-				console.warn('[SotaEcosystem] Entropia de Input (Insolvency WASM):', e.data.error);
-				setIsCalculatingInsolvency(false);
-			} else if (e.data.type === 'DISTORTION' && e.data.nashResults) {
-				setNashResults(e.data.nashResults);
-			} else if (e.data.type === 'MATRIX' && e.data.matrix) {
-				const m = e.data.matrix;
-				if (m && m.length >= 5) {
-					const [winRate, loseRate, tieRate, trueInsolvencyEv, riskIndex] = m;
-					if (
-						winRate === undefined ||
-						loseRate === undefined ||
-						tieRate === undefined ||
-						trueInsolvencyEv === undefined ||
-						riskIndex === undefined
-					) {
-						setInsolvencyMatrixData(null);
-						setIsCalculatingInsolvency(false);
-						return;
-					}
-					setInsolvencyMatrixData({
-						winRate,
-						loseRate,
-						tieRate,
-						trueInsolvencyEv,
-						riskIndex,
-					});
-				} else {
-					setInsolvencyMatrixData(null);
-				}
-				setIsCalculatingInsolvency(false);
-			}
-		};
+    worker.onmessage = (e: MessageEvent<InsolvencyWorkerResponse>) => {
+      // ValidaÃ§Ã£o de versÃ£o: Ignora resultados de requisiÃ§Ãµes antigas
+      if (e.data.id !== lastRequestIdRef.current) return;
 
-		worker.onerror = (e) => {
-			console.error('[SotaEcosystem] Falha catastrófica no Worker:', e);
-			setIsCalculatingInsolvency(false);
-		};
+      if (e.data.error) {
+        console.warn('[SotaEcosystem] Entropia de Input (Insolvency WASM):', e.data.error);
+        setIsCalculatingInsolvency(false);
+      } else if (e.data.type === 'DISTORTION' && e.data.nashResults) {
+        setNashResults(e.data.nashResults);
+      } else if (e.data.type === 'MATRIX' && e.data.matrix) {
+        const m = e.data.matrix;
+        if (m && m.length >= 5) {
+          const [winRate, loseRate, tieRate, trueInsolvencyEv, riskIndex] = m;
+          if (
+            winRate === undefined ||
+            loseRate === undefined ||
+            tieRate === undefined ||
+            trueInsolvencyEv === undefined ||
+            riskIndex === undefined
+          ) {
+            setInsolvencyMatrixData(null);
+            setIsCalculatingInsolvency(false);
+            return;
+          }
+          setInsolvencyMatrixData({
+            winRate,
+            loseRate,
+            tieRate,
+            trueInsolvencyEv,
+            riskIndex,
+          });
+        } else {
+          setInsolvencyMatrixData(null);
+        }
+        setIsCalculatingInsolvency(false);
+      } else if (e.data.type === 'MULTIWAY_MATRIX' && e.data.multiwayResult) {
+        // SOTA: Atualiza a referência de memória invisivelmente para o React.
+        // O Canvas consumirá isto em loop de hardware (requestAnimationFrame).
+        multiwayTensorRef.current = e.data.multiwayResult;
+        setIsCalculatingMultiway(false);
+      }
+    };
 
-		return () => {
-			worker.terminate();
-			insolvencyWorkerRef.current = null;
-			if (matrixTimeoutRef.current) clearTimeout(matrixTimeoutRef.current);
-			if (distortionTimeoutRef.current) clearTimeout(distortionTimeoutRef.current);
-		};
-	}, []);
+    worker.onerror = (e) => {
+      console.error('[SotaEcosystem] Falha catastrÃ³fica no Worker:', e);
+      setIsCalculatingInsolvency(false);
+    };
 
-	// SOTA: Fricção Zero no Fator de Credibilidade (Axioma Lipe Piv).
-	// O recálculo engatilha somente se a variação for superior a 0.05 para evitar inundação do Event Loop (debouncing quantizado).
-	const effectiveKappa = useMemo(() => {
-		return Math.round(kappaValue * 20) / 20;
-	}, [kappaValue]);
+    return () => {
+      worker.terminate();
+      insolvencyWorkerRef.current = null;
+      if (matrixTimeoutRef.current) clearTimeout(matrixTimeoutRef.current);
+      if (distortionTimeoutRef.current) clearTimeout(distortionTimeoutRef.current);
+      if (multiwayTimeoutRef.current) clearTimeout(multiwayTimeoutRef.current);
+    };
+  }, []);
 
-	const humanNoiseFactor = useMemo(() => {
-		if (!isPredictive || !predictiveProfile) return 0;
-		return predictiveProfile['Desvio de Nash'] ?? 0;
-	}, [isPredictive, predictiveProfile]);
+  // SOTA: FricÃ§Ã£o Zero no Fator de Credibilidade (Axioma Lipe Piv).
+  // O recÃ¡lculo engatilha somente se a variaÃ§Ã£o for superior a 0.05 para evitar inundaÃ§Ã£o do Event Loop (debouncing quantizado).
+  const effectiveKappa = useMemo(() => {
+    return Math.round(kappaValue * 20) / 20;
+  }, [kappaValue]);
 
-	const dispatchInsolvencyMatrix = useCallback(
-		(payload: InsolvencyPayload) => {
-			const {
-				villainRange,
-				board,
-				rpFactor,
-				heroInvested,
-				currentPot,
-				activePlayers,
-				kappaOverride,
-				heroRange = 'AhKd',
-				betSizing = 0.5,
-			} = payload;
+  const humanNoiseFactor = useMemo(() => {
+    if (!isPredictive || !predictiveProfile) return 0;
+    return predictiveProfile['Desvio de Nash'] ?? 0;
+  }, [isPredictive, predictiveProfile]);
 
-			if (!insolvencyWorkerRef.current) return;
-			setIsCalculatingInsolvency(true);
-			if (matrixTimeoutRef.current) clearTimeout(matrixTimeoutRef.current);
-			matrixTimeoutRef.current = setTimeout(() => {
-				const id = ++lastRequestIdRef.current;
-				insolvencyWorkerRef.current?.postMessage({
-					type: 'MATRIX',
-					heroRange,
-					villainRange,
-					board,
-					rpFactor,
-					heroInvested,
-					currentPot,
-					activePlayers,
-					kappa: kappaOverride ?? effectiveKappa,
-					betSizing,
-					humanNoiseFactor,
-					id,
-				});
-			}, 150);
-		},
-		[effectiveKappa, humanNoiseFactor],
-	);
+  const dispatchInsolvencyMatrix = useCallback(
+    (payload: InsolvencyPayload) => {
+      const {
+        villainRange,
+        board,
+        rpFactor,
+        heroInvested,
+        currentPot,
+        activePlayers,
+        kappaOverride,
+        heroRange = 'AhKd',
+        betSizing = 0.5,
+      } = payload;
 
-	const dispatchIcmDistortion = useCallback(
-		(payload: DistortionPayload) => {
-			if (!insolvencyWorkerRef.current) return;
-			if (distortionTimeoutRef.current) clearTimeout(distortionTimeoutRef.current);
-			distortionTimeoutRef.current = setTimeout(() => {
-				const id = ++lastRequestIdRef.current;
-				insolvencyWorkerRef.current?.postMessage({
-					type: 'DISTORTION',
-					...payload,
-					humanNoiseFactor,
-					id,
-				});
-			}, 150);
-		},
-		[humanNoiseFactor],
-	);
+      if (!insolvencyWorkerRef.current) return;
+      setIsCalculatingInsolvency(true);
+      if (matrixTimeoutRef.current) clearTimeout(matrixTimeoutRef.current);
+      matrixTimeoutRef.current = setTimeout(() => {
+        const id = ++lastRequestIdRef.current;
+        insolvencyWorkerRef.current?.postMessage({
+          type: 'MATRIX',
+          heroRange,
+          villainRange,
+          board,
+          rpFactor,
+          heroInvested,
+          currentPot,
+          activePlayers,
+          kappa: kappaOverride ?? effectiveKappa,
+          betSizing,
+          humanNoiseFactor,
+          id,
+        });
+      }, 150);
+    },
+    [effectiveKappa, humanNoiseFactor],
+  );
 
-	// Incentivo intrinseco do pote pre-flop (dead money).
-	// Quanto maior, menor a pressao relativa do ICM.
-	const preflopDeadMoney = useMemo(() => {
-		if (currentPotBb !== undefined && currentPotBb > 0) return currentPotBb;
-		if (numPlayers < 2) return 1.5; // Fallback para HU
-		return 1.5 + numPlayers * anteInBb; // SB (0.5) + BB (1.0) + Antes
-	}, [numPlayers, anteInBb, currentPotBb]);
+  const dispatchIcmDistortion = useCallback(
+    (payload: DistortionPayload) => {
+      if (!insolvencyWorkerRef.current) return;
+      if (distortionTimeoutRef.current) clearTimeout(distortionTimeoutRef.current);
+      distortionTimeoutRef.current = setTimeout(() => {
+        const id = ++lastRequestIdRef.current;
+        insolvencyWorkerRef.current?.postMessage({
+          type: 'DISTORTION',
+          ...payload,
+          humanNoiseFactor,
+          id,
+        });
+      }, 150);
+    },
+    [humanNoiseFactor],
+  );
 
-	// Custo Base de Desistência (EV_Fold)
-	// OOP assume BB (1BB + Ante). IP assume BTN (0BB + Ante).
-	const foldEvBb = useMemo(() => {
-		// SOTA: O Sunk Cost agora respeita o escalonamento (3bets, 4bets) e preserva a soma do Ante.
-		let baseInvested: number;
-		if (heroInvestedBb === undefined) {
-			baseInvested = heroIsIp ? 0 : 1;
-		} else {
-			baseInvested = Math.abs(heroInvestedBb);
-		}
-		return -(baseInvested + anteInBb);
-	}, [heroIsIp, anteInBb, heroInvestedBb]);
+  // SOTA: Despachante Quântico Multiway via Transferable Objects
+  const dispatchMultiwayMatrix = useCallback((payload: MultiwayPayload) => {
+    const {
+      rangesData,
+      numPlayers,
+      boardMask,
+      targetIterations,
+      seed = Math.floor(Math.random() * 0xffffffff),
+    } = payload;
 
-	// Derivar Perspectiva Matemática Quantum (v4.0)
-	const quantumPerspectiva = useMemo(() => {
-		// SOTA: Fator R (Realização) atenuado pelo Axioma Lipe Piv.
-		// Se a credibilidade do vilão é baixa (kappa < 1), a penalidade posicional é diluída,
-		// aproximando a realização OOP do Bluff-Catcher Puro.
-		const baseRealization = heroIsIp ? 1 : 0.85;
-		const realizationFactor = heroIsIp ? 1 : baseRealization + 0.15 * (1 - effectiveKappa);
-		try {
-			return calculatePerspectivaVitoi({
-				stacks: stableStacks,
-				prizes: resolvedPrizes,
-				heroIdx: ipIndex,
-				villainIdx: oopIndex,
-				potSize: preflopDeadMoney,
-				heroCost: Math.abs(foldEvBb),
-				winProb: 0.5,
-				realizationFactor: realizationFactor,
-				edgeBase: 1,
-				bountyValue: pkoValue * 100,
-				isNearPayjump,
-				blindsRisingSoon,
-				heroPosition, // SOTA: Injeção de Antevisão Posicional
-			});
-		} catch (e: unknown) {
-			// SOTA: Preserva a logagem crua na Engine do Browser
-			console.error('[QuantumEngine] Falha na PM Lens:', e);
-			return null;
-		}
-	}, [
-		stableStacks,
-		resolvedPrizes,
-		pkoValue,
-		isNearPayjump,
-		blindsRisingSoon,
-		preflopDeadMoney,
-		foldEvBb,
-		heroPosition,
-		heroIsIp,
-		effectiveKappa,
-	]);
+    if (!insolvencyWorkerRef.current) return;
+    setIsCalculatingMultiway(true);
+    if (multiwayTimeoutRef.current) clearTimeout(multiwayTimeoutRef.current);
 
-	// Derivar RP automaticamente via Malmuth-Harville (Base)
-	const derivedRp = useMemo(() => {
-		if (isBaseline) return null;
+    multiwayTimeoutRef.current = setTimeout(() => {
+      const id = ++lastRequestIdRef.current;
+      // SOTA ZERO-COPY TRANSFER: Transferimos o ArrayBuffer nativo diretamente para o Worker.
+      // Isso extirpa a clonagem pesada (Structured Clone) do JS e aniquila os vazamentos de GC no React.
+      insolvencyWorkerRef.current?.postMessage(
+        {
+          type: 'MULTIWAY_MATRIX',
+          rangesData,
+          numPlayers,
+          boardMask,
+          targetIterations,
+          seed,
+          id,
+        },
+        [rangesData.buffer],
+      ); // <- A Mágica SOTA: Transferência absoluta de posse da memória.
+    }, 150);
+  }, []);
 
-		const t0 = performance.now();
-		try {
-			const res = deriveRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, pkoValue * 100);
-			const t1 = performance.now();
-			const latency = t1 - t0;
+  // Incentivo intrinseco do pote pre-flop (dead money).
+  // Quanto maior, menor a pressao relativa do ICM.
+  const preflopDeadMoney = useMemo(() => {
+    if (currentPotBb !== undefined && currentPotBb > 0) return currentPotBb;
+    if (numPlayers < 2) return 1.5; // Fallback para HU
+    return 1.5 + numPlayers * anteInBb; // SB (0.5) + BB (1.0) + Antes
+  }, [numPlayers, anteInBb, currentPotBb]);
 
-			if (latency > 50) {
-				logTelemetryEvent({
-					category: 'performance',
-					componentName: `MasterSimulator:${scenario.id}:deriveRps`,
-					latency: Math.round(latency),
-					metadata: { stacksCount: stableStacks.length || 0, pko: pkoValue },
-				});
-			}
-			return res;
-		} catch {
-			return null;
-		}
-	}, [scenario.id, stableStacks, resolvedPrizes, pkoValue, isBaseline]);
+  // Custo Base de DesistÃªncia (EV_Fold)
+  // OOP assume BB (1BB + Ante). IP assume BTN (0BB + Ante).
+  const foldEvBb = useMemo(() => {
+    // SOTA: O Sunk Cost agora respeita o escalonamento (3bets, 4bets) e preserva a soma do Ante.
+    let baseInvested: number;
+    if (heroInvestedBb === undefined) {
+      baseInvested = heroIsIp ? 0 : 1;
+    } else {
+      baseInvested = Math.abs(heroInvestedBb);
+    }
+    return -(baseInvested + anteInBb);
+  }, [heroIsIp, anteInBb, heroInvestedBb]);
 
-	// RP Efetivo Quantum: O RP base é ajustado pela Perspectiva (Piso Dinâmico)
-	const rpAdjustment = useMemo(() => {
-		if (!quantumPerspectiva || isBaseline) return 0;
+  // Derivar Perspectiva MatemÃ¡tica Quantum (v4.0)
+  const quantumPerspectiva = useMemo(() => {
+    // SOTA: Fator R (RealizaÃ§Ã£o) atenuado pelo Axioma Lipe Piv.
+    // Se a credibilidade do vilÃ£o Ã© baixa (kappa < 1), a penalidade posicional Ã© diluÃ­da,
+    // aproximando a realizaÃ§Ã£o OOP do Bluff-Catcher Puro.
+    const baseRealization = heroIsIp ? 1 : 0.85;
+    const realizationFactor = heroIsIp ? 1 : baseRealization + 0.15 * (1 - effectiveKappa);
+    try {
+      return calculatePerspectivaVitoi({
+        stacks: stableStacks,
+        prizes: resolvedPrizes,
+        heroIdx: ipIndex,
+        villainIdx: oopIndex,
+        potSize: preflopDeadMoney,
+        heroCost: Math.abs(foldEvBb),
+        winProb: 0.5,
+        realizationFactor: realizationFactor,
+        edgeBase: 1,
+        bountyValue: pkoValue * 100,
+        isNearPayjump,
+        blindsRisingSoon,
+        heroPosition, // SOTA: InjeÃ§Ã£o de AntevisÃ£o Posicional
+        humanNoiseFactor, // SOTA v7.0: InjeÃ§Ã£o de Entropia
+      });
+    } catch (e: unknown) {
+      // SOTA: Preserva a logagem crua na Engine do Browser
+      console.error('[QuantumEngine] Falha na PM Lens:', e);
+      return null;
+    }
+  }, [
+    stableStacks,
+    resolvedPrizes,
+    pkoValue,
+    isNearPayjump,
+    blindsRisingSoon,
+    preflopDeadMoney,
+    foldEvBb,
+    heroPosition,
+    heroIsIp,
+    effectiveKappa,
+  ]);
 
-		// SOTA: Erradicação do Magic Number (10).
-		// O delta positivo entre o ganho de sobrevivência e a dor em ICM real do fold gera a pressão inflacionária.
-		const survivalGain = quantumPerspectiva.dynamicEvFold || 0;
-		// P1 FIX: costOfFold unificado em Perspectiva EV (% do pool), pareado semanticamente com survivalGain.
-		const costOfFold = Math.abs(quantumPerspectiva.deltaFoldPct);
+  // Derivar RP automaticamente via Malmuth-Harville (Base)
+  const derivedRp = useMemo(() => {
+    if (isBaseline) return null;
 
-		// SOTA: O incentivo do dead money modula a pressao do ICM.
-		// Um pote maior (mais dead money) reduz a aversao ao risco.
-		const standardDeadMoney = 2.625; // Baseline: 9-handed com 12.5% ante (1.5 + 9*0.125)
-		const deadMoneyFactor = preflopDeadMoney > 0 ? standardDeadMoney / preflopDeadMoney : 1;
+    const t0 = performance.now();
+    try {
+      const res = deriveRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, pkoValue * 100);
+      const t1 = performance.now();
+      const latency = t1 - t0;
 
-		if (survivalGain <= costOfFold) return 0;
+      if (latency > 50) {
+        logTelemetryEvent({
+          category: 'performance',
+          componentName: `MasterSimulator:${scenario.id}:deriveRps`,
+          latency: Math.round(latency),
+          metadata: { stacksCount: stableStacks.length || 0, pko: pkoValue },
+        });
+      }
+      return res;
+    } catch {
+      return null;
+    }
+  }, [scenario.id, stableStacks, resolvedPrizes, pkoValue, isBaseline]);
 
-		const initialPotSize =
-			stableSprData.find((s: SprStage) => s.name === 'FLOP')?.potSize || 7.5;
-		const baseAdjustment = (survivalGain - costOfFold) * (initialPotSize / 2);
-		return baseAdjustment * deadMoneyFactor;
-	}, [quantumPerspectiva, stableSprData, preflopDeadMoney, isBaseline]);
+  // RP Efetivo Quantum: O RP base Ã© ajustado pela Perspectiva (Piso DinÃ¢mico)
+  const rpAdjustment = useMemo(() => {
+    if (!quantumPerspectiva || isBaseline) return 0;
 
-	const effectiveIpRp = Math.max(
-		0,
-		((derivedRp?.ipRp ?? Number(scenario.ipRp)) || 0) + rpAdjustment,
-	);
-	const effectiveOopRp = Math.max(
-		0,
-		((derivedRp?.oopRp ?? Number(scenario.oopRp)) || 0) + rpAdjustment,
-	);
+    // SOTA: ErradicaÃ§Ã£o do Magic Number (10).
+    // O delta positivo entre o ganho de sobrevivÃªncia e a dor em ICM real do fold gera a pressÃ£o inflacionÃ¡ria.
+    const survivalGain = quantumPerspectiva.dynamicEvFold || 0;
+    // P1 FIX: costOfFold unificado em Perspectiva EV (% do pool), pareado semanticamente com survivalGain.
+    const costOfFold = Math.abs(quantumPerspectiva.deltaFoldPct);
 
-	let rpSource = 'manual';
-	if (derivedRp) {
-		rpSource = scenario.category === 'baseline' ? 'ICMev Puro' : 'Quantum v4.1';
-	}
+    // SOTA: O incentivo do dead money modula a pressao do ICM.
+    // Um pote maior (mais dead money) reduz a aversao ao risco.
+    const standardDeadMoney = 2.625; // Baseline: 9-handed com 12.5% ante (1.5 + 9*0.125)
+    const deadMoneyFactor = preflopDeadMoney > 0 ? standardDeadMoney / preflopDeadMoney : 1;
 
-	// --- MOTOR DE PROPAGAÇÃO REVERSA (ORGANISMO VITOI) ---
-	const postFlopPots = useMemo<[number, number, number]>(() =>
-		// SOTA: Estado purificado e tipagem estrita
-		{
-			const sprFlop = stableSprData.find((s: SprStage) => s.name === 'FLOP');
-			const sprTurn = stableSprData.find((s: SprStage) => s.name === 'TURN');
-			const sprRiver = stableSprData.find((s: SprStage) => s.name === 'RIVER');
+    if (survivalGain <= costOfFold) return 0;
 
-			// SOTA: O valuation do pot dissipa o RP por streets respeitando o preflopDeadMoney como piso (Pot Entrapment escalonado).
-			const potFlop = Math.max(sprFlop?.potSize ?? 7.5, preflopDeadMoney);
-			let potTurn = Math.max(sprTurn?.potSize ?? 22.5, preflopDeadMoney);
-			let potRiver = Math.max(sprRiver?.potSize ?? 40, preflopDeadMoney);
+    const initialPotSize = stableSprData.find((s: SprStage) => s.name === 'FLOP')?.potSize || 7.5;
+    const baseAdjustment = (survivalGain - costOfFold) * (initialPotSize / 2);
+    return baseAdjustment * deadMoneyFactor;
+  }, [quantumPerspectiva, stableSprData, preflopDeadMoney, isBaseline]);
 
-			if (activeNodelock?.type === 'block_bet') {
-				const b20Turn = potFlop * activeNodelock.sizePct;
-				potTurn = potFlop + b20Turn * 2;
-				const b20River = potTurn * activeNodelock.sizePct;
-				potRiver = potTurn + b20River * 2;
-			}
+  const effectiveIpRp = Math.max(0, ((derivedRp?.ipRp ?? Number(scenario.ipRp)) || 0) + rpAdjustment);
+  const effectiveOopRp = Math.max(0, ((derivedRp?.oopRp ?? Number(scenario.oopRp)) || 0) + rpAdjustment);
 
-			return [potFlop, potTurn, potRiver];
-		}, [stableSprData, preflopDeadMoney, activeNodelock]);
+  let rpSource = 'manual';
+  if (derivedRp) {
+    rpSource = scenario.category === 'baseline' ? 'ICMev Puro' : 'Quantum v4.1';
+  }
 
-	const postFlopRps = useMemo(() => {
-		if (isBaseline) return null;
+  // --- MOTOR DE PROPAGAÃ‡ÃƒO REVERSA (ORGANISMO VITOI) ---
+  const postFlopPots = useMemo<[number, number, number]>(() =>
+    // SOTA: Estado purificado e tipagem estrita
+    {
+      const sprFlop = stableSprData.find((s: SprStage) => s.name === 'FLOP');
+      const sprTurn = stableSprData.find((s: SprStage) => s.name === 'TURN');
+      const sprRiver = stableSprData.find((s: SprStage) => s.name === 'RIVER');
 
-		const [potFlop, potTurn, potRiver] = postFlopPots;
+      // SOTA: O valuation do pot dissipa o RP por streets respeitando o preflopDeadMoney como piso (Pot Entrapment escalonado).
+      const potFlop = Math.max(sprFlop?.potSize ?? 7.5, preflopDeadMoney);
+      let potTurn = Math.max(sprTurn?.potSize ?? 22.5, preflopDeadMoney);
+      let potRiver = Math.max(sprRiver?.potSize ?? 40, preflopDeadMoney);
 
-		const river = derivePostFlopRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, {
-			street: 'river',
-			potAcumuladoHero: potRiver / 2,
-			potTotal: potRiver,
-			heroIsIp,
-			bountyValue: pkoValue * 100,
-		});
+      if (activeNodelock?.type === 'block_bet') {
+        const b20Turn = potFlop * activeNodelock.sizePct;
+        potTurn = potFlop + b20Turn * 2;
+        const b20River = potTurn * activeNodelock.sizePct;
+        potRiver = potTurn + b20River * 2;
+      }
 
-		const turnFutureRpInfluence = heroIsIp ? (river?.ipRp ?? 0) : (river?.oopRp ?? 0);
-		const turn = derivePostFlopRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, {
-			street: 'turn',
-			potAcumuladoHero: potTurn / 2,
-			potTotal: potTurn,
-			heroIsIp,
-			bountyValue: pkoValue * 100,
-			futureRpInfluence: turnFutureRpInfluence,
-		});
+      return [potFlop, potTurn, potRiver];
+    }, [stableSprData, preflopDeadMoney, activeNodelock]);
 
-		const flopFutureRpInfluence = heroIsIp ? (turn?.ipRp ?? 0) : (turn?.oopRp ?? 0);
-		const flop = derivePostFlopRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, {
-			street: 'flop',
-			potAcumuladoHero: potFlop / 2,
-			potTotal: potFlop,
-			heroIsIp,
-			bountyValue: pkoValue * 100,
-			futureRpInfluence: flopFutureRpInfluence,
-		});
+  const postFlopRps = useMemo(() => {
+    if (isBaseline) return null;
 
-		return { flop, turn, river };
-	}, [stableStacks, resolvedPrizes, pkoValue, heroIsIp, isBaseline, postFlopPots]);
+    const [potFlop, potTurn, potRiver] = postFlopPots;
 
-	// SOTA: Distribuição Matemática Exponencial da Perspectiva (PMev)
-	// O RP é sobre colisão. No flop, sem colisão evidente, ele é dissipado e distribuído condicional e exponencialmente.
-	const ipRpFlop = postFlopRps?.flop?.ipRp ?? effectiveIpRp * Math.exp(-1.2);
-	const oopRpFlop = postFlopRps?.flop?.oopRp ?? effectiveOopRp * Math.exp(-1.2);
+    const river = derivePostFlopRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, {
+      street: 'river',
+      potAcumuladoHero: potRiver / 2,
+      potTotal: potRiver,
+      heroIsIp,
+      bountyValue: pkoValue * 100,
+    });
 
-	const ipRpTurn = postFlopRps?.turn?.ipRp ?? effectiveIpRp * Math.exp(-0.6);
-	const oopRpTurn = postFlopRps?.turn?.oopRp ?? effectiveOopRp * Math.exp(-0.6);
+    const turnFutureRpInfluence = heroIsIp ? (river?.ipRp ?? 0) : (river?.oopRp ?? 0);
+    const turn = derivePostFlopRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, {
+      street: 'turn',
+      potAcumuladoHero: potTurn / 2,
+      potTotal: potTurn,
+      heroIsIp,
+      bountyValue: pkoValue * 100,
+      futureRpInfluence: turnFutureRpInfluence,
+    });
 
-	const ipRpRiver = postFlopRps?.river?.ipRp ?? effectiveIpRp * Math.exp(-0.1);
-	const oopRpRiver = postFlopRps?.river?.oopRp ?? effectiveOopRp * Math.exp(-0.1);
+    const flopFutureRpInfluence = heroIsIp ? (turn?.ipRp ?? 0) : (turn?.oopRp ?? 0);
+    const flop = derivePostFlopRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, {
+      street: 'flop',
+      potAcumuladoHero: potFlop / 2,
+      potTotal: potFlop,
+      heroIsIp,
+      bountyValue: pkoValue * 100,
+      futureRpInfluence: flopFutureRpInfluence,
+    });
 
-	const effectiveSprData = useMemo(() => {
-		if (!postFlopRps) return stableSprData;
-		const baseRp = heroIsIp ? effectiveIpRp : effectiveOopRp;
+    return { flop, turn, river };
+  }, [stableStacks, resolvedPrizes, pkoValue, heroIsIp, isBaseline, postFlopPots]);
 
-		const getRp = (streetObj: PostFlopResult | null, fb: number) => {
-			if (!streetObj) return fb;
-			return heroIsIp ? (streetObj.ipRp ?? fb) : (streetObj.oopRp ?? fb);
-		};
+  // SOTA: DistribuiÃ§Ã£o MatemÃ¡tica Exponencial da Perspectiva (PMev)
+  // O RP Ã© sobre colisÃ£o. No flop, sem colisÃ£o evidente, ele Ã© dissipado e distribuÃ­do condicional e exponencialmente.
+  const ipRpFlop = postFlopRps?.flop?.ipRp ?? effectiveIpRp * Math.exp(-1.2);
+  const oopRpFlop = postFlopRps?.flop?.oopRp ?? effectiveOopRp * Math.exp(-1.2);
 
-		const rpDispatcher: Record<string, (fallback: number) => number> = {
-			PRE: () => baseRp,
-			FLOP: (fb) => getRp(postFlopRps.flop, fb),
-			TURN: (fb) => getRp(postFlopRps.turn, fb),
-			RIVER: (fb) => getRp(postFlopRps.river, fb),
-		};
+  const ipRpTurn = postFlopRps?.turn?.ipRp ?? effectiveIpRp * Math.exp(-0.6);
+  const oopRpTurn = postFlopRps?.turn?.oopRp ?? effectiveOopRp * Math.exp(-0.6);
 
-		return stableSprData.map((stage: SprStage) => {
-			const resolver = rpDispatcher[stage.name];
-			return resolver ? { ...stage, rpValue: resolver(stage.rpValue) } : stage;
-		});
-	}, [stableSprData, postFlopRps, effectiveIpRp, effectiveOopRp, heroIsIp]);
+  const ipRpRiver = postFlopRps?.river?.ipRp ?? effectiveIpRp * Math.exp(-0.1);
+  const oopRpRiver = postFlopRps?.river?.oopRp ?? effectiveOopRp * Math.exp(-0.1);
 
-	// SOTA VITOI: Consciência Topológica Proporcional e Condicionante
-	const topologicAggression = useMemo(() => {
-		let baseAggression = aggressionFactor;
+  const effectiveSprData = useMemo(() => {
+    if (!postFlopRps) return stableSprData;
+    const baseRp = heroIsIp ? effectiveIpRp : effectiveOopRp;
 
-		// SOTA v6.2.1: Purificacao. O damping fisico agora e soberania do motor WASM.
-		// Removemos a estabilizacao local para evitar "Damping Duplo".
+    const getRp = (streetObj: PostFlopResult | null, fb: number) => {
+      if (!streetObj) return fb;
+      return heroIsIp ? (streetObj.ipRp ?? fb) : (streetObj.oopRp ?? fb);
+    };
 
-		// Entrapment Ratio boost implicito: reduz a pressao mitigando o Downward Drift
-		if (activeNodelock?.type === 'block_bet') {
-			baseAggression *= 0.8;
-		}
+    const rpDispatcher: Record<string, (fallback: number) => number> = {
+      PRE: () => baseRp,
+      FLOP: (fb) => getRp(postFlopRps.flop, fb),
+      TURN: (fb) => getRp(postFlopRps.turn, fb),
+      RIVER: (fb) => getRp(postFlopRps.river, fb),
+    };
 
-		if (isBaseline) return baseAggression;
+    return stableSprData.map((stage: SprStage) => {
+      const resolver = rpDispatcher[stage.name];
+      return resolver ? { ...stage, rpValue: resolver(stage.rpValue) } : stage;
+    });
+  }, [stableSprData, postFlopRps, effectiveIpRp, effectiveOopRp, heroIsIp]);
 
-		// A pressao do ecossistema atua como um regulador continuo.
-		// Capamos em 30% de RP para normalizar o fator de 0 a 1 (0 = sem pressao, 1 = dor maxima).
-		const maxRp = Math.max(effectiveIpRp, effectiveOopRp);
-		const pressureIndex = Math.min(maxRp / 30, 1);
+  // SOTA VITOI: ConsciÃªncia TopolÃ³gica Proporcional e Condicionante
+  const topologicAggression = useMemo(() => {
+    let baseAggression = aggressionFactor;
 
-		if (isNearPayjump) {
-			// Borda do Plato / Payjump: Supressao proporcional a diferenca do Ganho Real.
-			const suppression = 1 - 0.3 * pressureIndex;
-			return baseAggression * suppression;
-		} else {
-			// Vale de Pressao (Plato): Expansao proporcional.
-			const expansion = 1.05 + 0.25 * (1 - pressureIndex);
-			return baseAggression * expansion;
-		}
-	}, [
-		aggressionFactor,
-		isNearPayjump,
-		isBaseline,
-		effectiveIpRp,
-		effectiveOopRp,
-		activeNodelock,
-	]);
+    // SOTA v7.0 GOLD: Purificacao. O damping fisico agora e soberania do motor WASM.
+    // Removemos a estabilizacao local para evitar "Damping Duplo".
 
-	const effectiveStreetFreqs = useMemo(() => {
-		if (activeNodelock?.type === 'block_bet') {
-			const override = activeNodelock.freqOverride * 100;
-			return {
-				flop: {
-					...stableStreetFreqs.flop,
-					ip_bet_small: heroIsIp ? override : stableStreetFreqs.flop.ip_bet_small,
-				},
-				turn: {
-					...stableStreetFreqs.turn,
-					ip_bet_small: heroIsIp ? override : stableStreetFreqs.turn.ip_bet_small,
-				},
-				river: {
-					...stableStreetFreqs.river,
-					ip_bet_small: heroIsIp ? override : stableStreetFreqs.river.ip_bet_small,
-				},
-			};
-		}
-		return stableStreetFreqs;
-	}, [stableStreetFreqs, activeNodelock, heroIsIp]);
+    // Entrapment Ratio boost implicito: reduz a pressao mitigando o Downward Drift
+    if (activeNodelock?.type === 'block_bet') {
+      baseAggression *= 0.8;
+    }
 
-	// SOTA: Despacho assíncrono para a esteira WASM (Web Worker)
-	useEffect(() => {
-		// SOTA: Payload purificado. Tipagem ChipEvFreqs estrita e validada.
-		if (dispatchIcmDistortion) {
-			dispatchIcmDistortion({
-				ipRpFlop,
-				oopRpFlop,
-				freqFlop: effectiveStreetFreqs.flop,
-				ipRpTurn,
-				oopRpTurn,
-				freqTurn: effectiveStreetFreqs.turn,
-				ipRpRiver,
-				oopRpRiver,
-				freqRiver: effectiveStreetFreqs.river,
-				topologicAggression,
-				activePlayers,
-				pots: postFlopPots,
-			});
-		}
-	}, [
-		dispatchIcmDistortion,
-		ipRpFlop,
-		oopRpFlop,
-		ipRpTurn,
-		oopRpTurn,
-		ipRpRiver,
-		oopRpRiver,
-		effectiveStreetFreqs,
-		topologicAggression,
-		activePlayers,
-		postFlopPots,
-	]);
+    if (isBaseline) return baseAggression;
 
-	// SOTA FIX: Interceptador adaptativo. Protege o primeiro frame do React forçando o
-	// contrato antigo do solver síncrono no novo formato estrito IP/OOP antes da resposta do Worker.
-	const formatSyncSolverResult = (
-		result: IcmDistortionResult,
-		freqs: ChipEvFreqs,
-		ipRp: number,
-		oopRp: number,
-	): IcmDistortionResult | null => {
-		if (!result) return null;
-		if ('ip' in result && 'oop' in result && result.ip?.check?.center !== undefined) {
-			result.deltaRp ??= ipRp - oopRp;
-			return result;
-		}
-		const formatMetric = (val: number) => ({
-			center: val,
-			spread: 0,
-			delta: 0,
-		});
-		return {
-			deltaRp: ipRp - oopRp,
-			bExponent: 1,
-			rawData: { ipRp, oopRp, chipEvFreqs: freqs },
-			ip: {
-				check: formatMetric(freqs.ip_check || 0),
-				bet_small: formatMetric(freqs.ip_bet_small || 0),
-				bet_large: formatMetric(freqs.ip_bet_large || 0),
-			},
-			oop: {
-				fold: formatMetric(result.oop?.fold?.center ?? freqs.oop_fold ?? 0),
-				call: formatMetric(result.oop?.call?.center ?? freqs.oop_call ?? 0),
-				raise: formatMetric(result.oop?.raise?.center ?? freqs.oop_raise ?? 0),
-			},
-		};
-	};
+    // A pressao do ecossistema atua como um regulador continuo.
+    // Capamos em 30% de RP para normalizar o fator de 0 a 1 (0 = sem pressao, 1 = dor maxima).
+    const maxRp = Math.max(effectiveIpRp, effectiveOopRp);
+    const pressureIndex = Math.min(maxRp / 30, 1);
 
-	const { nashFlop, nashTurn, nashRiver } = useMemo(
-		() => ({
-			nashFlop:
-				nashResults?.flop ??
-				formatSyncSolverResult(
-					solveIcmDistortion(
-						ipRpFlop,
-						oopRpFlop,
-						effectiveStreetFreqs.flop,
-						topologicAggression,
-					),
-					effectiveStreetFreqs.flop,
-					ipRpFlop,
-					oopRpFlop,
-				),
-			nashTurn:
-				nashResults?.turn ??
-				formatSyncSolverResult(
-					solveIcmDistortion(
-						ipRpTurn,
-						oopRpTurn,
-						effectiveStreetFreqs.turn,
-						topologicAggression,
-					),
-					effectiveStreetFreqs.turn,
-					ipRpTurn,
-					oopRpTurn,
-				),
-			nashRiver:
-				nashResults?.river ??
-				formatSyncSolverResult(
-					solveIcmDistortion(
-						ipRpRiver,
-						oopRpRiver,
-						effectiveStreetFreqs.river,
-						topologicAggression,
-					),
-					effectiveStreetFreqs.river,
-					ipRpRiver,
-					oopRpRiver,
-				),
-		}),
-		[
-			nashResults,
-			ipRpFlop,
-			oopRpFlop,
-			ipRpTurn,
-			oopRpTurn,
-			ipRpRiver,
-			oopRpRiver,
-			effectiveStreetFreqs,
-			topologicAggression,
-		],
-	);
+    if (isNearPayjump) {
+      // Borda do Plato / Payjump: Supressao proporcional a diferenca do Ganho Real.
+      const suppression = 1 - 0.3 * pressureIndex;
+      return baseAggression * suppression;
+    } else {
+      // Vale de Pressao (Plato): Expansao proporcional.
+      const expansion = 1.05 + 0.25 * (1 - pressureIndex);
+      return baseAggression * expansion;
+    }
+  }, [aggressionFactor, isNearPayjump, isBaseline, effectiveIpRp, effectiveOopRp, activeNodelock]);
 
-	// SOTA: Isolamento de referência para evitar GC Churn e quebra de memoização downstream
-	const streetRps = useMemo(
-		() => ({
-			flop: { ip: ipRpFlop, oop: oopRpFlop, deltaRp: ipRpFlop - oopRpFlop },
-			turn: { ip: ipRpTurn, oop: oopRpTurn, deltaRp: ipRpTurn - oopRpTurn },
-			river: {
-				ip: ipRpRiver,
-				oop: oopRpRiver,
-				deltaRp: ipRpRiver - oopRpRiver,
-			},
-			// SOTA FIX: O Header do NashPanel consome métricas globais diretamente da raiz do objeto.
-			deltaRp: effectiveIpRp - effectiveOopRp,
-			ip: effectiveIpRp,
-			oop: effectiveOopRp,
-		}),
-		[
-			ipRpFlop,
-			oopRpFlop,
-			ipRpTurn,
-			oopRpTurn,
-			ipRpRiver,
-			oopRpRiver,
-			effectiveIpRp,
-			effectiveOopRp,
-		],
-	);
+  const effectiveStreetFreqs = useMemo(() => {
+    if (activeNodelock?.type === 'block_bet') {
+      const override = activeNodelock.freqOverride * 100;
+      return {
+        flop: {
+          ...stableStreetFreqs.flop,
+          ip_bet_small: heroIsIp ? override : stableStreetFreqs.flop.ip_bet_small,
+        },
+        turn: {
+          ...stableStreetFreqs.turn,
+          ip_bet_small: heroIsIp ? override : stableStreetFreqs.turn.ip_bet_small,
+        },
+        river: {
+          ...stableStreetFreqs.river,
+          ip_bet_small: heroIsIp ? override : stableStreetFreqs.river.ip_bet_small,
+        },
+      };
+    }
+    return stableStreetFreqs;
+  }, [stableStreetFreqs, activeNodelock, heroIsIp]);
 
-	return {
-		effectiveIpRp,
-		effectiveOopRp,
-		rpSource,
-		ipRpFlop,
-		oopRpFlop,
-		ipRpTurn,
-		oopRpTurn,
-		ipRpRiver,
-		oopRpRiver,
-		effectiveSprData,
-		nashFlop,
-		nashTurn,
-		nashRiver,
-		streetRps,
-		quantumPerspectiva,
-		insolvencyMatrixData,
-		isCalculatingInsolvency,
-		nashResults,
-		dispatchInsolvencyMatrix,
-		dispatchIcmDistortion,
-	};
+  // SOTA: Despacho assÃ­ncrono para a esteira WASM (Web Worker)
+  useEffect(() => {
+    // SOTA: Payload purificado. Tipagem ChipEvFreqs estrita e validada.
+    if (dispatchIcmDistortion) {
+      dispatchIcmDistortion({
+        ipRpFlop,
+        oopRpFlop,
+        freqFlop: effectiveStreetFreqs.flop,
+        ipRpTurn,
+        oopRpTurn,
+        freqTurn: effectiveStreetFreqs.turn,
+        ipRpRiver,
+        oopRpRiver,
+        freqRiver: effectiveStreetFreqs.river,
+        topologicAggression,
+        activePlayers,
+        pots: postFlopPots,
+      });
+    }
+  }, [
+    dispatchIcmDistortion,
+    ipRpFlop,
+    oopRpFlop,
+    ipRpTurn,
+    oopRpTurn,
+    ipRpRiver,
+    oopRpRiver,
+    effectiveStreetFreqs,
+    topologicAggression,
+    activePlayers,
+    postFlopPots,
+  ]);
+
+  // SOTA FIX: Interceptador adaptativo. Protege o primeiro frame do React forÃ§ando o
+  // contrato antigo do solver sÃ­ncrono no novo formato estrito IP/OOP antes da resposta do Worker.
+  const formatSyncSolverResult = (
+    result: IcmDistortionResult,
+    freqs: ChipEvFreqs,
+    ipRp: number,
+    oopRp: number,
+  ): IcmDistortionResult | null => {
+    if (!result) return null;
+    if ('ip' in result && 'oop' in result && result.ip?.check?.center !== undefined) {
+      result.deltaRp ??= ipRp - oopRp;
+      return result;
+    }
+    const formatMetric = (val: number) => ({
+      center: val,
+      spread: 0,
+      delta: 0,
+    });
+    return {
+      deltaRp: ipRp - oopRp,
+      bExponent: 1,
+      rawData: { ipRp, oopRp, chipEvFreqs: freqs },
+      ip: {
+        check: formatMetric(freqs.ip_check || 0),
+        bet_small: formatMetric(freqs.ip_bet_small || 0),
+        bet_large: formatMetric(freqs.ip_bet_large || 0),
+      },
+      oop: {
+        fold: formatMetric(result.oop?.fold?.center ?? freqs.oop_fold ?? 0),
+        call: formatMetric(result.oop?.call?.center ?? freqs.oop_call ?? 0),
+        raise: formatMetric(result.oop?.raise?.center ?? freqs.oop_raise ?? 0),
+      },
+    };
+  };
+
+  const { nashFlop, nashTurn, nashRiver } = useMemo(
+    () => ({
+      nashFlop:
+        nashResults?.flop ??
+        formatSyncSolverResult(
+          solveIcmDistortion(ipRpFlop, oopRpFlop, effectiveStreetFreqs.flop, topologicAggression),
+          effectiveStreetFreqs.flop,
+          ipRpFlop,
+          oopRpFlop,
+        ),
+      nashTurn:
+        nashResults?.turn ??
+        formatSyncSolverResult(
+          solveIcmDistortion(ipRpTurn, oopRpTurn, effectiveStreetFreqs.turn, topologicAggression),
+          effectiveStreetFreqs.turn,
+          ipRpTurn,
+          oopRpTurn,
+        ),
+      nashRiver:
+        nashResults?.river ??
+        formatSyncSolverResult(
+          solveIcmDistortion(ipRpRiver, oopRpRiver, effectiveStreetFreqs.river, topologicAggression),
+          effectiveStreetFreqs.river,
+          ipRpRiver,
+          oopRpRiver,
+        ),
+    }),
+    [
+      nashResults,
+      ipRpFlop,
+      oopRpFlop,
+      ipRpTurn,
+      oopRpTurn,
+      ipRpRiver,
+      oopRpRiver,
+      effectiveStreetFreqs,
+      topologicAggression,
+    ],
+  );
+
+  // SOTA: Isolamento de referÃªncia para evitar GC Churn e quebra de memoizaÃ§Ã£o downstream
+  const streetRps = useMemo(
+    () => ({
+      flop: { ip: ipRpFlop, oop: oopRpFlop, deltaRp: ipRpFlop - oopRpFlop },
+      turn: { ip: ipRpTurn, oop: oopRpTurn, deltaRp: ipRpTurn - oopRpTurn },
+      river: {
+        ip: ipRpRiver,
+        oop: oopRpRiver,
+        deltaRp: ipRpRiver - oopRpRiver,
+      },
+      // SOTA FIX: O Header do NashPanel consome mÃ©tricas globais diretamente da raiz do objeto.
+      deltaRp: effectiveIpRp - effectiveOopRp,
+      ip: effectiveIpRp,
+      oop: effectiveOopRp,
+    }),
+    [ipRpFlop, oopRpFlop, ipRpTurn, oopRpTurn, ipRpRiver, oopRpRiver, effectiveIpRp, effectiveOopRp],
+  );
+
+  return {
+    effectiveIpRp,
+    effectiveOopRp,
+    rpSource,
+    ipRpFlop,
+    oopRpFlop,
+    ipRpTurn,
+    oopRpTurn,
+    ipRpRiver,
+    oopRpRiver,
+    effectiveSprData,
+    nashFlop,
+    nashTurn,
+    nashRiver,
+    streetRps,
+    quantumPerspectiva,
+    insolvencyMatrixData,
+    isCalculatingInsolvency,
+    multiwayTensorRef,
+    isCalculatingMultiway,
+    nashResults,
+    dispatchInsolvencyMatrix,
+    dispatchIcmDistortion,
+    dispatchMultiwayMatrix,
+  };
 }

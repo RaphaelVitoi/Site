@@ -28,9 +28,7 @@ def _count_ast_nodes(tree: ast.AST) -> tuple[int, int, int]:
     doc_lines = 0
     functions = 0
     for n in ast.walk(tree):
-        if isinstance(
-            n, (ast.If, ast.While, ast.For, ast.And, ast.Or, ast.ExceptHandler)
-        ):
+        if isinstance(n, (ast.If, ast.While, ast.For, ast.And, ast.Or, ast.ExceptHandler)):
             vg += 1
         if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions += 1
@@ -40,9 +38,7 @@ def _count_ast_nodes(tree: ast.AST) -> tuple[int, int, int]:
     return vg, doc_lines, functions
 
 
-def _calculate_file_ih(
-    vg: int, doc_lines: int, functions: int, loc: int
-) -> tuple[float, float]:
+def _calculate_file_ih(vg: int, doc_lines: int, functions: int, loc: int) -> tuple[float, float]:
     """Realiza a matematica de Indice de Saude do arquivo (Ih)."""
     if functions > 0:
         ih = 100 - ((vg / functions) * 5) + ((doc_lines / loc) * 20)
@@ -54,7 +50,7 @@ def _calculate_file_ih(
 def calcular_metrics_file(path: str) -> dict[str, Any] | None:
     """Le o arquivo de forma segura e orquestra a extracao de metricas SOTA."""
     try:
-        with open(path, "r", encoding="utf-8-sig") as f:
+        with open(path, encoding="utf-8-sig") as f:
             content = f.read()
 
         if not content.strip():
@@ -87,9 +83,7 @@ def _scan_directory(diretorio: str) -> list[dict[str, Any]]:
 
 def gerar_heatmap(diretorio: str) -> None:
     """Funcao principal que compoe o Dashboard de Entropia no terminal."""
-    console.print(
-        f"[bold white]VITOI 3.2 | MAPA DE CALOR DE ENTROPIA: {diretorio}[/]\n"
-    )
+    console.print(f"[bold white]VITOI 3.2 | MAPA DE CALOR DE ENTROPIA: {diretorio}[/]\n")
 
     results = _scan_directory(diretorio)
     # Ordenacao: Menor Ih (Pior Saude) para o Maior

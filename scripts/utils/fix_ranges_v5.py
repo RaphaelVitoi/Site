@@ -9,9 +9,7 @@ def _parse_dash_range(item: str) -> set:
     if item[-1] in ("s", "o"):
         idx1 = RANKS.index(start[0])
         i_min, i_max = sorted([RANKS.index(start[1]), RANKS.index(end[1])])
-        return {
-            (idx1, i) if item[-1] == "s" else (i, idx1) for i in range(i_min, i_max + 1)
-        }
+        return {(idx1, i) if item[-1] == "s" else (i, idx1) for i in range(i_min, i_max + 1)}
 
     i_min, i_max = sorted([RANKS.index(start[0]), RANKS.index(end[0])])
     return {(i, i) for i in range(i_min, i_max + 1)}
@@ -20,10 +18,7 @@ def _parse_dash_range(item: str) -> set:
 def _parse_plus_range(item: str) -> set:
     if item.endswith("+") and len(item) == 4 and item[2] in ("s", "o"):
         idx1, idx2 = RANKS.index(item[0]), RANKS.index(item[1])
-        return {
-            (idx1, i) if item[2] == "s" else (i, idx1)
-            for i in range(idx1 + 1, idx2 + 1)
-        }
+        return {(idx1, i) if item[2] == "s" else (i, idx1) for i in range(idx1 + 1, idx2 + 1)}
 
     if item.endswith("+") and len(item) == 3:
         idx = RANKS.index(item[0])
@@ -224,11 +219,9 @@ export const EG_BF_MATRIX = new Array(9).fill(0).map((_, r) => new Array(9).fill
 export const EG_RP_MATRIX = EG_BF_MATRIX.map(row => row.map(val => val === 1 ? 0 : Math.round((1 - 1/val) * 1000) / 10));
 """
 
-final_content = template.replace(
-    "{btn_grid_ts}", build_grid_string("BTN_ACTION_GRID", btn_grid)
-).replace("{bb_grid_ts}", build_grid_string("BB_ACTION_GRID", bb_grid))
+final_content = template.replace("{btn_grid_ts}", build_grid_string("BTN_ACTION_GRID", btn_grid)).replace(
+    "{bb_grid_ts}", build_grid_string("BB_ACTION_GRID", bb_grid)
+)
 
-with open(
-    "frontend/src/components/simulator/ReferencialData.ts", "w", encoding="utf-8"
-) as f:
+with open("frontend/src/components/simulator/ReferencialData.ts", "w", encoding="utf-8") as f:
     f.write(final_content)

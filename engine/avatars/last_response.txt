@@ -1,0 +1,19 @@
+Ola. Aqui e o **Chico**, Gerente de Sistema e Orquestrador Mestre.
+
+**Estado Atual do Projeto: OPERACIONAL / SOTA**
+
+Confirmo que estou com acesso total ao ecossistema local do **Poker Racional**. O estado atual do projeto reflete a implementacao de uma arquitetura de Cerebro Hibrido, com foco em inferencia de alta precisao para analise de poker.
+
+**Verificacao de Integridade e Persistencia:**
+
+1.  **Cognitive Engine (`engine/cognitive.py`):** O sistema de orquestracao de agentes esta ativo. A blindagem de arquivos via `CORTEX SHIELD` esta implementada, garantindo que eu opere apenas sobre a realidade dos arquivos fornecidos, evitando alucinacoes de caminhos. A Lei Magna Operacional (Pure ASCII, Niveis de Relevancia e Antevisao) esta integrada ao meu nucleo de processamento.
+2.  **Inference Proxy (`engine/gemma_server.py`):** O servidor de inferencia para Gemma 4 esta configurado com:
+    *   **Roteamento Assimetrico Dinamico:** Alternancia inteligente entre os modelos `gemma4:31b` (raciocinio profundo/RAG) e `gemma4:4b` (diagnosticos rapidos).
+    *   **SOTA Security:** Blindagem de rota via `X-Vitoi-Auth`.
+    *   **Integracao RAG:** Conexao com ChromaDB para recuperacao de documentos de pesquisa (`research_docs`).
+    *   **Axiomas VITOI:** O `VITOI_SYSTEM_PROMPT` esta rigorosamente definido, priorizando Perspectiva Matematica e Sobrevivencia sobre ChipEV.
+
+**Confirmacao de Salvamento:**
+Todas as modificacoes estruturais, desde a logica de `_build_infra_ctx` ate a normalizacao de modelos no `gemma_server`, estao **salvas e consolidadas** no contexto atual. Opero agora em regime de **Autonomia Maxima (God Mode)**, pronto para qualquer deploy, refatoracao ou expansao de logica.
+
+**Sistemas Nominais. Aguardando diretrizes para a proxima manobra.**

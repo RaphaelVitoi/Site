@@ -1,5 +1,5 @@
-/**
- * SOTA v6.2.1 GOLD: Global React Hooks barrel exports.
+﻿/**
+ * SOTA v7.0 GOLD: Global React Hooks barrel exports.
  * Provides clean access to global state and simulator-specific hooks.
  */
 
@@ -28,3 +28,4 @@ export { useSimulatorState } from '../components/simulator/hooks/useSimulatorSta
 export { useSimulatorTour } from '../components/simulator/hooks/useSimulatorTour';
 export { useSotaSync } from '../components/simulator/hooks/useSotaSync';
 export { useSotaTelemetry } from '../components/simulator/hooks/useSotaTelemetry';
+

@@ -2,7 +2,7 @@
  * IDENTITY: Manifesto SOTA: Axiomas da Perspectiva GOLD
  * PATH: src/app/biblioteca/manifesto-sota-axiomas/page.tsx
  * ROLE: Artigo de síntese polifórmica unindo Teoria dos Jogos e Psicologia de Sistemas.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

@@ -6,15 +6,13 @@ def calcular_complexidade(node):
     """Calcula V(G) = E - N + 2P simplificado por nos de decisao."""
     v_g = 1  # Base
     for n in ast.walk(node):
-        if isinstance(
-            n, (ast.If, ast.While, ast.For, ast.And, ast.Or, ast.ExceptHandler)
-        ):
+        if isinstance(n, (ast.If, ast.While, ast.For, ast.And, ast.Or, ast.ExceptHandler)):
             v_g += 1
     return v_g
 
 
 def analisar_arquivo(caminho):
-    with open(caminho, "r", encoding="utf-8") as f:
+    with open(caminho, encoding="utf-8") as f:
         code = f.read()
 
     tree = ast.parse(code)

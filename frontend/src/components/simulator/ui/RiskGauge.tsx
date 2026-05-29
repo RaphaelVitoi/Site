@@ -1,3 +1,9 @@
+/**
+ * IDENTITY: Medidor de Risco (RiskGauge) SOTA v7.0 GOLD
+ * PATH: src/components/simulator/ui/RiskGauge.tsx
+ * ROLE: Visualização circular de Risk Premium com feedback tátil e sonoro.
+ */
+
 'use client';
 
 import { motion } from 'framer-motion';
@@ -94,17 +100,17 @@ export function RiskGauge({
   const dashPercentage = Math.min(100, Math.max(0, (safeValue / maxRp) * 100));
 
   const getColorHex = () => {
-    if (isDeathZone) return '#ff0055';
-    if (isCritical) return '#ef4444';
-    if (isPredatorZone) return '#10b981';
-    return baseColor === 'pink' ? '#ec4899' : '#6366f1';
+    if (isDeathZone) return '#f43f5e'; // accent-rose
+    if (isCritical) return '#ef4444'; // accent-danger
+    if (isPredatorZone) return '#10b981'; // accent-emerald
+    return baseColor === 'pink' ? '#ec4899' : '#6366f1'; // accent-pink : accent-indigo
   };
   const colorHex = getColorHex();
 
   const getStrokeWidth = () => {
-    if (isDeathZone) return '3.5';
-    if (isPredatorZone) return '3';
-    return '2.5';
+    if (isDeathZone) return '4';
+    if (isPredatorZone) return '3.5';
+    return '3';
   };
   const strokeWidth = getStrokeWidth();
 
@@ -139,53 +145,63 @@ export function RiskGauge({
 
   let centerContent = (
     <span
-      className={`font-mono text-xl font-bold tracking-tight text-white sm:text-2xl ${isCritical ? 'text-red-500' : ''}`}
-      style={{ textShadow: `0 0 10px ${colorHex}40` }}
+      className={`font-mono text-2xl font-black tracking-tighter text-white sm:text-3xl tabular-nums ${isCritical ? 'text-accent-danger' : ''}`}
+      style={{ textShadow: `0 0 25px ${colorHex}80` }}
     >
       {safeValue.toFixed(1)}%
     </span>
   );
 
   if (isDeathZone) {
-    centerContent = <i className="fa-solid fa-biohazard mb-1 animate-pulse text-3xl" style={{ color: colorHex }} />;
+    centerContent = (
+      <div className="relative">
+        <i className="fa-solid fa-biohazard mb-2 animate-pulse text-4xl" style={{ color: colorHex, filter: `drop-shadow(0 0 15px ${colorHex})` }} />
+        <div className="absolute inset-0 bg-accent-rose/20 blur-2xl rounded-full -z-10 animate-pulse" />
+      </div>
+    );
   } else if (isPredatorZone) {
-    centerContent = <i className="fa-solid fa-crosshairs mb-1 text-3xl" style={{ color: colorHex }} />;
+    centerContent = (
+      <div className="relative">
+        <i className="fa-solid fa-crosshairs mb-2 text-4xl animate-spin-[20s_linear_infinite]" style={{ color: colorHex, filter: `drop-shadow(0 0 15px ${colorHex})` }} />
+        <div className="absolute inset-0 bg-accent-emerald/20 blur-2xl rounded-full -z-10" />
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col items-center font-sans">
-      <div className="relative mx-auto mb-4 aspect-square w-full max-w-35">
-        <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+    <div className="flex flex-col items-center group/gauge">
+      <div className="relative mx-auto mb-6 aspect-square w-full max-w-40 transition-transform duration-700 group-hover/gauge:scale-105">
+        <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90 filter drop-shadow-[0_0_30px_rgba(0,0,0,0.5)]">
           <path
-            className="fill-none stroke-slate-800/50"
-            strokeWidth="2"
+            className="fill-none stroke-slate-900/60"
+            strokeWidth="3"
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
           <motion.path
-            className={`fill-none drop-shadow-md ${isDeathZone ? 'animate-pulse' : ''}`}
+            className={`fill-none ${isDeathZone ? 'animate-pulse' : ''}`}
             stroke={colorHex}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             initial={{ strokeDasharray: '0, 100' }}
             animate={{ strokeDasharray: `${dashPercentage}, 100` }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-            style={{ filter: `drop-shadow(0 0 8px ${colorHex}80)` }}
+            style={{ filter: `drop-shadow(0 0 12px ${colorHex})` }}
           />
         </svg>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {centerContent}
-          <span className="mt-1 text-[9px] font-bold tracking-widest uppercase" style={{ color: colorHex }}>
+          <span className="mt-2 text-[0.65rem] font-black tracking-[0.4em] uppercase" style={{ color: colorHex }}>
             {statusText}
           </span>
         </div>
       </div>
 
-      <div className="text-center">
-        <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">{label}</div>
-        <div className="font-serif text-xl leading-tight font-bold text-white">{pos}</div>
-        <div className="font-mono text-sm text-slate-500">{stack}</div>
+      <div className="text-center space-y-2">
+        <div className="text-[0.6rem] font-black tracking-[0.4em] text-text-darker uppercase group-hover/gauge:text-text-muted transition-colors">{label}</div>
+        <div className="text-2xl leading-none font-black text-white tracking-tighter uppercase group-hover/gauge:text-glow-indigo transition-all duration-500">{pos}</div>
+        <div className="font-mono text-[0.75rem] font-black text-text-darker tracking-widest uppercase">{stack}</div>
       </div>
     </div>
   );

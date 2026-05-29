@@ -95,7 +95,7 @@ export default function DynamicArticlePage() {
 										Arquitetura
 									</span>
 									<span className="text-[0.55rem] text-text-bright uppercase font-mono font-black">
-										v6.2.1 GOLD
+										v7.0 GOLD
 									</span>
 								</div>
 							</div>

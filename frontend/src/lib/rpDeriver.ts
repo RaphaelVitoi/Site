@@ -1,4 +1,4 @@
-/**
+﻿/**
  * IDENTITY: Derivador de Risk Premium via Bubble Factor (Perspectiva)
  * PATH: src/lib/rpDeriver.ts
  * ROLE: Conectar o motor ICM (Perspectiva/M-H) ao motor pos-flop (nashSolver).
@@ -48,7 +48,7 @@ export function deriveRps(
 	ipIndex: number,
 	oopIndex: number,
 	bountyValue = 0,
-	simulationAmount?: number, // Opcional: permite forçar um valor de investimento
+	simulationAmount?: number, // Opcional: permite forÃ§ar um valor de investimento
 ): RpDerivationResult | null {
 	if (stacks.length < 2) throw new Error('deriveRps: necessario ao menos 2 jogadores.');
 
@@ -56,9 +56,9 @@ export function deriveRps(
 	const oopIdx = oopIndex;
 	const rawEffStack = Math.min(stacks[ipIdx] ?? 0, stacks[oopIdx] ?? 0);
 
-	// SOTA v6.2.1 GOLD CALIBRATION:
-	// Para a matriz de RP didática, não simulamos o Shove (que explode o RP para > 60%).
-	// Simulamos um "Investimento de Referência" (~35% do stack) que coincide com os 21.4% da Aula 1.2.
+	// SOTA v7.0 GOLD CALIBRATION:
+	// Para a matriz de RP didÃ¡tica, nÃ£o simulamos o Shove (que explode o RP para > 60%).
+	// Simulamos um "Investimento de ReferÃªncia" (~35% do stack) que coincide com os 21.4% da Aula 1.2.
 	const effStack = simulationAmount ?? rawEffStack * 0.35;
 
 	if (rawEffStack <= 0 || effStack <= 0) {
@@ -97,13 +97,13 @@ export function deriveRps(
 
 	const allBfs: number[] = stacks.map((_, i) => {
 		if (i === ipIdx) {
-			// Diferença financeira real (ICM)
+			// DiferenÃ§a financeira real (ICM)
 			const gain =
 				(perspIpWin.equities[i] ?? 0) -
 				(baseline.equities[i] ?? 0) +
 				(bountyValue * totalPrizes) / 100;
 			const loss = (baseline.equities[i] ?? 0) - (perspOopWin.equities[i] ?? 0);
-			// BF = Custo da Derrota / Benefício da Vitória
+			// BF = Custo da Derrota / BenefÃ­cio da VitÃ³ria
 			return gain > 0 ? loss / gain : 1;
 		}
 		if (i === oopIdx) {
@@ -159,12 +159,12 @@ export interface PostFlopResult extends RpDerivationResult {
 	rStreet: number;
 	stackHeroRemanescente: number;
 	// D6: Componentes PM por street
-	rioMwStreet: number; // RIO multiway por street (O(N²) × pot_acumulado)
-	valuationStreet: number; // ICM valuation dinâmica (gain/loss ratio)
-	pmStreet: number; // Perspectiva Matemática por street
-	ciStreet: number; // Coeficiente de Insolvência por street
-	threshEqStreet: number; // Novo: Teto do RP dinâmico por street
-	potEntrapmentRatio: number; // Razão EV_fold / stack_hero (severidade do aprisionamento)
+	rioMwStreet: number; // RIO multiway por street (O(NÂ²) Ã— pot_acumulado)
+	valuationStreet: number; // ICM valuation dinÃ¢mica (gain/loss ratio)
+	pmStreet: number; // Perspectiva MatemÃ¡tica por street
+	ciStreet: number; // Coeficiente de InsolvÃªncia por street
+	threshEqStreet: number; // Novo: Teto do RP dinÃ¢mico por street
+	potEntrapmentRatio: number; // RazÃ£o EV_fold / stack_hero (severidade do aprisionamento)
 }
 
 export function derivePostFlopRps(
@@ -186,9 +186,9 @@ export function derivePostFlopRps(
 	const villainIdx = heroIsIp ? oopIndex : ipIndex;
 	const numPlayersInPot = state.numPlayers ?? 2;
 
-	const heroCost = Math.max(0, potTotal - potAcumuladoHero); // O que falta pagar para ver a próxima street (ou showdown)
+	const heroCost = Math.max(0, potTotal - potAcumuladoHero); // O que falta pagar para ver a prÃ³xima street (ou showdown)
 
-	// SOTA v6.2.1 GOLD: Delegação Total para o Motor Perspectiva
+	// SOTA v7.0 GOLD: DelegaÃ§Ã£o Total para o Motor Perspectiva
 	const input: PerspectivaInput = {
 		stacks,
 		prizes,
@@ -196,8 +196,8 @@ export function derivePostFlopRps(
 		villainIdx,
 		potSize: potTotal - heroCost, // Pote antes do investimento atual do hero
 		heroCost: heroCost,
-		winProb: 0.5, // Baseline agnóstico
-		realizationFactor: 1, // Será ajustado internamente pelo motor
+		winProb: 0.5, // Baseline agnÃ³stico
+		realizationFactor: 1, // SerÃ¡ ajustado internamente pelo motor
 		edgeBase: 1,
 		bountyValue,
 		numPlayersInPot,
@@ -211,7 +211,7 @@ export function derivePostFlopRps(
 	const totalPrizes = prizes.reduce((s, v) => s + v, 0);
 	const bountyContrib = (bountyValue * totalPrizes) / 100;
 
-	// SOTA: Calcular Bubble Factors reais para IP e OOP sem aproximações de simetria
+	// SOTA: Calcular Bubble Factors reais para IP e OOP sem aproximaÃ§Ãµes de simetria
 	const baseline = calculateMapaICM(stacks, prizes);
 	const potSize = potTotal - heroCost;
 
@@ -273,3 +273,4 @@ export function derivePostFlopRps(
 		potEntrapmentRatio: Math.abs(core.deltaFoldPct) / (stacks[heroIdx] || 1),
 	};
 }
+

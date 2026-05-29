@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import Home from '../../app/page';
+import Home from '../../app/(public)/page';
 
 jest.mock('next/link', () => {
 	const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => {
@@ -19,23 +19,21 @@ globalThis.fetch = jest.fn(() =>
 ) as jest.Mock;
 
 describe('Landing Page - Poker Racional', () => {
-	it('renderiza o título principal e o CTA principal', async () => {
-		const ResolvedHome = await Home();
-		render(ResolvedHome);
+	it('renderiza o título principal e o CTA principal', () => {
+		render(<Home />);
 
 		expect(
-			screen.getByRole('heading', { name: /A Fronteira da Resolução/i }),
+			screen.getByRole('heading', { name: /O Edge Mudou de Lugar/i }),
 		).toBeInTheDocument();
-		expect(screen.getByRole('link', { name: /Consultar Oráculo/i })).toBeInTheDocument();
+		expect(screen.getByRole('link', { name: /Simulador Mestre/i })).toBeInTheDocument();
 	});
 
-	it('renderiza a vitrine de laboratórios (bifurcação do funil)', async () => {
-		const ResolvedHome = await Home();
-		render(ResolvedHome);
+	it('renderiza a ementa de módulos e os CTAs principais', () => {
+		render(<Home />);
 
-		expect(screen.getByText(/Laboratório CFR/i)).toBeInTheDocument();
-		expect(screen.getByText(/Oráculo Gemma 4/i)).toBeInTheDocument();
-		expect(screen.getByText(/A Mente Coletiva/i)).toBeInTheDocument();
-		expect(screen.getByText(/Simulador Mestre/i)).toBeInTheDocument();
+		expect(screen.getAllByText(/Laboratório CFR/i).length).toBeGreaterThan(0);
+		expect(screen.getAllByText(/Biblioteca/i).length).toBeGreaterThan(0);
+		expect(screen.getByText(/O Downward Drift/i)).toBeInTheDocument();
+		expect(screen.getByText(/A "Mentira" do ICM/i)).toBeInTheDocument();
 	});
 });

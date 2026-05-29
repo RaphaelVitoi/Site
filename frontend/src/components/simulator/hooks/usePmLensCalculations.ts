@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -25,7 +25,7 @@ interface PmLensCalculationsParams {
 	blindsRisingSoon: boolean;
 	activeNodelock: NodelockConstraint | null;
 	betSizing: number;
-	aggFactor?: number; // SOTA v6.2.1 Harmony
+	aggFactor?: number; // SOTA v7.0 GOLD Harmony
 }
 
 export function usePmLensCalculations({
@@ -45,7 +45,7 @@ export function usePmLensCalculations({
 	blindsRisingSoon,
 	activeNodelock,
 	betSizing,
-	aggFactor = 1, // SOTA v6.2.1 Harmony
+	aggFactor = 1, // SOTA v7.0 GOLD Harmony
 }: PmLensCalculationsParams) {
 	const [asyncResults, setAsyncResults] = useState<Record<string, PerspectivaResult | null>>({});
 
@@ -135,7 +135,7 @@ export function usePmLensCalculations({
 				heroPosition: absoluteHeroPos,
 				blindsRisingSoon,
 				investidoAcumulado: sunkCost,
-				humanNoiseFactor: aggFactor, // SOTA v6.2.1 Harmony: Damping fisico
+				humanNoiseFactor: aggFactor, // SOTA v7.0 GOLD Harmony: Damping fisico
 			};
 
 			let res = calculatePerspectivaVitoi(input);
@@ -206,3 +206,4 @@ export function usePmLensCalculations({
 
 	return { streetMetrics };
 }
+

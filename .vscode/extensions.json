@@ -1,42 +1,10 @@
 {
   "recommendations": [
-    // ── NUCLEO SOTA (IA & ORQUESTRACAO) ──────────────────────────────
-    "google.geminicodeassist",
-    "alefragnani.project-manager",
-
-    // ── BACKEND (PYTHON SOTA) ────────────────────────────────────────
-    "ms-python.python",
-    "ms-python.vscode-pylance",
     "charliermarsh.ruff",
-    "ms-python.debugpy",
-
-    // ── FRONTEND (NEXT.JS & UI) ──────────────────────────────────────
-    "ms-vscode.vscode-typescript-next",
+    "ms-python.mypy-type-checker",
     "esbenp.prettier-vscode",
-    "dbaeumer.vscode-eslint",
-    "bradlc.vscode-tailwindcss",
-    "yoavbls.pretty-ts-errors",
-
-    // ── INFRA & TOOLS ────────────────────────────────────────────────
-    "ms-azuretools.vscode-docker",
-    "ms-vscode.powershell",
-    "tamasfe.even-better-toml",
-    "mikestead.dotenv",
-    "qwtel.sqlite-viewer",
-
-    // ── GIT & QUALIDADE ──────────────────────────────────────────────
-    "eamodio.gitlens",
-    "usernamehw.errorlens",
-    "streetsidesoftware.code-spell-checker",
-
-    // ── DOCUMENTACAO ─────────────────────────────────────────────────
-    "yzhang.markdown-all-in-one",
-    "bierner.markdown-mermaid"
-  ],
-  "unwantedRecommendations": [
-    "GitHub.copilot",
-    "GitHub.copilot-chat",
-    "TabNine.tabnine-vscode",
-    "VisualStudioExptTeam.vscodeintellicode"
+    "SonarSource.sonarlint-vscode",
+    "ms-python.python",
+    "dbaeumer.vscode-eslint"
   ]
 }

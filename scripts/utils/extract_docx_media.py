@@ -4,9 +4,7 @@ import zipfile
 from pathlib import Path
 
 
-def _process_media_files(
-    docx_zip: zipfile.ZipFile, media_files: list, public_dir: Path
-) -> list:
+def _process_media_files(docx_zip: zipfile.ZipFile, media_files: list, public_dir: Path) -> list:
     """Middleware isolado para purificacao e copia binaria SOTA."""
     extracted = []
     for item in media_files:
@@ -50,9 +48,7 @@ def extract_media(docx_path: str, slug: str):
 
             extracted_images = _process_media_files(docx_zip, media_files, public_dir)
 
-        print(
-            f"\n[SUCESSO] {len(extracted_images)} imagem(ns) extraida(s) com Friccao Zero!"
-        )
+        print(f"\n[SUCESSO] {len(extracted_images)} imagem(ns) extraida(s) com Friccao Zero!")
         print("\n=== SINTAXE MARKDOWN SOTA PARA INJECAO ===")
         for img in extracted_images:
             print(f"![Descricao do Grafico](/images/aulas/{slug}/{img})")

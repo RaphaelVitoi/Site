@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-# pylint: disable=missing-module-docstring, broad-exception-caught, line-too-long
+# pylint: disable=missing-module-docstring, broad-exception-caught, line-too-long, import-error
 
 import re
 import subprocess  # noqa: S404
-
-import os
 from pathlib import Path
+
 from mcp.server.fastmcp import FastMCP  # type: ignore
 
 # Initialize FastMCP server
 mcp = FastMCP("NexusSotaBridge")
 
-# SOTA: Resolução dinâmica de caminhos para portabilidade absoluta
+# SOTA: Resolucao dinamica de caminhos para portabilidade absoluta
 SCRIPT_DIR = Path(__file__).parent.resolve()
 BASE_DIR = SCRIPT_DIR.parent
 TASK_EXECUTOR = BASE_DIR / "task_executor.py"

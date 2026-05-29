@@ -1,3 +1,5 @@
+"""Module containing heuristic algorithms for text analysis and term scoring."""
+
 import re
 
 

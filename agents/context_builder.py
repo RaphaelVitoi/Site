@@ -6,12 +6,12 @@ Context Builder -- Modulo especializado na construcao e compressao de contexto p
 import asyncio
 import hashlib
 import logging
-from pathlib import Path
 import re
 import time
+from pathlib import Path
 
-from agents.prompts import get_agent_system_prompt
 import core.runtime as te
+from agents.prompts import get_agent_system_prompt
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
@@ -66,6 +66,7 @@ async def _extract_task_file_mentions(description: str) -> list[Path]:
             if folder_path.exists() and folder_path.is_dir():
                 paths_to_check.extend(list(folder_path.glob("*.md")))
         return paths_to_check
+
     return await asyncio.to_thread(sync_extract)
 
 
@@ -86,6 +87,7 @@ async def _resolve_allowed_task_doc_path(candidate: Path) -> Path | None:
             except ValueError:
                 continue
         return None
+
     return await asyncio.to_thread(sync_resolve)
 
 
@@ -477,6 +479,10 @@ async def _read_agent_and_project_contexts(agent_clean: str) -> tuple[str, str]:
         if context_file.exists():
             project_context = _read_file_with_cache(str(context_file)) or ""
         if len(project_context) > 20000:
-            project_context = project_context[:20000] + "\n\n... [Contexto massivo truncado. Consulte o @bibliotecario se precisar de historico profundo.]"
+            project_context = (
+                project_context[:20000]
+                + "\n\n... [Contexto massivo truncado. Consulte o @bibliotecario se precisar de historico profundo.]"
+            )
         return agent_memory, project_context
+
     return await asyncio.to_thread(sync_read)

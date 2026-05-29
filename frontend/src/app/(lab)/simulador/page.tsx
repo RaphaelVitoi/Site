@@ -4,7 +4,7 @@ import MasterSimulatorDynamic from '@/components/simulator/MasterSimulatorDynami
 
 export const dynamic = 'force-dynamic';
 export const metadata = {
-	title: 'Motor ICM SOTA v6.2.1 GOLD | Nexus',
+	title: 'Motor ICM SOTA v7.0 GOLD | Nexus',
 	description: 'Simulador Quântico: ICM Pós-Flop, Risk Premium e Distorções GTO.',
 };
 

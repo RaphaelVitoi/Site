@@ -51,7 +51,8 @@ async def get_global_http_session() -> aiohttp.ClientSession:
                 # SOTA: Reduzido para 5s previne TCP drop pela API (Connection closed)
                 keepalive_timeout=5,
                 ttl_dns_cache=300,  # renova IPs de load balancers a cada 5 min
-                enable_cleanup_closed=True,
+                # enable_cleanup_closed removido: no-op e DeprecationWarning no Python 3.14+
+                # (corrigido em https://github.com/python/cpython/pull/118960)
             )
             default_headers = {
                 "User-Agent": (
@@ -86,9 +87,7 @@ def _sync_fallback_request(
     if not url.lower().startswith(("http://", "https://")):
         return 0, "Bloqueio de Seguranca: Apenas esquemas HTTP/HTTPS sao permitidos."
 
-    req = urllib.request.Request(
-        url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST"
-    )
+    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
     try:
         # SOTA: Injeta o mesmo contexto SSL do certifi no fallback para consistencia de rede.
         ctx = ssl.create_default_context(cafile=certifi.where())

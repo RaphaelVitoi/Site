@@ -1,4 +1,4 @@
-/**
+﻿/**
  * IDENTITY: Motor de Distorcao ICM pos-flop
  * PATH: src/components/simulator/engine/nashSolver.ts
  * ROLE: Aplicar distorcao ICM sobre frequencias ChipEV via equacao concava.
@@ -24,23 +24,23 @@ function calcSpread(deltaRp: number): number {
 }
 
 /**
- * Calcula o expoente da curva baseada na média de RPs para garantir convexidade correta.
- * @param avgRp - A média das pressões de risco (RP) no board.
+ * Calcula o expoente da curva baseada na mÃ©dia de RPs para garantir convexidade correta.
+ * @param avgRp - A mÃ©dia das pressÃµes de risco (RP) no board.
  */
 function calcBExponent(avgRp: number): number {
 	if (avgRp <= 0) return 1;
-	return Math.max(0.1, 1 - avgRp / 100); // Exponencial decai com a pressão
+	return Math.max(0.1, 1 - avgRp / 100); // Exponencial decai com a pressÃ£o
 }
 
 /**
  * Aplica distorcao ICM sobre frequencias ChipEV para calcular frequencias pos-flop ajustadas.
  * Motor guiado estritamente pela Hierarquia SOTA (PMev).
  *
- * @param ipRp           - Risk Premium do IP (0–100), via Malmuth-Harville
- * @param oopRp          - Risk Premium do OOP (0–100), via Malmuth-Harville
+ * @param ipRp           - Risk Premium do IP (0â€“100), via Malmuth-Harville
+ * @param oopRp          - Risk Premium do OOP (0â€“100), via Malmuth-Harville
  * @param chipEvFreqs    - Frequencias ChipEV do spot (GTO Wizard ou equivalente)
  * @param aggressionFactor - Desvio comportamental real do oponente vs equilibrio ICM
- *                           (0.5 = passivo · 1.0 = equilibrio)
+ *                           (0.5 = passivo Â· 1.0 = equilibrio)
  */
 export function solveIcmDistortion(
 	ipRp: number,
@@ -54,8 +54,8 @@ export function solveIcmDistortion(
 	const safeIp = Math.max(0, Math.min(100, Number(ipRp) || 0));
 	const safeOop = Math.max(0, Math.min(100, Number(oopRp) || 0));
 
-	// SOTA v4.6.1 GOLD: Gravidade do Pote (Inércia Estratégica)
-	// A inércia estratégica (G) reduz a elasticidade da resposta ao desvio do oponente.
+	// SOTA v7.0 GOLD GOLD: Gravidade do Pote (InÃ©rcia EstratÃ©gica)
+	// A inÃ©rcia estratÃ©gica (G) reduz a elasticidade da resposta ao desvio do oponente.
 	const gravity = Math.max(0, Math.log(Math.max(1, potSize / 7.5)));
 	const damping = 1 / (1 + gravity * 0.15); // SOTA: Aumento do amortecimento pela gravidade
 	const effectiveAggression = 1 + (aggressionFactor - 1) * damping;
@@ -64,8 +64,8 @@ export function solveIcmDistortion(
 	const spread = calcSpread(deltaRp);
 	const avgRp = (safeIp + safeOop) / 2;
 
-	// SOTA: bExponent agora integra a aversão ao risco (D5/D6)
-	// Em altas pressões, a curva de resposta se torna mais inelástica (concavidade acentuada).
+	// SOTA: bExponent agora integra a aversÃ£o ao risco (D5/D6)
+	// Em altas pressÃµes, a curva de resposta se torna mais inelÃ¡stica (concavidade acentuada).
 	const bExponent = Math.max(0.12, calcBExponent(avgRp) * (1 - gravity * 0.05));
 
 	// Moduladores Dimensionais (Alinhamento Fractal)
@@ -73,11 +73,11 @@ export function solveIcmDistortion(
 	const k_ip_bet_large = -12;
 
 	// --- APLICACAO: DEFENSOR (OOP) ---
-	// SOTA v4.6.1: Colapso Multiway e Pressão de Eliminação
+	// SOTA v7.0 GOLD: Colapso Multiway e PressÃ£o de EliminaÃ§Ã£o
 	const pressure = avgRp + Math.abs(deltaRp) * 0.3; // SOTA: Peso maior no Delta
 	const driftBase = 0.005 * (streetIdx + 1);
 
-	// Penalização Multiway: O RIO cresce quadraticamente (N^2), forçando o colapso da agressão.
+	// PenalizaÃ§Ã£o Multiway: O RIO cresce quadraticamente (N^2), forÃ§ando o colapso da agressÃ£o.
 	const mwMultiplier = Math.pow(activePlayers - 1, 1.5); 
 	const driftPenalty =
 		chipEvFreqs.oop_raise * (pressure * driftBase * (1 + gravity * 0.4) * mwMultiplier);
@@ -89,8 +89,8 @@ export function solveIcmDistortion(
 
 	const newRaise = Math.max(0, chipEvFreqs.oop_raise + raiseShift);
 
-	// SOTA: Teto do RP (Defense Ceiling) - Derivação 6
-	// O fold não pode ser infinito. A gravidade do pote (G) cria um piso de defesa inelástica.
+	// SOTA: Teto do RP (Defense Ceiling) - DerivaÃ§Ã£o 6
+	// O fold nÃ£o pode ser infinito. A gravidade do pote (G) cria um piso de defesa inelÃ¡stica.
 	const maxFoldAllowed = Math.min(92, 90 - (gravity * 4) + (pressure * 0.1));
 	const foldShift =
 		chipEvFreqs.oop_fold * (pressure * 0.015) +
@@ -170,3 +170,4 @@ export function solveIcmDistortion(
 		rawData: { ipRp: safeIp, oopRp: safeOop, chipEvFreqs },
 	};
 }
+

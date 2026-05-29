@@ -1,66 +1,21 @@
 /* @ts-self-types="./vitoi_equity_engine.d.ts" */
 
-export class MultiwayRioProfiler {
-    __destroy_into_raw() {
-        const ptr = this.__wbg_ptr;
-        this.__wbg_ptr = 0;
-        MultiwayRioProfilerFinalization.unregister(this);
-        return ptr;
-    }
-    free() {
-        const ptr = this.__destroy_into_raw();
-        wasm.__wbg_multiwayrioprofiler_free(ptr, 0);
-    }
-    /**
-     * @param {number} max_players
-     * @param {number} spr_levels
-     * @returns {Float32Array}
-     */
-    compute_profile(max_players, spr_levels) {
-        const ret = wasm.multiwayrioprofiler_compute_profile(this.__wbg_ptr, max_players, spr_levels);
-        return ret;
-    }
-    /**
-     * @param {number} base_tension
-     */
-    constructor(base_tension) {
-        const ret = wasm.multiwayrioprofiler_new(base_tension);
-        this.__wbg_ptr = ret;
-        MultiwayRioProfilerFinalization.register(this, this.__wbg_ptr, this);
-    }
+/**
+ * ========================================================================
+ * SOTA MEMORY BRIDGE: ZERO-COPY ALLOCATION
+ * ========================================================================
+ * Aloca um buffer contíguo no Heap do WASM e devolve o ponteiro bruto ao JS.
+ * Garante que o React deposite o array de ranges sem overflow.
+ * @param {number} size
+ * @returns {number}
+ */
+export function alloc_range_buffer(size) {
+    const ret = wasm.alloc_range_buffer(size);
+    return ret >>> 0;
 }
-if (Symbol.dispose) MultiwayRioProfiler.prototype[Symbol.dispose] = MultiwayRioProfiler.prototype.free;
-
-export class QuantumCfrEngine {
-    __destroy_into_raw() {
-        const ptr = this.__wbg_ptr;
-        this.__wbg_ptr = 0;
-        QuantumCfrEngineFinalization.unregister(this);
-        return ptr;
-    }
-    free() {
-        const ptr = this.__destroy_into_raw();
-        wasm.__wbg_quantumcfrengine_free(ptr, 0);
-    }
-    /**
-     * @param {number} nodes
-     * @param {number} iterations
-     * @param {number} kappa
-     * @returns {Float32Array}
-     */
-    compute_cfr_heatmap(nodes, iterations, kappa) {
-        const ret = wasm.quantumcfrengine_compute_cfr_heatmap(this.__wbg_ptr, nodes, iterations, kappa);
-        return ret;
-    }
-    constructor() {
-        const ret = wasm.quantumcfrengine_new();
-        this.__wbg_ptr = ret;
-        QuantumCfrEngineFinalization.register(this, this.__wbg_ptr, this);
-    }
-}
-if (Symbol.dispose) QuantumCfrEngine.prototype[Symbol.dispose] = QuantumCfrEngine.prototype.free;
 
 /**
+ * Interface FFI para Monte Carlo de Equidade
  * @param {Uint8Array} hero_mask
  * @param {Uint8Array} villain_mask
  * @param {string} board
@@ -81,6 +36,56 @@ export function calculate_equity_monte_carlo_binary(hero_mask, villain_mask, boa
 }
 
 /**
+ * SOTA: FFI Zero-Copy Pointer Input Multiway
+ * O ecossistema React/WebWorker deposita a matriz probabilística diretamente na memória partilhada.
+ * Fricção zero. Aniquila o Gargalo de Serialização JSON no ambiente Multiway.
+ * @param {number} ranges_ptr
+ * @param {number} num_players
+ * @param {bigint} board_mask
+ * @param {number} target_iterations
+ * @param {number} seed
+ * @returns {Float64Array}
+ */
+export function calculate_multiway_equity_zerocopy(ranges_ptr, num_players, board_mask, target_iterations, seed) {
+    const ret = wasm.calculate_multiway_equity_zerocopy(ranges_ptr, num_players, board_mask, target_iterations, seed);
+    return ret;
+}
+
+/**
+ * Interface FFI para Perspectiva Matemática SOTA v7.0 GOLD
+ * @param {number} current_equity_pct
+ * @param {number} delta_win_pct
+ * @param {number} delta_lose_pct
+ * @param {number} dynamic_ev_fold
+ * @param {number} realization_factor
+ * @param {number} fgs_health
+ * @param {number} active_players
+ * @param {number} _hero_invested
+ * @param {number} current_pot
+ * @param {number} stack_eff
+ * @param {number} hero_rp
+ * @param {number} villain_rp
+ * @param {number} bounty_value
+ * @param {number} edge_base
+ * @param {number} human_noise_factor
+ * @returns {object}
+ */
+export function calculate_perspectiva_vitoi_wasm(current_equity_pct, delta_win_pct, delta_lose_pct, dynamic_ev_fold, realization_factor, fgs_health, active_players, _hero_invested, current_pot, stack_eff, hero_rp, villain_rp, bounty_value, edge_base, human_noise_factor) {
+    const ret = wasm.calculate_perspectiva_vitoi_wasm(current_equity_pct, delta_win_pct, delta_lose_pct, dynamic_ev_fold, realization_factor, fgs_health, active_players, _hero_invested, current_pot, stack_eff, hero_rp, villain_rp, bounty_value, edge_base, human_noise_factor);
+    return ret;
+}
+
+/**
+ * Libera a memória previamente alocada. Mandatório no ciclo de vida (useEffect) do React.
+ * @param {number} ptr
+ * @param {number} size
+ */
+export function free_range_buffer(ptr, size) {
+    wasm.free_range_buffer(ptr, size);
+}
+
+/**
+ * Interface FFI para Distorção Quântica (Nash)
  * @param {number} ip_rp
  * @param {number} oop_rp
  * @param {number} topologic_aggression
@@ -94,6 +99,8 @@ export function solve_icm_distortion_binary(ip_rp, oop_rp, topologic_aggression,
 }
 
 /**
+ * SOTA v4.2: Topologic Aggression 2.0 (Gravidade do Pote)
+ * Implementa a inércia estratégica e o Downward Drift dinâmico.
  * @param {number} ip_rp
  * @param {number} oop_rp
  * @param {number} topologic_aggression
@@ -101,16 +108,16 @@ export function solve_icm_distortion_binary(ip_rp, oop_rp, topologic_aggression,
  * @param {number} pot_size
  * @param {number} street_idx
  * @param {number} fold
- * @param {number} _call
  * @param {number} raise
  * @returns {Float64Array}
  */
-export function solve_icm_distortion_v2(ip_rp, oop_rp, topologic_aggression, active_players, pot_size, street_idx, fold, _call, raise) { // NOSONAR
-    const ret = wasm.solve_icm_distortion_v2(ip_rp, oop_rp, topologic_aggression, active_players, pot_size, street_idx, fold, _call, raise);
+export function solve_icm_distortion_v2(ip_rp, oop_rp, topologic_aggression, active_players, pot_size, street_idx, fold, raise) {
+    const ret = wasm.solve_icm_distortion_v2(ip_rp, oop_rp, topologic_aggression, active_players, pot_size, street_idx, fold, raise);
     return ret;
 }
 
 /**
+ * SOTA: FFI Zero-Copy O(1) para Distorção Quântica
  * @param {Float64Array} payload
  * @returns {Float64Array}
  */
@@ -122,6 +129,7 @@ export function solve_icm_distortion_zerocopy(payload) {
 }
 
 /**
+ * Interface FFI para Matriz de Insolvência
  * @param {Uint8Array} villain_mask
  * @param {string} board
  * @param {number} rp_factor
@@ -133,7 +141,7 @@ export function solve_icm_distortion_zerocopy(payload) {
  * @param {number} kappa
  * @returns {Array<any>}
  */
-export function solve_insolvency_matrix_binary(villain_mask, board, rp_factor, hero_invested, current_pot, active_players, iterations, seed, kappa) { // NOSONAR
+export function solve_insolvency_matrix_binary(villain_mask, board, rp_factor, hero_invested, current_pot, active_players, iterations, seed, kappa) {
     const ptr0 = passArray8ToWasm0(villain_mask, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(board, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -144,75 +152,60 @@ export function solve_insolvency_matrix_binary(villain_mask, board, rp_factor, h
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
-        __wbg___wbindgen_debug_string_edece8177ad01481: function (arg0, arg1) {
+        __wbg___wbindgen_debug_string_edece8177ad01481: function(arg0, arg1) {
             const ret = debugString(arg1);
             const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
-        __wbg___wbindgen_number_get_f73a1244370fcc2c: function (arg0, arg1) {
+        __wbg___wbindgen_number_get_f73a1244370fcc2c: function(arg0, arg1) {
             const obj = arg1;
-            const ret = typeof (obj) === 'number' ? obj : undefined;
+            const ret = typeof(obj) === 'number' ? obj : undefined;
             getDataViewMemory0().setFloat64(arg0 + 8 * 1, isLikeNone(ret) ? 0 : ret, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, !isLikeNone(ret), true);
         },
-        __wbg___wbindgen_throw_9c31b086c2b26051: function (arg0, arg1) {
+        __wbg___wbindgen_throw_9c31b086c2b26051: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
-        __wbg_get_dcf82ab8aad1a593: function () {
-            return handleError(function (arg0, arg1) {
-                const ret = Reflect.get(arg0, arg1);
-                return ret;
-            }, arguments);
-        },
-        __wbg_length_13e61aa81636ec86: function (arg0) {
-            const ret = arg0.length;
+        __wbg_get_dcf82ab8aad1a593: function() { return handleError(function (arg0, arg1) {
+            const ret = Reflect.get(arg0, arg1);
             return ret;
-        },
-        __wbg_new_02d162bc6cf02f60: function () {
+        }, arguments); },
+        __wbg_new_02d162bc6cf02f60: function() {
             const ret = new Object();
             return ret;
         },
-        __wbg_new_310879b66b6e95e1: function () {
+        __wbg_new_310879b66b6e95e1: function() {
             const ret = new Array();
             return ret;
         },
-        __wbg_new_with_length_1278c16a5c5b497f: function (arg0) {
+        __wbg_new_with_length_1278c16a5c5b497f: function(arg0) {
             const ret = new Float64Array(arg0 >>> 0);
             return ret;
         },
-        __wbg_new_with_length_58dc420af34edb59: function (arg0) {
-            const ret = new Float32Array(arg0 >>> 0);
-            return ret;
-        },
-        __wbg_push_b77c476b01548d0a: function (arg0, arg1) {
+        __wbg_push_b77c476b01548d0a: function(arg0, arg1) {
             const ret = arg0.push(arg1);
             return ret;
         },
-        __wbg_set_5d860a0c0949a838: function (arg0, arg1, arg2) {
-            arg0.set(getArrayF32FromWasm0(arg1, arg2));
-        },
-        __wbg_set_a0e911be3da02782: function () {
-            return handleError(function (arg0, arg1, arg2) {
-                const ret = Reflect.set(arg0, arg1, arg2);
-                return ret;
-            }, arguments);
-        },
-        __wbg_set_index_24a79f6bf22a9e3c: function (arg0, arg1, arg2) {
+        __wbg_set_a0e911be3da02782: function() { return handleError(function (arg0, arg1, arg2) {
+            const ret = Reflect.set(arg0, arg1, arg2);
+            return ret;
+        }, arguments); },
+        __wbg_set_index_24a79f6bf22a9e3c: function(arg0, arg1, arg2) {
             arg0[arg1 >>> 0] = arg2;
         },
-        __wbindgen_cast_0000000000000001: function (arg0) {
+        __wbindgen_cast_0000000000000001: function(arg0) {
             // Cast intrinsic for `F64 -> Externref`.
             const ret = arg0;
             return ret;
         },
-        __wbindgen_cast_0000000000000002: function (arg0, arg1) {
+        __wbindgen_cast_0000000000000002: function(arg0, arg1) {
             // Cast intrinsic for `Ref(String) -> Externref`.
             const ret = getStringFromWasm0(arg0, arg1);
             return ret;
         },
-        __wbindgen_init_externref_table: function () {
+        __wbindgen_init_externref_table: function() {
             const table = wasm.__wbindgen_externrefs;
             const offset = table.grow(4);
             table.set(0, undefined);
@@ -228,24 +221,17 @@ function __wbg_get_imports() {
     };
 }
 
-const MultiwayRioProfilerFinalization = (typeof FinalizationRegistry === 'undefined')
-    ? { register: () => { }, unregister: () => { } }
-    : new FinalizationRegistry(ptr => wasm.__wbg_multiwayrioprofiler_free(ptr, 1));
-const QuantumCfrEngineFinalization = (typeof FinalizationRegistry === 'undefined')
-    ? { register: () => { }, unregister: () => { } }
-    : new FinalizationRegistry(ptr => wasm.__wbg_quantumcfrengine_free(ptr, 1));
-
 function addToExternrefTable0(obj) {
     const idx = wasm.__externref_table_alloc();
     wasm.__wbindgen_externrefs.set(idx, obj);
     return idx;
 }
 
-function debugString(val) { // NOSONAR
+function debugString(val) {
     // primitive types
     const type = typeof val;
     if (type == 'number' || type == 'boolean' || val == null) {
-        return `${val}`;
+        return  `${val}`;
     }
     if (type == 'string') {
         return `"${val}"`;
@@ -273,20 +259,20 @@ function debugString(val) { // NOSONAR
         if (length > 0) {
             debug += debugString(val[0]);
         }
-        for (let i = 1; i < length; i++) {
+        for(let i = 1; i < length; i++) {
             debug += ', ' + debugString(val[i]);
         }
         debug += ']';
         return debug;
     }
     // Test for built-in
-    const builtInMatches = /\[object ([^\]]+)\]/.exec(Object.prototype.toString.call(val));
+    const builtInMatches = /\[object ([^\]]+)\]/.exec(toString.call(val));
     let className;
     if (builtInMatches && builtInMatches.length > 1) {
         className = builtInMatches[1];
     } else {
         // Failed to match the standard '[object ClassName]'
-        return Object.prototype.toString.call(val);
+        return toString.call(val);
     }
     if (className == 'Object') {
         // we're a user defined class or Object
@@ -294,7 +280,7 @@ function debugString(val) { // NOSONAR
         // easier than looping through ownProperties of `val`.
         try {
             return 'Object(' + JSON.stringify(val) + ')';
-        } catch (error) { // NOSONAR
+        } catch (_) {
             return 'Object';
         }
     }
@@ -302,13 +288,8 @@ function debugString(val) { // NOSONAR
     if (val instanceof Error) {
         return `${val.name}: ${val.message}\n${val.stack}`;
     }
-    // We could test for more things here, like `Set`s and `Map`s.
+    // TODO we could test for more things here, like `Set`s and `Map`s.
     return className;
-}
-
-function getArrayF32FromWasm0(ptr, len) {
-    ptr = ptr >>> 0;
-    return getFloat32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
 }
 
 let cachedDataViewMemory0 = null;
@@ -317,14 +298,6 @@ function getDataViewMemory0() {
         cachedDataViewMemory0 = new DataView(wasm.memory.buffer);
     }
     return cachedDataViewMemory0;
-}
-
-let cachedFloat32ArrayMemory0 = null;
-function getFloat32ArrayMemory0() {
-    if (cachedFloat32ArrayMemory0 === null || cachedFloat32ArrayMemory0.byteLength === 0) {
-        cachedFloat32ArrayMemory0 = new Float32Array(wasm.memory.buffer);
-    }
-    return cachedFloat32ArrayMemory0;
 }
 
 let cachedFloat64ArrayMemory0 = null;
@@ -391,7 +364,7 @@ function passStringToWasm0(arg, malloc, realloc) {
     let offset = 0;
 
     for (; offset < len; offset++) {
-        const code = arg.codePointAt(offset);
+        const code = arg.charCodeAt(offset);
         if (code > 0x7F) break;
         mem[ptr + offset] = code;
     }
@@ -399,9 +372,7 @@ function passStringToWasm0(arg, malloc, realloc) {
         if (offset !== 0) {
             arg = arg.slice(offset);
         }
-        const newLen = offset + arg.length * 3;
-        ptr = realloc(ptr, len, newLen, 1) >>> 0;
-        len = newLen;
+        ptr = realloc(ptr, len, len = offset + arg.length * 3, 1) >>> 0;
         const view = getUint8ArrayMemory0().subarray(ptr + offset, ptr + len);
         const ret = cachedTextEncoder.encodeInto(arg, view);
 
@@ -448,21 +419,13 @@ function __wbg_finalize_init(instance, module) {
     wasm = instance.exports;
     wasmModule = module;
     cachedDataViewMemory0 = null;
-    cachedFloat32ArrayMemory0 = null;
     cachedFloat64ArrayMemory0 = null;
     cachedUint8ArrayMemory0 = null;
     wasm.__wbindgen_start();
     return wasm;
 }
 
-function expectedResponseType(type) {
-    switch (type) {
-        case 'basic': case 'cors': case 'default': return true;
-    }
-    return false;
-}
-
-async function __wbg_load(module, imports) { // NOSONAR
+async function __wbg_load(module, imports) {
     if (typeof Response === 'function' && module instanceof Response) {
         if (typeof WebAssembly.instantiateStreaming === 'function') {
             try {
@@ -488,6 +451,13 @@ async function __wbg_load(module, imports) { // NOSONAR
             return instance;
         }
     }
+
+    function expectedResponseType(type) {
+        switch (type) {
+            case 'basic': case 'cors': case 'default': return true;
+        }
+        return false;
+    }
 }
 
 function initSync(module) {
@@ -496,7 +466,7 @@ function initSync(module) {
 
     if (module !== undefined) {
         if (Object.getPrototypeOf(module) === Object.prototype) {
-            ({ module } = module)
+            ({module} = module)
         } else {
             console.warn('using deprecated parameters for `initSync()`; pass a single object instead')
         }
@@ -516,7 +486,7 @@ async function __wbg_init(module_or_path) {
 
     if (module_or_path !== undefined) {
         if (Object.getPrototypeOf(module_or_path) === Object.prototype) {
-            ({ module_or_path } = module_or_path)
+            ({module_or_path} = module_or_path)
         } else {
             console.warn('using deprecated parameters for the initialization function; pass a single object instead')
         }
@@ -536,4 +506,4 @@ async function __wbg_init(module_or_path) {
     return __wbg_finalize_init(instance, module);
 }
 
-export { initSync, __wbg_init as default }; // NOSONAR
+export { initSync, __wbg_init as default };

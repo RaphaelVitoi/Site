@@ -38,7 +38,7 @@ interface UseMasterSpotLogicParams {
 }
 
 /**
- * IDENTITY: Hook de Lógica de Spot (SOTA v4.6)
+ * IDENTITY: Hook de Lógica de Spot (SOTA v7.0 GOLD)
  * PATH: src/components/simulator/hooks/useMasterSpotLogic.ts
  * ROLE: Processa topologia, custos afundados e gera contextos para UI.
  */
@@ -191,6 +191,8 @@ export function useMasterSpotLogic({
 						perspectiva: apiQuantumMetrics.perspectiva,
 						threshEq: apiQuantumMetrics.threshEq,
 						ci: apiQuantumMetrics.ci,
+						riskAdvantage: apiQuantumMetrics.riskAdvantage,
+						bountyPower: apiQuantumMetrics.bountyPower ?? quantumPerspectiva?.bountyPower ?? 0,
 						marginInstability: apiQuantumMetrics.marginInstability,
 						isSolvent: apiQuantumMetrics.isSolvent,
 						isActionable: apiQuantumMetrics.isActionable,

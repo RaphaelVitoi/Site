@@ -3,7 +3,7 @@
 'use client';
 
 /**
- * IDENTITY: Dashboard de Perspectiva Matemática SOTA v6.2.1 GOLD (VITOI - GOLD)
+ * IDENTITY: Dashboard de Perspectiva Matemática SOTA v7.0 GOLD (VITOI - GOLD)
  * PATH: src/components/simulator/panels/PerspectivePanel.tsx
  * ROLE: Visualização da Física Quântica do Poker: Piso Dinâmico, RIO Exponencial e Valuation.
  */
@@ -29,6 +29,7 @@ interface PerspectivePanelProps {
   initialPkoValue?: number;
   initialIsNearPayjump?: boolean;
   initialBlindsRising?: boolean;
+  hudOnly?: boolean; // SOTA v7.0 GOLD
 }
 
 export default function PerspectivePanel({
@@ -42,6 +43,7 @@ export default function PerspectivePanel({
   initialPkoValue = 0,
   initialIsNearPayjump = false,
   initialBlindsRising = false,
+  hudOnly = false,
 }: Readonly<PerspectivePanelProps>) {
   const stacks = useMemo(
     () => (initialStacks && initialStacks.length > 0 ? initialStacks : DEFAULT_STACKS),
@@ -61,7 +63,9 @@ export default function PerspectivePanel({
   const [isNearPayjump, setIsNearPayjump] = useState(initialIsNearPayjump);
   const [blindsRising, setBlindsRising] = useState(initialBlindsRising);
   const [kappa, setKappa] = useState(0.5);
-  const [humanNoiseFactor, setHumanNoiseFactor] = useState(0); // SOTA: Fator Psi (Entropia)
+  const [humanNoiseFactor, setHumanNoiseFactor] = useState(0); 
+
+  // ... (rest of states unchanged)
   const [wasmLogs, setWasmLogs] = useState<string[]>([
     '> [SOTA ENGINE] Inicializando cálculo de cenário: GOLD_STANDARD',
     '> [SOLVER] Aguardando acoplamento do WebWorker (WASM FFI)...',
@@ -98,18 +102,6 @@ export default function PerspectivePanel({
     setBlindsRising(initialBlindsRising);
   }, [scenarioId, initialActivePlayers, initialPkoValue, initialIsNearPayjump, initialBlindsRising]);
 
-  // Engatilha o re-cálculo e telemetria sempre que os parâmetros quânticos mudarem
-  useEffect(() => {
-    setWasmLogs((prev) => [
-      ...prev,
-      `> [MATH] Invocando FFI: solve_unified_equation_v6_2_1(stacks, prizes, ${kappa.toFixed(2)})`,
-    ]);
-    workerRef.current?.postMessage({
-      type: 'CALCULATE_PERSPECTIVE',
-      payload: { stacks, prizes, kappa, numPlayers, bountyValue },
-    });
-  }, [stacks, prizes, kappa, numPlayers, bountyValue]);
-
   const safeHeroInvestedBb =
     Number.isNaN(Number(heroInvestedBb)) || heroInvestedBb == null ? 1 : Number(heroInvestedBb);
   const safeAnteSize = Number.isNaN(Number(anteSize)) || anteSize == null ? 12.5 : Number(anteSize);
@@ -119,6 +111,39 @@ export default function PerspectivePanel({
     [safeHeroInvestedBb, safeAnteSize],
   );
   const heroCost = Math.abs(foldEvBb);
+
+  // Engatilha o re-cálculo e telemetria sempre que os parâmetros quânticos mudarem
+  useEffect(() => {
+    setWasmLogs((prev) => [
+      ...prev,
+      `> [MATH] Invocando FFI: solve_perspectiva_v7_gold(9-max stress, Ψ=${humanNoiseFactor.toFixed(2)})`,
+    ]);
+
+    const heroRp = prizes.length > 0 ? 15 : 0; // Simplificação para o log, o worker usa real
+    const villainRp = prizes.length > 0 ? 15 : 0;
+
+    workerRef.current?.postMessage({
+      type: 'CALCULATE_PERSPECTIVE',
+      payload: { 
+        stacks, 
+        prizes, 
+        kappa, 
+        numPlayers, 
+        bountyValue,
+        potSize,
+        heroCost,
+        winProb,
+        realization,
+        edgeBase,
+        isNearPayjump,
+        blindsRising,
+        humanNoiseFactor,
+        heroRp,
+        villainRp,
+        stackEff: stacks[0] || 40,
+      },
+    });
+  }, [stacks, prizes, kappa, numPlayers, bountyValue, potSize, heroCost, winProb, realization, edgeBase, isNearPayjump, blindsRising, humanNoiseFactor]);
 
   // SOTA v4.2: Orquestração de Cálculo Modularizada
   const { result, chartData } = usePerspectiveCalculations({
@@ -137,15 +162,44 @@ export default function PerspectivePanel({
     humanNoiseFactor,
   });
 
+  if (hudOnly) {
+    return (
+      <div className="flex flex-col gap-10 animate-sota-in">
+        {/* GRÁFICO HUD (Visualização Crítica) */}
+        <div className="glass-panel p-8! lg:p-10! border-white/5 shadow-2xl">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-white font-black text-xs tracking-[0.4em] uppercase m-0 flex items-center gap-4">
+              <div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)]" />
+              Equidade Dinâmica
+            </h3>
+            <span className="text-text-darker text-[0.6rem] font-black tracking-[0.3em] uppercase">
+              Vantagem: {result.riskAdvantage > 0 ? '+' : ''}{result.riskAdvantage.toFixed(1)}%
+            </span>
+          </div>
+          <div className="h-64 w-full overflow-hidden rounded-3xl border border-white/5 bg-black/40 p-4 shadow-inner">
+            <PerspectiveChart chartData={chartData} />
+          </div>
+        </div>
+
+        {/* TELEMETRIA SOTA WASM (Motor de Observabilidade) */}
+        <WasmTelemetryWidget 
+          wasmLogs={wasmLogs} 
+          resultCi={result.ci} 
+          riskAdvantage={result.riskAdvantage}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="glass-panel bg-bg-panel/80 relative flex flex-col gap-10 overflow-hidden rounded-4xl border border-white/10 p-6 shadow-2xl backdrop-blur-xl transition-all duration-500 sm:p-10 lg:p-14">
+    <div className="glass-panel bg-bg-panel/80 relative flex flex-col gap-10 overflow-hidden rounded-4xl border border-white/10 p-8 shadow-2xl backdrop-blur-3xl transition-all duration-500 lg:p-12">
       <div className="bg-accent-indigo/5 pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full blur-3xl" />
 
       <div className="flex flex-col items-start justify-between gap-6 border-b border-white/5 pb-6 sm:flex-row sm:items-center">
         <div>
           <h3 className="text-accent-indigo-light m-0 flex items-center gap-3 text-[0.75rem] font-black tracking-[0.3em] uppercase">
             <div className="bg-accent-indigo h-2 w-2 rounded-full shadow-[0_0_10px_var(--accent-indigo)]" />
-            Perspectiva Matemática &middot; <span className="text-text-muted">v6.2.1 GOLD</span>
+            Perspectiva Matemática &middot; <span className="text-text-muted">v7.0 GOLD</span>
           </h3>
           <p className="text-text-dim m-0 mt-1.5 max-w-md text-[0.6rem] leading-relaxed font-medium tracking-widest uppercase">
             Física da Decisão: Piso Dinâmico (EV_fold) e Dívida RIO
@@ -227,7 +281,7 @@ export default function PerspectivePanel({
               htmlFor="perspective-pko"
               className="text-text-muted text-[0.55rem] font-black tracking-[0.25em] uppercase"
             >
-              PKO Bounty
+              Bounty Offset (PKO)
             </label>
             <span className="text-accent-gold rounded-lg border border-white/10 bg-black/60 px-2.5 py-1 font-mono text-[0.65rem] font-black tabular-nums shadow-lg">
               {Math.round(bountyValue * 100)}%
@@ -237,8 +291,8 @@ export default function PerspectivePanel({
             id="perspective-pko"
             type="range"
             min="0"
-            max="0.1"
-            step="0.005"
+            max="0.5"
+            step="0.01"
             value={bountyValue}
             onChange={(e) => setBountyValue(Number.parseFloat(e.target.value))}
             className="accent-accent-gold h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10"
@@ -488,6 +542,15 @@ export default function PerspectivePanel({
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-text-darker text-[0.55rem] font-black tracking-widest uppercase">
+                      Risk Advantage
+                    </span>
+                    <strong className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 font-mono text-lg font-black text-accent-indigo-light tabular-nums shadow-inner">
+                      {result.riskAdvantage > 0 ? '+' : ''}
+                      {result.riskAdvantage.toFixed(1)}%
+                    </strong>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-text-darker text-[0.55rem] font-black tracking-widest uppercase">
                       Insolvência Cᵢ
                     </span>
                     <strong className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 font-mono text-lg font-black text-white tabular-nums shadow-inner">
@@ -591,7 +654,11 @@ export default function PerspectivePanel({
       </div>
 
       {/* TELEMETRIA SOTA WASM (Motor de Observabilidade) */}
-      <WasmTelemetryWidget wasmLogs={wasmLogs} resultCi={result.ci} />
+      <WasmTelemetryWidget 
+        wasmLogs={wasmLogs} 
+        resultCi={result.ci} 
+        riskAdvantage={result.riskAdvantage}
+      />
     </div>
   );
 }

@@ -70,7 +70,7 @@ def _analisar_arquivo(path: str) -> tuple[int, int, int, int]:
     Retorna uma tupla na forma (vg, docs, funcs, loc).
     """
     try:
-        with open(path, "r", encoding="utf-8-sig") as f:
+        with open(path, encoding="utf-8-sig") as f:
             content = f.read()
 
         if not content.strip():
@@ -83,18 +83,14 @@ def _analisar_arquivo(path: str) -> tuple[int, int, int, int]:
 
     except SyntaxError as e:
         logger.error(f"Erro de Sintaxe em {path}: {e}")
-        print(
-            f" [!] Pulando {os.path.basename(path)}: Erro de sintaxe (possivel corrupcao)."
-        )
+        print(f" [!] Pulando {os.path.basename(path)}: Erro de sintaxe (possivel corrupcao).")
         return 0, 0, 0, 0
     except Exception as e:  # noqa: BLE001
         logger.error(f"Falha ao ler {path}: {e}")
         return 0, 0, 0, 0
 
 
-def calcular_indice_saude(
-    total_vg: int, total_funcs: int, total_docs: int, total_loc: int
-) -> float:
+def calcular_indice_saude(total_vg: int, total_funcs: int, total_docs: int, total_loc: int) -> float:
     """
     Calcula o Indice de Saude de Invariancia (Ih) baseado na formula matematica.
     """

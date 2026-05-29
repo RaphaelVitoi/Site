@@ -103,7 +103,8 @@ class PredictiveForestEngine:
                 # ambientes de teste
                 if len(features_list) < 10:
                     logger.info(
-                        "[PREDICTIVE] Amostragem insuficiente (%d < 10). Treinamento abortado.", len(features_list)
+                        "[PREDICTIVE] Amostragem insuficiente (%d < 10). Treinamento abortado.",
+                        len(features_list),
                     )
                     return False
 
@@ -204,8 +205,6 @@ class PredictiveForestEngine:
                     "Excesso de Agressao": "Excesso de Agressao",
                     "Passivo Estrutural (RIO)": "Passivo Estrutural (RIO)",
                     "Desvio de Nash": "Desvio de Nash",
-                    "Aversao ao Risco": "Aversao ao Risco",
-                    "Excesso de Agressao": "Excesso de Agressao",
                 }
                 for k, v in profile.items():
                     mapped_k = ascii_map.get(k, k)

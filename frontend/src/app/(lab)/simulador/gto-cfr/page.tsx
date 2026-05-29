@@ -13,7 +13,7 @@ export default function GtoCfrPage() {
 				<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-indigo/10 border border-accent-indigo/20 mb-6">
 					<i className="fa-solid fa-atom text-[0.6rem] text-accent-indigo animate-spin-slow" />
 					<span className="text-[0.55rem] font-black text-accent-indigo-light uppercase tracking-[0.3em]">
-						Neural Engine v6.2.1 GOLD
+						Neural Engine v7.0 GOLD
 					</span>
 				</div>
 				<h1 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tighter mb-6 drop-shadow-2xl">

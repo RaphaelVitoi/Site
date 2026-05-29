@@ -140,7 +140,7 @@ export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 			correctOptionId: 'opt2',
 			explanation:
 				'Estado da Arte: Em estruturas Top-Heavy (payouts concentrados no topo), o valor incremental de sobreviver (laddering) é ofuscado pela equidade astronômica da cravada. Isso comprime o Bubble Factor e estimula a tomada de risco (Risk Premium cai).',
-			category: 'Pós-Flop',
+			category: 'Pos-Flop',
 		});
 	}
 

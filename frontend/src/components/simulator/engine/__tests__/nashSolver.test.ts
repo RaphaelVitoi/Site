@@ -1,18 +1,18 @@
-/// <reference types="jest" />
+﻿/// <reference types="jest" />
 
 /**
- * TESTE DE VALIDAÇÃO: NashSolver — Motor ICM pós-flop
+ * TESTE DE VALIDAÃ‡ÃƒO: NashSolver â€” Motor ICM pÃ³s-flop
  * PATH: src/components/simulator/engine/__tests__/nashSolver.test.ts
  *
  * Valida propriedades estruturais e comportamentais do motor.
- * Âncora empírica: BTN 39bb (RP 21.4%) vs BB 54bb (RP 12.9%), ΔRP = +8.5pp
+ * Ã‚ncora empÃ­rica: BTN 39bb (RP 21.4%) vs BB 54bb (RP 12.9%), Î”RP = +8.5pp
  * Fonte: 93 nodes HRC vs GTO Wizard, Aula 1.2 (board KJT-2-3)
  */
 
 import { solveIcmDistortion } from '../nashSolver';
 import type { ChipEvFreqs } from '../types';
 
-// Frequências ChipEV da âncora empírica (calibração real)
+// FrequÃªncias ChipEV da Ã¢ncora empÃ­rica (calibraÃ§Ã£o real)
 const ANCORA: ChipEvFreqs = {
   ip_check: 2,
   ip_bet_small: 65,
@@ -22,7 +22,7 @@ const ANCORA: ChipEvFreqs = {
   oop_raise: 15,
 };
 
-// Frequências ChipEV genéricas para testes de comportamento
+// FrequÃªncias ChipEV genÃ©ricas para testes de comportamento
 const NEUTRO: ChipEvFreqs = {
   ip_check: 30,
   ip_bet_small: 40,
@@ -32,8 +32,8 @@ const NEUTRO: ChipEvFreqs = {
   oop_raise: 15,
 };
 
-// === CONSERVAÇÃO ===
-describe( 'Conservação de frequências', () => {
+// === CONSERVAÃ‡ÃƒO ===
+describe( 'ConservaÃ§Ã£o de frequÃªncias', () => {
   test( 'IP: check + bet_small + bet_large = 100 sempre', () => {
     const result = solveIcmDistortion( 21.4, 12.9, ANCORA, 1 );
     const sum = result.ip.check.center + result.ip.bet_small.center + result.ip.bet_large.center;
@@ -46,7 +46,7 @@ describe( 'Conservação de frequências', () => {
     expect( sum ).toBeCloseTo( 100, 5 );
   } );
 
-  test( 'Conservação com aggressionFactor 1.5x', () => {
+  test( 'ConservaÃ§Ã£o com aggressionFactor 1.5x', () => {
     const result = solveIcmDistortion( 15, 10, NEUTRO, 1.5 );
     const ip = result.ip.check.center + result.ip.bet_small.center + result.ip.bet_large.center;
     const oop = result.oop.call.center + result.oop.fold.center + result.oop.raise.center;
@@ -54,7 +54,7 @@ describe( 'Conservação de frequências', () => {
     expect( oop ).toBeCloseTo( 100, 5 );
   } );
 
-  test( 'Conservação com RPs extremos', () => {
+  test( 'ConservaÃ§Ã£o com RPs extremos', () => {
     const result = solveIcmDistortion( 24, 1, ANCORA, 3 );
     const ip = result.ip.check.center + result.ip.bet_small.center + result.ip.bet_large.center;
     const oop = result.oop.call.center + result.oop.fold.center + result.oop.raise.center;
@@ -63,8 +63,8 @@ describe( 'Conservação de frequências', () => {
   } );
 } );
 
-// === DISTORÇÃO ZERO (ΔRP = 0) ===
-describe( 'ΔRP = 0: sem distorção nas apostas', () => {
+// === DISTORÃ‡ÃƒO ZERO (Î”RP = 0) ===
+describe( 'Î”RP = 0: sem distorÃ§Ã£o nas apostas', () => {
   test( 'IP bet_small e bet_large correspondem ao ChipEV', () => {
     const result = solveIcmDistortion( 0, 0, NEUTRO, 1 );
     expect( result.deltaRp ).toBe( 0 );
@@ -79,10 +79,10 @@ describe( 'ΔRP = 0: sem distorção nas apostas', () => {
   } );
 } );
 
-// === DIREÇÃO DAS DISTORÇÕES ===
-describe( 'Direção das distorções ICM', () => {
-  test( 'ΔRP positivo (IP sob mais pressão): apostas IP caem, check sobe', () => {
-    // k_bet_small = -3.5, k_bet_large = -12: ambos negativos → bets caem quando ΔRP > 0
+// === DIREÃ‡ÃƒO DAS DISTORÃ‡Ã•ES ===
+describe( 'DireÃ§Ã£o das distorÃ§Ãµes ICM', () => {
+  test( 'Î”RP positivo (IP sob mais pressÃ£o): apostas IP caem, check sobe', () => {
+    // k_bet_small = -3.5, k_bet_large = -12: ambos negativos â†’ bets caem quando Î”RP > 0
     const base = solveIcmDistortion( 10, 10, NEUTRO, 1 );
     const pressured = solveIcmDistortion( 20, 10, NEUTRO, 1 );
     expect( pressured.ip.bet_small.center ).toBeLessThan( base.ip.bet_small.center );
@@ -90,14 +90,14 @@ describe( 'Direção das distorções ICM', () => {
     expect( pressured.ip.check.center ).toBeGreaterThan( base.ip.check.center );
   } );
 
-  test( 'ΔRP positivo: OOP call cai por risco de ressuscitar o IP', () => {
+  test( 'Î”RP positivo: OOP call cai por risco de ressuscitar o IP', () => {
     const base = solveIcmDistortion( 10, 10, NEUTRO, 1 );
     const pressured = solveIcmDistortion( 20, 10, NEUTRO, 1 );
     expect( pressured.oop.call.center ).toBeLessThan( base.oop.call.center );
   } );
 
-  test( 'ΔRP negativo (OOP sob mais pressão): apostas IP sobem', () => {
-    // k negativo × sinal negativo = efeito positivo no bloco de aposta (small+large)
+  test( 'Î”RP negativo (OOP sob mais pressÃ£o): apostas IP sobem', () => {
+    // k negativo Ã— sinal negativo = efeito positivo no bloco de aposta (small+large)
     const base = solveIcmDistortion( 10, 10, NEUTRO, 1 );
     const pressured = solveIcmDistortion( 10, 20, NEUTRO, 1 );
     const baseBetting = base.ip.bet_small.center + base.ip.bet_large.center;
@@ -106,8 +106,8 @@ describe( 'Direção das distorções ICM', () => {
     expect( pressured.ip.check.center ).toBeLessThan( base.ip.check.center );
   } );
 
-  test( 'oop_raise usa |ΔRP| sem sign (comprime em ambas as direções)', () => {
-    // Em ambos os lados, oop_raise deve cair com |ΔRP| crescente (k = -9)
+  test( 'oop_raise usa |Î”RP| sem sign (comprime em ambas as direÃ§Ãµes)', () => {
+    // Em ambos os lados, oop_raise deve cair com |Î”RP| crescente (k = -9)
     const base = solveIcmDistortion( 10, 10, NEUTRO, 1 );
     const ipOver = solveIcmDistortion( 20, 10, NEUTRO, 1 );
     const oopOver = solveIcmDistortion( 10, 20, NEUTRO, 1 );
@@ -118,21 +118,21 @@ describe( 'Direção das distorções ICM', () => {
 
 // === AGGRESSION FACTOR ===
 describe( 'aggressionFactor', () => {
-  test( '1.5x: apostas IP aumentam, check cai como resíduo', () => {
+  test( '1.5x: apostas IP aumentam, check cai como resÃ­duo', () => {
     const gto = solveIcmDistortion( 15, 10, NEUTRO, 1 );
     const agg = solveIcmDistortion( 15, 10, NEUTRO, 1.5 );
     expect( agg.ip.bet_small.center ).toBeGreaterThanOrEqual( gto.ip.bet_small.center );
     expect( agg.ip.check.center ).toBeLessThanOrEqual( gto.ip.check.center );
   } );
 
-  test( '0.5x: apostas IP caem, check sobe como resíduo', () => {
+  test( '0.5x: apostas IP caem, check sobe como resÃ­duo', () => {
     const gto = solveIcmDistortion( 15, 10, NEUTRO, 1 );
     const pass = solveIcmDistortion( 15, 10, NEUTRO, 0.5 );
     expect( pass.ip.bet_small.center ).toBeLessThanOrEqual( gto.ip.bet_small.center );
     expect( pass.ip.check.center ).toBeGreaterThanOrEqual( gto.ip.check.center );
   } );
 
-  test( 'aggressionFactor afeta OOP call indiretamente via contração do raise (SOTA v4.6)', () => {
+  test( 'aggressionFactor afeta OOP call indiretamente via contraÃ§Ã£o do raise (SOTA v7.0 GOLD)', () => {
     const gto = solveIcmDistortion( 15, 10, NEUTRO, 1 );
     const agg = solveIcmDistortion( 15, 10, NEUTRO, 1.5 );
     // Em Topologic Aggression 2.0, um maior aggressionFactor eleva o raise, o que comprime o call.
@@ -140,15 +140,15 @@ describe( 'aggressionFactor', () => {
   } );
 } );
 
-// === EXPOENTE b (CURVA CÔNCAVA) ===
-describe( 'Expoente b (curva côncava)', () => {
-  test( 'b decresce com maior pressão ICM (avgRp maior)', () => {
+// === EXPOENTE b (CURVA CÃ”NCAVA) ===
+describe( 'Expoente b (curva cÃ´ncava)', () => {
+  test( 'b decresce com maior pressÃ£o ICM (avgRp maior)', () => {
     const low = solveIcmDistortion( 5, 5, NEUTRO, 1 );
     const high = solveIcmDistortion( 20, 20, NEUTRO, 1 );
     expect( high.bExponent ).toBeLessThan( low.bExponent );
   } );
 
-  test( 'b → 1 quando RPs → 0 (ChipEV puro)', () => {
+  test( 'b â†’ 1 quando RPs â†’ 0 (ChipEV puro)', () => {
     const result = solveIcmDistortion( 0, 0, NEUTRO, 1 );
     expect( result.bExponent ).toBeCloseTo( 1, 3 );
   } );
@@ -159,9 +159,9 @@ describe( 'Expoente b (curva côncava)', () => {
   } );
 } );
 
-// === CLAMPING E SANITIZAÇÃO ===
-describe( 'Clamping e sanitização de inputs', () => {
-  test( 'Todas as frequências ficam entre 0 e 100', () => {
+// === CLAMPING E SANITIZAÃ‡ÃƒO ===
+describe( 'Clamping e sanitizaÃ§Ã£o de inputs', () => {
+  test( 'Todas as frequÃªncias ficam entre 0 e 100', () => {
     const result = solveIcmDistortion( 100, 100, ANCORA, 3 );
     const freqs = [
       result.ip.check.center, result.ip.bet_small.center, result.ip.bet_large.center,
@@ -173,7 +173,7 @@ describe( 'Clamping e sanitização de inputs', () => {
     } );
   } );
 
-  test( 'deltaRp calculado corretamente na âncora', () => {
+  test( 'deltaRp calculado corretamente na Ã¢ncora', () => {
     const result = solveIcmDistortion( 21.4, 12.9, ANCORA, 1 );
     expect( result.deltaRp ).toBeCloseTo( 8.5, 1 );
   } );
@@ -191,3 +191,4 @@ describe( 'Clamping e sanitização de inputs', () => {
     expect( result.oop.call.spread ).toBeGreaterThan( 0 );
   } );
 } );
+

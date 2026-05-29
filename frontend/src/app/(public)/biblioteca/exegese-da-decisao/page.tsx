@@ -2,7 +2,7 @@
  * IDENTITY: Exegese da Decisão GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/exegese-da-decisao/page.tsx
  * ROLE: Artigo técnico imersivo demonstrando a desconstrução algorítmica da decisão de Poker.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

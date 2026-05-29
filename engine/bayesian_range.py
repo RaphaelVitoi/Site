@@ -3,14 +3,10 @@ Motor de Leitura Bayesiana de Ranges (SOTA).
 Calcula a contracao dos ranges oponentes aplicando o Teorema de Bayes a cada acao observada.
 """
 
-from typing import List
-
 RANKS = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
 
 
-def update_posterior(
-    prior_matrix: List[List[float]], likelihood_matrix: List[List[float]]
-) -> List[List[float]]:
+def update_posterior(prior_matrix: list[list[float]], likelihood_matrix: list[list[float]]) -> list[list[float]]:
     """
     Contracao Bayesiana pura.
     Multiplica o Prior (frequencia previa) pelo Likelihood (probabilidade da acao dada a mao)
@@ -34,7 +30,7 @@ def update_posterior(
     return posterior
 
 
-def _categorize_hand(r: int, c: int, board_ranks: List[str]) -> str:
+def _categorize_hand(r: int, c: int, board_ranks: list[str]) -> str:
     rank1, rank2 = RANKS[r], RANKS[c]
     is_pair = r == c
 
@@ -67,9 +63,7 @@ def _apply_profile_drift(p_action: float, action: str, cat: str, profile: str) -
     return p_action
 
 
-def build_likelihood_matrix(
-    action: str, board: List[str], profile: str = "reg"
-) -> List[List[float]]:
+def build_likelihood_matrix(action: str, board: list[str], profile: str = "reg") -> list[list[float]]:
     """
     Constroi a matriz de Likelihood baseada na acao e na textura do board.
     Aqui serao injetadas as heuristicas taticas do motor (ex: Smart Sniper, RIO).

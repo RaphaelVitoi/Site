@@ -2,7 +2,7 @@
  * IDENTITY: Laboratório ChipEV vs ICMev GOLD (Artigo Interativo)
  * PATH: src/app/biblioteca/laboratorio-chipev-vs-icmev/page.tsx
  * ROLE: Artigo técnico demonstrando a diferença prática entre valor esperado de fichas e valor esperado monetário.
- * VERSION: v6.2.1 GOLD
+ * VERSION: v7.0 GOLD
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';

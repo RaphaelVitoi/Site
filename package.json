@@ -3,7 +3,9 @@
   "private": true,
   "packageManager": "npm@10.9.2",
   "description": "Monorepo SOTA: Orquestrador de Agentes LLM (Python) + Frontend Next.js",
-  "workspaces": ["frontend"],
+  "workspaces": [
+    "frontend"
+  ],
   "engines": {
     "node": ">=22.0.0",
     "npm": ">=10.0.0"
@@ -15,15 +17,13 @@
     "typecheck": "tsc --build frontend/tsconfig.json",
     "test": "npm --workspace frontend run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\" --ignore-path .prettierignore",
-    "clean": "rimraf frontend/.next frontend/.turbo node_modules/.cache",
-
-    "python:test": ".venv/Scripts/python.exe -m pytest tests/",
-    "python:lint": "ruff check .",
-    "python:format": "ruff format .",
-    "python:typecheck": "pyright",
-
-    "sota:audit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/quality-gate.ps1",
-    "sota:full": "npm run python:lint && npm run python:typecheck && npm run lint && npm run typecheck && npm run python:test"
+    "clean": "rimraf frontend/.next frontend/.turbo node_modules/.cache temp/nexus_zone/*",
+    "python:test": "uv run pytest tests/",
+    "python:lint": "uv run ruff check .",
+    "python:format": "uv run ruff format .",
+    "python:typecheck": "uv run mypy .",
+    "sota:audit": "uv run nexus ops lint",
+    "sota:full": "npm run sota:audit && npm run typecheck && npm run python:test"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.0",

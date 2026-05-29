@@ -126,20 +126,19 @@ async def _forge_files(text: str, effective_mode: str, agent_name: str) -> list[
 
             target_path_str = os.path.normpath(str(target_path))  # noqa: ASYNC240
             is_protected = any(
-                os.path.normpath(p) in target_path_str for p in PROTECTED_KERNEL_PATHS  # noqa: ASYNC240
+                os.path.normpath(p) in target_path_str
+                for p in PROTECTED_KERNEL_PATHS  # noqa: ASYNC240
             )
             privileged_agents = ["@chico", "@gemma4"]
             if is_protected:
                 if effective_mode == "full" and agent_name in privileged_agents:
                     logger.warning(
-                        "[GOD MODE W3] Override de Seguranca Absoluto (TIER 1). "
-                        "Re-escrevendo arquivo de Kernel: %s",
+                        "[GOD MODE W3] Override de Seguranca Absoluto (TIER 1). Re-escrevendo arquivo de Kernel: %s",
                         filepath,
                     )
                 else:
                     logger.error(
-                        "[SEC] Bloqueio de escrita em arquivo protegido. "
-                        "%s nao possui privilegios de Tier 1: %s",
+                        "[SEC] Bloqueio de escrita em arquivo protegido. %s nao possui privilegios de Tier 1: %s",
                         agent_name,
                         filepath,
                     )
@@ -154,7 +153,6 @@ async def _forge_files(text: str, effective_mode: str, agent_name: str) -> list[
             logger.exception("[FAIL] Falha ao forjar %s", filepath)
 
     return modified_files
-
 
 
 def _validate_command(cmd: str, effective_mode: str, agent_name: str) -> bool:
@@ -194,12 +192,9 @@ def _validate_command(cmd: str, effective_mode: str, agent_name: str) -> bool:
         logger.error("[SEC] %s", error_msg)
         raise PermissionError(error_msg)
 
-    if effective_mode == "partial" and any(
-        k in cmd.lower() for k in state_changing_commands
-    ):
+    if effective_mode == "partial" and any(k in cmd.lower() for k in state_changing_commands):
         logger.warning(
-            "[SEC TIER 3] O agente %s tentou mutar o estado do ecossistema. "
-            "Comando interceptado: '%s'",
+            "[SEC TIER 3] O agente %s tentou mutar o estado do ecossistema. Comando interceptado: '%s'",
             agent_name,
             cmd,
         )
@@ -256,9 +251,7 @@ async def _run_native_command(cmd: str) -> None:
 
 
 async def _run_sandboxed_command(cmd: str, agent_name: str) -> None:
-    logger.info(
-        "[CASA DE MAQUINAS] Sandbox isolado acionado para %s: %s", agent_name, cmd
-    )
+    logger.info("[CASA DE MAQUINAS] Sandbox isolado acionado para %s: %s", agent_name, cmd)
     cmd_parts = [
         "docker",
         "run",
@@ -288,22 +281,16 @@ async def _run_sandboxed_command(cmd: str, agent_name: str) -> None:
         else:
             stderr_str = stderr_bytes.decode(errors="replace").strip()
             error_msg = f"Codigo {process.returncode} - {stderr_str}"
-            logger.warning(
-                "[SANDBOX FAIL] Comando contido na Casa de Maquinas: %s", error_msg
-            )
+            logger.warning("[SANDBOX FAIL] Comando contido na Casa de Maquinas: %s", error_msg)
     except TimeoutError:
         if process:
             process.kill()
             await process.communicate()
         logger.warning("[SANDBOX FAIL] Tempo limite excedido (120s) na Casa de Maquinas: %s", cmd)
     except FileNotFoundError:
-        logger.error(
-            "[SANDBOX FATAL] Docker ausente. Nao foi possivel instanciar a Casa de Maquinas."
-        )
+        logger.error("[SANDBOX FATAL] Docker ausente. Nao foi possivel instanciar a Casa de Maquinas.")
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.exception(
-            "[SANDBOX FAIL] Erro critico ao executar na Casa de Maquinas: %s", e
-        )
+        logger.exception("[SANDBOX FAIL] Erro critico ao executar na Casa de Maquinas: %s", e)
 
 
 async def _execute_commands(text: str, effective_mode: str, agent_name: str) -> None:
@@ -315,9 +302,7 @@ async def _execute_commands(text: str, effective_mode: str, agent_name: str) -> 
         )
         return
 
-    cmd_pattern = (
-        r"(?:Comando|Command|Executar|Execute):\s*(?:```[a-z]*\n(.*?)\n```|`([^`]+)`)"
-    )
+    cmd_pattern = r"(?:Comando|Command|Executar|Execute):\s*(?:```[a-z]*\n(.*?)\n```|`([^`]+)`)"
 
     for match in re.finditer(cmd_pattern, text, re.DOTALL | re.IGNORECASE):
         cmd = match.group(1) if match.group(1) else match.group(2)
@@ -350,7 +335,9 @@ async def _read_autonomy_levers() -> tuple[list[str], bool]:
                 god_mode_agents = cfg.get("god_mode_agents", god_mode_agents)
                 sandbox_default = cfg.get("sandbox_default", sandbox_default)
         except Exception as e:  # noqa: S110 # pylint: disable=broad-exception-caught
-            logger.warning("[AUTONOMY] Falha ao processar autonomia no autonomy.json. Retornando ao fallback. Erro: %s", e)
+            logger.warning(
+                "[AUTONOMY] Falha ao processar autonomia no autonomy.json. Retornando ao fallback. Erro: %s", e
+            )
     return god_mode_agents, sandbox_default
 
 
@@ -362,8 +349,7 @@ def _resolve_effective_mode(
         return global_mode
     if agent_name in god_mode_agents:
         logger.info(
-            "[TIER 1] %s invocando autoridade executiva maxima (God Mode). "
-            "Operando sob bypass nativo irrestrito.",
+            "[TIER 1] %s invocando autoridade executiva maxima (God Mode). Operando sob bypass nativo irrestrito.",
             agent_name,
         )
         return global_mode
@@ -375,9 +361,7 @@ def _resolve_effective_mode(
     return "partial" if global_mode in ["partial", "full"] else global_mode
 
 
-async def apply_god_mode(
-    text: str, manager: QueueManager, agent_name: str | None = None
-) -> list[str]:
+async def apply_god_mode(text: str, manager: QueueManager, agent_name: str | None = None) -> list[str]:
     """
     Orquestrador VITOI 3.2 de Autonomia (Cortex de Execucao).
     Aplica a hierarquia de privilegios de Tier 0 a Tier 3 dinamicamente.
@@ -392,23 +376,16 @@ async def apply_god_mode(
         # Fallback para Tier inferior.
         agent_name = running_tasks[0].agent if running_tasks else "@dispatcher"
 
-    effective_mode = _resolve_effective_mode(
-        global_mode, agent_name, god_mode_agents, sandbox_default
-    )
+    effective_mode = _resolve_effective_mode(global_mode, agent_name, god_mode_agents, sandbox_default)
 
     if effective_mode == "stop":
-        logger.warning(
-            "[GOD MODE] W0 (Stop) ativo. Observacao pura. Nenhuma mutacao permitida."
-        )
+        logger.warning("[GOD MODE] W0 (Stop) ativo. Observacao pura. Nenhuma mutacao permitida.")
         return []
 
     modified_files = await _forge_files(text, effective_mode, agent_name)
 
     if effective_mode == "default":
-        logger.info(
-            "[GOD MODE] W1 (Default) ativo. Homeostase. "
-            "Arquivos forjados, execucao de comandos bloqueada."
-        )
+        logger.info("[GOD MODE] W1 (Default) ativo. Homeostase. Arquivos forjados, execucao de comandos bloqueada.")
         return modified_files
 
     await _execute_commands(text, effective_mode, agent_name)

@@ -58,37 +58,37 @@ def purify_text_to_ascii(text: str) -> str:
         text = text.replace(corrupted, clean)
 
     # 2. Purificacao universal para Pure ASCII (Lei 5)
-    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
-
-    return text
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
 
 
 def purify_repo_memories():
-    print("=== [CHICO] INICIANDO PROTOCOLO DE PURIFICACAO DE MEMORIAS (ASCII) ===")
-    base_dir = Path(
-        os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../../.claude/agent-memory")
-        )
-    )
+    print("=== [CHICO] INICIANDO PROTOCOLO DE PURIFICACAO DE MEMORIAS E RELATORIOS (ASCII) ===")
 
-    if not base_dir.exists():
-        print(f"[ERRO] Diretorio de memorias nao encontrado em: {base_dir}")
-        return
+    # Lista de diretorios para purificar
+    targets = ["../../.claude/agent-memory", "../../reports", "../../docs", "../../scripts/maintenance/docs"]
 
     count = 0
-    for filepath in base_dir.rglob("*.md"):
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-            content = f.read()
+    for target in targets:
+        base_dir = Path(os.path.abspath(os.path.join(os.path.dirname(__file__), target)))
+        if not base_dir.exists():
+            continue
 
-        purified = purify_text_to_ascii(content)
+        for filepath in base_dir.rglob("*.md"):
+            try:
+                with open(filepath, encoding="utf-8", errors="replace") as f:
+                    content = f.read()
 
-        if content != purified:
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(purified)
-            print(f"[PURIFICADO] {filepath.parent.name}/{filepath.name}")
-            count += 1
+                purified = purify_text_to_ascii(content)
 
-    print(f"=== SUCESSO: {count} memorias convertidas para Pure ASCII. ===")
+                if content != purified:
+                    with open(filepath, "w", encoding="utf-8") as f:
+                        f.write(purified)
+                    print(f"[PURIFICADO] {filepath.parent.name}/{filepath.name}")
+                    count += 1
+            except Exception as e:
+                print(f"[ERRO] Falha ao processar {filepath}: {e}")
+
+    print(f"=== SUCESSO: {count} documentos convertidos para Pure ASCII. ===")
 
 
 if __name__ == "__main__":

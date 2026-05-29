@@ -1,14 +1,10 @@
 {
-  "superpowers": { "overrides": ["!/*"] },
-  "conductor": { "overrides": ["!/*"] },
-  "token-efficiency": { "overrides": ["!/*"] },
-  "gemini-cli-security": { "overrides": ["!/*"] },
-  "gemini-cli-jules": { "overrides": ["!/*"] },
-  "exa-mcp-server": { "overrides": ["!/*"] },
-  "gemini-supermemory": { "overrides": ["!/*"] },
-  "Stitch": { "overrides": ["!/*"] },
-  "gemini-cli-themes": { "overrides": ["!/*"] },
-  "run-long-command": { "overrides": ["!/*"] },
-  "file-search-store-extension": { "overrides": ["!/*"] },
-  "gemini-deep-research": { "overrides": ["!/*"] }
+  "superpowers": { "overrides": ["/*"] },
+  "token-efficiency": { "overrides": ["/*"] },
+  "gemini-cli-security": { "overrides": ["/*"] },
+  "gemini-cli-jules": { "overrides": ["/*"] },
+  "exa-mcp-server": { "overrides": ["/*"] },
+  "gemini-supermemory": { "overrides": ["/*"] },
+  "Stitch": { "overrides": ["/*"] },
+  "gemini-deep-research": { "overrides": ["/*"] }
 }

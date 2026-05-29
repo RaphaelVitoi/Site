@@ -1,18 +1,18 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 
 /**
  * IDENTITY: SOTA Semantic Schemas
- * ROLE: Garantir integridade de dados entre Prisma, API e Motor Matemático.
+ * ROLE: Garantir integridade de dados entre Prisma, API e Motor MatemÃ¡tico.
  * PRINCIPLE: Economia Generalizada (Shannon) - Tipagem forte reduz entropia de erro.
  */
 
-// Schema para Stacks (Array de números positivos)
+// Schema para Stacks (Array de nÃºmeros positivos)
 export const StacksSchema = z.array(z.number().nonnegative()).min(2);
 
-// Schema para Prizes (Array de números positivos decrescentes)
+// Schema para Prizes (Array de nÃºmeros positivos decrescentes)
 export const PrizesSchema = z.array(z.number().nonnegative());
 
-// Schema para a Física da Mesa (PhysicsSnapshot)
+// Schema para a FÃ­sica da Mesa (PhysicsSnapshot)
 export const PhysicsSnapshotSchema = z.object({
 	heroStack: z.number().positive(),
 	villain1Stack: z.number().positive().optional(),
@@ -22,9 +22,11 @@ export const PhysicsSnapshotSchema = z.object({
 	edgeFactor: z.number().min(0.5).max(2).default(1).optional(),
 	position: z.enum(['IP', 'OOP', 'BB', 'SB']),
 	referenceStatus: z.enum(['baseline', 'tilt', 'protecting', 'bubble']).default('baseline'),
+	riskAdvantage: z.number().optional(), // SOTA v7.0
+	bountyPower: z.number().optional(), // SOTA v7.0
 });
 
-// Schema para Requisição de Inferência (InferenceRequest)
+// Schema para RequisiÃ§Ã£o de InferÃªncia (InferenceRequest)
 export const InferenceRequestSchema = z.object({
 	prompt: z.string(),
 	system_prompt: z.string().optional(),
@@ -84,7 +86,7 @@ export const PerspectivaResultSchema = z.object({
 	loseMapaICM: z.array(z.number()),
 });
 
-// === PERSPECTIVA SOTA v6.2.1 GOLD ===
+// === PERSPECTIVA SOTA v7.0 GOLD ===
 
 export const PerspectiveMetricSchema = z.object({
 	scenarioId: z
@@ -128,7 +130,7 @@ export const TelemetryCategorySchema = z.enum([
 	'Fundamentos SOTA',
 	'Bolha',
 	'Pos-Flop',
-	'Pós-Flop',
+	'PÃ³s-Flop',
 ] as const);
 
 export const GeneralTelemetrySchema = z.object({
@@ -141,7 +143,7 @@ export const GeneralTelemetrySchema = z.object({
 		'Fundamentos SOTA',
 		'Bolha',
 		'Pos-Flop',
-		'Pós-Flop',
+		'PÃ³s-Flop',
 	]),
 	componentName: z.string().nullable().optional(),
 	scenarioContext: z.unknown().nullable().optional(),
@@ -175,3 +177,4 @@ export type PhysicsSnapshot = z.infer<typeof PhysicsSnapshotSchema>;
 export type InferenceRequest = z.infer<typeof InferenceRequestSchema>;
 export type PerspectivaInputValidated = z.infer<typeof PerspectivaInputSchema>;
 export type TelemetryPayload = z.input<typeof TelemetryPayloadSchema>;
+

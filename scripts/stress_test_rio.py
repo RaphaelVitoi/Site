@@ -3,22 +3,20 @@ Script de stress test para avaliar a metrica de RIO (Reverse Implied Odds) em di
 """
 
 import math
-import sys
 import os
+import sys
 
 # Adiciona o diretorio atual ao path para importar o motor
 sys.path.append(os.getcwd())
 
-from engine.math_sota import calculate_rio_risk_v2
+from engine.math_sota import calculate_rio_risk_v2  # noqa: E402 # pylint: disable=wrong-import-position
+
 
 def run_rio_stress_test():
     """Executa a simulacao de estresse para a tabela de perigos de RIO."""
     print("# SIMULACAO DE ESTRESSE: TABELA DE PERIGOS DE RIO (SOTA v6)")
     print("-" * 80)
-    print(
-        f"{'Players':<8} | {'Stack':<8} | {'Pot':<8} | {'Invested':<10} | {'Ci':<8} | "
-        f"{'Status':<12} | {'Rationale'}"
-    )
+    print(f"{'Players':<8} | {'Stack':<8} | {'Pot':<8} | {'Invested':<10} | {'Ci':<8} | {'Status':<12} | {'Rationale'}")
     print("-" * 80)
 
     # Variaveis de controle baseadas na Derivacao 2 (RIO O(N^2))
@@ -26,9 +24,9 @@ def run_rio_stress_test():
     stacks = [15.0, 30.0, 60.0]
     # Simula um cenario de call no flop/turn
     scenarios = [
-        {"pot": 5.0, "invested": 2.5},   # Bet 1/2 pot
+        {"pot": 5.0, "invested": 2.5},  # Bet 1/2 pot
         {"pot": 10.0, "invested": 5.0},  # Bet 1/2 pot (pote maior)
-        {"pot": 20.0, "invested": 10.0}, # Bet 1/2 pot (pote gigante)
+        {"pot": 20.0, "invested": 10.0},  # Bet 1/2 pot (pote gigante)
     ]
 
     for n in player_counts:
@@ -46,9 +44,9 @@ def run_rio_stress_test():
                     hero_invested=sc["invested"],
                     current_pot=sc["pot"],
                     hero_raw_stack=s,
-                    hero_position="OOP", # BB vs UTG
+                    hero_position="OOP",  # BB vs UTG
                     active_players=n,
-                    human_noise_factor=0.15 # SOTA v6.2.1 Harmony
+                    human_noise_factor=0.15,  # SOTA v6.2.1 Harmony
                 )
 
                 ci = float(risk_data["ci"])
@@ -62,6 +60,7 @@ def run_rio_stress_test():
 
     print("-" * 80)
     print("Fim da Simulacao de Estresse.")
+
 
 if __name__ == "__main__":
     run_rio_stress_test()

@@ -1,7 +1,7 @@
-'use client';
+﻿'use client';
 
 /**
- * IDENTITY: Matriz de Ranges 13x13 (Visual Grid) v6.2.1 GOLD
+ * IDENTITY: Matriz de Ranges 13x13 (Visual Grid) v7.0 GOLD
  * PATH: src/components/simulator/panels/RangeMatrix.tsx
  * ROLE: Visualizar um mapa heuristico de colapso e expansao do range baseado no Risk Premium (IP/OOP).
  * BINDING: [panels/TheoryPanel.tsx, components/simulator/engine/utils.ts]
@@ -73,10 +73,10 @@ export default function RangeMatrix({ ipRp, oopRp, scenarioId }: Readonly<RangeM
 					<div>
 						<h4 className="text-[0.75rem] font-black text-accent-emerald uppercase tracking-[0.2em] m-0 flex items-center gap-3">
 							<div className="w-2 h-2 rounded-full bg-accent-emerald shadow-[0_0_10px_var(--accent-emerald)]" />
-							Mapa HeurÃ­stico de Range
+							Mapa HeurÃƒÂ­stico de Range
 						</h4>
 						<p className="m-0 mt-2 text-[0.65rem] text-text-dim font-medium uppercase tracking-wider group-hover/matrix:text-glow-indigo transition-all duration-500">
-							Topologia de Colapso SOTA v6.2.1
+							Topologia de Colapso SOTA v7.0 GOLD
 						</p>
 					</div>
 					<div className="flex rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1.5 shadow-inner">
@@ -169,7 +169,7 @@ export default function RangeMatrix({ ipRp, oopRp, scenarioId }: Readonly<RangeM
 										</span>
 										{isDeath && ci !== null && (
 											<span className="absolute bottom-0.5 right-0.5 text-[0.4rem] font-bold text-accent-danger/80 leading-none">
-												Cáµ¢ {ci.toFixed(2)}
+												CÃ¡ÂµÂ¢ {ci.toFixed(2)}
 											</span>
 										)}
 									</button>
@@ -186,18 +186,19 @@ export default function RangeMatrix({ ipRp, oopRp, scenarioId }: Readonly<RangeM
 				</div>
 				<div className="flex flex-col gap-2">
 					<h5 className="text-white uppercase tracking-[0.3em] text-[0.65rem] font-black m-0 group-hover/guide:text-accent-indigo-light transition-colors">
-						Guia TopolÃ³gico de Colapso
+						Guia TopolÃƒÂ³gico de Colapso
 					</h5>
 					<p className="text-[0.75rem] text-text-muted leading-relaxed m-0 font-medium">
-						Este painel simula o colapso heurÃ­stico do range sob pressÃ£o ICM. MÃ£os em{' '}
+						Este painel simula o colapso heurÃƒÂ­stico do range sob pressÃƒÂ£o ICM. MÃƒÂ£os em{' '}
 						<strong className="text-accent-danger uppercase tracking-tighter">
 							Death
 						</strong>{' '}
-						representam a zona de insolvÃªncia mecÃ¢nica onde o valuation do pote nÃ£o
-						suporta a pressÃ£o estrutural do motor de simulaÃ§Ã£o.
+						representam a zona de insolvÃƒÂªncia mecÃƒÂ¢nica onde o valuation do pote nÃƒÂ£o
+						suporta a pressÃƒÂ£o estrutural do motor de simulaÃƒÂ§ÃƒÂ£o.
 					</p>
 				</div>
 			</div>
 		</div>
 	);
 }
+
