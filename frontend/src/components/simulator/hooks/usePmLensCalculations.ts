@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -119,6 +119,14 @@ export function usePmLensCalculations({
 					? (streetProgression[streetIdx - 1]?.cumulative ?? 0)
 					: Math.abs(heroInvested);
 
+			// SOTA v7.0 GOLD: Dinamização das Equidades pós-flop (Range Condensation)
+			// À medida que as ruas progridem (s), os ranges se estreitam e a equidade do range
+			// se condensa em direção ao centro (50%) contra o continuing range do vilão.
+			const isHeroIP = absoluteHeroPos === 'IP';
+			const condensationDecay = isHeroIP ? 0.22 : 0.32; // OOP condensa mais rápido devido à agressividade exigida
+			const baseWinProb = equity / 100;
+			const dynamicWinProb = baseWinProb + (0.5 - baseWinProb) * (1 - Math.pow(1 - condensationDecay, streetIdx));
+
 			const input: PerspectivaInput = {
 				stacks: initialStacks,
 				prizes: initialPrizes,
@@ -126,7 +134,7 @@ export function usePmLensCalculations({
 				villainIdx: primaryVillainIdx,
 				potSize: street.potSize,
 				heroCost: street.cumulative,
-				winProb: equity / 100,
+				winProb: dynamicWinProb,
 				realizationFactor: finalRealization,
 				edgeBase: 1 + deltaHabilidade / 100,
 				bountyValue: pkoValue * 100,
@@ -135,7 +143,7 @@ export function usePmLensCalculations({
 				heroPosition: absoluteHeroPos,
 				blindsRisingSoon,
 				investidoAcumulado: sunkCost,
-				humanNoiseFactor: aggFactor, // SOTA v7.0 GOLD Harmony: Damping fisico
+				humanNoiseFactor: Math.abs((aggFactor ?? 1.0) - 1.0), // SOTA v7.0 GOLD Harmony: Damping fisico
 			};
 
 			let res = calculatePerspectivaVitoi(input);

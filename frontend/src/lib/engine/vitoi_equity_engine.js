@@ -68,10 +68,11 @@ export function calculate_multiway_equity_zerocopy(ranges_ptr, num_players, boar
  * @param {number} bounty_value
  * @param {number} edge_base
  * @param {number} human_noise_factor
- * @returns {object}
+ * @param {number} reference_status
+ * @returns {Float64Array}
  */
-export function calculate_perspectiva_vitoi_wasm(current_equity_pct, delta_win_pct, delta_lose_pct, dynamic_ev_fold, realization_factor, fgs_health, active_players, _hero_invested, current_pot, stack_eff, hero_rp, villain_rp, bounty_value, edge_base, human_noise_factor) {
-    const ret = wasm.calculate_perspectiva_vitoi_wasm(current_equity_pct, delta_win_pct, delta_lose_pct, dynamic_ev_fold, realization_factor, fgs_health, active_players, _hero_invested, current_pot, stack_eff, hero_rp, villain_rp, bounty_value, edge_base, human_noise_factor);
+export function calculate_perspectiva_vitoi_wasm(current_equity_pct, delta_win_pct, delta_lose_pct, dynamic_ev_fold, realization_factor, fgs_health, active_players, _hero_invested, current_pot, stack_eff, hero_rp, villain_rp, bounty_value, edge_base, human_noise_factor, reference_status) {
+    const ret = wasm.calculate_perspectiva_vitoi_wasm(current_equity_pct, delta_win_pct, delta_lose_pct, dynamic_ev_fold, realization_factor, fgs_health, active_players, _hero_invested, current_pot, stack_eff, hero_rp, villain_rp, bounty_value, edge_base, human_noise_factor, reference_status);
     return ret;
 }
 

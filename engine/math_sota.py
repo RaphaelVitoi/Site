@@ -4,6 +4,15 @@
 import math
 
 
+# SOTA v7.0 GOLD: Precomputed Mathematical Constants for O(1) Latency Optimization
+LN_100 = 4.605170185988092
+LN_60 = 4.0943445622221
+INV_LN_60 = 0.24423939986381665
+INV_7_5 = 0.13333333333333333
+INV_15 = 0.06666666666666667
+INV_100 = 0.01
+
+
 def calculate_geometric_sizing(current_pot: float, target_pot: float, remaining_streets: int) -> float:
     """
     Calcula a fracao do pote (f) necessaria para apostar nas streets restantes
@@ -15,7 +24,7 @@ def calculate_geometric_sizing(current_pot: float, target_pot: float, remaining_
 
     growth_factor = target_pot / current_pot
     one_plus_two_f = math.pow(growth_factor, 1.0 / remaining_streets)
-    return (one_plus_two_f - 1.0) / 2.0
+    return (one_plus_two_f - 1.0) * 0.5
 
 
 def cfr_mock_strategy(regrets: dict[str, float]) -> dict[str, float]:
@@ -53,14 +62,14 @@ def solve_icm_distortion_v2(
     Paridade absoluta com wasm-equity/src/lib.rs.
     """
     # Calculo de Gravidade (G): ln(pot/7.5). 7.5bb e o baseline de SRP.
-    gravity = math.log(max(1.0, pot_size / 7.5)) if pot_size > 0 else 0.0
+    gravity = math.log(max(1.0, pot_size * INV_7_5)) if pot_size > 0 else 0.0
     gravity = max(0.0, gravity)
 
     # Amortecimento (Damping): Reduz a sensibilidade da agressao em potes gigantes
     damping = 1.0 / (1.0 + gravity * 0.12)
     effective_aggression = 1.0 + (topologic_aggression - 1.0) * damping
 
-    pressure = (oop_rp + ip_rp) / 2.0
+    pressure = (oop_rp + ip_rp) * 0.5
 
     # Downward Drift: Pressao RP converte Raise em Small Bet ou Check/Call
     # Escala com a street (0=Flop, 1=Turn, 2=River) e com a gravidade
@@ -80,10 +89,11 @@ def solve_icm_distortion_v2(
     total = new_fold + new_call + new_raise
 
     if total > 0.0:
+        inv_total = 1.0 / total
         return {
-            "fold": new_fold / total,
-            "call": new_call / total,
-            "raise": new_raise / total,
+            "fold": new_fold * inv_total,
+            "call": new_call * inv_total,
+            "raise": new_raise * inv_total,
         }
 
     return {"fold": 1.0, "call": 0.0, "raise": 0.0}
@@ -101,7 +111,7 @@ def calculate_rio_tension(
 ) -> float:
     """Fisica Base do Poker: Gravidade do Pote, Downward Drift e Multiway Noise SOTA v4.6 GOLD."""
     # SOTA v4.6: Gravidade baseada em ln(pot/7.5) para paridade com Rust
-    gravity = math.log(max(1.0, current_pot / 7.5)) if current_pot > 0 else 0.0
+    gravity = math.log(max(1.0, current_pot * INV_7_5)) if current_pot > 0 else 0.0
 
     bet_to_call = current_pot * 0.5
     # O aprisionamento escala com o custo relativo do call e a gravidade acumulada
@@ -116,7 +126,7 @@ def calculate_rio_tension(
 
     return min(
         1.0,
-        ((base_rio_liability * mw_noise_multiplier) / 100.0) + (pot_entrapment * downward_drift * mitigation_factor),
+        ((base_rio_liability * mw_noise_multiplier) * INV_100) + (pot_entrapment * downward_drift * mitigation_factor),
     )
 
 
@@ -140,10 +150,10 @@ def calculate_utility_ev(
         fgs_health = 1.0
 
     safe_stack = max(2.718, stack_eff)
-    stack_modifier = math.log(100.0) / math.log(safe_stack)
+    stack_modifier = LN_100 / math.log(safe_stack)
 
     # SOTA: Lambda impulsionado inversamente pela saude do FGS (Axioma de Sobrevivencia)
-    fgs_modifier = 1.0 / max(0.1, math.pow(fgs_health, 2.0))
+    fgs_modifier = 1.0 / max(0.1, fgs_health * fgs_health)
     lambda_val = loss_aversion_base * stack_modifier * fgs_modifier
 
     alpha = 0.88
@@ -196,7 +206,7 @@ def compute_quantum_metrics(
     # SOTA: Amortizacao da Edge escalada pelo Risk Advantage
     # A arvore de decisao e podada em S=10bb. Er(S) e proporcional a log(S).
     safe_stack_edge = max(2.718, stack_eff)
-    edge_scale = (math.log(safe_stack_edge) / math.log(60.0)) * advantage_multiplier
+    edge_scale = math.log(safe_stack_edge) * INV_LN_60 * advantage_multiplier
     amortized_edge = edge_base * edge_scale
 
     bayesian_win_prob = calculate_bayesian_win_prob(eq, action_strength=0.5, range_density=0.5)
@@ -208,12 +218,14 @@ def compute_quantum_metrics(
         opponents = max(1, active_players - 1)
         # SOTA GOLD: Passivo Estrutural cresce em taxa quadratica (x^(2+f))
         rio_penalty_factor = math.pow(opponents, 2.0 + human_noise_factor)
-        volatility_multiplier = math.pow(active_players / (max(1.0, stack_eff / 5.0)), 2.0)
+
+        vol_term = active_players / (max(1.0, stack_eff * 0.2))
+        volatility_multiplier = vol_term * vol_term
 
         # Damping sintonizado com TS
         damping = 0.15 + (human_noise_factor * 0.05)
         rio_penalty_chips = (
-            current_pot * rio_penalty_factor * (damping + (volatility_multiplier * 0.05)) * (effective_hero_rp / 15.0)
+            current_pot * rio_penalty_factor * (damping + (volatility_multiplier * 0.05)) * (effective_hero_rp * INV_15)
         )
         rio_mw = rio_penalty_chips * icm_per_chip
 
@@ -316,7 +328,7 @@ def calculate_rio_risk_v2(
     adjusted_ci = ci * (1.5 / (1.0 + rio_tension))
 
     decision = "CALL" if adjusted_ci >= 1.0 else "FOLD"
-    gravity = math.log(max(1.0, current_pot / 7.5))
+    gravity = math.log(max(1.0, current_pot * INV_7_5))
 
     return {
         "rio_risk_score": round(rio_tension, 3),

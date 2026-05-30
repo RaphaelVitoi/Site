@@ -1,11 +1,56 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "mcpServers": {
-        "nexus-sota-bridge": {
-            "command": "C:\\Users\\Raphael\\.gemini\\Site\\.venv\\Scripts\\python.exe",
-            "args": [
-                "C:\\Users\\Raphael\\.gemini\\Site\\mcp-bridge\\server.py"
-            ]
-        }
+  "mcpServers": {
+    "sota-dynamic-orchestrator": {
+      "command": "wsl.exe",
+      "args": [
+        "--cd",
+        "C:\\Users\\Raphael\\.gemini\\Site",
+        "-d",
+        "Debian",
+        "-u",
+        "root",
+        "-e",
+        "bash",
+        "-lc",
+        "PYTHONIOENCODING=utf-8 uv run python scripts/mcp_dynamic_server.py"
+      ]
+    },
+    "sota-fs-hybrid": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\",
+        "\\\\wsl.localhost\\Debian"
+      ]
+    },
+    "sota-bash-wsl": {
+      "command": "wsl.exe",
+      "args": [
+        "--cd",
+        "C:\\Users\\Raphael\\.gemini\\Site",
+        "-d",
+        "Debian",
+        "-u",
+        "root",
+        "-e",
+        "bash",
+        "-lc",
+        "npx -y @modelcontextprotocol/server-bash"
+      ]
+    },
+    "sota-sqlite-dal": {
+      "command": "wsl.exe",
+      "args": [
+        "-d",
+        "Debian",
+        "-u",
+        "root",
+        "-e",
+        "bash",
+        "-lc",
+        "uvx mcp-server-sqlite --db-path /mnt/c/Users/Raphael/.gemini/Site/queue/tasks.db"
+      ]
     }
+  }
 }

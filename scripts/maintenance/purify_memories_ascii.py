@@ -65,7 +65,7 @@ def purify_repo_memories():
     print("=== [CHICO] INICIANDO PROTOCOLO DE PURIFICACAO DE MEMORIAS E RELATORIOS (ASCII) ===")
 
     # Lista de diretorios para purificar
-    targets = ["../../.claude/agent-memory", "../../reports", "../../docs", "../../scripts/maintenance/docs"]
+    targets = ["../../.cerebro/agent-memory", "../../reports", "../../docs", "../../scripts/maintenance/docs"]
 
     count = 0
     for target in targets:

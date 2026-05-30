@@ -1,4 +1,4 @@
-﻿/// <reference types="jest" />
+/// <reference types="jest" />
 
 /**
  * TESTE DE VALIDAÃ‡ÃƒO: NashSolver â€” Motor ICM pÃ³s-flop
@@ -81,13 +81,12 @@ describe( 'Î”RP = 0: sem distorÃ§Ã£o nas apostas', () => {
 
 // === DIREÃ‡ÃƒO DAS DISTORÃ‡Ã•ES ===
 describe( 'DireÃ§Ã£o das distorÃ§Ãµes ICM', () => {
-  test( 'Î”RP positivo (IP sob mais pressÃ£o): apostas IP caem, check sobe', () => {
-    // k_bet_small = -3.5, k_bet_large = -12: ambos negativos â†’ bets caem quando Î”RP > 0
+  test( 'Î”RP positivo (IP sob mais pressÃ£o): apostas IP permanecem no ChipEV baseline (OOP-only defense)', () => {
     const base = solveIcmDistortion( 10, 10, NEUTRO, 1 );
     const pressured = solveIcmDistortion( 20, 10, NEUTRO, 1 );
-    expect( pressured.ip.bet_small.center ).toBeLessThan( base.ip.bet_small.center );
-    expect( pressured.ip.bet_large.center ).toBeLessThanOrEqual( base.ip.bet_large.center );
-    expect( pressured.ip.check.center ).toBeGreaterThan( base.ip.check.center );
+    expect( pressured.ip.bet_small.center ).toBe( base.ip.bet_small.center );
+    expect( pressured.ip.bet_large.center ).toBe( base.ip.bet_large.center );
+    expect( pressured.ip.check.center ).toBe( base.ip.check.center );
   } );
 
   test( 'Î”RP positivo: OOP call cai por risco de ressuscitar o IP', () => {
@@ -96,14 +95,12 @@ describe( 'DireÃ§Ã£o das distorÃ§Ãµes ICM', () => {
     expect( pressured.oop.call.center ).toBeLessThan( base.oop.call.center );
   } );
 
-  test( 'Î”RP negativo (OOP sob mais pressÃ£o): apostas IP sobem', () => {
-    // k negativo Ã— sinal negativo = efeito positivo no bloco de aposta (small+large)
+  test( 'Î”RP negativo (OOP sob mais pressÃ£o): apostas IP permanecem no ChipEV baseline (OOP-only defense)', () => {
     const base = solveIcmDistortion( 10, 10, NEUTRO, 1 );
     const pressured = solveIcmDistortion( 10, 20, NEUTRO, 1 );
-    const baseBetting = base.ip.bet_small.center + base.ip.bet_large.center;
-    const pressuredBetting = pressured.ip.bet_small.center + pressured.ip.bet_large.center;
-    expect( pressuredBetting ).toBeGreaterThan( baseBetting );
-    expect( pressured.ip.check.center ).toBeLessThan( base.ip.check.center );
+    expect( pressured.ip.bet_small.center ).toBe( base.ip.bet_small.center );
+    expect( pressured.ip.bet_large.center ).toBe( base.ip.bet_large.center );
+    expect( pressured.ip.check.center ).toBe( base.ip.check.center );
   } );
 
   test( 'oop_raise usa |Î”RP| sem sign (comprime em ambas as direÃ§Ãµes)', () => {
@@ -118,18 +115,11 @@ describe( 'DireÃ§Ã£o das distorÃ§Ãµes ICM', () => {
 
 // === AGGRESSION FACTOR ===
 describe( 'aggressionFactor', () => {
-  test( '1.5x: apostas IP aumentam, check cai como resÃ­duo', () => {
+  test( 'aggressionFactor nÃ£o altera as frequÃªncias do IP (OOP-only defense)', () => {
     const gto = solveIcmDistortion( 15, 10, NEUTRO, 1 );
     const agg = solveIcmDistortion( 15, 10, NEUTRO, 1.5 );
-    expect( agg.ip.bet_small.center ).toBeGreaterThanOrEqual( gto.ip.bet_small.center );
-    expect( agg.ip.check.center ).toBeLessThanOrEqual( gto.ip.check.center );
-  } );
-
-  test( '0.5x: apostas IP caem, check sobe como resÃ­duo', () => {
-    const gto = solveIcmDistortion( 15, 10, NEUTRO, 1 );
-    const pass = solveIcmDistortion( 15, 10, NEUTRO, 0.5 );
-    expect( pass.ip.bet_small.center ).toBeLessThanOrEqual( gto.ip.bet_small.center );
-    expect( pass.ip.check.center ).toBeGreaterThanOrEqual( gto.ip.check.center );
+    expect( agg.ip.bet_small.center ).toBe( gto.ip.bet_small.center );
+    expect( agg.ip.check.center ).toBe( gto.ip.check.center );
   } );
 
   test( 'aggressionFactor afeta OOP call indiretamente via contraÃ§Ã£o do raise (SOTA v7.0 GOLD)', () => {

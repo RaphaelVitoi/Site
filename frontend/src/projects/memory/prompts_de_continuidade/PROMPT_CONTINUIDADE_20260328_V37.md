@@ -106,12 +106,12 @@ llm/budget.py
 - Arquitetura: agents_manifest.json = fonte primaria, intentmap.json = fallback se manifest falhar
 - COHERENCE_MANIFEST.md: 18 agentes (4 refs corrigidas, formula 8+4+2+3+1=18)
 
-### Arquivos de agentes (.claude/agents/*.md)
+### Arquivos de agentes (.cerebro/agents/*.md)
 - 18 perfis expandidos (de 12 linhas para 35-50 linhas cada)
 - Novos: historian.md, planner.md, sequenciador.md
 - Todos com secoes: Modo de Operacao, Padrao e Filosofia, Anti-Padroes, Entrega Esperada, Proposta Evolutiva
 
-### MEMORYs de agentes (.claude/agent-memory/*/MEMORY.md)
+### MEMORYs de agentes (.cerebro/agent-memory/*/MEMORY.md)
 - historian, planner, verifier, dispatcher, bibliotecario: reescritos com conteudo real
 - sequenciador: corrigido (removida declaracao de auto-extincao; agente permanece ativo)
 
@@ -139,12 +139,12 @@ Rotas corretas:
 - Principio: extrair sem alterar logica; potencializar incrementalmente
 
 ### Worktree residual
-- `.claude/worktrees/agent-ad7cbace` -- worktree do agente que falhou por permissao
-- Pode ser deletada: `git worktree remove --force .claude/worktrees/agent-ad7cbace`
+- `.cerebro/worktrees/agent-ad7cbace` -- worktree do agente que falhou por permissao
+- Pode ser deletada: `git worktree remove --force .cerebro/worktrees/agent-ad7cbace`
 
 ### memory/ raiz (reavaliacao)
 - 39 arquivos restantes (todos com mod date Mar 23)
-- Maioria e copia do auto-memory em C:\Users\Raphael\.claude\projects\...
+- Maioria e copia do auto-memory em C:\Users\Raphael\.cerebro\projects\...
 - Nao e legivel pelo auto-memory system (caminho diferente)
 - Decisao: avaliar se deve ser deletada completamente ou mantida como backup
 

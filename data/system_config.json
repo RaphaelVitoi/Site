@@ -1,7 +1,7 @@
 {
   "system_info": {
     "workspace_path": "c:\\Users\\Raphael\\OneDrive\\Documentos\\Site",
-    "settings_local": ".claude\\settings.local.json",
+    "settings_local": ".cerebro\\settings.local.json",
     "version": "1.0.3",
     "last_sync": "2025-05-06T08:50:00Z",
     "environment": "production",

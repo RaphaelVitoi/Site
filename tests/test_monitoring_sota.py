@@ -96,7 +96,7 @@ async def test_audit_engine_flow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     await engine._flush_to_disk()
     assert len(engine.active_buffer) == 0
 
-    log_dir = tmp_path / ".claude/audit_logs"
+    log_dir = tmp_path / ".cerebro/audit_logs"
     log_files = list(log_dir.glob("vdom_audit_*.jsonl"))
     assert len(log_files) == 1
 
@@ -124,7 +124,7 @@ async def test_audit_engine_auto_flush(tmp_path: Path, monkeypatch: pytest.Monke
     await engine.process_frontend_events(events)
     assert len(engine.active_buffer) == 0
 
-    log_dir = tmp_path / ".claude/audit_logs"
+    log_dir = tmp_path / ".cerebro/audit_logs"
     assert len(list(log_dir.glob("vdom_audit_*.jsonl"))) == 1
 
 

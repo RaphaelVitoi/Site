@@ -271,6 +271,7 @@ export default function PmLensPanel({
     blindsRisingSoon,
     activeNodelock,
     betSizing,
+    aggFactor,
   });
 
   const getInsights = useCallback((): InsightAlert[] => {

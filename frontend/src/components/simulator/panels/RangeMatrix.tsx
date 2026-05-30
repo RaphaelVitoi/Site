@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * IDENTITY: Matriz de Ranges 13x13 (Visual Grid) v7.0 GOLD
@@ -73,7 +73,7 @@ export default function RangeMatrix({ ipRp, oopRp, scenarioId }: Readonly<RangeM
 					<div>
 						<h4 className="text-[0.75rem] font-black text-accent-emerald uppercase tracking-[0.2em] m-0 flex items-center gap-3">
 							<div className="w-2 h-2 rounded-full bg-accent-emerald shadow-[0_0_10px_var(--accent-emerald)]" />
-							Mapa HeurÃƒÂ­stico de Range
+							Mapa Heurístico de Range
 						</h4>
 						<p className="m-0 mt-2 text-[0.65rem] text-text-dim font-medium uppercase tracking-wider group-hover/matrix:text-glow-indigo transition-all duration-500">
 							Topologia de Colapso SOTA v7.0 GOLD
@@ -157,7 +157,7 @@ export default function RangeMatrix({ ipRp, oopRp, scenarioId }: Readonly<RangeM
 									<button
 										type="button"
 										key={hand}
-										className={`relative overflow-hidden aspect-square flex items-center justify-center text-[0.6rem] lg:text-[0.65rem] font-black font-mono transition-all duration-300 cursor-pointer rounded-sm ${bgClass} ${overrides[hand] ? 'z-30 scale-125 shadow-[0_0_25px_rgba(255,255,255,0.4)] border border-white/60 ring-2 ring-white/30' : 'opacity-90 hover:opacity-100 hover:scale-[1.15] hover:z-20 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] border border-white/5'}`}
+										className={`relative overflow-hidden aspect-square flex items-center justify-center text-[0.6rem] lg:text-[0.65rem] font-black font-mono transition-all duration-200 ease-out cursor-pointer rounded-[4px] ${bgClass} ${overrides[hand] ? 'z-30 scale-120 shadow-[0_0_20px_rgba(255,255,255,0.3)] border border-white/40 ring-2 ring-white/20' : 'opacity-85 hover:opacity-100 hover:scale-110 hover:z-20 hover:shadow-[0_0_12px_rgba(255,255,255,0.15)] border border-white/5'}`}
 										onClick={() => handleCellClick(hand, status)}
 										title={`${hand} - ${status.toUpperCase()}`}
 									>
@@ -169,7 +169,7 @@ export default function RangeMatrix({ ipRp, oopRp, scenarioId }: Readonly<RangeM
 										</span>
 										{isDeath && ci !== null && (
 											<span className="absolute bottom-0.5 right-0.5 text-[0.4rem] font-bold text-accent-danger/80 leading-none">
-												CÃ¡ÂµÂ¢ {ci.toFixed(2)}
+												Cᵢ {ci.toFixed(2)}
 											</span>
 										)}
 									</button>
@@ -186,15 +186,15 @@ export default function RangeMatrix({ ipRp, oopRp, scenarioId }: Readonly<RangeM
 				</div>
 				<div className="flex flex-col gap-2">
 					<h5 className="text-white uppercase tracking-[0.3em] text-[0.65rem] font-black m-0 group-hover/guide:text-accent-indigo-light transition-colors">
-						Guia TopolÃƒÂ³gico de Colapso
+						Guia Topológico de Colapso
 					</h5>
 					<p className="text-[0.75rem] text-text-muted leading-relaxed m-0 font-medium">
-						Este painel simula o colapso heurÃƒÂ­stico do range sob pressÃƒÂ£o ICM. MÃƒÂ£os em{' '}
+						Este painel simula o colapso heurístico do range sob pressão ICM. Mãos em{' '}
 						<strong className="text-accent-danger uppercase tracking-tighter">
 							Death
 						</strong>{' '}
-						representam a zona de insolvÃƒÂªncia mecÃƒÂ¢nica onde o valuation do pote nÃƒÂ£o
-						suporta a pressÃƒÂ£o estrutural do motor de simulaÃƒÂ§ÃƒÂ£o.
+						representam a zona de insolvência mecânica onde o valuation do pote não
+						suporta a pressão estrutural do motor de simulação.
 					</p>
 				</div>
 			</div>

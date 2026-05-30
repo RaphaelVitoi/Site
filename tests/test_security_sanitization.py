@@ -1,5 +1,5 @@
 """
-Teste de sanitizacao de prompts SOTA — espelha logica de useGemmaStream.ts.
+Teste de sanitizacao de prompts SOTA  espelha logica de useGemmaStream.ts.
 Garante paridade de seguranca entre Frontend (TS) e testes de regressao (Python).
 """
 

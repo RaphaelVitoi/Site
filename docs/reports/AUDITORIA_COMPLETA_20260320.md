@@ -29,7 +29,7 @@
 nashSolver.ts (coeficientes corrigidos e auditados sessao 20260316), scenarios.ts (399 linhas, 9 cenarios clinicos), types.ts, ftEnvironments.ts - coerente e validado. Lib icm.ts (428 linhas) com calculadora Malmuth-Harville funcional.
 
 ### 3. Arquitetura de agentes (17 agentes)
-Sistema coerente: cada agente tem definicao em .claude/agents/, memoria em agent-memory/, mapeamento em intentmap.json e routing_map.json. Contagem consistente em todos os documentos.
+Sistema coerente: cada agente tem definicao em .cerebro/agents/, memoria em agent-memory/, mapeamento em intentmap.json e routing_map.json. Contagem consistente em todos os documentos.
 
 ### 4. Build pipeline
 Next.js 16 + Turbopack compila em ~5s. Arquitetura de rotas limpa: App Router, sem Pages Router legado.
@@ -128,7 +128,7 @@ Ambos 'use client', interfaces similares, implementacoes possivelmente divergent
 ## V. PROBLEMAS MODERADOS (P2)
 
 ### P2-1: ChromaDB ocupa 734 MB
-.claude/agent-memory/.chroma_db/ consome 734 MB. Desproporcional para 17 agentes. Possivelmente embeddings duplicados ou lixo de sessoes.
+.cerebro/agent-memory/.chroma_db/ consome 734 MB. Desproporcional para 17 agentes. Possivelmente embeddings duplicados ou lixo de sessoes.
 
 ### P2-2: .backups_sota/ ocupa 266 MB
 3 snapshots sem compressao nem rotacao (SNAPSHOT_PERFEICAO_20260320, staging_20260319 x2).
@@ -173,8 +173,8 @@ Menciona Agent-TaskManager.psm1 e Agent-Autopoiesis.psm1 que nao existem.
 - engine/page.tsx (143 linhas, Guia Motor ICM) dentro de components/simulator/engine/ - nao e rota, e componente orfao
 - page.test.tsx na raiz de app/ - teste dentro do build dir
 - 3 rotas redirect (/tools/icm, /tools/masterclass, /tools/toy-games -> /tools/simulador)
-- GLOBAL_INSTRUCTIONS.md na raiz duplica .claude/GLOBAL_INSTRUCTIONS.md
-- .claude/page.tsx orfao
+- GLOBAL_INSTRUCTIONS.md na raiz duplica .cerebro/GLOBAL_INSTRUCTIONS.md
+- .cerebro/page.tsx orfao
 - components/ui/Button.tsx (1 linha) - provavelmente inutil
 
 ---

@@ -110,8 +110,8 @@ async def handle_get_task_result(request):
 
         # SOTA: Isolamento de I/O bloqueante (disco) para fora do Event Loop
         def _resolve_and_read():
-            result_path = (Path(".claude/task_results") / f"{task_id}.md").resolve()
-            base_dir = Path(".claude/task_results").resolve()
+            result_path = (Path(".cerebro/task_results") / f"{task_id}.md").resolve()
+            base_dir = Path(".cerebro/task_results").resolve()
             if not str(result_path).startswith(str(base_dir)):
                 return False, "INVALID_PATH"
             if not result_path.exists():

@@ -14,6 +14,7 @@ import { SotaTooltip } from '@/components/simulator/ui/SotaTooltip';
 import { GravitationalScannerPanel } from '@/components/simulator/ui/GravitationalScannerPanel';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { WasmTelemetryWidget } from './WasmTelemetryWidget';
+import { useSotaSync } from '@/components/simulator/hooks/useSotaSync';
 
 const DEFAULT_STACKS = [9.4, 52.4, 22.2, 7, 44.3, 24.3, 40, 13.4, 55];
 const DEFAULT_PRIZES = [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
@@ -45,6 +46,9 @@ export default function PerspectivePanel({
   initialBlindsRising = false,
   hudOnly = false,
 }: Readonly<PerspectivePanelProps>) {
+  const { physics } = useSotaSync();
+  const referenceStatus = physics.referenceStatus;
+
   const stacks = useMemo(
     () => (initialStacks && initialStacks.length > 0 ? initialStacks : DEFAULT_STACKS),
     [initialStacks],
@@ -141,9 +145,10 @@ export default function PerspectivePanel({
         heroRp,
         villainRp,
         stackEff: stacks[0] || 40,
+        referenceStatus,
       },
     });
-  }, [stacks, prizes, kappa, numPlayers, bountyValue, potSize, heroCost, winProb, realization, edgeBase, isNearPayjump, blindsRising, humanNoiseFactor]);
+  }, [stacks, prizes, kappa, numPlayers, bountyValue, potSize, heroCost, winProb, realization, edgeBase, isNearPayjump, blindsRising, humanNoiseFactor, referenceStatus]);
 
   // SOTA v4.2: Orquestração de Cálculo Modularizada
   const { result, chartData } = usePerspectiveCalculations({
@@ -160,6 +165,7 @@ export default function PerspectivePanel({
     isNearPayjump,
     blindsRising,
     humanNoiseFactor,
+    referenceStatus,
   });
 
   if (hudOnly) {
@@ -205,13 +211,46 @@ export default function PerspectivePanel({
             Física da Decisão: Piso Dinâmico (EV_fold) e Dívida RIO
           </p>
         </div>
-        <div
-          className={`flex items-center gap-3 rounded-xl border px-5 py-2.5 text-[0.6rem] font-black tracking-[0.2em] uppercase shadow-2xl transition-all ${isNearPayjump ? 'text-accent-emerald border-emerald-500/20 bg-emerald-500/10 shadow-emerald-500/5' : 'text-text-darker border-white/5 bg-black/40'}`}
-        >
+        <div className="flex flex-wrap items-center gap-4">
           <div
-            className={`h-1.5 w-1.5 rounded-full ${isNearPayjump ? 'bg-accent-emerald animate-pulse shadow-[0_0_8px_var(--accent-emerald)]' : 'bg-text-darker'}`}
-          />
-          {isNearPayjump ? 'LADDERING ATIVO' : 'EQUILÍBRIO ESTÁVEL'}
+            className={`flex items-center gap-3 rounded-xl border px-5 py-2.5 text-[0.6rem] font-black tracking-[0.2em] uppercase shadow-2xl transition-all ${isNearPayjump ? 'text-accent-emerald border-emerald-500/20 bg-emerald-500/10 shadow-emerald-500/5' : 'text-text-darker border-white/5 bg-black/40'}`}
+          >
+            <div
+              className={`h-1.5 w-1.5 rounded-full ${isNearPayjump ? 'bg-accent-emerald animate-pulse shadow-[0_0_8px_var(--accent-emerald)]' : 'bg-text-darker'}`}
+            />
+            {isNearPayjump ? 'LADDERING ATIVO' : 'EQUILÍBRIO ESTÁVEL'}
+          </div>
+
+          <div
+            className={`flex items-center gap-3 rounded-xl border px-5 py-2.5 text-[0.6rem] font-black tracking-[0.2em] uppercase shadow-2xl transition-all ${
+              referenceStatus === 'tilt'
+                ? 'text-accent-rose border-rose-500/20 bg-rose-500/10 shadow-rose-500/5'
+                : referenceStatus === 'protecting'
+                  ? 'text-accent-emerald border-emerald-500/20 bg-emerald-500/10 shadow-emerald-500/5'
+                  : referenceStatus === 'bubble'
+                    ? 'text-accent-indigo border-indigo-500/20 bg-indigo-500/10 shadow-indigo-500/5'
+                    : 'text-slate-400 border-white/5 bg-black/40'
+            }`}
+          >
+            <div
+              className={`h-1.5 w-1.5 rounded-full ${
+                referenceStatus === 'tilt'
+                  ? 'bg-accent-rose shadow-[0_0_8px_var(--accent-rose)] animate-pulse'
+                  : referenceStatus === 'protecting'
+                    ? 'bg-accent-emerald shadow-[0_0_8px_var(--accent-emerald)] animate-pulse'
+                    : referenceStatus === 'bubble'
+                      ? 'bg-accent-indigo shadow-[0_0_8px_var(--accent-indigo)] animate-pulse'
+                      : 'bg-slate-500'
+              }`}
+            />
+            {referenceStatus === 'tilt'
+              ? 'TILT / RISK SEEKING'
+              : referenceStatus === 'protecting'
+                ? 'PROTECTING WIN'
+                : referenceStatus === 'bubble'
+                  ? 'BUBBLE SURVIVAL'
+                  : 'BASELINE EV'}
+          </div>
         </div>
       </div>
 
@@ -221,7 +260,7 @@ export default function PerspectivePanel({
           <GravitationalScannerPanel stacks={stacks} heroIdx={0} />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 rounded-2xl border border-white/5 bg-black/40 p-5 shadow-2xl hover:border-white/10 transition-colors duration-300">
           <div className="flex items-center justify-between px-1">
             <label
               htmlFor="perspective-opponents"
@@ -242,11 +281,11 @@ export default function PerspectivePanel({
             step="1"
             value={numPlayers}
             onChange={(e) => setNumPlayers(Number.parseInt(e.target.value))}
-            className="accent-accent-danger h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10"
+            className="sota-range-slider sota-slider-danger cursor-pointer"
           />
         </div>
 
-        <div className="flex flex-col justify-center gap-3 rounded-2xl border border-white/5 bg-black/40 p-5 shadow-2xl">
+        <div className="flex flex-col justify-center gap-3 rounded-2xl border border-white/5 bg-black/40 p-5 shadow-2xl hover:border-white/10 transition-colors duration-300">
           <label
             htmlFor="perspective-payjump"
             className="text-text-muted group flex cursor-pointer items-center gap-3 text-[0.6rem] font-black tracking-[0.2em] uppercase transition-all active:scale-95"
@@ -275,7 +314,7 @@ export default function PerspectivePanel({
           </label>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 rounded-2xl border border-white/5 bg-black/40 p-5 shadow-2xl hover:border-white/10 transition-colors duration-300">
           <div className="flex items-center justify-between px-1">
             <label
               htmlFor="perspective-pko"
@@ -295,11 +334,11 @@ export default function PerspectivePanel({
             step="0.01"
             value={bountyValue}
             onChange={(e) => setBountyValue(Number.parseFloat(e.target.value))}
-            className="accent-accent-gold h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10"
+            className="sota-range-slider sota-slider-gold cursor-pointer"
           />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 rounded-2xl border border-white/5 bg-black/40 p-5 shadow-2xl hover:border-white/10 transition-colors duration-300">
           <div className="flex items-center justify-between px-1">
             <label
               htmlFor="perspective-kappa"
@@ -319,11 +358,11 @@ export default function PerspectivePanel({
             step="0.05"
             value={kappa}
             onChange={(e) => setKappa(Number.parseFloat(e.target.value))}
-            className="accent-accent-pink h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10"
+            className="sota-range-slider sota-slider-pink cursor-pointer"
           />
         </div>
 
-        <div className="group/sunk relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-black/60 p-5 shadow-2xl">
+        <div className="group/sunk relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-black/60 p-5 shadow-2xl transition-all duration-300 hover:border-white/10">
           <div className="from-accent-amber/5 pointer-events-none absolute inset-0 bg-linear-to-b to-transparent" />
           <span className="text-text-darker group-hover/sunk:text-text-dim relative z-10 mb-1.5 text-[0.55rem] font-black tracking-[0.3em] uppercase transition-colors">
             Sunk Cost &middot; Pot
@@ -333,7 +372,7 @@ export default function PerspectivePanel({
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 rounded-2xl border border-white/5 bg-black/40 p-5 shadow-2xl hover:border-white/10 transition-colors duration-300">
           <div className="flex items-center justify-between px-1">
             <label
               htmlFor="perspective-equity"
@@ -353,12 +392,11 @@ export default function PerspectivePanel({
             step="0.01"
             value={winProb}
             onChange={(e) => setWinProb(Number.parseFloat(e.target.value))}
-            className="accent-accent-indigo h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10"
+            className="sota-range-slider sota-slider-indigo cursor-pointer"
           />
         </div>
 
-        {/* SOTA v6: Fator Psi */}
-        <div className="space-y-4">
+        <div className="space-y-4 rounded-2xl border border-white/5 bg-black/40 p-5 shadow-2xl hover:border-white/10 transition-colors duration-300">
           <div className="flex items-center justify-between px-1">
             <label
               htmlFor="perspective-human-noise"
@@ -378,11 +416,11 @@ export default function PerspectivePanel({
             step="0.05"
             value={humanNoiseFactor}
             onChange={(e) => setHumanNoiseFactor(Number.parseFloat(e.target.value))}
-            className="accent-accent-rose h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10"
+            className="sota-range-slider sota-slider-rose cursor-pointer"
           />
         </div>
 
-        <div className="space-y-4 pt-2 md:col-span-2">
+        <div className="space-y-4 pt-2 md:col-span-2 rounded-2xl border border-white/5 bg-black/40 p-5 shadow-2xl hover:border-white/10 transition-colors duration-300">
           <div className="flex items-center justify-between px-1">
             <label
               htmlFor="perspective-realization"
@@ -402,7 +440,7 @@ export default function PerspectivePanel({
             step="0.05"
             value={realization}
             onChange={(e) => setRealization(Number.parseFloat(e.target.value))}
-            className="accent-accent-emerald h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10 shadow-inner"
+            className="sota-range-slider sota-slider-emerald cursor-pointer"
           />
         </div>
       </div>

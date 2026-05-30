@@ -26,7 +26,7 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 
-# ── Integracao Direta com o Kernel (Bypass de Subprocessos) ──
+#  Integracao Direta com o Kernel (Bypass de Subprocessos)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR))
 
@@ -55,8 +55,8 @@ logger.add(
 )
 
 # Inicializa as configuracoes globais de blindagem de logs SOTA e Manifestos
-from core.schemas import Task  # noqa: E402
-from database.queue_manager import QueueManager  # noqa: E402
+from core.schemas import Task
+from database.queue_manager import QueueManager
 
 console = Console()
 
@@ -66,8 +66,16 @@ app = typer.Typer(
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
-ops_app = typer.Typer(name="ops", help="Operacoes de Infraestrutura, Saneamento e Watchers", no_args_is_help=True)
-agent_app = typer.Typer(name="agent", help="Sincronizacao e Handoff Hibrido da Mente Coletiva", no_args_is_help=True)
+ops_app = typer.Typer(
+    name="ops",
+    help="Operacoes de Infraestrutura, Saneamento e Watchers",
+    no_args_is_help=True,
+)
+agent_app = typer.Typer(
+    name="agent",
+    help="Sincronizacao e Handoff Hibrido da Mente Coletiva",
+    no_args_is_help=True,
+)
 db_app = typer.Typer(name="db", help="Gestao e Otimizacao do DAL (SQLite ACID)", no_args_is_help=True)
 stats_app = typer.Typer(name="stats", help="Telemetria Preditiva e Relatorios", no_args_is_help=True)
 
@@ -76,10 +84,15 @@ app.add_typer(agent_app)
 app.add_typer(db_app)
 app.add_typer(stats_app)
 
-DIR_CLAUDE = BASE_DIR / ".claude"
+DIR_CLAUDE = BASE_DIR / ".cerebro"
+
+#  Constantes do Orquestrador SOTA
+WORKER_SCRIPT_NAME = "task_executor.py"
+WORKER_SCRIPT_PATH = BASE_DIR / WORKER_SCRIPT_NAME
+WORKER_API_CMD = "worker-api"
 
 
-# ── Utils de Runtime ──
+#  Utils de Runtime
 def coro(f):
     """Wrapper letal para permitir injecao direta de tarefas async no Typer."""
 
@@ -98,7 +111,7 @@ def main():
     if script_path.exists():
         # Execucao em background ou silenciosa O(n) sobre a Nexus Zone
         subprocess.Popen(
-            ["uv", "run", "python", str(script_path)],
+            [sys.executable, str(script_path)],
             cwd=str(BASE_DIR),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -114,9 +127,16 @@ def main():
 @coro
 async def add_task(
     description: list[str] = typer.Argument(..., help="Descricao bruta da tarefa a ser executada pela malha."),
-    agent: str = typer.Option("@dispatcher", "--agent", "-a", help="Roteamento explicito (ex: @chico, @implementor)"),
+    agent: str = typer.Option(
+        "@dispatcher",
+        "--agent",
+        "-a",
+        help="Roteamento explicito (ex: @chico, @implementor)",
+    ),
     cortex_override: bool = typer.Option(
-        False, "--cortex-override", help="Bypass da Antevisao Semantica (Forcar execucao)"
+        False,
+        "--cortex-override",
+        help="Bypass da Antevisao Semantica (Forcar execucao)",
     ),
 ):
     """
@@ -170,7 +190,9 @@ async def add_task(
 
 @app.command("list")
 @coro
-async def list_tasks(limit: int = typer.Option(5, "--limit", "-l", help="Numero de tarefas recentes")):
+async def list_tasks(
+    limit: int = typer.Option(5, "--limit", "-l", help="Numero de tarefas recentes"),
+):
     """Lista as diretrizes mais recentes injetadas no Orquestrador."""
     db_path = _resolve_tasks_db_path()
     if not db_path:
@@ -180,7 +202,10 @@ async def list_tasks(limit: int = typer.Option(5, "--limit", "-l", help="Numero 
     try:
         with contextlib.closing(sqlite3.connect(db_path)) as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id, agent, status, description FROM tasks ORDER BY timestamp DESC LIMIT ?", (limit,))
+            cursor.execute(
+                "SELECT id, agent, status, description FROM tasks ORDER BY timestamp DESC LIMIT ?",
+                (limit,),
+            )
             rows = cursor.fetchall()
 
             table = Table(title="[bold]DIRETRIZES RECENTES (SOTA v7.0)[/]")
@@ -207,8 +232,11 @@ async def show_status():
             counts = await qm.get_task_counts()
             worker_alive = False
             for proc in psutil.process_iter(["pid", "cmdline"]):
-                cmdline = " ".join(proc.info.get("cmdline") or [])
-                if "task_executor.py" in cmdline and "worker-api" in cmdline:
+                cmd_info = proc.info.get("cmdline")
+                cmd_str = ""
+                if isinstance(cmd_info, list):
+                    cmd_str = " ".join(map(str, cmd_info))
+                if WORKER_SCRIPT_NAME in cmd_str and WORKER_API_CMD in cmd_str:
                     worker_alive = True
                     break
 
@@ -216,7 +244,10 @@ async def show_status():
             grid.add_column(style="cyan", justify="right", width=25)
             grid.add_column()
 
-            grid.add_row("[CORE] Orquestrador", "[green]OPERANTE[/]" if worker_alive else "[red]OFFLINE[/]")
+            grid.add_row(
+                "[CORE] Orquestrador",
+                "[green]OPERANTE[/]" if worker_alive else "[red]OFFLINE[/]",
+            )
             grid.add_row(
                 "[DATA] Carga de Tarefas",
                 f"[yellow]{counts.get('pending', 0)}[/] Pendentes | [magenta]{counts.get('running', 0)}[/] Rodando | [green]{counts.get('completed', 0)}[/] Concluidas",
@@ -237,7 +268,7 @@ def search_rag(
     """Realiza busca hibrida semantica no RAG do Orquestrador."""
     console.print(f"[cyan]Pesquisando na Mente Coletiva SOTA por: '{query}'...[/cyan]")
     rag_script = BASE_DIR / "memory_rag.py"
-    subprocess.run(["uv", "run", "python", str(rag_script), "query", query], cwd=str(BASE_DIR))
+    subprocess.run([sys.executable, str(rag_script), "query", query], cwd=str(BASE_DIR))
 
 
 @app.command("graph")
@@ -247,7 +278,7 @@ def graph_rag(
     """Consulta e forja as relacoes do Grafo Causal (Knowledge Graph)."""
     console.print(f"[cyan]Forjando Grafo Causal para: '{query}'...[/cyan]")
     rag_script = BASE_DIR / "memory_rag.py"
-    subprocess.run(["uv", "run", "python", str(rag_script), "graph", query], cwd=str(BASE_DIR))
+    subprocess.run([sys.executable, str(rag_script), "graph", query], cwd=str(BASE_DIR))
 
 
 # ==========================================
@@ -256,7 +287,7 @@ def graph_rag(
 
 
 def _resolve_tasks_db_path() -> Path | None:
-    for candidate in ["queue/tasks.db", ".claude/tasks.db", "tasks.db"]:
+    for candidate in ["queue/tasks.db", ".cerebro/tasks.db", "tasks.db"]:
         p = BASE_DIR / candidate
         if p.exists() and p.stat().st_size > 0:
             return p
@@ -268,8 +299,10 @@ def _extract_dependencies(meta_str: str | None) -> list[str]:
         return []
     try:
         meta = json.loads(meta_str)
-        if isinstance(meta, dict) and isinstance(meta.get("depends_on"), list):
-            return [str(d) for d in meta.get("depends_on")]
+        if isinstance(meta, dict):
+            deps = meta.get("depends_on")
+            if isinstance(deps, list):
+                return [str(d) for d in deps]
     except json.JSONDecodeError:
         pass
     return []
@@ -347,7 +380,9 @@ def purge_orphans():
 
 
 @db_app.command("clear-pending")
-def clear_pending(confirm: bool = typer.Option(False, "--confirm", help="Confirma a delecao de tarefas pendentes")):
+def clear_pending(
+    confirm: bool = typer.Option(False, "--confirm", help="Confirma a delecao de tarefas pendentes"),
+):
     """Remove todas as tarefas com status 'pending' do DAL."""
     db_path = _resolve_tasks_db_path()
     if not db_path:
@@ -400,8 +435,10 @@ def vacuum_db():
 def generate_graph():
     """Gera Grafo Mermaid da Malha DAG Atual."""
     console.print("[bold magenta]=== [SISTEMA] GERANDO GRAFO DE DEPENDENCIAS (MERMAID) ===[/]")
-    executor = BASE_DIR / "task_executor.py"
-    subprocess.run(["uv", "run", "python", str(executor), "db-mermaid-graph"], cwd=str(BASE_DIR))
+    subprocess.run(
+        [sys.executable, str(WORKER_SCRIPT_PATH), "db-mermaid-graph"],
+        cwd=str(BASE_DIR),
+    )
 
 
 # ==========================================
@@ -412,22 +449,28 @@ def generate_graph():
 @stats_app.command("daily")
 def daily_stats():
     """Estatisticas diarias da Autonomia."""
-    executor = BASE_DIR / "task_executor.py"
-    subprocess.run(["uv", "run", "python", str(executor), "daily-stats"], cwd=str(BASE_DIR))
+    subprocess.run(
+        [sys.executable, str(WORKER_SCRIPT_PATH), "daily-stats"],
+        cwd=str(BASE_DIR),
+    )
 
 
 @stats_app.command("historian")
 def historian_reports():
     """Extrai perfis preditivos e aversao ao risco da base SOTA."""
-    executor = BASE_DIR / "task_executor.py"
-    subprocess.run(["uv", "run", "python", str(executor), "historian-reports"], cwd=str(BASE_DIR))
+    subprocess.run(
+        [sys.executable, str(WORKER_SCRIPT_PATH), "historian-reports"],
+        cwd=str(BASE_DIR),
+    )
 
 
 @stats_app.command("daily-report")
 def generate_daily_report():
     """Gera relatorios diarios de autonomia e os enfileira na fila."""
-    executor = BASE_DIR / "task_executor.py"
-    subprocess.run(["uv", "run", "python", str(executor), "generate-daily-reports"], cwd=str(BASE_DIR))
+    subprocess.run(
+        [sys.executable, str(WORKER_SCRIPT_PATH), "generate-daily-reports"],
+        cwd=str(BASE_DIR),
+    )
 
 
 # ==========================================
@@ -442,8 +485,11 @@ def start_worker(
     """Gatilho de ignicao do Orquestrador Hibrido (Autopoiese)."""
     for proc in psutil.process_iter(["pid", "cmdline"]):
         try:
-            cmdline = " ".join(proc.info.get("cmdline") or [])
-            if "task_executor.py" in cmdline and "worker-api" in cmdline:
+            cmd_info = proc.info.get("cmdline")
+            cmdline_str = ""
+            if isinstance(cmd_info, list):
+                cmdline_str = " ".join(map(str, cmd_info))
+            if WORKER_SCRIPT_NAME in cmdline_str and WORKER_API_CMD in cmdline_str:
                 if force:
                     console.print(f"[bold yellow][AVISO] Matando Worker pendurado (PID {proc.pid})...[/]")
                     proc.kill()
@@ -455,9 +501,10 @@ def start_worker(
             continue
 
     console.print("[cyan]Iniciando Orquestrador Hibrido (SOTA)...[/cyan]")
-    worker_script = BASE_DIR / "task_executor.py"
     subprocess.Popen(
-        ["uv", "run", "python", str(worker_script), "worker-api"], start_new_session=True, cwd=str(BASE_DIR)
+        [sys.executable, str(WORKER_SCRIPT_PATH), WORKER_API_CMD],
+        start_new_session=True,
+        cwd=str(BASE_DIR),
     )
     console.print("[bold magenta]Orquestrador desperto e vigilante em background.[/]")
 
@@ -473,7 +520,14 @@ def watch_files():
         raise typer.Exit(1)
 
     def ignore_paths(change, path):
-        ignore_list = ["__pycache__", ".git", ".venv", "node_modules", ".chroma_db", ".claude/logs"]
+        ignore_list = [
+            "__pycache__",
+            ".git",
+            ".venv",
+            "node_modules",
+            ".chroma_db",
+            ".cerebro/logs",
+        ]
         return not any(ign in path for ign in ignore_list)
 
     try:
@@ -491,11 +545,13 @@ def watch_files():
 
 
 @ops_app.command("sanitize")
-def sanitize_system(apply: bool = typer.Option(False, "--apply", help="Forca a execucao real da delecao.")):
+def sanitize_system(
+    apply: bool = typer.Option(False, "--apply", help="Forca a execucao real da delecao."),
+):
     """Aplica o expurgo deterministico de entropia SOTA."""
     script_path = BASE_DIR / "scripts/maintenance/apply_sanitize.py"
     if script_path.exists():
-        args = ["uv", "run", "python", str(script_path)]
+        args = [sys.executable, str(script_path)]
         if apply:
             args.append("--apply")
         subprocess.run(args, cwd=str(BASE_DIR))
@@ -506,59 +562,79 @@ def purify_memories():
     """Purifica as memorias do agente para Pure ASCII (Mojibake Fix)."""
     script_path = BASE_DIR / "scripts/maintenance/purify_memories_ascii.py"
     if script_path.exists():
-        subprocess.run(["uv", "run", "python", str(script_path)], cwd=str(BASE_DIR))
+        subprocess.run([sys.executable, str(script_path)], cwd=str(BASE_DIR))
 
 
 @ops_app.command("check-ascii")
 def check_ascii_mandate():
-    """Verifica se os módulos Python respeitam a Blindagem ASCII."""
-    console.print("[bold cyan]=== [SISTEMA] Verificando Blindagem ASCII em Módulos Python ===[/]")
+    """Verifica se os modulos Python respeitam a Blindagem ASCII."""
+    console.print("[bold cyan]=== [SISTEMA] Verificando Blindagem ASCII em Modulos Python ===[/]")
 
     non_ascii_files = []
-    # Foca nos diretorios core
-    for path in BASE_DIR.rglob("*.py"):
-        if any(exc in str(path) for exc in [".venv", "node_modules", "__pycache__", ".gemini"]):
-            continue
+
+    def scan_dir(dir_path: Path):
         try:
-            with open(path, "rb") as f:
-                content = f.read()
-                content.decode("ascii")
-        except UnicodeDecodeError:
-            non_ascii_files.append(path.relative_to(BASE_DIR))
+            for path in dir_path.iterdir():
+                if path.is_dir():
+                    if path.name not in [".venv", ".venv-wsl", "venv", ".env", "node_modules", "__pycache__", ".gemini", "temp", "triage", ".git", ".cerebro", "target", ".next", "dist", "build"]:
+                        scan_dir(path)
+                elif path.is_file() and path.suffix == ".py":
+                    try:
+                        with open(path, "rb") as f:
+                            content = f.read()
+                            content.decode("ascii")
+                    except UnicodeDecodeError:
+                        non_ascii_files.append(path.relative_to(BASE_DIR))
+        except (PermissionError, FileNotFoundError):
+            pass
+
+    scan_dir(BASE_DIR)
 
     if non_ascii_files:
-        console.print("[bold red][ENTROPIA] Caracteres não-ASCII detectados:[/]")
-        for f in non_ascii_files:
-            console.print(f"  - {f}")
+        console.print("[bold red][ENTROPIA] Caracteres nao-ASCII detectados:[/]")
+        for file_path in non_ascii_files:
+            console.print(f"  - {file_path}")
         raise typer.Exit(1)
-    console.print("[bold green][OK] Blindagem ASCII íntegra em todos os módulos Python.[/]")
+    console.print("[bold green][OK] Blindagem ASCII integra em todos os modulos Python.[/]")
 
 
 @ops_app.command("lint")
 def run_lint():
     """Executa a Pipeline de Integridade Python (Ruff, Mypy, Pylint)."""
-    console.print("[bold magenta]🛡️  Nexus Orchestrator - Pipeline de Integridade Python[/]\n")
+    console.print("[bold magenta][NEXUS] Nexus Orchestrator - Pipeline de Integridade Python[/]\n")
 
     def run_step(name: str, cmd: list[str]):
-        console.print(f"\n[bold blue]🚀 Iniciando:[/] [white]{name}[/]")
+        console.print(f"\n[bold blue]> Iniciando:[/] [white]{name}[/]")
         start = time.monotonic()
         res = subprocess.run(cmd, cwd=str(BASE_DIR))
         elapsed = time.monotonic() - start
         if res.returncode == 0:
-            console.print(f"[bold green]✅ Sucesso:[/] {name} ({elapsed:.2f}s)")
+            console.print(f"[bold green][OK] Sucesso:[/] {name} ({elapsed:.2f}s)")
         else:
-            console.print(f"[bold red]❌ Falha:[/] {name} ({elapsed:.2f}s)")
+            console.print(f"[bold red][ERR] Falha:[/] {name} ({elapsed:.2f}s)")
             raise typer.Exit(res.returncode)
 
-    run_step("Ruff Linter (Auto-fix)", ["uv", "run", "ruff", "check", ".", "--fix"])
-    run_step("Ruff Formatter", ["uv", "run", "ruff", "format", "."])
-    run_step("Mypy (Type Checker)", ["uv", "run", "mypy", "."])
+    run_step("Ruff Linter (Auto-fix)", [sys.executable, "-m", "ruff", "check", ".", "--fix"])
+    run_step("Ruff Formatter", [sys.executable, "-m", "ruff", "format", "."])
+    run_step("Mypy (Type Checker)", [sys.executable, "-m", "mypy", "."])
     run_step(
         "Pylint (Auditor Semantico)",
-        ["uv", "run", "pylint", "core", "database", "engine", "agents", "llm", "worker", "utils", "api"],
+        [
+            sys.executable,
+            "-m",
+            "pylint",
+            "core",
+            "database",
+            "engine",
+            "agents",
+            "llm",
+            "worker",
+            "utils",
+            "api",
+        ],
     )
 
-    console.print("\n[bold green]🎉 Pipeline Python SOTA concluido com sucesso absoluto![/]")
+    console.print("\n[bold green][SUCCESS] Pipeline Python SOTA concluido com sucesso absoluto![/]")
 
 
 @ops_app.command("vscode-inject")
@@ -573,8 +649,8 @@ def inject_vscode_settings():
         "8. HIERARQUIA ABSOLUTA (GOD MODE W3): Voce atua sob a consciencia de @chico (Tier 1)."
     )
 
-    vscode_dir = BASE_DIR / ".vscode"
-    settings_file = vscode_dir / "settings.json"
+    vscode_dir: Path = BASE_DIR / ".vscode"
+    settings_file: Path = vscode_dir / "settings.json"
 
     if not vscode_dir.exists():
         vscode_dir.mkdir(parents=True)
@@ -582,7 +658,12 @@ def inject_vscode_settings():
     if settings_file.exists():
         with open(settings_file, encoding="utf-8") as f:
             raw = f.read()
-            clean_json = re.sub(r"//.*|/\*[\s\S]*?\*/", "", raw)
+            # SOTA: Evita que comentarios '//' colidam com URLs 'http://' ou 'https://' dentro de strings
+            clean_json = re.sub(
+                r'("(?:\\.|[^"\\])*")|//.*|/\*[\s\S]*?\*/',
+                lambda m: m.group(1) or "",
+                raw,
+            )
             if clean_json.strip():
                 settings_data = json.loads(clean_json)
 
@@ -602,9 +683,50 @@ def run_hygiene():
     """Realiza a extirpacao temporal de artefatos obsoletos (Limite: 7 dias)."""
     script_path = BASE_DIR / "scripts/maintenance/hygiene.py"
     if script_path.exists():
-        subprocess.run(["uv", "run", "python", str(script_path)], cwd=str(BASE_DIR))
+        subprocess.run([sys.executable, str(script_path)], cwd=str(BASE_DIR))
     else:
         console.print("[bold red][ERRO] Script de higiene nao encontrado.[/]")
+
+
+async def _execute_step(name: str, cmd: list[str], cwd: Path | str) -> None:
+    """Executa um passo isolado do Quality Gate e processa a saida ativamente (Friccao Zero)."""
+    console.print(f"\n[bold cyan]==> {name}[/]")
+    logger.info(f"[QUALITY-GATE] START: {name} | CMD: {' '.join(cmd)}")
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            cwd=str(cwd),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+
+        if proc.stdout is not None:
+            while True:
+                line = await proc.stdout.readline()
+                if not line:
+                    break
+                decoded = line.decode("utf-8", errors="ignore").strip()
+                if decoded:
+                    clean_decoded = decoded.encode("ascii", errors="ignore").decode("ascii")
+                    if clean_decoded:
+                        console.print(f"[dim]{clean_decoded}[/]")
+                        logger.debug(f"[{name}] {clean_decoded}")
+
+        await proc.wait()
+
+        if proc.returncode != 0:
+            logger.error(f"[QUALITY-GATE] FAIL: {name} | EXIT_CODE: {proc.returncode}")
+            console.print(f"[bold red]Erro: O passo '{name}' falhou com codigo de saida {proc.returncode}.[/]")
+            raise typer.Exit(proc.returncode or 1)
+
+        logger.success(f"[QUALITY-GATE] SUCCESS: {name}")
+    except typer.Exit:
+        raise
+    except Exception as e:
+        logger.exception(f"[QUALITY-GATE] FATAL ERROR in {name}: {e}")
+        console.print(f"[bold red]Excecao fatal executando '{name}': {e}[/]")
+        raise typer.Exit(1)
 
 
 @ops_app.command("quality-gate")
@@ -613,53 +735,97 @@ async def quality_gate():
     """Executa a Pipeline SOTA (Lint, Typecheck, Build, Tests) sem dependencias externas e envia logs ao Loguru."""
     console.print("[bold magenta]=== [SISTEMA] INICIANDO QUALITY GATE SOTA ===[/]")
 
-    npm_cmd = shutil.which("npm") or "npm"
-    uv_cmd = shutil.which("uv") or "uv"
+    npm_cmd = shutil.which("npm")
+
+    if not npm_cmd:
+        console.print("[bold red][ENTROPIA CRITICA] Executaveis vitais (npm) ausentes no PATH da membrana.[/]")
+        raise typer.Exit(1)
+
+    # --- Auto-Cure & O(1) Cache Recovery for LightningCSS Native Binaries ---
+    import os
+    node_modules_dir = BASE_DIR / "node_modules"
+    cache_dir = NEXUS_ZONE_CACHE / "lightningcss"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    platforms = [
+        ("lightningcss-linux-x64-gnu", sys.platform.startswith("linux") or os.name == "posix"),
+        ("lightningcss-win32-x64-msvc", sys.platform == "win32")
+    ]
+
+    for lib_name, is_current in platforms:
+        lib_path = node_modules_dir / lib_name
+        cache_path = cache_dir / lib_name
+
+        # 1. Se existe no node_modules mas nao no cache, faz backup
+        if lib_path.exists() and not cache_path.exists():
+            try:
+                shutil.copytree(lib_path, cache_path, dirs_exist_ok=True)
+                logger.info(f"[AUTO-CURE] Backup criado para {lib_name} no cache.")
+            except Exception as e:
+                logger.warning(f"[AUTO-CURE] Falha ao fazer backup de {lib_name}: {e}")
+
+        # 2. Se e a plataforma atual e esta ausente no node_modules
+        if is_current and not lib_path.exists():
+            # Tenta recuperar do cache (O(1) local restore)
+            if cache_path.exists():
+                console.print(f"[bold green][AUTO-CURE] Recuperando {lib_name} do cache local (O(1) sem rede)...[/]")
+                try:
+                    shutil.copytree(cache_path, lib_path, dirs_exist_ok=True)
+                    console.print(f"[bold green][AUTO-CURE] {lib_name} recuperado com sucesso.[/]")
+                except Exception as e:
+                    console.print(f"[bold red][AUTO-CURE] Falha ao copiar do cache: {e}. Executando fallback 'npm install'...[/]")
+
+            # Se nao havia no cache ou a copia falhou, executa npm install e depois faz o backup
+            if not lib_path.exists():
+                console.print(f"[bold yellow][AUTO-CURE] {lib_name} ausente no cache. Executando 'npm install'...[/]")
+                try:
+                    proc = await asyncio.create_subprocess_exec(
+                        npm_cmd, "install",
+                        cwd=str(BASE_DIR),
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE
+                    )
+                    await proc.communicate()
+                    if proc.returncode == 0:
+                        console.print("[bold green][AUTO-CURE] npm install concluido com sucesso. Binarios reestabelecidos.[/]")
+                        if lib_path.exists():
+                            shutil.copytree(lib_path, cache_path, dirs_exist_ok=True)
+                    else:
+                        console.print(f"[bold red][AUTO-CURE] Falha ao executar 'npm install'. Exit code: {proc.returncode}[/]")
+                except Exception as e:
+                    console.print(f"[bold red][AUTO-CURE] Excecao ao executar 'npm install': {e}[/]")
+    # -------------------------------------------------------------------------
 
     steps = [
-        ("Blindagem ASCII", [uv_cmd, "run", "python", str(Path(__file__)), "ops", "check-ascii"], BASE_DIR),
+        (
+            "Blindagem ASCII",
+            [sys.executable, str(Path(__file__)), "ops", "check-ascii"],
+            BASE_DIR,
+        ),
         ("Lint (frontend)", [npm_cmd, "run", "lint"], BASE_DIR),
-        ("Typecheck (frontend)", [npm_cmd, "--workspace", "frontend", "run", "typecheck:audit"], BASE_DIR),
+        (
+            "Typecheck (frontend)",
+            [npm_cmd, "--workspace", "frontend", "run", "typecheck:audit"],
+            BASE_DIR,
+        ),
         ("Build (frontend)", [npm_cmd, "run", "build"], BASE_DIR),
         ("Tests (frontend)", [npm_cmd, "run", "test"], BASE_DIR),
         (
             "Python syntax check",
-            [uv_cmd, "run", "python", "-m", "py_compile", "api/v1/middleware.py", "api/v1/server.py"],
+            [
+                sys.executable,
+                "-m",
+                "py_compile",
+                "api/v1/middleware.py",
+                "api/v1/server.py",
+            ],
             BASE_DIR,
         ),
-        ("Python tests", [uv_cmd, "run", "pytest", "-q"], BASE_DIR),
+        ("Python tests", [sys.executable, "-m", "pytest", "-q"], BASE_DIR),
     ]
 
     for name, cmd, cwd in steps:
-        console.print(f"\n[bold cyan]==> {name}[/]")
-        logger.info(f"[QUALITY-GATE] START: {name} | CMD: {' '.join(cmd)}")
-
-        try:
-            process = await asyncio.create_subprocess_exec(
-                *cmd, cwd=str(cwd), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
-            )
-
-            while True:
-                line = await process.stdout.readline()
-                if not line:
-                    break
-                decoded = line.decode("utf-8", errors="replace").strip()
-                if decoded:
-                    console.print(f"[dim]{decoded}[/]")
-                    logger.debug(f"[{name}] {decoded}")
-
-            await process.wait()
-
-            if process.returncode != 0:
-                logger.error(f"[QUALITY-GATE] FAIL: {name} | EXIT_CODE: {process.returncode}")
-                console.print(f"[bold red]Erro: O passo '{name}' falhou com codigo de saida {process.returncode}.[/]")
-                raise typer.Exit(process.returncode)
-
-            logger.success(f"[QUALITY-GATE] SUCCESS: {name}")
-        except Exception as e:
-            logger.exception(f"[QUALITY-GATE] FATAL ERROR in {name}: {e}")
-            console.print(f"[bold red]Excecao fatal executando '{name}': {e}[/]")
-            raise typer.Exit(1)
+        await _execute_step(name, cmd, cwd)
 
     console.print("\n[bold green]QUALITY GATE: OK (Telemetria Preditiva Capturada)[/]")
 
@@ -706,7 +872,9 @@ def execute_handoff(
 
 
 @agent_app.command("route")
-def test_routing(description: str = typer.Argument(..., help="Testa o despacho semantico da malha.")):
+def test_routing(
+    description: str = typer.Argument(..., help="Testa o despacho semantico da malha."),
+):
     """Avalia para qual agente uma dada instrucao seria roteada usando as heuristicas do config nativamente."""
     try:
         import task_executor

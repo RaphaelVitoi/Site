@@ -72,7 +72,7 @@ async def _handle_hibernation(manager: QueueManager, status_line) -> bool:
 
     try:
         hibernation_until = datetime.fromisoformat(hibernation_ts)
-        # SOTA: Correcao de tzinfo — apenas adiciona UTC se o datetime for naive.
+        # SOTA: Correcao de tzinfo  apenas adiciona UTC se o datetime for naive.
         # .replace(tzinfo=UTC) num datetime tz-aware substitui sem converter, gerando
         # comparacao incorreta. A forma correta e testar tzinfo antes de substituir.
         if hibernation_until.tzinfo is None:

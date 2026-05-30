@@ -2,6 +2,8 @@
 import type { PerspectivaResult, PerspectivaInput } from '@/lib/perspectiva';
 import { createContext } from 'react';
 
+import type { HeroPosition } from './engine/types';
+
 // Contexto Estático/Dados Base (Muda com as interações de spot)
 export interface ActionMetric {
 	chipEv: number;
@@ -32,6 +34,14 @@ export interface ISotaSpotContext {
 	activePlayers?: number;
 	heroStack?: number;
 	villainStack?: number;
+	initialStacks?: number[];
+	initialPrizes?: number[];
+	heroIdx?: number;
+	primaryVillainIdx?: number;
+	heroPosition?: HeroPosition;
+	blindsRisingSoon?: boolean;
+	pkoValue?: number;
+	aggFactor?: number;
 }
 
 // Contexto de Métricas Calculadas (Muda conforme FGS e Perspectiva)

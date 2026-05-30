@@ -1,6 +1,6 @@
 secrets:
   auth_secret:
-    file: ./.claude/secrets/auth_secret.txt
+    file: ./.cerebro/secrets/auth_secret.txt
 
 services:
   backend:
@@ -13,7 +13,7 @@ services:
       - '17042:17042'
     restart: always
     volumes:
-      - ./.claude:/app/.claude
+      - ./.cerebro:/app/.cerebro
       - ./queue:/app/queue
       - ./data/chroma_db:/app/data/chroma_db
       - ./tasks.db:/app/tasks.db

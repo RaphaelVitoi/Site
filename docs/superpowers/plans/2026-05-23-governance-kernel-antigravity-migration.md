@@ -31,7 +31,7 @@
   - Reduce to a Gemini-specific adapter.
 - Modify: `.cursorules`
   - Reduce to a Cursor-specific adapter.
-- Modify: `.clauderules`
+- Modify: `.cerebrorules`
   - Reduce to a Claude-specific adapter.
 - Modify: `.vscode/gemini-codeassist-custom-instructions.md`
   - Reduce to a minimal VS Code Code Assist adapter.
@@ -398,7 +398,7 @@ git commit -m "refactor: drive autonomy runtime from structured policy"
 **Files:**
 - Modify: `GEMINI.md`
 - Modify: `.cursorules`
-- Modify: `.clauderules`
+- Modify: `.cerebrorules`
 - Modify: `.vscode/gemini-codeassist-custom-instructions.md`
 
 - [ ] **Step 1: Replace `GEMINI.md` with a host adapter**
@@ -440,7 +440,7 @@ Derived from `governance/KERNEL.md`.
 - Treat runtime policy as defined by `governance/autonomy.yaml`.
 ```
 
-- [ ] **Step 3: Replace `.clauderules` with a Claude adapter**
+- [ ] **Step 3: Replace `.cerebrorules` with a Claude adapter**
 
 ```md
 # Claude Adapter
@@ -476,7 +476,7 @@ Derived from `governance/KERNEL.md`.
 Run:
 
 ```powershell
-Select-String -Path GEMINI.md,.cursorules,.clauderules,.vscode\gemini-codeassist-custom-instructions.md -Pattern 'Tier 0|God Mode|VITOI|Authority-Full|bypass'
+Select-String -Path GEMINI.md,.cursorules,.cerebrorules,.vscode\gemini-codeassist-custom-instructions.md -Pattern 'Tier 0|God Mode|VITOI|Authority-Full|bypass'
 ```
 
 Expected:
@@ -488,7 +488,7 @@ No matches or only adapter-safe references
 - [ ] **Step 6: Commit**
 
 ```bash
-git add GEMINI.md .cursorules .clauderules .vscode/gemini-codeassist-custom-instructions.md
+git add GEMINI.md .cursorules .cerebrorules .vscode/gemini-codeassist-custom-instructions.md
 git commit -m "docs: reduce host prompts to governance adapters"
 ```
 
@@ -636,7 +636,7 @@ git commit -m "chore: mark vscode layer as host-local only"
 - Review: `agents/autonomy.py`
 - Review: `GEMINI.md`
 - Review: `.cursorules`
-- Review: `.clauderules`
+- Review: `.cerebrorules`
 - Review: `.vscode/gemini-codeassist-custom-instructions.md`
 
 - [ ] **Step 1: Run targeted autonomy tests**

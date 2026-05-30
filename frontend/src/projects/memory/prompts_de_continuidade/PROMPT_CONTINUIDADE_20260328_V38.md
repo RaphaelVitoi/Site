@@ -186,8 +186,8 @@ O que PERMANECE em task_executor.py (nao foi extraido):
 
 ### Worktree residual
 
-`.claude/worktrees/agent-ad7cbace` -- worktree de agente que falhou por permissao.
-Pode ser deletada: `git worktree remove --force .claude/worktrees/agent-ad7cbace`
+`.cerebro/worktrees/agent-ad7cbace` -- worktree de agente que falhou por permissao.
+Pode ser deletada: `git worktree remove --force .cerebro/worktrees/agent-ad7cbace`
 
 ---
 

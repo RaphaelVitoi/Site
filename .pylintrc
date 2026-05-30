@@ -1,2 +1,29 @@
-# DEPRECATED: Toda a configuracao harmonizada do Pylint foi
-# movida e unificada dentro de pyproject.toml na secao [tool.pylint.*]
+[MESSAGES CONTROL]
+disable =
+    line-too-long,
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    duplicate-code,
+    broad-exception-caught,
+    cyclic-import,
+    logging-fstring-interpolation,
+    too-many-branches,
+    too-many-return-statements,
+    too-few-public-methods,
+    protected-access,
+    consider-using-with,
+    no-else-return,
+    too-many-arguments,
+    too-many-positional-arguments,
+    too-many-locals,
+    too-many-statements,
+    too-many-instance-attributes,
+    too-many-nested-blocks,
+    too-many-public-methods,
+    consider-using-in,
+    invalid-name,
+    consider-using-join,
+    too-many-lines,
+    contextmanager-generator-missing-cleanup,
+    import-outside-toplevel

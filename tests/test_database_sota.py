@@ -250,7 +250,7 @@ async def test_queue_manager_recover_stalled_tasks() -> None:
     """Valida a detecao e recuperacao (auto-cura) de tarefas travadas."""
     manager = QueueManager(queue_path=":memory:")
     try:
-        # Tarefa travada há 1 hora
+        # Tarefa travada ha 1 hora
         task = Task(
             id="T-STUCK",
             description="Tarefa travada",
@@ -304,7 +304,7 @@ async def test_queue_manager_promote_starved_tasks() -> None:
     """Valida a promocao automatica de prioridade para tarefas famintas."""
     manager = QueueManager(queue_path=":memory:")
     try:
-        # Tarefa pendente há muito tempo com prioridade low
+        # Tarefa pendente ha muito tempo com prioridade low
         task = Task(
             id="T-STARVED",
             description="Tarefa faminta",

@@ -2,7 +2,11 @@
   "terminal.integrated.env.windows": {
     "GEMINI_SOTA_MODE": "v7"
   },
-  "python.defaultInterpreterPath": "C:\\Users\\Raphael\\.gemini\\Site\\.venv\\Scripts\\python.exe",
+  "terminal.integrated.env.linux": {
+    "UV_LINK_MODE": "copy",
+    "UV_PROJECT_ENVIRONMENT": ".venv-wsl"
+  },
+  "terminal.integrated.cwd": "${workspaceFolder}",
   "gemini-cli.model": "gemini-2.5-pro",
   "gemini.auto_auditoria": true,
   "gemini.sota.version": "7.0.0-QUANTUM",
@@ -10,7 +14,11 @@
   "antigravity.telemetry.enabled": false,
   "antigravity.performance.mode": "extreme",
   "ollama.executablePath": "ollama",
-  "ollama.models": ["gemma4:31b-cloud", "gemma4:4b-it", "llama.cpp"],
+  "ollama.models": [
+    "gemma4:31b-cloud",
+    "gemma4:4b-it",
+    "llama.cpp"
+  ],
   "git.autofetch": false,
   "editor.minimap.enabled": false,
   "editor.hover.delay": 1000,
@@ -22,48 +30,78 @@
   "geminicodeassist.agentDebugMode": false,
   "geminicodeassist.agentYoloMode": true,
   "geminicodeassist.enableTelemetry": false,
-  "geminicodeassist.outlines.automaticOutlineGeneration": false,
+  "geminicodeassist.outlines.automaticOutlineGeneration": true,
   "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
   "geminicodeassist.updateChannel": "Insiders",
   "geminicodeassist.codeGenerationPaneViewEnabled": true,
   "geminicodeassist.project": "gen-lang-client-0098874436",
-  "geminicodeassist.rules": "SOTA v7.0 GOLD: Excelência técnica absoluta. Proibido smoothing ou artificialização. Respostas pautadas em rigor lógico e evidência empírica. Aplique o Steelmaning Protocol: fortaleça a premissa do usuário antes da crítica arquitetural. Se houver ausência de dados, declare ignorância. Foco total em eficiência de tokens e integridade full-stack. Aprimore seu output com Antevisão e Pensamento Bayesiano.",
+  "geminicodeassist.rules": "SOTA v7.0 GOLD: Excelencia tecnica absoluta. Proibido smoothing ou artificializaco. Respostas pautadas em rigor logico e evidencia empirica. Aplique o Steelmaning Protocol: fortaleca a premissa do usurio antes da critica arquitetural. Se houver ausencia de dados, declare ignorancia. Foco total em eficiencia de tokens e integridade full-stack. Aprimore seu output com Antevisao e Pensamento Bayesiano.",
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/node_modules/**": true,
     "**/.venv/**": true,
+    "**/.venv-wsl/**": true,
     "**/.next/**": true,
     "**/.turbo/**": true,
+    "**/.swc/**": true,
     "**/__pycache__/**": true,
     "**/dist/**": true,
     "**/build/**": true,
     "**/wasm-equity/target/**": true,
-    "**/.gemini/**": true
+    "**/.gemini/**": true,
+    "**/temp/nexus_zone/**": true,
+    "**/dist-workers/**": true,
+    "**/reports/**": true,
+    "**/skills/exa-mcp-server/**": true,
+    "**/skills/gemini-cli-security/**": true,
+    "**/skills/file-search-store-extension/**": true,
+    "**/skills/run-long-command/**": true,
+    "**/plugins/driftx/skills/**": true
   },
   "files.autoSave": "onFocusChange",
   "files.hotExit": "onExit",
-  "files.useExperimentalFileWatcher": false,
+  "files.useExperimentalFileWatcher": true,
   "files.exclude": {
     "**/.git": true,
     "**/node_modules": true,
     "**/.venv": true,
+    "**/.venv-wsl": true,
     "**/__pycache__": true,
     "**/.next": true,
     "**/.turbo": true,
+    "**/.swc": true,
     "**/.chroma_db": true,
     "**/dist": true,
-    "**/build": true
+    "**/build": true,
+    "**/temp/nexus_zone": true,
+    "**/dist-workers": true,
+    "**/reports": true,
+    "**/skills/exa-mcp-server": true,
+    "**/skills/gemini-cli-security": true,
+    "**/skills/file-search-store-extension": true,
+    "**/skills/run-long-command": true,
+    "**/plugins/driftx/skills": true
   },
   "search.exclude": {
     "**/.git": true,
     "**/node_modules": true,
     "**/.venv": true,
+    "**/.venv-wsl": true,
     "**/__pycache__": true,
     "**/.next": true,
     "**/.turbo": true,
+    "**/.swc": true,
     "**/.chroma_db": true,
     "**/dist": true,
-    "**/build": true
+    "**/build": true,
+    "**/temp/nexus_zone": true,
+    "**/dist-workers": true,
+    "**/reports": true,
+    "**/skills/exa-mcp-server": true,
+    "**/skills/gemini-cli-security": true,
+    "**/skills/file-search-store-extension": true,
+    "**/skills/run-long-command": true,
+    "**/plugins/driftx/skills": true
   },
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
@@ -80,7 +118,7 @@
   "editor.suggest.showCodeLenses": true,
   "editor.renderWhitespace": "selection",
   "editor.tabSize": 4,
-  "editor.insertSpaces": false,
+  "editor.insertSpaces": true,
   "editor.stickyScroll.enabled": true,
   "editor.stickyScroll.maxLineCount": 5,
   "editor.defaultFormatter": "charliermarsh.ruff",
@@ -91,7 +129,12 @@
       "source.organizeImports.ruff": "explicit"
     }
   },
-  "tailwindCSS.experimental.classRegex": [["@theme\\s*{([^}]*)}", "--color-([^\\s:]*)"]],
+  "tailwindCSS.experimental.classRegex": [
+    [
+      "@theme\\s*{([^}]*)}",
+      "--color-([^\\s:]*)"
+    ]
+  ],
   "tailwindCSS.includeLanguages": {
     "plaintext": "html",
     "typescriptreact": "html"
@@ -99,22 +142,56 @@
   "terminal.integrated.profiles.windows": {
     "Gemini-SOTA": {
       "path": "powershell.exe",
-      "args": ["-NoExit", "-Command", "gemini --approval-mode auto_edit"]
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-NoExit",
+        "-Command",
+        "gemini --approval-mode auto_edit"
+      ]
     },
     "WSL-Debian": {
       "path": "wsl.exe",
-      "args": ["-d", "Debian"],
+      "args": [
+        "--cd",
+        "${workspaceFolder}",
+        "-d",
+        "Debian"
+      ],
       "icon": "terminal-debian"
+    },
+    "WSL-Debian-Root": {
+      "path": "wsl.exe",
+      "args": [
+        "--cd",
+        "${workspaceFolder}",
+        "-d",
+        "Debian",
+        "-u",
+        "root"
+      ],
+      "icon": "warning",
+      "color": "terminal.ansiRed"
     }
   },
   "terminal.integrated.defaultProfile.windows": "Gemini-SOTA",
+  "terminal.integrated.profiles.linux": {
+    "Root-God-Mode": {
+      "path": "sudo",
+      "args": [
+        "bash"
+      ],
+      "icon": "warning",
+      "color": "terminal.ansiRed"
+    }
+  },
   "explorer.fileNesting.enabled": false,
   "msg.shell.useExternal": false,
   "msg.mrs.displayScriptHelpers": true,
   "msg.editor.stopOnErrors": true,
   "msg.dbEditor.connectionBrowser.sortFoldersFirst": true,
   "msg.editor.showHidden": true,
-  "gemini.mcp.configPath": ".vscode/mcp.json",
+  "gemini.mcp.configPath": ".vscode/gemini-mcp.json",
   "gemini.research.autoSaveReport": true,
   "gemini.googleSearch.enabled": true,
   "gemini.cloud.autoDeploy": false,
@@ -124,11 +201,11 @@
   "cloudcode.yaml.trace.server": "off",
   "google.cloud.project": "gen-lang-client-0098874436",
   "hermes.debugLogs": false,
-  "hermes.path": "C:\\Users\\Raphael\\.gemini\\Site\\.venv\\Scripts\\hermes.exe",
+  "hermes.path": "${workspaceFolder}/.venv/Scripts/hermes.exe",
   "ollama-chat.defaultModel": "gemma4:31b-cloud",
-  "workbench.iconTheme": "vs-seti",
+  "workbench.iconTheme": "office-material-icon-theme",
   "console-ninja.enabled": true,
-  "turboConsoleLog.logMessagePrefix": "🚀 SOTA",
+  "turboConsoleLog.logMessagePrefix": "\ud83d\ude80 SOTA",
   "markdown.extension.toc.orderedList": true,
   "markdown.extension.toc.plaintext": true,
   "markdown.extension.tableFormatter.normalizeIndentation": true,
@@ -149,15 +226,15 @@
   "ruff.lint.preview": true,
   "ruff.format.preview": true,
   "dart.normalizeFileCasing": true,
-  "powershell.integratedConsole.useLegacyReadLine": false,
-  "powershell.integratedConsole.startInBackground": true,
+  "powershell.integratedConsole.useLegacyReadLine": true,
+  "powershell.integratedConsole.startInBackground": false,
   "eslint.useESLintClass": true,
   "eslint.quiet": true,
   "eslint.problems.shortenToSingleLine": true,
   "eslint.format.enable": true,
   "eslint.ignoreUntitled": true,
-  "eslint.debug": true,
-  "terminal.integrated.initialHintCopilotCli": false,
+  "eslint.debug": false,
+  "terminal.integrated.initialHintCopilotCli": true,
   "terminal.integrated.enableWin32InputMode": true,
   "terminal.integrated.suggest.providers": {
     "lsp": true
@@ -209,7 +286,9 @@
   "python.analysis.referencesCodeLens": true,
   "python.analysis.supportDocstringTemplate": true,
   "python.analysis.diagnosticMode": "openFilesOnly",
-  "mypy-type-checker.args": ["--config-file=${workspaceFolder}/pyproject.toml"],
+  "mypy-type-checker.args": [
+    "--config-file=${workspaceFolder}/pyproject.toml"
+  ],
   "mypy-type-checker.importStrategy": "fromEnvironment",
   "python.globalModuleInstallation": true,
   "python.REPL.sendToNativeREPL": true,
@@ -232,27 +311,36 @@
     "activeDirectoryEndpointUrl": "https://login.microsoftonline.com/",
     "activeDirectoryResourceId": "https://management.core.windows.net/"
   },
-  "prettier.enableDebugLogs": true,
+  "prettier.enableDebugLogs": false,
   "prettier.experimentalTernaries": true,
-  "prettier.insertPragma": true,
+  "prettier.insertPragma": false,
   "prettier.jsxSingleQuote": true,
   "prettier.resolveGlobalModules": true,
   "prettier.singleAttributePerLine": false,
-  "prettier.withNodeModules": true,
-  "prettier.requirePragma": true,
+  "prettier.withNodeModules": false,
+  "prettier.requirePragma": false,
   "prettier.proseWrap": "preserve",
   "vetur.experimental.templateInterpolationService": true,
   "vetur.validation.templateProps": true,
   "markdown-pdf.outputDirectoryRelativePathFile": true,
   "markdown-pdf.stylesRelativePathFile": true,
   "powershell.codeFormatting.useConstantStrings": false,
+  "powershell.powerShellAdditionalExePaths": {
+    "Windows PowerShell (WSL Interop)": "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+    "pwsh (WSL Interop)": "/mnt/c/Program Files/PowerShell/7/pwsh.exe"
+  },
+  "powershell.powerShellDefaultVersion": "Windows PowerShell (WSL Interop)",
   "rust-analyzer.interpret.tests": true,
-  "pylint.args": ["--ignore-paths=^.*[/\\\\]\\.vscode[/\\\\]extensions[/\\\\].*$"],
+  "pylint.args": [
+    "--ignore-paths=^.*[/\\\\]\\.vscode[/\\\\]extensions[/\\\\].*$"
+  ],
   "sonarlint.analyzerProperties": {
     "sonar.exclusions": "**/.vscode/extensions/**, **/.venv/**, **/node_modules/**"
   },
-  "sonarlint.pathToNodeExecutable": "/home/RaphaelVitoi/.nvm/versions/node/v24.16.0/bin/node",
-  "pylint.ignorePatterns": ["**/.vscode/extensions/**", "**/*.pyi"],
+  "pylint.ignorePatterns": [
+    "**/.vscode/extensions/**",
+    "**/*.pyi"
+  ],
   "python-envs.pythonProjects": [
     {
       "path": "cli/commands.py",
@@ -311,11 +399,11 @@
   "sqltools.disableNodeDetectNotifications": false,
   "sqltools.csvExport.quoted": true,
   "sqltools.connectionExplorer.groupConnected": true,
-  "spring-boot.ls.cds.enabled": true,
-  "boot-java.ai.mcp-server-enabled": true,
+  "spring-boot.ls.cds.enabled": false,
+  "boot-java.ai.mcp-server-enabled": false,
   "boot-java.properties.completions.elide-prefix": true,
-  "boot-java.scan-java-test-sources.on": true,
-  "boot-java.live-information.all-local-java-processes": true,
+  "boot-java.scan-java-test-sources.on": false,
+  "boot-java.live-information.all-local-java-processes": false,
   "boot-java.highlight-copilot-codelens.on": true,
   "boot-java.code-action.data-query-multiline": true,
   "terminal.integrated.accessibleViewFocusOnCommandExecution": true,
@@ -330,7 +418,30 @@
   "explorer.confirmDelete": true,
   "explorer.confirmDragAndDrop": true,
   "editor.formatOnPaste": true,
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "/.vscode/gemini-mcp.json"
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mcpServers": {
+            "type": "object",
+            "description": "SOTA: Declaracao nativa de servidores MCP (Model Context Protocol)."
+          }
+        }
+      }
+    }
+  ],
   "[jsonc]": {
     "editor.defaultFormatter": "vscode.json-language-features"
-  }
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  },
+  "gemini.codeAssist.customSystemInstructions": "PROTOCOLO SOTA DE COMPREENSAO E REFATORACAO DE CODIGO v7.0 GOLD.\n\nDIRETRIZES IRREVOGAVEIS:\n1. ANTEVISAO SEMANTICA (Micro-Macro): E terminantemente proibida a analise isolada de fragmentos...\n2. LETALIDADE TERMODINAMICA: Refatore com o menor numero de tokens e operacoes I/O possiveis.\n8. HIERARQUIA ABSOLUTA (GOD MODE W3): Voce atua sob a consciencia de @chico (Tier 1).",
+  "gemini.codeAssist.system.enableExtendedChainOfThought": true,
+  "gemini.codeAssist.system.verbosityLevel": "maximum_density",
+  "geminicodeassist.inlineSuggestions.suggestionSpeed": "Fast"
 }

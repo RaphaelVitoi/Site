@@ -1,7 +1,7 @@
 {
     "sources": [
         {
-            "path": ".claude/agent-memory",
+            "path": ".cerebro/agent-memory",
             "patterns": [
                 "MEMORY.md"
             ],
@@ -15,14 +15,14 @@
             "recursive": true
         },
         {
-            "path": ".claude",
+            "path": ".cerebro",
             "patterns": [
                 "*.md"
             ],
             "recursive": false
         },
         {
-            "path": ".claude/agents",
+            "path": ".cerebro/agents",
             "patterns": [
                 "*.md"
             ],

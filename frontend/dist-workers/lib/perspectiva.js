@@ -8,18 +8,18 @@
  */
 import { calculateIcmMonteCarlo } from './montecarlo';
 import { PerspectivaInputSchema, PerspectivaResultSchema } from './schemas';
-// === MOTOR ICM (Malmuth-Harville / Monte Carlo EstocÃ¡stico) ===
+// === MOTOR ICM (Malmuth-Harville / Monte Carlo Estocástico) ===
 const _icmCache = new Map();
 export function calculateMapaICM(stacks, prizes) {
     const n = stacks.length;
-    // SOTA: Monte Carlo Fallback para evitar explosÃ£o combinatÃ³ria (O(2^N))
+    // SOTA: Monte Carlo Fallback para evitar explosão combinatória (O(2^N))
     // Adaptado de bibliotecas Open Source para fields maiores
     if (n > 10) {
         const totalChips = stacks.reduce((s, v) => s + v, 0);
         const equities = calculateIcmMonteCarlo(stacks, prizes, {
             iterations: 20000,
         });
-        // Probs aproximadas (nÃ£o totalmente precisas via MCMC, mas suficientes para fallback)
+        // Probs aproximadas (não totalmente precisas via MCMC, mas suficientes para fallback)
         const positionProbs = Array.from({ length: n }, () => new Array(Math.min(n, prizes.length)).fill(0));
         if (totalChips > 0 && prizes.length > 0) {
             stacks.forEach((s, i) => {
@@ -33,14 +33,23 @@ export function calculateMapaICM(stacks, prizes) {
     const activePrizes = prizes.slice(0, n);
     const k = activePrizes.length;
     const totalChips = stacks.reduce((s, v) => s + v, 0);
-    const key = `${stacks.join(',')}|${activePrizes.join(',')}`;
+    // SOTA v7.0 GOLD: Normalização e Invariância de Escala para cache de alta performance
+    const normScale = 20000;
+    const normalizedStacks = totalChips > 0 ? stacks.map(s => Math.round((s / totalChips) * normScale)) : stacks;
+    const key = `${normalizedStacks.join(',')}|${activePrizes.join(',')}`;
     const cachedIcm = _icmCache.get(key);
-    if (cachedIcm)
-        return cachedIcm;
+    if (cachedIcm) {
+        return {
+            positionProbs: cachedIcm.positionProbs,
+            equities: cachedIcm.equities,
+            totalChips,
+        };
+    }
     const positionProbs = Array.from({ length: n }, () => new Array(k).fill(0));
     const equities = new Array(n).fill(0);
     if (totalChips === 0 || k === 0)
         return { positionProbs, equities, totalChips };
+    // SOTA v7.0 GOLD: Bitmask Memoization (Integers keys) para eliminar alocações e conversões de string em loops recursivos
     const memo = new Map();
     function _applySubComputation(p, posIdx, sub, posC, eqC) {
         for (let j = 0; j < n; j++) {
@@ -53,43 +62,41 @@ export function calculateMapaICM(stacks, prizes) {
             eqC[j] = (eqC[j] ?? 0) + p * (sub.eqC[j] ?? 0);
         }
     }
-    function compute(currStacks, currIndices, posIdx, currTotal) {
-        if (posIdx >= k || currStacks.length === 0 || currTotal === 0) {
+    function compute(mask, posIdx, currTotal) {
+        if (posIdx >= k || mask === 0 || currTotal <= 0) {
             return {
                 posC: Array.from({ length: n }, () => new Array(k).fill(0)),
                 eqC: new Array(n).fill(0),
             };
         }
-        const stateKey = `${posIdx}:${currIndices
-            .slice()
-            .sort((a, b) => a - b)
-            .join(',')}`;
+        const stateKey = (posIdx << 16) | mask;
         const cachedState = memo.get(stateKey);
         if (cachedState)
             return cachedState;
         const posC = Array.from({ length: n }, () => new Array(k).fill(0));
         const eqC = new Array(n).fill(0);
-        for (let i = 0; i < currStacks.length; i++) {
-            const stack = currStacks[i] ?? 0;
+        for (let i = 0; i < n; i++) {
+            if ((mask & (1 << i)) === 0)
+                continue;
+            const stack = stacks[i] ?? 0;
             if (stack <= 0)
                 continue;
             const p = stack / currTotal;
-            const origIdx = currIndices[i];
-            if (origIdx === undefined)
-                continue;
-            const heroPosRow = posC[origIdx];
+            const heroPosRow = posC[i];
             if (!heroPosRow)
                 continue;
             heroPosRow[posIdx] = (heroPosRow[posIdx] ?? 0) + p;
-            eqC[origIdx] = (eqC[origIdx] ?? 0) + p * (activePrizes[posIdx] ?? 0);
-            const sub = compute(currStacks.filter((_, j) => j !== i), currIndices.filter((_, j) => j !== i), posIdx + 1, currTotal - stack);
+            eqC[i] = (eqC[i] ?? 0) + p * (activePrizes[posIdx] ?? 0);
+            const nextMask = mask ^ (1 << i);
+            const sub = compute(nextMask, posIdx + 1, currTotal - stack);
             _applySubComputation(p, posIdx, sub, posC, eqC);
         }
         const res = { posC, eqC };
         memo.set(stateKey, res);
         return res;
     }
-    const resultContrib = compute(stacks, stacks.map((_, i) => i), 0, totalChips);
+    const initialMask = (1 << n) - 1;
+    const resultContrib = compute(initialMask, 0, totalChips);
     const finalResult = {
         positionProbs: resultContrib.posC,
         equities: resultContrib.eqC,

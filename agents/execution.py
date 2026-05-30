@@ -343,7 +343,7 @@ async def _process_observers_and_handoff(task: Task, manager: QueueManager) -> N
     if not await manager.get_task(handoff_id):
         new_task = Task(
             id=handoff_id,
-            description=f"O agente {task.agent} concluiu sua etapa. Analise '.claude/task_results/{task.id}.md' e execute a sua.",
+            description=f"O agente {task.agent} concluiu sua etapa. Analise '.cerebro/task_results/{task.id}.md' e execute a sua.",
             agent=next_agent,
             timestamp=datetime.now(UTC).isoformat(),
         )
@@ -377,7 +377,7 @@ def _save_task_result_sync(task_id: str, agent: str, response_text: str) -> None
     """Descarrega a gravacao em disco do resultado para uma thread limpa."""
     # Blindagem SOTA: apenas alfanum, hifens, underscores e pontos sao permitidos.
     safe_task_id = re.sub(r"[^\w\-\.]", "_", Path(task_id).name)[:128]
-    result_dir = Path(".claude/task_results")
+    result_dir = Path(".cerebro/task_results")
     result_dir.mkdir(parents=True, exist_ok=True)
     with open(result_dir / f"{safe_task_id}.md", "w", encoding="utf-8") as f:
         f.write(f"# Resposta: {task_id} ({agent})\n\n{response_text}")

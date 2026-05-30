@@ -178,7 +178,7 @@ function Get-FileContentSOTA([string]$Path) {
 
 function Write-CryptoAuditSOTA {
     param([string]$Action, [string]$Target)
-    $LogDir = Join-Path $ScriptDirectory '.claude\logs'
+    $LogDir = Join-Path $ScriptDirectory '.cerebro\logs'
     if (-not (Test-Path -LiteralPath $LogDir)) { New-Item -ItemType Directory -Path $LogDir | Out-Null }
     $AuditLogPath = Join-Path $LogDir 'crypto_audit.log'
     $Timestamp = (Get-Date -Format 'o')
@@ -295,7 +295,7 @@ if ($Graph) {
 }
 
 if ($Reflect) {
-    Invoke-NexusScript -ScriptName '.claude\trigger_mass_reflection.ps1' -Message 'INICIANDO DESPERTAR COGNITIVO EM MASSA'
+    Invoke-NexusScript -ScriptName '.cerebro\trigger_mass_reflection.ps1' -Message 'INICIANDO DESPERTAR COGNITIVO EM MASSA'
 }
 
 if ($Watch) {
@@ -464,7 +464,7 @@ if ($Web -or $Ola) {
 
     Write-Host "`n[INFO] Sintetizando artefatos e memorias no Clipboard..." -ForegroundColor Yellow
 
-    $ClaudeDir = Join-Path $ScriptDirectory '.claude'
+    $CerebroDir = Join-Path $ScriptDirectory '.cerebro'
 
     try {
         # --- Montagem 100% em Memoria (Anti-IOException e Bypass Absoluto de Temps) ---
@@ -485,18 +485,18 @@ if ($Web -or $Ola) {
         }
 
         # 1. Base Arquitetural
-        $globalInstrPath = Join-Path $ClaudeDir 'GLOBAL_INSTRUCTIONS.md'
+        $globalInstrPath = Join-Path $CerebroDir 'GLOBAL_INSTRUCTIONS.md'
         if (-not (Test-Path -LiteralPath $globalInstrPath)) { $globalInstrPath = Join-Path $ScriptDirectory 'GLOBAL_INSTRUCTIONS.md' }
         &$InjectFile 'INSTRUCOES GLOBAIS' $globalInstrPath
-        &$InjectFile 'COSMOVISAO (FILOSOFIA)' (Join-Path $ClaudeDir 'COSMOVISAO.md')
-        &$InjectFile 'INVARIANTES ARQUITETURAIS' (Join-Path $ClaudeDir 'ARCHITECTURAL_INVARIANTS.md')
+        &$InjectFile 'COSMOVISAO (FILOSOFIA)' (Join-Path $CerebroDir 'COSMOVISAO.md')
+        &$InjectFile 'INVARIANTES ARQUITETURAIS' (Join-Path $CerebroDir 'ARCHITECTURAL_INVARIANTS.md')
 
         # 2. Arquivos Core de Roteamento solicitados
-        &$InjectFile 'CONTEXTO DO PROJETO' (Join-Path $ClaudeDir 'project-context.md')
-        &$InjectFile 'IDENTIDADE SOTA' (Join-Path $ClaudeDir 'CLAUDE.md')
+        &$InjectFile 'CONTEXTO DO PROJETO' (Join-Path $CerebroDir 'project-context.md')
+        &$InjectFile 'IDENTIDADE SOTA' (Join-Path $CerebroDir 'CEREBRO.md')
 
         # 3. Injeta Perfis dos Agentes
-        $AgentsDir = Join-Path $ClaudeDir 'agents'
+        $AgentsDir = Join-Path $CerebroDir 'agents'
         if (Test-Path -LiteralPath $AgentsDir) {
             $AgentFiles = Get-ChildItem -LiteralPath $AgentsDir -Filter *.md
             if ($AgentFiles) {
@@ -508,7 +508,7 @@ if ($Web -or $Ola) {
         }
 
         # 4. Injeta Memorias Individuais
-        $AgentMemoryDir = Join-Path $ClaudeDir 'agent-memory'
+        $AgentMemoryDir = Join-Path $CerebroDir 'agent-memory'
         if (Test-Path -LiteralPath $AgentMemoryDir) {
             $MemoryFiles = Get-ChildItem -LiteralPath $AgentMemoryDir -Filter MEMORY.md -Recurse
             if ($MemoryFiles) {
@@ -679,7 +679,7 @@ if ($Description) {
         }
         catch {
             Write-Host '[ALERTA] Motor Gemma Offline ou em Carregamento. Tentando Fallback (Cold Start)...' -ForegroundColor Yellow
-            & $PythonCmd (Join-Path $ScriptDirectory 'scripts\llm_inference\run_inference.py') $DescText
+        Invoke-WslPython 'scripts/llm_inference/run_inference.py' $DescText
             exit $LASTEXITCODE
         }
     }
@@ -687,7 +687,7 @@ if ($Description) {
     $TargetAgent = if ($ExplicitAgent) { $ExplicitAgent } else { '@dispatcher' }
     $Metadata = @{}
     try {
-        $RouteOutput = & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') route-task $DescText $ExplicitAgent
+    $RouteOutput = Invoke-WslPython 'task_executor.py' route-task $DescText $ExplicitAgent
         if ($LASTEXITCODE -eq 0 -and $RouteOutput) {
             $RouteJson = $RouteOutput | Where-Object { $_ -match '^\s*\{' } | Select-Object -First 1
             $RouteData = $RouteJson | ConvertFrom-Json
@@ -748,7 +748,7 @@ if ($Description) {
     catch {
         Write-Host '[AVISO] API de alta velocidade offline. Acionando Fallback para insercao direta no DAL (SQLite)...' -ForegroundColor Yellow
         $taskB64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($taskJson))
-        $output = & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') db-add $taskB64
+        $output = Invoke-WslPython 'task_executor.py' db-add $taskB64
         if ($LASTEXITCODE -eq 0) {
             Write-Host "[TAREFA ENFILEIRADA SOTA] ID: $($NewTask.id) (DAL Sincronizado)" -ForegroundColor Green
         }

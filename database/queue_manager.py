@@ -6,6 +6,7 @@ import gc
 import json
 import logging
 import os
+import re
 import sqlite3
 import uuid
 from collections.abc import Iterable
@@ -129,16 +130,10 @@ class QueueManager:
         """Internal provider de conexoes aiosqlite sem travas DDL."""
         if getattr(self, "_is_memory", False):
             async with aiosqlite.connect(self.db_path, uri=True) as db:
-                try:
-                    yield db
-                finally:
-                    pass
+                yield db
         else:
             async with aiosqlite.connect(self.db_path) as db:
-                try:
-                    yield db
-                finally:
-                    pass
+                yield db
 
     @contextlib.asynccontextmanager
     async def _get_async_db(self):
@@ -147,10 +142,7 @@ class QueueManager:
         """
         await self._ensure_initialized()
         async with self._get_async_db_context() as db:
-            try:
-                yield db
-            finally:
-                pass
+            yield db
 
     async def close(self) -> None:
         """Encerra graciosamente a conexao ancora em memoria, se aplicavel."""
@@ -355,23 +347,30 @@ class QueueManager:
 
     async def get_next_task(self) -> Task | None:
         """
-        SOTA: Algoritmo de extracao baseada em Grafos de Dependencia e Peso de Prioridade.
-        Impede condicoes de corrida garantindo que bloqueios sejam respeitados.
+        SOTA GOLD: Extracao de Grafo DAG usando Common Table Expressions (CTEs).
+        Isola a filtragem primaria da complexidade de juncao JSON, maximizando hit-rate no indice.
         """
         async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
-            async with db.execute("""
-                SELECT t1.* FROM tasks AS t1
-                WHERE t1.status = 'pending' AND NOT EXISTS (
-                    SELECT 1 FROM json_each(t1.metadata, '$.depends_on') AS dep
-                    JOIN tasks AS t2 ON t2.id = dep.value
-                    WHERE t2.status NOT IN ('completed', 'cancelled')
+            query = """
+                WITH pending_tasks AS (
+                    SELECT * FROM tasks WHERE status = 'pending'
+                ),
+                ready_tasks AS (
+                    SELECT t1.* FROM pending_tasks AS t1
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM json_each(t1.metadata, '$.depends_on') AS dep
+                        JOIN tasks AS t2 ON t2.id = dep.value
+                        WHERE t2.status NOT IN ('completed', 'cancelled')
+                    )
                 )
+                SELECT * FROM ready_tasks
                 ORDER BY
-                    CASE t1.priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 3 END,
-                    t1.timestamp ASC
+                    CASE priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 3 END,
+                    timestamp ASC
                 LIMIT 1
-            """) as cursor:
+            """
+            async with db.execute(query) as cursor:
                 row = await cursor.fetchone()
             if row:
                 return self._row_to_task(row)
@@ -439,34 +438,40 @@ class QueueManager:
         """
         SOTA GOLD Auto-Cura: Detecta e recupera tarefas travadas no status 'running'.
         Reseta para 'pending' incrementando retentativas, ou falha se ultrapassar o limite de 3.
+        Otimizacao ACID Absoluta: Resolvido via SQLite JSON1 na camada C (Zero Python Loops).
         """
         cutoff = (datetime.now(UTC) - timedelta(minutes=max_running_minutes)).isoformat()
-        recovered_count = 0
+        now_iso = datetime.now(UTC).isoformat()
+
+        query = """
+            UPDATE tasks
+            SET
+                status = CASE WHEN COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1 < 3 THEN 'pending' ELSE 'failed' END,
+                timestamp = ?,
+                metadata = json_set(
+                    COALESCE(metadata, '{}'),
+                    '$.retry_count', COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1,
+                    '$.last_stall_reason', CASE
+                        WHEN COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1 < 3
+                        THEN 'Recuperado apos ' || ? || ' minutos travado.'
+                        ELSE 'Processamento abortado: Limite maximo de retentativas de travamento atingido.'
+                    END
+                )
+            WHERE status = 'running' AND timestamp < ?
+            RETURNING id, status, json_extract(metadata, '$.retry_count') as retries, description;
+        """
         async with self._get_async_db() as db:
-            await db.execute("BEGIN EXCLUSIVE")
             db.row_factory = sqlite3.Row
-            async with db.execute(
-                "SELECT id, metadata, description FROM tasks WHERE status = 'running' AND timestamp < ?",
-                (cutoff,),
-            ) as cursor:
-                stalled_rows = await cursor.fetchall()
+            async with db.execute(query, (now_iso, str(max_running_minutes), cutoff)) as cursor:
+                recovered_rows = await cursor.fetchall()
 
-            for row in stalled_rows:
+            for row in recovered_rows:
                 task_id = row["id"]
+                new_status = row["status"]
+                retries = int(row["retries"] or 1)
                 desc = row["description"]
-                meta = {}
-                if row["metadata"]:
-                    try:
-                        meta = json.loads(row["metadata"])
-                    except Exception:
-                        pass
 
-                retries = int(meta.get("retry_count", 0)) + 1
-                meta["retry_count"] = retries
-
-                if retries < 3:
-                    new_status = "pending"
-                    meta["last_stall_reason"] = f"Recuperado apos {max_running_minutes} minutos travado."
+                if new_status == "pending":
                     logger.warning(
                         "[AUTO-HEAL] Tarefa '%s' ressucitada. Retentativa %d/3.",
                         task_id,
@@ -481,80 +486,65 @@ class QueueManager:
                             "warning",
                         )
                 else:
-                    new_status = "failed"
-                    meta["last_stall_reason"] = (
-                        "Processamento abortado: Limite maximo de retentativas de travamento atingido."
-                    )
                     logger.error(
                         "[AUTO-HEAL] Tarefa '%s' falhou definitivamente apos %d travamentos.",
                         task_id,
                         retries,
                     )
 
-                new_timestamp = datetime.now(UTC).isoformat()
-                await db.execute(
-                    "UPDATE tasks SET status = ?, timestamp = ?, metadata = ? WHERE id = ?",
-                    (new_status, new_timestamp, json.dumps(meta, ensure_ascii=True), task_id),
-                )
-                recovered_count += 1
-
             await db.commit()
-        return recovered_count
+        return len(recovered_rows)
 
     async def promote_starved_tasks(self, max_wait_hours: int = 2) -> int:
         """
         SOTA GOLD Anti-Starvation: Promove a prioridade de tarefas pendentes ha muito tempo.
         Evita que tarefas 'low' ou 'medium' fiquem bloqueadas indefinidamente por tarefas criticas.
+        Otimizacao ACID Absoluta: Resolvido via SQLite JSON1 na camada C (Zero Python Loops).
         """
         cutoff = (datetime.now(UTC) - timedelta(hours=max_wait_hours)).isoformat()
-        promoted_count = 0
+        now_iso = datetime.now(UTC).isoformat()
+
+        query = """
+            UPDATE tasks
+            SET
+                metadata = json_set(
+                    COALESCE(metadata, '{}'),
+                    '$.original_priority', COALESCE(priority, 'normal'),
+                    '$.priority', CASE COALESCE(priority, 'normal')
+                        WHEN 'low' THEN 'medium'
+                        WHEN 'normal' THEN 'high'
+                        WHEN 'medium' THEN 'high'
+                        WHEN 'high' THEN 'critical'
+                        ELSE 'critical'
+                    END,
+                    '$.promoted_at', ?
+                ),
+                priority = CASE COALESCE(priority, 'normal')
+                    WHEN 'low' THEN 'medium'
+                    WHEN 'normal' THEN 'high'
+                    WHEN 'medium' THEN 'high'
+                    WHEN 'high' THEN 'critical'
+                    ELSE 'critical'
+                END
+            WHERE status = 'pending' AND timestamp < ? AND priority != 'critical'
+            RETURNING id, priority, json_extract(metadata, '$.original_priority') as old_priority;
+        """
         async with self._get_async_db() as db:
-            await db.execute("BEGIN EXCLUSIVE")
             db.row_factory = sqlite3.Row
-            async with db.execute(
-                "SELECT id, priority, metadata FROM tasks WHERE status = 'pending' AND timestamp < ? AND priority != 'critical'",
-                (cutoff,),
-            ) as cursor:
-                starved_rows = await cursor.fetchall()
+            async with db.execute(query, (now_iso, cutoff)) as cursor:
+                promoted_rows = await cursor.fetchall()
 
-            priority_map = {
-                "low": "medium",
-                "normal": "high",
-                "medium": "high",
-                "high": "critical",
-            }
-
-            for row in starved_rows:
-                task_id = row["id"]
-                current_priority = row["priority"] or "normal"
-                new_priority = priority_map.get(current_priority, "critical")
-
-                meta = {}
-                if row["metadata"]:
-                    try:
-                        meta = json.loads(row["metadata"])
-                    except Exception:
-                        pass
-
-                meta["original_priority"] = current_priority
-                meta["priority"] = new_priority
-                meta["promoted_at"] = datetime.now(UTC).isoformat()
-
-                await db.execute(
-                    "UPDATE tasks SET priority = ?, metadata = ? WHERE id = ?",
-                    (new_priority, json.dumps(meta, ensure_ascii=True), task_id),
-                )
-                promoted_count += 1
+            for row in promoted_rows:
                 logger.info(
                     "[ANTI-STARVATION] Tarefa '%s' promovida de '%s' para '%s' (Espera > %d horas).",
-                    task_id,
-                    current_priority,
-                    new_priority,
+                    row["id"],
+                    row["old_priority"],
+                    row["priority"],
                     max_wait_hours,
                 )
 
             await db.commit()
-        return promoted_count
+        return len(promoted_rows)
 
     async def get_tasks(self, status: str | None = None, since_hours: int | None = None) -> list[Task]:
         """Varredura historica da fila com filtros de estado e temporalidade."""
@@ -614,8 +604,6 @@ class QueueManager:
         # 1. Normalizar quebras de linha
         p = prompt.replace("\r\n", "\n").replace("\r", "\n")
         # 2. Substituir sequencias longas de espacos e tabulacoes por um unico espaco, preservando quebras de linha
-        import re
-
         p = re.sub(r"[ \t]+", " ", p)
         # 3. Remover espacos no inicio e fim de cada linha
         p = "\n".join(line.strip() for line in p.split("\n"))
@@ -645,11 +633,40 @@ class QueueManager:
         return None
 
     async def get_first_cached_response(self, models: Iterable[str], prompt: str) -> str | None:
-        """Consulta a primeira resposta em cache disponivel para a lista de modelos."""
-        for model in models:
-            cached = await self.get_llm_cache(model, prompt)
-            if cached is not None:
-                return cached
+        """Consulta otimizada a primeira resposta em cache via Single-Query IN()."""
+        canon_prompt = self._canonicalize_prompt(prompt)
+        models_list = list(models)
+        if not models_list:
+            return None
+
+        placeholders = ",".join("?" for _ in models_list)
+        async with self._get_async_db() as db:
+            query = f"""
+                SELECT response FROM llm_cache
+                WHERE prompt = ? AND model IN ({placeholders})
+                ORDER BY timestamp DESC
+                LIMIT 1
+            """  # noqa: S608
+            async with db.execute(query, (canon_prompt, *models_list)) as cursor:
+                row = await cursor.fetchone()
+                if row is not None:
+                    return row[0]
+
+        # SOTA: Fallback Generico
+        generic_models = [m for m in models_list if m.startswith("@")]
+        if generic_models:
+            placeholders_gen = ",".join("?" for _ in generic_models)
+            async with self._get_async_db() as db:
+                query_gen = f"""
+                    SELECT response FROM llm_cache
+                    WHERE prompt = ? AND model IN ({placeholders_gen})
+                    ORDER BY timestamp DESC
+                    LIMIT 1
+                """  # noqa: S608
+                async with db.execute(query_gen, (canon_prompt, *generic_models)) as cursor:
+                    row = await cursor.fetchone()
+                    if row is not None:
+                        return row[0]
         return None
 
     async def update_llm_cache(self, model: str, prompt: str, response: str) -> None:
@@ -970,9 +987,9 @@ class QueueManager:
     def _purge_obsolete_files(self, cutoff_date: datetime) -> None:
         """Itera sobre os diretorios alvo aniquilando arquivos inativos."""
         directories_to_clean = [
-            ".claude/logs/audit",
-            ".claude/logs",
-            ".claude/task_results",
+            ".cerebro/logs/audit",
+            ".cerebro/logs",
+            ".cerebro/task_results",
         ]
         empty_dirs = []
         deleted_count = 0

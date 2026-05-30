@@ -46,7 +46,7 @@ def _test_rag_initialization() -> str:
     """Executa o teste de instanciacao vetorial SOTA (ChromaDB)."""
     start = time.time()
     try:
-        rag = MemoryRAG(memory_dir=".claude/agent-memory")
+        rag = MemoryRAG(memory_dir=".cerebro/agent-memory")
         expected_name = "agent_collective_memory"
         if rag.collection.name != expected_name:
             raise ValueError(f"Colecao com nome incorreto. Esperado '{expected_name}', obteve '{rag.collection.name}'")
@@ -127,7 +127,7 @@ def _test_quantum_physics_parity() -> str:
 
 def _save_report(report: list[str]) -> None:
     """Salva o relatorio bruto em arquivo de log SOTA."""
-    report_path = Path(".claude/logs/audit/latest_sota_test.log")
+    report_path = Path(".cerebro/logs/audit/latest_sota_test.log")
     report_path.parent.mkdir(parents=True, exist_ok=True)
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(report))

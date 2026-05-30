@@ -26,7 +26,7 @@ A auditoria focou na capacidade do @curator de atuar como "Filtro Executivo" e d
 
 ### 3.1. Capacidade de Identificacao e Proatividade
 
-O @curator demonstrou excelente capacidade em identificar falhas de "low" prioridade (warnings) no log (`docs/old_plan.md` e `.claude/task_results/temp_output.log`). Sua proatividade em tentar delegar as correcoes para o `@organizador` via comandos CLI (`.\do.ps1`) esta **em alinhamento perfeito** com o principio da Proatividade Sistemica e Delegacao Estrategica (Filtro Executivo), conforme descrito em `GLOBAL_INSTRUCTIONS.md` (Principio 11). Isso evita a sobrecarga do CEO (Raphael Vitoi) com tarefas operacionais de baixo/medio nivel.
+O @curator demonstrou excelente capacidade em identificar falhas de "low" prioridade (warnings) no log (`docs/old_plan.md` e `.cerebro/task_results/temp_output.log`). Sua proatividade em tentar delegar as correcoes para o `@organizador` via comandos CLI (`.\do.ps1`) esta **em alinhamento perfeito** com o principio da Proatividade Sistemica e Delegacao Estrategica (Filtro Executivo), conforme descrito em `GLOBAL_INSTRUCTIONS.md` (Principio 11). Isso evita a sobrecarga do CEO (Raphael Vitoi) com tarefas operacionais de baixo/medio nivel.
 
 ### 3.2. Efetividade da Delegacao
 

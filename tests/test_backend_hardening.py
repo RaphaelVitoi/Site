@@ -1,5 +1,5 @@
 """
-Testes de integridade e hardening do backend — middlewares, queue e task executor.
+Testes de integridade e hardening do backend  middlewares, queue e task executor.
 Marcadores: unit (sem I/O externo), integration (requer servicos).
 """
 
@@ -86,7 +86,7 @@ async def test_inject_task_docs_ignores_markdown_paths_outside_workspace(local_t
     # Mock do root do repo para os testes
     monkeypatch.setattr("agents.context_builder.WORKSPACE_ROOT", local_tmp_dir)
     monkeypatch.setattr(
-        "agents.context_builder.ALLOWED_TASK_DOC_ROOTS", (local_tmp_dir / "docs", local_tmp_dir / ".claude")
+        "agents.context_builder.ALLOWED_TASK_DOC_ROOTS", (local_tmp_dir / "docs", local_tmp_dir / ".cerebro")
     )
 
     # Caminho malicioso simulado

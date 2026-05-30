@@ -1,0 +1,23 @@
+# SOTA: Utilização do Python 3.12 conforme contrato do pyproject.toml
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# SOTA: Instalação do gerenciador universal `uv` da Astral
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Instala dependências respeitando o uv.lock determinístico
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
+
+COPY . .
+
+# Expõe a porta do Uvicorn (FastAPI/Handlers)
+EXPOSE 8000
+
+# Inicia o motor de tarefas e a API em paralelo
+CMD ["python", "task_executor.py", "start-all"]

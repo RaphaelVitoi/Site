@@ -1,31 +1,19 @@
 {
+    "version": "0.2.0",
     "configurations": [
         {
-            "name": "SOTA: Next.js (Frontend)",
-            "type": "node-terminal",
-            "request": "launch",
-            "command": "npm run dev",
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "name": "SOTA: Python Worker (Backend)",
+            "name": "SOTA GOLD: Uvicorn API (Native WSL)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/task_executor.py",
-            "args": [
-                "worker"
-            ],
+            "program": "${workspaceFolder}/main.py",
             "console": "integratedTerminal",
-            "justMyCode": false
-        }
-    ],
-    "compounds": [
-        {
-            "name": "SOTA: Ecossistema Híbrido (Next.js + Python)",
-            "configurations": [
-                "SOTA: Next.js (Frontend)",
-                "SOTA: Python Worker (Backend)"
-            ]
+            "justMyCode": false,
+            "env": {
+                "FASTAPI_DEBUG": "1",
+                "UVICORN_RELOAD": "False",
+                "PYTHONDONTWRITEBYTECODE": "1"
+            },
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

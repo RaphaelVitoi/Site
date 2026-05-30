@@ -1,4 +1,4 @@
-﻿/**
+/**
  * IDENTITY: Motor de Distorcao ICM pos-flop
  * PATH: src/components/simulator/engine/nashSolver.ts
  * ROLE: Aplicar distorcao ICM sobre frequencias ChipEV via equacao concava.
@@ -54,112 +54,82 @@ export function solveIcmDistortion(
 	const safeIp = Math.max(0, Math.min(100, Number(ipRp) || 0));
 	const safeOop = Math.max(0, Math.min(100, Number(oopRp) || 0));
 
-	// SOTA v7.0 GOLD GOLD: Gravidade do Pote (InÃ©rcia EstratÃ©gica)
-	// A inÃ©rcia estratÃ©gica (G) reduz a elasticidade da resposta ao desvio do oponente.
+	// SOTA v7.0 GOLD: Gravidade do Pote (Inércia Estratégica)
 	const gravity = Math.max(0, Math.log(Math.max(1, potSize / 7.5)));
-	const damping = 1 / (1 + gravity * 0.15); // SOTA: Aumento do amortecimento pela gravidade
-	const effectiveAggression = 1 + (aggressionFactor - 1) * damping;
+	const damping = 1.0 / (1.0 + gravity * 0.12);
+	const effectiveAggression = 1.0 + (aggressionFactor - 1.0) * damping;
+
+	const pressure = (safeOop + safeIp) / 2.0 / 100.0; // Converte pressão média para fração
+
+	const fold = (chipEvFreqs.oop_fold ?? 0) / 100;
+	const raise = (chipEvFreqs.oop_raise ?? 0) / 100;
+
+	// Downward Drift: Pressão RP converte Raise em Small Bet ou Check/Call
+	const driftBase = 0.004 * (streetIdx + 1.0);
+	const driftPenalty = raise * (pressure * driftBase * (1.0 + gravity * 0.5));
+
+	const raiseShift = raise * (effectiveAggression - 1.0) - driftPenalty - (pressure * 0.003 * activePlayers);
+	let newRaise = Math.max(0.0, raise + raiseShift);
+
+	// Fold Shift: Limitado pelo Teto de RP
+	const maxFoldAllowed = 0.88 - Math.min(0.3, gravity * 0.05);
+	const foldShift = fold * (pressure * 0.012) + Math.max(0.0, raise - newRaise);
+	let newFold = Math.max(0.0, Math.min(maxFoldAllowed, fold + foldShift));
+
+	let newCall = Math.max(0.0, 1.0 - newFold - newRaise);
+	const total = newFold + newCall + newRaise;
+
+	if (total > 0.0) {
+		newFold /= total;
+		newCall /= total;
+		newRaise /= total;
+	} else {
+		newFold = 1.0;
+		newCall = 0.0;
+		newRaise = 0.0;
+	}
 
 	const deltaRp = safeIp - safeOop;
 	const spread = calcSpread(deltaRp);
 	const avgRp = (safeIp + safeOop) / 2;
-
-	// SOTA: bExponent agora integra a aversÃ£o ao risco (D5/D6)
-	// Em altas pressÃµes, a curva de resposta se torna mais inelÃ¡stica (concavidade acentuada).
 	const bExponent = Math.max(0.12, calcBExponent(avgRp) * (1 - gravity * 0.05));
 
-	// Moduladores Dimensionais (Alinhamento Fractal)
-	const k_ip_bet_small = -3.5;
-	const k_ip_bet_large = -12;
-
-	// --- APLICACAO: DEFENSOR (OOP) ---
-	// SOTA v7.0 GOLD: Colapso Multiway e PressÃ£o de EliminaÃ§Ã£o
-	const pressure = avgRp + Math.abs(deltaRp) * 0.3; // SOTA: Peso maior no Delta
-	const driftBase = 0.005 * (streetIdx + 1);
-
-	// PenalizaÃ§Ã£o Multiway: O RIO cresce quadraticamente (N^2), forÃ§ando o colapso da agressÃ£o.
-	const mwMultiplier = Math.pow(activePlayers - 1, 1.5); 
-	const driftPenalty =
-		chipEvFreqs.oop_raise * (pressure * driftBase * (1 + gravity * 0.4) * mwMultiplier);
-
-	const raiseShift =
-		chipEvFreqs.oop_raise * (effectiveAggression - 1) -
-		driftPenalty -
-		(pressure * 0.004 * activePlayers);
-
-	const newRaise = Math.max(0, chipEvFreqs.oop_raise + raiseShift);
-
-	// SOTA: Teto do RP (Defense Ceiling) - DerivaÃ§Ã£o 6
-	// O fold nÃ£o pode ser infinito. A gravidade do pote (G) cria um piso de defesa inelÃ¡stica.
-	const maxFoldAllowed = Math.min(92, 90 - (gravity * 4) + (pressure * 0.1));
-	const foldShift =
-		chipEvFreqs.oop_fold * (pressure * 0.015) +
-		Math.max(0, chipEvFreqs.oop_raise - newRaise);
-	const newFold = Math.max(
-		0,
-		Math.min(maxFoldAllowed, chipEvFreqs.oop_fold + foldShift),
-	);
-
-	const newCall = Math.max(0, 100 - newFold - newRaise);
-	const oopSum = newFold + newCall + newRaise;
-
-	const raiseCenter = oopSum > 0 ? (newRaise / oopSum) * 100 : 0;
-	const callCenter = oopSum > 0 ? (newCall / oopSum) * 100 : 0;
-	const foldCenter = oopSum > 0 ? (newFold / oopSum) * 100 : 100;
+	const foldCenter = newFold * 100;
+	const callCenter = newCall * 100;
+	const raiseCenter = newRaise * 100;
 
 	const oopCall: FreqResult = {
 		center: callCenter,
 		spread,
-		delta: callCenter - chipEvFreqs.oop_call,
+		delta: callCenter - (chipEvFreqs.oop_call ?? 0),
 	};
 	const oopFold: FreqResult = {
 		center: foldCenter,
 		spread,
-		delta: foldCenter - chipEvFreqs.oop_fold,
+		delta: foldCenter - (chipEvFreqs.oop_fold ?? 0),
 	};
 	const oopRaise: FreqResult = {
 		center: raiseCenter,
 		spread,
-		delta: raiseCenter - chipEvFreqs.oop_raise,
+		delta: raiseCenter - (chipEvFreqs.oop_raise ?? 0),
 	};
 
-	// --- APLICACAO: AGRESSOR (IP) ---
-	const absDelta = Math.abs(deltaRp);
-	const signDelta = Math.sign(deltaRp) || 1;
-	const deltaBetSmall =
-		signDelta * Math.pow(absDelta / 10, bExponent) * k_ip_bet_small;
-	const rawBetSmall = Math.max(0, chipEvFreqs.ip_bet_small + deltaBetSmall);
-
-	const deltaBetLarge =
-		signDelta * Math.pow(absDelta / 10, bExponent) * k_ip_bet_large;
-	const rawBetLarge = Math.max(0, chipEvFreqs.ip_bet_large + deltaBetLarge);
-
-	const rawSmallModulated = rawBetSmall * effectiveAggression;
-	const rawLargeModulated = rawBetLarge * effectiveAggression;
-	const rawCheckModulated = Math.max(
-		0,
-		100 - rawSmallModulated - rawLargeModulated,
-	);
-
-	const ipSum = rawSmallModulated + rawLargeModulated + rawCheckModulated;
-	const betSmallCenter = ipSum > 0 ? (rawSmallModulated / ipSum) * 100 : 0;
-	const betLargeCenter = ipSum > 0 ? (rawLargeModulated / ipSum) * 100 : 0;
-	const checkCenter = Math.max(0, 100 - betSmallCenter - betLargeCenter);
-
+	// IP Frequencies (check, bet_small, bet_large) are NOT modified (OOP-only defense in v7.0 GOLD)
+	// Sets delta to 0 and center to base GTO to eliminate UI flashing and mismatches
 	const ipCheck: FreqResult = {
-		center: checkCenter,
+		center: chipEvFreqs.ip_check ?? 0,
 		spread,
-		delta: checkCenter - chipEvFreqs.ip_check,
+		delta: 0,
 	};
 	const ipBetSmall: FreqResult = {
-		center: betSmallCenter,
+		center: chipEvFreqs.ip_bet_small ?? 0,
 		spread,
-		delta: betSmallCenter - chipEvFreqs.ip_bet_small,
+		delta: 0,
 	};
 	const ipBetLarge: FreqResult = {
-		center: betLargeCenter,
+		center: chipEvFreqs.ip_bet_large ?? 0,
 		spread,
-		delta: betLargeCenter - chipEvFreqs.ip_bet_large,
+		delta: 0,
 	};
 
 	return {

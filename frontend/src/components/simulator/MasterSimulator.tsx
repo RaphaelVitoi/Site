@@ -267,6 +267,8 @@ export default function MasterSimulator() {
     predictiveProfile: stablePredictiveProfile,
     predictiveTelemetry: predictiveData?.telemetry || null,
     setNativeRangeMetric,
+    pkoValue,
+    aggFactor: aggressionFactor,
   });
 
   const { handleScenarioSelect, handleExportHRC, handleHeroPositionChange } = useMasterHandlers({

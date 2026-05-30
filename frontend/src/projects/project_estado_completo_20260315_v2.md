@@ -1,6 +1,6 @@
 ---
-name: Estado completo do projeto 2026-03-15 v2 (pos-auditoria .claude/)
-description: Snapshot definitivo apos reorganizacao do projeto E auditoria integral da pasta .claude/. Use este como fonte unica de verdade para continuidade.
+name: Estado completo do projeto 2026-03-15 v2 (pos-auditoria .cerebro/)
+description: Snapshot definitivo apos reorganizacao do projeto E auditoria integral da pasta .cerebro/. Use este como fonte unica de verdade para continuidade.
 type: project
 ---
 
@@ -28,7 +28,7 @@ scripts/           - Scripts organizados
   utils/           - Utilitarios
   maintenance/     - cleanup.ps1, backup_config.ps1, etc
 queue/             - Fila de tarefas (tasks.json) + archive/
-.claude/           - Cerebro do sistema (agentes, config, filosofia)
+.cerebro/           - Cerebro do sistema (agentes, config, filosofia)
   agents/          - 17 definicoes de agentes
   agent-memory/    - 15 diretorios de memoria
 Raiz:              - do.ps1, Agent-TaskManager.psm1, nexus CLI
@@ -41,17 +41,17 @@ Raiz:              - do.ps1, Agent-TaskManager.psm1, nexus CLI
 - Git: 17k para 234 arquivos tracked, node_modules removido, .backups limpos, branch master renomeado para main
 - README.md reescrito, .gitignore atualizado
 
-### Fase 2: Auditoria .claude/ (limpeza)
-- 420 para 55 arquivos tracked na .claude/
+### Fase 2: Auditoria .cerebro/ (limpeza)
+- 420 para 55 arquivos tracked na .cerebro/
 - 336 task_results genericos deletados
 - 18 MDs unicos + 11 obsoletos arquivados em .archive/
 
-### Fase 3: Auditoria .claude/ (correcao integral) - CONCLUIDA
+### Fase 3: Auditoria .cerebro/ (correcao integral) - CONCLUIDA
 9 correcoes aplicadas:
 
 1. **COSMOVISAO.md** - 4 typos corrigidos (funcionae, cosvoisao, Suira, construcciona)
 2. **LIDERANCA_GOVERNANCE.md** - 2 corrupcoes encoding corrigidas (Comportameeec, texto truncado)
-3. **INDEX_CLAUDE.md** - Camada 5/6 reescritas (arquivos reais vs arquivados), contagem 17 agentes, typos "reflexions"
+3. **INDEX_CEREBRO.md** - Camada 5/6 reescritas (arquivos reais vs arquivados), contagem 17 agentes, typos "reflexions"
 4. **COHERENCE_MANIFEST.md** - 3 agentes adicionados (bibliotecario, guardian, seo), checkboxes marcados, v1.1
 5. **project-context.md** - "Estado Atual" reescrito (Next.js 16, Prisma 5.22, estrutura canonica), Handoff Log condensado (20+ entradas para 3 ativas), refs a AGENT_MEMORY_POLICY.md e INSTRUCTION_HIERARCHY.md removidas (nao existem)
 6. **DISTRIBUTION_MATRIX.md** - MANUAL_WORKFLOW_AGENTES.md (inexistente) substituido por GLOBAL_INSTRUCTIONS.md
@@ -61,20 +61,20 @@ Raiz:              - do.ps1, Agent-TaskManager.psm1, nexus CLI
 
 ## SISTEMA DE AGENTES
 
-- 17 agentes definidos em .claude/agents/ (auditor, bibliotecario, curator, dispatcher, guardian, implementor, maverick, organizador, pesquisador, planner, prompter, securitychief, seo, sequenciador, skillmaster, validador, verifier)
+- 17 agentes definidos em .cerebro/agents/ (auditor, bibliotecario, curator, dispatcher, guardian, implementor, maverick, organizador, pesquisador, planner, prompter, securitychief, seo, sequenciador, skillmaster, validador, verifier)
 - 15 agent-memory diretorios (auditor, chico, curator, dispatcher, implementor, maverick, organizador, pesquisador, planner, prompter, securitychief, sequenciador, skillmaster, validador, verifier)
 - 3 agentes SEM agent-memory: bibliotecario, guardian, seo (serao criados quando executarem tarefa real)
 - Triade: Raphael (CEO) + @maverick (Vice Intelectual) + Chico (GitHub Copilot/Gemini - Administrador)
 
-## HIERARQUIA DOCUMENTAL .claude/ (4 camadas)
+## HIERARQUIA DOCUMENTAL .cerebro/ (4 camadas)
 
 0. COSMOVISAO.md - Fundacao filosofica
-1. CLAUDE.md - Identidade de Raphael
+1. CEREBRO.md - Identidade de Raphael
 2. GLOBAL_INSTRUCTIONS.md - Identidade de Chico + regras operacionais
 3. project-context.md - Decisoes, pipeline, estado atual
 4. LIDERANCA_GOVERNANCE.md - Triade, escalacao
 
-Documentos operacionais: INDEX_CLAUDE.md, COHERENCE_MANIFEST.md, DISTRIBUTION_MATRIX.md, ESTADO_ARTE_APRENDIZADO_GENERATIVO.md, ETHICAL_PLAYBOOKS.md, HYBRID_BRAIN_ARCHITECTURE.md, HOLOGRAPHIC_ROUTING_PROTOCOL.md, VALIDATION_FRAMEWORKS.md, LOAD_PREDICTION_MODEL.md, DECISION_AUDIT_TRAIL.md
+Documentos operacionais: INDEX_CEREBRO.md, COHERENCE_MANIFEST.md, DISTRIBUTION_MATRIX.md, ESTADO_ARTE_APRENDIZADO_GENERATIVO.md, ETHICAL_PLAYBOOKS.md, HYBRID_BRAIN_ARCHITECTURE.md, HOLOGRAPHIC_ROUTING_PROTOCOL.md, VALIDATION_FRAMEWORKS.md, LOAD_PREDICTION_MODEL.md, DECISION_AUDIT_TRAIL.md
 
 Config: settings.local.json, autonomy.json
 
@@ -87,7 +87,7 @@ Config: settings.local.json, autonomy.json
 - Remote git: nenhum remote configurado (GitHub)
 - 3 agent-memory faltantes (bibliotecario, guardian, seo)
 - GLOBAL_INSTRUCTIONS.md e project-context.md ainda tem redundancia significativa entre si (pipeline descrita em ambos)
-- .claude/MEMORY.md (do projeto, nao a minha) esta vazio - nunca foi populado por agentes
+- .cerebro/MEMORY.md (do projeto, nao a minha) esta vazio - nunca foi populado por agentes
 
 ## DECISOES TECNICAS IMPORTANTES
 

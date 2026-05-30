@@ -1,8 +1,9 @@
 # ruff: noqa: D100, D101, D103, BLE001, G004, ARG001, ARG002, E402, I001
-# pylint: disable=wrong-import-position
+# pylint: disable=wrong-import-position, global-statement
 
 import asyncio
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 import json
 import logging
 import os
@@ -72,9 +73,39 @@ def verify_sota_auth(api_key: Annotated[str, Security(api_key_header)]) -> str:
 
 
 # ==============================================================================
+# [SOTA PERFORMANCE] SHARED HTTP SESSION POOLING (LIFESPAN GATEWAY)
+# ==============================================================================
 
 
-app = FastAPI(title="SOTA Inference Proxy (Gemma 4 via llama.cpp)")
+class HTTPSessionManager:
+    session: aiohttp.ClientSession | None = None
+
+    @classmethod
+    def get_session(cls) -> aiohttp.ClientSession:
+        if cls.session is None or cls.session.closed:
+            # SOTA: Keepalive otimizado e conexoes reutilizadas para latencia minima
+            connector = aiohttp.TCPConnector(limit=100, keepalive_timeout=30)
+            cls.session = aiohttp.ClientSession(connector=connector)
+        return cls.session
+
+    @classmethod
+    async def close(cls):
+        if cls.session and not cls.session.closed:
+            await cls.session.close()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Inicializacao
+    yield
+    # Finalizacao
+    await HTTPSessionManager.close()
+
+
+app = FastAPI(
+    title="SOTA Inference Proxy (Gemma 4 via llama.cpp)",
+    lifespan=lifespan,
+)
 
 
 # ==============================================================================
@@ -280,9 +311,17 @@ def is_port_open(port: int) -> bool:
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
+LLAMA_SERVER_ACTIVE = False
+
+
 def ensure_llama_server() -> bool:
+    global LLAMA_SERVER_ACTIVE
+    if LLAMA_SERVER_ACTIVE:
+        return True
+
     if is_port_open(LLAMA_PORT):
         logger.info("[LLAMA.CPP] Server ja esta rodando na porta %d", LLAMA_PORT)
+        LLAMA_SERVER_ACTIVE = True
         return True
 
     if not os.path.exists(LLAMA_SERVER_PATH):
@@ -314,6 +353,7 @@ def ensure_llama_server() -> bool:
             time.sleep(0.5)
             if is_port_open(LLAMA_PORT):
                 logger.info("[LLAMA.CPP] Server iniciado com sucesso!")
+                LLAMA_SERVER_ACTIVE = True
                 return True
         logger.warning("[LLAMA.CPP] Timeout aguardando o server subir.")
     except Exception as e:
@@ -391,14 +431,12 @@ async def generate_response(
                     "n_predict": req.max_tokens,
                 }
                 try:
-                    async with (
-                        aiohttp.ClientSession() as session,
-                        session.post(
-                            f"http://127.0.0.1:{LLAMA_PORT}/completion",
-                            json=payload,
-                            timeout=aiohttp.ClientTimeout(total=60),
-                        ) as resp,
-                    ):
+                    session = HTTPSessionManager.get_session()
+                    async with session.post(
+                        f"http://127.0.0.1:{LLAMA_PORT}/completion",
+                        json=payload,
+                        timeout=aiohttp.ClientTimeout(total=60),
+                    ) as resp:
                         if resp.status == 200:
                             async for line in resp.content:
                                 if await request.is_disconnected():
@@ -421,6 +459,8 @@ async def generate_response(
                                 resp.status,
                             )
                 except Exception as e:
+                    global LLAMA_SERVER_ACTIVE
+                    LLAMA_SERVER_ACTIVE = False
                     logger.warning(
                         "[ROTEAMENTO LOCAL] Erro ao conectar ao llama.cpp local (%s). Tentando Fallback...",
                         e,
@@ -449,15 +489,13 @@ async def generate_response(
                 "Content-Type": "application/json",
             }
             try:
-                async with (
-                    aiohttp.ClientSession() as session,
-                    session.post(
-                        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-                        json=cloud_payload,
-                        headers=headers,
-                        timeout=aiohttp.ClientTimeout(total=60),
-                    ) as resp,
-                ):
+                session = HTTPSessionManager.get_session()
+                async with session.post(
+                    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+                    json=cloud_payload,
+                    headers=headers,
+                    timeout=aiohttp.ClientTimeout(total=60),
+                ) as resp:
                     if resp.status == 200:
                         async for line in resp.content:
                             if await request.is_disconnected():
@@ -504,15 +542,13 @@ async def generate_response(
                 "Content-Type": "application/json",
             }
             try:
-                async with (
-                    aiohttp.ClientSession() as session,
-                    session.post(
-                        "https://openrouter.ai/api/v1/chat/completions",
-                        json=cloud_payload,
-                        headers=headers,
-                        timeout=aiohttp.ClientTimeout(total=60),
-                    ) as resp,
-                ):
+                session = HTTPSessionManager.get_session()
+                async with session.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    json=cloud_payload,
+                    headers=headers,
+                    timeout=aiohttp.ClientTimeout(total=60),
+                ) as resp:
                     if resp.status == 200:
                         async for line in resp.content:
                             if await request.is_disconnected():

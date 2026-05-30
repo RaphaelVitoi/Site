@@ -5,6 +5,8 @@
     "esbenp.prettier-vscode",
     "SonarSource.sonarlint-vscode",
     "ms-python.python",
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    "google.geminicodeassist",
+    "llvm-vs-code-extensions.lldb-dap"
   ]
 }

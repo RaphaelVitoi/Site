@@ -22,7 +22,8 @@ import { TelemetryCharts } from '../analytics/TelemetryCharts';
 import { solveIcmDistortion } from './engine/nashSolver';
 import { GemmaAnalysisPanel } from './GemmaAnalysisPanel';
 import { InsolvencyMatrix } from './InsolvencyMatrix';
-import { SotaMetricsContext, SotaSpotContext } from './SotaContext';
+import { SotaMetricsContext, SotaSpotContext, SotaWasmContext } from './SotaContext';
+import { usePmLensCalculations } from './hooks/usePmLensCalculations';
 import { RiskGauge } from './ui/RiskGauge';
 
 interface HistorianData {
@@ -42,6 +43,51 @@ interface DashboardSOTAProps {
 export default function DashboardSOTA({ initialData, hudMode = false }: Readonly<DashboardSOTAProps> = {}) {
   const metricsContext = use(SotaMetricsContext);
   const spotContext = use(SotaSpotContext);
+  const wasmContext = use(SotaWasmContext);
+
+  const DEFAULT_STACKS = [9.4, 52.4, 22.2, 7, 44.3, 24.3, 40, 13.4, 55];
+  const DEFAULT_PRIZES = [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
+
+  const initialStacks = spotContext?.initialStacks ?? DEFAULT_STACKS;
+  const initialPrizes = spotContext?.initialPrizes ?? DEFAULT_PRIZES;
+  const heroIdx = spotContext?.heroIdx ?? 6;
+  const primaryVillainIdx = spotContext?.primaryVillainIdx ?? 8;
+  const heroInvested = spotContext?.heroInvested ?? 1;
+  const simulatedActivePlayers = spotContext?.activePlayers ?? 2;
+  const absoluteHeroPos = spotContext?.heroPosition ?? 'IP';
+  const blindsRisingSoon = spotContext?.blindsRisingSoon ?? false;
+  const pkoValue = spotContext?.pkoValue ?? 0;
+  const aggFactor = spotContext?.aggFactor ?? 1;
+
+  const rawGpuEquity = wasmContext?.insolvencyMatrixData?.winRate
+    ? wasmContext.insolvencyMatrixData.winRate * 100
+    : undefined;
+  const equity =
+    rawGpuEquity === undefined ? (wasmContext?.nativeRangeMetric?.equity ?? 50) : Number(rawGpuEquity.toFixed(1));
+
+  const isHeroIP = absoluteHeroPos === 'IP';
+  const posBaseline = isHeroIP ? 1 : 0.85;
+  const realizationFactor = posBaseline;
+
+  const { streetMetrics } = usePmLensCalculations({
+    initialStacks,
+    initialPrizes,
+    heroIdx,
+    primaryVillainIdx,
+    currentPot: spotContext?.spotData?.pot ?? 7.5,
+    heroInvested,
+    equity,
+    realizationFactor,
+    deltaHabilidade: 50,
+    pkoValue,
+    kappa: 0.5,
+    simulatedActivePlayers,
+    absoluteHeroPos,
+    blindsRisingSoon,
+    activeNodelock: null,
+    betSizing: 0.5,
+    aggFactor,
+  });
 
   const { data: session } = useSession();
   const userName = session?.user?.name || 'Operador Autônomo';
@@ -118,12 +164,18 @@ export default function DashboardSOTA({ initialData, hudMode = false }: Readonly
           <div className="relative z-10 h-60 w-full rounded-3xl bg-black/20 p-2 shadow-inner">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
-                <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                <defs>
+                  <linearGradient id="hudLeakGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="5%" stopColor="var(--color-accent-indigo)" stopOpacity={0.5} />
+                    <stop offset="95%" stopColor="var(--color-accent-indigo)" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <PolarGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
                 <PolarAngleAxis
                   dataKey="subject"
                   tick={{
-                    fill: '#475569',
-                    fontSize: 7,
+                    fill: 'var(--color-text-muted)',
+                    fontSize: 8,
                     fontWeight: 900,
                     fontFamily: 'var(--font-mono)',
                     letterSpacing: '0.05em',
@@ -135,29 +187,30 @@ export default function DashboardSOTA({ initialData, hudMode = false }: Readonly
                   dataKey="Deficiencia"
                   stroke="var(--color-accent-indigo)"
                   strokeWidth={2}
-                  fill="var(--color-accent-indigo)"
-                  fillOpacity={0.15}
+                  fill="url(#hudLeakGradient)"
+                  fillOpacity={0.3}
                 />
               </RadarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="relative z-10 mt-8 space-y-5">
+          <div className="relative z-10 mt-8 space-y-4 rounded-2xl border border-white/5 bg-slate-950/40 p-4 shadow-inner">
             {topLeaks.map(([name, value], idx) => (
-              <div key={name} className="group/leak flex flex-col gap-2">
+              <div key={name} className="group/leak flex flex-col gap-2 transition-all duration-300 hover:translate-x-1">
                 <div className="flex items-center justify-between px-1">
                   <span
-                    className={`text-[0.55rem] font-black tracking-widest uppercase ${idx === 0 ? 'text-accent-rose' : 'text-text-muted'}`}
+                    className={`text-[0.55rem] font-black tracking-widest uppercase transition-colors duration-300 ${idx === 0 ? 'text-accent-rose group-hover/leak:text-accent-rose-light' : 'text-text-muted group-hover/leak:text-white'}`}
                   >
                     {name}
                   </span>
                   <span className="font-mono text-[0.65rem] font-black text-white">{(value * 100).toFixed(0)}%</span>
                 </div>
-                <div className="h-1 w-full overflow-hidden rounded-full bg-white/5">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5 shadow-inner">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${value * 100}%` }}
-                    className={`h-full ${idx === 0 ? 'bg-accent-rose' : 'bg-accent-indigo'}`}
+                    transition={{ duration: 1.5, ease: 'easeOut', delay: idx * 0.2 }}
+                    className={`h-full rounded-full ${idx === 0 ? 'bg-accent-rose shadow-[0_0_8px_var(--color-accent-rose)]' : 'bg-accent-indigo shadow-[0_0_8px_var(--color-accent-indigo)]'}`}
                   />
                 </div>
               </div>
@@ -193,7 +246,7 @@ export default function DashboardSOTA({ initialData, hudMode = false }: Readonly
             </div>
           </div>
           <div className="relative z-10">
-            <InsolvencyMatrix />
+            <InsolvencyMatrix streetMetrics={streetMetrics} />
           </div>
         </div>
 
@@ -365,11 +418,11 @@ export default function DashboardSOTA({ initialData, hudMode = false }: Readonly
                       <stop offset="95%" stopColor="var(--color-accent-emerald)" stopOpacity={0.1} />
                     </linearGradient>
                   </defs>
-                  <PolarGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="5 5" />
+                  <PolarGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
                   <PolarAngleAxis
                     dataKey="subject"
                     tick={{
-                      fill: '#94a3b8',
+                      fill: 'var(--color-text-muted)',
                       fontSize: 10,
                       fontWeight: 900,
                       fontFamily: 'var(--font-mono)',
@@ -413,9 +466,9 @@ export default function DashboardSOTA({ initialData, hudMode = false }: Readonly
                   Top Leaks (IA Preditiva)
                 </h4>
               </div>
-              <div className="space-y-6">
+              <div className="space-y-6 rounded-2xl border border-white/5 bg-slate-950/40 p-5 shadow-inner">
                 {topLeaks.map(([name, value], idx) => (
-                  <div key={name} className="group/leak flex flex-col gap-3">
+                  <div key={name} className="group/leak flex flex-col gap-3 transition-all duration-300 hover:translate-x-1">
                     <div className="flex items-center justify-between px-2">
                       <span
                         className={`text-[0.75rem] font-black tracking-widest uppercase transition-colors ${idx === 0 ? 'text-accent-rose group-hover/leak:text-glow-rose' : 'text-text-muted group-hover/leak:text-white'}`}
@@ -426,7 +479,7 @@ export default function DashboardSOTA({ initialData, hudMode = false }: Readonly
                         {(value * 100).toFixed(1)}%
                       </span>
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5 shadow-inner">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/5 shadow-inner border border-white/5">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${value * 100}%` }}

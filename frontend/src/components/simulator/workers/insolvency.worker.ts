@@ -1,6 +1,5 @@
 /** @format */
 
-// @ts-expect-error SOTA: Some bindings might not be generated in d.ts yet
 import init, {
   solve_insolvency_matrix_binary,
   solve_icm_distortion_v2,
@@ -29,7 +28,11 @@ interface StreetFreqs {
 
 let initPromise: Promise<unknown> | null = null; // SOTA: Promise Guard evita Race Conditions na injeção assíncrona do WebAssembly
 
-interface MatrixPayload {
+interface BasePayload {
+  id?: number;
+}
+
+interface MatrixPayload extends BasePayload {
   type: 'MATRIX';
   heroRange: string;
   villainRange: string;
@@ -41,10 +44,9 @@ interface MatrixPayload {
   kappa: number;
   betSizing: number;
   humanNoiseFactor: number;
-  id: number;
 }
 
-interface PerspectivePayload {
+interface PerspectivePayload extends BasePayload {
   type: 'CALCULATE_PERSPECTIVE';
   payload: {
     stacks: number[];
@@ -63,10 +65,11 @@ interface PerspectivePayload {
     heroRp: number;
     villainRp: number;
     stackEff: number;
+    referenceStatus: 'baseline' | 'tilt' | 'protecting' | 'bubble';
   };
 }
 
-interface DistortionPayload {
+interface DistortionPayload extends BasePayload {
   type: 'DISTORTION';
   ipRpFlop: number;
   oopRpFlop: number;
@@ -81,17 +84,15 @@ interface DistortionPayload {
   activePlayers: number;
   pots: [number, number, number];
   humanNoiseFactor: number;
-  id: number;
 }
 
-interface MultiwayPayload {
+interface MultiwayPayload extends BasePayload {
   type: 'MULTIWAY_MATRIX';
   rangesData: Float64Array;
   numPlayers: number;
   boardMask: number;
   targetIterations: number;
   seed: number;
-  id: number;
 }
 
 type WorkerMessage = MatrixPayload | PerspectivePayload | DistortionPayload | MultiwayPayload;
@@ -129,10 +130,18 @@ async function handlePerspectivePayload(data: PerspectivePayload, id?: number) {
   const p = data.payload;
   const start = performance.now();
 
+  const statusMap: Record<string, number> = {
+    baseline: 0,
+    tilt: 1,
+    protecting: 2,
+    bubble: 3,
+  };
+  const referenceStatusVal = statusMap[p.referenceStatus ?? 'baseline'] ?? 0;
+
   // Stress Test: Executa o loop de 21 pontos (usado no gráfico) para validar performance
   const results = [];
   for (let i = 0; i <= 100; i += 5) {
-    const r = calculate_perspectiva_vitoi_wasm(
+    const r = calculate_pers_vitoi_wasm_flat(
       i, // winProb
       p.potSize * 0.8, // deltaWin (simulado)
       -p.heroCost * 2, // deltaLose (simulado)
@@ -148,6 +157,7 @@ async function handlePerspectivePayload(data: PerspectivePayload, id?: number) {
       p.bountyValue,
       p.edgeBase,
       p.humanNoiseFactor,
+      referenceStatusVal,
     );
     results.push(r);
   }
@@ -168,6 +178,55 @@ async function handlePerspectivePayload(data: PerspectivePayload, id?: number) {
   }
 
   globalThis.postMessage({ type: 'WASM_RESULT', result: results[11], id }); // Envia o ponto central (55%) como exemplo
+}
+
+// Helper wrapper to convert Float64Array from Rust back to Object shape for compatibility
+function calculate_pers_vitoi_wasm_flat(
+  current_equity_pct: number,
+  delta_win_pct: number,
+  delta_lose_pct: number,
+  dynamic_ev_fold: number,
+  realization_factor: number,
+  fgs_health: number,
+  active_players: number,
+  _hero_invested: number,
+  current_pot: number,
+  stack_eff: number,
+  hero_rp: number,
+  villain_rp: number,
+  bounty_value: number,
+  edge_base: number,
+  human_noise_factor: number,
+  reference_status: number
+) {
+  const r = calculate_perspectiva_vitoi_wasm(
+    current_equity_pct,
+    delta_win_pct,
+    delta_lose_pct,
+    dynamic_ev_fold,
+    realization_factor,
+    fgs_health,
+    active_players,
+    _hero_invested,
+    current_pot,
+    stack_eff,
+    hero_rp,
+    villain_rp,
+    bounty_value,
+    edge_base,
+    human_noise_factor,
+    reference_status
+  );
+  return {
+    perspectivaPct: r[0],
+    expectativa: r[1],
+    riskAdvantage: r[2],
+    rioMw: r[3],
+    threshEq: r[4],
+    ci: r[5],
+    amortizedEdge: r[6],
+    bayesianWinProb: r[7],
+  };
 }
 
 async function handleDistortionPayload(data: DistortionPayload, id?: number) {
@@ -293,7 +352,7 @@ async function handleMultiwayPayload(data: MultiwayPayload, id?: number) {
     const start = performance.now();
 
     // Motor Quântico O(1)
-    const rawResult = calculate_multiway_equity_zerocopy(ptr, numPlayers, boardMask, targetIterations, seed);
+    const rawResult = calculate_multiway_equity_zerocopy(ptr, numPlayers, BigInt(boardMask), targetIterations, seed);
     const latency = performance.now() - start;
 
     globalThis.postMessage({
@@ -330,8 +389,7 @@ globalThis.onmessage = async (e: MessageEvent<WorkerMessage>) => {
     return;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const id = (data as any).id;
+  const id = data.id;
 
   try {
     if (!initPromise) {

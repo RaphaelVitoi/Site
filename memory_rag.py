@@ -1,6 +1,5 @@
 # pylint: disable=logging-fstring-interpolation, broad-exception-caught, redefined-outer-name, line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, wrong-import-position, import-outside-toplevel
 # pyright: reportMissingImports=false
-# ruff: noqa: F821, F401
 
 import os
 import sys
@@ -17,7 +16,7 @@ import logging
 import re
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import aiofiles
 
@@ -91,7 +90,7 @@ MIN_RELEVANCE_SCORE = 0.65
 
 
 class MemoryRAG:
-    def __init__(self, memory_dir: str = ".claude/agent-memory"):
+    def __init__(self, memory_dir: str = ".cerebro/agent-memory"):
         try:
             import chromadb
             from chromadb.utils import embedding_functions
@@ -122,7 +121,7 @@ class MemoryRAG:
                     name="agent_collective_memory",
                     embedding_function=self.emb_fn,  # type: ignore
                 )
-            else:
+            else:  # pragma: no cover
                 raise
 
     def _hard_split_sentence(self, sentence: str, chunk_size: int, overlap: int) -> list[str]:
@@ -175,8 +174,8 @@ class MemoryRAG:
         """Processa paragrafos longos preservando integridade semantica de frases e formulas."""
         # SOTA: Expansao semantica para pontuacoes finais (!, ?) erradicando o hard_split e melhorando a qualidade do vetor
         sentences = re.split(r"(?<=[.!?])\s+", paragraph)
-        chunks = []
-        buffer = []
+        chunks: list[str] = []
+        buffer: list[str] = []
         current_len = 0
 
         for sentence in sentences:
@@ -209,7 +208,7 @@ class MemoryRAG:
             return False  # Fragmento muito curto. Sem entropia util.
 
         # 1. Blocklist de Inutilidades (Logs, Dumps de Task, Traces)
-        useless_patterns = r"(?i)(\[INFO\]|\[DEBUG\]|\[ERROR\]|\[WARN\]|Traceback \(most recent|Process Group PGID|\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}|Task id:|--- FILE CONTENT|Status: Showing lines)"
+        useless_patterns = r"(?i)(\[(?:INFO|DEBUG|ERROR|WARN)\]|Traceback \(most recent|Process Group PGID|\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}|Task id:|--- FILE CONTENT|Status: Showing lines)"
         if re.search(useless_patterns, chunk):
             return False
 
@@ -225,7 +224,7 @@ class MemoryRAG:
         # 3. Validacao Estrutural Basica: Pelo menos uma das primeiras 5 palavras deve ser alfabetica pura.
         words = intro.split()
         if len(words) >= 3:
-            alpha_words = sum(1 for w in words[:5] if re.match(r"^[A-Za-zA-ÿ]+$", w))
+            alpha_words = sum(1 for w in words[:5] if re.match(r"^[A-Za-zA-y]+$", w))
             if alpha_words == 0:
                 return False
 
@@ -271,8 +270,8 @@ class MemoryRAG:
                     lambda m: m.group(1) if m.group(1) else "",
                     manifest_content,
                 )
-                return json.loads(manifest_content)
-        except Exception:  # noqa: BLE001
+                return cast(dict, json.loads(manifest_content))
+        except (OSError, json.JSONDecodeError):
             logger.exception("[RAG] Falha ao ler ou parsear o manifesto de ingestao.")
             return {}
 
@@ -314,7 +313,11 @@ class MemoryRAG:
                 continue
 
             for pattern in source.get("patterns", []):
-                files = await asyncio.to_thread(lambda p=pattern, sp=source_path: list(sp.rglob(p)))
+
+                def _rglob_files(sp: Path, p: str) -> list[Path]:
+                    return list(sp.rglob(p))
+
+                files = await asyncio.to_thread(_rglob_files, source_path, pattern)
                 for f in files:
                     if not self._is_ignored_by_ragignore(f, ignore_patterns):
                         target_files.append(f)
@@ -333,7 +336,7 @@ class MemoryRAG:
         except TimeoutError:
             logger.error(f"[RAG] Timeout (60s) ao extrair DOCX: {file_path.name}")
             return ""
-        except Exception:  # noqa: BLE001
+        except (ImportError, ValueError):
             logger.exception(f"[RAG] Falha ao processar arquivo .docx ({file_path.name}).")
             return ""
 
@@ -353,7 +356,7 @@ class MemoryRAG:
         except TimeoutError:
             logger.error(f"[RAG] Timeout (120s) ao extrair PDF: {file_path.name}")
             return ""
-        except Exception:  # noqa: BLE001
+        except (ImportError, ValueError):
             logger.exception(f"[RAG] Falha ao extrair texto do PDF ({file_path.name}).")
             return ""
 
@@ -374,7 +377,7 @@ class MemoryRAG:
         except TimeoutError:
             logger.error(f"[RAG] Timeout (60s) ao extrair CSV: {file_path.name}")
             return ""
-        except Exception:  # noqa: BLE001
+        except (ImportError, ValueError):
             logger.exception(f"[RAG] Falha ao extrair texto do CSV ({file_path.name}).")
             return ""
 
@@ -397,7 +400,7 @@ class MemoryRAG:
         except TimeoutError:
             logger.error(f"[RAG] Timeout (60s) ao extrair XLSX: {file_path.name}")
             return ""
-        except Exception:  # noqa: BLE001
+        except (ImportError, ValueError):
             logger.exception(f"[RAG] Falha ao extrair texto do XLSX ({file_path.name}).")
             return ""
 
@@ -475,7 +478,7 @@ class MemoryRAG:
 
             if fallback_docs:
                 return "\n=== MENTE COLETIVA (FALLBACK DE EMERGENCIA - I/O DIRETO) ===\n" + "\n".join(fallback_docs)
-        except Exception:
+        except OSError:
             logger.exception("[RAG] Fallback Lexical tambem colapsou.")
         return ""
 
@@ -497,7 +500,7 @@ class MemoryRAG:
                     await asyncio.to_thread(self.collection.delete, ids=ids_to_delete[i : i + batch_size])
                     await asyncio.sleep(0.01)
                 logger.info(f"Expurgados {len(ids_to_delete)} fragmentos obsoletos (Limpeza de Entropia).")
-        except Exception:  # noqa: BLE001
+        except (ImportError, RuntimeError):
             logger.exception("[RAG] Erro ao limpar memorias antigas.")
 
     async def ingest_all_memories(self):
@@ -542,7 +545,7 @@ class MemoryRAG:
                     GEMINI_KEYS[0],
                 )
                 return response
-            except Exception as e:  # noqa: BLE001
+            except (ImportError, ValueError) as e:
                 logger.warning(
                     f"[RAG] Falha na expansao via Gemini (Free Tier): {e}. Tentando fallback para OpenRouter."
                 )
@@ -558,7 +561,7 @@ class MemoryRAG:
                     OPENROUTER_KEYS[0],
                 )
                 return response
-            except Exception as e:  # noqa: BLE001
+            except (ImportError, ValueError) as e:
                 logger.warning(f"[RAG] Falha na expansao via OpenRouter: {e}.")
         return ""
 
@@ -580,7 +583,7 @@ class MemoryRAG:
                             return [question] + expanded_queries
                     except json.JSONDecodeError as e:
                         logger.debug(f"[RAG] Falha ao decodificar JSON na expansao de query: {e}")
-        except Exception:  # noqa: BLE001
+        except (ImportError, ValueError):
             logger.exception("[RAG] Erro inesperado na expansao de query.")
         return [question]  # Retorna a original em caso de falha
 
@@ -652,7 +655,7 @@ class MemoryRAG:
         if not res_docs:
             return [], [], []
 
-        unique_docs = {}
+        unique_docs: dict[str, dict[str, Any]] = {}
         res_metas = results.get("metadatas") or []
         res_dists = results.get("distances") or []
 
@@ -696,7 +699,7 @@ class MemoryRAG:
                     f"--- Fragmento #{i + 1} de @{item['agent']} (Fonte: {Path(item['source']).name}) ---\n{item['doc']}\n"
                 )
             return "\n".join(output_parts)
-        except Exception:  # noqa: BLE001
+        except (ImportError, RuntimeError):
             logger.exception("[RAG] Colapso Critico no ChromaDB/ONNX. Acionando Fallback Lexical (Latencia Zero)...")
             # Bypass de seguranca para evitar que o LLM responda sem contexto
             return await self._zero_latency_lexical_fallback()
@@ -713,7 +716,7 @@ class MemoryRAG:
                 max_tokens=1024,
             )
             return response
-        except Exception as e:
+        except (ImportError, ValueError) as e:
             logger.warning(f"[RAG] Falha na forja do Grafo Causal via Gemma Local: {e}. Tentando fallback para Cloud.")
 
         if GEMINI_KEYS:
@@ -727,7 +730,7 @@ class MemoryRAG:
                     GEMINI_KEYS[0],
                 )
                 return response
-            except Exception as e:  # noqa: BLE001
+            except (ImportError, ValueError) as e:
                 logger.warning(f"[RAG] Falha na forja do Grafo Causal via Gemini: {e}")
 
         if OPENROUTER_KEYS:
@@ -741,7 +744,7 @@ class MemoryRAG:
                     OPENROUTER_KEYS[0],
                 )
                 return response
-            except Exception as e:  # noqa: BLE001
+            except (ImportError, ValueError) as e:
                 logger.warning(f"[RAG] Falha na forja do Grafo Causal via OpenRouter: {e}")
         return '{"nodes": [], "edges": []}'
 
@@ -782,9 +785,9 @@ class MemoryRAG:
             raw_json = await self._extract_causal_graph(session, system_prompt, user_prompt)
 
             # Purificacao contra entropia de encoding (markdown injetado por LLMs)
-            return re.sub(r"^```json|```$", "", raw_json.strip(), flags=re.MULTILINE).strip()
+            return re.sub(r"^```(?:json)?|```$", "", raw_json.strip(), flags=re.MULTILINE).strip()
 
-        except Exception:  # noqa: BLE001
+        except (ImportError, RuntimeError):
             logger.exception("[RAG] Colapso na extracao do Grafo Causal.")
             return '{"nodes": [], "edges": [], "error": "Falha sistemica na forja do grafo."}'
 

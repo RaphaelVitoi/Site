@@ -58,7 +58,6 @@ export interface PerspectivaInput {
     heroPosition?: string;
     spr?: number;
     investidoAcumulado?: number;
-    blindCost?: number;
 }
 export declare function calculateMapaICM(stacks: number[], prizes: number[]): MapaICMResult;
 export declare function classifyTier(stack: number, stacks: number[]): StackTier;

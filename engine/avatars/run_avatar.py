@@ -14,42 +14,11 @@ PORT_LLAMA = 17045
 
 def clean_text_to_ascii(text: str) -> str:
     """Substitui caracteres acentuados e especiais por equivalentes ASCII puro."""
-    replacements = {
-        "a": "a",
-        "ä": "a",
-        "A": "A",
-        "Ä": "A",
-        "e": "e",
-        "ë": "e",
-        "E": "E",
-        "Ë": "E",
-        "i": "i",
-        "ï": "i",
-        "I": "I",
-        "Ï": "I",
-        "o": "o",
-        "ö": "o",
-        "O": "O",
-        "Ö": "O",
-        "u": "u",
-        "ü": "u",
-        "U": "U",
-        "Ü": "U",
-        "c": "c",
-        "C": "C",
-        "ñ": "n",
-        "Ñ": "N",
-        "—": "-",
-        "–": "-",
-        "’": "'",
-        "‘": "'",
-        "”": '"',
-        "“": '"',
-    }
-    cleaned = []
-    for char in text:
-        cleaned.append(replacements.get(char, char))
-    return "".join(cleaned)
+    import unicodedata
+    # Normalize to NFKD (separates accents from characters)
+    normalized = unicodedata.normalize("NFKD", text)
+    # Encode to ASCII, ignoring characters that cannot be represented in ASCII
+    return normalized.encode("ascii", "ignore").decode("ascii")
 
 
 def is_port_open(port: int) -> bool:

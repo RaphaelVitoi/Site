@@ -1,15 +1,86 @@
-# SOTA Dockerignore - Root
+# ==============================================================================
+# NEXUS ORCHESTRATOR — .dockerignore (Backend)
+# Blindagem da imagem Docker: exclui segredos, dev tools, caches e artefatos.
+# ==============================================================================
+
+# ── SEGREDOS E AMBIENTE ────────────────────────────────────────────────────────
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+_env.ps1
+
+# ── CONTROLE DE VERSÃO ────────────────────────────────────────────────────────
 .git
-.env*
+.gitignore
+.gitattributes
+.github
+
+# ── AMBIENTES VIRTUAIS PYTHON ─────────────────────────────────────────────────
 .venv
+.venv-wsl
 __pycache__
 *.pyc
 *.pyo
 *.pyd
+*.egg-info
+.eggs
+
+# ── CACHES DE FERRAMENTAS ─────────────────────────────────────────────────────
 .pytest_cache
-.claude
-.gemini
+.ruff_cache
+.mypy_cache
+.pyright
+.coverage
+htmlcov
+reports
+
+# ── FRONTEND (não vai para o container do backend) ───────────────────────────
+frontend
 node_modules
-frontend/node_modules
-frontend/.next
-tests/
+
+# ── ARTEFATOS TEMPORÁRIOS E DADOS VOLÁTEIS ───────────────────────────────────
+temp
+triage
+inspo
+*.log
+logs
+.nexus_worker.pid
+*.pid
+
+# ── WASM / RUST (compilado separadamente) ────────────────────────────────────
+wasm-equity/target
+
+# ── IDE E CONFIGURAÇÃO LOCAL ─────────────────────────────────────────────────
+.vscode
+.cursor
+.clauderules
+.cursorules
+.aiexclude
+.gemini
+.gemini_security
+.cerebro/secrets
+
+# ── DOCUMENTAÇÃO E CONTEXTO DE IA ────────────────────────────────────────────
+docs
+*.md
+GEMINI.md
+MODUS_OPERANDI.md
+MEMORY.md
+ROUTES.md
+AGNOSTIC_SYSTEM.md
+CONTEXT_CHECKPOINT.md
+conductor
+skills
+plugins
+agents
+
+# ── TESTES ────────────────────────────────────────────────────────────────────
+tests
+locustfile.py
+
+# ── SCRIPTS DE DEV ────────────────────────────────────────────────────────────
+do.ps1
+Microsoft.PowerShell_profile.ps1
+scripts/ci

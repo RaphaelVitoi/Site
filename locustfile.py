@@ -14,6 +14,9 @@ ENABLE_LOGGING = os.getenv("ENABLE_LOGGING", "True") == "True"
 logging.basicConfig(level=logging.DEBUG if ENABLE_LOGGING else logging.WARNING)
 log = logging.getLogger("locustfile")
 
+CONTENT_TYPE_JSON = "application/json"
+DO_PS1_FILE = ".\\do.ps1"
+
 
 class ApiUser(HttpUser):
     wait_time = between(1, 3)
@@ -21,7 +24,7 @@ class ApiUser(HttpUser):
     # Override by setting ORCHESTRATOR_HOST env var, e.g. ORCHESTRATOR_HOST="http://localhost:8000"
     host = os.getenv("ORCHESTRATOR_HOST", "http://localhost:8000")
     timeout_duration = 90
-    created_run_ids = []
+    created_run_ids: list[str | dict[str, str]] = []
 
     def on_start(self):
         # No authentication specified in the Postman Collection; do not add Authorization headers.
@@ -62,7 +65,7 @@ class ApiUser(HttpUser):
     # Helper to POST execution requests mirroring the Postman Collection operations
     def _post_execute(self, payload: dict, name: str):
         url = f"{self.host}/api/execute"
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": CONTENT_TYPE_JSON}
 
         if ENABLE_LOGGING:
             log.info(f"Posting execute: {name} -> URL: {url} Payload: {json.dumps(payload)}")
@@ -95,7 +98,7 @@ class ApiUser(HttpUser):
 
     # Operation implementations (match Postman Collection command & args exactly)
 
-    def run_sota_backup(self, parent_run_id: str = None):
+    def run_sota_backup(self, parent_run_id: str | None = None):
         r"""
         Operation: sota_backup
         Description: Acionar Salvaguarda Integral do Ecossistema
@@ -106,7 +109,7 @@ class ApiUser(HttpUser):
             "operation": "sota_backup",
             "description": "Acionar Salvaguarda Integral do Ecossistema",
             "command": "powershell",
-            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ".\\do.ps1", "-Backup"],
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", DO_PS1_FILE, "-Backup"],
             "run_id": run_id,
             "parent_run_id": parent_run_id,
         }
@@ -114,7 +117,7 @@ class ApiUser(HttpUser):
             log.info("Request: sota_backup")
         self._post_execute(payload, name="sota_backup")
 
-    def run_sota_sync(self, parent_run_id: str = None):
+    def run_sota_sync(self, parent_run_id: str | None = None):
         r"""
         Operation: sota_sync
         Description: Sincroniza Manifesto dos Agentes para a Realidade Fisica
@@ -125,7 +128,7 @@ class ApiUser(HttpUser):
             "operation": "sota_sync",
             "description": "Sincroniza Manifesto dos Agentes para a Realidade Fisica",
             "command": "powershell",
-            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ".\\do.ps1", "-SyncAgents"],
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", DO_PS1_FILE, "-SyncAgents"],
             "run_id": run_id,
             "parent_run_id": parent_run_id,
         }
@@ -133,7 +136,7 @@ class ApiUser(HttpUser):
             log.info("Request: sota_sync")
         self._post_execute(payload, name="sota_sync")
 
-    def run_sota_audit(self, parent_run_id: str = None):
+    def run_sota_audit(self, parent_run_id: str | None = None):
         r"""
         Operation: sota_audit
         Description: Dispara Auditoria Adaptativa SOTA (Smart MDA)
@@ -149,7 +152,7 @@ class ApiUser(HttpUser):
                 "-ExecutionPolicy",
                 "Bypass",
                 "-File",
-                ".\\do.ps1",
+                DO_PS1_FILE,
                 "-Audit",
                 "Auditoria Global de Integridade",
             ],
@@ -160,7 +163,7 @@ class ApiUser(HttpUser):
             log.info("Request: sota_audit")
         self._post_execute(payload, name="sota_audit")
 
-    def run_sota_db_check(self, parent_run_id: str = None):
+    def run_sota_db_check(self, parent_run_id: str | None = None):
         r"""
         Operation: sota_db_check
         Description: Inspeciona integridade do DAL (SQLite)
@@ -171,7 +174,7 @@ class ApiUser(HttpUser):
             "operation": "sota_db_check",
             "description": "Inspeciona integridade do DAL (SQLite)",
             "command": "powershell",
-            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ".\\do.ps1", "-CheckDB"],
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", DO_PS1_FILE, "-CheckDB"],
             "run_id": run_id,
             "parent_run_id": parent_run_id,
         }
@@ -191,11 +194,11 @@ class ApiUser(HttpUser):
             "timeOfDay": "23:59",
             "details": {
                 "command": "powershell",
-                "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ".\\do.ps1", "-Backup"],
+                "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", DO_PS1_FILE, "-Backup"],
             },
         }
         url = f"{self.host}/api/schedules"
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": CONTENT_TYPE_JSON}
 
         if ENABLE_LOGGING:
             log.info(f"Creating schedule: daily_report -> URL: {url} Payload: {json.dumps(payload)}")
@@ -237,35 +240,37 @@ class ApiUser(HttpUser):
         if ENABLE_LOGGING:
             log.info("on_stop: cleaning up created resources")
 
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": CONTENT_TYPE_JSON}
         # Attempt to delete recorded run ids
-        for rid in list(self.created_run_ids):
-            if isinstance(rid, dict) and "schedule_id" in rid:
-                schedule_id = rid["schedule_id"]
-                url = f"{self.host}/api/schedules/{schedule_id}"
-                name = "schedules.delete"
+        for rid in self.created_run_ids:
+            self._cleanup_resource(rid, headers)
+
+    def _cleanup_resource(self, rid: str | dict[str, str], headers: dict):
+        if isinstance(rid, dict) and "schedule_id" in rid:
+            schedule_id = rid["schedule_id"]
+            url = f"{self.host}/api/schedules/{schedule_id}"
+            name = "schedules.delete"
+        else:
+            run_id = rid
+            url = f"{self.host}/api/execute/{run_id}"
+            name = "execute.delete"
+
+        if ENABLE_LOGGING:
+            log.info(f"Attempting cleanup: {name} -> URL: {url}")
+
+        with self.client.delete(
+            url, headers=headers, name=name, catch_response=True, timeout=self.timeout_duration
+        ) as response:
+            # Accept 200 or 204
+            if response.status_code in (200, 204):
+                if ENABLE_LOGGING:
+                    log.info(f"Cleanup success for {url} status={response.status_code}")
+                response.success()
             else:
-                schedule_id = None
-                run_id = rid
-                url = f"{self.host}/api/execute/{run_id}"
-                name = "execute.delete"
-
-            if ENABLE_LOGGING:
-                log.info(f"Attempting cleanup: {name} -> URL: {url}")
-
-            with self.client.delete(
-                url, headers=headers, name=name, catch_response=True, timeout=self.timeout_duration
-            ) as response:
-                # Accept 200 or 204
-                if response.status_code in (200, 204):
-                    if ENABLE_LOGGING:
-                        log.info(f"Cleanup success for {url} status={response.status_code}")
-                    response.success()
-                else:
-                    msg = f"Cleanup failed for {url} status={response.status_code} response={response.text}"
-                    if ENABLE_LOGGING:
-                        log.error(msg)
-                    response.failure(msg)
+                msg = f"Cleanup failed for {url} status={response.status_code} response={response.text}"
+                if ENABLE_LOGGING:
+                    log.error(msg)
+                response.failure(msg)
 
 
 # To run this test at the requested scale and duration:

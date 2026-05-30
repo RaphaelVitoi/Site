@@ -165,7 +165,7 @@ def test_rio_tension_ip_less_than_oop() -> None:
 
 
 # ==============================================================================
-# Bayesian Range — Normalizacao
+# Bayesian Range  Normalizacao
 # ==============================================================================
 
 

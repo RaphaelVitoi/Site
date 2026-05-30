@@ -25,7 +25,7 @@ export function calculate_multiway_equity_zerocopy(ranges_ptr: number, num_playe
 /**
  * Interface FFI para Perspectiva Matemática SOTA v7.0 GOLD
  */
-export function calculate_perspectiva_vitoi_wasm(current_equity_pct: number, delta_win_pct: number, delta_lose_pct: number, dynamic_ev_fold: number, realization_factor: number, fgs_health: number, active_players: number, _hero_invested: number, current_pot: number, stack_eff: number, hero_rp: number, villain_rp: number, bounty_value: number, edge_base: number, human_noise_factor: number): object;
+export function calculate_perspectiva_vitoi_wasm(current_equity_pct: number, delta_win_pct: number, delta_lose_pct: number, dynamic_ev_fold: number, realization_factor: number, fgs_health: number, active_players: number, _hero_invested: number, current_pot: number, stack_eff: number, hero_rp: number, villain_rp: number, bounty_value: number, edge_base: number, human_noise_factor: number, reference_status: number): Float64Array;
 
 /**
  * Libera a memória previamente alocada. Mandatório no ciclo de vida (useEffect) do React.
@@ -60,7 +60,7 @@ export interface InitOutput {
     readonly alloc_range_buffer: (a: number) => number;
     readonly calculate_equity_monte_carlo_binary: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => number;
     readonly calculate_multiway_equity_zerocopy: (a: number, b: number, c: bigint, d: number, e: number) => any;
-    readonly calculate_perspectiva_vitoi_wasm: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number) => any;
+    readonly calculate_perspectiva_vitoi_wasm: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number) => any;
     readonly free_range_buffer: (a: number, b: number) => void;
     readonly solve_icm_distortion_binary: (a: number, b: number, c: number, d: number, e: any) => any;
     readonly solve_icm_distortion_v2: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => any;

@@ -16,8 +16,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Estágio Final: Imagem de Runtime Purificada
 FROM python:3.12-slim-bookworm
 
-# Porta contratual do Cloud Run
-ENV PORT=8080
+# Porta configurável: Cloud Run usa 8080 (default), docker-compose sobrescreve via env
+ARG PORT=8080
+ENV PORT=${PORT}
 ENV PYTHONUNBUFFERED=1
 
 # Blindagem OS SOTA
@@ -41,7 +42,8 @@ COPY --chown=appuser:appgroup . .
 USER appuser
 
 # Healthcheck SOTA
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD curl -f http://localhost:8080/ || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/ || exit 1
 
 # Boot do Master Core
 CMD ["python", "core/runtime.py"]

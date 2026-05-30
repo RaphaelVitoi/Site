@@ -104,7 +104,7 @@ async def _format_notify_row(t: Task, manager: QueueManager) -> tuple:
                 err_msg = str(err_msg_raw).replace("\n", " ")
                 desc += f" [bold red][ERRO AUTOFIX: {err_msg[:120]}...][/]"
 
-    display_id = f"[bold orange3]🔔 {t.id}[/]"
+    display_id = f"[bold orange3] {t.id}[/]"
     desc = f"[orange3]{desc}[/]"
     ts = t.timestamp[:19].replace("T", " ")
     return (
@@ -126,7 +126,7 @@ async def _cmd_get_notify(manager: QueueManager, argv: list) -> None:
         return
 
     table = Table(
-        title="[bold orange3]🔔 NEXUS ORCHESTRATOR - Auditorias Sentinela Pendentes[/]",
+        title="[bold orange3] NEXUS ORCHESTRATOR - Auditorias Sentinela Pendentes[/]",
         border_style="orange3",
         show_lines=True,
     )
@@ -786,7 +786,7 @@ async def _cmd_verify_keys(manager: QueueManager):
         }
         await manager.set_system_state("keys_last_audit", json.dumps(audit_payload, ensure_ascii=True))
 
-        runtime_file = Path(".claude/RUNTIME_KEYS_ROUTING_STATUS.md")
+        runtime_file = Path(".cerebro/RUNTIME_KEYS_ROUTING_STATUS.md")
         runtime_file.parent.mkdir(parents=True, exist_ok=True)  # noqa: ASYNC240
         lines = [
             "# Runtime Keys and Routing Status",
@@ -911,14 +911,14 @@ def _print_tasks_table(tasks: list) -> None:
         desc = t.description.replace("\r", "").replace("\n", " ")
         display_id = str(t.id)
         if display_id.startswith("NOTIFY-"):
-            display_id = f"[bold orange3]🔔 {t.id}[/]"
+            display_id = f"[bold orange3] {t.id}[/]"
             desc = f"[orange3]{desc}[/]"
         elif display_id.startswith("AUTOFIX-"):
-            display_id = f"[bold red]💉 {t.id}[/]"
+            display_id = f"[bold red] {t.id}[/]"
         elif display_id.startswith("RESONANCE-"):
-            display_id = f"[bold magenta]🌀 {t.id}[/]"
+            display_id = f"[bold magenta] {t.id}[/]"
         elif display_id.startswith("HANDOFF-"):
-            display_id = f"[bold cyan]🤝 {t.id}[/]"
+            display_id = f"[bold cyan] {t.id}[/]"
         ts = t.timestamp[:19].replace("T", " ")
         table.add_row(
             display_id,
@@ -1068,7 +1068,7 @@ async def _cli_db_cleanup(argv: list, manager: QueueManager) -> None:
     days = int(argv[2]) if len(argv) > 2 else 15
     await manager.cleanup(days)
     deleted_files = 0
-    results_dir = Path(".claude/task_results")
+    results_dir = Path(".cerebro/task_results")
     if results_dir.exists():  # noqa: ASYNC240
         cutoff_time = time.time() - (days * 86400)
         for f in results_dir.glob("*.md"):  # noqa: ASYNC240
@@ -1173,7 +1173,7 @@ async def _cli_ingest(argv: list, manager: QueueManager) -> None:
         # SOTA: Amnesia Operacional Condicionada
         # Oblitera o arquivo APENAS se ele estiver em zona temporaria (dropzone).
         # Previne a destruicao de arquivos legitimos da codebase sob ingestao analitica.
-        if ".claude" in filepath.parts and "dropzone" in filepath.parts:
+        if ".cerebro" in filepath.parts and "dropzone" in filepath.parts:
             await asyncio.to_thread(filepath.unlink, missing_ok=True)
 
     except Exception as e:  # noqa: BLE001

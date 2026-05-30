@@ -70,4 +70,22 @@ def load_env() -> dict[str, str]:
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.warning("Falha ao carregar arquivo %s: %s", file_name, e)
 
+    # --- SOTA Auto-Cure & Platform Guard (v7.0 GOLD) ---
+    import sys
+    if sys.platform.startswith("linux") or os.name == "posix":
+        # Guest (WSL Debian) Protection Shield
+        os.environ["UV_PROJECT_ENVIRONMENT"] = ".venv-wsl"
+        os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+        os.environ["NODE_OPTIONS"] = "--max-old-space-size=4096"
+        keys["UV_PROJECT_ENVIRONMENT"] = ".venv-wsl"
+        keys["PYTHONDONTWRITEBYTECODE"] = "1"
+        keys["NODE_OPTIONS"] = "--max-old-space-size=4096"
+    elif sys.platform == "win32":
+        # Host (Windows NT) Protection Shield
+        os.environ["UV_PROJECT_ENVIRONMENT"] = ".venv"
+        os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+        keys["UV_PROJECT_ENVIRONMENT"] = ".venv"
+        keys["PYTHONDONTWRITEBYTECODE"] = "1"
+    # ---------------------------------------------------
+
     return keys

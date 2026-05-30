@@ -13,7 +13,7 @@ import { TelemetryPayloadSchema, PerspectiveMetricSchema } from '@/lib/schemas';
 const SHARED_TELEMETRY_PATH = path.resolve(
 	process.cwd(),
 	'..',
-	'.claude/logs/wasm_telemetry_dump.jsonl',
+	'.cerebro/logs/wasm_telemetry_dump.jsonl',
 );
 
 function logToOrchestrator(payload: Record<string, unknown>) {

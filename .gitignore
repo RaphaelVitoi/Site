@@ -60,10 +60,7 @@ _backups/
 .backups_sota/
 archive/
 NEXUS_SOTA_BACKUP_*/
-.claude/
-.claude/logs/
-.claude/task_results/
-.claude/.archive/
+
 .pytest_tmp/
 
 # 6. SEGREDOS & AMBIENTE (PREVENÇÃO DE VAZAMENTO) ─────────────────────────────
@@ -104,3 +101,9 @@ desktop.ini
 .github/instructions/
 .cursorules
 .aiexclude
+
+# 10. ARTEFATOS DE BUILD TYPESCRIPT ──────────────────────────────────────────
+*.tsbuildinfo
+
+# 11. BANCO DE DADOS LOCAL DE DEV ─────────────────────────────────────────────
+frontend/dev.db

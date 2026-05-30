@@ -123,7 +123,7 @@ def _generate_fallback_specs(task_id: str, route_agents: list) -> list:
     stage_prompts = {
         AGENT_ARCHITECT: (
             f"Fallback automatico do dispatcher para a tarefa base {task_id}. \n"
-            f"Analise '.claude/task_results/{task_id}.md' e consolide um blueprint \n"
+            f"Analise '.cerebro/task_results/{task_id}.md' e consolide um blueprint \n"
             f"arquitetural objetivo com escopo, restricoes e criterios de sucesso."
         ),
         AGENT_MAVERICK: (

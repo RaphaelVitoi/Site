@@ -53,7 +53,7 @@ A aula deve ter progressao didatica clara: fundamentos -> toy-games como laborat
 Os seguintes arquivos foram lidos para construcao deste prompt:
 
 - `C:\Users\Raphael\OneDrive\Documentos\Site\docs\tasks\aula-icm-rp\pesquisa.md` -- relatorio completo de pesquisa com material local, fontes web, conceitos nao cobertos no material original, gaps identificados, conexoes interdisciplinares e estrutura proposta
-- `C:\Users\Raphael\OneDrive\Documentos\Site\.claude\agents\planner.md` -- instrucoes do agente que vai receber este prompt (PRD.md e SPEC.md como entregaveis)
+- `C:\Users\Raphael\OneDrive\Documentos\Site\.cerebro\agents\planner.md` -- instrucoes do agente que vai receber este prompt (PRD.md e SPEC.md como entregaveis)
 
 O material primario de Raphael (`Entendendo o ICM e suas heuristicas.docx`) nao foi lido diretamente nesta sessao -- o conteudo esta descrito em detalhe no prompt de entrada e no pesquisa.md. O @planner deve ler o arquivo original antes de escrever qualquer secao que reproduza ou derive dos toy-games.
 

@@ -3,6 +3,14 @@
 /// ROLE: Resolvedor O(1) de Equidade, Matriz de Insolvência e Distorção ICM.
 use wasm_bindgen::prelude::*;
 
+// SOTA v7.0 GOLD: Precomputed Mathematical Constants for O(1) Latency Optimization
+const LN_100: f64 = 4.605170185988092;
+const LN_60: f64 = 4.0943445622221;
+const INV_LN_60: f64 = 0.24423939986381665;
+const INV_7_5: f64 = 0.13333333333333333;
+const INV_15: f64 = 0.06666666666666667;
+const INV_100: f64 = 0.01;
+
 /// SOTA: XorShift64* PRNG.
 /// Aniquila viés de amostragem na bolha do ICM e previne exaustão de ciclo (2^64-1).
 #[inline(always)]
@@ -371,16 +379,32 @@ fn calculate_bayesian_win_prob(prior_equity: f64, action_strength: f64, range_de
 
 /// SOTA v7.0 GOLD: Curva de Utilidade (Kahneman/VITOI)
 #[inline(always)]
-fn calculate_utility_ev(raw_ev: f64, stack_eff: f64, fgs_health: f64) -> f64 {
+fn calculate_utility_ev(raw_ev: f64, stack_eff: f64, fgs_health: f64, reference_status: u32) -> f64 {
     if raw_ev.is_nan() || raw_ev.is_infinite() {
         return 0.0;
     }
     let safe_stack = stack_eff.max(2.718);
-    let stack_modifier = 100.0f64.ln() / safe_stack.ln();
-    let fgs_modifier = 1.0 / fgs_health.powf(2.0).max(0.1);
-    let lambda_val = 2.25 * stack_modifier * fgs_modifier;
-    let alpha = 0.88;
-    let beta = 0.88;
+    let stack_modifier = LN_100 / safe_stack.ln();
+    let fgs_modifier = 1.0 / (fgs_health * fgs_health).max(0.1);
+    let mut lambda_val = 2.25 * stack_modifier * fgs_modifier;
+    let mut alpha = 0.88;
+    let mut beta = 0.88;
+
+    // reference_status: 0 = baseline, 1 = tilt, 2 = protecting, 3 = bubble
+    match reference_status {
+        1 => { // tilt
+            lambda_val = lambda_val * 0.66;
+            beta = 0.95;
+        }
+        2 => { // protecting
+            lambda_val = lambda_val * 1.33;
+            alpha = 0.75;
+        }
+        3 => { // bubble
+            lambda_val = lambda_val * 2.0;
+        }
+        _ => {} // baseline / default
+    }
 
     if raw_ev >= 0.0 {
         raw_ev.powf(alpha)
@@ -407,21 +431,22 @@ pub fn calculate_perspectiva_vitoi_wasm(
     bounty_value: f64,
     edge_base: f64,
     human_noise_factor: f64,
-) -> js_sys::Object {
+    reference_status: u32,
+) -> js_sys::Float64Array {
     // 1. Bounty Offset & Risk Advantage
     let bounty_rp_offset = (bounty_value / current_pot.max(1.0)) * 10.0;
     let effective_hero_rp = (hero_rp - bounty_rp_offset).max(0.01);
     let risk_advantage = villain_rp - effective_hero_rp;
-    let advantage_multiplier = 1.0 + (risk_advantage / 100.0);
+    let advantage_multiplier = 1.0 + (risk_advantage * INV_100);
 
     // 2. Amortização de Edge
     let safe_stack_edge = stack_eff.max(2.718);
-    let edge_scale = (safe_stack_edge.ln() / 60.0f64.ln()) * advantage_multiplier;
+    let edge_scale = (safe_stack_edge.ln() * INV_LN_60) * advantage_multiplier;
     let amortized_edge = edge_base * edge_scale;
 
     // 3. Bayesian Win Prob
     let eq = if current_equity_pct > 1.0 {
-        current_equity_pct / 100.0
+        current_equity_pct * INV_100
     } else {
         current_equity_pct
     };
@@ -433,20 +458,21 @@ pub fn calculate_perspectiva_vitoi_wasm(
     } else {
         let opponents = (active_players - 1) as f64;
         let rio_penalty_factor = opponents.powf(2.0 + human_noise_factor);
-        let volatility_multiplier = (active_players as f64 / (stack_eff / 5.0).max(1.0)).powf(2.0);
+        let base_ratio = active_players as f64 / (stack_eff * 0.2).max(1.0);
+        let volatility_multiplier = base_ratio * base_ratio;
         let damping = 0.15 + (human_noise_factor * 0.05);
         // Constante de ICM por chip (Baseline 0.05)
         let icm_per_chip = 0.05;
         let rio_penalty_chips = current_pot
             * rio_penalty_factor
             * (damping + (volatility_multiplier * 0.05))
-            * (effective_hero_rp / 15.0);
+            * (effective_hero_rp * INV_15);
         rio_penalty_chips * icm_per_chip
     };
 
     // 5. Prospect Theory Logic
     let base_delta_lose = delta_lose_pct * (1.0 / fgs_health.max(0.1));
-    let prospect_delta_lose = calculate_utility_ev(base_delta_lose, stack_eff, fgs_health);
+    let prospect_delta_lose = calculate_utility_ev(base_delta_lose, stack_eff, fgs_health, reference_status);
 
     // 6. A EQUAÇÃO UNIFICADA
     let valuation = 1.0; // Baseline
@@ -475,23 +501,18 @@ pub fn calculate_perspectiva_vitoi_wasm(
         1.5
     };
 
-    // Retorno via JS Object
-    let obj = js_sys::Object::new();
-    js_sys::Reflect::set(&obj, &"perspectivaPct".into(), &perspectiva.into()).unwrap();
-    js_sys::Reflect::set(&obj, &"expectativa".into(), &expectativa.into()).unwrap();
-    js_sys::Reflect::set(&obj, &"riskAdvantage".into(), &risk_advantage.into()).unwrap();
-    js_sys::Reflect::set(&obj, &"rioMw".into(), &rio_mw.into()).unwrap();
-    js_sys::Reflect::set(&obj, &"threshEq".into(), &thresh_eq.into()).unwrap();
-    js_sys::Reflect::set(&obj, &"ci".into(), &ci.into()).unwrap();
-    js_sys::Reflect::set(&obj, &"amortizedEdge".into(), &amortized_edge.into()).unwrap();
-    js_sys::Reflect::set(
-        &obj,
-        &"bayesianWinProb".into(),
-        &(bayesian_win_prob * 100.0).into(),
-    )
-    .unwrap();
+    // Retorno via JS Float64Array para Fricção Zero O(1)
+    let out_array = js_sys::Float64Array::new_with_length(8);
+    out_array.set_index(0, perspectiva);
+    out_array.set_index(1, expectativa);
+    out_array.set_index(2, risk_advantage);
+    out_array.set_index(3, rio_mw);
+    out_array.set_index(4, thresh_eq);
+    out_array.set_index(5, ci);
+    out_array.set_index(6, amortized_edge);
+    out_array.set_index(7, bayesian_win_prob * 100.0);
 
-    obj
+    out_array
 }
 
 /// Interface FFI para Matriz de Insolvência
@@ -611,13 +632,13 @@ pub fn solve_icm_distortion_v2(
     }
 
     // Cálculo de Gravidade (G): ln(pot/7.5). 7.5bb é o baseline de SRP.
-    let gravity = (pot_size / 7.5).ln().max(0.0);
+    let gravity = (pot_size * INV_7_5).ln().max(0.0);
 
     // Amortecimento (Damping): Reduz a sensibilidade da agressão em potes gigantes
     let damping = 1.0 / (1.0 + gravity * 0.12);
     let effective_aggression = 1.0 + (topologic_aggression - 1.0) * damping;
 
-    let pressure = (oop_rp + ip_rp) / 2.0;
+    let pressure = (oop_rp + ip_rp) * 0.5;
 
     // Downward Drift: Pressão RP converte Raise em Small Bet ou Check/Call
     // Escala com a street e com a gravidade
@@ -640,9 +661,10 @@ pub fn solve_icm_distortion_v2(
     let total = new_fold + new_call + new_raise;
 
     if total > 0.0 {
-        new_fold /= total;
-        new_call /= total;
-        new_raise /= total;
+        let inv_total = 1.0 / total;
+        new_fold *= inv_total;
+        new_call *= inv_total;
+        new_raise *= inv_total;
     } else {
         new_fold = 1.0;
         new_call = 0.0;
@@ -682,7 +704,7 @@ pub fn solve_icm_distortion_binary(
         );
     }
 
-    let pressure = (oop_rp + ip_rp) / 2.0;
+    let pressure = (oop_rp + ip_rp) * 0.5;
 
     // SOTA v4.6 GOLD: Unificacao de constantes para paridade absoluta com motor Python/v2
     let raise_shift =
@@ -695,9 +717,10 @@ pub fn solve_icm_distortion_binary(
     let mut new_call = (1.0 - new_fold - new_raise).max(0.0);
     let total = new_fold + new_call + new_raise;
     if total > 0.0 {
-        new_fold /= total;
-        new_call /= total;
-        new_raise /= total;
+        let inv_total = 1.0 / total;
+        new_fold *= inv_total;
+        new_call *= inv_total;
+        new_raise *= inv_total;
     } else {
         new_fold = 1.0;
         new_call = 0.0;

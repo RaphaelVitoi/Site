@@ -16,7 +16,7 @@ from engine.bayesian_range import (
 )
 
 # ==============================================================================
-# _categorize_hand — todos os ramos
+# _categorize_hand  todos os ramos
 # ==============================================================================
 
 
@@ -83,7 +83,7 @@ def test_categorize_hand_air_or_draw_postflop() -> None:
 
 
 # ==============================================================================
-# _apply_profile_drift — perfis nit, aggro, station
+# _apply_profile_drift  perfis nit, aggro, station
 # ==============================================================================
 
 
@@ -117,7 +117,7 @@ def test_apply_profile_drift_caps_at_one() -> None:
 
 
 # ==============================================================================
-# build_likelihood_matrix — acoes e perfis
+# build_likelihood_matrix  acoes e perfis
 # ==============================================================================
 
 
@@ -166,7 +166,7 @@ def test_build_likelihood_matrix_preflop_all_air_or_draw() -> None:
 
 
 # ==============================================================================
-# update_posterior — propriedades matematicas
+# update_posterior  propriedades matematicas
 # ==============================================================================
 
 

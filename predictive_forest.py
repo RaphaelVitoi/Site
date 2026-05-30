@@ -10,10 +10,17 @@ try:
     import numpy as np
     from sklearn.ensemble import RandomForestClassifier
 except ImportError:
-    RandomForestClassifier = None
-    np = None
+    RandomForestClassifier = None  # type: ignore
+    np = None  # type: ignore
 
 logger = logging.getLogger(__name__)
+
+CAT_RISK = "Aversao ao Risco"
+CAT_POT = "Pot Entrapment"
+CAT_PAYJUMP = "Miopia de Payjump"
+CAT_AGGRO = "Excesso de Agressao"
+CAT_RIO = "Passivo Estrutural (RIO)"
+CAT_NASH = "Desvio de Nash"
 
 
 class PredictiveForestEngine:
@@ -96,7 +103,7 @@ class PredictiveForestEngine:
                             features = [float(meta[k]) for k in self.feature_keys]
                             features_list.append(features)
                             targets.append(1 - int(row["isCorrect"]))  # User error: 1 - isCorrect
-                    except (ValueError, TypeError, KeyError, json.JSONDecodeError) as e:
+                    except (ValueError, TypeError, KeyError) as e:
                         logger.debug("[PREDICTIVE] Erro ao parsear metadata: %s", e)
 
                 # Requisicao de amostragem minima reduzida para 10 para
@@ -112,7 +119,8 @@ class PredictiveForestEngine:
                 targets_array = np.array(targets)
 
                 self.model = RandomForestClassifier(n_estimators=50, max_depth=4, random_state=42)
-                self.model.fit(features_array, targets_array)
+                if self.model is not None:
+                    self.model.fit(features_array, targets_array)
 
                 self._is_trained = True
                 logger.info(
@@ -126,12 +134,12 @@ class PredictiveForestEngine:
                     with open(self.profile_path, "w", encoding="ascii") as f:
                         json.dump(profile, f, ensure_ascii=True)
                     logger.info("[PREDICTIVE] Perfil preditivo calibrado persistido com sucesso.")
-                except OSError as e:
-                    logger.error("[PREDICTIVE] Falha ao persistir perfil preditivo no disco: %s", e)
+                except OSError:
+                    logger.exception("[PREDICTIVE] Falha ao persistir perfil preditivo no disco.")
 
                 return True
-        except sqlite3.Error as e:  # noqa: BLE001
-            logger.error("[PREDICTIVE] Falha Catastrofica no treinamento: %s", e)
+        except sqlite3.Error:  # noqa: BLE001
+            logger.exception("[PREDICTIVE] Falha Catastrofica no treinamento.")
             return False
 
     def _compute_modulated_profile(self) -> dict[str, float]:
@@ -140,12 +148,12 @@ class PredictiveForestEngine:
         Utiliza a importancia das features para modular o baseline de erros.
         """
         profile = {
-            "Aversao ao Risco": 0.85,
-            "Pot Entrapment": 0.65,
-            "Miopia de Payjump": 0.90,
-            "Excesso de Agressao": 0.30,
-            "Passivo Estrutural (RIO)": 0.75,
-            "Desvio de Nash": 0.45,
+            CAT_RISK: 0.85,
+            CAT_POT: 0.65,
+            CAT_PAYJUMP: 0.90,
+            CAT_AGGRO: 0.30,
+            CAT_RIO: 0.75,
+            CAT_NASH: 0.45,
         }
 
         if self._is_trained and self.model is not None:
@@ -155,30 +163,26 @@ class PredictiveForestEngine:
 
                 # Modulate baseline using feature importances
                 risk_mod = (importances.get("gravity", 0.0) + importances.get("timeToBlindJumpMinutes", 0.0)) * scale
-                profile["Aversao ao Risco"] = round(min(1.0, max(0.0, profile["Aversao ao Risco"] + risk_mod)), 2)
+                profile[CAT_RISK] = round(min(1.0, max(0.0, profile[CAT_RISK] + risk_mod)), 2)
 
                 pot_mod = importances.get("potOddsRatio", 0.0) * scale
-                profile["Pot Entrapment"] = round(min(1.0, max(0.0, profile["Pot Entrapment"] + pot_mod)), 2)
+                profile[CAT_POT] = round(min(1.0, max(0.0, profile[CAT_POT] + pot_mod)), 2)
 
                 payjump_mod = importances.get("payjumpProximityFactor", 0.0) * scale
-                profile["Miopia de Payjump"] = round(min(1.0, max(0.0, profile["Miopia de Payjump"] - payjump_mod)), 2)
+                profile[CAT_PAYJUMP] = round(min(1.0, max(0.0, profile[CAT_PAYJUMP] - payjump_mod)), 2)
 
                 aggro_mod = importances.get("positionalUrgency", 0.0) * scale
-                profile["Excesso de Agressao"] = round(
-                    min(1.0, max(0.0, profile["Excesso de Agressao"] + aggro_mod)), 2
-                )
+                profile[CAT_AGGRO] = round(min(1.0, max(0.0, profile[CAT_AGGRO] + aggro_mod)), 2)
 
                 rio_mod = importances.get("reverseImpliedOddsPenalty", 0.0) * scale
-                profile["Passivo Estrutural (RIO)"] = round(
-                    min(1.0, max(0.0, profile["Passivo Estrutural (RIO)"] + rio_mod)), 2
-                )
+                profile[CAT_RIO] = round(min(1.0, max(0.0, profile[CAT_RIO] + rio_mod)), 2)
 
                 nash_mod = (
                     importances.get("insolvencyCoefficient", 0.0) + importances.get("downward_drift", 0.0)
                 ) * scale
-                profile["Desvio de Nash"] = round(min(1.0, max(0.0, profile["Desvio de Nash"] + nash_mod)), 2)
-            except (AttributeError, TypeError, ValueError) as e:
-                logger.error("[PREDICTIVE] Erro ao modular perfil preditivo: %s", e)
+                profile[CAT_NASH] = round(min(1.0, max(0.0, profile[CAT_NASH] + nash_mod)), 2)
+            except (AttributeError, TypeError, ValueError):
+                logger.exception("[PREDICTIVE] Erro ao modular perfil preditivo.")
 
         return profile
 
@@ -199,19 +203,19 @@ class PredictiveForestEngine:
                 # Mapeia chaves acentuadas antigas para ASCII puro caso existam
                 ascii_profile = {}
                 ascii_map = {
-                    "Aversao ao Risco": "Aversao ao Risco",
-                    "Pot Entrapment": "Pot Entrapment",
-                    "Miopia de Payjump": "Miopia de Payjump",
-                    "Excesso de Agressao": "Excesso de Agressao",
-                    "Passivo Estrutural (RIO)": "Passivo Estrutural (RIO)",
-                    "Desvio de Nash": "Desvio de Nash",
+                    "Aversao ao Risco": CAT_RISK,
+                    "Pot Entrapment": CAT_POT,
+                    "Miopia de Payjump": CAT_PAYJUMP,
+                    "Excesso de Agressao": CAT_AGGRO,
+                    "Passivo Estrutural (RIO)": CAT_RIO,
+                    "Desvio de Nash": CAT_NASH,
                 }
                 for k, v in profile.items():
                     mapped_k = ascii_map.get(k, k)
                     ascii_profile[mapped_k] = v
                 return ascii_profile
-            except (OSError, ValueError) as e:
-                logger.error("[PREDICTIVE] Erro ao carregar perfil: %s", e)
+            except (OSError, ValueError):
+                logger.exception("[PREDICTIVE] Erro ao carregar perfil.")
 
         # Fallback basico
         return self._compute_modulated_profile()

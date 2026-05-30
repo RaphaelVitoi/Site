@@ -3,29 +3,29 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-    --color-bg-base: #0f172a;
-    --color-bg-deep: #020617;
-    --color-bg-panel: #1e293b;
-    --color-bg-elevated: #1e293b;
-    --color-text-main: #cbd5e1;
-    --color-text-bright: #f8fafc;
-    --color-text-muted: #94a3b8;
-    --color-text-dim: #64748b;
-    --color-text-darker: #334155;
+    --color-bg-base: hsl(222, 47%, 11%);
+    --color-bg-deep: hsl(224, 71%, 4%);
+    --color-bg-panel: hsl(215, 25%, 27%);
+    --color-bg-elevated: hsl(215, 25%, 27%);
+    --color-text-main: hsl(215, 20%, 80%);
+    --color-text-bright: hsl(210, 40%, 98%);
+    --color-text-muted: hsl(215, 16%, 65%);
+    --color-text-dim: hsl(215, 14%, 47%);
+    --color-text-darker: hsl(215, 25%, 27%);
 
-    --color-accent-indigo: #6366f1;
-    --color-accent-indigo-light: #818cf8;
-    --color-accent-emerald: #10b981;
-    --color-accent-emerald-light: #34d399;
-    --color-accent-rose: #f43f5e;
-    --color-accent-rose-light: #fb7185;
-    --color-accent-danger: #ef4444;
-    --color-accent-danger-light: #f87171;
-    --color-accent-amber: #f59e0b;
-    --color-accent-gold: #fbbf24;
-    --color-accent-violet: #8b5cf6;
-    --color-accent-sky: #0ea5e9;
-    --color-accent-pink: #ec4899;
+    --color-accent-indigo: hsl(239, 84%, 67%);
+    --color-accent-indigo-light: hsl(233, 89%, 74%);
+    --color-accent-emerald: hsl(158, 82%, 39%);
+    --color-accent-emerald-light: hsl(159, 63%, 59%);
+    --color-accent-rose: hsl(349, 89%, 60%);
+    --color-accent-rose-light: hsl(351, 95%, 71%);
+    --color-accent-danger: hsl(0, 84%, 60%);
+    --color-accent-danger-light: hsl(0, 93%, 71%);
+    --color-accent-amber: hsl(38, 92%, 50%);
+    --color-accent-gold: hsl(43, 96%, 58%);
+    --color-accent-violet: hsl(262, 89%, 66%);
+    --color-accent-sky: hsl(199, 89%, 48%);
+    --color-accent-pink: hsl(330, 81%, 60%);
 
     --radius-4xl: 2rem;
     --radius-5xl: 3rem;
@@ -367,4 +367,151 @@
 .light-page {
     scrollbar-width: none;
     -ms-overflow-style: none;
+}
+
+/* ==============================================================================
+   SOTA PREMIUM CUSTOM UI REFINEMENTS (v7.0 GOLD)
+   ============================================================================== */
+
+/* Glass Panel Hover Glow Refinements */
+.glass-panel {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.glass-panel:hover {
+    border-color: rgba(99, 102, 241, 0.25) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 
+                0 0 50px rgba(99, 102, 241, 0.08),
+                0 40px 85px -20px rgba(0, 0, 0, 0.85) !important;
+    transform: translateY(-2px);
+}
+
+.sota-glass-pill {
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.sota-glass-pill:hover {
+    border-color: rgba(99, 102, 241, 0.3) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 
+                0 0 25px rgba(99, 102, 241, 0.12),
+                0 10px 30px -10px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ── SOTA Premium Custom Range Slider ── */
+.sota-range-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+    transition: background 0.3s, box-shadow 0.3s;
+    
+    --slider-color: var(--color-accent-indigo);
+    --slider-color-light: var(--color-accent-indigo-light);
+    --slider-glow: rgba(99, 102, 241, 0.25);
+    --slider-glow-hover: rgba(99, 102, 241, 0.4);
+    --slider-glow-active: rgba(99, 102, 241, 0.55);
+}
+
+.sota-range-slider.sota-slider-indigo {
+    --slider-color: var(--color-accent-indigo);
+    --slider-color-light: var(--color-accent-indigo-light);
+    --slider-glow: rgba(99, 102, 241, 0.25);
+    --slider-glow-hover: rgba(99, 102, 241, 0.4);
+    --slider-glow-active: rgba(99, 102, 241, 0.55);
+}
+
+.sota-range-slider.sota-slider-danger {
+    --slider-color: var(--color-accent-danger);
+    --slider-color-light: var(--color-accent-danger-light);
+    --slider-glow: rgba(239, 68, 68, 0.25);
+    --slider-glow-hover: rgba(239, 68, 68, 0.4);
+    --slider-glow-active: rgba(239, 68, 68, 0.55);
+}
+
+.sota-range-slider.sota-slider-gold {
+    --slider-color: var(--color-accent-gold);
+    --slider-color-light: var(--color-accent-amber);
+    --slider-glow: rgba(245, 158, 11, 0.25);
+    --slider-glow-hover: rgba(245, 158, 11, 0.4);
+    --slider-glow-active: rgba(245, 158, 11, 0.55);
+}
+
+.sota-range-slider.sota-slider-pink {
+    --slider-color: var(--color-accent-pink);
+    --slider-color-light: var(--color-accent-pink);
+    --slider-glow: rgba(219, 39, 119, 0.25);
+    --slider-glow-hover: rgba(219, 39, 119, 0.4);
+    --slider-glow-active: rgba(219, 39, 119, 0.55);
+}
+
+.sota-range-slider.sota-slider-rose {
+    --slider-color: var(--color-accent-rose);
+    --slider-color-light: var(--color-accent-rose-light);
+    --slider-glow: rgba(244, 63, 94, 0.25);
+    --slider-glow-hover: rgba(244, 63, 94, 0.4);
+    --slider-glow-active: rgba(244, 63, 94, 0.55);
+}
+
+.sota-range-slider.sota-slider-emerald {
+    --slider-color: var(--color-accent-emerald);
+    --slider-color-light: var(--color-accent-emerald-light);
+    --slider-glow: rgba(16, 185, 129, 0.25);
+    --slider-glow-hover: rgba(16, 185, 129, 0.4);
+    --slider-glow-active: rgba(16, 185, 129, 0.55);
+}
+
+.sota-range-slider:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Chrome, Safari, Opera, Edge */
+.sota-range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--slider-color);
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--slider-color), 0 0 0 4px var(--slider-glow);
+    transition: transform 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.sota-range-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+    background: var(--slider-color-light);
+    box-shadow: 0 0 15px var(--slider-color-light), 0 0 0 6px var(--slider-glow-hover);
+}
+
+.sota-range-slider::-webkit-slider-thumb:active {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px var(--slider-color-light), 0 0 0 8px var(--slider-glow-active);
+}
+
+/* Firefox */
+.sota-range-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: none;
+    border-radius: 50%;
+    background: var(--slider-color);
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--slider-color), 0 0 0 4px var(--slider-glow);
+    transition: transform 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.sota-range-slider::-moz-range-thumb:hover {
+    transform: scale(1.25);
+    background: var(--slider-color-light);
+    box-shadow: 0 0 15px var(--slider-color-light), 0 0 0 6px var(--slider-glow-hover);
+}
+
+.sota-range-slider::-moz-range-thumb:active {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px var(--slider-color-light), 0 0 0 8px var(--slider-glow-active);
 }

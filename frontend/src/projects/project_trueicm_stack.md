@@ -14,7 +14,7 @@ trueICM.com e o site pessoal/educacional de Raphael Vitoi focado em ICM, teoria 
 - DB: SQLite via Prisma 7.5 (2 schemas: root=game theory, frontend=content+telemetria)
 - Testes: Jest 30.3 + ts-jest
 - Scripts: PowerShell (automacao/infra) + Python (RAG, CLI nexus, seeds)
-- Agentes: 15 agentes definidos em .claude/agents/ com governanca Raphael-Maverick-Chico
+- Agentes: 15 agentes definidos em .cerebro/agents/ com governanca Raphael-Maverick-Chico
 
 **Motor central:**
 

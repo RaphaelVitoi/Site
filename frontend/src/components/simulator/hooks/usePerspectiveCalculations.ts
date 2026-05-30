@@ -17,6 +17,7 @@ interface PerspectiveCalculationsParams {
 	isNearPayjump: boolean;
 	blindsRising: boolean;
 	humanNoiseFactor?: number;
+	referenceStatus?: 'baseline' | 'tilt' | 'protecting' | 'bubble';
 }
 
 export function usePerspectiveCalculations({
@@ -33,6 +34,7 @@ export function usePerspectiveCalculations({
 	isNearPayjump,
 	blindsRising,
 	humanNoiseFactor = 0,
+	referenceStatus,
 }: PerspectiveCalculationsParams) {
 	const result = useMemo(() => {
 		return calculatePerspectivaVitoi({
@@ -51,6 +53,7 @@ export function usePerspectiveCalculations({
 			isNearPayjump,
 			blindsRisingSoon: blindsRising,
 			humanNoiseFactor,
+			referenceStatus,
 		});
 	}, [
 		stacks,
@@ -66,6 +69,7 @@ export function usePerspectiveCalculations({
 		isNearPayjump,
 		blindsRising,
 		humanNoiseFactor,
+		referenceStatus,
 	]);
 
 	const chartData = useMemo(() => {
@@ -88,6 +92,7 @@ export function usePerspectiveCalculations({
 				isNearPayjump,
 				blindsRisingSoon: blindsRising,
 				humanNoiseFactor,
+				referenceStatus,
 			});
 			points.push({ name: `${p}%`, prob: p, 'PM Quantum': r.perspectivaPct });
 		}
@@ -105,6 +110,7 @@ export function usePerspectiveCalculations({
 		isNearPayjump,
 		blindsRising,
 		humanNoiseFactor,
+		referenceStatus,
 	]);
 
 	return { result, chartData };

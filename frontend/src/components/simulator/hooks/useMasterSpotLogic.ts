@@ -35,6 +35,8 @@ interface UseMasterSpotLogicParams {
 		createdAt: string | Date;
 	}> | null;
 	setNativeRangeMetric: (val: { equity: number; isCalculating: boolean }) => void;
+	pkoValue: number;
+	aggFactor: number;
 }
 
 /**
@@ -63,6 +65,8 @@ export function useMasterSpotLogic({
 	predictiveProfile,
 	predictiveTelemetry,
 	setNativeRangeMetric,
+	pkoValue,
+	aggFactor,
 }: UseMasterSpotLogicParams) {
 	const isBaseline =
 		scenario.category === 'baseline' || !scenario.prizes || scenario.prizes.length <= 1;
@@ -79,6 +83,25 @@ export function useMasterSpotLogic({
 	const villainInvested = Math.max(0, safeCurrentPot - safeHeroInvested);
 	const heroUpdatedStack = Math.max(0, heroRawStack - safeHeroInvested);
 	const villainUpdatedStack = Math.max(0, villainRawStack - villainInvested);
+
+	const heroIdx = useMemo(() => {
+		const posMap: Record<string, { max: number; off: number }> = {
+			BB: { max: 8, off: 1 },
+			SB: { max: 7, off: 2 },
+			IP: { max: 6, off: 3 },
+			OOP: { max: 0, off: 1 },
+		};
+		const conf = posMap[heroPosition] || posMap['OOP'];
+		const safeConf = conf ?? { max: 0, off: 1 };
+		return Math.min(safeConf.max, (scenario.stacks?.length ?? 9) - safeConf.off);
+	}, [heroPosition, scenario.stacks]);
+
+	const primaryVillainIdx = useMemo(() => {
+		const numVillains = Math.max(1, safeActivePlayers - 1);
+		const valid = Array.from({ length: scenario.stacks?.length ?? 9 }, (_, i) => i).filter((i) => i !== heroIdx);
+		if (valid.length >= numVillains) return valid.slice(0, numVillains)[0] ?? 0;
+		return valid.length > 0 ? (valid[0] ?? 0) : Math.max(0, (scenario.stacks?.length ?? 9) - 3);
+	}, [safeActivePlayers, scenario.stacks, heroIdx]);
 
 	const baseFgsErosion = useMemo(
 		() => calculateBaseFgsErosion(quantumPerspectiva, blindsRisingSoon, anteSize, heroPosition),
@@ -165,6 +188,14 @@ export function useMasterSpotLogic({
 			heroInvested: safeHeroInvested,
 			heroStack: heroRawStack,
 			villainStack: villainRawStack,
+			initialStacks: scenario.stacks,
+			initialPrizes: scenario.prizes,
+			heroIdx,
+			primaryVillainIdx,
+			heroPosition,
+			blindsRisingSoon,
+			pkoValue,
+			aggFactor,
 		};
 	}, [
 		spotData,
@@ -177,6 +208,14 @@ export function useMasterSpotLogic({
 		scenario.name,
 		heroRawStack,
 		villainRawStack,
+		scenario.stacks,
+		scenario.prizes,
+		heroIdx,
+		primaryVillainIdx,
+		heroPosition,
+		blindsRisingSoon,
+		pkoValue,
+		aggFactor,
 	]);
 
 	const metricsContextValue = useMemo(

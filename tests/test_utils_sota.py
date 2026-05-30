@@ -14,7 +14,7 @@ from utils.storage import SOTABucketing
 from utils.text import enforce_pure_ascii
 
 # ==============================================================================
-# utils/text.py — enforce_pure_ascii
+# utils/text.py  enforce_pure_ascii
 # ==============================================================================
 
 
@@ -47,7 +47,7 @@ def test_enforce_pure_ascii_idempotent() -> None:
 
 
 # ==============================================================================
-# utils/harmonizer.py — SOTAHarmonizer
+# utils/harmonizer.py  SOTAHarmonizer
 # ==============================================================================
 
 
@@ -116,7 +116,7 @@ async def test_harmonizer_batch_process_empty_list() -> None:
 
 
 # ==============================================================================
-# utils/cache.py — SOTACache
+# utils/cache.py  SOTACache
 # ==============================================================================
 
 
@@ -184,7 +184,7 @@ def test_cache_get_hash_is_deterministic(cache: SOTACache) -> None:
 
 
 # ==============================================================================
-# utils/storage.py — SOTABucketing
+# utils/storage.py  SOTABucketing
 # ==============================================================================
 
 
@@ -227,7 +227,7 @@ def test_bucketing_multiple_buckets_isolated(buckets: SOTABucketing) -> None:
 
 
 # ==============================================================================
-# utils/resources.py — ResourceGuard
+# utils/resources.py  ResourceGuard
 # ==============================================================================
 
 

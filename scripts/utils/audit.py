@@ -9,7 +9,7 @@ from utils.text import enforce_pure_ascii
 
 def write_economic_log(task: Task, duration_secs: float, status: str):
     """Grava logs economicos sobre as tasks realizadas (Pure ASCII)."""
-    audit_dir = Path(".claude/logs/audit")
+    audit_dir = Path(".cerebro/logs/audit")
     audit_dir.mkdir(parents=True, exist_ok=True)
     log_file = audit_dir / f"economic_audit_{datetime.now(UTC).strftime('%Y-%m')}.log"
 

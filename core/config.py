@@ -16,6 +16,14 @@ from utils.env_loader import load_env
 
 load_env()
 
+# ==========================================
+# SOTA GOLD: Supressao de Entropia ASGI/FastAPI (WSL Bridge)
+# Obliteracao imperativa de modos bloqueantes para garantir throughput nativo no ext4
+# ==========================================
+os.environ["FASTAPI_DEBUG"] = "0"
+os.environ["UVICORN_RELOAD"] = "False"
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+
 BASE_DIR = Path(__file__).parent.parent.resolve()
 logger = logging.getLogger(__name__)
 
@@ -308,8 +316,7 @@ def _flush_telemetry_buffer() -> None:
         try:
             PATH_TELEMETRY_DUMP.parent.mkdir(parents=True, exist_ok=True)
             with open(PATH_TELEMETRY_DUMP, "a", encoding="ascii", errors="backslashreplace") as f:
-                for item in _TELEMETRY_BUFFER:
-                    f.write(json.dumps(item, ensure_ascii=True) + "\n")
+                f.writelines(json.dumps(item, ensure_ascii=True) + "\n" for item in _TELEMETRY_BUFFER)
             _TELEMETRY_BUFFER.clear()
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.exception("[SOTA TELEMETRY] Falha catastrofica ao persistir telemetria: %s", e)
@@ -361,7 +368,9 @@ class AsciiEnforcementFilter(logging.Filter):
     """Filtro global SOTA para forcar Pure ASCII em todos os logs emitidos."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        from utils.text import enforce_pure_ascii  # pylint: disable=import-outside-toplevel
+        from utils.text import (
+            enforce_pure_ascii,  # pylint: disable=import-outside-toplevel
+        )
 
         if isinstance(record.msg, str):
             record.msg = enforce_pure_ascii(record.msg)

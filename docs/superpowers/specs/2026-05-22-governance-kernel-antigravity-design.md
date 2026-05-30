@@ -19,7 +19,7 @@ The current state mixes four responsibilities across overlapping files:
 - executable policy in `agents/autonomy.py`
 - Python dependency authority in `pyproject.toml` with generated lock state in `requirements.txt`
 - Node and workspace authority in `package.json`
-- duplicated governance and prompt doctrine in `GEMINI.md`, `.cursorules`, `.clauderules`, and `.vscode/gemini-codeassist-custom-instructions.md`
+- duplicated governance and prompt doctrine in `GEMINI.md`, `.cursorules`, `.cerebrorules`, and `.vscode/gemini-codeassist-custom-instructions.md`
 
 This creates the following risks:
 
@@ -101,7 +101,7 @@ The final topology is editor-agnostic and layered:
 - references the governance kernel
 - contains only host-specific guidance
 
-`.clauderules`
+`.cerebrorules`
 
 - Claude-specific adapter
 - references the governance kernel
@@ -217,7 +217,7 @@ Reduce:
 
 - `GEMINI.md`
 - `.cursorules`
-- `.clauderules`
+- `.cerebrorules`
 - `.vscode/gemini-codeassist-custom-instructions.md`
 
 Each becomes a thin adapter that references the kernel and contains only host-local guidance.

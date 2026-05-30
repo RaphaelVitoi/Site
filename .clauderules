@@ -6,7 +6,7 @@
 
 O conhecimento do ecossistema opera sob leis físicas estritas:
 
-* **Axiomas (Read-Only):** `.claude/project-context.md` e `GEMINI.md`. São a verdade universal.
+* **Axiomas (Read-Only):** `.cerebro/project-context.md` e `GEMINI.md`. São a verdade universal.
 * **Operacoes (SOTA v6):** Seguir estritamente o `docs/audits/`. Cada alteração deve ser auditada proativamente.
 * **Memória Fractal:** Persistência via `MEMORY.md` e `supermemory`.
 * **SHANNON ECONOMY:** Proibida a redundância de leitura. `grep_search` cirúrgico antes de qualquer `read_file` em arquivos > 100 linhas.

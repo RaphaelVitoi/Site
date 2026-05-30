@@ -100,10 +100,10 @@ let bluff = safeOopRp >= 40
 
 ## Documentação Criada
 
-- `.claude/AUDITORIA_DIDATICA_MOTOR_ICM.md` - Problemas identificados
-- `.claude/CORRECAO_COEFICIENTES_20260316.md` - Primeira correção
-- `.claude/CORRECAO_FINAL_NASH_SOLVER.md` - Solução completa
-- `.claude/PLANO_VALIDACAO_COEFICIENTES.md` - Plano de validação
+- `.cerebro/AUDITORIA_DIDATICA_MOTOR_ICM.md` - Problemas identificados
+- `.cerebro/CORRECAO_COEFICIENTES_20260316.md` - Primeira correção
+- `.cerebro/CORRECAO_FINAL_NASH_SOLVER.md` - Solução completa
+- `.cerebro/PLANO_VALIDACAO_COEFICIENTES.md` - Plano de validação
 
 ## Build & Commit
 

@@ -1,4 +1,4 @@
-﻿import { z } from 'zod';
+import { z } from 'zod';
 
 /**
  * IDENTITY: SOTA Semantic Schemas
@@ -58,6 +58,7 @@ export const PerspectivaInputSchema = z.object({
 	spr: z.number().optional(),
 	investidoAcumulado: z.number().optional(),
 	blindCost: z.number().optional(),
+	referenceStatus: z.enum(['baseline', 'tilt', 'protecting', 'bubble']).default('baseline').optional(),
 });
 
 // Schema para o resultado do Motor de Perspectiva (PerspectivaResult)

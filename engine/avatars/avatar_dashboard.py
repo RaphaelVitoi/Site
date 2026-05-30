@@ -9,9 +9,9 @@ import sys
 import time
 from datetime import UTC, datetime
 
-# ────────────────────────────────────────────────────────────────
-# PALETTE ANSI – Pure ASCII labels, rich ANSI color
-# ────────────────────────────────────────────────────────────────
+# 
+# PALETTE ANSI  Pure ASCII labels, rich ANSI color
+# 
 C_BLUE = "\033[94m"
 C_GREEN = "\033[92m"
 C_YELLOW = "\033[93m"
@@ -23,9 +23,9 @@ C_DIM = "\033[2m"
 C_RESET = "\033[0m"
 C_BOLD = "\033[1m"
 
-# ────────────────────────────────────────────────────────────────
+# 
 # AVATAR CATALOGUE  (key, display_label, model_tag, scope_tag)
-# ────────────────────────────────────────────────────────────────
+# 
 AVATARS = [
     ("chico", "CHICO (Gerente SOTA)", "gemma4-31b-cloud", "Auditoria, seguranca, refatoracao"),
     ("maverick", "MAVERICK (Poker GTO)", "llama3.1-8b + gemma4b", "Ranges, equidade, GTO, visao"),
@@ -36,9 +36,9 @@ AVATARS = [
 PERSONA_MAP = {str(i + 1): av[0] for i, av in enumerate(AVATARS)}
 
 
-# ────────────────────────────────────────────────────────────────
+# 
 # HELPERS
-# ────────────────────────────────────────────────────────────────
+# 
 def clear_screen() -> None:
     os.system("cls" if os.name == "nt" else "clear")  # noqa: S605
 
@@ -84,9 +84,9 @@ def _bar(value: int, total: int, width: int = 18) -> str:
     return f"[{C_GREEN}{progress_bar}{C_RESET}] {pct:>3}%"
 
 
-# ────────────────────────────────────────────────────────────────
-# DATABASE LAYER  (sync sqlite3 – dashboard nao usa asyncio)
-# ────────────────────────────────────────────────────────────────
+# 
+# DATABASE LAYER  (sync sqlite3  dashboard nao usa asyncio)
+# 
 def get_db_snapshot() -> dict:
     """Extrai snapshot completo do banco de tarefas."""
     snap = {
@@ -104,14 +104,14 @@ def get_db_snapshot() -> dict:
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
 
-        # ── global counts ──────────────────────────────────────
+        #  global counts 
         cur.execute("SELECT status, COUNT(*) as n FROM tasks GROUP BY status")
         for row in cur.fetchall():
             s = row["status"].lower().strip()
             if s in snap["counts"]:
                 snap["counts"][s] = row["n"]
 
-        # ── per-agent counts ──────────────────────────────────
+        #  per-agent counts 
         cur.execute("SELECT agent, status, COUNT(*) as n FROM tasks GROUP BY agent, status")
         for row in cur.fetchall():
             ag = (row["agent"] or "").replace("@", "").lower().strip()
@@ -123,7 +123,7 @@ def get_db_snapshot() -> dict:
             if s in snap["by_agent"][ag]:
                 snap["by_agent"][ag][s] = row["n"]
 
-        # ── history: last 20 tasks ─────────────────────────────
+        #  history: last 20 tasks 
         cur.execute(
             """
             SELECT id, agent, status, description, timestamp, completedAt
@@ -134,7 +134,7 @@ def get_db_snapshot() -> dict:
         )
         snap["history"] = [dict(r) for r in cur.fetchall()]
 
-        # ── tasks running RIGHT NOW ────────────────────────────
+        #  tasks running RIGHT NOW 
         cur.execute(
             """
             SELECT id, agent, description, timestamp
@@ -146,7 +146,7 @@ def get_db_snapshot() -> dict:
         )
         snap["running_now"] = [dict(r) for r in cur.fetchall()]
 
-        # ── api usage ─────────────────────────────────────────
+        #  api usage 
         cur.execute(
             """
             SELECT model,
@@ -167,26 +167,26 @@ def get_db_snapshot() -> dict:
     return snap
 
 
-# ────────────────────────────────────────────────────────────────
+# 
 # PRINT BLOCKS
-# ────────────────────────────────────────────────────────────────
+# 
 def _ruler(width: int = 66) -> None:
-    print(f"{C_DIM}{'─' * width}{C_RESET}")
+    print(f"{C_DIM}{'' * width}{C_RESET}")
 
 
 def print_header(subtitle: str = "") -> None:
-    print(f"{C_CYAN}{C_BOLD}╔{'═' * 64}╗")
-    print(f"║{'  DASHBOARD SOTA — AVATARES POKER RACIONAL':^64}║")
+    print(f"{C_CYAN}{C_BOLD}{'' * 64}")
+    print(f"{'  DASHBOARD SOTA  AVATARES POKER RACIONAL':^64}")
     if subtitle:
-        print(f"║{subtitle:^64}║")
-    print(f"╚{'═' * 64}╝{C_RESET}")
+        print(f"{subtitle:^64}")
+    print(f"{'' * 64}{C_RESET}")
     now = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M:%S")
-    print(f"  {C_DIM}Diretriz Vitoi: Excelencia Tecnica · Latencia Otimizada · Simetria{C_RESET}")
+    print(f"  {C_DIM}Diretriz Vitoi: Excelencia Tecnica  Latencia Otimizada  Simetria{C_RESET}")
     print(f"  {C_DIM}Timestamp: {now}{C_RESET}")
     _ruler()
 
 
-# ── PANEL 1: main menu ────────────────────────────────────────
+#  PANEL 1: main menu 
 def show_main_menu(snap: dict) -> None:
     running = snap["counts"]["running"]
     pending = snap["counts"]["pending"]
@@ -230,12 +230,12 @@ def show_main_menu(snap: dict) -> None:
     _ruler()
 
 
-# ── PANEL 2: full metrics ─────────────────────────────────────
+#  PANEL 2: full metrics 
 def show_metrics(snap: dict) -> None:
     clear_screen()
     print_header("  METRICAS, TELEMETRIA E HISTORICO SOTA  ")
 
-    # ── 2.1 live running tasks ────────────────────────────────
+    #  2.1 live running tasks 
     print(f"\n{C_YELLOW}{C_BOLD}>>> TAREFAS EM EXECUCAO AGORA{C_RESET}")
     if snap["running_now"]:
         for t in snap["running_now"]:
@@ -247,7 +247,7 @@ def show_metrics(snap: dict) -> None:
         print(f"  {C_DIM}Nenhuma tarefa em execucao no momento.{C_RESET}")
     _ruler()
 
-    # ── 2.2 global queue counters ─────────────────────────────
+    #  2.2 global queue counters 
     total = sum(snap["counts"].values()) or 1
     print(f"\n{C_MAGENTA}{C_BOLD}STATUS GLOBAL DA FILA (NEXUS){C_RESET}")
     labels = [
@@ -262,10 +262,10 @@ def show_metrics(snap: dict) -> None:
         print(f"  {col}{lbl:<12}{C_RESET}  {n:>5}  {progress_bar}")
     _ruler()
 
-    # ── 2.3 per-avatar breakdown ──────────────────────────────
+    #  2.3 per-avatar breakdown 
     print(f"\n{C_BOLD}STATUS POR AVATAR:{C_RESET}")
     print(f"  {'Avatar':<18} {'OK':>6} {'ERR':>6} {'RUN':>6} {'FILA':>6}  Desempenho")
-    print(f"  {'─' * 18} {'─' * 6} {'─' * 6} {'─' * 6} {'─' * 6}  {'─' * 22}")
+    print(f"  {'' * 18} {'' * 6} {'' * 6} {'' * 6} {'' * 6}  {'' * 22}")
     for key, label, _, _ in AVATARS:
         ag = snap["by_agent"].get(key, {})
         ok = ag.get("completed", 0)
@@ -285,10 +285,10 @@ def show_metrics(snap: dict) -> None:
         )
     _ruler()
 
-    # ── 2.4 task history (last 20) ────────────────────────────
+    #  2.4 task history (last 20) 
     print(f"\n{C_BOLD}HISTORICO DE TAREFAS (ultimas 20):{C_RESET}")
     print(f"  {'#':<3} {'Status':<8} {'Avatar':<12} {'Descricao':<38} {'Criado':<11} {'Concluido':<11}")
-    print(f"  {'─' * 3} {'─' * 8} {'─' * 12} {'─' * 38} {'─' * 11} {'─' * 11}")
+    print(f"  {'' * 3} {'' * 8} {'' * 12} {'' * 38} {'' * 11} {'' * 11}")
     if snap["history"]:
         for i, t in enumerate(snap["history"], 1):
             badge = _status_badge(t.get("status", "?"))
@@ -301,11 +301,11 @@ def show_metrics(snap: dict) -> None:
         print(f"  {C_DIM}Nenhuma tarefa registrada ainda.{C_RESET}")
     _ruler()
 
-    # ── 2.5 token telemetry ───────────────────────────────────
+    #  2.5 token telemetry 
     print(f"\n{C_BOLD}TELEMETRIA DE TOKENS POR MODELO:{C_RESET}")
     if snap["api_usage"]:
         print(f"  {'Modelo':<38} {'Req':>6}  {'Prompt tk':>10}  {'Compl. tk':>10}")
-        print(f"  {'─' * 38} {'─' * 6}  {'─' * 10}  {'─' * 10}")
+        print(f"  {'' * 38} {'' * 6}  {'' * 10}  {'' * 10}")
         for u in snap["api_usage"]:
             m = (u.get("model") or "?")[:38]
             n = u.get("n", 0)
@@ -316,7 +316,7 @@ def show_metrics(snap: dict) -> None:
         print(f"  {C_DIM}Sem dados de api_usage registrados.{C_RESET}")
     _ruler()
 
-    # ── 2.6 model justification matrix ───────────────────────
+    #  2.6 model justification matrix 
     print(f"\n{C_MAGENTA}{C_BOLD}JUSTIFICATIVAS ARQUITETURAIS DOS MODELOS{C_RESET}")
     matrix = [
         (
@@ -325,12 +325,12 @@ def show_metrics(snap: dict) -> None:
             "Auditoria profunda de codigo e resgate de arquivos historicos via RAG.",
         ),
         (
-            "Llama 3.1 8B Local (Maverick — GTO)",
+            "Llama 3.1 8B Local (Maverick  GTO)",
             "Latencia ultrabaixa, tabelas estruturadas, zero custo de API.",
             "Calculo de ranges GTO pos-flop e RIO em tempo real no terminal.",
         ),
         (
-            "Gemma 4 4B Local  (Gemma4 — Borda)",
+            "Gemma 4 4B Local  (Gemma4  Borda)",
             "Leveza termodinamica, DirectML/Ollama, VRAM minima.",
             "Micro-decisoes locais e calibracao de heuristicas instantaneas.",
         ),
@@ -341,13 +341,13 @@ def show_metrics(snap: dict) -> None:
         ),
     ]
     for title, forte, just in matrix:
-        print(f"  {C_BOLD}• {title}{C_RESET}")
+        print(f"  {C_BOLD} {title}{C_RESET}")
         print(f"    {C_GREEN}Ponto Forte:{C_RESET} {forte}")
         print(f"    {C_GREEN}Justificativa:{C_RESET} {just}")
         print()
     _ruler()
 
-    # ── 2.7 network telemetry ─────────────────────────────────
+    #  2.7 network telemetry 
     ollama = f"{C_GREEN}ONLINE (11434){C_RESET}" if is_port_open(11434) else f"{C_RED}OFFLINE (11434){C_RESET}"
     gemma_s = f"{C_GREEN}ONLINE (17043){C_RESET}" if is_port_open(17043) else f"{C_YELLOW}STANDBY (17043){C_RESET}"
     backend = f"{C_GREEN}ONLINE (8000){C_RESET}" if is_port_open(8000) else f"{C_RED}OFFLINE (8000){C_RESET}"
@@ -360,9 +360,9 @@ def show_metrics(snap: dict) -> None:
     input(f"\n  {C_DIM}Pressione ENTER para voltar ao menu...{C_RESET}")
 
 
-# ────────────────────────────────────────────────────────────────
+# 
 # QUERY RUNNER
-# ────────────────────────────────────────────────────────────────
+# 
 def run_query(persona_name: str, prompt: str, image_path: str = "") -> None:
     dir_path = os.path.dirname(__file__)
     runner_path = os.path.join(dir_path, "run_avatar.py")
@@ -382,9 +382,9 @@ def run_query(persona_name: str, prompt: str, image_path: str = "") -> None:
     input(f"\n  {C_DIM}Pressione ENTER para voltar ao menu...{C_RESET}")
 
 
-# ────────────────────────────────────────────────────────────────
+# 
 # MAIN LOOP
-# ────────────────────────────────────────────────────────────────
+# 
 def main() -> None:
     if os.name == "nt":  # noqa: S605
         os.system("")  # habilita sequencias ANSI no Windows

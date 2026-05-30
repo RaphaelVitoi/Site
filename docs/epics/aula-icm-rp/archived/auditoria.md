@@ -82,7 +82,7 @@
 ### Pontos positivos
 - Fontes estao nomeadas para todos os dados quantitativos externos.
 - A separacao entre conceitos proprios de Raphael e conceitos de fontes externas esta clara (apos correcao).
-- O tom prescrito e consistente e alinhado com as instrucoes do prompt.md e CLAUDE.md.
+- O tom prescrito e consistente e alinhado com as instrucoes do prompt.md e CEREBRO.md.
 - A critica ao uso mecanico de solvers esta presente e fundamentada (SPEC 4.1, secao de justificativa metodologica).
 - Os criterios de verificacao sao verificaveis de fato (cada um testa se o leitor consegue fazer algo especifico).
 

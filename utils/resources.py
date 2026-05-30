@@ -5,7 +5,7 @@ import psutil
 try:
     import torch
 except ImportError:
-    torch = None
+    torch = None  # type: ignore[assignment]
 
 
 class ResourceGuard:
@@ -17,7 +17,7 @@ class ResourceGuard:
     @staticmethod
     def get_vram_usage() -> dict:
         """Returns current VRAM usage statistics."""
-        if torch and torch.cuda.is_available():
+        if torch and hasattr(torch, "cuda") and torch.cuda.is_available():
             return {
                 "total": torch.cuda.get_device_properties(0).total_memory / (1024**3),
                 "allocated": torch.cuda.memory_allocated(0) / (1024**3),

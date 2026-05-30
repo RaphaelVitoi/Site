@@ -9,7 +9,7 @@ import pytest
 from engine.math_rio import calculate_rio_risk, get_bb_vs_utg_rio_table
 
 # ==============================================================================
-# calculate_rio_risk — cenarios canonicos
+# calculate_rio_risk  cenarios canonicos
 # ==============================================================================
 
 

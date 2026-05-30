@@ -10,10 +10,10 @@
 
 | Camada | Artefatos | Quantidade |
 |--------|-----------|------------|
-| Definicoes | `.claude/agents/*.md` | 15 arquivos |
-| Memorias | `.claude/agent-memory/*/MEMORY.md` | 15 diretorios |
+| Definicoes | `.cerebro/agents/*.md` | 15 arquivos |
+| Memorias | `.cerebro/agent-memory/*/MEMORY.md` | 15 diretorios |
 | Manifest | `data/agents_manifest.json` | 1 arquivo (152 linhas) |
-| Docs governanca | `.claude/*.md` (COHERENCE, DISTRIBUTION, HRP, etc.) | 7 documentos |
+| Docs governanca | `.cerebro/*.md` (COHERENCE, DISTRIBUTION, HRP, etc.) | 7 documentos |
 
 ### 1.2 O que funciona de verdade
 
@@ -60,7 +60,7 @@ Claude Opus (sessao principal) decide qual agente invocar
 Agent(subagent_type="implementor", prompt="tarefa detalhada")
     |
     v
-Claude Code carrega .claude/agents/implementor.md como system prompt
+Claude Code carrega .cerebro/agents/implementor.md como system prompt
     |
     v
 Agente executa com acesso a Read, Edit, Write, Grep, Glob, Bash
@@ -77,9 +77,9 @@ Resultado volta para sessao principal
 
 ### 2.2 O que o agente ve quando e invocado
 
-1. Seu proprio `.claude/agents/<nome>.md` (automatico, e o system prompt)
+1. Seu proprio `.cerebro/agents/<nome>.md` (automatico, e o system prompt)
 2. O `prompt` passado pelo invocador (a tarefa)
-3. CLAUDE.md do projeto (automatico, carregado pelo Claude Code)
+3. CEREBRO.md do projeto (automatico, carregado pelo Claude Code)
 4. **Nada mais** - a menos que ele leia arquivos por conta propria
 
 ---
@@ -170,7 +170,7 @@ Depois:
 2. **Esperar que agentes se comuniquem entre si** - a sessao principal e o router
 3. **Invocar @skillmaster esperando cron automatico** - ele e util para tarefas pontuais de manutencao, nao e um daemon
 4. **Invocar @bibliotecario sem ChromaDB** - o RAG depende de infra Python que pode nao estar ativa
-5. **Confiar que o agente leu a MEMORY.md** - inclua "Leia sua MEMORY.md em .claude/agent-memory/<nome>/MEMORY.md primeiro" no prompt se precisar de contexto historico
+5. **Confiar que o agente leu a MEMORY.md** - inclua "Leia sua MEMORY.md em .cerebro/agent-memory/<nome>/MEMORY.md primeiro" no prompt se precisar de contexto historico
 
 ---
 
@@ -257,7 +257,7 @@ Invocacao manual com contexto rico. Eu (sessao principal) sou o router. Agentes 
 - `HOLOGRAPHIC_ROUTING_PROTOCOL.md` (headers que ninguem usa)
 
 ### O que deve ser mantido
-- Os 15 `.claude/agents/*.md` (todos funcionam agora)
+- Os 15 `.cerebro/agents/*.md` (todos funcionam agora)
 - As 15 memorias (mesmo as genericas, podem ser enriquecidas com uso)
 - `COHERENCE_MANIFEST.md` (bom mapa da arquitetura)
 - `HYBRID_BRAIN_ARCHITECTURE.md` (explica o modelo Claude+Gemini)

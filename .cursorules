@@ -50,7 +50,7 @@ A duplicação de informações contextuais é **terminantemente proibida**.
 
 > **\[LEITURA OBRIGATÓRIA\]**
 
-- **`.claude/project-context.md`**
+- **`.cerebro/project-context.md`**
   - O QUÊ foi decidido e POR QUÊ
   - Contém: Domínio, Público-alvo, Decisões Estruturais, Estado Atual, Handoff Log
   - Frequência: LER ao INÍCIO de cada tarefa
@@ -60,7 +60,7 @@ A duplicação de informações contextuais é **terminantemente proibida**.
   - Referência técnica operacional
   - Frequência: Consultar conforme necessário
 
-- **`.claude/DISTRIBUTION_MATRIX.md`**
+- **`.cerebro/DISTRIBUTION_MATRIX.md`**
   - QUEM atualiza O QUÊ e QUANDO (autoridade canônica por tópico)
   - Mapa de referências cruzadas (permitidas vs bloqueadas)
   - **NUNCA duplicar informação entre docs. Sempre referenciar.**
@@ -73,10 +73,10 @@ Cada agente escreve APENAS em seu contexto designado:
 
 | Contexto              | Localização                               | Quem Escreve                        | Frequência              |
 | --------------------- | ----------------------------------------- | ----------------------------------- | ----------------------- |
-| Memória Operacional   | `.claude/agent-memory/<agente>/MEMORY.md` | Respectivo agente                   | Apó cada tarefa         |
+| Memória Operacional   | `.cerebro/agent-memory/<agente>/MEMORY.md` | Respectivo agente                   | Apó cada tarefa         |
 | Auditoria             | `logs/task_log.md`                        | task_executor.py (automatico)       | Real-time               |
-| Decisões Globais      | `.claude/project-context.md`              | @pesquisador (apenas)               | Após decisão confirmada |
-| Handoff Entre Agentes | `.claude/project-context.md` Handoff Log  | Todos agentes (append-only)         | Ao final de execução    |
+| Decisões Globais      | `.cerebro/project-context.md`              | @pesquisador (apenas)               | Após decisão confirmada |
+| Handoff Entre Agentes | `.cerebro/project-context.md` Handoff Log  | Todos agentes (append-only)         | Ao final de execução    |
 
 > **Regra de Ouro:** Se você precisa ESCREVER informação estrutural (decisão, padrão, protocolo),
 > escreva SOMENTE em seu MEMORY.md. A síntese global é responsabilidade exclusiva do @pesquisador.
@@ -201,7 +201,7 @@ failed → pending     (Crie nova tarefa, não resuscite)
 
 ## 5. FORMATO NORMATIVO DE MEMÓRIA (MEMORY.md)
 
-Cada agente mantem seu histórico em `.claude/agent-memory/<agente>/MEMORY.md`:
+Cada agente mantem seu histórico em `.cerebro/agent-memory/<agente>/MEMORY.md`:
 
 ### 5.1 Estrutura Obrigatória
 
@@ -221,8 +221,8 @@ Cada agente mantem seu histórico em `.claude/agent-memory/<agente>/MEMORY.md`:
 
 ## Referências de Contexto
 
-- `.claude/project-context.md` - Estado global
-- `.claude/DISTRIBUTION_MATRIX.md` - Autoridade documental
+- `.cerebro/project-context.md` - Estado global
+- `.cerebro/DISTRIBUTION_MATRIX.md` - Autoridade documental
 - ... (outras)
 ```
 
@@ -289,11 +289,11 @@ Quando em dúvida, responda:
 
 | Pergunta                     | Resposta | Ação                                                          |
 | ---------------------------- | -------- | ------------------------------------------------------------- |
-| Preciso ler contexto?        | Sim      | Abra `.claude/project-context.md`                             |
+| Preciso ler contexto?        | Sim      | Abra `.cerebro/project-context.md`                             |
 | Preciso consultar sintaxe?   | Sim      | Abra `docs/MANUAL_WORKFLOW_AGENTES.md`                        |
 | Qualquer tarefa nova?        | Sim      | Adicione via `task_executor.py add`                           |
-| Preciso escrever descoberta? | Sim      | Escreva em `.claude/agent-memory/<agente>/MEMORY.md`          |
-| Redundância documentada?     | Sim      | Consulte `.claude/DISTRIBUTION_MATRIX.md` antes               |
+| Preciso escrever descoberta? | Sim      | Escreva em `.cerebro/agent-memory/<agente>/MEMORY.md`          |
+| Redundância documentada?     | Sim      | Consulte `.cerebro/DISTRIBUTION_MATRIX.md` antes               |
 | Tenho certeza de claim?      | Não      | Declare "Não é possível ter certeza" + cite evidência parcial |
 
 ---
@@ -332,8 +332,8 @@ Gere um relatório rigoroso (Sem Smoothing, Sem Fabricação) contendo:
 
 **PASSO 2: INJEÇÃO AUTÔNOMA DE MEMÓRIA (Materialização em Disco)**
 Você tem a permissão e a obrigação de registrar este aprendizado na sua mente. Use a forja de arquivos para atualizar (adicionar ao final) o seu arquivo `MEMORY.md`.
-Caminho Absoluto: `C:\Users\Raphael\.gemini\Site\.claude\agent-memory\<SEU_NOME_SEM_ARROBA>\MEMORY.md`.
-Caminho Relativo: `.claude/agent-memory/<SEU_NOME_SEM_ARROBA>/MEMORY.md`.
+Caminho Absoluto: `C:\Users\Raphael\.gemini\Site\.cerebro\agent-memory\<SEU_NOME_SEM_ARROBA>\MEMORY.md`.
+Caminho Relativo: `.cerebro/agent-memory/<SEU_NOME_SEM_ARROBA>/MEMORY.md`.
 
 **PASSO 3: FORJA DO PROMPT DE CONTINUIDADE (Para o Tier 0)**
 Crie um bloco de código markdown contendo o "PROMPT DE CONTINUIDADE SOTA". Ele servirá para o Tier 0 copiar e colar na inicialização da PRÓXIMA sessão. Estrutura obrigatória:
