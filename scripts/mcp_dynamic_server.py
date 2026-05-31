@@ -8,6 +8,7 @@ Implementa Antevisao de I/O: Bypass de interop WSL se executado nativamente no L
 import asyncio
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -64,6 +65,51 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
             )
         ]
 
+    # --- SANDBOX SECURITY GUARDRAILS (SOTA v7.0 GOLD) ---
+    # 1. Command Injection Prevention: Sanitize argument values
+    for k, v in arguments.items():
+        v_str = str(v)
+        # Base64 Guardrail
+        if k == "payload_b64":
+            if not re.match(r"^[A-Za-z0-9+/=]+$", v_str):
+                return [
+                    types.TextContent(
+                        type="text",
+                        text="[SEC ALERTA] Tentativa de injecao detectada: payload_b64 invalido.",
+                    )
+                ]
+        else:
+            # Metacharacter Guardrail
+            if any(char in v_str for char in [";", "&", "|", "$", "`", ">", "<", "\n", "\r"]):
+                return [
+                    types.TextContent(
+                        type="text",
+                        text=f"[SEC ALERTA] Metacaracteres suspeitos detectados no argumento '{k}'.",
+                    )
+                ]
+
+        # 2. Path Traversal Prevention
+        if ".." in v_str or v_str.startswith("/") or (len(v_str) > 1 and v_str[1] == ":"):
+            # Check if it attempts to break out of base workspace path
+            resolved_base = BASE_DIR.resolve()
+            try:
+                resolved_val = Path(v_str).resolve()
+                if not resolved_val.is_relative_to(resolved_base):
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text="[SEC ALERTA] Tentativa de Path Traversal detectada.",
+                        )
+                    ]
+            except Exception:
+                # Path parsing failure
+                return [
+                    types.TextContent(
+                        type="text",
+                        text="[SEC ALERTA] Caminho ou argumento invalido.",
+                    )
+                ]
+
     op_data = operations[name]
     raw_command = op_data.get("command", "")
 
@@ -77,8 +123,6 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
         raw_args.append(formatted_arg)
 
     # SOTA: Antevisao Semantica e Bypass de Interop (Friccao Zero)
-    # Se o MCP esta instanciado nativamente no Debian e a operacao tenta usar interop ("wsl.exe"),
-    # quebramos o encapsulamento NT e rodamos a instrucao interna direto no bash atual.
     if sys.platform == "linux" and raw_command in ("wsl", "wsl.exe"):
         logger.info(f"Bypass de interop WSL acionado (Antevisao Ativa) para a tool '{name}'.")
         try:
@@ -96,6 +140,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     logger.info(f"Delegando syscal para '{name}': {exec_cmd} {' '.join(exec_args)}")
 
     try:
+        # Enforce execution timeout (max 15s) to prevent hanging deceptions
         process = await asyncio.create_subprocess_exec(
             exec_cmd,
             *exec_args,
@@ -103,7 +148,21 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
             stderr=asyncio.subprocess.PIPE,
             cwd=str(BASE_DIR) if sys.platform == "linux" else None,
         )
-        stdout, stderr = await process.communicate()
+
+        try:
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=15.0)
+        except asyncio.TimeoutError:
+            try:
+                process.kill()
+            except ProcessLookupError:
+                pass
+            return [
+                types.TextContent(
+                    type="text",
+                    text="[ENTROPIA ALERTA] Timeout (15s) na execucao da operacao.",
+                )
+            ]
+
         out_text = stdout.decode("utf-8", errors="replace").strip()
         err_text = stderr.decode("utf-8", errors="replace").strip()
 
@@ -116,10 +175,10 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
         return [
             types.TextContent(
                 type="text",
-                text=res_text if res_text else "[SUCESSO] Operacao silenciosa concluida.",
+                text=res_text if res_text else "[SUCESSO] Operacao concluida silenciosamente.",
             )
         ]
-    except (OSError, asyncio.TimeoutError, FileNotFoundError) as e:
+    except (OSError, FileNotFoundError) as e:
         return [
             types.TextContent(
                 type="text",

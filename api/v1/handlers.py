@@ -369,3 +369,260 @@ async def handle_frontend_logs(request) -> web.Response:
     except Exception as e:  # noqa: BLE001
         logger.exception("Falha ao processar logs do frontend: %s", e)
         return web.json_response({"error": str(e)}, status=500)
+
+
+IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".webp")
+SPREADSHEET_EXTS = (".csv", ".xlsx", ".ods", ".xls")
+ARCHIVE_EXTS = (".zip", ".rar", ".7z")
+
+
+def _categorize_file(ext: str) -> str:
+    if ext in ARCHIVE_EXTS:
+        return "archive"
+    if ext in IMAGE_EXTS:
+        return "image"
+    if ext in (".mp4", ".avi", ".mkv", ".mov", ".mp3", ".wav"):
+        return "media"
+    if ext in SPREADSHEET_EXTS:
+        return "spreadsheet"
+    if ext == ".pdf":
+        return "pdf"
+    return "text"
+
+
+def _scan_root(name: str, root_resolved: Path, ignored_folders: set) -> list[dict]:
+    import os
+
+    files_list = []
+    for current_root, dirs, files in os.walk(root_resolved):
+        dirs[:] = [d for d in dirs if d not in ignored_folders]
+        if name == "GoogleDrive":
+            relative = Path(current_root).relative_to(root_resolved)
+            if len(relative.parts) > 0 and relative.parts[0] not in ("Documentos", "GD", "Documents"):
+                dirs.clear()
+                continue
+        for f in files:
+            fpath = Path(current_root) / f
+            files_list.append(
+                {
+                    "name": f,
+                    "path": fpath.as_posix(),
+                    "relative_path": fpath.relative_to(root_resolved).as_posix(),
+                    "category": _categorize_file(fpath.suffix.lower()),
+                    "size": fpath.stat().st_size if fpath.exists() else 0,
+                }
+            )
+    return files_list[:200]
+
+
+def _get_allowed_roots(base_dir: Path) -> list[tuple[str, Path]]:
+    allowed_roots = [
+        ("Cerebro", base_dir / ".cerebro"),
+        ("Project", base_dir),
+    ]
+    gdrive_base = Path("F:\\.shortcut-targets-by-id\\1avGxyx2AeL3Uct6X45zhwfvRALgpoBac\\Meu computador")
+    if gdrive_base.exists():
+        allowed_roots.append(("GoogleDrive", gdrive_base))
+    return allowed_roots
+
+
+async def handle_list_files(_request: web.Request) -> web.Response:
+    """SOTA CLI/API: Lists files in the allowed workspace and Google Drive folders."""
+    base_dir = Path(__file__).resolve().parent.parent.parent
+    ignored_folders = {
+        ".venv",
+        ".venv-wsl",
+        "node_modules",
+        ".git",
+        ".next",
+        "temp",
+        "reports",
+        "dist",
+        ".mypy_cache",
+        ".ruff_cache",
+    }
+
+    def _scan():
+        tree = []
+        for name, root_path in _get_allowed_roots(base_dir):
+            if not root_path.exists():
+                continue
+            root_resolved = root_path.resolve()
+            tree.append(
+                {
+                    "source": name,
+                    "path": root_resolved.as_posix(),
+                    "files": _scan_root(name, root_resolved, ignored_folders),
+                }
+            )
+        return tree
+
+    try:
+        tree = await asyncio.to_thread(_scan)
+        return web.json_response({"status": "SUCCESS", "tree": tree})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+def _parse_spreadsheet(ext: str, file_path: Path) -> dict:
+    import pandas as pd
+
+    if ext == ".csv":
+        df = pd.read_csv(file_path, nrows=50)
+    elif ext == ".xlsx":
+        df = pd.read_excel(file_path, nrows=50)
+    else:
+        df = pd.read_excel(file_path, engine="odf", nrows=50)
+    return {"headers": list(df.columns), "rows": df.values.tolist()}
+
+
+def _list_zip(file_path: Path) -> list:
+    import os
+    import zipfile
+
+    from utils.os_integration import get_winrar_path
+
+    files = []
+    if zipfile.is_zipfile(file_path):
+        with zipfile.ZipFile(file_path, "r") as zf:
+            for name in zf.namelist():
+                info = zf.getinfo(name)
+                files.append({"name": name, "size": info.file_size, "is_dir": info.is_dir()})
+    else:
+        winrar_path = get_winrar_path()
+        if winrar_path and os.path.exists(winrar_path):
+            files.append({"name": "Conteudo Rar (Visualizacao via WinRAR habilitada)", "size": 0, "is_dir": False})
+    return files
+
+
+def _parse_image(file_path: Path) -> dict:
+    import base64
+
+    from PIL import Image
+    from PIL.ExifTags import TAGS
+
+    with Image.open(file_path) as img:
+        exif_data = {}
+        if exif := img.getexif():
+            for tag_id, val in exif.items():
+                tag = TAGS.get(tag_id, tag_id)
+                if not isinstance(val, (bytes, bytearray)) and len(str(val)) < 100:
+                    exif_data[str(tag)] = str(val)
+        b64_str = ""
+        if file_path.stat().st_size < 1 * 1024 * 1024:
+            with open(file_path, "rb") as f:
+                b64_str = base64.b64encode(f.read()).decode("utf-8")
+        return {"format": img.format, "size": f"{img.width}x{img.height}", "exif": exif_data, "base64": b64_str}
+
+
+def _is_file_access_allowed(file_path: Path) -> bool:
+    base_dir = Path(__file__).resolve().parent.parent.parent.resolve()
+    if file_path.is_relative_to(base_dir):
+        return True
+    gdrive_base = Path("F:\\.shortcut-targets-by-id\\1avGxyx2AeL3Uct6X45zhwfvRALgpoBac\\Meu computador").resolve()
+    if gdrive_base.exists() and file_path.is_relative_to(gdrive_base):
+        rel = file_path.relative_to(gdrive_base)
+        if len(rel.parts) > 0 and rel.parts[0] in ("Documentos", "GD", "Documents"):
+            return True
+    return False
+
+
+def _get_raw_content_type(ext: str) -> str:
+    if ext == ".pdf":
+        return "application/pdf"
+    if ext in (".mp4", ".mov", ".mkv", ".avi"):
+        return "video/mp4"
+    if ext in IMAGE_EXTS:
+        return "image/png"
+    return "application/octet-stream"
+
+
+async def handle_view_file(request: web.Request) -> web.StreamResponse:
+    """SOTA CLI/API: Serves or parses the file content securely with traversal guards."""
+    path_param = request.query.get("path", "").strip()
+    raw_param = request.query.get("raw", "false").strip().lower() == "true"
+
+    if not path_param:
+        return web.json_response({"error": "Parametro 'path' ausente."}, status=400)
+
+    file_path = Path(path_param).resolve()
+    if not _is_file_access_allowed(file_path):
+        return web.json_response({"error": "[SEC] Acesso negado: Caminho fora das fronteiras autorizadas."}, status=403)
+
+    if not file_path.exists() or not file_path.is_file():
+        return web.json_response({"error": "Arquivo nao encontrado ou nao e um arquivo valido."}, status=404)
+
+    ext = file_path.suffix.lower()
+    if raw_param:
+        return web.FileResponse(file_path, headers={"Content-Type": _get_raw_content_type(ext)})
+
+    try:
+        if ext in SPREADSHEET_EXTS:
+            sheet_data = await asyncio.to_thread(_parse_spreadsheet, ext, file_path)
+            return web.json_response({"type": "spreadsheet", "data": sheet_data})
+        if ext in ARCHIVE_EXTS:
+            archive_files = await asyncio.to_thread(_list_zip, file_path)
+            return web.json_response({"type": "archive", "files": archive_files})
+        if ext in IMAGE_EXTS:
+            img_data = await asyncio.to_thread(_parse_image, file_path)
+            return web.json_response({"type": "image", "data": img_data})
+        if ext in (".pdf", ".docx", ".odt", ".doc", ".ppt", ".pptx", ".odp"):
+            rag = await _te.get_rag_async()
+            extracted_text = await rag._extract_text_from_file(file_path)
+            return web.json_response({"type": "document", "content": extracted_text})
+
+        def _read_text():
+            return file_path.read_text(encoding="utf-8", errors="ignore")
+
+        text_content = await asyncio.to_thread(_read_text)
+        return web.json_response({"type": "text", "content": text_content})
+    except Exception as e:
+        return web.json_response({"error": f"Falha ao ler arquivo: {e!s}"}, status=500)
+
+
+async def handle_web_search(request: web.Request) -> web.Response:
+    """Realiza busca na web via Tavily/DDG fallback e retorna JSON."""
+    try:
+        query = request.query.get("q", "").strip()
+        if not query:
+            return web.json_response({"error": "Query parameter 'q' is required"}, status=400)
+
+        max_results_str = request.query.get("max", "5")
+        try:
+            max_results = int(max_results_str)
+        except ValueError:
+            max_results = 5
+
+        provider = request.query.get("provider", "auto")
+
+        from utils.web_search import get_search_engine_from_env
+
+        engine = get_search_engine_from_env()
+
+        resp = await engine.search(query, max_results=max_results, preferred_provider=provider)  # type: ignore
+
+        if resp.error:
+            return web.json_response({"error": resp.error}, status=500)
+
+        results_list = []
+        for r in resp.results:
+            results_list.append(
+                {
+                    "title": r.title,
+                    "url": r.url,
+                    "snippet": r.snippet,
+                    "score": r.score,
+                    "provider": r.provider,
+                }
+            )
+
+        return web.json_response(
+            {
+                "query": resp.query,
+                "results": results_list,
+                "provider_used": resp.provider_used,
+                "latency_ms": resp.latency_ms,
+            }
+        )
+    except Exception as e:
+        return web.json_response({"error": f"Search failed: {e!s}"}, status=500)

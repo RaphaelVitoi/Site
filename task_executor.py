@@ -50,7 +50,7 @@ def _resolve_tasks_db_path() -> Path | None:
         p = Path(candidate)
         if p.exists() and p.stat().st_size > 0:
             try:
-                with contextlib.closing(sqlite3.connect(p)) as conn:
+                with contextlib.closing(sqlite3.connect(p, timeout=60.0)) as conn:
                     cursor = conn.cursor()
                     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'")
                     if cursor.fetchone():
@@ -92,8 +92,11 @@ if not logger.handlers:
             record.msg = original_msg
             return formatted
 
+    today = datetime.now(UTC)
+    log_dir = PATH_NEXUS_LOGS / f"{today.year:04d}" / f"{today.month:02d}" / f"{today.day:02d}"
+    log_dir.mkdir(parents=True, exist_ok=True)
     rotating_handler = logging.handlers.RotatingFileHandler(
-        PATH_NEXUS_LOGS / "task_executor.log",
+        log_dir / "task_executor.log",
         maxBytes=1024 * 1024 * 10,
         backupCount=10,
         encoding="ascii",
@@ -375,34 +378,45 @@ async def _process_telemetry_file(path: Path) -> list[dict]:
 
 async def _read_telemetry_dump() -> list[dict]:
     """SOTA: Leitura Assincrona Atomica do Buffer WASM Telemetry (Homeostase de I/O)"""
-    dump_path = await asyncio.to_thread(_core_config.PATH_TELEMETRY_DUMP.resolve)
-
-    # SOTA SEC: Blindagem contra Delecao Arbitraria via Symlink / Path Traversal
     project_root = await asyncio.to_thread(Path(__file__).parent.resolve)
-    if not dump_path.is_relative_to(project_root):
-        logger.error(
-            f"[SEC CRITICO] O caminho de telemetria transborda a raiz segura. Abortando exclusao de arquivo: {dump_path}"
-        )
+    logs_dir = _core_config.PATH_NEXUS_ZONE / "logs"
+    if not await asyncio.to_thread(logs_dir.exists):
         return []
 
-    exists = await asyncio.to_thread(dump_path.exists)
-    if not exists:
-        return []
+    def _find_telemetry_files() -> list[Path]:
+        return list(logs_dir.rglob("wasm_telemetry_dump.jsonl"))
 
-    size = await asyncio.to_thread(lambda: dump_path.stat().st_size)
-    if size == 0:
-        return []
+    telemetry_files = await asyncio.to_thread(_find_telemetry_files)
+    all_telemetry = []
 
-    try:
-        processing_path = dump_path.with_suffix(".jsonl.processing")
-        # SOTA: Offload de I/O bloqueante para Thread Pool, impedindo asfixia do Event Loop
-        await asyncio.to_thread(shutil.move, str(dump_path), str(processing_path))
-        telemetry = await _process_telemetry_file(processing_path)
-        await asyncio.to_thread(processing_path.unlink, missing_ok=True)
-        return telemetry
-    except Exception as e:
-        logger.warning(f"[HISTORIAN] Falha sistemica ao processar telemetria WASM: {e}")
-        return []
+    for dump_path in telemetry_files:
+        dump_path_resolved = await asyncio.to_thread(dump_path.resolve)
+        # SOTA SEC: Blindagem contra Delecao Arbitraria via Symlink / Path Traversal
+        if not dump_path_resolved.is_relative_to(project_root):
+            logger.error(
+                f"[SEC CRITICO] O caminho de telemetria transborda a raiz segura. Abortando processamento: {dump_path_resolved}"
+            )
+            continue
+
+        exists = await asyncio.to_thread(dump_path.exists)
+        if not exists:
+            continue
+
+        size = await asyncio.to_thread(lambda dp=dump_path: dp.stat().st_size)
+        if size == 0:
+            continue
+
+        try:
+            processing_path = dump_path.with_suffix(".jsonl.processing")
+            # SOTA: Offload de I/O bloqueante para Thread Pool, impedindo asfixia do Event Loop
+            await asyncio.to_thread(shutil.move, str(dump_path), str(processing_path))
+            telemetry = await _process_telemetry_file(processing_path)
+            await asyncio.to_thread(processing_path.unlink, missing_ok=True)
+            all_telemetry.extend(telemetry)
+        except Exception as e:
+            logger.warning(f"[HISTORIAN] Falha sistemica ao processar telemetria WASM para {dump_path}: {e}")
+
+    return all_telemetry
 
 
 def _build_profile(fail_rate: float, engine: Any) -> dict:
@@ -617,7 +631,7 @@ def _cli_db_audit_dag() -> None:
         logger.error(ERR_DB_CORRUPTED)
         sys.exit(1)
     try:
-        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+        with contextlib.closing(sqlite3.connect(db_path, timeout=60.0)) as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT id, metadata FROM tasks")
             all_tasks = cursor.fetchall()
@@ -647,7 +661,7 @@ def _cli_db_purge_orphans() -> None:
         logger.error(ERR_DB_CORRUPTED)
         sys.exit(1)
     try:
-        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+        with contextlib.closing(sqlite3.connect(db_path, timeout=60.0)) as conn:
             # SOTA: Desativa fsync() do OS para delecoes em lote CLI. Erradica o pico de 150ms no rebalanceamento B-Tree.
             conn.execute("PRAGMA synchronous=OFF;")
             cursor = conn.cursor()

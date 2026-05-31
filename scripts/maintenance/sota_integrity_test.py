@@ -48,6 +48,8 @@ def _test_rag_initialization() -> str:
     try:
         rag = MemoryRAG(memory_dir=".cerebro/agent-memory")
         expected_name = "agent_collective_memory"
+        if not rag.collection:
+            raise ValueError("Colecao ChromaDB nao foi inicializada (is None).")
         if rag.collection.name != expected_name:
             raise ValueError(f"Colecao com nome incorreto. Esperado '{expected_name}', obteve '{rag.collection.name}'")
         return f"[PASS] RAG Initialization SOTA: {time.time() - start:.4f}s"

@@ -47,42 +47,27 @@ HYBRID_SEARCH_LEXICAL_WEIGHT = 0.4
 
 def ingest_drive_pdfs(drive_path: str):
     """Ingestao Vetorial de PDF para RAG do Oraculo Gemma."""
-    try:
-        from langchain_community.document_loaders import PyPDFDirectoryLoader
-        from langchain_community.embeddings import OllamaEmbeddings
-        from langchain_community.vectorstores import Chroma
-        from langchain_text_splitters import RecursiveCharacterTextSplitter
-    except ImportError:
-        logger.error(
-            "[ERRO CRITICO] O ecossistema langchain nao esta instalado. Execute: pip install langchain-community langchain-text-splitters chromadb"
-        )
+    path = Path(drive_path)
+    if not path.exists():
+        logger.error(f"[ERRO CRITICO] O caminho nao existe ou esta inacessivel: {drive_path}")
         return
 
     logger.info(f"[SOTA RAG] Iniciando mapeamento no diretorio: {drive_path}")
+    files = list(path.rglob("*.pdf"))
+    logger.info(f"[SOTA RAG] {len(files)} PDFs encontrados.")
 
-    if not os.path.exists(drive_path):
-        logger.error(f"[ERRO CRITICO] O caminho nao existe ou esta inacessivel: {drive_path}")
-        sys.exit(1)
-
-    loader = PyPDFDirectoryLoader(drive_path)
-    docs = loader.load()
-    logger.info(f"[SOTA RAG] {len(docs)} paginas extraidas com sucesso.")
-
-    if not docs:
+    if not files:
         logger.warning("[SOTA RAG] Nenhum PDF encontrado. Abortando ingestao.")
         return
 
-    # Chunking Semantico rigoroso para materiais de Teoria dos Jogos (ICM/Nash)
-    splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=150)
-    chunks = splitter.split_documents(docs)
-    logger.info(f"[SOTA RAG] {len(chunks)} fragmentos (chunks) forjados.")
+    async def _ingest():
+        rag = MemoryRAG()
+        for idx, file_path in enumerate(files, 1):
+            file_info = f"[{idx}/{len(files)}]"
+            await rag._process_single_file(file_path, file_info)
+        logger.info("[SOTA RAG] Ingestao concluida e indexada. A Mente Coletiva foi hidratada.")
 
-    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL, base_url=OLLAMA_BASE_URL)
-
-    # Persistencia Vetorial
-    logger.info("[SOTA RAG] Compilando tensores no banco de dados Chroma...")
-    Chroma.from_documents(documents=chunks, embedding=embeddings, persist_directory=str(CHROMA_PATH))
-    logger.info("[SOTA RAG] Ingestao concluida e indexada. A Mente Coletiva foi hidratada.")
+    asyncio.run(_ingest())
 
 
 # SOTA: Filtro de Relevancia Baseline
@@ -99,30 +84,69 @@ class MemoryRAG:
             return
 
         self.memory_dir = Path(memory_dir)
-        self.client = chromadb.EphemeralClient()
+        self.clients: dict[str, Any] = {}
+        self.collections: dict[str, Any] = {}
 
         self.emb_fn = embedding_functions.OllamaEmbeddingFunction(
             url=f"{OLLAMA_BASE_URL}/api/embeddings",
             model_name=EMBEDDING_MODEL,
         )
 
+        # Fallback de compatibilidade para sistemas que acessam o root collection
+        self.collection = None
         try:
-            self.collection = self.client.get_or_create_collection(
-                name="agent_collective_memory",
+            _, self.collection = self._get_namespace_client_and_collection("general")
+        except Exception:
+            pass
+
+    def _get_namespace_client_and_collection(self, namespace: str) -> tuple[Any, Any]:
+        """Garante e retorna o cliente e a colecao Chroma sharded para um namespace."""
+        import chromadb
+        import hashlib
+
+        ns = re.sub(r"[^a-zA-Z0-9_-]", "", namespace.lower())
+        if not ns:
+            ns = "general"
+
+        if ns in self.collections:
+            return self.clients[ns], self.collections[ns]
+
+        # Sharding: data/chroma/{hash[:2]}/{namespace}
+        ns_hash = hashlib.sha256(ns.encode("utf-8")).hexdigest()[:2]
+        shard_dir = self.memory_dir / ns_hash / ns
+        shard_dir.mkdir(parents=True, exist_ok=True)
+
+        client = chromadb.PersistentClient(path=str(shard_dir))
+
+        try:
+            collection = client.get_or_create_collection(
+                name=f"agent_memory_{ns}",
                 embedding_function=self.emb_fn,  # type: ignore
             )
         except Exception as e:
             if "Embedding function conflict" in str(e):
-                logger.warning(
-                    "[SOTA] Conflito de Engine Vetorial detectado (PyTorch vs ONNX). Aniquilando memoria obsoleta e recriando..."
-                )
-                self.client.delete_collection("agent_collective_memory")
-                self.collection = self.client.create_collection(
-                    name="agent_collective_memory",
+                logger.warning(f"[SOTA] Conflito de Engine Vetorial na namespace {ns}. Recriando...")
+                client.delete_collection(f"agent_memory_{ns}")
+                collection = client.create_collection(
+                    name=f"agent_memory_{ns}",
                     embedding_function=self.emb_fn,  # type: ignore
                 )
-            else:  # pragma: no cover
+            else:
                 raise
+
+        self.clients[ns] = client
+        self.collections[ns] = collection
+        return client, collection
+
+    def _list_available_namespaces(self) -> list[str]:
+        """Varre os diretorios sharded no disco para listar todas as namespaces ativas."""
+        namespaces = []
+        if not self.memory_dir.exists():
+            return ["general"]
+        for path in self.memory_dir.glob("*/*"):
+            if path.is_dir():
+                namespaces.append(path.name)
+        return list(set(namespaces)) if namespaces else ["general"]
 
     def _hard_split_sentence(self, sentence: str, chunk_size: int, overlap: int) -> list[str]:
         """Aplica quebra brusca com heuristica de espaco para strings sem pontuacao."""
@@ -322,6 +346,32 @@ class MemoryRAG:
                     if not self._is_ignored_by_ragignore(f, ignore_patterns):
                         target_files.append(f)
 
+        # SOTA: Google Drive Auto-detection and Ingestion
+        import sys
+
+        if sys.platform == "win32":
+            gdrive_base = Path("F:\\.shortcut-targets-by-id\\1avGxyx2AeL3Uct6X45zhwfvRALgpoBac\\Meu computador")
+            if gdrive_base.exists():
+                logger.info(f"[RAG] Google Drive detectado em {gdrive_base}. Injetando na malha de ingestao.")
+                # Index "Documentos" and "GD" folders under the Drive mount
+                for folder in ["Documentos", "GD", "Documents"]:
+                    folder_path = gdrive_base / folder
+                    if folder_path.exists():
+                        for ext_pattern in ["*.txt", "*.md", "*.pdf", "*.docx", "*.xlsx", "*.csv", "*.odt", "*.ods"]:
+                            try:
+
+                                def _scan_dir(fp: Path, pat: str) -> list[Path]:
+                                    return list(fp.rglob(pat))
+
+                                drive_files = await asyncio.to_thread(_scan_dir, folder_path, ext_pattern)
+                                for f in drive_files:
+                                    if not self._is_ignored_by_ragignore(f, ignore_patterns):
+                                        target_files.append(f)
+                            except Exception as ex:
+                                logger.warning(
+                                    f"[RAG] Falha ao escanear Google Drive em '{folder}/{ext_pattern}': {ex}"
+                                )
+
         return set(target_files)
 
     async def _extract_docx(self, file_path: Path) -> str:
@@ -408,8 +458,175 @@ class MemoryRAG:
         async with aiofiles.open(file_path, encoding="utf-8", errors="ignore") as f:
             return await f.read()
 
+    async def _extract_via_libreoffice(self, file_path: Path) -> str:
+        """Runs headless LibreOffice to convert file to plain text."""
+        import tempfile
+        import shutil
+        import sys
+        import subprocess
+
+        soffice_path = "C:\\Program Files\\LibreOffice\\program\\soffice.exe"
+        if sys.platform != "win32":
+            soffice_path = shutil.which("soffice") or shutil.which("libreoffice") or ""
+
+        if not soffice_path or not os.path.exists(soffice_path):
+            logger.warning(f"[RAG] LibreOffice not found. Falling back to plain text for: {file_path.name}")
+            return await self._extract_fallback(file_path)
+
+        def _convert():
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                try:
+                    subprocess.run(
+                        [soffice_path, "--headless", "--convert-to", "txt:Text", "--outdir", tmp_dir, str(file_path)],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        timeout=15.0,
+                    )
+                    txt_file = Path(tmp_dir) / f"{file_path.stem}.txt"
+                    if txt_file.exists():
+                        return txt_file.read_text(encoding="utf-8", errors="ignore")
+                except Exception as e:
+                    logger.error(f"[RAG] LibreOffice conversion exception: {e}")
+            return ""
+
+        return await asyncio.to_thread(_convert)
+
+    async def _extract_archive_via_winrar(self, file_path: Path) -> str:
+        """Decompresses zip/rar/7z via WinRAR or native python zipfile module."""
+        import tempfile
+        import subprocess
+        from utils.os_integration import get_winrar_path
+
+        winrar_path = get_winrar_path()
+
+        def _extract():
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                extracted_texts = []
+                if winrar_path and os.path.exists(winrar_path):
+                    logger.info(f"[RAG] Extracting archive '{file_path.name}' via WinRAR...")
+                    try:
+                        subprocess.run(
+                            [winrar_path, "x", "-ibck", "-y", str(file_path), tmp_dir],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            timeout=15.0,
+                        )
+                        for root, _, files in os.walk(tmp_dir):
+                            for file in files:
+                                fpath = Path(root) / file
+                                if fpath.suffix.lower() in (".txt", ".md", ".json", ".csv"):
+                                    txt = fpath.read_text(encoding="utf-8", errors="ignore")
+                                    extracted_texts.append(f"--- Archive File: {file} ---\n{txt}\n")
+                    except Exception as e:
+                        logger.error(f"[RAG] WinRAR execution error: {e}")
+                else:
+                    if file_path.suffix.lower() == ".zip":
+                        logger.info(f"[RAG] Extracting zip '{file_path.name}' via zipfile (fallback)...")
+                        import zipfile
+
+                        try:
+                            with zipfile.ZipFile(file_path, "r") as zf:
+                                for name in zf.namelist():
+                                    if name.endswith(("/", "\\")):
+                                        continue
+                                    if Path(name).suffix.lower() in (".txt", ".md", ".json", ".csv"):
+                                        with zf.open(name) as f:
+                                            txt = f.read().decode("utf-8", errors="ignore")
+                                            extracted_texts.append(f"--- Archive File: {name} ---\n{txt}\n")
+                        except Exception as e:
+                            logger.error(f"[RAG] Native zipfile extraction error: {e}")
+                    else:
+                        logger.warning(f"[RAG] WinRAR missing. Cannot extract non-zip archive: {file_path.name}")
+                return "\n".join(extracted_texts)
+
+        return await asyncio.to_thread(_extract)
+
+    async def _extract_image_metadata(self, file_path: Path) -> str:
+        """Extracts resolution, EXIF tags from images and performs basic OCR if pytesseract is present."""
+        from PIL import Image
+        from PIL.ExifTags import TAGS
+
+        def _parse():
+            try:
+                with Image.open(file_path) as img:
+                    info = [
+                        f"--- Imagem: {file_path.name} ---",
+                        f"Formato: {img.format}",
+                        f"Dimensoes: {img.width}x{img.height}",
+                        f"Modo: {img.mode}",
+                    ]
+                    exif = img.getexif()
+                    if exif:
+                        for tag_id, val in exif.items():
+                            tag = TAGS.get(tag_id, tag_id)
+                            if not isinstance(val, (bytes, bytearray)) and len(str(val)) < 100:
+                                info.append(f"EXIF {tag}: {val}")
+                    try:
+                        import pytesseract  # type: ignore
+
+                        ocr_text = pytesseract.image_to_string(img)
+                        if ocr_text and ocr_text.strip():
+                            info.append(f"--- Conteudo Extraido (OCR) ---\n{ocr_text.strip()}")
+                    except Exception:
+                        pass
+                    return "\n".join(info)
+            except Exception as e:
+                logger.error(f"[RAG] Image metadata extraction failed: {e}")
+                return f"Imagem: {file_path.name} (falha na leitura de metadados)"
+
+        return await asyncio.to_thread(_parse)
+
+    async def _extract_video_metadata(self, file_path: Path) -> str:
+        """Parses video metadata (duration, format, resolution) using cv2 or moviepy."""
+
+        def _parse():
+            try:
+                import cv2  # type: ignore
+
+                cap = cv2.VideoCapture(str(file_path))
+                if cap.isOpened():
+                    fps = cap.get(cv2.CAP_PROP_FPS)
+                    frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+                    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+                    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                    duration = frame_count / fps if fps > 0 else 0
+                    cap.release()
+                    return (
+                        f"--- Video: {file_path.name} ---\n"
+                        f"Duracao: {duration:.2f}s\n"
+                        f"Resolucao: {int(width)}x{int(height)}\n"
+                        f"Frame Rate (FPS): {fps:.2f}\n"
+                        f"Total de Quadros: {int(frame_count)}\n"
+                    )
+            except Exception:
+                pass
+
+            try:
+                from moviepy import VideoFileClip  # type: ignore
+
+                with VideoFileClip(str(file_path)) as clip:
+                    return (
+                        f"--- Video: {file_path.name} ---\n"
+                        f"Duracao: {clip.duration:.2f}s\n"
+                        f"Resolucao: {clip.size[0]}x{clip.size[1]}\n"
+                        f"Audio Ativo: {clip.audio is not None}\n"
+                    )
+            except Exception as e:
+                logger.error(f"[RAG] Video metadata extraction failed: {e}")
+            return f"Video: {file_path.name}"
+
+        return await asyncio.to_thread(_parse)
+
     async def _extract_text_from_file(self, file_path: Path) -> str:
         ext = file_path.suffix.lower()
+        if ext in (".zip", ".rar", ".7z"):
+            return await self._extract_archive_via_winrar(file_path)
+        if ext in (".png", ".jpg", ".jpeg", ".gif", ".webp"):
+            return await self._extract_image_metadata(file_path)
+        if ext in (".mp4", ".avi", ".mkv", ".mov", ".mp3", ".wav"):
+            return await self._extract_video_metadata(file_path)
+        if ext in (".odt", ".doc", ".ods", ".xls", ".odp", ".ppt", ".pptx"):
+            return await self._extract_via_libreoffice(file_path)
         if ext == ".docx":
             return await self._extract_docx(file_path)
         if ext == ".pdf":
@@ -434,6 +651,7 @@ class MemoryRAG:
             return []
 
         source_name = file_path.parent.name if file_path.name == "MEMORY.md" else file_path.stem
+        _, collection = self._get_namespace_client_and_collection(source_name)
         logger.info(f"[RAG] Extraindo '{source_name}{file_path.suffix}' {file_info}...")
         content = await self._extract_text_from_file(file_path)
 
@@ -449,7 +667,7 @@ class MemoryRAG:
             batch_size = 500
             for i in range(0, len(chunks), batch_size):
                 await asyncio.to_thread(
-                    self.collection.upsert,
+                    collection.upsert,
                     documents=chunks[i : i + batch_size],
                     metadatas=metadatas[i : i + batch_size],
                     ids=ids[i : i + batch_size],
@@ -482,39 +700,61 @@ class MemoryRAG:
             logger.exception("[RAG] Fallback Lexical tambem colapsou.")
         return ""
 
-    async def _purge_obsolete_memories(self, all_generated_ids: set) -> None:
-        if not hasattr(self, "collection"):
-            return
+    async def _load_all_manifests(self, base_path: Path) -> dict:
+        """Carrega e mescla as configuracoes do manifesto principal e todos os shards .json."""
+        main_manifest_path = base_path / "rag_ingestion_manifest.json"
+        merged_sources = []
 
+        main_manifest = await self._read_manifest(main_manifest_path)
+        if main_manifest and "sources" in main_manifest:
+            merged_sources.extend(main_manifest["sources"])
+
+        shards_dir = base_path / "rag_ingestion_manifest.d"
+        if await asyncio.to_thread(shards_dir.exists) and await asyncio.to_thread(shards_dir.is_dir):
+
+            def _list_shards() -> list[Path]:
+                return list(shards_dir.glob("*.json"))
+
+            shard_paths = await asyncio.to_thread(_list_shards)
+            for path in shard_paths:
+                shard_manifest = await self._read_manifest(path)
+                if shard_manifest and "sources" in shard_manifest:
+                    merged_sources.extend(shard_manifest["sources"])
+
+        return {"sources": merged_sources}
+
+    async def _purge_obsolete_memories_for_namespace(self, namespace: str, generated_ids: set) -> None:
+        """Limpa fragmentos obsoletos em um namespace/colecao especifica."""
+        _, collection = self._get_namespace_client_and_collection(namespace)
         try:
-            # SOTA Guard: include=[] previne OOM (Out of Memory) e colapso de I/O no SQLite.
-            # Extrai estritamente os IDs, barrando o carregamento dos vetores e textos na RAM.
-            existing_data = await asyncio.to_thread(self.collection.get, include=[])
+            existing_data = await asyncio.to_thread(collection.get, include=[])
             existing_ids = set(existing_data.get("ids", []))
-            ids_to_delete = list(existing_ids - all_generated_ids)
+            ids_to_delete = list(existing_ids - generated_ids)
 
             if ids_to_delete:
-                # SOTA: Evita Memory Spike e Erro de Parametros Limite no SQLite do Chroma
                 batch_size = 500
                 for i in range(0, len(ids_to_delete), batch_size):
-                    await asyncio.to_thread(self.collection.delete, ids=ids_to_delete[i : i + batch_size])
+                    await asyncio.to_thread(collection.delete, ids=ids_to_delete[i : i + batch_size])
                     await asyncio.sleep(0.01)
-                logger.info(f"Expurgados {len(ids_to_delete)} fragmentos obsoletos (Limpeza de Entropia).")
-        except (ImportError, RuntimeError):
-            logger.exception("[RAG] Erro ao limpar memorias antigas.")
+                logger.info(f"Expurgados {len(ids_to_delete)} fragmentos obsoletos na namespace '{namespace}'.")
+        except Exception:
+            logger.exception(f"[RAG] Erro ao limpar memorias antigas para namespace '{namespace}'.")
+
+    async def _purge_obsolete_memories(self, all_generated_ids: set) -> None:
+        """Fallback de compatibilidade para purga geral."""
+        await self._purge_obsolete_memories_for_namespace("general", all_generated_ids)
 
     async def ingest_all_memories(self):
         logger.info("[RAG] Iniciando expansao de consciencia (Memorias + Base de Conhecimento)...")
         base_path = Path(__file__).parent
-        manifest_path = base_path / "rag_ingestion_manifest.json"
 
-        manifest = await self._read_manifest(manifest_path)
+        manifest = await self._load_all_manifests(base_path)
         if not manifest:
             return
 
         target_files = list(await self._collect_target_files_async(manifest, base_path))
         total_files = len(target_files)
-        all_generated_ids = set()
+        ids_per_namespace: dict[str, set[str]] = {}
 
         start_time = time.time()
 
@@ -528,10 +768,19 @@ class MemoryRAG:
                 eta_str = "ETA: calculando..."
 
             file_info = f"[{idx}/{total_files} | {eta_str}]"
-            ids = await self._process_single_file(file_path, file_info)
-            all_generated_ids.update(ids)
+            source_name = file_path.parent.name if file_path.name == "MEMORY.md" else file_path.stem
 
-        await self._purge_obsolete_memories(all_generated_ids)
+            ns = re.sub(r"[^a-zA-Z0-9_-]", "", source_name.lower())
+            if not ns:
+                ns = "general"
+
+            ids = await self._process_single_file(file_path, file_info)
+            if ns not in ids_per_namespace:
+                ids_per_namespace[ns] = set()
+            ids_per_namespace[ns].update(ids)
+
+        for ns, generated_ids in ids_per_namespace.items():
+            await self._purge_obsolete_memories_for_namespace(ns, generated_ids)
 
     async def _fetch_expanded_query(self, session, system_prompt: str, user_prompt: str) -> str:
         if GEMINI_KEYS:
@@ -671,20 +920,67 @@ class MemoryRAG:
         distances = [val["dist"] for val in unique_docs.values()]
         return documents, metadatas, distances
 
+    async def _federated_query(
+        self, expanded_queries: list[str], n_results: int
+    ) -> tuple[list[str], list, list[float]]:
+        """SOTA: Realiza a busca paralela distribuida (Federated Query) em todas as namespaces do Chroma."""
+        namespaces = self._list_available_namespaces()
+
+        async def _query_namespace(ns: str) -> list[dict]:
+            try:
+                _, collection = self._get_namespace_client_and_collection(ns)
+                loop = asyncio.get_event_loop()
+                results = await loop.run_in_executor(
+                    None,
+                    lambda: collection.query(
+                        query_texts=expanded_queries,
+                        n_results=n_results * HYBRID_SEARCH_N_RESULTS_MULTIPLIER,
+                        include=["documents", "metadatas", "distances"],
+                    ),
+                )
+                docs, metas, dists = self._flatten_and_deduplicate_results(results)
+                ns_docs = []
+                for j, doc in enumerate(docs):
+                    ns_docs.append(
+                        {
+                            "doc": doc,
+                            "agent": metas[j]["agent"],
+                            "source": metas[j].get("source", "N/A"),
+                            "distance": dists[j],
+                        }
+                    )
+                return ns_docs
+            except Exception as e:
+                logger.warning(f"[RAG] Falha ao consultar shard '{ns}': {e}")
+                return []
+
+        tasks = [asyncio.create_task(_query_namespace(ns)) for ns in namespaces]
+        results_list = await asyncio.gather(*tasks, return_exceptions=True)
+
+        unique_docs = {}
+        for res in results_list:
+            if isinstance(res, BaseException):
+                continue
+            for item in res:
+                doc = item["doc"]
+                if doc not in unique_docs:
+                    unique_docs[doc] = item
+                else:
+                    unique_docs[doc]["distance"] = min(unique_docs[doc]["distance"], item["distance"])
+
+        documents = list(unique_docs.keys())
+        metadatas = [{"agent": item["agent"], "source": item["source"]} for item in unique_docs.values()]
+        distances = [item["distance"] for item in unique_docs.values()]
+        return documents, metadatas, distances
+
     async def query_memory(self, question: str, n_results: int = 3, local_only: bool = False) -> str:
         try:
             # 1. Expansao da Query com IA para Recall Semantico Superior
             expanded_queries = [question] if local_only else await self._expand_query(question)
-            results = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self.collection.query(
-                    query_texts=expanded_queries,
-                    n_results=n_results * HYBRID_SEARCH_N_RESULTS_MULTIPLIER,
-                    include=["documents", "metadatas", "distances"],
-                ),
-            )
 
-            documents, metadatas, distances = self._flatten_and_deduplicate_results(results)
+            # SOTA: Federated query distributed across sharded databases
+            documents, metadatas, distances = await self._federated_query(expanded_queries, n_results)
+
             if not documents:
                 logger.warning(
                     "[RAG] Busca vetorial nao retornou resultados. Acionando Fallback Lexical (I/O Direto)..."
@@ -753,16 +1049,10 @@ class MemoryRAG:
         try:
             # Reutiliza o RAG Hibrido para buscar os blocos factuais
             expanded_queries = await self._expand_query(question)
-            results = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self.collection.query(
-                    query_texts=expanded_queries,
-                    n_results=n_results * HYBRID_SEARCH_N_RESULTS_MULTIPLIER,
-                    include=["documents", "metadatas", "distances"],
-                ),
-            )
 
-            documents, metadatas, distances = self._flatten_and_deduplicate_results(results)
+            # SOTA: Federated query distributed across sharded databases
+            documents, metadatas, distances = await self._federated_query(expanded_queries, n_results)
+
             if not documents:
                 return '{"nodes": [], "edges": [], "error": "Contexto nao encontrado na Mente Coletiva."}'
 
