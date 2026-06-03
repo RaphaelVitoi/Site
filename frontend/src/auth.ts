@@ -10,6 +10,10 @@ import Google from 'next-auth/providers/google';
 const getAuthSecret = () => {
 	const secret = process.env.AUTH_SECRET;
 	if (!secret) {
+		// SOTA: Permite placeholder durante build ou desenvolvimento para evitar quebra de compilação
+		if (process.env.NODE_ENV === 'development' || process.env.NEXT_PHASE === 'phase-production-build') {
+			return 'sota_default_development_secret_placeholder';
+		}
 		throw new Error(
 			'[FATAL] AUTH_SECRET não configurado. Abortando (Insolvência de Ambiente).',
 		);

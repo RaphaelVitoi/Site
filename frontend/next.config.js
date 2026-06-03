@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  turbopack: {},
+  turbopack: {
+    root: require('path').join(__dirname, '../'),
+  },
   webpack: (config, { dev }) => {
     if (dev) {
       // SOTA: Blindagem do Watchpack para evitar o escaneamento de arquivos do sistema (C:\)
