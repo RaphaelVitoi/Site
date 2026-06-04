@@ -1,8 +1,17 @@
 /**
- * IDENTITY: Motor de Perspectiva Matemática SOTA v6.2.1 GOLD (VITOI - GOLD)
+ * IDENTITY: Motor de Perspectiva Matemática SOTA v8.0 GOLD (VITOI - FUSED)
  * PATH: src/lib/perspectiva.ts
- * ROLE: Core algorítmico da Equação Unificada SOTA (Purificada).
+ * ROLE: Core algorítmico da Equação Unificada SOTA (Fusão v6.2.1 + v7.0).
  *       PM = [(Equity * R) * Valuation] - [EV_fold(t, dpj, pos) + RIO_mw]
+ *
+ * FUSION CHANGELOG (v8.0 vs v6.2.1):
+ * [+] ICM Bitmask Memoization: integer keys O(1) + normalização de escala (v7.0)
+ * [+] riskAdvantage: exportado no PerspectivaResult (v7.0 arch, fórmula BF canônica v6.2.1)
+ * [+] Mapa Posicional Completo FGS: UTG/EP/MP/HJ/CO/BTN/SB/BB (v7.0)
+ * [+] referenceStatus: parâmetro de Teoria do Prospecto no input (v7.0)
+ * [=] Expoente RIO N^2.0 fixo (v6.2.1 — sem risco de feedback loop)
+ * [=] Fórmula BF canônica 100×(BF-1)/BF (v6.2.1 — didática e rastreável)
+ * [=] blindCost mantido como parâmetro (v6.2.1)
  *
  * @format
  */
@@ -29,21 +38,22 @@ export interface PerspectivaResult {
 	deltaFoldPct: number;
 
 	// Layer 2: Esperança (Lógica)
-	valuation: number; // Coeficiente de explosão financeira das fichas
-	rioLiability: number; // Dívida matemática por multiway/RIO
+	valuation: number;       // Coeficiente de explosão financeira das fichas
+	rioLiability: number;    // Dívida matemática por multiway/RIO
 
 	// Layer 3: Expectativa (Preditiva)
 	fgsHealth: number;
 	survivalPressure: number;
-	dynamicEvFold: number; // O piso real (pode ser positivo via laddering)
+	dynamicEvFold: number;   // O piso real (pode ser positivo via laddering)
 
 	// Layer 4: Perspectiva (A Síntese Final)
-	perspectivaPct: number; // PM Final
+	perspectivaPct: number;  // PM Final
 	amortizedEdge: number;
-	ci: number; // Coeficiente de Insolvência (PM / PotOdds)
+	riskAdvantage: number;   // [v8.0] Risk Premium do Hero (BF canônico, %)
+	ci: number;              // Coeficiente de Insolvência (PM / PotOdds)
 	marginInstability: number; // Incerteza % baseada no stack efetivo
-	threshEq: number; // Novo: Equidade Limite Projetada
-	realizationFactor: number; // SOTA: Exportar o R calculado dinamicamente
+	threshEq: number;        // Equidade Limite Projetada
+	realizationFactor: number; // R calculado dinamicamente
 
 	// Metadados
 	isActionBetterThanFold: boolean;
@@ -65,22 +75,24 @@ export interface PerspectivaInput {
 	heroCost: number;
 	winProb: number;
 	realizationFactor: number; // R
-	edgeBase: number;
-	bountyValue?: number; // PKO
-	kappa?: number; // Axioma Lipe Piv (Credibilidade da Informacao)
 
-	// Parâmetros Quantum (v6.2.1)
-	numPlayersInPot?: number; // Para RIO_mw
+	edgeBase: number;
+	bountyValue?: number;    // PKO
+	kappa?: number;          // Axioma Lipe Piv (Credibilidade da Informacao)
+
+	// Parâmetros Quantum (v8.0 GOLD)
+	numPlayersInPot?: number;  // Para RIO_mw
 	humanNoiseFactor?: number; // SOTA: Table Draw Noise
-	isNearPayjump?: boolean; // Para EV_fold positivo
+	isNearPayjump?: boolean;   // Para EV_fold positivo
 	blindsRisingSoon?: boolean; // Para Erosão de stack
 	currentEquityPct?: number; // Para Delta Fold Pct
-	heroPosition?: string; // SOTA: Antevisão Posicional
+	heroPosition?: string;     // SOTA: Antevisão Posicional (UTG/EP/MP/HJ/CO/BTN/SB/BB/IP/OOP)
 
 	// Parametros Opcionais de Teoremas
 	spr?: number;
 	investidoAcumulado?: number;
 	blindCost?: number;
+	referenceStatus?: ReferencePointStatus; // [v8.0] Estado de referência para Teoria do Prospecto
 }
 
 // === MOTOR ICM (Malmuth-Harville / Monte Carlo Estocástico) ===
@@ -90,14 +102,12 @@ export function calculateMapaICM(stacks: number[], prizes: number[]): MapaICMRes
 	const n = stacks.length;
 
 	// SOTA: Monte Carlo Fallback para evitar explosão combinatória (O(2^N))
-	// Adaptado de bibliotecas Open Source para fields maiores
 	if (n > 10) {
 		const totalChips = stacks.reduce((s, v) => s + v, 0);
 		const equities = calculateIcmMonteCarlo(stacks, prizes, {
 			iterations: 20000,
 		});
 
-		// Probs aproximadas (não totalmente precisas via MCMC, mas suficientes para fallback)
 		const positionProbs = Array.from({ length: n }, () =>
 			new Array(Math.min(n, prizes.length)).fill(0),
 		);
@@ -114,17 +124,34 @@ export function calculateMapaICM(stacks: number[], prizes: number[]): MapaICMRes
 	const activePrizes = prizes.slice(0, n);
 	const k = activePrizes.length;
 	const totalChips = stacks.reduce((s, v) => s + v, 0);
-	const key = `${stacks.join(',')}|${activePrizes.join(',')}`;
+
+	// [v8.0] Normalização de Escala para invariância de proporções de stacks.
+	// ICM([100, 200]) === ICM([1000, 2000]) → mesmo resultado após normalização.
+	const normScale = 20000;
+	const normalizedStacks = totalChips > 0
+		? stacks.map(s => Math.round((s / totalChips) * normScale))
+		: stacks;
+	const key = `${normalizedStacks.join(',')}|${activePrizes.join(',')}`;
 
 	const cachedIcm = _icmCache.get(key);
-	if (cachedIcm) return cachedIcm;
+	if (cachedIcm) {
+		// Reconstrói com totalChips real (preserva rastreabilidade de fichas)
+		return {
+			positionProbs: cachedIcm.positionProbs,
+			equities: cachedIcm.equities,
+			totalChips,
+		};
+	}
 
 	const positionProbs: number[][] = Array.from({ length: n }, () => new Array(k).fill(0));
 	const equities: number[] = new Array(n).fill(0);
 
 	if (totalChips === 0 || k === 0) return { positionProbs, equities, totalChips };
 
-	const memo = new Map<string, { posC: number[][]; eqC: number[] }>();
+	// [v8.0] Bitmask Memoization: Chave inteira O(1) via bitshift.
+	// posIdx ocupa bits 16–31, mask ocupa bits 0–15 (suporta até 16 jogadores).
+	// Performance vs. string keys: elimina sort() + join() em cada nó recursivo.
+	const memo = new Map<number, { posC: number[][]; eqC: number[] }>();
 
 	function _applySubComputation(
 		p: number,
@@ -144,64 +171,54 @@ export function calculateMapaICM(stacks: number[], prizes: number[]): MapaICMRes
 	}
 
 	function compute(
-		currStacks: number[],
-		currIndices: number[],
+		mask: number,
 		posIdx: number,
 		currTotal: number,
 	): { posC: number[][]; eqC: number[] } {
-		if (posIdx >= k || currStacks.length === 0 || currTotal === 0) {
+		if (posIdx >= k || mask === 0 || currTotal <= 0) {
 			return {
 				posC: Array.from({ length: n }, () => new Array(k).fill(0)),
 				eqC: new Array(n).fill(0),
 			};
 		}
 
-		const stateKey = `${posIdx}:${currIndices
-			.slice()
-			.sort((a, b) => a - b)
-			.join(',')}`;
+		// Chave inteira: (posIdx << 16) | mask — O(1) hash, zero alocação
+		const stateKey = (posIdx << 16) | mask;
 		const cachedState = memo.get(stateKey);
 		if (cachedState) return cachedState;
 
 		const posC: number[][] = Array.from({ length: n }, () => new Array(k).fill(0));
 		const eqC: number[] = new Array(n).fill(0);
 
-		for (let i = 0; i < currStacks.length; i++) {
-			const stack = currStacks[i] ?? 0;
+		for (let i = 0; i < n; i++) {
+			if ((mask & (1 << i)) === 0) continue; // Bit-test: jogador já eliminado
+			const stack = stacks[i] ?? 0;
 			if (stack <= 0) continue;
 			const p = stack / currTotal;
-			const origIdx = currIndices[i];
-			if (origIdx === undefined) continue;
-			const heroPosRow = posC[origIdx];
-
+			const heroPosRow = posC[i];
 			if (!heroPosRow) continue;
 			heroPosRow[posIdx] = (heroPosRow[posIdx] ?? 0) + p;
-			eqC[origIdx] = (eqC[origIdx] ?? 0) + p * (activePrizes[posIdx] ?? 0);
+			eqC[i] = (eqC[i] ?? 0) + p * (activePrizes[posIdx] ?? 0);
 
-			const sub = compute(
-				currStacks.filter((_, j) => j !== i),
-				currIndices.filter((_, j) => j !== i),
-				posIdx + 1,
-				currTotal - stack,
-			);
+			const nextMask = mask ^ (1 << i); // Bit-XOR: remove jogador i do conjunto
+			const sub = compute(nextMask, posIdx + 1, currTotal - stack);
 			_applySubComputation(p, posIdx, sub, posC, eqC);
 		}
+
 		const res = { posC, eqC };
 		memo.set(stateKey, res);
 		return res;
 	}
 
-	const resultContrib = compute(
-		stacks,
-		stacks.map((_, i) => i),
-		0,
-		totalChips,
-	);
+	const initialMask = (1 << n) - 1; // Todos n jogadores ativos
+	const resultContrib = compute(initialMask, 0, totalChips);
+
 	const finalResult = {
 		positionProbs: resultContrib.posC,
 		equities: resultContrib.eqC,
 		totalChips,
 	};
+
 	if (_icmCache.size >= 1000) {
 		const firstKey = _icmCache.keys().next().value;
 		if (firstKey !== undefined) _icmCache.delete(firstKey);
@@ -220,7 +237,7 @@ export function classifyTier(stack: number, stacks: number[]): StackTier {
 	return 'big';
 }
 
-// --- HELPERS DE REDUÇÃO DE ENTROPIA COGNITIVA (SOTA v6.2.1 GOLD) ---
+// --- HELPERS DE REDUÇÃO DE ENTROPIA COGNITIVA (SOTA v8.0 GOLD FUSED) ---
 
 function _buildSimulatedStacks(
 	stacks: number[],
@@ -269,7 +286,7 @@ function _calculateSnapshot(input: PerspectivaInput, totalPrizes: number) {
 		current,
 		currentEquityPct,
 		stacksWin,
-		deltaWinPct: (winEq / totalPrizes) * 100 - currentEquityPct, // PURE CHIP DELTA: Bounty isolado da base de ICM.
+		deltaWinPct: (winEq / totalPrizes) * 100 - currentEquityPct,
 		deltaLosePct: (loseEq / totalPrizes) * 100 - currentEquityPct,
 		deltaFoldPct: (foldEq / totalPrizes) * 100 - currentEquityPct,
 		perspWin,
@@ -280,6 +297,7 @@ function _calculateSnapshot(input: PerspectivaInput, totalPrizes: number) {
 function _calculateValuationAndRio(
 	current: MapaICMResult,
 	deltaWinPct: number,
+	deltaLosePct: number,
 	perspWin: MapaICMResult,
 	input: PerspectivaInput,
 	totalPrizes: number,
@@ -297,31 +315,33 @@ function _calculateValuationAndRio(
 		villainDeltaLoss > 0 ? deltaWinPct / ((villainDeltaLoss / totalPrizes) * 100) : 1;
 	const valuation = Math.max(0.1, Math.min(2, rawValuation));
 
-	// SOTA: Alinhamento Dimensional. Converte o RIO em Fichas para RIO em ICM Equity (Impacto Real).
-	// SOTA: Ponderação Quadrática da Dívida RIO
-	// Aumenta a penalização em cenários de short-stack onde a volatilidade destrói o stack.
+	// [v8.0] riskAdvantage: Fórmula BF canônica (100×(BF-1)/BF) aplicada ao Hero.
+	// Preservamos a fórmula v6.2.1 por sua rastreabilidade didática e fidelidade ao BF.
+	const gainAbs = deltaWinPct;         // Δ equidade ICM em caso de vitória (positivo)
+	const lossAbs = Math.abs(deltaLosePct); // Δ equidade ICM em caso de derrota (magnitude)
+	const heroBf = gainAbs > 0 ? lossAbs / gainAbs : 1;
+	const riskAdvantage = heroBf <= 1 ? 0 : 100 * (heroBf - 1) / heroBf;
 
-	// Se HU, RIO é zero. Apenas MW possui passivo estrutural de colaboração implícita.
+	// [v6.2.1] Expoente N^2.0 FIXO — sem feedback loop com noise factor.
+	// Decisão arquitetural: separar física multiway (expoente) da percepção humana (damping).
 	if (numPlayersInPot <= 2) {
-		return { valuation, rioLiability: 0 };
+		return { valuation, rioLiability: 0, riskAdvantage };
 	}
 
 	const opponents = Math.max(1, numPlayersInPot - 1);
-	// SOTA v6.2.1: Expoente N^2.0 Unificado.
-	// O noise factor atua como um desvio na percepcao da agressao, nao na fisica multiway.
-	const rioPenaltyFactor = Math.pow(opponents, 2.0);
+	const rioPenaltyFactor = Math.pow(opponents, 2.0); // N^2.0 fixo
 	const volatilityMultiplier = stackHero > 0 ? Math.pow(2 / Math.max(1, stackHero / 5), 2) : 1;
 
-	// SOTA v6.2.1: Damping 0.15 integrado como base do passivo.
+	// [v6.2.1] Damping 0.15 base + noise linear (não exponencial)
 	const damping = 0.15 + humanNoiseFactor * 0.05;
 	const rioPenaltyChips = potSize * rioPenaltyFactor * (damping + volatilityMultiplier * 0.05);
 	const icmPerChip =
 		currentVillainEq > 0
 			? ((currentVillainEq / totalPrizes) * 100) / (current.totalChips / 2)
 			: 0;
-	const rioLiability = rioPenaltyChips * (icmPerChip || 0.05); // Penalidade base mínima maior
+	const rioLiability = rioPenaltyChips * (icmPerChip || 0.05);
 
-	return { valuation, rioLiability };
+	return { valuation, rioLiability, riskAdvantage };
 }
 
 function _calculateFoldPressure(
@@ -348,13 +368,18 @@ function _calculateFoldPressure(
 	const payjumpBonus =
 		isNearPayjump && !isVacuum ? Math.max(1.2, Math.abs(deltaFoldPct) + 0.25) : 0;
 
-	// SOTA: Erosão Proporcional via Antevisão Posicional (FGS t-3)
-	// O UTG/IP caminha para o BB (Punição Máxima). O SB caminha para o BTN (Punição Mínima).
+	// [v8.0] Mapa Posicional Completo (v7.0): erosão proporcional à distância real até o BB.
+	// Granularidade: UTG (máxima exposição orbital) → BB (0 penalidade, já está no BB).
 	let erosionPenalty = 0;
 	if (blindsRisingSoon && !isVacuum) {
 		const baseErosion = Math.abs(deltaFoldPct * 0.5) + 0.1;
-		const penaltyMap: Record<string, number> = { IP: 1.5, BB: 0.5, SB: 0 };
-		erosionPenalty = baseErosion + (penaltyMap[heroPosition] ?? 0);
+		const penaltyMap: Record<string, number> = {
+			// Posições específicas de mesa (v7.0 expansão)
+			UTG: 1.5, EP: 1.5, MP: 1.2, HJ: 1.0, CO: 0.75, BTN: 0.5, SB: 0.25, BB: 0.0,
+			// Fallbacks genéricos (v6.2.1 compatibilidade)
+			IP: 1.5, OOP: 0.5,
+		};
+		erosionPenalty = baseErosion + (penaltyMap[heroPosition] ?? 0.5);
 	}
 
 	return {
@@ -377,8 +402,7 @@ function _resolveRealizationFactor(
 	const spr = input.spr ?? effectiveStack / (potSize || 1);
 	let R = input.realizationFactor;
 
-	// SOTA v6.2.1: Damping de Realizacao Baseado em Agressao (Fisica Unificada)
-	// Se o humanNoiseFactor (AggFactor) for > 1, aplicamos o damping de 0.15
+	// SOTA v8.0: Damping de Realização Baseado em Agressão (Física Unificada)
 	if (input.humanNoiseFactor && input.humanNoiseFactor > 1) {
 		const aggPenalty = 1 - (input.humanNoiseFactor - 1) * 0.15;
 		R *= Math.max(0.1, aggPenalty);
@@ -410,7 +434,6 @@ export function calculateAmortizedEdge(
 	const effectiveStackForEdge = spr === undefined ? stackHero : Math.max(2, spr * 5);
 
 	// SOTA: Amortização da Edge (Colapso Mecânico)
-	// A árvore de decisão é podada em S=10bb. Er(S) é proporcional a log(S).
 	const safeStackEdge = Math.max(2.718, effectiveStackForEdge);
 	const edgeScale = Math.log(safeStackEdge) / Math.log(60);
 
@@ -426,6 +449,7 @@ function _buildDiagnostico(params: {
 	stackHero: number;
 	kappa: number;
 	humanNoiseFactor: number;
+	riskAdvantage: number;
 }): string {
 	const {
 		perspectivaPct,
@@ -436,6 +460,7 @@ function _buildDiagnostico(params: {
 		stackHero,
 		kappa,
 		humanNoiseFactor,
+		riskAdvantage,
 	} = params;
 	let diagnostico = perspectivaPct > 0 ? 'Ação Soberana.' : 'Insolvência de Perspectiva.';
 	if (rioLiability > 1) diagnostico += ' Alerta: Colapso Multiway.';
@@ -445,12 +470,13 @@ function _buildDiagnostico(params: {
 		diagnostico += ' Alerta: Pot Entrapment Severo.';
 	if (Math.abs(perspectivaPct) <= 5 && kappa < 0.4)
 		diagnostico += ' Credibilidade Baixa: Intuição filtrada pelo Baseline Matemático.';
-
-	// SOTA v4.5: Fator PSI (Maluquice Humana)
 	if (humanNoiseFactor > 0.3)
 		diagnostico += ` Fator Ψ Elevado (${(humanNoiseFactor * 100).toFixed(0)}%): Entropia do oponente detectada.`;
 	if (perspectivaPct > 15 && stackHero > 40)
 		diagnostico += ' Predador Ativo: Exploração Forçada.';
+	// [v8.0] Diagnóstico de Risk Advantage
+	if (riskAdvantage > 20)
+		diagnostico += ` RP Alto (${riskAdvantage.toFixed(1)}%): Hero sob pressão severa de bolha.`;
 
 	return diagnostico;
 }
@@ -497,9 +523,11 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 		perspWin,
 		perspLose,
 	} = _calculateSnapshot(input, totalPrizes);
-	const { valuation, rioLiability } = _calculateValuationAndRio(
+
+	const { valuation, rioLiability, riskAdvantage } = _calculateValuationAndRio(
 		current,
 		deltaWinPct,
+		deltaLosePct,
 		perspWin,
 		input,
 		totalPrizes,
@@ -529,37 +557,31 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 	// SOTA: O passivo da derrota sofre dilatação no ICM e aversão dinâmica via Teoria do Prospecto.
 	const effectiveStack = Math.min(stackHero, stackVillain);
 	const baseDeltaLose = deltaLosePct * (1 / Math.max(0.1, fgsHealth));
-	const prospectDeltaLose = calculateUtilityEV(baseDeltaLose, 'baseline', 2.25, effectiveStack);
+	const prospectDeltaLose = calculateUtilityEV(baseDeltaLose, input.referenceStatus ?? 'baseline', 2.25, effectiveStack);
 
 	// A EQUAÇÃO UNIFICADA SOTA (Blindagem Dimensional)
-	// Fichas (Chips) sofrem inflacao nao-linear (Valuation, FGS). Cash (Bounty) possui utilidade estritamente linear.
 	const bountyValue = input.bountyValue ?? 0;
 
-	// SOTA: Amortização da Edge aplicada cirurgicamente ao vetor de ganho.
 	const chipWinExpectativa =
 		bayesianWinProb * deltaWinPct * R * valuation * fgsHealth * amortizedEdge;
-	const chipLoseExpectativa = (1 - bayesianWinProb) * prospectDeltaLose; // Perda é física, não amortizável pela skill.
-
-	const bountyExpectativa = bayesianWinProb * bountyValue * R; // Exige vitoria e Realizacao(R), mas imune a Valuation/FGS.
+	const chipLoseExpectativa = (1 - bayesianWinProb) * prospectDeltaLose;
+	const bountyExpectativa = bayesianWinProb * bountyValue * R;
 
 	const expectativaReal = chipWinExpectativa + chipLoseExpectativa + bountyExpectativa;
 	const perspectivaPct = expectativaReal - (dynamicEvFold + rioLiability);
 
 	// SOTA: Cálculo do Teto do RP (Equidade de Indiferença)
-	// O motor permite que a equação defina o teto organicamente, sem hard-cap artificial.
 	const denom =
 		deltaWinPct * R * valuation * fgsHealth * amortizedEdge -
 		prospectDeltaLose +
 		bountyValue * R;
-	let threshEq = 0.5; // Fallback
+	let threshEq = 0.5;
 	if (Math.abs(denom) > 1e-6) {
 		const rawThresh = (dynamicEvFold + rioLiability - prospectDeltaLose) / denom;
-		threshEq = Math.max(0, Math.min(0.99, rawThresh)); // Deixa a matemática fluir organicamente
+		threshEq = Math.max(0, Math.min(0.99, rawThresh));
 	}
 
 	// SOTA: Coeficiente de Insolvência (Ci)
-	// Ci = Equity Real / Equidade de Indiferença (Threshold)
-	// Se Ci < 1, a mão é matematicamente insolvente sob a ótica da Perspectiva.
 	let ci = 0.5;
 	if (threshEq > 0) {
 		ci = bayesianWinProb / threshEq;
@@ -580,6 +602,7 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 		stackHero,
 		kappa,
 		humanNoiseFactor,
+		riskAdvantage,
 	});
 
 	const result = {
@@ -595,9 +618,10 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 		dynamicEvFold,
 		perspectivaPct,
 		amortizedEdge,
+		riskAdvantage,    // [v8.0] Exportado no resultado core
 		ci,
 		marginInstability,
-		threshEq, // Novo: Equidade Limite Projetada
+		threshEq,
 		realizationFactor: R,
 		bountyPower: bountyValue,
 		isActionBetterThanFold: perspectivaPct > 0,
@@ -636,7 +660,6 @@ export function calculateRioTension( // NOSONAR
 ): number {
 	const gravity = calculateGravity(currentPot);
 	const betToCall = currentPot * 0.5;
-	// SOTA v4.6: O aprisionamento escala com o custo relativo do call e a gravidade acumulada (G)
 	const potEntrapment =
 		((heroInvested + betToCall) / Math.max(0.1, heroRawStack)) * (1 + gravity * 0.1);
 	const downwardDrift = heroPosition === 'OOP' ? 1.25 : 0.85;
@@ -670,28 +693,22 @@ export function calculateUtilityEV(
 	const safeStack = Math.max(2.718, stackEff);
 	const stackModifier = Math.log(100) / Math.log(safeStack);
 
-	// SOTA: Lambda agora é impulsionado inversamente pela saúde do FGS (Future Game Simulation)
-	// Se fgsHealth < 1 (Risco de Bust alto), a aversão à perda cresce exponencialmente.
 	const fgsModifier = 1 / Math.max(0.1, Math.pow(fgsHealth, 2));
 	let lambda = lossAversionBase * stackModifier * fgsModifier;
 
-	let alpha = 0.88; // Concavidade de ganhos
-	let beta = 0.88; // Convexidade de perdas
+	let alpha = 0.88;
+	let beta = 0.88;
 
-	// O "Reference Point" altera o quão intensa é a dor da perda ou a busca pelo risco
 	switch (status) {
 		case 'tilt':
-			// "Stuck" (perdendo): Busca o risco. A dor adicional diminui, e a aversão à perda cai (chasing losses)
 			lambda = lambda * 0.66;
-			beta = 0.95; // Mais próximo da linearidade nas perdas
+			beta = 0.95;
 			break;
 		case 'protecting':
-			// Acima do Buy-in: Protegendo o lucro. Extrema aversão à perda.
 			lambda = lambda * 1.33;
-			alpha = 0.75; // Ganhos adicionais valem muito menos
+			alpha = 0.75;
 			break;
 		case 'bubble':
-			// Sobrevivência extrema: O valor da ficha perdida é astronômico
 			lambda = lambda * 2;
 			break;
 		case 'baseline':
@@ -700,10 +717,8 @@ export function calculateUtilityEV(
 	}
 
 	if (rawEv >= 0) {
-		// Área de Ganhos
 		return Math.pow(rawEv, alpha);
 	} else {
-		// Área de Perdas
 		return -lambda * Math.pow(Math.abs(rawEv), beta);
 	}
 }
@@ -721,21 +736,22 @@ export function computeQuantumMetrics(quantumPerspectiva: PerspectivaResult | nu
 			threshEq: null,
 			ci: null,
 			marginInstability: 0,
+			riskAdvantage: 0,
 			isSolvent: false,
 			isActionable: false,
 		};
 
-	// SOTA: Extração direta do motor core (PerspectivaResult) para garantir consistência absoluta.
 	return {
 		amortizedEdgeMultiplier: quantumPerspectiva.amortizedEdge,
 		rioMw: quantumPerspectiva.rioLiability,
 		adjustedEvFold: quantumPerspectiva.dynamicEvFold,
-		esperanca: quantumPerspectiva.perspectivaPct, // Alinhado: Esperança agora é o PM base
+		esperanca: quantumPerspectiva.perspectivaPct,
 		expectativa: quantumPerspectiva.deltaWinPct,
 		perspectiva: quantumPerspectiva.perspectivaPct,
 		threshEq: quantumPerspectiva.threshEq,
 		ci: quantumPerspectiva.ci,
 		marginInstability: quantumPerspectiva.marginInstability,
+		riskAdvantage: quantumPerspectiva.riskAdvantage, // [v8.0]
 		isSolvent: quantumPerspectiva.ci >= 1,
 		isActionable: quantumPerspectiva.perspectivaPct > 0,
 	};

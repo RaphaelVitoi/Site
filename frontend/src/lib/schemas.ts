@@ -56,6 +56,7 @@ export const PerspectivaInputSchema = z.object({
 	spr: z.number().optional(),
 	investidoAcumulado: z.number().optional(),
 	blindCost: z.number().optional(),
+	referenceStatus: z.enum(['baseline', 'tilt', 'protecting', 'bubble']).optional(), // [v8.0]
 });
 
 // Schema para o resultado do Motor de Perspectiva (PerspectivaResult)
@@ -72,6 +73,7 @@ export const PerspectivaResultSchema = z.object({
 	dynamicEvFold: z.number(),
 	perspectivaPct: z.number(),
 	amortizedEdge: z.number(),
+	riskAdvantage: z.number(),  // [v8.0] RP canônico do hero (BF + RIO + Prospecto)
 	ci: z.number(),
 	marginInstability: z.number(),
 	threshEq: z.number(),
@@ -84,7 +86,7 @@ export const PerspectivaResultSchema = z.object({
 	loseMapaICM: z.array(z.number()),
 });
 
-// === PERSPECTIVA SOTA v6.2.1 GOLD ===
+// === PERSPECTIVA SOTA v8.0 GOLD (FUSED) ===
 
 export const PerspectiveMetricSchema = z.object({
 	scenarioId: z
