@@ -25,15 +25,20 @@ class SOTALogger {
 
 	private constructor() {
 		// Escuta erros globais
-		if (globalThis.window !== undefined) {
-			globalThis.addEventListener('error', (e) =>
-				this.error('Window', e.message, { stack: e.error?.stack }),
-			);
-			globalThis.addEventListener('unhandledrejection', (e) =>
-				this.error('Promise', e.reason?.message || 'Unhandled Rejection', {
-					reason: e.reason,
-				}),
-			);
+		if ('window' in globalThis) {
+			const globalObj = globalThis as unknown as {
+				addEventListener(type: string, listener: (ev: unknown) => void): void;
+			};
+			globalObj.addEventListener('error', (e: unknown) => {
+				const err = e as { message?: string; error?: { stack?: string } } | null;
+				this.error('Window', err?.message || 'Error', { stack: err?.error?.stack });
+			});
+			globalObj.addEventListener('unhandledrejection', (e: unknown) => {
+				const rej = e as { reason?: { message?: string } } | null;
+				this.error('Promise', rej?.reason?.message || 'Unhandled Rejection', {
+					reason: rej?.reason,
+				});
+			});
 		}
 	}
 

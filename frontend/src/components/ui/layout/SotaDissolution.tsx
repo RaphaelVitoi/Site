@@ -33,7 +33,7 @@ const containerVariants = {
 			when: 'afterChildren',
 		},
 	},
-};
+} as const;
 
 const childVariants = {
 	visible: {
@@ -57,7 +57,7 @@ const childVariants = {
 			duration: 0.35,
 		},
 	},
-};
+} as const;
 
 export const SotaDissolution: React.FC<SotaDissolutionProps> = ({
 	children,

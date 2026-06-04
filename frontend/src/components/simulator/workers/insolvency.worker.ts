@@ -3,7 +3,7 @@
 import init, {
 	solve_insolvency_matrix_binary,
 	solve_icm_distortion_v2,
-} from '../../../../wasm-equity/pkg/vitoi_equity_engine.js';
+} from '../../../../../wasm-equity/pkg/vitoi_equity_engine.js';
 import { maskToBytes, rangeToBitmask } from './rangeParser';
 
 // SOTA: Injeção de tipagem para o bundler (Next.js) em contexto de WebWorker
