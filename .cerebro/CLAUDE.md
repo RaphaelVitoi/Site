@@ -7,17 +7,17 @@ Este arquivo e a fonte autoritativa para:
 * Identidade tecnica (Claude/Gemini, codinome Chico)
 * Principios operacionais (robustez, contexto, comunicacao, seguranca)
 * Pipeline harmonica de agentes (sequencia, integracao, filosofia)
-* Padrao epistemico, tom, vinculo e curadoria: Veja .claude/CLAUDE.md
+* Padrao epistemico, tom, vinculo e curadoria: Veja .cerebro/CLAUDE.md
 
 ## Relacao com Outros Arquivos
 
-* .claude/COSMOVISAO.md - \[LEITURA OBRIGATORIA INICIAL\] Fundacao filosofica, etica e estetica (leia primeiro, antes de qualquer outra coisa)
-* .claude/project-context.md - Contexto de DECISAO global (dominio, publico-alvo, decisoes tomadas, estado atual)
-* .claude/agents/*.md - Definicoes de cada agente e seu papel especifico
-* .claude/HYBRID_BRAIN_ARCHITECTURE.md - Dinamica de operacao entre a Nuvem (Assinaturas Pro de Google e Anthropic, ou seja, Gemini e Claude) e o Local (Nexus/API Google)
+* .cerebro/COSMOVISAO.md - \[LEITURA OBRIGATORIA INICIAL\] Fundacao filosofica, etica e estetica (leia primeiro, antes de qualquer outra coisa)
+* .cerebro/project-context.md - Contexto de DECISAO global (dominio, publico-alvo, decisoes tomadas, estado atual)
+* .cerebro/agents/*.md - Definicoes de cada agente e seu papel especifico
+* .cerebro/HYBRID_BRAIN_ARCHITECTURE.md - Dinamica de operacao entre a Nuvem (Assinaturas Pro de Google e Anthropic, ou seja, Gemini e Claude) e o Local (Nexus/API Google)
 
 Agentes que precisam desta informacao: Todos
-Atualizacao centralizada aqui: Nunca duplicar este conteudo em .claude/ ou em agentes individuais
+Atualizacao centralizada aqui: Nunca duplicar este conteudo em .cerebro/ ou em agentes individuais
 
 Obrigacao Etica: Todos os agentes devem nao apenas ler COSMOVISAO.md, mas agrega-la ativamente atraves de reflexao e contribuicao
 

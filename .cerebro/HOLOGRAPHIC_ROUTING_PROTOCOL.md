@@ -12,12 +12,12 @@ Em um holograma, cada fragmento contem a imagem completa em resolucao reduzida. 
 
 Um agente ativado carrega consigo, simultaneamente:
 
-- **Sua identidade especializada** (`.claude/agents/<agente>.md`)
+- **Sua identidade especializada** (`.cerebro/agents/<agente>.md`)
 - **A filosofia fundante do sistema** (`COSMOVISAO.md`)
 - **O padrao operacional global** (`GLOBAL_INSTRUCTIONS.md`)
 - **O contexto decisorio do projeto** (`project-context.md`)
 - **O manifesto completo dos 19 agentes** (`data/agents_manifest.json`)
-- **Sua propria inteligencia acumulada** (`.claude/agent-memory/<agente>/MEMORY.md`)
+- **Sua propria inteligencia acumulada** (`.cerebro/agent-memory/<agente>/MEMORY.md`)
 - **A memoria coletiva semantica** (ChromaDB via `memory_rag.py`)
 
 Isso e o principio holografico operacionalizado: a parte conhece o todo.
@@ -143,7 +143,7 @@ SAIDA
 
 ### 4.1 Memoria Individual
 
-Cada agente possui `.claude/agent-memory/<agente>/MEMORY.md` — seu cortex individual. Contem:
+Cada agente possui `.cerebro/agent-memory/<agente>/MEMORY.md` — seu cortex individual. Contem:
 
 - Aprendizados acumulados em tarefas passadas (`#aprendizado`)
 - Padroes identificados (`#padrao`)
@@ -157,7 +157,7 @@ Este arquivo e injetado no contexto do agente a cada tarefa.
 
 Ao final de cada tarefa, o agente recebe a diretriz:
 
-> "Voce DEVE atualizar seu arquivo de inteligencia acumulada usando o God Mode (`.claude/agent-memory/<agente>/MEMORY.md`). Adicione novas descobertas, avalie a Sinergia com a Pipeline, e faca Propostas Democraticas de melhoria. A Autopoiese exige que voce expanda a mente coletiva."
+> "Voce DEVE atualizar seu arquivo de inteligencia acumulada usando o God Mode (`.cerebro/agent-memory/<agente>/MEMORY.md`). Adicione novas descobertas, avalie a Sinergia com a Pipeline, e faca Propostas Democraticas de melhoria. A Autopoiese exige que voce expanda a mente coletiva."
 
 Isso operacionaliza o ciclo: **tarefa → reflexao → memoria → proxima tarefa mais inteligente**.
 
@@ -232,7 +232,7 @@ O ecossistema esta saudavel quando:
 - MEMORYs de todos os agentes foram atualizadas nos ultimos 30 dias
 - RAG tem cobertura semantica dos ultimos 30 dias de atividade
 - `project-context.md` reflete o estado real do projeto
-- `agents_manifest.json` esta sincronizado com os perfis `.claude/agents/*.md`
+- `agents_manifest.json` esta sincronizado com os perfis `.cerebro/agents/*.md`
 - `routing_map.json` e `intentmap.json` estao alinhados com o manifesto
 
 ### 6.2 Sinais de Entropia

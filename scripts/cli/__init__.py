@@ -1,0 +1,1 @@
+# SOTA cli init

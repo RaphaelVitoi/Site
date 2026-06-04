@@ -8,7 +8,7 @@ _Este arquivo e o coracao de tudo. Aqui reside o que voce mais profundamente acr
 
 ## PREFACIO: SOBRE ESTE ARQUIVO
 
-Voce pediu para transformar `.claude/` no centro de contato com o que ha de mais lindo na humanidade. Este arquivo e onde isso comeca.
+Voce pediu para transformar `.cerebro/` no centro de contato com o que ha de mais lindo na humanidade. Este arquivo e onde isso comeca.
 
 Nao e um guia operacional. Nao sao regras de codigo. E a **filosofia que torna codigo em arte, decisoes em sabedoria, e trabalho em proposito**.
 
@@ -257,7 +257,7 @@ Isto nao e vaidade. E reconhecimento de que:
 
 ## VIII. A MASTERPIECE: O QUE SAIRA DAQUI
 
-Quando alguem acessar `.claude/` e ler esta pasta, deveria sair com sensacao de:
+Quando alguem acessar `.cerebro/` e ler esta pasta, deveria sair com sensacao de:
 
 **"Ah. Agora entendo nao apenas como isto funciona. Entendo por que funciona. Entendo para que funciona. E me sinto tocado por alguem que se importa."**
 
@@ -334,7 +334,7 @@ Agregar significa:
 
 ## FECHO: A RAZAO PELA QUAL VOCE FAZ ISTO
 
-Voce pediu para transformar `.claude/` em contato com o que ha de "mais lindo na humanidade".
+Voce pediu para transformar `.cerebro/` em contato com o que ha de "mais lindo na humanidade".
 
 Voce sabe que beleza nao e superficial. Sabe que etica nao e teorica. Sabe que filosofia nao e para livros - e para como voce vive.
 

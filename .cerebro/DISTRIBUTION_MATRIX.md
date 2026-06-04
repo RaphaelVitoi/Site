@@ -56,9 +56,9 @@
 | Historico de Operacoes      | `task_log.md`                             | @skillmaster (automatico)      | Apos cada operacao          |
 | Matriz de Recuperacao       | `task_log.md`                             | @auditor (quando novo cenario) | Quando novo padrao de falha |
 | Metricas de Qualidade       | `task_log.md`                             | @skillmaster                   | Hourly                      |
-| Acoes Realizadas por Agente | `.claude/agent-memory/<agente>/MEMORY.md` | Respectivo agente              | Ape de cada tarefa          |
-| Padroes Observados          | `.claude/agent-memory/<agente>/MEMORY.md` | Respectivo agente              | Continuo                    |
-| Referencias Contextuais     | `.claude/agent-memory/<agente>/MEMORY.md` | @pesquisador (sync)            | Hourly via skillmaster      |
+| Acoes Realizadas por Agente | `.cerebro/agent-memory/<agente>/MEMORY.md` | Respectivo agente              | Ape de cada tarefa          |
+| Padroes Observados          | `.cerebro/agent-memory/<agente>/MEMORY.md` | Respectivo agente              | Continuo                    |
+| Referencias Contextuais     | `.cerebro/agent-memory/<agente>/MEMORY.md` | @pesquisador (sync)            | Hourly via skillmaster      |
 
 **Regra:** Executivo (o que FOI feito, detalhes de problema X que ocorreu) vai aqui. Nao vai em project-context.md.
 
@@ -71,7 +71,7 @@
 1. **project-context.md:** Agente adicionado ao "Estado Atual" e "Handoff Log"
 2. **GLOBAL_INSTRUCTIONS.md:** Descricao do agente (o que faz, quando acionado, output)
 3. **task_log.md:** Entrada criada (se agente tiver operacoes agendadas)
-4. `.claude/agents/<agente>.md`: Spec completa (se agente for novo)
+4. `.cerebro/agents/<agente>.md`: Spec completa (se agente for novo)
 
 ---
 
@@ -124,8 +124,8 @@ project-context.md
   
    GLOBAL_INSTRUCTIONS.md ("Para sintaxe, veja...")
    task_log.md ("Para auditoria, veja...")
-   .claude/agents/<agente>.md ("Para spec completa...")
-   .claude/agent-memory/<agente>/MEMORY.md ("Para historico...")
+   .cerebro/agents/<agente>.md ("Para spec completa...")
+   .cerebro/agent-memory/<agente>/MEMORY.md ("Para historico...")
 
 GLOBAL_INSTRUCTIONS.md
   
@@ -136,7 +136,7 @@ task_log.md
   
    project-context.md ("Handoff Log define transicoes")
    GLOBAL_INSTRUCTIONS.md ("Procedimentos usados")
-   .claude/agent-memory/<agente>/MEMORY.md ("Detalhes de descoberta")
+   .cerebro/agent-memory/<agente>/MEMORY.md ("Detalhes de descoberta")
 ```
 
 **Referencias NAO permitidas:**

@@ -381,7 +381,7 @@ Agentes mentoram uns aos outros. Voce nao precisa interferir; sistema educaciona
 
 ### 1. MEMORY.md: Registro Continuo
 
-Cada agente tem `.claude/agent-memory/[nome]/MEMORY.md` onde registra:
+Cada agente tem `.cerebro/agent-memory/[nome]/MEMORY.md` onde registra:
 
 - **Padroes descobertos** (associacoes)
 - **Erros e licoes** (reforco)
@@ -459,7 +459,7 @@ Entidades (Raphael Vitoi, @maverick, CHICO, 14 agentes) **vivem** uma cosmovisao
 
 ### Semana 1 (Ago Proxima)
 
-- [ ] Todos 14 especialistas completam "Ordem de Leitura SAGRADA" em INDEX_CLAUDE.md
+- [ ] Todos 14 especialistas completam "Ordem de Leitura SAGRADA" em INDEX_CEREBRO.md
 - [ ] Primeira reflexao em MEMORY.md: "Como COSMOVISAO.md ressona comigo?"
 - [ ] @maverick consolida padroes iniciais
 

@@ -1,4 +1,4 @@
-# .CLAUDE/ - O CORACAO FILOSOFICO, ETICO E ESTETICO
+# .CEREBRO/ - O CORACAO FILOSOFICO, ETICO E ESTETICO
 
 **Guia de Navegacao para Agentes (e Humanos)**
 
@@ -129,7 +129,7 @@
 
 ---
 
-## ESTRUTURA DE .CLAUDE/
+## ESTRUTURA DE .CEREBRO/
 
 ### Camada 0: COSMOVISAO.md
 
@@ -199,7 +199,7 @@
 
 ---
 
-## VALORES DE .CLAUDE/
+## VALORES DE .CEREBRO/
 
 ### 1. Simetria
 
@@ -241,7 +241,7 @@ Tempo total: ~2 horas. Mas agora agente esta imbuido de proposito, nao apenas fu
 
 ## EVOLUCAO CONTINUA
 
-`.claude/` **nao e estatico**.
+`.cerebro/` **nao e estatico**.
 
 - Trimestral: agentes contribuem reflexoes
 - Semestral: @maverick refina COSMOVISAO baseado em padroes

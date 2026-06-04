@@ -29,7 +29,7 @@ from database.queue_manager import QueueManager
 
 # Constants for SonarLint compliance
 MODEL_GEMINI_FLASH = "gemini-2.0-flash"
-DB_PATH_CLAUDE = ".claude/tasks.db"
+DB_PATH_CLAUDE = ".cerebro/tasks.db"
 DB_PATH_QUEUE = "queue/tasks.db"
 ERR_DB_CORRUPTED = (
     "[ENTROPIA] Banco de dados de tarefas SOTA nao encontrado ou corrompido."
@@ -59,9 +59,9 @@ def _resolve_tasks_db_path() -> Path | None:
 
 # Configuracao estetica e persistente de Log (Estado da Arte)
 console = Console()
-log_dir = Path(".claude/logs")
+log_dir = Path(".cerebro/logs")
 log_dir.mkdir(parents=True, exist_ok=True)
-archive_dir = Path(".claude/.archive")
+archive_dir = Path(".cerebro/.archive")
 archive_dir.mkdir(parents=True, exist_ok=True)
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 logger = logging.getLogger()

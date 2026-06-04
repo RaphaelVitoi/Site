@@ -172,7 +172,7 @@ function Get-FileContentSOTA([string]$Path) {
 
 function Write-CryptoAuditSOTA {
     param([string]$Action, [string]$Target)
-    $LogDir = Join-Path $ScriptDirectory '.claude\logs'
+    $LogDir = Join-Path $ScriptDirectory '.cerebro\logs'
     if (-not (Test-Path -LiteralPath $LogDir)) { New-Item -ItemType Directory -Path $LogDir | Out-Null }
     $AuditLogPath = Join-Path $LogDir 'crypto_audit.log'
     $Timestamp = (Get-Date -Format 'o')
@@ -289,7 +289,7 @@ if ($Graph) {
 }
 
 if ($Reflect) {
-    Invoke-NexusScript -ScriptName '.claude\trigger_mass_reflection.ps1' -Message 'INICIANDO DESPERTAR COGNITIVO EM MASSA'
+    Invoke-NexusScript -ScriptName '.cerebro\trigger_mass_reflection.ps1' -Message 'INICIANDO DESPERTAR COGNITIVO EM MASSA'
 }
 
 if ($Watch) {
@@ -471,7 +471,7 @@ if ($Web -or $Ola) {
 
     Write-Host "`n[INFO] Sintetizando artefatos e memorias no Clipboard..." -ForegroundColor Yellow
 
-    $ClaudeDir = Join-Path $ScriptDirectory '.claude'
+    $ClaudeDir = Join-Path $ScriptDirectory '.cerebro'
 
     try {
         # --- Montagem 100% em Memoria (Anti-IOException e Bypass Absoluto de Temps) ---

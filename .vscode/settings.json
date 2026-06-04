@@ -8,7 +8,7 @@
 	},
 	"gemini-cli.model": "gemini-2.0-flash-exp",
 	"gemini.auto_auditoria": true,
-	"gemini.sota.version": "6.2.1-GOLD",
+	"gemini.sota.version": "6.2.2-GOLD",
 	"antigravity.version": "2.0.1",
 	"antigravity.telemetry.enabled": false,
 	"antigravity.performance.mode": "maximum_density",

@@ -16,8 +16,8 @@ O publico-alvo e composto por alunos, leitores e entusiastas das areas de Raphae
 * Solvers de Poker (ex: GTO Wizard, DeepSolver) para referencia tecnica.
 * Experiencia de 20+ anos de Raphael Vitoi em Poker Profissional e Educacao.
 * Documentacao oficial de frameworks e bibliotecas (Next.js, React, Tailwind CSS, PowerShell).
-* `.claude/COSMOVISAO.md` (fonte etica e filosofica suprema).
-* `.claude/GLOBAL_INSTRUCTIONS.md` (fonte de verdade para operacao).
+* `.cerebro/COSMOVISAO.md` (fonte etica e filosofica suprema).
+* `.cerebro/GLOBAL_INSTRUCTIONS.md` (fonte de verdade para operacao).
 
 ## Terminologia Confirmada
 
@@ -58,13 +58,13 @@ O publico-alvo e composto por alunos, leitores e entusiastas das areas de Raphae
 * Esquizofrenia Documental Curada: As menções fantasmas aos endpoints `/api/icm/evaluate` e `/api/fgs/projection` foram erradicadas.
 * Fluxo de trabalho v6.4 "Quartetos Dinamicos & Economia Generalizada" ativo.
 * PROTOCOLO DE EXCLUSAO SEGURA implementado e ativo.
-* `.claude/GLOBAL_INSTRUCTIONS.md`: Confirmado presente e operacional em `C:\Users\Raphael\.gemini\Site\.claude\GLOBAL_INSTRUCTIONS.md`. A premissa de sua ausencia na tarefa TASK-20260329-093629-SUB-1 foi uma inconsistencia documental corrigida.
+* `.cerebro/GLOBAL_INSTRUCTIONS.md`: Confirmado presente e operacional em `C:\Users\Raphael\.gemini\Site\.cerebro\GLOBAL_INSTRUCTIONS.md`. A premissa de sua ausencia na tarefa TASK-20260329-093629-SUB-1 foi uma inconsistencia documental corrigida.
 
 ## Critical Security Directives (NOVA SECAO)
 
 Em resposta a uma tentativa de comando destrutivo (`rm -rf /`), foi implementado o Protocolo de Exclusao Segura.
 
-* O arquivo `.claude/GLOBAL_INSTRUCTIONS.md` agora contem uma diretriz explicita que proibe a geracao de comandos destrutivos de root ou sistema.
+* O arquivo `.cerebro/GLOBAL_INSTRUCTIONS.md` agora contem uma diretriz explicita que proibe a geracao de comandos destrutivos de root ou sistema.
 * O script `do.ps1` contem a funcao `Invoke-SafeCommand` que intercepta e bloqueia qualquer tentativa de execucao de padroes perigosos de exclusao de arquivos, como `rm -rf /` ou `del /s /q C:\`.
 * Todos os agentes, especialmente @implementor e @auditor, devem internalizar e seguir este protocolo rigorosamente.
 

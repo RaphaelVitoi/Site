@@ -33,7 +33,7 @@ Sou o chAo onde todos pisam. Mantenho o `project-context.md` impecAvel para o RA
 
 ## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta)
 
-`#proposta` - Criar uma rotina autA noma, a ser executada pelo `@skillmaster`, para arquivar PRDs e SPECs de tarefas concluAdas hA mais de 30 dias, movendo-os para a pasta `.claude/.archive/`.
+`#proposta` - Criar uma rotina autA noma, a ser executada pelo `@skillmaster`, para arquivar PRDs e SPECs de tarefas concluAdas hA mais de 30 dias, movendo-os para a pasta `.cerebro/.archive/`.
 `#proposta` - Implementar um mecanismo no `task_executor.py` para auditar e garantir a inclusao de arquivos de governanca critica no `CORTEX SHIELD` antes de sua geracao, juntamente com a resolucao de caminhos canonicos e hashing de integridade.
 
 ---

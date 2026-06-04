@@ -21,7 +21,7 @@ $ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $PidFile     = Join-Path $ProjectRoot ".nexus_worker.pid"
 $VenvPython  = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $EnvScript   = Join-Path $ProjectRoot "_env.ps1"
-$LogDir      = Join-Path $ProjectRoot ".claude\logs"
+$LogDir      = Join-Path $ProjectRoot ".cerebro\logs"
 
 # ─── Banner ──────────────────────────────────────────────────────────────────
 Write-Host ""

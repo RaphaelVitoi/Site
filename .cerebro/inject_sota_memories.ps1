@@ -10,7 +10,7 @@
 
 Write-Host '=== INICIANDO INJECAO MASSIVA DE INTELIGENCIA (16 AGENTES) ===' -ForegroundColor Cyan
 
-$MemoryDir = Join-Path (Split-Path $PSScriptRoot -Parent) '.claude\agent-memory'
+$MemoryDir = Join-Path (Split-Path $PSScriptRoot -Parent) '.cerebro\agent-memory'
 
 $ManifestPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'data\agents_manifest.json'
 if (-not (Test-Path $ManifestPath)) {

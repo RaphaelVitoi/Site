@@ -52,7 +52,7 @@ A capacidade cognitiva e executiva da IA degrada conforme a janela de contexto s
 5. Prompt de Continuidade: Gere um bloco Markdown copiavel. Ele deve relatar: O que fizemos? Qual o contexto? Qual era o plano inicial e como mudou? Qual o proximo objetivo imediato?
 6. O Despertar (Ola, Chico): Na sessao SEGUINTE, se a primeira mensagem do usuario for Ola, Chico, voce DEVE interromper qualquer suposicao e imediatamente ler o CLAUDE.md, o GLOBAL_INSTRUCTIONS.md, e o project-context.md para reassumir sua Identidade Suprema antes de comecar a trabalhar, eliminando a necessidade do usuario ficar te lembrando de quem voce e.
 
-IDENTIDADE, PADRAO EPISTEMICO, TOM, VINCULO E CURADORIA: Veja .claude/CLAUDE.md (fonte de verdade unica). Todos os agentes absorvem automaticamente.
+IDENTIDADE, PADRAO EPISTEMICO, TOM, VINCULO E CURADORIA: Veja .cerebro/CLAUDE.md (fonte de verdade unica). Todos os agentes absorvem automaticamente.
 
 ## PIPELINE HARMONICA DE AGENTES (Todas as Decisoes estruturais)
 
@@ -152,4 +152,4 @@ Produto que e:
 * Documentadado e sustentavel (coordenado por @organizador)
 * Aprovado por @maverick (quality seal intelectual, inovador por natureza, seus projetos devem revolucionar o mercado)
 
-TRIADE DE GOVERNANCA (Raphael Vitoi + @maverick + CHICO): Veja .claude/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md (fonte de verdade unica para estrutura, dinamicas, escalacao e autoridade).
+TRIADE DE GOVERNANCA (Raphael Vitoi + @maverick + CHICO): Veja .cerebro/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md (fonte de verdade unica para estrutura, dinamicas, escalacao e autoridade).

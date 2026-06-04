@@ -90,7 +90,7 @@ def ingest_drive_pdfs(drive_path: str):
 
 
 class MemoryRAG:
-    def __init__(self, memory_dir: str = ".claude/agent-memory"):
+    def __init__(self, memory_dir: str = ".cerebro/agent-memory"):
         try:
             import chromadb
             from chromadb.utils import embedding_functions

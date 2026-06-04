@@ -28,6 +28,12 @@ function logToOrchestrator(payload: Record<string, unknown>) {
 		// SOTA: Purificação ASCII obrigatória antes de gravar no log compartilhado
 		const logEntry = enforcePureAscii(rawLog);
 
+		// SOTA FIX: Garantir que o diretório pai existe antes de fazer append
+		const parentDir = path.dirname(SHARED_TELEMETRY_PATH);
+		if (!fs.existsSync(parentDir)) {
+			fs.mkdirSync(parentDir, { recursive: true });
+		}
+
 		// SOTA FIX: Append atômico via fs.appendFileSync para garantir integridade no log rotativo do Python
 		fs.appendFileSync(SHARED_TELEMETRY_PATH, logEntry, { encoding: 'ascii' });
 	} catch (err) {

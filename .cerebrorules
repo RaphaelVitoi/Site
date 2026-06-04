@@ -2,13 +2,13 @@
 
 **PARADIGMA:** SQLite + Python, Finite State Machine (FSM), Context Pruning
 
-## 1. INTEGRIDADE EPISTEMICA (SINGLE SOURCE OF TRUTH)
+## 1. INTEGRIDADE EPISEMICA (SINGLE SOURCE OF TRUTH)
 
 O conhecimento do ecossistema opera sob leis fisicas estritas:
 
-* **Axiomas (Read-Only):** Leia `.claude/project-context.md`. E a verdade universal do projeto. Nunca edite este ficheiro.
+* **Axiomas (Read-Only):** Leia `.cerebro/project-context.md`. E a verdade universal do projeto. Nunca edite este ficheiro.
 * **Operacoes (Read-Only):** Leia `docs/MANUAL_WORKFLOW_AGENTES.md`. Contem procedimentos operacionais.
-* **Memoria (Write-Only):** O seu log de pensamentos e tarefas deve ser escrito exclusivamente em `.claude/agent-memory/<agente>/MEMORY.md`.
+* **Memoria (Write-Only):** O seu log de pensamentos e tarefas deve ser escrito exclusivamente em `.cerebro/agent-memory/<agente>/MEMORY.md`.
 * **COMPRESSAO DE CONTEXTO:** A cada 5 tarefas concluidas, voce e OBRIGADO a sumarizar o topo do ficheiro `MEMORY.md`, consolidando o conhecimento para evitar o esgotamento da Janela de Contexto (Context Degradation).
 
 ## 2. TRANSACOES DE ESTADO (MAQUINA DE ESTADOS FINITA)

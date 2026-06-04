@@ -20,9 +20,9 @@ Inicie uma auditoria rigorosa de consistencia de agentes em todo o nosso Cortex 
 
 FONTES PARA CRUZAMENTO DE DADOS (O Manifesto e a fonte unica de verdade):
 1. `data/agents_manifest.json` (Fonte da verdade de roteamento - deve refletir os 15 Agentes IA).
-2. `.claude/project-context.md` (Verificar a Secao 'Pipeline de Agentes').
-3. `.claude/GLOBAL_INSTRUCTIONS.md` (Verificar a Secao 'Pipeline Harmonica').
-4. `.claude/agents/*.md` (Arquivos fisicos de definicao de persona).
+2. `.cerebro/project-context.md` (Verificar a Secao 'Pipeline de Agentes').
+3. `.cerebro/GLOBAL_INSTRUCTIONS.md` (Verificar a Secao 'Pipeline Harmonica').
+4. `.cerebro/agents/*.md` (Arquivos fisicos de definicao de persona).
 
 O QUE VOCE DEVE FAZER:
 - Verifique se TODOS os 15 agentes IA estao descritos corretamente nas listas de pipeline no `project-context.md` e `GLOBAL_INSTRUCTIONS.md`.

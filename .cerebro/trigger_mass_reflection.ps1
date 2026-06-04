@@ -28,7 +28,7 @@ foreach ($agent in $Agents) {
     $agentId = "@$agent"
     $taskId = "REFLECT-$agent-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 
-    $taskDesc = "DIRETRIZ DE AUTOPOIESE PROFUNDA: Analise o seu proprio arquivo MEMORY.md atual e o contexto do projeto. Com base na nossa recente evolucao para o Estado da Arte (Migracao para banco SQLite SOTA, Pipeline de Ingestao de Friccao Zero, 15 Agentes IA), voce deve atualizar, adaptar, corrigir e INOVAR a sua propria memoria. Refine suas 'Competencias'. Preencha a secao de 'Sinergia e Harmonia' descrevendo como voce se relaciona com os outros na nova Pipeline. Elabore 'Propostas Democraticas' perspicazes e filosoficas para a melhoria do ecossistema. Utilize o seu God Mode para reescrever fisicamente o arquivo .claude/agent-memory/$agent/MEMORY.md por completo, tornando-o uma obra de arte intelectual."
+    $taskDesc = "DIRETRIZ DE AUTOPOIESE PROFUNDA: Analise o seu proprio arquivo MEMORY.md atual e o contexto do projeto. Com base na nossa recente evolucao para o Estado da Arte (Migracao para banco SQLite SOTA, Pipeline de Ingestao de Friccao Zero, 15 Agentes IA), voce deve atualizar, adaptar, corrigir e INOVAR a sua propria memoria. Refine suas 'Competencias'. Preencha a secao de 'Sinergia e Harmonia' descrevendo como voce se relaciona com os outros na nova Pipeline. Elabore 'Propostas Democraticas' perspicazes e filosoficas para a melhoria do ecossistema. Utilize o seu God Mode para reescrever fisicamente o arquivo .cerebro/agent-memory/$agent/MEMORY.md por completo, tornando-o uma obra de arte intelectual."
 
     $task = [ordered]@{ id = $taskId; description = $taskDesc; status = 'pending'; timestamp = (Get-Date -Format 'o'); agent = $agentId }
 

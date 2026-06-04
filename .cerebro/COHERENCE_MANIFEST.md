@@ -20,7 +20,7 @@ Cada um dos **19 agentes** funciona como parte de um **ecossistema coeso e harmo
 
 ### Camada 1: IDENTIDADE & COMPORTAMENTO GLOBAL
 
-**Arquivo:** `.claude/CLAUDE.md`
+**Arquivo:** `.cerebro/CLAUDE.md`
 
 Todos os 19 agentes absorvem:
 
@@ -44,7 +44,7 @@ Todos os 19 agentes absorvem:
 
 ### Camada 3: CONTEXTO DO PROJETO & PAPEL NA PIPELINE
 
-**Arquivo:** `.claude/project-context.md`
+**Arquivo:** `.cerebro/project-context.md`
 
 Todos os 19 agentes absorvem:
 
@@ -56,7 +56,7 @@ Todos os 19 agentes absorvem:
 
 ### Camada 4: MEMORIA INDIVIDUAL & INTELIGENCIA ACUMULADA
 
-**Arquivo:** `.claude/agent-memory/<agente>/MEMORY.md`
+**Arquivo:** `.cerebro/agent-memory/<agente>/MEMORY.md`
 
 Cada um dos 19 agentes tem:
 
@@ -76,8 +76,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                    | Status                         |
 | ------------------------------------------ | ------------------------------ |
-| `.claude/agents/architect.md`              | Documentado                    |
-| `.claude/agent-memory/architect/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/architect.md`              | Documentado                    |
+| `.cerebro/agent-memory/architect/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                       | FASE 00 claro                  |
 | `GLOBAL_INSTRUCTIONS.md`                   | Tabela de integracao           |
 
@@ -85,8 +85,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                  | Status                         |
 | ---------------------------------------- | ------------------------------ |
-| `.claude/agents/planner.md`              | Documentado                    |
-| `.claude/agent-memory/planner/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/planner.md`              | Documentado                    |
+| `.cerebro/agent-memory/planner/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                     | FASE 01 claro                  |
 | `GLOBAL_INSTRUCTIONS.md`                 | Tabela de integracao           |
 
@@ -94,8 +94,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                      | Status                         |
 | -------------------------------------------- | ------------------------------ |
-| `.claude/agents/pesquisador.md`              | Documentado                    |
-| `.claude/agent-memory/pesquisador/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/pesquisador.md`              | Documentado                    |
+| `.cerebro/agent-memory/pesquisador/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                         | FASE 02 claro                  |
 | `GLOBAL_INSTRUCTIONS.md`                     | Tabela de integracao           |
 
@@ -103,8 +103,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                   | Status                         |
 | ----------------------------------------- | ------------------------------ |
-| `.claude/agents/prompter.md`              | Documentado                    |
-| `.claude/agent-memory/prompter/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/prompter.md`              | Documentado                    |
+| `.cerebro/agent-memory/prompter/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                      | FASE 03 claro                  |
 | `GLOBAL_INSTRUCTIONS.md`                  | Tabela de integracao           |
 
@@ -112,8 +112,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                  | Status                         |
 | ---------------------------------------- | ------------------------------ |
-| `.claude/agents/auditor.md`              | Documentado                    |
-| `.claude/agent-memory/auditor/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/auditor.md`              | Documentado                    |
+| `.cerebro/agent-memory/auditor/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                     | FASE 04 claro (bloqueador)     |
 | `GLOBAL_INSTRUCTIONS.md`                 | Tabela de integracao           |
 
@@ -121,8 +121,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                      | Status                         |
 | -------------------------------------------- | ------------------------------ |
-| `.claude/agents/implementor.md`              | Documentado                    |
-| `.claude/agent-memory/implementor/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/implementor.md`              | Documentado                    |
+| `.cerebro/agent-memory/implementor/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                         | FASE 05 claro                  |
 | `GLOBAL_INSTRUCTIONS.md`                     | Tabela de integracao           |
 
@@ -130,8 +130,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                   | Status                         |
 | ----------------------------------------- | ------------------------------ |
-| `.claude/agents/verifier.md`              | Documentado                    |
-| `.claude/agent-memory/verifier/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/verifier.md`              | Documentado                    |
+| `.cerebro/agent-memory/verifier/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                      | FASE 06 claro                  |
 | `GLOBAL_INSTRUCTIONS.md`                  | Tabela de integracao           |
 
@@ -141,8 +141,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                  | Status                         |
 | ---------------------------------------- | ------------------------------ |
-| `.claude/agents/curator.md`              | Documentado                    |
-| `.claude/agent-memory/curator/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/curator.md`              | Documentado                    |
+| `.cerebro/agent-memory/curator/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                     | Consultivo                     |
 | `GLOBAL_INSTRUCTIONS.md`                 | Tabela de integracao           |
 
@@ -150,8 +150,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                    | Status                         |
 | ------------------------------------------ | ------------------------------ |
-| `.claude/agents/validador.md`              | Documentado                    |
-| `.claude/agent-memory/validador/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/validador.md`              | Documentado                    |
+| `.cerebro/agent-memory/validador/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                       | Consultivo                     |
 | `GLOBAL_INSTRUCTIONS.md`                   | Tabela de integracao           |
 
@@ -159,8 +159,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                        | Status                         |
 | ---------------------------------------------- | ------------------------------ |
-| `.claude/agents/securitychief.md`              | Documentado                    |
-| `.claude/agent-memory/securitychief/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/securitychief.md`              | Documentado                    |
+| `.cerebro/agent-memory/securitychief/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                           | Consultivo                     |
 | `GLOBAL_INSTRUCTIONS.md`                       | Tabela de integracao           |
 
@@ -168,8 +168,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                        | Status                         |
 | ---------------------------------------------- | ------------------------------ |
-| `.claude/agents/bibliotecario.md`              | Documentado                    |
-| `.claude/agent-memory/bibliotecario/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/bibliotecario.md`              | Documentado                    |
+| `.cerebro/agent-memory/bibliotecario/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                           | Consultivo                     |
 | `GLOBAL_INSTRUCTIONS.md`                       | Tabela de integracao           |
 
@@ -177,8 +177,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                  | Status                         |
 | ---------------------------------------- | ------------------------------ |
-| `.claude/agents/gemma4.md`              | Documentado                    |
-| `.claude/agent-memory/gemma4/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/gemma4.md`              | Documentado                    |
+| `.cerebro/agent-memory/gemma4/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                     | Consultivo                     |
 | `GLOBAL_INSTRUCTIONS.md`                 | Tabela de integracao           |
 
@@ -188,8 +188,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                   | Status                                 |
 | ----------------------------------------- | -------------------------------------- |
-| `.claude/agents/maverick.md`              | Documentado                            |
-| `.claude/agent-memory/maverick/MEMORY.md` | Ativo com referencia harmonica         |
+| `.cerebro/agents/maverick.md`              | Documentado                            |
+| `.cerebro/agent-memory/maverick/MEMORY.md` | Ativo com referencia harmonica         |
 | `project-context.md`                      | Lideranca Intelectual Transversal 24/7 |
 | `GLOBAL_INSTRUCTIONS.md`                  | SUPER-AGENT                            |
 
@@ -197,10 +197,10 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                                  | Status                                   |
 | -------------------------------------------------------- | ---------------------------------------- |
-| `.claude/agents/chico.md`                                | Documentado                              |
-| `.claude/agent-memory/chico/MEMORY.md`                   | Ativo com referencia harmonica           |
+| `.cerebro/agents/chico.md`                                | Documentado                              |
+| `.cerebro/agent-memory/chico/MEMORY.md`                   | Ativo com referencia harmonica           |
 | `GLOBAL_INSTRUCTIONS.md`                                 | Identidade da raiz, Triade de Governanca |
-| `.claude/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md` | Documentacao estrutural completa         |
+| `.cerebro/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md` | Documentacao estrutural completa         |
 
 ### OPERACIONAIS 24/7 (4 agentes)
 
@@ -208,8 +208,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                      | Status                         |
 | -------------------------------------------- | ------------------------------ |
-| `.claude/agents/organizador.md`              | Documentado                    |
-| `.claude/agent-memory/organizador/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/organizador.md`              | Documentado                    |
+| `.cerebro/agent-memory/organizador/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                         | Operacional 24/7               |
 | `GLOBAL_INSTRUCTIONS.md`                     | Tabela de integracao           |
 
@@ -217,8 +217,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                       | Status                         |
 | --------------------------------------------- | ------------------------------ |
-| `.claude/agents/sequenciador.md`              | Documentado                    |
-| `.claude/agent-memory/sequenciador/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/sequenciador.md`              | Documentado                    |
+| `.cerebro/agent-memory/sequenciador/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                          | Operacional 24/7               |
 | `GLOBAL_INSTRUCTIONS.md`                      | Tabela de integracao           |
 
@@ -226,8 +226,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                      | Status                         |
 | -------------------------------------------- | ------------------------------ |
-| `.claude/agents/skillmaster.md`              | Documentado                    |
-| `.claude/agent-memory/skillmaster/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/skillmaster.md`              | Documentado                    |
+| `.cerebro/agent-memory/skillmaster/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                         | Operacional 24/7               |
 | `GLOBAL_INSTRUCTIONS.md`                     | Tabela de integracao           |
 
@@ -235,8 +235,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                     | Status                         |
 | ------------------------------------------- | ------------------------------ |
-| `.claude/agents/historian.md`              | Documentado                    |
-| `.claude/agent-memory/historian/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/historian.md`              | Documentado                    |
+| `.cerebro/agent-memory/historian/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                        | Operacional 24/7               |
 | `GLOBAL_INSTRUCTIONS.md`                    | Tabela de integracao           |
 
@@ -246,8 +246,8 @@ Cada um dos 19 agentes tem:
 
 | Arquivo                                     | Status                         |
 | ------------------------------------------- | ------------------------------ |
-| `.claude/agents/dispatcher.md`              | Documentado                    |
-| `.claude/agent-memory/dispatcher/MEMORY.md` | Ativo com referencia harmonica |
+| `.cerebro/agents/dispatcher.md`              | Documentado                    |
+| `.cerebro/agent-memory/dispatcher/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md`                        | FASE ENTRADA claro             |
 | `GLOBAL_INSTRUCTIONS.md`                    | Tabela de integracao           |
 
@@ -266,10 +266,10 @@ Cada um dos 19 agentes tem:
 
 Cada agente absorve:
 
-- [X] `.claude/CLAUDE.md` - Identidade & Principios
+- [X] `.cerebro/CLAUDE.md` - Identidade & Principios
 - [X] `GLOBAL_INSTRUCTIONS.md` - Instrucoes Globais
-- [X] `.claude/project-context.md` - Contexto & Papel
-- [X] `.claude/agent-memory/<seu-nome>/MEMORY.md` - Sua Inteligencia
+- [X] `.cerebro/project-context.md` - Contexto & Papel
+- [X] `.cerebro/agent-memory/<seu-nome>/MEMORY.md` - Sua Inteligencia
 
 ### SINCRONIZACAO DE MEMORIA
 
