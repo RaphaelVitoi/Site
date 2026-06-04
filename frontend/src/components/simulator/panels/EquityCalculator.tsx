@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * IDENTITY: Calculadora Malmuth-Harville de Equidade ICM v6.2.1 GOLD
@@ -39,14 +39,29 @@ export default function EquityCalculator() {
 	const [parserError, setParserError] = useState<string | null>(null);
 	const [heroId, setHeroId] = useState<string | null>('1');
 	const [pkoValue] = useState(0);
+	const [isSymmetric, setIsSymmetric] = useState(false);
 
 	const wasmContext = use(SotaWasmContext);
 	const insolvency: InsolvencyMetrics | null = wasmContext?.insolvencyMatrixData ?? null;
 
-	const deferredPlayers = useDeferredValue(players);
+	const averageStack = useMemo(() => {
+		if (players.length === 0) return 0;
+		const total = players.reduce((sum, p) => sum + p.stack, 0);
+		return total / players.length;
+	}, [players]);
+
+	const symmetricPlayers = useMemo(() => {
+		if (!isSymmetric) return players;
+		return players.map((p) => ({
+			...p,
+			stack: averageStack,
+		}));
+	}, [players, isSymmetric, averageStack]);
+
+	const deferredPlayers = useDeferredValue(symmetricPlayers);
 	const deferredPrizes = useDeferredValue(prizes);
 
-	// SOTA v4.2: OrquestraÃ§Ã£o de CÃ¡lculo Modularizada
+	// SOTA v4.2: Orquestração de Cálculo Modularizada
 	const { results, isWorkerCalculating, totalChips, totalPrizes } = useIcmCalculations({
 		players: deferredPlayers,
 		prizes: deferredPrizes,
@@ -80,6 +95,9 @@ export default function EquityCalculator() {
 
 	const icmInsight = useMemo(() => {
 		if (results.length < 2 || totalChips === 0) return null;
+		if (isSymmetric) {
+			return `Simetria de Stacks ativa. Todos os stacks foram equalizados para a média de ${averageStack.toFixed(1)} BB. A equidade do ICM distribui-se uniformemente por jogador, servindo como linha de base absoluta para o payout (${prizes.join('/')}).`;
+		}
 		let maxGain = { name: '', delta: -Infinity };
 		let maxLoss = { name: '', delta: Infinity };
 		for (const r of results) {
@@ -89,10 +107,10 @@ export default function EquityCalculator() {
 			if (delta < maxLoss.delta) maxLoss = { name: r.name, delta };
 		}
 		if (Math.abs(maxGain.delta) < 0.5 && Math.abs(maxLoss.delta) < 0.5) {
-			return 'Equidade ICM prÃ³xima da proporcional â€” pressÃ£o ICM baixa neste spot.';
+			return 'Equidade ICM próxima da proporcional — pressão ICM baixa neste spot.';
 		}
 		return `${maxGain.name} ganha +${maxGain.delta.toFixed(1)}% com ICM vs proporcional. ${maxLoss.name} perde ${Math.abs(maxLoss.delta).toFixed(1)}%. Short stacks acumulam equity desproporcional ao risco.`;
-	}, [results, players, totalChips]);
+	}, [results, players, totalChips, isSymmetric, averageStack, prizes]);
 
 	const addPlayer = useCallback(() => {
 		setPlayers((prev) => [
@@ -199,16 +217,25 @@ export default function EquityCalculator() {
 				</div>
 			</div>
 
-			<div className="flex flex-wrap gap-3">
-				{PRESETS.map((p) => (
-					<button
-						key={p.label}
-						onClick={() => loadPreset(p)}
-						className="px-4 py-2 rounded-xl bg-black/40 border border-white/5 text-text-muted text-[0.65rem] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white hover:border-white/20 transition-all shadow-inner"
-					>
-						{p.label}
-					</button>
-				))}
+			<div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+				<div className="flex flex-wrap gap-3">
+					{PRESETS.map((p) => (
+						<button
+							key={p.label}
+							onClick={() => loadPreset(p)}
+							className="px-4 py-2 rounded-xl bg-black/40 border border-white/5 text-text-muted text-[0.65rem] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white hover:border-white/20 transition-all shadow-inner"
+						>
+							{p.label}
+						</button>
+					))}
+				</div>
+				<button
+					onClick={() => setIsSymmetric(!isSymmetric)}
+					className={`px-4 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-widest transition-all border flex items-center gap-2 ${isSymmetric ? 'bg-accent-emerald/10 border-accent-emerald text-accent-emerald shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-black/40 border-white/5 text-text-muted hover:bg-white/5 hover:text-white'}`}
+				>
+					<i className="fa-solid fa-scale-balanced" />
+					Simetria de Stacks (SICM): {isSymmetric ? 'Ativa' : 'Inativa'}
+				</button>
 			</div>
 
 			{showParser ? (
@@ -275,20 +302,21 @@ export default function EquityCalculator() {
 										onChange={(e) => updateName(p.id, e.target.value)}
 										className="flex-1 bg-transparent border-none text-[0.75rem] font-bold text-text-light focus:outline-none focus:ring-0"
 									/>
-									<div className="flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-xl border border-white/5 shadow-inner">
+									<div className={`flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-xl border border-white/5 shadow-inner ${isSymmetric ? 'opacity-40' : ''}`}>
 										<input
 											type="number"
 											aria-label="Stack do Jogador"
 											title="Stack do Jogador"
 											placeholder="Stack"
-											value={p.stack}
+											value={isSymmetric ? Number(averageStack.toFixed(1)) : p.stack}
+											disabled={isSymmetric}
 											onChange={(e) =>
 												updateStack(
 													p.id,
 													Number.parseFloat(e.target.value) || 0,
 												)
 											}
-											className="w-16 bg-transparent border-none text-[0.75rem] font-mono font-black text-right text-white focus:outline-none focus:ring-0"
+											className={`w-16 bg-transparent border-none text-[0.75rem] font-mono font-black text-right text-white focus:outline-none focus:ring-0 ${isSymmetric ? 'cursor-not-allowed' : ''}`}
 										/>
 										<span className="text-[0.6rem] text-text-darker font-black uppercase">
 											BB
