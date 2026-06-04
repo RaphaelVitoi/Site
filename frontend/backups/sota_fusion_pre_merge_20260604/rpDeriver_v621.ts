@@ -1,20 +1,12 @@
 /**
  * IDENTITY: Derivador de Risk Premium via Bubble Factor (Perspectiva)
  * PATH: src/lib/rpDeriver.ts
- * ROLE: Adapter entre o motor ICM (perspectiva.ts v8.0) e a camada de decisão pós-flop.
- *
- * FUSION CHANGELOG (v8.0 vs v6.2.1):
- * [+] heroRpAbsolute: exposto no PostFlopResult via core.riskAdvantage (v8.0 perspectiva)
- * [+] recommendedSizing enriquecido: combina delta BF (IP vs OOP) + core.riskAdvantage
- * [+] isCeilingReached: adiciona core.riskAdvantage como gatilho de teto (> RP_CEILING)
- * [+] referenceStatus propagado no input do core via StreetState
- * [=] deriveRps(): lógica BF canônica mantida (100×(BF-1)/BF) — didática e rastreável
- * [=] allBfs dual-player preservado (perspectiva core é single-hero; precisamos do delta IP/OOP)
+ * ROLE: Conectar o motor ICM (Perspectiva/M-H) ao motor pos-flop (nashSolver).
  *
  * @format
  */
 
-import { calculateMapaICM, calculatePerspectivaVitoi, type PerspectivaInput, type ReferencePointStatus } from './perspectiva';
+import { calculateMapaICM, calculatePerspectivaVitoi, type PerspectivaInput } from './perspectiva';
 
 const RP_MIN = 0;
 const RP_MAX = 60;
@@ -34,22 +26,13 @@ export interface RpDerivationResult {
 	adjustedOopRp: number;
 }
 
-// [v8.0] Enriquecimento do sizing: combina vantagem de risco BF-delta com o RP absoluto do hero.
-// riskAdvantageDelta: OOP_RP - IP_RP (positivo = IP tem vantagem de risco sobre o OOP).
-// heroRpAbsolute: RP canônico do hero derivado pelo core (BF completo com RIO, Prospecto, etc.).
 function deriveRecommendedSizing(
-	riskAdvantageDelta: number,
+	riskAdvantage: number,
 	spr: number,
-	heroRpAbsolute: number = 0,
 ): 'small' | 'medium' | 'large' | 'check' {
-	// Se o hero está sob pressão severa de bolha (RP alto no core), sizing conservador.
-	if (heroRpAbsolute >= RP_CEILING_THRESHOLD) return 'small';
-	// OOP com muito mais risco que IP → aposta pequena explora o medo de cair do oponente.
-	if (riskAdvantageDelta > 8) return 'small';
-	// Oponente tem vantagem (cobre e não se importa de colidir) → não apostamos alto.
-	if (riskAdvantageDelta < -5) return 'check';
-	// SPR baixo: pote comprometido, bet/raise de comprometimento é correto.
+	if (riskAdvantage > 8) return 'small';
 	if (spr < 2) return 'medium';
+	if (riskAdvantage < -5) return 'check';
 	return 'medium';
 }
 
@@ -73,7 +56,7 @@ export function deriveRps(
 	const oopIdx = oopIndex;
 	const rawEffStack = Math.min(stacks[ipIdx] ?? 0, stacks[oopIdx] ?? 0);
 
-	// SOTA v8.0 GOLD CALIBRATION:
+	// SOTA v6.2.1 GOLD CALIBRATION:
 	// Para a matriz de RP didática, não simulamos o Shove (que explode o RP para > 60%).
 	// Simulamos um "Investimento de Referência" (~35% do stack) que coincide com os 21.4% da Aula 1.2.
 	const effStack = simulationAmount ?? rawEffStack * 0.35;
@@ -139,7 +122,6 @@ export function deriveRps(
 	const oopRp = allRps[oopIdx] ?? 0;
 	const deltaRp = ipRp - oopRp;
 	const isCeilingReached = ipRp >= RP_CEILING_THRESHOLD || oopRp >= RP_CEILING_THRESHOLD;
-	// riskAdvantage: positivo = OOP está sob mais pressão → IP tem vantagem de risco.
 	const riskAdvantage = oopRp - ipRp;
 	const sprProxy = (stacks[ipIdx] ?? effStack) / (effStack * 2 || 1);
 	const recommendedSizing = deriveRecommendedSizing(riskAdvantage, sprProxy);
@@ -167,9 +149,8 @@ export interface StreetState {
 	heroIsIp: boolean;
 	bountyValue?: number;
 	futureRpInfluence?: number;
-	numPlayers?: number;       // D6: jogadores no pot (HU=2, MW=3+)
+	numPlayers?: number; // D6: jogadores no pot (HU=2, MW=3+)
 	humanNoiseFactor?: number;
-	referenceStatus?: ReferencePointStatus; // [v8.0] Estado psicológico do hero (Prospecto)
 }
 
 export interface PostFlopResult extends RpDerivationResult {
@@ -178,14 +159,12 @@ export interface PostFlopResult extends RpDerivationResult {
 	rStreet: number;
 	stackHeroRemanescente: number;
 	// D6: Componentes PM por street
-	rioMwStreet: number;      // RIO multiway por street (O(N²) × pot_acumulado)
-	valuationStreet: number;  // ICM valuation dinâmica (gain/loss ratio)
-	pmStreet: number;         // Perspectiva Matemática por street
-	ciStreet: number;         // Coeficiente de Insolvência por street
-	threshEqStreet: number;   // Teto do RP dinâmico por street
+	rioMwStreet: number; // RIO multiway por street (O(N²) × pot_acumulado)
+	valuationStreet: number; // ICM valuation dinâmica (gain/loss ratio)
+	pmStreet: number; // Perspectiva Matemática por street
+	ciStreet: number; // Coeficiente de Insolvência por street
+	threshEqStreet: number; // Novo: Teto do RP dinâmico por street
 	potEntrapmentRatio: number; // Razão EV_fold / stack_hero (severidade do aprisionamento)
-	// [v8.0] Métricas do core fused
-	heroRpAbsolute: number;   // RP canônico do hero (core.riskAdvantage — BF + RIO + Prospecto)
 }
 
 export function derivePostFlopRps(
@@ -202,7 +181,6 @@ export function derivePostFlopRps(
 		bountyValue = 0,
 		futureRpInfluence = 0,
 		humanNoiseFactor = 0,
-		referenceStatus,
 	} = state;
 	const heroIdx = heroIsIp ? ipIndex : oopIndex;
 	const villainIdx = heroIsIp ? oopIndex : ipIndex;
@@ -210,7 +188,7 @@ export function derivePostFlopRps(
 
 	const heroCost = Math.max(0, potTotal - potAcumuladoHero); // O que falta pagar para ver a próxima street (ou showdown)
 
-	// SOTA v8.0 GOLD: Delegação Total para o Motor Perspectiva Fused
+	// SOTA v6.2.1 GOLD: Delegação Total para o Motor Perspectiva
 	const input: PerspectivaInput = {
 		stacks,
 		prizes,
@@ -218,7 +196,7 @@ export function derivePostFlopRps(
 		villainIdx,
 		potSize: potTotal - heroCost, // Pote antes do investimento atual do hero
 		heroCost: heroCost,
-		winProb: 0.5,         // Baseline agnóstico
+		winProb: 0.5, // Baseline agnóstico
 		realizationFactor: 1, // Será ajustado internamente pelo motor
 		edgeBase: 1,
 		bountyValue,
@@ -226,20 +204,14 @@ export function derivePostFlopRps(
 		humanNoiseFactor,
 		heroPosition: heroIsIp ? 'IP' : 'OOP',
 		investidoAcumulado: potAcumuladoHero,
-		referenceStatus,      // [v8.0] Propaga estado de referência para Teoria do Prospecto
 	};
 
 	const core = calculatePerspectivaVitoi(input);
 
-	// [v8.0] heroRpAbsolute: RP canônico derivado pelo core fused.
-	// Inclui RIO_mw, Prospecto, FGS — mais rico que o BF simples.
-	const heroRpAbsolute = core.riskAdvantage;
-
 	const totalPrizes = prizes.reduce((s, v) => s + v, 0);
 	const bountyContrib = (bountyValue * totalPrizes) / 100;
 
-	// SOTA: Calcular Bubble Factors reais para IP e OOP sem aproximações de simetria.
-	// Mantemos o cálculo dual-player: o core é single-hero, mas precisamos do delta IP↔OOP.
+	// SOTA: Calcular Bubble Factors reais para IP e OOP sem aproximações de simetria
 	const baseline = calculateMapaICM(stacks, prizes);
 	const potSize = potTotal - heroCost;
 
@@ -275,29 +247,18 @@ export function derivePostFlopRps(
 	const allRps = allBfs.map((bf) => bfToRp(bf));
 	const ipRp = allRps[ipIndex] ?? 0;
 	const oopRp = allRps[oopIndex] ?? 0;
-	// Delta de risco entre os dois jogadores (perspectiva do IP agressor)
-	const riskAdvantageDelta = oopRp - ipRp;
-	const sprProxy = (stacks[heroIdx] ?? heroCost) / (heroCost * 2 || 1);
 
-	// [v8.0] Sizing enriquecido: combina delta BF (IP vs OOP) + heroRpAbsolute do core.
-	const recommendedSizing = deriveRecommendedSizing(riskAdvantageDelta, sprProxy, heroRpAbsolute);
-
-	// [v8.0] isCeilingReached: teto ativado por RIO, BF individuais OU RP absoluto do core.
-	const isCeilingReached =
-		core.rioLiability > 20 ||
-		ipRp >= RP_CEILING_THRESHOLD ||
-		oopRp >= RP_CEILING_THRESHOLD ||
-		heroRpAbsolute >= RP_CEILING_THRESHOLD;
-
+	// Mapeamento SOTA para o contrato PostFlopResult
 	return {
 		ipRp,
 		oopRp,
 		deltaRp: ipRp - oopRp,
 		allRps,
 		allBfs,
-		isCeilingReached,
-		recommendedSizing,
-		riskAdvantage: riskAdvantageDelta,
+		isCeilingReached:
+			core.rioLiability > 20 || ipRp >= RP_CEILING_THRESHOLD || oopRp >= RP_CEILING_THRESHOLD,
+		recommendedSizing: core.perspectivaPct > 5 ? 'medium' : 'small',
+		riskAdvantage: oopRp - ipRp,
 		adjustedIpRp: ipRp + futureRpInfluence,
 		adjustedOopRp: oopRp + futureRpInfluence,
 		evFoldStreet: core.deltaFoldPct,
@@ -310,6 +271,5 @@ export function derivePostFlopRps(
 		ciStreet: core.ci,
 		threshEqStreet: core.threshEq,
 		potEntrapmentRatio: Math.abs(core.deltaFoldPct) / (stacks[heroIdx] || 1),
-		heroRpAbsolute,        // [v8.0] RP canônico do hero via core fused
 	};
 }
