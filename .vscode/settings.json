@@ -213,7 +213,7 @@
 	"telemetry.telemetryLevel": "off",
 	"geminicodeassist.enableTelemetry": false,
 	"geminicodeassist.outlines.automaticOutlineGeneration": true,
-	"geminicodeassist.updateChannel": "Insiders",
+	"geminicodeassist.updateChannel": "Stable",
 	"geminicodeassist.codeGenerationPaneViewEnabled": true,
 	"geminicodeassist.project": "gen-lang-client-0098874436",
 	"geminicodeassist.rules": "Está proibida absolutamente o enviesamento e a artificialização de outputs, respostas não fundamentadas ou outputs que não sejam pautados na lógica e na comprovação científica e empírica. Sempre que for o caso, responda: Não sei a resposta; Não é possível ter certeza, apenas indícios. Ou qualquer tipo de resposta similar onde há a impossibilidade de definir um assunto por ausencia de evidências ou argumentação sólida. O modelo LLM deve sempre fazer perguntas acerca de inconsistências quando os inputs carecerem de informação, forem vagos, contraditórios ou equivocados. O modelo LLM não deve reproduzir e agradar como inclinação nativa: é mandatório que o modelo agregue com adendos e provocações valiosas que não constavam na instrução do user. Adotar a abordagem de fortalecer a tese ou argumento para então desafiá-lo em sua versão mais robusta, garantindo uma análise crítica de alta integridade (steelmaning).",
@@ -229,5 +229,28 @@
 	"cloudcode.yaml.trace.server": "messages",
 	"google.cloud.project": "gen-lang-client-0098874436",
 	"hermes.debugLogs": true,
-	"hermes.path": "C:\\Users\\Raphael\\.gemini\\Site\\.venv\\Scripts\\hermes.exe"
+	"hermes.path": "C:\\Users\\Raphael\\.gemini\\Site\\.venv\\Scripts\\hermes.exe",
+	"cloudcode.updateChannel": "Stable",
+	"antigravity-storage-manager.sync.autoSync": false,
+	"gwsMcp.autoStart": false,
+	"database-client.connections": [
+		{
+			"name": "Local PostgreSQL",
+			"type": "postgres",
+			"host": "localhost",
+			"port": 5432,
+			"username": "postgres",
+			"database": "postgres"
+		}
+	],
+	"sqltools.connections": [
+		{
+			"name": "Local PostgreSQL",
+			"driver": "PostgreSQL",
+			"server": "localhost",
+			"port": 5432,
+			"username": "postgres",
+			"database": "postgres"
+		}
+	]
 }
