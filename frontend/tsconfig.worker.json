@@ -1,9 +1,11 @@
 {
     "extends": "../tsconfig.base.json",
     "compilerOptions": {
+        "composite": true,
         "target": "ES2022",
         "module": "ESNext",
         "moduleResolution": "bundler",
+        "jsx": "react-jsx",
         "lib": [
             "ESNext",
             "WebWorker"
@@ -11,9 +13,21 @@
         "allowJs": true,
         "types": [
             "node"
-        ]
+        ],
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ]
+        }
     },
     "include": [
-        "src/**/*.worker.ts"
+        "src/**/*.worker.ts",
+        "src/components/simulator/workers/rangeParser.ts",
+        "src/lib/icmEngine.ts",
+        "src/lib/perspectiva.ts",
+        "src/lib/montecarlo.ts",
+        "src/lib/schemas.ts",
+        "src/lib/logger.ts",
+        "src/lib/api-contract.ts"
     ]
 }
