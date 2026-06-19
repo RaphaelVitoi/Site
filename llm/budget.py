@@ -112,15 +112,19 @@ GEMINI_ALL_KEYS = list(dict.fromkeys(GEMINI_PRO_KEYS + GEMINI_FLASH_KEYS + GEMIN
 GEMINI_ALL_KEYS_WITH_POOLS = _collect_keys_with_pool(("GEMINI", "GOOGLE"), exclude_prefixes=("GEMINI_CLI",))
 
 OPENROUTER_KEYS = list(
-    dict.fromkeys([
-        v
-        for k, v in ALL_ENV_VARS.items()
-        if _is_real_key_value(v)
-        and (k.upper().startswith("OPENROUTER") or k.upper().startswith("DEEPSEEK") or k.upper().startswith("LLAMA"))
-        and "MODELS" not in k.upper()
-        and "," not in v
-        and "/" not in v
-    ])
+    dict.fromkeys(
+        [
+            v
+            for k, v in ALL_ENV_VARS.items()
+            if _is_real_key_value(v)
+            and (
+                k.upper().startswith("OPENROUTER") or k.upper().startswith("DEEPSEEK") or k.upper().startswith("LLAMA")
+            )
+            and "MODELS" not in k.upper()
+            and "," not in v
+            and "/" not in v
+        ]
+    )
 )
 ANTHROPIC_KEYS = _collect_keys(("ANTHROPIC", "CLAUDE"))
 TAVILY_KEYS = _collect_keys(("TAVILY",))
