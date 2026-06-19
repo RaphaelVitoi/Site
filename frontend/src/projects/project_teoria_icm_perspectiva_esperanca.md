@@ -4,13 +4,13 @@ description: Contribuições originais de Raphael. Hierarquia de 4 métricas: IC
 type: project
 ---
 
-## Hierarquia das Métricas (ordem de processamento)
+# Hierarquia das Métricas (ordem de processamento)
 
 **Autoria:** Raphael Vitoi (2026)
 
 A Perspectiva Matemática é o output final de um pipeline iterativo de 4 camadas:
 
-```
+```text
 ICM EV → Esperança Matemática → Expectativa Matemática → Perspectiva Matemática
 ```
 
@@ -24,7 +24,7 @@ Limitações reconhecidas: simplificação via toy game, aproximação grosseira
 
 Não é "o que eu quero". É: "O que concretamente tenho neste cenário em termos de probabilidades, riscos e ganhos para buscar um outcome positivo?"
 
-```
+```math
 Esperança(ação) = P(ganhar) × ΔPerspectiva_ganho
                 + P(perder) × ΔPerspectiva_perda
 ```
@@ -44,6 +44,7 @@ Atua com condicionantes em prol de melhorar a situação atual (ou manter, no ca
 **Não é o output simples das três camadas anteriores.** É uma síntese encapsulada que aprendeu iterativamente das métricas anteriores (desde chipEV, ICM EV, Esperança, Expectativa com FGS integrado e corrigido). Essa aprendizagem iterativa permite substituir a decisão pura de ICM EV de forma matematicamente superior.
 
 Características:
+
 - Métrica **fechada** (sem abstração residual)
 - **Definitiva** — o que faz sentido lógico, irrefutável, matemático, estratégico e científico
 - **Guarda-chuva**: realização da Esperança e da Expectativa
@@ -56,7 +57,9 @@ Características:
 
 **ChipEV:** EV_fold = −antes (nunca zero em torneios com antes). Threshold = Esperança(ação) > EV_fold, não > 0.
 
-**ICM:** EV_fold **pode ser positivo**. Ex: tenho 12bbs, múltiplos shorts menores na mesa. Foldar = payjumps passivos garantidos. Perspectiva do fold aumenta. Não confundir com chipEV.
+**ICM:** EV_fold **pode ser positivo**. Ex: tenho 12bbs, múltiplos shorts menores na mesa. Foldar = payjumps passivos garantidos. Perspectiva do fold aumenta.
+
+*Axioma da Assimetria Posicional:* O `EV_fold > 0` não é um paradigma universal, mas um estado transitório. No Big Blind, por exemplo, o EV_fold nunca será positivo (perda de 1bb + antes é garantida). Além disso, em um ecossistema de soma-zero, a adoção iterativa do fold buscando EV positivo levaria à destruição da stack pelos blinds. O ganho passivo do fold é uma função estritamente dependente da alta variância induzida pela iminência estrutural do bustout de terceiros, devendo ser modelada em conjunto com o tempo ($t-3$).
 
 ---
 
@@ -70,7 +73,8 @@ Características:
 - sign(ΔRP) positivo = OOP tem vantagem de risco; negativo = IP tem vantagem
 - Magnitude organiza as 6 frequências pós-flop via equação côncava do motor
 
-**Fontes de validação externa:**
+### Fontes de validação externa
+
 - GTO Wizard "MDF vs ICM" (2025): MDF quebra sob ICM, covering player mais agressivo
 - GTO Wizard "How ICM Impacts Postflop" (2025): Downward Drift confirmado, small sizing dominante
 
@@ -79,6 +83,7 @@ Características:
 ## RP Pós-flop — Diluição Dinâmica
 
 RP é exclusivo para colisão. Conforme fichas entram no pot (sem colisão direta):
+
 - RP diminui nas streets (pressão de eliminação reduz)
 - Mas cada BB ganha valuation individualmente (stack perde valuation em total, fichas individuais ficam mais "valiosas")
 - O pot representa valuation compensatória exponencialmente maior
@@ -101,6 +106,7 @@ BB não defende porque tem pot odds — defende porque EV_fold é −1.125bb (co
 HRC FGS: limitado a ~6 mãos de profundidade, consome RAM e disco enormes, na prática ignorado. Baseado na métrica M (orbitas de sobrevivência) emendada com ICM — abordagem pobre.
 
 **FGS do framework Vitoi:** vai direto ao cerne abstrativo. Considera variáveis que solvers ignoram:
+
 - Iminência do salto de blinds (t−3 min)
 - Posição na próxima mão (UTG agora = BB em seguida)
 - Table Draw: posições estratégicas dos oponentes
@@ -126,6 +132,7 @@ Depois: perfil de cada oponente (fish ou regular? quão bom?), dinâmica da mesa
 Efeito na teoria perfeita: **mínimo ou inexistente** — redundante, absorvido pelo EV_fold e Perspectiva.
 
 Efeito na prática:
+
 - Elite: provavelmente prejudicial (distrator de Perspectiva)
 - Iniciante: positivo (reduz erros catastróficos)
 
@@ -139,7 +146,7 @@ Efeito na prática:
 
 Todos os jogadores têm uma frequência de decisão emocional/tilt quantificável. Na análise de call river all-in:
 
-```
+```math
 P(Call_ganho) = P(Nuts_representado) + P(Bluff_errado_emocional)
 ```
 
@@ -165,11 +172,12 @@ Hipótese testável prioritariamente em FTs (controle máximo de variáveis). IC
 
 ## Equação Formal da Perspectiva Matemática
 
-```
+```math
 PM = [(Equity × R) × Valuation_stack] - [EV_fold(t, d_pj, pos) + RIO_mw]
 ```
 
 Onde:
+
 - `R` = Fator de Realização de Equidade (já implementado)
 - `EV_fold(t, d_pj, pos)` = baseline dinâmico (ver arquivo ev_fold)
 - `RIO_mw` = Passivo Estrutural Multiway
@@ -178,22 +186,24 @@ Onde:
 
 ## Edge Relativa — Formalização
 
-```
-Er(S) = (ΔHabilidade / σ) × log(S)
+```math
+Er(S) = (ΔHabilidade / σ(S)) × \log_{b}(S)
 ```
 
 Edge cresce logaritmicamente com profundidade de stack (S). Nos limiares extremos pode ser exponencial. A variância (σ) é o denominador — domina em stacks curtos.
 
 ### Oportunidade de Erro (Oe) por profundidade
 
-| Stack | Ferramentas ativas | Oe | Er |
-|-------|-------------------|----|----|
-| 100bb+ | 3bet/4bet/multi-barrel/x-r/overbet/blockers | Máxima | Máxima |
-| 25-60bb | open/cbet/3bet/shove parcial | Média | Média |
-| 10-15bb | push/fold quase exclusivo | Mínima | Mínima |
+| Stack   | Ferramentas ativas                          | Oe     | Er     |
+|---------|---------------------------------------------|--------|--------|
+| 100bb+  | 3bet/4bet/multi-barrel/x-r/overbet/blockers | Máxima | Máxima |
+| 25-60bb | open/cbet/3bet/shove parcial                | Média  | Média  |
+| 10-15bb | push/fold quase exclusivo                   | Mínima | Mínima |
 
 **Amortização dupla em short stacks:**
+
 1. Árvore colapsada — menos ferramentas = menos chances de erro do fraco
+
 2. Nash comoditizado — teoria de push/fold está disseminada (vídeos, apps)
 3. Com 60bb+ o jogo é mais complexo E menos disseminado → abismo de edge real
 
@@ -209,7 +219,7 @@ O modelo "não confunda o call matemático com o call que restaura ferramentas a
 
 ## Coeficiente de Insolvência (Ci) — Pot Odds vs Perspectiva
 
-```
+```math
 Ci = Perspectiva_real / Pot_Odds_incentivo
 ```
 
@@ -223,7 +233,9 @@ Ci = Perspectiva_real / Pot_Odds_incentivo
 
 Frequência aproximada de cenários multiway: ~33% (tendência de MDA, hipótese forte sem rigor científico preciso).
 
-Em multiway, RIO(N) cresce em O(N²) — produto de frequência_domínio O(N) × custo_quando_dominado O(N). Pot odds crescem em O(N). Razão dano/incentivo cresce em O(N). Derivação formal em `validacao_matematica_hipoteses_v1.md`. (A formulação "x²" era imprecisa: a probabilidade de domínio é O(N), não O(N²) — é o produto que é quadrático.)
+Em multiway, o dano por RIO não obedece a uma progressão linear perene, tampouco a um $O(N^2)$ algorítmico perfeito. A probabilidade de encontrar um oponente com uma mão melhor que a sua segue a Lei de Probabilidades Complementares: $P = 1 - (1 - p)^N$.
+Esta curva é sub-linear com forte assíntota em 1 (100%). Ou seja, o perigo salta massivamente de 2 para 3 oponentes, mas a diferença prática de estar dominado entre 7 e 8 oponentes é marginalmente nula.
+
 - Diluição de equidade realizada R (mais oponentes = mais caminhos de derrota)
 - Pico de RIO: probabilidade de construir segunda melhor mão se multiplica pelo número de oponentes
 - O pot maior "atrai" o call básico enquanto o passivo sistêmico cresce fora de proporção

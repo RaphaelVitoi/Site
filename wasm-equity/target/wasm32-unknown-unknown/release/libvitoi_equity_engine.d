@@ -1,1 +1,1 @@
-C:\Users\Raphael\.gemini\antigravity\worktrees\Site\fix-antigravity-sync-errors\wasm-equity\target\wasm32-unknown-unknown\release\libvitoi_equity_engine.rlib: C:\Users\Raphael\.gemini\antigravity\worktrees\Site\fix-antigravity-sync-errors\wasm-equity\lib.rs
+C:\Users\Raphael\.gemini\Site\wasm-equity\target\wasm32-unknown-unknown\release\libvitoi_equity_engine.rlib: C:\Users\Raphael\.gemini\Site\wasm-equity\lib.rs

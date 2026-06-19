@@ -1,6 +1,7 @@
 import logging
 import subprocess
 
+
 def send_toast(title: str, message: str, status: str = "success"):
     try:
         ps_code = f"""

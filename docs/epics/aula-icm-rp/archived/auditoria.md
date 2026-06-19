@@ -21,7 +21,7 @@
 4. **[BAIXO] Antevisao sem secao dedicada no Modulo 5.** Adicionada secao 7.4.
 
 ### Ressalvas pendentes
-- O @implementor DEVE ler o arquivo `Entendendo o ICM e suas heuristicas.docx` (caminho: `C:\Users\Raphael\Downloads\Entendendo o ICM e suas heuristicas.docx`) antes de redigir qualquer secao dos Modulos 1-2. Sem isso, os dados dos toy-games podem estar incorretos.
+- O @implementor DEVE ler o arquivo `Entendendo o ICM e suas heuristicas.docx` (caminho: `C:\users\rapha\Downloads\Entendendo o ICM e suas heuristicas.docx`) antes de redigir qualquer secao dos Modulos 1-2. Sem isso, os dados dos toy-games podem estar incorretos.
 - Os conceitos "Antevisao", "Vantagem/Desvantagem de Risco" e "Batata Quente" precisam ser verificados contra o material original para determinar se sao nomenclatura de Raphael ou derivacoes da pesquisa/SPEC.
 
 ---
@@ -82,7 +82,7 @@
 ### Pontos positivos
 - Fontes estao nomeadas para todos os dados quantitativos externos.
 - A separacao entre conceitos proprios de Raphael e conceitos de fontes externas esta clara (apos correcao).
-- O tom prescrito e consistente e alinhado com as instrucoes do prompt.md e CLAUDE.md.
+- O tom prescrito e consistente e alinhado com as instrucoes do prompt.md e CEREBRO.md.
 - A critica ao uso mecanico de solvers esta presente e fundamentada (SPEC 4.1, secao de justificativa metodologica).
 - Os criterios de verificacao sao verificaveis de fato (cada um testa se o leitor consegue fazer algo especifico).
 

@@ -4,7 +4,7 @@ description: Tarefa ativa: criar validação matemática formal para hipóteses 
 type: project
 ---
 
-## Objetivo
+# Validação Matemática das Hipóteses Paradigmáticas
 
 Transformar hipóteses paradigmáticas do framework Perspectiva em proposições com validação matemática ou empírica explícita. Raphael tem a teoria; falta a formalização que fecha o ciclo científico.
 
@@ -21,33 +21,34 @@ Transformar hipóteses paradigmáticas do framework Perspectiva em proposições
 1. **EV_fold em ICM pode ser positivo**
    - Exemplo qualitativo existe (12bb vs múltiplos 5bb)
    - Falta: prova geral. Quando exatamente EV_fold(ICM) ≥ 0? Condições necessárias e suficientes.
-   - Abordagem: derivar via Malmuth-Harville — comparar equity(fold) vs equity(call) como função de d_pj e distribuição de shorts.
+   - Abordagem (Steelman): Integrar a restrição de assimetria posicional (o pagamento do BB é inevitavelmente negativo para a stack) à equação diferencial dependente do tempo (a corrosão lenta de capital vs iminência instantânea de eliminação de terceiros).
 
 2. **RIO multiway cresce em taxa x² enquanto pot odds são lineares**
    - Afirmado sem derivação
-   - Abordagem: mostrar que em multiway com N oponentes, P(acertar mão dominada por pelo menos 1) cresce em O(N) ou O(N²) dependendo da independência de ranges. Formalizar para N=2,3,4.
+   - Abordagem (Steelman): Substituir o falso postulado do crescimento polinomial constante por $P = 1 - (1 - p)^N$ (Probabilidade Complementar). Demonstrar matematicamente a curva sub-linear com assíntota severa.
 
 3. **Er(S) = (ΔHabilidade / σ) × log(S)**
    - Forma proposta por Raphael, sem derivação da escolha logarítmica
-   - Abordagem: justificar por que log(S) — argumento de information theory (entropia de decisão cresce logaritmicamente com a árvore de opções)?
+   - Abordagem (Steelman): Tratar obrigatoriamente a variância como uma covariante algorítmica $\sigma(S)$, extinguindo seu isolamento no denominador.
 
 ### Hipóteses com ancoragem empírica declarada mas sem quantificação
 
-4. **Frequência multiway ~33%** (tendência MDA, "hipótese forte sem rigor científico")
+1. **Frequência multiway ~33%** (tendência MDA, "hipótese forte sem rigor científico")
    - Declarada explicitamente como hipótese
    - Status: aguarda dados MDA
 
-5. **EV_fold dinâmico f(t, d_pj, pos)**
+2. **EV_fold dinâmico f(t, d_pj, pos)**
    - Matemática declarada como "não fechada"
    - Abordagem: modelar cada dimensão separadamente antes de combinar
 
 ### Hipóteses implícitas que merecem formalização
 
-6. **Risco de Ressurreição** — dobrar 10bb→20bb "devolve complexidade ao oponente"
+1. **Risco de Ressurreição** — dobrar 10bb→20bb "devolve complexidade ao oponente"
    - Intuitivo, não quantificado. Pode ser derivado via Oe(S) por profundidade.
 
-7. **Ci = Perspectiva_real / Pot_Odds_incentivo < 1 em MW com ≥4 jogadores**
-   - Condição de "pot odds mentem" — falta prova geral
+2. **Ci = Perspectiva_real / Pot_Odds_incentivo < 1 em MW com ≥4 jogadores**
+   - Condição de "pot odds mentem" (necessita revisão dimensional)
+   - Abordagem (Steelman): Consertar a inconsistência matemática original, estruturando $Ci$ como uma razão adimensional estrita das duas realidades atuantes (Perspectiva VS Fichas).
 
 ---
 

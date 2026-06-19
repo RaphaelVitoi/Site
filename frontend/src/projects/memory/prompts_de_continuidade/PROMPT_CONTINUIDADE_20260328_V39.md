@@ -123,7 +123,7 @@ Meta: task_executor.py com ~400 linhas (imports + globals de estado + init)
 
 - 18 agentes no manifesto (agents_manifest.json)
 - Routing patterns sincronizados (commit 07b272e)
-- 18 perfis .claude/agents/*.md expandidos
+- 18 perfis .cerebro/agents/*.md expandidos
 - MEMORYs: historian, planner, verifier, dispatcher, bibliotecario reescritas
 
 ## Estado do site (frontend)
@@ -133,8 +133,8 @@ Meta: task_executor.py com ~400 linhas (imports + globals de estado + init)
 
 ## Worktree residual (pendente limpeza)
 
-`.claude/worktrees/agent-ad7cbace` -- worktree de agente que falhou por permissao.
-Deletar: `git worktree remove --force .claude/worktrees/agent-ad7cbace`
+`.cerebro/worktrees/agent-ad7cbace` -- worktree de agente que falhou por permissao.
+Deletar: `git worktree remove --force .cerebro/worktrees/agent-ad7cbace`
 
 ## Principios da modularizacao (para proximas fases)
 

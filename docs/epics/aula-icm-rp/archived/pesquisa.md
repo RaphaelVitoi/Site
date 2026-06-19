@@ -9,18 +9,18 @@
 ## 1. Materiais Locais Encontrados
 
 ### 1.1 Material Primario
-- **Entendendo o ICM e suas heuristicas** (`C:\Users\Raphael\Downloads\Entendendo o ICM e suas heuristicas.docx`)
+- **Entendendo o ICM e suas heuristicas** (`C:\users\rapha\Downloads\Entendendo o ICM e suas heuristicas.docx`)
   - Documento completo de Raphael Vitoi
   - Conteudo: Toy-games progressivos (ChipEV -> RP crescente), conceito de Teto do RP, inversao de RP, simulacoes ICM com calculadora, analise de valuations
   - Estrutura: Parte I (5 toy-games com RP crescente no OOP) + Parte II (3 toy-games com RP invertido no IP)
-  - Copia identica em `C:\Users\Raphael\Bodog.com Poker\Desktop\Entendendo o ICM e suas heuristicas (1).docx`
+  - Copia identica em `C:\users\rapha\Bodog.com Poker\Desktop\Entendendo o ICM e suas heuristicas (1).docx`
 
 ### 1.2 Materiais Complementares
-- **deepsolver.docx** (`C:\Users\Raphael\OneDrive\Documentos\deepsolver.docx`)
+- **deepsolver.docx** (`C:\users\rapha\OneDrive\Documentos\deepsolver.docx`)
   - Tutorial transcrito do DeepSolver (Smart Tree, nodelocking, estrategias GTO)
   - Relevancia: demonstra ferramentas de solver que complementam o estudo de ICM pos-flop
 
-- **Selouan - ICM.docx.url** (`C:\Users\Raphael\OneDrive\Documentos\Selouan - ICM.docx.url`)
+- **Selouan - ICM.docx.url** (`C:\users\rapha\OneDrive\Documentos\Selouan - ICM.docx.url`)
   - Link para OneDrive com material do Selouan sobre ICM (inacessivel diretamente)
 
 ### 1.3 Materiais de Contexto (Bodog Desktop)

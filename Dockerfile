@@ -1,39 +1,47 @@
-# SOTA: Matriz mínima, alta densidade e anti-entropia
-FROM python:3.12-slim
+# SOTA: Matriz mínima, alta densidade e anti-entropia via UV
+FROM ghcr.io/astral-sh/uv:python3.12-slim AS builder
 
 # Defesa Termodinâmica (Sem buffers, sem lixo em bytecode)
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+
+WORKDIR /app
+
+# SOTA: Instalacao de dependencias via UV (Ultra-Fast)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --frozen --no-install-project --no-dev
+
+# Estágio Final: Imagem de Runtime Purificada
+FROM python:3.12-slim
 
 # Porta contratual do Cloud Run
 ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
 
-# Blindagem OS SOTA (Expurgo de Vulnerabilidades de Imagem)
+# Blindagem OS SOTA
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Criar usuario e grupo non-root
+# Criar usuario non-root
 RUN groupadd -g 10001 appgroup && \
     useradd -u 10001 -g appgroup -m -s /bin/bash appuser
 
-# Cache Layering Otimizado
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Copiar ambiente virtual sincronizado do builder
+COPY --from=builder --chown=appuser:appgroup /app/.venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
 
-# Materialização SOTA
+# Materialização SOTA do código-fonte
 COPY --chown=appuser:appgroup . .
-
-# Ajustar propriedade do diretorio de trabalho
-RUN chown -R appuser:appgroup /app
 
 USER appuser
 
 # Healthcheck SOTA
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD curl -f http://localhost:8080/ || exit 1
 
-# Boot do Master Core (AioHTTP / God Mode)
+# Boot do Master Core
 CMD ["python", "core/runtime.py"]

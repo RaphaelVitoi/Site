@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: Radar de Topologia SOTA v6.2.1 GOLD
+ * IDENTITY: Radar de Topologia SOTA v7.0 GOLD
  * PATH: src/components/simulator/panels/ComparisonRadar.tsx
  * ROLE: Visualização Multidimensional de Tensões Sistêmicas e Equilíbrio de Nash.
  * AESTHETIC: SOTA Gold Standard (Glows, Precision SVG, Glassmorphism).

@@ -1,3 +1,9 @@
+/**
+ * IDENTITY: Cabeçalho do Simulador SOTA v7.0 GOLD
+ * PATH: src/components/simulator/ui/SimulatorHeader.tsx
+ * ROLE: Orquestrador de status global e navegação persistente.
+ */
+
 import { SotaTooltip } from '@/components/simulator/ui/SotaTooltip';
 import { signOut } from 'next-auth/react';
 
@@ -18,74 +24,74 @@ export default function SimulatorHeader({
 	onToggleSidebar,
 }: Readonly<SimulatorHeaderProps>) {
 	return (
-		<header className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-black/40 backdrop-blur-2xl sticky top-0 z-9999 shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
-			<div className="flex items-center gap-6">
+		<header className="px-8 py-5 border-b border-white/10 flex justify-between items-center bg-black/60 backdrop-blur-3xl sticky top-0 z-9999 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+			<div className="flex items-center gap-8">
 				<button
 					onClick={onToggleSidebar}
-					title="Alternar Menu"
-					aria-label="Alternar Menu"
-					className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] text-text-muted hover:text-white transition-all duration-300 group border border-white/5 cursor-pointer"
+					title="Alternar Menu de Cenários"
+					aria-label="Alternar Menu de Cenários"
+					className="w-11 h-11 flex items-center justify-center bg-white/5 rounded-2xl hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] text-text-muted hover:text-white transition-all duration-500 group border border-white/10 cursor-pointer active:scale-95"
 				>
-					<i className="fa-solid fa-bars group-hover:scale-110 transition-transform" />
+					<i className="fa-solid fa-bars-staggered group-hover:scale-110 transition-transform" />
 				</button>
-				<div className="flex items-center gap-4">
-					<div className="w-10 h-10 rounded-xl bg-black/20 border border-white/10 backdrop-blur-md shadow-[0_0_20px_rgba(255,255,255,0.03)] flex items-center justify-center relative overflow-hidden group-hover:border-white/20 transition-all duration-500">
-						<div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+				<div className="flex items-center gap-5 group/brand">
+					<div className="w-11 h-11 rounded-2xl bg-black/40 border border-white/15 backdrop-blur-xl shadow-[0_0_30px_rgba(255,255,255,0.05)] flex items-center justify-center relative overflow-hidden group-hover/brand:border-white/30 transition-all duration-700">
+						<div className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent opacity-0 transition-opacity duration-1000 group-hover/brand:opacity-100" />
 						<svg
-							width="20"
-							height="20"
+							width="22"
+							height="22"
 							viewBox="0 0 24 24"
 							fill="none"
 							xmlns="http://www.w3.org/2000/svg"
-							className="relative z-10 text-white"
+							className="relative z-10 text-white group-hover/brand:scale-110 transition-transform duration-700"
 						>
 							<path
 								d="M12 2L2 7L12 12L22 7L12 2Z"
 								stroke="currentColor"
-								strokeWidth="1"
+								strokeWidth="1.5"
 								strokeLinejoin="round"
 							/>
 							<path
 								d="M2 17L12 22L22 17"
 								stroke="currentColor"
-								strokeWidth="1"
+								strokeWidth="1.5"
 								strokeLinejoin="round"
 							/>
 							<path
 								d="M2 7V17"
 								stroke="currentColor"
-								strokeWidth="1"
+								strokeWidth="1.5"
 								strokeLinejoin="round"
 							/>
 							<path
 								d="M22 7V17"
 								stroke="currentColor"
-								strokeWidth="1"
+								strokeWidth="1.5"
 								strokeLinejoin="round"
 							/>
 							<path
 								d="M12 12V22"
 								stroke="currentColor"
-								strokeWidth="1"
+								strokeWidth="1.5"
 								strokeLinejoin="round"
 							/>
 						</svg>
 					</div>
 					<div className="flex flex-col justify-center">
-						<h1 className="text-[0.85rem] font-black text-white uppercase tracking-[0.25em] leading-none m-0">
+						<h1 className="text-[0.9rem] font-black text-white uppercase tracking-[0.4em] leading-none m-0 transition-all duration-500 group-hover/brand:tracking-[0.5em]">
 							SOTA{' '}
-							<span className="font-light text-white/70 tracking-widest ml-0.5">
-								QUANTUM
+							<span className="font-light text-white/60 tracking-widest ml-1">
+								v7.0 GOLD
 							</span>
 						</h1>
-						<h2 className="text-[0.55rem] font-bold text-text-dim uppercase tracking-[0.3em] leading-none m-0 mt-1.5">
+						<h2 className="text-[0.6rem] font-black text-text-darker uppercase tracking-[0.3em] leading-none m-0 mt-2.5 opacity-90 transition-all duration-500 group-hover/brand:text-text-muted">
 							{scenarioName || 'Laboratório Analítico'}
 						</h2>
 					</div>
 				</div>
 			</div>
-			<div className="flex items-center gap-4">
-				<div className="hidden sm:flex items-center gap-5 text-[0.65rem] font-mono font-black uppercase tracking-widest bg-bg-deep/80 px-5 py-2.5 rounded-xl border border-white/5 shadow-inner">
+			<div className="flex items-center gap-6">
+				<div className="hidden md:flex items-center gap-6 text-[0.7rem] font-mono font-black uppercase tracking-[0.2em] bg-slate-950/80 px-7 py-3 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-xl">
 					<SotaTooltip
 						title="IP Risk Premium"
 						content="A taxa extra de equidade (além das Pot Odds) exigida pelo Agressor para compensar a gravidade do cenário e a morte no torneio."
@@ -93,17 +99,19 @@ export default function SimulatorHeader({
 						position="bottom"
 						theme="indigo"
 					>
-						<div className="flex items-center gap-2.5">
-							<div className="relative flex items-center justify-center w-2.5 h-2.5">
-								<span className="absolute w-full h-full rounded-full bg-accent-indigo opacity-50 animate-ping" />
-								<span className="relative w-1.5 h-1.5 rounded-full bg-accent-indigo-light shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+						<div className="flex items-center gap-4 group/rp transition-all duration-500">
+							<div className="relative flex items-center justify-center w-3 h-3">
+								<span className="absolute w-full h-full rounded-full bg-accent-indigo opacity-40 animate-ping" />
+								<span className="relative w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_15px_rgba(99,102,241,0.8)]" />
 							</div>
-							<span className="text-text-muted">IP RP</span>
-							<span className="text-white text-sm">{effectiveIpRp?.toFixed(1)}%</span>
+							<span className="text-text-muted group-hover/rp:text-white transition-colors">IP RP</span>
+							<span className="text-white text-[1rem] tabular-nums group-hover/rp:text-glow-indigo transition-all">
+								{effectiveIpRp?.toFixed(1)}%
+							</span>
 						</div>
 					</SotaTooltip>
 
-					<div className="w-px h-5 bg-white/10" />
+					<div className="w-px h-6 bg-white/10" />
 
 					<SotaTooltip
 						title="OOP Risk Premium"
@@ -112,13 +120,13 @@ export default function SimulatorHeader({
 						position="bottom"
 						theme="rose"
 					>
-						<div className="flex items-center gap-2.5">
-							<div className="relative flex items-center justify-center w-2.5 h-2.5">
-								<span className="absolute w-full h-full rounded-full bg-accent-rose opacity-50 animate-ping [animation-delay:500ms]" />
-								<span className="relative w-1.5 h-1.5 rounded-full bg-accent-rose-light shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+						<div className="flex items-center gap-4 group/rp-oop transition-all duration-500">
+							<div className="relative flex items-center justify-center w-3 h-3">
+								<span className="absolute w-full h-full rounded-full bg-accent-rose opacity-40 animate-ping [animation-delay:500ms]" />
+								<span className="relative w-2 h-2 rounded-full bg-accent-rose shadow-[0_0_15px_rgba(244,63,94,0.8)]" />
 							</div>
-							<span className="text-text-muted">OOP RP</span>
-							<span className="text-white text-sm">
+							<span className="text-text-muted group-hover/rp-oop:text-white transition-colors">OOP RP</span>
+							<span className="text-white text-[1rem] tabular-nums group-hover/rp-oop:text-glow-rose transition-all">
 								{effectiveOopRp?.toFixed(1)}%
 							</span>
 						</div>
@@ -127,10 +135,10 @@ export default function SimulatorHeader({
 
 				<button
 					onClick={() => signOut({ callbackUrl: '/login' })}
-					className="flex items-center justify-center w-10 h-10 bg-rose-500/10 border border-rose-500/20 text-accent-rose rounded-xl hover:bg-rose-500/20 hover:border-rose-500/40 active:scale-95 transition-all shadow-lg cursor-pointer group"
+					className="flex items-center justify-center w-11 h-11 bg-accent-rose/10 border border-accent-rose/20 text-accent-rose rounded-2xl hover:bg-accent-rose/20 hover:border-accent-rose/40 active:scale-90 transition-all shadow-xl cursor-pointer group"
 					title="Fuga Quântica (Logout)"
 				>
-					<i className="fa-solid fa-power-off group-hover:scale-110 transition-transform" />
+					<i className="fa-solid fa-power-off group-hover:scale-110 transition-transform duration-500" />
 				</button>
 			</div>
 		</header>

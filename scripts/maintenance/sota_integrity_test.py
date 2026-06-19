@@ -1,21 +1,21 @@
 """
-Módulo de Testes de Integridade SOTA (Zero-Regression)
-Responsável por validar I/O de Banco de Dados, RAG Vetorial e Motor Quântico.
+Modulo de Testes de Integridade SOTA (Zero-Regression)
+Responsavel por validar I/O de Banco de Dados, RAG Vetorial e Motor Quantico.
 """
 
-import sys
 import asyncio
-import time
 import gc
+import sys
+import time
 from pathlib import Path
-from typing import List
 
 # Adiciona a raiz ao path para importar modulos do Kernel
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 # pylint: disable=wrong-import-position
-from task_executor import QueueManager, Task
 from memory_rag import MemoryRAG
+from task_executor import QueueManager, Task
+
 # pylint: enable=wrong-import-position
 
 
@@ -46,13 +46,12 @@ def _test_rag_initialization() -> str:
     """Executa o teste de instanciacao vetorial SOTA (ChromaDB)."""
     start = time.time()
     try:
-        rag = MemoryRAG(memory_dir=".claude/agent-memory")
+        rag = MemoryRAG(memory_dir=".cerebro/agent-memory")
         expected_name = "agent_collective_memory"
+        if not rag.collection:
+            raise ValueError("Colecao ChromaDB nao foi inicializada (is None).")
         if rag.collection.name != expected_name:
-            raise ValueError(
-                f"Colecao com nome incorreto. Esperado '{expected_name}', "
-                f"obteve '{rag.collection.name}'"
-            )
+            raise ValueError(f"Colecao com nome incorreto. Esperado '{expected_name}', obteve '{rag.collection.name}'")
         return f"[PASS] RAG Initialization SOTA: {time.time() - start:.4f}s"
     except Exception as e:  # pylint: disable=broad-exception-caught
         return f"[FAIL] RAG Initialization falhou: {e}"
@@ -63,10 +62,7 @@ def _test_garbage_collection() -> str:
     start = time.time()
     try:
         collected = gc.collect()
-        return (
-            f"[PASS] Garbage Collector Acionado: {time.time() - start:.4f}s | "
-            f"Objetos varridos: {collected}"
-        )
+        return f"[PASS] Garbage Collector Acionado: {time.time() - start:.4f}s | Objetos varridos: {collected}"
     except Exception as e:  # pylint: disable=broad-exception-caught
         return f"[FAIL] GC falhou: {e}"
 
@@ -92,7 +88,7 @@ def _test_quantum_physics_parity() -> str:
 
     start = time.time()
     try:
-        # Cenário de Teste: 20bb stack, 3 players no pot
+        # Cenario de Teste: 20bb stack, 3 players no pot
         res = compute_quantum_metrics(
             current_equity_pct=50.0,
             delta_win_pct=10.0,
@@ -112,32 +108,28 @@ def _test_quantum_physics_parity() -> str:
         perspectiva = res.get("perspectiva")
 
         if rio_mw is None or expectativa is None or perspectiva is None:
-            raise ValueError(
-                "O motor quântico retornou Nulo (None) para métricas cruciais."
-            )
+            raise ValueError("O motor quantico retornou Nulo (None) para metricas cruciais.")
 
-        # 1. Validar Amortização de Edge (log(20)/log(60) ~ 0.73)
+        # 1. Validar Amortizacao de Edge (log(20)/log(60) ~ 0.73)
         # 2. Validar RIO MW (Exponencial N^(2+f))
         if rio_mw <= 0:
-            raise ValueError("Dívida RIO não calculada para Multiway.")
+            raise ValueError("Divida RIO nao calculada para Multiway.")
 
         # SOTA FIX: A Perspectiva deve ser exatamente (Expectativa - RIO - EV_Fold)
-        # Como EV_Fold é negativo (-1.0), ela soma 1.0 e subtrai o RIO (~0.53)
+        # Como EV_Fold e negativo (-1.0), ela soma 1.0 e subtrai o RIO (~0.53)
         expected_persp = expectativa - (rio_mw + (-1.0))
 
         if abs(perspectiva - expected_persp) >= 1e-6:
-            raise ValueError(
-                f"Divergência vetorial na Perspectiva: {perspectiva} != {expected_persp}"
-            )
+            raise ValueError(f"Divergencia vetorial na Perspectiva: {perspectiva} != {expected_persp}")
 
         return f"[PASS] Quantum Physics Parity (SOTA v4.3): {time.time() - start:.4f}s"
     except Exception as e:  # pylint: disable=broad-exception-caught
         return f"[FAIL] Falha na paridade fisica: {e}"
 
 
-def _save_report(report: List[str]) -> None:
+def _save_report(report: list[str]) -> None:
     """Salva o relatorio bruto em arquivo de log SOTA."""
-    report_path = Path(".claude/logs/audit/latest_sota_test.log")
+    report_path = Path(".cerebro/logs/audit/latest_sota_test.log")
     report_path.parent.mkdir(parents=True, exist_ok=True)
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(report))
@@ -148,7 +140,7 @@ async def run_sota_tests() -> None:
     """Orquestrador principal da Suite de Testes SOTA (Zero-Regression)."""
     print("=== [QA] INICIANDO SUITE DE TESTES SOTA (ZERO-REGRESSION) ===")
 
-    report: List[str] = [
+    report: list[str] = [
         await _test_database_io(),
         _test_rag_initialization(),
         _test_garbage_collection(),

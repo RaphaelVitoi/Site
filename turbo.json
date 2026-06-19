@@ -1,51 +1,77 @@
 {
-    "tasks": {
-        "build": {
-            "dependsOn": [
-                "^build"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                ".env*"
-            ],
-            "outputs": [
-                ".next/**",
-                "!.next/cache/**",
-                "dist/**"
-            ]
-        },
-        "sota:audit": {
-            "dependsOn": [
-                "build",
-                "lint",
-                "typecheck:audit"
-            ],
-            "cache": false
-        },
-        "typecheck:audit": {
-            "dependsOn": [
-                "^build"
-            ]
-        },
-        "test": {
-            "dependsOn": [
-                "build"
-            ],
-            "outputs": [
-                "coverage/**"
-            ]
-        },
-        "lint": {
-            "dependsOn": [
-                "^lint"
-            ]
-        },
-        "dev": {
-            "cache": false,
-            "persistent": true
-        },
-        "seed": {
-            "cache": false
-        }
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*",
+        "tsconfig*.json",
+        "next.config.*"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**"
+      ],
+      "env": ["NODE_ENV", "NEXT_PUBLIC_*"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "env": ["NODE_ENV", "NEXT_PUBLIC_*", "PORT"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "*.{js,ts,tsx,jsx,mjs,cjs}",
+        ".eslintrc*",
+        "eslint.config.*",
+        "biome.json"
+      ],
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "tsconfig*.json",
+        "*.{ts,tsx}"
+      ],
+      "outputs": []
+    },
+    "test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "**/*.test.{ts,tsx,js}",
+        "**/*.spec.{ts,tsx,js}",
+        "jest.config.*",
+        "vitest.config.*"
+      ],
+      "outputs": ["coverage/**"],
+      "env": ["CI", "NODE_ENV"]
+    },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["coverage/**"],
+      "env": ["CI"]
+    },
+    "sota:audit": {
+      "dependsOn": ["build", "lint", "typecheck"],
+      "cache": false,
+      "env": ["CI"]
+    },
+    "typecheck:audit": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"]
+    },
+    "seed": {
+      "cache": false
+    },
+    "clean": {
+      "cache": false
     }
+  }
 }

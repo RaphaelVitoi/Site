@@ -130,6 +130,11 @@ param (
 # Forca o encoding do terminal para UTF-8, erradicando a entropia do Windows-1252
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
+# SOTA: Ativa o FNM para garantir disponibilidade do Node, NPM e NPX no escopo da sessao
+if (Get-Command 'fnm' -ErrorAction SilentlyContinue) {
+    fnm env --use-on-cd | Out-String | Invoke-Expression
+}
+
 # SOTA GUARD: Bloqueio de Downgrade Attack (Forca TLS 1.2 e 1.3 na Membrana)
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls13
 
@@ -234,7 +239,7 @@ if (-not $TestMode) {
     }
 
     function Invoke-TypeScriptGateSOTA {
-        Write-Host '=== [SISTEMA] BLINDAGEM TYPESCRIPT (tsc --noEmit) ===' -ForegroundColor Magenta
+        Write-Host '=== [SISTEMA] BLINDAGEM TYPESCRIPT (tsc -b) ===' -ForegroundColor Magenta
         $FrontendDir = Join-Path $ScriptDirectory 'frontend'
         if (Test-Path -LiteralPath $FrontendDir) {
             $PrevDir = $PWD
@@ -242,7 +247,8 @@ if (-not $TestMode) {
             try {
                 $NpxCmd = if (Get-Command 'npx.cmd' -ErrorAction SilentlyContinue) { 'npx.cmd' } else { 'npx' }
                 Write-Host '[INFRA] Analisando tipagem estrita no frontend...' -ForegroundColor DarkGray
-                & $NpxCmd tsc --noEmit
+                & $NpxCmd tsc -b --clean
+                & $NpxCmd tsc -b
                 if ($LASTEXITCODE -ne 0) {
                     Write-Error '[SEC CRITICO] Entropia de tipagem detectada pelo tsc. Abortando operacao para evitar colapso em Runtime.'
                     exit 1
@@ -430,9 +436,9 @@ if ($DailyReport) {
     $DailyStats = & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') daily-stats
 
     # SOTA: Autonomia Plena (Friccao Zero). Busca o GDrive ativamente ou usa a raiz do disco C:
-    $GDrivePath = 'C:\Users\Raphael\Google Drive\Nexus_Reports'
+    $GDrivePath = 'C:\Users\rapha\Google Drive\Nexus_Reports'
     $RootPath = 'C:\Nexus_Reports'
-    $TargetDir = if (Test-Path 'C:\Users\Raphael\Google Drive') { $GDrivePath } else { $RootPath }
+    $TargetDir = if (Test-Path 'C:\Users\rapha\Google Drive') { $GDrivePath } else { $RootPath }
 
     if (-not (Test-Path -LiteralPath $TargetDir)) { New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null }
     $ReportDir = $TargetDir -replace '\\', '/'

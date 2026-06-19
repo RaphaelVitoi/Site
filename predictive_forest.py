@@ -1,4 +1,4 @@
-"""Módulo contendo a engine preditiva (Random Forest)."""
+"""Modulo contendo a engine preditiva (Random Forest)."""
 import logging
 import sqlite3
 from pathlib import Path
@@ -221,10 +221,10 @@ class PredictiveForestEngine:
                 # Mapeia chaves acentuadas antigas para ASCII puro caso existam
                 ascii_profile = {}
                 ascii_map = {
-                    "Aversão ao Risco": "Aversao ao Risco",
+                    "Aversao ao Risco": "Aversao ao Risco",
                     "Pot Entrapment": "Pot Entrapment",
                     "Miopia de Payjump": "Miopia de Payjump",
-                    "Excesso de Agressão": "Excesso de Agressao",
+                    "Excesso de Agressao": "Excesso de Agressao",
                     "Passivo Estrutural (RIO)": "Passivo Estrutural (RIO)",
                     "Desvio de Nash": "Desvio de Nash",
                     "Aversao ao Risco": "Aversao ao Risco",

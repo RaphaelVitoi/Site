@@ -10,7 +10,8 @@
                     },
     "resources":  {
                       "ram_reserve_gb":  4,
-                      "vram_limit_gb":  12
+                      "vram_limit_gb":  24,
+                      "force_local":  true
                   },
     "bucketing":  {
                       "root":  "C:\\Users\\Raphael\\.gemini\\Site\\buckets",

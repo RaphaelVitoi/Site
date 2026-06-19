@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: Painel de Fundamentação Teórica SOTA v6.2.1 GOLD
+ * IDENTITY: Painel de Fundamentação Teórica SOTA v7.0 GOLD
  * PATH: src/components/simulator/panels/TheoryPanel.tsx
  * ROLE: Agregação de diretrizes doutrinárias, matrizes de diluição e auditoria sistêmica.
  * AESTHETIC: SOTA Gold Standard (Depth Layers, High-Contrast Typography, Glassmorphism).
@@ -64,8 +64,8 @@ export default function TheoryPanel({
 		'Nenhuma doutrina estÃ¡tica encontrada. Consulte o OrÃ¡culo QuÃ¢ntico.';
 
 	return (
-		<div className="glass-panel w-full p-10 lg:p-16 flex flex-col gap-24 animate-sota-in mt-12 bg-bg-panel/80 backdrop-blur-3xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] rounded-4xl relative overflow-hidden group/theory-root">
-			{/* Camadas de Profundidade QuÃ¢ntica */}
+		<div className="glass-panel w-full p-8 lg:p-12 flex flex-col gap-24 animate-sota-in mt-12 bg-bg-panel/80 backdrop-blur-3xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] rounded-4xl relative overflow-hidden group/theory-root">
+			{/* Camadas de Profundidade Quântica */}
 			<div className="absolute -top-40 -left-40 w-125 h-125 bg-accent-indigo/10 blur-[150px] rounded-full pointer-events-none group-hover/theory-root:bg-accent-indigo/15 transition-all duration-1000" />
 			<div className="absolute -bottom-40 -right-40 w-125 h-125 bg-accent-rose/5 blur-[150px] rounded-full pointer-events-none" />
 
@@ -77,7 +77,7 @@ export default function TheoryPanel({
 						Fundamentação Teórica
 					</h3>
 					<span className="text-[0.55rem] font-black text-text-darker uppercase tracking-[0.4em]">
-						Protocolo SOTA v6.2.1 GOLD
+						Protocolo SOTA v7.0 GOLD
 					</span>
 				</div>
 
@@ -362,7 +362,7 @@ export default function TheoryPanel({
 							icon="fa-dna"
 							color="rose"
 							label="Integridade"
-							value="v6.2.1 GOLD"
+							value="v7.0 GOLD"
 							sub="Genoma Matemático"
 						/>
 					</div>

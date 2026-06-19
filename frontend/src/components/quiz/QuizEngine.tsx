@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: Quiz Engine SOTA v4.2 Gold
+ * IDENTITY: Quiz Engine SOTA v7.0 GOLD
  * PATH: src/components/quiz/QuizEngine.tsx
  * ROLE: Orquestrador de avaliação cognitiva.
  * AESTHETIC: SOTA Gold Standard (Symmetry, Depth, Motion).

@@ -32,11 +32,11 @@ Categorias analisadas pela primeira vez:
 - `content/` (96 MB): artigos, aulas .docx, interativo/toy_games_page.tsx (prototipo valido), pesquisa (duplica docs/research/)
 - `docs/epics/` (19 MB): aula-icm-rp movido (com MP4 19MB), cli-interativa, icm-marketing, ingestion-pipeline
 - `docs/research/` (75 MB): 30 arquivos icm-materials (.docx pesados)
-- `.claude/` novos: LIDERANCA_GOVERNANCE (668 linhas, valido), DISTRIBUTION_MATRIX (valido), HOLOGRAPHIC_ROUTING (valido), HYBRID_BRAIN (valido), BOOT_OPERACIONAL (historico), ESTADO_ARTE_APRENDIZADO (aspiracional), agents/chico.md (novo, necessario)
+- `.cerebro/` novos: LIDERANCA_GOVERNANCE (668 linhas, valido), DISTRIBUTION_MATRIX (valido), HOLOGRAPHIC_ROUTING (valido), HYBRID_BRAIN (valido), BOOT_OPERACIONAL (historico), ESTADO_ARTE_APRENDIZADO (aspiracional), agents/chico.md (novo, necessario)
 - `scripts/routines/` (1092 linhas): 10 scripts Python vitoi_* + 3 PS1. Nunca commitados. Precisam revisao.
 - `utils/` (30 linhas): audit.py + notifications.py. Legitimos.
 - `tests/` (5 arquivos): Testes Python. Ja rodados (__pycache__). Legitimos.
-- `frontend/.claude/`: ChromaDB secundario (188KB). NAO deveria existir. Deletar.
+- `frontend/.cerebro/`: ChromaDB secundario (188KB). NAO deveria existir. Deletar.
 - `frontend/lib/icm.ts`: Duplicata simplificada de src/lib/icm.ts. Deletar.
 
 ### task_executor.py - evolucao confirmada como legitima
@@ -75,7 +75,7 @@ Categorias analisadas pela primeira vez:
 
 ### P2 - Higiene
 5. Remover deps npm nao usadas (html2canvas, jspdf, recharts, zustand)
-6. Deletar frontend/.claude/ (ChromaDB secundario 188KB)
+6. Deletar frontend/.cerebro/ (ChromaDB secundario 188KB)
 7. Deletar frontend/lib/icm.ts (duplicata)
 8. Deletar GLOBAL_INSTRUCTIONS.md raiz (duplicata)
 9. Deletar package.json raiz (3 deps inuteis)

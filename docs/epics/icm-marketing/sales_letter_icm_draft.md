@@ -2,13 +2,13 @@
 
 > Uma Mensagem de Raphael Vitoi para Quem Ousa Pensar.
 
-Voce joga poker. Voce estuda charts, GTO, talvez ate ja sonhou com ICM. Mas, seja brutalmente honesto consigo: voce realmente *sente* o ICM? Ou apenas calcula? A diferença entre saber a formula e *sentir a pressao* no limite do seu stack e a diferença entre um jogador amador e um verdadeiro mestre.
+Voce joga poker. Voce estuda charts, GTO, talvez ate ja sonhou com ICM. Mas, seja brutalmente honesto consigo: voce realmente *sente* o ICM? Ou apenas calcula? A diferenca entre saber a formula e *sentir a pressao* no limite do seu stack e a diferenca entre um jogador amador e um verdadeiro mestre.
 
 Este nao e mais um curso de "decore o ICM". Este e um mergulho na ontologia da decisao, onde as fichas sao a **ancora da sua autonomia** e cada pote e uma **negociacao radical**.
 
 ### ICM: Nao Apenas Matematica, Mas a Psicologia da Consequencia.
 
-Aos 15, rejeitei o Deus que me ensinaram. Aos 13, deixei de ser agnostico. No poker, rejeito a crença cega em tabelas sem o *entendimento visceral* da dor que o ICM impoe. O Independent Chip Model nao e uma ferramenta para ficar rico rapido; e a **metrica brutal da sua mortalidade** em um torneio.
+Aos 15, rejeitei o Deus que me ensinaram. Aos 13, deixei de ser agnostico. No poker, rejeito a crenca cega em tabelas sem o *entendimento visceral* da dor que o ICM impoe. O Independent Chip Model nao e uma ferramenta para ficar rico rapido; e a **metrica brutal da sua mortalidade** em um torneio.
 
 Ele revela:
 - **A Verdade sobre o Risk Premium:** Nao e um conceito abstrato. E a *dor* de arriscar sua sobrevivencia por uma recompensa que, em termos de $EV, nem sempre compensa. Voce sente o Downward Drift? Aquele momento em que cada ficha perde valor marginal? Nos vamos te fazer *sentir*.

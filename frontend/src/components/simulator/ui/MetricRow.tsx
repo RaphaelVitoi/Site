@@ -33,6 +33,12 @@ export const MetricRow = ({
 		}
 	};
 
+	const getTextColorClass = () => {
+		if (loading) return 'text-text-darker';
+		if (isAlert) return 'text-white';
+		return colorClass;
+	};
+
 	return (
 		<div
 			className={`flex flex-col py-2 px-3 rounded-xl border border-transparent transition-all duration-300 ${
@@ -47,9 +53,7 @@ export const MetricRow = ({
 					{label}
 				</span>
 				<span
-					className={`text-[0.7rem] font-black font-mono text-right ${
-						loading ? 'text-text-darker' : isAlert ? 'text-white' : colorClass
-					}`}
+					className={`text-[0.7rem] font-black font-mono text-right ${getTextColorClass()}`}
 				>
 					{loading ? '...' : value}
 				</span>

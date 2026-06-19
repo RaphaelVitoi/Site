@@ -54,8 +54,8 @@ Arquivos soltos que nao pertencem ali:
 ### A-03: Diretorio memory/ na raiz com 62 arquivos
 - Parece ser o auto-memory do Claude. Verificar se pode ser consolidado/arquivado.
 
-### A-04: .claude/page.tsx fora de lugar
-- Arquivo de blog dentro de .claude/. Deletar.
+### A-04: .cerebro/page.tsx fora de lugar
+- Arquivo de blog dentro de .cerebro/. Deletar.
 
 ### A-05: Configs Gemini triplicadas
 - `settings.json` (raiz), `settings.py` (raiz, extensao errada), `.vscode/settings.json`

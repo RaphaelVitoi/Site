@@ -46,7 +46,7 @@ type: project
 
 ### Limpeza Gemini
 - Deletados: `frontend/page.tsx` (vazio), `scripts/maintenance/types.ts` (duplicata), `scripts/tests/` (inconsistente), `image/` (irrelevante)
-- Mantidos: `.claude/handoff.md`, `scripts/utils/kill_eperm.ps1`
+- Mantidos: `.cerebro/handoff.md`, `scripts/utils/kill_eperm.ps1`
 
 ## Estado do projeto
 
@@ -95,7 +95,7 @@ stacks + prizes(FT real) → M-H(icmEngine) → RP derivado(rpDeriver) → effec
 - Migration Prisma para TelemetryEvent (schema adicionado mas nao migrado)
 
 ## Arquivos untracked (nao commitados)
-- `.claude/handoff.md` - handoff da sessao Gemini
+- `.cerebro/handoff.md` - handoff da sessao Gemini
 - `scripts/utils/kill_eperm.ps1` - script anti-EPERM do Prisma/Next.js
 
 ## Nota tecnica

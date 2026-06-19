@@ -11,7 +11,7 @@ type: project
 ### Limpeza da raiz (A-01 e A-02 resolvidos)
 - 6 arquivos lixo deletados: `_write_probe_root.txt`, `hello_sota.py`, `settings.py`, `settings.json`, `SESSION_LOG_20260327-020735.md`, `flowchart.svg`
 - `caminho/` (placeholder de teste) deletado
-- `.claude/page.tsx` (blog orfao) deletado
+- `.cerebro/page.tsx` (blog orfao) deletado
 - `node_modules/` orfao deletado (55MB recuperados)
 
 ### Reestruturacao de routing do frontend
@@ -57,7 +57,7 @@ Todos os componentes Python e PowerShell auditados:
 | 10 scripts criticos | FUNCIONAL |
 | api/server.py | DELETADO (legacy morto, zero refs) |
 
-### Docs .claude/ verificados
+### Docs .cerebro/ verificados
 - `MODUS_OPERANDI.md` estava 0 bytes → restaurado do git (4665 bytes)
 - Todos os demais existem e com conteudo integro
 - `autonomy.json` = `{"mode": "full"}` (minimalista mas funcional)
@@ -86,8 +86,8 @@ Todos os componentes Python e PowerShell auditados:
 - **CLI:** do.ps1 integrado
 
 ### Docs
-- `.claude/` integro (MODUS_OPERANDI restaurado)
-- INDEX_CLAUDE.md descreve estrutura de 6 camadas
+- `.cerebro/` integro (MODUS_OPERANDI restaurado)
+- INDEX_CEREBRO.md descreve estrutura de 6 camadas
 - Agentes: 18 specs + 18 memorias
 
 ## Pendentes para proxima sessao

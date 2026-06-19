@@ -23,27 +23,27 @@ export function SectionHeader({
 	return (
 		<div
 			id={id}
-			className="w-full mx-auto px-4 pt-12 pb-8 relative group flex flex-col items-center text-center"
+			className="w-full mx-auto px-6 pt-20 pb-12 relative group flex flex-col items-center text-center"
 		>
-			<div className="flex items-center justify-center gap-4 mb-8">
-				<div className="h-px w-16 bg-linear-to-r from-transparent to-accent-indigo/60" />
+			<div className="flex items-center justify-center gap-5 mb-10">
+				<div className="h-px w-20 bg-linear-to-r from-transparent to-accent-indigo/60" />
 				<div className="relative">
-					<div className="absolute inset-0 bg-accent-indigo/20 blur-md rounded-full" />
-					<span className="relative text-[0.65rem] font-black text-accent-indigo-light bg-bg-deep/80 border border-accent-indigo/30 px-5 py-2 rounded-full tracking-[0.25em] font-mono shadow-[0_0_20px_rgba(99,102,241,0.25)] flex items-center justify-center min-w-[3rem]">
+					<div className="absolute inset-0 bg-accent-indigo/20 blur-lg rounded-full" />
+					<span className="relative text-[0.7rem] font-black text-accent-indigo-light bg-bg-deep/80 border border-accent-indigo/30 px-6 py-2.5 rounded-full tracking-[0.4em] font-mono shadow-[0_0_25px_rgba(99,102,241,0.3)] flex items-center justify-center min-w-[4rem]">
 						{step}
 					</span>
 				</div>
-				<span className="text-[0.65rem] font-bold text-text-muted uppercase tracking-[0.35em] group-hover:text-text-main transition-colors duration-500">
+				<span className="text-[0.65rem] font-black text-text-muted uppercase tracking-[0.3em] group-hover:text-text-main transition-colors duration-500">
 					{label}
 				</span>
-				<div className="h-px w-16 bg-linear-to-l from-transparent to-accent-indigo/60" />
+				<div className="h-px w-20 bg-linear-to-l from-transparent to-accent-indigo/60" />
 			</div>
 
-			<h2 className="text-[clamp(1.75rem,4vw,2.75rem)] font-black m-0 mb-6 tracking-tighter text-white font-heading uppercase transition-all duration-700 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:text-gradient-sota">
+			<h2 className="text-[clamp(2.2rem,5vw,3.5rem)] font-black m-0 mb-8 tracking-tighter text-white font-heading uppercase transition-all duration-700 drop-shadow-[0_0_20px_rgba(255,255,255,0.15)] group-hover:text-glow-indigo">
 				{title}
 			</h2>
 
-			<p className="m-0 text-[0.95rem] text-text-muted leading-relaxed max-w-2xl font-body font-medium group-hover:text-text-main transition-colors duration-500">
+			<p className="m-0 text-[1.1rem] text-text-muted leading-loose max-w-3xl font-body font-medium group-hover:text-text-main transition-colors duration-500 opacity-90">
 				{description}
 			</p>
 		</div>

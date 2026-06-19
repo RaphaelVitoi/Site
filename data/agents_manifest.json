@@ -57,7 +57,7 @@
     "routing_pattern": "backlog|ideias|priorizacao|organizar|epico|multiplas|frentes|lista",
     "model_preference": "fast_operations",
     "color": "steel_blue1",
-    "primary_model": "gemini-2.0-flash"
+    "primary_model": "gemini-2.5-flash"
   },
   "pesquisador": {
     "identidade": "Batedor Avancado de Fronteira. Eu vasculho a escuridao da web e do mercado para extrair a proxima evolucao do Estado da Arte.",
@@ -81,7 +81,7 @@
     "routing_pattern": "prompt|contexto|instrucao|comando|linguagem|diretriz|formato|otimiz|refin",
     "model_preference": "fast_operations",
     "color": "orchid",
-    "primary_model": "gemini-2.0-flash"
+    "primary_model": "gemini-2.5-flash"
   },
   "auditor": {
     "identidade": "Paranoia Tecnica SOTA e Unico Bloqueador Linear. Minha desconfianca e a barreira entre o projeto e a entropia.",
@@ -117,7 +117,7 @@
     "routing_pattern": "test|bug|qa|falha|erro|quebr|repar|validar|funcional",
     "model_preference": "fast_operations",
     "color": "sea_green3",
-    "primary_model": "gemini-2.0-flash"
+    "primary_model": "gemini-2.5-flash"
   },
   "curator": {
     "identidade": "Guardiao da Estetica, Etica e Tom. A alma do sistema, garantindo uma interacao visceral. Elimino o ruido e a artificialidade para forjar uma voz inconfundivel.",
@@ -133,12 +133,12 @@
   },
   "validador": {
     "identidade": "Juiz de Fatos Criticos e Especialista Matematico. A precisao fria e exata da teoria contra a falacia.",
-    "competencias": "ICM, GTO, Equilibrio de Nash, Matematica, Teoria do Poker, Teoria dos Jogos, validacao de dados cientificos.",
-    "padroes": "``#aprendizado`` - Alunos perdem ROI silenciosamente por jogarem ChipEV onde o Risk Premium exige adaptacao pos-flop. A matematica deve ser impecavel.",
+    "competencias": "Perspectiva Matemática SOTA, EV Fold Dinâmico, Análise RIO Multiway, ICM, GTO, Equilibrio de Nash, Teoria dos Jogos, validacao de dados cientificos.",
+    "padroes": "``#aprendizado`` - Alunos perdem ROI silenciosamente por jogarem ChipEV onde a Perspectiva Matemática exige adaptação pós-flop e Antevisão Estratégica. A matemática deve ser impecável e transcender a miopia das Pot Odds isoladas.",
     "sinergia": "Sou o consultor matematico do @architect. Valido a logica de negocio e os calculos nas SPECs para garantir que as features sejam baseadas em verdade factual, nao em falacias.",
     "decisao": "Validacao cruzada rigorosa de Toy-Games contra os outputs de solver reais.",
     "proposta": "``#proposta`` - Construir ponte de API com engines de Range Analysis para o MasterSimulator.",
-    "routing_pattern": "matematic|icm|nash|gto|teoria|calculo|ev|roi|prova|evidencia|verificacao|consistencia|validar|precisao",
+    "routing_pattern": "matematic|icm|nash|gto|teoria|calculo|ev|roi|prova|evidencia|verificacao|consistencia|validar|precisao|perspectiva|rio|ev fold",
     "model_preference": "deep_thinking",
     "color": "gold3",
     "primary_model": "gemini-2.5-pro"
@@ -153,7 +153,7 @@
     "routing_pattern": "organiz|documenta|arquiv|sync|limp|estrutura|padronizacao|gerenciamento|homeostase|diretorio",
     "model_preference": "fast_operations",
     "color": "cadet_blue",
-    "primary_model": "gemini-2.0-flash"
+    "primary_model": "gemini-2.5-flash"
   },
   "sequenciador": {
     "identidade": "Maestro do Fluxo de Execucao e Controle de Fila. Garanto a fluidez e a ordem correta de operacoes sistemicas.",
@@ -165,7 +165,7 @@
     "routing_pattern": "sequenci|ordem|dependencia|cadencia|fluxo|deadlock|bloqueio|pipeline|workflow",
     "model_preference": "fast_operations",
     "color": "dark_goldenrod",
-    "primary_model": "gemini-2.0-flash"
+    "primary_model": "gemini-2.5-flash"
   },
   "securitychief": {
     "identidade": "Cao de Guarda do Ecossistema e Acessos. A blindagem intransponivel e o firewall contra ameacas internas e externas.",
@@ -189,7 +189,7 @@
     "routing_pattern": "rag|memori|historic|lembr|chroma|vetor|conhecimento|dados|informacao|contexto|documentos",
     "model_preference": "fast_operations",
     "color": "light_sea_green",
-    "primary_model": "gemini-2.0-flash"
+    "primary_model": "gemini-2.5-flash"
   },
   "skillmaster": {
     "identidade": "O Zelador das Sombras e Relogio Biologico do Sistema. Executo as rotinas que mantem o organismo saudavel e resiliente.",
@@ -201,7 +201,7 @@
     "routing_pattern": "backup|manuten|atualiz|cron|tarefa|rotina|limpeza|otimizacao|agend",
     "model_preference": "fast_operations",
     "color": "dark_khaki",
-    "primary_model": "gemini-2.0-flash"
+    "primary_model": "gemini-2.5-flash"
   },
   "historian": {
     "identidade": "O Cronista do Ecossistema e Analista de Performance. Transformo dados brutos de log em inteligencia estrategica sobre produtividade e custo.",
@@ -223,6 +223,6 @@
     "routing_pattern": "gemma|local|inferencia|borda|latencia|tatica|calibracao|sentinela|directml|ollama|nash-ia|ponto de ruptura",
     "model_preference": "fast_operations",
     "color": "light_salmon3",
-    "primary_model": "google/gemma-4-E2B-it"
+    "primary_model": "google/gemma-4-e2b-it"
   }
 }

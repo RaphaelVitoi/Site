@@ -147,7 +147,7 @@ function nexus-cli {
         [string[]]$Arguments
     )
     # Roteamento Absoluto SOTA: O Orquestrador Hibrido e o unico Kernel
-        & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" @Arguments
+    & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" @Arguments
 }
 
 # --- Atalhos de Alto Nivel (Qualidade de Vida SOTA) ---
@@ -271,11 +271,11 @@ function nexus-notify {
 
 function nexus-keys {
     # Auditoria de chaves + diagnostico de rede automatico quando a falha e de conectividade.
-        $outputRaw = & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" check-keys 2>&1
-        $outputStr = $outputRaw -join "`n"
-        Write-Host $outputStr
+    $outputRaw = & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" check-keys 2>&1
+    $outputStr = $outputRaw -join "`n"
+    Write-Host $outputStr
 
-        if ($outputStr -match "ClientConnectionError" -or $outputStr -match "WinError 5" -or $outputStr -match "Conexao:") {
+    if ($outputStr -match "ClientConnectionError" -or $outputStr -match "WinError 5" -or $outputStr -match "Conexao:") {
         Write-Host "[NEXUS] Falha de conectividade detectada. Acionando diagnostico de rede..." -ForegroundColor Yellow
         & $Global:NexusPythonExe "$Global:NexusProjectRoot\scripts\utils\network_diagnostic.py"
     }
@@ -302,346 +302,10 @@ function nexus-gemini-health {
     & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" gemini-health $Minutes
 }
 
-function nexus-rate-limits {
-    param(
-        [int]$Days = 7
-    )
-    & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" rate-limits $Days
-}
-
-function nexus-ai {
-    [CmdletBinding()]
-    param(
-        [Parameter(ValueFromRemainingArguments=$true)]
-        [string[]]$Arguments
-    )
-    if ($Arguments.Length -eq 0) {
-        Write-Host "`nUso: nexus-ai geometric <pot> <target> <streets>" -ForegroundColor Yellow
-        Write-Host "Uso: nexus-ai cfr '{""fold"": 10, ""call"": 20}'`n" -ForegroundColor Yellow
-        return
-    }
-    nexus-cli ai-simulate @Arguments
-}
-
-function nexus-watchdog {
-    & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" watchdog
-}
-
-function nexus-fallback-prune {
-    param(
-        [int]$Days = 7
-    )
-    & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" fallback-prune $Days
-}
-
-function nexus-fallback-prune-legacy {
-    & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" fallback-prune-legacy
-}
-
-# Atalhos Nativos da Membrana (Friccao Zero)
-function nexus-sync { & "$Global:NexusProjectRoot\do.ps1" -SyncAgents }
-function nexus-telemetry-prune { & "$Global:NexusProjectRoot\scripts\maintenance\run_telemetry_cleanup.ps1" }
-function nexus-audit { & "$Global:NexusProjectRoot\do.ps1" -Audit "Auditoria Global" }
-function nexus-diag-net { & $Global:NexusPythonExe "$Global:NexusProjectRoot\scripts\utils\network_diagnostic.py" }
-function nexus-setup {
-    & "$Global:NexusProjectRoot\do.ps1" -Setup
-    . $PROFILE
-    Write-Host "[SOTA] Membrana atualizada e recarregada na memoria ativa (Friccao Zero)." -ForegroundColor Green
-}
-function nexus-backup { & "$Global:NexusProjectRoot\do.ps1" -Backup }
-function nexus-backup-full { & "$Global:NexusProjectRoot\scripts\utils\invoke_full_backup.ps1" }
-function nexus-schedule { & "$Global:NexusProjectRoot\do.ps1" -ScheduleMaintenance }
-function nexus-watch { & "$Global:NexusProjectRoot\do.ps1" -Watch }
-function nexus-reflect { & "$Global:NexusProjectRoot\do.ps1" -Reflect }
-function nexus-map {
-    $MapPath = Join-Path $Global:NexusProjectRoot "docs\SOTA_REFERENCE_ARCHITECTURE.md"
-    if (Test-Path -LiteralPath $MapPath) {
-        # Usa um pager para textos longos, se disponivel, ou apenas exibe.
-            Get-Content -LiteralPath $MapPath
-    } else {
-        Write-Warning "O Mapa do Ecossistema (SOTA_REFERENCE_ARCHITECTURE.md) ainda nao foi gerado."
-        Write-Host "Execute 'nexus-schedule' e aguarde o @organizador cria-lo, ou acione manualmente." -ForegroundColor Yellow
-    }
-}
-function nexus-scripts {
-    $DashboardPath = Join-Path $Global:NexusProjectRoot "docs\SCRIPTS_E_COMANDOS_DASHBOARD.md"
-    if (Test-Path -LiteralPath $DashboardPath) {
-            Get-Content -LiteralPath $DashboardPath
-    } else {
-        Write-Warning "Dashboard de scripts/comandos nao encontrado."
-    }
-}
-function nexus-scripts-refresh {
-    & "$Global:NexusProjectRoot\scripts\routines\invoke_scripts_dashboard.ps1"
-}
-function nexus-graph {
-    & "$Global:NexusProjectRoot\do.ps1" -Graph
-}
-function nexus-checkdb { & "$Global:NexusProjectRoot\do.ps1" -CheckDB }
-function nexus-retry {
-    param([Parameter(Mandatory=$true)][string]$TaskId)
-    & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" db-retry $TaskId
-}
-function nexus-retry-failed {
-    $output = & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" db-retry-failed
-    $output | ForEach-Object { Write-Host $_ }
-    $combinedOutput = $output -join " "
-    if ($combinedOutput -match "SUCCESS:\s*(\d+)\s*tarefas") {
-        $count = $Matches[1]
-        [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-        [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
-        $ToastXml = @"
-<toast>
-    <visual>
-        <binding template="ToastText02">
-            <text id="1">Nexus Orchestrator</text>
-            <text id="2">SUCESSO: $count tarefas 'failed' reenfileiradas!</text>
-        </binding>
-    </visual>
-</toast>
-"@
-        $Xml = [Windows.Data.Xml.Dom.XmlDocument]::new()
-        $Xml.LoadXml($ToastXml)
-        $Toast = [Windows.UI.Notifications.ToastNotification]::new($Xml)
-        [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('NexusRetry').Show($Toast)
-    }
-}
-function nexus-complete {
-    param([Parameter(Mandatory=$true)][string]$TaskId)
-    & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" db-complete $TaskId
-}
-function nexus-restore {
-    [CmdletBinding(SupportsShouldProcess=$true)]
-    param(
-        [switch]$Force
-    )
-    & "$Global:NexusProjectRoot\scripts\utils\restore_system.ps1" @PSBoundParameters
-}
-function nexus-db {
-    [CmdletBinding()]
-    param(
-        [Parameter(ValueFromRemainingArguments=$true)]
-        [string[]]$Arguments
-    )
-    if ($Arguments.Length -eq 0) {
-        # SOTA: Busca dinamica dos comandos disponiveis no Kernel
-        try {
-            Write-Host "Buscando comandos de banco de dados no Kernel SOTA..." -ForegroundColor DarkGray
-            $commandsJsonRaw = nexus-cli db-commands
-            $commandsStr = $commandsJsonRaw -join "`n"
-            $jsonMatch = [System.Text.RegularExpressions.Regex]::Match($commandsStr, '(?s)\{.*\}')
-            $commands = $jsonMatch.Value | ConvertFrom-Json
-
-            Write-Host "`nUso: nexus-db <subcomando> [argumentos]`n" -ForegroundColor Yellow
-            Write-Host "Subcomandos disponiveis:"
-
-            # Formata a saida em uma tabela improvisada
-            $commands.PSObject.Properties | ForEach-Object {
-                $commandName = $_.Name
-                $commandDesc = $_.Value
-                Write-Host ("  {0,-30} # {1}" -f $commandName, $commandDesc)
-            }
-        } catch {
-            Write-Error "Nao foi possivel obter a lista de comandos do Kernel. Verifique se o worker esta online ou use 'nexus-cli db-commands' para depurar."
-        }
-        return
-    }
-    # Monta o comando db-* para o nexus-cli
-    $DbCommand = "db-" + $Arguments[0]
-
-    if ($Arguments.Length -gt 1) {
-        $RemainingArgs = $Arguments[1..($Arguments.Length - 1)]
-        nexus-cli $DbCommand @RemainingArgs
-    } else {
-        nexus-cli $DbCommand
-    }
-}
-
-function nexus-ping {
-    param(
-        [string]$Agent = "@maverick",
-        [int]$Timeout = 120
-    )
-    $ts = Get-Date -Format "yyyy-MM-ddTHH:mm:ss"
-    $tsShort = Get-Date -Format "HHmmss"
-    $taskId = "PING-$tsShort"
-    $apiBase = "http://127.0.0.1:17042"
-
-    $body = @{
-        id          = $taskId
-        description = "PING de diagnostico $taskId. Responda APENAS em uma linha: PONG | modelo=<seu_modelo> | ts=$ts"
-        agent       = $Agent
-        timestamp   = $ts
-        metadata    = @{ ping = $true }
-    } | ConvertTo-Json -Compress
-
-    Write-Host "[PING] Enfileirando tarefa $taskId para $Agent..." -ForegroundColor Cyan
-    try {
-        $client = [System.Net.Http.HttpClient]::new()
-        $client.Timeout = [System.TimeSpan]::FromSeconds(5)
-        if ($env:API_SECRET_TOKEN) { $client.DefaultRequestHeaders.Authorization = [System.Net.Http.Headers.AuthenticationHeaderValue]::new("Bearer", $env:API_SECRET_TOKEN) }
-
-        $httpContent = [System.Net.Http.StringContent]::new($body, [System.Text.Encoding]::UTF8, "application/json")
-        $resp = $client.PostAsync("$apiBase/add", $httpContent).GetAwaiter().GetResult()
-        $resp.EnsureSuccessStatusCode() | Out-Null
-        $respContent = $resp.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        $json = $respContent | ConvertFrom-Json
-        if ($json.status -ne "SUCCESS") { throw $json.error }
-
-        $start = [datetime]::UtcNow
-        $lastDot = 0
-        while (([datetime]::UtcNow - $start).TotalSeconds -lt $Timeout) {
-            $elapsed = [int]([datetime]::UtcNow - $start).TotalSeconds
-            try {
-                $res = $client.GetAsync("$apiBase/task-result?id=$taskId").GetAwaiter().GetResult()
-                $res.EnsureSuccessStatusCode() | Out-Null
-                $resContent = $res.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                $rJson = $resContent | ConvertFrom-Json
-                $preview = ($rJson.content -split "`n" | Where-Object { $_ -match "\S" } | Select-Object -First 2) -join " | "
-                Write-Host ""
-                Write-Host "[PONG] ${elapsed}s | $preview" -ForegroundColor Green
-                $client.Dispose()
-                return
-            } catch {
-                if (($elapsed - $lastDot) -ge 5) {
-                    Write-Host "[PING] Aguardando... ${elapsed}s" -ForegroundColor DarkGray
-                    $lastDot = $elapsed
-                }
-                Start-Sleep -Seconds 3
-            }
-        }
-        Write-Host "[PING] Timeout (${Timeout}s) -- tarefa $taskId ainda pendente." -ForegroundColor Yellow
-        $client.Dispose()
-    } catch {
-        Write-Host "[PING] Worker offline ou erro: $_" -ForegroundColor Red
-        Write-Host "       Use 'start-worker' para iniciar o orquestrador." -ForegroundColor DarkGray
-    }
-}
-
-function nexus-help {
-    nexus-commands
-}
-
-function nexus-list {
-    & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" db-get all
-}
-
-function ask {
-    param(
-        [Parameter(ValueFromRemainingArguments=$true)]
-        [string[]]$Query
-    )
-    $PrintOracle = {
-        param([string]$text)
-        Write-Host "`n[ ORACULO ] A VOZ DA MENTE COLETIVA" -ForegroundColor Magenta
-        Write-Host "----------------------------------" -ForegroundColor DarkGray
-        Write-Host $text -ForegroundColor Cyan
-        Write-Host "----------------------------------`n" -ForegroundColor DarkGray
-    }
-
-    $Question = $Query -join " "
-    try {
-        $apiUrl = "http://127.0.0.1:17042/ask-oracle"
-        $headers = @{ "Content-Type" = "application/json" }
-        if ($env:API_SECRET_TOKEN) {
-            $headers.Add("Authorization", "Bearer $env:API_SECRET_TOKEN")
-        }
-        $body = @{ question = $Question; n_results = 3 } | ConvertTo-Json -Compress
-        $response = Invoke-WebRequest -Uri $apiUrl -Method Post -Body $body -Headers $headers -ContentType "application/json" -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
-        $json = $response.Content | ConvertFrom-Json
-        if ($json.status -eq "SUCCESS") {
-            & $PrintOracle $json.answer
-        } else {
-            Write-Error "O Oraculo falhou: $($json.error)"
-        }
-    } catch {
-        Write-Host "[AVISO] Oraculo Hibrido offline. Tentando consulta via API CLI..." -ForegroundColor Yellow
-        $Output = & $Global:NexusPythonExe "$Global:NexusProjectRoot\task_executor.py" query $Question
-        & $PrintOracle $Output
-    }
-}
-
-# --- Protocolos de Sessao SOTA ---
-function ola-chico { nexus-sync }
-function handoff { & "$Global:NexusProjectRoot\do.ps1" -Handoff }
-
-function nexus-commands {
-    Write-Host "`n=== PAINEL DE COMANDOS FUNCIONAIS SOTA NEXUS ===" -ForegroundColor Cyan
-
-    $CommandGroups = [ordered]@{
-        "COGNICAO E EXECUCAO" = @(
-            @{ Name = 'nexus <tarefa>'; Desc = 'Enfileira uma nova tarefa para a IA' },
-            @{ Name = 'ask <pergunta>'; Desc = 'Consulta o Oraculo (Base RAG Vetorial)' },
-            @{ Name = 'nexus-ai <cmd>'; Desc = 'Acessa os modelos de simulacao matematica (GTO/CFR/A*)' },
-            @{ Name = 'nexus-list'; Desc = 'Exibe o Registro Akashico (Tabela das ultimas tarefas)' },
-            @{ Name = 'nexus-status'; Desc = 'Exibe as estatisticas da fila e o orcamento de API' },
-            @{ Name = 'nexus-notify'; Desc = 'Lista auditorias sentinela pendentes para o @maverick' }
-        );
-        "ORQUESTRACAO DA MAQUINA" = @(
-            @{ Name = 'start-worker'; Desc = 'Inicia o orquestrador (Background Executor SOTA)' },
-            @{ Name = 'stop-worker'; Desc = 'Paralisa o orquestrador com seguranca' },
-            @{ Name = 'nexus-watch'; Desc = 'Inicia a vigilia ativa (auto-executa tarefas em mudancas)' },
-            @{ Name = 'nexus-cli'; Desc = 'Acesso direto ao Kernel Python (task_executor.py)' }
-        );
-        "BANCO DE DADOS (DAL) E RECUPERACAO" = @(
-             @{ Name = 'nexus-db <cmd>'; Desc = 'Acesso direto aos comandos db-* do Kernel' },
-             @{ Name = 'nexus-checkdb'; Desc = 'Audita a integridade do banco de dados (corrupcao, zumbis)' },
-             @{ Name = 'nexus-retry <id>'; Desc = 'Reenfileira uma tarefa especifica (muda para pending)' },
-             @{ Name = 'nexus-retry-failed'; Desc = 'Reenfileira TODAS as tarefas com status failed' },
-             @{ Name = 'nexus-complete <id>'; Desc = 'Marca uma tarefa especifica (ex: NOTIFY-*) como concluida' },
-             @{ Name = 'nexus-backup'; Desc = 'Cria um snapshot de seguranca da infraestrutura' },
-             @{ Name = 'nexus-backup-full'; Desc = 'Cria um backup ZIP total do projeto' },
-             @{ Name = 'nexus-restore'; Desc = 'Restaura o sistema a partir do ultimo backup .zip (EMERGENCIA)' }
-        );
-        "SEGURANCA E AUDITORIA" = @(
-            @{ Name = 'nexus-ping'; Desc = 'Enfileira tarefa de diagnostico e exibe PONG quando o worker responder' },
-            @{ Name = 'nexus-keys'; Desc = 'Audita chaves de API e auto-dispara diagnostico de rede' },
-            @{ Name = 'nexus-fallback'; Desc = 'Mostra metricas de fallback (padrao 180 min)' },
-            @{ Name = 'nexus-route-health'; Desc = 'Mostra saude de rota por modelo e candidatos a cooldown' },
-            @{ Name = 'nexus-gemini-health'; Desc = 'Auditoria profunda Gemini (ListModels + generateContent)' },
-            @{ Name = 'nexus-watchdog'; Desc = 'Exibe as estatisticas do Watchdog e taxa de falhas atual' },
-            @{ Name = 'nexus-rate-limits'; Desc = 'Exibe relatorio de gargalos de quota (HTTP 429)' },
-            @{ Name = 'nexus-audit'; Desc = 'Dispara uma Auditoria Adaptativa SOTA (Smart MDA)' }
-        );
-        "MANUTENCAO DE DADOS" = @(
-            @{ Name = 'nexus-telemetry-prune'; Desc = 'Expurga registros de telemetria com mais de 15 dias' },
-            @{ Name = 'nexus-fallback-prune'; Desc = 'Limpa metricas antigas de fallback (padrao 7 dias)' }
-        );
-        "MANUTENCAO E SIMETRIA" = @(
-            @{ Name = 'nexus-sync'; Desc = 'Sincroniza o Manifesto (Gera/atualiza arquivos de Agentes)' },
-            @{ Name = 'nexus-setup'; Desc = 'Reinstala e atualiza as variaveis de perfil do terminal' },
-            @{ Name = 'nexus-schedule'; Desc = 'Agenda as tarefas de manutencao automaticas' },
-            @{ Name = 'nexus-map'; Desc = 'Exibe o mapa da arquitetura de referencia do sistema' },
-            @{ Name = 'nexus-scripts'; Desc = 'Exibe dashboard curado de scripts e comandos funcionais' },
-            @{ Name = 'nexus-scripts-refresh'; Desc = 'Regenera o dashboard vivo de scripts/comandos' },
-            @{ Name = 'nexus-graph'; Desc = 'Exibe o grafo de dependencias das tarefas pendentes' }
-        );
-        "CONTROLE DE AUTONOMIA (GOD MODE)" = @(
-            @{ Name = 'autonomy-full'; Desc = 'W3 - Ativa o God Mode irrestrito (Auto-execucao de comandos)' },
-            @{ Name = 'autonomy-partial'; Desc = 'W2 - Autonomia com bloqueio de comandos destrutivos/alteradores' },
-            @{ Name = 'autonomy-default'; Desc = 'W1 - Desativa execucao de terminal (Apenas forjamento de arquivos)' },
-            @{ Name = 'autonomy-stop'; Desc = 'W0 - Desativa mutacao completa (Observacao Pura)' }
-        )
-    }
-
-    foreach ($group in $CommandGroups.GetEnumerator()) {
-        Write-Host "`n[ $($group.Name) ]" -ForegroundColor Magenta
-        $group.Value | ForEach-Object {
-            $nameFormatted = "{0,-30}" -f $_.Name
-            Write-Host "  $nameFormatted" -NoNewline
-            Write-Host "# " -ForegroundColor DarkGray -NoNewline
-            Write-Host $_.Desc -ForegroundColor Gray
-        }
-    }
-    Write-Host "`n==================================================`n" -ForegroundColor Cyan
-}
-
 # --- Aliases para o Dashboard e Comandos Comuns (Friccao Zero) ---
-# Agora que nexus-cli aponta para nexus.py, estes aliases funcionarao.
 Set-Alias -Name dashboard -Value nexus-cli
 Set-Alias -Name hub -Value nexus-cli
 Set-Alias -Name vitoi_dashboard -Value nexus-cli
-# Set-Alias -Name gemini -Value nexus # Removido para liberar o comando para a Gemini CLI oficial do Google
 Set-Alias -Name gemini-cli -Value nexus-cli
 
 # --- Substituição de Aliases Nativos (Fricção Zero) ---
@@ -655,8 +319,7 @@ function gl { git log --oneline -n 10 @args }
 
 $FinalProfileContent = $Template.Replace('__PROJECT_ROOT__', $ProjectRoot)
 
-# Salva no arquivo (sobrescrevendo o que havia para evitar duplicacao na instalacao)
+# Salva no arquivo
 Set-Content -Path $ProfilePath -Value $FinalProfileContent -Encoding UTF8
-
 
 Write-Host "[OK] Ecossistema Nexus ancorado em: $ProfilePath" -ForegroundColor Green

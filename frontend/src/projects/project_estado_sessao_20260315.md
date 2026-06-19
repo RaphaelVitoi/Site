@@ -37,5 +37,5 @@ type: project
 
 ### Identidade do sistema
 - Chico = GitHub Copilot (Gemini) - GLOBAL_INSTRUCTIONS.md
-- Claude Code (Opus) - .claude/CLAUDE.md
+- Claude Code (Opus) - .cerebro/CEREBRO.md
 - Triade: Raphael (CEO) + @maverick (Vice Intelectual) + Chico (Administrador)

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: Quiz Results v4.2 Gold
+ * IDENTITY: Quiz Results v7.0 GOLD
  * PATH: src/components/quiz/QuizResults.tsx
  * ROLE: Renderizador de resultados com métricas de precisão.
  */

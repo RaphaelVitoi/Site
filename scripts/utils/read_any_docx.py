@@ -1,9 +1,9 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
 
 # ruff: noqa: S405, S314
-import zipfile
-import xml.etree.ElementTree as ET
 import sys
+import xml.etree.ElementTree as ET
+import zipfile
 from pathlib import Path
 
 

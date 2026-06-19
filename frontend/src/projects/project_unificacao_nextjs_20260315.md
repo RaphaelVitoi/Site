@@ -25,7 +25,7 @@ Site unificado no Next.js (16 + React 19 + Tailwind 4 + Prisma).
 - `/biblioteca` - Biblioteca Epistemica
 - `/quem-sou` - Manifesto/Bio (com video 0309.mp4)
 
-**Chico vs Claude:** Chico e o codinome do GitHub Copilot (Gemini). Claude Code opera em paralelo. GLOBAL_INSTRUCTIONS.md e do Chico. .claude/CLAUDE.md e do Claude. Ambos sao usados por Raphael.
+**Chico vs Claude:** Chico e o codinome do GitHub Copilot (Gemini). Claude Code opera em paralelo. GLOBAL_INSTRUCTIONS.md e do Chico. .cerebro/CEREBRO.md e do Claude. Ambos sao usados por Raphael.
 
 **Why:** Projeto tinha duplicacoes massivas, 356 tasks acumuladas, binarios pesados no repo, HTMLs conflitando com Next.js.
 

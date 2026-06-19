@@ -166,6 +166,8 @@ export interface QuantumMetrics {
   perspectiva: number;
   threshEq: number | null;
   ci: number | null;
+  riskAdvantage: number; // SOTA v7.0 GOLD
+  bountyPower?: number; // SOTA v7.0 GOLD
   marginInstability: number;
   isSolvent: boolean;
   isActionable: boolean;

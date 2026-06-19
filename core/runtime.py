@@ -1,3 +1,4 @@
+# pylint: disable=import-outside-toplevel
 """
 Exports explicitos de task_executor para sub-modulos.
 Populado por task_executor.py durante o startup e em cada hot-reload.
@@ -9,8 +10,6 @@ core.runtime nao importa de task_executor -- sem circularidade.
 """
 
 import asyncio
-
-from pathlib import Path
 from typing import Any
 
 import core.config as _config
@@ -23,14 +22,13 @@ def __getattr__(name: str) -> Any:
     if hasattr(_config, name):
         return getattr(_config, name)
     if name == "PID_FILE":
-        return Path(__file__).parent.parent / ".nexus_worker.pid"
+        return _config.PATH_PID_FILE
     if name == "SYSTEM_PROMPT_CACHE":
-        from llm.budget import SYSTEM_PROMPT_CACHE
+        from llm.budget import SYSTEM_PROMPT_CACHE  # pylint: disable=import-outside-toplevel
 
         return SYSTEM_PROMPT_CACHE
     raise AttributeError(
-        f"module '{__name__}' tem Friccao Zero e delegou a prop "
-        f"'{name}', que tambem nao existe no config."
+        f"module '{__name__}' tem Friccao Zero e delegou a prop '{name}', que tambem nao existe no config."
     )
 
 
@@ -39,7 +37,7 @@ def get_rag() -> Any:
     # pylint: disable=global-statement
     global _RAG_INSTANCE
     if _RAG_INSTANCE is None:
-        from memory_rag import MemoryRAG
+        from memory_rag import MemoryRAG  # pylint: disable=import-outside-toplevel
 
         _RAG_INSTANCE = MemoryRAG()
     return _RAG_INSTANCE
@@ -53,7 +51,7 @@ async def get_rag_async() -> Any:
 
 async def start_worker_and_api() -> Any:
     """Inicia o Worker e o Servidor de API."""
-    from worker.startup import start_worker_and_api as _start_worker_and_api
+    from worker.startup import start_worker_and_api as _start_worker_and_api  # pylint: disable=import-outside-toplevel
 
     return await _start_worker_and_api()
 
@@ -96,8 +94,9 @@ if __name__ == "__main__":
         stream=sys.stdout,
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
-    logging.info("[NEXUS SOTA] Inicializando Master Core Runtime (AioHTTP / Worker)...")
+    logger = logging.getLogger(__name__)
+    logger.info("[NEXUS SOTA] Inicializando Master Core Runtime (AioHTTP / Worker)...")
     try:
         asyncio.run(start_worker_and_api())
     except KeyboardInterrupt:
-        logging.info("[NEXUS SOTA] Desligamento Gracioso (SIGINT).")
+        logger.info("[NEXUS SOTA] Desligamento Gracioso (SIGINT).")

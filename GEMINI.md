@@ -18,7 +18,8 @@
 3. **Zero-Any (Integridade de Tipos):** Proibido o uso de `any` ou `as any` em código de produção ativo. Use `unknown` com guardas ou tipos derivados de Zod (`z.infer`).
 4. **Navalha SOTA:** Diante de entropia: **Fundir > Melhorar > Arquivar > Excluir**.
 5. **Blindagem ASCII & Estética UTF-8:** Backend estritamente ASCII puro. UTF-8 rico reservado para Frontend e Documentação.
-6. **Invariância Modular:** Preservar contratos de API e estruturas legadas, a menos que a refatoração total seja matematicamente justificada.
+6. **Organização Geométrica:** Respeitar a hierarquia de *Route Groups* no frontend (`(auth)`, `(public)`, `(lab)`, `(user)`) e a estrutura versionada `api/v1` no backend.
+7. **Invariância Modular:** Preservar contratos de API e estruturas legadas, a menos que a refatoração total seja matematicamente justificada.
 
 ## III. MANDATO DE AUDITORIA SOTA PROATIVA
 
@@ -41,8 +42,9 @@ Toda auditoria solicitada deve ser executada não apenas como análise passiva, 
 - **Token Efficiency (@token-efficiency):** Mandato de economia de tokens e contexto (Shannon Limit).
 - **Verification Loop:** Nenhum código é "pronto" sem linter, tipos e testes.
 
-## IV. PROTOCOLO DE POTÊNCIA MÁXIMA
+## IV. PROTOCOLO DE POTÊNCIA MÁXIMA E LETALIDADE TÁTICA
 
+- **Modus Operandi Estratégico:** A heurística operacional adaptável, táticas de paralelismo, uso cirúrgico de ferramentas e otimização de leitura estão consolidados em [MODUS_OPERANDI.md](file:///C:/users/rapha/.gemini/Site/MODUS_OPERANDI.md). Consulte para alinhamento tático durante sessões complexas.
 - **Bypass de Confirmação:** Use `--consent` e `-Force` quando necessário.
 - **Async v5 Pipeline:** Priorizar execução assíncrona com fila de tarefas (`queue/`).
 - **Leitura Cirúrgica:** `grep_search` antes de `read_file` em arquivos > 100 linhas.

@@ -9,9 +9,7 @@ def _parse_dash_range(item: str) -> set:
     if item[-1] in ("s", "o"):
         idx1 = RANKS.index(start[0])
         i_min, i_max = sorted([RANKS.index(start[1]), RANKS.index(end[1])])
-        return {
-            (idx1, i) if item[-1] == "s" else (i, idx1) for i in range(i_min, i_max + 1)
-        }
+        return {(idx1, i) if item[-1] == "s" else (i, idx1) for i in range(i_min, i_max + 1)}
 
     i_min, i_max = sorted([RANKS.index(start[0]), RANKS.index(end[0])])
     return {(i, i) for i in range(i_min, i_max + 1)}
@@ -20,10 +18,7 @@ def _parse_dash_range(item: str) -> set:
 def _parse_plus_range(item: str) -> set:
     if item.endswith("+") and len(item) == 4 and item[2] in ("s", "o"):
         idx1, idx2 = RANKS.index(item[0]), RANKS.index(item[1])
-        return {
-            (idx1, i) if item[2] == "s" else (i, idx1)
-            for i in range(idx1 + 1, idx2 + 1)
-        }
+        return {(idx1, i) if item[2] == "s" else (i, idx1) for i in range(idx1 + 1, idx2 + 1)}
 
     if item.endswith("+") and len(item) == 3:
         idx = RANKS.index(item[0])
@@ -149,8 +144,8 @@ for r in range(13):
 template = """export const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
 
 /**
- * IDENTITY: Referencial SOTA v5.2 Gold — Dados de Calibragem Soberana
- * SOURCE: Aula 1.2 (Âncora Empírica)
+ * IDENTITY: Referencial SOTA v5.2 Gold \u2014 Dados de Calibragem Soberana
+ * SOURCE: Aula 1.2 (Ancora Empirica)
  * CONTEXT: MTT $11 Vanilla, 126 Entradas, Final Table 9-Handed.
  */
 
@@ -182,15 +177,15 @@ export const RP_MATRIX = [
 ];
 
 export const PRIZES = [
-  { pos: '1º', val: 237.34, jump: 66.38 },
-  { pos: '2º', val: 170.96, jump: 35.79 },
-  { pos: '3º', val: 135.17, jump: 25.18 },
-  { pos: '4º', val: 109.99, jump: 19.71 },
-  { pos: '5º', val: 90.28, jump: 16.33 },
-  { pos: '6º', val: 73.95, jump: 14.03 },
-  { pos: '7º', val: 59.92, jump: 12.36 },
-  { pos: '8º', val: 47.56, jump: 11.09 },
-  { pos: '9º', val: 36.47, jump: 0 },
+  { pos: '1\xba', val: 237.34, jump: 66.38 },
+  { pos: '2\xba', val: 170.96, jump: 35.79 },
+  { pos: '3\xba', val: 135.17, jump: 25.18 },
+  { pos: '4\xba', val: 109.99, jump: 19.71 },
+  { pos: '5\xba', val: 90.28, jump: 16.33 },
+  { pos: '6\xba', val: 73.95, jump: 14.03 },
+  { pos: '7\xba', val: 59.92, jump: 12.36 },
+  { pos: '8\xba', val: 47.56, jump: 11.09 },
+  { pos: '9\xba', val: 36.47, jump: 0 },
 ];
 
 export const TOTAL_POOL = 1260;
@@ -224,11 +219,9 @@ export const EG_BF_MATRIX = new Array(9).fill(0).map((_, r) => new Array(9).fill
 export const EG_RP_MATRIX = EG_BF_MATRIX.map(row => row.map(val => val === 1 ? 0 : Math.round((1 - 1/val) * 1000) / 10));
 """
 
-final_content = template.replace(
-    "{btn_grid_ts}", build_grid_string("BTN_ACTION_GRID", btn_grid)
-).replace("{bb_grid_ts}", build_grid_string("BB_ACTION_GRID", bb_grid))
+final_content = template.replace("{btn_grid_ts}", build_grid_string("BTN_ACTION_GRID", btn_grid)).replace(
+    "{bb_grid_ts}", build_grid_string("BB_ACTION_GRID", bb_grid)
+)
 
-with open(
-    "frontend/src/components/simulator/ReferencialData.ts", "w", encoding="utf-8"
-) as f:
+with open("frontend/src/components/simulator/ReferencialData.ts", "w", encoding="utf-8") as f:
     f.write(final_content)

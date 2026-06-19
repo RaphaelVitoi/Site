@@ -83,10 +83,10 @@ if (oopRp >= 40) {
    - Validação do Death Zone incluída
 
 3. 📄 Documentação criada:
-   - `.claude/AUDITORIA_DIDATICA_MOTOR_ICM.md`
-   - `.claude/CORRECAO_COEFICIENTES_20260316.md`
-   - `.claude/CORRECAO_FINAL_NASH_SOLVER.md`
-   - `.claude/PLANO_VALIDACAO_COEFICIENTES.md`
+   - `.cerebro/AUDITORIA_DIDATICA_MOTOR_ICM.md`
+   - `.cerebro/CORRECAO_COEFICIENTES_20260316.md`
+   - `.cerebro/CORRECAO_FINAL_NASH_SOLVER.md`
+   - `.cerebro/PLANO_VALIDACAO_COEFICIENTES.md`
 
 ---
 

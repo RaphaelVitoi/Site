@@ -13,7 +13,7 @@ import { SotaGlobalSyncProvider } from '@/components/simulator/hooks/useSotaSync
 import SotaBackground from '@/components/ui/layout/SotaBackground';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Montserrat } from 'next/font/google';
+import { Inter, JetBrains_Mono, Montserrat, Playfair_Display, EB_Garamond } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({
@@ -31,6 +31,18 @@ const jetbrainsMono = JetBrains_Mono({
 const montserrat = Montserrat({
 	subsets: ['latin'],
 	variable: '--font-heading',
+	display: 'swap',
+});
+
+const playfair = Playfair_Display({
+	subsets: ['latin'],
+	variable: '--font-playfair',
+	display: 'swap',
+});
+
+const ebGaramond = EB_Garamond({
+	subsets: ['latin'],
+	variable: '--font-garamond',
 	display: 'swap',
 });
 
@@ -65,24 +77,24 @@ const rootSchema = {
 
 export const metadata: Metadata = {
 	title: {
-		default: 'Raphael Vitoi | Nexus - SOTA v6.2.1 GOLD',
+		default: 'Raphael Vitoi | Nexus - SOTA v7.0 GOLD',
 		template: '%s | Raphael Vitoi',
 	},
 	description:
-		'A Geometria do Risco: ICM Pós-Flop, Risk Premium e a Fronteira SOTA v6.2.1 GOLD do Edge no Poker.',
+		'A Geometria do Risco: ICM Pós-Flop, Risk Premium e a Fronteira SOTA v7.0 GOLD do Edge no Poker.',
 	metadataBase: new URL('https://www.pokerracional.com'),
 	openGraph: {
 		type: 'website',
 		locale: 'pt_BR',
 		url: 'https://www.pokerracional.com',
 		siteName: 'PokerRacional.com',
-		title: 'Raphael Vitoi | Nexus - Inteligência SOTA v6.2.1 GOLD',
+		title: 'Raphael Vitoi | Nexus - Inteligência SOTA v7.0 GOLD',
 		description:
 			'A Geometria do Risco: ICM Pós-Flop e o Paradigma da Perspectiva Matemática SOTA GOLD.',
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Raphael Vitoi | Nexus - SOTA v6.2.1 GOLD',
+		title: 'Raphael Vitoi | Nexus - SOTA v7.0 GOLD',
 		description: 'A Nova Fronteira do Edge no Poker: ICM Pós-Flop e Inteligência Quantum GOLD.',
 		creator: '@raphaelvitoi',
 	},
@@ -101,7 +113,7 @@ export default function RootLayout({
 			suppressHydrationWarning
 		>
 			<body
-				className={`${inter.variable} ${jetbrainsMono.variable} ${montserrat.variable} font-body antialiased bg-bg-base text-text-main flex flex-col min-h-screen selection:bg-accent-indigo/30 selection:text-text-bright overflow-x-hidden w-full max-w-full`}
+				className={`${inter.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${playfair.variable} ${ebGaramond.variable} font-body antialiased bg-bg-base text-text-main flex flex-col min-h-screen selection:bg-accent-indigo/30 selection:text-text-bright overflow-x-hidden w-full max-w-full`}
 				suppressHydrationWarning
 			>
 				<AuthProvider>

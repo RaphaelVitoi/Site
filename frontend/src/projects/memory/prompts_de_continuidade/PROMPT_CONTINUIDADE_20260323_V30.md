@@ -64,7 +64,7 @@ type: project
 3. `frontend/src/components/simulator/MasterSimulator.tsx` (rpDeriver + badge UI)
 4. `frontend/src/app/templo/analytics/page.tsx` (tipagem fix)
 5. `frontend/src/components/quiz/QuizQuestion.tsx` (tipagem fix)
-6. `.claude/agents/*.md` x15 (model fix)
+6. `.cerebro/agents/*.md` x15 (model fix)
 
 ### TypeScript
 - 0 erros em todo o projeto

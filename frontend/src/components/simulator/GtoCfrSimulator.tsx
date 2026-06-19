@@ -11,7 +11,7 @@ import {
 	calculateBayesianUpdate,
 	classifyVillainRandomForest,
 	generateGeometricPath,
-} from '@/lib/ai-models';
+} from '../../lib/ai-models';
 import { use, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	Pie,
@@ -244,7 +244,7 @@ export function GtoCfrSimulator() {
 					</div>
 
 					<div className="grid grid-cols-3 gap-3 relative z-10">
-						{geometricPath.map((node) => (
+						{geometricPath.map((node: { street: string; betSize: number }) => (
 							<div
 								key={`path-${node.street}`}
 								className="bg-black/40 p-3 rounded-xl border border-white/5 text-center shadow-inner group-hover:border-accent-indigo/20 transition-colors duration-500"

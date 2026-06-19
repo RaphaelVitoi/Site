@@ -4,9 +4,7 @@ import zipfile
 from pathlib import Path
 
 
-def _process_media_files(
-    docx_zip: zipfile.ZipFile, media_files: list, public_dir: Path
-) -> list:
+def _process_media_files(docx_zip: zipfile.ZipFile, media_files: list, public_dir: Path) -> list:
     """Middleware isolado para purificacao e copia binaria SOTA."""
     extracted = []
     for item in media_files:
@@ -25,17 +23,17 @@ def _process_media_files(
 def extract_media(docx_path: str, slug: str):
     docx_file = Path(docx_path)
     if not docx_file.exists() or not docx_file.is_file():
-        print(f"[ERRO] Arquivo não encontrado: {docx_path}")
+        print(f"[ERRO] Arquivo nao encontrado: {docx_path}")
         return
 
     # Diretorio de destino absoluto baseado na raiz do projeto
-    base_path = Path(__file__).parent
+    base_path = Path(__file__).parent.parent.parent
     public_dir = base_path / "frontend" / "public" / "images" / "aulas" / slug
 
     public_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"[INFO] Analisando arquivo: {docx_file.name}")
-    print(f"[INFO] Diretório de destino: {public_dir}")
+    print(f"[INFO] Diretorio de destino: {public_dir}")
 
     extracted_images = []
 
@@ -50,15 +48,13 @@ def extract_media(docx_path: str, slug: str):
 
             extracted_images = _process_media_files(docx_zip, media_files, public_dir)
 
-        print(
-            f"\n[SUCESSO] {len(extracted_images)} imagem(ns) extraída(s) com Fricção Zero!"
-        )
-        print("\n=== SINTAXE MARKDOWN SOTA PARA INJEÇÃO ===")
+        print(f"\n[SUCESSO] {len(extracted_images)} imagem(ns) extraida(s) com Friccao Zero!")
+        print("\n=== SINTAXE MARKDOWN SOTA PARA INJECAO ===")
         for img in extracted_images:
-            print(f"![Descrição do Gráfico](/images/aulas/{slug}/{img})")
+            print(f"![Descricao do Grafico](/images/aulas/{slug}/{img})")
 
     except zipfile.BadZipFile:
-        print("[ERRO] O arquivo fornecido não é um .docx válido.")
+        print("[ERRO] O arquivo fornecido nao e um .docx valido.")
 
 
 if __name__ == "__main__":

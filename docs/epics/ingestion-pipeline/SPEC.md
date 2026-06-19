@@ -32,8 +32,8 @@ A analise forense da infraestrutura SOTA revela que:
   1. Pular a logica de deteccao de Intencao (`Resolve-Intent`) e Handshake.
   2. Capturar o conteudo da area de transferencia: `$clipboard = Get-Clipboard -Raw`.
   3. Se vazio, abortar com CyberBeep Error.
-  4. Criar um arquivo em `.claude\dropzone.md` salvando o `$clipboard` com `-Encoding UTF8`.
-  5. Chamar o orquestrador Python: `python .\task_executor.py ingest ".claude\dropzone.md"`.
+  4. Criar um arquivo em `.cerebro\dropzone.md` salvando o `$clipboard` com `-Encoding UTF8`.
+  5. Chamar o orquestrador Python: `python .\task_executor.py ingest ".cerebro\dropzone.md"`.
   6. Disparar `Invoke-CyberBeep -Type 'Success'` e notificar o usuario com estetica visual.
   7. Sair da execucao (`exit`).
 
@@ -46,8 +46,8 @@ A analise forense da infraestrutura SOTA revela que:
 2. **Passo 2 (PowerShell):** Editar `do.ps1`.
    - Adicionar `[switch]$Ingest` nos parametros.
    - No topo da execucao (apos mostrar o header e o beep de boot), interceptar o fluxo se `$Ingest` for ativado.
-   - Escrever a logica de extracao do clipboard, salvamento no `.claude/dropzone.md` e a invocacao do Python.
-3. **Passo 3 (Clean Up):** Garantir que pastas como `.claude` existem antes de tentar salvar o `dropzone.md`.
+   - Escrever a logica de extracao do clipboard, salvamento no `.cerebro/dropzone.md` e a invocacao do Python.
+3. **Passo 3 (Clean Up):** Garantir que pastas como `.cerebro` existem antes de tentar salvar o `dropzone.md`.
 
 ## 5. Atualizacoes de Documentacao
 

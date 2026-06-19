@@ -12,6 +12,8 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  modulePathIgnorePatterns: ['<rootDir>/dist-workers/', '<rootDir>/src/lib/engine/pkg/'],
+  testPathIgnorePatterns: ['<rootDir>/dist-workers/', '<rootDir>/src/lib/engine/pkg/'],
 };
 
 module.exports = createJestConfig(customJestConfig);

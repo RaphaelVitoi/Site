@@ -16,7 +16,7 @@ type: project
 
 ## O QUE FOI FEITO NESTA SESSAO
 
-### Perfis de agentes (.claude/agents/*.md)
+### Perfis de agentes (.cerebro/agents/*.md)
 Todos os 18 agentes expandidos de 12 linhas para 35-50 linhas. Novo formato com secoes:
 - Modo de Operacao (quando acionar, protocolo entrada/saida)
 - Padrao e Filosofia
@@ -24,7 +24,7 @@ Todos os 18 agentes expandidos de 12 linhas para 35-50 linhas. Novo formato com 
 - Entrega Esperada
 - Proposta Evolutiva
 
-### MEMORYs reescritas/expandidas (.claude/agent-memory/*/MEMORY.md)
+### MEMORYs reescritas/expandidas (.cerebro/agent-memory/*/MEMORY.md)
 - @historian, @planner, @verifier: reescritas do zero (eram templates vazios ou corrompidos)
 - @dispatcher, @bibliotecario: expandidas (1 linha/secao → conteudo real)
 - @sequenciador: corrigida (declaracao de auto-extincao removida — agente permanece ativo)
@@ -33,7 +33,7 @@ Todos os 18 agentes expandidos de 12 linhas para 35-50 linhas. Novo formato com 
 - HOLOGRAPHIC_ROUTING_PROTOCOL.md: reescrito do zero (estava com codigo Python — corrompido)
   Cobre: principio holografico, pipeline harmonica, memoria individual/coletiva, autopoiese, fractalismo, mapa de comunicacao entre agentes
 - routing_map.json: data corrigida (2023 → 2026)
-- COHERENCE_MANIFEST.md + INDEX_CLAUDE.md: 17 → 18 agentes
+- COHERENCE_MANIFEST.md + INDEX_CEREBRO.md: 17 → 18 agentes
 
 ### @sequenciador permanece ativo
 Raphael confirmou. Papel distinto do task_executor.py: ele orquestra mecanicamente, o @sequenciador define a inteligencia de ordenacao.

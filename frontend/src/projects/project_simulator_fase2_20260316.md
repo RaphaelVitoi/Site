@@ -28,4 +28,4 @@ MasterSimulator ICM — Fase 1 concluída (commit 9739185). Fase 2 pendente.
 
 ## Prompt completo em
 
-`.claude/PROMPT_CONTINUIDADE_20260316_V3.md`
+`.cerebro/PROMPT_CONTINUIDADE_20260316_V3.md`

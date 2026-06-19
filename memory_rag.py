@@ -30,7 +30,7 @@ CHROMA_PATH = Path(__file__).parent / CHROMA_DB_DIR
 OLLAMA_BASE_URL = "http://127.0.0.1:11434"
 EMBEDDING_MODEL = "nomic-embed-text"  # Requer: ollama pull nomic-embed-text
 
-# MED-06: Removido logging.basicConfig() para evitar sobrescrever a configuração SOTA global.
+# MED-06: Removido logging.basicConfig() para evitar sobrescrever a configuracao SOTA global.
 logger = logging.getLogger(__name__)
 
 # =================================================
@@ -796,10 +796,9 @@ class MemoryRAG:
             )
 
             # Purificacao contra entropia de encoding (markdown injetado por LLMs)
-            cleaned_json = re.sub(
+            return re.sub(
                 r"^```json|```$", "", raw_json.strip(), flags=re.MULTILINE
             ).strip()
-            return cleaned_json
 
         except Exception:  # noqa: BLE001
             logger.exception("[RAG] Colapso na extracao do Grafo Causal.")
@@ -827,7 +826,7 @@ if __name__ == "__main__":
             print(result)
         elif cmd == "ingest_drive":
             target_dir = os.environ.get(
-                "GDRIVE_PDF_PATH", r"C:\Users\Raphael\Google Drive\Poker_PDFs"
+                "GDRIVE_PDF_PATH", r"C:\Users\rapha\Google Drive\Poker_PDFs"
             )
             ingest_drive_pdfs(target_dir)
         else:

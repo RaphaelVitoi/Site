@@ -32,6 +32,9 @@ export function calculateActionMetrics(params: ActionMetricsParams) {
 		apiQuantumMetrics,
 		activePlayers,
 	} = params;
+
+	const humanNoiseFactor = apiQuantumMetrics?.marginInstability ? apiQuantumMetrics.marginInstability / 100 : 0;
+
 	const fallbackFold =
 		quantumPerspectiva ?
 			quantumPerspectiva.dynamicEvFold
@@ -45,11 +48,14 @@ export function calculateActionMetrics(params: ActionMetricsParams) {
 			quantumPerspectiva.deltaWinPct * 0.5 +
 			quantumPerspectiva.deltaLosePct * 0.5
 		:	currentPot * 0.3;
+
 	const opponents = Math.max(1, activePlayers - 1);
-	const multiwayMultiplier = Math.pow(opponents, 2);
+	// SOTA GOLD: RIO Exponencial (x^(2+f))
+	const multiwayMultiplier = Math.pow(opponents, 2 + humanNoiseFactor);
 	const baseRioLiability =
 		(quantumPerspectiva ? quantumPerspectiva.rioLiability : rpForDash) *
 		multiwayMultiplier;
+
 	const posType = heroPosition === 'IP' ? 'IP' : 'OOP';
 	let rioTension = 1;
 	if (apiQuantumMetrics?.ci == null || apiQuantumMetrics.ci >= 1)
@@ -59,13 +65,18 @@ export function calculateActionMetrics(params: ActionMetricsParams) {
 			heroRawStack,
 			posType,
 			baseRioLiability,
+			activePlayers,
+			humanNoiseFactor,
 		);
+
 	const raiseTension = calculateRioTension(
 		heroInvested,
 		currentPot,
 		heroRawStack,
 		posType,
 		rpForDash,
+		activePlayers,
+		humanNoiseFactor,
 		0.6,
 	);
 	return {

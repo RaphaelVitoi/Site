@@ -1,7 +1,5 @@
-'use client';
-
 /**
- * IDENTITY: Navegação de Ferramentas SOTA v4.6 GOLD
+ * IDENTITY: Navegação de Ferramentas SOTA v7.0 GOLD
  * PATH: src/components/simulator/ui/SimulatorNavigation.tsx
  * ROLE: Orquestrador de visualização para as ferramentas do laboratório.
  */
@@ -59,8 +57,8 @@ export default function SimulatorNavigation({
 	];
 
 	return (
-		<nav className="flex items-center gap-3 p-2 bg-slate-950/40 backdrop-blur-2xl rounded-3xl border border-white/5 shadow-inner relative overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none snap-x snap-mandatory group/nav w-full max-w-full">
-			<div className="absolute inset-0 bg-radial-[at_top_left] from-white/5 to-transparent pointer-events-none min-w-full" />
+		<nav className="flex items-center gap-3 p-2 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner relative overflow-hidden group/nav w-full max-w-full justify-between">
+			<div className="absolute inset-0 bg-radial-[at_top_left] from-accent-indigo/5 to-transparent pointer-events-none min-w-full" />
 
 			{tools.map((t) => {
 				const isActive = activeTool === t.id;
@@ -72,37 +70,29 @@ export default function SimulatorNavigation({
 						aria-current={isActive ? 'page' : undefined}
 						aria-selected={isActive}
 						role="tab"
-						className={`relative px-5 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-[0.15em] transition-all duration-500 flex items-center gap-3 whitespace-nowrap active:scale-95 group/btn snap-center shrink-0 ${
+						className={`relative px-5 py-3 rounded-xl text-[0.65rem] font-black uppercase tracking-[0.35em] transition-all duration-500 flex items-center gap-3 whitespace-nowrap active:scale-95 group/btn shrink-0 ${
 							isActive
-								? 'text-white shadow-2xl scale-[1.02]'
-								: 'text-text-muted hover:text-text-main hover:bg-white/5'
+								? 'text-white'
+								: 'text-text-darker hover:text-text-muted hover:bg-white/2'
 						}`}
 					>
 						{isActive && (
 							<motion.div
 								layoutId="active-tool-bg"
-								className="absolute inset-0 bg-slate-800/80 border border-white/10 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
-								transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+								className="absolute inset-0 bg-accent-indigo/15 border border-accent-indigo/30 rounded-xl shadow-2xl shadow-indigo-500/10"
+								transition={{ type: 'spring', bounce: 0.1, duration: 0.7 }}
 							/>
 						)}
 
 						<div
-							className={`relative z-10 w-5 h-5 flex items-center justify-center transition-transform duration-500 ${isActive ? 'scale-110' : 'opacity-60 group-hover/btn:opacity-100 group-hover/btn:scale-110'}`}
+							className={`relative z-10 flex items-center justify-center transition-all duration-500 ${isActive ? 'scale-110' : 'opacity-40 group-hover/btn:opacity-80'}`}
 						>
 							<i
-								className={`fa-solid ${t.icon} ${isActive ? 'text-accent-indigo-light' : 'text-text-darker'}`}
+								className={`fa-solid ${t.icon} ${isActive ? 'text-accent-indigo text-glow-indigo' : ''}`}
 							/>
 						</div>
 
 						<span className="relative z-10">{t.label}</span>
-
-						{isActive && (
-							<motion.div
-								initial={{ opacity: 0, scale: 0 }}
-								animate={{ opacity: 1, scale: 1 }}
-								className="relative z-10 w-1.5 h-1.5 rounded-full bg-accent-indigo shadow-[0_0_8px_var(--accent-indigo)]"
-							/>
-						)}
 					</button>
 				);
 			})}

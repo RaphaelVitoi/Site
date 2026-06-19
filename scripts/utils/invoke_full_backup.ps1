@@ -1,79 +1,70 @@
 <#
 .SYNOPSIS
-    Cria um backup ZIP completo do projeto, excluindo diretorios pesados.
+    Protocolo de Salvaguarda Sistêmica (Full Backup SOTA)
 .DESCRIPTION
-    Protocolo de Salvaguarda Manual Redundante. Gera um arquivo .zip do
-    diretorio raiz do projeto, ignorando inteligentemente pastas como .git,
-    .venv, node_modules, e outros artefatos de build/cache para criar um
-    backup leve e portatil.
+    1. Clonagem via Robocopy (MT:16) isolando Entropia (node_modules, .venv, lancedb).
+    2. Compressão assintótica via System.IO.Compression (Fricção Zero).
+    3. Purga efêmera estrutural do diretório Staging.
+    4. Log Fantasma e Garbage Collector (Limite de 5 Backups).
 #>
 
-$ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
-$BackupBaseDir = Join-Path $ProjectRoot '_backups'
-$BackupDir = Join-Path $BackupBaseDir 'full_manual'
+# SOTA: Expurgando a dependência do Windows Explorer e I/O relativo que quebra em Background
+$ScriptDir = $PSScriptRoot
+$SiteDir = Split-Path -Parent (Split-Path -Parent $ScriptDir)
+$BackupRoot = Join-Path (Split-Path -Parent $SiteDir) "Backups"
 
-if (-not (Test-Path $BackupDir)) {
-    New-Item -ItemType Directory -Path $BackupDir -Force | Out-Null
-}
+$LogDir = Join-Path $SiteDir ".cerebro\logs"
+if (-not (Test-Path -LiteralPath $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
+$LogFile = Join-Path $LogDir "backup_ghost.log"
 
-$Timestamp = Get-Date -Format 'yyyy-MM-dd_HHmmss'
-$ArchiveName = "NEXUS_SOTA_BACKUP_$Timestamp.zip"
-$ArchivePath = Join-Path $BackupDir $ArchiveName
+if (-not (Test-Path -LiteralPath $BackupRoot)) { New-Item -ItemType Directory -Path $BackupRoot -Force | Out-Null }
 
-Write-Host '=== INICIANDO BACKUP MANUAL SOTA ===' -ForegroundColor Cyan
-Write-Host "[ALVO] $ArchivePath" -ForegroundColor DarkCyan
+$Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$TempStaging = Join-Path $BackupRoot "Staging_$Timestamp"
+$ZipDestination = Join-Path $BackupRoot "Site_GodMode_$Timestamp.zip"
 
-$ExclusionPatterns = @(
-    '*\.git\*',
-    '*\.venv\*',
-    '*\node_modules\*',
-    '*\frontend\.next\*',
-    '*\frontend\out\*',
-    '*\__pycache__\*',
-    '*\_backups\*',
-    '*\.claude\logs\*',
-    '*\.DS_Store'
-)
+"[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] [IGNIÇÃO] Processo Fantasma Acionado. Fricção Zero." | Out-File $LogFile -Append -Encoding UTF8
 
-Add-Type -AssemblyName System.IO.Compression
-Add-Type -AssemblyName System.IO.Compression.FileSystem
+try {
+    # SOTA: Expurgar vetores regeneráveis/mutáveis para minimizar entropia informacional
+    $ExcludeDirs = @(".git", ".venv", "node_modules", ".lancedb", ".chroma_db", "__pycache__", ".next", ".vscode")
+    $ExcludeFiles = @("*.zip", "*.tmp", "*.log")
 
-$ZipStream = [System.IO.File]::Open($ArchivePath, [System.IO.FileMode]::Create)
-$ZipArchive = [System.IO.Compression.ZipArchive]::new($ZipStream, [System.IO.Compression.ZipArchiveMode]::Create)
+    "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] [ROBOCOPY] Clonagem Assintótica (MT:16)..." | Out-File $LogFile -Append -Encoding UTF8
+    $RoboArgs = @($SiteDir, $TempStaging, "/MIR", "/MT:16", "/R:0", "/W:0", "/NFL", "/NDL", "/NJH", "/NJS", "/XD") + $ExcludeDirs + @("/XF") + $ExcludeFiles
 
-function Add-FilesToZip {
-    param([string]$Path)
-    try {
-        $items = Get-ChildItem -Path $Path -ErrorAction Stop
-        foreach ($item in $items) {
-            $itemPathForMatch = if ($item.PSIsContainer) { "$($item.FullName)\" } else { $item.FullName }
-            $isExcluded = $false
-            foreach ($pattern in $ExclusionPatterns) {
-                if ($itemPathForMatch -like $pattern) {
-                    $isExcluded = $true
-                    break
-                }
-            }
+    $null = & robocopy @RoboArgs
+    if ($LASTEXITCODE -ge 16) {
+        throw "Colapso fatal na clonagem Robocopy. Código crítico: $LASTEXITCODE"
+    }
+    elseif ($LASTEXITCODE -ge 8) {
+        "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] [AVISO] Robocopy ignorou entropia bloqueada (I/O Lock). Mantendo Autopoiese e prosseguindo..." | Out-File $LogFile -Append -Encoding UTF8
+    }
 
-            if (-not $isExcluded) {
-                if ($item.PSIsContainer) {
-                    Add-FilesToZip -Path $item.FullName
-                }
-                else {
-                    $relativePath = $item.FullName.Substring($ProjectRoot.Length).TrimStart('\')
-                    [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($ZipArchive, $item.FullName, $relativePath, [System.IO.Compression.CompressionLevel]::Optimal)
-                }
-            }
+    # Anti-Lock SOTA: Robocopy deixa rastros de I/O por milissegundos. Aguardamos a poeira baixar.
+    "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] [I/O] Aguardando liberação de handles no OS..." | Out-File $LogFile -Append -Encoding UTF8
+    Start-Sleep -Seconds 3
+
+    "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] [ZIP] Compressão Térmica via .NET Nativo..." | Out-File $LogFile -Append -Encoding UTF8
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::CreateFromDirectory($TempStaging, $ZipDestination, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+
+    "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] [PURGA] Destruindo diretório efêmero..." | Out-File $LogFile -Append -Encoding UTF8
+    Remove-Item -Recurse -Force -LiteralPath $TempStaging
+
+    # SOTA: Garbage Collector (Retém os últimos 5 backups, obliterando a entropia)
+    "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] [GARBAGE COLLECTOR] Aplicando teto de entropia (Max 5 backups)..." | Out-File $LogFile -Append -Encoding UTF8
+    $OldBackups = Get-ChildItem -Path $BackupRoot -Filter "Site_GodMode_*.zip" | Sort-Object CreationTime -Descending | Select-Object -Skip 5
+    if ($OldBackups) {
+        foreach ($file in $OldBackups) {
+            Remove-Item -Force -LiteralPath $file.FullName
+            "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] -> Aniquilado: $($file.Name)" | Out-File $LogFile -Append -Encoding UTF8
         }
     }
-    catch {
-        Write-Warning "  [AVISO] Ignorando pasta com lock ou corrompida pelo OneDrive: $Path"
-    }
+
+    "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] [SUCESSO ABSOLUTO] Blindagem preservada em: $ZipDestination`n" | Out-File $LogFile -Append -Encoding UTF8
 }
-
-Add-FilesToZip -Path $ProjectRoot
-
-$ZipArchive.Dispose()
-$ZipStream.Dispose()
-
-Write-Host "[SUCESSO] Backup completo criado com sucesso em: $ArchivePath" -ForegroundColor Green
+catch {
+    "[$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))] [ERRO CRÍTICO] $($_.Exception.Message)`n" | Out-File $LogFile -Append -Encoding UTF8
+    if (Test-Path -LiteralPath $TempStaging) { Remove-Item -Recurse -Force -LiteralPath $TempStaging }
+}

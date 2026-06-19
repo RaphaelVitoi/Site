@@ -76,23 +76,23 @@ const HeadingWithCopy = ({
 
 	const baseStyles =
 		level === 2
-			? 'text-xl font-bold text-accent-indigo mt-10 mb-4 tracking-tight'
-			: 'text-lg font-bold text-emerald-400 mt-8 mb-3';
+			? 'text-2xl font-black text-accent-indigo mt-14 mb-6 tracking-tight uppercase'
+			: 'text-xl font-bold text-emerald-400 mt-10 mb-4 tracking-tight';
 
 	return (
 		<Tag
 			id={id}
-			className={`${baseStyles} group cursor-pointer flex items-center gap-3`}
+			className={`${baseStyles} group cursor-pointer flex items-center gap-4 transition-all duration-300 hover:translate-x-1`}
 			onClick={handleCopy}
 			title="Clique para copiar o link desta seção"
 		>
 			<span className="grow">{children}</span>
 			{copied ? (
-				<span className="text-[0.55rem] font-black font-mono text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20 animate-fade-in">
-					Copiado
+				<span className="text-[0.6rem] font-black font-mono text-emerald-400 uppercase tracking-[0.2em] bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/20 animate-fade-in shadow-lg">
+					Link Copiado
 				</span>
 			) : (
-				<i className="fa-solid fa-link text-[0.7em] opacity-0 group-hover:opacity-40 transition-all text-text-muted hover:text-accent-indigo hover:opacity-100"></i>
+				<i className="fa-solid fa-link text-[0.6em] opacity-0 group-hover:opacity-60 transition-all text-text-muted hover:text-accent-indigo hover:opacity-100 drop-shadow-[0_0_8px_rgba(99,102,241,0.4)]"></i>
 			)}
 		</Tag>
 	);
@@ -101,7 +101,7 @@ const HeadingWithCopy = ({
 const markdownComponents: Components = {
 	h1: ({ children, ...props }) => (
 		<h1
-			className="text-2xl font-black text-text-bright mt-12 mb-6 uppercase tracking-tighter border-b border-white/5 pb-4"
+			className="text-3xl font-black text-text-bright mt-16 mb-8 uppercase tracking-tighter border-b border-white/10 pb-6 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
 			{...props}
 		>
 			{children}
@@ -118,33 +118,33 @@ const markdownComponents: Components = {
 		</HeadingWithCopy>
 	),
 	p: ({ children, ...props }) => (
-		<p className="mb-6 text-[1rem] text-text-muted leading-relaxed font-medium" {...props}>
+		<p className="mb-8 text-[1.05rem] text-text-muted leading-loose font-medium opacity-90" {...props}>
 			{children}
 		</p>
 	),
 	ul: ({ children, ...props }) => (
-		<ul className="list-disc pl-6 mb-8 text-[0.95rem] text-text-muted space-y-3" {...props}>
+		<ul className="list-disc pl-8 mb-10 text-[1rem] text-text-muted space-y-4" {...props}>
 			{children}
 		</ul>
 	),
 	ol: ({ children, ...props }) => (
-		<ol className="list-decimal pl-6 mb-8 text-[0.95rem] text-text-muted space-y-3" {...props}>
+		<ol className="list-decimal pl-8 mb-10 text-[1rem] text-text-muted space-y-4" {...props}>
 			{children}
 		</ol>
 	),
 	li: ({ children, ...props }) => (
-		<li className="pl-1" {...props}>
+		<li className="pl-2" {...props}>
 			{children}
 		</li>
 	),
 	strong: ({ children, ...props }) => (
-		<strong className="font-black text-text-bright" {...props}>
+		<strong className="font-black text-text-bright drop-shadow-sm" {...props}>
 			{children}
 		</strong>
 	),
 	blockquote: ({ children, ...props }) => (
 		<blockquote
-			className="border-l-4 border-accent-indigo/50 pl-6 py-2 italic bg-white/2 rounded-r-2xl my-8 text-text-muted text-lg shadow-sm"
+			className="border-l-4 border-accent-indigo/40 pl-8 py-6 italic bg-white/[0.03] rounded-2xl my-12 text-text-muted text-xl shadow-inner backdrop-blur-sm"
 			{...props}
 		>
 			{children}
@@ -156,7 +156,7 @@ const markdownComponents: Components = {
 			(href.includes('youtube.com') || href.includes('youtu.be') || href.endsWith('.mp4'))
 		) {
 			return (
-				<div className="my-10 rounded-3xl overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.6)] border border-white/10 aspect-video bg-black/40">
+				<div className="my-14 rounded-4xl overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.7)] border border-white/10 aspect-video bg-black/40 group">
 					<ReactPlayer url={href} width="100%" height="100%" controls />
 				</div>
 			);
@@ -164,7 +164,7 @@ const markdownComponents: Components = {
 		return (
 			<a
 				href={href}
-				className="text-accent-indigo-light hover:text-white font-bold underline decoration-accent-indigo/30 underline-offset-4 transition-all hover:decoration-accent-indigo"
+				className="text-accent-indigo-light hover:text-white font-bold underline decoration-accent-indigo/40 underline-offset-4 transition-all hover:decoration-accent-indigo hover:text-glow-indigo"
 				target={href?.startsWith('http') ? '_blank' : undefined}
 				rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
 				{...props}
@@ -196,24 +196,24 @@ const markdownComponents: Components = {
 		}
 		return isInline ? (
 			<code
-				className="bg-accent-indigo/10 text-accent-indigo-light px-1.5 py-0.5 rounded font-mono text-[0.85rem] border border-accent-indigo/20"
+				className="bg-accent-indigo/10 text-accent-indigo-light px-2 py-1 rounded-lg font-mono text-[0.9rem] border border-accent-indigo/20 shadow-sm"
 				{...props}
 			>
 				{children}
 			</code>
 		) : (
 			<code
-				className="block bg-[#050508] text-text-bright p-6 rounded-2xl border border-white/10 font-mono text-[0.85rem] overflow-x-auto my-8 shadow-2xl tabular-nums leading-relaxed"
+				className="block bg-[#020617]/80 text-text-bright p-8 rounded-3xl border border-white/5 font-mono text-[0.9rem] overflow-x-auto my-12 shadow-3xl tabular-nums leading-loose backdrop-blur-xl"
 				{...props}
 			>
 				{children}
 			</code>
 		);
 	},
-	hr: () => <hr className="my-12 border-t border-white/5" />,
+	hr: () => <hr className="my-16 border-t border-white/5 opacity-50" />,
 	table: ({ children, ...props }) => (
-		<div className="overflow-x-auto w-full my-6 rounded-xl border border-white/10 bg-black/20 shadow-inner scrollbar-thin scrollbar-thumb-white/10">
-			<table className="w-full text-left border-collapse text-[0.85rem]" {...props}>
+		<div className="overflow-x-auto w-full my-10 rounded-3xl border border-white/10 bg-black/40 shadow-2xl backdrop-blur-md">
+			<table className="w-full text-left border-collapse text-[0.9rem]" {...props}>
 				{children}
 			</table>
 		</div>
@@ -225,7 +225,7 @@ const markdownComponents: Components = {
 	),
 	th: ({ children, ...props }) => (
 		<th
-			className="p-3 font-black text-text-muted uppercase tracking-widest whitespace-nowrap"
+			className="p-5 font-black text-text-muted uppercase tracking-[0.2em] whitespace-nowrap"
 			{...props}
 		>
 			{children}
@@ -233,7 +233,7 @@ const markdownComponents: Components = {
 	),
 	td: ({ children, ...props }) => (
 		<td
-			className="p-3 border-b border-white/5 text-text-light font-mono whitespace-nowrap"
+			className="p-5 border-b border-white/5 text-text-light font-mono whitespace-nowrap opacity-90"
 			{...props}
 		>
 			{children}

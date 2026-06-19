@@ -456,10 +456,9 @@ export default function ToyGamesPage() {
 						</div>
 
 						<div className="mt-8 pt-6 border-t border-white/5">
-							<div
-								className="prose prose-invert max-w-none"
-								dangerouslySetInnerHTML={{ __html: activeScenario.theory }}
-							/>
+							<div className="prose prose-invert max-w-none">
+								{activeScenario.theory}
+							</div>
 						</div>
 					</div>
 				)}

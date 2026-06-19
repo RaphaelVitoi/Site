@@ -21,7 +21,7 @@ Site/
 ├── memory_rag.py                # Backend RAG (bibliotecario)
 ├── GLOBAL_INSTRUCTIONS.md       # Instrucoes do projeto
 ├── README.md
-├── .gitignore, .aiexclude, .clauderules, .cursorules
+├── .gitignore, .aiexclude, .cerebrorules, .cursorules
 │
 ├── data/                        # JSON configs do Cortex
 │   ├── intentmap.json           # Mapeamento agente -> regex
@@ -68,7 +68,7 @@ Site/
 │
 ├── queue/                       # tasks.json + archive/
 ├── logs/                        # task_log.md, tasks_archived.json
-├── .claude/                     # AI config (agentes, memoria, settings, autonomy)
+├── .cerebro/                     # AI config (agentes, memoria, settings, autonomy)
 │   ├── agents/                  # 16 agentes (.md cada)
 │   ├── agent-memory/            # MEMORY.md por agente
 │   ├── .archive/                # Docs obsoletos arquivados
@@ -103,7 +103,7 @@ Site/
 - 20 scripts movidos da raiz para scripts/ (cli, ops, control, setup)
 - 4 JSONs movidos para data/
 - prisma/ raiz removido (duplicata obsoleta do frontend/prisma/)
-- .claude/task_results/ removido (30 arquivos)
+- .cerebro/task_results/ removido (30 arquivos)
 - queue/*.corrupt* removidos
 - docs/ vazios removidos (MEMORY.md, project-context.md, STRUCTURE_SRC.md)
 - docs/PRD.md → docs/architecture/PRD_TOY_GAMES.md

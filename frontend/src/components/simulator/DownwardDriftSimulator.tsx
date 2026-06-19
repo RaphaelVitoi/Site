@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 /**
  * IDENTITY: Simulador de Downward Drift SOTA Quantum
  * PATH: src/components/simulator/DownwardDriftSimulator.tsx
- * ROLE: Analisar a erosão de stack e o aprisionamento no pote (Pot Entrapment).
- * PRINCIPLE: Fricção Zero & Estética Sofisticada.
+ * ROLE: Analisar a erosÃ£o de stack e o aprisionamento no pote (Pot Entrapment).
+ * PRINCIPLE: FricÃ§Ã£o Zero & EstÃ©tica Sofisticada.
  */
 
 import { useMounted } from '@/hooks/useMounted';
@@ -44,7 +44,7 @@ export function DownwardDriftSimulator() {
 			}
 		};
 
-		// Ignição do Profiler N^2 na VRAM
+		// IgniÃ§Ã£o do Profiler N^2 na VRAM
 		workerRef.current.postMessage({
 			type: 'MULTIWAY_RIO',
 			maxPlayers,
@@ -78,7 +78,7 @@ export function DownwardDriftSimulator() {
 	const { potEntrapment, chartData, crossoverPoint } = useMemo(() => {
 		const betToCall = physics.pot * 0.5;
 		const entrapment = (physics.heroInvested + betToCall) / Math.max(0.1, physics.heroStack);
-		// SOTA v6.2.1: Unificacao do Damping e Multiway N2
+		// SOTA v7.0 GOLD: Unificacao do Damping e Multiway N2
 		const data = [];
 		let firstCrossover = null;
 
@@ -98,7 +98,7 @@ export function DownwardDriftSimulator() {
 				baseRioLiability,
 			);
 
-			// SOTA: Injeção O(1) do Multiway RIO Profiler da VRAM (WASM)
+			// SOTA: InjeÃ§Ã£o O(1) do Multiway RIO Profiler da VRAM (WASM)
 			if (multiwayRioMatrix) {
 				const spr = Math.max(
 					1,
@@ -176,7 +176,7 @@ export function DownwardDriftSimulator() {
 				<div className="flex gap-4">
 					<div className="bg-bg-deep border border-white/5 px-4 py-2 rounded-xl">
 						<span className="text-label text-accent-emerald">
-							Tensão Ativa: {(activeTension * 100).toFixed(1)}%
+							TensÃ£o Ativa: {(activeTension * 100).toFixed(1)}%
 						</span>
 					</div>
 				</div>
@@ -222,13 +222,13 @@ export function DownwardDriftSimulator() {
 					</div>
 					<div className="space-y-2">
 						<div className="flex justify-between items-end mb-1">
-							<span className="text-label opacity-50">Jogadores (Multiway N²)</span>
+							<span className="text-label opacity-50">Jogadores (Multiway NÂ²)</span>
 							<span className="text-sm font-black font-mono text-accent-danger">
 								{activePlayers}
 							</span>
 						</div>
 						<input
-							aria-label="Jogadores (Multiway N²)"
+							aria-label="Jogadores (Multiway NÂ²)"
 							type="range"
 							min="2"
 							max="9"
@@ -303,7 +303,7 @@ export function DownwardDriftSimulator() {
 							)}
 							<Line
 								type="monotone"
-								name="Tensão IP"
+								name="TensÃ£o IP"
 								dataKey="ipTension"
 								stroke="var(--accent-indigo)"
 								strokeWidth={4}
@@ -312,7 +312,7 @@ export function DownwardDriftSimulator() {
 							/>
 							<Line
 								type="monotone"
-								name="Tensão OOP"
+								name="TensÃ£o OOP"
 								dataKey="oopTension"
 								stroke="var(--accent-danger)"
 								strokeWidth={4}
@@ -344,3 +344,4 @@ export function DownwardDriftSimulator() {
 		</div>
 	);
 }
+

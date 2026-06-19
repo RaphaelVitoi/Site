@@ -1,49 +1,113 @@
+# ==============================================================================
+# NEXUS ORCHESTRATOR — pyproject.toml SOTA v2
+# Fonte de verdade unica para dependencias, linters, formatadores e tipagem.
+# Gerenciador canônico: uv  |  Lock file: uv.lock
+# ==============================================================================
+
 [project]
 name = "nexus-orchestrator"
-version = "0.1.0"
-description = "Micro-servidor SOTA e Orquestrador de Agentes"
-requires-python = ">=3.10"
+version = "0.2.0"
+description = "Orquestrador SOTA de Agentes LLM com DAG, RAG e resiliencia multi-provedor"
+readme = "docs/architecture/README.md"
+license = { text = "Proprietary" }
+requires-python = ">=3.12"  # Exige 3.12+ (match/case, ExceptionGroup, type hints modernos)
+
 dependencies = [
-    "aiofiles>=25.1.0",
-    "aiohttp>=3.13.5",
-    "aiosqlite>=0.22.1",
-    "fastapi>=0.136.1",
-    "pydantic>=2.13.4",
-    "pydantic-settings>=2.14.1",
-    "uvicorn>=0.47.0",
-    "numpy>=2.4.4",
-    "pandas>=3.0.3",
-    "scikit-learn>=1.8.0",
-    "scipy>=1.17.1",
-    "chromadb>=1.5.9",
-    "onnxruntime>=1.26.0",
-    "sentence-transformers>=5.4.1",
-    "google-genai>=1.68.0",
-    "openai>=2.36.0",
-    "anthropic>=0.102.0",
-    "httpx>=0.28.1",
-    "pypdf>=6.11.0",
-    "python-docx>=1.1.2",
-    "openpyxl>=3.1.5",
-    "regex>=2026.2.28",
-    "requests>=2.34.0",
-    "PyYAML>=6.0.3",
-    "tqdm>=4.67.3",
-    "rich>=15.0.0",
-    "psutil>=7.2.2",
-    "python-dateutil>=2.9.0.post0",
-    "tenacity>=9.1.4",
-    "watchdog>=6.0.0",
-    "watchfiles>=1.1.1",
-    "Pillow>=11.0.0",
-    "moviepy>=2.0.0",
-    "opencv-python>=4.11.0",
-    "cloudpathlib>=0.20.0",
+    # ── NUCLEO ASSINCRONO ──────────────────────────────────────────────
+    "aiofiles>=24.1.0",
+    "aiohttp>=3.11.0",
+    "aiosqlite>=0.21.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    # ── PYDANTIC & SETTINGS ────────────────────────────────────────────
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    # ── MOTOR MATEMATICO & ANALYTICS ──────────────────────────────────
+    "numpy>=2.2.0",
+    "pandas>=2.2.0",
+    "scikit-learn>=1.6.0",
+    "scipy>=1.15.0",
+    # ── RAG & MEMORIA VETORIAL ─────────────────────────────────────────
+    "chromadb>=0.6.0",
+    "onnxruntime>=1.20.0",
+    "sentence-transformers>=3.3.0",
+    # ── CLIENTES LLM ──────────────────────────────────────────────────
+    "google-genai>=1.2.0",
+    "openai>=1.58.0",
+    "anthropic>=0.42.0",
+    "httpx>=0.28.0",
+    # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
+    "pypdf>=6.12.0,<7.0.0",
+    "python-docx>=1.2.0,<2.0.0",
+    "openpyxl>=3.1.5,<4.0.0",
+    "Pillow>=11.3.0,<12.0.0",
+    # ── MULTIMIDIA (opcional — carregamento lazy) ──────────────────────
+    "moviepy>=2.2.0,<3.0.0",
+    "opencv-python-headless>=4.13.0,<5.0.0",
+    # ── UTILITARIOS ───────────────────────────────────────────────────
+    "regex>=2026.5.0",
+    "requests>=2.34.0,<3.0.0",
+    "PyYAML>=6.0.2,<7.0.0",
+    "tqdm>=4.67.0,<5.0.0",
+    "rich>=15.0.0,<16.0.0",
+    "python-dateutil>=2.9.0,<3.0.0",
+    "tenacity>=9.1.0,<10.0.0",
+    # ── FILESYSTEM & CLOUD ────────────────────────────────────────────
+    "watchdog>=6.0.0,<7.0.0",
+    "watchfiles>=1.2.0,<2.0.0",
+    "cloudpathlib>=0.24.0,<1.0.0",
+    # ── INFRA & MONITORAMENTO ─────────────────────────────────────────
+    "psutil>=7.2.0,<8.0.0",
+    "loguru>=0.7.3",
+    "typer>=0.25.1",
 ]
 
+[project.optional-dependencies]
+# Instalado com: uv sync --extra dev
+dev = [
+    "ruff>=0.15.0",
+    "pylint>=4.0.0",
+    "pyright>=1.1.400",
+    "pytest>=9.0.0",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.15.0",
+    "httpx>=0.28.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.0",
+    "pylint>=4.0.0",
+    "pyright>=1.1.400",
+    "pytest>=9.0.0",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.15.0",
+    "httpx>=0.28.0",
+]
+
+# ==============================================================================
+# UV — Gerenciador de Pacotes (substituicao moderna de pip/venv)
+# ==============================================================================
+[tool.uv]
+# Sincronizado via dependency-groups.dev
+
+# ==============================================================================
+# PYTEST
+# ==============================================================================
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = "-ra -q --strict-markers"
+addopts = [
+    "-ra",
+    "-q",
+    "-p no:cacheprovider",
+    "--strict-markers",
+    "--cov=engine",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=html:reports/coverage",
+    "--cov-fail-under=10",
+]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 log_cli = true
@@ -51,35 +115,116 @@ log_cli_level = "INFO"
 pythonpath = ["."]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-
-[tool.coverage.run]
-branch = true
-source = [
-    "core",
-    "database",
-    "engine",
-    "utils",
-    "api",
-    "agents",
-    "llm",
-    "worker",
-    "task_executor",
+markers = [
+    "slow: testes lentos (>5s) que requerem LLM ou I/O pesado",
+    "integration: testes de integracao que requerem servicos externos",
+    "unit: testes unitarios puros sem I/O externo",
 ]
 
+# ==============================================================================
+# COVERAGE
+# ==============================================================================
+[tool.coverage.run]
+branch = true
+source = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker"]
+omit = ["*/tests/*", "*/__pycache__/*", "*/migrations/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+
+# ==============================================================================
+# RUFF — Linter + Formatter SOTA (substitui flake8, isort, black, bandit)
+# ==============================================================================
 [tool.ruff]
-target-version = "py314"
+target-version = "py312"
 line-length = 120
-exclude = [".gemini", ".venv", "__pycache__", "node_modules", ".next", "frontend"]
+exclude = [
+    ".gemini", ".venv", "__pycache__", "node_modules",
+    ".next", "frontend", "archive", ".backups", "_backups",
+    "nexus_orchestrator.egg-info", "skills", "plugins",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "S", "B", "UP", "I", "SIM", "TID", "FAST", "ASYNC", "C4", "T20", "PT", "RET", "ARG"]
-ignore = ["E501", "T201"]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "W",      # pycodestyle warnings
+    "S",      # bandit (security)
+    "B",      # flake8-bugbear
+    "UP",     # pyupgrade
+    "I",      # isort
+    "SIM",    # flake8-simplify
+    "TID",    # flake8-tidy-imports
+    "FAST",   # FastAPI patterns
+    "ASYNC",  # flake8-async
+    "C4",     # flake8-comprehensions
+    "T20",    # flake8-print (force logging)
+    "PT",     # flake8-pytest-style
+    "RET",    # flake8-return
+    "ARG",    # flake8-unused-arguments
+    "N",      # pep8-naming
+    "ERA",    # eradicate (commented-out code)
+    "LOG",    # flake8-logging
+    "G",      # flake8-logging-format
+    "PIE",    # flake8-pie
+]
+ignore = [
+    "E501",   # line-too-long: gerenciado pelo formatter
+    "T201",   # print: permitido em scripts CLI e task_executor
+    "S101",   # assert: permitido em testes
+    "S603",   # subprocess: gerenciado pela camada de autonomy
+    "S607",   # partial-executable: idem
+    "ERA001", # commented-out code: comentarios SOTA sao documentacao
+    "N806",   # uppercase variable: convencoes de algebra linear (X, y)
+    "G004",   # logging-f-string: permitido em modulos com # pylint: disable
+]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "S101",   # assert statements em testes
+    "ARG001", # unused arguments em fixtures
+    "ARG002", # idem
+    "T201",   # prints em testes de debug
+    "SIM117", # nested with em testes
+]
+"task_executor.py" = ["T201", "S603", "S607", "ERA001"]
+"scripts/**" = ["T201", "S603", "S607"]
+"memory_rag.py" = ["N806"]  # convencao vetorial
+
+[tool.ruff.lint.isort]
+known-first-party = ["core", "database", "engine", "agents", "llm", "worker", "utils", "api"]
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
+docstring-code-format = true
+docstring-code-line-length = 88
+
+# ==============================================================================
+# PYRIGHT — Type Checker (modo standard para projeto SOTA)
+# ==============================================================================
 [tool.pyright]
-include = ["engine", "core", "utils", "api", "agents"]
-exclude = [".venv", "node_modules", "frontend"]
+include = ["engine", "core", "utils", "api", "agents", "llm", "database", "worker"]
+exclude = ["**/__pycache__", "**/.*", ".venv", "node_modules", "frontend", "archive", "nexus_orchestrator.egg-info"]
 venvPath = "."
 venv = ".venv"
-typeCheckingMode = "basic"
+pythonVersion = "3.12"
+typeCheckingMode = "standard"           # Upgrade de "basic" para "standard"
 reportMissingImports = true
+reportMissingModuleSource = "warning"
 reportAttributeAccessIssue = "warning"
+reportUnusedImport = "warning"
+reportUnusedVariable = "warning"
+reportReturnType = "error"
+reportArgumentType = "error"
+reportIndexIssue = "warning"
+useLibraryCodeForTypes = true

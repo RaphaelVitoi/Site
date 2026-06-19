@@ -3,32 +3,54 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-    --color-bg-base: #0f172a;
-    --color-bg-deep: #020617;
-    --color-bg-elevated: #1e293b;
-    --color-text-main: #cbd5e1;
-    --color-text-bright: #f8fafc;
-    --color-text-muted: #94a3b8;
-    --color-text-dim: #64748b;
-    --color-text-darker: #334155;
+    --color-bg-base: hsl(222, 47%, 11%);
+    --color-bg-deep: hsl(224, 71%, 4%);
+    --color-bg-panel: hsl(215, 25%, 27%);
+    --color-bg-elevated: hsl(215, 25%, 27%);
+    --color-text-main: hsl(215, 20%, 80%);
+    --color-text-bright: hsl(210, 40%, 98%);
+    --color-text-muted: hsl(215, 16%, 65%);
+    --color-text-dim: hsl(215, 14%, 47%);
+    --color-text-darker: hsl(215, 25%, 27%);
 
-    --color-accent-indigo: #6366f1;
-    --color-accent-indigo-light: #818cf8;
-    --color-accent-emerald: #10b981;
-    --color-accent-emerald-light: #34d399;
-    --color-accent-rose: #f43f5e;
-    --color-accent-rose-light: #fb7185;
-    --color-accent-danger: #ef4444;
-    --color-accent-danger-light: #f87171;
-    --color-accent-amber: #f59e0b;
-    --color-accent-gold: #fbbf24;
-    --color-accent-violet: #8b5cf6;
-    --color-accent-sky: #0ea5e9;
-    --color-accent-pink: #ec4899;
-    --color-accent-fuchsia: #e879f9;
-    --color-accent-blue: #60a5fa;
-    --color-accent-cyan: #67e8f9;
-    --color-accent-orange: #fb923c;
+    --color-accent-indigo: hsl(239, 84%, 67%);
+    --color-accent-indigo-light: hsl(233, 89%, 74%);
+    --color-accent-emerald: hsl(158, 82%, 39%);
+    --color-accent-emerald-light: hsl(159, 63%, 59%);
+    --color-accent-rose: hsl(349, 89%, 60%);
+    --color-accent-rose-light: hsl(351, 95%, 71%);
+    --color-accent-danger: hsl(0, 84%, 60%);
+    --color-accent-danger-light: hsl(0, 93%, 71%);
+    --color-accent-amber: hsl(38, 92%, 50%);
+    --color-accent-gold: hsl(43, 96%, 58%);
+    --color-accent-violet: hsl(262, 89%, 66%);
+    --color-accent-sky: hsl(199, 89%, 48%);
+    --color-accent-pink: hsl(330, 81%, 60%);
+
+    --radius-4xl: 2rem;
+    --radius-5xl: 3rem;
+
+    --animate-fade-in: fade-in 0.5s ease-out forwards;
+    --animate-fade-up: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    --animate-sota-in: sota-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    --animate-shimmer: shimmer 2s infinite linear;
+
+    @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes sota-in {
+        from { opacity: 0; transform: scale(0.98) translateY(10px); filter: blur(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+    }
+    @keyframes shimmer {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(100%); }
+    }
 
     --background-image-glass-gradient: linear-gradient(180deg, rgba(30, 41, 59, 0.35) 0%, rgba(15, 23, 42, 0.15) 100%);
     --background-image-sota-pattern: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.05), transparent 40%), radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.05), transparent 40%);
@@ -54,17 +76,24 @@
     }
 
     html,
-    body {
+    body,
+    div,
+    section,
+    main,
+    aside,
+    pre,
+    code {
         @apply scroll-smooth antialiased;
-        scrollbar-width: none;
+        @supports (scrollbar-width: none) {
+            scrollbar-width: none !important;
+        }
         /* Firefox */
-        -ms-overflow-style: none;
+        -ms-overflow-style: none !important;
         /* IE/Edge */
     }
 
-    html::-webkit-scrollbar,
-    body::-webkit-scrollbar {
-        display: none;
+    *::-webkit-scrollbar {
+        display: none !important;
         /* Chrome/Safari/Opera */
     }
 
@@ -102,10 +131,10 @@
 
     /* O Vidro Perfeito (Abstração SOTA - Padrão Ouro) */
     .glass-panel {
-        @apply backdrop-blur-2xl rounded-3xl relative transition duration-500 p-8;
-        background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, rgba(2, 6, 23, 0.8) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        @apply backdrop-blur-3xl rounded-4xl relative transition duration-700 p-8 lg:p-12;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.7) 0%, rgba(2, 6, 23, 0.9) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 40px 80px -20px rgba(0, 0, 0, 0.7);
     }
 
     /* Pílula Flutuante para Navegações */
@@ -132,8 +161,18 @@
         text-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
     }
 
-    .text-glow-emerald {
-        text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    .text-glow-rose {
+        text-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+    }
+
+    .sota-label-gold {
+        @apply font-mono text-[0.65rem] font-black uppercase tracking-[0.4em] flex items-center gap-3;
+        color: var(--color-accent-gold);
+        text-shadow: 0 0 12px rgba(251, 191, 36, 0.3);
+    }
+
+    .sota-input-base {
+        @apply bg-slate-950/60 border border-white/10 rounded-xl px-5 py-3.5 text-[0.9rem] font-mono tabular-nums font-black text-white focus:bg-slate-950/80 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/40 transition-all shadow-inner outline-none hover:border-white/20;
     }
 
     .bg-grain {
@@ -174,7 +213,13 @@
 
     /* Container Padronizado (Geometria Áurea) */
     .sota-container {
-        @apply w-full max-w-400 mx-auto px-6 sm:px-8 xl:px-12;
+        @apply w-full mx-auto px-6 sm:px-10 lg:px-16;
+        max-width: var(--container-width, 1600px);
+    }
+
+    /* Utilitário de Respiro SOTA (Padrão Ouro) */
+    .sota-panel-gap {
+        @apply flex flex-col gap-12 lg:gap-20;
     }
 
     /* O Botão Primário SOTA */
@@ -276,4 +321,196 @@
     100% {
         transform: translateX(100%);
     }
+}
+
+/* ── Light Page Scope ──────────────────────────────────────────────────────
+   Overrides dark-mode defaults for ethereal white pages (landing, quem-sou).
+   Use class="light-page" on the root div of those pages.
+   ──────────────────────────────────────────────────────────────────────── */
+.light-page {
+    background: #F5F3EE !important;
+    color: #1C1B1A !important;
+    font-family: var(--font-garamond), Georgia, serif !important;
+    @supports (scrollbar-width: none) {
+        scrollbar-width: none;
+    }
+    -ms-overflow-style: none;
+}
+
+/* Headings */
+.light-page h1,
+.light-page h2,
+.light-page h3,
+.light-page h4 {
+    color: #0D0C0A !important;
+    font-family: var(--font-playfair), Georgia, serif !important;
+    font-weight: 700 !important;
+}
+
+/* Body copy */
+.light-page p {
+    color: inherit;
+}
+
+/* Links inside body text — neutralise browser/global blue */
+.light-page a:not([class]) {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Catch all links within light-page that aren't explicitly styled */
+.light-page a {
+    text-decoration-color: transparent;
+}
+
+/* Focus ring adapted to light bg */
+.light-page :focus-visible {
+    @apply ring-[#111110] ring-offset-[#F5F4F0];
+}
+
+/* ==============================================================================
+   SOTA PREMIUM CUSTOM UI REFINEMENTS (v7.0 GOLD)
+   ============================================================================== */
+
+/* Glass Panel Hover Glow Refinements */
+.glass-panel {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.glass-panel:hover {
+    border-color: rgba(99, 102, 241, 0.25) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 
+                0 0 50px rgba(99, 102, 241, 0.08),
+                0 40px 85px -20px rgba(0, 0, 0, 0.85) !important;
+    transform: translateY(-2px);
+}
+
+.sota-glass-pill {
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.sota-glass-pill:hover {
+    border-color: rgba(99, 102, 241, 0.3) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 
+                0 0 25px rgba(99, 102, 241, 0.12),
+                0 10px 30px -10px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ── SOTA Premium Custom Range Slider ── */
+.sota-range-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+    transition: background 0.3s, box-shadow 0.3s;
+    
+    --slider-color: var(--color-accent-indigo);
+    --slider-color-light: var(--color-accent-indigo-light);
+    --slider-glow: rgba(99, 102, 241, 0.25);
+    --slider-glow-hover: rgba(99, 102, 241, 0.4);
+    --slider-glow-active: rgba(99, 102, 241, 0.55);
+}
+
+.sota-range-slider.sota-slider-indigo {
+    --slider-color: var(--color-accent-indigo);
+    --slider-color-light: var(--color-accent-indigo-light);
+    --slider-glow: rgba(99, 102, 241, 0.25);
+    --slider-glow-hover: rgba(99, 102, 241, 0.4);
+    --slider-glow-active: rgba(99, 102, 241, 0.55);
+}
+
+.sota-range-slider.sota-slider-danger {
+    --slider-color: var(--color-accent-danger);
+    --slider-color-light: var(--color-accent-danger-light);
+    --slider-glow: rgba(239, 68, 68, 0.25);
+    --slider-glow-hover: rgba(239, 68, 68, 0.4);
+    --slider-glow-active: rgba(239, 68, 68, 0.55);
+}
+
+.sota-range-slider.sota-slider-gold {
+    --slider-color: var(--color-accent-gold);
+    --slider-color-light: var(--color-accent-amber);
+    --slider-glow: rgba(245, 158, 11, 0.25);
+    --slider-glow-hover: rgba(245, 158, 11, 0.4);
+    --slider-glow-active: rgba(245, 158, 11, 0.55);
+}
+
+.sota-range-slider.sota-slider-pink {
+    --slider-color: var(--color-accent-pink);
+    --slider-color-light: var(--color-accent-pink);
+    --slider-glow: rgba(219, 39, 119, 0.25);
+    --slider-glow-hover: rgba(219, 39, 119, 0.4);
+    --slider-glow-active: rgba(219, 39, 119, 0.55);
+}
+
+.sota-range-slider.sota-slider-rose {
+    --slider-color: var(--color-accent-rose);
+    --slider-color-light: var(--color-accent-rose-light);
+    --slider-glow: rgba(244, 63, 94, 0.25);
+    --slider-glow-hover: rgba(244, 63, 94, 0.4);
+    --slider-glow-active: rgba(244, 63, 94, 0.55);
+}
+
+.sota-range-slider.sota-slider-emerald {
+    --slider-color: var(--color-accent-emerald);
+    --slider-color-light: var(--color-accent-emerald-light);
+    --slider-glow: rgba(16, 185, 129, 0.25);
+    --slider-glow-hover: rgba(16, 185, 129, 0.4);
+    --slider-glow-active: rgba(16, 185, 129, 0.55);
+}
+
+.sota-range-slider:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Chrome, Safari, Opera, Edge */
+.sota-range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--slider-color);
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--slider-color), 0 0 0 4px var(--slider-glow);
+    transition: transform 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.sota-range-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+    background: var(--slider-color-light);
+    box-shadow: 0 0 15px var(--slider-color-light), 0 0 0 6px var(--slider-glow-hover);
+}
+
+.sota-range-slider::-webkit-slider-thumb:active {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px var(--slider-color-light), 0 0 0 8px var(--slider-glow-active);
+}
+
+/* Firefox */
+.sota-range-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: none;
+    border-radius: 50%;
+    background: var(--slider-color);
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--slider-color), 0 0 0 4px var(--slider-glow);
+    transition: transform 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.sota-range-slider::-moz-range-thumb:hover {
+    transform: scale(1.25);
+    background: var(--slider-color-light);
+    box-shadow: 0 0 15px var(--slider-color-light), 0 0 0 6px var(--slider-glow-hover);
+}
+
+.sota-range-slider::-moz-range-thumb:active {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px var(--slider-color-light), 0 0 0 8px var(--slider-glow-active);
 }

@@ -1,12 +1,12 @@
+# core/schemas.py
+# ruff: noqa: N815
 """Esquemas base de Pydantic SOTA."""
 
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from core.config import VALID_AGENTS
-
-TaskMetadata = dict[str, Any]
+TaskMetadata = dict[str, dict | list | str | int | float | bool | None]
 
 
 class Task(BaseModel):
@@ -14,26 +14,24 @@ class Task(BaseModel):
 
     id: str
     description: str
-    status: Literal["pending", "running", "completed", "failed", "cancelled"] = (
-        "pending"
-    )
+    status: Literal["pending", "running", "completed", "failed", "cancelled"] = "pending"
     timestamp: str
     agent: str = Field(..., pattern=r"^@[\w]+$")
     completedAt: str | None = None
     model: str | None = None
-    metadata: dict[str, Any] = Field(
+    metadata: TaskMetadata = Field(
         default_factory=dict,
-        description=(
-            "Metadados da tarefa, incluindo 'observers' "
-            "para notificacoes e telemetria SOTA."
-        ),
+        description=("Metadados da tarefa, incluindo 'observers' para notificacoes e telemetria SOTA."),
     )
 
     @field_validator("agent")
     @classmethod
     def validate_agent_existence(cls, v: str) -> str:
-        """Valida a consistencia do agente no core."""
-        if v not in VALID_AGENTS:
+        """Valida a consistencia do agente no core. Late import para respeitar hot-reload."""
+        # pylint: disable=import-outside-toplevel
+        from core.config import VALID_AGENTS as _LIVE_AGENTS
+
+        if v not in _LIVE_AGENTS:
             raise ValueError(f"Agente desconhecido: {v}")
         return v
 
@@ -50,16 +48,59 @@ class GeneralTelemetry(BaseModel):
         "Fundamentos SOTA",
         "Bolha",
         "Pos-Flop",
-        "Pós-Flop",
     ]
     componentName: str | None = None
-    scenarioContext: dict[str, Any] | list[Any] | str | None = None
-    userAction: str | None = None
+    scenarioContext: (
+        dict[str, dict | list | str | int | float | bool | None]
+        | list[dict | list | str | int | float | bool | None]
+        | str
+        | None
+    ) = None
+    userAction: str | None = None  # noqa: N815
     optimalAction: str | None = None
     evLoss: float = 0.0
     isCorrect: bool = True
     latency: float = 0.0
-    metadata: dict[str, Any] | None = None
+    metadata: dict[str, dict | list | str | int | float | bool | None] | None = None
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_category(cls, v: str) -> str:
+        """Normaliza categorias para o padrao SOTA (ASCII)."""
+        mapping = {
+            "Pos-Flop": "Pos-Flop",
+            "Pos Flop": "Pos-Flop",
+        }
+        return mapping.get(v, v)
+
+
+class SOTAMetrics(BaseModel):
+    """Isomorfismo SOTA: Schema compartilhado para metrica de IA."""
+
+    esperanca: float = Field(..., description="Vetor de ganho esperado (PM)")
+    expectativa: float = Field(..., description="Vetor bruto de EV")
+    perspectiva: float = Field(..., description="Expectativa ajustada por risco RIO")
+    ci: float = Field(..., description="Coeficiente de Insolvencia")
+    is_solvent: bool
+    is_actionable: bool
+
+
+class RAGQuery(BaseModel):
+    """Schema para consultas RAG (Retrieval Augmented Generation)."""
+
+    query: str
+    top_k: int = 5
+    threshold: float = 0.75
+    metadata_filter: dict[str, dict | list | str | int | float | bool | None] | None = None
+
+
+class LLMConfig(BaseModel):
+    """Configuracao de hardware para VRAM e RAM."""
+
+    vram_limit_gb: int = 12
+    ram_reserve_gb: int = 4
+    gpu_layers: int = 32
+    context_window: int = 8192
 
 
 class PerspectivaResult(BaseModel):
@@ -94,7 +135,7 @@ class InsolvencyMetrics(BaseModel):
 
     potOddsRatio: float
     perspectiveUtility: float
-    insolvencyCoefficient: float
+    insolvencyCoefficient: float | None = None
     isViable: bool
 
 
@@ -107,15 +148,11 @@ class PerspectiveMetric(BaseModel):
         ...,
         description="timeToBlindJumpMinutes, payjumpProximityFactor, positionalUrgency",
     )
-    structuralLiabilities: dict[str, float] = Field(
-        ..., description="multiwayOpponents, reverseImpliedOddsPenalty"
-    )
-    edgeRelative: dict[str, float] = Field(
-        ..., description="stackDepthBb, humanNoiseFactor, technicalSuperiority"
-    )
+    structuralLiabilities: dict[str, float] = Field(..., description="multiwayOpponents, reverseImpliedOddsPenalty")
+    edgeRelative: dict[str, float] = Field(..., description="stackDepthBb, humanNoiseFactor, technicalSuperiority")
     insolvency: InsolvencyMetrics
 
-    def flatten(self) -> dict[str, Any]:
+    def flatten(self) -> dict[str, dict | list | str | int | float | bool | None]:
         """Achata a estrutura para persistencia no SQLite/CSV."""
         return {
             "scenarioId": self.scenarioId,

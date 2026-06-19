@@ -5,8 +5,9 @@ Watchdog -- Supervisao Ativa 24/7 SOTA (Monitoramento Preditivo de Latencia e En
 import asyncio
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
+from core.schemas import Task
 from database.queue_manager import QueueManager
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,6 @@ async def _create_watchdog_task(
     priority: str = "high",
 ):
     """Cria uma tarefa de alerta do watchdog de forma robusta."""
-    from core.schemas import Task
 
     try:
         if not await manager.get_task(task_id):
@@ -28,14 +28,12 @@ async def _create_watchdog_task(
                 id=task_id,
                 description=description,
                 agent=agent,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 metadata={"priority": priority},
             )
             await manager.add_task(alert_task)
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.exception(
-            "[WATCHDOG] Falha ao criar tarefa de alerta '%s': %s", task_id, e
-        )
+        logger.exception("[WATCHDOG] Falha ao criar tarefa de alerta '%s': %s", task_id, e)
 
 
 async def _get_last_metrics(manager: QueueManager) -> dict:
@@ -47,9 +45,7 @@ async def _get_last_metrics(manager: QueueManager) -> dict:
         return {}
 
 
-def _calculate_failure_rate(
-    now: datetime, current_failed: int, last_metrics: dict
-) -> tuple[float, int]:
+def _calculate_failure_rate(now: datetime, current_failed: int, last_metrics: dict) -> tuple[float, int]:
     """Calcula a taxa de falha (falhas por minuto) baseada no historico."""
     last_failed = last_metrics.get("failed")
     last_timestamp_str = last_metrics.get("timestamp")
@@ -59,7 +55,7 @@ def _calculate_failure_rate(
             last_ts = datetime.fromisoformat(last_timestamp_str)
             # SOTA: Garantia de Coerence Temporal (Blindagem contra mismatch naive/aware)
             if last_ts.tzinfo is None:
-                last_ts = last_ts.replace(tzinfo=timezone.utc)
+                last_ts = last_ts.replace(tzinfo=UTC)
 
             time_delta = now - last_ts
             minutes_delta = time_delta.total_seconds() / 60
@@ -71,9 +67,7 @@ def _calculate_failure_rate(
     return 0.0, 0
 
 
-def _evaluate_triggers(
-    current_pending: int, recent_failures: int, failure_rate: float
-) -> str | None:
+def _evaluate_triggers(current_pending: int, recent_failures: int, failure_rate: float) -> str | None:
     """Avalia gatilhos de anomalia preditiva SOTA."""
     if current_pending > 40:
         return f"Engarrafamento na Fila ({current_pending} pendentes)"
@@ -92,7 +86,7 @@ async def _process_watchdog_triggers(
     failure_rate: float,
 ):
     """Processa e enfileira alertas de degradacao."""
-    alert_id = f"WATCHDOG-ALERT-{datetime.now(timezone.utc).strftime('%Y%m%d%H')}"
+    alert_id = f"WATCHDOG-ALERT-{datetime.now(UTC).strftime('%Y%m%d%H')}"
     desc = (
         f"[SUPERVISAO 24/7 SOTA] ALERTA DE DEGRADACAO: {trigger}.\n\n"
         f"Metricas Atuais:\n"
@@ -110,12 +104,10 @@ async def _run_watchdog_cycle(manager: QueueManager):
     counts = await manager.get_task_counts()
     current_failed = counts.get("failed", 0)
     current_pending = counts.get("pending", 0)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     last_metrics = await _get_last_metrics(manager)
-    failure_rate, recent_failures = _calculate_failure_rate(
-        now, current_failed, last_metrics
-    )
+    failure_rate, recent_failures = _calculate_failure_rate(now, current_failed, last_metrics)
 
     await manager.set_system_state(
         "watchdog_last_metrics",
@@ -124,9 +116,7 @@ async def _run_watchdog_cycle(manager: QueueManager):
 
     trigger = _evaluate_triggers(current_pending, recent_failures, failure_rate)
     if trigger:
-        await _process_watchdog_triggers(
-            manager, trigger, current_pending, recent_failures, failure_rate
-        )
+        await _process_watchdog_triggers(manager, trigger, current_pending, recent_failures, failure_rate)
 
 
 async def system_watchdog(manager: QueueManager):

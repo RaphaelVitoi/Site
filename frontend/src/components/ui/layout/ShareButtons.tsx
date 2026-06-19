@@ -17,33 +17,33 @@ export default function ShareButtons({ title, url }: Readonly<ShareButtonsProps>
 			name: 'Twitter',
 			href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
 			icon: <FaTwitter />,
-			className: styles.twitter,
+			className: styles['twitter'],
 		},
 		{
 			name: 'LinkedIn',
 			href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
 			icon: <FaLinkedinIn />,
-			className: styles.linkedin,
+			className: styles['linkedin'],
 		},
 		{
 			name: 'WhatsApp',
 			href: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
 			icon: <FaWhatsapp />,
-			className: styles.whatsapp,
+			className: styles['whatsapp'],
 		},
 	];
 
 	return (
-		<div className={styles.shareContainer}>
-			<h4 className={styles.shareTitle}>Compartilhe o Conhecimento</h4>
-			<div className={styles.buttonsWrapper}>
+		<div className={styles['shareContainer']}>
+			<h4 className={styles['shareTitle']}>Compartilhe o Conhecimento</h4>
+			<div className={styles['buttonsWrapper']}>
 				{socialLinks.map((link) => (
 					<a
 						key={link.name}
 						href={link.href}
 						target="_blank"
 						rel="noopener noreferrer"
-						className={`${styles.button} ${link.className}`}
+						className={`${styles['button']} ${link.className}`}
 						aria-label={`Compartilhar no ${link.name}`}
 					>
 						{link.icon}

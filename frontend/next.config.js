@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  poweredByHeader: false,
+  devIndicators: {
+    appIsrStatus: false,
+    buildActivity: true,
+    buildActivityPosition: 'bottom-right',
+  },
   turbopack: {},
   webpack: (config, { dev }) => {
     if (dev) {

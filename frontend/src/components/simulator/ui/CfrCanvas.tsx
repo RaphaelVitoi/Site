@@ -11,14 +11,14 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 
 // SOTA FIX: Selando a tipagem WebGPU para o TypeScript (Ambientes sem @types/webgpu global)
 declare const GPUBufferUsage: {
-	readonly MAP_READ: 0x0001;
-	readonly MAP_WRITE: 0x0002;
-	readonly COPY_SRC: 0x0004;
-	readonly COPY_DST: 0x0008;
-	readonly INDEX: 0x0010;
-	readonly VERTEX: 0x0020;
-	readonly UNIFORM: 0x0040;
-	readonly STORAGE: 0x0080;
+  readonly MAP_READ: 0x0001;
+  readonly MAP_WRITE: 0x0002;
+  readonly COPY_SRC: 0x0004;
+  readonly COPY_DST: 0x0008;
+  readonly INDEX: 0x0010;
+  readonly VERTEX: 0x0020;
+  readonly UNIFORM: 0x0040;
+  readonly STORAGE: 0x0080;
 };
 
 const WGSL_SHADER = `
@@ -71,249 +71,235 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
 `;
 
 export interface CfrCanvasProps {
-	nodes: number;
+  nodes: number;
 }
 
 export interface CfrCanvasRef {
-	updateMatrix: (matrix: Float32Array) => void;
+  updateMatrix: (matrix: Float32Array) => void;
 }
 
 // SOTA: Interfaces mínimas para blindagem de tipos WebGPU sem dependências externas
 interface SotaWebGpuContext {
-	configure(config: { device: unknown; format: string; alphaMode: string }): void;
-	getCurrentTexture(): { createView(): unknown };
+  configure(config: { device: unknown; format: string; alphaMode: string }): void;
+  getCurrentTexture(): { createView(): unknown };
 }
 
 interface SotaGpuDevice {
-	createShaderModule(desc: { label: string; code: string }): unknown;
-	createRenderPipeline(desc: Record<string, unknown>): {
-		getBindGroupLayout(index: number): unknown;
-	};
-	createBuffer(desc: { size: number; usage: number }): unknown;
-	queue: {
-		writeBuffer(buffer: unknown, offset: number, data: Float32Array): void;
-		submit(commands: unknown[]): void;
-	};
-	createBindGroup(desc: Record<string, unknown>): unknown;
-	createCommandEncoder(): {
-		beginRenderPass(desc: Record<string, unknown>): {
-			setPipeline(pipeline: unknown): void;
-			setBindGroup(index: number, bindGroup: unknown): void;
-			draw(v: number, i: number, v1: number, v2: number): void;
-			end(): void;
-		};
-		finish(): unknown;
-	};
-	destroy(): void;
+  createShaderModule(desc: { label: string; code: string }): unknown;
+  createRenderPipeline(desc: Record<string, unknown>): {
+    getBindGroupLayout(index: number): unknown;
+  };
+  createBuffer(desc: { size: number; usage: number }): unknown;
+  queue: {
+    writeBuffer(buffer: unknown, offset: number, data: Float32Array): void;
+    submit(commands: unknown[]): void;
+  };
+  createBindGroup(desc: Record<string, unknown>): unknown;
+  createCommandEncoder(): {
+    beginRenderPass(desc: Record<string, unknown>): {
+      setPipeline(pipeline: unknown): void;
+      setBindGroup(index: number, bindGroup: unknown): void;
+      draw(v: number, i: number, v1: number, v2: number): void;
+      end(): void;
+    };
+    finish(): unknown;
+  };
+  destroy(): void;
 }
 
 export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ nodes }, ref) => {
-	const canvasRef = useRef<HTMLCanvasElement>(null);
-	const deviceRef = useRef<SotaGpuDevice | null>(null);
-	const pipelineRef = useRef<unknown>(null);
-	const matrixBufferRef = useRef<unknown>(null);
-	const uniformBufferRef = useRef<unknown>(null);
-	const bindGroupRef = useRef<unknown>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const deviceRef = useRef<SotaGpuDevice | null>(null);
+  const pipelineRef = useRef<unknown>(null);
+  const matrixBufferRef = useRef<unknown>(null);
+  const uniformBufferRef = useRef<unknown>(null);
+  const bindGroupRef = useRef<unknown>(null);
 
-	const [isReady, setIsReady] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-	useEffect(() => {
-		let isCancelled = false;
+  useEffect(() => {
+    let isCancelled = false;
 
-		async function initWebGPU() {
-			const navigatorGpu = (navigator as unknown as Record<string, unknown>).gpu as
-				| {
-						requestAdapter(options?: Record<string, unknown>): Promise<{
-							requestDevice(): Promise<SotaGpuDevice>;
-						} | null>;
-						getPreferredCanvasFormat(): string;
-				  }
-				| undefined;
+    async function initWebGPU() {
+      const navigatorGpu = (navigator as unknown as Record<string, unknown>)['gpu'] as
+        | {
+            requestAdapter(options?: Record<string, unknown>): Promise<{
+              requestDevice(): Promise<SotaGpuDevice>;
+            } | null>;
+            getPreferredCanvasFormat(): string;
+          }
+        | undefined;
 
-			if (!navigatorGpu) {
-				setError(
-					'WebGPU não suportado neste navegador. Verifique a compatibilidade e aceleração de hardware.',
-				);
-				return;
-			}
+      if (!navigatorGpu) {
+        setError('WebGPU não suportado neste navegador. Verifique a compatibilidade e aceleração de hardware.');
+        return;
+      }
 
-			try {
-				const adapter = await navigatorGpu.requestAdapter({
-					powerPreference: 'high-performance',
-				});
-				if (!adapter) throw new Error('Adaptador WebGPU negou o pedido de contexto.');
+      try {
+        const adapter = await navigatorGpu.requestAdapter({
+          powerPreference: 'high-performance',
+        });
+        if (!adapter) throw new Error('Adaptador WebGPU negou o pedido de contexto.');
 
-				const device = await adapter.requestDevice();
-				if (isCancelled) return;
-				deviceRef.current = device;
+        const device = await adapter.requestDevice();
+        if (isCancelled) return;
+        deviceRef.current = device;
 
-				const canvas = canvasRef.current;
-				if (!canvas) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
 
-				// Cast blindado para anular a cegueira tipográfica do TS sobre WebGPU
-				const context = canvas.getContext('webgpu') as unknown as SotaWebGpuContext;
-				if (!context)
-					throw new Error('Falha ao ancorar o contexto de desenho WebGPU no DOM.');
+        // Cast blindado para anular a cegueira tipográfica do TS sobre WebGPU
+        const context = canvas.getContext('webgpu') as unknown as SotaWebGpuContext;
+        if (!context) throw new Error('Falha ao ancorar o contexto de desenho WebGPU no DOM.');
 
-				const presentationFormat = navigatorGpu.getPreferredCanvasFormat();
-				context.configure({
-					device,
-					format: presentationFormat,
-					alphaMode: 'premultiplied',
-				});
+        const presentationFormat = navigatorGpu.getPreferredCanvasFormat();
+        context.configure({
+          device,
+          format: presentationFormat,
+          alphaMode: 'premultiplied',
+        });
 
-				const shaderModule = device.createShaderModule({
-					label: 'CFR Heatmap Shader',
-					code: WGSL_SHADER,
-				});
+        const shaderModule = device.createShaderModule({
+          label: 'CFR Heatmap Shader',
+          code: WGSL_SHADER,
+        });
 
-				const pipeline = device.createRenderPipeline({
-					label: 'CFR Render Pipeline',
-					layout: 'auto',
-					vertex: { module: shaderModule, entryPoint: 'vs_main' },
-					fragment: {
-						module: shaderModule,
-						entryPoint: 'fs_main',
-						targets: [
-							{
-								format: presentationFormat,
-								blend: {
-									color: {
-										srcFactor: 'src-alpha',
-										dstFactor: 'one-minus-src-alpha',
-										operation: 'add',
-									},
-									alpha: {
-										srcFactor: 'one',
-										dstFactor: 'one-minus-src-alpha',
-										operation: 'add',
-									},
-								},
-							},
-						],
-					},
-					primitive: { topology: 'triangle-list' },
-				});
+        const pipeline = device.createRenderPipeline({
+          label: 'CFR Render Pipeline',
+          layout: 'auto',
+          vertex: { module: shaderModule, entryPoint: 'vs_main' },
+          fragment: {
+            module: shaderModule,
+            entryPoint: 'fs_main',
+            targets: [
+              {
+                format: presentationFormat,
+                blend: {
+                  color: {
+                    srcFactor: 'src-alpha',
+                    dstFactor: 'one-minus-src-alpha',
+                    operation: 'add',
+                  },
+                  alpha: {
+                    srcFactor: 'one',
+                    dstFactor: 'one-minus-src-alpha',
+                    operation: 'add',
+                  },
+                },
+              },
+            ],
+          },
+          primitive: { topology: 'triangle-list' },
+        });
 
-				pipelineRef.current = pipeline;
+        pipelineRef.current = pipeline;
 
-				// Homeostase de VRAM: O Uniform e o Storage são imutáveis em tamanho no ciclo de vida
-				const uBuffer = device.createBuffer({
-					size: 4,
-					usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-				});
-				device.queue.writeBuffer(uBuffer, 0, new Float32Array([nodes]));
-				uniformBufferRef.current = uBuffer;
+        // Homeostase de VRAM: O Uniform e o Storage são imutáveis em tamanho no ciclo de vida
+        const uBuffer = device.createBuffer({
+          size: 4,
+          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(uBuffer, 0, new Float32Array([nodes]));
+        uniformBufferRef.current = uBuffer;
 
-				const maxNodes = 100 * 100; // Limite arquitetural estrito
-				const mBuffer = device.createBuffer({
-					size: maxNodes * 4,
-					usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-				});
-				matrixBufferRef.current = mBuffer;
+        const maxNodes = 100 * 100; // Limite arquitetural estrito
+        const mBuffer = device.createBuffer({
+          size: maxNodes * 4,
+          usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
+        matrixBufferRef.current = mBuffer;
 
-				bindGroupRef.current = device.createBindGroup({
-					layout: pipeline.getBindGroupLayout(0),
-					entries: [
-						{ binding: 0, resource: { buffer: uBuffer } },
-						{ binding: 1, resource: { buffer: mBuffer } },
-					],
-				});
+        bindGroupRef.current = device.createBindGroup({
+          layout: pipeline.getBindGroupLayout(0),
+          entries: [
+            { binding: 0, resource: { buffer: uBuffer } },
+            { binding: 1, resource: { buffer: mBuffer } },
+          ],
+        });
 
-				setIsReady(true);
-			} catch (err: unknown) {
-				setError((err as Error).message || 'Entropia detectada na ponte WebGPU');
-			}
-		}
+        setIsReady(true);
+      } catch (err: unknown) {
+        setError((err as Error).message || 'Entropia detectada na ponte WebGPU');
+      }
+    }
 
-		initWebGPU();
+    initWebGPU();
 
-		return () => {
-			isCancelled = true;
-			if (uniformBufferRef.current)
-				(uniformBufferRef.current as { destroy(): void }).destroy();
-			if (matrixBufferRef.current) (matrixBufferRef.current as { destroy(): void }).destroy();
-			if (deviceRef.current) (deviceRef.current as { destroy(): void }).destroy();
-		};
-	}, [nodes]);
+    return () => {
+      isCancelled = true;
+      if (uniformBufferRef.current) (uniformBufferRef.current as { destroy(): void }).destroy();
+      if (matrixBufferRef.current) (matrixBufferRef.current as { destroy(): void }).destroy();
+      if (deviceRef.current) (deviceRef.current as { destroy(): void }).destroy();
+    };
+  }, [nodes]);
 
-	useImperativeHandle(
-		ref,
-		() => ({
-			updateMatrix: (newMatrix: Float32Array) => {
-				if (
-					!isReady ||
-					!deviceRef.current ||
-					!pipelineRef.current ||
-					!matrixBufferRef.current ||
-					!bindGroupRef.current
-				)
-					return;
+  useImperativeHandle(
+    ref,
+    () => ({
+      updateMatrix: (newMatrix: Float32Array) => {
+        if (!isReady || !deviceRef.current || !pipelineRef.current || !matrixBufferRef.current || !bindGroupRef.current)
+          return;
 
-				const device = deviceRef.current as {
-					queue: {
-						writeBuffer(buffer: unknown, offset: number, data: Float32Array): void;
-						submit(commands: unknown[]): void;
-					};
-					createCommandEncoder(): {
-						beginRenderPass(desc: Record<string, unknown>): {
-							setPipeline(pipeline: unknown): void;
-							setBindGroup(index: number, bindGroup: unknown): void;
-							draw(v: number, i: number, v1: number, v2: number): void;
-							end(): void;
-						};
-						finish(): unknown;
-					};
-				};
-				const context = canvasRef.current?.getContext(
-					'webgpu',
-				) as unknown as SotaWebGpuContext;
-				if (!context) return;
+        const device = deviceRef.current as {
+          queue: {
+            writeBuffer(buffer: unknown, offset: number, data: Float32Array): void;
+            submit(commands: unknown[]): void;
+          };
+          createCommandEncoder(): {
+            beginRenderPass(desc: Record<string, unknown>): {
+              setPipeline(pipeline: unknown): void;
+              setBindGroup(index: number, bindGroup: unknown): void;
+              draw(v: number, i: number, v1: number, v2: number): void;
+              end(): void;
+            };
+            finish(): unknown;
+          };
+        };
+        const context = canvasRef.current?.getContext('webgpu') as unknown as SotaWebGpuContext;
+        if (!context) return;
 
-				// Fricção Zero: Injeção direta da matriz (Zero-Copy)
-				device.queue.writeBuffer(matrixBufferRef.current, 0, newMatrix);
+        // Fricção Zero: Injeção direta da matriz (Zero-Copy)
+        device.queue.writeBuffer(matrixBufferRef.current, 0, newMatrix);
 
-				const commandEncoder = device.createCommandEncoder();
-				const textureView = (
-					context.getCurrentTexture() as { createView(): unknown }
-				).createView();
+        const commandEncoder = device.createCommandEncoder();
+        const textureView = context.getCurrentTexture().createView();
 
-				const renderPass = commandEncoder.beginRenderPass({
-					colorAttachments: [
-						{
-							view: textureView,
-							clearValue: { r: 0, g: 0, b: 0, a: 0 }, // Fundo transparente SOTA (Glassmorphism integration)
-							loadOp: 'clear',
-							storeOp: 'store',
-						},
-					],
-				});
+        const renderPass = commandEncoder.beginRenderPass({
+          colorAttachments: [
+            {
+              view: textureView,
+              clearValue: { r: 0, g: 0, b: 0, a: 0 }, // Fundo transparente SOTA (Glassmorphism integration)
+              loadOp: 'clear',
+              storeOp: 'store',
+            },
+          ],
+        });
 
-				renderPass.setPipeline(pipelineRef.current);
-				renderPass.setBindGroup(0, bindGroupRef.current);
-				renderPass.draw(6, 1, 0, 0);
-				renderPass.end();
+        renderPass.setPipeline(pipelineRef.current);
+        renderPass.setBindGroup(0, bindGroupRef.current);
+        renderPass.draw(6, 1, 0, 0);
+        renderPass.end();
 
-				device.queue.submit([commandEncoder.finish()]);
-			},
-		}),
-		[isReady],
-	);
+        device.queue.submit([commandEncoder.finish()]);
+      },
+    }),
+    [isReady],
+  );
 
-	if (error) {
-		return (
-			<div className="w-full h-full flex items-center justify-center border border-accent-danger/20 bg-accent-danger/5 rounded-3xl text-accent-danger text-[0.6rem] font-mono p-4 text-center">
-				{error}
-			</div>
-		);
-	}
+  if (error) {
+    return (
+      <div className="border-accent-danger/20 bg-accent-danger/5 text-accent-danger flex h-full w-full items-center justify-center rounded-3xl border p-4 text-center font-mono text-[0.6rem]">
+        {error}
+      </div>
+    );
+  }
 
-	return (
-		<canvas
-			ref={canvasRef}
-			className="w-full h-full absolute inset-0 mix-blend-screen opacity-90 transition-opacity duration-1000"
-		/>
-	);
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 h-full w-full opacity-90 mix-blend-screen transition-opacity duration-1000"
+    />
+  );
 });
 CfrCanvas.displayName = 'CfrCanvas';

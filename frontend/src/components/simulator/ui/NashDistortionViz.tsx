@@ -22,12 +22,12 @@ export const NashDistortionViz = ({ streetName, nashData }: Readonly<NashDistort
 	return (
 		<div className="flex flex-col gap-4 p-6 bg-black/60 rounded-3xl border border-white/5 shadow-2xl transition-all duration-500 hover:bg-black/80 hover:border-white/10 group">
 			<div className="flex items-center justify-between mb-1">
-				<h4 className="text-[0.6rem] font-black tracking-[0.25em] text-text-muted uppercase flex items-center gap-2 group-hover:text-text-dim transition-colors">
-					<i className="fa-solid fa-bolt text-accent-amber/40 animate-pulse"></i>
+				<h4 className="text-[0.6rem] font-black tracking-[0.3em] text-text-muted uppercase flex items-center gap-2 group-hover:text-text-dim transition-colors">
+					<i className="fa-solid fa-bolt text-accent-amber animate-pulse"></i>
 					{streetName} Distortion
 				</h4>
 				{!nashData && (
-					<span className="text-[0.55rem] uppercase tracking-widest text-text-dim animate-pulse">
+					<span className="text-[0.55rem] uppercase tracking-[0.4em] text-text-dim animate-pulse">
 						Calculando...
 					</span>
 				)}

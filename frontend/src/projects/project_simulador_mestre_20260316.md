@@ -62,7 +62,7 @@ frontend/src/components/simulator/
 ### Pendente
 - **Teste visual** no browser (dev server)
 - Features para Fase 2 futura (requerem backend): AI Coach (Gemini chat), Gerador de Cenarios IA, TTS
-- Plano aprovado em: `.claude/plans/shimmering-stargazing-rainbow.md`
+- Plano aprovado em: `.cerebro/plans/shimmering-stargazing-rainbow.md`
 
 **Why:** O usuario pediu unificacao de todos os simuladores redundantes num estado da arte. Site e exclusivamente sobre poker.
 

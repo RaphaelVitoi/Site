@@ -24,7 +24,7 @@ type: project
 - Quando `-TestMode` ativo: bloco `if (-not $TestMode)` suprime as definições locais de `Invoke-ContextAssembler` e `Invoke-NexusScript`
 - PowerShell sobe na cadeia de escopo e encontra as versões `global:` (mockadas pelo Pester)
 - Guards `Test-Path` do bloco `-Web` também pulados em `-TestMode`
-- Fix real (bug PS5.1): `Join-Path $ScriptDirectory '.claude' 'CLAUDE.md'` (3 args) incompatível com PS5.1. Corrigido com `$ClaudeDir = Join-Path $ScriptDirectory '.claude'` e chamadas de 2 args.
+- Fix real (bug PS5.1): `Join-Path $ScriptDirectory '.cerebro' 'CEREBRO.md'` (3 args) incompatível com PS5.1. Corrigido com `$ClaudeDir = Join-Path $ScriptDirectory '.cerebro'` e chamadas de 2 args.
 
 ### do.test.ps1 -- 8/9 verde
 - 5 testes antes `-Pending` agora passam:
