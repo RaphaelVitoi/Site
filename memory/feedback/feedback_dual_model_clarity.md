@@ -8,4 +8,4 @@ Claude Opus e Gemini Pro (ambas Pro tier) trabalham juntas no sistema como dupla
 
 **Why:** Raphael alterna entre os dois modelos continuamente. Edicoes opacas ou com contexto implicito quebram a continuidade do outro modelo.
 
-**How to apply:** Ao editar docs do sistema (.claude/, GLOBAL_INSTRUCTIONS, agents, etc.), usar linguagem auto-explicativa. Nao assumir que o proximo leitor tem o mesmo contexto. Preferir editar documentos de forma que sejam compreensíveis standalone, sem depender de contexto conversacional.
+**How to apply:** Ao editar docs do sistema (.cerebro/, GLOBAL_INSTRUCTIONS, agents, etc.), usar linguagem auto-explicativa. Nao assumir que o proximo leitor tem o mesmo contexto. Preferir editar documentos de forma que sejam compreensíveis standalone, sem depender de contexto conversacional.

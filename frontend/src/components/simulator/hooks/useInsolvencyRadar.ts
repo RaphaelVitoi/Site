@@ -9,24 +9,26 @@ export function useInsolvencyRadar(apiQuantumMetrics: QuantumMetrics | null) {
 		return [
 			{
 				subject: 'Pressão RIO',
-				Ameaça: Math.min(100, Math.max(0, apiQuantumMetrics.rioMw * 20)),
+				Ameaça: Math.min(100, Math.max(0, apiQuantumMetrics.rioMw * 25)),
 			},
 			{
-				subject: 'Piso Dinâmico',
-				Ameaça: Math.min(100, Math.max(0, Math.abs(apiQuantumMetrics.adjustedEvFold) * 30)),
+				subject: 'Erosão RP',
+				Ameaça: Math.min(100, Math.max(0, Math.abs(apiQuantumMetrics.adjustedEvFold) * 40)),
 			},
 			{
-				subject: 'Risco FGS',
-				Ameaça: Math.min(100, Math.max(0, 100 - apiQuantumMetrics.expectativa * 50)),
+				subject: 'Risk Disparity',
+				// Vantagem de Risco alta = Ameaça baixa. 
+				// Se RA < 0 (Desvantagem), a ameaça sobe.
+				Ameaça: Math.min(100, Math.max(0, 50 - apiQuantumMetrics.riskAdvantage * 2.5)),
 			},
 			{
 				subject: 'Instabilidade',
-				Ameaça: Math.min(100, Math.max(0, apiQuantumMetrics.marginInstability * 100)),
+				Ameaça: Math.min(100, Math.max(0, apiQuantumMetrics.marginInstability * 120)),
 			},
-			{ subject: 'Insolvência', Ameaça: apiQuantumMetrics.isSolvent ? 10 : 90 },
+			{ subject: 'Insolvência', Ameaça: apiQuantumMetrics.isSolvent ? 15 : 95 },
 			{
-				subject: 'Colapso de EV',
-				Ameaça: Math.min(100, Math.max(0, 100 - apiQuantumMetrics.esperanca * 50)),
+				subject: 'Vulnerabilidade',
+				Ameaça: Math.min(100, Math.max(0, 80 - apiQuantumMetrics.perspectiva * 3)),
 			},
 		];
 	}, [apiQuantumMetrics]);

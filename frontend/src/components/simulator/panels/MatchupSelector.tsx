@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: Matchup Selector — Pressão de Risco por Confronto v6.2.1 GOLD
+ * IDENTITY: Matchup Selector — Pressão de Risco por Confronto v7.0 GOLD
  * PATH: src/components/simulator/panels/MatchupSelector.tsx
  * ROLE: Seleciona agressor e defensor em 3 ambientes de Mesa Final (FT1/FT2/FT3).
  * BINDING: [engine/ftEnvironments.ts, components/simulator/engine/utils.ts, ui/*]

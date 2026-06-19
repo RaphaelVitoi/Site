@@ -1,47 +1,60 @@
-# NUCLEO SOBERANO (Friccao Zero)
-aiofiles==25.1.0
-aiohttp==3.13.5
-aiosqlite==0.22.1
-fastapi==0.136.1
-pydantic==2.13.4
-pydantic-settings==2.14.1
-uvicorn==0.47.0
+# ==============================================================================
+# NEXUS ORCHESTRATOR — requirements.txt (Runtime Only)
+# Fonte canônica: pyproject.toml  |  Lock file: uv.lock
+# Sincronizado para SOTA v6.2.1 GOLD
+# ==============================================================================
 
-# MOTOR MATEMATICO & ANALYTICS
-numpy==2.4.4
-pandas==3.0.3
-scikit-learn==1.8.0
-scipy==1.17.1
+# ── NUCLEO ASSINCRONO ─────────────────────────────────────────────────────────
+aiofiles>=24.1.0
+aiohttp>=3.11.0
+aiosqlite>=0.21.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
 
-# RAG & MEMORIA VETORIAL (ONNX Optimized)
-chromadb==1.5.9
-onnxruntime==1.26.0
-sentence-transformers==5.4.1
+# ── PYDANTIC & SETTINGS ───────────────────────────────────────────────────────
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
 
-# API EXTERNAS (LLM)
-google-genai==1.68.0
-openai==2.36.0
-anthropic==0.102.0
-httpx==0.28.1
+# ── MOTOR MATEMATICO & ANALYTICS ─────────────────────────────────────────────
+numpy>=2.2.0
+pandas>=2.2.0
+scikit-learn>=1.6.0
+scipy>=1.15.0
 
-# UTILITARIOS DE INGESTAO
-pypdf==6.11.0
-python-docx==1.1.2
-openpyxl==3.1.5
-regex==2026.2.28
-requests==2.34.0
-PyYAML==6.0.3
-tqdm==4.67.3
-rich==15.0.0
+# ── RAG & MEMORIA VETORIAL ───────────────────────────────────────────────────
+chromadb>=0.6.0
+onnxruntime>=1.20.0
+sentence-transformers>=3.3.0
 
-# INFRAESTRUTURA & MONITORAMENTO
-psutil==7.2.2
-python-dateutil==2.9.0.post0
-tenacity==9.1.4
-ruff==0.15.13
-watchdog==6.0.0
-watchfiles==1.1.1
+# ── CLIENTES LLM ─────────────────────────────────────────────────────────────
+google-genai>=1.2.0
+openai>=1.58.0
+anthropic>=0.42.0
+httpx>=0.28.0
 
-# TESTES
-pytest==9.0.3
-pytest-asyncio==1.3.0
+# ── INGESTAO DE DOCUMENTOS ───────────────────────────────────────────────────
+pypdf>=6.12.0
+python-docx>=1.2.0
+openpyxl>=3.1.5
+Pillow>=11.3.0
+
+# ── MULTIMIDIA ───────────────────────────────────────────────────────────────
+moviepy>=2.2.0
+opencv-python-headless>=4.13.0
+
+# ── UTILITARIOS ──────────────────────────────────────────────────────────────
+regex>=2024.11.6
+requests>=2.32.0
+PyYAML>=6.0.2
+tqdm>=4.67.0
+rich>=13.9.0
+python-dateutil>=2.9.0
+tenacity>=9.0.0
+
+# ── FILESYSTEM & CLOUD ───────────────────────────────────────────────────────
+watchdog>=6.0.0
+watchfiles>=1.0.0
+cloudpathlib>=0.20.0
+
+# ── INFRA & MONITORAMENTO ────────────────────────────────────────────────────
+psutil>=6.1.0

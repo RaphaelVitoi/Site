@@ -10,11 +10,12 @@ type: project
 
 O percentual do 1º lugar deve ser calculado sobre o **prize pool total do torneio** (total de buy-ins menos rake), NÃO sobre a soma dos prêmios distribuídos aos jogadores ITM.
 
-```
+```math
 % do 1º = prêmio_1º / TOTAL_POOL_TORNEIO
 ```
 
 **Exemplo concreto (Referência Aula 1.2):**
+
 - Torneio: MTT $11, 126 entradas
 - TOTAL_POOL ≈ $1260 (buy-ins líquidos de rake)
 - Soma dos 9 prêmios ITM (TOTAL_PRIZES) = $961.64
@@ -33,6 +34,7 @@ O percentual do 1º lugar deve ser calculado sobre o **prize pool total do torne
 **Regra:** 1º lugar ≥ 25% do prize pool total (field curto).
 
 **Características:**
+
 - 1º e 2º lugares concentram parcela desproporcional do pool
 - Em fields grandes: avaliar também o 3º lugar
 - Em fields curtos (≤30 jogadores): focar em 1º e 2º
@@ -41,6 +43,7 @@ O percentual do 1º lugar deve ser calculado sobre o **prize pool total do torne
 - Pressão ICM severa: foldar para subir uma posição tem EV marginal; o valor está em ganhar, não em sobreviver
 
 **Onde aparece:**
+
 - Eventos high stakes com field curto (quase sempre top-heavy)
 - Micro stakes com fields gigantescos (operadores inflam 1º-3º para marketing)
 - Torneios "winner-take-most" por design
@@ -52,6 +55,7 @@ O percentual do 1º lugar deve ser calculado sobre o **prize pool total do torne
 **Regra:** 1º lugar ≤ 18% do prize pool total.
 
 **Características:**
+
 - Saltos entre posições consecutivas são equilibrados e previsíveis
 - A distância entre uma posição e a imediatamente superior é significativa mas consistente
 - Laddering relevante: subir UMA posição tem valor real e tangível
@@ -69,11 +73,13 @@ O percentual do 1º lugar deve ser calculado sobre o **prize pool total do torne
 **Regra:** Foge dos extremos (1º entre 18% e 24% do pool total).
 
 **Método de classificação: Análise de Exclusão.**
+
 - Não é flat de forma clara e indiscutível → descarte flat
 - Não é top-heavy de forma clara e indiscutível → descarte top-heavy
 - Se nenhum extremo se aplica → é híbrida
 
 **Características:**
+
 - Tem traços de ambos os extremos simultaneamente
 - Pode se aproximar mais de flat ou de top-heavy
 - Varia entre sites, torneios específicos, formatos
@@ -81,6 +87,7 @@ O percentual do 1º lugar deve ser calculado sobre o **prize pool total do torne
 - Não existe padrão fixo: é o "quase top-heavy" ou o "quase flat"
 
 **Orientação ao usuário:**
+
 - Avalie se o laddering se aproxima mais de um extremo ou do outro
 - Analise os saltos entre posições (são graduais como flat ou concentrados no topo?)
 - Ajuste a estratégia ICM proporcionalmente: mais próximo de top-heavy → mais agressividade permitida no topo; mais próximo de flat → laddering mais valioso
@@ -94,6 +101,7 @@ O percentual do 1º lugar deve ser calculado sobre o **prize pool total do torne
 **Classificação:** Top-heavyssimo (sempre).
 
 **Características:**
+
 - Dinheiro estático MUITO concentrado no 1º lugar
 - Até 2º e 3º são desvalorizados no componente estático
 - Laddering muito menos valioso que em qualquer outra estrutura
@@ -109,6 +117,7 @@ O percentual do 1º lugar deve ser calculado sobre o **prize pool total do torne
 **Classificação:** Estrutura própria, não comparável diretamente.
 
 **Características:**
+
 - Prêmios idênticos no topo (tickets de entrada para outro torneio)
 - Dinâmica de sobrevivência pura
 - Acumular fichas além do necessário para o ticket tem EV zero
@@ -141,6 +150,7 @@ O percentual do 1º lugar deve ser calculado sobre o **prize pool total do torne
 ## Impacto no Motor ICM e no Simulador
 
 A classificação da estrutura afeta diretamente:
+
 1. **Magnitude do RP:** estruturas top-heavy geram RPs maiores (mais valor concentrado no topo)
 2. **Valor do laddering:** flat → cada posição vale subir; top-heavy → só o topo importa
 3. **Agressividade ótima:** top-heavy permite mais agressividade nos extremos (BF alto = risco justificado pelo upside)

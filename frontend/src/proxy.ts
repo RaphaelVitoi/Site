@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 
 export async function proxy(req: NextRequest) {
 	// SOTA: Extrai o JWT nativamente na Edge Network (Sem latência de banco)
-	const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET ?? '' });
+	const token = await getToken({ req, secret: process.env['NEXTAUTH_SECRET'] ?? '' });
 	const { pathname } = req.nextUrl;
 
 	// Mapeamento Vetorial de Rotas Protegidas (Isolamento de Domínio)

@@ -1,42 +1,65 @@
 {
   "name": "nexus-orchestrator-sota",
   "private": true,
-  "packageManager": "npm@10.8.2",
-  "description": "Orquestrador central com arquitetura monorepo e automação de qualidade",
+  "packageManager": "npm@10.9.2",
+  "description": "Monorepo SOTA: Orquestrador de Agentes LLM (Python) + Frontend Next.js",
   "workspaces": [
     "frontend"
   ],
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
   },
   "scripts": {
     "dev": "npm run dev --workspace=frontend",
     "build": "npm --workspace frontend run build",
     "lint": "npm --workspace frontend run lint",
-    "test": "npm --workspace frontend run test",
-    "test:coverage": "npm --workspace frontend run test:coverage",
     "typecheck": "tsc --build frontend/tsconfig.json",
-    "format": "prettier --write .",
+    "test": "npm --workspace frontend run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\" --ignore-path .prettierignore",
+    "clean": "rimraf frontend/.next frontend/.turbo node_modules/.cache",
+    "python:test": ".venv/Scripts/python.exe -m pytest tests/",
+    "python:lint": "ruff check .",
+    "python:format": "ruff format .",
+    "python:typecheck": "pyright",
     "sota:audit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/quality-gate.ps1",
-    "sota:api": "python task_executor.py api",
-    "prepare": "husky"
+    "sota:full": "npm run python:lint && npm run python:typecheck && npm run lint && npm run typecheck && npm run python:test"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "husky": "^9.1.7",
-    "jest": "^30.4.2",
-    "jest-environment-jsdom": "^30.4.1",
-    "lint-staged": "^17.0.5",
-    "prettier": "^3.8.3",
-    "turbo": "^2.9.14"
+    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/react": "^16.3.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "prettier": "^3.5.0",
+    "prettier-plugin-tailwindcss": "^0.6.0",
+    "rimraf": "^6.0.0",
+    "turbo": "^2.4.0"
+  },
+  "overrides": {
+    "postcss": "^8.5.15",
+    "dompurify": "^3.4.11",
+    "@hono/node-server": "^1.19.14",
+    "js-yaml": "^4.2.0"
+  },
+  "allowScripts": {
+    "@prisma/engines": true,
+    "prisma": true,
+    "sharp": true,
+    "unrs-resolver": true
   },
   "lint-staged": {
     "frontend/**/*.{ts,tsx,js,jsx}": [
       "npm --workspace frontend run lint -- --max-warnings=0"
     ],
-    "**/*.{py,log,txt,config}": [
-      "python scripts/check_ascii.py"
+    "**/*.{ts,tsx,js,jsx,json,css,md}": [
+      "prettier --write"
+    ],
+    "**/*.py": [
+      "ruff check --fix",
+      "ruff format"
     ]
+  },
+  "dependencies": {
+    "@prisma/client": "^7.8.0"
   }
 }

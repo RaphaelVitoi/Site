@@ -1,7 +1,6 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring, line-too-long
 
 # engine/math_rio.py
-from typing import Union
 from .math_sota import calculate_rio_risk_v2
 
 
@@ -12,7 +11,7 @@ def calculate_rio_risk(
     hero_position: str,
     active_players: int,
     human_noise_factor: float = 0.0,
-) -> dict[str, Union[float, str]]:
+) -> dict[str, float | str]:
     """
     Legado: Wrapper para o motor SOTA v4.6 unificado.
     Mantem compatibilidade com assinaturas anteriores enquanto usa a fisica de elite.
@@ -28,7 +27,7 @@ def calculate_rio_risk(
     )
 
 
-def get_bb_vs_utg_rio_table() -> list[dict[str, Union[float, str, int]]]:
+def get_bb_vs_utg_rio_table() -> list[dict[str, float | str | int]]:
     """
     Gera a tabela de perigos de RIO para BB vs UTG.
     Baseado nos axiomas VITOI de Passivo Estrutural.

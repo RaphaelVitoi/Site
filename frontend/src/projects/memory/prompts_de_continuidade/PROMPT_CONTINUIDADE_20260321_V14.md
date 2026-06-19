@@ -15,7 +15,7 @@ type: project
 - npm uninstall html2canvas, jspdf, zustand
 - Prisma schema: removido model Category (nao usado)
 - .cursorules: Agent-TaskManager -> task_executor.py
-- .clauderules: reescrito v4.0 (Python SOTA)
+- .cerebrorules: reescrito v4.0 (Python SOTA)
 
 ### Commit 2: Sincronizacao global (2b2db55)
 - 86 obsoletos removidos (Agent-*.psm1, snapshots, SPECs movidas, scripts init, agente seo)
@@ -26,7 +26,7 @@ type: project
 - scripts/tests/ consolidado em scripts/utils/tests/
 
 ### Deletados nesta sessao
-- frontend/.claude/, frontend/lib/icm.ts, GLOBAL_INSTRUCTIONS.md raiz, package.json raiz
+- frontend/.cerebro/, frontend/lib/icm.ts, GLOBAL_INSTRUCTIONS.md raiz, package.json raiz
 - MANUAL_WORKFLOW_AGENTES.md raiz, content/pesquisa/
 - routing_map.json (raiz, docs/, planner/), system_config.json (raiz, planner/), queue_manager.py (raiz, docs/, planner/)
 

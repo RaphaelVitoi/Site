@@ -3,8 +3,8 @@
 import asyncio
 import json
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime, timezone
 
 from utils.text import enforce_pure_ascii
 
@@ -19,10 +19,10 @@ class AuditEngine:
 
     def __init__(self, manager):
         self.manager = manager
-        self.log_dir = Path(".claude/audit_logs")
+        self.log_dir = Path(".cerebro/audit_logs")
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.active_buffer = []
-        self.MAX_BUFFER = 50
+        self.MAX_BUFFER: int = 50
 
     async def process_frontend_events(self, events: list[dict]):
         """Processa, purifica e descarrega a entropia visual no disco."""
@@ -40,7 +40,7 @@ class AuditEngine:
 
             purified_events.append(
                 {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "level": level,
                     "component": evt.get("component", "Unknown"),
                     "message": enforce_pure_ascii(safe_msg),
@@ -57,20 +57,13 @@ class AuditEngine:
         if not self.active_buffer:
             return
 
-        target_file = (
-            self.log_dir
-            / f"vdom_audit_{datetime.now(timezone.utc).strftime('%Y%m%d')}.jsonl"
-        )
+        target_file = self.log_dir / f"vdom_audit_{datetime.now(UTC).strftime('%Y%m%d')}.jsonl"
 
         def _write():
-            with open(
-                target_file, "a", encoding="ascii", errors="backslashreplace"
-            ) as f:
+            with open(target_file, "a", encoding="ascii", errors="backslashreplace") as f:
                 for evt in self.active_buffer:
                     f.write(json.dumps(evt, ensure_ascii=True) + "\n")
 
         await asyncio.to_thread(_write)
-        logger.info(
-            f"[AUDIT ENGINE] {len(self.active_buffer)} anomalias do VDOM purificadas e persistidas."
-        )
+        logger.info(f"[AUDIT ENGINE] {len(self.active_buffer)} anomalias do VDOM purificadas e persistidas.")
         self.active_buffer.clear()

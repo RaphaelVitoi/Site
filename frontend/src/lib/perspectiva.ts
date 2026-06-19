@@ -365,8 +365,19 @@ function _calculateFoldPressure(
 	const winTier = classifyTier(stacksWin[heroIdx] ?? stackHero, stacksWin);
 	const tierBonus = isVacuum || winTier === currentTier ? 0 : 0.15;
 	const fgsHealth = isVacuum ? 1 : 1 + tierBonus + survivalPressure * 0.2;
-	const payjumpBonus =
-		isNearPayjump && !isVacuum ? Math.max(1.2, Math.abs(deltaFoldPct) + 0.25) : 0;
+
+	// SOTA: EV_Fold Dinâmico Positivo (Laddering Termodinâmico)
+	// Foldar gera valor se o hero sobrevive enquanto os predadores devoram as presas.
+	let payjumpBonus = 0;
+	if (isNearPayjump && !isVacuum) {
+		const shortStacksCount = stacks.filter((s, i) => i !== heroIdx && classifyTier(s, stacks) === 'micro').length;
+		const predatorsCount = stacks.filter(s => classifyTier(s, stacks) === 'chipleader' || classifyTier(s, stacks) === 'big').length;
+		
+		// O bônus de payjump escala se houver shorts em risco e predadores ativos na mesa
+		const ladderingProbability = 0.25 * shortStacksCount * Math.max(1, predatorsCount * 0.5);
+		// Valor do payjump no EV do Fold (podendo ser > 0 absoluto)
+		payjumpBonus = Math.max(0, ladderingProbability + Math.abs(deltaFoldPct));
+	}
 
 	// [v8.0] Mapa Posicional Completo (v7.0): erosão proporcional à distância real até o BB.
 	// Granularidade: UTG (máxima exposição orbital) → BB (0 penalidade, já está no BB).
@@ -487,7 +498,7 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 	// Layer 0: Validação Semântica SOTA (Antevisão de Erros)
 	const validation = PerspectivaInputSchema.safeParse(input);
 	if (!validation.success) {
-		if (process.env.NODE_ENV !== 'production') {
+		if (process.env['NODE_ENV'] !== 'production') {
 			console.warn(
 				'[VITOI-QUANTUM] Sanitizing input due to validation mismatch:',
 				validation.error.issues,
@@ -554,30 +565,34 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 	const baselineEquity = heroCost / (potSize + heroCost);
 	const bayesianWinProb = baselineEquity + kappa * (winProb - baselineEquity);
 
-	// SOTA: O passivo da derrota sofre dilatação no ICM e aversão dinâmica via Teoria do Prospecto.
+	// SOTA: Simetria na Teoria do Prospecto. Tanto perdas quanto ganhos sofrem aversão/retornos marginais.
 	const effectiveStack = Math.min(stackHero, stackVillain);
+	
 	const baseDeltaLose = deltaLosePct * (1 / Math.max(0.1, fgsHealth));
 	const prospectDeltaLose = calculateUtilityEV(baseDeltaLose, input.referenceStatus ?? 'baseline', 2.25, effectiveStack);
+
+	const prospectDeltaWin = calculateUtilityEV(deltaWinPct, input.referenceStatus ?? 'baseline', 2.25, effectiveStack);
 
 	// A EQUAÇÃO UNIFICADA SOTA (Blindagem Dimensional)
 	const bountyValue = input.bountyValue ?? 0;
 
 	const chipWinExpectativa =
-		bayesianWinProb * deltaWinPct * R * valuation * fgsHealth * amortizedEdge;
-	const chipLoseExpectativa = (1 - bayesianWinProb) * prospectDeltaLose;
+		bayesianWinProb * prospectDeltaWin * R * valuation * fgsHealth * amortizedEdge;
+	const chipLoseExpectativa = (1 - bayesianWinProb) * prospectDeltaLose * valuation;
 	const bountyExpectativa = bayesianWinProb * bountyValue * R;
 
 	const expectativaReal = chipWinExpectativa + chipLoseExpectativa + bountyExpectativa;
 	const perspectivaPct = expectativaReal - (dynamicEvFold + rioLiability);
 
 	// SOTA: Cálculo do Teto do RP (Equidade de Indiferença)
+	// Refatoração algébrica (Passo 3): Valuation afeta ambos os vetores no denominador simetricamente.
 	const denom =
-		deltaWinPct * R * valuation * fgsHealth * amortizedEdge -
-		prospectDeltaLose +
-		bountyValue * R;
+		(prospectDeltaWin * R * valuation * fgsHealth * amortizedEdge) -
+		(prospectDeltaLose * valuation) +
+		(bountyValue * R);
 	let threshEq = 0.5;
 	if (Math.abs(denom) > 1e-6) {
-		const rawThresh = (dynamicEvFold + rioLiability - prospectDeltaLose) / denom;
+		const rawThresh = (dynamicEvFold + rioLiability - (prospectDeltaLose * valuation)) / denom;
 		threshEq = Math.max(0, Math.min(0.99, rawThresh));
 	}
 
@@ -631,7 +646,7 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 		loseMapaICM: perspLose.positionProbs[heroIdx] ?? [],
 	};
 
-	if (process.env.NODE_ENV !== 'production') {
+	if (process.env['NODE_ENV'] !== 'production') {
 		PerspectivaResultSchema.parse(result);
 	}
 

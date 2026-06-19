@@ -1,7 +1,44 @@
-# SOTA Dockerignore - Frontend
+# ==============================================================================
+# NEXUS ORCHESTRATOR — .dockerignore (Frontend)
+# ==============================================================================
+
+# ── DEPS E BUILD INTERMEDIÁRIO ────────────────────────────────────────────────
 node_modules
 .next
+.swc
+dist-workers
+
+# ── SEGREDOS E AMBIENTE ────────────────────────────────────────────────────────
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+
+# ── CONTROLE DE VERSÃO ────────────────────────────────────────────────────────
 .git
+.gitignore
+.gitattributes
+
+# ── ARTEFATOS DE BUILD TYPESCRIPT ─────────────────────────────────────────────
+*.tsbuildinfo
+tsconfig.audit.tsbuildinfo
+tsconfig.tsbuildinfo
+tsconfig.worker.tsbuildinfo
+
+# ── TESTES E COBERTURA ────────────────────────────────────────────────────────
 coverage
-.env*
-tests/*.log
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+jest.config.js
+
+# ── DOCUMENTAÇÃO E IDE ────────────────────────────────────────────────────────
+*.md
+AUDIT_REPORT_SOTA.md
+.vscode
+prisma/seed.ts
+
+# ── BANCO LOCAL DE DEV ────────────────────────────────────────────────────────
+dev.db
+*.sqlite

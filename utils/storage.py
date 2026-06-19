@@ -1,33 +1,43 @@
-import os
-from typing import Optional
+"""Module for providing unified storage abstraction (Bucketing)."""
+
+from pathlib import Path
+from core.config import BASE_DIR
+
 
 class SOTABucketing:
     """
-    SOTA v6.2.1 GOLD: Unified Storage Abstraction (Bucketing).
+    SOTA v7.0 GOLD: Unified Storage Abstraction (Bucketing).
     Garante paridade entre Local, S3 e GCS para ativos de IA e Media.
     """
-    def __init__(self, root_dir: str = "C:/Users/Raphael/.gemini/Site/buckets"):
-        self.root_dir = root_dir
-        if not os.path.exists(self.root_dir):
-            os.makedirs(self.root_dir)
 
-    def get_bucket_path(self, bucket_name: str) -> str:
-        path = os.path.join(self.root_dir, bucket_name)
-        if not os.path.exists(path):
-            os.makedirs(path)
+    def __init__(self, root_dir: Path | str | None = None):
+        if root_dir is None:
+            self.root_dir = BASE_DIR / "data" / "buckets"
+        else:
+            self.root_dir = Path(root_dir)
+
+        if not self.root_dir.exists():
+            self.root_dir.mkdir(parents=True, exist_ok=True)
+
+    def get_bucket_path(self, bucket_name: str) -> Path:
+        """Get the absolute path for a specific bucket."""
+        path = self.root_dir / bucket_name
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
         return path
 
     def upload_file(self, bucket_name: str, file_name: str, content: bytes):
-        bucket_path = self.get_bucket_path(bucket_name)
-        with open(os.path.join(bucket_path, file_name), "wb") as f:
-            f.write(content)
+        """Upload a file to the specified bucket."""
+        file_path = self.get_bucket_path(bucket_name) / file_name
+        file_path.write_bytes(content)
 
-    def download_file(self, bucket_name: str, file_name: str) -> Optional[bytes]:
-        path = os.path.join(self.get_bucket_path(bucket_name), file_name)
-        if os.path.exists(path):
-            with open(path, "rb") as f:
-                return f.read()
+    def download_file(self, bucket_name: str, file_name: str) -> bytes | None:
+        """Download a file from the specified bucket."""
+        path = self.get_bucket_path(bucket_name) / file_name
+        if path.exists():
+            return path.read_bytes()
         return None
+
 
 # Global Instance
 buckets = SOTABucketing()

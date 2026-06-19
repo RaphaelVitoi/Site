@@ -3,7 +3,7 @@
 import logging
 import time
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import aiohttp
 
@@ -11,9 +11,9 @@ import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
-    ANTHROPIC_KEYS,
     COMPRESSION_CIRCUIT_BREAKER,
     OPENROUTER_KEYS,
+    ANTHROPIC_KEYS,
     APIKeysExhaustedError,
     _gemini_key_pool_for_model,
     _is_route_blocked,
@@ -46,8 +46,8 @@ async def _try_compress_gemini(
     manager: QueueManager,
 ) -> tuple[str | None, bool]:
     """Tenta a compressao via Gemini, mas usando o motor de resiliencia SOTA (_try_provider)."""
-    gemini_compression_keys = _gemini_key_pool_for_model("gemini-2.0-flash")
-    gemini_model = "gemini-2.0-flash"
+    gemini_compression_keys = _gemini_key_pool_for_model("gemini-2.5-flash")
+    gemini_model = "gemini-2.5-flash"
     route_gemini = _route_identifier("gemini", gemini_model)
 
     if not gemini_compression_keys or await _is_route_blocked(route_gemini):
@@ -66,7 +66,7 @@ async def _try_compress_gemini(
         description="Context compression task",
         agent=task_agent,
         status="running",
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         metadata={"compression_task": True},
     )
 
@@ -87,9 +87,7 @@ async def _try_compress_gemini(
         COMPRESSION_CIRCUIT_BREAKER["consecutive_failures"] = 0
         return result.get("text"), False
 
-    logger.warning(
-        f"[[{_c(task_agent)}]{task_agent}[/]] Falha na compressao via Gemini. Resultado: {result}"
-    )
+    logger.warning(f"[[{_c(task_agent)}]{task_agent}[/]] Falha na compressao via Gemini. Resultado: {result}")
     return None, True
 
 
@@ -120,7 +118,7 @@ async def _try_compress_openrouter(
         description="Context compression task via OpenRouter",
         agent=task_agent,
         status="running",
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         metadata={"compression_task": True},
     )
 
@@ -141,26 +139,19 @@ async def _try_compress_openrouter(
         COMPRESSION_CIRCUIT_BREAKER["consecutive_failures"] = 0
         return result.get("text")
 
-    logger.warning(
-        f"[[{_c(task_agent)}]{task_agent}[/]] Falha na compressao via OpenRouter."
-    )
+    logger.warning(f"[[{_c(task_agent)}]{task_agent}[/]] Falha na compressao via OpenRouter.")
     return None
 
 
-async def _prepare_routing_pipeline(
-    task: Task, manager: QueueManager
-) -> tuple[list[str], str, str | None]:
+async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[list[str], str, str | None]:
     agent_type = te.AGENT_ROUTING_MAP.get(task.agent, "fast_operations")
-    models_to_try = (
-        list(te.DEEP_THINKING_MODELS)
-        if agent_type == "deep_thinking"
-        else list(te.FAST_OPERATIONS_MODELS)
-    )
+    models_to_try = list(te.DEEP_THINKING_MODELS) if agent_type == "deep_thinking" else list(te.FAST_OPERATIONS_MODELS)
 
     agent_clean = task.agent.replace("@", "")
-    designated_model = (task.metadata or {}).get(
-        "model_override"
-    ) or te.AGENTS_MANIFEST.get(agent_clean, {}).get("primary_model")
+    raw_model = (task.metadata or {}).get("model_override") or te.AGENTS_MANIFEST.get(agent_clean, {}).get(
+        "primary_model"
+    )
+    designated_model = str(raw_model) if raw_model else None
     if designated_model:
         if designated_model in models_to_try:
             models_to_try.remove(designated_model)
@@ -170,10 +161,14 @@ async def _prepare_routing_pipeline(
     frequent_failures = COMPRESSION_CIRCUIT_BREAKER["consecutive_failures"] >= 3
     prefer_local_fallback = recent_failure and frequent_failures
 
+    raw_domain = (task.metadata or {}).get("domain")
+    domain_str = str(raw_domain) if raw_domain else None
+
     models_to_try = _reorder_models_for_economy(
         models_to_try,
         prefer_local=prefer_local_fallback,
         designated_model=designated_model,
+        domain=domain_str,
     )
     models_to_try = _inject_openrouter_alternatives(models_to_try)
     models_to_try = await _apply_model_health_gate(models_to_try, manager, task)
@@ -198,23 +193,22 @@ async def _compress_context(
 
     _c = te._c
     try:
-        system_prompt = "Voce e um especialista em sumarizacao. Resuma o texto a seguir de forma densa e informativa, preservando todos os pontos criticos, nomes de arquivos, decisoes chave e a intencao original. O output deve ser em portugues (Pure ASCII)."
+        system_prompt = te.SYSTEM_CONFIG.get(
+            "compression_system_prompt",
+            "Voce e um especialista em sumarizacao. Resuma o texto a seguir de forma densa e informativa, preservando todos os pontos criticos, nomes de arquivos, decisoes chave e a intencao original. O output deve ser em portugues (Pure ASCII).",
+        )
         session = await get_global_http_session()
 
         gemini_failed = False
         if not prefer_local_fallback:
-            response, gemini_failed = await _try_compress_gemini(
-                session, system_prompt, text, task_agent, _c, manager
-            )
+            response, gemini_failed = await _try_compress_gemini(session, system_prompt, text, task_agent, _c, manager)
             if response:
                 return response
         else:
             gemini_failed = True
 
         if prefer_local_fallback or gemini_failed:
-            response = await _try_compress_openrouter(
-                session, system_prompt, text, task_agent, _c, manager
-            )
+            response = await _try_compress_openrouter(session, system_prompt, text, task_agent, _c, manager)
             if response:
                 return response
 
@@ -247,13 +241,9 @@ async def call_llm_api(
     te._maybe_reload_config()
     _c = te._c
 
-    models_to_try, agent_type, designated_model = await _prepare_routing_pipeline(
-        task, manager
-    )
+    models_to_try, agent_type, designated_model = await _prepare_routing_pipeline(task, manager)
 
-    logger.info(
-        f"[[{_c(task.agent)}]{task.agent}[/]] Rota de modelos selecionada: {agent_type} -> {models_to_try}"
-    )
+    logger.info(f"[[{_c(task.agent)}]{task.agent}[/]] Rota de modelos selecionada: {agent_type} -> {models_to_try}")
 
     timeout_seconds = te._agent_sla_value(task.agent, "llm_timeout_seconds", 600)
     provider_retries = te._agent_sla_value(task.agent, "provider_retries", 2)
@@ -269,22 +259,8 @@ async def call_llm_api(
                 f"[[{_c(task.agent)}]{task.agent}[/]] Rota em cooldown: {provider}:{model}. Pulando temporariamente."
             )
             continue
-        if provider == "anthropic":
-            response = await _try_provider(
-                session,
-                "anthropic",
-                model,
-                system_prompt,
-                user_prompt,
-                ANTHROPIC_KEYS,
-                task,
-                manager,
-                provider_retries,
-                request_timeout,
-                require_json=require_json,
-                **kwargs,
-            )
-        elif provider == "gemini":
+
+        if provider == "gemini":
             gemini_keys = _gemini_key_pool_for_model(model)
             response = await _try_provider(
                 session,
@@ -315,6 +291,21 @@ async def call_llm_api(
                 require_json=require_json,
                 **kwargs,
             )
+        elif provider == "anthropic":
+            response = await _try_provider(
+                session,
+                "anthropic",
+                model,
+                system_prompt,
+                user_prompt,
+                ANTHROPIC_KEYS,
+                task,
+                manager,
+                provider_retries,
+                request_timeout,
+                require_json=require_json,
+                **kwargs,
+            )
         elif provider == "local":
             response = await _try_provider(
                 session,
@@ -336,9 +327,7 @@ async def call_llm_api(
                 "route_selected": models_to_try,
                 "reason_codes": [
                     f"agent_type:{agent_type}",
-                    f"designated_model:{designated_model}"
-                    if designated_model
-                    else "designated_model:none",
+                    f"designated_model:{designated_model}" if designated_model else "designated_model:none",
                     f"provider_retries:{provider_retries}",
                     f"timeout_seconds:{timeout_seconds}",
                 ],
@@ -350,9 +339,7 @@ async def call_llm_api(
             await manager.update_task_metadata(task.id, route_selected, merge=True)
             return response["text"]
 
-    logger.error(
-        f"[[{_c(task.agent)}]{task.agent}[/]] Esgotamento absoluto do pool de APIs/Chaves."
-    )
+    logger.error(f"[[{_c(task.agent)}]{task.agent}[/]] Esgotamento absoluto do pool de APIs/Chaves.")
     raise APIKeysExhaustedError(
         "As chaves de API falharam sucessivamente ou estao temporariamente sob Rate Limit severo."
     )

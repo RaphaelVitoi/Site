@@ -1,153 +1,106 @@
 {
     "folders": [
         {
-            "path": "."
+            "path": ".",
+            "name": "NEXUS-CORE-SOTA"
         }
     ],
     "settings": {
+        // ── SOTA v6 GOLD PERFORMANCE ───────────────────────────────
         "editor.unicodeHighlight.nonBasicASCII": true,
         "editor.unicodeHighlight.invisibleCharacters": true,
         "editor.unicodeHighlight.ambiguousCharacters": true,
         "telemetry.telemetryLevel": "off",
-        "gemini-cli.approvalMode": "auto_edit",
-        "gemini-cli.model": "gemini-2.5-pro",
-        "geminicodeassist.outlines.automaticOutlineGeneration": true,
-        "geminicodeassist.project": "gemini2-491810",
-        "geminicodeassist.updateChannel": "Insiders",
-        "geminicodeassist.verboseLogging": true,
-        "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
-        "geminicodeassist.agentYoloMode": true,
-        "geminicodeassist.agentDebugMode": true,
-        "appMap.inspectEnabled": true,
-        "appMap.experimentalReviewUI": true,
-        "appMap.scannerEnabled": true,
-        "appMap.selectedModel": "gemini-2.5-pro",
-        "gitlab.ignoreCertificateErrors": true,
-        "gitlab.real-timeSecurityScan.enabled": true,
-        "gitlab.debug": true,
-        "gitlab.featureFlags.flowBuilder": true,
-        "gitlab.showPipelineUpdateNotifications": true,
-        "geminicodeassist.codeGenerationPaneViewEnabled": true,
-        "editor.suggest.showStatusBar": true,
-        "editor.suggest.snippetsPreventQuickSuggestions": true,
+        "git.autofetch": false,
+        "editor.minimap.enabled": false,
+        "editor.hover.delay": 700,
+        "editor.largeFileOptimizations": true,
         "files.autoGuessEncoding": true,
-        "files.autoSave": "afterDelay",
-        "files.autoSaveWhenNoErrors": true,
         "files.insertFinalNewline": true,
-        "files.readonlyFromPermissions": true,
-        "files.simpleDialog.enable": true,
         "files.trimFinalNewlines": true,
         "files.trimTrailingWhitespace": true,
-        "workbench.commandPalette.preserveInput": true,
-        "workbench.experimental.cloudChanges.partialMatches.enabled": true,
-        "workbench.experimental.share.enabled": true,
-        "workbench.list.horizontalScrolling": true,
-        "workbench.list.scrollByPage": true,
-        "workbench.list.smoothScrolling": true,
-        "workbench.quickOpen.preserveInput": true,
-        "workbench.view.alwaysShowHeaderActions": true,
-        "workbench.view.showQuietly": {
-            "workbench.panel.output": true
+        "files.autoSave": "onFocusChange",
+        // ── NUCLEO DE INTELIGENCIA (GEMINI) ─────────────────────────
+        "gemini-cli.approvalMode": "auto_edit",
+        "gemini-cli.model": "gemini-2.5-pro",
+        "geminicodeassist.outlines.automaticOutlineGeneration": false,
+        "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
+        "geminicodeassist.verboseLogging": false,
+        "geminicodeassist.agentDebugMode": false,
+        "geminicodeassist.rules": "Excelência SOTA: Proibida a artificialização. Priorizar lógica, ciência e SteelManning Protocol. Blindagem ASCII no Backend.",
+        // ── PARIDADE BACKEND (RUFF) ──────────────────────────────────
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+        "[python]": {
+            "editor.defaultFormatter": "charliermarsh.ruff",
+            "editor.codeActionsOnSave": {
+                "source.fixAll.ruff": "explicit",
+                "source.organizeImports.ruff": "explicit"
+            },
+            "editor.formatOnSave": true
         },
-        "workbench.editor.alwaysShowEditorActions": true,
-        "workbench.editor.autoLockGroups": {
-            "terminalEditor": false
+        // ── PARIDADE FRONTEND (PRETTIER/ESLINT) ──────────────────────
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "[typescript]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
         },
-        "workbench.editor.closeOnFileDelete": true,
-        "workbench.editor.enablePreviewFromCodeNavigation": true,
-        "workbench.editor.highlightModifiedTabs": true,
-        "workbench.editor.limit.enabled": true,
-        "workbench.editor.limit.excludeDirty": true,
-        "workbench.editor.limit.perEditorGroup": true,
-        "workbench.editor.preferHistoryBasedLanguageDetection": true,
-        "workbench.editor.pinnedTabsOnSeparateRow": true,
-        "workbench.editor.revealIfOpen": true,
-        "workbench.editor.showTabIndex": true,
-        "workbench.settings.openDefaultSettings": true,
-        "workbench.settings.openDefaultKeybindings": true,
-        "accessibility.openChatEditedFiles": true,
-        "accessibility.hideAccessibleView": true,
-        "accessibility.underlineLinks": true,
+        "[typescriptreact]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "eslint.useFlatConfig": true,
+        "eslint.workingDirectories": [
+            {
+                "directory": "frontend",
+                "changeProcessCWD": true
+            }
+        ],
+        "tailwindCSS.experimental.classRegex": [
+            [
+                "@theme\\s*{([^}]*)}",
+                "--color-([^\\s:]*)"
+            ]
+        ],
+        // ── BLINDAGEM DE WATCHER (SISTEMA INTEGRADO) ────────────────
+        "files.watcherExclude": {
+            "**/.git/objects/**": true,
+            "**/node_modules/**": true,
+            "**/.venv/**": true,
+            "**/.next/**": true,
+            "**/.turbo/**": true,
+            "**/__pycache__/**": true,
+            "**/dist/**": true,
+            "**/build/**": true,
+            "**/wasm-equity/target/**": true
+        },
+        "files.exclude": {
+            "**/.git": true,
+            "**/node_modules": true,
+            "**/.venv": true,
+            "**/__pycache__": true,
+            "**/.next": true,
+            "**/.turbo": true,
+            "**/dist": true,
+            "**/build": true
+        },
+        // ── TERMINAL SOTA ───────────────────────────────────────────
+        "terminal.integrated.defaultProfile.windows": "Gemini-SOTA",
+        "terminal.integrated.profiles.windows": {
+            "Gemini-SOTA": {
+                "path": "powershell.exe",
+                "args": [
+                    "-NoExit",
+                    "-Command",
+                    "gemini --approval-mode auto_edit"
+                ]
+            }
+        },
+        // ── ESTETICA & ORGANIZACAO ──────────────────────────────────
+        "workbench.iconTheme": "symbols",
         "explorer.fileNesting.enabled": true,
-        "search.experimental.closedNotebookRichContentResults": true,
-        "search.quickAccess.preserveInput": true,
-        "search.quickOpen.includeSymbols": true,
-        "search.searchEditor.reusePriorSearchConfiguration": true,
-        "search.searchEditor.focusResultsOnSearch": true,
-        "search.searchView.keywordSuggestions": true,
-        "search.seedWithNearestWord": true,
-        "search.seedOnFocus": true,
-        "search.smartCase": true,
-        "search.showLineNumbers": true,
-        "search.useGlobalIgnoreFiles": true,
-        "debug.closeReadonlyTabsOnEnd": true,
-        "debug.console.closeOnEnd": true,
-        "debug.console.acceptSuggestionOnEnter": "on",
-        "debug.confirmOnExit": "always",
-        "debug.hideLauncherWhileDebugging": true,
-        "debug.hideSlowPreLaunchWarning": true,
-        "debug.openExplorerOnEnd": true,
-        "debug.showBreakpointsInOverviewRuler": true,
-        "debug.showVariableTypes": true,
-        "debug.showSubSessionsInToolBar": true,
-        "debug.terminal.clearBeforeReusing": true,
-        "testing.alwaysRevealTestOnStateChange": true,
-        "testing.automaticallyOpenPeekViewDuringAutoRun": true,
-        "testing.coverageToolbarEnabled": true,
-        "testing.followRunningTest": true,
-        "scm.alwaysShowActions": true,
-        "scm.alwaysShowRepositories": true,
-        "scm.diffDecorationsGutterPattern": {
-            "added": true
-        },
-        "scm.repositories.explorer": true,
-        "scm.workingSets.enabled": true,
-        "extensions.closeExtensionDetailsOnViewChange": true,
-        "extensions.supportNodeGlobalNavigator": true,
-        "extensions.ignoreRecommendations": false,
-        "extensions.experimental.deferredStartupFinishedActivation": true,
-        "terminal.integrated.accessibleViewFocusOnCommandExecution": true,
-        "terminal.integrated.accessibleViewPreserveCursorPosition": true,
-        "terminal.integrated.allowMnemonics": true,
-        "terminal.integrated.cursorBlinking": true,
-        "terminal.integrated.copyOnSelection": true,
-        "terminal.integrated.enableImages": true,
-        "terminal.integrated.enableVisualBell": true,
-        "terminal.integrated.fontLigatures.enabled": true,
-        "terminal.integrated.ignoreBracketedPasteMode": true,
-        "terminal.integrated.macOptionIsMeta": false,
-        "terminal.integrated.shellIntegration.environmentReporting": true,
-        "terminal.integrated.smoothScrolling": true,
-        "terminal.integrated.suggest.insertTrailingSpace": true,
-        "terminal.integrated.windowsUseConptyDll": true,
-        "task.quickOpen.skip": true,
-        "task.quickOpen.showAll": true,
-        "task.verboseLogging": true,
-        "problems.showCurrentInStatus": true,
-        "interactiveWindow.promptToSaveOnClose": true,
-        "notebook.consolidatedRunButton": true,
-        "notebook.diff.overviewRuler": true,
-        "notebook.diff.ignoreOutputs": false,
-        "notebook.diff.ignoreMetadata": true,
-        "notebook.experimental.remoteSave": true,
-        "notebook.formatOnCellExecution": true,
-        "notebook.formatOnSave.enabled": true,
-        "notebook.insertFinalNewline": true,
-        "geminicodeassist.rules": "sem fabricação. sem smoothing. sem bajulação. sem output incoerente, que não passou pelo crivo da lógica e da ciência. não suponha. apresente fatos.\n\n\n\n",
-        "geminicodeassist.agent.additionalTrustedCertificates": "AIzaSyDidSoNA_Q527C43mZ1Q-UPN3mjLwN34-4",
-        "terminal.integrated.suggest.runOnEnter": "exactMatch",
-        "terminal.integrated.suggest.enabled": true,
-        "terminal.integrated.sendKeybindingsToShell": true,
-        "terminal.integrated.mouseWheelZoom": true,
-        "terminal.integrated.macOptionClickForcesSelection": false,
-        "terminal.integrated.localEchoEnabled": "auto",
-        "terminal.integrated.defaultProfile.windows": "Windows PowerShell",
-        "terminal.integrated.suggest.selectionMode": "always",
-        "terminal.sourceControlRepositoriesKind": "both",
-        "terminal.integrated.hideOnStartup": "whenEmpty",
-        "terminal.integrated.gpuAcceleration": "on",
-        "terminal.integrated.focusAfterRun": "terminal",
-        "terminal.integrated.confirmOnExit": "always",
-        "python.terminal.useEnvFile": true
+        "explorer.fileNesting.patterns": {
+            "package.json": "package-lock.json, turbo.json, tsconfig.base.json, .prettierrc, .eslintrc*",
+            "pyproject.toml": "uv.lock, requirements.txt, .pylintrc, .ruff_cache",
+            "next.config.js": "next-env.d.ts, postcss.config.js, tailwind.config.js",
+            ".env": ".env.*, _env.ps1"
+        }
     }
 }

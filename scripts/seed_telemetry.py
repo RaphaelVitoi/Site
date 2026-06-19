@@ -1,10 +1,10 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring, line-too-long
 
-import sqlite3
 import random
-from pathlib import Path
+import sqlite3
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from pathlib import Path
 
 
 def seed_telemetry():
@@ -18,13 +18,9 @@ def seed_telemetry():
 
     # Generate 25 rows of mock data
     for i in range(25):
-        # SOTA: Variancia logica para garantir que a Random Forest possa extrair a Taxa de Maluquice
-        is_viable = True if secure_rand.random() > 0.4 else False
-        perspective_utility = (
-            secure_rand.uniform(0.0, 5.0)
-            if is_viable
-            else secure_rand.uniform(-5.0, -0.1)
-        )
+        # SOTA: Variancia logica para garantir que a Random Forest possa extrair a Taxa de Maluquice_
+        is_viable = secure_rand.random() > 0.4
+        perspective_utility = secure_rand.uniform(0.0, 5.0) if is_viable else secure_rand.uniform(-5.0, -0.1)
 
         cursor.execute(
             """
@@ -49,7 +45,7 @@ def seed_telemetry():
                 perspective_utility,  # perspectiveUtility
                 secure_rand.uniform(0.1, 0.8),  # insolvencyCoefficient
                 1 if is_viable else 0,  # isViable (SQLite boolean)
-                datetime.now(timezone.utc).isoformat(),  # createdAt
+                datetime.now(UTC).isoformat(),  # createdAt
             ),
         )
 

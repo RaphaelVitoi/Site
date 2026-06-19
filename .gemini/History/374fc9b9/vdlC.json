@@ -1,7 +1,0 @@
-z{
-  "dependencies": {
-    "rechart": "^0.0.1",
-    "recharts": "^3.8.1",
-    "swr": "^2.4.1"
-  }
-}

@@ -3,6 +3,8 @@ name: Identidade CHICO e modelos de IA
 description: CHICO (codinome) usa dupla dinamica Gemini 3.1 Pro Preview + Claude Opus 4.6, ambos com assinatura Pro paga
 type: user
 ---
+# Identidade do Chico
+
 Raphael tem assinatura Pro paga tanto do Google (Gemini) quanto da Anthropic (Claude).
 
 CHICO e o codinome operacional do sistema de IA que atua como Administrador/Gerente. Ele usa dinamicamente:

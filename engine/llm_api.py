@@ -1,17 +1,18 @@
 """Modulo Orquestrador SOTA de APIs de Inferencia e Circuit Breaker."""
 
-from utils.env_loader import load_env
-
+import asyncio
 import logging
 import os
 import time
-import asyncio
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any
 
 import aiohttp
+
 from core.config import (
     AGENT_ROUTING_MAP,
+    AGENTS_MANIFEST,
     DEEP_THINKING_MODELS,
     FAST_OPERATIONS_MODELS,
     KEY_BLOCKLIST,
@@ -21,6 +22,7 @@ from core.config import (
 )
 from core.schemas import Task
 from database.queue_manager import QueueManager
+from utils.env_loader import load_env
 
 # SOTA: Circuit Breaker de Provedores (Impede pingar APIs caidas)
 PROVIDER_FAILURE_COUNTS: dict = {}
@@ -33,33 +35,47 @@ circuit_breaker_lock = asyncio.Lock()
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class ProviderCallConfig:
+    """Agrupa parametros estaticos de uma chamada de provedor para reduzir a aridade (S107)."""
+
+    provider_name: str
+    task: Task
+    manager: QueueManager
+    max_retries: int
+    usage_keys: tuple[str, str]
+    block_on_429_quota: bool
+    provider_key: str
+    response_format: dict | None = field(default=None)
+
+
 async def call_gemini(
     session: aiohttp.ClientSession,
     model: str,
     system_prompt: str,
     user_prompt: str,
     api_key: str | None = None,
+    response_format: dict | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Invoca o provedor Gemini via REST API."""
     if not api_key:
         api_key = os.environ.get("API_SECRET_TOKEN", "")
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{model}:generateContent?key={api_key}"
-    )
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     headers = {"Content-Type": CONTENT_TYPE_JSON}
-    data = {
+    data: dict[str, Any] = {
         "system_instruction": {"parts": [{"text": system_prompt}]},
         "contents": [{"parts": [{"text": user_prompt}]}],
     }
-    async with session.post(
-        url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)
-    ) as response:
+    if response_format:
+        data["generationConfig"] = {
+            "responseMimeType": "application/json",
+            "responseSchema": response_format,
+        }
+
+    async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
         if not response.ok:
             error_text = await response.text()
-            raise RuntimeError(
-                f"HTTP {response.status}: {response.reason} - {error_text}"
-            )
+            raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
         result = await response.json()
         text = result["candidates"][0]["content"]["parts"][0]["text"]
         usage = result.get("usageMetadata", {})
@@ -72,6 +88,7 @@ async def call_anthropic(
     system_prompt: str,
     user_prompt: str,
     api_key: str,
+    response_format: dict | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Invoca o provedor Anthropic (Claude) via REST API."""
     url = "https://api.anthropic.com/v1/messages"
@@ -86,14 +103,12 @@ async def call_anthropic(
         "system": system_prompt,
         "messages": [{"role": "user", "content": user_prompt}],
     }
-    async with session.post(
-        url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)
-    ) as response:
+    if response_format:
+        logger.warning("[SOTA RAG] Anthropic API nativa nao suporta json_schema estrito. Passando ignorado.")
+    async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
         if not response.ok:
             error_text = await response.text()
-            raise RuntimeError(
-                f"HTTP {response.status}: {response.reason} - {error_text}"
-            )
+            raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
         result = await response.json()
         text = result["content"][0]["text"]
         usage = result.get("usage", {})
@@ -106,25 +121,27 @@ async def call_openrouter(
     system_prompt: str,
     user_prompt: str,
     api_key: str,
+    response_format: dict | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Invoca o provedor OpenRouter via REST API."""
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {"Content-Type": CONTENT_TYPE_JSON, "Authorization": f"Bearer {api_key}"}
-    data = {
+    data: dict[str, Any] = {
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
     }
-    async with session.post(
-        url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)
-    ) as response:
+    if response_format:
+        data["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {"name": "structured_output", "schema": response_format, "strict": True},
+        }
+    async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
         if not response.ok:
             error_text = await response.text()
-            raise RuntimeError(
-                f"HTTP {response.status}: {response.reason} - {error_text}"
-            )
+            raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
         result = await response.json()
         text = result["choices"][0]["message"]["content"]
         usage = result.get("usage", {})
@@ -137,6 +154,7 @@ async def call_gemma_local(
     system_prompt: str,
     user_prompt: str,
     api_key: str | None = None,
+    response_format: dict | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Invocacao do Oraculo de Borda (Gemma 4 Local Server) usando aiohttp."""
     if not api_key:
@@ -145,20 +163,18 @@ async def call_gemma_local(
         raise RuntimeError("Nenhum token (API_SECRET_TOKEN ou VITOI_AUTH_TOKEN) configurado no ambiente.")
     url = "http://127.0.0.1:17043/generate"  # Roteado para o Proxy SOTA
     headers = {"Content-Type": CONTENT_TYPE_JSON, "X-Vitoi-Auth": api_key}
-    data = {
+    data: dict[str, Any] = {
         "prompt": user_prompt,
         "system_prompt": system_prompt,
         "max_tokens": 1024,
         "model": model,  # O Proxy SOTA julgara o roteamento se for um valor generico
     }
-    async with session.post(
-        url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)
-    ) as response:
+    if response_format:
+        data["response_format"] = response_format
+    async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
         if not response.ok:
             error_text = await response.text()
-            raise RuntimeError(
-                f"HTTP {response.status}: {response.reason} - {error_text}"
-            )
+            raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
         text = await response.text()
         usage = {
             "prompt_tokens": len(user_prompt) // 4,
@@ -167,9 +183,7 @@ async def call_gemma_local(
         return text, usage
 
 
-async def _evaluate_api_error(
-    error_msg: str, provider_name: str, provider_key: str, block_on_429: bool
-) -> str:
+async def _evaluate_api_error(error_msg: str, provider_name: str, provider_key: str, block_on_429: bool) -> str:
     """Retorna 'abort_provider', 'abort_key', ou 'retry'."""
     if any(err in error_msg for err in ["500", "502", "503", "504", "timeout"]):
         async with circuit_breaker_lock:
@@ -184,16 +198,11 @@ async def _evaluate_api_error(
                 )
                 return "abort_provider"
         return "retry"
-    if any(
-        err in error_msg
-        for err in ["401", "403", "unauthorized", "credit", "balance", "402"]
-    ):
+    if any(err in error_msg for err in ["401", "403", "unauthorized", "credit", "balance", "402"]):
         _block_key(provider_key)
         return "abort_key"
     if "429" in error_msg:
-        if block_on_429 and any(
-            q_err in error_msg for q_err in ["quota", "limit", "exhausted"]
-        ):
+        if block_on_429 and any(q_err in error_msg for q_err in ["quota", "limit", "exhausted"]):
             _block_key(provider_key)
         return "abort_key"
     if "404" in error_msg:
@@ -214,6 +223,7 @@ async def _execute_provider_attempt(
     usage_keys: tuple[str, str],
     attempt: int,
     key_index: int,
+    response_format: dict | None = None,
 ) -> tuple[str | None, str]:
     """Executa a chamada a API e retorna a (resposta_texto, erro_str)."""
     try:
@@ -227,9 +237,7 @@ async def _execute_provider_attempt(
         )
 
         start_time = time.perf_counter()
-        response_text, usage = await api_call_func(
-            session, model, system_prompt, user_prompt, key
-        )
+        response_text, usage = await api_call_func(session, model, system_prompt, user_prompt, key, response_format)
         latency = time.perf_counter() - start_time
         logger.info(
             "[%s] [SOTA TELEMETRY] %s via %s consolidou resposta em %.2fs",
@@ -242,9 +250,7 @@ async def _execute_provider_attempt(
         await manager.update_llm_cache(model, user_prompt, response_text)
         prompt_tokens = usage.get(usage_keys[0], 0)
         completion_tokens = usage.get(usage_keys[1], 0)
-        await manager.record_api_usage(
-            task.id, task.agent, model, provider_name, prompt_tokens, completion_tokens
-        )
+        await manager.record_api_usage(task.id, task.agent, model, provider_name, prompt_tokens, completion_tokens)
 
         # Reseta o Circuit Breaker em caso de sucesso
         async with circuit_breaker_lock:
@@ -256,53 +262,46 @@ async def _execute_provider_attempt(
 
 async def _try_single_key(
     session: aiohttp.ClientSession,
-    provider_name: str,
     api_call_func: Callable,
     model: str,
     system_prompt: str,
     user_prompt: str,
     key: str,
     key_index: int,
-    task: Task,
-    manager: QueueManager,
-    max_retries: int,
-    usage_keys: tuple[str, str],
-    block_on_429_quota: bool,
-    provider_key: str,
+    cfg: ProviderCallConfig,
 ) -> tuple[str | None, str | None]:
     """
     Processa a tentativa de uma unica chave, aplicando retry e backoff SOTA.
     Retorna (response_text, action).
     """
-    for attempt in range(max_retries):
+    for attempt in range(cfg.max_retries):
         response_text, error_msg = await _execute_provider_attempt(
             session,
-            provider_name,
+            cfg.provider_name,
             api_call_func,
             model,
             system_prompt,
             user_prompt,
             key,
-            task,
-            manager,
-            usage_keys,
+            cfg.task,
+            cfg.manager,
+            cfg.usage_keys,
             attempt + 1,
             key_index,
+            cfg.response_format,
         )
         if response_text:
             return response_text, None
 
         logger.warning(
             "[%s] Falha em %s com %s (Chave %d): %s",
-            task.agent,
-            provider_name,
+            cfg.task.agent,
+            cfg.provider_name,
             model,
             key_index,
             error_msg,
         )
-        action = await _evaluate_api_error(
-            error_msg, provider_name, provider_key, block_on_429_quota
-        )
+        action = await _evaluate_api_error(error_msg, cfg.provider_name, cfg.provider_key, cfg.block_on_429_quota)
         if action == "abort_provider":
             return None, "abort_provider"
         if action == "abort_key":
@@ -312,7 +311,7 @@ async def _try_single_key(
             logger.warning(
                 "[%s] [RATE LIMITER SOTA] Throttle/Timeout detectado. "
                 "Backoff acionado: aguardando %ds antes do retry...",
-                task.agent,
+                cfg.task.agent,
                 backoff_time,
             )
             await asyncio.sleep(backoff_time)
@@ -332,6 +331,7 @@ async def _try_provider(
     max_retries: int = 2,
     usage_keys: tuple[str, str] = ("prompt_tokens", "completion_tokens"),
     block_on_429_quota: bool = True,
+    response_format: dict | None = None,
 ) -> str | None:
     """
     Funcao generica SOTA para tentar um provedor de API.
@@ -352,21 +352,25 @@ async def _try_provider(
         if _is_key_blocked(provider_key):
             continue
 
+        cfg = ProviderCallConfig(
+            provider_name=provider_name,
+            task=task,
+            manager=manager,
+            max_retries=max_retries,
+            usage_keys=usage_keys,
+            block_on_429_quota=block_on_429_quota,
+            provider_key=provider_key,
+            response_format=response_format,
+        )
         response_text, action = await _try_single_key(
             session,
-            provider_name,
             api_call_func,
             model,
             system_prompt,
             user_prompt,
             key,
             i + 1,
-            task,
-            manager,
-            max_retries,
-            usage_keys,
-            block_on_429_quota,
-            provider_key,
+            cfg,
         )
         if response_text:
             return response_text
@@ -403,20 +407,19 @@ async def _dispatch_provider_call(
     openrouter_keys: list[str],
     task: Task,
     manager: QueueManager,
+    response_format: dict | None = None,
 ) -> str | None:
     async with aiohttp.ClientSession() as session:
-        model_l = str(model).lower()
+        model_l = model.lower()
         if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
             # Invocacao Local (SOTA Edge)
             try:
                 res, _ = await call_gemma_local(
-                    session, model, system_prompt, user_prompt
+                    session, model, system_prompt, user_prompt, response_format=response_format
                 )
                 return res
             except Exception as e:  # pylint: disable=broad-exception-caught
-                logger.warning(
-                    "Falha no Motor Gemma Local: %s. Tentando roteamento externo...", e
-                )
+                logger.warning("Falha no Motor Gemma Local: %s. Tentando roteamento externo...", e)
 
         if "/" in model or "deepseek" in model or "llama" in model:
             return await _try_provider(
@@ -431,6 +434,7 @@ async def _dispatch_provider_call(
                 manager,
                 max_retries=3,
                 usage_keys=("prompt_tokens", "completion_tokens"),
+                response_format=response_format,
             )
         if "gemini" in model:
             return await _try_provider(
@@ -445,6 +449,7 @@ async def _dispatch_provider_call(
                 manager,
                 max_retries=2,
                 usage_keys=("promptTokenCount", "candidatesTokenCount"),
+                response_format=response_format,
             )
         if "claude" in model:
             return await _try_provider(
@@ -459,6 +464,7 @@ async def _dispatch_provider_call(
                 manager,
                 max_retries=3,
                 usage_keys=("input_tokens", "output_tokens"),
+                response_format=response_format,
             )
     logger.warning("Modelo desconhecido '%s' no pipeline, pulando.", model)
     return None
@@ -471,44 +477,26 @@ def _extract_provider_keys(
         dict.fromkeys(
             v
             for k, v in all_env_vars.items()
-            if v
-            and (k.upper().startswith("GEMINI") or k.upper().startswith("GOOGLE"))
-            and "CLI" not in k.upper()
+            if v and (k.upper().startswith("GEMINI") or k.upper().startswith("GOOGLE")) and "CLI" not in k.upper()
         )
     )
-    anthropic_keys = list(
-        dict.fromkeys(
-            v
-            for k, v in all_env_vars.items()
-            if v and k.upper().startswith("ANTHROPIC")
-        )
-    )
+    anthropic_keys = list(dict.fromkeys(v for k, v in all_env_vars.items() if v and k.upper().startswith("ANTHROPIC")))
     openrouter_keys = list(
         dict.fromkeys(
             v
             for k, v in all_env_vars.items()
-            if v
-            and (
-                k.upper().startswith("OPENROUTER")
-                or k.upper().startswith("OPEN_ROUTER")
-            )
+            if v and (k.upper().startswith("OPENROUTER") or k.upper().startswith("OPEN_ROUTER"))
         )
     )
     return gemini_keys, anthropic_keys, openrouter_keys
 
 
-async def call_llm_api(
-    task: Task, system_prompt: str, user_prompt: str, manager: QueueManager
-) -> str:
-    """Ponto de entrada SOTA que orquestra e delega a cognicao as LLMs configuradas."""
-    models_to_try = []
+def _build_models_to_try(task: Task, agent_type: str, openrouter_keys: list[str]) -> list[str]:
+    """Extrai a lista de modelos candidatos para a tarefa, reduzindo a complexidade cognitiva de call_llm_api."""
+    models_to_try: list[str] = []
 
-    # 1. Model Override from task metadata
     if task.metadata and "model_override" in task.metadata:
         models_to_try.append(task.metadata["model_override"])
-
-    # 2. Primary Model from agents manifest
-    from core.config import AGENTS_MANIFEST
 
     agent_clean = task.agent.replace("@", "")
     if agent_clean in AGENTS_MANIFEST:
@@ -516,39 +504,33 @@ async def call_llm_api(
         if primary_model and primary_model not in models_to_try:
             models_to_try.append(primary_model)
 
-    # 3. Add default category models as fallback
-    agent_type = AGENT_ROUTING_MAP.get(task.agent, "fast_operations")
-    fallback_list = (
-        list(DEEP_THINKING_MODELS)
-        if agent_type == "deep_thinking"
-        else list(FAST_OPERATIONS_MODELS)
-    )
+    fallback_list = list(DEEP_THINKING_MODELS) if agent_type == "deep_thinking" else list(FAST_OPERATIONS_MODELS)
     for model_name in fallback_list:
         if model_name not in models_to_try:
             models_to_try.append(model_name)
 
+    if openrouter_keys:
+        extras = (
+            ["anthropic/claude-3.5-sonnet", "deepseek/deepseek-chat"]
+            if agent_type == "deep_thinking"
+            else ["google/gemini-2.5-flash", "meta-llama/llama-3.1-8b-instruct"]
+        )
+        models_to_try.extend(extras)
+
+    return models_to_try
+
+
+async def call_llm_api(
+    task: Task, system_prompt: str, user_prompt: str, manager: QueueManager, response_format: dict | None = None
+) -> str:
+    """Ponto de entrada SOTA que orquestra e delega a cognicao as LLMs configuradas."""
+    agent_type = AGENT_ROUTING_MAP.get(task.agent, "fast_operations")
+
     env_keys = load_env()
     all_env_vars = {**os.environ, **env_keys}
-
-    # SOTA: Agregacao e de-duplicacao de chaves de API extraida para reduzir complexidade
     gemini_keys, anthropic_keys, openrouter_keys = _extract_provider_keys(all_env_vars)
 
-    # SOTA: Injecao dinamica de modelos alternativos se houver chaves do OpenRouter
-    if openrouter_keys:
-        if agent_type == "deep_thinking":
-            models_to_try.extend(
-                [
-                    "anthropic/claude-3.5-sonnet",
-                    "deepseek/deepseek-chat",
-                ]
-            )
-        else:
-            models_to_try.extend(
-                [
-                    "google/gemini-2.0-flash",
-                    "meta-llama/llama-3.1-8b-instruct",
-                ]
-            )
+    models_to_try = _build_models_to_try(task, agent_type, openrouter_keys)
 
     for model in models_to_try:
         response = await _dispatch_provider_call(
@@ -560,6 +542,7 @@ async def call_llm_api(
             openrouter_keys,
             task,
             manager,
+            response_format=response_format,
         )
         if response:
             return response

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 async def call_gemma_local(
     session: aiohttp.ClientSession,
-    model: str,  # pylint: disable=unused-argument # NOSONAR
+    model: str,
     system_prompt: str,
     user_prompt: str,
     key: str,  # pylint: disable=unused-argument # NOSONAR
@@ -25,9 +25,16 @@ async def call_gemma_local(
     url = "http://127.0.0.1:17043/generate"
 
     payload = {
-        "prompt": f"{system_prompt}\n\n[CONTEXTO]:\n{user_prompt}",
-        "max_tokens": kwargs.get("max_tokens", 1024),
+        "prompt": user_prompt,
+        "system_prompt": system_prompt,
+        "max_tokens": kwargs.get("max_tokens", 2048),
+        "model": model,
+        "temperature": kwargs.get("temperature"),
     }
+    # Propagate optional agentic/structured fields if available
+    for opt_field in ("physics_snapshot", "predictive_profile", "messages", "response_format", "tools"):
+        if opt_field in kwargs:
+            payload[opt_field] = kwargs[opt_field]
 
     auth_token = os.environ.get("API_SECRET_TOKEN") or os.environ.get("VITOI_AUTH_TOKEN")
     if not auth_token:
@@ -35,9 +42,7 @@ async def call_gemma_local(
     headers = {"X-Vitoi-Auth": auth_token, "Content-Type": "application/json"}
 
     try:
-        async with session.post(
-            url, json=payload, headers=headers, timeout=timeout
-        ) as response:
+        async with session.post(url, json=payload, headers=headers, timeout=timeout) as response:
             if response.status != 200:
                 error_text = await response.text()
                 raise RuntimeError(f"Gemma Local Error {response.status}: {error_text}")
@@ -55,9 +60,7 @@ async def call_gemma_local(
             return text, usage
 
     except aiohttp.ClientConnectorError as e:
-        raise ConnectionError(
-            "Motor Gemma Offline. Inicie via 'nexus-cli start-gemma'."
-        ) from e
+        raise ConnectionError("Motor Gemma Offline. Inicie via 'nexus-cli start-gemma'.") from e
     except Exception as e:
         logger.exception("[GEMMA-LOCAL] Erro na inferencia: %s", e)
         raise

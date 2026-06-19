@@ -210,7 +210,6 @@ export function derivePostFlopRps(
 
 	const heroCost = Math.max(0, potTotal - potAcumuladoHero); // O que falta pagar para ver a próxima street (ou showdown)
 
-	// SOTA v8.0 GOLD: Delegação Total para o Motor Perspectiva Fused
 	const input: PerspectivaInput = {
 		stacks,
 		prizes,
@@ -226,8 +225,11 @@ export function derivePostFlopRps(
 		humanNoiseFactor,
 		heroPosition: heroIsIp ? 'IP' : 'OOP',
 		investidoAcumulado: potAcumuladoHero,
-		referenceStatus,      // [v8.0] Propaga estado de referência para Teoria do Prospecto
 	};
+
+	if (referenceStatus !== undefined) {
+		input.referenceStatus = referenceStatus;
+	}
 
 	const core = calculatePerspectivaVitoi(input);
 

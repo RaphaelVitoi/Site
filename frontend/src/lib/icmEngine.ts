@@ -1,12 +1,12 @@
-import { calculateMapaICM } from './perspectiva';
+﻿import { calculateMapaICM } from './perspectiva';
 
 /**
- * IDENTITY: Motor Algorítmico ICM
+ * IDENTITY: Motor AlgorÃ­tmico ICM
  * PATH: src/lib/icmEngine.ts
- * ROLE: Executar o algoritmo clássico de Malmuth-Harville para cálculo de Equidade em Torneios (ICM).
- *       Isolado de React/UI para permitir testes matemáticos puros e máxima performance.
+ * ROLE: Executar o algoritmo clÃ¡ssico de Malmuth-Harville para cÃ¡lculo de Equidade em Torneios (ICM).
+ *       Isolado de React/UI para permitir testes matemÃ¡ticos puros e mÃ¡xima performance.
  * BINDING: [src/components/ICMCalculator.tsx] (Alimenta o estado da Interface Visual)
- * TELEOLOGY: Evoluir como motor base para suportar simulações FGS (Future Game Simulation) e cálculos de colisão de ranges baseados em dados massivos (MDA).
+ * TELEOLOGY: Evoluir como motor base para suportar simulaÃ§Ãµes FGS (Future Game Simulation) e cÃ¡lculos de colisÃ£o de ranges baseados em dados massivos (MDA).
  */
 
 export interface ICMPlayer {
@@ -20,12 +20,12 @@ export interface ICMResult {
 	name: string;
 	equity: number; // Valor financeiro absoluto ($)
 	equityPercent: number; // Porcentagem do Prize Pool total (%)
-	winProb: number; // Probabilidade de 1º lugar (0-1)
+	winProb: number; // Probabilidade de 1Âº lugar (0-1)
 }
 
 /**
  * Calcula a equidade exata (ICM) baseada no Algoritmo de Malmuth-Harville.
- * [SOTA v6.2.1 GOLD]: Delegado para o motor ultra-otimizado O(2^N) do `perspectiva.ts`
+ * [SOTA v7.0 GOLD]: Delegado para o motor ultra-otimizado O(2^N) do `perspectiva.ts`
  * para garantir Economia de Shannon e evitar a explosao combinatoria O(N!).
  */
 export function calculateMalmuthHarville(
@@ -47,15 +47,15 @@ export function calculateMalmuthHarville(
 		}));
 	}
 
-	// SOTA: Barreira Termodinâmica (Fail-Fast) contra Starvation de CPU e OOM.
-	// Para N > 10, o motor reverte graciosamente para ChipEV, garantindo Fricção Zero na UI.
+	// SOTA: Barreira TermodinÃ¢mica (Fail-Fast) contra Starvation de CPU e OOM.
+	// Para N > 10, o motor reverte graciosamente para ChipEV, garantindo FricÃ§Ã£o Zero na UI.
 	if (players.length > 10) {
-		// Nota: O valor de N (players.length) deve representar o número de jogadores na mesa.
+		// Nota: O valor de N (players.length) deve representar o nÃºmero de jogadores na mesa.
 		// Se N for inesperadamente alto (ex: 3013 como visto em logs), isso pode indicar um problema
-		// na fonte de dados que popula o array 'players' ou um uso indevido da função para cenários
-		// que não sejam de mesa final de torneio. A função deliberadamente reverte para ChipEV neste caso.
+		// na fonte de dados que popula o array 'players' ou um uso indevido da funÃ§Ã£o para cenÃ¡rios
+		// que nÃ£o sejam de mesa final de torneio. A funÃ§Ã£o deliberadamente reverte para ChipEV neste caso.
 		console.warn(
-			`[ICM Engine] N=${players.length} excede o limite termodinâmico seguro. Revertendo para ChipEV.`,
+			`[ICM Engine] N=${players.length} excede o limite termodinÃ¢mico seguro. Revertendo para ChipEV.`,
 		);
 		const totalChips = players.reduce((sum, p) => sum + p.stack, 0);
 		return players.map((p) => {
@@ -66,7 +66,7 @@ export function calculateMalmuthHarville(
 				name: p.name,
 				equity: eq,
 				equityPercent: denominatorForPercent > 0 ? (eq / denominatorForPercent) * 100 : 0,
-				winProb: chipPct, // Em ChipEV, a probabilidade de cravada é estritamente proporcional ao stack
+				winProb: chipPct, // Em ChipEV, a probabilidade de cravada Ã© estritamente proporcional ao stack
 			};
 		});
 	}
@@ -88,3 +88,4 @@ export function calculateMalmuthHarville(
 		};
 	});
 }
+

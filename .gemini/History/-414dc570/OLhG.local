@@ -1,3 +1,0 @@
-# Arquivo de Variaveis de Ambiente (Ignorado pelo Git)
-# Mantenha suas chaves aqui. O task_executor.py le este arquivo diretamente.
-$env:GEMINI_API_KEY_11 = "AIzaSyBW8EzuB0YB2E7f9mF4FS-maiip-ElPtTM" 

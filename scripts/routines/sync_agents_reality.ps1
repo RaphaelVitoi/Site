@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Sincroniza a realidade das pastas com os 18 agentes listados no Manifesto SOTA.
+    Sincroniza a realidade das pastas com os agentes listados no Manifesto SOTA.
 .DESCRIPTION
     Le o agents_manifest.json e verifica se os arquivos `.claude/agents/<agente>.md`
     e `.claude/agent-memory/<agente>/MEMORY.md` existem. Se nao existirem, cria-os.
@@ -32,7 +32,8 @@ function Write-TextSOTA {
     }
 }
 
-Write-Host '=== VERIFICANDO ALINHAMENTO FRACTAL DOS 18 AGENTES ===' -ForegroundColor Cyan
+$AgentCount = $AgentNames.Count
+Write-Host "=== VERIFICANDO ALINHAMENTO FRACTAL DOS $AgentCount AGENTES ===" -ForegroundColor Cyan
 
 $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
 

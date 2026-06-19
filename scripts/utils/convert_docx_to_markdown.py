@@ -1,3 +1,5 @@
+# pylint: disable=c-extension-no-member
+
 import shutil
 import sys
 import zipfile
@@ -23,9 +25,7 @@ def _extract_image_mapping(rels_tree) -> dict:
     }
 
 
-def _process_paragraph(
-    p, docx_zip: zipfile.ZipFile, id_to_image: dict, image_output_dir: Path, slug: str
-) -> str:
+def _process_paragraph(p, docx_zip: zipfile.ZipFile, id_to_image: dict, image_output_dir: Path, slug: str) -> str:
     """Processa um paragrafo e lida com o parse de texto e ancoragem de imagens extraidas."""
     paragraph_parts = []
     for r in p.findall("w:r", namespaces=ns):
@@ -46,9 +46,7 @@ def _process_paragraph(
                         shutil.copyfileobj(source, target_file)
 
                     web_path = f"/images/aulas/{slug}/{image_filename}"
-                    markdown_image_tag = (
-                        f"\n\n![Descrição da imagem: {image_filename}]({web_path})\n\n"
-                    )
+                    markdown_image_tag = f"\n\n![Descricao da imagem: {image_filename}]({web_path})\n\n"
                     paragraph_parts.append(markdown_image_tag)
     return "".join(paragraph_parts)
 
@@ -56,18 +54,19 @@ def _process_paragraph(
 def convert_docx_to_markdown(docx_path_str: str, slug: str):
     """
     Extrai texto e imagens de um arquivo .docx, mantendo a ordem, e gera um arquivo Markdown.
-    As imagens são salvas em um diretório público e referenciadas no Markdown.
+    As imagens sao salvas em um diretorio publico e referenciadas no Markdown.
     """
     docx_path = Path(docx_path_str)
-    # Blindagem SOTA: Garante que o caminho é um arquivo, não um diretório.
+    # Blindagem SOTA: Garante que o caminho e um arquivo, nao um diretorio.
     if not docx_path.is_file():
-        print(f"[ERRO] O caminho fornecido não é um arquivo válido: {docx_path}")
+        print(f"[ERRO] O caminho fornecido nao e um arquivo valido: {docx_path}")
         return
 
-    base_path = Path(__file__).parent
+    # SOTA: Resolucao absoluta para a raiz do projeto a partir do diretorio 'utils'
+    base_path = Path(__file__).parent.parent.parent
     image_output_dir = base_path / "frontend" / "public" / "images" / "aulas" / slug
     image_output_dir.mkdir(parents=True, exist_ok=True)
-    print(f"[INFO] Imagens serão salvas em: {image_output_dir}")
+    print(f"[INFO] Imagens serao salvas em: {image_output_dir}")
 
     markdown_content = []
 
@@ -82,9 +81,7 @@ def convert_docx_to_markdown(docx_path_str: str, slug: str):
             body = doc_tree.find("w:body", namespaces=ns)
 
             for p in body.findall("w:p", namespaces=ns):
-                processed_text = _process_paragraph(
-                    p, docx_zip, id_to_image, image_output_dir, slug
-                )
+                processed_text = _process_paragraph(p, docx_zip, id_to_image, image_output_dir, slug)
                 if processed_text:
                     markdown_content.append(processed_text)
 
@@ -94,20 +91,18 @@ def convert_docx_to_markdown(docx_path_str: str, slug: str):
         with open(output_md_path, "w", encoding="utf-8") as f:
             f.write(final_markdown)
 
-        print("\n[SUCESSO] Conversão concluída!")
-        print(f"O conteúdo Markdown foi salvo em: {output_md_path}")
+        print("\n[SUCESSO] Conversao concluida!")
+        print(f"O conteudo Markdown foi salvo em: {output_md_path}")
         print(
-            "\nAgora você pode copiar este conteúdo para o seu `seed_lesson.py` ou usá-lo diretamente no banco de dados."
+            "\nAgora voce pode copiar este conteudo para o seu `seed_lesson.py` ou usa-lo diretamente no banco de dados."
         )
 
     except Exception as e:  # noqa: BLE001
-        print(f"[ERRO FATAL] Falha durante a conversão: {e}")
+        print(f"[ERRO FATAL] Falha durante a conversao: {e}")
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print(
-            'Uso: python convert_docx_to_markdown.py "<caminho_para_o_docx>" "<slug_da_aula>"'
-        )
+        print('Uso: python convert_docx_to_markdown.py "<caminho_para_o_docx>" "<slug_da_aula>"')
         sys.exit(1)
     convert_docx_to_markdown(sys.argv[1], sys.argv[2])

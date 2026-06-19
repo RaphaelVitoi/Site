@@ -1,57 +1,57 @@
 # Poker Racional
 
-ICM e Risk Premium Pós-Flop
+ICM e Risk Premium Pos-Flop
 
-**Headline:** O Edge Mudou de Lugar. Você Ainda Está Jogando o Jogo de 2020?
+**Headline:** O Edge Mudou de Lugar. Voce Ainda Esta Jogando o Jogo de 2020?
 
-**Subheadline:** Descubra por que jogar ChipEV em mesas finais está custando, em média, **mais de 10% do seu ROI** — e como a elite do poker usa o "Downward Drift" para dominar o pós-flop em 2026.
+**Subheadline:** Descubra por que jogar ChipEV em mesas finais esta custando, em media, **mais de 10% do seu ROI**  e como a elite do poker usa o "Downward Drift" para dominar o pos-flop em 2026.
 
 ---
 
 ## A "Mentira" do ICM
 
-Se você é como a maioria dos regulares de MTT, você aprendeu que o ICM é um interruptor que "liga" na bolha ou na mesa final.
+Se voce e como a maioria dos regulares de MTT, voce aprendeu que o ICM e um interruptor que "liga" na bolha ou na mesa final.
 
-Você estudou tabelas de Push/Fold. Você domina o HRC e o ICMIZER. Você acha que seu jogo de ICM está em dia.
+Voce estudou tabelas de Push/Fold. Voce domina o HRC e o ICMIZER. Voce acha que seu jogo de ICM esta em dia.
 
-**Tenho uma má notícia:** O poker evoluiu, e o seu edge no pré-flop está desaparecendo. Hoje, solvers resolveram o pré-flop. O gap de habilidade entre você e o reg médio nessa área é mínimo.
+**Tenho uma ma noticia:** O poker evoluiu, e o seu edge no pre-flop esta desaparecendo. Hoje, solvers resolveram o pre-flop. O gap de habilidade entre voce e o reg medio nessa area e minimo.
 
-Mas existe uma **Nova Fronteira**. Um lugar onde o dinheiro real está sendo ganho e perdido silenciosamente, longe dos olhos dos solvers básicos.
+Mas existe uma **Nova Fronteira**. Um lugar onde o dinheiro real esta sendo ganho e perdido silenciosamente, longe dos olhos dos solvers basicos.
 
-**O ICM Pós-Flop.**
+**O ICM Pos-Flop.**
 
-## O Custo Invisível
+## O Custo Invisivel
 
 Dados recentes do GTO Wizard (2025/2026) revelam uma verdade brutal:
 
-> Jogar uma estratégia padrão de ChipEV (focada em acumular fichas) em spots de mesa final custa, em média, **10% a 12% de todo o buy-in do torneio em $EV**.
+> Jogar uma estrategia padrao de ChipEV (focada em acumular fichas) em spots de mesa final custa, em media, **10% a 12% de todo o buy-in do torneio em $EV**.
 
 Em potes 3-bet? O erro custa mais de **30% do valor da jogada**.
 
-Pense nisso. Você grindou 8 horas. Chegou na FT. E em duas decisões de c-bet mal calibradas, você devolveu todo o lucro esperado do torneio. Não porque jogou "mal", mas porque jogou com a matemática errada.
+Pense nisso. Voce grindou 8 horas. Chegou na FT. E em duas decisoes de c-bet mal calibradas, voce devolveu todo o lucro esperado do torneio. Nao porque jogou "mal", mas porque jogou com a matematica errada.
 
-## Apresentando: O Mapa do ICM Pós-Flop
+## Apresentando: O Mapa do ICM Pos-Flop
 
-Nesta aula inédita, não vamos falar de tabelas de push/fold. Vamos mergulhar na física do jogo pós-flop sob pressão.
+Nesta aula inedita, nao vamos falar de tabelas de push/fold. Vamos mergulhar na fisica do jogo pos-flop sob pressao.
 
-Você vai aprender a **Antevisão**: a habilidade de olhar para uma mesa e ver o "campo de força" do Risk Premium antes mesmo de receber suas cartas.
+Voce vai aprender a **Antevisao**: a habilidade de olhar para uma mesa e ver o "campo de forca" do Risk Premium antes mesmo de receber suas cartas.
 
-### O Que Você Vai Dominar:
+### O Que Voce Vai Dominar:
 
-- **O "Downward Drift":** A heurística simples que ajusta automaticamente seus sizings e frequências para a realidade do ICM (e por que seus sizings de cash game estão queimando dinheiro).
-- **Toy-Games de Laboratório:** Vamos dissecar 8 cenários puros para provar matematicamente conceitos contra-intuitivos — como o fato de que, às vezes, **quem tem menos risco deve foldar MAIS** (O Paradoxo da Pressão Invertida).
-- **O Teto do Risk Premium:** Por que overbluffar o Chip Leader é suicídio, e onde está o limite matemático da agressão.
+- **O "Downward Drift":** A heuristica simples que ajusta automaticamente seus sizings e frequencias para a realidade do ICM (e por que seus sizings de cash game estao queimando dinheiro).
+- **Toy-Games de Laboratorio:** Vamos dissecar 8 cenarios puros para provar matematicamente conceitos contra-intuitivos  como o fato de que, as vezes, **quem tem menos risco deve foldar MAIS** (O Paradoxo da Pressao Invertida).
+- **O Teto do Risk Premium:** Por que overbluffar o Chip Leader e suicidio, e onde esta o limite matematico da agressao.
 - **A Mesa como Organismo:** Como um all-in entre dois oponentes muda instantaneamente o valor das SUAS fichas e como explorar isso.
 
-## Para Quem É Isso?
+## Para Quem E Isso?
 
-Este material é para quem:
+Este material e para quem:
 
-1. Já entende o básico de ICM pré-flop.
-2. Está cansado de "sentir" que está cometendo erros em FTs, mas não sabe onde.
-3. Quer uma vantagem técnica real que o field ainda não estuda.
+1. Ja entende o basico de ICM pre-flop.
+2. Esta cansado de "sentir" que esta cometendo erros em FTs, mas nao sabe onde.
+3. Quer uma vantagem tecnica real que o field ainda nao estuda.
 
-## O Que Está Incluso?
+## O Que Esta Incluso?
 
 ### Modulo 1: O Problema e o Mapa
 
@@ -98,11 +98,11 @@ Este material é para quem:
   - Teoria de Sistemas: mesa como organismo, propriedades emergentes, feedback loops
   - Teoria dos Jogos: Nash sob restricoes de utilidade nao-linear
 
-* e incontáveis outros módulos e sub-modulos!
+* e incontaveis outros modulos e sub-modulos!
 
-## Bônus Exclusivo
+## Bonus Exclusivo
 
-**Checklist de Bolso "Antevisão":** Um guia passo-a-passo para calibrar sua mente antes de cada mão em uma FT. Nunca mais entre em um spot sem saber quem cobre quem e qual é o Risk Premium da mesa.
+**Checklist de Bolso "Antevisao":** Um guia passo-a-passo para calibrar sua mente antes de cada mao em uma FT. Nunca mais entre em um spot sem saber quem cobre quem e qual e o Risk Premium da mesa.
 
 ## ELEMENTOS DIFERENCIADORES
 
@@ -115,12 +115,12 @@ Este material é para quem:
 ---
 
 **Autor:** Raphael Vitoi
-_Educador, Profissional de Poker há mais de dez anos, Especialista em Sistemas Complexos, ICM, Multiway Spots, Teoria dos Jogos, Análise Bayesiana, Preditiva e Recursiva, Adaptação Estratégica, Análise Comportamental, GTO e desvio, Psicologia do Poker
+_Educador, Profissional de Poker ha mais de dez anos, Especialista em Sistemas Complexos, ICM, Multiway Spots, Teoria dos Jogos, Analise Bayesiana, Preditiva e Recursiva, Adaptacao Estrategica, Analise Comportamental, GTO e desvio, Psicologia do Poker
 &
-é claro
+e claro
 em Poker Racional!
-(pois o que importa de verdade é pensar bem)_
+(pois o que importa de verdade e pensar bem)_
 
-> _"O edge não está mais nas cartas que você recebe, mas na precisão com que você avalia o risco de jogá-las."_
+> _"O edge nao esta mais nas cartas que voce recebe, mas na precisao com que voce avalia o risco de joga-las."_
 
 **Recupere seu ROI. Domine a fronteira final.**

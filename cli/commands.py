@@ -1,4 +1,4 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring, missing-class-docstring, broad-exception-caught, logging-fstring-interpolation, line-too-long, unused-argument, deprecated-argument, unused-variable, too-many-lines, invalid-name, redefined-outer-name, unspecified-encoding, protected-access
+# pylint: disable=missing-module-docstring, missing-function-docstring, missing-class-docstring, broad-exception-caught, logging-fstring-interpolation, line-too-long, unused-argument, deprecated-argument, unused-variable, too-many-lines, invalid-name, redefined-outer-name, unspecified-encoding, protected-access, wrong-import-position, import-outside-toplevel, import-error
 """
 CLI Commands -- Interface de linha de comando do Nexus Orchestrator.
 Todos os comandos db-*, check-keys, gemini-health, worker e query.
@@ -6,20 +6,24 @@ Todos os comandos db-*, check-keys, gemini-health, worker e query.
 
 import asyncio
 import base64
+import contextlib
 import ctypes
+import inspect
+from datetime import UTC, datetime, timedelta
 import json
 import os
+from pathlib import Path
 import socket
 import sqlite3
 import ssl
 import sys
 import time
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 # Injeta o diretorio raiz (Site) no sys.path para permitir execucoes diretas
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+# pylint: disable=wrong-import-position
+# ruff: noqa: E402, I001
 import aiofiles
 import aiohttp
 import aiosqlite
@@ -46,13 +50,14 @@ from llm.budget import (
     _key_fingerprint,
     _route_identifier,
 )
+# pylint: enable=wrong-import-position
 
 console = Console()
 
 
 def _get_runtime():
     """Import lazy do executor de tarefas para evitar dependencia circular."""
-    import task_executor as te
+    import task_executor as te  # pylint: disable=import-outside-toplevel
 
     return te
 
@@ -62,12 +67,10 @@ LATENCY_NA = "[dim]N/A[/]"
 
 
 async def _cmd_get_budget(manager: QueueManager) -> dict:
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     async with (
         aiosqlite.connect(manager.db_path) as db,
-        db.execute(
-            "SELECT call_count FROM daily_usage WHERE date = ?", (today,)
-        ) as cursor,
+        db.execute("SELECT call_count FROM daily_usage WHERE date = ?", (today,)) as cursor,
     ):
         row = await cursor.fetchone()
         current_count = row[0] if row else 0
@@ -101,7 +104,7 @@ async def _format_notify_row(t: Task, manager: QueueManager) -> tuple:
                 err_msg = str(err_msg_raw).replace("\n", " ")
                 desc += f" [bold red][ERRO AUTOFIX: {err_msg[:120]}...][/]"
 
-    display_id = f"[bold orange3]🔔 {t.id}[/]"
+    display_id = f"[bold orange3] {t.id}[/]"
     desc = f"[orange3]{desc}[/]"
     ts = t.timestamp[:19].replace("T", " ")
     return (
@@ -123,7 +126,7 @@ async def _cmd_get_notify(manager: QueueManager, argv: list) -> None:
         return
 
     table = Table(
-        title="[bold orange3]🔔 NEXUS ORCHESTRATOR - Auditorias Sentinela Pendentes[/]",
+        title="[bold orange3] NEXUS ORCHESTRATOR - Auditorias Sentinela Pendentes[/]",
         border_style="orange3",
         show_lines=True,
     )
@@ -148,7 +151,7 @@ async def _cmd_get_notify(manager: QueueManager, argv: list) -> None:
     console.print(table)
 
 
-async def _cmd_reset_budget(manager: QueueManager) -> None:
+async def _cmd_reset_budget(manager: QueueManager) -> None:  # noqa: ARG001
     async with aiosqlite.connect(manager.db_path) as db:
         await db.execute("DELETE FROM system_state WHERE key='hibernation_until'")
         await db.execute("DELETE FROM daily_usage")
@@ -156,7 +159,7 @@ async def _cmd_reset_budget(manager: QueueManager) -> None:
 
 
 async def _cmd_fallback_stats(manager: QueueManager, window_minutes: int) -> list:
-    since = (datetime.now(timezone.utc) - timedelta(minutes=window_minutes)).isoformat()
+    since = (datetime.now(UTC) - timedelta(minutes=window_minutes)).isoformat()
     async with aiosqlite.connect(manager.db_path) as db:
         db.row_factory = sqlite3.Row
         query = """
@@ -177,23 +180,17 @@ async def _cmd_fallback_stats(manager: QueueManager, window_minutes: int) -> lis
             "model": r["model"],
             "attempts": int(r["attempts"] or 0),
             "successes": int(r["successes"] or 0),
-            "success_rate": round(
-                (float(r["successes"] or 0) / float(r["attempts"] or 1)) * 100, 2
-            ),
-            "avg_latency_ms": int(r["avg_latency_ms"])
-            if r["avg_latency_ms"] is not None
-            else None,
+            "success_rate": round((float(r["successes"] or 0) / float(r["attempts"] or 1)) * 100, 2),
+            "avg_latency_ms": int(r["avg_latency_ms"]) if r["avg_latency_ms"] is not None else None,
         }
         for r in rows
     ]
 
 
 async def _cmd_prune_fallback(manager: QueueManager, days: int) -> dict:
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
     async with aiosqlite.connect(manager.db_path) as db:
-        async with db.execute(
-            "SELECT COUNT(*) FROM key_usage_metrics WHERE timestamp < ?", (cutoff,)
-        ) as cursor:
+        async with db.execute("SELECT COUNT(*) FROM key_usage_metrics WHERE timestamp < ?", (cutoff,)) as cursor:
             row = await cursor.fetchone()
             total_to_delete = int(row[0]) if row and row[0] is not None else 0
         await db.execute("DELETE FROM key_usage_metrics WHERE timestamp < ?", (cutoff,))
@@ -206,20 +203,16 @@ async def _cmd_prune_legacy_fallback(manager: QueueManager) -> dict:
     deleted = 0
     async with aiosqlite.connect(manager.db_path) as db:
         for pattern in legacy_patterns:
-            async with db.execute(
-                "SELECT COUNT(*) FROM key_usage_metrics WHERE model LIKE ?", (pattern,)
-            ) as cursor:
+            async with db.execute("SELECT COUNT(*) FROM key_usage_metrics WHERE model LIKE ?", (pattern,)) as cursor:
                 row = await cursor.fetchone()
                 deleted += int(row[0]) if row and row[0] is not None else 0
-            await db.execute(
-                "DELETE FROM key_usage_metrics WHERE model LIKE ?", (pattern,)
-            )
+            await db.execute("DELETE FROM key_usage_metrics WHERE model LIKE ?", (pattern,))
         await db.commit()
     return {"deleted_rows": deleted, "patterns": list(legacy_patterns)}
 
 
 async def _cmd_get_rate_limits(manager: QueueManager, days: int) -> list:
-    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    since = (datetime.now(UTC) - timedelta(days=days)).isoformat()
     async with aiosqlite.connect(manager.db_path) as db:
         db.row_factory = sqlite3.Row
         query = """
@@ -248,9 +241,7 @@ async def _cmd_get_watchdog_stats(manager: QueueManager) -> dict:
     failure_rate = 0.0
     recent_failures = 0
     if last_timestamp_str and last_failed is not None:
-        time_delta = datetime.now(timezone.utc) - datetime.fromisoformat(
-            last_timestamp_str
-        )
+        time_delta = datetime.now(UTC) - datetime.fromisoformat(last_timestamp_str)
         minutes_delta = time_delta.total_seconds() / 60.0
         recent_failures = max(0, current_failed - last_failed)
         if minutes_delta > 0:
@@ -265,7 +256,7 @@ async def _cmd_get_watchdog_stats(manager: QueueManager) -> dict:
 
 
 async def _cmd_route_health(manager: QueueManager, window_minutes: int) -> list:
-    since = (datetime.now(timezone.utc) - timedelta(minutes=window_minutes)).isoformat()
+    since = (datetime.now(UTC) - timedelta(minutes=window_minutes)).isoformat()
     async with aiosqlite.connect(manager.db_path) as db:
         db.row_factory = sqlite3.Row
         query = """
@@ -281,7 +272,7 @@ async def _cmd_route_health(manager: QueueManager, window_minutes: int) -> list:
         async with db.execute(query, (since,)) as cursor:
             rows = await cursor.fetchall()
     result = []
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for r in rows:
         provider = r["provider"]
         model = r["model"] or ""
@@ -292,15 +283,9 @@ async def _cmd_route_health(manager: QueueManager, window_minutes: int) -> list:
         cooldown_minutes = int(ROUTE_COOLDOWN_DURATION.total_seconds() / 60)
         if "deepseek/" in route_key.lower():
             threshold = DEEPSEEK_ROUTE_FAILURE_THRESHOLD
-            cooldown_minutes = int(
-                DEEPSEEK_ROUTE_COOLDOWN_DURATION.total_seconds() / 60
-            )
+            cooldown_minutes = int(DEEPSEEK_ROUTE_COOLDOWN_DURATION.total_seconds() / 60)
         is_cooldown_candidate = failures >= threshold and failures > successes
-        candidate_until = (
-            (now + timedelta(minutes=cooldown_minutes)).isoformat()
-            if is_cooldown_candidate
-            else None
-        )
+        candidate_until = (now + timedelta(minutes=cooldown_minutes)).isoformat() if is_cooldown_candidate else None
         result.append(
             {
                 "provider": provider,
@@ -327,13 +312,11 @@ async def _cmd_retry_task(manager: QueueManager, task_id: str) -> None:
         task_id,
         {
             "workflow_status": "pending_retry_forced",
-            "retry_timestamp": datetime.now(timezone.utc).isoformat(),
+            "retry_timestamp": datetime.now(UTC).isoformat(),
         },
         merge=True,
     )
-    print(
-        f"SUCCESS: Tarefa {task_id} reenfileirada com status 'pending'. A autopoiese lidara com ela em breve."
-    )
+    print(f"SUCCESS: Tarefa {task_id} reenfileirada com status 'pending'. A autopoiese lidara com ela em breve.")
 
 
 async def _cmd_retry_failed_tasks(manager: QueueManager) -> None:
@@ -347,7 +330,7 @@ async def _cmd_retry_failed_tasks(manager: QueueManager) -> None:
             task.id,
             {
                 "workflow_status": "pending_retry_forced",
-                "retry_timestamp": datetime.now(timezone.utc).isoformat(),
+                "retry_timestamp": datetime.now(UTC).isoformat(),
             },
             merge=True,
         )
@@ -364,7 +347,7 @@ async def _cmd_complete_task(manager: QueueManager, task_id: str) -> None:
         task_id,
         {
             "workflow_status": "completed",
-            "completedAt": datetime.now(timezone.utc).isoformat(),
+            "completedAt": datetime.now(UTC).isoformat(),
         },
         merge=True,
     )
@@ -392,9 +375,7 @@ async def _cmd_check_integrity(manager: QueueManager) -> dict:
                 result = await cursor.fetchone()
                 if result and result[0] != "ok":
                     report["integrity_check"] = result[0]
-            two_hours_ago = (
-                datetime.now(timezone.utc) - timedelta(hours=2)
-            ).isoformat()
+            two_hours_ago = (datetime.now(UTC) - timedelta(hours=2)).isoformat()
             async with db.execute(
                 "SELECT id, agent, timestamp FROM tasks WHERE status = 'running' AND timestamp < ?",
                 (two_hours_ago,),
@@ -409,9 +390,7 @@ async def _cmd_check_integrity(manager: QueueManager) -> dict:
                     task_id, metadata_json = task_row[0], task_row[1]
                     metadata = json.loads(metadata_json)
                     for dep_id in metadata.get("depends_on", []):
-                        async with db.execute(
-                            "SELECT 1 FROM tasks WHERE id = ?", (dep_id,)
-                        ) as dep_cursor:
+                        async with db.execute("SELECT 1 FROM tasks WHERE id = ?", (dep_id,)) as dep_cursor:
                             if await dep_cursor.fetchone() is None:
                                 report["orphan_dependencies"].append(
                                     {
@@ -425,7 +404,7 @@ async def _cmd_check_integrity(manager: QueueManager) -> dict:
 
 
 async def _cmd_get_agent_report(manager: QueueManager) -> dict:
-    since_date = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    since_date = (datetime.now(UTC) - timedelta(days=7)).isoformat()
     report = {}
     async with aiosqlite.connect(manager.db_path) as db:
         db.row_factory = sqlite3.Row
@@ -469,15 +448,11 @@ async def _cmd_get_agent_report(manager: QueueManager) -> dict:
 
 async def _cmd_get_mermaid_graph(manager: QueueManager, status_filter: str) -> None:
     tasks_to_graph = await manager.get_tasks(status=status_filter)
-    graph_definition = UniversalArbitrator.generate_dependency_mermaid_graph(
-        tasks_to_graph
-    )
+    graph_definition = UniversalArbitrator.generate_dependency_mermaid_graph(tasks_to_graph)
     print(graph_definition)
 
 
-async def _fetch_gemini_health(
-    session, key, model, system_prompt, health_prompt, client_timeout
-):
+async def _fetch_gemini_health(session, key, model, system_prompt, health_prompt, client_timeout):
     lm_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key}"
     async with session.get(lm_url) as lm_resp:
         if lm_resp.status != 200:
@@ -485,7 +460,7 @@ async def _fetch_gemini_health(
             return False, False, f"ListModels HTTP {lm_resp.status}: {lm_text[:120]}"
 
     try:
-        from llm.gemini import call_gemini
+        from llm.gemini import call_gemini  # noqa: I001
 
         await call_gemini(
             session,
@@ -540,9 +515,7 @@ async def _test_single_gemini_key(
             agent="@auditor",
             task_id="GEMINI-HEALTH",
         )
-        recent = await manager.get_key_recent_stats(
-            "gemini", key_hash, window_minutes=window_minutes
-        )
+        recent = await manager.get_key_recent_stats("gemini", key_hash, window_minutes=window_minutes)
 
         attempts = int(recent.get("attempts", 0) or 0)
         successes = int(recent.get("successes", 0) or 0)
@@ -582,8 +555,8 @@ async def _test_single_gemini_key(
 
 
 async def _cmd_run_gemini_health(manager: QueueManager, window_minutes: int) -> dict:
-    flash_model = os.environ.get("GEMINI_HEALTH_FLASH_MODEL", "gemini-2.0-flash")
-    pro_model = os.environ.get("GEMINI_HEALTH_PRO_MODEL", "gemini-1.5-pro")
+    flash_model = os.environ.get("GEMINI_HEALTH_FLASH_MODEL", "gemini-2.5-flash")
+    pro_model = os.environ.get("GEMINI_HEALTH_PRO_MODEL", "gemini-2.5-pro")
     health_prompt = "Responda apenas OK."
     system_prompt = "Voce e um verificador tecnico. Responda apenas com OK."
 
@@ -606,9 +579,7 @@ async def _cmd_run_gemini_health(manager: QueueManager, window_minutes: int) -> 
     timeout = aiohttp.ClientTimeout(total=20)
     results = []
 
-    async with aiohttp.ClientSession(
-        connector=connector, trust_env=True, timeout=timeout
-    ) as session:
+    async with aiohttp.ClientSession(connector=connector, trust_env=True, timeout=timeout) as session:
         for entry in entries:
             res = await _test_single_gemini_key(
                 session,
@@ -624,9 +595,7 @@ async def _cmd_run_gemini_health(manager: QueueManager, window_minutes: int) -> 
             results.append(res)
             await asyncio.sleep(4)
 
-    ranked = sorted(
-        results, key=lambda r: (r["score"], r["recent_success_rate_pct"]), reverse=True
-    )
+    ranked = sorted(results, key=lambda r: (r["score"], r["recent_success_rate_pct"]), reverse=True)
     return {
         "window_minutes": window_minutes,
         "tested_models": {"pro": pro_model, "flash": flash_model},
@@ -643,18 +612,16 @@ async def _cmd_run_health_parallel(manager: QueueManager) -> dict:
     counts = await manager.get_task_counts()
     state_hib = await manager.get_system_state("hibernation_until")
     state_auto = await manager.get_system_state("autonomy_mode")
-    budget_day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    budget_day = datetime.now(UTC).strftime("%Y-%m-%d")
     async with (
         aiosqlite.connect(manager.db_path) as db,
-        db.execute(
-            "SELECT call_count FROM daily_usage WHERE date = ?", (budget_day,)
-        ) as cursor,
+        db.execute("SELECT call_count FROM daily_usage WHERE date = ?", (budget_day,)) as cursor,
     ):
         row = await cursor.fetchone()
         used_budget = row[0] if row else 0
     return {
         "status": "ok",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "task_counts": counts,
         "hibernation_until": state_hib,
         "autonomy_mode": state_auto or "off",
@@ -686,9 +653,7 @@ async def _check_gemini_via_list_models(session, key):
 async def _check_openrouter_models(session, key):
     url = "https://openrouter.ai/api/v1/models"
     headers = {"Authorization": f"Bearer {key}"}
-    async with session.get(
-        url, headers=headers, timeout=aiohttp.ClientTimeout(total=15)
-    ) as resp:
+    async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=15)) as resp:
         status = resp.status
         body = await resp.text()
         if status == 200:
@@ -735,7 +700,7 @@ async def _test_api_key(session, provider, key, provider_id, semaphore):
             elif provider_id == "openrouter":
                 ok, detail = await _check_openrouter_models(session, key)
             else:
-                from llm.anthropic import call_anthropic
+                from llm.anthropic import call_anthropic  # pylint: disable=import-outside-toplevel # noqa: I001
 
                 await call_anthropic(
                     session,
@@ -787,23 +752,19 @@ async def _cmd_verify_keys(manager: QueueManager):
         for k in GEMINI_ALL_KEYS:
             tasks.append(_test_api_key(session, "Gemini", k, "gemini", semaphore))
         for k in OPENROUTER_KEYS:
-            tasks.append(
-                _test_api_key(session, "OpenRouter", k, "openrouter", semaphore)
-            )
+            tasks.append(_test_api_key(session, "OpenRouter", k, "openrouter", semaphore))
         for k in ANTHROPIC_KEYS:
             tasks.append(_test_api_key(session, "Anthropic", k, "anthropic", semaphore))
         if not tasks:
             c.print("[yellow]Nenhuma chave de API encontrada para auditar.[/]")
             return
-        with c.status(
-            f"[cyan]Conectando as mentes globais (Pool SOTA, Concorrencia: {CONCURRENCY_LIMIT})...[/]"
-        ):
+        with c.status(f"[cyan]Conectando as mentes globais (Pool SOTA, Concorrencia: {CONCURRENCY_LIMIT})...[/]"):
             results = list(await asyncio.gather(*tasks))
 
         online_count = sum(1 for r in results if "ONLINE" in str(r[2]))
         fail_count = len(results) - online_count
         audit_payload: dict = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "total_keys": len(results),
             "online_keys": online_count,
             "failed_keys": fail_count,
@@ -823,12 +784,10 @@ async def _cmd_verify_keys(manager: QueueManager):
                 "Falha de modelo fixo nao invalida chave; separar problema de roteamento de modelo.",
             ],
         }
-        await manager.set_system_state(
-            "keys_last_audit", json.dumps(audit_payload, ensure_ascii=True)
-        )
+        await manager.set_system_state("keys_last_audit", json.dumps(audit_payload, ensure_ascii=True))
 
-        runtime_file = Path(".claude/RUNTIME_KEYS_ROUTING_STATUS.md")
-        runtime_file.parent.mkdir(parents=True, exist_ok=True)
+        runtime_file = Path(".cerebro/RUNTIME_KEYS_ROUTING_STATUS.md")
+        runtime_file.parent.mkdir(parents=True, exist_ok=True)  # noqa: ASYNC240
         lines = [
             "# Runtime Keys and Routing Status",
             "",
@@ -847,17 +806,15 @@ async def _cmd_verify_keys(manager: QueueManager):
             lines.append(
                 f"- {row['provider']} | {row['masked_key']} | {row['status']} | {row['detail']} | {row['latency']}"
             )
-        runtime_file.write_text("\n".join(lines), encoding="utf-8")
+        runtime_file.write_text("\n".join(lines), encoding="utf-8")  # noqa: ASYNC240
 
         for res in results:
             t.add_row(*res)
         c.print(t)
 
 
-def _cli_db_init(argv: list, manager: QueueManager) -> None:
-    print(
-        "[SISTEMA] Tentando adquirir trava de sistema para inicializacao do banco de dados..."
-    )
+async def _cli_db_init(argv: list, manager: QueueManager) -> None:
+    print("[SISTEMA] Tentando adquirir trava de sistema para inicializacao do banco de dados...")
     lock_acquired = False
     lock_file = None
     mutex = None
@@ -867,25 +824,21 @@ def _cli_db_init(argv: list, manager: QueueManager) -> None:
             mutex = ctypes.windll.kernel32.CreateMutexW(None, False, mutex_name)
             wait_result = ctypes.windll.kernel32.WaitForSingleObject(mutex, 10000)
             if wait_result not in (0, 0x80):
-                raise BlockingIOError(
-                    "Nao foi possivel adquirir o Mutex Global. Outro processo pode estar usando."
-                )
+                raise BlockingIOError("Nao foi possivel adquirir o Mutex Global. Outro processo pode estar usando.")
         else:
-            import fcntl
+            import fcntl  # pylint: disable=import-error,import-outside-toplevel # noqa: I001
 
             lock_file_path = Path(argv[0]).parent / ".db.lock"
-            lock_file = open(lock_file_path, "w")  # noqa: SIM115
+            lock_file = await asyncio.to_thread(open, lock_file_path, "w")  # noqa: SIM115, ASYNC230
             fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)  # type: ignore
 
         lock_acquired = True
         print("[SISTEMA] Trava adquirida. Iniciando DB-INIT...")
-        manager._init_db()
+        await manager._ensure_initialized()
         print("SUCCESS: Database initialized.")
 
     except OSError as e:
-        print(
-            f"ERROR: Falha ao adquirir trava de sistema. Outro processo pode estar inicializando o DB. Detalhes: {e}"
-        )
+        print(f"ERROR: Falha ao adquirir trava de sistema. Outro processo pode estar inicializando o DB. Detalhes: {e}")
         sys.exit(1)
     except Exception as e:  # noqa: BLE001
         print(f"ERROR: Falha inesperada durante db-init: {e}")
@@ -895,13 +848,13 @@ def _cli_db_init(argv: list, manager: QueueManager) -> None:
             if os.name == "nt" and mutex:
                 ctypes.windll.kernel32.ReleaseMutex(mutex)
             elif lock_file:
-                import fcntl
+                import fcntl  # pylint: disable=import-error,import-outside-toplevel # noqa: I001
 
                 fcntl.flock(lock_file, fcntl.LOCK_UN)  # type: ignore
         if mutex:
             ctypes.windll.kernel32.CloseHandle(mutex)
         if lock_file:
-            lock_file.close()
+            await asyncio.to_thread(lock_file.close)
 
 
 async def _cli_add(argv: list, manager: QueueManager) -> None:
@@ -958,14 +911,14 @@ def _print_tasks_table(tasks: list) -> None:
         desc = t.description.replace("\r", "").replace("\n", " ")
         display_id = str(t.id)
         if display_id.startswith("NOTIFY-"):
-            display_id = f"[bold orange3]🔔 {t.id}[/]"
+            display_id = f"[bold orange3] {t.id}[/]"
             desc = f"[orange3]{desc}[/]"
         elif display_id.startswith("AUTOFIX-"):
-            display_id = f"[bold red]💉 {t.id}[/]"
+            display_id = f"[bold red] {t.id}[/]"
         elif display_id.startswith("RESONANCE-"):
-            display_id = f"[bold magenta]🌀 {t.id}[/]"
+            display_id = f"[bold magenta] {t.id}[/]"
         elif display_id.startswith("HANDOFF-"):
-            display_id = f"[bold cyan]🤝 {t.id}[/]"
+            display_id = f"[bold cyan] {t.id}[/]"
         ts = t.timestamp[:19].replace("T", " ")
         table.add_row(
             display_id,
@@ -1006,12 +959,12 @@ async def _cli_db_get_notify(argv: list, manager: QueueManager) -> None:
     await _cmd_get_notify(manager, argv)
 
 
-async def _cli_db_reset_budget(argv: list, manager: QueueManager) -> None:
+async def _cli_db_reset_budget(_argv: list, manager: QueueManager) -> None:
     await _cmd_reset_budget(manager)
     print("SUCCESS: Orcamento diario limpo e hibernacao anulada. (Friccao Zero)")
 
 
-async def _cli_db_stats(argv: list, manager: QueueManager) -> None:
+async def _cli_db_stats(_argv: list, manager: QueueManager) -> None:
     stats = await manager.get_performance_history()
     print(json.dumps(stats))
 
@@ -1043,7 +996,7 @@ async def _cli_db_fallback_prune(argv: list, manager: QueueManager) -> None:
     print(json.dumps(await _cmd_prune_fallback(manager, days), indent=2))
 
 
-async def _cli_db_fallback_prune_legacy(argv: list, manager: QueueManager) -> None:
+async def _cli_db_fallback_prune_legacy(_argv: list, manager: QueueManager) -> None:
     print(json.dumps(await _cmd_prune_legacy_fallback(manager), indent=2))
 
 
@@ -1060,7 +1013,7 @@ async def _cli_db_rate_limits(argv: list, manager: QueueManager) -> None:
     )
 
 
-async def _cli_watchdog(argv: list, manager: QueueManager) -> None:
+async def _cli_watchdog(_argv: list, manager: QueueManager) -> None:
     print(json.dumps(await _cmd_get_watchdog_stats(manager), indent=2))
 
 
@@ -1100,7 +1053,7 @@ async def _cli_retry(argv: list, manager: QueueManager) -> None:
     await _cmd_retry_task(manager, argv[2])
 
 
-async def _cli_retry_failed(argv: list, manager: QueueManager) -> None:
+async def _cli_retry_failed(_argv: list, manager: QueueManager) -> None:
     await _cmd_retry_failed_tasks(manager)
 
 
@@ -1115,20 +1068,18 @@ async def _cli_db_cleanup(argv: list, manager: QueueManager) -> None:
     days = int(argv[2]) if len(argv) > 2 else 15
     await manager.cleanup(days)
     deleted_files = 0
-    results_dir = Path(".claude/task_results")
-    if results_dir.exists():
+    results_dir = Path(".cerebro/task_results")
+    if results_dir.exists():  # noqa: ASYNC240
         cutoff_time = time.time() - (days * 86400)
-        for f in results_dir.glob("*.md"):
-            if f.is_file() and f.stat().st_mtime < cutoff_time:
+        for f in results_dir.glob("*.md"):  # noqa: ASYNC240
+            if f.is_file() and f.stat().st_mtime < cutoff_time:  # noqa: ASYNC240
                 try:
-                    f.unlink()
+                    f.unlink()  # noqa: ASYNC240
                     deleted_files += 1
                 except OSError:
                     continue
     await _cmd_force_wal_checkpoint(manager)
-    print(
-        f"SUCCESS: Cleanup done. {deleted_files} arquivos de task_results obliterados (> {days} dias)."
-    )
+    print(f"SUCCESS: Cleanup done. {deleted_files} arquivos de task_results obliterados (> {days} dias).")
 
 
 async def _cli_db_delete(argv: list, manager: QueueManager) -> None:
@@ -1140,15 +1091,15 @@ async def _cli_db_delete(argv: list, manager: QueueManager) -> None:
     print(f"SUCCESS: Tarefa {task_id} obliterada do sistema.")
 
 
-async def _cli_db_backup_online(argv: list, manager: QueueManager) -> None:
+async def _cli_db_backup_online(_argv: list, manager: QueueManager) -> None:
     await manager.online_backup()
 
 
-async def _cli_db_check_integrity(argv: list, manager: QueueManager) -> None:
+async def _cli_db_check_integrity(_argv: list, manager: QueueManager) -> None:
     print(json.dumps(await _cmd_check_integrity(manager), indent=2))
 
 
-async def _cli_db_get_agent_report(argv: list, manager: QueueManager) -> None:
+async def _cli_db_get_agent_report(_argv: list, manager: QueueManager) -> None:
     print(json.dumps(await _cmd_get_agent_report(manager), indent=2))
 
 
@@ -1157,7 +1108,7 @@ async def _cli_db_mermaid_graph(argv: list, manager: QueueManager) -> None:
     await _cmd_get_mermaid_graph(manager, status_filter)
 
 
-def _cli_db_commands(argv: list, manager: QueueManager) -> None:
+def _cli_db_commands(_argv: list, _manager: QueueManager) -> None:
     db_commands = {
         "get [all|counts|budget]": "Obtem tarefas, contagens ou o orcamento.",
         "stats": "Obtem o historico de performance.",
@@ -1188,14 +1139,10 @@ async def _cli_autonomy(argv: list, manager: QueueManager) -> None:
         "partial": "Equilibrio",
         "full": "Agencia Total",
     }
-    from monitoring.telemetry import send_toast
+    from monitoring.telemetry import send_toast  # pylint: disable=import-outside-toplevel # noqa: I001
 
-    send_toast(
-        "Autonomia VITOI 3.2", f"Modo: {labels.get(mode, mode.upper())}", "success"
-    )
-    print(
-        f"SUCCESS: Autonomia VITOI 3.2 definida para {mode.upper()} -- {labels.get(mode, '')}"
-    )
+    send_toast("Autonomia VITOI 3.2", f"Modo: {labels.get(mode, mode.upper())}", "success")
+    print(f"SUCCESS: Autonomia VITOI 3.2 definida para {mode.upper()} -- {labels.get(mode, '')}")
 
 
 async def _cli_ingest(argv: list, manager: QueueManager) -> None:
@@ -1203,46 +1150,44 @@ async def _cli_ingest(argv: list, manager: QueueManager) -> None:
         print("ERROR: O comando ingest requer um caminho de arquivo.")
         sys.exit(1)
     try:
-        project_root = Path(__file__).resolve().parent.parent
-        dropzone = project_root / ".claude" / "dropzone"
-        await asyncio.to_thread(dropzone.mkdir, parents=True, exist_ok=True)
+        project_root = Path(__file__).resolve().parent.parent  # noqa: ASYNC240
+        filepath = Path(argv[2]).resolve()  # noqa: ASYNC240
 
-        # SOTA: Validacao estrita de Path Traversal (Security Report Fix)
-        # Sanitizacao: Extrai apenas o nome do arquivo para impedir ../ ou caminhos absolutos
-        # Ref: https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.name
-        # [SEC] Chico SOTA: Esta sanitizacao garante que o filepath nunca saia da dropzone.
-        filename = Path(argv[2]).name
-        filepath = await asyncio.to_thread((dropzone / filename).resolve)
-
-        if not filepath.is_relative_to(dropzone):
-            print(
-                f"ERROR: [SEC] Escopo Invalido. O arquivo '{filepath.name}' deve estar estritamente dentro da dropzone ('{dropzone.relative_to(project_root)}')."
-            )
+        # SOTA: Validacao estrita O(1) de Path Traversal garantindo flexibilidade absoluta de Ingestao
+        # Operacionaliza qualquer alvo da codebase e rejeita escape para fora da arvore.
+        if not filepath.is_relative_to(project_root):  # noqa: ASYNC240
+            print(f"ERROR: [SEC] Escopo Invalido. O arquivo '{filepath.name}' tenta escapar da raiz do projeto.")
             sys.exit(1)
 
         is_file = await asyncio.to_thread(filepath.is_file)
         if not is_file:
             print("ERROR: [SEC] O alvo especificado nao e um arquivo valido.")
             sys.exit(1)
-        async with aiofiles.open(filepath, "r", encoding="utf-8") as f:
+        async with aiofiles.open(filepath, encoding="utf-8") as f:
             content = await f.read()
-        from agents.autonomy import apply_god_mode
+        from agents.autonomy import apply_god_mode  # pylint: disable=import-outside-toplevel # noqa: I001
 
         await apply_god_mode(content, manager)
         print(f"SUCCESS: Ingestion completed from {filepath}.")
-        await asyncio.to_thread(filepath.unlink, missing_ok=True)
+
+        # SOTA: Amnesia Operacional Condicionada
+        # Oblitera o arquivo APENAS se ele estiver em zona temporaria (dropzone).
+        # Previne a destruicao de arquivos legitimos da codebase sob ingestao analitica.
+        if ".cerebro" in filepath.parts and "dropzone" in filepath.parts:
+            await asyncio.to_thread(filepath.unlink, missing_ok=True)
+
     except Exception as e:  # noqa: BLE001
         print(f"ERROR: Ingestion failed - {e}")
         sys.exit(1)
 
 
-async def _cli_query(argv: list, manager: QueueManager) -> None:
+async def _cli_query(argv: list, _manager: QueueManager) -> None:
     if len(argv) < 3:
         print("ERROR: O comando query requer uma pergunta.")
         sys.exit(1)
     question = " ".join(argv[2:])
     try:
-        from core.runtime import get_rag
+        from core.runtime import get_rag  # pylint: disable=import-outside-toplevel # noqa: I001
 
         rag = get_rag()
         print(await rag.query_memory(question, n_results=3, local_only=True))
@@ -1262,24 +1207,22 @@ async def _cli_gemini_health(argv: list, manager: QueueManager) -> None:
     )
 
 
-async def _cli_check_keys(argv: list, manager: QueueManager) -> None:
+async def _cli_check_keys(_argv: list, manager: QueueManager) -> None:
     await _cmd_verify_keys(manager)
 
 
-async def _cli_health(argv: list, manager: QueueManager) -> None:
+async def _cli_health(_argv: list, manager: QueueManager) -> None:
     print(json.dumps(await _cmd_run_health_parallel(manager), indent=2))
 
 
-async def _cli_worker(argv: list, manager: QueueManager) -> None:
-    from core.runtime import start_worker_and_api  # type: ignore
+async def _cli_worker(_argv: list, _manager: QueueManager) -> None:
+    from core.runtime import start_worker_and_api  # type: ignore # pylint: disable=import-outside-toplevel # noqa: I001
 
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         await start_worker_and_api()
-    except KeyboardInterrupt:
-        pass
 
 
-def _cli_ai_simulate(argv: list, manager: QueueManager) -> None:
+def _cli_ai_simulate(argv: list, _manager: QueueManager) -> None:
     if len(argv) < 3:
         print("ERROR: O comando ai-simulate requer um subcomando (geometric ou cfr).")
         sys.exit(1)
@@ -1287,13 +1230,11 @@ def _cli_ai_simulate(argv: list, manager: QueueManager) -> None:
     subcmd = argv[2]
 
     # SOTA: Lazy import para manter o kernel leve
-    from engine.math_sota import calculate_geometric_sizing, cfr_mock_strategy
+    from engine.math_sota import calculate_geometric_sizing, cfr_mock_strategy  # pylint: disable=import-outside-toplevel # noqa: I001
 
     if subcmd == "geometric":
         if len(argv) < 6:
-            print(
-                "Uso: nexus-cli ai-simulate geometric <current_pot> <target_pot> <streets>"
-            )
+            print("Uso: nexus-cli ai-simulate geometric <current_pot> <target_pot> <streets>")
             return
         try:
             c_pot = float(argv[3])
@@ -1306,9 +1247,7 @@ def _cli_ai_simulate(argv: list, manager: QueueManager) -> None:
 
     elif subcmd == "cfr":
         if len(argv) < 4:
-            print(
-                'Uso: nexus-cli ai-simulate cfr \'{"fold": 10.0, "call": 20.0, "raise": -5.0}\''
-            )
+            print('Uso: nexus-cli ai-simulate cfr \'{"fold": 10.0, "call": 20.0, "raise": -5.0}\'')
             return
         try:
             regrets = json.loads(argv[3])
@@ -1375,7 +1314,7 @@ async def _handle_cli_command(cmd: str, argv: list, manager: QueueManager) -> No
 
     if cmd in handlers:
         handler = handlers[cmd]
-        if asyncio.iscoroutinefunction(handler):
+        if inspect.iscoroutinefunction(handler):
             await handler(argv, manager)
         else:
             handler(argv, manager)
@@ -1392,9 +1331,7 @@ def run_cli(argv: list):
         asyncio.run(_handle_cli_command(cmd, argv, manager))
 
     else:
-        from core.runtime import start_worker_and_api  # type: ignore
+        from core.runtime import start_worker_and_api  # type: ignore # pylint: disable=import-outside-toplevel # noqa: I001
 
-        try:
+        with contextlib.suppress(KeyboardInterrupt):
             asyncio.run(start_worker_and_api())
-        except KeyboardInterrupt:
-            pass

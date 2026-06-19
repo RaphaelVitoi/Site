@@ -4,6 +4,7 @@ Handles routing and payload formatting for OpenRouter models.
 """
 
 import asyncio
+import contextlib
 
 import aiohttp
 
@@ -37,29 +38,19 @@ async def call_openrouter(
     }
     if require_json:
         data["response_format"] = {"type": "json_object"}
-    request_kwargs: dict = (
-        {"timeout": client_timeout} if client_timeout is not None else {}
-    )
+    request_kwargs: dict = {"timeout": client_timeout} if client_timeout is not None else {}
 
-    timeout_val = (
-        client_timeout.total if client_timeout and client_timeout.total else 60.0
-    )
+    timeout_val = client_timeout.total if client_timeout and client_timeout.total else 60.0
 
     async def _make_request():
         response = None
         try:
-            async with session.post(
-                url, json=data, headers=headers, **request_kwargs
-            ) as response:
+            async with session.post(url, json=data, headers=headers, **request_kwargs) as response:
                 if response.status == 429:
                     retry_delay_s = 0.0
-                    try:
+                    with contextlib.suppress(ValueError, TypeError):
                         retry_delay_s = float(response.headers.get("Retry-After", "0"))
-                    except (ValueError, TypeError):
-                        pass
-                    raise RuntimeError(
-                        f"HTTP 429: RATE_LIMITED retry_after={retry_delay_s:.0f}s"
-                    )
+                    raise RuntimeError(f"HTTP 429: RATE_LIMITED retry_after={retry_delay_s:.0f}s")
                 response.raise_for_status()
                 result = await response.json()
                 text = result["choices"][0]["message"]["content"]
@@ -72,7 +63,7 @@ async def call_openrouter(
     try:
         async with get_api_semaphore():
             return await asyncio.wait_for(_make_request(), timeout=timeout_val + 5.0)
-    except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+    except (TimeoutError, aiohttp.ClientError) as err:
         raise RuntimeError(
             f"Timeout SOTA: A API OpenRouter excedeu o tempo limite ({timeout_val}s) "
             "e a requisicao foi aniquilada para proteger a fila."

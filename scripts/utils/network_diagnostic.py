@@ -1,22 +1,27 @@
-"""Módulo para diagnóstico de conectividade de rede para a API Gemini."""
+"""Modulo para diagnostico de conectividade de rede para a API Gemini."""
+# pylint: disable=wrong-import-position
 
 import sys
 from pathlib import Path
+
 import requests
 
 # Adiciona a raiz ao path para importar modulos do Kernel
 sys.path.append(str(Path(__file__).parent.parent.parent))
-from task_executor import GEMINI_KEYS  # type: ignore # pylint: disable=no-name-in-module
+from llm.budget import GEMINI_KEYS  # type: ignore # pylint: disable=no-name-in-module
 
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
+
+
+_MSG_AUTH_ERROR = "chave invalida, permissao ausente ou API nao habilitada no projeto."
 
 
 def _print_root_cause(status_code: int):
     """Despacho O(1) de mapeamento causal para reduzir complexidade ciclomatica."""
     causes = {
-        400: "chave invalida, permissao ausente ou API nao habilitada no projeto.",
-        401: "chave invalida, permissao ausente ou API nao habilitada no projeto.",
-        403: "chave invalida, permissao ausente ou API nao habilitada no projeto.",
+        400: _MSG_AUTH_ERROR,
+        401: _MSG_AUTH_ERROR,
+        403: _MSG_AUTH_ERROR,
         404: "endpoint/modelo inexistente para esta versao da API.",
         429: "limite de cota/rate limit atingido.",
     }
@@ -72,9 +77,7 @@ def _test_generation(api_key: str, headers: dict, model_name: str) -> None:
 
     if gen_resp.ok:
         print("[VITORIA] Chave valida e conectividade funcional para generateContent.")
-        print(
-            "  -> Se o worker falhar, o foco passa a ser runtime local (aiohttp/proxy/firewall)."
-        )
+        print("  -> Se o worker falhar, o foco passa a ser runtime local (aiohttp/proxy/firewall).")
     else:
         print(f"[FALHA] generateContent retornou erro: {gen_resp.text}")
         _print_root_cause(gen_resp.status_code)
@@ -85,13 +88,11 @@ def _handle_request_exception(e: Exception) -> None:
     error_map = {
         requests.exceptions.ProxyError: (
             "Erro de Proxy",
-            "Seu sistema esta atras de um proxy, mas a configuracao esta incorreta "
-            "ou bloqueando a conexao.",
+            "Seu sistema esta atras de um proxy, mas a configuracao esta incorreta ou bloqueando a conexao.",
         ),
         requests.exceptions.SSLError: (
             "Erro de SSL",
-            "Problema com os certificados SSL/TLS locais (antivirus, firewall DPI, "
-            "ou raiz obsoleta).",
+            "Problema com os certificados SSL/TLS locais (antivirus, firewall DPI, ou raiz obsoleta).",
         ),
         requests.exceptions.ConnectTimeout: (
             "Timeout de Conexao",
@@ -128,9 +129,7 @@ def run_diagnostic(api_key):
 
 if __name__ == "__main__":
     if not GEMINI_KEYS:
-        print(
-            "[ERRO] Nenhuma chave Gemini encontrada no ambiente. Verifique seu _env.ps1 ou .env"
-        )
+        print("[ERRO] Nenhuma chave Gemini encontrada no ambiente. Verifique seu _env.ps1 ou .env")
         sys.exit(1)
 
     # Usa a primeira chave encontrada para o teste

@@ -1,26 +1,28 @@
 #!/usr/bin/env python3
-# pylint: disable=missing-module-docstring, broad-exception-caught, line-too-long
+# pylint: disable=missing-module-docstring, broad-exception-caught, line-too-long, import-error
 
 import re
 import subprocess  # noqa: S404
+from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP  # type: ignore
 
 # Initialize FastMCP server
 mcp = FastMCP("NexusSotaBridge")
 
-# Base path for task_executor.py
-BASE_DIR = r"C:\Users\Raphael\.gemini\Site"
-TASK_EXECUTOR = f"{BASE_DIR}\\task_executor.py"
-PYTHON_EXE = f"{BASE_DIR}\\.venv\\Scripts\\python.exe"
+# SOTA: Resolucao dinamica de caminhos para portabilidade absoluta
+SCRIPT_DIR = Path(__file__).parent.resolve()
+BASE_DIR = SCRIPT_DIR.parent
+TASK_EXECUTOR = BASE_DIR / "task_executor.py"
+PYTHON_EXE = BASE_DIR / ".venv" / "Scripts" / "python.exe"
 
 
 @mcp.tool()
 def execute_sota_task(description: str, agent: str = "@dispatcher") -> str:
-    """Executa uma tarefa através do engine SOTA Task Executor."""
+    """Executa uma tarefa atraves do engine SOTA Task Executor."""
     # SOTA Guard: Blindagem contra Argument Injection no PowerShell
     if not re.match(r"^@[a-zA-Z0-9_-]+$", agent):
-        return "Erro de Segurança: O agente deve iniciar com '@' e conter apenas caracteres alfanuméricos."
+        return "Erro de Seguranca: O agente deve iniciar com '@' e conter apenas caracteres alfanumericos."
 
     try:
         # Chama o do.ps1 que enfileira a tarefa via HTTP ou DAL
@@ -30,7 +32,7 @@ def execute_sota_task(description: str, agent: str = "@dispatcher") -> str:
             "-ExecutionPolicy",
             "Bypass",
             "-File",
-            f"{BASE_DIR}\\do.ps1",
+            str(BASE_DIR / "do.ps1"),
             description,
             agent,
         ]
@@ -51,7 +53,7 @@ def list_sota_tasks() -> str:
     """Lista tarefas pendentes do sistema SOTA."""
     try:
         result = subprocess.run(  # noqa: S603
-            [PYTHON_EXE, TASK_EXECUTOR, "db-get", "pending"],
+            [str(PYTHON_EXE), str(TASK_EXECUTOR), "db-get", "pending"],
             capture_output=True,
             text=True,
             check=False,
