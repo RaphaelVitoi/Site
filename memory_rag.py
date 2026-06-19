@@ -59,9 +59,7 @@ def ingest_drive_pdfs(drive_path: str):
     logger.info(f"[SOTA RAG] Iniciando mapeamento no diretorio: {drive_path}")
 
     if not os.path.exists(drive_path):
-        logger.error(
-            f"[ERRO CRITICO] O caminho nao existe ou esta inacessivel: {drive_path}"
-        )
+        logger.error(f"[ERRO CRITICO] O caminho nao existe ou esta inacessivel: {drive_path}")
         sys.exit(1)
 
     loader = PyPDFDirectoryLoader(drive_path)
@@ -81,12 +79,8 @@ def ingest_drive_pdfs(drive_path: str):
 
     # Persistencia Vetorial
     logger.info("[SOTA RAG] Compilando tensores no banco de dados Chroma...")
-    Chroma.from_documents(
-        documents=chunks, embedding=embeddings, persist_directory=str(CHROMA_PATH)
-    )
-    logger.info(
-        "[SOTA RAG] Ingestao concluida e indexada. A Mente Coletiva foi hidratada."
-    )
+    Chroma.from_documents(documents=chunks, embedding=embeddings, persist_directory=str(CHROMA_PATH))
+    logger.info("[SOTA RAG] Ingestao concluida e indexada. A Mente Coletiva foi hidratada.")
 
 
 class MemoryRAG:
@@ -95,9 +89,7 @@ class MemoryRAG:
             import chromadb
             from chromadb.utils import embedding_functions
         except ImportError:
-            logger.error(
-                "[ERRO CRITICO] ChromaDB nao instalado. O RAG ficara inoperante."
-            )
+            logger.error("[ERRO CRITICO] ChromaDB nao instalado. O RAG ficara inoperante.")
             return
 
         self.memory_dir = Path(memory_dir)
@@ -124,9 +116,7 @@ class MemoryRAG:
             else:
                 raise
 
-    def _hard_split_sentence(
-        self, sentence: str, chunk_size: int, overlap: int
-    ) -> list[str]:
+    def _hard_split_sentence(self, sentence: str, chunk_size: int, overlap: int) -> list[str]:
         """Aplica quebra brusca com heuristica de espaco para strings sem pontuacao."""
         chunks = []
         start = 0
@@ -172,9 +162,7 @@ class MemoryRAG:
         chunks.extend(self._hard_split_sentence(sentence, chunk_size, overlap))
         return 0
 
-    def _chunk_long_paragraph(
-        self, paragraph: str, chunk_size: int, overlap: int
-    ) -> list[str]:
+    def _chunk_long_paragraph(self, paragraph: str, chunk_size: int, overlap: int) -> list[str]:
         """Processa paragrafos longos preservando integridade semantica de frases e formulas."""
         # SOTA: Expansao semantica para pontuacoes finais (!, ?) erradicando o hard_split e melhorando a qualidade do vetor
         sentences = re.split(r"(?<=[.!?])\s+", paragraph)
@@ -188,16 +176,12 @@ class MemoryRAG:
                 continue
 
             if len(sentence) > chunk_size:
-                current_len = self._handle_oversized_sentence(
-                    sentence, chunks, buffer, chunk_size, overlap
-                )
+                current_len = self._handle_oversized_sentence(sentence, chunks, buffer, chunk_size, overlap)
                 continue
 
             if current_len + len(sentence) + (1 if buffer else 0) > chunk_size:
                 chunks.append(" ".join(buffer))
-                current_len = self._slide_buffer(
-                    buffer, current_len, len(sentence), chunk_size, overlap
-                )
+                current_len = self._slide_buffer(buffer, current_len, len(sentence), chunk_size, overlap)
 
             buffer.append(sentence)
             current_len += len(sentence) + (1 if len(buffer) > 1 else 0)
@@ -206,14 +190,10 @@ class MemoryRAG:
             chunks.append(" ".join(buffer))
         return chunks
 
-    def _chunk_text(
-        self, text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP
-    ) -> list[str]:
+    def _chunk_text(self, text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
         """Quebra o texto em fragmentos, respeitando os limites semanticos (paragrafos e frases)."""
         if overlap >= chunk_size:
-            overlap = (
-                chunk_size // 10
-            )  # Fallback anti-entropia para prevenir loops infinitos
+            overlap = chunk_size // 10  # Fallback anti-entropia para prevenir loops infinitos
 
         if not text:
             return []
@@ -237,9 +217,7 @@ class MemoryRAG:
     async def _read_manifest(self, manifest_path: Path) -> dict:
         exists = await asyncio.to_thread(manifest_path.exists)
         if not exists:
-            logger.error(
-                f"[RAG] Manifesto de ingestao nao encontrado em {manifest_path}. Abortando."
-            )
+            logger.error(f"[RAG] Manifesto de ingestao nao encontrado em {manifest_path}. Abortando.")
             return {}
 
         try:
@@ -265,9 +243,7 @@ class MemoryRAG:
 
             # SOTA: Blindagem absoluta contra Path Traversal (LFI) via Manifesto
             if not source_path.is_relative_to(resolved_base):
-                logger.error(
-                    f"[SEC] Bloqueio de LFI/Traversal. O caminho de ingestao escapa a raiz: {source_path}"
-                )
+                logger.error(f"[SEC] Bloqueio de LFI/Traversal. O caminho de ingestao escapa a raiz: {source_path}")
                 continue
 
             for pattern in source.get("patterns", []):
@@ -283,16 +259,12 @@ class MemoryRAG:
             return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
 
         try:
-            return await asyncio.wait_for(
-                asyncio.to_thread(_read_docx_sync), timeout=60
-            )
+            return await asyncio.wait_for(asyncio.to_thread(_read_docx_sync), timeout=60)
         except asyncio.TimeoutError:
             logger.error(f"[RAG] Timeout (60s) ao extrair DOCX: {file_path.name}")
             return ""
         except Exception:  # noqa: BLE001
-            logger.exception(
-                f"[RAG] Falha ao processar arquivo .docx ({file_path.name})."
-            )
+            logger.exception(f"[RAG] Falha ao processar arquivo .docx ({file_path.name}).")
             return ""
 
     async def _extract_pdf(self, file_path: Path) -> str:
@@ -301,19 +273,13 @@ class MemoryRAG:
                 import pypdf  # type: ignore
 
                 reader = pypdf.PdfReader(str(file_path))
-                return "\n".join(
-                    page.extract_text() for page in reader.pages if page.extract_text()
-                )
+                return "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
             except ImportError:
-                logger.warning(
-                    "[RAG] 'pypdf' ausente. Execute 'pip install pypdf' para indexar PDFs."
-                )
+                logger.warning("[RAG] 'pypdf' ausente. Execute 'pip install pypdf' para indexar PDFs.")
                 return ""
 
         try:
-            return await asyncio.wait_for(
-                asyncio.to_thread(_read_pdf_sync), timeout=120
-            )
+            return await asyncio.wait_for(asyncio.to_thread(_read_pdf_sync), timeout=120)
         except asyncio.TimeoutError:
             logger.error(f"[RAG] Timeout (120s) ao extrair PDF: {file_path.name}")
             return ""
@@ -330,9 +296,7 @@ class MemoryRAG:
                 df = pd.read_csv(str(file_path), nrows=1000)
                 return df.to_markdown(index=False) or ""
             except ImportError:
-                logger.warning(
-                    "[RAG] 'pandas' ausente. Execute 'pip install pandas' para indexar CSVs."
-                )
+                logger.warning("[RAG] 'pandas' ausente. Execute 'pip install pandas' para indexar CSVs.")
                 return ""
 
         try:
@@ -359,22 +323,16 @@ class MemoryRAG:
                 return ""
 
         try:
-            return await asyncio.wait_for(
-                asyncio.to_thread(_read_xlsx_sync), timeout=60
-            )
+            return await asyncio.wait_for(asyncio.to_thread(_read_xlsx_sync), timeout=60)
         except asyncio.TimeoutError:
             logger.error(f"[RAG] Timeout (60s) ao extrair XLSX: {file_path.name}")
             return ""
         except Exception:  # noqa: BLE001
-            logger.exception(
-                f"[RAG] Falha ao extrair texto do XLSX ({file_path.name})."
-            )
+            logger.exception(f"[RAG] Falha ao extrair texto do XLSX ({file_path.name}).")
             return ""
 
     async def _extract_fallback(self, file_path: Path) -> str:
-        async with aiofiles.open(
-            file_path, "r", encoding="utf-8", errors="ignore"
-        ) as f:
+        async with aiofiles.open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             return await f.read()
 
     async def _extract_text_from_file(self, file_path: Path) -> str:
@@ -389,9 +347,7 @@ class MemoryRAG:
             return await self._extract_xlsx(file_path)
         return await self._extract_fallback(file_path)
 
-    async def _process_single_file(
-        self, file_path: Path, file_info: str = ""
-    ) -> list[str]:
+    async def _process_single_file(self, file_path: Path, file_info: str = "") -> list[str]:
         # SOTA: Trava de Seguranca Termodinamica (Impede OOM por leitura de arquivos colossais)
         MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB limite
         file_size = await asyncio.to_thread(lambda: file_path.stat().st_size)
@@ -404,9 +360,7 @@ class MemoryRAG:
         if CHROMA_DB_DIR in str(file_path):
             return []
 
-        source_name = (
-            file_path.parent.name if file_path.name == "MEMORY.md" else file_path.stem
-        )
+        source_name = file_path.parent.name if file_path.name == "MEMORY.md" else file_path.stem
         logger.info(f"[RAG] Extraindo '{source_name}{file_path.suffix}' {file_info}...")
         content = await self._extract_text_from_file(file_path)
 
@@ -415,9 +369,7 @@ class MemoryRAG:
 
         chunks = self._chunk_text(content)
         ids = [f"{source_name}_chunk_{i}" for i in range(len(chunks))]
-        metadatas: Any = [
-            {"agent": source_name, "source": str(file_path)} for _ in chunks
-        ]
+        metadatas: Any = [{"agent": source_name, "source": str(file_path)} for _ in chunks]
 
         if chunks:
             # SOTA: Batching Absoluto contra Morte Termica de RAM/SQLite
@@ -431,9 +383,7 @@ class MemoryRAG:
                 )
                 # SOTA: Flush do Event Loop para permitir ao Garbage Collector coletar as matrizes WASM
                 await asyncio.sleep(0.01)
-            logger.info(
-                f"[OK] {len(chunks):02d} fragmentos de '{source_name}' vetorizados (Lote Seguro SOTA)."
-            )
+            logger.info(f"[OK] {len(chunks):02d} fragmentos de '{source_name}' vetorizados (Lote Seguro SOTA).")
         return ids
 
     async def _zero_latency_lexical_fallback(self) -> str:
@@ -448,20 +398,13 @@ class MemoryRAG:
             for fpath in core_files:
                 exists = await asyncio.to_thread(fpath.exists)
                 if exists:
-                    async with aiofiles.open(
-                        fpath, "r", encoding="utf-8", errors="ignore"
-                    ) as f:
+                    async with aiofiles.open(fpath, "r", encoding="utf-8", errors="ignore") as f:
                         text = await f.read()
                         # Extrai a essencia inicial (primeiros 2000 caracteres) para nao estourar tokens
-                        fallback_docs.append(
-                            f"--- Documento Vital ({fpath.name}) ---\n{text[:2000]}...\n"
-                        )
+                        fallback_docs.append(f"--- Documento Vital ({fpath.name}) ---\n{text[:2000]}...\n")
 
             if fallback_docs:
-                return (
-                    "\n=== MENTE COLETIVA (FALLBACK DE EMERGENCIA - I/O DIRETO) ===\n"
-                    + "\n".join(fallback_docs)
-                )
+                return "\n=== MENTE COLETIVA (FALLBACK DE EMERGENCIA - I/O DIRETO) ===\n" + "\n".join(fallback_docs)
         except Exception:
             logger.exception("[RAG] Fallback Lexical tambem colapsou.")
         return ""
@@ -481,22 +424,16 @@ class MemoryRAG:
                 # SOTA: Evita Memory Spike e Erro de Parametros Limite no SQLite do Chroma
                 BATCH_SIZE = 500
                 for i in range(0, len(ids_to_delete), BATCH_SIZE):
-                    await asyncio.to_thread(
-                        self.collection.delete, ids=ids_to_delete[i : i + BATCH_SIZE]
-                    )
+                    await asyncio.to_thread(self.collection.delete, ids=ids_to_delete[i : i + BATCH_SIZE])
                     await asyncio.sleep(0.01)
-                logger.info(
-                    f"Expurgados {len(ids_to_delete)} fragmentos obsoletos (Limpeza de Entropia)."
-                )
+                logger.info(f"Expurgados {len(ids_to_delete)} fragmentos obsoletos (Limpeza de Entropia).")
         except Exception:  # noqa: BLE001
             logger.exception("[RAG] Erro ao limpar memorias antigas.")
 
     async def ingest_all_memories(self):
         import time
 
-        logger.info(
-            "[RAG] Iniciando expansao de consciencia (Memorias + Base de Conhecimento)..."
-        )
+        logger.info("[RAG] Iniciando expansao de consciencia (Memorias + Base de Conhecimento)...")
         base_path = Path(__file__).parent
         manifest_path = base_path / "rag_ingestion_manifest.json"
 
@@ -515,11 +452,7 @@ class MemoryRAG:
             if idx > 1:
                 avg_time = elapsed / (idx - 1)
                 eta_seconds = avg_time * (total_files - idx + 1)
-                eta_str = (
-                    f"ETA: {eta_seconds / 60:.1f}m"
-                    if eta_seconds > 60
-                    else f"ETA: {eta_seconds:.0f}s"
-                )
+                eta_str = f"ETA: {eta_seconds / 60:.1f}m" if eta_seconds > 60 else f"ETA: {eta_seconds:.0f}s"
             else:
                 eta_str = "ETA: calculando..."
 
@@ -529,14 +462,10 @@ class MemoryRAG:
 
         await self._purge_obsolete_memories(all_generated_ids)
 
-    async def _fetch_expanded_query(
-        self, session, system_prompt: str, user_prompt: str
-    ) -> str:
+    async def _fetch_expanded_query(self, session, system_prompt: str, user_prompt: str) -> str:
         if GEMINI_KEYS:
             try:
-                logger.info(
-                    "[RAG] Tentando expansao de query via Gemini (Free Tier)..."
-                )
+                logger.info("[RAG] Tentando expansao de query via Gemini (Free Tier)...")
                 response, _ = await call_gemini(
                     session,
                     "gemini-2.0-flash",
@@ -552,9 +481,7 @@ class MemoryRAG:
 
         if OPENROUTER_KEYS:
             try:
-                logger.info(
-                    "[RAG] Tentando expansao de query via OpenRouter (Fallback)..."
-                )
+                logger.info("[RAG] Tentando expansao de query via OpenRouter (Fallback)...")
                 response, _ = await call_openrouter(
                     session,
                     "google/gemini-2.0-flash",
@@ -575,9 +502,7 @@ class MemoryRAG:
 
             session = await get_global_http_session()
 
-            response = await self._fetch_expanded_query(
-                session, system_prompt, user_prompt
-            )
+            response = await self._fetch_expanded_query(session, system_prompt, user_prompt)
             if response:
                 match = re.search(r"\[.*\]", response, re.DOTALL)
                 if match:
@@ -586,9 +511,7 @@ class MemoryRAG:
                         if expanded_queries:
                             return [question] + expanded_queries
                     except json.JSONDecodeError as e:
-                        logger.debug(
-                            f"[RAG] Falha ao decodificar JSON na expansao de query: {e}"
-                        )
+                        logger.debug(f"[RAG] Falha ao decodificar JSON na expansao de query: {e}")
         except Exception:  # noqa: BLE001
             logger.exception("[RAG] Erro inesperado na expansao de query.")
         return [question]  # Retorna a original em caso de falha
@@ -638,11 +561,7 @@ class MemoryRAG:
         unique_docs: dict,
     ) -> None:
         for j, doc in enumerate(docs_row):
-            current_meta = (
-                metas_row[j]
-                if metas_row and j < len(metas_row)
-                else {"agent": "Unknown", "source": "N/A"}
-            )
+            current_meta = metas_row[j] if metas_row and j < len(metas_row) else {"agent": "Unknown", "source": "N/A"}
             current_dist = dists_row[j] if dists_row and j < len(dists_row) else 0.0
 
             if doc not in unique_docs:
@@ -650,9 +569,7 @@ class MemoryRAG:
             else:
                 unique_docs[doc]["dist"] = min(unique_docs[doc]["dist"], current_dist)
 
-    def _flatten_and_deduplicate_results(
-        self, results: Any
-    ) -> tuple[list[str], list, list[float]]:
+    def _flatten_and_deduplicate_results(self, results: Any) -> tuple[list[str], list, list[float]]:
         """SOTA: Achatamento e Deduplicacao Vetorial (Matriz Bidimensional)"""
         res_docs = results.get("documents")
         if not res_docs:
@@ -674,14 +591,10 @@ class MemoryRAG:
         distances = [val["dist"] for val in unique_docs.values()]
         return documents, metadatas, distances
 
-    async def query_memory(
-        self, question: str, n_results: int = 3, local_only: bool = False
-    ) -> str:
+    async def query_memory(self, question: str, n_results: int = 3, local_only: bool = False) -> str:
         try:
             # 1. Expansao da Query com IA para Recall Semantico Superior
-            expanded_queries = (
-                [question] if local_only else await self._expand_query(question)
-            )
+            expanded_queries = [question] if local_only else await self._expand_query(question)
             results = await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: self.collection.query(
@@ -691,18 +604,14 @@ class MemoryRAG:
                 ),
             )
 
-            documents, metadatas, distances = self._flatten_and_deduplicate_results(
-                results
-            )
+            documents, metadatas, distances = self._flatten_and_deduplicate_results(results)
             if not documents:
                 logger.warning(
                     "[RAG] Busca vetorial nao retornou resultados. Acionando Fallback Lexical (I/O Direto)..."
                 )
                 return await self._zero_latency_lexical_fallback()
 
-            top_docs = self._rank_documents(
-                question, documents, metadatas, distances, n_results
-            )
+            top_docs = self._rank_documents(question, documents, metadatas, distances, n_results)
 
             output_parts = ["\n=== MENTE COLETIVA (BUSCA HIBRIDA SOTA) ==="]
             for i, item in enumerate(top_docs):
@@ -711,20 +620,14 @@ class MemoryRAG:
                 )
             return "\n".join(output_parts)
         except Exception:  # noqa: BLE001
-            logger.exception(
-                "[RAG] Colapso Critico no ChromaDB/ONNX. Acionando Fallback Lexical (Latencia Zero)..."
-            )
+            logger.exception("[RAG] Colapso Critico no ChromaDB/ONNX. Acionando Fallback Lexical (Latencia Zero)...")
             # Bypass de seguranca para evitar que o LLM responda sem contexto
             return await self._zero_latency_lexical_fallback()
 
-    async def _extract_causal_graph(
-        self, session, system_prompt: str, user_prompt: str
-    ) -> str:
+    async def _extract_causal_graph(self, session, system_prompt: str, user_prompt: str) -> str:
         if GEMINI_KEYS:
             try:
-                logger.info(
-                    "[RAG] Forjando Grafo Causal (Knowledge Graph) via Gemini..."
-                )
+                logger.info("[RAG] Forjando Grafo Causal (Knowledge Graph) via Gemini...")
                 response, _ = await call_gemini(
                     session,
                     "gemini-2.0-flash",
@@ -748,9 +651,7 @@ class MemoryRAG:
                 )
                 return response
             except Exception as e:  # noqa: BLE001
-                logger.warning(
-                    f"[RAG] Falha na forja do Grafo Causal via OpenRouter: {e}"
-                )
+                logger.warning(f"[RAG] Falha na forja do Grafo Causal via OpenRouter: {e}")
         return '{"nodes": [], "edges": []}'
 
     async def query_causal_graph(self, question: str, n_results: int = 5) -> str:
@@ -767,15 +668,11 @@ class MemoryRAG:
                 ),
             )
 
-            documents, metadatas, distances = self._flatten_and_deduplicate_results(
-                results
-            )
+            documents, metadatas, distances = self._flatten_and_deduplicate_results(results)
             if not documents:
                 return '{"nodes": [], "edges": [], "error": "Contexto nao encontrado na Mente Coletiva."}'
 
-            top_docs = self._rank_documents(
-                question, documents, metadatas, distances, n_results
-            )
+            top_docs = self._rank_documents(question, documents, metadatas, distances, n_results)
             context_text = "\n\n".join([item["doc"] for item in top_docs])
 
             system_prompt = (
@@ -791,14 +688,10 @@ class MemoryRAG:
             user_prompt = f"Foco de Extracao: {question}\n\nContexto da Mente Coletiva:\n{context_text}"
 
             session = await get_global_http_session()
-            raw_json = await self._extract_causal_graph(
-                session, system_prompt, user_prompt
-            )
+            raw_json = await self._extract_causal_graph(session, system_prompt, user_prompt)
 
             # Purificacao contra entropia de encoding (markdown injetado por LLMs)
-            return re.sub(
-                r"^```json|```$", "", raw_json.strip(), flags=re.MULTILINE
-            ).strip()
+            return re.sub(r"^```json|```$", "", raw_json.strip(), flags=re.MULTILINE).strip()
 
         except Exception:  # noqa: BLE001
             logger.exception("[RAG] Colapso na extracao do Grafo Causal.")
@@ -825,13 +718,9 @@ if __name__ == "__main__":
             result = asyncio.run(rag.query_causal_graph(question))
             print(result)
         elif cmd == "ingest_drive":
-            target_dir = os.environ.get(
-                "GDRIVE_PDF_PATH", r"C:\Users\rapha\Google Drive\Poker_PDFs"
-            )
+            target_dir = os.environ.get("GDRIVE_PDF_PATH", r"C:\Users\rapha\Google Drive\Poker_PDFs")
             ingest_drive_pdfs(target_dir)
         else:
-            logger.error(
-                "Uso: python memory_rag.py [ingest | ingest_drive | query 'pergunta']"
-            )
+            logger.error("Uso: python memory_rag.py [ingest | ingest_drive | query 'pergunta']")
     else:
         logger.info("Uso SOTA: python memory_rag.py [ingest | ingest_drive | query]")

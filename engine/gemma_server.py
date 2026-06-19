@@ -491,15 +491,17 @@ def _build_tools_payload(req: InferenceRequest, prompt: str) -> tuple[str, dict 
     )
     for t in req.tools:
         tools_instructions += json.dumps(t["function"]) + "\n"
-        tool_schemas.append({
-            "type": "object",
-            "properties": {
-                "tool": {"const": t["function"]["name"]},
-                "arguments": t["function"]["parameters"],
-            },
-            "required": ["tool", "arguments"],
-            "additionalProperties": False,
-        })
+        tool_schemas.append(
+            {
+                "type": "object",
+                "properties": {
+                    "tool": {"const": t["function"]["name"]},
+                    "arguments": t["function"]["parameters"],
+                },
+                "required": ["tool", "arguments"],
+                "additionalProperties": False,
+            }
+        )
     return prompt + tools_instructions, {"anyOf": tool_schemas}
 
 

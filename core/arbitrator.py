@@ -10,6 +10,7 @@ from core.schemas import Task
 
 try:
     import nexus_core_rust
+
     RUST_CORE_AVAILABLE = True
 except ImportError:
     RUST_CORE_AVAILABLE = False
@@ -167,13 +168,11 @@ class UniversalArbitrator:
         if RUST_CORE_AVAILABLE:
             try:
                 import json
+
                 tasks_json = json.dumps([t.model_dump() for t in pending_tasks])
                 scalars_json = json.dumps(cls.PRIORITY_SCALARS)
                 result_json = nexus_core_rust.extract_optimal_task_py(
-                    tasks_json,
-                    scalars_json,
-                    cls.TIME_DECAY_ALPHA,
-                    cls.PROPAGATION_GAMMA
+                    tasks_json, scalars_json, cls.TIME_DECAY_ALPHA, cls.PROPAGATION_GAMMA
                 )
                 if result_json:
                     return Task(**json.loads(result_json))
