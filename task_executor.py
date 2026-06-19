@@ -708,13 +708,13 @@ if __name__ == "__main__":
     }
 
     if len(sys.argv) == 1:
-        from scripts.cli.nexus import main as run_nexus
+        from scripts.cli.nexus import app as run_nexus
 
         run_nexus(["dashboard"])
         sys.exit(0)
 
     if len(sys.argv) >= 2 and sys.argv[1].lower() in _nexus_cmds:
-        from scripts.cli.nexus import main as run_nexus
+        from scripts.cli.nexus import app as run_nexus
 
         run_nexus(sys.argv[1:])
         sys.exit(0)

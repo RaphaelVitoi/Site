@@ -15,133 +15,121 @@ let currentStrategy: Float32Array | null = null;
 let lastScenarioHash: string | null = null;
 
 interface CfrConfig {
-	nodes: number;
-	pot: number;
-	stack: number;
-	kappa: number;
+  nodes: number;
+  pot: number;
+  stack: number;
+  kappa: number;
 }
 
 function computeNodeCfr(
-	i: number,
-	config: CfrConfig,
-	localRegret: Float32Array,
-	localStrategy: Float32Array,
-	currentStrategy: Float32Array,
-	renderMatrix: Float32Array,
+  i: number,
+  config: CfrConfig,
+  localRegret: Float32Array,
+  localStrategy: Float32Array,
+  currentStrategy: Float32Array,
+  renderMatrix: Float32Array,
 ) {
-	const { nodes, pot, stack, kappa } = config;
-	const row = Math.floor(i / nodes);
-	const col = i % nodes;
+  const { nodes, pot, stack, kappa } = config;
+  const row = Math.floor(i / nodes);
+  const col = i % nodes;
 
-	// Força da mão [0 a 1] (Heurística base para a malha)
-	const rank1 = 1 - row / nodes;
-	const rank2 = 1 - col / nodes;
-	const isSuited = col > row;
-	const handStrength = (rank1 + rank2) / 2 + (isSuited ? 0.05 : 0);
+  // Força da mão [0 a 1] (Heurística base para a malha)
+  const rank1 = 1 - row / nodes;
+  const rank2 = 1 - col / nodes;
+  const isSuited = col > row;
+  const handStrength = (rank1 + rank2) / 2 + (isSuited ? 0.05 : 0);
 
-	// 1. Utilities (Cálculo de Expectativa)
-	const evFold = 0;
-	const evCall = handStrength * pot - (1 - handStrength) * (pot * 0.5);
-	const evRaise = handStrength * (pot * 2) - (1 - handStrength) * stack;
+  // 1. Utilities (Cálculo de Expectativa)
+  const evFold = 0;
+  const evCall = handStrength * pot - (1 - handStrength) * (pot * 0.5);
+  const evRaise = handStrength * (pot * 2) - (1 - handStrength) * stack;
 
-	const utilities = [evFold, evCall, evRaise];
+  const utilities = [evFold, evCall, evRaise];
 
-	// 2. Regret Matching -> Obter estratégia proporcional atual
-	let normalizingSum = 0;
-	const offset = i * ACTIONS;
+  // 2. Regret Matching -> Obter estratégia proporcional atual
+  let normalizingSum = 0;
+  const offset = i * ACTIONS;
 
-	for (let a = 0; a < ACTIONS; a++) {
-		currentStrategy[offset + a] = Math.max(localRegret[offset + a], 0);
-		normalizingSum += currentStrategy[offset + a];
-	}
+  for (let a = 0; a < ACTIONS; a++) {
+    currentStrategy[offset + a] = Math.max(localRegret[offset + a]!, 0);
+    normalizingSum += currentStrategy[offset + a]!;
+  }
 
-	for (let a = 0; a < ACTIONS; a++) {
-		if (normalizingSum > 0) {
-			currentStrategy[offset + a] /= normalizingSum;
-		} else {
-			currentStrategy[offset + a] = 1 / ACTIONS; // Distribuição uniforme se arrependimento for negativo
-		}
-		localStrategy[offset + a] += currentStrategy[offset + a];
-	}
+  for (let a = 0; a < ACTIONS; a++) {
+    if (normalizingSum > 0) {
+      currentStrategy[offset + a] = currentStrategy[offset + a]! / normalizingSum;
+    } else {
+      currentStrategy[offset + a] = 1 / ACTIONS; // Distribuição uniforme se arrependimento for negativo
+    }
+    localStrategy[offset + a] = localStrategy[offset + a]! + currentStrategy[offset + a]!;
+  }
 
-	// 3. Node Utility (EV da estratégia mista)
-	let nodeUtil = 0;
-	for (let a = 0; a < ACTIONS; a++) {
-		nodeUtil += currentStrategy[offset + a] * utilities[a];
-	}
+  // 3. Node Utility (EV da estratégia mista)
+  let nodeUtil = 0;
+  for (let a = 0; a < ACTIONS; a++) {
+    nodeUtil += currentStrategy[offset + a]! * utilities[a]!;
+  }
 
-	// 4. Atualizar Arrependimentos (Regrets) com Fator de Diluição (Kappa)
-	for (let a = 0; a < ACTIONS; a++) {
-		const regret = utilities[a] - nodeUtil;
-		localRegret[offset + a] = (localRegret[offset + a] + regret) * kappa;
-	}
+  // 4. Atualizar Arrependimentos (Regrets) com Fator de Diluição (Kappa)
+  for (let a = 0; a < ACTIONS; a++) {
+    const regret = utilities[a]! - nodeUtil;
+    localRegret[offset + a] = (localRegret[offset + a]! + regret) * kappa;
+  }
 
-	// Heurística de Exibição (Probabilidade agregada de agressão: Call/Raise)
-	let maxAggression = 0;
-	for (let a = 1; a < ACTIONS; a++) {
-		maxAggression += currentStrategy[offset + a];
-	}
-	renderMatrix[i] = maxAggression;
+  // Heurística de Exibição (Probabilidade agregada de agressão: Call/Raise)
+  let maxAggression = 0;
+  for (let a = 1; a < ACTIONS; a++) {
+    maxAggression += currentStrategy[offset + a]!;
+  }
+  renderMatrix[i] = maxAggression;
 }
 
 interface CfrMessageData {
-	id: string | number;
-	nodes: number;
-	pot: number;
-	stack: number;
-	kappa: number;
+  id: string | number;
+  nodes: number;
+  pot: number;
+  stack: number;
+  kappa: number;
 }
 
 globalThis.onmessage = (e: MessageEvent<CfrMessageData>) => {
-	const { id, nodes, pot, stack, kappa } = e.data;
+  const { id, nodes, pot, stack, kappa } = e.data;
 
-	if (!id || typeof nodes !== 'number' || typeof pot !== 'number') {
-		console.warn('[SOTA CFR Worker] Invalid payload discarded.', e.data);
-		return;
-	}
+  if (!id || typeof nodes !== 'number' || typeof pot !== 'number') {
+    console.warn('[SOTA CFR Worker] Invalid payload discarded.', e.data);
+    return;
+  }
 
-	try {
-		const totalNodes = nodes * nodes;
-		const currentScenarioHash = `${nodes}-${pot}-${stack}-${kappa}`;
+  try {
+    const totalNodes = nodes * nodes;
+    const currentScenarioHash = `${nodes}-${pot}-${stack}-${kappa}`;
 
-		// Alocação Contígua Estrita & Reset de Cenário
-		if (
-			regretSum?.length !== totalNodes * ACTIONS ||
-			lastScenarioHash !== currentScenarioHash
-		) {
-			regretSum = new Float32Array(totalNodes * ACTIONS);
-			strategySum = new Float32Array(totalNodes * ACTIONS);
-			currentStrategy = new Float32Array(totalNodes * ACTIONS);
-			lastScenarioHash = currentScenarioHash;
-		}
+    // Alocação Contígua Estrita & Reset de Cenário
+    if (regretSum?.length !== totalNodes * ACTIONS || lastScenarioHash !== currentScenarioHash) {
+      regretSum = new Float32Array(totalNodes * ACTIONS);
+      strategySum = new Float32Array(totalNodes * ACTIONS);
+      currentStrategy = new Float32Array(totalNodes * ACTIONS);
+      lastScenarioHash = currentScenarioHash;
+    }
 
-		// SOTA: O renderMatrix DEVE ser instanciado novo a cada iteração, pois sua posse (ownership) será transferida ao host
-		const renderMatrix = new Float32Array(totalNodes);
+    // SOTA: O renderMatrix DEVE ser instanciado novo a cada iteração, pois sua posse (ownership) será transferida ao host
+    const renderMatrix = new Float32Array(totalNodes);
 
-		if (regretSum && strategySum && currentStrategy) {
-			// Iteração CFR Pura
-			for (let i = 0; i < totalNodes; i++) {
-				computeNodeCfr(
-					i,
-					{ nodes, pot, stack, kappa },
-					regretSum,
-					strategySum,
-					currentStrategy,
-					renderMatrix,
-				);
-			}
-		}
+    if (regretSum && strategySum && currentStrategy) {
+      // Iteração CFR Pura
+      for (let i = 0; i < totalNodes; i++) {
+        computeNodeCfr(i, { nodes, pot, stack, kappa }, regretSum, strategySum, currentStrategy, renderMatrix);
+      }
+    }
 
-		// SOTA FIX: Transferência O(1) via Zero-Copy (Transferable Objects)
-		(globalThis as unknown as Worker).postMessage({ id, matrix: renderMatrix }, [
-			renderMatrix.buffer,
-		]);
-	} catch (error: unknown) {
-		let errorMessage = 'Erro desconhecido no motor CFR puro.';
-		if (error instanceof Error) errorMessage = error.message;
-		else if (typeof error === 'string') errorMessage = error;
+    // SOTA FIX: Transferência O(1) via Zero-Copy (Transferable Objects)
+    (globalThis as unknown as Worker).postMessage({ id, matrix: renderMatrix }, [renderMatrix.buffer]);
+  } catch (error: unknown) {
+    let errorMessage = 'Erro desconhecido no motor CFR puro.';
+    if (error instanceof Error) errorMessage = error.message;
+    else if (typeof error === 'string') errorMessage = error;
 
-		console.error('[SOTA CFR Worker] Falha estrutural:', errorMessage);
-		(globalThis as unknown as Worker).postMessage({ id, error: errorMessage });
-	}
+    console.error('[SOTA CFR Worker] Falha estrutural:', errorMessage);
+    (globalThis as unknown as Worker).postMessage({ id, error: errorMessage });
+  }
 };

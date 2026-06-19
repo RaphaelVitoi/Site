@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 
-# Integração com o Log Central do Dashboard Noir
+# Integracao com o Log Central do Dashboard Noir
 logging.basicConfig(
     filename=".vitoi_history.log",
     level=logging.INFO,
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def _is_decision_node(node: ast.AST) -> bool:
     """
-    Verifica se o nó AST representa um ponto de decisão lógica.
+    Verifica se o no AST representa um ponto de decisao logica.
     """
     decision_types = (
         ast.If,
@@ -32,7 +32,7 @@ def _is_decision_node(node: ast.AST) -> bool:
 
 def calcular_metrics(node: ast.AST) -> tuple[int, int, int]:
     """
-    Calcula Complexidade Ciclomática e Densidade de Documentação em um AST.
+    Calcula Complexidade Ciclomatica e Densidade de Documentacao em um AST.
     """
     vg = 1
     doc_lines = 0
@@ -51,7 +51,7 @@ def calcular_metrics(node: ast.AST) -> tuple[int, int, int]:
 
 def _is_ignored_dir(root: str) -> bool:
     """
-    Verifica se o diretório faz parte das pastas de dependências ignoradas.
+    Verifica se o diretorio faz parte das pastas de dependencias ignoradas.
     """
     ignore_list = [
         ".venv",
@@ -66,11 +66,11 @@ def _is_ignored_dir(root: str) -> bool:
 
 def _analisar_arquivo(path: str) -> tuple[int, int, int, int]:
     """
-    Abre o arquivo, gera sua Árvore Sintática e computa suas métricas de invariância.
+    Abre o arquivo, gera sua Arvore Sintatica e computa suas metricas de invariancia.
     Retorna uma tupla na forma (vg, docs, funcs, loc).
     """
     try:
-        with open(path, "r", encoding="utf-8-sig") as f:
+        with open(path, encoding="utf-8-sig") as f:
             content = f.read()
 
         if not content.strip():
@@ -83,20 +83,16 @@ def _analisar_arquivo(path: str) -> tuple[int, int, int, int]:
 
     except SyntaxError as e:
         logger.error(f"Erro de Sintaxe em {path}: {e}")
-        print(
-            f" [!] Pulando {os.path.basename(path)}: Erro de sintaxe (possível corrupção)."
-        )
+        print(f" [!] Pulando {os.path.basename(path)}: Erro de sintaxe (possivel corrupcao).")
         return 0, 0, 0, 0
     except Exception as e:  # noqa: BLE001
         logger.error(f"Falha ao ler {path}: {e}")
         return 0, 0, 0, 0
 
 
-def calcular_indice_saude(
-    total_vg: int, total_funcs: int, total_docs: int, total_loc: int
-) -> float:
+def calcular_indice_saude(total_vg: int, total_funcs: int, total_docs: int, total_loc: int) -> float:
     """
-    Calcula o Índice de Saúde de Invariância (Ih) baseado na fórmula matemática.
+    Calcula o Indice de Saude de Invariancia (Ih) baseado na formula matematica.
     """
     if total_funcs <= 0 or total_loc <= 0:
         return 100.0
@@ -107,9 +103,9 @@ def calcular_indice_saude(
 
 def auditoria_total(diretorio: str) -> None:
     """
-    Realiza a varredura de arquivos e calcula o Índice de Saúde (Ih) global.
+    Realiza a varredura de arquivos e calcula o Indice de Saude (Ih) global.
     """
-    print(f"[VITOI] Iniciando Auditoria de Invariância no diretório: {diretorio}")
+    print(f"[VITOI] Iniciando Auditoria de Invariancia no diretorio: {diretorio}")
 
     total_vg = 0
     total_docs = 0
@@ -140,10 +136,10 @@ def auditoria_total(diretorio: str) -> None:
     if ih > 85:
         status = "SOTA"
     elif ih > 70:
-        status = "ESTÁVEL"
+        status = "ESTAVEL"
     else:
-        status = "DÍVIDA TÉCNICA ALTA"
-    msg = f"Auditoria Concluída: Ih={ih:.2f} | Status: {status} | Analisados: {arquivos_analisados} arquivos."
+        status = "DIVIDA TECNICA ALTA"
+    msg = f"Auditoria Concluida: Ih={ih:.2f} | Status: {status} | Analisados: {arquivos_analisados} arquivos."
 
     print(f"[VITOI] {msg}")
     logger.info(msg)

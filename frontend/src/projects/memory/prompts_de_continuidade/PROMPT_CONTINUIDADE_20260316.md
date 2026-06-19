@@ -43,7 +43,7 @@ Estou retomando o trabalho do Motor ICM. Leia a memoria `project_simulador_mestr
 - Cenarios: `frontend/src/components/simulator/engine/scenarios.ts`
 - CSS: `frontend/src/components/simulator/simulator.module.css`
 - Rota: `frontend/src/app/tools/simulador/page.tsx`
-- Plano original: `.claude/plans/shimmering-stargazing-rainbow.md`
+- Plano original: `.cerebro/plans/shimmering-stargazing-rainbow.md`
 
 ### Regras
 - Site e EXCLUSIVAMENTE sobre poker (nao financas)

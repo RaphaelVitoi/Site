@@ -9,7 +9,7 @@
 
 | Documento                                       | Proposito                                                                                    | Publico                      | Quando Ler                                               |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------- |
-| **`.claude/project-context.md`**                | Contexto de DECISAO global (dominio, publico-alvo, decisoes tomadas, estado atual)           | Agentes durante execucao     | Antes de tomar decisoes ou criar features                |
+| **`.cerebro/project-context.md`**                | Contexto de DECISAO global (dominio, publico-alvo, decisoes tomadas, estado atual)           | Agentes durante execucao     | Antes de tomar decisoes ou criar features                |
 | **`MANUAL_WORKFLOW_AGENTES.md`** (este arquivo) | Manual de OPERACAO e referencia tecnica (como usar o sistema, descricao de agentes, scripts) | Desenvolvedores e operadores | Para entender como rodar o workflow e scripts do sistema |
 
 **Resumo:**
@@ -38,7 +38,7 @@
 
 Mecanismo central de comunicacao entre agentes. Schema padrao definido pelo @pesquisador:
 
-> **Para visao arquitetonica completa dos 16 agentes e pipeline, consulte `.claude/project-context.md`**
+> **Para visao arquitetonica completa dos 16 agentes e pipeline, consulte `.cerebro/project-context.md`**
 >
 > Este manual documenta COMO USAR o sistema. Para entender QUE foi decidido sobre o sistema, leia project-context.md.
 
@@ -131,7 +131,7 @@ O pipeline de agentes segue esta sequencia (nem sempre todos sao necessarios):
   (opcional)     (opcional)       (core)        (core)       (core)        (core)         (core)         (opcional)     (opcional)
 ```
 
-**Saiba quando usar cada agente consultando [.claude/project-context.md](./.claude/project-context.md) no seu projeto.**
+**Saiba quando usar cada agente consultando [.cerebro/project-context.md](./.cerebro/project-context.md) no seu projeto.**
 
 ---
 
@@ -161,7 +161,7 @@ O pipeline de agentes segue esta sequencia (nem sempre todos sao necessarios):
 2. Compara opcoes/abordagens
 3. Estima esforco e complexidade
 4. Identifica audiencia/contexto
-5. Cria ou atualiza `.claude/project-context.md` com decisoes confirmadas
+5. Cria ou atualiza `.cerebro/project-context.md` com decisoes confirmadas
 
 **Output esperado:**
 
@@ -384,7 +384,7 @@ Estes dois agentes rodam **sempre ativos**, sem necessidade de intervencao human
 
 **Status:**  Ativo 24/7
 
-**Proposito:** Executar operacoes agendadas definidas em `.claude/settings.local.json`
+**Proposito:** Executar operacoes agendadas definidas em `.cerebro/settings.local.json`
 
 **Operacoes Monitoras:**
 
@@ -396,10 +396,10 @@ Estes dois agentes rodam **sempre ativos**, sem necessidade de intervencao human
 
 **Como Funciona:**
 
-1. Verifica `.claude/settings.local.json` a cada minuto
+1. Verifica `.cerebro/settings.local.json` a cada minuto
 2. Compare hora atual com schedule de cada operacao
 3. Se match: executa comando associado
-4. Registra status em `.claude/logs/skillmaster.log`
+4. Registra status em `.cerebro/logs/skillmaster.log`
 
 **Integracao com Scripts:**
 
@@ -428,7 +428,7 @@ Estes dois agentes rodam **sempre ativos**, sem necessidade de intervencao human
 }
 ```
 
-**Nao requer handoff manual.** Estado persistente em `.claude/agent-memory/skillmaster/MEMORY.md`
+**Nao requer handoff manual.** Estado persistente em `.cerebro/agent-memory/skillmaster/MEMORY.md`
 
 ---
 
@@ -503,7 +503,7 @@ O sequenciador automaticamente mapeia uma tarefa para o agente correto:
 
 **Nao requer handoff manual.** Estado persistente em:
 
-- `.claude/agent-memory/sequenciador/MEMORY.md` (historico de decisoes)
+- `.cerebro/agent-memory/sequenciador/MEMORY.md` (historico de decisoes)
 - `queue/tasks.json` (fila com prioridades computadas)
 
 ---
@@ -522,7 +522,7 @@ O sequenciador automaticamente mapeia uma tarefa para o agente correto:
                     
   Monitora:                 Monitora:
    settings.local.json      queue/tasks.json
-   .claude/logs/            MEMORY.md
+   .cerebro/logs/            MEMORY.md
                              Despache para agentes
 
 
@@ -833,7 +833,7 @@ Todos os relatorios (implementacao, verificacao, validacao, auditoria) devem ser
 
 ### Regra 4: Memoria Persistente (agent-memory)
 
-Memorias de longo prazo de cada agente devem ser armazenadas em `.claude/agent-memory/<nome-do-agente>/MEMORY.md`.
+Memorias de longo prazo de cada agente devem ser armazenadas em `.cerebro/agent-memory/<nome-do-agente>/MEMORY.md`.
 
 **Regra 5: Simetria de Estado**
 Nenhum agente inicia uma tarefa sem antes validar se o estado do sistema (Kernel v3.0) esta saudavel (sem arquivos corrompidos). Se detectar entropia, aciona `@skillmaster` para `Invoke-TaskCleanup`.
@@ -913,8 +913,8 @@ O sistema e capaz de processar desde trafego zero ate cenarios de HIGH LOAD (20+
 
 Para detalhes tecnicos completos:
 
-- **Skillmaster:** [`.claude/agents/skillmaster.md`](./.claude/agents/skillmaster.md) - executor automatico 24/7
-- **Sequenciador:** [`.claude/agents/sequenciador.md`](./.claude/agents/sequenciador.md) - orquestrador inteligente 24/7
+- **Skillmaster:** [`.cerebro/agents/skillmaster.md`](./.cerebro/agents/skillmaster.md) - executor automatico 24/7
+- **Sequenciador:** [`.cerebro/agents/sequenciador.md`](./.cerebro/agents/sequenciador.md) - orquestrador inteligente 24/7
 
 ---
 

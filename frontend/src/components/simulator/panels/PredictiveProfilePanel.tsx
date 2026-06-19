@@ -25,7 +25,7 @@ export default function PredictiveProfilePanel() {
 		async function fetchProfile() {
 			try {
 				// Fricção Zero: Leitura dinâmica via API Local/Proxy
-				const res = await fetch('/api/predictive-profile', {
+				const res = await fetch('/api/v1/predictive', {
 					cache: 'no-store',
 				});
 

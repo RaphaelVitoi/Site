@@ -1,45 +1,54 @@
-﻿"""
-Testes para validacao da logica Bayesiana do motor SOTA.
+"""
+Testes unitarios para a inferencia Bayesiana do motor SOTA.
+Cobre os quadrantes da distribuicao Prior-Likelihood-Posterior.
 """
 
-import sys
-from pathlib import Path
-
-# Adiciona o root ao path para imports
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+import pytest
 
 from engine.math_sota import calculate_bayesian_win_prob
 
 
-def test_bayesian_logic():
-    """Valida se a inferencia Bayesiana atualiza a probabilidade de vitoria corretamente."""
-    print("=== [TESTE SOTA] Validando Logica Bayesiana ===")
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("prior", "action", "description"),
+    [
+        (0.5, 0.8, "acao_forte_eleva_prob"),
+        (0.5, 0.5, "acao_neutra_eleva_levemente"),  # acoes medianas ainda atualizam
+        (0.9, 0.1, "acao_fraca_contra_prior_alto"),
+        (0.1, 0.9, "acao_forte_contra_prior_baixo"),
+    ],
+)
+def test_bayesian_update_returns_valid_probability(prior: float, action: float, description: str) -> None:
+    """Garante que o resultado da inferencia Bayesiana e sempre [0.0, 1.0]."""
+    result = calculate_bayesian_win_prob(prior, action)
+    assert 0.0 <= result <= 1.0, f"[{description}] Resultado fora do intervalo: {result}"
 
-    # Caso 1: Equidade 50/50, Acao Forte (0.8), Densidade Media
-    # Esperamos que a probabilidade posterior suba significativamente
+
+@pytest.mark.unit
+def test_bayesian_strong_action_increases_probability() -> None:
+    """Acao forte (0.8) deve elevar a win prob acima do prior (0.5)."""
+    assert calculate_bayesian_win_prob(0.5, 0.8) > 0.5
+
+
+@pytest.mark.unit
+def test_bayesian_weak_action_decreases_probability() -> None:
+    """Acao fraca (0.2) deve reduzir a win prob abaixo do prior (0.5)."""
+    assert calculate_bayesian_win_prob(0.5, 0.2) < 0.5
+
+
+@pytest.mark.unit
+def test_bayesian_polarized_range_amplifies_strong_action() -> None:
+    """Range polarizado (density=0.1) amplifica o efeito de uma acao forte."""
+    dense = calculate_bayesian_win_prob(0.5, 0.8, range_density=1.0)
+    polarized = calculate_bayesian_win_prob(0.5, 0.8, range_density=0.1)
+    assert polarized > dense, "Range polarizado deve amplificar o likelihood de acao forte"
+
+
+@pytest.mark.unit
+def test_bayesian_monotonicity_with_action_strength() -> None:
+    """A probabilidade posterior deve crescer monotonicamente com a forca da acao."""
     prior = 0.5
-    action = 0.8
-    posterior = calculate_bayesian_win_prob(prior, action)
-    print(f"Prior: {prior} | Acao: {action} -> Posterior: {posterior:.4f}")
-    assert posterior > prior, "Erro: Acao forte deve aumentar a win prob posterior"
-
-    # Caso 2: Equidade 50/50, Acao Fraca (0.2)
-    # Esperamos que a probabilidade posterior caia
-    action_weak = 0.2
-    posterior_weak = calculate_bayesian_win_prob(prior, action_weak)
-    print(f"Prior: {prior} | Acao: {action_weak} -> Posterior: {posterior_weak:.4f}")
-    assert posterior_weak < prior, "Erro: Acao fraca deve diminuir a win prob posterior"
-
-    # Caso 3: Range Polarizado (density -> 0)
-    # A acao forte deve ter impacto ainda maior
-    posterior_polarized = calculate_bayesian_win_prob(prior, 0.8, range_density=0.1)
-    print(f"Polarizado (Density 0.1) -> Posterior: {posterior_polarized:.4f}")
-    assert posterior_polarized > posterior, (
-        "Erro: Range polarizado deve amplificar o likelihood"
-    )
-
-    print("[OK] Logica Bayesiana validada com exito.")
-
-
-if __name__ == "__main__":
-    test_bayesian_logic()
+    p_low = calculate_bayesian_win_prob(prior, 0.2)
+    p_mid = calculate_bayesian_win_prob(prior, 0.5)
+    p_high = calculate_bayesian_win_prob(prior, 0.8)
+    assert p_low < p_mid < p_high, "Monotonicidade Bayesiana violada"

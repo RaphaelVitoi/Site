@@ -11,7 +11,7 @@ Auditoria completa do sistema feita em 2026-03-13. 13 correcoes executadas, 6 it
 
 ## Status dos Pendentes (atualizado 2026-03-15)
 
-1. ~~**Identidade CHICO**~~ - RESOLVIDO. Modelo = Gemini 3.1 Pro Preview + Claude Opus 4.6 (dupla dinamica, ambos Pro). Sincronizado em: GLOBAL_INSTRUCTIONS.md (raiz + .claude/), project-context.md, pesquisador/MEMORY.md, auditor/MEMORY.md, MANUAL_WORKFLOW_AGENTES.md.
+1. ~~**Identidade CHICO**~~ - RESOLVIDO. Modelo = Gemini 3.1 Pro Preview + Claude Opus 4.6 (dupla dinamica, ambos Pro). Sincronizado em: GLOBAL_INSTRUCTIONS.md (raiz + .cerebro/), project-context.md, pesquisador/MEMORY.md, auditor/MEMORY.md, MANUAL_WORKFLOW_AGENTES.md.
 
 2. ~~**Branch git**~~ - RESOLVIDO. Ja estava em `main` (local e remote).
 
@@ -31,7 +31,7 @@ Auditoria completa do sistema feita em 2026-03-13. 13 correcoes executadas, 6 it
 - Video tags: preload=metadata em index.html, quem-sou.html
 - Canonical links: todas as 6 paginas
 - Open Graph: index.html
-- .claude/GLOBAL_INSTRUCTIONS.md: copiado da raiz
+- .cerebro/GLOBAL_INSTRUCTIONS.md: copiado da raiz
 - DISTRIBUTION_MATRIX.md: ref validate-queue corrigida
 - intents.json: 3 -> 14 mapeamentos
 - logs/: task_log.md e tasks_archived.json movidos para la

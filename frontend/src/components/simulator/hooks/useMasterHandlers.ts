@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useCallback } from 'react';
 import type { Scenario, HeroPosition } from '../engine/types';
 import { generateHRCJson, downloadHRCJson } from '@/lib/hrcExport';
+import type { SotaPhysicsState } from './useSotaSync';
 
 interface UseMasterHandlersParams {
 	scenario: Scenario;
@@ -11,15 +12,14 @@ interface UseMasterHandlersParams {
 	anteSize: number;
 	setScenario: (id: string) => void;
 	resetState: (scenario: Scenario) => void;
-	setHeroPosition: (pos: HeroPosition) => void;
-	setHeroInvested: (val: number) => void;
+	updatePhysics: (partial: Partial<SotaPhysicsState>) => void;
 	startTransition: (scope: () => void) => void;
 }
 
 /**
- * IDENTITY: Hook de Handlers Mestre (SOTA v4.6)
+ * IDENTITY: Hook de Handlers Mestre (SOTA v7.0 GOLD)
  * PATH: src/components/simulator/hooks/useMasterHandlers.ts
- * ROLE: Orquestra eventos de interface, exportação e transições de estado.
+ * ROLE: Orquestra eventos de interface, exportaÃ§Ã£o e transiÃ§Ãµes de estado.
  */
 export function useMasterHandlers({
 	scenario,
@@ -28,8 +28,7 @@ export function useMasterHandlers({
 	anteSize,
 	setScenario,
 	resetState,
-	setHeroPosition,
-	setHeroInvested,
+	updatePhysics,
 	startTransition,
 }: UseMasterHandlersParams) {
 	const handleScenarioSelect = useCallback(
@@ -61,7 +60,6 @@ export function useMasterHandlers({
 	const handleHeroPositionChange = useCallback(
 		(e: React.ChangeEvent<HTMLSelectElement>) => {
 			const pos = e.target.value as HeroPosition;
-			setHeroPosition(pos);
 			const anteBb = anteSize / 100;
 			const posOffset: Record<string, number> = {
 				BB: 1,
@@ -69,9 +67,10 @@ export function useMasterHandlers({
 				IP: 0,
 				OOP: 0,
 			};
-			setHeroInvested(anteBb + (posOffset[pos] ?? 0));
+			const heroInvested = anteBb + (posOffset[pos] ?? 0);
+			updatePhysics({ position: pos, heroInvested });
 		},
-		[anteSize, setHeroPosition, setHeroInvested],
+		[anteSize, updatePhysics],
 	);
 
 	return {
@@ -80,3 +79,4 @@ export function useMasterHandlers({
 		handleHeroPositionChange,
 	};
 }
+

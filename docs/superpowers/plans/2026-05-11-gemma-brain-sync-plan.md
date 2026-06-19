@@ -49,7 +49,7 @@ Psychological Status: {snapshot.referenceStatus}
 
 # Inside generate_response:
 snapshot_block = _format_snapshot_block(req.physics_snapshot)
-final_prompt = VITOI_SYSTEM_PROMPT + rag_context + snapshot_block + "[CENÁRIO/PERGUNTA]:\\n" + req.prompt
+final_prompt = VITOI_SYSTEM_PROMPT + rag_context + snapshot_block + "[CENARIO/PERGUNTA]:\\n" + req.prompt
 ```
 
 - [ ] **Step 3: Verify server health check**
@@ -87,7 +87,7 @@ const { physics, isHydrated: isSyncHydrated } = useSotaSync();
   <span className="text-xs font-black uppercase tracking-[0.2em]">Status do Motor: {status.toUpperCase()}</span>
   {isSyncHydrated && (
     <span className="text-[0.65rem] font-black text-accent-emerald-light bg-accent-emerald/10 px-2 py-0.5 rounded border border-accent-emerald/20 animate-in fade-in zoom-in">
-      [● SYNC: OK]
+      [ SYNC: OK]
     </span>
   )}
 </div>
@@ -125,7 +125,7 @@ function TelemetryCard({ snapshot }: { snapshot: any }) {
     <div className="my-4 p-4 bg-slate-900/60 border border-accent-indigo/20 rounded-xl font-mono text-[0.7rem] relative overflow-hidden group">
       <div className="absolute top-0 left-0 w-1 h-full bg-accent-indigo" />
       <div className="flex justify-between items-center mb-2">
-        <span className="text-accent-indigo-light font-black uppercase tracking-tighter">Telemetria de Oráculo</span>
+        <span className="text-accent-indigo-light font-black uppercase tracking-tighter">Telemetria de Oraculo</span>
         <span className="text-[0.6rem] text-text-muted">ACTIVE SNAPSHOT</span>
       </div>
       <div className="grid grid-cols-2 gap-x-8 gap-y-1">

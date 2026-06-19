@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { PhysicsSnapshot, InferenceRequest } from '@/lib/schemas';
+import { logger } from '@/lib/logger';
 
 async function processSSEStream(
 	stream: ReadableStream<Uint8Array>,
@@ -19,7 +20,10 @@ async function processSSEStream(
 			}
 		}
 	} finally {
-		await reader.cancel().catch((e) => console.warn('[ENTROPIA] Erro ao cancelar reader:', e));
+		await reader.cancel().catch((e) => {
+			 
+			console.warn('[ENTROPIA] Erro ao cancelar reader:', e);
+		});
 		reader.releaseLock();
 	}
 }
@@ -65,7 +69,7 @@ export function useGemmaStream() {
 			bufferRef.current = '';
 
 			// SOTA: Roteamento centralizado para o Proxy Python SOTA (onde o RAG e System Prompt são injetados)
-			const proxyUrl = process.env.NEXT_PUBLIC_SOTA_PROXY_URL || 'http://127.0.0.1:17043';
+			const proxyUrl = process.env['NEXT_PUBLIC_SOTA_PROXY_URL'] || 'http://127.0.0.1:17043';
 
 			// SOTA: Sanitização de Prompt - Remove tentativas de manipulação de instrução (jailbreak) com suporte a sufixos
 			const sanitizedPrompt = prompt
@@ -84,8 +88,8 @@ export function useGemmaStream() {
 					predictive_profile: predictiveProfile,
 				};
 
-				const token = process.env.NEXT_PUBLIC_SOTA_API_TOKEN;
-				if (!token && process.env.NODE_ENV !== 'development') {
+				const token = process.env['NEXT_PUBLIC_SOTA_API_TOKEN'];
+				if (!token && process.env['NODE_ENV'] !== 'development') {
 					throw new Error(
 						'NEXT_PUBLIC_SOTA_API_TOKEN não configurado no ambiente de produção.',
 					);
@@ -129,10 +133,10 @@ export function useGemmaStream() {
 				return bufferRef.current;
 			} catch (err: unknown) {
 				if (err instanceof Error && err.name === 'AbortError') {
-					console.log('[ENTROPIA] Stream abortado (Cleanup/Cancelamento).');
+					logger.info('Engine:GemmaStream', 'Stream abortado (Cleanup/Cancelamento).');
 					return;
 				}
-				console.error('[ENTROPIA] Falha no Stream:', err);
+				logger.error('Engine:GemmaStream', 'Falha no Stream', { error: err });
 				const errorMessage = err instanceof Error ? err.message : '';
 				// SOTA Fallback: Suavização heurística do erro TypeError de I/O em navegadores
 				if (

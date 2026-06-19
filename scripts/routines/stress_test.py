@@ -3,7 +3,7 @@
 
 def _processar_positivo(x):
     for i in range(x):
-        print("Par" if i % 2 == 0 else "Ímpar")
+        print("Par" if i % 2 == 0 else "Impar")
 
 
 def _processar_negativo(x):

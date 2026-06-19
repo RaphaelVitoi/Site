@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 """
 SOTA LLM Providers implementation.
 This module abstracts LLM routing and calling strategies to decouple
@@ -13,14 +14,13 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 
 import core.runtime as _te
 from core.schemas import Task
 from database.queue_manager import QueueManager
-from llm.anthropic import call_anthropic
 from llm.budget import (
     ROUTE_FAILURE_THRESHOLD,
     _block_gemini_model_key,
@@ -38,13 +38,25 @@ from llm.budget import (
 )
 from llm.gemini import call_gemini
 from llm.gemma_local import call_gemma_local
-from llm.openrouter import call_openrouter
+
+try:
+    from llm.openrouter import call_openrouter
+
+    OPENROUTER_AVAILABLE = True
+except Exception as exc:  # noqa: BLE001
+    call_openrouter = None  # type: ignore[assignment] # pylint: disable=invalid-name
+    OPENROUTER_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "OpenRouter module unavailable; provider disabled: %s",
+        exc,
+    )
+
 from utils.text import enforce_pure_ascii
 
 # =========================================================================
 # SOTA REFACTOR: Padrao Strategy para mitigar colapso de entropia.
 # Desacopla a chamada das APIs da logica de resiliencia e circuit break.
-# Essa abstracao permite que o Claude/Gemini extendam novos modelos
+# Essa abstracao permite que o Gemini estenda novos modelos
 # futuramente sem aumentar a Complexidade Ciclomatica (V(G)).
 # =========================================================================
 
@@ -80,8 +92,8 @@ class LLMProviderStrategy(ABC):
 
     async def check_quarantine(
         self,
-        model: str,  # pylint: disable=unused-argument
-        key: str,  # pylint: disable=unused-argument
+        _model: str,
+        _key: str,
     ) -> bool:
         """
         Permite que provedores implementem suas proprias
@@ -92,10 +104,10 @@ class LLMProviderStrategy(ABC):
 
     async def handle_semantic_error(
         self,
-        e: Exception,  # pylint: disable=unused-argument
-        model: str,  # pylint: disable=unused-argument
-        key: str,  # pylint: disable=unused-argument
-    ) -> None:  # noqa: B027
+        _e: Exception,
+        _model: str,
+        _key: str,
+    ) -> None:
         """Bloqueia a chave com base em erros especificos."""
         await asyncio.sleep(0)
 
@@ -146,45 +158,15 @@ class GeminiStrategy(LLMProviderStrategy):
             try:
                 match = re.search(r"retry_after=(\d+)", error_msg)
                 delay = int(match.group(1)) if match else 0
-            except Exception:  # pylint: disable=broad-exception-caught # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 delay = 0
 
-            is_quota_exhausted = any(
-                q in error_msg for q in ["quota", "daily", "exhausted"]
-            )
+            is_quota_exhausted = any(q in error_msg for q in ["quota", "daily", "exhausted"])
             if delay <= 65 and not is_quota_exhausted:
                 return  # Retorna prematuramente; nao bloqueia a chave na quarentena de 15 minutos.
 
         if _is_semantic_gemini_error(e):
             await _block_gemini_model_key(model, key)
-
-
-class AnthropicStrategy(LLMProviderStrategy):
-    """Strategy implementation for Anthropic API."""
-
-    @property
-    def name(self) -> str:
-        return "Anthropic"
-
-    @property
-    def token_keys(self) -> tuple[str, str]:
-        return ("input_tokens", "output_tokens")
-
-    async def call(
-        self,
-        session: aiohttp.ClientSession,
-        model: str,
-        system_prompt: str,
-        user_prompt: str,
-        key: str,
-        client_timeout: aiohttp.ClientTimeout | None,
-        require_json: bool,
-        **kwargs: Any,
-    ) -> tuple[str, dict[str, Any]]:
-        """Executes Anthropic API call."""
-        return await call_anthropic(
-            session, model, system_prompt, user_prompt, key, client_timeout, **kwargs
-        )
 
 
 class OpenRouterStrategy(LLMProviderStrategy):
@@ -210,6 +192,8 @@ class OpenRouterStrategy(LLMProviderStrategy):
         **kwargs: Any,
     ) -> tuple[str, dict[str, Any]]:
         """Executes OpenRouter API call."""
+        if call_openrouter is None:
+            raise RuntimeError("OpenRouter module unavailable.")
         return await call_openrouter(
             session,
             model,
@@ -251,20 +235,27 @@ class GemmaLocalStrategy(LLMProviderStrategy):
             system_prompt,
             user_prompt,
             key,
-            client_timeout,
+            timeout=client_timeout,
             require_json=require_json,
             **kwargs,
         )
 
 
+# Singletons de Strategies instanciados no nivel do modulo para evitar overhead de alocacao
+_STRATEGY_GEMINI = GeminiStrategy()
+_STRATEGY_OPENROUTER = OpenRouterStrategy()
+_STRATEGY_LOCAL = GemmaLocalStrategy()
+
+# Tabela Hash O(1) imutavel. Evita alocacao de dicionario no Event Loop a cada inferencia.
+_STRATEGIES_MAP = {
+    "gemini": _STRATEGY_GEMINI,
+    "openrouter": _STRATEGY_OPENROUTER,
+    "local": _STRATEGY_LOCAL,
+}
+
+
 def _get_provider_strategy(provider: str) -> LLMProviderStrategy | None:
-    strategies = {
-        "gemini": GeminiStrategy(),
-        "anthropic": AnthropicStrategy(),
-        "openrouter": OpenRouterStrategy(),
-        "local": GemmaLocalStrategy(),
-    }
-    return strategies.get(provider)
+    return _STRATEGIES_MAP.get(provider)
 
 
 @dataclass
@@ -285,28 +276,28 @@ class ProviderContext:
     kwargs: dict[str, Any]
 
 
-async def _handle_chaos_injection(task: Task, c_func: Callable):
+async def _handle_chaos_injection(task: Task, c_func: Callable[[str], str]) -> None:
     chaos_lambda_str = os.environ.get("NEXUS_CHAOS_LAMBDA")
     if not chaos_lambda_str:
         return
     try:
         chaos_lambda = float(chaos_lambda_str)
-        if random.random() < chaos_lambda:  # noqa: S311
-            chaos_type = random.choice(["503", "TIMEOUT", "LATENCY"])  # noqa: S311
+        if random.random() < chaos_lambda:
+            chaos_type = random.choice(["503", "TIMEOUT", "LATENCY"])
             if chaos_type == "LATENCY":
                 logger.warning(
                     "[[%s]%s[/]] [bold red]CHAOS INJECTED:[/] Latencia artificial",
                     c_func(task.agent),
                     task.agent,
                 )
-                await asyncio.sleep(random.uniform(3.0, 7.0))  # noqa: S311
+                await asyncio.sleep(random.uniform(3.0, 7.0))
             elif chaos_type == "TIMEOUT":
                 logger.warning(
                     "[[%s]%s[/]] [bold red]CHAOS INJECTED:[/] Timeout simulado",
                     c_func(task.agent),
                     task.agent,
                 )
-                raise asyncio.TimeoutError("ChaosCore: Timeout Injected")
+                raise TimeoutError("ChaosCore: Timeout Injected")
             elif chaos_type == "503":
                 logger.warning(
                     "[[%s]%s[/]] [bold red]CHAOS INJECTED:[/] HTTP 503 Service Unavailable",
@@ -319,15 +310,15 @@ async def _handle_chaos_injection(task: Task, c_func: Callable):
 
 
 async def _process_successful_call(
-    strategy,
-    key,
-    ctx,
-    start_time,
-    key_hash,
-    route_key,
-    key_rank,
-    attempt,
-):
+    strategy: LLMProviderStrategy,
+    key: str,
+    ctx: ProviderContext,
+    start_time: float,
+    key_hash: str,
+    route_key: str,
+    key_rank: int,
+    attempt: int,
+) -> dict[str, Any]:
     response_text, usage = await strategy.call(
         ctx.session,
         ctx.model,
@@ -345,11 +336,9 @@ async def _process_successful_call(
     await ctx.manager.update_llm_cache(ctx.model, ctx.user_prompt, response_text)
 
     p_key, c_key = strategy.token_keys
-    p_tokens = usage.get(p_key, 0)
-    c_tokens = usage.get(c_key, 0)
-    await ctx.manager.record_api_usage(
-        ctx.task.id, ctx.task.agent, ctx.model, ctx.provider, p_tokens, c_tokens
-    )
+    p_tokens = int(usage.get(p_key, 0))  # type: ignore[arg-type]
+    c_tokens = int(usage.get(c_key, 0))  # type: ignore[arg-type]
+    await ctx.manager.record_api_usage(ctx.task.id, ctx.task.agent, ctx.model, ctx.provider, p_tokens, c_tokens)
 
     latency_ms = int((time.monotonic() - start_time) * 1000)
     await ctx.manager.record_key_usage_metric(
@@ -374,14 +363,16 @@ async def _process_successful_call(
     }
 
 
-async def _handle_timeout_error(strategy, ctx, key_hash, route_key, retries_left):
+async def _handle_timeout_error(
+    strategy: LLMProviderStrategy,
+    ctx: ProviderContext,
+    key_hash: str,
+    route_key: str,
+    retries_left: int,
+) -> bool:
     # SOTA: A penalidade de latencia reflete estritamente o limite do SLA
     # configurado, imune a atrasos do Event Loop
-    timeout_sec = (
-        ctx.client_timeout.total
-        if ctx.client_timeout and ctx.client_timeout.total
-        else 60.0
-    )
+    timeout_sec = ctx.client_timeout.total if ctx.client_timeout and ctx.client_timeout.total else 60.0
     latency_ms = int(timeout_sec * 1000)
     await ctx.manager.record_key_usage_metric(
         provider=ctx.provider,
@@ -416,11 +407,11 @@ async def _handle_timeout_error(strategy, ctx, key_hash, route_key, retries_left
 
 async def _handle_5xx_error(
     status_code: int,
-    strategy,
-    ctx,
-    route_key,
-    general_retries_left,
-    rate_limit_retries_left,
+    strategy: LLMProviderStrategy,
+    ctx: ProviderContext,
+    route_key: str,
+    general_retries_left: int,
+    rate_limit_retries_left: int,
 ) -> tuple[bool, int, int]:
     if general_retries_left < 0:
         logger.error(
@@ -445,26 +436,25 @@ async def _handle_5xx_error(
 
 async def _handle_429_error(
     error_msg: str,
-    strategy,
-    ctx,
-    general_retries_left,
-    rate_limit_retries_left,
+    strategy: LLMProviderStrategy,
+    ctx: ProviderContext,
+    general_retries_left: int,
+    rate_limit_retries_left: int,
 ) -> tuple[bool, int, int]:
     try:
         match = re.search(r"retry_after=(\d+)", error_msg)
         delay = int(match.group(1)) if match else 0
-    except Exception:  # pylint: disable=broad-exception-caught # noqa: BLE001
+    except Exception:  # noqa: BLE001
         delay = 0
     if delay == 0:
         delay = 15
 
     if delay <= 65 and rate_limit_retries_left > 0:
         rate_limit_retries_left -= 1
-        jitter = random.uniform(1.0, 3.0)  # noqa: S311
+        jitter = random.uniform(1.0, 3.0)
         sleep_time = float(delay) + jitter
         logger.info(
-            "[[%s]%s[/]] 429 rate-limit em %s. Aguardando %.2fs... "
-            "(%d retries de 429 restantes)",
+            "[[%s]%s[/]] 429 rate-limit em %s. Aguardando %.2fs... (%d retries de 429 restantes)",
             ctx.c_func(ctx.task.agent),
             ctx.task.agent,
             strategy.name,
@@ -482,31 +472,29 @@ async def _handle_429_error(
         ctx.model,
     )
     if delay <= 65:
-        await asyncio.sleep(float(delay) + random.uniform(1.0, 3.0))  # noqa: S311
+        await asyncio.sleep(float(delay) + random.uniform(1.0, 3.0))
     else:
-        await asyncio.sleep(random.uniform(2.0, 4.0))  # noqa: S311
+        await asyncio.sleep(random.uniform(2.0, 4.0))
     return False, general_retries_left, rate_limit_retries_left
 
 
 async def _handle_general_error(
     e: Exception,
-    strategy,
-    key,
-    ctx,
-    start_time,
-    key_hash,
-    route_key,
-    provider_key,
-    general_retries_left,
-    rate_limit_retries_left,
+    strategy: LLMProviderStrategy,
+    key: str,
+    ctx: ProviderContext,
+    start_time: float,
+    key_hash: str,
+    route_key: str,
+    provider_key: str,
+    general_retries_left: int,
+    rate_limit_retries_left: int,
 ) -> tuple[bool, int, int]:
     # SOTA: Purificacao ASCII e truncamento para evitar explosao de logs
     # em respostas HTML macicas de erro (ex: 503 Cloudflare)
     error_msg = str(e).encode("ascii", "backslashreplace").decode("ascii")
     latency_ms = int((time.monotonic() - start_time) * 1000)
-    status_code = (
-        getattr(e, "status", 0) if isinstance(e, aiohttp.ClientResponseError) else 0
-    )
+    status_code = getattr(e, "status", 0) if isinstance(e, aiohttp.ClientResponseError) else 0
 
     if (status_code >= 500) or "chaoscore: 503" in error_msg.lower():
         return await _handle_5xx_error(
@@ -519,9 +507,7 @@ async def _handle_general_error(
         )
 
     if "429" in error_msg:
-        return await _handle_429_error(
-            error_msg, strategy, ctx, general_retries_left, rate_limit_retries_left
-        )
+        return await _handle_429_error(error_msg, strategy, ctx, general_retries_left, rate_limit_retries_left)
 
     if general_retries_left >= 0:
         logger.warning(
@@ -556,10 +542,7 @@ async def _handle_general_error(
     )
     await _register_route_failure(route_key)
 
-    if (
-        "connection closed" in error_msg.lower()
-        or "cannot connect" in error_msg.lower()
-    ):
+    if "connection closed" in error_msg.lower() or "cannot connect" in error_msg.lower():
         extra = max(0, ROUTE_FAILURE_THRESHOLD - 1)
         for _ in range(extra):
             await _register_route_failure(route_key)
@@ -590,9 +573,7 @@ async def _attempt_key_execution(
             if attempt > 1
             else f"Acionando cognicao via {strategy.name} ({ctx.model}, Chave {key_rank})..."
         )
-        logger.info(
-            "[[%s]%s[/]] %s", ctx.c_func(ctx.task.agent), ctx.task.agent, log_msg
-        )
+        logger.info("[[%s]%s[/]] %s", ctx.c_func(ctx.task.agent), ctx.task.agent, log_msg)
 
         await _handle_chaos_injection(ctx.task, ctx.c_func)
         result = await _process_successful_call(
@@ -606,7 +587,7 @@ async def _attempt_key_execution(
             attempt,
         )
         return result, False, general_retries_left, rate_limit_retries_left
-    except (asyncio.TimeoutError, TimeoutError):
+    except TimeoutError:
         general_retries_left -= 1
         should_retry = await _handle_timeout_error(
             strategy,
@@ -616,7 +597,7 @@ async def _attempt_key_execution(
             general_retries_left,
         )
         return None, should_retry, general_retries_left, rate_limit_retries_left
-    except Exception as e:  # pylint: disable=broad-exception-caught # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         general_retries_left -= 1
         (
             should_retry,
@@ -645,7 +626,7 @@ async def _execute_single_key(
     key_rank: int,
     route_key: str,
     ctx: ProviderContext,
-) -> Any:
+) -> dict[str, Any] | str:
     general_retries_left = max(0, int(ctx.max_retries))
     rate_limit_retries_left = 3  # Orcamento dedicado para absorver rajadas de 429
     attempt = 0
@@ -672,18 +653,17 @@ async def _execute_single_key(
 
         # SOTA: Se houve resposta (mesmo que com retentativas), entregamos o artefato.
         if result is not None:
-            return result
+            return cast(dict[str, Any], result)
 
         # SOTA: Se o tratador de erro determinou que nao devemos continuar
         # (ex: quota esgotada), abortamos esta chave para permitir a rotacao
         # no proximo slot do pool.
         if not should_continue:
-            return "SKIP_KEY"
+            break
 
     if await _is_route_blocked(route_key):
         logger.warning(
-            "[[%s]%s[/]] Rota %s:%s entrou em cooldown apos falha. "
-            "Avancando para proximo modelo.",
+            "[[%s]%s[/]] Rota %s:%s entrou em cooldown apos falha. Avancando para proximo modelo.",
             ctx.c_func(ctx.task.agent),
             ctx.task.agent,
             ctx.provider,
@@ -692,6 +672,49 @@ async def _execute_single_key(
         return "ROUTE_BLOCKED"
 
     return "SKIP_KEY"
+
+
+async def _check_and_execute_key(
+    strategy: LLMProviderStrategy,
+    provider: str,
+    model: str,
+    key: str,
+    key_rank: int,
+    route_key: str,
+    ctx: ProviderContext,
+) -> dict[str, Any] | str:
+    """Helper to check quarantine/blocking status and execute a key."""
+    if await strategy.check_quarantine(model, key):
+        logger.warning(
+            "[%s] Chave %s em quarentena semantica para modelo %s (Chave %d). Pulando.",
+            ctx.task.agent,
+            strategy.name,
+            model,
+            key_rank,
+        )
+        return "SKIP_KEY"
+
+    provider_key = _key_identifier(provider, key)
+    key_hash = _key_fingerprint(provider, key)
+
+    if await _is_key_blocked(provider_key):
+        logger.warning(
+            "[%s] Chave %s bloqueada temporariamente (Chave %d). Pulando.",
+            ctx.task.agent,
+            strategy.name,
+            key_rank,
+        )
+        return "SKIP_KEY"
+
+    return await _execute_single_key(
+        strategy=strategy,
+        provider_key=provider_key,
+        key_hash=key_hash,
+        key=key,
+        key_rank=key_rank,
+        route_key=route_key,
+        ctx=ctx,
+    )
 
 
 async def _try_provider(
@@ -706,13 +729,13 @@ async def _try_provider(
     max_retries: int = 2,
     client_timeout: aiohttp.ClientTimeout | None = None,
     require_json: bool = False,
-    **kwargs,
+    **kwargs: Any,
 ) -> dict[str, Any] | None:
     """Orquestrador de Provedor SOTA. Delega o comportamento para o padrao Strategy."""
     if not keys:
         return None
 
-    _c = _te._c  # pylint: disable=protected-access
+    _c = _te._c
     strategy = _get_provider_strategy(provider)
     if not strategy:
         logger.error("Provedor desconhecido: %s", provider)
@@ -728,36 +751,12 @@ async def _try_provider(
     for i, key in enumerate(ranked_keys):
         if await _is_route_blocked(route_key):
             logger.warning(
-                "[%s] Rota %s:%s entrou em cooldown durante a rotacao de chaves. "
-                "Interrompendo tentativas desta rota.",
+                "[%s] Rota %s:%s entrou em cooldown durante a rotacao de chaves. Interrompendo tentativas desta rota.",
                 task.agent,
                 strategy.name,
                 model,
             )
             break
-
-        if await strategy.check_quarantine(model, key):
-            logger.warning(
-                "[%s] Chave %s em quarentena semantica para modelo %s "
-                "(Chave %d). Pulando.",
-                task.agent,
-                strategy.name,
-                model,
-                i + 1,
-            )
-            continue
-
-        provider_key = _key_identifier(provider, key)
-        key_hash = _key_fingerprint(provider, key)
-
-        if await _is_key_blocked(provider_key):
-            logger.warning(
-                "[%s] Chave %s bloqueada temporariamente (Chave %d). Pulando.",
-                task.agent,
-                strategy.name,
-                i + 1,
-            )
-            continue
 
         ctx = ProviderContext(
             session=session,
@@ -773,25 +772,26 @@ async def _try_provider(
             c_func=_c,
             kwargs=kwargs,
         )
-        result = await _execute_single_key(
+
+        result = await _check_and_execute_key(
             strategy=strategy,
-            provider_key=provider_key,
-            key_hash=key_hash,
+            provider=provider,
+            model=model,
             key=key,
             key_rank=i + 1,
             route_key=route_key,
             ctx=ctx,
         )
 
-        if result == "SKIP_KEY":
-            continue
-        if result == "ROUTE_BLOCKED":
+        if isinstance(result, str):
+            if result == "SKIP_KEY":
+                continue
             return None
 
         # SOTA: Sobrescreve a latencia micro para espelhar o tempo macro gasto
         # (incluindo retries agressivos)
-        if isinstance(result, dict):
-            result["latency_ms"] = int((time.monotonic() - t0_provider) * 1000)
-        return result
+        res_dict = cast(dict[str, Any], result)
+        res_dict["latency_ms"] = int((time.monotonic() - t0_provider) * 1000)
+        return res_dict
 
     return None

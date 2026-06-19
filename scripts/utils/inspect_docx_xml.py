@@ -1,15 +1,14 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring, redefined-outer-name, invalid-name
 
-import zipfile
 import re
+import zipfile
 
 
 def extract_text_from_docx(path):
     with zipfile.ZipFile(path, "r") as z:
         content = z.read("word/document.xml").decode("utf-8")
         # Remove XML tags
-        text = re.sub(r"<[^>]+>", " ", content)
-        return text
+        return re.sub(r"<[^>]+>", " ", content)
 
 
 path = "frontend/research/icm-materials/Aula 1.2 .docx"

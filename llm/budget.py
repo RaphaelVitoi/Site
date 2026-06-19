@@ -1,18 +1,20 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring, broad-exception-caught, logging-fstring-interpolation, global-statement, line-too-long
 
-from utils.env_loader import load_env
-
 import asyncio
+import contextlib
 import hashlib
 import logging
 import os
 import re
+import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from database.queue_manager import QueueManager
 from core.schemas import Task
+from database.queue_manager import QueueManager
+from monitoring.telemetry import send_toast
+from utils.env_loader import load_env
 
 # =================================================
 # ORCAMENTO COGNITIVO E HIBERNACAO (Logistica SOTA)
@@ -33,8 +35,6 @@ logger = logging.getLogger(__name__)
 # =================================================
 # OTIMIZACOES DE PERFORMANCE (Cache SOTA)
 # =================================================
-
-
 
 
 # Carregamento unico das chaves de API para evitar I/O repetitivo
@@ -69,9 +69,7 @@ def _collect_keys(prefixes: tuple, exclude_prefixes: tuple = ()) -> list[str]:
     return list(dict.fromkeys(keys))
 
 
-def _collect_keys_with_pool(
-    prefixes: tuple, exclude_prefixes: tuple = ()
-) -> list[dict[str, str]]:
+def _collect_keys_with_pool(prefixes: tuple, exclude_prefixes: tuple = ()) -> list[dict[str, str]]:
     """Coleta chaves e extrai o 'pool' (ex: nome do projeto) do nome da variavel."""
     keys_with_pools = []
     seen_keys = set()
@@ -111,41 +109,26 @@ GEMINI_KEYS = _collect_keys(
 GEMINI_ALL_KEYS = list(dict.fromkeys(GEMINI_PRO_KEYS + GEMINI_FLASH_KEYS + GEMINI_KEYS))
 
 # SOTA: Nova fonte de verdade para auditoria com pools de projetos
-GEMINI_ALL_KEYS_WITH_POOLS = _collect_keys_with_pool(
-    ("GEMINI", "GOOGLE"), exclude_prefixes=("GEMINI_CLI",)
-)
+GEMINI_ALL_KEYS_WITH_POOLS = _collect_keys_with_pool(("GEMINI", "GOOGLE"), exclude_prefixes=("GEMINI_CLI",))
 
-ANTHROPIC_KEYS = list(
-    dict.fromkeys(
-        [
-            v
-            for k, v in ALL_ENV_VARS.items()
-            if _is_real_key_value(v) and k.upper().startswith("ANTHROPIC")
-        ]
-    )
-)
 OPENROUTER_KEYS = list(
-    dict.fromkeys(
-        [
-            v
-            for k, v in ALL_ENV_VARS.items()
-            if _is_real_key_value(v)
-            and (
-                k.upper().startswith("OPENROUTER")
-                or k.upper().startswith("DEEPSEEK")
-                or k.upper().startswith("LLAMA")
-            )
-            and "MODELS" not in k.upper()
-            and "," not in v
-            and "/" not in v
-        ]
-    )
+    dict.fromkeys([
+        v
+        for k, v in ALL_ENV_VARS.items()
+        if _is_real_key_value(v)
+        and (k.upper().startswith("OPENROUTER") or k.upper().startswith("DEEPSEEK") or k.upper().startswith("LLAMA"))
+        and "MODELS" not in k.upper()
+        and "," not in v
+        and "/" not in v
+    ])
 )
+ANTHROPIC_KEYS = _collect_keys(("ANTHROPIC", "CLAUDE"))
 TAVILY_KEYS = _collect_keys(("TAVILY",))
 PERPLEXITY_KEYS = _collect_keys(("PERPLEXITY",))
 API_SECRET_TOKEN = ALL_ENV_VARS.get("API_SECRET_TOKEN", "")
 
-# Cache para resultados da WebSearch
+# Cache para resultados da WebSearch (bounded: max 256 entradas)
+_WEB_SEARCH_CACHE_MAX = 256
 web_search_cache: dict[str, Any] = {}
 # Tempo de vida do cache em segundos (ex: 3600 = 1 hora)
 WEB_SEARCH_CACHE_TTL = 3600
@@ -154,24 +137,16 @@ WEB_SEARCH_CACHE_TTL = 3600
 # SOTA: Reduzido de 15 para 5 minutos. O ciclo de hibernacao (worker/loop.py) acorda em 3 mins e limpa a memoria.
 # Um bloqueio longo causava dessincronia severa, derrubando o flash_health pela insistencia prematura.
 KEY_BLOCK_DURATION = timedelta(minutes=5)
-GEMINI_MODEL_KEY_BLOCK_DURATION = timedelta(
-    minutes=int(os.environ.get("GEMINI_MODEL_KEY_BLOCK_MINUTES", "5"))
-)
+GEMINI_MODEL_KEY_BLOCK_DURATION = timedelta(minutes=int(os.environ.get("GEMINI_MODEL_KEY_BLOCK_MINUTES", "5")))
 
 KEY_BLOCKLIST: dict[str, datetime] = {}
 GEMINI_MODEL_KEY_BLOCKLIST: dict[str, datetime] = {}
-ROUTE_COOLDOWN_DURATION = timedelta(
-    minutes=int(os.environ.get("ROUTE_COOLDOWN_MINUTES", "5"))
-)
+ROUTE_COOLDOWN_DURATION = timedelta(minutes=int(os.environ.get("ROUTE_COOLDOWN_MINUTES", "5")))
 ROUTE_FAILURE_THRESHOLD = int(
     os.environ.get("ROUTE_FAILURE_THRESHOLD", "5")
 )  # Aumentado para permitir rotacao completa do pool antes de bloquear a rota
-DEEPSEEK_ROUTE_COOLDOWN_DURATION = timedelta(
-    minutes=int(os.environ.get("DEEPSEEK_ROUTE_COOLDOWN_MINUTES", "10"))
-)
-DEEPSEEK_ROUTE_FAILURE_THRESHOLD = int(
-    os.environ.get("DEEPSEEK_ROUTE_FAILURE_THRESHOLD", "1")
-)
+DEEPSEEK_ROUTE_COOLDOWN_DURATION = timedelta(minutes=int(os.environ.get("DEEPSEEK_ROUTE_COOLDOWN_MINUTES", "10")))
+DEEPSEEK_ROUTE_FAILURE_THRESHOLD = int(os.environ.get("DEEPSEEK_ROUTE_FAILURE_THRESHOLD", "1"))
 ROUTE_BLOCKLIST: dict[str, datetime] = {}
 ROUTE_FAILURE_COUNTS: dict[str, int] = {}
 COMPRESSION_CIRCUIT_BREAKER = {"consecutive_failures": 0, "last_failure": 0.0}
@@ -181,15 +156,18 @@ SYSTEM_PROMPT_CACHE: dict[str, str] = {}
 AUTONOMY_MODE_CACHE = {"mode": "off", "timestamp": 0.0}
 
 
-# Trava de Seguranca Global para variaveis de telemetria
-_TELEMETRY_LOCK = None
+# Trava de Seguranca Global para variaveis de telemetria mapeada por Event Loop
+# SOTA: Garante prevencao contra falhas de cross-loop bounds em Runtime
+_TELEMETRY_LOCKS: dict[int, asyncio.Lock] = {}
+_TELEMETRY_THREADING_LOCK = threading.Lock()
 
 
-def get_telemetry_lock():
-    global _TELEMETRY_LOCK
-    if _TELEMETRY_LOCK is None:
-        _TELEMETRY_LOCK = asyncio.Lock()
-    return _TELEMETRY_LOCK
+def get_telemetry_lock() -> asyncio.Lock:
+    loop_id = id(asyncio.get_running_loop())
+    with _TELEMETRY_THREADING_LOCK:
+        if loop_id not in _TELEMETRY_LOCKS:
+            _TELEMETRY_LOCKS[loop_id] = asyncio.Lock()
+        return _TELEMETRY_LOCKS[loop_id]
 
 
 def _key_identifier(provider: str, key: str) -> str:
@@ -200,7 +178,7 @@ async def _is_key_blocked(provider_key: str) -> bool:
     async with get_telemetry_lock():
         expiry = KEY_BLOCKLIST.get(provider_key)
         if expiry:
-            if expiry > datetime.now(timezone.utc):
+            if expiry > datetime.now(UTC):
                 return True
             KEY_BLOCKLIST.pop(provider_key, None)
         return False
@@ -208,7 +186,7 @@ async def _is_key_blocked(provider_key: str) -> bool:
 
 async def _block_key(provider_key: str):
     async with get_telemetry_lock():
-        KEY_BLOCKLIST[provider_key] = datetime.now(timezone.utc) + KEY_BLOCK_DURATION
+        KEY_BLOCKLIST[provider_key] = datetime.now(UTC) + KEY_BLOCK_DURATION
 
 
 def _gemini_model_key_identifier(model: str, key: str) -> str:
@@ -220,7 +198,7 @@ async def _is_gemini_model_key_blocked(model: str, key: str) -> bool:
         block_id = _gemini_model_key_identifier(model, key)
         expiry = GEMINI_MODEL_KEY_BLOCKLIST.get(block_id)
         if expiry:
-            if expiry > datetime.now(timezone.utc):
+            if expiry > datetime.now(UTC):
                 return True
             GEMINI_MODEL_KEY_BLOCKLIST.pop(block_id, None)
         return False
@@ -229,9 +207,7 @@ async def _is_gemini_model_key_blocked(model: str, key: str) -> bool:
 async def _block_gemini_model_key(model: str, key: str):
     async with get_telemetry_lock():
         block_id = _gemini_model_key_identifier(model, key)
-        GEMINI_MODEL_KEY_BLOCKLIST[block_id] = (
-            datetime.now(timezone.utc) + GEMINI_MODEL_KEY_BLOCK_DURATION
-        )
+        GEMINI_MODEL_KEY_BLOCKLIST[block_id] = datetime.now(UTC) + GEMINI_MODEL_KEY_BLOCK_DURATION
 
 
 def _gemini_key_pool_for_model(model: str) -> list[str]:
@@ -274,7 +250,7 @@ async def _is_route_blocked(route_key: str) -> bool:
     async with get_telemetry_lock():
         expiry = ROUTE_BLOCKLIST.get(route_key)
         if expiry:
-            if expiry > datetime.now(timezone.utc):
+            if expiry > datetime.now(UTC):
                 return True
             ROUTE_BLOCKLIST.pop(route_key, None)
         return False
@@ -296,7 +272,7 @@ async def _register_route_failure(route_key: str):
             threshold = DEEPSEEK_ROUTE_FAILURE_THRESHOLD
             cooldown = DEEPSEEK_ROUTE_COOLDOWN_DURATION
         if count >= threshold:
-            ROUTE_BLOCKLIST[route_key] = datetime.now(timezone.utc) + cooldown
+            ROUTE_BLOCKLIST[route_key] = datetime.now(UTC) + cooldown
 
 
 def _key_fingerprint(provider: str, key: str) -> str:
@@ -332,22 +308,18 @@ async def is_cognitive_hibernation_active(manager: QueueManager, task: Task) -> 
     if state:
         try:
             hibernation_end = datetime.fromisoformat(state)
-            if datetime.now(timezone.utc) < hibernation_end:
+            if datetime.now(UTC) < hibernation_end:
                 return True
         except ValueError:
             pass
     return False
 
 
-async def _rank_keys_by_health(
-    provider: str, keys: list[str], manager: QueueManager
-) -> list[str]:
+async def _rank_keys_by_health(provider: str, keys: list[str], manager: QueueManager) -> list[str]:
     ranked = []
     for idx, key in enumerate(keys):
         key_hash = _key_fingerprint(provider, key)
-        stats = await manager.get_key_recent_stats(
-            provider, key_hash, window_minutes=180
-        )
+        stats = await manager.get_key_recent_stats(provider, key_hash, window_minutes=180)
         score = _score_key_from_stats(stats)
         ranked.append((score, idx, key))
 
@@ -377,9 +349,7 @@ class AsyncTokenBucket:
             self.lock = asyncio.Lock()
 
         async with self.lock:
-            min_spacing = (
-                1.0 / self.fill_rate_per_sec if self.fill_rate_per_sec > 0 else 4.2
-            )
+            min_spacing = 1.0 / self.fill_rate_per_sec if self.fill_rate_per_sec > 0 else 4.2
             now = time.monotonic()
             if now - self.last_consume < min_spacing:
                 await asyncio.sleep(min_spacing - (now - self.last_consume))
@@ -388,9 +358,7 @@ class AsyncTokenBucket:
             while True:
                 current_time = time.monotonic()
                 elapsed = current_time - self.last_fill
-                self.tokens = min(
-                    self.capacity, self.tokens + elapsed * self.fill_rate_per_sec
-                )
+                self.tokens = min(self.capacity, self.tokens + elapsed * self.fill_rate_per_sec)
                 self.last_fill = current_time
 
                 if self.tokens >= tokens:
@@ -403,16 +371,12 @@ class AsyncTokenBucket:
 
                 # SOTA: Dispara Alerta Proativo (Toast) se a cota secar para evitar silent failures
                 if self.starvation_events % 5 == 1:
-                    try:
-                        from monitoring.telemetry import send_toast  # pylint: disable=import-outside-toplevel
-
+                    with contextlib.suppress(ImportError):
                         send_toast(
                             "[WARN] Rate Limit Fallback SOTA",
                             f"Cota de API esgotada. Aguardando {wait_time:.1f}s para resfriar chaves.",
                             "warning",
                         )
-                    except ImportError:
-                        pass
 
                 logger.warning(
                     f"[Rate Limiter SOTA] Starvation detectado. Aguardando {wait_time:.2f}s para {tokens} tokens."
@@ -433,17 +397,11 @@ GEMINI_PRO_RPM_PER_KEY = int(os.environ.get("GEMINI_PRO_RPM_PER_KEY", "4"))
 GEMINI_FLASH_RPM_PER_KEY = int(os.environ.get("GEMINI_FLASH_RPM_PER_KEY", "14"))
 
 TOTAL_PRO_RPM = GEMINI_PRO_RPM_PER_KEY * max(1, len(GEMINI_PRO_KEYS) + len(GEMINI_KEYS))
-TOTAL_FLASH_RPM = GEMINI_FLASH_RPM_PER_KEY * max(
-    1, len(GEMINI_FLASH_KEYS) + len(GEMINI_KEYS)
-)
+TOTAL_FLASH_RPM = GEMINI_FLASH_RPM_PER_KEY * max(1, len(GEMINI_FLASH_KEYS) + len(GEMINI_KEYS))
 
 _RATE_LIMITERS: dict[str, AsyncTokenBucket] = {
-    "gemini-pro": AsyncTokenBucket(
-        capacity=TOTAL_PRO_RPM, fill_rate_per_minute=TOTAL_PRO_RPM
-    ),
-    "gemini-flash": AsyncTokenBucket(
-        capacity=TOTAL_FLASH_RPM, fill_rate_per_minute=TOTAL_FLASH_RPM
-    ),
+    "gemini-pro": AsyncTokenBucket(capacity=TOTAL_PRO_RPM, fill_rate_per_minute=TOTAL_PRO_RPM),
+    "gemini-flash": AsyncTokenBucket(capacity=TOTAL_FLASH_RPM, fill_rate_per_minute=TOTAL_FLASH_RPM),
 }
 
 

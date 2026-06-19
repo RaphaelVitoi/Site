@@ -12,6 +12,14 @@ import { useDebouncedLocalStorage } from './useDebouncedLocalStorage';
 
 export interface SotaPhysicsState extends PhysicsSnapshot {
 	prizes: number[];
+	heroStack: number;
+	pot: number;
+	heroInvested: number;
+	position: 'IP' | 'OOP' | 'BB' | 'SB';
+	referenceStatus: 'baseline' | 'tilt' | 'protecting' | 'bubble';
+	edgeFactor?: number;
+	villain1Stack?: number;
+	villain2Stack?: number;
 }
 
 const defaultPhysics: SotaPhysicsState = {

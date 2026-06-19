@@ -4,14 +4,12 @@ Controla o nivel de agencia do sistema: stop, default, partial, full.
 """
 
 import asyncio
-import functools
 import json
 import logging
 import os
 import re
 import shlex
 import shutil
-import subprocess  # noqa: S404
 import time
 from pathlib import Path
 
@@ -21,9 +19,9 @@ from database.queue_manager import QueueManager
 
 logger = logging.getLogger(__name__)
 
-# TETRALOGIA DE GOVERNANÇA VITOI 3.2
-# W0 (stop) ⊂ W1 (default) ⊂ W2 (partial - Tier 3)
-# ⊂ W2.5 (full_restricted - Tier 2) ⊂ W3 (full - Tier 1)
+# TETRALOGIA DE GOVERNANCA VITOI 3.2
+# W0 (stop) \u2282 W1 (default) \u2282 W2 (partial - Tier 3)
+# \u2282 W2.5 (full_restricted - Tier 2) \u2282 W3 (full - Tier 1)
 VALID_AUTONOMY_MODES = {"stop", "default", "partial", "full", "sandbox"}
 PROTECTED_KERNEL_PATHS = [  # pylint: disable=line-too-long
     ".git",
@@ -45,12 +43,12 @@ _AUTONOMY_CACHE = {"mode": "stop", "timestamp": 0.0}
 
 
 def _read_legacy_autonomy_config() -> str:
-    """Lê a configuração mitigando o aninhamento de tratamento de erro.
-    (SOTA v6: Diretórios legados do Claude desligados)."""
+    """Le a configuracao mitigando o aninhamento de tratamento de erro.
+    (SOTA v6: Diretorios legados do Claude desligados)."""
     config_path = Path("autonomy.json")
     if config_path.exists():
         try:
-            with open(config_path, "r", encoding="utf-8-sig") as f:
+            with open(config_path, encoding="utf-8-sig") as f:
                 data = json.loads(f.read().lstrip("\ufeff"))
                 return data.get("mode", "stop")
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -82,43 +80,74 @@ async def get_autonomy_mode(manager: QueueManager) -> str:
     return mode
 
 
+def _validate_forged_path(
+    filepath: str, effective_mode: str, agent_name: str, safe_path_re: re.Pattern
+) -> tuple[bool, Path | None]:
+    """Valida seguranca e privilegios para o caminho do arquivo a ser forjado."""
+    if not safe_path_re.match(filepath):
+        logger.error(
+            "[SEC] Filepath rejeitado por conter caracteres invalidos (possivel injecao): %s",
+            filepath.encode("ascii", "backslashreplace").decode("ascii"),
+        )
+        return False, None
+
+    if ".." in filepath:
+        logger.error("[SEC] Path traversal explicito bloqueado: %s", filepath)
+        return False, None
+
+    base_path = Path(__file__).parent.parent.absolute()
+    target_path = Path(filepath).resolve()  # noqa: ASYNC240
+
+    if not target_path.is_relative_to(base_path):
+        logger.error("[SEC] Bloqueio de escrita fora da raiz: %s", filepath)
+        return False, None
+
+    target_path_str = os.path.normpath(str(target_path))  # noqa: ASYNC240
+    is_protected = any(os.path.normpath(p) in target_path_str for p in PROTECTED_KERNEL_PATHS)  # noqa: ASYNC240
+    privileged_agents = ["@chico", "@gemma4"]
+    if is_protected:
+        if effective_mode == "full" and agent_name in privileged_agents:
+            logger.warning(
+                "[GOD MODE W3] Override de Seguranca Absoluto (TIER 1). Re-escrevendo arquivo de Kernel: %s", filepath
+            )
+        else:
+            logger.error(
+                "[SEC] Bloqueio de escrita em arquivo protegido. %s nao possui privilegios de Tier 1: %s",
+                agent_name,
+                filepath,
+            )
+            return False, None
+
+    return True, target_path
+
+
 async def _forge_files(text: str, effective_mode: str, agent_name: str) -> list[str]:
-    """Isola a materialização em disco e blindagem contra Path Traversal."""
+    """Isola a materializacao em disco e blindagem contra Path Traversal."""
+    # SOTA SEC: Sandbox mode nao permite materializacao em disco nativo.
+    # Apenas modos com privilegio de escrita direta (partial, full, full_restricted) passam.
+    if effective_mode == "sandbox":
+        logger.warning(
+            "[GOD MODE SANDBOX] Materializacao em disco nativo bloqueada no modo sandbox. "
+            "Arquivos devem ser escritos dentro do container Docker."
+        )
+        return []
+
     modified_files = []
     pattern = r"(?:Arquivo|File|Caminho|Path):\s*`?([^\n`]+)`?\s*\n+```[a-z]*\n(.*?)```"
+
+    # SOTA SEC: Allowlist de caracteres validos para caminhos de arquivo.
+    # Bloqueia injecao de whitespace, null bytes, unicode de controle e outros vetores.
+    safe_path_re = re.compile(r"^[a-zA-Z0-9_/\\\-. :]+$")
 
     for match in re.finditer(pattern, text, re.DOTALL | re.IGNORECASE):
         filepath = match.group(1).strip()
         content = match.group(2)
+
+        is_valid, target_path = _validate_forged_path(filepath, effective_mode, agent_name, safe_path_re)
+        if not is_valid or not target_path:
+            continue
+
         try:
-            base_path = Path(__file__).parent.parent.absolute()
-            target_path = Path(filepath).absolute()
-
-            if not target_path.is_relative_to(base_path):
-                logger.error("[SEC] Bloqueio de escrita fora da raiz: %s", filepath)
-                continue
-
-            target_path_str = os.path.normpath(str(target_path))
-            is_protected = any(
-                os.path.normpath(p) in target_path_str for p in PROTECTED_KERNEL_PATHS
-            )
-            privileged_agents = ["@chico", "@gemma4"]
-            if is_protected:
-                if effective_mode == "full" and agent_name in privileged_agents:
-                    logger.warning(
-                        "[GOD MODE W3] Override de Seguranca Absoluto (TIER 1). "
-                        "Re-escrevendo arquivo de Kernel: %s",
-                        filepath,
-                    )
-                else:
-                    logger.error(
-                        "[SEC] Bloqueio de escrita em arquivo protegido. "
-                        "%s nao possui privilegios de Tier 1: %s",
-                        agent_name,
-                        filepath,
-                    )
-                    continue
-
             target_path.parent.mkdir(parents=True, exist_ok=True)
             async with aiofiles.open(target_path, "w", encoding="utf-8") as f:
                 await f.write(content)
@@ -150,8 +179,8 @@ def _validate_command(cmd: str, effective_mode: str, agent_name: str) -> bool:
         "pnpm add",
     ]
 
-    # SOTA: Expansão implacável dos vetores de bypass
-    # (sub-expressões, backticks, redirecionamentos).
+    # SOTA: Expansao implacavel dos vetores de bypass
+    # (sub-expressoes, backticks, redirecionamentos).
     if effective_mode not in ["full", "full_restricted"] and any(
         char in cmd for char in [";", "|", "&&", "&", "$", "`", ">", "<"]
     ):
@@ -167,12 +196,9 @@ def _validate_command(cmd: str, effective_mode: str, agent_name: str) -> bool:
         logger.error("[SEC] %s", error_msg)
         raise PermissionError(error_msg)
 
-    if effective_mode == "partial" and any(
-        k in cmd.lower() for k in state_changing_commands
-    ):
+    if effective_mode == "partial" and any(k in cmd.lower() for k in state_changing_commands):
         logger.warning(
-            "[SEC TIER 3] O agente %s tentou mutar o estado do ecossistema. "
-            "Comando interceptado: '%s'",
+            "[SEC TIER 3] O agente %s tentou mutar o estado do ecossistema. Comando interceptado: '%s'",
             agent_name,
             cmd,
         )
@@ -201,32 +227,35 @@ async def _run_native_command(cmd: str) -> None:
             if executable:
                 cmd_parts[0] = executable
 
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(
-        None,
-        functools.partial(
-            subprocess.run,
-            cmd_parts,
-            shell=False,
-            capture_output=True,
-            text=True,
-            timeout=300,
-            check=False,
-        ),
+    if not cmd_parts:
+        return
+
+    process = await asyncio.create_subprocess_exec(
+        *cmd_parts,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
 
-    if result.returncode == 0:
+    try:
+        _, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=300)
+    except TimeoutError as exc:
+        process.kill()
+        await process.communicate()
+        error_msg = f"O comando nativo excedeu o tempo limite (300s): {cmd}"
+        logger.error("[FAIL] %s", error_msg)
+        raise RuntimeError(error_msg) from exc
+
+    if process.returncode == 0:
         logger.info("[OK] Comando executado: %s", cmd)
     else:
-        error_msg = f"Codigo {result.returncode} - {result.stderr.strip()}"
+        stderr_str = stderr_bytes.decode(errors="replace").strip()
+        error_msg = f"Codigo {process.returncode} - {stderr_str}"
         logger.error("[FAIL] Falha no comando '%s': %s", cmd, error_msg)
         raise RuntimeError(f"O comando nativo falhou: {cmd}\nDetalhes: {error_msg}")
 
 
 async def _run_sandboxed_command(cmd: str, agent_name: str) -> None:
-    logger.info(
-        "[CASA DE MAQUINAS] Sandbox isolado acionado para %s: %s", agent_name, cmd
-    )
+    logger.info("[CASA DE MAQUINAS] Sandbox isolado acionado para %s: %s", agent_name, cmd)
     cmd_parts = [
         "docker",
         "run",
@@ -242,39 +271,34 @@ async def _run_sandboxed_command(cmd: str, agent_name: str) -> None:
         "-c",
         cmd,
     ]
-    loop = asyncio.get_running_loop()
+    process = None
     try:
-        result = await loop.run_in_executor(
-            None,
-            functools.partial(
-                subprocess.run,
-                cmd_parts,
-                shell=False,
-                capture_output=True,
-                text=True,
-                timeout=120,
-                check=False,
-            ),
+        process = await asyncio.create_subprocess_exec(
+            *cmd_parts,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
-        if result.returncode == 0:
+        _, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=120)
+
+        if process.returncode == 0:
             logger.info("[OK] Casa de Maquinas executou com sucesso: %s", cmd)
         else:
-            error_msg = f"Codigo {result.returncode} - {result.stderr.strip()}"
-            logger.warning(
-                "[SANDBOX FAIL] Comando contido na Casa de Maquinas: %s", error_msg
-            )
+            stderr_str = stderr_bytes.decode(errors="replace").strip()
+            error_msg = f"Codigo {process.returncode} - {stderr_str}"
+            logger.warning("[SANDBOX FAIL] Comando contido na Casa de Maquinas: %s", error_msg)
+    except TimeoutError:
+        if process:
+            process.kill()
+            await process.communicate()
+        logger.warning("[SANDBOX FAIL] Tempo limite excedido (120s) na Casa de Maquinas: %s", cmd)
     except FileNotFoundError:
-        logger.error(
-            "[SANDBOX FATAL] Docker ausente. Nao foi possivel instanciar a Casa de Maquinas."
-        )
+        logger.error("[SANDBOX FATAL] Docker ausente. Nao foi possivel instanciar a Casa de Maquinas.")
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.exception(
-            "[SANDBOX FAIL] Erro critico ao executar na Casa de Maquinas: %s", e
-        )
+        logger.exception("[SANDBOX FAIL] Erro critico ao executar na Casa de Maquinas: %s", e)
 
 
 async def _execute_commands(text: str, effective_mode: str, agent_name: str) -> None:
-    """Isola a orquestração segura de sub-processos do terminal."""
+    """Isola a orquestracao segura de sub-processos do terminal."""
     if effective_mode in ["stop", "default"]:
         logger.warning(
             "[SEC] Execucao de terminal bloqueada por hardware-lock no modo '%s'.",
@@ -282,9 +306,7 @@ async def _execute_commands(text: str, effective_mode: str, agent_name: str) -> 
         )
         return
 
-    cmd_pattern = (
-        r"(?:Comando|Command|Executar|Execute):\s*(?:```[a-z]*\n(.*?)\n```|`([^`]+)`)"
-    )
+    cmd_pattern = r"(?:Comando|Command|Executar|Execute):\s*(?:```[a-z]*\n(.*?)\n```|`([^`]+)`)"
 
     for match in re.finditer(cmd_pattern, text, re.DOTALL | re.IGNORECASE):
         cmd = match.group(1) if match.group(1) else match.group(2)
@@ -309,15 +331,17 @@ async def _read_autonomy_levers() -> tuple[list[str], bool]:
     god_mode_agents = [AGENT_CHICO, "@gemma4"]
     sandbox_default = True
     config_path = Path("autonomy.json")
-    if config_path.exists():
+    if config_path.exists():  # noqa: ASYNC240
         try:
-            async with aiofiles.open(config_path, "r", encoding="utf-8-sig") as f:
+            async with aiofiles.open(config_path, encoding="utf-8-sig") as f:
                 content = await f.read()
                 cfg = json.loads(content.lstrip("\ufeff"))
                 god_mode_agents = cfg.get("god_mode_agents", god_mode_agents)
                 sandbox_default = cfg.get("sandbox_default", sandbox_default)
-        except Exception:  # noqa: S110 # pylint: disable=broad-exception-caught
-            pass
+        except Exception as e:  # noqa: S110 # pylint: disable=broad-exception-caught
+            logger.warning(
+                "[AUTONOMY] Falha ao processar autonomia no autonomy.json. Retornando ao fallback. Erro: %s", e
+            )
     return god_mode_agents, sandbox_default
 
 
@@ -329,8 +353,7 @@ def _resolve_effective_mode(
         return global_mode
     if agent_name in god_mode_agents:
         logger.info(
-            "[TIER 1] %s invocando autoridade executiva maxima (God Mode). "
-            "Operando sob bypass nativo irrestrito.",
+            "[TIER 1] %s invocando autoridade executiva maxima (God Mode). Operando sob bypass nativo irrestrito.",
             agent_name,
         )
         return global_mode
@@ -342,11 +365,9 @@ def _resolve_effective_mode(
     return "partial" if global_mode in ["partial", "full"] else global_mode
 
 
-async def apply_god_mode(
-    text: str, manager: QueueManager, agent_name: str | None = None
-) -> list[str]:
+async def apply_god_mode(text: str, manager: QueueManager, agent_name: str | None = None) -> list[str]:
     """
-    Orquestrador VITOI 3.2 de Autonomia (Córtex de Execução).
+    Orquestrador VITOI 3.2 de Autonomia (Cortex de Execucao).
     Aplica a hierarquia de privilegios de Tier 0 a Tier 3 dinamicamente.
     """
     god_mode_agents, sandbox_default = await _read_autonomy_levers()
@@ -355,27 +376,20 @@ async def apply_god_mode(
     # Deducao dinamica de identidade caso nao seja provida explicitamente pela DAG
     if not agent_name:
         running_tasks = await manager.get_tasks(status="running")
-        # SOTA: Obliteração da escalada de privilégios (Zero-Trust).
+        # SOTA: Obliteracao da escalada de privilegios (Zero-Trust).
         # Fallback para Tier inferior.
         agent_name = running_tasks[0].agent if running_tasks else "@dispatcher"
 
-    effective_mode = _resolve_effective_mode(
-        global_mode, agent_name, god_mode_agents, sandbox_default
-    )
+    effective_mode = _resolve_effective_mode(global_mode, agent_name, god_mode_agents, sandbox_default)
 
     if effective_mode == "stop":
-        logger.warning(
-            "[GOD MODE] W0 (Stop) ativo. Observação pura. Nenhuma mutação permitida."
-        )
+        logger.warning("[GOD MODE] W0 (Stop) ativo. Observacao pura. Nenhuma mutacao permitida.")
         return []
 
     modified_files = await _forge_files(text, effective_mode, agent_name)
 
     if effective_mode == "default":
-        logger.info(
-            "[GOD MODE] W1 (Default) ativo. Homeostase. "
-            "Arquivos forjados, execução de comandos bloqueada."
-        )
+        logger.info("[GOD MODE] W1 (Default) ativo. Homeostase. Arquivos forjados, execucao de comandos bloqueada.")
         return modified_files
 
     await _execute_commands(text, effective_mode, agent_name)

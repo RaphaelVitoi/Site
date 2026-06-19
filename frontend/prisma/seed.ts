@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { PrismaClient } from '@prisma/client';
 import { seedContent } from './seed-content';
 import { seedScenarios } from './seed-scenarios';
@@ -5,12 +6,12 @@ import { seedScenarios } from './seed-scenarios';
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log( '=== [SISTEMA] INICIANDO INJEÇÃO SOTA (Fase 3) ===' );
+      console.log( '=== [SISTEMA] INICIANDO INJEÇÃO SOTA (Fase 3) ===' );
 
     await seedScenarios( prisma );
     await seedContent( prisma );
 
-    console.log( '=== [VITORIA] BANCO DE DADOS SOTA POPULADO ===' );
+      console.log( '=== [VITORIA] BANCO DE DADOS SOTA POPULADO ===' );
 }
 
 main()
@@ -21,3 +22,4 @@ main()
     .finally( async () => {
         await prisma.$disconnect();
     } );
+

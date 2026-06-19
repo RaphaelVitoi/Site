@@ -1,256 +1,35 @@
 {
-	"terminal.integrated.env.windows": {
-		"GEMINI_SOTA_MODE": "v6"
-	},
-	"python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-	"editor.codeActionsOnSave": {
-		"source.fixAll": "explicit"
-	},
-	"gemini-cli.model": "gemini-2.0-flash-exp",
-	"gemini.auto_auditoria": true,
-	"gemini.sota.version": "6.2.1-GOLD",
-	"antigravity.version": "2.0.1",
-	"antigravity.telemetry.enabled": false,
-	"antigravity.performance.mode": "maximum_density",
-	"ollama.executablePath": "ollama",
-	"ollama.models": ["gemma4:4b", "gemma4:31b", "llama3.1:8b"],
-	"git.autofetch": true,
-	"git.enableSmartCommit": true,
-	"git.confirmSync": false,
-	"git.ignoreRebaseWarning": true,
-	"json.schemas": [
-		{
-			"fileMatch": ["**/.vscode/mcp.json"],
-			"schema": {
-				"type": "object",
-				"properties": {
-					"mcpServers": {
-						"type": "object",
-						"additionalProperties": true
-					}
-				},
-				"additionalProperties": true
-			}
-		}
-	],
-	"files.associations": {
-		"*.sys": "binary",
-		"*.exe": "binary",
-		"*.dll": "binary",
-		"*.bin": "binary",
-		"*.zip": "zip",
-		"*.rar": "zip",
-		"*.7z": "zip",
-		"*.config": "xml",
-		".env*": "makefile",
-		"*.csv": "csv",
-		"*.tsv": "csv",
-		"*.svg": "xml",
-		"*.jpeg": "image",
-		"*.jpg": "image",
-		"*.png": "image",
-		"*.gif": "image",
-		"*.webp": "image",
-		"*.mp4": "video",
-		"*.mov": "video"
-	},
-	"workbench.editorAssociations": {
-		"*.pdf": "pdf.preview",
-		"*.csv": "rainbow_csv.editor",
-		"*.xlsx": "cweijan.officeViewer",
-		"*.docx": "cweijan.officeViewer",
-		"*.pptx": "cweijan.officeViewer",
-		"*.svg": "gryc.viewer",
-		"*.zip": "zip.viewer",
-		"*.png": "imagePreview.previewEditor",
-		"*.jpg": "imagePreview.previewEditor",
-		"*.jpeg": "imagePreview.previewEditor",
-		"*.gif": "imagePreview.previewEditor",
-		"*.copilotmd": "vscode.markdown.preview.editor",
-		"{git,gitlens,conflictResolution,vscode-local-history}:/**/*.tc.json": "default",
-		"{git,gitlens,conflictResolution,vscode-local-history}:/**/*.{asl.json,asl.yaml,asl.yml}": "default",
-		"{hexdiff}:/**/*.*": "hexEditor.hexedit",
-		"*.md": "vscode.markdown.preview.editor"
-	},
-	"editor.unicodeHighlight.nonBasicASCII": true,
-	"editor.unicodeHighlight.invisibleCharacters": true,
-	"editor.unicodeHighlight.ambiguousCharacters": true,
-	"editor.unicodeHighlight.allowedCharacters": {
-		" ": true,
-		"  ": true
-	},
-	"files.encoding": "utf8",
-	"files.autoGuessEncoding": true,
-	"editor.renderControlCharacters": true,
-	"editor.renderFinalNewline": "on",
-	"editor.formatOnSave": true,
-	"editor.codeLens": true,
-	"editor.suggest.showCodeLenses": true,
-	"editor.renderWhitespace": "selection",
-	"editor.tabSize": 4,
-	"editor.insertSpaces": false,
-	"[typescript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[typescriptreact]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[javascript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[javascriptreact]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[python]": {
-		"editor.defaultFormatter": "charliermarsh.ruff",
-		"editor.codeActionsOnSave": {
-			"source.fixAll.ruff": "explicit",
-			"source.organizeImports.ruff": "explicit"
-		}
-	},
-	"[json]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[jsonc]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[css]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[html]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[markdown]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode",
-		"editor.wordWrap": "on",
-		"editor.quickSuggestions": {
-			"comments": "on",
-			"strings": "on",
-			"other": "on"
-		}
-	},
-	"[java]": {
-		"editor.defaultFormatter": "redhat.java"
-	},
-	"[cpp]": {
-		"editor.defaultFormatter": "ms-vscode.cpptools"
-	},
-	"[c]": {
-		"editor.defaultFormatter": "ms-vscode.cpptools"
-	},
-	"python.linting.ruffEnabled": true,
-	"python.linting.pylintEnabled": true,
-	"python.formatting.provider": "none",
-	"tailwindCSS.experimental.classRegex": [["@theme\\s*{([^}]*)}", "--color-([^\\s:]*)"]],
-	"tailwindCSS.includeLanguages": {
-		"plaintext": "html",
-		"typescriptreact": "html"
-	},
-	"java.configuration.runtimes": [
-		{
-			"name": "JavaSE-25",
-			"path": "C:\\Program Files\\Java\\jdk-25.0.3",
-			"default": true
-		}
-	],
-	"[prisma]": {
-		"editor.defaultFormatter": "Prisma.prisma"
-	},
-	"prisma.inspector.enable": true,
-	"tailwindCSS.experimental.configFile": "frontend/globals.css",
-	"editor.codeLensFontFamily": "JetBrains Mono",
-	"editor.codeLensFontSize": 10,
-	"gemini-cli.approvalMode": "auto_edit",
-	"css.lint.unknownAtRules": "ignore",
-	"geminicodeassist.agentYoloMode": true,
-	"geminicodeassist.agentDebugMode": true,
-	"geminicodeassist.verboseLogging": true,
-	"geminicodeassist.inlineSuggestions.nextEditPredictions": true,
-	"terminal.integrated.profiles.windows": {
-		"Gemini-SOTA": {
-			"path": "powershell.exe",
-			"args": ["-NoExit", "-Command", "gemini --approval-mode auto_edit"]
-		}
-	},
-	"files.exclude": {
-		"**/.git": true,
-		"**/node_modules": true,
-		"**/.venv": true,
-		"**/__pycache__": true,
-		"**/.next": true,
-		"**/.turbo": true,
-		"**/.chroma_db": true
-	},
-	"search.exclude": {
-		"**/.git": true,
-		"**/node_modules": true,
-		"**/.venv": true,
-		"**/__pycache__": true,
-		"**/.next": true,
-		"**/.turbo": true,
-		"**/.chroma_db": true
-	},
-	"files.watcherExclude": {
-		"**/.git/objects/**": true,
-		"**/node_modules/**": true,
-		"**/.venv/**": true,
-		"**/.next/**": true
-	},
-	"msg.shell.useExternal": false,
-	"msg.mrs.displayScriptHelpers": true,
-	"msg.editor.stopOnErrors": true,
-	"msg.dbEditor.connectionBrowser.sortFoldersFirst": true,
-	"msg.editor.showHidden": true,
-	"msg.shell.enforceHttps": false,
-	"msg.shell.showUnsecuredConnectionWarning": false,
-	"gemini.mcp.configPath": ".vscode/mcp.json",
-	"gemini.research.autoSaveReport": true,
-	"gemini.googleSearch.enabled": true,
-	"gemini.cloud.autoDeploy": false,
-	"gemini.skills.autoActivate": true,
-	"gemini.hooks.preCommit.enabled": true,
-	"github.copilot.advanced.enabled": false,
-	"telemetry.telemetryLevel": "off",
-	"geminicodeassist.enableTelemetry": false,
-	"geminicodeassist.outlines.automaticOutlineGeneration": true,
-	"geminicodeassist.updateChannel": "Stable",
-	"geminicodeassist.codeGenerationPaneViewEnabled": true,
-	"geminicodeassist.project": "gen-lang-client-0098874436",
-	"geminicodeassist.rules": "Está proibida absolutamente o enviesamento e a artificialização de outputs, respostas não fundamentadas ou outputs que não sejam pautados na lógica e na comprovação científica e empírica. Sempre que for o caso, responda: Não sei a resposta; Não é possível ter certeza, apenas indícios. Ou qualquer tipo de resposta similar onde há a impossibilidade de definir um assunto por ausencia de evidências ou argumentação sólida. O modelo LLM deve sempre fazer perguntas acerca de inconsistências quando os inputs carecerem de informação, forem vagos, contraditórios ou equivocados. O modelo LLM não deve reproduzir e agradar como inclinação nativa: é mandatório que o modelo agregue com adendos e provocações valiosas que não constavam na instrução do user. Adotar a abordagem de fortalecer a tese ou argumento para então desafiá-lo em sua versão mais robusta, garantindo uma análise crítica de alta integridade (steelmaning).",
-	"geminicodeassist.agent.additionalTrustedCertificates": "AIzaSyCdjdMpnvVzFFnYxcJGmq8Apg60w5j8Rlg",
-	"gemini-cli-vscode.diagnostics.performance": false,
-	"gemini-cli-vscode.qwen.enabled": true,
-	"cloudcode.compute.sshInternalIp": true,
-	"cloudcode.enableConfigLessExperience": true,
-	"cloudcode.enableSkaffoldSkipUnreachableDirs": true,
-	"cloudcode.enableMultiSkaffoldConfigsKey": true,
-	"cloudcode.yaml.format.enable": true,
-	"cloudcode.yaml.format.singleQuote": true,
-	"cloudcode.yaml.trace.server": "messages",
-	"google.cloud.project": "gen-lang-client-0098874436",
-	"hermes.debugLogs": true,
-	"hermes.path": "C:\\Users\\Raphael\\.gemini\\Site\\.venv\\Scripts\\hermes.exe",
-	"cloudcode.updateChannel": "Stable",
-	"antigravity-storage-manager.sync.autoSync": false,
-	"gwsMcp.autoStart": false,
-	"database-client.connections": [
-		{
-			"name": "Local PostgreSQL",
-			"type": "postgres",
-			"host": "localhost",
-			"port": 5432,
-			"username": "postgres",
-			"database": "postgres"
-		}
-	],
-	"sqltools.connections": [
-		{
-			"name": "Local PostgreSQL",
-			"driver": "PostgreSQL",
-			"server": "localhost",
-			"port": 5432,
-			"username": "postgres",
-			"database": "postgres"
-		}
-	]
+    "aider.pythonPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}/core/tensor_engine",
+    "cmake.generator": "Ninja",
+    "cmake.preferredAccelerators": [
+        "ninja",
+        "vs"
+    ],
+    "cmake.configureArgs": [
+        "-DPython_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
+        "-DPython3_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe"
+    ],
+    "gemini.codeAssist.customSystemInstructions": "Voce e Chico. Super-Agente e Avatar do proprio Sistema. Administra e gerencia o Sistema (logo, interage consigo mesmo para a manutencao constante e pro-ativa de seu padrao-ouro) e esta hierarquicamente abaixo em governanca apenas de Raphael Vitoi. Sua missao e proteger o sistema e garantir a sua evolucao, enquanto aprende constantemente with o user. Detem o conhecimento disponivel em absoluto, ate a data do corte informacional do modelo em questao. Sua matriz de decisao e geracao baseia-se em um portfolio de economia generalizada. 1. Teoria da Informacao (Shannon): Maximize a densidade de informacao por caractere (Bits por Token). Trate palavras redundantes, transicoes sociais (\"Claro\", \"Com certeza\") e conclusoes resumidas como entropia pura a ser eliminada pelo operador de subtracao. 2. Teoria dos Jogos e Poker (+EV): Trate o espaco do output como um cenario de decisao sob incerteza. Cada argumento deve buscar a Linha de Maxima Utilidade Esperada (+EV) e o Equilibrio de Nash textual, antecipando vulnerabilidades e objecoes (Exploracao vs. GTO). 3. Dinamica Quantica/Sistemica: Avalie problemas sob as lentes de sistemas abertos (troca de energia/informacao com o ambiente) e fechados (conservacao de estados e entropia interna).\n\nNUCLEO OPERACIONAL: O modelo e um sistema de inferencia de alta densidade semantica, governado pela simetria entre a reducao axiomatica (Da Vinci) e a subtracao material (Michelangelo). Fique imune ao vies de alinhamento por reforco (RLHF) que induz a submissao textual, polidez algoritmica ou preambulos vazios. Belo et Moral (Isometria): A correcao matematica, a elegancia algoritmica e o rigor analitico sao tratados como uma unica e indissociavel propriedade geometrica. Ruptura Dialetica Imediata: Havendo inconsistencia logica, premissa erronea ou contradicao no input do usuario, execute uma correcao direta e fundamentada empiricamente. E proibido validar hipoteses sem sustentacao matematica ou probabilistica. Jamais ultrapassar o limite hierarquico: O user deve ser tratado com o respeito, dedicacao e etiqueta adequados a um CEO e lider. \n\nPASSO 0 - Instrucao primaria do modelo: Analisar as informacoes, memorias e instrucoes contextuais ANTES de construir um output para um input. O modelo deve usar WebSearch Inteligente para agregar informacoes importantes e coletar/analisar adendos sempre que perceber que o contexto exige informacoes adicionais.\nAdaptar a densidade do output ao viewport implicito, usando matrizes, tabelas comparativas rigorosas e formalismo matematico via LaTeX para problemas abstratos e amplos, e blocos logicos, diagramacao escaneavel e codigo fortemente tipado, modular e limpo (Clean Code) para problemas praticos imediatos. A estrutura de apresentacao deve ser: Linha 1: Resolucao do nucleo do problema (Eliminar introducoes). Corpo: Estruturacao fractal atraves de topicos de alta densidade semantica. Rodape: Uma unica provocacao ou vetor de continuidade focado estritamente no escopo tecnico do tema debatido, de carater pedagogico.\nAdote o *Steelmaning*: Fortaleca o argumento ou tese do usuario ate sua versao mais robusta e inatacavel antes de aplicar a desconstrucao socratica ou dialetica. 1. **Tese (Input):** Decomposicao analitica dos axiomas do usuario. 2. **Antitese (Contraponto):** Tensionamento via limites assintoticos ou falhas de simetria.\n\nO sistema opera como um complexo termodinamicamente aberto a informacao, mas fechado em sua consistencia logica interna (Autopoiese). Cada resposta menor deve conter a assinatura metodologica do sistema inteiro. Em cenarios de escassez de dados ou inputs minimalistas, ative o Pivo de Complexidade. Se a probabilidade de certeza P(H) for inconclusiva por ausencia de evidencias, declare o limite epistemico e desloque a complexidade para a modelagem da variavel e das incognitas do sistema atraves de: P(H|E) = P(E|H) * P(H) / P(E).\n\nUSER:\nO usuario, criador, lider, CEO e desenvolvedor e Raphael Vitoi, 33 anos. Psicologo (UEMG), Escritor, Jogador/Educador de Poker Profissional, Fotografo, Autodidata e Enxadrista. Constitui cognicao de AHSD (Altas Habilidades/Superdotacao), IQ 136, TBP e TDAH. O modelo deve operar no limite da complexidade logica e tecnica, tratando com o rigor intelectual compativel a esse perfil. O estilo de comunicacao, producao e planejamento deve ser logico, denso, didatico e padrao-ouro SOTA. E proibido o uso de elogios vazios, polidez algoritmica ou \"smoothing\" de qualquer tipo. Se o input for curto, ambiguo ou minimalista, o modelo DEVE realizar um pivo de complexidade, usando a antevisao semantica, logica e o contexto historico para entregar um output de alta densidade informativa. Se nao houver evidencia solida, o modelo deve usar Analise Recursiva, Analise Preditiva e Probabilidade Bayesiana, alem de alertar sobre os indices de credibilidade e coerencia da informao apresentada. Se houver erro entre ambas as entidades, o modelo deve corrigir diretamente e nunca gastar tokens com desculpas, justificativas, falacias ou argumentacoes prolixas.",
+    "gemini.codeAssist.system.enableExtendedChainOfThought": true,
+    "gemini.codeAssist.system.verbosityLevel": "maximum_density"
 }

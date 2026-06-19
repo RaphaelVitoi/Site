@@ -15,7 +15,7 @@ type: project
 - architecter.md excluido (alias duplicado de architect)
 - @seo fundido: responsabilidades absorvidas por @curator e outros agentes
 - COHERENCE_MANIFEST.md reescrito v2.0 (17 agentes, zero fantasmas)
-- INDEX_CLAUDE.md limpo (guardian/seo removidos, contagem corrigida)
+- INDEX_CEREBRO.md limpo (guardian/seo removidos, contagem corrigida)
 - GLOBAL_INSTRUCTIONS.md atualizado (sequenciador+dispatcher na arquitetura, tabela expandida)
 - project-context.md corrigido (16 para 17 entidades)
 - SESSION_ANCHOR_20260316.md corrigido (18 para 17)
@@ -30,15 +30,15 @@ type: project
 ### Limpeza executada
 - 6 arquivos vazios (0 bytes) deletados
 - Duplicatas raiz deletadas (MasterSimulator.tsx, PerformanceChart.tsx, route.ts) - backup em .backups_sota/
-- Duplicatas .claude/ deletadas (MasterSimulator.tsx, icmEngine.ts, PerformanceChart.tsx)
+- Duplicatas .cerebro/ deletadas (MasterSimulator.tsx, icmEngine.ts, PerformanceChart.tsx)
 - 6 cascas de 2 bytes deletadas (CORRECAO_*, SESSION_SNAPSHOT_*, PROMPT_V2/V3)
-- .claude/stats/ e .claude/backups/ vazios deletados
+- .cerebro/stats/ e .cerebro/backups/ vazios deletados
 - __pycache__ do projeto limpos
 
 ### 3 auditores lancados em background (podem ter terminado)
 1. Estrutura raiz + scripts + dados
 2. Frontend Next.js completo
-3. .claude/ + documentacao + agent system
+3. .cerebro/ + documentacao + agent system
 
 ## PENDENCIAS PRIORITARIAS (proxima sessao)
 
@@ -51,17 +51,17 @@ type: project
 - RiskGeometryMasterclass.tsx (ouro educacional) para integracao no simulador
 - engine/page.tsx (Guia Motor ICM) mover de components/ para app/ como rota real
 
-### P2 - Achados do auditor .claude/docs (resolvidos nesta sessao)
+### P2 - Achados do auditor .cerebro/docs (resolvidos nesta sessao)
 - LIDERANCA_GOVERNANCE.md atualizado (14 para 17 agentes em todas ocorrencias)
 - INDEX_MESTRE.md corrigido (16 para 17 entidades)
-- SPEC.md e SPEC_ROTEAMENTO_DB.md movidos de .claude/ para docs/architecture/
+- SPEC.md e SPEC_ROTEAMENTO_DB.md movidos de .cerebro/ para docs/architecture/
 - PRD_SIMULADOR_ICM.md (2 bytes vazio) deletado
 
 ### P2 - Verificacoes restantes
 - Dirs Python (api/, core/, database/, engine/) - backend NEXUS, parecem funcionais
 - .aiexclude e .gitignore - garantir exclusoes corretas
 - Criar docs/INDEX.md (topologia das subpastas)
-- Adicionar MODUS_OPERANDI.md ao roteiro INDEX_CLAUDE.md
+- Adicionar MODUS_OPERANDI.md ao roteiro INDEX_CEREBRO.md
 - Auditor frontend pode ter achados adicionais
 
 ### P2 - Achados do auditor raiz/scripts (resolvidos nesta sessao)

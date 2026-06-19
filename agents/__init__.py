@@ -1,10 +1,10 @@
 """
-SOTA AGENTS -- Lógica de Agentes e Orquestração de Tarefas.
+SOTA AGENTS -- Logica de Agentes e Orquestracao de Tarefas.
 """
 
+from .autonomy import apply_god_mode
 from .dispatcher import _parse_dispatcher_subtasks_strict
 from .execution import execute_task_workflow
-from .autonomy import apply_god_mode
 
 __all__ = [
     "_parse_dispatcher_subtasks_strict",

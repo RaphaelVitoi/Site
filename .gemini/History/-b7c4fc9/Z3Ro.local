@@ -1,3 +1,0 @@
-# Configurações do Motor Neural Local (Ollama)
-NEXT_PUBLIC_OLLAMA_URL="http://127.0.0.1:11434"
-NEXT_PUBLIC_OLLAMA_MODEL="gemma"

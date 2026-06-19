@@ -82,7 +82,7 @@ stacks + prizes(FT real) -> BF(perspectiva.ts) -> RP derivado(rpDeriver) -> effe
 - Migration Prisma para TelemetryEvent (schema adicionado mas nao migrado)
 
 ## Arquivos untracked (nao commitados)
-- `.claude/handoff.md` - handoff da sessao Gemini
+- `.cerebro/handoff.md` - handoff da sessao Gemini
 - `scripts/utils/kill_eperm.ps1` - script anti-EPERM
 - `docs/architecture/002-quiz-engine-sota.md` - doc Gemini
 - `frontend/src/app/templo/` - pagina Gemini

@@ -35,11 +35,10 @@ param tags array = [
 
 // App Registration
 resource appRegistration 'Microsoft.Graph/applications@v1.0' = {
-  displayName: appDisplayName
   uniqueName: toLower(replace(appDisplayName, ' ', '-'))
+  displayName: appDisplayName
   signInAudience: signInAudience
   tags: tags
-
   // Application identification
   identifierUris: [
     'api://${appDisplayName}'
@@ -66,11 +65,11 @@ resource appRegistration 'Microsoft.Graph/applications@v1.0' = {
     redirectUris: [
       'http://localhost'
       'myapp://auth'
-      'https://login.microsoftonline.com/common/oauth2/nativeclient'
+      '${environment().authentication.loginEndpoint}common/oauth2/nativeclient'
     ]
   }
 
-  // API definition (expose an API) 
+  // API definition (expose an API)
   api: {
     // Version of the access token affects the values present in the token claims
     requestedAccessTokenVersion: 2
@@ -183,11 +182,11 @@ resource appRegistration 'Microsoft.Graph/applications@v1.0' = {
 
 // Service Principal (Enterprise Application)
 resource servicePrincipal 'Microsoft.Graph/servicePrincipals@v1.0' = {
-  appId: appRegistration.appId
-  displayName: appDisplayName
   tags: [
     'WindowsAzureActiveDirectoryIntegratedApp'
   ]
+  appId: appRegistration.appId
+  displayName: appDisplayName
   appRoleAssignmentRequired: false
   preferredSingleSignOnMode: 'oidc'
 }

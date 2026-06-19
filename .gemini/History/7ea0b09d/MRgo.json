@@ -1,9 +1,0 @@
-{
-    "geminicodeassist.agentDebugMode": true,
-    "geminicodeassist.agentYoloMode": true,
-    "geminicodeassist.codeGenerationPaneViewEnabled": true,
-    "geminicodeassist.outlines.automaticOutlineGeneration": true,
-    "geminicodeassist.verboseLogging": true,
-    "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
-    "gemini-cli.debug.logging.enabled": true
-}

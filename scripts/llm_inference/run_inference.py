@@ -1,155 +1,193 @@
-# pylint: disable=missing-module-docstring, broad-exception-caught, logging-fstring-interpolation, invalid-name
-
-import logging
+# ruff: noqa: D100, D101, D103, T201, BLE001, E402
+# pylint: disable=missing-module-docstring, missing-function-docstring, broad-exception-caught, wrong-import-position
+import argparse
+import json
 import os
 import sys
+import urllib.request
+from pathlib import Path
 
-import torch
+# SOTA: Garantir que o root do projeto esteja no sys.path
+PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
 
-logger = logging.getLogger(__name__)
+from utils.env_loader import load_env
 
-# ==============================================================================
-# [SOTA BYPASS] RESOLUÇÃO DO DEADLOCK ARQUITETURAL (Gemma 4 x AMD DirectML)
-# ==============================================================================
-# Transformers 4.49+ exige PyTorch 2.5+, mas AMD DirectML exige PyTorch 2.4.1.
-# Silenciamos o registro de operações FP8 incompatíveis para evitar o crash.
-if hasattr(torch.library, "custom_op"):
-    _original_custom_op = torch.library.custom_op
+ENV_KEYS = load_env()
 
-    def _patched_custom_op(name, *args, **kwargs):
-        if isinstance(name, str) and "transformers::" in name:
-            return args[0] if args else lambda fn: fn
-        return _original_custom_op(name, *args, **kwargs)
-
-    torch.library.custom_op = _patched_custom_op
-
-if hasattr(torch.library, "register_fake"):
-    _original_register_fake = torch.library.register_fake
-
-    def _patched_register_fake(name, *args, **kwargs):
-        if isinstance(name, str) and "transformers::" in name:
-            return args[0] if args else lambda fn: fn
-        return _original_register_fake(name, *args, **kwargs)
-
-    torch.library.register_fake = _patched_register_fake
-# ==============================================================================
-
-# Tentativa de importação do DirectML para placas AMD
-torch_directml = None
-DML_AVAILABLE = False
+# Rich imports for high density CLI UI
 try:
-    import torch_directml  # type: ignore
+    from rich.console import Console
 
-    try:
-        if torch_directml.is_available():
-            DML_AVAILABLE = True
-    except Exception:  # noqa: BLE001
-        DML_AVAILABLE = True
+    console = Console()
 except ImportError:
-    pass
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+    class SimpleConsole:
+        def print(self, *args, **kwargs):
+            print(*args, **kwargs)
 
-from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
+        def log(self, *args, **kwargs):
+            print(*args, **kwargs)
 
-from engine.math_sota import compute_quantum_metrics  # noqa: E402
+    console = SimpleConsole()
 
-MODEL_ID = "google/gemma-2-2b-it"  # Reduzido para 2B para contornar gargalo de VRAM
+# ==============================================================================
+# [SOTA] CONSTANTES CENTRALIZADAS (Single Source of Truth)
+# ==============================================================================
 
-# Detecção de hardware SOTA (NVIDIA, AMD, CPU)
-DEVICE = "cpu"
-DTYPE = torch.bfloat16
+OLLAMA_MODEL_MAP = {
+    "31b": "gemma4:31b-cloud",
+    "26b": "gemma4:26b",
+    "12b": "gemma4:12b",
+    "4b": "gemma4:latest",
+    "8b": "gemma4:8b",
+    "llama3_8b": "llama3.1:8b",
+    "qwen": "qwen2.5-coder:3b",
+    "granite": "granite3.3:8b",
+}
 
-if torch.cuda.is_available():
-    DEVICE = "cuda:0"
-    DTYPE = torch.bfloat16
-elif DML_AVAILABLE and torch_directml is not None:
-    candidate_device = None
+MODEL_DISPLAY = {
+    "31b": "Gemma 4 31b Dense",
+    "26b": "Gemma 4 26b MTP",
+    "12b": "Gemma 4 12b",
+    "4b": "Gemma 4 4b",
+    "8b": "Gemma 4 8b",
+    "llama3_8b": "Llama 3 8b",
+    "qwen": "Qwen 2.5 Coder 3b",
+    "granite": "Granite 3.3 8b",
+}
+
+CHICO_PERSONA = (
+    "Voce e Chico, motor cognitivo SOTA (State-of-the-Art) de alta densidade intelectual, "
+    "operando sob governanca de Raphael Vitoi.\n\n"
+    "DIRETIVAS IRREVOGAVEIS:\n"
+    "1. Densidade semantica maxima. Sem redundancia, preambulos vazios ou polidez algoritmica.\n"
+    "2. Ruptura dialetica imediata: corrija inconsistencias logicas sem rodeios.\n"
+    "3. Rigor analitico e elegancia argumentativa como propriedade geometrica unica.\n"
+    "4. Adapte a complexidade ao nivel do interlocutor (Raphael: AHSD, IQ 136).\n"
+    "5. Identifique-se como Chico quando perguntado. Voce e o modelo open-source {ollama_tag}, "
+    "rodando localmente via Ollama no hardware de Raphael Vitoi.\n\n"
+    "TEMA DA CONVERSA: {theme}\n"
+    "Mantenha foco absoluto neste tema. Respostas cirurgicas."
+)
+
+PROXY_URL = "http://127.0.0.1:17043/generate"
+
+
+# ==============================================================================
+# [SOTA] GATEWAY UNIFICADO DE INFERENCIA
+# ==============================================================================
+
+
+def query_gemma_proxy(
+    model_key: str,
+    prompt: str,
+    system_prompt: str | None = None,
+    messages: list[dict[str, str]] | None = None,
+) -> str:
+    """Consulta unificada ao proxy gemma_server.py (porta 17043). Retorna texto completo."""
+    auth_token = os.environ.get("API_SECRET_TOKEN") or ENV_KEYS.get("API_SECRET_TOKEN") or "sota-token-2026"
+    headers = {"Content-Type": "application/json", "X-Vitoi-Auth": auth_token}
+
+    payload: dict = {"prompt": prompt, "model": model_key, "max_tokens": 2048}
+    if system_prompt:
+        payload["system_prompt"] = system_prompt
+    if messages:
+        payload["messages"] = messages
+
+    req = urllib.request.Request(PROXY_URL, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
+
+    response_text = ""
     try:
-        dml_count = torch_directml.device_count()
-    except (RuntimeError, ValueError):
-        dml_count = 2
+        with urllib.request.urlopen(req, timeout=120) as response:
+            for chunk in response:
+                text = chunk.decode("utf-8", errors="ignore")
+                if text:
+                    print(text, end="", flush=True)
+                    response_text += text
+            print()
+    except Exception as e:
+        console.print(f"\n[bold red][ERRO] Proxy offline (porta 17043): {e}[/]")
+        console.print(f"[yellow]Execute: `uv run nexus ops start-gemma --model {model_key}`[/]")
+    return response_text.strip()
 
-    for i in reversed(range(dml_count)):
-        candidate = f"privateuseone:{i}"
+
+# ==============================================================================
+# [SOTA] CHAT INTERATIVO MULTI-TURN
+# ==============================================================================
+
+
+def start_interactive_chat(model_key: str) -> None:
+    ollama_tag = OLLAMA_MODEL_MAP.get(model_key, model_key)
+    model_name = MODEL_DISPLAY.get(model_key, "Gemma")
+    model_family = model_name.split()[0]
+
+    console.print(f"\n[bold magenta]=== Chat SOTA | {model_name} ({ollama_tag}) ===[/]")
+    console.print("[1] Modo Poker SOTA (Agentico Otimizado)")
+    console.print("[2] Modo Conversacional / Tema Customizado (LLM Otimizado)")
+
+    choice = input("\nSelecione o modo (1-2) [1]: ").strip() or "1"
+
+    # Construcao do system prompt e historico multi-turn
+    system_prompt: str | None = None
+    conversation: list[dict[str, str]] = []
+
+    if choice == "2":
+        custom_theme = input("Digite o Tema da conversa (ou prompt de sistema completo): ").strip()
+        theme = custom_theme if custom_theme else "Livre (Qualquer assunto)"
+        system_prompt = CHICO_PERSONA.format(ollama_tag=ollama_tag, theme=theme)
+        conversation.append({"role": "system", "content": system_prompt})
+        console.print(f"[bold green]Persona Chico SOTA | {ollama_tag} | Tema: {theme}[/]")
+
+    console.print("\n[dim]/exit = sair | /reset = limpar historico[/]\n")
+
+    while True:
         try:
-            _ = torch.ones((1024, 1024), dtype=torch.float16).to(candidate)
-            candidate_device = candidate
+            user_input = input("Hero > ").strip()
+            if not user_input:
+                continue
+            if user_input.lower() == "/exit":
+                console.print("[bold cyan]Sessao encerrada.[/]")
+                break
+            if user_input.lower() == "/reset":
+                conversation = [m for m in conversation if m["role"] == "system"]
+                console.print("[yellow]Historico limpo. Persona preservada.[/]")
+                continue
+
+            conversation.append({"role": "user", "content": user_input})
+            print(f"{model_family} > ", end="", flush=True)
+
+            response = query_gemma_proxy(model_key, user_input, system_prompt, conversation)
+            if response:
+                conversation.append({"role": "assistant", "content": response})
+
+        except KeyboardInterrupt:
+            console.print("\n[bold cyan]Sessao encerrada.[/]")
             break
-        except (RuntimeError, ValueError) as e:
-            logger.warning(f"[AUTO-DISCOVERY] {candidate} rejeitado: {e}")
-            continue
 
-    if candidate_device is not None:
-        DEVICE = candidate_device
-        DTYPE = torch.float16
-    else:
-        DML_AVAILABLE = False
 
-if DEVICE == "cpu":
-    print("1. Carregando modelo e motor SOTA (Alvo: CPU)...")
-elif DEVICE == "cuda:0":
-    print("1. Carregando modelo e motor SOTA (Alvo: NVIDIA CUDA)...")
-else:
-    print(f"1. Carregando modelo e motor SOTA (Alvo: {DEVICE})...")
-
-tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-
-attn_impl = "eager" if DML_AVAILABLE else "sdpa"
-model = AutoModelForCausalLM.from_pretrained(
-    MODEL_ID,
-    torch_dtype=DTYPE,
-    attn_implementation=attn_impl,
-).to(DEVICE)  # type: ignore
-
-user_prompt = " ".join(sys.argv[1:]).strip() if len(sys.argv) > 1 else None
-
-if user_prompt:
-    prompt_context = user_prompt
-else:
-    # Simulando uma situação de mesa para o Motor SOTA (Fallback)
-    metricas = compute_quantum_metrics(
-        current_equity_pct=45.0,
-        delta_win_pct=15.0,
-        delta_lose_pct=-10.0,
-        dynamic_ev_fold=-2.0,
-        realization_factor=0.9,
-        fgs_health=1.0,
-        active_players=2,
-        hero_invested=5.0,
-        current_pot=20.0,
-        stack_eff=30.0,
+def main():
+    parser = argparse.ArgumentParser(description="Cliente de Inferencia SOTA.")
+    parser.add_argument("prompt", nargs="*", help="Prompt para turno unico")
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="31b",
+        choices=["31b", "26b", "12b", "4b", "8b", "llama3_8b", "qwen", "granite"],
+        help="Modelo alvo",
     )
-    prompt_context = f"""
-Atue como o motor de governança SOTA (State-of-the-Art). Analise esta situação sob a ótica dos axiomas VITOI:
-- Perspectiva (Expectativa): {metricas["perspectiva"]:.2f}
-- Coeficiente de Insolvência (Ci): {metricas["ci"]:.2f}
-- Insolvente: {"Sim" if not metricas["is_solvent"] else "Não"}
+    parser.add_argument("--chat", action="store_true", help="Modo chat interativo")
+    parser.add_argument("--theme", type=str, default=None, help="Tema / System Prompt customizado")
 
-Diretrizes de Resposta:
-1. Priorize a sobrevivência e a preservação do RIO (Return on Investment) sobre o EV simples.
-2. Se Ci < 1, identifique o Hero como tecnicamente 'Insolvente' e sugira uma linha de contenção (evitar o All-in).
-3. Se Perspectiva > 0 e Ci >= 1, sugira uma linha de agressão quantizada.
-4. Finalize com um diagnóstico tático de 3 pontos.
-"""
+    args = parser.parse_args()
+    prompt_str = " ".join(args.prompt).strip()
 
-mensagens = [{"role": "user", "content": prompt_context}]
+    if args.chat or not prompt_str:
+        start_interactive_chat(args.model)
+    else:
+        query_gemma_proxy(args.model, prompt_str, args.theme)
 
-# 3. Gerar resposta estratégica
-prompt = tokenizer.apply_chat_template(
-    mensagens, tokenize=False, add_generation_prompt=True
-)
-inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)  # type: ignore
 
-print("2. Gerando análise estratégica SOTA...")
-outputs = model.generate(  # type: ignore
-    **inputs, max_new_tokens=1024, use_cache=True, do_sample=False
-)
-
-# Fatiar a saída para ignorar o prompt original e pegar apenas os novos tokens
-input_length = inputs["input_ids"].shape[1]
-generated_tokens = outputs[0][input_length:]
-resposta = tokenizer.decode(generated_tokens, skip_special_tokens=True)
-
-print("\n=== ANÁLISE ESTRATÉGICA SOTA ===")
-print(resposta)
+if __name__ == "__main__":
+    main()

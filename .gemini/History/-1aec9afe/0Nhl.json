@@ -1,9 +1,0 @@
-{
-  "@maverick": ["pensar", "filosofia", "conceito", "viso"],
-  "@planner": ["arquitetar", "estrutura", "diagrama"],
-  "@implementor": ["codigo", "programar", "dev", "desenvolver", "forjar"],
-  "@validador": ["equidade", "payoff", "calculo", "solver"],
-  "@curator": ["design", "visceral", "beleza", "cyber"],
-  "@verifier": ["quebrou", "nao funciona", "corrigir"],
-  "@skillmaster": ["cron", "lixo", "purge"]
-}

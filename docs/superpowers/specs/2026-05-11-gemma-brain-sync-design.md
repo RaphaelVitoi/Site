@@ -40,8 +40,8 @@ The goal is to transform the Gemma 4 Oracle into a context-aware strategic partn
 ## 3. UI/UX: The "Oracle SOTA" Interface
 
 ### 3.1 Visual Elements
-- **Sync Badge:** A dynamic indicator next to the "Consult" button: `[● SYNC: OK]`.
-- **Telemetry Card:** The injected snapshot will be displayed in the chat history as a **"Telemetria de Oráculo"** card (Mono font, Metallic glows).
+- **Sync Badge:** A dynamic indicator next to the "Consult" button: `[ SYNC: OK]`.
+- **Telemetry Card:** The injected snapshot will be displayed in the chat history as a **"Telemetria de Oraculo"** card (Mono font, Metallic glows).
 - **Thinking Process:** A vector-analysis animation (SOTA Gold style) during inference.
 
 ### 3.2 Information Hierarchy

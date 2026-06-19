@@ -18,7 +18,7 @@ async def call_perplexity_search(
     session: aiohttp.ClientSession,
     api_key: str,
     query: str,
-    **kwargs,  # pylint: disable=unused-argument
+    **_kwargs,  # pylint: disable=unused-argument
 ) -> str | None:
     """Executa uma busca na web usando a API da Perplexity e formata os resultados.
     Usa o modelo sonar (tier gratuito) por padrao. Configuravel via PERPLEXITY_MODEL."""
@@ -34,10 +34,7 @@ async def call_perplexity_search(
         "messages": [
             {
                 "role": "system",
-                "content": (
-                    "Voce e um assistente de pesquisa preciso e conciso "
-                    "que responde em Pure ASCII."
-                ),
+                "content": ("Voce e um assistente de pesquisa preciso e conciso que responde em Pure ASCII."),
             },
             {"role": "user", "content": query},
         ],
@@ -60,11 +57,8 @@ async def call_perplexity_search(
                 return f"== CONTEXTO DA WEB (PERPLEXITY API) ==\n{answer}"
 
         return await asyncio.wait_for(_make_request(), timeout=50.0)
-    except asyncio.TimeoutError:
-        logger.warning(
-            "Timeout SOTA: Perplexity API excedeu o tempo limite absoluto (50s) "
-            "e a task foi abortada."
-        )
+    except TimeoutError:
+        logger.warning("Timeout SOTA: Perplexity API excedeu o tempo limite absoluto (50s) e a task foi abortada.")
         return None
     except Exception as e:  # pylint: disable=broad-exception-caught # noqa: BLE001
         logger.warning("Falha na busca web (Perplexity): %s", e)
@@ -76,7 +70,7 @@ async def call_tavily_search(
     api_key: str,
     query: str,
     max_results: int = 3,
-    **kwargs,  # pylint: disable=unused-argument
+    **_kwargs,  # pylint: disable=unused-argument
 ) -> str | None:
     """Executa uma busca na web usando a API da Tavily e formata os resultados para o prompt."""
     url = "https://api.tavily.com/search"
@@ -100,9 +94,7 @@ async def call_tavily_search(
                 response.raise_for_status()
                 result = await response.json()
 
-                if not result or (
-                    not result.get("results") and not result.get("answer")
-                ):
+                if not result or (not result.get("results") and not result.get("answer")):
                     return None
 
                 answer = result.get("answer", "")
@@ -114,19 +106,15 @@ async def call_tavily_search(
                     for res in result["results"]:
                         title = enforce_pure_ascii(res.get("title", ""))
                         content = enforce_pure_ascii(res.get("content", ""))
-                        formatted_results.append(
-                            f"Fonte: {res['url']} (Titulo: {title})\nConteudo: {content}"
-                        )
+                        formatted_results.append(f"Fonte: {res['url']} (Titulo: {title})\nConteudo: {content}")
 
                 answer_prefix = f"Resposta Direta: {answer}\n\n" if answer else ""
                 formatted_body = "\n\n---\n\n".join(formatted_results)
                 return f"== CONTEXTO DA WEB (TAVILY API) ==\n{answer_prefix}{formatted_body}"
 
         return await asyncio.wait_for(_make_request(), timeout=35.0)
-    except asyncio.TimeoutError:
-        logger.warning(
-            "Timeout SOTA: Tavily API excedeu o tempo limite absoluto (35s) e a task foi abortada."
-        )
+    except TimeoutError:
+        logger.warning("Timeout SOTA: Tavily API excedeu o tempo limite absoluto (35s) e a task foi abortada.")
         return None
     except Exception as e:  # pylint: disable=broad-exception-caught # noqa: BLE001
         logger.warning("Falha na busca web (Tavily): %s", e)

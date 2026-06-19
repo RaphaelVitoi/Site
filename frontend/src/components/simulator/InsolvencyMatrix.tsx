@@ -10,6 +10,17 @@ import {
 	YAxis,
 } from 'recharts';
 
+interface StreetMetric {
+	name: string;
+	PM: number;
+	threshEq: number;
+	loading: boolean;
+}
+
+interface InsolvencyMatrixProps {
+	streetMetrics?: StreetMetric[] | null;
+}
+
 const mockData = [
 	{ street: 'Pre-Flop', pm: 85, threshold: 30 },
 	{ street: 'Flop', pm: 65, threshold: 45 },
@@ -17,11 +28,19 @@ const mockData = [
 	{ street: 'River', pm: 15, threshold: 75 }, // Insolvência! (pm < threshold)
 ];
 
-export function InsolvencyMatrix() {
+export function InsolvencyMatrix({ streetMetrics }: InsolvencyMatrixProps) {
+	const chartData = streetMetrics && streetMetrics.length > 0 && !streetMetrics.some(s => s.loading)
+		? streetMetrics.map((s) => ({
+				street: s.name === 'PRE' ? 'Pre-Flop' : s.name,
+				pm: Number(s.PM.toFixed(1)),
+				threshold: Number(s.threshEq.toFixed(1)),
+		  }))
+		: mockData;
+
 	return (
 		<div className="w-full h-64">
 			<ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-				<AreaChart data={mockData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+				<AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
 					<defs>
 						<linearGradient id="pmGradient" x1="0" y1="0" x2="0" y2="1">
 							<stop offset="5%" stopColor="#10b981" stopOpacity={0.5} />

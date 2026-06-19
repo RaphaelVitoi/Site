@@ -3,10 +3,16 @@
 import logging
 import math
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, ClassVar
 
 from core.schemas import Task
+
+try:
+    import nexus_core_rust
+    RUST_CORE_AVAILABLE = True
+except ImportError:
+    RUST_CORE_AVAILABLE = False
 
 
 class CyclicDependencyError(ValueError):
@@ -33,9 +39,7 @@ class UniversalArbitrator:
     TIME_DECAY_ALPHA: ClassVar[float] = 1.5  # Multiplicador de segundos em espera
     PROPAGATION_GAMMA: ClassVar[float] = 0.8  # Desconto de profundidade topologica
 
-    _dag_cache_map: ClassVar[dict[str, dict[str, Any]]] = {}
-    _dag_cache_hash: ClassVar[int] = 0
-    _dag_cache_time: ClassVar[float] = 0.0
+    _dag_cache: ClassVar[dict[int, tuple[dict[str, dict[str, Any]], float]]] = {}
     CACHE_TTL_SECONDS: ClassVar[float] = 3.0
 
     @classmethod
@@ -72,9 +76,7 @@ class UniversalArbitrator:
                     "[SISTEMA] Entropia Detectada: Ciclo infinito no DAG envolvendo %s",
                     node_id,
                 )
-                raise CyclicDependencyError(
-                    f"Ciclo topologico detectado na tarefa {node_id}"
-                )
+                raise CyclicDependencyError(f"Ciclo topologico detectado na tarefa {node_id}")
 
             recursion_stack.add(node_id)
             node_data = graph[node_id]
@@ -83,9 +85,7 @@ class UniversalArbitrator:
             for child_id in node_data["out_edges"]:
                 child_in_degree = graph[child_id]["in_degree"]
                 child_utility = dfs_utility(child_id)
-                inherited_weight += cls.PROPAGATION_GAMMA * (
-                    child_utility / max(1, child_in_degree)
-                )
+                inherited_weight += cls.PROPAGATION_GAMMA * (child_utility / max(1, child_in_degree))
 
             final_utility = node_data["base_weight"] + inherited_weight
 
@@ -103,9 +103,7 @@ class UniversalArbitrator:
                     data["total_utility"] = -1.0  # Punicao severa para ciclos isolados
 
     @classmethod
-    def build_dependency_map(
-        cls, pending_tasks: list[Task]
-    ) -> dict[str, dict[str, Any]]:
+    def build_dependency_map(cls, pending_tasks: list[Task]) -> dict[str, dict[str, Any]]:
         """
         Constroi o DAG de dependencias em O(V + E) e propaga a Funcao de Utilidade
         do Caminho Critico usando Busca em Profundidade (DFS) reversa com Memoization.
@@ -113,46 +111,45 @@ class UniversalArbitrator:
         if not pending_tasks:
             return {}
 
-        current_hash = hash(tuple(t.id for t in pending_tasks))
+        current_hash = hash(tuple(sorted([t.id for t in pending_tasks])))
         current_time = time.monotonic()
 
-        if (
-            cls._dag_cache_hash == current_hash
-            and (current_time - cls._dag_cache_time) < cls.CACHE_TTL_SECONDS
-        ):
-            return cls._dag_cache_map
+        if current_hash in cls._dag_cache:
+            cache_map, cache_time = cls._dag_cache[current_hash]
+            if (current_time - cache_time) < cls.CACHE_TTL_SECONDS:
+                return cache_map
 
         graph = cls._build_graph(pending_tasks)
         cls._compute_utilities(graph)
 
-        cls._dag_cache_map = graph
-        cls._dag_cache_hash = current_hash
-        cls._dag_cache_time = current_time
+        # Previne vazamento infinito de memoria no dicionario estatico
+        if len(cls._dag_cache) >= 100:
+            cls._dag_cache = {
+                h: (g, t) for h, (g, t) in cls._dag_cache.items() if (current_time - t) < cls.CACHE_TTL_SECONDS
+            }
+
+        cls._dag_cache[current_hash] = (graph, current_time)
 
         return graph
 
     @classmethod
     def _calculate_base_weight(cls, task: Task) -> float:
         """Calcula a variavel isolada do vertice: P(v) + alpha * Delta T(v)"""
-        priority_str = str(
-            task.metadata.get("priority", "medium") if task.metadata else "medium"
-        ).lower()
+        priority_str = str(task.metadata.get("priority", "medium") if task.metadata else "medium").lower()
         base_prio = cls.PRIORITY_SCALARS.get(priority_str, 1000.0)
 
         try:
             created_dt = datetime.fromisoformat(task.timestamp)
             # SOTA: Normalizacao Absoluta para offset-aware, suprimindo o TypeError
             if created_dt.tzinfo is None:
-                created_dt = created_dt.replace(tzinfo=timezone.utc)
-            now = datetime.now(timezone.utc)
+                created_dt = created_dt.replace(tzinfo=UTC)
+            now = datetime.now(UTC)
 
             wait_seconds = max(0, (now - created_dt).total_seconds())
             # SOTA: Crescimento Sublinear (Achatamento Logaritmico)
             # Evita inversao de prioridade: tarefas antigas de baixa utilidade nao
             # suplantarao tarefas criticas apenas por acumularem tempo de espera linear.
-            time_bonus = (
-                math.log1p(wait_seconds) * (base_prio * 0.05) * cls.TIME_DECAY_ALPHA
-            )
+            time_bonus = math.log1p(wait_seconds) * (base_prio * 0.05) * cls.TIME_DECAY_ALPHA
         except Exception:  # pylint: disable=broad-exception-caught
             time_bonus = 0.0
 
@@ -165,6 +162,23 @@ class UniversalArbitrator:
         """
         if not pending_tasks:
             return None
+
+        # SOTA: Aceleracao Speedforce (Rust)
+        if RUST_CORE_AVAILABLE:
+            try:
+                import json
+                tasks_json = json.dumps([t.model_dump() for t in pending_tasks])
+                scalars_json = json.dumps(cls.PRIORITY_SCALARS)
+                result_json = nexus_core_rust.extract_optimal_task_py(
+                    tasks_json,
+                    scalars_json,
+                    cls.TIME_DECAY_ALPHA,
+                    cls.PROPAGATION_GAMMA
+                )
+                if result_json:
+                    return Task(**json.loads(result_json))
+            except Exception as e:
+                logger.warning(f"[SPEEDFORCE] Falha no core Rust, acionando fallback Python: {e}")
 
         try:
             dag_map = cls.build_dependency_map(pending_tasks)
@@ -181,10 +195,7 @@ class UniversalArbitrator:
                 optimal_task = data["task"]
 
         if not optimal_task:
-            logger.warning(
-                "[NEXUS ORCHESTRATOR] Deadlock Operacional: "
-                "Nenhuma tarefa possui in_degree=0."
-            )
+            logger.warning("[NEXUS ORCHESTRATOR] Deadlock Operacional: Nenhuma tarefa possui in_degree=0.")
             return None
 
         return optimal_task
@@ -258,27 +269,17 @@ class UniversalArbitrator:
         mermaid_links: list[str] = []
         task_id_to_node_id: dict[str, str] = {}
         for task in tasks:
-            node_id_mermaid, node_label, status_color = (
-                UniversalArbitrator._get_mermaid_node_details(task)
-            )
+            node_id_mermaid, node_label, status_color = UniversalArbitrator._get_mermaid_node_details(task)
             task_id_to_node_id[task.id] = node_id_mermaid
             mermaid_nodes[node_id_mermaid] = f'{node_id_mermaid}("{node_label}")'
-            mermaid_links.append(
-                f"style {node_id_mermaid} fill:{status_color},stroke:#333,stroke-width:2px"
-            )
+            mermaid_links.append(f"style {node_id_mermaid} fill:{status_color},stroke:#333,stroke-width:2px")
 
         # Criar links de dependencia
         for task_id, data in dag_map.items():
-            dependencies = (
-                data["task"].metadata.get("depends_on", [])
-                if data["task"].metadata
-                else []
-            )
+            dependencies = data["task"].metadata.get("depends_on", []) if data["task"].metadata else []
             for dep_id in dependencies:
                 if dep_id in task_id_to_node_id and task_id in task_id_to_node_id:
-                    mermaid_links.append(
-                        f"{task_id_to_node_id[dep_id]} --> {task_id_to_node_id[task_id]}"
-                    )
+                    mermaid_links.append(f"{task_id_to_node_id[dep_id]} --> {task_id_to_node_id[task_id]}")
 
         graph_definition = "graph TD\n"
         # Add nodes

@@ -19,10 +19,10 @@ type: project
 
 ### Ecossistema NEXUS
 - ✅ task_executor.py restaurado na raiz (versão canônica de scripts/ops/)
-- ✅ .claude/task_executor.py removido (versão corrompida/truncada)
+- ✅ .cerebro/task_executor.py removido (versão corrompida/truncada)
 - ✅ data/intentmap.json corrigido (@dispatcher adicionado, overlap @maverick/@architect resolvido)
-- ✅ .claude/project-context.md seção 6 completada (6 Leis de Engenharia Preditiva)
-- ✅ .claude/COHERENCE_MANIFEST.md consolidado (19 entidades, sem duplicatas)
+- ✅ .cerebro/project-context.md seção 6 completada (6 Leis de Engenharia Preditiva)
+- ✅ .cerebro/COHERENCE_MANIFEST.md consolidado (19 entidades, sem duplicatas)
 
 ### Commits desta sessão
 - `316a41a` fix: SimuladorICM re-export

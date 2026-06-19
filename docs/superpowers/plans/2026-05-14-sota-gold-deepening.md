@@ -1,21 +1,21 @@
-# Padrão Ouro SOTA: Aprofundamento do Frontend Implementation Plan
+# Padrao Ouro SOTA: Aprofundamento do Frontend Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Elevar o ecossistema frontend ao Padrão Ouro SOTA, consolidando segurança de ambiente, unificação de versão e calibração dinâmica da física de decisão.
+**Goal:** Elevar o ecossistema frontend ao Padrao Ouro SOTA, consolidando seguranca de ambiente, unificacao de versao e calibracao dinamica da fisica de decisao.
 
-**Architecture:** Implementação de Resiliência de Ambiente (Safe Mock) para segredos de autenticação, transição para Marginal Zone dinâmica (Axioma Lipe Piv) e modularização da telemetria WASM.
+**Architecture:** Implementacao de Resiliencia de Ambiente (Safe Mock) para segredos de autenticacao, transicao para Marginal Zone dinamica (Axioma Lipe Piv) e modularizacao da telemetria WASM.
 
 **Tech Stack:** Next.js 15, Auth.js v5, TypeScript Estrito, Tailwind CSS 4, Web Workers.
 
 ---
 
-### Task 1: Blindagem de Ambiente e Mock de Segurança (Auth.js)
+### Task 1: Blindagem de Ambiente e Mock de Seguranca (Auth.js)
 
 **Files:**
 - Modify: `frontend/src/auth.ts`
 
-- [ ] **Step 1: Implementar validador de segredos e injeção de Mock**
+- [ ] **Step 1: Implementar validador de segredos e injecao de Mock**
 
 ```typescript
 import prisma from "@/lib/prisma";
@@ -35,7 +35,7 @@ const getAuthSecret = () => {
       return "sota-gold-dev-mock-secret-2026-128bit-alpha-v6";
     }
     throw new Error(
-      "[FATAL] AUTH_SECRET não configurado. Abortando em modo Produção (Insolvência de Ambiente).",
+      "[FATAL] AUTH_SECRET nao configurado. Abortando em modo Producao (Insolvencia de Ambiente).",
     );
   }
   return secret;
@@ -69,26 +69,26 @@ git add frontend/src/auth.ts
 git commit -m "sec: implement sota gold environment shielding for auth"
 ```
 
-### Task 2: Unificação de Versão e Marginal Zone Dinâmica (PerspectivePanel)
+### Task 2: Unificacao de Versao e Marginal Zone Dinamica (PerspectivePanel)
 
 **Files:**
 - Modify: `frontend/src/components/simulator/panels/PerspectivePanel.tsx`
 
-- [ ] **Step 1: Atualizar Identidade Visual e Lógica da Marginal Zone**
+- [ ] **Step 1: Atualizar Identidade Visual e Logica da Marginal Zone**
 
 ```typescript
-// Localizar e substituir a renderização da Zona Marginal
+// Localizar e substituir a renderizacao da Zona Marginal
 {/* ... dentro do return do PerspectivePanel ... */}
 {Math.abs(result.perspectivaPct) <= (10 * (1 - kappa)) && (
   <div className="mt-2 p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-[0.8rem] text-accent-pink-light font-medium leading-relaxed flex flex-col gap-3 shadow-2xl relative overflow-hidden group/marginal">
-    {/* ... manter o conteúdo interno igual, atualizando apenas a lógica de exibição ... */}
+    {/* ... manter o conteudo interno igual, atualizando apenas a logica de exibicao ... */}
   </div>
 )}
 
-// Atualizar o cabeçalho para v4.6 GOLD
+// Atualizar o cabecalho para v4.6 GOLD
 <h3 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.3em] m-0 flex items-center gap-3">
   <div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)]" />
-  Perspectiva Matemática &middot;{" "}
+  Perspectiva Matematica &middot;{" "}
   <span className="text-text-muted">v4.6 GOLD</span>
 </h3>
 ```
@@ -98,10 +98,10 @@ git commit -m "sec: implement sota gold environment shielding for auth"
 ```typescript
 // Atualizar o estado inicial do wasmLogs
 const [wasmLogs] = useState<string[]>([
-  "> [SOTA ENGINE] Inicializando cálculo de cenário: GOLD_STANDARD",
+  "> [SOTA ENGINE] Inicializando calculo de cenario: GOLD_STANDARD",
   "> [SOLVER] Mapeando topologia via WASM FFI (RIO Exponencial)...",
   "> [MATH] Invocando FFI: solve_unified_equation_v4_6(stacks, prizes, kappa)",
-  "> [INFO] Colapso de Edge detectado. Convergência estável.",
+  "> [INFO] Colapso de Edge detectado. Convergencia estavel.",
 ]);
 ```
 
@@ -117,23 +117,23 @@ git add frontend/src/components/simulator/panels/PerspectivePanel.tsx
 git commit -m "feat: upgrade perspective panel to v4.6 gold with dynamic marginal zone"
 ```
 
-### Task 3: Modularização da Telemetria WASM
+### Task 3: Modularizacao da Telemetria WASM
 
 **Files:**
 - Modify: `frontend/src/components/simulator/panels/PerspectivePanel.tsx`
 - Import: `WasmTelemetryWidget` de `./WasmTelemetryWidget`
 
-- [ ] **Step 1: Substituir implementação inline pelo Widget modular**
+- [ ] **Step 1: Substituir implementacao inline pelo Widget modular**
 
 ```typescript
-// Remover a implementação inline de telemetria e substituir por:
+// Remover a implementacao inline de telemetria e substituir por:
 <WasmTelemetryWidget 
   wasmLogs={wasmLogs} 
   resultCi={result.ci} 
 />
 ```
 
-- [ ] **Step 2: Validar imports e renderização**
+- [ ] **Step 2: Validar imports e renderizacao**
 
 Run: `npm run typecheck:audit`
 Expected: PASS

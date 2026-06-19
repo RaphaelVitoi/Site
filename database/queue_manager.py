@@ -1,18 +1,25 @@
 """Modulo de gerenciamento da fila de tarefas SOTA (Queue Manager)."""  # pylint: disable=line-too-long
 
+import asyncio
+import contextlib
 import gc
 import json
 import logging
 import os
+import re
 import sqlite3
-from datetime import datetime, timedelta, timezone
+import uuid
+from collections.abc import Iterable
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any
 
 import aiosqlite
 
 import core.config as _core_config
 from core.schemas import Task
+
+logger = logging.getLogger(__name__)
 
 MEMORY_DB_TARGET = ":memory:"
 
@@ -25,27 +32,24 @@ class QueueManager:
     Controle de Orcamento Holistico e Expurgo Termodinamico de Entropia.
     """
 
-    def __init__(self, queue_path: Optional[str] = None) -> None:
+    def __init__(self, queue_path: str | None = None) -> None:
         self.base_path = Path(__file__).parent.parent.resolve()
+        self._is_initialized = False
+        self._init_lock: asyncio.Lock | None = None
+        self._memory_conn_async = None
         self._resolve_db_path(queue_path)
         self._validate_path_traversal()
-        self._init_db()
 
-    def _resolve_db_path(self, queue_path: Optional[str]) -> None:
+    def _resolve_db_path(self, queue_path: str | None) -> None:
         if queue_path is None:
             env_db = os.environ.get("SQLITE_DB_PATH")
-            self.db_path = (
-                Path(env_db) if env_db else self.base_path / "queue" / "tasks.db"
-            )
+            self.db_path = Path(env_db) if env_db else self.base_path / "queue" / "tasks.db"
             self.db_path = self._ensure_writable_db_path(self.db_path)
             self._is_memory = False
         elif queue_path == MEMORY_DB_TARGET:
-            self.db_path = MEMORY_DB_TARGET
+            _mem_name = f"memdb_{uuid.uuid4().hex}"
+            self.db_path = f"file:{_mem_name}?mode=memory&cache=shared"
             self._is_memory = True
-            self._memory_conn = sqlite3.connect(
-                MEMORY_DB_TARGET, check_same_thread=False
-            )
-            self._memory_conn.row_factory = sqlite3.Row
         else:
             self.db_path = Path(queue_path)
             self.db_path = self._ensure_writable_db_path(self.db_path)
@@ -67,18 +71,12 @@ class QueueManager:
                 try:
                     db_path_resolved.relative_to(base_path)
                 except ValueError as e:
-                    if (
-                        not str(db_path_resolved)
-                        .lower()
-                        .startswith(str(base_path).lower())
-                    ):
-                        logging.critical(
+                    if not str(db_path_resolved).lower().startswith(str(base_path).lower()):
+                        logger.critical(
                             "[SEC] Tentativa de Path Traversal bloqueada: '%s' fora da raiz.",
                             self.db_path,
                         )
-                        raise PermissionError(
-                            "Database path is outside the project root."
-                        ) from e
+                        raise PermissionError("Database path is outside the project root.") from e
 
     def _ensure_writable_db_path(self, desired_path: Path) -> Path:
         """
@@ -99,16 +97,10 @@ class QueueManager:
             try:
                 desired_resolved.relative_to(base_resolved)
             except ValueError:
-                if (
-                    not str(desired_resolved)
-                    .lower()
-                    .startswith(str(base_resolved).lower())
-                ):
-                    fallback = (
-                        self.base_path / ".nexus_runtime" / "queue" / desired_path.name
-                    )
+                if not str(desired_resolved).lower().startswith(str(base_resolved).lower()):
+                    fallback = _core_config.PATH_NEXUS_ZONE / "runtime" / "queue" / desired_path.name
                     fallback.parent.mkdir(parents=True, exist_ok=True)
-                    logging.warning(
+                    logger.warning(
                         "[DB] Caminho padrao resolve fora da raiz. Usando fallback local: %s",
                         fallback,
                     )
@@ -121,41 +113,85 @@ class QueueManager:
             probe.unlink(missing_ok=True)
             return desired_path
         except OSError:
-            fallback = self.base_path / ".nexus_runtime" / "queue" / desired_path.name
+            fallback = _core_config.PATH_NEXUS_ZONE / "runtime" / "queue" / desired_path.name
+
             fallback.parent.mkdir(parents=True, exist_ok=True)
             fallback_probe = fallback.parent / ".write_probe"
             fallback_probe.write_text("ok", encoding="ascii")
             fallback_probe.unlink(missing_ok=True)
-            logging.warning(
+            logger.warning(
                 "[DB] Caminho padrao sem permissao de escrita. Usando fallback local: %s",
                 fallback,
             )
             return fallback
 
-    def _get_conn(self) -> sqlite3.Connection:
-        """Fornece conexao sincrona estritamente para inicializacao de DDL."""
+    @contextlib.asynccontextmanager
+    async def _get_async_db_context(self):
+        """Internal provider de conexoes aiosqlite sem travas DDL."""
         if getattr(self, "_is_memory", False):
-            return self._memory_conn
-        return sqlite3.connect(self.db_path, timeout=30.0)
+            async with aiosqlite.connect(self.db_path, uri=True) as db:
+                await db.execute("PRAGMA busy_timeout=5000;")
+                yield db
+        else:
+            # SOTA: Shared Cache Assincrono fisico Oblitera concorrencia de leitura clonada na RAM
+            db_path = self.db_path
+            if not isinstance(db_path, Path):
+                db_path = Path(db_path)
+            uri_path = f"{db_path.absolute().as_uri()}?cache=shared"
+            async with aiosqlite.connect(uri_path, uri=True) as db:
+                await db.execute("PRAGMA busy_timeout=5000;")
+                yield db
 
-    def close(self) -> None:
-        """Encerra graciosamente a conexao em memoria, se aplicavel."""
-        if getattr(self, "_is_memory", False) and hasattr(self, "_memory_conn"):
-            self._memory_conn.close()
+    @contextlib.asynccontextmanager
+    async def _get_async_db(self):
+        """
+        SOTA: Context manager unificado para conexao async com DDL Lazy.
+        """
+        await self._ensure_initialized()
+        async with self._get_async_db_context() as db:
+            yield db
 
-    def _init_db(self) -> None:
-        """Forja a topologia relacional com Pragmas SOTA para Friccao Zero em I/O."""
-        conn = self._get_conn()
-        try:
-            # SOTA PRAGMAs: Maximizacao de concorrencia e uso eficiente de memoria
-            conn.execute("PRAGMA journal_mode=WAL;")
-            conn.execute("PRAGMA synchronous=NORMAL;")
-            conn.execute("PRAGMA busy_timeout=5000;")
-            conn.execute("PRAGMA cache_size=-64000;")
-            conn.execute("PRAGMA temp_store=MEMORY;")
-            conn.execute("PRAGMA mmap_size=30000000000;")
+    async def close(self) -> None:
+        """Encerra graciosamente a conexao ancora em memoria, se aplicavel."""
+        if getattr(self, "_is_memory", False) and self._memory_conn_async:
+            await self._memory_conn_async.close()
+            self._memory_conn_async = None
 
-            conn.execute("""
+    async def _ensure_initialized(self) -> None:
+        """Inicializacao Lazy SOTA: DDL Assincrono e Ancora de Memoria sob demanda."""
+        if self._is_initialized:
+            return
+
+        if self._init_lock is None:
+            self._init_lock = asyncio.Lock()
+
+        lock = self._init_lock
+        async with lock:
+            if self._is_initialized:
+                return
+
+            if self._is_memory and self._memory_conn_async is None:
+                self._memory_conn_async = await aiosqlite.connect(self.db_path, uri=True)
+                await self._memory_conn_async.execute("PRAGMA busy_timeout=5000;")
+
+            async with self._get_async_db_context() as conn:
+                # SOTA PRAGMAs: Maximizacao de concorrencia e uso eficiente de memoria
+                async with conn.execute("PRAGMA journal_mode;") as cursor:
+                    row = await cursor.fetchone()
+                    current_mode = row[0] if row else ""
+                if current_mode.lower() != "wal":
+                    await conn.execute("PRAGMA journal_mode=WAL;")
+                await conn.execute("PRAGMA synchronous=NORMAL;")
+                await conn.execute(
+                    "PRAGMA cache_size=-262144;"
+                )  # SOTA: Alocacao Dinamica de 256MB de RAM. Fixa a B-Tree e llm_cache na memoria.
+                await conn.execute("PRAGMA temp_store=MEMORY;")
+                await conn.execute(
+                    "PRAGMA mmap_size=2147483648;"
+                )  # SOTA: 2GB MMAP O(1). Delega paginacao de tabelas estaticas ao Kernel do OS.
+                await conn.execute("PRAGMA threads=8;")  # SOTA: Aceleracao Multithread para operacoes B-Tree e Sorting
+
+                await conn.execute("""
                 CREATE TABLE IF NOT EXISTS llm_cache (
                     model TEXT NOT NULL,
                     prompt TEXT NOT NULL,
@@ -164,11 +200,9 @@ class QueueManager:
                     PRIMARY KEY (model, prompt)
                 )
             """)
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_model_prompt ON llm_cache (model, prompt)"
-            )
+                await conn.execute("CREATE INDEX IF NOT EXISTS idx_model_prompt ON llm_cache (model, prompt)")
 
-            conn.execute("""
+                await conn.execute("""
                 CREATE TABLE IF NOT EXISTS tasks (
                     id TEXT PRIMARY KEY,
                     description TEXT NOT NULL,
@@ -180,12 +214,10 @@ class QueueManager:
                     completedAt TEXT
                 )
             """)
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_status_time ON tasks (status, timestamp)"
-            )
+                await conn.execute("CREATE INDEX IF NOT EXISTS idx_status_time ON tasks (status, timestamp)")
 
-            # SOTA: Partial Expression Index para Extracao O(1) na Fila DAG com 10.000+ Tarefas
-            conn.execute("""
+                # SOTA: Partial Expression Index para Extracao O(1) na Fila DAG com 10.000+ Tarefas
+                await conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_sota_dag_extraction ON tasks (
                     status,
                     CASE priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 3 END,
@@ -193,7 +225,7 @@ class QueueManager:
                 ) WHERE status = 'pending';
             """)
 
-            conn.execute("""
+                await conn.execute("""
                 CREATE TABLE IF NOT EXISTS api_usage (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     task_id TEXT NOT NULL,
@@ -207,7 +239,7 @@ class QueueManager:
                 )
             """)
 
-            conn.execute("""
+                await conn.execute("""
                 CREATE TABLE IF NOT EXISTS key_usage_metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     provider TEXT NOT NULL,
@@ -223,30 +255,24 @@ class QueueManager:
                     timestamp TEXT NOT NULL
                 )
             """)
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_key_usage_provider_hash_time ON key_usage_metrics (provider, key_hash, timestamp)"
-            )
+                await conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_key_usage_provider_hash_time ON key_usage_metrics (provider, key_hash, timestamp)"
+                )
 
-            conn.execute(
-                "CREATE TABLE IF NOT EXISTS daily_usage ( date TEXT PRIMARY KEY, call_count INTEGER NOT NULL )"
-            )
-            conn.execute(
-                "CREATE TABLE IF NOT EXISTS system_state ( key TEXT PRIMARY KEY, value TEXT )"
-            )
+                await conn.execute(
+                    "CREATE TABLE IF NOT EXISTS daily_usage ( date TEXT PRIMARY KEY, call_count INTEGER NOT NULL )"
+                )
+                await conn.execute("CREATE TABLE IF NOT EXISTS system_state ( key TEXT PRIMARY KEY, value TEXT )")
 
-            conn.commit()
-        finally:
-            if not getattr(self, "_is_memory", False):
-                conn.close()
+                await conn.commit()
+            self._is_initialized = True
 
-    def _enforce_backup_retention_policy(
-        self, backup_dir: Path, max_backups: int
-    ) -> None:
+    def _enforce_backup_retention_policy(self, backup_dir: Path, max_backups: int) -> None:
         """SOTA Guard: Preserva o armazenamento obliterando snapshots obsoletos."""
         try:
             # SOTA: Blindagem contra Path Traversal garantindo a relatividade de escopo.
             if not backup_dir.resolve().is_relative_to(self.base_path.resolve()):
-                logging.error(
+                logger.error(
                     "[SEC] Bloqueio de Path Traversal no expurgo de backups: %s",
                     backup_dir,
                 )
@@ -267,14 +293,12 @@ class QueueManager:
                 for old_backup in backups[max_backups:]:
                     # SOTA: missing_ok=True erradica race conditions em execucoes concorrentes.
                     old_backup.unlink(missing_ok=True)
-                    logging.info(
+                    logger.info(
                         "[BACKUP] Snapshot termodinamico obsoleto obliterado: %s",
                         old_backup.name,
                     )
         except Exception:  # pylint: disable=broad-exception-caught
-            logging.exception(
-                "[BACKUP] Falha estrutural ao aplicar a politica de retencao"
-            )
+            logger.exception("[BACKUP] Falha estrutural ao aplicar a politica de retencao")
 
     async def online_backup(self) -> None:
         """
@@ -282,40 +306,32 @@ class QueueManager:
         Assegura consistencia absoluta sem causar locks no ecossistema ativo.
         """
         if getattr(self, "_is_memory", False):
-            logging.info(
-                "[BACKUP] Salvaguarda online ignorada: Target reside em memoria volatil."
-            )
+            logger.info("[BACKUP] Salvaguarda online ignorada: Target reside em memoria volatil.")
             return
 
         backup_dir = Path(self.db_path).parent / "backups"
         backup_dir.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         backup_path = backup_dir / f"{Path(self.db_path).stem}_{timestamp}.db"
 
         try:
-            async with aiosqlite.connect(self.db_path) as source_db:
+            async with self._get_async_db() as source_db:
                 await source_db.execute("PRAGMA wal_checkpoint(FULL)")
                 async with aiosqlite.connect(backup_path) as backup_db:
                     await source_db.backup(backup_db)
-            logging.info(
-                "[BACKUP] Snapshot SOTA materializado com sucesso: %s", backup_path
-            )
+            logger.info("[BACKUP] Snapshot SOTA materializado com sucesso: %s", backup_path)
             self._enforce_backup_retention_policy(backup_dir, max_backups=20)
         except Exception:  # pylint: disable=broad-exception-caught
-            logging.exception(
-                "[BACKUP] Colapso durante a materializacao do snapshot online"
-            )
+            logger.exception("[BACKUP] Colapso durante a materializacao do snapshot online")
             if backup_path.exists():
                 try:
                     backup_path.unlink()
                 except Exception:  # pylint: disable=broad-exception-caught
-                    logging.exception(
-                        "[BACKUP] Falha ao obliterar fragmento corrompido de snapshot"
-                    )
+                    logger.exception("[BACKUP] Falha ao obliterar fragmento corrompido de snapshot")
 
     async def add_task(self, task: Task) -> None:
         """Injeta uma nova diretriz na malha de execucao (Queue)."""
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self._get_async_db() as db:
             await db.execute(
                 """
                 INSERT INTO tasks
@@ -328,48 +344,49 @@ class QueueManager:
                     task.status,
                     task.timestamp,
                     task.agent,
-                    task.metadata.get("priority", "normal")
-                    if task.metadata
-                    else "normal",
-                    json.dumps(task.metadata, ensure_ascii=True)
-                    if task.metadata
-                    else "{}",
+                    task.metadata.get("priority", "normal") if task.metadata else "normal",
+                    json.dumps(task.metadata, ensure_ascii=True) if task.metadata else "{}",
                     task.completedAt,
                 ),
             )
             await db.commit()
 
-    async def get_task(self, task_id: str) -> Optional[Task]:
+    async def get_task(self, task_id: str) -> Task | None:
         """Consulta pontual de estado (O(1)) de uma tarefa."""
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
-            async with db.execute(
-                "SELECT * FROM tasks WHERE id = ?", (task_id,)
-            ) as cursor:
+            async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
                 row = await cursor.fetchone()
                 if row:
                     return self._row_to_task(row)
         return None
 
-    async def get_next_task(self) -> Optional[Task]:
+    async def get_next_task(self) -> Task | None:
         """
-        SOTA: Algoritmo de extracao baseada em Grafos de Dependencia e Peso de Prioridade.
-        Impede condicoes de corrida garantindo que bloqueios sejam respeitados.
+        SOTA GOLD: Extracao de Grafo DAG usando Common Table Expressions (CTEs).
+        Isola a filtragem primaria da complexidade de juncao JSON, maximizando hit-rate no indice.
         """
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
-            async with db.execute("""
-                SELECT t1.* FROM tasks AS t1
-                WHERE t1.status = 'pending' AND NOT EXISTS (
-                    SELECT 1 FROM json_each(t1.metadata, '$.depends_on') AS dep
-                    JOIN tasks AS t2 ON t2.id = dep.value
-                    WHERE t2.status NOT IN ('completed', 'cancelled')
+            query = """
+                WITH pending_tasks AS (
+                    SELECT * FROM tasks WHERE status = 'pending'
+                ),
+                ready_tasks AS (
+                    SELECT t1.* FROM pending_tasks AS t1
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM json_each(t1.metadata, '$.depends_on') AS dep
+                        JOIN tasks AS t2 ON t2.id = dep.value
+                        WHERE t2.status NOT IN ('completed', 'cancelled')
+                    )
                 )
+                SELECT * FROM ready_tasks
                 ORDER BY
-                    CASE t1.priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 3 END,
-                    t1.timestamp ASC
+                    CASE priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 3 END,
+                    timestamp ASC
                 LIMIT 1
-            """) as cursor:
+            """
+            async with db.execute(query) as cursor:
                 row = await cursor.fetchone()
             if row:
                 return self._row_to_task(row)
@@ -377,36 +394,26 @@ class QueueManager:
 
     async def update_task_status(self, task_id: str, new_status: str) -> None:
         """Transicao de estado autonoma com timestamping automatico."""
-        completed_at = (
-            datetime.now(timezone.utc).isoformat()
-            if new_status in ["completed", "failed"]
-            else None
-        )
-        async with aiosqlite.connect(self.db_path) as db:
+        completed_at = datetime.now(UTC).isoformat() if new_status in ["completed", "failed"] else None
+        async with self._get_async_db() as db:
             if completed_at:
                 await db.execute(
                     "UPDATE tasks SET status = ?, completedAt = ? WHERE id = ?",
                     (new_status, completed_at, task_id),
                 )
             else:
-                await db.execute(
-                    "UPDATE tasks SET status = ? WHERE id = ?", (new_status, task_id)
-                )
+                await db.execute("UPDATE tasks SET status = ? WHERE id = ?", (new_status, task_id))
             await db.commit()
 
-    async def update_task_metadata(
-        self, task_id: str, metadata_patch: Dict[str, Any], merge: bool = True
-    ) -> None:
+    async def update_task_metadata(self, task_id: str, metadata_patch: dict[str, Any], merge: bool = True) -> None:
         """
         Atualiza os metadados de forma cirurgica e Thread-Safe (BEGIN EXCLUSIVE).
         Preserva a integridade do JSON original durante mutacoes concorrentes.
         """
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self._get_async_db() as db:
             await db.execute("BEGIN EXCLUSIVE")
             db.row_factory = sqlite3.Row
-            async with db.execute(
-                "SELECT metadata FROM tasks WHERE id = ?", (task_id,)
-            ) as cursor:
+            async with db.execute("SELECT metadata FROM tasks WHERE id = ?", (task_id,)) as cursor:
                 row = await cursor.fetchone()
 
             if not row:
@@ -418,7 +425,7 @@ class QueueManager:
                 try:
                     current = json.loads(row["metadata"])
                 except json.JSONDecodeError:
-                    logging.exception(
+                    logger.exception(
                         "[DAL] Entropia semantica detectada: Corrupcao JSON na tarefa %s",
                         task_id,
                     )
@@ -439,27 +446,135 @@ class QueueManager:
 
     async def delete_task(self, task_id: str) -> None:
         """Obliterar tarefa do Kernel."""
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self._get_async_db() as db:
             await db.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
             await db.commit()
 
-    async def get_tasks(
-        self, status: Optional[str] = None, since_hours: Optional[int] = None
-    ) -> List[Task]:
+    async def recover_stalled_tasks(self, max_running_minutes: int = 15) -> int:
+        """
+        SOTA GOLD Auto-Cura: Detecta e recupera tarefas travadas no status 'running'.
+        Reseta para 'pending' incrementando retentativas, ou falha se ultrapassar o limite de 3.
+        Otimizacao ACID Absoluta: Resolvido via SQLite JSON1 na camada C (Zero Python Loops).
+        """
+        cutoff = (datetime.now(UTC) - timedelta(minutes=max_running_minutes)).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
+
+        query = """
+            UPDATE tasks
+            SET
+                status = CASE WHEN COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1 < 3 THEN 'pending' ELSE 'failed' END,
+                timestamp = ?,
+                metadata = json_set(
+                    COALESCE(metadata, '{}'),
+                    '$.retry_count', COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1,
+                    '$.last_stall_reason', CASE
+                        WHEN COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1 < 3
+                        THEN 'Recuperado apos ' || ? || ' minutos travado.'
+                        ELSE 'Processamento abortado: Limite maximo de retentativas de travamento atingido.'
+                    END
+                )
+            WHERE status = 'running' AND timestamp < ?
+            RETURNING id, status, json_extract(metadata, '$.retry_count') as retries, description;
+        """
+        async with self._get_async_db() as db:
+            db.row_factory = sqlite3.Row
+            async with db.execute(query, (now_iso, str(max_running_minutes), cutoff)) as cursor:
+                recovered_rows = list(await cursor.fetchall())
+
+            for row in recovered_rows:
+                task_id = row["id"]
+                new_status = row["status"]
+                retries = int(row["retries"] or 1)
+                desc = row["description"]
+
+                if new_status == "pending":
+                    logger.warning(
+                        "[AUTO-HEAL] Tarefa '%s' ressucitada. Retentativa %d/3.",
+                        task_id,
+                        retries,
+                    )
+                    with contextlib.suppress(ImportError):
+                        from monitoring.telemetry import send_toast
+
+                        send_toast(
+                            "[WARN] Auto-Cura SOTA",
+                            f"Tarefa '{desc[:30]}' ressuscitada (Tenta {retries}/3)",
+                            "warning",
+                        )
+                else:
+                    logger.error(
+                        "[AUTO-HEAL] Tarefa '%s' falhou definitivamente apos %d travamentos.",
+                        task_id,
+                        retries,
+                    )
+
+            await db.commit()
+        return len(recovered_rows)
+
+    async def promote_starved_tasks(self, max_wait_hours: int = 2) -> int:
+        """
+        SOTA GOLD Anti-Starvation: Promove a prioridade de tarefas pendentes ha muito tempo.
+        Evita que tarefas 'low' ou 'medium' fiquem bloqueadas indefinidamente por tarefas criticas.
+        Otimizacao ACID Absoluta: Resolvido via SQLite JSON1 na camada C (Zero Python Loops).
+        """
+        cutoff = (datetime.now(UTC) - timedelta(hours=max_wait_hours)).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
+
+        query = """
+            UPDATE tasks
+            SET
+                metadata = json_set(
+                    COALESCE(metadata, '{}'),
+                    '$.original_priority', COALESCE(priority, 'normal'),
+                    '$.priority', CASE COALESCE(priority, 'normal')
+                        WHEN 'low' THEN 'medium'
+                        WHEN 'normal' THEN 'high'
+                        WHEN 'medium' THEN 'high'
+                        WHEN 'high' THEN 'critical'
+                        ELSE 'critical'
+                    END,
+                    '$.promoted_at', ?
+                ),
+                priority = CASE COALESCE(priority, 'normal')
+                    WHEN 'low' THEN 'medium'
+                    WHEN 'normal' THEN 'high'
+                    WHEN 'medium' THEN 'high'
+                    WHEN 'high' THEN 'critical'
+                    ELSE 'critical'
+                END
+            WHERE status = 'pending' AND timestamp < ? AND priority != 'critical'
+            RETURNING id, priority, json_extract(metadata, '$.original_priority') as old_priority;
+        """
+        async with self._get_async_db() as db:
+            db.row_factory = sqlite3.Row
+            async with db.execute(query, (now_iso, cutoff)) as cursor:
+                promoted_rows = list(await cursor.fetchall())
+
+            for row in promoted_rows:
+                logger.info(
+                    "[ANTI-STARVATION] Tarefa '%s' promovida de '%s' para '%s' (Espera > %d horas).",
+                    row["id"],
+                    row["old_priority"],
+                    row["priority"],
+                    max_wait_hours,
+                )
+
+            await db.commit()
+        return len(promoted_rows)
+
+    async def get_tasks(self, status: str | None = None, since_hours: int | None = None) -> list[Task]:
         """Varredura historica da fila com filtros de estado e temporalidade."""
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
             query = "SELECT * FROM tasks"
-            params: List[Any] = []
-            conditions: List[str] = []
+            params: list[Any] = []
+            conditions: list[str] = []
 
             if status:
                 conditions.append("status = ?")
                 params.append(status)
             if since_hours:
-                cutoff = (
-                    datetime.now(timezone.utc) - timedelta(hours=since_hours)
-                ).isoformat()
+                cutoff = (datetime.now(UTC) - timedelta(hours=since_hours)).isoformat()
                 conditions.append("timestamp >= ?")
                 params.append(cutoff)
 
@@ -471,13 +586,11 @@ class QueueManager:
                 rows = await cursor.fetchall()
             return [self._row_to_task(row) for row in rows]
 
-    async def get_task_counts(self) -> Dict[str, int]:
+    async def get_task_counts(self) -> dict[str, int]:
         """Fotografia termodinamica do estado atual da fila."""
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
-            async with db.execute(
-                "SELECT status, COUNT(*) as count FROM tasks GROUP BY status"
-            ) as cursor:
+            async with db.execute("SELECT status, COUNT(*) as count FROM tasks GROUP BY status") as cursor:
                 rows = await cursor.fetchall()
                 counts = {"pending": 0, "running": 0, "completed": 0, "failed": 0}
                 for r in rows:
@@ -485,9 +598,9 @@ class QueueManager:
                         counts[r["status"]] = r["count"]
                 return counts
 
-    async def get_performance_history(self) -> List[Dict[str, Any]]:
+    async def get_performance_history(self) -> list[dict[str, Any]]:
         """Extrai o ritmo de processamento sistemico diario."""
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
             query = """
                 SELECT date(completedAt) as day, COUNT(*) as count
@@ -500,12 +613,27 @@ class QueueManager:
                 rows = await cursor.fetchall()
                 return [{"day": r["day"], "count": r["count"]} for r in rows]
 
-    async def get_llm_cache(self, model: str, prompt: str) -> Optional[str]:
+    def _canonicalize_prompt(self, prompt: str) -> str:
+        """SOTA GOLD: Normaliza o prompt reduzindo espacos redundantes e quebras de linha."""
+        if not prompt:
+            return ""
+        # 1. Normalizar quebras de linha
+        p = prompt.replace("\r\n", "\n").replace("\r", "\n")
+        # 2. Substituir sequencias longas de espacos e tabulacoes por um unico espaco, preservando quebras de linha
+        p = re.sub(r"[ \t]+", " ", p)
+        # 3. Remover espacos no inicio e fim de cada linha
+        p = "\n".join(line.strip() for line in p.split("\n"))
+        # 4. Remover multiplas linhas vazias consecutivas
+        p = re.sub(r"\n+", "\n", p)
+        return p.strip()
+
+    async def get_llm_cache(self, model: str, prompt: str) -> str | None:
         """Consulta otimizada a Memoria Cache (Evita chamadas redundantes e gastos de API)."""
-        async with aiosqlite.connect(self.db_path) as db:
+        canon_prompt = self._canonicalize_prompt(prompt)
+        async with self._get_async_db() as db:
             async with db.execute(
                 "SELECT response FROM llm_cache WHERE model = ? AND prompt = ?",
-                (model, prompt),
+                (model, canon_prompt),
             ) as cursor:
                 row = await cursor.fetchone()
                 if row is not None:
@@ -513,36 +641,64 @@ class QueueManager:
             if model.startswith("@"):
                 async with db.execute(
                     "SELECT response FROM llm_cache WHERE prompt = ? ORDER BY timestamp DESC LIMIT 1",
-                    (prompt,),
+                    (canon_prompt,),
                 ) as cursor:
                     row = await cursor.fetchone()
                     if row is not None:
                         return row[0]
         return None
 
-    async def get_first_cached_response(
-        self, models: Iterable[str], prompt: str
-    ) -> Optional[str]:
-        """Consulta a primeira resposta em cache disponivel para a lista de modelos."""
-        for model in models:
-            cached = await self.get_llm_cache(model, prompt)
-            if cached is not None:
-                return cached
+    async def get_first_cached_response(self, models: Iterable[str], prompt: str) -> str | None:
+        """Consulta otimizada a primeira resposta em cache via Single-Query IN()."""
+        canon_prompt = self._canonicalize_prompt(prompt)
+        models_list = list(models)
+        if not models_list:
+            return None
+
+        placeholders = ",".join("?" for _ in models_list)
+        async with self._get_async_db() as db:
+            query = f"""
+                SELECT response FROM llm_cache
+                WHERE prompt = ? AND model IN ({placeholders})
+                ORDER BY timestamp DESC
+                LIMIT 1
+            """  # noqa: S608
+            async with db.execute(query, (canon_prompt, *models_list)) as cursor:
+                row = await cursor.fetchone()
+                if row is not None:
+                    return row[0]
+
+        # SOTA: Fallback Generico
+        generic_models = [m for m in models_list if m.startswith("@")]
+        if generic_models:
+            placeholders_gen = ",".join("?" for _ in generic_models)
+            async with self._get_async_db() as db:
+                query_gen = f"""
+                    SELECT response FROM llm_cache
+                    WHERE prompt = ? AND model IN ({placeholders_gen})
+                    ORDER BY timestamp DESC
+                    LIMIT 1
+                """  # noqa: S608
+                async with db.execute(query_gen, (canon_prompt, *generic_models)) as cursor:
+                    row = await cursor.fetchone()
+                    if row is not None:
+                        return row[0]
         return None
 
     async def update_llm_cache(self, model: str, prompt: str, response: str) -> None:
         """Injeta a resposta gerada na Memoria Cache."""
         if response is None:
-            logging.warning("[CACHE] Ingestao rejeitada: Resposta nula identificada.")
+            logger.warning("[CACHE] Ingestao rejeitada: Resposta nula identificada.")
             return
-        timestamp = datetime.now(timezone.utc).isoformat()
-        async with aiosqlite.connect(self.db_path) as db:
+        canon_prompt = self._canonicalize_prompt(prompt)
+        timestamp = datetime.now(UTC).isoformat()
+        async with self._get_async_db() as db:
             await db.execute(
                 """
                 INSERT OR REPLACE INTO llm_cache (model, prompt, response, timestamp)
                 VALUES (?, ?, ?, ?)
             """,
-                (model, prompt, response, timestamp),
+                (model, canon_prompt, response, timestamp),
             )
             await db.commit()
 
@@ -557,8 +713,8 @@ class QueueManager:
     ) -> None:
         """Telemetria Financeira SOTA: Registro imutavel de custo computacional."""
         total = prompt_tokens + completion_tokens
-        timestamp = datetime.now(timezone.utc).isoformat()
-        async with aiosqlite.connect(self.db_path) as db:
+        timestamp = datetime.now(UTC).isoformat()
+        async with self._get_async_db() as db:
             await db.execute(
                 """
                 INSERT INTO api_usage (task_id, agent, model, provider, prompt_tokens, completion_tokens, total_tokens, timestamp)
@@ -582,17 +738,17 @@ class QueueManager:
         provider: str,
         key_hash: str,
         status: str,
-        latency_ms: Optional[int] = None,
-        error_class: Optional[str] = None,
-        error_detail: Optional[str] = None,
-        model: Optional[str] = None,
-        agent: Optional[str] = None,
-        task_id: Optional[str] = None,
-        total_tokens: Optional[int] = None,
+        latency_ms: int | None = None,
+        error_class: str | None = None,
+        error_detail: str | None = None,
+        model: str | None = None,
+        agent: str | None = None,
+        task_id: str | None = None,
+        total_tokens: int | None = None,
     ) -> None:
         """Telemetria Operacional SOTA: Rastreador de saude do fluxo de rede e chaves de API."""
-        timestamp = datetime.now(timezone.utc).isoformat()
-        async with aiosqlite.connect(self.db_path) as db:
+        timestamp = datetime.now(UTC).isoformat()
+        async with self._get_async_db() as db:
             await db.execute(
                 """
                 INSERT INTO key_usage_metrics (
@@ -622,12 +778,10 @@ class QueueManager:
         provider: str,
         key_hash: str,
         window_minutes: int = 180,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Antevisao termodinamica da saude da API em janela deslizante."""
-        cutoff = (
-            datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
-        ).isoformat()
-        async with aiosqlite.connect(self.db_path) as db:
+        cutoff = (datetime.now(UTC) - timedelta(minutes=window_minutes)).isoformat()
+        async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
             async with db.execute(
                 """
@@ -656,23 +810,17 @@ class QueueManager:
             "attempts": int(row["attempts"]),
             "successes": int(row["successes"] or 0),
             "failures": int(row["failures"] or 0),
-            "avg_latency_ms": float(row["avg_latency_ms"])
-            if row["avg_latency_ms"] is not None
-            else None,
-            "avg_tokens": float(row["avg_tokens"])
-            if row["avg_tokens"] is not None
-            else None,
+            "avg_latency_ms": float(row["avg_latency_ms"]) if row["avg_latency_ms"] is not None else None,
+            "avg_tokens": float(row["avg_tokens"]) if row["avg_tokens"] is not None else None,
         }
 
     async def get_key_health_report(
         self,
         window_minutes: int = 180,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Relatorio matriz de resiliencia e estabilidade das integracoes externas."""
-        cutoff = (
-            datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
-        ).isoformat()
-        async with aiosqlite.connect(self.db_path) as db:
+        cutoff = (datetime.now(UTC) - timedelta(minutes=window_minutes)).isoformat()
+        async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
             async with db.execute(
                 """
@@ -698,33 +846,37 @@ class QueueManager:
         for row in rows:
             attempts = int(row["attempts"] or 0)
             successes = int(row["successes"] or 0)
+            failures = int(row["failures"] or 0)
             success_rate = (successes / attempts) if attempts else 0.0
+
+            avg_latency = float(row["avg_latency_ms"]) if row["avg_latency_ms"] is not None else 1200.0
+            latency_penalty = min(avg_latency / 50.0, 20.0)
+            failure_penalty = min(failures * 5.0, 30.0)
+            health_score = max(0.0, min(100.0, (success_rate * 100.0) - latency_penalty - failure_penalty))
+            is_anomaly = (failures / attempts > 0.3) or (avg_latency > 3000.0)
+
             report.append(
                 {
                     "provider": row["provider"],
                     "key_hash": row["key_hash"],
                     "attempts": attempts,
                     "successes": successes,
-                    "failures": int(row["failures"] or 0),
+                    "failures": failures,
                     "success_rate": round(success_rate, 4),
-                    "avg_latency_ms": float(row["avg_latency_ms"])
-                    if row["avg_latency_ms"] is not None
-                    else None,
-                    "avg_tokens": float(row["avg_tokens"])
-                    if row["avg_tokens"] is not None
-                    else None,
+                    "avg_latency_ms": float(row["avg_latency_ms"]) if row["avg_latency_ms"] is not None else None,
+                    "avg_tokens": float(row["avg_tokens"]) if row["avg_tokens"] is not None else None,
                     "last_seen": row["last_seen"],
+                    "health_score": round(health_score, 2),
+                    "is_anomaly": is_anomaly,
                 }
             )
         return report
 
     async def get_daily_budget_usage(self) -> int:
         """Retorna o uso do orcamento diario do LLM."""
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(
-                "SELECT call_count FROM daily_usage WHERE date = ?", (today,)
-            ) as cursor:
+        today = datetime.now(UTC).strftime("%Y-%m-%d")
+        async with self._get_async_db() as db:
+            async with db.execute("SELECT call_count FROM daily_usage WHERE date = ?", (today,)) as cursor:
                 row = await cursor.fetchone()
             return row[0] if row else 0
 
@@ -733,12 +885,10 @@ class QueueManager:
         SOTA Guard: Impede estouramento de cota diaria de requisicoes.
         Avaliacao atomica e Thread-Safe.
         """
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        async with aiosqlite.connect(self.db_path) as db:
+        today = datetime.now(UTC).strftime("%Y-%m-%d")
+        async with self._get_async_db() as db:
             await db.execute("BEGIN EXCLUSIVE")
-            async with db.execute(
-                "SELECT call_count FROM daily_usage WHERE date = ?", (today,)
-            ) as cursor:
+            async with db.execute("SELECT call_count FROM daily_usage WHERE date = ?", (today,)) as cursor:
                 row = await cursor.fetchone()
 
             current_count = row[0] if row else 0
@@ -756,23 +906,43 @@ class QueueManager:
             await db.commit()
             return True
 
-    async def get_system_state(self, key: str) -> Optional[str]:
+    async def get_system_state(self, key: str) -> str | None:
         """Consulta a malha de estado dinamico (K-V store)."""
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(
-                "SELECT value FROM system_state WHERE key = ?", (key,)
-            ) as cursor:
-                row = await cursor.fetchone()
-                return row[0] if row else None
+        async with (
+            self._get_async_db() as db,
+            db.execute("SELECT value FROM system_state WHERE key = ?", (key,)) as cursor,
+        ):
+            row = await cursor.fetchone()
+            return row[0] if row else None
 
     async def set_system_state(self, key: str, value: str) -> None:
         """Muta o estado global de sistema garantindo persistencia imediata."""
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self._get_async_db() as db:
             await db.execute(
                 "INSERT OR REPLACE INTO system_state (key, value) VALUES (?, ?)",
                 (key, value),
             )
             await db.commit()
+
+    async def perform_maintenance(self) -> None:
+        """
+        Executa operacoes de manutencao profunda (VACUUM / ANALYZE).
+        Otimiza a fragmentacao do disco e atualiza as estatisticas do Query Planner.
+        """
+        if getattr(self, "_is_memory", False):
+            return
+
+        logger.info("[DB] Iniciando manutencao profunda (VACUUM/ANALYZE)...")
+        try:
+            async with self._get_async_db() as db:
+                # SOTA: Otimizacao de fragmentacao
+                await db.execute("PRAGMA threads=8;")
+                await db.execute("PRAGMA optimize;")
+                await db.execute("VACUUM;")
+                await db.execute("ANALYZE;")
+            logger.info("[DB] Manutencao concluida com sucesso (Vazio Operacional restaurado).")
+        except Exception:  # pylint: disable=broad-exception-caught
+            logger.exception("[DB] Falha durante a manutencao profunda")
 
     async def cleanup(self, days: int = 30) -> None:
         """
@@ -780,16 +950,18 @@ class QueueManager:
         Transfere o estado resolvido para tabelas frias e vaporiza o lixo estatico,
         restaurando o Vazio Operacional da aplicacao.
         """
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
 
         await self._archive_and_tasks(cutoff)
         self._purge_obsolete_files(cutoff_date)
+        # SOTA: Executa manutencao apos o expurgo massivo
+        await self.perform_maintenance()
         gc.collect()
 
     async def _archive_and_tasks(self, cutoff: str) -> None:
         """Transfere tarefas completadas/falhas para o arquivo frio."""
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self._get_async_db() as db:
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS archive_tasks (
                     id TEXT PRIMARY KEY,
@@ -824,7 +996,7 @@ class QueueManager:
 
             deleted_rows = cursor.rowcount
             await db.commit()
-            logging.info(
+            logger.info(
                 "[CLEANUP] %d operacoes antigas arquivadas e expurgadas (Amnesia Seletiva).",
                 deleted_rows,
             )
@@ -832,9 +1004,9 @@ class QueueManager:
     def _purge_obsolete_files(self, cutoff_date: datetime) -> None:
         """Itera sobre os diretorios alvo aniquilando arquivos inativos."""
         directories_to_clean = [
-            ".claude/logs/audit",
-            ".claude/logs",
-            ".claude/task_results",
+            ".cerebro/logs/audit",
+            ".cerebro/logs",
+            ".cerebro/task_results",
         ]
         empty_dirs = []
         deleted_count = 0
@@ -849,16 +1021,14 @@ class QueueManager:
             empty_dirs.extend(dirs)
 
         if deleted_count > 0:
-            logging.info(
+            logger.info(
                 "[CLEANUP] %d artefatos obsoletos (logs/resultados) foram desintegrados.",
                 deleted_count,
             )
 
         self._remove_empty_dirs(empty_dirs)
 
-    def _process_directory_purge(
-        self, target_dir: Path, cutoff_date: datetime
-    ) -> Tuple[int, List[Path]]:
+    def _process_directory_purge(self, target_dir: Path, cutoff_date: datetime) -> tuple[int, list[Path]]:
         """Varre o diretorio e oblitera artefatos baseados no mtime."""
         deleted_count = 0
         empty_dirs = []
@@ -868,9 +1038,7 @@ class QueueManager:
             elif item.is_file():
                 try:
                     is_empty = item.stat().st_size == 0
-                    mtime_dt = datetime.fromtimestamp(
-                        item.stat().st_mtime, tz=timezone.utc
-                    )
+                    mtime_dt = datetime.fromtimestamp(item.stat().st_mtime, tz=UTC)
                     if is_empty or mtime_dt < cutoff_date:
                         item.unlink()
                         deleted_count += 1
@@ -878,7 +1046,7 @@ class QueueManager:
                     pass
         return deleted_count, empty_dirs
 
-    def _remove_empty_dirs(self, empty_dirs: List[Path]) -> None:
+    def _remove_empty_dirs(self, empty_dirs: list[Path]) -> None:
         """Remove diretorios da arvore caso nao possuam mais filhos."""
         empty_dirs.sort(key=lambda p: len(p.parts), reverse=True)
         for d in empty_dirs:
@@ -895,7 +1063,7 @@ class QueueManager:
             try:
                 metadata = json.loads(row["metadata"])
             except json.JSONDecodeError:
-                logging.exception(
+                logger.exception(
                     "[DAL] Entropia semantica extrema: Impossivel decodificar a carga JSON para a tarefa %s",
                     row["id"],
                 )
@@ -906,6 +1074,10 @@ class QueueManager:
         if agent_name in legacy_agents:
             agent_name = legacy_agents[agent_name]
         elif agent_name not in _core_config.VALID_AGENTS:
+            logger.warning(
+                "[DAL] Agente '%s' nao encontrado no manifesto. Fallback para @chico.",
+                agent_name,
+            )
             agent_name = "@chico"
 
         return Task(

@@ -3,10 +3,10 @@
                         "allow":  [
                                       "Read(//dev/**)",
                                       "Read(//tmp/**)",
-                                      "Read(//c/Users/Raphael/.gemini/Site/**)",
+                                      "Read(//c/users/rapha/.gemini/Site/**)",
                                       "RunCommand(powershell, **)",
                                       "RunCommand(python, **)",
-                                      "Read(C:/Users/Raphael/.gemini/extensions/**)",
+                                      "Read(C:/users/rapha/.gemini/extensions/**)",
                                       "RunCommand(git, **)",
                                       "RunCommand(gemini, **)"
                                   ],

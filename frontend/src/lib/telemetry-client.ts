@@ -37,7 +37,7 @@ class SotaTelemetryClient {
 
 		// Disparo assíncrono O(1). A flag 'keepalive' assegura o envio mesmo na morte da aba.
 		batch.forEach((data) => {
-			fetch('/api/telemetry', {
+			fetch('/api/v1/telemetry', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data),

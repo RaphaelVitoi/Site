@@ -19,6 +19,7 @@ rules:
           @app.$METHOD(...)
           async def $FUNC(..., $VAR = Depends(...), ...):
             ...
+    severity: ERROR
 
   - id: sota-nextjs-auth-enforcement
     languages:

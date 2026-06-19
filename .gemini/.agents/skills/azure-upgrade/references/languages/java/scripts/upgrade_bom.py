@@ -38,7 +38,8 @@ import sys
 import textwrap
 import urllib.error
 import urllib.request
-import xml.etree.ElementTree as ET
+
+from defusedxml import ElementTree as ET
 
 GROUP_ID = "com.azure"
 ARTIFACT_ID = "azure-sdk-bom"
@@ -62,6 +63,7 @@ GRADLE_PLUGIN_MARKER = "// --- openrewrite-upgrade-bom-plugin (auto-added, safe 
 # ---------------------------------------------------------------------------
 # Build-system detection
 # ---------------------------------------------------------------------------
+
 
 def _detect_build_system(project_dir: str) -> str:
     """Return 'maven' or 'gradle' depending on which build file is present."""
@@ -96,31 +98,32 @@ def _get_latest_bom_version() -> str:
 # Maven helpers
 # ---------------------------------------------------------------------------
 
+
+def _ensure_executable(wrapper_path: str) -> bool:
+    """Ensure the given wrapper is executable, attempting to add execute permission if needed."""
+    if os.access(wrapper_path, os.X_OK):
+        return True
+    try:
+        mode = os.stat(wrapper_path).st_mode
+        os.chmod(wrapper_path, mode | stat.S_IXUSR)
+        print(f"[upgrade_bom] Added executable bit to {wrapper_path}.")
+        return os.access(wrapper_path, os.X_OK)
+    except OSError as exc:
+        print(
+            f"[upgrade_bom] WARNING: Wrapper exists at {wrapper_path} but is not executable and chmod failed ({exc}).",
+            file=sys.stderr,
+        )
+        return False
+
+
 def _detect_maven(project_dir: str) -> str:
     if sys.platform == "win32":
         wrapper = os.path.join(project_dir, "mvnw.cmd")
-        # .cmd files on Windows are invoked by the shell; no executable bit needed.
-        if os.path.isfile(wrapper):
-            return wrapper
-    else:
-        wrapper = os.path.join(project_dir, "mvnw")
-        if os.path.isfile(wrapper):
-            if not os.access(wrapper, os.X_OK):
-                # Wrapper exists but isn't executable (common after fresh clones
-                # on filesystems that don't preserve the +x bit). Try to fix it.
-                try:
-                    mode = os.stat(wrapper).st_mode
-                    os.chmod(wrapper, mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-                    print(f"[upgrade_bom] Added executable bit to {wrapper}.")
-                except OSError as exc:
-                    print(
-                        f"[upgrade_bom] WARNING: mvnw exists at {wrapper} but is not "
-                        f"executable and chmod failed ({exc}); falling back to 'mvn'.",
-                        file=sys.stderr,
-                    )
-                    return "mvn"
-            if os.access(wrapper, os.X_OK):
-                return wrapper
+        return wrapper if os.path.isfile(wrapper) else "mvn"
+
+    wrapper = os.path.join(project_dir, "mvnw")
+    if os.path.isfile(wrapper) and _ensure_executable(wrapper):
+        return wrapper
     return "mvn"
 
 
@@ -133,29 +136,28 @@ def _has_maven_bom_entry(pom_path: str) -> bool:
     for dep in tree.findall(".//m:dependencyManagement/m:dependencies/m:dependency", ns):
         gid = dep.find("m:groupId", ns)
         aid = dep.find("m:artifactId", ns)
-        if gid is not None and aid is not None:
-            if gid.text == GROUP_ID and aid.text == ARTIFACT_ID:
-                return True
+        if gid is not None and aid is not None and gid.text == GROUP_ID and aid.text == ARTIFACT_ID:
+            return True
     for dep in tree.findall(".//dependencyManagement/dependencies/dependency"):
         gid = dep.find("groupId")
         aid = dep.find("artifactId")
-        if gid is not None and aid is not None:
-            if gid.text == GROUP_ID and aid.text == ARTIFACT_ID:
-                return True
+        if gid is not None and aid is not None and gid.text == GROUP_ID and aid.text == ARTIFACT_ID:
+            return True
     return False
 
 
 def _run_maven_recipe(mvn_cmd: str, project_dir: str, recipe: str, options: str) -> int:
     """Run an OpenRewrite recipe via the rewrite-maven-plugin."""
     cmd = [
-        mvn_cmd, "-U",
+        mvn_cmd,
+        "-U",
         f"{MVN_REWRITE_PLUGIN}:run",
         f"-Drewrite.recipeArtifactCoordinates={MVN_REWRITE_ARTIFACT_COORDS}",
         f"-Drewrite.activeRecipes={recipe}",
         f"-Drewrite.options={options}",
     ]
     print(f"[upgrade_bom] Running: {' '.join(cmd)}")
-    return subprocess.run(cmd, cwd=project_dir).returncode
+    return subprocess.run(cmd, cwd=project_dir, check=False).returncode
 
 
 def _handle_maven(project_dir: str, bom_version: str, mvn_cmd: str | None) -> int:
@@ -206,28 +208,15 @@ def _handle_maven(project_dir: str, bom_version: str, mvn_cmd: str | None) -> in
 # Gradle helpers
 # ---------------------------------------------------------------------------
 
+
 def _detect_gradle(project_dir: str) -> str:
     if sys.platform == "win32":
         wrapper = os.path.join(project_dir, "gradlew.bat")
-        if os.path.isfile(wrapper):
-            return wrapper
-    else:
-        wrapper = os.path.join(project_dir, "gradlew")
-        if os.path.isfile(wrapper):
-            if not os.access(wrapper, os.X_OK):
-                try:
-                    mode = os.stat(wrapper).st_mode
-                    os.chmod(wrapper, mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-                    print(f"[upgrade_bom] Added executable bit to {wrapper}.")
-                except OSError as exc:
-                    print(
-                        f"[upgrade_bom] WARNING: gradlew exists at {wrapper} but is not "
-                        f"executable and chmod failed ({exc}); falling back to 'gradle'.",
-                        file=sys.stderr,
-                    )
-                    return "gradle"
-            if os.access(wrapper, os.X_OK):
-                return wrapper
+        return wrapper if os.path.isfile(wrapper) else "gradle"
+
+    wrapper = os.path.join(project_dir, "gradlew")
+    if os.path.isfile(wrapper) and _ensure_executable(wrapper):
+        return wrapper
     return "gradle"
 
 
@@ -246,7 +235,7 @@ def _is_kotlin_dsl(build_file: str) -> bool:
 def _has_gradle_bom_entry(build_file: str) -> bool:
     """Check whether build.gradle already references azure-sdk-bom."""
     try:
-        with open(build_file, "r", encoding="utf-8") as f:
+        with open(build_file, encoding="utf-8") as f:
             content = f.read()
     except OSError:
         return False
@@ -264,32 +253,42 @@ def _create_rewrite_yml(project_dir: str, bom_version: str, has_bom: bool) -> st
     recipes: list[str] = []
 
     if has_bom:
-        recipes.append(textwrap.dedent(f"""\
+        recipes.append(
+            textwrap.dedent(f"""\
           - org.openrewrite.gradle.UpgradeDependencyVersion:
               groupId: {GROUP_ID}
               artifactId: {ARTIFACT_ID}
-              newVersion: {bom_version}"""))
+              newVersion: {bom_version}""")
+        )
     else:
-        recipes.append(textwrap.dedent(f"""\
+        recipes.append(
+            textwrap.dedent(f"""\
           - org.openrewrite.gradle.AddPlatformDependency:
               groupId: {GROUP_ID}
               artifactId: {ARTIFACT_ID}
               version: {bom_version}
               configuration: implementation
-              enforced: true"""))
+              enforced: true""")
+        )
 
-    recipes.append(textwrap.dedent(f"""\
+    recipes.append(
+        textwrap.dedent(f"""\
           - org.openrewrite.gradle.RemoveRedundantDependencyVersions:
               groupPattern: {GROUP_ID}*
-              onlyIfManagedVersionIs: GTE"""))
+              onlyIfManagedVersionIs: GTE""")
+    )
 
-    yml_content = textwrap.dedent("""\
+    yml_content = (
+        textwrap.dedent("""\
         ---
         type: specs.openrewrite.org/v1beta/recipe
         name: com.azure.UpgradeBom
         displayName: Upgrade azure-sdk-bom and remove redundant versions
         recipeList:
-    """) + "\n".join(recipes) + "\n"
+    """)
+        + "\n".join(recipes)
+        + "\n"
+    )
 
     with open(yml_path, "w", encoding="utf-8") as f:
         f.write(yml_content)
@@ -302,7 +301,7 @@ def _inject_gradle_rewrite_plugin(build_file: str) -> bool:
 
     Returns True if the plugin block was injected (and should be cleaned up).
     """
-    with open(build_file, "r", encoding="utf-8") as f:
+    with open(build_file, encoding="utf-8") as f:
         content = f.read()
 
     if "org.openrewrite.rewrite" in content:
@@ -332,24 +331,10 @@ def _inject_gradle_rewrite_plugin(build_file: str) -> bool:
         insert_pos = match.end()
         # content[insert_pos:] already starts with the newline that follows
         # `plugins {`, so don't add another one before the marker.
-        content = (
-            content[:insert_pos]
-            + "\n"
-            + GRADLE_PLUGIN_MARKER
-            + "\n"
-            + plugin_line
-            + content[insert_pos:]
-        )
+        content = content[:insert_pos] + "\n" + GRADLE_PLUGIN_MARKER + "\n" + plugin_line + content[insert_pos:]
     else:
         # No plugins block — prepend one
-        content = (
-            "plugins {\n"
-            + GRADLE_PLUGIN_MARKER
-            + "\n"
-            + plugin_line
-            + "\n}\n\n"
-            + content
-        )
+        content = "plugins {\n" + GRADLE_PLUGIN_MARKER + "\n" + plugin_line + "\n}\n\n" + content
 
     content += GRADLE_PLUGIN_MARKER + "\n"
     content += rewrite_block_kt if kotlin else rewrite_block_groovy
@@ -362,7 +347,7 @@ def _inject_gradle_rewrite_plugin(build_file: str) -> bool:
 
 def _remove_gradle_rewrite_plugin(build_file: str) -> None:
     """Remove the temporarily injected OpenRewrite plugin and config blocks."""
-    with open(build_file, "r", encoding="utf-8") as f:
+    with open(build_file, encoding="utf-8") as f:
         lines = f.readlines()
 
     cleaned: list[str] = []
@@ -393,7 +378,7 @@ def _remove_gradle_rewrite_plugin(build_file: str) -> None:
 def _run_gradle_openrewrite(gradle_cmd: str, project_dir: str) -> int:
     cmd = [gradle_cmd, "rewriteRun"]
     print(f"[upgrade_bom] Running: {' '.join(cmd)}")
-    return subprocess.run(cmd, cwd=project_dir).returncode
+    return subprocess.run(cmd, cwd=project_dir, check=False).returncode
 
 
 def _handle_gradle(project_dir: str, bom_version: str, gradle_cmd: str | None) -> int:
@@ -435,6 +420,7 @@ def _handle_gradle(project_dir: str, bom_version: str, gradle_cmd: str | None) -
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(

@@ -18,7 +18,7 @@ type: project
 
 ### Sessao anterior (V14)
 - P2 Higiene: ChromaDB removido do tracking (-734MB), 3x 0309.mp4 (-57MB)
-- .gitignore, .cursorules, .clauderules atualizados
+- .gitignore, .cursorules, .cerebrorules atualizados
 - npm uninstall html2canvas, jspdf, zustand
 - Sincronizacao global: 86 obsoletos removidos, 65 novos adicionados, 161 atualizados
 

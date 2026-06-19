@@ -1,3 +1,0 @@
-{
-  "content": "[{\"type\":\"text\",\"content\":\"Context: You are given multiple groups of tools that have been clustered together based on semantic similarity. Your task is to provide a descriptive name and summary for each group that accurately reflects the common functionality and purpose of the tools within that group.\\n\\nFor each group, analyze the tools and determine what they have in common, what domain or functionality they serve, and how they might be used together. Create a concise but descriptive name and a comprehensive summary for each group.\"}]"
-}

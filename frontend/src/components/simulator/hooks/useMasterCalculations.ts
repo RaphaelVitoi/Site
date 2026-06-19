@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { computeQuantumMetrics, type PerspectivaResult } from '@/lib/perspectiva';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -13,9 +13,9 @@ interface UseMasterCalculationsParams {
 }
 
 /**
- * IDENTITY: Hook de Cálculos Mestre (SOTA v4.6)
+ * IDENTITY: Hook de CÃ¡lculos Mestre (SOTA v7.0 GOLD)
  * PATH: src/components/simulator/hooks/useMasterCalculations.ts
- * ROLE: Orquestra Web Workers de Equity e sincronização Bayesiana Nexus.
+ * ROLE: Orquestra Web Workers de Equity e sincronizaÃ§Ã£o Bayesiana Nexus.
  */
 export function useMasterCalculations({
 	scenario,
@@ -33,23 +33,35 @@ export function useMasterCalculations({
 	const equityWorkerRef = useRef<Worker | null>(null);
 
 	useEffect(() => {
-		// SOTA FIX: Instanciação estrita via module para o WebWorker.
-		// O path é relativo à pasta hooks, então subimos uma pasta para workers.
+		// SOTA FIX: InstanciaÃ§Ã£o estrita via module para o WebWorker.
+		// O path Ã© relativo Ã  pasta hooks, entÃ£o subimos uma pasta para workers.
 		const worker = new Worker(new URL('../workers/equity.worker.ts', import.meta.url), {
 			type: 'module',
 		});
 
-		worker.onmessage = (e: MessageEvent) => {
-			if (e.data.error) {
-				console.warn('[SotaEcosystem] Entropia WASM:', e.data.error);
+		worker.onmessage = (e: MessageEvent<{ equity?: number; error?: string; id: number }>) => {
+			if (e.data.error || e.data.equity === undefined) {
+				console.warn('[SotaEcosystem] Entropia WASM:', e.data.error || 'Missing equity in payload');
 				setNativeRangeMetric((prev) => ({ ...prev, isCalculating: false }));
 			} else {
 				setNativeRangeMetric({ equity: e.data.equity, isCalculating: false });
 			}
 		};
 		equityWorkerRef.current = worker;
+
+		// SOTA FIX: Acionando o Motor Fantasma
+		// O worker precisa ser alimentado inicialmente para sair da trava de 50%.
+		if (Array.isArray(scenario.stacks) && scenario.stacks.length > 0) {
+			setNativeRangeMetric((prev) => ({ ...prev, isCalculating: true }));
+			worker.postMessage({
+				heroRange: 'random',
+				villainRange: 'random',
+				board: ''
+			});
+		}
+
 		return () => worker.terminate();
-	}, []);
+	}, [scenario.stacks]);
 
 	// SOTA v6: Sincronizacao da Mente Bayesiana via Nexus Proxy
 	useEffect(() => {
@@ -90,7 +102,7 @@ export function useMasterCalculations({
 			return computeQuantumMetrics(quantumPerspectiva);
 		} catch (e) {
 			console.warn(
-				'[SOTA] Fricção evitada: Motor quântico aguardando simetria topológica (Hidratação Pendente).',
+				'[SOTA] FricÃ§Ã£o evitada: Motor quÃ¢ntico aguardando simetria topolÃ³gica (HidrataÃ§Ã£o Pendente).',
 				e,
 			);
 			return null;
@@ -104,3 +116,4 @@ export function useMasterCalculations({
 		setNativeRangeMetric,
 	};
 }
+
