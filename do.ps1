@@ -773,5 +773,5 @@ if ($Description) {
 }
 
 if ($PSBoundParameters.Count -eq 0) {
-    Get-Help -Full $MyInvocation.MyCommand.Name
+    Get-Help -Full $PSCommandPath
 }

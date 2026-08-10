@@ -68,6 +68,7 @@ NEXUS_SOTA_BACKUP_*/
 .env.production
 .env.development
 _env.ps1
+frontend/.env
 frontend/.env.local
 prisma/.env
 

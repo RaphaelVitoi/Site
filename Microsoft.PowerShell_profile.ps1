@@ -1,3 +1,6 @@
+# === START SYSTEM CONSTRAINTS & STABILITY ===
+$env:POWERSHELL_UPDATECHECK = 'Off'
+# === END SYSTEM CONSTRAINTS & STABILITY ===
 
 # === START NEXUS SYSTEM ENVIRONMENT ===
 $Global:NexusProjectRoot = "C:\users\rapha\.gemini\Site"
@@ -11,6 +14,8 @@ function Invoke-Nexus {
     & "$Global:NexusProjectRoot\do.ps1" @args
 }
 Set-Alias nexus Invoke-Nexus
+Set-Alias sota Invoke-Nexus
+
 
 # O Centro de Comando (Diagnostico e Manutencao)
 function Invoke-NexusCli {

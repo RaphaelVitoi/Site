@@ -69,7 +69,8 @@
             "**/__pycache__/**": true,
             "**/dist/**": true,
             "**/build/**": true,
-            "**/wasm-equity/target/**": true
+            "**/wasm-equity/target/**": true,
+            "**/reports/**": true
         },
         "files.exclude": {
             "**/.git": true,
@@ -79,7 +80,8 @@
             "**/.next": true,
             "**/.turbo": true,
             "**/dist": true,
-            "**/build": true
+            "**/build": true,
+            "**/reports": true
         },
         // ── TERMINAL SOTA ───────────────────────────────────────────
         "terminal.integrated.defaultProfile.windows": "Gemini-SOTA",
@@ -101,6 +103,9 @@
             "pyproject.toml": "uv.lock, requirements.txt, .pylintrc, .ruff_cache",
             "next.config.js": "next-env.d.ts, postcss.config.js, tailwind.config.js",
             ".env": ".env.*, _env.ps1"
+        },
+        "[jsonc]": {
+            "editor.defaultFormatter": "vscode.json-language-features"
         }
     }
 }
