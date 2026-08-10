@@ -1,0 +1,25 @@
+{
+  "rustc": 7232790203559492684,
+  "features": "[\"default\", \"std\", \"unsafe-eval\"]",
+  "declared_features": "[\"default\", \"futures-core-03-stream\", \"std\", \"unsafe-eval\"]",
+  "target": 4913466754190795764,
+  "profile": 13180848661409974975,
+  "path": 3174776560068705469,
+  "deps": [
+    [5855319743879205494, "once_cell", false, 856633591684013642],
+    [5898568623609459682, "futures_util", false, 2425455039733495897],
+    [7667230146095136825, "cfg_if", false, 11353570003497239509],
+    [14242299569946004781, "wasm_bindgen", false, 17222755091276679968]
+  ],
+  "local": [
+    {
+      "CheckDepInfo": {
+        "dep_info": "wasm32-unknown-unknown\\release\\.fingerprint\\js-sys-b40f2d4fe4e5abee\\dep-lib-js_sys",
+        "checksum": false
+      }
+    }
+  ],
+  "rustflags": [],
+  "config": 8247474407144887393,
+  "compile_kind": 14682669768258224367
+}

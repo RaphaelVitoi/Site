@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pylint: disable=import-outside-toplevel, invalid-name, too-many-lines
 """
 NEXUS ORCHESTRATOR - Membrana Cognitiva SOTA (God Mode W3)
 Versao: v7.0 GOLD (Typer, Async, Zero I/O Friccao)
@@ -275,6 +276,27 @@ async def show_status():
         await qm.close()
 
 
+@app.command("autonomy")
+@coro
+async def set_autonomy(
+    mode: str = typer.Argument(..., help="Nivel de autonomia: stop, default, partial, full"),
+):
+    """Define o nivel de autonomia do ecossistema."""
+    if mode not in ["stop", "default", "partial", "full", "sandbox"]:
+        console.print(f"[bold red]Modo de autonomia invalido: {mode}[/]")
+        raise typer.Exit(1)
+
+    qm = QueueManager()
+    try:
+        await qm.set_system_state("autonomy_mode", mode)
+        console.print(f"[bold green]Autonomia definida para: {mode}[/]")
+    except Exception as e:
+        console.print(f"[bold red]Erro ao definir autonomia no DAL: {e}[/]")
+    finally:
+        await qm.close()
+
+
+
 VRAM_INFO_CACHE = {"nvidia": False, "amd_native": False, "amd_rocm": None}
 
 try:
@@ -546,23 +568,23 @@ def _get_key() -> str | None:
 
 def _execute_shortcut(key: str):
     cmd_map = {
-        "1": ["uv", "run", "nexus", "ops", "worker", "-f"],
-        "2": ["uv", "run", "nexus", "ops", "watch"],
-        "3": ["uv", "run", "nexus", "ops", "sanitize"],
-        "4": ["uv", "run", "nexus", "ops", "quality-gate"],
-        "5": ["uv", "run", "nexus", "agent", "handoff"],
-        "6": ["uv", "run", "nexus", "agent", "route", "Teste de roteamento do dashboard"],
-        "7": ["uv", "run", "nexus", "stats", "daily"],
-        "8": ["uv", "run", "nexus", "stats", "historian"],
-        "9": ["uv", "run", "nexus", "db", "audit-dag"],
-        "0": ["uv", "run", "nexus", "db", "purge-orphans"],
-        "c": ["uv", "run", "nexus", "db", "clear-pending", "--confirm"],
-        "f": ["uv", "run", "nexus", "db", "clear-failed", "--confirm"],
-        "v": ["uv", "run", "nexus", "db", "vacuum"],
-        "r": ["uv", "run", "nexus", "ops", "optimize-ram"],
-        "m": ["uv", "run", "nexus", "ops", "maintenance"],
-        "g": ["uv", "run", "nexus", "ops", "start-gemma", "-f"],
-        "i": ["uv", "run", "nexus", "ops", "chat-gemma"],
+        "1": [sys.executable, __file__, "ops", "worker", "-f"],
+        "2": [sys.executable, __file__, "ops", "watch"],
+        "3": [sys.executable, __file__, "ops", "sanitize"],
+        "4": [sys.executable, __file__, "ops", "quality-gate"],
+        "5": [sys.executable, __file__, "agent", "handoff"],
+        "6": [sys.executable, __file__, "agent", "route", "Teste de roteamento do dashboard"],
+        "7": [sys.executable, __file__, "stats", "daily"],
+        "8": [sys.executable, __file__, "stats", "historian"],
+        "9": [sys.executable, __file__, "db", "audit-dag"],
+        "0": [sys.executable, __file__, "db", "purge-orphans"],
+        "c": [sys.executable, __file__, "db", "clear-pending", "--confirm"],
+        "f": [sys.executable, __file__, "db", "clear-failed", "--confirm"],
+        "v": [sys.executable, __file__, "db", "vacuum"],
+        "r": [sys.executable, __file__, "ops", "optimize-ram"],
+        "m": [sys.executable, __file__, "ops", "maintenance"],
+        "g": [sys.executable, __file__, "ops", "start-gemma", "-f"],
+        "i": [sys.executable, __file__, "ops", "chat-gemma"],
     }
     if key in cmd_map:
         console.clear()
@@ -1592,7 +1614,7 @@ def test_routing(
     try:
         import task_executor
 
-        agent, meta = task_executor._intelligent_route_task(description)
+        agent, meta = task_executor.intelligent_route_task(description)
         console.print(json.dumps({"agent": agent, "metadata": meta}, indent=2))
     except Exception as e:
         logger.exception("Falha ao analisar rota")

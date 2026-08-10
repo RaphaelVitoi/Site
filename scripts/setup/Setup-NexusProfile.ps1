@@ -307,6 +307,7 @@ Set-Alias -Name dashboard -Value nexus-cli
 Set-Alias -Name hub -Value nexus-cli
 Set-Alias -Name vitoi_dashboard -Value nexus-cli
 Set-Alias -Name gemini-cli -Value nexus-cli
+Set-Alias -Name sota -Value nexus
 
 # --- Substituição de Aliases Nativos (Fricção Zero) ---
 Remove-Item Alias:gc -Force -ErrorAction SilentlyContinue
@@ -319,7 +320,20 @@ function gl { git log --oneline -n 10 @args }
 
 $FinalProfileContent = $Template.Replace('__PROJECT_ROOT__', $ProjectRoot)
 
-# Salva no arquivo
+# Salva no arquivo principal do PROFILE
 Set-Content -Path $ProfilePath -Value $FinalProfileContent -Encoding UTF8
-
 Write-Host "[OK] Ecossistema Nexus ancorado em: $ProfilePath" -ForegroundColor Green
+
+# Salva no arquivo alternativo (garante suporte a Windows PowerShell E PowerShell 7 Core)
+$AltProfilePath = if ($ProfilePath -match 'WindowsPowerShell') {
+    $ProfilePath -replace 'WindowsPowerShell', 'PowerShell'
+} else {
+    $ProfilePath -replace 'PowerShell', 'WindowsPowerShell'
+}
+$AltProfileDir = Split-Path $AltProfilePath
+if (-not (Test-Path -LiteralPath $AltProfileDir)) {
+    New-Item -ItemType Directory -Path $AltProfileDir -Force | Out-Null
+}
+Set-Content -Path $AltProfilePath -Value $FinalProfileContent -Encoding UTF8
+Write-Host "[OK] Ecossistema Nexus ancorado no profile alternativo: $AltProfilePath" -ForegroundColor Green
+
