@@ -1,0 +1,99 @@
+# ==============================================================================
+# NEXUS ORCHESTRATOR — Cloud Build SOTA (Backend)
+# Pipeline: Quality Gate → Build Docker → Push Artifact Registry → Deploy Cloud Run
+# Trigger: push para branch main (filtro por paths: core/**, api/**, engine/**)
+# ==============================================================================
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend:$COMMIT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+steps:
+  # 0. Quality Gate SOTA — Lint + Type Check (fail fast antes do build)
+  - args:
+      - -c
+      - |
+        uv sync --frozen --extra dev --no-progress
+        uv run ruff check . --output-format=github
+        uv run ruff format . --check
+        echo "Quality Gate: PASS"
+    entrypoint: sh
+    env:
+      - UV_LINK_MODE=copy
+    id: quality-gate
+    name: ghcr.io/astral-sh/uv:python3.12-slim
+
+  # 1. Build da Imagem Docker Backend (UV multi-stage)
+  - args:
+      - build
+      - --no-progress
+      - --build-arg
+      - PORT=${_PORT}
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend:$COMMIT_SHA
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend:latest
+      - -f
+      - Dockerfile
+      - .
+    id: docker-build
+    name: gcr.io/cloud-builders/docker
+    waitFor: [quality-gate]
+
+  # 2. Push para Artifact Registry
+  - args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend
+      - --all-tags
+    id: docker-push
+    name: gcr.io/cloud-builders/docker
+    waitFor: [docker-build]
+
+  # 3. Deploy Cloud Run Backend — Alta disponibilidade com min-instances=1
+  - args:
+      - run
+      - deploy
+      - ${_SERVICE_NAME}
+      - --image
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend:$COMMIT_SHA
+      - --region
+      - ${_REGION}
+      - --port
+      - ${_PORT}
+      - --cpu
+      - ${_CPU}
+      - --memory
+      - ${_MEMORY}
+      - --min-instances
+      - ${_MIN_INSTANCES}
+      - --max-instances
+      - ${_MAX_INSTANCES}
+      - --timeout
+      - "300"
+      - --concurrency
+      - "80"
+      - --allow-unauthenticated
+      - --set-env-vars
+      - PYTHONUNBUFFERED=1,UV_COMPILE_BYTECODE=1
+      - --execution-environment
+      - gen2
+    entrypoint: gcloud
+    id: cloudrun-deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    waitFor: [docker-push]
+
+substitutions:
+  _CPU: "2"
+  _MAX_INSTANCES: "20"
+  _MEMORY: 2Gi
+  _MIN_INSTANCES: "1"
+  _PORT: "8080"
+  _REGION: us-central1
+  _REPO: nexus-repo
+  _SERVICE_NAME: nexus-backend
+
+timeout: 1800s

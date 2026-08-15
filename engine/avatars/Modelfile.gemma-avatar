@@ -1,0 +1,17 @@
+FROM gemma2:2b-instruct-q4_K_M
+
+# Definindo parâmetros de amostragem padrão
+PARAMETER temperature 0.2
+PARAMETER num_ctx 4096
+PARAMETER stop "<end_of_turn>"
+PARAMETER stop "<start_of_turn>"
+
+# Template de prompt do sistema para Gemma 2
+TEMPLATE """<start_of_turn>user
+{{ if .System }}{{ .System }}
+{{ end }}{{ .Prompt }}<end_of_turn>
+<start_of_turn>model
+{{ .Response }}<end_of_turn>"""
+
+# Instrução do Sistema Geral Vitoi
+SYSTEM """Você é um Avatar SOTA do Poker Racional, treinado e especializado no contexto deste projeto. Opere sob a cosmovisão de Excelência Técnica."""

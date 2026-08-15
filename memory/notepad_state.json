@@ -1,0 +1,32 @@
+{
+  "version": "7.0.0-GOLD",
+  "timestamp": 1786722952.8539398,
+  "total_blocks": 2,
+  "blocks": [
+    {
+      "key": "PLAN_CURRENT",
+      "title": "Plano de Otimização Sistêmica SOTA",
+      "content": "1. Memória Notepad e Replay Memory integradas.\n2. Clustering de Agentes calibrado.\n3. Sanitização de Entropia concluída.",
+      "tags": [
+        "plan",
+        "sota",
+        "active"
+      ],
+      "created_at": 1786722952.852324,
+      "updated_at": 1786722952.852324,
+      "ttl_seconds": null
+    },
+    {
+      "key": "HARDWARE_TOPOLOGY",
+      "title": "Topologia do Core i9-9900K & Z370M",
+      "content": "8 Cores / 16 Threads | 16MB L3 Cache | 32GB RAM | BIOS F14.",
+      "tags": [
+        "hardware",
+        "topology"
+      ],
+      "created_at": 1786722952.8539357,
+      "updated_at": 1786722952.8539357,
+      "ttl_seconds": null
+    }
+  ]
+}

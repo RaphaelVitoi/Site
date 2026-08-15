@@ -1,0 +1,95 @@
+version: 1
+
+authority:
+  doctrine: governance/KERNEL.md
+  policy: governance/autonomy.yaml
+  environment: governance/environment.md
+  runtime_role: enforcement_only
+  host_role: adapter_only
+
+modes:
+  stop:
+    allow_native_commands: false
+    allow_file_writes: false
+    deny_state_changing_commands: true
+  default:
+    allow_native_commands: false
+    allow_file_writes: true
+    deny_state_changing_commands: true
+  partial:
+    allow_native_commands: true
+    allow_file_writes: true
+    deny_state_changing_commands: true
+  sandbox:
+    allow_native_commands: true
+    allow_file_writes: true
+    deny_state_changing_commands: true
+  full:
+    allow_native_commands: true
+    allow_file_writes: true
+    deny_state_changing_commands: false
+
+legacy_mode_map:
+  off: stop
+
+tiers:
+  tier_0: human_owner
+  tier_1: primary_orchestrator
+  tier_2: elevated_agents
+  tier_3: partial_agents
+
+privileged_agent_classes:
+  - primary_orchestrator
+  - elevated_agents
+
+protected_paths:
+  - .git
+  - .venv
+  - governance
+  - task_executor.py
+  - do.ps1
+  - _env.ps1
+  - .env
+  - scripts
+
+command_policies:
+  forbidden_tokens:
+    - rm -rf /
+    - del /s c:\
+    - diskpart
+    - format 
+    - mkfs
+    - vssadmin
+  shell_chaining_tokens:
+    - ";"
+    - "|"
+    - "&&"
+    - "&"
+    - "$"
+    - "`"
+    - ">"
+    - "<"
+  state_changing_commands:
+    - npm install
+    - npm i
+    - pip install
+    - git reset
+    - git push
+    - git clone
+    - yarn add
+    - pnpm add
+
+approval_gates:
+  structural_change: explicit_human_approval
+  destructive_change: explicit_human_approval
+  protected_path_write: explicit_human_approval
+  privileged_command: explicit_human_approval
+
+write_rules:
+  governance_kernel_mutation_requires_approval: true
+  runtime_must_consume_structured_policy: true
+  host_files_must_not_define_canonical_governance: true
+
+fallback:
+  mode: stop
+  deny_on_policy_load_failure: true
