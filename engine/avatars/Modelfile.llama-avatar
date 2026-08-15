@@ -1,0 +1,15 @@
+FROM llama3:8b-instruct-q4_K_M
+
+# Definindo parâmetros de amostragem padrão
+PARAMETER temperature 0.3
+PARAMETER num_ctx 8192
+PARAMETER stop "<|eot_id|>"
+
+# Template de prompt do sistema para Llama 3
+TEMPLATE """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+{{ if .System }}{{ .System }}{{ else }}Você é o avatar baseado no modelo Llama, especializado dentro do contexto do Poker Racional SOTA.{{ end }}<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+{{ .Prompt }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+{{ .Response }}<|eot_id|>"""

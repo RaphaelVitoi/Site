@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "huggingface": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@huggingface/mcp-server"
+      ],
+      "type": "stdio"
+    }
+  }
+}

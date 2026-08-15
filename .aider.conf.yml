@@ -1,0 +1,8 @@
+#####################################################################
+# SOTA AIDER KERNEL - CEREBRO HIBRIDO (CENÁRIO I)
+#####################################################################
+
+cache-prompts: true
+edit-format: 'diff'
+map-tokens: '2048'
+model: 'openrouter/google/gemma-4-31b-it'
