@@ -1,7 +1,7 @@
 # ==============================================================================
 # NEXUS ORCHESTRATOR — requirements.txt (Runtime Only)
 # Fonte canônica: pyproject.toml  |  Lock file: uv.lock
-# Sincronizado para SOTA v6.2.1 GOLD
+# Sincronizado para SOTA v7.0 GOLD
 # ==============================================================================
 
 # ── NUCLEO ASSINCRONO ─────────────────────────────────────────────────────────
@@ -43,18 +43,20 @@ moviepy>=2.2.0
 opencv-python-headless>=4.13.0
 
 # ── UTILITARIOS ──────────────────────────────────────────────────────────────
-regex>=2024.11.6
-requests>=2.32.0
+regex>=2026.5.0
+requests>=2.34.0
 PyYAML>=6.0.2
 tqdm>=4.67.0
-rich>=13.9.0
+rich>=15.0.0
 python-dateutil>=2.9.0
-tenacity>=9.0.0
+tenacity>=9.1.0
 
 # ── FILESYSTEM & CLOUD ───────────────────────────────────────────────────────
 watchdog>=6.0.0
-watchfiles>=1.0.0
-cloudpathlib>=0.20.0
+watchfiles>=1.2.0
+cloudpathlib>=0.24.0
 
 # ── INFRA & MONITORAMENTO ────────────────────────────────────────────────────
-psutil>=6.1.0
+psutil>=7.2.0
+loguru>=0.7.3
+typer>=0.25.1

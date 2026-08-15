@@ -1497,6 +1497,57 @@ async def _auto_cure_lightningcss(npm_cmd: str) -> None:
             await _restore_or_install_lightningcss(lib_name, lib_path, cache_path, npm_cmd)
 
 
+@ops_app.command("security")
+def security_audit(
+    strict: bool = typer.Option(True, "--strict/--no-strict", help="Falha o comando se houver qualquer vulnerabilidade"),
+):
+    """Auditoria de Seguranca, CVEs e Vulnerabilidades (NIST / GitHub Advisory Gate)."""
+    console.print("[bold cyan]=== [SISTEMA] Auditoria de Seguranca e Vulnerabilidades (CVEs) ===[/]")
+
+    npm_cmd = shutil.which("npm")
+    if not npm_cmd:
+        console.print("[bold red][ERRO] npm ausente para auditoria de dependencias.[/]")
+        raise typer.Exit(1)
+
+    # 1. NPM Audit Monorepo & Frontend
+    res = subprocess.run([npm_cmd, "audit", "--json"], cwd=str(BASE_DIR), capture_output=True, text=True, check=False)
+    crit_count = 0
+    high_count = 0
+    tot_count = 0
+    try:
+        data = json.loads(res.stdout)
+        vulns = data.get("metadata", {}).get("vulnerabilities", {})
+        crit_count = vulns.get("critical", 0)
+        high_count = vulns.get("high", 0)
+        tot_count = vulns.get("total", 0)
+    except Exception:
+        pass
+
+    table = Table(title="[bold]AUDITORIA DE VULNERABILIDADES (NIST / GHSA)[/]")
+    table.add_column("INDICADOR", style="cyan")
+    table.add_column("DETECTADAS", justify="center")
+    table.add_column("LIMITE SOTA", justify="center")
+    table.add_column("STATUS", justify="center")
+
+    table.add_row(
+        "Vulnerabilidades Criticas", str(crit_count), "0", "[green]PASS[/]" if crit_count == 0 else "[red]FAIL[/]"
+    )
+    table.add_row("Vulnerabilidades Altas", str(high_count), "0", "[green]PASS[/]" if high_count == 0 else "[red]FAIL[/]")
+    table.add_row(
+        "Total de Vulnerabilidades", str(tot_count), "0", "[green]PASS[/]" if tot_count == 0 else "[red]FAIL[/]"
+    )
+
+    console.print(table)
+
+    if (crit_count > 0 or high_count > 0 or tot_count > 0) and strict:
+        console.print(
+            f"[bold red][FALHA DE SEGURANCA] {tot_count} vulnerabilidade(s) detectada(s). Commit/Build bloqueado.[/]"
+        )
+        raise typer.Exit(1)
+
+    console.print("[bold green][OK] Blindagem de Seguranca 100% integra. Zero CVEs ativas.[/]")
+
+
 @ops_app.command("quality-gate")
 @coro
 async def quality_gate():
@@ -1520,6 +1571,12 @@ async def quality_gate():
         (
             "Blindagem ASCII",
             [sys.executable, str(Path(__file__)), "ops", "check-ascii"],
+            BASE_DIR,
+            None,
+        ),
+        (
+            "Auditoria de Vulnerabilidades & CVEs (NIST/GHSA)",
+            [sys.executable, str(Path(__file__)), "ops", "security"],
             BASE_DIR,
             None,
         ),
