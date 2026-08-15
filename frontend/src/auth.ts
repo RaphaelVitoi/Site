@@ -23,7 +23,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 	providers: [Discord, Google],
 	secret: getAuthSecret(),
 	callbacks: {
-		session({ session, user }) {
+		session({ session, user: _user }) {
 			return session;
 		},
 	},

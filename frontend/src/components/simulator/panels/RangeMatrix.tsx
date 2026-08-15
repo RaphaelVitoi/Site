@@ -8,7 +8,7 @@
  * BINDING: [src/lib/holdemEquities.ts, src/components/simulator/BubbleFactorMatrix.tsx]
  */
 
-import React, { useMemo, useState, useContext } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
 	computeRangeMatrixSummary,
 	evaluateHandDetail,
@@ -18,7 +18,6 @@ import {
 	type HandVerdict,
 	type ShoveProfile,
 } from '@/lib/holdemEquities';
-import { SotaMetricsContext } from '@/components/simulator/SotaContext';
 
 interface RangeMatrixProps {
 	ipRp: number;
@@ -32,16 +31,13 @@ type CellDisplayMode = 'MARGIN' | 'EQUITY' | 'STATUS';
 export default function RangeMatrix({
 	ipRp,
 	oopRp,
-	scenarioId = 'mtt-final-table',
+	scenarioId: _scenarioId = 'mtt-final-table',
 }: Readonly<RangeMatrixProps>) {
 	const [perspective, setPerspective] = useState<Perspective>('ip');
 	const [shoveProfile, setShoveProfile] = useState<ShoveProfile>('STANDARD_25');
 	const [displayMode, setDisplayMode] = useState<CellDisplayMode>('MARGIN');
 	const [selectedHand, setSelectedHand] = useState<string>('AKs');
 	const [hoveredHand, setHoveredHand] = useState<string | null>(null);
-
-	const metricsCtx = useContext(SotaMetricsContext);
-	const ci = metricsCtx?.apiQuantumMetrics?.ci ?? null;
 
 	const activeRp = perspective === 'ip' ? ipRp : oopRp;
 

@@ -105,7 +105,7 @@ export function useMasterCalculations({
 						setBayesianWinProb(Number((data.posterior_win_prob * 100).toFixed(1)));
 					}
 				}
-			} catch (e) {
+			} catch {
 				// Fallback síncrono local já está ativo
 			}
 		};
