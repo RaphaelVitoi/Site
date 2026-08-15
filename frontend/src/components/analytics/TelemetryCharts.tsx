@@ -4,7 +4,8 @@
  * IDENTITY: Telemetry & EV Loss Risk Zone Density Analytics v7.0 GOLD
  * PATH: src/components/analytics/TelemetryCharts.tsx
  * ROLE: Visualizar a densidade estocástica de perdas de EV, classificar decisões
- *       nas 4 zonas de risco ICM e correlacionar Posição (IP/OOP) com Stack Depth.
+ *       nas 4 zonas de risco ICM, correlacionar Posição (IP/OOP) com Stack Depth
+ *       e exportar relatórios analíticos completos (Markdown / JSON / Impressão).
  * AESTHETIC: SOTA Gold Standard (Visual Symmetry, Glassmorphism, Tabular Nums).
  */
 
@@ -64,6 +65,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 	const [viewMode, setViewMode] = useState<TelemetryViewMode>('HISTOGRAM');
 	const [stackFilter, setStackFilter] = useState<StackFilter>('ALL');
 	const [posFilter, setPosFilter] = useState<PositionFilter>('ALL_POS');
+	const [copiedFeedback, setCopiedFeedback] = useState<string | null>(null);
 
 	// Atribuição sintética determinística de stack depth e posição para amostras legadas
 	const enrichedData = useMemo(() => {
@@ -92,11 +94,9 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 	// Filtra os dados de acordo com a posição e profundidade de stack selecionadas
 	const filteredData = useMemo(() => {
 		return enrichedData.filter((d) => {
-			// Filtro de Posição
 			if (posFilter === 'IP' && d.position !== 'IP') return false;
 			if (posFilter === 'OOP' && d.position !== 'OOP') return false;
 
-			// Filtro de Stack Depth
 			const stack = d.stackDepthBb ?? 20;
 			if (stackFilter === 'SHALLOW' && stack >= 15) return false;
 			if (stackFilter === 'MID' && (stack < 15 || stack > 35)) return false;
@@ -127,6 +127,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 			position: 'IP' | 'OOP';
 			stackRange: 'SHALLOW' | 'MID' | 'DEEP';
 			title: string;
+			plainTitle: string;
 			subtitle: string;
 		}> = [
 			{
@@ -134,6 +135,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				position: 'IP',
 				stackRange: 'SHALLOW',
 				title: 'IP &bull; Shallow (< 15bb)',
+				plainTitle: 'IP • Shallow (< 15bb)',
 				subtitle: 'Steal, Push/Fold & All-in Calling',
 			},
 			{
@@ -141,6 +143,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				position: 'IP',
 				stackRange: 'MID',
 				title: 'IP &bull; Mid Stack (15-35bb)',
+				plainTitle: 'IP • Mid Stack (15-35bb)',
 				subtitle: 'Positional Reshove & Float 3-Bet',
 			},
 			{
@@ -148,6 +151,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				position: 'IP',
 				stackRange: 'DEEP',
 				title: 'IP &bull; Deep Stack (> 35bb)',
+				plainTitle: 'IP • Deep Stack (> 35bb)',
 				subtitle: 'Max Realization Edge & Multi-street',
 			},
 			{
@@ -155,6 +159,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				position: 'OOP',
 				stackRange: 'SHALLOW',
 				title: 'OOP &bull; Shallow (< 15bb)',
+				plainTitle: 'OOP • Shallow (< 15bb)',
 				subtitle: 'Blind Defense & SB Shove vs BTN',
 			},
 			{
@@ -162,6 +167,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				position: 'OOP',
 				stackRange: 'MID',
 				title: 'OOP &bull; Mid Stack (15-35bb)',
+				plainTitle: 'OOP • Mid Stack (15-35bb)',
 				subtitle: '3-Bet Polarization & Flat OOP',
 			},
 			{
@@ -169,6 +175,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				position: 'OOP',
 				stackRange: 'DEEP',
 				title: 'OOP &bull; Deep Stack (> 35bb)',
+				plainTitle: 'OOP • Deep Stack (> 35bb)',
 				subtitle: 'Max RIO Liability & Condensation',
 			},
 		];
@@ -214,7 +221,6 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 			};
 		});
 
-		// Identifica o quadrante com maior sangria de EV
 		const worstQuadrant = [...quadrants].sort((a, b) => b.totalLoss - a.totalLoss)[0];
 
 		return {
@@ -374,6 +380,111 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 		}
 	};
 
+	// Exportador 1: Markdown (.md)
+	const handleExportMarkdown = () => {
+		const timestamp = new Date().toISOString();
+		const formattedDate = new Date().toLocaleString('pt-BR');
+
+		const quadRows = quadrantMatrix.quadrants
+			.map(
+				(q) =>
+					`| **${q.plainTitle || q.title}** | ${q.count} | ${q.accuracy}% | -${q.meanLoss} bb | -${q.totalLoss} bb | ${q.severity} |`
+			)
+			.join('\n');
+
+		const zoneRows = analytics.zones
+			.map((z) => `| **${z.name}** | ${z.count} | ${z.pct}% | -${z.totalLoss} bb | ${z.desc} |`)
+			.join('\n');
+
+		const md = `# RELATÓRIO DE TELEMETRIA E DIAGNÓSTICO SOTA v7.0 GOLD
+> "A correção matemática, a elegância algorítmica e o rigor analítico são tratados como uma única e indissociável propriedade geométrica."
+
+- **Data de Emissão:** ${formattedDate}
+- **Acurácia GTO Global:** ${analytics.accuracy}%
+- **Perda Média de EV:** -${analytics.meanLoss} bb/decisão
+- **Pior Desvio Registrado:** -${analytics.maxLoss} bb
+- **Volume Amostrado no Filtro:** ${filteredData.length} mãos (de ${enrichedData.length} totais)
+- **Filtro Aplicado:** Posição: ${posFilter} | Stack: ${stackFilter}
+
+---
+
+## I. MATRIZ DE CORRELAÇÃO POSICIONAL (IP vs OOP × STACK DEPTH)
+
+| Quadrante Estratégico | Volume | Acurácia GTO | Perda Média | Perda Total | Severidade |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+${quadRows}
+
+---
+
+## II. CLASSIFICAÇÃO NAS 4 ZONAS DE RISCO ICM
+
+| Zona de Risco | Volume | Percentual | Perda Acumulada | Descrição do Impacto |
+| :--- | :--- | :--- | :--- | :--- |
+${zoneRows}
+
+---
+
+## III. DIAGNÓSTICO DE CAUSA RAIZ & DIRETRIZES PÓS-SESSÃO
+
+**Quadrante de Sangria Máxima:** ${quadrantMatrix.worstQuadrant?.plainTitle || quadrantMatrix.worstQuadrant?.title}
+- **Dano Financeiro:** -${quadrantMatrix.worstQuadrant?.totalLoss} bb acumulados (Média: -${quadrantMatrix.worstQuadrant?.meanLoss} bb/mão)
+- **Diagnóstico Teórico:** ${
+			quadrantMatrix.worstQuadrant?.position === 'OOP'
+				? 'Fora de posição, a incapacidade de realizar equidade associada ao Passivo Estrutural RIO e à barreira de eliminação do Bubble Factor amplificam os desvios de Nash.'
+				: 'Em posição, erros de super-call contra shoves polarizados corroem a vantagem de realização de equidade.'
+		}
+- **Vetor de Correção:** Calibrar a defesa estrita pela fórmula $ReqEq_{ICM} = \\frac{BF}{1 + BF}$ e evitar calls marginais em cenários de alta assimetria de ICM.
+
+---
+*Relatório gerado automaticamente pelo Ecossistema SOTA v7.0 GOLD para Raphael Vitoi.*
+`;
+
+		const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `relatorio_telemetria_sota_${timestamp.slice(0, 10)}.md`;
+		a.click();
+		URL.revokeObjectURL(url);
+
+		setCopiedFeedback('Markdown Baixado!');
+		setTimeout(() => setCopiedFeedback(null), 3000);
+	};
+
+	// Exportador 2: JSON Completo (.json)
+	const handleExportJson = () => {
+		const payload = {
+			timestamp: new Date().toISOString(),
+			summary: {
+				accuracy: analytics.accuracy,
+				meanLoss: analytics.meanLoss,
+				maxLoss: analytics.maxLoss,
+				totalDecisions: filteredData.length,
+				appliedFilter: {
+					position: posFilter,
+					stack: stackFilter,
+				},
+			},
+			quadrantMatrix: quadrantMatrix.quadrants,
+			riskZones: analytics.zones,
+			histogram: analytics.histogramData,
+			rawDecisions: filteredData,
+		};
+
+		const blob = new Blob([JSON.stringify(payload, null, 2)], {
+			type: 'application/json;charset=utf-8',
+		});
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `telemetry_data_sota_${new Date().toISOString().slice(0, 10)}.json`;
+		a.click();
+		URL.revokeObjectURL(url);
+
+		setCopiedFeedback('JSON Exportado!');
+		setTimeout(() => setCopiedFeedback(null), 3000);
+	};
+
 	return (
 		<div className="flex flex-col gap-6 w-full">
 			{/* Barra Superior: Filtros Combinados de Posição & Stack Depth */}
@@ -444,8 +555,8 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				</div>
 			</div>
 
-			{/* Barra de Métricas Globais & Alternador de Visualização */}
-			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+			{/* Barra de Métricas Globais, Alternador de Visualização & Botões de Exportação */}
+			<div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-white/5 pb-4">
 				<div className="flex items-center gap-6">
 					<div>
 						<span className="text-[0.6rem] font-mono uppercase tracking-widest text-text-muted block">
@@ -475,31 +586,64 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 					</div>
 				</div>
 
-				{/* Botões de Alternância de Visualização */}
-				<div className="flex rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1 shadow-inner">
-					{(
-						[
-							{ id: 'HISTOGRAM', label: 'Densidade (EV)' },
-							{ id: 'QUADRANTS', label: 'Quadrantes IP/OOP' },
-							{ id: 'ZONES', label: 'Zonas ICM' },
-							{ id: 'TIMELINE', label: 'Temporal' },
-						] as const
-					).map((tab) => (
+				{/* Grupo de Controles da Direita: Abas + Ações de Exportação */}
+				<div className="flex flex-wrap items-center gap-3">
+					{/* Alternador de Abas */}
+					<div className="flex rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1 shadow-inner">
+						{(
+							[
+								{ id: 'HISTOGRAM', label: 'Densidade (EV)' },
+								{ id: 'QUADRANTS', label: 'Quadrantes IP/OOP' },
+								{ id: 'ZONES', label: 'Zonas ICM' },
+								{ id: 'TIMELINE', label: 'Temporal' },
+							] as const
+						).map((tab) => (
+							<button
+								key={tab.id}
+								type="button"
+								onClick={() => setViewMode(tab.id)}
+								className={`px-3 py-1.5 text-[0.6rem] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+									viewMode === tab.id
+										? 'bg-accent-indigo/20 text-accent-indigo-light border border-accent-indigo/40 shadow-lg shadow-indigo-500/10'
+										: 'text-text-muted hover:text-white border border-transparent'
+								}`}
+							>
+								{tab.label}
+							</button>
+						))}
+					</div>
+
+					{/* Botões de Ação de Exportação SOTA */}
+					<div className="flex items-center gap-2">
 						<button
-							key={tab.id}
 							type="button"
-							onClick={() => setViewMode(tab.id)}
-							className={`px-3 py-1.5 text-[0.6rem] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
-								viewMode === tab.id
-									? 'bg-accent-indigo/20 text-accent-indigo-light border border-accent-indigo/40 shadow-lg shadow-indigo-500/10'
-									: 'text-text-muted hover:text-white border border-transparent'
-							}`}
+							onClick={handleExportMarkdown}
+							className="px-3 py-1.5 rounded-xl text-[0.6rem] font-black uppercase tracking-wider bg-accent-emerald/15 hover:bg-accent-emerald/25 text-accent-emerald border border-accent-emerald/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+							title="Baixar Relatório Completo em Markdown"
 						>
-							{tab.label}
+							<i className="fa-brands fa-markdown text-xs" />
+							<span>Exportar MD</span>
 						</button>
-					))}
+
+						<button
+							type="button"
+							onClick={handleExportJson}
+							className="px-3 py-1.5 rounded-xl text-[0.6rem] font-black uppercase tracking-wider bg-accent-indigo/15 hover:bg-accent-indigo/25 text-accent-indigo-light border border-accent-indigo/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+							title="Exportar Dados Brutos em JSON"
+						>
+							<i className="fa-solid fa-code text-xs" />
+							<span>JSON</span>
+						</button>
+					</div>
 				</div>
 			</div>
+
+			{/* Toast de Feedback de Cópia / Download */}
+			{copiedFeedback && (
+				<div className="p-2.5 rounded-xl bg-accent-emerald/20 border border-accent-emerald/40 text-emerald-300 text-[0.65rem] font-mono font-bold text-center animate-fade-in">
+					{copiedFeedback}
+				</div>
+			)}
 
 			{/* Modo 1: Histograma de Densidade de Perda de EV */}
 			{viewMode === 'HISTOGRAM' && (
