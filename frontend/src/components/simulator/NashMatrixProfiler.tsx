@@ -21,16 +21,26 @@ interface MetricFrame {
 	wasmExecutionMs: number;
 }
 
-export const NashMatrixProfiler: React.FC = () => {
+export interface NashMatrixProfilerProps {
+	injectedIpRp?: number;
+	injectedOopRp?: number;
+	matchupLabel?: string;
+}
+
+export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
+	injectedIpRp,
+	injectedOopRp,
+	matchupLabel,
+}) => {
 	const workerRef = useRef<Worker | null>(null);
 	const [metrics, setMetrics] = useState<MetricFrame[]>([]);
 	const [renderPhase, setRenderPhase] = useState<string>('idle');
-	const [ipRp, setIpRp] = useState<number>(35.0);
-	const [oopRp, setOopRp] = useState<number>(65.0);
+	const [ipRp, setIpRp] = useState<number>(injectedIpRp ?? 35.0);
+	const [oopRp, setOopRp] = useState<number>(injectedOopRp ?? 65.0);
 	const [aggression, setAggression] = useState<number>(1.25);
 	const [activePreset, setActivePreset] = useState<string>('ft-3way-highstakes');
 	const [solution, setSolution] = useState<NashSolutionResult>(() =>
-		defaultNashSolver.solve(35.0, 65.0, 1.25)
+		defaultNashSolver.solve(injectedIpRp ?? 35.0, injectedOopRp ?? 65.0, 1.25)
 	);
 
 	useEffect(() => {
@@ -99,6 +109,14 @@ export const NashMatrixProfiler: React.FC = () => {
 		[]
 	);
 
+	// Efeito de injeção externa reativa da Matriz de Bubble Factor
+	useEffect(() => {
+		if (injectedIpRp !== undefined && injectedOopRp !== undefined) {
+			setActivePreset('');
+			recompute(injectedIpRp, injectedOopRp, aggression);
+		}
+	}, [injectedIpRp, injectedOopRp, aggression, recompute]);
+
 	const applyPreset = (preset: HighStakesPreset) => {
 		setActivePreset(preset.id);
 		recompute(preset.ipRp, preset.oopRp, preset.aggression);
@@ -124,7 +142,7 @@ export const NashMatrixProfiler: React.FC = () => {
 				<div>
 					<div className="flex items-center gap-3">
 						<h2 className="text-cyan-400 text-xl font-bold tracking-tight">
-							SOTA High-Stakes Nash & Risk Distortion Matrix
+							SOTA High-Stakes Nash &amp; Risk Distortion Matrix
 						</h2>
 						<span
 							className={`px-2.5 py-0.5 text-xs font-bold border rounded-full ${getZoneBadgeColor(
@@ -133,6 +151,11 @@ export const NashMatrixProfiler: React.FC = () => {
 						>
 							{solution.zoneCategory}
 						</span>
+						{matchupLabel && (
+							<span className="px-2 py-0.5 text-[11px] font-bold border rounded bg-indigo-950 text-indigo-300 border-indigo-500/50">
+								⚡ Injetado da Matriz: {matchupLabel}
+							</span>
+						)}
 					</div>
 					<p className="text-xs text-slate-400 mt-1">
 						Calibrado para MTT High Stakes, Mesas Finais e Assimetrias Nucleares de ICM (0% a 80% RP)

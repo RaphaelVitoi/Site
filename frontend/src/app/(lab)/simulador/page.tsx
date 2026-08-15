@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ErrorBoundary } from '@/components/analytics/ErrorBoundary';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
@@ -21,6 +21,29 @@ const MasterSimulatorDynamic = dynamic(
 );
 
 export default function MotorPage() {
+	const [matchupSync, setMatchupSync] = useState<{
+		ipRp?: number;
+		oopRp?: number;
+		label?: string;
+	}>({
+		ipRp: 13.5,
+		oopRp: 31.8,
+		label: 'BTN (Aggressive CL) vs CO (Second Stack)',
+	});
+
+	const handleMatchupSelect = (
+		heroRp: number,
+		villainRp: number,
+		heroName: string,
+		villainName: string
+	) => {
+		setMatchupSync({
+			ipRp: heroRp,
+			oopRp: villainRp,
+			label: `${heroName} vs ${villainName}`,
+		});
+	};
+
 	return (
 		<div className="min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body pb-24">
 			<ContentPageHeader
@@ -31,10 +54,14 @@ export default function MotorPage() {
 			/>
 			<div className="sota-container mt-8 space-y-8">
 				<ErrorBoundary>
-					<BubbleFactorMatrix />
+					<BubbleFactorMatrix onSelectMatchup={handleMatchupSelect} />
 				</ErrorBoundary>
 				<ErrorBoundary>
-					<NashMatrixProfiler />
+					<NashMatrixProfiler
+						injectedIpRp={matchupSync.ipRp}
+						injectedOopRp={matchupSync.oopRp}
+						matchupLabel={matchupSync.label}
+					/>
 				</ErrorBoundary>
 				<ErrorBoundary>
 					<MasterSimulatorDynamic />
