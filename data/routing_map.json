@@ -1,10 +1,13 @@
 {
   "deep_thinking": [
+    "gemini-3.7-flash",
+    "gemini-3.1-pro",
     "gemini-2.5-flash",
     "gemini-2.5-pro",
     "deepseek/deepseek-r1:free"
   ],
   "fast_operations": [
+    "gemini-3.7-flash",
     "gemini-2.5-flash",
     "meta-llama/llama-3.1-8b-instruct"
   ],
@@ -29,11 +32,11 @@
     "@bibliotecario": "deep_thinking"
   },
   "routing_config": {
-    "last_updated": "2026-04-12",
-    "version": "1.3",
+    "last_updated": "2026-08-15",
+    "version": "2.0-SOTA-GOLD",
     "environment": "production",
     "routing_logic": "weighted_round_robin",
-    "fallback_model": "gemini-2.5-flash",
+    "fallback_model": "gemini-3.7-flash",
     "retry_limit": 3
   }
 }
