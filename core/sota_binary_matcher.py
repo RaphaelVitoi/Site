@@ -11,31 +11,31 @@ def sort_key(s: str) -> Tuple[int, str]:
     return (len(s), s)
 
 
-def binary_search_length_lex(haystack: List[str], needle: str, r: Optional[int] = None) -> int:
+def binary_search_length_lex(haystack: List[str], needle: str, high: Optional[int] = None) -> int:
     """
     Executa busca binária de alta precisão baseada em comprimento e ordem lexicográfica.
     """
-    l = 0
-    i = 0
-    r = len(haystack) if r is None else r
+    low = 0
+    mid = 0
+    high_idx = len(haystack) if high is None else high
     needle_len = len(needle)
 
-    while l < r:
-        i = (l + r) >> 1  # 1-cycle bitwise right shift
-        candidate = haystack[i]
+    while low < high_idx:
+        mid = (low + high_idx) >> 1  # 1-cycle bitwise right shift
+        candidate = haystack[mid]
         d = needle_len - len(candidate)
 
         if d == 0:
             if needle == candidate:
-                return i
+                return mid
             d = -1 if needle < candidate else 1
 
         if d < 0:
-            r = i
+            high_idx = mid
         else:
-            l = i + 1
+            low = mid + 1
 
-    return ~i
+    return ~mid
 
 
 def compute_domain_hierarchy(hostname: str) -> List[str]:

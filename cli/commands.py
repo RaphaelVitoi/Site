@@ -1340,4 +1340,3 @@ def run_cli(argv: list):
 def main():
     """Main CLI entrypoint for pyproject.toml scripts."""
     run_cli(sys.argv)
-
