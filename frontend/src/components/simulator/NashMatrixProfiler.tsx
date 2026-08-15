@@ -109,15 +109,21 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 		[]
 	);
 
-	// Efeito de injeção externa com guarda estrita contra loops de re-render
+	const lastInjectedRef = useRef<{ ip?: number; oop?: number }>({});
+
+	// Efeito de injeção externa com guarda estrita via Ref contra loops de re-render
 	useEffect(() => {
 		if (injectedIpRp !== undefined && injectedOopRp !== undefined) {
-			if (Math.abs(injectedIpRp - ipRp) > 1e-4 || Math.abs(injectedOopRp - oopRp) > 1e-4) {
+			if (
+				lastInjectedRef.current.ip !== injectedIpRp ||
+				lastInjectedRef.current.oop !== injectedOopRp
+			) {
+				lastInjectedRef.current = { ip: injectedIpRp, oop: injectedOopRp };
 				setActivePreset('');
 				recompute(injectedIpRp, injectedOopRp, aggression);
 			}
 		}
-	}, [injectedIpRp, injectedOopRp, aggression, ipRp, oopRp, recompute]);
+	}, [injectedIpRp, injectedOopRp, aggression, recompute]);
 
 	const applyPreset = (preset: HighStakesPreset) => {
 		setActivePreset(preset.id);
