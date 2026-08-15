@@ -13,14 +13,16 @@ export const metadata: Metadata = {
 export default async function AnalyticsPage() {
 	let events: Array<{ evLoss: number; isCorrect: boolean; createdAt: Date }> = [];
 	try {
-		const rawEvents = await prisma.telemetryEvent.findMany({
-			where: { userId: 'anonymous' },
-			orderBy: { createdAt: 'desc' },
-			take: 1000,
-		});
-		events = rawEvents;
+		if (prisma && typeof prisma.telemetryEvent?.findMany === 'function') {
+			const rawEvents = await prisma.telemetryEvent.findMany({
+				where: { userId: 'anonymous' },
+				orderBy: { createdAt: 'desc' },
+				take: 1000,
+			});
+			events = rawEvents || [];
+		}
 	} catch (error) {
-		console.error('[PANOPTICO] Falha na telemetria:', error);
+		console.warn('[PANOPTICO] Falha na telemetria remota (DB offline/unmigrated). Injetando baseline sintética:', error);
 	}
 
 	// Prepara os dados para o DashboardSOTA (initialData)

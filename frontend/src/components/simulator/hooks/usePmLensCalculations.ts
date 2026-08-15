@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import {
 	calculatePerspectivaVitoi,
 	type PerspectivaInput,
-	type PerspectivaResult,
 } from '@/lib/perspectiva';
 import type { NodelockConstraint, HeroPosition } from '@/components/simulator/engine/types';
 
@@ -47,85 +46,75 @@ export function usePmLensCalculations({
 	betSizing,
 	aggFactor = 1, // SOTA v7.0 GOLD Harmony
 }: PmLensCalculationsParams) {
-	const [asyncResults, setAsyncResults] = useState<Record<string, PerspectivaResult | null>>({});
-
-	const streetProgression = useMemo(() => {
+	const streetMetrics = useMemo(() => {
 		const basePot = Math.max(2.5, currentPot);
 		const normalizedSizing = Math.max(0.2, betSizing);
 		const firstBet = basePot * normalizedSizing;
 
+		let streetProgression: Array<{ name: string; potSize: number; cumulative: number }>;
+
 		if (activeNodelock?.type === 'block_bet') {
 			const flopPot = basePot * 3;
 			const flopCumulative = Math.abs(heroInvested) + firstBet;
-
 			const b20BetTurn = flopPot * activeNodelock.sizePct;
 			const turnPot = flopPot + b20BetTurn * 2;
 			const turnCumulative = flopCumulative + b20BetTurn;
-
 			const b20BetRiver = turnPot * activeNodelock.sizePct;
 			const riverPot = turnPot + b20BetRiver * 2;
 			const riverCumulative = turnCumulative + b20BetRiver;
 
-			return [
+			streetProgression = [
 				{ name: 'PRE', potSize: basePot, cumulative: Math.abs(heroInvested) },
 				{ name: 'FLOP', potSize: flopPot, cumulative: flopCumulative },
 				{ name: 'TURN', potSize: turnPot, cumulative: turnCumulative },
 				{ name: 'RIVER', potSize: riverPot, cumulative: riverCumulative },
 			];
+		} else {
+			streetProgression = [
+				{ name: 'PRE', potSize: basePot, cumulative: Math.abs(heroInvested) },
+				{
+					name: 'FLOP',
+					potSize: basePot + firstBet * 2,
+					cumulative: Math.abs(heroInvested) + firstBet,
+				},
+				{
+					name: 'TURN',
+					potSize: (basePot + firstBet * 2) * (1 + 2 * normalizedSizing),
+					cumulative:
+						Math.abs(heroInvested) + firstBet + (basePot + firstBet * 2) * normalizedSizing,
+				},
+				{
+					name: 'RIVER',
+					potSize:
+						(basePot + firstBet * 2) *
+						(1 + 2 * normalizedSizing) *
+						(1 + 2 * normalizedSizing),
+					cumulative:
+						Math.abs(heroInvested) +
+						firstBet +
+						(basePot + firstBet * 2) * normalizedSizing +
+						(basePot + firstBet * 2) * (1 + 2 * normalizedSizing) * normalizedSizing,
+				},
+			];
 		}
 
-		return [
-			{ name: 'PRE', potSize: basePot, cumulative: Math.abs(heroInvested) },
-			{
-				name: 'FLOP',
-				potSize: basePot + firstBet * 2,
-				cumulative: Math.abs(heroInvested) + firstBet,
-			},
-			{
-				name: 'TURN',
-				potSize: (basePot + firstBet * 2) * (1 + 2 * normalizedSizing),
-				cumulative:
-					Math.abs(heroInvested) + firstBet + (basePot + firstBet * 2) * normalizedSizing,
-			},
-			{
-				name: 'RIVER',
-				potSize:
-					(basePot + firstBet * 2) *
-					(1 + 2 * normalizedSizing) *
-					(1 + 2 * normalizedSizing),
-				cumulative:
-					Math.abs(heroInvested) +
-					firstBet +
-					(basePot + firstBet * 2) * normalizedSizing +
-					(basePot + firstBet * 2) * (1 + 2 * normalizedSizing) * normalizedSizing,
-			},
-		];
-	}, [heroInvested, currentPot, activeNodelock, betSizing]);
-
-	const handleIcmResult = useCallback((streetName: string, res: PerspectivaResult | null) => {
-		setAsyncResults((prev) => ({ ...prev, [streetName]: res }));
-	}, []);
-
-	useEffect(() => {
-		for (const street of streetProgression) {
+		return streetProgression.map((street, streetIdx) => {
 			let finalRealization = realizationFactor;
 			if (activeNodelock?.type === 'block_bet') {
 				finalRealization += 0.15;
 			}
 
-			const streetIdx = streetProgression.findIndex((s) => s.name === street.name);
 			const sunkCost =
 				streetIdx > 0
 					? (streetProgression[streetIdx - 1]?.cumulative ?? 0)
 					: Math.abs(heroInvested);
 
 			// SOTA v7.0 GOLD: Dinamização das Equidades pós-flop (Range Condensation)
-			// À medida que as ruas progridem (s), os ranges se estreitam e a equidade do range
-			// se condensa em direção ao centro (50%) contra o continuing range do vilão.
 			const isHeroIP = absoluteHeroPos === 'IP';
-			const condensationDecay = isHeroIP ? 0.22 : 0.32; // OOP condensa mais rápido devido à agressividade exigida
+			const condensationDecay = isHeroIP ? 0.22 : 0.32;
 			const baseWinProb = equity / 100;
-			const dynamicWinProb = baseWinProb + (0.5 - baseWinProb) * (1 - Math.pow(1 - condensationDecay, streetIdx));
+			const dynamicWinProb =
+				baseWinProb + (0.5 - baseWinProb) * (1 - Math.pow(1 - condensationDecay, streetIdx));
 
 			const input: PerspectivaInput = {
 				stacks: initialStacks,
@@ -143,7 +132,7 @@ export function usePmLensCalculations({
 				heroPosition: absoluteHeroPos,
 				blindsRisingSoon,
 				investidoAcumulado: sunkCost,
-				humanNoiseFactor: Math.abs((aggFactor ?? 1) - 1), // SOTA v7.0 GOLD Harmony: Damping fisico
+				humanNoiseFactor: Math.abs((aggFactor ?? 1) - 1),
 			};
 
 			let res = calculatePerspectivaVitoi(input);
@@ -154,31 +143,7 @@ export function usePmLensCalculations({
 				res = { ...res, perspectivaPct: b20Effectiveness };
 			}
 
-			handleIcmResult(street.name, res);
-		}
-	}, [
-		heroIdx,
-		primaryVillainIdx,
-		equity,
-		pkoValue,
-		kappa,
-		simulatedActivePlayers,
-		blindsRisingSoon,
-		deltaHabilidade,
-		streetProgression,
-		initialStacks,
-		initialPrizes,
-		handleIcmResult,
-		absoluteHeroPos,
-		realizationFactor,
-		activeNodelock,
-		aggFactor,
-	]);
-
-	const streetMetrics = useMemo(() => {
-		return streetProgression.map((street) => {
-			const res = asyncResults[street.name];
-			if (!res)
+			if (!res) {
 				return {
 					name: street.name,
 					potSize: street.potSize,
@@ -192,8 +157,10 @@ export function usePmLensCalculations({
 					valuation: 1,
 					realizationFactor: 1,
 					threshEq: 0,
-					loading: true,
+					loading: false,
 				};
+			}
+
 			return {
 				name: street.name,
 				potSize: street.potSize,
@@ -210,8 +177,25 @@ export function usePmLensCalculations({
 				loading: false,
 			};
 		});
-	}, [asyncResults, streetProgression]);
+	}, [
+		currentPot,
+		betSizing,
+		activeNodelock,
+		heroInvested,
+		realizationFactor,
+		absoluteHeroPos,
+		equity,
+		initialStacks,
+		initialPrizes,
+		heroIdx,
+		primaryVillainIdx,
+		deltaHabilidade,
+		pkoValue,
+		kappa,
+		simulatedActivePlayers,
+		blindsRisingSoon,
+		aggFactor,
+	]);
 
 	return { streetMetrics };
 }
-
