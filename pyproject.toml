@@ -8,10 +8,8 @@
 name = "nexus-orchestrator"
 version = "0.2.0"
 description = "Orquestrador SOTA de Agentes LLM com DAG, RAG e resiliencia multi-provedor"
-readme = "docs/architecture/README.md"
-license = { text = "Proprietary" }
-requires-python = ">=3.12"  # Exige 3.12+ (match/case, ExceptionGroup, type hints modernos)
-
+readme = "AGNOSTIC_SYSTEM.md"
+requires-python = ">=3.12"
 dependencies = [
     # ── NUCLEO ASSINCRONO ──────────────────────────────────────────────
     "aiofiles>=24.1.0",
@@ -62,7 +60,19 @@ dependencies = [
     "typer>=0.25.1",
 ]
 
+[project.scripts]
+nexus = "cli.commands:main"
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "math"]
+
+
 [project.optional-dependencies]
+
 # Instalado com: uv sync --extra dev
 dev = [
     "ruff>=0.15.0",

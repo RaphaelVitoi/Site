@@ -1,6 +1,6 @@
 # ==============================================================================
-# NEXUS ORCHESTRATOR — .gitignore SOTA v6 GOLD
-# Protocolo VITOI 3.2 — Blindagem de Repositório & Zero Entropia
+# NEXUS ORCHESTRATOR — .gitignore SOTA v7.0 GOLD
+# Protocolo CHICO SOTA — Blindagem de Repositorio & Zero Entropia
 # ==============================================================================
 
 # 1. INFRAESTRUTURA E RUNTIME (DENSIDADE ZERO) ────────────────────────────────
@@ -12,19 +12,36 @@ __pycache__/
 *.pyd
 *.egg-info/
 nexus_orchestrator.egg-info/
+Python-*/
 
-# 2. BUILD & COMPILAÇÃO (NEXT.JS / TURBOPACK / RUST WASM) ─────────────────────
+# 2. BUILD & COMPILACAO (NEXT.JS / TURBOPACK / RUST WASM / C++) ───────────────
 .next/
 .turbo/
 dist/
 build/
 out/
+target/
+**/target/
 wasm-equity/target/
+core/nexus-core-rust/target/
 frontend/.next/
 frontend/.turbo/
 frontend/.next-build/
+*.dll
+*.exe
+*.so
+*.dylib
+*.rlib
+*.wasm
 
-# 3. BANCOS DE DADOS & VETORES (OPACIDADE BINÁRIA) ─────────────────────────────
+# 3. MODELOS PESADOS, BLOBS E LLM ENGINE (LOCAL STORAGE) ───────────────────────
+.ollama/
+*.gguf
+*.bin
+engine/llama_cpp/*.dll
+engine/llama_cpp/*.exe
+
+# 4. BANCOS DE DADOS & VETORES (OPACIDADE BINARIA) ─────────────────────────────
 *.db
 *.db-shm
 *.db-wal
@@ -34,8 +51,10 @@ frontend/.next-build/
 .chroma_db/
 data/chroma_db/
 queue/tasks.db
+*.lance
+.cerebro/agent-memory/
 
-# 4. LOGS, TELEMETRIA & ARTEFATOS TEMPORÁRIOS ─────────────────────────────────
+# 5. LOGS, TELEMETRIA & ARTEFATOS TEMPORARIOS ─────────────────────────────────
 logs/
 *.log
 temp/
@@ -49,8 +68,12 @@ reports/coverage/
 .coverage
 htmlcov/
 *.cover
+reports/cwv/*.json
+reports/cwv/*.md
+!reports/cwv/latest_cwv_report.md
+engine/avatars/*.txt
 
-# 5. BACKUPS E ARCHIVES (PURA HIGIENE) ─────────────────────────────────────────
+# 6. BACKUPS E ARCHIVES (PURA HIGIENE) ─────────────────────────────────────────
 _backups/
 .backups/
 .backups_sota/
@@ -60,8 +83,13 @@ NEXUS_SOTA_BACKUP_*/
 .claude/task_results/
 .claude/.archive/
 .pytest_tmp/
+*.zip
+*.tar.gz
+*.mp4
+*.pdf
+*.docx
 
-# 6. SEGREDOS & AMBIENTE (PREVENÇÃO DE VAZAMENTO) ─────────────────────────────
+# 7. SEGREDOS & AMBIENTE (PREVENCAO DE VAZAMENTO) ─────────────────────────────
 .env
 .env.*
 .env.local
@@ -71,8 +99,9 @@ _env.ps1
 frontend/.env
 frontend/.env.local
 prisma/.env
+.claude/secrets/
 
-# 7. FERRAMENTAS & CACHE DE LINTERS ───────────────────────────────────────────
+# 8. FERRAMENTAS & CACHE DE LINTERS ───────────────────────────────────────────
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
@@ -81,7 +110,7 @@ prisma/.env
 .prettiercache
 .tsbuildinfo
 
-# 8. SISTEMA & RUÍDO (DESKTOP/VSC) ─────────────────────────────────────────────
+# 9. SISTEMA & RUIDO (DESKTOP/VSC) ─────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -92,11 +121,12 @@ desktop.ini
 .continue/
 .vscode/*
 !.vscode/settings.json
-! .vscode/extensions.json
-! .vscode/launch.json
-! .vscode/tasks.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
 
-# 9. INSTRUCOES DE IA LEGADAS ─────────────────────────────────────────────────
+# 10. INSTRUCOES DE IA E ARQUIVOS EFEMEROS ─────────────────────────────────────
 .github/instructions/
 .cursorules
 .aiexclude
+null
