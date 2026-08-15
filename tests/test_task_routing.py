@@ -38,6 +38,7 @@ MOCK_AGENTS_MANIFEST = {
 MOCK_VALID_AGENTS = [f"@{name}" for name in MOCK_AGENTS_MANIFEST]
 
 KNOWN_VALID_MODEL_PREFIXES = (
+    "gemini-3.",
     "gemini-2.",
     "claude-",
     "meta-llama/",
@@ -47,7 +48,6 @@ KNOWN_VALID_MODEL_PREFIXES = (
 )
 
 GHOST_MODEL_PATTERNS = (
-    "gemini-3.",  # nunca existiu na API Google
     "gemini-1.",  # descontinuado
 )
 
