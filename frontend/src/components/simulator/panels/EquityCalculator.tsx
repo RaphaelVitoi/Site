@@ -15,6 +15,7 @@ import { SotaWasmContext } from '../SotaContext';
 import { useIcmCalculations } from '../hooks/useIcmCalculations';
 import type { InsolvencyMetrics } from '../hooks/useQuantumEngine';
 import AnimatedNumber from '../ui/AnimatedNumber';
+import { DynamicFoldEquityWidget } from '../ui/DynamicFoldEquityWidget';
 import { InsolvencyRioPanel } from '../ui/InsolvencyRioPanel';
 import { MonteCarloConvergenceWidget } from '../ui/MonteCarloConvergenceWidget';
 
@@ -472,6 +473,10 @@ export default function EquityCalculator() {
 
         <div className="mt-2">
           <MonteCarloConvergenceWidget />
+        </div>
+
+        <div className="mt-2">
+          <DynamicFoldEquityWidget />
         </div>
 
         <div
