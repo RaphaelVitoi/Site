@@ -26,6 +26,9 @@ def verify_package_lock_integrity() -> dict:
         data = json.load(f)
 
     packages = data.get("packages", {})
+    root_pkg = packages.get("", {})
+    declared_workspaces = set(root_pkg.get("workspaces", []))
+
     total_remote = 0
     sha512_count = 0
     sha1_count = 0
@@ -34,10 +37,14 @@ def verify_package_lock_integrity() -> dict:
     for pkg_key, pkg_info in packages.items():
         if not pkg_key:  # Root package entry
             continue
-        # Link packages or workspaces (e.g. "frontend") don't have remote tarball integrity
-        if pkg_info.get("link") or pkg_key in ("frontend", "node_modules/frontend"):
-            continue
-        if pkg_info.get("resolved", "").startswith("file:"):
+        # Link packages or local workspaces don't have remote tarball integrity
+        if (
+            pkg_info.get("link")
+            or pkg_key in declared_workspaces
+            or any(pkg_key == w or pkg_key == f"node_modules/{w}" for w in declared_workspaces)
+            or pkg_info.get("resolved", "").startswith("file:")
+            or not pkg_info.get("resolved")
+        ):
             continue
 
         total_remote += 1
