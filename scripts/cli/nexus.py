@@ -296,7 +296,6 @@ async def set_autonomy(
         await qm.close()
 
 
-
 VRAM_INFO_CACHE = {"nvidia": False, "amd_native": False, "amd_rocm": None}
 
 try:
