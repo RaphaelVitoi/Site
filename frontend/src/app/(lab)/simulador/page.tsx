@@ -1,12 +1,19 @@
+'use client';
+
+import React from 'react';
+import dynamic from 'next/dynamic';
 import { ErrorBoundary } from '@/components/analytics/ErrorBoundary';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
-import MasterSimulatorDynamic from '@/components/simulator/MasterSimulatorDynamic';
 
-export const dynamic = 'force-dynamic';
-export const metadata = {
-	title: 'Motor ICM SOTA v7.0 GOLD | Nexus',
-	description: 'Simulador Quântico: ICM Pós-Flop, Risk Premium e Distorções GTO.',
-};
+const NashMatrixProfiler = dynamic(
+	() => import('@/components/simulator/NashMatrixProfiler').then((m) => m.NashMatrixProfiler),
+	{ ssr: false }
+);
+
+const MasterSimulatorDynamic = dynamic(
+	() => import('@/components/simulator/MasterSimulator'),
+	{ ssr: false }
+);
 
 export default function MotorPage() {
 	return (
@@ -17,7 +24,10 @@ export default function MotorPage() {
 				category="Ecossistema"
 				icon="fa-flask-vial"
 			/>
-			<div className="sota-container mt-8">
+			<div className="sota-container mt-8 space-y-8">
+				<ErrorBoundary>
+					<NashMatrixProfiler />
+				</ErrorBoundary>
 				<ErrorBoundary>
 					<MasterSimulatorDynamic />
 				</ErrorBoundary>

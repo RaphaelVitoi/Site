@@ -1,3 +1,5 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -8,11 +10,11 @@ const nextConfig = {
     buildActivityPosition: 'bottom-right',
   },
   turbopack: {
-    root: require('path').join(__dirname, '../'),
+    root: path.resolve(__dirname, '..'),
   },
   webpack: (config, { dev }) => {
     if (dev) {
-      // SOTA: Blindagem do Watchpack para evitar o escaneamento de arquivos do sistema (C:\)
+      // SOTA: Blindagem do Watchpack para evitar o escaneamento de arquivos do sistema
       config.watchOptions = {
         ignored: [
           '**/node_modules/**',
