@@ -1,149 +1,206 @@
-import React, { useEffect, useRef, useState, Profiler, useCallback } from 'react';
+/** @format */
 
-interface MetricFrame
-{
-    id: string;
-    t0: number; // Dispatch React
-    t1: number; // Chegada no Worker (Friccao I/O)
-    t2: number; // Fim do FFI WASM
-    t3: number; // Atualização React Completa
-    totalLatencyMs: number;
-    workerFrictionMs: number;
-    wasmExecutionMs: number;
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { defaultNashSolver, type NashSolutionResult } from '../../lib/nashSolver';
+
+interface MetricFrame {
+	id: string;
+	t0: number;
+	t1: number;
+	t2: number;
+	t3: number;
+	totalLatencyMs: number;
+	workerFrictionMs: number;
+	wasmExecutionMs: number;
 }
 
-function useQuantizedDebounce<T extends ( ...args: never[] ) => void> ( callback: T, delayMs: number )
-{
-    const timer = useRef<ReturnType<typeof setTimeout> | null>( null );
-    const callbackRef = useRef<T>( callback );
+export const NashMatrixProfiler: React.FC = () => {
+	const workerRef = useRef<Worker | null>(null);
+	const [metrics, setMetrics] = useState<MetricFrame[]>([]);
+	const [renderPhase, setRenderPhase] = useState<string>('idle');
+	const [ipRp, setIpRp] = useState<number>(15.0);
+	const [oopRp, setOopRp] = useState<number>(25.0);
+	const [aggression, setAggression] = useState<number>(1.0);
+	const [solution, setSolution] = useState<NashSolutionResult>(() =>
+		defaultNashSolver.solve(15.0, 25.0, 1.0)
+	);
 
-    // SOTA: Preserva a closure mais recente sem invalidar a alocação de memória do debouncer.
-    useEffect( () => { callbackRef.current = callback; }, [ callback ] );
+	useEffect(() => {
+		try {
+			workerRef.current = new Worker(
+				new URL('./workers/nashDistortion.worker.ts', import.meta.url),
+				{ type: 'module' }
+			);
 
-    useEffect( () =>
-    {
-        return () => { if ( timer.current ) clearTimeout( timer.current ); };
-    }, [] );
+			workerRef.current.onmessage = (e: MessageEvent) => {
+				const { id, t0, t1, t2, solution: workerSol } = e.data;
+				const t3 = performance.now();
 
-    return useCallback( ( ...args: Parameters<T> ) =>
-    {
-        if ( timer.current ) clearTimeout( timer.current );
-        timer.current = setTimeout( () => callbackRef.current( ...args ), delayMs );
-    }, [ delayMs ] ) as T;
-}
+				if (workerSol) {
+					setSolution(workerSol);
+				}
 
-interface DistortionPayload {
-    ip_rp: number;
-    oop_rp: number;
-    kappa: number;
-    topologic_aggression: number;
-    active_players: number;
-    freqs: {
-        fold: number;
-        call: number;
-        raise: number;
-    };
-}
+				setMetrics((prev) => [
+					...prev.slice(-9),
+					{
+						id,
+						t0,
+						t1,
+						t2,
+						t3,
+						totalLatencyMs: Number.parseFloat((t3 - t0).toFixed(2)),
+						workerFrictionMs: Number.parseFloat((t1 - t0).toFixed(2)),
+						wasmExecutionMs: Number.parseFloat((t2 - t1).toFixed(2)),
+					},
+				]);
+			};
+		} catch {
+			// Fallback síncrono gracioso
+		}
 
-export const NashMatrixProfiler: React.FC = () =>
-{
-    const workerRef = useRef<Worker | null>( null );
-    const [ metrics, setMetrics ] = useState<MetricFrame[]>( [] );
-    const [ renderPhase, setRenderPhase ] = useState<string>( "idle" );
+		return () => workerRef.current?.terminate();
+	}, []);
 
-    useEffect( () =>
-    {
-        workerRef.current = new Worker( new URL( '../workers/nashDistortion.worker.ts', import.meta.url ), { type: 'module' } );
+	const recompute = useCallback(
+		(newIp: number, newOop: number, newAgg: number) => {
+			setIpRp(newIp);
+			setOopRp(newOop);
+			setAggression(newAgg);
 
-        workerRef.current.onmessage = ( e: MessageEvent ) =>
-        {
-            const { id, t0, t1, t2 } = e.data;
-            const t3 = performance.now();
+			if (workerRef.current) {
+				const id =
+					typeof crypto !== 'undefined' && crypto.randomUUID
+						? crypto.randomUUID()
+						: Date.now().toString(36);
+				const t0 = performance.now();
+				const buffer = new ArrayBuffer(8 * 8);
+				const f64Array = new Float64Array(buffer);
+				f64Array[0] = newIp / 100;
+				f64Array[1] = newOop / 100;
+				f64Array[2] = newAgg;
 
-            setMetrics( prev => [ ...prev, {
-                id,
-                t0, t1, t2, t3,
-                totalLatencyMs: Number.parseFloat( ( t3 - t0 ).toFixed( 2 ) ),
-                workerFrictionMs: Number.parseFloat( ( t1 - t0 ).toFixed( 2 ) ),
-                wasmExecutionMs: Number.parseFloat( ( t2 - t1 ).toFixed( 2 ) )
-            } ] );
+				workerRef.current.postMessage(
+					{ id, type: 'NASH_PROFILER', payload: f64Array, t0 },
+					[buffer]
+				);
+			} else {
+				setSolution(defaultNashSolver.solve(newIp, newOop, newAgg));
+			}
+			setRenderPhase('Calculado');
+		},
+		[]
+	);
 
-            performance.mark( `react_render_end_${ id }` );
-            performance.measure( `full_cycle_${ id }`, `react_dispatch_${ id }`, `react_render_end_${ id }` );
-        };
+	return (
+		<div className="p-6 font-mono text-white bg-[#0f172a] rounded-xl border border-cyan-500/20 shadow-2xl space-y-6">
+			<div className="flex items-center justify-between border-b border-cyan-500/20 pb-4">
+				<div>
+					<h2 className="text-cyan-400 text-xl font-bold tracking-tight">
+						SOTA Nash Risk Distortion Matrix
+					</h2>
+					<p className="text-xs text-slate-400">
+						Motor Analítico de Equilíbrio de Nash & Distorção de Risk Premium
+					</p>
+				</div>
+				<span className="px-3 py-1 bg-cyan-950 text-cyan-300 text-xs border border-cyan-500/30 rounded-full">
+					{solution.verdict}
+				</span>
+			</div>
 
-        return () => workerRef.current?.terminate();
-    }, [] );
+			{/* Controles Reativos de Parâmetros */}
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div className="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+					<label className="text-xs text-slate-400 block mb-2">
+						Agressor Risk Premium (IP RP):{' '}
+						<span className="text-cyan-400 font-bold">{ipRp.toFixed(1)}%</span>
+					</label>
+					<input
+						type="range"
+						min="0"
+						max="60"
+						step="0.5"
+						value={ipRp}
+						onChange={(e) => recompute(parseFloat(e.target.value), oopRp, aggression)}
+						className="w-full accent-cyan-400 cursor-pointer"
+					/>
+				</div>
 
-    const processDistortion = useCallback( ( payload: DistortionPayload ) =>
-    {
-        if ( !workerRef.current ) return;
-        // SOTA: Degradação Graciosa para ambientes sem Crypto API (ex: HTTP local legado)
-        const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substring(2);
-        const t0 = performance.now();
-        performance.mark( `react_dispatch_${ id }` );
+				<div className="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+					<label className="text-xs text-slate-400 block mb-2">
+						Defensor Risk Premium (OOP RP):{' '}
+						<span className="text-rose-400 font-bold">{oopRp.toFixed(1)}%</span>
+					</label>
+					<input
+						type="range"
+						min="0"
+						max="60"
+						step="0.5"
+						value={oopRp}
+						onChange={(e) => recompute(ipRp, parseFloat(e.target.value), aggression)}
+						className="w-full accent-rose-400 cursor-pointer"
+					/>
+				</div>
 
-        // SOTA Zero-Copy: Vetorização Matemática para FFI Termodinâmica
-        const buffer = typeof SharedArrayBuffer === 'undefined'
-            ? new ArrayBuffer( 8 * 8 )
-            : new SharedArrayBuffer( 8 * 8 );
+				<div className="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+					<label className="text-xs text-slate-400 block mb-2">
+						Fator de Agressão (&kappa;):{' '}
+						<span className="text-amber-400 font-bold">{aggression.toFixed(2)}x</span>
+					</label>
+					<input
+						type="range"
+						min="0.5"
+						max="2.5"
+						step="0.05"
+						value={aggression}
+						onChange={(e) => recompute(ipRp, oopRp, parseFloat(e.target.value))}
+						className="w-full accent-amber-400 cursor-pointer"
+					/>
+				</div>
+			</div>
 
-        const f64Array = new Float64Array( buffer );
-        f64Array[ 0 ] = payload.ip_rp;
-        f64Array[ 1 ] = payload.oop_rp;
-        f64Array[ 2 ] = payload.kappa;
-        f64Array[ 3 ] = payload.topologic_aggression;
-        f64Array[ 4 ] = payload.active_players;
-        f64Array[ 5 ] = payload.freqs.fold;
-        f64Array[ 6 ] = payload.freqs.call;
-        f64Array[ 7 ] = payload.freqs.raise;
+			{/* Resultados do Equilíbrio de Nash */}
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div className="bg-gradient-to-br from-slate-900 to-cyan-950/30 p-4 rounded-lg border border-cyan-500/30 text-center">
+					<div className="text-xs text-slate-400">{solution.defense.label}</div>
+					<div className="text-2xl font-bold text-cyan-300 mt-1">
+						{solution.defense.value}%
+					</div>
+					<div className="text-xs text-cyan-500/80 mt-1">
+						&Delta; {solution.defense.delta > 0 ? `+${solution.defense.delta}` : solution.defense.delta}%
+					</div>
+				</div>
 
-        if ( buffer instanceof SharedArrayBuffer )
-        {
-            workerRef.current.postMessage( { id, type: 'NASH_PROFILER', payload: f64Array, t0 } );
-        } else
-        {
-            workerRef.current.postMessage( { id, type: 'NASH_PROFILER', payload: f64Array, t0 }, [ buffer ] );
-        }
-    }, [] );
+				<div className="bg-gradient-to-br from-slate-900 to-amber-950/30 p-4 rounded-lg border border-amber-500/30 text-center">
+					<div className="text-xs text-slate-400">{solution.bluff.label}</div>
+					<div className="text-2xl font-bold text-amber-300 mt-1">
+						{solution.bluff.value}%
+					</div>
+					<div className="text-xs text-amber-500/80 mt-1">
+						&Delta; {solution.bluff.delta > 0 ? `+${solution.bluff.delta}` : solution.bluff.delta}%
+					</div>
+				</div>
 
-    // Debouncer SOTA: Blindagem contra engarrafamento de UI (Intervalo de Quantum ~ 60fps)
-    const dispatchQuantized = useQuantizedDebounce( processDistortion, 16.67 );
+				<div className="bg-gradient-to-br from-slate-900 to-emerald-950/30 p-4 rounded-lg border border-emerald-500/30 text-center">
+					<div className="text-xs text-slate-400">{solution.evDiff.label}</div>
+					<div className="text-2xl font-bold text-emerald-300 mt-1">
+						{solution.evDiff.totalRequired}%
+					</div>
+					<div className="text-xs text-emerald-500/80 mt-1">
+						Shift: +{solution.evDiff.value}%
+					</div>
+				</div>
+			</div>
 
-    const handleConcurrentStressTest = () =>
-    {
-        for ( let i = 0; i < 50; i++ )
-        {
-            dispatchQuantized( {
-                ip_rp: Math.random(),
-                oop_rp: Math.random(),
-                kappa: 0.8,
-                topologic_aggression: 1.2,
-                active_players: 3,
-                freqs: { fold: 0.2, call: 0.4, raise: 0.4 }
-            } );
-        }
-    };
-
-    const onProfilerRender = ( _id: string, phase: string, actualDuration: number ) =>
-    {
-        if ( phase === 'update' ) setRenderPhase( `DOM Commit [${ actualDuration.toFixed( 2 ) }ms]` );
-    };
-
-    return (
-        <Profiler id="NashMatrix" onRender={ onProfilerRender }>
-            <div className="p-5 font-mono text-white bg-[#121212]">
-                <h2 className="text-[#00ffcc] text-xl font-bold mb-4">Nash Distortion Profiler (SOTA)</h2>
-                <button onClick={ handleConcurrentStressTest } className="p-2.5 bg-[#333] text-[#00ffcc] border border-[#00ffcc] cursor-pointer hover:bg-[#444] transition-colors rounded">
-                    Disparar Concorrência (50 Mutações / Stress Test)
-                </button>
-                <div className="mt-2.5 text-[#aaa] text-sm">Fase de Renderização Atual: { renderPhase }</div>
-
-                <h3 className="mt-5 text-lg font-bold mb-2">Logs de Latência do Worker:</h3>
-                <pre className="bg-black p-4 overflow-y-auto max-h-100 rounded border border-white/10 text-xs">
-                    { JSON.stringify( metrics.slice( -10 ), null, 2 ) }
-                </pre>
-            </div>
-        </Profiler>
-    );
+			{/* Telemetria e Latência de Worker */}
+			<div className="bg-slate-950 p-4 rounded-lg border border-slate-800 text-xs">
+				<div className="flex justify-between items-center mb-2">
+					<span className="text-slate-400">Telemetria de Baixa Latência (WebWorker):</span>
+					<span className="text-slate-500">{renderPhase}</span>
+				</div>
+				<pre className="text-slate-300 overflow-x-auto">
+					{JSON.stringify(metrics.slice(-3), null, 2)}
+				</pre>
+			</div>
+		</div>
+	);
 };
