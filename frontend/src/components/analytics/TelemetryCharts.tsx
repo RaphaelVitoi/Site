@@ -78,6 +78,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 						strokeWidth={3}
 						dot={{ r: 4, fill: '#020617', stroke: '#6366f1', strokeWidth: 2 }}
 						name="EV LOSS"
+						isAnimationActive={false}
 					/>
 				</LineChart>
 			</ResponsiveContainer>

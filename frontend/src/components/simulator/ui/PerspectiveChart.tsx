@@ -67,6 +67,7 @@ export const PerspectiveChart = ({ chartData }: Readonly<PerspectiveChartProps>)
 						stroke="#818cf8"
 						strokeWidth={2.5}
 						dot={false}
+						isAnimationActive={false}
 					/>
 				</LineChart>
 			</ResponsiveContainer>

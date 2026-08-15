@@ -225,7 +225,7 @@ export function GtoCfrSimulator() {
 									fillOpacity={1}
 									strokeWidth={3}
 									filter="url(#glowAStar)"
-									animationDuration={1500}
+									isAnimationActive={false}
 								/>
 								<Tooltip
 									contentStyle={{
@@ -385,6 +385,7 @@ export function GtoCfrSimulator() {
 										dataKey="strategy"
 										stroke="none"
 										filter="url(#glowPie)"
+										isAnimationActive={false}
 									/>
 								</PieChart>
 							</ResponsiveContainer>

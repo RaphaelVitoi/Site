@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * IDENTITY: Simulador de Risco da RessurreiÃ§Ã£o SOTA Quantum
@@ -348,6 +348,7 @@ export default function ResurrectionRiskSimulator() {
 								strokeWidth={3}
 								dot={false}
 								activeDot={{ r: 6 }}
+								isAnimationActive={false}
 							/>
 							<Line
 								type="monotone"
@@ -357,6 +358,7 @@ export default function ResurrectionRiskSimulator() {
 								strokeWidth={2}
 								strokeDasharray="5 5"
 								dot={false}
+								isAnimationActive={false}
 							/>
 						</LineChart>
 					</ResponsiveContainer>

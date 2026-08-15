@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * IDENTITY: Simulador de Downward Drift SOTA Quantum
@@ -303,21 +303,23 @@ export function DownwardDriftSimulator() {
 							)}
 							<Line
 								type="monotone"
-								name="TensÃ£o IP"
+								name="Tensão IP"
 								dataKey="ipTension"
 								stroke="var(--accent-indigo)"
 								strokeWidth={4}
 								dot={false}
 								filter="url(#glowDrift)"
+								isAnimationActive={false}
 							/>
 							<Line
 								type="monotone"
-								name="TensÃ£o OOP"
+								name="Tensão OOP"
 								dataKey="oopTension"
 								stroke="var(--accent-danger)"
 								strokeWidth={4}
 								dot={false}
 								filter="url(#glowDrift)"
+								isAnimationActive={false}
 							/>
 							<Line
 								type="monotone"
@@ -327,6 +329,7 @@ export function DownwardDriftSimulator() {
 								strokeWidth={2}
 								strokeDasharray="5 5"
 								dot={false}
+								isAnimationActive={false}
 							/>
 							<Line
 								type="monotone"
@@ -336,6 +339,7 @@ export function DownwardDriftSimulator() {
 								strokeWidth={2}
 								strokeDasharray="3 3"
 								dot={false}
+								isAnimationActive={false}
 							/>
 						</LineChart>
 					</ResponsiveContainer>

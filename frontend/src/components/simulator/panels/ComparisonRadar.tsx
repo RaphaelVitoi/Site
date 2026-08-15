@@ -194,7 +194,7 @@ export default function ComparisonRadar({
 							fill="url(#gradIndigo)"
 							strokeWidth={3}
 							strokeOpacity={0.8}
-							animationDuration={1500}
+							isAnimationActive={false}
 						/>
 
 						{compareScenario && (
@@ -206,7 +206,7 @@ export default function ComparisonRadar({
 								strokeWidth={2}
 								strokeDasharray="4 4"
 								strokeOpacity={0.6}
-								animationDuration={1500}
+								isAnimationActive={false}
 							/>
 						)}
 
