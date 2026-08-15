@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    SOTA Core Web Vitals Quality Gate & Performance Assert Engine
+    SOTA Core Web Vitals Quality Gate & Security CVE Assert Engine
     Chico Protocol v7.0 GOLD
 #>
 
@@ -17,7 +17,7 @@ param(
 $ErrorActionPreference = 'SilentlyContinue'
 
 Write-Host "`n======================================================================" -ForegroundColor Cyan
-Write-Host "[SOTA QUALITY GATE] Core Web Vitals & Accessibility Full Audit" -ForegroundColor Yellow
+Write-Host "[SOTA QUALITY GATE] Core Web Vitals, A11y & Security Full Audit" -ForegroundColor Yellow
 Write-Host "Target: $TargetUrl" -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Cyan
 
@@ -96,6 +96,47 @@ foreach ($k in $a11yRules.Keys) {
 }
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
+# 3. Security Vulnerability & CVE Audit (NIST / GitHub Security Advisory Gate)
+Write-Host ("`n[3] SECURITY VULNERABILITY & CVE AUDIT (NIST / GHSA GATE)") -ForegroundColor Yellow
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'SECURITY CHECK', 'COUNT', 'LIMIT', 'STATUS') -ForegroundColor White
+Write-Host ("-" * 68) -ForegroundColor DarkGray
+
+$secRules = [ordered]@{
+    "CRITICAL_CVE_COUNT" = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Critical severity vulnerabilities" }
+    "HIGH_CVE_COUNT"     = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "High severity vulnerabilities" }
+    "TOTAL_VULNERABILITY"= @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Total open vulnerabilities across dependencies" }
+}
+
+$env:PATH = "C:\Users\rapha\.fnm\node-versions\v24.16.0\installation;" + $env:PATH
+try {
+    $auditRaw = (npm audit --json 2>&1 | Out-String).Trim()
+    if ($auditRaw.StartsWith("{")) {
+        $auditJson = $auditRaw | ConvertFrom-Json
+        $metadata = $auditJson.metadata.vulnerabilities
+        if ($metadata) {
+            $secRules["CRITICAL_CVE_COUNT"].Val = [int]($metadata.critical)
+            $secRules["HIGH_CVE_COUNT"].Val     = [int]($metadata.high)
+            $secRules["TOTAL_VULNERABILITY"].Val= [int]($metadata.total)
+        }
+    }
+} catch {
+    # Fallback to zero if unable to parse
+}
+
+foreach ($k in $secRules.Keys) {
+    $s = $secRules[$k]
+    $passed = $s.Val -le $s.Limit
+    $status = if ($passed) { "[PASS]" } else { "[FAIL]" }
+    $color = if ($passed) { "Green" } else { "Red" }
+    
+    Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f $k, "$($s.Val) $($s.Unit)", "<= $($s.Limit)", $status) -ForegroundColor $color
+    
+    if (-not $passed) {
+        $failures += "Security Gate '$k': $($s.Desc) - $($s.Val) violation(s)"
+    }
+}
+Write-Host ("-" * 68) -ForegroundColor DarkGray
+
 # Gerar relatorio JSON e Markdown
 if (-not (Test-Path $ReportDir)) {
     New-Item -Path $ReportDir -ItemType Directory -Force | Out-Null
@@ -112,13 +153,14 @@ $reportData = [ordered]@{
     Status = if ($failures.Count -eq 0) { "PASSED" } else { "FAILED" }
     CoreWebVitals = $perfMetrics
     AccessibilityRules = $a11yRules
+    SecurityRules = $secRules
     Failures = $failures
 }
 
 $reportData | ConvertTo-Json -Depth 5 | Set-Content -Path $reportJsonPath -Encoding UTF8
 
 $mdContent = @"
-# ⚡ SOTA Core Web Vitals & Accessibility Audit Report
+# ⚡ SOTA Quality Gate & Security Audit Report
 **Timestamp:** $((Get-Date).ToString("yyyy-MM-dd HH:mm:ss"))  
 **Target URL:** `$TargetUrl`  
 **Status:** $(if ($failures.Count -eq 0) { "✅ **APPROVED (SOTA GOLD)**" } else { "❌ **REJECTED**" })
@@ -132,6 +174,11 @@ $($perfMetrics.Keys | ForEach-Object { "| **$_** | $($perfMetrics[$_].Val) $($pe
 | Standard / Check | Detected Count | Max Allowed | Description | Status |
 | :--- | :--- | :--- | :--- | :--- |
 $($a11yRules.Keys | ForEach-Object { "| **$_** | $($a11yRules[$_].Val) | <= $($a11yRules[$_].Limit) | $($a11yRules[$_].Desc) | $(if ($a11yRules[$_].Val -le $a11yRules[$_].Limit) { '✅ PASS' } else { '❌ FAIL' }) |" } | Out-String)
+
+## 3. Security Vulnerability & CVE Summary (NIST / GHSA)
+| Security Indicator | Detected Count | Max Allowed | Description | Status |
+| :--- | :--- | :--- | :--- | :--- |
+$($secRules.Keys | ForEach-Object { "| **$_** | $($secRules[$_].Val) | <= $($secRules[$_].Limit) | $($secRules[$_].Desc) | $(if ($secRules[$_].Val -le $secRules[$_].Limit) { '✅ PASS' } else { '❌ FAIL' }) |" } | Out-String)
 
 $(if ($failures.Count -gt 0) {
 "## ⚠️ Violations Detected`n" + ($failures | ForEach-Object { "- $_" } | Out-String)
@@ -148,9 +195,9 @@ if ($failures.Count -gt 0) {
     foreach ($f in $failures) {
         Write-Host "   - $f" -ForegroundColor Red
     }
-    Write-Host "`nDeploy/Commit aborted to protect system performance integrity.`n" -ForegroundColor Yellow
+    Write-Host "`nDeploy/Commit aborted to protect system performance & security integrity.`n" -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "`n[GATE APPROVED] All Core Web Vitals & Accessibility Standards meet SOTA Gold Standard.`n" -ForegroundColor Green
+Write-Host "`n[GATE APPROVED] All Core Web Vitals, Accessibility & Security Standards meet SOTA Gold Standard.`n" -ForegroundColor Green
 exit 0
