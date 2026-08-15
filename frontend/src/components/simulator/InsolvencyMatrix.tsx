@@ -80,6 +80,7 @@ export function InsolvencyMatrix({ streetMetrics }: InsolvencyMatrixProps) {
 						tickLine={false}
 					/>
 					<Tooltip
+						isAnimationActive={false}
 						contentStyle={{
 							backgroundColor: '#020617',
 							borderColor: 'rgba(16,185,129,0.3)',

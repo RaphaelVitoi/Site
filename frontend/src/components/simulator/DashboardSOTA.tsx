@@ -441,6 +441,7 @@ export default function DashboardSOTA({ initialData, hudMode = false }: Readonly
                     isAnimationActive={false}
                   />
                   <RechartsTooltip
+                    isAnimationActive={false}
                     contentStyle={{
                       backgroundColor: '#020617',
                       border: '1px solid rgba(16,185,129,0.3)',

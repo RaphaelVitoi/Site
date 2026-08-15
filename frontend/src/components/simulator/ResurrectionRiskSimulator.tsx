@@ -310,6 +310,7 @@ export default function ResurrectionRiskSimulator() {
 							/>
 							<YAxis domain={['auto', 'auto']} hide />
 							<RechartsTooltip
+								isAnimationActive={false}
 								contentStyle={{
 									backgroundColor: 'var(--bg-panel)',
 									border: '1px solid rgba(255,255,255,0.05)',

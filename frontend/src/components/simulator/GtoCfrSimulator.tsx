@@ -228,6 +228,7 @@ export function GtoCfrSimulator() {
 									isAnimationActive={false}
 								/>
 								<Tooltip
+									isAnimationActive={false}
 									contentStyle={{
 										backgroundColor: 'rgba(15,23,42,0.95)',
 										border: '1px solid rgba(99,102,241,0.3)',

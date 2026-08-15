@@ -63,6 +63,7 @@ export function InsolvencyRadar({ data }: Readonly<InsolvencyRadarProps>) {
 					isAnimationActive={false}
 				/>
 				<RechartsTooltip
+					isAnimationActive={false}
 					contentStyle={{
 						backgroundColor: '#020617',
 						border: '1px solid rgba(244,63,94,0.4)',

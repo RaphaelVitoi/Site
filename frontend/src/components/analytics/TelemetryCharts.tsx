@@ -56,6 +56,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 						tickLine={false}
 					/>
 					<Tooltip
+						isAnimationActive={false}
 						contentStyle={{
 							backgroundColor: '#020617',
 							borderColor: 'rgba(99,102,241,0.3)',

@@ -53,13 +53,6 @@ export function useDebouncedLocalStorage<T>(
 
 			timeoutRef.current = setTimeout(() => {
 				globalThis.localStorage.setItem(key, JSON.stringify(newValue));
-				// Dispara um evento customizado para a própria aba (já que 'storage' só avisa as outras)
-				globalThis.dispatchEvent(
-					new StorageEvent('storage', {
-						key,
-						newValue: JSON.stringify(newValue),
-					}),
-				);
 			}, delay);
 		},
 		[key, delay],

@@ -211,6 +211,7 @@ export default function ComparisonRadar({
 						)}
 
 						<Tooltip
+							isAnimationActive={false}
 							content={<RadarTooltip />}
 							allowEscapeViewBox={{ x: true, y: true }}
 							wrapperStyle={{ zIndex: 1000 }}

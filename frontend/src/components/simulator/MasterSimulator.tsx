@@ -145,13 +145,16 @@ export default function MasterSimulator() {
       if (heroPosition !== physics.position && typeof setHeroPosition === 'function') {
         setHeroPosition(physics.position);
       }
-      if (aggressionFactor !== physics.edgeFactor && typeof setAggressionFactor === 'function') {
+      if (aggressionFactor !== (physics.edgeFactor ?? 1) && typeof setAggressionFactor === 'function') {
         setAggressionFactor(physics.edgeFactor ?? 1);
       }
     }
   }, [
     isSyncHydrated,
-    physics,
+    physics?.pot,
+    physics?.heroInvested,
+    physics?.position,
+    physics?.edgeFactor,
     currentPot,
     heroInvested,
     heroPosition,

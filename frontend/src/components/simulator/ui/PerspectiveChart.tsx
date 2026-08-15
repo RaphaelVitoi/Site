@@ -53,6 +53,7 @@ export const PerspectiveChart = ({ chartData }: Readonly<PerspectiveChartProps>)
 						tickFormatter={(v) => `${v.toFixed(0)}%`}
 					/>
 					<Tooltip
+						isAnimationActive={false}
 						contentStyle={{
 							background: 'var(--bg-panel)',
 							border: '1px solid rgba(255,255,255,0.1)',
