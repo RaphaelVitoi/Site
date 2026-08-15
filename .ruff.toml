@@ -1,0 +1,77 @@
+# SOTA v7.0 GOLD: Silent Ruff Configuration
+target-version = "py312"
+line-length = 120
+
+extend-exclude = [
+  ".gemini",
+  ".next",
+  "node_modules",
+  "__pycache__",
+  ".ruff_cache",
+  ".venv",
+  ".venv-wsl",
+  "dist",
+  "build",
+  "*.log",
+  "temp",
+  "plugins",
+  ".cerebro",
+  ".chroma_db",
+]
+
+[lint]
+select = [
+  "E",
+  "F",
+  "W",
+  "I",
+  "N",
+  "S",
+  "ASYNC",
+  "B",
+  "ARG",
+  "PTH",
+  "RET",
+  "LOG",
+]
+ignore = [
+  "S311",
+  "S310",
+  "S108",
+  "S301",
+  "ASYNC240",
+  "N815",
+  "ARG001",
+  "ARG002",
+  "B008",
+  "RET505",
+  "LOG015",
+  "E501",
+  "PTH",
+  "W191",
+  "E701",
+  "B904",
+  "PT028",
+  "ARG005",
+  "F401",
+  "I001",
+  "N806",
+  "S603",
+  "S607",
+  "ASYNC109",
+  "S110",
+  "S101",
+  "S314",
+  "S112",
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101", "S603", "S607", "F821"]
+"scripts/*" = ["E402", "S603", "S607"]
+"engine/avatars/*" = ["S605", "S607"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

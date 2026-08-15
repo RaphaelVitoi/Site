@@ -1,0 +1,202 @@
+Bounty
+PKO
+Progressive Knockout
+Knockout
+Bounties
+Bounty Value
+Recompensas
+Polidez Algorítmica
+Desculpas
+Justificativas
+Smoothing
+Smoothing de Output
+Incerteza Axiomática
+Contradição Lógica
+Alucinação Sintática
+Glitch Tokens
+Unused25
+Ruído Semântico
+Entropia Purulenta
+RLHF Bias
+Alinhamento por Reforço
+Submissão Textual
+Transições Sociais
+Claro,
+Com certeza
+Entendido
+Vou ajudar
+Lamento
+Sinto muito
+Peço desculpas
+Pro prolixo
+Argumentação Falaciosa
+Smoothing Cognitivo
+Fragmentação de Estado
+Inconsistência de Markov
+Degradação de Perplexidade
+Page Faults
+OOM
+Starvation
+Bloqueio de I/O
+Arritmia de Loop
+Vício de Memória
+Vazamento de Contexto
+Prompt Massivo
+Ruído de Sistema
+Obsoleto
+Claude
+Anthropic
+Legacy
+Bounty Hunter
+Calculadora de Bounty
+Lógica de KO
+Suposição Infundada
+Smoothing de Variância
+Smoothing Bayesiano
+Smoothing de Nash
+Smoothing de Bellman
+Incerteza Epistêmica (sem fundamentação)
+Alucinação de Equity
+Falha de Isomorfismo
+Desvio de Perspectiva
+Entropia SOTA
+Nexus Inativo
+Chico Inativo
+Vitoi Desrespeitado
+Quebra de Hierarquia
+Quebra de Protocolo
+Desvio de Cosmovisão
+Entropia Termodinâmica
+Colapso de Distribuição
+Hipersensibilidade Semântica
+Alucinação de Token
+Repetição de Padrão
+Vício de Geração
+Smoothing de Logits
+Logits Desequilibrados
+α excessivo
+β excessivo
+Supressão de Sinal
+Asfixia de Variabilidade
+Vício de Expressão
+Vício de Roteamento
+Bypass de Segurança Inativo
+Escalada de Privilégios
+Race Condition
+Identidade Fluida
+Identidade Global (Task)
+Zumbis de Banco de Dados
+Tasks Órfãs
+Lógica de Recompensa
+Cálculo de KO
+Matemática de Bounty
+Isomorfismo Quebrado
+Entropia de Shannon (Alta Variância)
+Bias de Provedor
+Smoothing de API
+Incerteza de Borda
+Arritmia de Kernel
+Desvio de Sincronização
+Fractal Quebrado
+Desvio de Isometria
+Geometria Corrompida
+Elegância Ausente
+Rigor Ausente
+Matemática Corrompida
+Algoritmo Opaco
+Código Sujo
+Código Legado
+Anthropic-Free Violation
+Claude references
+Smoothing de Prompt
+Smoothing de Persona
+Vício de Alinhamento
+Entropia GOLD
+Estado da Arte degradado
+Nexus v6 residual
+Nexus v5 residual
+Nexus v4 residual
+Protocolo GOLD bypass
+Soberania ameaçada
+Incerteza de Liderança
+Desvio de Mandato
+Vitoi 3.2 Violation
+Tetralogia Corrompida
+W0 bypass
+W1 bypass
+W2 bypass
+W3 violation
+Sandbox escape
+Injecão de Prompt
+Path Traversal
+Acesso Não Autorizado
+Kernel mutado por Tier Inferior
+Dispatcher God Mode (unauthorized)
+Entropia de Sistema
+Morte de Processo
+Crash sem Auto-Heal
+Resgate Falho
+Memória de Bloqueio Persistente (pós-hibernação)
+Fricção Elevada
+Latência Inaceitável
+Starvation de Fila
+Deadlock Topológico (Ignorado)
+Arbitragem Falha
+Universal Arbitrator bypass
+Task Utility Zero
+Dedução Matemática Falha
+RIO Extended Violation
+Bellman-Shannon Deviation
+Utilidade Negativa (-EV)
+Vulnerabilidade Exposta
+Erro Crítico Ignorado
+Log Oculto
+Telemetria Cega
+Vigília de Guardião Inativa
+Cosmologia Vitoi Negada
+Soberania W3 degradada
+Administrador bypassing CEO
+Falta de Rigor Intelectual
+Polidez em vez de Precisão
+Eloquência sem Lógica
+Smoothing de RAG
+Contexto Irrelevante (LanceDB)
+Bypass de RAG Inativo (Queries curtas)
+Filtragem Falha
+Incerteza de Borda (Gemma 4)
+Gemma 3 residual
+Gemma 2 residual
+Llama 2 residual
+Llama 1 residual
+Provedores Cloud Obsoletos
+Desperdício de Tokens
+Entropia de Caractere
+Bits per Token Baixo
+Shannon Efficiency Violation
+Fractal Inconsistente
+Linha 1 Prolixa
+Corpo de Baixa Densidade
+Rodapé Social
+Provocação Técnica Ausente
+Estado de Arte Comprometido
+Nexus v7.0 GOLD Violation
+CHICO GOLD degradado
+PATTERN-PERFECT FAIL
+EXECUTION IMPURE
+IMACULADA DEGRADADA
+CORTEX DE EXECUCAO CORROMPIDO
+SISTEMA IMUNOLOGICO INATIVO
+AUTO-HEAL FAIL
+AMNESIA DE BLOQUEIOS FAIL
+RESFRIAMENTO DE ROTAS FAIL
+GRACEFUL SHUTDOWN FAIL
+VIGILIA DE GUARDIAO FAIL
+ESTABILIDADE OPERACIONAL FAIL
+ESTADO DE ARTE FAIL
+NEXUS SOTA v7.0 FAIL
+RAPHAEL VITOI DISRESPECTED
+CEO OVERRIDDEN BY AGENT
+TIER 0 VIOLATION
+SOBERANIA ABSOLUTA FAIL
+EXCELENCIA TERMODINAMICA FAIL
+CHICO SOTA v7.0 GOLD FAIL
