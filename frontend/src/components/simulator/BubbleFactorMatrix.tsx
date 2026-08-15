@@ -85,14 +85,14 @@ export const BubbleFactorMatrix: React.FC = () => {
 				<div>
 					<div className="flex items-center gap-3">
 						<h2 className="text-indigo-400 text-xl font-bold tracking-tight">
-							Matriz Dinâmica de Bubble Factor & Risk Premium ($BF_{'{i,j}'}$)
+							Matriz Dinâmica de Bubble Factor &amp; Risk Premium (BF i,j)
 						</h2>
 						<span className="px-2.5 py-0.5 text-xs font-bold border rounded-full bg-indigo-950 text-indigo-300 border-indigo-500/40">
 							Malmuth-Harville SOTA
 						</span>
 					</div>
 					<p className="text-xs text-slate-400 mt-1">
-						Derivação exata de $EV$, $\Delta \$EV(\text{Perda}) / \Delta \$EV(\text{Ganho})$ e assimetrias de confronto
+						Derivação exata de $EV, &Delta;$EV(Perda) / &Delta;$EV(Ganho) e assimetrias de confronto
 					</p>
 				</div>
 
@@ -137,7 +137,7 @@ export const BubbleFactorMatrix: React.FC = () => {
 			{/* Presets de Torneios Reais do Circuito */}
 			<div className="space-y-2">
 				<label className="text-xs text-slate-400 font-bold uppercase tracking-wider block">
-					Estruturas Reais de Torneios & Mesas Finais:
+					Estruturas Reais de Torneios &amp; Mesas Finais:
 				</label>
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
 					{TOURNAMENT_PRESETS.map((p) => (
@@ -268,14 +268,14 @@ export const BubbleFactorMatrix: React.FC = () => {
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">$\Delta \$EV(\text{Ganho})$</div>
+						<div className="text-[10px] text-slate-400">&Delta;$EV (Ganho)</div>
 						<div className="text-sm font-bold text-emerald-400 mt-1">
 							+${matchupDetail.deltaWin.toLocaleString()}
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">$\Delta \$EV(\text{Perda})$</div>
+						<div className="text-[10px] text-slate-400">&Delta;$EV (Perda)</div>
 						<div className="text-sm font-bold text-rose-400 mt-1">
 							-${matchupDetail.deltaLose.toLocaleString()}
 						</div>
