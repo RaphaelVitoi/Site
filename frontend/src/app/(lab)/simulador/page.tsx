@@ -15,6 +15,11 @@ const NashMatrixProfiler = dynamic(
 	{ ssr: false }
 );
 
+const RangeMatrixDynamic = dynamic(
+	() => import('@/components/simulator/panels/RangeMatrix'),
+	{ ssr: false }
+);
+
 const MasterSimulatorDynamic = dynamic(
 	() => import('@/components/simulator/MasterSimulator'),
 	{ ssr: false }
@@ -73,6 +78,13 @@ export default function MotorPage() {
 						injectedIpRp={matchupSync.ipRp}
 						injectedOopRp={matchupSync.oopRp}
 						matchupLabel={matchupSync.label}
+					/>
+				</ErrorBoundary>
+				<ErrorBoundary>
+					<RangeMatrixDynamic
+						ipRp={matchupSync.ipRp ?? 13.5}
+						oopRp={matchupSync.oopRp ?? 31.8}
+						scenarioId="mtt-final-table"
 					/>
 				</ErrorBoundary>
 				<ErrorBoundary>
