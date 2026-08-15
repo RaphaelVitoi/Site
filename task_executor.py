@@ -218,7 +218,6 @@ def intelligent_route_task(description: str, explicit_agent: str | None = None) 
     return _intelligent_route_task(description, explicit_agent)
 
 
-
 # Cold start: garante que o state manager leu do disco pelo menos uma vez
 _core_config.maybe_reload_config()
 

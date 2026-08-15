@@ -17,7 +17,7 @@ class TestSOTABinaryMatcher:
             "com",
             "*",
             "aistudio.google.com",
-            "console.cloud.google.com"
+            "console.cloud.google.com",
         ]
         sorted_domains = sorted(domains, key=sort_key)
 
@@ -42,7 +42,7 @@ class TestSOTABinaryMatcher:
             "gemini.google.com",
             "google.com",
             "com",
-            "*"
+            "*",
         ]
         assert hns == expected
 

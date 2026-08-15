@@ -46,17 +46,17 @@ class TestVitoiPerspectiveEngine:
         base_rio = 1.5
         rio_heads_up = VitoiPerspectiveEngine.calculate_structural_liability(1, base_rio)
         rio_3way = VitoiPerspectiveEngine.calculate_structural_liability(3, base_rio)
-        
+
         assert rio_heads_up == base_rio
-        assert rio_3way == round(base_rio * (3 ** 2), 4)
+        assert rio_3way == round(base_rio * (3**2), 4)
 
     def test_calculate_edge_amortization_boundaries(self):
         """Valida amortização de edge conforme a profundidade de stack."""
         assert VitoiPerspectiveEngine.calculate_edge_amortization(0.0, 1.5, 2.0) == 0.0
-        
+
         edge_10bb = VitoiPerspectiveEngine.calculate_edge_amortization(10.0, 1.0, 1.0)
         edge_100bb = VitoiPerspectiveEngine.calculate_edge_amortization(100.0, 1.0, 1.0)
-        
+
         assert edge_100bb > edge_10bb
 
     def test_calculate_utility_prospect_theory(self):
@@ -64,7 +64,7 @@ class TestVitoiPerspectiveEngine:
         loss_aversion = 2.25
         gain_utility = VitoiPerspectiveEngine.calculate_utility(10.0, loss_aversion)
         loss_utility = VitoiPerspectiveEngine.calculate_utility(-10.0, loss_aversion)
-        
+
         assert gain_utility > 0
         assert loss_utility < 0
         assert abs(loss_utility) > gain_utility

@@ -25,7 +25,7 @@ class SOTAMetadataPool:
         """Insere uma string no pool unificado ou retorna seu ID compacto existente."""
         if text in self._string_to_id:
             return self._string_to_id[text]
-        
+
         idx = len(self._string_pool)
         self._string_pool.append(text)
         self._string_to_id[text] = idx
@@ -52,12 +52,12 @@ class SOTAMetadataPool:
         """Resolve os metadados de um método a partir de seu ID compacto."""
         if entry_id < 0 or entry_id >= len(self._metadata_entries):
             raise IndexError("ID de metadados inválido no pool.")
-        
+
         c_idx, m_idx, s_idx = self._metadata_entries[entry_id]
         return {
             "class_name": self._string_pool[c_idx],
             "method_name": self._string_pool[m_idx],
-            "signature": self._string_pool[s_idx]
+            "signature": self._string_pool[s_idx],
         }
 
     def get_stats(self) -> Dict[str, Any]:
@@ -74,7 +74,7 @@ class SOTAMetadataPool:
             "unique_strings_in_pool": len(self._string_pool),
             "raw_characters": total_raw_chars,
             "pooled_characters": pooled_chars,
-            "compression_savings_percent": round(savings_percent, 2)
+            "compression_savings_percent": round(savings_percent, 2),
         }
 
 
@@ -86,7 +86,9 @@ if __name__ == "__main__":
     pool.register_method_metadata("org/chromium/chrome/browser/tab/Tab", "getTitle", "()Ljava/lang/String;")
     pool.register_method_metadata("org/chromium/chrome/browser/tab/Tab", "getId", "()I")
     pool.register_method_metadata("org/chromium/chrome/browser/tabmodel/TabModel", "getCount", "()I")
-    pool.register_method_metadata("org/chromium/chrome/browser/tabmodel/TabModel", "getTabAt", "(I)Lorg/chromium/chrome/browser/tab/Tab;")
+    pool.register_method_metadata(
+        "org/chromium/chrome/browser/tabmodel/TabModel", "getTabAt", "(I)Lorg/chromium/chrome/browser/tab/Tab;"
+    )
     pool.register_method_metadata("org/chromium/chrome/browser/tab/Tab", "getUrl", "()Ljava/lang/String;")  # Duplicata
 
     stats = pool.get_stats()
