@@ -19,6 +19,8 @@ import {
 	type ShoveProfile,
 } from '@/lib/holdemEquities';
 
+import { calculateReverseRequiredFoldEquity } from '@/lib/dynamicFoldEquityEngine';
+
 interface RangeMatrixProps {
 	ipRp: number;
 	oopRp: number;
@@ -26,7 +28,7 @@ interface RangeMatrixProps {
 }
 
 type Perspective = 'ip' | 'oop';
-type CellDisplayMode = 'MARGIN' | 'EQUITY' | 'STATUS';
+type CellDisplayMode = 'MARGIN' | 'EQUITY' | 'STATUS' | 'FE_REQ';
 
 export default function RangeMatrix({
 	ipRp,
@@ -51,7 +53,21 @@ export default function RangeMatrix({
 		return evaluateHandDetail(activeInspectorHand, shoveProfile, activeRp);
 	}, [activeInspectorHand, shoveProfile, activeRp]);
 
-	const getCellColorAndBorder = (detail: HandEquityDetail) => {
+	const getCellColorAndBorder = (detail: HandEquityDetail, mode: CellDisplayMode = displayMode) => {
+		if (mode === 'FE_REQ') {
+			const feReq = calculateReverseRequiredFoldEquity(15, 20, detail.equity / 100, 15);
+			if (feReq === 0) {
+				return 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40 hover:bg-emerald-800/90 hover:border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]';
+			}
+			if (feReq <= 0.30) {
+				return 'bg-cyan-950/80 text-cyan-300 border-cyan-500/40 hover:bg-cyan-800/90 hover:border-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.15)]';
+			}
+			if (feReq <= 0.50) {
+				return 'bg-amber-950/80 text-amber-300 border-amber-500/40 hover:bg-amber-800/90 hover:border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]';
+			}
+			return 'bg-slate-950/80 text-slate-500 border-white/5 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-500/40';
+		}
+
 		switch (detail.verdict) {
 			case 'CORE_CALL':
 				return 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40 hover:bg-emerald-800/90 hover:border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]';
@@ -137,12 +153,13 @@ export default function RangeMatrix({
 
 					{/* Modo de Exibição das Células */}
 					<div className="flex rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1 shadow-inner">
-						{(['MARGIN', 'EQUITY', 'STATUS'] as CellDisplayMode[]).map((mode) => {
+						{(['MARGIN', 'EQUITY', 'STATUS', 'FE_REQ'] as CellDisplayMode[]).map((mode) => {
 							const isActive = displayMode === mode;
-							const labels = {
-								MARGIN: 'Margem &Delta;',
+							const labels: Record<CellDisplayMode, string> = {
+								MARGIN: 'Margem \u0394',
 								EQUITY: 'Equidade %',
 								STATUS: 'Veredito',
+								FE_REQ: 'Fold Req %',
 							};
 							return (
 								<button
@@ -277,6 +294,7 @@ export default function RangeMatrix({
 									);
 									const isSelected = selectedHand === hand;
 									const cellStyle = getCellColorAndBorder(detail);
+									const feReqCell = calculateReverseRequiredFoldEquity(15, 20, detail.equity / 100, 15);
 
 									return (
 										<button
@@ -290,7 +308,7 @@ export default function RangeMatrix({
 													? 'ring-2 ring-white z-20 scale-110 shadow-[0_0_16px_rgba(255,255,255,0.4)]'
 													: 'hover:scale-105 hover:z-10'
 											}`}
-											title={`${hand}: Eq ${detail.equity}% | Req ${detail.requiredEquity}% | Delta ${detail.margin >= 0 ? '+' : ''}${detail.margin}%`}
+											title={`${hand}: Eq ${detail.equity}% | Req ${detail.requiredEquity}% | FE_req ${(feReqCell * 100).toFixed(0)}%`}
 										>
 											<span className="leading-none">{hand}</span>
 											{displayMode === 'MARGIN' && (
@@ -313,6 +331,19 @@ export default function RangeMatrix({
 											{displayMode === 'STATUS' && (
 												<span className="text-[0.42rem] font-bold mt-0.5 leading-none opacity-80">
 													{detail.margin >= 0 ? 'CALL' : 'FOLD'}
+												</span>
+											)}
+											{displayMode === 'FE_REQ' && (
+												<span
+													className={`text-[0.42rem] font-mono font-bold mt-0.5 leading-none ${
+														feReqCell === 0
+															? 'text-emerald-300'
+															: 'text-cyan-300'
+													}`}
+												>
+													{feReqCell === 0
+														? '0%'
+														: `${(feReqCell * 100).toFixed(0)}%`}
 												</span>
 											)}
 										</button>
@@ -387,6 +418,17 @@ export default function RangeMatrix({
 							>
 								{inspectedDetail.margin >= 0 ? '+' : ''}
 								{inspectedDetail.margin.toFixed(1)}%
+							</span>
+						</div>
+
+						<div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
+							<span className="text-[0.62rem] text-text-muted uppercase tracking-wider">
+								Fold Equity Reversa ($FE_{'{req}'}$)
+							</span>
+							<span className="text-sm font-black text-accent-cyan">
+								{calculateReverseRequiredFoldEquity(15, 20, inspectedDetail.equity / 100, 15) === 0
+									? '0.0% (Valor Puro)'
+									: `${(calculateReverseRequiredFoldEquity(15, 20, inspectedDetail.equity / 100, 15) * 100).toFixed(1)}%`}
 							</span>
 						</div>
 					</div>
