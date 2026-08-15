@@ -1,4 +1,4 @@
-﻿/**
+/**
  * IDENTITY: Web Worker de ICM (SOTA)
  * PATH: src/components/simulator/workers/icm.worker.ts
  * ROLE: Desacoplar o cálculo recursivo O(2^N) e Monte Carlo da Main Thread (UI).
@@ -32,10 +32,10 @@ globalThis.onmessage = (e: MessageEvent<IcmMessageData>) => {
 
     // SOTA: Fricção Zero (Zero-Copy O(1) Memory Transfer)
     // Empacotando as 3 métricas matemáticas contínuas (equity, equityPercent, winProb)
-    const buffer =
-      typeof SharedArrayBuffer === 'undefined'
-        ? new ArrayBuffer(icmResults.length * 3 * 8)
-        : new SharedArrayBuffer(icmResults.length * 3 * 8);
+    const hasShared = typeof globalThis.SharedArrayBuffer !== 'undefined';
+    const buffer = hasShared
+      ? new globalThis.SharedArrayBuffer(icmResults.length * 3 * 8)
+      : new ArrayBuffer(icmResults.length * 3 * 8);
 
     const f64Results = new Float64Array(buffer);
 
@@ -48,7 +48,7 @@ globalThis.onmessage = (e: MessageEvent<IcmMessageData>) => {
       }
     }
 
-    if (buffer instanceof SharedArrayBuffer) {
+    if (hasShared && buffer instanceof globalThis.SharedArrayBuffer) {
       (globalThis as unknown as Worker).postMessage({
         id,
         type: 'ICM_RESULT',
