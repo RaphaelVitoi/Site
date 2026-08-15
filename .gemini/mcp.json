@@ -28,13 +28,20 @@
 			"type": "stdio",
 			"command": "npx",
 			"args": [
-				"--registry",
-				"https://registry.npmjs.org",
-				"chrome-devtools-mcp@0.21.0"
+				"-y",
+				"chrome-devtools-mcp@latest",
+				"--categoryPerformance=true",
+				"--categoryNetwork=true",
+				"--categoryEmulation=true",
+				"--categoryExtensions=true",
+				"--categoryExperimentalThirdParty=true",
+				"--allowUnrestrictedPaths=true",
+				"--no-usage-statistics"
 			],
 			"gallery": "https://api.mcp.github.com",
-			"version": "0.21.0"
+			"version": "latest"
 		},
+
 		"io.github.vercel/next-devtools-mcp": {
 			"type": "stdio",
 			"command": "npx",

@@ -514,3 +514,100 @@
     transform: scale(1.1);
     box-shadow: 0 0 20px var(--slider-color-light), 0 0 0 8px var(--slider-glow-active);
 }
+
+/* ==========================================================================
+   SOTA CSS Grid Area Semantic Auto-Mapping Engine
+   Mapeamento determinístico de elementos .grid-item para suas respectivas grid-areas
+   ========================================================================== */
+
+.grid-container,
+.grid-layout {
+    display: grid;
+    gap: var(--grid-gap, 1.5rem);
+}
+
+/* 1. Estruturas Globais de Layout */
+.grid-item.header,
+.grid-item.hdr {
+    grid-area: header;
+}
+
+.grid-item.nav,
+.grid-item.navigation,
+.grid-item.navbar {
+    grid-area: nav;
+}
+
+.grid-item.sidebar,
+.grid-item.side {
+    grid-area: sidebar;
+}
+
+.grid-item.main,
+.grid-item.main-content,
+.grid-item.content,
+.grid-item.body {
+    grid-area: main;
+}
+
+.grid-item.aside,
+.grid-item.sidebar-right {
+    grid-area: aside;
+}
+
+.grid-item.footer,
+.grid-item.ftr {
+    grid-area: footer;
+}
+
+/* 2. Componentes Específicos & Seções Modulares */
+.grid-item.hero {
+    grid-area: hero;
+}
+
+.grid-item.stage,
+.grid-item.visualizer {
+    grid-area: stage;
+}
+
+.grid-item.controls,
+.grid-item.actions {
+    grid-area: controls;
+}
+
+.grid-item.telemetry,
+.grid-item.observability {
+    grid-area: telemetry;
+}
+
+.grid-item.stats,
+.grid-item.metrics {
+    grid-area: stats;
+}
+
+.grid-item.feature,
+.grid-item.features {
+    grid-area: feature;
+}
+
+.grid-item.banner {
+    grid-area: banner;
+}
+
+.grid-item.card,
+.grid-item.card-1 {
+    grid-area: card-1;
+}
+
+.grid-item.card-2 {
+    grid-area: card-2;
+}
+
+.grid-item.card-3 {
+    grid-area: card-3;
+}
+
+.grid-item.card-4 {
+    grid-area: card-4;
+}
+

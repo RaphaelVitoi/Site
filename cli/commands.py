@@ -1335,3 +1335,9 @@ def run_cli(argv: list):
 
         with contextlib.suppress(KeyboardInterrupt):
             asyncio.run(start_worker_and_api())
+
+
+def main():
+    """Main CLI entrypoint for pyproject.toml scripts."""
+    run_cli(sys.argv)
+

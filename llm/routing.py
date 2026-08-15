@@ -52,16 +52,20 @@ def _score_standard_preference(m: str, model: str, domain: str | None = None) ->
     if domain == "MATH" and ("31b" in m or "gemma-4-31b" in m):
         return -5
 
+    if "gemini-3.7" in m:
+        return -4  # Prioridade SOTA máxima para Gemini 3.7 Flash Medium
     if "gemma-4" in m or "gemma4" in m:
         return 0
-    if "gemini-2.5-flash" in m:
+    if "gemini-3.1" in m:
         return 1
-    if "gemini-2.5-pro" in m:
+    if "gemini-2.5-flash" in m:
         return 2
-    if "deepseek-r1" in m:
+    if "gemini-2.5-pro" in m:
         return 3
-    if FREE_TIER_MARKER in m:
+    if "deepseek-r1" in m:
         return 4
+    if FREE_TIER_MARKER in m:
+        return 5
 
     p = _infer_provider_for_model(model)
     if p == "openrouter":

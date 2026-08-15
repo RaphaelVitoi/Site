@@ -19,25 +19,22 @@ def _normalize_gemini_model(model: str) -> str:
     """Helper SOTA: Normaliza modelos legados e experimentais Gemini para a linha estavel."""
     model_l = str(model).lower()
 
+    # Suporte nativo para a serie 3.x (Gemini 3.7 Flash / 3.1 Pro)
+    if any(v in model_l for v in ("3.7", "3.1", "3.0")):
+        return model
+
     # Suporte nativo para a serie 2.x
     if "2.0" in model_l or "2.5" in model_l:
         return model
 
-    # SOTA: Suporte nativo para a serie 3.x (Gemini 3.1 Pro Preview)
-    if "pro" in model_l and any(v in model_l for v in ("3.1", "3.0")):
-        return model
-
-    if any(v in model_l for v in ("3.1", "3.0")):
-        return model
-
     if "1.0" in model_l:
-        return "gemini-2.5-flash"
+        return "gemini-3.7-flash"
 
     return model
 
 
 def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bool, **kwargs) -> dict:
-    """Constroi a carga util da API absorvendo a prevencao de falhas de chaves Free-Tier."""
+    """Constroi a carga util da API absorvendo a prevencao de falhas de chaves Free-Tier e suporte a Thinking."""
     final_user_prompt = f"{system_prompt}\n\n---\n\n{user_prompt}" if system_prompt else user_prompt
     gen_config = {
         "temperature": kwargs.get("temperature", 0.2),
@@ -45,6 +42,14 @@ def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bo
     }
     if require_json:
         gen_config["responseMimeType"] = APP_JSON
+
+    # SOTA: Habilita Dynamic Thinking para Gemini 3.7 Flash
+    model_str = str(kwargs.get("model", "")).lower()
+    if "3.7" in model_str or kwargs.get("thinking", False):
+        budget = kwargs.get("thinking_budget", 4096)
+        if budget:
+            gen_config["thinkingConfig"] = {"thinkingBudget": budget}
+
     return {
         "contents": [{"parts": [{"text": final_user_prompt}]}],
         "generationConfig": gen_config,
