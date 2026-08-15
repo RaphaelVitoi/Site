@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ErrorBoundary } from '@/components/analytics/ErrorBoundary';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
@@ -31,18 +31,30 @@ export default function MotorPage() {
 		label: 'BTN (Aggressive CL) vs CO (Second Stack)',
 	});
 
-	const handleMatchupSelect = (
-		heroRp: number,
-		villainRp: number,
-		heroName: string,
-		villainName: string
-	) => {
-		setMatchupSync({
-			ipRp: heroRp,
-			oopRp: villainRp,
-			label: `${heroName} vs ${villainName}`,
-		});
-	};
+	const handleMatchupSelect = useCallback(
+		(
+			heroRp: number,
+			villainRp: number,
+			heroName: string,
+			villainName: string
+		) => {
+			setMatchupSync((prev) => {
+				if (
+					prev.ipRp === heroRp &&
+					prev.oopRp === villainRp &&
+					prev.label === `${heroName} vs ${villainName}`
+				) {
+					return prev;
+				}
+				return {
+					ipRp: heroRp,
+					oopRp: villainRp,
+					label: `${heroName} vs ${villainName}`,
+				};
+			});
+		},
+		[]
+	);
 
 	return (
 		<div className="min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body pb-24">

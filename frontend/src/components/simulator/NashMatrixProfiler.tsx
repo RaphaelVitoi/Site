@@ -109,13 +109,15 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 		[]
 	);
 
-	// Efeito de injeção externa reativa da Matriz de Bubble Factor
+	// Efeito de injeção externa com guarda estrita contra loops de re-render
 	useEffect(() => {
 		if (injectedIpRp !== undefined && injectedOopRp !== undefined) {
-			setActivePreset('');
-			recompute(injectedIpRp, injectedOopRp, aggression);
+			if (Math.abs(injectedIpRp - ipRp) > 1e-4 || Math.abs(injectedOopRp - oopRp) > 1e-4) {
+				setActivePreset('');
+				recompute(injectedIpRp, injectedOopRp, aggression);
+			}
 		}
-	}, [injectedIpRp, injectedOopRp, aggression, recompute]);
+	}, [injectedIpRp, injectedOopRp, aggression, ipRp, oopRp, recompute]);
 
 	const applyPreset = (preset: HighStakesPreset) => {
 		setActivePreset(preset.id);

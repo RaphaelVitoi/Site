@@ -2,7 +2,7 @@
 
 /** @format */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
 	computeBubbleFactorMatrix,
 	getPairwiseMatchupDetail,
@@ -44,14 +44,6 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 		activePreset.defaultStacks.map((s) => `${s.pos} (${s.name})`)
 	);
 
-	const handlePresetChange = (preset: ICMTournamentPreset) => {
-		setActivePreset(preset);
-		setStacks(preset.defaultStacks.map((s) => s.chips));
-		setPayouts([...preset.payouts]);
-		setPlayerNames(preset.defaultStacks.map((s) => `${s.pos} (${s.name})`));
-		setSelectedCell({ hero: 0, villain: 1 });
-	};
-
 	const matrixResult: BubbleFactorMatrixResult = useMemo(() => {
 		return computeBubbleFactorMatrix(stacks, payouts, playerNames);
 	}, [stacks, payouts, playerNames]);
@@ -62,24 +54,47 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 		return getPairwiseMatchupDetail(matrixResult, h, v);
 	}, [matrixResult, selectedCell]);
 
-	// Broadcast inicial e em mudanças de matchup
-	useEffect(() => {
+	const handlePresetChange = useCallback(
+		(preset: ICMTournamentPreset) => {
+			setActivePreset(preset);
+			const newStacks = preset.defaultStacks.map((s) => s.chips);
+			const newPayouts = [...preset.payouts];
+			const newNames = preset.defaultStacks.map((s) => `${s.pos} (${s.name})`);
+			setStacks(newStacks);
+			setPayouts(newPayouts);
+			setPlayerNames(newNames);
+			setSelectedCell({ hero: 0, villain: 1 });
+
+			if (onSelectMatchup) {
+				const freshMatrix = computeBubbleFactorMatrix(newStacks, newPayouts, newNames);
+				const heroRp = freshMatrix.rpMatrix[0][1];
+				const villainRp = freshMatrix.rpMatrix[1][0];
+				onSelectMatchup(heroRp, villainRp, newNames[0], newNames[1]);
+			}
+		},
+		[onSelectMatchup]
+	);
+
+	const handleCellClick = useCallback(
+		(i: number, j: number) => {
+			if (i === j) return;
+			setSelectedCell({ hero: i, villain: j });
+			if (onSelectMatchup) {
+				const heroRp = matrixResult.rpMatrix[i][j];
+				const villainRp = matrixResult.rpMatrix[j][i];
+				onSelectMatchup(heroRp, villainRp, matrixResult.playerNames[i], matrixResult.playerNames[j]);
+			}
+		},
+		[matrixResult, onSelectMatchup]
+	);
+
+	const handleInjectClick = useCallback(() => {
 		if (onSelectMatchup && matchupDetail) {
 			const heroRp = matrixResult.rpMatrix[matchupDetail.heroIndex][matchupDetail.villainIndex];
 			const villainRp = matrixResult.rpMatrix[matchupDetail.villainIndex][matchupDetail.heroIndex];
 			onSelectMatchup(heroRp, villainRp, matchupDetail.heroName, matchupDetail.villainName);
 		}
 	}, [matchupDetail, matrixResult, onSelectMatchup]);
-
-	const handleCellClick = (i: number, j: number) => {
-		if (i === j) return;
-		setSelectedCell({ hero: i, villain: j });
-		if (onSelectMatchup) {
-			const heroRp = matrixResult.rpMatrix[i][j];
-			const villainRp = matrixResult.rpMatrix[j][i];
-			onSelectMatchup(heroRp, villainRp, matrixResult.playerNames[i], matrixResult.playerNames[j]);
-		}
-	};
 
 	const getCellColor = (val: number, mode: DisplayMode, isDiagonal: boolean) => {
 		if (isDiagonal) return 'bg-slate-900/40 text-slate-600 border-slate-800';
@@ -278,14 +293,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 						</div>
 						<button
 							type="button"
-							onClick={() =>
-								onSelectMatchup?.(
-									matchupDetail.riskPremium,
-									matrixResult.rpMatrix[matchupDetail.villainIndex][matchupDetail.heroIndex],
-									matchupDetail.heroName,
-									matchupDetail.villainName
-								)
-							}
+							onClick={handleInjectClick}
 							className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-bold transition-all shadow"
 						>
 							⚡ Injetar no Profiler
