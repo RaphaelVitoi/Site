@@ -16,6 +16,7 @@ import { useIcmCalculations } from '../hooks/useIcmCalculations';
 import type { InsolvencyMetrics } from '../hooks/useQuantumEngine';
 import AnimatedNumber from '../ui/AnimatedNumber';
 import { InsolvencyRioPanel } from '../ui/InsolvencyRioPanel';
+import { MonteCarloConvergenceWidget } from '../ui/MonteCarloConvergenceWidget';
 
 const PRESETS = [
   { label: 'HU (2p)', stacks: [50, 50], prizes: [65, 35] },
@@ -467,6 +468,10 @@ export default function EquityCalculator() {
               })}
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-2">
+          <MonteCarloConvergenceWidget />
         </div>
 
         <div

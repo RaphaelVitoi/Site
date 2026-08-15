@@ -1,14 +1,9 @@
 /** @format */
 
 import init, {
-  solve_insolvency_matrix_binary,
-  solve_icm_distortion_v2,
-  calculate_perspectiva_vitoi_wasm,
-  alloc_range_buffer,
-  free_range_buffer,
-  calculate_multiway_equity_zerocopy,
+	solve_icm_distortion_v2,
+	solve_insolvency_matrix_binary,
 } from '../../../lib/engine/vitoi_equity_engine';
-import { maskToBytes, rangeToBitmask } from './rangeParser';
 
 declare const self: DedicatedWorkerGlobalScope;
 
@@ -25,21 +20,41 @@ self.onmessage = async (e: MessageEvent) => {
 
 		let result = null;
 		if (matrixData) {
-			result = solve_insolvency_matrix_binary(matrixData);
+			result = solve_insolvency_matrix_binary(
+				matrixData.villainMask,
+				matrixData.board,
+				matrixData.rpFactor,
+				matrixData.heroInvested,
+				matrixData.currentPot,
+				matrixData.activePlayers,
+				matrixData.iterations,
+				matrixData.seed,
+				matrixData.kappa
+			);
 		} else if (icmData) {
-			result = solve_icm_distortion_v2(icmData.stacks, icmData.prizes);
+			result = solve_icm_distortion_v2(
+				icmData.ipRp,
+				icmData.oopRp,
+				icmData.topologicAggression,
+				icmData.activePlayers,
+				icmData.potSize,
+				icmData.streetIdx,
+				icmData.fold,
+				icmData.raise
+			);
 		}
 
 		self.postMessage({
 			type: 'SUCCESS',
 			simulationId,
-			result
+			result,
 		});
-	} catch (err: any) {
+	} catch (err: unknown) {
+		const errorMessage = err instanceof Error ? err.message : String(err);
 		self.postMessage({
 			type: 'ERROR',
 			simulationId,
-			error: err?.message || String(err)
+			error: errorMessage,
 		});
 	}
 };
