@@ -16,6 +16,10 @@ interface GemmaAnalysisProps {
 	icmContext?: {
 		payjumpDist?: string;
 		bubbleFactor?: number;
+		riskPremium?: number;
+		requiredEquity?: number;
+		callPercentage?: number;
+		activeHand?: string;
 	};
 }
 
@@ -34,13 +38,18 @@ export function GemmaAnalysisPanel({
 	const { streamedText, isStreaming, error, generateAnalysis } = useGemmaStream();
 
 	const handleInjectAnalysis = () => {
+		const bfStr = (icmContext?.bubbleFactor ?? 1).toFixed(2);
+		const reqEqStr = (icmContext?.requiredEquity ?? 50).toFixed(1);
+		const callRangeStr = (icmContext?.callPercentage ?? 25).toFixed(1);
+		const activeHandStr = icmContext?.activeHand ?? 'AKs';
+
 		const prompt = `
-> SYSTEM: Atue como Motor de Inferência SOTA v7.0 GOLD. Raciocínio Termodinâmico Ativo.
-> DATA: Pos: ${heroPos} vs ${villainPos} | Pot: ${potSize}bb | Stacks: ${heroStack}bb / ${villainStack}bb | RiskAdv: ${riskAdvantage.toFixed(1)}% | Bounty: ${bountyPower.toFixed(1)}.
-> TASK: Forneça uma análise de Antevisão Estratégica (máx 150 palavras) dividida em dois bullets:
-- TERMODINÂMICA: [Sua análise sobre Risk Advantage e proteção de Bounty]
-- VEREDITO SOTA: [Ação soberana baseada na paridade de Perspectiva]
-Direto ao ponto, sem preâmbulos.
+> SYSTEM: Atue como Motor de Inferência SOTA v7.0 GOLD. Raciocínio Termodinâmico e Teoria dos Jogos Ativos.
+> DATA: Matchup: ${heroPos} vs ${villainPos} | Pot: ${potSize}bb | Stacks: ${heroStack}bb / ${villainStack}bb | RiskAdv: ${riskAdvantage.toFixed(1)}% | BF: ${bfStr}x | ReqEq: ${reqEqStr}% | Defesa Total: ${callRangeStr}% | Mão em Foco: ${activeHandStr}.
+> TASK: Forneça uma análise de Antevisão Estratégica (máx 150 palavras) dividida em dois tópicos de alta densidade:
+- TOPOLOGIA DO RANGE & BUBBLE FACTOR: [Impacto da assimetria do BF no estreitamento do range de defesa e limiar ReqEq]
+- VEREDITO SOTA: [Ação soberana de ${activeHandStr} ponderando a margem de lucratividade contra o shove do vilão]
+Direto ao ponto, com rigor axiomático e sem preâmbulos.
 `;
 		const targetModelOverride = selectedModel === 'auto' ? undefined : selectedModel;
 
