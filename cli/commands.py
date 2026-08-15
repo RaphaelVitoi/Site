@@ -1260,6 +1260,27 @@ def _cli_ai_simulate(argv: list, _manager: QueueManager) -> None:
         print(f"Subcomando AI desconhecido: {subcmd}")
 
 
+def _cli_voice(argv: list, manager: QueueManager) -> None:
+    from scripts.cli.nexus_voice import speak_text
+
+    text = (
+        argv[2]
+        if len(argv) > 2 and not argv[2].startswith("-")
+        else "Sistema SOTA v7.0 GOLD operando com síntese de voz padrão ouro em português do Brasil sob governança de Raphael Vitoi."
+    )
+    voice = "pt-BR-FranciscaNeural"
+    if "--voice" in argv:
+        idx = argv.index("--voice")
+        if idx + 1 < len(argv):
+            voice = argv[idx + 1]
+    elif "-v" in argv:
+        idx = argv.index("-v")
+        if idx + 1 < len(argv):
+            voice = argv[idx + 1]
+    no_play = "--no-play" in argv
+    speak_text(text, voice=voice, play=not no_play)
+
+
 async def _handle_cli_command(cmd: str, argv: list, manager: QueueManager) -> None:
     handlers = {
         "db-init": _cli_db_init,
@@ -1310,6 +1331,7 @@ async def _handle_cli_command(cmd: str, argv: list, manager: QueueManager) -> No
         "worker": _cli_worker,
         "worker-api": _cli_worker,
         "ai-simulate": _cli_ai_simulate,
+        "voice": _cli_voice,
     }
 
     if cmd in handlers:
