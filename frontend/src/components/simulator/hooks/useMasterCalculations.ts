@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { computeQuantumMetrics, type PerspectivaResult } from '@/lib/perspectiva';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -39,12 +39,24 @@ export function useMasterCalculations({
 			type: 'module',
 		});
 
-		worker.onmessage = (e: MessageEvent<{ equity?: number; error?: string; id: number }>) => {
-			if (e.data.error || e.data.equity === undefined) {
-				console.warn('[SotaEcosystem] Entropia WASM:', e.data.error || 'Missing equity in payload');
+		worker.onmessage = (
+			e: MessageEvent<{
+				equity?: number;
+				error?: string;
+				id?: number;
+				result?: { hero_equity?: number; villain_equity?: number };
+			}>
+		) => {
+			if (e.data.error) {
 				setNativeRangeMetric((prev) => ({ ...prev, isCalculating: false }));
 			} else {
-				setNativeRangeMetric({ equity: e.data.equity, isCalculating: false });
+				const extractedEquity =
+					e.data.result?.hero_equity !== undefined
+						? e.data.result.hero_equity > 1
+							? e.data.result.hero_equity
+							: e.data.result.hero_equity * 100
+						: e.data.equity ?? 50;
+				setNativeRangeMetric({ equity: extractedEquity, isCalculating: false });
 			}
 		};
 		equityWorkerRef.current = worker;
@@ -56,33 +68,45 @@ export function useMasterCalculations({
 			worker.postMessage({
 				heroRange: 'random',
 				villainRange: 'random',
-				board: ''
+				board: '',
 			});
 		}
 
 		return () => worker.terminate();
 	}, [scenario.stacks]);
 
-	// SOTA v6: Sincronizacao da Mente Bayesiana via Nexus Proxy
+	// SOTA v6: Sincronização da Mente Bayesiana via Nexus Proxy e Motor Síncrono
 	useEffect(() => {
+		const prior = (nativeRangeMetric.equity || 50) / 100;
+		const alpha = Math.min(0.99, Math.max(0.01, aggressionFactor / 3));
+		const pOdd = safeHeroInvested / Math.max(0.1, safeCurrentPot + safeHeroInvested);
+		const pActionWin = 1 - (1 - alpha) * 0.75;
+		const pActionLoss = alpha * Math.max(0.1, 1 - pOdd);
+		const num = pActionWin * prior;
+		const den = num + pActionLoss * (1 - prior);
+		const localProb = den > 0 ? (num / den) * 100 : prior * 100;
+		setBayesianWinProb(Number(localProb.toFixed(1)));
+
 		const fetchBayesian = async () => {
 			try {
 				const response = await fetch('/api/sota/bayesian-range', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						prior_equity: nativeRangeMetric.equity / 100,
-						action_strength: Math.min(0.99, Math.max(0.01, aggressionFactor / 3)),
+						prior_equity: prior,
+						action_strength: alpha,
 						range_density: 0.5,
-						pot_odd_pressure: safeHeroInvested / (safeCurrentPot + safeHeroInvested),
+						pot_odd_pressure: pOdd,
 					}),
 				});
-				const data = await response.json();
-				if (data.posterior_win_prob !== undefined) {
-					setBayesianWinProb(data.posterior_win_prob * 100);
+				if (response.ok) {
+					const data = await response.json();
+					if (data.posterior_win_prob !== undefined) {
+						setBayesianWinProb(Number((data.posterior_win_prob * 100).toFixed(1)));
+					}
 				}
 			} catch (e) {
-				console.warn('[SOTA] Falha ao sincronizar Mente Bayesiana:', e);
+				// Fallback síncrono local já está ativo
 			}
 		};
 		if (!nativeRangeMetric.isCalculating) fetchBayesian();
