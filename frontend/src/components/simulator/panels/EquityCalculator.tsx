@@ -16,6 +16,7 @@ import { useIcmCalculations } from '../hooks/useIcmCalculations';
 import type { InsolvencyMetrics } from '../hooks/useQuantumEngine';
 import AnimatedNumber from '../ui/AnimatedNumber';
 import { DynamicFoldEquityWidget } from '../ui/DynamicFoldEquityWidget';
+import { GeminiVoicePlayer } from '../ui/GeminiVoicePlayer';
 import { InsolvencyRioPanel } from '../ui/InsolvencyRioPanel';
 import { MonteCarloConvergenceWidget } from '../ui/MonteCarloConvergenceWidget';
 
@@ -477,6 +478,16 @@ export default function EquityCalculator() {
 
         <div className="mt-2">
           <DynamicFoldEquityWidget />
+        </div>
+
+        <div className="mt-2">
+          <GeminiVoicePlayer
+            title="Narrador de Insights ICM SOTA (Voz Neural PT-BR)"
+            defaultText={
+              icmInsight ||
+              'Aproximação Malmuth-Harville calculada com sucesso sob governança de Raphael Vitoi.'
+            }
+          />
         </div>
 
         <div

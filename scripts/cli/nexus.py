@@ -90,11 +90,13 @@ agent_app = typer.Typer(
 )
 db_app = typer.Typer(name="db", help="Gestao e Otimizacao do DAL (SQLite ACID)", no_args_is_help=True)
 stats_app = typer.Typer(name="stats", help="Telemetria Preditiva e Relatorios", no_args_is_help=True)
+voice_app = typer.Typer(name="voice", help="Sintese Neural de Voz e Audio SOTA", no_args_is_help=True)
 
 app.add_typer(ops_app)
 app.add_typer(agent_app)
 app.add_typer(db_app)
 app.add_typer(stats_app)
+app.add_typer(voice_app)
 
 DIR_CLAUDE = BASE_DIR / ".cerebro"
 
@@ -105,6 +107,9 @@ WORKER_API_CMD = "worker-api"
 MEMORY_RAG_SCRIPT = "memory_rag.py"
 
 STYLE_BOLD_WHITE = "bold #f8f8f2"
+STATUS_PASS = "[green]PASS[/]"
+STATUS_FAIL = "[red]FAIL[/]"
+
 
 
 #  Utils de Runtime
@@ -1499,7 +1504,9 @@ async def _auto_cure_lightningcss(npm_cmd: str) -> None:
 
 @ops_app.command("security")
 def security_audit(
-    strict: bool = typer.Option(True, "--strict/--no-strict", help="Falha o comando se houver qualquer vulnerabilidade"),
+    strict: bool = typer.Option(
+        True, "--strict/--no-strict", help="Falha o comando se houver qualquer vulnerabilidade"
+    ),
 ):
     """Auditoria de Seguranca, CVEs e Vulnerabilidades (NIST / GitHub Advisory Gate)."""
     console.print("[bold cyan]=== [SISTEMA] Auditoria de Seguranca e Vulnerabilidades (CVEs) ===[/]")
@@ -1530,11 +1537,13 @@ def security_audit(
     table.add_column("STATUS", justify="center")
 
     table.add_row(
-        "Vulnerabilidades Criticas", str(crit_count), "0", "[green]PASS[/]" if crit_count == 0 else "[red]FAIL[/]"
+        "Vulnerabilidades Criticas", str(crit_count), "0", STATUS_PASS if crit_count == 0 else STATUS_FAIL
     )
-    table.add_row("Vulnerabilidades Altas", str(high_count), "0", "[green]PASS[/]" if high_count == 0 else "[red]FAIL[/]")
     table.add_row(
-        "Total de Vulnerabilidades", str(tot_count), "0", "[green]PASS[/]" if tot_count == 0 else "[red]FAIL[/]"
+        "Vulnerabilidades Altas", str(high_count), "0", STATUS_PASS if high_count == 0 else STATUS_FAIL
+    )
+    table.add_row(
+        "Total de Vulnerabilidades", str(tot_count), "0", STATUS_PASS if tot_count == 0 else STATUS_FAIL
     )
 
     console.print(table)
@@ -1721,6 +1730,32 @@ def test_routing(
     except Exception as e:
         logger.exception("Falha ao analisar rota")
         console.print(f"[bold red]Erro de roteamento: {e}[/]")
+
+
+# ==========================================
+# COMANDOS DE VOZ SOTA (TTS NEURAL)
+# ==========================================
+
+
+@voice_app.command("speak")
+def voice_speak(
+    text: str = typer.Argument(
+        "Sistema SOTA v7.0 GOLD operando com síntese de voz padrão ouro em português do Brasil sob governança de Raphael Vitoi.",
+        help="Texto a sintetizar em voz alta.",
+    ),
+    voice: str = typer.Option(
+        "pt-BR-FranciscaNeural",
+        "--voice",
+        "-v",
+        help="Voz (pt-BR-FranciscaNeural, pt-BR-ThalitaNeural, Aoede, Kore, Puck)",
+    ),
+    output: str | None = typer.Option(None, "--output", "-o", help="Arquivo de saída (.mp3/.wav)"),
+    no_play: bool = typer.Option(False, "--no-play", help="Desabilita reprodução imediata no speaker"),
+):
+    """Sintetiza voz neural em PT-BR (Feminina Padrão Ouro) ou Gemini Multimodal Audio."""
+    from scripts.cli.nexus_voice import speak_text
+
+    speak_text(text, voice=voice, output_file=output, play=not no_play)
 
 
 # ==========================================
