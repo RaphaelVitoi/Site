@@ -1567,6 +1567,20 @@ def verify_integrity(
         raise typer.Exit(1)
 
 
+@ops_app.command("compress")
+def compress_static_assets():
+    """Executa a Pre-Compactacao Estatica Brotli (q=11) e Gzip (lvl=9) dos Assets."""
+    script_path = BASE_DIR / "scripts" / "ops" / "brotli_compressor.mjs"
+    if script_path.exists():
+        node_cmd = shutil.which("node") or "node"
+        res = subprocess.run([node_cmd, str(script_path)], cwd=str(BASE_DIR), check=False)
+        if res.returncode != 0:
+            raise typer.Exit(res.returncode)
+    else:
+        console.print("[bold red][ERRO] Script de compressao ausente.[/]")
+        raise typer.Exit(1)
+
+
 @ops_app.command("quality-gate")
 @coro
 async def quality_gate():
@@ -1574,6 +1588,7 @@ async def quality_gate():
     console.print("[bold magenta]=== [SISTEMA] INICIANDO QUALITY GATE SOTA ===[/]")
 
     npm_cmd = shutil.which("npm")
+    node_cmd = shutil.which("node") or "node"
 
     if not npm_cmd:
         console.print("[bold red][ENTROPIA CRITICA] Executaveis vitais (npm) ausentes no PATH da membrana.[/]")
@@ -1613,6 +1628,12 @@ async def quality_gate():
             None,
         ),
         ("Build (frontend)", [npm_cmd, "run", "build"], BASE_DIR, build_env),
+        (
+            "Pre-Compressao Estatica Brotli/Gzip (<15KB Mandate)",
+            [node_cmd, str(BASE_DIR / "scripts" / "ops" / "brotli_compressor.mjs")],
+            BASE_DIR,
+            None,
+        ),
         ("Tests (frontend)", [npm_cmd, "run", "test"], BASE_DIR, None),
         (
             "Python syntax check",
