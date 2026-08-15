@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    SOTA Core Web Vitals Quality Gate & Security CVE Assert Engine
+    SOTA Core Web Vitals Quality Gate, Security CVE & SRI Assert Engine
     Chico Protocol v7.0 GOLD
 #>
 
@@ -17,7 +17,7 @@ param(
 $ErrorActionPreference = 'SilentlyContinue'
 
 Write-Host "`n======================================================================" -ForegroundColor Cyan
-Write-Host "[SOTA QUALITY GATE] Core Web Vitals, A11y & Security Full Audit" -ForegroundColor Yellow
+Write-Host "[SOTA QUALITY GATE] Full Performance, A11y, CVE & SRI Integrity Audit" -ForegroundColor Yellow
 Write-Host "Target: $TargetUrl" -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Cyan
 
@@ -137,6 +137,31 @@ foreach ($k in $secRules.Keys) {
 }
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
+# 4. Cryptographic SRI & SHA-512 Integrity Gate
+Write-Host ("`n[4] SUBRESOURCE INTEGRITY (SRI) & SHA-512 CRYPTOGRAPHIC HASH AUDIT") -ForegroundColor Yellow
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CRYPTOGRAPHIC TARGET', 'STATUS', 'LIMIT', 'GATE') -ForegroundColor White
+Write-Host ("-" * 68) -ForegroundColor DarkGray
+
+$sriSuccess = $true
+try {
+    $pythonExe = if (Test-Path "$env:USERPROFILE\.gemini\Site\.venv\Scripts\python.exe") { "$env:USERPROFILE\.gemini\Site\.venv\Scripts\python.exe" } else { "python.exe" }
+    $sriOutput = & $pythonExe "$env:USERPROFILE\.gemini\Site\scripts\ops\sri_integrity_verifier.py" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        $sriSuccess = $false
+    }
+} catch {
+    $sriSuccess = $false
+}
+
+$sriStatus = if ($sriSuccess) { "[PASS]" } else { "[FAIL]" }
+$sriColor = if ($sriSuccess) { "Green" } else { "Red" }
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f "SHA512_&_SRI_INTEGRITY", "VERIFIED", "<= 0 viol", $sriStatus) -ForegroundColor $sriColor
+
+if (-not $sriSuccess) {
+    $failures += "Cryptographic Integrity Gate: Falha na validacao de SRI ou hash SHA-512 de pacotes."
+}
+Write-Host ("-" * 68) -ForegroundColor DarkGray
+
 # Gerar relatorio JSON e Markdown
 if (-not (Test-Path $ReportDir)) {
     New-Item -Path $ReportDir -ItemType Directory -Force | Out-Null
@@ -154,13 +179,14 @@ $reportData = [ordered]@{
     CoreWebVitals = $perfMetrics
     AccessibilityRules = $a11yRules
     SecurityRules = $secRules
+    SriIntegrity = if ($sriSuccess) { "VERIFIED" } else { "FAILED" }
     Failures = $failures
 }
 
 $reportData | ConvertTo-Json -Depth 5 | Set-Content -Path $reportJsonPath -Encoding UTF8
 
 $mdContent = @"
-# ⚡ SOTA Quality Gate & Security Audit Report
+# ⚡ SOTA Quality Gate, Security & SRI Audit Report
 **Timestamp:** $((Get-Date).ToString("yyyy-MM-dd HH:mm:ss"))  
 **Target URL:** `$TargetUrl`  
 **Status:** $(if ($failures.Count -eq 0) { "✅ **APPROVED (SOTA GOLD)**" } else { "❌ **REJECTED**" })
@@ -180,6 +206,11 @@ $($a11yRules.Keys | ForEach-Object { "| **$_** | $($a11yRules[$_].Val) | <= $($a
 | :--- | :--- | :--- | :--- | :--- |
 $($secRules.Keys | ForEach-Object { "| **$_** | $($secRules[$_].Val) | <= $($secRules[$_].Limit) | $($secRules[$_].Desc) | $(if ($secRules[$_].Val -le $secRules[$_].Limit) { '✅ PASS' } else { '❌ FAIL' }) |" } | Out-String)
 
+## 4. Cryptographic SRI & SHA-512 Subresource Integrity
+- **NPM Package SHA-512**: $(if ($sriSuccess) { '✅ 100% SHA-512 Estrito' } else { '❌ Falha' })
+- **Frontend SRI Script Tags**: $(if ($sriSuccess) { '✅ Zero Scripts Externos Desprotegidos' } else { '❌ Falha' })
+- **WASM Binaries SHA-256 Lock**: $(if ($sriSuccess) { '✅ Integridade Criptográfica Verificada' } else { '❌ Falha' })
+
 $(if ($failures.Count -gt 0) {
 "## ⚠️ Violations Detected`n" + ($failures | ForEach-Object { "- $_" } | Out-String)
 })
@@ -195,9 +226,9 @@ if ($failures.Count -gt 0) {
     foreach ($f in $failures) {
         Write-Host "   - $f" -ForegroundColor Red
     }
-    Write-Host "`nDeploy/Commit aborted to protect system performance & security integrity.`n" -ForegroundColor Yellow
+    Write-Host "`nDeploy/Commit aborted to protect system performance, security & cryptographic integrity.`n" -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "`n[GATE APPROVED] All Core Web Vitals, Accessibility & Security Standards meet SOTA Gold Standard.`n" -ForegroundColor Green
+Write-Host "`n[GATE APPROVED] All Core Web Vitals, A11y, Security & SRI Standards meet SOTA Gold Standard.`n" -ForegroundColor Green
 exit 0

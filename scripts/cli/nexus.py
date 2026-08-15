@@ -1548,6 +1548,25 @@ def security_audit(
     console.print("[bold green][OK] Blindagem de Seguranca 100% integra. Zero CVEs ativas.[/]")
 
 
+@ops_app.command("verify-integrity")
+@ops_app.command("sri-audit")
+def verify_integrity(
+    strict: bool = typer.Option(True, "--strict/--no-strict", help="Falha o comando se houver violacao SRI ou de Hash"),
+):
+    """Auditoria Criptografica de Subresource Integrity (SRI) e SHA-512 (WASM & Packages)."""
+    script_path = BASE_DIR / "scripts" / "ops" / "sri_integrity_verifier.py"
+    if script_path.exists():
+        args = [sys.executable, str(script_path)]
+        if not strict:
+            args.append("--no-strict")
+        res = subprocess.run(args, cwd=str(BASE_DIR), check=False)
+        if res.returncode != 0 and strict:
+            raise typer.Exit(res.returncode)
+    else:
+        console.print("[bold red][ERRO] Script de integridade SRI ausente.[/]")
+        raise typer.Exit(1)
+
+
 @ops_app.command("quality-gate")
 @coro
 async def quality_gate():
@@ -1577,6 +1596,12 @@ async def quality_gate():
         (
             "Auditoria de Vulnerabilidades & CVEs (NIST/GHSA)",
             [sys.executable, str(Path(__file__)), "ops", "security"],
+            BASE_DIR,
+            None,
+        ),
+        (
+            "Auditoria Criptografica SRI & SHA-512",
+            [sys.executable, str(Path(__file__)), "ops", "verify-integrity"],
             BASE_DIR,
             None,
         ),
