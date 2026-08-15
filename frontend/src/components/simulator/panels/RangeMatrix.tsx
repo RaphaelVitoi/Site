@@ -3,202 +3,430 @@
 /**
  * IDENTITY: Matriz de Ranges 13x13 (Visual Grid) v7.0 GOLD
  * PATH: src/components/simulator/panels/RangeMatrix.tsx
- * ROLE: Visualizar um mapa heuristico de colapso e expansao do range baseado no Risk Premium (IP/OOP).
- * BINDING: [panels/TheoryPanel.tsx, components/simulator/engine/utils.ts]
+ * ROLE: Visualizar a física de defesa e push/fold de todas as 169 mãos Texas Hold'em
+ *       com cálculo exato de Equidade Requerida e Margem de Lucro baseadas no Bubble Factor.
+ * BINDING: [src/lib/holdemEquities.ts, src/components/simulator/BubbleFactorMatrix.tsx]
  */
 
-import React, { useEffect, useState, useContext } from 'react';
-import { getHandStatus, getStatusBgClass } from '@/components/simulator/engine/utils';
+import React, { useMemo, useState, useContext } from 'react';
+import {
+	computeRangeMatrixSummary,
+	evaluateHandDetail,
+	RANKS,
+	SHOVE_PROFILES,
+	type HandEquityDetail,
+	type HandVerdict,
+	type ShoveProfile,
+} from '@/lib/holdemEquities';
 import { SotaMetricsContext } from '@/components/simulator/SotaContext';
-
-const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
-const STATUS_CYCLE = ['fold', 'core', 'marginal', 'bluff', 'death'];
 
 interface RangeMatrixProps {
 	ipRp: number;
 	oopRp: number;
-	scenarioId: string;
+	scenarioId?: string;
 }
 
 type Perspective = 'ip' | 'oop';
+type CellDisplayMode = 'MARGIN' | 'EQUITY' | 'STATUS';
 
-export default function RangeMatrix({ ipRp, oopRp, scenarioId }: Readonly<RangeMatrixProps>) {
-	const [overrides, setOverrides] = useState<Record<string, string>>({});
+export default function RangeMatrix({
+	ipRp,
+	oopRp,
+	scenarioId = 'mtt-final-table',
+}: Readonly<RangeMatrixProps>) {
 	const [perspective, setPerspective] = useState<Perspective>('ip');
+	const [shoveProfile, setShoveProfile] = useState<ShoveProfile>('STANDARD_25');
+	const [displayMode, setDisplayMode] = useState<CellDisplayMode>('MARGIN');
+	const [selectedHand, setSelectedHand] = useState<string>('AKs');
+	const [hoveredHand, setHoveredHand] = useState<string | null>(null);
+
 	const metricsCtx = useContext(SotaMetricsContext);
 	const ci = metricsCtx?.apiQuantumMetrics?.ci ?? null;
 
-	useEffect(() => {
-		try {
-			const storageKey = `rangeMatrixOverrides_${scenarioId}`;
-			const saved = localStorage.getItem(storageKey);
-			setOverrides(saved ? JSON.parse(saved) : {});
-		} catch (error: unknown) {
-			console.warn('[CORTEX SHIELD] Falha ao restaurar overrides do localStorage:', error);
-			setOverrides({});
-		}
-	}, [scenarioId]);
-
-	const handleCellClick = (hand: string, currentStatus: string) => {
-		const currentIndex = STATUS_CYCLE.indexOf(currentStatus);
-		const nextStatus = STATUS_CYCLE[(currentIndex + 1) % STATUS_CYCLE.length] ?? currentStatus;
-
-		setOverrides((prev) => {
-			const nextOverrides = { ...prev, [hand]: nextStatus };
-			try {
-				localStorage.setItem(
-					`rangeMatrixOverrides_${scenarioId}`,
-					JSON.stringify(nextOverrides),
-				);
-			} catch (error: unknown) {
-				console.error('[CORTEX SHIELD] Persistence failure:', error);
-			}
-			return nextOverrides;
-		});
-	};
-
-	const resetOverrides = () => {
-		setOverrides({});
-		localStorage.removeItem(`rangeMatrixOverrides_${scenarioId}`);
-	};
-
 	const activeRp = perspective === 'ip' ? ipRp : oopRp;
 
-	return (
-		<div className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
-			<div className="absolute -bottom-24 -left-24 w-48 h-48 bg-accent-emerald/5 blur-3xl rounded-full pointer-events-none" />
+	const summary = useMemo(() => {
+		return computeRangeMatrixSummary(shoveProfile, activeRp);
+	}, [shoveProfile, activeRp]);
 
-			<div className="flex justify-between items-center flex-wrap gap-8 pb-8 border-b border-white/5">
-				<div className="flex flex-col sm:flex-row sm:items-center gap-6">
-					<div>
-						<h4 className="text-[0.75rem] font-black text-accent-emerald uppercase tracking-[0.2em] m-0 flex items-center gap-3">
-							<div className="w-2 h-2 rounded-full bg-accent-emerald shadow-[0_0_10px_var(--accent-emerald)]" />
-							Mapa Heurístico de Range
-						</h4>
-						<p className="m-0 mt-2 text-[0.65rem] text-text-dim font-medium uppercase tracking-wider group-hover/matrix:text-glow-indigo transition-all duration-500">
-							Topologia de Colapso SOTA v7.0 GOLD
-						</p>
+	const activeInspectorHand = hoveredHand || selectedHand;
+
+	const inspectedDetail: HandEquityDetail = useMemo(() => {
+		return evaluateHandDetail(activeInspectorHand, shoveProfile, activeRp);
+	}, [activeInspectorHand, shoveProfile, activeRp]);
+
+	const getCellColorAndBorder = (detail: HandEquityDetail) => {
+		switch (detail.verdict) {
+			case 'CORE_CALL':
+				return 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40 hover:bg-emerald-800/90 hover:border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]';
+			case 'MARGINAL_CALL':
+				return 'bg-amber-950/80 text-amber-300 border-amber-500/40 hover:bg-amber-800/90 hover:border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]';
+			case 'RISKY_FOLD':
+				return 'bg-indigo-950/80 text-indigo-300 border-indigo-500/30 hover:bg-indigo-900/90 hover:border-indigo-300';
+			case 'DEATH_FOLD':
+			default:
+				return 'bg-slate-950/80 text-slate-500 border-white/5 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-500/40';
+		}
+	};
+
+	const getVerdictBadge = (verdict: HandVerdict) => {
+		switch (verdict) {
+			case 'CORE_CALL':
+				return {
+					text: 'CALL LUCRATIVO (+EV)',
+					color: 'text-emerald-400 bg-emerald-950/60 border-emerald-500/30',
+				};
+			case 'MARGINAL_CALL':
+				return {
+					text: 'CALL MARGINAL (Break-Even)',
+					color: 'text-amber-400 bg-amber-950/60 border-amber-500/30',
+				};
+			case 'RISKY_FOLD':
+				return {
+					text: 'FOLD POR ICM (Dano Estrutural)',
+					color: 'text-indigo-400 bg-indigo-950/60 border-indigo-500/30',
+				};
+			case 'DEATH_FOLD':
+				return {
+					text: 'FOLD CRÍTICO (Death Zone)',
+					color: 'text-rose-400 bg-rose-950/60 border-rose-500/30',
+				};
+		}
+	};
+
+	return (
+		<div className="glass-panel flex flex-col gap-8 p-6 sm:p-8 lg:p-10 rounded-4xl bg-bg-panel/90 backdrop-blur-2xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
+			<div className="absolute -bottom-32 -left-32 w-64 h-64 bg-accent-emerald/5 blur-[120px] rounded-full pointer-events-none" />
+			<div className="absolute -top-32 -right-32 w-64 h-64 bg-accent-indigo/5 blur-[120px] rounded-full pointer-events-none" />
+
+			{/* Cabeçalho Principal e Controles */}
+			<div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 pb-6 border-b border-white/5">
+				<div>
+					<div className="flex items-center gap-3">
+						<div className="w-2.5 h-2.5 rounded-full bg-accent-emerald shadow-[0_0_12px_var(--accent-emerald)] animate-pulse" />
+						<h3 className="text-sm font-black text-white uppercase tracking-[0.25em] m-0">
+							Matriz de Defesa 13&times;13 (169 Mãos Hold&apos;em)
+						</h3>
 					</div>
-					<div className="flex rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1.5 shadow-inner">
+					<p className="m-0 mt-1 text-[0.7rem] text-text-muted font-mono uppercase tracking-wider">
+						Equidade Requerida $\text&#123;ReqEq&#125; = {summary.requiredEquity}\%$ &middot; $BF = {summary.bubbleFactor}\times$ &middot; $RP = {activeRp.toFixed(1)}\%$
+					</p>
+				</div>
+
+				{/* Alternadores de Perspectiva e Modo de Exibição */}
+				<div className="flex flex-wrap items-center gap-4">
+					{/* Perspectiva IP / OOP */}
+					<div className="flex rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1 shadow-inner">
 						{(['ip', 'oop'] as Perspective[]).map((p) => {
 							const isActive = perspective === p;
-							const activeStyle =
-								p === 'ip'
-									? 'bg-slate-900/80 text-accent-indigo-light shadow-2xl border border-accent-indigo/30'
-									: 'bg-slate-900/80 text-accent-rose shadow-2xl border border-accent-rose/30';
-							const btnClass = isActive
-								? activeStyle
-								: 'bg-transparent text-text-darker hover:text-text-muted';
+							const val = p === 'ip' ? ipRp : oopRp;
 							return (
 								<button
 									key={p}
 									type="button"
 									onClick={() => setPerspective(p)}
-									className={`px-6 py-2.5 text-[0.65rem] font-black uppercase tracking-[0.2em] cursor-pointer transition-all duration-500 rounded-xl ${btnClass}`}
+									className={`px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.15em] cursor-pointer transition-all duration-300 rounded-xl ${
+										isActive
+											? p === 'ip'
+												? 'bg-accent-indigo/20 text-accent-indigo-light border border-accent-indigo/40 shadow-lg shadow-indigo-500/10'
+												: 'bg-accent-rose/20 text-accent-rose border border-accent-rose/40 shadow-lg shadow-rose-500/10'
+											: 'text-text-muted hover:text-white'
+									}`}
 								>
-									{p.toUpperCase()} &middot;{' '}
-									{(p === 'ip' ? ipRp : oopRp).toFixed(1)}%
+									{p.toUpperCase()}: {val.toFixed(1)}%
+								</button>
+							);
+						})}
+					</div>
+
+					{/* Modo de Exibição das Células */}
+					<div className="flex rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1 shadow-inner">
+						{(['MARGIN', 'EQUITY', 'STATUS'] as CellDisplayMode[]).map((mode) => {
+							const isActive = displayMode === mode;
+							const labels = {
+								MARGIN: 'Margem &Delta;',
+								EQUITY: 'Equidade %',
+								STATUS: 'Veredito',
+							};
+							return (
+								<button
+									key={mode}
+									type="button"
+									onClick={() => setDisplayMode(mode)}
+									className={`px-3 py-2 text-[0.6rem] font-black uppercase tracking-wider cursor-pointer transition-all rounded-xl ${
+										isActive
+											? 'bg-white/10 text-white border border-white/20'
+											: 'text-text-muted hover:text-white'
+									}`}
+								>
+									{labels[mode]}
 								</button>
 							);
 						})}
 					</div>
 				</div>
+			</div>
 
-				<div className="flex gap-6 items-center flex-wrap">
-					<div className="flex gap-5 text-[0.6rem] font-black text-text-muted uppercase tracking-[0.2em] bg-black/40 px-5 py-3 rounded-2xl border border-white/5 shadow-inner">
-						<span className="flex items-center gap-2">
-							<div className="w-1.5 h-1.5 rounded-full bg-accent-emerald shadow-[0_0_8px_var(--accent-emerald)]" />{' '}
-							Core
+			{/* Barra de Perfil de Shove do Vilão */}
+			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-black/30 p-4 rounded-2xl border border-white/5">
+				<span className="text-[0.65rem] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
+					<i className="fa-solid fa-crosshairs text-accent-amber" /> Range de Shove do Vilão:
+				</span>
+				<div className="flex flex-wrap gap-2">
+					{(Object.keys(SHOVE_PROFILES) as ShoveProfile[]).map((key) => {
+						const prof = SHOVE_PROFILES[key];
+						const isActive = shoveProfile === key;
+						return (
+							<button
+								key={key}
+								type="button"
+								onClick={() => setShoveProfile(key)}
+								className={`px-3 py-1.5 rounded-xl text-[0.6rem] font-black uppercase tracking-wider transition-all cursor-pointer ${
+									isActive
+										? 'bg-accent-amber/20 text-accent-amber border border-accent-amber/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+										: 'bg-white/5 text-text-muted hover:text-white border border-transparent'
+								}`}
+							>
+								{prof.name}
+							</button>
+						);
+					})}
+				</div>
+			</div>
+
+			{/* Estatísticas Sumárias de Defesa */}
+			<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+				<div className="bg-emerald-950/30 border border-emerald-500/20 p-4 rounded-2xl flex flex-col">
+					<span className="text-[0.6rem] font-black uppercase tracking-widest text-emerald-400 mb-1">
+						Defesa Total (Call)
+					</span>
+					<div className="flex items-baseline gap-2">
+						<span className="font-mono text-xl font-black text-white">
+							{summary.callCombos}
 						</span>
-						<span className="flex items-center gap-2">
-							<div className="w-1.5 h-1.5 rounded-full bg-accent-amber shadow-[0_0_8px_var(--accent-amber)]" />{' '}
-							Misto
+						<span className="text-xs font-mono font-bold text-emerald-400">
+							({summary.callPercentage}%)
 						</span>
-						<span className="flex items-center gap-2">
-							<div className="w-1.5 h-1.5 rounded-full bg-accent-indigo-light shadow-[0_0_8px_var(--accent-indigo-light)]" />{' '}
-							Float
-						</span>
-						{activeRp >= 40 && (
-							<span className="flex items-center gap-2 text-accent-danger">
-								<div className="w-1.5 h-1.5 rounded-full bg-accent-danger shadow-[0_0_8px_var(--accent-danger)] animate-pulse" />{' '}
-								Death
-							</span>
-						)}
 					</div>
-					{Object.keys(overrides).length > 0 && (
-						<button
-							onClick={resetOverrides}
-							className="text-[0.65rem] font-black tracking-widest uppercase text-accent-danger hover:text-white bg-accent-danger/5 hover:bg-accent-danger/10 px-5 py-3 rounded-2xl border border-accent-danger/20 transition-all active:scale-95"
-						>
-							<i className="fa-solid fa-rotate-left mr-2" /> Reset Matrix
-						</button>
-					)}
+					<span className="text-[0.55rem] text-slate-400 mt-1 font-mono">
+						{summary.coreCallCombos} core + {summary.marginalCallCombos} marginais
+					</span>
+				</div>
+
+				<div className="bg-rose-950/30 border border-rose-500/20 p-4 rounded-2xl flex flex-col">
+					<span className="text-[0.6rem] font-black uppercase tracking-widest text-rose-400 mb-1">
+						Descarte (Fold)
+					</span>
+					<div className="flex items-baseline gap-2">
+						<span className="font-mono text-xl font-black text-white">
+							{summary.foldCombos}
+						</span>
+						<span className="text-xs font-mono font-bold text-rose-400">
+							({summary.foldPercentage}%)
+						</span>
+					</div>
+					<span className="text-[0.55rem] text-slate-400 mt-1 font-mono">
+						{summary.deathFoldCombos} death + {summary.riskyFoldCombos} risco ICM
+					</span>
+				</div>
+
+				<div className="bg-slate-900/40 border border-white/5 p-4 rounded-2xl flex flex-col">
+					<span className="text-[0.6rem] font-black uppercase tracking-widest text-text-muted mb-1">
+						Equidade Requerida
+					</span>
+					<span className="font-mono text-xl font-black text-accent-amber">
+						{summary.requiredEquity}%
+					</span>
+					<span className="text-[0.55rem] text-text-muted mt-1 font-mono">
+						Threshold de Break-Even ICM
+					</span>
+				</div>
+
+				<div className="bg-slate-900/40 border border-white/5 p-4 rounded-2xl flex flex-col">
+					<span className="text-[0.6rem] font-black uppercase tracking-widest text-text-muted mb-1">
+						Bubble Factor
+					</span>
+					<span className="font-mono text-xl font-black text-accent-indigo-light">
+						{summary.bubbleFactor}&times;
+					</span>
+					<span className="text-[0.55rem] text-text-muted mt-1 font-mono">
+						Assimetria Ganho / Perda
+					</span>
 				</div>
 			</div>
 
-			<div className="w-full flex justify-center py-10 overflow-x-auto scrollbar-hide relative group/matrix">
-				<div className="absolute inset-0 bg-radial-[at_center_center] from-emerald-500/5 to-transparent pointer-events-none opacity-0 group-hover/matrix:opacity-100 transition-opacity duration-1000" />
-				<div className="min-w-150 max-w-2xl w-full grid grid-cols-13 gap-0.5 bg-slate-950/80 p-3 rounded-4xl border border-white/10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-3xl transform transition-transform duration-700 relative z-10">
-					{RANKS.map((r1, i) => (
-						<React.Fragment key={`row-${r1}`}>
-							{RANKS.map((r2, j) => {
-								const isPair = i === j;
-								const isSuited = j > i;
+			{/* Layout Central: Grade 13x13 e Painel Inspetor Lateral */}
+			<div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-8 items-start">
+				{/* Grade 13x13 */}
+				<div className="flex justify-center overflow-x-auto pb-4">
+					<div className="min-w-160 max-w-3xl w-full grid grid-cols-13 gap-1 bg-slate-950/90 p-3.5 rounded-3xl border border-white/10 shadow-2xl backdrop-blur-3xl">
+						{RANKS.map((r1, i) => (
+							<React.Fragment key={`row-${r1}`}>
+								{RANKS.map((r2, j) => {
+									const isPair = i === j;
+									const isSuited = j > i;
+									let hand: string;
+									if (isPair) {
+										hand = `${r1}${r2}`;
+									} else if (isSuited) {
+										hand = `${r1}${r2}s`;
+									} else {
+										hand = `${r2}${r1}o`;
+									}
 
-								let hand = `${r1}${r2}`;
-								if (!isPair) {
-									hand = isSuited ? `${r1}${r2}s` : `${r2}${r1}o`;
-								}
-								const status = getHandStatus(i, j, hand, activeRp, overrides) ?? 'fold';
-								const bgClass = getStatusBgClass(status);
-								const isDeath = status === 'death';
+									const detail = evaluateHandDetail(
+										hand,
+										shoveProfile,
+										activeRp
+									);
+									const isSelected = selectedHand === hand;
+									const cellStyle = getCellColorAndBorder(detail);
 
-								return (
-									<button
-										type="button"
-										key={hand}
-										className={`relative overflow-hidden aspect-square flex items-center justify-center text-[0.6rem] lg:text-[0.65rem] font-black font-mono transition-all duration-200 ease-out cursor-pointer rounded-[4px] ${bgClass} ${overrides[hand] ? 'z-30 scale-120 shadow-[0_0_20px_rgba(255,255,255,0.3)] border border-white/40 ring-2 ring-white/20' : 'opacity-85 hover:opacity-100 hover:scale-110 hover:z-20 hover:shadow-[0_0_12px_rgba(255,255,255,0.15)] border border-white/5'}`}
-										onClick={() => handleCellClick(hand, status)}
-										title={`${hand} - ${status.toUpperCase()}`}
-									>
-										<div className="absolute inset-0 bg-linear-to-b from-white/20 to-transparent opacity-20 pointer-events-none" />
-										<span
-											className={`relative z-10 drop-shadow-md transition-colors ${status === 'fold' ? 'text-white/20 hover:text-white/50' : 'text-white/80 hover:text-white'}`}
+									return (
+										<button
+											type="button"
+											key={hand}
+											onClick={() => setSelectedHand(hand)}
+											onMouseEnter={() => setHoveredHand(hand)}
+											onMouseLeave={() => setHoveredHand(null)}
+											className={`relative aspect-square flex flex-col items-center justify-center text-[0.62rem] font-mono font-black transition-all duration-150 cursor-pointer rounded-lg border ${cellStyle} ${
+												isSelected
+													? 'ring-2 ring-white z-20 scale-110 shadow-[0_0_16px_rgba(255,255,255,0.4)]'
+													: 'hover:scale-105 hover:z-10'
+											}`}
+											title={`${hand}: Eq ${detail.equity}% | Req ${detail.requiredEquity}% | Delta ${detail.margin >= 0 ? '+' : ''}${detail.margin}%`}
 										>
-											{hand}
-										</span>
-										{isDeath && ci !== null && (
-											<span className="absolute bottom-0.5 right-0.5 text-[0.4rem] font-bold text-accent-danger/80 leading-none">
-												Cᵢ {ci.toFixed(2)}
-											</span>
-										)}
-									</button>
-								);
-							})}
-						</React.Fragment>
-					))}
+											<span className="leading-none">{hand}</span>
+											{displayMode === 'MARGIN' && (
+												<span
+													className={`text-[0.45rem] font-bold mt-0.5 leading-none ${
+														detail.margin >= 0
+															? 'text-emerald-300'
+															: 'text-rose-400/80'
+													}`}
+												>
+													{detail.margin >= 0 ? '+' : ''}
+													{detail.margin.toFixed(0)}%
+												</span>
+											)}
+											{displayMode === 'EQUITY' && (
+												<span className="text-[0.45rem] font-bold mt-0.5 leading-none text-slate-300">
+													{detail.equity.toFixed(0)}%
+												</span>
+											)}
+											{displayMode === 'STATUS' && (
+												<span className="text-[0.42rem] font-bold mt-0.5 leading-none opacity-80">
+													{detail.margin >= 0 ? 'CALL' : 'FOLD'}
+												</span>
+											)}
+										</button>
+									);
+								})}
+							</React.Fragment>
+						))}
+					</div>
 				</div>
-			</div>
 
-			<div className="flex items-start gap-6 p-8 bg-black/40 border border-white/5 rounded-3xl shadow-inner group/guide hover:border-accent-indigo/20 transition-all duration-500">
-				<div className="w-10 h-10 rounded-2xl bg-accent-indigo/10 border border-accent-indigo/20 flex items-center justify-center shrink-0">
-					<i className="fa-solid fa-circle-info text-accent-indigo text-lg" />
-				</div>
-				<div className="flex flex-col gap-2">
-					<h5 className="text-white uppercase tracking-[0.3em] text-[0.65rem] font-black m-0 group-hover/guide:text-accent-indigo-light transition-colors">
-						Guia Topológico de Colapso
-					</h5>
-					<p className="text-[0.75rem] text-text-muted leading-relaxed m-0 font-medium">
-						Este painel simula o colapso heurístico do range sob pressão ICM. Mãos em{' '}
-						<strong className="text-accent-danger uppercase tracking-tighter">
-							Death
-						</strong>{' '}
-						representam a zona de insolvência mecânica onde o valuation do pote não
-						suporta a pressão estrutural do motor de simulação.
+				{/* Inspetor Detalhado da Mão Selecionada */}
+				<div className="bg-slate-950/60 border border-white/10 p-6 rounded-3xl flex flex-col gap-6 shadow-inner">
+					<div className="flex items-center justify-between border-b border-white/5 pb-4">
+						<div className="flex items-center gap-3">
+							<div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-mono font-black text-lg text-white">
+								{inspectedDetail.hand}
+							</div>
+							<div>
+								<span className="text-[0.6rem] font-black uppercase tracking-widest text-text-muted block">
+									{inspectedDetail.isPair
+										? 'Par na Mão'
+										: inspectedDetail.isSuited
+											? 'Naipadas (Suited)'
+											: 'Desconectadas (Offsuit)'}
+								</span>
+								<span className="text-xs font-mono font-bold text-slate-300">
+									{inspectedDetail.combos} combinações
+								</span>
+							</div>
+						</div>
+					</div>
+
+					{/* Badge do Veredito */}
+					<div
+						className={`p-3 rounded-2xl border text-center font-mono text-[0.68rem] font-black tracking-widest ${
+							getVerdictBadge(inspectedDetail.verdict).color
+						}`}
+					>
+						{getVerdictBadge(inspectedDetail.verdict).text}
+					</div>
+
+					{/* Métricas de Equidade e Margem */}
+					<div className="space-y-4 font-mono">
+						<div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
+							<span className="text-[0.62rem] text-text-muted uppercase tracking-wider">
+								Equidade vs Shove
+							</span>
+							<span className="text-sm font-black text-white">
+								{inspectedDetail.equity}%
+							</span>
+						</div>
+
+						<div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
+							<span className="text-[0.62rem] text-text-muted uppercase tracking-wider">
+								Equidade Requerida
+							</span>
+							<span className="text-sm font-black text-accent-amber">
+								{inspectedDetail.requiredEquity}%
+							</span>
+						</div>
+
+						<div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
+							<span className="text-[0.62rem] text-text-muted uppercase tracking-wider">
+								Margem de Lucro (&Delta;)
+							</span>
+							<span
+								className={`text-sm font-black ${
+									inspectedDetail.margin >= 0
+										? 'text-accent-emerald'
+										: 'text-accent-rose'
+								}`}
+							>
+								{inspectedDetail.margin >= 0 ? '+' : ''}
+								{inspectedDetail.margin.toFixed(1)}%
+							</span>
+						</div>
+					</div>
+
+					{/* Barra de Progresso Visual de Equidade vs Limiar */}
+					<div className="space-y-2">
+						<div className="flex justify-between text-[0.55rem] font-mono font-bold uppercase text-text-muted">
+							<span>0%</span>
+							<span className="text-accent-amber">
+								Req: {inspectedDetail.requiredEquity}%
+							</span>
+							<span>100%</span>
+						</div>
+						<div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-white/10 relative">
+							{/* Indicador de Required Equity */}
+							<div
+								className="absolute top-0 bottom-0 w-0.5 bg-amber-400 z-10"
+								style={{ left: `${inspectedDetail.requiredEquity}%` }}
+							/>
+							{/* Barra de Equidade da Mão */}
+							<div
+								className={`h-full transition-all duration-300 ${
+									inspectedDetail.margin >= 0 ? 'bg-emerald-500' : 'bg-rose-500'
+								}`}
+								style={{ width: `${inspectedDetail.equity}%` }}
+							/>
+						</div>
+					</div>
+
+					<p className="text-[0.65rem] text-text-muted leading-relaxed font-sans mt-2">
+						{inspectedDetail.margin >= 0
+							? `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) supera o limiar de sobrevivência ICM (${inspectedDetail.requiredEquity}%), gerando call de expectativa positiva.`
+							: `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) é inferior à barreira de risco ICM (${inspectedDetail.requiredEquity}%). Dar call resulta em perda massiva de EV em dinheiro real.`}
 					</p>
 				</div>
 			</div>
 		</div>
 	);
 }
-

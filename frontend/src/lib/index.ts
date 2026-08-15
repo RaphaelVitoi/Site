@@ -12,4 +12,5 @@ export * from './telemetry-client';
 export * from './text-utils';
 export * from './nashSolver';
 export * from './icmMatrix';
+export * from './holdemEquities';
 
