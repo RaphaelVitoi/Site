@@ -189,6 +189,7 @@ export default function DashboardSOTA({ initialData, hudMode = false }: Readonly
                   strokeWidth={2}
                   fill="url(#hudLeakGradient)"
                   fillOpacity={0.3}
+                  isAnimationActive={false}
                 />
               </RadarChart>
             </ResponsiveContainer>
@@ -437,7 +438,7 @@ export default function DashboardSOTA({ initialData, hudMode = false }: Readonly
                     strokeWidth={4}
                     fill="url(#leakGradient)"
                     fillOpacity={0.4}
-                    animationDuration={2500}
+                    isAnimationActive={false}
                   />
                   <RechartsTooltip
                     contentStyle={{

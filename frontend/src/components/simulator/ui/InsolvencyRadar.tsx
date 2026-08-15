@@ -60,7 +60,7 @@ export function InsolvencyRadar({ data }: Readonly<InsolvencyRadarProps>) {
 					strokeWidth={4}
 					fill="url(#gradInsolvency)"
 					fillOpacity={0.5}
-					animationDuration={2500}
+					isAnimationActive={false}
 				/>
 				<RechartsTooltip
 					contentStyle={{

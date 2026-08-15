@@ -102,6 +102,7 @@ export function InsolvencyMatrix({ streetMetrics }: InsolvencyMatrixProps) {
 						strokeWidth={2}
 						fill="url(#threshGradient)"
 						name="TETO RIO"
+						isAnimationActive={false}
 					/>
 					{/* Renderiza a PM (Equidade) na frente */}
 					<Area
@@ -111,6 +112,7 @@ export function InsolvencyMatrix({ streetMetrics }: InsolvencyMatrixProps) {
 						strokeWidth={3}
 						fill="url(#pmGradient)"
 						name="PERSPECTIVA (PM)"
+						isAnimationActive={false}
 					/>
 				</AreaChart>
 			</ResponsiveContainer>
