@@ -2,7 +2,7 @@
 
 /** @format */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
 	computeBubbleFactorMatrix,
 	getPairwiseMatchupDetail,
@@ -14,8 +14,21 @@ import {
 
 type DisplayMode = 'RP' | 'BF' | 'REQ_EQ';
 
-export const BubbleFactorMatrix: React.FC = () => {
-	const [activePreset, setActivePreset] = useState<ICMTournamentPreset>(TOURNAMENT_PRESETS[1]); // Triton 6-max default
+export interface BubbleFactorMatrixProps {
+	onSelectMatchup?: (
+		heroRp: number,
+		villainRp: number,
+		heroName: string,
+		villainName: string
+	) => void;
+}
+
+export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
+	onSelectMatchup,
+}) => {
+	const [activePreset, setActivePreset] = useState<ICMTournamentPreset>(
+		TOURNAMENT_PRESETS[1]
+	); // Triton 6-max default
 	const [displayMode, setDisplayMode] = useState<DisplayMode>('RP');
 	const [selectedCell, setSelectedCell] = useState<{ hero: number; villain: number }>({
 		hero: 0,
@@ -48,6 +61,25 @@ export const BubbleFactorMatrix: React.FC = () => {
 		const v = Math.min(selectedCell.villain, matrixResult.nPlayers - 1);
 		return getPairwiseMatchupDetail(matrixResult, h, v);
 	}, [matrixResult, selectedCell]);
+
+	// Broadcast inicial e em mudanças de matchup
+	useEffect(() => {
+		if (onSelectMatchup && matchupDetail) {
+			const heroRp = matrixResult.rpMatrix[matchupDetail.heroIndex][matchupDetail.villainIndex];
+			const villainRp = matrixResult.rpMatrix[matchupDetail.villainIndex][matchupDetail.heroIndex];
+			onSelectMatchup(heroRp, villainRp, matchupDetail.heroName, matchupDetail.villainName);
+		}
+	}, [matchupDetail, matrixResult, onSelectMatchup]);
+
+	const handleCellClick = (i: number, j: number) => {
+		if (i === j) return;
+		setSelectedCell({ hero: i, villain: j });
+		if (onSelectMatchup) {
+			const heroRp = matrixResult.rpMatrix[i][j];
+			const villainRp = matrixResult.rpMatrix[j][i];
+			onSelectMatchup(heroRp, villainRp, matrixResult.playerNames[i], matrixResult.playerNames[j]);
+		}
+	};
 
 	const getCellColor = (val: number, mode: DisplayMode, isDiagonal: boolean) => {
 		if (isDiagonal) return 'bg-slate-900/40 text-slate-600 border-slate-800';
@@ -92,7 +124,7 @@ export const BubbleFactorMatrix: React.FC = () => {
 						</span>
 					</div>
 					<p className="text-xs text-slate-400 mt-1">
-						Derivação exata de $EV, &Delta;$EV(Perda) / &Delta;$EV(Ganho) e assimetrias de confronto
+						Derivação exata de $EV, &Delta;$EV(Perda) / &Delta;$EV(Ganho) e acoplamento em tempo real com o Profiler de Nash
 					</p>
 				</div>
 
@@ -169,8 +201,8 @@ export const BubbleFactorMatrix: React.FC = () => {
 						<strong className="text-indigo-400">Linhas:</strong> Hero (Agressor / Decisor) &times;{' '}
 						<strong className="text-indigo-400">Colunas:</strong> Villain (Alvo / Confronto)
 					</span>
-					<span className="text-[11px] text-slate-500">
-						Clique em qualquer célula para inspecionar a micro-física do matchup
+					<span className="text-[11px] text-indigo-300 font-semibold">
+						⚡ Clique em qualquer célula para injetar os RPs instantaneamente no Profiler de Nash abaixo
 					</span>
 				</div>
 
@@ -212,7 +244,7 @@ export const BubbleFactorMatrix: React.FC = () => {
 									return (
 										<td
 											key={j}
-											onClick={() => !isDiag && setSelectedCell({ hero: i, villain: j })}
+											onClick={() => handleCellClick(i, j)}
 											className={`p-2 border transition-all cursor-pointer select-none ${
 												isSelected
 													? 'ring-2 ring-indigo-400 scale-105 z-10'
@@ -234,14 +266,30 @@ export const BubbleFactorMatrix: React.FC = () => {
 				<div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 border-b border-slate-800 pb-3">
 					<div className="flex items-center gap-2">
 						<span className="px-2 py-0.5 rounded bg-indigo-900 text-indigo-300 text-xs font-bold">
-							MATCHUP TÁTICO
+							MATCHUP TÁTICO ATIVO
 						</span>
 						<h3 className="text-sm font-bold text-white">
 							{matchupDetail.heroName} (Hero) vs {matchupDetail.villainName} (Villain)
 						</h3>
 					</div>
-					<div className="text-xs text-indigo-300 font-bold">
-						Fichas Efetivas: {matchupDetail.effectiveChips.toLocaleString()}
+					<div className="flex items-center gap-3">
+						<div className="text-xs text-indigo-300 font-bold">
+							Fichas Efetivas: {matchupDetail.effectiveChips.toLocaleString()}
+						</div>
+						<button
+							type="button"
+							onClick={() =>
+								onSelectMatchup?.(
+									matchupDetail.riskPremium,
+									matrixResult.rpMatrix[matchupDetail.villainIndex][matchupDetail.heroIndex],
+									matchupDetail.heroName,
+									matchupDetail.villainName
+								)
+							}
+							className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-bold transition-all shadow"
+						>
+							⚡ Injetar no Profiler
+						</button>
 					</div>
 				</div>
 
@@ -254,16 +302,20 @@ export const BubbleFactorMatrix: React.FC = () => {
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">Risk Premium</div>
+						<div className="text-[10px] text-slate-400">Hero RP (IP)</div>
 						<div className="text-lg font-black text-rose-400 mt-0.5">
 							+{matchupDetail.riskPremium.toFixed(1)}%
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">Eq. Requerida</div>
+						<div className="text-[10px] text-slate-400">Villain RP (OOP)</div>
 						<div className="text-lg font-black text-amber-400 mt-0.5">
-							{matchupDetail.requiredEquity.toFixed(1)}%
+							+
+							{matrixResult.rpMatrix[matchupDetail.villainIndex][
+								matchupDetail.heroIndex
+							].toFixed(1)}
+							%
 						</div>
 					</div>
 
@@ -284,7 +336,10 @@ export const BubbleFactorMatrix: React.FC = () => {
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
 						<div className="text-[10px] text-slate-400">Assimetria de Risco</div>
 						<div className="text-sm font-bold text-purple-400 mt-1">
-							{matchupDetail.riskAsymmetry > 0 ? `+${matchupDetail.riskAsymmetry}` : matchupDetail.riskAsymmetry}%
+							{matchupDetail.riskAsymmetry > 0
+								? `+${matchupDetail.riskAsymmetry}`
+								: matchupDetail.riskAsymmetry}
+							%
 						</div>
 					</div>
 				</div>
