@@ -3,15 +3,17 @@
 /**
  * IDENTITY: SOTA Monte Carlo Parallel Convergence Widget (v7.0 GOLD)
  * PATH: src/components/simulator/ui/MonteCarloConvergenceWidget.tsx
- * ROLE: Renderiza o painel de convergência estocástica, desvio padrão e telemetria
- *       do pool WebAssembly em 50.000 iterações com SharedArrayBuffer.
+ * ROLE: Renderiza o painel de convergência estocástica, desvio padrão, telemetria
+ *       do pool WebAssembly em 50.000 iterações com SharedArrayBuffer e
+ *       recalcula blockers de cartas mortas em tempo real sobre os 1.326 combos.
  */
 
+import { computeBlockerSummary } from '@/lib/deadCardFilter';
 import {
 	type MonteCarloSimulationResult,
 	monteCarloPool,
 } from '@/lib/monteCarloParallelPool';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import AnimatedNumber from './AnimatedNumber';
 
 export interface MonteCarloConvergenceWidgetProps {
@@ -33,6 +35,11 @@ export function MonteCarloConvergenceWidget({
 	const [iterations, setIterations] = useState<number>(50000);
 	const [isSimulating, setIsSimulating] = useState(false);
 	const [result, setResult] = useState<MonteCarloSimulationResult | null>(null);
+
+	// Análise Combinatória O(1) de Blockers e Cartas Mortas
+	const blockerSummary = useMemo(() => {
+		return computeBlockerSummary(board);
+	}, [board]);
 
 	const executeSimulation = useCallback(async () => {
 		setIsSimulating(true);
@@ -115,7 +122,7 @@ export function MonteCarloConvergenceWidget({
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<label htmlFor="mc-board-input" className="text-[0.55rem] font-black text-text-darker uppercase tracking-wider">
-						Board (Opcional)
+						Board (Cartas Mortas)
 					</label>
 					<div className="flex gap-2">
 						<input
@@ -141,6 +148,49 @@ export function MonteCarloConvergenceWidget({
 					</div>
 				</div>
 			</div>
+
+			{/* Painel Combinatório de Dead Cards & Blockers */}
+			{blockerSummary.deadCards.length > 0 && (
+				<div className="bg-black/40 border border-white/5 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-[0.55rem] font-mono">
+					<div className="flex items-center gap-2">
+						<span className="font-bold text-text-darker uppercase tracking-wider">
+							Cartas no Board:
+						</span>
+						<div className="flex items-center gap-1.5">
+							{blockerSummary.deadCards.map((c) => (
+								<span
+									key={`${c.rankChar}${c.suitChar}`}
+									className="px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-white font-black"
+								>
+									{c.rankChar}
+									<span
+										className={
+											c.suitChar === 'h' || c.suitChar === 'd'
+												? 'text-accent-danger font-bold'
+												: 'text-text-muted font-bold'
+										}
+									>
+										{c.suitChar}
+									</span>
+								</span>
+							))}
+						</div>
+					</div>
+
+					<div className="flex items-center gap-4">
+						<span className="text-text-muted">
+							Combos Vivos:{' '}
+							<strong className="text-white font-bold">
+								{blockerSummary.totalLiveCombos.toLocaleString('pt-BR')}
+							</strong>{' '}
+							/ 1.326
+						</span>
+						<span className="text-accent-amber font-bold">
+							{blockerSummary.totalBlockedCombos} Bloqueados ({blockerSummary.blockagePercentage}%)
+						</span>
+					</div>
+				</div>
+			)}
 
 			<div className="flex items-center gap-2">
 				<span className="text-[0.55rem] font-black text-text-darker uppercase tracking-wider">
