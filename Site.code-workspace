@@ -29,7 +29,7 @@
         "geminicodeassist.agentDebugMode": false,
         "geminicodeassist.rules": "Excelência SOTA: Proibida a artificialização. Priorizar lógica, ciência e SteelManning Protocol. Blindagem ASCII no Backend.",
         // ── PARIDADE BACKEND (RUFF) ──────────────────────────────────
-        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+        "python.defaultInterpreterPath": "C:/Users/rapha/.gemini/Site/.venv/Scripts/python.exe",
         "[python]": {
             "editor.defaultFormatter": "charliermarsh.ruff",
             "editor.codeActionsOnSave": {
