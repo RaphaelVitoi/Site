@@ -280,6 +280,7 @@ export function DownwardDriftSimulator() {
 							<XAxis dataKey="investedPct" hide />
 							<YAxis domain={[0, 100]} hide />
 							<RechartsTooltip
+								isAnimationActive={false}
 								contentStyle={{
 									backgroundColor: 'var(--bg-panel)',
 									border: '1px solid rgba(255,255,255,0.05)',
