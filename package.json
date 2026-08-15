@@ -4,7 +4,12 @@
   "packageManager": "npm@10.9.2",
   "description": "Monorepo SOTA: Orquestrador de Agentes LLM (Python) + Frontend Next.js",
   "workspaces": [
-    "frontend"
+    "frontend",
+    "antigravity-plus",
+    "skills/gemini-cli-jules/mcp-server",
+    "skills/gemini-cli-security/mcp-server",
+    "skills/gemini-deep-research",
+    "skills/gemini-supermemory"
   ],
   "engines": {
     "node": ">=22.0.0",
@@ -22,7 +27,7 @@
     "python:lint": "ruff check .",
     "python:format": "ruff format .",
     "python:typecheck": "pyright",
-    "sota:audit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/quality-gate.ps1",
+    "sota:audit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ops/cwv_gate.ps1",
     "sota:full": "npm run python:lint && npm run python:typecheck && npm run lint && npm run typecheck && npm run python:test"
   },
   "devDependencies": {
@@ -41,12 +46,29 @@
     "@hono/node-server": "^1.19.15",
     "hono": "^4.12.34",
     "js-yaml": "^4.3.1",
-    "brace-expansion": "^2.1.4",
+    "brace-expansion": "^5.0.9",
     "nanoid": "^3.3.18",
     "fast-uri": "^3.1.5",
     "valibot": "^1.4.2",
     "sharp": "^0.35.0",
-    "mermaid": "^11.16.1"
+    "mermaid": "^11.16.1",
+    "esbuild": "^0.28.0",
+    "zod": "^3.24.2",
+    "ws": "^8.18.3",
+    "linkify-it": "^6.1.0",
+    "markdown-it": "^14.1.2",
+    "@vscode/vsce": "^3.9.2",
+    "serialize-javascript": "7.1.0",
+    "mocha": {
+      "serialize-javascript": "7.1.0"
+    },
+    "diff": "^9.0.0",
+    "@sigstore/core": "^4.0.1",
+    "ip-address": "^10.5.0",
+    "picomatch": "^4.0.5",
+    "markdownlint-cli": "^0.49.1",
+    "tar": "^7.5.21",
+    "undici": "^6.27.1"
   },
   "allowScripts": {
     "@prisma/engines": true,
