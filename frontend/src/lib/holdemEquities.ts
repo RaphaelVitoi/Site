@@ -124,11 +124,13 @@ const BASELINE_EQUITIES_25: Record<string, number> = {
 	'32o': 27.9,
 };
 
+const BASELINE_EQUITIES_MAP = new Map<string, number>(Object.entries(BASELINE_EQUITIES_25));
+
 /**
  * Calcula a equidade ajustada de uma mão contra o perfil de shove especificado.
  */
 export function getHandEquityAgainstProfile(hand: string, profile: ShoveProfile): number {
-	const base = BASELINE_EQUITIES_25[hand] ?? 50.0;
+	const base = BASELINE_EQUITIES_MAP.get(hand) ?? 50.0;
 	switch (profile) {
 		case 'WIDE_40':
 			// Contra range mais amplo, mãos de valor e pairs ganham +3% a +6% de equidade
@@ -245,10 +247,8 @@ export function computeRangeMatrixSummary(
 	let riskyFoldCombos = 0;
 	let deathFoldCombos = 0;
 
-	for (let i = 0; i < RANKS.length; i++) {
-		for (let j = 0; j < RANKS.length; j++) {
-			const r1 = RANKS[i];
-			const r2 = RANKS[j];
+	for (const [i, r1] of RANKS.entries()) {
+		for (const [j, r2] of RANKS.entries()) {
 			let hand: string;
 			if (i === j) {
 				hand = `${r1}${r2}`;
