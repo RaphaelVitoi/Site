@@ -55,9 +55,26 @@ function requireValue<T>(value: T | undefined, context: string): T {
 	return value;
 }
 
+function getItem<T>(arr: readonly T[], idx: number, name: string): T {
+	const val = arr.at(idx);
+	if (val === undefined) {
+		throw new RangeError(`Missing item ${name}[${idx}]`);
+	}
+	return val;
+}
+
+function setMatrixCell(matrix: number[][], row: number, col: number, val: number, name: string): void {
+	const r = matrix.at(row);
+	if (!r) throw new RangeError(`Missing row ${name}[${row}]`);
+	r[col] = val;
+}
+
 function matrixValue(matrix: readonly (readonly number[])[], row: number, column: number, name: string): number {
-	const values = requireValue(matrix[row], `${name}[${row}]`);
-	return requireValue(values[column], `${name}[${row}][${column}]`);
+	const values = matrix.at(row);
+	if (!values) throw new RangeError(`Missing row ${name}[${row}]`);
+	const val = values.at(column);
+	if (val === undefined) throw new RangeError(`Missing col ${name}[${row}][${column}]`);
+	return val;
 }
 
 export const TOURNAMENT_PRESETS: ICMTournamentPreset[] = [
@@ -135,8 +152,8 @@ export function calculateMalmuthHarville(stacks: number[], payouts: number[]): n
 
 	// 1º Lugar
 	for (let i = 0; i < n; i++) {
-		const row = requireValue(probMatrix[i], `probMatrix[${i}]`);
-		const stack = requireValue(stacks[i], `stacks[${i}]`);
+		const row = getItem(probMatrix, i, 'probMatrix');
+		const stack = getItem(stacks, i, 'stacks');
 		row[0] = Math.max(0, stack) / totalChips;
 	}
 
@@ -150,13 +167,14 @@ export function calculateMalmuthHarville(stacks: number[], payouts: number[]): n
 			if (pos >= m || remChips <= 0) return;
 
 			for (let p = 0; p < n; p++) {
-				const stack = requireValue(stacks[p], `stacks[${p}]`);
+				const stack = getItem(stacks, p, 'stacks');
 				if ((usedBitmask & (1 << p)) !== 0 || stack <= 0) continue;
 
 				const probThis = stack / remChips;
 				const branchProb = currentProb * probThis;
-				const row = requireValue(probMatrix[p], `probMatrix[${p}]`);
-				row[pos] = (row[pos] ?? 0) + branchProb;
+				const row = getItem(probMatrix, p, 'probMatrix');
+				const currentProbVal = row.at(pos) ?? 0;
+				row[pos] = currentProbVal + branchProb;
 
 				if (pos + 1 < m && remChips - stack > 0) {
 					computeBranch(
@@ -170,7 +188,7 @@ export function calculateMalmuthHarville(stacks: number[], payouts: number[]): n
 		};
 
 		for (let p0 = 0; p0 < n; p0++) {
-			const stack = requireValue(stacks[p0], `stacks[${p0}]`);
+			const stack = getItem(stacks, p0, 'stacks');
 			if (stack > 0) {
 				const rem = totalChips - stack;
 				if (rem > 0) {
@@ -181,7 +199,7 @@ export function calculateMalmuthHarville(stacks: number[], payouts: number[]): n
 	}
 
 	return probMatrix.map((probs) =>
-		probs.reduce((sum, p, k) => sum + p * (activePayouts[k] ?? 0), 0)
+		probs.reduce((sum, p, k) => sum + p * (activePayouts.at(k) ?? 0), 0)
 	);
 }
 
@@ -208,37 +226,37 @@ export function computeBubbleFactorMatrix(
 
 	for (let i = 0; i < n; i++) {
 		for (let j = 0; j < n; j++) {
-			const stackI = requireValue(stacks[i], `stacks[${i}]`);
-			const stackJ = requireValue(stacks[j], `stacks[${j}]`);
+			const stackI = getItem(stacks, i, 'stacks');
+			const stackJ = getItem(stacks, j, 'stacks');
 			if (i === j || stackI <= 0 || stackJ <= 0) continue;
 
 			const eff = Math.min(stackI, stackJ);
 
 			// Win case (+eff)
 			const winStacks = [...stacks];
-			winStacks[i] = requireValue(winStacks[i], `winStacks[${i}]`) + eff;
-			winStacks[j] = requireValue(winStacks[j], `winStacks[${j}]`) - eff;
-			const evWin = requireValue(calculateMalmuthHarville(winStacks, payouts)[i], `evWin[${i}]`);
-			const baseEvI = requireValue(baseEv[i], `baseEv[${i}]`);
+			winStacks[i] = getItem(winStacks, i, 'winStacks') + eff;
+			winStacks[j] = getItem(winStacks, j, 'winStacks') - eff;
+			const evWin = getItem(calculateMalmuthHarville(winStacks, payouts), i, 'evWin');
+			const baseEvI = getItem(baseEv, i, 'baseEv');
 			const deltaWin = Math.max(1e-6, evWin - baseEvI);
-			requireValue(deltaWinMatrix[i], `deltaWinMatrix[${i}]`)[j] = Number(deltaWin.toFixed(2));
+			setMatrixCell(deltaWinMatrix, i, j, Number(deltaWin.toFixed(2)), 'deltaWinMatrix');
 
 			// Lose case (-eff)
 			const loseStacks = [...stacks];
-			loseStacks[i] = requireValue(loseStacks[i], `loseStacks[${i}]`) - eff;
-			loseStacks[j] = requireValue(loseStacks[j], `loseStacks[${j}]`) + eff;
-			const evLose = requireValue(calculateMalmuthHarville(loseStacks, payouts)[i], `evLose[${i}]`);
+			loseStacks[i] = getItem(loseStacks, i, 'loseStacks') - eff;
+			loseStacks[j] = getItem(loseStacks, j, 'loseStacks') + eff;
+			const evLose = getItem(calculateMalmuthHarville(loseStacks, payouts), i, 'evLose');
 			const deltaLose = Math.max(1e-6, baseEvI - evLose);
-			requireValue(deltaLoseMatrix[i], `deltaLoseMatrix[${i}]`)[j] = Number(deltaLose.toFixed(2));
+			setMatrixCell(deltaLoseMatrix, i, j, Number(deltaLose.toFixed(2)), 'deltaLoseMatrix');
 
 			const bf = deltaLose / deltaWin;
-			requireValue(bfMatrix[i], `bfMatrix[${i}]`)[j] = Number(bf.toFixed(3));
+			setMatrixCell(bfMatrix, i, j, Number(bf.toFixed(3)), 'bfMatrix');
 
 			const rp = Math.max(0, ((bf - 1.0) / (bf + 1.0)) * 100);
-			requireValue(rpMatrix[i], `rpMatrix[${i}]`)[j] = Number(rp.toFixed(2));
+			setMatrixCell(rpMatrix, i, j, Number(rp.toFixed(2)), 'rpMatrix');
 
 			const reqEq = (bf / (bf + 1.0)) * 100;
-			requireValue(reqEquityMatrix[i], `reqEquityMatrix[${i}]`)[j] = Number(reqEq.toFixed(2));
+			setMatrixCell(reqEquityMatrix, i, j, Number(reqEq.toFixed(2)), 'reqEquityMatrix');
 		}
 	}
 
@@ -269,12 +287,12 @@ export function getPairwiseMatchupDetail(
 	const { playerNames, stacks, baseEv, bfMatrix, rpMatrix, reqEquityMatrix, deltaWinMatrix, deltaLoseMatrix } =
 		matrixResult;
 
-	const heroName = playerNames[heroIdx] || `P${heroIdx + 1}`;
-	const villainName = playerNames[villainIdx] || `P${villainIdx + 1}`;
-	const heroStack = requireValue(stacks[heroIdx], `stacks[${heroIdx}]`);
-	const villainStack = requireValue(stacks[villainIdx], `stacks[${villainIdx}]`);
-	const heroBaseEv = requireValue(baseEv[heroIdx], `baseEv[${heroIdx}]`);
-	const villainBaseEv = requireValue(baseEv[villainIdx], `baseEv[${villainIdx}]`);
+	const heroName = playerNames.at(heroIdx) ?? `P${heroIdx + 1}`;
+	const villainName = playerNames.at(villainIdx) ?? `P${villainIdx + 1}`;
+	const heroStack = requireValue(stacks.at(heroIdx), `stacks[${heroIdx}]`);
+	const villainStack = requireValue(stacks.at(villainIdx), `stacks[${villainIdx}]`);
+	const heroBaseEv = requireValue(baseEv.at(heroIdx), `baseEv[${heroIdx}]`);
+	const villainBaseEv = requireValue(baseEv.at(villainIdx), `baseEv[${villainIdx}]`);
 	const eff = Math.min(heroStack, villainStack);
 
 	const bf = matrixValue(bfMatrix, heroIdx, villainIdx, 'bfMatrix');
@@ -286,7 +304,7 @@ export function getPairwiseMatchupDetail(
 	const asymmetry = Number((rp - villainRp).toFixed(2));
 	const coverageAdv = heroStack >= villainStack;
 
-	let advice = 'Equilíbrio padrão de ICM.';
+	let advice: string;
 	if (rp >= 30 && !coverageAdv) {
 		advice = '🚨 Risco Crítico de Eliminação: Fold exploitativo amplo. Exija equidade premium.';
 	} else if (asymmetry <= -20 && coverageAdv) {
