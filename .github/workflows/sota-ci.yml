@@ -85,11 +85,12 @@ jobs:
       - name: 📥 Checkout Codebase
         uses: actions/checkout@v4
 
-      - name: 🔗 Initialize and Validate Pinned Eigen
+      - name: 🔗 Initialize and Validate Pinned Submodules
         run: |
-          git submodule update --init -- core/vendor/eigen
-          git submodule status -- core/vendor/eigen
+          git submodule update --init -- core/vendor/eigen skills/Stitch
+          git submodule status -- core/vendor/eigen skills/Stitch
           test "$(git -C core/vendor/eigen rev-parse HEAD)" = "$(git rev-parse HEAD:core/vendor/eigen)"
+          test "$(git -C skills/Stitch rev-parse HEAD)" = "$(git rev-parse HEAD:skills/Stitch)"
 
       - name: ⚡ Setup Astral uv
         uses: astral-sh/setup-uv@v3
