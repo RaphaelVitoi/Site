@@ -47,6 +47,10 @@ C:\Users\rapha\.gemini\Site\
 ### C. Comandos de Operação Rápida (CLI)
 
 ```powershell
+# Inicializar Eigen na revisão fixada pelo repositório
+git submodule update --init -- core/vendor/eigen
+git submodule status -- core/vendor/eigen
+
 # Executar suíte completa de testes
 pytest tests/ -q
 
