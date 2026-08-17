@@ -4,7 +4,9 @@
  * ROLE: Executa sub-lotes de simulação Monte Carlo (10k-50k iterações) em WebAssembly.
  */
 
-import init, { calculate_equity_monte_carlo_binary } from '../../../lib/engine/vitoi_equity_engine';
+import init, {
+	calculate_equity_monte_carlo_binary,
+} from '../../../lib/engine/generated/vitoi_equity_engine';
 import { maskToBytes, rangeToBitmask } from './rangeParser';
 
 declare const self: DedicatedWorkerGlobalScope;

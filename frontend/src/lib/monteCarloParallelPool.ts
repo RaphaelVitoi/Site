@@ -245,7 +245,7 @@ export class MonteCarloParallelPool {
 			}
 
 			const { default: initWasm, initSync, calculate_equity_monte_carlo_binary } = await import(
-				'./engine/vitoi_equity_engine'
+				'./engine/generated/vitoi_equity_engine'
 			);
 
 			if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
@@ -253,13 +253,11 @@ export class MonteCarloParallelPool {
 				const path = await import('path');
 				const cwd = process.cwd();
 				const candidates = [
-					path.resolve(__dirname, 'engine/vitoi_equity_engine_bg.wasm'),
-					path.resolve(__dirname, 'engine/pkg/vitoi_equity_engine_bg.wasm'),
-					path.resolve(cwd, 'src/lib/engine/vitoi_equity_engine_bg.wasm'),
-					path.resolve(cwd, 'frontend/src/lib/engine/vitoi_equity_engine_bg.wasm'),
+					path.resolve(__dirname, 'engine/generated/vitoi_equity_engine_bg.wasm'),
+					path.resolve(cwd, 'src/lib/engine/generated/vitoi_equity_engine_bg.wasm'),
+					path.resolve(cwd, 'frontend/src/lib/engine/generated/vitoi_equity_engine_bg.wasm'),
 					path.resolve(cwd, 'public/wasm/vitoi_equity_engine_bg.wasm'),
 					path.resolve(cwd, 'frontend/public/wasm/vitoi_equity_engine_bg.wasm'),
-					'C:/Users/rapha/.gemini/Site/frontend/src/lib/engine/vitoi_equity_engine_bg.wasm',
 				];
 				const found = candidates.find((p) => fs.existsSync(p));
 				if (found) {
