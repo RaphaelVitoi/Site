@@ -1,3 +1,6 @@
 [submodule "core/vendor/eigen"]
 	path = core/vendor/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "skills/Stitch"]
+	path = skills/Stitch
+	url = https://github.com/gemini-cli-extensions/stitch.git
