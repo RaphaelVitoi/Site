@@ -135,7 +135,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				id: 'ip-shallow',
 				position: 'IP',
 				stackRange: 'SHALLOW',
-				title: 'IP &bull; Shallow (< 15bb)',
+				title: 'IP • Shallow (< 15bb)',
 				plainTitle: 'IP • Shallow (< 15bb)',
 				subtitle: 'Steal, Push/Fold & All-in Calling',
 			},
@@ -143,7 +143,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				id: 'ip-mid',
 				position: 'IP',
 				stackRange: 'MID',
-				title: 'IP &bull; Mid Stack (15-35bb)',
+				title: 'IP • Mid Stack (15-35bb)',
 				plainTitle: 'IP • Mid Stack (15-35bb)',
 				subtitle: 'Positional Reshove & Float 3-Bet',
 			},
@@ -151,7 +151,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				id: 'ip-deep',
 				position: 'IP',
 				stackRange: 'DEEP',
-				title: 'IP &bull; Deep Stack (> 35bb)',
+				title: 'IP • Deep Stack (> 35bb)',
 				plainTitle: 'IP • Deep Stack (> 35bb)',
 				subtitle: 'Max Realization Edge & Multi-street',
 			},
@@ -159,7 +159,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				id: 'oop-shallow',
 				position: 'OOP',
 				stackRange: 'SHALLOW',
-				title: 'OOP &bull; Shallow (< 15bb)',
+				title: 'OOP • Shallow (< 15bb)',
 				plainTitle: 'OOP • Shallow (< 15bb)',
 				subtitle: 'Blind Defense & SB Shove vs BTN',
 			},
@@ -167,7 +167,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				id: 'oop-mid',
 				position: 'OOP',
 				stackRange: 'MID',
-				title: 'OOP &bull; Mid Stack (15-35bb)',
+				title: 'OOP • Mid Stack (15-35bb)',
 				plainTitle: 'OOP • Mid Stack (15-35bb)',
 				subtitle: '3-Bet Polarization & Flat OOP',
 			},
@@ -175,7 +175,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				id: 'oop-deep',
 				position: 'OOP',
 				stackRange: 'DEEP',
-				title: 'OOP &bull; Deep Stack (> 35bb)',
+				title: 'OOP • Deep Stack (> 35bb)',
 				plainTitle: 'OOP • Deep Stack (> 35bb)',
 				subtitle: 'Max RIO Liability & Condensation',
 			},
@@ -434,7 +434,7 @@ ${zoneRows}
 				? 'Fora de posição, a incapacidade de realizar equidade associada ao Passivo Estrutural RIO e à barreira de eliminação do Bubble Factor amplificam os desvios de Nash.'
 				: 'Em posição, erros de super-call contra shoves polarizados corroem a vantagem de realização de equidade.'
 		}
-- **Vetor de Correção:** Calibrar a defesa estrita pela fórmula $ReqEq_{ICM} = \\frac{BF}{1 + BF}$ e evitar calls marginais em cenários de alta assimetria de ICM.
+- **Vetor de Correção:** Calibrar a defesa estrita pela fórmula ${String.raw`$ReqEq_{ICM} = \frac{BF}{1 + BF}$`} e evitar calls marginais em cenários de alta assimetria de ICM.
 
 ---
 *Relatório gerado automaticamente pelo Ecossistema SOTA v7.0 GOLD para Raphael Vitoi.*
@@ -705,8 +705,8 @@ ${zoneRows}
 									}}
 								/>
 								<Bar dataKey="count" name="Decisões" radius={[6, 6, 0, 0]} isAnimationActive={false}>
-									{analytics.histogramData.map((entry, index) => (
-										<Cell key={`cell-${index}`} fill={entry.color} />
+									{analytics.histogramData.map((entry) => (
+										<Cell key={`hist-cell-${entry.range}`} fill={entry.color} />
 									))}
 								</Bar>
 							</BarChart>
@@ -724,6 +724,14 @@ ${zoneRows}
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{quadrantMatrix.quadrants.map((quad) => {
 							const badge = getSeverityBadge(quad.severity);
+							let accuracyClass = 'text-rose-400';
+							if (quad.accuracy >= 75) accuracyClass = 'text-emerald-400';
+							else if (quad.accuracy >= 50) accuracyClass = 'text-amber-400';
+
+							let meanLossClass = 'text-rose-400';
+							if (quad.meanLoss <= 0.3) meanLossClass = 'text-emerald-400';
+							else if (quad.meanLoss <= 1.0) meanLossClass = 'text-amber-400';
+
 							return (
 								<div
 									key={quad.id}
@@ -731,10 +739,9 @@ ${zoneRows}
 								>
 									<div className="space-y-1">
 										<div className="flex items-center justify-between">
-											<span
-												className="text-xs font-black text-white uppercase tracking-wider"
-												dangerouslySetInnerHTML={{ __html: quad.title }}
-											/>
+											<span className="text-xs font-black text-white uppercase tracking-wider">
+												{quad.plainTitle || quad.title}
+											</span>
 											<span
 												className={`text-[0.55rem] font-mono font-black px-2 py-0.5 rounded-full border ${badge.badgeClass}`}
 											>
@@ -751,15 +758,7 @@ ${zoneRows}
 											<span className="text-[0.55rem] text-text-muted uppercase block">
 												Acurácia
 											</span>
-											<span
-												className={`text-sm font-black ${
-													quad.accuracy >= 75
-														? 'text-emerald-400'
-														: quad.accuracy >= 50
-															? 'text-amber-400'
-															: 'text-rose-400'
-												}`}
-											>
+											<span className={`text-sm font-black ${accuracyClass}`}>
 												{quad.accuracy}%
 											</span>
 										</div>
@@ -767,15 +766,7 @@ ${zoneRows}
 											<span className="text-[0.55rem] text-text-muted uppercase block">
 												Média EV Loss
 											</span>
-											<span
-												className={`text-sm font-black ${
-													quad.meanLoss <= 0.3
-														? 'text-emerald-400'
-														: quad.meanLoss <= 1.0
-															? 'text-amber-400'
-															: 'text-rose-400'
-												}`}
-											>
+											<span className={`text-sm font-black ${meanLossClass}`}>
 												-{quad.meanLoss} bb
 											</span>
 										</div>
@@ -804,12 +795,9 @@ ${zoneRows}
 								</span>
 								<p className="text-xs text-slate-300 m-0 leading-relaxed font-sans">
 									O quadrante mais crítico é{' '}
-									<strong
-										className="text-white"
-										dangerouslySetInnerHTML={{
-											__html: quadrantMatrix.worstQuadrant.title,
-										}}
-									/>{' '}
+									<strong className="text-white">
+										{quadrantMatrix.worstQuadrant.plainTitle || quadrantMatrix.worstQuadrant.title}
+									</strong>{' '}
 									com perda acumulada de{' '}
 									<strong className="text-rose-400">
 										-{quadrantMatrix.worstQuadrant.totalLoss} bb
