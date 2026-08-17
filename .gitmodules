@@ -4,3 +4,24 @@
 [submodule "skills/Stitch"]
 	path = skills/Stitch
 	url = https://github.com/gemini-cli-extensions/stitch.git
+[submodule "skills/exa-mcp-server"]
+	path = skills/exa-mcp-server
+	url = https://github.com/exa-labs/exa-mcp-server.git
+[submodule "skills/gemini-cli-jules"]
+	path = skills/gemini-cli-jules
+	url = https://github.com/gemini-cli-extensions/jules.git
+[submodule "skills/gemini-cli-security"]
+	path = skills/gemini-cli-security
+	url = https://github.com/gemini-cli-extensions/security.git
+[submodule "skills/gemini-deep-research"]
+	path = skills/gemini-deep-research
+	url = https://github.com/allenhutchison/gemini-cli-deep-research.git
+[submodule "skills/gemini-supermemory"]
+	path = skills/gemini-supermemory
+	url = https://github.com/Rishabjs03/gemini-supermemory.git
+[submodule "skills/superpowers"]
+	path = skills/superpowers
+	url = https://github.com/obra/superpowers.git
+[submodule "skills/token-efficiency"]
+	path = skills/token-efficiency
+	url = https://github.com/undefdev/token-efficiency.git

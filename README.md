@@ -48,8 +48,8 @@ C:\Users\rapha\.gemini\Site\
 
 ```powershell
 # Inicializar dependências externas nas revisões fixadas pelo repositório
-git submodule update --init -- core/vendor/eigen skills/Stitch
-git submodule status -- core/vendor/eigen skills/Stitch
+git submodule update --init --recursive
+git submodule status --recursive
 
 # Executar suíte completa de testes
 pytest tests/ -q

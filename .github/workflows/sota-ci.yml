@@ -96,10 +96,16 @@ jobs:
 
       - name: 🔗 Initialize and Validate Pinned Submodules
         run: |
-          git submodule update --init -- core/vendor/eigen skills/Stitch
-          git submodule status -- core/vendor/eigen skills/Stitch
-          test "$(git -C core/vendor/eigen rev-parse HEAD)" = "$(git rev-parse HEAD:core/vendor/eigen)"
-          test "$(git -C skills/Stitch rev-parse HEAD)" = "$(git rev-parse HEAD:skills/Stitch)"
+          declared_paths="$(git config -f .gitmodules --get-regexp '^submodule\..*\.path$' | awk '{print $2}' | sort)"
+          gitlink_paths="$(git ls-files -s | awk '$1 == "160000" {print $4}' | sort)"
+          test "$declared_paths" = "$gitlink_paths"
+          git submodule update --init --recursive
+          git submodule status --recursive
+          while read -r submodule_path; do
+            test "$(git -C "$submodule_path" rev-parse HEAD)" = "$(git rev-parse "HEAD:$submodule_path")"
+          done <<EOF
+          $declared_paths
+          EOF
 
       - name: ⚡ Setup Astral uv
         uses: astral-sh/setup-uv@v3
