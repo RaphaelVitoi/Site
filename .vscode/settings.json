@@ -1,6 +1,5 @@
 {
-    "aider.pythonPath": "C:/Users/rapha/.gemini/Site/.venv/Scripts/python.exe",
-    "python.defaultInterpreterPath": "C:/Users/rapha/.gemini/Site/.venv/Scripts/python.exe",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
     "looker.projectId": "dummy-project-id",
     "looker.instanceUrl": "https://dummy.looker.com",
     "looker.authUrl": "https://dummy.looker.com/auth",
