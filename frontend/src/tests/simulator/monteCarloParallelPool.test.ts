@@ -1,3 +1,4 @@
+/** @jest-environment node */
 /// <reference types="jest" />
 
 import { MonteCarloParallelPool, monteCarloPool } from '../../lib/monteCarloParallelPool';

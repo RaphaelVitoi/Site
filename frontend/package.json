@@ -4,6 +4,12 @@
 	"engines": {
 		"node": ">=22.0.0"
 	},
+	"imports": {
+		"#monte-carlo-wasm-runtime": {
+			"browser": "./src/lib/monteCarloWasmRuntime.browser.ts",
+			"default": "./src/lib/monteCarloWasmRuntime.node.ts"
+		}
+	},
 	"scripts": {
 		"dev": "next dev",
 		"build": "next build",

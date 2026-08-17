@@ -6,6 +6,7 @@
  */
 
 import { maskToBytes, rangeToBitmask } from '../components/simulator/workers/rangeParser';
+import { initializeMonteCarloWasm } from '#monte-carlo-wasm-runtime';
 
 export interface MonteCarloSimulationOptions {
 	heroRange: string;
@@ -244,36 +245,7 @@ export class MonteCarloParallelPool {
 				}
 			}
 
-			const { default: initWasm, initSync, calculate_equity_monte_carlo_binary } = await import(
-				'./engine/generated/vitoi_equity_engine'
-			);
-
-			if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
-				const fs = await import('fs');
-				const path = await import('path');
-				const cwd = process.cwd();
-				const candidates = [
-					path.resolve(__dirname, 'engine/generated/vitoi_equity_engine_bg.wasm'),
-					path.resolve(cwd, 'src/lib/engine/generated/vitoi_equity_engine_bg.wasm'),
-					path.resolve(cwd, 'frontend/src/lib/engine/generated/vitoi_equity_engine_bg.wasm'),
-					path.resolve(cwd, 'public/wasm/vitoi_equity_engine_bg.wasm'),
-					path.resolve(cwd, 'frontend/public/wasm/vitoi_equity_engine_bg.wasm'),
-				];
-				const found = candidates.find((p) => fs.existsSync(p));
-				if (found) {
-					const wasmBytes = fs.readFileSync(found);
-					try {
-						const wasmModule = new WebAssembly.Module(wasmBytes);
-						initSync({ module: wasmModule });
-					} catch {
-						await initWasm(wasmBytes.buffer);
-					}
-				} else {
-					await initWasm();
-				}
-			} else {
-				await initWasm();
-			}
+			const calculate_equity_monte_carlo_binary = await initializeMonteCarloWasm();
 
 			const heroBigInt = typeof heroRange === 'string' ? rangeToBitmask(heroRange) : BigInt(0);
 			const villainBigInt = typeof villainRange === 'string' ? rangeToBitmask(villainRange) : BigInt(0);
