@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ErrorBoundary } from '@/components/analytics/ErrorBoundary';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
@@ -27,9 +27,9 @@ const MasterSimulatorDynamic = dynamic(
 
 export default function MotorPage() {
 	const [matchupSync, setMatchupSync] = useState<{
-		ipRp?: number;
-		oopRp?: number;
-		label?: string;
+		ipRp: number;
+		oopRp: number;
+		label: string;
 	}>({
 		ipRp: 13.5,
 		oopRp: 31.8,

@@ -23,11 +23,23 @@ export interface BubbleFactorMatrixProps {
 	) => void;
 }
 
+function requireItem<T>(items: readonly T[], index: number, context: string): T {
+	const item = items[index];
+	if (item === undefined) throw new RangeError(`Missing value: ${context}[${index}]`);
+	return item;
+}
+
+function requireCell(matrix: readonly (readonly number[])[], row: number, column: number, context: string): number {
+	return requireItem(requireItem(matrix, row, context), column, `${context}[${row}]`);
+}
+
+const DEFAULT_PRESET = requireItem(TOURNAMENT_PRESETS, 1, 'TOURNAMENT_PRESETS');
+
 export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 	onSelectMatchup,
 }) => {
 	const [activePreset, setActivePreset] = useState<ICMTournamentPreset>(
-		TOURNAMENT_PRESETS[1]
+		DEFAULT_PRESET
 	); // Triton 6-max default
 	const [displayMode, setDisplayMode] = useState<DisplayMode>('RP');
 	const [selectedCell, setSelectedCell] = useState<{ hero: number; villain: number }>({
@@ -67,9 +79,14 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 
 			if (onSelectMatchup) {
 				const freshMatrix = computeBubbleFactorMatrix(newStacks, newPayouts, newNames);
-				const heroRp = freshMatrix.rpMatrix[0][1];
-				const villainRp = freshMatrix.rpMatrix[1][0];
-				onSelectMatchup(heroRp, villainRp, newNames[0], newNames[1]);
+				const heroRp = requireCell(freshMatrix.rpMatrix, 0, 1, 'rpMatrix');
+				const villainRp = requireCell(freshMatrix.rpMatrix, 1, 0, 'rpMatrix');
+				onSelectMatchup(
+					heroRp,
+					villainRp,
+					requireItem(newNames, 0, 'playerNames'),
+					requireItem(newNames, 1, 'playerNames')
+				);
 			}
 		},
 		[onSelectMatchup]
@@ -80,9 +97,14 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 			if (i === j) return;
 			setSelectedCell({ hero: i, villain: j });
 			if (onSelectMatchup) {
-				const heroRp = matrixResult.rpMatrix[i][j];
-				const villainRp = matrixResult.rpMatrix[j][i];
-				onSelectMatchup(heroRp, villainRp, matrixResult.playerNames[i], matrixResult.playerNames[j]);
+				const heroRp = requireCell(matrixResult.rpMatrix, i, j, 'rpMatrix');
+				const villainRp = requireCell(matrixResult.rpMatrix, j, i, 'rpMatrix');
+				onSelectMatchup(
+					heroRp,
+					villainRp,
+					requireItem(matrixResult.playerNames, i, 'playerNames'),
+					requireItem(matrixResult.playerNames, j, 'playerNames')
+				);
 			}
 		},
 		[matrixResult, onSelectMatchup]
@@ -90,8 +112,8 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 
 	const handleInjectClick = useCallback(() => {
 		if (onSelectMatchup && matchupDetail) {
-			const heroRp = matrixResult.rpMatrix[matchupDetail.heroIndex][matchupDetail.villainIndex];
-			const villainRp = matrixResult.rpMatrix[matchupDetail.villainIndex][matchupDetail.heroIndex];
+			const heroRp = requireCell(matrixResult.rpMatrix, matchupDetail.heroIndex, matchupDetail.villainIndex, 'rpMatrix');
+			const villainRp = requireCell(matrixResult.rpMatrix, matchupDetail.villainIndex, matchupDetail.heroIndex, 'rpMatrix');
 			onSelectMatchup(heroRp, villainRp, matchupDetail.heroName, matchupDetail.villainName);
 		}
 	}, [matchupDetail, matrixResult, onSelectMatchup]);
@@ -120,9 +142,9 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 
 	const formatCellValue = (i: number, j: number) => {
 		if (i === j) return '-';
-		if (displayMode === 'RP') return `${matrixResult.rpMatrix[i][j]}%`;
-		if (displayMode === 'BF') return `${matrixResult.bfMatrix[i][j]}x`;
-		return `${matrixResult.reqEquityMatrix[i][j]}%`;
+		if (displayMode === 'RP') return `${requireCell(matrixResult.rpMatrix, i, j, 'rpMatrix')}%`;
+		if (displayMode === 'BF') return `${requireCell(matrixResult.bfMatrix, i, j, 'bfMatrix')}x`;
+		return `${requireCell(matrixResult.reqEquityMatrix, i, j, 'reqEquityMatrix')}%`;
 	};
 
 	return (
@@ -243,7 +265,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 								<td className="p-2 text-left font-bold text-slate-300 bg-slate-900/60 border border-slate-800 whitespace-nowrap">
 									{rowName}
 									<span className="block text-[10px] text-slate-500 font-normal">
-										${matrixResult.baseEv[i].toLocaleString()} $EV
+										${requireItem(matrixResult.baseEv, i, 'baseEv').toLocaleString()} $EV
 									</span>
 								</td>
 								{matrixResult.playerNames.map((_, j) => {
@@ -251,10 +273,10 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 									const isSelected = selectedCell.hero === i && selectedCell.villain === j;
 									const cellVal =
 										displayMode === 'RP'
-											? matrixResult.rpMatrix[i][j]
+											? requireCell(matrixResult.rpMatrix, i, j, 'rpMatrix')
 											: displayMode === 'BF'
-												? matrixResult.bfMatrix[i][j]
-												: matrixResult.reqEquityMatrix[i][j];
+												? requireCell(matrixResult.bfMatrix, i, j, 'bfMatrix')
+												: requireCell(matrixResult.reqEquityMatrix, i, j, 'reqEquityMatrix');
 
 									return (
 										<td
@@ -320,9 +342,12 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 						<div className="text-[10px] text-slate-400">Villain RP (OOP)</div>
 						<div className="text-lg font-black text-amber-400 mt-0.5">
 							+
-							{matrixResult.rpMatrix[matchupDetail.villainIndex][
-								matchupDetail.heroIndex
-							].toFixed(1)}
+							{requireCell(
+								matrixResult.rpMatrix,
+								matchupDetail.villainIndex,
+								matchupDetail.heroIndex,
+								'rpMatrix'
+							).toFixed(1)}
 							%
 						</div>
 					</div>
