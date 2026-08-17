@@ -48,6 +48,18 @@ export interface BubbleFactorMatrixResult {
 	deltaLoseMatrix: number[][];
 }
 
+function requireValue<T>(value: T | undefined, context: string): T {
+	if (value === undefined) {
+		throw new RangeError(`Missing value: ${context}`);
+	}
+	return value;
+}
+
+function matrixValue(matrix: readonly (readonly number[])[], row: number, column: number, name: string): number {
+	const values = requireValue(matrix[row], `${name}[${row}]`);
+	return requireValue(values[column], `${name}[${row}][${column}]`);
+}
+
 export const TOURNAMENT_PRESETS: ICMTournamentPreset[] = [
 	{
 		id: 'wsop-main-event-ft',
@@ -123,7 +135,9 @@ export function calculateMalmuthHarville(stacks: number[], payouts: number[]): n
 
 	// 1º Lugar
 	for (let i = 0; i < n; i++) {
-		probMatrix[i][0] = Math.max(0, stacks[i]) / totalChips;
+		const row = requireValue(probMatrix[i], `probMatrix[${i}]`);
+		const stack = requireValue(stacks[i], `stacks[${i}]`);
+		row[0] = Math.max(0, stack) / totalChips;
 	}
 
 	if (m > 1) {
@@ -136,35 +150,38 @@ export function calculateMalmuthHarville(stacks: number[], payouts: number[]): n
 			if (pos >= m || remChips <= 0) return;
 
 			for (let p = 0; p < n; p++) {
-				if ((usedBitmask & (1 << p)) !== 0 || stacks[p] <= 0) continue;
+				const stack = requireValue(stacks[p], `stacks[${p}]`);
+				if ((usedBitmask & (1 << p)) !== 0 || stack <= 0) continue;
 
-				const probThis = stacks[p] / remChips;
+				const probThis = stack / remChips;
 				const branchProb = currentProb * probThis;
-				probMatrix[p][pos] += branchProb;
+				const row = requireValue(probMatrix[p], `probMatrix[${p}]`);
+				row[pos] = (row[pos] ?? 0) + branchProb;
 
-				if (pos + 1 < m && remChips - stacks[p] > 0) {
+				if (pos + 1 < m && remChips - stack > 0) {
 					computeBranch(
 						pos + 1,
 						usedBitmask | (1 << p),
 						branchProb,
-						remChips - stacks[p]
+						remChips - stack
 					);
 				}
 			}
 		};
 
 		for (let p0 = 0; p0 < n; p0++) {
-			if (stacks[p0] > 0) {
-				const rem = totalChips - stacks[p0];
+			const stack = requireValue(stacks[p0], `stacks[${p0}]`);
+			if (stack > 0) {
+				const rem = totalChips - stack;
 				if (rem > 0) {
-					computeBranch(1, 1 << p0, probMatrix[p0][0], rem);
+					computeBranch(1, 1 << p0, matrixValue(probMatrix, p0, 0, 'probMatrix'), rem);
 				}
 			}
 		}
 	}
 
 	return probMatrix.map((probs) =>
-		probs.reduce((sum, p, k) => sum + p * activePayouts[k], 0)
+		probs.reduce((sum, p, k) => sum + p * (activePayouts[k] ?? 0), 0)
 	);
 }
 
@@ -191,34 +208,37 @@ export function computeBubbleFactorMatrix(
 
 	for (let i = 0; i < n; i++) {
 		for (let j = 0; j < n; j++) {
-			if (i === j || stacks[i] <= 0 || stacks[j] <= 0) continue;
+			const stackI = requireValue(stacks[i], `stacks[${i}]`);
+			const stackJ = requireValue(stacks[j], `stacks[${j}]`);
+			if (i === j || stackI <= 0 || stackJ <= 0) continue;
 
-			const eff = Math.min(stacks[i], stacks[j]);
+			const eff = Math.min(stackI, stackJ);
 
 			// Win case (+eff)
 			const winStacks = [...stacks];
-			winStacks[i] += eff;
-			winStacks[j] -= eff;
-			const evWin = calculateMalmuthHarville(winStacks, payouts)[i];
-			const deltaWin = Math.max(1e-6, evWin - baseEv[i]);
-			deltaWinMatrix[i][j] = Number(deltaWin.toFixed(2));
+			winStacks[i] = requireValue(winStacks[i], `winStacks[${i}]`) + eff;
+			winStacks[j] = requireValue(winStacks[j], `winStacks[${j}]`) - eff;
+			const evWin = requireValue(calculateMalmuthHarville(winStacks, payouts)[i], `evWin[${i}]`);
+			const baseEvI = requireValue(baseEv[i], `baseEv[${i}]`);
+			const deltaWin = Math.max(1e-6, evWin - baseEvI);
+			requireValue(deltaWinMatrix[i], `deltaWinMatrix[${i}]`)[j] = Number(deltaWin.toFixed(2));
 
 			// Lose case (-eff)
 			const loseStacks = [...stacks];
-			loseStacks[i] -= eff;
-			loseStacks[j] += eff;
-			const evLose = calculateMalmuthHarville(loseStacks, payouts)[i];
-			const deltaLose = Math.max(1e-6, baseEv[i] - evLose);
-			deltaLoseMatrix[i][j] = Number(deltaLose.toFixed(2));
+			loseStacks[i] = requireValue(loseStacks[i], `loseStacks[${i}]`) - eff;
+			loseStacks[j] = requireValue(loseStacks[j], `loseStacks[${j}]`) + eff;
+			const evLose = requireValue(calculateMalmuthHarville(loseStacks, payouts)[i], `evLose[${i}]`);
+			const deltaLose = Math.max(1e-6, baseEvI - evLose);
+			requireValue(deltaLoseMatrix[i], `deltaLoseMatrix[${i}]`)[j] = Number(deltaLose.toFixed(2));
 
 			const bf = deltaLose / deltaWin;
-			bfMatrix[i][j] = Number(bf.toFixed(3));
+			requireValue(bfMatrix[i], `bfMatrix[${i}]`)[j] = Number(bf.toFixed(3));
 
 			const rp = Math.max(0, ((bf - 1.0) / (bf + 1.0)) * 100);
-			rpMatrix[i][j] = Number(rp.toFixed(2));
+			requireValue(rpMatrix[i], `rpMatrix[${i}]`)[j] = Number(rp.toFixed(2));
 
 			const reqEq = (bf / (bf + 1.0)) * 100;
-			reqEquityMatrix[i][j] = Number(reqEq.toFixed(2));
+			requireValue(reqEquityMatrix[i], `reqEquityMatrix[${i}]`)[j] = Number(reqEq.toFixed(2));
 		}
 	}
 
@@ -251,14 +271,20 @@ export function getPairwiseMatchupDetail(
 
 	const heroName = playerNames[heroIdx] || `P${heroIdx + 1}`;
 	const villainName = playerNames[villainIdx] || `P${villainIdx + 1}`;
-	const eff = Math.min(stacks[heroIdx], stacks[villainIdx]);
+	const heroStack = requireValue(stacks[heroIdx], `stacks[${heroIdx}]`);
+	const villainStack = requireValue(stacks[villainIdx], `stacks[${villainIdx}]`);
+	const heroBaseEv = requireValue(baseEv[heroIdx], `baseEv[${heroIdx}]`);
+	const villainBaseEv = requireValue(baseEv[villainIdx], `baseEv[${villainIdx}]`);
+	const eff = Math.min(heroStack, villainStack);
 
-	const bf = bfMatrix[heroIdx][villainIdx];
-	const rp = rpMatrix[heroIdx][villainIdx];
-	const villainRp = rpMatrix[villainIdx][heroIdx];
-	const reqEq = reqEquityMatrix[heroIdx][villainIdx];
+	const bf = matrixValue(bfMatrix, heroIdx, villainIdx, 'bfMatrix');
+	const rp = matrixValue(rpMatrix, heroIdx, villainIdx, 'rpMatrix');
+	const villainRp = matrixValue(rpMatrix, villainIdx, heroIdx, 'rpMatrix');
+	const reqEq = matrixValue(reqEquityMatrix, heroIdx, villainIdx, 'reqEquityMatrix');
+	const deltaWin = matrixValue(deltaWinMatrix, heroIdx, villainIdx, 'deltaWinMatrix');
+	const deltaLose = matrixValue(deltaLoseMatrix, heroIdx, villainIdx, 'deltaLoseMatrix');
 	const asymmetry = Number((rp - villainRp).toFixed(2));
-	const coverageAdv = stacks[heroIdx] >= stacks[villainIdx];
+	const coverageAdv = heroStack >= villainStack;
 
 	let advice = 'Equilíbrio padrão de ICM.';
 	if (rp >= 30 && !coverageAdv) {
@@ -277,12 +303,12 @@ export function getPairwiseMatchupDetail(
 		heroName,
 		villainName,
 		effectiveChips: eff,
-		heroBaseEv: baseEv[heroIdx],
-		villainBaseEv: baseEv[villainIdx],
-		heroWinEv: baseEv[heroIdx] + deltaWinMatrix[heroIdx][villainIdx],
-		heroLoseEv: baseEv[heroIdx] - deltaLoseMatrix[heroIdx][villainIdx],
-		deltaWin: deltaWinMatrix[heroIdx][villainIdx],
-		deltaLose: deltaLoseMatrix[heroIdx][villainIdx],
+		heroBaseEv,
+		villainBaseEv,
+		heroWinEv: heroBaseEv + deltaWin,
+		heroLoseEv: heroBaseEv - deltaLose,
+		deltaWin,
+		deltaLose,
 		bubbleFactor: bf,
 		riskPremium: rp,
 		requiredEquity: reqEq,

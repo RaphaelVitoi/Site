@@ -9,7 +9,7 @@
  * AESTHETIC: SOTA Gold Standard (Visual Symmetry, Glassmorphism, Tabular Nums).
  */
 
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
 	Bar,
 	BarChart,
@@ -53,6 +53,7 @@ interface QuadrantMetric {
 	position: 'IP' | 'OOP';
 	stackRange: 'SHALLOW' | 'MID' | 'DEEP';
 	title: string;
+	plainTitle: string;
 	subtitle: string;
 	count: number;
 	accuracy: number;
@@ -246,7 +247,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 		let totalEvLoss = 0;
 		let maxLoss = 0;
 
-		const bins: Record<string, { range: string; count: number; color: string }> = {
+		const bins: Record<'bin0' | 'bin1' | 'bin2' | 'bin3' | 'bin4', { range: string; count: number; color: string }> = {
 			bin0: { range: '0.0 bb (Ideal)', count: 0, color: '#10b981' },
 			bin1: { range: '0.1 - 0.5 bb', count: 0, color: '#f59e0b' },
 			bin2: { range: '0.6 - 1.5 bb', count: 0, color: '#6366f1' },

@@ -206,8 +206,11 @@ export function evaluateHandDetail(
 	const isPair = hand.length === 2;
 	const isSuited = hand.endsWith('s');
 	const isOffsuit = !isPair && !isSuited;
-	const r1 = hand[0];
-	const r2 = isPair ? hand[1] : hand[1];
+	if (hand.length < 2) {
+		throw new RangeError(`Invalid Hold'em hand notation: ${hand}`);
+	}
+	const r1 = hand.charAt(0);
+	const r2 = hand.charAt(1);
 
 	return {
 		hand,

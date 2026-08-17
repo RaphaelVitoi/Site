@@ -28,7 +28,7 @@ export function GeminiVoicePlayer({
 	const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 	const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
 	const [rate, setRate] = useState<number>(1.05); // Ritmo ideal
-	const [pitch, setPitch] = useState<number>(1.0);
+	const [pitch] = useState<number>(1.0);
 	const [isSupported, setIsSupported] = useState<boolean>(true);
 
 	// Carrega e filtra vozes femininas em Português do Brasil
