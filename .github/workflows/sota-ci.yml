@@ -59,22 +59,31 @@ jobs:
       - name: 📥 Checkout Codebase
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node.js 20.x
+      - name: 🟢 Setup Node.js 24.x
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: 📦 Install Frontend Dependencies
-        working-directory: ./frontend
+      - name: 🦀 Install pinned Rust and WASM toolchain
         run: |
-          npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+          rustup toolchain install 1.97.1 --profile minimal --target wasm32-unknown-unknown
+          rustup default 1.97.1
+          cargo install wasm-pack --version 0.15.0 --locked
 
-      - name: 🔍 TypeScript Strict Type Check
-        working-directory: ./frontend
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧬 Regenerate and verify WASM bindings
         run: |
-          npx tsc --noEmit || true
+          npm run wasm:build
+          git diff --exit-code -- frontend/src/lib/engine/generated frontend/public/wasm/vitoi_equity_engine_bg.wasm
+
+      - name: 🔍 TypeScript Strict Type Check and production build
+        run: |
+          npm run typecheck
+          npm run build
 
   security-and-architecture-gate:
     name: 🛡️ Security Headers & Architecture Quality Gate

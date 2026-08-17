@@ -16,6 +16,7 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
+    "wasm:build": "node scripts/build-wasm.mjs",
     "dev": "npm run dev --workspace=frontend",
     "build": "npm --workspace frontend run build",
     "lint": "npm --workspace frontend run lint",
