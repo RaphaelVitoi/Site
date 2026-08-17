@@ -8,6 +8,7 @@ import { ZodError } from 'zod';
 import { enforcePureAscii } from '@/lib/text-utils';
 import { auth } from '@/auth';
 import { TelemetryPayloadSchema, PerspectiveMetricSchema } from '@/lib/schemas';
+import { resolveTelemetryIdentity } from '@/lib/server/telemetry-identity';
 
 // SOTA: Caminho absoluto para o buffer de telemetria compartilhado com o motor Python
 const SHARED_TELEMETRY_PATH = path.resolve(
@@ -58,11 +59,15 @@ export async function POST(req: Request) {
 		// Roteamento Híbrido Fricção Zero: Distingue TelemetryEvent de PerspectiveMetric
 		if ('category' in rawPayload) {
 			const parsed = TelemetryPayloadSchema.parse(rawPayload);
+			const identity = resolveTelemetryIdentity(session.user?.id, parsed.user_id);
+			if (!identity.ok) {
+				return NextResponse.json({ error: identity.error }, { status: identity.status });
+			}
 
 			// SOTA: Persistência no Banco de Dados (Prisma)
 			const record = await prisma.telemetryEvent.create({
 				data: {
-					userId: parsed.user_id || 'local-operator',
+					userId: identity.userId,
 					category: parsed.category,
 					componentName: parsed.componentName || parsed.type || 'unknown',
 					scenarioContext: parsed.scenarioContext
