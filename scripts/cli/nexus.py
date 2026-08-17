@@ -107,7 +107,7 @@ WORKER_API_CMD = "worker-api"
 MEMORY_RAG_SCRIPT = "memory_rag.py"
 
 STYLE_BOLD_WHITE = "bold #f8f8f2"
-STATUS_PASS = "[green]PASS[/]"
+STATUS_PASS = "[green]PASS[/]"  # noqa: S105
 STATUS_FAIL = "[red]FAIL[/]"
 
 
