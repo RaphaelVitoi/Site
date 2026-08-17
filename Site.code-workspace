@@ -29,7 +29,7 @@
         "geminicodeassist.agentDebugMode": false,
         "geminicodeassist.rules": "Excelência SOTA: Proibida a artificialização. Priorizar lógica, ciência e SteelManning Protocol. Blindagem ASCII no Backend.",
         // ── PARIDADE BACKEND (RUFF) ──────────────────────────────────
-        "python.defaultInterpreterPath": "C:/Users/rapha/.gemini/Site/.venv/Scripts/python.exe",
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
         "[python]": {
             "editor.defaultFormatter": "charliermarsh.ruff",
             "editor.codeActionsOnSave": {
@@ -68,6 +68,7 @@
             "**/.turbo/**": true,
             "**/__pycache__/**": true,
             "**/dist/**": true,
+            "**/dist-workers/**": true,
             "**/build/**": true,
             "**/wasm-equity/target/**": true,
             "**/reports/**": true
@@ -80,6 +81,7 @@
             "**/.next": true,
             "**/.turbo": true,
             "**/dist": true,
+            "**/dist-workers": true,
             "**/build": true,
             "**/reports": true
         },
