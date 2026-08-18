@@ -18,6 +18,7 @@ Esta sessão de trabalho alcançou o estado de **Harmonização Completa e Equil
 ## 2. Inventário de Modificações e Arquivos Chave
 
 ### 2.1. Backend, Banco de Dados e Fila Assíncrona
+
 - **`database/queue_manager.py`:**
   - Desacoplamento da conexão via `_connect_raw()`.
   - Fechamento determinístico em blocos `try...finally await conn.close()`, eliminando o aviso Pylint W0135.
@@ -29,6 +30,7 @@ Esta sessão de trabalho alcançou o estado de **Harmonização Completa e Equil
   - Mapeamento e teste de persistência e decodificação Base64 no toast do Windows (15/15 testes passando).
 
 ### 2.2. Multimídia, Voz Neural & Documentos
+
 - **`scripts/cli/nexus_voice.py` & `tests/test_nexus_voice.py`:**
   - Integração assíncrona do Edge-TTS (`pt-BR-FranciscaNeural` / `pt-BR-ThalitaNeural`) e áudio Gemini Aoede (24kHz).
   - Suíte de 7 testes unitários validados com 100% de sucesso.
@@ -37,6 +39,7 @@ Esta sessão de trabalho alcançou o estado de **Harmonização Completa e Equil
   - Sincronização de `python-docx`, `openpyxl`, `Pillow`, `moviepy` e `opencv-python-headless`.
 
 ### 2.3. Frontend, Renderização & ORM
+
 - **`frontend/package.json` & `package.json`:**
   - `next`: `16.3.1` (Turbopack engine).
   - `katex`: `0.18.4`, `rehype-katex`: `7.0.1`, `remark-math`: `6.0.0`.
@@ -46,6 +49,7 @@ Esta sessão de trabalho alcançou o estado de **Harmonização Completa e Equil
   - **Build de Produção:** 51/51 páginas estáticas e dinâmicas geradas com sucesso.
 
 ### 2.4. Servidores MCP & Testes Cross-Platform
+
 - **`skills/gemini-cli-jules/mcp-server` & `skills/gemini-cli-security/mcp-server`:**
   - Atualização do `vitest` para `4.1.10`.
   - Normalização da resolução de caminhos agnóstica no Windows (`mockPath.resolve`) em `poc.test.ts`.
@@ -70,6 +74,7 @@ Esta sessão de trabalho alcançou o estado de **Harmonização Completa e Equil
 ## 4. Estado dos Submódulos Git
 
 Todos os submódulos foram sincronizados e comitados internamente:
+
 - `core/vendor/eigen`
 - `skills/gemini-cli-jules`
 - `skills/gemini-cli-security`

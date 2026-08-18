@@ -27,8 +27,8 @@ def send_toast(title: str, message: str) -> None:
 def _send_windows_toast(title: str, message: str) -> None:
     """Send a Windows toast notification using PowerShell EncodedCommand."""
     try:
-        safe_title = html.escape(title, quote=True)
-        safe_message = html.escape(message, quote=True)
+        safe_title = shlex.quote(html.escape(title, quote=True))
+        safe_message = shlex.quote(html.escape(message, quote=True))
         ps_code = (
             "[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, "
             "ContentType = WindowsRuntime] | Out-Null;\n"
@@ -41,6 +41,7 @@ def _send_windows_toast(title: str, message: str) -> None:
             '[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Nexus Worker").Show($toast);'
         )
         encoded_cmd = base64.b64encode(ps_code.encode("utf-16le")).decode("ascii")
+        safe_encoded_cmd = shlex.quote(encoded_cmd)
 
         systemroot = os.environ.get("SYSTEMROOT", "C:\\Windows")
         powershell_path = Path(systemroot) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
@@ -56,16 +57,16 @@ def _send_windows_toast(title: str, message: str) -> None:
             "-WindowStyle",
             "Hidden",
             "-EncodedCommand",
-            shlex.quote(encoded_cmd),
+            safe_encoded_cmd,
         ]
         # pylint: disable=consider-using-with
-        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # nosec B603 # noqa: S603,S607
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=False)  # nosec B603 # noqa: S603,S607
     except Exception as e:  # pylint: disable=broad-exception-caught
         err_msg = str(e)
         if "Access denied" in err_msg or "Acesso negado" in err_msg:
             logger.warning("Falha ao disparar Windows Toast: Permissao negada (Access denied).")
         else:
-            logger.exception("Falha ao disparar Windows Toast")
+            logger.exception("Falha ao disparar Windows Toast")def _send_linux_notification(title: str, message: str) ->
 
 
 def _send_linux_notification(title: str, message: str) -> None:
