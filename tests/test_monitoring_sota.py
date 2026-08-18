@@ -2,6 +2,7 @@
 Testes SOTA para os modulos de telemetria, auditoria e watchdog do Nexus Orchestrator.
 """
 
+import base64
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -9,6 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+import core.config
 from core.schemas import Task
 from monitoring.audit_engine import AuditEngine
 from monitoring.telemetry import send_toast, write_economic_log
@@ -23,8 +25,6 @@ from monitoring.watchdog import (
 @pytest.fixture(autouse=True)
 def patch_valid_agents(monkeypatch: pytest.MonkeyPatch) -> None:
     """Garante que agentes de teste sao considerados validos pelo Pydantic."""
-    import core.config
-
     monkeypatch.setattr(core.config, "VALID_AGENTS", ["@test_agent", "@maverick"])
 
 
@@ -40,7 +40,10 @@ def test_send_toast_success(monkeypatch: pytest.MonkeyPatch) -> None:
         mock_popen.assert_called_once()
         args = mock_popen.call_args[0][0]
         assert "powershell.exe" in args[0]
-        assert "Teste SOTA" in args[5]
+        assert "-EncodedCommand" in args
+        encoded_idx = args.index("-EncodedCommand") + 1
+        decoded_payload = base64.b64decode(args[encoded_idx]).decode("utf-16le")
+        assert "Teste SOTA" in decoded_payload
 
 
 @pytest.mark.unit
@@ -93,7 +96,7 @@ async def test_audit_engine_flow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert len(engine.active_buffer) == 2
     assert "TRUNCATED_BY_SOTA" in engine.active_buffer[0]["message"]
 
-    await engine._flush_to_disk()
+    await engine.flush()
     assert len(engine.active_buffer) == 0
 
     log_dir = tmp_path / ".cerebro/audit_logs"

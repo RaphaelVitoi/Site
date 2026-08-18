@@ -1,6 +1,43 @@
 """Modulo de Perspectiva Matematica VITOI."""
 
 import math
+import sys
+from pathlib import Path
+from typing import Any
+
+try:
+    import numpy as np
+
+    NUMPY_AVAILABLE: bool = True
+except ImportError:
+    np = None  # type: ignore
+    NUMPY_AVAILABLE: bool = False
+
+# SOTA: Bootstrap de Aceleracao Nativa C++ (AVX2 / Quantum Tensor Engine)
+TENSOR_ENGINE_AVAILABLE: bool = False
+QUANTUM_TENSOR_ENGINE: Any = None
+
+try:
+    import quantum_tensor_engine as _qte  # type: ignore
+
+    QUANTUM_TENSOR_ENGINE = _qte
+    TENSOR_ENGINE_AVAILABLE = True
+except ImportError:
+    _build_paths = [
+        Path(__file__).resolve().parent.parent / "core" / "tensor_engine" / "build" / "Release",
+        Path(__file__).resolve().parent.parent / "core" / "tensor_engine" / "build",
+    ]
+    for _bp in _build_paths:
+        if _bp.exists() and str(_bp) not in sys.path:
+            sys.path.insert(0, str(_bp))
+    try:
+        import quantum_tensor_engine as _qte  # type: ignore
+
+        QUANTUM_TENSOR_ENGINE = _qte
+        TENSOR_ENGINE_AVAILABLE = True
+    except ImportError:
+        QUANTUM_TENSOR_ENGINE = None
+        TENSOR_ENGINE_AVAILABLE = False
 
 
 class VitoiPerspectiveEngine:
@@ -270,3 +307,42 @@ class VitoiPerspectiveEngine:
             realization_factor=realization_factor,
         )
         return round(float(res["pm_best"]), 4)
+
+    @classmethod
+    def calculate_perspective_vectorized(
+        cls,
+        equity: Any,
+        pot: Any,
+        human_noise_factor: float = 0.05,
+    ) -> Any:
+        """
+        Executa calculo vetorizado de Perspectiva via Kernel C++ SIMD (AVX2)
+        com fallback transparente para NumPy/Python puro.
+        """
+        if TENSOR_ENGINE_AVAILABLE and QUANTUM_TENSOR_ENGINE is not None and NUMPY_AVAILABLE and np is not None:
+            try:
+                eq_arr = np.ascontiguousarray(equity, dtype=np.float32)
+                pot_arr = np.ascontiguousarray(pot, dtype=np.float32)
+                simd_fn = getattr(QUANTUM_TENSOR_ENGINE, "calculate_perspective_simd", None)
+                if simd_fn is not None:
+                    return simd_fn(eq_arr, pot_arr, human_noise_factor)
+            except Exception:
+                pass
+
+        # Fallback analitico deterministico
+        if NUMPY_AVAILABLE and np is not None:
+            try:
+                eq_arr = np.asarray(equity, dtype=np.float32)
+                pot_arr = np.asarray(pot, dtype=np.float32)
+                return (eq_arr * pot_arr) * (1.0 - human_noise_factor)
+            except Exception:
+                pass
+
+        if isinstance(equity, (int, float)):
+            if isinstance(pot, (int, float)):
+                return (equity * pot) * (1.0 - human_noise_factor)
+            return [(equity * float(p)) * (1.0 - human_noise_factor) for p in pot]
+        if isinstance(pot, (int, float)):
+            return [(float(e) * pot) * (1.0 - human_noise_factor) for e in equity]
+
+        return [(float(e) * float(p)) * (1.0 - human_noise_factor) for e, p in zip(equity, pot, strict=False)]

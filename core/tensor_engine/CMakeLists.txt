@@ -10,14 +10,26 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # SOTA: Blindagem contra MSVC STL 17.13+ vs Clang 18
 add_compile_definitions(_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH)
 
-# 1. Recuperar Diretório do Nanobind a partir do interpretador Python local
+# 1. Localizacao do Interpretador e Headers Python (com autodeteccao do venv local)
+if(NOT Python_EXECUTABLE)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../.venv/Scripts/python.exe")
+        set(Python_EXECUTABLE "${CMAKE_CURRENT_SOURCE_DIR}/../../.venv/Scripts/python.exe")
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../.venv/bin/python")
+        set(Python_EXECUTABLE "${CMAKE_CURRENT_SOURCE_DIR}/../../.venv/bin/python")
+    endif()
+endif()
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
+
+# 2. Recuperar Diretorio do Nanobind a partir do executavel Python resolvido
 execute_process(
-    COMMAND python -m nanobind --cmake_dir
+    COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
     OUTPUT_VARIABLE NB_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
 )
-list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
+if(NB_DIR)
+    list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
+endif()
 find_package(nanobind CONFIG REQUIRED)
 
 # 2. Resolução do Vendor SOTA (Álgebra Linear Eigen)

@@ -3,9 +3,10 @@ SOTA Vectorized Replay Memory & Trajectory Ring-Buffer Engine (Chico v7.0 GOLD)
 Protocol Chico SOTA v7.0 GOLD - Prioritized Experience Replay (PER) & Agent State Memory
 """
 
-import numpy as np
 import threading
-from typing import NamedTuple, Any, List, Dict, Optional, Tuple
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple
+
+import numpy as np
 
 
 class Transition(NamedTuple):
@@ -19,8 +20,8 @@ class Transition(NamedTuple):
 
 class SumTree:
     """
-    Árvore binária de soma para amostragem probabilística e atualização O(log N).
-    Usada para Prioritized Experience Replay (PER) com ponderação de TD-error.
+    Arvore binaria de soma para amostragem probabilistica e atualizacao O(log N).
+    Usada para Prioritized Experience Replay (PER) com ponderacao de TD-error.
     """
 
     def __init__(self, capacity: int):
@@ -72,11 +73,18 @@ class SumTree:
 
 class PrioritizedReplayMemory:
     """
-    Memória de Replay Prioritária (PER) SOTA com vetorização NumPy,
-    amostragem estocástica e compensação de viés por Importance Sampling (IS).
+    Memoria de Replay Prioritaria (PER) SOTA com vetorizacao NumPy,
+    amostragem estocastica e compensacao de vies por Importance Sampling (IS).
     """
 
-    def __init__(self, capacity: int = 100000, alpha: float = 0.6, beta: float = 0.4, beta_increment: float = 0.001):
+    def __init__(
+        self,
+        capacity: int = 100000,
+        alpha: float = 0.6,
+        beta: float = 0.4,
+        beta_increment: float = 0.001,
+        seed: Optional[int] = None,
+    ):
         self.tree = SumTree(capacity)
         self.capacity = capacity
         self.alpha = alpha
@@ -84,17 +92,18 @@ class PrioritizedReplayMemory:
         self.beta_increment = beta_increment
         self.epsilon = 1e-5
         self.max_priority = 1.0
+        self._rng = np.random.default_rng(seed)
 
     def push(
         self, state: Any, action: Any, reward: float, next_state: Any, done: bool, info: Optional[Dict[str, Any]] = None
     ):
-        """Armazena uma transição de agente com prioridade máxima inicial."""
+        """Armazena uma transicao de agente com prioridade maxima inicial."""
         transition = Transition(state, action, reward, next_state, done, info or {})
         priority = self.max_priority**self.alpha
         self.tree.add(priority, transition)
 
     def sample(self, batch_size: int) -> Tuple[List[Transition], np.ndarray, np.ndarray]:
-        """Amostra um lote de transições proporcionalmente à prioridade de TD-error."""
+        """Amostra um lote de transicoes proporcionalmente a prioridade de TD-error."""
         batch: List[Transition] = []
         idxs = np.zeros(batch_size, dtype=np.int32)
         priorities = np.zeros(batch_size, dtype=np.float64)
@@ -105,12 +114,12 @@ class PrioritizedReplayMemory:
         for i in range(batch_size):
             a = segment * i
             b = segment * (i + 1)
-            s = np.random.uniform(a, b)
+            s = float(self._rng.uniform(a, b))
             idx, priority, data = self.tree.get(s)
 
-            # Fallback para transição vazia se árvore não totalmente preenchida
+            # Fallback para transicao vazia se arvore nao totalmente preenchida
             if data == 0 or data is None:
-                s = np.random.uniform(0, max(self.epsilon, self.tree.total()))
+                s = float(self._rng.uniform(0, max(self.epsilon, self.tree.total())))
                 idx, priority, data = self.tree.get(s)
 
             priorities[i] = priority
@@ -138,30 +147,31 @@ class PrioritizedReplayMemory:
 
 def test_replay_buffer():
     print("=" * 60)
-    print("  TESTE DO MOTOR DE MEMÓRIA DE REPLAY PRIORITÁRIA (PER)")
+    print("  TESTE DO MOTOR DE MEMORIA DE REPLAY PRIORITARIA (PER)")
     print("=" * 60)
 
-    memory = PrioritizedReplayMemory(capacity=10000)
+    memory = PrioritizedReplayMemory(capacity=10000, seed=42)
+    rng = np.random.default_rng(42)
 
     # Ingest 1,000 synthetic agent transitions
     for i in range(1000):
         s = np.array([i, i * 2, np.sin(i)])
         a = i % 4
-        r = float(np.random.randn())
+        r = float(rng.standard_normal())
         s_next = s + np.array([1, 2, 0.1])
         done = i % 50 == 0
         memory.push(s, a, r, s_next, done, {"step": i})
 
-    print(f"[OK] {len(memory)} transições injetadas na SumTree com sucesso.")
+    print(f"[OK] {len(memory)} transicoes injetadas na SumTree com sucesso.")
 
     batch, idxs, weights = memory.sample(batch_size=32)
     print(f"[OK] Amostrado lote de {len(batch)} itens via Importance Sampling.")
-    print(f"     Média de Pesos IS: {np.mean(weights):.4f} (Min: {np.min(weights):.4f}, Max: {np.max(weights):.4f})")
+    print(f"     Media de Pesos IS: {np.mean(weights):.4f} (Min: {np.min(weights):.4f}, Max: {np.max(weights):.4f})")
 
     # Simulate TD-error update
-    simulated_td = np.random.exponential(scale=2.0, size=32)
+    simulated_td = rng.exponential(scale=2.0, size=32)
     memory.update_priorities(idxs, simulated_td)
-    print("[OK] Prioridades O(log N) atualizadas na árvore com sucesso absoluto.")
+    print("[OK] Prioridades O(log N) atualizadas na arvore com sucesso absoluto.")
     print("=" * 60)
 
 

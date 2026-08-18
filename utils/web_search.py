@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Literal
@@ -15,6 +17,9 @@ logger = logging.getLogger(__name__)
 
 PROVIDER_TAVILY = "tavily"
 PROVIDER_DDG = "duckduckgo"
+
+_DDG_LINK_PATTERN = re.compile(r'<a\s[^>]*?href="([^"]+)">([^<]+)</a>')
+_DDG_SNIPPET_PATTERN = re.compile(r'<td\s+class=["\']result-snippet["\']>([^<]+)')
 
 
 @dataclass
@@ -160,21 +165,15 @@ class WebSearchEngine:
 
 def _parse_ddg_html(html: str, max_results: int) -> list[SearchResult]:
     """Minimal HTML parser for DDG Lite results - no external deps."""
-    import re
-
     results: list[SearchResult] = []
-    # DDG Lite emits result snippets in <td class="result-snippet"> and links in <a>
-    # Pattern: extract result blocks
-    block_pattern = re.compile(
-        r'<a[^>]+href="([^"]+)"[^>]*>([^<]+)</a>.*?<td class=["\']result-snippet["\']>([^<]+)',
-        re.DOTALL,
-    )
-    for m in block_pattern.finditer(html):
-        url, title, snippet = m.group(1), m.group(2), m.group(3)
+    links = _DDG_LINK_PATTERN.findall(html)
+    snippets = _DDG_SNIPPET_PATTERN.findall(html)
+
+    for (url, title), snippet in zip(links, snippets, strict=False):
         url = url.strip()
         if url.startswith("//"):
             url = "https:" + url
-        if not url.startswith("http"):
+        if not url.startswith("http") or "duckduckgo.com" in url:
             continue
         results.append(
             SearchResult(
@@ -191,7 +190,5 @@ def _parse_ddg_html(html: str, max_results: int) -> list[SearchResult]:
 
 def get_search_engine_from_env() -> WebSearchEngine:
     """Factory: loads TAVILY_API_KEY from env/settings automatically."""
-    import os
-
     key = os.environ.get("TAVILY_API_KEY", "")
     return WebSearchEngine(tavily_api_key=key)

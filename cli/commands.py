@@ -96,7 +96,7 @@ async def _format_notify_row(t: Task, manager: QueueManager) -> tuple:
     desc = t.description.replace("\r", "").replace("\n", " ")
 
     ref_task_id = t.metadata.get("reference_task") if t.metadata else None
-    if ref_task_id and ref_task_id.startswith("AUTOFIX"):
+    if isinstance(ref_task_id, str) and ref_task_id.startswith("AUTOFIX"):
         ref_task = await manager.get_task(ref_task_id)
         if ref_task and ref_task.metadata:
             err_msg_raw = ref_task.metadata.get("last_error_message")
@@ -1266,7 +1266,7 @@ def _cli_voice(argv: list, manager: QueueManager) -> None:
     text = (
         argv[2]
         if len(argv) > 2 and not argv[2].startswith("-")
-        else "Sistema SOTA v7.0 GOLD operando com síntese de voz padrão ouro em português do Brasil sob governança de Raphael Vitoi."
+        else "Sistema SOTA v7.0 GOLD operando com sintese de voz padrao ouro em portugues do Brasil sob governanca de Raphael Vitoi."
     )
     voice = "pt-BR-FranciscaNeural"
     if "--voice" in argv:

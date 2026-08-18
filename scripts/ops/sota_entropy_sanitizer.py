@@ -3,25 +3,65 @@ SOTA Intelligent Entropy Sanitizer & Multi-Tier Garbage Collector (Chico v7.0 GO
 Protocol Chico SOTA v7.0 GOLD - Systems Maintenance, WAL Vacuum & Zero-Loss Entropy Expurgation
 """
 
-import os
-import sys
-import time
-import sqlite3
 import shutil
+import sqlite3
+import tempfile
+import time
 from pathlib import Path
 
 
-def log(msg, status="OK"):
+def log(msg: str, status: str = "OK") -> None:
     colors = {"OK": "\033[92m", "WARN": "\033[93m", "ERR": "\033[91m", "INFO": "\033[96m", "RESET": "\033[0m"}
     prefix = colors.get(status, "")
     reset = colors.get("RESET", "")
     print(f"{prefix}[SANITIZER {status}] {msg}{reset}")
 
 
-def sanitize_temp_directories():
+def _purge_item(item: Path) -> tuple[int, int]:
+    try:
+        stat = item.stat()
+        if item.is_file():
+            size = stat.st_size
+            item.unlink()
+            return 1, size
+        if item.is_dir():
+            size = sum(f.stat().st_size for f in item.glob("**/*") if f.is_file())
+            shutil.rmtree(item, ignore_errors=True)
+            return 1, size
+    except OSError:
+        pass
+    return 0, 0
+
+
+def _process_temp_entry(item: Path, now: float, max_age_sec: float) -> tuple[int, int]:
+    try:
+        stat = item.stat()
+        if (now - stat.st_mtime) < max_age_sec:
+            return 0, 0
+        return _purge_item(item)
+    except OSError:
+        return 0, 0
+
+
+def _sanitize_directory(tdir: Path, now: float, max_age_sec: float) -> tuple[int, int]:
+    if not tdir.exists() or not tdir.is_dir():
+        return 0, 0
+
+    count = 0
+    bytes_freed = 0
+    try:
+        for item in tdir.iterdir():
+            c, b = _process_temp_entry(item, now, max_age_sec)
+            count += c
+            bytes_freed += b
+    except OSError:
+        pass
+    return count, bytes_freed
+
+
+def sanitize_temp_directories() -> None:
     temp_dirs = [
-        Path(os.environ.get("TEMP", r"C:\Users\rapha\AppData\Local\Temp")),
-        Path(r"C:\Windows\Temp"),
+        Path(tempfile.gettempdir()),
         Path(r"C:\Users\rapha\.gemini\tmp"),
     ]
 
@@ -31,36 +71,15 @@ def sanitize_temp_directories():
     max_age_sec = 2 * 3600  # Arquivos com mais de 2 horas
 
     for tdir in temp_dirs:
-        if not tdir.exists():
-            continue
-        try:
-            for item in tdir.iterdir():
-                try:
-                    # Não deletar se for modificado nos últimos 120 min
-                    stat = item.stat()
-                    if (now - stat.st_mtime) < max_age_sec:
-                        continue
-
-                    if item.is_file():
-                        size = stat.st_size
-                        item.unlink()
-                        purged_count += 1
-                        purged_bytes += size
-                    elif item.is_dir():
-                        size = sum(f.stat().st_size for f in item.glob("**/*") if f.is_file())
-                        shutil.rmtree(item, ignore_errors=True)
-                        purged_count += 1
-                        purged_bytes += size
-                except Exception:
-                    pass
-        except Exception:
-            pass
+        c, b = _sanitize_directory(tdir, now, max_age_sec)
+        purged_count += c
+        purged_bytes += b
 
     mb_freed = purged_bytes / (1024 * 1024)
-    log(f"Temp Sanitizado: {purged_count} itens órfãos expurgados ({mb_freed:.2f} MB liberados)", "OK")
+    log(f"Temp Sanitizado: {purged_count} itens orfaos expurgados ({mb_freed:.2f} MB liberados)", "OK")
 
 
-def optimize_sqlite_databases():
+def optimize_sqlite_databases() -> None:
     gemini_root = Path(r"C:\Users\rapha\.gemini")
     db_files = list(gemini_root.glob("**/*.db"))
 
@@ -83,7 +102,7 @@ def optimize_sqlite_databases():
     log(f"Bancos de Dados SQLite Otimizados (WAL + VACUUM): {optimized} bancos compactados", "OK")
 
 
-def rotate_and_compact_logs():
+def rotate_and_compact_logs() -> None:
     logs_dir = Path(r"C:\Users\rapha\.gemini\Site\logs")
     if not logs_dir.exists():
         return
@@ -101,13 +120,13 @@ def rotate_and_compact_logs():
         except Exception:
             pass
 
-    log(f"Rotação de Logs do Nexus: {rotated} logs antigos arquivados", "OK")
+    log(f"Rotacao de Logs do Nexus: {rotated} logs antigos arquivados", "OK")
 
 
-def main():
+def main() -> None:
     print("=" * 68)
     print("  SOTA INTELLIGENT ENTROPY SANITIZER (CHICO v7.0 GOLD)")
-    print("  Governança: Raphael Vitoi | Higiene Termodinâmica de Sistema")
+    print("  Governanca: Raphael Vitoi | Higiene Termodinamica de Sistema")
     print("=" * 68)
 
     sanitize_temp_directories()

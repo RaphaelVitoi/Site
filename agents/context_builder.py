@@ -6,7 +6,6 @@ Context Builder -- Modulo especializado na construcao e compressao de contexto p
 import asyncio
 import hashlib
 import logging
-import re
 import time
 from pathlib import Path
 
@@ -53,12 +52,14 @@ AGENT_BIBLIOTECARIO = "@bibliotecario"
 AGENT_VALIDADOR = "@validador"
 AGENT_VERIFIER = "@verifier"
 AGENT_AUDITOR = "@auditor"
+PUNCTUATION_STRIP = "()[]{},;\"'"
 
 
 async def _extract_task_file_mentions(description: str) -> list[Path]:
     def sync_extract():
-        md_mentions = re.findall(r"[\w\./\\-]+\.md", description, re.IGNORECASE)
-        folder_mentions = re.findall(r"docs[\\/]tasks[\\/][\w-]+", description, re.IGNORECASE)
+        tokens = description.split()
+        md_mentions = [t.strip(PUNCTUATION_STRIP) for t in tokens if t.strip(PUNCTUATION_STRIP).lower().endswith(".md")]
+        folder_mentions = [t.strip(PUNCTUATION_STRIP) for t in tokens if "docs/tasks/" in t.replace("\\", "/").lower()]
 
         paths_to_check = [Path(p) for p in md_mentions]
         for folder in folder_mentions:
@@ -116,8 +117,8 @@ async def _process_slug_docs(slug: str) -> str:
 async def _inject_task_docs(task: Task) -> str:
     task_docs = ""
     slug = task.metadata.get("slug") if task.metadata else None
-    if slug:
-        task_docs += await _process_slug_docs(slug)
+    if isinstance(slug, str) and slug.strip():
+        task_docs += await _process_slug_docs(slug.strip())
 
     paths_to_check = await _extract_task_file_mentions(task.description or "")
 
@@ -426,7 +427,8 @@ def _finalize_prompt(prompt_parts: list[str], agent_clean: str) -> str:
 
 
 def _inject_domain_skills(task: Task) -> str:
-    domain = (task.metadata or {}).get("domain", "SYS")
+    domain_raw = (task.metadata or {}).get("domain", "SYS")
+    domain = str(domain_raw) if domain_raw is not None else "SYS"
 
     skill_blocks = {
         "MATH": "\n\n[SKILLS ATIVAS: MATH]\n- Science Superpowers: Use rigor cientifico, evidenciacao antes de conclusoes.\n- ML Best Practices: Siga padroes de ouro para analise de dados e modelagem.",

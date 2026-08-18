@@ -7,9 +7,31 @@ interface SotaHeatmapCanvasProps {
    * SOTA: Não passamos o array via props do React para evitar VDOM Diffing.
    * Passamos uma Referência Mutável que o Worker atualiza silenciosamente.
    */
-  tensorRef: React.MutableRefObject<Float64Array | null>;
+  tensorRef: React.RefObject<Float64Array | null>;
   width?: number;
   height?: number;
+}
+
+const COLOR_BG = 0xff2a170f;
+const COLOR_INDIGO = 0xfff16663;
+const COLOR_EMERALD = 0xff81b910;
+const COLOR_RED = 0xff1a1aff;
+
+const RANKS = '23456789TJQKA';
+const SUITS = ['♠', '♥', '♦', '♣'] as const;
+const SUIT_COLORS = ['text-slate-400', 'text-red-500', 'text-blue-500', 'text-emerald-500'] as const;
+
+function getSotaColor(prob: number): number {
+  if (prob < 0.01) return COLOR_BG;
+  if (prob < 0.4) return COLOR_INDIGO;
+  if (prob < 0.7) return COLOR_EMERALD;
+  return COLOR_RED;
+}
+
+function setPixel(data32: Uint32Array, pixelIdx: number, color: number): void {
+  if (pixelIdx >= 0 && pixelIdx < data32.length) {
+    data32.fill(color, pixelIdx, pixelIdx + 1);
+  }
 }
 
 export function SotaHeatmapCanvas({ tensorRef, width = 260, height = 260 }: Readonly<SotaHeatmapCanvasProps>) {
@@ -30,85 +52,50 @@ export function SotaHeatmapCanvas({ tensorRef, width = 260, height = 260 }: Read
     const cellWidth = width / GRID_SIZE;
     const cellHeight = height / GRID_SIZE;
 
-    // SOTA: Rasterização de Baixo Nível. Criamos um buffer de pixels Uint8ClampedArray (RGBA)
-    // Isso é ordens de magnitude mais rápido do que chamar ctx.fillRect 1326 vezes.
+    // SOTA: Rasterização de Baixo Nível via buffer de 32-bit dwords (RGBA)
     const imageData = ctx.createImageData(GRID_SIZE, GRID_SIZE);
-    const data = imageData.data;
-
-    // Função Pura para colorização (SOTA Cromática)
-    // Mapeia a probabilidade (0.0 a 1.0) para a paleta SOTA (Indigo -> Emerald -> Nuclear Red)
-    const applySotaColor = (prob: number, pixelIndex: number) => {
-      if (prob < 0.01) {
-        // Fundo (Vazio / Morto)
-        data[pixelIndex] = 15; // R
-        data[pixelIndex + 1] = 23; // G
-        data[pixelIndex + 2] = 42; // B
-        data[pixelIndex + 3] = 255; // Alpha
-      } else if (prob < 0.4) {
-        // SOTA Indigo (#6366f1) -> Baseline
-        data[pixelIndex] = 99;
-        data[pixelIndex + 1] = 102;
-        data[pixelIndex + 2] = 241;
-        data[pixelIndex + 3] = 255;
-      } else if (prob < 0.7) {
-        // Predator Emerald (#10b981) -> Vantagem
-        data[pixelIndex] = 16;
-        data[pixelIndex + 1] = 185;
-        data[pixelIndex + 2] = 129;
-        data[pixelIndex + 3] = 255;
-      } else {
-        // Nuclear Red (#ff1a1a) -> Pressão / Forte
-        data[pixelIndex] = 255;
-        data[pixelIndex + 1] = 26;
-        data[pixelIndex + 2] = 26;
-        data[pixelIndex + 3] = 255;
-      }
-    };
+    const data32 = new Uint32Array(imageData.data.buffer);
 
     const renderLoop = () => {
       const tensor = tensorRef.current;
       if (tensor) {
         let comboIndex = 0;
 
-        // SOTA: Limpeza de Buffer (Fricção Zero)
-        // Necessário porque desenharemos uma matriz esparsa (com buracos lógicos)
-        for (let i = 0; i < data.length; i += 4) {
-          data[i] = 15; // R
-          data[i + 1] = 23; // G
-          data[i + 2] = 42; // B
-          data[i + 3] = 255; // Alpha
-        }
+        // SOTA: Limpeza de Buffer Vetorizada (Fricção Zero)
+        data32.fill(COLOR_BG);
 
         // Assumindo indexação linear c1 > c2 (0..51)
         for (let c1 = 1; c1 < 52; c1++) {
           for (let c2 = 0; c2 < c1; c2++) {
             // Acesso à memória Fricção Zero
-            const prob = tensor[comboIndex] ?? 0;
+            const prob = tensor.at(comboIndex) ?? 0;
+            const color = getSotaColor(prob);
 
             // Mapeamento [x, y] = [c1, c2] e simetria [c2, c1]
-            const idx1 = (c2 * GRID_SIZE + c1) * 4;
-            const idx2 = (c1 * GRID_SIZE + c2) * 4;
+            const idx1 = c2 * GRID_SIZE + c1;
+            const idx2 = c1 * GRID_SIZE + c2;
+
             // Inversão Geométrica: Ás (rank 12, index 51) no Topo/Esquerda (0)
             const m1 = 51 - c1;
             const m2 = 51 - c2;
 
-            const idxUpper = (m1 * GRID_SIZE + m2) * 4;
-            const idxLower = (m2 * GRID_SIZE + m1) * 4;
+            const idxUpper = m1 * GRID_SIZE + m2;
+            const idxLower = m2 * GRID_SIZE + m1;
 
             const isPair = c1 >> 2 === c2 >> 2;
             const isSuited = (c1 & 3) === (c2 & 3);
 
             if (isPair) {
-              applySotaColor(prob, idxUpper);
-              applySotaColor(prob, idxLower);
+              setPixel(data32, idxUpper, color);
+              setPixel(data32, idxLower, color);
             } else if (isSuited) {
-              applySotaColor(prob, idxUpper);
+              setPixel(data32, idxUpper, color);
             } else {
-              applySotaColor(prob, idxLower);
+              setPixel(data32, idxLower, color);
             }
 
-            applySotaColor(prob, idx1);
-            applySotaColor(prob, idx2);
+            setPixel(data32, idx1, color);
+            setPixel(data32, idx2, color);
 
             comboIndex++;
           }
@@ -182,30 +169,49 @@ export function SotaHeatmapCanvas({ tensorRef, width = 260, height = 260 }: Read
       const c2 = Math.min(mapped_c_row, mapped_c_col);
       const comboIndex = (c1 * (c1 - 1)) / 2 + c2;
 
-      const prob = tensorRef.current[comboIndex] || 0;
+      const prob = tensorRef.current.at(comboIndex) ?? 0;
 
       // Decodificador de Naipes O(1)
-      const RANKS = '23456789TJQKA';
-      // 0=Spades(s), 1=Hearts(h), 2=Diamonds(d), 3=Clubs(c)
-      const SUITS = ['♠', '♥', '♦', '♣'];
-      const SUIT_COLORS = ['text-slate-400', 'text-red-500', 'text-blue-500', 'text-emerald-500'];
-
-      const r1 = RANKS[c1 >> 2];
+      const r1 = RANKS.at(c1 >> 2) ?? '2';
       const s1 = c1 & 3;
-      const r2 = RANKS[c2 >> 2];
+      const r2 = RANKS.at(c2 >> 2) ?? '2';
       const s2 = c2 & 3;
+      const suit1 = SUITS.at(s1) ?? '♠';
+      const suit2 = SUITS.at(s2) ?? '♠';
+      const suitColor1 = SUIT_COLORS.at(s1) ?? 'text-slate-400';
+      const suitColor2 = SUIT_COLORS.at(s2) ?? 'text-slate-400';
 
-      tooltipRef.current.innerHTML = `
-        <div class="flex items-center gap-1 font-bold text-sm">
-          <span>${r1}<span class="${SUIT_COLORS[s1]}">${SUITS[s1]}</span></span>
-          <span>${r2}<span class="${SUIT_COLORS[s2]}">${SUITS[s2]}</span></span>
-        </div>
-        <div class="text-[10px] text-slate-400 mt-1">Density: ${(prob * 100).toFixed(2)}%</div>
-      `;
+      const tooltipEl = tooltipRef.current;
+      tooltipEl.replaceChildren();
+
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'flex items-center gap-1 font-bold text-sm';
+
+      const c1Span = document.createElement('span');
+      c1Span.textContent = r1;
+      const s1Span = document.createElement('span');
+      s1Span.className = suitColor1;
+      s1Span.textContent = suit1;
+      c1Span.appendChild(s1Span);
+
+      const c2Span = document.createElement('span');
+      c2Span.textContent = r2;
+      const s2Span = document.createElement('span');
+      s2Span.className = suitColor2;
+      s2Span.textContent = suit2;
+      c2Span.appendChild(s2Span);
+
+      headerDiv.append(c1Span, c2Span);
+
+      const densityDiv = document.createElement('div');
+      densityDiv.className = 'text-[10px] text-slate-400 mt-1';
+      densityDiv.textContent = `Density: ${(prob * 100).toFixed(2)}%`;
+
+      tooltipEl.append(headerDiv, densityDiv);
 
       // Mutação direta via Compositor Thread (GPU), ignorando o React Render Cycle
-      tooltipRef.current.style.transform = `translate(${e.clientX + 15}px, ${e.clientY + 15}px)`;
-      tooltipRef.current.style.opacity = '1';
+      tooltipEl.style.transform = `translate(${e.clientX + 15}px, ${e.clientY + 15}px)`;
+      tooltipEl.style.opacity = '1';
     };
 
     const handleMouseLeave = () => {

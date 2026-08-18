@@ -34,13 +34,14 @@ export interface MonteCarloSimulationResult {
 }
 
 function getHighEntropyUint32(): number {
-	if (globalThis.crypto !== undefined && typeof globalThis.crypto.getRandomValues === 'function') {
+	if (typeof globalThis.crypto?.getRandomValues === 'function') {
 		const buf = new Uint32Array(1);
 		globalThis.crypto.getRandomValues(buf);
 		const val = buf.at(0);
 		if (val !== undefined) return val;
 	}
-	return Math.floor(Math.random() * 0x100000000) >>> 0;
+	const perfTime = typeof performance !== 'undefined' ? performance.now() * 1000 : 0;
+	return ((Date.now() ^ perfTime) >>> 0) || 0xdeadbeef;
 }
 
 export class MonteCarloParallelPool {

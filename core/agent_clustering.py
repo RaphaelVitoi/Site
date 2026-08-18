@@ -4,15 +4,20 @@ Protocol Chico SOTA v7.0 GOLD - Multi-Agent Cluster Topologies & Hardware Affini
 """
 
 import enum
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 class ClusterType(str, enum.Enum):
     ALPHA_REASONING = "ALPHA_REASONING"  # Arquitetura, Teoria dos Jogos (PMev), Provas Formais
-    BETA_EXECUTION = "BETA_EXECUTION"  # Geração de Código, Edição Atômica, CLI Ops
-    GAMMA_AUDITING = "GAMMA_AUDITING"  # Verificação Empírica, Linting, Type-Check, DevTools
+    BETA_EXECUTION = "BETA_EXECUTION"  # Geracao de Codigo, Edicao Atomica, CLI Ops
+    GAMMA_AUDITING = "GAMMA_AUDITING"  # Verificacao Empirica, Linting, Type-Check, DevTools
     DELTA_DATAPROC = "DELTA_DATAPROC"  # Pipelines Spark, Bucketing, Arrow Analytics
+
+
+MODEL_GEMINI_37_FLASH = "gemini-3.7-flash-medium"
+MODEL_GEMINI_25_FLASH = "gemini-2.5-flash"
+MODEL_GEMINI_31_PRO = "gemini-3.1-pro"
+MODEL_CLAUDE_37_SONNET = "claude-3-7-sonnet"
 
 
 @dataclass
@@ -20,8 +25,8 @@ class AgentClusterConfig:
     cluster_type: ClusterType
     name: str
     description: str
-    primary_models: List[str]
-    cpu_affinity_cores: List[int]
+    primary_models: list[str]
+    cpu_affinity_cores: list[int]
     max_concurrency: int
     enable_thinking: bool
     thinking_budget: int
@@ -29,17 +34,17 @@ class AgentClusterConfig:
 
 class AgentClusteringMesh:
     """
-    Topologia de Clusters para Orquestração de Subagentes SOTA.
-    Distribui tarefas por afinidade de domínio, modelos de IA e núcleos de CPU.
+    Topologia de Clusters para Orquestracao de Subagentes SOTA.
+    Distribui tarefas por afinidade de dominio, modelos de IA e nucleos de CPU.
     """
 
     def __init__(self):
-        self.clusters: Dict[ClusterType, AgentClusterConfig] = {
+        self.clusters: dict[ClusterType, AgentClusterConfig] = {
             ClusterType.ALPHA_REASONING: AgentClusterConfig(
                 cluster_type=ClusterType.ALPHA_REASONING,
                 name="Cluster Alpha (Deep Reasoning & Architecture)",
-                description="Governança, planejamento estratégico, resolução matemática de PMev/ICM e arquitetura de sistemas.",
-                primary_models=["gemini-3.7-flash-medium", "gemini-3.1-pro", "claude-3-7-sonnet"],
+                description="Governanca, planejamento estrategico, resolucao matematica de PMev/ICM e arquitetura de sistemas.",
+                primary_models=[MODEL_GEMINI_37_FLASH, MODEL_GEMINI_31_PRO, MODEL_CLAUDE_37_SONNET],
                 cpu_affinity_cores=[4, 5, 6, 7, 12, 13, 14, 15],  # Cores de alta performance
                 max_concurrency=4,
                 enable_thinking=True,
@@ -48,8 +53,8 @@ class AgentClusteringMesh:
             ClusterType.BETA_EXECUTION: AgentClusterConfig(
                 cluster_type=ClusterType.BETA_EXECUTION,
                 name="Cluster Beta (Rapid Code Synthesis & Tooling)",
-                description="Geração de código de baixa latência, modificações atômicas de arquivos e execução de comandos.",
-                primary_models=["gemini-3.7-flash-medium", "gemini-2.5-flash"],
+                description="Geracao de codigo de baixa latencia, modificacoes atomicas de arquivos e execucao de comandos.",
+                primary_models=[MODEL_GEMINI_37_FLASH, MODEL_GEMINI_25_FLASH],
                 cpu_affinity_cores=[2, 3, 4, 5, 10, 11, 12, 13],
                 max_concurrency=8,
                 enable_thinking=False,
@@ -58,29 +63,29 @@ class AgentClusteringMesh:
             ClusterType.GAMMA_AUDITING: AgentClusterConfig(
                 cluster_type=ClusterType.GAMMA_AUDITING,
                 name="Cluster Gamma (Auditing, Linting & Empirical Verification)",
-                description="Inspeção de integridade, suíte de testes, tipagem estrita e profiling DevTools CDP.",
-                primary_models=["gemini-3.7-flash-medium", "gemini-3.1-pro"],
-                cpu_affinity_cores=[0, 1, 2, 3, 8, 9, 10, 11],
+                description="Varredura de seguranca, auditoria estatica de codigo, execucao de testes unitarios e linting.",
+                primary_models=[MODEL_GEMINI_25_FLASH],
+                cpu_affinity_cores=[0, 1, 8, 9],
                 max_concurrency=6,
-                enable_thinking=True,
-                thinking_budget=2048,
+                enable_thinking=False,
+                thinking_budget=0,
             ),
             ClusterType.DELTA_DATAPROC: AgentClusterConfig(
                 cluster_type=ClusterType.DELTA_DATAPROC,
-                name="Cluster Delta (Big Data, Spark & Vector Analytics)",
-                description="Execução distribuída em PySpark, particionamento adaptativo AQE e memória de replay PER.",
-                primary_models=["gemini-3.7-flash-medium"],
-                cpu_affinity_cores=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],  # All 16 threads
+                name="Cluster Delta (Spark & High-Throughput Analytics)",
+                description="Processamento de lotes Spark, vetores Arrow, transformacoes analiticas e replay de sessoes.",
+                primary_models=[MODEL_GEMINI_37_FLASH, MODEL_GEMINI_25_FLASH],
+                cpu_affinity_cores=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],  # All cores
                 max_concurrency=16,
                 enable_thinking=False,
                 thinking_budget=0,
             ),
         }
 
-    def route_task(self, domain: Optional[str] = None, task_type: Optional[str] = None) -> AgentClusterConfig:
-        """Roteia dinamicamente uma tarefa para o cluster com maior afinidade de execução."""
-        d_lower = str(domain or "").lower()
-        t_lower = str(task_type or "").lower()
+    def route_task(self, domain: str | None = None, task_type: str | None = None) -> AgentClusterConfig:
+        """Roteia dinamicamente uma tarefa para o cluster com maior afinidade de execucao."""
+        d_lower = (domain or "").lower()
+        t_lower = (task_type or "").lower()
 
         if any(w in d_lower or w in t_lower for w in ["math", "theory", "icm", "pmev", "arch", "plan", "complex"]):
             return self.clusters[ClusterType.ALPHA_REASONING]
@@ -112,7 +117,7 @@ def test_clustering():
         cluster = mesh.route_task(domain=domain, task_type=t_name)
         print(f"[OK] Tarefa '{t_name}' ({domain}) -> {cluster.name}")
         print(
-            f"     Modelo Primário: {cluster.primary_models[0]} | Dynamic Thinking: {cluster.enable_thinking} ({cluster.thinking_budget} tokens)"
+            f"     Modelo Primario: {cluster.primary_models[0]} | Dynamic Thinking: {cluster.enable_thinking} ({cluster.thinking_budget} tokens)"
         )
         print(f"     Afinidade CPU Cores: {cluster.cpu_affinity_cores[:4]}...")
     print("=" * 60)

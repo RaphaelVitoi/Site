@@ -68,4 +68,4 @@ def enforce_pure_ascii(text: str) -> str:
     for k, v in replacements.items():
         text = text.replace(k, v)
     # Destroi qualquer byte nao-ASCII restante
-    return unicodedata.normalize("NFKD", str(text)).encode("ASCII", "ignore").decode("ASCII")
+    return unicodedata.normalize("NFKD", text).encode("ASCII", "ignore").decode("ASCII")
