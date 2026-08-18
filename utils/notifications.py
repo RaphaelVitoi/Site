@@ -66,13 +66,13 @@ def _send_windows_toast(title: str, message: str) -> None:
         if "Access denied" in err_msg or "Acesso negado" in err_msg:
             logger.warning("Falha ao disparar Windows Toast: Permissao negada (Access denied).")
         else:
-            logger.exception("Falha ao disparar Windows Toast")def _send_linux_notification(title: str, message: str) ->
+            logger.exception("Falha ao disparar Windows Toast")
 
 
 def _send_linux_notification(title: str, message: str) -> None:
     """Dispara notificacao via notify-send (comum em Linux/WSL com GUI)."""
     try:
         # pylint: disable=consider-using-with
-        subprocess.Popen(["notify-send", shlex.quote(title), shlex.quote(message)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # nosec B603 # noqa: S603,S607
+        subprocess.Popen(["notify-send", shlex.quote(title), shlex.quote(message)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=False)  # nosec B603 # noqa: S603,S607
     except Exception:  # pylint: disable=broad-exception-caught
         logger.info("[NOTIFY-LINUX] %s: %s", title, message)
