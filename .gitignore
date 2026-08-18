@@ -71,9 +71,7 @@ reports/coverage/
 .coverage
 htmlcov/
 *.cover
-reports/cwv/*.json
-reports/cwv/*.md
-!reports/cwv/latest_cwv_report.md
+reports/cwv/
 engine/avatars/*.txt
 
 # 6. BACKUPS E ARCHIVES (PURA HIGIENE) ─────────────────────────────────────────
