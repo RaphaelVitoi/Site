@@ -15,18 +15,36 @@ from utils.cache import _read_file_with_cache
 logger = logging.getLogger(__name__)
 
 
-def _build_global_instructions(system_prompt_parts: list, is_technical_agent: bool) -> list:
-    # SOTA: Consumo Dinamico do Manifesto de Documentos
-    manifest_path = Path("docs/document_manifest.json")
-    doc_manifest = {}
-    if manifest_path.exists():
-        try:
-            manifest_content = _read_file_with_cache(str(manifest_path))
-            if manifest_content:
-                doc_manifest = json.loads(manifest_content)
-        except Exception:  # noqa: BLE001
-            logger.exception("[PROMPTS] Falha ao ler document_manifest.json")
+def _load_document_manifest(base_dir: Path) -> dict:
+    """Carrega o manifesto de documentos garantindo seguranca contra path traversal."""
+    manifest_path = (base_dir / "docs" / "document_manifest.json").resolve()
+    if not manifest_path.is_file():
+        return {}
+    try:
+        manifest_path.relative_to(base_dir)
+        manifest_content = _read_file_with_cache(str(manifest_path))
+        if manifest_content:
+            return json.loads(manifest_content)
+    except Exception:  # noqa: BLE001
+        logger.exception("[PROMPTS] Falha ao ler document_manifest.json")
+    return {}
 
+
+def _resolve_safe_doc_path(base_dir: Path, doc_path: str) -> Path | None:
+    """Resolve e valida o caminho do documento contido no diretorio base (CWE-22)."""
+    try:
+        resolved = (base_dir / doc_path).resolve()
+        resolved.relative_to(base_dir)
+        return resolved if resolved.is_file() else None
+    except (ValueError, RuntimeError):
+        logger.warning("[PROMPTS] Path traversal bloqueado para documento: %s", doc_path)
+        return None
+
+
+def _build_global_instructions(system_prompt_parts: list, is_technical_agent: bool) -> list:
+    # SOTA: Consumo Dinamico do Manifesto de Documentos com Imunidade a Path Traversal (CWE-22)
+    base_dir = Path.cwd().resolve()
+    doc_manifest = _load_document_manifest(base_dir)
     philosophical_docs = set(doc_manifest.get("philosophical_docs", []))
     documents = doc_manifest.get("documents", [])
 
@@ -42,11 +60,15 @@ def _build_global_instructions(system_prompt_parts: list, is_technical_agent: bo
         doc_path = doc.get("path")
         if not doc_path:
             continue
-        file_obj = Path(doc_path)
-        content = _read_file_with_cache(str(file_obj))
+
+        safe_path = _resolve_safe_doc_path(base_dir, doc_path)
+        if not safe_path:
+            continue
+
+        content = _read_file_with_cache(str(safe_path))
         if content:
             system_prompt_parts.append(f"=== {doc_name} ===\n{content}\n\n")
-            successfully_read_files.append(str(file_obj.resolve()))
+            successfully_read_files.append(str(safe_path))
 
     return successfully_read_files
 

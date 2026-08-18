@@ -58,8 +58,8 @@ def _read_legacy_autonomy_config() -> str:
 
 async def get_autonomy_mode(manager: QueueManager) -> str:
     """Retorna o modo de autonomia atual, normalizando legados para VITOI 3.2."""
-    if time.time() - float(_AUTONOMY_CACHE["timestamp"]) < 5:
-        return str(_AUTONOMY_CACHE["mode"])
+    if time.time() - _AUTONOMY_CACHE["timestamp"] < 5:
+        return _AUTONOMY_CACHE["mode"]
 
     mode = await manager.get_system_state("autonomy_mode")
     if not mode:
@@ -133,7 +133,8 @@ async def _forge_files(text: str, effective_mode: str, agent_name: str) -> list[
         return []
 
     modified_files = []
-    pattern = r"(?:Arquivo|File|Caminho|Path):\s*`?([^\n`]+)`?\s*\n+```[a-z]*\n(.*?)```"
+    # SOTA SEC: Regex deterministico sem backtracking catastrofico (ReDoS-safe)
+    pattern = r"(?:Arquivo|File|Caminho|Path):[ \t]*`?([^\r\n`]+)`?[ \t]*\r?\n+```[a-zA-Z0-9_-]*\r?\n(.*?)```"
 
     # SOTA SEC: Allowlist de caracteres validos para caminhos de arquivo.
     # Bloqueia injecao de whitespace, null bytes, unicode de controle e outros vetores.
