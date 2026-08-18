@@ -3,7 +3,7 @@ SOTA GOLD: Motor MCP Dinamico.
 Mapeia operacoes do .cerebro/settings.local.json para rotas ativas do Model Context Protocol.
 Implementa Antevisao de I/O: Bypass de interop WSL se executado nativamente no Linux.
 """
-# pylint: disable=broad-exception-caught
+# pylint: disable=broad-exception-caught, no-member
 
 import asyncio
 import json
@@ -39,7 +39,7 @@ def load_operations() -> dict:
         return {}
 
 
-@app.list_tools()
+@app.list_tools()  # type: ignore
 async def list_tools() -> list[types.Tool]:
     operations = load_operations()
     tools = []
@@ -48,7 +48,9 @@ async def list_tools() -> list[types.Tool]:
             types.Tool(
                 name=op_id,
                 description=op_data.get("description", f"Executa a operacao de orquestracao {op_id}"),
-                inputSchema=op_data.get("inputSchema", {"type": "object", "properties": {}, "required": []}),
+                input_schema=op_data.get("inputSchema")
+                or op_data.get("input_schema")
+                or {"type": "object", "properties": {}, "required": []},
             )
         )
     return tools
@@ -107,7 +109,7 @@ def _prepare_command(op_data: dict, arguments: dict) -> tuple[str, list[str]]:
     return raw_command, raw_args
 
 
-@app.call_tool()
+@app.call_tool()  # type: ignore
 async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     operations = load_operations()
     if name not in operations:

@@ -1,5 +1,5 @@
 # tests/test_icm_matrix.py
-"""Testes de integridade matemática para o motor ICM e Bubble Factor Matrix SOTA v7.0 GOLD."""
+"""Testes de integridade matematica para o motor ICM e Bubble Factor Matrix SOTA v7.0 GOLD."""
 
 import pytest
 from engine.icm_matrix import calculate_malmuth_harville_icm, compute_bubble_factor_matrix
@@ -16,7 +16,7 @@ def test_malmuth_harville_equal_stacks():
 
 
 def test_malmuth_harville_winner_take_all():
-    """Em formato Winner-Take-All (1º lugar leva tudo), o $EV é puramente proporcional aos stacks (ChipEV)."""
+    """Em formato Winner-Take-All (1o lugar leva tudo), o $EV e puramente proporcional aos stacks (ChipEV)."""
     stacks = [5000.0, 3000.0, 2000.0]
     payouts = [100.0]
     ev = calculate_malmuth_harville_icm(stacks, payouts)
@@ -51,12 +51,12 @@ def test_bubble_factor_matrix_properties():
 
     # 3. Short stack (P3) contra o Chip Leader (P1):
     # Se o Short Stack dobra, ele ganha muito $EV.
-    # Já o Mid Stack (P2) contra o Chip Leader (P1) sofre alto Risk Premium de eliminação.
+    # Ja o Mid Stack (P2) contra o Chip Leader (P1) sofre alto Risk Premium de eliminacao.
     assert rp[1][0] > 0.0
 
 
 def test_bubble_factor_matrix_empty_and_zero_stacks():
-    """Valida resiliência contra listas vazias ou stacks zerados."""
+    """Valida resiliencia contra listas vazias ou stacks zerados."""
     res_empty = compute_bubble_factor_matrix([], [])
     assert res_empty["n_players"] == 0
 

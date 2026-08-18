@@ -4,22 +4,21 @@ Protocol Chico SOTA v7.0 GOLD - Link-Time Pooling & Binary Footprint Minimizatio
 Author: Raphael Vitoi & Chico SOTA (Inspired by Andrew Grieve / Chromium JNI Zero)
 """
 
-from typing import Dict, List, Tuple, Any, Optional
-import struct
+from typing import Any
 
 
 class SOTAMetadataPool:
     """
     Motor de pooling de metadados e constantes literais inspirado no Chromium JNI Zero.
-    Agrupa assinaturas, seletores e strings em tabelas contíguas indexadas por inteiros,
-    eliminando redundâncias em .rodata e reduzindo a entropia de memória.
+    Agrupa assinaturas, seletores e strings em tabelas contiguas indexadas por inteiros,
+    eliminando redundancias em .rodata e reduzindo a entropia de memoria.
     """
 
     def __init__(self):
-        self._string_pool: List[str] = []
-        self._string_to_id: Dict[str, int] = {}
-        self._metadata_entries: List[Tuple[int, int, int]] = []  # (class_idx, name_idx, sig_idx)
-        self._entry_to_id: Dict[Tuple[int, int, int], int] = {}
+        self._string_pool: list[str] = []
+        self._string_to_id: dict[str, int] = {}
+        self._metadata_entries: list[tuple[int, int, int]] = []  # (class_idx, name_idx, sig_idx)
+        self._entry_to_id: dict[tuple[int, int, int], int] = {}
 
     def intern_string(self, text: str) -> int:
         """Insere uma string no pool unificado ou retorna seu ID compacto existente."""
@@ -33,7 +32,7 @@ class SOTAMetadataPool:
 
     def register_method_metadata(self, class_name: str, method_name: str, signature: str) -> int:
         """
-        Registra metadados de método (@CalledByNative pattern) utilizando índices compactos do pool.
+        Registra metadados de metodo (@CalledByNative pattern) utilizando indices compactos do pool.
         """
         c_idx = self.intern_string(class_name)
         m_idx = self.intern_string(method_name)
@@ -48,10 +47,10 @@ class SOTAMetadataPool:
         self._entry_to_id[key] = entry_id
         return entry_id
 
-    def resolve_method_metadata(self, entry_id: int) -> Dict[str, str]:
-        """Resolve os metadados de um método a partir de seu ID compacto."""
+    def resolve_method_metadata(self, entry_id: int) -> dict[str, str]:
+        """Resolve os metadados de um metodo a partir de seu ID compacto."""
         if entry_id < 0 or entry_id >= len(self._metadata_entries):
-            raise IndexError("ID de metadados inválido no pool.")
+            raise IndexError("ID de metadados invalido no pool.")
 
         c_idx, m_idx, s_idx = self._metadata_entries[entry_id]
         return {
@@ -60,8 +59,8 @@ class SOTAMetadataPool:
             "signature": self._string_pool[s_idx],
         }
 
-    def get_stats(self) -> Dict[str, Any]:
-        """Calcula estatísticas de economia de memória e compressão."""
+    def get_stats(self) -> dict[str, Any]:
+        """Calcula estatisticas de economia de memoria e compressao."""
         total_raw_chars = sum(
             len(self._string_pool[c]) + len(self._string_pool[m]) + len(self._string_pool[s])
             for c, m, s in self._metadata_entries
@@ -79,21 +78,23 @@ class SOTAMetadataPool:
 
 
 if __name__ == "__main__":
+    TAB_CLASS = "org/chromium/chrome/browser/tab/Tab"
+    TAB_MODEL_CLASS = "org/chromium/chrome/browser/tabmodel/TabModel"
+    STRING_SIG = "()Ljava/lang/String;"
+
     pool = SOTAMetadataPool()
 
-    # Simulação de registros repetidos no estilo Chromium JNI
-    pool.register_method_metadata("org/chromium/chrome/browser/tab/Tab", "getUrl", "()Ljava/lang/String;")
-    pool.register_method_metadata("org/chromium/chrome/browser/tab/Tab", "getTitle", "()Ljava/lang/String;")
-    pool.register_method_metadata("org/chromium/chrome/browser/tab/Tab", "getId", "()I")
-    pool.register_method_metadata("org/chromium/chrome/browser/tabmodel/TabModel", "getCount", "()I")
-    pool.register_method_metadata(
-        "org/chromium/chrome/browser/tabmodel/TabModel", "getTabAt", "(I)Lorg/chromium/chrome/browser/tab/Tab;"
-    )
-    pool.register_method_metadata("org/chromium/chrome/browser/tab/Tab", "getUrl", "()Ljava/lang/String;")  # Duplicata
+    # Simulacao de registros repetidos no estilo Chromium JNI
+    pool.register_method_metadata(TAB_CLASS, "getUrl", STRING_SIG)
+    pool.register_method_metadata(TAB_CLASS, "getTitle", STRING_SIG)
+    pool.register_method_metadata(TAB_CLASS, "getId", "()I")
+    pool.register_method_metadata(TAB_MODEL_CLASS, "getCount", "()I")
+    pool.register_method_metadata(TAB_MODEL_CLASS, "getTabAt", f"(I)L{TAB_CLASS};")
+    pool.register_method_metadata(TAB_CLASS, "getUrl", STRING_SIG)  # Duplicata
 
     stats = pool.get_stats()
     print("=== SOTA METADATA POOL (CHROMIUM JNI ZERO) STATS ===")
     print(stats)
     assert stats["total_methods_registered"] == 5
     assert pool.resolve_method_metadata(0)["method_name"] == "getUrl"
-    print("Validação do Pool JNI Zero: 100% SUCESSO.")
+    print("Validacao do Pool JNI Zero: 100% SUCESSO.")

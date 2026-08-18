@@ -1,5 +1,6 @@
 """Modulo de Arbitragem Universal (DAG) SOTA."""
 
+import json
 import logging
 import math
 import time
@@ -9,10 +10,11 @@ from typing import Any, ClassVar
 from core.schemas import Task
 
 try:
-    import nexus_core_rust
+    import nexus_core_rust  # type: ignore # pylint: disable=import-error
 
     RUST_CORE_AVAILABLE = True
 except ImportError:
+    nexus_core_rust = None  # type: ignore
     RUST_CORE_AVAILABLE = False
 
 
@@ -56,7 +58,8 @@ class UniversalArbitrator:
             }
         task_ids = set(graph.keys())
         for task in pending_tasks:
-            deps = task.metadata.get("depends_on", []) if task.metadata else []
+            deps_raw = task.metadata.get("depends_on", []) if task.metadata else []
+            deps = [str(d) for d in deps_raw] if isinstance(deps_raw, list) else []
             for dep_id in deps:
                 if dep_id in task_ids:
                     graph[dep_id]["out_edges"].append(task.id)
@@ -165,10 +168,8 @@ class UniversalArbitrator:
             return None
 
         # SOTA: Aceleracao Speedforce (Rust)
-        if RUST_CORE_AVAILABLE:
+        if RUST_CORE_AVAILABLE and nexus_core_rust is not None:
             try:
-                import json
-
                 tasks_json = json.dumps([t.model_dump() for t in pending_tasks])
                 scalars_json = json.dumps(cls.PRIORITY_SCALARS)
                 result_json = nexus_core_rust.extract_optimal_task_py(

@@ -35,7 +35,7 @@ dependencies = [
     "anthropic>=0.42.0",
     "httpx>=0.28.0",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
-    "pypdf>=6.12.0,<7.0.0",
+    "pypdf>=6.16.0,<7.0.0",
     "python-docx>=1.2.0,<2.0.0",
     "openpyxl>=3.1.5,<4.0.0",
     "Pillow>=11.3.0,<12.0.0",
@@ -59,28 +59,29 @@ dependencies = [
     "loguru>=0.7.3",
     "typer>=0.25.1",
     "edge-tts>=7.2.8",
+    "mcp>=2.0.0",
 ]
 
 [project.scripts]
-nexus = "cli.commands:main"
+nexus = "scripts.cli.nexus:app"
 
 [build-system]
 requires = ["setuptools>=68.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "math"]
+packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "math", "scripts", "scripts.cli"]
 
 
 [project.optional-dependencies]
 
 # Instalado com: uv sync --extra dev
 dev = [
-    "ruff>=0.15.0",
-    "pylint>=4.0.0",
-    "pyright>=1.1.400",
-    "pytest>=9.0.0",
-    "pytest-asyncio>=1.3.0",
+    "ruff>=0.16.3",
+    "pylint>=4.0.7",
+    "pyright>=1.1.411",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.0",
     "httpx>=0.28.0",
@@ -88,14 +89,15 @@ dev = [
 
 [dependency-groups]
 dev = [
-    "ruff>=0.15.0",
-    "pylint>=4.0.0",
-    "pyright>=1.1.400",
-    "pytest>=9.0.0",
-    "pytest-asyncio>=1.3.0",
+    "ruff>=0.16.3",
+    "pylint>=4.0.7",
+    "pyright>=1.1.411",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.0",
     "httpx>=0.28.0",
+    "pytest-watcher>=0.6.3",
 ]
 
 # ==============================================================================
@@ -123,7 +125,20 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 log_cli = true
 log_cli_level = "INFO"
-pythonpath = ["."]
+pythonpath = [
+    ".",
+    "scripts",
+    "engine",
+    "core",
+    "utils",
+    "agents",
+    "database",
+    "monitoring",
+    "governance",
+    "conductor",
+    "tools",
+    "math"
+]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 markers = [
@@ -184,6 +199,7 @@ select = [
     "LOG",    # flake8-logging
     "G",      # flake8-logging-format
     "PIE",    # flake8-pie
+    "PLC0415",# import-outside-top-level (enforce top-level imports)
 ]
 ignore = [
     "E501",   # line-too-long: gerenciado pelo formatter
@@ -209,7 +225,23 @@ ignore = [
 "memory_rag.py" = ["N806"]  # convencao vetorial
 
 [tool.ruff.lint.isort]
-known-first-party = ["core", "database", "engine", "agents", "llm", "worker", "utils", "api"]
+known-first-party = [
+    "core",
+    "database",
+    "engine",
+    "agents",
+    "llm",
+    "worker",
+    "utils",
+    "api",
+    "scripts",
+    "monitoring",
+    "governance",
+    "conductor",
+    "tools",
+    "cli",
+    "math"
+]
 force-sort-within-sections = true
 
 [tool.ruff.format]
@@ -224,8 +256,38 @@ docstring-code-line-length = 88
 # PYRIGHT — Type Checker (modo standard para projeto SOTA)
 # ==============================================================================
 [tool.pyright]
-include = ["engine", "core", "utils", "api", "agents", "llm", "database", "worker"]
-exclude = ["**/__pycache__", "**/.*", ".venv", "node_modules", "frontend", "archive", "nexus_orchestrator.egg-info"]
+include = [
+    "engine",
+    "core",
+    "utils",
+    "api",
+    "agents",
+    "llm",
+    "database",
+    "worker",
+    "scripts",
+    "monitoring",
+    "governance",
+    "conductor",
+    "tools",
+    "cli",
+    "math"
+]
+extraPaths = [
+    ".",
+    "scripts",
+    "engine",
+    "core",
+    "utils",
+    "agents",
+    "database",
+    "monitoring",
+    "governance",
+    "conductor",
+    "tools",
+    "math"
+]
+exclude = ["**/__pycache__", "**/.*", ".venv", "node_modules", "frontend", "archive", "nexus_orchestrator.egg-info", "core/vendor"]
 venvPath = "."
 venv = ".venv"
 pythonVersion = "3.12"

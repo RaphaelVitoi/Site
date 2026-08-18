@@ -9,6 +9,11 @@ import platform
 import subprocess  # nosec # noqa: S404
 import sys
 
+try:
+    import pyperclip  # type: ignore[import-untyped,import-not-found] # pylint: disable=import-error
+except ImportError:
+    pyperclip = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 # Default Chrome Dev path on Windows Host
@@ -42,14 +47,13 @@ def get_winrar_path() -> str | None:
 
 def get_clipboard_text() -> str:
     """Reads text from the OS system clipboard with robust fallbacks."""
-    try:
-        import pyperclip  # type: ignore
-
-        text = pyperclip.paste()
-        if text:
-            return str(text)
-    except Exception as e:
-        logger.debug(f"[OS Clipboard] Pyperclip error: {e}. Trying PowerShell fallback.")
+    if pyperclip is not None:
+        try:
+            text = pyperclip.paste()
+            if text:
+                return text
+        except Exception as e:
+            logger.debug(f"[OS Clipboard] Pyperclip error: {e}. Trying PowerShell fallback.")
 
     if sys.platform == "win32":
         try:
@@ -69,13 +73,12 @@ def get_clipboard_text() -> str:
 
 def set_clipboard_text(text: str) -> bool:
     """Writes text to the OS system clipboard with fallbacks."""
-    try:
-        import pyperclip  # type: ignore
-
-        pyperclip.copy(text)
-        return True
-    except Exception as e:
-        logger.debug(f"[OS Clipboard] Pyperclip copy error: {e}. Trying PowerShell fallback.")
+    if pyperclip is not None:
+        try:
+            pyperclip.copy(text)
+            return True
+        except Exception as e:
+            logger.debug(f"[OS Clipboard] Pyperclip copy error: {e}. Trying PowerShell fallback.")
 
     if sys.platform == "win32":
         try:

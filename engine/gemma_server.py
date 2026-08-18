@@ -1,18 +1,19 @@
 # ruff: noqa: D100, D101, D103, BLE001, G004, ARG001, ARG002, E402, I001
-# pylint: disable=wrong-import-position, global-statement
+# pylint: disable=wrong-import-position, global-statement, invalid-name, too-many-lines, import-outside-toplevel
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import asyncio
-import shutil
-import subprocess  # noqa: S404
 import hmac
 import json
 import logging
 import os
-import uuid
+import re
+import shutil
+import subprocess  # noqa: S404
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Annotated, Any, TypedDict
 
@@ -152,6 +153,7 @@ app = FastAPI(
 # [SOTA RAG] INTEGRACAO LANCEDB (BUSCA VETORIAL - FRICCAO ZERO)
 # ==============================================================================
 RAG_AVAILABLE = False
+rag_engine: Any = None
 try:
     from memory_rag import MemoryRAG
 
@@ -433,8 +435,6 @@ async def _get_rag_context_async(prompt: str, local_only: bool = False) -> str:
         return ""
 
     # Heuristica de Bypass de Latencia para Saudacoes e Queries Curtas (Friccao Zero)
-    import re
-
     clean_q = prompt.strip().lower()
     words = re.findall(r"\b\w+\b", clean_q)
     if len(words) < 4:
@@ -754,9 +754,11 @@ async def _stream_local(
     # SOTA: Keep static context size by default to maximize Ollama prompt caching
     static_ctx = os.environ.get("SOTA_STATIC_CONTEXT", "1") == "1"
     if static_ctx:
-        num_ctx = params["num_ctx"]
+        num_ctx = int(params["num_ctx"])
     else:
-        num_ctx = _calculate_dynamic_context(messages, req.max_tokens, params["num_ctx"], params["num_predict"])
+        num_ctx = _calculate_dynamic_context(
+            messages, req.max_tokens, int(params["num_ctx"]), int(params["num_predict"])
+        )
 
     headers = {"Content-Type": "application/json"}
     session = HTTPSessionManager.get_session()

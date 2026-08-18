@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from utils.env_loader import load_env
+from utils.text import enforce_pure_ascii
 
 load_env()
 
@@ -233,7 +234,7 @@ def feature_enabled(flag_name: str) -> bool:
     """Verifica se uma flag de funcionalidade esta ativa."""
     if flag_name in WORKFLOW_FLAGS:
         return bool(WORKFLOW_FLAGS.get(flag_name))
-    return bool(DEFAULT_WORKFLOW_FLAGS.get(flag_name, False))
+    return DEFAULT_WORKFLOW_FLAGS.get(flag_name, False)
 
 
 def heuristic_terms(group_name: str) -> dict[str, int]:
@@ -250,7 +251,7 @@ def agent_sla_value(agent: str, key: str, default: int) -> int:
         return int(agent_cfg[key])
     if key in default_cfg:
         return int(default_cfg[key])
-    return int(default)
+    return default
 
 
 def health_gate_value(key: str, default: Any) -> Any:
@@ -371,10 +372,6 @@ class AsciiEnforcementFilter(logging.Filter):
     """Filtro global SOTA para forcar Pure ASCII em todos os logs emitidos."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        from utils.text import (
-            enforce_pure_ascii,  # pylint: disable=import-outside-toplevel
-        )
-
         if isinstance(record.msg, str):
             record.msg = enforce_pure_ascii(record.msg)
         if record.args:

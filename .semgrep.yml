@@ -61,3 +61,22 @@ rules:
     message: '[SOTA SECURITY] Uso de dangerouslySetInnerHTML pode causar XSS (p/nextjs, p/typescript).'
     pattern: dangerouslySetInnerHTML={...}
     severity: WARNING
+
+  - id: sota-no-import-outside-toplevel
+    languages:
+      - python
+    message: "[SOTA ARCHITECTURE] Import fora do nível superior detectado. Mova imports para o topo do módulo com fallback defensivo em try/except se for dependência opcional."
+    patterns:
+      - pattern-either:
+          - pattern: |
+              def $FUNC(...):
+                ...
+                import $PKG
+          - pattern: |
+              def $FUNC(...):
+                ...
+                from $PKG import $NAME
+      - pattern-not-inside: |
+          if TYPE_CHECKING:
+            ...
+    severity: WARNING

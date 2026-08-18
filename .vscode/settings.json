@@ -1,10 +1,32 @@
 {
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/scripts",
+        "${workspaceFolder}/engine",
+        "${workspaceFolder}/core",
+        "${workspaceFolder}/utils",
+        "${workspaceFolder}/database",
+        "${workspaceFolder}/worker",
+        "${workspaceFolder}/monitoring",
+        "${workspaceFolder}/api",
+        "${workspaceFolder}/llm",
+        "${workspaceFolder}/governance",
+        "${workspaceFolder}/conductor"
+    ],
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "eslint.workingDirectories": [{ "mode": "auto" }],
     "looker.projectId": "dummy-project-id",
     "looker.instanceUrl": "https://dummy.looker.com",
     "looker.authUrl": "https://dummy.looker.com/auth",
     "looker.sdkUrl": "https://dummy.looker.com/sdk",
-    "python.terminal.activateEnvironment": true,
     "editor.formatOnSave": true,
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",

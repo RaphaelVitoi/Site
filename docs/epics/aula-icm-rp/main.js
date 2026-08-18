@@ -1,3 +1,4 @@
+/* eslint-disable no-unsanitized/property, sonarjs/no-nested-template-literals, sonarjs/xss */
 import { TOY_GAMES } from '../../../scenarios_toygame.js';
 import { NashSolver } from './NashSolver.js';
 import './risk-gauge.js';
@@ -7,6 +8,16 @@ import { SCENARIOS } from './scenarios.js';
 const safeScenarios = Array.isArray( SCENARIOS ) ? SCENARIOS : [];
 const safeToyGames = Array.isArray( TOY_GAMES ) ? TOY_GAMES : [];
 const ALL_SCENARIOS = [ ...safeScenarios, ...safeToyGames ];
+
+function escapeHTML( str ) {
+    if ( str == null ) return '';
+    return String( str )
+        .replaceAll( '&', '&amp;' )
+        .replaceAll( '<', '&lt;' )
+        .replaceAll( '>', '&gt;' )
+        .replaceAll( '"', '&quot;' )
+        .replaceAll( "'", '&#039;' );
+}
 
 class GameEngine {
     constructor () {
@@ -143,7 +154,7 @@ class GameEngine {
         } catch ( err )
         {
             if ( this.ui.title ) this.ui.title.innerText = "Erro Crítico de Motor";
-            if ( this.ui.content ) this.ui.content.innerHTML = `<div class="bg-rose-500/10 border border-rose-500/30 p-4 rounded text-rose-400 font-mono text-xs">${err.message}</div>`;
+            if ( this.ui.content ) this.ui.content.innerHTML = `<div class="bg-rose-500/10 border border-rose-500/30 p-4 rounded text-rose-400 font-mono text-xs">${escapeHTML(err.message)}</div>`;
         }
     }
 
@@ -194,7 +205,7 @@ class GameEngine {
         } catch ( err )
         {
             if ( this.ui.title ) this.ui.title.innerText = "Erro ao Renderizar Cenário";
-            if ( this.ui.content ) this.ui.content.innerHTML = `<div class="bg-rose-500/10 border border-rose-500/30 p-4 rounded text-rose-400 font-mono text-xs">${err.stack}</div>`;
+            if ( this.ui.content ) this.ui.content.innerHTML = `<div class="bg-rose-500/10 border border-rose-500/30 p-4 rounded text-rose-400 font-mono text-xs">${escapeHTML(err.stack || err.message)}</div>`;
         }
     }
 
@@ -238,7 +249,7 @@ class GameEngine {
         const sign = margin > 0 ? '+' : '';
 
         output.innerHTML = `
-            <span class="font-bold ${statusClass} text-lg tracking-wider">${action}</span>
+            <span class="font-bold ${statusClass} text-lg tracking-wider">${escapeHTML(action)}</span>
             <span class="text-xs text-slate-400 ml-2">
                 (${isClose ? 'Marginal' : 'Claro'}, ${sign}${margin.toFixed( 1 )}%)
             </span>
@@ -282,7 +293,7 @@ class GameEngine {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div class="bg-slate-900/50 p-4 rounded-xl border border-white/5">
                     <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">${sol.bluff.label}</span>
+                        <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">${escapeHTML(sol.bluff.label)}</span>
                         <span class="text-xs font-mono font-bold ${getStatus( sol.bluff.delta )}">${sol.bluff.delta}%</span>
                     </div>
                     <div class="text-2xl font-mono font-bold text-white">${sol.bluff.value}%</div>
@@ -293,7 +304,7 @@ class GameEngine {
 
                 <div class="bg-slate-900/50 p-4 rounded-xl border border-white/5">
                     <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">${sol.defense.label}</span>
+                        <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">${escapeHTML(sol.defense.label)}</span>
                         <span class="text-xs font-mono font-bold ${getStatus( sol.defense.delta )}">${sol.defense.delta}%</span>
                     </div>
                     <div class="text-2xl font-mono font-bold text-white">${sol.defense.value}%</div>
@@ -305,7 +316,7 @@ class GameEngine {
                 <!-- EV Diff / Equity Shift Panel -->
                 <div class="ev-diff-panel col-span-1 md:col-span-2 bg-slate-900/50 p-4 rounded-xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div>
-                        <div class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">${sol.evDiff.label}</div>
+                        <div class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">${escapeHTML(sol.evDiff.label)}</div>
                         <div class="flex items-baseline gap-2">
                             <span class="text-3xl font-mono font-bold text-white tracking-tighter">${sol.evDiff.totalRequired}%</span>
                             <span class="text-xs font-bold status-negative bg-status-negative px-2 py-0.5 rounded border">+${sol.evDiff.value}% vs ChipEV</span>
@@ -349,7 +360,7 @@ class GameEngine {
                     ${chartHtml}
                 </div>
             </div>
-            <div class="text-center"><span class="badge border-indigo-500/30 text-indigo-300 bg-indigo-500/10">${sol.verdict}</span></div>
+            <div class="text-center"><span class="badge border-indigo-500/30 text-indigo-300 bg-indigo-500/10">${escapeHTML(sol.verdict)}</span></div>
         `;
     }
 
@@ -363,7 +374,7 @@ class GameEngine {
             const h = Math.max( 2, val * 0.8 );
             const y = 90 - h;
             return `<g class="group cursor-help">
-                        <rect x="${x}" y="${y}" width="16" height="${h}" fill="${color}" rx="2" class="transition-all duration-500 hover:opacity-80"><title>${label}: ${val}%</title></rect>
+                        <rect x="${x}" y="${y}" width="16" height="${h}" fill="${color}" rx="2" class="transition-all duration-500 hover:opacity-80"><title>${escapeHTML(label)}: ${val}%</title></rect>
                         <text x="${x + 8}" y="${y - 4}" font-family="monospace" font-size="9" fill="#cbd5e1" text-anchor="middle">${val}%</text>
                     </g>`;
         };
@@ -461,7 +472,7 @@ class GameEngine {
     }
 
     renderComparisonInterface () {
-        const optionsHtml = ALL_SCENARIOS.map( s => `<option value="${s.id}">${s.label}</option>` ).join( '' );
+        const optionsHtml = ALL_SCENARIOS.map( s => `<option value="${escapeHTML(s.id)}">${escapeHTML(s.label)}</option>` ).join( '' );
 
         this.ui.compareArea.innerHTML = `
             <div class="grid grid-cols-2 gap-4 mb-6">
@@ -501,8 +512,8 @@ class GameEngine {
         const comparison = this._compareScenarios( s1, s2 );
 
         const verdictHtml = `
-            <span class="text-indigo-400 font-bold">${s1.label}:</span> ${comparison.analysis.s1.verdict} <br>
-            <span class="text-pink-400 font-bold">${s2.label}:</span> ${comparison.analysis.s2.verdict}
+            <span class="text-indigo-400 font-bold">${escapeHTML(s1.label)}:</span> ${escapeHTML(comparison.analysis.s1.verdict)} <br>
+            <span class="text-pink-400 font-bold">${escapeHTML(s2.label)}:</span> ${escapeHTML(comparison.analysis.s2.verdict)}
         `;
 
         // Update delta cirúrgico
@@ -595,18 +606,18 @@ class GameEngine {
                 </div>
 
                 <div style="margin-bottom: 30px; background: #f8fafc; padding: 20px; border-radius: 8px;">
-                    <h2 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #6366f1; margin-top: 0;">Cenário: ${data.label}</h2>
-                    <p style="font-size: 14px; margin: 5px 0 0; color: #334155;"><strong>Contexto:</strong> ${data.context}</p>
+                    <h2 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #6366f1; margin-top: 0;">Cenário: ${escapeHTML(data.label)}</h2>
+                    <p style="font-size: 14px; margin: 5px 0 0; color: #334155;"><strong>Contexto:</strong> ${escapeHTML(data.context)}</p>
                     <div style="display: flex; gap: 40px; margin-top: 20px;">
                         <div>
                             <div style="font-size: 10px; color: #94a3b8; text-transform: uppercase;">Agressor (IP)</div>
                             <div style="font-size: 18px; font-weight: bold;">${data.data.ip.rp}% RP</div>
-                            <div style="font-size: 12px; color: #64748b;">${data.data.ip.stack} (${data.data.ip.morph})</div>
+                            <div style="font-size: 12px; color: #64748b;">${escapeHTML(data.data.ip.stack)} (${escapeHTML(data.data.ip.morph)})</div>
                         </div>
                         <div>
                             <div style="font-size: 10px; color: #94a3b8; text-transform: uppercase;">Defensor (OOP)</div>
                             <div style="font-size: 18px; font-weight: bold;">${data.data.oop.rp}% RP</div>
-                            <div style="font-size: 12px; color: #64748b;">${data.data.oop.stack} (${data.data.oop.morph})</div>
+                            <div style="font-size: 12px; color: #64748b;">${escapeHTML(data.data.oop.stack)} (${escapeHTML(data.data.oop.morph)})</div>
                         </div>
                     </div>
                 </div>
@@ -642,7 +653,7 @@ class GameEngine {
                 </div>
 
                 <div style="background: #f1f5f9; padding: 15px; border-left: 4px solid #334155; border-radius: 4px; font-size: 12px; color: #334155; margin-top: 40px;">
-                    <strong>Veredito do Solver:</strong> ${sol.verdict}
+                    <strong>Veredito do Solver:</strong> ${escapeHTML(sol.verdict)}
                     <br><span style="color: #64748b;">Fator de Agressividade Simulado: ${this.agressionFactor.toFixed( 1 )}x</span>
                 </div>
 

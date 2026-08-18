@@ -18,7 +18,7 @@ FREE_TIER_MARKER = ":free"
 
 
 def _infer_provider_for_model(model: str) -> str | None:
-    model_l = str(model).lower()
+    model_l = model.lower()
     if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
         return "local"
     if "gemini" in model_l:
@@ -53,7 +53,7 @@ def _score_standard_preference(m: str, model: str, domain: str | None = None) ->
         return -5
 
     if "gemini-3.7" in m:
-        return -4  # Prioridade SOTA máxima para Gemini 3.7 Flash Medium
+        return -4  # Prioridade SOTA maxima para Gemini 3.7 Flash Medium
     if "gemma-4" in m or "gemma4" in m:
         return 0
     if "gemini-3.1" in m:
@@ -74,7 +74,7 @@ def _score_standard_preference(m: str, model: str, domain: str | None = None) ->
 
 
 def _score_model(model: str, prefer_local: bool, designated_model: str | None, domain: str | None = None) -> int:
-    m = str(model).lower()
+    m = model.lower()
     if designated_model and m == designated_model.lower():
         return -10  # Modelo designado pelo CEO sempre vence
 
@@ -157,7 +157,7 @@ async def _apply_model_health_gate(models: list[str], manager: QueueManager, tas
 
     filtered: list[str] = []
     for model in models:
-        model_l = str(model).lower()
+        model_l = model.lower()
         provider = _infer_provider_for_model(model) or "unknown"
 
         # SOTA: Define as condicoes em que um modelo deve ser verificado.

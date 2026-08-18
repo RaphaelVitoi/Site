@@ -19,6 +19,14 @@ try:
 except ImportError:
     _PSUTIL_OK = False
 
+try:
+    import httpx as _httpx_lib
+
+    _HTTPX_OK = True
+except ImportError:
+    _httpx_lib = None  # type: ignore[assignment]
+    _HTTPX_OK = False
+
 logger = logging.getLogger(__name__)
 
 USER_HOME = Path.home()
@@ -131,11 +139,12 @@ def apply_wsl_memory_limit(memory_gb: int = 6, processors: int = 4, swap_gb: int
 
 def optimize_ollama_keepalive(keepalive: int = 0) -> bool:
     """Set Ollama OLLAMA_KEEP_ALIVE=0 to unload model from RAM when idle."""
+    if not _HTTPX_OK or _httpx_lib is None:
+        logger.warning("[RAM_OPT] httpx library not available for Ollama optimization")
+        return False
     try:
-        import httpx as _httpx
-
         # Ollama exposes /api/ps to list loaded models
-        resp = _httpx.get(f"{OLLAMA_API_BASE}/api/ps", timeout=5.0)
+        resp = _httpx_lib.get(f"{OLLAMA_API_BASE}/api/ps", timeout=5.0)
         models = resp.json().get("models", [])
         if not models:
             logger.info("[RAM_OPT] Ollama: no models currently loaded")
@@ -146,7 +155,7 @@ def optimize_ollama_keepalive(keepalive: int = 0) -> bool:
             if not model_name:
                 continue
             payload = {"model": model_name, "keep_alive": keepalive}
-            unload_resp = _httpx.post(
+            unload_resp = _httpx_lib.post(
                 f"{OLLAMA_API_BASE}/api/generate",
                 json=payload,
                 timeout=10.0,
@@ -209,10 +218,10 @@ def _read_wslconfig() -> dict[str, str]:
 
 
 def _check_ollama_running() -> bool:
+    if not _HTTPX_OK or _httpx_lib is None:
+        return False
     try:
-        import httpx
-
-        r = httpx.get(f"{OLLAMA_API_BASE}/api/ps", timeout=2.0)
+        r = _httpx_lib.get(f"{OLLAMA_API_BASE}/api/ps", timeout=2.0)
         return r.status_code == 200
     except Exception:
         return False
