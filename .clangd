@@ -1,0 +1,10 @@
+CompileFlags:
+  CompilationDatabase: "core/tensor_engine/build"
+  Add:
+    - "-std=c++17"
+    - "-I${workspaceFolder}/core/vendor/eigen"
+    - "-I${workspaceFolder}/.venv/Lib/site-packages/nanobind/include"
+    - "-I${workspaceFolder}/.venv/include"
+    - "-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
+    - "-Wno-unknown-pragmas"
+    - "-Wno-unused-command-line-argument"

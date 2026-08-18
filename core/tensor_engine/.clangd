@@ -1,0 +1,10 @@
+CompileFlags:
+  CompilationDatabase: "build"
+  Add:
+    - "-std=c++17"
+    - "-I../vendor/eigen"
+    - "-I../../.venv/Lib/site-packages/nanobind/include"
+    - "-I../../.venv/include"
+    - "-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
+    - "-Wno-unknown-pragmas"
+    - "-Wno-unused-command-line-argument"
