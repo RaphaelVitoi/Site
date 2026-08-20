@@ -104,7 +104,7 @@ def compute_bubble_factor_matrix(
     """
     n = len(stacks)
     if player_names is None:
-        player_names = [f"P{i+1}" for i in range(n)]
+        player_names = [f"P{i + 1}" for i in range(n)]
 
     base_ev = calculate_malmuth_harville_icm(stacks, payouts)
 

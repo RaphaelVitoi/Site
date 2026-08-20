@@ -107,9 +107,8 @@ WORKER_API_CMD = "worker-api"
 MEMORY_RAG_SCRIPT = "memory_rag.py"
 
 STYLE_BOLD_WHITE = "bold #f8f8f2"
-STATUS_PASS = "[green]PASS[/]"
+STATUS_PASS = "[green]PASS[/]"  # noqa: S105
 STATUS_FAIL = "[red]FAIL[/]"
-
 
 
 #  Utils de Runtime
@@ -1536,15 +1535,9 @@ def security_audit(
     table.add_column("LIMITE SOTA", justify="center")
     table.add_column("STATUS", justify="center")
 
-    table.add_row(
-        "Vulnerabilidades Criticas", str(crit_count), "0", STATUS_PASS if crit_count == 0 else STATUS_FAIL
-    )
-    table.add_row(
-        "Vulnerabilidades Altas", str(high_count), "0", STATUS_PASS if high_count == 0 else STATUS_FAIL
-    )
-    table.add_row(
-        "Total de Vulnerabilidades", str(tot_count), "0", STATUS_PASS if tot_count == 0 else STATUS_FAIL
-    )
+    table.add_row("Vulnerabilidades Criticas", str(crit_count), "0", STATUS_PASS if crit_count == 0 else STATUS_FAIL)
+    table.add_row("Vulnerabilidades Altas", str(high_count), "0", STATUS_PASS if high_count == 0 else STATUS_FAIL)
+    table.add_row("Total de Vulnerabilidades", str(tot_count), "0", STATUS_PASS if tot_count == 0 else STATUS_FAIL)
 
     console.print(table)
 
