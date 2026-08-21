@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     SOTA Core Web Vitals Quality Gate, Security CVE & SRI Assert Engine
     Chico Protocol v7.0 GOLD

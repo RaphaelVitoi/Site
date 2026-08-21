@@ -1,4 +1,4 @@
-# SOTA Chrome Dev Memory Watchdog & Optimization Daemon
+﻿# SOTA Chrome Dev Memory Watchdog & Optimization Daemon
 # Chico Protocol v7.0 GOLD - Performance & Thermodynamics
 
 param(

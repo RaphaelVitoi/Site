@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Script de Inicializacao Otimizada de Modelos SOTA (Windows).
 .DESCRIPTION
