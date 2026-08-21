@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Protocolo de Compilação SOTA para o Motor Tensorial C++ (Vetor Beta)
 #>

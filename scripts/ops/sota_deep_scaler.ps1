@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     SOTA Deep Systems & Hardware Scaler (Chico v7.0 GOLD)
     Otimização de VRAM, GPU, CPU, NTFS MFT, Bucketing, Isomorfismo e Memória.

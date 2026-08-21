@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     SOTA Entropy Sanitizer & Multi-Tier Garbage Collector
     Protocol Chico SOTA v7.0 GOLD

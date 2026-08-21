@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     SOTA Antigravity Ecosystem Auditor & Orchestrator Telemetry
     Protocol Chico SOTA v7.0 GOLD

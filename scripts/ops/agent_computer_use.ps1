@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     SOTA Browser Agent & Computer-Use Automation Engine via Chrome DevTools Protocol
     Protocol Chico SOTA v7.0 GOLD

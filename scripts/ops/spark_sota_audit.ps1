@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     SOTA Apache Spark & Dataproc Runtime Auditor
     Protocol Chico SOTA v7.0 GOLD

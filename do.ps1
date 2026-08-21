@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     A Membrana Inteligente (CLI Interativa) e ponto de entrada para o ecossistema de agentes.
     Orquestra a enfileiracao de tarefas e executa comandos com seguranca.

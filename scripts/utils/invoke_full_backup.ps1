@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Protocolo de Salvaguarda Sistêmica (Full Backup SOTA)
 .DESCRIPTION

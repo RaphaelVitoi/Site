@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Integra o Ecossistema Nexus ao terminal Windows permanentemente.
 .DESCRIPTION

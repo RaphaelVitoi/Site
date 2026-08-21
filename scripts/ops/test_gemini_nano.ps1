@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     SOTA Gemini Nano On-Device AI Capability Prober & Benchmark
     Chico Protocol v7.0 GOLD

@@ -244,7 +244,41 @@ foreach ($arquivo in $staged) {
     }
 }
 
+# ── PowerShell: parsear com o interpretador que DE FATO executa ──────────────
+# O hook pre-commit e as tarefas agendadas invocam `powershell`, que no Windows
+# e o 5.1. Ele le arquivo SEM BOM usando a codepage ANSI: um em-dash U+2014
+# (E2 80 94 em UTF-8) vira "a€<0x94>", e 0x94 e aspa de fechamento em cp1252 —
+# a string termina no meio e o erro aparece dezenas de linhas adiante.
+# O PowerShell 7 le UTF-8 e nao ve nada, entao validar no 7 esconde o defeito.
+# Auditoria de 2026-08-21: 270 .ps1 no ambiente, 10 ja quebrados no 5.1 e 94
+# em risco. Esta fase impede que o numero volte a crescer.
+$violPs = @()
+foreach ($arquivo in $staged) {
+    if ($arquivo -notmatch '\.ps1$') { continue }
+    $abs = Join-Path (& git rev-parse --show-toplevel) $arquivo
+    if (-not (Test-Path $abs)) { continue }
+
+    $bytes = [System.IO.File]::ReadAllBytes($abs)
+    $temBom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF
+    $naoAscii = @($bytes | Where-Object { $_ -gt 127 }).Count
+
+    if ($naoAscii -gt 0 -and -not $temBom) {
+        $violPs += "$arquivo (nao-ASCII sem BOM: $naoAscii bytes)"
+        continue
+    }
+
+    $saida = & powershell.exe -NoProfile -Command @"
+`$e = `$null
+[System.Management.Automation.Language.Parser]::ParseFile('$abs', [ref]`$null, [ref]`$e) | Out-Null
+if (`$e.Count) { 'ERR:' + `$e.Count + ':' + `$e[0].Extent.StartLineNumber } else { 'OK' }
+"@
+    if ("$saida".Trim() -ne 'OK') {
+        $violPs += "$arquivo (parse PS5.1 falhou: $saida)"
+    }
+}
+
 $hygieneRules['StagedFiles']      = @{ Val = $staged.Count;      Limit = '-';         Desc = 'Arquivos em stage examinados' }
+$hygieneRules['PowerShell51']     = @{ Val = $violPs.Count;      Limit = 0;           Desc = 'Script .ps1 que quebra no interpretador real' }
 $hygieneRules['ForbiddenPaths']   = @{ Val = $violPath.Count;    Limit = 0;           Desc = 'Diretorio de perfil/ferramenta versionado' }
 $hygieneRules['OversizedBlobs']   = @{ Val = $violSize.Count;    Limit = 0;           Desc = "Blob nao-LFS acima de $MaxBlobMb MB" }
 $hygieneRules['UnroutedBinaries'] = @{ Val = $violRoute.Count;   Limit = 0;           Desc = 'Binario sem filter=lfs no .gitattributes' }
@@ -262,6 +296,7 @@ foreach ($regra in $hygieneRules.Keys) {
 foreach ($v in $violPath)  { Write-Host "   - caminho proibido: $v" -ForegroundColor Red }
 foreach ($v in $violSize)  { Write-Host "   - blob grande fora do LFS: $v" -ForegroundColor Red }
 foreach ($v in $violRoute) { Write-Host "   - binario sem roteamento LFS: $v" -ForegroundColor Red }
+foreach ($v in $violPs)    { Write-Host "   - PowerShell 5.1: $v" -ForegroundColor Red }
 
 if ($violPath.Count -gt 0) {
     $failures += "Repository Hygiene: $($violPath.Count) arquivo(s) sob diretorio de perfil/ferramenta. Adicione ao .gitignore em vez de versionar."
@@ -271,6 +306,9 @@ if ($violSize.Count -gt 0) {
 }
 if ($violRoute.Count -gt 0) {
     $failures += "Repository Hygiene: $($violRoute.Count) binario(s) sem filter=lfs. Verifique se o .gitattributes ainda roteia essa extensao."
+}
+if ($violPs.Count -gt 0) {
+    $failures += "Repository Hygiene: $($violPs.Count) script(s) .ps1 quebram no PowerShell 5.1, que e o interpretador do hook e das tarefas agendadas. Adicione BOM UTF-8 se o arquivo tiver caractere nao-ASCII; se o erro for de sintaxe, corrija antes de commitar."
 }
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
