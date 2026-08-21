@@ -1,0 +1,62 @@
+# Pyrefly — configuracao explicita do projeto Site.
+#
+# POR QUE ESTE ARQUIVO EXISTE
+# Sem ele, o Pyrefly adivinha a configuracao a partir de [tool.pyright] no
+# pyproject.toml e de qualquer config de mypy que encontre no caminho. Duas
+# consequencias medidas em 2026-08-21:
+#
+#   1. O `exclude` do pyright NAO era respeitado. O checker entrava em
+#      core/vendor/ (eigen e drjit, incluindo um submodulo inteiro) e no
+#      .venv. Resultado: 32 erros, dos quais 26 em codigo de terceiros, e
+#      recheck de 27,85 s por alteracao. Com o editor aberto na raiz
+#      multiprojeto e edicao ao vivo, o watchdog do LSP matava o servidor —
+#      "crashed 5 times in the last 3 minutes".
+#
+#   2. Ele tentava migrar codigos de erro do mypy e avisava a cada ciclo
+#      ("Cannot migrate unsupported mypy error code `ignore-without-code`").
+#      Nao ha [tool.mypy] neste projeto: a config vinha de fora do Site.
+#      Com este arquivo, nenhuma configuracao de mypy entra. Por decisao do
+#      operador, mypy nao participa deste projeto.
+#
+# REGRA: se voce adicionar dependencia vendorizada ou submodulo, exclua aqui.
+# Type-checar codigo de terceiro nao encontra defeito seu e custa o tempo de
+# resposta do editor.
+
+# Raiz unica de busca. Deliberadamente NAO replica os 12 extraPaths do
+# [tool.pyright] — em especial `math`, que e nome de modulo da stdlib e existe
+# como diretorio neste repo (math/rio_extended.py, sem __init__.py). Manter
+# `math` no caminho de busca convida o resolvedor a sombrear a stdlib, e
+# `import math` aparece em 6 arquivos reais do projeto.
+# O que E o projeto. Espelha o `include` de [tool.pyright] — sem isto, o
+# Pyrefly varre TUDO sob a raiz e fica mais lento do que sem configuracao
+# nenhuma (medido: 4092 ms contra 2145 ms). Excluir nao basta; e preciso dizer
+# o que entra.
+project-includes = [
+    "engine", "core", "utils", "api", "agents", "llm", "database", "worker",
+    "scripts", "monitoring", "governance", "conductor", "tools", "cli",
+]
+
+search-path = ["."]
+
+# Um venv, o do projeto. O log mostrava o servidor resolvendo tambem contra
+# C:\Users\rapha\.gemini\.venv — o venv da RAIZ multiprojeto — porque o editor
+# esta aberto em .gemini e nao em Site. Fixar aqui torna o escopo independente
+# da pasta que voce abriu no editor.
+site-package-path = [".venv/Lib/site-packages"]
+python-interpreter-path = ".venv/Scripts/python.exe"
+
+# Sem heuristica: so o que esta declarado acima.
+disable-search-path-heuristics = true
+
+project-excludes = [
+    "**/__pycache__",
+    "**/.*",
+    ".venv/**",
+    "node_modules/**",
+    "core/vendor/**",
+    "frontend/**",
+    "archive/**",
+    "skills/**",
+    "wasm-equity/**",
+    "nexus_orchestrator.egg-info/**",
+]
