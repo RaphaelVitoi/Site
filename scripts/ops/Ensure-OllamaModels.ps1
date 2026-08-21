@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Provisionamento declarativo de modelos Ollama a partir da fonte unica de verdade.
 

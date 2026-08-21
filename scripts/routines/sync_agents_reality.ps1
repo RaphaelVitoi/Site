@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Sincroniza a realidade das pastas com os agentes listados no Manifesto SOTA.
 .DESCRIPTION
