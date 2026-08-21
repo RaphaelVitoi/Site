@@ -1,4 +1,6 @@
 {
+  "_uso": "FALLBACK APENAS. core/config.py faz MODEL_ROUTING = SYSTEM_CONFIG.get('model_routing', ROUTING_CONFIG), entao data/system_config.json tem precedencia e este arquivo so entra em vigor se 'model_routing' sumir de la. As listas abaixo eram byte a byte identicas as de system_config em 2026-08-21.",
+  "_removido_2026_08_21": "'agent_map' foi removido: tinha ZERO consumidores em todo o codigo e contradizia data/agents_manifest.json em 3 agentes (implementor, verifier, bibliotecario). A preferencia por agente vem do manifesto, via core.config.AGENT_ROUTING_MAP, consumido em engine/llm_api.py:528 e llm/orchestrator.py:147.",
   "deep_thinking": [
     "gemini-3.7-flash",
     "gemini-3.5-flash-lite",
@@ -12,27 +14,6 @@
     "gemini-3.6-flash",
     "meta-llama/llama-3.1-8b-instruct:free"
   ],
-  "agent_map": {
-    "@maverick": "deep_thinking",
-    "@architect": "deep_thinking",
-    "@planner": "deep_thinking",
-    "@auditor": "deep_thinking",
-    "@implementor": "deep_thinking",
-    "@verifier": "deep_thinking",
-    "@securitychief": "deep_thinking",
-    "@curator": "deep_thinking",
-    "@validador": "deep_thinking",
-    "@chico": "deep_thinking",
-    "@skillmaster": "fast_operations",
-    "@dispatcher": "fast_operations",
-    "@sequenciador": "fast_operations",
-    "@pesquisador": "deep_thinking",
-    "@organizador": "fast_operations",
-    "@prompter": "fast_operations",
-    "@historian": "deep_thinking",
-    "@bibliotecario": "deep_thinking",
-    "@gemma4": "fast_operations"
-  },
   "routing_config": {
     "last_updated": "2026-08-18",
     "version": "2.0-SOTA-GOLD",
