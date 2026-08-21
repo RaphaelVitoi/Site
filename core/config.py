@@ -34,7 +34,10 @@ PATH_INTENTMAP = BASE_DIR / "data/intentmap.json"
 PATH_SYSTEM_CONFIG = BASE_DIR / "data/system_config.json"
 PATH_ROUTING_MAP = BASE_DIR / "data/routing_map.json"
 MODEL_GEMINI_FLASH = "gemini-3.5-flash-lite"
-MODEL_GEMINI_FLASH_LITE = "gemini-3.5-flash-lite"
+# MODEL_GEMINI_FLASH_LITE removido em 2026-08-21: tinha VALOR IDENTICO ao de
+# cima e zero consumidores. Dois nomes para a mesma coisa sugerem uma distincao
+# que nao existe — quem lesse assumiria "flash" != "flash-lite".
+# As cadeias de fallback reais estao em data/routing_map.json.
 
 
 def load_json_config(file_path: Path, default_value: Any = None) -> Any:

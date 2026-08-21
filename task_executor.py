@@ -29,7 +29,13 @@ from core.schemas import Task
 from database.queue_manager import QueueManager
 
 # Constants for SonarLint compliance
-MODEL_GEMINI_FLASH = "gemini-2.0-flash"
+# NOTA: MODEL_GEMINI_FLASH foi REMOVIDO daqui em 2026-08-21. Era constante
+# morta (definida, nunca usada) com valor obsoleto "gemini-2.0-flash", e
+# colidia por nome com core.config.MODEL_GEMINI_FLASH, que vale
+# "gemini-3.5-flash-lite". Duas constantes de mesmo nome e valores diferentes,
+# em modulos distintos: quem importasse do lugar errado pegava um modelo duas
+# geracoes atras sem nenhum sinal. Modelo se resolve por core.config /
+# data/routing_map.json, nunca por literal local.
 DB_PATH_CLAUDE = ".claude/tasks.db"
 DB_PATH_QUEUE = "queue/tasks.db"
 ERR_DB_CORRUPTED = "[ENTROPIA] Banco de dados de tarefas SOTA nao encontrado ou corrompido."
