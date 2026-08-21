@@ -253,6 +253,15 @@ foreach ($arquivo in $staged) {
 # Auditoria de 2026-08-21: 270 .ps1 no ambiente, 10 ja quebrados no 5.1 e 94
 # em risco. Esta fase impede que o numero volte a crescer.
 $violPs = @()
+
+# Script do processo filho, codificado uma unica vez. Le o alvo de
+# $env:SOTA_PS51_ALVO — o caminho e DADO, nunca texto de comando.
+$EncPs51 = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes(
+    '$e = $null; ' +
+    '[System.Management.Automation.Language.Parser]::ParseFile($env:SOTA_PS51_ALVO, [ref]$null, [ref]$e) | Out-Null; ' +
+    'if ($e.Count) { "ERR:" + $e.Count + ":" + $e[0].Extent.StartLineNumber } else { "OK" }'
+))
+
 foreach ($arquivo in $staged) {
     if ($arquivo -notmatch '\.ps1$') { continue }
     $abs = Join-Path (& git rev-parse --show-toplevel) $arquivo
@@ -267,11 +276,30 @@ foreach ($arquivo in $staged) {
         continue
     }
 
-    $saida = & powershell.exe -NoProfile -Command @"
-`$e = `$null
-[System.Management.Automation.Language.Parser]::ParseFile('$abs', [ref]`$null, [ref]`$e) | Out-Null
-if (`$e.Count) { 'ERR:' + `$e.Count + ':' + `$e[0].Extent.StartLineNumber } else { 'OK' }
-"@
+    # SEGURANCA (corrigido em 2026-08-21, achado de injecao de comando):
+    # a versao anterior interpolava $abs dentro de um here-string @"..."@, que
+    # EXPANDE variaveis, e o caminho ia parar dentro de aspas simples no script
+    # filho: ParseFile('$abs', ...). Um arquivo em stage chamado
+    #     relatorio'; <comando>; '.ps1
+    # fecha a aspa e injeta comando arbitrario no powershell.exe filho. Nome
+    # valido em NTFS, termina em .ps1, passa pelo filtro. O gatilho seria um
+    # `git commit` comum, via hook — execucao remota de codigo na maquina do
+    # desenvolvedor. Confirmado com PSParser: 'Set-Content' era tokenizado como
+    # Command, nao como parte do caminho.
+    #
+    # Correcao: o caminho viaja por variavel de ambiente e o comando e uma
+    # string de aspas SIMPLES — nada e interpolado pelo pai, e o filho le o
+    # valor como dado, nunca como codigo.
+    # -EncodedCommand e nao -Command: o PowerShell 5.1 remonta os argumentos ao
+    # invocar executavel nativo e despedaca strings com ';' e espacos — a
+    # primeira tentativa desta correcao devolveu saida vazia por isso. O base64
+    # viaja como um unico token, imune a requoting.
+    $env:SOTA_PS51_ALVO = $abs
+    try {
+        $saida = & powershell.exe -NoProfile -EncodedCommand $EncPs51
+    } finally {
+        Remove-Item Env:\SOTA_PS51_ALVO -ErrorAction SilentlyContinue
+    }
     if ("$saida".Trim() -ne 'OK') {
         $violPs += "$arquivo (parse PS5.1 falhou: $saida)"
     }
