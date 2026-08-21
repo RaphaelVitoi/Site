@@ -6,6 +6,15 @@ Marcadores: unit (sem I/O externo), integration (requer servicos).
 # pylint: disable=redefined-outer-name, protected-access, line-too-long
 # ruff: noqa: F821
 
+# import-outside-toplevel e DELIBERADO neste arquivo, nao descuido. Os imports
+# dentro das funcoes de teste existem para:
+#   - permitir monkeypatch antes do modulo ser carregado (handle_rag_ingest);
+#   - evitar que a coleta do pytest dispare importacao pesada de api/ e core/;
+#   - e, no caso de `memory_rag`, o import DENTRO do teste E o proprio teste —
+#     ele verifica quais modulos memory_rag arrasta consigo, medindo o
+#     desacoplamento. Move-lo para o topo destruiria o que ele afere.
+# pylint: disable=import-outside-toplevel
+
 import asyncio
 import contextlib
 import shutil
@@ -213,7 +222,5 @@ def test_frontend_uses_canonical_nexus_api_contract() -> None:
 def test_client_components_do_not_import_server_telemetry_module() -> None:
     """Componentes React client-side nao importam modulos server-side de telemetria."""
     # Validacao de arquitetura fractal: Backend nunca vaza para o bundle client
-    from pathlib import Path
-
     frontend_src = Path(__file__).resolve().parent.parent / "frontend" / "src"
     assert frontend_src.is_dir()
