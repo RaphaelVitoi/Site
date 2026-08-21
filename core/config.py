@@ -84,6 +84,13 @@ DEFAULT_WORKFLOW_FLAGS = {
 AGENTS_MANIFEST = {}
 INTENT_MAP = {}
 AGENT_ROUTING_MAP = {}
+
+# @agente -> modelo CONCRETO, resolvido por llm.routing_policy.
+# AGENT_ROUTING_MAP guarda apenas a preferencia declarada ("deep_thinking" /
+# "fast_operations"), que por si so nao escolhe nada: ate 2026-08-21 os 19
+# agentes recebiam o MESMO primary_model no manifesto, independentemente dela.
+# Este mapa e o que torna a preferencia operante.
+AGENT_MODEL_MAP = {}
 AGENT_COLOR_MAP = {}
 VALID_AGENTS = []
 AGENT_SOURCE = ""
@@ -106,6 +113,37 @@ PRIORITY_WEIGHTS = {}
 
 _CONFIG_LOCK = threading.Lock()
 _CONFIG_MTIME: dict[str, float] = {}
+
+
+def _resolver_modelos(manifesto: dict) -> dict:
+    """Resolve @agente -> modelo concreto pela politica de roteamento.
+
+    Import tardio de proposito: `core.config` e carregado muito cedo e por quase
+    todo modulo do projeto; um import de topo para `llm.*` acoplaria a
+    configuracao a camada de LLM e criaria risco de ciclo (llm/providers.py e
+    llm/orchestrator.py ja importam `core.*`).
+
+    Se a politica estiver indisponivel, cai para o `primary_model` declarado no
+    manifesto — o comportamento anterior — em vez de derrubar a configuracao.
+    """
+    try:
+        from llm.routing_policy import rotear
+    except Exception:  # noqa: BLE001 - configuracao nao pode falhar por isto
+        logger.warning("[ROTEAMENTO] llm.routing_policy indisponivel; usando primary_model do manifesto.")
+        return {f"@{n}": d.get("primary_model") for n, d in manifesto.items()}
+
+    resolvido, sem_rota = {}, []
+    for nome, dados in manifesto.items():
+        try:
+            resolvido[f"@{nome}"] = rotear(nome)
+        except KeyError:
+            sem_rota.append(nome)
+            resolvido[f"@{nome}"] = dados.get("primary_model")
+
+    if sem_rota:
+        # Nao e fatal, mas e sinal de manifesto e politica fora de sincronia.
+        logger.warning("[ROTEAMENTO] sem rota declarada, usando primary_model: %s", sorted(sem_rota))
+    return resolvido
 
 
 def _reload_system_config() -> bool:
@@ -181,6 +219,7 @@ def _reload_system_config() -> bool:
 def _reload_agents_manifest() -> bool:
     # pylint: disable=global-statement
     global AGENTS_MANIFEST, INTENT_MAP, AGENT_ROUTING_MAP, AGENT_COLOR_MAP, VALID_AGENTS, AGENT_SOURCE
+    global AGENT_MODEL_MAP
     try:
         mtime = PATH_AGENTS_MANIFEST.stat().st_mtime
         if _CONFIG_MTIME.get("agents_manifest") != mtime:
@@ -195,6 +234,7 @@ def _reload_agents_manifest() -> bool:
                 }
                 AGENT_COLOR_MAP = {f"@{n}": d.get("color", "white") for n, d in AGENTS_MANIFEST.items()}
                 VALID_AGENTS = list(INTENT_MAP.keys())
+                AGENT_MODEL_MAP = _resolver_modelos(AGENTS_MANIFEST)
             else:
                 logger.warning(
                     "[RESILIENCIA] %s vazio ou invalido. Aplicando fallback de emergencia.",
