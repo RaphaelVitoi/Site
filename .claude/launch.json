@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sota-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 3000,
+      "cwd": "${workspaceFolder}/frontend"
+    }
+  ],
+  "_uso": "Escopo: projeto Site. Config de execucao de projeto NAO vai em C:/Users/rapha/.claude/ (escopo de usuario)."
+}
