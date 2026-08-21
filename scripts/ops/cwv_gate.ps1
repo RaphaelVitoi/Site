@@ -187,7 +187,16 @@ $CaminhosProibidos = @(
     '.vscode-shared/', '.vscode/cli/', 'node_modules/', '.venv/'
 )
 
-$staged = @(& git diff --cached --name-only --diff-filter=ACM 2>$null | Where-Object { $_ })
+# -c core.quotePath=false e OBRIGATORIO aqui, nao cosmetico.
+# Com o padrao do git (quotePath=true), um caminho com qualquer byte nao-ASCII
+# sai ENTRE ASPAS e com escapes octais:
+#     ".gemini/sec_test/t\303\253st.json"
+# A aspa inicial faz o teste -like ".gemini/*" falhar, e o arquivo EVADE a
+# checagem de caminho proibido. Verificado nos dois modos em 2026-08-21.
+# O repositorio local tem quotePath=false, o que mascarava a falha — mas essa
+# configuracao NAO e versionada, entao qualquer clone novo estaria exposto.
+$staged = @(& git -c core.quotePath=false diff --cached --name-only --diff-filter=ACM 2>$null |
+    Where-Object { $_ })
 
 $violPath = @()
 $violSize = @()
