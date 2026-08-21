@@ -32,7 +32,10 @@
 param(
     [switch]$Pull,
     [switch]$IncludeOptional,
-    [switch]$StartOllama
+    [switch]$StartOllama,
+
+    # Libera OLLAMA_API_BASE fora de loopback. Ver validacao abaixo.
+    [switch]$PermitirRemoto
 )
 
 $ErrorActionPreference = 'Stop'
@@ -59,7 +62,30 @@ try {
 }
 
 $ApiBase = if ($env:OLLAMA_API_BASE) { $env:OLLAMA_API_BASE } else { $Manifest.runtime.api_base_default }
-$Porta   = ([uri]$ApiBase).Port
+
+# OLLAMA_API_BASE vem do ambiente e atravessa fronteira de confianca: e o
+# destino de um Invoke-RestMethod mais adiante. Uma variavel envenenada faria
+# este script consultar um host arbitrario. O Ollama e um daemon local, entao
+# restringir a loopback nao custa funcionalidade — e quem tiver motivo legitimo
+# para apontar para outro host declara isso explicitamente com -PermitirRemoto.
+try {
+    $Uri = [uri]$ApiBase
+} catch {
+    Write-Error "[SOTA] OLLAMA_API_BASE nao e uma URI valida: '$ApiBase'"
+    exit 1
+}
+
+$ehLoopback = $Uri.IsLoopback -or $Uri.Host -in @('localhost', '127.0.0.1', '::1')
+if (-not $ehLoopback -and -not $PermitirRemoto) {
+    Write-Error (
+        "[SOTA] OLLAMA_API_BASE aponta para '$($Uri.Host)', fora de loopback. " +
+        "O Ollama e um daemon local; um endereco remoto aqui costuma indicar " +
+        "variavel de ambiente envenenada. Use -PermitirRemoto se for deliberado."
+    )
+    exit 1
+}
+
+$Porta = $Uri.Port
 
 Write-Output ''
 Write-Output '════════════════════════════════════════════════════════════════'
