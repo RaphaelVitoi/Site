@@ -148,6 +148,7 @@ try {
     $sriOutput = & $pythonExe "$env:USERPROFILE\.gemini\Site\scripts\ops\sri_integrity_verifier.py" 2>&1
     if ($LASTEXITCODE -ne 0) {
         $sriSuccess = $false
+        Write-Verbose "SRI verifier output: $sriOutput"
     }
 } catch {
     $sriSuccess = $false
@@ -159,6 +160,101 @@ Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f "SHA512_&_SRI_INTEGRITY", "VER
 
 if (-not $sriSuccess) {
     $failures += "Cryptographic Integrity Gate: Falha na validacao de SRI ou hash SHA-512 de pacotes."
+}
+Write-Host ("-" * 68) -ForegroundColor DarkGray
+
+# ============================================================================
+# [5] HIGIENE DE REPOSITORIO
+# ----------------------------------------------------------------------------
+# Adicionada em 2026-08-21. Motivo: a auditoria SOTA v8.0 encontrou 651 arquivos
+# de perfil de ferramenta e um modelo Ollama de 15 GB no historico publicado, e
+# NADA no pipeline impedia a recorrencia. As fases 1-4 cobrem performance, a11y,
+# CVE e SRI; nenhuma olhava para o que entra no repositorio.
+#
+# Esta fase examina apenas o que esta EM STAGE, entao nao pune divida pre-
+# existente - so bloqueia a proxima ocorrencia.
+# ============================================================================
+Write-Host ("`n[5] REPOSITORY HYGIENE (LFS ROUTING & PAYLOAD GATE)") -ForegroundColor Yellow
+
+$hygieneRules = [ordered]@{}
+$MaxBlobMb = 5.0
+
+# Prefixos de diretorio de perfil/ferramenta que nunca devem ser versionados.
+# '.vscode/' inteiro NAO entra: settings.json compartilhado e legitimo. So o
+# subdiretorio de runtime baixado pelo CLI.
+$CaminhosProibidos = @(
+    '.gemini/', '.ollama/', '.vs-kubernetes/', '.antigravity-ide/',
+    '.vscode-shared/', '.vscode/cli/', 'node_modules/', '.venv/'
+)
+
+$staged = @(& git diff --cached --name-only --diff-filter=ACM 2>$null | Where-Object { $_ })
+
+$violPath = @()
+$violSize = @()
+$violRoute = @()
+
+foreach ($arquivo in $staged) {
+    $normal = $arquivo -replace '\\', '/'
+
+    foreach ($proibido in $CaminhosProibidos) {
+        if ($normal -like "$proibido*" -or $normal -like "*/$proibido*") {
+            $violPath += $normal
+            break
+        }
+    }
+
+    # Tamanho do blob JA EM STAGE (nao do working tree)
+    $sha = (& git ls-files -s -- $arquivo 2>$null) -split '\s+' | Select-Object -Index 1
+    if (-not $sha) { continue }
+    $tamanho = & git cat-file -s $sha 2>$null
+    if (-not $tamanho) { continue }
+
+    # Ponteiro LFS tem ~130 bytes e comeca com 'version https://git-lfs'
+    $ehPonteiro = $false
+    if ([int64]$tamanho -lt 300) {
+        $cabecalho = (& git cat-file -p $sha 2>$null | Select-Object -First 1)
+        if ($cabecalho -like 'version https://git-lfs*') { $ehPonteiro = $true }
+    }
+
+    if (-not $ehPonteiro -and ([int64]$tamanho / 1MB) -gt $MaxBlobMb) {
+        $violSize += ("{0} ({1:N1} MB)" -f $normal, ([int64]$tamanho / 1MB))
+    }
+
+    # Extensao binaria conhecida que NAO esta sendo roteada para o LFS:
+    # sintoma de .gitattributes sem filter=lfs (causa raiz de 2026-08-21).
+    if ($normal -match '\.(dll|exe|so|dylib|bin|dat|pdb|node|wasm|gguf|onnx|safetensors)$' -and -not $ehPonteiro) {
+        $filtro = (& git check-attr filter -- $arquivo 2>$null)
+        if ($filtro -notlike '*filter: lfs*') { $violRoute += $normal }
+    }
+}
+
+$hygieneRules['StagedFiles']      = @{ Val = $staged.Count;      Limit = '-';         Desc = 'Arquivos em stage examinados' }
+$hygieneRules['ForbiddenPaths']   = @{ Val = $violPath.Count;    Limit = 0;           Desc = 'Diretorio de perfil/ferramenta versionado' }
+$hygieneRules['OversizedBlobs']   = @{ Val = $violSize.Count;    Limit = 0;           Desc = "Blob nao-LFS acima de $MaxBlobMb MB" }
+$hygieneRules['UnroutedBinaries'] = @{ Val = $violRoute.Count;   Limit = 0;           Desc = 'Binario sem filter=lfs no .gitattributes' }
+
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'HYGIENE CHECK', 'COUNT', 'LIMIT', 'GATE') -ForegroundColor White
+foreach ($regra in $hygieneRules.Keys) {
+    $v = $hygieneRules[$regra].Val
+    $l = $hygieneRules[$regra].Limit
+    $ok = ($l -eq '-') -or ($v -le $l)
+    $cor = if ($ok) { 'Green' } else { 'Red' }
+    $marca = if ($l -eq '-') { 'INFO' } elseif ($ok) { 'PASS' } else { 'FAIL' }
+    Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f $regra, $v, $l, $marca) -ForegroundColor $cor
+}
+
+foreach ($v in $violPath)  { Write-Host "   - caminho proibido: $v" -ForegroundColor Red }
+foreach ($v in $violSize)  { Write-Host "   - blob grande fora do LFS: $v" -ForegroundColor Red }
+foreach ($v in $violRoute) { Write-Host "   - binario sem roteamento LFS: $v" -ForegroundColor Red }
+
+if ($violPath.Count -gt 0) {
+    $failures += "Repository Hygiene: $($violPath.Count) arquivo(s) sob diretorio de perfil/ferramenta. Adicione ao .gitignore em vez de versionar."
+}
+if ($violSize.Count -gt 0) {
+    $failures += "Repository Hygiene: $($violSize.Count) blob(s) acima de $MaxBlobMb MB fora do LFS. Use 'git lfs track' antes de commitar."
+}
+if ($violRoute.Count -gt 0) {
+    $failures += "Repository Hygiene: $($violRoute.Count) binario(s) sem filter=lfs. Verifique se o .gitattributes ainda roteia essa extensao."
 }
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
@@ -175,11 +271,13 @@ $latestMdPath = Join-Path $ReportDir "latest_cwv_report.md"
 $reportData = [ordered]@{
     Timestamp = (Get-Date).ToString("o")
     TargetUrl = $TargetUrl
+    CdpActive = $cdpActive
     Status = if ($failures.Count -eq 0) { "PASSED" } else { "FAILED" }
     CoreWebVitals = $perfMetrics
     AccessibilityRules = $a11yRules
     SecurityRules = $secRules
     SriIntegrity = if ($sriSuccess) { "VERIFIED" } else { "FAILED" }
+    RepositoryHygiene = $hygieneRules
     Failures = $failures
 }
 
@@ -187,8 +285,8 @@ $reportData | ConvertTo-Json -Depth 5 | Set-Content -Path $reportJsonPath -Encod
 
 $mdContent = @"
 # ⚡ SOTA Quality Gate, Security & SRI Audit Report
-**Timestamp:** $((Get-Date).ToString("yyyy-MM-dd HH:mm:ss"))  
-**Target URL:** `$TargetUrl`  
+**Timestamp:** $((Get-Date).ToString("yyyy-MM-dd HH:mm:ss"))
+**Target URL:** `$TargetUrl`
 **Status:** $(if ($failures.Count -eq 0) { "✅ **APPROVED (SOTA GOLD)**" } else { "❌ **REJECTED**" })
 
 ## 1. Core Web Vitals Summary

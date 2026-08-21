@@ -26,6 +26,14 @@ dependencies = [
     "scikit-learn>=1.6.0",
     "scipy>=1.15.0",
     # ── RAG & MEMORIA VETORIAL ─────────────────────────────────────────
+    # SEGURANCA: chromadb carrega PYSEC-2026-311 (injecao pre-autenticacao)
+    # em TODAS as versoes publicadas ate 1.5.9. Nao ha correcao upstream.
+    # Nao explorada aqui porque o projeto so usa chromadb.PersistentClient
+    # (modo embarcado, sem servidor, sem porta em escuta) em:
+    #   memory_rag.py e scripts/utils/ingest_rag.py
+    # NAO migrar para chromadb.HttpClient nem subir `chroma run` sem antes
+    # confirmar que a advisory foi corrigida. Limite inferior deixado aberto
+    # de proposito, para adotar a correcao assim que ela for publicada.
     "chromadb>=0.6.0",
     "onnxruntime>=1.20.0",
     "sentence-transformers>=3.3.0",
@@ -38,7 +46,7 @@ dependencies = [
     "pypdf>=6.16.0,<7.0.0",
     "python-docx>=1.2.0,<2.0.0",
     "openpyxl>=3.1.5,<4.0.0",
-    "Pillow>=11.3.0,<12.0.0",
+    "Pillow>=12.3.0",
     # ── MULTIMIDIA (opcional — carregamento lazy) ──────────────────────
     "moviepy>=2.2.0,<3.0.0",
     "opencv-python-headless>=4.13.0,<5.0.0",
@@ -50,6 +58,7 @@ dependencies = [
     "rich>=15.0.0,<16.0.0",
     "python-dateutil>=2.9.0,<3.0.0",
     "tenacity>=9.1.0,<10.0.0",
+    "defusedxml>=0.7.1",
     # ── FILESYSTEM & CLOUD ────────────────────────────────────────────
     "watchdog>=6.0.0,<7.0.0",
     "watchfiles>=1.2.0,<2.0.0",
@@ -101,6 +110,9 @@ dev = [
     "pytest-watcher>=0.6.3",
     "cmake>=4.4.2",
     "ninja>=1.13.0",
+    "locust>=2.46.3",
+    "types-aiofiles>=25.1.0.20260518",
+    "types-psutil>=7.2.2.20260518",
 ]
 
 # ==============================================================================
@@ -148,6 +160,13 @@ markers = [
     "slow: testes lentos (>5s) que requerem LLM ou I/O pesado",
     "integration: testes de integracao que requerem servicos externos",
     "unit: testes unitarios puros sem I/O externo",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:chromadb.*",
+    "ignore::DeprecationWarning:google.genai.*",
+    "ignore::DeprecationWarning:opentelemetry.*",
+    "ignore:.*asyncio\\.iscoroutinefunction.*:DeprecationWarning",
+    "ignore:.*_UnionGenericAlias.*:DeprecationWarning",
 ]
 
 # ==============================================================================
@@ -278,6 +297,8 @@ include = [
 ]
 extraPaths = [
     ".",
+    ".venv/Lib/site-packages",
+    ".venv/lib/site-packages",
     "scripts",
     "engine",
     "core",
