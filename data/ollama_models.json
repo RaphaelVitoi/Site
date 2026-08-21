@@ -1,0 +1,148 @@
+{
+  "$schema_version": "1.0",
+  "_comment": [
+    "FONTE UNICA DE VERDADE para modelos Ollama do ecossistema SOTA.",
+    "Substitui tres mapas hardcoded e divergentes que existiam em:",
+    "  scripts/start_model.ps1  ($OllamaTags, 9 entradas)",
+    "  engine/gemma_server.py   (OLLAMA_MODEL_MAP, 8 entradas)",
+    "  scripts/llm_inference/run_inference.py (OLLAMA_MODEL_MAP, 5 entradas)",
+    "Os pesos NAO sao versionados em git. Sao provisionados sob demanda por",
+    "scripts/ops/Ensure-OllamaModels.ps1, que le este arquivo."
+  ],
+  "runtime": {
+    "api_base_env": "OLLAMA_API_BASE",
+    "api_base_default": "http://127.0.0.1:11434",
+    "keep_alive_env": "OLLAMA_KEEP_ALIVE",
+    "keep_alive_default": "5m",
+    "flash_attention_env": "OLLAMA_FLASH_ATTENTION",
+    "amd_polaris_gfx_override": "8.0.3"
+  },
+  "models": [
+    {
+      "alias": "12b",
+      "tag": "gemma4:12b",
+      "tier": "local",
+      "required": true,
+      "size_gb": 7.6,
+      "role": "Modelo local padrao. Default do gemma_server e do start_model.",
+      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1", "engine/avatars/avatar_config.json", "scripts/llm_inference/run_inference.py"]
+    },
+    {
+      "alias": "e4b",
+      "tag": "gemma4:e4b",
+      "tier": "local",
+      "required": true,
+      "size_gb": 9.6,
+      "role": "Variante efficient de 4B ativos. Usada quando ha pressao de RAM.",
+      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
+    },
+    {
+      "alias": "26b",
+      "tag": "gemma4:26b",
+      "tier": "local",
+      "required": true,
+      "size_gb": 17.0,
+      "role": "Modelo local de alta capacidade para inferencia pesada.",
+      "consumers": ["scripts/llm_inference/run_inference.py", "tests/test_gemma_server_sota.py"]
+    },
+    {
+      "alias": "31b",
+      "tag": "gemma4:31b",
+      "tier": "local",
+      "required": true,
+      "size_gb": 19.0,
+      "role": "Maior modelo local. CORRECAO: o alias '31b' apontava para a variante cloud em start_model.ps1, ignorando estes 19 GB ja presentes em disco.",
+      "consumers": ["engine/gemma_server.py"]
+    },
+    {
+      "alias": "31b_cloud",
+      "tag": "gemma4:31b-cloud",
+      "tier": "cloud",
+      "required": true,
+      "size_gb": 0,
+      "role": "Inferencia remota. Sem custo de disco local.",
+      "consumers": ["engine/avatars/run_avatar.py", "engine/avatars/query_current.py", "engine/avatars/avatar_config.json", "scripts/llm_inference/run_inference.py"]
+    },
+    {
+      "alias": "e2b",
+      "tag": "gemma4:e2b",
+      "tier": "local",
+      "required": false,
+      "size_gb": null,
+      "role": "Referenciado por gemma_server.py e start_model.ps1, mas NAO instalado. Puxar so se for usado de fato.",
+      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
+    },
+    {
+      "alias": "4b",
+      "tag": "gemma4:latest",
+      "tier": "local",
+      "required": false,
+      "size_gb": null,
+      "role": "Referenciado pelos mapas, mas NAO instalado. Tag 'latest' e movel: evitar em producao.",
+      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1", "scripts/llm_inference/run_inference.py"]
+    },
+    {
+      "alias": "8b",
+      "tag": "gemma4:8b",
+      "tier": "local",
+      "required": false,
+      "size_gb": null,
+      "role": "Referenciado apenas por run_inference.py. NAO instalado.",
+      "consumers": ["scripts/llm_inference/run_inference.py"]
+    },
+    {
+      "alias": "llama3_8b",
+      "tag": "llama3.1:8b",
+      "tier": "local",
+      "required": false,
+      "size_gb": null,
+      "role": "Alias legado. NAO instalado e sem consumidor ativo alem do proprio mapa.",
+      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
+    },
+    {
+      "alias": "qwen",
+      "tag": "qwen2.5-coder:3b",
+      "tier": "local",
+      "required": false,
+      "size_gb": null,
+      "role": "Alias legado. NAO instalado e sem consumidor ativo alem do proprio mapa.",
+      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
+    },
+    {
+      "alias": "granite",
+      "tag": "granite3.3:8b",
+      "tier": "local",
+      "required": false,
+      "size_gb": null,
+      "role": "Alias legado. NAO instalado e sem consumidor ativo alem do proprio mapa.",
+      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
+    },
+    {
+      "alias": "deepseek",
+      "tag": "deepseek-coder:1.3b",
+      "tier": "local",
+      "required": false,
+      "size_gb": null,
+      "role": "Alias legado presente so em gemma_server.py. NAO instalado.",
+      "consumers": ["engine/gemma_server.py"]
+    },
+    {
+      "alias": "deepseek_pro",
+      "tag": "deepseek-v4-pro:cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "INSTALADO mas sem nenhuma referencia no codigo. Candidato a remocao se nao houver uso planejado.",
+      "consumers": []
+    },
+    {
+      "alias": "deepseek_flash",
+      "tag": "deepseek-v4-flash:cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "INSTALADO mas sem nenhuma referencia no codigo. Candidato a remocao se nao houver uso planejado.",
+      "consumers": []
+    }
+  ]
+}

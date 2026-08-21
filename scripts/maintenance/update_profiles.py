@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import os
 import re
 
 SOTA_BLOCK = """# ==============================================================================
@@ -122,7 +121,7 @@ def update_user_profile():
     # Strip existing SOTA variables
     content = re.sub(r"export UV_PROJECT_ENVIRONMENT=.venv-wsl\n?", "", content)
     content = re.sub(r"export PYTHONDONTWRITEBYTECODE=1\n?", "", content)
-    content = re.sub(r"export NODE_OPTIONS=.*?\n?", "", content)
+    content = re.sub(r"export NODE_OPTIONS=[^\n]*\n?", "", content)
 
     # Append environment optimizations at the end
     content = (

@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useCallback } from 'react';
-import type { Scenario, HeroPosition } from '../engine/types';
+import type { Scenario, HeroPosition } from '../solver/types';
 import { generateHRCJson, downloadHRCJson } from '@/lib/hrcExport';
 import type { SotaPhysicsState } from './useSotaSync';
 
@@ -19,7 +19,7 @@ interface UseMasterHandlersParams {
 /**
  * IDENTITY: Hook de Handlers Mestre (SOTA v7.0 GOLD)
  * PATH: src/components/simulator/hooks/useMasterHandlers.ts
- * ROLE: Orquestra eventos de interface, exportaÃ§Ã£o e transiÃ§Ãµes de estado.
+ * ROLE: Orquestra eventos de interface, exportação e transições de estado.
  */
 export function useMasterHandlers({
 	scenario,

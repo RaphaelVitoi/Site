@@ -12,6 +12,7 @@ import sqlite3
 import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import agents.context_builder as cb
 import core.runtime as te
@@ -34,6 +35,7 @@ from llm.orchestrator import _prepare_routing_pipeline, call_llm_api
 from monitoring.telemetry import send_toast, write_economic_log
 
 logger = logging.getLogger(__name__)
+_BACKGROUND_TASKS: set[asyncio.Task[Any]] = set()
 
 # Mapeamento Global de Entidades SOTA (Mantidos para referencia local)
 AGENT_MAVERICK = "@maverick"
@@ -218,7 +220,8 @@ async def _enqueue_subtasks(
         meta = task.metadata.copy() if task.metadata else {}
         meta["route_selected"] = agents_list
 
-        reason_codes = list(meta.get("reason_codes", []))
+        raw_reasons = meta.get("reason_codes", [])
+        reason_codes = [str(r) for r in raw_reasons] if isinstance(raw_reasons, list) else []
         if reason_code not in reason_codes:
             reason_codes.append(reason_code)
         meta["reason_codes"] = reason_codes
@@ -354,7 +357,8 @@ async def _process_observers_and_handoff(task: Task, manager: QueueManager) -> N
 
 
 async def _notify_observers(task: Task, manager: QueueManager) -> None:
-    observers = task.metadata.get("observers", []) if task.metadata else []
+    raw_observers = task.metadata.get("observers", []) if task.metadata else []
+    observers = [str(obs) for obs in raw_observers] if isinstance(raw_observers, list) else []
     for observer in observers:
         logger.info(
             f"[[{te._c(observer)}]{observer}[/]] [bold yellow]OBSERVER SOTA[/] Gerando notificacao estrategica referente a tarefa {task.id}."
@@ -427,7 +431,9 @@ async def _finish_task_success(
     # SOTA: Sincronizacao de Consciencia Automatica (Loop de Feedback RAG)
     if te.feature_enabled("enable_auto_sync_consciousness") and modified_files:
         logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] [bold cyan]SYNC[/]: Pulso de Consciencia disparado.")
-        asyncio.create_task(_trigger_sync_consciousness(task))
+        sync_bg_task = asyncio.create_task(_trigger_sync_consciousness(task))
+        _BACKGROUND_TASKS.add(sync_bg_task)
+        sync_bg_task.add_done_callback(_BACKGROUND_TASKS.discard)
 
     duration = time.monotonic() - start_time
     final_metadata: dict[str, dict | list | str | int | float | bool | None] = {
@@ -462,7 +468,7 @@ async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
         return
 
     # --- SOTA DELEGATION: Oraculo de Borda (@gemma4) ---
-    if task.agent == "@gemma4" or task.agent == "@gemma":
+    if task.agent in ("@gemma4", "@gemma"):
         logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] Delegando para o Motor Cognitivo Local (Pure Engine)...")
         try:
             await local_engine.process_agent_task(task, manager)

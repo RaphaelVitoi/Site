@@ -1,19 +1,13 @@
-# pylint: disable=logging-fstring-interpolation, broad-exception-caught, redefined-outer-name, line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name
+# pylint: disable=logging-fstring-interpolation, broad-exception-caught, redefined-outer-name, line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, import-outside-toplevel
 # pyright: reportMissingImports=false
-
-import os
-import sys
-
-# =================================================
-# BLINDAGEM DE I/O REDE (Hugging Face / RAG Friccao Zero)
-# =================================================
-os.environ["HF_HUB_OFFLINE"] = "1"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import asyncio
 import json
 import logging
+import os
 import re
+import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +17,12 @@ from llm.budget import GEMINI_KEYS, OPENROUTER_KEYS
 from llm.gemini import call_gemini
 from llm.openrouter import call_openrouter
 from llm.session import get_global_http_session
+
+# =================================================
+# BLINDAGEM DE I/O REDE (Hugging Face / RAG Friccao Zero)
+# =================================================
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Configuracao SOTA (Friccao Zero)
 CHROMA_DB_DIR = ".chroma_db"
@@ -70,12 +70,12 @@ def ingest_drive_pdfs(drive_path: str):
         logger.warning("[SOTA RAG] Nenhum PDF encontrado. Abortando ingestao.")
         return
 
-    # SOTA Padrão Ouro: Chunking Semântico Dinâmico com Overlap de 25% (300 chars > 15%) e Preservação de Derivações Matemáticas (LaTeX/Nash/ICM)
+    # SOTA Padrao Ouro: Chunking Semantico Dinamico com Overlap de 25% (300 chars > 15%) e Preservacao de Derivacoes Matematicas (LaTeX/Nash/ICM)
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1200, chunk_overlap=300, separators=["\n## ", "\n# ", "\n\n", "\n\\[", "\n$$", "\n", " "]
     )
     chunks = splitter.split_documents(docs)
-    logger.info(f"[SOTA RAG] {len(chunks)} fragmentos (chunks semânticos de 1200 chars / 300 overlap) forjados.")
+    logger.info(f"[SOTA RAG] {len(chunks)} fragmentos (chunks semanticos de 1200 chars / 300 overlap) forjados.")
 
     embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL, base_url=OLLAMA_BASE_URL)
 
@@ -433,8 +433,6 @@ class MemoryRAG:
             logger.exception("[RAG] Erro ao limpar memorias antigas.")
 
     async def ingest_all_memories(self):
-        import time
-
         logger.info("[RAG] Iniciando expansao de consciencia (Memorias + Base de Conhecimento)...")
         base_path = Path(__file__).parent
         manifest_path = base_path / "rag_ingestion_manifest.json"
@@ -693,7 +691,14 @@ class MemoryRAG:
             raw_json = await self._extract_causal_graph(session, system_prompt, user_prompt)
 
             # Purificacao contra entropia de encoding (markdown injetado por LLMs)
-            return re.sub(r"^```json|```$", "", raw_json.strip(), flags=re.MULTILINE).strip()
+            clean_json = raw_json.strip()
+            if clean_json.startswith("```json"):
+                clean_json = clean_json[7:]
+            elif clean_json.startswith("```"):
+                clean_json = clean_json[3:]
+            if clean_json.endswith("```"):
+                clean_json = clean_json[:-3]
+            return clean_json.strip()
 
         except Exception:  # noqa: BLE001
             logger.exception("[RAG] Colapso na extracao do Grafo Causal.")

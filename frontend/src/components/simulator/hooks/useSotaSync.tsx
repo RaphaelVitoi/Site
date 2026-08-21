@@ -63,8 +63,8 @@ export function SotaGlobalSyncProvider({ children }: { readonly children: React.
 	const updatePhysics = React.useCallback((partial: Partial<SotaPhysicsState>) => {
 		setPhysics((prev) => {
 			let changed = false;
-			for (const key of Object.keys(partial) as Array<keyof SotaPhysicsState>) {
-				if (prev[key] !== partial[key]) {
+			for (const [key, val] of Object.entries(partial) as Array<[keyof SotaPhysicsState, unknown]>) {
+				if (Reflect.get(prev, key) !== val) {
 					changed = true;
 					break;
 				}

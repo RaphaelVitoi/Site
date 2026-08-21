@@ -1,4 +1,4 @@
-"""Modulo de gerenciamento da fila de tarefas SOTA (Queue Manager)."""  # pylint: disable=line-too-long
+"""Modulo de gerenciamento da fila de tarefas SOTA (Queue Manager)."""  # pylint: disable=line-too-long, import-outside-toplevel, too-many-lines
 
 import asyncio
 import contextlib
@@ -19,9 +19,15 @@ import aiosqlite
 import core.config as _core_config
 from core.schemas import Task
 
+try:
+    from monitoring.telemetry import send_toast
+except ImportError:
+    send_toast = None
+
 logger = logging.getLogger(__name__)
 
 MEMORY_DB_TARGET = ":memory:"
+_PRAGMA_BUSY_TIMEOUT = "PRAGMA busy_timeout=5000;"
 
 
 class QueueManager:
@@ -125,22 +131,27 @@ class QueueManager:
             )
             return fallback
 
-    @contextlib.asynccontextmanager
-    async def _get_async_db_context(self):
-        """Internal provider de conexoes aiosqlite sem travas DDL."""
+    async def _connect_raw(self) -> aiosqlite.Connection:
+        """SOTA: Criacao de conexao aiosqlite com timeout configurado."""
         if getattr(self, "_is_memory", False):
-            async with aiosqlite.connect(self.db_path, uri=True) as db:
-                await db.execute("PRAGMA busy_timeout=5000;")
-                yield db
+            conn = await aiosqlite.connect(self.db_path, uri=True)
         else:
-            # SOTA: Shared Cache Assincrono fisico Oblitera concorrencia de leitura clonada na RAM
             db_path = self.db_path
             if not isinstance(db_path, Path):
                 db_path = Path(db_path)
             uri_path = f"{db_path.absolute().as_uri()}?cache=shared"
-            async with aiosqlite.connect(uri_path, uri=True) as db:
-                await db.execute("PRAGMA busy_timeout=5000;")
-                yield db
+            conn = await aiosqlite.connect(uri_path, uri=True)
+        await conn.execute(_PRAGMA_BUSY_TIMEOUT)
+        return conn
+
+    @contextlib.asynccontextmanager
+    async def _get_async_db_context(self):
+        """Internal provider de conexoes aiosqlite sem travas DDL."""
+        conn = await self._connect_raw()
+        try:
+            yield conn
+        finally:
+            await conn.close()
 
     @contextlib.asynccontextmanager
     async def _get_async_db(self):
@@ -148,8 +159,11 @@ class QueueManager:
         SOTA: Context manager unificado para conexao async com DDL Lazy.
         """
         await self._ensure_initialized()
-        async with self._get_async_db_context() as db:
-            yield db
+        conn = await self._connect_raw()
+        try:
+            yield conn
+        finally:
+            await conn.close()
 
     async def close(self) -> None:
         """Encerra graciosamente a conexao ancora em memoria, se aplicavel."""
@@ -172,7 +186,7 @@ class QueueManager:
 
             if self._is_memory and self._memory_conn_async is None:
                 self._memory_conn_async = await aiosqlite.connect(self.db_path, uri=True)
-                await self._memory_conn_async.execute("PRAGMA busy_timeout=5000;")
+                await self._memory_conn_async.execute(_PRAGMA_BUSY_TIMEOUT)
 
             async with self._get_async_db_context() as conn:
                 # SOTA PRAGMAs: Maximizacao de concorrencia e uso eficiente de memoria
@@ -493,9 +507,7 @@ class QueueManager:
                         task_id,
                         retries,
                     )
-                    with contextlib.suppress(ImportError):
-                        from monitoring.telemetry import send_toast
-
+                    if send_toast is not None:
                         send_toast(
                             "[WARN] Auto-Cura SOTA",
                             f"Tarefa '{desc[:30]}' ressuscitada (Tenta {retries}/3)",

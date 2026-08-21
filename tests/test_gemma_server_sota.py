@@ -71,13 +71,15 @@ def test_generate_success_stream(mock_orchestrate, mock_rag):
 @pytest.mark.unit
 def test_normalize_model_logic():
     """Valida a ontologia de normalizacao de modelos da Mente Coletiva."""
-    assert normalize_model("gemma-4-31b-it") == "31b"
+    assert normalize_model("gemma-4-31b-it") == "31b_cloud"
+    assert normalize_model("gemma4:26b") == "12b"
     assert normalize_model("Qwen-coder") == "qwen"
     assert normalize_model("llama-3-8b") == "llama3_8b"
-    assert normalize_model("gemma-4-4b") == "4b"
+    assert normalize_model("gemma-4-4b") == "e4b"
+    assert normalize_model("gemma-4-e2b") == "e2b"
     assert normalize_model("gemma4:12b") == "12b"
     assert normalize_model("deepseek-coder:1.3b") == "deepseek"
-    assert normalize_model("") == "31b"  # default
+    assert normalize_model("") == "12b"  # SOTA default local model is 12b
 
 
 @pytest.mark.unit
@@ -91,3 +93,21 @@ def test_build_messages_with_snapshot():
     assert "[SOTA_SNAPSHOT_ACTIVE]" in user_content
     assert "Hero Stack: 100.0bb" in user_content
     assert "Position: BTN" in user_content
+
+
+@pytest.mark.unit
+def test_multimodal_vision_inference_request():
+    """Valida o payload multimodal com imagens em base64 e audio para Gemma 4."""
+    req = InferenceRequest(
+        prompt="Analise este screenshot da mesa e diga as odds.",
+        images=[
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        ],
+        audios=["data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="],
+        model="12b",
+    )
+    assert req.images is not None
+    assert len(req.images) == 1
+    assert req.audios is not None
+    assert len(req.audios) == 1
+    assert normalize_model(req.model) == "12b"

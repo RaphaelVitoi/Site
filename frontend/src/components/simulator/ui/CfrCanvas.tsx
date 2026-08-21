@@ -59,12 +59,11 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
 
   let val = matrix[idx];
 
-  // SOTA: Colorimetria Semântico-Associativa (Heatmap)
-  // Indigo = Cold (Baixo Regret), Emerald = Hot (Alto Regret)
-  let r = val * 0.1;       // Baixa incidência de Red
-  let g = val;             // Alta incidência de Green (Emerald)
-  let b = 1.0 - (val * 0.5); // Redução gradual de Blue
-  let a = 0.1 + (val * 0.6); // Transparência dinâmica para estética Glassmorphism
+  // SOTA: Colorimetria SOTA Gold & Indigo (Heatmap Sutil)
+  let r = val * 0.4 + 0.02;
+  let g = val * 0.45 + 0.02;
+  let b = (1.0 - val) * 0.6 + 0.05;
+  let a = 0.04 + (val * 0.2); // Transparência refinada para estética Glassmorphism
 
   return vec4<f32>(r, g, b, a);
 }
@@ -298,7 +297,7 @@ export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ n
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 h-full w-full opacity-90 mix-blend-screen transition-opacity duration-1000"
+      className="absolute inset-0 h-full w-full opacity-40 mix-blend-screen transition-opacity duration-1000"
     />
   );
 });

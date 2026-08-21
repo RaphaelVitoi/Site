@@ -30,6 +30,7 @@ if (-not $targetPage) {
     $wsUrl = $targetPage.webSocketDebuggerUrl
     Write-Host "[OK] Utilizando aba ativa: $($targetPage.title)" -ForegroundColor Green
 }
+Write-Host "[OK] WebSocket CDP: $wsUrl" -ForegroundColor DarkGray
 
 Write-Host "`n[ PROBING GEMINI NANO CAPABILITIES ]" -ForegroundColor Magenta
 Write-Host "Verificando flags de IA no runtime:"

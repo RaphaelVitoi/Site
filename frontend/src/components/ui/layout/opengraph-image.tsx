@@ -109,32 +109,32 @@ const authorTextStyle = {
 
 export default async function Image() {
 	return new ImageResponse(
-		<div {...{ style: containerStyle }}>
+		<div style={containerStyle}>
 			{/* Grade decorativa */}
-			<div {...{ style: gridStyle }} />
+			<div style={gridStyle} />
 
 			{/* Glows */}
-			<div {...{ style: glow1Style }} />
-			<div {...{ style: glow2Style }} />
+			<div style={glow1Style} />
+			<div style={glow2Style} />
 
 			{/* Conteúdo */}
-			<div {...{ style: contentStyle }}>
+			<div style={contentStyle}>
 				{/* Label */}
-				<div {...{ style: labelStyle }}>ICM &bull; Risk Premium &bull; Pós-Flop</div>
+				<div style={labelStyle}>ICM &bull; Risk Premium &bull; Pós-Flop</div>
 
 				{/* Logo */}
-				<div {...{ style: logoStyle }}>PokerRacional</div>
+				<div style={logoStyle}>PokerRacional</div>
 
 				{/* Tagline */}
-				<div {...{ style: taglineStyle }}>
+				<div style={taglineStyle}>
 					A Geometria do Risco: ICM Pós-Flop, Risk Premium e a Nova Fronteira do Edge em
 					2026
 				</div>
 
 				{/* Author */}
-				<div {...{ style: authorWrapperStyle }}>
-					<div {...{ style: authorLineStyle }} />
-					<div {...{ style: authorTextStyle }}>
+				<div style={authorWrapperStyle}>
+					<div style={authorLineStyle} />
+					<div style={authorTextStyle}>
 						Raphael Vitoi &mdash; Embaixador DeepSolver &bull; GTO Wizard
 					</div>
 				</div>

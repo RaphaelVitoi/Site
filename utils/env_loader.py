@@ -2,6 +2,7 @@
 
 import logging
 import os
+import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -42,8 +43,6 @@ def _clean_env_value(value: str) -> str:
 
 def _apply_platform_guards(keys: dict[str, str]) -> None:
     """Applies SOTA auto-cure & platform guard configurations to environment."""
-    import sys
-
     if sys.platform.startswith("linux") or os.name == "posix":
         # Guest (WSL Debian) Protection Shield
         os.environ["UV_PROJECT_ENVIRONMENT"] = ".venv-wsl"

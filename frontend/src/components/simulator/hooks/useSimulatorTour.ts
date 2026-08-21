@@ -1,13 +1,13 @@
 ﻿'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { performTourScrollAndHighlight } from '../engine/utils';
+import { performTourScrollAndHighlight } from '../solver/utils';
 import type { Step as TourStep } from '../ui/SimulatorTour';
 
 /**
- * IDENTITY: Hook de OrquestraÃ§Ã£o do Tour (SOTA v7.0 GOLD)
+ * IDENTITY: Hook de Orquestração do Tour (SOTA v7.0 GOLD)
  * PATH: src/components/simulator/hooks/useSimulatorTour.ts
- * ROLE: Gerencia spotlights, timers e navegaÃ§Ã£o do tour guiado.
+ * ROLE: Gerencia spotlights, timers e navegação do tour guiado.
  */
 export function useSimulatorTour(handleScenarioSelect: (id: string) => void) {
 	const [tourSpotlight, setTourSpotlight] = useState<DOMRect | null>(null);

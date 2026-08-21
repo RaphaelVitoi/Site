@@ -3,9 +3,8 @@
 /**
  * IDENTITY: Simulador Mestre ICM (Orquestrador SOTA v7.0 GOLD)
  * PATH: src/components/simulator/MasterSimulator.tsx
- * ROLE: Componente raiz que compõe sidebar + main stage com todos os painéis.
- *       Unifica 4 simuladores redundantes num único estado da arte.
- * AESTHETIC: SOTA GOLD Standard (Precision Alignment, Visual Hierarchy, Glassmorphism).
+ * ROLE: Componente raiz unificado e centralizador de estado para toda a plataforma de simulação.
+ * AESTHETIC: SOTA GOLD Standard (Precision Alignment, Golden Ratio, Glassmorphism, Zero-Entropy Layout).
  */
 
 import { useFrequencyPropagation } from './hooks/useFrequencyPropagation';
@@ -17,8 +16,6 @@ import { useSotaSync } from './hooks/useSotaSync';
 import { SotaMetricsContext, SotaSpotContext, SotaWasmContext } from './SotaContext';
 import { GuideToolbar } from './ui/GuideToolbar';
 import { NashDistortionViz } from './ui/NashDistortionViz';
-import ScenarioSelector from './ui/ScenarioSelector';
-import SimulatorHeader from './ui/SimulatorHeader';
 import SimulatorNavigation from './ui/SimulatorNavigation';
 import SimulatorTour from './ui/SimulatorTour';
 import { useSimulatorTour } from './hooks/useSimulatorTour';
@@ -32,6 +29,9 @@ import dynamic from 'next/dynamic';
 import { Suspense, useEffect, useMemo, useDeferredValue, useTransition, useState } from 'react';
 import useSWR from 'swr';
 import { useLlamaEngine } from '../../hooks/useLlamaEngine';
+
+import { MasterTableVisualizer } from './ui/MasterTableVisualizer';
+import { ScenarioQuickSelector } from './ui/ScenarioQuickSelector';
 
 // SOTA: Dynamic imports with ssr: false for WASM/Worker safety
 const EquityCalculator = dynamic(() => import('./panels/EquityCalculator'), {
@@ -55,9 +55,7 @@ const PmLensPanel = dynamic(() => import('./panels/PmLensPanel'), {
 const ReferencialAula12 = dynamic(() => import('./ReferencialAula12'), {
   ssr: false,
 });
-const SimulatorQuizWidget = dynamic(() => import('../quiz/SimulatorQuizWidget').then((m) => m.SimulatorQuizWidget), {
-  ssr: false,
-});
+
 const NashPanel = dynamic(() => import('./panels/NashPanel'), { ssr: false });
 const TheoryPanel = dynamic(() => import('./panels/TheoryPanel'), {
   ssr: false,
@@ -96,7 +94,8 @@ export default function MasterSimulator() {
   const { physics, updatePhysics, isHydrated: isSyncHydrated } = useSotaSync();
   const { scenario, setScenario, scenarios } = useScenario();
   const [isPending, startTransition] = useTransition();
-  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'dashboard' | 'referencial' | 'lente' | 'laboratorio'>('dashboard');
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'laboratorio' | 'dashboard' | 'referencial' | 'lente'>('laboratorio');
+  const [spotSubView, setSpotSubView] = useState<'nash' | 'insolvency' | 'ranges' | 'theory'>('nash');
 
   const { data: predictiveData } = useSWR('/api/v1/predictive', fetcher, {
     revalidateOnFocus: false,
@@ -117,8 +116,6 @@ export default function MasterSimulator() {
     setStreetFreqs,
     activeTool,
     setActiveTool,
-    sidebarOpen,
-    setSidebarOpen,
     anteSize,
     heroPosition,
     setHeroPosition,
@@ -217,7 +214,6 @@ export default function MasterSimulator() {
   const {
     effectiveIpRp,
     effectiveOopRp,
-    rpSource,
     effectiveSprData,
     nashFlop,
     nashTurn,
@@ -294,110 +290,248 @@ export default function MasterSimulator() {
     const toolContents: Record<ActiveTool, React.ReactNode> = {
       scenario: (
         <Suspense fallback={<LoadingFallback />}>
-          <div className="flex flex-col gap-10">
-            <ScenarioStage
-              scenario={scenario}
-              effectiveIpRp={finalIpRp}
-              effectiveOopRp={finalOopRp}
-              dynamicDeathZone={apiQuantumMetrics?.threshEq ? apiQuantumMetrics.threshEq * 100 : 0}
-            />
-            <GuideToolbar onExport={handleExportHRC} />
-            <SpatialControls
-              heroPosition={heroPosition}
-              handleHeroPositionChange={handleHeroPositionChange}
-              heroInvested={heroInvested}
-              // @ts-expect-error - A propriedade 'setHeroInvested' pode não estar tipada em SpatialControlsProps
-              setHeroInvested={setHeroInvested}
-              currentPot={currentPot}
-              setCurrentPot={setCurrentPot}
-              activePlayers={activePlayers}
-              setActivePlayers={setActivePlayers}
-              isPredictive={isPredictive}
-              setIsPredictive={setIsPredictive}
-            />
-            {nashFlop && nashTurn && nashRiver && streetRps && (
-              <NashPanel
-                nashFlop={nashFlop}
-                nashTurn={nashTurn}
-                nashRiver={nashRiver}
-                streetFreqs={streetFreqs}
-                streetRps={streetRps}
-                aggressionFactor={aggressionFactor}
-                pkoValue={pkoValue}
-                isNearPayjump={isNearPayjump}
-                blindsRisingSoon={blindsRisingSoon}
-                isBaseline={isBaseline}
-                onStreetFreqChange={handleStreetFreqChange}
-                onAggressionChange={setAggressionFactor}
-                onPkoChange={setPkoValue}
-                onPayjumpToggle={setIsNearPayjump}
-                onBlindsToggle={setBlindsRisingSoon}
-              />
-            )}
+          {/* Cockpit 2-Colunas · Proporção Áurea (7:5) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-            <div className="glass-panel animate-sota-in border-white/10 p-8 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] backdrop-blur-3xl lg:p-12">
-              <div className="group/insolvency relative mb-12 overflow-hidden rounded-4xl border border-white/5 bg-slate-950/40 p-10 shadow-inner">
-                <div className="bg-grain pointer-events-none absolute inset-0 opacity-[0.02] mix-blend-overlay" />
-                <div className="pointer-events-none absolute inset-0 bg-radial-[at_top_right] from-rose-500/5 to-transparent" />
-                <div className="relative z-10 mb-10 flex flex-col items-center gap-4 text-center">
-                  <div className="text-accent-rose flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-500/20 bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
-                    <i className="fa-solid fa-radar animate-pulse text-xl"></i>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="m-0 text-xl font-black tracking-[0.35em] text-white uppercase">
-                      Diagnóstico de Insolvência
-                    </h3>
-                    <p className="text-text-muted text-[0.65rem] font-medium tracking-[0.25em] uppercase">
-                      Mapeamento vetorial de tensões sistêmicas e colapso de equidade
-                    </p>
-                  </div>
-                </div>
+            {/* ═══ COLUNA PRINCIPAL (7/12) · Mesa + Controles + Lentes Modulares ═══ */}
+            <div className="lg:col-span-7 flex flex-col gap-5">
 
-                <div className="relative h-112 w-full">
-                  <Suspense
-                    fallback={
-                      <div className="text-text-darker flex h-full animate-pulse items-center justify-center text-[0.65rem] font-black tracking-[0.4em] uppercase">
-                        Sincronizando Radar...
-                      </div>
-                    }
-                  >
-                    <InsolvencyRadar data={insolvencyRadarData} />
-                  </Suspense>
-                </div>
+              {/* Mesa Interativa 9P */}
+              <div className="rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+                <MasterTableVisualizer
+                  scenario={scenario}
+                  heroPosition={heroPosition}
+                  currentPot={safeCurrentPot}
+                  effectiveIpRp={finalIpRp}
+                  effectiveOopRp={finalOopRp}
+                  onSelectPosition={(pos) => setHeroPosition(pos)}
+                />
               </div>
 
-              {nashResults?.flop && (
-                <div className="mb-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
-                  <NashDistortionViz streetName="Flop" nashData={nashResults.flop} />
-                  <NashDistortionViz streetName="Turn" nashData={nashResults.turn ?? null} />
-                  <NashDistortionViz streetName="River" nashData={nashResults.river ?? null} />
+              {/* Controles Espaciais */}
+              <div className="rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+                <SpatialControls
+                  heroPosition={heroPosition}
+                  handleHeroPositionChange={handleHeroPositionChange}
+                  heroInvested={heroInvested}
+                  setHeroInvested={setHeroInvested}
+                  currentPot={currentPot}
+                  setCurrentPot={setCurrentPot}
+                  activePlayers={activePlayers}
+                  setActivePlayers={setActivePlayers}
+                  isPredictive={isPredictive}
+                  setIsPredictive={setIsPredictive}
+                  onUpdatePhysics={updatePhysics}
+                />
+              </div>
+
+              {/* Seletor de Lentes do Spot */}
+              <div className="flex items-center gap-1.5 p-1 bg-slate-950/50 rounded-2xl border border-white/8 shadow-inner overflow-x-auto no-scrollbar">
+                {[
+                  { id: 'nash', label: 'Nash & Ações', icon: 'fa-chess-knight' },
+                  { id: 'insolvency', label: 'Insolvência', icon: 'fa-radar' },
+                  { id: 'ranges', label: 'Matriz 169', icon: 'fa-table-cells' },
+                  { id: 'theory', label: 'Teoria', icon: 'fa-book-open' },
+                ].map((sub) => {
+                  const isSubActive = spotSubView === sub.id;
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setSpotSubView(sub.id as 'nash' | 'insolvency' | 'ranges' | 'theory')}
+                      className={`flex-1 px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-[0.12em] transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                        isSubActive
+                          ? 'bg-accent-indigo/20 text-white border border-accent-indigo/40 shadow-md shadow-indigo-500/10'
+                          : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
+                      }`}
+                    >
+                      <i className={`fa-solid ${sub.icon} text-[0.55rem] ${isSubActive ? 'text-accent-indigo' : ''}`} />
+                      <span>{sub.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Conteúdo da Lente Ativa */}
+              {spotSubView === 'nash' && (
+                <div className="flex flex-col gap-5 animate-sota-in">
+                  <div className="rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+                    <GuideToolbar onExport={handleExportHRC} />
+                  </div>
+                  {nashFlop && nashTurn && nashRiver && streetRps && (
+                    <div className="rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+                      <NashPanel
+                        nashFlop={nashFlop}
+                        nashTurn={nashTurn}
+                        nashRiver={nashRiver}
+                        streetFreqs={streetFreqs}
+                        streetRps={streetRps}
+                        aggressionFactor={aggressionFactor}
+                        pkoValue={pkoValue}
+                        isNearPayjump={isNearPayjump}
+                        blindsRisingSoon={blindsRisingSoon}
+                        isBaseline={isBaseline}
+                        onStreetFreqChange={handleStreetFreqChange}
+                        onAggressionChange={setAggressionFactor}
+                        onPkoChange={setPkoValue}
+                        onPayjumpToggle={setIsNearPayjump}
+                        onBlindsToggle={setBlindsRisingSoon}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
-              <RangeMatrix ipRp={finalIpRp} oopRp={finalOopRp} scenarioId={scenario.id} />
+
+              {spotSubView === 'insolvency' && (
+                <div className="animate-sota-in rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg space-y-5">
+                  {/* Radar de Insolvência */}
+                  <div className="rounded-2xl border border-white/5 bg-black/30 p-5 shadow-inner">
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <div className="text-accent-rose flex h-8 w-8 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10">
+                        <i className="fa-solid fa-radar text-sm" />
+                      </div>
+                      <h3 className="m-0 text-sm font-black tracking-[0.2em] text-white uppercase">
+                        Radar de Insolvência
+                      </h3>
+                    </div>
+                    <div className="relative h-72 w-full">
+                      <Suspense
+                        fallback={
+                          <div className="text-text-darker flex h-full animate-pulse items-center justify-center text-[0.6rem] font-black tracking-[0.3em] uppercase">
+                            Sincronizando...
+                          </div>
+                        }
+                      >
+                        <InsolvencyRadar data={insolvencyRadarData} />
+                      </Suspense>
+                    </div>
+                  </div>
+
+                  {/* Distorções por Street */}
+                  {nashResults?.flop && (
+                    <div className="grid grid-cols-3 gap-3">
+                      <NashDistortionViz streetName="Flop" nashData={nashResults.flop} />
+                      <NashDistortionViz streetName="Turn" nashData={nashResults.turn ?? null} />
+                      <NashDistortionViz streetName="River" nashData={nashResults.river ?? null} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {spotSubView === 'ranges' && (
+                <div className="animate-sota-in rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
+                  <RangeMatrix ipRp={finalIpRp} oopRp={finalOopRp} scenarioId={scenario.id} />
+                </div>
+              )}
+
+              {spotSubView === 'theory' && (
+                <div className="animate-sota-in rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+                  <TheoryPanel
+                    scenario={scenario}
+                    effectiveSprData={effectiveSprData}
+                    effectiveIpRp={finalIpRp}
+                    effectiveOopRp={finalOopRp}
+                  />
+                </div>
+              )}
             </div>
 
-            <TheoryPanel
-              scenario={scenario}
-              effectiveSprData={effectiveSprData}
-              effectiveIpRp={finalIpRp}
-              effectiveOopRp={finalOopRp}
-            />
+            {/* ═══ COLUNA LATERAL (5/12) · Narrativa + IA + Telemetria ═══ */}
+            <div className="lg:col-span-5 flex flex-col gap-5 lg:sticky lg:top-36">
+
+              {/* Cenário: Narrativa e Medidores de Risco */}
+              <ScenarioStage
+                scenario={scenario}
+                effectiveIpRp={finalIpRp}
+                effectiveOopRp={finalOopRp}
+                dynamicDeathZone={apiQuantumMetrics?.threshEq ? apiQuantumMetrics.threshEq * 100 : 0}
+              />
+
+              {/* Oráculo Gemma (IA Preditiva) */}
+              <div className="rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+                <GemmaAnalysisPanel
+                  heroPos={heroPosition}
+                  villainPos={isIp ? 'OOP' : 'IP'}
+                  potSize={safeCurrentPot}
+                  heroStack={heroUpdatedStack}
+                  villainStack={villainUpdatedStack}
+                  heroInvested={safeHeroInvested}
+                  riskAdvantage={apiQuantumMetrics?.riskAdvantage ?? 0}
+                  bountyPower={0}
+                />
+              </div>
+
+              {/* Telemetria Quântica do Spot */}
+              <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg space-y-3">
+                <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
+                  <span className="font-mono text-[0.6rem] font-black uppercase tracking-[0.2em] text-accent-emerald flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-emerald animate-pulse" />
+                    Física do Spot
+                  </span>
+                  <span className="text-[0.5rem] font-mono text-text-dim uppercase tracking-wider">
+                    v7.0 GOLD
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
+                    <span className="text-[0.48rem] font-black uppercase tracking-wider text-text-dim block mb-0.5">
+                      IP Risk Premium
+                    </span>
+                    <span className="font-mono text-base font-black text-accent-indigo">
+                      {finalIpRp.toFixed(1)}%
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
+                    <span className="text-[0.48rem] font-black uppercase tracking-wider text-text-dim block mb-0.5">
+                      OOP Risk Premium
+                    </span>
+                    <span className="font-mono text-base font-black text-accent-rose">
+                      {finalOopRp.toFixed(1)}%
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
+                    <span className="text-[0.48rem] font-black uppercase tracking-wider text-text-dim block mb-0.5">
+                      Assimetria (ΔRP)
+                    </span>
+                    <span className="font-mono text-base font-black text-white">
+                      {Math.abs(finalIpRp - finalOopRp).toFixed(1)}%
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
+                    <span className="text-[0.48rem] font-black uppercase tracking-wider text-text-dim block mb-0.5">
+                      Inércia FGS
+                    </span>
+                    <span className="font-mono text-base font-black text-accent-emerald">
+                      {blindsRisingSoon ? 'Subindo' : 'Estável'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </Suspense>
       ),
       calculator: (
         <Suspense fallback={<LoadingFallback />}>
-          <EquityCalculator key={`calc-${scenario.id}`} />
+          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden">
+            <EquityCalculator key={`calc-${scenario.id}`} />
+          </div>
         </Suspense>
       ),
       matchup: (
         <Suspense fallback={<LoadingFallback />}>
-          <MatchupSelector key={`match-${scenario.id}`} />
+          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden">
+            <MatchupSelector key={`match-${scenario.id}`} />
+          </div>
         </Suspense>
       ),
       comparar: (
         <Suspense fallback={<LoadingFallback />}>
-          <div className="relative h-187.5 w-full">
+          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden relative min-h-140">
             {scenarios && scenarios.length > 0 ? (
               <ComparisonRadar
                 key={`comp-${scenario.id}`}
@@ -413,39 +547,43 @@ export default function MasterSimulator() {
       ),
       perspectiva: (
         <Suspense fallback={<LoadingFallback />}>
-          <PerspectivePanel
-            key={`persp-${scenario.id}`}
-            initialStacks={scenario.stacks}
-            initialPrizes={scenario.prizes}
-            anteSize={anteSize}
-            heroInvestedBb={safeHeroInvested}
-            currentPotBb={safeCurrentPot}
-            initialActivePlayers={safeActivePlayers}
-            initialPkoValue={pkoValue}
-            initialIsNearPayjump={isNearPayjump}
-            initialBlindsRising={blindsRisingSoon}
-          />
+          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden">
+            <PerspectivePanel
+              key={`persp-${scenario.id}`}
+              initialStacks={scenario.stacks}
+              initialPrizes={scenario.prizes}
+              anteSize={anteSize}
+              heroInvestedBb={safeHeroInvested}
+              currentPotBb={safeCurrentPot}
+              initialActivePlayers={safeActivePlayers}
+              initialPkoValue={pkoValue}
+              initialIsNearPayjump={isNearPayjump}
+              initialBlindsRising={blindsRisingSoon}
+            />
+          </div>
         </Suspense>
       ),
       posflop: (
         <Suspense fallback={<LoadingFallback />}>
-          <PostFlopPanel
-            key={`pf-${scenario.id}`}
-            anteSize={anteSize}
-            scenarioId={scenario.id}
-            initialStacks={scenario.stacks}
-            initialPrizes={scenario.prizes}
-            heroIsIp={isIp}
-            activePlayers={safeActivePlayers}
-            effectiveSprData={effectiveSprData}
-            pkoValue={pkoValue}
-            {...(isIp ? { ipLabel: heroPosition } : { oopLabel: heroPosition })}
-          />
+          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden">
+            <PostFlopPanel
+              key={`pf-${scenario.id}`}
+              anteSize={anteSize}
+              scenarioId={scenario.id}
+              initialStacks={scenario.stacks}
+              initialPrizes={scenario.prizes}
+              heroIsIp={isIp}
+              activePlayers={safeActivePlayers}
+              effectiveSprData={effectiveSprData}
+              ipLabel={isIp ? heroPosition : undefined}
+              oopLabel={!isIp ? heroPosition : undefined}
+            />
+          </div>
         </Suspense>
       ),
       cfr: (
         <Suspense fallback={<LoadingFallback />}>
-          <div className="relative min-h-140 w-full">
+          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden min-h-140">
             <CfrRegretPanel
               key={`cfr-${scenario.id}`}
               initialPot={safeCurrentPot}
@@ -456,7 +594,8 @@ export default function MasterSimulator() {
         </Suspense>
       ),
     };
-    return toolContents[activeTool] || null;
+
+    return toolContents[activeTool] ?? toolContents.scenario;
   }, [
     activeTool,
     scenario,
@@ -503,7 +642,24 @@ export default function MasterSimulator() {
     nativeRangeMetric.equity,
     insolvencyRadarData,
     apiQuantumMetrics?.threshEq,
+    apiQuantumMetrics?.riskAdvantage,
+    spotSubView,
+    setHeroPosition,
+    updatePhysics,
   ]);
+
+  const getWorkspaceTabMeta = (tab: 'laboratorio' | 'dashboard' | 'referencial' | 'lente') => {
+    switch (tab) {
+      case 'laboratorio':
+        return { text: 'Cockpit Estratégico', icon: 'fa-sliders' };
+      case 'referencial':
+        return { text: 'Referencial Aula 1.2', icon: 'fa-anchor' };
+      case 'lente':
+        return { text: 'Lente PM (Fator Ψ)', icon: 'fa-atom' };
+      default:
+        return { text: 'Telemetria & Radar', icon: 'fa-chart-line' };
+    }
+  };
 
   if (!isMounted) {
     return <LoadingFallback />;
@@ -513,54 +669,40 @@ export default function MasterSimulator() {
     <SotaSpotContext value={spotContextValue}>
       <SotaMetricsContext value={metricsContextValue}>
         <SotaWasmContext value={wasmContextValue}>
-          {/* SOTA: Hard Containment (Zero Overflow / Zero Scroll) */}
-          <div className="bg-bg-base flex h-dvh w-screen flex-col overflow-hidden">
-            {tourSpotlight && <div className="tour-spotlight" {...tourSpotlightProps} />}
-
-            <div className="shrink-0">
-              <SimulatorHeader
-                scenarioName={
-                  scenario.name?.includes('B20') || scenario.id?.includes('b20')
-                    ? 'Ancoragem Forçada: Block Bet (20%)'
-                    : scenario.name
-                }
-                stacks={scenario.stacks}
-                effectiveIpRp={finalIpRp}
-                effectiveOopRp={finalOopRp}
-                rpSource={rpSource}
-                sidebarOpen={sidebarOpen}
-                onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          <div className="w-full flex flex-col min-h-screen">
+            {tourSpotlight && (
+              <div
+                className="tour-spotlight"
+                style={tourSpotlightProps?.style}
               />
-            </div>
+            )}
 
-            {/* Cockpit Workspace Tabs Switcher */}
-            <div className="shrink-0 bg-slate-950/20 border-b border-white/5 px-6 py-3">
-              <div className="sota-container flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-accent-indigo animate-pulse" />
-                  <span className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-text-muted">Cockpit Workspace</span>
+            {/* Barra de Navegação Mestre */}
+            <div className="bg-slate-950/60 border-b border-white/8 px-4 sm:px-6 py-3 sticky top-16 z-30 backdrop-blur-2xl">
+              <div className="flex flex-wrap items-center justify-between gap-3 max-w-7xl mx-auto">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-2 h-2 rounded-full bg-accent-indigo animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                  <span className="font-mono text-[0.62rem] font-black uppercase tracking-[0.2em] text-white">
+                    Simulador Mestre ICM
+                  </span>
                 </div>
-                <div className="flex items-center gap-1 bg-slate-950/40 p-1 rounded-xl border border-white/5">
-                  {(['dashboard', 'referencial', 'lente', 'laboratorio'] as const).map((tab) => {
+                <div className="flex flex-wrap items-center gap-1 bg-slate-950/60 p-1 rounded-xl border border-white/8 shadow-inner">
+                  {(['laboratorio', 'dashboard', 'referencial', 'lente'] as const).map((tab) => {
                     const isActive = activeWorkspaceTab === tab;
-                    const labels = {
-                      dashboard: { text: 'Telemetria', icon: 'fa-chart-line' },
-                      referencial: { text: 'Referencial', icon: 'fa-anchor' },
-                      lente: { text: 'Lente PM', icon: 'fa-atom' },
-                      laboratorio: { text: 'Laboratório', icon: 'fa-flask-vial' },
-                    };
+                    const meta = getWorkspaceTabMeta(tab);
                     return (
                       <button
+                        type="button"
                         key={tab}
                         onClick={() => setActiveWorkspaceTab(tab)}
-                        className={`px-4 py-2 rounded-lg text-[0.6rem] font-black uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 ${
+                        className={`px-3 py-1.5 rounded-lg text-[0.58rem] font-black uppercase tracking-[0.12em] transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
                           isActive
-                            ? 'bg-accent-indigo/15 text-white border border-accent-indigo/35 shadow-lg shadow-indigo-500/5'
-                            : 'text-text-dim hover:text-text-muted hover:bg-white/2 border border-transparent'
+                            ? 'bg-accent-indigo/20 text-white border border-accent-indigo/40 shadow-md'
+                            : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
                         }`}
                       >
-                        <i className={`fa-solid ${labels[tab].icon} ${isActive ? 'text-accent-indigo text-glow-indigo' : ''}`} />
-                        <span>{labels[tab].text}</span>
+                        <i className={`fa-solid ${meta.icon} text-[0.55rem] ${isActive ? 'text-accent-indigo' : ''}`} />
+                        <span>{meta.text}</span>
                       </button>
                     );
                   })}
@@ -568,243 +710,115 @@ export default function MasterSimulator() {
               </div>
             </div>
 
-            {/* Area do Simulador: Flexível, mas estritamente contida no Viewport */}
-            <div className="relative flex w-full flex-1 flex-col overflow-hidden">
-              <div className="h-full w-full flex-1 overflow-y-auto pb-0">
-                <div className="sota-panel-gap py-12 lg:py-20">
-                  
-                  {activeWorkspaceTab === 'dashboard' && (
-                    <section className="sota-container animate-sota-in" aria-label="Dashboard Quântico">
-                      <div className="mx-auto mb-20 max-w-4xl space-y-8 text-center">
-                        <SectionHeader
-                          step="00"
-                          label="Telemetria Sistêmica"
-                          title="Dashboard SOTA"
-                          description="A sua Assinatura Bayesiana. A Mente Preditiva monitora seus erros de EV e distorções de Nash em tempo real."
-                        />
-                        <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
-                      </div>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <div className="flex flex-col gap-10">
-                          <DashboardSOTA />
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-                            <GemmaAnalysisPanel
-                              heroPos={heroPosition}
-                              villainPos={isIp ? 'OOP' : 'IP'}
-                              potSize={safeCurrentPot}
-                              heroStack={heroUpdatedStack}
-                              villainStack={villainUpdatedStack}
-                              heroInvested={safeHeroInvested}
-                              riskAdvantage={apiQuantumMetrics?.riskAdvantage ?? 0}
-                              bountyPower={0}
-                            />
-                            <div className="glass-panel border-white/5 p-8 relative overflow-hidden rounded-4xl bg-slate-950/40 shadow-inner">
-                              <div className="bg-grain pointer-events-none absolute inset-0 opacity-[0.02] mix-blend-overlay" />
-                              <div className="pointer-events-none absolute inset-0 bg-radial-[at_top_right] from-rose-500/5 to-transparent" />
-                              <div className="relative z-10 mb-10 flex flex-col items-center gap-4 text-center">
-                                <div className="text-accent-rose flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-500/20 bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
-                                  <i className="fa-solid fa-radar animate-pulse text-xl"></i>
-                                </div>
-                                <div className="space-y-2">
-                                  <h3 className="m-0 text-xl font-black tracking-[0.35em] text-white uppercase">
-                                    Diagnóstico de Insolvência
-                                  </h3>
-                                  <p className="text-text-muted text-[0.65rem] font-medium tracking-[0.25em] uppercase">
-                                    Mapeamento vetorial de tensões sistêmicas e colapso de equidade
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="relative h-112 w-full">
-                                <Suspense fallback={<div className="text-text-darker flex h-full animate-pulse items-center justify-center text-[0.65rem] font-black tracking-[0.4em] uppercase">Sincronizando Radar...</div>}>
-                                  <InsolvencyRadar data={insolvencyRadarData} />
-                                </Suspense>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </Suspense>
-                    </section>
-                  )}
-
-                  {activeWorkspaceTab === 'referencial' && (
-                    <section className="sota-container animate-sota-in" aria-label="Referencial Empírico">
-                      <div className="mx-auto mb-20 max-w-4xl space-y-10 text-center">
-                        <SectionHeader
-                          step="01"
-                          label="Referencial"
-                          title="Âncora Empírica (Aula 1.2)"
-                          description="Dados reais e fundamentos absolutos do motor de simulação."
-                        />
-                        <p className="text-text-dim mx-auto max-w-3xl text-[1rem] leading-relaxed font-medium">
-                          Esta camada estabelece a{' '}
-                          <strong className="text-text-light text-xs tracking-[0.3em] uppercase">
-                            Topologia do Torneio
-                          </strong>
-                          {'. '}O motor ingere a estrutura de premiação e os stacks reais da Mesa Final para erguer as
-                          fundações matemáticas do cálculo de{' '}
-                          <em className="text-accent-indigo-light font-black tracking-wide not-italic">Bubble Factor</em>{' '}
-                          e <em className="text-accent-indigo-light font-black tracking-wide not-italic">Risk Premium</em>
-                          {'. '}
-                          Sem o Referencial, não há perspectiva.
-                        </p>
-                        <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
-                      </div>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <ReferencialAula12 />
-                      </Suspense>
-                    </section>
-                  )}
-
-                  {activeWorkspaceTab === 'lente' && (
-                    <section className="sota-container animate-sota-in" aria-label="Framework de Perspectiva Matemática">
-                      <div className="mx-auto mb-20 max-w-4xl space-y-10 text-center">
-                        <SectionHeader
-                          step="02"
-                          label="Framework"
-                          title="Lente de Perspectiva Matemática (PM)"
-                          description="A decomposição cirúrgica do spot através da lente do ecossistema SOTA."
-                        />
-                        <p className="text-text-dim mx-auto max-w-3xl text-[1rem] leading-relaxed font-medium">
-                          A{' '}
-                          <strong className="text-text-light text-xs tracking-[0.3em] uppercase">
-                            Métrica Soberana (PM)
-                          </strong>{' '}
-                          mede a verdadeira utilidade de uma ação, subtraindo o custo irrevogável (Sunk Cost) da
-                          expectativa purificada. A lente integra a Realização Posicional (R) e a punição gravitacional
-                          (FGS e RIO multiway).
-                        </p>
-                        <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
-                      </div>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <div className="space-y-16">
-                          <PmLensPanel
-                            key={`pmlens-${scenario.id}`}
-                            heroInvested={safeHeroInvested}
-                            currentPot={safeCurrentPot}
-                            activePlayers={safeActivePlayers}
-                            heroPosition={heroPosition}
-                            blindsRisingSoon={blindsRisingSoon}
-                            initialStacks={scenario.stacks}
-                            initialPrizes={scenario.prizes}
-                          />
-                          <SimulatorQuizWidget simulatorState={scenario} />
-                        </div>
-                      </Suspense>
-                    </section>
-                  )}
-
-                  {activeWorkspaceTab === 'laboratorio' && (
-                    <section className="sota-container animate-sota-in" aria-label="Laboratório ICM">
-                      <div className="mx-auto mb-20 max-w-4xl space-y-8 text-center">
-                        <SectionHeader
-                          step="03"
-                          label="Laboratório"
-                          title="Motor ICM de Distorções"
-                          description="Explore as refrações dinâmicas de equilíbrio GTO no multiverso de ranges."
-                        />
-                        <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
-                      </div>
-
-                      {/* HUD de Comando SOTA v7.0 GOLD */}
-                      <div className="grid grid-cols-1 items-start gap-10 overflow-visible xl:grid-cols-[350px_1fr_420px]">
-                        {/* COLUNA ALFA: Navegação de Cenários */}
-                        <aside
-                          className={`z-20 transition-all duration-700 lg:sticky lg:top-28 ${sidebarOpen ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-10 opacity-0'}`}
-                        >
-                          <div className="glass-panel border-white/5 p-6! lg:p-8!">
-                            <ScenarioSelector
-                              scenarios={scenarios}
-                              activeId={scenario.id}
-                              onSelect={handleScenarioSelect}
-                            />
-                          </div>
-                        </aside>
-
-                        {/* PALCO CENTRAL: Ferramenta Ativa */}
-                        <main
-                          className="flex min-w-0 flex-col gap-10 overflow-visible transition-all duration-500"
-                          role="main"
-                          aria-label="Palco de Execução SOTA"
-                        >
-                          <div className="bg-bg-base/60 sticky top-0 z-30 rounded-3xl border border-white/5 px-6 py-4 shadow-2xl backdrop-blur-xl">
-                            <SimulatorNavigation activeTool={activeTool} onSelectTool={setActiveTool} />
-                          </div>
-
-                          <div
-                            className={`overflow-visible transition-all duration-700 ${isPending ? 'scale-[0.99] opacity-40 blur-md' : 'scale-100 opacity-100'}`}
-                          >
-                            {activeToolContent}
-                          </div>
-                        </main>
-
-                        {/* COLUNA ÔMEGA: O Motor de Inteligência (HUD) */}
-                        <aside className="z-20 flex flex-col gap-10 lg:sticky lg:top-28">
-                          <div className="animate-fade-in [animation-delay:200ms]">
-                            <DashboardSOTA hudMode={true} />
-                          </div>
-
-                          <div className="animate-fade-in [animation-delay:400ms]">
-                            <GemmaAnalysisPanel
-                              heroPos={heroPosition}
-                              villainPos={isIp ? 'OOP' : 'IP'}
-                              potSize={safeCurrentPot}
-                              heroStack={heroUpdatedStack}
-                              villainStack={villainUpdatedStack}
-                              heroInvested={safeHeroInvested}
-                              riskAdvantage={apiQuantumMetrics?.riskAdvantage ?? 0}
-                              bountyPower={0}
-                            />
-                          </div>
-
-                          <div className="animate-fade-in [animation-delay:600ms]">
-                            {wasmContextValue && (
-                              <PerspectivePanel
-                                key={`hud-persp-${scenario.id}`}
-                                initialStacks={scenario.stacks}
-                                initialPrizes={scenario.prizes}
-                                anteSize={anteSize}
-                                heroInvestedBb={safeHeroInvested}
-                                currentPotBb={safeCurrentPot}
-                                initialActivePlayers={safeActivePlayers}
-                                initialPkoValue={pkoValue}
-                                hudOnly={true} // Nova prop para modo compacto
-                              />
-                            )}
-                          </div>
-                        </aside>
-                      </div>
-                    </section>
-                  )}
-                </div>
-
-                <footer className="bg-bg-deep relative mt-20 overflow-hidden border-t border-white/5 py-32">
-                  <div className="bg-accent-indigo/5 pointer-events-none absolute inset-0 bg-radial-[at_center_center] to-transparent" />
-                  <div className="sota-container relative z-10 flex flex-col items-center justify-center gap-12 text-center">
-                    <div className="space-y-6">
-                      <p className="m-0 text-[1rem] font-black tracking-[0.8em] text-white uppercase opacity-90 transition-all duration-1000 group-hover:tracking-[1em]">
-                        SOTA v7.0 GOLD
-                      </p>
-                      <div className="via-accent-indigo/40 mx-auto h-px w-48 bg-linear-to-r from-transparent to-transparent" />
-                      <p className="text-text-muted m-0 mx-auto max-w-2xl text-[0.7rem] leading-loose font-bold tracking-[0.4em] uppercase">
-                        A Convergência Absoluta entre Teoria de Jogo, Matemática Soberana e Inteligência Preditiva.
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-center gap-4">
-                      <p className="text-text-darker m-0 text-[0.6rem] font-black tracking-[0.5em] uppercase">
-                        &copy; 2026 Raphael Vitoi &middot; Nexus Core System
-                      </p>
-                      <div className="flex gap-10 opacity-40">
-                        <i className="fa-brands fa-instagram hover:text-accent-indigo cursor-pointer text-lg transition-colors" />
-                        <i className="fa-brands fa-twitch hover:text-accent-violet cursor-pointer text-lg transition-colors" />
-                        <i className="fa-brands fa-youtube hover:text-accent-danger cursor-pointer text-lg transition-colors" />
-                      </div>
-                    </div>
+            {/* Conteúdo do Workspace Ativo */}
+            <div className="w-full flex-1 py-6">
+              {activeWorkspaceTab === 'laboratorio' && (
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5 animate-sota-in" aria-label="Cockpit Estratégico & Cenários">
+                  {/* Seletor Rápido dos 8 Cenários */}
+                  <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-4 sm:p-5 shadow-lg">
+                    <ScenarioQuickSelector
+                      scenarios={scenarios}
+                      activeId={scenario.id}
+                      onSelect={handleScenarioSelect}
+                    />
                   </div>
-                </footer>
-              </div>
 
-              <SimulatorTour onStepAction={handleTourStep} onClose={closeTour} />
+                  {/* Barra de Ferramentas */}
+                  <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-1.5 shadow-lg">
+                    <SimulatorNavigation activeTool={activeTool} onSelectTool={setActiveTool} />
+                  </div>
+
+                  {/* Palco Central de Execução */}
+                  <div
+                    className={`transition-all duration-200 ${
+                      isPending ? 'scale-[0.995] opacity-50 blur-xs' : 'scale-100 opacity-100'
+                    }`}
+                  >
+                    {activeToolContent}
+                  </div>
+                </section>
+              )}
+
+              {activeWorkspaceTab === 'dashboard' && (
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-sota-in" aria-label="Dashboard Quântico">
+                  <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
+                    <SectionHeader
+                      step="00"
+                      label="Telemetria Sistêmica"
+                      title="Dashboard SOTA"
+                      description="A sua Assinatura Bayesiana. A Mente Preditiva monitora seus erros de EV e distorções de Nash em tempo real."
+                    />
+                    <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
+                  </div>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <div className="flex flex-col gap-8">
+                      <DashboardSOTA />
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                        <GemmaAnalysisPanel
+                          heroPos={heroPosition}
+                          villainPos={isIp ? 'OOP' : 'IP'}
+                          potSize={safeCurrentPot}
+                          heroStack={heroUpdatedStack}
+                          villainStack={villainUpdatedStack}
+                          heroInvested={safeHeroInvested}
+                          riskAdvantage={apiQuantumMetrics?.riskAdvantage ?? 0}
+                          bountyPower={0}
+                        />
+                        <div className="glass-panel border-white/10 p-6 relative overflow-hidden rounded-3xl bg-slate-950/50 shadow-inner">
+                          <div className="relative z-10 mb-6 flex flex-col items-center gap-2 text-center">
+                            <div className="text-accent-rose flex h-10 w-10 items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
+                              <i className="fa-solid fa-radar animate-pulse text-lg" />
+                            </div>
+                            <h3 className="m-0 text-base font-black tracking-[0.25em] text-white uppercase">
+                              Diagnóstico de Insolvência
+                            </h3>
+                          </div>
+                          <div className="relative h-96 w-full">
+                            <InsolvencyRadar data={insolvencyRadarData} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Suspense>
+                </section>
+              )}
+
+              {activeWorkspaceTab === 'referencial' && (
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-sota-in" aria-label="Referencial Empírico">
+                  <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
+                    <SectionHeader
+                      step="01"
+                      label="Referencial"
+                      title="Âncora Empírica (Aula 1.2)"
+                      description="Dados reais e fundamentos absolutos do motor de simulação."
+                    />
+                    <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
+                  </div>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ReferencialAula12 />
+                  </Suspense>
+                </section>
+              )}
+
+              {activeWorkspaceTab === 'lente' && (
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-sota-in" aria-label="Framework de Perspectiva Matemática">
+                  <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
+                    <SectionHeader
+                      step="02"
+                      label="Framework"
+                      title="Lente de Perspectiva (PM)"
+                      description="O algoritmo matemático desenvolvido por Raphael Vitoi para quantificação do Fator Ψ."
+                    />
+                    <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
+                  </div>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PmLensPanel />
+                  </Suspense>
+                </section>
+              )}
             </div>
+
+            <SimulatorTour onStepAction={handleTourStep} onClose={closeTour} />
           </div>
         </SotaWasmContext>
       </SotaMetricsContext>

@@ -36,7 +36,7 @@ export const RadarTooltip = ({ active, payload, label }: Readonly<RadarTooltipPr
 						>
 							<span
 								className="text-[0.65rem] font-bold uppercase tracking-wider"
-								{...{ style: { color: entry.color } }}
+								style={{ color: entry.color }}
 							>
 								{entry.name}
 							</span>

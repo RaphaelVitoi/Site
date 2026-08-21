@@ -2,7 +2,7 @@
 
 import { computeQuantumMetrics, type PerspectivaResult } from '@/lib/perspectiva';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Scenario } from '../engine/types';
+import type { Scenario } from '../solver/types';
 
 interface UseMasterCalculationsParams {
 	scenario: Scenario;
@@ -12,29 +12,46 @@ interface UseMasterCalculationsParams {
 	quantumPerspectiva: PerspectivaResult | null;
 }
 
+interface NativeRangeMetric {
+	equity: number;
+	isCalculating: boolean;
+}
+
 /**
- * IDENTITY: Hook de CÃ¡lculos Mestre (SOTA v7.0 GOLD)
+ * IDENTITY: Hook de Cálculos Mestre (SOTA v7.0 GOLD)
  * PATH: src/components/simulator/hooks/useMasterCalculations.ts
- * ROLE: Orquestra Web Workers de Equity e sincronizaÃ§Ã£o Bayesiana Nexus.
+ * ROLE: Orquestra Web Workers de Equity e sincronização Bayesiana Nexus.
  */
+function extractWorkerEquity(data: {
+	equity?: number;
+	result?: { hero_equity?: number; villain_equity?: number };
+}): number {
+	const heroEquity = data.result?.hero_equity;
+	if (heroEquity !== undefined) {
+		return heroEquity > 1 ? heroEquity : heroEquity * 100;
+	}
+	return data.equity ?? 50;
+}
+
 export function useMasterCalculations({
 	scenario,
 	aggressionFactor,
 	safeHeroInvested,
 	safeCurrentPot,
 	quantumPerspectiva,
-}: UseMasterCalculationsParams) {
+}: Readonly<UseMasterCalculationsParams>) {
 	const [bayesianWinProb, setBayesianWinProb] = useState<number | null>(null);
-	const [nativeRangeMetric, setNativeRangeMetric] = useState<{
-		equity: number;
-		isCalculating: boolean;
-	}>({ equity: 50, isCalculating: false });
+	const [nativeRangeMetric, setNativeRangeMetric] = useState<NativeRangeMetric>({
+		equity: 50,
+		isCalculating: false,
+	});
 
 	const equityWorkerRef = useRef<Worker | null>(null);
 
+	// 1. Worker Lifecycle (Persistente)
 	useEffect(() => {
-		// SOTA FIX: InstanciaÃ§Ã£o estrita via module para o WebWorker.
-		// O path Ã© relativo Ã  pasta hooks, entÃ£o subimos uma pasta para workers.
+		// SOTA FIX: Instanciação estrita via module para o WebWorker.
+		// O path é relativo à pasta hooks, então subimos uma pasta para workers.
 		const worker = new Worker(new URL('../workers/equity.worker.ts', import.meta.url), {
 			type: 'module',
 		});
@@ -50,12 +67,7 @@ export function useMasterCalculations({
 			if (e.data.error) {
 				setNativeRangeMetric((prev) => ({ ...prev, isCalculating: false }));
 			} else {
-				const extractedEquity =
-					e.data.result?.hero_equity !== undefined
-						? e.data.result.hero_equity > 1
-							? e.data.result.hero_equity
-							: e.data.result.hero_equity * 100
-						: e.data.equity ?? 50;
+				const extractedEquity = extractWorkerEquity(e.data);
 				setNativeRangeMetric({ equity: extractedEquity, isCalculating: false });
 			}
 		};
@@ -126,7 +138,7 @@ export function useMasterCalculations({
 			return computeQuantumMetrics(quantumPerspectiva);
 		} catch (e) {
 			console.warn(
-				'[SOTA] FricÃ§Ã£o evitada: Motor quÃ¢ntico aguardando simetria topolÃ³gica (HidrataÃ§Ã£o Pendente).',
+				'[SOTA] Fricção evitada: Motor quântico aguardando simetria topológica (Hidratação Pendente).',
 				e,
 			);
 			return null;

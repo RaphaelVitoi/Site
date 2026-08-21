@@ -4,7 +4,9 @@
  * ROLE: Executa sub-lotes de simulação Monte Carlo (10k-50k iterações) em WebAssembly.
  */
 
-import init, { calculate_equity_monte_carlo_binary } from '../../../lib/engine/vitoi_equity_engine';
+import init, {
+	calculate_equity_monte_carlo_binary,
+} from '../../../lib/engine/generated/vitoi_equity_engine';
 import { maskToBytes, rangeToBitmask } from './rangeParser';
 
 declare const self: DedicatedWorkerGlobalScope;
@@ -43,7 +45,7 @@ self.onmessage = async (e: MessageEvent<EquityWorkerRequest>) => {
 		board = '',
 		iterations = 50000,
 		simulationId,
-		seed = Math.floor(Math.random() * 0xffffffff),
+		seed = (globalThis.crypto?.getRandomValues(new Uint32Array(1))[0] ?? 0) >>> 0,
 		kappa = 1.0,
 		sharedBuffer,
 		workerIndex = 0,
@@ -83,11 +85,11 @@ self.onmessage = async (e: MessageEvent<EquityWorkerRequest>) => {
 
 		const latencyMs = Number((performance.now() - t0).toFixed(2));
 
-		// Se SharedArrayBuffer for fornecido, grava o resultado na posição indexada atômica
+		// Se SharedArrayBuffer for fornecido, grava o resultado na posição indexada
 		if (sharedBuffer) {
 			const floatView = new Float64Array(sharedBuffer);
-			if (workerIndex < floatView.length) {
-				floatView[workerIndex] = equity;
+			if (workerIndex >= 0 && workerIndex < floatView.length) {
+				floatView.set([equity], workerIndex);
 			}
 		}
 

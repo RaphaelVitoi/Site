@@ -25,6 +25,7 @@ class PhysicsSnapshot(BaseModel):
     position: str
     referenceStatus: str
 
+
 class InferenceRequest(BaseModel):
     prompt: str
     physics_snapshot: Optional[PhysicsSnapshot] = None
@@ -46,6 +47,7 @@ Position: {snapshot.position}
 Psychological Status: {snapshot.referenceStatus}
 [END_SNAPSHOT]
 """
+
 
 # Inside generate_response:
 snapshot_block = _format_snapshot_block(req.physics_snapshot)

@@ -12,15 +12,15 @@ import { logger } from '@/lib/logger';
 
 export interface RiskGaugeProps {
   value: number;
-  label?: string;
-  pos?: string;
-  stack?: string;
-  baseColor?: 'indigo' | 'pink';
-  threshold?: number;
-  opponentValue?: number;
-  dynamicDeathZone?: number;
-  maxRp?: number;
-  muted?: boolean;
+  label?: string | undefined;
+  pos?: string | undefined;
+  stack?: string | undefined;
+  baseColor?: 'indigo' | 'pink' | undefined;
+  threshold?: number | undefined;
+  opponentValue?: number | undefined;
+  dynamicDeathZone?: number | undefined;
+  maxRp?: number | undefined;
+  muted?: boolean | undefined;
 }
 
 type GaugeState = 'normal' | 'predator' | 'death';

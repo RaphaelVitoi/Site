@@ -40,7 +40,10 @@ PERSONA_MAP = {str(i + 1): av[0] for i, av in enumerate(AVATARS)}
 # HELPERS
 #
 def clear_screen() -> None:
-    os.system("cls" if os.name == "nt" else "clear")  # noqa: S605
+    if os.name == "nt":
+        subprocess.run(["cmd", "/c", "cls"], check=False)
+    else:
+        subprocess.run(["clear"], check=False)
 
 
 def is_port_open(port: int) -> bool:
@@ -427,8 +430,8 @@ def _execute_avatar_interaction(persona_name: str) -> None:
 
 
 def main() -> None:
-    if os.name == "nt":  # noqa: S605
-        os.system("")  # habilita sequencias ANSI no Windows
+    if os.name == "nt":
+        subprocess.run(["cmd", "/c", ""], check=False)  # habilita sequencias ANSI no Windows
 
     while True:
         snap = get_db_snapshot()

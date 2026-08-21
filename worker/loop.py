@@ -218,7 +218,7 @@ async def _dispatch_optimal_task(manager: QueueManager, semaphore: asyncio.Semap
     task = await loop.run_in_executor(None, UniversalArbitrator.extract_optimal_task, pending_tasks) if loop else None
 
     if task:
-        display_id = _format_display_id(str(task.id))
+        display_id = _format_display_id(task.id)
         logger.info(
             "[bold magenta][>] ESPACO DE ENTRADA VITAL REQUISITADO:[/] [%s]%s[/] (ID: %s)",
             te._c(task.agent),

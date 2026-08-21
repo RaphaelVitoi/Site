@@ -25,16 +25,16 @@ jobs:
 
     steps:
       - name: 📥 Checkout Codebase
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: ⚡ Setup Astral uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
         with:
           version: "latest"
           enable-cache: true
 
       - name: 🐍 Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -57,24 +57,33 @@ jobs:
 
     steps:
       - name: 📥 Checkout Codebase
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: 🟢 Setup Node.js 20.x
-        uses: actions/setup-node@v4
+      - name: 🟢 Setup Node.js 24.x
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: 📦 Install Frontend Dependencies
-        working-directory: ./frontend
+      - name: 🦀 Install pinned Rust and WASM toolchain
         run: |
-          npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+          rustup toolchain install 1.97.1 --profile minimal --target wasm32-unknown-unknown
+          rustup default 1.97.1
+          cargo install wasm-pack --version 0.15.0 --locked
 
-      - name: 🔍 TypeScript Strict Type Check
-        working-directory: ./frontend
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧬 Regenerate and verify WASM bindings
         run: |
-          npx tsc --noEmit || true
+          npm run wasm:build
+          git diff --exit-code -- frontend/src/lib/engine/generated frontend/public/wasm/vitoi_equity_engine_bg.wasm
+
+      - name: 🔍 TypeScript Strict Type Check and production build
+        run: |
+          npm run typecheck
+          npm run build
 
   security-and-architecture-gate:
     name: 🛡️ Security Headers & Architecture Quality Gate
@@ -83,15 +92,32 @@ jobs:
 
     steps:
       - name: 📥 Checkout Codebase
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: 🔗 Initialize and Validate Pinned Submodules
+        run: |
+          declared_paths="$(git config -f .gitmodules --get-regexp '^submodule\..*\.path$' | awk '{print $2}' | sort)"
+          gitlink_paths="$(git ls-files -s | awk '$1 == "160000" {print $4}' | sort)"
+          test "$declared_paths" = "$gitlink_paths"
+          git submodule update --init --recursive
+          git submodule status --recursive
+          while read -r submodule_path; do
+            test "$(git -C "$submodule_path" rev-parse HEAD)" = "$(git rev-parse "HEAD:$submodule_path")"
+          done <<EOF
+          $declared_paths
+          EOF
 
       - name: ⚡ Setup Astral uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
 
       - name: 🐍 Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: "3.12"
+
+      - name: 🔍 Actionlint GitHub Workflows Static Analysis
+        run: |
+          uv run --with actionlint-py actionlint .github/workflows/sota-ci.yml skills/gemini-cli-security/.github/workflows/gemini-review.yml
 
       - name: 🔒 SOTA Security & CWV Quality Gate Check
         run: |

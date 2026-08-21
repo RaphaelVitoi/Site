@@ -28,8 +28,22 @@
         "geminicodeassist.verboseLogging": false,
         "geminicodeassist.agentDebugMode": false,
         "geminicodeassist.rules": "Excelência SOTA: Proibida a artificialização. Priorizar lógica, ciência e SteelManning Protocol. Blindagem ASCII no Backend.",
-        // ── PARIDADE BACKEND (RUFF) ──────────────────────────────────
-        "python.defaultInterpreterPath": "C:/Users/rapha/.gemini/Site/.venv/Scripts/python.exe",
+        // ── PARIDADE BACKEND (RUFF & RUNTIME SOTA) ──────────────────
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+        "python.terminal.activateEnvironment": true,
+        "python.analysis.autoSearchPaths": true,
+        "python.analysis.extraPaths": [
+            "${workspaceFolder}",
+            "${workspaceFolder}/scripts",
+            "${workspaceFolder}/engine",
+            "${workspaceFolder}/core"
+        ],
+        "python.envFile": "${workspaceFolder}/.env",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+            "tests"
+        ],
+        "python.testing.unittestEnabled": false,
         "[python]": {
             "editor.defaultFormatter": "charliermarsh.ruff",
             "editor.codeActionsOnSave": {
@@ -68,6 +82,7 @@
             "**/.turbo/**": true,
             "**/__pycache__/**": true,
             "**/dist/**": true,
+            "**/dist-workers/**": true,
             "**/build/**": true,
             "**/wasm-equity/target/**": true,
             "**/reports/**": true
@@ -80,6 +95,7 @@
             "**/.next": true,
             "**/.turbo": true,
             "**/dist": true,
+            "**/dist-workers": true,
             "**/build": true,
             "**/reports": true
         },

@@ -6,6 +6,7 @@
  */
 
 import { maskToBytes, rangeToBitmask } from '../components/simulator/workers/rangeParser';
+import { initializeMonteCarloWasm } from '#monte-carlo-wasm-runtime';
 
 export interface MonteCarloSimulationOptions {
 	heroRange: string;
@@ -32,6 +33,17 @@ export interface MonteCarloSimulationResult {
 	simulationId: string;
 }
 
+function getHighEntropyUint32(): number {
+	if (typeof globalThis.crypto?.getRandomValues === 'function') {
+		const buf = new Uint32Array(1);
+		globalThis.crypto.getRandomValues(buf);
+		const val = buf.at(0);
+		if (val !== undefined) return val;
+	}
+	const perfTime = typeof performance !== 'undefined' ? performance.now() * 1000 : 0;
+	return ((Date.now() ^ perfTime) >>> 0) || 0xdeadbeef;
+}
+
 export class MonteCarloParallelPool {
 	private static instance: MonteCarloParallelPool | null = null;
 	private workers: Worker[] = [];
@@ -44,9 +56,7 @@ export class MonteCarloParallelPool {
 	}
 
 	public static getInstance(): MonteCarloParallelPool {
-		if (!MonteCarloParallelPool.instance) {
-			MonteCarloParallelPool.instance = new MonteCarloParallelPool();
-		}
+		MonteCarloParallelPool.instance ??= new MonteCarloParallelPool();
 		return MonteCarloParallelPool.instance;
 	}
 
@@ -61,7 +71,7 @@ export class MonteCarloParallelPool {
 		try {
 			this.hasSharedArrayBuffer =
 				typeof SharedArrayBuffer !== 'undefined' &&
-				typeof window.crossOriginIsolated !== 'undefined' &&
+				window.crossOriginIsolated !== undefined &&
 				window.crossOriginIsolated;
 		} catch {
 			this.hasSharedArrayBuffer = false;
@@ -110,7 +120,7 @@ export class MonteCarloParallelPool {
 		} = options;
 
 		const t0 = performance.now();
-		const simulationId = `sim_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+		const simulationId = `sim_${Date.now()}_${getHighEntropyUint32().toString(36).slice(2, 7)}`;
 
 		if (!this.isInitialized) {
 			await this.init();
@@ -124,7 +134,7 @@ export class MonteCarloParallelPool {
 		}
 
 		const iterationsPerWorker = Math.ceil(iterations / activeWorkers);
-		const baseSeed = Math.floor(Math.random() * 0x7fffffff);
+		const baseSeed = getHighEntropyUint32() & 0x7fffffff;
 
 		let sharedBuffer: SharedArrayBuffer | undefined;
 		let mode: ParallelismMode = 'TRANSFERABLE_WORKERS';
@@ -142,7 +152,7 @@ export class MonteCarloParallelPool {
 		const promises: Promise<{ equity: number; iterations: number }>[] = [];
 
 		for (let i = 0; i < activeWorkers; i++) {
-			const worker = this.workers[i];
+			const worker = this.workers.at(i);
 			if (!worker) continue;
 
 			const workerSeed = (baseSeed + (i * 1013904223)) >>> 0;
@@ -234,55 +244,14 @@ export class MonteCarloParallelPool {
 		t0: number
 	): Promise<MonteCarloSimulationResult> {
 		try {
-			if (typeof globalThis.TextDecoder === 'undefined') {
-				try {
-					const { TextDecoder, TextEncoder } = await import('util');
-					globalThis.TextDecoder = TextDecoder as unknown as typeof globalThis.TextDecoder;
-					globalThis.TextEncoder = TextEncoder as unknown as typeof globalThis.TextEncoder;
-				} catch {
-					// Silent fallback
-				}
-			}
-
-			const { default: initWasm, initSync, calculate_equity_monte_carlo_binary } = await import(
-				'./engine/vitoi_equity_engine'
-			);
-
-			if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
-				const fs = await import('fs');
-				const path = await import('path');
-				const cwd = process.cwd();
-				const candidates = [
-					path.resolve(__dirname, 'engine/vitoi_equity_engine_bg.wasm'),
-					path.resolve(__dirname, 'engine/pkg/vitoi_equity_engine_bg.wasm'),
-					path.resolve(cwd, 'src/lib/engine/vitoi_equity_engine_bg.wasm'),
-					path.resolve(cwd, 'frontend/src/lib/engine/vitoi_equity_engine_bg.wasm'),
-					path.resolve(cwd, 'public/wasm/vitoi_equity_engine_bg.wasm'),
-					path.resolve(cwd, 'frontend/public/wasm/vitoi_equity_engine_bg.wasm'),
-					'C:/Users/rapha/.gemini/Site/frontend/src/lib/engine/vitoi_equity_engine_bg.wasm',
-				];
-				const found = candidates.find((p) => fs.existsSync(p));
-				if (found) {
-					const wasmBytes = fs.readFileSync(found);
-					try {
-						const wasmModule = new WebAssembly.Module(wasmBytes);
-						initSync({ module: wasmModule });
-					} catch {
-						await initWasm(wasmBytes.buffer);
-					}
-				} else {
-					await initWasm();
-				}
-			} else {
-				await initWasm();
-			}
+			const calculate_equity_monte_carlo_binary = await initializeMonteCarloWasm();
 
 			const heroBigInt = typeof heroRange === 'string' ? rangeToBitmask(heroRange) : BigInt(0);
 			const villainBigInt = typeof villainRange === 'string' ? rangeToBitmask(villainRange) : BigInt(0);
 
 			const heroMask = maskToBytes(heroBigInt);
 			const villainMask = maskToBytes(villainBigInt);
-			const seed = Math.floor(Math.random() * 0xffffffff);
+			const seed = getHighEntropyUint32();
 
 			const equity = calculate_equity_monte_carlo_binary(
 				heroMask,

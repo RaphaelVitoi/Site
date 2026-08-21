@@ -1,13 +1,12 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
-
-# ruff: noqa: S405, S314
 import sys
-import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 
+import defusedxml.ElementTree as DefusedET
 
-def read_docx(file_path):
+
+def read_docx(file_path: str) -> None:
     path = Path(file_path)
     if not path.exists():
         print(f"Arquivo {file_path} nao encontrado.")
@@ -16,13 +15,13 @@ def read_docx(file_path):
     try:
         with zipfile.ZipFile(path, "r") as docx_zip:
             xml_content = docx_zip.read("word/document.xml")
-            tree = ET.fromstring(xml_content)
+            tree = DefusedET.fromstring(xml_content)
             ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
             for p in tree.findall(".//w:p", namespaces=ns):
                 texts = [t.text for t in p.findall(".//w:t", namespaces=ns) if t.text]
                 if texts:
                     print("".join(texts))
-    except (zipfile.BadZipFile, ET.ParseError, OSError) as e:
+    except (zipfile.BadZipFile, DefusedET.ParseError, OSError) as e:
         print(f"Erro ao ler DOCX: {e}")
 
 

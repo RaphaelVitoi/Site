@@ -93,6 +93,7 @@ Modulos que dependem de globals ainda em task_executor.py usam:
 ```python
 def _get_te():
     import task_executor as te
+
     return te
 ```
 

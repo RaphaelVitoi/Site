@@ -83,6 +83,14 @@ export const metadata: Metadata = {
 	description:
 		'A Geometria do Risco: ICM Pós-Flop, Risk Premium e a Fronteira SOTA v7.0 GOLD do Edge no Poker.',
 	metadataBase: new URL('https://www.pokerracional.com'),
+	icons: {
+		icon: [
+			{ url: '/favicon.svg', type: 'image/svg+xml' },
+			{ url: '/favicon.ico', sizes: '48x48 32x32 16x16', type: 'image/x-icon' },
+		],
+		shortcut: '/favicon.ico',
+		apple: '/favicon.svg',
+	},
 	openGraph: {
 		type: 'website',
 		locale: 'pt_BR',

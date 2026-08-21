@@ -14,6 +14,12 @@ interface AStarProjectionPanelProps {
   equity: number;
 }
 
+const LABELS = {
+  bet: 'Aposta',
+  reqFoldEquity: 'Req. Fold Equity',
+  potPrefix: 'Pot: ',
+} as const;
+
 export default function AStarProjectionPanel({ pot, stack, equity }: Readonly<AStarProjectionPanelProps>) {
   const streets = 3; // Flop, Turn, River
 
@@ -32,7 +38,7 @@ export default function AStarProjectionPanel({ pot, stack, equity }: Readonly<AS
     for (let i = 0; i < streets; i++) {
       const bet = currentPot * f;
       const streetNames = ['Flop', 'Turn', 'River'];
-      const streetName = streetNames[i] ?? 'River';
+      const streetName = streetNames.at(i) ?? 'River';
 
       // Simulação de Fold Equity baseada na agressão (tamanho da aposta) e equity do Hero
       // Quanto maior a aposta relativa ao pote, maior o FE inicial.
@@ -86,7 +92,7 @@ export default function AStarProjectionPanel({ pot, stack, equity }: Readonly<AS
             </div>
             <div className="space-y-4">
               <div className="flex items-end justify-between">
-                <span className="text-text-dim text-[0.5rem] font-bold uppercase">Aposta</span>
+                <span className="text-text-dim text-[0.5rem] font-bold uppercase">{LABELS.bet}</span>
                 <span className="font-mono text-[0.85rem] font-black text-white">
                   {step.bet.toFixed(1)} <span className="text-[0.5rem]">bb</span>
                 </span>
@@ -104,7 +110,7 @@ export default function AStarProjectionPanel({ pot, stack, equity }: Readonly<AS
 
               {/* Fold Equity Mock Display */}
               <div className="flex items-center justify-between pt-2">
-                <span className="text-text-darker text-[0.45rem] font-black uppercase">Req. Fold Equity</span>
+                <span className="text-text-darker text-[0.45rem] font-black uppercase">{LABELS.reqFoldEquity}</span>
                 <span className="text-accent-indigo-light font-mono text-[0.6rem] font-bold">
                   {step.fe.toFixed(1)}%
                 </span>
@@ -112,7 +118,7 @@ export default function AStarProjectionPanel({ pot, stack, equity }: Readonly<AS
 
               <div className="flex justify-between border-t border-white/5 pt-2 text-[0.5rem] font-bold tracking-tighter uppercase">
                 <span className="text-accent-indigo-light">{step.betPct.toFixed(0)}% Pot</span>
-                <span className="text-text-darker">Pot: {step.potAfter.toFixed(1)}</span>
+                <span className="text-text-darker">{LABELS.potPrefix}{step.potAfter.toFixed(1)}</span>
               </div>
             </div>
           </div>

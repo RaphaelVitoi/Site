@@ -6,7 +6,7 @@
 
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
-import type { Scenario } from '../engine/types';
+import type { Scenario } from '../solver/types';
 
 interface ScenarioSelectorProps {
   scenarios: Scenario[];

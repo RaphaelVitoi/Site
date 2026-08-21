@@ -14,6 +14,18 @@ from rich.table import Table
 
 console = Console()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+VITOI_WASM_FILENAME = "vitoi_equity_engine_bg.wasm"
+
+
+def _should_skip_package(pkg_key: str, pkg_info: dict, declared_workspaces: set[str]) -> bool:
+    if not pkg_key or pkg_info.get("link"):
+        return True
+    if pkg_key in declared_workspaces:
+        return True
+    if any(pkg_key == w or pkg_key == f"node_modules/{w}" for w in declared_workspaces):
+        return True
+    resolved = pkg_info.get("resolved", "")
+    return not resolved or resolved.startswith("file:")
 
 
 def verify_package_lock_integrity() -> dict:
@@ -35,23 +47,14 @@ def verify_package_lock_integrity() -> dict:
     missing_integrity = []
 
     for pkg_key, pkg_info in packages.items():
-        if not pkg_key:  # Root package entry
-            continue
-        # Link packages or local workspaces don't have remote tarball integrity
-        if (
-            pkg_info.get("link")
-            or pkg_key in declared_workspaces
-            or any(pkg_key == w or pkg_key == f"node_modules/{w}" for w in declared_workspaces)
-            or pkg_info.get("resolved", "").startswith("file:")
-            or not pkg_info.get("resolved")
-        ):
+        if _should_skip_package(pkg_key, pkg_info, declared_workspaces):
             continue
 
         total_remote += 1
         integrity = pkg_info.get("integrity", "")
         if integrity.startswith("sha512-"):
             sha512_count += 1
-        elif integrity.startswith("sha1-") or integrity.startswith("sha256-") or integrity.startswith("sha384-"):
+        elif integrity.startswith(("sha1-", "sha256-", "sha384-")):
             if integrity.startswith("sha1-"):
                 sha1_count += 1
             else:
@@ -75,12 +78,13 @@ def verify_frontend_sri_tags() -> dict:
     src_dir = BASE_DIR / "frontend" / "src"
     violations = []
     scanned_files = 0
+    script_pattern = re.compile(r'<script\b[^>]*?\bsrc=["\'](https?://[^"\']+)["\'][^>]*?>', re.IGNORECASE)
 
     if src_dir.exists():
         for file_path in src_dir.rglob("*.tsx"):
             scanned_files += 1
             content = file_path.read_text(encoding="utf-8", errors="ignore")
-            external_scripts = re.findall(r'<script[^>]+src=["\'](https?://[^"\']+)["\'][^>]*>', content, re.IGNORECASE)
+            external_scripts = script_pattern.findall(content)
             for tag in external_scripts:
                 if "integrity=" not in tag:
                     violations.append((file_path.name, tag[:60]))
@@ -95,21 +99,23 @@ def verify_frontend_sri_tags() -> dict:
 def verify_wasm_binary_checksums() -> dict:
     """Garante a integridade criptografica dos binarios WebAssembly compilados."""
     wasm_targets = [
-        BASE_DIR / "frontend" / "public" / "wasm" / "vitoi_equity_engine_bg.wasm",
+        BASE_DIR / "frontend" / "public" / "wasm" / VITOI_WASM_FILENAME,
         BASE_DIR / "frontend" / "public" / "wasm" / "nexus_core_rust_bg.wasm",
-        BASE_DIR / "frontend" / "src" / "lib" / "engine" / "pkg" / "vitoi_equity_engine_bg.wasm",
-        BASE_DIR / "wasm-equity" / "pkg" / "vitoi_equity_engine_bg.wasm",
+        BASE_DIR / "frontend" / "src" / "lib" / "engine" / "pkg" / VITOI_WASM_FILENAME,
+        BASE_DIR / "wasm-equity" / "pkg" / VITOI_WASM_FILENAME,
     ]
 
     verified = []
     for w in wasm_targets:
         if w.exists():
             h = hashlib.sha256(w.read_bytes()).hexdigest()
-            verified.append({
-                "path": w.relative_to(BASE_DIR).as_posix(),
-                "sha256": h[:16] + "..." + h[-8:],
-                "size_bytes": w.stat().st_size
-            })
+            verified.append(
+                {
+                    "path": w.relative_to(BASE_DIR).as_posix(),
+                    "sha256": h[:16] + "..." + h[-8:],
+                    "size_bytes": w.stat().st_size,
+                }
+            )
 
     return {
         "status": "PASS" if len(verified) > 0 else "FAIL",
@@ -126,29 +132,29 @@ def run_full_sri_audit(strict: bool = True) -> bool:
     sri_res = verify_frontend_sri_tags()
     wasm_res = verify_wasm_binary_checksums()
 
-    table = Table(title="[bold]AUDITORIA CRIPTOGRÁFICA DE INTEGRIDADE (SOTA v7.0 GOLD)[/]")
+    table = Table(title="[bold]AUDITORIA CRIPTOGRAFICA DE INTEGRIDADE (SOTA v7.0 GOLD)[/]")
     table.add_column("COMPONENTE", style="cyan")
     table.add_column("AMOSTRAS", justify="center")
-    table.add_column("PADRÃO CRIPTOGRÁFICO", justify="center")
+    table.add_column("PADRAO CRIPTOGRAFICO", justify="center")
     table.add_column("STATUS", justify="center")
 
     table.add_row(
         "NPM package-lock.json",
         f"{pkg_res.get('sha512_count', 0)} / {pkg_res.get('total_remote', 0)} pacotes",
         "SHA-512 Estrito (Zero SHA-1)",
-        f"[green]{pkg_res['status']}[/]" if pkg_res["status"] == "PASS" else f"[red]{pkg_res['status']}[/]"
+        f"[green]{pkg_res['status']}[/]" if pkg_res["status"] == "PASS" else f"[red]{pkg_res['status']}[/]",
     )
     table.add_row(
         "Frontend SRI Script Tags",
         f"{sri_res.get('scanned_files', 0)} arquivos auditados",
-        "SRI Mandate (Zero Injeção Externa)",
-        f"[green]{sri_res['status']}[/]" if sri_res["status"] == "PASS" else f"[red]{sri_res['status']}[/]"
+        "SRI Mandate (Zero Injecao Externa)",
+        f"[green]{sri_res['status']}[/]" if sri_res["status"] == "PASS" else f"[red]{sri_res['status']}[/]",
     )
     table.add_row(
-        "Binários WebAssembly (WASM)",
-        f"{len(wasm_res.get('binaries', []))} binários ativos",
+        "Binarios WebAssembly (WASM)",
+        f"{len(wasm_res.get('binaries', []))} binarios ativos",
         "SHA-256 Hash Lock (Zero Byte Drift)",
-        f"[green]{wasm_res['status']}[/]" if wasm_res["status"] == "PASS" else f"[red]{wasm_res['status']}[/]"
+        f"[green]{wasm_res['status']}[/]" if wasm_res["status"] == "PASS" else f"[red]{wasm_res['status']}[/]",
     )
 
     console.print(table)
@@ -156,14 +162,16 @@ def run_full_sri_audit(strict: bool = True) -> bool:
     all_passed = pkg_res["status"] == "PASS" and sri_res["status"] == "PASS" and wasm_res["status"] == "PASS"
 
     if not all_passed and strict:
-        console.print("[bold red]\n[GATE BLOCKED] Falha de integridade criptográfica detectada.[/]")
+        console.print("[bold red]\n[GATE BLOCKED] Falha de integridade criptografica detectada.[/]")
         return False
 
-    console.print("\n[bold green][GATE APPROVED] 100% dos recursos atendem ao padrão criptográfico SHA-512 / SRI SOTA.[/]")
+    console.print(
+        "\n[bold green][GATE APPROVED] 100% dos recursos atendem ao padrao criptografico SHA-512 / SRI SOTA.[/]"
+    )
     return True
 
 
 if __name__ == "__main__":
     is_strict = "--no-strict" not in sys.argv
-    success = run_full_sri_audit(strict=is_strict)
-    sys.exit(0 if success else 1)
+    SUCCESS = run_full_sri_audit(strict=is_strict)
+    sys.exit(0 if SUCCESS else 1)

@@ -3,12 +3,11 @@ SOTA Notepad Memory & Working Scratchpad Engine (Chico v7.0 GOLD)
 Protocol Chico SOTA v7.0 GOLD - Multi-Agent Working Memory & Dynamic Epistemic Scratchpad
 """
 
-import os
 import json
-import time
 import threading
+import time
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 
 class MemoryBlock:
@@ -55,8 +54,8 @@ class MemoryBlock:
 
 class NotepadMemory:
     """
-    Scratchpad / Working Memory Engine para agentes autônomos.
-    Permite compartilhamento de estado, hipóteses, planos de ação e checkpointing entre subagentes.
+    Scratchpad / Working Memory Engine para agentes autonomos.
+    Permite compartilhamento de estado, hipoteses, planos de acao e checkpointing entre subagentes.
     """
 
     def __init__(self, storage_path: Optional[Path] = None):
@@ -141,7 +140,7 @@ class NotepadMemory:
         with self._lock:
             lines = [
                 "# SOTA Working Memory & Notepad Scratchpad",
-                f"> **Protocolo Chico v7.0 GOLD** | Última Atualização: {time.strftime('%Y-%m-%d %H:%M:%S')}",
+                f"> **Protocolo Chico v7.0 GOLD** | Ultima Atualizacao: {time.strftime('%Y-%m-%d %H:%M:%S')}",
                 "",
                 f"**Total de Blocos Ativos:** `{len(self._blocks)}`",
                 "---",
@@ -171,8 +170,8 @@ def test_notepad():
     mem = NotepadMemory()
     mem.write_block(
         key="PLAN_CURRENT",
-        title="Plano de Otimização Sistêmica SOTA",
-        content="1. Memória Notepad e Replay Memory integradas.\n2. Clustering de Agentes calibrado.\n3. Sanitização de Entropia concluída.",
+        title="Plano de Otimizacao Sistemica SOTA",
+        content="1. Memoria Notepad e Replay Memory integradas.\n2. Clustering de Agentes calibrado.\n3. Sanitizacao de Entropia concluida.",
         tags=["plan", "sota", "active"],
     )
     mem.write_block(
@@ -183,7 +182,7 @@ def test_notepad():
     )
 
     blocks = mem.list_blocks()
-    print(f"[OK] {len(blocks)} blocos de memória salvos e renderizados em Markdown.")
+    print(f"[OK] {len(blocks)} blocos de memoria salvos e renderizados em Markdown.")
     for b in blocks:
         print(f"  - [{b.key}] {b.title} (Tags: {b.tags})")
     print("=" * 60)

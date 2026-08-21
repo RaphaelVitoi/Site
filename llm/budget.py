@@ -215,7 +215,7 @@ async def _block_gemini_model_key(model: str, key: str):
 
 
 def _gemini_key_pool_for_model(model: str) -> list[str]:
-    model_l = str(model).lower()
+    model_l = model.lower()
     if "pro" in model_l:
         return list(dict.fromkeys(GEMINI_PRO_KEYS + GEMINI_KEYS + GEMINI_FLASH_KEYS))
     if "flash" in model_l:

@@ -6,7 +6,7 @@
 
 'use client';
 
-import type { HeroPosition } from '@/components/simulator/engine/types';
+import type { HeroPosition } from '@/components/simulator/solver/types';
 import { SotaTooltip } from '@/components/simulator/ui/SotaTooltip';
 import React from 'react';
 import type { SotaPhysicsState } from '../hooks/useSotaSync';
@@ -15,10 +15,12 @@ interface SpatialControlsProps {
 	heroPosition: HeroPosition;
 	handleHeroPositionChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 	heroInvested: number;
+	setHeroInvested?: (v: number) => void;
 	currentPot: number;
+	setCurrentPot?: (v: number) => void;
 	activePlayers: number;
 	isPredictive: boolean;
-	onUpdatePhysics: (partial: Partial<SotaPhysicsState>) => void;
+	onUpdatePhysics?: (partial: Partial<SotaPhysicsState>) => void;
 	setActivePlayers: (v: number) => void;
 	setIsPredictive: (v: boolean) => void;
 }
@@ -27,7 +29,9 @@ export const SpatialControls = ({
 	heroPosition,
 	handleHeroPositionChange,
 	heroInvested,
+	setHeroInvested,
 	currentPot,
+	setCurrentPot,
 	activePlayers,
 	isPredictive,
 	onUpdatePhysics,
@@ -37,7 +41,7 @@ export const SpatialControls = ({
 	const isMultiway = activePlayers > 2;
 
 	return (
-		<div className="glass-panel p-8 lg:p-10 mb-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 items-end relative animate-sota-in overflow-hidden rounded-4xl">
+		<div className="glass-panel p-6 sm:p-8 mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 items-end relative animate-sota-in overflow-hidden rounded-3xl bg-slate-950/60 border border-white/10 shadow-xl">
 			<div className="absolute top-6 right-8 flex items-center gap-3">
 				<span
 					id="label-antevisao"
@@ -46,6 +50,7 @@ export const SpatialControls = ({
 					Modo Antevisão
 				</span>
 				<button
+					type="button"
 					aria-labelledby="label-antevisao"
 					aria-checked={isPredictive}
 					role="switch"
@@ -101,7 +106,11 @@ export const SpatialControls = ({
 						type="number"
 						step="0.5"
 						value={heroInvested}
-						onChange={(e) => onUpdatePhysics({ heroInvested: Number(e.target.value) })}
+						onChange={(e) => {
+							const val = Number(e.target.value);
+							setHeroInvested?.(val);
+							onUpdatePhysics?.({ heroInvested: val });
+						}}
 						className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-5 py-3.5 text-[0.9rem] font-mono tabular-nums font-black text-white focus:bg-slate-950/80 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/40 transition-all shadow-inner outline-none hover:border-white/20"
 					/>
 					<span className="absolute right-4 top-3.5 text-[0.65rem] text-text-darker font-black tracking-widest uppercase pointer-events-none">
@@ -125,7 +134,11 @@ export const SpatialControls = ({
 						type="number"
 						step="0.5"
 						value={currentPot}
-						onChange={(e) => onUpdatePhysics({ pot: Number(e.target.value) })}
+						onChange={(e) => {
+							const val = Number(e.target.value);
+							setCurrentPot?.(val);
+							onUpdatePhysics?.({ pot: val });
+						}}
 						className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-5 py-3.5 text-[0.9rem] font-mono tabular-nums font-black text-white focus:bg-slate-950/80 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/40 transition-all shadow-inner outline-none hover:border-white/20"
 					/>
 					<span className="absolute right-4 top-3.5 text-[0.65rem] text-text-darker font-black tracking-widest uppercase pointer-events-none">
@@ -175,7 +188,7 @@ export const SpatialControls = ({
 						FGS / Erosão
 					</label>
 				</SotaTooltip>
-				<div className="flex gap-4 items-center h-[46px]">
+				<div className="flex gap-4 items-center h-11.5">
 					<input
 						id="sim-fgs-control"
 						type="range"

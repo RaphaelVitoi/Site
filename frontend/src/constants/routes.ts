@@ -8,6 +8,8 @@ export const ROUTES = {
 	QUEM_SOU: '/quem-sou',
 	BIBLIOTECA: '/biblioteca',
 	SIMULADOR: '/simulador',
+	SIMULADOR_DISTORCOES: '/simulador/distorcoes',
+	SIMULADOR_GTO: '/simulador/gto-cfr',
 	DASHBOARD: '/dashboard',
 	QUIZ: '/quiz',
 	O_AUTOR: '/quem-sou',

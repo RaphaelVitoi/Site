@@ -11,6 +11,12 @@ export * from './schemas';
 export * from './telemetry-client';
 export * from './text-utils';
 export * from './nashSolver';
-export * from './icmMatrix';
+export {
+	TOURNAMENT_PRESETS,
+	computeBubbleFactorMatrix,
+	getPairwiseMatchupDetail,
+	type BubbleFactorMatrixResult,
+	type ICMTournamentPreset,
+	type PairwiseMatchupDetail,
+} from './icmMatrix';
 export * from './holdemEquities';
-

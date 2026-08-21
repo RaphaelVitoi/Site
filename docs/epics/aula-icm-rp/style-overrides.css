@@ -27,10 +27,6 @@
 }
 
 /* 3. Simetria do Scrollbar (Scenario List) */
-scenario-list {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(99, 102, 241, 0.5) transparent;
-}
 scenario-list::-webkit-scrollbar {
     width: 4px;
 }
@@ -43,6 +39,13 @@ scenario-list::-webkit-scrollbar-thumb {
 }
 scenario-list:hover::-webkit-scrollbar-thumb {
     background-color: rgba(99, 102, 241, 0.7);
+}
+
+@supports (scrollbar-width: thin) {
+    scenario-list {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(99, 102, 241, 0.5) transparent;
+    }
 }
 
 /* 4. Fix de Quebra de Linha em Telas Intermediárias */

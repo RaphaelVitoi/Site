@@ -16,6 +16,11 @@ interface WasmTelemetryWidgetProps {
 	riskAdvantage?: number; // SOTA v7.0 GOLD
 }
 
+const LABELS = {
+	title: 'Telemetria',
+	wasm: 'WASM',
+} as const;
+
 export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: Readonly<WasmTelemetryWidgetProps>) {
 	const logsEndRef = useRef<HTMLDivElement>(null);
 
@@ -55,7 +60,7 @@ export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: R
 					</div>
 					<div>
 						<h3 className="text-white font-black text-xl tracking-[0.3em] uppercase m-0">
-							Telemetria <span className="text-text-darker ml-1">WASM</span>
+							{LABELS.title} <span className="text-text-darker ml-1">{LABELS.wasm}</span>
 						</h3>
 						<p className="text-text-darker text-[0.6rem] font-black tracking-[0.4em] uppercase mt-1.5 m-0">
 							Motor de Observabilidade SOTA v7.0 GOLD
@@ -69,48 +74,48 @@ export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: R
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-10 relative z-10">
-				<div className="bg-black/40 p-6 rounded-3xl border border-white/5 hover:border-accent-emerald/30 transition-all duration-500 shadow-inner group/card">
-					<div className="text-[0.55rem] text-text-darker group-hover/card:text-accent-emerald/60 font-black uppercase tracking-[0.4em] mb-4 transition-colors">
+			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-8 relative z-10">
+				<div className="bg-black/50 p-4 sm:p-5 rounded-2xl border border-white/5 hover:border-accent-emerald/30 transition-all duration-300 shadow-inner group/card">
+					<div className="text-[0.5rem] sm:text-[0.55rem] text-text-darker group-hover/card:text-accent-emerald/60 font-black uppercase tracking-[0.25em] mb-2 transition-colors">
 						Latency
 					</div>
-					<div className="font-mono text-accent-emerald text-3xl font-black tabular-nums tracking-tighter">
-						{extractedLatency}<span className="text-xs ml-1 opacity-40">ms</span>
+					<div className="font-mono text-accent-emerald text-lg sm:text-xl font-black tabular-nums tracking-tight">
+						{extractedLatency}<span className="text-[0.65rem] ml-1 opacity-40">ms</span>
 					</div>
 				</div>
 				
-				<div className="bg-black/40 p-6 rounded-3xl border border-white/5 hover:border-accent-sky/30 transition-all duration-500 shadow-inner group/card">
-					<div className="text-[0.55rem] text-text-darker group-hover/card:text-accent-sky/60 font-black uppercase tracking-[0.4em] mb-4 transition-colors">
+				<div className="bg-black/50 p-4 sm:p-5 rounded-2xl border border-white/5 hover:border-accent-sky/30 transition-all duration-300 shadow-inner group/card">
+					<div className="text-[0.5rem] sm:text-[0.55rem] text-text-darker group-hover/card:text-accent-sky/60 font-black uppercase tracking-[0.25em] mb-2 transition-colors">
 						Nodes
 					</div>
-					<div className="font-mono text-accent-sky text-3xl font-black tabular-nums tracking-tighter">
+					<div className="font-mono text-accent-sky text-lg sm:text-xl font-black tabular-nums tracking-tight">
 						{extractedNodes}
 					</div>
 				</div>
 
-				<div className="bg-black/40 p-6 rounded-3xl border border-white/5 hover:border-accent-violet/30 transition-all duration-500 shadow-inner group/card">
-					<div className="text-[0.55rem] text-text-darker group-hover/card:text-accent-violet/60 font-black uppercase tracking-[0.4em] mb-4 transition-colors">
+				<div className="bg-black/50 p-4 sm:p-5 rounded-2xl border border-white/5 hover:border-accent-violet/30 transition-all duration-300 shadow-inner group/card">
+					<div className="text-[0.5rem] sm:text-[0.55rem] text-text-darker group-hover/card:text-accent-violet/60 font-black uppercase tracking-[0.25em] mb-2 transition-colors">
 						Nash Conv.
 					</div>
-					<div className="font-mono text-accent-violet text-3xl font-black tabular-nums tracking-tighter">
-						99.9<span className="text-xs ml-0.5 opacity-40">%</span>
+					<div className="font-mono text-accent-violet text-lg sm:text-xl font-black tabular-nums tracking-tight">
+						99.9<span className="text-[0.65rem] ml-0.5 opacity-40">%</span>
 					</div>
 				</div>
 
-				<div className="bg-black/40 p-6 rounded-3xl border border-white/5 hover:border-accent-rose/30 transition-all duration-500 shadow-inner group/card">
-					<div className="text-[0.55rem] text-text-darker group-hover/card:text-accent-rose/60 font-black uppercase tracking-[0.4em] mb-4 transition-colors">
+				<div className="bg-black/50 p-4 sm:p-5 rounded-2xl border border-white/5 hover:border-accent-rose/30 transition-all duration-300 shadow-inner group/card">
+					<div className="text-[0.5rem] sm:text-[0.55rem] text-text-darker group-hover/card:text-accent-rose/60 font-black uppercase tracking-[0.25em] mb-2 transition-colors">
 						Risk Adv.
 					</div>
-					<div className="font-mono text-accent-rose text-3xl font-black tabular-nums tracking-tighter">
-						{riskAdvantage > 0 ? '+' : ''}{riskAdvantage.toFixed(1)}<span className="text-xs ml-0.5 opacity-40">%</span>
+					<div className="font-mono text-accent-rose text-lg sm:text-xl font-black tabular-nums tracking-tight">
+						{riskAdvantage > 0 ? '+' : ''}{riskAdvantage.toFixed(1)}<span className="text-[0.65rem] ml-0.5 opacity-40">%</span>
 					</div>
 				</div>
 
-				<div className="bg-black/40 p-6 rounded-3xl border border-white/5 hover:border-accent-amber/30 transition-all duration-500 shadow-inner group/card">
-					<div className="text-[0.55rem] text-text-darker group-hover/card:text-accent-amber/60 font-black uppercase tracking-[0.4em] mb-4 transition-colors">
+				<div className="bg-black/50 p-4 sm:p-5 rounded-2xl border border-white/5 hover:border-accent-amber/30 transition-all duration-300 shadow-inner group/card col-span-2 sm:col-span-1">
+					<div className="text-[0.5rem] sm:text-[0.55rem] text-text-darker group-hover/card:text-accent-amber/60 font-black uppercase tracking-[0.25em] mb-2 transition-colors">
 						Insolvency
 					</div>
-					<div className={`font-mono text-3xl font-black tabular-nums tracking-tighter ${resultCi < 1 ? 'text-accent-rose' : 'text-accent-emerald'}`}>
+					<div className={`font-mono text-lg sm:text-xl font-black tabular-nums tracking-tight ${resultCi < 1 ? 'text-accent-rose' : 'text-accent-emerald'}`}>
 						{resultCi.toFixed(3)}
 					</div>
 				</div>

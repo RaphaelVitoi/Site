@@ -67,7 +67,7 @@ export function TableDrawScanner({ heroPosition, onUnlock, isUnlocked, children 
   }
 
   return (
-    <div className="glass-panel animate-sota-in relative flex min-h-[500px] flex-col items-center justify-center overflow-hidden border-white/10 p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] lg:p-14">
+    <div className="glass-panel animate-sota-in relative flex min-h-125 flex-col items-center justify-center overflow-hidden border-white/10 p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] lg:p-14">
       <div className="from-accent-indigo/5 pointer-events-none absolute inset-0 bg-radial-[at_top_right] to-transparent" />
 
       <div className="z-10 flex w-full max-w-2xl flex-col items-center text-center">
@@ -81,13 +81,13 @@ export function TableDrawScanner({ heroPosition, onUnlock, isUnlocked, children 
           {steps.map((step, idx) => (
             <div
               key={step.title}
-              className={`h-1.5 max-w-[80px] flex-1 rounded-full transition-all duration-500 ${getProgressColor(idx)}`}
+              className={`h-1.5 max-w-20 flex-1 rounded-full transition-all duration-500 ${getProgressColor(idx)}`}
             />
           ))}
         </div>
 
         {/* Active Step Card */}
-        <div className="relative mb-12 flex min-h-[200px] w-full items-center justify-center">
+        <div className="relative mb-12 flex min-h-50 w-full items-center justify-center">
           {steps.map((step, idx) => (
             <div
               key={step.title}
@@ -106,6 +106,7 @@ export function TableDrawScanner({ heroPosition, onUnlock, isUnlocked, children 
 
         {/* Actions */}
         <button
+          type="button"
           onClick={() => {
             if (currentStep < steps.length - 1) {
               setCurrentStep((prev) => prev + 1);
@@ -115,7 +116,7 @@ export function TableDrawScanner({ heroPosition, onUnlock, isUnlocked, children 
           }}
           className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 px-8 py-4 transition-all duration-300 hover:border-white/20 hover:bg-white/10"
         >
-          <div className="absolute inset-0 translate-x-[-100%] bg-linear-to-r from-transparent via-white/5 to-transparent transition-transform duration-1000 group-hover:translate-x-[100%]" />
+          <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/5 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
           <span className="relative z-10 flex items-center gap-3 text-xs font-black tracking-[0.2em] text-white uppercase">
             {currentStep < steps.length - 1
               ? 'Confirmar Analise e Avancar'

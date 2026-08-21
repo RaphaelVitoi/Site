@@ -16,7 +16,7 @@ def write_economic_log(task: Task, duration_secs: float, status: str):
     priority = str(task.metadata.get("priority", "medium")).upper() if task.metadata else "MEDIUM"
     timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
 
-    desc = str(task.description[:60])
+    desc = task.description[:60] if task.description else ""
     log_entry = (
         f"[{timestamp}] | LVL:{priority} | AGENT:{task.agent} | STAT:{status} "
         f"| DUR:{duration_secs:.1f}s | ID:{task.id} | DESC:{desc}...\n"
