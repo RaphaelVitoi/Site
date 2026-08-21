@@ -6,27 +6,53 @@
   com os pesos puxados e inicia o proxy de inferencia.
 #>
 param (
-    [Parameter(Mandatory=$true)]
-    [ValidateSet("31b", "26b", "12b", "4b", "8b", "llama3_8b", "qwen", "granite")]
-    [string]$Model,
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("12b", "e4b", "e2b", "4b", "26b", "31b", "31b_cloud", "8b", "llama3_8b", "qwen", "granite", "deepseek")]
+    [string]$Model = "12b",
 
     [Parameter(Mandatory=$false)]
     [switch]$Force
 )
 
-# 1. Mapeamento de Tags do Ollama
-$OllamaTags = @{
-    "31b"       = "gemma4:31b-cloud"
-    "26b"       = "gemma4:26b"
-    "12b"       = "gemma4:12b"
-    "4b"        = "gemma4:latest"
-    "8b"        = "gemma4:8b"
-    "llama3_8b" = "llama3.1:8b"
-    "qwen"      = "qwen2.5-coder:3b"
-    "granite"   = "granite3.3:8b"
+# 1. Mapeamento de Tags do Ollama — lido da FONTE UNICA DE VERDADE
+#    data/ollama_models.json. Antes existiam tres mapas hardcoded divergentes
+#    (aqui, engine/gemma_server.py e scripts/llm_inference/run_inference.py).
+#    O mapa local abaixo e apenas fallback se o manifesto estiver indisponivel.
+#    NOTA: nao usar $M como nome de variavel — PowerShell trata $M e $m como
+#    a mesma variavel, e qualquer 'foreach ($m in ...)' sobrescreveria o mapa.
+$ManifestoModelos = Join-Path $PSScriptRoot "..\data\ollama_models.json"
+$OllamaTags = @{}
+
+if (Test-Path $ManifestoModelos) {
+    try {
+        $Manifest = Get-Content $ManifestoModelos -Raw -Encoding UTF8 | ConvertFrom-Json
+        foreach ($entrada in $Manifest.models) { $OllamaTags[$entrada.alias] = $entrada.tag }
+        Write-Output "[SOTA INIT] Manifesto de modelos carregado ($($OllamaTags.Count) aliases)."
+    } catch {
+        Write-Warning "[SOTA INIT] Manifesto ilegivel; usando fallback embutido. $($_.Exception.Message)"
+    }
+}
+
+if ($OllamaTags.Count -eq 0) {
+    # Fallback minimo — mantido em paridade com o manifesto.
+    $OllamaTags = @{
+        "12b"       = "gemma4:12b"
+        "e4b"       = "gemma4:e4b"
+        "e2b"       = "gemma4:e2b"
+        "4b"        = "gemma4:latest"
+        "31b_cloud" = "gemma4:31b-cloud"
+        "31b"       = "gemma4:31b"
+        "llama3_8b" = "llama3.1:8b"
+        "qwen"      = "qwen2.5-coder:3b"
+        "granite"   = "granite3.3:8b"
+    }
 }
 
 $ModelTag = $OllamaTags[$Model]
+if (-not $ModelTag) {
+    Write-Error "[SOTA INIT] Alias '$Model' nao existe no manifesto. Aliases: $(($OllamaTags.Keys | Sort-Object) -join ', ')"
+    exit 1
+}
 Write-Output "[SOTA INIT] Inicializando modelo: $Model ($ModelTag)..."
 
 # 2. Garbage Collector & RAM Trim (WMI / API do Windows via PowerShell)
@@ -136,13 +162,19 @@ if (-not $OllamaPortOpen) {
 
 # 4. Verificacao/Pull de Pesos do Modelo
 Write-Output "[SOTA WEIGHTS] Verificando se os pesos do modelo $ModelTag estao disponiveis localmente..."
-$ModelsList = & ollama list
+# Comparacao EXATA. A versao anterior usava '-like "*$ModelTag*"', que casava por
+# substring: o alias 'gemma4:12b' daria falso positivo em 'gemma4:12b-instruct',
+# e um prefixo comum mascararia a ausencia do peso correto.
 $ModelDownloaded = $false
-foreach ($line in $ModelsList) {
-    if ($line -like "*$ModelTag*") {
-        $ModelDownloaded = $true
-        break
-    }
+try {
+    $tags = Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/tags" -TimeoutSec 20
+    $ModelDownloaded = @($tags.models | Where-Object { $_.name -eq $ModelTag }).Count -gt 0
+} catch {
+    # Fallback: primeira coluna de 'ollama list', comparada por igualdade.
+    $ModelDownloaded = @(& ollama list |
+        Select-Object -Skip 1 |
+        ForEach-Object { ($_ -split '\s+')[0] } |
+        Where-Object { $_ -eq $ModelTag }).Count -gt 0
 }
 
 if (-not $ModelDownloaded) {
@@ -174,21 +206,35 @@ if (Test-Path $VenvPythonRelative) {
 Write-Output "[SOTA PROXY] Usando python executavel: $VenvPython (WorkingDirectory: $WorkingDirectory)"
 
 # Iniciar configuracao de afinidade em background via Start-Job
-Start-Job -ScriptBlock {
+# CORRECAO: a mascara fixa 255 cobre apenas 8 processadores logicos. Nesta
+# maquina (i9-9900K, 8 nucleos / 16 threads) isso confinava tanto o proxy quanto
+# o Ollama a METADE da CPU disponivel. A mascara agora e derivada da topologia
+# real, e so e aplicada se houver mais de 8 logicos a ganhar.
+$LogicalCount = (Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum
+$AffinityMask = [IntPtr]([int64][math]::Pow(2, $LogicalCount) - 1)
+
+Start-Job -ArgumentList $AffinityMask, $PID -ScriptBlock {
+    param($Mask, $ParentPid)
     Start-Sleep -Seconds 4
-    # Ajustar afinidade do Proxy python
-    $ProxyProcs = Get-Process -Name "python" -ErrorAction SilentlyContinue
+
+    # Restringe ao python DESTA arvore de processos. A versao anterior alterava
+    # afinidade e prioridade de TODO processo 'python' da maquina, incluindo os
+    # que nada tinham a ver com o proxy.
+    $ProxyProcs = Get-CimInstance Win32_Process -Filter "Name='python.exe'" |
+        Where-Object { $_.ParentProcessId -eq $ParentPid } |
+        ForEach-Object { Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }
+
     foreach ($p in $ProxyProcs) {
         try {
-            $p.ProcessorAffinity = 255
+            $p.ProcessorAffinity = $Mask
             $p.PriorityClass = [System.Diagnostics.ProcessPriorityClass]::High
         } catch {}
     }
-    # Ajustar afinidade do Ollama
+
     $OllamaProcs = Get-Process -Name "ollama_llama_server", "ollama" -ErrorAction SilentlyContinue
     foreach ($o in $OllamaProcs) {
         try {
-            $o.ProcessorAffinity = 255
+            $o.ProcessorAffinity = $Mask
             $o.PriorityClass = [System.Diagnostics.ProcessPriorityClass]::AboveNormal
         } catch {}
     }
