@@ -8,7 +8,7 @@
 
 import { calculateMapaICM } from '../../lib/perspectiva';
 import { deriveRps, derivePostFlopRps, StreetState } from '../../lib/rpDeriver';
-import { solveIcmDistortion } from '../../components/simulator/engine/nashSolver';
+import { solveIcmDistortion } from '../../components/simulator/solver/nashSolver';
 
 describe('SOTA v4.2 Mathematical Integrity Audit', () => {
   // 1. FUNDAMENTO ICM (Malmuth-Harville)

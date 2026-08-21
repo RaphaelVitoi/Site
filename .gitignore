@@ -131,3 +131,7 @@ desktop.ini
 .cursorules
 .aiexclude
 null
+
+# Aninhamento de ecossistema e artefatos de teste (auditoria v8.0 GOLD)
+.gemini/
+.pytest_temp/

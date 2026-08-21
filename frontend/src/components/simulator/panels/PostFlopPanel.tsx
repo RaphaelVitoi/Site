@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState, useContext } from 'react';
 import { derivePostFlopRps, type PostFlopResult, type Street } from '@/lib/rpDeriver';
-import type { SprStage } from '../engine/types';
+import type { SprStage } from '../solver/types';
 import { StreetCard } from '@/components/simulator/ui/StreetCard';
 import { SotaMetricsContext, SotaWasmContext } from '../SotaContext';
-import { formatCi, formatPct, getPmColorClass } from '@/components/simulator/engine/utils';
+import { formatCi, formatPct, getPmColorClass } from '@/components/simulator/solver/utils';
 
 interface PostFlopPreset {
   label: string;
@@ -47,7 +47,6 @@ const PRESETS: PostFlopPreset[] = [
   },
 ];
 
-const STREET_LABEL: Record<Street, string> = { flop: 'FLOP', turn: 'TURN', river: 'RIVER' };
 const DEFAULT_PRESET: PostFlopPreset = PRESETS[0] ?? {
   label: 'Fallback',
   stacks: [40, 55],
@@ -57,6 +56,18 @@ const DEFAULT_PRESET: PostFlopPreset = PRESETS[0] ?? {
   ipLabel: 'IP',
   oopLabel: 'OOP',
 };
+
+const POSTFLOP_LABELS = {
+  fold: 'Fold',
+  hybridIntelligence: 'Inteligência Híbrida',
+  wasmLens: 'WASM + PM Lens',
+  pmGlobal: 'PM Global:',
+  insolvencyCi: 'Insolvência (Cᵢ)',
+  insolvencyCiField: 'Insolvência (Cᵢ):',
+  winRateReal: 'Win Rate Real',
+  riskPremium: 'Risk Premium',
+  evFold: 'EV_fold',
+} as const;
 
 function StackInput({
   val,
@@ -138,13 +149,13 @@ function PotControl({
       </div>
       <div className="flex flex-col gap-1">
         <div className="text-text-darker flex justify-between text-[0.55rem] font-black tracking-tighter uppercase">
-          <span>EV_fold EstÃ¡tico</span>
+          <span>EV_fold Estático</span>
           <span className="text-accent-danger/80">-{(safeVal + safeAnte / 100).toFixed(2)} bb</span>
         </div>
         <div className="h-1 w-full overflow-hidden rounded-full bg-white/5">
           <div
             className="bg-accent-danger/30 h-full rounded-full"
-            {...{ style: { width: `${Math.min((safeVal / max) * 100, 100)}%` } }}
+            style={{ width: `${Math.min((safeVal / max) * 100, 100)}%` }}
           />
         </div>
       </div>
@@ -153,16 +164,16 @@ function PotControl({
 }
 
 interface PostFlopPanelProps {
-  anteSize?: number;
-  scenarioId?: string;
-  initialStacks?: number[];
-  initialPrizes?: number[];
-  heroIsIp?: boolean;
-  activePlayers?: number;
-  effectiveSprData?: SprStage[];
-  pkoValue?: number;
-  ipLabel?: string;
-  oopLabel?: string;
+  anteSize?: number | undefined;
+  scenarioId?: string | undefined;
+  initialStacks?: number[] | undefined;
+  initialPrizes?: number[] | undefined;
+  heroIsIp?: boolean | undefined;
+  activePlayers?: number | undefined;
+  effectiveSprData?: SprStage[] | undefined;
+  pkoValue?: number | undefined;
+  ipLabel?: string | undefined;
+  oopLabel?: string | undefined;
 }
 
 export default function PostFlopPanel({
@@ -234,7 +245,7 @@ export default function PostFlopPanel({
   ]);
 
   const handlePresetChange = (idx: number) => {
-    const nextPreset = PRESETS[idx] ?? DEFAULT_PRESET;
+    const nextPreset = PRESETS.at(idx) ?? DEFAULT_PRESET;
     setPresetIdx(idx);
     setStacks(nextPreset.stacks);
     setPrizes(nextPreset.prizes);
@@ -250,17 +261,15 @@ export default function PostFlopPanel({
   };
 
   const updateStack = (idx: number, val: number) => {
-    const newStacks = [...stacks];
-    newStacks[idx] = Math.max(0.1, val);
-    setStacks(newStacks);
+    setStacks((prev) => prev.map((s, i) => (i === idx ? Math.max(0.1, val) : s)));
     setIsLocked(false);
   };
 
-  const preset = PRESETS[presetIdx] ?? DEFAULT_PRESET;
+  const preset = PRESETS.at(presetIdx) ?? DEFAULT_PRESET;
   const ipIdx = preset.ipIndex;
   const oopIdx = preset.oopIndex;
-  const ipStack = stacks[ipIdx] ?? 1;
-  const oopStack = stacks[oopIdx] ?? 1;
+  const ipStack = stacks.at(ipIdx) ?? 1;
+  const oopStack = stacks.at(oopIdx) ?? 1;
   const minActiveStack = Math.min(ipStack, oopStack);
   const resolvedIpLabel = ipLabel ?? (heroIsIp ? 'HERO' : 'VILÃO');
   const resolvedOopLabel = oopLabel ?? (heroIsIp ? 'VILÃO' : 'HERO');
@@ -355,21 +364,23 @@ export default function PostFlopPanel({
             </div>
             <p className="text-text-muted mt-1.5 mb-0 text-[0.7rem] leading-relaxed font-medium">
             Mapeamento termodinâmico de EV_fold e Risk Premium. O descarte ({' '}
-            <code className="text-accent-danger font-black px-1.5 py-0.5 rounded bg-accent-danger/10">Fold</code> ) possui valor intrínseco de sobrevivência baseado no
+            <code className="text-accent-danger font-black px-1.5 py-0.5 rounded bg-accent-danger/10">{POSTFLOP_LABELS.fold}</code> ) possui valor intrínseco de sobrevivência baseado no
             Payjump e na inércia da mesa.
             </p>
         </div>
 
         <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-black/40 p-1.5 shadow-inner">
           <button
+            type="button"
             onClick={() => setIsLocked(!isLocked)}
-            {...{ 'aria-pressed': isLocked }}
+            aria-pressed={isLocked}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-[0.55rem] font-black tracking-[0.2em] uppercase transition-all ${isLocked ? 'bg-accent-indigo text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'text-text-dim bg-transparent hover:text-white'}`}
           >
             <i className={`fa-solid ${isLocked ? 'fa-link' : 'fa-link-slash'} text-[0.6rem]`} />
             {isLocked ? 'Sincronizado' : 'Manual (Lab)'}
           </button>
           <button
+            type="button"
             onClick={addPhantom}
             aria-label="Adicionar Phantom Stack"
             className="text-text-dim flex items-center gap-2 rounded-lg border border-white/5 bg-white/5 px-4 py-2 text-[0.55rem] font-black tracking-[0.2em] uppercase transition-all hover:bg-white/10 hover:text-white"
@@ -395,9 +406,10 @@ export default function PostFlopPanel({
             <div className="flex flex-wrap gap-2">
               {PRESETS.map((p, i) => (
                 <button
+                  type="button"
                   key={p.label}
                   onClick={() => handlePresetChange(i)}
-                  {...{ 'aria-pressed': presetIdx === i }}
+                  aria-pressed={presetIdx === i}
                   className={`rounded-xl border px-4 py-2.5 text-[0.55rem] font-black transition-all duration-500 ${presetIdx === i ? 'bg-accent-indigo border-accent-indigo-light text-white shadow-lg' : 'text-text-muted border-white/5 bg-slate-800/40 hover:border-white/10 hover:text-white'}`}
                 >
                   {p.label}
@@ -413,12 +425,13 @@ export default function PostFlopPanel({
             <div className="flex gap-2 rounded-2xl border border-white/5 bg-black/40 p-1.5 shadow-inner">
               {[true, false].map((isIp) => (
                 <button
+                  type="button"
                   key={String(isIp)}
                   onClick={() => {
                     setHeroIsIp(isIp);
                     setIsLocked(false);
                   }}
-                  {...{ 'aria-pressed': heroIsIp === isIp }}
+                  aria-pressed={heroIsIp === isIp}
                   className={`flex-1 rounded-xl border px-4 py-2.5 text-[0.55rem] font-black transition-all duration-500 ${heroIsIp === isIp ? 'from-accent-sky border-accent-sky-light bg-linear-to-r to-sky-700 text-white shadow-md' : 'text-text-dim border-transparent bg-transparent hover:text-white'}`}
                 >
                   {isIp ? 'IP (Hero)' : 'OOP (Hero)'}
@@ -434,12 +447,13 @@ export default function PostFlopPanel({
             <div className="flex gap-2 rounded-2xl border border-white/5 bg-black/40 p-1.5 shadow-inner">
               {[2, 3, 4, 5].map((n) => (
                 <button
+                  type="button"
                   key={n}
                   onClick={() => {
                     setNumPlayers(n);
                     setIsLocked(false);
                   }}
-                  {...{ 'aria-pressed': numPlayers === n }}
+                  aria-pressed={numPlayers === n}
                   className={`flex-1 rounded-xl border py-2 text-[0.6rem] font-black transition-all duration-500 ${numPlayers === n ? 'bg-accent-violet border-accent-violet text-black' : 'text-text-muted border-transparent bg-transparent hover:text-white'}`}
                 >
                   {n}
@@ -506,7 +520,7 @@ export default function PostFlopPanel({
             >
               <i className="fa-solid fa-ban text-text-darker mb-4 text-2xl"></i>
               <span className="text-text-darker text-[0.6rem] font-black tracking-[0.3em] uppercase">
-                {STREET_LABEL[street]} &middot; Vácuo de Dados
+                {street.toUpperCase()} &middot; Vácuo de Dados
               </span>
             </div>
           ),
@@ -524,7 +538,8 @@ export default function PostFlopPanel({
               className={`h-2 w-2 rounded-full ${isCalculatingWasm ? 'bg-accent-emerald animate-pulse shadow-[0_0_12px_var(--accent-emerald)]' : 'bg-accent-indigo shadow-[0_0_12px_var(--accent-indigo)]'}`}
             ></div>
             <strong className="text-[0.75rem] font-black tracking-[0.3em] text-white uppercase">
-              Inteligência Híbrida &middot; <span className="text-text-muted">WASM + PM Lens</span>
+              {POSTFLOP_LABELS.hybridIntelligence} &middot;{' '}
+              <span className="text-text-muted">{POSTFLOP_LABELS.wasmLens}</span>
             </strong>
             <span
               className={`rounded-lg border px-3 py-1 font-mono text-[0.55rem] font-black tabular-nums ${isLocked ? 'bg-accent-indigo/10 border-accent-indigo/30 text-accent-indigo-light' : 'text-text-muted border-white/10 bg-white/5'}`}
@@ -535,7 +550,7 @@ export default function PostFlopPanel({
           <div className="flex flex-wrap items-center gap-4">
             {pm !== null && (
               <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-black/40 px-4 py-2 shadow-inner">
-                <span className="text-text-dim text-[0.6rem] font-black tracking-[0.2em] uppercase">PM Global:</span>
+                <span className="text-text-dim text-[0.6rem] font-black tracking-[0.2em] uppercase">{POSTFLOP_LABELS.pmGlobal}</span>
                 <span className={`font-mono text-[0.8rem] font-black tabular-nums ${getPmColorClass(pm)}`}>
                   {formatPct(pm)}
                 </span>
@@ -544,7 +559,7 @@ export default function PostFlopPanel({
             {ci !== null && (
               <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-black/40 px-4 py-2 shadow-inner">
                 <span className="text-text-dim text-[0.6rem] font-black tracking-[0.2em] uppercase">
-                  Insolvência (Cᵢ):
+                  {POSTFLOP_LABELS.insolvencyCiField}
                 </span>
                 <span
                   className={`font-mono text-[0.8rem] font-black tabular-nums ${ci < 1 ? 'text-accent-danger' : 'text-accent-emerald'}`}
@@ -563,7 +578,7 @@ export default function PostFlopPanel({
             </span>
             <div className="flex h-full flex-col justify-center gap-5 rounded-2xl border border-white/5 bg-black/50 p-5 shadow-inner">
               <div className="flex items-center justify-between">
-                <span className="text-text-muted text-[0.65rem] font-bold tracking-[0.2em] uppercase">Win Rate Real</span>
+                <span className="text-text-muted text-[0.65rem] font-bold tracking-[0.2em] uppercase">{POSTFLOP_LABELS.winRateReal}</span>
                 <span className={`font-mono text-[0.9rem] font-black tabular-nums ${winRateClass}`}>{winRateText}</span>
               </div>
               <div className="h-px w-full bg-white/5" />
@@ -584,13 +599,14 @@ export default function PostFlopPanel({
             </div>
             <p className="text-text-dim m-0 text-[0.8rem] leading-relaxed font-medium italic opacity-90">
               A Perspectiva Matemática (PM) atua sobre{' '}
-              <code className="text-accent-danger bg-accent-danger/10 rounded px-1.5 py-0.5 font-bold">EV_fold</code> e{' '}
-              <code className="text-accent-indigo-light bg-accent-indigo/10 rounded px-1.5 py-0.5 font-bold">Risk Premium</code>.
-              A <span className="text-accent-danger font-bold">Insolvência (Cᵢ)</span> desmascara a ilusão do
+              <code className="text-accent-danger bg-accent-danger/10 rounded px-1.5 py-0.5 font-bold">{POSTFLOP_LABELS.evFold}</code> e{' '}
+              <code className="text-accent-indigo-light bg-accent-indigo/10 rounded px-1.5 py-0.5 font-bold">{POSTFLOP_LABELS.riskPremium}</code>.
+              A <span className="text-accent-danger font-bold">{POSTFLOP_LABELS.insolvencyCi}</span> desmascara a ilusão do
               ChipEV, enquanto o Motor WebGPU injeta Pathfinding A*, mitigando o viés do vácuo pós-flop.
             </p>
             {!isLocked && (
               <button
+                type="button"
                 onClick={() => setIsLocked(true)}
                 className="bg-accent-emerald/10 text-accent-emerald-light border-accent-emerald/30 hover:bg-accent-emerald/20 mt-6 self-start rounded-xl border px-5 py-2.5 text-[0.55rem] font-black tracking-[0.3em] uppercase transition-all hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95"
               >

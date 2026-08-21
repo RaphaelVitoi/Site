@@ -62,6 +62,9 @@ interface QuadrantMetric {
 	severity: 'OPTIMAL' | 'MODERATE' | 'HIGH' | 'CRITICAL';
 }
 
+const TXT_EXPORT_MD = 'Exportar MD';
+const TXT_EXPORT_JSON = 'JSON';
+
 export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) {
 	const [viewMode, setViewMode] = useState<TelemetryViewMode>('HISTOGRAM');
 	const [stackFilter, setStackFilter] = useState<StackFilter>('ALL');
@@ -623,7 +626,7 @@ ${zoneRows}
 							title="Baixar Relatório Completo em Markdown"
 						>
 							<i className="fa-brands fa-markdown text-xs" />
-							<span>Exportar MD</span>
+							<span>{TXT_EXPORT_MD}</span>
 						</button>
 
 						<button
@@ -633,7 +636,7 @@ ${zoneRows}
 							title="Exportar Dados Brutos em JSON"
 						>
 							<i className="fa-solid fa-code text-xs" />
-							<span>JSON</span>
+							<span>{TXT_EXPORT_JSON}</span>
 						</button>
 					</div>
 				</div>
@@ -833,7 +836,7 @@ ${zoneRows}
 							</p>
 							<div className="flex justify-between items-center border-t border-white/5 pt-2 font-mono text-[0.6rem] text-text-muted">
 								<span>{zone.count} mãos no filtro</span>
-								<span className={zone.textClass}>Perda Total: {zone.totalLoss} bb</span>
+								<span className={zone.textClass}>{`Perda Total: ${zone.totalLoss} bb`}</span>
 							</div>
 						</div>
 					))}

@@ -88,7 +88,12 @@ export function calculateEffectiveFoldProbability(
 	const bayesianFold = (baseFoldProb * 0.4) + (mdfFold * 0.4) + (polarization * 0.2);
 
 	// Modulação por Agressividade do Vilão (AF alto folda menos vs apostas médias, AF baixo folda mais)
-	const afModifier = aggressionFactor > 2.5 ? 0.92 : aggressionFactor < 1.5 ? 1.08 : 1.0;
+	let afModifier = 1.0;
+	if (aggressionFactor > 2.5) {
+		afModifier = 0.92;
+	} else if (aggressionFactor < 1.5) {
+		afModifier = 1.08;
+	}
 	const adjustedFold = Math.min(0.95, Math.max(0.05, bayesianFold * afModifier));
 
 	// Distorção de Sobrevivência ICM (Bubble Factor > 1.0 força o vilão a foldar mais para preservar stack)

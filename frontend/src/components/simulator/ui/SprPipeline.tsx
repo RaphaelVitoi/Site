@@ -8,7 +8,7 @@
  * BINDING: [engine/types.ts, simulator.module.css]
  */
 
-import type { SprStage } from '../engine/types';
+import type { SprStage } from '../solver/types';
 import AnimatedNumber from './AnimatedNumber';
 import { useSotaSync } from '../hooks/useSotaSync';
 
@@ -64,7 +64,7 @@ export default function SprPipeline({ stages, activeStage = 0 }: Readonly<SprPip
 
 					const opacityClass = isActive
 						? 'opacity-100'
-						: (OPACITY_CLASSES[idx] ?? 'opacity-30');
+						: (OPACITY_CLASSES.at(idx) ?? 'opacity-30');
 					const activeClasses = isActive
 						? `border-white/20 ring-4 ${ringColor} ${bgActive}`
 						: 'border-white/10';

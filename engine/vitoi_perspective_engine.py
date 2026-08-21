@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name, too-many-locals, too-many-statements, too-many-positional-arguments
 """Modulo de Perspectiva Matematica VITOI."""
 
 import math
@@ -94,8 +95,7 @@ class VitoiPerspectiveEngine:
         beta = 0.88
         if x >= 0:
             return math.pow(x, alpha)
-        else:
-            return -loss_aversion * math.pow(abs(x), beta)
+        return -loss_aversion * math.pow(abs(x), beta)
 
     @classmethod
     def simulate_decision_tree(

@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react';
 import { PrizesSchema, StacksSchema } from '@/lib/schemas';
-import type { Scenario, IcmDistortionResult } from '@/components/simulator/engine/types';
-import { solveIcmDistortion } from '@/components/simulator/engine/nashSolver';
+import type { Scenario, IcmDistortionResult } from '@/components/simulator/solver/types';
+import { solveIcmDistortion } from '@/components/simulator/solver/nashSolver';
 
 interface RadarCalculationsParams {
 	scenarios: Scenario[];

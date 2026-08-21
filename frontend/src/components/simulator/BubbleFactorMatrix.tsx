@@ -252,7 +252,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 							{matrixResult.playerNames.map((name, j) => (
 								<th
 									key={`head-col-${name}-${j}`}
-									className="p-2 text-slate-300 font-bold bg-slate-900/80 border border-slate-800 min-w-[85px]"
+									className="p-2 text-slate-300 font-bold bg-slate-900/80 border border-slate-800 min-w-21.25"
 								>
 									{name.split(' ')[0]}
 								</th>

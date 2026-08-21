@@ -89,6 +89,7 @@ Direto ao ponto, com rigor axiomático e sem preâmbulos.
 				<div className="flex flex-wrap items-center gap-6">
 					<div className="flex bg-slate-950/80 p-2 rounded-2xl border border-white/10 shadow-inner backdrop-blur-xl">
 						<button
+							type="button"
 							onClick={() => setSelectedModel('auto')}
 							disabled={isStreaming}
 							className={`px-5 py-2 text-[0.65rem] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-500 active:scale-95 ${
@@ -100,6 +101,7 @@ Direto ao ponto, com rigor axiomático e sem preâmbulos.
 							Auto
 						</button>
 						<button
+							type="button"
 							onClick={() => setSelectedModel('gemma4:4b')}
 							disabled={isStreaming}
 							className={`px-5 py-2 text-[0.65rem] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-500 active:scale-95 ${
@@ -112,6 +114,7 @@ Direto ao ponto, com rigor axiomático e sem preâmbulos.
 							4B
 						</button>
 						<button
+							type="button"
 							onClick={() => setSelectedModel('gemma4:31b')}
 							disabled={isStreaming}
 							className={`px-5 py-2 text-[0.65rem] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-500 active:scale-95 ${
@@ -125,19 +128,20 @@ Direto ao ponto, com rigor axiomático e sem preâmbulos.
 						</button>
 					</div>
 					<button
+						type="button"
 						onClick={handleInjectAnalysis}
 						disabled={isStreaming}
 						className="px-10 py-4 text-[0.7rem] font-black tracking-[0.3em] text-white bg-accent-indigo/15 hover:bg-accent-indigo/25 rounded-2xl border border-accent-indigo/40 disabled:opacity-40 transition-all duration-500 active:scale-90 shadow-2xl hover:shadow-indigo-500/20 group/btn whitespace-nowrap"
 					>
 						{isStreaming ? (
 							<span className="flex items-center gap-4">
-								<i className="fa-solid fa-atom animate-spin text-accent-indigo" /> 
+								<i className="fa-solid fa-atom animate-spin text-accent-indigo" />
 								<span className="animate-pulse">SINTETIZANDO...</span>
 							</span>
 						) : (
 							<span className="flex items-center gap-4">
 								<i className="fa-solid fa-bolt-lightning text-accent-indigo group-hover/btn:scale-110 transition-transform" />
-								INJETAR ANTEVISÃO
+								<span>INJETAR ANTEVISÃO</span>
 							</span>
 						)}
 					</button>
@@ -148,19 +152,19 @@ Direto ao ponto, com rigor axiomático e sem preâmbulos.
 				{error && (
 					<div className="text-accent-rose p-8 bg-accent-rose/10 rounded-3xl border border-accent-rose/20 text-[0.7rem] font-black tracking-widest flex items-center gap-5">
 						<i className="fa-solid fa-triangle-exclamation text-xl" />
-						ERRO NA SINAPSE: {error}
+						<span>ERRO NA SINAPSE: {error}</span>
 					</div>
 				)}
 				{!error && !streamedText && isStreaming && (
 					<span className="text-accent-emerald/60 italic text-[0.9rem] animate-pulse flex items-center gap-4">
 						<i className="fa-solid fa-wifi animate-pulse" />
-						Estabelecendo handshake com a Mente Local...
+						<span>Estabelecendo handshake com a Mente Local...</span>
 					</span>
 				)}
 				{!error && !streamedText && !isStreaming && (
 					<span className="text-text-darker italic text-[0.9rem] flex items-center gap-4">
-						<i className="fa-solid fa-terminal opacity-50" /> 
-						Aguardando gatilho de injeção SOTA v7.0 GOLD...
+						<i className="fa-solid fa-terminal opacity-50" />
+						<span>Aguardando gatilho de injeção SOTA v7.0 GOLD...</span>
 					</span>
 				)}
 				<div className="relative z-10 text-white/90 leading-loose">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import type { ChipEvFreqs, StreetChipEvFreqs } from '@/components/simulator/engine/types';
+import type { ChipEvFreqs, StreetChipEvFreqs } from '@/components/simulator/solver/types';
 
 /**
  * SOTA: Entanglement Quântico Verdadeiro (A Árvore Viva)
@@ -89,12 +89,19 @@ function calculateFreqDeltas(
 ): { deltas: Partial<ChipEvFreqs>; hasChange: boolean } {
 	const deltas: Partial<ChipEvFreqs> = {};
 	let hasChange = false;
-	for (const key of Object.keys(newFreqs) as Array<keyof ChipEvFreqs>) {
-		const d = newFreqs[key] - oldFreqs[key];
-		deltas[key] = d;
+	for (const [key, newVal] of Object.entries(newFreqs) as Array<[keyof ChipEvFreqs, number]>) {
+		const oldVal = Reflect.get(oldFreqs, key) ?? 0;
+		const d = newVal - oldVal;
+		Reflect.set(deltas, key, d);
 		if (Math.abs(d) > 0.1) hasChange = true;
 	}
 	return { deltas, hasChange };
+}
+
+function getStreetFreqs(container: StreetChipEvFreqs, street: keyof StreetChipEvFreqs): ChipEvFreqs {
+	if (street === 'flop') return container.flop;
+	if (street === 'turn') return container.turn;
+	return container.river;
 }
 
 function propagateFrequencies(
@@ -109,7 +116,11 @@ function propagateFrequencies(
 	};
 
 	const propagate = (targetStreet: keyof StreetChipEvFreqs, attenuation: number) => {
-		next[targetStreet] = applyFrequencyPropagation(deltas, next[targetStreet], attenuation);
+		const currentStreetFreqs = getStreetFreqs(next, targetStreet);
+		const updated = applyFrequencyPropagation(deltas, currentStreetFreqs, attenuation);
+		if (targetStreet === 'flop') next.flop = updated;
+		else if (targetStreet === 'turn') next.turn = updated;
+		else if (targetStreet === 'river') next.river = updated;
 	};
 
 	if (street === 'flop') {
@@ -131,10 +142,13 @@ export function useFrequencyPropagation(
 	const handleStreetFreqChange = useCallback(
 		(street: keyof StreetChipEvFreqs, freqs: ChipEvFreqs) => {
 			setStreetFreqs((prev: StreetChipEvFreqs) => {
-				const { deltas, hasChange } = calculateFreqDeltas(prev[street], freqs);
+				const currentFreqs = getStreetFreqs(prev, street);
+				const { deltas, hasChange } = calculateFreqDeltas(currentFreqs, freqs);
 				if (!hasChange) return { ...prev, [street]: freqs };
 				const next = propagateFrequencies(prev, street, deltas);
-				next[street] = { ...freqs };
+				if (street === 'flop') next.flop = { ...freqs };
+				else if (street === 'turn') next.turn = { ...freqs };
+				else if (street === 'river') next.river = { ...freqs };
 				return next;
 			});
 		},

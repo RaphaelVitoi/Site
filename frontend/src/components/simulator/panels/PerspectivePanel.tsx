@@ -19,6 +19,41 @@ import { useSotaSync } from '@/components/simulator/hooks/useSotaSync';
 const DEFAULT_STACKS = [9.4, 52.4, 22.2, 7, 44.3, 24.3, 40, 13.4, 55];
 const DEFAULT_PRIZES = [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
 
+const LABELS = {
+  advantagePrefix: 'Vantagem: ',
+  opponents: 'Oponentes',
+  nearPayjump: 'Perto de Payjump',
+  blindsRising: 'Blinds Subindo',
+  kappaCredibility: 'Credibilidade κ',
+  sunkCostPot: 'Sunk Cost · Pot',
+  estimatedEquity: 'Equity Estimada',
+  psiEntropyFactor: 'Fator Ψ (Entropia)',
+  realizationFactor: 'Fator de Realização Posicional (R)',
+  layer1Title: 'LAYER 1 · ICMev',
+  layer1Desc: 'Perspectiva base e ingênua (Física Newtoniana).',
+  baseEquity: 'Base Equity',
+  layer2Title: 'LAYER 2 · ESPERANÇA MATEMÁTICA',
+  valuationFactor: 'Valuation Factor',
+  rioLiability: 'Dívida RIO',
+  asymmetry: 'Assimetria',
+  layer3Title: 'LAYER 3 · EXPECTATIVA PREDITIVA',
+  floorEvFold: 'Piso (EV_fold)',
+  fgsHealth: 'FGS Health',
+  organicStatus: 'Status Orgânico',
+  layer4Title: 'LAYER 4 · PERSPECTIVA (PM)',
+  amortizedEdge: 'Edge Amortizada',
+  riskAdvantage: 'Risk Advantage',
+  insolvencyCi: 'Insolvência Cᵢ',
+  rpCeiling: 'Teto do RP',
+  marginalZone: 'Zona Marginal',
+  unstableEquilibrium: 'Equilíbrio Instável',
+  marginalDesc: 'Decisão altamente sensível à imprecisão de range e entropia informacional.',
+  sotaProtocol: 'Protocolo SOTA',
+  guideline: 'Diretriz',
+  extremeRiskAversion: 'Extrema Aversão ao Risco Identificada',
+  extremeRiskDesc: 'A pressão de payjump induz o overfold estrutural. A inversão de EVs da teoria pura exige um desvio (exploit) estritamente proporcional à credibilidade informacional (Axioma Lipe Piv).',
+} as const;
+
 interface PerspectivePanelProps {
   initialStacks?: number[];
   initialPrizes?: number[];
@@ -240,7 +275,7 @@ export default function PerspectivePanel({
               Equidade Dinâmica
             </h3>
             <span className="text-text-darker text-[0.6rem] font-black tracking-[0.3em] uppercase">
-              Vantagem: {statusDisplay.riskAdvantageSign}{result.riskAdvantage.toFixed(1)}%
+              {LABELS.advantagePrefix}{statusDisplay.riskAdvantageSign}{result.riskAdvantage.toFixed(1)}%
             </span>
           </div>
           <div className="h-64 w-full overflow-hidden rounded-3xl border border-white/5 bg-black/40 p-4 shadow-inner">
@@ -305,7 +340,7 @@ export default function PerspectivePanel({
               htmlFor="perspective-opponents"
               className="text-text-muted text-[0.55rem] font-black tracking-[0.25em] uppercase"
             >
-              Oponentes
+              {LABELS.opponents}
             </label>
             <span className="text-accent-danger rounded-lg border border-white/10 bg-black/60 px-2.5 py-1 font-mono text-[0.65rem] font-black tabular-nums shadow-lg">
               {numPlayers}
@@ -336,7 +371,7 @@ export default function PerspectivePanel({
               onChange={(e) => setIsNearPayjump(e.target.checked)}
               className="accent-accent-emerald h-4 w-4 cursor-pointer rounded-lg border-white/10 bg-black/60"
             />
-            <span className="transition-colors group-hover:text-white">Perto de Payjump</span>
+            <span className="transition-colors group-hover:text-white">{LABELS.nearPayjump}</span>
           </label>
           <label
             htmlFor="perspective-blinds"
@@ -349,7 +384,7 @@ export default function PerspectivePanel({
               onChange={(e) => setBlindsRising(e.target.checked)}
               className="accent-accent-danger h-4 w-4 cursor-pointer rounded-lg border-white/10 bg-black/60"
             />
-            <span className="transition-colors group-hover:text-white">Blinds Subindo</span>
+            <span className="transition-colors group-hover:text-white">{LABELS.blindsRising}</span>
           </label>
         </div>
 
@@ -359,7 +394,7 @@ export default function PerspectivePanel({
               htmlFor="perspective-kappa"
               className="text-text-muted text-[0.55rem] font-black tracking-[0.25em] uppercase"
             >
-              Credibilidade κ
+              {LABELS.kappaCredibility}
             </label>
             <span className="text-accent-pink rounded-lg border border-white/10 bg-black/60 px-2.5 py-1 font-mono text-[0.65rem] font-black tabular-nums shadow-lg">
               {Math.round(kappa * 100)}%
@@ -380,7 +415,7 @@ export default function PerspectivePanel({
         <div className="group/sunk relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-black/60 p-5 shadow-2xl transition-all duration-300 hover:border-white/10">
           <div className="from-accent-amber/5 pointer-events-none absolute inset-0 bg-linear-to-b to-transparent" />
           <span className="text-text-darker group-hover/sunk:text-text-dim relative z-10 mb-1.5 text-[0.55rem] font-black tracking-[0.3em] uppercase transition-colors">
-            Sunk Cost &middot; Pot
+            {LABELS.sunkCostPot}
           </span>
           <div className="text-accent-amber relative z-10 font-mono text-lg font-black tracking-tighter tabular-nums">
             -{heroCost.toFixed(2)}bb <span className="text-text-darker mx-1">/</span> {potSize.toFixed(1)}bb
@@ -393,7 +428,7 @@ export default function PerspectivePanel({
               htmlFor="perspective-equity"
               className="text-text-muted text-[0.55rem] font-black tracking-[0.25em] uppercase"
             >
-              Equity Estimada
+              {LABELS.estimatedEquity}
             </label>
             <span className="text-accent-indigo rounded-lg border border-white/10 bg-black/60 px-2.5 py-1 font-mono text-[0.65rem] font-black tabular-nums shadow-lg">
               {Math.round(winProb * 100)}%
@@ -417,7 +452,7 @@ export default function PerspectivePanel({
               htmlFor="perspective-human-noise"
               className="text-text-muted text-[0.55rem] font-black tracking-[0.25em] uppercase"
             >
-              Fator Ψ (Entropia)
+              {LABELS.psiEntropyFactor}
             </label>
             <span className="text-accent-rose rounded-lg border border-white/10 bg-black/60 px-2.5 py-1 font-mono text-[0.65rem] font-black tabular-nums shadow-lg">
               {Math.round(humanNoiseFactor * 100)}%
@@ -441,7 +476,7 @@ export default function PerspectivePanel({
               htmlFor="perspective-realization"
               className="text-text-muted text-[0.55rem] font-black tracking-[0.25em] uppercase"
             >
-              Fator de Realização Posicional (R)
+              {LABELS.realizationFactor}
             </label>
             <span className="text-accent-emerald rounded-lg border border-white/10 bg-black/60 px-3 py-1 font-mono text-[0.65rem] font-black tabular-nums shadow-lg">
               {realization.toFixed(2)}x
@@ -472,14 +507,14 @@ export default function PerspectivePanel({
             <div className="pointer-events-none absolute inset-0 bg-radial-[at_top_right] from-white/5 to-transparent opacity-0 transition-opacity group-hover/layer:opacity-100" />
             <div className="relative z-10 space-y-2">
               <span className="text-text-muted group-hover/layer:text-text-light text-[0.8rem] font-black tracking-[0.4em] uppercase transition-all group-hover/layer:tracking-[0.45em]">
-                LAYER 1 &middot; ICMev
+                {LABELS.layer1Title}
               </span>
               <p className="text-text-darker group-hover/layer:text-text-dim m-0 text-[0.75rem] leading-relaxed font-medium transition-colors">
-                Perspectiva base e ingênua (Física Newtoniana).
+                {LABELS.layer1Desc}
               </p>
             </div>
             <div className="relative z-10 mt-6 flex flex-col items-start gap-1 md:mt-0 md:items-end">
-              <span className="text-text-darker text-[0.6rem] font-black tracking-[0.3em] uppercase">Base Equity</span>
+              <span className="text-text-darker text-[0.6rem] font-black tracking-[0.3em] uppercase">{LABELS.baseEquity}</span>
               <span className="text-text-muted font-mono text-3xl font-black tracking-tighter tabular-nums drop-shadow-lg transition-all group-hover/layer:text-white">
                 {result.currentEquityPct.toFixed(2)}%
               </span>
@@ -497,12 +532,12 @@ export default function PerspectivePanel({
             <div className="from-accent-amber/5 pointer-events-none absolute inset-0 bg-radial-[at_top_right] to-transparent opacity-0 transition-opacity group-hover/layer:opacity-100" />
             <div className="relative z-10 flex flex-col gap-4">
               <span className="text-accent-amber text-[0.8rem] font-black tracking-[0.4em] uppercase transition-all group-hover/layer:tracking-[0.45em]">
-                LAYER 2 &middot; ESPERANÇA MATEMÁTICA
+                {LABELS.layer2Title}
               </span>
               <div className="flex flex-wrap items-center gap-6">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
-                    Valuation Factor
+                    {LABELS.valuationFactor}
                   </span>
                   <strong className="text-accent-amber bg-accent-amber/10 border-accent-amber/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
                     {result.valuation.toFixed(2)}x
@@ -511,7 +546,7 @@ export default function PerspectivePanel({
                 <div className="h-10 w-px bg-white/5" />
                 <div className="flex flex-col gap-1.5">
                   <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
-                    Dívida RIO
+                    {LABELS.rioLiability}
                   </span>
                   <strong className="text-accent-amber bg-accent-amber/10 border-accent-amber/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
                     -{result.rioLiability.toFixed(2)}%
@@ -520,7 +555,7 @@ export default function PerspectivePanel({
               </div>
             </div>
             <div className="relative z-10 mt-6 flex flex-col items-start gap-1 md:mt-0 md:items-end">
-              <span className="text-text-darker text-[0.6rem] font-black tracking-[0.3em] uppercase">Assimetria</span>
+              <span className="text-text-darker text-[0.6rem] font-black tracking-[0.3em] uppercase">{LABELS.asymmetry}</span>
               <span className="text-accent-amber font-mono text-4xl font-black tracking-tighter tabular-nums drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]">
                 {((result.valuation - 1) * 100).toFixed(0)}%
               </span>
@@ -538,12 +573,12 @@ export default function PerspectivePanel({
             <div className="from-accent-emerald/5 pointer-events-none absolute inset-0 bg-radial-[at_top_right] to-transparent opacity-0 transition-opacity group-hover/layer:opacity-100" />
             <div className="relative z-10 flex flex-col gap-4">
               <span className="text-accent-emerald text-[0.8rem] font-black tracking-[0.4em] uppercase transition-all group-hover/layer:tracking-[0.45em]">
-                LAYER 3 &middot; EXPECTATIVA PREDITIVA
+                {LABELS.layer3Title}
               </span>
               <div className="flex flex-wrap items-center gap-6">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
-                    Piso (EV_fold)
+                    {LABELS.floorEvFold}
                   </span>
                   <strong className="text-accent-emerald bg-accent-emerald/10 border-accent-emerald/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
                     {result.dynamicEvFold.toFixed(2)}%
@@ -552,7 +587,7 @@ export default function PerspectivePanel({
                 <div className="h-10 w-px bg-white/5" />
                 <div className="flex flex-col gap-1.5">
                   <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
-                    FGS Health
+                    {LABELS.fgsHealth}
                   </span>
                   <strong className="text-accent-emerald bg-accent-emerald/10 border-accent-emerald/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
                     {result.fgsHealth.toFixed(2)}x
@@ -562,7 +597,7 @@ export default function PerspectivePanel({
             </div>
             <div className="relative z-10 mt-6 flex flex-col items-start gap-1 md:mt-0 md:items-end">
               <span className="text-text-darker text-[0.6rem] font-black tracking-[0.3em] uppercase">
-                Status Orgânico
+                {LABELS.organicStatus}
               </span>
               <span className="text-accent-emerald text-2xl font-black tracking-[0.25em] uppercase drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]">
                 {statusDisplay.organicStatus}
@@ -582,12 +617,12 @@ export default function PerspectivePanel({
             <div className="relative z-10 flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
               <div className="flex flex-col gap-4">
                 <span className="text-accent-indigo-light mb-1 text-[0.8rem] font-black tracking-[0.4em] uppercase transition-all duration-700 group-hover/pm:tracking-[0.45em]">
-                  LAYER 4 &middot; PERSPECTIVA (PM)
+                  {LABELS.layer4Title}
                 </span>
                 <div className="flex flex-wrap items-center gap-6">
                   <div className="flex flex-col gap-1">
                     <span className="text-text-darker text-[0.55rem] font-black tracking-widest uppercase">
-                      Edge Amortizada
+                      {LABELS.amortizedEdge}
                     </span>
                     <strong className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 font-mono text-lg font-black text-white tabular-nums shadow-inner">
                       {result.amortizedEdge.toFixed(2)}x
@@ -595,7 +630,7 @@ export default function PerspectivePanel({
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-text-darker text-[0.55rem] font-black tracking-widest uppercase">
-                      Risk Advantage
+                      {LABELS.riskAdvantage}
                     </span>
                     <strong className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 font-mono text-lg font-black text-accent-indigo-light tabular-nums shadow-inner">
                       {statusDisplay.riskAdvantageSign}
@@ -604,7 +639,7 @@ export default function PerspectivePanel({
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-text-darker text-[0.55rem] font-black tracking-widest uppercase">
-                      Insolvência Cᵢ
+                      {LABELS.insolvencyCi}
                     </span>
                     <strong className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 font-mono text-lg font-black text-white tabular-nums shadow-inner">
                       {result.ci.toFixed(2)}
@@ -612,7 +647,7 @@ export default function PerspectivePanel({
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-text-darker text-[0.55rem] font-black tracking-widest uppercase">
-                      Teto do RP
+                      {LABELS.rpCeiling}
                     </span>
                     <strong className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 font-mono text-lg font-black text-white tabular-nums shadow-inner">
                       {Math.round(result.threshEq * 100)}%
@@ -640,11 +675,11 @@ export default function PerspectivePanel({
                     <i className="fa-solid fa-triangle-exclamation text-accent-rose-light animate-pulse text-lg"></i>
                   </div>
                   <strong className="text-accent-rose-light text-[0.7rem] font-black tracking-[0.3em] uppercase">
-                    Zona Marginal &middot; <span className="text-text-darker">Equilíbrio Instável</span>
+                    {LABELS.marginalZone} &middot; <span className="text-text-darker">{LABELS.unstableEquilibrium}</span>
                   </strong>
                 </div>
                 <p className="m-0 pl-14 leading-relaxed font-medium opacity-80">
-                  Decisão altamente sensível à imprecisão de range e entropia informacional.
+                  {LABELS.marginalDesc}
                 </p>
                 <div className="text-text-bright border-accent-rose/40 mt-1 ml-4 rounded-r-xl border-l-4 bg-black/20 px-5 py-1.5 pl-10 font-bold italic">
                   &quot;O tamanho do desvio (exploit) deve ser estritamente proporcional à credibilidade da sua
@@ -673,13 +708,13 @@ export default function PerspectivePanel({
         <p className="relative z-10 m-0 max-w-5xl leading-loose font-medium">{result.diagnostico}</p>
         <div className="relative z-10 mt-6 flex flex-wrap gap-x-10 gap-y-3 border-t border-white/5 pt-6">
           <div className="flex items-center gap-2.5">
-            <span className="text-text-darker text-[0.55rem] font-black tracking-widest uppercase">Protocolo SOTA</span>
+            <span className="text-text-darker text-[0.55rem] font-black tracking-widest uppercase">{LABELS.sotaProtocol}</span>
             <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-[0.65rem] font-black tracking-widest text-white uppercase shadow-lg">
               {statusDisplay.protocoloLabel}
             </span>
           </div>
           <div className="flex items-center gap-2.5">
-            <span className="text-text-darker text-[0.55rem] font-black tracking-widest uppercase">Diretriz</span>
+            <span className="text-text-darker text-[0.55rem] font-black tracking-widest uppercase">{LABELS.guideline}</span>
             <span className="text-text-muted text-[0.75rem] font-bold italic">
               {statusDisplay.diretrizLabel}
             </span>
@@ -693,12 +728,11 @@ export default function PerspectivePanel({
             <div className="relative z-10 mb-3 flex items-center gap-3">
               <i className="fa-solid fa-bolt-lightning text-accent-amber animate-pulse text-lg"></i>
               <span className="text-[0.7rem] font-black tracking-[0.3em] uppercase">
-                Extrema Aversão ao Risco Identificada
+                {LABELS.extremeRiskAversion}
               </span>
             </div>
             <p className="relative z-10 m-0 text-[0.85rem] leading-relaxed">
-              A pressão de payjump induz o overfold estrutural. A inversão de EVs da teoria pura exige um desvio
-              (exploit) estritamente proporcional à credibilidade informacional (Axioma Lipe Piv).
+              {LABELS.extremeRiskDesc}
             </p>
           </div>
         )}

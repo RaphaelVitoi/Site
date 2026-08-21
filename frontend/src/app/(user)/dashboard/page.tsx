@@ -8,6 +8,44 @@ export const metadata = {
 	description: 'Orquestrador híbrido, monitoramento de agentes e fila termodinâmica.',
 };
 
+function isNetworkRefused(error: unknown): boolean {
+	if (!(error instanceof Error)) return false;
+	if (error.message.includes('ECONNREFUSED')) return true;
+	if ('code' in error && error.code === 'ECONNREFUSED') return true;
+	if (error.cause && typeof error.cause === 'object' && 'code' in error.cause) {
+		return (error.cause as { code?: string }).code === 'ECONNREFUSED';
+	}
+	return false;
+}
+
+const ASCII_TO_UTF8_MAP = new Map<string, string>([
+	['Aversao ao Risco', 'Aversão ao Risco'],
+	['Pot Entrapment', 'Pot Entrapment'],
+	['Miopia de Payjump', 'Miopia de Payjump'],
+	['Excesso de Agressao', 'Excesso de Agressão'],
+	['Passivo Estrutural (RIO)', 'Passivo Estrutural (RIO)'],
+	['Desvio de Nash', 'Desvio de Nash'],
+]);
+
+function parseProfileMap(rawData: unknown): Map<string, number> {
+	const profile = new Map<string, number>();
+	if (typeof rawData !== 'object' || rawData === null || !('profile' in rawData)) {
+		return profile;
+	}
+	const rawProfile = (rawData as { profile?: unknown }).profile;
+	if (typeof rawProfile !== 'object' || rawProfile === null) {
+		return profile;
+	}
+
+	for (const [key, value] of Object.entries(rawProfile as Record<string, unknown>)) {
+		if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
+		const mappedKey = ASCII_TO_UTF8_MAP.get(key) ?? key;
+		const numValue = typeof value === 'number' && Number.isFinite(value) ? value : 0;
+		profile.set(mappedKey, numValue);
+	}
+	return profile;
+}
+
 async function getOrchestratorTelemetry() {
 	try {
 		// Busca telemetria SOTA da API do Orquestrador Python (Latência Zero SSR)
@@ -28,16 +66,10 @@ async function getOrchestratorTelemetry() {
 			agentsOnline: 15, // Total consolidado de agentes na malha VITOI
 		};
 	} catch (error: unknown) {
-		const isRefused =
-			error instanceof Error &&
-			(error.message.includes('ECONNREFUSED') ||
-				('code' in error && error.code === 'ECONNREFUSED') ||
-				(error.cause &&
-					typeof error.cause === 'object' &&
-					'code' in error.cause &&
-					(error.cause as { code?: string }).code === 'ECONNREFUSED'));
-		if (isRefused) {
-			console.warn('[Telemetry SOTA] Orquestrador offline (ECONNREFUSED) - usando fallback.');
+		if (isNetworkRefused(error)) {
+			if (process.env['NODE_ENV'] !== 'production' || process.env['DEBUG']) {
+				console.warn('[Telemetry SOTA] Orquestrador offline (ECONNREFUSED) - usando fallback.');
+			}
 		} else {
 			console.error('[Telemetry SOTA] Falha ao buscar dados do orquestrador:', error);
 		}
@@ -64,38 +96,19 @@ async function getPredictiveProfile() {
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
 
-		const profileData = (data.profile || {}) as Record<string, number>;
-		const asciiToUtf8Map: Record<string, string> = {
-			'Aversao ao Risco': 'Aversão ao Risco',
-			'Pot Entrapment': 'Pot Entrapment',
-			'Miopia de Payjump': 'Miopia de Payjump',
-			'Excesso de Agressao': 'Excesso de Agressão',
-			'Passivo Estrutural (RIO)': 'Passivo Estrutural (RIO)',
-			'Desvio de Nash': 'Desvio de Nash',
-		};
-		const profile: Record<string, number> = {};
-		for (const key of Object.keys(profileData)) {
-			const mappedKey = asciiToUtf8Map[key] || key;
-			profile[mappedKey] = profileData[key] ?? 0;
-		}
-		const topLeak =
-			Object.entries(profile).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Risk Premium';
+		const profile = parseProfileMap(data);
+		const sortedEntries = Array.from(profile.entries()).sort((a, b) => b[1] - a[1]);
+		const topLeak = sortedEntries[0]?.[0] || 'Risk Premium';
 
 		return {
 			topVazamento: topLeak,
 			evLoss: 12,
 		};
 	} catch (error: unknown) {
-		const isRefused =
-			error instanceof Error &&
-			(error.message.includes('ECONNREFUSED') ||
-				('code' in error && error.code === 'ECONNREFUSED') ||
-				(error.cause &&
-					typeof error.cause === 'object' &&
-					'code' in error.cause &&
-					(error.cause as { code?: string }).code === 'ECONNREFUSED'));
-		if (isRefused) {
-			console.warn('[Predictive SOTA] Orquestrador offline (ECONNREFUSED) - usando fallback.');
+		if (isNetworkRefused(error)) {
+			if (process.env['NODE_ENV'] !== 'production' || process.env['DEBUG']) {
+				console.warn('[Predictive SOTA] Orquestrador offline (ECONNREFUSED) - usando fallback.');
+			}
 		} else {
 			console.error('[Predictive SOTA] Falha na inferência preditiva:', error);
 		}

@@ -16,8 +16,10 @@ const wasmPackExecutable = process.platform === 'win32' ? 'wasm-pack.exe' : 'was
 
 const expectedWasmPackVersion = 'wasm-pack 0.15.0';
 const version = spawnSync(wasmPackExecutable, ['--version'], { encoding: 'utf8' });
-if (version.status !== 0 || version.stdout.trim() !== expectedWasmPackVersion) {
-	throw new Error(`Expected ${expectedWasmPackVersion}; received ${version.stdout.trim() || 'unavailable'}.`);
+const versionOutput = typeof version.stdout === 'string' ? version.stdout.trim() : '';
+if (version.status !== 0 || versionOutput !== expectedWasmPackVersion) {
+	const errorDetail = version.error ? version.error.message : (versionOutput || 'unavailable');
+	throw new Error(`Expected ${expectedWasmPackVersion}; received ${errorDetail}.`);
 }
 
 const build = spawnSync(

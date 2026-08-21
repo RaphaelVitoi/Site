@@ -11,6 +11,33 @@ interface SotaTooltipProps {
 	children: React.ReactNode;
 }
 
+type TooltipAlign = 'left' | 'center' | 'right';
+type TooltipTheme = 'indigo' | 'emerald' | 'rose';
+
+const ALIGN_CLASSES: Record<TooltipAlign, string> = {
+	left: 'left-0 origin-bottom-left',
+	center: 'left-1/2 -translate-x-1/2 origin-bottom',
+	right: 'right-0 origin-bottom-right',
+};
+
+const THEME_CLASSES: Record<TooltipTheme, string> = {
+	indigo: 'border-accent-indigo/40 bg-[#080b14]/95 shadow-[0_30px_60px_-15px_rgba(99,102,241,0.5)]',
+	emerald: 'border-accent-emerald/40 bg-[#08140f]/95 shadow-[0_30px_60px_-15px_rgba(16,185,129,0.5)]',
+	rose: 'border-accent-rose/40 bg-[#14080a]/95 shadow-[0_30px_60px_-15px_rgba(244,63,94,0.5)]',
+};
+
+const DOT_CLASSES: Record<TooltipTheme, string> = {
+	indigo: 'bg-accent-indigo shadow-[0_0_10px_rgba(99,102,241,0.8)]',
+	emerald: 'bg-accent-emerald shadow-[0_0_10px_rgba(16,185,129,0.8)]',
+	rose: 'bg-accent-rose shadow-[0_0_10px_rgba(244,63,94,0.8)]',
+};
+
+const TITLE_CLASSES: Record<TooltipTheme, string> = {
+	indigo: 'text-accent-indigo-light',
+	emerald: 'text-accent-emerald-light',
+	rose: 'text-accent-rose-light',
+};
+
 export function SotaTooltip({
 	title,
 	content,
@@ -20,20 +47,7 @@ export function SotaTooltip({
 	theme = 'indigo',
 	fullWidth = false,
 	children,
-}: Readonly<SotaTooltipProps>) {
-	const alignClasses = {
-		left: 'left-0 origin-bottom-left',
-		center: 'left-1/2 -translate-x-1/2 origin-bottom',
-		right: 'right-0 origin-bottom-right',
-	};
-
-	const themeClasses = {
-		indigo: 'border-accent-indigo/40 bg-[#080b14]/95 shadow-[0_30px_60px_-15px_rgba(99,102,241,0.5)]',
-		emerald:
-			'border-accent-emerald/40 bg-[#08140f]/95 shadow-[0_30px_60px_-15px_rgba(16,185,129,0.5)]',
-		rose: 'border-accent-rose/40 bg-[#14080a]/95 shadow-[0_30px_60px_-15px_rgba(244,63,94,0.5)]',
-	};
-
+}: Readonly<SotaTooltipProps>): React.JSX.Element {
 	const positionClasses = position === 'bottom' ? 'top-full mt-3' : 'bottom-full mb-3';
 	const animationClasses =
 		position === 'bottom'
@@ -46,33 +60,21 @@ export function SotaTooltip({
 			? '-top-2 border-l border-t border-inherit'
 			: '-bottom-2 border-r border-b border-inherit';
 
-	const dotClasses = {
-		indigo: 'bg-accent-indigo shadow-[0_0_10px_rgba(99,102,241,0.8)]',
-		emerald: 'bg-accent-emerald shadow-[0_0_10px_rgba(16,185,129,0.8)]',
-		rose: 'bg-accent-rose shadow-[0_0_10px_rgba(244,63,94,0.8)]',
-	};
-
-	const titleClasses = {
-		indigo: 'text-accent-indigo-light',
-		emerald: 'text-accent-emerald-light',
-		rose: 'text-accent-rose-light',
-	};
-
 	return (
 		<div
 			className={`relative group cursor-help items-center ${fullWidth ? 'flex w-full' : 'inline-flex'}`}
 		>
 			{children}
 			<div
-				className={`absolute ${positionClasses} ${alignClasses[align]} w-max max-w-70 p-5 backdrop-blur-3xl border rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible ${animationClasses} transition-all duration-300 ease-out z-99999 pointer-events-none ${themeClasses[theme]}`}
+				className={`absolute ${positionClasses} ${ALIGN_CLASSES[align]} w-max max-w-70 p-5 backdrop-blur-3xl border rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible ${animationClasses} transition-all duration-300 ease-out z-99999 pointer-events-none ${THEME_CLASSES[theme]}`}
 			>
 				{/* Bridge gap for hover continuity */}
 				<div className={`absolute ${gapBridge} pointer-events-auto`} />
 
 				<div className="flex items-center gap-3 mb-3 border-b border-white/10 pb-3">
-					<div className={`w-2 h-2 rounded-full ${dotClasses[theme]} animate-pulse`} />
+					<div className={`w-2 h-2 rounded-full ${DOT_CLASSES[theme]} animate-pulse`} />
 					<p
-						className={`text-[0.7rem] font-black uppercase tracking-[0.25em] m-0 ${titleClasses[theme]}`}
+						className={`text-[0.7rem] font-black uppercase tracking-[0.25em] m-0 ${TITLE_CLASSES[theme]}`}
 					>
 						{title}
 					</p>

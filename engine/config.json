@@ -5,16 +5,16 @@
                   "enabled":  true
               },
     "isomorphism":  {
-                        "shared_types_path":  "C:\\Users\\Raphael\\.gemini\\Site\\shared\\types",
+                        "shared_types_path":  "C:\\Users\\rapha\\.gemini\\Site\\shared\\types",
                         "zod_to_pydantic":  true
                     },
     "resources":  {
                       "ram_reserve_gb":  4,
-                      "vram_limit_gb":  24,
+                      "vram_limit_gb":  8,
                       "force_local":  true
                   },
     "bucketing":  {
-                      "root":  "C:\\Users\\Raphael\\.gemini\\Site\\buckets",
+                      "root":  "C:\\Users\\rapha\\.gemini\\Site\\buckets",
                       "provider":  "local"
                   }
 }

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { SCENARIOS } from '../engine/scenarios';
-import type { Scenario } from '../engine/types';
+import { SCENARIOS } from '../solver/scenarios';
+import type { Scenario } from '../solver/types';
 
 export function useScenario() {
 	const [activeId, setActiveId] = useState(SCENARIOS[0]?.id ?? '');

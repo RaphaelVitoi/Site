@@ -2,17 +2,17 @@ import { z } from 'zod';
 
 /**
  * IDENTITY: SOTA Semantic Schemas
- * ROLE: Garantir integridade de dados entre Prisma, API e Motor MatemÃ¡tico.
+ * ROLE: Garantir integridade de dados entre Prisma, API e Motor Matemático.
  * PRINCIPLE: Economia Generalizada (Shannon) - Tipagem forte reduz entropia de erro.
  */
 
-// Schema para Stacks (Array de nÃºmeros positivos)
+// Schema para Stacks (Array de números positivos)
 export const StacksSchema = z.array(z.number().nonnegative()).min(2);
 
-// Schema para Prizes (Array de nÃºmeros positivos decrescentes)
+// Schema para Prizes (Array de números positivos decrescentes)
 export const PrizesSchema = z.array(z.number().nonnegative());
 
-// Schema para a FÃ­sica da Mesa (PhysicsSnapshot)
+// Schema para a Física da Mesa (PhysicsSnapshot)
 export const PhysicsSnapshotSchema = z.object({
 	heroStack: z.number().positive(),
 	villain1Stack: z.number().positive().optional(),
@@ -26,7 +26,7 @@ export const PhysicsSnapshotSchema = z.object({
 	bountyPower: z.number().optional(), // SOTA v7.0
 });
 
-// Schema para RequisiÃ§Ã£o de InferÃªncia (InferenceRequest)
+// Schema para Requisição de Inferência (InferenceRequest)
 export const InferenceRequestSchema = z.object({
 	prompt: z.string(),
 	system_prompt: z.string().optional(),
@@ -131,7 +131,7 @@ export const TelemetryCategorySchema = z.enum([
 	'Fundamentos SOTA',
 	'Bolha',
 	'Pos-Flop',
-	'PÃ³s-Flop',
+	'Pós-Flop',
 ] as const);
 
 export const GeneralTelemetrySchema = z.object({
@@ -144,7 +144,7 @@ export const GeneralTelemetrySchema = z.object({
 		'Fundamentos SOTA',
 		'Bolha',
 		'Pos-Flop',
-		'PÃ³s-Flop',
+		'Pós-Flop',
 	]),
 	componentName: z.string().nullable().optional(),
 	scenarioContext: z.unknown().nullable().optional(),

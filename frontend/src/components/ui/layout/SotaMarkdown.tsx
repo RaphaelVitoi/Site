@@ -144,7 +144,7 @@ const markdownComponents: Components = {
 	),
 	blockquote: ({ children, ...props }) => (
 		<blockquote
-			className="border-l-4 border-accent-indigo/40 pl-8 py-6 italic bg-white/[0.03] rounded-2xl my-12 text-text-muted text-xl shadow-inner backdrop-blur-sm"
+			className="border-l-4 border-accent-indigo/40 pl-8 py-6 italic bg-white/3 rounded-2xl my-12 text-text-muted text-xl shadow-inner backdrop-blur-sm"
 			{...props}
 		>
 			{children}
@@ -183,7 +183,7 @@ const markdownComponents: Components = {
 			if (Array.isArray(node)) return node.map(extractText).join('');
 			if (node && typeof node === 'object' && 'props' in node) {
 				const element = node as ReactElement<{ children?: ReactNode }>;
-				if (element.props && element.props.children) {
+				if (element.props?.children) {
 					return extractText(element.props.children);
 				}
 			}

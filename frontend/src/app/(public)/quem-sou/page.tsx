@@ -461,7 +461,7 @@ function ClassicalSigil() {
         { bottom: 14, right: 14, bb: true, br: true },
       ].map((c) => (
         <div
-          key={`bracket-${c.top || c.bottom}-${c.left || c.right}`}
+          key={`bracket-${c.top !== undefined ? 't' : 'b'}-${c.left !== undefined ? 'l' : 'r'}`}
           className={`absolute h-4 w-4 ${c.top ? 'top-[14px]' : ''} ${c.bottom ? 'bottom-[14px]' : ''} ${c.left ? 'left-[14px]' : ''} ${c.right ? 'right-[14px]' : ''} ${c.bt ? 'border-t border-[#B09460]/30' : ''} ${c.bb ? 'border-b border-[#B09460]/30' : ''} ${c.bl ? 'border-l border-[#B09460]/30' : ''} ${c.br ? 'border-r border-[#B09460]/30' : ''}`}
         />
       ))}

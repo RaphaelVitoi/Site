@@ -44,44 +44,46 @@ function computeNodeCfr(
   const evCall = handStrength * pot - (1 - handStrength) * (pot * 0.5);
   const evRaise = handStrength * (pot * 2) - (1 - handStrength) * stack;
 
-  const utilities = [evFold, evCall, evRaise];
-
   // 2. Regret Matching -> Obter estratégia proporcional atual
-  let normalizingSum = 0;
   const offset = i * ACTIONS;
+  const idx0 = offset;
+  const idx1 = offset + 1;
+  const idx2 = offset + 2;
 
-  for (let a = 0; a < ACTIONS; a++) {
-    currentStrategy[offset + a] = Math.max(localRegret[offset + a]!, 0);
-    normalizingSum += currentStrategy[offset + a]!;
-  }
+  const r0 = Math.max(localRegret.at(idx0) ?? 0, 0);
+  const r1 = Math.max(localRegret.at(idx1) ?? 0, 0);
+  const r2 = Math.max(localRegret.at(idx2) ?? 0, 0);
 
-  for (let a = 0; a < ACTIONS; a++) {
-    if (normalizingSum > 0) {
-      currentStrategy[offset + a] = currentStrategy[offset + a]! / normalizingSum;
-    } else {
-      currentStrategy[offset + a] = 1 / ACTIONS; // Distribuição uniforme se arrependimento for negativo
-    }
-    localStrategy[offset + a] = localStrategy[offset + a]! + currentStrategy[offset + a]!;
-  }
+  const normalizingSum = r0 + r1 + r2;
+  const s0 = normalizingSum > 0 ? r0 / normalizingSum : 1 / ACTIONS;
+  const s1 = normalizingSum > 0 ? r1 / normalizingSum : 1 / ACTIONS;
+  const s2 = normalizingSum > 0 ? r2 / normalizingSum : 1 / ACTIONS;
+
+  currentStrategy.set([s0, s1, s2], offset);
+  localStrategy.set(
+    [
+      (localStrategy.at(idx0) ?? 0) + s0,
+      (localStrategy.at(idx1) ?? 0) + s1,
+      (localStrategy.at(idx2) ?? 0) + s2,
+    ],
+    offset,
+  );
 
   // 3. Node Utility (EV da estratégia mista)
-  let nodeUtil = 0;
-  for (let a = 0; a < ACTIONS; a++) {
-    nodeUtil += currentStrategy[offset + a]! * utilities[a]!;
-  }
+  const nodeUtil = s0 * evFold + s1 * evCall + s2 * evRaise;
 
   // 4. Atualizar Arrependimentos (Regrets) com Fator de Diluição (Kappa)
-  for (let a = 0; a < ACTIONS; a++) {
-    const regret = utilities[a]! - nodeUtil;
-    localRegret[offset + a] = (localRegret[offset + a]! + regret) * kappa;
-  }
+  localRegret.set(
+    [
+      ((localRegret.at(idx0) ?? 0) + (evFold - nodeUtil)) * kappa,
+      ((localRegret.at(idx1) ?? 0) + (evCall - nodeUtil)) * kappa,
+      ((localRegret.at(idx2) ?? 0) + (evRaise - nodeUtil)) * kappa,
+    ],
+    offset,
+  );
 
   // Heurística de Exibição (Probabilidade agregada de agressão: Call/Raise)
-  let maxAggression = 0;
-  for (let a = 1; a < ACTIONS; a++) {
-    maxAggression += currentStrategy[offset + a]!;
-  }
-  renderMatrix[i] = maxAggression;
+  renderMatrix.set([s1 + s2], i);
 }
 
 interface CfrMessageData {

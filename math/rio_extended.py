@@ -60,13 +60,15 @@ class RIOExtendedSOTA:
         p = p_range[p_range > 0]
         return float(-np.sum(p * np.log2(p)))
 
-    def _estimate_rio_penalty(self, ctx: PokerContext, t: int) -> float:
+    def estimate_rio_penalty(self, ctx: PokerContext, t: int) -> float:
         """
         Calcula a penalidade de Reverse Implied Odds.
         Elevada quando a variancia futura e alta e a intensidade do vilao sugere ranges polarizados.
         """
         base_penalty = (ctx.variance * ctx.action_intensity) * (ctx.pot * 0.15)
         return base_penalty / (t + 1)
+
+    _estimate_rio_penalty = estimate_rio_penalty
 
     def solve_recursive_utility(self, ctx: PokerContext, p_range: np.ndarray, depth: int = 2) -> float:
         """
@@ -96,7 +98,7 @@ class RIOExtendedSOTA:
             reward_t = (ctx.pot * equity_t) * entropy_adj
 
             # 4. Termo de Penalidade (RIO)
-            rio_t = self._estimate_rio_penalty(ctx, t)
+            rio_t = self.estimate_rio_penalty(ctx, t)
 
             # 5. Acumulacao de Bellman
             step_utility = reward_t - rio_t
@@ -131,7 +133,7 @@ def surprise_test():
     print("      ORACULO DE BORDA: RIO ESTENDIDO v2.0")
     print("=" * 50)
     print(f"Utilidade Esperada (EU):  {result_eu:.2f} chips")
-    print(f"Fator de Risco RIO:      {sota._estimate_rio_penalty(ctx, 0):.2f}")
+    print(f"Fator de Risco RIO:      {sota.estimate_rio_penalty(ctx, 0):.2f}")
     print("Status Cognitivo:        Simetria de Bellman Alcancada")
     print("=" * 50 + "\n")
 

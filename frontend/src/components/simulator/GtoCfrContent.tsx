@@ -12,9 +12,9 @@ import BayesianBeliefPanel from '@/components/simulator/panels/BayesianBeliefPan
 import PredictiveProfilePanel from '@/components/simulator/panels/PredictiveProfilePanel';
 
 export interface GtoCfrContentProps {
-	initialPot?: number;
-	initialStack?: number;
-	initialEquity?: number;
+	initialPot?: number | undefined;
+	initialStack?: number | undefined;
+	initialEquity?: number | undefined;
 }
 
 function GtoCfrContentInner({
@@ -64,7 +64,11 @@ function GtoCfrContentInner({
 	);
 }
 
-export function GtoCfrContent(props: Readonly<GtoCfrContentProps>) {
+export function GtoCfrContent({
+	initialPot,
+	initialStack,
+	initialEquity,
+}: Readonly<GtoCfrContentProps>) {
 	return (
 		<Suspense
 			fallback={
@@ -74,7 +78,11 @@ export function GtoCfrContent(props: Readonly<GtoCfrContentProps>) {
 				</div>
 			}
 		>
-			<GtoCfrContentInner {...props} />
+			<GtoCfrContentInner
+				initialPot={initialPot}
+				initialStack={initialStack}
+				initialEquity={initialEquity}
+			/>
 		</Suspense>
 	);
 }

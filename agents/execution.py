@@ -468,7 +468,7 @@ async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
         return
 
     # --- SOTA DELEGATION: Oraculo de Borda (@gemma4) ---
-    if task.agent == "@gemma4" or task.agent == "@gemma":
+    if task.agent in ("@gemma4", "@gemma"):
         logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] Delegando para o Motor Cognitivo Local (Pure Engine)...")
         try:
             await local_engine.process_agent_task(task, manager)

@@ -99,7 +99,7 @@ export function GravitationalScannerPanel({ stacks, heroIdx }: Readonly<Gravitat
 
         {/* O Sol (Chipleader) */}
         <div
-          className={`absolute top-1/2 left-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-all duration-700 hover:scale-110 ${TIER_SIZES[systemData.center.tier]} ${TIER_COLORS[systemData.center.tier]}`}
+          className={`absolute top-1/2 left-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-all duration-700 hover:scale-110 ${TIER_SIZES[systemData.center.tier] ?? TIER_SIZES.chipleader} ${TIER_COLORS[systemData.center.tier] ?? TIER_COLORS.chipleader}`}
         >
           {systemData.center.isHero && (
             <span className="text-[0.6rem] font-black tracking-widest text-black/90 drop-shadow-md">HERO</span>
@@ -134,7 +134,7 @@ export function GravitationalScannerPanel({ stacks, heroIdx }: Readonly<Gravitat
           return (
             <div
               key={planet.idx}
-              className={`absolute z-30 flex items-center justify-center rounded-full transition-all duration-1000 hover:scale-125 ${TIER_SIZES[planet.tier]} ${TIER_COLORS[planet.tier]} ${planet.isHero ? 'shadow-[0_0_25px_rgba(255,255,255,0.7)] ring-2 ring-white ring-offset-4 ring-offset-black/60' : ''}`}
+              className={`absolute z-30 flex items-center justify-center rounded-full transition-all duration-1000 hover:scale-125 ${TIER_SIZES[planet.tier] ?? TIER_SIZES.mid} ${TIER_COLORS[planet.tier] ?? TIER_COLORS.mid} ${planet.isHero ? 'shadow-[0_0_25px_rgba(255,255,255,0.7)] ring-2 ring-white ring-offset-4 ring-offset-black/60' : ''}`}
               style={{ left: `${leftPct}%`, top: `${topPct}%`, transform: 'translate(-50%, -50%)' }}
               title={`Stack: ${planet.stack.toFixed(1)}bb | Tier: ${planet.tier}`}
             >
@@ -144,7 +144,7 @@ export function GravitationalScannerPanel({ stacks, heroIdx }: Readonly<Gravitat
         })}
       </div>
 
-      <div className="relative z-10 mt-2 flex min-h-[80px] w-full items-center justify-center space-y-3 rounded-2xl border border-white/5 bg-white/5 p-5 text-center">
+      <div className="relative z-10 mt-2 flex min-h-20 w-full items-center justify-center space-y-3 rounded-2xl border border-white/5 bg-white/5 p-5 text-center">
         <p className="text-text-dim m-0 max-w-sm text-[0.75rem] leading-relaxed font-medium">
           {systemData.center.isHero ? (
             <span className="text-accent-amber-light font-bold">
@@ -157,7 +157,7 @@ export function GravitationalScannerPanel({ stacks, heroIdx }: Readonly<Gravitat
               <strong className="text-accent-rose-light font-black">
                 Evite a Zona de Colis&atilde;o (Raios Internos)
               </strong>
-              , o custo estrutural da derrota destr&oacute;i a sua Perspectiva.
+              {', '}o custo estrutural da derrota destr&oacute;i a sua Perspectiva.
             </span>
           )}
         </p>

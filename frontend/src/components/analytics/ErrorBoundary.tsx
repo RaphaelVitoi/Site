@@ -78,23 +78,21 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 			}
 
 			return (
-				<div {...{ style: containerStyle }}>
-					<h2 {...{ style: titleStyle }}>
-						<i
-							className="fa-solid fa-triangle-exclamation"
-							{...{ style: iconStyle }}
-						></i>{' '}
+				<div style={containerStyle}>
+					<h2 style={titleStyle}>
+						<i className="fa-solid fa-triangle-exclamation" style={iconStyle}></i>{' '}
 						Anomalia Detectada no Motor ICM
 					</h2>
-					<p {...{ style: pStyle }}>
+					<p style={pStyle}>
 						A termodinâmica do simulador sofreu uma falha crítica. A equipe SOTA já foi
 						notificada através do sistema de telemetria.
 					</p>
 					<button
+						type="button"
 						onClick={() => this.setState({ hasError: false })}
-						{...{ style: buttonStyle }}
+						style={buttonStyle}
 					>
-						<i className="fa-solid fa-rotate-right" {...{ style: iconStyle }}></i>{' '}
+						<i className="fa-solid fa-rotate-right" style={iconStyle}></i>{' '}
 						Reiniciar Subsistema
 					</button>
 				</div>

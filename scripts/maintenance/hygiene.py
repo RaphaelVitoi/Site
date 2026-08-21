@@ -38,7 +38,7 @@ def extirpate_obsolete_artifacts():
                     bytes_freed += size
                     logger.debug(f"[HYGIENE] Extirpado: {file_path}")
             except Exception as e:
-                logger.error(f"[HYGIENE] Falha ao remover {file_path}: {e}")
+                logger.warning("[HYGIENE] Falha ao remover %s: %s", file_path, e)
 
     if count > 0:
         logger.info(f"[HYGIENE] Sucesso: {count} artefatos extirpados. {bytes_freed / 1024:.2f} KB liberados.")

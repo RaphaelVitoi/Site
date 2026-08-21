@@ -57,7 +57,7 @@ export default function SimulatorNavigation({
 	];
 
 	return (
-		<nav className="flex items-center gap-3 p-2 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner relative overflow-hidden group/nav w-full max-w-full justify-between">
+		<nav className="flex items-center gap-1.5 p-1.5 bg-slate-950/60 rounded-2xl border border-white/10 shadow-inner relative overflow-x-auto no-scrollbar w-full max-w-full justify-start md:justify-between">
 			<div className="absolute inset-0 bg-radial-[at_top_left] from-accent-indigo/5 to-transparent pointer-events-none min-w-full" />
 
 			{tools.map((t) => {
@@ -65,27 +65,28 @@ export default function SimulatorNavigation({
 
 				return (
 					<button
+						type="button"
 						key={t.id}
 						onClick={() => onSelectTool(t.id)}
 						aria-current={isActive ? 'page' : undefined}
 						aria-selected={isActive}
 						role="tab"
-						className={`relative px-5 py-3 rounded-xl text-[0.65rem] font-black uppercase tracking-[0.35em] transition-all duration-500 flex items-center gap-3 whitespace-nowrap active:scale-95 group/btn shrink-0 ${
+						className={`relative px-3 sm:px-4 py-2 rounded-xl text-[0.58rem] sm:text-[0.62rem] font-black uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 whitespace-nowrap active:scale-95 group/btn shrink-0 cursor-pointer ${
 							isActive
 								? 'text-white'
-								: 'text-text-darker hover:text-text-muted hover:bg-white/2'
+								: 'text-text-dim hover:text-text-muted hover:bg-white/5'
 						}`}
 					>
 						{isActive && (
 							<motion.div
 								layoutId="active-tool-bg"
-								className="absolute inset-0 bg-accent-indigo/15 border border-accent-indigo/30 rounded-xl shadow-2xl shadow-indigo-500/10"
-								transition={{ type: 'spring', bounce: 0.1, duration: 0.7 }}
+								className="absolute inset-0 bg-accent-indigo/20 border border-accent-indigo/40 rounded-xl shadow-lg shadow-indigo-500/10"
+								transition={{ type: 'spring', bounce: 0.1, duration: 0.5 }}
 							/>
 						)}
 
 						<div
-							className={`relative z-10 flex items-center justify-center transition-all duration-500 ${isActive ? 'scale-110' : 'opacity-40 group-hover/btn:opacity-80'}`}
+							className={`relative z-10 flex items-center justify-center transition-all duration-300 ${isActive ? 'scale-110' : 'opacity-50 group-hover/btn:opacity-90'}`}
 						>
 							<i
 								className={`fa-solid ${t.icon} ${isActive ? 'text-accent-indigo text-glow-indigo' : ''}`}

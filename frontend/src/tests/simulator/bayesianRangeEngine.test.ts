@@ -12,9 +12,9 @@ describe('bayesianRangeEngine', () => {
 			const belief = generateUniformBelief();
 
 			// Verifica chaves importantes
-			expect(belief['AA']).toBe(6 / 1326);
-			expect(belief['AKs']).toBe(4 / 1326);
-			expect(belief['AKo']).toBe(12 / 1326);
+			expect(Reflect.get(belief, 'AA')).toBe(6 / 1326);
+			expect(Reflect.get(belief, 'AKs')).toBe(4 / 1326);
+			expect(Reflect.get(belief, 'AKo')).toBe(12 / 1326);
 
 			// Soma de todos os pesos de probabilidade
 			const totalSum = Object.values(belief).reduce((s, v) => s + v, 0);
@@ -28,17 +28,17 @@ describe('bayesianRangeEngine', () => {
 			const likelihood: Record<string, number> = {};
 
 			// Definir que apenas AA e KK fazem a ação com probabilidade 1, outros com 0
-			for (const hand in prior) {
-				likelihood[hand] = hand === 'AA' || hand === 'KK' ? 1.0 : 0.0;
+			for (const hand of Object.keys(prior)) {
+				Reflect.set(likelihood, hand, hand === 'AA' || hand === 'KK' ? 1.0 : 0.0);
 			}
 
 			const posterior = updateBelief(prior, likelihood);
 
 			// Como AA e KK têm as mesmas probabilidades iniciais e probabilidades condicionais,
 			// cada um deve ter 0.5 de probabilidade a posteriori.
-			expect(posterior['AA']).toBeCloseTo(0.5, 5);
-			expect(posterior['KK']).toBeCloseTo(0.5, 5);
-			expect(posterior['AKs']).toBe(0);
+			expect(Reflect.get(posterior, 'AA')).toBeCloseTo(0.5, 5);
+			expect(Reflect.get(posterior, 'KK')).toBeCloseTo(0.5, 5);
+			expect(Reflect.get(posterior, 'AKs')).toBe(0);
 		});
 
 		it('should return prior (anti-crash) if the action is impossible (evidence === 0)', () => {
@@ -46,8 +46,8 @@ describe('bayesianRangeEngine', () => {
 			const likelihood: Record<string, number> = {};
 
 			// Probabilidade da ação dada qualquer mão é 0
-			for (const hand in prior) {
-				likelihood[hand] = 0.0;
+			for (const hand of Object.keys(prior)) {
+				Reflect.set(likelihood, hand, 0.0);
 			}
 
 			const posterior = updateBelief(prior, likelihood);

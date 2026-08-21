@@ -3,8 +3,8 @@
 /**
  * IDENTITY: Simulador GTO/CFR SOTA Quantum
  * PATH: src/components/simulator/GtoCfrSimulator.tsx
- * ROLE: Motor de visualizaÃ§Ã£o compacta de DecisÃµes, Bayes e CFR.
- * PRINCIPLE: FricÃ§Ã£o Zero & Simetria (Sem scrollbars, mÃ¡xima fluidez).
+ * ROLE: Motor de visualização compacta de Decisões, Bayes e CFR.
+ * PRINCIPLE: Fricção Zero & Simetria (Sem scrollbars, máxima fluidez).
  */
 
 import {
@@ -63,7 +63,7 @@ export function GtoCfrSimulator() {
 		'var(--accent-danger)',
 	];
 
-	// CÃ¡lculos otimizados para Economia de Shannon (AntevisÃ£o MatemÃ¡tica)
+	// Cálculos otimizados para Economia de Shannon (Antevisão Matemática)
 	const geometricPath = useMemo(
 		() => generateGeometricPath(physics.pot, physics.heroStack, 3),
 		[physics.pot, physics.heroStack],
@@ -84,7 +84,7 @@ export function GtoCfrSimulator() {
 		[villainStats],
 	);
 
-	// SOTA: InjeÃ§Ã£o Vetorial Zero-Copy (WebGPU) acoplada Ã  Perspectiva
+	// SOTA: Injeção Vetorial Zero-Copy (WebGPU) acoplada à Perspectiva
 	useEffect(() => {
 		if (!isHydrated) return;
 		workerRef.current ??= new Worker(new URL('./workers/cfr.worker.ts', import.meta.url), {
@@ -120,7 +120,7 @@ export function GtoCfrSimulator() {
 		};
 	}, [isHydrated, physics.pot, physics.heroStack, spot]);
 
-	// SOTA: Offloading da estratÃ©gia CFR pesada para o Web Worker
+	// SOTA: Offloading da estratégia CFR pesada para o Web Worker
 	useEffect(() => {
 		if (!isHydrated || !workerRef.current) return;
 
@@ -141,7 +141,7 @@ export function GtoCfrSimulator() {
 			<div className="flex flex-col items-center justify-center p-24 w-full min-h-125 bg-black/20 animate-pulse rounded-4xl border border-white/5 shadow-[inset_0_0_50px_rgba(0,0,0,0.5)]">
 				<i className="fa-solid fa-atom text-accent-indigo text-3xl mb-4 opacity-50 animate-spin" />
 				<div className="text-text-muted text-[0.65rem] font-black uppercase tracking-widest font-mono">
-					Hidratando Simetria QuÃ¢ntica...
+					Hidratando Simetria Quântica...
 				</div>
 			</div>
 		);
@@ -150,9 +150,9 @@ export function GtoCfrSimulator() {
 		<div className="space-y-6 animate-sota-in">
 			<SectionHeader
 				step="IA"
-				label="InteligÃªncia Artificial"
-				title="DecisÃ£o QuÃ¢ntica"
-				description="ConvergÃªncia CFR e Teoria da Perspectiva."
+				label="Inteligência Artificial"
+				title="Decisão Quântica"
+				description="Convergência CFR e Teoria da Perspectiva."
 			/>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">

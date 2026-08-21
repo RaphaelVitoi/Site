@@ -1,11 +1,11 @@
 {
     "system_info": {
-        "workspace_path": "c:\\Users\\Raphael\\OneDrive\\Documentos\\Site",
+        "workspace_path": "C:\\Users\\rapha\\.gemini\\Site",
         "settings_local": ".cerebro\\settings.local.json",
-        "version": "1.0.3",
-        "last_sync": "2025-05-06T08:50:00Z",
+        "version": "7.0.0",
+        "last_sync": "2026-08-18T13:40:00Z",
         "environment": "production",
-        "sota_level": "v3-final"
+        "sota_level": "v7.0-GOLD"
     },
     "protected_agents_from_cleanup": [
         "@maverick",
@@ -17,7 +17,9 @@
         "@bibliotecario",
         "@sequenciador",
         "@historian",
-        "@auditor"
+        "@auditor",
+        "@validador",
+        "@gemma4"
     ],
     "handoff_pipeline": {
         "@dispatcher": "@architect",
@@ -27,9 +29,11 @@
         "@prompter": "@auditor",
         "@auditor": "@implementor",
         "@implementor": "@verifier",
-        "@verifier": "@curator",
+        "@verifier": "@validador",
+        "@validador": "@curator",
         "@curator": "@sequenciador",
-        "@sequenciador": "@historian"
+        "@sequenciador": "@historian",
+        "@historian": "@gemma4"
     },
     "workflow_flags": {
         "enable_dynamic_fallback": true,
@@ -38,6 +42,7 @@
         "enable_domain_validation_gate": true,
         "enable_strategy_gate": true,
         "enable_research_gate": true,
+        "enable_edge_inference_gate": true,
         "prefer_cost_saving_mode": true,
         "anthropic_last": true
     },
@@ -91,6 +96,12 @@
                 "heuristic": "domain_terms",
                 "agent": "@validador",
                 "position": 7
+            },
+            {
+                "gate": "enable_edge_inference_gate",
+                "heuristic": "edge_inference_terms",
+                "agent": "@gemma4",
+                "position": 8
             }
         ]
     },
@@ -107,12 +118,23 @@
         "technical_agents": [
             "@implementor",
             "@verifier",
+            "@validador",
             "@skillmaster",
             "@organizador",
-            "@sequenciador"
+            "@sequenciador",
+            "@gemma4"
         ]
     },
     "routing_heuristics": {
+        "edge_inference_terms": {
+            "gemma": 4,
+            "local": 3,
+            "inferencia": 3,
+            "borda": 3,
+            "directml": 4,
+            "ollama": 4,
+            "nash-ia": 4
+        },
         "research_terms": {
             "pesquisa": 2,
             "research": 2,
@@ -216,35 +238,45 @@
         "min_success_rate_pct": 10.0,
         "drop_only_free_models": true,
         "protect_models": [
-            "gemini-2.5-flash",
-            "gemini-2.5-pro"
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-3.6-flash",
+            "gemini-3.7-flash"
         ]
     },
     "model_routing": {
         "deep_thinking": [
-            "gemini-2.5-pro",
+            "gemini-3.7-flash",
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
             "deepseek/deepseek-r1:free",
-            "gemini-2.5-flash"
+            "meta-llama/llama-3.3-70b-instruct:free"
         ],
         "fast_operations": [
-            "gemini-2.5-flash",
-            "meta-llama/llama-3.1-8b-instruct"
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-3.6-flash",
+            "meta-llama/llama-3.1-8b-instruct:free"
         ],
         "coding": [
-            "gemini-2.5-pro",
-            "qwen/qwen3-next-80b-a3b-instruct:free",
-            "qwen/qwen3-coder:free"
+            "gemini-3.7-flash",
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "qwen/qwen-2.5-coder-32b-instruct:free",
+            "deepseek/deepseek-r1:free"
         ],
         "general_purpose": [
-            "gemini-2.5-flash",
-            "meta-llama/llama-3.1-8b-instruct"
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-3.6-flash",
+            "meta-llama/llama-3.3-70b-instruct:free"
         ],
         "openrouter_alternatives": [
-            "meta-llama/llama-3.1-8b-instruct",
             "deepseek/deepseek-r1:free",
-            "qwen/qwen3-coder:free",
-            "openai/gpt-oss-20b:free",
-            "qwen/qwen3-next-80b-a3b-instruct:free"
+            "meta-llama/llama-3.3-70b-instruct:free",
+            "qwen/qwen-2.5-coder-32b-instruct:free",
+            "meta-llama/llama-3.1-8b-instruct:free",
+            "mistralai/mistral-small-3.1-24b-instruct:free"
         ]
     },
     "system_prompts": {

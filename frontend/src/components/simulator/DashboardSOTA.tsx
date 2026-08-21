@@ -19,7 +19,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { TelemetryCharts } from '../analytics/TelemetryCharts';
-import { solveIcmDistortion } from './engine/nashSolver';
+import { solveIcmDistortion } from './solver/nashSolver';
 import { GemmaAnalysisPanel } from './GemmaAnalysisPanel';
 import { InsolvencyMatrix } from './InsolvencyMatrix';
 import { SotaMetricsContext, SotaSpotContext, SotaWasmContext } from './SotaContext';
@@ -125,9 +125,9 @@ export default function DashboardSOTA({ initialData, hudMode = false }: Readonly
   };
   const nashResult = solveIcmDistortion(ipRp, oopRp, baselineFreqs, 1, potSize);
 
-  const radarData = (Object.keys(activeProfile) as Array<keyof typeof activeProfile>).map((key) => ({
+  const radarData = Object.entries(activeProfile).map(([key, val]) => ({
     subject: key,
-    Deficiencia: Number((activeProfile[key] * 100).toFixed(1)),
+    Deficiencia: Number((val * 100).toFixed(1)),
   }));
 
   const topLeaks = Object.entries(activeProfile)

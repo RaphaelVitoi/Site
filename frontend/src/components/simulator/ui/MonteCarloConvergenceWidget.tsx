@@ -16,6 +16,16 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import AnimatedNumber from './AnimatedNumber';
 
+function getSimulationModeLabel(mode: string | undefined): string {
+	if (mode === 'SHARED_ARRAY_BUFFER') {
+		return 'SharedArrayBuffer Atômico';
+	}
+	if (mode === 'TRANSFERABLE_WORKERS') {
+		return 'Transferable Workers Pool';
+	}
+	return 'Single-Thread WASM Fallback';
+}
+
 export interface MonteCarloConvergenceWidgetProps {
 	heroRangeDefault?: string;
 	villainRangeDefault?: string;
@@ -66,12 +76,7 @@ export function MonteCarloConvergenceWidget({
 		return () => clearTimeout(debounceTimer);
 	}, [executeSimulation]);
 
-	const modeLabel =
-		result?.mode === 'SHARED_ARRAY_BUFFER'
-			? 'SharedArrayBuffer Atômico'
-			: result?.mode === 'TRANSFERABLE_WORKERS'
-				? 'Transferable Workers Pool'
-				: 'Single-Thread WASM Fallback';
+	const modeLabel = getSimulationModeLabel(result?.mode);
 
 	const mIps = result ? (result.throughputIps / 1000000).toFixed(2) : '0.00';
 
@@ -134,6 +139,7 @@ export function MonteCarloConvergenceWidget({
 							className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3.5 py-2 text-[0.7rem] font-mono font-bold text-white focus:outline-none focus:border-accent-indigo transition-all shadow-inner"
 						/>
 						<button
+							type="button"
 							onClick={executeSimulation}
 							disabled={isSimulating}
 							className="px-4 py-2 rounded-xl bg-accent-indigo text-white text-[0.6rem] font-black uppercase tracking-wider hover:bg-indigo-500 disabled:opacity-50 transition-all shadow-lg active:scale-95 flex items-center gap-1.5"
@@ -199,6 +205,7 @@ export function MonteCarloConvergenceWidget({
 				{[10000, 25000, 50000].map((it) => (
 					<button
 						key={it}
+						type="button"
 						onClick={() => setIterations(it)}
 						className={`px-3 py-1 rounded-lg text-[0.55rem] font-mono font-bold transition-all border ${
 							iterations === it
@@ -259,7 +266,7 @@ export function MonteCarloConvergenceWidget({
 					</div>
 					<div className="h-2 w-full bg-black/60 rounded-full overflow-hidden border border-white/5 relative">
 						<div
-							className="h-full bg-gradient-to-r from-accent-indigo to-accent-emerald rounded-full transition-all duration-300"
+							className="h-full bg-linear-to-r from-accent-indigo to-accent-emerald rounded-full transition-all duration-300"
 							style={{ width: `${Math.min(100, Math.max(0, result.equityPercentage))}%` }}
 						/>
 					</div>

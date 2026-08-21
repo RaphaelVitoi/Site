@@ -14,8 +14,10 @@ class ClusterType(str, enum.Enum):
     DELTA_DATAPROC = "DELTA_DATAPROC"  # Pipelines Spark, Bucketing, Arrow Analytics
 
 
-MODEL_GEMINI_37_FLASH = "gemini-3.7-flash-medium"
-MODEL_GEMINI_25_FLASH = "gemini-2.5-flash"
+MODEL_GEMINI_35_FLASH_LITE = "gemini-3.5-flash-lite"
+MODEL_GEMINI_31_FLASH_LITE = "gemini-3.1-flash-lite"
+MODEL_GEMINI_36_FLASH = "gemini-3.6-flash"
+MODEL_GEMINI_37_FLASH = "gemini-3.7-flash"
 MODEL_GEMINI_31_PRO = "gemini-3.1-pro"
 MODEL_CLAUDE_37_SONNET = "claude-3-7-sonnet"
 
@@ -44,7 +46,12 @@ class AgentClusteringMesh:
                 cluster_type=ClusterType.ALPHA_REASONING,
                 name="Cluster Alpha (Deep Reasoning & Architecture)",
                 description="Governanca, planejamento estrategico, resolucao matematica de PMev/ICM e arquitetura de sistemas.",
-                primary_models=[MODEL_GEMINI_37_FLASH, MODEL_GEMINI_31_PRO, MODEL_CLAUDE_37_SONNET],
+                primary_models=[
+                    MODEL_GEMINI_37_FLASH,
+                    MODEL_GEMINI_35_FLASH_LITE,
+                    MODEL_GEMINI_31_PRO,
+                    MODEL_CLAUDE_37_SONNET,
+                ],
                 cpu_affinity_cores=[4, 5, 6, 7, 12, 13, 14, 15],  # Cores de alta performance
                 max_concurrency=4,
                 enable_thinking=True,
@@ -54,7 +61,12 @@ class AgentClusteringMesh:
                 cluster_type=ClusterType.BETA_EXECUTION,
                 name="Cluster Beta (Rapid Code Synthesis & Tooling)",
                 description="Geracao de codigo de baixa latencia, modificacoes atomicas de arquivos e execucao de comandos.",
-                primary_models=[MODEL_GEMINI_37_FLASH, MODEL_GEMINI_25_FLASH],
+                primary_models=[
+                    MODEL_GEMINI_35_FLASH_LITE,
+                    MODEL_GEMINI_31_FLASH_LITE,
+                    MODEL_GEMINI_36_FLASH,
+                    MODEL_GEMINI_37_FLASH,
+                ],
                 cpu_affinity_cores=[2, 3, 4, 5, 10, 11, 12, 13],
                 max_concurrency=8,
                 enable_thinking=False,
@@ -64,7 +76,7 @@ class AgentClusteringMesh:
                 cluster_type=ClusterType.GAMMA_AUDITING,
                 name="Cluster Gamma (Auditing, Linting & Empirical Verification)",
                 description="Varredura de seguranca, auditoria estatica de codigo, execucao de testes unitarios e linting.",
-                primary_models=[MODEL_GEMINI_25_FLASH],
+                primary_models=[MODEL_GEMINI_35_FLASH_LITE, MODEL_GEMINI_31_FLASH_LITE],
                 cpu_affinity_cores=[0, 1, 8, 9],
                 max_concurrency=6,
                 enable_thinking=False,
@@ -74,7 +86,7 @@ class AgentClusteringMesh:
                 cluster_type=ClusterType.DELTA_DATAPROC,
                 name="Cluster Delta (Spark & High-Throughput Analytics)",
                 description="Processamento de lotes Spark, vetores Arrow, transformacoes analiticas e replay de sessoes.",
-                primary_models=[MODEL_GEMINI_37_FLASH, MODEL_GEMINI_25_FLASH],
+                primary_models=[MODEL_GEMINI_35_FLASH_LITE, MODEL_GEMINI_36_FLASH],
                 cpu_affinity_cores=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],  # All cores
                 max_concurrency=16,
                 enable_thinking=False,

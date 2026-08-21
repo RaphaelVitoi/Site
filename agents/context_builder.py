@@ -404,7 +404,7 @@ def _add_autonomy_and_guidelines(user_prompt: str, task: Task, agent_clean: str,
 
 
 def _finalize_prompt(prompt_parts: list[str], agent_clean: str) -> str:
-    primary_model = te.AGENTS_MANIFEST.get(agent_clean, {}).get("primary_model", "gemini-2.5-flash")
+    primary_model = te.AGENTS_MANIFEST.get(agent_clean, {}).get("primary_model", "gemini-3.5-flash-lite")
     prompt_parts.append(
         f"\n\n[DIRETRIZ DE LLM SOTA] Ao final da sua resposta, recomende ativamente o modelo {primary_model} para as "
         f"proximas etapas que exijam sua atuacao ou perfil cognitivo, justificando com base na Economia Generalizada. "
