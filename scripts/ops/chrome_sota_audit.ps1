@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     SOTA Chrome Dev Dual-Instance & Core Web Vitals Audit Suite
     Chico Protocol v7.0 GOLD

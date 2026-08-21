@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Protocolo SOTA de Aniquilação Material (Obliterate)
 .DESCRIPTION

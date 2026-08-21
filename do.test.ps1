@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Testes de unidade para a Membrana Inteligente (do.ps1) usando Pester 3.x.
 .DESCRIPTION

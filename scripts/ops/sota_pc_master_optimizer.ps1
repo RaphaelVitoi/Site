@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     SOTA Gold Master PC Performance, Boot & Runtime Optimizer
     Protocol Chico SOTA v7.0 GOLD - Systems Architecture & Low-Latency Tuning
