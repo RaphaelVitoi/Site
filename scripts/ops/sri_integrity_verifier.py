@@ -105,11 +105,13 @@ def verify_wasm_binary_checksums() -> dict:
     for w in wasm_targets:
         if w.exists():
             h = hashlib.sha256(w.read_bytes()).hexdigest()
-            verified.append({
-                "path": w.relative_to(BASE_DIR).as_posix(),
-                "sha256": h[:16] + "..." + h[-8:],
-                "size_bytes": w.stat().st_size
-            })
+            verified.append(
+                {
+                    "path": w.relative_to(BASE_DIR).as_posix(),
+                    "sha256": h[:16] + "..." + h[-8:],
+                    "size_bytes": w.stat().st_size,
+                }
+            )
 
     return {
         "status": "PASS" if len(verified) > 0 else "FAIL",
@@ -136,19 +138,19 @@ def run_full_sri_audit(strict: bool = True) -> bool:
         "NPM package-lock.json",
         f"{pkg_res.get('sha512_count', 0)} / {pkg_res.get('total_remote', 0)} pacotes",
         "SHA-512 Estrito (Zero SHA-1)",
-        f"[green]{pkg_res['status']}[/]" if pkg_res["status"] == "PASS" else f"[red]{pkg_res['status']}[/]"
+        f"[green]{pkg_res['status']}[/]" if pkg_res["status"] == "PASS" else f"[red]{pkg_res['status']}[/]",
     )
     table.add_row(
         "Frontend SRI Script Tags",
         f"{sri_res.get('scanned_files', 0)} arquivos auditados",
         "SRI Mandate (Zero Injeção Externa)",
-        f"[green]{sri_res['status']}[/]" if sri_res["status"] == "PASS" else f"[red]{sri_res['status']}[/]"
+        f"[green]{sri_res['status']}[/]" if sri_res["status"] == "PASS" else f"[red]{sri_res['status']}[/]",
     )
     table.add_row(
         "Binários WebAssembly (WASM)",
         f"{len(wasm_res.get('binaries', []))} binários ativos",
         "SHA-256 Hash Lock (Zero Byte Drift)",
-        f"[green]{wasm_res['status']}[/]" if wasm_res["status"] == "PASS" else f"[red]{wasm_res['status']}[/]"
+        f"[green]{wasm_res['status']}[/]" if wasm_res["status"] == "PASS" else f"[red]{wasm_res['status']}[/]",
     )
 
     console.print(table)
@@ -159,7 +161,9 @@ def run_full_sri_audit(strict: bool = True) -> bool:
         console.print("[bold red]\n[GATE BLOCKED] Falha de integridade criptográfica detectada.[/]")
         return False
 
-    console.print("\n[bold green][GATE APPROVED] 100% dos recursos atendem ao padrão criptográfico SHA-512 / SRI SOTA.[/]")
+    console.print(
+        "\n[bold green][GATE APPROVED] 100% dos recursos atendem ao padrão criptográfico SHA-512 / SRI SOTA.[/]"
+    )
     return True
 
 

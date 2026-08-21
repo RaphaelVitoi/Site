@@ -46,9 +46,7 @@ def synthesize_gemini_audio(text: str, voice_name: str, output_path: Path) -> bo
                 response_modalities=["AUDIO"],
                 speech_config=types.SpeechConfig(
                     voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                            voice_name=voice_name
-                        )
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voice_name)
                     )
                 ),
             ),
@@ -89,8 +87,8 @@ async def async_speak_text(
 
     out_path = Path(output_file) if output_file else temp_dir / "sota_voice_output.mp3"
 
-    print(f"\n[NEXUS VOICE SOTA v7.0 GOLD]")
-    print(f"Texto: \"{text}\"")
+    print("\n[NEXUS VOICE SOTA v7.0 GOLD]")
+    print(f'Texto: "{text}"')
     print(f"Voz: {voice}")
     print(f"Destino: {out_path}")
 
@@ -109,7 +107,7 @@ async def async_speak_text(
     print(f"[NEXUS VOICE] \u2705 \u00c1udio sintetizado com sucesso ({out_path.stat().st_size} bytes).")
 
     if play and out_path.exists():
-        print(f"[NEXUS VOICE] \U0001f50a Reproduzindo nos alto-falantes do sistema...")
+        print("[NEXUS VOICE] \U0001f50a Reproduzindo nos alto-falantes do sistema...")
         play_audio_windows(out_path)
 
     return out_path
@@ -129,9 +127,7 @@ def speak_text(
 
     if loop and loop.is_running():
         with concurrent.futures.ThreadPoolExecutor() as pool:
-            return pool.submit(
-                asyncio.run, async_speak_text(text, voice, output_file, play)
-            ).result()
+            return pool.submit(asyncio.run, async_speak_text(text, voice, output_file, play)).result()
     else:
         return asyncio.run(async_speak_text(text, voice, output_file, play))
 
@@ -151,9 +147,7 @@ def main():
         help=f"Voz (Padrão: {DEFAULT_VOICE_PTBR}, ou Thalita, Aoede)",
     )
     parser.add_argument("--output", "-o", default=None, help="Arquivo de saída (.mp3/.wav)")
-    parser.add_argument(
-        "--no-play", action="store_true", help="Não reproduzir áudio automaticamente"
-    )
+    parser.add_argument("--no-play", action="store_true", help="Não reproduzir áudio automaticamente")
 
     args = parser.parse_args()
     speak_text(args.text, voice=args.voice, output_file=args.output, play=not args.no_play)

@@ -59,22 +59,20 @@ jobs:
       - name: 📥 Checkout Codebase
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node.js 20.x
+      - name: 🟢 Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: 📦 Install Frontend Dependencies
-        working-directory: ./frontend
+      - name: 📦 Install Workspace Dependencies
         run: |
-          npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+          npm ci
 
       - name: 🔍 TypeScript Strict Type Check
-        working-directory: ./frontend
         run: |
-          npx tsc --noEmit || true
+          npm run typecheck || true
 
   security-and-architecture-gate:
     name: 🛡️ Security Headers & Architecture Quality Gate
