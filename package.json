@@ -16,29 +16,37 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
+    "wasm:build": "node scripts/build-wasm.mjs",
     "dev": "npm run dev --workspace=frontend",
     "build": "npm --workspace frontend run build",
     "lint": "npm --workspace frontend run lint",
+    "lint:workflows": "uv run --with actionlint-py actionlint .github/workflows/sota-ci.yml skills/gemini-cli-security/.github/workflows/gemini-review.yml",
     "typecheck": "tsc --build frontend/tsconfig.json",
     "test": "npm --workspace frontend run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\" --ignore-path .prettierignore",
     "clean": "rimraf frontend/.next frontend/.turbo node_modules/.cache",
-    "python:test": ".venv/Scripts/python.exe -m pytest tests/",
-    "python:lint": "ruff check .",
-    "python:format": "ruff format .",
-    "python:typecheck": "pyright",
+    "python:test": "uv run --no-sync pytest tests/",
+    "python:test:watch": "uv run --no-sync pytest-watcher . tests/",
+    "python:lint": "uv run --no-sync ruff check .",
+    "python:watch": "uv run --no-sync ruff check --watch .",
+    "python:format": "uv run --no-sync ruff format .",
+    "python:typecheck": "uv run --no-sync pyright",
+    "python:coverage": "uv run --no-sync pytest --cov=engine tests/",
     "sota:audit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ops/cwv_gate.ps1",
-    "sota:full": "npm run python:lint && npm run python:typecheck && npm run lint && npm run typecheck && npm run python:test"
+    "sota:full": "npm run python:lint && npm run python:typecheck && npm run lint && npm run typecheck && npm run python:test",
+    "watch:all": "concurrently -n \"RUFF,TEST\" -c \"yellow,green\" \"npm run python:watch\" \"npm run python:test:watch\"",
+    "dev:all": "concurrently -n \"NEXT,RUFF,TEST\" -c \"cyan,yellow,green\" \"npm run dev\" \"npm run python:watch\" \"npm run python:test:watch\""
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.6.0",
-    "@testing-library/react": "^16.3.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "prettier": "^3.5.0",
-    "prettier-plugin-tailwindcss": "^0.6.0",
-    "rimraf": "^6.0.0",
-    "turbo": "^2.4.0"
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.2",
+    "concurrently": "10.0.5",
+    "jest": "30.4.2",
+    "jest-environment-jsdom": "30.4.1",
+    "prettier": "3.9.6",
+    "prettier-plugin-tailwindcss": "0.8.1",
+    "rimraf": "6.1.3",
+    "turbo": "2.10.10"
   },
   "overrides": {
     "postcss": "^8.5.23",
@@ -69,7 +77,7 @@
     "markdownlint-cli": "^0.49.1",
     "tar": "^7.5.21",
     "undici": "^6.27.1",
-    "deepmerge-ts": "^8.0.1"
+    "deepmerge-ts": "8.0.1"
   },
   "allowScripts": {
     "@prisma/engines": true,
@@ -90,6 +98,6 @@
     ]
   },
   "dependencies": {
-    "@prisma/client": "^7.8.0"
+    "@prisma/client": "7.8.0"
   }
 }

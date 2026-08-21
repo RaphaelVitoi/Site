@@ -1,18 +1,19 @@
 # ruff: noqa: D100, D101, D103, BLE001, G004, ARG001, ARG002, E402, I001
-# pylint: disable=wrong-import-position, global-statement
+# pylint: disable=wrong-import-position, global-statement, invalid-name, too-many-lines, import-outside-toplevel
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import asyncio
-import shutil
-import subprocess  # noqa: S404
 import hmac
 import json
 import logging
 import os
-import uuid
+import re
+import shutil
+import subprocess  # noqa: S404
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Annotated, Any, TypedDict
 
@@ -152,6 +153,7 @@ app = FastAPI(
 # [SOTA RAG] INTEGRACAO LANCEDB (BUSCA VETORIAL - FRICCAO ZERO)
 # ==============================================================================
 RAG_AVAILABLE = False
+rag_engine: Any = None
 try:
     from memory_rag import MemoryRAG
 
@@ -214,6 +216,8 @@ class InferenceRequest(BaseModel):
     prompt: str
     system_prompt: str | None = None
     messages: list[dict[str, str]] | None = None
+    images: list[str] | None = None  # SOTA Multimodal: Base64 / URLs para visao
+    audios: list[str] | None = None  # SOTA Multimodal: Audio nativo para Gemma 4 E2B/E4B/12B
     physics_snapshot: PhysicsSnapshot | None = None
     predictive_profile: CognitiveProfile | None = None
     max_tokens: int = 2048
@@ -247,13 +251,13 @@ def _format_predictive_profile(profile: CognitiveProfile | None) -> str:
     return f"\n[PERFIL COGNITIVO (TELEMETRIA BAYESIANA)]\n{prof_str}\nDiretriz SOTA: Adapte sua argumentacao e justifique a jogada mitigando ativamente as maiores fraquezas numericas deste perfil.\n[END_PROFILE]\n"
 
 
-# SOTA: Mapeamento e Normalizacao de Modelos Gemma 4
+# SOTA: Mapeamento e Normalizacao de Modelos Gemma 4 (Foco Local: 12B/4B | Cloud: 31B)
 LOCAL_MODEL_MAP = {
-    "31b": "31b",
-    "26b": "26b",
     "12b": "12b",
-    "4b": "4b",
-    "8b": "8b",
+    "e4b": "e4b",
+    "e2b": "e2b",
+    "4b": "e4b",
+    "31b_cloud": "31b_cloud",
     "llama3_8b": "llama3_8b",
     "qwen": "qwen",
     "granite": "granite",
@@ -261,74 +265,105 @@ LOCAL_MODEL_MAP = {
 }
 
 CLOUD_MODEL_MAP = {
+    "12b": "gemma-4-12b-it",
+    "e4b": "gemma-4-e4b-it",
+    "e2b": "gemma-4-e2b-it",
+    "4b": "gemma-4-e4b-it",
+    "31b_cloud": "gemma-4-31b-it",
     "31b": "gemma-4-31b-it",
-    "26b": "gemma-4-26b-a4b-it",
-    "12b": "gemma-3-12b-it",
-    "4b": "gemma-3-4b-it",
-    "8b": "gemma-4-8b-it",
     "llama3_8b": "meta-llama/llama-3.1-8b-instruct",
     "qwen": "qwen/qwen-2.5-coder-32b-instruct",
     "granite": "ibm/granite-3.3-8b-instruct",
     "deepseek": "deepseek/deepseek-chat",
 }
 
+# Fallback embutido. A fonte de verdade e data/ollama_models.json, carregado
+# logo abaixo. Este literal so entra em uso se o manifesto estiver ausente ou
+# ilegivel, para que o servidor nunca deixe de subir por causa de um arquivo
+# de configuracao.
 OLLAMA_MODEL_MAP = {
-    "31b": "gemma4:31b-cloud",
-    "26b": "gemma4:26b",
     "12b": "gemma4:12b",
+    "e4b": "gemma4:e4b",
+    "e2b": "gemma4:e2b",
     "4b": "gemma4:latest",
-    "8b": "gemma4:8b",
     "llama3_8b": "llama3.1:8b",
     "qwen": "qwen2.5-coder:3b",
     "granite": "granite3.3:8b",
     "deepseek": "deepseek-coder:1.3b",
 }
 
+OLLAMA_MODELS_MANIFEST = Path(PROJECT_ROOT) / "data" / "ollama_models.json"
+
+
+def _carregar_manifesto_ollama() -> dict[str, str]:
+    """Le os aliases de modelo da fonte unica de verdade.
+
+    Consolida o que antes eram tres mapas hardcoded divergentes (aqui, em
+    scripts/start_model.ps1 e em scripts/llm_inference/run_inference.py).
+    Devolve dicionario vazio se o manifesto nao puder ser lido — o chamador
+    mantem o fallback nesse caso.
+    """
+    try:
+        with OLLAMA_MODELS_MANIFEST.open(encoding="utf-8") as fh:
+            dados = json.load(fh)
+        return {
+            m["alias"]: m["tag"]
+            for m in dados.get("models", [])
+            if m.get("alias") and m.get("tag")
+        }
+    except (OSError, json.JSONDecodeError, KeyError, TypeError):
+        return {}
+
+
+_manifesto_aliases = _carregar_manifesto_ollama()
+if _manifesto_aliases:
+    OLLAMA_MODEL_MAP = _manifesto_aliases
+
 MODEL_INFERENCE_PARAMS = {
-    "31b": {
-        "num_ctx": 32768,  # SOTA GOLD: Contexto expandido para arquitetura de ecossistema
-        "temperature": 0.3,  # Precisao cirurgica (+EV)
+    "12b": {
+        "num_ctx": 32768,  # Gemma 4 12B: Baseline 32K (Expansível dinamicamente até 256K)
+        "temperature": 0.4,
+        "top_p": 0.9,
+        "top_k": 40,
+        "repeat_penalty": 1.1,
+        "num_predict": 2048,
+        "num_thread": 8,
+    },
+    "e4b": {
+        "num_ctx": 16384,  # Gemma 4 Effective 4B: Baseline 16K (Expansível até 128K)
+        "temperature": 0.5,
         "top_p": 0.95,
         "top_k": 64,
-        "repeat_penalty": 1.05,
-        "num_predict": 4096,
-        "num_thread": 12,  # Escalonamento para workloads pesados
+        "repeat_penalty": 1.1,
+        "num_predict": 2048,
+        "num_thread": 4,
     },
-    "26b": {
-        "num_ctx": 32768,
+    "e2b": {
+        "num_ctx": 8192,  # Gemma 4 Effective 2B: Baseline 8K (Expansível até 128K)
+        "temperature": 0.5,
+        "top_p": 0.95,
+        "top_k": 64,
+        "repeat_penalty": 1.1,
+        "num_predict": 2048,
+        "num_thread": 4,
+    },
+    "4b": {
+        "num_ctx": 131072,
+        "temperature": 0.5,
+        "top_p": 0.95,
+        "top_k": 64,
+        "repeat_penalty": 1.1,
+        "num_predict": 2048,
+        "num_thread": 4,
+    },
+    "31b_cloud": {
+        "num_ctx": 262144,  # Gemma 4 31B Cloud Flagship (Google AI Studio / Vertex)
         "temperature": 0.3,
-        "top_p": 0.5,
+        "top_p": 0.95,
         "top_k": 64,
         "repeat_penalty": 1.05,
         "num_predict": 4096,
         "num_thread": 12,
-    },
-    "12b": {
-        "num_ctx": 16384,
-        "temperature": 0.5,
-        "top_p": 0.9,
-        "top_k": 40,
-        "repeat_penalty": 1.1,
-        "num_predict": 2048,
-        "num_thread": 8,
-    },
-    "4b": {
-        "num_ctx": 8192,
-        "temperature": 0.7,
-        "top_p": 0.95,
-        "top_k": 64,
-        "repeat_penalty": 1.1,
-        "num_predict": 1024,
-        "num_thread": 4,
-    },
-    "8b": {
-        "num_ctx": 16384,
-        "temperature": 0.5,
-        "top_p": 0.9,
-        "top_k": 40,
-        "repeat_penalty": 1.1,
-        "num_predict": 2048,
-        "num_thread": 8,
     },
     "llama3_8b": {
         "num_ctx": 16384,
@@ -371,16 +406,18 @@ MODEL_INFERENCE_PARAMS = {
 
 def normalize_model(model_name: str | None) -> str:
     if not model_name:
-        return "31b"
+        return "12b"
     model_name_lower = model_name.lower()
-    if "31b" in model_name_lower:
-        return "31b"
+    if "31b" in model_name_lower or "cloud" in model_name_lower:
+        return "31b_cloud"
     if "26b" in model_name_lower:
-        return "26b"
+        return "12b"  # SOTA: 26b desviado estrategicamente para o cavalo-de-batalha local 12b
     if "12b" in model_name_lower:
         return "12b"
+    if "e2b" in model_name_lower or "2b" in model_name_lower:
+        return "e2b"
     if "4b" in model_name_lower or "latest" in model_name_lower or "e4b" in model_name_lower:
-        return "4b"
+        return "e4b"
     if "llama" in model_name_lower:
         return "llama3_8b"
     if "qwen" in model_name_lower:
@@ -389,9 +426,7 @@ def normalize_model(model_name: str | None) -> str:
         return "granite"
     if "deepseek" in model_name_lower:
         return "deepseek"
-    if "8b" in model_name_lower:
-        return "8b"
-    return "31b"
+    return "12b"
 
 
 # SOTA: Roteamento Assimetrico Dinamico (Auto-Routing)
@@ -433,8 +468,6 @@ async def _get_rag_context_async(prompt: str, local_only: bool = False) -> str:
         return ""
 
     # Heuristica de Bypass de Latencia para Saudacoes e Queries Curtas (Friccao Zero)
-    import re
-
     clean_q = prompt.strip().lower()
     words = re.findall(r"\b\w+\b", clean_q)
     if len(words) < 4:
@@ -584,13 +617,13 @@ def _parse_ollama_chunk(line_str: str) -> tuple[str, bool]:
         return "", False
 
 
-def _sanitize_messages_for_gemma(messages: list[dict[str, str]]) -> list[dict[str, str]]:
+def _sanitize_messages_for_gemma(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """SOTA: Funde o System Prompt no User Prompt para evitar colapso do template Jinja do Ollama."""
-    sanitized = []
+    sanitized: list[dict[str, Any]] = []
     system_prompt = ""
     for msg in messages:
         role = msg.get("role", "user")
-        content = msg.get("content", "").strip()
+        content = str(msg.get("content", "")).strip()
         if not content:
             continue
         if role == "system":
@@ -610,13 +643,13 @@ def _sanitize_messages_for_gemma(messages: list[dict[str, str]]) -> list[dict[st
 
 
 def _calculate_dynamic_context(
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     max_tokens: int | None,
     max_ctx: int,
     default_predict: int,
 ) -> int:
     """Calcula dinamicamente o tamanho ideal do contexto (KV Cache)."""
-    total_chars = sum(len(m.get("content", "")) for m in messages)
+    total_chars = sum(len(str(m.get("content", ""))) for m in messages)
     estimated_tokens = (total_chars // 3) + (max_tokens or default_predict)
     target_ctx = 2048
     while target_ctx < estimated_tokens and target_ctx < max_ctx:
@@ -720,76 +753,103 @@ async def _check_vram_offload(target_model: str) -> None:
 
 
 def _get_target_gpu_layers(target_model: str) -> int:
-    if "26b" in target_model:
-        return 16
+    """SOTA: Fatiamento hibrido de memoria (VRAM GPU vs RAM do Sistema).
+    Divide a carga harmonicamente sem sobrecarregar a GPU, aproveitando
+    a banda de memoria do sistema com MMAP e vetorizacao AVX/Zen4.
+    """
     if "12b" in target_model:
-        return 28
+        return 26  # ~65% VRAM (~5.2 GB) + 35% RAM do Sistema (DDR4/DDR5)
+    if "e4b" in target_model or "4b" in target_model:
+        return 18  # ~65% VRAM (~2.1 GB) + 35% RAM do Sistema
+    if "e2b" in target_model:
+        return 12  # ~65% VRAM (~1.1 GB) + 35% RAM do Sistema
     return -1
+
+
+def _build_ollama_options(
+    req: InferenceRequest,
+    target_model: str,
+    messages: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """SOTA: Constroi opcoes de inferencia do Ollama calibradas termodinamicamente."""
+    model_key = next((k for k in MODEL_INFERENCE_PARAMS if k in target_model), "31b")
+    params = MODEL_INFERENCE_PARAMS[model_key].copy()
+
+    if req.temperature is not None:
+        params["temperature"] = req.temperature
+    elif not req.system_prompt:
+        params["temperature"] = 0.0
+
+    static_ctx = os.environ.get("SOTA_STATIC_CONTEXT", "1") == "1"
+    if static_ctx:
+        num_ctx = int(params["num_ctx"])
+    else:
+        num_ctx = _calculate_dynamic_context(
+            messages, req.max_tokens, int(params["num_ctx"]), int(params["num_predict"])
+        )
+
+    num_gpu = _get_target_gpu_layers(target_model)
+
+    return {
+        "temperature": params["temperature"],
+        "top_p": params["top_p"],
+        "top_k": params["top_k"],
+        "repeat_penalty": 1.0,
+        "num_predict": req.max_tokens or params["num_predict"],
+        "num_ctx": num_ctx,
+        "num_thread": params["num_thread"],
+        "num_batch": 1024,
+        "stop": ["<eos>", "</s>", "<unused50>", "<unused24>", "<|thought|>", "</thought>", "<think>", "</think>", "(-"],
+        "num_gpu": num_gpu,
+        "use_mmap": True,
+    }
+
+
+def _prepare_ollama_payload(
+    req: InferenceRequest,
+    ollama_model: str,
+    messages: list[dict[str, Any]],
+    options: dict[str, Any],
+) -> dict[str, Any]:
+    """SOTA: Sanitiza mensagens e monta o payload serializavel para Ollama."""
+    sanitized = _sanitize_messages_for_gemma(messages)
+    if req.images:
+        for m in reversed(sanitized):
+            if m.get("role") == "user":
+                m["images"] = req.images
+                break
+
+    payload: dict[str, Any] = {
+        "model": ollama_model,
+        "messages": sanitized,
+        "stream": True,
+        "options": options,
+    }
+    if req.response_format:
+        payload["format"] = req.response_format
+    return payload
 
 
 async def _stream_local(
     req: InferenceRequest,
     request: Request,
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     target_model: str,
 ) -> AsyncGenerator[str, None]:
     """SOTA: Streaming via Ollama nativo com NDJSON e controle granular de contexto."""
     logger.info("[ROTEAMENTO LOCAL] Direcionando %s para Ollama nativo...", target_model)
     logger.info("[SISTEMA] Malha Ativa: 19 Agentes SOTA (Gemma 4 inclusive) | Entidade 20 (CEO Raphael Vitoi).")
-    ollama_model = OLLAMA_MODEL_MAP.get(target_model, "gemma4:31b-cloud")
+    ollama_model = OLLAMA_MODEL_MAP.get(target_model, "gemma4:12b")
 
-    # SOTA: Inspecao Fisica antes do offload para a GPU
     await _check_vram_offload(target_model)
 
-    model_key = next((k for k in MODEL_INFERENCE_PARAMS if k in target_model), "31b")
-    params = MODEL_INFERENCE_PARAMS[model_key].copy()
-
-    # Overrides dinamicos em cenarios agenticos rigorosos
-    if req.temperature is not None:
-        params["temperature"] = req.temperature
-    elif not req.system_prompt:
-        # Se for agentico sem system prompt customizado, aplica entropia 0
-        params["temperature"] = 0.0
-
-    # SOTA: Keep static context size by default to maximize Ollama prompt caching
-    static_ctx = os.environ.get("SOTA_STATIC_CONTEXT", "1") == "1"
-    if static_ctx:
-        num_ctx = params["num_ctx"]
-    else:
-        num_ctx = _calculate_dynamic_context(messages, req.max_tokens, params["num_ctx"], params["num_predict"])
+    options = _build_ollama_options(req, target_model, messages)
+    payload = _prepare_ollama_payload(req, ollama_model, messages, options)
 
     headers = {"Content-Type": "application/json"}
     session = HTTPSessionManager.get_session()
     ollama_base = os.environ.get("OLLAMA_API_BASE", "http://127.0.0.1:11434")
-
-    # SOTA: Fatiamento hibrido escalonado (Erradicacao de ternario aninhado S3358)
-    num_gpu = _get_target_gpu_layers(target_model)
-
-    options = {
-        "temperature": params["temperature"],
-        "top_p": params["top_p"],
-        "top_k": params["top_k"],
-        "repeat_penalty": 1.0,  # SOTA: Neutralizado absoluto (Gemma colapsa e vaza Control Tokens sob penalty)
-        "num_predict": req.max_tokens or params["num_predict"],
-        "num_ctx": num_ctx,
-        "num_thread": params["num_thread"],
-        "num_batch": 1024,  # SOTA: Balanceamento termodinamico do TTFT para RAG sem asfixiar GPU
-        "stop": ["<eos>", "</s>", "<unused50>", "<unused24>", "<|thought|>", "</thought>", "<think>", "</think>", "(-"],
-        "num_gpu": num_gpu,
-        "use_mmap": True,  # SOTA: Bypass de Paging File maximizando banda IO da RAM 32GB
-    }
-
     url = f"{ollama_base}/api/chat"
-    payload = {
-        "model": ollama_model,
-        "messages": _sanitize_messages_for_gemma(messages),
-        "stream": True,
-        "options": options,
-    }
-
-    # SOTA: Repasse estrito de Schema. Forca o Ollama a emitir Constrained JSON, blindando Pydantic.
-    if req.response_format:
-        payload["format"] = req.response_format
 
     yielded_any = False
     try:
@@ -917,14 +977,15 @@ async def _orchestrate_streams(
     cloud_model: str,
 ) -> AsyncGenerator[str, None]:
     # SOTA: Hibrido Local/Cloud para todos os modelos suportados.
-    # 1. Tenta execucao local (Edge)
+    # 1. Tenta execucao local (Edge) para modelos 12B/4B/Edge (31B e estritamente Cloud)
     local_success = False
-    try:
-        async for chunk in _stream_local(req, request, messages, target_model):
-            local_success = True
-            yield chunk
-    except Exception as e:
-        logger.warning("[HIBRIDO] Inferencia local para %s falhou: %s.", target_model, e)
+    if target_model != "31b_cloud":
+        try:
+            async for chunk in _stream_local(req, request, messages, target_model):
+                local_success = True
+                yield chunk
+        except Exception as e:
+            logger.warning("[HIBRIDO] Inferencia local para %s falhou: %s.", target_model, e)
 
     if local_success:
         return
@@ -1040,18 +1101,19 @@ async def openai_chat_completions(
 
     if req.stream:
         return StreamingResponse(_openai_stream_adapter(stream_gen, target_model), media_type="text/event-stream")
-    else:
-        full_text = ""
-        async for chunk in stream_gen:
-            full_text += chunk
-        return {
-            "id": f"chatcmpl-{uuid.uuid4().hex}",
-            "object": "chat.completion",
-            "created": int(time.time()),
-            "model": target_model,
-            "choices": [{"index": 0, "message": {"role": "assistant", "content": full_text}, "finish_reason": "stop"}],
-            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-        }
+
+    chunks = []
+    async for chunk in stream_gen:
+        chunks.append(chunk)
+    full_text = "".join(chunks)
+    return {
+        "id": f"chatcmpl-{uuid.uuid4().hex}",
+        "object": "chat.completion",
+        "created": int(time.time()),
+        "model": target_model,
+        "choices": [{"index": 0, "message": {"role": "assistant", "content": full_text}, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+    }
 
 
 if __name__ == "__main__":
@@ -1059,7 +1121,7 @@ if __name__ == "__main__":
 
     if os.name != "nt":
         try:
-            import uvloop
+            import uvloop  # type: ignore[import-not-found, import-untyped] # noqa: PLC0415
 
             uvloop.install()
             logger.info("[INFRA] uvloop instalado e ativo como motor assincrono de alta performance.")

@@ -4,10 +4,10 @@
  * Chico Protocol - Zero-Friction Asset Delivery
  */
 
-import fs from 'fs';
-import path from 'path';
-import zlib from 'zlib';
-import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+import path from 'node:path';
+import zlib from 'node:zlib';
+import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,17 +22,27 @@ const COMPRESSIBLE_EXTS = new Set([
   '.js', '.css', '.html', '.json', '.svg', '.wasm', '.txt', '.xml', '.mjs', '.cjs'
 ]);
 
+function assertSafePath(targetPath) {
+  const basePath = path.normalize(BASE_DIR);
+  const fullPath = path.normalize(path.resolve(basePath, targetPath));
+  if (!fullPath.startsWith(basePath)) {
+    throw new Error(`Security Violation: Path traversal attempt: ${targetPath}`);
+  }
+  return fullPath;
+}
+
 function getFiles(dir, fileList = []) {
-  if (!fs.existsSync(dir)) return fileList;
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const safeDir = assertSafePath(dir);
+  if (!fs.existsSync(safeDir)) return fileList;
+  const entries = fs.readdirSync(safeDir, { withFileTypes: true });
   for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
+    const safeChildPath = assertSafePath(path.join(safeDir, entry.name));
     if (entry.isDirectory()) {
-      getFiles(fullPath, fileList);
+      getFiles(safeChildPath, fileList);
     } else if (entry.isFile()) {
       const ext = path.extname(entry.name).toLowerCase();
       if (COMPRESSIBLE_EXTS.has(ext) && !entry.name.endsWith('.br') && !entry.name.endsWith('.gz')) {
-        fileList.push(fullPath);
+        fileList.push(safeChildPath);
       }
     }
   }
@@ -52,19 +62,23 @@ export async function compressAllStaticAssets() {
   const results = [];
 
   for (const targetDir of TARGET_DIRS) {
-    const files = getFiles(targetDir);
+    const safeTargetDir = assertSafePath(targetDir);
+    const files = getFiles(safeTargetDir);
     for (const filePath of files) {
-      const raw = fs.readFileSync(filePath);
+      const safeFilePath = assertSafePath(filePath);
+
+      const raw = fs.readFileSync(safeFilePath);
       const rawSize = raw.length;
       totalRawBytes += rawSize;
 
       // 1. Gzip Compression (Level 9)
       const gz = zlib.gzipSync(raw, { level: 9 });
-      fs.writeFileSync(`${filePath}.gz`, gz);
+      const gzPath = assertSafePath(`${safeFilePath}.gz`);
+      fs.writeFileSync(gzPath, gz);
       totalGzBytes += gz.length;
 
       // 2. Brotli Compression (Quality 11, Text/Generic Mode)
-      const isWasm = filePath.endsWith('.wasm');
+      const isWasm = safeFilePath.endsWith('.wasm');
       const br = zlib.brotliCompressSync(raw, {
         params: {
           [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
@@ -73,11 +87,12 @@ export async function compressAllStaticAssets() {
             : zlib.constants.BROTLI_MODE_TEXT,
         },
       });
-      fs.writeFileSync(`${filePath}.br`, br);
+      const brPath = assertSafePath(`${safeFilePath}.br`);
+      fs.writeFileSync(brPath, br);
       totalBrBytes += br.length;
 
       processedCount++;
-      const relPath = path.relative(BASE_DIR, filePath).replace(/\\/g, '/');
+      const relPath = path.relative(BASE_DIR, safeFilePath).replaceAll('\\', '/');
       results.push({
         path: relPath,
         rawKb: (rawSize / 1024).toFixed(2),
@@ -89,7 +104,7 @@ export async function compressAllStaticAssets() {
   }
 
   // Print top compressed assets
-  results.sort((a, b) => parseFloat(b.rawKb) - parseFloat(a.rawKb));
+  results.sort((a, b) => Number.parseFloat(b.rawKb) - Number.parseFloat(a.rawKb));
   const top10 = results.slice(0, 10);
 
   console.log('TOP COMPRESSED STATIC ASSETS:');
@@ -98,7 +113,7 @@ export async function compressAllStaticAssets() {
   console.log('----------------------------------------------------------------------');
   for (const r of top10) {
     const shortPath = r.path.length > 40 ? '...' + r.path.slice(-37) : r.path;
-    const isUnder15k = parseFloat(r.brKb) < 15.0;
+    const isUnder15k = Number.parseFloat(r.brKb) < 15.0;
     const status = isUnder15k ? '[< 15 KB]' : '[OPTIMIZED]';
     console.log(
       `${shortPath.padEnd(42)} | ${(r.rawKb + ' KB').padEnd(8)} | ${(r.gzKb + ' KB').padEnd(8)} | ${(r.brKb + ' KB').padEnd(8)} | ${status}`
@@ -121,8 +136,10 @@ export async function compressAllStaticAssets() {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  compressAllStaticAssets().catch(err => {
+  try {
+    await compressAllStaticAssets();
+  } catch (err) {
     console.error('Compression failed:', err);
     process.exit(1);
-  });
+  }
 }

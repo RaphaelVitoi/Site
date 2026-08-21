@@ -6,7 +6,7 @@ import uuid
 from datetime import UTC, datetime
 
 from dotenv import load_dotenv
-from locust import HttpUser, between, task
+from locust import HttpUser, between, task  # type: ignore[import-untyped,import-not-found] # pylint: disable=import-error
 
 load_dotenv()
 

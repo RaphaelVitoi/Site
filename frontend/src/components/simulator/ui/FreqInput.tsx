@@ -1,6 +1,6 @@
 'use client';
 
-import type { ChipEvFreqs } from '@/components/simulator/engine/types';
+import type { ChipEvFreqs } from '@/components/simulator/solver/types';
 
 interface FreqInputProps {
 	value: number;

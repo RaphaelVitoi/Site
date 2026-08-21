@@ -24,7 +24,8 @@ class SOTACache:
         self.memory_cache: dict[str, tuple[float, Any]] = {}
         self._lock = threading.Lock()
 
-    def _get_hash(self, key: str) -> str:
+    @staticmethod
+    def _get_hash(key: str) -> str:
         return hashlib.sha256(key.encode()).hexdigest()
 
     def _evict_if_needed(self):
@@ -80,8 +81,7 @@ class SOTACache:
                         self._evict_if_needed()
                         self.memory_cache[key] = (expiry, value)
                     return value
-                else:
-                    os.remove(cache_file)
+                os.remove(cache_file)
         except json.JSONDecodeError:
             logger.warning("[CACHE] Arquivo corrompido detectado para a chave '%s'. Reciclando...", key)
             try:

@@ -27,7 +27,7 @@ type: project
 2. **globals.css — 3 categorias de correção:**
    - P0: `--accent-rose` duplicada (linha 21: #e11d48, linha 52: #fb7185) → renomeada duplicata para `--accent-rose-light`. Nenhum componente usava o valor da duplicata diretamente.
    - P1: ~20 hex hardcoded migrados para CSS vars (h1-h4, article p/strong/ul/ol, td/td strong, scenario-btn, action-tab, pipeline-node, toy-scenario-btn, nav-dropdown-menu)
-   - P2: Encoding corrompido "Arsenal TÃ¡tico" na linha 502 — NÃO CORRIGIDO (comentário CSS, impacto zero)
+   - P2: Encoding corrompido "Arsenal Tático" na linha 502 — NÃO CORRIGIDO (comentário CSS, impacto zero)
 
 3. **Build limpo** após todas as correções.
 

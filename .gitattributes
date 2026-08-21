@@ -68,10 +68,41 @@ uv.lock           -text
 *.sqlite3   binary
 *.db-wal    binary
 *.db-shm    binary
-*.exe       binary
-*.dll       binary
-*.so        binary
-*.dylib     binary
-*.bin       binary
 *.tsbuildinfo binary
 *.pb        binary
+
+# ── ROTEAMENTO GIT LFS ───────────────────────────────────────────────────────
+# RESTAURADO EM 2026-08-21. O commit a622824c ("sanitize gitattributes") removeu
+# TODOS os padroes filter=lfs deste arquivo. A partir dali, `git check-attr
+# filter -- qualquer.dll` passou a responder "unspecified": binarios novos iriam
+# direto para o pack do Git como blob real, permanentes no historico e
+# recusados pelo GitHub acima de 100 MB.
+#
+# Os 140 .dll e 98 .exe que hoje estao em LFS entraram ANTES dessa remocao.
+# Nao ha nenhum binario rastreado como blob real, entao restaurar o roteamento
+# nao gera churn no working tree.
+#
+# NAO adicionar *.html aqui. Havia 10 HTMLs em LFS (incluindo um de 53 MB) e
+# rotear a extensao inteira transformaria todo fonte do site em ponteiro.
+# Arquivo grande de tipo textual deve ser tratado caso a caso, por caminho.
+#
+# NAO adicionar *.wasm nem *.pdb. Foram roteados por engano em 51fe43c1 e
+# removidos aqui: ja existem 6 .wasm e 24 .pdb RASTREADOS COMO BLOBS REAIS
+# (sob wasm-equity/target/ e .../panels/target/, saida de build do Rust).
+# Declarar a extensao como LFS com blobs pre-existentes produz o aviso
+# "files that should have been pointers, but weren't" a cada checkout, e faria
+# arquivos novos divergirem dos antigos. Regra: so rotear extensao cujos
+# arquivos rastreados JA sejam ponteiros, ou que nao tenha nenhum rastreado.
+# Verificado em 2026-08-21: .dll 118/118 ponteiros, .dat 3/3 ponteiros.
+# A protecao real contra binario novo e a fase 5 do cwv_gate.ps1, que bloqueia
+# blob >5 MB fora do LFS independentemente de extensao.
+*.exe       filter=lfs diff=lfs merge=lfs -text
+*.dll       filter=lfs diff=lfs merge=lfs -text
+*.so        filter=lfs diff=lfs merge=lfs -text
+*.dylib     filter=lfs diff=lfs merge=lfs -text
+*.bin       filter=lfs diff=lfs merge=lfs -text
+*.dat       filter=lfs diff=lfs merge=lfs -text
+*.node      filter=lfs diff=lfs merge=lfs -text
+*.gguf      filter=lfs diff=lfs merge=lfs -text
+*.onnx      filter=lfs diff=lfs merge=lfs -text
+*.safetensors filter=lfs diff=lfs merge=lfs -text

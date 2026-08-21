@@ -8,6 +8,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { UI_I18N } from '../../../constants/translations';
 
 export interface GeminiVoicePlayerProps {
 	defaultText?: string;
@@ -28,7 +29,7 @@ export function GeminiVoicePlayer({
 	const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 	const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
 	const [rate, setRate] = useState<number>(1.05); // Ritmo ideal
-	const [pitch, setPitch] = useState<number>(1.0);
+	const [pitch] = useState<number>(1.0);
 	const [isSupported, setIsSupported] = useState<boolean>(true);
 
 	// Carrega e filtra vozes femininas em Português do Brasil
@@ -151,7 +152,7 @@ export function GeminiVoicePlayer({
 					{isPlaying && (
 						<div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent-emerald/10 border border-accent-emerald/20 text-accent-emerald text-[0.55rem] font-mono font-bold">
 							<span className="w-1.5 h-1.5 rounded-full bg-accent-emerald animate-pulse" />
-							<span>Transmitindo</span>
+							<span>{UI_I18N.voice.transmitting}</span>
 						</div>
 					)}
 					{selectedVoice && (
@@ -175,7 +176,7 @@ export function GeminiVoicePlayer({
 				<div className="flex items-center justify-center gap-1 h-5 py-1">
 					{[0.4, 0.8, 1.2, 0.6, 1.0, 0.7, 1.4, 0.9, 0.5, 1.1, 0.8, 1.3].map((h, i) => (
 						<div
-							key={i}
+							key={`wave-bar-${h}-${i}`}
 							className="w-1 bg-accent-indigo-light rounded-full animate-pulse"
 							style={{
 								height: `${Math.min(100, h * 100)}%`,
@@ -190,6 +191,7 @@ export function GeminiVoicePlayer({
 			<div className="flex flex-wrap items-center justify-between gap-3 pt-1">
 				<div className="flex items-center gap-2">
 					<button
+						type="button"
 						onClick={isPlaying ? handlePause : handlePlay}
 						className={`px-4 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
 							isPlaying
@@ -198,23 +200,28 @@ export function GeminiVoicePlayer({
 						}`}
 					>
 						<i className={`fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'} text-xs`} />
-						<span>{isPlaying ? 'Pausar' : isPaused ? 'Retomar' : 'Ouvir Insight'}</span>
+						<span>{(() => {
+							if (isPlaying) return UI_I18N.voice.pause;
+							if (isPaused) return UI_I18N.voice.resume;
+							return UI_I18N.voice.play;
+						})()}</span>
 					</button>
 
 					{(isPlaying || isPaused) && (
 						<button
+							type="button"
 							onClick={handleStop}
 							className="px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-text-muted hover:text-white text-[0.65rem] font-black uppercase tracking-wider transition-all"
 						>
 							<i className="fa-solid fa-stop text-xs mr-1" />
-							<span>Parar</span>
+							<span>{UI_I18N.voice.stop}</span>
 						</button>
 					)}
 				</div>
 
 				<div className="flex items-center gap-4 text-[0.55rem] font-mono text-text-dim">
 					<div className="flex items-center gap-1.5">
-						<span>Velocidade:</span>
+						<span>{UI_I18N.voice.speed}</span>
 						<select
 							aria-label="Velocidade de Reprodução"
 							value={rate}
@@ -230,7 +237,7 @@ export function GeminiVoicePlayer({
 
 					{voices.length > 1 && (
 						<div className="flex items-center gap-1.5">
-							<span>Voz:</span>
+							<span>{UI_I18N.voice.voiceLabel}</span>
 							<select
 								aria-label="Seleção de Voz"
 								value={selectedVoice?.name || ''}

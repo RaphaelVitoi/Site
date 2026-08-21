@@ -36,8 +36,14 @@ except ImportError:
 # [SOTA] CONSTANTES CENTRALIZADAS (Single Source of Truth)
 # ==============================================================================
 
+# Fallback embutido. A fonte de verdade real e data/ollama_models.json — este
+# bloco estava rotulado "Single Source of Truth" mas era a TERCEIRA copia
+# divergente do mesmo mapa (as outras em engine/gemma_server.py e
+# scripts/start_model.ps1). O alias "31b" aqui apontava para a variante cloud,
+# ignorando o gemma4:31b local de 18,5 GB; o manifesto corrige isso.
 OLLAMA_MODEL_MAP = {
-    "31b": "gemma4:31b-cloud",
+    "31b": "gemma4:31b",
+    "31b_cloud": "gemma4:31b-cloud",
     "26b": "gemma4:26b",
     "12b": "gemma4:12b",
     "4b": "gemma4:latest",
@@ -46,6 +52,30 @@ OLLAMA_MODEL_MAP = {
     "qwen": "qwen2.5-coder:3b",
     "granite": "granite3.3:8b",
 }
+
+
+def _carregar_manifesto_ollama() -> dict[str, str]:
+    """Le os aliases de modelo da fonte unica de verdade.
+
+    Devolve dicionario vazio se o manifesto nao puder ser lido, caso em que o
+    fallback acima permanece em vigor.
+    """
+    caminho = PROJECT_ROOT / "data" / "ollama_models.json"
+    try:
+        with caminho.open(encoding="utf-8") as fh:
+            dados = json.load(fh)
+        return {
+            m["alias"]: m["tag"]
+            for m in dados.get("models", [])
+            if m.get("alias") and m.get("tag")
+        }
+    except (OSError, json.JSONDecodeError, KeyError, TypeError):
+        return {}
+
+
+_manifesto_aliases = _carregar_manifesto_ollama()
+if _manifesto_aliases:
+    OLLAMA_MODEL_MAP = _manifesto_aliases
 
 MODEL_DISPLAY = {
     "31b": "Gemma 4 31b Dense",

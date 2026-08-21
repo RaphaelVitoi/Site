@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { QuantumMetrics } from '../engine/types';
+import type { QuantumMetrics } from '../solver/types';
 
 export function useInsolvencyRadar(apiQuantumMetrics: QuantumMetrics | null) {
 	return useMemo(() => {

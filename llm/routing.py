@@ -18,7 +18,7 @@ FREE_TIER_MARKER = ":free"
 
 
 def _infer_provider_for_model(model: str) -> str | None:
-    model_l = str(model).lower()
+    model_l = model.lower()
     if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
         return "local"
     if "gemini" in model_l:
@@ -40,10 +40,20 @@ def _score_local_preference(m: str, domain: str | None = None) -> int:
 
     if "gemma-4" in m or "gemma4" in m:
         return 1
-    if "deepseek-r1" in m:
+    if "gemini-3.5" in m:
         return 2
-    if "gemini-2.5-flash" in m:
+    if "gemini-3.1" in m:
         return 3
+    if "gemini-3.6" in m:
+        return 4
+    if "gemini-3.7" in m:
+        return 5
+    if "deepseek-r1" in m:
+        return 6
+    if "flash" in m:
+        return 7
+    if "gemini" in m:
+        return 8
     return 10
 
 
@@ -52,20 +62,24 @@ def _score_standard_preference(m: str, model: str, domain: str | None = None) ->
     if domain == "MATH" and ("31b" in m or "gemma-4-31b" in m):
         return -5
 
+    if "gemini-3.5" in m:
+        return -4  # Prioridade SOTA maxima para Gemini 3.5 Flash-Lite
+    if "gemini-3.1" in m:
+        return -3  # Fallback imediato Flash-Lite
+    if "gemini-3.6" in m:
+        return -2  # Workhorse Flash
     if "gemini-3.7" in m:
-        return -4  # Prioridade SOTA máxima para Gemini 3.7 Flash Medium
+        return -1  # Reasoning Flash
     if "gemma-4" in m or "gemma4" in m:
         return 0
-    if "gemini-3.1" in m:
-        return 1
-    if "gemini-2.5-flash" in m:
-        return 2
-    if "gemini-2.5-pro" in m:
-        return 3
     if "deepseek-r1" in m:
-        return 4
+        return 1
     if FREE_TIER_MARKER in m:
-        return 5
+        return 2
+    if "flash" in m:
+        return 3
+    if "gemini" in m:
+        return 4
 
     p = _infer_provider_for_model(model)
     if p == "openrouter":
@@ -74,7 +88,7 @@ def _score_standard_preference(m: str, model: str, domain: str | None = None) ->
 
 
 def _score_model(model: str, prefer_local: bool, designated_model: str | None, domain: str | None = None) -> int:
-    m = str(model).lower()
+    m = model.lower()
     if designated_model and m == designated_model.lower():
         return -10  # Modelo designado pelo CEO sempre vence
 
@@ -157,7 +171,7 @@ async def _apply_model_health_gate(models: list[str], manager: QueueManager, tas
 
     filtered: list[str] = []
     for model in models:
-        model_l = str(model).lower()
+        model_l = model.lower()
         provider = _infer_provider_for_model(model) or "unknown"
 
         # SOTA: Define as condicoes em que um modelo deve ser verificado.

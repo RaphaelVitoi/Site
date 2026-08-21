@@ -110,15 +110,15 @@ export const InsolvencyRioPanel = ({
 				</div>
 				<div className="flex w-full h-1.5 rounded-full overflow-hidden opacity-80">
 					<div
-						{...{ style: { width: `${winPct}%` } }}
+						style={{ width: `${winPct}%` }}
 						className="bg-accent-emerald transition-all duration-500"
 					/>
 					<div
-						{...{ style: { width: `${safeInsolvency.tieRate * 100}%` } }}
+						style={{ width: `${safeInsolvency.tieRate * 100}%` }}
 						className="bg-text-darker transition-all duration-500"
 					/>
 					<div
-						{...{ style: { width: `${safeInsolvency.loseRate * 100}%` } }}
+						style={{ width: `${safeInsolvency.loseRate * 100}%` }}
 						className="bg-accent-danger transition-all duration-500"
 					/>
 				</div>

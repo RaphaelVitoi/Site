@@ -7,10 +7,21 @@
  * BINDING: [engine/ftEnvironments.ts, components/simulator/engine/utils.ts, ui/*]
  */
 
-import { classifyRp, getRpCellStyle } from '@/components/simulator/engine/utils';
+import { classifyRp, getRpCellStyle } from '@/components/simulator/solver/utils';
 import { PlayerSelectButton } from '@/components/simulator/ui/PlayerSelectButton';
 import { useState } from 'react';
-import { FT_ENVIRONMENTS, PAYOUTS_10K } from '../engine/ftEnvironments';
+import { FT_ENVIRONMENTS, PAYOUTS_10K } from '../solver/ftEnvironments';
+
+function getSafeMatrixValue(
+	matrix: Record<string, Record<string, number>> | undefined,
+	rowId: string,
+	colId: string
+): number | null {
+	if (!matrix || !Object.hasOwn(matrix, rowId)) return null;
+	const row = Reflect.get(matrix, rowId) as Record<string, number> | undefined;
+	if (!row || !Object.hasOwn(row, colId)) return null;
+	return (Reflect.get(row, colId) as number | undefined) ?? null;
+}
 
 export default function MatchupSelector() {
 	const [activeEnvId, setActiveEnvId] = useState('FT1');
@@ -40,7 +51,7 @@ export default function MatchupSelector() {
 		setDefensor(null);
 	};
 
-	const rp = agressor && defensor ? (env.rpMatrix[agressor]?.[defensor] ?? null) : null;
+	const rp = agressor && defensor ? getSafeMatrixValue(env.rpMatrix, agressor, defensor) : null;
 	const classification = rp === null ? null : classifyRp(rp);
 
 	const agressorData = agressor ? env.stacks.find((p) => p.id === agressor) : null;
@@ -77,6 +88,7 @@ export default function MatchupSelector() {
 				<div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 snap-x sota-mask-fade-r">
 					{FT_ENVIRONMENTS.map((e) => (
 						<button
+							type="button"
 							key={e.id}
 							onClick={() => handleEnvChange(e.id)}
 							className={`shrink-0 snap-start py-3 px-5 rounded-xl border cursor-pointer transition-all duration-500 text-left group active:scale-95 ${activeEnvId === e.id ? 'border-accent-indigo/40 bg-slate-900/80 shadow-2xl -translate-y-1' : 'border-white/5 bg-black/40 hover:bg-white/5'}`}
@@ -236,6 +248,7 @@ export default function MatchupSelector() {
 
 					{(agressor || defensor) && (
 						<button
+							type="button"
 							onClick={() => {
 								setAgressor(null);
 								setDefensor(null);
@@ -283,7 +296,7 @@ export default function MatchupSelector() {
 										{rowPlayer.pos.split(' ')[0]}
 									</td>
 									{env.stacks.map((colPlayer) => {
-										const val = env.rpMatrix[rowPlayer.id]?.[colPlayer.id] ?? 0;
+										const val = getSafeMatrixValue(env.rpMatrix, rowPlayer.id, colPlayer.id) ?? 0;
 										const isDiag = rowPlayer.id === colPlayer.id;
 										const isHighlighted =
 											rowPlayer.id === agressor && colPlayer.id === defensor;

@@ -4,7 +4,7 @@ import { calculatePerspectivaVitoi } from '@/lib/perspectiva';
 import { derivePostFlopRps, deriveRps, type PostFlopResult } from '@/lib/rpDeriver';
 import { logTelemetryEvent } from '@/lib/telemetry-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { solveIcmDistortion } from '../engine/nashSolver';
+import { solveIcmDistortion } from '../solver/nashSolver';
 import type {
   ChipEvFreqs,
   HeroPosition,
@@ -13,7 +13,7 @@ import type {
   Scenario,
   SprStage,
   StreetChipEvFreqs,
-} from '../engine/types';
+} from '../solver/types';
 
 export interface InsolvencyPayload {
   villainRange: string;
@@ -120,7 +120,7 @@ export function useQuantumEngine({
   const ipIndex = 0;
   const oopIndex = 1;
 
-  // SOTA FIX: Selagem de ReferÃªncias (Evita vazamento de rerenders e GC Thrashing O(N^3))
+  // SOTA FIX: Selagem de Referências (Evita vazamento de rerenders e GC Thrashing O(N^3))
   const stableStacksStr = scenario.stacks?.join('|') || '';
   const stableStacks = useMemo(() => scenario.stacks || [], [stableStacksStr]);
 
@@ -130,7 +130,7 @@ export function useQuantumEngine({
   const stableSprDataStr = scenario.sprData?.map((s) => `${s.name}:${s.potSize}`).join('|') || '';
   const stableSprData = useMemo(() => scenario.sprData || [], [stableSprDataStr]);
 
-  // SOTA FIX: Selagem Profunda para o objeto complexo de FrequÃªncias (Evita default param leakage)
+  // SOTA FIX: Selagem Profunda para o objeto complexo de Frequências (Evita default param leakage)
   const stableStreetFreqsStr = JSON.stringify(streetFreqs);
 
   const stableStreetFreqs = useMemo(() => streetFreqs, [stableStreetFreqsStr]);
@@ -138,18 +138,18 @@ export function useQuantumEngine({
   const numPlayers = useMemo(() => stableStacks.length || 2, [stableStacks]);
   const anteInBb = useMemo(() => anteSize / 100, [anteSize]);
 
-  // SOTA: Fallback de SobrevivÃªncia. Se o Lab omitir prÃªmios, injetamos a FT 9-max baseline para garantir a Perspectiva.
+  // SOTA: Fallback de Sobrevivência. Se o Lab omitir prêmios, injetamos a FT 9-max baseline para garantir a Perspectiva.
   const resolvedPrizes = useMemo(() => {
     return stablePrizes.length > 0 ? stablePrizes : [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
   }, [stablePrizes]);
 
-  // SOTA: Economia Generalizada (CÃ¡lculo Ãºnico de baseline para o ciclo de renderizaÃ§Ã£o)
+  // SOTA: Economia Generalizada (Cálculo único de baseline para o ciclo de renderização)
   const isBaseline = useMemo(
     () => scenario.category === 'baseline' || resolvedPrizes.length <= 1,
     [scenario.category, resolvedPrizes.length],
   );
 
-  // SOTA: Estados e Refs do Web Worker de InsolvÃªncia
+  // SOTA: Estados e Refs do Web Worker de Insolvência
   const [insolvencyMatrixData, setInsolvencyMatrixData] = useState<InsolvencyMetrics | null>(null);
   const [isCalculatingInsolvency, setIsCalculatingInsolvency] = useState(false);
   const [nashResults, setNashResults] = useState<NashDistortionResults | null>(null);
@@ -164,7 +164,7 @@ export function useQuantumEngine({
   const distortionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const multiwayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // InicializaÃ§Ã£o do Web Worker
+  // Inicialização do Web Worker
   useEffect(() => {
     const worker = new Worker(new URL('../workers/insolvency.worker.ts', import.meta.url), {
       type: 'module',
@@ -172,7 +172,7 @@ export function useQuantumEngine({
     insolvencyWorkerRef.current = worker;
 
     worker.onmessage = (e: MessageEvent<InsolvencyWorkerResponse>) => {
-      // ValidaÃ§Ã£o de versÃ£o: Ignora resultados de requisiÃ§Ãµes antigas
+      // Validação de versão: Ignora resultados de requisições antigas
       if (e.data.id !== lastRequestIdRef.current) return;
 
       if (e.data.error) {
@@ -215,7 +215,7 @@ export function useQuantumEngine({
     };
 
     worker.onerror = (e) => {
-      console.error('[SotaEcosystem] Falha catastrÃ³fica no Worker:', e);
+      console.error('[SotaEcosystem] Falha catastrófica no Worker:', e);
       setIsCalculatingInsolvency(false);
     };
 
@@ -228,8 +228,8 @@ export function useQuantumEngine({
     };
   }, []);
 
-  // SOTA: FricÃ§Ã£o Zero no Fator de Credibilidade (Axioma Lipe Piv).
-  // O recÃ¡lculo engatilha somente se a variaÃ§Ã£o for superior a 0.05 para evitar inundaÃ§Ã£o do Event Loop (debouncing quantizado).
+  // SOTA: Fricção Zero no Fator de Credibilidade (Axioma Lipe Piv).
+  // O recálculo engatilha somente se a variação for superior a 0.05 para evitar inundação do Event Loop (debouncing quantizado).
   const effectiveKappa = useMemo(() => {
     return Math.round(kappaValue * 20) / 20;
   }, [kappaValue]);
@@ -301,7 +301,9 @@ export function useQuantumEngine({
       numPlayers,
       boardMask,
       targetIterations,
-      seed = Math.floor(Math.random() * 0xffffffff),
+      seed = typeof crypto !== 'undefined' && crypto.getRandomValues
+        ? (crypto.getRandomValues(new Uint32Array(1))[0] ?? 0)
+        : Date.now() & 0xffffffff,
     } = payload;
 
     if (!insolvencyWorkerRef.current) return;
@@ -335,7 +337,7 @@ export function useQuantumEngine({
     return 1.5 + numPlayers * anteInBb; // SB (0.5) + BB (1.0) + Antes
   }, [numPlayers, anteInBb, currentPotBb]);
 
-  // Custo Base de DesistÃªncia (EV_Fold)
+  // Custo Base de Desistência (EV_Fold)
   // OOP assume BB (1BB + Ante). IP assume BTN (0BB + Ante).
   const foldEvBb = useMemo(() => {
     // SOTA: O Sunk Cost agora respeita o escalonamento (3bets, 4bets) e preserva a soma do Ante.
@@ -348,11 +350,11 @@ export function useQuantumEngine({
     return -(baseInvested + anteInBb);
   }, [heroIsIp, anteInBb, heroInvestedBb]);
 
-  // Derivar Perspectiva MatemÃ¡tica Quantum (v4.0)
+  // Derivar Perspectiva Matemática Quantum (v4.0)
   const quantumPerspectiva = useMemo(() => {
-    // SOTA: Fator R (RealizaÃ§Ã£o) atenuado pelo Axioma Lipe Piv.
-    // Se a credibilidade do vilÃ£o Ã© baixa (kappa < 1), a penalidade posicional Ã© diluÃ­da,
-    // aproximando a realizaÃ§Ã£o OOP do Bluff-Catcher Puro.
+    // SOTA: Fator R (Realização) atenuado pelo Axioma Lipe Piv.
+    // Se a credibilidade do vilão é baixa (kappa < 1), a penalidade posicional é diluída,
+    // aproximando a realização OOP do Bluff-Catcher Puro.
     const baseRealization = heroIsIp ? 1 : 0.85;
     const realizationFactor = heroIsIp ? 1 : baseRealization + 0.15 * (1 - effectiveKappa);
     try {
@@ -369,8 +371,8 @@ export function useQuantumEngine({
         bountyValue: pkoValue * 100,
         isNearPayjump,
         blindsRisingSoon,
-        heroPosition, // SOTA: InjeÃ§Ã£o de AntevisÃ£o Posicional
-        humanNoiseFactor, // SOTA v7.0: InjeÃ§Ã£o de Entropia
+        heroPosition, // SOTA: Injeção de Antevisão Posicional
+        humanNoiseFactor, // SOTA v7.0: Injeção de Entropia
       });
     } catch (e: unknown) {
       // SOTA: Preserva a logagem crua na Engine do Browser
@@ -414,12 +416,12 @@ export function useQuantumEngine({
     }
   }, [scenario.id, stableStacks, resolvedPrizes, pkoValue, isBaseline]);
 
-  // RP Efetivo Quantum: O RP base Ã© ajustado pela Perspectiva (Piso DinÃ¢mico)
+  // RP Efetivo Quantum: O RP base é ajustado pela Perspectiva (Piso Dinâmico)
   const rpAdjustment = useMemo(() => {
     if (!quantumPerspectiva || isBaseline) return 0;
 
-    // SOTA: ErradicaÃ§Ã£o do Magic Number (10).
-    // O delta positivo entre o ganho de sobrevivÃªncia e a dor em ICM real do fold gera a pressÃ£o inflacionÃ¡ria.
+    // SOTA: Erradicação do Magic Number (10).
+    // O delta positivo entre o ganho de sobrevivência e a dor em ICM real do fold gera a pressão inflacionária.
     const survivalGain = quantumPerspectiva.dynamicEvFold || 0;
     // P1 FIX: costOfFold unificado em Perspectiva EV (% do pool), pareado semanticamente com survivalGain.
     const costOfFold = Math.abs(quantumPerspectiva.deltaFoldPct);
@@ -444,7 +446,7 @@ export function useQuantumEngine({
     rpSource = scenario.category === 'baseline' ? 'ICMev Puro' : 'Quantum v4.1';
   }
 
-  // --- MOTOR DE PROPAGAÃ‡ÃƒO REVERSA (ORGANISMO VITOI) ---
+  // --- MOTOR DE PROPAGAÇÃO REVERSA (ORGANISMO VITOI) ---
   const postFlopPots = useMemo<[number, number, number]>(() =>
     // SOTA: Estado purificado e tipagem estrita
     {
@@ -503,8 +505,8 @@ export function useQuantumEngine({
     return { flop, turn, river };
   }, [stableStacks, resolvedPrizes, pkoValue, heroIsIp, isBaseline, postFlopPots]);
 
-  // SOTA: DistribuiÃ§Ã£o MatemÃ¡tica Exponencial da Perspectiva (PMev)
-  // O RP Ã© sobre colisÃ£o. No flop, sem colisÃ£o evidente, ele Ã© dissipado e distribuÃ­do condicional e exponencialmente.
+  // SOTA: Distribuição Matemática Exponencial da Perspectiva (PMev)
+  // O RP é sobre colisão. No flop, sem colisão evidente, ele é dissipado e distribuído condicional e exponencialmente.
   const ipRpFlop = postFlopRps?.flop?.ipRp ?? effectiveIpRp * Math.exp(-1.2);
   const oopRpFlop = postFlopRps?.flop?.oopRp ?? effectiveOopRp * Math.exp(-1.2);
 
@@ -531,12 +533,14 @@ export function useQuantumEngine({
     };
 
     return stableSprData.map((stage: SprStage) => {
-      const resolver = rpDispatcher[stage.name];
+      const resolver = Object.hasOwn(rpDispatcher, stage.name)
+        ? rpDispatcher[stage.name]
+        : undefined;
       return resolver ? { ...stage, rpValue: resolver(stage.rpValue) } : stage;
     });
   }, [stableSprData, postFlopRps, effectiveIpRp, effectiveOopRp, heroIsIp]);
 
-  // SOTA VITOI: ConsciÃªncia TopolÃ³gica Proporcional e Condicionante
+  // SOTA VITOI: Consciência Topológica Proporcional e Condicionante
   const topologicAggression = useMemo(() => {
     let baseAggression = aggressionFactor;
 
@@ -587,7 +591,7 @@ export function useQuantumEngine({
     return stableStreetFreqs;
   }, [stableStreetFreqs, activeNodelock, heroIsIp]);
 
-  // SOTA: Despacho assÃ­ncrono para a esteira WASM (Web Worker)
+  // SOTA: Despacho assíncrono para a esteira WASM (Web Worker)
   useEffect(() => {
     // SOTA: Payload purificado. Tipagem ChipEvFreqs estrita e validada.
     if (dispatchIcmDistortion) {
@@ -620,8 +624,8 @@ export function useQuantumEngine({
     postFlopPots,
   ]);
 
-  // SOTA FIX: Interceptador adaptativo. Protege o primeiro frame do React forÃ§ando o
-  // contrato antigo do solver sÃ­ncrono no novo formato estrito IP/OOP antes da resposta do Worker.
+  // SOTA FIX: Interceptador adaptativo. Protege o primeiro frame do React forçando o
+  // contrato antigo do solver síncrono no novo formato estrito IP/OOP antes da resposta do Worker.
   const formatSyncSolverResult = (
     result: IcmDistortionResult,
     freqs: ChipEvFreqs,
@@ -695,7 +699,7 @@ export function useQuantumEngine({
     ],
   );
 
-  // SOTA: Isolamento de referÃªncia para evitar GC Churn e quebra de memoizaÃ§Ã£o downstream
+  // SOTA: Isolamento de referência para evitar GC Churn e quebra de memoização downstream
   const streetRps = useMemo(
     () => ({
       flop: { ip: ipRpFlop, oop: oopRpFlop, deltaRp: ipRpFlop - oopRpFlop },
@@ -705,7 +709,7 @@ export function useQuantumEngine({
         oop: oopRpRiver,
         deltaRp: ipRpRiver - oopRpRiver,
       },
-      // SOTA FIX: O Header do NashPanel consome mÃ©tricas globais diretamente da raiz do objeto.
+      // SOTA FIX: O Header do NashPanel consome métricas globais diretamente da raiz do objeto.
       deltaRp: effectiveIpRp - effectiveOopRp,
       ip: effectiveIpRp,
       oop: effectiveOopRp,

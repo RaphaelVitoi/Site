@@ -1,13 +1,11 @@
-'use client';
-
 /**
  * IDENTITY: SOTA Content Header SOTA v7.0 GOLD
- * PATH: src/components/layout/ContentPageHeader.tsx
+ * PATH: src/components/ui/layout/ContentPageHeader.tsx
  * ROLE: Prover identidade visual, título e apresentação consistente para páginas de conteúdo.
  * AESTHETIC: SOTA Gold Standard (Glows, Shimmer, Depth Layers).
+ * ARCHITECTURE: Server Component puro sem mismatch de hidratação.
  */
 
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 interface ContentPageHeaderProps {
@@ -24,7 +22,10 @@ export function ContentPageHeader({
 	icon = 'fa-book-open',
 }: Readonly<ContentPageHeaderProps>) {
 	return (
-		<header className="relative w-full overflow-hidden border-b border-white/5 bg-bg-deep/40 backdrop-blur-3xl pt-40 pb-20 group/header">
+		<header
+			suppressHydrationWarning
+			className="relative w-full overflow-hidden border-b border-white/5 bg-bg-deep/40 backdrop-blur-3xl pt-10 sm:pt-14 pb-12 sm:pb-16 group/header"
+		>
 			{/* Camadas de Profundidade Gold */}
 			<div className="absolute -top-32 -right-32 w-80 h-80 bg-accent-indigo/10 blur-[120px] rounded-full pointer-events-none group-hover/header:bg-accent-indigo/15 transition-all duration-1000" />
 			<div className="absolute -bottom-32 -left-32 w-80 h-80 bg-accent-emerald/5 blur-[120px] rounded-full pointer-events-none" />
@@ -39,16 +40,16 @@ export function ContentPageHeader({
 						>
 							<i className="fa-solid fa-house text-[0.55rem]" /> Home
 						</Link>
-						<i className="fa-solid fa-chevron-right text-[0.45rem] text-text-darker"></i>
+						<i className="fa-solid fa-chevron-right text-[0.45rem] text-text-darker" />
 						{category && (
 							<>
 								<Link
-									href={`/biblioteca`}
+									href="/biblioteca"
 									className="hover:text-accent-indigo transition-colors"
 								>
 									{category}
 								</Link>
-								<i className="fa-solid fa-chevron-right text-[0.45rem] text-text-darker"></i>
+								<i className="fa-solid fa-chevron-right text-[0.45rem] text-text-darker" />
 							</>
 						)}
 						<span className="text-text-muted truncate max-w-50">{title}</span>
@@ -57,13 +58,10 @@ export function ContentPageHeader({
 					<div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12">
 						<div className="space-y-6 max-w-4xl">
 							<div className="flex items-center gap-5">
-								<motion.div
-									whileHover={{ scale: 1.05 }}
-									className="w-14 h-14 rounded-2xl bg-accent-indigo/10 border border-accent-indigo/20 flex items-center justify-center text-accent-indigo shadow-2xl relative overflow-hidden"
-								>
+								<div className="w-14 h-14 rounded-2xl bg-accent-indigo/10 border border-accent-indigo/20 flex items-center justify-center text-accent-indigo shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-105">
 									<div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent pointer-events-none" />
-									<i className={`fa-solid ${icon} text-2xl`}></i>
-								</motion.div>
+									<i className={`fa-solid ${icon} text-2xl`} />
+								</div>
 								{category && (
 									<div className="flex flex-col gap-1">
 										<span className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[0.55rem] font-black text-text-muted uppercase tracking-[0.4em] w-fit shadow-inner">

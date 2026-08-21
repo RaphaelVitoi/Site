@@ -11,6 +11,7 @@ import {
 	type ICMTournamentPreset,
 	type PairwiseMatchupDetail,
 } from '../../lib/icmMatrix';
+import { UI_I18N } from '../../constants/translations';
 
 type DisplayMode = 'RP' | 'BF' | 'REQ_EQ';
 
@@ -23,11 +24,23 @@ export interface BubbleFactorMatrixProps {
 	) => void;
 }
 
+function requireItem<T>(items: readonly T[], index: number, context: string): T {
+	const item = items.at(index);
+	if (item === undefined) throw new RangeError(`Missing value: ${context}[${index}]`);
+	return item;
+}
+
+function requireCell(matrix: readonly (readonly number[])[], row: number, column: number, context: string): number {
+	return requireItem(requireItem(matrix, row, context), column, `${context}[${row}]`);
+}
+
+const DEFAULT_PRESET = requireItem(TOURNAMENT_PRESETS, 1, 'TOURNAMENT_PRESETS');
+
 export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 	onSelectMatchup,
 }) => {
 	const [activePreset, setActivePreset] = useState<ICMTournamentPreset>(
-		TOURNAMENT_PRESETS[1]
+		DEFAULT_PRESET
 	); // Triton 6-max default
 	const [displayMode, setDisplayMode] = useState<DisplayMode>('RP');
 	const [selectedCell, setSelectedCell] = useState<{ hero: number; villain: number }>({
@@ -67,9 +80,14 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 
 			if (onSelectMatchup) {
 				const freshMatrix = computeBubbleFactorMatrix(newStacks, newPayouts, newNames);
-				const heroRp = freshMatrix.rpMatrix[0][1];
-				const villainRp = freshMatrix.rpMatrix[1][0];
-				onSelectMatchup(heroRp, villainRp, newNames[0], newNames[1]);
+				const heroRp = requireCell(freshMatrix.rpMatrix, 0, 1, 'rpMatrix');
+				const villainRp = requireCell(freshMatrix.rpMatrix, 1, 0, 'rpMatrix');
+				onSelectMatchup(
+					heroRp,
+					villainRp,
+					requireItem(newNames, 0, 'playerNames'),
+					requireItem(newNames, 1, 'playerNames')
+				);
 			}
 		},
 		[onSelectMatchup]
@@ -80,9 +98,14 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 			if (i === j) return;
 			setSelectedCell({ hero: i, villain: j });
 			if (onSelectMatchup) {
-				const heroRp = matrixResult.rpMatrix[i][j];
-				const villainRp = matrixResult.rpMatrix[j][i];
-				onSelectMatchup(heroRp, villainRp, matrixResult.playerNames[i], matrixResult.playerNames[j]);
+				const heroRp = requireCell(matrixResult.rpMatrix, i, j, 'rpMatrix');
+				const villainRp = requireCell(matrixResult.rpMatrix, j, i, 'rpMatrix');
+				onSelectMatchup(
+					heroRp,
+					villainRp,
+					requireItem(matrixResult.playerNames, i, 'playerNames'),
+					requireItem(matrixResult.playerNames, j, 'playerNames')
+				);
 			}
 		},
 		[matrixResult, onSelectMatchup]
@@ -90,39 +113,38 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 
 	const handleInjectClick = useCallback(() => {
 		if (onSelectMatchup && matchupDetail) {
-			const heroRp = matrixResult.rpMatrix[matchupDetail.heroIndex][matchupDetail.villainIndex];
-			const villainRp = matrixResult.rpMatrix[matchupDetail.villainIndex][matchupDetail.heroIndex];
+			const heroRp = requireCell(matrixResult.rpMatrix, matchupDetail.heroIndex, matchupDetail.villainIndex, 'rpMatrix');
+			const villainRp = requireCell(matrixResult.rpMatrix, matchupDetail.villainIndex, matchupDetail.heroIndex, 'rpMatrix');
 			onSelectMatchup(heroRp, villainRp, matchupDetail.heroName, matchupDetail.villainName);
 		}
 	}, [matchupDetail, matrixResult, onSelectMatchup]);
 
+	const getThresholds = (m: DisplayMode): readonly [number, number, number] => {
+		switch (m) {
+			case 'RP':
+				return [35, 20, 10] as const;
+			case 'BF':
+				return [2.0, 1.5, 1.2] as const;
+			case 'REQ_EQ':
+				return [67, 60, 55] as const;
+		}
+	};
+
 	const getCellColor = (val: number, mode: DisplayMode, isDiagonal: boolean) => {
 		if (isDiagonal) return 'bg-slate-900/40 text-slate-600 border-slate-800';
 
-		if (mode === 'RP') {
-			if (val >= 35) return 'bg-rose-950/70 text-rose-300 border-rose-600/60 font-bold';
-			if (val >= 20) return 'bg-amber-950/60 text-amber-300 border-amber-600/50';
-			if (val >= 10) return 'bg-cyan-950/50 text-cyan-300 border-cyan-600/40';
-			return 'bg-emerald-950/40 text-emerald-300 border-emerald-600/30';
-		}
-		if (mode === 'BF') {
-			if (val >= 2.0) return 'bg-rose-950/70 text-rose-300 border-rose-600/60 font-bold';
-			if (val >= 1.5) return 'bg-amber-950/60 text-amber-300 border-amber-600/50';
-			if (val >= 1.2) return 'bg-cyan-950/50 text-cyan-300 border-cyan-600/40';
-			return 'bg-emerald-950/40 text-emerald-300 border-emerald-600/30';
-		}
-		// REQ_EQ
-		if (val >= 67) return 'bg-rose-950/70 text-rose-300 border-rose-600/60 font-bold';
-		if (val >= 60) return 'bg-amber-950/60 text-amber-300 border-amber-600/50';
-		if (val >= 55) return 'bg-cyan-950/50 text-cyan-300 border-cyan-600/40';
+		const [high, mid, low] = getThresholds(mode);
+		if (val >= high) return 'bg-rose-950/70 text-rose-300 border-rose-600/60 font-bold';
+		if (val >= mid) return 'bg-amber-950/60 text-amber-300 border-amber-600/50';
+		if (val >= low) return 'bg-cyan-950/50 text-cyan-300 border-cyan-600/40';
 		return 'bg-emerald-950/40 text-emerald-300 border-emerald-600/30';
 	};
 
 	const formatCellValue = (i: number, j: number) => {
 		if (i === j) return '-';
-		if (displayMode === 'RP') return `${matrixResult.rpMatrix[i][j]}%`;
-		if (displayMode === 'BF') return `${matrixResult.bfMatrix[i][j]}x`;
-		return `${matrixResult.reqEquityMatrix[i][j]}%`;
+		if (displayMode === 'RP') return `${requireCell(matrixResult.rpMatrix, i, j, 'rpMatrix')}%`;
+		if (displayMode === 'BF') return `${requireCell(matrixResult.bfMatrix, i, j, 'bfMatrix')}x`;
+		return `${requireCell(matrixResult.reqEquityMatrix, i, j, 'reqEquityMatrix')}%`;
 	};
 
 	return (
@@ -183,9 +205,9 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 
 			{/* Presets de Torneios Reais do Circuito */}
 			<div className="space-y-2">
-				<label className="text-xs text-slate-400 font-bold uppercase tracking-wider block">
+				<div className="text-xs text-slate-400 font-bold uppercase tracking-wider block">
 					Estruturas Reais de Torneios &amp; Mesas Finais:
-				</label>
+				</div>
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
 					{TOURNAMENT_PRESETS.map((p) => (
 						<button
@@ -213,11 +235,11 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 			<div className="overflow-x-auto bg-slate-950 p-4 rounded-xl border border-slate-800">
 				<div className="text-xs text-slate-400 mb-2 flex items-center justify-between">
 					<span>
-						<strong className="text-indigo-400">Linhas:</strong> Hero (Agressor / Decisor) &times;{' '}
-						<strong className="text-indigo-400">Colunas:</strong> Villain (Alvo / Confronto)
+						<strong className="text-indigo-400">{UI_I18N.matrix.rows}</strong> {UI_I18N.matrix.heroRole} &times;{' '}
+						<strong className="text-indigo-400">{UI_I18N.matrix.cols}</strong> {UI_I18N.matrix.villainRole}
 					</span>
 					<span className="text-[11px] text-indigo-300 font-semibold">
-						⚡ Clique em qualquer célula para injetar os RPs instantaneamente no Profiler de Nash abaixo
+						{UI_I18N.matrix.clickHint}
 					</span>
 				</div>
 
@@ -225,12 +247,12 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 					<thead>
 						<tr>
 							<th className="p-2 text-left text-slate-400 font-bold bg-slate-900/80 border border-slate-800">
-								Hero \ Villain
+								{UI_I18N.matrix.heroVsVillain}
 							</th>
 							{matrixResult.playerNames.map((name, j) => (
 								<th
-									key={j}
-									className="p-2 text-slate-300 font-bold bg-slate-900/80 border border-slate-800 min-w-[85px]"
+									key={`head-col-${name}-${j}`}
+									className="p-2 text-slate-300 font-bold bg-slate-900/80 border border-slate-800 min-w-21.25"
 								>
 									{name.split(' ')[0]}
 								</th>
@@ -239,26 +261,28 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 					</thead>
 					<tbody>
 						{matrixResult.playerNames.map((rowName, i) => (
-							<tr key={i}>
+							<tr key={`row-${rowName}-${i}`}>
 								<td className="p-2 text-left font-bold text-slate-300 bg-slate-900/60 border border-slate-800 whitespace-nowrap">
 									{rowName}
 									<span className="block text-[10px] text-slate-500 font-normal">
-										${matrixResult.baseEv[i].toLocaleString()} $EV
+										${requireItem(matrixResult.baseEv, i, 'baseEv').toLocaleString()} $EV
 									</span>
 								</td>
-								{matrixResult.playerNames.map((_, j) => {
+								{matrixResult.playerNames.map((colName, j) => {
 									const isDiag = i === j;
 									const isSelected = selectedCell.hero === i && selectedCell.villain === j;
-									const cellVal =
-										displayMode === 'RP'
-											? matrixResult.rpMatrix[i][j]
-											: displayMode === 'BF'
-												? matrixResult.bfMatrix[i][j]
-												: matrixResult.reqEquityMatrix[i][j];
+									let cellVal: number;
+									if (displayMode === 'RP') {
+										cellVal = requireCell(matrixResult.rpMatrix, i, j, 'rpMatrix');
+									} else if (displayMode === 'BF') {
+										cellVal = requireCell(matrixResult.bfMatrix, i, j, 'bfMatrix');
+									} else {
+										cellVal = requireCell(matrixResult.reqEquityMatrix, i, j, 'reqEquityMatrix');
+									}
 
 									return (
 										<td
-											key={j}
+											key={`cell-${i}-${colName}-${j}`}
 											onClick={() => handleCellClick(i, j)}
 											className={`p-2 border transition-all cursor-pointer select-none ${
 												isSelected
@@ -281,7 +305,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 				<div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 border-b border-slate-800 pb-3">
 					<div className="flex items-center gap-2">
 						<span className="px-2 py-0.5 rounded bg-indigo-900 text-indigo-300 text-xs font-bold">
-							MATCHUP TÁTICO ATIVO
+							{UI_I18N.matrix.matchupActive}
 						</span>
 						<h3 className="text-sm font-bold text-white">
 							{matchupDetail.heroName} (Hero) vs {matchupDetail.villainName} (Villain)
@@ -289,60 +313,63 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 					</div>
 					<div className="flex items-center gap-3">
 						<div className="text-xs text-indigo-300 font-bold">
-							Fichas Efetivas: {matchupDetail.effectiveChips.toLocaleString()}
+							{UI_I18N.matrix.effectiveChips} {matchupDetail.effectiveChips.toLocaleString()}
 						</div>
 						<button
 							type="button"
 							onClick={handleInjectClick}
 							className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-bold transition-all shadow"
 						>
-							⚡ Injetar no Profiler
+							{UI_I18N.matrix.injectButton}
 						</button>
 					</div>
 				</div>
 
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">Bubble Factor</div>
+						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.bubbleFactor}</div>
 						<div className="text-lg font-black text-indigo-400 mt-0.5">
 							{matchupDetail.bubbleFactor.toFixed(3)}x
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">Hero RP (IP)</div>
+						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.heroRp}</div>
 						<div className="text-lg font-black text-rose-400 mt-0.5">
 							+{matchupDetail.riskPremium.toFixed(1)}%
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">Villain RP (OOP)</div>
+						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.villainRp}</div>
 						<div className="text-lg font-black text-amber-400 mt-0.5">
 							+
-							{matrixResult.rpMatrix[matchupDetail.villainIndex][
-								matchupDetail.heroIndex
-							].toFixed(1)}
+							{requireCell(
+								matrixResult.rpMatrix,
+								matchupDetail.villainIndex,
+								matchupDetail.heroIndex,
+								'rpMatrix'
+							).toFixed(1)}
 							%
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">&Delta;$EV (Ganho)</div>
+						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.gainDelta}</div>
 						<div className="text-sm font-bold text-emerald-400 mt-1">
 							+${matchupDetail.deltaWin.toLocaleString()}
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">&Delta;$EV (Perda)</div>
+						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.lossDelta}</div>
 						<div className="text-sm font-bold text-rose-400 mt-1">
 							-${matchupDetail.deltaLose.toLocaleString()}
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">Assimetria de Risco</div>
+						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.riskAsymmetry}</div>
 						<div className="text-sm font-bold text-purple-400 mt-1">
 							{matchupDetail.riskAsymmetry > 0
 								? `+${matchupDetail.riskAsymmetry}`
@@ -354,7 +381,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 
 				<div className="p-3 bg-slate-950/80 rounded-lg border border-indigo-500/20 text-xs text-slate-300 flex items-center justify-between">
 					<div>
-						<strong className="text-indigo-400">Diretriz Estrutural SOTA:</strong>{' '}
+						<strong className="text-indigo-400">{UI_I18N.matrix.sotaGuideline}</strong>{' '}
 						{matchupDetail.tacticalAdvice}
 					</div>
 					<span
@@ -364,7 +391,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 								: 'bg-rose-950 text-rose-300 border border-rose-500/40'
 						}`}
 					>
-						{matchupDetail.coverageAdvantage ? 'Hero Cobre Vilão' : 'Vilão Cobre Hero'}
+						{matchupDetail.coverageAdvantage ? UI_I18N.matrix.heroCovers : UI_I18N.matrix.villainCovers}
 					</span>
 				</div>
 			</div>

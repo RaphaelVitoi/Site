@@ -6,7 +6,7 @@ import {
 	formatPm,
 	getCiStyle,
 	getSprColorClass,
-} from '@/components/simulator/engine/utils';
+} from '@/components/simulator/solver/utils';
 import type { PostFlopResult, Street } from '@/lib/rpDeriver';
 import { MetricRow } from './MetricRow';
 

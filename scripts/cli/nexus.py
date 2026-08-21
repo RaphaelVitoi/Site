@@ -107,9 +107,8 @@ WORKER_API_CMD = "worker-api"
 MEMORY_RAG_SCRIPT = "memory_rag.py"
 
 STYLE_BOLD_WHITE = "bold #f8f8f2"
-STATUS_PASS = "[green]PASS[/]"
+STATUS_PASS = "[green]PASS[/]"  # noqa: S105
 STATUS_FAIL = "[red]FAIL[/]"
-
 
 
 #  Utils de Runtime
@@ -301,7 +300,7 @@ async def set_autonomy(
         await qm.close()
 
 
-VRAM_INFO_CACHE = {"nvidia": False, "amd_native": False, "amd_rocm": None}
+VRAM_INFO_CACHE: dict[str, bool | None] = {"nvidia": False, "amd_native": False, "amd_rocm": None}
 
 try:
     import pynvml  # type: ignore # pylint: disable=import-error
@@ -1536,15 +1535,9 @@ def security_audit(
     table.add_column("LIMITE SOTA", justify="center")
     table.add_column("STATUS", justify="center")
 
-    table.add_row(
-        "Vulnerabilidades Criticas", str(crit_count), "0", STATUS_PASS if crit_count == 0 else STATUS_FAIL
-    )
-    table.add_row(
-        "Vulnerabilidades Altas", str(high_count), "0", STATUS_PASS if high_count == 0 else STATUS_FAIL
-    )
-    table.add_row(
-        "Total de Vulnerabilidades", str(tot_count), "0", STATUS_PASS if tot_count == 0 else STATUS_FAIL
-    )
+    table.add_row("Vulnerabilidades Criticas", str(crit_count), "0", STATUS_PASS if crit_count == 0 else STATUS_FAIL)
+    table.add_row("Vulnerabilidades Altas", str(high_count), "0", STATUS_PASS if high_count == 0 else STATUS_FAIL)
+    table.add_row("Total de Vulnerabilidades", str(tot_count), "0", STATUS_PASS if tot_count == 0 else STATUS_FAIL)
 
     console.print(table)
 
@@ -1740,7 +1733,7 @@ def test_routing(
 @voice_app.command("speak")
 def voice_speak(
     text: str = typer.Argument(
-        "Sistema SOTA v7.0 GOLD operando com síntese de voz padrão ouro em português do Brasil sob governança de Raphael Vitoi.",
+        "Sistema SOTA v7.0 GOLD operando com sintese de voz padrao ouro em portugues do Brasil sob governanca de Raphael Vitoi.",
         help="Texto a sintetizar em voz alta.",
     ),
     voice: str = typer.Option(
@@ -1749,10 +1742,10 @@ def voice_speak(
         "-v",
         help="Voz (pt-BR-FranciscaNeural, pt-BR-ThalitaNeural, Aoede, Kore, Puck)",
     ),
-    output: str | None = typer.Option(None, "--output", "-o", help="Arquivo de saída (.mp3/.wav)"),
-    no_play: bool = typer.Option(False, "--no-play", help="Desabilita reprodução imediata no speaker"),
+    output: str | None = typer.Option(None, "--output", "-o", help="Arquivo de saida (.mp3/.wav)"),
+    no_play: bool = typer.Option(False, "--no-play", help="Desabilita reproducao imediata no speaker"),
 ):
-    """Sintetiza voz neural em PT-BR (Feminina Padrão Ouro) ou Gemini Multimodal Audio."""
+    """Sintetiza voz neural em PT-BR (Feminina Padrao Ouro) ou Gemini Multimodal Audio."""
     from scripts.cli.nexus_voice import speak_text
 
     speak_text(text, voice=voice, output_file=output, play=not no_play)

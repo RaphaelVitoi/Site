@@ -1,15 +1,16 @@
 {
   "deep_thinking": [
     "gemini-3.7-flash",
-    "gemini-3.1-pro",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-    "deepseek/deepseek-r1:free"
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "deepseek/deepseek-r1:free",
+    "meta-llama/llama-3.3-70b-instruct:free"
   ],
   "fast_operations": [
-    "gemini-3.7-flash",
-    "gemini-2.5-flash",
-    "meta-llama/llama-3.1-8b-instruct"
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-3.6-flash",
+    "meta-llama/llama-3.1-8b-instruct:free"
   ],
   "agent_map": {
     "@maverick": "deep_thinking",
@@ -29,14 +30,15 @@
     "@organizador": "fast_operations",
     "@prompter": "fast_operations",
     "@historian": "deep_thinking",
-    "@bibliotecario": "deep_thinking"
+    "@bibliotecario": "deep_thinking",
+    "@gemma4": "fast_operations"
   },
   "routing_config": {
-    "last_updated": "2026-08-15",
+    "last_updated": "2026-08-18",
     "version": "2.0-SOTA-GOLD",
     "environment": "production",
     "routing_logic": "weighted_round_robin",
-    "fallback_model": "gemini-3.7-flash",
+    "fallback_model": "gemini-3.1-flash-lite",
     "retry_limit": 3
   }
 }

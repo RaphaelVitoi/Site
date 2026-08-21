@@ -1,3 +1,4 @@
+# pylint: disable=consider-using-with
 """
 OS INTEGRATION - Membrana Cognitiva SOTA (v7.0 GOLD)
 Provides unified interfaces for default browser resolution, system clipboard, and OS notifications.
@@ -8,6 +9,11 @@ import os
 import platform
 import subprocess  # nosec # noqa: S404
 import sys
+
+try:
+    import pyperclip  # type: ignore[import-untyped,import-not-found] # pylint: disable=import-error
+except ImportError:
+    pyperclip = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -42,14 +48,13 @@ def get_winrar_path() -> str | None:
 
 def get_clipboard_text() -> str:
     """Reads text from the OS system clipboard with robust fallbacks."""
-    try:
-        import pyperclip  # type: ignore
-
-        text = pyperclip.paste()
-        if text:
-            return str(text)
-    except Exception as e:
-        logger.debug(f"[OS Clipboard] Pyperclip error: {e}. Trying PowerShell fallback.")
+    if pyperclip is not None:
+        try:
+            text = pyperclip.paste()
+            if text:
+                return text
+        except Exception as e:
+            logger.debug(f"[OS Clipboard] Pyperclip error: {e}. Trying PowerShell fallback.")
 
     if sys.platform == "win32":
         try:
@@ -69,22 +74,21 @@ def get_clipboard_text() -> str:
 
 def set_clipboard_text(text: str) -> bool:
     """Writes text to the OS system clipboard with fallbacks."""
-    try:
-        import pyperclip  # type: ignore
-
-        pyperclip.copy(text)
-        return True
-    except Exception as e:
-        logger.debug(f"[OS Clipboard] Pyperclip copy error: {e}. Trying PowerShell fallback.")
+    if pyperclip is not None:
+        try:
+            pyperclip.copy(text)
+            return True
+        except Exception as e:
+            logger.debug(f"[OS Clipboard] Pyperclip copy error: {e}. Trying PowerShell fallback.")
 
     if sys.platform == "win32":
         try:
             # Avoid quotes issues by feeding stdin to Set-Clipboard
-            process = subprocess.Popen(
+            with subprocess.Popen(
                 ["powershell", "-Command", "Set-Clipboard"], stdin=subprocess.PIPE, text=True, encoding="utf-8"
-            )
-            process.communicate(input=text)
-            return process.returncode == 0
+            ) as process:
+                process.communicate(input=text)
+                return process.returncode == 0
         except Exception as e:
             logger.warning(f"[OS Clipboard] PowerShell Set-Clipboard failed: {e}")
     return False

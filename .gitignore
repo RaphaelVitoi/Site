@@ -27,6 +27,9 @@ core/nexus-core-rust/target/
 frontend/.next/
 frontend/.turbo/
 frontend/.next-build/
+frontend/dist-workers/
+dist-workers/
+*.tsbuildinfo
 *.dll
 *.exe
 *.so
@@ -68,9 +71,7 @@ reports/coverage/
 .coverage
 htmlcov/
 *.cover
-reports/cwv/*.json
-reports/cwv/*.md
-!reports/cwv/latest_cwv_report.md
+reports/cwv/
 engine/avatars/*.txt
 
 # 6. BACKUPS E ARCHIVES (PURA HIGIENE) ─────────────────────────────────────────

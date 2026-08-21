@@ -1,7 +1,7 @@
 ﻿/**
  * IDENTITY: O Estado da Arte do ICM (Whitepaper GOLD)
  * PATH: src/app/biblioteca/estado-da-arte/page.tsx
- * ROLE: Artigo avanÃ§ado sobre tendÃªncias High Stakes, Donk Bet meta e IA.
+ * ROLE: Artigo avançado sobre tendências High Stakes, Donk Bet meta e IA.
  */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
@@ -14,13 +14,13 @@ import Link from 'next/link';
 export const metadata = {
 	title: 'O Estado da Arte do ICM GOLD | Raphael Vitoi',
 	description:
-		'Novas Fronteiras e TendÃªncias High Stakes. Protocolo v7.0 GOLD, Efeito de IrradiaÃ§Ã£o e a batalha IA vs HRC Pro.',
+		'Novas Fronteiras e Tendências High Stakes. Protocolo v7.0 GOLD, Efeito de Irradiação e a batalha IA vs HRC Pro.',
 };
 
 const articleSchema = {
 	'@context': 'https://schema.org',
 	'@type': 'TechArticle',
-	headline: 'O Estado da Arte do ICM GOLD: TendÃªncias e Tecnologias',
+	headline: 'O Estado da Arte do ICM GOLD: Tendências e Tecnologias',
 	description:
 		'Um whitepaper sobre as brechas ofensivas encontradas pela elite do poker na passividade imposta pelo ICM.',
 	author: { '@type': 'Person', name: 'Raphael Vitoi' },
@@ -33,28 +33,28 @@ export default function EstadoDaArtePage() {
 
 			<ContentPageHeader
 				title="Estado da Arte GOLD"
-				subtitle="Protocolo v7.0 GOLD: Novas Fronteiras e TendÃªncias High Stakes. A evoluÃ§Ã£o do organismo estratÃ©gico."
+				subtitle="Protocolo v7.0 GOLD: Novas Fronteiras e Tendências High Stakes. A evolução do organismo estratégico."
 				category="Whitepaper"
 				icon="fa-shuttle-space"
 			/>
 
 			<SectionHeader
 				step="01"
-				label="EvoluÃ§Ã£o"
-				title="O Organismo em MutaÃ§Ã£o"
-				description="Como a elite mundial estÃ¡ encontrando brechas ofensivas na passividade imposta pelo ICM."
+				label="Evolução"
+				title="O Organismo em Mutação"
+				description="Como a elite mundial está encontrando brechas ofensivas na passividade imposta pelo ICM."
 			/>
 			<div className="sota-container pb-12">
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted font-body">
 						<p>
-							Ao observarmos as tendÃªncias mais recentes dos circuitos High Roller
-							(Triton, SHRB) e a evoluÃ§Ã£o exponencial das IAs em 2026, identificamos
-							dinÃ¢micas que refinam o entendimento sobre o ICM PÃ³s-Flop. NÃ£o se trata
+							Ao observarmos as tendências mais recentes dos circuitos High Roller
+							(Triton, SHRB) e a evolução exponencial das IAs em 2026, identificamos
+							dinâmicas que refinam o entendimento sobre o ICM Pós-Flop. Não se trata
 							apenas de saber &quot;trancar&quot; o jogo para garantir payjumps, mas
-							de entender como a elite estÃ¡{' '}
+							de entender como a elite está{' '}
 							<strong className="text-text-bright">
-								encontrando agressÃ£o na passividade
+								encontrando agressão na passividade
 							</strong>
 							.
 						</p>
@@ -66,16 +66,16 @@ export default function EstadoDaArtePage() {
 				step="02"
 				label="Meta Game"
 				title="O Ataque Defensivo (Donk Bet)"
-				description="Explorando a passividade forÃ§ada com lideranÃ§as minÃºsculas para roubar iniciativa."
+				description="Explorando a passividade forçada com lideranças minúsculas para roubar iniciativa."
 			/>
 			<div className="sota-container pb-12">
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted font-body">
 						<p>
-							Sob pressÃ£o de ICM, o agressor (IP) estÃ¡ frequentemente
-							&quot;algemado&quot; pelo Risk Premium, forÃ§ado a dar check-back com
-							mÃ£os mÃ©dias para realizar equidade gratuitamente. O Big Blind explora
-							essa inÃ©rcia com{' '}
+							Sob pressão de ICM, o agressor (IP) está frequentemente
+							&quot;algemado&quot; pelo Risk Premium, forçado a dar check-back com
+							mãos médias para realizar equidade gratuitamente. O Big Blind explora
+							essa inércia com{' '}
 							<strong className="text-text-bright">
 								Donk Bets de 10% a 20% do pote
 							</strong>
@@ -87,11 +87,11 @@ export default function EstadoDaArtePage() {
 								A Falha na Matriz
 							</h4>
 							<p className="text-text-main leading-relaxed m-0 text-sm">
-								Em ChipEV, a resposta padrÃ£o seria o raise. No ICMev, crescer o pote
-								para punir uma aposta pequena Ã© um{' '}
-								<strong className="text-text-bright">erro matemÃ¡tico grave</strong>{' '}
-								para o stack maior. O BB rouba a iniciativa com impunidade tÃ©cnica,
-								transformando mÃ£os marginais em calls lucrativos.
+								Em ChipEV, a resposta padrão seria o raise. No ICMev, crescer o pote
+								para punir uma aposta pequena é um{' '}
+								<strong className="text-text-bright">erro matemático grave</strong>{' '}
+								para o stack maior. O BB rouba a iniciativa com impunidade técnica,
+								transformando mãos marginais em calls lucrativos.
 							</p>
 						</div>
 					</div>
@@ -100,25 +100,25 @@ export default function EstadoDaArtePage() {
 
 			<SectionHeader
 				step="03"
-				label="IrradiaÃ§Ã£o"
-				title="A FÃ­sica dos Micro-Stacks"
-				description="Como uma Ãºnica stack agonizante impÃµe lei marcial em toda a mesa."
+				label="Irradiação"
+				title="A Física dos Micro-Stacks"
+				description="Como uma única stack agonizante impõe lei marcial em toda a mesa."
 			/>
 			<div className="sota-container pb-12">
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted font-body">
 						<p>
-							A presenÃ§a de um jogador com menos de 5bb cria um{' '}
-							<strong className="text-text-bright">campo de forÃ§a</strong> que altera
-							a matemÃ¡tica de todos os outros confrontos. O custo de cair antes desse
-							&quot;morto-vivo&quot; Ã© estatisticamente infinito.
+							A presença de um jogador com menos de 5bb cria um{' '}
+							<strong className="text-text-bright">campo de força</strong> que altera
+							a matemática de todos os outros confrontos. O custo de cair antes desse
+							&quot;morto-vivo&quot; é estatisticamente infinito.
 						</p>
 						<p>
-							O acordo silencioso de passividade entre os stacks mÃ©dios torna-se{' '}
+							O acordo silencioso de passividade entre os stacks médios torna-se{' '}
 							<strong className="text-accent-rose text-shadow-glow uppercase font-black">
 								lei marcial
 							</strong>
-							. Qualquer desvio dessa norma Ã© suicÃ­dio em $EV.
+							. Qualquer desvio dessa norma é suicídio em $EV.
 						</p>
 					</div>
 				</GlassPanel>
@@ -128,7 +128,7 @@ export default function EstadoDaArtePage() {
 				step="04"
 				label="Tecnologia"
 				title="IA vs Precision Engine"
-				description="O trade-off entre a velocidade das Redes Neurais e a transparÃªncia do e-Nash tradicional."
+				description="O trade-off entre a velocidade das Redes Neurais e a transparência do e-Nash tradicional."
 			/>
 			<div className="sota-container pb-24">
 				<GtoCfrSimulator />
@@ -139,7 +139,7 @@ export default function EstadoDaArtePage() {
 							<table className="w-full text-left border-collapse bg-bg-elevated/20 rounded-2xl overflow-hidden">
 								<thead>
 									<tr className="border-b border-white/5 bg-white/5 text-text-bright uppercase text-[0.65rem] tracking-[0.15em] font-mono">
-										<th className="py-4 px-6">CritÃ©rio</th>
+										<th className="py-4 px-6">Critério</th>
 										<th className="py-4 px-6">Solvers de IA</th>
 										<th className="py-4 px-6">HRC Pro (Nash)</th>
 									</tr>
@@ -150,7 +150,7 @@ export default function EstadoDaArtePage() {
 											Velocidade
 										</td>
 										<td className="py-4 px-6 text-accent-emerald font-mono">
-											InstantÃ¢nea
+											Instantânea
 										</td>
 										<td className="py-4 px-6 text-accent-rose font-mono">
 											Iterativa
@@ -170,10 +170,10 @@ export default function EstadoDaArtePage() {
 											Uso Ideal
 										</td>
 										<td className="py-4 px-6 text-accent-indigo-light">
-											HeurÃ­sticas RÃ¡pidas
+											Heurísticas Rápidas
 										</td>
 										<td className="py-4 px-6 text-accent-emerald font-mono font-bold text-shadow-glow">
-											Estudo CirÃºrgico
+											Estudo Cirúrgico
 										</td>
 									</tr>
 								</tbody>

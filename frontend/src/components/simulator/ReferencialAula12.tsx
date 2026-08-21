@@ -30,20 +30,39 @@ import type { RangeCell, RangeAction } from './ReferencialData';
 
 export type MatrixViewMode = 'FT' | 'BUBBLE' | 'EG';
 
-const ACTION_COLORS: Record<RangeAction, string> = {
-  raise: '#ef4444', // Red-500
-  call: '#10b981', // Emerald-500
-  shove: '#6366f1', // Indigo-500
-  fold: '#334155', // Slate-700
-};
+function getCellActionValue(cell: RangeCell, action: RangeAction): number | undefined {
+  switch (action) {
+    case 'shove':
+      return cell.shove;
+    case 'raise':
+      return cell.raise;
+    case 'call':
+      return cell.call;
+    case 'fold':
+      return cell.fold;
+  }
+}
+
+function getActionColor(action: RangeAction): string {
+  switch (action) {
+    case 'shove':
+      return '#6366f1';
+    case 'raise':
+      return '#ef4444';
+    case 'call':
+      return '#10b981';
+    case 'fold':
+      return '#334155';
+  }
+}
 
 function toRad(deg: number) {
   return (deg * Math.PI) / 180;
 }
 
 function getHandLabel(r: number, c: number): string {
-  const rRank = RANKS[r] ?? '';
-  const cRank = RANKS[c] ?? '';
+  const rRank = RANKS.at(r) ?? '';
+  const cRank = RANKS.at(c) ?? '';
   if (r === c) return rRank + rRank;
   if (r < c) return rRank + cRank + 's';
   return cRank + rRank + 'o';
@@ -180,18 +199,20 @@ function ActionRangeGrid({
                 className={`group/cell relative aspect-square overflow-hidden rounded-sm transition-all duration-300 ${isEmpty ? 'border border-white/5 bg-slate-900/40' : 'border border-white/10 bg-slate-950/80 hover:z-20 hover:scale-[1.15] hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]'}`}
               >
                 <div className="absolute inset-0 flex flex-col">
-                  {(['shove', 'raise', 'call', 'fold'] as RangeAction[]).map((action) =>
-                    cell[action] && (!isEmpty || action !== 'fold') ? (
+                  {(['shove', 'raise', 'call', 'fold'] as RangeAction[]).map((action) => {
+                    const actionVal = getCellActionValue(cell, action);
+                    const actionColor = getActionColor(action);
+                    return actionVal && (!isEmpty || action !== 'fold') ? (
                       <div
                         key={action}
                         style={{
-                          height: `${cell[action]}%`,
-                          backgroundColor: ACTION_COLORS[action],
+                          height: `${actionVal}%`,
+                          backgroundColor: actionColor,
                         }}
                         className="w-full opacity-90 transition-opacity group-hover/cell:opacity-100"
                       />
-                    ) : null,
-                  )}
+                    ) : null;
+                  })}
                 </div>
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                   <span
@@ -462,9 +483,7 @@ function RiskAndPrizesRight(
         </p>
         <div className="rounded-5xl space-y-7 border border-white/5 bg-slate-900/40 p-10 shadow-inner">
           {PRIZES.map(({ pos, val, jump }, i) => {
-            const widthProps = {
-              style: { width: `${(val / (PRIZES[0]?.val ?? 1)) * 100}%` },
-            };
+            const widthPct = `${(val / (PRIZES.at(0)?.val ?? 1)) * 100}%`;
 
             let barBgClass = 'bg-white/10';
             let valColorClass = 'text-text-muted';
@@ -484,7 +503,10 @@ function RiskAndPrizesRight(
               <div key={pos} className="group/jump flex items-center gap-6">
                 <span className="text-text-darker w-6 font-mono text-[0.75rem] font-black">{pos}</span>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
-                  <div className={`h-full rounded-full transition-all duration-1000 ${barBgClass}`} {...widthProps} />
+                  <div
+                    className={`h-full rounded-full transition-all duration-1000 ${barBgClass}`}
+                    style={{ width: widthPct }}
+                  />
                 </div>
                 <div className="flex w-32 items-center justify-end gap-4">
                   {jump > 0 && (
@@ -817,7 +839,7 @@ export default function ReferencialAula12() {
                       >
                         <div className="mb-1 text-white">{p}</div>
                         <div className="text-text-darker font-mono text-[0.7rem]">
-                          {matrixData.mStacks[i]?.toFixed(1) ?? '0.0'}bb
+                          {matrixData.mStacks.at(i)?.toFixed(1) ?? '0.0'}bb
                         </div>
                       </th>
                     ))}
@@ -825,8 +847,8 @@ export default function ReferencialAula12() {
                 </thead>
                 <tbody className="bg-slate-900/40">
                   {matrixData.mBf.map((row, r) => {
-                    const playerName = matrixData.mPlayers[r];
-                    const playerStack = matrixData.mStacks[r];
+                    const playerName = matrixData.mPlayers.at(r) ?? `P${r}`;
+                    const playerStack = matrixData.mStacks.at(r);
                     const isRowActive = r === activeBbIdx;
 
                     return (
@@ -841,10 +863,10 @@ export default function ReferencialAula12() {
                           </div>
                         </td>
                         {row.map((bf, c) => {
-                          const rp = matrixData.mRp[r]?.[c] ?? 0;
+                          const rp = matrixData.mRp.at(r)?.at(c) ?? 0;
                           const gravity = getRpGravityColor(rp);
                           const isActiveMatch = r === activeBbIdx && c === activeBtnIdx;
-                          const columnPlayerName = matrixData.mPlayers[c];
+                          const columnPlayerName = matrixData.mPlayers.at(c) ?? `P${c}`;
 
                           return (
                             <td

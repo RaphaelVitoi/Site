@@ -52,6 +52,10 @@ class AuditEngine:
         if len(self.active_buffer) >= self.MAX_BUFFER:
             await self._flush_to_disk()
 
+    async def flush(self):
+        """Efetua o flush explicito do buffer para o disco."""
+        await self._flush_to_disk()
+
     async def _flush_to_disk(self):
         """Descarrega o buffer termodinamico para o File System O(1)."""
         if not self.active_buffer:

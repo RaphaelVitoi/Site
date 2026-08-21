@@ -1,14 +1,13 @@
-"""Testes unitários rigorosos para o motor VitoiPerspectiveEngine (PMev / Teoria dos Jogos SOTA)."""
+"""Testes unitarios rigorosos para o motor VitoiPerspectiveEngine (PMev / Teoria dos Jogos SOTA)."""
 
-import pytest
 from engine.vitoi_perspective_engine import VitoiPerspectiveEngine
 
 
 class TestVitoiPerspectiveEngine:
-    """Suíte de testes de validação dos axiomas matemáticos de VitoiPerspectiveEngine."""
+    """Suite de testes de validacao dos axiomas matematicos de VitoiPerspectiveEngine."""
 
     def test_calculate_dynamic_ev_fold_utg_penalty(self):
-        """Valida que a posição UTG aplica a penalidade posicional de 0.5."""
+        """Valida que a posicao UTG aplica a penalidade posicional de 0.5."""
         ev_btn = VitoiPerspectiveEngine.calculate_dynamic_ev_fold(
             base_antes=1.0,
             time_to_blind_minutes=10.0,
@@ -51,7 +50,7 @@ class TestVitoiPerspectiveEngine:
         assert rio_3way == round(base_rio * (3**2), 4)
 
     def test_calculate_edge_amortization_boundaries(self):
-        """Valida amortização de edge conforme a profundidade de stack."""
+        """Valida amortizacao de edge conforme a profundidade de stack."""
         assert VitoiPerspectiveEngine.calculate_edge_amortization(0.0, 1.5, 2.0) == 0.0
 
         edge_10bb = VitoiPerspectiveEngine.calculate_edge_amortization(10.0, 1.0, 1.0)
@@ -70,7 +69,7 @@ class TestVitoiPerspectiveEngine:
         assert abs(loss_utility) > gain_utility
 
     def test_simulate_decision_tree_high_equity_scenario(self):
-        """Simula árvore de decisão com alta equidade e valida preferência por RAISE/CALL."""
+        """Simula arvore de decisao com alta equidade e valida preferencia por RAISE/CALL."""
         result = VitoiPerspectiveEngine.simulate_decision_tree(
             equity=0.85,
             pot_size=20.0,
@@ -90,7 +89,7 @@ class TestVitoiPerspectiveEngine:
         assert 0.0 <= float(result["p_best_outcome"]) <= 1.0
 
     def test_simulate_decision_tree_low_equity_scenario(self):
-        """Simula árvore de decisão com baixa equidade e passivo estrutural alto forçando FOLD."""
+        """Simula arvore de decisao com baixa equidade e passivo estrutural alto forcando FOLD."""
         result = VitoiPerspectiveEngine.simulate_decision_tree(
             equity=0.05,
             pot_size=10.0,

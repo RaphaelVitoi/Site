@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { Scenario, HeroPosition, QuantumMetrics } from '../engine/types';
-import { calculateActionMetrics, calculateBaseFgsErosion, createSpotData } from '../engine/utils';
+import type { Scenario, HeroPosition, QuantumMetrics } from '../solver/types';
+import { calculateActionMetrics, calculateBaseFgsErosion, createSpotData } from '../solver/utils';
 import type { PerspectivaResult } from '@/lib/perspectiva';
 import type {
 	NashDistortionResults,
@@ -85,13 +85,15 @@ export function useMasterSpotLogic({
 	const villainUpdatedStack = Math.max(0, villainRawStack - villainInvested);
 
 	const heroIdx = useMemo(() => {
-		const posMap: Record<string, { max: number; off: number }> = {
+		const posMap: Record<'BB' | 'SB' | 'IP' | 'OOP', { max: number; off: number }> = {
 			BB: { max: 8, off: 1 },
 			SB: { max: 7, off: 2 },
 			IP: { max: 6, off: 3 },
 			OOP: { max: 0, off: 1 },
 		};
-		const conf = posMap[heroPosition] || posMap['OOP'];
+		const conf = Object.hasOwn(posMap, heroPosition)
+			? posMap[heroPosition as keyof typeof posMap]
+			: posMap.OOP;
 		const safeConf = conf ?? { max: 0, off: 1 };
 		return Math.min(safeConf.max, (scenario.stacks?.length ?? 9) - safeConf.off);
 	}, [heroPosition, scenario.stacks]);

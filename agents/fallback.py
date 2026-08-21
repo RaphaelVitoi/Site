@@ -40,7 +40,7 @@ def _feature_enabled(flag_name: str) -> bool:
 
     if hasattr(te, "_feature_enabled"):
         func = te._feature_enabled
-        return bool(func(flag_name))
+        return func(flag_name)
     return False
 
 
@@ -192,7 +192,8 @@ async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
         meta.pop("depends_on", None)
         meta["fallback_route"] = route_agents
         meta["route_selected"] = route_agents
-        existing_reasons = list(meta.get("reason_codes", []))
+        raw_existing_reasons = meta.get("reason_codes", [])
+        existing_reasons = [str(r) for r in raw_existing_reasons] if isinstance(raw_existing_reasons, list) else []
         for code in reason_codes:
             if code not in existing_reasons:
                 existing_reasons.append(code)

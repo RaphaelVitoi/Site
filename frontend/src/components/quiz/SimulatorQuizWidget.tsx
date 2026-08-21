@@ -105,6 +105,7 @@ export const SimulatorQuizWidget: React.FC<SimulatorQuizWidgetProps> = ({ simula
 				</div>
 				{ghostMode ? (
 					<button
+						type="button"
 						aria-pressed="true"
 						onClick={() => setGhostMode(false)}
 						className="px-4 py-2.5 rounded-lg text-[0.65rem] font-black uppercase tracking-widest transition-all shrink-0 flex items-center gap-2 bg-accent-indigo text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]"
@@ -113,6 +114,7 @@ export const SimulatorQuizWidget: React.FC<SimulatorQuizWidgetProps> = ({ simula
 					</button>
 				) : (
 					<button
+						type="button"
 						aria-pressed="false"
 						onClick={() => setGhostMode(true)}
 						className="px-4 py-2.5 rounded-lg text-[0.65rem] font-black uppercase tracking-widest transition-all shrink-0 flex items-center gap-2 bg-black/40 text-text-muted border border-white/10 hover:text-white hover:bg-white/5"
@@ -166,6 +168,7 @@ export const SimulatorQuizWidget: React.FC<SimulatorQuizWidgetProps> = ({ simula
 							intuição antes de responder.
 						</p>
 						<button
+							type="button"
 							onClick={() => setGhostMode(false)}
 							className="px-6 py-2.5 bg-accent-indigo/20 text-accent-indigo-light border border-accent-indigo/40 rounded-lg text-xs font-black uppercase tracking-widest hover:bg-accent-indigo/30 transition-colors"
 						>

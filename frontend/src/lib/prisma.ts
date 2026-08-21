@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
-import path from 'path';
+import path from 'node:path';
 
 // SOTA: Previne a exaustão de conexões no modo de desenvolvimento (Fast Refresh do Next.js)
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
@@ -10,7 +10,7 @@ function getDatabaseUrl(): string {
 	if (rawUrl && rawUrl !== 'undefined' && rawUrl !== 'null' && rawUrl.trim() !== '') {
 		return rawUrl;
 	}
-	const dbPath = path.resolve(process.cwd(), 'prisma/dev.db').replace(/\\/g, '/');
+	const dbPath = path.resolve(process.cwd(), 'prisma/dev.db').replaceAll('\\', '/');
 	return `file:${dbPath}`;
 }
 

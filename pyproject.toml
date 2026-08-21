@@ -19,13 +19,21 @@ dependencies = [
     "uvicorn[standard]>=0.34.0",
     # ── PYDANTIC & SETTINGS ────────────────────────────────────────────
     "pydantic>=2.10.0",
-    "pydantic-settings>=2.7.0",
+    "pydantic-settings>=2.14.2",  # >=2.14.2 corrige GHSA-4xgf-cpjx-pc3j
     # ── MOTOR MATEMATICO & ANALYTICS ──────────────────────────────────
     "numpy>=2.2.0",
     "pandas>=2.2.0",
     "scikit-learn>=1.6.0",
     "scipy>=1.15.0",
     # ── RAG & MEMORIA VETORIAL ─────────────────────────────────────────
+    # SEGURANCA: chromadb carrega PYSEC-2026-311 (injecao pre-autenticacao)
+    # em TODAS as versoes publicadas ate 1.5.9. Nao ha correcao upstream.
+    # Nao explorada aqui porque o projeto so usa chromadb.PersistentClient
+    # (modo embarcado, sem servidor, sem porta em escuta) em:
+    #   memory_rag.py e scripts/utils/ingest_rag.py
+    # NAO migrar para chromadb.HttpClient nem subir `chroma run` sem antes
+    # confirmar que a advisory foi corrigida. Limite inferior deixado aberto
+    # de proposito, para adotar a correcao assim que ela for publicada.
     "chromadb>=0.6.0",
     "onnxruntime>=1.20.0",
     "sentence-transformers>=3.3.0",
@@ -35,12 +43,14 @@ dependencies = [
     "anthropic>=0.42.0",
     "httpx>=0.28.0",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
-    "pypdf>=6.12.0,<7.0.0",
+    "pypdf>=6.16.0,<7.0.0",
     "python-docx>=1.2.0,<2.0.0",
     "openpyxl>=3.1.5,<4.0.0",
     "Pillow>=12.3.0",
     # ── MULTIMIDIA (opcional — carregamento lazy) ──────────────────────
-    "moviepy>=2.2.0,<3.0.0",
+    # moviepy REMOVIDO em 2026-08-21: exige pillow<12.0, prendendo o projeto em
+    # Pillow 11.x (10 CVEs, todas corrigidas em 12.3.0). 2.2.1 e a ultima versao
+    # e nao levanta o teto. Zero imports no codigo - so figurava aqui.
     "opencv-python-headless>=4.13.0,<5.0.0",
     # ── UTILITARIOS ───────────────────────────────────────────────────
     "regex>=2026.5.0",
@@ -50,6 +60,7 @@ dependencies = [
     "rich>=15.0.0,<16.0.0",
     "python-dateutil>=2.9.0,<3.0.0",
     "tenacity>=9.1.0,<10.0.0",
+    "defusedxml>=0.7.1",
     # ── FILESYSTEM & CLOUD ────────────────────────────────────────────
     "watchdog>=6.0.0,<7.0.0",
     "watchfiles>=1.2.0,<2.0.0",
@@ -59,28 +70,30 @@ dependencies = [
     "loguru>=0.7.3",
     "typer>=0.25.1",
     "edge-tts>=7.2.8",
+    "mcp>=2.0.0",
+    "nanobind>=2.15.0",
 ]
 
 [project.scripts]
-nexus = "cli.commands:main"
+nexus = "scripts.cli.nexus:app"
 
 [build-system]
 requires = ["setuptools>=68.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "math"]
+packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "math", "scripts", "scripts.cli"]
 
 
 [project.optional-dependencies]
 
 # Instalado com: uv sync --extra dev
 dev = [
-    "ruff>=0.15.0",
-    "pylint>=4.0.0",
-    "pyright>=1.1.400",
-    "pytest>=9.0.0",
-    "pytest-asyncio>=1.3.0",
+    "ruff>=0.16.3",
+    "pylint>=4.0.7",
+    "pyright>=1.1.411",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.0",
     "httpx>=0.28.0",
@@ -88,14 +101,20 @@ dev = [
 
 [dependency-groups]
 dev = [
-    "ruff>=0.15.0",
-    "pylint>=4.0.0",
-    "pyright>=1.1.400",
-    "pytest>=9.0.0",
-    "pytest-asyncio>=1.3.0",
+    "ruff>=0.16.3",
+    "pylint>=4.0.7",
+    "pyright>=1.1.411",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.0",
     "httpx>=0.28.0",
+    "pytest-watcher>=0.6.3",
+    "cmake>=4.4.2",
+    "ninja>=1.13.0",
+    "locust>=2.46.3",
+    "types-aiofiles>=25.1.0.20260518",
+    "types-psutil>=7.2.2.20260518",
 ]
 
 # ==============================================================================
@@ -103,6 +122,31 @@ dev = [
 # ==============================================================================
 [tool.uv]
 # Sincronizado via dependency-groups.dev
+
+# ── PISOS DE SEGURANCA PARA DEPENDENCIAS TRANSITIVAS ─────────────────────────
+# Equivalente Python do que "overrides" faz no package.json: corrige CVE de
+# transitiva sem promove-la a dependencia direta.
+#
+# Usa constraint-dependencies e NAO override-dependencies de proposito. Um
+# "constraint" respeita o teto declarado pelo pai e FALHA a resolucao se for
+# impossivel; um "override" atropela o pai e produziria, por exemplo, um torch
+# que o sentence-transformers nao suporta. Falhar alto e o comportamento
+# desejado - foi exatamente o silencio do resolvedor que deixou pillow 11.3.0
+# fixado no lock por uma sessao inteira (ver commit 43689d83).
+#
+# Verificado contra a base OSV em 2026-08-21. Quem puxa cada uma:
+#   starlette    <- fastapi, mcp, sse-starlette      10 advisories
+#   cryptography <- google-auth, pyjwt                7 advisories
+#   pyasn1       <- pyasn1-modules                    6 advisories
+#   setuptools   <- torch                             2 advisories
+#   torch        <- sentence-transformers             1 advisory
+constraint-dependencies = [
+    "starlette>=1.3.1",
+    "cryptography>=50.0.0",
+    "pyasn1>=0.6.4",
+    "setuptools>=83.0.0",
+    "torch>=2.13.0",
+]
 
 # ==============================================================================
 # PYTEST
@@ -123,13 +167,33 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 log_cli = true
 log_cli_level = "INFO"
-pythonpath = ["."]
+pythonpath = [
+    ".",
+    "scripts",
+    "engine",
+    "core",
+    "utils",
+    "agents",
+    "database",
+    "monitoring",
+    "governance",
+    "conductor",
+    "tools",
+    "math"
+]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 markers = [
     "slow: testes lentos (>5s) que requerem LLM ou I/O pesado",
     "integration: testes de integracao que requerem servicos externos",
     "unit: testes unitarios puros sem I/O externo",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:chromadb.*",
+    "ignore::DeprecationWarning:google.genai.*",
+    "ignore::DeprecationWarning:opentelemetry.*",
+    "ignore:.*asyncio\\.iscoroutinefunction.*:DeprecationWarning",
+    "ignore:.*_UnionGenericAlias.*:DeprecationWarning",
 ]
 
 # ==============================================================================
@@ -184,6 +248,7 @@ select = [
     "LOG",    # flake8-logging
     "G",      # flake8-logging-format
     "PIE",    # flake8-pie
+    "PLC0415",# import-outside-top-level (enforce top-level imports)
 ]
 ignore = [
     "E501",   # line-too-long: gerenciado pelo formatter
@@ -209,7 +274,23 @@ ignore = [
 "memory_rag.py" = ["N806"]  # convencao vetorial
 
 [tool.ruff.lint.isort]
-known-first-party = ["core", "database", "engine", "agents", "llm", "worker", "utils", "api"]
+known-first-party = [
+    "core",
+    "database",
+    "engine",
+    "agents",
+    "llm",
+    "worker",
+    "utils",
+    "api",
+    "scripts",
+    "monitoring",
+    "governance",
+    "conductor",
+    "tools",
+    "cli",
+    "math"
+]
 force-sort-within-sections = true
 
 [tool.ruff.format]
@@ -224,8 +305,40 @@ docstring-code-line-length = 88
 # PYRIGHT — Type Checker (modo standard para projeto SOTA)
 # ==============================================================================
 [tool.pyright]
-include = ["engine", "core", "utils", "api", "agents", "llm", "database", "worker"]
-exclude = ["**/__pycache__", "**/.*", ".venv", "node_modules", "frontend", "archive", "nexus_orchestrator.egg-info"]
+include = [
+    "engine",
+    "core",
+    "utils",
+    "api",
+    "agents",
+    "llm",
+    "database",
+    "worker",
+    "scripts",
+    "monitoring",
+    "governance",
+    "conductor",
+    "tools",
+    "cli",
+    "math"
+]
+extraPaths = [
+    ".",
+    ".venv/Lib/site-packages",
+    ".venv/lib/site-packages",
+    "scripts",
+    "engine",
+    "core",
+    "utils",
+    "agents",
+    "database",
+    "monitoring",
+    "governance",
+    "conductor",
+    "tools",
+    "math"
+]
+exclude = ["**/__pycache__", "**/.*", ".venv", "node_modules", "frontend", "archive", "nexus_orchestrator.egg-info", "core/vendor"]
 venvPath = "."
 venv = ".venv"
 pythonVersion = "3.12"

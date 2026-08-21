@@ -16,6 +16,7 @@ import json
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 REVIEW = ROOT / "reports" / "review_candidates.json"
@@ -91,7 +92,7 @@ def process_single_candidate(rel_path, apply_mode, audit):
     dst = ROOT / dst_rel
     dst.parent.mkdir(parents=True, exist_ok=True)
 
-    entry = {
+    entry: dict[str, Any] = {
         "path": rel_path,
         "absolute_src": str(src),
         "absolute_dst": str(dst),

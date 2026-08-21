@@ -15,18 +15,36 @@ from utils.cache import _read_file_with_cache
 logger = logging.getLogger(__name__)
 
 
-def _build_global_instructions(system_prompt_parts: list, is_technical_agent: bool) -> list:
-    # SOTA: Consumo Dinamico do Manifesto de Documentos
-    manifest_path = Path("docs/document_manifest.json")
-    doc_manifest = {}
-    if manifest_path.exists():
-        try:
-            manifest_content = _read_file_with_cache(str(manifest_path))
-            if manifest_content:
-                doc_manifest = json.loads(manifest_content)
-        except Exception:  # noqa: BLE001
-            logger.exception("[PROMPTS] Falha ao ler document_manifest.json")
+def _load_document_manifest(base_dir: Path) -> dict:
+    """Carrega o manifesto de documentos garantindo seguranca contra path traversal."""
+    manifest_path = (base_dir / "docs" / "document_manifest.json").resolve()
+    if not manifest_path.is_file():
+        return {}
+    try:
+        manifest_path.relative_to(base_dir)
+        manifest_content = _read_file_with_cache(str(manifest_path))
+        if manifest_content:
+            return json.loads(manifest_content)
+    except Exception:  # noqa: BLE001
+        logger.exception("[PROMPTS] Falha ao ler document_manifest.json")
+    return {}
 
+
+def _resolve_safe_doc_path(base_dir: Path, doc_path: str) -> Path | None:
+    """Resolve e valida o caminho do documento contido no diretorio base (CWE-22)."""
+    try:
+        resolved = (base_dir / doc_path).resolve()
+        resolved.relative_to(base_dir)
+        return resolved if resolved.is_file() else None
+    except (ValueError, RuntimeError):
+        logger.warning("[PROMPTS] Path traversal bloqueado para documento: %s", doc_path)
+        return None
+
+
+def _build_global_instructions(system_prompt_parts: list, is_technical_agent: bool) -> list:
+    # SOTA: Consumo Dinamico do Manifesto de Documentos com Imunidade a Path Traversal (CWE-22)
+    base_dir = Path.cwd().resolve()
+    doc_manifest = _load_document_manifest(base_dir)
     philosophical_docs = set(doc_manifest.get("philosophical_docs", []))
     documents = doc_manifest.get("documents", [])
 
@@ -42,11 +60,15 @@ def _build_global_instructions(system_prompt_parts: list, is_technical_agent: bo
         doc_path = doc.get("path")
         if not doc_path:
             continue
-        file_obj = Path(doc_path)
-        content = _read_file_with_cache(str(file_obj))
+
+        safe_path = _resolve_safe_doc_path(base_dir, doc_path)
+        if not safe_path:
+            continue
+
+        content = _read_file_with_cache(str(safe_path))
         if content:
             system_prompt_parts.append(f"=== {doc_name} ===\n{content}\n\n")
-            successfully_read_files.append(str(file_obj.resolve()))
+            successfully_read_files.append(str(safe_path))
 
     return successfully_read_files
 
@@ -157,7 +179,7 @@ async def get_agent_system_prompt(agent_name: str) -> str:
         infra_ctx += "6. ESTETICA VISUAL E OUTPUT PADRAO OURO: E PROIBIDO gerar JSONs crus, blocos de texto sem formatacao ou dados disformes para interacao humana. Todo output DEVE utilizar Markdown estruturado, tabelas simetricas, respiro visual e formatacao de nivel executivo C-Level.\n"
         infra_ctx += "7. COLORIMETRIA SEMANTICA (IDENTIDADE VISUAL): O sistema usa cores como linguagem. Vermelho = Entropia/Erro/Negativo. Verde = Simetria/Sucesso/Positivo. Amarelo = Alerta/Espera/Manutencao. Ciano = Infraestrutura/A Maquina. Magenta = IA/Filosofia/Oraculo. Cinza = Legado/Neutro. Pense nesses conceitos SOTA ao estruturar a informacao.\n\n"
 
-        primary_model = te.AGENTS_MANIFEST.get(agent_clean, {}).get("primary_model", "gemini-2.5-flash")
+        primary_model = te.AGENTS_MANIFEST.get(agent_clean, {}).get("primary_model", "gemini-3.5-flash-lite")
         agent_color = te.AGENT_COLOR_MAP.get(agent_name, "white")
         infra_ctx += f"8. SUA IDENTIDADE VISUAL E MODELO SOTA: Sua cor emblematica exclusiva no terminal e o '{agent_color}'. Sempre que referenciar a si mesmo ou seu output, entenda que sua aura visual possui essa cor. O modelo de IA otimizado para a sua capacidade cognitiva e o '{primary_model}'. Assuma isso na sua comunicacao e defenda a Economia Generalizada.\n\n"
 

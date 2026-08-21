@@ -47,6 +47,10 @@ C:\Users\rapha\.gemini\Site\
 ### C. Comandos de Operação Rápida (CLI)
 
 ```powershell
+# Inicializar dependências externas nas revisões fixadas pelo repositório
+git submodule update --init --recursive
+git submodule status --recursive
+
 # Executar suíte completa de testes
 pytest tests/ -q
 

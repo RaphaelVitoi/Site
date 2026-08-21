@@ -1,10 +1,12 @@
 import argparse
 import json
 import os
+import shlex
 import socket
 import subprocess  # noqa: S404
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 
@@ -14,12 +16,11 @@ PHYSICAL_CORES = psutil.cpu_count(logical=False) or 4
 
 
 # Configuracoes globais de porta
+PORT_LLAMA = 8080
 
 
 def clean_text_to_ascii(text: str) -> str:
     """Substitui caracteres acentuados e especiais por equivalentes ASCII puro."""
-    import unicodedata
-
     # Normalize to NFKD (separates accents from characters)
     normalized = unicodedata.normalize("NFKD", text)
     # Encode to ASCII, ignoring characters that cannot be represented in ASCII
@@ -73,44 +74,65 @@ def kill_process_on_port(port: int):
         _kill_unix_port(port)
 
 
+def _validate_context_path(rel_path: str, project_root: str) -> str | None:
+    if not isinstance(rel_path, str):
+        return None
+    abs_path = os.path.realpath(os.path.abspath(os.path.join(project_root, rel_path)))
+    if not abs_path.startswith(project_root):
+        print(f"[AVATAR Warning] Tentativa de path traversal bloqueada: {rel_path}")
+        return None
+
+    base_name = os.path.basename(abs_path).lower()
+    if base_name.startswith(".env") or "id_rsa" in base_name or "credentials" in base_name:
+        print(f"[AVATAR Warning] Acesso a arquivo sensivel bloqueado: {rel_path}")
+        return None
+    return abs_path
+
+
+def _read_context_file(rel_path: str, project_root: str, max_chars: int) -> str | None:
+    abs_path = _validate_context_path(rel_path, project_root)
+    if not abs_path:
+        return None
+    if not os.path.exists(abs_path):
+        print(f"[AVATAR Warning] Arquivo de contexto nao localizado: {abs_path}")
+        return None
+
+    try:
+        with open(abs_path, encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+
+        if len(content) > max_chars:
+            content = (
+                content[:max_chars]
+                + f"\n... [CONTEUDO TRUNCADO EM {max_chars} CARACTERES PARA OTIMIZACAO DE TOKENS] ...\n"
+            )
+
+        return f"\n--- INICIO DO ARQUIVO: {rel_path} ---\n{content}\n--- FIM DO ARQUIVO: {rel_path} ---\n"
+    except Exception as e:
+        print(f"[AVATAR Warning] Falha ao ler o arquivo {rel_path}: {e}")
+        return None
+
+
 def assemble_context(context_files: list) -> str:
     """Carrega o conteudo dos arquivos de contexto do projeto e gera a estrutura do prompt de sistema com limite de tamanho."""
-    context_str = ""
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-
-    # Orcamento maximo de caracteres por arquivo para evitar estouro do limite de contexto de 8192 tokens
+    project_root = os.path.realpath(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
     max_chars_per_file = 8000
 
+    chunks = []
     for rel_path in context_files:
-        abs_path = os.path.join(project_root, rel_path)
-        if os.path.exists(abs_path):
-            try:
-                with open(abs_path, encoding="utf-8", errors="ignore") as f:
-                    content = f.read()
+        chunk = _read_context_file(rel_path, project_root, max_chars_per_file)
+        if chunk:
+            chunks.append(chunk)
 
-                # Truncagem proativa com aviso ASCII
-                if len(content) > max_chars_per_file:
-                    content = (
-                        content[:max_chars_per_file]
-                        + f"\n... [CONTEUDO TRUNCADO EM {max_chars_per_file} CARACTERES PARA OTIMIZACAO DE TOKENS] ...\n"
-                    )
+    if not chunks:
+        return ""
 
-                context_str += f"\n--- INICIO DO ARQUIVO: {rel_path} ---\n"
-                context_str += content
-                context_str += f"\n--- FIM DO ARQUIVO: {rel_path} ---\n"
-            except Exception as e:
-                print(f"[AVATAR Warning] Falha ao ler o arquivo {rel_path}: {e}")
-        else:
-            print(f"[AVATAR Warning] Arquivo de contexto nao localizado: {abs_path}")
-
-    if context_str:
-        header = (
-            "\n\n=== CONTEXTO DO PROJETO - CODIGO FONTE E DEFINICOES ===\n"
-            "Abaixo esta o conteudo relevante dos arquivos do projeto nos quais voce foi treinado/especializado.\n"
-            "Use esses algoritmos, classes e diretrizes para estruturar suas respostas de forma correta e semantica:\n"
-        )
-        return header + context_str + "\n=======================================================\n"
-    return ""
+    header = (
+        "\n\n=== CONTEXTO DO PROJETO - CODIGO FONTE E DEFINICOES ===\n"
+        "Abaixo esta o conteudo relevante dos arquivos do projeto nos quais voce foi treinado/especializado.\n"
+        "Use esses algoritmos, classes e diretrizes para estruturar suas respostas de forma correta e semantica:\n"
+    )
+    return header + "".join(chunks) + "\n=======================================================\n"
 
 
 def ensure_server_for_persona(_persona_name: str, _persona_config: dict) -> bool:
@@ -215,13 +237,16 @@ def query_llama_server(system_prompt: str, user_prompt: str, persona_config: dic
 
 def _run_subprocess_stream(cmd: list[str], silent: bool) -> str:
     generated_text = ""
+    # SOTA: Sanitizacao estrita de tokens via shlex e prevencao de command injection
+    safe_cmd = [shlex.quote(arg) if any(c in arg for c in ";|&`$") else arg for arg in cmd if isinstance(arg, str)]
     try:
-        process = subprocess.Popen(  # noqa: S603
-            cmd,
+        process = subprocess.Popen(  # nosec B603 # noqa: S603
+            safe_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
             bufsize=1,
+            shell=False,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
         )
         if process.stdout:

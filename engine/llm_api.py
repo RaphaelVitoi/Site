@@ -492,22 +492,23 @@ def _extract_provider_keys(
 
 
 def _build_models_to_try(task: Task, agent_type: str, openrouter_keys: list[str]) -> list[str]:
-    """Extrai a lista de modelos candidatos para a tarefa, reduzindo a complexidade cognitiva de call_llm_api."""
-    models_to_try: list[str] = []
+    """Extrai a lista de modelos candidatos para a tarefa de forma deterministica."""
+    candidates: list[str] = []
 
-    if task.metadata and "model_override" in task.metadata:
-        models_to_try.append(task.metadata["model_override"])
+    model_override = task.metadata.get("model_override") if task.metadata else None
+    if isinstance(model_override, str) and model_override:
+        candidates.append(model_override)
 
     agent_clean = task.agent.replace("@", "")
-    if agent_clean in AGENTS_MANIFEST:
-        primary_model = AGENTS_MANIFEST[agent_clean].get("primary_model")
-        if primary_model and primary_model not in models_to_try:
-            models_to_try.append(primary_model)
+    manifest_entry = AGENTS_MANIFEST.get(agent_clean, {})
+    primary_model = manifest_entry.get("primary_model")
+    if primary_model and primary_model not in candidates:
+        candidates.append(primary_model)
 
-    fallback_list = list(DEEP_THINKING_MODELS) if agent_type == "deep_thinking" else list(FAST_OPERATIONS_MODELS)
-    for model_name in fallback_list:
-        if model_name not in models_to_try:
-            models_to_try.append(model_name)
+    fallbacks = DEEP_THINKING_MODELS if agent_type == "deep_thinking" else FAST_OPERATIONS_MODELS
+    for model_name in fallbacks:
+        if model_name not in candidates:
+            candidates.append(model_name)
 
     if openrouter_keys:
         extras = (
@@ -515,9 +516,9 @@ def _build_models_to_try(task: Task, agent_type: str, openrouter_keys: list[str]
             if agent_type == "deep_thinking"
             else ["google/gemini-2.5-flash", "meta-llama/llama-3.1-8b-instruct"]
         )
-        models_to_try.extend(extras)
+        candidates.extend(m for m in extras if m not in candidates)
 
-    return models_to_try
+    return candidates
 
 
 async def call_llm_api(

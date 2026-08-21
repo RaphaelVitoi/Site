@@ -40,9 +40,9 @@ export function useIcmCalculations({ players, prizes }: IcmCalculationsParams) {
 				const decodedResults: ICMResult[] = currentPlayers.map((p, i) => ({
 					id: p.id,
 					name: p.name,
-					equity: f64Results[i * 3 + 0] ?? 0,
-					equityPercent: f64Results[i * 3 + 1] ?? 0,
-					winProb: f64Results[i * 3 + 2] ?? 0,
+					equity: f64Results.at(i * 3 + 0) ?? 0,
+					equityPercent: f64Results.at(i * 3 + 1) ?? 0,
+					winProb: f64Results.at(i * 3 + 2) ?? 0,
 				}));
 				setResults(decodedResults);
 				const totalEq = decodedResults.reduce((sum, r) => sum + r.equityPercent, 0);
@@ -58,10 +58,9 @@ export function useIcmCalculations({ players, prizes }: IcmCalculationsParams) {
 
 	useEffect(() => {
 		if (!icmWorkerRef.current || players.length === 0) return;
-		const id =
-			typeof crypto !== 'undefined' && crypto.randomUUID
-				? crypto.randomUUID()
-				: Date.now().toString(36) + Math.random().toString(36).substring(2);
+		const id = typeof crypto !== 'undefined' && crypto.randomUUID
+			? crypto.randomUUID()
+			: `job_${Date.now()}`;
 		activeJobIdRef.current = id;
 		activePlayersRef.current = players;
 		setIsWorkerCalculating(true);

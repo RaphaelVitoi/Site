@@ -174,9 +174,13 @@ export const HAND_RANKING = [
 ];
 
 function _generatePairs(c: string, suits: string[]): string[] {
-	const combos = [];
+	const combos: string[] = [];
 	for (let i = 0; i < 4; i++) {
-		for (let j = i + 1; j < 4; j++) combos.push(`${c}${suits[i]}${c}${suits[j]}`);
+		const s1 = suits.at(i) ?? '';
+		for (let j = i + 1; j < 4; j++) {
+			const s2 = suits.at(j) ?? '';
+			combos.push(`${c}${s1}${c}${s2}`);
+		}
 	}
 	return combos;
 }
@@ -188,12 +192,14 @@ function _generateUnpaired(
 	isOffsuit: boolean,
 	suits: string[],
 ): string[] {
-	const combos = [];
+	const combos: string[] = [];
 	for (let i = 0; i < 4; i++) {
+		const s1 = suits.at(i) ?? '';
 		for (let j = 0; j < 4; j++) {
 			if (isSuited && i !== j) continue;
 			if (isOffsuit && i === j) continue;
-			combos.push(`${c1}${suits[i]}${c2}${suits[j]}`);
+			const s2 = suits.at(j) ?? '';
+			combos.push(`${c1}${s1}${c2}${s2}`);
 		}
 	}
 	return combos;
@@ -209,7 +215,7 @@ function _expandPercentage(pctStr: string): string[] {
 	const result = [];
 
 	for (const h of HAND_RANKING) {
-		const secondChar = h[1];
+		const secondChar = h.charAt(1);
 		const isPair = secondChar ? h.startsWith(secondChar) : false;
 		const isSuited = h.length === 3 && h.endsWith('s');
 
@@ -232,34 +238,41 @@ function _expandPercentage(pctStr: string): string[] {
 }
 
 function _expandPairsPlus(base: string): string[] {
-	const rank = base[0];
+	const rank = base.charAt(0);
 	if (!rank) return [base];
 	const startIdx = RANKS.indexOf(rank);
 	if (startIdx === -1) return [base];
-	const combos = [];
-	for (let i = startIdx; i < RANKS.length; i++) combos.push(`${RANKS[i]}${RANKS[i]}`);
+	const combos: string[] = [];
+	for (let i = startIdx; i < RANKS.length; i++) {
+		const r = RANKS.charAt(i);
+		combos.push(`${r}${r}`);
+	}
 	return combos;
 }
 
 function _expandUnpairedPlus(base: string): string[] {
-	const c1 = base[0],
-		c2 = base[1];
+	const c1 = base.charAt(0);
+	const c2 = base.charAt(1);
 	if (!c1 || !c2) return [base];
 	const suffix = base.substring(2); // 's', 'o', ou ''
-	const i1 = RANKS.indexOf(c1),
-		i2 = RANKS.indexOf(c2);
+	const i1 = RANKS.indexOf(c1);
+	const i2 = RANKS.indexOf(c2);
 	if (i1 === -1 || i2 === -1) return [base];
 
 	const high = Math.max(i1, i2);
 	const low = Math.min(i1, i2);
-	const combos = [];
+	const combos: string[] = [];
 
 	const gap = high - low;
+	const highRank = RANKS.charAt(high);
 	if (high === 12 || gap > 3 || (high === 11 && low < 8)) {
-		for (let i = low; i < high; i++) combos.push(`${RANKS[high]}${RANKS[i]}${suffix}`);
+		for (let i = low; i < high; i++) {
+			combos.push(`${highRank}${RANKS.charAt(i)}${suffix}`);
+		}
 	} else {
-		for (let i = 0; high + i < RANKS.length; i++)
-			combos.push(`${RANKS[high + i]}${RANKS[low + i]}${suffix}`);
+		for (let i = 0; high + i < RANKS.length; i++) {
+			combos.push(`${RANKS.charAt(high + i)}${RANKS.charAt(low + i)}${suffix}`);
+		}
 	}
 	return combos;
 }
@@ -356,7 +369,7 @@ export function maskToBytes(mask: bigint): Uint8Array {
 	const bytes = new Uint8Array(166);
 	let temp = mask;
 	for (let i = 0; i < 166; i++) {
-		bytes[i] = Number(temp & BigInt(0xff));
+		bytes.set([Number(temp & BigInt(0xff))], i);
 		temp >>= BigInt(8);
 	}
 	return bytes;

@@ -73,6 +73,7 @@ export const PlayerSelectButton = ({
 
 	return (
 		<button
+			type="button"
 			onClick={onClick}
 			className={`flex items-center justify-between py-2 px-3 rounded-lg cursor-pointer transition-all w-full border ${display.bg} ${display.borderColor}`}
 		>

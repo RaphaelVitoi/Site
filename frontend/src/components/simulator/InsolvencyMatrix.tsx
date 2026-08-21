@@ -28,7 +28,7 @@ const mockData = [
 	{ street: 'River', pm: 15, threshold: 75 }, // Insolvência! (pm < threshold)
 ];
 
-export function InsolvencyMatrix({ streetMetrics }: InsolvencyMatrixProps) {
+export function InsolvencyMatrix({ streetMetrics }: Readonly<InsolvencyMatrixProps>) {
 	const chartData = streetMetrics && streetMetrics.length > 0 && !streetMetrics.some(s => s.loading)
 		? streetMetrics.map((s) => ({
 				street: s.name === 'PRE' ? 'Pre-Flop' : s.name,

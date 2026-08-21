@@ -1,9 +1,13 @@
 """
 IDENTITY: SOTA Voice Synthesis Engine CLI (v7.0 GOLD)
 PATH: scripts/cli/nexus_voice.py
-ROLE: Síntese de voz neural padrão ouro (PT-BR Feminina e Gemini Audio)
-      com reprodução imediata no driver de som do Windows e exportação WAV/MP3.
+ROLE: Sintese de voz neural padrao ouro (PT-BR Feminina e Gemini Audio)
+      com reproducao imediata no driver de som do Windows e exportacao WAV/MP3.
 """
+
+# pylint: disable=broad-exception-caught
+
+from __future__ import annotations
 
 import argparse
 import asyncio
@@ -12,52 +16,111 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
-# Vozes Padrão Ouro PT-BR e Gemini
-DEFAULT_VOICE_PTBR = "pt-BR-FranciscaNeural"  # Feminina Padrão Ouro Brasil
+try:
+    import dotenv
+
+    dotenv.load_dotenv()
+except ImportError:
+    pass
+
+try:
+    import edge_tts
+except ImportError:
+    edge_tts = None
+
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None
+    types = None
+
+# Vozes Padrao Ouro PT-BR e Gemini
+DEFAULT_VOICE_PTBR = "pt-BR-FranciscaNeural"  # Feminina Padrao Ouro Brasil
 ALTERNATIVE_VOICE_PTBR = "pt-BR-ThalitaNeural"  # Feminina Expressiva
 GEMINI_VOICE_FEMALE = "Aoede"  # Gemini Multimodal Audio Feminina
 
 
 async def synthesize_edge_tts(text: str, voice: str, output_path: Path) -> Path:
-    """Sintetiza áudio neural em PT-BR de altíssima fidelidade via Edge TTS."""
-    import edge_tts
+    """Sintetiza audio neural em PT-BR de altissima fidelidade via Edge TTS."""
+    if edge_tts is None:
+        raise RuntimeError("edge_tts package is not installed")
 
     communicate = edge_tts.Communicate(text=text, voice=voice, rate="+0%", pitch="+0Hz")
     await communicate.save(str(output_path))
     return output_path
 
 
+def _extract_gemini_audio_bytes(response: Any) -> bytes | None:
+    """Extrai os bytes de audio do payload de resposta do Gemini."""
+    if not getattr(response, "candidates", None):
+        return None
+    candidates = response.candidates
+    if not candidates:
+        return None
+    first = candidates[0]
+    content = getattr(first, "content", None)
+    if not content or not getattr(content, "parts", None):
+        return None
+    for part in content.parts:
+        inline_data = getattr(part, "inline_data", None)
+        if inline_data and getattr(inline_data, "data", None):
+            return bytes(inline_data.data)
+    return None
+
+
 def synthesize_gemini_audio(text: str, voice_name: str, output_path: Path) -> bool:
-    """Tenta sintetizar áudio nativo usando o SDK oficial google-genai se a API Key estiver ativa."""
+    """Tenta sintetizar audio nativo usando o SDK oficial google-genai se a API Key estiver ativa."""
+    if genai is None or types is None:
+        return False
+
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         return False
 
     try:
-        from google import genai
-        from google.genai import types
-
         client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(
+        generate_fn = client.models.generate_content
+        response = generate_fn(
             model="gemini-2.5-flash",
             contents=text,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO"],
                 speech_config=types.SpeechConfig(
                     voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                            voice_name=voice_name
-                        )
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voice_name)
                     )
                 ),
+                safety_settings=[
+                    types.SafetySetting(
+                        category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                        threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+                    ),
+                    types.SafetySetting(
+                        category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                        threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+                    ),
+                    types.SafetySetting(
+                        category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                        threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+                    ),
+                    types.SafetySetting(
+                        category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                        threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+                    ),
+                    types.SafetySetting(
+                        category=types.HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
+                        threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+                    ),
+                ],
             ),
         )
-
-        for part in response.candidates[0].content.parts:
-            if part.inline_data and part.inline_data.data:
-                output_path.write_bytes(part.inline_data.data)
-                return True
+        audio_bytes = _extract_gemini_audio_bytes(response)
+        if audio_bytes:
+            output_path.write_bytes(audio_bytes)
+            return True
         return False
     except Exception as e:
         print(f"[NEXUS VOICE] Fallback para motor neural local (motivo: {e})", file=sys.stderr)
@@ -65,7 +128,7 @@ def synthesize_gemini_audio(text: str, voice_name: str, output_path: Path) -> bo
 
 
 def play_audio_windows(file_path: Path) -> None:
-    """Reproduz áudio nativamente no Windows sem travar o shell."""
+    """Reproduz audio nativamente no Windows sem travar o shell."""
     try:
         if file_path.suffix.lower() == ".wav":
             cmd = f"$player = New-Object System.Media.SoundPlayer '{file_path}'; $player.PlaySync()"
@@ -74,7 +137,7 @@ def play_audio_windows(file_path: Path) -> None:
             cmd = f"Add-Type -AssemblyName presentationCore; $mediaPlayer = New-Object system.windows.media.mediaplayer; $mediaPlayer.open('{file_path}'); $mediaPlayer.Play(); Start-Sleep -Seconds 4"
             subprocess.run(["powershell.exe", "-NoProfile", "-Command", cmd], check=False)
     except Exception as err:
-        print(f"[NEXUS VOICE] Aviso na reprodução de áudio: {err}", file=sys.stderr)
+        print(f"[NEXUS VOICE] Aviso na reproducao de audio: {err}", file=sys.stderr)
 
 
 async def async_speak_text(
@@ -83,14 +146,14 @@ async def async_speak_text(
     output_file: str | None = None,
     play: bool = True,
 ) -> Path:
-    """Execução assíncrona de síntese de voz."""
+    """Execucao assincrona de sintese de voz."""
     temp_dir = Path("C:/Users/rapha/.gemini/antigravity/scratch/voice")
     temp_dir.mkdir(parents=True, exist_ok=True)
 
     out_path = Path(output_file) if output_file else temp_dir / "sota_voice_output.mp3"
 
-    print(f"\n[NEXUS VOICE SOTA v7.0 GOLD]")
-    print(f"Texto: \"{text}\"")
+    print("\n[NEXUS VOICE SOTA v7.0 GOLD]")
+    print(f'Texto: "{text}"')
     print(f"Voz: {voice}")
     print(f"Destino: {out_path}")
 
@@ -109,7 +172,7 @@ async def async_speak_text(
     print(f"[NEXUS VOICE] \u2705 \u00c1udio sintetizado com sucesso ({out_path.stat().st_size} bytes).")
 
     if play and out_path.exists():
-        print(f"[NEXUS VOICE] \U0001f50a Reproduzindo nos alto-falantes do sistema...")
+        print("[NEXUS VOICE] \U0001f50a Reproduzindo nos alto-falantes do sistema...")
         play_audio_windows(out_path)
 
     return out_path
@@ -121,7 +184,7 @@ def speak_text(
     output_file: str | None = None,
     play: bool = True,
 ) -> Path:
-    """Wrapper síncrono que detecta event loops ativos e executa com segurança."""
+    """Wrapper sincrono que detecta event loops ativos e executa com seguranca."""
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
@@ -129,9 +192,7 @@ def speak_text(
 
     if loop and loop.is_running():
         with concurrent.futures.ThreadPoolExecutor() as pool:
-            return pool.submit(
-                asyncio.run, async_speak_text(text, voice, output_file, play)
-            ).result()
+            return pool.submit(asyncio.run, async_speak_text(text, voice, output_file, play)).result()
     else:
         return asyncio.run(async_speak_text(text, voice, output_file, play))
 
@@ -141,19 +202,17 @@ def main():
     parser.add_argument(
         "text",
         nargs="?",
-        default="Sistema SOTA v7.0 GOLD operando em excelência sob governança de Raphael Vitoi.",
+        default="Sistema SOTA v7.0 GOLD operando em excelencia sob governanca de Raphael Vitoi.",
         help="Texto a sintetizar",
     )
     parser.add_argument(
         "--voice",
         "-v",
         default=DEFAULT_VOICE_PTBR,
-        help=f"Voz (Padrão: {DEFAULT_VOICE_PTBR}, ou Thalita, Aoede)",
+        help=f"Voz (Padrao: {DEFAULT_VOICE_PTBR}, ou Thalita, Aoede)",
     )
-    parser.add_argument("--output", "-o", default=None, help="Arquivo de saída (.mp3/.wav)")
-    parser.add_argument(
-        "--no-play", action="store_true", help="Não reproduzir áudio automaticamente"
-    )
+    parser.add_argument("--output", "-o", default=None, help="Arquivo de saida (.mp3/.wav)")
+    parser.add_argument("--no-play", action="store_true", help="Nao reproduzir audio automaticamente")
 
     args = parser.parse_args()
     speak_text(args.text, voice=args.voice, output_file=args.output, play=not args.no_play)

@@ -69,7 +69,7 @@ export default function SimulatorTour({ onStepAction, onClose }: Readonly<Simula
 
 	useEffect(() => {
 		if (activeStep !== null && visible) {
-			const nextStep = TOUR_STEPS[activeStep];
+			const nextStep = TOUR_STEPS.at(activeStep);
 			if (nextStep) {
 				onStepAction(nextStep);
 			}
@@ -88,7 +88,7 @@ export default function SimulatorTour({ onStepAction, onClose }: Readonly<Simula
 
 	if (!visible || activeStep === null) return null;
 
-	const step = TOUR_STEPS[activeStep];
+	const step = TOUR_STEPS.at(activeStep);
 	if (!step) return null;
 
 	return (
@@ -98,14 +98,15 @@ export default function SimulatorTour({ onStepAction, onClose }: Readonly<Simula
           position: fixed;
           pointer-events: none;
           z-index: 9998;
-          border: 2px solid var(--accent-indigo);
-          box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
-          border-radius: 12px;
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8), 0 0 30px rgba(99, 102, 241, 0.6);
+          border-radius: 12px;
+          border: 2px solid var(--accent-indigo);
         }
         @keyframes pulseIndigo {
-          0% { box-shadow: 0 0 0 0px rgba(99, 102, 241, 0.4); }
-          100% { box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
+          0% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8), 0 0 20px rgba(99, 102, 241, 0.4); }
+          50% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8), 0 0 40px rgba(99, 102, 241, 0.8); }
+          100% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8), 0 0 20px rgba(99, 102, 241, 0.4); }
         }
         .pulse-border {
           animation: pulseIndigo 2s infinite;
@@ -113,59 +114,52 @@ export default function SimulatorTour({ onStepAction, onClose }: Readonly<Simula
       `}</style>
 
 			<div
-				{...{
-					style: {
-						position: 'fixed',
-						bottom: '2.5rem',
-						right: '2.5rem',
-						zIndex: 10000,
-						width: '320px',
-						background: 'rgba(10, 15, 30, 0.95)',
-						backdropFilter: 'blur(25px)',
-						border: '1px solid rgba(99, 102, 241, 0.5)',
-						borderRadius: '20px',
-						padding: '1.75rem',
-						boxShadow: '0 25px 60px rgba(0,0,0,0.9)',
-						animation: 'slideIn 0.5s ease-out',
-					},
+				style={{
+					position: 'fixed',
+					bottom: '2.5rem',
+					right: '2.5rem',
+					zIndex: 10000,
+					width: '320px',
+					background: 'rgba(10, 15, 30, 0.95)',
+					backdropFilter: 'blur(25px)',
+					border: '1px solid rgba(99, 102, 241, 0.5)',
+					borderRadius: '20px',
+					padding: '1.75rem',
+					boxShadow: '0 25px 60px rgba(0,0,0,0.9)',
+					animation: 'slideIn 0.5s ease-out',
 				}}
 			>
 				<div
-					{...{
-						style: {
-							display: 'flex',
-							justifyContent: 'space-between',
-							alignItems: 'center',
-							marginBottom: '1.2rem',
-						},
+					style={{
+						display: 'flex',
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						marginBottom: '1.2rem',
 					}}
 				>
 					<span
-						{...{
-							style: {
-								fontSize: '0.55rem',
-								fontWeight: 900,
-								color: 'var(--accent-indigo-light)',
-								textTransform: 'uppercase',
-								letterSpacing: '0.2em',
-							},
+						style={{
+							fontSize: '0.55rem',
+							fontWeight: 900,
+							color: 'var(--accent-indigo-light)',
+							textTransform: 'uppercase',
+							letterSpacing: '0.2em',
 						}}
 					>
 						Tutorial Ontológico &middot; {activeStep + 1}/{TOUR_STEPS.length}
 					</span>
 					<button
+						type="button"
 						onClick={() => {
 							setVisible(false);
 							onClose();
 						}}
-						{...{
-							style: {
-								background: 'none',
-								border: 'none',
-								color: 'var(--text-darker)',
-								cursor: 'pointer',
-								fontSize: '1.2rem',
-							},
+						style={{
+							background: 'none',
+							border: 'none',
+							color: 'var(--text-darker)',
+							cursor: 'pointer',
+							fontSize: '1.2rem',
 						}}
 					>
 						&times;
@@ -173,47 +167,42 @@ export default function SimulatorTour({ onStepAction, onClose }: Readonly<Simula
 				</div>
 
 				<h4
-					{...{
-						style: {
-							margin: '0 0 0.75rem',
-							fontSize: '1rem',
-							color: 'var(--text-main)',
-							fontWeight: 900,
-						},
+					style={{
+						margin: '0 0 0.75rem',
+						fontSize: '1rem',
+						color: 'var(--text-main)',
+						fontWeight: 900,
 					}}
 				>
 					{step.title}
 				</h4>
 				<p
-					{...{
-						style: {
-							margin: '0 0 1.5rem',
-							fontSize: '0.75rem',
-							color: 'var(--text-muted)',
-							lineHeight: 1.7,
-						},
+					style={{
+						margin: '0 0 1.5rem',
+						fontSize: '0.75rem',
+						color: 'var(--text-muted)',
+						lineHeight: 1.7,
 					}}
 				>
 					{step.content}
 				</p>
 
 				<button
+					type="button"
 					onClick={nextStep}
-					{...{
-						style: {
-							width: '100%',
-							padding: '0.8rem',
-							background:
-								'linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-indigo-dark) 100%)',
-							border: 'none',
-							borderRadius: '10px',
-							color: 'var(--text-main)',
-							fontSize: '0.7rem',
-							fontWeight: 800,
-							textTransform: 'uppercase',
-							letterSpacing: '0.05em',
-							cursor: 'pointer',
-						},
+					style={{
+						width: '100%',
+						padding: '0.8rem',
+						background:
+							'linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-indigo-dark) 100%)',
+						border: 'none',
+						borderRadius: '10px',
+						color: 'var(--text-main)',
+						fontSize: '0.7rem',
+						fontWeight: 800,
+						textTransform: 'uppercase',
+						letterSpacing: '0.05em',
+						cursor: 'pointer',
 					}}
 				>
 					{activeStep === TOUR_STEPS.length - 1 ? 'Iniciar Exploração' : 'Próximo'}

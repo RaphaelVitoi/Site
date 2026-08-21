@@ -51,6 +51,26 @@ export default function EquityCalculator() {
   };
   const insolvency: InsolvencyMetrics | null = safeWasmContext?.insolvencyMatrixData ?? null;
 
+  const LABELS = {
+    title: 'Calculadora Malmuth-Harville',
+    subtitle: 'Aproximação de Equidade por Malha de Combinações',
+    hhParser: 'Parser de Hand History',
+    processStacks: 'Processar Estrutura de Stacks',
+    playerStacks: 'Stacks dos Jogadores',
+    payoutStructure: 'Estrutura de Payouts (%)',
+    totalSum: 'Soma Total:',
+    equitySummary: 'Resumo de Equidade',
+    bubbleFactorVar: 'Variação Bubble Factor',
+    survivalUrgency: 'Urgência de Sobrevivência',
+    high: 'Alta',
+    icmInsight: 'ICM Insight SOTA',
+    player: 'Jogador',
+    stackBb: 'Stack (BB)',
+    propPct: 'Prop. (%)',
+    icmEqPct: 'ICM Eq (%)',
+    delta: 'Delta',
+  } as const;
+
   const deferredPlayers = useDeferredValue(players);
   const deferredPrizes = useDeferredValue(prizes);
 
@@ -106,7 +126,7 @@ export default function EquityCalculator() {
     setPlayers((prev) => [
       ...prev,
       {
-        id: Date.now().toString() + Math.random().toString(36).substring(2),
+        id: globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}-${prev.length + 1}`,
         name: `Jogador ${prev.length + 1}`,
         stack: 20,
       },
@@ -184,20 +204,22 @@ export default function EquityCalculator() {
       <div className="flex justify-between items-start border-b border-white/5 pb-6">
         <div>
           <h3 className="text-[0.75rem] font-black text-white uppercase tracking-[0.2em] m-0 text-glow-indigo transition-all duration-500">
-            Calculadora Malmuth-Harville
+            {LABELS.title}
           </h3>
           <p className="m-0 mt-1.5 text-[0.6rem] text-text-dim font-medium uppercase tracking-wider text-glow-indigo transition-all duration-500">
-            Aproximação de Equidade por Malha de Combinações
+            {LABELS.subtitle}
           </p>
         </div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={() => setShowParser(!showParser)}
             className={`px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all border ${showParser ? 'bg-accent-indigo text-white border-accent-indigo shadow-lg' : 'bg-black/40 border-white/5 text-text-muted hover:bg-white/5 hover:text-white'}`}
           >
             <i className="fa-solid fa-code mr-1.5" /> {showParser ? 'Config Manual' : 'Parser HH'}
           </button>
           <button
+            type="button"
             onClick={handleExportHRC}
             className="px-4 py-2 rounded-xl bg-black/40 border border-white/5 text-text-muted text-[0.6rem] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white transition-all"
           >
@@ -209,6 +231,7 @@ export default function EquityCalculator() {
       <div className="flex flex-wrap gap-3">
         {PRESETS.map((p) => (
           <button
+            type="button"
             key={p.label}
             onClick={() => loadPreset(p)}
             className="px-4 py-2 rounded-xl bg-black/40 border border-white/5 text-text-muted text-[0.65rem] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white hover:border-white/20 transition-all shadow-inner"
@@ -223,7 +246,7 @@ export default function EquityCalculator() {
           <div className="flex items-center gap-3 mb-2">
             <div className="w-1.5 h-1.5 rounded-full bg-accent-indigo shadow-[0_0_8px_var(--accent-indigo)]" />
             <p className="text-[0.65rem] font-black text-text-muted uppercase tracking-[0.2em] m-0">
-              Parser de Hand History
+              {LABELS.hhParser}
             </p>
           </div>
           <textarea
@@ -238,10 +261,11 @@ export default function EquityCalculator() {
             </div>
           )}
           <button
+            type="button"
             onClick={parseHand}
             className="w-full py-4 rounded-2xl bg-accent-indigo text-white text-[0.75rem] font-black uppercase tracking-widest hover:bg-indigo-500 shadow-lg shadow-accent-indigo/20 transition-all active:scale-[0.98]"
           >
-            Processar Estrutura de Stacks
+            {LABELS.processStacks}
           </button>
         </div>
       ) : (
@@ -251,10 +275,11 @@ export default function EquityCalculator() {
               <div className="flex items-center gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-text-darker" />
                 <p className="text-[0.65rem] font-black text-text-muted uppercase tracking-[0.2em] m-0">
-                  Stacks dos Jogadores
+                  {LABELS.playerStacks}
                 </p>
               </div>
               <button
+                type="button"
                 onClick={addPlayer}
                 className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-accent-emerald text-[0.6rem] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
               >
@@ -268,6 +293,7 @@ export default function EquityCalculator() {
                   className={`group flex items-center gap-3 p-3 rounded-2xl border transition-all ${heroId === p.id ? 'bg-accent-indigo/10 border-accent-indigo/30 shadow-[0_0_20px_rgba(99,102,241,0.1)]' : 'bg-black/40 border-white/5 hover:border-white/10'}`}
                 >
                   <button
+                    type="button"
                     onClick={() => setHeroId(p.id)}
                     className={`w-10 h-10 rounded-xl flex items-center justify-center text-[0.6rem] font-black uppercase tracking-tighter border transition-all ${heroId === p.id ? 'bg-accent-indigo text-white border-accent-indigo' : 'bg-black/60 text-text-darker border-white/5 hover:text-text-muted'}`}
                   >
@@ -296,6 +322,7 @@ export default function EquityCalculator() {
                   </div>
                   {players.length > 2 && (
                     <button
+                      type="button"
                       onClick={() => removePlayer(p.id)}
                       aria-label="Remover Jogador"
                       title="Remover Jogador"
@@ -314,10 +341,11 @@ export default function EquityCalculator() {
               <div className="flex items-center gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-text-darker" />
                 <p className="text-[0.65rem] font-black text-text-muted uppercase tracking-[0.2em] m-0">
-                  Estrutura de Payouts (%)
+                  {LABELS.payoutStructure}
                 </p>
               </div>
               <button
+                type="button"
                 onClick={addPrize}
                 className="px-3 py-1.5 rounded-lg bg-accent-amber/10 border border-accent-amber/20 text-accent-amber text-[0.6rem] font-black uppercase tracking-widest hover:bg-accent-amber/20 transition-all flex items-center gap-1.5"
               >
@@ -342,6 +370,7 @@ export default function EquityCalculator() {
                   />
                   {i === prizes.length - 1 && prizes.length > 1 && (
                     <button
+                      type="button"
                       onClick={removePrize}
                       aria-label="Remover Prêmio"
                       title="Remover Prêmio"
@@ -357,7 +386,7 @@ export default function EquityCalculator() {
               className={`mt-4 p-4 rounded-2xl border flex justify-between items-center font-mono tabular-nums ${totalPrizes === 100 ? 'bg-accent-emerald/5 border-accent-emerald/20 text-accent-emerald' : 'bg-accent-amber/5 border-accent-amber/20 text-accent-amber'}`}
             >
               <span className="text-[0.6rem] font-black uppercase tracking-widest">
-                Soma Total:
+                {LABELS.totalSum}
               </span>
               <span className="text-[0.8rem] font-black">{totalPrizes.toFixed(1)}%</span>
             </div>
@@ -370,7 +399,7 @@ export default function EquityCalculator() {
           <div className="flex-1 p-6 bg-black/40 border border-white/5 rounded-3xl shadow-inner space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-[0.6rem] font-black text-text-muted uppercase tracking-widest">
-                Resumo de Equidade
+                {LABELS.equitySummary}
               </span>
               {isCalculatingICM && (
                 <div className="w-2 h-2 rounded-full bg-accent-indigo animate-ping" />
@@ -379,7 +408,7 @@ export default function EquityCalculator() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-black/60 p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
                 <span className="text-[0.5rem] text-text-darker uppercase font-black tracking-widest">
-                  Variação Bubble Factor
+                  {LABELS.bubbleFactorVar}
                 </span>
                 <div
                   className={`text-xl font-black font-mono tracking-tighter tabular-nums ${bfRangeColor}`}
@@ -389,10 +418,10 @@ export default function EquityCalculator() {
               </div>
               <div className="bg-black/60 p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
                 <span className="text-[0.5rem] text-text-darker uppercase font-black tracking-widest">
-                  Urgência de Sobrevivência
+                  {LABELS.survivalUrgency}
                 </span>
                 <div className="text-xl font-black font-mono tracking-tighter text-white tabular-nums">
-                  Alta
+                  {LABELS.high}
                 </div>
               </div>
             </div>
@@ -403,7 +432,7 @@ export default function EquityCalculator() {
               <i className="fa-solid fa-lightbulb text-accent-indigo-light text-lg mt-1" />
               <p className="text-[0.7rem] text-text-muted leading-relaxed m-0 font-medium">
                 <strong className="text-white uppercase tracking-widest text-[0.6rem] block mb-2">
-                  ICM Insight SOTA
+                  {LABELS.icmInsight}
                 </strong>
                 {icmInsight}
               </p>
@@ -416,19 +445,19 @@ export default function EquityCalculator() {
             <thead>
               <tr className="border-b border-white/5">
                 <th className="px-4 py-4 text-left text-[0.6rem] font-black text-text-dim uppercase tracking-widest">
-                  Jogador
+                  {LABELS.player}
                 </th>
                 <th className="px-4 py-4 text-right text-[0.6rem] font-black text-text-dim uppercase tracking-widest w-24">
-                  Stack (BB)
+                  {LABELS.stackBb}
                 </th>
                 <th className="px-4 py-4 text-right text-[0.6rem] font-black text-text-dim uppercase tracking-widest w-24">
-                  Prop. (%)
+                  {LABELS.propPct}
                 </th>
                 <th className="px-4 py-4 text-right text-[0.6rem] font-black text-text-dim uppercase tracking-widest w-24">
-                  ICM Eq (%)
+                  {LABELS.icmEqPct}
                 </th>
                 <th className="px-4 py-4 text-right text-[0.6rem] font-black text-text-dim uppercase tracking-widest w-24">
-                  Delta
+                  {LABELS.delta}
                 </th>
               </tr>
             </thead>

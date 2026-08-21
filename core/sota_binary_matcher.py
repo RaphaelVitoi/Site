@@ -7,13 +7,13 @@ from typing import List, Optional, Tuple
 
 
 def sort_key(s: str) -> Tuple[int, str]:
-    """Chave canônica de ordenação: Comprimento ascendente, depois ordem alfabética."""
+    """Chave canonica de ordenacao: Comprimento ascendente, depois ordem alfabetica."""
     return (len(s), s)
 
 
 def binary_search_length_lex(haystack: List[str], needle: str, high: Optional[int] = None) -> int:
     """
-    Executa busca binária de alta precisão baseada em comprimento e ordem lexicográfica.
+    Executa busca binaria de alta precisao baseada em comprimento e ordem lexicografica.
     """
     low = 0
     mid = 0
@@ -40,7 +40,7 @@ def binary_search_length_lex(haystack: List[str], needle: str, high: Optional[in
 
 def compute_domain_hierarchy(hostname: str) -> List[str]:
     """
-    Decompõe um hostname hierarquicamente em sufixos e coringas.
+    Decompoe um hostname hierarquicamente em sufixos e coringas.
     Ex: 'app.sub.gemini.google.com' -> ['app.sub.gemini.google.com', 'sub.gemini.google.com', 'gemini.google.com', 'google.com', 'com', '*']
     """
     clean_hn = hostname.split(":")[0] if ":" in hostname else hostname
@@ -61,11 +61,12 @@ def compute_domain_hierarchy(hostname: str) -> List[str]:
 
 
 if __name__ == "__main__":
-    test_domains = ["api.gemini.google.com", "gemini.google.com", "google.com", "com", "*"]
+    TARGET_DOMAIN = "gemini.google.com"
+    test_domains = ["api.gemini.google.com", TARGET_DOMAIN, "google.com", "com", "*"]
     sorted_domains = sorted(test_domains, key=sort_key)
 
-    idx = binary_search_length_lex(sorted_domains, "gemini.google.com")
+    idx = binary_search_length_lex(sorted_domains, TARGET_DOMAIN)
     print(f"Lista Ordenada: {sorted_domains}")
-    print(f"Index de 'gemini.google.com': {idx} (Item encontrado: {sorted_domains[idx]})")
-    assert idx >= 0 and sorted_domains[idx] == "gemini.google.com"
+    print(f"Index de '{TARGET_DOMAIN}': {idx} (Item encontrado: {sorted_domains[idx]})")
+    assert idx >= 0 and sorted_domains[idx] == TARGET_DOMAIN
     print("SOTA Binary Engine Python: 100% Validado.")

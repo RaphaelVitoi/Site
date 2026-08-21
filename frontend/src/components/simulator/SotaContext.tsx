@@ -2,7 +2,7 @@
 import type { PerspectivaResult, PerspectivaInput } from '@/lib/perspectiva';
 import { createContext } from 'react';
 
-import type { HeroPosition } from './engine/types';
+import type { HeroPosition } from './solver/types';
 
 // Contexto Estático/Dados Base (Muda com as interações de spot)
 export interface ActionMetric {

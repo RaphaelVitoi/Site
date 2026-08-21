@@ -17,10 +17,10 @@ APP_JSON = "application/json"
 
 def _normalize_gemini_model(model: str) -> str:
     """Helper SOTA: Normaliza modelos legados e experimentais Gemini para a linha estavel."""
-    model_l = str(model).lower()
+    model_l = model.lower()
 
-    # Suporte nativo para a serie 3.x (Gemini 3.7 Flash / 3.1 Pro)
-    if any(v in model_l for v in ("3.7", "3.1", "3.0")):
+    # Suporte nativo para a serie 3.x (Gemini 3.7 Flash / 3.6 Flash / 3.5 Flash-Lite / 3.1 Flash-Lite)
+    if any(v in model_l for v in ("3.7", "3.6", "3.5", "3.1", "3.0")):
         return model
 
     # Suporte nativo para a serie 2.x
@@ -28,7 +28,7 @@ def _normalize_gemini_model(model: str) -> str:
         return model
 
     if "1.0" in model_l:
-        return "gemini-3.7-flash"
+        return "gemini-3.5-flash-lite"
 
     return model
 

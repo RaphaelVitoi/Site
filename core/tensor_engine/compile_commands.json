@@ -1,0 +1,68 @@
+[
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -Dquantum_tensor_engine_EXPORTS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /bigobj /MP /GS- /Os /O2 /fp:fast /arch:AVX2 /FoCMakeFiles\\quantum_tensor_engine.dir\\src\\quantum_kernel.cpp.obj /FdCMakeFiles\\quantum_tensor_engine.dir\\ /FS -c C:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\src\\quantum_kernel.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/core/tensor_engine/src/quantum_kernel.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/quantum_tensor_engine.dir/src/quantum_kernel.cpp.obj"
+},
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DNB_COMPACT_ASSERTIONS -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\ext\\robin_map\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /GS- /FoCMakeFiles\\nanobind-static.dir\\C_\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_internals.cpp.obj /FdCMakeFiles\\nanobind-static.dir\\nanobind-static.pdb /FS -c C:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_internals.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_internals.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/nanobind-static.dir/C_/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_internals.cpp.obj"
+},
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DNB_COMPACT_ASSERTIONS -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\ext\\robin_map\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /GS- /FoCMakeFiles\\nanobind-static.dir\\C_\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_func.cpp.obj /FdCMakeFiles\\nanobind-static.dir\\nanobind-static.pdb /FS -c C:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_func.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_func.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/nanobind-static.dir/C_/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_func.cpp.obj"
+},
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DNB_COMPACT_ASSERTIONS -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\ext\\robin_map\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /GS- /FoCMakeFiles\\nanobind-static.dir\\C_\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_type.cpp.obj /FdCMakeFiles\\nanobind-static.dir\\nanobind-static.pdb /FS -c C:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_type.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_type.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/nanobind-static.dir/C_/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_type.cpp.obj"
+},
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DNB_COMPACT_ASSERTIONS -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\ext\\robin_map\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /GS- /FoCMakeFiles\\nanobind-static.dir\\C_\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_enum.cpp.obj /FdCMakeFiles\\nanobind-static.dir\\nanobind-static.pdb /FS -c C:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_enum.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_enum.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/nanobind-static.dir/C_/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_enum.cpp.obj"
+},
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DNB_COMPACT_ASSERTIONS -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\ext\\robin_map\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /GS- /FoCMakeFiles\\nanobind-static.dir\\C_\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_ndarray.cpp.obj /FdCMakeFiles\\nanobind-static.dir\\nanobind-static.pdb /FS -c C:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_ndarray.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_ndarray.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/nanobind-static.dir/C_/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_ndarray.cpp.obj"
+},
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DNB_COMPACT_ASSERTIONS -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\ext\\robin_map\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /GS- /FoCMakeFiles\\nanobind-static.dir\\C_\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_static_property.cpp.obj /FdCMakeFiles\\nanobind-static.dir\\nanobind-static.pdb /FS -c C:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\nb_static_property.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_static_property.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/nanobind-static.dir/C_/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/nb_static_property.cpp.obj"
+},
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DNB_COMPACT_ASSERTIONS -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\ext\\robin_map\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /GS- /FoCMakeFiles\\nanobind-static.dir\\C_\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\common.cpp.obj /FdCMakeFiles\\nanobind-static.dir\\nanobind-static.pdb /FS -c C:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\common.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/common.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/nanobind-static.dir/C_/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/common.cpp.obj"
+},
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DNB_COMPACT_ASSERTIONS -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\ext\\robin_map\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /GS- /FoCMakeFiles\\nanobind-static.dir\\C_\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\error.cpp.obj /FdCMakeFiles\\nanobind-static.dir\\nanobind-static.pdb /FS -c C:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\error.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/error.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/nanobind-static.dir/C_/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/error.cpp.obj"
+},
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DNB_COMPACT_ASSERTIONS -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\ext\\robin_map\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /GS- /FoCMakeFiles\\nanobind-static.dir\\C_\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\trampoline.cpp.obj /FdCMakeFiles\\nanobind-static.dir\\nanobind-static.pdb /FS -c C:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\trampoline.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/trampoline.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/nanobind-static.dir/C_/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/trampoline.cpp.obj"
+},
+{
+  "directory": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build",
+  "command": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\cl.exe\"  /nologo /TP -DNB_COMPACT_ASSERTIONS -DPy_NO_LINK_LIB -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\rapha\\.gemini\\Site\\core\\tensor_engine\\..\\vendor\\eigen -IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\include -external:IC:\\Python314\\Include -external:IC:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\ext\\robin_map\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /GS- /FoCMakeFiles\\nanobind-static.dir\\C_\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\implicit.cpp.obj /FdCMakeFiles\\nanobind-static.dir\\nanobind-static.pdb /FS -c C:\\Users\\rapha\\.gemini\\Site\\.venv\\Lib\\site-packages\\nanobind\\src\\implicit.cpp",
+  "file": "C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/implicit.cpp",
+  "output": "C:/Users/rapha/.gemini/Site/core/tensor_engine/build/CMakeFiles/nanobind-static.dir/C_/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/src/implicit.cpp.obj"
+}
+]

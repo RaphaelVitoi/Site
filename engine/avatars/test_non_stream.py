@@ -1,16 +1,20 @@
 import json
-import os
-import sys
 import time
 import urllib.error
 import urllib.request
 
-sys.path.append(os.path.dirname(__file__))
-from run_avatar import (  # noqa: E402 # pylint: disable=wrong-import-position
-    PORT_LLAMA,
-    ensure_server_for_persona,
-    kill_process_on_port,
-)
+try:
+    from engine.avatars.run_avatar import (
+        PORT_LLAMA,
+        ensure_server_for_persona,
+        kill_process_on_port,
+    )
+except ImportError:
+    from run_avatar import (  # type: ignore # pylint: disable=wrong-import-position
+        PORT_LLAMA,
+        ensure_server_for_persona,
+        kill_process_on_port,
+    )
 
 
 def test():

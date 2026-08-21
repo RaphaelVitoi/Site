@@ -3,7 +3,7 @@
 import init, {
 	solve_icm_distortion_v2,
 	solve_insolvency_matrix_binary,
-} from '../../../lib/engine/vitoi_equity_engine';
+} from '../../../lib/engine/generated/vitoi_equity_engine';
 
 declare const self: DedicatedWorkerGlobalScope;
 

@@ -77,11 +77,11 @@ def test_chico_capabilities(avatar_config):
 def test_maverick_capabilities_and_math(avatar_config):
     """
     PROVA DE CAPACIDADE EXCLUSIVA: Maverick (GTO, Teoria dos Jogos & Calculo de Equidade).
-    Valida que o Maverick usa o modelo gemma4:26b (local, otimizado para tarefas especificas de poker)
+    Valida que o Maverick usa o modelo gemma4:12b (local multimodal, otimizado para tarefas especificas de poker)
     e que possui acesso exclusivo aos arquivos de calculo matematico (math_sota.py, math_rio.py, bayesian_range.py).
     """
     maverick = avatar_config["personas"]["maverick"]
-    assert maverick["ollama_model"] == "gemma4:26b"
+    assert maverick["ollama_model"] == "gemma4:12b"
 
     context = maverick["context_files"]
     assert "engine/math_sota.py" in context
@@ -114,11 +114,11 @@ def test_historian_capabilities(avatar_config):
 def test_gemma4_capabilities(avatar_config):
     """
     PROVA DE CAPACIDADE EXCLUSIVA: Gemma4 (Sentinela de Inferencia Local e Baixa Latencia).
-    Valida que Gemma4 usa o modelo local gemma4:latest (otimizado para processamento em hardware local)
+    Valida que Gemma4 usa o modelo local gemma4:12b (otimizado para processamento em hardware local)
     e possui o prompt focado em calibracao e execucao de borda.
     """
     gemma4 = avatar_config["personas"]["gemma4"]
-    assert gemma4["ollama_model"] == "gemma4:latest"
+    assert gemma4["ollama_model"] == "gemma4:12b"
 
     prompt = gemma4["system_prompt"].lower()
     assert "gemma4" in prompt

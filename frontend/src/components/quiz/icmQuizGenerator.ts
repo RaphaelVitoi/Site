@@ -178,8 +178,10 @@ export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 	if (state.predictiveProfile) {
 		const profile = state.predictiveProfile;
 		questions.sort((a, b) => {
-			const weightA = profile[a.category ?? ''] ?? 0.5;
-			const weightB = profile[b.category ?? ''] ?? 0.5;
+			const catA = a.category ?? '';
+			const catB = b.category ?? '';
+			const weightA = Object.hasOwn(profile, catA) ? Number(Reflect.get(profile, catA)) : 0.5;
+			const weightB = Object.hasOwn(profile, catB) ? Number(Reflect.get(profile, catB)) : 0.5;
 			// Pesos maiores indicam deficiência probabilística detectada pela Random Forest
 			return weightB - weightA;
 		});

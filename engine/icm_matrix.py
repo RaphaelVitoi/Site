@@ -15,8 +15,39 @@ Formalismo:
 
 from __future__ import annotations
 
-import itertools
 from typing import Any
+
+
+def _compute_branch(
+    current_pos: int,
+    used_players: list[int],
+    current_prob: float,
+    remaining_chips: float,
+    stacks: list[float],
+    n_payouts: int,
+    prob_matrix: list[list[float]],
+) -> None:
+    if current_pos >= n_payouts or remaining_chips <= 0:
+        return
+
+    for p_idx, stack in enumerate(stacks):
+        if p_idx in used_players or stack <= 0:
+            continue
+
+        prob_this_pos = stack / remaining_chips
+        branch_prob = current_prob * prob_this_pos
+        prob_matrix[p_idx][current_pos] += branch_prob
+
+        if current_pos + 1 < n_payouts and remaining_chips - stack > 0:
+            _compute_branch(
+                current_pos + 1,
+                used_players + [p_idx],
+                branch_prob,
+                remaining_chips - stack,
+                stacks,
+                n_payouts,
+                prob_matrix,
+            )
 
 
 def calculate_malmuth_harville_icm(
@@ -27,7 +58,7 @@ def calculate_malmuth_harville_icm(
 
     Args:
         stacks: Lista com o stack de cada jogador em fichas.
-        payouts: Lista com os payouts ordenados do 1º ao M-ésimo colocado.
+        payouts: Lista com os payouts ordenados do 1o ao M-esimo colocado.
 
     Returns:
         Lista com o $EV esperado de cada jogador no torneio.
@@ -40,51 +71,35 @@ def calculate_malmuth_harville_icm(
     if total_chips <= 0:
         return [0.0] * n_players
 
-    # Ajusta payouts caso haja mais prêmios que jogadores
+    # Ajusta payouts caso haja mais premios que jogadores
     n_payouts = min(len(payouts), n_players)
     active_payouts = payouts[:n_payouts]
 
     # Probabilidades de cada jogador i terminar na posicao pos (0-indexed)
     prob_matrix = [[0.0 for _ in range(n_payouts)] for _ in range(n_players)]
 
-    # 1º Lugar: probabilidade proporcional direta do stack
+    # 1o Lugar: probabilidade proporcional direta do stack
     for i in range(n_players):
         prob_matrix[i][0] = stacks[i] / total_chips
 
-    # 2º ao M-ésimo lugar via permutação recursiva exata
-    # Para N <= 9 e M <= 9, a recursão com pruning é sub-milissegundo
-    def compute_positions(current_pos: int, used_players: list[int], current_prob: float, remaining_chips: float):
-        if current_pos >= n_payouts:
-            return
-
-        for p_idx in range(n_players):
-            if p_idx in used_players or stacks[p_idx] <= 0:
-                continue
-
-            prob_this_pos = stacks[p_idx] / remaining_chips
-            branch_prob = current_prob * prob_this_pos
-            prob_matrix[p_idx][current_pos] += branch_prob
-
-            if current_pos + 1 < n_payouts and remaining_chips - stacks[p_idx] > 0:
-                compute_positions(
-                    current_pos + 1,
-                    used_players + [p_idx],
-                    branch_prob,
-                    remaining_chips - stacks[p_idx],
-                )
-
-    for first_player in range(n_players):
-        if stacks[first_player] > 0 and n_payouts > 1:
-            rem_chips = total_chips - stacks[first_player]
-            if rem_chips > 0:
-                compute_positions(1, [first_player], prob_matrix[first_player][0], rem_chips)
+    # 2o ao M-esimo lugar via permutacao recursiva exata
+    if n_payouts > 1:
+        for first_player, stack in enumerate(stacks):
+            if stack > 0:
+                rem_chips = total_chips - stack
+                if rem_chips > 0:
+                    _compute_branch(
+                        1,
+                        [first_player],
+                        prob_matrix[first_player][0],
+                        rem_chips,
+                        stacks,
+                        n_payouts,
+                        prob_matrix,
+                    )
 
     # Multiplica pela estrutura de payouts
-    ev_vector: list[float] = [0.0] * n_players
-    for i in range(n_players):
-        ev_vector[i] = sum(prob_matrix[i][k] * active_payouts[k] for k in range(n_payouts))
-
-    return ev_vector
+    return [sum(prob_matrix[i][k] * active_payouts[k] for k in range(n_payouts)) for i in range(n_players)]
 
 
 def compute_bubble_factor_matrix(
@@ -96,15 +111,15 @@ def compute_bubble_factor_matrix(
 
     Args:
         stacks: Stacks dos jogadores em fichas.
-        payouts: Estrutura de premiação.
+        payouts: Estrutura de premiacao.
         player_names: Nomes/labels opcionais dos jogadores.
 
     Returns:
-        Dicionário contendo as matrizes estruturadas e métricas táticas.
+        Dicionario contendo as matrizes estruturadas e metricas taticas.
     """
     n = len(stacks)
     if player_names is None:
-        player_names = [f"P{i+1}" for i in range(n)]
+        player_names = [f"P{i + 1}" for i in range(n)]
 
     base_ev = calculate_malmuth_harville_icm(stacks, payouts)
 
@@ -121,7 +136,7 @@ def compute_bubble_factor_matrix(
 
             eff_stack = min(stacks[i], stacks[j])
 
-            # Cenário 1: Jogador i ganha de j (+eff_stack)
+            # Cenario 1: Jogador i ganha de j (+eff_stack)
             win_stacks = list(stacks)
             win_stacks[i] += eff_stack
             win_stacks[j] -= eff_stack
@@ -129,7 +144,7 @@ def compute_bubble_factor_matrix(
             delta_win = max(1e-6, ev_win - base_ev[i])
             delta_win_matrix[i][j] = round(delta_win, 2)
 
-            # Cenário 2: Jogador i perde para j (-eff_stack)
+            # Cenario 2: Jogador i perde para j (-eff_stack)
             lose_stacks = list(stacks)
             lose_stacks[i] -= eff_stack
             lose_stacks[j] += eff_stack

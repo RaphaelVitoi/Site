@@ -16,6 +16,12 @@ from database.queue_manager import QueueManager
 
 logger = logging.getLogger(__name__)
 
+DISPATCHER_AGENT = "@dispatcher"
+BIBLIOTECARIO_AGENT = "@bibliotecario"
+SUPPORTED_FILE_EXTENSIONS: frozenset[str] = frozenset(
+    {".md", ".py", ".ps1", ".js", ".ts", ".tsx", ".json", ".css", ".html", ".txt"}
+)
+
 RAG_ENGINE = None
 
 
@@ -192,16 +198,15 @@ def _process_folder_mention(folder: str, cwd_resolved: Path, paths: list[Path]) 
 
 
 def _extract_paths_to_check(description: str) -> list[Path]:
-    file_mentions = re.findall(
-        r"[\w\./\\-]+\.(?:md|py|ps1|js|ts|tsx|json|css|html|txt)",
-        description,
-        re.IGNORECASE,
-    )
-    folder_mentions = re.findall(r"docs[\\/]tasks[\\/][\w-]+", description, re.IGNORECASE)
     paths: list[Path] = []
     cwd_resolved = Path.cwd().resolve()
-    for p_str in file_mentions:
-        _process_file_mention(p_str, cwd_resolved, paths)
+    for word in re.split(r"[\s\"'`()\[\]<>:,;]+", description):
+        if not word:
+            continue
+        p = Path(word)
+        if p.suffix.lower() in SUPPORTED_FILE_EXTENSIONS:
+            _process_file_mention(word, cwd_resolved, paths)
+    folder_mentions = re.findall(r"docs[\\/]tasks[\\/][\w-]+", description, re.IGNORECASE)
     for folder in folder_mentions:
         _process_folder_mention(folder, cwd_resolved, paths)
     return paths
@@ -245,18 +250,6 @@ async def _process_referenced_paths(
     task_docs: str,
     successfully_read: list,
 ) -> str:
-    valid_suffixes = {
-        ".md",
-        ".py",
-        ".ps1",
-        ".js",
-        ".ts",
-        ".tsx",
-        ".json",
-        ".css",
-        ".html",
-        ".txt",
-    }
     cwd_resolved = Path.cwd().resolve()
     for p in paths_to_check:
         if not _is_safe_path(p, cwd_resolved):
@@ -267,7 +260,7 @@ async def _process_referenced_paths(
             continue
         if slug and p_resolved.parent == Path(f"docs/tasks/{slug}").resolve():
             continue
-        if p_resolved.suffix.lower() not in valid_suffixes:
+        if p_resolved.suffix.lower() not in SUPPORTED_FILE_EXTENSIONS:
             continue
         task_docs = await _read_and_append_doc(p_resolved, "ARTEFATO REFERENCIADO", task_docs, successfully_read)
     return task_docs
@@ -276,7 +269,8 @@ async def _process_referenced_paths(
 async def _inject_task_docs_engine(task: Task) -> tuple[str, list[str]]:
     task_docs = ""
     successfully_read_task_files = []
-    slug = task.metadata.get("slug") if task.metadata else None
+    raw_slug = task.metadata.get("slug") if task.metadata else None
+    slug = str(raw_slug) if raw_slug is not None else None
 
     if slug:
         task_docs = await _process_slug_docs(slug, task_docs, successfully_read_task_files)
@@ -336,7 +330,7 @@ def _build_user_prompt(
         "Execute esta tarefa embasado nos materiais de fundacao acima, no contexto do projeto e em sua memoria."
     )
 
-    if task.agent not in ["@dispatcher", "@bibliotecario"]:
+    if task.agent not in [DISPATCHER_AGENT, BIBLIOTECARIO_AGENT]:
         user_prompt += "\n\n[AUTORIZACAO SUPREMA - GOD MODE]\nVoce possui ACESSO LIVRE ao sistema operacional do usuario.\n1. Para MATERIALIZAR ou EDITAR arquivos, use EXATAMENTE o formato:\nArquivo: caminho/do/arquivo.ext\n```linguagem\n[conteudo completo do arquivo]\n```\n2. Para EXECUTAR comandos de terminal (ex: npm install, python, git, robocopy), use o formato:\nComando: `seu comando aqui`\n\nVoce tem soberania para agir, instalar dependencias e forjar a realidade. ATENCAO: Ao editar arquivos, envie sempre o conteudo integral para sobrescrever adequadamente."
         user_prompt += f"\n\n[DIRETRIZ DE AUTOREFLEXAO E MEMORIA] Voce DEVE atualizar seu arquivo de inteligencia acumulada usando o God Mode (Arquivo: .cerebro/agent-memory/{agent_clean}/MEMORY.md). Adicione novas descobertas, avalie a Sinergia da sua interacao com a Pipeline, e faca Propostas Democraticas de melhoria para o ecossistema. A Autopoiese exige que voce expanda a mente coletiva."
 
@@ -365,7 +359,7 @@ async def process_agent_task(task: Task, manager: QueueManager):
 
     # SOTA: Injecao de Structured Output Absoluto para Grafo Aciclico (DAG)
     response_format = None
-    if task.agent == "@dispatcher":
+    if task.agent == DISPATCHER_AGENT:
         response_format = {
             "type": "object",
             "properties": {
@@ -397,5 +391,5 @@ async def process_agent_task(task: Task, manager: QueueManager):
     # Aplicacao do God Mode (Soberania de Acao)
     await apply_god_mode(response_text, manager)
 
-    if task.agent == "@dispatcher":
+    if task.agent == DISPATCHER_AGENT:
         await _process_dispatcher_result(task, manager, response_text)
