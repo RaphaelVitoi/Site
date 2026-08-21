@@ -281,12 +281,6 @@ class UniversalArbitrator:
                 if dep_id in task_id_to_node_id and task_id in task_id_to_node_id:
                     mermaid_links.append(f"{task_id_to_node_id[dep_id]} --> {task_id_to_node_id[task_id]}")
 
-        graph_definition = "graph TD\n"
-        # Add nodes
-        for node_def in mermaid_nodes.values():
-            graph_definition += f"    {node_def}\n"
-        # Add links and styles
-        for link in mermaid_links:
-            graph_definition += f"    {link}\n"
-
-        return graph_definition
+        node_lines = "".join(f"    {node_def}\n" for node_def in mermaid_nodes.values())
+        link_lines = "".join(f"    {link}\n" for link in mermaid_links)
+        return f"graph TD\n{node_lines}{link_lines}"

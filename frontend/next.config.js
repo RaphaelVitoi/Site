@@ -1,18 +1,15 @@
-const path = require('path');
+const path = require('node:path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true, // SOTA: Native Gzip/Brotli compression in production and edge
-  devIndicators: {
-    appIsrStatus: false,
-    buildActivity: true,
-    buildActivityPosition: 'bottom-right',
-  },
+  devIndicators: false,
   turbopack: {
     root: path.resolve(__dirname, '..'),
   },
+  agentRules: false,
   async headers() {
     return [
       {

@@ -134,7 +134,7 @@ async def _forge_files(text: str, effective_mode: str, agent_name: str) -> list[
 
     modified_files = []
     # SOTA SEC: Regex deterministico sem backtracking catastrofico (ReDoS-safe)
-    pattern = r"(?:Arquivo|File|Caminho|Path):[ \t]*`?([^\r\n`]+)`?[ \t]*\r?\n+```[a-zA-Z0-9_-]*\r?\n(.*?)```"
+    pattern = r"(?:Arquivo|File|Caminho|Path):[ \t]*`?([^`\r\n\t ]+)`?[ \t]*\r?\n```[a-z0-9_\-]*\r?\n(.*?)```"
 
     # SOTA SEC: Allowlist de caracteres validos para caminhos de arquivo.
     # Bloqueia injecao de whitespace, null bytes, unicode de controle e outros vetores.

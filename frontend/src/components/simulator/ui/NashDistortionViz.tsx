@@ -1,4 +1,4 @@
-import type { IcmDistortionResult } from '../engine/types';
+import type { IcmDistortionResult } from '../solver/types';
 
 interface NashDistortionVizProps {
 	streetName: string;
@@ -14,10 +14,6 @@ export const NashDistortionViz = ({ streetName, nashData }: Readonly<NashDistort
 	const fPct = foldValue.toFixed(1);
 	const cPct = callValue.toFixed(1);
 	const rPct = raiseValue.toFixed(1);
-
-	const foldStyle = { style: { width: `${fPct}%` } };
-	const callStyle = { style: { width: `${cPct}%` } };
-	const raiseStyle = { style: { width: `${rPct}%` } };
 
 	return (
 		<div className="flex flex-col gap-4 p-6 bg-black/60 rounded-3xl border border-white/5 shadow-2xl transition-all duration-500 hover:bg-black/80 hover:border-white/10 group">
@@ -36,21 +32,21 @@ export const NashDistortionViz = ({ streetName, nashData }: Readonly<NashDistort
 			<div className="flex w-full h-4 rounded-xl overflow-hidden opacity-95 shadow-inner bg-white/5 border border-white/5">
 				{foldValue > 0 && (
 					<div
-						{...foldStyle}
+						style={{ width: `${fPct}%` }}
 						className="bg-accent-danger transition-[width] duration-700 ease-out shadow-[0_0_15px_rgba(244,63,94,0.4)]"
 						title={`Fold: ${fPct}%`}
 					/>
 				)}
 				{callValue > 0 && (
 					<div
-						{...callStyle}
+						style={{ width: `${cPct}%` }}
 						className="bg-accent-emerald transition-[width] duration-700 ease-out shadow-[0_0_15px_rgba(16,185,129,0.4)]"
 						title={`Call: ${cPct}%`}
 					/>
 				)}
 				{raiseValue > 0 && (
 					<div
-						{...raiseStyle}
+						style={{ width: `${rPct}%` }}
 						className="bg-accent-indigo transition-[width] duration-700 ease-out shadow-[0_0_15px_rgba(99,102,241,0.4)]"
 						title={`Raise: ${rPct}%`}
 					/>

@@ -45,18 +45,24 @@ export default function BayesianBeliefPanel({
 
 	const handleApplyMock = (type: string) => {
 		const likelihoods: Record<string, number> = {};
-		// Mocking likelihoods for demonstration
-		for (const hand in currentBelief) {
+		for (const [hand] of Object.entries(currentBelief)) {
 			const isPair = hand.length === 2;
 			const isBroadcard = hand.includes('A') || hand.includes('K') || hand.includes('Q');
 
+			let val: number;
 			if (type === 'polarized') {
-				likelihoods[hand] = isPair || isBroadcard ? 0.8 : 0.2;
+				val = isPair || isBroadcard ? 0.8 : 0.2;
 			} else if (type === 'condensed') {
-				likelihoods[hand] = !isPair && isBroadcard ? 0.9 : 0.1;
+				val = !isPair && isBroadcard ? 0.9 : 0.1;
 			} else {
-				likelihoods[hand] = Math.random();
+				val = 0.5;
 			}
+			Object.defineProperty(likelihoods, hand, {
+				value: val,
+				writable: true,
+				enumerable: true,
+				configurable: true,
+			});
 		}
 		applyAction(likelihoods);
 	};
@@ -79,6 +85,7 @@ export default function BayesianBeliefPanel({
 				<div className="flex gap-4">
 					{history.length > 0 && (
 						<button
+							type="button"
 							onClick={undoAction}
 							className="btn-secondary px-4 py-2 text-[0.6rem] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
 						>
@@ -86,6 +93,7 @@ export default function BayesianBeliefPanel({
 						</button>
 					)}
 					<button
+						type="button"
 						onClick={resetBelief}
 						className="btn-secondary px-4 py-2 text-[0.6rem] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 text-accent-danger border-accent-danger/20"
 					>
@@ -114,12 +122,13 @@ export default function BayesianBeliefPanel({
 										maxBelief,
 									);
 									const bgClass = heatmapColors(intensity);
+									const handVal = Object.getOwnPropertyDescriptor(currentBelief, hand)?.value ?? 0;
 
 									return (
 										<div
 											key={hand}
 											className={`aspect-square flex flex-col items-center justify-center text-[0.55rem] font-black font-mono transition-all duration-500 border ${bgClass}`}
-											title={`${hand} - Belief: ${((currentBelief[hand] || 0) * 100).toFixed(4)}%`}
+											title={`${hand} - Belief: ${(handVal * 100).toFixed(4)}%`}
 										>
 											<span
 												className={
@@ -149,6 +158,7 @@ export default function BayesianBeliefPanel({
 						<div className="flex flex-col gap-4">
 							{mockActions.map((action) => (
 								<button
+									type="button"
 									key={action.name}
 									onClick={() => handleApplyMock(action.likelihood)}
 									className="w-full text-left p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-accent-indigo/40 hover:bg-accent-indigo/5 transition-all group"

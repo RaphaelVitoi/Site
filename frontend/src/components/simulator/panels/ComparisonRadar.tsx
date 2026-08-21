@@ -18,7 +18,7 @@ import {
 	ResponsiveContainer,
 	Tooltip,
 } from 'recharts';
-import type { IcmDistortionResult, Scenario } from '../engine/types';
+import type { IcmDistortionResult, Scenario } from '../solver/types';
 import { useRadarCalculations } from '../hooks/useRadarCalculations';
 import { RadarTooltip } from '../ui/RadarTooltip';
 import { SotaTooltip } from '../ui/SotaTooltip';
@@ -73,6 +73,7 @@ export default function ComparisonRadar({
 						theme="indigo"
 					>
 						<button
+							type="button"
 							title="Ajuda do Radar Topológico"
 							aria-label="Ajuda do Radar Topológico"
 							className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-text-darker hover:text-accent-indigo transition-all cursor-help shadow-lg active:scale-95"
@@ -119,6 +120,7 @@ export default function ComparisonRadar({
 					</div>
 					{compareId && (
 						<button
+							type="button"
 							title="Limpar Comparação"
 							aria-label="Limpar Comparação"
 							onClick={handleClear}

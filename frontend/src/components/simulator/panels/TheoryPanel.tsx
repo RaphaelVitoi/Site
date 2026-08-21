@@ -7,7 +7,7 @@
  * AESTHETIC: SOTA Gold Standard (Depth Layers, High-Contrast Typography, Glassmorphism).
  */
 
-import type { Scenario, SprStage } from '@/components/simulator/engine/types';
+import type { Scenario, SprStage } from '@/components/simulator/solver/types';
 import { BubbleFactorDiagnostic } from '@/components/simulator/ui/BubbleFactorDiagnostic';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 import { use, useMemo } from 'react';
@@ -23,6 +23,12 @@ interface TheoryPanelProps {
 	effectiveIpRp?: number;
 	effectiveOopRp?: number;
 }
+
+const LABELS = {
+	potBb: 'Pote (BB)',
+	blockerEffect: 'Blocker Effect',
+	gravitationalWeight: 'Peso Gravitacional',
+} as const;
 
 export default function TheoryPanel({
 	scenario,
@@ -54,14 +60,14 @@ export default function TheoryPanel({
 	const { streamedText, isStreaming, error, generateAnalysis } = useGemmaStream();
 
 	const handleGenerateTheory = () => {
-		const prompt = `> SYSTEM: Atue como Mentor SOTA de Teoria dos Jogos e ICM. Use formataÃ§Ã£o avanÃ§ada (Markdown/KaTeX).\n> DATA: Pot: ${preflopPot.toFixed(1)}bb | Stack Efetivo: ${effStack.toFixed(1)}bb | IP RP: ${effectiveIpRp.toFixed(1)}% | OOP RP: ${effectiveOopRp.toFixed(1)}%\n> TASK: ForneÃ§a uma anÃ¡lise teÃ³rica visceral (mÃ¡x 250 palavras) focada na assimetria de ranges e no impacto desse Risk Premium especÃ­fico na Ã¡rvore de decisÃ£o.`;
+		const prompt = `> SYSTEM: Atue como Mentor SOTA de Teoria dos Jogos e ICM. Use formatação avançada (Markdown/KaTeX).\n> DATA: Pot: ${preflopPot.toFixed(1)}bb | Stack Efetivo: ${effStack.toFixed(1)}bb | IP RP: ${effectiveIpRp.toFixed(1)}% | OOP RP: ${effectiveOopRp.toFixed(1)}%\n> TASK: Forneça uma análise teórica visceral (máx 250 palavras) focada na assimetria de ranges e no impacto desse Risk Premium específico na árvore de decisão.`;
 		generateAnalysis(prompt, 512, 'auto');
 	};
 
 	const displayContent =
 		streamedText ||
 		scenario.theory ||
-		'Nenhuma doutrina estÃ¡tica encontrada. Consulte o OrÃ¡culo QuÃ¢ntico.';
+		'Nenhuma doutrina estática encontrada. Consulte o Oráculo Quântico.';
 
 	return (
 		<div className="glass-panel w-full p-8 lg:p-12 flex flex-col gap-24 animate-sota-in mt-12 bg-bg-panel/80 backdrop-blur-3xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] rounded-4xl relative overflow-hidden group/theory-root">
@@ -88,10 +94,11 @@ export default function TheoryPanel({
 							<i className="fa-solid fa-book-open-reader text-lg"></i>
 						</div>
 						<h4 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.3em] m-0">
-							Doutrina AnalÃ­tica
+							Doutrina Analítica
 						</h4>
 						<div className="ml-auto">
 							<button
+								type="button"
 								onClick={handleGenerateTheory}
 								disabled={isStreaming}
 								className="px-4 py-2 bg-accent-indigo/20 hover:bg-accent-indigo/40 text-accent-indigo-light text-[0.65rem] font-black uppercase tracking-widest rounded-lg transition-all border border-accent-indigo/30 flex items-center gap-2 disabled:opacity-50 cursor-pointer disabled:cursor-wait"
@@ -103,7 +110,7 @@ export default function TheoryPanel({
 									</>
 								) : (
 									<>
-										<i className="fa-solid fa-microchip" /> Consultar OrÃ¡culo
+										<i className="fa-solid fa-microchip" /> Consultar Oráculo
 									</>
 								)}
 							</button>
@@ -124,12 +131,12 @@ export default function TheoryPanel({
 				<BubbleFactorDiagnostic ipRp={effectiveIpRp} oopRp={effectiveOopRp} />
 			</section>
 
-			{/* SEÃ‡ÃƒO 2: DILUIÃ‡ÃƒO (SPR) */}
+			{/* SEÇÃO 2: DILUIÇÃO (SPR) */}
 			<section className="relative z-10 w-full flex flex-col gap-10">
 				<div className="flex items-center justify-between border-b border-white/5 pb-6">
 					<h3 className="text-2xl font-black text-white uppercase tracking-[0.3em] m-0 flex items-center">
 						<i className="fa-solid fa-water text-accent-sky mr-5 shadow-[0_0_15px_var(--color-accent-sky)]" />{' '}
-						Matriz de DiluiÃ§Ã£o (SPR)
+						Matriz de Diluição (SPR)
 					</h3>
 					<div className="flex gap-2">
 						<div className="w-1.5 h-1.5 rounded-full bg-accent-sky animate-pulse" />
@@ -148,7 +155,7 @@ export default function TheoryPanel({
 										<th className="p-4 pl-8 font-black text-[0.65rem]">
 											Street
 										</th>
-										<th className="p-4 font-black text-[0.65rem]">Pote (BB)</th>
+										<th className="p-4 font-black text-[0.65rem]">{LABELS.potBb}</th>
 										<th className="p-4 font-black text-center text-[0.65rem]">
 											Stack Res.
 										</th>
@@ -235,7 +242,7 @@ export default function TheoryPanel({
 								</h4>
 							</div>
 							<p className="text-[0.85rem] text-indigo-100/70 leading-loose mb-10 font-medium">
-								O range do agressor é moldado pelo <strong>Blocker Effect</strong> e
+								O range do agressor é moldado pelo <strong>{LABELS.blockerEffect}</strong> e
 								pela diluição do risco. A agressão é calibrada para extrair valor de
 								insolvência sem colapsar a própria perspectiva.
 							</p>
@@ -246,7 +253,7 @@ export default function TheoryPanel({
 										<strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem] font-black">
 											CL (Agressor Absoluto)
 										</strong>{' '}
-										Inunda o vÃ¡cuo defensivo do oponente com agressÃ£o linear,
+										Inunda o vácuo defensivo do oponente com agressão linear,
 										alavancando a superioridade de stack.
 									</span>
 								</li>
@@ -254,10 +261,10 @@ export default function TheoryPanel({
 									<div className="w-1.5 h-1.5 rounded-full bg-accent-indigo mt-2 shadow-[0_0_8px_var(--accent-indigo)] group-hover/li:scale-125 transition-transform" />
 									<span className="leading-relaxed">
 										<strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem] font-black">
-											ConexÃ£o Tardia
+											Conexão Tardia
 										</strong>{' '}
-										ValorizaÃ§Ã£o de semi-bluffs de alta equidade no River,
-										explorando a passividade forÃ§ada do defensor.
+										Valorização de semi-bluffs de alta equidade no River,
+										explorando a passividade forçada do defensor.
 									</span>
 								</li>
 							</ul>
@@ -274,18 +281,18 @@ export default function TheoryPanel({
 								</h4>
 							</div>
 							<p className="text-[0.85rem] text-indigo-100/70 leading-loose mb-10 font-medium">
-								O defensor opera sob o <strong>Peso Gravitacional</strong> do ICM. O
-								MDF tradicional Ã© abandonado em favor de uma defesa hiper-seletiva
-								ancorada na sobrevivÃªncia.
+								O defensor opera sob o <strong>{LABELS.gravitationalWeight}</strong> do ICM. O
+								MDF tradicional é abandonado em favor de uma defesa hiper-seletiva
+								ancorada na sobrevivência.
 							</p>
 							<ul className="space-y-6 list-none p-0 relative z-10">
 								<li className="flex gap-5 items-start group/li">
 									<div className="w-1.5 h-1.5 rounded-full bg-accent-rose mt-2 shadow-[0_0_8px_var(--accent-rose)] group-hover/li:scale-125 transition-transform" />
 									<span className="leading-relaxed">
 										<strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem] font-black">
-											Teto de RP IntransponÃ­vel
+											Teto de RP Intransponível
 										</strong>{' '}
-										O descarte de equidade torna-se a aÃ§Ã£o de maior EV real,
+										O descarte de equidade torna-se a ação de maior EV real,
 										preservando a vida de torneio (FGS).
 									</span>
 								</li>
@@ -293,9 +300,9 @@ export default function TheoryPanel({
 									<div className="w-1.5 h-1.5 rounded-full bg-accent-rose mt-2 shadow-[0_0_8px_var(--accent-rose)] group-hover/li:scale-125 transition-transform" />
 									<span className="leading-relaxed">
 										<strong className="text-white block mb-1 uppercase tracking-widest text-[0.65rem] font-black">
-											CondensaÃ§Ã£o Estrita
+											Condensação Estrita
 										</strong>{' '}
-										Defesa limitada a mÃ£os que dominam o range de valor do
+										Defesa limitada a mãos que dominam o range de valor do
 										agressor, ignorando blefes marginais.
 									</span>
 								</li>
@@ -305,7 +312,7 @@ export default function TheoryPanel({
 				</div>
 			</section>
 
-			{/* SEÃ‡ÃƒO 4: BELIEF PROPAGATION (BAYESIAN) */}
+			{/* SEÇÃO 4: BELIEF PROPAGATION (BAYESIAN) */}
 			<section className="relative z-10 w-full flex flex-col gap-10">
 				<div className="flex items-center justify-between border-b border-white/5 pb-6">
 					<h3 className="text-2xl font-black text-white uppercase tracking-[0.3em] m-0 flex items-center">
@@ -323,19 +330,19 @@ export default function TheoryPanel({
 				</div>
 
 				<p className="text-center text-text-darker text-[0.65rem] font-black uppercase tracking-[0.4em] mt-2 italic px-10">
-					A inferÃªncia recursiva remapeia as densidades de probabilidade a cada aÃ§Ã£o.{' '}
+					A inferência recursiva remapeia as densidades de probabilidade a cada ação.{' '}
 					<span className="text-text-muted">
-						A contraÃ§Ã£o de range Ã© o efeito visual da regra de Bayes.
+						A contração de range é o efeito visual da regra de Bayes.
 					</span>
 				</p>
 			</section>
 
-			{/* SEÃ‡ÃƒO 5: AUDITORIA */}
+			{/* SEÇÃO 5: AUDITORIA */}
 			<section className="relative z-10 w-full flex flex-col gap-10">
 				<div className="flex items-center justify-between border-b border-white/5 pb-6">
 					<h3 className="text-2xl font-black text-white uppercase tracking-[0.3em] m-0 flex items-center">
 						<i className="fa-solid fa-microscope text-accent-emerald mr-5 shadow-[0_0_15px_var(--color-accent-emerald)]" />{' '}
-						Auditoria SistÃªmica
+						Auditoria Sistêmica
 					</h3>
 					<span className="px-3 py-1 rounded bg-accent-emerald/10 text-accent-emerald text-[0.5rem] font-black uppercase tracking-widest border border-accent-emerald/20">
 						Integridade Validada
@@ -349,14 +356,14 @@ export default function TheoryPanel({
 							color="indigo"
 							label="Motor ICM"
 							value="99.99%"
-							sub="PrecisÃ£o vs HRC Lib"
+							sub="Precisão vs HRC Lib"
 						/>
 						<AuditCard
 							icon="fa-gauge-simple-high"
 							color="emerald"
-							label="LatÃªncia JIT"
+							label="Latência JIT"
 							value="1.2ms"
-							sub="CÃ¡lculo QuÃ¢ntico"
+							sub="Cálculo Quântico"
 						/>
 						<AuditCard
 							icon="fa-dna"
@@ -373,12 +380,12 @@ export default function TheoryPanel({
 						</div>
 						<h4 className="text-[0.75rem] font-black text-white uppercase tracking-[0.3em] mb-6 flex items-center gap-4">
 							<i className="fa-solid fa-shield-check text-accent-indigo text-lg" />{' '}
-							Laudo TÃ©cnico
+							Laudo Técnico
 						</h4>
 						<div className="space-y-4">
 							<div className="flex justify-between items-center py-3 border-b border-white/5 group/row">
 								<span className="text-[0.6rem] text-text-muted font-bold uppercase tracking-widest group-hover/row:text-text-main transition-colors">
-									Î” Risk Premium
+									Δ Risk Premium
 								</span>
 								<span className="text-[0.75rem] font-mono font-black text-accent-indigo tabular-nums">
 									+{Math.abs(effectiveIpRp - effectiveOopRp).toFixed(2)}%
@@ -397,7 +404,7 @@ export default function TheoryPanel({
 							</div>
 							<div className="flex justify-between items-center py-3 border-b border-white/5 group/row">
 								<span className="text-[0.6rem] text-text-muted font-bold uppercase tracking-widest group-hover/row:text-text-main transition-colors">
-									ErosÃ£o Temporal (FGS)
+									Erosão Temporal (FGS)
 								</span>
 								<span className="text-[0.75rem] font-mono font-black text-accent-rose tabular-nums">
 									-0.15bb
@@ -414,22 +421,22 @@ export default function TheoryPanel({
 						</div>
 						<div className="mt-8 pt-6 border-t border-white/5 text-center">
 							<p className="text-[0.55rem] text-text-darker leading-relaxed font-black uppercase tracking-[0.2em] m-0 group-hover/audit-final:text-text-muted transition-colors">
-								&quot;A matemÃ¡tica do poker Ã© a fÃ­sica do capital.&quot;
+								&quot;A matemática do poker é a física do capital.&quot;
 							</p>
 						</div>
 					</div>
 				</div>
 			</section>
 
-			{/* SEÃ‡ÃƒO 6: CFR */}
+			{/* SEÇÃO 6: CFR */}
 			<section className="relative z-10 w-full flex flex-col gap-10">
 				<div className="flex items-center justify-between border-b border-white/5 pb-6">
 					<h3 className="text-2xl font-black text-white uppercase tracking-[0.3em] m-0 flex items-center">
 						<i className="fa-solid fa-network-wired text-accent-rose mr-5 shadow-[0_0_15px_var(--color-accent-rose)]" />{' '}
-						LaboratÃ³rio CFR & A*
+						Laboratório CFR & A*
 					</h3>
 					<span className="text-[0.55rem] font-black text-text-darker uppercase tracking-[0.4em]">
-						HeurÃ­stica Preditiva
+						Heurística Preditiva
 					</span>
 				</div>
 				<CfrRegretPanel
@@ -440,6 +447,16 @@ export default function TheoryPanel({
 			</section>
 		</div>
 	);
+}
+
+function getAuditColorClass(color: string) {
+	if (color === 'emerald') {
+		return 'text-accent-emerald-light bg-accent-emerald/10 border-accent-emerald/20 group-hover:border-accent-emerald/40';
+	}
+	if (color === 'rose') {
+		return 'text-accent-rose-light bg-accent-rose/10 border-accent-rose/20 group-hover:border-accent-rose/40';
+	}
+	return 'text-accent-indigo-light bg-accent-indigo/10 border-accent-indigo/20 group-hover:border-accent-indigo/40';
 }
 
 function AuditCard({
@@ -455,18 +472,13 @@ function AuditCard({
 	value: string;
 	sub: string;
 }>) {
-	const colorClasses = {
-		indigo: 'text-accent-indigo-light bg-accent-indigo/10 border-accent-indigo/20 group-hover:border-accent-indigo/40',
-		emerald:
-			'text-accent-emerald-light bg-accent-emerald/10 border-accent-emerald/20 group-hover:border-accent-emerald/40',
-		rose: 'text-accent-rose-light bg-accent-rose/10 border-accent-rose/20 group-hover:border-accent-rose/40',
-	}[color as 'indigo' | 'emerald' | 'rose'];
+	const colorClass = getAuditColorClass(color);
 
 	return (
 		<div className="bg-slate-950/40 border border-white/5 p-6 rounded-3xl shadow-inner group transition-all duration-500 hover:-translate-y-1 hover:bg-slate-900/60">
 			<div className="flex items-center gap-3 mb-4">
 				<div
-					className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${colorClasses}`}
+					className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${colorClass}`}
 				>
 					<i className={`fa-solid ${icon} text-base`} />
 				</div>

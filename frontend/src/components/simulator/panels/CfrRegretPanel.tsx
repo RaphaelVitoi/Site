@@ -48,7 +48,8 @@ function extractPathfinding(matrix: Float32Array, nodes: number): { x: number; y
 		let maxVal = -Infinity;
 		let bestY = 0;
 		for (let y = 0; y < nodes; y++) {
-			const val = matrix[x * nodes + y];
+			const idx = x * nodes + y;
+			const val = matrix.at(idx);
 			if (val === undefined) continue;
 			if (val > maxVal) {
 				maxVal = val;
@@ -65,6 +66,11 @@ export interface CfrRegretPanelProps {
 	initialStack?: number;
 	initialEquity?: number;
 }
+
+const LABELS = {
+	title: 'IA Laboratory',
+	cfrEngine: 'CFR Engine',
+} as const;
 
 export default function CfrRegretPanel({
 	initialPot = 2.5,
@@ -125,7 +131,7 @@ export default function CfrRegretPanel({
 				if (!firstNode) return;
 				let d = `M ${firstNode.x * w} ${firstNode.y * h}`;
 				for (let i = 1; i < path.length; i++) {
-					const node = path[i];
+					const node = path.at(i);
 					if (!node) continue;
 					d += ` L ${node.x * w} ${node.y * h}`;
 				}
@@ -167,7 +173,7 @@ export default function CfrRegretPanel({
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-white/5 gap-6">
 				<div>
 					<h3 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.2em] m-0">
-						IA Laboratory &middot; <span className="text-text-muted">CFR Engine</span>
+						{LABELS.title} &middot; <span className="text-text-muted">{LABELS.cfrEngine}</span>
 					</h3>
 					<p className="text-[0.65rem] text-text-dim mt-2 m-0 leading-relaxed max-w-md font-medium uppercase tracking-wider">
 						Counterfactual Regret Minimization (CFR) & Predictive Pathfinding.

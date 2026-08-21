@@ -32,21 +32,18 @@ globalThis.onmessage = (e: MessageEvent<IcmMessageData>) => {
 
     // SOTA: Fricção Zero (Zero-Copy O(1) Memory Transfer)
     // Empacotando as 3 métricas matemáticas contínuas (equity, equityPercent, winProb)
-    const hasShared = typeof globalThis.SharedArrayBuffer !== 'undefined';
+    const hasShared = globalThis.SharedArrayBuffer !== undefined;
     const buffer = hasShared
       ? new globalThis.SharedArrayBuffer(icmResults.length * 3 * 8)
       : new ArrayBuffer(icmResults.length * 3 * 8);
 
     const f64Results = new Float64Array(buffer);
 
-    for (let i = 0; i < icmResults.length; i++) {
-      const res = icmResults[i];
+    icmResults.forEach((res, i) => {
       if (res) {
-        f64Results[i * 3 + 0] = res.equity;
-        f64Results[i * 3 + 1] = res.equityPercent;
-        f64Results[i * 3 + 2] = res.winProb;
+        f64Results.set([res.equity, res.equityPercent, res.winProb], i * 3);
       }
-    }
+    });
 
     if (hasShared && buffer instanceof globalThis.SharedArrayBuffer) {
       (globalThis as unknown as Worker).postMessage({

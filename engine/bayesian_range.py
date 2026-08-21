@@ -40,7 +40,7 @@ def _categorize_hand(r: int, c: int, board_ranks: list[str]) -> str:
     top_board = board_ranks[0]
 
     if rank1 in board_ranks or rank2 in board_ranks:
-        if rank1 == top_board or rank2 == top_board:
+        if top_board in (rank1, rank2):
             return "top_pair_plus"
         return "mid_bottom_pair"
 

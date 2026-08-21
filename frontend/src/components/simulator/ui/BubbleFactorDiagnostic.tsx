@@ -1,6 +1,6 @@
 'use client';
 
-import { calcBF } from '@/components/simulator/engine/utils';
+import { calcBF } from '@/components/simulator/solver/utils';
 import { SotaTooltip } from '@/components/simulator/ui/SotaTooltip';
 
 interface BubbleFactorDiagnosticProps {

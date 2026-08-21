@@ -271,7 +271,8 @@ class DynamicYieldManager:
     async def apply_yield(self, task: Task, manager: QueueManager) -> float:
         async with self.lock:
             # SOTA: [Trava Cirurgica] Validacao de dependencias orfas antes de gastar recursos
-            deps = task.metadata.get("depends_on", []) if task.metadata else []
+            raw_deps = task.metadata.get("depends_on", []) if task.metadata else []
+            deps: list[str] = [str(d) for d in raw_deps] if isinstance(raw_deps, list) else []
             if await self._check_orphan_dependencies(deps, manager):
                 logger.error(
                     f"[[{_c(task.agent)}]{task.agent}[/]] [ENTROPIA FATAL] Tarefa {task.id} engatilhada com dependencia fantasma. Abortando imediatamente (status failed)."
@@ -459,11 +460,14 @@ async def _generate_historian_reports_async(qm: Any) -> None:
 
 
 def _cli_historian_reports() -> None:
-    qm = QueueManager()
-    try:
-        asyncio.run(_generate_historian_reports_async(qm))
-    finally:
-        qm.close()
+    async def _run() -> None:
+        qm = QueueManager()
+        try:
+            await _generate_historian_reports_async(qm)
+        finally:
+            await qm.close()
+
+    asyncio.run(_run())
     sys.exit(0)
 
 
@@ -497,11 +501,14 @@ def _cli_daily_stats() -> None:
         except Exception as e:
             logger.exception(f"[CLI] Falha ao gerar estatisticas diarias: {e}")
 
-    qm = QueueManager()
-    try:
-        asyncio.run(_generate_daily_stats(qm))
-    finally:
-        qm.close()
+    async def _run() -> None:
+        qm = QueueManager()
+        try:
+            await _generate_daily_stats(qm)
+        finally:
+            await qm.close()
+
+    asyncio.run(_run())
     sys.exit(0)
 
 

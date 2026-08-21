@@ -46,8 +46,8 @@ async def _try_compress_gemini(
     manager: QueueManager,
 ) -> tuple[str | None, bool]:
     """Tenta a compressao via Gemini, mas usando o motor de resiliencia SOTA (_try_provider)."""
-    gemini_compression_keys = _gemini_key_pool_for_model("gemini-2.5-flash")
-    gemini_model = "gemini-2.5-flash"
+    gemini_compression_keys = _gemini_key_pool_for_model("gemini-3.5-flash-lite")
+    gemini_model = "gemini-3.5-flash-lite"
     route_gemini = _route_identifier("gemini", gemini_model)
 
     if not gemini_compression_keys or await _is_route_blocked(route_gemini):

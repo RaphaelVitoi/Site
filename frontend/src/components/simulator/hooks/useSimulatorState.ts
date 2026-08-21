@@ -5,7 +5,7 @@ import type {
 	StreetChipEvFreqs,
 	Scenario,
 	HeroPosition,
-} from '@/components/simulator/engine/types';
+} from '@/components/simulator/solver/types';
 import type { ActiveTool } from '../MasterSimulator';
 
 export function useSimulatorState(initialScenario: Scenario) {

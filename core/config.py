@@ -33,7 +33,8 @@ PATH_AGENTS_MANIFEST = BASE_DIR / "data/agents_manifest.json"
 PATH_INTENTMAP = BASE_DIR / "data/intentmap.json"
 PATH_SYSTEM_CONFIG = BASE_DIR / "data/system_config.json"
 PATH_ROUTING_MAP = BASE_DIR / "data/routing_map.json"
-MODEL_GEMINI_FLASH = "gemini-2.5-flash"
+MODEL_GEMINI_FLASH = "gemini-3.5-flash-lite"
+MODEL_GEMINI_FLASH_LITE = "gemini-3.5-flash-lite"
 
 
 def load_json_config(file_path: Path, default_value: Any = None) -> Any:

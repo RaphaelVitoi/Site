@@ -30,6 +30,31 @@ interface RangeMatrixProps {
 type Perspective = 'ip' | 'oop';
 type CellDisplayMode = 'MARGIN' | 'EQUITY' | 'STATUS' | 'FE_REQ';
 
+function getPerspectiveButtonClass(isActive: boolean, p: Perspective): string {
+	if (!isActive) return 'text-text-muted hover:text-white';
+	if (p === 'ip') return 'bg-accent-indigo/20 text-accent-indigo-light border border-accent-indigo/40 shadow-lg shadow-indigo-500/10';
+	return 'bg-accent-rose/20 text-accent-rose border border-accent-rose/40 shadow-lg shadow-rose-500/10';
+}
+
+function getCellDisplayModeLabel(mode: CellDisplayMode): string {
+	switch (mode) {
+		case 'MARGIN':
+			return 'Margem \u0394';
+		case 'EQUITY':
+			return 'Equidade %';
+		case 'STATUS':
+			return 'Veredito';
+		case 'FE_REQ':
+			return 'Fold Req %';
+	}
+}
+
+function getHandTypeDescription(isPair: boolean, isSuited: boolean): string {
+	if (isPair) return 'Par na Mão';
+	if (isSuited) return 'Naipadas (Suited)';
+	return 'Desconectadas (Offsuit)';
+}
+
 export default function RangeMatrix({
 	ipRp,
 	oopRp,
@@ -137,13 +162,10 @@ export default function RangeMatrix({
 									key={p}
 									type="button"
 									onClick={() => setPerspective(p)}
-									className={`px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.15em] cursor-pointer transition-all duration-300 rounded-xl ${
-										isActive
-											? p === 'ip'
-												? 'bg-accent-indigo/20 text-accent-indigo-light border border-accent-indigo/40 shadow-lg shadow-indigo-500/10'
-												: 'bg-accent-rose/20 text-accent-rose border border-accent-rose/40 shadow-lg shadow-rose-500/10'
-											: 'text-text-muted hover:text-white'
-									}`}
+									className={`px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.15em] cursor-pointer transition-all duration-300 rounded-xl ${getPerspectiveButtonClass(
+										isActive,
+										p,
+									)}`}
 								>
 									{p.toUpperCase()}: {val.toFixed(1)}%
 								</button>
@@ -155,12 +177,6 @@ export default function RangeMatrix({
 					<div className="flex rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1 shadow-inner">
 						{(['MARGIN', 'EQUITY', 'STATUS', 'FE_REQ'] as CellDisplayMode[]).map((mode) => {
 							const isActive = displayMode === mode;
-							const labels: Record<CellDisplayMode, string> = {
-								MARGIN: 'Margem \u0394',
-								EQUITY: 'Equidade %',
-								STATUS: 'Veredito',
-								FE_REQ: 'Fold Req %',
-							};
 							return (
 								<button
 									key={mode}
@@ -172,7 +188,7 @@ export default function RangeMatrix({
 											: 'text-text-muted hover:text-white'
 									}`}
 								>
-									{labels[mode]}
+									{getCellDisplayModeLabel(mode)}
 								</button>
 							);
 						})}
@@ -186,14 +202,13 @@ export default function RangeMatrix({
 					<i className="fa-solid fa-crosshairs text-accent-amber" /> Range de Shove do Vilão:
 				</span>
 				<div className="flex flex-wrap gap-2">
-					{(Object.keys(SHOVE_PROFILES) as ShoveProfile[]).map((key) => {
-						const prof = SHOVE_PROFILES[key];
+					{Object.entries(SHOVE_PROFILES).map(([key, prof]) => {
 						const isActive = shoveProfile === key;
 						return (
 							<button
 								key={key}
 								type="button"
-								onClick={() => setShoveProfile(key)}
+								onClick={() => setShoveProfile(key as ShoveProfile)}
 								className={`px-3 py-1.5 rounded-xl text-[0.6rem] font-black uppercase tracking-wider transition-all cursor-pointer ${
 									isActive
 										? 'bg-accent-amber/20 text-accent-amber border border-accent-amber/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
@@ -363,11 +378,7 @@ export default function RangeMatrix({
 							</div>
 							<div>
 								<span className="text-[0.6rem] font-black uppercase tracking-widest text-text-muted block">
-									{inspectedDetail.isPair
-										? 'Par na Mão'
-										: inspectedDetail.isSuited
-											? 'Naipadas (Suited)'
-											: 'Desconectadas (Offsuit)'}
+									{getHandTypeDescription(inspectedDetail.isPair, inspectedDetail.isSuited)}
 								</span>
 								<span className="text-xs font-mono font-bold text-slate-300">
 									{inspectedDetail.combos} combinações

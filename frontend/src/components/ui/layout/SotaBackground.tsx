@@ -1,8 +1,12 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
 export default function SotaBackground() {
+	const pathname = usePathname();
+	const isLightPage = pathname === '/' || pathname === '/quem-sou';
+
 	// SOTA: Substituição de useState por useRef para bypassar o React Fiber
 	// Atualizar estado no 'mousemove' causava re-renderizações 60x por segundo, afogando a CPU.
 	const orb1Ref = useRef<HTMLDivElement>(null);
@@ -11,6 +15,8 @@ export default function SotaBackground() {
 	const rafRef = useRef<number | null>(null);
 
 	useEffect(() => {
+		if (isLightPage) return;
+
 		const handleMouseMove = (e: MouseEvent) => {
 			if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
@@ -35,10 +41,19 @@ export default function SotaBackground() {
 			globalThis.removeEventListener('mousemove', handleMouseMove);
 			if (rafRef.current) cancelAnimationFrame(rafRef.current);
 		};
-	}, []);
+	}, [isLightPage]);
+
+	if (isLightPage) {
+		return (
+			<div className="fixed inset-0 z-[-1] overflow-hidden bg-[#F5F4F0] pointer-events-none transition-colors duration-500">
+				{/* SOTA: Textura de Grain Ethereal em Fundo Claro */}
+				<div className="absolute inset-0 z-20 opacity-[0.03] bg-grain pointer-events-none mix-blend-multiply" />
+			</div>
+		);
+	}
 
 	return (
-		<div className="fixed inset-0 z-[-1] overflow-hidden bg-bg-base pointer-events-none">
+		<div className="fixed inset-0 z-[-1] overflow-hidden bg-bg-base pointer-events-none transition-colors duration-500">
 			{/* SOTA: Textura de Grain Nativa (Via CSS Utility) */}
 			<div className="absolute inset-0 z-20 opacity-[0.03] bg-grain pointer-events-none mix-blend-overlay" />
 

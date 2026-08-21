@@ -84,10 +84,10 @@ export const useQuizStore = create<QuizState>((set, get) => ({
 
   answerQuiz: (optionIndex: number) => {
     const state = get();
-    const currentQuiz = state.quizzes[state.currentQuizIndex];
+    const currentQuiz = state.quizzes.at(state.currentQuizIndex);
     if (!currentQuiz) return;
 
-    const selectedOption = currentQuiz.options[optionIndex];
+    const selectedOption = currentQuiz.options.at(optionIndex);
     if (!selectedOption) return;
 
     const isCorrect = selectedOption.isOptimal;

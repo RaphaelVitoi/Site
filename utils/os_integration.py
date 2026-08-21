@@ -1,3 +1,4 @@
+# pylint: disable=consider-using-with
 """
 OS INTEGRATION - Membrana Cognitiva SOTA (v7.0 GOLD)
 Provides unified interfaces for default browser resolution, system clipboard, and OS notifications.
@@ -83,11 +84,11 @@ def set_clipboard_text(text: str) -> bool:
     if sys.platform == "win32":
         try:
             # Avoid quotes issues by feeding stdin to Set-Clipboard
-            process = subprocess.Popen(
+            with subprocess.Popen(
                 ["powershell", "-Command", "Set-Clipboard"], stdin=subprocess.PIPE, text=True, encoding="utf-8"
-            )
-            process.communicate(input=text)
-            return process.returncode == 0
+            ) as process:
+                process.communicate(input=text)
+                return process.returncode == 0
         except Exception as e:
             logger.warning(f"[OS Clipboard] PowerShell Set-Clipboard failed: {e}")
     return False

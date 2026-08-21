@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * IDENTITY: Simulador de Risco da RessurreiÃ§Ã£o SOTA Quantum
+ * IDENTITY: Simulador de Risco da Ressurreição SOTA Quantum
  * PATH: src/components/simulator/ResurrectionRiskSimulator.tsx
- * ROLE: Analisar o custo estratÃ©gico de dar call em short stacks na bolha.
- * PRINCIPLE: AntevisÃ£o & FricÃ§Ã£o Zero.
+ * ROLE: Analisar o custo estratégico de dar call em short stacks na bolha.
+ * PRINCIPLE: Antevisão & Fricção Zero.
  */
 
 import { useState, useMemo, use } from 'react';
@@ -43,7 +43,7 @@ export default function ResurrectionRiskSimulator() {
 	const [equity, setEquity] = useState(58);
 	const [applyBubbleAxiom, setApplyBubbleAxiom] = useState(true);
 
-	// SOTA v4.5: ExtraÃ§Ã£o de Entropia (Fator Î¨)
+	// SOTA v4.5: Extração de Entropia (Fator Ψ)
 	const psiFactor = metricsContext?.predictiveProfile?.['Desvio de Nash'] ?? 0.45;
 
 	const COLORS = {
@@ -72,7 +72,7 @@ export default function ResurrectionRiskSimulator() {
 		const ssStackWin = ssStack * 2;
 
 		// SOTA VITOI: Amortized Edge Unificado (v4.5)
-		// A penalidade psicolÃ³gica agora Ã© proporcional Ã  Entropia (Psi) detectada
+		// A penalidade psicológica agora é proporcional à Entropia (Psi) detectada
 		const psychologicalPenalty = applyBubbleAxiom ? Math.max(0.6, 1 - psiFactor * 0.5) : 1;
 
 		const { amortizedEdge: clEdgeWin } = calculateAmortizedEdge(
@@ -147,13 +147,13 @@ export default function ResurrectionRiskSimulator() {
 			<div className="flex flex-col md:flex-row justify-between items-start gap-6 border-b border-white/5 pb-8">
 				<div className="space-y-2">
 					<h2 className="text-2xl font-black text-text-bright tracking-tighter uppercase">
-						Risco da RessurreiÃ§Ã£o
+						Risco da Ressurreição
 					</h2>
 					<p className="text-xs text-text-muted leading-relaxed max-w-2xl font-medium">
-						O call marginal Ã© um colapso em{' '}
+						O call marginal é um colapso em{' '}
 						<span className="text-accent-indigo font-bold">EV Futuro</span>. Ressuscitar
-						um oponente destrÃ³i a <strong className="text-white">Fear Equity</strong>{' '}
-						da mesa. Sob o Axioma PsicolÃ³gico, a sua Edge Relativa despenca se vocÃª
+						um oponente destrói a <strong className="text-white">Fear Equity</strong>{' '}
+						da mesa. Sob o Axioma Psicológico, a sua Edge Relativa despenca se você
 						sangrar o status de predador absoluto.
 					</p>
 				</div>
@@ -171,7 +171,7 @@ export default function ResurrectionRiskSimulator() {
 				</div>
 			</div>
 
-			{/* CONTROLES SIMÃ‰TRICOS */}
+			{/* CONTROLES SIMÉTRICOS */}
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 				<div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 bg-black/20 p-6 rounded-3xl border border-white/5">
 					<div className="space-y-4">
@@ -250,6 +250,7 @@ export default function ResurrectionRiskSimulator() {
 						</div>
 
 						<button
+							type="button"
 							onClick={() => setApplyBubbleAxiom(!applyBubbleAxiom)}
 							className={`flex items-center justify-between w-full mt-2 p-3 rounded-xl border transition-all duration-300 ${applyBubbleAxiom ? 'bg-accent-indigo/10 border-accent-indigo/30' : 'bg-black/40 border-white/5'}`}
 						>
@@ -257,7 +258,7 @@ export default function ResurrectionRiskSimulator() {
 								<span
 									className={`text-[0.65rem] font-black uppercase tracking-widest ${applyBubbleAxiom ? 'text-accent-indigo-light' : 'text-text-muted'}`}
 								>
-									Axioma PsicolÃ³gico
+									Axioma Psicológico
 								</span>
 								<span className="text-[0.55rem] font-bold text-text-darker uppercase tracking-widest mt-0.5">
 									Penalidade de RIO (20%)
@@ -283,16 +284,16 @@ export default function ResurrectionRiskSimulator() {
 							{results.breakEvenEquity?.toFixed(1)}%
 						</span>
 						<p className="text-[0.5rem] text-text-muted mt-2 uppercase">
-							Equidade necessÃ¡ria para call
+							Equidade necessária para call
 						</p>
 					</div>
 				</div>
 			</div>
 
-			{/* GRÃFICO DE INFLEXÃƒO */}
+			{/* GRÁFICO DE INFLEXÃO */}
 			<div className="pt-8">
 				<h3 className="text-label text-center mb-8 opacity-40">
-					Ponto de InflexÃ£o da Perspectiva
+					Ponto de Inflexão da Perspectiva
 				</h3>
 				<div className="relative h-80 w-full min-h-80">
 					<ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>

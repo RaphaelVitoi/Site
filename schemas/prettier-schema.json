@@ -1,2 +1,17 @@
-<head><title>Document Moved</title></head>
-<body><h1>Object Moved</h1>This document may be found <a HREF="https://www.schemastore.org/prettierrc.json">here</a></body>
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://json.schemastore.org/prettierrc.json",
+  "title": "Prettier Configuration Schema",
+  "type": "object",
+  "properties": {
+    "printWidth": { "type": "integer", "default": 80 },
+    "tabWidth": { "type": "integer", "default": 2 },
+    "useTabs": { "type": "boolean", "default": false },
+    "semi": { "type": "boolean", "default": true },
+    "singleQuote": { "type": "boolean", "default": false },
+    "trailingComma": { "type": "string", "enum": ["none", "es5", "all"], "default": "all" },
+    "bracketSpacing": { "type": "boolean", "default": true },
+    "arrowParens": { "type": "string", "enum": ["always", "avoid"], "default": "always" }
+  },
+  "additionalProperties": true
+}

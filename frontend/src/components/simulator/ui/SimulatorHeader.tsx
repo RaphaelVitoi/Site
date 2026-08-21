@@ -24,9 +24,10 @@ export default function SimulatorHeader({
 	onToggleSidebar,
 }: Readonly<SimulatorHeaderProps>) {
 	return (
-		<header className="px-8 py-5 border-b border-white/10 flex justify-between items-center bg-black/60 backdrop-blur-3xl sticky top-0 z-9999 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+		<div className="px-6 py-4 rounded-3xl border border-white/10 flex flex-wrap justify-between items-center bg-slate-950/70 backdrop-blur-2xl shadow-2xl mb-4 gap-4">
 			<div className="flex items-center gap-8">
 				<button
+					type="button"
 					onClick={onToggleSidebar}
 					title="Alternar Menu de Cenários"
 					aria-label="Alternar Menu de Cenários"
@@ -134,6 +135,7 @@ export default function SimulatorHeader({
 				</div>
 
 				<button
+					type="button"
 					onClick={() => signOut({ callbackUrl: '/login' })}
 					className="flex items-center justify-center w-11 h-11 bg-accent-rose/10 border border-accent-rose/20 text-accent-rose rounded-2xl hover:bg-accent-rose/20 hover:border-accent-rose/40 active:scale-90 transition-all shadow-xl cursor-pointer group"
 					title="Fuga Quântica (Logout)"
@@ -141,6 +143,6 @@ export default function SimulatorHeader({
 					<i className="fa-solid fa-power-off group-hover:scale-110 transition-transform duration-500" />
 				</button>
 			</div>
-		</header>
+		</div>
 	);
 }

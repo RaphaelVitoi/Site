@@ -69,6 +69,13 @@ const boxTitleIcmStyle = {
 
 // SOTA: Prevencao de GC Thrashing na alocacao de memoria das respostas dinamicas
 
+const OG_TITLE = 'Impacto do ICM (A Geometria do Risco)';
+const LABEL_BF = 'Bubble Factor (BF)';
+const LABEL_RP = 'Risk Premium (RP)';
+const LABEL_POT_BET = 'Pote / Aposta';
+const LABEL_CHIP_EV = 'ChipEV (Ilusao Linear)';
+const LABEL_ICM_EV = 'ICM EV (Realidade Assimetrica)';
+
 export async function GET(request: Request) {
 	try {
 		const { searchParams } = new URL(request.url);
@@ -100,36 +107,34 @@ export async function GET(request: Request) {
 		const numIcmEv = Number.isNaN(Number.parseFloat(icmEv)) ? 0 : Number.parseFloat(icmEv);
 
 		return new ImageResponse(
-			<div {...{ style: containerStyle }}>
-				<h1 {...{ style: titleStyle }}>Impacto do ICM (A Geometria do Risco)</h1>
+			<div style={containerStyle}>
+				<h1 style={titleStyle}>{OG_TITLE}</h1>
 
-				<div {...{ style: rowStyle }}>
-					<div {...{ style: colStyle }}>
-						<span {...{ style: labelStyle }}>Bubble Factor (BF)</span>
-						<span {...{ style: valStyle }}>{bf}</span>
+				<div style={rowStyle}>
+					<div style={colStyle}>
+						<span style={labelStyle}>{LABEL_BF}</span>
+						<span style={valStyle}>{bf}</span>
 					</div>
-					<div {...{ style: colStyle }}>
-						<span {...{ style: labelStyle }}>Risk Premium (RP)</span>
-						<span {...{ style: rpValStyle }}>{rp}</span>
+					<div style={colStyle}>
+						<span style={labelStyle}>{LABEL_RP}</span>
+						<span style={rpValStyle}>{rp}</span>
 					</div>
-					<div {...{ style: colStyle }}>
-						<span {...{ style: labelStyle }}>Pote / Aposta</span>
-						<span {...{ style: valStyle }}>
+					<div style={colStyle}>
+						<span style={labelStyle}>{LABEL_POT_BET}</span>
+						<span style={valStyle}>
 							{pot} / {bet}
 						</span>
 					</div>
 				</div>
 
-				<div {...{ style: boxesRowStyle }}>
-					<div {...{ style: boxPureStyle }}>
-						<span {...{ style: boxTitlePureStyle }}>ChipEV (Ilusao Linear)</span>
+				<div style={boxesRowStyle}>
+					<div style={boxPureStyle}>
+						<span style={boxTitlePureStyle}>{LABEL_CHIP_EV}</span>
 						<span
-							{...{
-								style: {
-									fontSize: '80px',
-									fontWeight: 'bold',
-									color: numPureEv >= 0 ? '#4ade80' : '#ef4444',
-								},
+							style={{
+								fontSize: '80px',
+								fontWeight: 'bold',
+								color: numPureEv >= 0 ? '#4ade80' : '#ef4444',
 							}}
 						>
 							{numPureEv > 0 ? '+' : ''}
@@ -137,15 +142,13 @@ export async function GET(request: Request) {
 						</span>
 					</div>
 
-					<div {...{ style: boxIcmStyle }}>
-						<span {...{ style: boxTitleIcmStyle }}>ICM EV (Realidade Assimetrica)</span>
+					<div style={boxIcmStyle}>
+						<span style={boxTitleIcmStyle}>{LABEL_ICM_EV}</span>
 						<span
-							{...{
-								style: {
-									fontSize: '80px',
-									fontWeight: 'bold',
-									color: numIcmEv >= 0 ? '#4ade80' : '#ef4444',
-								},
+							style={{
+								fontSize: '80px',
+								fontWeight: 'bold',
+								color: numIcmEv >= 0 ? '#4ade80' : '#ef4444',
 							}}
 						>
 							{numIcmEv > 0 ? '+' : ''}

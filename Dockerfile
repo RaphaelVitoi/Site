@@ -32,11 +32,17 @@ RUN groupadd -g 10001 appgroup && \
     useradd -u 10001 -g appgroup -m -s /bin/bash appuser
 
 # Copiar ambiente virtual sincronizado do builder
-COPY --from=builder --chown=appuser:appgroup /app/.venv /app/.venv
+COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Materialização SOTA do código-fonte
-COPY --chown=appuser:appgroup . .
+# Materialização SOTA do código-fonte (Imutável, protegido contra modificação por non-root)
+COPY core ./core
+COPY engine ./engine
+COPY llm ./llm
+COPY math ./math
+COPY utils ./utils
+COPY worker ./worker
+COPY app.py system_config.json pyproject.toml ./
 
 USER appuser
 

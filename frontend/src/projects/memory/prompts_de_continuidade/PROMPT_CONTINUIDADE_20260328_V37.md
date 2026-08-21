@@ -22,6 +22,7 @@ type: project
 - Bloco `if __name__ == '__main__':` substituido por:
   ```python
   from cli.commands import run_cli
+
   run_cli(sys.argv)
   ```
 
@@ -156,6 +157,7 @@ sao importadas lazily dentro de run_cli() via:
 ```python
 def _get_runtime():
     import task_executor as te
+
     return te
 ```
 Quando essas funcoes forem extraidas para seus proprios modulos (llm/gemini.py, agents/autonomy.py, etc.),

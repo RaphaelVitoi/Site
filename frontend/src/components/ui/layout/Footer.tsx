@@ -20,7 +20,7 @@ export default function Footer() {
 						href={ROUTES.HOME}
 						className="group relative flex flex-col items-center gap-6 focus:outline-none mb-8"
 					>
-						<div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-[2.5rem] bg-black/40 border border-white/10 backdrop-blur-md shadow-[0_0_50px_rgba(255,255,255,0.02)] transition-all duration-1000 group-hover:border-accent-indigo/40 group-hover:shadow-[0_0_80px_rgba(99,102,241,0.15)] group-hover:rotate-[360deg]">
+						<div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-[2.5rem] bg-black/40 border border-white/10 backdrop-blur-md shadow-[0_0_50px_rgba(255,255,255,0.02)] transition-all duration-1000 group-hover:border-accent-indigo/40 group-hover:shadow-[0_0_80px_rgba(99,102,241,0.15)] group-hover:rotate-360">
 							<div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
 							<svg
 								width="48"
@@ -96,13 +96,19 @@ export default function Footer() {
 						href={ROUTES.SIMULADOR}
 						className="hover:text-accent-emerald hover:drop-shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all duration-300"
 					>
-						Motor ICM
+						Simulador Mestre
 					</Link>
 					<Link
-						href={ROUTES.LIBRARY.ESTADO_DA_ARTE}
+						href={ROUTES.SIMULADOR_DISTORCOES}
+						className="hover:text-accent-rose hover:drop-shadow-[0_0_15px_rgba(244,63,94,0.4)] transition-all duration-300"
+					>
+						Distorções ICM
+					</Link>
+					<Link
+						href={ROUTES.SIMULADOR_GTO}
 						className="hover:text-accent-indigo-light hover:drop-shadow-[0_0_15px_rgba(129,140,248,0.4)] transition-all duration-300"
 					>
-						Whitepaper
+						Laboratório CFR
 					</Link>
 					<Link
 						href={ROUTES.BIBLIOTECA}
@@ -150,16 +156,27 @@ export default function Footer() {
 				<div className="w-full flex flex-col sm:flex-row items-center justify-between pt-10 border-t border-white/5 text-[0.6rem] font-black text-text-darker uppercase tracking-[0.4em] gap-6 relative">
 					<p className="m-0">
 						&copy; {currentYear} {SITE_CONFIG.author} &middot;{' '}
-						<span className="text-white/20">Axioma Sovereign</span>
+						<span className="text-white/20">{SITE_CONFIG.axiom}</span>
 					</p>
 					<div className="flex items-center gap-3 bg-white/3 px-4 py-2 rounded-full border border-white/5 shadow-inner">
 						<div className="w-2 h-2 rounded-full bg-accent-emerald animate-pulse shadow-[0_0_10px_var(--color-accent-emerald)]"></div>
-						<span className="text-text-muted">Nexus Core Online</span>
+						<span className="text-text-muted">{SITE_CONFIG.coreStatus}</span>
 					</div>
 				</div>
 			</div>
 		</footer>
 	);
+}
+
+function getSocialColorClass(color: 'rose' | 'red' | 'violet'): string {
+	switch (color) {
+		case 'rose':
+			return 'hover:text-accent-pink hover:border-accent-pink/30 hover:shadow-[0_0_30px_rgba(236,72,153,0.15)]';
+		case 'red':
+			return 'hover:text-accent-danger hover:border-accent-danger/30 hover:shadow-[0_0_30px_rgba(239,68,68,0.15)]';
+		case 'violet':
+			return 'hover:text-accent-violet hover:border-accent-violet/30 hover:shadow-[0_0_30px_rgba(139,92,246,0.15)]';
+	}
 }
 
 function SocialLink({
@@ -173,18 +190,14 @@ function SocialLink({
 	label: string;
 	color: 'rose' | 'red' | 'violet';
 }>) {
-	const colorMap = {
-		rose: 'hover:text-accent-pink hover:border-accent-pink/30 hover:shadow-[0_0_30px_rgba(236,72,153,0.15)]',
-		red: 'hover:text-accent-danger hover:border-accent-danger/30 hover:shadow-[0_0_30px_rgba(239,68,68,0.15)]',
-		violet: 'hover:text-accent-violet hover:border-accent-violet/30 hover:shadow-[0_0_30px_rgba(139,92,246,0.15)]',
-	};
-
 	return (
 		<a
 			href={href}
 			target="_blank"
 			rel="noopener noreferrer"
-			className={`w-14 h-14 rounded-[1.25rem] bg-black/40 border border-white/5 flex items-center justify-center text-text-dim transition-all duration-500 hover:-translate-y-2 ${colorMap[color]}`}
+			className={`w-14 h-14 rounded-[1.25rem] bg-black/40 border border-white/5 flex items-center justify-center text-text-dim transition-all duration-500 hover:-translate-y-2 ${getSocialColorClass(
+				color,
+			)}`}
 			aria-label={label}
 		>
 			<i className={`fa-brands ${icon} text-2xl`}></i>

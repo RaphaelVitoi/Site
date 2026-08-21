@@ -12,19 +12,50 @@
  * BINDING: [lib/perspectiva.ts, components/simulator/hooks/*, components/simulator/ui/*]
  */
 
-import { formatCi, formatPct, getPmColorClass, getVerdictText } from '@/components/simulator/engine/utils';
+import { formatCi, formatPct, getPmColorClass, getVerdictText } from '@/components/simulator/solver/utils';
 import { useDebouncedLocalStorage } from '@/components/simulator/hooks/useDebouncedLocalStorage';
 import { usePmLensCalculations } from '@/components/simulator/hooks/usePmLensCalculations';
 import { MetricRow } from '@/components/simulator/ui/MetricRow';
 import { SelectBtn } from '@/components/simulator/ui/SelectBtn';
 import { useCallback, use, useEffect, useState } from 'react';
-import type { HeroPosition, NodelockConstraint } from '../engine/types';
+import type { HeroPosition, NodelockConstraint } from '../solver/types';
 import { SotaWasmContext } from '../SotaContext';
 import { SniperBadge } from './SniperBadge';
 
 const DEFAULT_PLAYERS = ['UTG', 'EP', 'MP1', 'MP2', 'HJ', 'CO', 'BU', 'SB', 'BB'];
 const DEFAULT_STACKS = [9.4, 52.4, 22.2, 7, 44.3, 24.3, 40, 13.4, 55];
 const DEFAULT_PRIZES = [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
+
+const LABELS = {
+  diagnosticTitle: 'Diagnóstico da Perspectiva (Paradigma Vitoi)',
+  expectationPrefix: 'Expectativa: ',
+  totalCostPrefix: 'Custo Total: -',
+  formulaCollapsed: 'PM = (Exp × R × Val) – (EV_Fold + RIO)',
+  dynamicEq: 'Equação Dinâmica',
+  perspective: 'Perspectiva',
+  frameworkPm: 'Framework PM',
+  lensSubtitle: '· Lente de Perspectiva',
+  telemetryTitle: 'Telemetria Sistêmica de Sunk Cost · ',
+  sotaGold: 'SOTA v7.0 GOLD',
+  heroAggressor: 'Hero (Agressor)',
+  sprActive: 'SPR Active',
+  villainsMultiway: 'Villain(s) - Multiway',
+  n2Complexity: 'N² Complexity',
+  realizationR: 'Realização (R)',
+  realizationAdjustment: 'Ajuste de under/over realization. R<1 = perda de EQ.',
+  villainAggFactor: 'Villain AggFactor',
+  extremeAggWarning: 'Agg extrema OOP destrói sua Realização (R).',
+  motorRActive: 'Motor R Ativo:',
+  nodelockTriggered: 'A estrutura SPR foi mitigada (+40%/street). Axioma Lipe Piv acionado (κ: ',
+  rawEquity: 'Equity Bruta',
+  inVacuum: 'No vácuo · Cega para FGS, RIO e Pressão ICM.',
+  kappaCredibility: 'κ Credibilidade',
+  heroRange: 'Hero Range',
+  villainRange: 'Villain Range',
+  boardStructural: 'Board Structural',
+  sizing: 'Sizing',
+  computeShaderDesc: 'Invoca Compute Shader p/ Monte Carlo O(1)',
+} as const;
 
 interface PmLensPanelProps {
   heroInvested?: number;
@@ -44,6 +75,16 @@ interface InsightAlert {
   icon: string;
 }
 
+function getInsightTypeClass(type: string): string {
+  if (type === 'danger') {
+    return 'bg-red-500/5 border-red-500/20 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.15)]';
+  }
+  if (type === 'warning') {
+    return 'bg-amber-500/5 border-amber-500/20 text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.15)]';
+  }
+  return 'bg-blue-500/5 border-blue-500/20 text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.15)]';
+}
+
 const InsightBanner = ({ insights }: { readonly insights: InsightAlert[] }) => {
   if (insights.length === 0) return null;
 
@@ -52,21 +93,17 @@ const InsightBanner = ({ insights }: { readonly insights: InsightAlert[] }) => {
       <div className="flex items-center gap-3">
         <i className="fa-solid fa-brain text-accent-indigo animate-pulse text-sm" />
         <h4 className="text-text-main m-0 text-[0.65rem] font-black tracking-[0.25em] uppercase">
-          Diagnóstico da Perspectiva (Paradigma Vitoi)
+          {LABELS.diagnosticTitle}
         </h4>
       </div>
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {insights.map((ins) => {
-          const typeClasses = {
-            danger: 'bg-red-500/5 border-red-500/20 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.15)]',
-            warning: 'bg-amber-500/5 border-amber-500/20 text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.15)]',
-            info: 'bg-blue-500/5 border-blue-500/20 text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.15)]',
-          }[ins.type];
+          const typeClass = getInsightTypeClass(ins.type);
 
           return (
             <div
               key={ins.id}
-              className={`flex items-start gap-4 rounded-2xl border p-4 transition-all duration-300 hover:scale-[1.01] ${typeClasses}`}
+              className={`flex items-start gap-4 rounded-2xl border p-4 transition-all duration-300 hover:scale-[1.01] ${typeClass}`}
             >
               <i className={`${ins.icon} mt-0.5 text-base`} />
               <div className="flex flex-col gap-1">
@@ -81,7 +118,7 @@ const InsightBanner = ({ insights }: { readonly insights: InsightAlert[] }) => {
       </div>
     </div>
   );
-};
+}
 
 interface EquationData {
   handEquity: number;
@@ -110,7 +147,7 @@ const InteractiveEquation = ({ s }: { readonly s: EquationData }) => {
     >
       <div className="flex items-center justify-between w-full">
         <span className="text-text-muted flex items-center gap-1 text-[0.6rem] font-black tracking-[0.2em] uppercase transition-colors group-hover/eq:text-white">
-          {hovered ? 'Equação Dinâmica' : 'Perspectiva'}
+          {hovered ? LABELS.dynamicEq : LABELS.perspective}
           <i className="fa-solid fa-circle-question text-[0.55rem] opacity-40" />
         </span>
         <span
@@ -123,8 +160,8 @@ const InteractiveEquation = ({ s }: { readonly s: EquationData }) => {
       {hovered ? (
         <div className="text-text-dim animate-fade-in rounded-xl border border-white/10 bg-black/80 p-2.5 font-mono text-[0.42rem] leading-relaxed shadow-inner backdrop-blur-md w-full">
           <div className="mb-1.5 flex justify-between border-b border-white/5 pb-1.5 font-bold tracking-wider text-white uppercase">
-            <span>Expectativa: {expectationVal}%</span>
-            <span>Custo Total: -{costVal}%</span>
+            <span>{LABELS.expectationPrefix}{expectationVal}%</span>
+            <span>{LABELS.totalCostPrefix}{costVal}%</span>
           </div>
           <div className="text-right text-white/95">
             ({s.handEquity.toFixed(0)}% Eq × {s.realizationFactor.toFixed(2)} R × {s.valuation.toFixed(2)} Val) - (|
@@ -134,7 +171,7 @@ const InteractiveEquation = ({ s }: { readonly s: EquationData }) => {
         </div>
       ) : (
         <p className="text-text-darker group-hover/eq:text-text-muted m-0 text-right text-[0.45rem] leading-tight font-black tracking-widest uppercase transition-colors w-full">
-          PM = (Exp × R × Val) – (EV_Fold + RIO)
+          {LABELS.formulaCollapsed}
         </p>
       )}
     </button>
@@ -151,15 +188,10 @@ export default function PmLensPanel({
   initialPrizes = DEFAULT_PRIZES,
 }: Readonly<PmLensPanelProps>) {
   const getInitialHeroIdx = () => {
-    const posMap: Record<string, { max: number; off: number }> = {
-      BB: { max: 8, off: 1 },
-      SB: { max: 7, off: 2 },
-      IP: { max: 6, off: 3 },
-      OOP: { max: 0, off: 1 },
-    };
-    const conf = posMap[_heroPosition ?? 'OOP'] || posMap['OOP'];
-    const safeConf = conf ?? { max: 0, off: 1 };
-    return Math.min(safeConf.max, initialStacks.length - safeConf.off);
+    if (_heroPosition === 'BB') return Math.min(8, initialStacks.length - 1);
+    if (_heroPosition === 'SB') return Math.min(7, initialStacks.length - 2);
+    if (_heroPosition === 'IP') return Math.min(6, initialStacks.length - 3);
+    return Math.min(0, initialStacks.length - 1);
   };
   const [heroIdx, setHeroIdx] = useState(getInitialHeroIdx);
   const [villainIndices, setVillainIndices] = useState<number[]>(() => {
@@ -182,12 +214,14 @@ export default function PmLensPanel({
   const [betSizing, setBetSizing] = useState<number>(0.5);
 
   const getPostFlopOrder = (idx: number) => {
-    const orderMap: Record<number, number> = { 7: 0, 8: 1 };
-    return orderMap[idx] ?? idx + 2;
+    if (idx === 7) return 0;
+    if (idx === 8) return 1;
+    return idx + 2;
   };
   const isHeroIP = getPostFlopOrder(heroIdx) > getPostFlopOrder(primaryVillainIdx);
 
-  const spr = Math.max(0.1, (initialStacks[heroIdx] || 10) / Math.max(1, currentPot));
+  const heroStack = initialStacks.at(heroIdx) ?? 10;
+  const spr = Math.max(0.1, heroStack / Math.max(1, currentPot));
 
   // SOTA v7.0 GOLD: A Realizacao (R) e agora uma resultante da fisica unificada.
   const posBaseline = isHeroIP ? 1 : 0.85;
@@ -270,7 +304,7 @@ export default function PmLensPanel({
     if (!firstMetric || firstMetric.loading) return insights;
 
     const river = streetMetrics[3];
-    const heroStack = initialStacks[heroIdx] ?? 10;
+    const heroStack = initialStacks.at(heroIdx) ?? 10;
 
     // 1. Falácia ChipEV
     const hasInsolvencyWithHighEquity = streetMetrics.some((s) => s.ci !== null && s.ci < 1 && equity > 45);
@@ -362,17 +396,17 @@ export default function PmLensPanel({
             <div className="bg-accent-indigo h-3 w-3 rounded-full shadow-[0_0_20px_var(--accent-indigo)] animate-pulse" />
             <div>
               <h3 className="text-white m-0 text-[0.9rem] font-black tracking-[0.45em] uppercase">
-                Framework PM <span className="text-text-darker ml-2">&middot; Lente de Perspectiva</span>
+                {LABELS.frameworkPm} <span className="text-text-darker ml-2">{LABELS.lensSubtitle}</span>
               </h3>
               <p className="text-text-muted m-0 mt-2 text-[0.6rem] font-black tracking-[0.3em] uppercase">
-                Telemetria Sistêmica de Sunk Cost &middot; <span className="text-accent-indigo-light">SOTA v7.0 GOLD</span>
+                {LABELS.telemetryTitle}<span className="text-accent-indigo-light">{LABELS.sotaGold}</span>
               </p>
             </div>
           </div>
           <SniperBadge
             pm={streetMetrics[0]?.PM ?? 0}
             ci={streetMetrics[0]?.ci ?? null}
-            stackEff={Math.min(initialStacks[heroIdx] ?? 0, initialStacks[primaryVillainIdx] ?? 0)}
+            stackEff={Math.min(initialStacks.at(heroIdx) ?? 0, initialStacks.at(primaryVillainIdx) ?? 0)}
           />
         </div>
       </div>
@@ -384,17 +418,17 @@ export default function PmLensPanel({
             <div className="space-y-5">
               <div className="flex items-center justify-between px-1">
                 <span className="text-text-muted text-[0.65rem] font-black tracking-[0.3em] uppercase">
-                  Hero (Agressor)
+                  {LABELS.heroAggressor}
                 </span>
                 <span className="text-text-darker rounded-md bg-black/40 px-2.5 py-1 text-[0.5rem] font-black tracking-widest uppercase">
-                  SPR Active
+                  {LABELS.sprActive}
                 </span>
               </div>
               <div className="scrollbar-hide flex flex-wrap gap-2.5 overflow-x-auto pb-4">
                 {DEFAULT_PLAYERS.slice(0, initialStacks.length).map((p, i) => (
                   <SelectBtn
                     key={p}
-                    label={`${p} ${initialStacks[i]}bb`}
+                    label={`${p} ${initialStacks.at(i) ?? 0}bb`}
                     active={heroIdx === i}
                     impossible={villainIndices.includes(i)}
                     onClick={() => setHeroIdx(i)}
@@ -405,17 +439,17 @@ export default function PmLensPanel({
             <div className="space-y-5">
               <div className="flex items-center justify-between px-1">
                 <span className="text-text-muted text-[0.65rem] font-black tracking-[0.3em] uppercase">
-                  Villain(s) - Multiway
+                  {LABELS.villainsMultiway}
                 </span>
                 <span className="text-text-darker rounded-md bg-black/40 px-2.5 py-1 text-[0.5rem] font-black tracking-widest uppercase">
-                  N² Complexity
+                  {LABELS.n2Complexity}
                 </span>
               </div>
               <div className="scrollbar-hide flex flex-wrap gap-2.5 overflow-x-auto pb-4">
                 {DEFAULT_PLAYERS.slice(0, initialStacks.length).map((p, i) => (
                   <SelectBtn
                     key={p}
-                    label={`${p} ${initialStacks[i]}bb`}
+                    label={`${p} ${initialStacks.at(i) ?? 0}bb`}
                     active={villainIndices.includes(i)}
                     impossible={i === heroIdx}
                     onClick={() => toggleVillain(i)}
@@ -433,10 +467,11 @@ export default function PmLensPanel({
               <div className="space-y-6">
                 <div className={`flex flex-col gap-2 ${isHeroIP ? 'text-accent-indigo-light' : 'text-accent-danger'}`}>
                   <div className="flex items-center justify-between text-[0.65rem] font-black tracking-widest uppercase">
-                    <span>Realização (R)</span>
+                    <span>{LABELS.realizationR}</span>
                     <div className="flex items-center gap-4">
                       {customR !== null && (
                         <button
+                          type="button"
                           onClick={() => setCustomR(null)}
                           className="text-text-dim cursor-pointer rounded-lg border border-white/5 bg-black/40 px-3 py-1 text-[0.6rem] tracking-tighter uppercase transition-all hover:text-white"
                           title="Resetar para Auto"
@@ -461,14 +496,14 @@ export default function PmLensPanel({
                   className={`h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/5 ${isHeroIP ? 'accent-accent-indigo' : 'accent-accent-danger'}`}
                 />
                 <p className="text-text-darker m-0 text-[0.5rem] leading-tight font-black tracking-[0.2em] uppercase">
-                  Ajuste de under/over realization. R&lt;1 = perda de EQ.
+                  {LABELS.realizationAdjustment}
                 </p>
               </div>
 
               <div className="space-y-6">
                 <div className="text-accent-amber flex flex-col gap-2">
                   <div className="flex items-center justify-between text-[0.65rem] font-black tracking-widest uppercase">
-                    <span>Villain AggFactor</span>
+                    <span>{LABELS.villainAggFactor}</span>
                     <span className="rounded-lg border border-white/5 bg-black/60 px-3 py-1 font-mono font-black text-white shadow-2xl">
                       {aggFactor.toFixed(2)}x
                     </span>
@@ -485,7 +520,7 @@ export default function PmLensPanel({
                   className="accent-accent-amber h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/5"
                 />
                 <p className="text-text-darker m-0 text-[0.5rem] leading-tight font-black tracking-[0.2em] uppercase">
-                  Agg extrema OOP destrói sua Realização (R).
+                  {LABELS.extremeAggWarning}
                 </p>
               </div>
             </div>
@@ -493,7 +528,7 @@ export default function PmLensPanel({
               <div className="bg-accent-indigo/5 border-accent-indigo/10 flex items-center gap-4 rounded-2xl border p-5">
                 <div className="bg-accent-indigo h-2 w-2 animate-pulse rounded-full" />
                 <p className="text-text-muted m-0 text-[0.7rem] leading-relaxed font-medium">
-                  <strong className="mr-3 tracking-[0.3em] text-white uppercase">Motor R Ativo:</strong> SPR{' '}
+                  <strong className="mr-3 tracking-[0.3em] text-white uppercase">{LABELS.motorRActive}</strong> SPR{' '}
                   {spr.toFixed(1)} &middot; Pos {absoluteHeroPos} &middot; Agg {aggFactor.toFixed(1)}x
                 </p>
               </div>
@@ -507,10 +542,11 @@ export default function PmLensPanel({
                 <i className="fa-solid fa-anchor text-accent-indigo text-[0.7rem]" /> Tática de Ancoragem
               </h4>
               <button
+                type="button"
                 onClick={() =>
                   setActiveNodelock((prev) => (prev ? null : { type: 'block_bet', sizePct: 0.2, freqOverride: 1 }))
                 }
-                {...{ 'aria-pressed': !!activeNodelock }}
+                aria-pressed={Boolean(activeNodelock)}
                 className={`cursor-pointer rounded-xl border px-6 py-3 text-[0.65rem] font-black tracking-widest uppercase transition-all active:scale-95 ${activeNodelock ? 'bg-accent-indigo/20 border-accent-indigo text-accent-indigo-light shadow-[0_0_20px_rgba(99,102,241,0.2)]' : 'text-text-dim border-white/10 bg-transparent hover:border-white/30 hover:text-white'}`}
               >
                 {activeNodelock ? 'Nodelock B20 Ativo' : 'Ativar Block Bet 20%'}
@@ -518,7 +554,7 @@ export default function PmLensPanel({
             </div>
             {activeNodelock && (
               <p className="text-accent-indigo-light border-accent-indigo/30 m-0 border-l-2 py-2 pl-6 text-[0.75rem] leading-relaxed font-medium italic">
-                A estrutura SPR foi mitigada (+40%/street). Axioma Lipe Piv acionado (κ:{' '}
+                {LABELS.nodelockTriggered}
                 <span className="font-mono font-black">{Math.min(1, kappa + 0.3).toFixed(2)}x</span>)
               </p>
             )}
@@ -531,7 +567,7 @@ export default function PmLensPanel({
           <div className="relative z-10 space-y-10">
             <div className="flex flex-col gap-6">
               <div className="text-text-muted flex items-center justify-between text-[0.7rem] font-black tracking-[0.3em] uppercase transition-colors group-hover/sidebar:text-white">
-                <span>Equity Bruta</span>
+                <span>{LABELS.rawEquity}</span>
                 <span className="rounded-lg border border-white/5 bg-black/40 px-3 py-1 font-mono text-[0.9rem] text-white shadow-inner">
                   {equity}%
                 </span>
@@ -546,14 +582,14 @@ export default function PmLensPanel({
                 className="accent-text-muted h-2 w-full cursor-pointer appearance-none rounded-full bg-white/5"
               />
               <p className="text-text-darker m-0 text-[0.55rem] leading-tight font-black tracking-[0.2em] uppercase">
-                No vácuo &middot; Cega para FGS, RIO e Pressão ICM.
+                {LABELS.inVacuum}
               </p>
             </div>
 
             <div className="grid grid-cols-1 gap-10">
               <div className="space-y-5">
                 <div className="text-accent-pink flex items-center justify-between text-[0.65rem] font-black tracking-widest uppercase">
-                  <span>κ Credibilidade</span>
+                  <span>{LABELS.kappaCredibility}</span>
                   <span className="rounded-lg bg-black/40 px-3 py-1 font-mono text-white">
                     {Math.round(kappa * 100)}%
                   </span>
@@ -575,7 +611,7 @@ export default function PmLensPanel({
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <span className="text-text-darker pl-2 text-[0.55rem] font-black tracking-widest uppercase">
-                    Hero Range
+                    {LABELS.heroRange}
                   </span>
                   <input
                     aria-label="Hero Range"
@@ -588,7 +624,7 @@ export default function PmLensPanel({
                 </div>
                 <div className="space-y-3">
                   <span className="text-text-darker pl-2 text-[0.55rem] font-black tracking-widest uppercase">
-                    Villain Range
+                    {LABELS.villainRange}
                   </span>
                   <input
                     aria-label="Villain Range"
@@ -604,7 +640,7 @@ export default function PmLensPanel({
               <div className="grid grid-cols-[1fr_130px] gap-6">
                 <div className="space-y-3">
                   <span className="text-text-darker pl-2 text-[0.55rem] font-black tracking-widest uppercase">
-                    Board Structural
+                    {LABELS.boardStructural}
                   </span>
                   <input
                     aria-label="Board Structural"
@@ -617,7 +653,7 @@ export default function PmLensPanel({
                 </div>
                 <div className="space-y-3">
                   <span className="text-text-darker block text-center text-[0.55rem] font-black tracking-widest uppercase">
-                    Sizing
+                    {LABELS.sizing}
                   </span>
                   <div className="relative">
                     <select
@@ -637,6 +673,7 @@ export default function PmLensPanel({
 
               <div className="pt-4">
                 <button
+                  type="button"
                   onClick={handleCalculateEquity}
                   disabled={isCalculatingEq || !heroRange || !villainRange}
                   className="bg-accent-indigo border-accent-indigo-light/30 shadow-accent-indigo/20 w-full rounded-2xl border py-5 text-[0.8rem] font-black tracking-[0.3em] text-white uppercase shadow-2xl transition-all hover:bg-indigo-500 hover:shadow-indigo-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
@@ -644,7 +681,7 @@ export default function PmLensPanel({
                   {isCalculatingEq ? 'Triturando VRAM...' : 'Injetar GTO (WebGPU)'}
                 </button>
                 <p className="text-text-darker m-0 mt-4 text-center text-[0.55rem] leading-tight font-black tracking-widest uppercase">
-                  Invoca Compute Shader p/ Monte Carlo O(1)
+                  {LABELS.computeShaderDesc}
                 </p>
               </div>
             </div>
@@ -682,7 +719,7 @@ export default function PmLensPanel({
                 value={`-${s.heroCost.toFixed(2)}bb`}
                 colorClass="text-text-dim"
                 loading={s.loading}
-                isAlert={s.heroCost > (initialStacks[heroIdx] || 10) * 0.25}
+                isAlert={s.heroCost > (initialStacks.at(heroIdx) ?? 10) * 0.25}
                 alertType="warning"
                 tooltipDesc="Fichas investidas não lhe pertencem mais. Elas ditam a profundidade do custo irrecuperável de desistir."
               />

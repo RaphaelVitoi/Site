@@ -27,6 +27,20 @@ export interface NashMatrixProfilerProps {
 	matchupLabel?: string;
 }
 
+const PROFILER_LABELS = {
+	ipRp: 'Agressor Risk Premium (IP RP):',
+	oopRp: 'Defensor Risk Premium (OOP RP):',
+	aggression: 'Fator de Agressão (κ):',
+	asymmetry: 'Assimetria de Risco',
+	telemetry: 'Telemetria de Baixa Latência (WebWorker):',
+	chipEv: '0% (ChipEV)',
+	ftMid: '40% (FT Média)',
+	icmNuclear: '80% (ICM Nuclear)',
+	passive: '0.2x (Passivo)',
+	gto: '1.0x (GTO)',
+	hyperAggro: '3.5x (Hiper-Agressivo)',
+};
+
 export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 	injectedIpRp,
 	injectedOopRp,
@@ -174,38 +188,29 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 				</div>
 			</div>
 
-			{/* Presets Rápidos de High Stakes / Mesa Final */}
-			<div className="space-y-2">
-				<label className="text-xs text-slate-400 font-bold uppercase tracking-wider block">
-					Presets Estruturais de Mesa Final:
-				</label>
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-					{HIGH_STAKES_PRESETS.map((p) => (
-						<button
-							key={p.id}
-							type="button"
-							onClick={() => applyPreset(p)}
-							className={`p-2.5 text-left rounded-lg border text-xs transition-all ${
-								activePreset === p.id
-									? 'bg-cyan-950/60 border-cyan-400 text-cyan-200 shadow-md ring-1 ring-cyan-500/50'
-									: 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/40'
-							}`}
-						>
-							<div className="font-bold">{p.label}</div>
-							<div className="text-[10px] text-slate-400 truncate mt-0.5">{p.description}</div>
-							<div className="text-[10px] text-cyan-400 mt-1">
-								IP: {p.ipRp}% | OOP: {p.oopRp}% | &kappa;: {p.aggression}x
-							</div>
-						</button>
-					))}
-				</div>
+			{/* Presets Rápidos */}
+			<div className="flex flex-wrap gap-2">
+				{HIGH_STAKES_PRESETS.map((p) => (
+					<button
+						key={p.id}
+						type="button"
+						onClick={() => applyPreset(p)}
+						className={`px-3 py-1.5 rounded text-xs font-mono transition-all ${
+							activePreset === p.id
+								? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
+								: 'bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-slate-200'
+						}`}
+					>
+						{p.label}
+					</button>
+				))}
 			</div>
 
 			{/* Controles Dinâmicos de Parâmetros com Range 0% a 80% */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<div className="bg-slate-900/70 p-4 rounded-lg border border-slate-800 space-y-2">
 					<div className="flex justify-between items-center text-xs">
-						<span className="text-slate-400">Agressor Risk Premium (IP RP):</span>
+						<span className="text-slate-400">{PROFILER_LABELS.ipRp}</span>
 						<span className="text-cyan-400 font-bold text-sm">{ipRp.toFixed(1)}%</span>
 					</div>
 					<input
@@ -216,20 +221,20 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 						value={ipRp}
 						onChange={(e) => {
 							setActivePreset('');
-							recompute(parseFloat(e.target.value), oopRp, aggression);
+							recompute(Number.parseFloat(e.target.value), oopRp, aggression);
 						}}
 						className="w-full accent-cyan-400 cursor-pointer h-2 bg-slate-800 rounded-lg"
 					/>
 					<div className="flex justify-between text-[10px] text-slate-500 font-mono">
-						<span>0% (ChipEV)</span>
-						<span>40% (FT Média)</span>
-						<span>80% (ICM Nuclear)</span>
+						<span>{PROFILER_LABELS.chipEv}</span>
+						<span>{PROFILER_LABELS.ftMid}</span>
+						<span>{PROFILER_LABELS.icmNuclear}</span>
 					</div>
 				</div>
 
 				<div className="bg-slate-900/70 p-4 rounded-lg border border-slate-800 space-y-2">
 					<div className="flex justify-between items-center text-xs">
-						<span className="text-slate-400">Defensor Risk Premium (OOP RP):</span>
+						<span className="text-slate-400">{PROFILER_LABELS.oopRp}</span>
 						<span className="text-rose-400 font-bold text-sm">{oopRp.toFixed(1)}%</span>
 					</div>
 					<input
@@ -240,20 +245,20 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 						value={oopRp}
 						onChange={(e) => {
 							setActivePreset('');
-							recompute(ipRp, parseFloat(e.target.value), aggression);
+							recompute(ipRp, Number.parseFloat(e.target.value), aggression);
 						}}
 						className="w-full accent-rose-400 cursor-pointer h-2 bg-slate-800 rounded-lg"
 					/>
 					<div className="flex justify-between text-[10px] text-slate-500 font-mono">
-						<span>0% (ChipEV)</span>
-						<span>40% (FT Média)</span>
-						<span>80% (ICM Nuclear)</span>
+						<span>{PROFILER_LABELS.chipEv}</span>
+						<span>{PROFILER_LABELS.ftMid}</span>
+						<span>{PROFILER_LABELS.icmNuclear}</span>
 					</div>
 				</div>
 
 				<div className="bg-slate-900/70 p-4 rounded-lg border border-slate-800 space-y-2">
 					<div className="flex justify-between items-center text-xs">
-						<span className="text-slate-400">Fator de Agressão (&kappa;):</span>
+						<span className="text-slate-400">{PROFILER_LABELS.aggression}</span>
 						<span className="text-amber-400 font-bold text-sm">{aggression.toFixed(2)}x</span>
 					</div>
 					<input
@@ -264,21 +269,21 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 						value={aggression}
 						onChange={(e) => {
 							setActivePreset('');
-							recompute(ipRp, oopRp, parseFloat(e.target.value));
+							recompute(ipRp, oopRp, Number.parseFloat(e.target.value));
 						}}
 						className="w-full accent-amber-400 cursor-pointer h-2 bg-slate-800 rounded-lg"
 					/>
 					<div className="flex justify-between text-[10px] text-slate-500 font-mono">
-						<span>0.2x (Passivo)</span>
-						<span>1.0x (GTO)</span>
-						<span>3.5x (Hiper-Agressivo)</span>
+						<span>{PROFILER_LABELS.passive}</span>
+						<span>{PROFILER_LABELS.gto}</span>
+						<span>{PROFILER_LABELS.hyperAggro}</span>
 					</div>
 				</div>
 			</div>
 
 			{/* Métricas e Resultados do Equilíbrio Distorcido */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-				<div className="bg-gradient-to-br from-slate-900 to-cyan-950/40 p-4 rounded-lg border border-cyan-500/30 text-center">
+				<div className="bg-linear-to-br from-slate-900 to-cyan-950/40 p-4 rounded-lg border border-cyan-500/30 text-center">
 					<div className="text-xs text-slate-400">{solution.defense.label}</div>
 					<div className="text-2xl font-black text-cyan-300 mt-1">
 						{solution.defense.value}%
@@ -288,7 +293,7 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 					</div>
 				</div>
 
-				<div className="bg-gradient-to-br from-slate-900 to-amber-950/40 p-4 rounded-lg border border-amber-500/30 text-center">
+				<div className="bg-linear-to-br from-slate-900 to-amber-950/40 p-4 rounded-lg border border-amber-500/30 text-center">
 					<div className="text-xs text-slate-400">{solution.bluff.label}</div>
 					<div className="text-2xl font-black text-amber-300 mt-1">
 						{solution.bluff.value}%
@@ -298,7 +303,7 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 					</div>
 				</div>
 
-				<div className="bg-gradient-to-br from-slate-900 to-emerald-950/40 p-4 rounded-lg border border-emerald-500/30 text-center">
+				<div className="bg-linear-to-br from-slate-900 to-emerald-950/40 p-4 rounded-lg border border-emerald-500/30 text-center">
 					<div className="text-xs text-slate-400">{solution.evDiff.label}</div>
 					<div className="text-2xl font-black text-emerald-300 mt-1">
 						{solution.evDiff.totalRequired}%
@@ -308,8 +313,8 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 					</div>
 				</div>
 
-				<div className="bg-gradient-to-br from-slate-900 to-purple-950/40 p-4 rounded-lg border border-purple-500/30 text-center">
-					<div className="text-xs text-slate-400">Assimetria de Risco</div>
+				<div className="bg-linear-to-br from-slate-900 to-purple-950/40 p-4 rounded-lg border border-purple-500/30 text-center">
+					<div className="text-xs text-slate-400">{PROFILER_LABELS.asymmetry}</div>
 					<div className="text-2xl font-black text-purple-300 mt-1">
 						{solution.asymmetryScore > 0 ? `+${solution.asymmetryScore}` : solution.asymmetryScore}%
 					</div>
@@ -322,7 +327,7 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 			{/* Telemetria de Baixa Latência (WebWorker) */}
 			<div className="bg-slate-950 p-4 rounded-lg border border-slate-800 text-xs">
 				<div className="flex justify-between items-center mb-2">
-					<span className="text-slate-400">Telemetria de Baixa Latência (WebWorker):</span>
+					<span className="text-slate-400">{PROFILER_LABELS.telemetry}</span>
 					<span className="text-slate-500">{renderPhase}</span>
 				</div>
 				<pre className="text-slate-300 overflow-x-auto">
@@ -332,3 +337,5 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 		</div>
 	);
 };
+
+export default NashMatrixProfiler;

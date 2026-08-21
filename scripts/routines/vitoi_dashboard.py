@@ -28,7 +28,7 @@ def gerar_tabela_logs(n_linhas=15):
     if not os.path.exists(log_file):
         return table
 
-    with open(log_file) as f:
+    with open(log_file, encoding="utf-8", errors="replace") as f:
         linhas = f.readlines()[-n_linhas:]
 
     for linha in linhas:

@@ -16,6 +16,7 @@
 /(public)/quem-sou              Sobre Raphael Vitoi
 /(user)/dashboard               Dashboard do usuario (vitoi.ts integration)
 /(lab)/simulador               Simulador Mestre ICM (Motor v7.0 GOLD)
+/(lab)/simulador/distorcoes    Motor de Distorções ICM (Bubble Factor & Nash)
 /(lab)/simulador/gto-cfr       Laboratorio GTO AI (CFR e A*)
 /(auth)/login                   Página de autenticação/login
 /(lab)/quiz                    Quiz e validação de conhecimento

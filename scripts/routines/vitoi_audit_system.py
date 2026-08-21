@@ -82,11 +82,11 @@ def _analisar_arquivo(path: str) -> tuple[int, int, int, int]:
         return vg, docs, funcs, loc
 
     except SyntaxError as e:
-        logger.error(f"Erro de Sintaxe em {path}: {e}")
+        logger.warning("Erro de Sintaxe em %s: %s", path, e)
         print(f" [!] Pulando {os.path.basename(path)}: Erro de sintaxe (possivel corrupcao).")
         return 0, 0, 0, 0
     except Exception as e:  # noqa: BLE001
-        logger.error(f"Falha ao ler {path}: {e}")
+        logger.warning("Falha ao ler %s: %s", path, e)
         return 0, 0, 0, 0
 
 
@@ -98,7 +98,7 @@ def calcular_indice_saude(total_vg: int, total_funcs: int, total_docs: int, tota
         return 100.0
 
     ih = 100 - ((total_vg / total_funcs) * 5) + ((total_docs / total_loc) * 20)
-    return float(max(0, min(100, ih)))
+    return max(0.0, min(100.0, ih))
 
 
 def auditoria_total(diretorio: str) -> None:

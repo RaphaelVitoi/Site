@@ -84,8 +84,11 @@ def _sync_fallback_request(
     Executado em Thread isolada para nao bloquear o Event Loop principal.
     """
     # SOTA Guard (S310): Validacao estrita de esquema previne leitura de arquivos locais (file://)
-    if not url.lower().startswith(("http://", "https://")):
-        return 0, "Bloqueio de Seguranca: Apenas esquemas HTTP/HTTPS sao permitidos."
+    url_l = url.lower()
+    is_https = url_l.startswith("https://")
+    is_local_http = url_l.startswith(("http://localhost", "http://127.0.0.1", "http://[::1]"))
+    if not (is_https or is_local_http):
+        return 0, "Bloqueio de Seguranca: Apenas esquemas HTTPS ou HTTP locais sao permitidos."
 
     req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
     try:

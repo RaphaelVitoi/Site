@@ -11,7 +11,7 @@ import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 import { motion } from 'framer-motion';
 import { use, useState } from 'react';
 import { SotaMetricsContext } from '../SotaContext';
-import type { ChipEvFreqs, IcmDistortionResult, StreetChipEvFreqs } from '../engine/types';
+import type { ChipEvFreqs, IcmDistortionResult, StreetChipEvFreqs } from '../solver/types';
 import { ActionRow } from '../ui/ActionRow';
 import { SotaTooltip } from '../ui/SotaTooltip';
 import { useGemmaStream } from '../useGemmaStream';
@@ -64,7 +64,7 @@ const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: numbe
         >
           {ipRp.toFixed(1)}
         </span>
-        <span className="text-text-darker text-[0.7rem] font-black tracking-widest uppercase">RP %</span>
+        <span className="text-text-darker text-[0.7rem] font-black tracking-widest uppercase">{LABELS.rpPct}</span>
       </div>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
         <motion.div
@@ -87,7 +87,7 @@ const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: numbe
         <span className="text-accent-amber font-mono text-4xl font-black tracking-tighter tabular-nums [text-shadow:0_0_25px_rgba(245,158,11,0.3)]">
           {oopRp.toFixed(1)}
         </span>
-        <span className="text-text-darker text-[0.7rem] font-black tracking-widest uppercase">RP %</span>
+        <span className="text-text-darker text-[0.7rem] font-black tracking-widest uppercase">{LABELS.rpPct}</span>
       </div>
       <div className="mt-2 flex h-1.5 w-full justify-end overflow-hidden rounded-full bg-white/5">
         <motion.div
@@ -239,6 +239,13 @@ const EntropyModulators = ({
   </div>
 );
 
+const LABELS = {
+  rpPct: 'RP %',
+  valuationOrganism: 'Organismo de Valuation',
+  processing: 'Processando...',
+  injectTelemetry: 'Injetar Telemetria',
+} as const;
+
 export default function NashPanel({
   nashFlop,
   nashTurn,
@@ -294,7 +301,13 @@ export default function NashPanel({
     },
   };
 
-  const current = streetData[activeStreet];
+  const getStreetConfig = (s: 'flop' | 'turn' | 'river') => {
+    if (s === 'turn') return streetData.turn;
+    if (s === 'river') return streetData.river;
+    return streetData.flop;
+  };
+
+  const current = getStreetConfig(activeStreet);
 
   const deltaRp = isBaseline ? 0 : current.nash.deltaRp;
   const ipRp = isBaseline ? 0 : current.rps.ip;
@@ -337,20 +350,23 @@ export default function NashPanel({
               Motor SOTA v7.0 GOLD
             </span>
             <span className="text-white opacity-20">|</span>
-            <span>Organismo de Valuation</span>
+            <span>{LABELS.valuationOrganism}</span>
           </p>
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="text-text-darker text-[0.6rem] font-black tracking-[0.4em] uppercase">Instabilidade δ</span>
-          <div
-            className={`flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/80 px-6 py-3 font-mono text-[0.9rem] font-black whitespace-nowrap tabular-nums shadow-2xl transition-colors ${deltaRp > 0 ? 'text-accent-amber' : 'text-accent-emerald'}`}
-          >
-            <div
-              className={`h-1.5 w-1.5 rounded-full ${deltaRp > 0 ? 'bg-accent-amber animate-pulse' : 'bg-accent-emerald'}`}
-            />
-            {deltaRp >= 0 ? '+' : ''}
-            {deltaRp.toFixed(1)}%
+          <div className="flex flex-col items-end">
+            <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
+              Instabilidade &delta;
+            </span>
+            <span className="font-mono text-base font-black text-white">{deltaRp.toFixed(1)}%</span>
+          </div>
+          <div className="h-8 w-px bg-white/5" />
+          <div className="flex flex-col items-end">
+            <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
+              Agressividade (&Psi;)
+            </span>
+            <span className="font-mono text-base font-black text-white">{safeAggression.toFixed(1)}x</span>
           </div>
         </div>
       </div>
@@ -359,6 +375,7 @@ export default function NashPanel({
       <div id="quantum-controls" className="relative z-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
         {isNearPayjump ? (
           <button
+            type="button"
             aria-pressed="true"
             onClick={() => onPayjumpToggle(false)}
             className="group/btn bg-accent-emerald/10 border-accent-emerald/40 text-accent-emerald flex cursor-pointer items-center justify-center gap-4 rounded-2xl border px-8 py-5 text-[0.75rem] font-black tracking-[0.3em] uppercase shadow-2xl shadow-emerald-500/10 transition-all duration-500 active:scale-95"
@@ -368,6 +385,7 @@ export default function NashPanel({
           </button>
         ) : (
           <button
+            type="button"
             aria-pressed="false"
             onClick={() => onPayjumpToggle(true)}
             className="group/btn text-text-muted flex cursor-pointer items-center justify-center gap-4 rounded-2xl border border-white/5 bg-slate-900/40 px-8 py-5 text-[0.75rem] font-black tracking-[0.3em] uppercase shadow-2xl transition-all duration-500 hover:border-white/20 hover:bg-slate-900/60 active:scale-95"
@@ -379,6 +397,7 @@ export default function NashPanel({
 
         {blindsRisingSoon ? (
           <button
+            type="button"
             aria-pressed="true"
             onClick={() => onBlindsToggle(false)}
             className="group/btn bg-accent-danger/10 border-accent-danger/40 text-accent-danger flex cursor-pointer items-center justify-center gap-4 rounded-2xl border px-8 py-5 text-[0.75rem] font-black tracking-[0.3em] uppercase shadow-2xl shadow-rose-500/10 transition-all duration-500 active:scale-95"
@@ -388,6 +407,7 @@ export default function NashPanel({
           </button>
         ) : (
           <button
+            type="button"
             aria-pressed="false"
             onClick={() => onBlindsToggle(true)}
             className="group/btn text-text-muted flex cursor-pointer items-center justify-center gap-4 rounded-2xl border border-white/5 bg-slate-900/40 px-8 py-5 text-[0.75rem] font-black tracking-[0.3em] uppercase shadow-2xl transition-all duration-500 hover:border-white/20 hover:bg-slate-900/60 active:scale-95"
@@ -401,7 +421,7 @@ export default function NashPanel({
       {/* Street Selector - Estética High-End */}
       <div className="scrollbar-hide relative z-10 flex gap-4 overflow-x-auto rounded-3xl border border-white/5 bg-slate-950/60 p-2 shadow-inner">
         {(['flop', 'turn', 'river'] as const).map((s) => {
-          const d = streetData[s];
+          const d = getStreetConfig(s);
           const isActive = s === activeStreet;
           const avgRp = isBaseline ? 0 : (d.rps.ip + d.rps.oop) / 2;
           const activeClasses = `bg-slate-900/90 border-white/10 -translate-y-1 scale-[1.02] ${d.shadowClass}`;
@@ -448,6 +468,7 @@ export default function NashPanel({
             <span>Análise Preditiva (Gemma Edge)</span>
           </h4>
           <button
+            type="button"
             onClick={handleConsultGemma}
             disabled={isStreaming}
             className="bg-accent-indigo/10 hover:bg-accent-indigo/20 text-accent-indigo-light border-accent-indigo/30 flex items-center gap-3 rounded-xl border px-6 py-3 text-[0.7rem] font-black tracking-[0.3em] uppercase transition-all disabled:opacity-50"
@@ -455,12 +476,12 @@ export default function NashPanel({
             {isStreaming ? (
               <span className="flex items-center gap-3">
                 <i className="fa-solid fa-atom animate-spin" />
-                <span>Processando...</span>
+                <span>{LABELS.processing}</span>
               </span>
             ) : (
               <span className="flex items-center gap-3">
                 <i className="fa-solid fa-radar" />
-                <span>Injetar Telemetria</span>
+                <span>{LABELS.injectTelemetry}</span>
               </span>
             )}
           </button>

@@ -3,8 +3,8 @@
 /**
  * IDENTITY: Simulador de Downward Drift SOTA Quantum
  * PATH: src/components/simulator/DownwardDriftSimulator.tsx
- * ROLE: Analisar a erosÃ£o de stack e o aprisionamento no pote (Pot Entrapment).
- * PRINCIPLE: FricÃ§Ã£o Zero & EstÃ©tica Sofisticada.
+ * ROLE: Analisar a erosão de stack e o aprisionamento no pote (Pot Entrapment).
+ * PRINCIPLE: Fricção Zero & Estética Sofisticada.
  */
 
 import { useMounted } from '@/hooks/useMounted';
@@ -44,7 +44,7 @@ export function DownwardDriftSimulator() {
 			}
 		};
 
-		// IgniÃ§Ã£o do Profiler N^2 na VRAM
+		// Ignição do Profiler N^2 na VRAM
 		workerRef.current.postMessage({
 			type: 'MULTIWAY_RIO',
 			maxPlayers,
@@ -98,7 +98,7 @@ export function DownwardDriftSimulator() {
 				baseRioLiability,
 			);
 
-			// SOTA: InjeÃ§Ã£o O(1) do Multiway RIO Profiler da VRAM (WASM)
+			// SOTA: Injeção O(1) do Multiway RIO Profiler da VRAM (WASM)
 			if (multiwayRioMatrix) {
 				const spr = Math.max(
 					1,
@@ -176,7 +176,7 @@ export function DownwardDriftSimulator() {
 				<div className="flex gap-4">
 					<div className="bg-bg-deep border border-white/5 px-4 py-2 rounded-xl">
 						<span className="text-label text-accent-emerald">
-							TensÃ£o Ativa: {(activeTension * 100).toFixed(1)}%
+							Tensão Ativa: {(activeTension * 100).toFixed(1)}%
 						</span>
 					</div>
 				</div>
@@ -222,13 +222,13 @@ export function DownwardDriftSimulator() {
 					</div>
 					<div className="space-y-2">
 						<div className="flex justify-between items-end mb-1">
-							<span className="text-label opacity-50">Jogadores (Multiway NÂ²)</span>
+							<span className="text-label opacity-50">Jogadores (Multiway N²)</span>
 							<span className="text-sm font-black font-mono text-accent-danger">
 								{activePlayers}
 							</span>
 						</div>
 						<input
-							aria-label="Jogadores (Multiway NÂ²)"
+							aria-label="Jogadores (Multiway N²)"
 							type="range"
 							min="2"
 							max="9"

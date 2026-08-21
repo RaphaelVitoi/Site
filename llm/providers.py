@@ -8,8 +8,8 @@ API requests from resilience and circuit breaker logic.
 import asyncio
 import logging
 import os
-import random
 import re
+import secrets
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -92,23 +92,25 @@ class LLMProviderStrategy(ABC):
 
     async def check_quarantine(
         self,
-        _model: str,
-        _key: str,
+        model: str,
+        key: str,
     ) -> bool:
         """
         Permite que provedores implementem suas proprias
         regras de quarentena semantica de chaves.
         """
+        del model, key
         await asyncio.sleep(0)
         return False
 
     async def handle_semantic_error(
         self,
-        _e: Exception,
-        _model: str,
-        _key: str,
+        e: Exception,
+        model: str,
+        key: str,
     ) -> None:
         """Bloqueia a chave com base em erros especificos."""
+        del e, model, key
         await asyncio.sleep(0)
 
 
@@ -282,15 +284,16 @@ async def _handle_chaos_injection(task: Task, c_func: Callable[[str], str]) -> N
         return
     try:
         chaos_lambda = float(chaos_lambda_str)
-        if random.random() < chaos_lambda:
-            chaos_type = random.choice(["503", "TIMEOUT", "LATENCY"])
+        if (secrets.randbelow(1_000_000) / 1_000_000.0) < chaos_lambda:
+            chaos_type = secrets.choice(["503", "TIMEOUT", "LATENCY"])
             if chaos_type == "LATENCY":
                 logger.warning(
                     "[[%s]%s[/]] [bold red]CHAOS INJECTED:[/] Latencia artificial",
                     c_func(task.agent),
                     task.agent,
                 )
-                await asyncio.sleep(random.uniform(3.0, 7.0))
+                jitter = 3.0 + (secrets.randbelow(4000) / 1000.0)
+                await asyncio.sleep(jitter)
             elif chaos_type == "TIMEOUT":
                 logger.warning(
                     "[[%s]%s[/]] [bold red]CHAOS INJECTED:[/] Timeout simulado",
@@ -451,7 +454,8 @@ async def _handle_429_error(
 
     if delay <= 65 and rate_limit_retries_left > 0:
         rate_limit_retries_left -= 1
-        jitter = random.uniform(1.0, 3.0)
+        sys_rand = secrets.SystemRandom()
+        jitter = sys_rand.uniform(1.0, 3.0)
         sleep_time = float(delay) + jitter
         logger.info(
             "[[%s]%s[/]] 429 rate-limit em %s. Aguardando %.2fs... (%d retries de 429 restantes)",
@@ -471,10 +475,11 @@ async def _handle_429_error(
         strategy.name,
         ctx.model,
     )
+    sys_rand = secrets.SystemRandom()
     if delay <= 65:
-        await asyncio.sleep(float(delay) + random.uniform(1.0, 3.0))
+        await asyncio.sleep(float(delay) + sys_rand.uniform(1.0, 3.0))
     else:
-        await asyncio.sleep(random.uniform(2.0, 4.0))
+        await asyncio.sleep(sys_rand.uniform(2.0, 4.0))
     return False, general_retries_left, rate_limit_retries_left
 
 
@@ -627,7 +632,7 @@ async def _execute_single_key(
     route_key: str,
     ctx: ProviderContext,
 ) -> dict[str, Any] | str:
-    general_retries_left = max(0, int(ctx.max_retries))
+    general_retries_left = max(0, ctx.max_retries)
     rate_limit_retries_left = 3  # Orcamento dedicado para absorver rajadas de 429
     attempt = 0
 
@@ -790,8 +795,7 @@ async def _try_provider(
 
         # SOTA: Sobrescreve a latencia micro para espelhar o tempo macro gasto
         # (incluindo retries agressivos)
-        res_dict = cast(dict[str, Any], result)
-        res_dict["latency_ms"] = int((time.monotonic() - t0_provider) * 1000)
-        return res_dict
+        result["latency_ms"] = int((time.monotonic() - t0_provider) * 1000)
+        return result
 
     return None

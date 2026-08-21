@@ -43,14 +43,14 @@ def _calculate_file_ih(vg: int, doc_lines: int, functions: int, loc: int) -> tup
     if functions > 0:
         ih = 100 - ((vg / functions) * 5) + ((doc_lines / loc) * 20)
         avg_vg = vg / functions
-        return float(max(0, min(100, ih))), float(avg_vg)
+        return max(0.0, min(100.0, ih)), avg_vg
     return 100.0, 1.0
 
 
-def calcular_metrics_file(path: str) -> dict[str, Any] | None:
+def calcular_metrics_file(file_path: str) -> dict[str, Any] | None:
     """Le o arquivo de forma segura e orquestra a extracao de metricas SOTA."""
     try:
-        with open(path, encoding="utf-8-sig") as f:
+        with open(file_path, encoding="utf-8-sig") as f:
             content = f.read()
 
         if not content.strip():
@@ -62,7 +62,7 @@ def calcular_metrics_file(path: str) -> dict[str, Any] | None:
         vg, doc_lines, functions = _count_ast_nodes(tree)
         ih, avg_vg = _calculate_file_ih(vg, doc_lines, functions, loc)
 
-        return {"file": os.path.relpath(path), "ih": ih, "avg_vg": avg_vg, "loc": loc}
+        return {"file": os.path.relpath(file_path), "ih": ih, "avg_vg": avg_vg, "loc": loc}
     except Exception:  # noqa: BLE001
         return None
 
@@ -119,5 +119,5 @@ def gerar_heatmap(diretorio: str) -> None:
 
 
 if __name__ == "__main__":
-    path = sys.argv[1] if len(sys.argv) > 1 else "."
-    gerar_heatmap(path)
+    target_path = sys.argv[1] if len(sys.argv) > 1 else "."
+    gerar_heatmap(target_path)

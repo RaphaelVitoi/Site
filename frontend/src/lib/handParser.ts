@@ -17,37 +17,48 @@ import { type ICMPlayer } from './icmEngine';
  * @param rawText String contendo o histórico de mão bruto colado pelo usuário.
  * @returns Array de jogadores formatado para a calculadora ICM.
  */
+function parsePlayerFromLine(line: string, index: number): ICMPlayer | null {
+	const trimmed = line.trim();
+	if (!trimmed.startsWith('Seat')) return null;
+
+	const colonIdx = trimmed.indexOf(':');
+	const parenOpenIdx = trimmed.indexOf('(', colonIdx);
+	if (colonIdx === -1 || parenOpenIdx === -1) return null;
+
+	const name = trimmed.slice(colonIdx + 1, parenOpenIdx).trim();
+	if (!name) return null;
+
+	const afterParen = trimmed.slice(parenOpenIdx + 1);
+	const parenCloseIdx = afterParen.indexOf(')');
+	const stackContent = (parenCloseIdx !== -1 ? afterParen.slice(0, parenCloseIdx) : afterParen).replace(/^\$/, '');
+
+	const numMatch = /[\d,.]+/.exec(stackContent);
+	if (!numMatch) return null;
+
+	const rawStack = numMatch[0].replaceAll(',', '');
+	const stack = Number.parseFloat(rawStack);
+	if (Number.isNaN(stack) || stack <= 0) return null;
+
+	return {
+		id:
+			typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+				? crypto.randomUUID()
+				: `player_${Date.now()}_${index + 1}`,
+		name,
+		stack: Math.round(stack),
+	};
+}
+
 export function parseHandHistory(rawText: string): ICMPlayer[] {
 	if (!rawText || typeof rawText !== 'string') return [];
 
+	const lines = rawText.split(/\r?\n/);
 	const players: ICMPlayer[] = [];
 
-	// Heuristica principal: PokerStars, GGPoker, WPN, Hand2Note
-	// Captura stacks com virgulas (15,000), decimais (15000.50) e cifrao ($15,000)
-	// SOTA: Otimização contra ReDoS mantida, com flexibilidade estrutural para sufixos PKO e GGPoker (, $25 bounty)
-	const regex = /Seat \d+:\s*([^(]+?)\s*\(\s*\$?\s*([\d,]+(?:\.\d+)?)[^)]*\)/gi;
-	let match: RegExpExecArray | null;
-
-	while ((match = regex.exec(rawText)) !== null) {
-		const name = match[1]?.trim();
-		const rawStack = match[2]?.replaceAll(',', '');
-
-		if (!name || !rawStack) continue;
-
-		const stack = Number.parseFloat(rawStack);
-
-		// Previne dados corrompidos
-		if (name && !Number.isNaN(stack) && stack > 0) {
-			players.push({
-				id:
-					typeof crypto !== 'undefined' && crypto.randomUUID
-						? crypto.randomUUID()
-						: Date.now().toString(36) + Math.random().toString(36).substring(2),
-				name,
-				stack: Math.round(stack),
-			});
-		}
-	}
+	lines.forEach((line, index) => {
+		const player = parsePlayerFromLine(line, index);
+		if (player) players.push(player);
+	});
 
 	return players;
 }

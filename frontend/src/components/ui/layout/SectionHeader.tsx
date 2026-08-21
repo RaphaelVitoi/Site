@@ -29,7 +29,7 @@ export function SectionHeader({
 				<div className="h-px w-20 bg-linear-to-r from-transparent to-accent-indigo/60" />
 				<div className="relative">
 					<div className="absolute inset-0 bg-accent-indigo/20 blur-lg rounded-full" />
-					<span className="relative text-[0.7rem] font-black text-accent-indigo-light bg-bg-deep/80 border border-accent-indigo/30 px-6 py-2.5 rounded-full tracking-[0.4em] font-mono shadow-[0_0_25px_rgba(99,102,241,0.3)] flex items-center justify-center min-w-[4rem]">
+					<span className="relative text-[0.7rem] font-black text-accent-indigo-light bg-bg-deep/80 border border-accent-indigo/30 px-6 py-2.5 rounded-full tracking-[0.4em] font-mono shadow-[0_0_25px_rgba(99,102,241,0.3)] flex items-center justify-center min-w-16">
 						{step}
 					</span>
 				</div>

@@ -1,1 +1,14 @@
-Redirecting...
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://turbo.build/schema.json",
+  "title": "Turbo Configuration Schema",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "pipeline": { "type": "object" },
+    "tasks": { "type": "object" },
+    "globalDependencies": { "type": "array", "items": { "type": "string" } },
+    "globalEnv": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

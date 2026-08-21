@@ -28,8 +28,8 @@ class LabManager:
                 async with db.execute("SELECT * FROM Tournament ORDER BY start_date DESC") as cursor:
                     rows = await cursor.fetchall()
                     return [dict(row) for row in rows]
-        except sqlite3.OperationalError:
-            logger.exception("Erro ao acessar Prisma DB (Ja executou 'npx prisma db push'?)")
+        except sqlite3.OperationalError as err:
+            logger.warning("Erro ao acessar Prisma DB (Ja executou 'npx prisma db push'?): %s", err)
             return []
 
     async def get_scenarios_for_tournament(self, tournament_id: str) -> list[dict[str, str | int]]:
@@ -43,6 +43,6 @@ class LabManager:
                 ) as cursor:
                     rows = await cursor.fetchall()
                     return [dict(row) for row in rows]
-        except sqlite3.OperationalError:
-            logger.exception("Erro ao acessar Prisma DB")
+        except sqlite3.OperationalError as err:
+            logger.warning("Erro ao acessar Prisma DB: %s", err)
             return []

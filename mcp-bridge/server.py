@@ -1,11 +1,40 @@
 #!/usr/bin/env python3
-# pylint: disable=missing-module-docstring, broad-exception-caught, line-too-long, import-error
+# pylint: disable=missing-module-docstring, broad-exception-caught, line-too-long, import-error, no-name-in-module
+# ruff: noqa: S404, S603, BLE001
 
+import importlib
 import re
-import subprocess  # noqa: S404
+import subprocess
 from pathlib import Path
+from typing import Any
 
-from mcp.server.fastmcp import FastMCP  # type: ignore
+FastMCP: Any = None
+for _mod_name in ("mcp.server.mcpserver", "mcp.server.fastmcp", "fastmcp"):
+    try:
+        _mod = importlib.import_module(_mod_name)
+        FastMCP = getattr(_mod, "MCPServer", getattr(_mod, "FastMCP", None))
+        if FastMCP:
+            break
+    except (ImportError, AttributeError):
+        continue
+
+if FastMCP is None:
+    # Minimal fallback mock
+    class _MockFastMCP:
+        def __init__(self, name: str) -> None:
+            self.name = name
+
+        def tool(self) -> Any:
+            def decorator(func: Any) -> Any:
+                return func
+
+            return decorator
+
+        def run(self) -> None:
+            # Fallback mock run method when FastMCP is not available
+            return None
+
+    FastMCP = _MockFastMCP
 
 # Initialize FastMCP server
 mcp = FastMCP("NexusSotaBridge")
@@ -36,7 +65,7 @@ def execute_sota_task(description: str, agent: str = "@dispatcher") -> str:
             description,
             agent,
         ]
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
@@ -44,7 +73,7 @@ def execute_sota_task(description: str, agent: str = "@dispatcher") -> str:
             timeout=120,
         )
         return result.stdout if result.returncode == 0 else result.stderr
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return f"Error executing task: {e!s}"
 
 
@@ -52,7 +81,7 @@ def execute_sota_task(description: str, agent: str = "@dispatcher") -> str:
 def list_sota_tasks() -> str:
     """Lista tarefas pendentes do sistema SOTA."""
     try:
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [str(PYTHON_EXE), str(TASK_EXECUTOR), "db-get", "pending"],
             capture_output=True,
             text=True,
@@ -60,7 +89,7 @@ def list_sota_tasks() -> str:
             timeout=30,
         )
         return result.stdout
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return f"Error listing tasks: {e!s}"
 
 

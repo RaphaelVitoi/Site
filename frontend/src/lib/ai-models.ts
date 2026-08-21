@@ -60,7 +60,7 @@ export function generateGeometricPath(
 	for (let i = 0; i < streets; i++) {
 		const bet = currentPot * f;
 		const actualBet = Math.min(bet, currentStack);
-		const streetName = streetNames[i] ?? 'River';
+		const streetName = streetNames.at(i) ?? 'River';
 
 		path.push({
 			street: streetName,
@@ -91,20 +91,15 @@ export interface CfrAction {
  * Aqui, simulamos a "dor" de cada decisão para gerar a Mixed Strategy.
  */
 export function simulateCfrRegretMatching(evs: Record<string, number>): CfrAction[] {
-	const actions = Object.keys(evs);
-	const regrets: Record<string, number> = {};
-	actions.forEach((a) => (regrets[a] = 0));
+	const entries = Object.entries(evs);
+	if (entries.length === 0) return [];
 
-	// Algoritmo simplificado: Regret Matching
-	// O arrependimento de uma ação é (EV da ação - EV médio da estratégia atual)
-	// Aqui usamos um modelo de convergência estocástica
-	const totalRegret = actions.reduce((sum, a) => sum + Math.max(0, evs[a] ?? 0), 0);
+	const totalRegret = entries.reduce((sum, [, ev]) => sum + Math.max(0, ev), 0);
 
-	return actions.map((a) => {
-		const ev = evs[a] ?? 0;
-		const strategy = totalRegret > 0 ? Math.max(0, ev) / totalRegret : 1 / actions.length;
+	return entries.map(([action, ev]) => {
+		const strategy = totalRegret > 0 ? Math.max(0, ev) / totalRegret : 1 / entries.length;
 		return {
-			action: a,
+			action,
 			regret: Math.max(0, ev * 1.5), // Escala do "Arrependimento"
 			strategy: strategy * 100,
 		};

@@ -17,6 +17,11 @@ interface PredictiveProfile {
 	'Desvio de Nash': number;
 }
 
+const LABELS = {
+	title: 'Perfil Preditivo',
+	psiFactor: 'Fator Ψ',
+} as const;
+
 export default function PredictiveProfilePanel() {
 	const [profile, setProfile] = useState<PredictiveProfile | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -61,7 +66,7 @@ export default function PredictiveProfilePanel() {
 			<div className="flex flex-col mb-10 relative z-10">
 				<h3 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.3em] m-0 flex items-center gap-3">
 					<div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)] animate-pulse" />
-					Perfil Preditivo &middot; <span className="text-text-muted">Fator Ψ</span>
+					{LABELS.title} &middot; <span className="text-text-muted">{LABELS.psiFactor}</span>
 				</h3>
 				<p className="text-[0.65rem] text-text-dim mt-2 m-0 font-medium uppercase tracking-widest">
 					Modelagem Comportamental &middot; Teoria dos Sistemas
@@ -93,7 +98,7 @@ export default function PredictiveProfilePanel() {
 							<div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
 								<div
 									className={`h-full rounded-full transition-all duration-1000 ease-out ${colorClass}`}
-									{...{ style: { width: `${(value * 100).toFixed(0)}%` } }}
+									style={{ width: `${(value * 100).toFixed(0)}%` }}
 								/>
 							</div>
 						</div>
