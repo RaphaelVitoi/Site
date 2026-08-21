@@ -15,7 +15,15 @@ import remarkMath from 'remark-math';
 mermaid.initialize({
 	startOnLoad: false, // Desativado para controle manual via mermaid.run
 	theme: 'dark',
-	securityLevel: 'loose',
+	// SEGURANCA: 'strict' e nao 'loose'. O modo 'loose' habilita HTML arbitrario
+	// dentro dos rotulos e diretivas `click` que executam JavaScript. O conteudo
+	// deste componente nao e todo estatico: a rota /biblioteca/[slug] renderiza
+	// `content.body` vindo de /api/v1/content/{slug}, que tem caminho de
+	// ingestao no backend. Verificado em 2026-08-21: nenhum diagrama publicado
+	// usa `click` nem HTML em rotulo — os unicos .md com mermaid sao
+	// documentacao interna (.cerebro, .claude), fora do bundle. Ou seja,
+	// 'loose' nao comprava funcionalidade nenhuma e custava superficie de XSS.
+	securityLevel: 'strict',
 	fontFamily: 'var(--font-heading)',
 });
 
@@ -162,12 +170,17 @@ const markdownComponents: Components = {
 			);
 		}
 		return (
+			// SEGURANCA: o spread vem ANTES de target/rel de proposito. Na ordem
+			// anterior ({...props} por ultimo) qualquer `target` ou `rel` vindo do
+			// AST sobrescrevia a protecao — um link poderia recuperar `_blank` sem
+			// `noopener`, expondo `window.opener` ao destino (tabnabbing reverso).
+			// Com o spread primeiro, os atributos explicitos vencem sempre.
 			<a
+				{...props}
 				href={href}
 				className="text-accent-indigo-light hover:text-white font-bold underline decoration-accent-indigo/40 underline-offset-4 transition-all hover:decoration-accent-indigo hover:text-glow-indigo"
 				target={href?.startsWith('http') ? '_blank' : undefined}
 				rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-				{...props}
 			>
 				{children}
 			</a>

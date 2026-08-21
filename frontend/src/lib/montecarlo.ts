@@ -52,6 +52,11 @@ function pickWinner(
 	isBusted: Uint8Array | null,
 	remainingTotalChips: number,
 ): number {
+	// sonarjs typescript:S2245 — falso positivo por contexto, nao suprimir com
+	// crypto.getRandomValues. Este e o sorteio de vencedor de uma simulacao de
+	// Monte Carlo para ICM: o resultado nao protege nada, nao gera token, nao
+	// deriva chave e nao e observavel por adversario. Trocar por CSPRNG custaria
+	// ordens de grandeza no laco quente sem ganho de seguranca algum.
 	const r = Math.random() * remainingTotalChips;
 	if (isBusted) {
 		return pickWinnerWithBusted(numPlayers, stacks, isBusted, r);

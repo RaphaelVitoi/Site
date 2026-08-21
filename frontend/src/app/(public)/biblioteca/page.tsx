@@ -210,6 +210,7 @@ export default function BibliotecaIndexPage() {
 							/>
 							{searchQuery && (
 								<button
+									type="button"
 									onClick={() => setSearchQuery('')}
 									className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim hover:text-white text-xs px-1.5 py-0.5 rounded"
 									title="Limpar busca"
@@ -307,6 +308,7 @@ function CategoryTab({
 }) {
 	return (
 		<button
+			type="button"
 			onClick={onClick}
 			className={`px-4 py-2 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 border ${
 				active
