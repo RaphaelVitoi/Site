@@ -90,17 +90,39 @@ veredito — declare esse veredito.
 
 ---
 
-## Apêndice — o bloco "Arko", removido em 2026-08-21
+## Apêndice — Arko: histórico e estado atual
 
-A raiz multiprojeto continha um bloco entre `<!-- arko:start -->` e
-`<!-- arko:end -->` que impunha chamar `arko_scan_code`, `arko_fix_all` e
+**O que era.** A raiz multiprojeto continha um bloco entre `<!-- arko:start -->`
+e `<!-- arko:end -->` impondo chamar `arko_scan_code`, `arko_fix_all` e
 `arko_validate_fix` via MCP antes de concluir qualquer tarefa de código.
 
-**Removido porque era inexequível.** Verificado: 0 ocorrências de `arko` nos 4
-arquivos de configuração, nenhum bloco `mcpServers`, registro oficial de
+**Por que foi removido.** Medido em 2026-08-21, cedo: 0 ocorrências de `arko`
+nos 4 arquivos de configuração, nenhum bloco `mcpServers`, registro oficial de
 conectores MCP vazio, e as ocorrências no repositório eram falso positivo de
-`m·arko·v` (`markov_taskset.py`, `networkx`).
+`m·arko·v` (`markov_taskset.py`, `networkx`). Um mandato que ninguém podia
+cumprir, gerando declaração de ausência em todo relatório.
 
-O efeito era o pior possível: toda tarefa concluía sem varredura, em violação
-silenciosa da própria política. **Se instalar o Arko:** registre o servidor MCP,
-confirme que as três ferramentas respondem, e só então acrescente o loop.
+**O que mudou no mesmo dia.** O servidor MCP `arko` **passou a existir e está
+conectado** — `arko_scan_code`, `arko_scan_project`, `arko_fix_all`,
+`arko_validate_fix` e `arko_raise_fix_pr` respondem. A conclusão anterior era
+verdadeira quando medida e deixou de ser; fica registrada como lembrete de que
+**ausência verificada não é ausência permanente**.
+
+**Estado atual — falta um passo seu.** As ferramentas existem mas o servidor
+não está autenticado. Toda chamada retorna `Not signed in to Arko`. Para ativar:
+
+```bash
+npx -y arko-mcp login
+```
+
+Feito isso, o loop da seção 4 passa a ter duas camadas: `security-review` para
+revisão contextual e Arko para varredura com CWE e correção assistida. **Até
+lá, declare que a varredura do Arko não rodou** — e não a confunda com a
+revisão manual, que é outra coisa.
+
+**Precedente que justifica a camada.** Em 2026-08-21 uma revisão manual dos
+arquivos desta sessão encontrou **injeção de comando na própria fase 5 do
+portão** (commit `9c50712e`): o caminho de um arquivo em stage era interpolado
+num here-string `@"..."@` e chegava ao `powershell.exe` filho como código. Um
+`git commit` com arquivo chamado `x'; <comando>; '.ps1` executava comando
+arbitrário. O portão que protege o repositório era o vetor.
