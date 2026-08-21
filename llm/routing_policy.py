@@ -1,76 +1,111 @@
 """Politica de roteamento economico e especializado — SOTA v8.0 GOLD.
 
-Implementa a arquitetura estrategica do estudo de fronteira de 2026-08-21. O
-registro em `model_registry.py` corrigiu os DADOS do estudo; este modulo
-implementa a ESTRATEGIA, que sobreviveu intacta a verificacao — e que, num
-ponto, saiu reforcada por ela.
+Implementa a tabela de roteamento por tier definida pelo operador, estendida
+para cobrir o ecossistema inteiro: **19 agentes** do manifesto mais os **6
+niveis de subagente** de `core.subagents_mesh.SubagentTier`.
 
-## O problema que isto resolve
+## Ordem de precedencia das decisoes
 
-`data/agents_manifest.json` declara 18 agentes com `model_preference` de
-`deep_thinking` ou `fast_operations`. Os 18 apontam para o MESMO
-`primary_model`: gemini-3.5-flash-lite. O campo de preferencia e vocabulario
-sem mecanismo — Chico em God Mode e o dispatcher recebem o mesmo modelo.
+1. **Faixa orcamentaria manda antes de preco unitario.** A Economia
+   Generalizada ordena: cota gratuita/promocional -> ponte flat-fee -> API
+   paga. Um modelo com cota livre ganha de um modelo pago mais barato por
+   token, porque o custo marginal da cota e zero. Uma versao anterior deste
+   modulo roteava Tier 3 operacional para `gpt-5.6-luna` por ter o menor
+   $/token — e estava errada: `gemini-3.7-flash` tem cota gratuita e a Luna
+   nao. Preco unitario so desempata DENTRO da mesma faixa.
+2. **Assimetria de capacidade.** Nao existe "melhor modelo", existe melhor
+   modelo por classe de tarefa. Quem lidera raciocinio profundo nao lidera
+   refatoracao de longo horizonte.
+3. **Escalonamento.** Executor de primeira passagem barato; subir so quando a
+   complexidade exigir.
 
-`llm/routing.py` pontua por substring do nome (`"gemini-3.5" in m`) com
-inteiros fixos. Nao ha custo, tipo de tarefa nem escalonamento.
+## Conflito conhecido entre a tabela e o manifesto
 
-## As tres teses do estudo, e o que a verificacao fez com cada uma
-
-1. **Assimetria de capacidade.** Nao existe "melhor modelo", existe melhor
-   modelo POR CLASSE DE TAREFA. O topo em raciocinio profundo nao e o topo em
-   refatoracao de longo horizonte. Rotear por tarefa, nao por ranking.
-   -> Tese preservada.
-
-2. **Escalonamento em vez de flagship indiferenciado.** Executor barato de
-   primeira passagem; escalar so quando a complexidade exigir.
-   -> Tese REFORCADA pela verificacao: o GPT-5.6 Luna custa $0.20/$1.20 e nao
-      $1.00/$6.00 como o estudo supunha. A camada barata e 5x mais barata do
-      que o proprio autor calculava, o que aumenta o ganho do escalonamento.
-
-3. **Economia Generalizada.** Ordem de alocacao: cota gratuita/promocional ->
-   ponte flat-fee -> API paga como ultima linha.
-   -> Tese preservada.
-
-## Sobre a metrica de ROI
-
-O estudo propoe ROI = sucesso / (custo x latencia). A forma esta certa e a
-armadilha esta no denominador: em modelos de Sistema 2 os tokens de raciocinio
-sao cobrados como saida e podem dominar o total. Custo estimado por tokens
-visiveis e PISO, nao previsao — por isso `estimar_roi` exige que se informe o
-multiplicador de raciocinio em vez de fingir que ele nao existe.
+`data/agents_manifest.json` marca `implementor` como `fast_operations`, mas a
+tabela do operador o coloca em Tier 3 Construcao com `claude-sonnet-5`. E marca
+`historian` como `deep_thinking`, enquanto a tabela o lista em Tier 3
+Operacional. Onde a tabela e explicita, ela prevalece — foi escrita depois, com
+o sistema a vista. Os dois casos estao anotados em `CONFLITOS_MANIFESTO` para
+que voce reconcilie o manifesto quando quiser, em vez de a divergencia sumir.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import json
+from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 
 from llm.model_registry import MODEL_REGISTRY, custo_estimado, get
 
+# Modelos locais vivem em data/ollama_models.json, nao no MODEL_REGISTRY de
+# nuvem. Sao dois registros de proposito: um descreve API paga com preco por
+# token, o outro descreve pesos em disco cujo custo marginal e zero. Misturar
+# os dois faria a matematica de economia mentir.
+_MANIFESTO_LOCAL = Path(__file__).resolve().parent.parent / "data" / "ollama_models.json"
+
+
+def _carregar_modelos_locais() -> frozenset[str]:
+    try:
+        dados = json.loads(_MANIFESTO_LOCAL.read_text(encoding="utf-8"))
+        return frozenset(m["tag"] for m in dados.get("models", []) if m.get("tag"))
+    except (OSError, json.JSONDecodeError, KeyError, TypeError):
+        return frozenset()
+
+
+MODELOS_LOCAIS: frozenset[str] = _carregar_modelos_locais()
+
+
+def e_local(alias: str) -> bool:
+    return alias in MODELOS_LOCAIS
+
+
+def custo(alias: str, tokens_in: int, tokens_out: int) -> float:
+    """Custo em USD, ciente das duas faixas.
+
+    Modelo local custa **zero marginal** — os pesos ja estao em disco. Isso nao
+    e aproximacao: nao ha fatura por token. O custo real dele e energia e
+    ocupacao de GPU, que nao entram nesta conta e nao devem entrar, porque a
+    decisao que esta funcao alimenta e "gasto de API".
+    """
+    if e_local(alias):
+        return 0.0
+    return custo_estimado(alias, tokens_in, tokens_out)
+
 
 class ClasseTarefa(str, Enum):
-    """Classes com assimetria de desempenho conhecida entre provedores."""
-
-    RACIOCINIO_PROFUNDO = "raciocinio_profundo"   # prova, analise de risco, arquitetura macro
-    CODIGO_LONGO_HORIZONTE = "codigo_longo"       # refatoracao multi-arquivo, grafo de dependencia
-    VERIFICACAO = "verificacao"                   # auditoria, QA, revisao de primeira passagem
-    TRIAGEM = "triagem"                           # roteamento, classificacao, sumarizacao curta
-    SESSAO_MULTI_DIA = "sessao_multi_dia"         # execucao continuada assincrona
+    GOVERNANCA = "governanca"                    # mediacao, decisao final
+    ESTRATEGIA = "estrategia"                    # mentoria, analise de risco
+    CONSTRUCAO = "construcao"                    # escrita de codigo multi-arquivo
+    VERIFICACAO = "verificacao"                  # auditoria, QA, seguranca
+    OPERACIONAL = "operacional"                  # despacho, organizacao, registro
+    RACIOCINIO_PROFUNDO = "raciocinio_profundo"  # planejamento, pesquisa, prova
+    SESSAO_MULTI_DIA = "sessao_multi_dia"        # execucao continuada assincrona
+    LOCAL = "local"                              # inferencia de borda, sem API
 
 
 class TierAgente(int, Enum):
-    GOVERNANCA = 1   # chico
-    ESTRATEGIA = 2   # maverick
-    EXECUCAO = 3     # os demais 16
+    GOVERNANCA = 1
+    ESTRATEGIA = 2
+    EXECUCAO = 3
+    SUBAGENTE = 4
 
 
 class Faixa(str, Enum):
-    """Ordem de alocacao orcamentaria da Economia Generalizada."""
+    """Ordem de alocacao. Menor valor = consumir primeiro."""
 
-    GRATUITA = "gratuita"          # cota livre / promocional / local
-    FLAT_FEE = "flat_fee"          # ponte de handoff para assinatura web
-    API_PAGA = "api_paga"          # ultima linha de defesa
+    LOCAL = "local"        # 0 custo marginal, sem rede
+    GRATUITA = "gratuita"  # cota livre / promocional
+    FLAT_FEE = "flat_fee"  # ponte de handoff para assinatura web
+    API_PAGA = "api_paga"  # ultima linha de defesa
+
+
+PRECEDENCIA_FAIXA: dict[Faixa, int] = {
+    Faixa.LOCAL: 0,
+    Faixa.GRATUITA: 1,
+    Faixa.FLAT_FEE: 2,
+    Faixa.API_PAGA: 3,
+}
 
 
 @dataclass(frozen=True)
@@ -83,31 +118,38 @@ class Rota:
 
 
 # ==============================================================================
-# TABELA DE ROTEAMENTO POR CLASSE DE TAREFA
+# TABELA DE ROTEAMENTO — segue a definicao do operador
 # ==============================================================================
-# A assimetria e o ponto: o modelo que lidera raciocinio profundo NAO e o que
-# lidera refatoracao de longo horizonte. Rotear por ranking unico desperdicia
-# dinheiro na direcao errada.
 
 ROTAS: dict[ClasseTarefa, Rota] = {
-    ClasseTarefa.RACIOCINIO_PROFUNDO: Rota(
+    ClasseTarefa.GOVERNANCA: Rota(
+        primario="claude-opus-5",
+        fallback="gpt-5.6-sol",
+        faixa=Faixa.API_PAGA,
+        justificativa=(
+            "Mediacao de conflito e decisao final exigem julgamento com "
+            "consciencia de codigo. Opus 5 lidera horizonte longo e custa menos "
+            "na saida que o Sol ($25 contra $30)."
+        ),
+    ),
+    ClasseTarefa.ESTRATEGIA: Rota(
         primario="gpt-5.6-sol",
         fallback="claude-opus-5",
         faixa=Faixa.API_PAGA,
         justificativa=(
-            "Lideranca em exames de raciocinio profundo. Fallback para Opus 5, "
-            "que fica proximo e custa menos na saida ($25 contra $30)."
+            "Analise de risco e arquitetura macro pendem para raciocinio puro, "
+            "onde o Sol lidera. Inverso da governanca, de proposito."
         ),
     ),
-    ClasseTarefa.CODIGO_LONGO_HORIZONTE: Rota(
-        primario="claude-opus-5",
-        fallback="claude-sonnet-5",
+    ClasseTarefa.CONSTRUCAO: Rota(
+        primario="claude-sonnet-5",
+        fallback="gemini-3.7-flash",
         faixa=Faixa.API_PAGA,
+        escalona_para="claude-opus-5",
         justificativa=(
-            "Assimetria invertida: em refatoracao multi-arquivo e ambientes de "
-            "desenvolvimento reais a familia Claude lidera com folga sobre o "
-            "topo de raciocinio puro. Sonnet 5 sustenta a maior parte do "
-            "trabalho por 60% do preco."
+            "Sonnet 5 sustenta a maior parte da alteracao multi-arquivo por 60% "
+            "do preco do Opus. Escalona ao Opus quando o grafo de dependencia "
+            "passa do que o Sonnet resolve numa passada."
         ),
     ),
     ClasseTarefa.VERIFICACAO: Rota(
@@ -116,79 +158,148 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         faixa=Faixa.GRATUITA,
         escalona_para="claude-opus-5",
         justificativa=(
-            "Revisao de primeira passagem nao precisa de flagship. Escalona "
-            "so quando o revisor barato sinaliza incerteza."
+            "Revisao de primeira passagem em faixa gratuita. Escalona so quando "
+            "o revisor barato sinaliza incerteza."
         ),
     ),
-    ClasseTarefa.TRIAGEM: Rota(
-        primario="gpt-5.6-luna",
-        fallback="gemini-3.7-flash",
+    ClasseTarefa.OPERACIONAL: Rota(
+        primario="gemini-3.7-flash",
+        fallback="gpt-5.6-luna",
         faixa=Faixa.GRATUITA,
-        escalona_para="gpt-5.6-terra",
         justificativa=(
-            "A $0.20/$1.20 a Luna e o executor primario obvio. O estudo a "
-            "precificava 5x acima e por isso a subutilizava."
+            "Faixa gratuita ANTES de preco unitario. A Luna e mais barata por "
+            "token ($0.20/$1.20) mas nao tem cota livre; o Flash tem. Custo "
+            "marginal zero ganha de barato. A Luna fica como fallback pago."
         ),
+    ),
+    ClasseTarefa.RACIOCINIO_PROFUNDO: Rota(
+        primario="gpt-5.6-sol",
+        fallback="claude-opus-5",
+        faixa=Faixa.API_PAGA,
+        escalona_para=None,
+        justificativa="Planejamento, pesquisa e prova formal. Sem degrau acima.",
     ),
     ClasseTarefa.SESSAO_MULTI_DIA: Rota(
         primario="claude-fable-5",
         fallback="claude-opus-5",
         faixa=Faixa.API_PAGA,
         justificativa=(
-            "Unico modelo com auto-verificacao assincrona e raciocinio "
-            "multi-sessao. Caro ($10/$50): reservar para o que so ele faz."
+            "Unico com auto-verificacao assincrona e raciocinio multi-sessao. "
+            "A $10/$50, reservar ao que so ele faz."
+        ),
+    ),
+    ClasseTarefa.LOCAL: Rota(
+        primario="gemma4:12b",
+        fallback="gemma4:e4b",
+        faixa=Faixa.LOCAL,
+        escalona_para="gemini-3.7-flash",
+        justificativa=(
+            "Inferencia de borda sem custo marginal nem rede. Pesos ja "
+            "provisionados; ver data/ollama_models.json."
         ),
     ),
 }
 
 
 # ==============================================================================
-# MAPA AGENTE -> TIER + CLASSE
+# OS 19 AGENTES DO MANIFESTO
 # ==============================================================================
-# Nomes conferidos contra data/agents_manifest.json, nao inventados.
 
 AGENTES: dict[str, tuple[TierAgente, ClasseTarefa]] = {
-    "chico": (TierAgente.GOVERNANCA, ClasseTarefa.RACIOCINIO_PROFUNDO),
-    "maverick": (TierAgente.ESTRATEGIA, ClasseTarefa.RACIOCINIO_PROFUNDO),
-
-    "architect": (TierAgente.EXECUCAO, ClasseTarefa.CODIGO_LONGO_HORIZONTE),
-    "implementor": (TierAgente.EXECUCAO, ClasseTarefa.CODIGO_LONGO_HORIZONTE),
+    # Tier 1 — Governanca
+    "chico": (TierAgente.GOVERNANCA, ClasseTarefa.GOVERNANCA),
+    # Tier 2 — Estrategia
+    "maverick": (TierAgente.ESTRATEGIA, ClasseTarefa.ESTRATEGIA),
+    # Tier 3 — Construcao
+    "architect": (TierAgente.EXECUCAO, ClasseTarefa.CONSTRUCAO),
+    "implementor": (TierAgente.EXECUCAO, ClasseTarefa.CONSTRUCAO),
+    # Tier 3 — Auditoria / QA
+    "auditor": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
+    "verifier": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
+    "securitychief": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
+    "validador": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
+    # Tier 3 — Operacional
+    "dispatcher": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
+    "organizador": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
+    "historian": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
+    "sequenciador": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
+    "prompter": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
+    "bibliotecario": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
+    "skillmaster": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
+    # Tier 3 — Raciocinio
     "planner": (TierAgente.EXECUCAO, ClasseTarefa.RACIOCINIO_PROFUNDO),
     "pesquisador": (TierAgente.EXECUCAO, ClasseTarefa.RACIOCINIO_PROFUNDO),
     "curator": (TierAgente.EXECUCAO, ClasseTarefa.RACIOCINIO_PROFUNDO),
-    "historian": (TierAgente.EXECUCAO, ClasseTarefa.RACIOCINIO_PROFUNDO),
+    # Agente de borda — nao consome API
+    "gemma4": (TierAgente.EXECUCAO, ClasseTarefa.LOCAL),
+}
 
-    "auditor": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
-    "verifier": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
-    "validador": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
-    "securitychief": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
+# ==============================================================================
+# OS 6 NIVEIS DE SUBAGENTE — core.subagents_mesh.SubagentTier
+# ==============================================================================
+# Cobertos porque o mesh os despacha em paralelo: sem rota propria, herdariam a
+# do pai e uma varredura de seguranca poderia cair num modelo de triagem.
 
-    "dispatcher": (TierAgente.EXECUCAO, ClasseTarefa.TRIAGEM),
-    "organizador": (TierAgente.EXECUCAO, ClasseTarefa.TRIAGEM),
-    "sequenciador": (TierAgente.EXECUCAO, ClasseTarefa.TRIAGEM),
-    "prompter": (TierAgente.EXECUCAO, ClasseTarefa.TRIAGEM),
-    "bibliotecario": (TierAgente.EXECUCAO, ClasseTarefa.TRIAGEM),
-    "skillmaster": (TierAgente.EXECUCAO, ClasseTarefa.TRIAGEM),
+SUBAGENTES: dict[str, ClasseTarefa] = {
+    "appsec_gatekeeper": ClasseTarefa.VERIFICACAO,
+    "math_verifier_sota": ClasseTarefa.LOCAL,  # routing.py ja prioriza gemma-4-31b em MATH
+    "wasm_perf_engineer": ClasseTarefa.CONSTRUCAO,
+    "ui_design_curator": ClasseTarefa.CONSTRUCAO,
+    "research": ClasseTarefa.RACIOCINIO_PROFUNDO,
+    "self": ClasseTarefa.OPERACIONAL,  # copia do pai para fan-out barato
+}
+
+# Divergencias entre a tabela do operador e o manifesto, preservadas para
+# reconciliacao consciente em vez de sumirem numa escolha silenciosa.
+CONFLITOS_MANIFESTO: dict[str, str] = {
+    "implementor": (
+        "manifesto diz fast_operations; a tabela o coloca em Tier 3 Construcao "
+        "com claude-sonnet-5. Tabela prevalece: escrever codigo multi-arquivo "
+        "nao e operacao rapida."
+    ),
+    "historian": (
+        "manifesto diz deep_thinking; a tabela o lista em Tier 3 Operacional. "
+        "Tabela prevalece: registro historico e alto volume e baixa ambiguidade."
+    ),
 }
 
 
-def rotear(agente: str, *, escalado: bool = False) -> str:
-    """Modelo para um agente. `escalado=True` sobe um degrau na escada.
-
-    Substitui o estado atual, em que os 18 agentes recebem o mesmo modelo
-    independentemente de `model_preference`.
-    """
-    if agente not in AGENTES:
-        raise KeyError(f"Agente '{agente}' fora do manifesto. Conhecidos: {sorted(AGENTES)}")
-    _, classe = AGENTES[agente]
+def rotear(alvo: str, *, escalado: bool = False) -> str:
+    """Modelo para um agente ou subagente."""
+    classe = _classe_de(alvo)
     rota = ROTAS[classe]
     if escalado and rota.escalona_para:
         return rota.escalona_para
     return rota.primario
 
 
-def rota_de(agente: str) -> Rota:
-    return ROTAS[AGENTES[agente][1]]
+def rota_de(alvo: str) -> Rota:
+    return ROTAS[_classe_de(alvo)]
+
+
+def _classe_de(alvo: str) -> ClasseTarefa:
+    if alvo in AGENTES:
+        return AGENTES[alvo][1]
+    if alvo in SUBAGENTES:
+        return SUBAGENTES[alvo]
+    raise KeyError(
+        f"'{alvo}' nao e agente nem subagente conhecido. "
+        f"Agentes: {sorted(AGENTES)}. Subagentes: {sorted(SUBAGENTES)}."
+    )
+
+
+def cobertura() -> dict[str, int]:
+    """Quantos alvos a politica cobre. Usado em teste para impedir regressao."""
+    return {"agentes": len(AGENTES), "subagentes": len(SUBAGENTES),
+            "total": len(AGENTES) + len(SUBAGENTES)}
+
+
+def ordem_de_consumo() -> list[tuple[Faixa, list[ClasseTarefa]]]:
+    """Classes agrupadas por faixa, na ordem da Economia Generalizada."""
+    por_faixa: dict[Faixa, list[ClasseTarefa]] = {}
+    for classe, rota in ROTAS.items():
+        por_faixa.setdefault(rota.faixa, []).append(classe)
+    return sorted(por_faixa.items(), key=lambda kv: PRECEDENCIA_FAIXA[kv[0]])
 
 
 # ==============================================================================
@@ -206,12 +317,9 @@ def estimar_roi(
 ) -> float:
     """ROI cognitivo = sucesso / (custo x latencia).
 
-    `multiplicador_raciocinio` corrige o ponto cego da formula original: em
-    modelos de Sistema 2 os tokens de raciocinio sao cobrados como saida. Um
-    valor de 3.0 significa que a saida faturada tende a ser 3x a saida visivel.
-    Deixar em 1.0 assume que nao ha raciocinio — o que e falso em todo modelo
-    deste registro, e por isso o parametro e explicito em vez de ter default
-    silencioso e otimista.
+    `multiplicador_raciocinio` corrige o ponto cego da formula: tokens de
+    raciocinio sao cobrados como saida e podem dominar o total. Explicito em vez
+    de default silencioso e otimista.
     """
     if not 0.0 <= taxa_sucesso <= 1.0:
         raise ValueError("taxa_sucesso deve estar entre 0 e 1.")
@@ -231,24 +339,24 @@ def economia_do_escalonamento(
     tokens_out: int,
     fracao_escalada: float,
 ) -> dict[str, float]:
-    """Compara escalonamento contra usar o modelo caro em tudo.
-
-    `fracao_escalada` e a parcela de chamadas que o executor barato nao resolve
-    e precisa subir. Acima de um certo ponto o escalonamento deixa de compensar
-    — o retorno inclui esse limiar em vez de assumir que escalonar sempre ganha.
-    """
+    """Compara escalonamento contra usar o modelo caro em tudo."""
     rota = ROTAS[classe]
     caro = rota.escalona_para or rota.fallback
     barato = rota.primario
 
-    c_barato = custo_estimado(barato, tokens_in, tokens_out)
-    c_caro = custo_estimado(caro, tokens_in, tokens_out)
+    c_barato = custo(barato, tokens_in, tokens_out)
+    c_caro = custo(caro, tokens_in, tokens_out)
+
+    if c_caro <= 0:
+        # Ambos em faixa local: nao ha gasto de API a comparar.
+        return {
+            "custo_tudo_caro": 0.0, "custo_escalonado": 0.0, "economia": 0.0,
+            "economia_pct": 0.0, "fracao_de_equilibrio": 1.0, "vale_a_pena": True,
+        }
 
     tudo_caro = chamadas * c_caro
     escalonado = chamadas * c_barato + chamadas * fracao_escalada * c_caro
-
-    # Ponto em que escalonar custa o mesmo que ir direto ao caro.
-    limiar = 1.0 - (c_barato / c_caro) if c_caro > 0 else 0.0
+    limiar = 1.0 - (c_barato / c_caro)
 
     return {
         "custo_tudo_caro": round(tudo_caro, 4),
@@ -261,6 +369,30 @@ def economia_do_escalonamento(
 
 
 # ==============================================================================
+# TIMEOUT PARA RACIOCINIO ESTENDIDO
+# ==============================================================================
+
+def timeout_recomendado(alias: str, *, max_tokens: int = 16_000) -> int:
+    """Segundos de timeout para o worker assincrono.
+
+    Recomendacao 3 do estudo: modos de raciocinio profundo levam minutos numa
+    unica requisicao, e um socket fechado no meio descarta o trabalho ja pago.
+    O default de 10 minutos dos SDKs e curto para efeito `xhigh`/`max` com
+    saida grande.
+
+    Deriva da capacidade declarada em vez de numero magico: modelos com
+    `requires_streaming_above` sao os que geram saidas longas.
+    """
+    cap = get(alias)
+    base = 600
+    if cap.effort in ("xhigh", "max") or cap.reasoning_effort == "max":
+        base = 1800
+    if cap.requires_streaming_above and max_tokens > cap.requires_streaming_above:
+        base = max(base, 2400)
+    return base
+
+
+# ==============================================================================
 # PRUNING DINAMICO DE FERRAMENTAS
 # ==============================================================================
 
@@ -270,19 +402,11 @@ def plano_de_ferramentas(
     *,
     limiar_defer: int = 8,
 ) -> list[dict]:
-    """Marca ferramentas irrelevantes com `defer_loading`, mantendo o cache.
+    """Marca ferramentas irrelevantes com `defer_loading`, preservando o cache.
 
-    Implementa o insight de segunda ordem do estudo — nao expor dezenas de
-    esquemas JSON a cada iteracao, o que dilui a atencao e aumenta chamada
-    incorreta — pelo mecanismo que de fato existe.
-
-    O estudo atribui isso ao header 'mid-conversation-tool-changes-2026-07-01',
-    que nao consta na documentacao. O mecanismo real e o tool search com
-    `defer_loading: true`: as ferramentas diferidas ficam fora do contexto ate
-    o modelo busca-las, e o prefixo cacheado permanece valido.
-
-    Regra dura da API: a ferramenta de busca nao pode ser diferida, e ao menos
-    uma ferramenta precisa continuar carregada, ou a chamada retorna 400.
+    Mecanismo real por tras do insight de pruning dinamico: `tool_search` com
+    `defer_loading: true`. Regras duras da API — a ferramenta de busca nunca e
+    diferida, e nunca se difere tudo.
     """
     if len(ferramentas) <= limiar_defer:
         return ferramentas
@@ -298,7 +422,7 @@ def plano_de_ferramentas(
         else:
             saida.append({**f, "defer_loading": True})
 
-    if carregadas == 0:  # nunca diferir tudo
+    if carregadas == 0:
         saida[0] = {k: v for k, v in saida[0].items() if k != "defer_loading"}
     return saida
 
@@ -307,12 +431,18 @@ __all__ = [
     "ClasseTarefa",
     "TierAgente",
     "Faixa",
+    "PRECEDENCIA_FAIXA",
     "Rota",
     "ROTAS",
     "AGENTES",
+    "SUBAGENTES",
+    "CONFLITOS_MANIFESTO",
     "rotear",
     "rota_de",
+    "cobertura",
+    "ordem_de_consumo",
     "estimar_roi",
     "economia_do_escalonamento",
+    "timeout_recomendado",
     "plano_de_ferramentas",
 ]
