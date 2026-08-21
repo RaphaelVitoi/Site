@@ -48,7 +48,9 @@ dependencies = [
     "openpyxl>=3.1.5,<4.0.0",
     "Pillow>=12.3.0",
     # ── MULTIMIDIA (opcional — carregamento lazy) ──────────────────────
-    "moviepy>=2.2.0,<3.0.0",
+    # moviepy REMOVIDO em 2026-08-21: exige pillow<12.0, prendendo o projeto em
+    # Pillow 11.x (10 CVEs, todas corrigidas em 12.3.0). 2.2.1 e a ultima versao
+    # e nao levanta o teto. Zero imports no codigo - so figurava aqui.
     "opencv-python-headless>=4.13.0,<5.0.0",
     # ── UTILITARIOS ───────────────────────────────────────────────────
     "regex>=2026.5.0",

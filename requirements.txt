@@ -42,7 +42,12 @@ openpyxl>=3.1.5
 Pillow>=12.3.0
 
 # ── MULTIMIDIA ───────────────────────────────────────────────────────────────
-moviepy>=2.2.0
+# moviepy REMOVIDO em 2026-08-21. Motivo: exige pillow<12.0, o que tornava o
+# requirements.txt INSTALAVEL apenas com Pillow 11.x - versao que carrega 10
+# vulnerabilidades (PYSEC-2026-2253/2255/2256/3451/3453/3454/3493/3494/3495/
+# 3496), todas corrigidas em 12.3.0. moviepy 2.2.1 e a ultima versao publicada
+# e nenhuma levanta esse teto. Verificado: ZERO imports no codigo - so aparecia
+# em declaracoes de dependencia. Removendo, Pillow>=12.3.0 resolve.
 opencv-python-headless>=4.13.0
 
 # ── UTILITARIOS ──────────────────────────────────────────────────────────────
