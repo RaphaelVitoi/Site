@@ -19,7 +19,7 @@ dependencies = [
     "uvicorn[standard]>=0.34.0",
     # ── PYDANTIC & SETTINGS ────────────────────────────────────────────
     "pydantic>=2.10.0",
-    "pydantic-settings>=2.7.0",
+    "pydantic-settings>=2.14.2",  # >=2.14.2 corrige GHSA-4xgf-cpjx-pc3j
     # ── MOTOR MATEMATICO & ANALYTICS ──────────────────────────────────
     "numpy>=2.2.0",
     "pandas>=2.2.0",
@@ -122,6 +122,31 @@ dev = [
 # ==============================================================================
 [tool.uv]
 # Sincronizado via dependency-groups.dev
+
+# ── PISOS DE SEGURANCA PARA DEPENDENCIAS TRANSITIVAS ─────────────────────────
+# Equivalente Python do que "overrides" faz no package.json: corrige CVE de
+# transitiva sem promove-la a dependencia direta.
+#
+# Usa constraint-dependencies e NAO override-dependencies de proposito. Um
+# "constraint" respeita o teto declarado pelo pai e FALHA a resolucao se for
+# impossivel; um "override" atropela o pai e produziria, por exemplo, um torch
+# que o sentence-transformers nao suporta. Falhar alto e o comportamento
+# desejado - foi exatamente o silencio do resolvedor que deixou pillow 11.3.0
+# fixado no lock por uma sessao inteira (ver commit 43689d83).
+#
+# Verificado contra a base OSV em 2026-08-21. Quem puxa cada uma:
+#   starlette    <- fastapi, mcp, sse-starlette      10 advisories
+#   cryptography <- google-auth, pyjwt                7 advisories
+#   pyasn1       <- pyasn1-modules                    6 advisories
+#   setuptools   <- torch                             2 advisories
+#   torch        <- sentence-transformers             1 advisory
+constraint-dependencies = [
+    "starlette>=1.3.1",
+    "cryptography>=50.0.0",
+    "pyasn1>=0.6.4",
+    "setuptools>=83.0.0",
+    "torch>=2.13.0",
+]
 
 # ==============================================================================
 # PYTEST
