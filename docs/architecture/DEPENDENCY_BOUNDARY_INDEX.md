@@ -6,15 +6,9 @@ Este documento indexa dependências que são repositórios externos fixados. Ele
 
 | Caminho | Origem declarada | Papel no sistema | Regra de atualização |
 |---|---|---|---|
-| `core/vendor/eigen` | `gitlab.com/libeigen/eigen` | álgebra linear de fornecedor | atualizar isoladamente; validar builds numéricos |
+| `core/vendor/eigen` | snapshot Eigen `0430489b826d88f7d3879232fe13468e16ced465` | álgebra linear vendorizada | atualizar somente por importação deliberada; validar builds numéricos |
 | `skills/Stitch` | `github.com/gemini-cli-extensions/stitch` | extensão externa de design | revisar manifesto e privilégios; não tratar como núcleo |
 | `skills/exa-mcp-server` | `github.com/exa-labs/exa-mcp-server` | servidor/conector externo | revisar rede, OAuth e comandos antes de habilitar |
-| `skills/gemini-cli-jules` | `github.com/gemini-cli-extensions/jules` | extensão externa | revisar scripts, CI e permissões |
-| `skills/gemini-cli-security` | `github.com/gemini-cli-extensions/security` | extensão de análise externa | revisar MCP, leitura de arquivos e scripts |
-| `skills/gemini-deep-research` | `github.com/allenhutchison/gemini-cli-deep-research` | pesquisa externa | revisar egress, credenciais e dependências |
-| `skills/gemini-supermemory` | `github.com/Rishabjs03/gemini-supermemory` | memória/integração externa | revisar hooks e persistência antes de uso |
-| `skills/superpowers` | `github.com/obra/superpowers` | conjunto de automações externo | não carregar instruções como política canônica |
-| `skills/token-efficiency` | `github.com/undefdev/token-efficiency` | otimização de contexto externa | tratar como adaptador, não como governança |
 
 ## Contrato de atualização
 
@@ -30,6 +24,6 @@ origem declarada → revisão/pin → diff isolado → permissões e egress → 
 
 ## Estado de auditoria
 
-Na auditoria de 21/08/2026, os nove submódulos estavam presentes e tinham origens HTTPS declaradas. Oito diretórios em `skills/` continham alterações locais anteriores que exigem revisão por diff antes de qualquer limpeza. Esta página é o índice de decisão; ela não substitui essa revisão.
+Na auditoria de 22/08/2026, sete gitlinks apontavam para commits que já não eram recuperáveis dos upstreams declarados. Os seis adaptadores de `skills/` foram retirados do superprojeto; o Eigen, dependência viva do motor tensorial, foi convertido em snapshot vendorizado a partir do commit local limpo `0430489b826d88f7d3879232fe13468e16ced465`. As cópias locais e alterações auditadas permanecem preservadas fora desta mudança, aguardando fork ou vendor seletivo. Esta página é o índice de decisão; ela não substitui essa revisão.
 
 O detalhe da classificação atual está em [docs/audits/2026-08-21-submodule-classification.md](../audits/2026-08-21-submodule-classification.md).

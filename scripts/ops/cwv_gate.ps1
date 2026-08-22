@@ -11,11 +11,16 @@ param(
     [double]$InpThreshold = 200.0,
     [double]$TtfbThreshold = 800.0,
     [double]$MaxHeapThresholdMb = 128.0,
-    [string]$ReportDir = "$env:USERPROFILE\.gemini\Site\reports\cwv"
+    [string]$ReportDir = ""
 )
 
 $ErrorActionPreference = 'SilentlyContinue'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\\..')).Path
+if (-not $ReportDir) {
+    # Isolamento: um worktree deve registrar a propria evidencia de gate, sem
+    # escrever no checkout principal apenas porque ele compartilha $env:USERPROFILE.
+    $ReportDir = Join-Path $RepoRoot 'reports\\cwv'
+}
 
 Write-Host "`n======================================================================" -ForegroundColor Cyan
 Write-Host "[SOTA QUALITY GATE] Full Performance, A11y, CVE & SRI Integrity Audit" -ForegroundColor Yellow
@@ -273,6 +278,26 @@ $violPath = @()
 $violSize = @()
 $violRoute = @()
 
+# Le o indice uma unica vez. A versao anterior invocava `git ls-files` e
+# `git cat-file` para CADA arquivo em stage; uma dependencia vendorizada
+# legitima (Eigen: 1.933 arquivos) fazia o hook exceder o tempo operacional.
+# A politica permanece identica: o SHA e o tamanho continuam vindo do indice
+# ja staged, nunca do working tree.
+$indicePorArquivo = @{}
+foreach ($linhaIndice in @(& git -C $RepoRoot ls-files -s 2>$null | Where-Object { $_ })) {
+    if ($linhaIndice -match '^\d+\s+([0-9a-f]{40,64})\s+\d+\t(.+)$') {
+        $indicePorArquivo[$Matches[2]] = $Matches[1]
+    }
+}
+$tamanhoPorSha = @{}
+@($indicePorArquivo.Values | Sort-Object -Unique) |
+    & git -C $RepoRoot cat-file --batch-check='%(objectname) %(objectsize)' 2>$null |
+    ForEach-Object {
+        if ($_ -match '^([0-9a-f]{40,64})\s+(\d+)$') {
+            $tamanhoPorSha[$Matches[1]] = [int64]$Matches[2]
+        }
+    }
+
 foreach ($arquivo in $staged) {
     $normal = $arquivo -replace '\\', '/'
 
@@ -283,20 +308,14 @@ foreach ($arquivo in $staged) {
         }
     }
 
-    # Tamanho do blob JA EM STAGE (nao do working tree)
-    $sha = (& git -C $RepoRoot ls-files -s -- $arquivo 2>$null) -split '\s+' | Select-Object -Index 1
+    # Tamanho do blob JA EM STAGE (nao do working tree). Um ponteiro LFS tem
+    # cerca de 130 bytes; portanto um blob acima de 5 MB nunca e ponteiro.
+    $sha = $indicePorArquivo[$arquivo]
     if (-not $sha) { continue }
-    $tamanho = & git -C $RepoRoot cat-file -s $sha 2>$null
+    $tamanho = $tamanhoPorSha[$sha]
     if (-not $tamanho) { continue }
 
-    # Ponteiro LFS tem ~130 bytes e comeca com 'version https://git-lfs'
-    $ehPonteiro = $false
-    if ([int64]$tamanho -lt 300) {
-        $cabecalho = (& git -C $RepoRoot cat-file -p $sha 2>$null | Select-Object -First 1)
-        if ($cabecalho -like 'version https://git-lfs*') { $ehPonteiro = $true }
-    }
-
-    if (-not $ehPonteiro -and ([int64]$tamanho / 1MB) -gt $MaxBlobMb) {
+    if (([int64]$tamanho / 1MB) -gt $MaxBlobMb) {
         $violSize += ("{0} ({1:N1} MB)" -f $normal, ([int64]$tamanho / 1MB))
     }
 
@@ -309,7 +328,7 @@ foreach ($arquivo in $staged) {
     # extensao com blobs pre-existentes gera "should have been pointers" a cada
     # checkout. Mante-los aqui faria o portao reprovar um estado que e correto.
     # Arquivo grande desses tipos continua coberto pela checagem de tamanho.
-    if ($normal -match '\.(dll|exe|so|dylib|bin|dat|node|gguf|onnx|safetensors)$' -and -not $ehPonteiro) {
+    if ($normal -match '\.(dll|exe|so|dylib|bin|dat|node|gguf|onnx|safetensors)$') {
         $filtro = (& git -C $RepoRoot check-attr filter -- $arquivo 2>$null)
         if ($filtro -notlike '*filter: lfs*') { $violRoute += $normal }
     }
@@ -325,6 +344,12 @@ foreach ($arquivo in $staged) {
 # em risco. Esta fase impede que o numero volte a crescer.
 $violPs = @()
 
+# Snapshot upstream exato, sem scripts chamados pelo produto. Estes arquivos
+# pertencem ao CI do Eigen e usam sintaxe destinada ao ambiente do upstream;
+# valida-los com o PowerShell 5.1 do hook seria um falso positivo. Todo .ps1
+# fora deste fornecedor imutavel continua sob parse obrigatorio do PS 5.1.
+$PowerShellSnapshotExemptions = @('core/vendor/eigen/')
+
 # Script do processo filho, codificado uma unica vez. Le o alvo de
 # $env:SOTA_PS51_ALVO — o caminho e DADO, nunca texto de comando.
 $EncPs51 = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes(
@@ -335,6 +360,8 @@ $EncPs51 = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes(
 
 foreach ($arquivo in $staged) {
     if ($arquivo -notmatch '\.ps1$') { continue }
+    $normal = $arquivo -replace '\\', '/'
+    if (@($PowerShellSnapshotExemptions | Where-Object { $normal -like "$_*" }).Count -gt 0) { continue }
     $abs = Join-Path $RepoRoot $arquivo
     if (-not (Test-Path $abs)) { continue }
 

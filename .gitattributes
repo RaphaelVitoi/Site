@@ -106,3 +106,8 @@ uv.lock           -text
 *.gguf      filter=lfs diff=lfs merge=lfs -text
 *.onnx      filter=lfs diff=lfs merge=lfs -text
 *.safetensors filter=lfs diff=lfs merge=lfs -text
+
+# Snapshot upstream imutável do Eigen (commit 0430489b826d88f7d3879232fe13468e16ced465).
+# Preserva licença, conteúdo e formatação byte-a-byte; higiene de whitespace do
+# código próprio continua coberta pelas regras globais acima.
+core/vendor/eigen/** whitespace=-trailing-space,-blank-at-eof

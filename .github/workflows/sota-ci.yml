@@ -120,7 +120,7 @@ jobs:
 
       - name: 🔍 Actionlint GitHub Workflows Static Analysis
         run: |
-          uv run --with actionlint-py actionlint .github/workflows/sota-ci.yml skills/gemini-cli-security/.github/workflows/gemini-review.yml
+          uv run --with actionlint-py actionlint .github/workflows/sota-ci.yml
 
       - name: 🔒 SOTA Security & CWV Quality Gate Check
         run: |
