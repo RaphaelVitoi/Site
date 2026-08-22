@@ -108,20 +108,51 @@ $secRules = [ordered]@{
     "TOTAL_VULNERABILITY"= @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Total open vulnerabilities across dependencies" }
 }
 
-$env:PATH = "C:\Users\rapha\.fnm\node-versions\v24.16.0\installation;" + $env:PATH
-try {
-    $auditRaw = (npm audit --json 2>&1 | Out-String).Trim()
-    if ($auditRaw.StartsWith("{")) {
-        $auditJson = $auditRaw | ConvertFrom-Json
-        $metadata = $auditJson.metadata.vulnerabilities
-        if ($metadata) {
-            $secRules["CRITICAL_CVE_COUNT"].Val = [int]($metadata.critical)
-            $secRules["HIGH_CVE_COUNT"].Val     = [int]($metadata.high)
-            $secRules["TOTAL_VULNERABILITY"].Val= [int]($metadata.total)
+# SEGURANCA (2026-08-22): esta fase FALHAVA ABERTA.
+#
+# Se o `npm audit` nao produzisse JSON — npm fora do PATH, erro de rede, texto
+# de erro em vez de JSON — a excecao era engolida, os contadores ficavam no
+# valor INICIAL zero, e as tres checagens reportavam [PASS]. Comprovado por
+# experimento: com o npm inacessivel, o veredito da fase era APROVADA.
+#
+# O gatilho nao era hipotetico. A linha abaixo prependia ao PATH o caminho
+# C:\Users\rapha\.fnm\node-versions\v24.16.0\installation, que NAO EXISTE neste
+# ambiente. O portao so vinha medindo porque o Node chega pelo PATH de maquina
+# — garantia acidental, nao estrutural.
+#
+# Regra que passa a valer: um portao que nao mede NAO aprova. "Zero
+# vulnerabilidades" e um resultado; "nao consegui rodar" e uma falha.
+
+# So prepende o caminho do fnm se ele existir de fato.
+$fnmPath = "$env:USERPROFILE\.fnm\node-versions\v24.16.0\installation"
+if (Test-Path $fnmPath) { $env:PATH = "$fnmPath;" + $env:PATH }
+
+$cveMedido = $false
+$cveErro = ''
+
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    $cveErro = 'npm nao foi encontrado no PATH'
+} else {
+    try {
+        $auditRaw = (npm audit --json 2>&1 | Out-String).Trim()
+        if ($auditRaw.StartsWith("{")) {
+            $auditJson = $auditRaw | ConvertFrom-Json
+            $metadata = $auditJson.metadata.vulnerabilities
+            if ($null -ne $metadata) {
+                $secRules["CRITICAL_CVE_COUNT"].Val = [int]($metadata.critical)
+                $secRules["HIGH_CVE_COUNT"].Val     = [int]($metadata.high)
+                $secRules["TOTAL_VULNERABILITY"].Val= [int]($metadata.total)
+                $cveMedido = $true
+            } else {
+                $cveErro = 'JSON sem metadata.vulnerabilities'
+            }
+        } else {
+            $trecho = $auditRaw.Substring(0, [Math]::Min(70, $auditRaw.Length))
+            $cveErro = "npm audit nao devolveu JSON: $trecho"
         }
+    } catch {
+        $cveErro = "excecao ao rodar npm audit: $($_.Exception.Message)"
     }
-} catch {
-    # Fallback to zero if unable to parse
 }
 
 foreach ($k in $secRules.Keys) {
@@ -136,6 +167,15 @@ foreach ($k in $secRules.Keys) {
         $failures += "Security Gate '$k': $($s.Desc) - $($s.Val) violation(s)"
     }
 }
+
+# A linha que impede a falha aberta: os zeros acima so valem se o audit RODOU.
+$execStatus = if ($cveMedido) { "[PASS]" } else { "[FAIL]" }
+$execColor  = if ($cveMedido) { "Green" } else { "Red" }
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_AUDIT_EXECUTADO', $(if ($cveMedido) { 'sim' } else { 'NAO' }), 'sim', $execStatus) -ForegroundColor $execColor
+if (-not $cveMedido) {
+    Write-Host "   motivo: $cveErro" -ForegroundColor Red
+    $failures += "Security Gate: o audit de CVE NAO RODOU ($cveErro). Zero medido e resultado; zero por falta de medicao e falha."
+}
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
 # 4. Cryptographic SRI & SHA-512 Integrity Gate
@@ -143,24 +183,47 @@ Write-Host ("`n[4] SUBRESOURCE INTEGRITY (SRI) & SHA-512 CRYPTOGRAPHIC HASH AUDI
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CRYPTOGRAPHIC TARGET', 'STATUS', 'LIMIT', 'GATE') -ForegroundColor White
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
-$sriSuccess = $true
-try {
-    $pythonExe = if (Test-Path "$env:USERPROFILE\.gemini\Site\.venv\Scripts\python.exe") { "$env:USERPROFILE\.gemini\Site\.venv\Scripts\python.exe" } else { "python.exe" }
-    $sriOutput = & $pythonExe "$env:USERPROFILE\.gemini\Site\scripts\ops\sri_integrity_verifier.py" 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        $sriSuccess = $false
-        Write-Verbose "SRI verifier output: $sriOutput"
+# SEGURANCA (2026-08-22): comeca PESSIMISTA. A versao anterior iniciava
+# $sriSuccess = $true e so o derrubava se $LASTEXITCODE fosse diferente de
+# zero. Duas brechas: se o interpretador nao chegasse a lancar, $LASTEXITCODE
+# retinha o valor do comando ANTERIOR — se aquele tivesse dado 0, a fase
+# passava sem verificar nada; e o caminho caia para "python.exe" sem conferir
+# se existe. Mesma classe de falha aberta da fase 3.
+$sriSuccess = $false
+$sriErro = ''
+$venvPy    = "$env:USERPROFILE\.gemini\Site\.venv\Scripts\python.exe"
+$sriScript = "$env:USERPROFILE\.gemini\Site\scripts\ops\sri_integrity_verifier.py"
+$pythonExe = if (Test-Path $venvPy) { $venvPy } else { (Get-Command python.exe -ErrorAction SilentlyContinue).Source }
+
+if (-not $pythonExe) {
+    $sriErro = 'nenhum interpretador Python encontrado (venv ausente e python.exe fora do PATH)'
+} elseif (-not (Test-Path $sriScript)) {
+    $sriErro = "verificador ausente: $sriScript"
+} else {
+    $global:LASTEXITCODE = 0
+    try {
+        $sriOutput = & $pythonExe $sriScript 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $sriSuccess = $true
+        } else {
+            $sriErro = "verificador saiu com codigo $LASTEXITCODE"
+            Write-Verbose "SRI verifier output: $sriOutput"
+        }
+    } catch {
+        $sriErro = "excecao ao executar o verificador: $($_.Exception.Message)"
     }
-} catch {
-    $sriSuccess = $false
 }
 
 $sriStatus = if ($sriSuccess) { "[PASS]" } else { "[FAIL]" }
 $sriColor = if ($sriSuccess) { "Green" } else { "Red" }
-Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f "SHA512_&_SRI_INTEGRITY", "VERIFIED", "<= 0 viol", $sriStatus) -ForegroundColor $sriColor
+# Antes imprimia "VERIFIED" mesmo quando reprovava — rotulo que contradizia o
+# proprio veredito ao lado.
+$sriLabel = if ($sriSuccess) { "VERIFIED" } else { "NAO VERIF." }
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f "SHA512_&_SRI_INTEGRITY", $sriLabel, "<= 0 viol", $sriStatus) -ForegroundColor $sriColor
 
 if (-not $sriSuccess) {
-    $failures += "Cryptographic Integrity Gate: Falha na validacao de SRI ou hash SHA-512 de pacotes."
+    Write-Host "   motivo: $sriErro" -ForegroundColor Red
+    $failures += "Cryptographic Integrity Gate: SRI/SHA-512 nao verificado ($sriErro)."
 }
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
