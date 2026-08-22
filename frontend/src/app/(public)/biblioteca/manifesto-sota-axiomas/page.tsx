@@ -1,9 +1,4 @@
-/**
- * IDENTITY: Manifesto SOTA: Axiomas da Perspectiva GOLD
- * PATH: src/app/biblioteca/manifesto-sota-axiomas/page.tsx
- * ROLE: Artigo de síntese polifórmica unindo Teoria dos Jogos e Psicologia de Sistemas.
- * VERSION: v7.0 GOLD
- */
+/** Tese editorial da PMev: proposições explícitas, não resultados alegados. */
 
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
@@ -13,105 +8,98 @@ import { ROUTES } from '@/constants/routes';
 import { SITE_CONFIG } from '@/constants/site';
 
 const content = `
-# Manifesto SOTA: Axiomas da Perspectiva Matemática
+# Manifesto SOTA: Proposições da Perspectiva Matemática
 
-O paradigma proposto — a **Perspectiva Matemática** — desloca o eixo do poker de uma análise de "estado" (snapshot) para uma análise de "fluxo" (dinâmica sistêmica).
-
----
-
-## 1. O Axioma do EV do Fold (EV_fold ≠ 0)
-
-A falha fundamental dos solvers comerciais ao exibir o EV do fold como 0 é uma simplificação pedagógica que oculta o custo de oportunidade. Matematicamente, o fold é uma transação de capital onde você aceita uma perda garantida para evitar uma perda incerta e potencialmente maior.
-
-### O Paradoxo do ICM pós-flop
-No ICM, o EV_fold torna-se uma variável dinâmica e, por vezes, **positiva**.
-*   **Atratividade do Fold:** Quando a sobrevivência garante um payjump iminente, o valor de "passar a vez" supera o valor esperado de colidir.
-*   **Pot Entrapment:** Conforme as fichas entram no pote, o EV_fold torna-se violentamente negativo. A perda de valuation do stack investido gera uma "gravidade" que aproxima as decisões de call do ChipEV.
+Este texto formula uma **tese de trabalho**: a Perspectiva Matemática (PMev) pode estender a leitura de estados de ICM com variáveis de fluxo, realização e incerteza. Não substitui o ICM, não é prova matemática e só pode alegar ganho preditivo após comparação reprodutível fora da amostra.
 
 ---
 
-## 2. A Hierarquia da Perspectiva Matemática
+## 1. Convenção do EV do Fold
 
-A tomada de decisão não é plana; ela evolui em camadas de complexidade:
+Em muitos solvers, fold é mostrado como zero **por convenção incremental**: o investimento já realizado é custo afundado e as linhas são comparadas a partir do nó atual. Uma modelagem de valor absoluto ou de oportunidade pode usar outro referencial, desde que declare o estado, o horizonte e a função objetivo.
 
-1.  **ICMev (Snapshot):** "O que eu tenho agora?" (Aproximação grosseira).
-2.  **Esperança Matemática (Lógica):** "O que eu posso buscar?" — Antevisão de controle de mesa e edge.
-3.  **Expectativa Matemática (Preditiva):** "Qual o impacto no FGS e na saúde futura?" — Inclui aversão à perda.
-4.  **Perspectiva Matemática (Síntese):** O output final que encapsula as camadas anteriores em uma decisão soberana.
+No ICM, a ação de fold pode preservar valor relativo quando payouts, stacks e sobrevivência criam assimetria. Isso não torna o fold universalmente “positivo”: o resultado depende da convenção de EV e do cenário parametrizado.
 
----
-
-## 3. A Falácia das Pot Odds e o Veneno das RIO
-
-As Pot Odds são uma métrica linear e isolada. No Poker de elite, elas tornam-se um distrator sistêmico.
-
-### O Cavalo de Troia
-As Pot Odds facilitam a entrada em um pote (especulação barata) apenas para expor o jogador às **Reverse Implied Odds (RIO)**. No cenário Multiway (~33% de frequência), o passivo estrutural cresce a uma taxa exponencial $x^{2+f}$. 
-
-O prejuízo nasce do descompasso entre o preço de entrada (Odds) e o custo de saída (RIO + Perda de Valuation).
+* **Valor de preservação:** payjumps e pressão de eliminação podem elevar o custo de uma colisão.
+* **Comprometimento de pote:** fichas já investidas alteram o preço marginal de continuar, mas não eliminam a comparação de todas as linhas da árvore.
 
 ---
 
-## 4. O Axioma Lipe Piv (A Regressão Bayesiana da Equidade)
+## 2. Hierarquia proposta da Perspectiva Matemática
 
-A crença ingênua de que a Equidade da sua mão é um valor fixo (ex: 55%) é o caminho para a insolvência estratégica. O **Axioma Lipe Piv** introduz a Credibilidade Informacional (κ) na equação:
-
-> **Eq_real = Baseline_PotOdds + κ * (Eq_Hand - Baseline_PotOdds)**
-
-*   **κ (Kappa):** Mede a força da sua leitura. Se κ = 1, você confia plenamente no seu range. Se κ = 0, você regride ao baseline matemático de sobrevivência.
-*   **Significado:** Em cenários de incerteza (entropia), a matemática SOTA força sua equidade real em direção ao teto do RP, impedindo o "Hero Call" suicida sem provas cabais.
+1. **ICM (baseline):** função de valor estática para stacks e payouts declarados.
+2. **EV da linha:** comparação de ações dentro de uma árvore e ranges declarados.
+3. **Expectativas condicionais:** hipóteses sobre realização, transições e comportamento, explicitadas como tais.
+4. **PMev (síntese proposta):** extensão em pesquisa que deve recuperar o baseline ICM quando suas variáveis adicionais são neutralizadas.
 
 ---
 
-## 5. O Fator Ψ (A Taxa de Maluquice Humana)
+## 3. Pot Odds, RIO e custos futuros
 
-Ignorar o desvio emocional populacional é um erro fatal. A decisão no River deve integrar a **Frequência de Bobagem Humana** ($f_b$):
+Pot odds descrevem corretamente o preço imediato de uma decisão. Elas não capturam, sozinhas, realização de equidade, rake, ranges, ICM ou streets futuras; por isso são um componente, não uma função objetivo completa.
 
-> **P(Call Ganho) = P(Nuts Representado) + P(Tilt/Bluff Irracional)**
-
-Se a probabilidade do oponente ter o nuts é de 4%, mas a taxa estatística de "besteira humana" naquele spot é de 10%, o call é obrigatório por Perspectiva, mesmo que o GTO sugira o contrário.
+Pot odds podem induzir a uma leitura incompleta quando a ação futura cria custos adicionais de realização ou de ICM. A magnitude desses custos deve ser estimada por árvore, ranges e estrutura; não há frequência multiway ou crescimento exponencial universal que dispense essa medição.
 
 ---
 
-## 6. O Axioma da Sinergia Cognitiva (O Paradoxo do Oráculo)
+## 4. Proposta Lipe Piv: regressão de crenças
 
-A verdadeira inteligência não reside apenas no cálculo (WASM/GPU) nem apenas na intuição (Heurística Humana), mas na colisão entre ambos. O **Paradoxo do Oráculo** estabelece que o GTO é o mapa, mas o Operador é o território.
+A equidade depende de ranges e informação; tratar uma estimativa como certeza introduz erro. O **Lipe Piv** é uma proposta de regularização de crenças que precisa de definição operacional e validação:
 
-*   **Cálculo Determinístico:** Processa a física estrita do pote.
-*   **Análise Heurística (@gemma):** Processa a entropia do comportamento.
-*   **Síntese:** A decisão soberana emerge quando o cálculo de Nash é filtrado pela probabilidade da bobagem humana (Fator Ψ).
+> **Eq_real = Baseline + κ × (Eq_estimada − Baseline)**
+
+* **κ (Kappa):** parâmetro proposto para expressar confiança na informação; a sua estimação deve ser definida antes da decisão.
+* **Limite:** κ não força equidade a um teto universal de RP. Deve ser calibrado contra previsões e baselines, sem transformar prudência em dogma.
 
 ---
 
-## 7. Persistência Estratégica: A Memória do Operador
+## 5. O Fator Ψ: hipótese comportamental
 
-No ecossistema SOTA, o aprendizado não é volátil. Cada desvio (exploit) calculado e cada cenário resolvido tornam-se parte do **Registro Akashico** do usuário. A evolução do jogador é medida pela capacidade de seu sistema pessoal de armazenar e recuperar padrões de dominância (A* Pathfinding).
+Desvios comportamentais podem importar em decisões exploitativas, mas precisam ser modelados por população, contexto e amostra. O fator Ψ é uma hipótese para registrar essa incerteza, não uma frequência observada pronta para uso.
+
+> **P(call ganha) = P(range que perde) + P(bluffs e erros comportamentais)**
+
+Um call só é justificável após comparar distribuição de ranges, sizing, pot odds, ICM e incerteza da estimativa. Números ilustrativos não estabelecem frequência populacional nem tornam uma ação obrigatória.
+
+---
+
+## 6. Sinergia cognitiva: cálculo, hipótese e auditoria
+
+O princípio operacional é separar cálculo, hipótese comportamental e registro de decisão — para que uma leitura humana possa ser auditada, corrigida e eventualmente testada.
+
+* **Cálculo determinístico:** processa o modelo e os inputs declarados.
+* **Análise heurística:** gera hipóteses sobre comportamento, sem alegar observação sem dados.
+* **Síntese:** documenta a decisão e suas premissas para confronto posterior com resultados e baselines.
+
+---
+
+## 7. Persistência estratégica: memória auditável
+
+No ecossistema SOTA, hipóteses, inputs, decisões e resultados podem ser registrados para revisão. O objetivo é reduzir memória seletiva e criar histórico que permita atualização — não armazenar “padrões de dominância” como verdades.
 `;
 
 export default function ManifestoAxiomasPage() {
-	return (
-		<div className="min-h-screen bg-bg-base text-text-bright">
-			<ContentPageHeader
-				title="Manifesto SOTA"
-				subtitle="Axiomas da Perspectiva: A união entre Teoria dos Jogos e Psicologia de Sistemas."
-				category="Doutrina"
-				icon="fa-scroll"
-			/>
-
-			<div className="sota-container py-12 md:py-24">
-				<div className="max-w-4xl mx-auto">
-					<GlassPanel className="p-10 lg:p-16 border-t-8 border-t-accent-indigo">
-						<SotaMarkdown content={content} />
-					</GlassPanel>
-				</div>
-			</div>
-
-			<ContentFooter
-				shareTitle={`Manifesto SOTA | ${SITE_CONFIG.author}`}
-				shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.MANIFESTO_SOTA}`}
-				backLinkHref={ROUTES.BIBLIOTECA}
-				backLinkText="Voltar para Biblioteca"
-			/>
-		</div>
-	);
+  return (
+    <div className="bg-bg-base text-text-bright min-h-screen">
+      <ContentPageHeader
+        title="Manifesto SOTA"
+        subtitle="Proposições da Perspectiva: um programa de pesquisa que une teoria dos jogos, comportamento e auditoria."
+        category="Tese editorial"
+        icon="fa-scroll"
+      />
+      <div className="sota-container py-12 md:py-24">
+        <div className="mx-auto max-w-4xl">
+          <GlassPanel className="border-t-accent-indigo border-t-8 p-10 lg:p-16">
+            <SotaMarkdown content={content} />
+          </GlassPanel>
+        </div>
+      </div>
+      <ContentFooter
+        shareTitle={`Manifesto SOTA | ${SITE_CONFIG.author}`}
+        shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.MANIFESTO_SOTA}`}
+        backLinkHref={ROUTES.BIBLIOTECA}
+        backLinkText="Voltar para Biblioteca"
+      />
+    </div>
+  );
 }

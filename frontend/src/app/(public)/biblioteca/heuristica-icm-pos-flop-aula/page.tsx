@@ -16,7 +16,7 @@ const content = `
 # Masterclass 1.2: Entendendo o ICM e suas Heurísticas
 ### Aplicações de Risk Premium no Pós-Flop
 
-Nesta aula, realizamos um comparativo exegético entre o modelo linear (**ChipEV - GTO Wizard**) e o modelo utilitário (**ICMev - HRC Pós-Flop**) em uma Mesa Final de 126 entradas.
+Esta aula usa um cenário ilustrativo de comparação entre ChipEV e ICM pós-flop. Qualquer número depende da árvore, ranges, payouts, versões de ferramenta e configuração reproduzível.
 
 ---
 
@@ -27,15 +27,15 @@ Analisamos um spot clássico de **BTN vs BB**.
 *   **BB (53bb):** Risk Premium de 12.9%
 *   **Risk Advantage:** +8.5% para o BTN.
 
-O BTN possui a "autorização matemática" para ser o agressor dominante, pois sua sobrevivência está menos ameaçada em termos relativos de valuation de stack do que a do BB, apesar de ter menos fichas nominais.
+Esses números só podem sugerir uma assimetria no cenário declarado; não autorizam agressão dominante sem comparar ranges, posições, sizings e árvore completa.
 
 ---
 
 ## 2. A Mutação do Flop (C-bet vs Check)
 
 No ChipEV, o agressor mantém o "piloto automático" de agressão. Sob ICM:
-1.  **Aumento substancial de Checks:** A preservação de valuation desencoraja inflar o pote.
-2.  **Sizings de Controle:** Apostas de 20% a 25% dominam a árvore.
+1. **Hipótese de mais checks:** preservação de valuation pode desencorajar inflar o pote em algumas árvores.
+2. **Sizings de controle:** apostas pequenas podem aparecer no cenário; não há faixa dominante universal.
 
 ![Comparativo de Linhas de C-bet](/images/aulas/entendendo-o-icm-e-suas-heuristicas/image1.png)
 
@@ -43,11 +43,11 @@ No ChipEV, o agressor mantém o "piloto automático" de agressão. Sob ICM:
 
 ## 3. O Colapso do Bluffcatcher
 
-Quando o pote atinge o River, o **Pot Entrapment** (Aprisionamento) força o defensor a um dilema brutal. O EV do Fold não é mais zero; é o total investido. 
+Quando o pote atinge o River, o comprometimento de pote altera o preço marginal de continuar. Sob a convenção incremental usada por muitos solvers, o EV do fold continua a linha de base; o investimento prévio é custo afundado.
 
 ![Matriz de Defesa River](/images/aulas/entendendo-o-icm-e-suas-heuristicas/image7.png)
 
-*Note na imagem acima como o range de call do BB "derrete" nas extremidades. Mãos marginais que seriam call por pot odds puras tornam-se folds obrigatórios pela Perspectiva de sobrevivência.*
+*A imagem ilustra uma hipótese de estreitamento de calls. Mãos marginais exigem comparação entre pot odds, ranges, ICM e árvore; não se tornam folds obrigatórios por um rótulo.*
 
 ---
 
@@ -60,34 +60,34 @@ O HRC Pós-Flop introduz uma variável que o GTO Wizard ignora: o impacto das ca
 ## 5. Conclusões Práticas
 
 *   **Sizings Pequenos:** São a ferramenta de mitigação de variância.
-*   **Agressão Seletiva:** O teto do RP proíbe overbluffs sem blockers de alta fidelidade.
+* **Agressão seletiva:** RP pode alterar incentivos de blefe; o efeito precisa ser calculado no spot, sem assumir um teto universal.
 *   **Check-Back:** AA e KK devem ser checkados com mais frequência para controlar o SPR e evitar o "Pacto Silencioso" sendo quebrado prematuramente.
 `;
 
 export default function MasterclassLessonPage() {
-	return (
-		<div className="min-h-screen bg-bg-base text-text-bright">
-			<ContentPageHeader
-				title="Masterclass 1.2"
-				subtitle="Heurísticas de ICM no Pós-Flop: A ciência por trás da dissipação do Risk Premium."
-				category="Aula Técnica"
-				icon="fa-chalkboard-user"
-			/>
+  return (
+    <div className="bg-bg-base text-text-bright min-h-screen">
+      <ContentPageHeader
+        title="Masterclass 1.2"
+        subtitle="Heurísticas de ICM no Pós-Flop: A ciência por trás da dissipação do Risk Premium."
+        category="Aula Técnica"
+        icon="fa-chalkboard-user"
+      />
 
-			<div className="sota-container py-12 md:py-24">
-				<div className="max-w-4xl mx-auto">
-					<GlassPanel className="p-8 lg:p-12">
-						<SotaMarkdown content={content} />
-					</GlassPanel>
-				</div>
-			</div>
+      <div className="sota-container py-12 md:py-24">
+        <div className="mx-auto max-w-4xl">
+          <GlassPanel className="p-8 lg:p-12">
+            <SotaMarkdown content={content} />
+          </GlassPanel>
+        </div>
+      </div>
 
-			<ContentFooter
-				shareTitle={`Masterclass 1.2: ICM no Pós-Flop | ${SITE_CONFIG.author}`}
-				shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.HEURISTICA_POS_FLOP}`}
-				backLinkHref={ROUTES.BIBLIOTECA}
-				backLinkText="Voltar para Biblioteca"
-			/>
-		</div>
-	);
+      <ContentFooter
+        shareTitle={`Masterclass 1.2: ICM no Pós-Flop | ${SITE_CONFIG.author}`}
+        shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.HEURISTICA_POS_FLOP}`}
+        backLinkHref={ROUTES.BIBLIOTECA}
+        backLinkText="Voltar para Biblioteca"
+      />
+    </div>
+  );
 }

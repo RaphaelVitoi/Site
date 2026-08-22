@@ -15,15 +15,15 @@ import { SITE_CONFIG } from '@/constants/site';
 const content = `
 # Hierarquia Cognitiva da Decisão
 
-A evolução do pensamento estratégico no poker não é plana; ela escala em camadas de complexidade até atingir o Estado da Arte. No **Paradigma VITOI**, deslocamos a análise de um modelo de "estado" estático ($ICM_{ev}$) para uma análise de "fluxo" dinâmica (Sistemas Complexos e Lógica Bayesiana).
+A evolução do pensamento estratégico pode ser organizada em camadas. No **Paradigma VITOI**, propomos complementar um modelo de estado ($ICM_{ev}$) com hipóteses de fluxo, realização e atualização bayesiana — sem dispensar o baseline ICM.
 
 ---
 
 ## 1. $ICM_{ev}$ (Métrica Estática)
 **Resolução:** Baixa (Snapshot).
-O **ICMev** é a camada mais superficial. Ele calcula o valor financeiro das suas fichas no momento exato da decisão, tratando o torneio como se ele terminasse agora. 
+O **ICMev** calcula o valor financeiro de fichas para stacks e payouts declarados. É um baseline útil, mas não resolve sozinho todas as transições futuras de uma árvore pós-flop.
 *   **A pergunta:** "O que eu tenho agora?"
-*   **Falha:** É uma aproximação grosseira e isolada. Ignora a continuidade do jogo, a subida das blinds e a dinâmica de mesa.
+*   **Limite:** a continuidade do jogo, blinds e dinâmica de mesa exigem um modelo complementar explicitamente definido.
 
 ---
 
@@ -43,43 +43,43 @@ A **Expectativa** é a projeção preditiva do *Future Game Simulation* (FGS).
 
 ---
 
-## 4. Perspectiva Matemática (A Síntese Final)
-**Resolução:** SOBERANA (Estado da Arte).
-A **Perspectiva** é o output definitivo e de rigor irrefutável. Ela absorve a abstração e substitui o $ICM_{ev}$ isolado por uma decisão perfeitamente calibrada ao fluxo sistêmico.
+## 4. Perspectiva Matemática (Síntese proposta)
+**Resolução:** hipótese de integração.
+A **Perspectiva** é uma proposta para integrar abstrações adicionais ao $ICM_{ev}$, preservando-o como baseline recuperável. A calibração depende de especificação, dados e comparação fora da amostra.
 
 $$ \text{Perspectiva} = \text{Expectativa} - (\text{Dívida RIO} + \text{Custo do Fold}) $$
 
-Na camada de Perspectiva, a decisão é blindada contra os passivos estruturais (RIO) e o custo de oportunidade (EV Fold). Se a Perspectiva é positiva, a ação é **Soberana**. Se é negativa, a abstenção é a única rota para a excelência.
+Na camada de Perspectiva, RIO e custo de oportunidade são hipóteses que devem ser explicitadas e comparadas com linhas alternativas. Um valor positivo só informa a escolha se a função, os inputs e a convenção de EV forem declarados.
 
 ---
 
-> **Axioma VITOI:** "Onde o solver vê um call de 0.01bb, a Perspectiva vê uma ferida na saúde do stack. No Estado da Arte, priorizamos a integridade do sistema sobre a acumulação nominal de fichas."
+> **Princípio editorial VITOI:** "Onde um modelo encontra uma margem pequena, a análise deve perguntar quais premissas a sustentam — e registrar a resposta para auditoria."
 `;
 
 export default function HierarquiaDecisaoPage() {
-	return (
-		<div className="min-h-screen bg-bg-base text-text-bright">
-			<ContentPageHeader
-				title="Hierarquia da Decisão"
-				subtitle="As 4 camadas de resolução do pensamento estratégico VITOI: Do snapshot estático à Métrica Soberana."
-				category="Doutrina SOTA"
-				icon="fa-layer-group"
-			/>
+  return (
+    <div className="bg-bg-base text-text-bright min-h-screen">
+      <ContentPageHeader
+        title="Hierarquia da Decisão"
+        subtitle="As 4 camadas de resolução do pensamento estratégico VITOI: Do snapshot estático à Métrica Soberana."
+        category="Doutrina SOTA"
+        icon="fa-layer-group"
+      />
 
-			<div className="sota-container py-12 md:py-24">
-				<div className="max-w-4xl mx-auto">
-					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-indigo shadow-2xl">
-						<SotaMarkdown content={content} />
-					</GlassPanel>
-				</div>
-			</div>
+      <div className="sota-container py-12 md:py-24">
+        <div className="mx-auto max-w-4xl">
+          <GlassPanel className="border-l-accent-indigo border-l-4 p-8 shadow-2xl lg:p-12">
+            <SotaMarkdown content={content} />
+          </GlassPanel>
+        </div>
+      </div>
 
-			<ContentFooter
-				shareTitle={`Hierarquia da Decisão SOTA | ${SITE_CONFIG.author}`}
-				shareUrl={`${SITE_CONFIG.baseUrl}/biblioteca/hierarquia-da-decisao`}
-				backLinkHref={ROUTES.BIBLIOTECA}
-				backLinkText="Voltar para Biblioteca"
-			/>
-		</div>
-	);
+      <ContentFooter
+        shareTitle={`Hierarquia da Decisão SOTA | ${SITE_CONFIG.author}`}
+        shareUrl={`${SITE_CONFIG.baseUrl}/biblioteca/hierarquia-da-decisao`}
+        backLinkHref={ROUTES.BIBLIOTECA}
+        backLinkText="Voltar para Biblioteca"
+      />
+    </div>
+  );
 }

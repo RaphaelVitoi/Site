@@ -33,7 +33,7 @@ O prejuízo nasce do descompasso entre o **preço de entrada** (Odds) e o **cust
 
 ## 2. O Multiway como Cemitério Estratégico
 
-Em cenários Multiway (~33% de frequência), a entropia do sistema aumenta exponencialmente. As pot odds parecem ainda mais atrativas (5:1, 6:1), mas a Perspectiva Matemática revela que o risco de colisão catastrófica cresce em uma taxa superior ao desconto do pote.
+Em cenários multiway, ranges e árvores tornam a realização de equidade mais difícil de estimar. Pot odds podem parecer atrativas, mas custos futuros e ICM exigem modelagem do cenário; não há frequência multiway ou taxa de crescimento universal.
 
 No Multiway, as **RIO** tornam-se uma dívida impagável. Se você está no meio da ação (Sandwich), suas Pot Odds são irrelevantes; você está insolventemente preso em um "Cemitério Estratégico" onde a força absoluta da sua mão é aniquilada pela tensão posicional.
 
@@ -43,7 +43,7 @@ No Multiway, as **RIO** tornam-se uma dívida impagável. Se você está no meio
 
 A Edge (superioridade técnica) não é uma constante; ela é uma função direta da **Profundidade de Stack (Stack Depth)**.
 
-*   **100bb+:** Edge Infinita. As árvores de decisão são complexas e favorecem o processamento superior de sistemas dinâmicos.
+* **100bb+:** árvores mais profundas podem ampliar espaço de decisão e erro, mas não implicam edge infinita nem vantagem automática de qualquer sistema.
 *   **10bb-:** Edge Nula. Ocorre o colapso binário onde o jogo se resume a tabelas pré-computadas (Push/Fold).
 
 O solver protege o jogador fraco ao simplificar o jogo conforme as stacks diminuem. No paradigma SOTA, a missão é forçar a complexidade onde a edge existe e aceitar a variância onde o colapso mecânico é inevitável.
@@ -70,29 +70,29 @@ Para um jogador de elite, as pot odds são apenas o esqueleto de uma decisão. A
 `;
 
 export default function InsolvenciaPotOddsPage() {
-	return (
-		<div className="min-h-screen bg-bg-base text-text-bright">
-			<ContentPageHeader
-				title="Insolvência das Pot Odds"
-				subtitle="Por que focar no preço imediato é a rota mais rápida para a erosão de stack em Mesas Finais."
-				category="Teoria Crítica"
-				icon="fa-biohazard"
-			/>
+  return (
+    <div className="bg-bg-base text-text-bright min-h-screen">
+      <ContentPageHeader
+        title="Insolvência das Pot Odds"
+        subtitle="Por que focar no preço imediato é a rota mais rápida para a erosão de stack em Mesas Finais."
+        category="Teoria Crítica"
+        icon="fa-biohazard"
+      />
 
-			<div className="sota-container py-12 md:py-24">
-				<div className="max-w-4xl mx-auto">
-					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-rose">
-						<SotaMarkdown content={content} />
-					</GlassPanel>
-				</div>
-			</div>
+      <div className="sota-container py-12 md:py-24">
+        <div className="mx-auto max-w-4xl">
+          <GlassPanel className="border-l-accent-rose border-l-4 p-8 lg:p-12">
+            <SotaMarkdown content={content} />
+          </GlassPanel>
+        </div>
+      </div>
 
-			<ContentFooter
-				shareTitle={`A Insolvência das Pot Odds | ${SITE_CONFIG.author}`}
-				shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.INSOLVENCIA_POT_ODDS}`}
-				backLinkHref={ROUTES.BIBLIOTECA}
-				backLinkText="Voltar para Biblioteca"
-			/>
-		</div>
-	);
+      <ContentFooter
+        shareTitle={`A Insolvência das Pot Odds | ${SITE_CONFIG.author}`}
+        shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.INSOLVENCIA_POT_ODDS}`}
+        backLinkHref={ROUTES.BIBLIOTECA}
+        backLinkText="Voltar para Biblioteca"
+      />
+    </div>
+  );
 }

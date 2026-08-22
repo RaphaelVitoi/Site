@@ -33,32 +33,32 @@ O que o cálculo ChipEV ignora:
 
 A Perspectiva Matemática exige a inclusão do **Fator Ψ (Axioma Psicológico)**. Se a mesa estiver sob estresse emocional (Maluquice Humana), a sua *Edge Relativa* é brutalmente penalizada ao se envolver em colisões desnecessárias de alta variância.
 
-A matemática SOTA prova que o *Fold EV* contra um short stack na bolha é ativamente positivo. A preservação do seu status de "Predador Absoluto" tem um Valuation infinitamente superior à equidade fracionária das cartas.
+Uma hipótese PMev é que devolver fichas a um short stack possa ter custo estratégico adicional em certos payouts e configurações. Isso não prova que fold tenha EV positivo em toda convenção nem que o seu valuation seja infinito: compare ranges, ICM, pot odds e linhas alternativas.
 
-Teste o laboratório abaixo. Modifique o Stack do Chip Leader e perceba como a barra de "Break-Even SOTA" exige muito mais equidade real do que as pot odds ilusórias sugerem.
+Teste o laboratório abaixo como visualização exploratória. Modifique stacks e compare premissas; a barra de break-even não substitui uma árvore de solver ou uma validação externa.
 `;
 
 export default function RiscoRessurreicaoPage() {
-	return (
-		<div className="min-h-screen bg-bg-base text-text-bright pb-24">
-			<ContentPageHeader
-				title="Risco de Ressurreição"
-				subtitle="A métrica invisível da Fear Equity: O custo catastrófico de dobrar um short stack e destruir o equilíbrio de pressão da mesa."
-				category="Valuation & Risco"
-				icon="fa-skull-crossbones"
-			/>
+  return (
+    <div className="bg-bg-base text-text-bright min-h-screen pb-24">
+      <ContentPageHeader
+        title="Risco de Ressurreição"
+        subtitle="A métrica invisível da Fear Equity: O custo catastrófico de dobrar um short stack e destruir o equilíbrio de pressão da mesa."
+        category="Valuation & Risco"
+        icon="fa-skull-crossbones"
+      />
 
-			<div className="sota-container py-12 md:py-24">
-				<div className="max-w-5xl mx-auto flex flex-col gap-16">
-					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-amber shadow-2xl group transition-colors hover:border-l-accent-rose">
-						<SotaMarkdown content={content} />
-					</GlassPanel>
+      <div className="sota-container py-12 md:py-24">
+        <div className="mx-auto flex max-w-5xl flex-col gap-16">
+          <GlassPanel className="border-l-accent-amber group hover:border-l-accent-rose border-l-4 p-8 shadow-2xl transition-colors lg:p-12">
+            <SotaMarkdown content={content} />
+          </GlassPanel>
 
-					<div className="w-full relative z-10">
-						<ResurrectionRiskSimulator />
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+          <div className="relative z-10 w-full">
+            <ResurrectionRiskSimulator />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

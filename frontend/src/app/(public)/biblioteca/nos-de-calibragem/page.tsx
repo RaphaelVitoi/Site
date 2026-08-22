@@ -30,45 +30,45 @@ const content = `
 
 | Street | Ação | Conclusão SOTA |
 | :--- | :--- | :--- |
-| **Pré-flop** | BTN Shove vs BB | BB executa um **Fold Estrutural** de ~78% devido ao Teto do RP e pressão assimétrica. |
-| **Flop (K-J-T)** | C-bet (small) | IP (BTN) mantém altíssima agressividade blindada pela Vantagem de Risco e negação de equity. |
-| **Turn (2d)** | Barrel (pol) | A diluição do RP começa a operar; OOP defende estritamente no seu Teto Mecânico. |
-| **River (3h)** | Shove | O abismo matemático do $EV_{fold}$ dita a decisão soberana, inviabilizando floatings criativos. |
+| **Pré-flop** | BTN Shove vs BB | Exemplo de hipótese: a frequência de fold deve ser calculada para ranges, stacks e payouts publicados. |
+| **Flop (K-J-T)** | C-bet (small) | Cenário para testar como IP, OOP e sizing mudam realização e equidade. |
+| **Turn (2d)** | Barrel (pol) | Hipótese de alteração de incentivos; comparar com baseline de árvore idêntica. |
+| **River (3h)** | Shove | A decisão depende de pot odds, ranges, ICM e da convenção de EV declarada. |
 
 ---
 
 ## 3. Invariâncias Matemáticas Mapeadas
 
-### A. O Teto de Equidade Termial
-No river, a equidade necessária para pagar um shove em cenários de ICM severo **nunca ultrapassa a faixa de ~45%**, mesmo quando confrontado contra ranges insanamente polarizados, devido ao custo incomensurável de eliminação em relação ao prêmio residual.
+### A. Equidade de call no river
+No river, a equidade necessária para pagar um shove muda com pot odds, ranges, stacks, payouts e bounties. Nenhuma faixa fixa, como 45%, pode ser transferida sem resolver o cenário correspondente.
 
 ### B. Efeito de Irradiação de Stacks
-A mera presença de micro-stacks na mesa (ex: UTG sobrevivendo com 9bb) comprime irreversivelmente os ranges de call dos stacks médios e grandes (ex: BB), forçando o **Fold Estrutural** mesmo quando possuem a vantagem de cartas, simplesmente porque o custo de oportunidade de colidir é irracional.
+A presença de micro-stacks pode alterar incentivos de call de stacks médios e grandes. O efeito deve ser calculado para o estado concreto; “fold estrutural” é uma etiqueta didática, não uma frequência automática.
 
 ### C. Pot Entrapment (Inércia de Investimento)
-A partir do Turn, a métrica de *Insolvência das Pot Odds* se cristaliza: o custo de foldar um pote onde já se investiu $> 30\\%$ do stack efetivo torna-se violentamente negativo ($\\Delta EV_{fold}$ cai drasticamente), forçando calls marginais que um paradigma ChipEV consideraria equivocados ou "loose".
+A partir do Turn, o material propõe investigar como comprometimento de pote, realização e ICM alteram a comparação entre linhas. Um investimento acima de 30% do stack não determina a ação: custo afundado, ranges e preço marginal continuam relevantes.
 
 ---
-*Fonte: Extração SOTA v6, 2026. Dados validados nativamente pela Wasm-Equity Engine.*
+*Fonte: cenário SOTA v6, 2026. A WASM Equity Engine executa cálculo para seus inputs; o cenário não é dado validado sem artefatos, versão e reprodução independente.*
 `;
 
 export default function NosDeCalibragemPage() {
-	return (
-		<div className="min-h-screen bg-bg-base text-text-bright pb-24">
-			<ContentPageHeader
-				title="Nós de Calibração"
-				subtitle="A validação empírica e ancoragem matemática do Motor ICM."
-				category="Biblioteca Analítica"
-				icon="fa-anchor"
-			/>
+  return (
+    <div className="bg-bg-base text-text-bright min-h-screen pb-24">
+      <ContentPageHeader
+        title="Nós de Calibração"
+        subtitle="A validação empírica e ancoragem matemática do Motor ICM."
+        category="Biblioteca Analítica"
+        icon="fa-anchor"
+      />
 
-			<div className="sota-container py-12 md:py-24">
-				<div className="max-w-4xl mx-auto flex flex-col gap-12">
-					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-indigo shadow-2xl group transition-colors hover:border-l-accent-cyan">
-						<SotaMarkdown content={content} />
-					</GlassPanel>
-				</div>
-			</div>
-		</div>
-	);
+      <div className="sota-container py-12 md:py-24">
+        <div className="mx-auto flex max-w-4xl flex-col gap-12">
+          <GlassPanel className="border-l-accent-indigo group hover:border-l-accent-cyan border-l-4 p-8 shadow-2xl transition-colors lg:p-12">
+            <SotaMarkdown content={content} />
+          </GlassPanel>
+        </div>
+      </div>
+    </div>
+  );
 }

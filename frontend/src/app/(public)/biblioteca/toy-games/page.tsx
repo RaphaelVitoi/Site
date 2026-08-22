@@ -19,11 +19,11 @@ No **Paradigma VITOI**, reduzimos a complexidade sistêmica a **Toy Games** — 
 
 ## 1. Conceitos Centrais de Raphael Vitoi
 
-### A. Teto do RP (RP Ceiling)
-O limite mecânico de defesa imposto pelo Risk Premium. Não é binário (como a "Death Zone" em 40%) - é gradual e já opera em níveis baixos como 6%. O defensor (OOP) defende até onde o RP permite, e não pelo MDF clássico. No "Teto", qualquer desvio adicional de defesa pioraria seu EV monetário, permitindo que o agressor expanda blefes impunemente.
+### A. Fronteira de defesa sob RP (hipótese)
+O termo “teto do RP” descreve uma hipótese de fronteira de defesa. Não há limiar universal em 6%, 40% ou outra taxa: a defesa depende de payout, stacks, ranges, sizing e árvore. O Toy Game testa mecanismo, não transfere frequências diretamente à mesa real.
 
 ### B. Vantagem de Risco (Risk Advantage)
-Calculada como $\\Delta RP = RP_{agressor} - RP_{defensor}$. É a métrica da proporção de agressividade permitida. No Estado da Arte, a agressividade permitida ao Chip Leader (CL) é quase a proporção exata da subtração dos dois RPs.
+Calculada como $\\Delta RP = RP_{agressor} - RP_{defensor}$. É um descritor proposto de assimetria, não uma proporção direta de agressividade permitida.
 
 ### C. Negal de Perspectiva
 O CL não briga por fichas; briga por **Perspectiva Matemática**. Ele aposta para negar perspectiva alheia, mantendo rivais "algemados" pela pressão de sobrevivência.
@@ -32,7 +32,7 @@ O CL não briga por fichas; briga por **Perspectiva Matemática**. Ele aposta pa
 O Mid-stack entra no pote não por *pot odds*, mas por **implied odds de ICM**. Investe pouco, absorve agressividade obrigatória do CL, e realiza equity passivamente. Se acerta, sua Perspectiva explode, enquanto o CL sofre pouco dano relativo.
 
 ### E. Fold Estrutural (A Falácia do "Overfold")
-75% de fold contra o CL não é um erro - é a frequência GTO sob pressão de ICM severo. "Overfold" é um vício de linguagem herdado do ChipEV. O termo técnico correto é **Fold Estrutural**.
+Uma frequência alta de fold pode ser ótima em um cenário de ICM severo, mas só é “GTO” depois de resolver a árvore e publicar suas premissas. “Fold estrutural” é uma etiqueta didática, não um veredito automático.
 
 ---
 
@@ -59,30 +59,26 @@ O Mid-stack entra no pote não por *pot odds*, mas por **implied odds de ICM**. 
 `;
 
 export default function ToyGamesPage() {
-	return (
-		<div className="min-h-screen bg-bg-base text-text-bright pb-24">
-			<ContentPageHeader
-				title="Toy Games (Predator Mode)"
-				subtitle="A abstração laboratorial das dinâmicas GTO: Polarização, Vantagem de Nuts e Isolamento de Ranges."
-				category="Laboratórios & Exegese"
-				icon="fa-microscope"
-			/>
+  return (
+    <div className="bg-bg-base text-text-bright min-h-screen pb-24">
+      <ContentPageHeader
+        title="Toy Games (Predator Mode)"
+        subtitle="A abstração laboratorial das dinâmicas GTO: Polarização, Vantagem de Nuts e Isolamento de Ranges."
+        category="Laboratórios & Exegese"
+        icon="fa-microscope"
+      />
 
-			<div className="sota-container py-12 md:py-24">
-				<div className="max-w-5xl mx-auto flex flex-col gap-16">
-					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-indigo shadow-2xl group transition-colors hover:border-l-accent-rose">
-						<SotaMarkdown content={content} />
-					</GlassPanel>
+      <div className="sota-container py-12 md:py-24">
+        <div className="mx-auto flex max-w-5xl flex-col gap-16">
+          <GlassPanel className="border-l-accent-indigo group hover:border-l-accent-rose border-l-4 p-8 shadow-2xl transition-colors lg:p-12">
+            <SotaMarkdown content={content} />
+          </GlassPanel>
 
-					<div className="w-full relative z-10">
-						<PostFlopPanel
-							scenarioId="toy_game_iso"
-							activePlayers={2}
-							heroIsIp={true}
-						/>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+          <div className="relative z-10 w-full">
+            <PostFlopPanel scenarioId="toy_game_iso" activePlayers={2} heroIsIp={true} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
