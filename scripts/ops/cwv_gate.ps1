@@ -15,6 +15,7 @@ param(
 )
 
 $ErrorActionPreference = 'SilentlyContinue'
+$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\\..')).Path
 
 Write-Host "`n======================================================================" -ForegroundColor Cyan
 Write-Host "[SOTA QUALITY GATE] Full Performance, A11y, CVE & SRI Integrity Audit" -ForegroundColor Yellow
@@ -195,8 +196,15 @@ $CaminhosProibidos = @(
 # checagem de caminho proibido. Verificado nos dois modos em 2026-08-21.
 # O repositorio local tem quotePath=false, o que mascarava a falha — mas essa
 # configuracao NAO e versionada, entao qualquer clone novo estaria exposto.
-$staged = @(& git -c core.quotePath=false diff --cached --name-only --diff-filter=ACM 2>$null |
+# O conteudo de uma exclusao nao entra no indice e, portanto, nao pode ser
+# analisado como blob. Ainda assim ela pertence ao universo do commit: a
+# metrica precisa inclui-la, enquanto as regras de payload analisam somente
+# adicoes/modificacoes/renomeacoes.
+$staged = @(& git -C $RepoRoot -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR 2>$null |
     Where-Object { $_ })
+$stagedDeleted = @(& git -C $RepoRoot -c core.quotePath=false diff --cached --name-only --diff-filter=D 2>$null |
+    Where-Object { $_ })
+$stagedTotal = $staged.Count + $stagedDeleted.Count
 
 $violPath = @()
 $violSize = @()
@@ -213,15 +221,15 @@ foreach ($arquivo in $staged) {
     }
 
     # Tamanho do blob JA EM STAGE (nao do working tree)
-    $sha = (& git ls-files -s -- $arquivo 2>$null) -split '\s+' | Select-Object -Index 1
+    $sha = (& git -C $RepoRoot ls-files -s -- $arquivo 2>$null) -split '\s+' | Select-Object -Index 1
     if (-not $sha) { continue }
-    $tamanho = & git cat-file -s $sha 2>$null
+    $tamanho = & git -C $RepoRoot cat-file -s $sha 2>$null
     if (-not $tamanho) { continue }
 
     # Ponteiro LFS tem ~130 bytes e comeca com 'version https://git-lfs'
     $ehPonteiro = $false
     if ([int64]$tamanho -lt 300) {
-        $cabecalho = (& git cat-file -p $sha 2>$null | Select-Object -First 1)
+        $cabecalho = (& git -C $RepoRoot cat-file -p $sha 2>$null | Select-Object -First 1)
         if ($cabecalho -like 'version https://git-lfs*') { $ehPonteiro = $true }
     }
 
@@ -239,7 +247,7 @@ foreach ($arquivo in $staged) {
     # checkout. Mante-los aqui faria o portao reprovar um estado que e correto.
     # Arquivo grande desses tipos continua coberto pela checagem de tamanho.
     if ($normal -match '\.(dll|exe|so|dylib|bin|dat|node|gguf|onnx|safetensors)$' -and -not $ehPonteiro) {
-        $filtro = (& git check-attr filter -- $arquivo 2>$null)
+        $filtro = (& git -C $RepoRoot check-attr filter -- $arquivo 2>$null)
         if ($filtro -notlike '*filter: lfs*') { $violRoute += $normal }
     }
 }
@@ -264,7 +272,7 @@ $EncPs51 = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes(
 
 foreach ($arquivo in $staged) {
     if ($arquivo -notmatch '\.ps1$') { continue }
-    $abs = Join-Path (& git rev-parse --show-toplevel) $arquivo
+    $abs = Join-Path $RepoRoot $arquivo
     if (-not (Test-Path $abs)) { continue }
 
     $bytes = [System.IO.File]::ReadAllBytes($abs)
@@ -305,7 +313,7 @@ foreach ($arquivo in $staged) {
     }
 }
 
-$hygieneRules['StagedFiles']      = @{ Val = $staged.Count;      Limit = '-';         Desc = 'Arquivos em stage examinados' }
+$hygieneRules['StagedFiles']      = @{ Val = $stagedTotal;       Limit = '-';         Desc = 'Arquivos em stage (conteudo ou exclusao)' }
 $hygieneRules['PowerShell51']     = @{ Val = $violPs.Count;      Limit = 0;           Desc = 'Script .ps1 que quebra no interpretador real' }
 $hygieneRules['ForbiddenPaths']   = @{ Val = $violPath.Count;    Limit = 0;           Desc = 'Diretorio de perfil/ferramenta versionado' }
 $hygieneRules['OversizedBlobs']   = @{ Val = $violSize.Count;    Limit = 0;           Desc = "Blob nao-LFS acima de $MaxBlobMb MB" }
