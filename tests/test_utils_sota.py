@@ -232,6 +232,28 @@ def test_bucketing_multiple_buckets_isolated(buckets: SOTABucketing) -> None:
     assert buckets.download_file("bucket-b", "file.txt") == b"beta"
 
 
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("bucket_name", "file_name"),
+    [
+        ("..", "file.txt"),
+        ("bucket/../../escape", "file.txt"),
+        ("bucket", "../escape.txt"),
+        ("bucket", "nested/escape.txt"),
+        ("bucket", r"nested\escape.txt"),
+        (r"C:\outside", "file.txt"),
+        ("bucket", r"C:\outside.txt"),
+        (r"\\server\share", "file.txt"),
+    ],
+)
+def test_bucketing_rejects_paths_outside_storage(
+    buckets: SOTABucketing, bucket_name: str, file_name: str
+) -> None:
+    """Storage names are components, never arbitrary paths or Windows shares."""
+    with pytest.raises(ValueError):
+        buckets.upload_file(bucket_name, file_name, b"blocked")
+
+
 # ==============================================================================
 # utils/resources.py  ResourceGuard
 # ==============================================================================

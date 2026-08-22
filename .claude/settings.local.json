@@ -1,78 +1,8 @@
 {
-  "version": "1.0",
   "permissions": {
-    "description": "Operacoes delegadas ao Orquestrador SOTA (do.ps1)",
     "allow": [
-      "sota_sync",
-      "sota_backup",
-      "sota_audit",
-      "sota_db_check"
-    ]
-  },
-  "operations": {
-    "sota_backup": {
-      "description": "Acionar Salvaguarda Integral do Ecossistema",
-      "type": "Bash",
-      "command": "powershell",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        ".\\do.ps1",
-        "-Backup"
-      ]
-    },
-    "sota_sync": {
-      "description": "Sincroniza Manifesto dos Agentes para a Realidade Fisica",
-      "type": "Bash",
-      "command": "powershell",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        ".\\do.ps1",
-        "-SyncAgents"
-      ]
-    },
-    "sota_audit": {
-      "description": "Dispara Auditoria Adaptativa SOTA (Smart MDA)",
-      "type": "Bash",
-      "command": "powershell",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        ".\\do.ps1",
-        "-Audit",
-        "Auditoria Global de Integridade"
-      ]
-    },
-    "sota_db_check": {
-      "description": "Inspeciona integridade do DAL (SQLite)",
-      "type": "Bash",
-      "command": "powershell",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        ".\\do.ps1",
-        "-CheckDB"
-      ]
-    }
-  },
-  "scheduling": {
-    "description": "Tarefas agendadas para manutencao periodica",
-    "tasks": [
-      {
-        "name": "daily_report",
-        "operation": "sota_backup",
-        "frequency": "daily",
-        "timeOfDay": "23:59"
-      }
-    ]
+      "Read(C:/users/rapha/.gemini/Site/**)"
+    ],
+    "additionalDirectories": []
   }
 }

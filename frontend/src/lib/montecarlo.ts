@@ -57,7 +57,7 @@ function pickWinner(
 	// Monte Carlo para ICM: o resultado nao protege nada, nao gera token, nao
 	// deriva chave e nao e observavel por adversario. Trocar por CSPRNG custaria
 	// ordens de grandeza no laco quente sem ganho de seguranca algum.
-	const r = Math.random() * remainingTotalChips;
+	const r = Math.random() * remainingTotalChips; // NOSONAR: PRNG estatístico, sem contexto criptográfico.
 	if (isBusted) {
 		return pickWinnerWithBusted(numPlayers, stacks, isBusted, r);
 	}

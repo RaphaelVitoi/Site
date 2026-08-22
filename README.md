@@ -78,4 +78,15 @@ python "C:\Users\rapha\.gemini\spark_equilibrium_engine.py"
 | **Roteamento IA** | [`data/routing_map.json`](data/routing_map.json) | Tiers de modelos calibrados para Gemini 3.7 Flash e 3.1 Pro. |
 
 ---
+
+## 4. Navegação de Engenharia
+
+- [Índice canônico de documentação](docs/INDEX.md)
+- [Mapa sistêmico e fronteiras de módulos](docs/architecture/SYSTEM_MAP.md)
+- [Matriz de roteamento de mudanças](docs/architecture/ROUTING_MATRIX.md)
+- [Índice de dependências e submódulos](docs/architecture/DEPENDENCY_BOUNDARY_INDEX.md)
+- [Fronteira de integrações de host](docs/security/HOST_INTEGRATION_BOUNDARY.md)
+- [Regras mestras do repositório](governance/REPOSITORY_RULES.md)
+
+---
 *Nexus Orchestrator SOTA v7.0 GOLD — Sistema 100% Operacional e Blindado.*

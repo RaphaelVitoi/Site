@@ -107,7 +107,7 @@ DELETADO: bbbb4722-... (7,89 dias)
 | `auto-saved.toml` linhas | 1.628 | **181** | **-89%** |
 | Regras únicas | 216 (com duplicatas) | **27** | — |
 
-Script: [`consolidate_policies.py`](../../antigravity/scratch/consolidate_policies.py)
+Script de consolidação: `antigravity/scratch/consolidate_policies.py` — artefato transitório da execução de 2026-06-03, não preservado no inventário atual; a auditoria registra seu efeito, não uma dependência operacional ativa.
 
 ---
 

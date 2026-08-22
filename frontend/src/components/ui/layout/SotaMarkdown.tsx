@@ -10,6 +10,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
+import { isEmbeddableMediaUrl, isExternalHttpUrl } from '@/lib/markdown-url-policy';
 
 // SOTA: Configuração global do Mermaid fora do ciclo de render para evitar overhead.
 mermaid.initialize({
@@ -107,10 +108,10 @@ const HeadingWithCopy = ({
 };
 
 const markdownComponents: Components = {
-	h1: ({ children, ...props }) => (
+	h1: ({ children, id }) => (
 		<h1
+			id={id}
 			className="text-3xl font-black text-text-bright mt-16 mb-8 uppercase tracking-tighter border-b border-white/10 pb-6 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
-			{...props}
 		>
 			{children}
 		</h1>
@@ -125,44 +126,40 @@ const markdownComponents: Components = {
 			{children}
 		</HeadingWithCopy>
 	),
-	p: ({ children, ...props }) => (
-		<p className="mb-8 text-[1.05rem] text-text-muted leading-loose font-medium opacity-90" {...props}>
+	p: ({ children }) => (
+		<p className="mb-8 text-[1.05rem] text-text-muted leading-loose font-medium opacity-90">
 			{children}
 		</p>
 	),
-	ul: ({ children, ...props }) => (
-		<ul className="list-disc pl-8 mb-10 text-[1rem] text-text-muted space-y-4" {...props}>
+	ul: ({ children }) => (
+		<ul className="list-disc pl-8 mb-10 text-[1rem] text-text-muted space-y-4">
 			{children}
 		</ul>
 	),
-	ol: ({ children, ...props }) => (
-		<ol className="list-decimal pl-8 mb-10 text-[1rem] text-text-muted space-y-4" {...props}>
+	ol: ({ children, start }) => (
+		<ol start={start} className="list-decimal pl-8 mb-10 text-[1rem] text-text-muted space-y-4">
 			{children}
 		</ol>
 	),
-	li: ({ children, ...props }) => (
-		<li className="pl-2" {...props}>
+	li: ({ children }) => (
+		<li className="pl-2">
 			{children}
 		</li>
 	),
-	strong: ({ children, ...props }) => (
-		<strong className="font-black text-text-bright drop-shadow-sm" {...props}>
+	strong: ({ children }) => (
+		<strong className="font-black text-text-bright drop-shadow-sm">
 			{children}
 		</strong>
 	),
-	blockquote: ({ children, ...props }) => (
+	blockquote: ({ children }) => (
 		<blockquote
 			className="border-l-4 border-accent-indigo/40 pl-8 py-6 italic bg-white/3 rounded-2xl my-12 text-text-muted text-xl shadow-inner backdrop-blur-sm"
-			{...props}
 		>
 			{children}
 		</blockquote>
 	),
-	a: ({ children, href, ...props }) => {
-		if (
-			href &&
-			(href.includes('youtube.com') || href.includes('youtu.be') || href.endsWith('.mp4'))
-		) {
+	a: ({ children, href, title }) => {
+		if (isEmbeddableMediaUrl(href)) {
 			return (
 				<div className="my-14 rounded-4xl overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.7)] border border-white/10 aspect-video bg-black/40 group">
 					<ReactPlayer url={href} width="100%" height="100%" controls />
@@ -170,23 +167,18 @@ const markdownComponents: Components = {
 			);
 		}
 		return (
-			// SEGURANCA: o spread vem ANTES de target/rel de proposito. Na ordem
-			// anterior ({...props} por ultimo) qualquer `target` ou `rel` vindo do
-			// AST sobrescrevia a protecao — um link poderia recuperar `_blank` sem
-			// `noopener`, expondo `window.opener` ao destino (tabnabbing reverso).
-			// Com o spread primeiro, os atributos explicitos vencem sempre.
 			<a
-				{...props}
 				href={href}
+				title={title}
 				className="text-accent-indigo-light hover:text-white font-bold underline decoration-accent-indigo/40 underline-offset-4 transition-all hover:decoration-accent-indigo hover:text-glow-indigo"
-				target={href?.startsWith('http') ? '_blank' : undefined}
-				rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+				target={isExternalHttpUrl(href) ? '_blank' : undefined}
+				rel={isExternalHttpUrl(href) ? 'noopener noreferrer' : undefined}
 			>
 				{children}
 			</a>
 		);
 	},
-	code: ({ className, children, ...props }) => {
+	code: ({ className, children }) => {
 		const match = /language-(\w+)/.exec(className || '');
 		const isInline = !className;
 
@@ -210,44 +202,42 @@ const markdownComponents: Components = {
 		return isInline ? (
 			<code
 				className="bg-accent-indigo/10 text-accent-indigo-light px-2 py-1 rounded-lg font-mono text-[0.9rem] border border-accent-indigo/20 shadow-sm"
-				{...props}
 			>
 				{children}
 			</code>
 		) : (
 			<code
 				className="block bg-[#020617]/80 text-text-bright p-8 rounded-3xl border border-white/5 font-mono text-[0.9rem] overflow-x-auto my-12 shadow-3xl tabular-nums leading-loose backdrop-blur-xl"
-				{...props}
 			>
 				{children}
 			</code>
 		);
 	},
 	hr: () => <hr className="my-16 border-t border-white/5 opacity-50" />,
-	table: ({ children, ...props }) => (
+	table: ({ children }) => (
 		<div className="overflow-x-auto w-full my-10 rounded-3xl border border-white/10 bg-black/40 shadow-2xl backdrop-blur-md">
-			<table className="w-full text-left border-collapse text-[0.9rem]" {...props}>
+			<table className="w-full text-left border-collapse text-[0.9rem]">
 				{children}
 			</table>
 		</div>
 	),
-	thead: ({ children, ...props }) => (
-		<thead className="bg-white/5 border-b border-white/10" {...props}>
+	thead: ({ children }) => (
+		<thead className="bg-white/5 border-b border-white/10">
 			{children}
 		</thead>
 	),
-	th: ({ children, ...props }) => (
+	th: ({ children, align }) => (
 		<th
+			align={align}
 			className="p-5 font-black text-text-muted uppercase tracking-[0.2em] whitespace-nowrap"
-			{...props}
 		>
 			{children}
 		</th>
 	),
-	td: ({ children, ...props }) => (
+	td: ({ children, align }) => (
 		<td
+			align={align}
 			className="p-5 border-b border-white/5 text-text-light font-mono whitespace-nowrap opacity-90"
-			{...props}
 		>
 			{children}
 		</td>

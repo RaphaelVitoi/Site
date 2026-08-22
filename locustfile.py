@@ -70,7 +70,7 @@ class ApiUser(HttpUser):
         # SOTA: Autenticacao injetada para transpor a blindagem do auth_middleware (Tarpit de 2000ms)
         headers = {
             "Content-Type": CONTENT_TYPE_JSON,
-            "Authorization": f"Bearer {os.getenv('API_SECRET_TOKEN', 'sota-fallback-key')}",
+            "Authorization": f"Bearer {os.environ['API_SECRET_TOKEN']}",
         }
 
         if ENABLE_LOGGING:

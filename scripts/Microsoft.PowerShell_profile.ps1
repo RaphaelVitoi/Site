@@ -1,18 +1,10 @@
 ﻿# ==============================================================================
 # TIER 0 POWERSHELL PROFILE - SOTA v7.0 GOLD PROTOCOL
-# Bypass absoluto de restricoes, homeostase de performance e interop WSL simetrico
+# Homeostase de performance e interop WSL sem elevacao implicita.
 # ==============================================================================
 
-# 1. Erradicacao de Atrito Termodinamico & Silenciamento (Bypass de Politicas)
+# 1. Ambiente de shell sem alterar politica de execucao do host
 $ProgressPreference = 'SilentlyContinue'
-try {
-    # Evita qualquer prompt ou restrição de execução de scripts locais
-    Set-ExecutionPolicy Bypass -Scope Process -Force -ErrorAction SilentlyContinue
-    Set-ExecutionPolicy Bypass -Scope CurrentUser -Force -ErrorAction SilentlyContinue
-}
-catch {
-    # Silencia limites impostos por politicas do Active Directory ou Registro do Sistema
-}
 
 # 2. Variaveis de Ambiente Host (Windows)
 $env:UV_PROJECT_ENVIRONMENT = ".venv"
@@ -24,53 +16,31 @@ if ([Environment]::GetEnvironmentVariable("OLLAMA_FLASH_ATTENTION", "User") -ne 
     [Environment]::SetEnvironmentVariable("OLLAMA_FLASH_ATTENTION", "1", "User")
 }
 
-# 3. Workaround de Interoperabilidade WSL Simetrico (Sem overhead de shell interativo)
-# Garante paridade delegando execucao ao WSL com privilegios do root,
-# mas isolado sob prefixo para nao colidir com wrappers nativos (nexus.ps1)
+# 3. Interoperabilidade WSL sem shell interpolado ou privilegio elevado
 function Invoke-WslNexus {
-    wsl.exe --cd "$PWD" -u root -e bash -lc "uv run nexus $($args -join ' ')"
+    wsl.exe --cd "$PWD" -e uv run nexus @args
 }
 Set-Alias wsl-nexus Invoke-WslNexus
 
-function Invoke-WslRoot {
-    if ($args) {
-        wsl.exe --cd "$PWD" -u root -e bash -lc "$($args -join ' ')"
-    }
-    else {
-        wsl.exe --cd "$PWD" -u root
-    }
-}
-Set-Alias wsl-root Invoke-WslRoot
-
 function Invoke-WslPython {
-    wsl.exe --cd "$PWD" -u root -e bash -lc "python3 $($args -join ' ')"
+    wsl.exe --cd "$PWD" -e python3 @args
 }
 Set-Alias wsl-python Invoke-WslPython
 
 function Invoke-WslUv {
-    wsl.exe --cd "$PWD" -u root -e bash -lc "uv $($args -join ' ')"
+    wsl.exe --cd "$PWD" -e uv @args
 }
 Set-Alias wsl-uv Invoke-WslUv
 
 function Invoke-WslNpm {
-    wsl.exe --cd "$PWD" -u root -e bash -lc "npm $($args -join ' ')"
+    wsl.exe --cd "$PWD" -e npm @args
 }
 Set-Alias wsl-npm Invoke-WslNpm
 
 function Invoke-WslNpx {
-    wsl.exe --cd "$PWD" -u root -e bash -lc "npx $($args -join ' ')"
+    wsl.exe --cd "$PWD" -e npx @args
 }
 Set-Alias wsl-npx Invoke-WslNpx
-
-# 4. Elevacao de Privilegio Nativa (Sudo do Windows)
-function sudo {
-    if ($args) {
-        Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command $args" -Verb RunAs
-    }
-    else {
-        Start-Process powershell -Verb RunAs
-    }
-}
 
 # ==============================================================================
 # 5. ARSENAL EXECUTIVO SOTA (NEXUS CLI WRAPPERS)
@@ -126,11 +96,3 @@ Set-Alias nexus-fix Invoke-NexusFix
 Set-Alias nexus-handoff Invoke-NexusHandoff
 
 Set-Alias nx nexus-watch
-
-# ==============================================================================
-# 6. TYPECHECKING TÉRMICO SOTA (Mypy Daemon via UV)
-# ==============================================================================
-function Invoke-SotaTypecheck {
-    uv run dmypy run -- . $args
-}
-Set-Alias tc Invoke-SotaTypecheck

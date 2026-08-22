@@ -1439,41 +1439,37 @@ async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | 
         raise typer.Exit(1)
 
 
-async def _restore_or_install_lightningcss(lib_name: str, lib_path: Path, cache_path: Path, npm_cmd: str) -> None:
-    # Tenta recuperar do cache (O(1) local restore)
-    if cache_path.exists():
-        console.print(f"[bold green][AUTO-CURE] Recuperando {lib_name} do cache local (O(1) sem rede)...[/]")
-        try:
-            shutil.copytree(cache_path, lib_path, dirs_exist_ok=True)
-            console.print(f"[bold green][AUTO-CURE] {lib_name} recuperado com sucesso.[/]")
-        except Exception as e:
-            console.print(
-                f"[bold red][AUTO-CURE] Falha ao copiar do cache: {e}. Executando fallback 'npm install'...[/]"
-            )
+async def _restore_lightningcss(lib_name: str, lib_path: Path, cache_path: Path) -> bool:
+    """Restaura somente um artefato local conhecido; nunca altera o lockfile no gate."""
+    if not cache_path.exists():
+        console.print(
+            f"[bold red][DEPENDENCIA AUSENTE] {lib_name} nao esta em node_modules nem no cache local. "
+            "Execute 'npm ci' explicitamente e rode o gate novamente.[/]"
+        )
+        return False
 
-    # Se nao havia no cache ou a copia falhou, executa npm install e depois faz o backup
-    if not lib_path.exists():
-        console.print(f"[bold yellow][AUTO-CURE] {lib_name} ausente no cache. Executando 'npm install'...[/]")
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                npm_cmd,
-                "install",
-                cwd=str(BASE_DIR),
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            await proc.communicate()
-            if proc.returncode == 0:
-                console.print("[bold green][AUTO-CURE] npm install concluido com sucesso. Binarios reestabelecidos.[/]")
-                if lib_path.exists():
-                    shutil.copytree(lib_path, cache_path, dirs_exist_ok=True)
-            else:
-                console.print(f"[bold red][AUTO-CURE] Falha ao executar 'npm install'. Exit code: {proc.returncode}[/]")
-        except Exception as e:
-            console.print(f"[bold red][AUTO-CURE] Excecao ao executar 'npm install': {e}[/]")
+    console.print(f"[bold green][AUTO-CURE] Recuperando {lib_name} do cache local (O(1) sem rede)...[/]")
+    try:
+        shutil.copytree(cache_path, lib_path, dirs_exist_ok=True)
+    except Exception as error:
+        console.print(
+            f"[bold red][DEPENDENCIA AUSENTE] Falha ao restaurar {lib_name}: {error}. "
+            "Execute 'npm ci' explicitamente e rode o gate novamente.[/]"
+        )
+        return False
+
+    if lib_path.exists():
+        console.print(f"[bold green][AUTO-CURE] {lib_name} recuperado com sucesso.[/]")
+        return True
+
+    console.print(
+        f"[bold red][DEPENDENCIA AUSENTE] A restauracao de {lib_name} nao produziu o artefato esperado. "
+        "Execute 'npm ci' explicitamente e rode o gate novamente.[/]"
+    )
+    return False
 
 
-async def _auto_cure_lightningcss(npm_cmd: str) -> None:
+async def _auto_cure_lightningcss() -> None:
     # --- Auto-Cure & O(1) Cache Recovery for LightningCSS Native Binaries ---
     node_modules_dir = BASE_DIR / "node_modules"
     cache_dir = NEXUS_ZONE_CACHE / "lightningcss"
@@ -1498,7 +1494,8 @@ async def _auto_cure_lightningcss(npm_cmd: str) -> None:
 
         # 2. Se e a plataforma atual e esta ausente no node_modules
         if is_current and not lib_path.exists():
-            await _restore_or_install_lightningcss(lib_name, lib_path, cache_path, npm_cmd)
+            if not await _restore_lightningcss(lib_name, lib_path, cache_path):
+                raise typer.Exit(1)
 
 
 @ops_app.command("security")
@@ -1596,7 +1593,7 @@ async def quality_gate():
         console.print("[bold red][ENTROPIA CRITICA] Executaveis vitais (npm) ausentes no PATH da membrana.[/]")
         raise typer.Exit(1)
 
-    await _auto_cure_lightningcss(npm_cmd)
+    await _auto_cure_lightningcss()
     # -------------------------------------------------------------------------
 
     # SOTA: Variavel de ambiente injetada para short-circuit de I/O no Next.js durante SSG

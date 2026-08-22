@@ -28,12 +28,12 @@ export const PhysicsSnapshotSchema = z.object({
 
 // Schema para Requisição de Inferência (InferenceRequest)
 export const InferenceRequestSchema = z.object({
-	prompt: z.string(),
-	system_prompt: z.string().optional(),
+	prompt: z.string().trim().min(1).max(16_000),
+	system_prompt: z.string().max(16_000).optional(),
 	physics_snapshot: PhysicsSnapshotSchema.optional(),
 	predictive_profile: z.record(z.string(), z.unknown()).optional(),
-	max_tokens: z.number().int().default(1024),
-	model: z.string().optional(),
+	max_tokens: z.number().int().min(1).max(8_192).default(1024),
+	model: z.string().max(128).optional(),
 });
 
 // Schema para entrada do Motor de Perspectiva
@@ -178,4 +178,3 @@ export type PhysicsSnapshot = z.infer<typeof PhysicsSnapshotSchema>;
 export type InferenceRequest = z.infer<typeof InferenceRequestSchema>;
 export type PerspectivaInputValidated = z.infer<typeof PerspectivaInputSchema>;
 export type TelemetryPayload = z.input<typeof TelemetryPayloadSchema>;
-
