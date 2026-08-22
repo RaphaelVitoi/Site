@@ -11,18 +11,22 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
+import { EditorialEvidencePanel } from '@/components/ui/layout/EditorialEvidencePanel';
 import ScrollToTop from '@/components/ui/layout/ScrollToTop';
 import ContentFooter from '@/components/ui/layout/ContentFooter';
 import TableOfContents from '@/components/ui/layout/TableOfContents';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SITE_CONFIG } from '@/constants/site';
 import { ROUTES } from '@/constants/routes';
+import { getEditorialManifestEntry } from '@/content/editorialManifest';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function DynamicArticlePage() {
-	const { slug } = useParams();
+	const { slug: rawSlug } = useParams<{ slug: string | string[] }>();
+	const slug = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug;
 	const { data: content, error, isLoading } = useSWR(`/api/v1/content/${slug}`, fetcher);
+	const editorial = content?.editorial ?? getEditorialManifestEntry(slug ?? 'unknown');
 
 	if (isLoading)
 		return (
@@ -77,29 +81,7 @@ export default function DynamicArticlePage() {
 							<TableOfContents content={content.body || ''} />
 						</div>
 
-						<div className="p-8 bg-accent-indigo/5 border border-accent-indigo/10 rounded-3xl">
-							<h4 className="text-[0.6rem] font-black text-white uppercase tracking-widest mb-4 text-glow-indigo">
-								Metadados SOTA
-							</h4>
-							<div className="space-y-4">
-								<div className="flex justify-between items-center">
-									<span className="text-[0.55rem] text-text-dim uppercase font-bold">
-										Status
-									</span>
-									<span className="text-[0.55rem] text-accent-emerald uppercase font-black tracking-widest bg-accent-emerald/10 px-2 py-0.5 rounded border border-emerald-500/20 text-glow-emerald">
-										Validado
-									</span>
-								</div>
-								<div className="flex justify-between items-center">
-									<span className="text-[0.55rem] text-text-dim uppercase font-bold">
-										Arquitetura
-									</span>
-									<span className="text-[0.55rem] text-text-bright uppercase font-mono font-black">
-										v7.0 GOLD
-									</span>
-								</div>
-							</div>
-						</div>
+						<EditorialEvidencePanel entry={editorial} />
 					</aside>
 				</div>
 			</main>

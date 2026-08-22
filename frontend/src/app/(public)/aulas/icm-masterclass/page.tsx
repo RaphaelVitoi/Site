@@ -35,28 +35,28 @@ const metrics = [
 	},
 	{
 		label: 'Risk Premium (RP)',
-		value: '0% a ~24%',
-		detail: 'Equity adicional necessária para justificar um call. Acima deste teto, a defesa racional colapsa.',
+		value: 'Dependente do estado',
+		detail: 'Equity adicional necessária para justificar um call. Não há teto universal: stacks, payouts, pot odds e regras importam.',
 	},
 	{
 		label: 'Bubble Factor (BF)',
 		value: 'Multiplicador da Dor',
-		detail: 'O coeficiente que escala o custo da eliminação. BF = 100 / (100 - RP).',
+		detail: 'O coeficiente que escala o custo da eliminação. Em all-in simétrico: Equity* = BF / (BF + 1).',
 	},
 	{
 		label: 'ΔRP — Diferencial',
 		value: 'RP_IP − RP_OOP',
-		detail: 'O diferencial que dita quem detém a iniciativa e quem é forçado à passividade estrutural.',
+		detail: 'Um descritor comparativo proposto; não determina sozinho iniciativa, range ou sizing.',
 	},
 	{
 		label: 'Downward Drift',
 		value: 'RP↑ → Sizing↓',
-		detail: 'A migração gravitacional dos sizings para faixas menores conforme a pressão monetária aumenta.',
+		detail: 'Hipótese comportamental a testar por configuração, árvore e população; não uma lei determinística.',
 	},
 	{
 		label: 'Regra de Ouro',
-		value: 'RPs nunca são iguais',
-		detail: 'Em qualquer colisão, um jogador detém vantagem estrutural de risco. A neutralidade é uma ilusão.',
+		value: 'RPs são específicos ao par',
+		detail: 'Assimetrias são frequentes, mas valores iguais podem ocorrer. Sempre calcule o estado concreto.',
 	},
 ];
 
@@ -90,7 +90,7 @@ export default function AulaICMPage() {
 				step="01"
 				label="Fundamentos"
 				title="Grandezas do Sistema"
-				description="RP, BF, ΔRP e Downward Drift não são metáforas — são grandezas calculáveis que governam o equilíbrio de Nash."
+				description="RP e BF são grandezas calculáveis em estados definidos; ΔRP e Downward Drift são hipóteses operacionais que exigem teste."
 			/>
 
 			<div className="sota-container pb-12">
@@ -118,16 +118,16 @@ export default function AulaICMPage() {
 				step="02"
 				label="Doutrina"
 				title="A Ilusão do Vácuo"
-				description="Por que solvers tradicionais não resolvem mesas finais e como a matemática oculta subverte a teoria clássica."
+				description="Limites de modelos ChipEV ou simplificados e o que uma análise ICM completa precisa declarar."
 			/>
 
 			<div className="sota-container pb-12">
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted">
 						<p>
-							Solvers maximizam ChipEV — assumem que cada ficha vale o mesmo. Em cash
-							game, isso é correto. Em torneio, é sistematicamente falso: a última
-							ficha (base da stack) vale mais do que a primeira (topo). O{' '}
+							Solvers ChipEV maximizam fichas sob utilidade linear; solvers ICM e árvores
+							especializadas podem incorporar payouts e risco de eliminação. Em torneio,
+							uma análise adequada deve declarar qual utilidade, payouts e transições usa. O{' '}
 							<strong className="text-text-bright">Risk Premium</strong> quantifica
 							essa assimetria por jogador, por spot. Ignorar o RP não é &ldquo;jogar
 							GTO&rdquo; — é jogar um jogo diferente do que está acontecendo.
@@ -142,18 +142,19 @@ export default function AulaICMPage() {
 								<strong className="text-text-bright">
 									continua sujeito a pressões letais de ICM
 								</strong>. Apenas no confronto final (Top 2), o modelo reverte para ChipEV
-								puro. Fora isso, a sombra dos outros adversários impõe uma lei
-								marcial matemática.
+							puro sob as hipóteses usuais de winner-take-all, sem bounties e sem efeitos
+							externos. Fora disso, os demais jogadores e a estrutura de premiação importam.
 							</p>
 						</div>
 
 						<p>
 							O <strong className="text-text-bright">Downward Drift</strong>{' '}
 							(O&apos;Kearney &amp; Carter) é o mecanismo de transmissão: sob RP
-							crescente, a distribuição de apostas migra para sizes menores. Overbets
-							desaparecem. 2/3 pot vira 1/3. 1/3 vira check. A{' '}
+							crescente, é plausível que ranges e sizings se adaptem. A direção e a
+							magnitude dependem da árvore, da cobertura e da população; devem ser
+							medidas, não presumidas. A{' '}
 							<strong className="text-text-bright">Perspectiva Matemática</strong>{' '}
-							governa o quanto de risco cada jogador pode absorver por street.
+							ainda é uma hipótese de modelagem para esse risco dinâmico.
 						</p>
 					</div>
 				</GlassPanel>
@@ -502,4 +503,3 @@ export default function AulaICMPage() {
 		</div>
 	);
 }
-

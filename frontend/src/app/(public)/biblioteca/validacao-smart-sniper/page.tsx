@@ -1,5 +1,5 @@
 ﻿/**
- * IDENTITY: Validação Científica do Smart Sniper (GOLD v7.0 GOLD)
+ * IDENTITY: Protocolo de avaliação do Smart Sniper (GOLD v7.0 GOLD)
  * PATH: src/app/biblioteca/validacao-smart-sniper/page.tsx
  * ROLE: Artigo acadêmico/técnico com análise de Monte Carlo, Sharpe e Barbell.
  */
@@ -10,17 +10,17 @@ import { SectionHeader } from '@/components/ui/layout/SectionHeader';
 import Link from 'next/link';
 
 export const metadata = {
-	title: 'Validação Científica do Smart Sniper GOLD | Raphael Vitoi',
+	title: 'Protocolo de Avaliação do Smart Sniper | Raphael Vitoi',
 	description:
-		'Análise comparativa via Monte Carlo, Índice de Sharpe e Teoria de Portfólio aplicada ao poker MTT GOLD v7.0 GOLD.',
+		'Desenho de avaliação para Monte Carlo, risco e portfólio em poker MTT. Resultados dependem de dados, versão e reprodução.',
 };
 
 const articleSchema = {
 	'@context': 'https://schema.org',
 	'@type': 'TechArticle',
-	headline: 'Validação Científica do Protocolo Smart Sniper GOLD: v7.0 GOLD',
+	headline: 'Protocolo de Avaliação do Smart Sniper: v7.0 GOLD',
 	description:
-		'Investigação da eficácia matemática de estratégias de grind em MTTs através de 10.000 simulações de Monte Carlo.',
+		'Desenho reprodutível para investigar estratégias de grind em MTTs com cenários e métricas explicitamente versionados.',
 	author: { '@type': 'Person', name: 'Raphael Vitoi' },
 };
 
@@ -37,16 +37,16 @@ export default function ValidacaoSmartSniperPage() {
 							Otimização de Variância
 						</h1>
 						<p className="m-0 mt-4 text-[0.9rem] text-text-muted leading-relaxed max-w-145">
-							Validação Científica do Protocolo Smart Sniper. Análise exegética via
-							Monte Carlo, Índice de Sharpe e Teoria de Portfólio.
+							Protocolo de avaliação do Smart Sniper. Desenho de Monte Carlo, índice de
+							Sharpe e teoria de portfólio que ainda requer dados e reprodução pública.
 						</p>
 						<div className="flex flex-wrap items-center gap-4 mt-6">
 							<span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-indigo/10 border border-accent-indigo/20 text-[0.65rem] font-bold text-accent-indigo-light uppercase tracking-widest font-mono">
 								<span className="w-2 h-2 rounded-full bg-accent-emerald shadow-[0_0_8px_rgba(16,185,129,0.5)]" />{' '}
-								Artigo Científico
+								Hipótese operacional
 							</span>
 							<span className="text-[0.7rem] text-text-dim font-bold font-mono uppercase tracking-widest">
-								Validação Estratégica
+								Revisão requerida
 							</span>
 						</div>
 					</div>
@@ -66,26 +66,19 @@ export default function ValidacaoSmartSniperPage() {
 				step="01"
 				label="Abstract"
 				title="Resumo do Estudo"
-				description="Investigação da eficácia matemática de diferentes abordagens de grind através de simulações de alta fidelidade."
+				description="Desenho para comparar abordagens de grind; nenhuma conclusão é declarada antes dos artefatos executáveis."
 			/>
 			<div className="max-w-300 mx-auto px-6 pb-12">
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted font-body">
 						<p>
-							Este estudo investiga a eficácia matemática de diferentes abordagens de
-							grind em torneios multi-mesa (MTT) de No-Limit Hold&apos;em. Através de
-							10.000 simulações de Monte Carlo, comparamos a estratégia tradicional de
-							alto volume (<em>Mass Multitabling</em>) com o{' '}
-							<strong className="text-text-bright">Protocolo Smart Sniper</strong>,
-							caracterizado por seleção de Small Fields, entrada tardia estratégica (
-							<em>Late Reg</em>) e alocação assimétrica de capital aos domingos (
-							<em>Capped Spend, High ABI</em>). Os resultados demonstram que o
-							Protocolo Sniper oferece um{' '}
-							<strong className="text-accent-emerald">
-								Índice de Sharpe 8x superior
-							</strong>{' '}
-							à estratégia de volume puro, reduzindo o risco de prejuízo para &lt;3%
-							enquanto mantém potencial de lucros de seis dígitos anuais.
+							Este é um protocolo de pesquisa, não um resultado publicado. Ele propõe
+							comparar alto volume com o{' '}
+							<strong className="text-text-bright">Smart Sniper</strong> — seleção de
+							fields, horário de entrada e alocação de bankroll — em cenários fixados.
+							Antes de afirmar superioridade, o estudo deve publicar código, seed, base de
+							dados, rake, estrutura de premiação, modelo de habilidade, número de
+							iterações e intervalos de confiança.
 						</p>
 					</div>
 				</GlassPanel>
@@ -112,43 +105,37 @@ export default function ValidacaoSmartSniperPage() {
 
 						<div className="bg-accent-emerald/10 border-l-4 border-accent-emerald p-8 my-10 rounded-r-2xl">
 							<h4 className="mt-0 text-accent-emerald font-bold text-lg mb-4 font-heading">
-								Evidência Quantificada
+								Benchmark H9 a executar
 							</h4>
 							<p className="text-text-main leading-relaxed">
-								Simulações computacionais comprovam que uma stack inserida no
-								momento de fechamento do registro possui um valor monetário ($EV)
-								entre{' '}
-								<strong className="text-text-bright">4,7% e 16,0% superior</strong>{' '}
-								ao valor do buy-in. O registro tardio atua como um subsídio
-								matemático: ROI base positivo antes que qualquer carta seja
-								distribuída.
+								A entrada tardia deve ser medida sob conservação explícita de payout:
+								compare o estado antes, a stack do entrante, a contribuição líquida e o
+								estado após a entrada. Vantagem de registro não é presumida; ela pode
+								variar ou desaparecer com rake, overlay, bounties, blinds e habilidade.
 							</p>
 							<p className="m-0 font-mono text-[0.8rem] text-accent-emerald-light">
-								Ponto ótimo: entrada com 30-50bb (Late Reg 2x Average). Captura 5-8%
-								de ágio sem a volatilidade de entrar com &lt;15bb.
+								Parâmetros candidatos (profundidade, horário e field) devem ser pré-registados
+								e avaliados com intervalo de confiança, não apresentados como ponto ótimo.
 							</p>
 						</div>
 
 						<h3 className="text-text-bright font-heading">
-							1.2 O Custo da Diluição (Deep Stack)
+							1.2 O Custo da Diluição (Hipótese)
 						</h3>
 						<p>
-							A decisão de registrar no Nível 1 (Deep Stack 100bb+) impõe um custo
-							oculto: cada novo jogador que se registra dilui a equidade das stacks
-							existentes em{' '}
-							<strong className="text-text-bright">~0,28% por entrada</strong>. Um
-							jogador que registra no Level 1 de um torneio com 500 entrantes pagou
-							passivamente por 4 horas de diluição antes de receber qualquer retorno
-							competitivo.
+							A entrada no Nível 1 pode expor a stack a mudanças de field e prize pool,
+							mas o efeito depende de stacks, payout, contribuição e regras. A taxa de
+							diluição precisa ser derivada para cada evento; nenhum percentual fixo deve
+							ser extrapolado como regra geral.
 						</p>
 
 						<h3 className="text-text-bright font-heading">
 							1.3 O Fator Small Field e a Redução de Variância
 						</h3>
 						<p>
-							A variância em MTTs não é linear; é{' '}
-							<strong className="text-text-bright">exponencial</strong> em relação ao
-							tamanho do field:
+							O tamanho do field afeta distribuição de retornos, mas a forma e a magnitude
+							dependem de payout, edge, rake e volume. A tabela abaixo é um molde de
+							benchmark, não uma estimativa publicada:
 						</p>
 
 						<div className="my-10 overflow-x-auto">
@@ -166,11 +153,10 @@ export default function ValidacaoSmartSniperPage() {
 											3.000 jogadores (Large)
 										</td>
 										<td className="py-4 px-6 text-accent-rose font-mono">
-											~0,3%
+											A medir
 										</td>
 										<td className="py-4 px-6">
-											Downswings de centenas de buy-ins. Bankroll astronômico
-											necessário.
+											Estimar por simulação parametrizada e intervalo de confiança.
 										</td>
 									</tr>
 									<tr className="hover:bg-white/5 transition-colors">
@@ -178,11 +164,10 @@ export default function ValidacaoSmartSniperPage() {
 											300 jogadores (Small)
 										</td>
 										<td className="py-4 px-6 text-accent-emerald font-mono">
-											~3,3%
+											A medir
 										</td>
 										<td className="py-4 px-6">
-											Fluxo de caixa constante. Curva de crescimento suave e
-											previsível.
+											Estimar por simulação parametrizada e intervalo de confiança.
 										</td>
 									</tr>
 								</tbody>
@@ -197,57 +182,57 @@ export default function ValidacaoSmartSniperPage() {
 				step="03"
 				label="Dados"
 				title="Performance Financeira"
-				description="Simulações de Monte Carlo com 10.000 iterações revelam a estabilidade do Protocolo Sniper."
+				description="Campos de resultado reservados: serão preenchidos apenas por execução reproduzível com artefatos publicados."
 			/>
 			<div className="max-w-300 mx-auto px-6 pb-12">
 				<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 					<GlassPanel className="p-8">
 						<h3 className="text-lg font-bold mb-6 text-text-bright font-heading">
-							Vetor Semanal (Renda Fixa)
+							Cenário semanal (a parametrizar)
 						</h3>
 						<ul className="space-y-4 list-none pl-0">
 							<li className="flex justify-between border-b border-white/5 pb-2 text-sm">
 								<span className="text-text-dim uppercase tracking-wider text-[0.7rem] font-mono">
 									Alocação de Volume
 								</span>
-								<span className="text-text-main font-bold">92%</span>
+									<span className="text-text-main font-bold">A definir</span>
 							</li>
 							<li className="flex justify-between border-b border-white/5 pb-2 text-sm">
 								<span className="text-text-dim uppercase tracking-wider text-[0.7rem] font-mono">
 									ROI Esperado
 								</span>
-								<span className="text-accent-emerald font-bold">30%</span>
+									<span className="text-accent-emerald font-bold">A medir</span>
 							</li>
 							<li className="flex justify-between border-b border-white/5 pb-2 text-sm">
 								<span className="text-text-dim uppercase tracking-wider text-[0.7rem] font-mono">
 									Desvio Padrão
 								</span>
-								<span className="text-text-main font-bold">70 BI</span>
+									<span className="text-text-main font-bold">A medir</span>
 							</li>
 						</ul>
 					</GlassPanel>
 					<GlassPanel className="p-8">
 						<h3 className="text-lg font-bold mb-6 text-text-bright font-heading">
-							Vetor Domingo (Venture Capital)
+							Cenário de domingo (a parametrizar)
 						</h3>
 						<ul className="space-y-4 list-none pl-0">
 							<li className="flex justify-between border-b border-white/5 pb-2 text-sm">
 								<span className="text-text-dim uppercase tracking-wider text-[0.7rem] font-mono">
 									Alocação de Volume
 								</span>
-								<span className="text-text-main font-bold">8%</span>
+									<span className="text-text-main font-bold">A definir</span>
 							</li>
 							<li className="flex justify-between border-b border-white/5 pb-2 text-sm">
 								<span className="text-text-dim uppercase tracking-wider text-[0.7rem] font-mono">
 									ROI Esperado
 								</span>
-								<span className="text-accent-emerald font-bold">40%</span>
+									<span className="text-accent-emerald font-bold">A medir</span>
 							</li>
 							<li className="flex justify-between border-b border-white/5 pb-2 text-sm">
 								<span className="text-text-dim uppercase tracking-wider text-[0.7rem] font-mono">
 									Desvio Padrão
 								</span>
-								<span className="text-text-main font-bold">130 BI</span>
+									<span className="text-text-main font-bold">A medir</span>
 							</li>
 						</ul>
 					</GlassPanel>
@@ -258,14 +243,13 @@ export default function ValidacaoSmartSniperPage() {
 				step="04"
 				label="Veredito"
 				title="A Estratégia Barbell"
-				description="A eliminação do meio-termo medíocre e a busca pela convexidade positiva. Q.E.D."
+				description="Hipótese de portfólio a testar contra baseline, com métricas, incerteza e critérios de falsificação explícitos."
 			/>
 			<div className="max-w-300 mx-auto px-6 pb-24">
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted font-body">
 						<p>
-							A validação científica aponta que o sucesso do modelo reside na
-							aplicação da{' '}
+							A hipótese estratégica é que uma aplicação disciplinada da{' '}
 							<strong className="text-text-bright">
 								Teoria da Convexidade de Nassim Taleb
 							</strong>{' '}
@@ -274,11 +258,11 @@ export default function ValidacaoSmartSniperPage() {
 
 						<div className="bg-bg-elevated/50 border border-accent-emerald/20 p-8 my-10 rounded-2xl">
 							<p className="font-mono text-[0.7rem] text-accent-emerald uppercase tracking-[0.2em] mb-4">
-								Q.E.D. — Quod Erat Demonstrandum
+								Critério de falsificação
 							</p>
 							<p className="text-xl text-text-bright font-medium leading-relaxed mb-6">
-								O Protocolo Sniper é estatisticamente superior para a construção de
-								carreira sustentável.
+								O protocolo só poderá ser chamado superior se superar o baseline pré-definido
+								em retorno ajustado ao risco, com incerteza reportada e reprodução independente.
 							</p>
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 								<div className="text-sm">
@@ -286,8 +270,7 @@ export default function ValidacaoSmartSniperPage() {
 										Eficiência & Longevidade
 									</strong>
 									<p className="m-0 leading-relaxed">
-										Captura ágio via arbitragem de ICM e previne o burnout
-										inerente aos modelos de volume insano.
+										Avalia retorno, risco de ruína e carga operacional sem assumir arbitragem.
 									</p>
 								</div>
 								<div className="text-sm">
@@ -295,8 +278,7 @@ export default function ValidacaoSmartSniperPage() {
 										Assimetria de Retorno
 									</strong>
 									<p className="m-0 leading-relaxed">
-										O domingo destrava a cauda longa (Big Hits) sem expor o
-										capital a riscos de ruína irracionais.
+										Mede a contribuição de cenários de maior variância com controle de bankroll.
 									</p>
 								</div>
 							</div>
@@ -324,4 +306,3 @@ export default function ValidacaoSmartSniperPage() {
 		</div>
 	);
 }
-

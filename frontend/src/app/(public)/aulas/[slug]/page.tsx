@@ -1,10 +1,12 @@
 import ContentFooter from '@/components/ui/layout/ContentFooter';
 import LessonHeader from '@/components/ui/layout/LessonHeader';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
+import { EditorialEvidencePanel } from '@/components/ui/layout/EditorialEvidencePanel';
 import TableOfContents from '@/components/ui/layout/TableOfContents';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
+import { getEditorialManifestEntry } from '@/content/editorialManifest';
 
 interface LessonPageProps {
 	readonly params: Promise<{
@@ -15,8 +17,8 @@ interface LessonPageProps {
 // Busca o conteúdo diretamente do banco Prisma
 const getLesson = cache(async (slug: string) => {
 	try {
-		const content = await prisma.content?.findUnique({
-			where: { slug },
+		const content = await prisma.content?.findFirst({
+			where: { slug, isPublished: true },
 		});
 
 		if (!content) return null;
@@ -54,6 +56,7 @@ const getLesson = cache(async (slug: string) => {
 			author: 'Raphael Vitoi',
 			date: content.createdAt.toISOString(),
 			body: content.body,
+			editorial: getEditorialManifestEntry(slug),
 			toc,
 		};
 	} catch (e) {
@@ -83,6 +86,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
 					<div className="prose prose-invert prose-emerald max-w-none">
 						<SotaMarkdown content={lesson.body} />
+					</div>
+					<div className="mt-10">
+						<EditorialEvidencePanel entry={lesson.editorial} />
 					</div>
 				</div>
 

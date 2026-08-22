@@ -16,7 +16,7 @@ import { SITE_CONFIG } from '@/constants/site';
 export const metadata = {
 	title: `Teoria da Perspectiva Matemática | ${SITE_CONFIG.author}`,
 	description:
-		'O framework definitivo de ICM: Expectativa, Perspectiva, Esperança e a mecânica oculta do ICM Pós-Flop.',
+		'PMev v7 em desenvolvimento: um programa de pesquisa para estender a análise ICM de estados a decisões de torneio dinâmicas.',
 };
 
 export default function TeoriaICMPage() {
@@ -27,7 +27,7 @@ export default function TeoriaICMPage() {
 		<div className="min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body">
 			<ContentPageHeader
 				title="Whitepaper SOTA"
-				subtitle="A transição do modelo estático de estados para o fluxo dinâmico da Perspectiva Matemática."
+				subtitle="Uma proposta de transição do modelo estático de estados para uma análise dinâmica, sujeita a especificação e teste reprodutível."
 				category="Educação"
 				icon="fa-scroll"
 			/>
@@ -37,7 +37,7 @@ export default function TeoriaICMPage() {
 				step="01"
 				label="Calibração"
 				title="Risk Premium vs. Bubble Factor"
-				description="Duas réguas de medição da pressão ICM. Definições, relação matemática e por que RP é o padrão do motor."
+				description="Duas métricas de pressão ICM. A conversão depende do mesmo estado e do tipo de confronto avaliado."
 			/>
 			<div className="sota-container pb-12">
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
@@ -47,9 +47,10 @@ export default function TeoriaICMPage() {
 							medição de pressão do torneio. É fundamental distinguir entre{' '}
 							<strong>Ruído de Simulação</strong> (comum em modelos simplificados como
 							GTO Wizard pós-flop) e a <strong>Influência Real do ICM</strong>. No
-							Framework ICM, calibramos o motor contra os 93 nodes do HRC para
-							garantir que os desvios observados sejam fruto da matemática de colisão,
-							e não de imprecisões algorítmicas (e-Nash).
+							Framework ICM, HRC é uma referência de baseline. Uma alegação de
+							calibração requer publicar os 93 nós, versões, ranges, payouts e a
+							métrica de erro; sem esse artefato, a comparação permanece uma hipótese
+							de trabalho, não uma validação.
 						</p>
 
 						<ul className="ml-6 text-text-main leading-relaxed list-disc">
@@ -63,9 +64,9 @@ export default function TeoriaICMPage() {
 							<li>
 								<strong>Risk Premium (RP):</strong> É a equity adicional, acima das
 								pot odds puras, necessária para justificar um call. O motor SOTA
-								adota o RP como padrão pois ele opera em uma{' '}
-								<strong>escala percentual intuitiva</strong> (0% a ~24% em mesas
-								finais reais; teto teórico mais alto em cenários extremos).
+							pode ser expresso em pontos percentuais. Seu valor não possui teto
+							universal: depende de stacks, payouts, pares de jogadores, pot odds e
+							regras do torneio.
 							</li>
 						</ul>
 
@@ -74,13 +75,12 @@ export default function TeoriaICMPage() {
 								Relação Matemática
 							</h4>
 							<p className="font-mono text-sm text-accent-indigo-light leading-relaxed">
-								RP = 100 &times; (BF &minus; 1) / BF
+							Confronto all-in simétrico: Equity* = BF / (BF + 1); RP = Equity* &minus; 50 p.p.
 							</p>
 							<p className="mb-0 text-sm">
-								Por que usar &Delta;RP (Risk Advantage)? Subtrair RPs (IP &minus;
-								OOP) gera um delta percentual linear que dita diretamente a
-								proporção de agressividade permitida em um cenário. O BF não permite
-								essa extração de forma natural.
+							&Delta;RP é um descritor comparativo proposto, não uma regra que determina
+							agressividade. Fora do confronto all-in simétrico, a equity requerida deve
+							ser calculada no estado e na árvore de decisão concretos.
 							</p>
 						</div>
 					</div>
@@ -92,7 +92,7 @@ export default function TeoriaICMPage() {
 				step="02"
 				label="Paradigma"
 				title="A Hierarquia Cognitiva da Decisão"
-				description="Quatro camadas: ICM EV, Esperança, Expectativa e Perspectiva. Do snapshot financeiro à síntese definitiva."
+				description="Quatro camadas propostas: ICM EV, Esperança, Expectativa e Perspectiva. Do snapshot financeiro a uma hipótese dinâmica."
 			/>
 			<div className="sota-container pb-12">
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
@@ -119,19 +119,15 @@ export default function TeoriaICMPage() {
 								<span>
 									EV<sub>fold</sub>
 								</span>{' '}
-								pode ser <strong>Positivo</strong> (&ldquo;passar a vez&rdquo; gera
-								valor passivo). No pós-flop, o <strong>Pot Entrapment</strong> torna
-								o{' '}
-								<span>
-									EV<sub>fold</sub>
-								</span>{' '}
-								violentamente negativo (desistir do pote custa exponencialmente mais
-								em valuation do que o risco residual). O{' '}
+								pode ser <strong>Positivo</strong> sob uma convenção de valor absoluto
+								e em estados com eliminação alheia provável. Em uma convenção incremental,
+								fold pode ser normalizado a zero; as comparações devem manter a mesma
+								convenção. O{' '}
 								<span>
 									ICM<sub>ev</sub>
 								</span>{' '}
-								calcula isso como um &ldquo;snapshot&rdquo; (como se o torneio
-								acabasse na mão atual).
+								calcula um snapshot de premiação condicionado aos stacks; não modela,
+								por si só, a árvore pós-flop, blinds futuros ou distribuição de mãos.
 							</li>
 						</ul>
 
@@ -177,10 +173,10 @@ export default function TeoriaICMPage() {
 							Camada 4: Perspectiva Matemática
 						</h3>
 						<p>
-							A síntese definitiva e fechada. Não é o output simples das camadas
-							anteriores — é uma métrica que <strong>aprendeu iterativamente</strong>{' '}
-							de todas elas (ICM EV, Esperança, Expectativa com FGS integrado).
-							Substitui o ICM EV como refinamento superior.
+							Uma generalização proposta, ainda não uma métrica fechada validada. A PMev
+							v7 modela decisão como valor esperado sob transições, crenças e utilidade;
+							o ICM EV continua sendo o baseline recuperável em PMev-0. Superioridade
+							requer comparação fora da amostra e artefatos reproduzíveis.
 						</p>
 					</div>
 				</GlassPanel>
@@ -211,10 +207,10 @@ export default function TeoriaICMPage() {
 
 						<h3 className="text-text-bright font-heading">2. O Fator &Psi; (Psi)</h3>
 						<p>
-							Se a probabilidade de o oponente ter nuts é de 4%, mas a taxa
-							estatística de <em>&ldquo;Bobagem Humana&rdquo;</em> (tilt, erro
-							cognitivo) no spot é de 10%, a Esperança Matemática exige o call,
-							ignorando o conservadorismo GTO.
+							&Psi; é uma hipótese de crença: uma mistura explícita de linhas, erros e
+							frequências adversárias pode alterar o valor de uma ação. Os pesos precisam
+							ser observáveis, calibrados e comparados a um baseline; percentuais isolados
+							não implicam call.
 						</p>
 
 						<h3 className="text-text-bright font-heading">3. O Veneno das RIO</h3>
@@ -240,8 +236,9 @@ export default function TeoriaICMPage() {
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted">
 						<ul className="ml-6 text-text-main leading-relaxed list-disc">
 							<li>
-								<strong>O Teto do RP:</strong> A âncora empírica é 24%. O OOP não
-								defende pelo MDF clássico, mas até onde o RP permite.
+								<strong>Faixas de RP:</strong> qualquer âncora numérica, inclusive 24%,
+								é uma hipótese de domínio e deve ser testada contra estados publicados.
+								O RP não substitui uma árvore de decisão nem uma análise de MDF.
 							</li>
 							<li>
 								<strong>&Delta;RP (Diferencial de Risco):</strong> RP<sub>IP</sub>{' '}

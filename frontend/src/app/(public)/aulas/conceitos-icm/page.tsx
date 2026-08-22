@@ -8,7 +8,7 @@ import { SITE_CONFIG } from '@/constants/site';
 export const metadata = {
 	title: 'Conceitos ICM | Raphael Vitoi',
 	description:
-		'Definição formal de Risk Premium, Bubble Factor, Expectativa, Perspectiva e Esperança Matemática — o framework que estende ICM EV para o espaço decisório do torneio inteiro.',
+		'Glossário de ICM e da hipótese PMev v7: conceitos, convenções e limites de uma extensão dinâmica em desenvolvimento.',
 };
 
 const toc = [
@@ -128,12 +128,12 @@ export default function ConceitosICM() {
 									Relação Matemática
 								</h4>
 								<p className="font-mono text-sm text-accent-indigo-light mb-4">
-									BF = 100 / (100 &minus; RP)
+									All-in simétrico: Equity* = BF / (BF + 1); RP = Equity* &minus; 50 p.p.
 								</p>
 								<p className="text-text-main m-0 leading-relaxed text-sm">
-									Exemplo: RP de 21% &rarr; BF = 100 / 79 &asymp; 1,27. No
-									framework VITOI, o RP é a unidade base por sua clareza
-									operacional imediata.
+									Exemplo: BF = 1,27 implica Equity* &asymp; 55,9% e RP &asymp; 5,9 p.p.
+									para um all-in simétrico. Fora desse caso, não há conversão universal:
+									use o estado, as pot odds e a árvore da decisão.
 								</p>
 							</div>
 						</div>
@@ -199,7 +199,7 @@ export default function ConceitosICM() {
 						<div className="prose prose-invert prose-lg max-w-none text-text-muted">
 							<p>
 								A Expectativa Matemática é a camada preditiva. Ela captura a{' '}
-								<strong>cadeia de consequências encadeadas</strong> — o quequele
+								<strong>cadeia de consequências encadeadas</strong> — o que aquele
 								outcome específico abre ou fecha para o restante da trajetória.
 							</p>
 
@@ -207,10 +207,10 @@ export default function ConceitosICM() {
 								Table Draw e Antevisão
 							</h3>
 							<p>
-								A <strong>Antevisão</strong> integra variáveis que solvers ignoram:
-								o salto iminente de blinds (t&minus;3) e o custo posicional da
-								órbita seguinte. Essas dimensões alteram a urgência da ação
-								presente.
+								A <strong>Antevisão</strong> propõe integrar variáveis ausentes de um
+								snapshot ICM — por exemplo, salto de blinds e posição na próxima órbita.
+								Solvers que recebem essas variáveis podem modelá-las; a hipótese PMev é
+								que elas mudam a ação ótima de modo mensurável.
 							</p>
 						</div>
 					</GlassPanel>
@@ -223,14 +223,15 @@ export default function ConceitosICM() {
 					step="04"
 					label="Síntese"
 					title="Perspectiva Matemática"
-					description="Síntese definitiva e fechada. Substitui o ICM EV como refinamento superior."
+				description="Hipótese de síntese dinâmica. Preserva ICM EV como baseline recuperável e exige validação fora da amostra."
 				/>
 				<div className="sota-container pb-12">
 					<GlassPanel className="p-8 sm:p-12 lg:p-16">
 						<div className="prose prose-invert prose-lg max-w-none text-text-muted">
 							<p>
-								A Perspectiva Matemática encapsula todas as camadas anteriores em
-								uma única medida fechada, sem abstração residual.
+							A Perspectiva Matemática é uma proposta de função de valor dinâmica; não
+							está estabelecida como medida fechada nem substitui o ICM EV sem comparação
+							reproduzível fora da amostra.
 							</p>
 
 							<div className="bg-bg-elevated/50 border border-accent-indigo/20 p-8 my-10 rounded-2xl">
@@ -238,8 +239,7 @@ export default function ConceitosICM() {
 									Equação Formal
 								</h4>
 								<p className="font-mono text-xs text-accent-indigo-light mb-0 leading-relaxed">
-									PM = [(Equity &times; R) &times; Valuation_stack] &minus;
-									[EV_fold + RIO<sub>mw</sub>]
+									Q<sub>PMev</sub>(s, a) = E[U(S<sub>T</sub>) | s, a, transições, crenças]
 								</p>
 							</div>
 
@@ -247,10 +247,9 @@ export default function ConceitosICM() {
 								Risco de Ressurreição
 							</h3>
 							<p>
-								Dobrar o stack de um short{' '}
-								<strong>devolve a complexidade ao oponente</strong>. Um call de EV
-								marginalmente positivo pode ser um erro sistêmico se ressuscitar um
-								adversário taticamente neutralizado.
+							Dobrar o stack de um short pode alterar opções futuras, ranges e risco de
+							eliminação. Isso é uma hipótese de efeito dinâmico: deve ser comparada a um
+							baseline ICM com a mesma estrutura de payouts e transições explícitas.
 							</p>
 						</div>
 					</GlassPanel>

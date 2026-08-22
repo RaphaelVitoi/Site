@@ -1,6 +1,7 @@
 /**
  * SOTA Malmuth-Harville ICM & Bubble Factor Matrix Engine (Client-Side)
- * Portado e calibrado sob governança de Raphael Vitoi
+ * Baseline Malmuth-Harville para confrontos pairwise de all-in.
+ * Não incorpora pot odds, bounties, rake, ranges, árvore pós-flop ou transições futuras.
  *
  * @format
  */
@@ -211,7 +212,7 @@ export function calculateMalmuthHarville(stacks: number[], payouts: number[]): n
 }
 
 /**
- * Computa a matriz completa de Bubble Factors e métricas entre todos os jogadores
+ * Computa a matriz de BF e a conversão de RP para confronto all-in binário simétrico.
  */
 export function computeBubbleFactorMatrix(
 	stacks: number[],
