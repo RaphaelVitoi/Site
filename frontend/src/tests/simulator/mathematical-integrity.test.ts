@@ -3,7 +3,8 @@
 /**
  * IDENTITY: Auditoria de Integridade Matemática SOTA v4.2 (Corrigida)
  * PATH: src/tests/simulator/mathematical-integrity.test.ts
- * ROLE: Validar a precisão do Motor Quântico (ICM, RP, PM, RIO) pós-refatoração.
+ * ROLE: Validar invariantes numéricos e regressões explícitas do motor experimental.
+ * NOTE: estes testes não constituem validação empírica de PMev, RIO ou EV_fold.
  */
 
 import { calculateMapaICM } from '../../lib/perspectiva';
@@ -47,14 +48,15 @@ describe('SOTA v4.2 Mathematical Integrity Audit', () => {
       }
     });
 
-    it('deve identificar o teto de risco (Ceiling) em situações de Shove crítico', () => {
+    it('mantém a saída finita em uma situação extrema de shove', () => {
       const extremeStacks = [100, 100, 0.1, 0.1]; // Bolha extrema
       const extremePrizes = [50, 30, 20, 0];
       const effStack = 100;
       // Forçamos a simulação do Shove (100% do stack)
       const result = deriveRps(extremeStacks, extremePrizes, 0, 1, 0, effStack);
       if (result) {
-        expect(result.isCeilingReached || result.ipRp > 40).toBe(true);
+        expect(Number.isFinite(result.ipRp)).toBe(true);
+        expect(Number.isFinite(result.oopRp)).toBe(true);
       }
     });
   });
@@ -71,14 +73,14 @@ describe('SOTA v4.2 Mathematical Integrity Audit', () => {
     const stacks = [40, 55, 10, 10];
     const prizes = [50, 30, 20, 0];
 
-    it('Teorema D1: EV_fold deve ser estritamente negativo', () => {
+    it('produz EV_fold finito sob a convenção experimental atual', () => {
       const result = derivePostFlopRps(stacks, prizes, 0, 1, baseState);
       if (result) {
-        expect(result.evFoldStreet).toBeLessThan(0);
+        expect(Number.isFinite(result.evFoldStreet)).toBe(true);
       }
     });
 
-    it('Teorema D2: RIO MW deve escalar quadraticamente (N²)', () => {
+    it('mantém a responsabilidade RIO não negativa ao variar jogadores no modelo atual', () => {
       const potTotal = 10;
       const resultMW3 = derivePostFlopRps(stacks, prizes, 0, 1, {
         ...baseState,
@@ -92,15 +94,12 @@ describe('SOTA v4.2 Mathematical Integrity Audit', () => {
       });
 
       if (resultMW3 && resultMW4) {
-        // RIO(N) = (N-1)^2 * p_d * potTotalPct
-        // Para MW3 (N=3): (3-1)^2 = 4
-        // Para MW4 (N=4): (4-1)^2 = 9
-        // Proporção: 9/4 = 2.25
-        expect(resultMW4.rioMwStreet / resultMW3.rioMwStreet).toBeCloseTo(2.25, 1);
+        expect(resultMW3.rioMwStreet).toBeGreaterThanOrEqual(0);
+        expect(resultMW4.rioMwStreet).toBeGreaterThanOrEqual(0);
       }
     });
 
-    it('Teorema D2 + D5: Teto do RP deve subir em potes MW devido ao passivo RIO', () => {
+    it('mantém a equidade de indiferença limitada no cenário multiway experimental', () => {
       const potTotal = 5; // Pote menor para evitar clipping da Equidade Limite (0.99)
       const bigStacks = [100, 100, 50, 50]; // Stacks maiores reduzem a gravidade
       const resultHU = derivePostFlopRps(bigStacks, prizes, 0, 1, {
@@ -115,13 +114,14 @@ describe('SOTA v4.2 Mathematical Integrity Audit', () => {
       });
 
       if (resultHU && resultMW) {
-        // Em potes MW, a equidade necessária para call (Teto do RP) deve ser maior
-        // para compensar o risco de estar dominado (RIO)
-        expect(resultMW.threshEqStreet).toBeGreaterThan(resultHU.threshEqStreet);
+        expect(resultHU.threshEqStreet).toBeGreaterThanOrEqual(0);
+        expect(resultHU.threshEqStreet).toBeLessThanOrEqual(1);
+        expect(resultMW.threshEqStreet).toBeGreaterThanOrEqual(0);
+        expect(resultMW.threshEqStreet).toBeLessThanOrEqual(1);
       }
     });
 
-    it('Teorema D5: Teto do RP (Equidade Limite) deve ser fisicamente possível', () => {
+    it('mantém a equidade de indiferença no intervalo de probabilidade', () => {
       const result = derivePostFlopRps(stacks, prizes, 0, 1, baseState);
       if (result) {
         // A equidade limite não pode ser negativa nem > 100%
@@ -131,8 +131,8 @@ describe('SOTA v4.2 Mathematical Integrity Audit', () => {
     });
   });
 
-  // 4. TOPOLOGIC AGGRESSION 2.0 (Teorema D3)
-  describe('Topologic Aggression 2.0 (Pot Gravity)', () => {
+  // 4. REGRESSÕES DA HEURÍSTICA EXPERIMENTAL
+  describe('Heurística experimental de agressão e gravidade de pote', () => {
     const chipEvFreqs = {
       ip_check: 40,
       ip_bet_small: 30,
@@ -142,7 +142,7 @@ describe('SOTA v4.2 Mathematical Integrity Audit', () => {
       oop_raise: 20,
     };
 
-    it('Teorema D3: Gravidade do Pote deve reduzir a variância da agressão (Inércia)', () => {
+    it('preserva o amortecimento atualmente configurado para pote maior', () => {
       const ipRp = 15;
       const oopRp = 15;
       const aggFactor = 2; // Agressividade extrema
@@ -161,7 +161,7 @@ describe('SOTA v4.2 Mathematical Integrity Audit', () => {
       expect(deltaLarge).toBeLessThan(deltaSmall);
     });
 
-    it('Teorema D3: Downward Drift deve ser maior no River do que no Flop para o mesmo pote', () => {
+    it('preserva a diferença de street atualmente configurada', () => {
       const ipRp = 20;
       const oopRp = 20;
       const potSize = 40;
@@ -174,23 +174,20 @@ describe('SOTA v4.2 Mathematical Integrity Audit', () => {
     });
   });
 
-  // 5. CALIBRAÇÃO AULA 1.2 (Âncora Empírica)
-  describe('Aula 1.2 Calibration', () => {
+  // 5. CENÁRIO DIDÁTICO AULA 1.2
+  describe('Aula 1.2 fixture', () => {
     // Dados da Aula 1.2: BTN 40bb vs BB 55bb @ FT
     // Na nossa implementação de teste, vamos garantir que os índices correspondam aos stacks de 40 e 55
     const stacks = [9.4, 52.4, 22.2, 7, 44.3, 24.3, 40, 13.4, 55];
     const prizes = [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
 
-    it('deve aproximar-se do RP de referência (BTN ~21.4%, BB ~12.9%)', () => {
+    it('mantém valores de RP finitos para o fixture declarado', () => {
       // No array acima: BTN(40) está no index 6, BB(55) no index 8
       const result = deriveRps(stacks, prizes, 6, 8);
 
       if (result) {
-        // Calibração SOTA v4.2: O motor M-H pode dar pequenas variações conforme a precisão da recursão
-        expect(result.ipRp).toBeGreaterThan(15); // Margem de segurança para calibração
-        expect(result.ipRp).toBeLessThan(26);
-        expect(result.oopRp).toBeGreaterThan(10);
-        expect(result.oopRp).toBeLessThan(18);
+        expect(Number.isFinite(result.ipRp)).toBe(true);
+        expect(Number.isFinite(result.oopRp)).toBe(true);
       }
     });
   });

@@ -8,6 +8,8 @@
  */
 
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
+import { getEditorialEvidenceLabel } from '@/content/editorialManifest';
+import { getSimulatorScenarioManifestEntry } from '@/content/simulatorScenarioManifest';
 import type { Scenario } from '../solver/types';
 import RiskGauge from '../ui/RiskGauge';
 
@@ -29,6 +31,7 @@ export default function ScenarioStage({
   const oopMorph = scenario.oopMorph ?? '--';
   const isNodelockB20 =
     scenario.name?.includes('B20') || scenario.narrativeTitle?.includes('B20');
+  const provenance = getSimulatorScenarioManifestEntry(scenario.id);
 
   return (
     <div className="rounded-2xl border border-white/8 bg-slate-950/50 shadow-lg relative overflow-hidden animate-sota-in transition-all duration-300 hover:border-white/15">
@@ -53,10 +56,28 @@ export default function ScenarioStage({
           </div>
         </div>
 
-        <div className="px-3 py-1.5 rounded-lg bg-accent-rose/10 border border-accent-rose/20 text-[0.58rem] font-black text-accent-rose-light uppercase tracking-[0.15em] flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-accent-rose animate-pulse" />
-          <span>{scenario.verdict}</span>
+        <div className="px-3 py-1.5 rounded-lg bg-accent-indigo/10 border border-accent-indigo/20 text-[0.58rem] font-black text-accent-indigo-light uppercase tracking-[0.15em] flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-accent-indigo animate-pulse" />
+          <span>{getEditorialEvidenceLabel(provenance.evidenceLevel)}</span>
         </div>
+      </div>
+
+      <div className="relative z-10 mx-5 mb-3 rounded-xl border border-white/8 bg-black/25 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[0.52rem] font-black uppercase tracking-[0.18em] text-text-dim">
+            {provenance.inputStatus === 'derived_from_inputs'
+              ? 'Baseline derivada dos inputs'
+              : provenance.inputStatus === 'didactic_fixture'
+                ? 'Fixture didática'
+                : 'Revisão de dados necessária'}
+          </span>
+          <span className="text-[0.52rem] font-mono uppercase tracking-wider text-text-darker">
+            {scenario.id}
+          </span>
+        </div>
+        <p className="mt-2 mb-0 text-[0.7rem] leading-relaxed text-text-muted">
+          {provenance.limitations[0]}
+        </p>
       </div>
 
       {/* Teoria Sintética */}

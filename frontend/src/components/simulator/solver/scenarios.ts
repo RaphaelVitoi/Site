@@ -43,18 +43,18 @@ export const SCENARIOS: Scenario[] = [
     ipPos: 'Mid', oopPos: 'Mid',
     ipMorph: 'Valor Estrito', oopMorph: 'Condensado',
     verdict: 'Pressão Estática',
-    narrativeTitle: 'O Dogma do EV Fold = 0',
+    narrativeTitle: 'O Snapshot de ICM',
     narrativeSubtitle: 'ICM Tradicional',
     icon: 'fa-camera', color: 'blue',
-    theory: `O ICM EV calcula o valor monetário da stack <em>como se o torneio terminasse agora</em>. É um snapshot financeiro — correto no instante, mas cego para o fluxo. Não captura o salto de blinds iminente, a posição na próxima mão, nem o impacto futuro de ganhar ou perder o pot. O EV_fold é tratado como zero, quando na realidade pode ser positivo (payjumps passivos) ou violentamente negativo (pot entrapment pós-flop). É a base necessária, mas insuficiente.`,
-    exploit: [ 'Identifique a Rigidez: O modelo ignora blinds subindo e posição futura.', 'O EV_fold nunca é zero em torneios — use o threshold correto.' ],
+    theory: `O ICM atribui valor monetário às stacks e payouts <em>no estado declarado</em>. É uma baseline financeira útil, mas não inclui por si só transições de blinds, posição futura, ranges ou árvore pós-flop. Nesta interface, qualquer extensão de fold EV além desse baseline deve ser lida como hipótese explícita e não como propriedade intrínseca do ICM.`,
+    exploit: [ 'Compare o baseline com uma extensão que declare transições, ranges e árvore.', 'Não transporte um valor de fold entre árvores sem especificar o modelo.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 18.5 }, { name: 'FLOP', potSize: 7.5, rpValue: 14.2 }, { name: 'TURN', potSize: 22.5, rpValue: 8.4 }, { name: 'RIVER', potSize: 25, rpValue: 3.1 } ],
     defaultStreetFreqs: {
       flop: { ip_check: 30, ip_bet_small: 50, ip_bet_large: 20, oop_call: 45, oop_fold: 45, oop_raise: 10 },
       turn: { ip_check: 25, ip_bet_small: 40, ip_bet_large: 35, oop_call: 50, oop_fold: 40, oop_raise: 10 },
       river: { ip_check: 20, ip_bet_small: 15, ip_bet_large: 65, oop_call: 60, oop_fold: 33, oop_raise: 7 },
     },
-    quiz: { question: 'Qual a falha fundamental do ICM EV puro?', options: [ { id: 'A', text: 'Trata o torneio como se terminasse na mão atual.', isCorrect: true }, { id: 'B', text: 'Calcula o valor das fichas de forma incorreta.', isCorrect: false }, { id: 'C', text: 'Não considera a estrutura de pagamentos.', isCorrect: false }, { id: 'D', text: 'Ignora a posição na mesa.', isCorrect: false } ], explanation: 'O ICM EV é um snapshot: calcula corretamente o valor do pot, mas como se o torneio parasse ali. Não captura cadeia futura (blinds subindo, posição na próxima mão, FGS).' }
+    quiz: { question: 'Qual limite aparece quando o ICM é usado isoladamente?', options: [ { id: 'A', text: 'Ele não inclui automaticamente transições futuras, ranges ou árvore pós-flop.', isCorrect: true }, { id: 'B', text: 'Ele ignora os stacks declarados.', isCorrect: false }, { id: 'C', text: 'Ele elimina a estrutura de pagamentos.', isCorrect: false }, { id: 'D', text: 'Ele determina a ação ótima em toda árvore futura.', isCorrect: false } ], explanation: 'O ICM é uma baseline para stacks e payouts declarados. Transições futuras e decisões pós-flop exigem um modelo adicional com inputs e validação próprios.' }
   },
   {
     id: 'paradoxo',
@@ -115,8 +115,8 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Peso de Agir Primeiro',
     narrativeSubtitle: 'A Dinâmica do Shove',
     icon: 'fa-fire-flame-curved', color: 'amber',
-    theory: `O open-shove de 20bb não é apenas uma aposta — é uma <strong>transferência de peso volitivo</strong>. O agressor acopla Fold Equity ao RP e retira do BB a capacidade de re-agressão. O defensor colapsa para overfold matemático forçado pelo custo binário da eliminação. O BB (RP 19.5%) precisa de equity significativamente acima dos pot odds para justificar o call — o "fardo" do ICM é transferido inteiramente para quem defende.`,
-    exploit: [ 'Alpha Real: Expanda o range de shove até o teto matemático.', 'O defensor carrega o fardo — cada mão que ele folda é lucro estrutural.' ],
+    theory: `Nesta fixture, o open-shove de 20bb transforma a escolha do BB em uma decisão binária. O custo relativo da eliminação pode deslocar o limiar de call em relação a ChipEV, mas a magnitude depende de payouts, ranges, bounties e árvore. A expressão "transferência de peso" é uma hipótese didática para investigar esse deslocamento; não prova um range de shove.`,
+    exploit: [ 'Teste o efeito do RP contra ranges e payouts declarados.', 'Não extrapole o sizing ou a frequência desta fixture para outro field.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 19.5 }, { name: 'FLOP', potSize: 7, rpValue: 13 }, { name: 'TURN', potSize: 14, rpValue: 5.5 }, { name: 'RIVER', potSize: 20, rpValue: 1.9 } ],
     defaultStreetFreqs: {
       flop: { ip_check: 0, ip_bet_small: 0, ip_bet_large: 100, oop_call: 40, oop_fold: 60, oop_raise: 0 },
@@ -253,8 +253,8 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'Licença para Matar',
     narrativeSubtitle: 'SB vs BB Death Zone',
     icon: 'fa-crosshairs', color: 'emerald',
-    theory: `O SB (CL, 50bb, RP 12%) enfrenta o BB (12bb, RP 45%). Com RP de 45%, o BB precisa de equity absurda para justificar qualquer call — está na Death Zone. O CL pode shover ranges extremamente amplos (potencialmente any two cards) porque a Fold Equity é massiva: o BB colapsa em paralisia estrutural. Mesmo quando o BB acerta o call, o CL sobrevive confortavelmente. A assimetria é tão brutal que o campo gravitacional do ICM paralisa o defensor.`,
-    exploit: [ 'Shove ranges extremamente amplos — o BB é paralisado.', 'O custo de estar errado para o CL é mínimo (RP 12%).' ],
+    theory: `Nesta fixture, SB e BB possuem assimetria de stacks e de RP declarados. Isso motiva testar como o limiar de call pode se afastar de ChipEV. A descrição de "zona de paralisia" é uma metáfora didática: ranges de shove e call requerem árvore, ranges e solver compatíveis antes de qualquer recomendação.`,
+    exploit: [ 'Compare limiares de call com ranges e payouts explícitos.', 'Não interprete o cenário como autorização para shove automático.' ],
     sprData: [ { name: 'PRE', potSize: 1.5, rpValue: 45 }, { name: 'FLOP', potSize: 4, rpValue: 30 }, { name: 'TURN', potSize: 8, rpValue: 15 }, { name: 'RIVER', potSize: 12, rpValue: 9 } ],
     defaultStreetFreqs: {
       flop: { ip_check: 10, ip_bet_small: 30, ip_bet_large: 60, oop_call: 45, oop_fold: 45, oop_raise: 10 },
@@ -272,18 +272,18 @@ export const SCENARIOS: Scenario[] = [
     ipRp: 5, oopRp: 42,
     ipPos: 'BTN (CL)', oopPos: 'Blinds',
     ipMorph: 'Modo Predador', oopMorph: 'Zona de Paralisia',
-    verdict: 'Agressão Impune',
-    narrativeTitle: 'Agressão Impune',
+    verdict: 'Assimetria na Bolha',
+    narrativeTitle: 'Assimetria na Bolha',
     narrativeSubtitle: 'Bolha do ITM',
     icon: 'fa-skull-crossbones', color: 'rose',
-    theory: `Na bolha do ITM, o BTN (CL, 80bb, RP 5%) joga quase ChipEV enquanto os Blinds (RP 42%) carregam pressão extrema. A assimetria é a mais brutal do framework: o CL perde pouco quando errado e ganha muito quando certo, enquanto os Blinds perdem tudo quando erram e ganham pouco quando acertam. A agressão do CL é impune — cada fold dos Blinds é lucro garantido, e cada call deles é uma aposta de sobrevivência contra odds esmagadoras.`,
-    exploit: [ 'Agressão impune: o custo da perda é mínimo (RP 5%).', 'Cada fold dos Blinds é lucro estrutural garantido.' ],
+    theory: `Na configuração desta bolha, BTN e blinds têm assimetria de RP declarada. A fixture explora como essa assimetria pode deslocar incentivos de abertura e defesa. Ela não torna agressão "impune": a ação depende de ranges, stack efetivo, payouts, bounties e respostas adversárias modeladas.`,
+    exploit: [ 'Use a assimetria como pergunta de modelagem, não como licença automática.', 'Valide qualquer frequência contra uma árvore e ranges explícitos.' ],
     sprData: [ { name: 'PRE', potSize: 1.5, rpValue: 42 }, { name: 'FLOP', potSize: 5, rpValue: 31.5 }, { name: 'TURN', potSize: 15, rpValue: 9.5 }, { name: 'RIVER', potSize: 20, rpValue: 4.2 } ],
     defaultStreetFreqs: {
       flop: { ip_check: 15, ip_bet_small: 30, ip_bet_large: 55, oop_call: 45, oop_fold: 47, oop_raise: 8 },
       turn: { ip_check: 10, ip_bet_small: 20, ip_bet_large: 70, oop_call: 55, oop_fold: 38, oop_raise: 7 },
       river: { ip_check: 10, ip_bet_small: 5, ip_bet_large: 85, oop_call: 65, oop_fold: 28, oop_raise: 7 },
     },
-    quiz: { question: 'Por que a agressão do CL na bolha é impune?', options: [ { id: 'A', text: 'RP 5% vs 42% — o CL arrisca quase nada, os Blinds arriscam tudo.', isCorrect: true }, { id: 'B', text: 'Porque os Blinds são obrigados a foldar por regra.', isCorrect: false }, { id: 'C', text: 'Porque o CL sempre ganha os showdowns.', isCorrect: false }, { id: 'D', text: 'Porque a bolha não afeta stacks grandes.', isCorrect: false } ], explanation: 'Com RP de 5%, o CL opera quase em ChipEV puro. Os Blinds (RP 42%) pagam custo catastrófico por cada erro. A assimetria de dor cria uma situação onde a agressão é matematicamente impune para o agressor.' }
+    quiz: { question: 'O que esta fixture permite investigar na bolha?', options: [ { id: 'A', text: 'Como a assimetria de RP pode alterar limiares de abertura e defesa sob inputs declarados.', isCorrect: true }, { id: 'B', text: 'Que os Blinds são obrigados a foldar por regra.', isCorrect: false }, { id: 'C', text: 'Que o CL sempre vence os showdowns.', isCorrect: false }, { id: 'D', text: 'Que a bolha não afeta stacks grandes.', isCorrect: false } ], explanation: 'A fixture isola uma assimetria de RP. Para converter esse sinal em frequência estratégica, ainda são necessários ranges, árvore, solver e validação.' }
   }
 ];

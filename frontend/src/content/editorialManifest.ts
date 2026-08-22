@@ -484,10 +484,15 @@ export const EDITORIAL_ENTRIES: readonly EditorialManifestEntry[] = [
     'laboratorios',
     'laboratory',
     'laboratory',
-    'review_required',
+    'reproducible_experiment',
     {
-      sources: [],
-      limitations: ['Toy games esclarecem mecanismo, mas não demonstram validade externa para mesas reais.'],
+      sources: [
+        'Entendendo o ICM e suas Heurísticas: frontend/src/app/(public)/biblioteca/entendendo-o-icm-e-suas-heuristicas/page.tsx.',
+      ],
+      methodRef: 'Estudo Toy Games verificado; cada cenário preserva seus inputs didáticos e seu domínio de validade.',
+      limitations: [
+        'O estudo valida os mecanismos sob seus cenários controlados; mesas reais exigem inputs, ranges e árvore próprios antes de transportar frequências.',
+      ],
     },
   ),
   entry(

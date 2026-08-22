@@ -119,16 +119,16 @@ export function DownwardDriftSimulator() {
 
 			if (firstCrossover === null && simOopTension >= 1) firstCrossover = pctInvested;
 
-			const fakeChipEv = 50 - invested * 1.5;
-			const fakeUtilityEv = calculateUtilityEV(fakeChipEv, physics.referenceStatus);
+			// Curva didática normalizada: não representa EV de uma árvore de solver.
+			const illustrativeValue = 50 - invested * 1.5;
+			const illustrativeUtility = calculateUtilityEV(illustrativeValue, physics.referenceStatus);
 
 			data.push({
 				investedPct: Number(pctInvested.toFixed(0)),
 				ipTension: Number((simIpTension * 100).toFixed(1)),
 				oopTension: Number((simOopTension * 100).toFixed(1)),
-				chipEv: Number(fakeChipEv.toFixed(1)),
-				utilityEv: Number(fakeUtilityEv.toFixed(1)),
-				threshold: Math.min(50, 20 + (invested / (physics.pot + invested)) * 30),
+				illustrativeUtility: Number(illustrativeUtility.toFixed(1)),
+				referenceBand: Math.min(50, 20 + (invested / (physics.pot + invested)) * 30),
 			});
 		}
 
@@ -170,7 +170,7 @@ export function DownwardDriftSimulator() {
 						&amp; Entrapment
 					</h2>
 					<p className="text-[0.65rem] text-text-muted font-mono uppercase tracking-widest mt-1 opacity-60">
-						Sincronia Quantum Ativa
+						Laboratório exploratório · parâmetros editáveis
 					</p>
 				</div>
 				<div className="flex gap-4">
@@ -222,13 +222,13 @@ export function DownwardDriftSimulator() {
 					</div>
 					<div className="space-y-2">
 						<div className="flex justify-between items-end mb-1">
-							<span className="text-label opacity-50">Jogadores (Multiway N²)</span>
+							<span className="text-label opacity-50">Jogadores no pote</span>
 							<span className="text-sm font-black font-mono text-accent-danger">
 								{activePlayers}
 							</span>
 						</div>
 						<input
-							aria-label="Jogadores (Multiway N²)"
+							aria-label="Jogadores no pote"
 							type="range"
 							min="2"
 							max="9"
@@ -261,7 +261,7 @@ export function DownwardDriftSimulator() {
 
 			<div className="pt-8 border-t border-white/5 relative z-10">
 				<h3 className="text-label text-center mb-8 opacity-40">
-					Curva de Aprisionamento Fractal
+					Curva exploratória de comprometimento
 				</h3>
 				<div className="relative h-72 w-full min-h-72">
 					<ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
@@ -324,8 +324,8 @@ export function DownwardDriftSimulator() {
 							/>
 							<Line
 								type="monotone"
-								name="Utilidade"
-								dataKey="utilityEv"
+								name="Índice de utilidade ilustrativo"
+								dataKey="illustrativeUtility"
 								stroke="var(--accent-amber)"
 								strokeWidth={2}
 								strokeDasharray="5 5"
@@ -334,8 +334,8 @@ export function DownwardDriftSimulator() {
 							/>
 							<Line
 								type="monotone"
-								name="Teto do RP"
-								dataKey="threshold"
+								name="Faixa de referência"
+								dataKey="referenceBand"
 								stroke="var(--accent-sky)"
 								strokeWidth={2}
 								strokeDasharray="3 3"
@@ -345,8 +345,12 @@ export function DownwardDriftSimulator() {
 						</LineChart>
 					</ResponsiveContainer>
 				</div>
+				<p className="m-0 pt-4 text-center text-[0.65rem] leading-relaxed text-text-dim">
+					As curvas de utilidade e referência são visualizações normalizadas. Para uma
+					conclusão estratégica, informe ranges, árvore, payouts e versão do motor em um
+					cenário reproduzível.
+				</p>
 			</div>
 		</div>
 	);
 }
-

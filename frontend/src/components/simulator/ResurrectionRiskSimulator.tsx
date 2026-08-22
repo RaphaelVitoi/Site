@@ -41,10 +41,11 @@ export default function ResurrectionRiskSimulator() {
 	const { physics, updatePhysics, isHydrated } = useSotaSync();
 	const metricsContext = use(SotaMetricsContext);
 	const [equity, setEquity] = useState(58);
-	const [applyBubbleAxiom, setApplyBubbleAxiom] = useState(true);
+	const [applyBehavioralHypothesis, setApplyBehavioralHypothesis] = useState(false);
+	const [shortEliminationProbability, setShortEliminationProbability] = useState(0.35);
 
 	// SOTA v4.5: Extração de Entropia (Fator Ψ)
-	const psiFactor = metricsContext?.predictiveProfile?.['Desvio de Nash'] ?? 0.45;
+	const psiFactor = metricsContext?.predictiveProfile?.['Desvio de Nash'] ?? 0;
 
 	const COLORS = {
 		call: 'var(--accent-emerald)',
@@ -73,7 +74,9 @@ export default function ResurrectionRiskSimulator() {
 
 		// SOTA VITOI: Amortized Edge Unificado (v4.5)
 		// A penalidade psicológica agora é proporcional à Entropia (Psi) detectada
-		const psychologicalPenalty = applyBubbleAxiom ? Math.max(0.6, 1 - psiFactor * 0.5) : 1;
+		const psychologicalPenalty = applyBehavioralHypothesis
+			? Math.max(0.6, 1 - psiFactor * 0.5)
+			: 1;
 
 		const { amortizedEdge: clEdgeWin } = calculateAmortizedEdge(
 			edgeFactor,
@@ -95,7 +98,7 @@ export default function ResurrectionRiskSimulator() {
 		const futureEvWinVal = getIcmEquity(clStackWin, msStack, 0, prizes) * clEdgeWin;
 		const futureEvLossVal = getIcmEquity(clStackLoss, ssStackWin, msStack, prizes) * clEdgeLoss;
 
-		const msEliminatesSsProb = 0.35;
+		const msEliminatesSsProb = shortEliminationProbability;
 		const foldEvIfMsWins = getIcmEquity(clStack - bb, 0, msStack + ssStack + bb, prizes);
 		const foldEvIfMsFolds = getIcmEquity(
 			clStack - bb,
@@ -138,7 +141,14 @@ export default function ResurrectionRiskSimulator() {
 			clStackLoss,
 			ssStackWin,
 		};
-	}, [physics, equity, isHydrated, applyBubbleAxiom, psiFactor]);
+	}, [
+		physics,
+		equity,
+		isHydrated,
+		applyBehavioralHypothesis,
+		psiFactor,
+		shortEliminationProbability,
+	]);
 
 	if (!isHydrated || !results) return null;
 
@@ -150,18 +160,16 @@ export default function ResurrectionRiskSimulator() {
 						Risco da Ressurreição
 					</h2>
 					<p className="text-xs text-text-muted leading-relaxed max-w-2xl font-medium">
-						O call marginal é um colapso em{' '}
-						<span className="text-accent-indigo font-bold">EV Futuro</span>. Ressuscitar
-						um oponente destrói a <strong className="text-white">Fear Equity</strong>{' '}
-						da mesa. Sob o Axioma Psicológico, a sua Edge Relativa despenca se você
-						sangrar o status de predador absoluto.
+						Laboratório exploratório de estados futuros: compare call e fold a partir dos
+						stacks, payouts e hipóteses declaradas. O efeito de ressuscitar um oponente
+						não é universal e deve ser confrontado com ranges e árvore de decisão.
 					</p>
 				</div>
 				<div
 					className={`px-8 py-4 rounded-3xl border flex flex-col items-center shadow-2xl transition-colors duration-500 ${results.decision ? 'bg-accent-emerald/10 border-accent-emerald/30' : 'bg-accent-danger/10 border-accent-danger/30'}`}
 				>
 					<span className="text-[0.6rem] font-black uppercase tracking-widest opacity-60 mb-1">
-						Veredito do Axioma
+						Resultado do cenário
 					</span>
 					<span
 						className={`text-xl font-black uppercase ${results.decision ? 'text-accent-emerald' : 'text-accent-danger'}`}
@@ -180,7 +188,7 @@ export default function ResurrectionRiskSimulator() {
 								<span>Chip Leader (CL)</span>
 								<span>{physics.heroStack}bb</span>
 							</div>
-							<input
+						<input
 								title="Chip Leader Stack"
 								aria-label="Chip Leader Stack"
 								type="range"
@@ -208,9 +216,26 @@ export default function ResurrectionRiskSimulator() {
 								onChange={(e) =>
 									updatePhysics({ villain1Stack: Number(e.target.value) })
 								}
-								className="w-full h-1 bg-white/10 rounded-full appearance-none accent-accent-danger cursor-pointer"
-							/>
+							className="w-full h-1 bg-white/10 rounded-full appearance-none accent-accent-danger cursor-pointer"
+						/>
+					</div>
+					<div className="space-y-1">
+						<div className="flex justify-between text-label opacity-50">
+							<span>Prob. de eliminação por terceiro</span>
+							<span>{(shortEliminationProbability * 100).toFixed(0)}%</span>
 						</div>
+						<input
+							title="Probabilidade de eliminação por terceiro"
+							aria-label="Probabilidade de eliminação por terceiro"
+							type="range"
+							min="0"
+							max="1"
+							step="0.05"
+							value={shortEliminationProbability}
+							onChange={(event) => setShortEliminationProbability(Number(event.target.value))}
+							className="w-full h-1 bg-white/10 rounded-full appearance-none accent-accent-sky cursor-pointer"
+						/>
+					</div>
 					</div>
 					<div className="space-y-4">
 						<div className="space-y-1">
@@ -251,24 +276,25 @@ export default function ResurrectionRiskSimulator() {
 
 						<button
 							type="button"
-							onClick={() => setApplyBubbleAxiom(!applyBubbleAxiom)}
-							className={`flex items-center justify-between w-full mt-2 p-3 rounded-xl border transition-all duration-300 ${applyBubbleAxiom ? 'bg-accent-indigo/10 border-accent-indigo/30' : 'bg-black/40 border-white/5'}`}
+							aria-pressed={applyBehavioralHypothesis}
+							onClick={() => setApplyBehavioralHypothesis(!applyBehavioralHypothesis)}
+							className={`flex items-center justify-between w-full mt-2 p-3 rounded-xl border transition-all duration-300 ${applyBehavioralHypothesis ? 'bg-accent-indigo/10 border-accent-indigo/30' : 'bg-black/40 border-white/5'}`}
 						>
 							<div className="flex flex-col items-start">
 								<span
-									className={`text-[0.65rem] font-black uppercase tracking-widest ${applyBubbleAxiom ? 'text-accent-indigo-light' : 'text-text-muted'}`}
+									className={`text-[0.65rem] font-black uppercase tracking-widest ${applyBehavioralHypothesis ? 'text-accent-indigo-light' : 'text-text-muted'}`}
 								>
-									Axioma Psicológico
+									Hipótese comportamental
 								</span>
 								<span className="text-[0.55rem] font-bold text-text-darker uppercase tracking-widest mt-0.5">
-									Penalidade de RIO (20%)
+									Aplica ajuste explícito à edge
 								</span>
 							</div>
 							<div
-								className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${applyBubbleAxiom ? 'bg-accent-indigo' : 'bg-white/10'}`}
+								className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${applyBehavioralHypothesis ? 'bg-accent-indigo' : 'bg-white/10'}`}
 							>
 								<div
-									className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-300 ${applyBubbleAxiom ? 'translate-x-4' : 'translate-x-0'}`}
+									className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-300 ${applyBehavioralHypothesis ? 'translate-x-4' : 'translate-x-0'}`}
 								/>
 							</div>
 						</button>
@@ -278,13 +304,13 @@ export default function ResurrectionRiskSimulator() {
 				<div className="flex flex-col gap-4">
 					<div className="bg-bg-deep border border-white/5 p-5 rounded-2xl flex flex-col items-center justify-center text-center">
 						<span className="text-[0.55rem] text-text-darker font-black uppercase tracking-widest mb-1">
-							Break-Even SOTA
+						Ponto de indiferença
 						</span>
 						<span className="text-3xl font-black text-accent-amber font-heading">
 							{results.breakEvenEquity?.toFixed(1)}%
 						</span>
 						<p className="text-[0.5rem] text-text-muted mt-2 uppercase">
-							Equidade necessária para call
+						Sob as premissas deste cenário
 						</p>
 					</div>
 				</div>

@@ -7,6 +7,8 @@
  * AESTHETIC: SOTA v7.0 GOLD Glassmorphism & Micro-animations.
  */
 
+import { getEditorialEvidenceLabel } from '@/content/editorialManifest';
+import { getSimulatorScenarioManifestEntry } from '@/content/simulatorScenarioManifest';
 import type { Scenario } from '../solver/types';
 
 interface ScenarioQuickSelectorProps {
@@ -28,11 +30,11 @@ export function ScenarioQuickSelector({
             <i className="fa-solid fa-layer-group" />
           </div>
           <span className="font-mono text-[0.6rem] font-black uppercase tracking-[0.2em] text-white">
-            Atlas · 8 Cenários
+            Atlas · {scenarios.length} cenários
           </span>
         </div>
         <span className="text-[0.5rem] font-mono text-text-dim uppercase tracking-wider bg-black/25 px-2 py-0.5 rounded-md border border-white/5">
-          Mesa Final 9P · 126 Players
+          Baselines e hipóteses declarados
         </span>
       </div>
 
@@ -42,6 +44,7 @@ export function ScenarioQuickSelector({
           const isB20 = s.name?.includes('B20') || s.id?.includes('b20');
           const displayName = isB20 ? 'Block Bet 20%' : s.name.replace(' (Baseline)', '').replace(' (A Fotografia)', '');
           const subtitle = s.narrativeSubtitle || 'ICM Spot';
+          const provenance = getSimulatorScenarioManifestEntry(s.id);
 
           return (
             <button
@@ -72,7 +75,7 @@ export function ScenarioQuickSelector({
                   {displayName}
                 </span>
                 <span className="text-[0.46rem] font-mono text-text-dim line-clamp-1 uppercase tracking-wider block">
-                  {subtitle}
+                  {getEditorialEvidenceLabel(provenance.evidenceLevel)} · {subtitle}
                 </span>
               </div>
             </button>
