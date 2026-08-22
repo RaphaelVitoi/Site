@@ -55,7 +55,9 @@ This document is the canonical governance source for the repository and its agen
 1. `governance/KERNEL.md`
 2. `governance/autonomy.yaml`
 3. `governance/environment.md`
-4. Runtime and host adapter files derived from the kernel
+4. `governance/REPOSITORY_RULES.md`
+5. `docs/INDEX.md` and the referenced architecture/security documents
+6. Runtime and host adapter files derived from the kernel
 
 ## Handoff And Memory
 

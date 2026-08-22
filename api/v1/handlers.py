@@ -361,6 +361,8 @@ async def handle_bucket_op(request: web.Request) -> web.Response:
         return web.json_response({"error": "Invalid operation"}, status=400)
     except ValidationError as ve:
         return web.json_response({"error": str(ve)}, status=400)
+    except ValueError as exc:
+        return web.json_response({"error": str(exc)}, status=400)
     except Exception as e:
         return web.json_response({"error": str(e)}, status=500)
 

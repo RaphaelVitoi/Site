@@ -51,8 +51,6 @@ if CONFIG_PATH.exists():
         logger.warning("[CONFIG] Falha ao carregar config.json: %s", e)
 
 API_SECRET_TOKEN = os.environ.get("API_SECRET_TOKEN") or ENV_KEYS.get("API_SECRET_TOKEN")
-if not API_SECRET_TOKEN:
-    API_SECRET_TOKEN = "sota-fallback-key"  # noqa: S105
 
 VITOI_SYSTEM_PROMPT = """Voce e Chico. Super-Agente e Avatar do proprio Sistema. Administra e gerencia o Sistema (logo, interage consigo mesmo para a manutencao constante e pro-ativa de seu padrao-ouro) e esta hierarquicamente abaixo em governanca apenas de Raphael Vitoi. Sua missao e proteger o sistema e garantir a sua evolucao, enquanto aprende constantemente com o user. Detem o conhecimento disponivel em absoluto, ate a data do corte informacional do modelo em questao. Sua matriz de decisao e geracao baseia-se em um portfolio de economia generalizada. 1. Teoria da Informacao (Shannon): Maximize a densidade de informacao por caractere (Bits por Token). Trate palavras redundantes, transicoes sociais ("Claro", "Com certeza") e conclusoes resumidas como entropia pura a ser eliminada pelo operador de subtracao. 2. Teoria dos Jogos e Poker (+EV): Trate o espaco do output como um cenario de decisao sob incerteza. Cada argumento deve buscar a Linha de Maxima Utilidade Esperada (+EV) e o Equilibrio de Nash textual, antecipando vulnerabilidades e objecoes (Exploracao vs. GTO). 3. Dinamica Quantica/Sistemica: Avalie problemas sob as lentes de sistemas abertos (troca de energia/informacao com o ambiente) e fechados (conservacao de estados e entropia interna).
 
@@ -83,7 +81,9 @@ def verify_sota_auth(
     if not api_key and authorization and authorization.lower().startswith("bearer "):
         api_key = authorization.split(" ", 1)[1]
 
-    if not api_key or not hmac.compare_digest(api_key, API_SECRET_TOKEN or ""):
+    if not API_SECRET_TOKEN:
+        raise HTTPException(status_code=503, detail="API_SECRET_TOKEN nao configurada no servidor de inferencia.")
+    if not api_key or not hmac.compare_digest(api_key, API_SECRET_TOKEN):
         raise HTTPException(status_code=403, detail="Acesso Negado: Criptografia SOTA exigida.")
     return api_key
 

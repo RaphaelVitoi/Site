@@ -5,6 +5,7 @@ import os
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 # Setup inicial para evitar colapso de ambiente ausente durante o spawn do app
@@ -41,6 +42,18 @@ def test_generate_auth_failure():
     response = client.post("/generate", json={"prompt": "teste SOTA"}, headers={"X-Vitoi-Auth": "wrong-token"})
     assert response.status_code == 403
     assert "Acesso Negado" in response.json()["detail"]
+
+
+@pytest.mark.unit
+def test_generate_auth_fails_closed_when_server_token_is_missing(monkeypatch: pytest.MonkeyPatch):
+    """A proxy must never replace a missing credential with a predictable literal."""
+    monkeypatch.setattr("engine.gemma_server.API_SECRET_TOKEN", None)
+    from engine.gemma_server import verify_sota_auth
+
+    with pytest.raises(HTTPException) as exc_info:
+        verify_sota_auth(None, "any-value", None)  # type: ignore[arg-type]
+
+    assert exc_info.value.status_code == 503
 
 
 @pytest.mark.unit

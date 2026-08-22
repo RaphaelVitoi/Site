@@ -127,7 +127,7 @@ export default function BibliotecaIndexPage() {
 				if (!query) return true;
 				return (
 					art.title.toLowerCase().includes(query) ||
-					(art.desc && art.desc.toLowerCase().includes(query)) ||
+					art.desc?.toLowerCase().includes(query) ||
 					art.slug.toLowerCase().includes(query)
 				);
 			});
@@ -300,12 +300,12 @@ function CategoryTab({
 	count,
 	active,
 	onClick,
-}: {
+}: Readonly<{
 	label: string;
 	count: number;
 	active: boolean;
 	onClick: () => void;
-}) {
+}>) {
 	return (
 		<button
 			type="button"
@@ -328,7 +328,7 @@ function CategoryTab({
 	);
 }
 
-function PathBadge({ step, label, href }: { step: string; label: string; href: string }) {
+function PathBadge({ step, label, href }: Readonly<{ step: string; label: string; href: string }>) {
 	return (
 		<Link
 			href={href}

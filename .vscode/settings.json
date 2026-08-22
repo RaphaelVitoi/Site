@@ -1,5 +1,12 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  // Literal e absoluto de proposito. O consumidor desta chave e a extensao
+  // ms-python.vscode-python-envs, que valida o valor e so entao chama
+  // Uri.file() — que exige caminho absoluto. Quando `${workspaceFolder}`
+  // sobrevive a substituicao dela, a extensao emite
+  // "Default interpreter path ... could not be resolved" e cai em
+  // auto-discovery. As demais chaves python.* abaixo seguem com
+  // ${workspaceFolder} porque quem as le e o Pylance, que expande corretamente.
+  "python.defaultInterpreterPath": "C:\\Users\\rapha\\.gemini\\Site\\.venv\\Scripts\\python.exe",
   "python.terminal.activateEnvironment": true,
   "python.analysis.autoSearchPaths": true,
   "python.analysis.extraPaths": [
@@ -31,6 +38,48 @@
     "**/build": true,
     "**/reports/coverage": true,
     "**/.pytest_cache": true
+  },
+  // Duplicado de proposito a partir de Site.code-workspace.
+  //
+  // As exclusoes de watcher viviam SO no Site.code-workspace. Quando a janela e
+  // aberta como PASTA (o estado medido em 2026-08-21: lastActiveWindow tinha a
+  // chave `folder`, nao `workspace`), nada do arquivo .code-workspace se
+  // aplica, e o watcher passa a vigiar .venv (21.215 arquivos .py), node_modules
+  // e reports/. Foi essa a causa de "Notify file events failed".
+  //
+  // Manter as duas copias em sincronia. Abrir pelo Site.code-workspace continua
+  // sendo o modo correto (ver CLAUDE.md); isto e a rede de seguranca para
+  // quando alguem abrir a pasta direto.
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.venv/**": true,
+    "**/.next/**": true,
+    "**/.turbo/**": true,
+    "**/__pycache__/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/dist/**": true,
+    "**/dist-workers/**": true,
+    "**/build/**": true,
+    "**/wasm-equity/target/**": true,
+    "**/core/vendor/**": true,
+    "**/reports/**": true,
+    "**/coverage/**": true
+  },
+  // Saida gerada e codigo vendorizado. Fora do explorador, nao sao abertos por
+  // acidente e o webhint/axe do Microsoft Edge Tools deixa de emitir
+  // diagnostico de A11y sobre HTML que ninguem escreveu (relatorio de coverage
+  // do pytest, lcov-report do jest). O webhint segue LIGADO para o HTML real de
+  // frontend/ e docs/ — que e o que a fase 2 do portao cobra.
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/reports/coverage": true,
+    "**/coverage/lcov-report": true,
+    "**/dist-workers": true
   },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
@@ -139,15 +188,14 @@
   "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
   "css.lint.unknownAtRules": "ignore",
   "scss.lint.unknownAtRules": "ignore",
-  "firebase.firebasePath": "C:\\Users\\rapha\\.fnm\\aliases\\default\\firebase.cmd",
-  "firebase.npmPath": "C:\\Users\\rapha\\.fnm\\aliases\\default\\npm.cmd",
   "vitest.rootConfig": "vitest.config.mjs",
-  "vitest.nodeExecutable": "C:\\Users\\rapha\\.fnm\\aliases\\default\\node.exe",
+  "vitest.nodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
   "python-envs.pythonProjects": [
     {
       "path": ".",
       "envManager": "ms-python.python:venv",
       "packageManager": "ms-python.python:pip"
     }
-  ]
+  ],
+  "sonarlint.disableTelemetry": true
 }
