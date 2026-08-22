@@ -52,14 +52,5 @@
         "uvx mcp-server-sqlite --db-path /mnt/c/Users/rapha/.gemini/Site/queue/tasks.db"
       ]
     }
-  },
-  "servers": {
-    "gpdoc": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "c:\\Users\\rapha\\.antigravity-ide\\extensions\\repetere.gpdoc-3.3.0-universal\\out\\mcp-server.js"
-      ]
-    }
   }
 }
