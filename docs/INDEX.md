@@ -24,7 +24,7 @@ Este índice é o ponto de entrada documental do repositório. Ele organiza as f
 | Segurança | [security](security) |
 | Pesquisa de produto e teoria | [research](research) |
 
-Auditoria temporal recente: [incorporação e correção do corpus teórico PMev v7 — 2026-08-22](audits/2026-08-22_INCORPORACAO_DO_CORPUS_TEORETICO_PMEV_V7.md). Consulte também a [auditoria editorial, didática e epistêmica do frontend](audits/2026-08-22_AUDITORIA_EDITORIAL_DIDATICA_FRONTEND_SOTA_GOLD.md), a [avaliação qualitativa integral do projeto](audits/2026-08-22_RELATORIO_QUALITATIVO_INTEGRAL_PROJETO_SOTA_GOLD.md) e o [handoff de reprodutibilidade e publicação](audits/2026-08-22_AUDITORIA_E_HANDOFF_REPOSITORIO_SOTA_GOLD.md).
+Auditoria temporal recente: [auditoria do arcabouço enciclopédico PMev v7 — 2026-08-22](audits/2026-08-22_AUDITORIA_ARCABOUCO_ENCICLOPEDICO_PMEV_V7_GOLD.md). Consulte também a [incorporação e correção do corpus teórico PMev v7](audits/2026-08-22_INCORPORACAO_DO_CORPUS_TEORETICO_PMEV_V7.md), a [auditoria editorial, didática e epistêmica do frontend](audits/2026-08-22_AUDITORIA_EDITORIAL_DIDATICA_FRONTEND_SOTA_GOLD.md), a [avaliação qualitativa integral do projeto](audits/2026-08-22_RELATORIO_QUALITATIVO_INTEGRAL_PROJETO_SOTA_GOLD.md) e o [handoff de reprodutibilidade e publicação](audits/2026-08-22_AUDITORIA_E_HANDOFF_REPOSITORIO_SOTA_GOLD.md).
 
 ## Regra de manutenção
 
