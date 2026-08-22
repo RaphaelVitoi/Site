@@ -24,7 +24,7 @@ Este índice é o ponto de entrada documental do repositório. Ele organiza as f
 | Segurança | [security](security) |
 | Pesquisa de produto e teoria | [research](research) |
 
-Auditoria temporal recente: [auditoria e handoff do repositório — 2026-08-22](audits/2026-08-22_AUDITORIA_E_HANDOFF_REPOSITORIO_SOTA_GOLD.md).
+Auditoria temporal recente: [avaliação qualitativa integral do projeto — 2026-08-22](audits/2026-08-22_RELATORIO_QUALITATIVO_INTEGRAL_PROJETO_SOTA_GOLD.md). Consulte também o [handoff de reprodutibilidade e publicação](audits/2026-08-22_AUDITORIA_E_HANDOFF_REPOSITORIO_SOTA_GOLD.md).
 
 ## Regra de manutenção
 
