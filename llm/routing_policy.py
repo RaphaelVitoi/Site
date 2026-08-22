@@ -36,7 +36,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-from llm.model_registry import MODEL_REGISTRY, custo_estimado, get
+from llm.model_registry import custo_estimado, get
 
 # Modelos locais vivem em data/ollama_models.json, nao no MODEL_REGISTRY de
 # nuvem. Sao dois registros de proposito: um descreve API paga com preco por
@@ -325,10 +325,10 @@ def estimar_roi(
         raise ValueError("taxa_sucesso deve estar entre 0 e 1.")
     if latencia_s <= 0:
         raise ValueError("latencia_s deve ser positiva.")
-    custo = custo_estimado(alias, tokens_in, int(tokens_out * multiplicador_raciocinio))
-    if custo <= 0:
+    custo_api = custo_estimado(alias, tokens_in, int(tokens_out * multiplicador_raciocinio))
+    if custo_api <= 0:
         raise ValueError(f"Custo nao positivo para {alias}.")
-    return taxa_sucesso / (custo * latencia_s)
+    return taxa_sucesso / (custo_api * latencia_s)
 
 
 def economia_do_escalonamento(

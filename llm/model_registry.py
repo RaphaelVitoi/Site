@@ -17,7 +17,7 @@ Verificado em 2026-08-21 contra:
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
