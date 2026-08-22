@@ -32,7 +32,7 @@
 ## Quality Gates
 
 - Python lint with Ruff.
-- Python type checking with mypy.
+- Python type checking with Pyright.
 - Python tests with pytest.
 - Frontend lint and typecheck.
 - Security scanning with Semgrep.

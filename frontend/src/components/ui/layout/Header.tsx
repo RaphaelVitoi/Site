@@ -126,8 +126,7 @@ function useHeaderState() {
 
 	useEffect(() => {
 		const checkGemma = () => {
-			const proxyUrl = process.env['NEXT_PUBLIC_SOTA_PROXY_URL'] || 'http://127.0.0.1:17043';
-			fetch(proxyUrl)
+			fetch('/api/v1/gemma')
 				.then((res) => setGemmaOnline(res.ok))
 				.catch(() => setGemmaOnline(false));
 		};

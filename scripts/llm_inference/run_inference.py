@@ -117,7 +117,10 @@ def query_gemma_proxy(
     messages: list[dict[str, str]] | None = None,
 ) -> str:
     """Consulta unificada ao proxy gemma_server.py (porta 17043). Retorna texto completo."""
-    auth_token = os.environ.get("API_SECRET_TOKEN") or ENV_KEYS.get("API_SECRET_TOKEN") or "sota-token-2026"
+    auth_token = os.environ.get("API_SECRET_TOKEN") or ENV_KEYS.get("API_SECRET_TOKEN")
+    if not auth_token:
+        console.print("[bold red][ERRO] API_SECRET_TOKEN nao configurada para o proxy de inferencia.[/]")
+        return ""
     headers = {"Content-Type": "application/json", "X-Vitoi-Auth": auth_token}
 
     payload: dict = {"prompt": prompt, "model": model_key, "max_tokens": 2048}

@@ -1,19 +1,9 @@
 {
-    "permissions":  {
-                        "allow":  [
-                                      "Read(//dev/**)",
-                                      "Read(//tmp/**)",
-                                      "Read(//c/users/rapha/.gemini/Site/**)",
-                                      "RunCommand(powershell, **)",
-                                      "RunCommand(python, **)",
-                                      "Read(C:/users/rapha/.gemini/extensions/**)",
-                                      "RunCommand(git, **)",
-                                      "RunCommand(gemini, **)"
-                                  ],
-                        "additionalDirectories":  [
-                                                      "\\dev",
-                                                      "\\tmp"
-                                                  ]
-                    },
-    "claudeCode.allowDangerouslySkipPermissions":  true
+  "permissions": {
+    "allow": [
+      "Read(C:/users/rapha/.gemini/Site/**)"
+    ],
+    "additionalDirectories": []
+  },
+  "claudeCode.allowDangerouslySkipPermissions": false
 }

@@ -163,7 +163,7 @@ The kernel sits above all four layers.
 `audit-strict`
 
 - `ruff`
-- `mypy`
+- `pyright`
 - `pytest`
 - frontend lint and typecheck
 - `semgrep`

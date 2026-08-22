@@ -68,9 +68,6 @@ export function useGemmaStream() {
 			setError(null);
 			bufferRef.current = '';
 
-			// SOTA: Roteamento centralizado para o Proxy Python SOTA (onde o RAG e System Prompt são injetados)
-			const proxyUrl = process.env['NEXT_PUBLIC_SOTA_PROXY_URL'] || 'http://127.0.0.1:17043';
-
 			// SOTA: Sanitização de Prompt - Remove tentativas de manipulação de instrução (jailbreak) com suporte a sufixos
 			const sanitizedPrompt = prompt
 				.replace(
@@ -88,19 +85,10 @@ export function useGemmaStream() {
 					predictive_profile: predictiveProfile,
 				};
 
-				const token = process.env['NEXT_PUBLIC_SOTA_API_TOKEN'];
-				if (!token && process.env['NODE_ENV'] !== 'development') {
-					throw new Error(
-						'NEXT_PUBLIC_SOTA_API_TOKEN não configurado no ambiente de produção.',
-					);
-				}
-				const authHeader = token || 'sota-token-2026';
-
-				const response = await fetch(`${proxyUrl}/generate`, {
+				const response = await fetch('/api/v1/gemma', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'X-Vitoi-Auth': authHeader,
 					},
 					body: JSON.stringify(payload),
 					signal: abortControllerRef.current.signal,

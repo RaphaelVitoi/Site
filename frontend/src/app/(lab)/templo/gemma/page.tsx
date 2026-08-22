@@ -76,7 +76,7 @@ export default function GemmaPortal() {
 
 	useEffect(() => {
 		// Check local server health
-		fetch('http://127.0.0.1:17043/')
+		fetch('/api/v1/gemma')
 			.then((res) => setServerOnline(res.ok))
 			.catch(() => setServerOnline(false));
 	}, []);

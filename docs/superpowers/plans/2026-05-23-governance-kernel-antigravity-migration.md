@@ -211,7 +211,7 @@ fallback:
 ## Quality Gates
 
 - Python lint: Ruff
-- Python types: mypy
+- Python types: Pyright
 - Python tests: pytest
 - Frontend lint and typecheck
 - Security: Semgrep
@@ -659,7 +659,7 @@ Run:
 
 ```powershell
 .\.venv\Scripts\python -m pytest -q
-.\.venv\Scripts\python -m mypy agents
+uv run --no-sync pyright agents
 .\.venv\Scripts\python -m ruff check .
 ```
 
