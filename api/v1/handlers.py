@@ -684,3 +684,144 @@ async def handle_web_search(request: web.Request) -> web.Response:
         )
     except Exception as e:
         return web.json_response({"error": f"Search failed: {e!s}"}, status=500)
+
+
+async def handle_calculate_perspective(request: web.Request) -> web.Response:
+    """Calcula pontualmente a Perspectiva Matematica (PMev) VITOI."""
+    from core.perspective_schemas import PerspectiveCalculationRequest, PerspectivaResult  # pylint: disable=import-outside-toplevel
+    from engine.vitoi_perspective_engine import VitoiPerspectiveEngine  # pylint: disable=import-outside-toplevel
+
+    try:
+        data = await request.json()
+        req = PerspectiveCalculationRequest.model_validate(data)
+
+        ev_fold = VitoiPerspectiveEngine.calculate_dynamic_ev_fold(
+            base_antes=req.base_antes,
+            time_to_blind_minutes=req.time_to_blind_minutes,
+            payjump_proximity_factor=req.payjump_proximity_factor,
+            position=req.position,
+        )
+        struct_liab = VitoiPerspectiveEngine.calculate_structural_liability(
+            multiway_opponents=req.multiway_opponents,
+            base_rio=req.base_rio,
+        )
+        amort_edge = VitoiPerspectiveEngine.calculate_edge_amortization(
+            stack_depth_bb=req.stack_depth_bb,
+            edge_base=req.edge_base,
+            aggression_factor=req.aggression_factor,
+        )
+
+        effective_eq = max(0.01, min(0.99, req.equity * req.realization_factor))
+        win_delta = req.pot_size - req.hero_invested
+        lose_delta = -(req.hero_invested + (req.pot_size * 0.5))
+
+        u_win = VitoiPerspectiveEngine.calculate_utility(win_delta, req.loss_aversion_base) * req.valuation_stack
+        u_lose = VitoiPerspectiveEngine.calculate_utility(lose_delta, req.loss_aversion_base) * req.valuation_stack
+
+        pmev_value = round((effective_eq * u_win) + ((1.0 - effective_eq) * u_lose) - ev_fold - struct_liab + amort_edge, 4)
+
+        opt_action = "FOLD"
+        if pmev_value > 0.5:
+            opt_action = "RAISE"
+        elif pmev_value >= 0.0:
+            opt_action = "CALL"
+
+        bf_est = round(1.0 + (req.payjump_proximity_factor * 0.8), 2)
+        req_eq = round(bf_est / (bf_est + 1.0) if (bf_est + 1.0) > 0 else 0.5, 4)
+        risk_adv = round((1.0 - req.payjump_proximity_factor) * 25.0, 2)
+
+        result = PerspectivaResult(
+            pmev=pmev_value,
+            dynamic_ev_fold=ev_fold,
+            structural_liability=struct_liab,
+            amortized_edge=amort_edge,
+            risk_advantage=risk_adv,
+            required_equity=req_eq,
+            bubble_factor=bf_est,
+            utility_win=round(u_win, 4),
+            utility_lose=round(u_lose, 4),
+            optimal_action=opt_action,
+            metadata={"position": req.position, "multiway_opponents": req.multiway_opponents},
+        )
+        return web.json_response(result.model_dump())
+    except ValidationError as ve:
+        return web.json_response({"error": str(ve)}, status=400)
+    except Exception as e:
+        return web.json_response({"error": f"Erro no calculo de perspectiva: {e!s}"}, status=500)
+
+
+async def handle_simulate_perspective_tree(request: web.Request) -> web.Response:
+    """Executa a simulacao recursiva da arvore de decisao de Perspectiva Matematica."""
+    from core.perspective_schemas import PerspectiveTreeRequest, PerspectiveTreeResponse  # pylint: disable=import-outside-toplevel
+    from engine.vitoi_perspective_engine import VitoiPerspectiveEngine  # pylint: disable=import-outside-toplevel
+
+    try:
+        data = await request.json()
+        req = PerspectiveTreeRequest.model_validate(data)
+
+        ev_fold = (
+            req.ev_fold_dynamic
+            if req.ev_fold_dynamic is not None
+            else VitoiPerspectiveEngine.calculate_dynamic_ev_fold(1.0, 10.0, 0.5, req.position)
+        )
+        struct_liab = VitoiPerspectiveEngine.calculate_structural_liability(req.active_players - 1, req.base_rio)
+        amort_edge = VitoiPerspectiveEngine.calculate_edge_amortization(req.stack_eff, req.edge_base, req.aggression_factor)
+
+        tree_res = VitoiPerspectiveEngine.simulate_decision_tree(
+            equity=req.equity,
+            pot_size=req.pot_size,
+            stack_eff=req.stack_eff,
+            active_players=req.active_players,
+            street_idx=req.street_idx,
+            hero_invested=req.hero_invested,
+            ev_fold_dynamic=ev_fold,
+            structural_liability=struct_liab,
+            valuation_stack=req.valuation_stack,
+            amortized_edge=amort_edge,
+            aggression_factor=req.aggression_factor,
+            realization_factor=req.realization_factor,
+            loss_aversion_base=req.loss_aversion_base,
+            fgs_health=req.fgs_health,
+            rp_opp=req.rp_opp,
+            fold_equity=req.fold_equity,
+        )
+
+        resp = PerspectiveTreeResponse(
+            status="SUCCESS",
+            tree_result=tree_res,
+            summary={
+                "best_action": tree_res.get("best_action"),
+                "pm_best": tree_res.get("pm_best"),
+                "p_best_outcome": tree_res.get("p_best_outcome"),
+            },
+        )
+        return web.json_response(resp.model_dump())
+    except ValidationError as ve:
+        return web.json_response({"error": str(ve)}, status=400)
+    except Exception as e:
+        return web.json_response({"error": f"Erro na simulacao de arvore: {e!s}"}, status=500)
+
+
+async def handle_import_solver_tree(request: web.Request) -> web.Response:
+    """Importa e normaliza arvores de DeepSolver, GTOWizard, Monker, HRC Pro e PioSolver."""
+    from core.perspective_schemas import SolverImportRequest  # pylint: disable=import-outside-toplevel
+    from engine.solver_importers import UniversalSolverImporter  # pylint: disable=import-outside-toplevel
+
+    try:
+        data = await request.json()
+        req = SolverImportRequest.model_validate(data)
+
+        importer = UniversalSolverImporter()
+        response = importer.import_tree(
+            raw_content=req.raw_content,
+            solver_type=req.solver_type,
+            tournament_context=req.tournament_context,
+            convert_to_pmev=True,
+        )
+
+        return web.json_response(response.model_dump(), status=200 if response.status == "SUCCESS" else 400)
+    except ValidationError as ve:
+        return web.json_response({"error": str(ve), "status": "ERROR"}, status=400)
+    except Exception as e:
+        return web.json_response({"error": f"Erro na importacao de solver: {e!s}", "status": "ERROR"}, status=500)
+

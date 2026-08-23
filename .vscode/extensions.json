@@ -5,7 +5,6 @@
     "SonarSource.sonarlint-vscode",
     "ms-python.python",
     "dbaeumer.vscode-eslint",
-    "google.geminicodeassist",
     "llvm-vs-code-extensions.lldb-dap",
     "rust-lang.rust-analyzer"
   ]
