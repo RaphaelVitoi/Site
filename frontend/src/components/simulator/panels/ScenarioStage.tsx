@@ -31,7 +31,7 @@ export default function ScenarioStage({
     scenario.name?.includes('B20') || scenario.narrativeTitle?.includes('B20');
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-slate-950/50 shadow-lg relative overflow-hidden animate-sota-in transition-all duration-300 hover:border-white/15">
+    <div className="rounded-3xl border border-white/8 bg-slate-950/60 backdrop-blur-2xl shadow-xl relative overflow-hidden animate-sota-in transition-all duration-300 hover:border-white/15">
       {/* Ambient Backlight (subtle) */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-20 -right-20 w-48 h-48 bg-accent-indigo/8 blur-[80px] rounded-full" />

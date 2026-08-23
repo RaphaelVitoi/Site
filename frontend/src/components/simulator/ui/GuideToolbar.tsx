@@ -7,7 +7,7 @@ interface GuideToolbarProps {
 }
 
 export const GuideToolbar = ({ onExport }: Readonly<GuideToolbarProps>) => (
-	<div className="flex flex-wrap items-center justify-between gap-6 glass-panel p-5 mb-6 animate-sota-in rounded-2xl border border-white/5 shadow-lg">
+	<div className="flex flex-wrap items-center justify-between gap-4 glass-panel p-4 animate-sota-in rounded-2xl border border-white/8 bg-slate-950/60 shadow-lg">
 		<div className="flex flex-wrap items-center gap-5">
 			<span className="text-[0.65rem] font-black uppercase tracking-widest text-text-dim opacity-70">
 				Guia SOTA

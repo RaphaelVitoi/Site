@@ -297,7 +297,7 @@ export default function MasterSimulator() {
             <div className="lg:col-span-7 flex flex-col gap-5">
 
               {/* Mesa Interativa 9P */}
-              <div className="rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+              <div className="w-full">
                 <MasterTableVisualizer
                   scenario={scenario}
                   heroPosition={heroPosition}
@@ -309,7 +309,7 @@ export default function MasterSimulator() {
               </div>
 
               {/* Controles Espaciais */}
-              <div className="rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+              <div className="w-full">
                 <SpatialControls
                   heroPosition={heroPosition}
                   handleHeroPositionChange={handleHeroPositionChange}
@@ -354,12 +354,12 @@ export default function MasterSimulator() {
 
               {/* Conteúdo da Lente Ativa */}
               {spotSubView === 'nash' && (
-                <div className="flex flex-col gap-5 animate-sota-in">
-                  <div className="rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+                <div className="flex flex-col gap-4 animate-sota-in">
+                  <div className="w-full">
                     <GuideToolbar onExport={handleExportHRC} />
                   </div>
                   {nashFlop && nashTurn && nashRiver && streetRps && (
-                    <div className="rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+                    <div className="w-full">
                       <NashPanel
                         nashFlop={nashFlop}
                         nashTurn={nashTurn}
@@ -425,7 +425,7 @@ export default function MasterSimulator() {
               )}
 
               {spotSubView === 'theory' && (
-                <div className="animate-sota-in rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
+                <div className="w-full animate-sota-in">
                   <TheoryPanel
                     scenario={scenario}
                     effectiveSprData={effectiveSprData}
@@ -448,28 +448,26 @@ export default function MasterSimulator() {
               />
 
               {/* Oráculo Gemma (IA Preditiva) */}
-              <div className="rounded-2xl border border-white/8 bg-slate-950/50 overflow-hidden shadow-lg">
-                <GemmaAnalysisPanel
-                  heroPos={heroPosition}
-                  villainPos={isIp ? 'OOP' : 'IP'}
-                  potSize={safeCurrentPot}
-                  heroStack={heroUpdatedStack}
-                  villainStack={villainUpdatedStack}
-                  heroInvested={safeHeroInvested}
-                  riskAdvantage={apiQuantumMetrics?.riskAdvantage ?? 0}
-                  bountyPower={0}
-                />
-              </div>
+              <GemmaAnalysisPanel
+                heroPos={heroPosition}
+                villainPos={isIp ? 'OOP' : 'IP'}
+                potSize={safeCurrentPot}
+                heroStack={heroUpdatedStack}
+                villainStack={villainUpdatedStack}
+                heroInvested={safeHeroInvested}
+                riskAdvantage={apiQuantumMetrics?.riskAdvantage ?? 0}
+                bountyPower={0}
+              />
 
               {/* Telemetria Quântica do Spot */}
-              <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg space-y-3">
+              <div className="rounded-3xl border border-white/8 bg-slate-950/60 backdrop-blur-2xl p-5 shadow-xl space-y-3">
                 <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
                   <span className="font-mono text-[0.6rem] font-black uppercase tracking-[0.2em] text-accent-emerald flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent-emerald animate-pulse" />
                     <span>Física do Spot</span>
                   </span>
                   <span className="text-[0.5rem] font-mono text-text-dim uppercase tracking-wider">
-                    v7.0 GOLD
+                    v8.0 GOLD
                   </span>
                 </div>
 

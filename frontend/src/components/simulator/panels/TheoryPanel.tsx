@@ -70,7 +70,7 @@ export default function TheoryPanel({
 		'Nenhuma doutrina estática encontrada. Consulte o Oráculo Quântico.';
 
 	return (
-		<div className="glass-panel w-full p-8 lg:p-12 flex flex-col gap-24 animate-sota-in mt-12 bg-bg-panel/80 backdrop-blur-3xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] rounded-4xl relative overflow-hidden group/theory-root">
+		<div className="glass-panel w-full p-6 sm:p-8 lg:p-10 flex flex-col gap-12 animate-sota-in bg-bg-panel/80 backdrop-blur-3xl border border-white/10 shadow-2xl rounded-4xl relative overflow-hidden group/theory-root">
 			{/* Camadas de Profundidade Quântica */}
 			<div className="absolute -top-40 -left-40 w-125 h-125 bg-accent-indigo/10 blur-[150px] rounded-full pointer-events-none group-hover/theory-root:bg-accent-indigo/15 transition-all duration-1000" />
 			<div className="absolute -bottom-40 -right-40 w-125 h-125 bg-accent-rose/5 blur-[150px] rounded-full pointer-events-none" />

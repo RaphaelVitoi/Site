@@ -41,11 +41,11 @@ export const SpatialControls = ({
 	const isMultiway = activePlayers > 2;
 
 	return (
-		<div className="glass-panel p-6 sm:p-8 mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 items-end relative animate-sota-in overflow-hidden rounded-3xl bg-slate-950/60 border border-white/10 shadow-xl">
-			<div className="absolute top-6 right-8 flex items-center gap-3">
+		<div className="glass-panel p-5 sm:p-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 items-end relative animate-sota-in overflow-hidden rounded-3xl bg-slate-950/60 border border-white/10 shadow-xl">
+			<div className="absolute top-5 right-6 flex items-center gap-2.5">
 				<span
 					id="label-antevisao"
-					className="text-[0.6rem] font-black text-text-darker uppercase tracking-[0.3em] transition-colors group-hover:text-text-muted"
+					className="text-[0.58rem] font-mono text-text-dim uppercase tracking-wider transition-colors group-hover:text-text-muted"
 				>
 					Modo Antevisão
 				</span>
@@ -55,15 +55,15 @@ export const SpatialControls = ({
 					aria-checked={isPredictive}
 					role="switch"
 					onClick={() => setIsPredictive(!isPredictive)}
-					className={`w-10 h-5 rounded-full transition-all relative focus-visible:ring-2 focus-visible:ring-accent-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base shadow-inner ${isPredictive ? 'bg-accent-emerald shadow-emerald-500/20' : 'bg-slate-900 border border-white/10'}`}
+					className={`w-9 h-4.5 rounded-full transition-all relative focus-visible:ring-2 focus-visible:ring-accent-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base shadow-inner cursor-pointer ${isPredictive ? 'bg-accent-emerald shadow-emerald-500/20' : 'bg-slate-900 border border-white/10'}`}
 				>
 					<div
-						className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-xl transition-all duration-300 ${isPredictive ? 'left-5.5' : 'left-0.5'}`}
+						className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-md transition-all duration-300 ${isPredictive ? 'left-4.5' : 'left-0.5'}`}
 					/>
 				</button>
 			</div>
 
-			<div className="space-y-4">
+			<div className="space-y-2.5">
 				<SotaTooltip
 					align="left"
 					title="Ponto Zero"
@@ -72,7 +72,7 @@ export const SpatialControls = ({
 					<label
 						id="label-hero-pos"
 						htmlFor="sim-hero-pos"
-						className="text-[0.7rem] font-black uppercase tracking-[0.3em] text-text-muted cursor-help hover:text-accent-indigo transition-colors block ml-1"
+						className="text-[0.62rem] font-mono font-black uppercase tracking-wider text-text-muted cursor-help hover:text-accent-indigo transition-colors block ml-0.5"
 					>
 						Posição (Ponto Zero)
 					</label>
@@ -82,12 +82,12 @@ export const SpatialControls = ({
 					value={heroPosition}
 					onChange={handleHeroPositionChange}
 					aria-labelledby="label-hero-pos"
-					className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-5 py-3.5 text-[0.8rem] font-black text-white focus:bg-slate-950/80 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/40 transition-all shadow-inner outline-none cursor-pointer appearance-none hover:border-white/20"
+					className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3.5 py-2.5 text-[0.72rem] font-bold text-white focus:bg-slate-950 focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/40 transition-all shadow-inner outline-none cursor-pointer appearance-none hover:border-white/20"
 				>
-					<option value="BB">Big Blind [-1 BB]</option>
-					<option value="SB">Small Blind [-0.5 BB]</option>
-					<option value="IP">Outras Posições [0 BB]</option>
-					<option value="OOP">Out of Position [0 BB]</option>
+					<option value="BB">Big Blind (-1 BB)</option>
+					<option value="SB">Small Blind (-0.5 BB)</option>
+					<option value="IP">In Position (IP)</option>
+					<option value="OOP">Out of Position (OOP)</option>
 				</select>
 			</div>
 
