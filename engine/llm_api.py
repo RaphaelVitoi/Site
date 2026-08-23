@@ -4,6 +4,7 @@ import asyncio
 import logging
 import os
 import time
+from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -318,6 +319,28 @@ async def _try_single_key(
     return None, "exhausted"
 
 
+# Cursor por provedor: de onde a PROXIMA requisicao comeca a percorrer as chaves.
+# Sem ele, toda requisicao comeca em keys[0] e a distribuicao que o balde de
+# `llm/budget.py` pressupoe nunca acontece. Um int por provedor basta — o loop
+# de eventos e monotarefa e nao ha await entre a leitura e a escrita.
+_provider_cursor: dict[str, int] = defaultdict(int)
+
+
+def _next_start_index(provider_name: str, total_keys: int) -> int:
+    """Gira o ponto de partida para que a carga se espalhe pela frota.
+
+    A ordem RELATIVA das chaves nao muda — quem esta bloqueada continua sendo
+    pulada e a lista inteira continua sendo percorrida antes de desistir. So o
+    ponto de entrada anda, de modo que N requisicoes seguidas atinjam N chaves
+    diferentes em vez de martelarem a primeira.
+    """
+    if total_keys <= 1:
+        return 0
+    start = _provider_cursor[provider_name] % total_keys
+    _provider_cursor[provider_name] = (start + 1) % total_keys
+    return start
+
+
 async def _try_provider(
     session: aiohttp.ClientSession,
     provider_name: str,
@@ -347,7 +370,21 @@ async def _try_provider(
         )
         return None
 
-    for i, key in enumerate(keys):
+    # O balde de `llm/budget.py` e dimensionado pela FROTA:
+    #     TOTAL_PRO_RPM = GEMINI_PRO_RPM_PER_KEY * n_chaves
+    # Isso so e honesto se o consumo realmente se espalhar. Comecando sempre em
+    # keys[0], as 4*N chamadas que o balde autorizou por minuto caem TODAS na
+    # primeira chave ate ela levar 429; a fila entao anda para keys[1] e repete.
+    # O resultado e queimar as chaves em sequencia, em segundos — que e o padrao
+    # que os provedores detectam como abuso e que bloqueia a conta inteira, nao
+    # so a chave.
+    #
+    # O balde nao estava errado; o consumo e que nao cumpria a premissa dele.
+    # Girar o ponto de partida faz a premissa virar verdade, sem mexer na cota.
+    start = _next_start_index(provider_name, len(keys))
+    for offset in range(len(keys)):
+        i = (start + offset) % len(keys)
+        key = keys[i]
         provider_key = _key_identifier(provider_name, key)
         if _is_key_blocked(provider_key):
             continue

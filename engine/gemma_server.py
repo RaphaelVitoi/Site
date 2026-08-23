@@ -183,7 +183,15 @@ _SSE_PREFIX = "data: "
 _SSE_DONE = "[DONE]"
 _JSON_CONTENT = "application/json"
 _CHAT_COMPLETION_CHUNK = "chat.completion.chunk"
-_OLLAMA_TIMEOUT = aiohttp.ClientTimeout(total=600.0)
+# Um total de 600 s e correto para uma geracao longa do 31b, mas era o UNICO
+# limite — entao um Ollama pendurado tambem custava dez minutos antes de o
+# fallback sequer comecar. Sao dois eventos diferentes e agora tem limites
+# diferentes:
+#   sock_connect  o daemon nao aceita conexao        -> falha em 3 s
+#   sock_read     conectou mas nao manda byte nenhum -> falha em 90 s
+#   total         teto da geracao inteira, inalterado
+# Geracao lenta continua tendo os 600 s; so o silencio e cortado cedo.
+_OLLAMA_TIMEOUT = aiohttp.ClientTimeout(total=600.0, sock_connect=3.0, sock_read=90.0)
 _CLOUD_TIMEOUT = aiohttp.ClientTimeout(total=60.0)
 
 
@@ -432,6 +440,33 @@ def normalize_model(model_name: str | None) -> str:
 # SOTA: Roteamento Assimetrico Dinamico (Auto-Routing)
 def _determine_optimal_model(_prompt: str, requested_model: str | None, _has_rag: bool) -> str:
     return normalize_model(requested_model)
+
+
+def _names_local_engine(requested_model: str | None) -> bool:
+    """O chamador nomeou um MOTOR, ou pediu uma CAPACIDADE?
+
+    A distincao decide se o fallback para nuvem e legitimo:
+
+      "preciso de um modelo bom"   -> capacidade. Se o local cair, servir pela
+                                      nuvem atende o pedido. Fallback correto.
+      "rode gemma4:e4b"            -> identidade. Servir google/gemma-4-e4b-it
+                                      no OpenRouter NAO atende o pedido: e outro
+                                      motor, remoto e pago, escolhido sem avisar.
+
+    `normalize_model` colapsa "gemma4:e4b" em "e4b" e a partir dai o servidor nao
+    tem mais como saber qual dos dois casos era — CLOUD_MODEL_MAP remonta um id
+    remoto com a mesma naturalidade. Esta funcao le a string ORIGINAL, antes do
+    colapso, que e o unico lugar onde a intencao ainda existe.
+
+    Heuristica: a notacao `familia:tag` e do Ollama. Quem digita `gemma4:e4b`
+    esta apontando para o que tem em disco, nao pedindo uma classe de qualidade.
+    """
+    if not requested_model:
+        return False
+    candidate = requested_model.strip().lower()
+    if ":" in candidate:
+        return True
+    return candidate in {value.lower() for value in OLLAMA_MODEL_MAP.values()}
 
 
 @app.get("/")
@@ -725,18 +760,38 @@ async def _consume_ollama_stream(
     response: aiohttp.ClientResponse,
     request: Request,
 ) -> AsyncGenerator[str, None]:
-    """Consome a resposta de streaming da API do Ollama linha por linha."""
+    """Consome a resposta de streaming da API do Ollama linha por linha.
+
+    O CHECK DE DESCONEXAO E UMA OTIMIZACAO, NAO UMA CONDICAO DE CORRETUDE.
+    Ele existe para parar de gerar quando ninguem esta mais ouvindo — economia.
+    Mas estava sendo consultado ANTES de processar cada linha, inclusive a
+    primeira, e `Request.is_disconnected()` le do canal de receive do ASGI: num
+    POST cujo corpo o FastAPI ja consumiu para montar o modelo, esse canal pode
+    devolver `http.disconnect` mesmo com o cliente presente. O gerador entao
+    terminava limpo, sem excecao e sem um unico chunk — HTTP 200 com corpo
+    vazio, que e o modo de falha mais caro que existe porque nao parece falha.
+
+    Duas mudancas fazem o check voltar a ser otimizacao:
+      1. so consulta DEPOIS de ja ter entregue algo — abandonar uma geracao que
+         ainda nao produziu nada nunca economiza o que importa;
+      2. o abandono e registrado, para nunca mais ser silencioso.
+    """
+    yielded = 0
     async for line in response.content:
-        if await request.is_disconnected():
+        if yielded and await request.is_disconnected():
+            logger.info("[ROTEAMENTO LOCAL] Cliente desconectou apos %d chunks; abortando geracao.", yielded)
             break
         line_str = line.decode("utf-8").strip()
         if not line_str:
             continue
         content, done = _parse_ollama_chunk(line_str)
         if content:
+            yielded += 1
             yield content
         if done:
             break
+    if not yielded:
+        logger.warning("[ROTEAMENTO LOCAL] Ollama fechou o stream sem nenhum chunk util.")
 
 
 async def _check_vram_offload(target_model: str) -> None:
@@ -752,17 +807,42 @@ async def _check_vram_offload(target_model: str) -> None:
             raise RuntimeError(vram_error)
 
 
+# Fatia fixa por modelo, o esquema anterior. Preservado porque ainda e a saida
+# certa quando o dono QUER reservar GPU para outra coisa e aceita pagar em
+# latencia — mas nao pode mais ser o padrao. Ver _get_target_gpu_layers.
+_STATIC_GPU_LAYERS = {"12b": 26, "e4b": 18, "4b": 18, "e2b": 12}
+
+
 def _get_target_gpu_layers(target_model: str) -> int:
-    """SOTA: Fatiamento hibrido de memoria (VRAM GPU vs RAM do Sistema).
-    Divide a carga harmonicamente sem sobrecarregar a GPU, aproveitando
-    a banda de memoria do sistema com MMAP e vetorizacao AVX/Zen4.
+    """Quantas camadas vao para a GPU. -1 = o runtime decide medindo.
+
+    ISTO NAO E PROPRIEDADE DO MODELO. Quantas camadas cabem depende da VRAM
+    LIVRE no instante da carga, e essa maquina varia o proprio orcamento — a
+    placa e compartilhada e o dono limita a fatia conforme o que mais esteja
+    rodando. Uma constante congela a medicao de um dia especifico e erra em
+    todos os outros.
+
+    MEDIDO em 2026-08-23: com o valor fixo de 18 para o e4b, o llama.cpp
+    reportou `Vulkan0 - 7367 MiB free` e ainda assim carregou apenas
+    18/43 camadas, ocupando 1462 MiB. Sobraram 5,9 GB de GPU ociosos enquanto
+    25 camadas rodavam na CPU: 54 s para uma resposta trivial.
+
+    O encaixe automatico (LLAMA_ARG_FIT, ligado por sota_memory) le a VRAM livre
+    de verdade e preserva LLAMA_ARG_FIT_TARGET MiB de folga, entao o -1 nao e
+    "use tudo": e "meca e use o que couber, deixando a margem". Isso e o proprio
+    balanceamento VRAM -> cache -> RAM que se queria, so que decidido por quem
+    tem o dado.
+
+    Para voltar ao esquema fixo: SOTA_GPU_LAYERS=static (ou um inteiro literal).
     """
-    if "12b" in target_model:
-        return 26  # ~65% VRAM (~5.2 GB) + 35% RAM do Sistema (DDR4/DDR5)
-    if "e4b" in target_model or "4b" in target_model:
-        return 18  # ~65% VRAM (~2.1 GB) + 35% RAM do Sistema
-    if "e2b" in target_model:
-        return 12  # ~65% VRAM (~1.1 GB) + 35% RAM do Sistema
+    override = os.environ.get("SOTA_GPU_LAYERS", "").strip().lower()
+    if override and override not in {"auto", "-1"}:
+        if override == "static":
+            return next((v for k, v in _STATIC_GPU_LAYERS.items() if k in target_model), -1)
+        try:
+            return int(override)
+        except ValueError:
+            logger.warning("[SOTA PERF] SOTA_GPU_LAYERS=%r invalido; usando encaixe automatico.", override)
     return -1
 
 
@@ -824,6 +904,16 @@ def _prepare_ollama_payload(
         "messages": sanitized,
         "stream": True,
         "options": options,
+        # MEDIDO em 2026-08-23 contra gemma4:e4b, que e um modelo de raciocinio:
+        # sem este campo, TODO o orcamento de num_predict vai para
+        # message.thinking e message.content chega vazio ao fim, com
+        # done_reason="length". O servidor devolvia HTTP 200 e corpo vazio —
+        # sem excecao, sem log, sem sintoma que parecesse falha.
+        #
+        # Raciocinio nao e gratuito: e orcamento de tokens gasto antes da
+        # primeira palavra da resposta. Para um gateway de inferencia o padrao
+        # tem de ser resposta; quem quiser a cadeia de pensamento pede.
+        "think": os.environ.get("SOTA_THINK", "0") == "1",
     }
     if req.response_format:
         payload["format"] = req.response_format
@@ -975,19 +1065,36 @@ async def _orchestrate_streams(
     gemini_key: str | None,
     openrouter_key: str | None,
     cloud_model: str,
+    local_only: bool = False,
 ) -> AsyncGenerator[str, None]:
     # SOTA: Hibrido Local/Cloud para todos os modelos suportados.
     # 1. Tenta execucao local (Edge) para modelos 12B/4B/Edge (31B e estritamente Cloud)
+    #
+    # `local_success` mede CONCLUSAO, nao volume. A versao anterior so o marcava
+    # ao ver o primeiro chunk, entao uma geracao local legitimamente vazia caia
+    # para a nuvem — pagando por uma resposta que o local ja tinha dado.
     local_success = False
     if target_model != "31b_cloud":
         try:
             async for chunk in _stream_local(req, request, messages, target_model):
-                local_success = True
                 yield chunk
+            local_success = True
         except Exception as e:
             logger.warning("[HIBRIDO] Inferencia local para %s falhou: %s.", target_model, e)
 
     if local_success:
+        return
+
+    # O chamador nomeou o motor. Substitui-lo por um id remoto seria atender
+    # outro pedido — e cobrar por isso. Falhar aqui e a resposta correta.
+    if local_only:
+        logger.warning("[HIBRIDO] %s foi pedido por nome; sem fallback para nuvem.", target_model)
+        yield (
+            f"[MOTOR LOCAL INDISPONIVEL]: '{req.model}' foi pedido explicitamente e o Ollama nao "
+            f"atendeu. Nao ha fallback para nuvem quando o motor e nomeado — servir outro modelo "
+            f"remoto seria responder a uma pergunta diferente. Verifique o daemon em "
+            f"{os.environ.get('OLLAMA_API_BASE', 'http://127.0.0.1:11434')}."
+        )
         return
 
     # 2. Fallback Cloud (Gemini)
@@ -1026,7 +1133,10 @@ async def generate_response(
     cloud_model = CLOUD_MODEL_MAP.get(target_model, "gemma-4-31b-it")
 
     return StreamingResponse(
-        _orchestrate_streams(req, request, messages, target_model, gemini_key, openrouter_key, cloud_model),
+        _orchestrate_streams(
+            req, request, messages, target_model, gemini_key, openrouter_key, cloud_model,
+            local_only=_names_local_engine(req.model),
+        ),
         media_type="text/plain",
     )
 
@@ -1096,7 +1206,8 @@ async def openai_chat_completions(
     cloud_model = CLOUD_MODEL_MAP.get(target_model, "gemma-4-31b-it")
 
     stream_gen = _orchestrate_streams(
-        inference_req, request, final_messages, target_model, gemini_key, openrouter_key, cloud_model
+        inference_req, request, final_messages, target_model, gemini_key, openrouter_key, cloud_model,
+        local_only=_names_local_engine(inference_req.model),
     )
 
     if req.stream:
