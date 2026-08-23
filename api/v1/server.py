@@ -32,6 +32,7 @@ from api.v1.handlers import (
     handle_add_task,
     handle_ask_oracle,
     handle_bucket_op,
+    handle_calculate_perspective,
     handle_frontend_logs,
     handle_get_db_summary,
     handle_get_key_health_summary,
@@ -42,10 +43,12 @@ from api.v1.handlers import (
     handle_get_task_result,
     handle_get_tournaments,
     handle_health,
+    handle_import_solver_tree,
     handle_ping,
     handle_rag_ingest,
     handle_rag_query,
     handle_set_state,
+    handle_simulate_perspective_tree,
 )
 from api.v1.middleware import (
     auth_middleware,
@@ -105,6 +108,9 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
             web.get("/resources", handle_get_resource_usage),
             web.post("/rag/query", handle_rag_query),
             web.post("/buckets", handle_bucket_op),
+            web.post("/api/v1/perspective", handle_calculate_perspective),
+            web.post("/api/v1/perspective/tree", handle_simulate_perspective_tree),
+            web.post("/api/v1/perspective/import-solver", handle_import_solver_tree),
         ]
     )
 
