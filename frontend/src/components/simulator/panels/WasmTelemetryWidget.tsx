@@ -22,7 +22,7 @@ const LABELS = {
 } as const;
 
 export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: Readonly<WasmTelemetryWidgetProps>) {
-	const logsEndRef = useRef<HTMLDivElement>(null);
+	const logContainerRef = useRef<HTMLDivElement>(null);
 
 	const extractedLatency = useMemo(() => {
 		const latencyLog = [...wasmLogs].reverse().find(l => l.includes('em ') && l.includes('ms'));
@@ -45,7 +45,9 @@ export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: R
 	}, [wasmLogs]);
 
 	useEffect(() => {
-		logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+		if (logContainerRef.current) {
+			logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+		}
 	}, [wasmLogs]);
 
 	return (
@@ -121,7 +123,7 @@ export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: R
 				</div>
 			</div>
 
-			<div className="bg-black/60 rounded-3xl border border-white/5 p-8 font-mono text-[0.75rem] h-64 overflow-y-auto shadow-2xl relative z-10 scrollbar-hide">
+			<div ref={logContainerRef} className="bg-black/60 rounded-3xl border border-white/5 p-8 font-mono text-[0.75rem] h-64 overflow-y-auto shadow-2xl relative z-10 scrollbar-hide">
 				<div className="space-y-3">
 					{wasmLogs.map((log, index) => (
 						<div
@@ -134,7 +136,6 @@ export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: R
 							<span className={`${getLogColor(log)} leading-relaxed tracking-wide`}>{log}</span>
 						</div>
 					))}
-					<div ref={logsEndRef} />
 				</div>
 				<div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
 					<i className="fa-solid fa-code text-6xl" />
