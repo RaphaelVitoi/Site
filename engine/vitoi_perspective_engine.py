@@ -97,6 +97,53 @@ class VitoiPerspectiveEngine:
             return math.pow(x, alpha)
         return -loss_aversion * math.pow(abs(x), beta)
 
+    @staticmethod
+    def calculate_janda_vitoi_defense(pot_size: float, bet_size: float, bubble_factor: float = 1.0) -> dict[str, float]:
+        """
+        Ponte Janda-Vitoi Analitica Exata para defesa no River sob ICM/PMev.
+        Calcula a equidade minima de indiferenca, o Risk Premium exato em p.p. e a MDF sob perspectiva.
+        """
+        if pot_size <= 0 or bet_size <= 0:
+            return {
+                "equity_required_pmev": 0.0,
+                "equity_required_chipev": 0.0,
+                "risk_premium_pp": 0.0,
+                "mdf_pmev": 1.0,
+                "mdf_chipev": 1.0,
+            }
+        bf = max(1.0, bubble_factor)
+        e_chipev = bet_size / (pot_size + 2.0 * bet_size)
+        mdf_chipev = pot_size / (pot_size + bet_size)
+
+        denom = pot_size + bet_size + (bet_size * bf)
+        e_pmev = (bet_size * bf) / denom if denom > 0 else 0.0
+        mdf_pmev = (pot_size + bet_size) / denom if denom > 0 else 0.0
+        rp_pp = max(0.0, e_pmev - e_chipev)
+
+        return {
+            "equity_required_pmev": round(e_pmev, 4),
+            "equity_required_chipev": round(e_chipev, 4),
+            "risk_premium_pp": round(rp_pp, 4),
+            "mdf_pmev": round(mdf_pmev, 4),
+            "mdf_chipev": round(mdf_chipev, 4),
+        }
+
+    @staticmethod
+    def calculate_combinatorial_multiway_liability(
+        active_players: int,
+        base_rio: float,
+        equity: float,
+        bubble_factor_avg: float = 1.0,
+    ) -> float:
+        """
+        Deducao Combinatoria Rigorosa do Passivo Estrutural Multiway K = n*(n-1)/2.
+        """
+        if active_players <= 2:
+            return round(base_rio * (1.0 - max(0.0, min(1.0, equity))), 4)
+        k_combinations = (active_players * (active_players - 1)) / 2.0
+        liability = base_rio * k_combinations * (1.0 - max(0.0, min(1.0, equity))) * max(1.0, bubble_factor_avg)
+        return round(liability, 4)
+
     @classmethod
     def simulate_decision_tree(
         cls,
@@ -307,6 +354,120 @@ class VitoiPerspectiveEngine:
             realization_factor=realization_factor,
         )
         return round(float(res["pm_best"]), 4)
+
+
+    @staticmethod
+    def calculate_negative_risk_premium_river(
+        pot_size: float,
+        bet_size: float,
+        residual_stack_bb: float,
+        fold_survival_prob: float,
+        call_win_survival_prob: float,
+    ) -> dict[str, float]:
+        """
+        Teorema 2 (Vitoi): Inversao de Valuation e Risk Premium Negativo (RP menor que 0) no River.
+        Quando a stack residual encolhe para zona de morte (<= 4bb) e o pote infla,
+        a probabilidade de ressurgir com o Bluffcatcher supera a morte por inanicao com micro-stack.
+        """
+        chipev_equity = bet_size / (pot_size + 2.0 * bet_size)
+        if fold_survival_prob <= 0:
+            fold_survival_prob = 1e-6
+        relative_survival_ratio = fold_survival_prob / max(call_win_survival_prob, 1e-6)
+        pmev_required_equity = chipev_equity * relative_survival_ratio
+        risk_premium = pmev_required_equity - chipev_equity
+        is_negative_rp = risk_premium < 0.0 or residual_stack_bb <= 4.0
+
+        return {
+            "chipev_equity": round(chipev_equity, 4),
+            "pmev_required_equity": round(pmev_required_equity, 4),
+            "risk_premium": round(risk_premium, 4),
+            "is_negative_rp": 1.0 if is_negative_rp else 0.0,
+            "bluffcatcher_call_mandatory": 1.0 if (is_negative_rp or pmev_required_equity <= chipev_equity) else 0.0,
+        }
+
+    @staticmethod
+    def calculate_symmetric_dissipation_vector(
+        stacks: list[float],
+        eliminated_idx: int,
+        lost_perspective: float,
+    ) -> list[float]:
+        """
+        Teorema 3 (Vitoi): 1a Lei da Termodinamica do Poker (Conservacao e Dissipacao).
+        A soma das perspectivas no Simplex e constante (sum(Omega_i) == 1).
+        A perspectiva perdida por um jogador e simetricamente dissipada para todos os outros sobreviventes.
+        """
+        n = len(stacks)
+        if n <= 1:
+            return [0.0] * n
+        surviving_indices = [i for i in range(n) if i != eliminated_idx]
+        total_surviving_stack = sum(stacks[i] for i in surviving_indices)
+        if total_surviving_stack <= 0:
+            share = lost_perspective / len(surviving_indices)
+            return [round(-lost_perspective, 4) if i == eliminated_idx else round(share, 4) for i in range(n)]
+
+        dissipation = [0.0] * n
+        dissipation[eliminated_idx] = round(-lost_perspective, 4)
+        for i in surviving_indices:
+            weight = stacks[i] / total_surviving_stack
+            dissipation[i] = round(lost_perspective * weight, 4)
+        return dissipation
+
+    @staticmethod
+    def calculate_convex_speculation_ev(
+        entry_cost_bb: float,
+        prob_hit_cooler: float,
+        current_title_prob: float,
+        new_leader_title_prob: float,
+    ) -> dict[str, float]:
+        """
+        Teorema 4 (Vitoi): Alavancagem Convexa Especulativa vs Chip Leader.
+        Opcao de Black-Scholes no poker: custo marginal linear minusculo (-entry_cost) vs
+        payoff exponencial quantico ao sequestrar o centro gravitacional da mesa.
+        """
+        linear_cost = (1.0 - prob_hit_cooler) * (-entry_cost_bb)
+        perspective_jump = new_leader_title_prob - current_title_prob
+        convex_payoff = prob_hit_cooler * perspective_jump
+        net_ev_speculation = linear_cost + (convex_payoff * 100.0)
+
+        return {
+            "linear_cost": round(linear_cost, 4),
+            "perspective_jump": round(perspective_jump, 4),
+            "convex_payoff": round(convex_payoff, 4),
+            "net_ev_speculation": round(net_ev_speculation, 4),
+            "speculation_approved": 1.0 if net_ev_speculation > 0.0 else 0.0,
+        }
+
+    @staticmethod
+    def calculate_static_overpair_decay(
+        preflop_equity: float,
+        street_idx: int,
+        board_connectedness: float,
+        active_opponents: int,
+    ) -> float:
+        """
+        Teorema 9 (Vitoi): Decaimento Entropico Monotono do Par de As (AA).
+        O AA e estatico com apenas 2 outs de trinca (~4.3%), sofrendo degradacao continua
+        conforme o board avanca (Flop -> Turn -> River) contra ranges conectados vivos (8 a 15 outs).
+        """
+        if street_idx <= 0:
+            return round(preflop_equity, 4)
+        decay_rate = 0.08 * street_idx * (1.0 + board_connectedness * 0.5) * math.log2(max(active_opponents, 2))
+        realized_equity = max(preflop_equity - decay_rate, 0.12)
+        return round(realized_equity, 4)
+
+    @staticmethod
+    def calculate_dual_navigation_vector(
+        alpha_attack: float,
+        expansion_title_value: float,
+        conservation_survival_value: float,
+    ) -> float:
+        """
+        Teorema 10 (Vitoi): O Vetor Duplo de Navegacao da PMev.
+        Omega*(a|t) = alpha * Omega_Expansao(1o Lugar) + (1 - alpha) * Omega_Conservacao(Trajetoria)
+        """
+        clamped_alpha = max(0.0, min(1.0, alpha_attack))
+        res = (clamped_alpha * expansion_title_value) + ((1.0 - clamped_alpha) * conservation_survival_value)
+        return round(res, 4)
 
     @classmethod
     def calculate_perspective_vectorized(
