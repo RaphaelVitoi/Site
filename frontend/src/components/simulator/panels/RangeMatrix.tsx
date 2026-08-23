@@ -132,28 +132,28 @@ export default function RangeMatrix({
 	};
 
 	return (
-		<div className="glass-panel flex flex-col gap-8 p-6 sm:p-8 lg:p-10 rounded-4xl bg-bg-panel/90 backdrop-blur-2xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
+		<div className="glass-panel flex flex-col gap-6 p-5 sm:p-7 rounded-3xl bg-slate-950/60 backdrop-blur-2xl border border-white/8 shadow-2xl relative overflow-hidden transition-all duration-300 group/matrix">
 			<div className="absolute -bottom-32 -left-32 w-64 h-64 bg-accent-emerald/5 blur-[120px] rounded-full pointer-events-none" />
 			<div className="absolute -top-32 -right-32 w-64 h-64 bg-accent-indigo/5 blur-[120px] rounded-full pointer-events-none" />
 
-			{/* Cabeçalho Principal e Controles */}
-			<div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 pb-6 border-b border-white/5">
-				<div>
-					<div className="flex items-center gap-3">
-						<div className="w-2.5 h-2.5 rounded-full bg-accent-emerald shadow-[0_0_12px_var(--accent-emerald)] animate-pulse" />
-						<h3 className="text-sm font-black text-white uppercase tracking-[0.25em] m-0">
+			{/* ═══ CABEÇALHO PRINCIPAL E CONTROLES ═══ */}
+			<div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-white/8">
+				<div className="space-y-1">
+					<div className="flex items-center gap-2.5">
+						<div className="w-2.5 h-2.5 rounded-full bg-accent-emerald shadow-[0_0_12px_var(--color-accent-emerald)] animate-pulse" />
+						<h3 className="text-sm font-black text-white uppercase tracking-[0.2em] m-0">
 							Matriz de Defesa 13&times;13 (169 Mãos Hold&apos;em)
 						</h3>
 					</div>
-					<p className="m-0 mt-1 text-[0.7rem] text-text-muted font-mono uppercase tracking-wider">
-						Equidade Requerida $\text&#123;ReqEq&#125; = {summary.requiredEquity}\%$ &middot; $BF = {summary.bubbleFactor}\times$ &middot; $RP = {activeRp.toFixed(1)}\%$
+					<p className="m-0 text-[0.62rem] text-text-dim font-mono uppercase tracking-wider">
+						ReqEq = <span className="text-accent-amber font-bold">{summary.requiredEquity}%</span> &middot; Bubble Factor = <span className="text-accent-indigo font-bold">{summary.bubbleFactor}&times;</span> &middot; Risk Premium = <span className="text-white font-bold">{activeRp.toFixed(1)}%</span>
 					</p>
 				</div>
 
 				{/* Alternadores de Perspectiva e Modo de Exibição */}
-				<div className="flex flex-wrap items-center gap-4">
+				<div className="flex flex-wrap items-center gap-3">
 					{/* Perspectiva IP / OOP */}
-					<div className="flex rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1 shadow-inner">
+					<div className="flex rounded-xl overflow-hidden border border-white/10 bg-slate-950/80 p-1 shadow-inner">
 						{(['ip', 'oop'] as Perspective[]).map((p) => {
 							const isActive = perspective === p;
 							const val = p === 'ip' ? ipRp : oopRp;
@@ -162,7 +162,7 @@ export default function RangeMatrix({
 									key={p}
 									type="button"
 									onClick={() => setPerspective(p)}
-									className={`px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.15em] cursor-pointer transition-all duration-300 rounded-xl ${getPerspectiveButtonClass(
+									className={`px-3 py-1.5 text-[0.58rem] font-mono font-black uppercase tracking-wider cursor-pointer transition-all duration-300 rounded-lg ${getPerspectiveButtonClass(
 										isActive,
 										p,
 									)}`}
@@ -174,7 +174,7 @@ export default function RangeMatrix({
 					</div>
 
 					{/* Modo de Exibição das Células */}
-					<div className="flex rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1 shadow-inner">
+					<div className="flex rounded-xl overflow-hidden border border-white/10 bg-slate-950/80 p-1 shadow-inner">
 						{(['MARGIN', 'EQUITY', 'STATUS', 'FE_REQ'] as CellDisplayMode[]).map((mode) => {
 							const isActive = displayMode === mode;
 							return (
@@ -182,10 +182,10 @@ export default function RangeMatrix({
 									key={mode}
 									type="button"
 									onClick={() => setDisplayMode(mode)}
-									className={`px-3 py-2 text-[0.6rem] font-black uppercase tracking-wider cursor-pointer transition-all rounded-xl ${
+									className={`px-2.5 py-1.5 text-[0.56rem] font-black uppercase tracking-wider cursor-pointer transition-all rounded-lg ${
 										isActive
-											? 'bg-white/10 text-white border border-white/20'
-											: 'text-text-muted hover:text-white'
+											? 'bg-white/10 text-white border border-white/20 shadow-sm'
+											: 'text-text-dim hover:text-text-muted'
 									}`}
 								>
 									{getCellDisplayModeLabel(mode)}
@@ -196,12 +196,12 @@ export default function RangeMatrix({
 				</div>
 			</div>
 
-			{/* Barra de Perfil de Shove do Vilão */}
-			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-black/30 p-4 rounded-2xl border border-white/5">
-				<span className="text-[0.65rem] font-black uppercase tracking-widest text-text-muted flex items-center gap-2">
+			{/* ═══ BARRA DE PERFIL DE SHOVE DO VILÃO ═══ */}
+			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-black/40 p-3.5 rounded-2xl border border-white/5">
+				<span className="text-[0.6rem] font-mono font-black uppercase tracking-wider text-text-dim flex items-center gap-2">
 					<i className="fa-solid fa-crosshairs text-accent-amber" /> Range de Shove do Vilão:
 				</span>
-				<div className="flex flex-wrap gap-2">
+				<div className="flex flex-wrap gap-1.5">
 					{Object.entries(SHOVE_PROFILES).map(([key, prof]) => {
 						const isActive = shoveProfile === key;
 						return (
@@ -209,10 +209,10 @@ export default function RangeMatrix({
 								key={key}
 								type="button"
 								onClick={() => setShoveProfile(key as ShoveProfile)}
-								className={`px-3 py-1.5 rounded-xl text-[0.6rem] font-black uppercase tracking-wider transition-all cursor-pointer ${
+								className={`px-2.5 py-1 rounded-lg text-[0.58rem] font-bold uppercase tracking-wider transition-all cursor-pointer ${
 									isActive
-										? 'bg-accent-amber/20 text-accent-amber border border-accent-amber/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
-										: 'bg-white/5 text-text-muted hover:text-white border border-transparent'
+										? 'bg-accent-amber/20 text-accent-amber border border-accent-amber/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
+										: 'bg-white/5 text-text-dim hover:text-white border border-transparent'
 								}`}
 							>
 								{prof.name}
@@ -222,259 +222,256 @@ export default function RangeMatrix({
 				</div>
 			</div>
 
-			{/* Estatísticas Sumárias de Defesa */}
-			<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-				<div className="bg-emerald-950/30 border border-emerald-500/20 p-4 rounded-2xl flex flex-col">
-					<span className="text-[0.6rem] font-black uppercase tracking-widest text-emerald-400 mb-1">
+			{/* ═══ ESTATÍSTICAS SUMÁRIAS DE DEFESA (4 CARDS) ═══ */}
+			<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+				<div className="bg-emerald-950/25 border border-emerald-500/20 p-3.5 rounded-2xl flex flex-col">
+					<span className="text-[0.52rem] font-mono font-black uppercase tracking-wider text-emerald-400 mb-0.5">
 						Defesa Total (Call)
 					</span>
-					<div className="flex items-baseline gap-2">
-						<span className="font-mono text-xl font-black text-white">
+					<div className="flex items-baseline gap-1.5">
+						<span className="font-mono text-lg font-black text-white">
 							{summary.callCombos}
 						</span>
-						<span className="text-xs font-mono font-bold text-emerald-400">
+						<span className="text-[0.68rem] font-mono font-bold text-emerald-400">
 							({summary.callPercentage}%)
 						</span>
 					</div>
-					<span className="text-[0.55rem] text-slate-400 mt-1 font-mono">
+					<span className="text-[0.48rem] text-slate-400 mt-0.5 font-mono">
 						{summary.coreCallCombos} core + {summary.marginalCallCombos} marginais
 					</span>
 				</div>
 
-				<div className="bg-rose-950/30 border border-rose-500/20 p-4 rounded-2xl flex flex-col">
-					<span className="text-[0.6rem] font-black uppercase tracking-widest text-rose-400 mb-1">
+				<div className="bg-rose-950/25 border border-rose-500/20 p-3.5 rounded-2xl flex flex-col">
+					<span className="text-[0.52rem] font-mono font-black uppercase tracking-wider text-rose-400 mb-0.5">
 						Descarte (Fold)
 					</span>
-					<div className="flex items-baseline gap-2">
-						<span className="font-mono text-xl font-black text-white">
+					<div className="flex items-baseline gap-1.5">
+						<span className="font-mono text-lg font-black text-white">
 							{summary.foldCombos}
 						</span>
-						<span className="text-xs font-mono font-bold text-rose-400">
+						<span className="text-[0.68rem] font-mono font-bold text-rose-400">
 							({summary.foldPercentage}%)
 						</span>
 					</div>
-					<span className="text-[0.55rem] text-slate-400 mt-1 font-mono">
+					<span className="text-[0.48rem] text-slate-400 mt-0.5 font-mono">
 						{summary.deathFoldCombos} death + {summary.riskyFoldCombos} risco ICM
 					</span>
 				</div>
 
-				<div className="bg-slate-900/40 border border-white/5 p-4 rounded-2xl flex flex-col">
-					<span className="text-[0.6rem] font-black uppercase tracking-widest text-text-muted mb-1">
+				<div className="bg-slate-900/40 border border-white/5 p-3.5 rounded-2xl flex flex-col">
+					<span className="text-[0.52rem] font-mono font-black uppercase tracking-wider text-text-dim mb-0.5">
 						Equidade Requerida
 					</span>
-					<span className="font-mono text-xl font-black text-accent-amber">
+					<span className="font-mono text-lg font-black text-accent-amber">
 						{summary.requiredEquity}%
 					</span>
-					<span className="text-[0.55rem] text-text-muted mt-1 font-mono">
-						Threshold de Break-Even ICM
+					<span className="text-[0.48rem] text-text-dim mt-0.5 font-mono">
+						Threshold de Break-Even
 					</span>
 				</div>
 
-				<div className="bg-slate-900/40 border border-white/5 p-4 rounded-2xl flex flex-col">
-					<span className="text-[0.6rem] font-black uppercase tracking-widest text-text-muted mb-1">
+				<div className="bg-slate-900/40 border border-white/5 p-3.5 rounded-2xl flex flex-col">
+					<span className="text-[0.52rem] font-mono font-black uppercase tracking-wider text-text-dim mb-0.5">
 						Bubble Factor
 					</span>
-					<span className="font-mono text-xl font-black text-accent-indigo-light">
+					<span className="font-mono text-lg font-black text-accent-indigo">
 						{summary.bubbleFactor}&times;
 					</span>
-					<span className="text-[0.55rem] text-text-muted mt-1 font-mono">
+					<span className="text-[0.48rem] text-text-dim mt-0.5 font-mono">
 						Assimetria Ganho / Perda
 					</span>
 				</div>
 			</div>
 
-			{/* Layout Central: Grade 13x13 e Painel Inspetor Lateral */}
-			<div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-8 items-start">
-				{/* Grade 13x13 */}
-				<div className="flex justify-center overflow-x-auto pb-4">
-					<div className="min-w-160 max-w-3xl w-full grid grid-cols-13 gap-1 bg-slate-950/90 p-3.5 rounded-3xl border border-white/10 shadow-2xl backdrop-blur-3xl">
-						{RANKS.map((r1, i) => (
-							<React.Fragment key={`row-${r1}`}>
-								{RANKS.map((r2, j) => {
-									const isPair = i === j;
-									const isSuited = j > i;
-									let hand: string;
-									if (isPair) {
-										hand = `${r1}${r2}`;
-									} else if (isSuited) {
-										hand = `${r1}${r2}s`;
-									} else {
-										hand = `${r2}${r1}o`;
-									}
+			{/* ═══ GRADE 13x13 COMPLETA, DESAFOGADA E 100% RESPONSIVA ═══ */}
+			<div className="w-full bg-slate-950/80 p-2.5 sm:p-4 rounded-3xl border border-white/8 shadow-2xl backdrop-blur-3xl overflow-hidden">
+				<div className="w-full grid grid-cols-13 gap-0.5 sm:gap-1">
+					{RANKS.map((r1, i) => (
+						<React.Fragment key={`row-${r1}`}>
+							{RANKS.map((r2, j) => {
+								const isPair = i === j;
+								const isSuited = j > i;
+								let hand: string;
+								if (isPair) {
+									hand = `${r1}${r2}`;
+								} else if (isSuited) {
+									hand = `${r1}${r2}s`;
+								} else {
+									hand = `${r2}${r1}o`;
+								}
 
-									const detail = evaluateHandDetail(
-										hand,
-										shoveProfile,
-										activeRp
-									);
-									const isSelected = selectedHand === hand;
-									const cellStyle = getCellColorAndBorder(detail);
-									const feReqCell = calculateReverseRequiredFoldEquity(15, 20, detail.equity / 100, 15);
+								const detail = evaluateHandDetail(
+									hand,
+									shoveProfile,
+									activeRp
+								);
+								const isSelected = selectedHand === hand || hoveredHand === hand;
+								const cellStyle = getCellColorAndBorder(detail);
+								const feReqCell = calculateReverseRequiredFoldEquity(15, 20, detail.equity / 100, 15);
 
-									return (
-										<button
-											type="button"
-											key={hand}
-											onClick={() => setSelectedHand(hand)}
-											onMouseEnter={() => setHoveredHand(hand)}
-											onMouseLeave={() => setHoveredHand(null)}
-											className={`relative aspect-square flex flex-col items-center justify-center text-[0.62rem] font-mono font-black transition-all duration-150 cursor-pointer rounded-lg border ${cellStyle} ${
-												isSelected
-													? 'ring-2 ring-white z-20 scale-110 shadow-[0_0_16px_rgba(255,255,255,0.4)]'
-													: 'hover:scale-105 hover:z-10'
-											}`}
-											title={`${hand}: Eq ${detail.equity}% | Req ${detail.requiredEquity}% | FE_req ${(feReqCell * 100).toFixed(0)}%`}
-										>
-											<span className="leading-none">{hand}</span>
-											{displayMode === 'MARGIN' && (
-												<span
-													className={`text-[0.45rem] font-bold mt-0.5 leading-none ${
-														detail.margin >= 0
-															? 'text-emerald-300'
-															: 'text-rose-400/80'
-													}`}
-												>
-													{detail.margin >= 0 ? '+' : ''}
-													{detail.margin.toFixed(0)}%
-												</span>
-											)}
-											{displayMode === 'EQUITY' && (
-												<span className="text-[0.45rem] font-bold mt-0.5 leading-none text-slate-300">
-													{detail.equity.toFixed(0)}%
-												</span>
-											)}
-											{displayMode === 'STATUS' && (
-												<span className="text-[0.42rem] font-bold mt-0.5 leading-none opacity-80">
-													{detail.margin >= 0 ? 'CALL' : 'FOLD'}
-												</span>
-											)}
-											{displayMode === 'FE_REQ' && (
-												<span
-													className={`text-[0.42rem] font-mono font-bold mt-0.5 leading-none ${
-														feReqCell === 0
-															? 'text-emerald-300'
-															: 'text-cyan-300'
-													}`}
-												>
-													{feReqCell === 0
-														? '0%'
-														: `${(feReqCell * 100).toFixed(0)}%`}
-												</span>
-											)}
-										</button>
-									);
-								})}
-							</React.Fragment>
-						))}
-					</div>
+								return (
+									<button
+										type="button"
+										key={hand}
+										onClick={() => setSelectedHand(hand)}
+										onMouseEnter={() => setHoveredHand(hand)}
+										onMouseLeave={() => setHoveredHand(null)}
+										className={`relative aspect-square flex flex-col items-center justify-center font-mono font-black transition-all duration-150 cursor-pointer rounded-md sm:rounded-lg border ${cellStyle} ${
+											isSelected
+												? 'ring-2 ring-white z-20 scale-110 shadow-[0_0_14px_rgba(255,255,255,0.4)]'
+												: 'hover:scale-105 hover:z-10'
+										}`}
+										title={`${hand}: Eq ${detail.equity}% | Req ${detail.requiredEquity}% | FE_req ${(feReqCell * 100).toFixed(0)}%`}
+									>
+										<span className="text-[0.52rem] sm:text-[0.68rem] md:text-[0.74rem] leading-none">{hand}</span>
+										{displayMode === 'MARGIN' && (
+											<span
+												className={`text-[0.38rem] sm:text-[0.48rem] md:text-[0.52rem] font-bold mt-0.5 leading-none ${
+													detail.margin >= 0
+														? 'text-emerald-300'
+														: 'text-rose-400/80'
+												}`}
+											>
+												{detail.margin >= 0 ? '+' : ''}
+												{detail.margin.toFixed(0)}%
+											</span>
+										)}
+										{displayMode === 'EQUITY' && (
+											<span className="text-[0.38rem] sm:text-[0.48rem] md:text-[0.52rem] font-bold mt-0.5 leading-none text-slate-300">
+												{detail.equity.toFixed(0)}%
+											</span>
+										)}
+										{displayMode === 'STATUS' && (
+											<span className="text-[0.34rem] sm:text-[0.44rem] md:text-[0.48rem] font-bold mt-0.5 leading-none opacity-80">
+												{detail.margin >= 0 ? 'CALL' : 'FOLD'}
+											</span>
+										)}
+										{displayMode === 'FE_REQ' && (
+											<span
+												className={`text-[0.34rem] sm:text-[0.44rem] md:text-[0.48rem] font-mono font-bold mt-0.5 leading-none ${
+													feReqCell === 0
+														? 'text-emerald-300'
+														: 'text-cyan-300'
+												}`}
+											>
+												{feReqCell === 0
+													? '0%'
+													: `${(feReqCell * 100).toFixed(0)}%`}
+											</span>
+										)}
+									</button>
+								);
+							})}
+						</React.Fragment>
+					))}
 				</div>
+			</div>
 
-				{/* Inspetor Detalhado da Mão Selecionada */}
-				<div className="bg-slate-950/60 border border-white/10 p-6 rounded-3xl flex flex-col gap-6 shadow-inner">
-					<div className="flex items-center justify-between border-b border-white/5 pb-4">
-						<div className="flex items-center gap-3">
-							<div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-mono font-black text-lg text-white">
-								{inspectedDetail.hand}
-							</div>
-							<div>
-								<span className="text-[0.6rem] font-black uppercase tracking-widest text-text-muted block">
-									{getHandTypeDescription(inspectedDetail.isPair, inspectedDetail.isSuited)}
-								</span>
-								<span className="text-xs font-mono font-bold text-slate-300">
-									{inspectedDetail.combos} combinações
-								</span>
-							</div>
+			{/* ═══ PAINEL INSPETOR DETALHADO DA MÃO SELECIONADA (INFERIOR) ═══ */}
+			<div className="bg-slate-950/60 border border-white/8 p-5 sm:p-6 rounded-3xl flex flex-col gap-4 shadow-inner">
+				<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
+					<div className="flex items-center gap-3">
+						<div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-mono font-black text-lg text-white shadow-inner">
+							{inspectedDetail.hand}
+						</div>
+						<div>
+							<span className="text-[0.58rem] font-mono font-black uppercase tracking-wider text-text-dim block">
+								{getHandTypeDescription(inspectedDetail.isPair, inspectedDetail.isSuited)}
+							</span>
+							<span className="text-xs font-mono font-bold text-slate-300">
+								{inspectedDetail.combos} combinações
+							</span>
 						</div>
 					</div>
 
 					{/* Badge do Veredito */}
 					<div
-						className={`p-3 rounded-2xl border text-center font-mono text-[0.68rem] font-black tracking-widest ${
+						className={`px-4 py-2 rounded-xl border text-center font-mono text-[0.65rem] font-black tracking-wider shadow-sm ${
 							getVerdictBadge(inspectedDetail.verdict).color
 						}`}
 					>
 						{getVerdictBadge(inspectedDetail.verdict).text}
 					</div>
-
-					{/* Métricas de Equidade e Margem */}
-					<div className="space-y-4 font-mono">
-						<div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
-							<span className="text-[0.62rem] text-text-muted uppercase tracking-wider">
-								Equidade vs Shove
-							</span>
-							<span className="text-sm font-black text-white">
-								{inspectedDetail.equity}%
-							</span>
-						</div>
-
-						<div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
-							<span className="text-[0.62rem] text-text-muted uppercase tracking-wider">
-								Equidade Requerida
-							</span>
-							<span className="text-sm font-black text-accent-amber">
-								{inspectedDetail.requiredEquity}%
-							</span>
-						</div>
-
-						<div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
-							<span className="text-[0.62rem] text-text-muted uppercase tracking-wider">
-								Margem de Lucro (&Delta;)
-							</span>
-							<span
-								className={`text-sm font-black ${
-									inspectedDetail.margin >= 0
-										? 'text-accent-emerald'
-										: 'text-accent-rose'
-								}`}
-							>
-								{inspectedDetail.margin >= 0 ? '+' : ''}
-								{inspectedDetail.margin.toFixed(1)}%
-							</span>
-						</div>
-
-						<div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
-							<span className="text-[0.62rem] text-text-muted uppercase tracking-wider">
-								Fold Equity Reversa ($FE_{'{req}'}$)
-							</span>
-							<span className="text-sm font-black text-accent-cyan">
-								{calculateReverseRequiredFoldEquity(15, 20, inspectedDetail.equity / 100, 15) === 0
-									? '0.0% (Valor Puro)'
-									: `${(calculateReverseRequiredFoldEquity(15, 20, inspectedDetail.equity / 100, 15) * 100).toFixed(1)}%`}
-							</span>
-						</div>
-					</div>
-
-					{/* Barra de Progresso Visual de Equidade vs Limiar */}
-					<div className="space-y-2">
-						<div className="flex justify-between text-[0.55rem] font-mono font-bold uppercase text-text-muted">
-							<span>0%</span>
-							<span className="text-accent-amber">
-								Req: {inspectedDetail.requiredEquity}%
-							</span>
-							<span>100%</span>
-						</div>
-						<div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-white/10 relative">
-							{/* Indicador de Required Equity */}
-							<div
-								className="absolute top-0 bottom-0 w-0.5 bg-amber-400 z-10"
-								style={{ left: `${inspectedDetail.requiredEquity}%` }}
-							/>
-							{/* Barra de Equidade da Mão */}
-							<div
-								className={`h-full transition-all duration-300 ${
-									inspectedDetail.margin >= 0 ? 'bg-emerald-500' : 'bg-rose-500'
-								}`}
-								style={{ width: `${inspectedDetail.equity}%` }}
-							/>
-						</div>
-					</div>
-
-					<p className="text-[0.65rem] text-text-muted leading-relaxed font-sans mt-2">
-						{inspectedDetail.margin >= 0
-							? `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) supera o limiar de sobrevivência ICM (${inspectedDetail.requiredEquity}%), gerando call de expectativa positiva.`
-							: `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) é inferior à barreira de risco ICM (${inspectedDetail.requiredEquity}%). Dar call resulta em perda massiva de EV em dinheiro real.`}
-					</p>
 				</div>
+
+				{/* Grade de 4 Métricas Chave */}
+				<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 font-mono">
+					<div className="flex flex-col bg-black/40 p-3 rounded-xl border border-white/5">
+						<span className="text-[0.5rem] text-text-dim uppercase tracking-wider mb-0.5">
+							Equidade vs Shove
+						</span>
+						<span className="text-sm font-black text-white">
+							{inspectedDetail.equity}%
+						</span>
+					</div>
+
+					<div className="flex flex-col bg-black/40 p-3 rounded-xl border border-white/5">
+						<span className="text-[0.5rem] text-text-dim uppercase tracking-wider mb-0.5">
+							Equidade Requerida
+						</span>
+						<span className="text-sm font-black text-accent-amber">
+							{inspectedDetail.requiredEquity}%
+						</span>
+					</div>
+
+					<div className="flex flex-col bg-black/40 p-3 rounded-xl border border-white/5">
+						<span className="text-[0.5rem] text-text-dim uppercase tracking-wider mb-0.5">
+							Margem de Lucro (&Delta;)
+						</span>
+						<span
+							className={`text-sm font-black ${
+								inspectedDetail.margin >= 0
+									? 'text-accent-emerald'
+									: 'text-accent-rose'
+							}`}
+						>
+							{inspectedDetail.margin >= 0 ? '+' : ''}
+							{inspectedDetail.margin.toFixed(1)}%
+						</span>
+					</div>
+
+					<div className="flex flex-col bg-black/40 p-3 rounded-xl border border-white/5">
+						<span className="text-[0.5rem] text-text-dim uppercase tracking-wider mb-0.5">
+							Fold Equity Reversa ($FE_{'{req}'}$)
+						</span>
+						<span className="text-sm font-black text-accent-sky">
+							{calculateReverseRequiredFoldEquity(15, 20, inspectedDetail.equity / 100, 15) === 0
+								? '0.0% (Valor Puro)'
+								: `${(calculateReverseRequiredFoldEquity(15, 20, inspectedDetail.equity / 100, 15) * 100).toFixed(1)}%`}
+						</span>
+					</div>
+				</div>
+
+				{/* Barra de Progresso Visual de Equidade vs Limiar */}
+				<div className="space-y-1.5 pt-1">
+					<div className="flex justify-between text-[0.52rem] font-mono font-bold uppercase text-text-dim">
+						<span>0% (Fold)</span>
+						<span className="text-accent-amber">
+							Threshold Requerido: {inspectedDetail.requiredEquity}%
+						</span>
+						<span>100% (Pure Value)</span>
+					</div>
+					<div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-white/10 relative">
+						{/* Indicador de Required Equity */}
+						<div
+							className="absolute top-0 bottom-0 w-0.5 bg-amber-400 z-10 shadow-[0_0_6px_#fbbf24]"
+							style={{ left: `${inspectedDetail.requiredEquity}%` }}
+						/>
+						{/* Barra de Equidade da Mão */}
+						<div
+							className={`h-full transition-all duration-300 ${
+								inspectedDetail.margin >= 0 ? 'bg-linear-to-r from-emerald-600 to-emerald-400' : 'bg-linear-to-r from-rose-600 to-rose-400'
+							}`}
+							style={{ width: `${inspectedDetail.equity}%` }}
+						/>
+					</div>
+				</div>
+
+				<p className="text-[0.65rem] text-text-muted leading-relaxed font-sans m-0 italic bg-black/20 p-3 rounded-xl border border-white/5">
+					{inspectedDetail.margin >= 0
+						? `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) supera o limiar de sobrevivência ICM (${inspectedDetail.requiredEquity}%), gerando call de expectativa positiva.`
+						: `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) é inferior à barreira de risco ICM (${inspectedDetail.requiredEquity}%). Dar call resulta em perda massiva de EV em dinheiro real.`}
+				</p>
 			</div>
 		</div>
 	);
