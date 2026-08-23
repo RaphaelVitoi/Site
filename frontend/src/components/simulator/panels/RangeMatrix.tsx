@@ -283,8 +283,11 @@ export default function RangeMatrix({
 				</div>
 			</div>
 
-			{/* ═══ GRADE 13x13 COMPLETA, DESAFOGADA E 100% RESPONSIVA ═══ */}
-			<div className="w-full bg-slate-950/80 p-2.5 sm:p-4 rounded-3xl border border-white/8 shadow-2xl backdrop-blur-3xl overflow-hidden">
+			{/* ═══ GRADE 13x13 COMPLETA, ANCORADA E 100% ESTÁVEL ═══ */}
+			<div
+				className="w-full bg-slate-950/80 p-2.5 sm:p-4 rounded-3xl border border-white/8 shadow-2xl backdrop-blur-3xl overflow-hidden select-none"
+				onMouseLeave={() => setHoveredHand(null)}
+			>
 				<div className="w-full grid grid-cols-13 gap-0.5 sm:gap-1">
 					{RANKS.map((r1, i) => (
 						<React.Fragment key={`row-${r1}`}>
@@ -305,7 +308,8 @@ export default function RangeMatrix({
 									shoveProfile,
 									activeRp
 								);
-								const isSelected = selectedHand === hand || hoveredHand === hand;
+								const isPinned = selectedHand === hand;
+								const isHovered = hoveredHand === hand;
 								const cellStyle = getCellColorAndBorder(detail);
 								const feReqCell = calculateReverseRequiredFoldEquity(15, 20, detail.equity / 100, 15);
 
@@ -315,11 +319,12 @@ export default function RangeMatrix({
 										key={hand}
 										onClick={() => setSelectedHand(hand)}
 										onMouseEnter={() => setHoveredHand(hand)}
-										onMouseLeave={() => setHoveredHand(null)}
-										className={`relative aspect-square flex flex-col items-center justify-center font-mono font-black transition-all duration-150 cursor-pointer rounded-md sm:rounded-lg border ${cellStyle} ${
-											isSelected
-												? 'ring-2 ring-white z-20 scale-110 shadow-[0_0_14px_rgba(255,255,255,0.4)]'
-												: 'hover:scale-105 hover:z-10'
+										className={`relative aspect-square flex flex-col items-center justify-center font-mono font-black transition-colors duration-150 cursor-pointer rounded-md sm:rounded-lg border ${cellStyle} ${
+											isPinned
+												? 'ring-2 ring-accent-amber border-amber-300 brightness-125 z-20 shadow-[0_0_12px_rgba(245,158,11,0.5)]'
+												: isHovered
+													? 'ring-1.5 ring-white border-white brightness-125 z-10 shadow-[0_0_10px_rgba(255,255,255,0.4)]'
+													: 'hover:border-white/50 hover:brightness-110'
 										}`}
 										title={`${hand}: Eq ${detail.equity}% | Req ${detail.requiredEquity}% | FE_req ${(feReqCell * 100).toFixed(0)}%`}
 									>
@@ -367,7 +372,7 @@ export default function RangeMatrix({
 				</div>
 			</div>
 
-			{/* ═══ PAINEL INSPETOR DETALHADO DA MÃO SELECIONADA (INFERIOR) ═══ */}
+			{/* ═══ PAINEL INSPETOR DETALHADO DA MÃO SELECIONADA (INFERIOR COM ALTURA ESTÁVEL) ═══ */}
 			<div className="bg-slate-950/60 border border-white/8 p-5 sm:p-6 rounded-3xl flex flex-col gap-4 shadow-inner">
 				<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
 					<div className="flex items-center gap-3">
@@ -375,9 +380,16 @@ export default function RangeMatrix({
 							{inspectedDetail.hand}
 						</div>
 						<div>
-							<span className="text-[0.58rem] font-mono font-black uppercase tracking-wider text-text-dim block">
-								{getHandTypeDescription(inspectedDetail.isPair, inspectedDetail.isSuited)}
-							</span>
+							<div className="flex items-center gap-2">
+								<span className="text-[0.58rem] font-mono font-black uppercase tracking-wider text-text-dim block">
+									{getHandTypeDescription(inspectedDetail.isPair, inspectedDetail.isSuited)}
+								</span>
+								{hoveredHand && hoveredHand !== selectedHand && (
+									<span className="text-[0.48rem] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/5 text-text-muted border border-white/10">
+										Preview
+									</span>
+								)}
+							</div>
 							<span className="text-xs font-mono font-bold text-slate-300">
 								{inspectedDetail.combos} combinações
 							</span>
@@ -386,7 +398,7 @@ export default function RangeMatrix({
 
 					{/* Badge do Veredito */}
 					<div
-						className={`px-4 py-2 rounded-xl border text-center font-mono text-[0.65rem] font-black tracking-wider shadow-sm ${
+						className={`px-4 py-2 rounded-xl border text-center font-mono text-[0.65rem] font-black tracking-wider shadow-sm transition-colors ${
 							getVerdictBadge(inspectedDetail.verdict).color
 						}`}
 					>
@@ -467,11 +479,13 @@ export default function RangeMatrix({
 					</div>
 				</div>
 
-				<p className="text-[0.65rem] text-text-muted leading-relaxed font-sans m-0 italic bg-black/20 p-3 rounded-xl border border-white/5">
-					{inspectedDetail.margin >= 0
-						? `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) supera o limiar de sobrevivência ICM (${inspectedDetail.requiredEquity}%), gerando call de expectativa positiva.`
-						: `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) é inferior à barreira de risco ICM (${inspectedDetail.requiredEquity}%). Dar call resulta em perda massiva de EV em dinheiro real.`}
-				</p>
+				<div className="min-h-[58px] flex items-center bg-black/20 p-3 rounded-xl border border-white/5">
+					<p className="text-[0.65rem] text-text-muted leading-relaxed font-sans m-0 italic">
+						{inspectedDetail.margin >= 0
+							? `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) supera o limiar de sobrevivência ICM (${inspectedDetail.requiredEquity}%), gerando call de expectativa positiva.`
+							: `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) é inferior à barreira de risco ICM (${inspectedDetail.requiredEquity}%). Dar call resulta em perda massiva de EV em dinheiro real.`}
+					</p>
+				</div>
 			</div>
 		</div>
 	);
