@@ -466,7 +466,7 @@ export default function MasterSimulator() {
                 <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
                   <span className="font-mono text-[0.6rem] font-black uppercase tracking-[0.2em] text-accent-emerald flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent-emerald animate-pulse" />
-                    Física do Spot
+                    <span>Física do Spot</span>
                   </span>
                   <span className="text-[0.5rem] font-mono text-text-dim uppercase tracking-wider">
                     v7.0 GOLD
@@ -531,7 +531,7 @@ export default function MasterSimulator() {
       ),
       comparar: (
         <Suspense fallback={<LoadingFallback />}>
-          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden relative min-h-140">
+          <div className="w-full">
             {scenarios && scenarios.length > 0 ? (
               <ComparisonRadar
                 key={`comp-${scenario.id}`}
