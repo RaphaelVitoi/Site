@@ -419,7 +419,7 @@ export default function MasterSimulator() {
               )}
 
               {spotSubView === 'ranges' && (
-                <div className="animate-sota-in rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
+                <div className="w-full animate-sota-in">
                   <RangeMatrix ipRp={finalIpRp} oopRp={finalOopRp} scenarioId={scenario.id} />
                 </div>
               )}
