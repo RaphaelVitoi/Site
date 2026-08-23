@@ -1,4 +1,4 @@
-# SOTA v7.0 GOLD: Dependabot Automated Security & Dependency Management
+# SOTA v8.0 GOLD: Dependabot Automated Security & Dependency Management
 version: 2
 updates:
   # Python dependencies (pyproject.toml / uv)
@@ -7,10 +7,17 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(deps-python)"
       include: "scope"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "chromadb"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
   # Frontend dependencies (npm / package.json)
   - package-ecosystem: "npm"
@@ -18,17 +25,27 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(deps-npm)"
       include: "scope"
+    groups:
+      frontend-dependencies:
+        patterns:
+          - "*"
 
   # GitHub Actions CI/CD workflows
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "chore(ci)"
       include: "scope"
+    groups:
+      actions:
+        patterns:
+          - "actions/*"
+          - "astral-sh/*"
+
