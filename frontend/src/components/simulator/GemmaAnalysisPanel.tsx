@@ -69,112 +69,129 @@ Direto ao ponto, com rigor axiomático e sem preâmbulos.
 
 	return (
 		<div
-			className={`glass-panel mt-12 p-8! lg:p-12! flex flex-col gap-10 transition-all duration-700 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.8)] border-white/10 ${isStreaming ? 'border-accent-emerald/40 shadow-emerald-500/10' : 'border-white/5 hover:border-white/20'}`}
+			className={`glass-panel p-5 sm:p-6 flex flex-col gap-4.5 rounded-3xl bg-slate-950/60 border shadow-xl transition-all duration-500 backdrop-blur-2xl relative overflow-hidden group/gemma ${
+				isStreaming ? 'border-accent-emerald/40 shadow-emerald-500/10' : 'border-white/8 hover:border-white/15'
+			}`}
 		>
-			<div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/10 pb-8 gap-8 relative z-10">
-				<div className="flex items-center gap-5 group/title">
+			{/* Ambient Backlight */}
+			<div className="pointer-events-none absolute inset-0 bg-radial-[at_top_right] from-emerald-500/5 via-transparent to-transparent opacity-60 transition-opacity duration-700 group-hover/gemma:opacity-100" />
+
+			{/* ═══ CABEÇALHO & SELETOR DE MODELO ═══ */}
+			<div className="flex items-center justify-between gap-3 border-b border-white/8 pb-4 relative z-10">
+				<div className="flex items-center gap-3">
 					<div className="relative">
-						<div className={`w-3 h-3 rounded-full ${isStreaming ? 'bg-accent-emerald animate-ping' : 'bg-accent-emerald/40 shadow-[0_0_15px_var(--accent-emerald)]'}`} />
-						<div className="absolute inset-0 bg-accent-emerald/20 blur-xl rounded-full" />
+						<div
+							className={`w-2.5 h-2.5 rounded-full ${
+								isStreaming
+									? 'bg-accent-emerald animate-ping'
+									: 'bg-accent-emerald/70 shadow-[0_0_10px_var(--color-accent-emerald)]'
+							}`}
+						/>
+						<div className="absolute inset-0 bg-accent-emerald/20 blur-md rounded-full" />
 					</div>
 					<div>
-						<h3 className="text-white font-black text-xl tracking-[0.3em] uppercase m-0 group-hover/title:text-glow-emerald transition-all duration-500">
-							Oráculo <span className="text-text-darker ml-1">Gemma</span>
+						<h3 className="text-xs sm:text-sm font-black text-white uppercase tracking-[0.2em] m-0">
+							Oráculo <span className="text-accent-emerald font-extrabold">Gemma</span>
 						</h3>
-						<p className="text-text-darker text-[0.6rem] font-black tracking-[0.4em] uppercase mt-1.5 m-0">
-							Inteligência Preditiva SOTA v7.0 GOLD
+						<p className="text-text-dim text-[0.52rem] font-mono uppercase tracking-wider mt-0.5 m-0">
+							Inteligência Preditiva · SOTA v8.0 GOLD
 						</p>
 					</div>
 				</div>
-				<div className="flex flex-wrap items-center gap-6">
-					<div className="flex bg-slate-950/80 p-2 rounded-2xl border border-white/10 shadow-inner backdrop-blur-xl">
-						<button
-							type="button"
-							onClick={() => setSelectedModel('auto')}
-							disabled={isStreaming}
-							className={`px-5 py-2 text-[0.65rem] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-500 active:scale-95 ${
-								selectedModel === 'auto'
-									? 'bg-accent-emerald/15 text-accent-emerald border border-accent-emerald/30 shadow-xl'
-									: 'text-text-darker hover:text-text-muted border border-transparent'
-							}`}
-						>
-							Auto
-						</button>
-						<button
-							type="button"
-							onClick={() => setSelectedModel('gemma4:4b')}
-							disabled={isStreaming}
-							className={`px-5 py-2 text-[0.65rem] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-500 active:scale-95 ${
-								selectedModel === 'gemma4:4b'
-									? 'bg-accent-sky/15 text-accent-sky border border-accent-sky/30 shadow-xl'
-									: 'text-text-darker hover:text-text-muted border border-transparent'
-							}`}
-							title="Baixa Latência (4B Edge)"
-						>
-							4B
-						</button>
-						<button
-							type="button"
-							onClick={() => setSelectedModel('gemma4:31b')}
-							disabled={isStreaming}
-							className={`px-5 py-2 text-[0.65rem] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-500 active:scale-95 ${
-								selectedModel === 'gemma4:31b'
-									? 'bg-accent-violet/15 text-accent-violet border border-accent-violet/30 shadow-xl'
-									: 'text-text-darker hover:text-text-muted border border-transparent'
-							}`}
-							title="Deep Thinking & RAG"
-						>
-							31B
-						</button>
-					</div>
+
+				{/* Seletor de Modelo Compacto */}
+				<div className="flex items-center bg-slate-950/80 p-1 rounded-xl border border-white/8 shadow-inner">
 					<button
 						type="button"
-						onClick={handleInjectAnalysis}
+						onClick={() => setSelectedModel('auto')}
 						disabled={isStreaming}
-						className="px-10 py-4 text-[0.7rem] font-black tracking-[0.3em] text-white bg-accent-indigo/15 hover:bg-accent-indigo/25 rounded-2xl border border-accent-indigo/40 disabled:opacity-40 transition-all duration-500 active:scale-90 shadow-2xl hover:shadow-indigo-500/20 group/btn whitespace-nowrap"
+						className={`px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+							selectedModel === 'auto'
+								? 'bg-accent-emerald/20 text-accent-emerald border border-accent-emerald/30 shadow-sm'
+								: 'text-text-dim hover:text-text-muted border border-transparent'
+						}`}
 					>
-						{isStreaming ? (
-							<span className="flex items-center gap-4">
-								<i className="fa-solid fa-atom animate-spin text-accent-indigo" />
-								<span className="animate-pulse">SINTETIZANDO...</span>
-							</span>
-						) : (
-							<span className="flex items-center gap-4">
-								<i className="fa-solid fa-bolt-lightning text-accent-indigo group-hover/btn:scale-110 transition-transform" />
-								<span>INJETAR ANTEVISÃO</span>
-							</span>
-						)}
+						Auto
+					</button>
+					<button
+						type="button"
+						onClick={() => setSelectedModel('gemma4:4b')}
+						disabled={isStreaming}
+						className={`px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+							selectedModel === 'gemma4:4b'
+								? 'bg-accent-sky/20 text-accent-sky border border-accent-sky/30 shadow-sm'
+								: 'text-text-dim hover:text-text-muted border border-transparent'
+						}`}
+						title="Baixa Latência (4B Edge)"
+					>
+						4B
+					</button>
+					<button
+						type="button"
+						onClick={() => setSelectedModel('gemma4:31b')}
+						disabled={isStreaming}
+						className={`px-2.5 py-1 text-[0.56rem] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+							selectedModel === 'gemma4:31b'
+								? 'bg-accent-violet/20 text-accent-violet border border-accent-violet/30 shadow-sm'
+								: 'text-text-dim hover:text-text-muted border border-transparent'
+						}`}
+						title="Deep Thinking & RAG"
+					>
+						31B
 					</button>
 				</div>
 			</div>
 
-			<div className="min-h-40 text-[1rem] text-text-muted font-mono leading-relaxed whitespace-pre-wrap relative bg-black/50 rounded-4xl p-10 border border-white/5 shadow-inner">
+			{/* ═══ BOTÃO DE INJEÇÃO HARMONIZADO & RESPONSIVO ═══ */}
+			<div className="relative z-10 w-full">
+				<button
+					type="button"
+					onClick={handleInjectAnalysis}
+					disabled={isStreaming}
+					className="w-full py-2.5 px-4 text-[0.65rem] font-black tracking-[0.2em] uppercase text-white bg-accent-indigo/15 hover:bg-accent-indigo/25 rounded-xl border border-accent-indigo/35 disabled:opacity-40 transition-all duration-300 active:scale-98 shadow-md hover:shadow-indigo-500/20 group/btn flex items-center justify-center gap-2 cursor-pointer"
+				>
+					{isStreaming ? (
+						<span className="flex items-center gap-2.5">
+							<i className="fa-solid fa-atom animate-spin text-accent-indigo text-xs" />
+							<span className="animate-pulse">Sintetizando Antevisão...</span>
+						</span>
+					) : (
+						<span className="flex items-center gap-2.5">
+							<i className="fa-solid fa-bolt-lightning text-accent-indigo group-hover/btn:scale-110 transition-transform text-xs" />
+							<span>Injetar Antevisão</span>
+						</span>
+					)}
+				</button>
+			</div>
+
+			{/* ═══ TERMINAL DE SAÍDA SOTA ═══ */}
+			<div className="min-h-32 text-[0.75rem] text-slate-300 font-mono leading-relaxed whitespace-pre-wrap relative bg-black/40 rounded-2xl p-4 border border-white/5 shadow-inner overflow-hidden">
 				{error && (
-					<div className="text-accent-rose p-8 bg-accent-rose/10 rounded-3xl border border-accent-rose/20 text-[0.7rem] font-black tracking-widest flex items-center gap-5">
-						<i className="fa-solid fa-triangle-exclamation text-xl" />
+					<div className="text-accent-rose p-3 bg-accent-rose/10 rounded-xl border border-accent-rose/20 text-[0.62rem] font-black tracking-wider flex items-center gap-3">
+						<i className="fa-solid fa-triangle-exclamation text-base shrink-0" />
 						<span>ERRO NA SINAPSE: {error}</span>
 					</div>
 				)}
 				{!error && !streamedText && isStreaming && (
-					<span className="text-accent-emerald/60 italic text-[0.9rem] animate-pulse flex items-center gap-4">
+					<span className="text-accent-emerald/70 italic text-[0.7rem] animate-pulse flex items-center gap-2.5">
 						<i className="fa-solid fa-wifi animate-pulse" />
 						<span>Estabelecendo handshake com a Mente Local...</span>
 					</span>
 				)}
 				{!error && !streamedText && !isStreaming && (
-					<span className="text-text-darker italic text-[0.9rem] flex items-center gap-4">
-						<i className="fa-solid fa-terminal opacity-50" />
-						<span>Aguardando gatilho de injeção SOTA v7.0 GOLD...</span>
+					<span className="text-text-dim italic text-[0.7rem] flex items-center gap-2.5">
+						<i className="fa-solid fa-terminal opacity-40 text-xs" />
+						<span>Aguardando gatilho de injeção SOTA v8.0 GOLD...</span>
 					</span>
 				)}
-				<div className="relative z-10 text-white/90 leading-loose">
+				<div className="relative z-10 text-slate-100 leading-relaxed font-mono">
 					{streamedText}
 					{isStreaming && streamedText && (
-						<span className="inline-block w-2.5 h-5 ml-3 bg-accent-emerald animate-pulse align-baseline shadow-[0_0_15px_var(--accent-emerald)]" />
+						<span className="inline-block w-2 h-4 ml-2 bg-accent-emerald animate-pulse align-baseline shadow-[0_0_10px_var(--color-accent-emerald)]" />
 					)}
 				</div>
-				<div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-					<i className="fa-solid fa-brain text-9xl" />
+				<div className="absolute top-2 right-2 p-3 opacity-5 pointer-events-none">
+					<i className="fa-solid fa-brain text-5xl" />
 				</div>
 			</div>
 		</div>
