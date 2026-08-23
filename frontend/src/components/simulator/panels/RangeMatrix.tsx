@@ -284,10 +284,7 @@ export default function RangeMatrix({
 			</div>
 
 			{/* ═══ GRADE 13x13 COMPLETA, ANCORADA E 100% ESTÁVEL ═══ */}
-			<div
-				className="w-full bg-slate-950/80 p-2.5 sm:p-4 rounded-3xl border border-white/8 shadow-2xl backdrop-blur-3xl overflow-hidden select-none"
-				onMouseLeave={() => setHoveredHand(null)}
-			>
+			<div className="w-full bg-slate-950/80 p-2.5 sm:p-4 rounded-3xl border border-white/8 shadow-2xl backdrop-blur-3xl overflow-hidden select-none">
 				<div className="w-full grid grid-cols-13 gap-0.5 sm:gap-1">
 					{RANKS.map((r1, i) => (
 						<React.Fragment key={`row-${r1}`}>
@@ -317,14 +314,17 @@ export default function RangeMatrix({
 									<button
 										type="button"
 										key={hand}
-										onClick={() => setSelectedHand(hand)}
+										onClick={() => {
+											setSelectedHand(hand);
+											setHoveredHand(null);
+										}}
 										onMouseEnter={() => setHoveredHand(hand)}
-										className={`relative aspect-square flex flex-col items-center justify-center font-mono font-black transition-colors duration-150 cursor-pointer rounded-md sm:rounded-lg border ${cellStyle} ${
+										className={`relative aspect-square flex flex-col items-center justify-center font-mono font-black transition-colors duration-100 cursor-pointer rounded-md sm:rounded-lg border outline-none ${cellStyle} ${
 											isPinned
-												? 'ring-2 ring-accent-amber border-amber-300 brightness-125 z-20 shadow-[0_0_12px_rgba(245,158,11,0.5)]'
+												? 'ring-2 ring-accent-amber border-amber-300 brightness-125 z-10 shadow-[0_0_10px_rgba(245,158,11,0.4)]'
 												: isHovered
-													? 'ring-1.5 ring-white border-white brightness-125 z-10 shadow-[0_0_10px_rgba(255,255,255,0.4)]'
-													: 'hover:border-white/50 hover:brightness-110'
+													? 'ring-1.5 ring-white border-white brightness-125 z-10 shadow-[0_0_8px_rgba(255,255,255,0.3)]'
+													: 'hover:border-white/40'
 										}`}
 										title={`${hand}: Eq ${detail.equity}% | Req ${detail.requiredEquity}% | FE_req ${(feReqCell * 100).toFixed(0)}%`}
 									>
@@ -372,23 +372,25 @@ export default function RangeMatrix({
 				</div>
 			</div>
 
-			{/* ═══ PAINEL INSPETOR DETALHADO DA MÃO SELECIONADA (INFERIOR COM ALTURA ESTÁVEL) ═══ */}
+			{/* ═══ PAINEL INSPETOR DETALHADO DA MÃO SELECIONADA (ALTURA ESTRITAMENTE CONSTANTE) ═══ */}
 			<div className="bg-slate-950/60 border border-white/8 p-5 sm:p-6 rounded-3xl flex flex-col gap-4 shadow-inner">
-				<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
+				<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-4 min-h-[52px]">
 					<div className="flex items-center gap-3">
-						<div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-mono font-black text-lg text-white shadow-inner">
+						<div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-mono font-black text-lg text-white shadow-inner shrink-0">
 							{inspectedDetail.hand}
 						</div>
 						<div>
-							<div className="flex items-center gap-2">
+							<div className="flex items-center gap-2 h-4">
 								<span className="text-[0.58rem] font-mono font-black uppercase tracking-wider text-text-dim block">
 									{getHandTypeDescription(inspectedDetail.isPair, inspectedDetail.isSuited)}
 								</span>
-								{hoveredHand && hoveredHand !== selectedHand && (
-									<span className="text-[0.48rem] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/5 text-text-muted border border-white/10">
-										Preview
-									</span>
-								)}
+								<span
+									className={`text-[0.48rem] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/5 text-text-muted border border-white/10 transition-opacity duration-150 ${
+										hoveredHand && hoveredHand !== selectedHand ? 'opacity-100' : 'opacity-0 pointer-events-none'
+									}`}
+								>
+									Preview
+								</span>
 							</div>
 							<span className="text-xs font-mono font-bold text-slate-300">
 								{inspectedDetail.combos} combinações
@@ -396,9 +398,9 @@ export default function RangeMatrix({
 						</div>
 					</div>
 
-					{/* Badge do Veredito */}
+					{/* Badge do Veredito com Altura e Largura Estáveis */}
 					<div
-						className={`px-4 py-2 rounded-xl border text-center font-mono text-[0.65rem] font-black tracking-wider shadow-sm transition-colors ${
+						className={`px-4 py-2 min-h-[34px] rounded-xl border text-center font-mono text-[0.65rem] font-black tracking-wider shadow-sm transition-colors flex items-center justify-center whitespace-nowrap shrink-0 ${
 							getVerdictBadge(inspectedDetail.verdict).color
 						}`}
 					>
@@ -408,30 +410,30 @@ export default function RangeMatrix({
 
 				{/* Grade de 4 Métricas Chave */}
 				<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 font-mono">
-					<div className="flex flex-col bg-black/40 p-3 rounded-xl border border-white/5">
+					<div className="flex flex-col justify-center bg-black/40 p-3 rounded-xl border border-white/5 min-h-[56px]">
 						<span className="text-[0.5rem] text-text-dim uppercase tracking-wider mb-0.5">
 							Equidade vs Shove
 						</span>
-						<span className="text-sm font-black text-white">
+						<span className="text-sm font-black text-white leading-none">
 							{inspectedDetail.equity}%
 						</span>
 					</div>
 
-					<div className="flex flex-col bg-black/40 p-3 rounded-xl border border-white/5">
+					<div className="flex flex-col justify-center bg-black/40 p-3 rounded-xl border border-white/5 min-h-[56px]">
 						<span className="text-[0.5rem] text-text-dim uppercase tracking-wider mb-0.5">
 							Equidade Requerida
 						</span>
-						<span className="text-sm font-black text-accent-amber">
+						<span className="text-sm font-black text-accent-amber leading-none">
 							{inspectedDetail.requiredEquity}%
 						</span>
 					</div>
 
-					<div className="flex flex-col bg-black/40 p-3 rounded-xl border border-white/5">
+					<div className="flex flex-col justify-center bg-black/40 p-3 rounded-xl border border-white/5 min-h-[56px]">
 						<span className="text-[0.5rem] text-text-dim uppercase tracking-wider mb-0.5">
 							Margem de Lucro (&Delta;)
 						</span>
 						<span
-							className={`text-sm font-black ${
+							className={`text-sm font-black leading-none ${
 								inspectedDetail.margin >= 0
 									? 'text-accent-emerald'
 									: 'text-accent-rose'
@@ -442,11 +444,11 @@ export default function RangeMatrix({
 						</span>
 					</div>
 
-					<div className="flex flex-col bg-black/40 p-3 rounded-xl border border-white/5">
+					<div className="flex flex-col justify-center bg-black/40 p-3 rounded-xl border border-white/5 min-h-[56px]">
 						<span className="text-[0.5rem] text-text-dim uppercase tracking-wider mb-0.5">
 							Fold Equity Reversa ($FE_{'{req}'}$)
 						</span>
-						<span className="text-sm font-black text-accent-sky">
+						<span className="text-sm font-black text-accent-sky leading-none">
 							{calculateReverseRequiredFoldEquity(15, 20, inspectedDetail.equity / 100, 15) === 0
 								? '0.0% (Valor Puro)'
 								: `${(calculateReverseRequiredFoldEquity(15, 20, inspectedDetail.equity / 100, 15) * 100).toFixed(1)}%`}
@@ -479,8 +481,8 @@ export default function RangeMatrix({
 					</div>
 				</div>
 
-				<div className="min-h-[58px] flex items-center bg-black/20 p-3 rounded-xl border border-white/5">
-					<p className="text-[0.65rem] text-text-muted leading-relaxed font-sans m-0 italic">
+				<div className="min-h-[56px] h-[56px] flex items-center bg-black/20 p-3 rounded-xl border border-white/5 overflow-hidden">
+					<p className="text-[0.65rem] text-text-muted leading-relaxed font-sans m-0 italic line-clamp-2">
 						{inspectedDetail.margin >= 0
 							? `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) supera o limiar de sobrevivência ICM (${inspectedDetail.requiredEquity}%), gerando call de expectativa positiva.`
 							: `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) é inferior à barreira de risco ICM (${inspectedDetail.requiredEquity}%). Dar call resulta em perda massiva de EV em dinheiro real.`}
