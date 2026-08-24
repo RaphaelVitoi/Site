@@ -4,6 +4,7 @@ Travam a ESTRATEGIA definida pelo operador, nao os dados do estudo. Cada
 assercao corresponde a uma regra que, se revertida, degradaria o sistema em
 silencio.
 """
+# pylint: disable=protected-access
 
 from __future__ import annotations
 
@@ -13,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+import core.config as cfg
 from llm.model_registry import MODEL_REGISTRY
 from llm.routing_policy import (
     AGENTES,
@@ -42,6 +44,7 @@ MESH = RAIZ / "core" / "subagents_mesh.py"
 
 
 # ── Cobertura: o defeito que deixou o gemma4 de fora ─────────────────────────
+
 
 def test_cobertura_bidirecional_com_o_manifesto():
     """A versao anterior so checava mapa ⊆ manifesto e passou faltando o gemma4.
@@ -83,6 +86,7 @@ def test_todo_modelo_roteado_existe_em_algum_registro():
 
 # ── A regra central: faixa antes de preco unitario ───────────────────────────
 
+
 def test_operacional_usa_faixa_gratuita_e_nao_o_menor_preco():
     """Regressao guardada: uma versao anterior roteava operacional para
     gpt-5.6-luna por ter o menor $/token, ignorando que gemini-3.7-flash tem
@@ -93,8 +97,8 @@ def test_operacional_usa_faixa_gratuita_e_nao_o_menor_preco():
     luna = MODEL_REGISTRY["gpt-5.6-luna"]
     flash = MODEL_REGISTRY["gemini-3.7-flash"]
     assert luna.price_per_1m_in < flash.price_per_1m_in  # a Luna E mais barata...
-    assert rota.primario != "gpt-5.6-luna"                # ...e ainda assim nao e primaria
-    assert rota.fallback == "gpt-5.6-luna"                # fica como fallback pago
+    assert rota.primario != "gpt-5.6-luna"  # ...e ainda assim nao e primaria
+    assert rota.fallback == "gpt-5.6-luna"  # fica como fallback pago
 
 
 def test_ordem_de_consumo_respeita_a_economia_generalizada():
@@ -105,6 +109,7 @@ def test_ordem_de_consumo_respeita_a_economia_generalizada():
 
 
 # ── Tabela do operador ───────────────────────────────────────────────────────
+
 
 @pytest.mark.parametrize(
     ("agente", "primario", "fallback"),
@@ -148,6 +153,7 @@ def test_conflitos_com_o_manifesto_estao_declarados():
 
 # ── Faixa local ──────────────────────────────────────────────────────────────
 
+
 def test_gemma4_fica_na_faixa_local():
     r = rota_de("gemma4")
     assert r.faixa is Faixa.LOCAL
@@ -157,7 +163,10 @@ def test_gemma4_fica_na_faixa_local():
 
 def test_modelo_local_nao_quebra_a_matematica_de_economia():
     r = economia_do_escalonamento(
-        ClasseTarefa.LOCAL, chamadas=100, tokens_in=1000, tokens_out=100,
+        ClasseTarefa.LOCAL,
+        chamadas=100,
+        tokens_in=1000,
+        tokens_out=100,
         fracao_escalada=0.1,
     )
     assert r["custo_escalonado"] >= 0
@@ -171,6 +180,7 @@ def test_math_verifier_usa_a_frota_local():
 
 # ── Assimetria e escalonamento ───────────────────────────────────────────────
 
+
 def test_construcao_e_estrategia_usam_provedores_diferentes():
     c = MODEL_REGISTRY[ROTAS[ClasseTarefa.CONSTRUCAO].primario]
     e = MODEL_REGISTRY[ROTAS[ClasseTarefa.ESTRATEGIA].primario]
@@ -183,15 +193,22 @@ def test_construcao_escalona_de_sonnet_para_opus():
 
 
 def test_topo_nao_escalona():
-    for classe in (ClasseTarefa.GOVERNANCA, ClasseTarefa.ESTRATEGIA,
-                   ClasseTarefa.RACIOCINIO_PROFUNDO, ClasseTarefa.SESSAO_MULTI_DIA):
+    for classe in (
+        ClasseTarefa.GOVERNANCA,
+        ClasseTarefa.ESTRATEGIA,
+        ClasseTarefa.RACIOCINIO_PROFUNDO,
+        ClasseTarefa.SESSAO_MULTI_DIA,
+    ):
         assert ROTAS[classe].escalona_para is None
 
 
 def test_escalonamento_raro_economiza():
     r = economia_do_escalonamento(
-        ClasseTarefa.VERIFICACAO, chamadas=1000, tokens_in=20_000,
-        tokens_out=2_000, fracao_escalada=0.05,
+        ClasseTarefa.VERIFICACAO,
+        chamadas=1000,
+        tokens_in=20_000,
+        tokens_out=2_000,
+        fracao_escalada=0.05,
     )
     assert r["economia_pct"] > 50
     assert r["vale_a_pena"]
@@ -199,13 +216,17 @@ def test_escalonamento_raro_economiza():
 
 def test_escalonamento_constante_deixa_de_compensar():
     r = economia_do_escalonamento(
-        ClasseTarefa.VERIFICACAO, chamadas=1000, tokens_in=20_000,
-        tokens_out=2_000, fracao_escalada=0.999,
+        ClasseTarefa.VERIFICACAO,
+        chamadas=1000,
+        tokens_in=20_000,
+        tokens_out=2_000,
+        fracao_escalada=0.999,
     )
     assert not r["vale_a_pena"]
 
 
 # ── Timeout para raciocinio estendido ────────────────────────────────────────
+
 
 def test_timeout_cresce_com_o_esforco():
     """Recomendacao 3 do estudo: socket fechado no meio descarta trabalho pago."""
@@ -217,10 +238,23 @@ def test_timeout_cresce_com_o_esforco():
 
 # ── ROI ──────────────────────────────────────────────────────────────────────
 
+
 def test_roi_penaliza_tokens_de_raciocinio():
-    base = dict(taxa_sucesso=0.8, tokens_in=10_000, tokens_out=2_000, latencia_s=5.0)
-    assert estimar_roi("claude-opus-5", **base, multiplicador_raciocinio=4.0) < \
-           estimar_roi("claude-opus-5", **base, multiplicador_raciocinio=1.0)
+    assert estimar_roi(
+        "claude-opus-5",
+        taxa_sucesso=0.8,
+        tokens_in=10_000,
+        tokens_out=2_000,
+        latencia_s=5.0,
+        multiplicador_raciocinio=4.0,
+    ) < estimar_roi(
+        "claude-opus-5",
+        taxa_sucesso=0.8,
+        tokens_in=10_000,
+        tokens_out=2_000,
+        latencia_s=5.0,
+        multiplicador_raciocinio=1.0,
+    )
 
 
 def test_roi_rejeita_entrada_invalida():
@@ -232,6 +266,7 @@ def test_roi_rejeita_entrada_invalida():
 
 # ── Pruning de ferramentas ───────────────────────────────────────────────────
 
+
 def test_conjunto_pequeno_nao_e_podado():
     fer = [{"name": f"t{i}"} for i in range(4)]
     assert plano_de_ferramentas(fer, relevantes=set()) == fer
@@ -239,8 +274,7 @@ def test_conjunto_pequeno_nao_e_podado():
 
 def test_irrelevantes_sao_diferidas():
     fer = [{"name": f"t{i}"} for i in range(12)]
-    carregadas = [f for f in plano_de_ferramentas(fer, relevantes={"t3"})
-                  if not f.get("defer_loading")]
+    carregadas = [f for f in plano_de_ferramentas(fer, relevantes={"t3"}) if not f.get("defer_loading")]
     assert [f["name"] for f in carregadas] == ["t3"]
 
 
@@ -253,18 +287,16 @@ def test_ferramenta_de_busca_nunca_e_diferida():
 
 def test_nunca_difere_todas():
     fer = [{"name": f"t{i}"} for i in range(12)]
-    assert any(not f.get("defer_loading")
-               for f in plano_de_ferramentas(fer, relevantes=set()))
+    assert any(not f.get("defer_loading") for f in plano_de_ferramentas(fer, relevantes=set()))
 
 
 # ── Integracao: a politica precisa estar LIGADA, nao ser uma ilha ────────────
+
 
 def test_core_config_expoe_modelo_concreto_por_agente():
     """Regressao guardada: a politica existiu por commits inteiros sem que
     nada a importasse, e o sistema seguia com todos os agentes no mesmo modelo.
     'Integrado' significa que o comportamento em execucao mudou."""
-    import core.config as cfg
-
     mapa = cfg.AGENT_MODEL_MAP
     assert len(mapa) == 19, f"esperado 19 agentes resolvidos, veio {len(mapa)}"
     assert len(set(mapa.values())) >= 3, f"roteamento colapsou: {set(mapa.values())}"
@@ -274,8 +306,6 @@ def test_core_config_expoe_modelo_concreto_por_agente():
 
 
 def test_nenhum_agente_fica_sem_modelo():
-    import core.config as cfg
-
     sem = [a for a, m in cfg.AGENT_MODEL_MAP.items() if not m]
     assert not sem, f"agentes sem modelo: {sem}"
 
@@ -283,8 +313,6 @@ def test_nenhum_agente_fica_sem_modelo():
 def test_resolucao_degrada_sem_derrubar_a_configuracao():
     """Se a politica sumir, cai para primary_model do manifesto em vez de
     quebrar o carregamento de configuracao do projeto inteiro."""
-    import core.config as cfg
-
     manifesto = json.loads(MANIFESTO.read_text(encoding="utf-8"))
     fallback = cfg._resolver_modelos({"inexistente_xyz": {"primary_model": "modelo-x"}})
     assert fallback["@inexistente_xyz"] == "modelo-x"
@@ -292,7 +320,31 @@ def test_resolucao_degrada_sem_derrubar_a_configuracao():
 
 
 def test_hierarquia_de_tiers_cobre_governanca_e_execucao():
-    tiers = {AGENTES[a][0] for a in AGENTES}
+    tiers = {spec[0] for spec in AGENTES.values()}
     assert TierAgente.GOVERNANCA in tiers
     assert TierAgente.ESTRATEGIA in tiers
     assert TierAgente.EXECUCAO in tiers
+
+
+def test_avaliar_uso_condicional_pro():
+    from llm.routing_policy import avaliar_uso_condicional_pro
+    
+    # 1. Tarefa de baixa complexidade ou ganho marginal -> Gemini 3.7 Flash
+    res_flash = avaliar_uso_condicional_pro(
+        complexidade_formal=False,
+        ganho_qualidade_esperado_pct=10.0,
+    )
+    assert res_flash["modelo_escolhido"] == "gemini-3.7-flash"
+    assert res_flash["aprovado_pro"] is False
+    assert "Gemini 3.7 Flash supre a tarefa" in res_flash["motivo"]
+    
+    # 2. Tarefa de alta complexidade matematica e ganho expressivo -> Gemini 3.1 Pro
+    res_pro = avaliar_uso_condicional_pro(
+        complexidade_formal=True,
+        ganho_qualidade_esperado_pct=40.0,
+    )
+    assert res_pro["modelo_escolhido"] == "gemini-3.1-pro"
+    assert res_pro["aprovado_pro"] is True
+    assert res_pro["beneficio_estimado_pct"] == 40.0
+    assert "Alta complexidade matematica" in res_pro["motivo"]
+

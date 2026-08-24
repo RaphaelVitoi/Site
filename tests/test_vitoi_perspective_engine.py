@@ -220,3 +220,79 @@ class TestVitoiPerspectiveEngine:
         assert v_agressivo > v_conservador
         assert round(v_conservador, 4) == 0.53
         assert round(v_agressivo, 4) == 0.77
+
+    def test_calculate_utg_disguised_open_ev(self):
+        """Valida o Teorema 5: Open Disfarcado do UTG & Escudo de Transito."""
+        res_with_shield = VitoiPerspectiveEngine.calculate_utg_disguised_open_ev(
+            hero_stack_bb=25.0,
+            hero_open_size_bb=2.0,
+            dead_money_bb=2.5,
+            num_players_behind=7,
+            short_stacks_behind_count=2,
+            hero_equity_vs_bb=0.62,
+        )
+        res_no_shield = VitoiPerspectiveEngine.calculate_utg_disguised_open_ev(
+            hero_stack_bb=25.0,
+            hero_open_size_bb=2.0,
+            dead_money_bb=2.5,
+            num_players_behind=7,
+            short_stacks_behind_count=0,
+            hero_equity_vs_bb=0.62,
+        )
+        assert res_with_shield["transit_shield_active"] == 1.0
+        assert res_no_shield["transit_shield_active"] == 0.0
+        # O escudo de transito suprime a 3-bet e eleva o EV liquido do open
+        assert res_with_shield["prob_3bet_absorbed"] < res_no_shield["prob_3bet_absorbed"]
+        assert res_with_shield["net_ev_open"] > res_no_shield["net_ev_open"]
+        assert res_with_shield["open_approved"] == 1.0
+
+    def test_calculate_check_condensation_and_ip_aggression(self):
+        """Valida o Teorema 8: Poda Bipolar do Check e Meiuca Condensada."""
+        # 1. OOP checa 100% (Range nao-capado / "quem checa tudo, tem tudo")
+        res_pure = VitoiPerspectiveEngine.calculate_check_condensation_and_ip_aggression(
+            oop_check_strategy_pct=1.0,
+            is_multiway=True,
+            pot_size=15.0,
+        )
+        assert res_pure["is_pure_range_check"] == 1.0
+        assert res_pure["oop_range_capped"] == 0.0
+        assert res_pure["uncapped_retention"] == 1.0
+        assert res_pure["recommended_ip_bet_frequency"] <= 0.40
+
+        # 2. OOP checa parcialmente (Range capado na meiuca)
+        res_capped = VitoiPerspectiveEngine.calculate_check_condensation_and_ip_aggression(
+            oop_check_strategy_pct=0.60,
+            is_multiway=False,
+            pot_size=15.0,
+            board_texture_wetness=0.8,
+        )
+        assert res_capped["is_pure_range_check"] == 0.0
+        assert res_capped["oop_range_capped"] == 1.0
+        assert res_capped["uncapped_retention"] < 0.30
+        assert res_capped["recommended_ip_bet_frequency"] > 0.50
+
+    def test_evaluate_vitoi_theorems_synthesis(self):
+        """Valida o diagnostico unificado dos 10 Teoremas da PMev."""
+        report = VitoiPerspectiveEngine.evaluate_vitoi_theorems(
+            equity=0.65,
+            pot_size=18.0,
+            stack_eff_bb=30.0,
+            active_players=2,
+            street_idx=0,
+            position="BTN",
+            bubble_factor=1.35,
+        )
+        assert "teorema_1_dynamic_ev_fold" in report
+        assert "teorema_2_river_inversion" in report
+        assert "teorema_3_thermodynamic_dissipation" in report
+        assert "teorema_4_convex_speculation" in report
+        assert "teorema_5_utg_disguised_open" in report
+        assert "teorema_6_janda_vitoi_defense" in report
+        assert "teorema_7_multiway_liability" in report
+        assert "teorema_8_check_condensation" in report
+        assert "teorema_9_overpair_decay" in report
+        assert "teorema_10_dual_navigation_vector" in report
+        assert "decision_tree_synthesis" in report
+        assert report["recommended_action"] in ["RAISE", "CALL", "FOLD"]
+        assert isinstance(report["pmev_value"], (int, float))
+

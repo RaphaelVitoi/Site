@@ -456,6 +456,204 @@ class VitoiPerspectiveEngine:
         return round(realized_equity, 4)
 
     @staticmethod
+    def calculate_utg_disguised_open_ev(
+        hero_stack_bb: float,
+        hero_open_size_bb: float,
+        dead_money_bb: float,
+        num_players_behind: int,
+        short_stacks_behind_count: int,
+        hero_equity_vs_bb: float,
+        flop_cbet_fe: float = 0.50,
+        realization_factor: float = 1.15,
+    ) -> dict[str, float]:
+        """
+        Teorema 5 (Vitoi): O Open Disfarcado do UTG & O Escudo de Transito.
+        Abrir de posicao inicial (UTG) com stack confortavel na presenca de short-stacks atras
+        esteriliza 3-bets leves dos lideres e impede Check-Raises do Big Blind OOP.
+        """
+        base_3bet_threat = 0.08 * math.log2(max(num_players_behind, 2))
+        transit_shield_suppression = 0.40 * min(short_stacks_behind_count, 3)
+        prob_3bet_absorbed = max(0.01, base_3bet_threat * (1.0 - transit_shield_suppression))
+        
+        prob_fold_around = max(0.15, 0.50 * (1.0 - 0.04 * num_players_behind))
+        prob_bb_call = max(0.20, 1.0 - prob_fold_around - prob_3bet_absorbed)
+        
+        pot_flop = dead_money_bb + (hero_open_size_bb * 2.0)
+        r_eff = realization_factor * (1.0 + 0.10 * short_stacks_behind_count)
+        postflop_ev = (flop_cbet_fe * pot_flop) + ((1.0 - flop_cbet_fe) * ((hero_equity_vs_bb * r_eff * pot_flop) - hero_open_size_bb))
+        
+        net_ev_open = (prob_fold_around * dead_money_bb) + (prob_bb_call * postflop_ev) - (prob_3bet_absorbed * hero_open_size_bb)
+        
+        return {
+            "prob_fold_around": round(prob_fold_around, 4),
+            "prob_3bet_absorbed": round(prob_3bet_absorbed, 4),
+            "prob_bb_call": round(prob_bb_call, 4),
+            "postflop_ev_bb": round(postflop_ev, 4),
+            "net_ev_open": round(net_ev_open, 4),
+            "transit_shield_active": 1.0 if short_stacks_behind_count >= 1 else 0.0,
+            "open_approved": 1.0 if net_ev_open > 0.0 else 0.0,
+        }
+
+    @staticmethod
+    def calculate_check_condensation_and_ip_aggression(
+        oop_check_strategy_pct: float,
+        is_multiway: bool,
+        pot_size: float,
+        board_texture_wetness: float = 0.5,
+    ) -> dict[str, float]:
+        """
+        Teorema 8 (Vitoi): A Poda Bipolar do Check e o Teorema 'Quem Checa Tudo, Tem Tudo'.
+        Quando o agressor OOP adota Check-100% de range no 3-way, o range permanece estritamente
+        NAO-CAPADO ('quem checa tudo, tem tudo'). Checagens parciais condensam a meiuca.
+        """
+        clamped_check = max(0.0, min(1.0, oop_check_strategy_pct))
+        is_pure_range_check = clamped_check >= 0.95
+        
+        if is_pure_range_check:
+            uncapped_retention = 1.0
+            condensed_middle_retention = 1.0
+            oop_range_capped = 0.0
+            recommended_ip_bet_frequency = 0.33 if is_multiway else 0.45
+            ip_check_back_realization = 0.85
+        else:
+            uncapped_retention = max(0.05, clamped_check * 0.4)
+            condensed_middle_retention = min(1.0, clamped_check * 1.5)
+            oop_range_capped = 1.0
+            wetness_mod = 1.0 + (board_texture_wetness * 0.25)
+            recommended_ip_bet_frequency = min(0.85, (0.55 if not is_multiway else 0.42) * wetness_mod)
+            ip_check_back_realization = 0.65
+            
+        return {
+            "oop_check_strategy_pct": round(clamped_check, 4),
+            "is_pure_range_check": 1.0 if is_pure_range_check else 0.0,
+            "oop_range_capped": oop_range_capped,
+            "uncapped_retention": round(uncapped_retention, 4),
+            "condensed_middle_retention": round(condensed_middle_retention, 4),
+            "recommended_ip_bet_frequency": round(recommended_ip_bet_frequency, 4),
+            "ip_check_back_realization": round(ip_check_back_realization, 4),
+        }
+
+    @classmethod
+    def evaluate_vitoi_theorems(
+        cls,
+        equity: float,
+        pot_size: float,
+        stack_eff_bb: float,
+        active_players: int = 2,
+        street_idx: int = 0,
+        position: str = "BTN",
+        bubble_factor: float = 1.30,
+        time_to_blind_minutes: float = 10.0,
+        payjump_proximity: float = 0.5,
+        base_rio: float = 1.0,
+        board_connectedness: float = 0.5,
+    ) -> dict[str, Any]:
+        """
+        SOTA: Sintese Unificada dos 10 Teoremas Canonicos da Perspectiva Matematica (PMev).
+        Executa uma auditoria multidimensional diacronica do cenario em tempo real.
+        """
+        ev_fold = cls.calculate_dynamic_ev_fold(
+            base_antes=1.0,
+            time_to_blind_minutes=time_to_blind_minutes,
+            payjump_proximity_factor=payjump_proximity,
+            position=position,
+        )
+        
+        t2_res = cls.calculate_negative_risk_premium_river(
+            pot_size=pot_size,
+            bet_size=min(pot_size * 0.5, stack_eff_bb),
+            residual_stack_bb=stack_eff_bb,
+            fold_survival_prob=0.05,
+            call_win_survival_prob=0.40,
+        )
+        
+        t3_dissipation = cls.calculate_symmetric_dissipation_vector(
+            stacks=[stack_eff_bb * 2.0, stack_eff_bb, stack_eff_bb * 0.7, stack_eff_bb * 0.4],
+            eliminated_idx=3,
+            lost_perspective=0.15,
+        )
+        
+        t4_spec = cls.calculate_convex_speculation_ev(
+            entry_cost_bb=2.0,
+            prob_hit_cooler=0.12,
+            current_title_prob=0.18,
+            new_leader_title_prob=0.55,
+        )
+        
+        t5_utg = cls.calculate_utg_disguised_open_ev(
+            hero_stack_bb=stack_eff_bb,
+            hero_open_size_bb=2.0,
+            dead_money_bb=2.5,
+            num_players_behind=7,
+            short_stacks_behind_count=2 if stack_eff_bb >= 20 else 0,
+            hero_equity_vs_bb=equity,
+        )
+        
+        t6_janda = cls.calculate_janda_vitoi_defense(
+            pot_size=pot_size,
+            bet_size=min(pot_size * 0.5, stack_eff_bb),
+            bubble_factor=bubble_factor,
+        )
+        
+        t7_multiway = cls.calculate_combinatorial_multiway_liability(
+            active_players=active_players,
+            base_rio=base_rio,
+            equity=equity,
+            bubble_factor_avg=bubble_factor,
+        )
+        
+        t8_check = cls.calculate_check_condensation_and_ip_aggression(
+            oop_check_strategy_pct=1.0 if active_players >= 3 else 0.70,
+            is_multiway=active_players >= 3,
+            pot_size=pot_size,
+            board_texture_wetness=board_connectedness,
+        )
+        
+        t9_decay = cls.calculate_static_overpair_decay(
+            preflop_equity=equity if equity > 0.70 else 0.85,
+            street_idx=street_idx,
+            board_connectedness=board_connectedness,
+            active_opponents=active_players,
+        )
+        
+        t10_vector = cls.calculate_dual_navigation_vector(
+            alpha_attack=0.65 if stack_eff_bb > 25 else 0.25,
+            expansion_title_value=0.75,
+            conservation_survival_value=0.45,
+        )
+        
+        tree_res = cls.simulate_decision_tree(
+            equity=equity,
+            pot_size=pot_size,
+            stack_eff=stack_eff_bb,
+            active_players=active_players,
+            street_idx=street_idx,
+            hero_invested=2.0,
+            ev_fold_dynamic=ev_fold,
+            structural_liability=t7_multiway,
+            valuation_stack=1.0,
+            amortized_edge=cls.calculate_edge_amortization(stack_eff_bb, 0.05, 1.5),
+            aggression_factor=1.5,
+            realization_factor=1.0,
+        )
+        
+        return {
+            "teorema_1_dynamic_ev_fold": ev_fold,
+            "teorema_2_river_inversion": t2_res,
+            "teorema_3_thermodynamic_dissipation": t3_dissipation,
+            "teorema_4_convex_speculation": t4_spec,
+            "teorema_5_utg_disguised_open": t5_utg,
+            "teorema_6_janda_vitoi_defense": t6_janda,
+            "teorema_7_multiway_liability": t7_multiway,
+            "teorema_8_check_condensation": t8_check,
+            "teorema_9_overpair_decay": t9_decay,
+            "teorema_10_dual_navigation_vector": t10_vector,
+            "decision_tree_synthesis": tree_res,
+            "recommended_action": tree_res["best_action"],
+            "pmev_value": tree_res["pm_best"],
+        }
+
+    @staticmethod
     def calculate_dual_navigation_vector(
         alpha_attack: float,
         expansion_title_value: float,
