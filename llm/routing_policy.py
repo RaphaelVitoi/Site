@@ -246,6 +246,10 @@ SUBAGENTES: dict[str, ClasseTarefa] = {
     "streaming_fim_companion": ClasseTarefa.OPERACIONAL,
     "ui_design_curator": ClasseTarefa.CONSTRUCAO,
     "research": ClasseTarefa.RACIOCINIO_PROFUNDO,
+    "validador": ClasseTarefa.VERIFICACAO,
+    "implementor": ClasseTarefa.CONSTRUCAO,
+    "curator": ClasseTarefa.RACIOCINIO_PROFUNDO,
+    "architect": ClasseTarefa.CONSTRUCAO,
     "self": ClasseTarefa.OPERACIONAL,  # copia do pai para fan-out barato
 }
 
