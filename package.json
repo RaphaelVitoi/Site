@@ -32,7 +32,7 @@
     "python:format": "uv run --no-sync ruff format .",
     "python:typecheck": "uv run --no-sync pyright",
     "python:coverage": "uv run --no-sync pytest --cov=engine tests/",
-    "sota:audit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ops/cwv_gate.ps1",
+    "sota:audit": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/ops/cwv_gate.ps1",
     "sota:full": "npm run python:lint && npm run python:typecheck && npm run lint && npm run typecheck && npm run python:test",
     "watch:all": "concurrently -n \"RUFF,TEST\" -c \"yellow,green\" \"npm run python:watch\" \"npm run python:test:watch\"",
     "dev:all": "concurrently -n \"NEXT,RUFF,TEST\" -c \"cyan,yellow,green\" \"npm run dev\" \"npm run python:watch\" \"npm run python:test:watch\""
