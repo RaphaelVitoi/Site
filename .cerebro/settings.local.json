@@ -6,7 +6,11 @@
       "sota_sync",
       "sota_audit",
       "sota_db_check",
-      "sota_inject_ipc"
+      "sota_inject_ipc",
+      "sota_pmev_eval",
+      "sota_monthly_audit",
+      "sota_model_roi",
+      "sota_test_suite"
     ]
   },
   "operations": {
@@ -56,6 +60,60 @@
       "args": [
         "-lc",
         "uv run python task_executor.py db-add '{payload_b64}'"
+      ]
+    },
+    "sota_pmev_eval": {
+      "description": "Avalia spot na Perspectiva Matematica (PMev) usando os 10 Teoremas Canônicos de Raphael Vitoi",
+      "type": "Python",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "equity": { "type": "number", "description": "Equidade de showdown (0.0 a 1.0)" },
+          "pot_size": { "type": "number", "description": "Tamanho do pote em BB" },
+          "stack_eff_bb": { "type": "number", "description": "Stack efetivo em BB" },
+          "position": { "type": "string", "description": "Posicao na mesa (ex: UTG, BTN, BB)" },
+          "active_players": { "type": "integer", "description": "Numero de jogadores ativos no pote" }
+        },
+        "required": ["equity", "pot_size", "stack_eff_bb"]
+      },
+      "command": "python",
+      "args": [
+        "-c",
+        "from engine.vitoi_perspective_engine import VitoiPerspectiveEngine; import json, sys; res = VitoiPerspectiveEngine.evaluate_vitoi_theorems(equity={equity}, pot_size={pot_size}, stack_eff_bb={stack_eff_bb}, position='{position}', active_players={active_players}); print(json.dumps(res, indent=2))"
+      ]
+    },
+    "sota_monthly_audit": {
+      "description": "Executa a rotina analitica mensal de auditoria do Modus Operandi e Roteamento SOTA",
+      "type": "Python",
+      "command": "python",
+      "args": [
+        "scripts/routines/audit_monthly_modus_operandi_and_routing.py"
+      ]
+    },
+    "sota_model_roi": {
+      "description": "Avalia o ROI condicional do Gemini 3.1 Pro vs. Gemini 3.7 Flash para uma tarefa",
+      "type": "Python",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "complexidade_formal": { "type": "boolean", "description": "Se a tarefa exige provar teoremas ou calculos de alta densidade" },
+          "ganho_qualidade_esperado_pct": { "type": "number", "description": "Ganho percentual estimado de qualidade (0 a 100)" }
+        },
+        "required": ["complexidade_formal", "ganho_qualidade_esperado_pct"]
+      },
+      "command": "python",
+      "args": [
+        "-c",
+        "from llm.routing_policy import avaliar_uso_condicional_pro; import json; print(json.dumps(avaliar_uso_condicional_pro(complexidade_formal={complexidade_formal}, ganho_qualidade_esperado_pct={ganho_qualidade_esperado_pct}), indent=2))"
+      ]
+    },
+    "sota_test_suite": {
+      "description": "Executa a suite completa de testes de regressao do Nexus Core",
+      "type": "Python",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest"
       ]
     }
   },
