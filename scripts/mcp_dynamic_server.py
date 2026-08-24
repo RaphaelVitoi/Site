@@ -123,14 +123,17 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
 
     logger.info(f"Delegando syscal para '{name}': {exec_cmd} {' '.join(exec_args)}")
 
+    if exec_cmd == "python":
+        exec_cmd = sys.executable
+
     try:
-        # Enforce execution timeout (max 15s) to prevent hanging deceptions
+        # Enforce execution timeout (max 30s) to prevent hanging deceptions
         process = await asyncio.create_subprocess_exec(
             exec_cmd,
             *exec_args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            cwd=str(BASE_DIR) if sys.platform == "linux" else None,
+            cwd=str(BASE_DIR),
         )
 
         try:

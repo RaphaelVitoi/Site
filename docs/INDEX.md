@@ -18,6 +18,7 @@ Este índice é o ponto de entrada documental do repositório. Ele organiza as f
 |---|---|
 | Topologia executiva e comandos de entrada | [README](../README.md) |
 | Arquitetura Padrão-Ouro (4 Camadas & MCP) | [ARQUITETURA_PADRAO_OURO_SOTA_2026.md](ARQUITETURA_PADRAO_OURO_SOTA_2026.md) |
+| Topologia do Ecossistema MCP (35+24 Servidores) | [MCP_ECOSYSTEM_TOPOLOGY_2026.md](MCP_ECOSYSTEM_TOPOLOGY_2026.md) |
 | Tratado Canônico da Perspectiva Matemática | [PERSPECTIVA_MATEMATICA_PMEV_MASTER.md](PERSPECTIVA_MATEMATICA_PMEV_MASTER.md) |
 | Arquitetura de frontend | [architecture/frontend.md](architecture/frontend.md) |
 | Banco, rotas e contratos | [architecture/SPEC_ROTEAMENTO_DB.md](architecture/SPEC_ROTEAMENTO_DB.md) |
