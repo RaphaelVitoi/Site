@@ -70,6 +70,22 @@
         {
             "name": "TEORIA SOTA CONVENCIONAL (PERSPECTIVA E ESPERANCA)",
             "path": "docs/architecture/THEORY_SOTA_CONVENCIONAL.md"
+        },
+        {
+            "name": "ARQUITETURA TECNICA PADRAO-OURO (SOTA v8.0 GOLD 2026)",
+            "path": "docs/ARQUITETURA_PADRAO_OURO_SOTA_2026.md"
+        },
+        {
+            "name": "PERSPECTIVA MATEMATICA PMEV TRATADO MASTER",
+            "path": "docs/PERSPECTIVA_MATEMATICA_PMEV_MASTER.md"
+        },
+        {
+            "name": "RELATORIO OFICIAL DE SESSAO 2026-08-24 SOTA v8.0 GOLD",
+            "path": "reports/RELATORIO_SESSAO_2026_08_24_SOTA_v8_GOLD.md"
+        },
+        {
+            "name": "AUDITORIA MENSAL MODUS OPERANDI E ROUTING (2026_08)",
+            "path": "reports/audits/AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_2026_08.md"
         }
     ]
 }

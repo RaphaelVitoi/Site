@@ -59,12 +59,10 @@ CORRECOES_APLICADAS: dict[str, str] = {
         "da geracao 5. O estudo so menciona isso para a OpenAI."
     ),
     "openai.max_output": (
-        "O estudo declara 64k (Sol/Terra) e 32k (Luna). A documentacao indica "
-        "128k para as tres variantes."
+        "O estudo declara 64k (Sol/Terra) e 32k (Luna). A documentacao indica 128k para as tres variantes."
     ),
     "openai.contexto_luna": (
-        "O estudo declara 512k de contexto para a Luna. A documentacao indica "
-        "1.05M para as tres variantes."
+        "O estudo declara 512k de contexto para a Luna. A documentacao indica 1.05M para as tres variantes."
     ),
     "openai.preco_luna": (
         "CRITICO PARA ORCAMENTO. O estudo declara $1.00/$6.00 por 1M. A "
@@ -104,9 +102,9 @@ class AdapterType(str, Enum):
 class VerificationStatus(str, Enum):
     """Procedencia do dado. Nunca tratar INFERIDO como se fosse VERIFICADO."""
 
-    VERIFICADO = "verificado"          # confirmado em doc autoritativa
+    VERIFICADO = "verificado"  # confirmado em doc autoritativa
     NAO_VERIFICADO = "nao_verificado"  # plausivel, sem confirmacao
-    CORRIGIDO = "corrigido"            # o estudo errava; valor aqui e o corrigido
+    CORRIGIDO = "corrigido"  # o estudo errava; valor aqui e o corrigido
 
 
 class ModelCapability(BaseModel):
@@ -215,7 +213,6 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "Exige retencao de dados de 30 dias — org com ZDR recebe 400."
         ),
     ),
-
     # ── OPENAI — GPT-5.6 ─────────────────────────────────────────────────────
     "gpt-5.6-sol": ModelCapability(
         adapter=AdapterType.OPENAI,
@@ -233,7 +230,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         model_name="gpt-5.6-terra",
         context_window_in=1_050_000,
         max_output_tokens=131_072,
-        price_per_1m_in=2.00,   # CORRIGIDO: estudo dizia 2.50
+        price_per_1m_in=2.00,  # CORRIGIDO: estudo dizia 2.50
         price_per_1m_out=12.00,  # CORRIGIDO: estudo dizia 15.00
         reasoning_effort="high",
         verification=VerificationStatus.CORRIGIDO,
@@ -242,9 +239,9 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         adapter=AdapterType.OPENAI,
         model_name="gpt-5.6-luna",
         context_window_in=1_050_000,  # CORRIGIDO: estudo dizia 512_000
-        max_output_tokens=131_072,     # CORRIGIDO: estudo dizia 32_768
-        price_per_1m_in=0.20,          # CORRIGIDO: estudo dizia 1.00
-        price_per_1m_out=1.20,         # CORRIGIDO: estudo dizia 6.00
+        max_output_tokens=131_072,  # CORRIGIDO: estudo dizia 32_768
+        price_per_1m_in=0.20,  # CORRIGIDO: estudo dizia 1.00
+        price_per_1m_out=1.20,  # CORRIGIDO: estudo dizia 6.00
         reasoning_effort="low",
         verification=VerificationStatus.CORRIGIDO,
         notas=(
@@ -253,7 +250,6 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "primario obvio para triagem e sub-agentes."
         ),
     ),
-
     # ── GOOGLE — Gemini 3 ────────────────────────────────────────────────────
     "gemini-3.7-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
@@ -271,17 +267,53 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "tratar como estimativa ate conferir."
         ),
     ),
+    "gemini-3.6-flash": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-3.6-flash",
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=0.50,
+        price_per_1m_out=2.50,
+        thinking_level="high",
+        thought_signature_mode="stateful",
+        verification=VerificationStatus.VERIFICADO,
+        notas="Circuito de fallback canonico para gemini-3.7-flash em pipelines de extracao JSON estrita.",
+    ),
+    "gemini-3.5-flash": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-3.5-flash",
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=0.35,
+        price_per_1m_out=1.50,
+        thinking_level="high",
+        thought_signature_mode="stateful",
+        verification=VerificationStatus.VERIFICADO,
+        notas="Degrau 3 do circuito de continuidade SOTA.",
+    ),
+    "gemini-3.5-flash-lite": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-3.5-flash-lite",
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=0.15,
+        price_per_1m_out=0.60,
+        thinking_level="low",
+        thought_signature_mode="stateless",
+        verification=VerificationStatus.VERIFICADO,
+        notas="Camada 1: Triagem, parsing rapido e borda de baixa latencia.",
+    ),
     "gemini-3.1-pro": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.1-pro-preview",
-        context_window_in=1_000_000,
+        context_window_in=2_000_000,
         max_output_tokens=65_536,
         price_per_1m_in=2.00,
         price_per_1m_out=10.00,
         thinking_level="high",
         thought_signature_mode="stateful",
         verification=VerificationStatus.NAO_VERIFICADO,
-        notas="Preview. Existencia verificada; precos nao confirmados.",
+        notas="Preview. Janela de 2M tokens para analise de manuscritos inteiros e deducoes logicas profundas.",
     ),
 }
 
@@ -302,10 +334,7 @@ def get(alias: str) -> ModelCapability:
         extra = ""
         if alias in MODELOS_NAO_VERIFICADOS:
             extra = f" MOTIVO: {MODELOS_NAO_VERIFICADOS[alias]}"
-        raise KeyError(
-            f"Modelo '{alias}' nao esta no registro. "
-            f"Disponiveis: {sorted(MODEL_REGISTRY)}.{extra}"
-        )
+        raise KeyError(f"Modelo '{alias}' nao esta no registro. Disponiveis: {sorted(MODEL_REGISTRY)}.{extra}")
     return MODEL_REGISTRY[alias]
 
 

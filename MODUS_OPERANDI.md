@@ -59,17 +59,6 @@ O objetivo central é a **preservação do contexto** e a **agilidade de resolu�
 
 ## 4. FLUXO OPERACIONAL AGÊNTICO E ARTEFATOS (ANTIGRAVITY 2.0)
 
-O desenvolvimento no ecossistema independente exige determinismo absoluto e mitigação de entropia de contexto:
-
-### A. Gatilhos de Controle Operacional
-*   **Decisão (/grill-me):** Em caso de tarefas de alta complexidade ou ambiguidade, force o modo de alinhamento com perguntas cirúrgicas reversas antes de iniciar qualquer modificação.
-*   **Execução (/goal):** Ao operar em modo autônomo, utilize encadeamento assíncrono de tarefas em background no Antigravity Standalone, minimizando requisições de feedback intermediário.
-*   **Navegação (/browser):** Delegue a validação visual do frontend de forma determinística acionando sessões ativas do Chrome para capturar e comparar snapshots.
-*   **Agendamento (/schedule):** Utilize cron-jobs no daemon em background para validações periódicas de regressões e cobertura de testes.
-
-### B. Gestão de Memória e Token Compression
-*   Ao atingir o limite crítico de context window (~135k tokens), aplique compressão semântica nos logs de console, mantendo persistidos apenas as definições do `MEMORY.md`, contratos de API e pendências do checklist.
-
 ### C. Ciclo de Vida de Artefatos
 1.  **Task List (`task.md`):** Todo de execução granular.
 2.  **Implementation Plan (`implementation_plan.md`):** Detalhamento arquitetural da modificação, com aprovação prévia obrigatória do usuário.
@@ -87,12 +76,74 @@ O comportamento do agente é fundado em três premissas inegociáveis:
 2.  **Sofisticação (Estética da Engenharia):** Código funcional não basta. Deve ser esteticamente impecável, seguindo a Navalha SOTA. Tipos literais, remoção de entropia (any, suppressions) e arquitetura modular que não onera o leitor humano.
 3.  **Eficiência (A Letalidade Termodinâmica):** Operações O(1). Resolução cirúrgica sem gerar overhead no CLI, no tempo do usuário ou na carga computacional local. Priorizar projeções nativas (`jq`, `ast-grep`) em detrimento de dumps lentos e pesados.
 
-## 6. ADAPTAÇÃO DINÂMICA
+## 6. ARQUITETURA PADRÃO-OURO: 4 CAMADAS FUNCIONAIS & BARRAMENTO MCP (AGOSTO 2026)
+```
+                             [INPUT DA TAREFA / PROMPT]
+                                         │
+                                         ▼
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │ CAMADA 1: TRIAGEM & PROCESSAMENTO DE BAIXA LATÊNCIA (Borda & Ingestão)      │
+ │ • Modelos: Gemini 3.5 Flash-Lite / Gemini 3.5/3.6 Flash (Low > Mid > High)   │
+ │ • Função: Classificação inicial de intenção, parsing de dados, validação     │
+ │   sintática, sanitização e roteamento estruturado com TTFT sub-segundo.     │
+ └──────────────────────────────────────┬──────────────────────────────────────┘
+                                        │
+                                        ▼
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │ CAMADA 2: AGÊNTICA & ORQUESTRAÇÃO DE CÓDIGO (Trabalho Principal)            │
+ │ • Modelos: Gemini 3.7 Flash (Medium - High)                                 │
+ │ • Função: Motor primário para geração de código, refatoração cirúrgica,     │
+ │   Parallel Tool Calling (MCPs, Python, Rust/WASM, Shell) e orquestração     │
+ │   multi-etapas. Pensamento Estendido ativado dinamicamente sob falhas.      │
+ └──────────────────────────────────────┬──────────────────────────────────────┘
+                                        │
+                                        ▼
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │ CAMADA 3: RACIOCÍNIO TEÓRICO PROFUNDO (Análise Arquitetural & Provas)       │
+ │ • Modelos: Gemini 3.1 Pro (preview/custom)                                  │
+ │ • Gatilho: Acionamento estrito e EVENTUAL onde o ganho supera o custo (ROI) │
+ │ • Função: Provas axiomáticas da PMev, Teoria dos Jogos / Nash, modelagem de │
+ │   sistemas complexos e auditorias de segurança de alta densidade.           │
+ └──────────────────────────────────────┬──────────────────────────────────────┘
+                                        │
+                                        ▼
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │ CAMADA 4: PERSISTÊNCIA DE CONTEXTO & OTIMIZAÇÃO DE CUSTOS (Gestão de Cache) │
+ │ • Context Caching Explícito (TTL 1-24h): Instruções estáticas (CLAUDE.md,   │
+ │   GLOBAL_INSTRUCTIONS.md, COSMOVISAO.md, project-context.md) ~90% desconto.│
+ │ • Context Caching Implícito: Alinhamento de prefixos idênticos em prompts.  │
+ └─────────────────────────────────────────────────────────────────────────────┘
+```
 
-Este M.O. se flexiona com base no input do usuário:
+## 7. BARRAMENTO DE COMUNICAÇÃO E CONECTIVIDADE DE FERRAMENTAS
+- **Model Context Protocol (MCP):** Padronização rigorosa da comunicação de ferramentas externas (Chrome DevTools, BigQuery, Cloud SQL, Neon, Windsor, Filesystem).
+- **Google Developer Knowledge API:** Injeção contínua de documentações oficiais atualizadas diretamente no contexto dos agentes (@chico, @maverick, @architect, @implementor).
 
-*   **Inputs Críticos ("Fix now", "Emergência"):** Abandona explicações verbais, pula para `grep` -> `replace` -> `test` no mesmo turno se possível.
-*   **Inputs Exploratórios ("Vamos pensar em...", "Como faremos?"):** Trava ferramentas de mutação. Entra em modo de plano (`enter_plan_mode`), realiza `Deep Research` e desenha a Arquitetura no `MEMORY.md`.
+## 8. REGRAS DE IMPLEMENTAÇÃO DO PIPELINE
+- **Imposição Rígida de Esquema com Limite de Tokens:** Em extrações estruturadas via `responseSchema`, declarar sempre teto conservador em `maxOutputTokens` (ex.: 1000 a 4000) para neutralizar loops recursivos de decodificação gerados por auto-atenção degenerada.
+- **Amortização de Prefixo com Context Caching:** Em bases de conhecimento estáveis (manuais, especificações de APIs, bases de código, ontologias), utilizar Explicit Caching garantindo prefixos $> 32.768$ tokens (redução de 87,5% no custo e 90% na latência).
+- **Encapsulamento de Ferramentas via Interface Estrita:** Assinar funções externas com documentação semântica densa nos parâmetros (`description`). O modelo avalia a intenção da chamada a partir da semântica dos tipos e restrições descritas no esquema JSON.
+
+## 9. MATRIZ DE APLICAÇÃO TÉCNICA ESTRATÉGICA (DOMÍNIOS DE RAPHAEL VITOI)
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ 1. TEORIA DA PERSPECTIVA MATEMÁTICA (PMev) & SOLVERS (trueicm.com)     │
+│    • Context Caching: Árvores de decisão e matrizes de ICM complexas   │
+│    • Extended Thinking (/effort high): Subgames multiway e equilíbrios │
+│    • Inferência de Borda (@gemma4): Decisões locais on-device ultra-low│
+├────────────────────────────────────────────────────────────────────────┤
+│ 2. ENGENHARIA DE SOFTWARE & DESENVOLVIMENTO AGÊNTICO                   │
+│    • Tool Calling em Python/Rust (WASM) com AST Validation & DAP/LLDB  │
+│    • Antigravity CLI/IDE/2.0 para automação cirúrgica e slash stacking │
+├────────────────────────────────────────────────────────────────────────┤
+│ 3. ANÁLISE PSICOLÓGICA & LITERÁRIA COMPLEXA                            │
+│    • Janela de 2M tokens para análise de obras e manuscritos inteiros  │
+│    • Preservação de estilística sem homogeneização de linguagem        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+- **PMev & Solvers:** Modelagem de subgames multiway sob pressão de ICM, Extended Thinking para equilíbrios de risco e Context Caching em payouts/stacks.
+- **Engenharia Cirúrgica:** Automação via Antigravity CLI e execução segura com Tool Calling tipado.
+- **Produção Literária & Filosofia:** Processamento integral de manuscritos ("Homem-Bomba", ensaios e poemas) via janela de 2M tokens com densidade aforística e temperatura controlada ($\text{Temp} \approx 0.3 - 0.7$).
 
 ---
-*M.O. Indexado e Ativo. A Excelência é um hábito.*
+*Protocolo Site M.O. v8.0 GOLD ativo e persistente (Data de Corte: Agosto de 2026).*

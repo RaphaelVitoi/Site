@@ -17,10 +17,14 @@ Este índice é o ponto de entrada documental do repositório. Ele organiza as f
 | Necessidade | Referência |
 |---|---|
 | Topologia executiva e comandos de entrada | [README](../README.md) |
+| Arquitetura Padrão-Ouro (4 Camadas & MCP) | [ARQUITETURA_PADRAO_OURO_SOTA_2026.md](ARQUITETURA_PADRAO_OURO_SOTA_2026.md) |
+| Tratado Canônico da Perspectiva Matemática | [PERSPECTIVA_MATEMATICA_PMEV_MASTER.md](PERSPECTIVA_MATEMATICA_PMEV_MASTER.md) |
 | Arquitetura de frontend | [architecture/frontend.md](architecture/frontend.md) |
 | Banco, rotas e contratos | [architecture/SPEC_ROTEAMENTO_DB.md](architecture/SPEC_ROTEAMENTO_DB.md) |
 | Simulador ICM/PMev | [architecture/SPEC_SIMULADOR_ICM_GLOBAL.md](architecture/SPEC_SIMULADOR_ICM_GLOBAL.md) |
 | Auditorias e handoffs | [audits](audits) |
+| Relatório Oficial de Sessão (2026-08-24) | [../reports/RELATORIO_SESSAO_2026_08_24_SOTA_v8_GOLD.md](../reports/RELATORIO_SESSAO_2026_08_24_SOTA_v8_GOLD.md) |
+| Auditoria Mensal de Roteamento (2026_08) | [../reports/audits/AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_2026_08.md](../reports/audits/AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_2026_08.md) |
 | Segurança | [security](security) |
 | Pesquisa de produto e teoria | [research](research) |
 

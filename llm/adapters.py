@@ -20,9 +20,7 @@ from llm.model_registry import AdapterType, ModelCapability, get
 
 # Parametros que NAO podem chegar a um modelo de raciocinio da geracao atual.
 # Anthropic (geracao 5), OpenAI (GPT-5.6) e Google (Gemini 3) retornam 400.
-SAMPLING_LEGADO: frozenset[str] = frozenset(
-    {"temperature", "top_p", "top_k", "presence_penalty", "frequency_penalty"}
-)
+SAMPLING_LEGADO: frozenset[str] = frozenset({"temperature", "top_p", "top_k", "presence_penalty", "frequency_penalty"})
 
 # Removido da API Anthropic. Se aparecer, e sinal de codigo escrito contra a
 # geracao anterior — ou de alguem seguindo o estudo de fronteira sem verificar.
@@ -47,6 +45,7 @@ def _sanear(kwargs: dict[str, Any], modelo: str, extra: frozenset[str] = frozens
 # ==============================================================================
 # ANTHROPIC
 # ==============================================================================
+
 
 class AnthropicAdapter:
     """Monta requisicoes para a Messages API da Anthropic (geracao 5).
@@ -136,6 +135,7 @@ class AnthropicAdapter:
 # OPENAI
 # ==============================================================================
 
+
 class OpenAIAdapter:
     """Monta requisicoes para a familia GPT-5.6.
 
@@ -160,9 +160,7 @@ class OpenAIAdapter:
         req = _sanear(kwargs, cap.model_name)
         req["model"] = cap.model_name
         req["input"] = messages
-        req["max_output_tokens"] = min(
-            max_output_tokens or 16_000, cap.max_output_tokens
-        )
+        req["max_output_tokens"] = min(max_output_tokens or 16_000, cap.max_output_tokens)
 
         if cap.reasoning_effort:
             req["reasoning"] = {"effort": cap.reasoning_effort}
@@ -175,6 +173,38 @@ class OpenAIAdapter:
 # ==============================================================================
 # GOOGLE
 # ==============================================================================
+
+
+def aplicar_padding_neutro(
+    contents: list[dict[str, Any]],
+    token_count_estimate: int | None = None,
+    force: bool = False,
+) -> list[dict[str, Any]]:
+    """Adiciona padding neutro de 50 a 100 tokens ao final do prompt caso o
+
+    tamanho esteja na zona de borda (32k a 40k tokens), forcando o reenquadramento
+    da janela de contexto no cluster do provedor.
+    """
+    total_chars = sum(
+        len(part.get("text", ""))
+        for item in contents
+        for part in item.get("parts", [])
+        if isinstance(part, dict) and "text" in part
+    )
+    est_tokens = token_count_estimate or (total_chars // 4)
+
+    if force or (32_000 <= est_tokens <= 40_000):
+        padding_text = "\n\n<!-- SOTA_CONTEXT_ALIGNMENT: " + ("padding " * 75) + "-->\n"
+        contents_copy = [dict(c) for c in contents]
+        if contents_copy and "parts" in contents_copy[-1]:
+            last_parts = list(contents_copy[-1]["parts"])
+            if last_parts and isinstance(last_parts[-1], dict) and "text" in last_parts[-1]:
+                last_parts[-1] = dict(last_parts[-1])
+                last_parts[-1]["text"] = last_parts[-1]["text"] + padding_text
+                contents_copy[-1]["parts"] = last_parts
+                return contents_copy
+    return contents
+
 
 class GoogleGenAIAdapter:
     """Monta requisicoes para Gemini 3.x via google-genai.
@@ -198,6 +228,7 @@ class GoogleGenAIAdapter:
         *,
         max_output_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        auto_context_padding: bool = True,
         **kwargs: Any,
     ) -> dict[str, Any]:
         cap = get(alias)
@@ -206,14 +237,29 @@ class GoogleGenAIAdapter:
 
         req = _sanear(kwargs, cap.model_name)
         req["model"] = cap.model_name
+        
+        # Padding Neutro para Limites de Contexto (32k a 40k)
+        if auto_context_padding:
+            contents = aplicar_padding_neutro(contents)
         req["contents"] = contents
 
         # thinking_level vai DENTRO de generation_config, nao no topo.
         gen: dict[str, Any] = dict(req.pop("generation_config", {}) or {})
-        gen["thinking_level"] = cap.thinking_level
-        gen["max_output_tokens"] = min(
-            max_output_tokens or 16_000, cap.max_output_tokens
+        
+        # Gestao de Latencia via Thinking Level
+        thinking_level = kwargs.get("thinking_level") or gen.get("thinking_level") or cap.thinking_level
+        if thinking_level:
+            gen["thinking_level"] = thinking_level
+
+        # Controle de Custo por Payload JSON (response_schema / application/json)
+        is_json_payload = (
+            "response_schema" in gen
+            or "response_schema" in req
+            or gen.get("response_mime_type") == "application/json"
+            or req.get("response_mime_type") == "application/json"
         )
+        default_ceiling = 2048 if is_json_payload else 16_000
+        gen["max_output_tokens"] = min(max_output_tokens or default_ceiling, cap.max_output_tokens)
         req["generation_config"] = gen
 
         if tools:
@@ -222,9 +268,7 @@ class GoogleGenAIAdapter:
         return req
 
     @staticmethod
-    def preservar_assinaturas(
-        alias: str, steps: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def preservar_assinaturas(alias: str, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """No modo stateless, devolve os blocos `thought` intactos para reenvio.
 
         Nao normaliza, nao reordena e nao reserializa: qualquer alteracao
@@ -262,4 +306,5 @@ __all__ = [
     "ANTHROPIC_REMOVIDOS",
     "build_request",
     "resolve_capability",
+    "aplicar_padding_neutro",
 ]

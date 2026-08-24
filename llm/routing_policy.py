@@ -74,14 +74,14 @@ def custo(alias: str, tokens_in: int, tokens_out: int) -> float:
 
 
 class ClasseTarefa(str, Enum):
-    GOVERNANCA = "governanca"                    # mediacao, decisao final
-    ESTRATEGIA = "estrategia"                    # mentoria, analise de risco
-    CONSTRUCAO = "construcao"                    # escrita de codigo multi-arquivo
-    VERIFICACAO = "verificacao"                  # auditoria, QA, seguranca
-    OPERACIONAL = "operacional"                  # despacho, organizacao, registro
+    GOVERNANCA = "governanca"  # mediacao, decisao final
+    ESTRATEGIA = "estrategia"  # mentoria, analise de risco
+    CONSTRUCAO = "construcao"  # escrita de codigo multi-arquivo
+    VERIFICACAO = "verificacao"  # auditoria, QA, seguranca
+    OPERACIONAL = "operacional"  # despacho, organizacao, registro
     RACIOCINIO_PROFUNDO = "raciocinio_profundo"  # planejamento, pesquisa, prova
-    SESSAO_MULTI_DIA = "sessao_multi_dia"        # execucao continuada assincrona
-    LOCAL = "local"                              # inferencia de borda, sem API
+    SESSAO_MULTI_DIA = "sessao_multi_dia"  # execucao continuada assincrona
+    LOCAL = "local"  # inferencia de borda, sem API
 
 
 class TierAgente(int, Enum):
@@ -94,7 +94,7 @@ class TierAgente(int, Enum):
 class Faixa(str, Enum):
     """Ordem de alocacao. Menor valor = consumir primeiro."""
 
-    LOCAL = "local"        # 0 custo marginal, sem rede
+    LOCAL = "local"  # 0 custo marginal, sem rede
     GRATUITA = "gratuita"  # cota livre / promocional
     FLAT_FEE = "flat_fee"  # ponte de handoff para assinatura web
     API_PAGA = "api_paga"  # ultima linha de defesa
@@ -158,8 +158,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         faixa=Faixa.GRATUITA,
         escalona_para="claude-opus-5",
         justificativa=(
-            "Revisao de primeira passagem em faixa gratuita. Escalona so quando "
-            "o revisor barato sinaliza incerteza."
+            "Revisao de primeira passagem em faixa gratuita. Escalona so quando o revisor barato sinaliza incerteza."
         ),
     ),
     ClasseTarefa.OPERACIONAL: Rota(
@@ -184,8 +183,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         fallback="claude-opus-5",
         faixa=Faixa.API_PAGA,
         justificativa=(
-            "Unico com auto-verificacao assincrona e raciocinio multi-sessao. "
-            "A $10/$50, reservar ao que so ele faz."
+            "Unico com auto-verificacao assincrona e raciocinio multi-sessao. A $10/$50, reservar ao que so ele faz."
         ),
     ),
     ClasseTarefa.LOCAL: Rota(
@@ -194,8 +192,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         faixa=Faixa.LOCAL,
         escalona_para="gemini-3.7-flash",
         justificativa=(
-            "Inferencia de borda sem custo marginal nem rede. Pesos ja "
-            "provisionados; ver data/ollama_models.json."
+            "Inferencia de borda sem custo marginal nem rede. Pesos ja provisionados; ver data/ollama_models.json."
         ),
     ),
 }
@@ -244,6 +241,9 @@ SUBAGENTES: dict[str, ClasseTarefa] = {
     "appsec_gatekeeper": ClasseTarefa.VERIFICACAO,
     "math_verifier_sota": ClasseTarefa.LOCAL,  # routing.py ja prioriza gemma-4-31b em MATH
     "wasm_perf_engineer": ClasseTarefa.CONSTRUCAO,
+    "poetics_curator": ClasseTarefa.OPERACIONAL,
+    "nano_intent_router": ClasseTarefa.OPERACIONAL,
+    "streaming_fim_companion": ClasseTarefa.OPERACIONAL,
     "ui_design_curator": ClasseTarefa.CONSTRUCAO,
     "research": ClasseTarefa.RACIOCINIO_PROFUNDO,
     "self": ClasseTarefa.OPERACIONAL,  # copia do pai para fan-out barato
@@ -283,15 +283,13 @@ def _classe_de(alvo: str) -> ClasseTarefa:
     if alvo in SUBAGENTES:
         return SUBAGENTES[alvo]
     raise KeyError(
-        f"'{alvo}' nao e agente nem subagente conhecido. "
-        f"Agentes: {sorted(AGENTES)}. Subagentes: {sorted(SUBAGENTES)}."
+        f"'{alvo}' nao e agente nem subagente conhecido. Agentes: {sorted(AGENTES)}. Subagentes: {sorted(SUBAGENTES)}."
     )
 
 
 def cobertura() -> dict[str, int]:
     """Quantos alvos a politica cobre. Usado em teste para impedir regressao."""
-    return {"agentes": len(AGENTES), "subagentes": len(SUBAGENTES),
-            "total": len(AGENTES) + len(SUBAGENTES)}
+    return {"agentes": len(AGENTES), "subagentes": len(SUBAGENTES), "total": len(AGENTES) + len(SUBAGENTES)}
 
 
 def ordem_de_consumo() -> list[tuple[Faixa, list[ClasseTarefa]]]:
@@ -305,6 +303,7 @@ def ordem_de_consumo() -> list[tuple[Faixa, list[ClasseTarefa]]]:
 # ==============================================================================
 # ECONOMIA
 # ==============================================================================
+
 
 def estimar_roi(
     alias: str,
@@ -350,8 +349,12 @@ def economia_do_escalonamento(
     if c_caro <= 0:
         # Ambos em faixa local: nao ha gasto de API a comparar.
         return {
-            "custo_tudo_caro": 0.0, "custo_escalonado": 0.0, "economia": 0.0,
-            "economia_pct": 0.0, "fracao_de_equilibrio": 1.0, "vale_a_pena": True,
+            "custo_tudo_caro": 0.0,
+            "custo_escalonado": 0.0,
+            "economia": 0.0,
+            "economia_pct": 0.0,
+            "fracao_de_equilibrio": 1.0,
+            "vale_a_pena": True,
         }
 
     tudo_caro = chamadas * c_caro
@@ -371,6 +374,7 @@ def economia_do_escalonamento(
 # ==============================================================================
 # TIMEOUT PARA RACIOCINIO ESTENDIDO
 # ==============================================================================
+
 
 def timeout_recomendado(alias: str, *, max_tokens: int = 16_000) -> int:
     """Segundos de timeout para o worker assincrono.
@@ -395,6 +399,7 @@ def timeout_recomendado(alias: str, *, max_tokens: int = 16_000) -> int:
 # ==============================================================================
 # PRUNING DINAMICO DE FERRAMENTAS
 # ==============================================================================
+
 
 def plano_de_ferramentas(
     ferramentas: list[dict],
@@ -427,6 +432,42 @@ def plano_de_ferramentas(
     return saida
 
 
+def avaliar_uso_condicional_pro(
+    *,
+    complexidade_formal: bool,
+    ganho_qualidade_esperado_pct: float,
+    tokens_in: int = 4000,
+    tokens_out: int = 1000,
+) -> dict[str, Any]:
+    """Avalia se o Gemini 3.1 Pro deve ser utilizado no lugar do Gemini 3.7 Flash.
+
+    Regra de Ouro do Operador:
+    Gemini 3.1 Pro so deve ser acionado EVENTUALMENTE se o ganho de qualidade
+    superar CONCRETAMENTE o diferencial de custo/tokens. Caso contrario, o
+    Gemini 3.7 Flash prevalece.
+    """
+    custo_flash = custo("gemini-3.7-flash", tokens_in, tokens_out)
+    custo_pro = custo("gemini-3.1-pro", tokens_in, tokens_out)
+
+    aprovado = complexidade_formal and (ganho_qualidade_esperado_pct >= 25.0)
+    modelo_escolhido = "gemini-3.1-pro" if aprovado else "gemini-3.7-flash"
+
+    motivo = (
+        f"Alta complexidade matematica/axiomatica com ganho concreto de {ganho_qualidade_esperado_pct:.1f}% justificando o custo."
+        if aprovado
+        else f"Eficiencia de custo x beneficio: Gemini 3.7 Flash supre a tarefa com menor latencia (ganho de {ganho_qualidade_esperado_pct:.1f}% nao justifica o overhead)."
+    )
+
+    return {
+        "modelo_escolhido": modelo_escolhido,
+        "aprovado_pro": aprovado,
+        "beneficio_estimado_pct": ganho_qualidade_esperado_pct if aprovado else 0.0,
+        "motivo": motivo,
+        "custo_flash": round(custo_flash, 6),
+        "custo_pro": round(custo_pro, 6),
+    }
+
+
 __all__ = [
     "ClasseTarefa",
     "TierAgente",
@@ -445,4 +486,5 @@ __all__ = [
     "economia_do_escalonamento",
     "timeout_recomendado",
     "plano_de_ferramentas",
+    "avaliar_uso_condicional_pro",
 ]

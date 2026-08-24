@@ -31,6 +31,7 @@ USUARIO = [{"role": "user", "content": "ping"}]
 
 # ── Integridade do registro ──────────────────────────────────────────────────
 
+
 def test_registro_nao_vazio_e_valido():
     assert MODEL_REGISTRY
     for alias, cap in MODEL_REGISTRY.items():
@@ -53,6 +54,7 @@ def test_modelo_nao_verificado_fica_fora_e_explica_o_motivo():
 
 
 # ── Anthropic: as correcoes criticas ─────────────────────────────────────────
+
 
 def test_anthropic_nunca_emite_budget_tokens():
     """budget_tokens foi removido da API e retorna 400 na geracao 5."""
@@ -115,6 +117,7 @@ def test_streaming_obrigatorio_para_saida_grande():
 
 # ── OpenAI ───────────────────────────────────────────────────────────────────
 
+
 def test_openai_nao_usa_esforco_ultra():
     """'ultra' nao existe na escala documentada (none..max)."""
     validos = {"none", "low", "medium", "high", "max"}
@@ -142,6 +145,7 @@ def test_openai_monta_bloco_de_reasoning():
 
 # ── Google ───────────────────────────────────────────────────────────────────
 
+
 def test_thinking_level_vai_dentro_de_generation_config():
     req = GoogleGenAIAdapter.build("gemini-3.7-flash", USUARIO)
     assert "thinking_level" not in req
@@ -167,6 +171,7 @@ def test_modo_stateful_nao_reenvia_assinaturas():
 
 # ── Cruzados ─────────────────────────────────────────────────────────────────
 
+
 def test_adaptador_recusa_modelo_de_outro_provedor():
     with pytest.raises(ParametroRejeitadoError, match="nao e um modelo Anthropic"):
         AnthropicAdapter.build("gpt-5.6-sol", USUARIO)
@@ -175,6 +180,24 @@ def test_adaptador_recusa_modelo_de_outro_provedor():
 
 
 def test_custo_cresce_com_tokens():
-    assert custo_estimado("claude-opus-5", 2_000_000, 0) > custo_estimado(
-        "claude-opus-5", 1_000_000, 0
-    )
+    assert custo_estimado("claude-opus-5", 2_000_000, 0) > custo_estimado("claude-opus-5", 1_000_000, 0)
+
+
+def test_padding_neutro_limite_contexto():
+    """Verifica se payloads na fronteira de 32k-40k tokens recebem padding neutro."""
+    from llm.adapters import aplicar_padding_neutro
+    
+    # Payload pequeno (sem padding)
+    pequeno = [{"role": "user", "parts": [{"text": "Hello world"}]}]
+    assert aplicar_padding_neutro(pequeno) == pequeno
+    
+    # Payload na fronteira de 35k tokens (140.000 caracteres / 4 = 35.000 tokens)
+    texto_35k = "x" * 140_000
+    borda = [{"role": "user", "parts": [{"text": texto_35k}]}]
+    pad = aplicar_padding_neutro(borda)
+    assert "<!-- SOTA_CONTEXT_ALIGNMENT: " in pad[0]["parts"][0]["text"]
+    
+    # Forcando padding neutro explicitamente
+    forcado = aplicar_padding_neutro(pequeno, force=True)
+    assert "<!-- SOTA_CONTEXT_ALIGNMENT: " in forcado[0]["parts"][0]["text"]
+
