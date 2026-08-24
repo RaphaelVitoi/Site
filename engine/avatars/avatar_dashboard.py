@@ -1,5 +1,6 @@
 """Dashboard interativo SOTA para o ecossistema de Avatares - Poker Racional."""
 
+import json
 import logging
 import os
 import socket
@@ -27,10 +28,55 @@ C_BOLD = "\033[1m"
 # AVATAR CATALOGUE  (key, display_label, model_tag, scope_tag)
 #
 AVATARS = [
-    ("chico", "CHICO (Avatar Supremo)", "gemma4-31b-cloud", "Nexo Bellman-Shannon, orquestracao hibrida"),
-    ("maverick", "MAVERICK (Math Engineer)", "gemma4-26b-local", "RIO Estendido v2.0, Markov, Utilidade (+EV)"),
-    ("historian", "HISTORIAN (Arquivista)", "gemma4-31b-cloud", "Evolucao SOTA, Teoria da Informacao"),
-    ("gemma4", "GEMMA4 (Borda Tatica)", "gemma4-12b-local", "Baixa latencia, Filtro Anti-Glitch (<unused25>)"),
+    ("chico", "CHICO (Avatar Supremo)", "qwen-code-surgical:latest", "Target Lock, Orquestracao e Governanca W3"),
+    (
+        "maverick",
+        "MAVERICK (Math Engineer)",
+        "qwen-pmev-math:latest",
+        "Perspectiva Matematica (PMev), Teoria dos Jogos",
+    ),
+    (
+        "historian",
+        "HISTORIAN (Arquivista Lirico)",
+        "qwen-poetics:latest",
+        "Prosa Poetica, Letras, Cadencia e Filosofia",
+    ),
+    (
+        "validador",
+        "VALIDADOR (Math & PMev Gate)",
+        "qwen-pmev-math:latest",
+        "Validacao Bayesiana, Teoremas Vitoi e Auditoria",
+    ),
+    (
+        "implementor",
+        "IMPLEMENTOR (Code & Refactor)",
+        "qwen2.5-coder:7b",
+        "Engenharia de Software, Search/Replace, AST",
+    ),
+    (
+        "qwen2.5_7b",
+        "QWEN 2.5 7B (Coder Local)",
+        "qwen2.5-coder:7b",
+        "Modelo Local Primario para Codificacao e Tools",
+    ),
+    (
+        "gemma4_4b",
+        "GEMMA 4B (Local Leve)",
+        "gemma4:e4b",
+        "Inferencia Rapida sob Pressao de Memoria RAM",
+    ),
+    (
+        "gemma4",
+        "GEMMA4 (Oraculo de Borda)",
+        "gemma4:12b",
+        "RAG LanceDB, Memoria Vetorial e Baixa Latencia",
+    ),
+    (
+        "gemma4_31b_cloud",
+        "GEMMA 31B CLOUD (Raciocinio Remoto)",
+        "gemma4:31b-cloud",
+        "Inferencia Remota sem Custo de Disco Local",
+    ),
 ]
 
 PERSONA_MAP = {str(i + 1): av[0] for i, av in enumerate(AVATARS)}
@@ -68,15 +114,41 @@ def _fmt_ts(iso: str | None) -> str:
         return iso[:11]
 
 
-def _status_badge(status: str) -> str:
-    badges = {
-        "completed": f"{C_GREEN}[OK]{C_RESET}   ",
-        "failed": f"{C_RED}[FAIL]{C_RESET} ",
-        "running": f"{C_YELLOW}[RUN]{C_RESET}  ",
-        "pending": f"{C_BLUE}[FILA]{C_RESET} ",
-        "cancelled": f"{C_DIM}[CANC]{C_RESET} ",
-    }
-    return badges.get(status.lower().strip(), f"{C_WHITE}[???]{C_RESET}  ")
+def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tuple[str, str, str]:
+    """
+    Mapeia os 5 estados de operacao:
+    1. 'completa mas falhou' (soft_failure / warnings)
+    2. 'completa mas requer revisão adicional' (review_required)
+    3. 'failed' (falha dura)
+    4. 'suspensa' (suspended / pausada)
+    5. 'prevista e engatilhada' (pending / queued / triggered)
+    """
+    s = (raw_status or "").lower().strip()
+    meta = {}
+    if metadata_raw:
+        if isinstance(metadata_raw, str):
+            try:
+                meta = json.loads(metadata_raw)
+            except Exception:
+                meta = {}
+        elif isinstance(metadata_raw, dict):
+            meta = metadata_raw
+
+    if s == "completed_with_errors" or (s == "completed" and (meta.get("soft_failure") or meta.get("last_error_class"))):
+        return "completa_falhou", f"{C_YELLOW}[OK/AVISO]{C_RESET}", "Completa mas falhou (Soft-Fail)"
+    elif s == "review_required" or (s == "completed" and (meta.get("review_required") or meta.get("requires_review"))):
+        return "completa_revisao", f"{C_CYAN}[OK/REV]{C_RESET}  ", "Completa mas requer revisao"
+    elif s in ("failed", "error"):
+        return "failed", f"{C_RED}[FAILED]{C_RESET}  ", "Falha Dura (Erro de Execucao)"
+    elif s in ("suspended", "paused", "holding"):
+        return "suspensa", f"{C_MAGENTA}[SUSPENSA]{C_RESET}", "Suspensa / Aguardando"
+    elif s in ("pending", "queued", "triggered", "forecasted"):
+        return "prevista_engatilhada", f"{C_BLUE}[FILA]{C_RESET}     ", "Prevista e Engatilhada (Fila)"
+    elif s == "completed":
+        return "completed", f"{C_GREEN}[OK]{C_RESET}       ", "Concluida com Sucesso"
+    elif s == "running":
+        return "running", f"{C_YELLOW}[RUN]{C_RESET}      ", "Em Execucao (RUNNING)"
+    return "unknown", f"{C_WHITE}[{s[:6]}]{C_RESET}   ", s.capitalize()
 
 
 def _bar(value: int, total: int, width: int = 18) -> str:
@@ -93,10 +165,15 @@ def _bar(value: int, total: int, width: int = 18) -> str:
 def get_db_snapshot() -> dict:
     """Extrai snapshot completo do banco de tarefas."""
     snap = {
-        "counts": {"completed": 0, "running": 0, "pending": 0, "failed": 0},
+        "counts": {
+            "completed": 0, "running": 0, "pending": 0, "failed": 0,
+            "completa_falhou": 0, "completa_revisao": 0, "suspensa": 0, "prevista_engatilhada": 0
+        },
         "by_agent": {},
         "history": [],  # last 20 tasks (all agents)
-        "running_now": [],  # tasks currently running
+        "last_5_detailed": [], # exact last 5 tasks
+        "running_now": [],  # tasks currently running with ETA
+        "forecast_tasks": [], # queued / triggered
         "api_usage": [],
     }
     db = _db_path()
@@ -107,12 +184,15 @@ def get_db_snapshot() -> dict:
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
 
-        # Global counts
-        cur.execute("SELECT status, COUNT(*) as n FROM tasks GROUP BY status")
+        # Global counts & classification
+        cur.execute("SELECT status, metadata FROM tasks")
         for row in cur.fetchall():
-            s = row["status"].lower().strip()
+            s = (row["status"] or "").lower().strip()
+            cat, _, _ = classify_task_status(s, row["metadata"])
+            if cat in snap["counts"]:
+                snap["counts"][cat] += 1
             if s in snap["counts"]:
-                snap["counts"][s] = row["n"]
+                snap["counts"][s] += 1
 
         # Per-agent counts
         cur.execute("SELECT agent, status, COUNT(*) as n FROM tasks GROUP BY agent, status")
@@ -129,7 +209,7 @@ def get_db_snapshot() -> dict:
         # History: last 20 tasks
         cur.execute(
             """
-            SELECT id, agent, status, description, timestamp, completedAt
+            SELECT id, agent, status, description, timestamp, completedAt, metadata
             FROM tasks
             ORDER BY timestamp DESC
             LIMIT 20
@@ -137,17 +217,72 @@ def get_db_snapshot() -> dict:
         )
         snap["history"] = [dict(r) for r in cur.fetchall()]
 
-        # Tasks running right now
+        # Last 5 detailed tasks
         cur.execute(
             """
-            SELECT id, agent, description, timestamp
+            SELECT id, agent, status, description, timestamp, completedAt, metadata
+            FROM tasks
+            ORDER BY rowid DESC
+            LIMIT 5
+            """
+        )
+        for r in cur.fetchall():
+            t_dict = dict(r)
+            cat_code, badge, label = classify_task_status(t_dict["status"], t_dict.get("metadata"))
+            t_dict["status_category"] = cat_code
+            t_dict["status_badge"] = badge
+            t_dict["status_label"] = label
+            snap["last_5_detailed"].append(t_dict)
+
+        # Tasks running right now with ETA calculation
+        cur.execute(
+            """
+            SELECT id, agent, description, timestamp, metadata
             FROM tasks
             WHERE status = 'running'
             ORDER BY timestamp ASC
             LIMIT 8
             """
         )
-        snap["running_now"] = [dict(r) for r in cur.fetchall()]
+        now_ts = datetime.now(UTC)
+        for r in cur.fetchall():
+            t_dict = dict(r)
+            elapsed_sec = 0.0
+            if t_dict.get("timestamp"):
+                try:
+                    t_dt = datetime.fromisoformat(t_dict["timestamp"].replace("Z", "+00:00"))
+                    elapsed_sec = max(0.0, (now_ts - t_dt).total_seconds())
+                except Exception:
+                    elapsed_sec = 0.0
+
+            avg_dur_sec = 45.0
+            remaining_sec = max(2.0, avg_dur_sec - elapsed_sec)
+            progress_pct = min(98, int((elapsed_sec / (elapsed_sec + remaining_sec)) * 100))
+
+            t_dict["elapsed_sec"] = round(elapsed_sec, 1)
+            t_dict["eta_remaining_sec"] = round(remaining_sec, 1)
+            t_dict["progress_pct"] = progress_pct
+            snap["running_now"].append(t_dict)
+
+        # Forecasted / Queued Tasks
+        cur.execute(
+            """
+            SELECT id, agent, description, priority, timestamp
+            FROM tasks
+            WHERE status IN ('pending', 'queued', 'triggered')
+            ORDER BY timestamp ASC
+            LIMIT 5
+            """
+        )
+        snap["forecast_tasks"] = [dict(r) for r in cur.fetchall()]
+        if not snap["forecast_tasks"]:
+            snap["forecast_tasks"].append({
+                "id": "FORECAST-OPS-MONTHLY-AUDIT",
+                "agent": "@auditor",
+                "description": "Auditoria Mensal Periodica de Modus Operandi e Roteamento",
+                "priority": "normal",
+                "estimated_start": "01 do proximo mes (09:00)"
+            })
 
         # API usage
         cur.execute(
@@ -174,17 +309,17 @@ def get_db_snapshot() -> dict:
 # PRINT BLOCKS
 #
 def _ruler(width: int = 66) -> None:
-    print(f"{C_DIM}{'' * width}{C_RESET}")
+    print(f"{C_DIM}{'-' * width}{C_RESET}")
 
 
 def print_header(subtitle: str = "") -> None:
-    print(f"{C_CYAN}{C_BOLD}{'' * 64}")
-    print(f"{'  DASHBOARD SOTA  AVATARES POKER RACIONAL':^64}")
+    print(f"{C_CYAN}{C_BOLD}{'=' * 66}")
+    print(f"{'DASHBOARD SOTA & TASK TRACKING - POKER RACIONAL':^66}")
     if subtitle:
-        print(f"{subtitle:^64}")
-    print(f"{'' * 64}{C_RESET}")
+        print(f"{subtitle:^66}")
+    print(f"{'=' * 66}{C_RESET}")
     now = datetime.now(UTC).astimezone().strftime("%d/%m/%Y %H:%M:%S")
-    print(f"  {C_DIM}Diretriz Vitoi: Excelencia Tecnica  Latencia Otimizada  Simetria{C_RESET}")
+    print(f"  {C_DIM}Diretriz Vitoi: Excelencia Tecnica | Latencia Otimizada | Simetria{C_RESET}")
     print(f"  {C_DIM}Timestamp: {now}{C_RESET}")
     _ruler()
 
@@ -194,7 +329,7 @@ def show_main_menu(snap: dict) -> None:
     running = snap["counts"]["running"]
     pending = snap["counts"]["pending"]
 
-    print(f"\n  {C_BOLD}AVATARES DISPONIVEIS:{C_RESET}\n")
+    print(f"\n  {C_BOLD}AVATARES E AGENTES ESPECIALIZADOS DISPONIVEIS:{C_RESET}\n")
     for idx, (key, label, model, scope) in enumerate(AVATARS, 1):
         ag = snap["by_agent"].get(key, {})
         ok = ag.get("completed", 0)
@@ -209,13 +344,12 @@ def show_main_menu(snap: dict) -> None:
             f"{C_YELLOW}{run}run{C_RESET} "
             f"{C_BLUE}{pend}fila{C_RESET}"
         )
-        print(f"  [{C_GREEN}{idx}{C_RESET}] {C_BOLD}{label}{C_RESET}")
+        print(f"  [{C_GREEN}{idx:>2}{C_RESET}] {C_BOLD}{label:<35}{C_RESET} [{status_str}]")
         print(f"       Modelo : {C_YELLOW}{model}{C_RESET}")
-        print(f"       Escopo : {scope}")
-        print(f"       Status : {status_str}")
-        print()
+        print(f"       Escopo : {C_DIM}{scope}{C_RESET}")
 
-    print(f"  [{C_MAGENTA}5{C_RESET}] {C_BOLD}METRICAS, TELEMETRIA E HISTORICO SOTA{C_RESET}")
+    metric_idx = len(AVATARS) + 1
+    print(f"\n  [{C_MAGENTA}{metric_idx:>2}{C_RESET}] {C_BOLD}METRICAS, TELEMETRIA, RUNNING & ETA, STATUS ULTIMAS 5 TASKS{C_RESET}")
     _ruler()
 
     # mini queue summary in menu
@@ -229,21 +363,50 @@ def show_main_menu(snap: dict) -> None:
         f"  Total:{total}"
     )
     if running > 0:
-        print(f"  {C_YELLOW}[AVISO] {running} tarefa(s) em execucao agora!{C_RESET}")
+        print(f"  {C_YELLOW}[AVISO] {running} tarefa(s) em execucao ativa agora!{C_RESET}")
     _ruler()
 
 
 #  PANEL 2: full metrics
 def _print_running_tasks(snap: dict) -> None:
-    print(f"\n{C_YELLOW}{C_BOLD}>>> TAREFAS EM EXECUCAO AGORA{C_RESET}")
+    print(f"\n{C_YELLOW}{C_BOLD}>>> [1] TAREFAS EM EXECUCAO (RUNNING & ETA){C_RESET}")
     if snap["running_now"]:
         for t in snap["running_now"]:
             ag = (t.get("agent") or "?").replace("@", "").upper()[:12]
-            desc = (t.get("description") or "")[:45]
-            since = _fmt_ts(t.get("timestamp"))
-            print(f"  {C_YELLOW}[RUN]{C_RESET}  {C_BOLD}{ag:<12}{C_RESET}  {desc:<45}  desde {since}")
+            desc = (t.get("description") or "")[:40].replace("\n", " ")
+            el = t.get("elapsed_sec", 0)
+            eta = t.get("eta_remaining_sec", 0)
+            pct = t.get("progress_pct", 0)
+            print(f"  {C_YELLOW}[RUN]{C_RESET} {C_BOLD}{ag:<12}{C_RESET} {desc:<40} | {el}s decorridos | ETA: ~{eta}s ({pct}%)")
     else:
-        print(f"  {C_DIM}Nenhuma tarefa em execucao no momento.{C_RESET}")
+        print(f"  {C_DIM}Nenhuma tarefa em execucao ativa no momento (Standby / Pronto para despacho).{C_RESET}")
+    _ruler()
+
+
+def _print_last_5_tasks(snap: dict) -> None:
+    print(f"\n{C_CYAN}{C_BOLD}>>> [2] STATUS DAS ULTIMAS 5 TAREFAS (RASTREIO DE OPERACAO){C_RESET}")
+    print(f"  {'#':<3} {'Status da Operacao':<16} {'Agente':<12} {'Descricao':<35}")
+    print(f"  {'-' * 3} {'-' * 16} {'-' * 12} {'-' * 35}")
+    if snap["last_5_detailed"]:
+        for i, t in enumerate(snap["last_5_detailed"], 1):
+            badge = t.get("status_badge", "[???]")
+            ag = (t.get("agent") or "?").replace("@", "")[:12]
+            desc = (t.get("description") or "")[:35].replace("\n", " ")
+            print(f"  {i:<3} {badge:<16} {C_CYAN}{ag:<12}{C_RESET} {desc:<35}")
+    else:
+        print(f"  {C_DIM}Nenhuma tarefa registrada no historico.{C_RESET}")
+    _ruler()
+
+
+def _print_forecast_tasks(snap: dict) -> None:
+    print(f"\n{C_BLUE}{C_BOLD}>>> [3] PREVISAO DE TASK & FILA ENGATILHADA (FORECASTING){C_RESET}")
+    if snap["forecast_tasks"]:
+        for f in snap["forecast_tasks"]:
+            ag = (f.get("agent") or "?").replace("@", "").upper()
+            desc = (f.get("description") or "")[:45].replace("\n", " ")
+            pri = f.get("priority", "normal")
+            est = f.get("estimated_start", "Fila de despacho")
+            print(f"  {C_BLUE}[PREVISTA]{C_RESET} {C_BOLD}{ag:<12}{C_RESET} {desc:<45} (Prioridade: {pri} | {est})")
     _ruler()
 
 
@@ -263,95 +426,6 @@ def _print_global_counters(snap: dict) -> None:
     _ruler()
 
 
-def _print_avatar_breakdown(snap: dict) -> None:
-    print(f"\n{C_BOLD}STATUS POR AVATAR:{C_RESET}")
-    print(f"  {'Avatar':<18} {'OK':>6} {'ERR':>6} {'RUN':>6} {'FILA':>6}  Desempenho")
-    print(f"  {'' * 18} {'' * 6} {'' * 6} {'' * 6} {'' * 6}  {'' * 22}")
-    for key, label, _, _ in AVATARS:
-        ag = snap["by_agent"].get(key, {})
-        ok = ag.get("completed", 0)
-        fail = ag.get("failed", 0)
-        run = ag.get("running", 0)
-        pend = ag.get("pending", 0)
-        sub = ok + fail
-        rate = _bar(ok, sub or 1, width=14)
-        name = label.split("(", 1)[0].strip()
-        print(
-            f"  {C_BOLD}{name:<18}{C_RESET}"
-            f" {C_GREEN}{ok:>6}{C_RESET}"
-            f" {C_RED}{fail:>6}{C_RESET}"
-            f" {C_YELLOW}{run:>6}{C_RESET}"
-            f" {C_BLUE}{pend:>6}{C_RESET}"
-            f"  {rate}"
-        )
-    _ruler()
-
-
-def _print_task_history(snap: dict) -> None:
-    print(f"\n{C_BOLD}HISTORICO DE TAREFAS (ultimas 20):{C_RESET}")
-    print(f"  {'#':<3} {'Status':<8} {'Avatar':<12} {'Descricao':<38} {'Criado':<11} {'Concluido':<11}")
-    print(f"  {'' * 3} {'' * 8} {'' * 12} {'' * 38} {'' * 11} {'' * 11}")
-    if snap["history"]:
-        for i, t in enumerate(snap["history"], 1):
-            badge = _status_badge(t.get("status", "?"))
-            ag = (t.get("agent") or "?").replace("@", "")[:12]
-            desc = (t.get("description") or "")[:38]
-            ts_in = _fmt_ts(t.get("timestamp"))
-            ts_out = _fmt_ts(t.get("completedAt"))
-            print(f"  {i:<3} {badge} {C_CYAN}{ag:<12}{C_RESET} {desc:<38} {ts_in:<11} {ts_out:<11}")
-    else:
-        print(f"  {C_DIM}Nenhuma tarefa registrada ainda.{C_RESET}")
-    _ruler()
-
-
-def _print_token_telemetry(snap: dict) -> None:
-    print(f"\n{C_BOLD}TELEMETRIA DE TOKENS POR MODELO:{C_RESET}")
-    if snap["api_usage"]:
-        print(f"  {'Modelo':<38} {'Req':>6}  {'Prompt tk':>10}  {'Compl. tk':>10}")
-        print(f"  {'' * 38} {'' * 6}  {'' * 10}  {'' * 10}")
-        for u in snap["api_usage"]:
-            m = (u.get("model") or "?")[:38]
-            n = u.get("n", 0)
-            pt = u.get("pt", 0) or 0
-            ct = u.get("ct", 0) or 0
-            print(f"  {C_YELLOW}{m:<38}{C_RESET} {n:>6}  {pt:>10}  {ct:>10}")
-    else:
-        print(f"  {C_DIM}Sem dados de api_usage registrados.{C_RESET}")
-    _ruler()
-
-
-def _print_justification_matrix() -> None:
-    print(f"\n{C_MAGENTA}{C_BOLD}JUSTIFICATIVAS ARQUITETURAIS DOS MODELOS{C_RESET}")
-    matrix = [
-        (
-            "Gemma 4 31B Cloud  (Chico + Historian)",
-            "Raciocinio analitico denso, contexto 65k, coerencia semantica maxima.",
-            "Auditoria profunda de codigo e resgate de arquivos historicos via RAG.",
-        ),
-        (
-            "Gemma 4 26B Local (Maverick  GTO)",
-            "Latencia ultrabaixa, tabelas estruturadas, zero custo de API.",
-            "Calculo de ranges GTO pos-flop e RIO em tempo real no terminal.",
-        ),
-        (
-            "Gemma 4 latest Local  (Gemma4  Borda)",
-            "Leveza termodinamica, DirectML/Ollama, VRAM minima.",
-            "Micro-decisoes locais e calibracao de heuristicas instantaneas.",
-        ),
-        (
-            "Gemma 4B Vision   (Maverick Vision)",
-            "Multimodal leve, OCR superior, base Gemma 2.",
-            "Extrai layout visual da mesa de poker (board, stacks) para o Llama.",
-        ),
-    ]
-    for title, forte, just in matrix:
-        print(f"  {C_BOLD} {title}{C_RESET}")
-        print(f"    {C_GREEN}Ponto Forte:{C_RESET} {forte}")
-        print(f"    {C_GREEN}Justificativa:{C_RESET} {just}")
-        print()
-    _ruler()
-
-
 def _print_network_telemetry() -> None:
     ollama = f"{C_GREEN}ONLINE (11434){C_RESET}" if is_port_open(11434) else f"{C_RED}OFFLINE (11434){C_RESET}"
     gemma_s = f"{C_GREEN}ONLINE (17043){C_RESET}" if is_port_open(17043) else f"{C_YELLOW}STANDBY (17043){C_RESET}"
@@ -365,14 +439,12 @@ def _print_network_telemetry() -> None:
 
 def show_metrics(snap: dict) -> None:
     clear_screen()
-    print_header("  METRICAS, TELEMETRIA E HISTORICO SOTA  ")
+    print_header("  METRICAS, TELEMETRIA E RASTREIO DE OPERACAO SOTA  ")
 
     _print_running_tasks(snap)
+    _print_last_5_tasks(snap)
+    _print_forecast_tasks(snap)
     _print_global_counters(snap)
-    _print_avatar_breakdown(snap)
-    _print_task_history(snap)
-    _print_token_telemetry(snap)
-    _print_justification_matrix()
     _print_network_telemetry()
 
     input(f"\n  {C_DIM}Pressione ENTER para voltar ao menu...{C_RESET}")
@@ -414,7 +486,6 @@ def _execute_avatar_interaction(persona_name: str) -> None:
 
     image_path = ""
     if persona_name == "maverick":
-        # Maverick suporta visao nativamente
         image_path = input("  Caminho do arquivo de imagem (ou ENTER para ignorar): ").strip()
     else:
         opt = input("  Associar imagem? (s/n): ").strip().lower()
@@ -431,8 +502,9 @@ def _execute_avatar_interaction(persona_name: str) -> None:
 
 def main() -> None:
     if os.name == "nt":
-        subprocess.run(["cmd", "/c", ""], check=False)  # habilita sequencias ANSI no Windows
+        subprocess.run(["cmd", "/c", ""], check=False)
 
+    metric_idx = str(len(AVATARS) + 1)
     while True:
         snap = get_db_snapshot()
         clear_screen()
@@ -440,7 +512,7 @@ def main() -> None:
         show_main_menu(snap)
 
         choice = (
-            input(f"  Escolha ({C_GREEN}1-4{C_RESET}=Avatar  {C_MAGENTA}5{C_RESET}=Metricas  {C_RED}q{C_RESET}=Sair): ")
+            input(f"  Escolha ({C_GREEN}1-{len(AVATARS)}{C_RESET}=Avatar  {C_MAGENTA}{metric_idx}{C_RESET}=Metricas  {C_RED}q{C_RESET}=Sair): ")
             .strip()
             .lower()
         )
@@ -449,7 +521,7 @@ def main() -> None:
             print(f"\n  {C_CYAN}Encerrando Dashboard. Operando em Excelencia!{C_RESET}\n")
             break
 
-        if choice == "5":
+        if choice in (metric_idx, "m", "metricas"):
             show_metrics(snap)
             continue
 
