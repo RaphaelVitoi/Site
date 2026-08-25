@@ -150,7 +150,6 @@ class TestVitoiPerspectiveEngine:
         )
         assert res_4way == round(1.0 * 6 * 0.5 * 1.5, 4)
 
-
     def test_calculate_negative_risk_premium_river(self):
         """Valida a deducao de Risk Premium Negativo (RP < 0) no River com micro-stack."""
         res = VitoiPerspectiveEngine.calculate_negative_risk_premium_river(
@@ -198,9 +197,15 @@ class TestVitoiPerspectiveEngine:
     def test_calculate_static_overpair_decay(self):
         """Valida o decaimento entropico monotonico do Par de As (AA)."""
         eq_preflop = 0.85
-        eq_flop = VitoiPerspectiveEngine.calculate_static_overpair_decay(eq_preflop, street_idx=1, board_connectedness=0.8, active_opponents=3)
-        eq_turn = VitoiPerspectiveEngine.calculate_static_overpair_decay(eq_preflop, street_idx=2, board_connectedness=0.8, active_opponents=3)
-        eq_river = VitoiPerspectiveEngine.calculate_static_overpair_decay(eq_preflop, street_idx=3, board_connectedness=0.8, active_opponents=3)
+        eq_flop = VitoiPerspectiveEngine.calculate_static_overpair_decay(
+            eq_preflop, street_idx=1, board_connectedness=0.8, active_opponents=3
+        )
+        eq_turn = VitoiPerspectiveEngine.calculate_static_overpair_decay(
+            eq_preflop, street_idx=2, board_connectedness=0.8, active_opponents=3
+        )
+        eq_river = VitoiPerspectiveEngine.calculate_static_overpair_decay(
+            eq_preflop, street_idx=3, board_connectedness=0.8, active_opponents=3
+        )
 
         assert eq_preflop > eq_flop > eq_turn > eq_river
         assert eq_river >= 0.15

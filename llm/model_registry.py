@@ -17,7 +17,7 @@ Verificado em 2026-08-21 contra:
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -119,7 +119,7 @@ class ModelCapability(BaseModel):
     verification: VerificationStatus = VerificationStatus.VERIFICADO
     notas: str = ""
 
-    #  Anthropic 
+    #  Anthropic
     # thinking adaptativo e o unico modo suportado na geracao 5.
     # budget_tokens NAO existe aqui de proposito: incluir o campo convidaria
     # alguem a preenche-lo, e o resultado seria 400.
@@ -130,15 +130,15 @@ class ModelCapability(BaseModel):
     supports_mid_conversation_system: bool = False
     requires_streaming_above: int | None = None
 
-    #  OpenAI 
+    #  OpenAI
     reasoning_effort: Literal["none", "low", "medium", "high", "max"] | None = None
     supports_subagents: bool = False
 
-    #  Google 
+    #  Google
     thinking_level: Literal["minimal", "low", "medium", "high"] | None = None
     thought_signature_mode: Literal["stateful", "stateless"] | None = None
 
-    #  Comum 
+    #  Comum
     # Em TODOS os tres provedores os modelos de raciocinio rejeitam amostragem
     # legada. Deixar True e o padrao seguro.
     reject_legacy_sampling: bool = True
@@ -162,7 +162,7 @@ class ModelCapability(BaseModel):
 # ==============================================================================
 
 MODEL_REGISTRY: dict[str, ModelCapability] = {
-    #  ANTHROPIC  Geracao 5 
+    #  ANTHROPIC  Geracao 5
     "claude-opus-5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-opus-5",
@@ -213,7 +213,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "Exige retencao de dados de 30 dias  org com ZDR recebe 400."
         ),
     ),
-    #  OPENAI  GPT-5.6 
+    #  OPENAI  GPT-5.6
     "gpt-5.6-sol": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-5.6-sol",
@@ -250,7 +250,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "primario obvio para triagem e sub-agentes."
         ),
     ),
-    #  GOOGLE  Gemini 3 
+    #  GOOGLE  Gemini 3
     "gemini-3.7-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.7-flash",

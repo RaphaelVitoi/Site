@@ -151,7 +151,9 @@ class CausalGraphEngine:
     def list_nodes(self, category: Optional[str] = None) -> List[Dict[str, Any]]:
         with self._get_connection() as conn:
             if category:
-                rows = conn.execute("SELECT * FROM causal_nodes WHERE category = ? ORDER BY id ASC", (category,)).fetchall()
+                rows = conn.execute(
+                    "SELECT * FROM causal_nodes WHERE category = ? ORDER BY id ASC", (category,)
+                ).fetchall()
             else:
                 rows = conn.execute("SELECT * FROM causal_nodes ORDER BY id ASC").fetchall()
             results = []

@@ -1,6 +1,9 @@
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.languageServer": "Pylance",
   "python.terminal.activateEnvironment": true,
+  "python.analysis.typeCheckingMode": "standard",
+  "python.analysis.diagnosticMode": "workspace",
   "python.analysis.autoSearchPaths": true,
   "python.analysis.extraPaths": [
     "${workspaceFolder}",
@@ -16,10 +19,23 @@
     "${workspaceFolder}/governance",
     "${workspaceFolder}/conductor"
   ],
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.variableTypes": true,
+  "python.analysis.inlayHints.parameterNames": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.indexing": true,
+  "python.analysis.packageIndexDepths": [
+    {
+      "name": "",
+      "depth": 3,
+      "includeAllSymbols": true
+    }
+  ],
   "python.envFile": "${workspaceFolder}/.env",
   "python.testing.pytestEnabled": true,
   "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,
+  "python.testing.autoTestDiscoverOnSaveEnabled": true,
   "editor.formatOnSave": true,
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
@@ -274,5 +290,16 @@
     "jsx-not-internationalized",
     "i18n",
     "internationalization"
-  ]
+  ],
+  "google.cloud.project": "original-498419",
+  "google.cloud.billingQuotaProject": "original-498419",
+  "cloudcode.project": "original-498419",
+  "cloudcode.enableTelemetry": false,
+  "cloudcode.autoDependencies": "on",
+  "cloudcode.cloudRun.showExplorer": true,
+  "cloudcode.gke.showExplorer": true,
+  "cloudcode.secretManager.showExplorer": true,
+  "cloudcode.yaml.schemaValidation": true,
+  "claudeCode.preferredLocation": "panel",
+  "claudeCode.focusView": true
 }

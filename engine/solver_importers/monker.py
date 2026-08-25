@@ -102,7 +102,6 @@ class MonkerSolverImporter(BaseSolverImporter):
 
         return player, pot
 
-
     def _parse_text(self, trimmed: str, starting_pot: float, board: list[str]) -> dict[str, SolverNode]:
         lines = trimmed.splitlines()
         strategy: dict[str, float] = {}

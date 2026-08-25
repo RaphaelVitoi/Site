@@ -44,7 +44,7 @@ MANIFESTO = RAIZ / "data" / "agents_manifest.json"
 MESH = RAIZ / "core" / "subagents_mesh.py"
 
 
-#  Cobertura: o defeito que deixou o gemma4 de fora 
+#  Cobertura: o defeito que deixou o gemma4 de fora
 
 
 def test_cobertura_bidirecional_com_o_manifesto():
@@ -85,7 +85,7 @@ def test_todo_modelo_roteado_existe_em_algum_registro():
             assert alias in MODEL_REGISTRY or alias in MODELOS_LOCAIS, f"{classe}: {alias}"
 
 
-#  A regra central: faixa antes de preco unitario 
+#  A regra central: faixa antes de preco unitario
 
 
 def test_operacional_usa_faixa_gratuita_e_nao_o_menor_preco():
@@ -109,7 +109,7 @@ def test_ordem_de_consumo_respeita_a_economia_generalizada():
     assert ordem[0] is Faixa.LOCAL
 
 
-#  Tabela do operador 
+#  Tabela do operador
 
 
 @pytest.mark.parametrize(
@@ -152,7 +152,7 @@ def test_conflitos_com_o_manifesto_estao_declarados():
     assert "historian" in CONFLITOS_MANIFESTO
 
 
-#  Faixa local 
+#  Faixa local
 
 
 def test_gemma4_fica_na_faixa_local():
@@ -179,7 +179,7 @@ def test_math_verifier_usa_a_frota_local():
     assert e_local(rotear("math_verifier_sota"))
 
 
-#  Assimetria e escalonamento 
+#  Assimetria e escalonamento
 
 
 def test_construcao_e_estrategia_usam_provedores_diferentes():
@@ -226,7 +226,7 @@ def test_escalonamento_constante_deixa_de_compensar():
     assert not r["vale_a_pena"]
 
 
-#  Timeout para raciocinio estendido 
+#  Timeout para raciocinio estendido
 
 
 def test_timeout_cresce_com_o_esforco():
@@ -237,7 +237,7 @@ def test_timeout_cresce_com_o_esforco():
     assert raso >= 600
 
 
-#  ROI 
+#  ROI
 
 
 def test_roi_penaliza_tokens_de_raciocinio():
@@ -265,7 +265,7 @@ def test_roi_rejeita_entrada_invalida():
         estimar_roi("claude-opus-5", taxa_sucesso=0.5, tokens_in=1, tokens_out=1, latencia_s=0)
 
 
-#  Pruning de ferramentas 
+#  Pruning de ferramentas
 
 
 def test_conjunto_pequeno_nao_e_podado():
@@ -291,7 +291,7 @@ def test_nunca_difere_todas():
     assert any(not f.get("defer_loading") for f in plano_de_ferramentas(fer, relevantes=set()))
 
 
-#  Integracao: a politica precisa estar LIGADA, nao ser uma ilha 
+#  Integracao: a politica precisa estar LIGADA, nao ser uma ilha
 
 
 def test_core_config_expoe_modelo_concreto_por_agente():

@@ -10,7 +10,7 @@ Marcadores: unit (sem I/O externo), integration (requer servicos).
 # dentro das funcoes de teste existem para:
 #   - permitir monkeypatch antes do modulo ser carregado (handle_rag_ingest);
 #   - evitar que a coleta do pytest dispare importacao pesada de api/ e core/;
-#   - e, no caso de `memory_rag`, o import DENTRO do teste E o proprio teste 
+#   - e, no caso de `memory_rag`, o import DENTRO do teste E o proprio teste
 #     ele verifica quais modulos memory_rag arrasta consigo, medindo o
 #     desacoplamento. Move-lo para o topo destruiria o que ele afere.
 # pylint: disable=import-outside-toplevel
@@ -243,7 +243,16 @@ def test_sota_guard_blocks_on_errors_or_excess_warnings() -> None:
     assert sess.exitstatus == pytest.ExitCode.OK
 
     # Caso 2: 0 erros, 1-2 warnings -> FRAGIL (Amarelo, passa sessao mas alerta)
-    SotaGuardState.warnings_list = [{"type": "WARNING", "category": "Deprecation", "message": "w1", "component": "c1", "nodeid": "t1", "recommendation": "r1"}]
+    SotaGuardState.warnings_list = [
+        {
+            "type": "WARNING",
+            "category": "Deprecation",
+            "message": "w1",
+            "component": "c1",
+            "nodeid": "t1",
+            "recommendation": "r1",
+        }
+    ]
     status, _ = SotaGuardState.evaluate_tri_state()
     assert status == "FRAGIL"
     sess = MockSession()
@@ -251,8 +260,26 @@ def test_sota_guard_blocks_on_errors_or_excess_warnings() -> None:
     assert sess.exitstatus == pytest.ExitCode.OK
 
     # Caso 3: 0 erros, 3 warnings -> FALHOU (Vermelho, bloqueia com ExitCode 1)
-    SotaGuardState.warnings_list.append({"type": "WARNING", "category": "Deprecation", "message": "w2", "component": "c2", "nodeid": "t2", "recommendation": "r2"})
-    SotaGuardState.warnings_list.append({"type": "WARNING", "category": "Deprecation", "message": "w3", "component": "c3", "nodeid": "t3", "recommendation": "r3"})
+    SotaGuardState.warnings_list.append(
+        {
+            "type": "WARNING",
+            "category": "Deprecation",
+            "message": "w2",
+            "component": "c2",
+            "nodeid": "t2",
+            "recommendation": "r2",
+        }
+    )
+    SotaGuardState.warnings_list.append(
+        {
+            "type": "WARNING",
+            "category": "Deprecation",
+            "message": "w3",
+            "component": "c3",
+            "nodeid": "t3",
+            "recommendation": "r3",
+        }
+    )
     status, _ = SotaGuardState.evaluate_tri_state()
     assert status == "FALHOU"
     pytest_sessionfinish(sess, 0)
@@ -260,7 +287,16 @@ def test_sota_guard_blocks_on_errors_or_excess_warnings() -> None:
 
     # Caso 4: 1 erro (peso prioritario) -> FALHOU (Vermelho)
     SotaGuardState.reset()
-    SotaGuardState.errors = [{"type": "ERROR", "category": "TestFailure", "message": "AssertionError", "component": "core", "nodeid": "t_err", "recommendation": "fix"}]
+    SotaGuardState.errors = [
+        {
+            "type": "ERROR",
+            "category": "TestFailure",
+            "message": "AssertionError",
+            "component": "core",
+            "nodeid": "t_err",
+            "recommendation": "fix",
+        }
+    ]
     status, _ = SotaGuardState.evaluate_tri_state()
     assert status == "FALHOU"
     sess = MockSession()
@@ -272,4 +308,3 @@ def test_sota_guard_blocks_on_errors_or_excess_warnings() -> None:
     assert "llm.routing" in rec
     assert "[SOTA-REC]" in rec
     SotaGuardState.reset()
-

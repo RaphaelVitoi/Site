@@ -210,7 +210,7 @@ class GoogleGenAIAdapter:
     """Monta requisicoes para Gemini 3.x via google-genai.
 
     Correcao relevante sobre o estudo: nao existe campo `include_thoughts`. As
-    *thought signatures* funcionam em dois modos 
+    *thought signatures* funcionam em dois modos
 
       - **stateful** (recomendado): o servidor gerencia as assinaturas; o
         cliente nao faz nada;
@@ -237,7 +237,7 @@ class GoogleGenAIAdapter:
 
         req = _sanear(kwargs, cap.model_name)
         req["model"] = cap.model_name
-        
+
         # Padding Neutro para Limites de Contexto (32k a 40k)
         if auto_context_padding:
             contents = aplicar_padding_neutro(contents)
@@ -245,7 +245,7 @@ class GoogleGenAIAdapter:
 
         # thinking_level vai DENTRO de generation_config, nao no topo.
         gen: dict[str, Any] = dict(req.pop("generation_config", {}) or {})
-        
+
         # Gestao de Latencia via Thinking Level
         thinking_level = kwargs.get("thinking_level") or gen.get("thinking_level") or cap.thinking_level
         if thinking_level:

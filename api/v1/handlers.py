@@ -920,7 +920,6 @@ async def handle_prometheus_metrics(request: web.Request) -> web.Response:
         except Exception:
             pass
 
-
     lines = [
         "# HELP nexus_tasks_total Total de tarefas registradas na fila por status",
         "# TYPE nexus_tasks_total gauge",

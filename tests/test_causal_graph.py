@@ -19,7 +19,7 @@ def test_causal_graph_node_crud():
             id="node_pmev",
             label="Perspectiva Matematica",
             category="AXIOM",
-            properties={"author": "Raphael Vitoi", "version": "8.0"}
+            properties={"author": "Raphael Vitoi", "version": "8.0"},
         )
         engine.add_node(node)
 

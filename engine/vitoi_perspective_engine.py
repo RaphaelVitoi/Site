@@ -355,7 +355,6 @@ class VitoiPerspectiveEngine:
         )
         return round(float(res["pm_best"]), 4)
 
-
     @staticmethod
     def calculate_negative_risk_premium_river(
         pot_size: float,
@@ -471,19 +470,24 @@ class VitoiPerspectiveEngine:
         Abrir de posicao inicial (UTG) com stack confortavel na presenca de short-stacks atras
         esteriliza 3-bets leves dos lideres e impede Check-Raises do Big Blind OOP.
         """
+        _ = hero_stack_bb  # Profundidade efetiva de manobra do UTG
         base_3bet_threat = 0.08 * math.log2(max(num_players_behind, 2))
         transit_shield_suppression = 0.40 * min(short_stacks_behind_count, 3)
         prob_3bet_absorbed = max(0.01, base_3bet_threat * (1.0 - transit_shield_suppression))
-        
+
         prob_fold_around = max(0.15, 0.50 * (1.0 - 0.04 * num_players_behind))
         prob_bb_call = max(0.20, 1.0 - prob_fold_around - prob_3bet_absorbed)
-        
+
         pot_flop = dead_money_bb + (hero_open_size_bb * 2.0)
         r_eff = realization_factor * (1.0 + 0.10 * short_stacks_behind_count)
-        postflop_ev = (flop_cbet_fe * pot_flop) + ((1.0 - flop_cbet_fe) * ((hero_equity_vs_bb * r_eff * pot_flop) - hero_open_size_bb))
-        
-        net_ev_open = (prob_fold_around * dead_money_bb) + (prob_bb_call * postflop_ev) - (prob_3bet_absorbed * hero_open_size_bb)
-        
+        postflop_ev = (flop_cbet_fe * pot_flop) + (
+            (1.0 - flop_cbet_fe) * ((hero_equity_vs_bb * r_eff * pot_flop) - hero_open_size_bb)
+        )
+
+        net_ev_open = (
+            (prob_fold_around * dead_money_bb) + (prob_bb_call * postflop_ev) - (prob_3bet_absorbed * hero_open_size_bb)
+        )
+
         return {
             "prob_fold_around": round(prob_fold_around, 4),
             "prob_3bet_absorbed": round(prob_3bet_absorbed, 4),
@@ -506,9 +510,10 @@ class VitoiPerspectiveEngine:
         Quando o agressor OOP adota Check-100% de range no 3-way, o range permanece estritamente
         NAO-CAPADO ('quem checa tudo, tem tudo'). Checagens parciais condensam a meiuca.
         """
+        _ = pot_size  # Volume nominal do pote na street
         clamped_check = max(0.0, min(1.0, oop_check_strategy_pct))
         is_pure_range_check = clamped_check >= 0.95
-        
+
         if is_pure_range_check:
             uncapped_retention = 1.0
             condensed_middle_retention = 1.0
@@ -522,7 +527,7 @@ class VitoiPerspectiveEngine:
             wetness_mod = 1.0 + (board_texture_wetness * 0.25)
             recommended_ip_bet_frequency = min(0.85, (0.55 if not is_multiway else 0.42) * wetness_mod)
             ip_check_back_realization = 0.65
-            
+
         return {
             "oop_check_strategy_pct": round(clamped_check, 4),
             "is_pure_range_check": 1.0 if is_pure_range_check else 0.0,
@@ -558,7 +563,7 @@ class VitoiPerspectiveEngine:
             payjump_proximity_factor=payjump_proximity,
             position=position,
         )
-        
+
         t2_res = cls.calculate_negative_risk_premium_river(
             pot_size=pot_size,
             bet_size=min(pot_size * 0.5, stack_eff_bb),
@@ -566,20 +571,20 @@ class VitoiPerspectiveEngine:
             fold_survival_prob=0.05,
             call_win_survival_prob=0.40,
         )
-        
+
         t3_dissipation = cls.calculate_symmetric_dissipation_vector(
             stacks=[stack_eff_bb * 2.0, stack_eff_bb, stack_eff_bb * 0.7, stack_eff_bb * 0.4],
             eliminated_idx=3,
             lost_perspective=0.15,
         )
-        
+
         t4_spec = cls.calculate_convex_speculation_ev(
             entry_cost_bb=2.0,
             prob_hit_cooler=0.12,
             current_title_prob=0.18,
             new_leader_title_prob=0.55,
         )
-        
+
         t5_utg = cls.calculate_utg_disguised_open_ev(
             hero_stack_bb=stack_eff_bb,
             hero_open_size_bb=2.0,
@@ -588,40 +593,40 @@ class VitoiPerspectiveEngine:
             short_stacks_behind_count=2 if stack_eff_bb >= 20 else 0,
             hero_equity_vs_bb=equity,
         )
-        
+
         t6_janda = cls.calculate_janda_vitoi_defense(
             pot_size=pot_size,
             bet_size=min(pot_size * 0.5, stack_eff_bb),
             bubble_factor=bubble_factor,
         )
-        
+
         t7_multiway = cls.calculate_combinatorial_multiway_liability(
             active_players=active_players,
             base_rio=base_rio,
             equity=equity,
             bubble_factor_avg=bubble_factor,
         )
-        
+
         t8_check = cls.calculate_check_condensation_and_ip_aggression(
             oop_check_strategy_pct=1.0 if active_players >= 3 else 0.70,
             is_multiway=active_players >= 3,
             pot_size=pot_size,
             board_texture_wetness=board_connectedness,
         )
-        
+
         t9_decay = cls.calculate_static_overpair_decay(
             preflop_equity=equity if equity > 0.70 else 0.85,
             street_idx=street_idx,
             board_connectedness=board_connectedness,
             active_opponents=active_players,
         )
-        
+
         t10_vector = cls.calculate_dual_navigation_vector(
             alpha_attack=0.65 if stack_eff_bb > 25 else 0.25,
             expansion_title_value=0.75,
             conservation_survival_value=0.45,
         )
-        
+
         tree_res = cls.simulate_decision_tree(
             equity=equity,
             pot_size=pot_size,
@@ -636,7 +641,7 @@ class VitoiPerspectiveEngine:
             aggression_factor=1.5,
             realization_factor=1.0,
         )
-        
+
         return {
             "teorema_1_dynamic_ev_fold": ev_fold,
             "teorema_2_river_inversion": t2_res,

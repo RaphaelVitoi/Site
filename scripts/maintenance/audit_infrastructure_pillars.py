@@ -27,8 +27,8 @@ BRAIN_DIR = BASE_DIR.parent / "antigravity" / "brain"
 # Regex para detecção de segredos em logs
 SECRET_PATTERNS = [
     re.compile(r"(?:AIzaSy[A-Za-z0-9-_]{33})"),  # Google Gemini / Firebase API Key
-    re.compile(r"(?:sk-[A-Za-z0-9-_]{32,})"),    # OpenAI / Anthropic Secret Key
-    re.compile(r"(?:ghp_[A-Za-z0-9]{36})"),       # GitHub Personal Token
+    re.compile(r"(?:sk-[A-Za-z0-9-_]{32,})"),  # OpenAI / Anthropic Secret Key
+    re.compile(r"(?:ghp_[A-Za-z0-9]{36})"),  # GitHub Personal Token
     re.compile(r"(?:Bearer\s+[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*)"),  # JWT
 ]
 
@@ -52,13 +52,17 @@ def audit_logs_pillar() -> Tuple[List[str], List[str], Dict]:
             stats["bytes_total"] += sz
 
             if sz > 20 * 1024 * 1024:  # > 20MB
-                errors.append(f"[LOGS-EXCESS] Arquivo {p.relative_to(BASE_DIR)} excede limite de rotação (Tamanho: {sz / (1024*1024):.2f}MB > 20MB).")
+                errors.append(
+                    f"[LOGS-EXCESS] Arquivo {p.relative_to(BASE_DIR)} excede limite de rotação (Tamanho: {sz / (1024 * 1024):.2f}MB > 20MB)."
+                )
 
             try:
                 content = p.read_text(encoding="utf-8", errors="ignore")
                 for pattern in SECRET_PATTERNS:
                     if pattern.search(content):
-                        errors.append(f"[LOGS-SECRET-LEAK] Possível credencial vazada detectada em {p.relative_to(BASE_DIR)}.")
+                        errors.append(
+                            f"[LOGS-SECRET-LEAK] Possível credencial vazada detectada em {p.relative_to(BASE_DIR)}."
+                        )
                         stats["leaks_detected"] += 1
             except Exception as e:
                 warnings.append(f"[LOGS-READ-WARN] Falha ao inspecionar {p.relative_to(BASE_DIR)}: {e}")
@@ -76,7 +80,7 @@ def audit_temps_pillar() -> Tuple[List[str], List[str], Dict]:
         return errors, warnings, stats
 
     now = time.time()
-    max_age = 7 * 86400
+    max_age = 86400  # > 24h
 
     # Varredura de diretórios órfãos do pytest
     for item in NEXUS_ZONE.iterdir():
@@ -87,7 +91,7 @@ def audit_temps_pillar() -> Tuple[List[str], List[str], Dict]:
                 try:
                     # Remove diretórios de teste antigos ou vazios
                     mtime = item.stat().st_mtime
-                    if now - mtime > 86400:  # > 24h
+                    if now - mtime > max_age:
                         # Purge recursivo seguro
                         for root, dirs, files in os.walk(item, topdown=False):
                             for f in files:
@@ -162,7 +166,9 @@ def audit_skills_pillar() -> Tuple[List[str], List[str], Dict]:
                     content = skill_file.read_text(encoding="utf-8")
                     # Validar YAML Frontmatter
                     if not content.startswith("---"):
-                        errors.append(f"[SKILL-NO-FRONTMATTER] {skill_file.parent.name} não inicia com delimitador YAML '---'")
+                        errors.append(
+                            f"[SKILL-NO-FRONTMATTER] {skill_file.parent.name} não inicia com delimitador YAML '---'"
+                        )
                         continue
 
                     parts = content.split("---", 2)
@@ -175,9 +181,13 @@ def audit_skills_pillar() -> Tuple[List[str], List[str], Dict]:
                     has_desc = "description:" in frontmatter
 
                     if not has_name:
-                        errors.append(f"[SKILL-MISSING-NAME] {skill_file.parent.name} não define 'name:' no frontmatter")
+                        errors.append(
+                            f"[SKILL-MISSING-NAME] {skill_file.parent.name} não define 'name:' no frontmatter"
+                        )
                     if not has_desc:
-                        errors.append(f"[SKILL-MISSING-DESC] {skill_file.parent.name} não define 'description:' no frontmatter")
+                        errors.append(
+                            f"[SKILL-MISSING-DESC] {skill_file.parent.name} não define 'description:' no frontmatter"
+                        )
 
                     if has_name and has_desc:
                         stats["valid_frontmatter"] += 1
@@ -197,7 +207,9 @@ def run_full_pillars_audit():
 
     # 1. LOGS
     log_errs, log_warns, log_stats = audit_logs_pillar()
-    print(f"• [PILAR 1/4: LOGS]      {log_stats['files_scanned']} arquivos ({log_stats['bytes_total']/1024:.1f} KB) | Erros: {len(log_errs)} | Warnings: {len(log_warns)}")
+    print(
+        f"• [PILAR 1/4: LOGS]      {log_stats['files_scanned']} arquivos ({log_stats['bytes_total'] / 1024:.1f} KB) | Erros: {len(log_errs)} | Warnings: {len(log_warns)}"
+    )
     for e in log_errs:
         print(f"  ❌ {e}")
     for w in log_warns:
@@ -205,7 +217,9 @@ def run_full_pillars_audit():
 
     # 2. TEMPS
     tmp_errs, tmp_warns, tmp_stats = audit_temps_pillar()
-    print(f"• [PILAR 2/4: TEMPS]     {tmp_stats['temp_folders']} pastas ({tmp_stats['empty_purged']} purgadas) | Erros: {len(tmp_errs)} | Warnings: {len(tmp_warns)}")
+    print(
+        f"• [PILAR 2/4: TEMPS]     {tmp_stats['temp_folders']} pastas ({tmp_stats['empty_purged']} purgadas) | Erros: {len(tmp_errs)} | Warnings: {len(tmp_warns)}"
+    )
     for e in tmp_errs:
         print(f"  ❌ {e}")
     for w in tmp_warns:
@@ -213,7 +227,9 @@ def run_full_pillars_audit():
 
     # 3. ARTIFACTS
     art_errs, art_warns, art_stats = audit_artifacts_pillar()
-    print(f"• [PILAR 3/4: ARTIFACTS] {art_stats['artifacts_scanned']} artefatos ({art_stats['valid_metadata']} metadados) | Erros: {len(art_errs)} | Warnings: {len(art_warns)}")
+    print(
+        f"• [PILAR 3/4: ARTIFACTS] {art_stats['artifacts_scanned']} artefatos ({art_stats['valid_metadata']} metadados) | Erros: {len(art_errs)} | Warnings: {len(art_warns)}"
+    )
     for e in art_errs:
         print(f"  ❌ {e}")
     for w in art_warns:
@@ -221,7 +237,9 @@ def run_full_pillars_audit():
 
     # 4. SKILLS
     skl_errs, skl_warns, skl_stats = audit_skills_pillar()
-    print(f"• [PILAR 4/4: SKILLS]    {skl_stats['skills_scanned']} skills ({skl_stats['valid_frontmatter']} válidas) | Erros: {len(skl_errs)} | Warnings: {len(skl_warns)}")
+    print(
+        f"• [PILAR 4/4: SKILLS]    {skl_stats['skills_scanned']} skills ({skl_stats['valid_frontmatter']} válidas) | Erros: {len(skl_errs)} | Warnings: {len(skl_warns)}"
+    )
     for e in skl_errs:
         print(f"  ❌ {e}")
     for w in skl_warns:

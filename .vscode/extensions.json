@@ -1,15 +1,20 @@
 {
   "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.debugpy",
+    "ms-python.vscode-python-envs",
     "charliermarsh.ruff",
+    "googlecloudtools.cloudcode",
+    "googlecloudtools.datacloud",
+    "anthropic.claude-code",
     "esbenp.prettier-vscode",
     "SonarSource.sonarlint-vscode",
-    "ms-python.python",
     "dbaeumer.vscode-eslint",
     "llvm-vs-code-extensions.lldb-dap",
     "rust-lang.rust-analyzer",
-    "anthropic.claude-code",
     "openai.chatgpt",
-    "googlecloudtools.cloudcode",
     "tamasfe.even-better-toml"
   ]
 }
+
