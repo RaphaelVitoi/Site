@@ -37,8 +37,8 @@
       {
         "path": ".",
         "envManager": "ms-python.python:venv",
-        "packageManager": "ms-python.python:pip"
-      }
+        "packageManager": "ms-python.python:pip",
+      },
     ],
     "python.terminal.activateEnvironment": true,
     "python.analysis.typeCheckingMode": "standard",
@@ -56,7 +56,7 @@
       "${workspaceFolder}/api",
       "${workspaceFolder}/llm",
       "${workspaceFolder}/governance",
-      "${workspaceFolder}/conductor"
+      "${workspaceFolder}/conductor",
     ],
     "python.analysis.inlayHints.functionReturnTypes": true,
     "python.analysis.inlayHints.variableTypes": true,
@@ -122,7 +122,7 @@
       "**/build": true,
       "**/reports": true,
       "**/core/vendor": true,
-      "**/worker/Java": true
+      "**/worker/Java": true,
     },
     // ── TERMINAL SOTA ───────────────────────────────────────────
     "terminal.integrated.defaultProfile.windows": "PowerShell",
@@ -136,7 +136,7 @@
       },
     },
     // ── ESTETICA & ORGANIZACAO ──────────────────────────────────
-    "workbench.iconTheme": "symbols",
+    "workbench.iconTheme": "office-material-icon-theme",
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
       "package.json": "package-lock.json, turbo.json, tsconfig.base.json, .prettierrc, .eslintrc*",
@@ -153,11 +153,7 @@
     "securecoder.rules.i18n": "off",
     "securecoder.rules.internationalization": "off",
     "securecoder.rules.jsx-not-internationalized": "off",
-    "securecoder.disabledRules": [
-      "jsx-not-internationalized",
-      "i18n",
-      "internationalization"
-    ],
+    "securecoder.disabledRules": ["jsx-not-internationalized", "i18n", "internationalization"],
     "google.cloud.project": "original-498419",
     "google.cloud.billingQuotaProject": "original-498419",
     "cloudcode.project": "original-498419",
@@ -168,6 +164,6 @@
     "cloudcode.secretManager.showExplorer": true,
     "cloudcode.yaml.schemaValidation": true,
     "claudeCode.preferredLocation": "panel",
-    "claudeCode.focusView": true
-  }
+    "claudeCode.focusView": true,
+  },
 }
