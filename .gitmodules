@@ -1,27 +1,36 @@
 [submodule "core/vendor/eigen"]
 	path = core/vendor/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+	ignore = dirty
 [submodule "skills/Stitch"]
 	path = skills/Stitch
 	url = https://github.com/gemini-cli-extensions/stitch.git
+	ignore = dirty
 [submodule "skills/exa-mcp-server"]
 	path = skills/exa-mcp-server
 	url = https://github.com/exa-labs/exa-mcp-server.git
+	ignore = dirty
 [submodule "skills/gemini-cli-jules"]
 	path = skills/gemini-cli-jules
 	url = https://github.com/gemini-cli-extensions/jules.git
+	ignore = dirty
 [submodule "skills/gemini-cli-security"]
 	path = skills/gemini-cli-security
 	url = https://github.com/gemini-cli-extensions/security.git
+	ignore = dirty
 [submodule "skills/gemini-deep-research"]
 	path = skills/gemini-deep-research
 	url = https://github.com/allenhutchison/gemini-cli-deep-research.git
+	ignore = dirty
 [submodule "skills/gemini-supermemory"]
 	path = skills/gemini-supermemory
 	url = https://github.com/Rishabjs03/gemini-supermemory.git
+	ignore = dirty
 [submodule "skills/superpowers"]
 	path = skills/superpowers
 	url = https://github.com/obra/superpowers.git
+	ignore = dirty
 [submodule "skills/token-efficiency"]
 	path = skills/token-efficiency
 	url = https://github.com/undefdev/token-efficiency.git
+	ignore = dirty

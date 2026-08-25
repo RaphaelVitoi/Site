@@ -1,4 +1,4 @@
-name: SOTA v7.0 GOLD CI/CD Pipeline
+name: SOTA v8.0 GOLD CI/CD Pipeline
 
 on:
   push:
@@ -6,10 +6,26 @@ on:
       - master
       - main
       - fix-antigravity-sync-errors
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'reports/**'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.editorconfig'
+      - 'LICENSE'
   pull_request:
     branches:
       - master
       - main
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'reports/**'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.editorconfig'
+      - 'LICENSE'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,6 +38,7 @@ jobs:
   python-test-and-lint:
     name: 🐍 Python Lint & Pytest Matrix
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         python-version: ["3.12", "3.13"]
@@ -57,6 +74,7 @@ jobs:
   frontend-build-and-typecheck:
     name: ⚛️ Frontend TypeScript & Next.js Build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: 📥 Checkout Codebase
@@ -73,6 +91,17 @@ jobs:
         run: |
           rustup toolchain install 1.97.1 --profile minimal --target wasm32-unknown-unknown
           rustup default 1.97.1
+
+      - name: ⚡ Cache wasm-pack binary (Free Tier Economy)
+        id: cache-wasm-pack
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
+        with:
+          path: ~/.cargo/bin/wasm-pack
+          key: wasm-pack-0.15.0-${{ runner.os }}
+
+      - name: 📦 Install wasm-pack
+        if: steps.cache-wasm-pack.outputs.cache-hit != 'true'
+        run: |
           cargo install wasm-pack --version 0.15.0 --locked
 
       - name: 📦 Install dependencies
@@ -91,6 +120,7 @@ jobs:
   security-and-architecture-gate:
     name: 🛡️ Security Headers & Architecture Quality Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [python-test-and-lint, frontend-build-and-typecheck]
 
     steps:

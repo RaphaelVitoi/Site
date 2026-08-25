@@ -2081,7 +2081,7 @@ def run_or_list_audits(
         for c in ainfo.get("thematic_criteria", []):
             console.print(f"  [cyan] Criterio:[/] [white]{c}[/]")
         t0 = time.monotonic()
-        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False) # noqa: S602
+        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)  # noqa: S602
         dt = time.monotonic() - t0
         sla = ainfo.get("sla_seconds", 10.0)
 
