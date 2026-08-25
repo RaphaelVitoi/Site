@@ -21,7 +21,7 @@ main()
   A.print("A:");
   B.print("B:");
   
-  std::cout << ((status) ? "*** smoke test okay" : "*** smoke test failed") << std::endl;
+  std::cout << (status ? "*** smoke test okay" : "*** smoke test failed") << std::endl;
   
-  return (status) ? 0 : -1;
+  return status ? 0 : -1;
   }

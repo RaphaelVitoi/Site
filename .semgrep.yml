@@ -19,6 +19,11 @@ rules:
           @app.$METHOD(...)
           async def $FUNC(..., $VAR = Depends(...), ...):
             ...
+      # Filtro 3: Ignora a rota raiz (Health Check público)
+      - pattern-not: |
+          @app.get("/")
+          async def root_health_check(...):
+            ...
     severity: ERROR
 
   - id: sota-nextjs-auth-enforcement
@@ -37,11 +42,6 @@ rules:
             if (!$SESSION) { ... }
             ...
           }
-      # Filtro 3: Ignora a rota raiz (Health Check público)
-      - pattern-not: |
-          @app.get("/")
-          async def root_health_check(...):
-            ...
     severity: ERROR
 
   - id: sota-secrets-hardcoded

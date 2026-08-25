@@ -90,6 +90,8 @@
       "**/dist-workers/**": true,
       "**/build/**": true,
       "**/wasm-equity/target/**": true,
+      "**/core/vendor/**": true,
+      "**/worker/Java/**": true,
       "**/reports/**": true,
     },
     "files.exclude": {
@@ -102,6 +104,8 @@
       "**/dist-workers": true,
       "**/build": true,
       "**/reports": true,
+      "**/core/vendor": true,
+      "**/worker/Java": true
     },
     // ── TERMINAL SOTA ───────────────────────────────────────────
     "terminal.integrated.defaultProfile.windows": "PowerShell",
@@ -127,6 +131,7 @@
       "editor.defaultFormatter": "vscode.json-language-features",
     },
     "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/build/**,**/temp/**",
     "securecoder.enableI18n": false,
     "securecoder.rules.i18n": "off",
     "securecoder.rules.internationalization": "off",

@@ -8,11 +8,11 @@ purificação de entropia e autocura do ecossistema Nexus / Antigravity / Site.
 
 import json
 import os
+import shutil
+import sqlite3
+import subprocess
 import sys
 import time
-import hashlib
-import shutil
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -136,7 +136,6 @@ class AutopoiesisEngine:
         if not db_path.exists():
             return True, "Fila SQLite não instanciada ou em memória pura."
 
-        import sqlite3
         try:
             conn = sqlite3.connect(str(db_path), timeout=5.0)
             cursor = conn.cursor()
@@ -154,9 +153,8 @@ class AutopoiesisEngine:
         except Exception as e:
             return False, f"Falha ao validar SQLite: {e}"
 
-    def run_autopoietic_cycle(self) -> HomeostaseReport if False else HomeostasisReport:
+    def run_autopoietic_cycle(self) -> HomeostasisReport:
         """Executa um ciclo completo de homeostase e autopoiese."""
-        t0 = time.monotonic()
         if not self._acquire_lock():
             # Concorrência detectada: outro processo de homeostase já está operando
             return HomeostasisReport(
@@ -295,7 +293,7 @@ def run_homeostasis():
         print(f"  ⚡ {act}")
 
     print("\n[ESTADO DOS SUBSISTEMAS VITAIS]:")
-    for k, sub in report.subsystems.items():
+    for sub in report.subsystems.values():
         icon = "✓" if sub.status == "VERDE" else "❌"
         print(f"  {icon} [{sub.name}]: [{sub.status}] | Erros: {sub.errors} | {sub.details}")
 

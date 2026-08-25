@@ -8,3 +8,9 @@ CompileFlags:
     - "-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
     - "-Wno-unknown-pragmas"
     - "-Wno-unused-command-line-argument"
+
+---
+If:
+  PathMatch: .*(/vendor/|/worker/Java/|/oracleJdk-).*
+Diagnostics:
+  Suppress: ["*"]
