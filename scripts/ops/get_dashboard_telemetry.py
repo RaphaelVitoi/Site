@@ -1,7 +1,7 @@
 """
 SOTA v8.0 GOLD: Nexus Dashboard Telemetry Engine.
-Coleta e formata métricas de tarefas, modelos (Qwen 7B, Gemma 4B, Gemma 31B Cloud),
-previsão de task, RUNNING & ETA e status das últimas 5 tarefas.
+Coleta e formata metricas de tarefas, modelos (Qwen 7B, Gemma 4B, Gemma 31B Cloud),
+previsao de task, RUNNING & ETA e status das ultimas 5 tarefas.
 """
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tu
     """
     Mapeia os 5 estados de operacao estritos:
     1. 'completa mas falhou' (soft_failure / warnings)
-    2. 'completa mas requer revisão adicional' (review_required)
+    2. 'completa mas requer revisao adicional' (review_required)
     3. 'failed' (falha dura)
     4. 'suspensa' (suspended / pausada)
     5. 'prevista e engatilhada' (pending / queued / triggered)
@@ -94,7 +94,7 @@ def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tu
     if s == "completed_with_errors" or (s == "completed" and (meta.get("soft_failure") or meta.get("last_error_class"))):
         return "completa_falhou", "Completa mas falhou"
     elif s == "review_required" or (s == "completed" and (meta.get("review_required") or meta.get("requires_review"))):
-        return "completa_revisao", "Completa mas requer revisão adicional"
+        return "completa_revisao", "Completa mas requer revisao adicional"
     elif s in ("failed", "error"):
         return "failed", "Failed (Falha Dura)"
     elif s in ("suspended", "paused", "holding"):
@@ -102,9 +102,9 @@ def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tu
     elif s in ("pending", "queued", "triggered", "forecasted"):
         return "prevista_engatilhada", "Prevista e engatilhada (Fila)"
     elif s == "completed":
-        return "completed", "Concluída com Sucesso"
+        return "completed", "Concluida com Sucesso"
     elif s == "running":
-        return "running", "Em Execução (RUNNING)"
+        return "running", "Em Execucao (RUNNING)"
     return "unknown", s.capitalize()
 
 

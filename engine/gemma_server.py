@@ -184,7 +184,7 @@ _SSE_DONE = "[DONE]"
 _JSON_CONTENT = "application/json"
 _CHAT_COMPLETION_CHUNK = "chat.completion.chunk"
 # Um total de 600 s e correto para uma geracao longa do 31b, mas era o UNICO
-# limite — entao um Ollama pendurado tambem custava dez minutos antes de o
+# limite  entao um Ollama pendurado tambem custava dez minutos antes de o
 # fallback sequer comecar. Sao dois eventos diferentes e agora tem limites
 # diferentes:
 #   sock_connect  o daemon nao aceita conexao        -> falha em 3 s
@@ -224,6 +224,14 @@ class InferenceRequest(BaseModel):
     prompt: str
     system_prompt: str | None = None
     messages: list[dict[str, str]] | None = None
+    # Raciocinar e decisao POR REQUISICAO, nao configuracao de servidor. "ola" e
+    # "analise este stack trace" nao querem o mesmo regime: medido no app do
+    # Ollama, o gemma4:12b gastou 19,5 s deliberando sobre qual de tres saudacoes
+    # equivalentes usar. Custo pago onde nao muda a resposta.
+    #   None   segue o padrao do servidor (SOTA_THINK, hoje desligado)
+    #   False  responde direto
+    #   True   raciocina antes, para tarefa que tem o que decidir
+    think: bool | None = None
     images: list[str] | None = None  # SOTA Multimodal: Base64 / URLs para visao
     audios: list[str] | None = None  # SOTA Multimodal: Audio nativo para Gemma 4 E2B/E4B/12B
     physics_snapshot: PhysicsSnapshot | None = None
@@ -308,17 +316,13 @@ def _carregar_manifesto_ollama() -> dict[str, str]:
 
     Consolida o que antes eram tres mapas hardcoded divergentes (aqui, em
     scripts/start_model.ps1 e em scripts/llm_inference/run_inference.py).
-    Devolve dicionario vazio se o manifesto nao puder ser lido — o chamador
+    Devolve dicionario vazio se o manifesto nao puder ser lido  o chamador
     mantem o fallback nesse caso.
     """
     try:
         with OLLAMA_MODELS_MANIFEST.open(encoding="utf-8") as fh:
             dados = json.load(fh)
-        return {
-            m["alias"]: m["tag"]
-            for m in dados.get("models", [])
-            if m.get("alias") and m.get("tag")
-        }
+        return {m["alias"]: m["tag"] for m in dados.get("models", []) if m.get("alias") and m.get("tag")}
     except (OSError, json.JSONDecodeError, KeyError, TypeError):
         return {}
 
@@ -329,7 +333,7 @@ if _manifesto_aliases:
 
 MODEL_INFERENCE_PARAMS = {
     "12b": {
-        "num_ctx": 32768,  # Gemma 4 12B: Baseline 32K (Expansível dinamicamente até 256K)
+        "num_ctx": 32768,  # Gemma 4 12B: Baseline 32K (Expansivel dinamicamente ate 256K)
         "temperature": 0.4,
         "top_p": 0.9,
         "top_k": 40,
@@ -338,7 +342,7 @@ MODEL_INFERENCE_PARAMS = {
         "num_thread": 8,
     },
     "e4b": {
-        "num_ctx": 16384,  # Gemma 4 Effective 4B: Baseline 16K (Expansível até 128K)
+        "num_ctx": 16384,  # Gemma 4 Effective 4B: Baseline 16K (Expansivel ate 128K)
         "temperature": 0.5,
         "top_p": 0.95,
         "top_k": 64,
@@ -347,7 +351,7 @@ MODEL_INFERENCE_PARAMS = {
         "num_thread": 4,
     },
     "e2b": {
-        "num_ctx": 8192,  # Gemma 4 Effective 2B: Baseline 8K (Expansível até 128K)
+        "num_ctx": 8192,  # Gemma 4 Effective 2B: Baseline 8K (Expansivel ate 128K)
         "temperature": 0.5,
         "top_p": 0.95,
         "top_k": 64,
@@ -454,7 +458,7 @@ def _names_local_engine(requested_model: str | None) -> bool:
                                       motor, remoto e pago, escolhido sem avisar.
 
     `normalize_model` colapsa "gemma4:e4b" em "e4b" e a partir dai o servidor nao
-    tem mais como saber qual dos dois casos era — CLOUD_MODEL_MAP remonta um id
+    tem mais como saber qual dos dois casos era  CLOUD_MODEL_MAP remonta um id
     remoto com a mesma naturalidade. Esta funcao le a string ORIGINAL, antes do
     colapso, que e o unico lugar onde a intencao ainda existe.
 
@@ -763,16 +767,16 @@ async def _consume_ollama_stream(
     """Consome a resposta de streaming da API do Ollama linha por linha.
 
     O CHECK DE DESCONEXAO E UMA OTIMIZACAO, NAO UMA CONDICAO DE CORRETUDE.
-    Ele existe para parar de gerar quando ninguem esta mais ouvindo — economia.
+    Ele existe para parar de gerar quando ninguem esta mais ouvindo  economia.
     Mas estava sendo consultado ANTES de processar cada linha, inclusive a
     primeira, e `Request.is_disconnected()` le do canal de receive do ASGI: num
     POST cujo corpo o FastAPI ja consumiu para montar o modelo, esse canal pode
     devolver `http.disconnect` mesmo com o cliente presente. O gerador entao
-    terminava limpo, sem excecao e sem um unico chunk — HTTP 200 com corpo
+    terminava limpo, sem excecao e sem um unico chunk  HTTP 200 com corpo
     vazio, que e o modo de falha mais caro que existe porque nao parece falha.
 
     Duas mudancas fazem o check voltar a ser otimizacao:
-      1. so consulta DEPOIS de ja ter entregue algo — abandonar uma geracao que
+      1. so consulta DEPOIS de ja ter entregue algo  abandonar uma geracao que
          ainda nao produziu nada nunca economiza o que importa;
       2. o abandono e registrado, para nunca mais ser silencioso.
     """
@@ -809,7 +813,7 @@ async def _check_vram_offload(target_model: str) -> None:
 
 # Fatia fixa por modelo, o esquema anterior. Preservado porque ainda e a saida
 # certa quando o dono QUER reservar GPU para outra coisa e aceita pagar em
-# latencia — mas nao pode mais ser o padrao. Ver _get_target_gpu_layers.
+# latencia  mas nao pode mais ser o padrao. Ver _get_target_gpu_layers.
 _STATIC_GPU_LAYERS = {"12b": 26, "e4b": 18, "4b": 18, "e2b": 12}
 
 
@@ -817,7 +821,7 @@ def _get_target_gpu_layers(target_model: str) -> int:
     """Quantas camadas vao para a GPU. -1 = o runtime decide medindo.
 
     ISTO NAO E PROPRIEDADE DO MODELO. Quantas camadas cabem depende da VRAM
-    LIVRE no instante da carga, e essa maquina varia o proprio orcamento — a
+    LIVRE no instante da carga, e essa maquina varia o proprio orcamento  a
     placa e compartilhada e o dono limita a fatia conforme o que mais esteja
     rodando. Uma constante congela a medicao de um dia especifico e erra em
     todos os outros.
@@ -907,13 +911,13 @@ def _prepare_ollama_payload(
         # MEDIDO em 2026-08-23 contra gemma4:e4b, que e um modelo de raciocinio:
         # sem este campo, TODO o orcamento de num_predict vai para
         # message.thinking e message.content chega vazio ao fim, com
-        # done_reason="length". O servidor devolvia HTTP 200 e corpo vazio —
+        # done_reason="length". O servidor devolvia HTTP 200 e corpo vazio 
         # sem excecao, sem log, sem sintoma que parecesse falha.
         #
         # Raciocinio nao e gratuito: e orcamento de tokens gasto antes da
         # primeira palavra da resposta. Para um gateway de inferencia o padrao
         # tem de ser resposta; quem quiser a cadeia de pensamento pede.
-        "think": os.environ.get("SOTA_THINK", "0") == "1",
+        "think": req.think if req.think is not None else os.environ.get("SOTA_THINK", "0") == "1",
     }
     if req.response_format:
         payload["format"] = req.response_format
@@ -1072,7 +1076,7 @@ async def _orchestrate_streams(
     #
     # `local_success` mede CONCLUSAO, nao volume. A versao anterior so o marcava
     # ao ver o primeiro chunk, entao uma geracao local legitimamente vazia caia
-    # para a nuvem — pagando por uma resposta que o local ja tinha dado.
+    # para a nuvem  pagando por uma resposta que o local ja tinha dado.
     local_success = False
     if target_model != "31b_cloud":
         try:
@@ -1086,12 +1090,12 @@ async def _orchestrate_streams(
         return
 
     # O chamador nomeou o motor. Substitui-lo por um id remoto seria atender
-    # outro pedido — e cobrar por isso. Falhar aqui e a resposta correta.
+    # outro pedido  e cobrar por isso. Falhar aqui e a resposta correta.
     if local_only:
         logger.warning("[HIBRIDO] %s foi pedido por nome; sem fallback para nuvem.", target_model)
         yield (
             f"[MOTOR LOCAL INDISPONIVEL]: '{req.model}' foi pedido explicitamente e o Ollama nao "
-            f"atendeu. Nao ha fallback para nuvem quando o motor e nomeado — servir outro modelo "
+            f"atendeu. Nao ha fallback para nuvem quando o motor e nomeado  servir outro modelo "
             f"remoto seria responder a uma pergunta diferente. Verifique o daemon em "
             f"{os.environ.get('OLLAMA_API_BASE', 'http://127.0.0.1:11434')}."
         )
@@ -1134,7 +1138,13 @@ async def generate_response(
 
     return StreamingResponse(
         _orchestrate_streams(
-            req, request, messages, target_model, gemini_key, openrouter_key, cloud_model,
+            req,
+            request,
+            messages,
+            target_model,
+            gemini_key,
+            openrouter_key,
+            cloud_model,
             local_only=_names_local_engine(req.model),
         ),
         media_type="text/plain",
@@ -1206,7 +1216,13 @@ async def openai_chat_completions(
     cloud_model = CLOUD_MODEL_MAP.get(target_model, "gemma-4-31b-it")
 
     stream_gen = _orchestrate_streams(
-        inference_req, request, final_messages, target_model, gemini_key, openrouter_key, cloud_model,
+        inference_req,
+        request,
+        final_messages,
+        target_model,
+        gemini_key,
+        openrouter_key,
+        cloud_model,
         local_only=_names_local_engine(inference_req.model),
     )
 

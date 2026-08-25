@@ -1,8 +1,8 @@
-"""Adaptadores de requisicao para Anthropic, OpenAI e Google — SOTA v8.0 GOLD.
+"""Adaptadores de requisicao para Anthropic, OpenAI e Google  SOTA v8.0 GOLD.
 
 Cada adaptador traduz uma entrada do MODEL_REGISTRY no formato de requisicao do
 respectivo SDK. A responsabilidade e estreita de proposito: montar kwargs
-corretos. Os adaptadores NAO instanciam clientes nem executam chamadas — isso
+corretos. Os adaptadores NAO instanciam clientes nem executam chamadas  isso
 fica com llm/providers.py, que ja tem a camada de estrategia do projeto.
 
 O valor real aqui e negativo: o que estes adaptadores REMOVEM. Os tres
@@ -23,7 +23,7 @@ from llm.model_registry import AdapterType, ModelCapability, get
 SAMPLING_LEGADO: frozenset[str] = frozenset({"temperature", "top_p", "top_k", "presence_penalty", "frequency_penalty"})
 
 # Removido da API Anthropic. Se aparecer, e sinal de codigo escrito contra a
-# geracao anterior — ou de alguem seguindo o estudo de fronteira sem verificar.
+# geracao anterior  ou de alguem seguindo o estudo de fronteira sem verificar.
 ANTHROPIC_REMOVIDOS: frozenset[str] = frozenset({"budget_tokens", "thinking_budget"})
 
 
@@ -88,7 +88,7 @@ class AnthropicAdapter:
         if tools:
             req["tools"] = tools
 
-        # Thinking adaptativo — o unico modo aceito. Profundidade via effort.
+        # Thinking adaptativo  o unico modo aceito. Profundidade via effort.
         if cap.thinking_adaptive:
             req["thinking"] = {"type": "adaptive"}
         if cap.effort:
@@ -139,8 +139,8 @@ class AnthropicAdapter:
 class OpenAIAdapter:
     """Monta requisicoes para a familia GPT-5.6.
 
-    O estudo acertou o diagnostico — parametros de amostragem legados provocam
-    400 em modelos de raciocinio — mas errou a escala de esforco: usa `"ultra"`,
+    O estudo acertou o diagnostico  parametros de amostragem legados provocam
+    400 em modelos de raciocinio  mas errou a escala de esforco: usa `"ultra"`,
     valor que nao aparece na documentacao. A escala vai de `none` a `max`.
     """
 
@@ -210,7 +210,7 @@ class GoogleGenAIAdapter:
     """Monta requisicoes para Gemini 3.x via google-genai.
 
     Correcao relevante sobre o estudo: nao existe campo `include_thoughts`. As
-    *thought signatures* funcionam em dois modos —
+    *thought signatures* funcionam em dois modos 
 
       - **stateful** (recomendado): o servidor gerencia as assinaturas; o
         cliente nao faz nada;
@@ -218,7 +218,7 @@ class GoogleGenAIAdapter:
         como recebidos, ou o modelo perde continuidade de raciocinio.
 
     O estudo descreve uma re-injecao manual de assinatura que corresponde,
-    parcialmente, ao modo stateless — e o apresenta como se fosse o unico.
+    parcialmente, ao modo stateless  e o apresenta como se fosse o unico.
     """
 
     @staticmethod

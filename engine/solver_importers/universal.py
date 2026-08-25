@@ -18,7 +18,7 @@ class UniversalSolverImporter:
     """
     Importador Mestre Universal para Solvers de Poker.
     Identifica automaticamente a origem (DeepSolver, GTOWizard, Monker, HRC Pro, PioSolver)
-    e normaliza para o grafo canônico da Perspectiva Matemática (PMev).
+    e normaliza para o grafo canonico da Perspectiva Matematica (PMev).
     """
 
     def __init__(self) -> None:

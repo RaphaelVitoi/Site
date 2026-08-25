@@ -134,3 +134,40 @@ async def test_handle_import_solver_tree_success():
     assert data["solver_type"] == "deep_solver"
     assert data["node_count"] == 1
     assert "pmev_converted_nodes" in data["tree"]
+
+
+@pytest.mark.asyncio
+async def test_handle_pmev_heatmap_success():
+    """Valida geracao de heatmap via endpoint HTTP."""
+    from api.v1.handlers import handle_pmev_heatmap
+
+    app = web.Application()
+    from aiohttp.test_utils import make_mocked_request
+
+    payload = {
+        "deepsolver_range": {
+            "AA": 1.0,
+            "KK": 1.0,
+            "AKs": 1.0,
+            "72o": 0.0,
+        },
+        "pot": 2.5,
+        "call_amount": 1.0,
+        "bubble_factor": 2.2,
+        "stack_bb": 15.0,
+        "position": "UTG",
+        "time_to_blind_minutes": 2.0,
+    }
+
+    req = make_mocked_request("POST", "/api/v1/pmev/heatmap", app=app)
+    req._read_bytes = json.dumps(payload).encode("utf-8")
+
+    resp = await handle_pmev_heatmap(req)
+    assert resp.status == 200
+    data = json.loads(resp.text)
+    assert data["status"] == "SUCCESS"
+    assert "deepsolver_matrix" in data
+    assert "pmev_matrix" in data
+    assert "delta_matrix" in data
+    assert "ascii_heatmap" in data
+    assert len(data["cells"]) == 169

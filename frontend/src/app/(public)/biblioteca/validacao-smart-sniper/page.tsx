@@ -1,4 +1,4 @@
-﻿/**
+/**
  * IDENTITY: Validação Científica do Smart Sniper (GOLD v7.0 GOLD)
  * PATH: src/app/biblioteca/validacao-smart-sniper/page.tsx
  * ROLE: Artigo acadêmico/técnico com análise de Monte Carlo, Sharpe e Barbell.
@@ -77,10 +77,9 @@ export default function ValidacaoSmartSniperPage() {
 							10.000 simulações de Monte Carlo, comparamos a estratégia tradicional de
 							alto volume (<em>Mass Multitabling</em>) com o{' '}
 							<strong className="text-text-bright">Protocolo Smart Sniper</strong>,
-							caracterizado por seleção de Small Fields, entrada tardia estratégica (
-							<em>Late Reg</em>) e alocação assimétrica de capital aos domingos (
-							<em>Capped Spend, High ABI</em>). Os resultados demonstram que o
-							Protocolo Sniper oferece um{' '}
+							caracterizado por seleção de Small Fields, entrada tardia estratégica (<em>Late Reg</em>) e
+							alocação assimétrica de capital aos domingos (<em>Capped Spend, High ABI</em>). Os resultados
+							demonstram que o Protocolo Sniper oferece um{' '}
 							<strong className="text-accent-emerald">
 								Índice de Sharpe 8x superior
 							</strong>{' '}

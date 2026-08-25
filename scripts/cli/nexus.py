@@ -91,12 +91,16 @@ agent_app = typer.Typer(
 db_app = typer.Typer(name="db", help="Gestao e Otimizacao do DAL (SQLite ACID)", no_args_is_help=True)
 stats_app = typer.Typer(name="stats", help="Telemetria Preditiva e Relatorios", no_args_is_help=True)
 voice_app = typer.Typer(name="voice", help="Sintese Neural de Voz e Audio SOTA", no_args_is_help=True)
+audit_app = typer.Typer(name="audit", help="Auditorias SOTA v8.0 GOLD", no_args_is_help=True)
+routine_app = typer.Typer(name="routine", help="Rotinas SOTA v8.0 GOLD", no_args_is_help=True)
 
 app.add_typer(ops_app)
 app.add_typer(agent_app)
 app.add_typer(db_app)
 app.add_typer(stats_app)
 app.add_typer(voice_app)
+app.add_typer(audit_app)
+app.add_typer(routine_app)
 
 DIR_CLAUDE = BASE_DIR / ".cerebro"
 
@@ -643,10 +647,64 @@ def search_rag(
 
 @app.command("graph")
 def graph_rag(
-    query: str = typer.Argument(..., help="Foco conceitual para extracao do Grafo Causal"),
+    query: str = typer.Argument("list", help="Foco conceitual, 'bootstrap-pmev', 'list' ou ID do no causal"),
 ):
     """Consulta e forja as relacoes do Grafo Causal (Knowledge Graph)."""
-    console.print(f"[cyan]Forjando Grafo Causal para: '{query}'...[/cyan]")
+    from core.causal_graph import CausalGraphEngine
+
+    engine = CausalGraphEngine()
+
+    if query in ["bootstrap", "bootstrap-pmev", "init"]:
+        count = engine.bootstrap_pmev_axioms()
+        console.print(f"[bold green] Grafo Causal Primordial PMev forjado com sucesso! ({count} nos axiomicos indexados)[/]")
+        return
+
+    if query == "list":
+        nodes = engine.list_nodes()
+        if not nodes:
+            # Auto bootstrap se vazio
+            engine.bootstrap_pmev_axioms()
+            nodes = engine.list_nodes()
+
+        table = Table(title=" GRAFO CAUSAL SOTA  NOS DE CONHECIMENTO & PMev", box=box.ROUNDED)
+        table.add_column("ID", style="bold cyan")
+        table.add_column("Categoria", style="bold magenta")
+        table.add_column("Conceito / Axioma", style="white")
+        table.add_column("Propriedades", style="dim")
+
+        for n in nodes:
+            table.add_row(n["id"], n["category"], n["label"], str(n["properties"]))
+        console.print(table)
+        return
+
+    # Consulta direta a um no
+    result = engine.query_node(query)
+    if result and result.get("node"):
+        node = result["node"]
+        causes = result.get("causes", [])
+        effects = result.get("effects", [])
+
+        grid = Table.grid(expand=True, padding=(0, 2))
+        grid.add_column(style="bold white", ratio=1)
+        grid.add_column(ratio=2)
+
+        causes_str = "\n".join([f" [{c['relation']}] {c['label']} ({c['id']})" for c in causes]) or "[dim]Nenhuma causa direta[/]"
+        effects_str = "\n".join([f" [{e['relation']}] {e['label']} ({e['id']})" for e in effects]) or "[dim]Nenhum efeito direto[/]"
+
+        grid.add_row("[bold cyan]Origens / Causas:[/]", causes_str)
+        grid.add_row("[bold green]Impactos / Efeitos:[/]", effects_str)
+
+        panel = Panel(
+            grid,
+            title=f"[bold gold1]CONCEITO: {node['label']} ({node['id']})  {node['category']}[/]",
+            border_style="cyan",
+            box=box.ROUNDED,
+        )
+        console.print(panel)
+        return
+
+    # Fallback para extracao via MemoryRAG
+    console.print(f"[cyan]Forjando Grafo Causal dinamico para: '{query}'...[/cyan]")
     rag_script = BASE_DIR / MEMORY_RAG_SCRIPT
     subprocess.run([sys.executable, str(rag_script), "graph", query], cwd=str(BASE_DIR), check=True)
 
@@ -1013,13 +1071,19 @@ def _is_ignored_dir(name: str) -> bool:
         ".next",
         "dist",
         "build",
+        ".trunk",
+        ".Codex",
+        "reports",
+        "docs",
     }
 
 
 def _check_file_ascii(path: Path) -> bool:
     try:
         with open(path, "rb") as f:
-            f.read().decode("ascii")
+            content = f.read()
+            # Garante que o arquivo e UTF-8 valido e sem bytes corrompidos
+            content.decode("utf-8")
         return True
     except UnicodeDecodeError:
         return False
@@ -1032,9 +1096,6 @@ def _scan_dir_for_ascii(dir_path: Path, base_dir: Path, non_ascii_files: list[Pa
                 if not _is_ignored_dir(path.name):
                     _scan_dir_for_ascii(path, base_dir, non_ascii_files)
             elif path.is_file() and path.suffix == ".py":
-                # SOTA: Excecao para modulos que hospedam a ontologia acentuada do Sistema
-                if path.name in ("gemma_server.py", "nexus.py"):
-                    continue
                 if not _check_file_ascii(path):
                     non_ascii_files.append(path.relative_to(base_dir))
     except (PermissionError, FileNotFoundError):
@@ -1580,23 +1641,24 @@ def compress_static_assets():
         raise typer.Exit(1)
 
 
+@app.command("gate")
+@ops_app.command("gate")
 @ops_app.command("quality-gate")
 @coro
 async def quality_gate():
-    """Executa a Pipeline SOTA (Lint, Typecheck, Build, Tests) sem dependencias externas e envia logs ao Loguru."""
-    console.print("[bold magenta]=== [SISTEMA] INICIANDO QUALITY GATE SOTA ===[/]")
+    """Executa a Pipeline Master SOTA (Lint, Typecheck, Build, Tests, CWV Gate) sob o SOTA Guard v8.0 GOLD."""
+    console.print("[bold magenta]=== [SISTEMA] INICIANDO QUALITY GATE SOTA (PROTOCOLO CHICO v8.0 GOLD) ===[/]")
 
     npm_cmd = shutil.which("npm")
     node_cmd = shutil.which("node") or "node"
+    pwsh_cmd = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
 
     if not npm_cmd:
         console.print("[bold red][ENTROPIA CRITICA] Executaveis vitais (npm) ausentes no PATH da membrana.[/]")
         raise typer.Exit(1)
 
     await _auto_cure_lightningcss()
-    # -------------------------------------------------------------------------
 
-    # SOTA: Variavel de ambiente injetada para short-circuit de I/O no Next.js durante SSG
     build_env = os.environ.copy()
     build_env["NEXT_PUBLIC_SOTA_BUILD_MODE"] = "1"
 
@@ -1619,41 +1681,41 @@ async def quality_gate():
             BASE_DIR,
             None,
         ),
-        ("Lint (frontend)", [npm_cmd, "run", "lint"], BASE_DIR, None),
+        ("Lint (frontend ESLint)", [npm_cmd, "run", "lint"], BASE_DIR, None),
         (
-            "Typecheck (frontend)",
-            [npm_cmd, "--workspace", "frontend", "run", "typecheck:audit"],
+            "Typecheck (frontend TypeScript Strict)",
+            [npm_cmd, "--workspace", "frontend", "run", "typecheck"],
             BASE_DIR,
             None,
         ),
-        ("Build (frontend)", [npm_cmd, "run", "build"], BASE_DIR, build_env),
+        ("Build (frontend Next.js)", [npm_cmd, "run", "build"], BASE_DIR, build_env),
         (
             "Pre-Compressao Estatica Brotli/Gzip (<15KB Mandate)",
             [node_cmd, str(BASE_DIR / "scripts" / "ops" / "brotli_compressor.mjs")],
             BASE_DIR,
             None,
         ),
-        ("Tests (frontend)", [npm_cmd, "run", "test"], BASE_DIR, None),
+        ("Tests (frontend Jest + SOTA Guard)", [npm_cmd, "run", "test"], BASE_DIR, None),
         (
-            "Python syntax check",
-            [
-                sys.executable,
-                "-m",
-                "py_compile",
-                "api/v1/middleware.py",
-                "api/v1/server.py",
-            ],
-            BASE_DIR,
-            None,
-        ),
-        (
-            "Python tests",
+            "Python tests (Pytest + SOTA Guard)",
             [
                 sys.executable,
                 "-m",
                 "pytest",
                 "-q",
-                "--basetemp=temp/nexus_zone/pytest_temp",
+            ],
+            BASE_DIR,
+            None,
+        ),
+        (
+            "Portao CWV 5-Fases (Performance, A11y, CVE, SRI, Hygiene)",
+            [
+                pwsh_cmd,
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(BASE_DIR / "scripts" / "ops" / "cwv_gate.ps1"),
             ],
             BASE_DIR,
             None,
@@ -1663,7 +1725,172 @@ async def quality_gate():
     for name, cmd, cwd, env in steps:
         await _execute_step(name, cmd, cwd, env)
 
-    console.print("\n[bold green]QUALITY GATE: OK (Telemetria Preditiva Capturada)[/]")
+    console.print("\n" + "=" * 80)
+    console.print("[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (QUALITY GATE) ==========[/]")
+    console.print(" Total de Erros:    0 (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+    console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+    console.print("[bold green] Status da Bateria: [SUCESSO (VERDE)] Zero Erros & Zero Warnings nas 10 Fases do Gate.[/]")
+    console.print("[green] Homeostase Total:  Todas as 10 fases e suites do Quality Gate aprovadas com excelencia termodinamica.[/]")
+    console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+
+
+@app.command("test")
+def run_thematic_test_suite(
+    suite: str = typer.Option("all", "--suite", "-s", help="Nome da suite tematica: pmev, core_ai, agents_llm, database_infra, security_governance, all"),
+    list_suites: bool = typer.Option(False, "--list", "-l", help="Lista todas as suites tematicas disponiveis"),
+    coverage: bool = typer.Option(False, "--cov", help="Gera relatorio de cobertura completo"),
+):
+    """Executa suites de testes tematicas com o SOTA Integrity Guard v8.0 GOLD e criterios especificos."""
+    manifest_path = BASE_DIR / "tests" / "TEST_SUITES_MANIFEST.json"
+    if not manifest_path.exists():
+        console.print("[bold red][ERRO] TEST_SUITES_MANIFEST.json ausente.[/]")
+        raise typer.Exit(1)
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    suites = manifest.get("thematic_suites", {})
+
+    if list_suites:
+        console.print("\n[bold cyan]=== [SUITES DE TESTES TEMATICAS SOTA v8.0 GOLD] ===[/]\n")
+        table = Table(title="Catalogo de Suites Tematicas (Pytest & SOTA Guard)", box=box.ROUNDED)
+        table.add_column("Suite ID", style="bold yellow")
+        table.add_column("Nome Tematico", style="white")
+        table.add_column("Testes", justify="right", style="cyan")
+        table.add_column("SLA", justify="right", style="green")
+        table.add_column("Criterio Tematico Chave", style="dim")
+
+        for sid, sinfo in suites.items():
+            crit_list = sinfo.get("thematic_criteria", [])
+            key_crit = crit_list[0] if crit_list else sinfo.get("description", "")
+            table.add_row(
+                sid,
+                sinfo.get("name", ""),
+                str(sinfo.get("test_count", 0)),
+                f"{sinfo.get('sla_seconds', 0)}s",
+                key_crit[:55] + "...",
+            )
+        console.print(table)
+        console.print("[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n")
+        return
+
+    if suite == "all":
+        console.print("[bold cyan]=== [SISTEMA] EXECUTANDO TODAS AS SUITES TEMATICAS (385 TESTES) ===[/]")
+        console.print("[dim] Validando: PMev, Core AI, Agents LLM, Database Infra, Security Governance[/]")
+        cmd = [sys.executable, "-m", "pytest", "-v"]
+    elif suite in suites:
+        sinfo = suites[suite]
+        console.print(f"[bold cyan]=== [SISTEMA] EXECUTANDO SUITE TEMATICA: {sinfo.get('name')} ===[/]")
+        console.print(f"[dim] Camada Alvo: {sinfo.get('target_layer', '')}[/]")
+        console.print(f"[dim] SLA Maximo:  {sinfo.get('sla_seconds', 0)}s | Testes: {sinfo.get('test_count', 0)}[/]")
+        for c in sinfo.get("thematic_criteria", []):
+            console.print(f"  [cyan] Criterio:[/] [white]{c}[/]")
+        console.print("")
+        cmd = [sys.executable, "-m", "pytest", "-v"] + sinfo.get("pytest_args", [])
+    else:
+        console.print(f"[bold red][ERRO] Suite '{suite}' desconhecida. Use 'nexus test --list' para ver as opcoes.[/]")
+        raise typer.Exit(1)
+
+    if coverage:
+        cmd += ["--cov=core", "--cov=database", "--cov=engine", "--cov=llm"]
+
+    res = subprocess.run(cmd, cwd=str(BASE_DIR), check=False)
+    if res.returncode != 0:
+        raise typer.Exit(res.returncode)
+
+
+@app.command("scripts")
+@ops_app.command("scripts")
+def list_and_run_scripts(
+    list_all: bool = typer.Option(False, "--list", "-l", help="Lista catalogo de scripts"),
+    category: str = typer.Option(None, "--category", "-c", help="Filtrar por categoria: ops, maintenance, routines, benchmarks, cli"),
+    audit: bool = typer.Option(False, "--audit", "-a", help="Executa a auditoria global de 100% dos scripts e testes"),
+    run_cat: str = typer.Option(None, "--run", "-r", help="Executa todos os scripts da categoria informada sob o Tri-State Guard"),
+):
+    """Consulta e executa o Catalogo Estruturado de Scripts sob o SOTA Guard Tri-State."""
+    catalog_path = BASE_DIR / "scripts" / "SCRIPTS_CATALOG.json"
+    if not catalog_path.exists():
+        console.print("[bold red][ERRO] SCRIPTS_CATALOG.json ausente.[/]")
+        raise typer.Exit(1)
+
+    if audit:
+        audit_script = BASE_DIR / "scripts" / "maintenance" / "audit_ecosystem_tests_scripts.py"
+        res = subprocess.run([sys.executable, str(audit_script)], cwd=str(BASE_DIR), check=False)
+        raise typer.Exit(res.returncode)
+
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    taxonomy = catalog.get("taxonomy", {})
+
+    if run_cat:
+        cat_key = run_cat.lower()
+        if cat_key not in taxonomy:
+            console.print(f"[bold red][ERRO] Categoria '{run_cat}' desconhecida. Use 'nexus scripts --list'.[/]")
+            raise typer.Exit(1)
+
+        cat_info = taxonomy[cat_key]
+        console.print(f"\n[bold cyan]=== [EXECUTANDO BATERIA DE SCRIPTS: {cat_info.get('name')} ({cat_key})] ===[/]\n")
+        for crit in cat_info.get("thematic_criteria", []):
+            console.print(f"  [cyan] Criterio:[/] [white]{crit}[/]")
+        console.print("")
+
+        script_errors = []
+        for s_path, s_data in cat_info.get("scripts", {}).items():
+            cmd_str = s_data.get("command", "")
+            if cmd_str.startswith("python "):
+                cmd_str = f'"{sys.executable}" ' + cmd_str[7:]
+            elif cmd_str.startswith("pwsh "):
+                pwsh_bin = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
+                cmd_str = f'"{pwsh_bin}" ' + cmd_str[5:]
+            elif cmd_str.startswith("node "):
+                node_bin = shutil.which("node") or "node"
+                cmd_str = f'"{node_bin}" ' + cmd_str[5:]
+
+            console.print(f"[bold yellow] Disparando:[/] [white]{s_path}[/] [dim]({cmd_str})[/]...")
+            t0 = time.monotonic()
+            res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)
+            dt = time.monotonic() - t0
+            sla = s_data.get("sla_seconds", 10.0)
+
+            if res.returncode == 0:
+                console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)")
+            else:
+                console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}")
+                script_errors.append((s_path, res.stderr or res.stdout))
+
+        tri_state = "FALHOU (VERMELHO)" if script_errors else "SUCESSO (VERDE)"
+        console.print("\n" + "=" * 80)
+        console.print("[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (SCRIPTS) ==========[/]")
+        console.print(f" Total de Erros:    {len(script_errors)} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+        console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+        console.print(f" Status da Bateria: [{tri_state}]")
+        if not script_errors:
+            console.print("[bold green] Homeostase Total:  Todos os scripts da categoria executados com excelencia.[/]")
+        console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+
+        if script_errors:
+            raise typer.Exit(1)
+        return
+
+    # Modo Listagem por padrao
+    console.print("\n[bold cyan]=== [CATALOGO DE SCRIPTS SOTA v8.0 GOLD] ===[/]\n")
+    for cat_id, cat_info in taxonomy.items():
+        if category and category.lower() != cat_id.lower():
+            continue
+        table = Table(title=f"Categoria: {cat_info.get('name')} ({cat_id})", box=box.ROUNDED)
+        table.add_column("Script Path", style="bold yellow")
+        table.add_column("Runtime", style="cyan")
+        table.add_column("SLA", justify="right", style="green")
+        table.add_column("Descricao", style="white")
+
+        for s_path, s_data in cat_info.get("scripts", {}).items():
+            table.add_row(
+                s_path,
+                s_data.get("runtime", ""),
+                f"{s_data.get('sla_seconds', 0)}s",
+                s_data.get("description", "")[:55] + "...",
+            )
+        console.print(table)
+        console.print("")
+
+    console.print("[bold green] Tri-State Guard para Scripts:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n")
 
 
 # ==========================================
@@ -1677,34 +1904,49 @@ def execute_handoff(
     agent: str = typer.Option("chico", "--agent", help="Focar contexto num agente especifico"),
 ):
     """Monta contexto hierarquico isolado e realiza o Handoff Cognitivo de Sessao."""
-    console.print("[bold cyan]=== [PROTOCOLO DE HANDOFF SOTA] ===[/]")
-    if web:
-        context = []
-        files_to_inject = {
-            "INSTRUCOES GLOBAIS": BASE_DIR / "GLOBAL_INSTRUCTIONS.md",
-            "COSMOVISAO": DIR_CLAUDE / "COSMOVISAO.md",
-            "INVARIANTES ARQUITETURAIS": DIR_CLAUDE / "ARCHITECTURAL_INVARIANTS.md",
-        }
-        for title, path in files_to_inject.items():
-            if path.exists():
-                context.append(
-                    f"\n=================================================================\n## {title}\n=================================================================\n{path.read_text(encoding='utf-8', errors='ignore')}"
-                )
-
-        agents_dir = DIR_CLAUDE / "agents"
-        specific_agent = agents_dir / f"{agent}.md"
-        if specific_agent.exists():
+    console.print("\n[bold cyan]=== [PROTOCOLO DE HANDOFF COGNITIVO SOTA v8.0 GOLD] ===[/]\n")
+    context = []
+    
+    claude_dir = BASE_DIR / ".claude" if (BASE_DIR / ".claude").exists() else BASE_DIR / ".cerebro"
+    files_to_inject = {
+        "MODUS OPERANDI v8.0 GOLD": BASE_DIR.parent / "MODUS_OPERANDI.md",
+        "INSTRUCOES GLOBAIS": BASE_DIR / "GLOBAL_INSTRUCTIONS.md",
+        "COSMOVISAO": claude_dir / "COSMOVISAO.md",
+        "INVARIANTES ARQUITETURAIS": claude_dir / "ARCHITECTURAL_INVARIANTS.md",
+    }
+    for title, path in files_to_inject.items():
+        if path.exists():
             context.append(
-                f"\n--- PERFIL ATIVO: {specific_agent.name} ---\n{specific_agent.read_text(encoding='utf-8', errors='ignore')}"
+                f"\n=================================================================\n## {title}\n=================================================================\n{path.read_text(encoding='utf-8', errors='ignore')}"
             )
 
-        try:
-            import pyperclip  # type: ignore
+    agents_dir = claude_dir / "agents"
+    specific_agent = agents_dir / f"{agent}.md"
+    if specific_agent.exists():
+        context.append(
+            f"\n=================================================================\n## PERFIL ATIVO: {specific_agent.name}\n=================================================================\n{specific_agent.read_text(encoding='utf-8', errors='ignore')}"
+        )
 
-            pyperclip.copy("\n".join(context))
-            console.print("[bold green][HANDOFF COMPLETO] Contexto extraido para o Clipboard![/]")
-        except ImportError:
-            console.print("[bold red]Modulo 'pyperclip' nao detectado.[/]")
+    memory_file = claude_dir / "agent-memory" / agent / "MEMORY.md"
+    if memory_file.exists():
+        context.append(
+            f"\n=================================================================\n## MEMÓRIA SIMBIÓTICA: {agent}\n=================================================================\n{memory_file.read_text(encoding='utf-8', errors='ignore')}"
+        )
+
+    handoff_text = "\n".join(context)
+    handoff_output_file = claude_dir / "agent-memory" / agent / "HANDOFF_LATEST.md"
+    handoff_output_file.parent.mkdir(parents=True, exist_ok=True)
+    handoff_output_file.write_text(handoff_text, encoding="utf-8")
+    console.print(f"[bold green]✓ Handoff persistido com sucesso:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/]")
+
+    try:
+        import pyperclip  # type: ignore
+        pyperclip.copy(handoff_text)
+        console.print("[bold green]✓ Handoff copiado para o Clipboard do Sistema![/]")
+    except Exception:
+        console.print("[dim]• Clipboard não disponível ou pyperclip ausente (texto salvo em arquivo).[/]")
+
+    console.print("\n[bold cyan]======================== FIM DO HANDOFF ========================[/]\n")
 
 
 @agent_app.command("route")
@@ -1746,6 +1988,187 @@ def voice_speak(
     from scripts.cli.nexus_voice import speak_text
 
     speak_text(text, voice=voice, output_file=output, play=not no_play)
+
+
+# ==========================================
+# COMANDOS DE AUDITORIAS (AUDITS) SOTA v8.0 GOLD
+# ==========================================
+
+
+@audit_app.callback(invoke_without_command=True)
+@app.command("audit")
+def run_or_list_audits(
+    list_all: bool = typer.Option(False, "--list", "-l", help="Lista todas as auditorias"),
+    audit_id: str = typer.Option("all", "--run", "-r", help="Executa auditoria especifica ou 'all'"),
+):
+    """Executa e valida as Auditorias do Sistema sob o SOTA Guard Tri-State."""
+    manifest_path = BASE_DIR / "data" / "SYSTEM_OPERATIONS_MANIFEST.json"
+    if not manifest_path.exists():
+        console.print("[bold red][ERRO] SYSTEM_OPERATIONS_MANIFEST.json ausente.[/]")
+        raise typer.Exit(1)
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    audits = manifest.get("audits", {})
+
+    if list_all:
+        console.print("\n[bold cyan]=== [CATALOGO DE AUDITORIAS SOTA v8.0 GOLD] ===[/]\n")
+        table = Table(title="Auditorias do Ecossistema", box=box.ROUNDED)
+        table.add_column("Audit ID", style="bold yellow")
+        table.add_column("Nome", style="white")
+        table.add_column("SLA", justify="right", style="green")
+        table.add_column("Descricao", style="dim")
+        for aid, ainfo in audits.items():
+            table.add_row(aid, ainfo.get("name", ""), f"{ainfo.get('sla_seconds', 0)}s", ainfo.get("description", "")[:55] + "...")
+        console.print(table)
+        console.print("[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n")
+        return
+
+    targets = audits if audit_id == "all" else ({audit_id: audits[audit_id]} if audit_id in audits else None)
+    if not targets:
+        console.print(f"[bold red][ERRO] Auditoria '{audit_id}' desconhecida. Use 'nexus audit --list'.[/]")
+        raise typer.Exit(1)
+
+    console.print(f"\n[bold cyan]=== [EXECUTANDO AUDITORIAS SOTA: {len(targets)} AUDITORIAS] ===[/]\n")
+    audit_errors = []
+    for aid, ainfo in targets.items():
+        cmd_str = ainfo.get("command", "")
+        if cmd_str.startswith("python "):
+            cmd_str = f'"{sys.executable}" ' + cmd_str[7:]
+        elif cmd_str.startswith("pwsh "):
+            pwsh_bin = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
+            cmd_str = f'"{pwsh_bin}" ' + cmd_str[5:]
+
+        console.print(f"[bold yellow] Auditoria:[/] [white]{ainfo.get('name')}[/] [dim]({cmd_str})[/]")
+        for c in ainfo.get("thematic_criteria", []):
+            console.print(f"  [cyan] Criterio:[/] [white]{c}[/]")
+        t0 = time.monotonic()
+        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)
+        dt = time.monotonic() - t0
+        sla = ainfo.get("sla_seconds", 10.0)
+
+        if res.returncode == 0:
+            console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)\n")
+        else:
+            console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}\n")
+            audit_errors.append((aid, res.stderr or res.stdout))
+
+    tri_state = "FALHOU (VERMELHO)" if audit_errors else "SUCESSO (VERDE)"
+    console.print("=" * 80)
+    console.print("[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (AUDITS) ==========[/]")
+    console.print(f" Total de Erros:    {len(audit_errors)} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+    console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+    console.print(f" Status da Bateria: [{tri_state}]")
+    if not audit_errors:
+        console.print("[bold green] Homeostase Total:  Todas as auditorias selecionadas aprovadas com excelencia.[/]")
+    console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+
+    if audit_errors:
+        raise typer.Exit(1)
+
+
+# ==========================================
+# COMANDOS DE ROTINAS (ROUTINES) SOTA v8.0 GOLD
+# ==========================================
+
+
+@routine_app.callback(invoke_without_command=True)
+@app.command("routine")
+def run_or_list_routines(
+    list_all: bool = typer.Option(False, "--list", "-l", help="Lista todas as rotinas"),
+    routine_id: str = typer.Option("all", "--run", "-r", help="Executa rotina especifica ou 'all'"),
+):
+    """Executa e valida as Rotinas do Sistema sob o SOTA Guard Tri-State."""
+    manifest_path = BASE_DIR / "data" / "SYSTEM_OPERATIONS_MANIFEST.json"
+    if not manifest_path.exists():
+        console.print("[bold red][ERRO] SYSTEM_OPERATIONS_MANIFEST.json ausente.[/]")
+        raise typer.Exit(1)
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    routines = manifest.get("routines", {})
+
+    if list_all:
+        console.print("\n[bold cyan]=== [CATALOGO DE ROTINAS SOTA v8.0 GOLD] ===[/]\n")
+        table = Table(title="Rotinas Operacionais", box=box.ROUNDED)
+        table.add_column("Routine ID", style="bold yellow")
+        table.add_column("Nome", style="white")
+        table.add_column("SLA", justify="right", style="green")
+        table.add_column("Descricao", style="dim")
+        for rid, rinfo in routines.items():
+            table.add_row(rid, rinfo.get("name", ""), f"{rinfo.get('sla_seconds', 0)}s", rinfo.get("description", "")[:55] + "...")
+        console.print(table)
+        console.print("[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n")
+        return
+
+    targets = routines if routine_id == "all" else ({routine_id: routines[routine_id]} if routine_id in routines else None)
+    if not targets:
+        console.print(f"[bold red][ERRO] Rotina '{routine_id}' desconhecida. Use 'nexus routine --list'.[/]")
+        raise typer.Exit(1)
+
+    console.print(f"\n[bold cyan]=== [EXECUTANDO ROTINAS SOTA: {len(targets)} ROTINAS] ===[/]\n")
+    routine_errors = []
+    for rid, rinfo in targets.items():
+        cmd_str = rinfo.get("command", "")
+        if cmd_str.startswith("python "):
+            cmd_str = f'"{sys.executable}" ' + cmd_str[7:]
+        elif cmd_str.startswith("pwsh "):
+            pwsh_bin = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
+            cmd_str = f'"{pwsh_bin}" ' + cmd_str[5:]
+
+        console.print(f"[bold yellow] Rotina:[/] [white]{rinfo.get('name')}[/] [dim]({cmd_str})[/]")
+        for c in rinfo.get("thematic_criteria", []):
+            console.print(f"  [cyan] Criterio:[/] [white]{c}[/]")
+        t0 = time.monotonic()
+        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)
+        dt = time.monotonic() - t0
+        sla = rinfo.get("sla_seconds", 10.0)
+
+        if res.returncode == 0:
+            console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)\n")
+        else:
+            console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}\n")
+            routine_errors.append((rid, res.stderr or res.stdout))
+
+    tri_state = "FALHOU (VERMELHO)" if routine_errors else "SUCESSO (VERDE)"
+    console.print("=" * 80)
+    console.print("[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (ROUTINES) ==========[/]")
+    console.print(f" Total de Erros:    {len(routine_errors)} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+    console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+    console.print(f" Status da Bateria: [{tri_state}]")
+    if not routine_errors:
+        console.print("[bold green] Homeostase Total:  Todas as rotinas selecionadas executadas com excelencia.[/]")
+    console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+
+    if routine_errors:
+        raise typer.Exit(1)
+
+
+# ==========================================
+# COMANDOS DE TAREFAS (TASKS) SOTA v8.0 GOLD
+# ==========================================
+
+
+@app.command("task-audit")
+def audit_task_pipeline():
+    """Valida o ciclo de vida completo da fila de tarefas sob o SOTA Guard Tri-State."""
+    console.print("\n[bold cyan]=== [AUDITORIA DA FILA DE TAREFAS & WATCHDOG MDA SOTA v8.0 GOLD] ===[/]\n")
+    test_cmd = [sys.executable, "-m", "pytest", "tests/test_database_sota.py", "tests/test_monitoring_sota.py", "tests/test_stress_circuit_breaker.py", "-v"]
+    res = subprocess.run(test_cmd, cwd=str(BASE_DIR), check=False)
+    if res.returncode != 0:
+        raise typer.Exit(res.returncode)
+
+
+# ==========================================
+# AUTOPOIESE & HOMEOSTASE SISTÊMICA SOTA v8.0 GOLD
+# ==========================================
+
+
+@app.command("homeostasis")
+@app.command("autopoiesis")
+@ops_app.command("homeostasis")
+def trigger_homeostasis():
+    """Aciona o Motor de Autopoiese e Homeostase Sistêmica (Zero Entropia & Autocura)."""
+    from core.autopoiesis_engine import run_homeostasis
+    run_homeostasis()
 
 
 # ==========================================

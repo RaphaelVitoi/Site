@@ -36,7 +36,7 @@ except ImportError:
 # [SOTA] CONSTANTES CENTRALIZADAS (Single Source of Truth)
 # ==============================================================================
 
-# Fallback embutido. A fonte de verdade real e data/ollama_models.json — este
+# Fallback embutido. A fonte de verdade real e data/ollama_models.json  este
 # bloco estava rotulado "Single Source of Truth" mas era a TERCEIRA copia
 # divergente do mesmo mapa (as outras em engine/gemma_server.py e
 # scripts/start_model.ps1). O alias "31b" aqui apontava para a variante cloud,
@@ -64,11 +64,7 @@ def _carregar_manifesto_ollama() -> dict[str, str]:
     try:
         with caminho.open(encoding="utf-8") as fh:
             dados = json.load(fh)
-        return {
-            m["alias"]: m["tag"]
-            for m in dados.get("models", [])
-            if m.get("alias") and m.get("tag")
-        }
+        return {m["alias"]: m["tag"] for m in dados.get("models", []) if m.get("alias") and m.get("tag")}
     except (OSError, json.JSONDecodeError, KeyError, TypeError):
         return {}
 

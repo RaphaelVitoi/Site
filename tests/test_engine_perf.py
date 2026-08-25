@@ -120,7 +120,9 @@ def test_quantum_metrics_solvency_insolvent_scenario() -> None:
         current_pot=50.0,
         stack_eff=1000.0,
     )
-    assert float(metrics["ci"]) < 1.0
+    ci = metrics["ci"]
+    assert isinstance(ci, (int, float))
+    assert float(ci) < 1.0
     assert metrics["is_solvent"] is False
 
 

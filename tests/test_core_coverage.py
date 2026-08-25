@@ -1,6 +1,7 @@
 """
 Testes SOTA para os componentes core do Nexus Orchestrator (config, arbitrator, runtime).
 """
+# pylint: disable=protected-access
 
 import json
 import logging
@@ -178,6 +179,7 @@ def test_arbitrator_dag_prioritization() -> None:
     assert dag["T1"]["total_utility"] > dag["T1"]["base_weight"]
 
     opt = UniversalArbitrator.extract_optimal_task(tasks)
+    assert opt is not None
     assert opt.id == "T1"
 
 

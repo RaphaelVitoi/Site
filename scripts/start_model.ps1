@@ -7,8 +7,8 @@
 #>
 param (
     [Parameter(Mandatory=$false)]
-    [ValidateSet("12b", "e4b", "e2b", "4b", "26b", "31b", "31b_cloud", "8b", "llama3_8b", "qwen", "granite", "deepseek")]
-    [string]$Model = "12b",
+    [ValidateSet("12b", "e4b", "e2b", "4b", "26b", "31b", "31b_cloud", "8b", "llama3_8b", "qwen", "qwen_coder_7b_q5", "qwen_coder_7b", "granite", "deepseek")]
+    [string]$Model = "qwen_coder_7b_q5",
 
     [Parameter(Mandatory=$false)]
     [switch]$Force

@@ -42,7 +42,7 @@ def run_benchmark_mathematics():
     t_icm = time.perf_counter() - t0
     icm_rate = n_icm_iterations / t_icm
     print(
-        f"  • ICM Matrix (6-max, 3 payouts):  {n_icm_iterations:,} resolucoes em {t_icm:.3f}s -> {icm_rate:,.0f} solves/s"
+        f"   ICM Matrix (6-max, 3 payouts):  {n_icm_iterations:,} resolucoes em {t_icm:.3f}s -> {icm_rate:,.0f} solves/s"
     )
 
     # 2. Perspectiva Matematica Vitoi v7 & Quantum Metrics
@@ -63,7 +63,7 @@ def run_benchmark_mathematics():
         )
     t_pm = time.perf_counter() - t0
     pm_rate = n_pm_iterations / t_pm
-    print(f"  • Perspectiva Vitoi v7 (Quantum):  {n_pm_iterations:,} tensores em {t_pm:.3f}s -> {pm_rate:,.0f} eval/s")
+    print(f"   Perspectiva Vitoi v7 (Quantum):  {n_pm_iterations:,} tensores em {t_pm:.3f}s -> {pm_rate:,.0f} eval/s")
 
     # 3. Geometric Sizing & Street Growth (Bellman)
     n_geom = 100000
@@ -72,7 +72,7 @@ def run_benchmark_mathematics():
         _ = calculate_geometric_sizing(current_pot=6.5, target_pot=100.0, remaining_streets=3)
     t_geom = time.perf_counter() - t0
     geom_rate = n_geom / t_geom
-    print(f"  • Geometric Sizing (Bellman Opt):  {n_geom:,} calculos em {t_geom:.3f}s -> {geom_rate:,.0f} ops/s")
+    print(f"   Geometric Sizing (Bellman Opt):  {n_geom:,} calculos em {t_geom:.3f}s -> {geom_rate:,.0f} ops/s")
 
     # 4. Vitoi Perspective Engine Utility & Decision Tree
     n_vitoi = 20000
@@ -92,7 +92,7 @@ def run_benchmark_mathematics():
     t_vitoi = time.perf_counter() - t0
     vitoi_rate = (n_vitoi * 4) / t_vitoi
     print(
-        f"  • Vitoi Perspective Engine (4 ops): {n_vitoi * 4:,} avaliacoes em {t_vitoi:.3f}s -> {vitoi_rate:,.0f} ops/s"
+        f"   Vitoi Perspective Engine (4 ops): {n_vitoi * 4:,} avaliacoes em {t_vitoi:.3f}s -> {vitoi_rate:,.0f} ops/s"
     )
 
     # 5. Recursive Decision Tree Simulation
@@ -115,7 +115,7 @@ def run_benchmark_mathematics():
         )
     t_tree = time.perf_counter() - t0
     tree_rate = n_tree / t_tree
-    print(f"  • Vitoi Decision Tree (Markov/Tree): {n_tree:,} arvores em {t_tree:.3f}s -> {tree_rate:,.0f} trees/s")
+    print(f"   Vitoi Decision Tree (Markov/Tree): {n_tree:,} arvores em {t_tree:.3f}s -> {tree_rate:,.0f} trees/s")
 
     # 5. RIO Stress & Risk Calculations
     n_rio = 25000
@@ -126,7 +126,7 @@ def run_benchmark_mathematics():
         )
     t_rio = time.perf_counter() - t0
     rio_rate = n_rio / t_rio
-    print(f"  • RIO Tensor Dynamic Risk:         {n_rio:,} calculos em {t_rio:.3f}s -> {rio_rate:,.0f} ops/s")
+    print(f"   RIO Tensor Dynamic Risk:         {n_rio:,} calculos em {t_rio:.3f}s -> {rio_rate:,.0f} ops/s")
 
 
 def run_benchmark_wasm():
@@ -147,7 +147,7 @@ def run_benchmark_wasm():
                     or "Speedup" in line
                     or "Total de Operacoes" in line
                 ):
-                    print(f"  • {line.strip()}")
+                    print(f"   {line.strip()}")
         except Exception as e:
             print(f"  [AVISO] Erro na execucao do benchmark WASM: {e}")
     else:
@@ -163,12 +163,12 @@ def run_benchmark_llama_cpp():
     binaries = list(llama_dir.glob("*.exe"))
     dlls = list(llama_dir.glob("*.dll"))
 
-    print(f"  • Binarios Compilados Detectados: {len(binaries)} executaveis")
+    print(f"   Binarios Compilados Detectados: {len(binaries)} executaveis")
     for b in binaries[:4]:
         size_kb = b.stat().st_size / 1024
         print(f"    - {b.name:<28} ({size_kb:,.1f} KB)")
 
-    print(f"  • Bibliotecas Compartilhadas (.dll): {len(dlls)} modulos")
+    print(f"   Bibliotecas Compartilhadas (.dll): {len(dlls)} modulos")
     vulkan_dll = llama_dir / "ggml-vulkan.dll"
     if vulkan_dll.exists():
         vulkan_mb = vulkan_dll.stat().st_size / (1024 * 1024)
@@ -193,9 +193,9 @@ def run_benchmark_inference():
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode())
             models = [m["name"] for m in data.get("models", [])]
-            print(f"  • Modelos Ativos no Daemon Ollama: {', '.join(models)}")
+            print(f"   Modelos Ativos no Daemon Ollama: {', '.join(models)}")
     except Exception as e:
-        print(f"  • Status do Daemon Ollama: {e}")
+        print(f"   Status do Daemon Ollama: {e}")
 
     # Telemetria de Memoria Atual do Sistema
     mem = psutil.virtual_memory()
@@ -203,9 +203,9 @@ def run_benchmark_inference():
     used_gb = mem.used / (1024**3)
     available_gb = mem.available / (1024**3)
     print(
-        f"  • Telemetria de RAM Host: Total: {total_gb:.1f} GB | Usada: {used_gb:.1f} GB | Disponivel: {available_gb:.1f} GB ({mem.percent}% utilizada)"
+        f"   Telemetria de RAM Host: Total: {total_gb:.1f} GB | Usada: {used_gb:.1f} GB | Disponivel: {available_gb:.1f} GB ({mem.percent}% utilizada)"
     )
-    print("  • Fatiamento Termodinamico: ~5.2 GB VRAM GPU (-ngl 26) + ~3.5 GB System RAM (MMAP/OpenMP)")
+    print("   Fatiamento Termodinamico: ~5.2 GB VRAM GPU (-ngl 26) + ~3.5 GB System RAM (MMAP/OpenMP)")
 
 
 def main():

@@ -1,0 +1,211 @@
+{
+  "version": "8.0.0",
+  "protocol": "CHICO_SOTA_v8_GOLD",
+  "governance": "Raphael Vitoi",
+  "last_audit": "2026-08-24T22:21:00-03:00",
+  "sota_guard": {
+    "tri_state_policy": {
+      "SUCESSO": {
+        "condition": "errors == 0 and warnings == 0",
+        "color": "green",
+        "description": "Homeostase Total. Zero erros e zero warnings."
+      },
+      "FRAGIL": {
+        "condition": "errors == 0 and 1 <= warnings <= 2",
+        "color": "yellow",
+        "description": "Alerta de degradação sob risco de entropia. Exige saneamento preventivo."
+      },
+      "FALHOU": {
+        "condition": "errors >= 1 or warnings >= 3",
+        "color": "red",
+        "description": "Bloqueio Mandatório. Erros possuem peso crítico prioritário."
+      }
+    },
+    "max_errors": 0,
+    "max_warnings": 2
+  },
+  "audits": {
+    "audit_security": {
+      "name": "Auditoria de Vulnerabilidades & CVEs (NIST / GHSA)",
+      "description": "Varredura estrita de dependências Python (pip-audit) e NPM contra vulnerabilidades conhecidas.",
+      "thematic_criteria": [
+        "Zero CVEs críticos ou altos",
+        "Nenhuma dependência vulnerável no package-lock.json ou requirements.txt"
+      ],
+      "command": "python scripts/cli/nexus.py ops security",
+      "sla_seconds": 10.0
+    },
+    "audit_sri": {
+      "name": "Auditoria Criptográfica SRI & SHA-512",
+      "description": "Garantia de integridade de sub-recursos (SRI) e verificação criptográfica SHA-512 estrita.",
+      "thematic_criteria": [
+        "100% dos pacotes em package-lock.json com integridade SHA-512 (Zero SHA-1)",
+        "Zero tags de script externas sem hash SRI",
+        "Binários WASM com integridade SHA-256 inalterada"
+      ],
+      "command": "python scripts/ops/sri_integrity_verifier.py",
+      "sla_seconds": 3.0
+    },
+    "audit_ascii": {
+      "name": "Blindagem de Encoding & Pure ASCII Shield",
+      "description": "Verificação de pureza ASCII em identificadores, configs e módulos protegidos.",
+      "thematic_criteria": [
+        "100% dos arquivos protegidos livres de caracteres de controle ou corrupção UTF-8",
+        "Idempotência de normalização ASCII"
+      ],
+      "command": "python scripts/cli/nexus.py ops check-ascii",
+      "sla_seconds": 3.0
+    },
+    "audit_cwv": {
+      "name": "Portão CWV 5-Fases (Performance, A11y, CVE, SRI, Hygiene)",
+      "description": "Auditoria completa de Core Web Vitals, acessibilidade WCAG 2.1 AA e higiene Git LFS.",
+      "thematic_criteria": [
+        "LCP <= 2500ms, CLS <= 0.1, INP <= 200ms, TTFB <= 800ms",
+        "Zero violações de ARIA ou tags sem dimensões",
+        "Zero blobs > 5MB fora do Git LFS"
+      ],
+      "command": "pwsh scripts/ops/cwv_gate.ps1",
+      "sla_seconds": 15.0
+    },
+    "audit_desambiguacao": {
+      "name": "Auditoria de Fonte Única da Verdade & Desambiguação",
+      "description": "Garante que não existem constantes de modelos ou regras de roteamento duplicadas entre módulos.",
+      "thematic_criteria": [
+        "Zero constantes de modelo duplicadas entre módulos",
+        "data/agents_manifest.json como fonte única para preferências de modelo",
+        "data/system_config.json como fonte única para failover chains"
+      ],
+      "command": "python -m pytest tests/test_desambiguacao.py -v",
+      "sla_seconds": 3.0
+    },
+    "audit_monthly_mo": {
+      "name": "Auditoria de Conformidade com o Modus Operandi",
+      "description": "Validação de aderência ao Modus Operandi Perpétuo v8.0 GOLD e regras operacionais.",
+      "thematic_criteria": [
+        "Conformidade da hierarquia canônica de caminhos",
+        "Validação de integridade do runtime agêntico"
+      ],
+      "command": "python scripts/routines/audit_monthly_modus_operandi_and_routing.py",
+      "sla_seconds": 3.0
+    },
+    "audit_pillars": {
+      "name": "Auditoria de Infraestrutura: Logs, Temps, Artifacts & Skills",
+      "description": "Auditoria e purificação unificada de logs (zero-leak), zona de temporários, integridade de artefatos KaTeX e 100% de conformidade de skills.",
+      "thematic_criteria": [
+        "Zero credenciais/segredos vazados em arquivos de log",
+        "Purificação de diretórios temporários órfãos e integridade SQLite",
+        "Artefatos markdown com blocos KaTeX balanceados e metadados válidos",
+        "100% das 56 skills com frontmatter YAML válido (name, description)"
+      ],
+      "command": "python scripts/maintenance/audit_infrastructure_pillars.py",
+      "sla_seconds": 5.0
+    }
+  },
+  "routines": {
+    "routine_sync_agents": {
+      "name": "Sincronização Viva da Realidade dos 19 Agentes",
+      "description": "Geração e sincronização automática da documentação viva dos 19 agentes em .Codex/agents/*.md.",
+      "thematic_criteria": [
+        "Sincronização 1-para-1 a partir de data/agents_manifest.json",
+        "Zero edição manual em arquivos gerados",
+        "Documentação com modelos concretos e tiers definidos"
+      ],
+      "command": "pwsh scripts/routines/sync_agents_reality.ps1",
+      "sla_seconds": 6.0
+    },
+    "routine_ollama_sync": {
+      "name": "Garantia & Provisionamento de Modelos Locais Ollama",
+      "description": "Verificação e provisionamento de modelos locais declarados em data/ollama_models.json.",
+      "thematic_criteria": [
+        "Conformidade determinística de modelos locais Ollama",
+        "Prevenção de indisponibilidade em fallback local"
+      ],
+      "command": "pwsh scripts/ops/Ensure-OllamaModels.ps1",
+      "sla_seconds": 5.0
+    },
+    "routine_hygiene": {
+      "name": "Higienização Temporal & Purificação do Workspace",
+      "description": "Expurgo seguro de snapshots, logs e backups com idade superior a 7 dias.",
+      "thematic_criteria": [
+        "Preservação do estado operacional com Vazio Termodinâmico",
+        "Zero deleção de arquivos ativos ou manifests"
+      ],
+      "command": "python scripts/maintenance/hygiene.py",
+      "sla_seconds": 3.0
+    },
+    "routine_stress": {
+      "name": "Teste de Estresse & Homeostase de Complexidade",
+      "description": "Avaliação de complexidade ciclomática V(G) e robustez estrutural sob carga.",
+      "thematic_criteria": [
+        "Complexidade ciclomática controlada (V(G) <= 10)",
+        "Zero exceções não tratadas sob estresse"
+      ],
+      "command": "python scripts/routines/stress_test.py",
+      "sla_seconds": 3.0
+    },
+    "routine_purify_ascii": {
+      "name": "Purificação de Encoding dos Módulos Python",
+      "description": "Garantia de encoding limpo e pureza de texto em arquivos-fonte.",
+      "thematic_criteria": [
+        "Zero corrupção de caracteres em arquivos Python",
+        "Manutenção de docstrings e comentários intactos"
+      ],
+      "command": "python scripts/maintenance/purify_python_ascii.py",
+      "sla_seconds": 3.0
+    }
+  },
+  "tasks": {
+    "task_queue_acid": {
+      "name": "Transações ACID & Persistência em Fila SQLite WAL",
+      "description": "CRUD em memória/disco com modo WAL, locking transacional e integridade de estado.",
+      "thematic_criteria": [
+        "Transações atômicas com zero perda de dados",
+        "Detecção e rejeição de path traversal em IDs de tarefas",
+        "Snapshot de backup determinístico com rotação"
+      ],
+      "target_layer": "database.queue_manager",
+      "sla_seconds": 3.0
+    },
+    "task_anti_starvation": {
+      "name": "Anti-Starvation & Promoção de Tarefas Estagnadas",
+      "description": "Identificação e escalonamento de prioridade para tarefas represadas na fila por mais de 2 horas.",
+      "thematic_criteria": [
+        "Promoção automática de prioridade (low -> medium -> high)",
+        "Zero tarefas orfãs ou esquecidas no backlog"
+      ],
+      "target_layer": "database.queue_manager",
+      "sla_seconds": 2.0
+    },
+    "task_recovery_stalled": {
+      "name": "Recuperação Automática de Tarefas Travadas (Deadlock Recovery)",
+      "description": "Detecção de tarefas presas no estado 'processing' por falha de worker e reinjeção na fila.",
+      "thematic_criteria": [
+        "Detecção de timeout de processamento (> 30 min)",
+        "Transição segura de volta para 'pending' com incremento de retry"
+      ],
+      "target_layer": "database.queue_manager",
+      "sla_seconds": 2.0
+    },
+    "task_watchdog_mda": {
+      "name": "Watchdog de Saúde, Engarrafamento & Failure Rate",
+      "description": "Monitoramento da taxa de falhas e acionamento de alertas por engarrafamento ou sobrecarga.",
+      "thematic_criteria": [
+        "Disparo de alertas por fila engarrafada (> 40 tarefas)",
+        "Disparo de alertas por pico de falhas acumuladas (> 5 falhas recentes)",
+        "Disparo de alertas por taxa de falha anormal (> 0.50 falhas/min)"
+      ],
+      "target_layer": "monitoring.watchdog",
+      "sla_seconds": 2.0
+    },
+    "task_vdom_audit": {
+      "name": "Auditoria & Purificação de Telemetria VDOM",
+      "description": "Coleta, sanitização e flush periódico de anomalias detectadas no Virtual DOM / frontend.",
+      "thematic_criteria": [
+        "Persistência atômica em JSONL de auditoria",
+        "Flush automático ao atingir o limite de lote"
+      ],
+      "target_layer": "monitoring.audit_engine",
+      "sla_seconds": 2.0
+    }
+  }
+}

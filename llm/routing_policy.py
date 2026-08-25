@@ -1,4 +1,4 @@
-"""Politica de roteamento economico e especializado — SOTA v8.0 GOLD.
+"""Politica de roteamento economico e especializado  SOTA v8.0 GOLD.
 
 Implementa a tabela de roteamento por tier definida pelo operador, estendida
 para cobrir o ecossistema inteiro: **19 agentes** do manifesto mais os **6
@@ -11,7 +11,7 @@ niveis de subagente** de `core.subagents_mesh.SubagentTier`.
    paga. Um modelo com cota livre ganha de um modelo pago mais barato por
    token, porque o custo marginal da cota e zero. Uma versao anterior deste
    modulo roteava Tier 3 operacional para `gpt-5.6-luna` por ter o menor
-   $/token — e estava errada: `gemini-3.7-flash` tem cota gratuita e a Luna
+   $/token  e estava errada: `gemini-3.7-flash` tem cota gratuita e a Luna
    nao. Preco unitario so desempata DENTRO da mesma faixa.
 2. **Assimetria de capacidade.** Nao existe "melhor modelo", existe melhor
    modelo por classe de tarefa. Quem lidera raciocinio profundo nao lidera
@@ -24,7 +24,7 @@ niveis de subagente** de `core.subagents_mesh.SubagentTier`.
 `data/agents_manifest.json` marca `implementor` como `fast_operations`, mas a
 tabela do operador o coloca em Tier 3 Construcao com `claude-sonnet-5`. E marca
 `historian` como `deep_thinking`, enquanto a tabela o lista em Tier 3
-Operacional. Onde a tabela e explicita, ela prevalece — foi escrita depois, com
+Operacional. Onde a tabela e explicita, ela prevalece  foi escrita depois, com
 o sistema a vista. Os dois casos estao anotados em `CONFLITOS_MANIFESTO` para
 que voce reconcilie o manifesto quando quiser, em vez de a divergencia sumir.
 """
@@ -63,7 +63,7 @@ def e_local(alias: str) -> bool:
 def custo(alias: str, tokens_in: int, tokens_out: int) -> float:
     """Custo em USD, ciente das duas faixas.
 
-    Modelo local custa **zero marginal** — os pesos ja estao em disco. Isso nao
+    Modelo local custa **zero marginal**  os pesos ja estao em disco. Isso nao
     e aproximacao: nao ha fatura por token. O custo real dele e energia e
     ocupacao de GPU, que nao entram nesta conta e nao devem entrar, porque a
     decisao que esta funcao alimenta e "gasto de API".
@@ -118,7 +118,7 @@ class Rota:
 
 
 # ==============================================================================
-# TABELA DE ROTEAMENTO — segue a definicao do operador
+# TABELA DE ROTEAMENTO  segue a definicao do operador
 # ==============================================================================
 
 ROTAS: dict[ClasseTarefa, Rota] = {
@@ -203,19 +203,19 @@ ROTAS: dict[ClasseTarefa, Rota] = {
 # ==============================================================================
 
 AGENTES: dict[str, tuple[TierAgente, ClasseTarefa]] = {
-    # Tier 1 — Governanca
+    # Tier 1  Governanca
     "chico": (TierAgente.GOVERNANCA, ClasseTarefa.GOVERNANCA),
-    # Tier 2 — Estrategia
+    # Tier 2  Estrategia
     "maverick": (TierAgente.ESTRATEGIA, ClasseTarefa.ESTRATEGIA),
-    # Tier 3 — Construcao
+    # Tier 3  Construcao
     "architect": (TierAgente.EXECUCAO, ClasseTarefa.CONSTRUCAO),
     "implementor": (TierAgente.EXECUCAO, ClasseTarefa.CONSTRUCAO),
-    # Tier 3 — Auditoria / QA
+    # Tier 3  Auditoria / QA
     "auditor": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
     "verifier": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
     "securitychief": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
     "validador": (TierAgente.EXECUCAO, ClasseTarefa.VERIFICACAO),
-    # Tier 3 — Operacional
+    # Tier 3  Operacional
     "dispatcher": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
     "organizador": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
     "historian": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
@@ -223,16 +223,16 @@ AGENTES: dict[str, tuple[TierAgente, ClasseTarefa]] = {
     "prompter": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
     "bibliotecario": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
     "skillmaster": (TierAgente.EXECUCAO, ClasseTarefa.OPERACIONAL),
-    # Tier 3 — Raciocinio
+    # Tier 3  Raciocinio
     "planner": (TierAgente.EXECUCAO, ClasseTarefa.RACIOCINIO_PROFUNDO),
     "pesquisador": (TierAgente.EXECUCAO, ClasseTarefa.RACIOCINIO_PROFUNDO),
     "curator": (TierAgente.EXECUCAO, ClasseTarefa.RACIOCINIO_PROFUNDO),
-    # Agente de borda — nao consome API
+    # Agente de borda  nao consome API
     "gemma4": (TierAgente.EXECUCAO, ClasseTarefa.LOCAL),
 }
 
 # ==============================================================================
-# OS 6 NIVEIS DE SUBAGENTE — core.subagents_mesh.SubagentTier
+# OS 6 NIVEIS DE SUBAGENTE  core.subagents_mesh.SubagentTier
 # ==============================================================================
 # Cobertos porque o mesh os despacha em paralelo: sem rota propria, herdariam a
 # do pai e uma varredura de seguranca poderia cair num modelo de triagem.
@@ -414,7 +414,7 @@ def plano_de_ferramentas(
     """Marca ferramentas irrelevantes com `defer_loading`, preservando o cache.
 
     Mecanismo real por tras do insight de pruning dinamico: `tool_search` com
-    `defer_loading: true`. Regras duras da API — a ferramenta de busca nunca e
+    `defer_loading: true`. Regras duras da API  a ferramenta de busca nunca e
     diferida, e nunca se difere tudo.
     """
     if len(ferramentas) <= limiar_defer:

@@ -93,3 +93,117 @@ class DeepSolverImporter(BaseSolverImporter):
             nodes=nodes_dict,
             root_node_id=root_id,
         )
+
+    @staticmethod
+    def get_hand_label(r: int, c: int) -> str:
+        """Retorna a notacao padrao de mao preflop (ex: AA, AKs, AKo)."""
+        from engine.bayesian_range import RANKS
+
+        if r == c:
+            return f"{RANKS[r]}{RANKS[c]}"
+        if r < c:
+            return f"{RANKS[r]}{RANKS[c]}s"
+        return f"{RANKS[c]}{RANKS[r]}o"
+
+    def parse_range_matrix(self, raw_data: Any) -> list[list[float]]:
+        """Converte formatos variados do DeepSolver (2D list, 1D 169, dict) em matriz 13x13."""
+        from engine.bayesian_range import RANKS
+
+        matrix = [[0.0 for _ in range(13)] for _ in range(13)]
+
+        if isinstance(raw_data, list):
+            if len(raw_data) == 13 and all(isinstance(row, list) and len(row) == 13 for row in raw_data):
+                return [[round(float(v), 4) for v in row] for row in raw_data]
+            if len(raw_data) == 169:
+                for idx, val in enumerate(raw_data):
+                    r = idx // 13
+                    c = idx % 13
+                    matrix[r][c] = round(float(val), 4)
+                return matrix
+        elif isinstance(raw_data, dict):
+            for r in range(13):
+                for c in range(13):
+                    label = self.get_hand_label(r, c)
+                    val = raw_data.get(label, raw_data.get(label.lower(), 0.0))
+                    matrix[r][c] = round(float(val), 4)
+            return matrix
+
+        return matrix
+
+    def generate_pmev_heatmap(
+        self,
+        deepsolver_range: Any,
+        pmev_threshold: float,
+    ) -> dict[str, Any]:
+        """
+        Gera o heatmap comparativo (DeepSolver GTO vs. PMev 3.2).
+        Retorna matrizes de delta, metricas de combo e renderizacao visual ASCII.
+        """
+        from engine.bayesian_range import apply_pmev_range_filter, get_preflop_hand_strength_matrix
+
+        ds_matrix = self.parse_range_matrix(deepsolver_range)
+        hand_strengths = get_preflop_hand_strength_matrix()
+        pmev_matrix = apply_pmev_range_filter(ds_matrix, pmev_threshold, hand_strengths)
+
+        delta_matrix = [[0.0 for _ in range(13)] for _ in range(13)]
+        cells: list[dict[str, Any]] = []
+        ascii_rows: list[str] = []
+
+        total_ds_combos = 0.0
+        total_pmev_combos = 0.0
+        expanded_hands: list[str] = []
+        contracted_hands: list[str] = []
+
+        for r in range(13):
+            row_symbols: list[str] = []
+            for c in range(13):
+                label = self.get_hand_label(r, c)
+                ds_freq = ds_matrix[r][c]
+                pmev_freq = pmev_matrix[r][c]
+                delta = round(pmev_freq - ds_freq, 4)
+                delta_matrix[r][c] = delta
+
+                # Combos ponderados: pares=6, suited=4, offsuit=12
+                combo_weight = 6.0 if r == c else (4.0 if r < c else 12.0)
+                total_ds_combos += ds_freq * combo_weight
+                total_pmev_combos += pmev_freq * combo_weight
+
+                symbol = "."
+                action = "EQUAL"
+                if delta > 0.05:
+                    symbol = "+"
+                    action = "EXPAND"
+                    expanded_hands.append(label)
+                elif delta < -0.05:
+                    symbol = "-"
+                    action = "CONTRACT"
+                    contracted_hands.append(label)
+
+                row_symbols.append(symbol)
+                cells.append(
+                    {
+                        "hand": label,
+                        "deepsolver_freq": ds_freq,
+                        "pmev_freq": pmev_freq,
+                        "delta": delta,
+                        "strength": hand_strengths[r][c],
+                        "action": action,
+                    }
+                )
+            ascii_rows.append(" ".join(row_symbols))
+
+        return {
+            "pmev_threshold": round(pmev_threshold, 4),
+            "deepsolver_matrix": ds_matrix,
+            "pmev_matrix": pmev_matrix,
+            "delta_matrix": delta_matrix,
+            "total_deepsolver_combos": round(total_ds_combos, 2),
+            "total_pmev_combos": round(total_pmev_combos, 2),
+            "combo_delta": round(total_pmev_combos - total_ds_combos, 2),
+            "expanded_hands_count": len(expanded_hands),
+            "contracted_hands_count": len(contracted_hands),
+            "expanded_hands": expanded_hands[:10],
+            "contracted_hands": contracted_hands[:10],
+            "ascii_heatmap": "\n".join(ascii_rows),
+            "cells": cells,
+        }

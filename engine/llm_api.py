@@ -321,7 +321,7 @@ async def _try_single_key(
 
 # Cursor por provedor: de onde a PROXIMA requisicao comeca a percorrer as chaves.
 # Sem ele, toda requisicao comeca em keys[0] e a distribuicao que o balde de
-# `llm/budget.py` pressupoe nunca acontece. Um int por provedor basta — o loop
+# `llm/budget.py` pressupoe nunca acontece. Um int por provedor basta  o loop
 # de eventos e monotarefa e nao ha await entre a leitura e a escrita.
 _provider_cursor: dict[str, int] = defaultdict(int)
 
@@ -329,7 +329,7 @@ _provider_cursor: dict[str, int] = defaultdict(int)
 def _next_start_index(provider_name: str, total_keys: int) -> int:
     """Gira o ponto de partida para que a carga se espalhe pela frota.
 
-    A ordem RELATIVA das chaves nao muda — quem esta bloqueada continua sendo
+    A ordem RELATIVA das chaves nao muda  quem esta bloqueada continua sendo
     pulada e a lista inteira continua sendo percorrida antes de desistir. So o
     ponto de entrada anda, de modo que N requisicoes seguidas atinjam N chaves
     diferentes em vez de martelarem a primeira.
@@ -375,7 +375,7 @@ async def _try_provider(
     # Isso so e honesto se o consumo realmente se espalhar. Comecando sempre em
     # keys[0], as 4*N chamadas que o balde autorizou por minuto caem TODAS na
     # primeira chave ate ela levar 429; a fila entao anda para keys[1] e repete.
-    # O resultado e queimar as chaves em sequencia, em segundos — que e o padrao
+    # O resultado e queimar as chaves em sequencia, em segundos  que e o padrao
     # que os provedores detectam como abuso e que bloqueia a conta inteira, nao
     # so a chave.
     #

@@ -2,8 +2,8 @@
 Unit Tests for SOTA Core Engines: Binary Matcher & Metadata Pool (Chromium & uBOL SOTA)
 Protocol Chico SOTA v7.0 GOLD - Continuous Integration & Zero-Defect Governance
 """
+# pylint: disable=protected-access
 
-import pytest
 from core.sota_binary_matcher import binary_search_length_lex, compute_domain_hierarchy, sort_key
 from core.sota_metadata_pool import SOTAMetadataPool
 

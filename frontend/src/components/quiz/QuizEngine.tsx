@@ -86,7 +86,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ questions, onQuizRestart
 						initial={{ opacity: 0, scale: 0.95 }}
 						animate={{ opacity: 1, scale: 1 }}
 						exit={{ opacity: 0, scale: 1.05 }}
-						className="glass-panel rounded-[3rem] bg-bg-panel/60 border border-white/10 shadow-2xl overflow-hidden relative"
+						className="glass-panel rounded-5xl bg-bg-panel/60 border border-white/10 shadow-2xl overflow-hidden relative"
 					>
 						<div className="absolute inset-0 bg-radial-[at_top_right] from-accent-indigo/10 to-transparent pointer-events-none" />
 						<QuizResults

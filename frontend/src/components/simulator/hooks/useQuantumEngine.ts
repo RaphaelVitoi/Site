@@ -525,17 +525,15 @@ export function useQuantumEngine({
       return heroIsIp ? (streetObj.ipRp ?? fb) : (streetObj.oopRp ?? fb);
     };
 
-    const rpDispatcher: Record<string, (fallback: number) => number> = {
-      PRE: () => baseRp,
-      FLOP: (fb) => getRp(postFlopRps.flop, fb),
-      TURN: (fb) => getRp(postFlopRps.turn, fb),
-      RIVER: (fb) => getRp(postFlopRps.river, fb),
-    };
+    const rpDispatcher: ReadonlyMap<string, (fallback: number) => number> = new Map([
+      ['PRE', () => baseRp],
+      ['FLOP', (fb: number) => getRp(postFlopRps.flop, fb)],
+      ['TURN', (fb: number) => getRp(postFlopRps.turn, fb)],
+      ['RIVER', (fb: number) => getRp(postFlopRps.river, fb)],
+    ]);
 
     return stableSprData.map((stage: SprStage) => {
-      const resolver = Object.hasOwn(rpDispatcher, stage.name)
-        ? rpDispatcher[stage.name]
-        : undefined;
+      const resolver = rpDispatcher.get(stage.name);
       return resolver ? { ...stage, rpValue: resolver(stage.rpValue) } : stage;
     });
   }, [stableSprData, postFlopRps, effectiveIpRp, effectiveOopRp, heroIsIp]);

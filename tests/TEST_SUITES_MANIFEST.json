@@ -1,0 +1,191 @@
+{
+  "version": "8.0.0",
+  "protocol": "CHICO_SOTA_v8_GOLD",
+  "governance": "Raphael Vitoi",
+  "last_audit": "2026-08-24T22:09:00-03:00",
+  "sota_guard": {
+    "tri_state_policy": {
+      "SUCESSO": {
+        "condition": "errors == 0 and warnings == 0",
+        "color": "green",
+        "description": "Homeostase Total. Zero erros e zero warnings."
+      },
+      "FRAGIL": {
+        "condition": "errors == 0 and 1 <= warnings <= 2",
+        "color": "yellow",
+        "description": "Alerta de degradação. 0 erros, mas presença de warnings exige saneamento."
+      },
+      "FALHOU": {
+        "condition": "errors >= 1 or warnings >= 3",
+        "color": "red",
+        "description": "Bloqueio Termodinâmico. Erros têm peso crítico prioritário. Execução rejeitada."
+      }
+    },
+    "max_errors": 0,
+    "max_warnings": 2,
+    "strict_mode": true
+  },
+  "thematic_suites": {
+    "pmev": {
+      "name": "Perspectiva Matemática & Poker Game Theory",
+      "description": "Validação formal da hipótese PMev (Raphael Vitoi), RIO Multiway, ICM Matrix, Dynamic EV(fold) e importadores de solvers (DeepSolver, GTOWizard, HRC, PioSolver).",
+      "target_layer": "engine.math / engine.solver_importers / api.v1.endpoints",
+      "thematic_criteria": [
+        "Conservação da probabilidade total (sum(P) == 1.0)",
+        "Isometria e não-negatividade do Dynamic EV(fold)",
+        "Sizing geométrico estritamente positivo (> 0.0)",
+        "Invariante RIO Multiway com penalidade por passividade",
+        "Importação sem perdas de ranges de DeepSolver, GTOWizard, HRC e Monker"
+      ],
+      "files": [
+        "tests/test_vitoi_perspective_engine.py",
+        "tests/test_icm_matrix.py",
+        "tests/test_math_rio.py",
+        "tests/test_math_sota.py",
+        "tests/test_perspective_api.py",
+        "tests/test_solver_importers.py"
+      ],
+      "pytest_args": [
+        "tests/test_vitoi_perspective_engine.py",
+        "tests/test_icm_matrix.py",
+        "tests/test_math_rio.py",
+        "tests/test_math_sota.py",
+        "tests/test_perspective_api.py",
+        "tests/test_solver_importers.py"
+      ],
+      "test_count": 52,
+      "sla_seconds": 6.0
+    },
+    "core_ai": {
+      "name": "Mente Coletiva, Motores Bayesianos & Grafos Causais",
+      "description": "Motores de inferência bayesiana, DAGs causais de Pearl, invariantes estruturais e verificação de homeostase dos núcleos cognitivos.",
+      "target_layer": "core.causal_graph / core.bayesian / core.sota_context_engine",
+      "thematic_criteria": [
+        "Normalização bayesiana estrita no intervalo [0.0, 1.0]",
+        "Acyclicidade garantida em grafos causais (Zero ciclos)",
+        "Eficiência de interning e deduplicação no Metadata Pool",
+        "Detecção e bloqueio de path traversal em carregamento de configs"
+      ],
+      "files": [
+        "tests/test_engine_bayesian_sota.py",
+        "tests/test_bayesian.py",
+        "tests/test_causal_graph.py",
+        "tests/test_sota_core_engines.py",
+        "tests/test_core_coverage.py",
+        "tests/test_engine_perf.py"
+      ],
+      "pytest_args": [
+        "tests/test_engine_bayesian_sota.py",
+        "tests/test_bayesian.py",
+        "tests/test_causal_graph.py",
+        "tests/test_sota_core_engines.py",
+        "tests/test_core_coverage.py",
+        "tests/test_engine_perf.py"
+      ],
+      "test_count": 73,
+      "sla_seconds": 4.5
+    },
+    "agents_llm": {
+      "name": "Multi-Agent System, 19 Avatares & LLM Routing",
+      "description": "Orquestração de tarefas, 19 personas sincronizadas com data/agents_manifest.json, failover chains, adaptadores LLM, Gemma local e síntese neural de voz.",
+      "target_layer": "agents.execution / llm.routing_policy / llm.adapters / scripts.cli.nexus_voice",
+      "thematic_criteria": [
+        "100% dos 19 agentes com modelo preferencial e concreto definido",
+        "Zero vazamento de credenciais ou chaves no tráfego LLM",
+        "Fallback determinístico entre provedores em caso de indisponibilidade",
+        "Autenticação fechada (fail-closed) no servidor local Gemma"
+      ],
+      "files": [
+        "tests/test_agents_sota.py",
+        "tests/test_avatars_portfolio.py",
+        "tests/test_subagents_mesh.py",
+        "tests/test_task_routing.py",
+        "tests/test_routing_policy.py",
+        "tests/test_model_registry.py",
+        "tests/test_llm_layer_sota.py",
+        "tests/test_gemma_server_sota.py",
+        "tests/test_nexus_voice.py"
+      ],
+      "pytest_args": [
+        "tests/test_agents_sota.py",
+        "tests/test_avatars_portfolio.py",
+        "tests/test_subagents_mesh.py",
+        "tests/test_task_routing.py",
+        "tests/test_routing_policy.py",
+        "tests/test_model_registry.py",
+        "tests/test_llm_layer_sota.py",
+        "tests/test_gemma_server_sota.py",
+        "tests/test_nexus_voice.py"
+      ],
+      "test_count": 145,
+      "sla_seconds": 15.0
+    },
+    "database_infra": {
+      "name": "Infraestrutura, Fila SQLite WAL, MDA & Circuit Breaker",
+      "description": "Fila transacional com isolamento ACID, watchdog de saúde, circuit breakers sob saturação e armazenamento de buckets protegidos.",
+      "target_layer": "database.queue_manager / monitoring.watchdog / utils.bucketing / utils.resource_guard",
+      "thematic_criteria": [
+        "Isolamento ACID e persistência em WAL sem corrupção",
+        "Anti-starvation promovendo tarefas antigas (> 2h)",
+        "Resistência de circuit breaker sob carga extrema",
+        "Proteção de bucketing contra escapes de diretório"
+      ],
+      "files": [
+        "tests/test_database_sota.py",
+        "tests/test_monitoring_sota.py",
+        "tests/test_stress_circuit_breaker.py",
+        "tests/test_utils_sota.py"
+      ],
+      "pytest_args": [
+        "tests/test_database_sota.py",
+        "tests/test_monitoring_sota.py",
+        "tests/test_stress_circuit_breaker.py",
+        "tests/test_utils_sota.py"
+      ],
+      "test_count": 63,
+      "sla_seconds": 5.0
+    },
+    "security_governance": {
+      "name": "SOTA Guard, Hardening, Desambiguação & Nexus CLI",
+      "description": "Blindagem contra injeção e path traversal, sanitização de entrada, validação de fonte única de verdade (Single Source of Truth) e comandos do Nexus CLI.",
+      "target_layer": "tests.conftest / scripts.cli.nexus / api.v1.middleware",
+      "thematic_criteria": [
+        "Bloqueio estrito de injeção de prompt e palavras-chave maliciosas",
+        "Zero constantes de modelos duplicadas entre módulos",
+        "Validação de fonte única de verdade em rotas de agentes",
+        "Imutabilidade do SOTA Guard (reprovação em >=1 erro ou >=3 warnings)"
+      ],
+      "files": [
+        "tests/test_backend_hardening.py",
+        "tests/test_security_sanitization.py",
+        "tests/test_desambiguacao.py",
+        "tests/test_cli_nexus.py"
+      ],
+      "pytest_args": [
+        "tests/test_backend_hardening.py",
+        "tests/test_security_sanitization.py",
+        "tests/test_desambiguacao.py",
+        "tests/test_cli_nexus.py"
+      ],
+      "test_count": 52,
+      "sla_seconds": 12.0
+    }
+  },
+  "frontend_suites": {
+    "simulator_pmev": {
+      "name": "Frontend Simulator & Monte Carlo",
+      "test_count": 65,
+      "criteria": ["Zero divergência matemática de ICM", "Validação de dead cards sem colisão"]
+    },
+    "security_auth": {
+      "name": "Frontend Security & Secret Protection",
+      "test_count": 12,
+      "criteria": ["Zero exposição de chaves no bundle", "Sanitização de links de markdown"]
+    },
+    "components_ui": {
+      "name": "Frontend Components, Audio & Markdown Policy",
+      "test_count": 18,
+      "criteria": ["Zero React memory leaks", "Renderização acessível sem violações"]
+    }
+  }
+}

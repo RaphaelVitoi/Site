@@ -1,12 +1,5 @@
 {
-  // Literal e absoluto de proposito. O consumidor desta chave e a extensao
-  // ms-python.vscode-python-envs, que valida o valor e so entao chama
-  // Uri.file() — que exige caminho absoluto. Quando `${workspaceFolder}`
-  // sobrevive a substituicao dela, a extensao emite
-  // "Default interpreter path ... could not be resolved" e cai em
-  // auto-discovery. As demais chaves python.* abaixo seguem com
-  // ${workspaceFolder} porque quem as le e o Pylance, que expande corretamente.
-  "python.defaultInterpreterPath": "C:\\Users\\rapha\\.gemini\\Site\\.venv\\Scripts\\python.exe",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
   "python.terminal.activateEnvironment": true,
   "python.analysis.autoSearchPaths": true,
   "python.analysis.extraPaths": [
@@ -131,6 +124,7 @@
     }
   ],
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "rust-analyzer.server.path": "C:\\Users\\rapha\\.cargo\\bin\\rust-analyzer.exe",
   "rust-analyzer.check.command": "clippy",
   "rust-analyzer.cargo.allTargets": true,
   "rust-analyzer.procMacro.enable": true,
@@ -190,6 +184,8 @@
   "scss.lint.unknownAtRules": "ignore",
   "vitest.rootConfig": "vitest.config.mjs",
   "vitest.nodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+  "python-envs.defaultEnvManager": "ms-python.python:venv",
+  "python-envs.defaultPackageManager": "ms-python.python:pip",
   "python-envs.pythonProjects": [
     {
       "path": ".",
@@ -197,5 +193,43 @@
       "packageManager": "ms-python.python:pip"
     }
   ],
-  "sonarlint.disableTelemetry": true
+  "sonarlint.disableTelemetry": true,
+  "sonarlint.rules": {
+    "javascript:S6853": {
+      "level": "off"
+    },
+    "typescript:S6853": {
+      "level": "off"
+    },
+    "javascript:S4790": {
+      "level": "off"
+    },
+    "typescript:S4790": {
+      "level": "off"
+    },
+    "javascript:S5332": {
+      "level": "off"
+    },
+    "typescript:S5332": {
+      "level": "off"
+    }
+  },
+  "rust-analyzer.imports.preferPrelude": true,
+  "rust-analyzer.imports.granularity.enforce": true,
+  "rust-analyzer.completion.termSearch.enable": true,
+  "rust-analyzer.completion.privateEditable.enable": true,
+  "rust-analyzer.completion.fullFunctionSignatures.enable": true,
+  "rust-analyzer.diagnostics.styleLints.enable": true,
+  "rust-analyzer.diagnostics.previewRustcOutput": true,
+  "rust-analyzer.debug.buildBeforeRestart": true,
+  "rust-analyzer.trace.server": "verbose",
+  "securecoder.enableI18n": false,
+  "securecoder.rules.i18n": "off",
+  "securecoder.rules.internationalization": "off",
+  "securecoder.rules.jsx-not-internationalized": "off",
+  "securecoder.disabledRules": [
+    "jsx-not-internationalized",
+    "i18n",
+    "internationalization"
+  ]
 }

@@ -1,4 +1,4 @@
-"""Rotina de Auditoria Mensal Periodica — Modus Operandi & Roteamento SOTA v8.0 GOLD.
+"""Rotina de Auditoria Mensal Periodica  Modus Operandi & Roteamento SOTA v8.0 GOLD.
 
 Executa no 1o dia de cada mes ou sob demanda para auditar:
 1. Conformidade de Modelos & Registros de Capacidade (Model Registry & Pricing).
@@ -124,25 +124,25 @@ def run_monthly_audit() -> dict[str, any]:
     reports_dir.mkdir(parents=True, exist_ok=True)
     report_file = reports_dir / f"AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_{mes_ano}.md"
     
-    md_content = f"""# RELATÓRIO DE AUDITORIA MENSAL: MODUS OPERANDI & ROUTING SOTA v8.0 GOLD
+    md_content = f"""# RELATORIO DE AUDITORIA MENSAL: MODUS OPERANDI & ROUTING SOTA v8.0 GOLD
 
-> **Data de Execução:** {timestamp_str}  
-> **Mês de Referência:** {mes_ano}  
+> **Data de Execucao:** {timestamp_str}  
+> **Mes de Referencia:** {mes_ano}  
 > **Status Global:** **{audit_results["status_geral"]}**  
-> **Auditor Responsável:** Chico / SOTA Routine Daemon
+> **Auditor Responsavel:** Chico / SOTA Routine Daemon
 
 ---
 
 ## 1. RESUMO EXECUTIVO
 - **Total de Agentes Cobertos:** {cob["agentes"]} agentes / {cob["subagentes"]} tiers de subagente
-- **Mapa Concreto Ativo:** {len(AGENT_MODEL_MAP)} agentes operando sem fallbacks órfãos
-- **Validação de Gatilho de ROI (Gemini 3.1 Pro vs. 3.7 Flash):** Aprovado e calibrado
+- **Mapa Concreto Ativo:** {len(AGENT_MODEL_MAP)} agentes operando sem fallbacks orfaos
+- **Validacao de Gatilho de ROI (Gemini 3.1 Pro vs. 3.7 Flash):** Aprovado e calibrado
 - **Status dos Manuais de Modus Operandi:** 100% Sincronizados com a Arquitetura de 4 Camadas
 
 ---
 
 ## 2. CONFORMIDADE DAS 4 CAMADAS FUNCIONAIS
-| Modelo | Camada | Context Window | Max Output | Preço In/Out ($/1M) | Thinking | Status |
+| Modelo | Camada | Context Window | Max Output | Preco In/Out ($/1M) | Thinking | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 """
     for mod, dados in status_camadas.items():
@@ -154,7 +154,7 @@ def run_monthly_audit() -> dict[str, any]:
     md_content += """
 ---
 
-## 3. AUDITORIA DE MANUAIS E GOVERNANÇA
+## 3. AUDITORIA DE MANUAIS E GOVERNANCA
 | Arquivo | Presente | Tamanho | 4 Camadas | Barramento MCP |
 | :--- | :--- | :--- | :--- | :--- |
 """
@@ -167,16 +167,16 @@ def run_monthly_audit() -> dict[str, any]:
     md_content += f"""
 ---
 
-## 4. ALERTAS E RECOMENDAÇÕES PARA O PRÓXIMO MÊS
+## 4. ALERTAS E RECOMENDACOES PARA O PROXIMO MES
 """
     if audit_results["alertas"]:
         for al in audit_results["alertas"]:
-            md_content += f"- ⚠️ **Alerta:** {al}\n"
+            md_content += f"-  **Alerta:** {al}\n"
     else:
-        md_content += "- ✅ **Zero inconformidades detectadas.** O ecossistema opera no Padrão-Ouro termodinâmico.\n"
-        md_content += "- 💡 **Recomendação:** Manter monitoramento sobre lançamentos de modelos de fronteira para eventual atualização dos degraus de fallback.\n"
+        md_content += "-  **Zero inconformidades detectadas.** O ecossistema opera no Padrao-Ouro termodinamico.\n"
+        md_content += "-  **Recomendacao:** Manter monitoramento sobre lancamentos de modelos de fronteira para eventual atualizacao dos degraus de fallback.\n"
 
-    md_content += "\n---\n*Relatório gerado automaticamente pela Rotina de Auditoria Mensal SOTA v8.0 GOLD sob governança de Raphael Vitoi.*\n"
+    md_content += "\n---\n*Relatorio gerado automaticamente pela Rotina de Auditoria Mensal SOTA v8.0 GOLD sob governanca de Raphael Vitoi.*\n"
 
     report_file.write_text(md_content, encoding="utf-8")
     print(f"[AUDITORIA SOTA] Relatorio gerado com sucesso em: {report_file}")

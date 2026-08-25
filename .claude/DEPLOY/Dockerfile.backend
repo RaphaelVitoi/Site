@@ -4,15 +4,29 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    && groupadd -r -g 1001 appuser \
+    && useradd -r -u 1001 -g appuser -d /app -s /sbin/nologin appuser \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Materialização do código-fonte (Imutável, protegido contra modificação por non-root)
+COPY api ./api
+COPY core ./core
+COPY engine ./engine
+COPY llm ./llm
+COPY math ./math
+COPY utils ./utils
+COPY task_executor.py main.py system_config.json ./
+
+USER appuser
 
 # Expõe a porta do Uvicorn (FastAPI/Handlers)
 EXPOSE 8000
 
 # Inicia o motor de tarefas e a API em paralelo
 CMD ["python", "task_executor.py", "start-all"]
+
+
+

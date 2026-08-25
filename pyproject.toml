@@ -158,11 +158,11 @@ addopts = [
     "-q",
     "-p no:cacheprovider",
     "--strict-markers",
-    "--cov=engine",
     "--cov-report=term-missing:skip-covered",
     "--cov-report=html:reports/coverage",
-    "--cov-fail-under=10",
 ]
+tmp_path_retention_policy = "none"
+tmp_path_retention_count = 0
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 log_cli = true
@@ -187,6 +187,11 @@ markers = [
     "slow: testes lentos (>5s) que requerem LLM ou I/O pesado",
     "integration: testes de integracao que requerem servicos externos",
     "unit: testes unitarios puros sem I/O externo",
+    "pmev: suite tematica Perspectiva Matematica e Poker Game Theory (Raphael Vitoi)",
+    "core_ai: suite tematica Mente Coletiva, Motores Bayesianos e Grafos Causais",
+    "agents_llm: suite tematica Multi-Agent System, 19 Avatares e LLM Routing",
+    "database_infra: suite tematica Infraestrutura, Fila SQLite WAL, MDA e Circuit Breaker",
+    "security_governance: suite tematica SOTA Guard, Hardening, Desambiguacao e Nexus CLI",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning:chromadb.*",

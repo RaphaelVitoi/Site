@@ -32,12 +32,16 @@ export async function fetchSOTA(
   while (attempt <= retries) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const combinedSignal = options?.signal
-      ? AbortSignal.any([options.signal, controller.signal])
-      : controller.signal;
+    if (options?.signal) {
+      if (options.signal.aborted) {
+        controller.abort(options.signal.reason);
+      } else {
+        options.signal.addEventListener('abort', () => controller.abort(options.signal?.reason), { once: true });
+      }
+    }
 
     try {
-      const response = await fetch(url, { ...options, signal: combinedSignal });
+      const response = await fetch(url, { ...options, signal: controller.signal });
       clearTimeout(timer);
       return response;
     } catch (err: unknown) {

@@ -11,14 +11,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
 		const content = await prisma.content.findFirst({
 			where: {
 				slug,
-				published: true, // Restrição SOTA: Apenas conteúdo consolidado/público
+				isPublished: true, // Restrição SOTA: Apenas conteúdo consolidado/público
 			},
 			select: {
 				// Whitelist de projeção de dados (Data Transfer Object explícito)
 				id: true,
 				slug: true,
 				title: true,
-				content: true,
+				category: true,
+				description: true,
+				body: true,
 				createdAt: true,
 				updatedAt: true,
 			},

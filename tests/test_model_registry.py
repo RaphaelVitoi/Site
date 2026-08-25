@@ -29,7 +29,7 @@ from llm.model_registry import (
 USUARIO = [{"role": "user", "content": "ping"}]
 
 
-# ── Integridade do registro ──────────────────────────────────────────────────
+#  Integridade do registro 
 
 
 def test_registro_nao_vazio_e_valido():
@@ -53,7 +53,7 @@ def test_modelo_nao_verificado_fica_fora_e_explica_o_motivo():
         get("gpt-5.6-sol-ultrafast")
 
 
-# ── Anthropic: as correcoes criticas ─────────────────────────────────────────
+#  Anthropic: as correcoes criticas 
 
 
 def test_anthropic_nunca_emite_budget_tokens():
@@ -115,7 +115,7 @@ def test_streaming_obrigatorio_para_saida_grande():
     assert not AnthropicAdapter.precisa_streaming("claude-opus-5", 8_000)
 
 
-# ── OpenAI ───────────────────────────────────────────────────────────────────
+#  OpenAI 
 
 
 def test_openai_nao_usa_esforco_ultra():
@@ -127,7 +127,7 @@ def test_openai_nao_usa_esforco_ultra():
 
 
 def test_luna_tem_o_preco_corrigido():
-    """O estudo dizia $1.00/$6.00; o correto e $0.20/$1.20 — 5x de diferenca."""
+    """O estudo dizia $1.00/$6.00; o correto e $0.20/$1.20  5x de diferenca."""
     luna = get("gpt-5.6-luna")
     assert luna.price_per_1m_in == 0.20
     assert luna.price_per_1m_out == 1.20
@@ -143,7 +143,7 @@ def test_openai_monta_bloco_de_reasoning():
     assert req["model"] == "gpt-5.6-sol"
 
 
-# ── Google ───────────────────────────────────────────────────────────────────
+#  Google 
 
 
 def test_thinking_level_vai_dentro_de_generation_config():
@@ -153,7 +153,7 @@ def test_thinking_level_vai_dentro_de_generation_config():
 
 
 def test_gemini_37_flash_nao_aceita_minimal():
-    """gemini-3.7-flash aceita low/medium/high — 'minimal' e de outros modelos."""
+    """gemini-3.7-flash aceita low/medium/high  'minimal' e de outros modelos."""
     assert get("gemini-3.7-flash").thinking_level in {"low", "medium", "high"}
 
 
@@ -169,7 +169,7 @@ def test_modo_stateful_nao_reenvia_assinaturas():
     assert GoogleGenAIAdapter.preservar_assinaturas("gemini-3.7-flash", steps) == []
 
 
-# ── Cruzados ─────────────────────────────────────────────────────────────────
+#  Cruzados 
 
 
 def test_adaptador_recusa_modelo_de_outro_provedor():

@@ -62,9 +62,12 @@ foreach ($Agent in $AgentNames) {
 
     # SOBRESCRITA SOTA: O Manifesto e a fonte absoluta. A identidade base SEMPRE e atualizada.
     $RoutingPattern = if ($AgentProps.routing_pattern) { $AgentProps.routing_pattern } else { 'N/A' }
-    $Template = "# Identidade e Escopo: @$Agent`n`n**Cor Emblematica:** ``$Color`` | **Motor Base:** $MotorBase`n`n$($AgentProps.identidade)`n`n## Competencias`n$($AgentProps.competencias)`n`n## Sinergia`n$($AgentProps.sinergia)`n`n## Gatilho de Roteamento (routing_pattern)`n``$RoutingPattern``"
+    $SkillsList = if ($AgentProps.skills) { ($AgentProps.skills | ForEach-Object { "- ``$_``" }) -join "`n" } else { "- N/A" }
+    $ScriptsList = if ($AgentProps.specialized_scripts) { ($AgentProps.specialized_scripts | ForEach-Object { "- ``$_``" }) -join "`n" } else { "- N/A" }
+
+    $Template = "# Identidade e Escopo: @$Agent`n`n**Cor Emblematica:** ``$Color`` | **Motor Base:** $MotorBase`n`n$($AgentProps.identidade)`n`n## Competencias`n$($AgentProps.competencias)`n`n## Skills Especializadas`n$SkillsList`n`n## Scripts & Ferramentas Integradas`n$ScriptsList`n`n## Sinergia`n$($AgentProps.sinergia)`n`n## Gatilho de Roteamento (routing_pattern)`n``$RoutingPattern``"
     Write-TextSOTA -Path $AgentDocPath -Content $Template -Encoding $Utf8NoBom
-    Write-Host "[ + ] Identidade sincronizada para @$Agent" -ForegroundColor Green
+    Write-Host "[ + ] Identidade sincronizada para @$Agent (Skills & Scripts integrados)" -ForegroundColor Green
 
     if (-not (Test-Path $MemoryDir)) {
         New-Item -ItemType Directory -Path $MemoryDir -Force | Out-Null

@@ -472,14 +472,45 @@ $mdContent | Set-Content -Path $latestMdPath -Encoding UTF8
 
 Write-Host "📄 [REPORT] Artifact saved: $reportMdPath" -ForegroundColor Cyan
 
-if ($failures.Count -gt 0) {
-    Write-Host "`n[GATE REJECTED] $($failures.Count) SOTA threshold violation(s) detected:" -ForegroundColor Red
-    foreach ($f in $failures) {
-        Write-Host "   - $f" -ForegroundColor Red
-    }
-    Write-Host "`nDeploy/Commit aborted to protect system performance, security & cryptographic integrity.`n" -ForegroundColor Yellow
-    exit 1
+Write-Host "`n" + ("=" * 80)
+Write-Host "========= SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (GATE) ==========" -ForegroundColor Cyan
+Write-Host "• Total de Erros:    $($failures.Count) (Teto Maximo Permitido: 0 | Peso: CRITICO)"
+Write-Host "• Total de Warnings: $($warnings.Count) (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)"
+
+$triState = "SUCESSO"
+if ($failures.Count -eq 0 -and $warnings.Count -eq 0) {
+    $triState = "SUCESSO (VERDE)"
+    Write-Host "• Status da Bateria: [$triState] Zero Erros e Zero Warnings nas 5 Fases do Quality Gate." -ForegroundColor Green
+    Write-Host "• Homeostase Total:  Nenhum erro ou warning detectado nas 5 fases do Quality Gate." -ForegroundColor Green
+} elseif ($failures.Count -eq 0 -and $warnings.Count -le 2) {
+    $triState = "FRAGIL (AMARELO)"
+    Write-Host "• Status da Bateria: [$triState] 0 Erros, mas detectados $($warnings.Count) warnings no Quality Gate." -ForegroundColor Yellow
+} else {
+    $triState = "FALHOU (VERMELHO)"
+    Write-Host "• Status da Bateria: [$triState] Bloqueio Termodinamico! ($($failures.Count) Erros, $($warnings.Count) Warnings)." -ForegroundColor Red
 }
 
-Write-Host "`n[GATE APPROVED] All Core Web Vitals, A11y, Security & SRI Standards meet SOTA Gold Standard.`n" -ForegroundColor Green
+if ($failures.Count -gt 0 -or $warnings.Count -gt 0) {
+    Write-Host ("-" * 80) -ForegroundColor Yellow
+    Write-Host "SUMARIO INDIVIDUAL DE DETECCOES ($($failures.Count + $warnings.Count) OCORRENCIAS)" -ForegroundColor Yellow
+    $idx = 1
+    foreach ($f in $failures) {
+        Write-Host "[$idx] ERROR -> Componente: 'gate.quality' | Verificacao: $f" -ForegroundColor Red
+        Write-Host "    Causa/Motivo: Limite SOTA ultrapassado na fase de auditoria."
+        Write-Host "    `e[36m💡 Recomendacao: [SOTA-REC] Ajustar o limite de performance/seguranca no modulo auditado.`e[0m`n"
+        $idx++
+    }
+    foreach ($w in $warnings) {
+        Write-Host "[$idx] WARNING -> Componente: 'gate.quality' | Alerta: $w" -ForegroundColor Yellow
+        Write-Host "    Causa/Motivo: Alerta de entropia moderada detectado."
+        Write-Host "    `e[36m💡 Recomendacao: [SOTA-REC] Sanear warning preventivamente para manter homeostase verde.`e[0m`n"
+        $idx++
+    }
+}
+
+Write-Host ("=" * 80) + "`n" -ForegroundColor Cyan
+
+if ($triState -eq "FALHOU (VERMELHO)") {
+    exit 1
+}
 exit 0

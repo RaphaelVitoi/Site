@@ -1,7 +1,7 @@
 """Guardas contra reintroducao de ambiguidade de roteamento, nome e indice.
 
 Cada teste corresponde a uma ambiguidade real medida em 2026-08-21. Nenhuma foi
-removida por "parecer redundante" — todas tiveram consumo verificado antes.
+removida por "parecer redundante"  todas tiveram consumo verificado antes.
 """
 
 from __future__ import annotations
@@ -32,7 +32,8 @@ def _constantes_de_modelo(caminho: Path) -> dict[str, str]:
     return achados
 
 
-# ── Nome de constante: um nome, um valor, um lugar ───────────────────────────
+#  Nome de constante: um nome, um valor, um lugar 
+
 
 def test_nenhuma_constante_de_modelo_duplicada_entre_modulos():
     """MODEL_GEMINI_FLASH existia em core/config.py ("gemini-3.5-flash-lite") e
@@ -48,14 +49,12 @@ def test_nenhuma_constante_de_modelo_duplicada_entre_modulos():
         for nome, valor in consts.items():
             if nome in vistos:
                 origem, outro = vistos[nome]
-                raise AssertionError(
-                    f"{nome} duplicada: {origem}={outro!r} vs {modulo}={valor!r}"
-                )
+                raise AssertionError(f"{nome} duplicada: {origem}={outro!r} vs {modulo}={valor!r}")
             vistos[nome] = (modulo, valor)
 
 
 def test_sem_constantes_sinonimas_com_valor_identico():
-    """MODEL_GEMINI_FLASH e MODEL_GEMINI_FLASH_LITE tinham o MESMO valor —
+    """MODEL_GEMINI_FLASH e MODEL_GEMINI_FLASH_LITE tinham o MESMO valor 
     dois nomes sugerindo uma distincao inexistente."""
     consts = _constantes_de_modelo(RAIZ / "core" / "config.py")
     por_valor: dict[str, list[str]] = {}
@@ -65,14 +64,15 @@ def test_sem_constantes_sinonimas_com_valor_identico():
     assert not colisoes, f"nomes diferentes para o mesmo modelo: {colisoes}"
 
 
-# ── Roteamento: uma fonte por decisao ────────────────────────────────────────
+#  Roteamento: uma fonte por decisao 
+
 
 def test_preferencia_por_agente_tem_fonte_unica():
     """routing_map.json trazia um agent_map com zero consumidores que
     contradizia o manifesto em 3 agentes. A fonte viva e o manifesto, lido em
     engine/llm_api.py:528 e llm/orchestrator.py:147."""
     rm = json.loads(ROUTING_MAP.read_text(encoding="utf-8"))
-    assert "agent_map" not in rm, "agent_map voltou — duplica o manifesto"
+    assert "agent_map" not in rm, "agent_map voltou  duplica o manifesto"
     manifesto = json.loads(MANIFESTO.read_text(encoding="utf-8"))
     assert all(a.get("model_preference") for a in manifesto.values())
 
@@ -82,7 +82,8 @@ def test_routing_map_declara_que_e_apenas_fallback():
     ROUTING_CONFIG). system_config vence; sem rotulo, os dois arquivos parecem
     igualmente autoritativos e divergem em silencio."""
     rm = json.loads(ROUTING_MAP.read_text(encoding="utf-8"))
-    assert "_uso" in rm and "FALLBACK" in rm["_uso"].upper()
+    assert "_uso" in rm
+    assert "FALLBACK" in rm["_uso"].upper()
 
 
 def test_listas_de_roteamento_nao_divergiram():
@@ -93,11 +94,12 @@ def test_listas_de_roteamento_nao_divergiram():
         assert sc.get(chave) == rm.get(chave), f"{chave} divergiu entre os dois arquivos"
 
 
-# ── Referencias: documentacao nao fixa modelo ────────────────────────────────
+#  Referencias: documentacao nao fixa modelo 
+
 
 def test_agentes_md_nao_fixam_modelo_literal():
     """Os 19 .claude/agents/*.md declaravam 'Motor Base: gemini-2.5-pro/flash'
-    — duas geracoes atras do manifesto. Documentacao que repete um valor
+     duas geracoes atras do manifesto. Documentacao que repete um valor
     versionado em outro lugar envelhece sem avisar."""
     obsoletos = []
     for f in AGENTES_MD.glob("*.md"):

@@ -45,6 +45,8 @@ from api.v1.handlers import (
     handle_health,
     handle_import_solver_tree,
     handle_ping,
+    handle_pmev_heatmap,
+    handle_prometheus_metrics,
     handle_rag_ingest,
     handle_rag_query,
     handle_set_state,
@@ -91,6 +93,7 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
     app.add_routes(
         [
             web.get("/ping", handle_ping),
+            web.get("/metrics", handle_prometheus_metrics),
             web.get("/db-summary", handle_get_db_summary),
             web.get("/health", handle_health),
             web.post("/add", handle_add_task),
@@ -111,6 +114,8 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
             web.post("/api/v1/perspective", handle_calculate_perspective),
             web.post("/api/v1/perspective/tree", handle_simulate_perspective_tree),
             web.post("/api/v1/perspective/import-solver", handle_import_solver_tree),
+            web.post("/api/v1/pmev/heatmap", handle_pmev_heatmap),
+            web.post("/api/v1/perspective/heatmap", handle_pmev_heatmap),
         ]
     )
 

@@ -1,0 +1,203 @@
+{
+  "version": "8.0.0",
+  "protocol": "CHICO_SOTA_v8_GOLD",
+  "governance": "Raphael Vitoi",
+  "last_audit": "2026-08-24T22:16:00-03:00",
+  "sota_guard": {
+    "tri_state_policy": {
+      "SUCESSO": {
+        "condition": "errors == 0 and warnings == 0",
+        "color": "green",
+        "description": "Homeostase Total. Zero erros sintáticos/executivos e zero warnings."
+      },
+      "FRAGIL": {
+        "condition": "errors == 0 and 1 <= warnings <= 2",
+        "color": "yellow",
+        "description": "Alerta de entropia moderada. 0 erros, mas avisos detectados exigem saneamento."
+      },
+      "FALHOU": {
+        "condition": "errors >= 1 or warnings >= 3",
+        "color": "red",
+        "description": "Bloqueio Termodinâmico. Erros de execução/sintaxe têm peso crítico mandatório."
+      }
+    },
+    "max_errors": 0,
+    "max_warnings": 2
+  },
+  "taxonomy": {
+    "ops": {
+      "name": "Operações de Produção & Quality Gate",
+      "description": "Scripts críticos para integridade do sistema, auditoria de segurança, compilação de assets e verificação de Core Web Vitals.",
+      "thematic_criteria": [
+        "Auditoria criptográfica SHA-512 e SRI com zero falhas",
+        "Taxa de compressão Brotli/Gzip > 70% com mandate <15KB",
+        "Aprovação nas 5 fases do CWV Gate sem violações"
+      ],
+      "scripts": {
+        "scripts/ops/cwv_gate.ps1": {
+          "utility": "UTIL",
+          "runtime": "PowerShell 7",
+          "description": "Portão obrigatório de 5 fases (Performance CWV, Acessibilidade A11y, Auditoria CVE, Integridade SRI SHA-512 e Higiene de Repositório LFS).",
+          "command": "pwsh scripts/ops/cwv_gate.ps1",
+          "sla_seconds": 15.0
+        },
+        "scripts/ops/brotli_compressor.mjs": {
+          "utility": "UTIL",
+          "runtime": "Node.js",
+          "description": "Pré-compactador estático de assets em Brotli (q=11) e Gzip (lvl=9) com mandate <15KB.",
+          "command": "node scripts/ops/brotli_compressor.mjs",
+          "sla_seconds": 5.0
+        },
+        "scripts/ops/sri_integrity_verifier.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Auditoria criptográfica de integridade de sub-recursos (SRI) e verificação de integridade estrita SHA-512.",
+          "command": "python scripts/ops/sri_integrity_verifier.py",
+          "sla_seconds": 2.0
+        },
+        "scripts/ops/Ensure-OllamaModels.ps1": {
+          "utility": "UTIL",
+          "runtime": "PowerShell 7",
+          "description": "Provisionamento e garantia determinística dos modelos locais Ollama declarados em data/ollama_models.json.",
+          "command": "pwsh scripts/ops/Ensure-OllamaModels.ps1",
+          "sla_seconds": 5.0
+        },
+        "scripts/ops/get_dashboard_telemetry.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Extrator de telemetria em tempo real para o dashboard executivo.",
+          "command": "python scripts/ops/get_dashboard_telemetry.py",
+          "sla_seconds": 2.0
+        }
+      }
+    },
+    "maintenance": {
+      "name": "Manutenção, Purificação & Sanidade do Workspace",
+      "description": "Rotinas de purificação de encoding, testes de sanidade zero-regression e higienização periódica.",
+      "thematic_criteria": [
+        "100% dos módulos Python compilam sem erro de sintaxe",
+        "Purificação de codificação UTF-8/ASCII sem corrupção de caracteres",
+        "Expurgo de logs/backups obsoletos > 7 dias com segurança"
+      ],
+      "scripts": {
+        "scripts/maintenance/audit_ecosystem_tests_scripts.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Varredura e auditoria integral de 100% dos scripts e suítes de testes do repositório.",
+          "command": "python scripts/maintenance/audit_ecosystem_tests_scripts.py",
+          "sla_seconds": 15.0
+        },
+        "scripts/maintenance/sota_integrity_test.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Teste abrangente de integridade com SQLite I/O, RAG, Garbage Collector e Paridade Quântica.",
+          "command": "python scripts/maintenance/sota_integrity_test.py",
+          "sla_seconds": 5.0
+        },
+        "scripts/maintenance/hygiene.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Higienização temporal de backups, logs e arquivos temporários com idade superior a 7 dias.",
+          "command": "python scripts/maintenance/hygiene.py",
+          "sla_seconds": 3.0
+        },
+        "scripts/maintenance/purify_python_ascii.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Purificador de codificação para módulos Python.",
+          "command": "python scripts/maintenance/purify_python_ascii.py",
+          "sla_seconds": 2.0
+        }
+      }
+    },
+    "routines": {
+      "name": "Rotinas Programadas & Sincronização da Realidade",
+      "description": "Scripts de geração de documentação viva, sincronização de agentes e tarefas agendadas.",
+      "thematic_criteria": [
+        "Sincronização 1-para-1 de agentes em agents_manifest.json para .Codex/agents/*.md",
+        "Conformidade estrita com o Modus Operandi e regras de roteamento",
+        "Complexidade ciclomática V(G) sob limites controlados"
+      ],
+      "scripts": {
+        "scripts/routines/sync_agents_reality.ps1": {
+          "utility": "UTIL",
+          "runtime": "PowerShell 7",
+          "description": "Gerador canônico da documentação dos 19 agentes em .Codex/agents/*.md a partir de data/agents_manifest.json.",
+          "command": "pwsh scripts/routines/sync_agents_reality.ps1",
+          "sla_seconds": 5.0
+        },
+        "scripts/routines/audit_monthly_modus_operandi_and_routing.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Auditoria mensal de conformidade com o Modus Operandi e regras de roteamento.",
+          "command": "python scripts/routines/audit_monthly_modus_operandi_and_routing.py",
+          "sla_seconds": 3.0
+        },
+        "scripts/routines/stress_test.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Teste de estresse e validação de complexidade ciclomática V(G).",
+          "command": "python scripts/routines/stress_test.py",
+          "sla_seconds": 3.0
+        }
+      }
+    },
+    "benchmarks": {
+      "name": "Benchmarks de Performance & SIMD C++/WASM",
+      "description": "Métricas de aceleração termodinâmica, throughput e vetorização matemática.",
+      "thematic_criteria": [
+        "Aceleração termodinâmica estritamente > 1.0x sobre baseline",
+        "Paridade numérica exata (Zero-Copy / Symmetry Matched)",
+        "Zero memory leaks em buffers de alta densidade"
+      ],
+      "scripts": {
+        "scripts/benchmark_sota_suite.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Suíte completa de benchmark de hardware, CPU, memória e throughput de inferência.",
+          "command": "python scripts/benchmark_sota_suite.py",
+          "sla_seconds": 10.0
+        },
+        "scripts/benchmark_wasm_quantum.mjs": {
+          "utility": "UTIL",
+          "runtime": "Node.js",
+          "description": "Benchmark de aceleração quântica e vetorização SIMD em WebAssembly.",
+          "command": "node scripts/benchmark_wasm_quantum.mjs",
+          "sla_seconds": 5.0
+        },
+        "core/tensor_engine/src/test_tensor_bridge.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Benchmark de paridade e aceleração SIMD C++ vs Numpy em 10.000.000 de elementos.",
+          "command": "python core/tensor_engine/src/test_tensor_bridge.py",
+          "sla_seconds": 2.0
+        }
+      }
+    },
+    "cli": {
+      "name": "Nexus CLI Orchestrator & Sintetizador de Voz",
+      "description": "Interface central de linha de comando para orquestração de testes, gates e tarefas operacionais.",
+      "thematic_criteria": [
+        "Ponto de entrada de comando com retorno 0 e tratamento tipado de erros",
+        "Síntese neural de voz resiliente com fallback transparente",
+        "Zero vazamento de exceções não tratadas no terminal"
+      ],
+      "scripts": {
+        "scripts/cli/nexus.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Ponto de entrada mestre do CLI Nexus (nexus gate, nexus test, nexus ops, nexus db).",
+          "command": "python scripts/cli/nexus.py --help",
+          "sla_seconds": 5.0
+        },
+        "scripts/cli/nexus_voice.py": {
+          "utility": "UTIL",
+          "runtime": "Python 3.14",
+          "description": "Módulo de síntese neural de voz com fallbacks Edge-TTS e Gemini Flash Audio.",
+          "command": "python scripts/cli/nexus_voice.py --help",
+          "sla_seconds": 5.0
+        }
+      }
+    }
+  }
+}
