@@ -1,0 +1,9 @@
+**/LICENSE
+LICENSE
+node_modules/
+.venv/
+.next/
+dist/
+build/
+coverage/
+reports/
