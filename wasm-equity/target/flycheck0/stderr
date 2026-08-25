@@ -1,2 +1,0 @@
-error: 'cargo-clippy.exe' is not installed for the toolchain '1.97.1-x86_64-pc-windows-msvc'.
-help: run `rustup component add --toolchain 1.97.1-x86_64-pc-windows-msvc clippy` to install it
