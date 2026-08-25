@@ -1,4 +1,6 @@
+# SOTA v8.0 GOLD CI/CD Pipeline - Verified 2026-08-25
 name: SOTA v8.0 GOLD CI/CD Pipeline
+
 
 on:
   push:
