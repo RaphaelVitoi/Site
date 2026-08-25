@@ -32,7 +32,7 @@ def _constantes_de_modelo(caminho: Path) -> dict[str, str]:
     return achados
 
 
-#  Nome de constante: um nome, um valor, um lugar 
+#  Nome de constante: um nome, um valor, um lugar
 
 
 def test_nenhuma_constante_de_modelo_duplicada_entre_modulos():
@@ -54,7 +54,7 @@ def test_nenhuma_constante_de_modelo_duplicada_entre_modulos():
 
 
 def test_sem_constantes_sinonimas_com_valor_identico():
-    """MODEL_GEMINI_FLASH e MODEL_GEMINI_FLASH_LITE tinham o MESMO valor 
+    """MODEL_GEMINI_FLASH e MODEL_GEMINI_FLASH_LITE tinham o MESMO valor
     dois nomes sugerindo uma distincao inexistente."""
     consts = _constantes_de_modelo(RAIZ / "core" / "config.py")
     por_valor: dict[str, list[str]] = {}
@@ -64,7 +64,7 @@ def test_sem_constantes_sinonimas_com_valor_identico():
     assert not colisoes, f"nomes diferentes para o mesmo modelo: {colisoes}"
 
 
-#  Roteamento: uma fonte por decisao 
+#  Roteamento: uma fonte por decisao
 
 
 def test_preferencia_por_agente_tem_fonte_unica():
@@ -94,7 +94,7 @@ def test_listas_de_roteamento_nao_divergiram():
         assert sc.get(chave) == rm.get(chave), f"{chave} divergiu entre os dois arquivos"
 
 
-#  Referencias: documentacao nao fixa modelo 
+#  Referencias: documentacao nao fixa modelo
 
 
 def test_agentes_md_nao_fixam_modelo_literal():

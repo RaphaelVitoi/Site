@@ -130,7 +130,9 @@ def run_benchmark():
 
     # --- BENCHMARK 3: VETORES AVX-512 (512-BIT WIDE-LANE SIMD / 16 FLOATS PER CYCLE) ---
     n_avx512 = 16_000_000  # Multiplo exato de 16 (16 floats * 32-bit = 512-bit ZMM registers)
-    console.print(f"\n[bold cyan][TESTE 3] AVX-512 Wide-Lane SIMD Chunking ({n_avx512} elementos float32 / 16-wide ZMM)...[/]")
+    console.print(
+        f"\n[bold cyan][TESTE 3] AVX-512 Wide-Lane SIMD Chunking ({n_avx512} elementos float32 / 16-wide ZMM)...[/]"
+    )
 
     eq_512 = rng.random(n_avx512, dtype=np.float32)
     pot_512 = rng.random(n_avx512, dtype=np.float32)
@@ -154,7 +156,9 @@ def run_benchmark():
     gflops = (n_avx512 * 2) / (time_cpp_512 * 1e9) if time_cpp_512 > 0 else 0
 
     console.print(f"[bold white]Aceleracao Termodinamica (T3):[/] {speedup3:.2f}x")
-    console.print(f"[bold green]Throughput de Memoria (Zero-Copy):[/] {throughput_gb:.2f} GB/s | [bold cyan]Poder Computacional:[/] {gflops:.2f} GFLOPS")
+    console.print(
+        f"[bold green]Throughput de Memoria (Zero-Copy):[/] {throughput_gb:.2f} GB/s | [bold cyan]Poder Computacional:[/] {gflops:.2f} GFLOPS"
+    )
 
 
 if __name__ == "__main__":

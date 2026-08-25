@@ -10,34 +10,28 @@ Executa no 1o dia de cada mes ou sob demanda para auditar:
 from __future__ import annotations
 
 import datetime
-import json
 import sys
 from pathlib import Path
+from typing import Any
+
+from core.config import AGENT_MODEL_MAP
+from llm.model_registry import get
+from llm.routing_policy import (
+    avaliar_uso_condicional_pro,
+    cobertura,
+)
 
 # Garantir path raiz do projeto
 SITE_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(SITE_ROOT) not in sys.path:
     sys.path.insert(0, str(SITE_ROOT))
 
-from core.config import AGENT_MODEL_MAP
-from llm.model_registry import MODEL_REGISTRY, get
-from llm.routing_policy import (
-    AGENTES,
-    ROTAS,
-    SUBAGENTES,
-    avaliar_uso_condicional_pro,
-    cobertura,
-    economia_do_escalonamento,
-    rotear,
-    ClasseTarefa,
-)
 
-
-def run_monthly_audit() -> dict[str, any]:
+def run_monthly_audit() -> dict[str, Any]:
     agora = datetime.datetime.now()
     timestamp_str = agora.strftime("%Y-%m-%d %H:%M:%S")
     mes_ano = agora.strftime("%Y_%m")
-    
+
     audit_results = {
         "timestamp": timestamp_str,
         "mes_referencia": mes_ano,
@@ -54,7 +48,7 @@ def run_monthly_audit() -> dict[str, any]:
         "camada_2_agente_principal": ["gemini-3.7-flash"],
         "camada_3_raciocinio_profundo": ["gemini-3.1-pro"],
     }
-    
+
     status_camadas = {}
     for camada, modelos in camadas.items():
         for mod in modelos:
@@ -80,7 +74,7 @@ def run_monthly_audit() -> dict[str, any]:
     cob = cobertura()
     test_roi_flash = avaliar_uso_condicional_pro(complexidade_formal=False, ganho_qualidade_esperado_pct=10.0)
     test_roi_pro = avaliar_uso_condicional_pro(complexidade_formal=True, ganho_qualidade_esperado_pct=40.0)
-    
+
     audit_results["roteamento_auditado"] = {
         "total_agentes_cobertos": cob["agentes"],
         "total_subagentes_cobertos": cob["subagentes"],
@@ -88,9 +82,11 @@ def run_monthly_audit() -> dict[str, any]:
         "roi_trigger_flash_ok": test_roi_flash["modelo_escolhido"] == "gemini-3.7-flash",
         "roi_trigger_pro_ok": test_roi_pro["modelo_escolhido"] == "gemini-3.1-pro",
     }
-    
+
     if len(AGENT_MODEL_MAP) < 19:
-        audit_results["alertas"].append(f"Numero de agentes resolvidos ({len(AGENT_MODEL_MAP)}) abaixo do esperado (19).")
+        audit_results["alertas"].append(
+            f"Numero de agentes resolvidos ({len(AGENT_MODEL_MAP)}) abaixo do esperado (19)."
+        )
         audit_results["status_geral"] = "ATENCAO"
 
     # 3. Auditoria de Integridade de Manuais
@@ -99,7 +95,7 @@ def run_monthly_audit() -> dict[str, any]:
         SITE_ROOT / "MODUS_OPERANDI.md",
         SITE_ROOT / "docs" / "ARQUITETURA_PADRAO_OURO_SOTA_2026.md",
     ]
-    
+
     mo_status = {}
     for f in arquivos_mo:
         if f.exists():
@@ -123,12 +119,12 @@ def run_monthly_audit() -> dict[str, any]:
     reports_dir = SITE_ROOT / "reports" / "audits"
     reports_dir.mkdir(parents=True, exist_ok=True)
     report_file = reports_dir / f"AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_{mes_ano}.md"
-    
+
     md_content = f"""# RELATORIO DE AUDITORIA MENSAL: MODUS OPERANDI & ROUTING SOTA v8.0 GOLD
 
-> **Data de Execucao:** {timestamp_str}  
-> **Mes de Referencia:** {mes_ano}  
-> **Status Global:** **{audit_results["status_geral"]}**  
+> **Data de Execucao:** {timestamp_str}
+> **Mes de Referencia:** {mes_ano}
+> **Status Global:** **{audit_results["status_geral"]}**
 > **Auditor Responsavel:** Chico / SOTA Routine Daemon
 
 ---
@@ -164,7 +160,7 @@ def run_monthly_audit() -> dict[str, any]:
         else:
             md_content += f"| `{fname}` | Nao | N/A | N/A | N/A |\n"
 
-    md_content += f"""
+    md_content += """
 ---
 
 ## 4. ALERTAS E RECOMENDACOES PARA O PROXIMO MES

@@ -6,6 +6,7 @@ Importador especializado para DeepSolver (JSON / Tree API).
 import json
 from typing import Any
 from core.perspective_schemas import NormalizedGameTree, SolverNode, SolverType
+from engine.bayesian_range import RANKS, apply_pmev_range_filter, get_preflop_hand_strength_matrix
 from engine.solver_importers.base import BaseSolverImporter
 
 
@@ -97,8 +98,6 @@ class DeepSolverImporter(BaseSolverImporter):
     @staticmethod
     def get_hand_label(r: int, c: int) -> str:
         """Retorna a notacao padrao de mao preflop (ex: AA, AKs, AKo)."""
-        from engine.bayesian_range import RANKS
-
         if r == c:
             return f"{RANKS[r]}{RANKS[c]}"
         if r < c:
@@ -107,8 +106,6 @@ class DeepSolverImporter(BaseSolverImporter):
 
     def parse_range_matrix(self, raw_data: Any) -> list[list[float]]:
         """Converte formatos variados do DeepSolver (2D list, 1D 169, dict) em matriz 13x13."""
-        from engine.bayesian_range import RANKS
-
         matrix = [[0.0 for _ in range(13)] for _ in range(13)]
 
         if isinstance(raw_data, list):
@@ -139,8 +136,6 @@ class DeepSolverImporter(BaseSolverImporter):
         Gera o heatmap comparativo (DeepSolver GTO vs. PMev 3.2).
         Retorna matrizes de delta, metricas de combo e renderizacao visual ASCII.
         """
-        from engine.bayesian_range import apply_pmev_range_filter, get_preflop_hand_strength_matrix
-
         ds_matrix = self.parse_range_matrix(deepsolver_range)
         hand_strengths = get_preflop_hand_strength_matrix()
         pmev_matrix = apply_pmev_range_filter(ds_matrix, pmev_threshold, hand_strengths)

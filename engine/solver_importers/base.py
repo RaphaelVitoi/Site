@@ -5,7 +5,7 @@ Classe base abstrata para importadores de solvers de poker profissional.
 
 from abc import ABC, abstractmethod
 from typing import Any
-from core.perspective_schemas import NormalizedGameTree, SolverNode, SolverType
+from core.perspective_schemas import NormalizedGameTree, SolverType
 
 
 class BaseSolverImporter(ABC):

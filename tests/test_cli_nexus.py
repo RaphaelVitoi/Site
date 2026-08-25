@@ -2,7 +2,6 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 from typer.testing import CliRunner
-import pytest
 
 from scripts.cli.nexus import app
 
@@ -74,8 +73,10 @@ def test_nexus_task_null_byte_rejection():
 
 def test_nexus_list_tasks():
     """Valida a listagem de diretrizes no Orquestrador."""
-    with patch("scripts.cli.nexus._resolve_tasks_db_path") as mock_path, \
-         patch("scripts.cli.nexus.sqlite3.connect") as mock_connect:
+    with (
+        patch("scripts.cli.nexus._resolve_tasks_db_path") as mock_path,
+        patch("scripts.cli.nexus.sqlite3.connect") as mock_connect,
+    ):
         mock_path.return_value = MagicMock(exists=lambda: True, stat=lambda: MagicMock(st_size=1024))
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
@@ -127,8 +128,10 @@ def test_nexus_status_command():
 
 def test_nexus_db_vacuum():
     """Valida manutencao VACUUM no banco SQLite."""
-    with patch("scripts.cli.nexus._resolve_tasks_db_path") as mock_path, \
-         patch("scripts.cli.nexus.sqlite3.connect") as mock_connect:
+    with (
+        patch("scripts.cli.nexus._resolve_tasks_db_path") as mock_path,
+        patch("scripts.cli.nexus.sqlite3.connect") as mock_connect,
+    ):
         mock_path.return_value = MagicMock(exists=lambda: True, stat=lambda: MagicMock(st_size=2048))
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
@@ -188,3 +191,4 @@ def test_nexus_sync_consciousness():
         result = runner.invoke(app, ["sync-consciousness"])
         assert result.exit_code == 0
         assert "SINCRONIZACAO DE CONSCIENCIA SOTA" in result.stdout
+        mock_sub.assert_called_once()

@@ -656,7 +656,9 @@ def graph_rag(
 
     if query in ["bootstrap", "bootstrap-pmev", "init"]:
         count = engine.bootstrap_pmev_axioms()
-        console.print(f"[bold green] Grafo Causal Primordial PMev forjado com sucesso! ({count} nos axiomicos indexados)[/]")
+        console.print(
+            f"[bold green] Grafo Causal Primordial PMev forjado com sucesso! ({count} nos axiomicos indexados)[/]"
+        )
         return
 
     if query == "list":
@@ -688,8 +690,14 @@ def graph_rag(
         grid.add_column(style="bold white", ratio=1)
         grid.add_column(ratio=2)
 
-        causes_str = "\n".join([f" [{c['relation']}] {c['label']} ({c['id']})" for c in causes]) or "[dim]Nenhuma causa direta[/]"
-        effects_str = "\n".join([f" [{e['relation']}] {e['label']} ({e['id']})" for e in effects]) or "[dim]Nenhum efeito direto[/]"
+        causes_str = (
+            "\n".join([f" [{c['relation']}] {c['label']} ({c['id']})" for c in causes])
+            or "[dim]Nenhuma causa direta[/]"
+        )
+        effects_str = (
+            "\n".join([f" [{e['relation']}] {e['label']} ({e['id']})" for e in effects])
+            or "[dim]Nenhum efeito direto[/]"
+        )
 
         grid.add_row("[bold cyan]Origens / Causas:[/]", causes_str)
         grid.add_row("[bold green]Impactos / Efeitos:[/]", effects_str)
@@ -1726,17 +1734,28 @@ async def quality_gate():
         await _execute_step(name, cmd, cwd, env)
 
     console.print("\n" + "=" * 80)
-    console.print("[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (QUALITY GATE) ==========[/]")
+    console.print(
+        "[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (QUALITY GATE) ==========[/]"
+    )
     console.print(" Total de Erros:    0 (Teto Maximo Permitido: 0 | Peso: CRITICO)")
     console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
-    console.print("[bold green] Status da Bateria: [SUCESSO (VERDE)] Zero Erros & Zero Warnings nas 10 Fases do Gate.[/]")
-    console.print("[green] Homeostase Total:  Todas as 10 fases e suites do Quality Gate aprovadas com excelencia termodinamica.[/]")
+    console.print(
+        "[bold green] Status da Bateria: [SUCESSO (VERDE)] Zero Erros & Zero Warnings nas 10 Fases do Gate.[/]"
+    )
+    console.print(
+        "[green] Homeostase Total:  Todas as 10 fases e suites do Quality Gate aprovadas com excelencia termodinamica.[/]"
+    )
     console.print("[bold cyan]" + "=" * 80 + "[/]\n")
 
 
 @app.command("test")
 def run_thematic_test_suite(
-    suite: str = typer.Option("all", "--suite", "-s", help="Nome da suite tematica: pmev, core_ai, agents_llm, database_infra, security_governance, all"),
+    suite: str = typer.Option(
+        "all",
+        "--suite",
+        "-s",
+        help="Nome da suite tematica: pmev, core_ai, agents_llm, database_infra, security_governance, all",
+    ),
     list_suites: bool = typer.Option(False, "--list", "-l", help="Lista todas as suites tematicas disponiveis"),
     coverage: bool = typer.Option(False, "--cov", help="Gera relatorio de cobertura completo"),
 ):
@@ -1769,7 +1788,9 @@ def run_thematic_test_suite(
                 key_crit[:55] + "...",
             )
         console.print(table)
-        console.print("[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n")
+        console.print(
+            "[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
+        )
         return
 
     if suite == "all":
@@ -1801,9 +1822,13 @@ def run_thematic_test_suite(
 @ops_app.command("scripts")
 def list_and_run_scripts(
     list_all: bool = typer.Option(False, "--list", "-l", help="Lista catalogo de scripts"),
-    category: str = typer.Option(None, "--category", "-c", help="Filtrar por categoria: ops, maintenance, routines, benchmarks, cli"),
+    category: str = typer.Option(
+        None, "--category", "-c", help="Filtrar por categoria: ops, maintenance, routines, benchmarks, cli"
+    ),
     audit: bool = typer.Option(False, "--audit", "-a", help="Executa a auditoria global de 100% dos scripts e testes"),
-    run_cat: str = typer.Option(None, "--run", "-r", help="Executa todos os scripts da categoria informada sob o Tri-State Guard"),
+    run_cat: str = typer.Option(
+        None, "--run", "-r", help="Executa todos os scripts da categoria informada sob o Tri-State Guard"
+    ),
 ):
     """Consulta e executa o Catalogo Estruturado de Scripts sob o SOTA Guard Tri-State."""
     catalog_path = BASE_DIR / "scripts" / "SCRIPTS_CATALOG.json"
@@ -1819,7 +1844,7 @@ def list_and_run_scripts(
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     taxonomy = catalog.get("taxonomy", {})
 
-    if run_cat:
+    if not list_all and run_cat:
         cat_key = run_cat.lower()
         if cat_key not in taxonomy:
             console.print(f"[bold red][ERRO] Categoria '{run_cat}' desconhecida. Use 'nexus scripts --list'.[/]")
@@ -1845,7 +1870,9 @@ def list_and_run_scripts(
 
             console.print(f"[bold yellow] Disparando:[/] [white]{s_path}[/] [dim]({cmd_str})[/]...")
             t0 = time.monotonic()
-            res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)
+            res = subprocess.run(  # noqa: S602
+                cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False
+            )
             dt = time.monotonic() - t0
             sla = s_data.get("sla_seconds", 10.0)
 
@@ -1857,7 +1884,9 @@ def list_and_run_scripts(
 
         tri_state = "FALHOU (VERMELHO)" if script_errors else "SUCESSO (VERDE)"
         console.print("\n" + "=" * 80)
-        console.print("[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (SCRIPTS) ==========[/]")
+        console.print(
+            "[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (SCRIPTS) ==========[/]"
+        )
         console.print(f" Total de Erros:    {len(script_errors)} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
         console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
         console.print(f" Status da Bateria: [{tri_state}]")
@@ -1890,7 +1919,9 @@ def list_and_run_scripts(
         console.print(table)
         console.print("")
 
-    console.print("[bold green] Tri-State Guard para Scripts:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n")
+    console.print(
+        "[bold green] Tri-State Guard para Scripts:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
+    )
 
 
 # ==========================================
@@ -1904,9 +1935,10 @@ def execute_handoff(
     agent: str = typer.Option("chico", "--agent", help="Focar contexto num agente especifico"),
 ):
     """Monta contexto hierarquico isolado e realiza o Handoff Cognitivo de Sessao."""
-    console.print("\n[bold cyan]=== [PROTOCOLO DE HANDOFF COGNITIVO SOTA v8.0 GOLD] ===[/]\n")
+    mode_desc = "Web Clipboard (Claude/Gemini Pro)" if web else "Padrao SOTA"
+    console.print(f"\n[bold cyan]=== [PROTOCOLO DE HANDOFF COGNITIVO SOTA v8.0 GOLD ({mode_desc})] ===[/]\n")
     context = []
-    
+
     claude_dir = BASE_DIR / ".claude" if (BASE_DIR / ".claude").exists() else BASE_DIR / ".cerebro"
     files_to_inject = {
         "MODUS OPERANDI v8.0 GOLD": BASE_DIR.parent / "MODUS_OPERANDI.md",
@@ -1937,10 +1969,13 @@ def execute_handoff(
     handoff_output_file = claude_dir / "agent-memory" / agent / "HANDOFF_LATEST.md"
     handoff_output_file.parent.mkdir(parents=True, exist_ok=True)
     handoff_output_file.write_text(handoff_text, encoding="utf-8")
-    console.print(f"[bold green]✓ Handoff persistido com sucesso:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/]")
+    console.print(
+        f"[bold green]✓ Handoff persistido com sucesso:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/]"
+    )
 
     try:
         import pyperclip  # type: ignore
+
         pyperclip.copy(handoff_text)
         console.print("[bold green]✓ Handoff copiado para o Clipboard do Sistema![/]")
     except Exception:
@@ -2018,9 +2053,13 @@ def run_or_list_audits(
         table.add_column("SLA", justify="right", style="green")
         table.add_column("Descricao", style="dim")
         for aid, ainfo in audits.items():
-            table.add_row(aid, ainfo.get("name", ""), f"{ainfo.get('sla_seconds', 0)}s", ainfo.get("description", "")[:55] + "...")
+            table.add_row(
+                aid, ainfo.get("name", ""), f"{ainfo.get('sla_seconds', 0)}s", ainfo.get("description", "")[:55] + "..."
+            )
         console.print(table)
-        console.print("[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n")
+        console.print(
+            "[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
+        )
         return
 
     targets = audits if audit_id == "all" else ({audit_id: audits[audit_id]} if audit_id in audits else None)
@@ -2042,7 +2081,7 @@ def run_or_list_audits(
         for c in ainfo.get("thematic_criteria", []):
             console.print(f"  [cyan] Criterio:[/] [white]{c}[/]")
         t0 = time.monotonic()
-        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)
+        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False) # noqa: S602
         dt = time.monotonic() - t0
         sla = ainfo.get("sla_seconds", 10.0)
 
@@ -2054,7 +2093,9 @@ def run_or_list_audits(
 
     tri_state = "FALHOU (VERMELHO)" if audit_errors else "SUCESSO (VERDE)"
     console.print("=" * 80)
-    console.print("[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (AUDITS) ==========[/]")
+    console.print(
+        "[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (AUDITS) ==========[/]"
+    )
     console.print(f" Total de Erros:    {len(audit_errors)} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
     console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
     console.print(f" Status da Bateria: [{tri_state}]")
@@ -2094,12 +2135,18 @@ def run_or_list_routines(
         table.add_column("SLA", justify="right", style="green")
         table.add_column("Descricao", style="dim")
         for rid, rinfo in routines.items():
-            table.add_row(rid, rinfo.get("name", ""), f"{rinfo.get('sla_seconds', 0)}s", rinfo.get("description", "")[:55] + "...")
+            table.add_row(
+                rid, rinfo.get("name", ""), f"{rinfo.get('sla_seconds', 0)}s", rinfo.get("description", "")[:55] + "..."
+            )
         console.print(table)
-        console.print("[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n")
+        console.print(
+            "[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
+        )
         return
 
-    targets = routines if routine_id == "all" else ({routine_id: routines[routine_id]} if routine_id in routines else None)
+    targets = (
+        routines if routine_id == "all" else ({routine_id: routines[routine_id]} if routine_id in routines else None)
+    )
     if not targets:
         console.print(f"[bold red][ERRO] Rotina '{routine_id}' desconhecida. Use 'nexus routine --list'.[/]")
         raise typer.Exit(1)
@@ -2118,7 +2165,7 @@ def run_or_list_routines(
         for c in rinfo.get("thematic_criteria", []):
             console.print(f"  [cyan] Criterio:[/] [white]{c}[/]")
         t0 = time.monotonic()
-        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)
+        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)  # noqa: S602
         dt = time.monotonic() - t0
         sla = rinfo.get("sla_seconds", 10.0)
 
@@ -2130,7 +2177,9 @@ def run_or_list_routines(
 
     tri_state = "FALHOU (VERMELHO)" if routine_errors else "SUCESSO (VERDE)"
     console.print("=" * 80)
-    console.print("[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (ROUTINES) ==========[/]")
+    console.print(
+        "[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (ROUTINES) ==========[/]"
+    )
     console.print(f" Total de Erros:    {len(routine_errors)} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
     console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
     console.print(f" Status da Bateria: [{tri_state}]")
@@ -2151,7 +2200,15 @@ def run_or_list_routines(
 def audit_task_pipeline():
     """Valida o ciclo de vida completo da fila de tarefas sob o SOTA Guard Tri-State."""
     console.print("\n[bold cyan]=== [AUDITORIA DA FILA DE TAREFAS & WATCHDOG MDA SOTA v8.0 GOLD] ===[/]\n")
-    test_cmd = [sys.executable, "-m", "pytest", "tests/test_database_sota.py", "tests/test_monitoring_sota.py", "tests/test_stress_circuit_breaker.py", "-v"]
+    test_cmd = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "tests/test_database_sota.py",
+        "tests/test_monitoring_sota.py",
+        "tests/test_stress_circuit_breaker.py",
+        "-v",
+    ]
     res = subprocess.run(test_cmd, cwd=str(BASE_DIR), check=False)
     if res.returncode != 0:
         raise typer.Exit(res.returncode)
@@ -2168,6 +2225,7 @@ def audit_task_pipeline():
 def trigger_homeostasis():
     """Aciona o Motor de Autopoiese e Homeostase Sistêmica (Zero Entropia & Autocura)."""
     from core.autopoiesis_engine import run_homeostasis
+
     run_homeostasis()
 
 

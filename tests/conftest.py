@@ -60,9 +60,9 @@ def isolate_test_simulation_logs():
         "root",
     ]
     for name in target_loggers:
-        l = logging.getLogger(name)
-        l.addFilter(log_filter)
-        for h in l.handlers:
+        lg = logging.getLogger(name)
+        lg.addFilter(log_filter)
+        for h in lg.handlers:
             h.addFilter(log_filter)
 
     yield
@@ -85,8 +85,7 @@ class SotaGuardState:
     def extract_component(cls, nodeid: Optional[str], filename: Optional[str]) -> str:
         if nodeid:
             parts = nodeid.replace("tests/", "").replace("tests\\", "").split("::")
-            base = parts[0].replace("test_", "").replace(".py", "")
-            return base
+            return parts[0].replace("test_", "").replace(".py", "")
         if filename:
             return filename.split("/")[-1].split("\\")[-1].replace(".py", "")
         return "core.unknown"
@@ -106,7 +105,6 @@ class SotaGuardState:
             return f"[SOTA-REC] Corrigir a falha de execucao no modulo '{component}', aplicando tipagem e tratamento defensivo."
         return f"[SOTA-REC] Inspecionar pontualmente o modulo '{component}' e aplicar o Padrao-Ouro SOTA v8.0."
 
-
     @classmethod
     def evaluate_tri_state(cls) -> tuple[str, str]:
         total_errors = len(cls.errors)
@@ -120,6 +118,7 @@ class SotaGuardState:
 
 
 def pytest_configure(config: Any) -> None:
+    _ = config
     SotaGuardState.reset()
 
 
@@ -144,7 +143,7 @@ def pytest_runtest_logreport(report: Any) -> None:
     if report.failed:
         comp = SotaGuardState.extract_component(report.nodeid, None)
         msg_str = str(report.longreprtext if hasattr(report, "longreprtext") else report.longrepr)
-        first_line = msg_str.strip().split("\n")[-1] if msg_str else "Falha de assercao / execucao"
+        first_line = msg_str.strip().rsplit("\n", maxsplit=1)[-1] if msg_str else "Falha de assercao / execucao"
 
         rec = {
             "type": "ERROR",
@@ -159,6 +158,7 @@ def pytest_runtest_logreport(report: Any) -> None:
 
 
 def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
+    _ = exitstatus
     status, _ = SotaGuardState.evaluate_tri_state()
     # Guard intransponivel: FALHOU reprova imediatamente com ExitCode 1
     if status == "FALHOU":
@@ -166,9 +166,10 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
 
 
 def pytest_terminal_summary(terminalreporter: Any, exitstatus: int, config: Any) -> None:
+    _ = (exitstatus, config)
     total_errors = len(SotaGuardState.errors)
     total_warnings = len(SotaGuardState.warnings_list)
-    status, color = SotaGuardState.evaluate_tri_state()
+    status, _ = SotaGuardState.evaluate_tri_state()
 
     tr = terminalreporter
     tr.write_sep("=", "SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD", cyan=True, bold=True)
@@ -176,18 +177,33 @@ def pytest_terminal_summary(terminalreporter: Any, exitstatus: int, config: Any)
     tr.write_line(f" Total de Warnings: {total_warnings} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
 
     if status == "SUCESSO":
-        tr.write_line(" Status da Bateria: [SUCESSO (VERDE)] Zero Erros e Zero Warnings. Homeostase Total Aprovada.", green=True, bold=True)
+        tr.write_line(
+            " Status da Bateria: [SUCESSO (VERDE)] Zero Erros e Zero Warnings. Homeostase Total Aprovada.",
+            green=True,
+            bold=True,
+        )
     elif status == "FRAGIL":
-        tr.write_line(f" Status da Bateria: [FRAGIL (AMARELO)] 0 Erros, mas presenca de {total_warnings} warning(s). Atencao: degradacao sob risco de entropia!", yellow=True, bold=True)
+        tr.write_line(
+            f" Status da Bateria: [FRAGIL (AMARELO)] 0 Erros, mas presenca de {total_warnings} warning(s). Atencao: degradacao sob risco de entropia!",
+            yellow=True,
+            bold=True,
+        )
     else:
-        tr.write_line(f" Status da Bateria: [FALHOU (VERMELHO)] Bloqueio Termodinamico! ({total_errors} Erros, {total_warnings} Warnings). Erros possuem peso prioritario.", red=True, bold=True)
+        tr.write_line(
+            f" Status da Bateria: [FALHOU (VERMELHO)] Bloqueio Termodinamico! ({total_errors} Erros, {total_warnings} Warnings). Erros possuem peso prioritario.",
+            red=True,
+            bold=True,
+        )
 
     all_findings = SotaGuardState.errors + SotaGuardState.warnings_list
     if all_findings:
         tr.write_sep("-", f"SUMARIO INDIVIDUAL DE DETECCOES ({len(all_findings)} OCORRENCIAS)", yellow=True)
         for idx, item in enumerate(all_findings, 1):
             item_color = "red" if item["type"] == "ERROR" else "yellow"
-            tr.write_line(f"[{idx}] {item['type']} -> Componente: '{item['component']}' | Teste: {item['nodeid']}", **{item_color: True, "bold": True})
+            tr.write_line(
+                f"[{idx}] {item['type']} -> Componente: '{item['component']}' | Teste: {item['nodeid']}",
+                **{item_color: True, "bold": True},
+            )
             tr.write_line(f"    Causa/Motivo: {item['message']}")
             tr.write_line(f"     Recomendacao: {item['recommendation']}", cyan=True)
             tr.write_line("")

@@ -134,7 +134,9 @@ def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tu
         elif isinstance(metadata_raw, dict):
             meta = metadata_raw
 
-    if s == "completed_with_errors" or (s == "completed" and (meta.get("soft_failure") or meta.get("last_error_class"))):
+    if s == "completed_with_errors" or (
+        s == "completed" and (meta.get("soft_failure") or meta.get("last_error_class"))
+    ):
         return "completa_falhou", f"{C_YELLOW}[OK/AVISO]{C_RESET}", "Completa mas falhou (Soft-Fail)"
     elif s == "review_required" or (s == "completed" and (meta.get("review_required") or meta.get("requires_review"))):
         return "completa_revisao", f"{C_CYAN}[OK/REV]{C_RESET}  ", "Completa mas requer revisao"
@@ -166,14 +168,20 @@ def get_db_snapshot() -> dict:
     """Extrai snapshot completo do banco de tarefas."""
     snap = {
         "counts": {
-            "completed": 0, "running": 0, "pending": 0, "failed": 0,
-            "completa_falhou": 0, "completa_revisao": 0, "suspensa": 0, "prevista_engatilhada": 0
+            "completed": 0,
+            "running": 0,
+            "pending": 0,
+            "failed": 0,
+            "completa_falhou": 0,
+            "completa_revisao": 0,
+            "suspensa": 0,
+            "prevista_engatilhada": 0,
         },
         "by_agent": {},
         "history": [],  # last 20 tasks (all agents)
-        "last_5_detailed": [], # exact last 5 tasks
+        "last_5_detailed": [],  # exact last 5 tasks
         "running_now": [],  # tasks currently running with ETA
-        "forecast_tasks": [], # queued / triggered
+        "forecast_tasks": [],  # queued / triggered
         "api_usage": [],
     }
     db = _db_path()
@@ -276,13 +284,15 @@ def get_db_snapshot() -> dict:
         )
         snap["forecast_tasks"] = [dict(r) for r in cur.fetchall()]
         if not snap["forecast_tasks"]:
-            snap["forecast_tasks"].append({
-                "id": "FORECAST-OPS-MONTHLY-AUDIT",
-                "agent": "@auditor",
-                "description": "Auditoria Mensal Periodica de Modus Operandi e Roteamento",
-                "priority": "normal",
-                "estimated_start": "01 do proximo mes (09:00)"
-            })
+            snap["forecast_tasks"].append(
+                {
+                    "id": "FORECAST-OPS-MONTHLY-AUDIT",
+                    "agent": "@auditor",
+                    "description": "Auditoria Mensal Periodica de Modus Operandi e Roteamento",
+                    "priority": "normal",
+                    "estimated_start": "01 do proximo mes (09:00)",
+                }
+            )
 
         # API usage
         cur.execute(
@@ -349,7 +359,9 @@ def show_main_menu(snap: dict) -> None:
         print(f"       Escopo : {C_DIM}{scope}{C_RESET}")
 
     metric_idx = len(AVATARS) + 1
-    print(f"\n  [{C_MAGENTA}{metric_idx:>2}{C_RESET}] {C_BOLD}METRICAS, TELEMETRIA, RUNNING & ETA, STATUS ULTIMAS 5 TASKS{C_RESET}")
+    print(
+        f"\n  [{C_MAGENTA}{metric_idx:>2}{C_RESET}] {C_BOLD}METRICAS, TELEMETRIA, RUNNING & ETA, STATUS ULTIMAS 5 TASKS{C_RESET}"
+    )
     _ruler()
 
     # mini queue summary in menu
@@ -377,7 +389,9 @@ def _print_running_tasks(snap: dict) -> None:
             el = t.get("elapsed_sec", 0)
             eta = t.get("eta_remaining_sec", 0)
             pct = t.get("progress_pct", 0)
-            print(f"  {C_YELLOW}[RUN]{C_RESET} {C_BOLD}{ag:<12}{C_RESET} {desc:<40} | {el}s decorridos | ETA: ~{eta}s ({pct}%)")
+            print(
+                f"  {C_YELLOW}[RUN]{C_RESET} {C_BOLD}{ag:<12}{C_RESET} {desc:<40} | {el}s decorridos | ETA: ~{eta}s ({pct}%)"
+            )
     else:
         print(f"  {C_DIM}Nenhuma tarefa em execucao ativa no momento (Standby / Pronto para despacho).{C_RESET}")
     _ruler()
@@ -512,7 +526,9 @@ def main() -> None:
         show_main_menu(snap)
 
         choice = (
-            input(f"  Escolha ({C_GREEN}1-{len(AVATARS)}{C_RESET}=Avatar  {C_MAGENTA}{metric_idx}{C_RESET}=Metricas  {C_RED}q{C_RESET}=Sair): ")
+            input(
+                f"  Escolha ({C_GREEN}1-{len(AVATARS)}{C_RESET}=Avatar  {C_MAGENTA}{metric_idx}{C_RESET}=Metricas  {C_RED}q{C_RESET}=Sair): "
+            )
             .strip()
             .lower()
         )

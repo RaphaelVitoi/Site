@@ -99,7 +99,9 @@ class AutopoiesisEngine:
             sync_script = self.base_dir / "scripts" / "routines" / "sync_agents_reality.ps1"
             if sync_script.exists():
                 pwsh_bin = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
-                res = subprocess.run([pwsh_bin, str(sync_script)], cwd=str(self.base_dir), capture_output=True, text=True, check=False)
+                res = subprocess.run(
+                    [pwsh_bin, str(sync_script)], cwd=str(self.base_dir), capture_output=True, text=True, check=False
+                )
                 if res.returncode == 0:
                     return True, "Sincronização 1-para-1 dos 19 agentes executada com sucesso."
                 return False, f"Falha na sincronização dos agentes: {res.stderr[:150]}"
@@ -127,7 +129,11 @@ class AutopoiesisEngine:
             except Exception:
                 pass
 
-        msg = f"{purged} artefatos e diretórios temporários purgados." if purged > 0 else "Nexus Zone limpa e em Vazio Termodinâmico."
+        msg = (
+            f"{purged} artefatos e diretórios temporários purgados."
+            if purged > 0
+            else "Nexus Zone limpa e em Vazio Termodinâmico."
+        )
         return purged, msg
 
     def check_and_heal_sqlite_wal(self) -> Tuple[bool, str]:
@@ -205,7 +211,13 @@ class AutopoiesisEngine:
             audit_script = self.base_dir / "scripts" / "maintenance" / "audit_infrastructure_pillars.py"
             if audit_script.exists():
                 t_sub = time.monotonic()
-                res = subprocess.run([sys.executable, str(audit_script)], cwd=str(self.base_dir), capture_output=True, text=True, check=False)
+                res = subprocess.run(
+                    [sys.executable, str(audit_script)],
+                    cwd=str(self.base_dir),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
                 dt_sub = time.monotonic() - t_sub
                 p_status = "VERDE" if res.returncode == 0 else "VERMELHO"
                 p_err = 0 if res.returncode == 0 else 1
@@ -221,7 +233,13 @@ class AutopoiesisEngine:
 
             # 5. Auditoria de Desambiguação & Fonte Única
             t_sub = time.monotonic()
-            res = subprocess.run([sys.executable, "-m", "pytest", "tests/test_desambiguacao.py", "-q"], cwd=str(self.base_dir), capture_output=True, text=True, check=False)
+            res = subprocess.run(
+                [sys.executable, "-m", "pytest", "tests/test_desambiguacao.py", "-q"],
+                cwd=str(self.base_dir),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
             dt_sub = time.monotonic() - t_sub
             d_status = "VERDE" if res.returncode == 0 else "VERMELHO"
             d_err = 0 if res.returncode == 0 else 1
@@ -249,18 +267,25 @@ class AutopoiesisEngine:
                 overall_status=overall,
                 entropy_index=entropy,
                 subsystems=subsystems,
-                actions_taken=actions if actions else ["Sistema operando em homeostase pura. Nenhuma correção necessária."],
+                actions_taken=actions
+                if actions
+                else ["Sistema operando em homeostase pura. Nenhuma correção necessária."],
             )
 
             # Persistência Atômica de Telemetria
             try:
-                line = json.dumps({
-                    "timestamp": report.timestamp,
-                    "overall_status": report.overall_status,
-                    "entropy_index": report.entropy_index,
-                    "actions_taken": report.actions_taken,
-                    "subsystems_count": len(report.subsystems),
-                }) + "\n"
+                line = (
+                    json.dumps(
+                        {
+                            "timestamp": report.timestamp,
+                            "overall_status": report.overall_status,
+                            "entropy_index": report.entropy_index,
+                            "actions_taken": report.actions_taken,
+                            "subsystems_count": len(report.subsystems),
+                        }
+                    )
+                    + "\n"
+                )
                 with open(TELEMETRY_LOG, "a", encoding="utf-8") as f:
                     f.write(line)
             except Exception:

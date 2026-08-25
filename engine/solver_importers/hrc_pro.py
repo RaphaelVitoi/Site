@@ -7,6 +7,7 @@ import json
 import re
 from typing import Any
 from core.perspective_schemas import NormalizedGameTree, SolverNode, SolverType
+from engine.bayesian_range import RANKS, apply_pmev_range_filter, get_preflop_hand_strength_matrix
 from engine.solver_importers.base import BaseSolverImporter
 
 
@@ -123,8 +124,6 @@ class HRCProImporter(BaseSolverImporter):
     @staticmethod
     def get_hand_label(r: int, c: int) -> str:
         """Retorna a notacao padrao de mao preflop (ex: AA, AKs, AKo)."""
-        from engine.bayesian_range import RANKS
-
         if r == c:
             return f"{RANKS[r]}{RANKS[c]}"
         if r < c:
@@ -133,8 +132,6 @@ class HRCProImporter(BaseSolverImporter):
 
     def parse_range_matrix(self, raw_data: Any) -> list[list[float]]:
         """Converte formatos do HRC Pro (dict, texto HRC, 2D list, 1D 169) em matriz 13x13."""
-        from engine.bayesian_range import RANKS
-
         matrix = [[0.0 for _ in range(13)] for _ in range(13)]
 
         if isinstance(raw_data, str):
@@ -186,8 +183,6 @@ class HRCProImporter(BaseSolverImporter):
         pmev_threshold: float,
     ) -> dict[str, Any]:
         """Gera o heatmap comparativo (HRC Pro vs. PMev 3.2)."""
-        from engine.bayesian_range import apply_pmev_range_filter, get_preflop_hand_strength_matrix
-
         hrc_matrix = self.parse_range_matrix(hrc_range)
         hand_strengths = get_preflop_hand_strength_matrix()
         pmev_matrix = apply_pmev_range_filter(hrc_matrix, pmev_threshold, hand_strengths)

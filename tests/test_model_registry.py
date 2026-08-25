@@ -29,7 +29,7 @@ from llm.model_registry import (
 USUARIO = [{"role": "user", "content": "ping"}]
 
 
-#  Integridade do registro 
+#  Integridade do registro
 
 
 def test_registro_nao_vazio_e_valido():
@@ -53,7 +53,7 @@ def test_modelo_nao_verificado_fica_fora_e_explica_o_motivo():
         get("gpt-5.6-sol-ultrafast")
 
 
-#  Anthropic: as correcoes criticas 
+#  Anthropic: as correcoes criticas
 
 
 def test_anthropic_nunca_emite_budget_tokens():
@@ -115,7 +115,7 @@ def test_streaming_obrigatorio_para_saida_grande():
     assert not AnthropicAdapter.precisa_streaming("claude-opus-5", 8_000)
 
 
-#  OpenAI 
+#  OpenAI
 
 
 def test_openai_nao_usa_esforco_ultra():
@@ -143,7 +143,7 @@ def test_openai_monta_bloco_de_reasoning():
     assert req["model"] == "gpt-5.6-sol"
 
 
-#  Google 
+#  Google
 
 
 def test_thinking_level_vai_dentro_de_generation_config():
@@ -169,7 +169,7 @@ def test_modo_stateful_nao_reenvia_assinaturas():
     assert GoogleGenAIAdapter.preservar_assinaturas("gemini-3.7-flash", steps) == []
 
 
-#  Cruzados 
+#  Cruzados
 
 
 def test_adaptador_recusa_modelo_de_outro_provedor():
@@ -186,18 +186,17 @@ def test_custo_cresce_com_tokens():
 def test_padding_neutro_limite_contexto():
     """Verifica se payloads na fronteira de 32k-40k tokens recebem padding neutro."""
     from llm.adapters import aplicar_padding_neutro
-    
+
     # Payload pequeno (sem padding)
     pequeno = [{"role": "user", "parts": [{"text": "Hello world"}]}]
     assert aplicar_padding_neutro(pequeno) == pequeno
-    
+
     # Payload na fronteira de 35k tokens (140.000 caracteres / 4 = 35.000 tokens)
     texto_35k = "x" * 140_000
     borda = [{"role": "user", "parts": [{"text": texto_35k}]}]
     pad = aplicar_padding_neutro(borda)
     assert "<!-- SOTA_CONTEXT_ALIGNMENT: " in pad[0]["parts"][0]["text"]
-    
+
     # Forcando padding neutro explicitamente
     forcado = aplicar_padding_neutro(pequeno, force=True)
     assert "<!-- SOTA_CONTEXT_ALIGNMENT: " in forcado[0]["parts"][0]["text"]
-

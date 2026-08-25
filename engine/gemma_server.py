@@ -911,7 +911,7 @@ def _prepare_ollama_payload(
         # MEDIDO em 2026-08-23 contra gemma4:e4b, que e um modelo de raciocinio:
         # sem este campo, TODO o orcamento de num_predict vai para
         # message.thinking e message.content chega vazio ao fim, com
-        # done_reason="length". O servidor devolvia HTTP 200 e corpo vazio 
+        # done_reason="length". O servidor devolvia HTTP 200 e corpo vazio
         # sem excecao, sem log, sem sintoma que parecesse falha.
         #
         # Raciocinio nao e gratuito: e orcamento de tokens gasto antes da

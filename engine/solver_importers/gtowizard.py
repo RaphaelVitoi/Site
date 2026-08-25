@@ -90,12 +90,8 @@ class GTOWizardImporter(BaseSolverImporter):
     def _build_csv_node(
         self, action_counts: dict[str, list[float]], ev_counts: dict[str, list[float]], starting_pot: float
     ) -> SolverNode:
-        strategy = {
-            act: round(sum(freqs) / len(freqs) if freqs else 0.0, 4) for act, freqs in action_counts.items()
-        }
-        ev_map = {
-            act: round(sum(evs) / len(evs) if evs else 0.0, 4) for act, evs in ev_counts.items()
-        }
+        strategy = {act: round(sum(freqs) / len(freqs) if freqs else 0.0, 4) for act, freqs in action_counts.items()}
+        ev_map = {act: round(sum(evs) / len(evs) if evs else 0.0, 4) for act, evs in ev_counts.items()}
         total_f = sum(strategy.values())
         if total_f > 0:
             strategy = {k: round(v / total_f, 4) for k, v in strategy.items()}
@@ -127,7 +123,6 @@ class GTOWizardImporter(BaseSolverImporter):
 
         node = self._build_csv_node(action_counts, ev_counts, starting_pot)
         return {"root": node}
-
 
     def parse_tree(self, raw_content: str, tournament_context: dict[str, Any] | None = None) -> NormalizedGameTree:
         """Processa exports em CSV ou JSON do GTOWizard."""
