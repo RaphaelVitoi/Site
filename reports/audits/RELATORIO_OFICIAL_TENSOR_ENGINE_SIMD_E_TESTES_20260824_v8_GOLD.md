@@ -16,6 +16,7 @@ Esta sessão consolidou a compilação de alto desempenho do motor tensorial qu�
 ## 2. VETORES DE EXECUÇÃO & HOMEOSTASE TÉCNICA
 
 ### 2.1. Compilação do Motor C++ SIMD (AVX2 / nanobind)
+
 - **Toolchain:** Visual Studio 16 2019 MSBuild (`x64`) com CMake integrado.
 - **Target:** `quantum_tensor_engine.cp314-win_amd64.pyd`.
 - **Sincronização:** Artefatos espelhados na raiz e em `core/quantum_tensor_engine.pyd`.
@@ -24,10 +25,12 @@ Esta sessão consolidou a compilação de alto desempenho do motor tensorial qu�
   - *ICM Distortion SOTA ($10^7$ floats):* **5.93x** de aceleração termodinâmica.
 
 ### 2.2. Correção de Escopo no Semgrep (`.semgrep.yml`)
+
 - **Problema:** O Filtro 3 (exceção da rota raiz `root_health_check` em FastAPI/Python) estava indevidamente aninhado dentro da regra `sota-nextjs-auth-enforcement` (`languages: [typescript]`).
 - **Correção:** Realocação cirúrgica do filtro para `sota-fastapi-auth-enforcement` e normalização da regra TypeScript.
 
 ### 2.3. Criação da Suíte de Testes Pytest (`tests/test_tensor_engine.py`)
+
 - Mapeamento direto de invariantes:
   - `test_perspective_simd_isometry`: Validação de tolerância $rtol \le 10^{-5}$.
   - `test_icm_distortion_simd_isometry`: Conservação estrita de probabilidade ($\sum P = 1.0$) e simetria Fast-Math AVX2.
@@ -35,6 +38,7 @@ Esta sessão consolidou a compilação de alto desempenho do motor tensorial qu�
 - **Higienização de Linter:** Resolução de `unused-argument`, `redefined-outer-name` e `import-outside-toplevel`.
 
 ### 2.4. Auditoria de Pilares & KaTeX Balance
+
 - Normalizado bloco KaTeX no artefato `walkthrough.md` para assegurar contagem estritamente par de delimitadores `$$`.
 
 ---

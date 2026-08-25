@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=redefined-outer-name,import-outside-toplevel,unused-argument
 """SOTA Test Suite for C++ SIMD Quantum Tensor Engine Bridge.
 
 Direct pytest mapping of the high-performance AVX2/nanobind tensor bridge.
@@ -8,27 +7,36 @@ Protocolo Chico SOTA v8.0 GOLD.
 
 import sys
 from pathlib import Path
+from typing import Any
 import numpy as np
 import pytest
 
-# Assegura que o módulo do projeto seja importável
+# Assegura que a raiz do projeto esteja no sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# Imports defensivos de topo de módulo para conformidade estrita de AST
+try:
+    import core.quantum_tensor_engine as _qte_core
+except ImportError:
+    _qte_core = None
 
-@pytest.fixture(scope="module")
-def qte():
-    """Importa o motor C++ de aceleração tensorial nanobind."""
-    try:
-        import core.quantum_tensor_engine as engine
-        return engine
-    except ImportError:
-        try:
-            import quantum_tensor_engine as engine
-            return engine
-        except ImportError as err:
-            pytest.skip(f"Módulo quantum_tensor_engine não compilado: {err}")
+try:
+    import quantum_tensor_engine as _qte_root
+except ImportError:
+    _qte_root = None
+
+from core.tensor_engine.src.test_tensor_bridge import run_benchmark
+
+
+@pytest.fixture(name="tensor_module", scope="module")
+def fixture_tensor_module() -> Any:
+    """Carrega o motor C++ de aceleração tensorial nanobind."""
+    engine = _qte_core or _qte_root
+    if engine is None:
+        pytest.skip("Módulo quantum_tensor_engine não compilado no ambiente.")
+    return engine
 
 
 def numpy_icm_distortion(
@@ -43,6 +51,7 @@ def numpy_icm_distortion(
     street_idx: int,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Modelo analítico NumPy de distorção de ICM como baseline."""
+    _ = _call  # Garante uso semântico do parâmetro no baseline de assinatura
     inv_7_5 = np.float32(1.0 / 7.5)
     gravity = np.maximum(np.log(pot * inv_7_5), np.float32(0.0)).astype(np.float32)
     damping = np.float32(1.0) / (np.float32(1.0) + gravity * np.float32(0.12))
@@ -77,7 +86,7 @@ def numpy_icm_distortion(
     return n_fold, n_call, n_raise
 
 
-def test_perspective_simd_isometry(qte):
+def test_perspective_simd_isometry(tensor_module: Any) -> None:
     """Valida a isometria exata do cálculo de perspectiva C++ SIMD vs NumPy."""
     n_elements = 100_000
     rng = np.random.default_rng(42)
@@ -86,7 +95,7 @@ def test_perspective_simd_isometry(qte):
     human_noise = 0.05
 
     res_numpy = (equity * pot) * (1.0 - human_noise)
-    res_cpp = qte.calculate_perspective_simd(equity, pot, human_noise)
+    res_cpp = tensor_module.calculate_perspective_simd(equity, pot, human_noise)
 
     assert isinstance(res_cpp, np.ndarray)
     assert res_cpp.shape == (n_elements,)
@@ -94,7 +103,7 @@ def test_perspective_simd_isometry(qte):
     np.testing.assert_allclose(res_numpy, res_cpp, rtol=1e-5, atol=1e-5)
 
 
-def test_icm_distortion_simd_isometry(qte):
+def test_icm_distortion_simd_isometry(tensor_module: Any) -> None:
     """Valida a convergência e simetria do resolvedor SIMD de ICM."""
     n_elements = 100_000
     rng = np.random.default_rng(42)
@@ -114,7 +123,7 @@ def test_icm_distortion_simd_isometry(qte):
         fold_arr, call_arr, raise_arr, ip_rp, oop_rp, pot_size, top_agg, players, street
     )
 
-    cpp_f, cpp_c, cpp_r = qte.solve_icm_distortion_simd(
+    cpp_f, cpp_c, cpp_r = tensor_module.solve_icm_distortion_simd(
         fold_arr, call_arr, raise_arr, ip_rp, oop_rp, pot_size, top_agg, players, street
     )
 
@@ -128,7 +137,6 @@ def test_icm_distortion_simd_isometry(qte):
     np.testing.assert_allclose(total_prob, np.ones(n_elements, dtype=np.float32), rtol=1e-4, atol=1e-4)
 
 
-def test_tensor_bridge_standalone_runner():
+def test_tensor_bridge_standalone_runner() -> None:
     """Garante que o script de benchmark standalone roda sem exceções."""
-    from core.tensor_engine.src.test_tensor_bridge import run_benchmark
     run_benchmark()
