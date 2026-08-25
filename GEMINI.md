@@ -57,8 +57,18 @@ Toda interação com o runtime agêntico é interceptada por três categorias de
 
 $$\text{Task List (task.md)} \longrightarrow \text{Implementation Plan (implementation\_plan.md)} \longrightarrow \text{Code Diffs} \longrightarrow \text{Walkthrough (walkthrough.md)} \longrightarrow \text{Screenshots}$$
 
-- Linha 1 resolve o problema imediatamente (sem introduções).
-- Respostas técnicas organizadas de forma fractal e geométrica.
+## VIII. PADRÃO-OURO DE OUTPUT MULTIMODAL & VISUAL ENGINE SOTA
+
+1. **Indexação Zero-Token:** Todo agente/modelo consulta e aplica as regras do `MODUS_OPERANDI.md` (Seção 10) antes de produzir o primeiro byte de output.
+2. **Diagramação Mermaid Validada:** Proibição estrita de `gantt` e `xychart-beta`. Uso exclusivo de `flowchart TD/LR`, `graph TD/LR`, `stateDiagram-v2`, `sequenceDiagram`, `classDiagram` e `erDiagram` com estilização por `classDef`.
+3. **KaTeX com Blindagem Monetária:** Fórmulas matemáticas com `$..$` e `$$..$$`, e escape mandatório de valores monetários como `\$`.
+## IX. ENGENHARIA DE CÓDIGO MODERNO & EXECUÇÃO NATIVA (PYTHON 3.12+)
+
+1. **Padrão de Tipagem & Sintaxe:** `from __future__ import annotations` mandatória, uniões por pipe (`A | B`), genéricos embutidos (`list[T]`), schemas Pydantic v2 / Zod e política de Zero-`Any`.
+2. **Entrega de Código Autocontida:** Blocos executáveis, com tratamento estruturado de erros, docstrings semânticas, links com protocolo `file://` e diffs limitados a 120-150 linhas.
+3. **Execução em Ambiente Virtual:** Comandos executados estritamente via `.venv/Scripts/python.exe` ou `uv run`, com auditoria silenciosa em background e entrega condensada de resultados.
 
 ---
 *Protocolo Site v8.0 GOLD integrado e ativo sob Soberania de Raphael Vitoi.*
+
+
