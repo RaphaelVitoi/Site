@@ -10,6 +10,7 @@ import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 import ContentFooter from '@/components/ui/layout/ContentFooter';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SectionHeader } from '@/components/ui/layout/SectionHeader';
+import { PmevRangeViewer } from '@/components/simulator/PmevRangeViewer';
 import { ROUTES } from '@/constants/routes';
 import { SITE_CONFIG } from '@/constants/site';
 
@@ -68,10 +69,20 @@ export default function TeoriaPerspectivaPage() {
 					title="O Algoritmo do Medo"
 					description="Como o cérebro processa risco e recompensa em cenários de alta pressão."
 				/>
-				<div className="max-w-4xl mx-auto">
+				<div className="max-w-4xl mx-auto mb-16">
 					<GlassPanel className="p-8 lg:p-12 border-l-4 border-l-accent-indigo">
 						<SotaMarkdown content={content} />
 					</GlassPanel>
+				</div>
+
+				<SectionHeader
+					step="INTERATIVO"
+					label="Simulador de Range"
+					title="Matriz de Perspectiva (PMev 3.2 vs. DeepSolver GTO)"
+					description="Explore o impacto do stack depth, bubble factor e tempo de órbita na modulação dos ranges pré-flop 13x13."
+				/>
+				<div className="max-w-5xl mx-auto">
+					<PmevRangeViewer />
 				</div>
 			</div>
 
@@ -84,3 +95,4 @@ export default function TeoriaPerspectivaPage() {
 		</div>
 	);
 }
+

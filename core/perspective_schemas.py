@@ -127,7 +127,9 @@ class SolverImportRequest(BaseModel):
 
     solver_type: SolverType = "auto"
     raw_content: str = Field(..., min_length=5, description="Conteudo bruto do solver (JSON, CSV ou texto formatado)")
-    tournament_context: dict[str, Any] = Field(default_factory=dict, description="Parametros de torneio (prizes, stacks, antes)")
+    tournament_context: dict[str, Any] = Field(
+        default_factory=dict, description="Parametros de torneio (prizes, stacks, antes)"
+    )
 
 
 class SolverImportResponse(BaseModel):
@@ -137,4 +139,45 @@ class SolverImportResponse(BaseModel):
     solver_type: SolverType
     tree: NormalizedGameTree | None = None
     node_count: int = 0
+    error: str | None = None
+
+
+class PmevHeatmapRequest(BaseModel):
+    """Requisicao para geracao de heatmap de range comparativo (DeepSolver/HRC vs PMev)."""
+
+    deepsolver_range: Any = Field(..., description="Range do Solver (2D list 13x13, 1D array 169 ou dict de maos)")
+    pmev_threshold: float | None = Field(None, ge=0.0, le=1.0, description="Limiar PMev explicito [0.0 - 1.0]")
+    pot: float = Field(2.5, ge=0.1, description="Pote atual em big blinds ou unidades")
+    call_amount: float = Field(1.0, ge=0.0, description="Valor do call em big blinds ou unidades")
+    bubble_factor: float = Field(1.8, ge=1.0, description="Bubble factor do cenario")
+    stack_bb: float = Field(25.0, ge=0.1, description="Stack efetivo em big blinds")
+    position: str = Field("UTG", description="Posicao do Hero na mesa")
+    time_to_blind_minutes: float = Field(5.0, ge=0.0, description="Minutos ate o aumento dos blinds")
+    edge_base: float = Field(0.08, ge=0.0, description="Edge base tecnico")
+    aggression: float = Field(0.7, ge=0.0, description="Fator de agressividade")
+    loss_aversion_lambda: float = Field(2.25, ge=1.0, le=5.0, description="Coeficiente de aversao a perda lambda")
+    ante_bb: float = Field(1.0, ge=0.0, le=5.0, description="Ante ou Big Blind Ante em BBs")
+    players_behind: int | None = Field(None, ge=0, le=9, description="Numero de jogadores restantes atras")
+    structure_speed: str = Field("REGULAR", description="Velocidade da estrutura: TURBO, REGULAR, HYPER, DEEP")
+
+
+class PmevHeatmapResponse(BaseModel):
+    """Resposta estruturada com matrizes, contagem de combos e visualizacao ASCII do heatmap."""
+
+    status: Literal["SUCCESS", "ERROR"] = "SUCCESS"
+    pmev_threshold: float
+    deepsolver_matrix: list[list[float]]
+    pmev_matrix: list[list[float]]
+    delta_matrix: list[list[float]]
+    total_deepsolver_combos: float
+    total_pmev_combos: float
+    combo_delta: float
+    expanded_hands_count: int
+    contracted_hands_count: int
+    expanded_hands: list[str]
+    contracted_hands: list[str]
+    ev_fold_bb: float | None = None
+    players_behind: int | None = None
+    ascii_heatmap: str
+    cells: list[dict[str, Any]]
     error: str | None = None

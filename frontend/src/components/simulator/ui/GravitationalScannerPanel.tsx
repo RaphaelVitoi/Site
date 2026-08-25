@@ -8,23 +8,21 @@ interface GravitationalScannerProps {
   heroIdx: number;
 }
 
-const TIER_COLORS: Record<StackTier, string> = {
-  micro: 'bg-gradient-to-br from-rose-500 to-rose-700 shadow-[0_0_15px_rgba(225,29,72,0.8)] border border-rose-400/50',
-  short:
-    'bg-gradient-to-br from-orange-400 to-orange-600 shadow-[0_0_20px_rgba(234,88,12,0.6)] border border-orange-400/50',
-  mid: 'bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-[0_0_25px_rgba(79,70,229,0.5)] border border-indigo-400/50',
-  big: 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-[0_0_30px_rgba(16,185,129,0.5)] border border-emerald-400/50',
-  chipleader:
-    'bg-gradient-to-br from-amber-300 to-amber-500 shadow-[0_0_50px_rgba(245,158,11,0.9)] border border-amber-300/80',
-};
+const TIER_COLORS: ReadonlyMap<StackTier, string> = new Map([
+  ['micro', 'bg-linear-to-br from-rose-500 to-rose-700 shadow-[0_0_15px_rgba(225,29,72,0.8)] border border-rose-400/50'],
+  ['short', 'bg-linear-to-br from-orange-400 to-orange-600 shadow-[0_0_20px_rgba(234,88,12,0.6)] border border-orange-400/50'],
+  ['mid', 'bg-linear-to-br from-indigo-400 to-indigo-600 shadow-[0_0_25px_rgba(79,70,229,0.5)] border border-indigo-400/50'],
+  ['big', 'bg-linear-to-br from-emerald-400 to-emerald-600 shadow-[0_0_30px_rgba(16,185,129,0.5)] border border-emerald-400/50'],
+  ['chipleader', 'bg-linear-to-br from-amber-300 to-amber-500 shadow-[0_0_50px_rgba(245,158,11,0.9)] border border-amber-300/80'],
+]);
 
-const TIER_SIZES: Record<StackTier, string> = {
-  micro: 'w-4 h-4',
-  short: 'w-6 h-6',
-  mid: 'w-8 h-8',
-  big: 'w-12 h-12',
-  chipleader: 'w-20 h-20',
-};
+const TIER_SIZES: ReadonlyMap<StackTier, string> = new Map([
+  ['micro', 'w-4 h-4'],
+  ['short', 'w-6 h-6'],
+  ['mid', 'w-8 h-8'],
+  ['big', 'w-12 h-12'],
+  ['chipleader', 'w-20 h-20'],
+]);
 
 export function GravitationalScannerPanel({ stacks, heroIdx }: Readonly<GravitationalScannerProps>) {
   const systemData = useMemo(() => {
@@ -99,7 +97,7 @@ export function GravitationalScannerPanel({ stacks, heroIdx }: Readonly<Gravitat
 
         {/* O Sol (Chipleader) */}
         <div
-          className={`absolute top-1/2 left-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-all duration-700 hover:scale-110 ${TIER_SIZES[systemData.center.tier] ?? TIER_SIZES.chipleader} ${TIER_COLORS[systemData.center.tier] ?? TIER_COLORS.chipleader}`}
+          className={`absolute top-1/2 left-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-all duration-700 hover:scale-110 ${TIER_SIZES.get(systemData.center.tier) ?? 'w-20 h-20'} ${TIER_COLORS.get(systemData.center.tier) ?? 'bg-linear-to-br from-amber-300 to-amber-500 shadow-[0_0_50px_rgba(245,158,11,0.9)] border border-amber-300/80'}`}
         >
           {systemData.center.isHero && (
             <span className="text-[0.6rem] font-black tracking-widest text-black/90 drop-shadow-md">HERO</span>
@@ -134,7 +132,7 @@ export function GravitationalScannerPanel({ stacks, heroIdx }: Readonly<Gravitat
           return (
             <div
               key={planet.idx}
-              className={`absolute z-30 flex items-center justify-center rounded-full transition-all duration-1000 hover:scale-125 ${TIER_SIZES[planet.tier] ?? TIER_SIZES.mid} ${TIER_COLORS[planet.tier] ?? TIER_COLORS.mid} ${planet.isHero ? 'shadow-[0_0_25px_rgba(255,255,255,0.7)] ring-2 ring-white ring-offset-4 ring-offset-black/60' : ''}`}
+              className={`absolute z-30 flex items-center justify-center rounded-full transition-all duration-1000 hover:scale-125 ${TIER_SIZES.get(planet.tier) ?? 'w-8 h-8'} ${TIER_COLORS.get(planet.tier) ?? 'bg-linear-to-br from-indigo-400 to-indigo-600 shadow-[0_0_25px_rgba(79,70,229,0.5)] border border-indigo-400/50'} ${planet.isHero ? 'shadow-[0_0_25px_rgba(255,255,255,0.7)] ring-2 ring-white ring-offset-4 ring-offset-black/60' : ''}`}
               style={{ left: `${leftPct}%`, top: `${topPct}%`, transform: 'translate(-50%, -50%)' }}
               title={`Stack: ${planet.stack.toFixed(1)}bb | Tier: ${planet.tier}`}
             >

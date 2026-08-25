@@ -246,9 +246,7 @@ def test_bucketing_multiple_buckets_isolated(buckets: SOTABucketing) -> None:
         (r"\\server\share", "file.txt"),
     ],
 )
-def test_bucketing_rejects_paths_outside_storage(
-    buckets: SOTABucketing, bucket_name: str, file_name: str
-) -> None:
+def test_bucketing_rejects_paths_outside_storage(buckets: SOTABucketing, bucket_name: str, file_name: str) -> None:
     """Storage names are components, never arbitrary paths or Windows shares."""
     with pytest.raises(ValueError):
         buckets.upload_file(bucket_name, file_name, b"blocked")

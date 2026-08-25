@@ -34,44 +34,21 @@ def is_port_open(port: int) -> bool:
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
-def _kill_windows_port(port: int) -> None:
-    try:
-        res = subprocess.run(["netstat", "-ano"], capture_output=True, text=True, check=True)  # noqa: S607
-        pids = set()
-        for line in res.stdout.splitlines():
-            if f":{port}" in line and "LISTENING" in line:
-                parts = line.strip().split()
-                if len(parts) >= 5:
-                    pids.add(parts[-1])
-        for pid in pids:
-            print(f"[AVATAR] Encerrando processo PID: {pid}")
-            subprocess.run(
-                ["taskkill", "/F", "/PID", pid], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False
-            )  # noqa: S603, S607
-        time.sleep(1.0)
-    except Exception as e:
-        print(f"[AVATAR Error] Erro ao encerrar processo no Windows: {e}")
-
-
-def _kill_unix_port(port: int) -> None:
-    try:
-        res = subprocess.run(["lsof", "-t", f"-i:{port}"], capture_output=True, text=True, check=False)
-        if res.stdout:
-            pids = res.stdout.strip().split()
-            if pids:
-                subprocess.run(["kill", "-9", *pids], check=False)
-        time.sleep(1.0)
-    except Exception as e:
-        print(f"[AVATAR Error] Erro ao encerrar processo no Unix: {e}")
-
-
-def kill_process_on_port(port: int):
-    """Localiza e finaliza de forma forcada qualquer processo escutando na porta informada."""
+def kill_process_on_port(port: int) -> None:
+    """Localiza e finaliza de forma forcada qualquer processo escutando na porta informada via psutil."""
     print(f"[AVATAR] Liberando a porta {port}...")
-    if os.name == "nt":
-        _kill_windows_port(port)
-    else:
-        _kill_unix_port(port)
+    try:
+        for proc in psutil.process_iter(["pid", "name"]):
+            try:
+                for conn in proc.connections(kind="inet"):
+                    if conn.laddr and conn.laddr.port == port:
+                        print(f"[AVATAR] Encerrando processo {proc.name()} (PID: {proc.pid})")
+                        proc.kill()
+                        proc.wait(timeout=2.0)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired):
+                continue
+    except Exception as e:
+        print(f"[AVATAR Error] Erro ao liberar porta {port}: {e}")
 
 
 def _validate_context_path(rel_path: str, project_root: str) -> str | None:
@@ -165,7 +142,57 @@ def _process_stream_response(response) -> str:
     return generated_text
 
 
-def _handle_response(response, stream: bool) -> None:
+def _memory_file_path(persona_name: str) -> str:
+    mem_dir = os.path.join(os.path.dirname(__file__), "memory")
+    os.makedirs(mem_dir, exist_ok=True)
+    return os.path.join(mem_dir, f"{persona_name}_history.json")
+
+
+def load_persona_memory(persona_name: str, max_turns: int = 6) -> str:
+    """Carrega o historico persistente de conversas anteriores com esta persona."""
+    path = _memory_file_path(persona_name)
+    if not os.path.exists(path):
+        return ""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            history = json.load(f)
+        if not history:
+            return ""
+        recent = history[-max_turns:]
+        formatted = []
+        for turn in recent:
+            role = turn.get("role", "user")
+            content = turn.get("content", "")
+            formatted.append(f"{role.upper()}: {content}")
+        return (
+            "\n\n=== MEMORIA PERSISTENTE DE CONVERSAS ANTERIORES ===\n"
+            + "\n".join(formatted)
+            + "\n=================================================\n"
+        )
+    except Exception as e:
+        print(f"[AVATAR Warning] Falha ao carregar memoria persistente: {e}")
+        return ""
+
+
+def save_persona_turn(persona_name: str, user_prompt: str, assistant_response: str) -> None:
+    """Persiste a nova rodada de dialogo no arquivo historico da persona."""
+    path = _memory_file_path(persona_name)
+    try:
+        history = []
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                history = json.load(f)
+        history.append({"role": "user", "content": user_prompt, "timestamp": time.time()})
+        history.append({"role": "assistant", "content": assistant_response, "timestamp": time.time()})
+        # Mantem ate 50 turns persistidos
+        history = history[-50:]
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(history, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"[AVATAR Warning] Falha ao salvar memoria persistente: {e}")
+
+
+def _handle_response(response, stream: bool, persona_name: str = "", user_prompt: str = "") -> None:
     if stream:
         generated_text = _process_stream_response(response)
     else:
@@ -173,6 +200,9 @@ def _handle_response(response, stream: bool) -> None:
         res_json = json.loads(res_data)
         generated_text = clean_text_to_ascii(res_json.get("response", ""))
         print(generated_text)
+
+    if persona_name and user_prompt and generated_text:
+        save_persona_turn(persona_name, user_prompt, generated_text)
 
     try:
         res_file = os.path.join(os.path.dirname(__file__), "last_response.txt")
@@ -182,7 +212,9 @@ def _handle_response(response, stream: bool) -> None:
         print(f"[AVATAR Warning] Falha ao gravar last_response.txt: {e}")
 
 
-def query_llama_server(system_prompt: str, user_prompt: str, persona_config: dict, stream: bool = True):
+def query_llama_server(
+    system_prompt: str, user_prompt: str, persona_config: dict, stream: bool = True, persona_name: str = ""
+):
     """Executa consulta contra a API do local Ollama usando o endpoint /api/generate."""
     url = "http://127.0.0.1:11434/api/generate"
 
@@ -214,7 +246,7 @@ def query_llama_server(system_prompt: str, user_prompt: str, persona_config: dic
     for attempt in range(1, max_retries + 1):
         try:
             with urllib.request.urlopen(req, timeout=300) as response:  # noqa: S310
-                _handle_response(response, stream)
+                _handle_response(response, stream, persona_name=persona_name, user_prompt=user_prompt)
                 return
         except urllib.error.HTTPError as he:
             error_body = he.read().decode("utf-8", errors="ignore")
@@ -351,7 +383,9 @@ def _execute_agentic_multimodal(args, persona_cfg, system_prompt):
     )
 
     if ensure_server_for_persona(args.persona, persona_cfg):
-        query_llama_server(system_prompt, agentic_user_prompt, persona_cfg, stream=not args.no_stream)
+        query_llama_server(
+            system_prompt, agentic_user_prompt, persona_cfg, stream=not args.no_stream, persona_name=args.persona
+        )
     else:
         print("[AVATAR Error] Nao foi possivel assegurar o servidor local do Ollama.")
         sys.exit(1)
@@ -366,7 +400,9 @@ def _dispatch_avatar_execution(args, persona_cfg, system_prompt):
             query_multimodal_cli(system_prompt, args.prompt, args.image, args.audio, persona_cfg)
     else:
         if ensure_server_for_persona(args.persona, persona_cfg):
-            query_llama_server(system_prompt, args.prompt, persona_cfg, stream=not args.no_stream)
+            query_llama_server(
+                system_prompt, args.prompt, persona_cfg, stream=not args.no_stream, persona_name=args.persona
+            )
         else:
             print("[AVATAR Error] Nao foi possivel assegurar o servidor local.")
             sys.exit(1)
@@ -413,8 +449,11 @@ def main():
     context_files = persona_cfg.get("context_files") or []
     project_context = assemble_context(context_files)
 
+    # 2. Carrega a memoria persistente de conversas anteriores (Multi-Turn Continuity)
+    persistent_memory = load_persona_memory(args.persona)
+
     # Injeta o contexto no prompt de sistema
-    system_prompt = persona_cfg.get("system_prompt", "") + project_context
+    system_prompt = persona_cfg.get("system_prompt", "") + project_context + persistent_memory
 
     _dispatch_avatar_execution(args, persona_cfg, system_prompt)
 

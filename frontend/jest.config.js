@@ -14,6 +14,7 @@ const customJestConfig = {
   },
   modulePathIgnorePatterns: ['<rootDir>/dist-workers/'],
   testPathIgnorePatterns: ['<rootDir>/dist-workers/'],
+  reporters: ['default', '<rootDir>/jest.reporter.sota.js'],
 };
 
 module.exports = createJestConfig(customJestConfig);

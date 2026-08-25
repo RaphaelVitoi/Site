@@ -2,7 +2,7 @@
 SOTA v8.0 GOLD: Subagents Mesh Orchestrator.
 Unifica a malha DAG de 19 Agentes, o barramento de Subagentes Antigravity,
 a ponte FastMCP, os modelos especializados locais (Qwen 7B/1.5B/0.5B) e o Motor Cognitivo Local (@gemma4).
-Protocolo Chico SOTA v8.0 GOLD — Governança: Raphael Vitoi.
+Protocolo Chico SOTA v8.0 GOLD  Governanca: Raphael Vitoi.
 """
 
 from __future__ import annotations

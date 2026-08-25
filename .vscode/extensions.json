@@ -6,6 +6,8 @@
     "ms-python.python",
     "dbaeumer.vscode-eslint",
     "llvm-vs-code-extensions.lldb-dap",
-    "rust-lang.rust-analyzer"
+    "rust-lang.rust-analyzer",
+    "anthropic.claude-code",
+    "openai.chatgpt"
   ]
 }

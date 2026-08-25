@@ -203,3 +203,88 @@ def test_update_posterior_contracts_low_likelihood_hands() -> None:
     bluff_prob = posterior[RANKS.index("7")][RANKS.index("6")]
 
     assert aa_prob > bluff_prob, "Posterior: AA deve superar bluffs apos bet"
+
+
+# ==============================================================================
+# SOTA: Testes de Integracao PMev & Range Filtering
+# ==============================================================================
+
+
+@pytest.mark.unit
+def test_calculate_pmev_call_threshold_short_stack_orbit_pressure() -> None:
+    """Stack curto sob pressao de blinds (UTG) deve ter limiar PMev mais agressivo que ICM classico."""
+    from engine.bayesian_range import calculate_pmev_call_threshold
+
+    res = calculate_pmev_call_threshold(
+        pot=2.5,
+        call_amount=1.0,
+        bubble_factor=2.2,
+        stack_bb=15.0,
+        position="UTG",
+        time_to_blind=2.0,
+    )
+    assert res["pmev_req"] < res["icm_req"], "PMev deve reduzir limiar sob pressao de orbita curta"
+    assert res["delta_eq"] < 0.0
+
+
+@pytest.mark.unit
+def test_calculate_pmev_call_threshold_deep_stack_edge_capitalization() -> None:
+    """Stack profundo com edge deve ser mais seletivo em bolhas moderadas."""
+    from engine.bayesian_range import calculate_pmev_call_threshold
+
+    res = calculate_pmev_call_threshold(
+        pot=2.5,
+        call_amount=1.0,
+        bubble_factor=1.8,
+        stack_bb=60.0,
+        position="UTG",
+        time_to_blind=2.0,
+    )
+    assert res["pmev_req"] > res["icm_req"], "PMev deve proteger stack profundo para realizacao de edge"
+    assert res["delta_eq"] > 0.0
+
+
+@pytest.mark.unit
+def test_get_preflop_hand_strength_matrix_shape_and_bounds() -> None:
+    """Matriz de forca preflop deve ser 13x13 com valores normalizados em [0.15, 0.95]."""
+    from engine.bayesian_range import get_preflop_hand_strength_matrix
+
+    matrix = get_preflop_hand_strength_matrix()
+    assert len(matrix) == 13
+    assert all(len(row) == 13 for row in matrix)
+    assert matrix[0][0] > matrix[12][12], "AA (0,0) deve ter forca superior a 22 (12,12)"
+    for r in range(13):
+        for c in range(13):
+            assert 0.15 <= matrix[r][c] <= 0.95
+
+
+@pytest.mark.unit
+def test_apply_pmev_range_filter_preserves_strong_hands() -> None:
+    """Range filter deve reter maos premium e anular maos abaixo do threshold."""
+    from engine.bayesian_range import apply_pmev_range_filter
+
+    prior = [[1.0] * 13 for _ in range(13)]
+    filtered = apply_pmev_range_filter(prior, pmev_threshold=0.70)
+    assert filtered[0][0] == 1.0, "AA deve ser 100% mantido com threshold 0.70"
+    assert filtered[12][12] == 0.0, "22 deve ser cortado com threshold 0.70"
+
+
+@pytest.mark.unit
+def test_export_pmev_benchmark(tmp_path: pytest.TempPathFactory) -> None:
+    """Benchmark export deve gerar arquivos JSON e CSV estruturados e validos."""
+    import json
+    from engine.bayesian_range import export_pmev_benchmark
+
+    json_file = str(tmp_path / "bench.json")
+    csv_file = str(tmp_path / "bench.csv")
+
+    p_json, p_csv = export_pmev_benchmark(
+        output_path_json=json_file,
+        output_path_csv=csv_file,
+        stacks=[15.0, 40.0],
+        bfs=[1.8, 2.6],
+    )
+    with open(p_json, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["benchmark_version"] == "PMev_3.2_SOTA"
+    assert len(data["rows"]) == 8  # 2 stacks * 2 bfs * 2 positions

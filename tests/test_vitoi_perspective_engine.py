@@ -295,4 +295,3 @@ class TestVitoiPerspectiveEngine:
         assert "decision_tree_synthesis" in report
         assert report["recommended_action"] in ["RAISE", "CALL", "FOLD"]
         assert isinstance(report["pmev_value"], (int, float))
-

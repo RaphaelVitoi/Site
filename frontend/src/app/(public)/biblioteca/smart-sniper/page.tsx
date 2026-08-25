@@ -192,7 +192,7 @@ export default function SmartSniperPage() {
 
 				{/* Final CTA */}
 				<section className="max-w-5xl mx-auto w-full pb-24">
-					<div className="glass-panel p-16 rounded-[3rem] bg-slate-950/60 border border-accent-indigo/20 text-center relative overflow-hidden shadow-[0_40px_80px_-20px_rgba(0,0,0,0.8)] group/cta">
+					<div className="glass-panel p-16 rounded-5xl bg-slate-950/60 border border-accent-indigo/20 text-center relative overflow-hidden shadow-[0_40px_80px_-20px_rgba(0,0,0,0.8)] group/cta">
 						<div className="absolute inset-0 bg-radial-[at_bottom_center] from-accent-indigo/10 to-transparent pointer-events-none" />
 						<div className="relative z-10 space-y-10">
 							<div className="space-y-4">

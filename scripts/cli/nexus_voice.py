@@ -25,7 +25,7 @@ try:
 except ImportError:
     pass
 
-# Raiz DESTE projeto, derivada do proprio arquivo — scripts/cli/ -> raiz.
+# Raiz DESTE projeto, derivada do proprio arquivo  scripts/cli/ -> raiz.
 # Nao usar cwd: o script pode ser chamado de qualquer lugar, e a raiz
 # multiprojeto (~/.gemini) nao e a raiz deste projeto.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -153,7 +153,7 @@ async def async_speak_text(
 ) -> Path:
     """Execucao assincrona de sintese de voz."""
     # Ate 2026-08-21 este caminho era o literal absoluto
-    # "C:/Users/rapha/.gemini/antigravity/scratch/voice" — codigo do projeto
+    # "C:/Users/rapha/.gemini/antigravity/scratch/voice"  codigo do projeto
     # Site escrevendo dentro do projeto irmao `antigravity`, por caminho fixo.
     # Isso quebra em qualquer outra maquina, amarra dois projetos que deveriam
     # ser independentes, e some se `antigravity` for movido ou renomeado.

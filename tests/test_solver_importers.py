@@ -184,3 +184,33 @@ def test_universal_solver_importer_auto_detection_and_pmev():
     pmev_res = response.tree.pmev_converted_nodes["root"]
     assert pmev_res.pmev is not None
     assert pmev_res.bubble_factor > 1.0
+
+
+def test_deep_solver_parse_range_matrix_and_heatmap():
+    """Valida a geracao de heatmap de range comparativo (DeepSolver vs PMev)."""
+    importer = DeepSolverImporter()
+
+    # Range em formato de dicionario de maos
+    sample_range_dict = {
+        "AA": 1.0,
+        "KK": 1.0,
+        "QQ": 0.8,
+        "AKs": 1.0,
+        "AQs": 0.9,
+        "AKo": 0.7,
+        "72o": 0.0,
+    }
+
+    heatmap = importer.generate_pmev_heatmap(
+        deepsolver_range=sample_range_dict,
+        pmev_threshold=0.60,
+    )
+
+    assert heatmap["pmev_threshold"] == 0.60
+    assert len(heatmap["deepsolver_matrix"]) == 13
+    assert len(heatmap["pmev_matrix"]) == 13
+    assert len(heatmap["delta_matrix"]) == 13
+    assert heatmap["total_deepsolver_combos"] > 0.0
+    assert heatmap["ascii_heatmap"] is not None
+    assert len(heatmap["cells"]) == 169
+    assert any(c["hand"] == "AA" for c in heatmap["cells"])

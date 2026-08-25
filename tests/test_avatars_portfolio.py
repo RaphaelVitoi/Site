@@ -57,58 +57,57 @@ def test_avatar_config_schema(avatar_config):
 def test_chico_capabilities(avatar_config):
     """
     PROVA DE CAPACIDADE EXCLUSIVA: Chico (Gerente de Sistema & Orquestrador Mestre).
-    Valida que o Chico usa o modelo gemma4:31b-cloud (otimizado para raciocinio complexo e orquestracao)
-    e que possui acesso aos contextos de engine e cognicao para governar o ecossistema.
+    Valida que o Chico usa o modelo de cirurgia de codigo e orquestracao
+    e que possui acesso aos contextos de engine e orquestracao para governar o ecossistema.
     """
     chico = avatar_config["personas"]["chico"]
-    assert chico["ollama_model"] == "gemma4:31b-cloud"
+    assert chico["ollama_model"] == "qwen-code-surgical:latest"
 
-    # Chico deve conter arquivos de cognicao e infraestrutura
+    # Chico deve conter arquivos de contexto e infraestrutura
     context = chico["context_files"]
-    assert "engine/cognitive.py" in context
+    assert "core/sota_context_engine.py" in context
     assert "engine/gemma_server.py" in context
 
     # Prompt do Chico deve indicar autoridade/orquestracao
     prompt = chico["system_prompt"].lower()
     assert "chico" in prompt
-    assert "gerente de sistema" in prompt or "orquestrador" in prompt
+    assert "sistema" in prompt or "orquestra" in prompt
 
 
 def test_maverick_capabilities_and_math(avatar_config):
     """
     PROVA DE CAPACIDADE EXCLUSIVA: Maverick (GTO, Teoria dos Jogos & Calculo de Equidade).
-    Valida que o Maverick usa o modelo gemma4:12b (local multimodal, otimizado para tarefas especificas de poker)
-    e que possui acesso exclusivo aos arquivos de calculo matematico (math_sota.py, math_rio.py, bayesian_range.py).
+    Valida que o Maverick usa o modelo qwen-pmev-math:latest
+    e que possui acesso aos arquivos de calculo matematico e perspectiva.
     """
     maverick = avatar_config["personas"]["maverick"]
-    assert maverick["ollama_model"] == "gemma4:12b"
+    assert maverick["ollama_model"] == "qwen-pmev-math:latest"
 
     context = maverick["context_files"]
+    assert "engine/vitoi_perspective_engine.py" in context
     assert "engine/math_sota.py" in context
-    assert "engine/math_rio.py" in context
     assert "engine/bayesian_range.py" in context
 
     prompt = maverick["system_prompt"].lower()
     assert "maverick" in prompt
-    assert "poker" in prompt
-    assert "gto" in prompt or "teoria dos jogos" in prompt
+    assert "pmev" in prompt or "jogos" in prompt
 
 
 def test_historian_capabilities(avatar_config):
     """
-    PROVA DE CAPACIDADE EXCLUSIVA: Historian (Perspectiva Arquitetural & Filosofia do Risco).
-    Valida que o Historian usa o modelo gemma4:31b-cloud (para processar longos contextos historicos)
+    PROVA DE CAPACIDADE EXCLUSIVA: Historian (Perspectiva Arquitetural & Poetica).
+    Valida que o Historian usa o modelo qwen-poetics:latest
     e possui o arquivo de framework da perspectiva como contexto.
     """
     historian = avatar_config["personas"]["historian"]
-    assert historian["ollama_model"] == "gemma4:31b-cloud"
+    assert historian["ollama_model"] == "qwen-poetics:latest"
 
     context = historian["context_files"]
     assert "docs/research/perspectiva_matematica_framework_v2.md" in context
 
     prompt = historian["system_prompt"].lower()
     assert "historian" in prompt
-    assert "filosofica" in prompt or "historica" in prompt
+    assert "poetica" in prompt or "poetica" in prompt or "letrista" in prompt
 
 
 def test_gemma4_capabilities(avatar_config):

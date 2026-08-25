@@ -118,7 +118,7 @@ def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tu
     """
     Mapeia os 5 estados de operacao:
     1. 'completa mas falhou' (soft_failure / warnings)
-    2. 'completa mas requer revisão adicional' (review_required)
+    2. 'completa mas requer revisao adicional' (review_required)
     3. 'failed' (falha dura)
     4. 'suspensa' (suspended / pausada)
     5. 'prevista e engatilhada' (pending / queued / triggered)

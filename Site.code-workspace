@@ -30,13 +30,22 @@
     "geminicodeassist.rules": "Excelência SOTA: Proibida a artificialização. Priorizar lógica, ciência e SteelManning Protocol. Blindagem ASCII no Backend.",
     // ── PARIDADE BACKEND (RUFF & RUNTIME SOTA) ──────────────────
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python-envs.defaultEnvManager": "ms-python.python:venv",
+    "python-envs.defaultPackageManager": "ms-python.python:pip",
+    "python-envs.pythonProjects": [
+      {
+        "path": ".",
+        "envManager": "ms-python.python:venv",
+        "packageManager": "ms-python.python:pip"
+      }
+    ],
     "python.terminal.activateEnvironment": true,
     "python.analysis.autoSearchPaths": true,
     "python.analysis.extraPaths": [
       "${workspaceFolder}",
       "${workspaceFolder}/scripts",
       "${workspaceFolder}/engine",
-      "${workspaceFolder}/core",
+      "${workspaceFolder}/core"
     ],
     "python.envFile": "${workspaceFolder}/.env",
     "python.testing.pytestEnabled": true,
@@ -66,6 +75,9 @@
       },
     ],
     "tailwindCSS.experimental.classRegex": [["@theme\\s*{([^}]*)}", "--color-([^\\s:]*)"]],
+    "rust-analyzer.server.path": "C:\\Users\\rapha\\.cargo\\bin\\rust-analyzer.exe",
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.cargo.allTargets": true,
     // ── BLINDAGEM DE WATCHER (SISTEMA INTEGRADO) ────────────────
     "files.watcherExclude": {
       "**/.git/objects/**": true,
@@ -83,7 +95,6 @@
     "files.exclude": {
       "**/.git": true,
       "**/node_modules": true,
-      "**/.venv": true,
       "**/__pycache__": true,
       "**/.next": true,
       "**/.turbo": true,
@@ -93,8 +104,11 @@
       "**/reports": true,
     },
     // ── TERMINAL SOTA ───────────────────────────────────────────
-    "terminal.integrated.defaultProfile.windows": "Gemini-SOTA",
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
     "terminal.integrated.profiles.windows": {
+      "PowerShell": {
+        "source": "PowerShell",
+      },
       "Gemini-SOTA": {
         "path": "powershell.exe",
         "args": ["-NoExit", "-Command", "gemini --approval-mode auto_edit"],
@@ -113,5 +127,14 @@
       "editor.defaultFormatter": "vscode.json-language-features",
     },
     "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+    "securecoder.enableI18n": false,
+    "securecoder.rules.i18n": "off",
+    "securecoder.rules.internationalization": "off",
+    "securecoder.rules.jsx-not-internationalized": "off",
+    "securecoder.disabledRules": [
+      "jsx-not-internationalized",
+      "i18n",
+      "internationalization"
+    ]
   },
 }

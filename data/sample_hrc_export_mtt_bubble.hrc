@@ -1,0 +1,79 @@
+HoldemResources Calculator Pro Export v2.4.1
+Game: No Limit Hold'em MTT Final Table (8 Players)
+Blinds: 25k/50k Ante: 5k (Effective Antes: 40k)
+Time to Blind Increase: 3.0 minutes
+
+Payout Structure:
+1st: $45,000 (30.0%)
+2nd: $30,000 (20.0%)
+3rd: $21,000 (14.0%)
+4th: $15,000 (10.0%)
+5th: $12,000 (8.0%)
+6th: $9,000 (6.0%)
+7th: $7,500 (5.0%)
+8th: $6,000 (4.0%)
+
+Stacks:
+UTG: 4.5bb
+UTG+1: 32.0bb
+MP: 14.0bb
+MP+1: 28.0bb
+CO: 19.0bb
+BTN: 55.0bb (Chip Leader)
+SB (Hero): 18.5bb
+BB (Villain): 22.0bb
+
+ICM Metrics:
+Bubble Factor (Hero vs BB): 2.45
+Risk Premium (Hero): 24.8%
+FGS Depth: 3 hands
+
+HRC Calculated Strategy (Hero SB vs BB All-in):
+AA: 100.0%  (EV: +4.82bb)
+KK: 100.0%  (EV: +4.21bb)
+QQ: 100.0%  (EV: +3.65bb)
+JJ: 100.0%  (EV: +3.12bb)
+TT: 100.0%  (EV: +2.54bb)
+99: 90.0%   (EV: +1.80bb)
+88: 75.0%   (EV: +1.15bb)
+77: 45.0%   (EV: +0.42bb)
+66: 20.0%   (EV: +0.05bb)
+55: 0.0%    (EV: -0.35bb)
+44: 0.0%    (EV: -0.72bb)
+33: 0.0%    (EV: -1.10bb)
+22: 0.0%    (EV: -1.45bb)
+
+AKs: 100.0% (EV: +4.50bb)
+AQs: 100.0% (EV: +3.80bb)
+AJs: 100.0% (EV: +3.10bb)
+ATs: 90.0%  (EV: +2.20bb)
+A9s: 65.0%  (EV: +1.10bb)
+A8s: 40.0%  (EV: +0.35bb)
+A7s: 15.0%  (EV: +0.02bb)
+A6s: 0.0%   (EV: -0.45bb)
+A5s: 50.0%  (EV: +0.60bb)
+A4s: 30.0%  (EV: +0.15bb)
+A3s: 0.0%   (EV: -0.30bb)
+A2s: 0.0%   (EV: -0.65bb)
+
+KQs: 90.0%  (EV: +2.05bb)
+KJs: 70.0%  (EV: +1.25bb)
+KTs: 45.0%  (EV: +0.50bb)
+K9s: 0.0%   (EV: -0.40bb)
+QJs: 60.0%  (EV: +0.95bb)
+QTs: 30.0%  (EV: +0.20bb)
+JTs: 50.0%  (EV: +0.70bb)
+T9s: 25.0%  (EV: +0.10bb)
+98s: 0.0%   (EV: -0.35bb)
+87s: 0.0%   (EV: -0.60bb)
+76s: 0.0%   (EV: -0.85bb)
+65s: 0.0%   (EV: -1.15bb)
+54s: 0.0%   (EV: -1.40bb)
+
+AKo: 100.0% (EV: +4.10bb)
+AQo: 85.0%  (EV: +2.90bb)
+AJo: 50.0%  (EV: +1.40bb)
+ATo: 20.0%  (EV: +0.10bb)
+KQo: 40.0%  (EV: +0.65bb)
+KJo: 0.0%   (EV: -0.30bb)
+QJo: 0.0%   (EV: -0.55bb)

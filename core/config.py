@@ -36,7 +36,7 @@ PATH_ROUTING_MAP = BASE_DIR / "data/routing_map.json"
 MODEL_GEMINI_FLASH = "gemini-3.5-flash-lite"
 # MODEL_GEMINI_FLASH_LITE removido em 2026-08-21: tinha VALOR IDENTICO ao de
 # cima e zero consumidores. Dois nomes para a mesma coisa sugerem uma distincao
-# que nao existe — quem lesse assumiria "flash" != "flash-lite".
+# que nao existe  quem lesse assumiria "flash" != "flash-lite".
 # As cadeias de fallback reais estao em data/routing_map.json.
 
 
@@ -127,7 +127,7 @@ def _resolver_modelos(manifesto: dict) -> dict:
     llm/orchestrator.py ja importam `core.*`).
 
     Se a politica estiver indisponivel, cai para o `primary_model` declarado no
-    manifesto — o comportamento anterior — em vez de derrubar a configuracao.
+    manifesto  o comportamento anterior  em vez de derrubar a configuracao.
     """
     try:
         from llm.routing_policy import rotear

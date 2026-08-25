@@ -1,4 +1,4 @@
-﻿/**
+/**
  * IDENTITY: O Estado da Arte do ICM (Whitepaper GOLD)
  * PATH: src/app/biblioteca/estado-da-arte/page.tsx
  * ROLE: Artigo avançado sobre tendências High Stakes, Donk Bet meta e IA.
@@ -55,8 +55,7 @@ export default function EstadoDaArtePage() {
 							de entender como a elite está{' '}
 							<strong className="text-text-bright">
 								encontrando agressão na passividade
-							</strong>
-							.
+							</strong>.
 						</p>
 					</div>
 				</GlassPanel>
@@ -78,8 +77,7 @@ export default function EstadoDaArtePage() {
 							essa inércia com{' '}
 							<strong className="text-text-bright">
 								Donk Bets de 10% a 20% do pote
-							</strong>
-							.
+							</strong>.
 						</p>
 
 						<div className="bg-accent-emerald/10 border-l-4 border-accent-emerald p-8 my-10 rounded-r-2xl">
@@ -117,8 +115,7 @@ export default function EstadoDaArtePage() {
 							O acordo silencioso de passividade entre os stacks médios torna-se{' '}
 							<strong className="text-accent-rose text-shadow-glow uppercase font-black">
 								lei marcial
-							</strong>
-							. Qualquer desvio dessa norma é suicídio em $EV.
+							</strong>. Qualquer desvio dessa norma é suicídio em $EV.
 						</p>
 					</div>
 				</GlassPanel>

@@ -29,15 +29,15 @@ function getHeroPosName(heroPosition: HeroPosition, scenario: Scenario): string 
   return heroPosition;
 }
 
-const POSITION_INDEX_MAP: Record<string, number> = {
-  UTG: 2,
-  EP: 3,
-  MP1: 4,
-  MP2: 5,
-  HJ: 6,
-  CO: 7,
-  SB: 8,
-};
+const POSITION_INDEX_MAP: ReadonlyMap<string, number> = new Map([
+  ['UTG', 2],
+  ['EP', 3],
+  ['MP1', 4],
+  ['MP2', 5],
+  ['HJ', 6],
+  ['CO', 7],
+  ['SB', 8],
+]);
 
 function getPlayerStack(pName: string, scenario: Scenario, defaultStack: number): number {
   if (!Array.isArray(scenario.stacks) || scenario.stacks.length !== 9) {
@@ -52,7 +52,7 @@ function getPlayerStack(pName: string, scenario: Scenario, defaultStack: number)
   if (pName === oopPos || (oopPos.includes('BB') && pName === 'BB') || (oopPos.includes('CL') && pName === 'BB')) {
     return scenario.stacks[1] ?? defaultStack;
   }
-  const mappedIdx = POSITION_INDEX_MAP[pName];
+  const mappedIdx = POSITION_INDEX_MAP.get(pName);
   if (mappedIdx !== undefined) {
     return scenario.stacks[mappedIdx] ?? defaultStack;
   }

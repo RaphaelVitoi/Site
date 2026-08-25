@@ -273,10 +273,24 @@ class QueueManager:
                     "CREATE INDEX IF NOT EXISTS idx_key_usage_provider_hash_time ON key_usage_metrics (provider, key_hash, timestamp)"
                 )
 
-                await conn.execute(
-                    "CREATE TABLE IF NOT EXISTS daily_usage ( date TEXT PRIMARY KEY, call_count INTEGER NOT NULL )"
-                )
+                await conn.execute("""
+                CREATE TABLE IF NOT EXISTS daily_usage ( date TEXT PRIMARY KEY, call_count INTEGER NOT NULL )
+                """)
                 await conn.execute("CREATE TABLE IF NOT EXISTS system_state ( key TEXT PRIMARY KEY, value TEXT )")
+
+                # SOTA: SQL View consolidada para Prometheus & Realtime Dashboard
+                await conn.execute("""
+                CREATE VIEW IF NOT EXISTS v_nexus_realtime_metrics AS
+                SELECT
+                    (SELECT COUNT(*) FROM tasks WHERE status = 'pending') AS tasks_pending,
+                    (SELECT COUNT(*) FROM tasks WHERE status = 'running') AS tasks_running,
+                    (SELECT COUNT(*) FROM tasks WHERE status = 'completed') AS tasks_completed,
+                    (SELECT COUNT(*) FROM tasks WHERE status = 'failed') AS tasks_failed,
+                    (SELECT COUNT(*) FROM tasks) AS tasks_total,
+                    (SELECT COUNT(*) FROM llm_cache) AS cached_prompts_total,
+                    (SELECT IFNULL(SUM(total_tokens), 0) FROM api_usage) AS total_tokens_consumed,
+                    (SELECT IFNULL(AVG(latency_ms), 0.0) FROM key_usage_metrics WHERE timestamp >= datetime('now', '-1 hour')) AS avg_latency_ms_1h;
+                """)
 
                 await conn.commit()
             self._is_initialized = True
@@ -405,6 +419,16 @@ class QueueManager:
             if row:
                 return self._row_to_task(row)
         return None
+
+    async def get_realtime_metrics(self) -> dict[str, Any]:
+        """Recupera metricas consolidadas em tempo real a partir da SQL View."""
+        async with self._get_async_db() as db:
+            async with db.execute("SELECT * FROM v_nexus_realtime_metrics") as cursor:
+                row = await cursor.fetchone()
+                if row and cursor.description:
+                    col_names = [d[0] for d in cursor.description]
+                    return dict(zip(col_names, row, strict=False))
+        return {}
 
     async def update_task_status(self, task_id: str, new_status: str) -> None:
         """Transicao de estado autonoma com timestamping automatico."""
