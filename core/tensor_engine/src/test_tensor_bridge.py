@@ -1,4 +1,4 @@
-# pylint: disable=c-extension-no-member, no-member
+# pylint: disable=c-extension-no-member, no-member, import-outside-toplevel
 import sys
 import time
 from pathlib import Path
@@ -14,8 +14,8 @@ console = Console()
 
 def numpy_icm_distortion(fold, call, raise_, ip_rp, oop_rp, pot, topologic_aggression, active_players, street_idx):  # pylint: disable=unused-argument
     # SOTA: Type casting estrito para float32 garantindo Isometria Absoluta com o AVX2 do C++
-    INV_7_5 = np.float32(1.0 / 7.5)
-    gravity = np.maximum(np.log(pot * INV_7_5), np.float32(0.0)).astype(np.float32)
+    inv_7_5 = np.float32(1.0 / 7.5)
+    gravity = np.maximum(np.log(pot * inv_7_5), np.float32(0.0)).astype(np.float32)
     damping = np.float32(1.0) / (np.float32(1.0) + gravity * np.float32(0.12))
     eff_agg = np.float32(1.0) + (np.float32(topologic_aggression) - np.float32(1.0)) * damping
 
@@ -127,6 +127,34 @@ def run_benchmark():
 
     speedup2 = time_np_icm / time_cpp_icm if time_cpp_icm > 0 else 0
     console.print(f"[bold white]Aceleracao Termodinamica (T2):[/] {speedup2:.2f}x")
+
+    # --- BENCHMARK 3: VETORES AVX-512 (512-BIT WIDE-LANE SIMD / 16 FLOATS PER CYCLE) ---
+    n_avx512 = 16_000_000  # Multiplo exato de 16 (16 floats * 32-bit = 512-bit ZMM registers)
+    console.print(f"\n[bold cyan][TESTE 3] AVX-512 Wide-Lane SIMD Chunking ({n_avx512} elementos float32 / 16-wide ZMM)...[/]")
+
+    eq_512 = rng.random(n_avx512, dtype=np.float32)
+    pot_512 = rng.random(n_avx512, dtype=np.float32)
+    noise_512 = 0.05
+
+    # 1. Baseline NumPy
+    start_np_512 = time.perf_counter()
+    res_np_512 = (eq_512 * pot_512) * (1.0 - noise_512)
+    time_np_512 = time.perf_counter() - start_np_512
+    console.print(f"[yellow]Numpy 512-bit Aligned (Baseline):[/] {time_np_512:.5f}s")
+
+    # 2. C++ SIMD Kernel (AVX2/AVX-512 Auto-Vectorized)
+    start_cpp_512 = time.perf_counter()
+    res_cpp_512 = qte.calculate_perspective_simd(eq_512, pot_512, noise_512)
+    time_cpp_512 = time.perf_counter() - start_cpp_512
+    console.print(f"[green]C++ SIMD 512-Bit Unrolled Kernel:[/] {time_cpp_512:.5f}s")
+
+    np.testing.assert_allclose(res_np_512, res_cpp_512, rtol=1e-5)
+    speedup3 = time_np_512 / time_cpp_512 if time_cpp_512 > 0 else 0
+    throughput_gb = (n_avx512 * 4 * 3) / (time_cpp_512 * (1024**3)) if time_cpp_512 > 0 else 0
+    gflops = (n_avx512 * 2) / (time_cpp_512 * 1e9) if time_cpp_512 > 0 else 0
+
+    console.print(f"[bold white]Aceleracao Termodinamica (T3):[/] {speedup3:.2f}x")
+    console.print(f"[bold green]Throughput de Memoria (Zero-Copy):[/] {throughput_gb:.2f} GB/s | [bold cyan]Poder Computacional:[/] {gflops:.2f} GFLOPS")
 
 
 if __name__ == "__main__":

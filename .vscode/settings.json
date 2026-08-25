@@ -169,10 +169,49 @@
   "geminicodeassist.contextExclusionFile": ".aiexclude",
   "geminicodeassist.languages": ["*"],
   "geminicodeassist.customCommands": {
-    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v7.0 GOLD",
+    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
     "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
     "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
-    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita"
+    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+  },
+  "claude.customPrompts": {
+    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+  },
+  "anthropic.claudeCode.customCommands": {
+    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+  },
+  "chatgpt.customPrompts": {
+    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+  },
+  "openai.customPrompts": {
+    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
   },
   "editor.inlineSuggest.enabled": true,
   "editor.suggest.preview": true,

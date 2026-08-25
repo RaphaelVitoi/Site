@@ -8,6 +8,8 @@
     "llvm-vs-code-extensions.lldb-dap",
     "rust-lang.rust-analyzer",
     "anthropic.claude-code",
-    "openai.chatgpt"
+    "openai.chatgpt",
+    "googlecloudtools.cloudcode",
+    "tamasfe.even-better-toml"
   ]
 }

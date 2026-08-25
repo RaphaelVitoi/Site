@@ -11,6 +11,8 @@ from typing import Any
 import numpy as np
 import pytest
 
+from core.tensor_engine.src.test_tensor_bridge import run_benchmark
+
 # Assegura que a raiz do projeto esteja no sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -26,8 +28,6 @@ try:
     import quantum_tensor_engine as _qte_root
 except ImportError:
     _qte_root = None
-
-from core.tensor_engine.src.test_tensor_bridge import run_benchmark
 
 
 @pytest.fixture(name="tensor_module", scope="module")
@@ -135,6 +135,24 @@ def test_icm_distortion_simd_isometry(tensor_module: Any) -> None:
     # Conservação estrita de probabilidade (sum == 1.0)
     total_prob = cpp_f + cpp_c + cpp_r
     np.testing.assert_allclose(total_prob, np.ones(n_elements, dtype=np.float32), rtol=1e-4, atol=1e-4)
+
+
+def test_avx512_wide_lane_isometry(tensor_module: Any) -> None:
+    """Valida a isometria e alinhamento do processamento 16-wide (512-bit ZMM register chunks)."""
+    n_elements = 524_288  # 2^19 elementos (alinhamento exato de 16 floats / 512-bit)
+    rng = np.random.default_rng(1337)
+    equity = rng.random(n_elements, dtype=np.float32)
+    pot = rng.random(n_elements, dtype=np.float32)
+    human_noise = 0.05
+
+    res_numpy = (equity * pot) * (1.0 - human_noise)
+    res_cpp = tensor_module.calculate_perspective_simd(equity, pot, human_noise)
+
+    assert isinstance(res_cpp, np.ndarray)
+    assert res_cpp.shape == (n_elements,)
+    assert res_cpp.dtype == np.float32
+    assert res_cpp.flags.c_contiguous
+    np.testing.assert_allclose(res_numpy, res_cpp, rtol=1e-5, atol=1e-5)
 
 
 def test_tensor_bridge_standalone_runner() -> None:
