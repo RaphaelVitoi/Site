@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 AUDITORIA SOTA v8.0 GOLD: INFRASTRUCTURE PILLARS (LOGS, TEMPS, ARTIFACTS, SKILLS)
-Governança: Raphael Vitoi | Protocolo: CHICO SOTA v8.0 GOLD
+Governanca: Raphael Vitoi | Protocolo: CHICO SOTA v8.0 GOLD
 
-Audita, valida e aplica o sistema Tri-State Guard com rigor matemático sobre:
-1. LOGS: Políticas de retenção, ausência de vazamento de credenciais, encoding e rotação.
-2. TEMPS: Purificação de pastas vazias/órfãs, integridade SQLite e isolamento na Nexus Zone.
-3. ARTIFACTS: Validação de markdown, KaTeX math blocks, integridade de metadados e media links.
-4. SKILLS: Validação de YAML frontmatter, integridade de nomes, descrições e recursos em 100% das skills.
+Audita, valida e aplica o sistema Tri-State Guard com rigor matematico sobre:
+1. LOGS: Politicas de retencao, ausencia de vazamento de credenciais, encoding e rotacao.
+2. TEMPS: Purificacao de pastas vazias/orfas, integridade SQLite e isolamento na Nexus Zone.
+3. ARTIFACTS: Validacao de markdown, KaTeX math blocks, integridade de metadados e media links.
+4. SKILLS: Validacao de YAML frontmatter, integridade de nomes, descricoes e recursos em 100% das skills.
 """
 
 import json
@@ -24,7 +24,7 @@ USER_SKILLS_DIR = Path(r"c:\Users\rapha\.agents\skills")
 BUILTIN_SKILLS_DIR = BASE_DIR.parent / "antigravity" / "builtin" / "skills"
 BRAIN_DIR = BASE_DIR.parent / "antigravity" / "brain"
 
-# Regex para detecção de segredos em logs
+# Regex para deteccao de segredos em logs
 SECRET_PATTERNS = [
     re.compile(r"(?:AIzaSy[A-Za-z0-9-_]{33})"),  # Google Gemini / Firebase API Key
     re.compile(r"(?:sk-[A-Za-z0-9-_]{32,})"),  # OpenAI / Anthropic Secret Key
@@ -34,14 +34,14 @@ SECRET_PATTERNS = [
 
 
 def audit_logs_pillar() -> Tuple[List[str], List[str], Dict]:
-    """Audita a governança de logs."""
+    """Audita a governanca de logs."""
     errors = []
     warnings = []
     stats = {"files_scanned": 0, "bytes_total": 0, "leaks_detected": 0}
 
     logs_dir = NEXUS_ZONE / "logs"
     if not logs_dir.exists():
-        warnings.append(f"[LOGS] Diretório de logs ({logs_dir}) não inicializado.")
+        warnings.append(f"[LOGS] Diretorio de logs ({logs_dir}) nao inicializado.")
         return errors, warnings, stats
 
     for root, _, files in os.walk(logs_dir):
@@ -53,7 +53,7 @@ def audit_logs_pillar() -> Tuple[List[str], List[str], Dict]:
 
             if sz > 20 * 1024 * 1024:  # > 20MB
                 errors.append(
-                    f"[LOGS-EXCESS] Arquivo {p.relative_to(BASE_DIR)} excede limite de rotação (Tamanho: {sz / (1024 * 1024):.2f}MB > 20MB)."
+                    f"[LOGS-EXCESS] Arquivo {p.relative_to(BASE_DIR)} excede limite de rotacao (Tamanho: {sz / (1024 * 1024):.2f}MB > 20MB)."
                 )
 
             try:
@@ -61,7 +61,7 @@ def audit_logs_pillar() -> Tuple[List[str], List[str], Dict]:
                 for pattern in SECRET_PATTERNS:
                     if pattern.search(content):
                         errors.append(
-                            f"[LOGS-SECRET-LEAK] Possível credencial vazada detectada em {p.relative_to(BASE_DIR)}."
+                            f"[LOGS-SECRET-LEAK] Possivel credencial vazada detectada em {p.relative_to(BASE_DIR)}."
                         )
                         stats["leaks_detected"] += 1
             except Exception as e:
@@ -71,7 +71,7 @@ def audit_logs_pillar() -> Tuple[List[str], List[str], Dict]:
 
 
 def audit_temps_pillar() -> Tuple[List[str], List[str], Dict]:
-    """Audita e higieniza a zona de temporários."""
+    """Audita e higieniza a zona de temporarios."""
     errors = []
     warnings = []
     stats = {"temp_folders": 0, "empty_purged": 0, "pytest_dirs": 0}
@@ -82,14 +82,14 @@ def audit_temps_pillar() -> Tuple[List[str], List[str], Dict]:
     now = time.time()
     max_age = 86400  # > 24h
 
-    # Varredura de diretórios órfãos do pytest
+    # Varredura de diretorios orfaos do pytest
     for item in NEXUS_ZONE.iterdir():
         if item.is_dir():
             stats["temp_folders"] += 1
             if item.name.startswith("pytest_"):
                 stats["pytest_dirs"] += 1
                 try:
-                    # Remove diretórios de teste antigos ou vazios
+                    # Remove diretorios de teste antigos ou vazios
                     mtime = item.stat().st_mtime
                     if now - mtime > max_age:
                         # Purge recursivo seguro
@@ -101,12 +101,12 @@ def audit_temps_pillar() -> Tuple[List[str], List[str], Dict]:
                         item.rmdir()
                         stats["empty_purged"] += 1
                 except Exception as e:
-                    warnings.append(f"[TEMPS-WARN] Falha ao purificar pasta temporária de teste {item.name}: {e}")
+                    warnings.append(f"[TEMPS-WARN] Falha ao purificar pasta temporaria de teste {item.name}: {e}")
 
-    # Checar por arquivos temporários soltos na raiz do projeto
+    # Checar por arquivos temporarios soltos na raiz do projeto
     for item in BASE_DIR.iterdir():
         if item.is_file() and item.suffix in [".tmp", ".bak", ".swp", ".orig"]:
-            errors.append(f"[TEMPS-POLLUTION] Arquivo temporário órfão na raiz: {item.name}")
+            errors.append(f"[TEMPS-POLLUTION] Arquivo temporario orfao na raiz: {item.name}")
 
     return errors, warnings, stats
 
@@ -118,7 +118,7 @@ def audit_artifacts_pillar() -> Tuple[List[str], List[str], Dict]:
     stats = {"artifacts_scanned": 0, "valid_metadata": 0}
 
     if not BRAIN_DIR.exists():
-        warnings.append(f"[ARTIFACTS] Diretório Brain ({BRAIN_DIR}) não encontrado.")
+        warnings.append(f"[ARTIFACTS] Diretorio Brain ({BRAIN_DIR}) nao encontrado.")
         return errors, warnings, stats
 
     for root, _, files in os.walk(BRAIN_DIR):
@@ -167,7 +167,7 @@ def audit_skills_pillar() -> Tuple[List[str], List[str], Dict]:
                     # Validar YAML Frontmatter
                     if not content.startswith("---"):
                         errors.append(
-                            f"[SKILL-NO-FRONTMATTER] {skill_file.parent.name} não inicia com delimitador YAML '---'"
+                            f"[SKILL-NO-FRONTMATTER] {skill_file.parent.name} nao inicia com delimitador YAML '---'"
                         )
                         continue
 
@@ -182,11 +182,11 @@ def audit_skills_pillar() -> Tuple[List[str], List[str], Dict]:
 
                     if not has_name:
                         errors.append(
-                            f"[SKILL-MISSING-NAME] {skill_file.parent.name} não define 'name:' no frontmatter"
+                            f"[SKILL-MISSING-NAME] {skill_file.parent.name} nao define 'name:' no frontmatter"
                         )
                     if not has_desc:
                         errors.append(
-                            f"[SKILL-MISSING-DESC] {skill_file.parent.name} não define 'description:' no frontmatter"
+                            f"[SKILL-MISSING-DESC] {skill_file.parent.name} nao define 'description:' no frontmatter"
                         )
 
                     if has_name and has_desc:
@@ -208,42 +208,42 @@ def run_full_pillars_audit():
     # 1. LOGS
     log_errs, log_warns, log_stats = audit_logs_pillar()
     print(
-        f"• [PILAR 1/4: LOGS]      {log_stats['files_scanned']} arquivos ({log_stats['bytes_total'] / 1024:.1f} KB) | Erros: {len(log_errs)} | Warnings: {len(log_warns)}"
+        f" [PILAR 1/4: LOGS]      {log_stats['files_scanned']} arquivos ({log_stats['bytes_total'] / 1024:.1f} KB) | Erros: {len(log_errs)} | Warnings: {len(log_warns)}"
     )
     for e in log_errs:
-        print(f"  ❌ {e}")
+        print(f"   {e}")
     for w in log_warns:
-        print(f"  ⚠️  {w}")
+        print(f"    {w}")
 
     # 2. TEMPS
     tmp_errs, tmp_warns, tmp_stats = audit_temps_pillar()
     print(
-        f"• [PILAR 2/4: TEMPS]     {tmp_stats['temp_folders']} pastas ({tmp_stats['empty_purged']} purgadas) | Erros: {len(tmp_errs)} | Warnings: {len(tmp_warns)}"
+        f" [PILAR 2/4: TEMPS]     {tmp_stats['temp_folders']} pastas ({tmp_stats['empty_purged']} purgadas) | Erros: {len(tmp_errs)} | Warnings: {len(tmp_warns)}"
     )
     for e in tmp_errs:
-        print(f"  ❌ {e}")
+        print(f"   {e}")
     for w in tmp_warns:
-        print(f"  ⚠️  {w}")
+        print(f"    {w}")
 
     # 3. ARTIFACTS
     art_errs, art_warns, art_stats = audit_artifacts_pillar()
     print(
-        f"• [PILAR 3/4: ARTIFACTS] {art_stats['artifacts_scanned']} artefatos ({art_stats['valid_metadata']} metadados) | Erros: {len(art_errs)} | Warnings: {len(art_warns)}"
+        f" [PILAR 3/4: ARTIFACTS] {art_stats['artifacts_scanned']} artefatos ({art_stats['valid_metadata']} metadados) | Erros: {len(art_errs)} | Warnings: {len(art_warns)}"
     )
     for e in art_errs:
-        print(f"  ❌ {e}")
+        print(f"   {e}")
     for w in art_warns:
-        print(f"  ⚠️  {w}")
+        print(f"    {w}")
 
     # 4. SKILLS
     skl_errs, skl_warns, skl_stats = audit_skills_pillar()
     print(
-        f"• [PILAR 4/4: SKILLS]    {skl_stats['skills_scanned']} skills ({skl_stats['valid_frontmatter']} válidas) | Erros: {len(skl_errs)} | Warnings: {len(skl_warns)}"
+        f" [PILAR 4/4: SKILLS]    {skl_stats['skills_scanned']} skills ({skl_stats['valid_frontmatter']} validas) | Erros: {len(skl_errs)} | Warnings: {len(skl_warns)}"
     )
     for e in skl_errs:
-        print(f"  ❌ {e}")
+        print(f"   {e}")
     for w in skl_warns:
-        print(f"  ⚠️  {w}")
+        print(f"    {w}")
 
     total_errors = len(log_errs) + len(tmp_errs) + len(art_errs) + len(skl_errs)
     total_warnings = len(log_warns) + len(tmp_warns) + len(art_warns) + len(skl_warns)
@@ -257,12 +257,12 @@ def run_full_pillars_audit():
         tri_state = "FALHOU (VERMELHO)"
 
     print("\n" + "=" * 80)
-    print("========= SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (PILLARS) =========")
-    print(f"• Total de Erros:    {total_errors} (Teto Máximo Permitido: 0 | Peso: CRÍTICO)")
-    print(f"• Total de Warnings: {total_warnings} (Teto Máximo Permitido: 2 | Tolerância: 0 para SUCESSO)")
-    print(f"• Status da Bateria: [{tri_state}] em {dt:.2f}s")
+    print("========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (PILLARS) =========")
+    print(f" Total de Erros:    {total_errors} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+    print(f" Total de Warnings: {total_warnings} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+    print(f" Status da Bateria: [{tri_state}] em {dt:.2f}s")
     if total_errors == 0 and total_warnings == 0:
-        print("• Homeostase Total:  Logs, Temps, Artifacts e Skills certificados em padrão-ouro absoluto.")
+        print(" Homeostase Total:  Logs, Temps, Artifacts e Skills certificados em padrao-ouro absoluto.")
     print("=" * 80 + "\n")
 
     if total_errors > 0 or total_warnings >= 3:

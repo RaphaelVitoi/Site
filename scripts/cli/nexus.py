@@ -1962,7 +1962,7 @@ def execute_handoff(
     memory_file = claude_dir / "agent-memory" / agent / "MEMORY.md"
     if memory_file.exists():
         context.append(
-            f"\n=================================================================\n## MEMÓRIA SIMBIÓTICA: {agent}\n=================================================================\n{memory_file.read_text(encoding='utf-8', errors='ignore')}"
+            f"\n=================================================================\n## MEMORIA SIMBIOTICA: {agent}\n=================================================================\n{memory_file.read_text(encoding='utf-8', errors='ignore')}"
         )
 
     handoff_text = "\n".join(context)
@@ -1970,16 +1970,16 @@ def execute_handoff(
     handoff_output_file.parent.mkdir(parents=True, exist_ok=True)
     handoff_output_file.write_text(handoff_text, encoding="utf-8")
     console.print(
-        f"[bold green]✓ Handoff persistido com sucesso:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/]"
+        f"[bold green] Handoff persistido com sucesso:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/]"
     )
 
     try:
         import pyperclip  # type: ignore
 
         pyperclip.copy(handoff_text)
-        console.print("[bold green]✓ Handoff copiado para o Clipboard do Sistema![/]")
+        console.print("[bold green] Handoff copiado para o Clipboard do Sistema![/]")
     except Exception:
-        console.print("[dim]• Clipboard não disponível ou pyperclip ausente (texto salvo em arquivo).[/]")
+        console.print("[dim] Clipboard nao disponivel ou pyperclip ausente (texto salvo em arquivo).[/]")
 
     console.print("\n[bold cyan]======================== FIM DO HANDOFF ========================[/]\n")
 
@@ -2215,7 +2215,7 @@ def audit_task_pipeline():
 
 
 # ==========================================
-# AUTOPOIESE & HOMEOSTASE SISTÊMICA SOTA v8.0 GOLD
+# AUTOPOIESE & HOMEOSTASE SISTEMICA SOTA v8.0 GOLD
 # ==========================================
 
 
@@ -2223,7 +2223,7 @@ def audit_task_pipeline():
 @app.command("autopoiesis")
 @ops_app.command("homeostasis")
 def trigger_homeostasis():
-    """Aciona o Motor de Autopoiese e Homeostase Sistêmica (Zero Entropia & Autocura)."""
+    """Aciona o Motor de Autopoiese e Homeostase Sistemica (Zero Entropia & Autocura)."""
     from core.autopoiesis_engine import run_homeostasis
 
     run_homeostasis()
