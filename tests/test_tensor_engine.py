@@ -18,7 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-# Imports defensivos de topo de módulo para conformidade estrita de AST
+# Imports defensivos de topo de modulo para conformidade estrita de AST
 try:
     import core.quantum_tensor_engine as _qte_core
 except ImportError:
@@ -32,10 +32,10 @@ except ImportError:
 
 @pytest.fixture(name="tensor_module", scope="module")
 def fixture_tensor_module() -> Any:
-    """Carrega o motor C++ de aceleração tensorial nanobind."""
+    """Carrega o motor C++ de aceleracao tensorial nanobind."""
     engine = _qte_core or _qte_root
     if engine is None:
-        pytest.skip("Módulo quantum_tensor_engine não compilado no ambiente.")
+        pytest.skip("Modulo quantum_tensor_engine nao compilado no ambiente.")
     return engine
 
 
@@ -50,8 +50,8 @@ def numpy_icm_distortion(
     active_players: int,
     street_idx: int,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Modelo analítico NumPy de distorção de ICM como baseline."""
-    _ = _call  # Garante uso semântico do parâmetro no baseline de assinatura
+    """Modelo analitico NumPy de distorcao de ICM como baseline."""
+    _ = _call  # Garante uso semantico do parametro no baseline de assinatura
     inv_7_5 = np.float32(1.0 / 7.5)
     gravity = np.maximum(np.log(pot * inv_7_5), np.float32(0.0)).astype(np.float32)
     damping = np.float32(1.0) / (np.float32(1.0) + gravity * np.float32(0.12))
@@ -87,7 +87,7 @@ def numpy_icm_distortion(
 
 
 def test_perspective_simd_isometry(tensor_module: Any) -> None:
-    """Valida a isometria exata do cálculo de perspectiva C++ SIMD vs NumPy."""
+    """Valida a isometria exata do calculo de perspectiva C++ SIMD vs NumPy."""
     n_elements = 100_000
     rng = np.random.default_rng(42)
     equity = rng.random(n_elements, dtype=np.float32)
@@ -104,7 +104,7 @@ def test_perspective_simd_isometry(tensor_module: Any) -> None:
 
 
 def test_icm_distortion_simd_isometry(tensor_module: Any) -> None:
-    """Valida a convergência e simetria do resolvedor SIMD de ICM."""
+    """Valida a convergencia e simetria do resolvedor SIMD de ICM."""
     n_elements = 100_000
     rng = np.random.default_rng(42)
 
@@ -127,12 +127,12 @@ def test_icm_distortion_simd_isometry(tensor_module: Any) -> None:
         fold_arr, call_arr, raise_arr, ip_rp, oop_rp, pot_size, top_agg, players, street
     )
 
-    # Simetria e tolerância numérica AVX2 Fast-Math
+    # Simetria e tolerancia numerica AVX2 Fast-Math
     np.testing.assert_allclose(np_f, cpp_f, rtol=5e-3, atol=5e-3)
     np.testing.assert_allclose(np_c, cpp_c, rtol=5e-3, atol=5e-3)
     np.testing.assert_allclose(np_r, cpp_r, rtol=5e-3, atol=5e-3)
 
-    # Conservação estrita de probabilidade (sum == 1.0)
+    # Conservacao estrita de probabilidade (sum == 1.0)
     total_prob = cpp_f + cpp_c + cpp_r
     np.testing.assert_allclose(total_prob, np.ones(n_elements, dtype=np.float32), rtol=1e-4, atol=1e-4)
 
@@ -156,5 +156,5 @@ def test_avx512_wide_lane_isometry(tensor_module: Any) -> None:
 
 
 def test_tensor_bridge_standalone_runner() -> None:
-    """Garante que o script de benchmark standalone roda sem exceções."""
+    """Garante que o script de benchmark standalone roda sem excecoes."""
     run_benchmark()

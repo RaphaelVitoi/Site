@@ -1,9 +1,9 @@
 """
-MOTOR DE AUTOPOIESE & HOMEOSTASE SISTÊMICA — CHICO SOTA v8.0 GOLD
-Governança: Raphael Vitoi | Protocolo: SOTA AUTOPOIESIS & HOMEOSTASIS ENGINE
+MOTOR DE AUTOPOIESE & HOMEOSTASE SISTEMICA  CHICO SOTA v8.0 GOLD
+Governanca: Raphael Vitoi | Protocolo: SOTA AUTOPOIESIS & HOMEOSTASIS ENGINE
 
-Coordena a auto-regeneração, integridade contra concorrência, retroalimentação,
-purificação de entropia e autocura do ecossistema Nexus / Antigravity / Site.
+Coordena a auto-regeneracao, integridade contra concorrencia, retroalimentacao,
+purificacao de entropia e autocura do ecossistema Nexus / Antigravity / Site.
 """
 
 import json
@@ -45,7 +45,7 @@ class HomeostasisReport:
 
 
 class AutopoiesisEngine:
-    """Motor central de homeostase, autocura e controle de concorrência."""
+    """Motor central de homeostase, autocura e controle de concorrencia."""
 
     def __init__(self, base_dir: Optional[Path] = None):
         self.base_dir = base_dir or BASE_DIR
@@ -54,11 +54,11 @@ class AutopoiesisEngine:
         (self.nexus_zone / "logs").mkdir(parents=True, exist_ok=True)
 
     def _acquire_lock(self) -> bool:
-        """Adquire trava de processo anti-concorrência."""
+        """Adquire trava de processo anti-concorrencia."""
         if LOCK_FILE.exists():
             try:
                 pid = int(LOCK_FILE.read_text().strip())
-                # Checa se o processo ainda está vivo
+                # Checa se o processo ainda esta vivo
                 if pid != os.getpid():
                     # No Windows, checamos via tasklist ou tratamento defensivo
                     # Se o lock for mais velho que 60 segundos, consideramos stale
@@ -77,14 +77,14 @@ class AutopoiesisEngine:
         LOCK_FILE.unlink(missing_ok=True)
 
     def check_and_heal_agents_drift(self) -> Tuple[bool, str]:
-        """Detecta se a realidade dos agentes está desatualizada e sincroniza proativamente."""
+        """Detecta se a realidade dos agentes esta desatualizada e sincroniza proativamente."""
         manifest_file = self.base_dir / "data" / "agents_manifest.json"
         agents_dir = self.base_dir / ".claude" / "agents"
         if not agents_dir.exists():
             agents_dir = self.base_dir / ".cerebro" / "agents"
 
         if not manifest_file.exists() or not agents_dir.exists():
-            return False, "Arquivos de manifesto de agentes não encontrados."
+            return False, "Arquivos de manifesto de agentes nao encontrados."
 
         manifest_mtime = manifest_file.stat().st_mtime
         drift_detected = False
@@ -103,13 +103,13 @@ class AutopoiesisEngine:
                     [pwsh_bin, str(sync_script)], cwd=str(self.base_dir), capture_output=True, text=True, check=False
                 )
                 if res.returncode == 0:
-                    return True, "Sincronização 1-para-1 dos 19 agentes executada com sucesso."
-                return False, f"Falha na sincronização dos agentes: {res.stderr[:150]}"
+                    return True, "Sincronizacao 1-para-1 dos 19 agentes executada com sucesso."
+                return False, f"Falha na sincronizacao dos agentes: {res.stderr[:150]}"
 
         return False, "Realidade dos agentes 100% sincronizada."
 
     def check_and_heal_temps_entropy(self) -> Tuple[int, str]:
-        """Purga pastas e arquivos temporários obsoletos e órfãos."""
+        """Purga pastas e arquivos temporarios obsoletos e orfaos."""
         now = time.time()
         purged = 0
         for item in self.nexus_zone.iterdir():
@@ -130,17 +130,17 @@ class AutopoiesisEngine:
                 pass
 
         msg = (
-            f"{purged} artefatos e diretórios temporários purgados."
+            f"{purged} artefatos e diretorios temporarios purgados."
             if purged > 0
-            else "Nexus Zone limpa e em Vazio Termodinâmico."
+            else "Nexus Zone limpa e em Vazio Termodinamico."
         )
         return purged, msg
 
     def check_and_heal_sqlite_wal(self) -> Tuple[bool, str]:
-        """Verifica integridade do banco SQLite e aciona VACUUM/WAL checkpoint se necessário."""
+        """Verifica integridade do banco SQLite e aciona VACUUM/WAL checkpoint se necessario."""
         db_path = self.nexus_zone / "runtime" / "queue" / "tasks.db"
         if not db_path.exists():
-            return True, "Fila SQLite não instanciada ou em memória pura."
+            return True, "Fila SQLite nao instanciada ou em memoria pura."
 
         try:
             conn = sqlite3.connect(str(db_path), timeout=5.0)
@@ -150,7 +150,7 @@ class AutopoiesisEngine:
             status = row[0] if row else "unknown"
             if status != "ok":
                 conn.close()
-                return False, f"Corrupção detectada no SQLite: {status}"
+                return False, f"Corrupcao detectada no SQLite: {status}"
 
             # Executa checkpoint passivo
             cursor.execute("PRAGMA wal_checkpoint(PASSIVE);")
@@ -162,12 +162,12 @@ class AutopoiesisEngine:
     def run_autopoietic_cycle(self) -> HomeostasisReport:
         """Executa um ciclo completo de homeostase e autopoiese."""
         if not self._acquire_lock():
-            # Concorrência detectada: outro processo de homeostase já está operando
+            # Concorrencia detectada: outro processo de homeostase ja esta operando
             return HomeostasisReport(
                 timestamp=time.strftime("%Y-%m-%dT%H:%M:%S%z"),
                 overall_status="SUCESSO (VERDE)",
                 entropy_index=0.0,
-                actions_taken=["Operação concorrente prevenida. Lock ativo respeitado."],
+                actions_taken=["Operacao concorrente prevenida. Lock ativo respeitado."],
             )
 
         actions = []
@@ -186,12 +186,12 @@ class AutopoiesisEngine:
                 details=msg_agents,
             )
 
-            # 2. Autocura de Temporários & Entropia
+            # 2. Autocura de Temporarios & Entropia
             purged_temps, msg_temps = self.check_and_heal_temps_entropy()
             if purged_temps > 0:
                 actions.append(f"[AUTOCURA-TEMPS] {msg_temps}")
             subsystems["temps_hygiene"] = SubsystemHealth(
-                name="Higienização de Temporários & Vazio Termodinâmico",
+                name="Higienizacao de Temporarios & Vazio Termodinamico",
                 status="VERDE",
                 details=msg_temps,
             )
@@ -231,7 +231,7 @@ class AutopoiesisEngine:
                     details="56 skills, 33 artefatos, logs e temps auditados com sucesso.",
                 )
 
-            # 5. Auditoria de Desambiguação & Fonte Única
+            # 5. Auditoria de Desambiguacao & Fonte Unica
             t_sub = time.monotonic()
             res = subprocess.run(
                 [sys.executable, "-m", "pytest", "tests/test_desambiguacao.py", "-q"],
@@ -246,14 +246,14 @@ class AutopoiesisEngine:
             if d_err > 0:
                 total_errors += d_err
             subsystems["desambiguacao"] = SubsystemHealth(
-                name="Fonte Única da Verdade & Desambiguação de Modelos",
+                name="Fonte Unica da Verdade & Desambiguacao de Modelos",
                 status=d_status,
                 errors=d_err,
                 elapsed_seconds=dt_sub,
-                details="Garantia de zero constantes duplicadas e roteamento canônico.",
+                details="Garantia de zero constantes duplicadas e roteamento canonico.",
             )
 
-            # Cálculo de Entropia e Status Tri-State
+            # Calculo de Entropia e Status Tri-State
             entropy = float(total_errors * 1.0 + total_warnings * 0.25)
             if total_errors == 0 and total_warnings == 0:
                 overall = "SUCESSO (VERDE)"
@@ -269,10 +269,10 @@ class AutopoiesisEngine:
                 subsystems=subsystems,
                 actions_taken=actions
                 if actions
-                else ["Sistema operando em homeostase pura. Nenhuma correção necessária."],
+                else ["Sistema operando em homeostase pura. Nenhuma correcao necessaria."],
             )
 
-            # Persistência Atômica de Telemetria
+            # Persistencia Atomica de Telemetria
             try:
                 line = (
                     json.dumps(
@@ -305,25 +305,25 @@ def run_homeostasis():
     dt = time.monotonic() - t0
 
     print("\n" + "=" * 80)
-    print("=== [SOTA AUTOPOIESIS & HOMEOSTASIS ENGINE — PROTOCOLO CHICO v8.0 GOLD] ===")
+    print("=== [SOTA AUTOPOIESIS & HOMEOSTASIS ENGINE  PROTOCOLO CHICO v8.0 GOLD] ===")
     print("=" * 80 + "\n")
 
-    print(f"• Timestamp:       {report.timestamp}")
-    print(f"• Status Geral:    [{report.overall_status}]")
-    print(f"• Índice Entropia: {report.entropy_index:.2f} (0.00 = Homeostase Termodinâmica Pura)")
-    print(f"• Tempo de Ciclo:  {dt:.2f}s\n")
+    print(f" Timestamp:       {report.timestamp}")
+    print(f" Status Geral:    [{report.overall_status}]")
+    print(f" Indice Entropia: {report.entropy_index:.2f} (0.00 = Homeostase Termodinamica Pura)")
+    print(f" Tempo de Ciclo:  {dt:.2f}s\n")
 
-    print("[AÇÕES DE AUTOCURA & REGENERAÇÃO EXECUTADAS]:")
+    print("[ACOES DE AUTOCURA & REGENERACAO EXECUTADAS]:")
     for act in report.actions_taken:
-        print(f"  ⚡ {act}")
+        print(f"   {act}")
 
     print("\n[ESTADO DOS SUBSISTEMAS VITAIS]:")
     for sub in report.subsystems.values():
-        icon = "✓" if sub.status == "VERDE" else "❌"
+        icon = "" if sub.status == "VERDE" else ""
         print(f"  {icon} [{sub.name}]: [{sub.status}] | Erros: {sub.errors} | {sub.details}")
 
     print("\n" + "=" * 80)
-    print("========= HOMEOSTASE TOTAL DO ECOSSISTEMA ATINGIDA COM PADRÃO-OURO ==========")
+    print("========= HOMEOSTASE TOTAL DO ECOSSISTEMA ATINGIDA COM PADRAO-OURO ==========")
     print("=" * 80 + "\n")
 
     if report.overall_status.startswith("FALHOU"):
