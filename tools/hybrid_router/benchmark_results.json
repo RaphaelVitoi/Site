@@ -1,0 +1,92 @@
+[
+  {
+    "status_code": 200,
+    "latency_ms": 965.9518000007665,
+    "target_executed": "GEMINI_37_FLASH_STANDARD",
+    "thinking_tokens": 0,
+    "tokens_evaluated": 24,
+    "is_success": true,
+    "error_message": null
+  },
+  {
+    "status_code": 200,
+    "latency_ms": 1214.1388000000006,
+    "target_executed": "GEMINI_37_FLASH_THINKING",
+    "thinking_tokens": 4096,
+    "tokens_evaluated": 53,
+    "is_success": true,
+    "error_message": null
+  },
+  {
+    "status_code": 200,
+    "latency_ms": 971.1893999992753,
+    "target_executed": "GEMINI_37_FLASH_STANDARD",
+    "thinking_tokens": 0,
+    "tokens_evaluated": 35,
+    "is_success": true,
+    "error_message": null
+  },
+  {
+    "status_code": 200,
+    "latency_ms": 958.4630000008474,
+    "target_executed": "GEMINI_37_FLASH_STANDARD",
+    "thinking_tokens": 0,
+    "tokens_evaluated": 24,
+    "is_success": true,
+    "error_message": null
+  },
+  {
+    "status_code": 200,
+    "latency_ms": 1205.739099999846,
+    "target_executed": "GEMINI_37_FLASH_THINKING",
+    "thinking_tokens": 4096,
+    "tokens_evaluated": 53,
+    "is_success": true,
+    "error_message": null
+  },
+  {
+    "status_code": 200,
+    "latency_ms": 970.1425000002928,
+    "target_executed": "GEMINI_37_FLASH_STANDARD",
+    "thinking_tokens": 0,
+    "tokens_evaluated": 35,
+    "is_success": true,
+    "error_message": null
+  },
+  {
+    "status_code": 200,
+    "latency_ms": 976.9829999986541,
+    "target_executed": "GEMINI_37_FLASH_STANDARD",
+    "thinking_tokens": 0,
+    "tokens_evaluated": 24,
+    "is_success": true,
+    "error_message": null
+  },
+  {
+    "status_code": 200,
+    "latency_ms": 1212.6535000006697,
+    "target_executed": "GEMINI_37_FLASH_THINKING",
+    "thinking_tokens": 4096,
+    "tokens_evaluated": 53,
+    "is_success": true,
+    "error_message": null
+  },
+  {
+    "status_code": 200,
+    "latency_ms": 969.0536999987671,
+    "target_executed": "GEMINI_37_FLASH_STANDARD",
+    "thinking_tokens": 0,
+    "tokens_evaluated": 35,
+    "is_success": true,
+    "error_message": null
+  },
+  {
+    "status_code": 200,
+    "latency_ms": 968.1208999991213,
+    "target_executed": "GEMINI_37_FLASH_STANDARD",
+    "thinking_tokens": 0,
+    "tokens_evaluated": 24,
+    "is_success": true,
+    "error_message": null
+  }
+]
