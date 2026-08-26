@@ -1,0 +1,95 @@
+services:
+  # ===================================================================
+  # 1. RUNTIME LOCAL LLAMA.CPP (VULKAN GPU PASSTHROUGH)
+  # ===================================================================
+  llama-vulkan:
+    build:
+      context: .
+      dockerfile: Dockerfile.llama-vulkan
+    container_name: hybrid_llama_vulkan
+    restart: unless-stopped
+    devices:
+      - /dev/dri:/dev/dri # Acesso direto ao subsistema DRI/GPU (Intel/AMD/Nvidia Vulkan)
+    environment:
+      - MODEL_PATH=/models/${LOCAL_MODEL_FILENAME:-model.gguf}
+      - HOST=0.0.0.0
+      - PORT=8080
+      - CTX_SIZE=${LOCAL_CTX_SIZE:-4096}
+      - N_GPU_LAYERS=${LOCAL_GPU_LAYERS:-99}
+      - THREADS=${LOCAL_THREADS:-4}
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || curl -f http://localhost:8080/models || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - hybrid_network
+
+  # ===================================================================
+  # 2. FASTAPI HYBRID ROUTER API
+  # ===================================================================
+  router-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: hybrid_router_api
+    restart: unless-stopped
+    depends_on:
+      llama-vulkan:
+        condition: service_healthy
+    environment:
+      - LOCAL_LLAMA_URL=http://llama-vulkan:8080/v1
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL_ID=${GEMINI_MODEL_ID:-gemini-2.5-flash}
+      - LOCAL_MAX_TOKENS=${LOCAL_MAX_TOKENS:-2048}
+      - COMPLEXITY_THRESHOLD=${COMPLEXITY_THRESHOLD:-0.45}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - hybrid_network
+
+  # ===================================================================
+  # 3. RUNNER DE BENCHMARK E GERAÇÃO DE RELATÓRIO GRÁFICO (SOB DEMANDA)
+  # ===================================================================
+  benchmark:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: hybrid_benchmark_runner
+    profiles: ["bench"]
+    depends_on:
+      router-api:
+        condition: service_healthy
+    environment:
+      - ROUTER_URL=http://router-api:8000
+      - BENCH_REQUESTS=${BENCH_REQUESTS:-60}
+      - BENCH_CONCURRENCY=${BENCH_CONCURRENCY:-10}
+      - BENCH_TIMEOUT=60.0
+      - BENCH_OUTPUT_JSON=/app/output/benchmark_results.json
+    volumes:
+      - ./output:/app/output
+    command: >
+      sh -c "
+        echo '[1/2] Executando benchmark assíncrono...' &&
+        python benchmark.py &&
+        echo '[2/2] Gerando gráficos estatísticos...' &&
+        python plot_benchmark.py --input /app/output/benchmark_results.json --output /app/output/benchmark_latency_report.png &&
+        echo 'Execução concluída com sucesso. Arquivos salvos em ./output/'
+      "
+    networks:
+      - hybrid_network
+
+networks:
+  hybrid_network:
+    driver: bridge
