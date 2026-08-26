@@ -46,6 +46,7 @@ export const GuideToolbar = ({ onExport }: Readonly<GuideToolbarProps>) => (
 		</div>
 		<div>
 			<button
+				type="button"
 				onClick={onExport}
 				className="flex items-center gap-2 px-4 py-2 bg-black/40 hover:bg-accent-indigo/20 border border-white/10 hover:border-accent-indigo/50 text-text-muted hover:text-white rounded-xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-md"
 			>

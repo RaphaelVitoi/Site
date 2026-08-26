@@ -1,4 +1,4 @@
-# [SOTA WORKFLOW] Sincronizacao de Consciencia (RAG Sync)
+﻿# [SOTA WORKFLOW] Sincronizacao de Consciencia (RAG Sync)
 # Versao: v1.0 GOLD
 
 param (

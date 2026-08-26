@@ -71,7 +71,7 @@ def test_synthesize_gemini_audio_success(tmp_path: Path, monkeypatch: pytest.Mon
 async def test_synthesize_edge_tts_execution(tmp_path: Path):
     """Valida a sintese de voz neural via Edge TTS com mock hermetico."""
     out_file = tmp_path / "francisca.mp3"
-    
+
     mock_communicate = MagicMock()
     async def mock_save(path: str) -> None:
         Path(path).write_bytes(b"MOCK_MP3_EDGE_TTS_PAYLOAD")
@@ -89,7 +89,7 @@ async def test_synthesize_edge_tts_execution(tmp_path: Path):
 async def test_async_speak_text_execution(tmp_path: Path):
     """Valida a execucao assincrona de sintese neural."""
     out_file = tmp_path / "async_test.mp3"
-    
+
     mock_communicate = MagicMock()
     async def mock_save(path: str) -> None:
         Path(path).write_bytes(b"MOCK_ASYNC_AUDIO_PAYLOAD")
@@ -106,7 +106,7 @@ async def test_async_speak_text_execution(tmp_path: Path):
 def test_speak_text_synchronous_wrapper(tmp_path: Path):
     """Valida o wrapper sincrono speak_text operando com play=False."""
     out_file = tmp_path / "sync_test.mp3"
-    
+
     mock_communicate = MagicMock()
     async def mock_save(path: str) -> None:
         Path(path).write_bytes(b"MOCK_SYNC_AUDIO_PAYLOAD")

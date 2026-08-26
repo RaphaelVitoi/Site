@@ -61,6 +61,7 @@ function LoginContent() {
 				</div>
 
 				<button
+					type="button"
 					disabled
 					className="w-full py-3 px-6 rounded-xl border border-white/5 bg-white/5 text-text-darker font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 cursor-not-allowed opacity-50"
 				>

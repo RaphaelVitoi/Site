@@ -1,4 +1,4 @@
-# NEXUS SPEEDFORCE BUILD SOTA
+﻿# NEXUS SPEEDFORCE BUILD SOTA
 # Alvos: Python (PyO3) e Frontend (WASM)
 
 $ErrorActionPreference = "Stop"

@@ -1,4 +1,5 @@
 # tests/test_perspective_api.py
+# pylint: disable=protected-access
 """
 Testes de integracao para os endpoints REST de Perspectiva Matematica (PMev):
 - POST /api/v1/perspective
@@ -6,12 +7,18 @@ Testes de integracao para os endpoints REST de Perspectiva Matematica (PMev):
 - POST /api/v1/perspective/import-solver
 """
 
+from __future__ import annotations
+
 import json
+
 import pytest
 from aiohttp import web
+from aiohttp.test_utils import make_mocked_request
+
 from api.v1.handlers import (
     handle_calculate_perspective,
     handle_import_solver_tree,
+    handle_pmev_heatmap,
     handle_simulate_perspective_tree,
 )
 
@@ -35,9 +42,6 @@ async def test_handle_calculate_perspective_success():
         "stack_depth_bb": 30.0,
     }
 
-    # Mock request
-    from aiohttp.test_utils import make_mocked_request
-
     req = make_mocked_request(
         "POST",
         "/api/v1/perspective",
@@ -48,6 +52,7 @@ async def test_handle_calculate_perspective_success():
 
     resp = await handle_calculate_perspective(req)
     assert resp.status == 200
+    assert resp.text is not None
     data = json.loads(resp.text)
     assert "pmev" in data
     assert "dynamic_ev_fold" in data
@@ -60,7 +65,6 @@ async def test_handle_calculate_perspective_success():
 async def test_handle_calculate_perspective_invalid_equity():
     """Valida rejeicao de equity fora dos limites [0, 1]."""
     app = web.Application()
-    from aiohttp.test_utils import make_mocked_request
 
     req = make_mocked_request("POST", "/api/v1/perspective", app=app)
     req._read_bytes = json.dumps({"equity": 1.5}).encode("utf-8")
@@ -73,7 +77,6 @@ async def test_handle_calculate_perspective_invalid_equity():
 async def test_handle_simulate_perspective_tree_success():
     """Valida simulacao de arvore recursiva via endpoint HTTP."""
     app = web.Application()
-    from aiohttp.test_utils import make_mocked_request
 
     payload = {
         "equity": 0.55,
@@ -90,6 +93,7 @@ async def test_handle_simulate_perspective_tree_success():
 
     resp = await handle_simulate_perspective_tree(req)
     assert resp.status == 200
+    assert resp.text is not None
     data = json.loads(resp.text)
     assert data["status"] == "SUCCESS"
     assert "tree_result" in data
@@ -100,7 +104,6 @@ async def test_handle_simulate_perspective_tree_success():
 async def test_handle_import_solver_tree_success():
     """Valida importacao de solver com auto-deteccao via endpoint HTTP."""
     app = web.Application()
-    from aiohttp.test_utils import make_mocked_request
 
     ds_json = json.dumps(
         {
@@ -129,6 +132,7 @@ async def test_handle_import_solver_tree_success():
 
     resp = await handle_import_solver_tree(req)
     assert resp.status == 200
+    assert resp.text is not None
     data = json.loads(resp.text)
     assert data["status"] == "SUCCESS"
     assert data["solver_type"] == "deep_solver"
@@ -139,10 +143,7 @@ async def test_handle_import_solver_tree_success():
 @pytest.mark.asyncio
 async def test_handle_pmev_heatmap_success():
     """Valida geracao de heatmap via endpoint HTTP."""
-    from api.v1.handlers import handle_pmev_heatmap
-
     app = web.Application()
-    from aiohttp.test_utils import make_mocked_request
 
     payload = {
         "deepsolver_range": {
@@ -164,6 +165,7 @@ async def test_handle_pmev_heatmap_success():
 
     resp = await handle_pmev_heatmap(req)
     assert resp.status == 200
+    assert resp.text is not None
     data = json.loads(resp.text)
     assert data["status"] == "SUCCESS"
     assert "deepsolver_matrix" in data

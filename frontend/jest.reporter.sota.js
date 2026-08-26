@@ -62,8 +62,8 @@ class SotaJestGuardReporter {
     const totalErrors = this.errors.length + results.numFailedTests;
     const totalWarnings = this.warnings.length;
     
-    let status = 'SUCESSO';
-    let statusColor = '\x1b[32m';
+    let status;
+    let statusColor;
     if (totalErrors === 0 && totalWarnings === 0) {
       status = 'SUCESSO (VERDE)';
       statusColor = '\x1b[32m';

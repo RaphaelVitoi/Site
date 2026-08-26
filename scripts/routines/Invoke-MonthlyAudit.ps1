@@ -1,4 +1,4 @@
-# Rotina Mensal Automatizada de Auditoria SOTA v8.0 GOLD: Modus Operandi & Roteamento.
+﻿# Rotina Mensal Automatizada de Auditoria SOTA v8.0 GOLD: Modus Operandi & Roteamento.
 param()
 
 $ErrorActionPreference = "Stop"

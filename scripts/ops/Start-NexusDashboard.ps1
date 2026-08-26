@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Nexus Dashboard SOTA v8.0 GOLD - Visualizador de Telemetria, Modelos e Pipeline de Operacoes em Tempo Real.
     Governanca: Raphael Vitoi | Avatar: Chico (Tier 1).

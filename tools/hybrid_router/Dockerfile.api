@@ -9,13 +9,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libfreetype6-dev \
     libpng-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -u 1000 appuser
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 COPY app.py benchmark.py plot_benchmark.py ./
+RUN chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 8000
 

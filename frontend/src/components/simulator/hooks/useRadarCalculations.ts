@@ -48,8 +48,8 @@ function buildTopologicalData(scenario: Scenario, nash?: IcmDistortionResult): T
 		? Math.min(100, Math.max(0, ((firstSpr.rpValue - (lastSpr?.rpValue ?? 0)) / Math.max(1, firstSpr.rpValue)) * 100))
 		: 0;
 
-	// Índice de Tensão Topológica Theta = sqrt(rpIp^2 + rpOop^2) * (1 + asymmetry/100) normalizado para escala 0-100
-	const rawTension = Math.sqrt(rpIp * rpIp + rpOop * rpOop) * (1 + asymmetry / 100);
+	// Índice de Tensão Topológica Theta = Math.hypot(rpIp, rpOop) * (1 + asymmetry/100) normalizado para escala 0-100
+	const rawTension = Math.hypot(rpIp, rpOop) * (1 + asymmetry / 100);
 	const tensionIndex = Math.min(100, Math.max(0, rawTension * 1.8));
 
 	return {

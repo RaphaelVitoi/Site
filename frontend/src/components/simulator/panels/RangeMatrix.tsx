@@ -224,7 +224,7 @@ export default function RangeMatrix({
 
 			{/* ═══ ESTATÍSTICAS SUMÁRIAS DE DEFESA (4 CARDS) ═══ */}
 			<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-				<div className="bg-emerald-950/25 border border-emerald-500/20 p-3 rounded-2xl flex flex-col justify-center min-h-[58px]">
+				<div className="bg-emerald-950/25 border border-emerald-500/20 p-3 rounded-2xl flex flex-col justify-center min-h-14.5">
 					<span className="text-[0.52rem] font-mono font-black uppercase tracking-wider text-emerald-400 mb-0.5">
 						Defesa Total (Call)
 					</span>
@@ -241,7 +241,7 @@ export default function RangeMatrix({
 					</span>
 				</div>
 
-				<div className="bg-rose-950/25 border border-rose-500/20 p-3 rounded-2xl flex flex-col justify-center min-h-[58px]">
+				<div className="bg-rose-950/25 border border-rose-500/20 p-3 rounded-2xl flex flex-col justify-center min-h-14.5">
 					<span className="text-[0.52rem] font-mono font-black uppercase tracking-wider text-rose-400 mb-0.5">
 						Descarte (Fold)
 					</span>
@@ -258,7 +258,7 @@ export default function RangeMatrix({
 					</span>
 				</div>
 
-				<div className="bg-slate-900/40 border border-white/5 p-3 rounded-2xl flex flex-col justify-center min-h-[58px]">
+				<div className="bg-slate-900/40 border border-white/5 p-3 rounded-2xl flex flex-col justify-center min-h-14.5">
 					<span className="text-[0.52rem] font-mono font-black uppercase tracking-wider text-text-dim mb-0.5">
 						Equidade Requerida
 					</span>
@@ -270,7 +270,7 @@ export default function RangeMatrix({
 					</span>
 				</div>
 
-				<div className="bg-slate-900/40 border border-white/5 p-3 rounded-2xl flex flex-col justify-center min-h-[58px]">
+				<div className="bg-slate-900/40 border border-white/5 p-3 rounded-2xl flex flex-col justify-center min-h-14.5">
 					<span className="text-[0.52rem] font-mono font-black uppercase tracking-wider text-text-dim mb-0.5">
 						Bubble Factor
 					</span>
@@ -310,6 +310,13 @@ export default function RangeMatrix({
 								const cellStyle = getCellColorAndBorder(detail);
 								const feReqCell = calculateReverseRequiredFoldEquity(15, 20, detail.equity / 100, 15);
 
+								let stateRingStyle = 'hover:border-white/40';
+								if (isPinned) {
+									stateRingStyle = 'ring-2 ring-accent-amber border-amber-300 brightness-125 z-10 shadow-[0_0_10px_rgba(245,158,11,0.4)]';
+								} else if (isHovered) {
+									stateRingStyle = 'ring-1.5 ring-white border-white brightness-125 z-10 shadow-[0_0_8px_rgba(255,255,255,0.3)]';
+								}
+
 								return (
 									<button
 										type="button"
@@ -319,13 +326,7 @@ export default function RangeMatrix({
 											setHoveredHand(null);
 										}}
 										onMouseEnter={() => setHoveredHand(hand)}
-										className={`relative aspect-square flex flex-col items-center justify-center font-mono font-black transition-colors duration-75 cursor-pointer rounded-md sm:rounded-lg border outline-none ${cellStyle} ${
-											isPinned
-												? 'ring-2 ring-accent-amber border-amber-300 brightness-125 z-10 shadow-[0_0_10px_rgba(245,158,11,0.4)]'
-												: isHovered
-													? 'ring-1.5 ring-white border-white brightness-125 z-10 shadow-[0_0_8px_rgba(255,255,255,0.3)]'
-													: 'hover:border-white/40'
-										}`}
+										className={`relative aspect-square flex flex-col items-center justify-center font-mono font-black transition-colors duration-75 cursor-pointer rounded-md sm:rounded-lg border outline-none ${cellStyle} ${stateRingStyle}`}
 										title={`${hand}: Eq ${detail.equity}% | Req ${detail.requiredEquity}% | FE_req ${(feReqCell * 100).toFixed(0)}%`}
 									>
 										<span className="text-[0.52rem] sm:text-[0.68rem] md:text-[0.74rem] leading-none">{hand}</span>
@@ -374,7 +375,7 @@ export default function RangeMatrix({
 
 			{/* ═══ PAINEL INSPETOR DETALHADO DA MÃO SELECIONADA (ALTURA ESTRITAMENTE CONSTANTE) ═══ */}
 			<div className="bg-slate-950/60 border border-white/8 p-4 sm:p-5 rounded-3xl flex flex-col gap-3.5 shadow-inner">
-				<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-3 min-h-[50px]">
+				<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-3 min-h-12.5">
 					<div className="flex items-center gap-3">
 						<div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-mono font-black text-base text-white shadow-inner shrink-0">
 							{inspectedDetail.hand}
@@ -400,7 +401,7 @@ export default function RangeMatrix({
 
 					{/* Badge do Veredito com Altura e Largura Estáveis */}
 					<div
-						className={`px-3.5 py-1.5 min-h-[32px] rounded-xl border text-center font-mono text-[0.62rem] font-black tracking-wider shadow-sm transition-colors flex items-center justify-center whitespace-nowrap shrink-0 ${
+						className={`px-3.5 py-1.5 min-h-8 rounded-xl border text-center font-mono text-[0.62rem] font-black tracking-wider shadow-sm transition-colors flex items-center justify-center whitespace-nowrap shrink-0 ${
 							getVerdictBadge(inspectedDetail.verdict).color
 						}`}
 					>
@@ -410,7 +411,7 @@ export default function RangeMatrix({
 
 				{/* Grade de 4 Métricas Chave */}
 				<div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 font-mono">
-					<div className="flex flex-col justify-center bg-black/40 p-2.5 rounded-xl border border-white/5 min-h-[52px]">
+					<div className="flex flex-col justify-center bg-black/40 p-2.5 rounded-xl border border-white/5 min-h-13">
 						<span className="text-[0.48rem] text-text-dim uppercase tracking-wider mb-0.5">
 							Equidade vs Shove
 						</span>
@@ -419,7 +420,7 @@ export default function RangeMatrix({
 						</span>
 					</div>
 
-					<div className="flex flex-col justify-center bg-black/40 p-2.5 rounded-xl border border-white/5 min-h-[52px]">
+					<div className="flex flex-col justify-center bg-black/40 p-2.5 rounded-xl border border-white/5 min-h-13">
 						<span className="text-[0.48rem] text-text-dim uppercase tracking-wider mb-0.5">
 							Equidade Requerida
 						</span>
@@ -428,7 +429,7 @@ export default function RangeMatrix({
 						</span>
 					</div>
 
-					<div className="flex flex-col justify-center bg-black/40 p-2.5 rounded-xl border border-white/5 min-h-[52px]">
+					<div className="flex flex-col justify-center bg-black/40 p-2.5 rounded-xl border border-white/5 min-h-13">
 						<span className="text-[0.48rem] text-text-dim uppercase tracking-wider mb-0.5">
 							Margem de Lucro (&Delta;)
 						</span>
@@ -444,7 +445,7 @@ export default function RangeMatrix({
 						</span>
 					</div>
 
-					<div className="flex flex-col justify-center bg-black/40 p-2.5 rounded-xl border border-white/5 min-h-[52px]">
+					<div className="flex flex-col justify-center bg-black/40 p-2.5 rounded-xl border border-white/5 min-h-13">
 						<span className="text-[0.48rem] text-text-dim uppercase tracking-wider mb-0.5">
 							Fold Equity Reversa ($FE_{'{req}'}$)
 						</span>
@@ -481,7 +482,7 @@ export default function RangeMatrix({
 					</div>
 				</div>
 
-				<div className="min-h-[52px] h-[52px] flex items-center bg-black/20 px-3.5 py-2 rounded-xl border border-white/5 overflow-hidden">
+				<div className="min-h-13 h-13 flex items-center bg-black/20 px-3.5 py-2 rounded-xl border border-white/5 overflow-hidden">
 					<p className="text-[0.62rem] text-text-muted leading-tight font-sans m-0 italic line-clamp-2">
 						{inspectedDetail.margin >= 0
 							? `A equidade de ${inspectedDetail.hand} (${inspectedDetail.equity}%) supera o limiar de sobrevivência ICM (${inspectedDetail.requiredEquity}%), gerando call de expectativa positiva.`

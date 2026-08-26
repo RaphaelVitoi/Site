@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Auditoria de Integridade do Banco de Dados SOTA (SQLite)
 #>

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Sincronizador SOTA de Repositorio (Rebase Linear + CWV Gate)
     Protocolo Chico SOTA v8.0 GOLD

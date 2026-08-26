@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Auditoria Adaptativa (Smart MDA) - Verificacao de Integridade SOTA
 #>

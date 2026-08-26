@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable max-params, complexity, sonarjs/cognitive-complexity, sonarjs/todo-tag, sonarjs/no-nested-functions, sonarjs/prefer-default-export, unicorn/prefer-code-point, sonarjs/no-commented-code, sonarjs/expression-complexity */
 /* @ts-self-types="./vitoi_equity_engine.d.ts" */
 
 /**
@@ -267,13 +269,13 @@ function debugString(val) {
         return debug;
     }
     // Test for built-in
-    const builtInMatches = /\[object ([^\]]+)\]/.exec(toString.call(val));
+    const builtInMatches = /\[object ([^\]]+)\]/.exec(Object.prototype.toString.call(val));
     let className;
     if (builtInMatches && builtInMatches.length > 1) {
         className = builtInMatches[1];
     } else {
         // Failed to match the standard '[object ClassName]'
-        return toString.call(val);
+        return Object.prototype.toString.call(val);
     }
     if (className == 'Object') {
         // we're a user defined class or Object
@@ -373,7 +375,9 @@ function passStringToWasm0(arg, malloc, realloc) {
         if (offset !== 0) {
             arg = arg.slice(offset);
         }
-        ptr = realloc(ptr, len, len = offset + arg.length * 3, 1) >>> 0;
+        const oldLen = len;
+        len = offset + arg.length * 3;
+        ptr = realloc(ptr, oldLen, len, 1) >>> 0;
         const view = getUint8ArrayMemory0().subarray(ptr + offset, ptr + len);
         const ret = cachedTextEncoder.encodeInto(arg, view);
 
@@ -426,6 +430,13 @@ function __wbg_finalize_init(instance, module) {
     return wasm;
 }
 
+function expectedResponseType(type) {
+    switch (type) {
+        case 'basic': case 'cors': case 'default': return true;
+        default: return false;
+    }
+}
+
 async function __wbg_load(module, imports) {
     if (typeof Response === 'function' && module instanceof Response) {
         if (typeof WebAssembly.instantiateStreaming === 'function') {
@@ -451,13 +462,6 @@ async function __wbg_load(module, imports) {
         } else {
             return instance;
         }
-    }
-
-    function expectedResponseType(type) {
-        switch (type) {
-            case 'basic': case 'cors': case 'default': return true;
-        }
-        return false;
     }
 }
 
@@ -507,4 +511,5 @@ async function __wbg_init(module_or_path) {
     return __wbg_finalize_init(instance, module);
 }
 
-export { initSync, __wbg_init as default };
+export default __wbg_init;
+export { initSync };

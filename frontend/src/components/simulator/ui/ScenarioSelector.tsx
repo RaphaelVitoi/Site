@@ -19,8 +19,8 @@ export default function ScenarioSelector({ scenarios, activeId, onSelect }: Read
     const groups: Record<string, Scenario[]> = {};
     scenarios.forEach((s) => {
       const cat = s.category || 'Outros';
-      groups[cat] ??= [];
-      groups[cat].push(s);
+      const list = groups[cat] ?? (groups[cat] = []);
+      list.push(s);
     });
     return groups;
   }, [scenarios]);

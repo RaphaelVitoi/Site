@@ -15,7 +15,7 @@ import sys
 import time
 from contextlib import asynccontextmanager
 from enum import StrEnum
-from typing import AsyncGenerator
+from typing import AsyncGenerator, TYPE_CHECKING
 
 import httpx
 from fastapi import FastAPI, HTTPException, status
@@ -45,12 +45,16 @@ _load_env_file()
 
 
 # Google GenAI SDK Oficial
-try:
+if TYPE_CHECKING:
     from google import genai
     from google.genai import types
-except ImportError:
-    genai = None  # type: ignore[assignment]
-    types = None  # type: ignore[assignment]
+else:
+    try:
+        from google import genai
+        from google.genai import types
+    except ImportError:
+        genai = None  # type: ignore[assignment]
+        types = None  # type: ignore[assignment]
 
 
 # =====================================================================
@@ -73,7 +77,7 @@ class RouteMetrics(BaseModel):
     requires_tools: bool = Field(..., description="Indica necessidade de execução de ferramentas.")
     requires_strict_json: bool = Field(..., description="Indica exigência de validação via JSON Schema estrito.")
     selected_target: ExecutionTarget = Field(..., description="Destino de execução selecionado.")
-    thinking_budget: int | None = Field(None, description="Orçamento de tokens de Extended Thinking.")
+    thinking_budget: int | None = Field(default=None, description="Orçamento de tokens de Extended Thinking.")
     rationale: str = Field(..., description="Fundamentação lógica da decisão de roteamento.")
 
 
@@ -89,11 +93,11 @@ class GenerateRequest(BaseModel):
     )
 
     prompt: str = Field(..., min_length=1, description="Payload de entrada para inferência.")
-    system_instruction: str = Field("", description="Instruções de sistema ou metaprompt de governança.")
-    force_target: ExecutionTarget | None = Field(None, description="Sobrescreve a heurística do roteador.")
-    thinking_budget_override: int | None = Field(None, ge=-1, le=65536, description="Orçamento de raciocínio (-1=dinâmico, 0=off, >0=fixo).")
-    response_schema: dict[str, JsonValue] | None = Field(None, description="JSON Schema para decodificação gramatical estrita.")
-    tools_provided: bool = Field(False, description="Flag indicando presença de ferramentas no pipeline.")
+    system_instruction: str = Field(default="", description="Instruções de sistema ou metaprompt de governança.")
+    force_target: ExecutionTarget | None = Field(default=None, description="Sobrescreve a heurística do roteador.")
+    thinking_budget_override: int | None = Field(default=None, ge=-1, le=65536, description="Orçamento de raciocínio (-1=dinâmico, 0=off, >0=fixo).")
+    response_schema: dict[str, JsonValue] | None = Field(default=None, description="JSON Schema para decodificação gramatical estrita.")
+    tools_provided: bool = Field(default=False, description="Flag indicando presença de ferramentas no pipeline.")
 
 
 class GenerateResponse(BaseModel):
@@ -103,7 +107,7 @@ class GenerateResponse(BaseModel):
     target_executed: ExecutionTarget = Field(..., description="Ambiente que executou a inferência.")
     latency_ms: float = Field(..., description="Latência ponta a ponta em milissegundos.")
     tokens_evaluated: int = Field(..., description="Tokens estimados no prompt de entrada.")
-    thinking_tokens_used: int = Field(0, description="Tokens consumidos durante o Extended Thinking.")
+    thinking_tokens_used: int = Field(default=0, description="Tokens consumidos durante o Extended Thinking.")
     metrics: RouteMetrics = Field(..., description="Métricas analíticas calculadas na triagem.")
 
 
@@ -282,29 +286,26 @@ class GeminiCloudClient:
         response_schema: dict[str, JsonValue] | None = None,
     ) -> tuple[str, int]:
         """Executa geração assíncrona não-bloqueante via client.aio."""
-        if not self._client or types is None:
+        client = self._client
+        if client is None or types is None:
             raise RuntimeError("SDK Google GenAI não inicializado ou GEMINI_API_KEY ausente.")
 
-        config_params: dict[str, object] = {
-            "temperature": 0.2,
-        }
+        thinking_cfg = (
+            types.ThinkingConfig(thinking_budget=thinking_budget)
+            if thinking_budget is not None
+            else None
+        )
 
-        if system_instruction:
-            config_params["system_instruction"] = system_instruction
-
-        if thinking_budget is not None:
-            config_params["thinking_config"] = types.ThinkingConfig(
-                thinking_budget=thinking_budget
-            )
-
-        if response_schema is not None:
-            config_params["response_mime_type"] = "application/json"
-            config_params["response_schema"] = response_schema
-
-        config = types.GenerateContentConfig(**config_params)
+        config = types.GenerateContentConfig(
+            temperature=0.2,
+            system_instruction=system_instruction if system_instruction else None,
+            thinking_config=thinking_cfg,
+            response_mime_type="application/json" if response_schema is not None else None,
+            response_schema=response_schema,
+        )
 
         # Chamada assíncrona nativa pelo barramento client.aio
-        response = await self._client.aio.models.generate_content(
+        response = await client.aio.models.generate_content(
             model=self.model_id,
             contents=prompt,
             config=config,
@@ -333,11 +334,11 @@ class HybridOrchestrator:
         self,
         local_client: LocalLlamaVulkanClient,
         cloud_client: GeminiCloudClient,
-        analyzer: ComplexityAnalyzer,
+        complexity_analyzer: ComplexityAnalyzer,
     ) -> None:
         self.local = local_client
         self.cloud = cloud_client
-        self.analyzer = analyzer
+        self.analyzer = complexity_analyzer
 
     async def dispatch(self, req: GenerateRequest) -> GenerateResponse:
         start_time = time.perf_counter()
@@ -433,7 +434,7 @@ orchestrator = HybridOrchestrator(local_llama_client, gemini_cloud_client, analy
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     await local_llama_client.start()
     yield
     await local_llama_client.close()
@@ -494,6 +495,5 @@ async def generate_completion(request: GenerateRequest) -> GenerateResponse:
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", "8000"))
-    host = os.getenv("HOST", "0.0.0.0")
+    host = os.getenv("HOST", "0.0.0.0")  # noqa: S104 # nosec B104
     uvicorn.run("app:app", host=host, port=port, reload=False, log_level="info")
-
