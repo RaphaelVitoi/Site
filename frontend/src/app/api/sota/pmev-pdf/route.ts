@@ -69,21 +69,15 @@ function generateMultiPagePdf(pagesData: string[][], docTitle: string): Uint8Arr
 		const pageLines = pagesData[i] || [];
 		const contentStream: string[] = [];
 
-		contentStream.push('q');
-		// Dark obsidian theme background
-		contentStream.push('0.05 0.07 0.10 rg 0 0 595.28 841.89 re f');
-
-		// Header Box on top
-		contentStream.push('0.08 0.11 0.16 rg 30 740 535.28 72 re f');
-		contentStream.push('0.85 0.55 0.10 RG 1.5 w 30 740 535.28 72 re S');
-		contentStream.push(`BT /F2 13 Tf 1.0 1.0 1.0 rg 45 783 Td (${docTitle}) Tj ET`);
-		contentStream.push('BT /F1 9 Tf 0.65 0.75 0.85 rg 45 766 Td (POKER RACIONAL - NEXUS SOTA v8.0 GOLD | AUTOR: RAPHAEL VITOI) Tj ET');
+		// Dark obsidian theme background, Header Box, Title, and Footer
 		contentStream.push(
-			`BT /F1 8 Tf 0.85 0.55 0.10 rg 45 750 Td (PARTE ${i + 1} DE ${numPages} | GUIA DIDATICO E TRATADO MATEMATICO PARA ESTUDANTES) Tj ET`
-		);
-
-		// Footer
-		contentStream.push(
+			'q',
+			'0.05 0.07 0.10 rg 0 0 595.28 841.89 re f',
+			'0.08 0.11 0.16 rg 30 740 535.28 72 re f',
+			'0.85 0.55 0.10 RG 1.5 w 30 740 535.28 72 re S',
+			`BT /F2 13 Tf 1.0 1.0 1.0 rg 45 783 Td (${docTitle}) Tj ET`,
+			'BT /F1 9 Tf 0.65 0.75 0.85 rg 45 766 Td (POKER RACIONAL - NEXUS SOTA v8.0 GOLD | AUTOR: RAPHAEL VITOI) Tj ET',
+			`BT /F1 8 Tf 0.85 0.55 0.10 rg 45 750 Td (PARTE ${i + 1} DE ${numPages} | GUIA DIDATICO E TRATADO MATEMATICO PARA ESTUDANTES) Tj ET`,
 			`BT /F1 8 Tf 0.45 0.55 0.65 rg 220 25 Td (Pagina ${i + 1} de ${numPages} - Poker Racional SOTA v8.0 GOLD) Tj ET`
 		);
 
@@ -92,8 +86,10 @@ function generateMultiPagePdf(pagesData: string[][], docTitle: string): Uint8Arr
 			const line = rawLine.replace(/[()]/g, '');
 			if (line.startsWith('# ')) {
 				y -= 22;
-				contentStream.push(`0.12 0.16 0.22 rg 30 ${y - 4} 535.28 17 re f`);
-				contentStream.push(`BT /F2 9.5 Tf 0.95 0.65 0.15 rg 38 ${y} Td (${line.slice(2)}) Tj ET`);
+				contentStream.push(
+					`0.12 0.16 0.22 rg 30 ${y - 4} 535.28 17 re f`,
+					`BT /F2 9.5 Tf 0.95 0.65 0.15 rg 38 ${y} Td (${line.slice(2)}) Tj ET`
+				);
 				y -= 6;
 			} else if (line.startsWith('## ')) {
 				y -= 16;
@@ -103,9 +99,11 @@ function generateMultiPagePdf(pagesData: string[][], docTitle: string): Uint8Arr
 				contentStream.push(`BT /F1 8.5 Tf 0.85 0.90 0.95 rg 45 ${y} Td (${line}) Tj ET`);
 			} else if (line.startsWith('     [FORMULA] ')) {
 				y -= 15;
-				contentStream.push(`0.07 0.12 0.18 rg 45 ${y - 3} 505.28 15 re f`);
-				contentStream.push(`0.20 0.45 0.70 RG 0.5 w 45 ${y - 3} 505.28 15 re S`);
-				contentStream.push(`BT /F3 8 Tf 0.60 0.95 0.70 rg 52 ${y} Td (${line.slice(15).trim()}) Tj ET`);
+				contentStream.push(
+					`0.07 0.12 0.18 rg 45 ${y - 3} 505.28 15 re f`,
+					`0.20 0.45 0.70 RG 0.5 w 45 ${y - 3} 505.28 15 re S`,
+					`BT /F3 8 Tf 0.60 0.95 0.70 rg 52 ${y} Td (${line.slice(15).trim()}) Tj ET`
+				);
 				y -= 4;
 			} else if (line.startsWith('     ')) {
 				y -= 11;

@@ -232,19 +232,22 @@ export function computeDynamicFoldEV(state: TableStateDTO, posFromBB = 2): numbe
 	const orbitCost = state.smallBlind + state.bigBlind + (state.ante ?? 0) * n;
 
 	const friction = (orbitCost / n) * (1.0 + posFromBB / Math.max(1, n));
-	const decayedHeroStack = Math.max(0, state.stacks[state.heroIndex] - friction);
+	const heroStack = state.stacks[state.heroIndex] ?? 0;
+	const decayedHeroStack = Math.max(0, heroStack - friction);
 	const baseFoldEV = (decayedHeroStack / totalChips) * totalPayout;
 
 	let bystanderGain = 0;
 	for (let j = 0; j < n; j++) {
 		for (let k = j + 1; k < n; k++) {
 			if (j === state.heroIndex || k === state.heroIndex) continue;
-			const shorterStack = Math.min(state.stacks[j], state.stacks[k]);
-			const largerStack = Math.max(state.stacks[j], state.stacks[k]);
+			const stackJ = state.stacks[j] ?? 0;
+			const stackK = state.stacks[k] ?? 0;
+			const shorterStack = Math.min(stackJ, stackK);
+			const largerStack = Math.max(stackJ, stackK);
 
 			const pAllIn = Math.exp(-0.08 * shorterStack);
-			const pElim = largerStack / Math.max(1e-9, state.stacks[j] + state.stacks[k]);
-			const heroShare = state.stacks[state.heroIndex] / Math.max(1e-9, totalChips - shorterStack);
+			const pElim = largerStack / Math.max(1e-9, stackJ + stackK);
+			const heroShare = heroStack / Math.max(1e-9, totalChips - shorterStack);
 			const payjumpValue = (totalPayout / Math.max(1, n)) * 0.40;
 
 			bystanderGain += pAllIn * pElim * heroShare * payjumpValue;

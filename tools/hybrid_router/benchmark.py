@@ -151,7 +151,7 @@ async def run_benchmark(config: BenchmarkConfig) -> BenchmarkMetrics:
     limits = httpx.Limits(max_keepalive_connections=config.concurrency, max_connections=config.concurrency * 2)
     timeout = httpx.Timeout(config.timeout_seconds, connect=5.0)
 
-    print(f"\n[INICIALIZANDO BENCHMARK SOTA]")
+    print("\n[INICIALIZANDO BENCHMARK SOTA]")
     print(f"Target URL:        {url}")
     print(f"Total Requests:    {config.total_requests}")
     print(f"Concorrência:      {config.concurrency}")
@@ -227,13 +227,17 @@ def display_report(metrics: BenchmarkMetrics) -> None:
     print("=" * 75)
 
 
-if __name__ == "__main__":
-    config = BenchmarkConfig(
+def main() -> None:
+    bench_config = BenchmarkConfig(
         base_url=os.getenv("ROUTER_URL", "http://127.0.0.1:8000"),
         total_requests=int(os.getenv("BENCH_REQUESTS", "30")),
         concurrency=int(os.getenv("BENCH_CONCURRENCY", "6")),
         timeout_seconds=float(os.getenv("BENCH_TIMEOUT", "60.0")),
         output_json_file=os.getenv("BENCH_OUTPUT_JSON", "benchmark_results.json"),
     )
-    metrics_result = asyncio.run(run_benchmark(config))
+    metrics_result = asyncio.run(run_benchmark(bench_config))
     display_report(metrics_result)
+
+
+if __name__ == "__main__":
+    main()

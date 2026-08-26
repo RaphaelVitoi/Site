@@ -3,8 +3,16 @@
 
 from __future__ import annotations
 
+import sys
 import unittest
-from app import (
+from pathlib import Path
+
+_REPO_ROOT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+# pylint: disable=wrong-import-position
+from tools.hybrid_router.app import (  # noqa: E402
     ComplexityAnalyzer,
     ExecutionTarget,
     GenerateRequest,

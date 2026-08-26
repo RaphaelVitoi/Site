@@ -1,6 +1,6 @@
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-  "python.languageServer": "Pylance",
+  "python.languageServer": "Jedi",
   "python.terminal.activateEnvironment": true,
   "python.analysis.typeCheckingMode": "standard",
   "python.analysis.diagnosticMode": "workspace",
@@ -238,7 +238,7 @@
   "jupyter.askForKernelRestart": false,
   "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
   "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
-  "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/build/**,**/temp/**",
+  "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**",
   "css.lint.unknownAtRules": "ignore",
   "scss.lint.unknownAtRules": "ignore",
   "vitest.rootConfig": "vitest.config.mjs",
@@ -286,11 +286,7 @@
   "securecoder.rules.i18n": "off",
   "securecoder.rules.internationalization": "off",
   "securecoder.rules.jsx-not-internationalized": "off",
-  "securecoder.disabledRules": [
-    "jsx-not-internationalized",
-    "i18n",
-    "internationalization"
-  ],
+  "securecoder.disabledRules": ["jsx-not-internationalized", "i18n", "internationalization"],
   "google.cloud.project": "original-498419",
   "google.cloud.billingQuotaProject": "original-498419",
   "cloudcode.project": "original-498419",
@@ -301,5 +297,12 @@
   "cloudcode.secretManager.showExplorer": true,
   "cloudcode.yaml.schemaValidation": true,
   "claudeCode.preferredLocation": "panel",
-  "claudeCode.focusView": true
+  "claudeCode.focusView": true,
+  "autoDocstring.docstringFormat": "google",
+  "autoDocstring.startOnNewLine": true,
+  "autoDocstring.includeExtendedSummary": true,
+  "evenBetterToml.schema.enabled": true,
+  "turboConsoleLog.addSemicolonInTheEnd": true,
+  "turboConsoleLog.logMessagePrefix": "⚡ [SOTA-DEBUG]",
+  "redhat.telemetry.enabled": false
 }

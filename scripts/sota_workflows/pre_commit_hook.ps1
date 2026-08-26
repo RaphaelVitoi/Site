@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Hook de Pre-Commit SOTA
 # Este hook engatilha a integridade e forca a validacao da malha termodinamica
 # antes de qualquer modificacao ser salva no Indice.

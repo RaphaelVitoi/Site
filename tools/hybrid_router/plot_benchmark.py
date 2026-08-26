@@ -13,25 +13,33 @@ import json
 import os
 import subprocess
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
-try:
+if TYPE_CHECKING:
     import matplotlib
-    matplotlib.use("Agg")  # Backend headless seguro
     import matplotlib.gridspec as gridspec
     import matplotlib.pyplot as plt
     import numpy as np
     import pandas as pd
     import seaborn as sns
-except ImportError as exc:
-    print(f"[AVISO] Dependências de plotagem não encontradas ({exc}).")
-    print("Instale com: pip install matplotlib seaborn pandas numpy")
-    matplotlib = None  # type: ignore[assignment]
-    gridspec = None  # type: ignore[assignment]
-    plt = None  # type: ignore[assignment]
-    np = None  # type: ignore[assignment]
-    pd = None  # type: ignore[assignment]
-    sns = None  # type: ignore[assignment]
+else:
+    try:
+        import matplotlib
+        matplotlib.use("Agg")  # Backend headless seguro
+        import matplotlib.gridspec as gridspec
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import pandas as pd
+        import seaborn as sns
+    except ImportError as exc:
+        print(f"[AVISO] Dependências de plotagem não encontradas ({exc}).")
+        print("Instale com: pip install matplotlib seaborn pandas numpy")
+        matplotlib = None  # type: ignore[assignment]
+        gridspec = None  # type: ignore[assignment]
+        plt = None  # type: ignore[assignment]
+        np = None  # type: ignore[assignment]
+        pd = None  # type: ignore[assignment]
+        sns = None  # type: ignore[assignment]
 
 
 # =====================================================================
@@ -92,8 +100,7 @@ def generate_synthetic_data(samples: int = 60) -> pd.DataFrame:
         })
 
     # Embaralhar para simular sequência de requisições real
-    df = pd.DataFrame(records).sample(frac=1.0, random_state=42).reset_index(drop=True)
-    return df
+    return pd.DataFrame(records).sample(frac=1.0, random_state=42).reset_index(drop=True)
 
 
 def load_dataset(file_path: str | None) -> pd.DataFrame:
@@ -111,7 +118,8 @@ def load_dataset(file_path: str | None) -> pd.DataFrame:
         df = generate_synthetic_data()
 
     if "is_success" in df.columns:
-        df = df[df["is_success"] == True].copy().reset_index(drop=True)  # noqa: E712
+        filtered = df[df["is_success"]]
+        df = cast(pd.DataFrame, filtered).copy().reset_index(drop=True)
     return df
 
 
@@ -121,7 +129,7 @@ def load_dataset(file_path: str | None) -> pd.DataFrame:
 
 def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_report.png") -> None:
     sns.set_theme(style="whitegrid", font="sans-serif")
-    
+
     # Criação do Canvas Master com Banner Superior e 4 Painéis
     fig = plt.figure(figsize=(20, 12), dpi=300, facecolor=THEME_BG)
     gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.32, wspace=0.22, top=0.88, bottom=0.07, left=0.06, right=0.96)
@@ -130,16 +138,17 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
     # 0. HEADER / BANNER DE KPIS EXECUTIVOS
     # -------------------------------------------------------------
     total_reqs = len(df)
-    avg_lat = df["latency_ms"].mean() if total_reqs else 0.0
-    p50 = float(np.percentile(df["latency_ms"], 50)) if total_reqs else 0.0
-    p90 = float(np.percentile(df["latency_ms"], 90)) if total_reqs else 0.0
-    p99 = float(np.percentile(df["latency_ms"], 99)) if total_reqs else 0.0
-    total_thinking = int(df["thinking_tokens"].sum()) if "thinking_tokens" in df.columns else 0
+    latency_vals = df["latency_ms"].to_numpy()
+    avg_lat = float(np.mean(latency_vals)) if total_reqs else 0.0
+    p50 = float(np.percentile(latency_vals, 50)) if total_reqs else 0.0
+    p90 = float(np.percentile(latency_vals, 90)) if total_reqs else 0.0
+    p99 = float(np.percentile(latency_vals, 99)) if total_reqs else 0.0
+    total_thinking = int(np.sum(df["thinking_tokens"].to_numpy())) if "thinking_tokens" in df.columns else 0
 
     # Título Principal e Subtítulo
-    fig.text(0.06, 0.955, "HYBRID ROUTER SOTA — RELATÓRIO DE DESEMPENHO E LATÊNCIA", 
+    fig.text(0.06, 0.955, "HYBRID ROUTER SOTA — RELATÓRIO DE DESEMPENHO E LATÊNCIA",
              fontsize=17, fontweight="bold", color=TEXT_PRIMARY, ha="left")
-    fig.text(0.06, 0.932, "Protocolo Chico SOTA v8.0 GOLD • Arquitetura Google Gemini 3.7 Flash & Llama.cpp Vulkan Edge", 
+    fig.text(0.06, 0.932, "Protocolo Chico SOTA v8.0 GOLD • Arquitetura Google Gemini 3.7 Flash & Llama.cpp Vulkan Edge",
              fontsize=11, color=TEXT_MUTED, ha="left")
 
     # Cards de Métricas no Topo Direito
@@ -150,7 +159,7 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
         f"Cauda p99: {p99:.1f}ms  │  "
         f"Thinking Tokens: {total_thinking:,}"
     )
-    fig.text(0.96, 0.942, kpi_text, fontsize=10.5, fontweight="bold", color=TEXT_PRIMARY, 
+    fig.text(0.96, 0.942, kpi_text, fontsize=10.5, fontweight="bold", color=TEXT_PRIMARY,
              ha="right", bbox=dict(boxstyle="round,pad=0.5", facecolor=CARD_BG, edgecolor=BORDER_COLOR, alpha=0.9))
 
     present_targets = df["target_executed"].unique()
@@ -178,7 +187,7 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
             linewidth=1.5,
         )
         # Linha vertical indicando a média do grupo
-        mean_val = subset["latency_ms"].mean()
+        mean_val = float(np.mean(np.asarray(subset["latency_ms"])))
         ax1.axvline(mean_val, color=color, linestyle="--", linewidth=1.2, alpha=0.8)
 
     ax1.set_title("1. Densidade de Probabilidade de Latência (PDF / KDE Bimodal)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
@@ -258,12 +267,12 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
     # PAINEL 4: PARTICIONAMENTO DE ROTAS & ALOCAÇÃO DE THINKING TOKENS
     # -------------------------------------------------------------
     ax4 = fig.add_subplot(gs[1, 1], facecolor=CARD_BG)
-    
-    target_counts = df["target_executed"].value_counts()
-    labels = [TARGET_LABELS.get(t, t) for t in target_counts.index]
-    colors = [PALETTE_MAP.get(t, "#333333") for t in target_counts.index]
 
-    wedges, texts, autotexts = ax4.pie(
+    target_counts = df["target_executed"].value_counts()
+    labels = [TARGET_LABELS.get(str(t), str(t)) for t in target_counts.index]
+    colors = [PALETTE_MAP.get(str(t), "#333333") for t in target_counts.index]
+
+    _, texts, autotexts = ax4.pie(
         target_counts,
         labels=labels,
         colors=colors,
@@ -319,33 +328,33 @@ def open_image(file_path: str) -> None:
     if sys.platform == "win32":
         # 1. Tenta via explorer.exe (garante abertura mesmo em console elevado Administrator)
         try:
-            subprocess.Popen(["explorer.exe", abs_path])
+            subprocess.Popen(["explorer.exe", abs_path])  # noqa: S603, S607 # nosec B603, B607
             opened = True
         except Exception:
             pass
         # 2. Fallback via os.startfile
         if not opened:
             try:
-                os.startfile(abs_path)
+                os.startfile(abs_path)  # noqa: S606 # nosec B606
                 opened = True
             except Exception:
                 pass
         # 3. Fallback via cmd start
         if not opened:
             try:
-                subprocess.Popen(["cmd.exe", "/c", "start", "", abs_path], shell=False)
+                subprocess.Popen(["cmd.exe", "/c", "start", "", abs_path], shell=False)  # noqa: S603, S607 # nosec B603, B607
                 opened = True
             except Exception:
                 pass
     elif sys.platform == "darwin":
         try:
-            subprocess.run(["open", abs_path], check=False)
+            subprocess.run(["open", abs_path], check=False)  # noqa: S603, S607 # nosec B603, B607
             opened = True
         except Exception:
             pass
     else:
         try:
-            subprocess.run(["xdg-open", abs_path], check=False)
+            subprocess.run(["xdg-open", abs_path], check=False)  # noqa: S603, S607 # nosec B603, B607
             opened = True
         except Exception:
             pass

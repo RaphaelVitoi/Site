@@ -204,17 +204,926 @@ const TOY_GAMES_DATABASE: ToyGameScenario[] = [
 type MainTab = 'RANGE_VIEWER' | 'TOY_GAMES_LAB';
 type ViewMode = 'DELTA' | 'PMEV_ADJUSTED' | 'BASELINE_GTO' | 'DUAL_GRID';
 type SpotType = 'RFI' | 'BB_DEFENSE' | 'PUSH_FOLD';
+type HandType = 'PAIR' | 'SUITED' | 'OFFSUIT';
+type HandAction = 'EXPAND' | 'CONTRACT' | 'PARITY';
 
 interface HandCellInfo {
 	hand: string;
 	r: number;
 	c: number;
-	type: 'PAIR' | 'SUITED' | 'OFFSUIT';
+	type: HandType;
 	baselineFreq: number;
 	vitoiFreq: number;
 	delta: number;
-	action: 'EXPAND' | 'CONTRACT' | 'PARITY';
+	action: HandAction;
 	justification: string;
+}
+
+interface AdjustmentParams {
+	handName: string;
+	handType: HandType;
+	baseFreq: number;
+	isPair: boolean;
+	isSuited: boolean;
+	hasShortStackPressure: boolean;
+	timeToBlind: number;
+	stackBb: number;
+	riskAdvantage: number;
+}
+
+function getShortStackPressureAdjustment(baseFreq: number): { adjustedFreq: number; justification: string } | null {
+	if (baseFreq > 0 && baseFreq < 0.9) {
+		return {
+			adjustedFreq: Math.max(0.0, baseFreq - 0.4),
+			justification: 'Contração pelo Teto do RP: Preservação de stack para payjump passivo iminente.',
+		};
+	}
+	return null;
+}
+
+function getTimeToBlindAdjustment(
+	handName: string,
+	baseFreq: number,
+	isSuited: boolean,
+	isPair: boolean,
+	timeToBlind: number,
+	stackBb: number
+): { adjustedFreq: number; justification: string } | null {
+	if (timeToBlind > 3.0 || stackBb > 20) return null;
+	if (!isSuited && !isPair && baseFreq >= 1.0) return null;
+
+	if (baseFreq === 0.0 && (handName.includes('s') || isPair)) {
+		return {
+			adjustedFreq: 0.65,
+			justification: 'Resgate por EV_fold Negativo: Ataque obrigatório antes da sangria da órbita.',
+		};
+	}
+	if (baseFreq > 0.0 && baseFreq < 1.0) {
+		return {
+			adjustedFreq: Math.min(1.0, baseFreq + 0.35),
+			justification: 'Expansão de Agressão: Diluição de RP e maximização de Fold Equity.',
+		};
+	}
+	return null;
+}
+
+function getRiskAdvantageAdjustment(
+	riskAdvantage: number,
+	handType: HandType,
+	baseFreq: number
+): { adjustedFreq: number; justification: string } | null {
+	if (riskAdvantage > 3 && baseFreq > 0 && baseFreq < 1.0) {
+		return {
+			adjustedFreq: Math.min(1.0, baseFreq + 0.25),
+			justification: 'Alavancagem de Risk Advantage: Pressão sobre stacks médios com menor RP.',
+		};
+	}
+	if (riskAdvantage < -3 && handType === 'OFFSUIT' && baseFreq > 0) {
+		return {
+			adjustedFreq: Math.max(0.0, baseFreq - 0.35),
+			justification: 'Mitigação de Passivo Estrutural (RIO): Evita colisão dominada contra stack maior.',
+		};
+	}
+	return null;
+}
+
+function computeHandAdjustment(params: AdjustmentParams): { adjustedFreq: number; justification: string } {
+	if (params.hasShortStackPressure) {
+		const shortStackAdj = getShortStackPressureAdjustment(params.baseFreq);
+		if (shortStackAdj) return shortStackAdj;
+	}
+
+	const timeAdj = getTimeToBlindAdjustment(
+		params.handName,
+		params.baseFreq,
+		params.isSuited,
+		params.isPair,
+		params.timeToBlind,
+		params.stackBb
+	);
+	if (timeAdj) return timeAdj;
+
+	const riskAdj = getRiskAdvantageAdjustment(params.riskAdvantage, params.handType, params.baseFreq);
+	if (riskAdj) return riskAdj;
+
+	return {
+		adjustedFreq: params.baseFreq,
+		justification: 'Alinhado ao Equilíbrio GTO Baseline',
+	};
+}
+
+function getHandTypeAndName(r: number, c: number): {
+	handName: string;
+	handType: HandType;
+	isPair: boolean;
+	isSuited: boolean;
+} {
+	if (r === c) {
+		return { handName: `${RANKS[r]}${RANKS[c]}`, handType: 'PAIR', isPair: true, isSuited: false };
+	}
+	if (r < c) {
+		return { handName: `${RANKS[r]}${RANKS[c]}s`, handType: 'SUITED', isPair: false, isSuited: true };
+	}
+	return { handName: `${RANKS[c]}${RANKS[r]}o`, handType: 'OFFSUIT', isPair: false, isSuited: false };
+}
+
+function getHandWeight(type: HandType): number {
+	if (type === 'PAIR') return 6;
+	if (type === 'SUITED') return 4;
+	return 12;
+}
+
+function getActionFromDelta(delta: number): HandAction {
+	if (delta > 0.05) return 'EXPAND';
+	if (delta < -0.05) return 'CONTRACT';
+	return 'PARITY';
+}
+
+function getHandTypeLabel(type: HandType): string {
+	if (type === 'PAIR') return 'Par em Mão';
+	if (type === 'SUITED') return 'Naipe Idêntico (Suited)';
+	return 'Naipes Diferentes (Offsuit)';
+}
+
+function getActionBadgeStyle(action: HandAction): { className: string; label: string } {
+	if (action === 'EXPAND') {
+		return {
+			className: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40',
+			label: 'Expansão Vitoi',
+		};
+	}
+	if (action === 'CONTRACT') {
+		return {
+			className: 'bg-rose-500/20 text-rose-400 border border-rose-500/40',
+			label: 'Contração RP',
+		};
+	}
+	return {
+		className: 'bg-slate-800 text-slate-400 border border-slate-700',
+		label: 'Paridade GTO',
+	};
+}
+
+function getDeltaColor(delta: number): string {
+	if (delta > 0) return 'text-emerald-400';
+	if (delta < 0) return 'text-rose-400';
+	return 'text-slate-400';
+}
+
+function getBaselineColor(freq: number): string {
+	if (freq === 0) return 'bg-slate-900/80 text-slate-600';
+	if (freq >= 0.8) return 'bg-sky-600 text-white font-bold';
+	if (freq >= 0.4) return 'bg-sky-700/80 text-sky-200';
+	return 'bg-sky-950 text-sky-400';
+}
+
+function getAdjustedColor(freq: number): string {
+	if (freq === 0) return 'bg-slate-900/80 text-slate-600';
+	if (freq >= 0.8) return 'bg-amber-500 text-slate-950 font-extrabold';
+	if (freq >= 0.4) return 'bg-amber-600/80 text-white font-bold';
+	return 'bg-amber-950 text-amber-300';
+}
+
+function getCellColor(cell: HandCellInfo, mode: ViewMode): string {
+	if (mode === 'BASELINE_GTO') return getBaselineColor(cell.baselineFreq);
+	if (mode === 'PMEV_ADJUSTED') return getAdjustedColor(cell.vitoiFreq);
+	if (cell.action === 'EXPAND') {
+		return 'bg-linear-to-br from-emerald-600 to-emerald-400 text-white font-extrabold shadow-[0_0_8px_rgba(16,185,129,0.5)]';
+	}
+	if (cell.action === 'CONTRACT') {
+		return 'bg-linear-to-br from-rose-700 to-rose-500 text-white font-bold opacity-80';
+	}
+	if (cell.baselineFreq > 0) {
+		return 'bg-slate-800 text-slate-300 font-semibold border border-slate-700';
+	}
+	return 'bg-slate-950 text-slate-700';
+}
+
+async function parseSolverFile(file: File): Promise<{ customMap: Record<string, number>; sourceLabel: string } | null> {
+	const content = await file.text();
+	if (file.name.endsWith('.json')) {
+		const parsed = JSON.parse(content);
+		const raw = parsed.strategy || parsed.range || parsed;
+		const customMap: Record<string, number> = {};
+		Object.entries(raw).forEach(([k, v]) => {
+			if (typeof v === 'number') customMap[k] = v;
+		});
+		if (Object.keys(customMap).length > 0) {
+			return { customMap, sourceLabel: `DeepSolver JSON (${file.name})` };
+		}
+	} else if (file.name.endsWith('.hrc') || file.name.endsWith('.txt')) {
+		const lines = content.split('\n');
+		const customMap: Record<string, number> = {};
+		const hrcRegex = /^([AKQJT98765432]{2}[so]?)\s*[:=]\s*([\d.]+)%?/i;
+		lines.forEach((l) => {
+			const match = hrcRegex.exec(l);
+			if (match?.[1] && match[2]) {
+				const hand = match[1].toUpperCase();
+				let val = Number.parseFloat(match[2]);
+				if (val > 1.0) val /= 100.0;
+				customMap[hand] = val;
+			}
+		});
+		if (Object.keys(customMap).length > 0) {
+			return { customMap, sourceLabel: `HRC Pro (${file.name})` };
+		}
+	}
+	return null;
+}
+
+interface RangeViewerTabProps {
+	readonly spotType: SpotType;
+	readonly setSpotType: (spot: SpotType) => void;
+	readonly position: string;
+	readonly setPosition: (pos: string) => void;
+	readonly setCustomBaseline: (base: Record<string, number> | null) => void;
+	readonly stackBb: number;
+	readonly setStackBb: (s: number) => void;
+	readonly sizingBb: number;
+	readonly riskAdvantage: number;
+	readonly setRiskAdvantage: (r: number) => void;
+	readonly riskAdvantageBadgeColor: string;
+	readonly hasShortStackPressure: boolean;
+	readonly setHasShortStackPressure: (h: boolean) => void;
+	readonly timeToBlind: number;
+	readonly setTimeToBlind: (t: number) => void;
+	readonly calculatedEvFold: number;
+	readonly stats: {
+		readonly baseCombos: number;
+		readonly vitoiCombos: number;
+		readonly deltaCombos: number;
+		readonly expandedCount: number;
+		readonly contractedCount: number;
+	};
+	readonly viewMode: ViewMode;
+	readonly setViewMode: (mode: ViewMode) => void;
+	readonly sourceLabel: string;
+	readonly gridCells: HandCellInfo[];
+	readonly selectedHand: HandCellInfo | null;
+	readonly setSelectedHand: (cell: HandCellInfo) => void;
+}
+
+interface RangeControlsBarProps {
+	readonly spotType: SpotType;
+	readonly setSpotType: (spot: SpotType) => void;
+	readonly position: string;
+	readonly setPosition: (pos: string) => void;
+	readonly setCustomBaseline: (base: Record<string, number> | null) => void;
+	readonly stackBb: number;
+	readonly setStackBb: (s: number) => void;
+	readonly sizingBb: number;
+	readonly riskAdvantage: number;
+	readonly setRiskAdvantage: (r: number) => void;
+	readonly riskAdvantageBadgeColor: string;
+	readonly hasShortStackPressure: boolean;
+	readonly setHasShortStackPressure: (h: boolean) => void;
+	readonly timeToBlind: number;
+	readonly setTimeToBlind: (t: number) => void;
+}
+
+function RangeControlsBar({
+	spotType,
+	setSpotType,
+	position,
+	setPosition,
+	setCustomBaseline,
+	stackBb,
+	setStackBb,
+	sizingBb,
+	riskAdvantage,
+	setRiskAdvantage,
+	riskAdvantageBadgeColor,
+	hasShortStackPressure,
+	setHasShortStackPressure,
+	timeToBlind,
+	setTimeToBlind,
+}: RangeControlsBarProps) {
+	return (
+		<div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-slate-900/70 p-5 rounded-2xl border border-slate-800/80">
+			<div>
+				<label htmlFor="spot-type-select" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+					Spot & Ação
+				</label>
+				<div className="grid grid-cols-2 gap-2">
+					<select
+						id="spot-type-select"
+						value={spotType}
+						onChange={(e) => setSpotType(e.target.value as SpotType)}
+						className="bg-slate-800 border border-slate-700 text-xs text-white rounded-lg p-2 font-bold focus:outline-none focus:border-amber-500"
+					>
+						<option value="RFI">RFI (Open Raise)</option>
+						<option value="BB_DEFENSE">Defesa de BB</option>
+						<option value="PUSH_FOLD">Push / Fold</option>
+					</select>
+
+					<select
+						id="position-select"
+						aria-label="Posição na Mesa"
+						value={position}
+						onChange={(e) => {
+							setPosition(e.target.value);
+							setCustomBaseline(null);
+						}}
+						className="bg-slate-800 border border-slate-700 text-xs text-white rounded-lg p-2 font-bold focus:outline-none focus:border-amber-500"
+					>
+						<option value="UTG">UTG (8 Atrás)</option>
+						<option value="MP">MP / LJ (6 Atrás)</option>
+						<option value="CO">CO (4 Atrás)</option>
+						<option value="BTN">BTN (2 Atrás)</option>
+						<option value="SB">SB (1 Atrás)</option>
+					</select>
+				</div>
+			</div>
+
+			<div>
+				<div className="flex justify-between items-center mb-1.5">
+					<label htmlFor="stack-slider" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+						Stack: <span className="text-amber-400 font-extrabold">{stackBb} BB</span>
+					</label>
+					<span className="text-[11px] text-slate-500">Sizing: {sizingBb}bb</span>
+				</div>
+				<input
+					id="stack-slider"
+					type="range"
+					min="8"
+					max="60"
+					step="1"
+					value={stackBb}
+					onChange={(e) => setStackBb(Number.parseFloat(e.target.value))}
+					className="w-full accent-amber-500 cursor-pointer"
+				/>
+			</div>
+
+			<div>
+				<div className="flex justify-between items-center mb-1.5">
+					<label htmlFor="risk-advantage-slider" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+						Risk Advantage: <span className={riskAdvantageBadgeColor}>
+							{riskAdvantage > 0 ? `+${riskAdvantage}` : riskAdvantage}
+						</span>
+					</label>
+				</div>
+				<input
+					id="risk-advantage-slider"
+					type="range"
+					min="-10"
+					max="10"
+					step="1"
+					value={riskAdvantage}
+					onChange={(e) => setRiskAdvantage(Number.parseFloat(e.target.value))}
+					className="w-full accent-amber-500 cursor-pointer"
+				/>
+				<div className="flex justify-between text-[10px] text-slate-500 mt-1">
+					<span>Hero Coberto (CL)</span>
+					<span>Neutro</span>
+					<span>Hero Cobre (Pressão)</span>
+				</div>
+			</div>
+
+			<div>
+				<span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+					Custo de Sobrevivência (EV_fold)
+				</span>
+				<div className="flex items-center gap-2">
+					<button
+						type="button"
+						onClick={() => setHasShortStackPressure(!hasShortStackPressure)}
+						className={`text-xs px-3 py-2 rounded-lg font-bold border transition-all flex-1 ${
+							hasShortStackPressure
+								? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+								: 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+						}`}
+					>
+						{hasShortStackPressure ? '⚡ Payjump Passivo (EV>0)' : 'Órbita Normal'}
+					</button>
+
+					<button
+						type="button"
+						onClick={() => setTimeToBlind(timeToBlind <= 3 ? 12 : 2)}
+						className={`text-xs px-3 py-2 rounded-lg font-bold border transition-all flex-1 ${
+							timeToBlind <= 3
+								? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+								: 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+						}`}
+					>
+						{timeToBlind <= 3 ? '🚨 Blinds em 2m' : '⏱ Blinds em 12m'}
+					</button>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+interface RangeKpiSummaryProps {
+	readonly calculatedEvFold: number;
+	readonly stats: {
+		readonly baseCombos: number;
+		readonly vitoiCombos: number;
+		readonly deltaCombos: number;
+		readonly expandedCount: number;
+		readonly contractedCount: number;
+	};
+}
+
+function RangeKpiSummary({ calculatedEvFold, stats }: RangeKpiSummaryProps) {
+	return (
+		<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
+				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">EV do Fold no Spot</span>
+				<div className={`text-xl font-black mt-1 ${calculatedEvFold > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+					{calculatedEvFold > 0 ? `+${calculatedEvFold.toFixed(3)} BB` : `${calculatedEvFold.toFixed(3)} BB`}
+				</div>
+				<p className="text-[10px] text-slate-500 mt-1">
+					{calculatedEvFold > 0 ? 'Fold positivo: Payjump passivo sem risco' : 'Piso de ChipEV / Sangria de antes'}
+				</p>
+			</div>
+
+			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
+				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Combos Poker Racional</span>
+				<div className="text-xl font-black text-amber-400 mt-1">
+					{stats.vitoiCombos} <span className="text-xs text-slate-500 font-normal">/ {stats.baseCombos} GTO</span>
+				</div>
+				<p className="text-[10px] text-slate-500 mt-1">
+					Delta: <strong className={stats.deltaCombos >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+						{stats.deltaCombos >= 0 ? `+${stats.deltaCombos}` : stats.deltaCombos} combos
+					</strong>
+				</p>
+			</div>
+
+			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
+				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mãos Resgatadas (Agressão)</span>
+				<div className="text-xl font-black text-emerald-400 mt-1">
+					+{stats.expandedCount}
+				</div>
+				<p className="text-[10px] text-slate-500 mt-1">Ataque contra over-fold e sangria</p>
+			</div>
+
+			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
+				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Teto do Risk Premium (Folds)</span>
+				<div className="text-xl font-black text-rose-400 mt-1">
+					-{stats.contractedCount}
+				</div>
+				<p className="text-[10px] text-slate-500 mt-1">Proteção contra passivo de RIO</p>
+			</div>
+		</div>
+	);
+}
+
+interface SingleMatrixWithInspectorProps {
+	readonly gridCells: HandCellInfo[];
+	readonly selectedHand: HandCellInfo | null;
+	readonly setSelectedHand: (cell: HandCellInfo) => void;
+	readonly viewMode: ViewMode;
+}
+
+function SingleMatrixWithInspector({
+	gridCells,
+	selectedHand,
+	setSelectedHand,
+	viewMode,
+}: SingleMatrixWithInspectorProps) {
+	return (
+		<div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+			<div className="lg:col-span-8 bg-slate-950 p-4 rounded-2xl border border-slate-800/80 shadow-inner">
+				<div className="grid grid-cols-13 gap-1 md:gap-1.5 aspect-square">
+					{gridCells.map((cell) => {
+						const isSelected = selectedHand?.hand === cell.hand;
+						const colorClass = getCellColor(cell, viewMode);
+
+						return (
+							<button
+								type="button"
+								key={cell.hand}
+								onClick={() => setSelectedHand(cell)}
+								className={`aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] md:text-xs font-bold transition-all relative select-none ${colorClass} ${
+									isSelected ? 'ring-2 ring-amber-400 scale-105 z-10 shadow-lg' : 'hover:scale-105 hover:z-10'
+								}`}
+							>
+								<span>{cell.hand}</span>
+								{viewMode === 'DELTA' && cell.delta !== 0 && (
+									<span className="text-[8px] font-black leading-none opacity-90">
+										{cell.delta > 0 ? `+${Math.round(cell.delta * 100)}%` : `${Math.round(cell.delta * 100)}%`}
+									</span>
+								)}
+							</button>
+						);
+					})}
+				</div>
+			</div>
+
+			<div className="lg:col-span-4 bg-slate-900/90 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between">
+				{selectedHand ? (
+					<div>
+						<div className="flex items-center justify-between pb-4 border-b border-slate-800">
+							<div>
+								<h3 className="text-3xl font-black text-white">{selectedHand.hand}</h3>
+								<span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+									{getHandTypeLabel(selectedHand.type)}
+								</span>
+							</div>
+							<span className={`text-xs font-extrabold px-3 py-1 rounded-full uppercase ${getActionBadgeStyle(selectedHand.action).className}`}>
+								{getActionBadgeStyle(selectedHand.action).label}
+							</span>
+						</div>
+
+						<div className="space-y-4 my-5">
+							<div className="flex justify-between items-center text-sm">
+								<span className="text-slate-400 font-semibold">Frequência GTO Baseline:</span>
+								<span className="text-white font-bold">{(selectedHand.baselineFreq * 100).toFixed(0)}%</span>
+							</div>
+
+							<div className="flex justify-between items-center text-sm">
+								<span className="text-slate-400 font-semibold">Frequência Poker Racional:</span>
+								<span className="text-amber-400 font-extrabold">{(selectedHand.vitoiFreq * 100).toFixed(0)}%</span>
+							</div>
+
+							<div className="flex justify-between items-center text-sm">
+								<span className="text-slate-400 font-semibold">Delta Diferencial (Δ):</span>
+								<span className={`font-black ${getDeltaColor(selectedHand.delta)}`}>
+									{selectedHand.delta > 0 ? `+${(selectedHand.delta * 100).toFixed(0)}%` : `${(selectedHand.delta * 100).toFixed(0)}%`}
+								</span>
+							</div>
+
+							<div className="bg-slate-950 p-4 rounded-xl border border-slate-800/80 mt-4">
+								<span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
+									Justificativa Epistêmica (Vitoi Framework)
+								</span>
+								<p className="text-xs text-slate-300 leading-relaxed">
+									{selectedHand.justification}
+								</p>
+							</div>
+						</div>
+					</div>
+				) : (
+					<div className="flex items-center justify-center h-full text-slate-500 text-xs">
+						Selecione uma mão na matriz 13x13 para inspecionar o racional.
+					</div>
+				)}
+
+				<div className="pt-4 border-t border-slate-800 text-[11px] space-y-1.5 text-slate-400">
+					<div className="flex items-center gap-2">
+						<span className="w-3 h-3 rounded bg-emerald-500 inline-block"></span>
+						<span><strong>Verde:</strong> Expande ação pelo EV_fold e Fold Equity.</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<span className="w-3 h-3 rounded bg-slate-700 inline-block"></span>
+						<span><strong>Cinza/Azul:</strong> Paridade com o equilíbrio GTO.</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<span className="w-3 h-3 rounded bg-rose-600 inline-block"></span>
+						<span><strong>Vermelho:</strong> Contrai ação pelo Teto do Risk Premium / RIO.</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+interface DualGridComparisonProps {
+	readonly gridCells: HandCellInfo[];
+	readonly stats: {
+		readonly baseCombos: number;
+		readonly vitoiCombos: number;
+	};
+}
+
+function DualGridComparison({ gridCells, stats }: DualGridComparisonProps) {
+	return (
+		<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+				<div className="flex justify-between items-center mb-3">
+					<h4 className="text-xs font-black uppercase text-sky-400 tracking-wider">1. Solver Baseline (GTO Puro)</h4>
+					<span className="text-xs text-slate-500 font-bold">{stats.baseCombos} Combos</span>
+				</div>
+				<div className="grid grid-cols-13 gap-1 aspect-square">
+					{gridCells.map((cell) => (
+						<div
+							key={`base-${cell.hand}`}
+							className={`aspect-square rounded flex items-center justify-center text-[9px] font-bold ${getCellColor(cell, 'BASELINE_GTO')}`}
+						>
+							{cell.hand}
+						</div>
+					))}
+				</div>
+			</div>
+
+			<div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+				<div className="flex justify-between items-center mb-3">
+					<h4 className="text-xs font-black uppercase text-amber-400 tracking-wider">2. Poker Racional (Vitoi Framework)</h4>
+					<span className="text-xs text-amber-400 font-bold">{stats.vitoiCombos} Combos</span>
+				</div>
+				<div className="grid grid-cols-13 gap-1 aspect-square">
+					{gridCells.map((cell) => (
+						<div
+							key={`vitoi-${cell.hand}`}
+							className={`aspect-square rounded flex items-center justify-center text-[9px] font-bold ${getCellColor(cell, 'PMEV_ADJUSTED')}`}
+						>
+							{cell.hand}
+						</div>
+					))}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function RangeViewerTab({
+	spotType,
+	setSpotType,
+	position,
+	setPosition,
+	setCustomBaseline,
+	stackBb,
+	setStackBb,
+	sizingBb,
+	riskAdvantage,
+	setRiskAdvantage,
+	riskAdvantageBadgeColor,
+	hasShortStackPressure,
+	setHasShortStackPressure,
+	timeToBlind,
+	setTimeToBlind,
+	calculatedEvFold,
+	stats,
+	viewMode,
+	setViewMode,
+	sourceLabel,
+	gridCells,
+	selectedHand,
+	setSelectedHand,
+}: RangeViewerTabProps) {
+	return (
+		<div>
+			<RangeControlsBar
+				spotType={spotType}
+				setSpotType={setSpotType}
+				position={position}
+				setPosition={setPosition}
+				setCustomBaseline={setCustomBaseline}
+				stackBb={stackBb}
+				setStackBb={setStackBb}
+				sizingBb={sizingBb}
+				riskAdvantage={riskAdvantage}
+				setRiskAdvantage={setRiskAdvantage}
+				riskAdvantageBadgeColor={riskAdvantageBadgeColor}
+				hasShortStackPressure={hasShortStackPressure}
+				setHasShortStackPressure={setHasShortStackPressure}
+				timeToBlind={timeToBlind}
+				setTimeToBlind={setTimeToBlind}
+			/>
+
+			<RangeKpiSummary
+				calculatedEvFold={calculatedEvFold}
+				stats={stats}
+			/>
+
+			{/* Abas de Modo de Visualização */}
+			<div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-6">
+				<div className="flex items-center gap-2">
+					<button
+						type="button"
+						onClick={() => setViewMode('DELTA')}
+						className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+							viewMode === 'DELTA'
+								? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
+								: 'bg-slate-900 text-slate-400 hover:text-white'
+						}`}
+					>
+						Diferencial (Deltas Δ)
+					</button>
+
+					<button
+						type="button"
+						onClick={() => setViewMode('PMEV_ADJUSTED')}
+						className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+							viewMode === 'PMEV_ADJUSTED'
+								? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
+								: 'bg-slate-900 text-slate-400 hover:text-white'
+						}`}
+					>
+						Poker Racional (Ajustado)
+					</button>
+
+					<button
+						type="button"
+						onClick={() => setViewMode('BASELINE_GTO')}
+						className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+							viewMode === 'BASELINE_GTO'
+								? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
+								: 'bg-slate-900 text-slate-400 hover:text-white'
+						}`}
+					>
+						GTO Solver Baseline
+					</button>
+
+					<button
+						type="button"
+						onClick={() => setViewMode('DUAL_GRID')}
+						className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+							viewMode === 'DUAL_GRID'
+								? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
+								: 'bg-slate-900 text-slate-400 hover:text-white'
+						}`}
+					>
+						Dual Grid (Lado a Lado)
+					</button>
+				</div>
+
+				<div className="text-right text-[11px] text-slate-500">
+					Fonte ativa: <span className="text-slate-300 font-bold">{sourceLabel}</span>
+				</div>
+			</div>
+
+			{viewMode !== 'DUAL_GRID' ? (
+				<SingleMatrixWithInspector
+					gridCells={gridCells}
+					selectedHand={selectedHand}
+					setSelectedHand={setSelectedHand}
+					viewMode={viewMode}
+				/>
+			) : (
+				<DualGridComparison
+					gridCells={gridCells}
+					stats={stats}
+				/>
+			)}
+		</div>
+	);
+}
+
+interface ToyGamesLabTabProps {
+	readonly selectedToyGame: ToyGameScenario;
+	readonly setSelectedToyGame: (tg: ToyGameScenario) => void;
+}
+
+function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabProps) {
+	return (
+		<div>
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+				<div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+					<span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider block mb-2">
+						1. Vantagem de Risco (IP RP 3% vs OOP RP Alto)
+					</span>
+					<div className="space-y-1.5">
+						{TOY_GAMES_DATABASE.filter((tg) => tg.category === 'RISK_ADVANTAGE' || tg.category === 'CHIP_EV').map((tg) => (
+							<button
+								type="button"
+								key={tg.id}
+								onClick={() => setSelectedToyGame(tg)}
+								className={`w-full text-left text-xs p-2.5 rounded-xl font-bold transition-all ${
+									selectedToyGame.id === tg.id
+										? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
+										: 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+								}`}
+							>
+								{tg.title}
+							</button>
+						))}
+					</div>
+				</div>
+
+				<div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+					<span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider block mb-2">
+						2. Inversão de Risco (IP RP Alto vs OOP RP 3%)
+					</span>
+					<div className="space-y-1.5">
+						{TOY_GAMES_DATABASE.filter((tg) => tg.category === 'RISK_INVERSION').map((tg) => (
+							<button
+								type="button"
+								key={tg.id}
+								onClick={() => setSelectedToyGame(tg)}
+								className={`w-full text-left text-xs p-2.5 rounded-xl font-bold transition-all ${
+									selectedToyGame.id === tg.id
+										? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
+										: 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+								}`}
+							>
+								{tg.title}
+							</button>
+						))}
+					</div>
+				</div>
+
+				<div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between">
+					<div>
+						<span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
+							Métricas PioSolver / Toy Game
+						</span>
+						<h4 className="text-sm font-black text-white">{selectedToyGame.title}</h4>
+						<p className="text-xs text-slate-400 mt-1">{selectedToyGame.description}</p>
+					</div>
+
+					<div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800 text-center">
+						<div className="bg-slate-900 p-2 rounded-lg">
+							<span className="text-[9px] text-slate-500 uppercase block font-bold">IP Shove Freq</span>
+							<span className="text-sm font-extrabold text-amber-400">{selectedToyGame.ipShovePercent}%</span>
+						</div>
+						<div className="bg-slate-900 p-2 rounded-lg">
+							<span className="text-[9px] text-slate-500 uppercase block font-bold">OOP KK Defense</span>
+							<span className="text-sm font-extrabold text-emerald-400">{selectedToyGame.oopCallPercent}%</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950 p-6 rounded-3xl border border-slate-800">
+				<div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800">
+					<div className="flex justify-between items-center pb-3 border-b border-slate-800">
+						<div>
+							<h4 className="text-sm font-black text-sky-400 uppercase">Range IP (AA, QQ, JJ - 18 Combos)</h4>
+							<span className="text-xs text-slate-500 font-semibold">Risk Premium: {selectedToyGame.rpIp}%</span>
+						</div>
+						<span className="text-xs font-black text-white bg-sky-500/20 px-3 py-1 rounded-full border border-sky-500/40">
+							Shove Total: {selectedToyGame.ipShovePercent}%
+						</span>
+					</div>
+
+					<div className="space-y-3 mt-4">
+						<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
+							<div className="flex justify-between text-xs font-bold mb-1">
+								<span className="text-slate-300">Valor Puro (AA - 6 Combos):</span>
+								<span className="text-emerald-400 font-black">100% Shove (6.0 Combos)</span>
+							</div>
+							<div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+								<div className="bg-emerald-500 h-full w-full"></div>
+							</div>
+						</div>
+
+						<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
+							<div className="flex justify-between text-xs font-bold mb-1">
+								<span className="text-slate-300">Blefes (QQ, JJ - 12 Combos):</span>
+								<span className="text-amber-400 font-black">
+									{((selectedToyGame.ipBluffCombos / 12) * 100).toFixed(1)}% Shove ({selectedToyGame.ipBluffCombos} Combos)
+								</span>
+							</div>
+							<div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+								<div
+									className="bg-amber-500 h-full transition-all duration-500"
+									style={{ width: `${Math.min(100, (selectedToyGame.ipBluffCombos / 12) * 100)}%` }}
+								></div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800">
+					<div className="flex justify-between items-center pb-3 border-b border-slate-800">
+						<div>
+							<h4 className="text-sm font-black text-rose-400 uppercase">Range OOP (KK Bluffcatcher - 6 Combos)</h4>
+							<span className="text-xs text-slate-500 font-semibold">Risk Premium: {selectedToyGame.rpOop}%</span>
+						</div>
+						<span className={`text-xs font-black px-3 py-1 rounded-full border ${
+							selectedToyGame.oopFoldPercent > 60
+								? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+								: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+						}`}>
+							Fold: {selectedToyGame.oopFoldPercent}% | Call: {selectedToyGame.oopCallPercent}%
+						</span>
+					</div>
+
+					<div className="space-y-3 mt-4">
+						<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
+							<div className="flex justify-between text-xs font-bold mb-1">
+								<span className="text-slate-300">Ação de Call no River (MDF vs Teto do RP):</span>
+								<span className="text-emerald-400 font-black">
+									{selectedToyGame.oopCallPercent}% ({(6 * (selectedToyGame.oopCallPercent / 100)).toFixed(1)} Combos)
+								</span>
+							</div>
+							<div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+								<div
+									className="bg-emerald-500 h-full transition-all duration-500"
+									style={{ width: `${selectedToyGame.oopCallPercent}%` }}
+								></div>
+							</div>
+						</div>
+
+						<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
+							<div className="flex justify-between text-xs font-bold mb-1">
+								<span className="text-slate-300">Ação de Fold (Preservação de Valuation):</span>
+								<span className="text-rose-400 font-black">
+									{selectedToyGame.oopFoldPercent}% ({(6 * (selectedToyGame.oopFoldPercent / 100)).toFixed(1)} Combos)
+								</span>
+							</div>
+							<div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+								<div
+									className="bg-rose-600 h-full transition-all duration-500"
+									style={{ width: `${selectedToyGame.oopFoldPercent}%` }}
+								></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl mt-6">
+				<span className="text-[11px] font-extrabold text-amber-400 uppercase tracking-wider block mb-2">
+					💡 Racional Teórico do Paradoxo VITOI ("Entendendo o ICM e suas heurísticas")
+				</span>
+				<p className="text-xs md:text-sm text-slate-300 leading-relaxed">
+					{selectedToyGame.vitoiInsight}
+				</p>
+			</div>
+		</div>
+	);
 }
 
 export function PmevRangeViewer() {
@@ -265,50 +1174,24 @@ export function PmevRangeViewer() {
 
 		for (let r = 0; r < 13; r++) {
 			for (let c = 0; c < 13; c++) {
-				const isPair = r === c;
-				const isSuited = r < c;
-				const handName = isPair
-					? `${RANKS[r]}${RANKS[c]}`
-					: isSuited
-					? `${RANKS[r]}${RANKS[c]}s`
-					: `${RANKS[c]}${RANKS[r]}o`;
-
-				const handType = isPair ? 'PAIR' : isSuited ? 'SUITED' : 'OFFSUIT';
+				const { handName, handType, isPair, isSuited } = getHandTypeAndName(r, c);
 				const baseFreq = activeBaseline[handName] ?? 0.0;
 
-				let adjustedFreq = baseFreq;
-				let justification = 'Alinhado ao Equilíbrio GTO Baseline';
+				const { adjustedFreq: rawAdjusted, justification } = computeHandAdjustment({
+					handName,
+					handType,
+					baseFreq,
+					isPair,
+					isSuited,
+					hasShortStackPressure,
+					timeToBlind,
+					stackBb,
+					riskAdvantage,
+				});
 
-				if (hasShortStackPressure) {
-					if (baseFreq > 0 && baseFreq < 0.9) {
-						adjustedFreq = Math.max(0.0, baseFreq - 0.4);
-						justification = 'Contração pelo Teto do RP: Preservação de stack para payjump passivo iminente.';
-					}
-				} else if (timeToBlind <= 3.0 && stackBb <= 20) {
-					if (isSuited || isPair || (isPair && baseFreq < 1.0)) {
-						if (baseFreq === 0.0 && (handName.includes('s') || isPair)) {
-							adjustedFreq = 0.65;
-							justification = 'Resgate por EV_fold Negativo: Ataque obrigatório antes da sangria da órbita.';
-						} else if (baseFreq > 0.0 && baseFreq < 1.0) {
-							adjustedFreq = Math.min(1.0, baseFreq + 0.35);
-							justification = 'Expansão de Agressão: Diluição de RP e maximização de Fold Equity.';
-						}
-					}
-				} else if (riskAdvantage > 3) {
-					if (baseFreq > 0 && baseFreq < 1.0) {
-						adjustedFreq = Math.min(1.0, baseFreq + 0.25);
-						justification = 'Alavancagem de Risk Advantage: Pressão sobre stacks médios com menor RP.';
-					}
-				} else if (riskAdvantage < -3) {
-					if (handType === 'OFFSUIT' && baseFreq > 0) {
-						adjustedFreq = Math.max(0.0, baseFreq - 0.35);
-						justification = 'Mitigação de Passivo Estrutural (RIO): Evita colisão dominada contra stack maior.';
-					}
-				}
-
-				adjustedFreq = Math.round(adjustedFreq * 100) / 100;
+				const adjustedFreq = Math.round(rawAdjusted * 100) / 100;
 				const delta = Math.round((adjustedFreq - baseFreq) * 100) / 100;
-				const action = delta > 0.05 ? 'EXPAND' : delta < -0.05 ? 'CONTRACT' : 'PARITY';
+				const action = getActionFromDelta(delta);
 
 				cells.push({
 					hand: handName,
@@ -340,7 +1223,7 @@ export function PmevRangeViewer() {
 		let contractedCount = 0;
 
 		gridCells.forEach((c) => {
-			const weight = c.type === 'PAIR' ? 6 : c.type === 'SUITED' ? 4 : 12;
+			const weight = getHandWeight(c.type);
 			totalBase += c.baselineFreq * weight;
 			totalVitoi += c.vitoiFreq * weight;
 			if (c.action === 'EXPAND') expandedCount++;
@@ -356,44 +1239,16 @@ export function PmevRangeViewer() {
 		};
 	}, [gridCells]);
 
-	const handleFileUpload = (file: File) => {
-		const reader = new FileReader();
-		reader.onload = (e) => {
-			try {
-				const content = (e.target?.result as string) || '';
-				if (file.name.endsWith('.json')) {
-					const parsed = JSON.parse(content);
-					const raw = parsed.strategy || parsed.range || parsed;
-					const customMap: Record<string, number> = {};
-					Object.entries(raw).forEach(([k, v]) => {
-						if (typeof v === 'number') customMap[k] = v;
-					});
-					if (Object.keys(customMap).length > 0) {
-						setCustomBaseline(customMap);
-						setSourceLabel(`DeepSolver JSON (${file.name})`);
-					}
-				} else if (file.name.endsWith('.hrc') || file.name.endsWith('.txt')) {
-					const lines = content.split('\n');
-					const customMap: Record<string, number> = {};
-					lines.forEach((l) => {
-						const match = l.match(/^([AKQJT98765432]{2}[so]?)\s*[:=]\s*([\d.]+)%?/i);
-						if (match && match[1] && match[2]) {
-							const hand = match[1].toUpperCase();
-							let val = parseFloat(match[2]);
-							if (val > 1.0) val /= 100.0;
-							customMap[hand] = val;
-						}
-					});
-					if (Object.keys(customMap).length > 0) {
-						setCustomBaseline(customMap);
-						setSourceLabel(`HRC Pro (${file.name})`);
-					}
-				}
-			} catch (err) {
-				console.error('Erro na ingestão de arquivo do solver:', err);
+	const handleFileUpload = async (file: File) => {
+		try {
+			const parsedResult = await parseSolverFile(file);
+			if (parsedResult) {
+				setCustomBaseline(parsedResult.customMap);
+				setSourceLabel(parsedResult.sourceLabel);
 			}
-		};
-		reader.readAsText(file);
+		} catch (err) {
+			console.error('Erro na ingestão de arquivo do solver:', err);
+		}
 	};
 
 	const handleDownloadPdf = async () => {
@@ -418,7 +1273,7 @@ export function PmevRangeViewer() {
 				a.download = `relatorio_tecnico_poker_racional_${position}_${stackBb}bb.pdf`;
 				document.body.appendChild(a);
 				a.click();
-				document.body.removeChild(a);
+				a.remove();
 				window.URL.revokeObjectURL(url);
 			}
 		} catch (err) {
@@ -428,30 +1283,7 @@ export function PmevRangeViewer() {
 		}
 	};
 
-	const getCellColor = (cell: HandCellInfo, mode: ViewMode) => {
-		if (mode === 'BASELINE_GTO') {
-			if (cell.baselineFreq === 0) return 'bg-slate-900/80 text-slate-600';
-			if (cell.baselineFreq >= 0.8) return 'bg-sky-600 text-white font-bold';
-			if (cell.baselineFreq >= 0.4) return 'bg-sky-700/80 text-sky-200';
-			return 'bg-sky-950 text-sky-400';
-		}
-		if (mode === 'PMEV_ADJUSTED') {
-			if (cell.vitoiFreq === 0) return 'bg-slate-900/80 text-slate-600';
-			if (cell.vitoiFreq >= 0.8) return 'bg-amber-500 text-slate-950 font-extrabold';
-			if (cell.vitoiFreq >= 0.4) return 'bg-amber-600/80 text-white font-bold';
-			return 'bg-amber-950 text-amber-300';
-		}
-		if (cell.action === 'EXPAND') {
-			return 'bg-gradient-to-br from-emerald-600 to-emerald-400 text-white font-extrabold shadow-[0_0_8px_rgba(16,185,129,0.5)]';
-		}
-		if (cell.action === 'CONTRACT') {
-			return 'bg-gradient-to-br from-rose-700 to-rose-500 text-white font-bold opacity-80';
-		}
-		if (cell.baselineFreq > 0) {
-			return 'bg-slate-800 text-slate-300 font-semibold border border-slate-700';
-		}
-		return 'bg-slate-950 text-slate-700';
-	};
+	const riskAdvantageBadgeColor = getDeltaColor(riskAdvantage);
 
 	return (
 		<div className="w-full bg-[#0b0e14] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl text-slate-200">
@@ -473,17 +1305,19 @@ export function PmevRangeViewer() {
 
 				<div className="flex items-center gap-3">
 					<button
+						type="button"
 						onClick={handleDownloadPdf}
 						disabled={downloadingPdf}
-						className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50"
+						className="flex items-center gap-2 bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50"
 					>
 						<span>📄</span>
 						<span>{downloadingPdf ? 'Gerando...' : 'Baixar Relatório (PDF)'}</span>
 					</button>
 
-					<label className="cursor-pointer bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white px-4 py-2 rounded-xl border border-slate-700 transition-colors">
-						Importar Solver (.json/.hrc/.csv)
+					<label htmlFor="solver-upload-input" className="cursor-pointer bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white px-4 py-2 rounded-xl border border-slate-700 transition-colors">
+						<span>Importar Solver (.json/.hrc/.csv)</span>
 						<input
+							id="solver-upload-input"
 							type="file"
 							accept=".json,.hrc,.txt,.csv"
 							className="hidden"
@@ -499,6 +1333,7 @@ export function PmevRangeViewer() {
 			{/* Main Module Tabs */}
 			<div className="flex items-center gap-3 my-6 border-b border-slate-800 pb-3">
 				<button
+					type="button"
 					onClick={() => setActiveTab('RANGE_VIEWER')}
 					className={`text-xs md:text-sm font-black px-5 py-2.5 rounded-xl transition-all ${
 						activeTab === 'RANGE_VIEWER'
@@ -510,6 +1345,7 @@ export function PmevRangeViewer() {
 				</button>
 
 				<button
+					type="button"
 					onClick={() => setActiveTab('TOY_GAMES_LAB')}
 					className={`text-xs md:text-sm font-black px-5 py-2.5 rounded-xl transition-all ${
 						activeTab === 'TOY_GAMES_LAB'
@@ -522,509 +1358,36 @@ export function PmevRangeViewer() {
 			</div>
 
 			{activeTab === 'RANGE_VIEWER' ? (
-				<div>
-					{/* Seletores de Spot & Variáveis Estruturais Reais */}
-					<div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-slate-900/70 p-5 rounded-2xl border border-slate-800/80">
-						<div>
-							<label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-								Spot & Ação
-							</label>
-							<div className="grid grid-cols-2 gap-2">
-								<select
-									value={spotType}
-									onChange={(e) => setSpotType(e.target.value as SpotType)}
-									className="bg-slate-800 border border-slate-700 text-xs text-white rounded-lg p-2 font-bold focus:outline-none focus:border-amber-500"
-								>
-									<option value="RFI">RFI (Open Raise)</option>
-									<option value="BB_DEFENSE">Defesa de BB</option>
-									<option value="PUSH_FOLD">Push / Fold</option>
-								</select>
-
-								<select
-									value={position}
-									onChange={(e) => {
-										setPosition(e.target.value);
-										setCustomBaseline(null);
-									}}
-									className="bg-slate-800 border border-slate-700 text-xs text-white rounded-lg p-2 font-bold focus:outline-none focus:border-amber-500"
-								>
-									<option value="UTG">UTG (8 Atrás)</option>
-									<option value="MP">MP / LJ (6 Atrás)</option>
-									<option value="CO">CO (4 Atrás)</option>
-									<option value="BTN">BTN (2 Atrás)</option>
-									<option value="SB">SB (1 Atrás)</option>
-								</select>
-							</div>
-						</div>
-
-						<div>
-							<div className="flex justify-between items-center mb-1.5">
-								<label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-									Stack: <span className="text-amber-400 font-extrabold">{stackBb} BB</span>
-								</label>
-								<span className="text-[11px] text-slate-500">Sizing: {sizingBb}bb</span>
-							</div>
-							<input
-								type="range"
-								min="8"
-								max="60"
-								step="1"
-								value={stackBb}
-								onChange={(e) => setStackBb(parseFloat(e.target.value))}
-								className="w-full accent-amber-500 cursor-pointer"
-							/>
-						</div>
-
-						<div>
-							<div className="flex justify-between items-center mb-1.5">
-								<label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-									Risk Advantage: <span className={riskAdvantage > 0 ? 'text-emerald-400' : riskAdvantage < 0 ? 'text-rose-400' : 'text-slate-300'}>
-										{riskAdvantage > 0 ? `+${riskAdvantage}` : riskAdvantage}
-									</span>
-								</label>
-							</div>
-							<input
-								type="range"
-								min="-10"
-								max="10"
-								step="1"
-								value={riskAdvantage}
-								onChange={(e) => setRiskAdvantage(parseFloat(e.target.value))}
-								className="w-full accent-amber-500 cursor-pointer"
-							/>
-							<div className="flex justify-between text-[10px] text-slate-500 mt-1">
-								<span>Hero Coberto (CL)</span>
-								<span>Neutro</span>
-								<span>Hero Cobre (Pressão)</span>
-							</div>
-						</div>
-
-						<div>
-							<label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-								Custo de Sobrevivência (EV_fold)
-							</label>
-							<div className="flex items-center gap-2">
-								<button
-									onClick={() => setHasShortStackPressure(!hasShortStackPressure)}
-									className={`text-xs px-3 py-2 rounded-lg font-bold border transition-all flex-1 ${
-										hasShortStackPressure
-											? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-											: 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
-									}`}
-								>
-									{hasShortStackPressure ? '⚡ Payjump Passivo (EV>0)' : 'Órbita Normal'}
-								</button>
-
-								<button
-									onClick={() => setTimeToBlind(timeToBlind <= 3 ? 12 : 2)}
-									className={`text-xs px-3 py-2 rounded-lg font-bold border transition-all flex-1 ${
-										timeToBlind <= 3
-											? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-											: 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
-									}`}
-								>
-									{timeToBlind <= 3 ? '🚨 Blinds em 2m' : '⏱ Blinds em 12m'}
-								</button>
-							</div>
-						</div>
-					</div>
-
-					{/* KPI Cards */}
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-						<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-							<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">EV do Fold no Spot</span>
-							<div className={`text-xl font-black mt-1 ${calculatedEvFold > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-								{calculatedEvFold > 0 ? `+${calculatedEvFold.toFixed(3)} BB` : `${calculatedEvFold.toFixed(3)} BB`}
-							</div>
-							<p className="text-[10px] text-slate-500 mt-1">
-								{calculatedEvFold > 0 ? 'Fold positivo: Payjump passivo sem risco' : 'Piso de ChipEV / Sangria de antes'}
-							</p>
-						</div>
-
-						<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-							<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Combos Poker Racional</span>
-							<div className="text-xl font-black text-amber-400 mt-1">
-								{stats.vitoiCombos} <span className="text-xs text-slate-500 font-normal">/ {stats.baseCombos} GTO</span>
-							</div>
-							<p className="text-[10px] text-slate-500 mt-1">
-								Delta: <strong className={stats.deltaCombos >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-									{stats.deltaCombos >= 0 ? `+${stats.deltaCombos}` : stats.deltaCombos} combos
-								</strong>
-							</p>
-						</div>
-
-						<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-							<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mãos Resgatadas (Agressão)</span>
-							<div className="text-xl font-black text-emerald-400 mt-1">
-								+{stats.expandedCount}
-							</div>
-							<p className="text-[10px] text-slate-500 mt-1">Ataque contra over-fold e sangria</p>
-						</div>
-
-						<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-							<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Teto do Risk Premium (Folds)</span>
-							<div className="text-xl font-black text-rose-400 mt-1">
-								-{stats.contractedCount}
-							</div>
-							<p className="text-[10px] text-slate-500 mt-1">Proteção contra passivo de RIO</p>
-						</div>
-					</div>
-
-					{/* Abas de Modo de Visualização */}
-					<div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-6">
-						<div className="flex items-center gap-2">
-							<button
-								onClick={() => setViewMode('DELTA')}
-								className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
-									viewMode === 'DELTA'
-										? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-										: 'bg-slate-900 text-slate-400 hover:text-white'
-								}`}
-							>
-								Diferencial (Deltas Δ)
-							</button>
-
-							<button
-								onClick={() => setViewMode('PMEV_ADJUSTED')}
-								className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
-									viewMode === 'PMEV_ADJUSTED'
-										? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-										: 'bg-slate-900 text-slate-400 hover:text-white'
-								}`}
-							>
-								Poker Racional (Ajustado)
-							</button>
-
-							<button
-								onClick={() => setViewMode('BASELINE_GTO')}
-								className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
-									viewMode === 'BASELINE_GTO'
-										? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-										: 'bg-slate-900 text-slate-400 hover:text-white'
-								}`}
-							>
-								GTO Solver Baseline
-							</button>
-
-							<button
-								onClick={() => setViewMode('DUAL_GRID')}
-								className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
-									viewMode === 'DUAL_GRID'
-										? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-										: 'bg-slate-900 text-slate-400 hover:text-white'
-								}`}
-							>
-								Dual Grid (Lado a Lado)
-							</button>
-						</div>
-
-						<div className="text-right text-[11px] text-slate-500">
-							Fonte ativa: <span className="text-slate-300 font-bold">{sourceLabel}</span>
-						</div>
-					</div>
-
-					{/* Grid Tensorial 13x13 */}
-					{viewMode !== 'DUAL_GRID' ? (
-						<div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-							<div className="lg:col-span-8 bg-slate-950 p-4 rounded-2xl border border-slate-800/80 shadow-inner">
-								<div className="grid grid-cols-[repeat(13,minmax(0,1fr))] gap-1 md:gap-1.5 aspect-square">
-									{gridCells.map((cell) => {
-										const isSelected = selectedHand?.hand === cell.hand;
-										const colorClass = getCellColor(cell, viewMode);
-
-										return (
-											<button
-												key={cell.hand}
-												onClick={() => setSelectedHand(cell)}
-												className={`aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] md:text-xs font-bold transition-all relative select-none ${colorClass} ${
-													isSelected ? 'ring-2 ring-amber-400 scale-105 z-10 shadow-lg' : 'hover:scale-105 hover:z-10'
-												}`}
-											>
-												<span>{cell.hand}</span>
-												{viewMode === 'DELTA' && cell.delta !== 0 && (
-													<span className="text-[8px] font-black leading-none opacity-90">
-														{cell.delta > 0 ? `+${Math.round(cell.delta * 100)}%` : `${Math.round(cell.delta * 100)}%`}
-													</span>
-												)}
-											</button>
-										);
-									})}
-								</div>
-							</div>
-
-							<div className="lg:col-span-4 bg-slate-900/90 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between">
-								{selectedHand ? (
-									<div>
-										<div className="flex items-center justify-between pb-4 border-b border-slate-800">
-											<div>
-												<h3 className="text-3xl font-black text-white">{selectedHand.hand}</h3>
-												<span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-													{selectedHand.type === 'PAIR' ? 'Par em Mão' : selectedHand.type === 'SUITED' ? 'Naipe Idêntico (Suited)' : 'Naipes Diferentes (Offsuit)'}
-												</span>
-											</div>
-											<span className={`text-xs font-extrabold px-3 py-1 rounded-full uppercase ${
-												selectedHand.action === 'EXPAND' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
-												selectedHand.action === 'CONTRACT' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40' :
-												'bg-slate-800 text-slate-400 border border-slate-700'
-											}`}>
-												{selectedHand.action === 'EXPAND' ? 'Expansão Vitoi' : selectedHand.action === 'CONTRACT' ? 'Contração RP' : 'Paridade GTO'}
-											</span>
-										</div>
-
-										<div className="space-y-4 my-5">
-											<div className="flex justify-between items-center text-sm">
-												<span className="text-slate-400 font-semibold">Frequência GTO Baseline:</span>
-												<span className="text-white font-bold">{(selectedHand.baselineFreq * 100).toFixed(0)}%</span>
-											</div>
-
-											<div className="flex justify-between items-center text-sm">
-												<span className="text-slate-400 font-semibold">Frequência Poker Racional:</span>
-												<span className="text-amber-400 font-extrabold">{(selectedHand.vitoiFreq * 100).toFixed(0)}%</span>
-											</div>
-
-											<div className="flex justify-between items-center text-sm">
-												<span className="text-slate-400 font-semibold">Delta Diferencial (Δ):</span>
-												<span className={`font-black ${selectedHand.delta > 0 ? 'text-emerald-400' : selectedHand.delta < 0 ? 'text-rose-400' : 'text-slate-400'}`}>
-													{selectedHand.delta > 0 ? `+${(selectedHand.delta * 100).toFixed(0)}%` : `${(selectedHand.delta * 100).toFixed(0)}%`}
-												</span>
-											</div>
-
-											<div className="bg-slate-950 p-4 rounded-xl border border-slate-800/80 mt-4">
-												<span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
-													Justificativa Epistêmica (Vitoi Framework)
-												</span>
-												<p className="text-xs text-slate-300 leading-relaxed">
-													{selectedHand.justification}
-												</p>
-											</div>
-										</div>
-									</div>
-								) : (
-									<div className="flex items-center justify-center h-full text-slate-500 text-xs">
-										Selecione uma mão na matriz 13x13 para inspecionar o racional.
-									</div>
-								)}
-
-								<div className="pt-4 border-t border-slate-800 text-[11px] space-y-1.5 text-slate-400">
-									<div className="flex items-center gap-2">
-										<span className="w-3 h-3 rounded bg-emerald-500 inline-block"></span>
-										<span><strong>Verde:</strong> Expande ação pelo EV_fold e Fold Equity.</span>
-									</div>
-									<div className="flex items-center gap-2">
-										<span className="w-3 h-3 rounded bg-slate-700 inline-block"></span>
-										<span><strong>Cinza/Azul:</strong> Paridade com o equilíbrio GTO.</span>
-									</div>
-									<div className="flex items-center gap-2">
-										<span className="w-3 h-3 rounded bg-rose-600 inline-block"></span>
-										<span><strong>Vermelho:</strong> Contrai ação pelo Teto do Risk Premium / RIO.</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					) : (
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
-								<div className="flex justify-between items-center mb-3">
-									<h4 className="text-xs font-black uppercase text-sky-400 tracking-wider">1. Solver Baseline (GTO Puro)</h4>
-									<span className="text-xs text-slate-500 font-bold">{stats.baseCombos} Combos</span>
-								</div>
-								<div className="grid grid-cols-[repeat(13,minmax(0,1fr))] gap-1 aspect-square">
-									{gridCells.map((cell) => (
-										<div
-											key={`base-${cell.hand}`}
-											className={`aspect-square rounded flex items-center justify-center text-[9px] font-bold ${getCellColor(cell, 'BASELINE_GTO')}`}
-										>
-											{cell.hand}
-										</div>
-									))}
-								</div>
-							</div>
-
-							<div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
-								<div className="flex justify-between items-center mb-3">
-									<h4 className="text-xs font-black uppercase text-amber-400 tracking-wider">2. Poker Racional (Vitoi Framework)</h4>
-									<span className="text-xs text-amber-400 font-bold">{stats.vitoiCombos} Combos</span>
-								</div>
-								<div className="grid grid-cols-[repeat(13,minmax(0,1fr))] gap-1 aspect-square">
-									{gridCells.map((cell) => (
-										<div
-											key={`vitoi-${cell.hand}`}
-											className={`aspect-square rounded flex items-center justify-center text-[9px] font-bold ${getCellColor(cell, 'PMEV_ADJUSTED')}`}
-										>
-											{cell.hand}
-										</div>
-									))}
-								</div>
-							</div>
-						</div>
-					)}
-				</div>
+				<RangeViewerTab
+					spotType={spotType}
+					setSpotType={setSpotType}
+					position={position}
+					setPosition={setPosition}
+					setCustomBaseline={setCustomBaseline}
+					stackBb={stackBb}
+					setStackBb={setStackBb}
+					sizingBb={sizingBb}
+					riskAdvantage={riskAdvantage}
+					setRiskAdvantage={setRiskAdvantage}
+					riskAdvantageBadgeColor={riskAdvantageBadgeColor}
+					hasShortStackPressure={hasShortStackPressure}
+					setHasShortStackPressure={setHasShortStackPressure}
+					timeToBlind={timeToBlind}
+					setTimeToBlind={setTimeToBlind}
+					calculatedEvFold={calculatedEvFold}
+					stats={stats}
+					viewMode={viewMode}
+					setViewMode={setViewMode}
+					sourceLabel={sourceLabel}
+					gridCells={gridCells}
+					selectedHand={selectedHand}
+					setSelectedHand={setSelectedHand}
+				/>
 			) : (
-				/* Tab 2: Laboratório de Toy Games do PioSolver (Raphael Vitoi) */
-				<div>
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-						<div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-							<span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider block mb-2">
-								1. Vantagem de Risco (IP RP 3% vs OOP RP Alto)
-							</span>
-							<div className="space-y-1.5">
-								{TOY_GAMES_DATABASE.filter((tg) => tg.category === 'RISK_ADVANTAGE' || tg.category === 'CHIP_EV').map((tg) => (
-									<button
-										key={tg.id}
-										onClick={() => setSelectedToyGame(tg)}
-										className={`w-full text-left text-xs p-2.5 rounded-xl font-bold transition-all ${
-											selectedToyGame.id === tg.id
-												? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-												: 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-										}`}
-									>
-										{tg.title}
-									</button>
-								))}
-							</div>
-						</div>
-
-						<div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-							<span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider block mb-2">
-								2. Inversão de Risco (IP RP Alto vs OOP RP 3%)
-							</span>
-							<div className="space-y-1.5">
-								{TOY_GAMES_DATABASE.filter((tg) => tg.category === 'RISK_INVERSION').map((tg) => (
-									<button
-										key={tg.id}
-										onClick={() => setSelectedToyGame(tg)}
-										className={`w-full text-left text-xs p-2.5 rounded-xl font-bold transition-all ${
-											selectedToyGame.id === tg.id
-												? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-												: 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-										}`}
-									>
-										{tg.title}
-									</button>
-								))}
-							</div>
-						</div>
-
-						<div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between">
-							<div>
-								<span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
-									Métricas PioSolver / Toy Game
-								</span>
-								<h4 className="text-sm font-black text-white">{selectedToyGame.title}</h4>
-								<p className="text-xs text-slate-400 mt-1">{selectedToyGame.description}</p>
-							</div>
-
-							<div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800 text-center">
-								<div className="bg-slate-900 p-2 rounded-lg">
-									<span className="text-[9px] text-slate-500 uppercase block font-bold">IP Shove Freq</span>
-									<span className="text-sm font-extrabold text-amber-400">{selectedToyGame.ipShovePercent}%</span>
-								</div>
-								<div className="bg-slate-900 p-2 rounded-lg">
-									<span className="text-[9px] text-slate-500 uppercase block font-bold">OOP KK Defense</span>
-									<span className="text-sm font-extrabold text-emerald-400">{selectedToyGame.oopCallPercent}%</span>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950 p-6 rounded-3xl border border-slate-800">
-						<div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800">
-							<div className="flex justify-between items-center pb-3 border-b border-slate-800">
-								<div>
-									<h4 className="text-sm font-black text-sky-400 uppercase">Range IP (AA, QQ, JJ - 18 Combos)</h4>
-									<span className="text-xs text-slate-500 font-semibold">Risk Premium: {selectedToyGame.rpIp}%</span>
-								</div>
-								<span className="text-xs font-black text-white bg-sky-500/20 px-3 py-1 rounded-full border border-sky-500/40">
-									Shove Total: {selectedToyGame.ipShovePercent}%
-								</span>
-							</div>
-
-							<div className="space-y-3 mt-4">
-								<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
-									<div className="flex justify-between text-xs font-bold mb-1">
-										<span className="text-slate-300">Valor Puro (AA - 6 Combos):</span>
-										<span className="text-emerald-400 font-black">100% Shove (6.0 Combos)</span>
-									</div>
-									<div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
-										<div className="bg-emerald-500 h-full w-full"></div>
-									</div>
-								</div>
-
-								<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
-									<div className="flex justify-between text-xs font-bold mb-1">
-										<span className="text-slate-300">Blefes (QQ, JJ - 12 Combos):</span>
-										<span className="text-amber-400 font-black">
-											{((selectedToyGame.ipBluffCombos / 12) * 100).toFixed(1)}% Shove ({selectedToyGame.ipBluffCombos} Combos)
-										</span>
-									</div>
-									<div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
-										<div
-											className="bg-amber-500 h-full transition-all duration-500"
-											style={{ width: `${Math.min(100, (selectedToyGame.ipBluffCombos / 12) * 100)}%` }}
-										></div>
-									</div>
-								</div>
-							</div>
-						</div>
-
-						<div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800">
-							<div className="flex justify-between items-center pb-3 border-b border-slate-800">
-								<div>
-									<h4 className="text-sm font-black text-rose-400 uppercase">Range OOP (KK Bluffcatcher - 6 Combos)</h4>
-									<span className="text-xs text-slate-500 font-semibold">Risk Premium: {selectedToyGame.rpOop}%</span>
-								</div>
-								<span className={`text-xs font-black px-3 py-1 rounded-full border ${
-									selectedToyGame.oopFoldPercent > 60
-										? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-										: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-								}`}>
-									Fold: {selectedToyGame.oopFoldPercent}% | Call: {selectedToyGame.oopCallPercent}%
-								</span>
-							</div>
-
-							<div className="space-y-3 mt-4">
-								<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
-									<div className="flex justify-between text-xs font-bold mb-1">
-										<span className="text-slate-300">Ação de Call no River (MDF vs Teto do RP):</span>
-										<span className="text-emerald-400 font-black">
-											{selectedToyGame.oopCallPercent}% ({(6 * (selectedToyGame.oopCallPercent / 100)).toFixed(1)} Combos)
-										</span>
-									</div>
-									<div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
-										<div
-											className="bg-emerald-500 h-full transition-all duration-500"
-											style={{ width: `${selectedToyGame.oopCallPercent}%` }}
-										></div>
-									</div>
-								</div>
-
-								<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
-									<div className="flex justify-between text-xs font-bold mb-1">
-										<span className="text-slate-300">Ação de Fold (Preservação de Valuation):</span>
-										<span className="text-rose-400 font-black">
-											{selectedToyGame.oopFoldPercent}% ({(6 * (selectedToyGame.oopFoldPercent / 100)).toFixed(1)} Combos)
-										</span>
-									</div>
-									<div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
-										<div
-											className="bg-rose-600 h-full transition-all duration-500"
-											style={{ width: `${selectedToyGame.oopFoldPercent}%` }}
-										></div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl mt-6">
-						<span className="text-[11px] font-extrabold text-amber-400 uppercase tracking-wider block mb-2">
-							💡 Racional Teórico do Paradoxo VITOI ("Entendendo o ICM e suas heurísticas")
-						</span>
-						<p className="text-xs md:text-sm text-slate-300 leading-relaxed">
-							{selectedToyGame.vitoiInsight}
-						</p>
-					</div>
-				</div>
+				<ToyGamesLabTab
+					selectedToyGame={selectedToyGame}
+					setSelectedToyGame={setSelectedToyGame}
+				/>
 			)}
 		</div>
 	);
