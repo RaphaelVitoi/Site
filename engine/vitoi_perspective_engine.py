@@ -1,10 +1,206 @@
 # pylint: disable=invalid-name, too-many-locals, too-many-statements, too-many-positional-arguments
-"""Modulo de Perspectiva Matematica VITOI."""
+"""Modulo de Perspectiva Matematica VITOI (PMev Engine v8.0 GOLD)."""
+
+from __future__ import annotations
 
 import math
 import sys
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Final, Sequence
+
+EPSILON: Final[float] = 1e-12
+DEFAULT_ALPHA: Final[float] = 0.88
+DEFAULT_BETA: Final[float] = 0.88
+DEFAULT_LAMBDA: Final[float] = 2.25
+
+type StackVector = list[float]
+type PayoutVector = list[float]
+type PlayerIndex = int
+
+
+# ==============================================================================
+# 1. NÚCLEO DA ETAPA 1: EV_dyn(fold) & BYSTANDER DRIFT
+# ==============================================================================
+
+@dataclass(frozen=True, slots=True)
+class TableState:
+    """Representacao imutavel do estado da mesa de torneio."""
+
+    stacks: StackVector
+    payouts: PayoutVector
+    small_blind: float
+    big_blind: float
+    ante: float = 0.0
+    hero_index: PlayerIndex = 0
+
+    @property
+    def total_chips(self) -> float:
+        return max(EPSILON, sum(self.stacks))
+
+    @property
+    def num_players(self) -> int:
+        return len(self.stacks)
+
+    @property
+    def orbit_cost(self) -> float:
+        return self.small_blind + self.big_blind + (self.ante * self.num_players)
+
+
+class DynamicFoldEngine:
+    """Calculador do valor estocastico do Fold sob atrito de blinds e colisao."""
+
+    def __init__(self, state: TableState) -> None:
+        self._state = state
+
+    def compute_static_icm(self, stacks: Sequence[float]) -> float:
+        total = max(EPSILON, sum(stacks))
+        hero_stack = stacks[self._state.hero_index]
+        return (hero_stack / total) * sum(self._state.payouts)
+
+    def calculate_orbit_friction(self, pos_from_bb: int) -> float:
+        n = self._state.num_players
+        weight = 1.0 + (pos_from_bb / max(1, n))
+        return (self._state.orbit_cost / n) * weight
+
+    def calculate_bystander_collision_gain(self) -> float:
+        n = self._state.num_players
+        hero_idx = self._state.hero_index
+        total_payout = sum(self._state.payouts)
+        bystander_gain_total = 0.0
+
+        for j in range(n):
+            for k in range(j + 1, n):
+                if j == hero_idx or k == hero_idx:
+                    continue
+
+                stack_j = self._state.stacks[j]
+                stack_k = self._state.stacks[k]
+                shorter_stack = min(stack_j, stack_k)
+                larger_stack = max(stack_j, stack_k)
+
+                # 1. Probabilidade de all-in: Stacks mais curtos sofrem maior urgência de all-in
+                p_allin = math.exp(-0.08 * shorter_stack)
+
+                # 2. Probabilidade de eliminação do stack menor no confronto
+                p_elim = larger_stack / max(EPSILON, stack_j + stack_k)
+
+                # 3. Salto de equidade para o Hero ao subir de colocação
+                hero_share = self._state.stacks[hero_idx] / max(EPSILON, self._state.total_chips - shorter_stack)
+                payjump_value = (total_payout / max(1, n)) * 0.40
+
+                bystander_gain_total += p_allin * p_elim * hero_share * payjump_value
+
+        return bystander_gain_total
+
+
+    def evaluate_dynamic_ev_fold(self, pos_from_bb: int = 2) -> float:
+        hero_stack = self._state.stacks[self._state.hero_index]
+        friction = self.calculate_orbit_friction(pos_from_bb)
+
+        decayed_hero_stack = max(0.0, hero_stack - friction)
+        decayed_stacks = list(self._state.stacks)
+        decayed_stacks[self._state.hero_index] = decayed_hero_stack
+
+        base_fold_ev = self.compute_static_icm(decayed_stacks)
+        bystander_gain = self.calculate_bystander_collision_gain()
+
+        return base_fold_ev + bystander_gain
+
+
+# ==============================================================================
+# 2. NÚCLEO DA ETAPA 2: REALIZAÇÃO (R) & PASSIVO MULTIWAY (L_multi)
+# ==============================================================================
+
+@dataclass(frozen=True, slots=True)
+class HandContext:
+    """Contexto tatico da mao e da posicao."""
+
+    raw_equity: float
+    is_in_position: bool
+    spr: float
+    num_opponents: int
+    hand_playability_index: float = 1.0
+    base_rio_penalty: float = 0.08
+
+
+class PerspectiveActionEvaluator:
+    """Calculador de Equidade Realizavel e Risco Multiway."""
+
+    def __init__(self, context: HandContext) -> None:
+        self._ctx = context
+
+    def calculate_realization_factor(self) -> float:
+        pos_base = 1.15 if self._ctx.is_in_position else 0.85
+
+        if self._ctx.spr <= 0.1:
+            return 1.0
+
+        spr_modifier = math.tanh(0.35 * self._ctx.spr)
+        realization = pos_base * (1.0 + (spr_modifier * (self._ctx.hand_playability_index - 1.0)))
+        return max(0.40, min(1.40, realization))
+
+    def calculate_multiway_structural_liability(self, pot_size: float, hero_stack: float) -> float:
+        n = max(1, self._ctx.num_opponents)
+        if n == 1:
+            return 0.0
+
+        pot_ratio = pot_size / max(EPSILON, hero_stack)
+        return self._ctx.base_rio_penalty * (n**2) * pot_ratio
+
+
+# ==============================================================================
+# 3. NÚCLEO DA ETAPA 3: UTILIDADE PROSPECTIVA & PRÊMIO DE RISCO DINÂMICO
+# ==============================================================================
+
+@dataclass(frozen=True, slots=True)
+class RiskContext:
+    """Contexto comportamental e financeiro sob a Teoria do Prospecto."""
+
+    delta_win_dollars: float
+    delta_lose_dollars: float
+    hero_edge: float
+    time_to_blind_increase: int
+    is_in_position: bool
+    alpha: float = DEFAULT_ALPHA
+    beta: float = DEFAULT_BETA
+    loss_aversion_lambda: float = DEFAULT_LAMBDA
+
+
+class ProspectRiskEngine:
+    """Motor de calculo de Utilidade S-Shape e Bubble Factor Dinamico."""
+
+    def __init__(self, ctx: RiskContext) -> None:
+        self._ctx = ctx
+
+    def calculate_prospect_utility(self, delta_dollars: float) -> float:
+        if delta_dollars >= 0:
+            return math.pow(delta_dollars, self._ctx.alpha)
+        return -self._ctx.loss_aversion_lambda * math.pow(abs(delta_dollars), self._ctx.beta)
+
+    def calculate_dynamic_bubble_factor(self) -> float:
+        u_win = self.calculate_prospect_utility(self._ctx.delta_win_dollars)
+        u_lose = abs(self.calculate_prospect_utility(-self._ctx.delta_lose_dollars))
+
+        if u_win <= EPSILON:
+            return 10.0
+        return max(1.0, u_lose / u_win)
+
+    def calculate_edge_time_modulator(self) -> float:
+        time_factor = min(2.0, self._ctx.time_to_blind_increase / 20.0)
+        edge_discount = -0.15 * self._ctx.hero_edge * time_factor
+        pos_bonus = -0.05 if self._ctx.is_in_position else 0.05
+        return math.exp(edge_discount + pos_bonus)
+
+    def evaluate_required_equilibrium_equity(self, raw_pot_odds: float) -> float:
+        bf = self.calculate_dynamic_bubble_factor()
+        raw_risk_premium = (bf - 1.0) / bf
+        psi = self.calculate_edge_time_modulator()
+        rp_dynamic = raw_risk_premium * psi
+
+        req_equity = (raw_pot_odds + rp_dynamic) / (1.0 + rp_dynamic)
+        return min(0.95, max(raw_pot_odds, req_equity))
+
 
 try:
     import numpy as np
@@ -46,6 +242,7 @@ class VitoiPerspectiveEngine:
     SOTA: Motor Hibrido de Perspectiva Matematica (VITOI 3.2).
     Substitui a metrica estatica de Pot Odds e o FGS Limitado pela Antevisao de Fluxo.
     """
+
 
     @staticmethod
     def calculate_dynamic_ev_fold(

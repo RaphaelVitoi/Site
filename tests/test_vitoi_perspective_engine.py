@@ -1,10 +1,23 @@
 """Testes unitarios rigorosos para o motor VitoiPerspectiveEngine (PMev / Teoria dos Jogos SOTA)."""
 
-from engine.vitoi_perspective_engine import VitoiPerspectiveEngine
+from __future__ import annotations
+
+import pytest
+
+from engine.vitoi_perspective_engine import (
+    DynamicFoldEngine,
+    HandContext,
+    PerspectiveActionEvaluator,
+    ProspectRiskEngine,
+    RiskContext,
+    TableState,
+    VitoiPerspectiveEngine,
+)
 
 
 class TestVitoiPerspectiveEngine:
     """Suite de testes de validacao dos axiomas matematicos de VitoiPerspectiveEngine."""
+
 
     def test_calculate_dynamic_ev_fold_utg_penalty(self):
         """Valida que a posicao UTG aplica a penalidade posicional de 0.5."""
@@ -300,3 +313,121 @@ class TestVitoiPerspectiveEngine:
         assert "decision_tree_synthesis" in report
         assert report["recommended_action"] in ["RAISE", "CALL", "FOLD"]
         assert isinstance(report["pmev_value"], (int, float))
+
+    # ==========================================================================
+    # TESTES DEDICADOS DAS ETAPAS 1, 2 E 3 (TRÍADE AXIOMÁTICA PMev)
+    # ==========================================================================
+
+    def test_ev_fold_monotonicity_with_blinds_proximity(self):
+        """[Etapa 1] Garante que estar em Late Position retém mais equidade de fold que no UTG."""
+        state = TableState(
+            stacks=[25.0, 50.0, 15.0, 8.0],
+            payouts=[1000.0, 600.0, 400.0],
+            small_blind=0.5,
+            big_blind=1.0,
+            hero_index=0,
+        )
+        engine = DynamicFoldEngine(state)
+
+        ev_fold_btn = engine.evaluate_dynamic_ev_fold(pos_from_bb=1)
+        ev_fold_utg = engine.evaluate_dynamic_ev_fold(pos_from_bb=3)
+
+        assert ev_fold_btn > ev_fold_utg
+
+    def test_bystander_gain_elevates_fold_value_with_short_stacks(self):
+        """[Etapa 1] Garante que a presença de Short Stacks eleva o valor do Fold do Hero."""
+        state_balanced = TableState(
+            stacks=[30.0, 30.0, 30.0],
+            payouts=[1000.0, 500.0],
+            small_blind=0.5,
+            big_blind=1.0,
+            hero_index=0,
+        )
+        state_short_in_danger = TableState(
+            stacks=[30.0, 56.0, 4.0],
+            payouts=[1000.0, 500.0],
+            small_blind=0.5,
+            big_blind=1.0,
+            hero_index=0,
+        )
+
+        gain_balanced = DynamicFoldEngine(state_balanced).calculate_bystander_collision_gain()
+        gain_short = DynamicFoldEngine(state_short_in_danger).calculate_bystander_collision_gain()
+
+        assert gain_short > gain_balanced
+
+    def test_realization_factor_ip_superior_to_oop(self):
+        """[Etapa 2] Garante que a realização de equidade em posição (IP) é superior a fora de posição (OOP)."""
+        ctx_ip = HandContext(
+            raw_equity=0.45,
+            is_in_position=True,
+            spr=3.5,
+            num_opponents=1,
+            hand_playability_index=1.0,
+        )
+        ctx_oop = HandContext(
+            raw_equity=0.45,
+            is_in_position=False,
+            spr=3.5,
+            num_opponents=1,
+            hand_playability_index=1.0,
+        )
+
+        r_ip = PerspectiveActionEvaluator(ctx_ip).calculate_realization_factor()
+        r_oop = PerspectiveActionEvaluator(ctx_oop).calculate_realization_factor()
+
+        assert r_ip > r_oop
+
+    def test_multiway_structural_liability_scales_quadratically(self):
+        """[Etapa 2] Garante que o passivo de risco escala com N^2 conforme o número de oponentes."""
+        ctx_2opp = HandContext(raw_equity=0.35, is_in_position=True, spr=2.0, num_opponents=2)
+        ctx_3opp = HandContext(raw_equity=0.35, is_in_position=True, spr=2.0, num_opponents=3)
+
+        l_2opp = PerspectiveActionEvaluator(ctx_2opp).calculate_multiway_structural_liability(pot_size=12.0, hero_stack=25.0)
+        l_3opp = PerspectiveActionEvaluator(ctx_3opp).calculate_multiway_structural_liability(pot_size=12.0, hero_stack=25.0)
+
+        ratio = l_3opp / l_2opp
+        expected_ratio = 9.0 / 4.0  # 2.25
+
+        assert ratio == pytest.approx(expected_ratio, rel=1e-2)
+
+    def test_prospect_theory_loss_aversion_ratio(self):
+        """[Etapa 3] Garante que a perda é penalizada em razão de lambda = 2.25 sobre ganhos idênticos."""
+        engine = ProspectRiskEngine(
+            RiskContext(
+                delta_win_dollars=150.0,
+                delta_lose_dollars=150.0,
+                hero_edge=0.0,
+                time_to_blind_increase=20,
+                is_in_position=True,
+                loss_aversion_lambda=2.25,
+            )
+        )
+
+        u_win = engine.calculate_prospect_utility(150.0)
+        u_lose = abs(engine.calculate_prospect_utility(-150.0))
+
+        assert (u_lose / u_win) == pytest.approx(2.25, rel=1e-2)
+
+    def test_edge_and_deep_structure_attenuates_risk_premium(self):
+        """[Etapa 3] Garante que jogadores com alto Edge em estruturas lentas têm menor corte de equidade."""
+        ctx_high_edge = RiskContext(
+            delta_win_dollars=200.0,
+            delta_lose_dollars=400.0,
+            hero_edge=0.8,
+            time_to_blind_increase=40,
+            is_in_position=True,
+        )
+        ctx_low_edge = RiskContext(
+            delta_win_dollars=200.0,
+            delta_lose_dollars=400.0,
+            hero_edge=-0.5,
+            time_to_blind_increase=40,
+            is_in_position=True,
+        )
+
+        req_high = ProspectRiskEngine(ctx_high_edge).evaluate_required_equilibrium_equity(raw_pot_odds=0.33)
+        req_low = ProspectRiskEngine(ctx_low_edge).evaluate_required_equilibrium_equity(raw_pot_odds=0.33)
+
+        assert req_high < req_low
+

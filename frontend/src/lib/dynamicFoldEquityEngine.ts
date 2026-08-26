@@ -202,3 +202,70 @@ export function calculateDynamicFoldEquity(params: DynamicFoldEquityParams): Dyn
 		verdictDescription,
 	};
 }
+
+// ==============================================================================
+// EXTENSÃO AXIOMÁTICA PMev (CHICO SOTA v8.0 GOLD)
+// ==============================================================================
+
+export interface TableStateDTO {
+	stacks: number[];
+	payouts: number[];
+	smallBlind: number;
+	bigBlind: number;
+	ante?: number;
+	heroIndex: number;
+}
+
+export interface HandContextDTO {
+	rawEquity: number;
+	isInPosition: boolean;
+	spr: number;
+	numOpponents: number;
+	playabilityIndex?: number;
+	baseRioPenalty?: number;
+}
+
+export function computeDynamicFoldEV(state: TableStateDTO, posFromBB = 2): number {
+	const n = state.stacks.length;
+	const totalChips = Math.max(1e-9, state.stacks.reduce((a, b) => a + b, 0));
+	const totalPayout = state.payouts.reduce((a, b) => a + b, 0);
+	const orbitCost = state.smallBlind + state.bigBlind + (state.ante ?? 0) * n;
+
+	const friction = (orbitCost / n) * (1.0 + posFromBB / Math.max(1, n));
+	const decayedHeroStack = Math.max(0, state.stacks[state.heroIndex] - friction);
+	const baseFoldEV = (decayedHeroStack / totalChips) * totalPayout;
+
+	let bystanderGain = 0;
+	for (let j = 0; j < n; j++) {
+		for (let k = j + 1; k < n; k++) {
+			if (j === state.heroIndex || k === state.heroIndex) continue;
+			const shorterStack = Math.min(state.stacks[j], state.stacks[k]);
+			const largerStack = Math.max(state.stacks[j], state.stacks[k]);
+
+			const pAllIn = Math.exp(-0.08 * shorterStack);
+			const pElim = largerStack / Math.max(1e-9, state.stacks[j] + state.stacks[k]);
+			const heroShare = state.stacks[state.heroIndex] / Math.max(1e-9, totalChips - shorterStack);
+			const payjumpValue = (totalPayout / Math.max(1, n)) * 0.40;
+
+			bystanderGain += pAllIn * pElim * heroShare * payjumpValue;
+		}
+	}
+
+	return Number((baseFoldEV + bystanderGain).toFixed(4));
+}
+
+export function computeRealizationFactor(ctx: HandContextDTO): number {
+	if (ctx.spr <= 0.1) return 1.0;
+	const posBase = ctx.isInPosition ? 1.15 : 0.85;
+	const playability = ctx.playabilityIndex ?? 1.0;
+	const sprModifier = Math.tanh(0.35 * ctx.spr);
+	return Number(Math.max(0.4, Math.min(1.4, posBase * (1.0 + sprModifier * (playability - 1.0)))).toFixed(4));
+}
+
+export function computeMultiwayLiability(ctx: HandContextDTO, potSize: number, heroStack: number): number {
+	const n = Math.max(1, ctx.numOpponents);
+	if (n === 1) return 0.0;
+	const baseRio = ctx.baseRioPenalty ?? 0.08;
+	return Number((baseRio * Math.pow(n, 2) * (potSize / Math.max(1e-9, heroStack))).toFixed(4));
+}
+
