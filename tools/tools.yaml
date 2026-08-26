@@ -1,0 +1,25 @@
+# ==============================================================================
+# NEXUS SOTA TOOLS REGISTRY — PROTOCOLO CHICO SOTA v8.0 GOLD
+# ==============================================================================
+
+tools:
+  - name: "hybrid_router"
+    version: "2.0.0"
+    description: "Gateway de inferência híbrida inteligente entre Vulkan Local (llama.cpp) e Google Gemini 3.7 Flash Cloud."
+    path: "tools/hybrid_router"
+    entrypoint: "app:app"
+    protocol: "fastapi_rest"
+    ports:
+      api: 8000
+      local_engine: 8080
+    targets:
+      - "LOCAL_LLAMA_VULKAN"
+      - "GEMINI_37_FLASH_STANDARD"
+      - "GEMINI_37_FLASH_THINKING"
+    features:
+      - "static_complexity_analysis"
+      - "submillisecond_triage"
+      - "dynamic_thinking_budget"
+      - "pydantic_v2_validation"
+      - "concurrent_benchmark_suite"
+      - "quad_panel_sota_visual_dashboard"

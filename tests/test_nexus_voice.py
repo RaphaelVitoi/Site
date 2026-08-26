@@ -69,30 +69,55 @@ def test_synthesize_gemini_audio_success(tmp_path: Path, monkeypatch: pytest.Mon
 
 @pytest.mark.asyncio
 async def test_synthesize_edge_tts_execution(tmp_path: Path):
-    """Valida a sintese de voz neural via Edge TTS."""
+    """Valida a sintese de voz neural via Edge TTS com mock hermetico."""
     out_file = tmp_path / "francisca.mp3"
-    result = await synthesize_edge_tts("Teste SOTA de sintese neural.", DEFAULT_VOICE_PTBR, out_file)
-    assert result == out_file
-    assert out_file.exists()
-    assert out_file.stat().st_size > 0
+    
+    mock_communicate = MagicMock()
+    async def mock_save(path: str) -> None:
+        Path(path).write_bytes(b"MOCK_MP3_EDGE_TTS_PAYLOAD")
+    mock_communicate.save = mock_save
+
+    with patch("scripts.cli.nexus_voice.edge_tts") as mock_etts:
+        mock_etts.Communicate.return_value = mock_communicate
+        result = await synthesize_edge_tts("Teste SOTA de sintese neural.", DEFAULT_VOICE_PTBR, out_file)
+        assert result == out_file
+        assert out_file.exists()
+        assert out_file.stat().st_size > 0
 
 
 @pytest.mark.asyncio
 async def test_async_speak_text_execution(tmp_path: Path):
     """Valida a execucao assincrona de sintese neural."""
     out_file = tmp_path / "async_test.mp3"
-    result = await async_speak_text("Validacao async speak text.", output_file=str(out_file), play=False)
-    assert result == out_file
-    assert out_file.exists()
-    assert out_file.stat().st_size > 0
+    
+    mock_communicate = MagicMock()
+    async def mock_save(path: str) -> None:
+        Path(path).write_bytes(b"MOCK_ASYNC_AUDIO_PAYLOAD")
+    mock_communicate.save = mock_save
+
+    with patch("scripts.cli.nexus_voice.edge_tts") as mock_etts:
+        mock_etts.Communicate.return_value = mock_communicate
+        result = await async_speak_text("Validacao async speak text.", output_file=str(out_file), play=False)
+        assert result == out_file
+        assert out_file.exists()
+        assert out_file.stat().st_size > 0
 
 
 def test_speak_text_synchronous_wrapper(tmp_path: Path):
     """Valida o wrapper sincrono speak_text operando com play=False."""
     out_file = tmp_path / "sync_test.mp3"
-    result_path = speak_text("Validacao do wrapper sincrono.", output_file=str(out_file), play=False)
-    assert result_path.exists()
-    assert result_path.stat().st_size > 0
+    
+    mock_communicate = MagicMock()
+    async def mock_save(path: str) -> None:
+        Path(path).write_bytes(b"MOCK_SYNC_AUDIO_PAYLOAD")
+    mock_communicate.save = mock_save
+
+    with patch("scripts.cli.nexus_voice.edge_tts") as mock_etts:
+        mock_etts.Communicate.return_value = mock_communicate
+        result_path = speak_text("Validacao do wrapper sincrono.", output_file=str(out_file), play=False)
+        assert result_path.exists()
+        assert result_path.stat().st_size > 0
+
 
 
 def test_play_audio_windows_dispatch(tmp_path: Path):
