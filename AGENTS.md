@@ -87,3 +87,20 @@ pasta do usuário.
 Dizer quais verificações rodaram e quais não. Verificação não executada não é
 verificação aprovada. O portão de 5 fases roda em todo commit e imprime seu
 veredito — declare esse veredito.
+
+---
+
+## 6. Diretrizes de Manutenção Contínua SOTA (2026-08-26)
+
+1. **Invariância de Testes (Tolerância Zero):** Manter a regra de tolerância zero
+   para falhas na suite de testes ($395/395$). Toda nova funcionalidade deve
+   incluir mocks herméticos correspondentes.
+2. **Sanitização de Warnings:** O pipeline de CI/CD e o pre-commit rejeitam
+   builds que introduzam novos warnings no Pytest.
+3. **Controle de Roteamento:** O limiar do `ComplexityAnalyzer` (Edge vs Cloud)
+   deve ser calibrado periodicamente para manter o tráfego local na faixa ótima
+   de $60\%$ a $70\%$.
+4. **Imutabilidade de Encoding:** Todo script `.ps1` criado ou modificado deve
+   preservar a codificação **UTF-8 com BOM** (`utf-8-sig`) para compatibilidade
+   estrita com PowerShell 5.1.
+
