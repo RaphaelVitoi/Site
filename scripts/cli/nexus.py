@@ -210,6 +210,11 @@ def main():
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+    else:
+        # Best-effort por desenho: roda a cada invocacao do CLI, entao gritar no
+        # console seria ruido em todo comando. Mas sumir sem deixar rastro nao e
+        # opcao -- o gatilho pararia de existir sem ninguem notar. Vai para o log.
+        logger.warning(f"[HIGIENE] Gatilho silencioso NAO executado: {script_path} ausente.")
 
 
 # ==========================================
@@ -637,14 +642,20 @@ def _generate_dashboard_ui(counts: dict) -> Group:
 
 
 def _get_key() -> str | None:
-    if sys.platform == "win32":
-        try:
-            import msvcrt
+    # Degradava em silencio: qualquer excecao do msvcrt virava "nenhuma tecla",
+    # para sempre, e o dashboard parecia travado sem nada explicar. Agora degrada
+    # UMA vez, dizendo o motivo, e para de tentar. So ImportError e OSError sao
+    # esperados (modulo ausente, processo sem console); o resto deve aparecer.
+    if sys.platform != "win32" or getattr(_get_key, "_indisponivel", False):
+        return None
+    try:
+        import msvcrt
 
-            if msvcrt.kbhit():
-                return msvcrt.getch().decode("utf-8", errors="ignore").lower()
-        except Exception:
-            return None
+        if msvcrt.kbhit():
+            return msvcrt.getch().decode("utf-8", errors="ignore").lower()
+    except (ImportError, OSError) as e:
+        _get_key._indisponivel = True  # type: ignore[attr-defined]
+        console.print(f"[yellow][AVISO] Atalhos de teclado indisponiveis ({e}). Use Ctrl+C para sair.[/]")
     return None
 
 
@@ -930,6 +941,7 @@ def purge_orphans():
             )
     except sqlite3.Error as e:
         console.print(f"[bold red][FALHA] Erro ao limpar DAL: {e}[/]")
+        raise typer.Exit(1) from e
 
 
 @db_app.command("clear-pending")
@@ -962,7 +974,11 @@ def clear_pending(
             conn.commit()
             console.print(f"[bold green][SUCESSO] {deleted} tarefas pendentes aniquiladas.[/]")
     except sqlite3.Error as e:
+        # Levanta, como os irmaos `vacuum` e `audit-dag` sempre fizeram. Sem isto,
+        # erro de banco imprimia em vermelho e saia 0: o atalho do dashboard
+        # reportava sucesso tendo aniquilado zero tarefas.
         console.print(f"[bold red]Erro ao manipular DAL: {e}[/]")
+        raise typer.Exit(1) from e
 
 
 @db_app.command("clear-failed")
@@ -995,7 +1011,11 @@ def clear_failed(
             conn.commit()
             console.print(f"[bold green][SUCESSO] {deleted} tarefas falhas aniquiladas da Malha SOTA.[/]")
     except sqlite3.Error as e:
+        # Levanta, como os irmaos `vacuum` e `audit-dag` sempre fizeram. Sem isto,
+        # erro de banco imprimia em vermelho e saia 0: o atalho do dashboard
+        # reportava sucesso tendo aniquilado zero tarefas.
         console.print(f"[bold red]Erro ao manipular DAL: {e}[/]")
+        raise typer.Exit(1) from e
 
 
 @db_app.command("vacuum")
@@ -1092,12 +1112,22 @@ def start_worker(
             continue
 
     console.print("[cyan]Iniciando Orquestrador Hibrido (SOTA)...[/cyan]")
-    subprocess.Popen(
+    proc = subprocess.Popen(
         [sys.executable, str(WORKER_SCRIPT_PATH), WORKER_API_CMD],
         start_new_session=True,
         cwd=str(BASE_DIR),
     )
-    console.print("[bold magenta]Orquestrador desperto e vigilante em background.[/]")
+
+    # Popen sucede quando o processo NASCE, nao quando ele sobrevive. Afirmar
+    # "desperto e vigilante" logo apos era afirmacao sem leitura: um worker que
+    # morre na ignicao (import quebrado, porta ocupada) produzia exatamente a
+    # mesma mensagem verde que um que subiu.
+    time.sleep(1.5)
+    codigo = proc.poll()
+    if codigo is not None:
+        console.print(f"[bold red][FALHA] Orquestrador morreu na ignicao (exit {codigo}).[/]")
+        raise typer.Exit(1)
+    console.print(f"[bold magenta]Orquestrador desperto e vigilante em background (PID {proc.pid}).[/]")
 
 
 @ops_app.command("watch")
@@ -1141,19 +1171,26 @@ def sanitize_system(
 ):
     """Aplica o expurgo deterministico de entropia SOTA."""
     script_path = BASE_DIR / "scripts/maintenance/apply_sanitize.py"
-    if script_path.exists():
-        args = [sys.executable, str(script_path)]
-        if apply:
-            args.append("--apply")
-        subprocess.run(args, cwd=str(BASE_DIR), check=True)
+    if not script_path.exists():
+        # Sem este ramo o comando nao fazia nada, nao imprimia nada e saia 0:
+        # o atalho [3] do dashboard viraria um no-op silencioso se o script
+        # fosse movido ou renomeado. Ausencia de ferramenta e falha, nao sucesso.
+        console.print(f"[bold red][ERRO] Script de saneamento ausente: {script_path}[/]")
+        raise typer.Exit(1)
+    args = [sys.executable, str(script_path)]
+    if apply:
+        args.append("--apply")
+    subprocess.run(args, cwd=str(BASE_DIR), check=True)
 
 
 @ops_app.command("purify-memories")
 def purify_memories():
     """Purifica as memorias do agente para Pure ASCII (Mojibake Fix)."""
     script_path = BASE_DIR / "scripts/maintenance/purify_memories_ascii.py"
-    if script_path.exists():
-        subprocess.run([sys.executable, str(script_path)], cwd=str(BASE_DIR), check=True)
+    if not script_path.exists():
+        console.print(f"[bold red][ERRO] Script de purificacao ausente: {script_path}[/]")
+        raise typer.Exit(1)
+    subprocess.run([sys.executable, str(script_path)], cwd=str(BASE_DIR), check=True)
 
 
 def _is_ignored_dir(name: str) -> bool:
@@ -1312,7 +1349,10 @@ def run_hygiene():
     if script_path.exists():
         subprocess.run([sys.executable, str(script_path)], cwd=str(BASE_DIR), check=True)
     else:
+        # Anunciava o erro e saia 0: dizia [ERRO] e reportava sucesso ao mesmo
+        # tempo. Ter o ramo de falha nao basta; ele precisa reprovar.
         console.print("[bold red][ERRO] Script de higiene nao encontrado.[/]")
+        raise typer.Exit(1)
 
 
 def _trim_working_set(handle) -> bool:
@@ -1578,6 +1618,12 @@ def _ensure_active_model(model: str) -> None:
             if _is_port_open(17043):
                 break
             time.sleep(0.5)
+        else:
+            # Esperava 20s e seguia adiante sem dizer nada, deixando o chat abrir
+            # contra um proxy inexistente. Desistir em silencio e uma forma de
+            # sinal verde: o comando prosseguia como se tivesse conseguido.
+            console.print("[bold red][FALHA] Proxy de inferencia nao respondeu em 20s (porta 17043).[/]")
+            raise typer.Exit(1)
 
 
 @ops_app.command("chat-gemma")
@@ -2187,8 +2233,11 @@ def test_routing(
         agent, meta = task_executor.intelligent_route_task(description)
         console.print(json.dumps({"agent": agent, "metadata": meta}, indent=2))
     except Exception as e:
+        # Roteamento quebrado nao pode sair 0. O atalho [6] do dashboard existe
+        # justamente para descobrir que a malha semantica parou de funcionar.
         logger.exception("Falha ao analisar rota")
         console.print(f"[bold red]Erro de roteamento: {e}[/]")
+        raise typer.Exit(1) from e
 
 
 # ==========================================
