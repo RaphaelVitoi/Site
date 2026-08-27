@@ -240,6 +240,12 @@ nenhuma das duas cabe numa rodada de correção:
 | :--- | :--- | :--- |
 | A | Função de roteamento duplicada entre `Microsoft.PowerShell_profile.ps1` e `Setup-NexusProfile.ps1` (agora 2 funções, não 1) | Declarar a fonte única é o item 1.3 do plano 2-B. Corrigi o defeito nos dois lados; unificar exige decidir quem é o canônico |
 | B | `_calculate_dynamic_context()` em `gemma_server.py` é inalcançável (`SOTA_STATIC_CONTEXT` nunca é definido) | Remoção é destrutiva e exige ordem explícita, item a item |
-| C | `nexus` sem argumentos mudou de destino (`do.ps1` → `nexus.ps1`) | Mudança não declarada da porta de entrada. Pode ser intencional; é decisão do vértice |
-| D | Payload do modo 2 leva `system_prompt` **e** `messages[0]` com o mesmo conteúdo | Pré-existente. Corrigir exige conhecer a semântica do proxy, que não foi levantado |
-| E | `data/RECORD_INDEX.json` (§13.C) não existe: 2 dos 4 itens do portão §13.F seguem inativos | É a frente 2 do plano 2-B, trabalho novo e não correção |
+| ~~C~~ | ~~`nexus` sem argumentos mudou de destino~~ | **RESOLVIDO** no prelúdio 0.5.1 do plano 2-B. Não era mudança de destino: era **regressão**. `nexus <texto livre>` deixara de enfileirar tarefa e devolvia `EXIT=2, "No such command"` |
+| ~~D~~ | ~~Payload do modo 2 duplica a persona~~ | **RESOLVIDO** no prelúdio 0.5.2. **Eu havia classificado errado**: não há duplicação, e a leitura do servidor bastou — não exigia levantar o proxy. O campo é canal lateral de temperatura, e a redundância é load-bearing |
+| ~~E~~ | ~~`RECORD_INDEX.json` não existe~~ | **FUNDIDO** na §2 do plano 2-B, que já era o escopo dele, com as dependências e armadilhas nomeadas |
+
+Restam **A** e **B**, ambos por natureza e não por falta de tempo: A é
+declaração de canônico (item 1.3 do plano) e B é remoção destrutiva, que exige
+ordem explícita item a item. A duplicação de A, porém, **deixou de poder
+divergir em silêncio**: `tests/test_roteamento_perfil.py` compara as duas cópias
+entre si e ambas contra o Typer.

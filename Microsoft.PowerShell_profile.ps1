@@ -9,15 +9,39 @@ $Global:NexusPythonExe = if (Test-Path "$Global:NexusProjectRoot\.venv\Scripts\p
 # --- Comandos Core do Ecossistema ---
 
 # A Membrana de Entrada (Inteligencia SOTA v8.0 GOLD)
+# Comandos de topo do Typer. Tudo o que NAO esta aqui pertence ao do.ps1: ou e
+# uma flag (-Web, -Execute...), ou e TEXTO LIVRE de tarefa, cujo posicional 0 e
+# $Description (do.ps1 linha 41).
+#
+# A regra anterior era "primeiro argumento sem hifen -> nexus.ps1", e isso
+# quebrou o uso historico principal do ecossistema: `nexus refatorar o kernel`
+# deixou de enfileirar tarefa e passou a devolver EXIT=2, "No such command
+# 'refatorar'". Medido em 2026-08-27. O discriminador certo nao e a presenca de
+# hifen, e o pertencimento ao conjunto de comandos do Typer.
+#
+# Lista estatica por velocidade: derivar exigiria um startup do Python a cada
+# invocacao. A divergencia e barrada por teste -- tests/test_roteamento_perfil.py
+# compara esta lista com os comandos que o Typer de fato registra, nos DOIS
+# arquivos que a duplicam.
+$Global:NexusTyperCommands = @(
+    'agent', 'audit', 'autonomy', 'autopoiesis', 'dashboard', 'db', 'gate',
+    'graph', 'homeostasis', 'list', 'ops', 'routine', 'scripts', 'search',
+    'stats', 'status', 'sync-consciousness', 'task', 'task-audit', 'test', 'voice'
+)
+
 function Invoke-Nexus {
-    # "$(...)" -like em vez de .StartsWith(): em modo de argumento o PowerShell
+    # Sem argumentos: ajuda do Typer, que lista os 21 comandos.
+    if ($args.Count -eq 0) {
+        & "$Global:NexusProjectRoot\nexus.ps1"
+        return
+    }
+    # "$(...)" em vez de .StartsWith(): em modo de argumento o PowerShell
     # converte literais numericos, entao `nexus 5` entrega um Int32 e o metodo
-    # lanca "does not contain a method named 'StartsWith'". A interpolacao ja e
-    # a coercao, e -like nunca lanca -- inclusive com $null.
-    if ($args.Count -gt 0 -and "$($args[0])" -like '-*') {
-        & "$Global:NexusProjectRoot\do.ps1" @args
-    } else {
+    # lanca. A interpolacao ja e a coercao, e -contains nunca lanca.
+    if ($Global:NexusTyperCommands -contains "$($args[0])") {
         & "$Global:NexusProjectRoot\nexus.ps1" @args
+    } else {
+        & "$Global:NexusProjectRoot\do.ps1" @args
     }
 }
 Set-Alias nexus Invoke-Nexus
