@@ -8,13 +8,27 @@ $Global:NexusPythonExe = if (Test-Path "$Global:NexusProjectRoot\.venv\Scripts\p
 
 # --- Comandos Core do Ecossistema ---
 
-# A Membrana de Entrada (Inteligencia)
+# A Membrana de Entrada (Inteligencia SOTA v8.0 GOLD)
 function Invoke-Nexus {
-    # Roteamento SOTA: Repassa todos os parametros e flags nativamente para o do.ps1
-    & "$Global:NexusProjectRoot\do.ps1" @args
+    # "$(...)" -like em vez de .StartsWith(): em modo de argumento o PowerShell
+    # converte literais numericos, entao `nexus 5` entrega um Int32 e o metodo
+    # lanca "does not contain a method named 'StartsWith'". A interpolacao ja e
+    # a coercao, e -like nunca lanca -- inclusive com $null.
+    if ($args.Count -gt 0 -and "$($args[0])" -like '-*') {
+        & "$Global:NexusProjectRoot\do.ps1" @args
+    } else {
+        & "$Global:NexusProjectRoot\nexus.ps1" @args
+    }
 }
 Set-Alias nexus Invoke-Nexus
 Set-Alias sota Invoke-Nexus
+
+# O Dashboard Executivo (CEO Level SOTA)
+function Invoke-Dashboard {
+    & "$Global:NexusProjectRoot\dashboard.ps1" @args
+}
+Set-Alias dashboard Invoke-Dashboard
+Set-Alias vitoi_dashboard Invoke-Dashboard
 
 
 # O Centro de Comando (Diagnostico e Manutencao)

@@ -134,6 +134,8 @@
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
     "editor.wordWrap": "on"
   },
+  "prettier.logLevel": "warn",
+  "prettier.requireConfig": true,
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
   },
