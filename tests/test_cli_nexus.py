@@ -205,3 +205,157 @@ def test_nexus_dashboard_once():
         result = runner.invoke(app, ["dashboard", "--once"])
         assert result.exit_code == 0
         assert "NEXUS SOTA GOD MODE DASHBOARD" in result.stdout
+
+
+# ============================================================================
+# Auditoria do dashboard, 2026-08-27: comando vazio devolvendo 0 gracioso.
+#
+# O vertice sinalizou que havia atalhos "vazios de funcao e devolvendo output
+# gracioso de 0" plugados no dashboard. A varredura dos 18 botoes encontrou
+# tres errados e um habilitador estrutural. Estes testes travam os quatro.
+# ============================================================================
+
+
+def test_warnings_declarados_distingue_zero_de_ausente():
+    """"Declarou zero" e "nao declarou" NAO sao a mesma coisa.
+
+    Confundir os dois foi o defeito: quatro resumos imprimiam " Total de
+    Warnings: 0" fixo, inclusive o do QUALITY GATE, cuja fase cwv_gate.ps1
+    declara 2 warnings e sai 0.
+    """
+    from scripts.cli.nexus import _warnings_declarados
+
+    assert _warnings_declarados(" Total de Warnings: 0 (Teto Maximo Permitido: 2)") == 0
+    assert _warnings_declarados(" Total de Warnings: 2 (Teto Maximo Permitido: 2)") == 2
+    assert _warnings_declarados("saida qualquer sem contagem") is None
+    assert _warnings_declarados("") is None
+
+
+def test_resumo_tri_state_alcanca_fragil():
+    """FRAGIL era inalcancavel: com warnings literalmente 0, o tri-state era bi-state."""
+    from scripts.cli.nexus import _imprimir_resumo_tri_state
+
+    assert _imprimir_resumo_tri_state("T", 0, {"a": 0, "b": 0}, "ok") == "SUCESSO (VERDE)"
+    assert _imprimir_resumo_tri_state("T", 0, {"a": 2, "b": 0}, "ok") == "FRAGIL (AMARELO)"
+    assert _imprimir_resumo_tri_state("T", 0, {"a": 3}, "ok") == "FALHOU (VERMELHO)"
+    assert _imprimir_resumo_tri_state("T", 1, {"a": 0}, "ok") == "FALHOU (VERMELHO)"
+
+
+def test_resumo_tri_state_reage_a_saida_real_do_cwv_gate():
+    """A saida REAL que o resumo antigo ignorava agora tem que mover o veredito."""
+    from scripts.cli.nexus import _imprimir_resumo_tri_state, _warnings_declarados
+
+    saida_real_cwv = (
+        " Total de Erros:    0 (Teto Maximo Permitido: 0 | Peso: CRITICO)\n"
+        " Total de Warnings: 2 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)\n"
+        " Status da Bateria: [FRAGIL (AMARELO)] 0 Erros, mas detectados 2 warnings no Quality Gate."
+    )
+    assert _warnings_declarados(saida_real_cwv) == 2
+    fases = {"CWV Gate": _warnings_declarados(saida_real_cwv), "Lint": 0}
+    assert _imprimir_resumo_tri_state("QUALITY GATE", 0, fases, "ok") == "FRAGIL (AMARELO)"
+
+
+def test_resumo_declara_piso_quando_a_fase_e_muda(capsys):
+    """Fase que nao declara contagem nao pode ser arredondada para zero."""
+    from scripts.cli.nexus import _imprimir_resumo_tri_state
+
+    _imprimir_resumo_tri_state("T", 0, {"fala": 0, "muda": None}, "homeostase")
+    saida = capsys.readouterr().out
+    assert "PISO, NAO TETO" in saida
+    assert "homeostase" not in saida, "nao pode declarar homeostase total com fase muda"
+
+
+def test_maintenance_nao_invoca_comando_typer_como_funcao():
+    """run_maintenance chamava optimize_ram(), cujos defaults viraram OptionInfo.
+
+    bool(OptionInfo) e True, entao o passo 1 entrava no daemon --watch e morria
+    em TypeError sem alcancar os passos 2 a 5. O teste prova que o protocolo
+    atravessa as cinco etapas.
+    """
+    with (
+        patch("scripts.cli.nexus._execute_ram_cleanse") as ram,
+        patch("scripts.cli.nexus.vacuum_db") as vac,
+        patch("scripts.cli.nexus.sanitize_system") as san,
+        patch("scripts.cli.nexus.run_hygiene") as hyg,
+        patch("scripts.cli.nexus.subprocess.run") as sub,
+    ):
+        result = runner.invoke(app, ["ops", "maintenance"])
+        assert result.exit_code == 0, result.stdout
+        ram.assert_called_once()
+        vac.assert_called_once()
+        san.assert_called_once()
+        hyg.assert_called_once()
+        assert sub.called, "passo 5 (LanceDB) nao foi alcancado"
+
+
+def test_maintenance_reprova_quando_uma_etapa_falha():
+    """O veredito era '[SUCESSO ABSOLUTO]' incondicional sob quatro try/except."""
+    with (
+        patch("scripts.cli.nexus._execute_ram_cleanse"),
+        patch("scripts.cli.nexus.vacuum_db", side_effect=RuntimeError("DB travado")),
+        patch("scripts.cli.nexus.sanitize_system"),
+        patch("scripts.cli.nexus.run_hygiene"),
+        patch("scripts.cli.nexus.subprocess.run"),
+    ):
+        result = runner.invoke(app, ["ops", "maintenance"])
+        assert result.exit_code == 1, "etapa falha nao pode sair 0"
+        assert "FALHA PARCIAL" in result.stdout
+        assert "VACUUM" in result.stdout
+
+
+def test_handoff_recusa_gravar_contexto_vazio(tmp_path):
+    """Handoff sem nenhuma fonte gravava arquivo VAZIO e dizia 'persistido com sucesso'."""
+    with patch("scripts.cli.nexus.BASE_DIR", tmp_path):
+        result = runner.invoke(app, ["agent", "handoff"])
+        assert result.exit_code == 1
+        assert "Handoff vazio NAO sera gravado" in result.stdout
+        assert not list(tmp_path.rglob("HANDOFF_LATEST.md")), "gravou apesar de vazio"
+
+
+def test_nexus_nao_reintroduz_contagem_literal_de_warnings():
+    """Guarda de ligacao: os helpers podem estar certos e o call-site voltar ao literal.
+
+    Quatro resumos do nexus.py imprimiam a contagem de warnings como digito
+    fixo. Os testes dos helpers nao pegariam a reintroducao, porque testam o
+    helper, nao quem o chama. Este pega: proibe o digito literal na fonte.
+    """
+    import re as _re
+    from pathlib import Path
+
+    import scripts.cli.nexus as nexus_mod
+
+    fonte = Path(nexus_mod.__file__).read_text(encoding="utf-8")
+    # Linha que e SO comentario nao imprime nada: a prosa que CITA o literal ao
+    # documentar por que ele foi removido nao e o literal. Mesma distincao
+    # estrutural que record_anchor_gate.ps1 precisou fazer para parar de
+    # reprovar a si mesmo -- isentar por caminho criaria ponto cego onde ele
+    # nao pode existir.
+    ofensores = [
+        linha
+        for linha in fonte.splitlines()
+        if _re.search(r"Total de Warnings:\s+\d", linha) and not linha.lstrip().startswith("#")
+    ]
+    assert not ofensores, f"contagem de warnings voltou a ser literal em {len(ofensores)} linha(s): {ofensores}"
+
+
+def test_comando_desconhecido_do_worker_reprova():
+    """O `else` do despacho legado imprimia e retornava: exit 0 para nome inexistente.
+
+    Era o habilitador estrutural: atalho do dashboard apontando para um nome
+    errado ficava indistinguivel de um que funciona, e check=True nao percebia.
+    """
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    raiz = Path(__file__).resolve().parent.parent
+    res = subprocess.run(
+        [sys.executable, str(raiz / "task_executor.py"), "comando-que-nao-existe-mesmo"],
+        cwd=str(raiz),
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=180,
+    )
+    assert res.returncode != 0, "comando inexistente nao pode sair 0"
+    assert "Comando desconhecido" in (res.stderr + res.stdout)

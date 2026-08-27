@@ -1341,7 +1341,15 @@ async def _handle_cli_command(cmd: str, argv: list, manager: QueueManager) -> No
         else:
             handler(argv, manager)
     else:
-        print(f"Comando desconhecido: {cmd}")
+        # Codigo de saida 2, nao 0. Este `else` imprimia e retornava normalmente,
+        # entao QUALQUER comando inexistente sucedia: um atalho do dashboard
+        # apontando para um nome errado ficava indistinguivel de um que funciona,
+        # e os subprocess.run(..., check=True) do nexus.py nao tinham como
+        # perceber, porque check=True confia no codigo de saida. Era o habilitador
+        # estrutural do "sinal verde desconectado" em toda a camada de CLI.
+        # Medido em 2026-08-27: `task_executor.py comando-que-nao-existe` -> EXIT=0.
+        print(f"Comando desconhecido: {cmd}", file=sys.stderr)
+        sys.exit(2)
 
 
 def run_cli(argv: list):
