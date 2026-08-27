@@ -74,7 +74,7 @@ console = Console()
 
 app = typer.Typer(
     name="nexus",
-    help="[bold cyan]NEXUS ORCHESTRATOR[/] - Membrana Cognitiva SOTA (v7.0 GOLD)",
+    help="[bold cyan]NEXUS ORCHESTRATOR[/] - Membrana Cognitiva SOTA (v8.0 GOLD)",
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
@@ -102,7 +102,8 @@ app.add_typer(voice_app)
 app.add_typer(audit_app)
 app.add_typer(routine_app)
 
-DIR_CLAUDE = BASE_DIR / ".cerebro"
+DIR_CEREBRO_NAME = ".cerebro"
+DIR_CLAUDE = BASE_DIR / DIR_CEREBRO_NAME
 
 #  Constantes do Orquestrador SOTA
 WORKER_SCRIPT_NAME = "task_executor.py"
@@ -113,6 +114,14 @@ MEMORY_RAG_SCRIPT = "memory_rag.py"
 STYLE_BOLD_WHITE = "bold #f8f8f2"
 STATUS_PASS = "[green]PASS[/]"  # noqa: S105
 STATUS_FAIL = "[red]FAIL[/]"
+
+# Nao reintroduzir aqui as constantes do Tri-State Guard (MSG_WARNINGS_SOTA,
+# STATUS_TRI_STATE_*, FOOTER_DIVIDER_CYAN, PREFIX_*). Existiram sem consumidor
+# -- medido em 2026-08-27: uma ocorrencia cada, a propria definicao -- e
+# MSG_WARNINGS_SOTA congelava " Total de Warnings: 0" como LITERAL. A fonte
+# viva dessa linha e tests/conftest.py, que a DERIVA de len(warnings_list)
+# alimentado pelo hook pytest_warning_recorded. Se o guard vier para o CLI,
+# ele deve ler daquela contagem, nunca reescrever o texto dela.
 
 
 #  Utils de Runtime
@@ -276,7 +285,7 @@ async def show_status():
                 f"[yellow]{counts.get('pending', 0)}[/] Pendentes | [magenta]{counts.get('running', 0)}[/] Rodando | [green]{counts.get('completed', 0)}[/] Concluidas",
             )
 
-            panel = Panel(grid, title="[bold]STATUS VITAL SOTA v7.0[/]", border_style="green")
+            panel = Panel(grid, title="[bold]STATUS VITAL SOTA v8.0 GOLD[/]", border_style="green")
             live.update(panel)
     except Exception as e:
         console.print(f"[bold red]Erro ao invocar telemetria DAL: {e}[/]")
@@ -497,7 +506,7 @@ def _build_metrics_panel() -> Panel:
     table.add_row("RAG Engine", "[bold #8be9fd]LanceDB (Hybrid)[/]")
     table.add_row("Antevisao Sem.", "[bold #50fa7b]ONLINE[/]")
     table.add_row("I/O Latency Target", "[bold #50fa7b]O(1)[/]")
-    table.add_row("CLI Version", "[bold #f8f8f2]v7.5 GOLD[/]")
+    table.add_row("CLI Version", "[bold #f8f8f2]v8.0 GOLD[/]")
     table.add_row("Cortex Override", "[dim #6272a4]Standby[/]")
     table.add_row("Quantum Metrics", "[bold #8be9fd]ATIVO[/]")
 
@@ -533,12 +542,13 @@ def _build_footer_panel() -> Panel:
         "[0] [bold #f1fa8c]nexus db purge-orphans[/]\n[dim #6272a4]    Limpar Orfas FAILED[/]\n\n"
         "[C] [bold #ff5555]nexus db clear-pending[/]\n[dim #6272a4]    Aniquilar Pendentes[/]\n\n"
         "[F] [bold #ff5555]nexus db clear-failed[/]\n[dim #6272a4]    Aniquilar Falhas[/]\n\n"
-        "[V] [bold #f1fa8c]nexus db vacuum[/]\n[dim #6272a4]    Otimizar DB (VACUUM)[/]"
+        "[V] [bold #f1fa8c]nexus db vacuum[/]\n[dim #6272a4]    Otimizar DB (VACUUM)[/]\n\n"
+        "[S] [bold #8be9fd]nexus status[/] | [Q] [bold #ff5555]Sair[/]"
     )
 
     grid.add_row(c1, c2, c3)
 
-    instructions = "\n[dim #f8f8f2 align=center]Pressione a [bold]TECLA[/] correspondente para executar o atalho ao vivo, ou [bold]Ctrl+C[/] para sair.[/]"
+    instructions = "\n[dim #f8f8f2 align=center]Pressione a [bold]TECLA[/] correspondente para executar o atalho ao vivo, [bold]Q[/] ou [bold]Ctrl+C[/] para sair.[/]"
 
     return Panel(
         Group(grid, instructions),
@@ -549,7 +559,7 @@ def _build_footer_panel() -> Panel:
 
 
 def _generate_dashboard_ui(counts: dict) -> Group:
-    header_text = f"[bold #ff79c6]NEXUS SOTA GOD MODE DASHBOARD v7.5[/] | [#8be9fd]CEO: Raphael Vitoi[/] | [#f1fa8c]{datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}[/]"
+    header_text = f"[bold #ff79c6]NEXUS SOTA GOD MODE DASHBOARD v8.0 GOLD[/] | [#8be9fd]CEO: Raphael Vitoi[/] | [#f1fa8c]{datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}[/]"
     header = Panel(Align.center(header_text, vertical="middle"), style="#6272a4", box=box.ROUNDED)
 
     col_table = Table.grid(expand=True, padding=(0, 2))
@@ -566,14 +576,19 @@ def _generate_dashboard_ui(counts: dict) -> Group:
 
 def _get_key() -> str | None:
     if sys.platform == "win32":
-        import msvcrt
+        try:
+            import msvcrt
 
-        if msvcrt.kbhit():
-            return msvcrt.getch().decode("utf-8", errors="ignore").lower()
+            if msvcrt.kbhit():
+                return msvcrt.getch().decode("utf-8", errors="ignore").lower()
+        except Exception:
+            return None
     return None
 
 
 def _execute_shortcut(key: str):
+    if key == "q":
+        return
     cmd_map = {
         "1": [sys.executable, __file__, "ops", "worker", "-f"],
         "2": [sys.executable, __file__, "ops", "watch"],
@@ -592,6 +607,7 @@ def _execute_shortcut(key: str):
         "m": [sys.executable, __file__, "ops", "maintenance"],
         "g": [sys.executable, __file__, "ops", "start-gemma", "-f"],
         "i": [sys.executable, __file__, "ops", "chat-gemma"],
+        "s": [sys.executable, __file__, "status"],
     }
     if key in cmd_map:
         console.clear()
@@ -602,7 +618,7 @@ def _execute_shortcut(key: str):
 async def _poll_for_action(live: Live, qm: QueueManager) -> str | None:
     counts = await qm.get_task_counts()
     live.update(_generate_dashboard_ui(counts))
-    valid_keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "c", "f", "v", "r", "m", "g", "i"}
+    valid_keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "c", "f", "v", "r", "m", "g", "i", "s", "q"}
     for _ in range(50):
         await asyncio.sleep(0.1)
         key = _get_key()
@@ -613,16 +629,32 @@ async def _poll_for_action(live: Live, qm: QueueManager) -> str | None:
 
 @app.command("dashboard")
 @coro
-async def render_dashboard():
+async def render_dashboard(
+    once: bool = typer.Option(
+        False,
+        "--once",
+        "-1",
+        help="Gera um snapshot instantaneo estatico do Dashboard sem entrar no loop interativo.",
+    ),
+):
     """Painel Executivo SOTA (CEO Level). Dinamico, Responsivo e Interativo."""
     qm = QueueManager()
 
     try:
+        if once:
+            counts = await qm.get_task_counts()
+            console.print(_generate_dashboard_ui(counts))
+            return
+
         while True:
             action_to_run = None
             with Live(console=console, refresh_per_second=0.2, screen=True) as live:
                 while not action_to_run:
                     action_to_run = await _poll_for_action(live, qm)
+
+            if action_to_run == "q":
+                console.print("[dim #6272a4]Dashboard SOTA encerrado com sucesso.[/]")
+                break
 
             _execute_shortcut(action_to_run)
             console.input("\n[bold #8be9fd]Pressione ENTER para retornar ao Dashboard SOTA...[/]")
@@ -1074,7 +1106,7 @@ def _is_ignored_dir(name: str) -> bool:
         "temp",
         "triage",
         ".git",
-        ".cerebro",
+        DIR_CEREBRO_NAME,
         "target",
         ".next",
         "dist",
@@ -1266,35 +1298,78 @@ def _trim_background_workers(current_pid: int) -> list[int]:
     return pids_trimmed
 
 
-@ops_app.command("optimize-ram")
-def optimize_ram():
-    """Esvaziamento de RAM e Otimizacao Termica do Kernel (Friccao Zero)."""
-    console.print("[bold cyan]=== [SISTEMA] Iniciando Otimizacao e Esvaziamento de RAM ===[/]")
-
+def _execute_ram_cleanse(verbose: bool = True) -> int:
+    """Executa a rotina central de liberacao de memoria e minimizacao de working sets."""
     import gc
 
     collected = gc.collect()
-    console.print(f"[green][OK] Coletor de lixo (Garbage Collector) liberou {collected} objetos.[/]")
+    if verbose:
+        console.print(f"[green][OK] Coletor de lixo (Garbage Collector) liberou {collected} objetos.[/]")
 
     if sys.platform == "win32":
         import ctypes
 
         current_handle = ctypes.windll.kernel32.GetCurrentProcess()
         if _trim_working_set(current_handle):
-            console.print("[green][OK] Windows Working Set minimizado (Memoria devolvida ao OS).[/]")
-        else:
+            if verbose:
+                console.print("[green][OK] Windows Working Set minimizado (Memoria devolvida ao OS).[/]")
+        elif verbose:
             console.print("[yellow][AVISO] Falha ao minimizar Working Set do processo atual.[/]")
 
         try:
             pids_trimmed = _trim_background_workers(os.getpid())
-            if pids_trimmed:
+            if pids_trimmed and verbose:
                 console.print(
                     f"[green][OK] Working Set de Workers em background minimizado (PIDs: {', '.join(map(str, pids_trimmed))}).[/]"
                 )
         except Exception as e:
             logger.debug(f"Falha ao limpar workers: {e}")
 
-    console.print("[bold green][SUCESSO] Otimizacao e esvaziamento de RAM concluidos.[/]")
+    if verbose:
+        console.print("[bold green][SUCESSO] Otimizacao e esvaziamento de RAM concluidos.[/]")
+    return collected
+
+
+@ops_app.command("optimize-ram")
+def optimize_ram(
+    watch: bool = typer.Option(False, "--watch", "-w", help="Executa como daemon em background com auto-higienizacao"),
+    threshold: float = typer.Option(90.0, "--threshold", "-t", help="Limiar de RAM (%) para expurgo instantaneo"),
+    interval: int = typer.Option(300, "--interval", "-i", help="Intervalo preditivo (segundos) para higienizacao ciclica"),
+):
+    """Esvaziamento de RAM e Otimizacao Termica do Kernel (Friccao Zero)."""
+    if watch:
+        console.print(
+            f"[bold magenta]=== [NEXUS] SOTA MEMORY GUARD ATIVO (Trigger: >={threshold}% | Intervalo: {interval}s) ===[/]"
+        )
+        last_periodic = time.time()
+        try:
+            while True:
+                mem = psutil.virtual_memory()
+                current_percent = mem.percent
+                now = time.time()
+
+                # 1. Gatilho Instantaneo Reativo se RAM >= threshold
+                if current_percent >= threshold:
+                    console.print(
+                        f"[bold red][ALERTA CRITICO] RAM em {current_percent:.1f}% (>= {threshold}%). Expurgo instantaneo acionado![/]"
+                    )
+                    _execute_ram_cleanse(verbose=False)
+                    time.sleep(2.0)
+                    continue
+
+                # 2. Higienizacao Preditiva Periodica sem degradacao
+                if now - last_periodic >= interval:
+                    logger.info(f"[MEMORY-GUARD] Higienizacao ciclica preditiva executada. RAM: {current_percent:.1f}%")
+                    _execute_ram_cleanse(verbose=False)
+                    last_periodic = now
+
+                time.sleep(3.0)
+        except KeyboardInterrupt:
+            console.print("\n[bold cyan]SOTA Memory Guard finalizado.[/]")
+            return
+
+    console.print("[bold cyan]=== [SISTEMA] Iniciando Otimizacao e Esvaziamento de RAM ===[/]")
+    _execute_ram_cleanse(verbose=True)
 
 
 @ops_app.command("maintenance")
@@ -1508,7 +1583,7 @@ async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | 
         raise typer.Exit(1)
 
 
-async def _restore_lightningcss(lib_name: str, lib_path: Path, cache_path: Path) -> bool:
+def _restore_lightningcss(lib_name: str, lib_path: Path, cache_path: Path) -> bool:
     """Restaura somente um artefato local conhecido; nunca altera o lockfile no gate."""
     if not cache_path.exists():
         console.print(
@@ -1563,7 +1638,7 @@ async def _auto_cure_lightningcss() -> None:
 
         # 2. Se e a plataforma atual e esta ausente no node_modules
         if is_current and not lib_path.exists():
-            if not await _restore_lightningcss(lib_name, lib_path, cache_path):
+            if not _restore_lightningcss(lib_name, lib_path, cache_path):
                 raise typer.Exit(1)
 
 

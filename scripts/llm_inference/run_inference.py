@@ -111,6 +111,7 @@ def query_gemma_proxy(
     prompt: str,
     system_prompt: str | None = None,
     messages: list[dict[str, str]] | None = None,
+    max_tokens: int = 4096,
 ) -> str:
     """Consulta unificada ao proxy gemma_server.py (porta 17043). Retorna texto completo."""
     auth_token = os.environ.get("API_SECRET_TOKEN") or ENV_KEYS.get("API_SECRET_TOKEN")
@@ -119,7 +120,7 @@ def query_gemma_proxy(
         return ""
     headers = {"Content-Type": "application/json", "X-Vitoi-Auth": auth_token}
 
-    payload: dict = {"prompt": prompt, "model": model_key, "max_tokens": 2048}
+    payload: dict = {"prompt": prompt, "model": model_key, "max_tokens": max_tokens}
     if system_prompt:
         payload["system_prompt"] = system_prompt
     if messages:
@@ -147,28 +148,46 @@ def query_gemma_proxy(
 # ==============================================================================
 
 
-def start_interactive_chat(model_key: str) -> None:
-    ollama_tag = OLLAMA_MODEL_MAP.get(model_key, model_key)
-    model_name = MODEL_DISPLAY.get(model_key, "Gemma")
-    model_family = model_name.split()[0]
-
-    console.print(f"\n[bold magenta]=== Chat SOTA | {model_name} ({ollama_tag}) ===[/]")
-    console.print("[1] Modo Poker SOTA (Agentico Otimizado)")
-    console.print("[2] Modo Conversacional / Tema Customizado (LLM Otimizado)")
-
+def _configure_chat_session(ollama_tag: str) -> tuple[str | None, list[dict[str, str]], int]:
     choice = input("\nSelecione o modo (1-2) [1]: ").strip() or "1"
 
-    # Construcao do system prompt e historico multi-turn
+    # Este valor vira `num_predict` no proxy: teto de tokens de SAIDA por
+    # resposta. Ele NAO move a janela de contexto. `num_ctx` vem de
+    # MODEL_INFERENCE_PARAMS e so seria recalculado com SOTA_STATIC_CONTEXT=0
+    # -- que ninguem define (medido em 2026-08-27: uma unica ocorrencia no
+    # repositorio, a leitura do proprio default "1"), entao
+    # _calculate_dynamic_context() nunca executa. A versao anterior desta linha
+    # anunciava "Context Window / KV Cache Alocado", afirmando um efeito que
+    # nao existe: para o 12b a janela e 32768 independentemente do que se digite.
+    #
+    # isdecimal(), nao isdigit(): isdigit() aceita digitos que int() recusa --
+    # expoentes unicode como U+00B2 ("dois sobrescrito") devolvem True e fazem
+    # int() lancar ValueError. isdecimal() e o predicado que casa exatamente
+    # com o que int() aceita.
+    token_str = input("\nTeto de tokens de SAIDA por resposta (ex: 2048, 4096, 8192) [4096]: ").strip()
+    max_tokens = int(token_str) if (token_str.isdecimal() and int(token_str) > 0) else 4096
+    console.print(f"[bold cyan]Teto de saida (num_predict): {max_tokens} tokens[/]")
+
     system_prompt: str | None = None
     conversation: list[dict[str, str]] = []
 
     if choice == "2":
-        custom_theme = input("Digite o Tema da conversa (ou prompt de sistema completo): ").strip()
-        theme = custom_theme if custom_theme else "Livre (Qualquer assunto)"
+        custom_theme = input("\nDigite o Tema da conversa (ou prompt de sistema completo): ").strip()
+        theme = custom_theme or "Livre (Qualquer assunto)"
         system_prompt = CHICO_PERSONA.format(ollama_tag=ollama_tag, theme=theme)
         conversation.append({"role": "system", "content": system_prompt})
         console.print(f"[bold green]Persona Chico SOTA | {ollama_tag} | Tema: {theme}[/]")
 
+    return system_prompt, conversation, max_tokens
+
+
+def _run_chat_loop(
+    model_key: str,
+    model_family: str,
+    system_prompt: str | None,
+    conversation: list[dict[str, str]],
+    max_tokens: int,
+) -> None:
     console.print("\n[dim]/exit = sair | /reset = limpar historico[/]\n")
 
     while True:
@@ -187,13 +206,26 @@ def start_interactive_chat(model_key: str) -> None:
             conversation.append({"role": "user", "content": user_input})
             print(f"{model_family} > ", end="", flush=True)
 
-            response = query_gemma_proxy(model_key, user_input, system_prompt, conversation)
+            response = query_gemma_proxy(model_key, user_input, system_prompt, conversation, max_tokens=max_tokens)
             if response:
                 conversation.append({"role": "assistant", "content": response})
 
         except KeyboardInterrupt:
             console.print("\n[bold cyan]Sessao encerrada.[/]")
             break
+
+
+def start_interactive_chat(model_key: str) -> None:
+    ollama_tag = OLLAMA_MODEL_MAP.get(model_key, model_key)
+    model_name = MODEL_DISPLAY.get(model_key, "Gemma")
+    model_family = model_name.split()[0]
+
+    console.print(f"\n[bold magenta]=== Chat SOTA | {model_name} ({ollama_tag}) ===[/]")
+    console.print("[1] Modo Poker SOTA (Agentico Otimizado)")
+    console.print("[2] Modo Conversacional / Tema Customizado (LLM Otimizado)")
+
+    system_prompt, conversation, max_tokens = _configure_chat_session(ollama_tag)
+    _run_chat_loop(model_key, model_family, system_prompt, conversation, max_tokens)
 
 
 def main():

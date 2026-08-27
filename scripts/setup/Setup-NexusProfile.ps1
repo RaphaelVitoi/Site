@@ -133,10 +133,17 @@ function Convert-DeepJsonStringSOTA {
 
 # --- Comandos Core do Ecossistema ---
 
-# A Membrana de Entrada (Inteligencia)
+# A Membrana de Entrada (Inteligencia SOTA v8.0 GOLD)
 function nexus {
-    # Roteamento SOTA: Repassa todos os parametros e flags nativamente para o do.ps1
-    & "$Global:NexusProjectRoot\do.ps1" @args
+    # Ver a nota gemea em Microsoft.PowerShell_profile.ps1: .StartsWith() lanca
+    # com argumento nao-string (`nexus 5` entrega Int32). Esta funcao esta
+    # DUPLICADA entre os dois arquivos -- item 1.3 do plano 2-B, fonte unica
+    # ainda por declarar. Enquanto durar a duplicacao, corrigir nos dois.
+    if ($args.Count -gt 0 -and "$($args[0])" -like '-*') {
+        & "$Global:NexusProjectRoot\do.ps1" @args
+    } else {
+        & "$Global:NexusProjectRoot\nexus.ps1" @args
+    }
 }
 
 # O Centro de Comando (Diagnostico e Manutencao)
@@ -303,9 +310,12 @@ function nexus-gemini-health {
 }
 
 # --- Aliases para o Dashboard e Comandos Comuns (Friccao Zero) ---
-Set-Alias -Name dashboard -Value nexus-cli
-Set-Alias -Name hub -Value nexus-cli
-Set-Alias -Name vitoi_dashboard -Value nexus-cli
+function Invoke-Dashboard {
+    & "$Global:NexusProjectRoot\dashboard.ps1" @args
+}
+Set-Alias -Name dashboard -Value Invoke-Dashboard
+Set-Alias -Name hub -Value nexus-status
+Set-Alias -Name vitoi_dashboard -Value Invoke-Dashboard
 Set-Alias -Name gemini-cli -Value nexus-cli
 Set-Alias -Name sota -Value nexus
 

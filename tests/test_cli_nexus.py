@@ -192,3 +192,16 @@ def test_nexus_sync_consciousness():
         assert result.exit_code == 0
         assert "SINCRONIZACAO DE CONSCIENCIA SOTA" in result.stdout
         mock_sub.assert_called_once()
+
+
+def test_nexus_dashboard_once():
+    """Valida renderizacao do snapshot instantaneo do Dashboard SOTA."""
+    with patch("scripts.cli.nexus.QueueManager") as mock_qm_cls:
+        mock_qm = MagicMock()
+        mock_qm.get_task_counts = AsyncMock(return_value={"pending": 0, "running": 0, "completed": 5})
+        mock_qm.close = AsyncMock(return_value=None)
+        mock_qm_cls.return_value = mock_qm
+
+        result = runner.invoke(app, ["dashboard", "--once"])
+        assert result.exit_code == 0
+        assert "NEXUS SOTA GOD MODE DASHBOARD" in result.stdout
