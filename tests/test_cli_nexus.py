@@ -359,3 +359,162 @@ def test_comando_desconhecido_do_worker_reprova():
     )
     assert res.returncode != 0, "comando inexistente nao pode sair 0"
     assert "Comando desconhecido" in (res.stderr + res.stdout)
+
+
+# ============================================================================
+# Fechamento da auditoria do dashboard, 2026-08-27: os 7 achados que ficaram
+# registrados e nao corrigidos na rodada anterior, mais o teclado e o turno
+# unico do run_inference. Todos exercitam a direcao da FALHA -- e o defeito
+# em todos era exatamente essa direcao devolver 0.
+# ============================================================================
+
+import sqlite3  # noqa: E402
+import sys as _sys  # noqa: E402
+from unittest.mock import Mock  # noqa: E402
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    ("comando", "trecho"),
+    [
+        (["ops", "sanitize"], "saneamento ausente"),
+        (["ops", "purify-memories"], "purificacao ausente"),
+        (["ops", "hygiene"], "higiene nao encontrado"),
+    ],
+)
+def test_script_de_manutencao_ausente_reprova(tmp_path, comando, trecho):
+    """Ferramenta ausente e falha, nao sucesso.
+
+    `sanitize` e `purify-memories` nao tinham ramo de ausencia (no-op silencioso
+    saindo 0); `hygiene` tinha o ramo, imprimia [ERRO] e ainda assim saia 0.
+    """
+    with patch("scripts.cli.nexus.BASE_DIR", tmp_path):
+        result = runner.invoke(app, comando)
+        assert result.exit_code == 1, f"{comando} saiu 0 com o script ausente"
+        assert trecho in result.stdout
+
+
+@pytest.mark.parametrize(
+    "comando",
+    [
+        ["db", "purge-orphans"],
+        ["db", "clear-pending", "--confirm"],
+        ["db", "clear-failed", "--confirm"],
+    ],
+)
+def test_erro_de_banco_reprova(tmp_path, comando):
+    """Os irmaos `vacuum` e `audit-dag` sempre levantaram; estes tres nao.
+
+    Erro de banco imprimia em vermelho e saia 0: o atalho reportava sucesso
+    tendo aniquilado zero tarefas.
+    """
+    fake_db = tmp_path / "tasks.db"
+    fake_db.touch()
+    with (
+        patch("scripts.cli.nexus._resolve_tasks_db_path", return_value=fake_db),
+        patch("scripts.cli.nexus.sqlite3.connect", side_effect=sqlite3.Error("disco cheio")),
+    ):
+        result = runner.invoke(app, comando)
+        assert result.exit_code == 1, f"{comando} saiu 0 apesar do erro de banco"
+
+
+def test_route_com_malha_quebrada_reprova():
+    """O atalho [6] existe para descobrir que o roteamento parou de funcionar.
+
+    Ele capturava a excecao, imprimia em vermelho e saia 0 -- reportando
+    sucesso exatamente quando tinha achado o problema que procurava.
+    """
+    import task_executor
+
+    with patch.object(task_executor, "intelligent_route_task", side_effect=RuntimeError("malha morta")):
+        result = runner.invoke(app, ["agent", "route", "qualquer coisa"])
+        assert result.exit_code == 1
+        assert "Erro de roteamento" in result.stdout
+
+
+def test_worker_que_morre_na_ignicao_reprova():
+    """Popen sucede quando o processo NASCE, nao quando ele sobrevive.
+
+    Um worker que morre na ignicao produzia a mesma mensagem verde de um que
+    subiu: "Orquestrador desperto e vigilante em background".
+    """
+    morto = Mock()
+    morto.poll.return_value = 1
+    morto.pid = 4242
+    with (
+        patch("scripts.cli.nexus.psutil.process_iter", return_value=[]),
+        patch("scripts.cli.nexus.subprocess.Popen", return_value=morto),
+        patch("scripts.cli.nexus.time.sleep"),
+    ):
+        result = runner.invoke(app, ["ops", "worker"])
+        assert result.exit_code == 1
+        assert "morreu na ignicao" in result.stdout
+
+
+def test_worker_vivo_e_aprovado():
+    """Controle: o caminho feliz nao pode ter sido reprovado junto."""
+    vivo = Mock()
+    vivo.poll.return_value = None
+    vivo.pid = 4242
+    with (
+        patch("scripts.cli.nexus.psutil.process_iter", return_value=[]),
+        patch("scripts.cli.nexus.subprocess.Popen", return_value=vivo),
+        patch("scripts.cli.nexus.time.sleep"),
+    ):
+        result = runner.invoke(app, ["ops", "worker"])
+        assert result.exit_code == 0
+        assert "4242" in result.stdout
+
+
+def test_proxy_que_nunca_sobe_reprova():
+    """Esperava 20s e seguia adiante calado, abrindo o chat contra um proxy morto."""
+    from scripts.cli import nexus as nx
+
+    with (
+        patch.object(nx, "_is_port_open", return_value=False),
+        patch.object(nx, "start_gemma"),
+        patch.object(nx.time, "sleep"),
+        pytest.raises(Exception, match="1|Exit"),
+    ):
+        nx._ensure_active_model("12b")
+
+
+def test_teclado_indisponivel_avisa_uma_vez_e_para(capsys):
+    """Degradava em silencio para sempre: as teclas nao respondiam e nada dizia por que."""
+    from scripts.cli import nexus as nx
+
+    if hasattr(nx._get_key, "_indisponivel"):
+        del nx._get_key._indisponivel
+    try:
+        with patch.object(nx.sys, "platform", "win32"), patch.dict("sys.modules", {"msvcrt": None}):
+            assert nx._get_key() is None
+            assert nx._get_key() is None
+        assert getattr(nx._get_key, "_indisponivel", False) is True
+    finally:
+        if hasattr(nx._get_key, "_indisponivel"):
+            del nx._get_key._indisponivel
+
+
+def test_turno_unico_sem_resposta_reprova():
+    """`main()` saia 0 com saida vazia: para do.ps1, indistinguivel de sucesso."""
+    from scripts.llm_inference import run_inference as ri
+
+    with (
+        patch.object(ri, "query_gemma_proxy", return_value=""),
+        patch.object(_sys, "argv", ["run_inference.py", "diga", "algo"]),
+        pytest.raises(SystemExit) as exc,
+    ):
+        ri.main()
+    assert exc.value.code == 1
+
+
+def test_turno_unico_com_resposta_e_aprovado():
+    """Controle: resposta valida nao pode ter passado a reprovar."""
+    from scripts.llm_inference import run_inference as ri
+
+    with (
+        patch.object(ri, "query_gemma_proxy", return_value="resposta real"),
+        patch.object(_sys, "argv", ["run_inference.py", "diga", "algo"]),
+    ):
+        ri.main()  # nao pode levantar

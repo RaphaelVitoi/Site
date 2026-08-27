@@ -247,7 +247,13 @@ def main():
     if args.chat or not prompt_str:
         start_interactive_chat(args.model)
     else:
-        query_gemma_proxy(args.model, prompt_str, args.theme)
+        resposta = query_gemma_proxy(args.model, prompt_str, args.theme)
+        if not resposta:
+            # Saia diferente de zero quando nao houve resposta. O turno unico e
+            # chamado por script (do.ps1), e sair 0 com saida vazia era
+            # indistinguivel de sucesso para quem chamou -- inclusive com o
+            # proxy offline, cujo unico sinal era texto em vermelho no console.
+            sys.exit(1)
 
 
 if __name__ == "__main__":
