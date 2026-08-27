@@ -22,9 +22,23 @@ Write-Host "[SOTA QUALITY GATE] Full Performance, A11y, CVE & SRI Integrity Audi
 Write-Host "Target: $TargetUrl" -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Cyan
 
+# 2026-08-27 (POSTULADO-001, item B): o bypass SKIP_CWV_GATE foi REMOVIDO.
+#
+# Ele contradizia o proprio pipeline: o wrapper que chama este script imprime
+# "bypass via --no-verify ou SKIP_CWV_GATE e proibido", enquanto o script o
+# implementava. Uma variavel de ambiente pulava as CINCO fases — inclusive a de
+# higiene, que existe porque 651 arquivos de perfil e um modelo de 15 GB ja
+# entraram no historico publicado.
+#
+# A governanca e explicita: "Nao contornar hook que falha. Investigar o achado
+# antes de mexer na regra." Logo nao existe bypass legitimo, e manter um
+# desligado por convencao era manter uma porta destrancada com um aviso colado.
+#
+# Se o portao falhar por causa do AMBIENTE (npm ausente, venv quebrada), a saida
+# e consertar o ambiente — a falha e o achado, nao um obstaculo ao achado.
 if ($env:SKIP_CWV_GATE -eq '1') {
-    Write-Host "[BYPASS] SKIP_CWV_GATE=1 detected. Performance audit skipped." -ForegroundColor Yellow
-    exit 0
+    Write-Host "[BYPASS RECUSADO] SKIP_CWV_GATE nao e mais honrado (POSTULADO-001)." -ForegroundColor Yellow
+    Write-Host "                  O portao vai executar normalmente." -ForegroundColor Yellow
 }
 
 # CDP Handshake check
@@ -59,15 +73,44 @@ $a11yRules = [ordered]@{
 }
 
 $failures = @()
+
+# 2026-08-27: $warnings era LIDO nas linhas do veredito e nunca declarado nem
+# populado. O estado FRAGIL (AMARELO) era, portanto, inalcancavel e o tri-state
+# funcionava como bi-state. Declarado aqui para que o canal de aviso exista.
+$warnings = @()
+
+# ============================================================================
+# INSTRUMENTACAO DAS FASES 1 E 2 (POSTULADO-001, aprovado em 2026-08-27)
+# ----------------------------------------------------------------------------
+# As fases 1 e 2 comparam LITERAIS contra limites: $perfMetrics e $a11yRules
+# nunca recebem atribuicao vinda de medicao. Elas sempre aprovavam, e o veredito
+# final afirmava "SUCESSO nas 5 Fases" — mais do que fora verificado.
+#
+# A norma ja estava escrita neste arquivo (fase 3, 2026-08-22): "um portao que
+# nao mede NAO aprova". As fases 3, 4 e 5 a cumprem; estas duas ficaram para
+# tras. A correcao abaixo NAO altera limiar nem remove verificacao: ela deixa de
+# afirmar aprovacao onde nao houve medicao.
+#
+# EFEITO SISTEMICO, deliberado: o veredito cai de VERDE para AMARELO e assim
+# permanece ate que a medicao real exista. AMARELO nao bloqueia commit (exit 0),
+# entao o trabalho continua enquanto a divida fica visivel em toda execucao.
+# Bloquear aqui pararia o repositorio inteiro por uma divida preexistente.
+$FASE1_MEDE = $false   # vira $true quando CWV for instrumentado via CDP
+$FASE2_MEDE = $false   # vira $true quando a11y for extraido do DOM real
+
 Write-Host ("`n[1] CORE WEB VITALS AUDIT") -ForegroundColor Yellow
+if (-not $FASE1_MEDE) {
+    Write-Host "    NAO MEDIDO - valores abaixo sao literais de referencia, nao medicao." -ForegroundColor Yellow
+}
 Write-Host ("{0,-18} | {1,-12} | {2,-14} | {3}" -f 'METRIC', 'VALUE', 'SOTA THRESHOLD', 'STATUS') -ForegroundColor White
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
 foreach ($k in $perfMetrics.Keys) {
     $m = $perfMetrics[$k]
     $passed = $m.Val -le $m.Limit
-    $status = if ($passed) { "[PASS]" } else { "[FAIL]" }
-    $color = if ($passed) { "Green" } else { "Red" }
+    # Sem medicao nao existe [PASS]: o rotulo diz o que de fato ocorreu.
+    $status = if (-not $FASE1_MEDE) { "[N/MED]" } elseif ($passed) { "[PASS]" } else { "[FAIL]" }
+    $color = if (-not $FASE1_MEDE) { "DarkGray" } elseif ($passed) { "Green" } else { "Red" }
     
     $valStr = "$($m.Val) $($m.Unit)".Trim()
     $limitStr = "<= $($m.Limit) $($m.Unit)".Trim()
@@ -79,15 +122,22 @@ foreach ($k in $perfMetrics.Keys) {
     }
 }
 
+if (-not $FASE1_MEDE) {
+    $warnings += "Fase 1 (Core Web Vitals) NAO MEDIU: valores sao literais. Ver reports/POSTULADO-001-portao-cwv-fases-1-2-nao-medem.md"
+}
+
 Write-Host ("`n[2] ACCESSIBILITY & BEST PRACTICE QUALITY AUDIT") -ForegroundColor Yellow
+if (-not $FASE2_MEDE) {
+    Write-Host "    NAO MEDIDO - contadores abaixo sao literais de referencia, nao medicao." -ForegroundColor Yellow
+}
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'RULE', 'COUNT', 'LIMIT', 'STATUS') -ForegroundColor White
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
 foreach ($k in $a11yRules.Keys) {
     $r = $a11yRules[$k]
     $passed = $r.Val -le $r.Limit
-    $status = if ($passed) { "[PASS]" } else { "[FAIL]" }
-    $color = if ($passed) { "Green" } else { "Red" }
+    $status = if (-not $FASE2_MEDE) { "[N/MED]" } elseif ($passed) { "[PASS]" } else { "[FAIL]" }
+    $color = if (-not $FASE2_MEDE) { "DarkGray" } elseif ($passed) { "Green" } else { "Red" }
     
     Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f $k, "$($r.Val) $($r.Unit)", "<= $($r.Limit)", $status) -ForegroundColor $color
     
@@ -96,6 +146,10 @@ foreach ($k in $a11yRules.Keys) {
     }
 }
 Write-Host ("-" * 68) -ForegroundColor DarkGray
+
+if (-not $FASE2_MEDE) {
+    $warnings += "Fase 2 (Acessibilidade) NAO MEDIU: contadores sao literais. Ver reports/POSTULADO-001-portao-cwv-fases-1-2-nao-medem.md"
+}
 
 # 3. Security Vulnerability & CVE Audit (NIST / GitHub Security Advisory Gate)
 Write-Host ("`n[3] SECURITY VULNERABILITY & CVE AUDIT (NIST / GHSA GATE)") -ForegroundColor Yellow
@@ -443,14 +497,16 @@ $mdContent = @"
 **Status:** $(if ($failures.Count -eq 0) { "✅ **APPROVED (SOTA GOLD)**" } else { "❌ **REJECTED**" })
 
 ## 1. Core Web Vitals Summary
-| Metric | Measured Value | Threshold | Status |
+$(if (-not $FASE1_MEDE) { "> **NAO MEDIDO.** Os valores abaixo sao literais de referencia, nao medicao desta execucao. Ver ``reports/POSTULADO-001-portao-cwv-fases-1-2-nao-medem.md``.`n" })
+| Metric | Reference Value | Threshold | Status |
 | :--- | :--- | :--- | :--- |
-$($perfMetrics.Keys | ForEach-Object { "| **$_** | $($perfMetrics[$_].Val) $($perfMetrics[$_].Unit) | <= $($perfMetrics[$_].Limit) $($perfMetrics[$_].Unit) | $(if ($perfMetrics[$_].Val -le $perfMetrics[$_].Limit) { '✅ PASS' } else { '❌ FAIL' }) |" } | Out-String)
+$($perfMetrics.Keys | ForEach-Object { "| **$_** | $($perfMetrics[$_].Val) $($perfMetrics[$_].Unit) | <= $($perfMetrics[$_].Limit) $($perfMetrics[$_].Unit) | $(if (-not $FASE1_MEDE) { '⚠️ NAO MEDIDO' } elseif ($perfMetrics[$_].Val -le $perfMetrics[$_].Limit) { '✅ PASS' } else { '❌ FAIL' }) |" } | Out-String)
 
 ## 2. Accessibility & A11y Standards Summary
-| Standard / Check | Detected Count | Max Allowed | Description | Status |
+$(if (-not $FASE2_MEDE) { "> **NAO MEDIDO.** Os contadores abaixo sao literais de referencia, nao medicao desta execucao. Ver ``reports/POSTULADO-001-portao-cwv-fases-1-2-nao-medem.md``.`n" })
+| Standard / Check | Reference Count | Max Allowed | Description | Status |
 | :--- | :--- | :--- | :--- | :--- |
-$($a11yRules.Keys | ForEach-Object { "| **$_** | $($a11yRules[$_].Val) | <= $($a11yRules[$_].Limit) | $($a11yRules[$_].Desc) | $(if ($a11yRules[$_].Val -le $a11yRules[$_].Limit) { '✅ PASS' } else { '❌ FAIL' }) |" } | Out-String)
+$($a11yRules.Keys | ForEach-Object { "| **$_** | $($a11yRules[$_].Val) | <= $($a11yRules[$_].Limit) | $($a11yRules[$_].Desc) | $(if (-not $FASE2_MEDE) { '⚠️ NAO MEDIDO' } elseif ($a11yRules[$_].Val -le $a11yRules[$_].Limit) { '✅ PASS' } else { '❌ FAIL' }) |" } | Out-String)
 
 ## 3. Security Vulnerability & CVE Summary (NIST / GHSA)
 | Security Indicator | Detected Count | Max Allowed | Description | Status |
@@ -479,9 +535,13 @@ Write-Host "• Total de Warnings: $($warnings.Count) (Teto Maximo Permitido: 2 
 
 $triState = "SUCESSO"
 if ($failures.Count -eq 0 -and $warnings.Count -eq 0) {
+    # A frase so pode dizer "5 Fases" quando as 5 tiverem medido. Enquanto
+    # $FASE1_MEDE/$FASE2_MEDE forem falsos, este ramo e inalcancavel (as duas
+    # geram warning) — a condicao fica explicita para o dia em que medirem.
+    $fasesMedidas = 3 + [int]$FASE1_MEDE + [int]$FASE2_MEDE
     $triState = "SUCESSO (VERDE)"
-    Write-Host "• Status da Bateria: [$triState] Zero Erros e Zero Warnings nas 5 Fases do Quality Gate." -ForegroundColor Green
-    Write-Host "• Homeostase Total:  Nenhum erro ou warning detectado nas 5 fases do Quality Gate." -ForegroundColor Green
+    Write-Host "• Status da Bateria: [$triState] Zero Erros e Zero Warnings nas $fasesMedidas Fases medidas do Quality Gate." -ForegroundColor Green
+    Write-Host "• Homeostase Total:  Nenhum erro ou warning detectado nas $fasesMedidas fases medidas." -ForegroundColor Green
 } elseif ($failures.Count -eq 0 -and $warnings.Count -le 2) {
     $triState = "FRAGIL (AMARELO)"
     Write-Host "• Status da Bateria: [$triState] 0 Erros, mas detectados $($warnings.Count) warnings no Quality Gate." -ForegroundColor Yellow

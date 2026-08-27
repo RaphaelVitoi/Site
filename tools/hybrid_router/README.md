@@ -17,7 +17,7 @@ O sistema implementa uma camada de triagem semântica estática e de tokenometri
 ## 2. Estrutura do Pacote
 
 ```
-C:\Users\rapha\.gemini\tools\hybrid_router\
+C:\Users\rapha\.gemini\Site\tools\hybrid_router\
 ├── __init__.py               # Metadados do pacote
 ├── app.py                    # Microserviço FastAPI com Google GenAI aio
 ├── benchmark.py              # Runner assíncrono de concorrência e carga
@@ -40,17 +40,17 @@ C:\Users\rapha\.gemini\tools\hybrid_router\
 
 ### Opção A: Execução Nativa no Windows (PowerShell 7+)
 
-Graças ao arquivo de configuração persistente [`.env`](file:///C:/Users/rapha/.gemini/tools/hybrid_router/.env), não é necessário passar flags manuais:
+Graças ao arquivo de configuração persistente [`.env`](file:///C:/Users/rapha/.gemini/Site/tools/hybrid_router/.env), não é necessário passar flags manuais:
 
 ```powershell
 # Execução direta do pipeline (Servidor + Benchmark + Abertura Automática na Tela)
-& "$HOME\.gemini\tools\hybrid_router\run_pipeline.ps1"
+& "$HOME\.gemini\Site\tools\hybrid_router\run_pipeline.ps1"
 ```
 
 ### Opção B: Replotar o Dashboard Imediatamente
 
 ```powershell
-& "C:\Users\rapha\.gemini\.venv\Scripts\python.exe" "C:\Users\rapha\.gemini\tools\hybrid_router\plot_benchmark.py"
+& "C:\Users\rapha\.gemini\Site\.venv\Scripts\python.exe" "C:\Users\rapha\.gemini\Site\tools\hybrid_router\plot_benchmark.py"
 ```
 
 ---

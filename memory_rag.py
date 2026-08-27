@@ -238,6 +238,47 @@ class MemoryRAG:
 
     async def _collect_target_files_async(self, manifest: dict, base_path: Path) -> set:
         target_files = []
+        ignore_dirs = {
+            ".venv",
+            ".venv-wsl",
+            "venv",
+            "node_modules",
+            "__pycache__",
+            ".git",
+            ".next",
+            "dist",
+            "build",
+            ".trunk",
+            "target",
+            "nexus_orchestrator.egg-info",
+        }
+
+        # `reports` NAO entra em ignore_dirs, e o motivo foi MEDIDO, nao suposto.
+        #
+        # Ate 2026-08-27 entrava como nome solto, e nome solto casa QUALQUER
+        # diretorio homonimo em qualquer profundidade. O alvo pretendido era
+        # `reports/cwv` (384 artefatos regerados a cada portao), mas o efeito
+        # colateral foi excluir tambem `docs/reports/` — 20 auditorias e
+        # handovers que sao fonte declarada no manifesto. Medido sob o
+        # manifesto de producao: 467 arquivos com o filtro cego, 487 com este.
+        #
+        # Por isso subarvore em vez de nome: o prefixo relativo acerta so o que
+        # a maquina regenera e nao alcanca homonimo nenhum.
+        ignore_subtrees = (
+            Path("reports") / "cwv",       # 384 artefatos por execucao de portao, gitignored
+            Path("reports") / "coverage",  # saida de cobertura, regenerada
+            Path(".claude") / ".ARQUIVE",  # 45 registros arquivados: tasks e cerimonias encerradas
+        )
+
+        def _ignorado(caminho: Path, raiz: Path) -> bool:
+            if any(part in ignore_dirs for part in caminho.parts):
+                return True
+            try:
+                rel = caminho.relative_to(raiz)
+            except ValueError:
+                return False
+            return any(rel.is_relative_to(sub) for sub in ignore_subtrees)
+
         for source in manifest.get("sources", []):
             source_path_str = source.get("path", ".")
             source_path = await asyncio.to_thread((base_path / source_path_str).resolve)
@@ -248,9 +289,25 @@ class MemoryRAG:
                 logger.error(f"[SEC] Bloqueio de LFI/Traversal. O caminho de ingestao escapa a raiz: {source_path}")
                 continue
 
+            # `recursive` era campo DECLARADO E NUNCA LIDO: `rglob` sempre
+            # recursa, entao `"recursive": false` mentia. Honrar a flag e o que
+            # a torna auditavel  mas honrar sozinho seria destrutivo: a fonte
+            # `.claude` declarava `false` enquanto DEPENDIA de recursao, e
+            # passar a obedecer tiraria 39 registros de governanca vivos
+            # (MODUSOPERANDI, GOVERNANCA, ARQUITETURA, PROPOSITOS) do indice.
+            #
+            # Por isso a correcao e conjunta: aqui o codigo passa a obedecer, no
+            # manifesto `.claude` passa a declarar `true` (que e o que sempre
+            # precisou), e `.claude/.ARQUIVE` sai por subarvore. Corrigir so um
+            # dos tres decapitaria a memoria ou legitimaria o arquivo morto.
+            recursivo = source.get("recursive", True)
             for pattern in source.get("patterns", []):
-                files = await asyncio.to_thread(lambda p=pattern, sp=source_path: list(sp.rglob(p)))
-                target_files.extend(files)
+                files = await asyncio.to_thread(
+                    lambda p=pattern, sp=source_path, r=recursivo: list(sp.rglob(p) if r else sp.glob(p))
+                )
+                for f in files:
+                    if not _ignorado(f, resolved_base):
+                        target_files.append(f)
         return set(target_files)
 
     async def _extract_docx(self, file_path: Path) -> str:

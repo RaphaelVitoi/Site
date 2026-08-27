@@ -135,17 +135,30 @@ def _resolver_modelos(manifesto: dict) -> dict:
         logger.warning("[ROTEAMENTO] llm.routing_policy indisponivel; usando primary_model do manifesto.")
         return {f"@{n}": d.get("primary_model") for n, d in manifesto.items()}
 
-    resolvido, sem_rota = {}, []
+    resolvido, sem_rota, sem_modelo = {}, [], []
     for nome, dados in manifesto.items():
         try:
             resolvido[f"@{nome}"] = rotear(nome)
         except KeyError:
             sem_rota.append(nome)
-            resolvido[f"@{nome}"] = dados.get("primary_model")
+            # `primary_model` pode NAO existir no manifesto. Ate 2026-08-27 o
+            # None entrava no mapa em silencio e so falhava la na frente, no
+            # ponto de uso, longe da causa. Medido hoje: nenhum agente cai
+            # aqui  mas isso e propriedade do dado de hoje, nao do codigo.
+            modelo = dados.get("primary_model")
+            if not modelo:
+                sem_modelo.append(nome)
+            resolvido[f"@{nome}"] = modelo
 
     if sem_rota:
         # Nao e fatal, mas e sinal de manifesto e politica fora de sincronia.
         logger.warning("[ROTEAMENTO] sem rota declarada, usando primary_model: %s", sorted(sem_rota))
+    if sem_modelo:
+        logger.error(
+            "[ROTEAMENTO] sem rota E sem primary_model no manifesto; o mapa recebeu None para: %s. "
+            "A falha vai aparecer no ponto de uso, nao aqui.",
+            sorted(sem_modelo),
+        )
     return resolvido
 
 
