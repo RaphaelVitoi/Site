@@ -123,6 +123,68 @@ STATUS_FAIL = "[red]FAIL[/]"
 # alimentado pelo hook pytest_warning_recorded. Se o guard vier para o CLI,
 # ele deve ler daquela contagem, nunca reescrever o texto dela.
 
+_RE_WARNINGS_DECLARADOS = re.compile(r"Total de Warnings:\s*(\d+)")
+
+
+def _warnings_declarados(saida: str) -> int | None:
+    """Contagem de warnings que a propria fase declarou. None = a fase nao declarou.
+
+    Distinguir "declarou zero" de "nao declarou nada" e o ponto inteiro desta
+    funcao. Assumir zero para quem nao fala foi exatamente o defeito que ela
+    existe para extinguir.
+    """
+    achados = _RE_WARNINGS_DECLARADOS.findall(saida or "")
+    return int(achados[-1]) if achados else None
+
+
+def _imprimir_resumo_tri_state(
+    titulo: str,
+    erros: int,
+    warnings_por_fase: dict[str, int | None],
+    homeostase: str,
+) -> str:
+    """Resumo DERIVADO do que as fases reportaram. Nenhum numero aqui e literal.
+
+    Substitui quatro blocos que imprimiam a contagem como zero fixo. Um deles
+    era o do QUALITY GATE, que roda scripts/ops/cwv_gate.ps1 -- e esse script
+    declara 2 warnings e sai 0 (amarelo nao bloqueia, por desenho do
+    POSTULADO-001). O resumo afirmava zero mesmo assim, o que tornava o estado
+    FRAGIL inalcancavel e o tri-state um bi-state: ou estourava, ou dizia
+    SUCESSO VERDE. Medido nos dois lados em 2026-08-27.
+
+    Quando uma fase nao declara contagem, o total vira PISO e nao teto, e isso
+    e dito em voz alta em vez de ser arredondado para zero.
+    """
+    declarados = [v for v in warnings_por_fase.values() if v is not None]
+    mudas = [nome for nome, v in warnings_por_fase.items() if v is None]
+    total_w = sum(declarados)
+
+    if erros > 0 or total_w >= 3:
+        tri_state, cor = "FALHOU (VERMELHO)", "bold red"
+    elif total_w > 0:
+        tri_state, cor = "FRAGIL (AMARELO)", "bold yellow"
+    else:
+        tri_state, cor = "SUCESSO (VERDE)", "bold green"
+
+    console.print("\n" + "=" * 80)
+    console.print(f"[bold cyan]===== SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD ({titulo}) =====[/]")
+    console.print(f" Total de Erros:    {erros} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+    console.print(
+        f" Total de Warnings: {total_w} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)"
+        f" [declarado por {len(declarados)} de {len(warnings_por_fase)} fase(s)]"
+    )
+    console.print(f"[{cor}] Status da Bateria: [{tri_state}][/]")
+    if mudas:
+        amostra = ", ".join(mudas[:3]) + ("..." if len(mudas) > 3 else "")
+        console.print(
+            f"[yellow] PISO, NAO TETO:    {len(mudas)} fase(s) nao declaram contagem ({amostra}). "
+            f"O total acima e um piso.[/]"
+        )
+    if erros == 0 and total_w == 0 and not mudas:
+        console.print(f"[bold green] Homeostase Total:  {homeostase}[/]")
+    console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+    return tri_state
+
 
 #  Utils de Runtime
 def coro(f):
@@ -1376,37 +1438,62 @@ def optimize_ram(
 def run_maintenance():
     """Executa a rotina completa de Manutencao SOTA (RAM, DB, Sanitize, Higiene)."""
     console.print("[bold magenta]=== [NEXUS] Iniciando Protocolo de Manutencao Geral SOTA ===[/]")
+    falhas: list[str] = []
 
-    # 1. RAM Optimization
-    optimize_ram()
+    # 1. RAM: chamar o NUCLEO, nunca o comando typer.
+    #
+    # Isto chamava optimize_ram() diretamente. Quando --watch foi adicionado ao
+    # comando, os defaults dele viraram objetos typer.OptionInfo -- e
+    # bool(OptionInfo) e True. A chamada entrava no ramo daemon e morria em
+    # "TypeError: '>=' not supported between instances of 'float' and
+    # 'OptionInfo'", no passo 1, sem nunca alcancar os passos 2 a 5. Medido em
+    # 2026-08-27. Chamar o nucleo elimina o acoplamento aos defaults do typer.
+    try:
+        _execute_ram_cleanse(verbose=True)
+    except Exception as e:
+        console.print(f"[red]Erro na otimizacao de RAM: {e}[/]")
+        falhas.append("RAM")
 
     # 2. Database Vacuum
     try:
         vacuum_db()
     except Exception as e:
         console.print(f"[red]Erro na manutencao do DB: {e}[/]")
+        falhas.append("VACUUM")
 
     # 3. Sanitize
     try:
         sanitize_system(apply=True)
     except Exception as e:
         console.print(f"[red]Erro no saneamento de arquivos: {e}[/]")
+        falhas.append("SANITIZE")
 
     # 4. Hygiene
     try:
         run_hygiene()
     except Exception as e:
         console.print(f"[red]Erro na higiene temporal: {e}[/]")
+        falhas.append("HIGIENE")
 
     # 5. LanceDB / RAG Optimization (SSD Deframing SOTA)
-    try:
-        rag_script = BASE_DIR / MEMORY_RAG_SCRIPT
-        if rag_script.exists():
+    rag_script = BASE_DIR / MEMORY_RAG_SCRIPT
+    if not rag_script.exists():
+        console.print(f"[yellow][AVISO] {MEMORY_RAG_SCRIPT} ausente: otimizacao vetorial NAO executada.[/]")
+        falhas.append("LANCEDB (script ausente)")
+    else:
+        try:
             subprocess.run([sys.executable, str(rag_script), "optimize"], cwd=str(BASE_DIR), check=True)
-    except Exception as e:
-        console.print(f"[red]Erro na otimizacao de disco vetorial (LanceDB): {e}[/]")
+        except Exception as e:
+            console.print(f"[red]Erro na otimizacao de disco vetorial (LanceDB): {e}[/]")
+            falhas.append("LANCEDB")
 
-    console.print("\n[bold green][SUCESSO ABSOLUTO] Manutencao geral concluida com sucesso![/]")
+    # O veredito e DERIVADO. Antes era "[SUCESSO ABSOLUTO] ... concluida com
+    # sucesso!" incondicional, impresso depois de quatro try/except que so
+    # imprimiam: os cinco passos podiam falhar por baixo dele.
+    if falhas:
+        console.print(f"\n[bold red][FALHA PARCIAL] {len(falhas)} de 5 etapas nao concluiram: {', '.join(falhas)}.[/]")
+        raise typer.Exit(1)
+    console.print("\n[bold green][SUCESSO] As 5 etapas da manutencao geral concluiram.[/]")
 
 
 HELP_MODEL_CHOICES = "Modelo: 31b, 26b, 12b, 4b, 8b, llama3_8b, qwen, granite"
@@ -1537,9 +1624,11 @@ def query_gemma(
     subprocess.run([sys.executable, str(script_path), "--model", model, prompt], cwd=str(BASE_DIR), check=False)
 
 
-async def _read_stream_and_log(stream, name: str) -> None:
+async def _read_stream_and_log(stream, name: str) -> list[str]:
+    """Ecoa a saida da fase e DEVOLVE as linhas: o resumo precisa delas para derivar."""
+    linhas: list[str] = []
     if stream is None:
-        return
+        return linhas
     while True:
         line = await stream.readline()
         if not line:
@@ -1550,10 +1639,16 @@ async def _read_stream_and_log(stream, name: str) -> None:
             if clean_decoded:
                 console.print(f"[dim]{clean_decoded}[/]")
                 logger.debug(f"[{name}] {clean_decoded}")
+                linhas.append(clean_decoded)
+    return linhas
 
 
-async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | None = None) -> None:
-    """Executa um passo isolado do Quality Gate e processa a saida ativamente (Friccao Zero)."""
+async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | None = None) -> int | None:
+    """Executa um passo do Quality Gate e devolve os warnings que ELE declarou.
+
+    None significa que a fase nao declara contagem -- e isso e reportado como
+    tal, nunca convertido em zero.
+    """
     console.print(f"\n[bold cyan]==> {name}[/]")
     logger.info(f"[QUALITY-GATE] START: {name} | CMD: {' '.join(cmd)}")
 
@@ -1566,7 +1661,7 @@ async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | 
             stderr=asyncio.subprocess.STDOUT,
         )
 
-        await _read_stream_and_log(proc.stdout, name)
+        linhas = await _read_stream_and_log(proc.stdout, name)
         await proc.wait()
 
         if proc.returncode != 0:
@@ -1575,6 +1670,7 @@ async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | 
             raise typer.Exit(proc.returncode or 1)
 
         logger.success(f"[QUALITY-GATE] SUCCESS: {name}")
+        return _warnings_declarados("\n".join(linhas))
     except typer.Exit:
         raise
     except Exception as e:
@@ -1805,22 +1901,20 @@ async def quality_gate():
         ),
     ]
 
+    # Erros sao sempre 0 aqui por construcao: _execute_step levanta typer.Exit no
+    # primeiro returncode != 0, entao alcancar esta linha ja prova que toda fase
+    # saiu 0. Warnings NAO seguiam a mesma logica -- eram literal fixo, e o
+    # cwv_gate.ps1 declara 2 deles saindo 0. Agora vem de cada fase.
+    warnings_por_fase: dict[str, int | None] = {}
     for name, cmd, cwd, env in steps:
-        await _execute_step(name, cmd, cwd, env)
+        warnings_por_fase[name] = await _execute_step(name, cmd, cwd, env)
 
-    console.print("\n" + "=" * 80)
-    console.print(
-        "[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (QUALITY GATE) ==========[/]"
+    _imprimir_resumo_tri_state(
+        "QUALITY GATE",
+        0,
+        warnings_por_fase,
+        f"Todas as {len(steps)} fases do Quality Gate aprovadas com excelencia termodinamica.",
     )
-    console.print(" Total de Erros:    0 (Teto Maximo Permitido: 0 | Peso: CRITICO)")
-    console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
-    console.print(
-        "[bold green] Status da Bateria: [SUCESSO (VERDE)] Zero Erros & Zero Warnings nas 10 Fases do Gate.[/]"
-    )
-    console.print(
-        "[green] Homeostase Total:  Todas as 10 fases e suites do Quality Gate aprovadas com excelencia termodinamica.[/]"
-    )
-    console.print("[bold cyan]" + "=" * 80 + "[/]\n")
 
 
 @app.command("test")
@@ -1932,6 +2026,7 @@ def list_and_run_scripts(
         console.print("")
 
         script_errors = []
+        warnings_por_script: dict[str, int | None] = {}
         for s_path, s_data in cat_info.get("scripts", {}).items():
             cmd_str = s_data.get("command", "")
             if cmd_str.startswith("python "):
@@ -1951,23 +2046,19 @@ def list_and_run_scripts(
             dt = time.monotonic() - t0
             sla = s_data.get("sla_seconds", 10.0)
 
+            warnings_por_script[s_path] = _warnings_declarados(res.stdout)
             if res.returncode == 0:
                 console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)")
             else:
                 console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}")
                 script_errors.append((s_path, res.stderr or res.stdout))
 
-        tri_state = "FALHOU (VERMELHO)" if script_errors else "SUCESSO (VERDE)"
-        console.print("\n" + "=" * 80)
-        console.print(
-            "[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (SCRIPTS) ==========[/]"
+        _imprimir_resumo_tri_state(
+            "SCRIPTS",
+            len(script_errors),
+            warnings_por_script,
+            "Todos os scripts da categoria executados com excelencia.",
         )
-        console.print(f" Total de Erros:    {len(script_errors)} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
-        console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
-        console.print(f" Status da Bateria: [{tri_state}]")
-        if not script_errors:
-            console.print("[bold green] Homeostase Total:  Todos os scripts da categoria executados com excelencia.[/]")
-        console.print("[bold cyan]" + "=" * 80 + "[/]\n")
 
         if script_errors:
             raise typer.Exit(1)
@@ -2021,11 +2112,19 @@ def execute_handoff(
         "COSMOVISAO": claude_dir / "COSMOVISAO.md",
         "INVARIANTES ARQUITETURAIS": claude_dir / "ARCHITECTURAL_INVARIANTS.md",
     }
+    # Ausencia declarada, nao silenciosa. Medido em 2026-08-27: 3 dos 4 arquivos
+    # nao existiam (GLOBAL_INSTRUCTIONS, COSMOVISAO, ARCHITECTURAL_INVARIANTS), e
+    # o handoff saia com um quarto da carga anunciada dizendo "persistido com
+    # sucesso". Handoff incompleto que se declara completo e pior que handoff
+    # que falha: o proximo agente herda o vazio sem saber.
+    ausentes: list[str] = []
     for title, path in files_to_inject.items():
         if path.exists():
             context.append(
                 f"\n=================================================================\n## {title}\n=================================================================\n{path.read_text(encoding='utf-8', errors='ignore')}"
             )
+        else:
+            ausentes.append(f"{title} ({path})")
 
     agents_dir = claude_dir / "agents"
     specific_agent = agents_dir / f"{agent}.md"
@@ -2041,12 +2140,30 @@ def execute_handoff(
         )
 
     handoff_text = "\n".join(context)
+
+    if not context:
+        console.print("[bold red][FALHA] Nenhuma fonte de contexto encontrada. Handoff vazio NAO sera gravado.[/]")
+        for a in ausentes:
+            console.print(f"  [red]-> ausente:[/] {a}")
+        raise typer.Exit(1)
+
     handoff_output_file = claude_dir / "agent-memory" / agent / "HANDOFF_LATEST.md"
     handoff_output_file.parent.mkdir(parents=True, exist_ok=True)
     handoff_output_file.write_text(handoff_text, encoding="utf-8")
-    console.print(
-        f"[bold green] Handoff persistido com sucesso:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/]"
-    )
+
+    total = len(files_to_inject)
+    if ausentes:
+        console.print(
+            f"[bold yellow] Handoff PARCIAL:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/] "
+            f"[yellow]({total - len(ausentes)} de {total} fontes de governanca; {len(ausentes)} ausente(s))[/]"
+        )
+        for a in ausentes:
+            console.print(f"  [yellow]-> ausente:[/] {a}")
+    else:
+        console.print(
+            f"[bold green] Handoff completo:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/] "
+            f"[green]({total} de {total} fontes de governanca)[/]"
+        )
 
     try:
         import pyperclip  # type: ignore
@@ -2144,6 +2261,7 @@ def run_or_list_audits(
 
     console.print(f"\n[bold cyan]=== [EXECUTANDO AUDITORIAS SOTA: {len(targets)} AUDITORIAS] ===[/]\n")
     audit_errors = []
+    warnings_por_auditoria: dict[str, int | None] = {}
     for aid, ainfo in targets.items():
         cmd_str = ainfo.get("command", "")
         if cmd_str.startswith("python "):
@@ -2160,23 +2278,19 @@ def run_or_list_audits(
         dt = time.monotonic() - t0
         sla = ainfo.get("sla_seconds", 10.0)
 
+        warnings_por_auditoria[str(ainfo.get("name") or aid)] = _warnings_declarados(res.stdout)
         if res.returncode == 0:
             console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)\n")
         else:
             console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}\n")
             audit_errors.append((aid, res.stderr or res.stdout))
 
-    tri_state = "FALHOU (VERMELHO)" if audit_errors else "SUCESSO (VERDE)"
-    console.print("=" * 80)
-    console.print(
-        "[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (AUDITS) ==========[/]"
+    _imprimir_resumo_tri_state(
+        "AUDITS",
+        len(audit_errors),
+        warnings_por_auditoria,
+        "Todas as auditorias selecionadas aprovadas com excelencia.",
     )
-    console.print(f" Total de Erros:    {len(audit_errors)} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
-    console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
-    console.print(f" Status da Bateria: [{tri_state}]")
-    if not audit_errors:
-        console.print("[bold green] Homeostase Total:  Todas as auditorias selecionadas aprovadas com excelencia.[/]")
-    console.print("[bold cyan]" + "=" * 80 + "[/]\n")
 
     if audit_errors:
         raise typer.Exit(1)
@@ -2228,6 +2342,7 @@ def run_or_list_routines(
 
     console.print(f"\n[bold cyan]=== [EXECUTANDO ROTINAS SOTA: {len(targets)} ROTINAS] ===[/]\n")
     routine_errors = []
+    warnings_por_rotina: dict[str, int | None] = {}
     for rid, rinfo in targets.items():
         cmd_str = rinfo.get("command", "")
         if cmd_str.startswith("python "):
@@ -2244,23 +2359,19 @@ def run_or_list_routines(
         dt = time.monotonic() - t0
         sla = rinfo.get("sla_seconds", 10.0)
 
+        warnings_por_rotina[str(rinfo.get("name") or rid)] = _warnings_declarados(res.stdout)
         if res.returncode == 0:
             console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)\n")
         else:
             console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}\n")
             routine_errors.append((rid, res.stderr or res.stdout))
 
-    tri_state = "FALHOU (VERMELHO)" if routine_errors else "SUCESSO (VERDE)"
-    console.print("=" * 80)
-    console.print(
-        "[bold cyan]========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (ROUTINES) ==========[/]"
+    _imprimir_resumo_tri_state(
+        "ROUTINES",
+        len(routine_errors),
+        warnings_por_rotina,
+        "Todas as rotinas selecionadas executadas com excelencia.",
     )
-    console.print(f" Total de Erros:    {len(routine_errors)} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
-    console.print(" Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
-    console.print(f" Status da Bateria: [{tri_state}]")
-    if not routine_errors:
-        console.print("[bold green] Homeostase Total:  Todas as rotinas selecionadas executadas com excelencia.[/]")
-    console.print("[bold cyan]" + "=" * 80 + "[/]\n")
 
     if routine_errors:
         raise typer.Exit(1)
