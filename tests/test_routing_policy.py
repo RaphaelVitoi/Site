@@ -9,6 +9,7 @@ silencio.
 from __future__ import annotations
 
 import json
+import logging
 import re
 from pathlib import Path
 
@@ -25,10 +26,12 @@ from llm.routing_policy import (
     SUBAGENTES,
     ClasseTarefa,
     Faixa,
+    Origem,
     TierAgente,
     avaliar_uso_condicional_pro,
     cobertura,
     custo,
+    decidir,
     e_local,
     economia_do_escalonamento,
     estimar_roi,
@@ -346,3 +349,104 @@ def test_avaliar_uso_condicional_pro():
     assert res_pro["aprovado_pro"] is True
     assert res_pro["beneficio_estimado_pct"] == 40.0
     assert "Alta complexidade matematica" in res_pro["motivo"]
+
+
+#  Procedencia da decisao: degradacao tem que ser VISIVEL no ponto de uso
+
+
+def test_decidir_marca_o_primario():
+    d = decidir("implementor")
+    assert d.modelo == "claude-sonnet-5"
+    assert d.origem is Origem.PRIMARIO
+    assert d.classe is ClasseTarefa.CONSTRUCAO
+    assert not d.degradado
+
+
+def test_decidir_marca_o_escalonamento_atendido():
+    d = decidir("implementor", escalado=True)
+    assert d.modelo == "claude-opus-5"
+    assert d.origem is Origem.ESCALADO
+    assert not d.degradado, "escalonamento ATENDIDO nao e degradacao"
+
+
+def test_escalonar_classe_sem_degrau_e_degradacao_declarada():
+    """O defeito que motivou `Decisao`.
+
+    `rotear('chico', escalado=True)` devolvia 'claude-opus-5'  que E o primario
+    da governanca. O chamador julgou a tarefa alem do primario, recebeu o
+    primario, e o valor de retorno era byte a byte identico ao do caso normal.
+    Silencio indistinguivel de sucesso.
+    """
+    for alvo, classe in (("chico", ClasseTarefa.GOVERNANCA), ("planner", ClasseTarefa.RACIOCINIO_PROFUNDO)):
+        d = decidir(alvo, escalado=True)
+        assert d.origem is Origem.ESCALONAMENTO_INDISPONIVEL
+        assert d.modelo == ROTAS[classe].primario
+        assert d.degradado, "pedir degrau acima e nao ter e degradacao relativa ao pedido"
+        assert "nao declara" in d.motivo
+
+
+def test_fallback_tem_caminho_de_execucao():
+    """`Rota.fallback` ficou declarado sem consumidor no caminho de decisao.
+
+    Degradacao escrita na tabela e inalcancavel em execucao e o mesmo defeito
+    de `$warnings` no cwv_gate: o estado existe no papel e nao no fluxo.
+    """
+    d = decidir("implementor", primario_indisponivel=True)
+    assert d.modelo == ROTAS[ClasseTarefa.CONSTRUCAO].fallback
+    assert d.origem is Origem.FALLBACK
+    assert d.degradado
+
+
+def test_toda_classe_alcanca_seu_fallback():
+    """Sem isto, uma classe poderia ganhar fallback orfao de novo sem ninguem ver."""
+    for alvo, (_, classe) in AGENTES.items():
+        d = decidir(alvo, primario_indisponivel=True)
+        assert d.modelo == ROTAS[classe].fallback, alvo
+        assert d.degradado, alvo
+
+
+def test_complexidade_vence_alcance_quando_os_dois_sinais_chegam():
+    """`escalado` e `primario_indisponivel` respondem perguntas diferentes.
+
+    Se ha degrau acima, o primario nao vai ser usado  logo a disponibilidade
+    dele e irrelevante. Travado porque a ordem inversa mandaria a tarefa
+    complexa para o fallback, que e o degrau ABAIXO.
+    """
+    d = decidir("implementor", escalado=True, primario_indisponivel=True)
+    assert d.modelo == ROTAS[ClasseTarefa.CONSTRUCAO].escalona_para
+    assert d.origem is Origem.ESCALADO
+
+
+def test_rotear_e_decidir_nunca_divergem():
+    """`rotear` e vista com perda de `decidir`, nao uma segunda implementacao.
+
+    Duas logicas de decisao paralelas divergiriam em silencio. Este teste e o
+    que impede que voltem a existir.
+    """
+    for alvo in list(AGENTES) + list(SUBAGENTES):
+        for escalado in (False, True):
+            assert rotear(alvo, escalado=escalado) == decidir(alvo, escalado=escalado).modelo, alvo
+
+
+def test_rotear_preserva_o_contrato_de_str_para_core_config():
+    """core.config._resolver_modelos so precisa do alias; o tipo nao pode mudar."""
+    for alvo in AGENTES:
+        assert isinstance(rotear(alvo), str)
+
+
+def test_rotear_registra_o_escalonamento_que_nao_aconteceu(caplog):
+    """O unico caso em que descartar a procedencia esconde algo relevante.
+
+    `rotear` continua devolvendo `str` por compatibilidade, entao o aviso e o
+    que impede o descarte de ser mudo.
+    """
+    with caplog.at_level(logging.WARNING, logger="llm.routing_policy"):
+        assert rotear("chico", escalado=True) == "claude-opus-5"
+    # getMessage() e o que interpola: o logger usa %-lazy, entao ate aqui o
+    # texto final nao existe  so `msg` com placeholders e `args` separados.
+    assert any("nao declara escalona_para" in r.getMessage() for r in caplog.records)
+
+    caplog.clear()
+    with caplog.at_level(logging.WARNING, logger="llm.routing_policy"):
+        rotear("implementor", escalado=True)
+    assert not caplog.records, "escalonamento atendido nao deve gerar ruido"

@@ -1,3 +1,18 @@
 #!/bin/sh
+# Portao de pre-commit — Protocolo Chico SOTA v8.0 GOLD
+#
+# `set -e` e obrigatorio aqui. Sem ele o codigo de saida do hook e o do ULTIMO
+# comando, entao acrescentar uma verificacao ao fim faria a anterior deixar de
+# bloquear silenciosamente. Foi por isso que este arquivo passou a ter mais de
+# uma linha.
+set -e
+
+# 1. Portao de qualidade existente (CWV, a11y, CVE, SRI).
 npm run sota:audit
 
+# 2. Portao de ancora de registro — M.O. secao 13.F.
+if command -v pwsh >/dev/null 2>&1; then
+    pwsh -NoProfile -ExecutionPolicy Bypass -File "scripts/ops/record_anchor_gate.ps1"
+else
+    powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/ops/record_anchor_gate.ps1"
+fi

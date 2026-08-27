@@ -15,11 +15,20 @@
             "recursive": true
         },
         {
+            "_nota": "Era 'recursive: false' e a flag nunca era lida, entao esta fonte SEMPRE recursou. Corrigido em 2026-08-27 para declarar o que de fato precisa: os 39 registros de governanca vivos (MODUSOPERANDI, GOVERNANCA, ARQUITETURA, PROPOSITOS, ESSENCIA MORAL, RELATORIOS) estao em subdiretorios. O arquivo morto .claude/.ARQUIVE sai por memory_rag.ignore_subtrees.",
             "path": ".claude",
             "patterns": [
                 "*.md"
             ],
-            "recursive": false
+            "recursive": true
+        },
+        {
+            "_nota": "Registros da secao 13 do MODUS_OPERANDI: POSTULADOs, HANDOFFs e auditorias com frontmatter canonico. Nenhuma fonte alcancava este diretorio ate 2026-08-27, entao o indice ancorado existia em disco e nao na memoria. As subarvores geradas (reports/cwv, reports/coverage) sao barradas em memory_rag.ignore_subtrees, nao aqui.",
+            "path": "reports",
+            "patterns": [
+                "*.md"
+            ],
+            "recursive": true
         },
         {
             "path": ".claude/agents",

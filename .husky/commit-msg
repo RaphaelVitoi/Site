@@ -1,0 +1,37 @@
+#!/bin/sh
+# Portao de mensagem de commit — Protocolo Chico SOTA v8.0 GOLD
+#
+# EXISTE PORQUE ESTAVA DESLIGADO. O repositorio tinha a regra escrita em
+# .git/hooks/commit-msg, mas `core.hooksPath` aponta para .husky, e nao havia
+# commit-msg aqui. A regra existia no disco e nunca executava — mesmo padrao do
+# supressor de linter: o sinal sumiu, a causa nao.
+set -e
+
+commit_msg_file="$1"
+commit_msg=$(sed '/^#/d' "$commit_msg_file" | head -n 1)
+
+# Commits gerados por operacao do proprio git nao seguem o padrao.
+case "$commit_msg" in
+    Merge*|Revert*|fixup!*|squash!*|WIP:*)
+        exit 0
+        ;;
+esac
+
+conventional_pattern="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|ops)(\([a-zA-Z0-9_\-\.\/]+\))?(!)?: .+"
+
+if ! echo "$commit_msg" | grep -Eq "$conventional_pattern"; then
+    echo "[COMMIT-MSG REJEITADO] Fora do padrao Conventional Commits SOTA v8.0 GOLD."
+    echo "   Recebido: '$commit_msg'"
+    echo "   Esperado: <tipo>(<escopo opcional>): <descricao>"
+    echo "   Tipos:    feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, ops"
+    echo "   Exemplo:  feat(engine): implementar avaliacao de equidade assincrona"
+    exit 1
+fi
+
+msg_len=${#commit_msg}
+if [ "$msg_len" -gt 100 ]; then
+    echo "[COMMIT-MSG REJEITADO] Titulo com $msg_len caracteres (maximo 100)."
+    exit 1
+fi
+
+exit 0

@@ -32,12 +32,16 @@ que voce reconcilie o manifesto quando quiser, em vez de a divergencia sumir.
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
+from datetime import date
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from llm.model_registry import custo_estimado, get
+
+logger = logging.getLogger(__name__)
 
 # Modelos locais vivem em data/ollama_models.json, nao no MODEL_REGISTRY de
 # nuvem. Sao dois registros de proposito: um descreve API paga com preco por
@@ -117,6 +121,24 @@ class Rota:
     justificativa: str
     escalona_para: str | None = None
 
+    # --- ANCORA DE DECAIMENTO (M.O. 13.A, classe EXTERNA) --------------------
+    # Toda `justificativa` desta tabela afirma CAPACIDADE e PRECO de sistema de
+    # terceiro: "Sonnet 5 sustenta alteracao multi-arquivo", "unico com
+    # auto-verificacao assincrona", "$25 contra $30". Sao fatos externos, e fato
+    # externo decai pelo TEMPO, nao por diff.
+    #
+    # O gatilho real e o release do fornecedor. A cada upgrade a fronteira de
+    # capacidade se move e papeis migram — sempre na mesma direcao, do barato e
+    # especializado para o caro e generalista, porque cada release torna o
+    # modelo de fronteira plausivelmente capaz da tarefa barata e nada empurra
+    # de volta. Deriva com direcao nao se corrige na media.
+    #
+    # Nao ha como detectar release sem consultar o fornecedor, entao o TTL e o
+    # proxy honesto: passado o prazo, a rota vira SUSPEITA e exige reconsulta em
+    # vez de continuar valendo em silencio.
+    ancorado_em: str = ""              # ISO YYYY-MM-DD da ultima verificacao
+    modelos_citados: tuple[str, ...] = ()  # de quem a justificativa depende
+
 
 # ==============================================================================
 # TABELA DE ROTEAMENTO  segue a definicao do operador
@@ -132,6 +154,8 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "consciencia de codigo. Opus 5 lidera horizonte longo e custa menos "
             "na saida que o Sol ($25 contra $30)."
         ),
+        ancorado_em="2026-08-27",
+        modelos_citados=("claude-opus-5", "gpt-5.6-sol"),
     ),
     ClasseTarefa.ESTRATEGIA: Rota(
         primario="gpt-5.6-sol",
@@ -141,6 +165,8 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "Analise de risco e arquitetura macro pendem para raciocinio puro, "
             "onde o Sol lidera. Inverso da governanca, de proposito."
         ),
+        ancorado_em="2026-08-27",
+        modelos_citados=("gpt-5.6-sol", "claude-opus-5"),
     ),
     ClasseTarefa.CONSTRUCAO: Rota(
         primario="claude-sonnet-5",
@@ -152,6 +178,8 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "do preco do Opus. Escalona ao Opus quando o grafo de dependencia "
             "passa do que o Sonnet resolve numa passada."
         ),
+        ancorado_em="2026-08-27",
+        modelos_citados=("claude-sonnet-5", "gemini-3.7-flash", "claude-opus-5"),
     ),
     ClasseTarefa.VERIFICACAO: Rota(
         primario="gemini-3.7-flash",
@@ -161,6 +189,8 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         justificativa=(
             "Revisao de primeira passagem em faixa gratuita. Escalona so quando o revisor barato sinaliza incerteza."
         ),
+        ancorado_em="2026-08-27",
+        modelos_citados=("gemini-3.7-flash", "gpt-5.6-terra", "claude-opus-5"),
     ),
     ClasseTarefa.OPERACIONAL: Rota(
         primario="gemini-3.7-flash",
@@ -168,9 +198,15 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         faixa=Faixa.GRATUITA,
         justificativa=(
             "Faixa gratuita ANTES de preco unitario. A Luna e mais barata por "
-            "token ($0.20/$1.20) mas nao tem cota livre; o Flash tem. Custo "
-            "marginal zero ganha de barato. A Luna fica como fallback pago."
+            "token ($0.20/$1.20) mas nao tem cota livre; o Flash tem. "
+            "COTA LIVRE VENCE PRECO UNITARIO MENOR QUANDO A QUALIDADE NAO "
+            "DISCRIMINA — e uma regra de desempate DENTRO do custo, aplicavel "
+            "so depois que a analise de custo-beneficio concluiu que a "
+            "qualidade nao e o fator decisivo nesta classe. A Luna fica como "
+            "fallback pago."
         ),
+        ancorado_em="2026-08-27",
+        modelos_citados=("gemini-3.7-flash", "gpt-5.6-luna"),
     ),
     ClasseTarefa.RACIOCINIO_PROFUNDO: Rota(
         primario="gpt-5.6-sol",
@@ -178,6 +214,8 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         faixa=Faixa.API_PAGA,
         escalona_para=None,
         justificativa="Planejamento, pesquisa e prova formal. Sem degrau acima.",
+        ancorado_em="2026-08-27",
+        modelos_citados=("gpt-5.6-sol", "claude-opus-5"),
     ),
     ClasseTarefa.SESSAO_MULTI_DIA: Rota(
         primario="claude-fable-5",
@@ -186,6 +224,8 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         justificativa=(
             "Unico com auto-verificacao assincrona e raciocinio multi-sessao. A $10/$50, reservar ao que so ele faz."
         ),
+        ancorado_em="2026-08-27",
+        modelos_citados=("claude-fable-5", "claude-opus-5"),
     ),
     ClasseTarefa.LOCAL: Rota(
         primario="gemma4:12b",
@@ -193,8 +233,11 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         faixa=Faixa.LOCAL,
         escalona_para="gemini-3.7-flash",
         justificativa=(
-            "Inferencia de borda sem custo marginal nem rede. Pesos ja provisionados; ver data/ollama_models.json."
+            "Inferencia de borda: nenhum custo por uso e nenhuma dependencia de "
+            "rede. Pesos ja provisionados; ver data/ollama_models.json."
         ),
+        ancorado_em="2026-08-27",
+        modelos_citados=("gemma4:12b", "gemma4:e4b", "gemini-3.7-flash"),
     ),
 }
 
@@ -269,13 +312,104 @@ CONFLITOS_MANIFESTO: dict[str, str] = {
 }
 
 
-def rotear(alvo: str, *, escalado: bool = False) -> str:
-    """Modelo para um agente ou subagente."""
+class Origem(str, Enum):
+    """De qual degrau da rota o modelo veio.
+
+    Existe porque `str` nao carrega essa informacao: quem recebia so o alias
+    nao distinguia "recebi o que pedi" de "pedi escalonamento e nao havia".
+    """
+
+    PRIMARIO = "primario"
+    ESCALADO = "escalado"
+    FALLBACK = "fallback"
+    ESCALONAMENTO_INDISPONIVEL = "escalonamento_indisponivel"
+
+
+@dataclass(frozen=True)
+class Decisao:
+    """Resultado de roteamento COM a procedencia declarada.
+
+    `Rota` descreve o que a politica OFERECE; `Decisao` descreve o que a
+    politica ENTREGOU e por que. Sem a segunda, degradacao e indistinguivel de
+    operacao normal no ponto de uso.
+    """
+
+    modelo: str
+    origem: Origem
+    classe: ClasseTarefa
+    rota: Rota
+
+    @property
+    def degradado(self) -> bool:
+        """True quando o chamador NAO recebeu o que a rota prometia.
+
+        Cobre os dois casos: caiu para o fallback, ou pediu escalonamento numa
+        classe que nao tem degrau acima. O segundo e degradacao relativa ao
+        pedido, nao ao primario  o chamador julgou a tarefa complexa demais
+        para o primario e recebeu o primario assim mesmo.
+        """
+        return self.origem in (Origem.FALLBACK, Origem.ESCALONAMENTO_INDISPONIVEL)
+
+    @property
+    def motivo(self) -> str:
+        return {
+            Origem.PRIMARIO: f"primario da classe {self.classe.value}",
+            Origem.ESCALADO: f"escalonado a pedido; primario era {self.rota.primario}",
+            Origem.FALLBACK: f"primario {self.rota.primario} indisponivel; degradado ao fallback",
+            Origem.ESCALONAMENTO_INDISPONIVEL: (
+                f"escalonamento pedido, mas a classe {self.classe.value} nao declara "
+                f"escalona_para; entregue o primario {self.rota.primario}"
+            ),
+        }[self.origem]
+
+
+def decidir(alvo: str, *, escalado: bool = False, primario_indisponivel: bool = False) -> Decisao:
+    """Decisao de roteamento com procedencia. Caminho unico de decisao.
+
+    ## Ordem de precedencia dos dois sinais
+
+    Os dois parametros respondem a perguntas diferentes e nao competem:
+
+    - `escalado` e sobre COMPLEXIDADE  o chamador julgou a tarefa alem do que
+      o primario resolve. Vence primeiro, porque se o escalonamento existe o
+      primario nao vai ser usado e a disponibilidade dele deixa de importar.
+    - `primario_indisponivel` e sobre ALCANCE  o modelo nao respondeu. Esta
+      politica nao mede saude de provedor e nunca vai medir: quem chama e que
+      sabe. Por isso o fallback e um caminho que o chamador ABRE, nao um que a
+      politica adivinha.
+
+    Ate esta data `Rota.fallback` estava declarado e nao tinha um unico
+    consumidor  degradacao escrita na tabela e inalcancavel em execucao.
+    """
     classe = _classe_de(alvo)
     rota = ROTAS[classe]
-    if escalado and rota.escalona_para:
-        return rota.escalona_para
-    return rota.primario
+
+    if escalado:
+        if rota.escalona_para:
+            return Decisao(rota.escalona_para, Origem.ESCALADO, classe, rota)
+        return Decisao(rota.primario, Origem.ESCALONAMENTO_INDISPONIVEL, classe, rota)
+
+    if primario_indisponivel:
+        return Decisao(rota.fallback, Origem.FALLBACK, classe, rota)
+
+    return Decisao(rota.primario, Origem.PRIMARIO, classe, rota)
+
+
+def rotear(alvo: str, *, escalado: bool = False) -> str:
+    """Modelo para um agente ou subagente. **Vista com perda.**
+
+    Preservada com a assinatura e o comportamento originais para nao quebrar
+    `core.config._resolver_modelos`, que so precisa do alias. Delega a
+    `decidir()` para que exista UMA logica de decisao  duas implementacoes
+    paralelas divergiriam em silencio, que e o modo de falha desta base.
+
+    Prefira `decidir()` em codigo novo: aqui a procedencia e descartada, e por
+    isso o unico caso em que o descarte esconde algo relevante vira log.
+    """
+    d = decidir(alvo, escalado=escalado)
+    if d.origem is Origem.ESCALONAMENTO_INDISPONIVEL:
+        logger.warning("[ROTEAMENTO] %s: %s", alvo, d.motivo)
+    return d.modelo
 
 
 def rota_de(alvo: str) -> Rota:
@@ -295,6 +429,46 @@ def _classe_de(alvo: str) -> ClasseTarefa:
 def cobertura() -> dict[str, int]:
     """Quantos alvos a politica cobre. Usado em teste para impedir regressao."""
     return {"agentes": len(AGENTES), "subagentes": len(SUBAGENTES), "total": len(AGENTES) + len(SUBAGENTES)}
+
+
+# PALPITE DECLARADO, nao medicao: 90 dias e a ordem de grandeza do intervalo
+# entre releases relevantes dos tres fornecedores de fronteira em 2026. Nao foi
+# derivado de serie historica. Substituir por numero medido quando houver.
+TTL_ROTA_DIAS = 90
+
+
+def rotas_suspeitas(hoje: date | None = None, *, ttl_dias: int = TTL_ROTA_DIAS) -> dict[ClasseTarefa, str]:
+    """Rotas cuja ancora de capacidade venceu, ou que nunca foi declarada.
+
+    Existe para que os campos de ancora nao virem dado que ninguem le — falha
+    que esta propria tabela ja cometeu com `Rota.fallback`, que ate 2026-08-27
+    so era lido por `economia_do_escalonamento` como substituto do degrau caro,
+    e nunca no caminho de decisao para o qual foi escrito. Hoje `decidir()` o
+    consome sob `Origem.FALLBACK`.
+
+    Nao decide nada e nao bloqueia: reporta. A revalidacao e ato humano, porque
+    exige consultar o fornecedor.
+    """
+    hoje = hoje or date.today()
+    suspeitas: dict[ClasseTarefa, str] = {}
+
+    for classe, rota in ROTAS.items():
+        if not rota.ancorado_em:
+            suspeitas[classe] = "sem ancora: a justificativa afirma capacidade sem data de verificacao"
+            continue
+        try:
+            ancora = date.fromisoformat(rota.ancorado_em)
+        except ValueError:
+            suspeitas[classe] = f"ancora ilegivel: {rota.ancorado_em!r} nao e ISO YYYY-MM-DD"
+            continue
+        idade = (hoje - ancora).days
+        if idade > ttl_dias:
+            citados = ", ".join(rota.modelos_citados) or "nao declarados"
+            suspeitas[classe] = (
+                f"ancora com {idade} dias (teto {ttl_dias}). Reconferir capacidade e preco de: {citados}"
+            )
+
+    return suspeitas
 
 
 def ordem_de_consumo() -> list[tuple[Faixa, list[ClasseTarefa]]]:
@@ -479,13 +653,18 @@ __all__ = [
     "Faixa",
     "PRECEDENCIA_FAIXA",
     "Rota",
+    "Origem",
+    "Decisao",
     "ROTAS",
     "AGENTES",
     "SUBAGENTES",
     "CONFLITOS_MANIFESTO",
+    "decidir",
     "rotear",
     "rota_de",
     "cobertura",
+    "rotas_suspeitas",
+    "TTL_ROTA_DIAS",
     "ordem_de_consumo",
     "estimar_roi",
     "economia_do_escalonamento",
