@@ -134,15 +134,27 @@ function Convert-DeepJsonStringSOTA {
 # --- Comandos Core do Ecossistema ---
 
 # A Membrana de Entrada (Inteligencia SOTA v8.0 GOLD)
+# Ver a nota gemea em Microsoft.PowerShell_profile.ps1. Esta lista e esta funcao
+# estao DUPLICADAS entre os dois arquivos -- item 1.3 do plano 2-B, fonte unica
+# ainda por declarar. Enquanto durar a duplicacao, tests/test_roteamento_perfil.py
+# compara AMBAS as copias com os comandos que o Typer registra: a duplicacao
+# continua, mas deixou de poder divergir em silencio.
+$Global:NexusTyperCommands = @(
+    'agent', 'audit', 'autonomy', 'autopoiesis', 'dashboard', 'db', 'gate',
+    'graph', 'homeostasis', 'list', 'ops', 'routine', 'scripts', 'search',
+    'stats', 'status', 'sync-consciousness', 'task', 'task-audit', 'test', 'voice'
+)
+
 function nexus {
-    # Ver a nota gemea em Microsoft.PowerShell_profile.ps1: .StartsWith() lanca
-    # com argumento nao-string (`nexus 5` entrega Int32). Esta funcao esta
-    # DUPLICADA entre os dois arquivos -- item 1.3 do plano 2-B, fonte unica
-    # ainda por declarar. Enquanto durar a duplicacao, corrigir nos dois.
-    if ($args.Count -gt 0 -and "$($args[0])" -like '-*') {
-        & "$Global:NexusProjectRoot\do.ps1" @args
-    } else {
+    if ($args.Count -eq 0) {
+        & "$Global:NexusProjectRoot\nexus.ps1"
+        return
+    }
+    if ($Global:NexusTyperCommands -contains "$($args[0])") {
         & "$Global:NexusProjectRoot\nexus.ps1" @args
+    } else {
+        # Flags e TEXTO LIVRE de tarefa: ambos sao do do.ps1.
+        & "$Global:NexusProjectRoot\do.ps1" @args
     }
 }
 

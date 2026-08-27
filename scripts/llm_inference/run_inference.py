@@ -120,6 +120,14 @@ def query_gemma_proxy(
         return ""
     headers = {"Content-Type": "application/json", "X-Vitoi-Auth": auth_token}
 
+    # Enviar `system_prompt` E `messages` PARECE redundante no modo
+    # conversacional, porque messages[0] ja carrega a persona. Nao e, e remover
+    # quebra em silencio: no caminho multi-turn o proxy ignora o conteudo de
+    # `system_prompt` (gemma_server._build_multiturn so insere um system quando
+    # messages[0] NAO e system), mas usa a PRESENCA do campo como chave de modo
+    # -- `elif not req.system_prompt: params["temperature"] = 0.0`. Sem ele, o
+    # chat conversacional perde a temperatura do modelo e vira deterministico.
+    # Contrato travado em tests/test_run_inference_contrato.py.
     payload: dict = {"prompt": prompt, "model": model_key, "max_tokens": max_tokens}
     if system_prompt:
         payload["system_prompt"] = system_prompt
