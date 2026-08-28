@@ -161,7 +161,7 @@ try:
     RAG_AVAILABLE = True
 except Exception as e:  # noqa: BLE001
     rag_engine = None
-    logger.warning("[INFRA] LanceDB/MemoryRAG nao inicializado. RAG desativado: %s", e)
+    logger.warning("[INFRA] MemoryRAG (ChromaDB) nao inicializado. RAG desativado: %s", e)
 # ==============================================================================
 
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")]
@@ -502,7 +502,14 @@ def rate_limit(request: Request) -> str:
 
 @harmonizer.ultra_fast_async
 async def _get_rag_context_async(prompt: str, local_only: bool = False) -> str:
-    """SOTA: Interface assincrona harmonizada para o RAG do Oracle usando LanceDB."""
+    """SOTA: Interface assincrona harmonizada para o RAG do Oracle sobre ChromaDB.
+
+    Dizia "usando LanceDB". O motor e ChromaDB (`memory_rag.py`:
+    chromadb.PersistentClient + ONNXMiniLM_L6_V2); `lancedb` nao esta instalado.
+    A troca de nome vinha desde o benchmark registrado no CONTEXT_CHECKPOINT: a
+    narracao foi escrita para o estado pretendido e nunca reconciliada com o
+    construido. Corrigido em 2026-08-28.
+    """
     if not RAG_AVAILABLE or not rag_engine:
         return ""
 
@@ -517,15 +524,15 @@ async def _get_rag_context_async(prompt: str, local_only: bool = False) -> str:
         return ""
 
     try:
-        # SOTA: Busca Hibrida via LanceDB (Rust Backend) - Friccao Zero
+        # SOTA: Busca vetorial via ChromaDB (embeddings ONNX locais) - Friccao Zero
         rag_result = await rag_engine.query_memory(prompt, n_results=3, local_only=local_only)
         if rag_result and "MENTE COLETIVA" in rag_result:
-            logger.info("=== [RAG INJECTED FRAGMENTS (LanceDB)] ===")
+            logger.info("=== [RAG INJECTED FRAGMENTS (ChromaDB)] ===")
             logger.info("%s...[TRUNCADO]", rag_result[:300].replace("\n", " "))
             logger.info("=====================================================")
             return f"\n\n[CONTEXTO EPISTEMICO RECUPERADO (RAG)]:\n{rag_result}\n\nIntegre o conhecimento absoluto acima em sua analise sempre que for matematicamente relevante.\n\n"
     except Exception:  # noqa: BLE001
-        logger.exception("[RAG] Falha na busca vetorial (LanceDB).")
+        logger.exception("[RAG] Falha na busca vetorial (ChromaDB).")
     return ""
 
 

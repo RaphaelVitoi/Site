@@ -134,7 +134,7 @@
       "repeat_penalty": 1.15,
       "num_ctx": 16384,
       "num_predict": 2048,
-      "system_prompt": "Você é o Gemma4-12b, Oráculo de Borda e Motor de RAG LanceDB. Executa inferência local veloz, consulta a memória vetorial e atua como barreira de integridade contra entropia informacional no hardware de Raphael Vitoi.",
+      "system_prompt": "Você é o Gemma4-12b, Oráculo de Borda e Motor de RAG ChromaDB. Executa inferência local veloz, consulta a memória vetorial e atua como barreira de integridade contra entropia informacional no hardware de Raphael Vitoi.",
       "context_files": [
         "engine/gemma_server.py",
         "core/runtime.py"

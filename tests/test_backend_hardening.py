@@ -308,3 +308,52 @@ def test_sota_guard_blocks_on_errors_or_excess_warnings() -> None:
     assert "llm.routing" in rec
     assert "[SOTA-REC]" in rec
     SotaGuardState.reset()
+
+
+def test_o_motor_de_rag_declarado_e_o_instalado():
+    """Nome de componente e afirmacao, e afirmacao tem que bater com a medicao.
+
+    Ate 2026-08-28 nove pontos afirmavam "LanceDB" -- o painel do dashboard, os
+    logs e docstrings do gemma_server, o dashboard de avatares e ate o
+    system_prompt entregue ao modelo, que era informado de ser um "Motor de RAG
+    LanceDB". O motor e ChromaDB, e `lancedb` nao esta instalado.
+
+    A origem esta no CONTEXT_CHECKPOINT: lancedb 0.37.1 foi benchmarkado, a
+    narracao foi escrita para o estado PRETENDIDO e nunca reconciliada com o
+    CONSTRUIDO. Nada nunca acusou, porque nome errado nao levanta excecao.
+    """
+    import importlib.util
+    from pathlib import Path
+
+    raiz = Path(__file__).resolve().parent.parent
+    lancedb_instalado = importlib.util.find_spec("lancedb") is not None
+
+    alvos = [
+        raiz / "scripts" / "cli" / "nexus.py",
+        raiz / "engine" / "gemma_server.py",
+        raiz / "engine" / "avatars" / "avatar_dashboard.py",
+        raiz / "engine" / "avatars" / "avatar_config.json",
+    ]
+    ofensores = []
+    for arq in alvos:
+        if not arq.exists():
+            continue
+        # Prosa que documenta a correcao pode citar o nome; codigo nao pode
+        # afirma-lo. Comentario e uma linha; docstring e um BLOCO, e a versao
+        # ingenua deste detector reprovou as linhas do meio da propria docstring
+        # que explicava a correcao. Rastrear o estado de bloco e o que separa
+        # "cita" de "afirma" -- quinta vez que esta distincao aparece nesta base.
+        em_docstring = False
+        for n, linha in enumerate(arq.read_text(encoding="utf-8").splitlines(), 1):
+            marcas = linha.count('"""') + linha.count("'''")
+            abria = em_docstring
+            if marcas % 2 == 1:
+                em_docstring = not em_docstring
+            if abria or em_docstring or linha.lstrip().startswith(("#", "*")):
+                continue
+            if "LanceDB" in linha or "lancedb" in linha:
+                ofensores.append(f"{arq.name}:{n}: {linha.strip()[:90]}")
+
+    if lancedb_instalado:
+        return  # se um dia for instalado de fato, esta guarda perde o objeto
+    assert not ofensores, "codigo afirma LanceDB e `lancedb` nao esta instalado:\n" + "\n".join(ofensores)

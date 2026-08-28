@@ -570,7 +570,10 @@ def _build_metrics_panel() -> Panel:
 
     table.add_row("Autonomia", "[bold #bd93f9]W3 (GOD MODE)[/]")
     table.add_row("Friccao Zero", "[bold #50fa7b]ATIVADO[/]")
-    table.add_row("RAG Engine", "[bold #8be9fd]LanceDB (Hybrid)[/]")
+    # Dizia "LanceDB (Hybrid)". O motor e ChromaDB: `memory_rag.py` usa
+    # chromadb.PersistentClient com ONNXMiniLM_L6_V2, e `lancedb` nao esta
+    # instalado neste ambiente. Medido em 2026-08-28.
+    table.add_row("RAG Engine", "[bold #8be9fd]ChromaDB (ONNX MiniLM-L6-v2)[/]")
     table.add_row("Antevisao Sem.", "[bold #50fa7b]ONLINE[/]")
     table.add_row("I/O Latency Target", "[bold #50fa7b]O(1)[/]")
     table.add_row("CLI Version", "[bold #f8f8f2]v8.0 GOLD[/]")
@@ -1515,25 +1518,38 @@ def run_maintenance():
         console.print(f"[red]Erro na higiene temporal: {e}[/]")
         falhas.append("HIGIENE")
 
-    # 5. LanceDB / RAG Optimization (SSD Deframing SOTA)
-    rag_script = BASE_DIR / MEMORY_RAG_SCRIPT
-    if not rag_script.exists():
-        console.print(f"[yellow][AVISO] {MEMORY_RAG_SCRIPT} ausente: otimizacao vetorial NAO executada.[/]")
-        falhas.append("LANCEDB (script ausente)")
-    else:
-        try:
-            subprocess.run([sys.executable, str(rag_script), "optimize"], cwd=str(BASE_DIR), check=True)
-        except Exception as e:
-            console.print(f"[red]Erro na otimizacao de disco vetorial (LanceDB): {e}[/]")
-            falhas.append("LANCEDB")
+    # 5. RAG vetorial -- etapa REMOVIDA por nao existir.
+    #
+    # Este passo chamava `memory_rag.py optimize` e o rotulava "LanceDB / RAG
+    # Optimization". Duas afirmacoes falsas numa linha:
+    #
+    #   a) `optimize` nunca foi subcomando do memory_rag. Ele caia no ramo de
+    #      uso desconhecido, que imprimia a ajuda e saia 0 -- entao check=True
+    #      nao via nada e a etapa era reportada como concluida. Medido em
+    #      2026-08-28. A etapa jamais fez coisa alguma.
+    #   b) o motor nao e LanceDB, e ChromaDB. `lancedb` nao esta sequer
+    #      instalado neste ambiente; `chromadb` esta.
+    #
+    # O ChromaDB nao expoe operacao de compactacao aqui. A manutencao real do
+    # indice e reindexar, que e `memory_rag.py ingest` -- caro (embeddings sobre
+    # todo o corpus) e por isso NAO disparado automaticamente. Rode a mao quando
+    # o corpus mudar de forma relevante.
+    console.print("[dim]5/5 RAG vetorial: sem operacao de otimizacao. Reindexar e `memory_rag.py ingest` (manual).[/]")
 
     # O veredito e DERIVADO. Antes era "[SUCESSO ABSOLUTO] ... concluida com
     # sucesso!" incondicional, impresso depois de quatro try/except que so
     # imprimiam: os cinco passos podiam falhar por baixo dele.
+    # Quatro etapas executam; a quinta e informativa desde que se descobriu que
+    # a operacao que ela invocava nao existe. O numero vem do que roda, nao do
+    # que o cabecalho promete.
+    total_executaveis = 4
     if falhas:
-        console.print(f"\n[bold red][FALHA PARCIAL] {len(falhas)} de 5 etapas nao concluiram: {', '.join(falhas)}.[/]")
+        console.print(
+            f"\n[bold red][FALHA PARCIAL] {len(falhas)} de {total_executaveis} etapas nao "
+            f"concluiram: {', '.join(falhas)}.[/]"
+        )
         raise typer.Exit(1)
-    console.print("\n[bold green][SUCESSO] As 5 etapas da manutencao geral concluiram.[/]")
+    console.print(f"\n[bold green][SUCESSO] As {total_executaveis} etapas executaveis da manutencao concluiram.[/]")
 
 
 HELP_MODEL_CHOICES = "Modelo: 31b, 26b, 12b, 4b, 8b, llama3_8b, qwen, granite"

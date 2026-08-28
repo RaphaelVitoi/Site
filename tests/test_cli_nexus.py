@@ -277,7 +277,6 @@ def test_maintenance_nao_invoca_comando_typer_como_funcao():
         patch("scripts.cli.nexus.vacuum_db") as vac,
         patch("scripts.cli.nexus.sanitize_system") as san,
         patch("scripts.cli.nexus.run_hygiene") as hyg,
-        patch("scripts.cli.nexus.subprocess.run") as sub,
     ):
         result = runner.invoke(app, ["ops", "maintenance"])
         assert result.exit_code == 0, result.stdout
@@ -285,7 +284,10 @@ def test_maintenance_nao_invoca_comando_typer_como_funcao():
         vac.assert_called_once()
         san.assert_called_once()
         hyg.assert_called_once()
-        assert sub.called, "passo 5 (LanceDB) nao foi alcancado"
+        # O passo 5 deixou de invocar subprocesso: chamava `memory_rag.py
+        # optimize`, subcomando que nunca existiu, e a etapa saia 0 sem fazer
+        # nada. Hoje ele apenas declara que reindexar e manual.
+        assert "sem operacao de otimizacao" in result.stdout
 
 
 def test_maintenance_reprova_quando_uma_etapa_falha():

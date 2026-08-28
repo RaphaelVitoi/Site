@@ -785,6 +785,15 @@ if __name__ == "__main__":
             target_dir = os.environ.get("GDRIVE_PDF_PATH", r"C:\Users\rapha\Google Drive\Poker_PDFs")
             ingest_drive_pdfs(target_dir)
         else:
-            logger.error("Uso: python memory_rag.py [ingest | ingest_drive | query 'pergunta']")
+            # Exit 2, nao 0. Este ramo imprimia o uso e saia com sucesso, entao
+            # `subprocess.run(..., check=True)` nao tinha como perceber um
+            # subcomando inexistente. O passo 5 do `nexus ops maintenance`
+            # invocava `memory_rag.py optimize` -- subcomando que nunca existiu
+            # -- e a manutencao reportava a etapa como concluida. Medido em
+            # 2026-08-28: EXIT=0 com "Uso: ..." na saida.
+            logger.error("Subcomando desconhecido: %s", cmd)
+            logger.error("Uso: python memory_rag.py [ingest | ingest_drive | query 'pergunta' | graph 'pergunta']")
+            sys.exit(2)
     else:
-        logger.info("Uso SOTA: python memory_rag.py [ingest | ingest_drive | query]")
+        logger.info("Uso SOTA: python memory_rag.py [ingest | ingest_drive | query | graph]")
+        sys.exit(2)
