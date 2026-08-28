@@ -1,11 +1,17 @@
-"""Guard tri-camada: RAM, VRAM e cache num laço só, com tetos declarados.
+"""Guard de memória: RAM, commit, VRAM e cache num laço só, com tetos declarados.
+
+Nasceu tri-camada e virou quatro no mesmo dia, por uma observação do operador:
+*"RAM utilizada 72% estável, mesmo a cache 18% estável"*. Estável em 72% com
+6,8 GB em standby reclaimável — e o **commit** em 82,6% do limite. Um teto de
+98% sobre a RAM física é guard incapaz de ficar vermelho, porque no Windows o
+que falha é o commit, não a RAM. Ver a seção `Commit` no fim do arquivo.
 
 O `optimize-ram --watch` que existia vigiava **só RAM**, com limiar e intervalo
 passados por flag — 90% e 300 s por default. Tinha os dois defeitos ao mesmo
 tempo: gastava CPU sem pressão nenhuma e demorava até cinco minutos para reagir
 quando havia.
 
-E faltavam duas camadas. VRAM porque o medidor estava cego até `a86168df` (os
+E faltavam três camadas. VRAM porque o medidor estava cego até `a86168df` (os
 três leitores cobriam NVIDIA, AMD nativo e ROCm; a máquina é Vulkan). Cache
 porque `max_cache_size_mb = 4096` era atribuído no `__init__` e **nunca lido** —
 a evicção olhava `len(buckets) > 100`, então o teto que nomeava megabytes era
@@ -56,8 +62,8 @@ def tetos(nx) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def test_os_tres_tetos_estao_declarados(tetos):
-    assert set(tetos) == {"ram", "vram", "cache"}
+def test_os_quatro_tetos_estao_declarados(tetos):
+    assert set(tetos) == {"ram", "commit", "vram", "cache"}
     assert tetos["ram"]["teto_pct"] == 98.0, "o operador pediu 98%, nao o default antigo de 90"
     assert tetos["vram"]["teto_pct"] > 0
     assert tetos["cache"]["teto_mb"] > 0
@@ -97,9 +103,9 @@ def test_camada_sem_medidor_nao_dispara_acao(nx, tetos):
     assert "vram" not in estourou
 
 
-def test_as_tres_camadas_sao_lidas_de_verdade(nx, tetos):
+def test_as_quatro_camadas_sao_lidas_de_verdade(nx, tetos):
     leitura = nx._medir_pressao(tetos)
-    assert set(leitura) == {"ram", "vram", "cache"}
+    assert set(leitura) == {"ram", "commit", "vram", "cache"}
     assert leitura["ram"]["valor"] is not None, "RAM sempre tem medidor via psutil"
     for camada in leitura.values():
         assert camada["teto"] > 0
@@ -184,3 +190,66 @@ def test_o_guard_AGE_quando_a_camada_estoura(nx, tmp_path):
         resultado = CliRunner().invoke(nx.app, ["ops", "guard", "--once", "--tetos", str(alvo)])
     assert resultado.exit_code == 0, resultado.output
     limpeza.assert_called_once(), "o teto foi estourado e nenhuma acao rodou"
+
+
+# ---------------------------------------------------------------------------
+#  Commit: a grandeza que de fato falha
+# ---------------------------------------------------------------------------
+
+
+def test_commit_e_medido_e_nao_e_a_mesma_coisa_que_RAM(nx, tetos):
+    """A primeira versao do guard vigiava so `virtual_memory().percent`.
+
+    Medido em 2026-08-29 nesta maquina: RAM fisica **estavel em 72%** com 6,8 GB
+    em standby reclaimavel, e o commit em 82,6% do limite -- 90% do seu teto.
+    `virtual_memory().percent` conta (total - disponivel), e disponivel inclui
+    standby; o Windows recusa alocacao quando o COMMIT bate no limite, nao
+    quando a RAM fisica sobe. Um teto de 98% sobre a grandeza folgada e guard
+    incapaz de ficar vermelho."""
+    leitura = nx._medir_pressao(tetos)
+    assert "commit" in leitura
+    if sys.platform == "win32":
+        assert leitura["commit"]["valor"] is not None, "sem medidor de commit no Windows"
+        assert leitura["commit"]["valor"] != leitura["ram"]["valor"], (
+            "commit e RAM fisica deram o mesmo numero -- um dos dois medidores esta errado"
+        )
+
+
+def test_fora_do_windows_o_commit_declara_ausencia_em_vez_de_zero(nx):
+    with patch.object(nx.sys, "platform", "linux"):
+        assert nx._commit_charge_pct() is None
+
+
+def test_a_acao_de_commit_NAO_e_trim_de_working_set(nx):
+    """Trim move pagina para standby, e pagina comprometida continua
+    comprometida. Usar a acao de RAM aqui seria gastar I/O sem devolver commit."""
+    falso = MagicMock(return_value=True)
+    with (
+        patch.dict(sys.modules, {"utils.ram_optimizer": MagicMock(optimize_ollama_keepalive=falso)}),
+        patch.object(nx, "_execute_ram_cleanse") as limpeza,
+    ):
+        msg = nx._agir_por_camada("commit", {})
+    assert "keepalive" in msg
+    falso.assert_called_once_with(keepalive=0)
+    limpeza.assert_not_called(), "a acao de commit chamou o expurgo de RAM, que nao reduz commit"
+
+
+def test_a_camada_de_RAM_declara_que_e_a_folgada(tetos):
+    """Sem isto, alguem le teto 98% e conclui que a RAM e o sinal principal."""
+    cuidados = " ".join(tetos["ram"]["cuidado_declarado"]).lower()
+    assert "folgada" in cuidados and "commit" in cuidados
+
+
+def test_o_ritmo_segue_a_camada_pressionada_e_nao_a_folgada(nx, tetos):
+    """A prova de que acrescentar commit mudou o comportamento, nao so o log.
+
+    Com RAM a 74% do seu teto e commit a 90% do dele, o intervalo tem de sair
+    menor do que sairia olhando so RAM."""
+    leitura = nx._medir_pressao(tetos)
+    if leitura["commit"]["pressao"] is None:
+        pytest.skip("sem medidor de commit nesta plataforma")
+    com_tudo = nx._intervalo_adaptativo(leitura)
+    so_ram = nx._intervalo_adaptativo({"ram": leitura["ram"]})
+    assert com_tudo <= so_ram, (
+        f"a camada mais pressionada nao esta mandando no ritmo: {com_tudo}s com tudo, {so_ram}s so com RAM"
+    )

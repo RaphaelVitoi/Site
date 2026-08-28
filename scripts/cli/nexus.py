@@ -1556,15 +1556,19 @@ def memory_guard(
     once: bool = typer.Option(False, "--once", "-1", help="Le as tres camadas, age se preciso, e sai"),
     tetos_path: Path = typer.Option(TETOS_PADRAO, "--tetos", help="Arquivo que declara os tetos"),
 ):
-    """Guard tri-camada: RAM, VRAM e cache num laco so, com tetos declarados.
+    """Guard de memoria: RAM, commit, VRAM e cache num laco so.
 
     O `optimize-ram --watch` que existia vigiava so RAM, com limiar e intervalo
-    passados por flag. Este le os tres niveis, os tetos vem do arquivo que os
+    passados por flag. Este le as quatro camadas, os tetos vem do arquivo que os
     declara junto com a medicao que os justifica, e o intervalo responde a
     pressao em vez de ser constante.
+
+    `commit` entrou depois das outras tres, e por medicao: no Windows e ele que
+    falha -- alocacao e recusada quando o commit bate no limite, com a RAM
+    fisica podendo estar folgada por causa do standby.
     """
     tetos = _ler_tetos(tetos_path)
-    console.print("[bold magenta]=== [NEXUS] GUARD TRI-CAMADA (RAM / VRAM / CACHE) ===[/]")
+    console.print("[bold magenta]=== [NEXUS] GUARD DE MEMORIA (RAM / COMMIT / VRAM / CACHE) ===[/]")
     for nome, cfg in tetos.items():
         unidade = "%" if "teto_pct" in cfg else "MB"
         console.print(f"  [dim]{nome:<6} teto {cfg.get('teto_pct', cfg.get('teto_mb'))}{unidade} -> {cfg['acao'].split(' -- ')[0]}[/]")
@@ -1616,6 +1620,44 @@ def _ler_tetos(caminho: Path = TETOS_PADRAO) -> dict:
     return json.loads(caminho.read_text(encoding="utf-8"))["camadas"]
 
 
+def _commit_charge_pct() -> tuple[float, float, float] | None:
+    """Commit charge: usado, em GB, e o limite. `None` se nao houver medidor.
+
+    E a grandeza que falha primeiro no Windows -- alocacao e recusada quando o
+    commit bate no limite, com a RAM fisica podendo estar folgada. `psutil` nao
+    expoe commit; vem do contador do proprio SO.
+    """
+    if sys.platform != "win32":
+        return None
+    try:
+        import ctypes  # noqa: PLC0415
+
+        class _Status(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+
+        st = _Status()
+        st.dwLength = ctypes.sizeof(_Status)
+        if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(st)):
+            return None
+        limite = st.ullTotalPageFile
+        if not limite:
+            return None
+        usado = limite - st.ullAvailPageFile
+        return (usado / limite) * 100, usado / 1e9, limite / 1e9
+    except Exception:  # noqa: BLE001 - ausencia de medidor, nao erro
+        return None
+
+
 def _medir_pressao(tetos: dict) -> dict[str, dict]:
     """Le as tres camadas e devolve a pressao de cada uma, de 0 a 1.
 
@@ -1629,6 +1671,25 @@ def _medir_pressao(tetos: dict) -> dict[str, dict]:
     mem = psutil.virtual_memory()
     teto_ram = float(tetos["ram"]["teto_pct"])
     leitura["ram"] = {"valor": mem.percent, "teto": teto_ram, "unidade": "%", "pressao": mem.percent / teto_ram}
+
+    # COMMIT e a grandeza que de fato falha, e a primeira versao deste guard nao
+    # a media. Medido em 2026-08-29 nesta maquina: RAM fisica **estavel em 72%**
+    # com 6,8 GB em standby reclaimavel, enquanto o commit estava em 82,6% do
+    # limite -- e chegou a 90% mais cedo na mesma sessao.
+    #
+    # `virtual_memory().percent` conta (total - disponivel), e disponivel inclui
+    # standby: com 32,6 GB fisicos e 74,6 GB comprometidos, o pagefile carrega
+    # ~42 GB e a RAM fisica tem folga real. O Windows recusa alocacao quando o
+    # COMMIT bate no limite, nao quando a RAM fisica sobe. Um teto de 98% sobre
+    # a grandeza folgada nunca dispararia -- guard incapaz de ficar vermelho.
+    teto_commit = float(tetos["commit"]["teto_pct"])
+    commit = _commit_charge_pct()
+    leitura["commit"] = (
+        {"valor": commit[0], "teto": teto_commit, "unidade": "%", "pressao": commit[0] / teto_commit,
+         "detalhe": f"{commit[1]:.1f}/{commit[2]:.1f} GB"}
+        if commit
+        else {"valor": None, "teto": teto_commit, "unidade": "%", "pressao": None, "detalhe": "sem medidor"}
+    )
 
     pct_vram, usado, total = _get_vram_usage()
     teto_vram = float(tetos["vram"]["teto_pct"])
@@ -1670,7 +1731,11 @@ def _agir_por_camada(camada: str, leitura: dict, verbose: bool = False) -> str:
     if camada == "ram":
         liberados = _execute_ram_cleanse(verbose=verbose)
         return f"GC liberou {liberados} objetos; working set dos workers de background minimizado"
-    if camada == "vram":
+    if camada in ("vram", "commit"):
+        # Mesma acao para as duas, e por motivos diferentes: em VRAM o modelo
+        # ocupa a placa; em commit ele segura memoria PRIVADA, que e o que conta
+        # no charge. Trim de working set nao serviria aqui -- ele move pagina
+        # para standby e pagina comprometida continua comprometida.
         from utils.ram_optimizer import optimize_ollama_keepalive  # noqa: PLC0415
 
         ok = optimize_ollama_keepalive(keepalive=0)

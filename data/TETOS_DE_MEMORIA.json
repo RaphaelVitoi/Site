@@ -4,12 +4,11 @@
   "declarado_em": "2026-08-28",
   "declarado_por": "claude@opus-5",
   "proposito": [
-    "Tetos das tres camadas de memoria, num lugar so, com a MEDICAO que",
+    "Tetos das QUATRO camadas de memoria, num lugar so, com a MEDICAO que",
     "justifica cada numero. Existe porque teto sem origem declarada vira",
-    "literal que ninguem ousa mexer -- e porque duas das tres camadas tinham",
-    "teto escrito no codigo que o mecanismo nao honrava."
+    "literal que ninguem ousa mexer -- e porque tres das quatro tinham teto",
+    "escrito no codigo que o mecanismo nao honrava, ou nem teto tinham."
   ],
-
   "maquina_medida": {
     "data": "2026-08-28",
     "gpu": "Radeon RX 570",
@@ -23,7 +22,6 @@
       "a troca de hardware, e o total e sempre medido em tempo de execucao."
     ]
   },
-
   "camadas": {
     "ram": {
       "gauge": "psutil.virtual_memory().percent",
@@ -40,7 +38,8 @@
         "nada de forma estavel. Trim paga em processo OCIOSO.",
         "E trim nao reduz commit charge: move paginas para standby, e pagina",
         "comprometida continua comprometida. Medido nesta maquina, o aperto real",
-        "era commit em 90% do limite, nao working set."
+        "era commit em 90% do limite, nao working set.",
+        "RAM fisica e a grandeza FOLGADA nesta maquina -- ver a camada `commit`, que e a que falha primeiro. Este teto continua util como rede de ultima instancia, nao como sinal principal."
       ]
     },
     "vram": {
@@ -73,9 +72,31 @@
         "VRAM_HOT e RAM_COLD nao sao evictados: a primeira e declarada como",
         "travada, a segunda ja e armazenamento frio."
       ]
+    },
+    "commit": {
+      "gauge": "nexus._commit_charge_pct -- GlobalMemoryStatusEx, ullTotalPageFile menos ullAvailPageFile",
+      "teto_pct": 92.0,
+      "origem_do_numero": [
+        "Palpite declarado, e a MEDICAO que o motivou: em 2026-08-29 a RAM fisica",
+        "estava ESTAVEL em 72% com 6,8 GB em standby reclaimavel, enquanto o",
+        "commit estava em 82,6% do limite -- e chegou a 90% mais cedo na mesma",
+        "sessao. 92% deixa ~7 GB de folga neste limite.",
+        "O commit e a grandeza que FALHA: o Windows recusa alocacao quando ele",
+        "bate no teto, nao quando a RAM fisica sobe. A primeira versao deste",
+        "guard vigiava so `virtual_memory().percent`, que conta (total -",
+        "disponivel) e inclui standby no disponivel -- teto de 98% sobre a",
+        "grandeza folgada e guard incapaz de ficar vermelho."
+      ],
+      "acao": "optimize_ollama_keepalive(0) -- descarregar modelo devolve commit privado",
+      "cuidado_declarado": [
+        "TRIM DE WORKING SET NAO REDUZ COMMIT. Ele move paginas para standby, e",
+        "pagina comprometida continua comprometida. Por isso a acao aqui e",
+        "descarregar processo que segura memoria privada, nao trimar.",
+        "Se descarregar nao bastar, nao ha acao automatica honesta: o que resta",
+        "e fechar processo, e isso e decisao do operador, nao do guard."
+      ]
     }
   },
-
   "periodicidade": {
     "modelo": "intervalo que responde a pressao, nao constante",
     "intervalo_min_s": 15,
@@ -90,12 +111,12 @@
     ],
     "gatilho_reativo": "qualquer camada no seu teto dispara a acao imediatamente, sem esperar o ciclo"
   },
-
   "nao_verificado": [
     "o teto de VRAM em 85% e palpite declarado, nao medicao de KV cache",
     "nao foi medido quanto cada acao efetivamente libera; o guard age e mede",
     "de novo no ciclo seguinte, mas nao ha estudo de eficacia por acao",
     "o guard nao foi exercitado sob pressao real de 98% de RAM -- os dois",
-    "estados foram exercitados com gauge dublado, nao com a maquina saturada"
+    "estados foram exercitados com gauge dublado, nao com a maquina saturada",
+    "o teto de commit em 92% e palpite declarado; nao houve episodio de exaustao medido para calibra-lo"
   ]
 }
