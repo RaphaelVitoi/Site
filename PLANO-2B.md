@@ -9,7 +9,7 @@
 > O que este painel tem, e o outro não, é **estado**: em que pé está cada frente,
 > e o que exige decisão do vértice.
 
-**Atualizado em 2026-08-28** · frente 4 **resolvida** · suíte 549 (viva)
+**Atualizado em 2026-08-29** · frentes 1, 2, 4 e 5 entregues · suíte 620 (viva)
 
 ---
 
@@ -20,7 +20,7 @@
 | 0.5 | **Prelúdio** — as duas portas de entrada | ✅ concluído | §0.5 do plano |
 | 1 | **Homônimos** — declarar o canônico | ✅ entregue | §1.6 do plano · [`data/INDICE_CANONICO_GOVERNANCA.json`](data/INDICE_CANONICO_GOVERNANCA.json) |
 | 2 | **Âncoras e índices** — `RECORD_INDEX` e §13.F | ✅ entregue | §2.3 do plano · [`scripts/ops/record_index.py`](scripts/ops/record_index.py) |
-| 3 | **Contexto e memória** — qual corpus a memória deve ter | ⏸ decisão do vértice | §3.1 a §3.3 do plano |
+| 3 | **Contexto e memória** — qual corpus a memória deve ter | 🔶 parcial — memória consolidada, índice reconstruído, guard entregue | [`reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`](reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md) |
 | 4 | **Routing** — qual tabela governa cada superficie | ✅ entregue | [`reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md`](reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md) |
 | 5 | **Referenciais** — quem aponta para quem | ✅ entregue | §5.1 do plano · [`scripts/ops/record_gate.py`](scripts/ops/record_gate.py) |
 | 6 | **Imports e exports** — morto vs. não integrado | ⏳ aberta | §6 do plano |
@@ -69,7 +69,8 @@ uv run python scripts/ops/suite_isolada.py --repo ../antigravity
 
 ## Leitura, em ordem
 
-1. [`reports/RETROSPECTIVA-2026-08-28-sessao.md`](reports/RETROSPECTIVA-2026-08-28-sessao.md) — o antes, o processo, os padrões acumulados
+1. [`reports/HANDOFF-2026-08-29-roteamento-memoria-e-guard.md`](reports/HANDOFF-2026-08-29-roteamento-memoria-e-guard.md) — estado atual e prompt de continuação
+2. [`reports/RETROSPECTIVA-2026-08-28-sessao.md`](reports/RETROSPECTIVA-2026-08-28-sessao.md) — o antes, o processo, os padrões acumulados
 2. [`reports/HANDOFF-2026-08-28-auditorias-e-preludio.md`](reports/HANDOFF-2026-08-28-auditorias-e-preludio.md) — estado e prompt de continuação
 3. [`reports/PLANO-2B-CURADORIA-ESTRUTURAL.md`](reports/PLANO-2B-CURADORIA-ESTRUTURAL.md) — o plano completo
 4. [`reports/INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md`](reports/INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md) — concorrência, isolamento e o P0
