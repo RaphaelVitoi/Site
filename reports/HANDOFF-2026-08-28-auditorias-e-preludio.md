@@ -5,8 +5,8 @@ escopo: multiprojeto
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T02:50-03:00
-atualizado_em: 2026-08-28T04:25-03:00
-commit: 9d02b9fa
+atualizado_em: 2026-08-28T05:10-03:00
+commit: 71934ef7
 classes: [interno, medido]
 referencias_nao_resolviveis:
   - reports/HANDOFF-2026-08-28-browser-sota-cdp.md
@@ -14,8 +14,8 @@ config_medida:
   raiz: C:/Users/rapha/.gemini
   branch: master
   suite_no_inicio: 415 passed
-  suite_no_fim: 493 passed
-  commits_da_sessao: 13
+  suite_no_fim: 504 passed (arvore viva) / 500 passed + 4 skipped (isolada)
+  commits_da_sessao: 16
   data: 2026-08-27 a 2026-08-28
 verificado:
   - FRENTE 2 -- criterios da 13.F sondados nos DOIS estados, um a um, com
@@ -75,17 +75,18 @@ que este documento **supersede** para efeito de retomada.
 ## 1. Estado
 
 ```
-master 9d02b9fa · suíte 415 → 493
+master 71934ef7 · suíte 415 → 504 (viva) · 500 + 4 skipped (isolada)
 ```
 
-Treze commits.
+Dezesseis commits.
 
-> **A árvore NÃO está limpa, e não por minha causa.** Outra sessão está
-> editando este repositório em paralelo: três arquivos com modificação não
-> commitada (`scripts/cli/nexus.py`, `scripts/ops/record_index.py`,
-> `tests/test_patches_skills.py` — correções de lint sobre o meu trabalho) e um
-> registro novo não rastreado, `reports/HANDOFF-2026-08-28-browser-sota-cdp.md`.
-> Nada disso entrou nos meus commits. Ver §4.5.
+> **A concorrência foi resolvida no INTERLÚDIO de 05:05.** As quatro edições da
+> outra sessão foram auditadas por execução e adotadas; as assimetrias que elas
+> expuseram, fechadas; e a suíte ganhou um caminho de execução isolado. Resta
+> intocado apenas o registro não rastreado
+> `reports/HANDOFF-2026-08-28-browser-sota-cdp.md` — decisão do vértice.
+> Ver [INTERLUDIO-2026-08-28](INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md)
+> e §4.5.
 
 | Commit | O quê |
 | :--- | :--- |
@@ -101,8 +102,11 @@ Treze commits.
 | `b3caaa1a` | **Frente 1 entregue:** índice canônico + regra de nomeação |
 | `6634a3f0` | **Frente 2 entregue:** `RECORD_INDEX` derivado + portão que lê o documento |
 | `9d02b9fa` | **Frente 5 entregue:** referência viva + isenção declarada |
+| `9e7f7d26` | Bloco de comentário é prosa — achado auditando a outra sessão |
+| `26f5e630` | **Interlúdio:** adota as edições concorrentes, unifica os vereditos |
+| `71934ef7` | **Interlúdio:** suíte em worktree isolado, e a simetria que ela expôs |
 
-## 2. O que se aprendeu — doze lições com custo pago
+## 2. O que se aprendeu — catorze lições com custo pago
 
 ### 2.1 Procurar o **habilitador**, não catalogar instâncias
 
@@ -230,6 +234,27 @@ Regra que passa a valer: **`git add` com caminhos explícitos**, e ler o
 `git status` antes de todo commit — não como cerimônia, mas porque o que aparece
 ali pode não ter sido você.
 
+### 2.13 Nome canônico é dado; nome de diretório é acidente
+
+Quatro lugares do código tratavam `RAIZ.name` como se fosse o nome do projeto.
+São coisas diferentes: o nome canônico é `Site`, e o diretório pode se chamar
+qualquer coisa — um worktree se chama `suite-isolada-Site-<pid>-<epoch>`.
+
+Três testes só passavam numa árvore multiprojeto completa, e nenhuma execução
+local acharia isso, porque local está tudo montado. **Só rodar fora do lugar
+revela o que depende do lugar.**
+
+### 2.14 Verificar o que está ao alcance, declarar o resto
+
+Ao rodar em árvore limpa, três classes de referência viraram "morta" sem estar:
+submódulo não materializado, caminho de projeto irmão, artefato derivado. Em
+todos os casos o endereço é válido e o conteúdo é que não está aqui.
+
+O detector deixou de ser binário. Ele agora **classifica**: resolve, é de outro
+escopo, é derivado, é submódulo vazio — ou é morta. É a mesma disciplina do
+`nao_verificado` do frontmatter, aplicada a caminho: *verificação não executada
+não é verificação reprovada, e também não é aprovada — é declarada.*
+
 ## 3. Padrão que se acumulou — calibração bayesiana
 
 **"Sinal verde desconectado" chegou a 15 instâncias catalogadas**, mais quatro
@@ -256,6 +281,9 @@ variantes novas nomeadas nesta sessão:
   legível. Para documento, parser.
 - `returncode != 0` numa bateria de sondas → prova que *algo* bloqueou, não que
   o **alvo** bloqueou. Conferir a mensagem.
+- Suíte que passa **aqui** → não prova que passa em clone limpo. Rodar
+  `nexus test --isolado` antes de afirmar que a suíte está verde.
+- Nome de diretório → **nunca** é o nome canônico do projeto.
 
 ## 4. O que fica aberto
 
@@ -297,14 +325,14 @@ variantes novas nomeadas nesta sessão:
 - `_calculate_dynamic_context()` — inalcançável no `gemma_server`
 - Cópia raiz de `~/.gemini/tools/hybrid_router/`
 
-### 4.5 Trabalho de outra sessão — **não toquei**
+### 4.5 Trabalho de outra sessão — **resolvido no interlúdio, menos um item**
 
 Descoberto em 2026-08-28 às ~04:00, com o repositório em uso concorrente:
 
 | Item | Estado |
 | :--- | :--- |
-| `reports/HANDOFF-2026-08-28-browser-sota-cdp.md` | **Não rastreado.** Handoff de endurecimento de Chrome/CDP. Foi ao stage pelo meu `git add -A` e eu o **retirei** |
-| `scripts/cli/nexus.py`, `scripts/ops/record_index.py`, `tests/test_patches_skills.py` | Modificados e **não commitados** — correções de lint sobre o meu trabalho desta sessão |
+| `scripts/cli/nexus.py`, `scripts/ops/record_index.py`, `tests/test_patches_skills.py`, `scripts/ops/cwv_gate.ps1` | **ADOTADOS** no `26f5e630`, auditados por execução. Duas das mudanças consertavam defeitos reais |
+| `reports/HANDOFF-2026-08-28-browser-sota-cdp.md` | **Não rastreado, intocado.** Decisão do vértice |
 
 **Duas coisas que o vértice precisa saber sobre esse handoff:**
 
@@ -330,11 +358,15 @@ Descoberto em 2026-08-28 às ~04:00, com o repositório em uso concorrente:
 ## 5. Prompt de continuação
 
 ```
-Retomando o NEXUS-CORE-SOTA (~/.gemini/Site), master 9d02b9fa, suite 493.
+Retomando o NEXUS-CORE-SOTA (~/.gemini/Site), master 71934ef7.
+Suite: 504 passed na arvore viva, 500 passed + 4 skipped na isolada.
 
-ANTES DE QUALQUER COISA: `git status`. Outra sessao editou este repositorio em
-paralelo em 28/08 (secao 4.5 deste handoff). Nao commitar o que nao e seu, e
-usar `git add` com caminho explicito, nunca -A.
+ANTES DE QUALQUER COISA: `git status`. Este repositorio ja teve duas sessoes ao
+mesmo tempo (secao 4.5 e o INTERLUDIO de 28/08). Nao commitar o que nao e seu,
+e usar `git add` com caminho explicito, nunca -A.
+
+E antes de afirmar que a suite esta verde: `nexus test --isolado`. Passar aqui
+nao prova que passa em clone limpo -- tres testes so passavam nesta maquina.
 
 LEIA PRIMEIRO, nesta ordem:
   1. reports/HANDOFF-2026-08-28-auditorias-e-preludio.md — secoes 2, 3 e 4
@@ -389,11 +421,17 @@ REGRAS QUE VALEM SEMPRE AQUI
   frontmatter -- nunca se isenta o arquivo.
 - `git add` com caminho explicito. Ler o `git status` antes de commitar: pode
   haver outra sessao no mesmo repositorio.
+- Sonda de portao e mutacao rodam em arvore ISOLADA (`suite_isolada.py`), nunca
+  no indice de trabalho: encenar violacao no indice de verdade e o unico risco
+  de concorrencia que disciplina de `git add` nao cobre.
+- Nome de diretorio nao e nome canonico de projeto.
 - Remocao e destrutiva: ordem explicita do vertice, item a item.
 - Nao contornar hook que falha -- inclusive nao ampliando a excecao dele.
 
 LINHA DE BASE
-493 passed. Portao de ancora APROVADO, portao de registro APROVADO.
+504 passed (viva) / 500 + 4 skipped (isolada). Os 4 skips sao os que declaram
+nao poder verificar projeto irmao sem a raiz multiprojeto -- pular com motivo,
+nunca passar em silencio. Portao de ancora APROVADO, portao de registro APROVADO.
 Pre-commit com EXIT real medido sem pipe. Indice: 9 VIGENTE, 0 SUSPEITO,
 1 OBSOLETO (o handoff de 27/08, corretamente aposentado).
 ```
