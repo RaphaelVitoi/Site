@@ -69,7 +69,7 @@ AVATARS = [
         "gemma4",
         "GEMMA4 (Oraculo de Borda)",
         "gemma4:12b",
-        "RAG LanceDB, Memoria Vetorial e Baixa Latencia",
+        "RAG ChromaDB, Memoria Vetorial e Baixa Latencia",
     ),
     (
         "gemma4_31b_cloud",
