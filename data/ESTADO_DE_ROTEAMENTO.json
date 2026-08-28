@@ -1,0 +1,167 @@
+{
+  "$schema_version": "1.0",
+  "projeto": "Site",
+  "declarado_em": "2026-08-28",
+  "declarado_por": "claude@opus-5",
+  "proposito": [
+    "Fonte unica sobre a RELACAO entre os dois modulos de roteamento.",
+    "Nao decide nada: registra o que foi MEDIDO e qual decisao esta pendente.",
+    "tests/test_frente4_autoridade_de_roteamento.py compara esta declaracao com",
+    "a arvore. Qualquer mudanca no roteamento faz o teste falhar e obriga a",
+    "atualizar este arquivo -- e a decisao pendente deixa de poder ser tomada em",
+    "silencio."
+  ],
+
+  "os_dois_modulos": {
+    "llm/routing_policy.py": {
+      "pergunta_que_responde": "QUAL modelo este agente deve usar?",
+      "entrada": "nome de agente ou de subagente (str)",
+      "saida": "alias de um modelo (str)",
+      "funcao_de_entrada": "rotear",
+      "natureza": "tabela declarada por classe de tarefa, com tier e faixa orcamentaria"
+    },
+    "llm/routing.py": {
+      "pergunta_que_responde": "EM QUE ORDEM tentar os modelos que ja me deram?",
+      "entrada": "lista de aliases (list[str])",
+      "saida": "a mesma lista, reordenada e filtrada (list[str])",
+      "funcao_de_entrada": "_reorder_models_for_economy",
+      "natureza": "heuristica de score no caminho quente, mais portao de saude"
+    },
+    "nota": [
+      "As assinaturas tem tipos diferentes -- str->str contra list->list. Duas",
+      "funcoes de tipos diferentes nao sao duas autoridades sobre a MESMA",
+      "pergunta. O plano 2-B enquadrou a frente 4 como 'decidir qual das duas e a",
+      "autoridade'; a medicao mostra que o enquadramento era um falso dilema. Elas",
+      "seriam complementares, em SERIE -- se estivessem ligadas."
+    ]
+  },
+
+  "o_que_foi_medido": {
+    "data": "2026-08-28",
+    "metodo": "execucao, nao leitura: core.config carregado e os dois mapas comparados agente a agente",
+    "agentes_no_manifesto": 19,
+    "agentes_em_AGENT_MODEL_MAP": 19,
+    "agentes_em_que_a_politica_e_o_caminho_quente_CONCORDAM": 0,
+    "agentes_em_que_DIVERGEM": 19,
+    "modelos_distintos_que_a_politica_atribui": 5,
+    "modelos_distintos_que_o_caminho_quente_atribui": 2
+  },
+
+  "consumidores_de_AGENT_MODEL_MAP": {
+    "declaracao": [
+      "Saida de llm.routing_policy, escrita por core/config.py:_resolver_modelos.",
+      "NENHUM consumidor de producao. Os tres leitores medidos verificam ou",
+      "reportam o mapa; nenhum roteia por ele."
+    ],
+    "leitores": [
+      {
+        "caminho": "core/config.py",
+        "papel": "escritor",
+        "detalhe": "chama _resolver_modelos, que chama llm.routing_policy.rotear"
+      },
+      {
+        "caminho": "scripts/routines/audit_monthly_modus_operandi_and_routing.py",
+        "papel": "relatorio",
+        "detalhe": "afere len(AGENT_MODEL_MAP) >= 19 e publica no relatorio mensal"
+      },
+      {
+        "caminho": "tests/test_routing_policy.py",
+        "papel": "teste",
+        "detalhe": "test_core_config_expoe_modelo_concreto_por_agente"
+      },
+      {
+        "caminho": "tests/test_frente4_autoridade_de_roteamento.py",
+        "papel": "teste",
+        "detalhe": "este detector; le o mapa para medir a divergencia"
+      }
+    ]
+  },
+
+  "fonte_de_fato_no_caminho_quente": {
+    "chave": "primary_model",
+    "origem": "data/agents_manifest.json, via core.config.AGENTS_MANIFEST",
+    "leitores": [
+      {
+        "caminho": "llm/orchestrator.py",
+        "papel": "roteamento de producao",
+        "detalhe": "define designated_model, que vence todo score em llm/routing.py"
+      },
+      {
+        "caminho": "engine/llm_api.py",
+        "papel": "roteamento de producao",
+        "detalhe": "acrescenta o primary_model a lista de candidatos"
+      },
+      {
+        "caminho": "agents/prompts.py",
+        "papel": "prompt",
+        "detalhe": "informa ao agente qual e o modelo dele"
+      },
+      {
+        "caminho": "agents/context_builder.py",
+        "papel": "prompt",
+        "detalhe": "pede ao agente que recomende o proprio primary_model"
+      }
+    ]
+  },
+
+  "segunda_superficie_subagentes": {
+    "declaracao": [
+      "A mesma desconexao se repete nos subagentes, e aqui ela inverte o sinal.",
+      "core/subagents_mesh.SUBAGENT_MODEL_MAP e a tabela EXECUTADA: 13 tiers para",
+      "modelos da frota LOCAL, usada em execute_subagent_pipeline.",
+      "llm.routing_policy.SUBAGENTES cobre os MESMOS 13 tiers e roteia para",
+      "modelos de NUVEM. Ninguem a consulta.",
+      "Nao e que a politica esteja certa e desligada: nesta superficie ligar a",
+      "politica trocaria uma frota de custo marginal zero por API paga. Por isso a",
+      "frente 4 nao se resolve com 'ligue a politica' -- resolve-se decidindo, POR",
+      "SUPERFICIE, qual tabela governa, e apagando a outra."
+    ],
+    "tabela_executada": "core/subagents_mesh.py",
+    "tabela_declarada": "llm/routing_policy.py",
+    "tiers": 13,
+    "tiers_em_que_CONCORDAM": 0,
+    "tiers_em_que_DIVERGEM": 13,
+    "a_executada_e_toda_local": true
+  },
+
+  "aliases_do_manifesto_ausentes_de_todo_registro": {
+    "declaracao": [
+      "primary_model que nao esta no MODEL_REGISTRY de nuvem NEM na frota local",
+      "declarada em data/ollama_models.json. Consertar um destes faz o teste",
+      "falhar -- e isso e o desenho: a lista encolhe por decisao, nunca por acaso."
+    ],
+    "aliases": [
+      {
+        "alias": "google/gemma-4-e2b-it",
+        "agente": "gemma4",
+        "medido": [
+          "llm.routing._infer_provider_for_model devolve 'local' (heuristica de string)",
+          "llm.routing_policy.e_local devolve False (consulta a frota declarada)",
+          "ausente do MODEL_REGISTRY",
+          "a frota local declara 'gemma4:e2b'; a politica roteia para 'gemma4:12b'"
+        ],
+        "natureza": "nomeacao de HuggingFace onde o runtime local usa nomeacao de Ollama"
+      }
+    ]
+  },
+
+  "decisao_pendente": {
+    "de_quem": "vertice",
+    "nao_e": "escolher entre llm/routing.py e llm/routing_policy.py -- elas nao competem",
+    "e": "por superficie, qual tabela governa -- e a perdedora se apaga, nao se sincroniza",
+    "superficie_agentes": "o caminho quente deve consultar AGENT_MODEL_MAP ou o manifesto continua sendo a autoridade?",
+    "superficie_subagentes": "a tabela local de subagents_mesh governa (e SUBAGENTES sai da politica) ou o contrario?",
+    "consequencia_medida": [
+      "Hoje 18 dos 19 agentes rodam em gemini-3.5-flash-lite.",
+      "A politica atribui 5 modelos distintos por classe de tarefa.",
+      "Ligar a politica multiplica o custo por chamada: ~5,5x para os agentes que",
+      "a tabela poe em gemini-3.7-flash, e ~37x para chico, que ela poe em",
+      "claude-opus-5. Isso e o desenho da tabela -- capacidade por classe custa --",
+      "mas torna a ligacao uma decisao de gasto, nao uma refatoracao."
+    ],
+    "nao_verificado": [
+      "Nenhuma chamada real a provedor foi feita. Liveness de credencial nao foi",
+      "testada; a governanca proibe. O que se mede aqui e forma e custo declarado."
+    ]
+  }
+}

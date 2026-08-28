@@ -6,7 +6,7 @@ ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T05:05-03:00
 commit: 71934ef7
-atualizado_em: 2026-08-28T09:40-03:00
+atualizado_em: 2026-08-28T11:50-03:00
 classes: [interno, medido]
 caminhos:
   - scripts/ops/suite_isolada.py
@@ -25,6 +25,8 @@ verificado:
   - suite completa rodada nas DUAS arvores, viva e isolada
   - o executor isolado exercitado com --sujo, --incluir-novos e --comando
   - guarda de subcomando git do executor provada -- pegou um `ls-files` novo
+  - o resumo do executor foi corrigido em 2026-08-28 para reconhecer skipped e
+    xfail, e exercitado nos tres estados; ver secao 8
 nao_verificado:
   - o handoff da outra sessao teve a ANCORA normalizada e entrou no historico em
     c88ef53e -- so o frontmatter foi tocado, com verificado e nao_verificado
@@ -218,3 +220,26 @@ separar citar de afirmar.
 isentá-lo — isentar cria ponto cego no único lugar que descreve os segredos. É
 uma propriedade do **achado**: credencial de verdade não contém metacaractere de
 regex.
+
+## 8. Adendo de 2026-08-28: o resumo do executor omitia uma categoria
+
+> Revisao obrigada pelo proprio portao de registro: a frente 4 tocou
+> `scripts/ops/suite_isolada.py`, que este registro declara em `caminhos`, e o
+> criterio G6 exigiu que eu voltasse aqui em vez de deixar a declaracao
+> envelhecer em silencio. E a segunda vez nesta semana que o portao me pega.
+
+O `RE_RESUMO` do executor casava `passed|failed|error`. **Nao casava `skipped`.**
+A arvore isolada pula por desenho os testes que dependem de submodulo
+materializado, de projeto irmao ou de artefato derivado -- exatamente a
+categoria *nao verificado* -- e o relatorio imprimia so `504 passed`.
+
+O numero era verdadeiro. A **categoria** e que sumia, e era a que mais importa
+num executor cujo proposito e provar portabilidade: um teste que nao rodou nao
+e um teste que passou. Vocabulario de reporte que nao cobre uma categoria a
+apaga do relatorio -- variante barata do padrao dominante desta base, dentro da
+ferramenta escrita para medir a base.
+
+Corrigido: o padrao passou a reconhecer `skipped`, `xfailed` e `xpassed`, e foi
+exercitado nos tres estados (so passados; falhas com pulos; entrada sem resumo
+reconhecivel). A execucao seguinte imprimiu `514 passed, 4 skipped` -- os mesmos
+4 pulos de sempre, agora visiveis.

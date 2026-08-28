@@ -56,7 +56,12 @@ import time
 from pathlib import Path
 
 RAIZ_PADRAO = Path(__file__).resolve().parents[2]
-RE_RESUMO = re.compile(r"(\d+) (passed|failed|error)")
+# `skipped` e `xfailed` entram aqui porque sao a categoria "nao verificado", e
+# era justamente a que o resumo nao sabia dizer: a arvore isolada pula os testes
+# que dependem de submodulo materializado ou de projeto irmao, e o relatorio
+# imprimia so "504 passed" -- numero verdadeiro, categoria omitida. Vocabulario
+# de reporte que nao cobre uma categoria a apaga do relatorio.
+RE_RESUMO = re.compile(r"(\d+) (passed|failed|error|skipped|xfailed|xpassed)")
 
 
 def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess:

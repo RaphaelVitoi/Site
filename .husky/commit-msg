@@ -17,7 +17,15 @@ case "$commit_msg" in
         ;;
 esac
 
-conventional_pattern="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|ops)(\([a-zA-Z0-9_\-\.\/]+\))?(!)?: .+"
+# O hifen fica no FIM da classe, e sem contrabarra. Dentro de uma expressao
+# de colchetes POSIX a contrabarra e LITERAL: `[_\-\.]` nao dizia "sublinhado,
+# hifen, ponto" -- dizia "sublinhado, a faixa de \ ate \, ponto". O hifen
+# virava operador de faixa e sumia do conjunto, enquanto a propria contrabarra
+# entrava nele. Resultado medido em 2026-08-28: `feat(frente-4):` era rejeitado
+# apesar de o autor ter escrito a contrabarra justamente para admiti-la -- e um
+# escopo contendo contrabarra, que ninguem quer, passava. Regra que nao
+# implementa a propria intencao declarada, e que nenhum teste exercitava.
+conventional_pattern="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|ops)(\([a-zA-Z0-9_./-]+\))?(!)?: .+"
 
 if ! echo "$commit_msg" | grep -Eq "$conventional_pattern"; then
     echo "[COMMIT-MSG REJEITADO] Fora do padrao Conventional Commits SOTA v8.0 GOLD."
