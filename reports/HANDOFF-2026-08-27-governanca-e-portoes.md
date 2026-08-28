@@ -8,27 +8,27 @@ criado_em: 2026-08-27T14:45-03:00
 commit: 4cce6758
 classes: [interno]
 verificado:
-  - suite tests/test_routing_policy.py + tests/test_task_routing.py: 49 passed
+  - suite tests/test_routing_policy.py + tests/test_task_routing.py -- 49 passed
     antes, 58 passed depois (49 originais intactos + 9 de procedencia)
-  - suite COMPLETA do projeto: 405 passed em 15.69s, apos o invariante 3
+  - suite COMPLETA do projeto -- 405 passed em 15.69s, apos o invariante 3
   - core.config.AGENT_MODEL_MAP resolve os 19 agentes, nenhum None, distribuicao
     inalterada (11 flash / 4 sol / 2 sonnet / 1 opus / 1 gemma4:12b)
-  - teste de mutacao na precedencia de decidir(): ordem invertida REPROVA, e
+  - teste de mutacao na precedencia de decidir() -- ordem invertida REPROVA, e
     manda tarefa complexa ao degrau abaixo (gemini-3.7-flash) - teste detecta
   - portao de ancora exercitado em 6 caminhos de erro e no caminho de sucesso;
-    reexecutado sobre routing_policy.py + test_routing_policy.py: APROVADO
+    reexecutado sobre routing_policy.py + test_routing_policy.py -- APROVADO
   - hook .husky/commit-msg exercitado em 3 caminhos
-  - cwv_gate executado fim a fim com SKIP_CWV_GATE=1: bypass recusado,
+  - cwv_gate executado fim a fim com SKIP_CWV_GATE=1 -- bypass recusado,
     FRAGIL (AMARELO), EXIT=0
   - BOM UTF-8 e parse sob powershell 5.1 verificados nos dois .ps1 alterados
-  - .husky/pre-commit COMPLETO executado fim a fim: as duas etapas rodam e
-    set -e condiciona a segunda a primeira. ATENCAO: as duas primeiras medicoes
-    desta linha reportaram "EXIT=0" lendo o status do `grep` no fim do pipe, e
+  - .husky/pre-commit COMPLETO executado fim a fim -- as duas etapas rodam e
+    set -e condiciona a segunda a primeira. ATENCAO -- as duas primeiras medicoes
+    desta linha reportaram "EXIT=0" lendo o status do grep no fim do pipe, e
     o hook estava saindo 1. Valor correto, medido sem pipe, na linha adiante.
-  - suite tests/test_audit_monthly_routine.py criada: 10 passed
-  - teste de mutacao na chave dos manuais: voltar a f.name REPROVA 2 testes,
+  - suite tests/test_audit_monthly_routine.py criada -- 10 passed
+  - teste de mutacao na chave dos manuais -- voltar a f.name REPROVA 2 testes,
     exibindo o sintoma real (tamanho do arquivo errado sob a chave certa)
-  - auditoria mensal exercitada nos DOIS estados: verde hoje (EXIT=0) e
+  - auditoria mensal exercitada nos DOIS estados -- verde hoje (EXIT=0) e
     vencido simulado em 2026-11-27 (8/8 suspeitas, ATENCAO, EXIT=1)
   - llm/routing.py lido por inteiro (211 linhas) e importadores mapeados
   - as 10 alteracoes da outra sessao foram lidas diff a diff
@@ -36,36 +36,36 @@ verificado:
   - contagem de skills remedida em 3 recortes; M.O. 9 corrigido para declarar
     o recorte junto do numero e o comando que o reproduz
   - BOM duplo removido de 2 .ps1; parse OK em powershell 5.1 E pwsh 7 nos dois.
-    Diff contra HEAD ficou VAZIO: a duplicata era a unica alteracao daqueles
+    Diff contra HEAD ficou VAZIO -- a duplicata era a unica alteracao daqueles
     arquivos, nada de conteudo se perdeu.
-  - guarda anti-recorrencia do BOM VERIFICADO por injecao: arquivo com BOM
+  - guarda anti-recorrencia do BOM VERIFICADO por injecao -- arquivo com BOM
     duplo em stage faz cwv_gate reportar PowerShell51=1 FAIL como ERRO
     bloqueante. Mecanismo ja existia e esta conectado; escapou porque a outra
     sessao nunca estagiou o arquivo.
-  - memory_rag: granularidade medida nos dois sentidos - 20 registros
+  - memory_rag -- granularidade medida nos dois sentidos - 20 registros
     canonicos indexados, 412 artefatos gerados excluidos, node_modules zero.
   - core.config._resolver_modelos exercitado nos 3 estados, incluindo o
     caminho None, que agora emite ERROR em vez de entrar mudo no mapa.
-  - consumidores de escalonamento medidos: rotear() tem 1 unico chamador de
+  - consumidores de escalonamento medidos -- rotear() tem 1 unico chamador de
     producao (core/config.py:141) e NINGUEM passa escalado=True nem consome
     escalona_para/fallback fora de teste.
-  - portao de ancora reprovava A SI MESMO: os comentarios que documentam o
+  - portao de ancora reprovava A SI MESMO -- os comentarios que documentam o
     detector citam "# nosec". Corrigido por estrutura (linha que e so
     comentario nao suprime nada), nao por isencao de caminho. Provado nos dois
-    sentidos: falsos positivos sumiram e supressor real em linha de codigo
+    sentidos -- falsos positivos sumiram e supressor real em linha de codigo
     continua bloqueando.
-  - `recursive` do manifesto era campo declarado e nunca lido. Honrar sozinho
+  - recursive do manifesto era campo declarado e nunca lido. Honrar sozinho
     tiraria 104 arquivos do indice, 39 deles governanca viva. Corrigido em tres
-    partes coordenadas (codigo obedece + `.claude` declara true + `.ARQUIVE`
-    sai por subarvore): 507 -> 461, com governanca mantida e arquivo morto fora.
-  - hook .husky/pre-commit medido SEM pipe: EXIT REAL = 0, 17 arquivos.
-    As duas medicoes anteriores de "EXIT=0" liam o status do `grep`, nao do
+    partes coordenadas (codigo obedece + .claude declara true + .ARQUIVE
+    sai por subarvore) -- 507 -> 461, com governanca mantida e arquivo morto fora.
+  - hook .husky/pre-commit medido SEM pipe -- EXIT REAL = 0, 17 arquivos.
+    As duas medicoes anteriores de "EXIT=0" liam o status do grep, nao do
     hook, e o hook estava saindo 1.
 nao_verificado:
   - NADA FOI COMMITADO. Todas as mudancas estao no working tree. O operador
     autorizou correcao e verificacao, nao commit.
-  - a degradacao e EXPRIMIVEL e ainda nao e CONSUMIDA: nao ha, hoje, chamador
-    de producao que escalone ou caia para fallback. Nao foi criado um: inventar
+  - a degradacao e EXPRIMIVEL e ainda nao e CONSUMIDA -- nao ha, hoje, chamador
+    de producao que escalone ou caia para fallback. Nao foi criado um -- inventar
     consumidor para justificar mecanismo e o mesmo defeito ao contrario.
 supersede: null
 ---

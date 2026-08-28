@@ -25,7 +25,7 @@ $Global:NexusPythonExe = if (Test-Path "$Global:NexusProjectRoot\.venv\Scripts\p
 # arquivos que a duplicam.
 $Global:NexusTyperCommands = @(
     'agent', 'audit', 'autonomy', 'autopoiesis', 'dashboard', 'db', 'gate',
-    'graph', 'homeostasis', 'list', 'ops', 'routine', 'scripts', 'search',
+    'graph', 'homeostasis', 'index', 'list', 'ops', 'routine', 'scripts', 'search',
     'stats', 'status', 'sync-consciousness', 'task', 'task-audit', 'test', 'voice'
 )
 

@@ -1,0 +1,191 @@
+"""Portao dos criterios da secao 13.F que dependem de LER o registro inteiro.
+
+Divisao de trabalho com `record_anchor_gate.ps1`, e ela nao e arbitraria:
+
+    record_anchor_gate.ps1  ->  linha a linha, sobre o DIFF
+                                (supressor sem Record-Id, credencial, campos
+                                 obrigatorios por regex)
+
+    record_gate.py          ->  documento inteiro, sobre o CONTEUDO
+                                (YAML valido, TTL, config_medida, ancora
+                                 interna, ampliacao de origem)
+
+O portao PowerShell confere presenca de campo com `^([a-z_]+):`. Regex ve campo;
+nao ve documento. Medido em 2026-08-28: SEIS dos dez registros com frontmatter
+desta base nao eram YAML valido -- `- texto: mais texto` vira mapa em vez de
+string, e crase e caractere indicador. O portao aprovava os seis, porque o
+regex achava os campos. **Campo presente num bloco que nenhum parser le e a
+forma mais limpa de sinal verde desconectado que esta base ja produziu.**
+
+Como o outro portao, opera sobre o que esta EM STAGE. Portao que reprova por
+divida preexistente e portao que se desliga na primeira semana.
+"""
+
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+from datetime import date
+from pathlib import Path
+
+import yaml
+
+RAIZ = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from record_index import (  # noqa: E402
+    conferir_config_medida,
+    ler_frontmatter,
+    resolvedores_de_ambiente,
+    ttl_vencido,
+)
+
+CAMPOS_OBRIGATORIOS = ("id", "tipo", "escopo", "autor", "criado_em", "verificado", "nao_verificado")
+EXTENSOES_DE_CODIGO = re.compile(r"\.(py|ps1|psm1|js|jsx|ts|tsx|go|rs|rb|java|cs|sh)$")
+
+# Ampliacao de origem. Padroes de alta precisao apenas: heuristica generica
+# produz falso positivo, e portao que cria ruido e portao que sera ignorado.
+PADROES_DE_AMPLIACAO = {
+    "origem CDP irrestrita": re.compile(r"--remote-allow-origins\s*=\s*\*"),
+    "CORS liberado para qualquer origem": re.compile(
+        r"""(Access-Control-Allow-Origin["'\s:]+\*|allow_origins\s*=\s*\[?["']\*["'])"""
+    ),
+    "CORS liberado por flag de framework": re.compile(r"CORS_ALLOW_ALL_ORIGINS\s*=\s*True"),
+}
+
+
+def _git(*args: str) -> str:
+    r = subprocess.run(["git", *args], cwd=RAIZ, capture_output=True, text=True, check=False)
+    return r.stdout
+
+
+def arquivos_em_stage() -> list[str]:
+    saida = _git("diff", "--cached", "--name-only", "--diff-filter=ACM")
+    return [linha for linha in saida.splitlines() if linha.strip()]
+
+
+def linhas_adicionadas(arquivo: str) -> list[str]:
+    saida = _git("diff", "--cached", "--unified=0", "--diff-filter=ACM", "--", arquivo)
+    return [l[1:] for l in saida.splitlines() if l.startswith("+") and not l.startswith("+++")]
+
+
+def _e_registro(rel: str) -> bool:
+    return rel.endswith(".md") and (rel.startswith("docs/") or rel.startswith("reports/"))
+
+
+def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
+    """Devolve (erros, avisos)."""
+    hoje = hoje or date.today()
+    erros: list[str] = []
+    avisos: list[str] = []
+    em_stage = arquivos_em_stage()
+    ambiente = resolvedores_de_ambiente(RAIZ)
+
+    registros_em_stage = [r for r in em_stage if _e_registro(r)]
+
+    for rel in registros_em_stage:
+        caminho = RAIZ / rel
+        if not caminho.is_file():
+            continue
+        texto = caminho.read_text(encoding="utf-8-sig", errors="ignore")
+        if not texto.startswith("---"):
+            continue  # ausencia de frontmatter e AVISO do outro portao; nao duplicar
+
+        # --- G1. o bloco tem de ser YAML de verdade ---------------------------
+        bruto = texto.split("\n---", 2)[0][3:]
+        try:
+            fm = yaml.safe_load(bruto)
+        except yaml.YAMLError as e:
+            marca = getattr(e, "problem_mark", None)
+            onde = f" (linha {marca.line + 1} do frontmatter)" if marca else ""
+            erros.append(f"Frontmatter nao e YAML valido{onde}: {rel} -- {getattr(e, 'problem', e)}")
+            continue
+        if not isinstance(fm, dict):
+            erros.append(f"Frontmatter nao produz um mapa: {rel}")
+            continue
+
+        for campo in ("verificado", "nao_verificado"):
+            itens = fm.get(campo) or []
+            if isinstance(itens, list) and any(not isinstance(x, str) for x in itens):
+                erros.append(
+                    f"'{campo}' tem item que nao e texto em {rel}. "
+                    "Item de lista com ': ' vira mapa: troque por ' -- '."
+                )
+
+        # --- G3. TTL externo vencido -----------------------------------------
+        motivo = ttl_vencido(fm, hoje)
+        if motivo:
+            erros.append(f"{rel}: {motivo}. Reconsulte a fonte ou rebaixe a classe explicitamente.")
+
+        # --- G4. config_medida divergente do ambiente ------------------------
+        divergencias, _ = conferir_config_medida(fm.get("config_medida"), ambiente)
+        for d in divergencias:
+            erros.append(f"{rel}: config_medida divergente -- {d}. Remeça ou marque o registro.")
+
+    # --- G2. ancora interna: caminho DECLARADO que o commit toca --------------
+    # Ancora e o campo `caminhos:`, nunca a prosa. Inferir da prosa travaria o
+    # repositorio: os handoffs citam nexus.py, e todo commit em nexus.py
+    # exigiria superseder o handoff.
+    tocados = set(em_stage)
+    for rel in _git("ls-files", "docs/*.md", "reports/*.md").splitlines():
+        if not rel.strip():
+            continue
+        fm, _ = ler_frontmatter(RAIZ / rel)
+        if not fm:
+            continue
+        declarados = fm.get("caminhos") or []
+        if isinstance(declarados, str):
+            declarados = [declarados]
+        atingidos = sorted(set(declarados) & tocados)
+        if atingidos and rel not in tocados:
+            erros.append(
+                f"{rel} declara ancora em {atingidos} e esses caminhos mudaram neste commit, "
+                "mas o registro nao foi revisado. Atualize-o ou declare `supersede` no mesmo commit."
+            )
+
+    # --- G5b. ampliacao de ACL/CORS/origem ------------------------------------
+    for rel in em_stage:
+        if not EXTENSOES_DE_CODIGO.search(rel):
+            continue
+        for linha in linhas_adicionadas(rel):
+            if re.match(r"^\s*(#|//)", linha):
+                continue  # linha que e so comentario nao amplia nada
+            for nome, padrao in PADROES_DE_AMPLIACAO.items():
+                if padrao.search(linha):
+                    erros.append(
+                        f"Ampliacao de origem detectada em {rel} ({nome}): {linha.strip()[:90]}. "
+                        "A governanca proibe ampliar ACL/CORS/firewall -- nao ha excecao por registro."
+                    )
+
+    return erros, avisos
+
+
+def main() -> int:
+    if not arquivos_em_stage():
+        print("[REGISTRO] Nada em stage. Nada a verificar.")
+        return 0
+
+    erros, avisos = verificar()
+
+    print()
+    print("=" * 70)
+    print("[PORTAO DE REGISTRO] M.O. SOTA v8.0 GOLD, secao 13.F -- criterios 1 a 5")
+    print("=" * 70)
+
+    for a in avisos:
+        print(f"   AVISO: {a}")
+
+    if erros:
+        print(f"\nERROS ({len(erros)}) - commit BLOQUEADO:")
+        for e in erros:
+            print(f"   {e}")
+        print("\nNao contorne. A governanca proibe bypass: investigue o achado.\n")
+        return 1
+
+    print(f"\nAPROVADO. Registros e origens integros em {len(arquivos_em_stage())} arquivo(s) em stage.\n")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

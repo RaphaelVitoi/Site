@@ -10,9 +10,18 @@ set -e
 # 1. Portao de qualidade existente (CWV, a11y, CVE, SRI).
 npm run sota:audit
 
-# 2. Portao de ancora de registro — M.O. secao 13.F.
+# 2. Portao de ancora de registro — M.O. secao 13.F, verificacao linha a linha.
 if command -v pwsh >/dev/null 2>&1; then
     pwsh -NoProfile -ExecutionPolicy Bypass -File "scripts/ops/record_anchor_gate.ps1"
 else
     powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/ops/record_anchor_gate.ps1"
+fi
+
+# 3. Portao de registro — os criterios da 13.F que exigem ler o DOCUMENTO:
+#    YAML valido, TTL externo, config_medida, ancora interna, ampliacao de origem.
+#    A etapa 2 confere campo por regex; regex ve campo, nao ve documento.
+if command -v uv >/dev/null 2>&1; then
+    uv run python "scripts/ops/record_gate.py"
+else
+    python "scripts/ops/record_gate.py"
 fi
