@@ -1,0 +1,14 @@
+diff --git a/.opencode/plugins/token-efficiency.js b/.opencode/plugins/token-efficiency.js
+index 15011d3..388d553 100644
+--- a/.opencode/plugins/token-efficiency.js
++++ b/.opencode/plugins/token-efficiency.js
+@@ -1,6 +1,6 @@
+-import { existsSync, readFileSync, readdirSync, statSync } from "fs";
+-import { join, dirname } from "path";
+-import { fileURLToPath } from "url";
++import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
++import { join, dirname } from "node:path";
++import { fileURLToPath } from "node:url";
+ 
+ const __dirname = dirname(fileURLToPath(import.meta.url));
+ const rootDir = join(__dirname, "..", "..");

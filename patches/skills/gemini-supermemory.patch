@@ -1,0 +1,544 @@
+diff --git a/README.md b/README.md
+index f873c52..2351fca 100644
+--- a/README.md
++++ b/README.md
+@@ -9,7 +9,7 @@ Your agent remembers what you worked on — across sessions, across projects.
+ 
+ - **Persistent Memory** — Memories saved across sessions, automatically loaded when you start
+ - **Team Memory** — Project knowledge shared across your team, separate from personal memories
+-- **Auto Capture** — Sessions saved automatically when they end
++- **Explicit Capture** — Memories are saved only through the dedicated MCP tools
+ - **Auto Load** — Past context injected when a new session starts
+ - **Codebase Indexing** — Deep-scan a repo's architecture and save it to memory
+ - **Project Config** — Per-repo settings and container tag overrides
+@@ -32,12 +32,11 @@ Your extension exposes **3 MCP tools** that Gemini calls automatically:
+ | `add_memory` | Save personal memories (decisions, preferences, learnings) |
+ | `save_project_memory` | Save team/project knowledge (architecture, conventions) |
+ 
+-Plus **two lifecycle hooks** that run behind the scenes:
++One lifecycle hook runs behind the scenes:
+ 
+ | Hook | Trigger | What it does |
+ | --- | --- | --- |
+ | **SessionStart** | Session begins | Fetches your past memories and injects them as context |
+-| **SessionEnd** | Session ends | Saves a summary of the session to Supermemory |
+ 
+ ## Commands
+ 
+@@ -104,7 +103,6 @@ gemini-supermemory/
+     ├── server.js             ← MCP server (3 tools)
+     ├── hooks/
+     │   ├── session-start.js  ← Auto-load memories
+-    │   └── session-end.js    ← Auto-save sessions
+     └── lib/
+         ├── supermemory-client.js  ← Supermemory SDK wrapper
+         ├── container-tag.js       ← Container tag generation
+diff --git a/build.js b/build.js
+index 64bd305..f0037f2 100644
+--- a/build.js
++++ b/build.js
+@@ -19,11 +19,6 @@ await Promise.all([
+     entryPoints: ["src/hooks/session-start.js"],
+     outfile: "dist/hooks/session-start.js",
+   }),
+-  build({
+-    ...shared,
+-    entryPoints: ["src/hooks/session-end.js"],
+-    outfile: "dist/hooks/session-end.js",
+-  }),
+ ]);
+ 
+-console.log("Built dist/server.js, dist/hooks/session-start.js, dist/hooks/session-end.js");
++console.log("Built dist/server.js, dist/hooks/session-start.js");
+diff --git a/hooks/hooks.json b/hooks/hooks.json
+index 0e70d42..f814e65 100644
+--- a/hooks/hooks.json
++++ b/hooks/hooks.json
+@@ -11,18 +11,6 @@
+           }
+         ]
+       }
+-    ],
+-    "SessionEnd": [
+-      {
+-        "hooks": [
+-          {
+-            "name": "supermemory-session-saver",
+-            "type": "command",
+-            "command": "node ${extensionPath}${/}dist${/}hooks${/}session-end.js",
+-            "timeout": 15000
+-          }
+-        ]
+-      }
+     ]
+   }
+ }
+diff --git a/src/hooks/session-end.js b/src/hooks/session-end.js
+deleted file mode 100644
+index fb1be86..0000000
+--- a/src/hooks/session-end.js
++++ /dev/null
+@@ -1,110 +0,0 @@
+-#!/usr/bin/env node
+-
+-/**
+- * SessionEnd hook — auto-saves a session summary to Supermemory
+- * when the Gemini CLI session ends.
+- *
+- * Reads: stdin JSON (session metadata from Gemini CLI)
+- * Writes: stdout JSON (empty — advisory hook)
+- * Env: SUPERMEMORY_API_KEY, GEMINI_CWD, GEMINI_SESSION_ID
+- */
+-
+-import { SupermemoryClient } from "../lib/supermemory-client.js";
+-import { getContainerContext } from "../lib/container-tag.js";
+-import { getFriendlyError } from "../lib/error-helper.js";
+-
+-const PERSONAL_ENTITY_CONTEXT = `Developer coding session. Focus on USER intent.
+-
+-EXTRACT:
+-- Actions: "built auth flow with JWT", "fixed memory leak in useEffect"
+-- Preferences: "prefers Tailwind over CSS modules"
+-- Decisions: "chose SQLite for local storage"
+-- Learnings: "learned about React Server Components"
+-
+-SKIP:
+-- Every fact assistant mentions (condense to user's action)
+-- Generic assistant explanations user didn't confirm/use`;
+-
+-function readStdin() {
+-  return new Promise((resolve) => {
+-    let data = "";
+-    process.stdin.setEncoding("utf8");
+-    process.stdin.on("data", (chunk) => (data += chunk));
+-    process.stdin.on("end", () => {
+-      try {
+-        resolve(data.trim() ? JSON.parse(data) : {});
+-      } catch {
+-        resolve({});
+-      }
+-    });
+-    process.stdin.on("error", () => resolve({}));
+-    if (process.stdin.isTTY) resolve({});
+-  });
+-}
+-
+-function output(json) {
+-  process.stdout.write(JSON.stringify(json));
+-}
+-
+-async function main() {
+-  try {
+-    const input = await readStdin();
+-
+-    const apiKey = process.env.SUPERMEMORY_API_KEY;
+-    if (!apiKey) {
+-      output({});
+-      return;
+-    }
+-
+-    const sessionId = process.env.GEMINI_SESSION_ID || input.session_id;
+-    if (!sessionId) {
+-      output({});
+-      return;
+-    }
+-
+-    const cwd = process.env.GEMINI_CWD || process.cwd();
+-    const { personalTag, projectName } = getContainerContext(cwd);
+-
+-    // Build a summary from whatever session data is available
+-    const parts = [];
+-    parts.push(`Session in project: ${projectName}`);
+-    parts.push(`Session ID: ${sessionId}`);
+-    parts.push(`Timestamp: ${new Date().toISOString()}`);
+-
+-    if (input.summary) {
+-      parts.push(`\nSummary:\n${input.summary}`);
+-    }
+-    if (input.transcript) {
+-      // If Gemini CLI provides transcript text, include it
+-      const trimmed =
+-        input.transcript.length > 50000
+-          ? input.transcript.slice(-50000)
+-          : input.transcript;
+-      parts.push(`\nTranscript:\n${trimmed}`);
+-    }
+-
+-    const content = parts.join("\n");
+-
+-    const client = new SupermemoryClient({ apiKey });
+-
+-    await client.addMemory(content, {
+-      containerTag: personalTag,
+-      metadata: {
+-        type: "session_summary",
+-        project: projectName,
+-        sessionId,
+-        timestamp: new Date().toISOString(),
+-      },
+-      customId: `session_${sessionId}`,
+-      entityContext: PERSONAL_ENTITY_CONTEXT,
+-    });
+-
+-    console.error(`Supermemory: Session saved for ${projectName}`);
+-    output({});
+-  } catch (err) {
+-    console.error(`Supermemory: ${getFriendlyError(err)}`);
+-    output({});
+-  }
+-}
+-
+-main();
+diff --git a/src/hooks/session-start.js b/src/hooks/session-start.js
+index 0dd725b..fa884e1 100644
+--- a/src/hooks/session-start.js
++++ b/src/hooks/session-start.js
+@@ -53,19 +53,25 @@ async function main() {
+ 
+     const client = new SupermemoryClient({ apiKey });
+ 
+-    const handleError = (label) => (err) => {
+-      if (isBenignError(err)) return null;
+-      console.error(`Supermemory: ${label} — ${getFriendlyError(err)}`);
+-      return null;
++    const logError = (label, err) => {
++      if (!isBenignError(err)) {
++        console.error(`Supermemory: ${label} — ${getFriendlyError(err)}`);
++      }
+     };
+ 
+     const [personalResult, repoResult] = await Promise.all([
+       client
+         .getProfile({ containerTag: personalTag, query: projectName })
+-        .catch(handleError("personal context")),
++        .catch((err) => {
++          logError("personal context", err);
++          return null;
++        }),
+       client
+         .getProfile({ containerTag: repoTag, query: projectName })
+-        .catch(handleError("project context")),
++        .catch((err) => {
++          logError("project context", err);
++          return null;
++        }),
+     ]);
+ 
+     const personalContext = formatProfileContext(personalResult, 5);
+@@ -87,4 +93,4 @@ async function main() {
+   }
+ }
+ 
+-main();
++await main();
+diff --git a/src/lib/config.js b/src/lib/config.js
+index 867a62e..71c8f0d 100644
+--- a/src/lib/config.js
++++ b/src/lib/config.js
+@@ -11,7 +11,7 @@ function readOptionalString(value) {
+   }
+ 
+   const trimmed = value.trim();
+-  return trimmed ? trimmed : undefined;
++  return trimmed || undefined;
+ }
+ 
+ function validateRequiredApiKey(apiKey) {
+diff --git a/src/lib/error-helper.js b/src/lib/error-helper.js
+index d628b37..a387dda 100644
+--- a/src/lib/error-helper.js
++++ b/src/lib/error-helper.js
+@@ -5,7 +5,7 @@
+  * @returns {string}
+  */
+ export function getFriendlyError(err) {
+-    const status = err && err.status;
++    const status = err?.status;
+     if (status === 400) {
+         return 'Bad request \u2014 your API key or request format may be invalid. Check your key at https://console.supermemory.ai';
+     }
+@@ -21,7 +21,7 @@ export function getFriendlyError(err) {
+     if (typeof status === 'number' && status >= 500) {
+         return 'Supermemory service is temporarily unavailable. Will retry next session.';
+     }
+-    return (err && err.message) || 'Unknown error';
++    return err?.message || 'Unknown error';
+ }
+ 
+ /**
+@@ -34,7 +34,7 @@ export function getFriendlyError(err) {
+  * @returns {boolean}
+  */
+ export function isRetryableError(err) {
+-    const status = err && err.status;
++    const status = err?.status;
+     if (status === 429) return true;
+     if (typeof status === 'number' && status >= 500) return true;
+     if (status === undefined || status === null) return true;
+@@ -51,7 +51,7 @@ export function isRetryableError(err) {
+  * @returns {boolean}
+  */
+ export function isBenignError(err) {
+-    const status = err && err.status;
++    const status = err?.status;
+     if (status === 404) return true;
+     if (status === undefined || status === null) return true;
+     return false;
+diff --git a/src/lib/format-context.js b/src/lib/format-context.js
+index 12b2e28..caeaa5a 100644
+--- a/src/lib/format-context.js
++++ b/src/lib/format-context.js
+@@ -39,15 +39,13 @@ export function formatProfileContext(profileResult, maxItems = 5) {
+   const sections = [];
+ 
+   if (statics.length) {
+-    sections.push(
+-      `**Persistent Facts**\n${statics.map((f) => `- ${f}`).join("\n")}`
+-    );
++    const staticLines = statics.map((f) => `- ${f}`).join("\n");
++    sections.push(`**Persistent Facts**\n${staticLines}`);
+   }
+ 
+   if (dynamics.length) {
+-    sections.push(
+-      `**Recent Context**\n${dynamics.map((f) => `- ${f}`).join("\n")}`
+-    );
++    const dynamicLines = dynamics.map((f) => `- ${f}`).join("\n");
++    sections.push(`**Recent Context**\n${dynamicLines}`);
+   }
+ 
+   if (search.length) {
+diff --git a/src/lib/git-utils.js b/src/lib/git-utils.js
+index c94c141..0807709 100644
+--- a/src/lib/git-utils.js
++++ b/src/lib/git-utils.js
+@@ -60,7 +60,8 @@ function getGitRepoName(cwd = process.cwd()) {
+     return null;
+   }
+ 
+-  const match = remoteUrl.match(/[/:]([^/]+?)(?:\.git)?$/);
++  const cleanUrl = remoteUrl.endsWith('.git') ? remoteUrl.slice(0, -4) : remoteUrl;
++  const match = /[/:]([^/:]+)$/.exec(cleanUrl);
+   return match ? match[1] : null;
+ }
+ 
+diff --git a/src/lib/project-config.js b/src/lib/project-config.js
+index 79997ad..afb490f 100644
+--- a/src/lib/project-config.js
++++ b/src/lib/project-config.js
+@@ -10,36 +10,46 @@ import { getGitRoot } from "./git-utils.js";
+ const CONFIG_DIR_NAME = ".supermemory";
+ const CONFIG_FILE_NAME = "config.json";
+ 
+-function findConfigPath(cwd = process.cwd()) {
+-  const gitRoot = getGitRoot(cwd);
+-  const basePath = gitRoot || cwd;
+-
+-  // Check .gemini/.supermemory/config.json first
+-  const geminiPath = path.join(
+-    basePath,
+-    ".gemini",
+-    CONFIG_DIR_NAME,
+-    CONFIG_FILE_NAME
+-  );
+-  if (fs.existsSync(geminiPath)) return geminiPath;
+-
+-  // Fallback: .supermemory/config.json in project root
+-  const rootPath = path.join(basePath, CONFIG_DIR_NAME, CONFIG_FILE_NAME);
+-  if (fs.existsSync(rootPath)) return rootPath;
+-
+-  return null;
++function readVerifiedConfigFile(baseDir, relativeTarget) {
++  const basePath = path.normalize(path.resolve(baseDir));
++  const fullPath = path.normalize(path.resolve(basePath, relativeTarget));
++  const relativePath = path.relative(basePath, fullPath);
++  if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)) {
++    return null;
++  }
++  if (!fs.existsSync(fullPath)) {
++    return null;
++  }
++  return fs.readFileSync(fullPath, "utf-8");
+ }
+ 
+ export function loadProjectConfig(cwd = process.cwd()) {
+-  const configPath = findConfigPath(cwd);
+-  if (!configPath) return null;
++  const gitRoot = getGitRoot(cwd);
++  const basePath = path.normalize(path.resolve(gitRoot || cwd));
+ 
+-  try {
+-    const raw = fs.readFileSync(configPath, "utf-8");
+-    return JSON.parse(raw);
+-  } catch {
+-    return null;
++  // Check .gemini/.supermemory/config.json first
++  const geminiRel = path.join(".gemini", CONFIG_DIR_NAME, CONFIG_FILE_NAME);
++  const geminiRaw = readVerifiedConfigFile(basePath, geminiRel);
++  if (geminiRaw) {
++    try {
++      return JSON.parse(geminiRaw);
++    } catch {
++      return null;
++    }
+   }
++
++  // Fallback: .supermemory/config.json in project root
++  const rootRel = path.join(CONFIG_DIR_NAME, CONFIG_FILE_NAME);
++  const rootRaw = readVerifiedConfigFile(basePath, rootRel);
++  if (rootRaw) {
++    try {
++      return JSON.parse(rootRaw);
++    } catch {
++      return null;
++    }
++  }
++
++  return null;
+ }
+ 
+ export function getProjectApiKey(cwd = process.cwd()) {
+diff --git a/src/lib/supermemory-client.js b/src/lib/supermemory-client.js
+index e62eb98..3ffe995 100644
+--- a/src/lib/supermemory-client.js
++++ b/src/lib/supermemory-client.js
+@@ -19,12 +19,18 @@ function dedupeBy(items,getKey){
+     })
+ }
+ 
++function getResultKind(results) {
++    if (results?.memory) return "memory";
++    if (results?.chunk) return "chunk";
++    return "unknown";
++}
++
+ function normalizeSearchResults(results){
+     const text = results?.memory ?? results?.chunk ?? results?.content ?? "";
+     return {
+         id: results?.id ?? null,
+         text,
+-        kind: results?.memory ? "memory" : results?.chunk ? "chunk" : "unknown",
++        kind: getResultKind(results),
+         chunk: results?.chunk ?? null,
+         context: results?.context ?? null,
+         documents: Array.isArray(results?.documents) ? results.documents : [],
+@@ -115,23 +121,25 @@ export class SupermemoryClient {
+         if(!normalizedQuery){
+             throw new Error("Search query must be a non-empty string");
+         }
+-        const results = await this.client.search.memories({
++        const searchPayload = {
+             q: normalizedQuery,
+             containerTag: this.resolveContainerTag(containerTag),
+             limit,
+-            searchMode:mode,
++            searchMode: mode,
+             filters,
+             threshold,
+             rerank,
+             rewriteQuery,
+-        });
++        };
+ 
+-        const mapped = results.results.map(normalizeSearchResults).filter((item) => item.text);
++        const results = await this.client.search(searchPayload);
++
++        const mapped = (results?.results || []).map(normalizeSearchResults).filter((item) => item.text);
+ 
+         return {
+             results: dedupeBy(mapped,(item)=>`${item.kind}:${item.text}`),
+-            total: results.total,
+-            timing: results.timing,
++            total: results?.total ?? mapped.length,
++            timing: results?.timing,
+         };
+     }
+ 
+@@ -160,17 +168,17 @@ export class SupermemoryClient {
+         .filter((item) => item.text);
+         return {
+          profile: {
+-         static: staticFacts,
+-         dynamic: dynamicFacts,
+-        },
+-        searchResults: result.searchResults
+-        ? {
+-            results: dedupeBy(mappedSearchResults, (item) => item.text),
+-            total: result.searchResults.total,
+-            timing: result.searchResults.timing,
+-          }
+-        : null,
+-    };
++          static: staticFacts,
++          dynamic: dynamicFacts,
++         },
++         searchResults: result.searchResults
++          ? {
++              results: dedupeBy(mappedSearchResults, (item) => item.text),
++              total: result.searchResults.total,
++              timing: result.searchResults.timing,
++            }
++          : null,
++        };
+     }
+ }
+ 
+diff --git a/src/lib/validate.js b/src/lib/validate.js
+index f9b754a..3ca0e2e 100644
+--- a/src/lib/validate.js
++++ b/src/lib/validate.js
+@@ -4,31 +4,30 @@ const UNICODE_SPECIALS = /[\uFFF0-\uFFFF]/g;
+ 
+ const DEFAULT_MAX_LENGTH = 100_000;
+ 
+-// SanitzeContent removes control characters, byte order marks and unicode specials from the content
+-export function SanitizeContent(content , maxLength = DEFAULT_MAX_LENGTH) {
+-    if(!content || typeof content !== 'string') return '';
++// SanitizeContent removes control characters, byte order marks and unicode specials from the content
++export function SanitizeContent(content, maxLength = DEFAULT_MAX_LENGTH) {
++    if (!content || typeof content !== 'string') return '';
+ 
+-    let sanitized = content ;
++    let sanitized = content
++        .replaceAll(CONTROL_CHARACTERS, '')
++        .replaceAll(BYTE_ORDER_MARK, '')
++        .replaceAll(UNICODE_SPECIALS, '');
+ 
+-    sanitized = sanitized.replace(CONTROL_CHARACTERS, '');
+-    sanitized = sanitized.replace(BYTE_ORDER_MARK, '');
+-    sanitized = sanitized.replace(UNICODE_SPECIALS, '');
+-
+-    if(sanitized.length > maxLength){
++    if (sanitized.length > maxLength) {
+         sanitized = sanitized.slice(0, maxLength);
+     }
+     return sanitized;
+ }
+ 
+ // ValidateContentLength checks if the content length is within the specified min and max length limits
+-export function ValidateContentLength(content, min = 1 ,maxLength = DEFAULT_MAX_LENGTH) {
+-   if(content.length < min) {
+-    return {valid: false, reason: `Content is below the minimum length of ${min} characters`}
++export function ValidateContentLength(content, min = 1, maxLength = DEFAULT_MAX_LENGTH) {
++   if (content.length < min) {
++    return { valid: false, reason: `Content is below the minimum length of ${min} characters` };
+    }
+-   if(content.length > maxLength) {
+-    return {valid: false, reason: `Content exceeds the maximum length of ${maxLength} characters`}
++   if (content.length > maxLength) {
++    return { valid: false, reason: `Content exceeds the maximum length of ${maxLength} characters` };
+    }
+-   return {valid: true, reason: null}
++   return { valid: true, reason: null };
+ }
+ 
+ // ValidateApiKey checks if the API key is a non-empty string that starts with "sm_" and does not contain whitespace
+@@ -62,7 +61,7 @@ export function validateContainerTag(tag) {
+       reason: "Container tag may only contain letters, numbers, hyphens, and underscores",
+     };
+   }
+-  if (/^[-_]|[-_]$/.test(tag)) {
++  if (/^[_-]|[_-]$/.test(tag)) {
+     return {
+       valid: false,
+       reason: "Container tag must not start or end with a hyphen or underscore",

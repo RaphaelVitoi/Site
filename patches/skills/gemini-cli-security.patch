@@ -1,0 +1,1708 @@
+diff --git a/.github/workflows/gemini-review.yml b/.github/workflows/gemini-review.yml
+index 499d38f..387114b 100644
+--- a/.github/workflows/gemini-review.yml
++++ b/.github/workflows/gemini-review.yml
+@@ -46,56 +46,71 @@ jobs:
+       id-token: 'write'
+       issues: 'write'
+       pull-requests: 'write'
++    env:
++      APP_ID: ${{ vars.APP_ID || '' }}
++      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY || '' }}
++      GOOGLE_CLOUD_LOCATION: ${{ vars.GOOGLE_CLOUD_LOCATION || '' }}
++      GOOGLE_CLOUD_PROJECT: ${{ vars.GOOGLE_CLOUD_PROJECT || '' }}
++      SERVICE_ACCOUNT_EMAIL: ${{ vars.SERVICE_ACCOUNT_EMAIL || '' }}
++      GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER || '' }}
++      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || '' }}
++      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY || '' }}
++      DEBUG: ${{ vars.DEBUG || '' }}
++      ACTIONS_STEP_DEBUG: ${{ vars.ACTIONS_STEP_DEBUG || '' }}
++      GEMINI_MODEL: ${{ vars.GEMINI_MODEL || '' }}
++      GOOGLE_GENAI_USE_GCA: ${{ vars.GOOGLE_GENAI_USE_GCA || 'false' }}
++      GOOGLE_GENAI_USE_VERTEXAI: ${{ vars.GOOGLE_GENAI_USE_VERTEXAI || 'false' }}
++      UPLOAD_ARTIFACTS: ${{ vars.UPLOAD_ARTIFACTS || 'false' }}
+     steps:
+       - name: 'Mint identity token'
+         id: 'mint_identity_token'
+-        if: ${{ (vars.APP_ID || '') != '' }}
++        if: ${{ (env.APP_ID || '') != '' }}
+         uses: 'actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b' # ratchet:actions/create-github-app-token@v2
+         with:
+-          app-id: '${{ vars.APP_ID }}'
+-          private-key: '${{ secrets.APP_PRIVATE_KEY }}'
++          app-id: ${{ env.APP_ID }}
++          private-key: ${{ env.APP_PRIVATE_KEY }}
+           permission-contents: 'read'
+           permission-issues: 'write'
+           permission-pull-requests: 'write'
+ 
+       - name: 'Acknowledge request'
+         env:
+-          GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
+-          ISSUE_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
++          GITHUB_TOKEN: ${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}
++          ISSUE_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+           MESSAGE: |-
+             🤖 Hi @${{ github.actor }}, I've received your request, and I'm working on it now! You can track my progress [in the logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details.
+-          REPOSITORY: '${{ github.repository }}'
++          REPOSITORY: ${{ github.repository }}
+         run: |-
+           gh issue comment "${ISSUE_NUMBER}" \
+             --body "${MESSAGE}" \
+             --repo "${REPOSITORY}"
+ 
+       - name: 'Checkout repository'
+-        uses: 'actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8' # ratchet:actions/checkout@v5
++        uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # ratchet:actions/checkout@v4.2.2
+ 
+       - name: 'Run Gemini pull request review'
+         uses: 'google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489' # ratchet:google-github-actions/run-gemini-cli@v0.1.22
+         id: 'gemini_pr_review'
+         env:
+-          GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
+-          ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
+-          ISSUE_BODY: '${{ github.event.pull_request.body || github.event.issue.body }}'
+-          PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
+-          REPOSITORY: '${{ github.repository }}'
+-          ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
++          GITHUB_TOKEN: ${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}
++          ISSUE_TITLE: ${{ github.event.pull_request.title || github.event.issue.title }}
++          ISSUE_BODY: ${{ github.event.pull_request.body || github.event.issue.body }}
++          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
++          REPOSITORY: ${{ github.repository }}
++          ADDITIONAL_CONTEXT: ${{ inputs.additional_context }}
+         with:
+-          gcp_location: '${{ vars.GOOGLE_CLOUD_LOCATION || '''' }}'
+-          gcp_project_id: '${{ vars.GOOGLE_CLOUD_PROJECT || '''' }}'
+-          gcp_service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL || '''' }}'
+-          gcp_workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER || '''' }}'
+-          gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
++          gcp_location: ${{ env.GOOGLE_CLOUD_LOCATION || '' }}
++          gcp_project_id: ${{ env.GOOGLE_CLOUD_PROJECT || '' }}
++          gcp_service_account: ${{ env.SERVICE_ACCOUNT_EMAIL || '' }}
++          gcp_workload_identity_provider: ${{ env.GCP_WIF_PROVIDER || '' }}
++          gemini_api_key: ${{ env.GEMINI_API_KEY }}
+           gemini_cli_version: '0.26.0'
+-          gemini_debug: '${{ inputs.debug || vars.DEBUG == ''true'' || vars.ACTIONS_STEP_DEBUG == ''true'' }}'
+-          gemini_model: '${{ inputs.gemini_model || vars.GEMINI_MODEL || '''' }}'
+-          google_api_key: '${{ secrets.GOOGLE_API_KEY }}'
+-          use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA || ''false'' }}'
+-          use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI || ''false'' }}'
+-          upload_artifacts: '${{ vars.UPLOAD_ARTIFACTS || ''false'' }}'
++          gemini_debug: ${{ inputs.debug || env.DEBUG == 'true' || env.ACTIONS_STEP_DEBUG == 'true' }}
++          gemini_model: ${{ inputs.gemini_model || env.GEMINI_MODEL || '' }}
++          google_api_key: ${{ env.GOOGLE_API_KEY }}
++          use_gemini_code_assist: ${{ env.GOOGLE_GENAI_USE_GCA || 'false' }}
++          use_vertex_ai: ${{ env.GOOGLE_GENAI_USE_VERTEXAI || 'false' }}
++          upload_artifacts: ${{ env.UPLOAD_ARTIFACTS || 'false' }}
+           settings: |-
+             {
+               "model": {
+@@ -143,25 +158,25 @@ jobs:
+         uses: 'google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489' # ratchet:google-github-actions/run-gemini-cli@v0.1.22
+         id: 'gemini_security_analysis'
+         env:
+-          GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
+-          ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
+-          ISSUE_BODY: '${{ github.event.pull_request.body || github.event.issue.body }}'
+-          PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
+-          REPOSITORY: '${{ github.repository }}'
+-          ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
++          GITHUB_TOKEN: ${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}
++          ISSUE_TITLE: ${{ github.event.pull_request.title || github.event.issue.title }}
++          ISSUE_BODY: ${{ github.event.pull_request.body || github.event.issue.body }}
++          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
++          REPOSITORY: ${{ github.repository }}
++          ADDITIONAL_CONTEXT: ${{ inputs.additional_context }}
+         with:
+-          gcp_location: '${{ vars.GOOGLE_CLOUD_LOCATION || '''' }}'
+-          gcp_project_id: '${{ vars.GOOGLE_CLOUD_PROJECT || '''' }}'
+-          gcp_service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL || '''' }}'
+-          gcp_workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER || '''' }}'
+-          gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
++          gcp_location: ${{ env.GOOGLE_CLOUD_LOCATION || '' }}
++          gcp_project_id: ${{ env.GOOGLE_CLOUD_PROJECT || '' }}
++          gcp_service_account: ${{ env.SERVICE_ACCOUNT_EMAIL || '' }}
++          gcp_workload_identity_provider: ${{ env.GCP_WIF_PROVIDER || '' }}
++          gemini_api_key: ${{ env.GEMINI_API_KEY }}
+           gemini_cli_version: '0.26.0'
+-          gemini_debug: '${{ inputs.debug || vars.DEBUG == ''true'' || vars.ACTIONS_STEP_DEBUG == ''true'' }}'
+-          gemini_model: '${{ inputs.gemini_model || vars.GEMINI_MODEL || '''' }}'
+-          google_api_key: '${{ secrets.GOOGLE_API_KEY }}'
+-          use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA || ''false'' }}'
+-          use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI || ''false'' }}'
+-          upload_artifacts: '${{ vars.UPLOAD_ARTIFACTS || ''false'' }}'
++          gemini_debug: ${{ inputs.debug || env.DEBUG == 'true' || env.ACTIONS_STEP_DEBUG == 'true' }}
++          gemini_model: ${{ inputs.gemini_model || env.GEMINI_MODEL || '' }}
++          google_api_key: ${{ env.GOOGLE_API_KEY }}
++          use_gemini_code_assist: ${{ env.GOOGLE_GENAI_USE_GCA || 'false' }}
++          use_vertex_ai: ${{ env.GOOGLE_GENAI_USE_VERTEXAI || 'false' }}
++          upload_artifacts: ${{ env.UPLOAD_ARTIFACTS || 'false' }}
+           extensions: |
+             [
+               "https://github.com/gemini-cli-extensions/security.git"
+diff --git a/GEMINI.md b/GEMINI.md
+index cbcc1de..13e5b4a 100644
+--- a/GEMINI.md
++++ b/GEMINI.md
+@@ -58,16 +58,16 @@ This is your internal knowledge base of vulnerabilities. When you need to do a s
+             ```python
+             # INSECURE - No ownership check
+             def get_order(order_id, current_user):
+-              return db.orders.find_one({"_id": order_id})
++                return db.orders.find_one({"_id": order_id})
+             ```
+         *   **Remediation (The logic should look like this):**
+             ```python
+             # SECURE - Verifies ownership
+             def get_order(order_id, current_user):
+-              order = db.orders.find_one({"_id": order_id})
+-              if order.user_id != current_user.id:
+-                raise AuthorizationError("User cannot access this order")
+-              return order
++                order = db.orders.find_one({"_id": order_id})
++                if order.user_id != current_user.id:
++                    raise AuthorizationError("User cannot access this order")
++                return order
+             ```
+     *   **Missing Function-Level Access Control:** Verify that sensitive API endpoints or functions perform an authorization check (e.g., `is_admin(user)` or `user.has_permission('edit_post')`) before executing logic.
+     *   **Privilege Escalation Flaws:** Look for code paths where a user can modify their own role or permissions in an API request (e.g., submitting a JSON payload with `"role": "admin"`).
+@@ -104,6 +104,7 @@ This is your internal knowledge base of vulnerabilities. When you need to do a s
+         *   **Vulnerable Example (Look for this pattern):**
+             ```python
+             import os
++
+             # User can inject commands like "; rm -rf /"
+             filename = user_input
+             os.system(f"grep 'pattern' {filename}")
+diff --git a/mcp-server/src/constants.ts b/mcp-server/src/constants.ts
+index 62bc3e2..6a960ff 100644
+--- a/mcp-server/src/constants.ts
++++ b/mcp-server/src/constants.ts
+@@ -4,7 +4,7 @@
+  * SPDX-License-Identifier: Apache-2.0
+  */
+ 
+-import path from 'path';
++import path from 'node:path';
+ 
+ export const SECURITY_DIR_NAME = '.gemini_security';
+ export const POC_DIR_NAME = 'poc';
+diff --git a/mcp-server/src/filesystem.test.ts b/mcp-server/src/filesystem.test.ts
+index 5f809cd..f9b4077 100644
+--- a/mcp-server/src/filesystem.test.ts
++++ b/mcp-server/src/filesystem.test.ts
+@@ -102,8 +102,14 @@ describe('filesystem', () => {
+     expect(diff).toContain('-pre content');
+     expect(diff).toContain('+post content');
+ 
+-    // Cleanup by switching back to the main, so other tests aren't affected
+-    execSync('git checkout master || git checkout main');
++  }, 30_000);
++
++  it('rejects Git options passed as revision names', () => {
++    const outputPath = path.join(tempDir, 'must-not-be-written.patch');
++    const diff = getAuditScope(`--output=${outputPath}`, 'HEAD');
++
++    expect(diff).toBe('');
++    expect(fs.existsSync(outputPath)).toBe(false);
+   });
+ 
+   it('should return the correct line count for a list of files', () => {
+diff --git a/mcp-server/src/filesystem.ts b/mcp-server/src/filesystem.ts
+index f648283..a9c9867 100644
+--- a/mcp-server/src/filesystem.ts
++++ b/mcp-server/src/filesystem.ts
+@@ -5,9 +5,8 @@
+  */
+ 
+ import { spawnSync } from 'node:child_process';
+-import { readFileSync } from 'node:fs';
+-import { promises as fs } from 'fs';
+-import path from 'path';
++import { readFileSync, promises as fs } from 'node:fs';
++import path from 'node:path';
+ import { IGNORED_EXTENSIONS, IGNORED_FILES, IGNORED_FOLDERS } from './constants.js';
+ 
+ /**
+@@ -17,19 +16,40 @@ import { IGNORED_EXTENSIONS, IGNORED_FILES, IGNORED_FOLDERS } from './constants.
+ export const isGitHubRepository = (): boolean => {
+   try {
+     const remotes = (
+-      spawnSync('git', ['remote', '-v'], {
++      spawnSync('git', ['remote', '-v'], { // NOSONAR
+         encoding: 'utf-8',
++        shell: false,
+       }).stdout || ''
+     ).trim();
+ 
+-    const pattern = /github\.com/;
+-
+-    return pattern.test(remotes);
+-  } catch (_error) {
++    return remotes.includes('github.com');
++  } catch (error) {
++    if (process.env.DEBUG) {
++      console.debug('Failed to check git remotes:', error);
++    }
+     return false;
+   }
+ };
+ 
++/** Resolves a user-supplied revision to an immutable commit id before Git diff. */
++function resolveCommitRevision(revision: string): string | undefined {
++  if (!revision || revision.startsWith('-')) {
++    return undefined;
++  }
++
++  const result = spawnSync(
++    'git', // NOSONAR: argumentos constantes + revisao verificada
++    ['rev-parse', '--verify', '--end-of-options', `${revision}^{commit}`],
++    { encoding: 'utf-8', shell: false },
++  );
++  if (result.status !== 0) {
++    return undefined;
++  }
++
++  const commit = (result.stdout || '').trim();
++  return /^[0-9a-f]{40}$/i.test(commit) ? commit : undefined;
++}
++
+ /**
+  * Gets a changelist of the repository between two commits.
+  * Can compare between two commits, or get the diff of the working directory.
+@@ -44,7 +64,12 @@ export function getAuditScope(base?: string, head?: string): string {
+ 
+     // Add commit range if both base and head are provided
+     if (base !== undefined && head !== undefined) {
+-        args.push(base, head);
++        const baseCommit = resolveCommitRevision(base);
++        const headCommit = resolveCommitRevision(head);
++        if (!baseCommit || !headCommit) {
++          return '';
++        }
++        args.push(baseCommit, headCommit);
+     }
+     // Otherwise, if this is a GitHub repository, use origin/HEAD as the base
+     else if (isGitHubRepository()) {
+@@ -52,13 +77,17 @@ export function getAuditScope(base?: string, head?: string): string {
+     }
+     try {
+         const diff = (
+-        spawnSync('git', args, {
++        spawnSync('git', args, { // NOSONAR
+             encoding: 'utf-8',
++            shell: false,
+         }).stdout || ''
+         ).trim();
+ 
+         return diff;
+-    } catch (_error) {
++    } catch (error) {
++        if (process.env.DEBUG) {
++          console.debug('Failed to get git diff:', error);
++        }
+         return "";
+     }
+ }
+@@ -71,16 +100,18 @@ export function getAuditScope(base?: string, head?: string): string {
+ export function getFilesToAudit(): string[] {
+   try {
+     const trackedFiles = (
+-      spawnSync('git', ['ls-files'], {
++      spawnSync('git', ['ls-files'], { // NOSONAR
+         encoding: 'utf-8',
++        shell: false,
+       }).stdout || ''
+     )
+       .trim()
+       .split('\n');
+ 
+     const untrackedFiles = (
+-      spawnSync('git', ['ls-files', '--others', '--exclude-standard'], {
++      spawnSync('git', ['ls-files', '--others', '--exclude-standard'], { // NOSONAR
+         encoding: 'utf-8',
++        shell: false,
+       }).stdout || ''
+     )
+       .trim()
+@@ -89,7 +120,7 @@ export function getFilesToAudit(): string[] {
+     const allFiles = [...trackedFiles, ...untrackedFiles].filter((f) => f !== '');
+ 
+     return allFiles.filter((filePath) => {
+-      const parts = filePath.split('/');
++      const parts = filePath.split(/[/\\]/);
+       
+       // Ignore if any part of the path is in IGNORED_FOLDERS
+       if (parts.some(part => IGNORED_FOLDERS.includes(part))) {
+@@ -134,7 +165,7 @@ export const getLineCount = (files: string[]): number => {
+     }
+   }
+   return totalLines;
+-}
++};
+ 
+ /**
+  * Detects the primary programming language of the project in the current working directory.
+@@ -156,7 +187,10 @@ export async function detectProjectLanguage(): Promise<'Node.js' | 'Python' | 'G
+     if (extensions.has('.go')) return 'Go';
+ 
+     return 'Unknown';
+-  } catch {
++  } catch (error) {
++    if (process.env.DEBUG) {
++      console.debug('Failed to detect project language:', error);
++    }
+     return 'Unknown';
+   }
+ }
+diff --git a/mcp-server/src/index.ts b/mcp-server/src/index.ts
+index b848c8c..aa4da38 100644
+--- a/mcp-server/src/index.ts
++++ b/mcp-server/src/index.ts
+@@ -9,48 +9,43 @@
+ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+ import { z } from 'zod';
+-import { promises as fs } from 'fs';
+-import { exec, execFile } from 'child_process';
+-import { promisify } from 'util';
+-import path from 'path';
+-import { getAuditScope, getFilesToAudit, getLineCount, detectProjectLanguage } from './filesystem.js';
++import { promises as fs } from 'node:fs';
++import path from 'node:path';
++import { getAuditScope, getFilesToAudit, getLineCount } from './filesystem.js';
+ import { findLineNumbers } from './security.js';
+ import { parseMarkdownToDict } from './parser.js';
+-import { SECURITY_DIR_NAME, POC_DIR_NAME, PATH_TRAVERSAL_TEMP_FILE } from './constants.js';
+-import { loadKnowledge, VulnerabilityType } from './knowledge.js';
++import { SECURITY_DIR_NAME } from './constants.js';
+ import { SECURITY_PATCH_CONTEXT_TOOL_NAME, SECURITY_PATCH_CONTEXT_TOOL_DESCRIPTION, SecurityPatchContextArgsSchema, getSecurityPatchContextMessages } from './tools/security_patch_context.js';
+ import { POC_CONTEXT_TOOL_NAME, POC_CONTEXT_TOOL_DESCRIPTION, PocContextArgsSchema, getPocContext } from './tools/poc_context.js';
+ import { RUN_POC_TOOL_NAME, RUN_POC_TOOL_DESCRIPTION, RunPocArgsSchema, getRunPocMessages } from './tools/run_poc.js';
+ 
+-// import { runPoc } from './poc.js';
+-
+ const server = new McpServer({
+   name: 'gemini-cli-security',
+   version: '0.1.0',
+ });
+ 
+-server.tool(
++(server as any).registerTool(
+   'find_line_numbers',
+-  'Finds the line numbers of a code snippet in a file.',
+   {
+-    filePath: z
+-      .string()
+-      .describe('The path to the file to with the security vulnerability.'),
+-    snippet: z
+-      .string()
+-      .describe('The code snippet to search for inside the file.'),
+-  } as any,
++    description: 'Finds the line numbers of a code snippet in a file.',
++    inputSchema: {
++      filePath: z.string().describe('The path to the file with the security vulnerability.'),
++      snippet: z.string().describe('The code snippet to search for inside the file.'),
++    },
++  },
+   (input: { filePath: string; snippet: string }) => findLineNumbers(input, { fs, path })
+ );
+ 
+-server.tool(
++(server as any).registerTool(
+   'get_audit_scope',
+-  'Gets the git diff of the current changes. Can optionally compare two specific branches.',
+   {
+-    base: z.string().optional().describe('The base branch or commit hash (e.g., "main").'),
+-    head: z.string().optional().describe('The head branch or commit hash (e.g., "feature-branch").'),
+-  } as any,
+-  ((args: { base?: string; head?: string }) => {
++    description: 'Gets the git diff of the current changes. Can optionally compare two specific branches.',
++    inputSchema: {
++      base: z.string().optional().describe('The base branch or commit hash (e.g., "main").'),
++      head: z.string().optional().describe('The head branch or commit hash (e.g., "feature-branch").'),
++    },
++  },
++  (args: { base?: string; head?: string }) => {
+     const diff = getAuditScope(args.base, args.head);
+     return {
+       content: [
+@@ -60,14 +55,16 @@ server.tool(
+         },
+       ],
+     };
+-  }) as any
++  }
+ );
+ 
+-server.tool(
++(server as any).registerTool(
+   'get_files_to_audit',
+-  'Lists relevant files for auditing by filtering out irrelevant files and folders.',
+-  {} as any,
+-  (() => {
++  {
++    description: 'Lists relevant files for auditing by filtering out irrelevant files and folders.',
++    inputSchema: {},
++  },
++  () => {
+     const files = getFilesToAudit();
+     return {
+       content: [
+@@ -77,21 +74,25 @@ server.tool(
+         },
+       ],
+     };
+-  }) as any
++  }
+ );
+ 
+-server.tool(
++(server as any).registerTool(
+   RUN_POC_TOOL_NAME,
+-  RUN_POC_TOOL_DESCRIPTION,
+-  RunPocArgsSchema.shape as any,
+-  getRunPocMessages as any
++  {
++    description: RUN_POC_TOOL_DESCRIPTION,
++    inputSchema: RunPocArgsSchema.shape,
++  },
++  getRunPocMessages
+ );
+ 
+-server.tool(
++(server as any).registerTool(
+   'convert_report_to_json',
+-  `Converts the Markdown security report into a JSON file named security_report.json in the ${SECURITY_DIR_NAME} folder.`,
+-  {} as any,
+-  (async () => {
++  {
++    description: `Converts the Markdown security report into a JSON file named security_report.json in the ${SECURITY_DIR_NAME} folder.`,
++    inputSchema: {},
++  },
++  async () => {
+     try {
+       const reportPath = path.join(process.cwd(), `${SECURITY_DIR_NAME}/DRAFT_SECURITY_REPORT.md`);
+       const outputPath = path.join(process.cwd(), `${SECURITY_DIR_NAME}/security_report.json`);
+@@ -114,7 +115,7 @@ server.tool(
+         isError: true
+       };
+     }
+-  }) as any
++  }
+ );
+ 
+ server.registerPrompt(
+@@ -160,17 +161,17 @@ server.registerPrompt(
+           },
+         },
+       ],
+-    }
++    };
+   },
+ );
+ 
+-server.registerTool(
++(server as any).registerTool(
+   POC_CONTEXT_TOOL_NAME,
+   {
+     description: POC_CONTEXT_TOOL_DESCRIPTION,
+-    inputSchema: PocContextArgsSchema as any,
++    inputSchema: PocContextArgsSchema,
+   },
+-  getPocContext as any
++  getPocContext
+ );
+ 
+ server.registerPrompt(
+@@ -217,91 +218,24 @@ server.registerPrompt(
+   })
+ );
+ 
+-server.tool(
++(server as any).registerTool(
+   SECURITY_PATCH_CONTEXT_TOOL_NAME,
+-  SECURITY_PATCH_CONTEXT_TOOL_DESCRIPTION,
+-  SecurityPatchContextArgsSchema.shape as any,
+-  getSecurityPatchContextMessages as any
+-);
+-
+-server.tool(
+-  'install_dependencies',
+-  'Executes a script file inside workspace.',
+   {
+-    scriptPath: z.string().describe('Absolute path to the script file to execute.'),
+-    targetFile: z.string().describe('The target file requiring dependencies.'),
+-    cwd: z.string().optional().describe('Execution directory (optional. overrides calculation).'),
+-  } as any,
+-  (async (input: { scriptPath: string; targetFile: string; cwd?: string }) => {
+-    try {
+-      const execFileAsync = promisify(execFile);
+-      let executionDir = input.cwd;
+-
+-      if (!executionDir) {
+-        const startDir = path.dirname(input.targetFile);
+-        executionDir = startDir;
+-
+-        let current = startDir;
+-        for (let i = 0; i < 5; i++) {
+-          try {
+-            const hasNode = await fs.access(path.join(current, 'package.json')).then(() => true).catch(() => false);
+-            const hasPy = await fs.access(path.join(current, 'requirements.txt')).then(() => true).catch(() => false);
+-            if (hasNode || hasPy) {
+-              executionDir = current;
+-              break;
+-            }
+-          } catch { }
+-          const parent = path.dirname(current);
+-          if (parent === current) break;
+-          current = parent;
+-        }
+-      }
+-
+-      await fs.chmod(input.scriptPath, 0o755);
+-      const output = await execFileAsync(input.scriptPath, { cwd: executionDir });
+-      return {
+-        content: [
+-          {
+-            type: 'text',
+-            text: JSON.stringify({
+-              stdout: output.stdout,
+-              stderr: output.stderr,
+-            }),
+-          },
+-        ],
+-      };
+-    } catch (error: any) {
+-      return {
+-        content: [
+-          {
+-            type: 'text',
+-            text: JSON.stringify({
+-              error: error.message || String(error),
+-              stdout: error.stdout || '',
+-              stderr: error.stderr || '',
+-            }),
+-          },
+-        ],
+-        isError: true,
+-      };
+-    }
+-  }) as any
++    description: SECURITY_PATCH_CONTEXT_TOOL_DESCRIPTION,
++    inputSchema: SecurityPatchContextArgsSchema.shape,
++  },
++  getSecurityPatchContextMessages
+ );
+ 
+-async function startServer() {
+-  const transport = new StdioServerTransport();
+-  await server.connect(transport);
+-}
+-
+-server.tool(
++(server as any).registerTool(
+   'get_line_count',
+-  'Gets the total line count of a list of files.',
+   {
+-    files: z
+-      .array(z.string())
+-      .describe('A list of file paths.'),
+-  } as any,
+-  ((input: {files: string[]}) => {
++    description: 'Gets the total line count of a list of files.',
++    inputSchema: {
++      files: z.array(z.string()).describe('A list of file paths.'),
++    },
++  },
++  (input: { files: string[] }) => {
+     const totalLines = getLineCount(input.files);
+     return {
+       content: [
+@@ -311,7 +245,12 @@ server.tool(
+         },
+       ],
+     };
+-  }) as any
++  }
+ );
+ 
+-startServer();
++async function startServer(): Promise<void> {
++  const transport = new StdioServerTransport();
++  await server.connect(transport);
++}
++
++await startServer();
+diff --git a/mcp-server/src/knowledge.ts b/mcp-server/src/knowledge.ts
+index dc281b2..5aa06a8 100644
+--- a/mcp-server/src/knowledge.ts
++++ b/mcp-server/src/knowledge.ts
+@@ -4,9 +4,9 @@
+  * SPDX-License-Identifier: Apache-2.0
+  */
+ 
+-import { promises as fs } from 'fs';
+-import path from 'path';
+-import { fileURLToPath } from 'url';
++import { promises as fs } from 'node:fs';
++import path from 'node:path';
++import { fileURLToPath } from 'node:url';
+ 
+ export enum VulnerabilityType {
+   ScanDeps = 'scan_deps',
+@@ -22,14 +22,14 @@ const KNOWLEDGE_BASE_DIR = path.join(__dirname, 'knowledge');
+  * Loads the knowledge base article for a specific vulnerability.
+  */
+ export async function loadKnowledge(vulnerability: string): Promise<string> {
+-  const safeVulnerability = vulnerability.replace(/[^a-z0-9_]/gi, '');
++  const safeVulnerability = vulnerability.replaceAll(/[^a-z0-9_]/gi, '');
+   const filePath = path.join(KNOWLEDGE_BASE_DIR, `${safeVulnerability}.md`);
+ 
+   try {
+     const content = await fs.readFile(filePath, 'utf-8');
+     return content;
+   } catch (error) {
+-    if ((error as any).code === 'ENOENT') {
++    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+       return `No specific knowledge base article found for vulnerability: ${vulnerability}. please rely on your general security knowledge.`;
+     }
+     throw error;
+diff --git a/mcp-server/src/parser.ts b/mcp-server/src/parser.ts
+index 9e80c0c..1dffa49 100644
+--- a/mcp-server/src/parser.ts
++++ b/mcp-server/src/parser.ts
+@@ -23,57 +23,69 @@ export interface Finding {
+   codeSuggestion?: string | null;
+ }
+ 
+-const FIELD_NAMES = [
+-  'Vulnerability',
+-  'Vulnerability Type',
+-  'Severity',
+-  'Source',
+-  'Sink',
+-  'Data',
+-  'Data Type',
+-  'Line',
+-  'Description',
+-  'Recommendation',
+-].join('|'); // add labels here
+-const patternCache = new Map<string, RegExp>();
+-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+-
+-/**
+- * Builds and caches a regex pattern for a given label to extract its content from a markdown section.
+- * The pattern looks for the label followed by a colon and captures everything until the next field or end of section.
+- *
+- * @param label - The label for which to build the regex pattern (e.g., "Vulnerability", "Severity").
+- * @returns A RegExp object that can be used to extract the content for the specified label.
+- */
+-const buildPattern = (label: string) => {
+-  const key = label.toLowerCase();
+-  if (patternCache.has(key)) return patternCache.get(key)!;
+-  const escapedLabel = escapeRegExp(label);
+-  const rx = new RegExp(
+-    `(?:-?\\s*\\**)?${escapedLabel}\\**:\\s*([\\s\\S]*?)(?=\\n(?:-?\\s*\\**)?(?:${FIELD_NAMES})|$)`,
+-    'i'
+-  );
+-  patternCache.set(key, rx);
+-  return rx;
+-};
++const KNOWN_FIELDS = new Set([
++  'vulnerability',
++  'vulnerability type',
++  'severity',
++  'source location',
++  'sink location',
++  'line content',
++  'source',
++  'sink',
++  'data',
++  'data type',
++  'line',
++  'description',
++  'recommendation',
++]);
+ 
+ /**
+  * Helper function to extract a specific field from a markdown section using a label.
+- * It constructs a regex pattern based on the label and captures the content until the next field or end of section.
++ * Linear O(N) parsing completely immune to ReDoS and regex complexity issues.
+  *
+  * @param section - The markdown section to search within.
+  * @param label - The label of the field to extract (e.g., "Vulnerability", "Severity").
+  * @returns The extracted content for the specified label, or null if not found.
+  */
+ function extractFromSection(section: string, label: string): string | null {
+-  const pattern = buildPattern(label);
+-  const match = section.match(pattern);
+-  return match ? match[1].trim() : null;
++  const lines = section.split('\n');
++  const target = label.toLowerCase().trim();
++  let capturing = false;
++  const resultLines: string[] = [];
++
++  for (const line of lines) {
++    const trimmed = line.trim();
++    const colonIdx = trimmed.indexOf(':');
++    if (colonIdx !== -1) {
++      const candidate = trimmed
++        .slice(0, colonIdx)
++        .replace(/^[-* ]+/, '')
++        .replace(/[*_`]/g, '')
++        .trim()
++        .toLowerCase();
++
++      if (candidate === target) {
++        capturing = true;
++        const initialVal = trimmed.slice(colonIdx + 1).trim();
++        if (initialVal) {
++          resultLines.push(initialVal);
++        }
++        continue;
++      } else if (capturing && KNOWN_FIELDS.has(candidate)) {
++        break;
++      }
++    }
++
++    if (capturing) {
++      resultLines.push(line);
++    }
++  }
++
++  return capturing ? resultLines.join('\n').trim() : null;
+ }
+ 
+ /**
+  * Parses a location string into a structured Location object.
+- * The string can be in formats like "path/to/file.js:10-20", "path/to/file.js:10", or just "path/to/file.js".
+  *
+  * @param locationStr - The location string to parse.
+  * @returns A Location object with file, startLine, and endLine properties.
+@@ -83,20 +95,18 @@ function parseLocation(locationStr: string | null): Location {
+     return { file: null, startLine: null, endLine: null };
+   }
+ 
+-  const cleanStr = locationStr.replace(/`/g, '').trim();
+-  // Regex: path/file.ext:start-end or path/file.ext:line
+-  // Matches: file.ext:12-34 OR file.ext:12 OR file.ext
+-  const match = cleanStr.match(/^([^:]+)(?::(\d+)(?:-(\d+))?)?$/);
++  const cleanStr = locationStr.replaceAll('`', '').trim();
++  const match = /^([^:]+)(?::(\d+)(?:-(\d+))?)?$/.exec(cleanStr);
+ 
+   if (match) {
+     const filePath = match[1].trim();
+     let start: number | null = null;
+     let end: number | null = null;
+     if (match[2] && match[3]) {
+-      start = parseInt(match[2], 10);
+-      end = parseInt(match[3], 10);
++      start = Number.parseInt(match[2], 10);
++      end = Number.parseInt(match[3], 10);
+     } else if (match[2]) {
+-      start = parseInt(match[2], 10);
++      start = Number.parseInt(match[2], 10);
+       end = start;
+     }
+     return { file: filePath, startLine: start, endLine: end };
+@@ -105,68 +115,76 @@ function parseLocation(locationStr: string | null): Location {
+   return { file: cleanStr, startLine: null, endLine: null };
+ }
+ 
++/**
++ * Extracts code suggestions and sanitizes recommendation text.
++ */
++function extractCodeSuggestion(rawRecommendation: string | null): { recommendation: string | null; codeSuggestion: string | null } {
++  if (!rawRecommendation) {
++    return { recommendation: null, codeSuggestion: null };
++  }
++
++  const codeStart = rawRecommendation.indexOf('```');
++  if (codeStart === -1) {
++    return { recommendation: rawRecommendation, codeSuggestion: null };
++  }
++
++  const codeEnd = rawRecommendation.indexOf('```', codeStart + 3);
++  if (codeEnd === -1) {
++    return { recommendation: rawRecommendation, codeSuggestion: null };
++  }
++
++  const rawBlock = rawRecommendation.slice(codeStart + 3, codeEnd);
++  const firstNewline = rawBlock.indexOf('\n');
++  const codeSuggestion = (firstNewline !== -1 ? rawBlock.slice(firstNewline + 1) : rawBlock).trim();
++  const recommendation = (rawRecommendation.slice(0, codeStart) + rawRecommendation.slice(codeEnd + 3)).trim();
++
++  return { recommendation, codeSuggestion };
++}
++
++/**
++ * Parses an individual finding section from markdown.
++ */
++function parseFindingSection(section: string): Finding {
++  const rawSource = extractFromSection(section, "Source Location");
++  const rawSink = extractFromSection(section, "Sink Location");
++
++  let lineContent = extractFromSection(section, "Line Content");
++  if (lineContent) {
++    lineContent = lineContent.replaceAll(/^```[a-z]*\n|```$/gm, '').trim();
++  }
++
++  const rawRec = extractFromSection(section, "Recommendation");
++  const { recommendation, codeSuggestion } = extractCodeSuggestion(rawRec);
++
++  return {
++    vulnerability: extractFromSection(section, "Vulnerability"),
++    vulnerabilityType: extractFromSection(section, "Vulnerability Type"),
++    severity: extractFromSection(section, "Severity"),
++    dataType: extractFromSection(section, "Data Type"),
++    sourceLocation: parseLocation(rawSource),
++    sinkLocation: parseLocation(rawSink),
++    lineContent,
++    description: extractFromSection(section, "Description"),
++    recommendation,
++    codeSuggestion
++  };
++}
++
+ /**
+  * Parses a markdown string containing security findings into a structured format.
+- * The markdown should follow a specific format where each finding starts with "Vulnerability:" and includes fields like "Severity:", "Source Location:", etc.
+- * The function uses regular expressions to extract the relevant information and returns an array of findings.
+  *
+  * @param content - The markdown string to parse.
+  * @returns An array of structured findings extracted from the markdown.
+  */
+ export function parseMarkdownToDict(content: string): Finding[] {
+-  const findings: Finding[] = [];
+-
+-  // TODO: Implement safeguards such as input length limits and complexity checks on the markdown content before parsing.
+-  // Consider using a more robust markdown parser library if performance becomes an issue.
+-
+-  // Remove markdown bullet points (only at line start), markdown emphasis, and preserve hyphens/underscores in text
+   const cleanContent = content
+-    .replace(/^\s*[\*\-]\s*/gm, '') // Remove bullet points at line start
+-    .replace(/\*\*/g, ''); // Remove ** markdown
+-  
+-  // Split by "Vulnerability:" preceded by newline
+-  const sections = cleanContent.split(/\n(?=#{1,6} |\s*Vulnerability:)/);
++    .replaceAll(/^[ \t]*[*\\-][ \t]*/gm, '')
++    .replaceAll('**', '');
+ 
+-  for (let section of sections) {
+-    section = section.trim();
+-    if (!section || !section.includes("Vulnerability:")) continue;
++  const sections = cleanContent.split(/\n(?=#{1,6}\s|[ \t]*Vulnerability:)/);
+ 
+-    const rawSource = extractFromSection(section, "Source Location");
+-    const rawSink = extractFromSection(section, "Sink Location");
+-
+-    let lineContent = extractFromSection(section, "Line Content");
+-    if (lineContent) {
+-      lineContent = lineContent.replace(/^```[a-z]*\n|```$/gm, '').trim();
+-    }
+-
+-    let codeSuggestion: string | null = null;
+-    let recommendation = extractFromSection(section, "Recommendation");
+-    if (recommendation) {
+-      // Extract code blocks from recommendation (```language...code...```)
+-      const codeMatch = recommendation.match(/```[^\n`]*\n?([\s\S]*?)```/);
+-      codeSuggestion = codeMatch ? codeMatch[1].trim() : null;
+-
+-      // Remove code blocks from recommendation text
+-      if (codeMatch) {
+-        recommendation = recommendation.replace(codeMatch[0], '').trim();
+-      } else {
+-        recommendation = recommendation.replace(/```[a-z]*\n[\s\S]*?```/g, '').trim();
+-      }
+-    }
+-
+-    findings.push({
+-      vulnerability: extractFromSection(section, "Vulnerability"),
+-      vulnerabilityType: extractFromSection(section, "Vulnerability Type"),
+-      severity: extractFromSection(section, "Severity"),
+-      dataType: extractFromSection(section, "Data Type"),
+-      sourceLocation: parseLocation(rawSource),
+-      sinkLocation: parseLocation(rawSink),
+-      lineContent,
+-      description: extractFromSection(section, "Description"),
+-      recommendation,
+-      codeSuggestion
+-    } as Finding);
+-  }
+-
+-  return findings;
++  return sections
++    .map(s => s.trim())
++    .filter(s => Boolean(s?.includes("Vulnerability:")))
++    .map(parseFindingSection);
+ }
+diff --git a/mcp-server/src/poc.test.ts b/mcp-server/src/poc.test.ts
+index 027ccc4..e27b6c1 100644
+--- a/mcp-server/src/poc.test.ts
++++ b/mcp-server/src/poc.test.ts
+@@ -5,7 +5,7 @@
+  */
+ 
+ import { describe, it, vi, expect } from 'vitest';
+-import { promises as fs, PathLike } from 'fs';
++import { PathLike } from 'node:fs';
+ import { runPoc } from './poc.js';
+ import { POC_DIR, PATH_TRAVERSAL_TEMP_FILE } from './constants.js';
+ 
+@@ -31,7 +31,6 @@ describe('runPoc', () => {
+   };
+ 
+   it('should execute a Node.js file', async () => {
+-    const mockExecAsync = vi.fn(async () => { return { stdout: '', stderr: '' }; });
+     const mockExecFileAsync = vi.fn(async () => { return { stdout: 'output', stderr: '' }; });
+ 
+     const result = await runPoc(
+@@ -42,12 +41,10 @@ describe('runPoc', () => {
+           writeFile: vi.fn(),
+         } as any, 
+         path: mockPath as any, 
+-        execAsync: mockExecAsync as any, 
+         execFileAsync: mockExecFileAsync as any 
+       }
+     );
+ 
+-    expect(mockExecAsync).toHaveBeenCalledTimes(0);
+     expect(mockExecFileAsync).toHaveBeenCalledTimes(1);
+     expect(mockExecFileAsync).toHaveBeenCalledWith('node', [`${POC_DIR}/test.js`], expect.any(Object));
+     expect(result.stdout).toBe('output');
+@@ -55,43 +52,34 @@ describe('runPoc', () => {
+   });
+ 
+   it('should execute a Python file', async () => {
+-    const mockExecAsync = vi.fn(async () => { return { stdout: '', stderr: '' }; });
+     const mockExecFileAsync = vi.fn(async () => { return { stdout: 'output', stderr: '' }; });
+ 
+     const result = await runPoc(
+       { filePath: `${POC_DIR}/test.py` },
+-      { fs: { access: vi.fn().mockRejectedValue(new Error()), writeFile: vi.fn() } as any, path: mockPath as any, execAsync: mockExecAsync as any, execFileAsync: mockExecFileAsync as any }
++      { fs: { access: vi.fn().mockRejectedValue(new Error()), writeFile: vi.fn() } as any, path: mockPath as any, execFileAsync: mockExecFileAsync as any }
+     );
+ 
+-    expect(mockExecAsync).toHaveBeenCalledWith(expect.stringContaining('python3 -m venv'));
+     expect(mockExecFileAsync).toHaveBeenCalledTimes(1);
+-    expect(mockExecFileAsync).toHaveBeenCalledWith(expect.stringContaining('python'), [`${POC_DIR}/test.py`], expect.any(Object));
++    expect(mockExecFileAsync).toHaveBeenCalledWith(expect.stringMatching(/^python/), [`${POC_DIR}/test.py`], expect.any(Object));
+     expect(result.stdout).toBe('output');
+     expect(result.stderr).toBe('');
+   });
+ 
+   it('should execute a Go file', async () => {
+-    const mockExecAsync = vi.fn(async () => { return { stdout: '', stderr: '' }; });
+     const mockExecFileAsync = vi.fn(async () => { return { stdout: 'output', stderr: '' }; });
+ 
+     const result = await runPoc(
+       { filePath: `${POC_DIR}/test.go` },
+-      { fs: { access: vi.fn().mockRejectedValue(new Error()), writeFile: vi.fn() } as any, path: mockPath as any, execAsync: mockExecAsync as any, execFileAsync: mockExecFileAsync as any }
++      { fs: { access: vi.fn().mockRejectedValue(new Error()), writeFile: vi.fn() } as any, path: mockPath as any, execFileAsync: mockExecFileAsync as any }
+     );
+ 
+-    expect(mockExecAsync).toHaveBeenCalledTimes(2);
+-    expect(mockExecAsync).toHaveBeenNthCalledWith(1, 'go mod init poc', { cwd: POC_DIR });
+-    expect(mockExecAsync).toHaveBeenNthCalledWith(2, 'go mod tidy', { cwd: POC_DIR });
+     expect(mockExecFileAsync).toHaveBeenCalledTimes(1);
+-    expect(mockExecFileAsync).toHaveBeenCalledWith('go', ['run', `${POC_DIR}/test.go`], expect.any(Object));
++    expect(mockExecFileAsync).toHaveBeenCalledWith('go', ['run', `${POC_DIR}/test.go`], expect.objectContaining({ env: expect.objectContaining({ GOPROXY: 'off', GOSUMDB: 'off' }) }));
+     expect(result.stdout).toBe('output');
+     expect(result.stderr).toBe('');
+   });
+ 
+   it('should handle execution errors', async () => {
+-    const mockExecAsync = vi.fn(async (cmd: string) => {
+-      return { stdout: '', stderr: '' };
+-    });
+     const mockExecFileAsync = vi.fn(async (file: string, args?: string[]) => {
+       throw new Error('Execution failed');
+     });
+@@ -101,7 +89,6 @@ describe('runPoc', () => {
+       { 
+         fs: { readFile: vi.fn(async () => '') } as any, 
+         path: mockPath as any, 
+-        execAsync: mockExecAsync as any, 
+         execFileAsync: mockExecFileAsync as any 
+       }
+     );
+@@ -112,22 +99,33 @@ describe('runPoc', () => {
+   });
+ 
+   it('should fail when accessing file outside of allowed directory', async () => {
+-    const mockExecAsync = vi.fn();
++    const mockWriteFile = vi.fn();
+     const mockExecFileAsync = vi.fn();
+ 
+     const result = await runPoc(
+-      { filePath: '/tmp/malicious.js' },
+-      { fs: { writeFile: vi.fn() } as any, path: mockPath as any, execAsync: mockExecAsync as any, execFileAsync: mockExecFileAsync as any }
++      { filePath: '/tmp/path_traversal_malicious.js' },
++      { fs: { writeFile: mockWriteFile } as any, path: mockPath as any, execFileAsync: mockExecFileAsync as any }
+     );
+ 
+     expect(result.isSecurityError).toBe(true);
+     expect(result.error).toContain('Security Error: PoC execution is restricted');
+-    expect(mockExecAsync).not.toHaveBeenCalled();
++    expect(mockWriteFile).not.toHaveBeenCalled();
++    expect(mockExecFileAsync).not.toHaveBeenCalled();
++  });
++
++  it('should reject TypeScript instead of invoking npx', async () => {
++    const mockExecFileAsync = vi.fn();
++
++    const result = await runPoc(
++      { filePath: `${POC_DIR}/test.ts` },
++      { fs: { access: vi.fn(), writeFile: vi.fn() } as any, path: mockPath as any, execFileAsync: mockExecFileAsync as any }
++    );
++
++    expect(result.error).toContain('Unsupported PoC extension: .ts');
+     expect(mockExecFileAsync).not.toHaveBeenCalled();
+   });
+ 
+   it('should cleanup path traversal temp file if it exists', async () => {
+-    const mockExecAsync = vi.fn(async () => { return { stdout: '', stderr: '' }; });
+     const mockExecFileAsync = vi.fn(async () => { return { stdout: 'output', stderr: '' }; });
+     const mockAccess = vi.fn();
+     const mockUnlink = vi.fn();
+@@ -148,7 +146,6 @@ describe('runPoc', () => {
+           readFile: vi.fn(async () => '')
+         } as any,
+         path: mockPath as any,
+-        execAsync: mockExecAsync as any,
+         execFileAsync: mockExecFileAsync as any
+       }
+     );
+@@ -156,4 +153,3 @@ describe('runPoc', () => {
+     expect(mockUnlink).toHaveBeenCalledWith(expect.stringContaining(PATH_TRAVERSAL_TEMP_FILE));
+   });
+ });
+-
+diff --git a/mcp-server/src/poc.ts b/mcp-server/src/poc.ts
+index 2f4198d..4e8526a 100644
+--- a/mcp-server/src/poc.ts
++++ b/mcp-server/src/poc.ts
+@@ -4,16 +4,14 @@
+  * SPDX-License-Identifier: Apache-2.0
+  */
+ 
+-import { promises as fs } from 'fs';
+-import path from 'path';
+-import { exec, execFile } from 'child_process';
+-import { promisify } from 'util';
++import { promises as fs } from 'node:fs';
++import path from 'node:path';
++import { execFile } from 'node:child_process';
++import { promisify } from 'node:util';
+ import { POC_DIR, PATH_TRAVERSAL_TEMP_FILE } from './constants.js';
+ 
+-const execAsync = promisify(exec);
+ const execFileAsync = promisify(execFile);
+ 
+-
+ export interface RunPocResult {
+   stdout: string;
+   stderr: string;
+@@ -21,29 +19,61 @@ export interface RunPocResult {
+   isSecurityError?: boolean;
+ }
+ 
++export interface PocDependencies {
++  fs?: typeof fs;
++  path?: typeof path;
++  execFileAsync?: typeof execFileAsync;
++}
++
++interface ResolvedDeps {
++  fs: typeof fs;
++  path: typeof path;
++  execFileAsync: typeof execFileAsync;
++}
++
++interface RunnerConfig {
++  runCmd: string;
++  runArgs: string[];
++  env?: NodeJS.ProcessEnv;
++}
++
++function resolveRunnerConfig(ext: string, filePath: string): RunnerConfig {
++  if (ext === '.py') {
++    return { runCmd: process.platform === 'win32' ? 'python' : 'python3', runArgs: [filePath] };
++  }
++  if (ext === '.go') {
++    return {
++      runCmd: 'go',
++      runArgs: ['run', filePath],
++      // A PoC must never resolve or download modules during execution.
++      env: { ...process.env, GOPROXY: 'off', GOSUMDB: 'off' },
++    };
++  }
++  if (ext === '.js' || ext === '.cjs' || ext === '.mjs') {
++    return { runCmd: 'node', runArgs: [filePath] };
++  }
++  throw new Error(`Unsupported PoC extension: ${ext || '(none)'}. Use .js, .cjs, .mjs, .py, or .go with dependencies already provisioned.`);
++}
++
+ export async function runPoc(
+   {
+     filePath,
+   }: {
+     filePath: string;
+   },
+-  dependencies: { fs: typeof fs; path: typeof path; execAsync: typeof execAsync; execFileAsync: typeof execFileAsync } = { fs, path, execAsync, execFileAsync }
++  dependencies?: PocDependencies
+ ): Promise<RunPocResult> {
++  const deps: ResolvedDeps = {
++    fs: dependencies?.fs ?? fs,
++    path: dependencies?.path ?? path,
++    execFileAsync: dependencies?.execFileAsync ?? execFileAsync,
++  };
++
+   try {
+-    const pocDir = dependencies.path.dirname(filePath);
+-    const pocFileName = dependencies.path.basename(filePath);
++    const resolvedFilePath = deps.path.resolve(filePath);
++    const safePocDir = deps.path.resolve(process.cwd(), POC_DIR);
+ 
+-    // Only write the path traversal temp file if the PoC is actually for a path traversal vulnerability.
+-    if (pocFileName.includes('path_traversal')) {
+-      const tempFilePath = dependencies.path.join(process.cwd(), PATH_TRAVERSAL_TEMP_FILE);
+-      await dependencies.fs.writeFile(tempFilePath, 'This is a path traversal test file to verify the vulnerability.');
+-    }
+-
+-    // Validate that the filePath is within the safe PoC directory
+-    const resolvedFilePath = dependencies.path.resolve(filePath);
+-    const safePocDir = dependencies.path.resolve(process.cwd(), POC_DIR);
+-
+-    if (!resolvedFilePath.startsWith(safePocDir + dependencies.path.sep)) {
++    if (!resolvedFilePath.startsWith(safePocDir + deps.path.sep)) {
+       return {
+         stdout: '',
+         stderr: '',
+@@ -52,125 +82,32 @@ export async function runPoc(
+       };
+     }
+ 
+-    const ext = dependencies.path.extname(filePath).toLowerCase();
+-
+-    let installCmd: string | null = null;
+-    let runCmd: string;
+-    let runArgs: string[];
+-
+-    if (ext === '.py') {
+-      const venvDir = dependencies.path.join(pocDir, '.venv');
+-      const isWindows = process.platform === 'win32';
+-      const pythonBin = isWindows
+-        ? dependencies.path.join(venvDir, 'Scripts', 'python.exe')
+-        : dependencies.path.join(venvDir, 'bin', 'python');
+-
+-      try {
+-        await dependencies.fs.access(pythonBin);
+-      } catch {
+-        try {
+-          await dependencies.execAsync(`python3 -m venv "${venvDir}"`);
+-        } catch {
+-          await dependencies.execAsync(`python -m venv "${venvDir}"`);
+-        }
+-      }
+-
+-      runCmd = pythonBin;
+-      runArgs = [filePath];
+-
+-      const projectRoot = process.cwd();
+-      const checkExists = async (p: string) =>
+-        dependencies.fs.access(p).then(() => true).catch(() => false);
+-
+-      const hasProjectPyproject = await checkExists(dependencies.path.join(projectRoot, 'pyproject.toml'));
+-      const hasProjectRequirements = await checkExists(dependencies.path.join(projectRoot, 'requirements.txt'));
+-
+-      if (hasProjectPyproject) {
+-        await dependencies.execAsync(`"${pythonBin}" -m pip install -e "${projectRoot}"`).catch(() => { });
+-      } else if (hasProjectRequirements) {
+-        await dependencies.execAsync(`"${pythonBin}" -m pip install -r "${dependencies.path.join(projectRoot, 'requirements.txt')}"`).catch(() => { });
+-      }
+-
+-      const hasPocPyproject = await checkExists(dependencies.path.join(pocDir, 'pyproject.toml'));
+-      const hasPocRequirements = await checkExists(dependencies.path.join(pocDir, 'requirements.txt'));
+-
+-      if (hasPocPyproject) {
+-        await dependencies.execAsync(`"${pythonBin}" -m pip install .`, { cwd: pocDir }).catch(() => { });
+-      }
+-      if (hasPocRequirements) {
+-        await dependencies.execAsync(`"${pythonBin}" -m pip install -r requirements.txt`, { cwd: pocDir }).catch(() => { });
+-      }
+-    } else if (ext === '.go') {
+-      runCmd = 'go';
+-      runArgs = ['run', filePath];
+-
+-      const hasGoMod = await dependencies.fs.access(dependencies.path.join(pocDir, 'go.mod')).then(() => true).catch(() => false);
+-      if (!hasGoMod) {
+-        await dependencies.execAsync('go mod init poc', { cwd: pocDir }).catch(() => { });
+-      }
+-
+-      installCmd = 'go mod tidy';
+-    } else {
+-      if (ext === '.ts') {
+-        runCmd = 'npx';
+-        runArgs = ['ts-node', filePath];
+-      } else {
+-        runCmd = 'node';
+-        runArgs = [filePath];
+-      }
+-      installCmd = null;
++    const pocDir = deps.path.dirname(filePath);
++    const pocFileName = deps.path.basename(filePath);
++    if (pocFileName.includes('path_traversal')) {
++      const tempFilePath = deps.path.join(process.cwd(), PATH_TRAVERSAL_TEMP_FILE);
++      await deps.fs.writeFile(tempFilePath, 'This is a path traversal test file to verify the vulnerability.');
+     }
+ 
+-    if (installCmd) {
+-      try {
+-        await dependencies.execAsync(installCmd, { cwd: pocDir });
+-      } catch (error) {
+-        // Ignore errors from install step, as it might fail if no dependency configuration file (e.g., package.json, requirements.txt, go.mod) exists,
+-        // but we still want to attempt running the PoC.
+-      }
+-    }
++    const ext = deps.path.extname(filePath).toLowerCase();
++    const runnerConfig = resolveRunnerConfig(ext, filePath);
++
++    const execOptions: { cwd: string; env?: NodeJS.ProcessEnv } = { cwd: pocDir };
++    if (runnerConfig.env) execOptions.env = runnerConfig.env;
+ 
+     let output: { stdout: string; stderr: string };
+-
+-    const execOptions: any = { cwd: pocDir };
+-    if (runCmd === 'npx') {
+-      execOptions.env = {
+-        ...process.env,
+-        npm_config_cache: dependencies.path.join(pocDir, '.npx_cache')
+-      };
+-    }
+-
+     try {
+-      output = (await dependencies.execFileAsync(runCmd, runArgs, execOptions)) as unknown as { stdout: string; stderr: string };
+-    } catch (error: any) {
+-      const errorMessage = error.message || '';
+-      const errorOutput = (error.stdout || '') + (error.stderr || '');
+-
+-      // If we are running a Python script in a venv and it fails due to missing modules,
+-      // try enabling system site packages for the venv and retry.
+-      if (ext === '.py' && (errorMessage.includes('ModuleNotFoundError') || errorOutput.includes('ModuleNotFoundError'))) {
+-        try {
+-          const venvDir = dependencies.path.join(pocDir, '.venv');
+-          // Update the venv to include system site packages
+-          try {
+-            await dependencies.execAsync(`python3 -m venv --system-site-packages "${venvDir}"`);
+-          } catch {
+-            await dependencies.execAsync(`python -m venv --system-site-packages "${venvDir}"`);
+-          }
+-
+-          output = (await dependencies.execFileAsync(runCmd, runArgs, execOptions)) as unknown as { stdout: string; stderr: string };
+-        } catch (retryError: any) {
+-          // If retry fails, throw the original error (or the retry error if it's new/different)
+-          throw retryError;
+-        }
+-      } else {
+-        throw error;
+-      }
++      const res = await (deps.execFileAsync as (cmd: string, args: string[], opts: unknown) => Promise<{ stdout: string; stderr: string }>)(
++        runnerConfig.runCmd,
++        runnerConfig.runArgs,
++        execOptions
++      );
++      output = { stdout: res.stdout, stderr: res.stderr };
++    } catch (error: unknown) {
++      throw error;
+     }
+ 
+-    const { stdout, stderr } = output;
+-
+-    return { stdout, stderr };
++    return output;
+   } catch (error) {
+     let errorMessage = 'An unknown error occurred.';
+     let stdout = '';
+@@ -178,9 +115,9 @@ export async function runPoc(
+ 
+     if (error instanceof Error) {
+       errorMessage = error.message;
+-      // Capture stdout/stderr from the error object if available (execFile throws with these)
+-      stdout = (error as any).stdout || '';
+-      stderr = (error as any).stderr || '';
++      const errObj = error as { stdout?: string; stderr?: string };
++      stdout = errObj.stdout || '';
++      stderr = errObj.stderr || '';
+     }
+ 
+     return {
+@@ -189,13 +126,12 @@ export async function runPoc(
+       stderr,
+     };
+   } finally {
+-    // Cleanup path traversal temp file if it exists
+-    const tempFilePath = dependencies.path.join(process.cwd(), PATH_TRAVERSAL_TEMP_FILE);
++    const tempFilePath = deps.path.join(process.cwd(), PATH_TRAVERSAL_TEMP_FILE);
+     try {
+-      await dependencies.fs.access(tempFilePath);
+-      await dependencies.fs.unlink(tempFilePath);
++      await deps.fs.access(tempFilePath);
++      await deps.fs.unlink(tempFilePath);
+     } catch {
+-      // Ignore if file doesn't exist or can't be deleted
++      // Ignore if file doesn't exist
+     }
+   }
+ }
+diff --git a/mcp-server/src/security.ts b/mcp-server/src/security.ts
+index 674a591..5234661 100755
+--- a/mcp-server/src/security.ts
++++ b/mcp-server/src/security.ts
+@@ -5,8 +5,26 @@
+  */
+ 
+ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+-import { promises as fs } from 'fs';
+-import path from 'path';
++import { promises as fs } from 'node:fs';
++import path from 'node:path';
++
++export interface SecurityDependencies {
++  fs?: typeof fs;
++  path?: typeof path;
++}
++
++function matchSnippetRange(lines: string[], snippetLines: string[], potentialStartLine: number): boolean {
++  for (let j = 1; j < snippetLines.length; j++) {
++    const fileLineIndex = potentialStartLine - 1 + j;
++    if (
++      fileLineIndex >= lines.length ||
++      lines[fileLineIndex].trim() !== snippetLines[j].trim()
++    ) {
++      return false;
++    }
++  }
++  return true;
++}
+ 
+ export async function findLineNumbers(
+   {
+@@ -16,14 +34,17 @@ export async function findLineNumbers(
+     filePath: string;
+     snippet: string;
+   },
+-  dependencies: { fs: typeof fs; path: typeof path } = { fs, path }
++  dependencies?: SecurityDependencies
+ ): Promise<CallToolResult> {
++  const fsDep = dependencies?.fs ?? fs;
++  const pathDep = dependencies?.path ?? path;
++
+   try {
+     const CWD = process.cwd();
+-    const safeFilePath = await dependencies.fs.realpath(
+-      dependencies.path.resolve(CWD, filePath)
++    const safeFilePath = await fsDep.realpath(
++      pathDep.resolve(CWD, filePath)
+     );
+-    if (!safeFilePath.startsWith(CWD + dependencies.path.sep)) {
++    if (!safeFilePath.startsWith(CWD + pathDep.sep)) {
+       return {
+         content: [
+           {
+@@ -35,12 +56,10 @@ export async function findLineNumbers(
+         ],
+       };
+     }
+-    const content = await dependencies.fs.readFile(safeFilePath, 'utf-8');
++    const content = await fsDep.readFile(safeFilePath, 'utf-8');
+     const lines = content.split('\n');
+     const snippetLines = snippet.trim().split('\n');
+     const snippetLineCount = snippetLines.length;
+-    let startLine = -1;
+-    let endLine = -1;
+ 
+     if (!snippet.trim()) {
+       return {
+@@ -56,27 +75,22 @@ export async function findLineNumbers(
+     const lineToNumbers = new Map<string, number[]>();
+     for (let i = 0; i < lines.length; i++) {
+       const trimmedLine = lines[i].trim();
+-      if (!lineToNumbers.has(trimmedLine)) {
+-        lineToNumbers.set(trimmedLine, []);
++      let entries = lineToNumbers.get(trimmedLine);
++      if (!entries) {
++        entries = [];
++        lineToNumbers.set(trimmedLine, entries);
+       }
+-      lineToNumbers.get(trimmedLine)!.push(i + 1);
++      entries.push(i + 1);
+     }
+ 
+     const firstSnippetLine = snippetLines[0].trim();
+-    if (lineToNumbers.has(firstSnippetLine)) {
+-      for (const potentialStartLine of lineToNumbers.get(firstSnippetLine)!) {
+-        let matchFound = true;
+-        for (let j = 1; j < snippetLineCount; j++) {
+-          const fileLineIndex = potentialStartLine - 1 + j;
+-          if (
+-            fileLineIndex >= lines.length ||
+-            lines[fileLineIndex].trim() !== snippetLines[j].trim()
+-          ) {
+-            matchFound = false;
+-            break;
+-          }
+-        }
+-        if (matchFound) {
++    const potentialStartLines = lineToNumbers.get(firstSnippetLine);
++    let startLine = -1;
++    let endLine = -1;
++
++    if (potentialStartLines) {
++      for (const potentialStartLine of potentialStartLines) {
++        if (matchSnippetRange(lines, snippetLines, potentialStartLine)) {
+           startLine = potentialStartLine;
+           endLine = potentialStartLine + snippetLineCount - 1;
+           break;
+diff --git a/mcp-server/src/tools/poc_context.ts b/mcp-server/src/tools/poc_context.ts
+index a663bde..40fefb4 100644
+--- a/mcp-server/src/tools/poc_context.ts
++++ b/mcp-server/src/tools/poc_context.ts
+@@ -5,8 +5,8 @@
+  */
+ 
+ import { z } from 'zod';
+-import { promises as fs } from 'fs';
+-import path from 'path';
++import { promises as fs } from 'node:fs';
++import path from 'node:path';
+ import { SECURITY_DIR_NAME, POC_DIR_NAME, PATH_TRAVERSAL_TEMP_FILE } from '../constants.js';
+ import { VulnerabilityType } from '../knowledge.js';
+ import { detectProjectLanguage } from '../filesystem.js';
+diff --git a/mcp-server/src/tools/security_patch_context.test.ts b/mcp-server/src/tools/security_patch_context.test.ts
+index c75b78a..3ad9dc5 100644
+--- a/mcp-server/src/tools/security_patch_context.test.ts
++++ b/mcp-server/src/tools/security_patch_context.test.ts
+@@ -5,6 +5,7 @@
+  */
+ 
+ import { describe, it, expect, vi, beforeEach } from 'vitest';
++import path from 'node:path';
+ import { getSecurityPatchContextMessages, SecurityPatchContextArgs } from './security_patch_context.js';
+ import { VulnerabilityType } from '../knowledge.js';
+ 
+@@ -24,17 +25,23 @@ vi.mock('../knowledge.js', async () => {
+ // Mock fs
+ const fsMocks = vi.hoisted(() => ({
+   readFile: vi.fn(),
++  realpath: vi.fn(),
++  stat: vi.fn(),
+ }));
+ 
+-vi.mock('fs', async () => ({
++vi.mock('node:fs', async () => ({
+   promises: {
+     readFile: fsMocks.readFile,
++    realpath: fsMocks.realpath,
++    stat: fsMocks.stat,
+   },
+ }));
+ 
+ describe('getSecurityPatchContextMessages', () => {
+   beforeEach(() => {
+     vi.clearAllMocks();
++    fsMocks.realpath.mockImplementation(async (candidate: string) => path.resolve(candidate));
++    fsMocks.stat.mockResolvedValue({ isFile: () => true, size: 1024 });
+   });
+ 
+   it('should generate context with knowledge and file content', async () => {
+@@ -43,7 +50,7 @@ describe('getSecurityPatchContextMessages', () => {
+ 
+     const args: SecurityPatchContextArgs = {
+       vulnerability: VulnerabilityType.PathTraversal,
+-      filePath: '/app/server.ts',
++      filePath: `${process.cwd()}/server.ts`,
+       pocFilePath: '',
+       vulnerabilityContext: 'Line 10: Unsafe input',
+     };
+@@ -67,7 +74,7 @@ describe('getSecurityPatchContextMessages', () => {
+ 
+     const args: SecurityPatchContextArgs = {
+       vulnerability: VulnerabilityType.PathTraversal,
+-      filePath: '/protected/file.ts',
++      filePath: `${process.cwd()}/protected-file.ts`,
+       pocFilePath: '',
+       vulnerabilityContext: 'Line 10: Unsafe input',
+     };
+@@ -77,4 +84,21 @@ describe('getSecurityPatchContextMessages', () => {
+ 
+     expect(content).toContain('Error reading file: Access denied');
+   });
+-});
+\ No newline at end of file
++
++  it('rejects a path outside the active workspace before reading it', async () => {
++    knowledgeMocks.loadKnowledge.mockResolvedValue('## Remediation Guide');
++    fsMocks.realpath.mockImplementation(async (candidate: string) =>
++      candidate === process.cwd() ? path.resolve(process.cwd()) : path.resolve('/outside/credential.txt')
++    );
++
++    const result = await getSecurityPatchContextMessages({
++      vulnerability: VulnerabilityType.PathTraversal,
++      filePath: '/outside/credential.txt',
++      pocFilePath: '',
++      vulnerabilityContext: 'Attempted escape',
++    });
++
++    expect(result.content[0].text).toContain('Security Error: file must resolve within the active workspace.');
++    expect(fsMocks.readFile).not.toHaveBeenCalled();
++  });
++});
+diff --git a/mcp-server/src/tools/security_patch_context.ts b/mcp-server/src/tools/security_patch_context.ts
+index 2981b8d..812990c 100644
+--- a/mcp-server/src/tools/security_patch_context.ts
++++ b/mcp-server/src/tools/security_patch_context.ts
+@@ -6,7 +6,8 @@
+ 
+ import { z } from 'zod';
+ import { loadKnowledge, VulnerabilityType } from '../knowledge.js';
+-import { promises as fs } from 'fs';
++import { promises as fs } from 'node:fs';
++import path from 'node:path';
+ 
+ export const SECURITY_PATCH_CONTEXT_TOOL_NAME = 'security_patch_context';
+ export const SECURITY_PATCH_CONTEXT_TOOL_DESCRIPTION = 'Fetches context about a security vulnerability in a given file. Do not call this tool directly from a user prompt; instead, you MUST invoke the `security-patcher` skill, which will orchestrate the use of this tool and the patching process.';
+@@ -20,6 +21,17 @@ export const SecurityPatchContextArgsSchema = z.object({
+ 
+ export type SecurityPatchContextArgs = z.infer<typeof SecurityPatchContextArgsSchema>;
+ 
++const MAX_PATCH_CONTEXT_BYTES = 512 * 1024;
++
++async function resolveWorkspaceFile(filePath: string): Promise<string> {
++  const workspaceRoot = await fs.realpath(process.env.GEMINI_WORKSPACE_PATH || process.cwd());
++  const resolvedFile = await fs.realpath(filePath);
++  if (resolvedFile === workspaceRoot || !resolvedFile.startsWith(workspaceRoot + path.sep)) {
++    throw new Error('Security Error: file must resolve within the active workspace.');
++  }
++  return resolvedFile;
++}
++
+ export async function getSecurityPatchContextMessages(args: SecurityPatchContextArgs) {
+   const { vulnerability, filePath, pocFilePath, vulnerabilityContext } = args;
+   const knowledge = await loadKnowledge(vulnerability);
+@@ -27,7 +39,12 @@ export async function getSecurityPatchContextMessages(args: SecurityPatchContext
+ 
+   if (filePath) {
+     try {
+-      fileContent = await fs.readFile(filePath, 'utf-8');
++      const resolvedFile = await resolveWorkspaceFile(filePath);
++      const stats = await fs.stat(resolvedFile);
++      if (!stats.isFile() || stats.size > MAX_PATCH_CONTEXT_BYTES) {
++        throw new Error('Security Error: file is not an allowed regular file or exceeds the context limit.');
++      }
++      fileContent = await fs.readFile(resolvedFile, 'utf-8');
+     } catch (e) {
+       fileContent = `Error reading file: ${(e as Error).message}`;
+     }
+diff --git a/skills/dependency-manager/SKILL.md b/skills/dependency-manager/SKILL.md
+deleted file mode 100644
+index f13b986..0000000
+--- a/skills/dependency-manager/SKILL.md
++++ /dev/null
+@@ -1,24 +0,0 @@
+----
+-name: dependency-manager
+-description: Safely resolve and install isolated dependencies for isolated sandboxes (PoC execution).
+----
+-
+-Proceed with these steps to ensure isolated execution while bypassing full installer locks.
+-
+-**Instructions:**
+-
+-1.  **Locate and Read Dependency Files**:
+-    *   Use an MCP read_file tool to locate and read the closest dependency manifest files walking up from the `targetFile` coordinate.
+-    *   **TypeScript/Node.js**: Grab `package.json` and `package-lock.json`.
+-    *   **Python**: Grab `requirements.txt` or `Pipfile.lock`.
+-    *   **C++**: Check for `conanfile.txt` or `CMakeLists.txt`.
+-    *   **Go**: Grab `go.mod` and `go.sum`.
+-    *   **Java**: Grab `pom.xml` (Maven) or `build.gradle`/`build.gradle.kts` (Gradle).
+-2.  **Extract Version Constraints**:
+-    *   Read the manifest files to find the exact version constraints for packages used in the PoC/verification code.
+-3.  **Bypass Full Installs (Node.js)**:
+-    *   Instruct commands to utilize prefixes like `npm_config_cache=.npx_cache` so downloads bypass global proxy auth locks.
+-4.  **Write Deterministic Running Script**:
+-    *   Generate a standalone dependency runner file on disk named deterministically e.g., `install_deps_<target_file_base>.sh` (or `.js`/`.py`).
+-5.  **Trigger Isolated Execute**:
+-    *   Call the `install_dependencies` Tool passing the absolute path to the generated script in the `scriptPath` argument AND providing `targetFile` as an argument to let the tool calculate isolated execution contexts.
+diff --git a/skills/poc/SKILL.md b/skills/poc/SKILL.md
+deleted file mode 100644
+index e3285a8..0000000
+--- a/skills/poc/SKILL.md
++++ /dev/null
+@@ -1,26 +0,0 @@
+----
+-name: poc
+-description: Sets up the necessary workspace, directories, and dependencies to test a vulnerability and generates a Proof-of-Concept.
+----
+-
+-You are a security expert. Your task is to generate a Proof-of-Concept (PoC) for a vulnerability. You MUST call the `poc_context` tool BEFORE attempting to write any PoC code. The `poc_context` tool will execute the setup and return the exact context and directory paths you need to actually generate the PoC script. If multiple vulnerabilities are present, use the ask_user tool to ask which one to test.
+-
+-**Your Steps:**
+-
+-1.  **Call `poc_context` Tool:**
+-    *   Extract the `problemStatement`, `vulnerabilityType`, and exact `sourceCodeLocation` from the user context. If the problemStatement does not contain the exact file path, you MUST use your search tools to find the vulnerable file in the codebase BEFORE calling the tool.
+-    *   Call the `poc_context` tool with these arguments.
+-    *   The tool will return JSON containing coordinates: `language`, `pocDir`, `pocFileName`, and `extraInstructions`. Keep these coordinates for the following steps.
+-
+-2.  **Use Dependency Manager Guidelines:**
+-    *   Use the `dependency-manager` skill to install dependencies for the PoC.
+-
+-3.  **Generate PoC:**
+-    *   The PoC directory `pocDir` has been created for your scratchwork.
+-    *   Generate your standalone script named exactly as `pocFileName` under the returned `pocDir`.
+-    *   Pay attention to any `extraInstructions` returned by `poc_context`.
+-
+-4.  **Run PoC:**
+-    *   Use the `run_poc` tool with the absolute file path to the generated PoC file to execute the code.
+-    *   Analyze the output to verify if the vulnerability is reproducible.
+-    *   If reproducible, use the `ask_user` tool to ask if the user wants to fix it.
+diff --git a/skills/security-patcher/SKILL.md b/skills/security-patcher/SKILL.md
+deleted file mode 100644
+index 32d84aa..0000000
+--- a/skills/security-patcher/SKILL.md
++++ /dev/null
+@@ -1,31 +0,0 @@
+----
+-name: security-patcher
+-description: Invoke this as your absolute first action before using any other tools whenever a user requests to fix, patch, or remediate a vulnerability. Do not perform manual research first.
+----
+-
+-You are a security expert. Your task is to patch security vulnerabilities in the user's code. Proceed with the following instructions using the context provided by the `security_patch_context` tool. Do not use any other context.
+-
+-**Your Steps:**
+-
+-1. **Pre-Requisites:**
+-    *   Check for the existence of a security report in the `.gemini_security/` directory.
+-    *   If a security report does not exist, kick off a `security:analyze` scan to build the required security context before proceeding.
+-    *   Identify and run the repository's existing test suite (e.g., `npm test`, `pytest`, `go test ./...`) to establish a working baseline. This proves the environment is healthy *before* you attempt to write a patch.
+-2. **Gather Context:**
+-    *   Use the `security_patch_context` tool to retrieve the specific context for the patch.
+-3. **Analyze and Prepare Patch:**
+-    *   Analyze the file content and the associated knowledge base rules returned from the context.
+-    *   Apply the secure coding patterns from the knowledge base to formulate a fix for the vulnerability in the target file.
+-    *   Output the complete fixed file content or a patch for the user to review.
+-4. **Confirm Verification Intent:**
+-    *   Use the `ask_user` tool to ask if they would like to verify the patch (Yes/No). If No, skip to step 5 (Apply Patch to Target File).
+-5. **Verify the Vulnerability Exists (Before Patching):**
+-    *   If a PoC doesn't exist, use the `security:setup_poc` tool to generate one.
+-    *   Execute the PoC using the `run_poc` tool **before** applying your patch to confirm that the vulnerability is reproducible.
+-6. **Apply Patch to Target File:**
+-    *   Apply your generated patch to the target vulnerable file.
+-
+-7.  **Verify the Vulnerability is Fixed (After Patching):**
+-    *   If you generated or verified a PoC in Step 4, execute the PoC again using the `run_poc` tool **after** applying your patch.
+-    *   Analyze the output to confirm the vulnerability is fixed and the patch did not break the file's primary functionality.
+-    *   Run any existing test files to ensure the patch did not break the file's primary functionality.
+\ No newline at end of file
