@@ -53,11 +53,26 @@ engine/llama_cpp/*.exe
 *.db-journal
 *.sqlite
 *.sqlite3
-.chroma_db/
+# O `*` cobre os backups renomeados. Ao mover um indice para
+# `.chroma_db.contaminado-<data>`, o diretorio deixa de casar com `.chroma_db/`
+# e 771 MB de binario aparecem como nao rastreados, a um `git add -A` de
+# entrarem no historico para sempre. Medido em 2026-08-28, logo depois de eu
+# mesmo criar o risco renomeando dois indices.
+.chroma_db*/
 data/chroma_db/
 queue/tasks.db
 *.lance
-.cerebro/agent-memory/
+
+# `.cerebro/agent-memory/` era ignorada INTEIRA ate 2026-08-28, e o efeito foi o
+# oposto do pretendido: a arvore guardava 23 arquivos .md de memoria agentica --
+# o aprendizado acumulado dos 19 agentes, que os proprios prompts mandavam
+# gravar la -- e NADA disso estava sob controle de versao. O motivo real do
+# ignore eram dois artefatos derivados: um render HTML de 20 MB e o banco Chroma.
+#
+# Mesmo defeito que `memory_rag.ignore_dirs` ja corrigira uma vez: nome solto
+# casa demais. A saida foi a mesma -- excluir o ARTEFATO por forma, nunca a
+# subarvore por nome. O `.chroma_db/` acima ja cobre o banco.
+.cerebro/agent-memory/**/*.html
 
 # 5. LOGS, TELEMETRIA & ARTEFATOS TEMPORARIOS ─────────────────────────────────
 logs/
