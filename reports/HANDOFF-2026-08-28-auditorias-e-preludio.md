@@ -5,15 +5,15 @@ escopo: multiprojeto
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T02:50-03:00
-atualizado_em: 2026-08-28T03:45-03:00
-commit: 6634a3f0
+atualizado_em: 2026-08-28T04:25-03:00
+commit: 9d02b9fa
 classes: [interno, medido]
 config_medida:
   raiz: C:/Users/rapha/.gemini
   branch: master
   suite_no_inicio: 415 passed
-  suite_no_fim: 487 passed
-  commits_da_sessao: 12
+  suite_no_fim: 493 passed
+  commits_da_sessao: 13
   data: 2026-08-27 a 2026-08-28
 verificado:
   - FRENTE 2 -- criterios da 13.F sondados nos DOIS estados, um a um, com
@@ -24,6 +24,11 @@ verificado:
     6 eram ilegiveis e os 10 parseiam apos a normalizacao
   - FRENTE 2 -- indice gerado contra o corpus real (121 arquivos), nunca
     sintetico; cadeia de supersede derivando OBSOLETO sem estado declarado
+  - FRENTE 5 -- 518 .md varridos por citacao de caminho; cada estreitamento
+    medido (1511 -> 46 -> 3) e as 4 suspeitas do recorte prescritivo conferidas
+    a mao, uma a uma
+  - FRENTE 5 -- criterio G6 provado nos dois estados; a isencao por
+    referencias_historicas testada contra vazamento para caminho nao declarado
   - FRENTE 1 -- corpus do RAG medido nos dois estados com o coletor real
     (470 -> 474) e a barreira de traversal exercitada (fonte ".." coleta 0)
   - FRENTE 1 -- 7 mutacoes aplicadas as guardas do indice, com baseline explicita
@@ -68,10 +73,17 @@ que este documento **supersede** para efeito de retomada.
 ## 1. Estado
 
 ```
-master 6634a3f0 · árvore limpa · suíte 415 → 487
+master 9d02b9fa · suíte 415 → 493
 ```
 
-Doze commits. Nada pela metade em lugar nenhum.
+Treze commits.
+
+> **A árvore NÃO está limpa, e não por minha causa.** Outra sessão está
+> editando este repositório em paralelo: três arquivos com modificação não
+> commitada (`scripts/cli/nexus.py`, `scripts/ops/record_index.py`,
+> `tests/test_patches_skills.py` — correções de lint sobre o meu trabalho) e um
+> registro novo não rastreado, `reports/HANDOFF-2026-08-28-browser-sota-cdp.md`.
+> Nada disso entrou nos meus commits. Ver §4.5.
 
 | Commit | O quê |
 | :--- | :--- |
@@ -86,8 +98,9 @@ Doze commits. Nada pela metade em lugar nenhum.
 | `9670b8a0` | Patches dos submódulos + handoff + frente 3 do plano |
 | `b3caaa1a` | **Frente 1 entregue:** índice canônico + regra de nomeação |
 | `6634a3f0` | **Frente 2 entregue:** `RECORD_INDEX` derivado + portão que lê o documento |
+| `9d02b9fa` | **Frente 5 entregue:** referência viva + isenção declarada |
 
-## 2. O que se aprendeu — dez lições com custo pago
+## 2. O que se aprendeu — doze lições com custo pago
 
 ### 2.1 Procurar o **habilitador**, não catalogar instâncias
 
@@ -187,6 +200,34 @@ Numa bateria em que cada sonda deve disparar um critério **específico**,
 bloqueou. É o refinamento da §2.5: lá o arnês contava "não rodou" como
 "reprovou"; aqui contava "reprovou por outro motivo" como "detector ativo".
 
+### 2.11 Quando a forma não separa, quem separa é a declaração
+
+Sete vezes um detector desta base reprovou a prosa que o documenta, e sete vezes
+a resposta foi **estreitar a forma**: pular linha que é só comentário, rastrear
+bloco de docstring, ignorar `$$`.
+
+Na oitava, a forma não separava. Um documento que cita `X` para **apontar** e um
+que cita `X` para dizer *"isto sumiu"* produzem a mesma sequência de caracteres,
+na mesma espécie de linha. Nenhuma regra estrutural distingue intenção.
+
+A saída não é isentar o arquivo — isso abre ponto cego exatamente no registro
+que fala dos caminhos mortos. É **declarar a exceção por item**, no frontmatter,
+onde o revisor a vê: `referencias_historicas: [...]`. Mesmo princípio do
+`caminhos:` da frente 2. **Quando a inferência não decide, o autor declara e o
+portão obedece à declaração — nunca ao palpite.**
+
+### 2.12 Trabalho concorrente é uma classe de risco, e `git add -A` é o vetor
+
+Outra sessão editou este repositório enquanto eu trabalhava. Meu `git add -A`
+varreu um handoff que não é meu para o stage; só não foi commitado porque conferi
+o `git status` antes. Duas sessões também acrescentaram **a mesma chave** ao
+mesmo frontmatter — e `yaml.safe_load` aceita chave repetida em silêncio, a
+última vencendo.
+
+Regra que passa a valer: **`git add` com caminhos explícitos**, e ler o
+`git status` antes de todo commit — não como cerimônia, mas porque o que aparece
+ali pode não ter sido você.
+
 ## 3. Padrão que se acumulou — calibração bayesiana
 
 **"Sinal verde desconectado" chegou a 15 instâncias catalogadas**, mais quatro
@@ -227,7 +268,9 @@ variantes novas nomeadas nesta sessão:
 
 ### 4.2 Execução — **mas nenhuma delas é livre de consequência**
 
-> **Frentes 1 e 2 saíram desta lista em 2026-08-28.** A 1 no commit `b3caaa1a`
+> **Frentes 1, 2 e 5 saíram desta lista em 2026-08-28.** A 5 no `9d02b9fa`
+> (referência morta em documento que prescreve vira critério de portão; isenção
+> declarada por caminho — §5.1 do plano). A 1 no commit `b3caaa1a`
 > (índice canônico das 5 famílias em `data/INDICE_CANONICO_GOVERNANCA.json`,
 > regra de nomeação, 11 guardas, 7 mutações — §1.6 do plano). A 2 no
 > `6634a3f0` (`RECORD_INDEX` derivado, `nexus index`, etapa 3 do pre-commit,
@@ -252,6 +295,26 @@ variantes novas nomeadas nesta sessão:
 - `_calculate_dynamic_context()` — inalcançável no `gemma_server`
 - Cópia raiz de `~/.gemini/tools/hybrid_router/`
 
+### 4.5 Trabalho de outra sessão — **não toquei**
+
+Descoberto em 2026-08-28 às ~04:00, com o repositório em uso concorrente:
+
+| Item | Estado |
+| :--- | :--- |
+| `reports/HANDOFF-2026-08-28-browser-sota-cdp.md` | **Não rastreado.** Handoff de endurecimento de Chrome/CDP. Foi ao stage pelo meu `git add -A` e eu o **retirei** |
+| `scripts/cli/nexus.py`, `scripts/ops/record_index.py`, `tests/test_patches_skills.py` | Modificados e **não commitados** — correções de lint sobre o meu trabalho desta sessão |
+
+**Duas coisas que o vértice precisa saber sobre esse handoff:**
+
+1. Ele registra um **risco P0 declarado pelo próprio autor**: *"uma credencial
+   materializada em argumento de MCP permanece um risco P0: requer rotação no
+   provedor e migração para mecanismo fora da linha de comando"*. Não verifiquei
+   nem toquei — só estou transportando o achado para onde ele seja visto.
+2. Se for commitado como está, **os dois portões o bloqueiam**: o frontmatter
+   não tem `verificado` nem `nao_verificado` (§13.B), e declara
+   `estado: bloqueado-por-baseline-de-qualidade`. O `estado` em si passa — meu
+   teste só proíbe declarar VIGENTE/SUSPEITO/OBSOLETO, que são derivados.
+
 ### 4.4 Meta-governança
 
 - **Candidato a POSTULADO:** a regra do portão de âncora distingue comentário
@@ -265,7 +328,11 @@ variantes novas nomeadas nesta sessão:
 ## 5. Prompt de continuação
 
 ```
-Retomando o NEXUS-CORE-SOTA (~/.gemini/Site), master 6634a3f0, suite 487.
+Retomando o NEXUS-CORE-SOTA (~/.gemini/Site), master 9d02b9fa, suite 493.
+
+ANTES DE QUALQUER COISA: `git status`. Outra sessao editou este repositorio em
+paralelo em 28/08 (secao 4.5 deste handoff). Nao commitar o que nao e seu, e
+usar `git add` com caminho explicito, nunca -A.
 
 LEIA PRIMEIRO, nesta ordem:
   1. reports/HANDOFF-2026-08-28-auditorias-e-preludio.md — secoes 2, 3 e 4
@@ -277,11 +344,14 @@ LEIA PRIMEIRO, nesta ordem:
   6. ~/.gemini/CLAUDE.md e Site/CLAUDE.md
 
 PROXIMO PASSO RECOMENDADO
-Frente 5 do plano 2-B (regras mestras e referenciais) ou frente 4 (routing).
-As frentes 1 e 2 fecharam a camada de GOVERNANCA DO REGISTRO: ha canonico
-declarado por familia, indice derivado, e 7 dos 8 criterios do portao ativos.
-O que sobra nas frentes 2 a 7 e majoritariamente ESTRUTURA DE ARQUIVO, e a
-frente 7 (higienizacao) continua sendo a ultima, por desenho.
+Frente 4 (routing) ou frente 6 (imports). As frentes 1, 2 e 5 fecharam a camada
+de GOVERNANCA DO REGISTRO: canonico declarado por familia, indice derivado,
+7 de 8 criterios do portao ativos, e referencia morta barrada no que prescreve.
+
+A frente 4 e a que destrava mais: enquanto nao se decidir se a autoridade e
+llm/routing_policy.py (declarada) ou llm/routing.py (executada), toda melhoria
+em qualquer uma tem chance de virar retrabalho. E ela e PRE-REQUISITO da frente
+6 no grafo da secao 8 do plano.
 
 Antes de qualquer frente nova, rodar `nexus index --suspeitos`. Se algum
 registro tiver virado SUSPEITO ou OBSOLETO desde 28/08, resolver isso primeiro:
@@ -313,11 +383,15 @@ REGRAS QUE VALEM SEMPRE AQUI
 - Regex ve campo; nao ve documento. Para documento, parser.
 - Numa bateria de sondas, conferir a MENSAGEM: returncode != 0 prova que algo
   bloqueou, nao que o alvo bloqueou.
+- Quando a FORMA nao separa citar de afirmar, a excecao se DECLARA por item no
+  frontmatter -- nunca se isenta o arquivo.
+- `git add` com caminho explicito. Ler o `git status` antes de commitar: pode
+  haver outra sessao no mesmo repositorio.
 - Remocao e destrutiva: ordem explicita do vertice, item a item.
 - Nao contornar hook que falha -- inclusive nao ampliando a excecao dele.
 
 LINHA DE BASE
-487 passed. Portao de ancora APROVADO, portao de registro APROVADO.
+493 passed. Portao de ancora APROVADO, portao de registro APROVADO.
 Pre-commit com EXIT real medido sem pipe. Indice: 9 VIGENTE, 0 SUSPEITO,
 1 OBSOLETO (o handoff de 27/08, corretamente aposentado).
 ```
