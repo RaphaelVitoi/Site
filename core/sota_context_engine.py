@@ -42,6 +42,9 @@ class ContextBucket:
     token_count: int = 0
     payload: Dict[str, Any] = field(default_factory=dict)
     hash_signature: str = ""
+    # Medido uma vez, na criacao. `token_count` e uma estimativa (chars // 4) e
+    # serve para orcamento de prompt; para teto de MEMORIA o que vale e byte.
+    bytes_payload: int = 0
 
     def is_expired(self) -> bool:
         return (time.time() - self.last_accessed) > self.ttl_seconds
@@ -83,16 +86,42 @@ class SotaContextCacheEngine:
             token_count=len(content) // 4,
             payload={"content": content},
             hash_signature=sig,
+            bytes_payload=len(content.encode("utf-8")),
         )
         self.buckets[bucket_id] = new_bucket
         self._enforce_lru_eviction()
         return new_bucket
+
+    def tamanho_mb(self) -> float:
+        """Quanto o cache ocupa, em MB. **Medido, nao estimado.**
+
+        Existia `max_cache_size_mb = 4096` desde sempre, atribuido no `__init__`
+        e **nunca lido**: a eviccao olhava `len(self.buckets) > 100`. O teto que
+        nomeava megabytes era medido em quantidade de baldes, e 100 baldes podem
+        ser 1 MB ou 400 MB dependendo do que cabe neles. Sem este metodo nao ha
+        como um guard de memoria vigiar esta camada.
+        """
+        return sum(b.bytes_payload for b in self.buckets.values()) / (1024 * 1024)
 
     def _enforce_lru_eviction(self) -> None:
         """Eviccao LRU automatica para impedir estouro de memoria RAM/Cache."""
         expired_keys = [k for k, v in self.buckets.items() if v.is_expired()]
         for k in expired_keys:
             del self.buckets[k]
+
+        # O TETO EM MB passa a valer. Antes so a contagem de baldes limitava, e
+        # `max_cache_size_mb` era decoracao. Evicta o efemero menos usado ate
+        # voltar abaixo do teto -- VRAM_HOT e RAM_COLD nao entram: a primeira e
+        # declarada como travada, a segunda ja e armazenamento frio.
+        if self.tamanho_mb() > self.max_cache_size_mb:
+            efemeros = sorted(
+                ((k, v) for k, v in self.buckets.items() if v.tier == CacheTier.CACHE_EPHEMERAL),
+                key=lambda kv: kv[1].last_accessed,
+            )
+            for k, _ in efemeros:
+                if self.tamanho_mb() <= self.max_cache_size_mb:
+                    break
+                del self.buckets[k]
 
         # Se ultrapassar contagem maxima, remove os mais antigos da camada efemera
         if len(self.buckets) > 100:
