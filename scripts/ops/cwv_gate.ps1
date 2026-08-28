@@ -11,6 +11,7 @@ param(
     [double]$InpThreshold = 200.0,
     [double]$TtfbThreshold = 800.0,
     [double]$MaxHeapThresholdMb = 128.0,
+    [int[]]$CdpPorts = @(9223, 9222),
     [string]$ReportDir = "$env:USERPROFILE\.gemini\Site\reports\cwv"
 )
 
@@ -41,16 +42,25 @@ if ($env:SKIP_CWV_GATE -eq '1') {
     Write-Host "                  O portao vai executar normalmente." -ForegroundColor Yellow
 }
 
-# CDP Handshake check
+# CDP Handshake check. O perfil administrativo canonico usa 9223; 9222 fica
+# como compatibilidade para a instancia padrao legada.
 $cdpActive = $false
-try {
-    $cdpVer = Invoke-RestMethod -Uri "http://127.0.0.1:9222/json/version" -TimeoutSec 2
-    if ($cdpVer -and $cdpVer.Browser) {
-        $cdpActive = $true
-        Write-Host "[CDP] Active runtime connection: $($cdpVer.Browser)" -ForegroundColor Green
+$cdpPort = $null
+foreach ($port in $CdpPorts) {
+    try {
+        $cdpVer = Invoke-RestMethod -Uri "http://127.0.0.1:$port/json/version" -TimeoutSec 2
+        if ($cdpVer -and $cdpVer.Browser) {
+            $cdpActive = $true
+            $cdpPort = $port
+            Write-Host "[CDP] Active runtime connection on ${port}: $($cdpVer.Browser)" -ForegroundColor Green
+            break
+        }
+    } catch {
+        continue
     }
-} catch {
-    Write-Host "[CDP] Background runtime offline - running synthetic baseline validation." -ForegroundColor DarkGray
+}
+if (-not $cdpActive) {
+    Write-Host "[CDP] Background runtime offline on ports $($CdpPorts -join ', ') - running synthetic baseline validation." -ForegroundColor DarkGray
 }
 
 # 1. Performance & Core Web Vitals Metrics
@@ -475,11 +485,40 @@ $reportJsonPath = Join-Path $ReportDir "cwv_report_$timestamp.json"
 $reportMdPath = Join-Path $ReportDir "cwv_report_$timestamp.md"
 $latestMdPath = Join-Path $ReportDir "latest_cwv_report.md"
 
+# --- VEREDITO UNICO -----------------------------------------------------------
+# Fonte de verdade unica para console, JSON, Markdown e codigo de saida.
+#
+# Ate 2026-08-28 havia DUAS regras. O relatorio dizia FRAGILE para qualquer
+# warning; o console reprovava a partir de 3 (secao 8: teto de 2). Com 0 erros e
+# 3 warnings o portao BLOQUEAVA (exit 1) enquanto o arquivo declarava "fragil" —
+# a mesma discordancia que a correcao anterior tinha comecado a fechar, so que
+# um degrau adiante. Duas expressoes para um veredito divergem por construcao:
+# a unica correcao estavel e nao ter a segunda.
+$TETO_DE_WARNINGS = 2
+$triState = if ($failures.Count -gt 0 -or $warnings.Count -gt $TETO_DE_WARNINGS) {
+    "FALHOU (VERMELHO)"
+} elseif ($warnings.Count -gt 0) {
+    "FRAGIL (AMARELO)"
+} else {
+    "SUCESSO (VERDE)"
+}
+$reportStatus = switch ($triState) {
+    "SUCESSO (VERDE)" { "PASSED" }
+    "FRAGIL (AMARELO)" { "FRAGILE" }
+    default { "FAILED" }
+}
+$reportStatusMarkdown = switch ($reportStatus) {
+    "PASSED" { "✅ **APPROVED (SOTA GOLD)**" }
+    "FRAGILE" { "⚠️ **FRAGILE (MEASUREMENT PENDING)**" }
+    default { "❌ **REJECTED**" }
+}
+
 $reportData = [ordered]@{
     Timestamp = (Get-Date).ToString("o")
     TargetUrl = $TargetUrl
     CdpActive = $cdpActive
-    Status = if ($failures.Count -eq 0) { "PASSED" } else { "FAILED" }
+    CdpPort = $cdpPort
+    Status = $reportStatus
     CoreWebVitals = $perfMetrics
     AccessibilityRules = $a11yRules
     SecurityRules = $secRules
@@ -493,8 +532,8 @@ $reportData | ConvertTo-Json -Depth 5 | Set-Content -Path $reportJsonPath -Encod
 $mdContent = @"
 # ⚡ SOTA Quality Gate, Security & SRI Audit Report
 **Timestamp:** $((Get-Date).ToString("yyyy-MM-dd HH:mm:ss"))
-**Target URL:** `$TargetUrl`
-**Status:** $(if ($failures.Count -eq 0) { "✅ **APPROVED (SOTA GOLD)**" } else { "❌ **REJECTED**" })
+**Target URL:** $TargetUrl
+**Status:** $reportStatusMarkdown
 
 ## 1. Core Web Vitals Summary
 $(if (-not $FASE1_MEDE) { "> **NAO MEDIDO.** Os valores abaixo sao literais de referencia, nao medicao desta execucao. Ver ``reports/POSTULADO-001-portao-cwv-fases-1-2-nao-medem.md``.`n" })
@@ -533,21 +572,19 @@ Write-Host "========= SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GO
 Write-Host "• Total de Erros:    $($failures.Count) (Teto Maximo Permitido: 0 | Peso: CRITICO)"
 Write-Host "• Total de Warnings: $($warnings.Count) (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)"
 
-$triState = "SUCESSO"
-if ($failures.Count -eq 0 -and $warnings.Count -eq 0) {
+# $triState ja foi derivado junto com o relatorio, de uma unica expressao. Aqui
+# so se IMPRIME o veredito — recalcula-lo seria reabrir a divergencia.
+if ($triState -eq "SUCESSO (VERDE)") {
     # A frase so pode dizer "5 Fases" quando as 5 tiverem medido. Enquanto
     # $FASE1_MEDE/$FASE2_MEDE forem falsos, este ramo e inalcancavel (as duas
     # geram warning) — a condicao fica explicita para o dia em que medirem.
     $fasesMedidas = 3 + [int]$FASE1_MEDE + [int]$FASE2_MEDE
-    $triState = "SUCESSO (VERDE)"
     Write-Host "• Status da Bateria: [$triState] Zero Erros e Zero Warnings nas $fasesMedidas Fases medidas do Quality Gate." -ForegroundColor Green
     Write-Host "• Homeostase Total:  Nenhum erro ou warning detectado nas $fasesMedidas fases medidas." -ForegroundColor Green
-} elseif ($failures.Count -eq 0 -and $warnings.Count -le 2) {
-    $triState = "FRAGIL (AMARELO)"
-    Write-Host "• Status da Bateria: [$triState] 0 Erros, mas detectados $($warnings.Count) warnings no Quality Gate." -ForegroundColor Yellow
+} elseif ($triState -eq "FRAGIL (AMARELO)") {
+    Write-Host "• Status da Bateria: [$triState] 0 Erros, mas detectados $($warnings.Count) warnings no Quality Gate (teto $TETO_DE_WARNINGS)." -ForegroundColor Yellow
 } else {
-    $triState = "FALHOU (VERMELHO)"
-    Write-Host "• Status da Bateria: [$triState] Bloqueio Termodinamico! ($($failures.Count) Erros, $($warnings.Count) Warnings)." -ForegroundColor Red
+    Write-Host "• Status da Bateria: [$triState] Bloqueio Termodinamico! ($($failures.Count) Erros, $($warnings.Count) Warnings, teto $TETO_DE_WARNINGS)." -ForegroundColor Red
 }
 
 if ($failures.Count -gt 0 -or $warnings.Count -gt 0) {

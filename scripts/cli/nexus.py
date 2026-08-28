@@ -2458,8 +2458,7 @@ def record_index_command(
     envelhece no primeiro registro editado sem rebuild, que e a divergencia que
     a propria 13.C adverte. O portao de pre-commit nao le o arquivo -- recalcula.
     """
-    sys.path.insert(0, str(BASE_DIR / "scripts" / "ops"))
-    from record_index import VIGENTE, construir, escrever
+    from scripts.ops.record_index import VIGENTE, construir, escrever
 
     indice = construir(BASE_DIR)
 

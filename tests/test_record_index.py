@@ -25,10 +25,13 @@ import pytest
 import yaml
 
 RAIZ = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(RAIZ / "scripts" / "ops"))
+if str(RAIZ) not in sys.path:
+    sys.path.insert(0, str(RAIZ))
 
-import record_gate  # noqa: E402
-import record_index  # noqa: E402
+# Caminho estatico do pacote, nunca o import solto: com `scripts/ops` no
+# sys.path o mesmo arquivo vira dois objetos de modulo, e o `monkeypatch` de um
+# nao alcanca o outro. Ver `scripts/ops/__init__.py`.
+from scripts.ops import record_gate, record_index  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -397,6 +400,52 @@ def test_bloco_de_comentario_e_prosa_e_nao_diretiva(tmp_path, monkeypatch):
     dentro = record_gate.linhas_em_bloco_de_comentario("x.ps1")
     assert dentro == {1, 2, 3, 4}, f"bloco <# #> mal delimitado: {dentro}"
     assert 5 not in dentro, "a linha de codigo entrou no bloco de comentario"
+
+
+def test_ha_um_unico_caminho_de_import_para_os_modulos_de_ops():
+    """Dois idiomas de import produzem DOIS objetos de modulo para um arquivo.
+
+    Medido em 2026-08-28, antes da harmonizacao:
+
+        import record_index as a
+        import scripts.ops.record_index as b
+        a is b  ->  False
+
+    Os dois importam, os dois funcionam, e o `monkeypatch` de um nao alcanca o
+    outro. Nada acusa. E a copia divergente do repositorio, so que em memoria.
+    """
+    ofensores = []
+    for arquivo in [*RAIZ.glob("scripts/**/*.py"), *RAIZ.glob("tests/*.py")]:
+        if arquivo.name == "__init__.py":
+            continue
+        rel = arquivo.relative_to(RAIZ).as_posix()
+        # Este proprio docstring CITA o import solto para explicar por que ele e
+        # proibido -- e o detector o reprovou na primeira execucao. Decima vez
+        # nesta base, e desta vez a ferramenta ja existia: reaproveitar o mesmo
+        # rastreador de bloco do portao, em vez de escrever um segundo.
+        em_docstring = record_gate.linhas_em_bloco_de_comentario(rel)
+        for n, linha in enumerate(
+            arquivo.read_text(encoding="utf-8", errors="ignore").splitlines(), start=1
+        ):
+            if n in em_docstring or linha.lstrip().startswith("#"):
+                continue
+            if re.match(r"^\s*(from|import)\s+record_(index|gate)\b", linha):
+                ofensores.append(f"{rel}:{n}  {linha.strip()}")
+    assert not ofensores, (
+        "import solto de modulo de scripts/ops (use scripts.ops.<modulo>):\n  "
+        + "\n  ".join(ofensores)
+    )
+
+
+def test_scripts_ops_e_pacote_de_verdade():
+    """Sem `__init__.py`, `scripts.ops` resolve como namespace e o import solto
+    volta a ser possivel sem que nada reclame."""
+    assert (RAIZ / "scripts" / "ops" / "__init__.py").is_file(), (
+        "scripts/ops/__init__.py sumiu; o caminho canonico de import deixa de ser unico"
+    )
+    assert record_index.__name__ == "scripts.ops.record_index", (
+        f"o modulo foi carregado como {record_index.__name__}, nao pelo caminho do pacote"
+    )
 
 
 def test_o_portao_esta_no_pre_commit():
