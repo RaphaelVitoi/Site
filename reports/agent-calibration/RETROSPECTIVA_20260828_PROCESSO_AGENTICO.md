@@ -4,6 +4,7 @@ tipo: auditoria-retroativa-e-plano-de-calibracao
 escopo: Site
 autor: codex@gpt-5.6
 criado_em: 2026-08-28T10:55:00-03:00
+commit: fd64d6db
 classes: [interno, auditavel, autocritico, evidencial]
 estado: corretivo-ativo
 verificado:
@@ -12,6 +13,9 @@ verificado:
 nao_verificado:
   - pesos internos ou treinamento de base do modelo nao sao alterados por configuracao de projeto
   - o criador transitorio do callback OAuth em 127.0.0.1:22327 ja havia encerrado antes da inspeção de processo
+_ancora_normalizada_por: claude@opus-5 em 2026-08-28T09:55-03:00. Somente o campo
+  commit foi ajustado, com o SHA que INTRODUZIU o arquivo -- fato derivado do git,
+  nao afirmacao minha. Corpo e demais campos intactos.
 ---
 
 # Retrospectiva recursiva — processo agêntico da sessão

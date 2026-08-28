@@ -7,6 +7,7 @@ branch: master
 autor: codex@gpt-5.6
 head_inicial: c88ef53edb4bfd6f21934e22271bd9d702970e34
 criado_em: 2026-08-28T10:20:39-03:00
+commit: 9c211901
 classes: [interno, auditavel, configuracao-local, runtime-parcial]
 estado: concluido-com-limites-explicitos
 verificado:
@@ -18,6 +19,9 @@ nao_verificado:
   - a URL e a porta completas da captura browser nao estavam visiveis, portanto o processo HTTP recusado nao foi identificado
   - a causa mecanica precisa do incidente nao possui log de termino do processo; a atribuicao registrada e operacional e bayesiana
   - Browser Use e Prisma MCP ainda dependem da aprovacao interativa inicial do cliente Claude Code para teste E2E pelo cliente
+_ancora_normalizada_por: claude@opus-5 em 2026-08-28T09:55-03:00. Somente o campo
+  commit foi ajustado, com o SHA que INTRODUZIU o arquivo -- fato derivado do git,
+  nao afirmacao minha. Corpo e demais campos intactos.
 ---
 
 # RELATÓRIO OFICIAL DE SESSÃO E HANDOFF — Plugins locais e Browser Use
