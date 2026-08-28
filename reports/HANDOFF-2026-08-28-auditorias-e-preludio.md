@@ -5,17 +5,25 @@ escopo: multiprojeto
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T02:50-03:00
-atualizado_em: 2026-08-28T03:10-03:00
-commit: b3caaa1a
+atualizado_em: 2026-08-28T03:45-03:00
+commit: 6634a3f0
 classes: [interno, medido]
 config_medida:
   raiz: C:/Users/rapha/.gemini
   branch: master
   suite_no_inicio: 415 passed
-  suite_no_fim: 469 passed
-  commits_da_sessao: 11
+  suite_no_fim: 487 passed
+  commits_da_sessao: 12
   data: 2026-08-27 a 2026-08-28
 verificado:
+  - FRENTE 2 -- criterios da 13.F sondados nos DOIS estados, um a um, com
+    violacao encenada em stage -- 3 de 7 bloqueavam antes, 7 de 8 depois
+  - FRENTE 2 -- cada bloqueio conferido pela MENSAGEM, e nao so pelo codigo de
+    saida; a primeira rodada atribuiu um bloqueio ao criterio errado
+  - FRENTE 2 -- os 10 registros com frontmatter submetidos a yaml.safe_load;
+    6 eram ilegiveis e os 10 parseiam apos a normalizacao
+  - FRENTE 2 -- indice gerado contra o corpus real (121 arquivos), nunca
+    sintetico; cadeia de supersede derivando OBSOLETO sem estado declarado
   - FRENTE 1 -- corpus do RAG medido nos dois estados com o coletor real
     (470 -> 474) e a barreira de traversal exercitada (fonte ".." coleta 0)
   - FRENTE 1 -- 7 mutacoes aplicadas as guardas do indice, com baseline explicita
@@ -43,6 +51,12 @@ nao_verificado:
     coletor (que arquivos ENTRAM), nao pela indexacao (o que a memoria devolve)
   - FRENTE 1 -- qual das tres grafias de chave de contexto o Gemini CLI honra de
     fato nao foi medido; exigiria executar o CLI
+  - FRENTE 2 -- o criterio C2b (ancora DECLARADA) nao foi sondado ponta a ponta;
+    a violacao exige registro rastreado e fora do stage. Provado em unidade
+  - FRENTE 2 -- nenhum registro declara o campo caminhos hoje; C2b esta ativo
+    com raio zero por ausencia de adotantes, nao por ausencia de defeito
+  - FRENTE 2 -- os 111 arquivos sem frontmatter nao foram convertidos em
+    registro; continuam fora do indice, contados e declarados
 supersede: handoff-2026-08-27-governanca-e-portoes
 ---
 
@@ -54,10 +68,10 @@ que este documento **supersede** para efeito de retomada.
 ## 1. Estado
 
 ```
-master b3caaa1a · árvore limpa · suíte 415 → 469
+master 6634a3f0 · árvore limpa · suíte 415 → 487
 ```
 
-Onze commits. Nada pela metade em lugar nenhum.
+Doze commits. Nada pela metade em lugar nenhum.
 
 | Commit | O quê |
 | :--- | :--- |
@@ -71,8 +85,9 @@ Onze commits. Nada pela metade em lugar nenhum.
 | `dc231c69` | O motor é ChromaDB; o passo 5 do maintenance nunca existiu |
 | `9670b8a0` | Patches dos submódulos + handoff + frente 3 do plano |
 | `b3caaa1a` | **Frente 1 entregue:** índice canônico + regra de nomeação |
+| `6634a3f0` | **Frente 2 entregue:** `RECORD_INDEX` derivado + portão que lê o documento |
 
-## 2. O que se aprendeu — oito lições com custo pago
+## 2. O que se aprendeu — dez lições com custo pago
 
 ### 2.1 Procurar o **habilitador**, não catalogar instâncias
 
@@ -145,9 +160,36 @@ mais fichas. Foi trocar por um predicado **estrutural**: *existe
 `gemini-extension.json` irmão cujo texto cita o nome deste arquivo*. Não depende
 de conhecer a grafia, e é o mesmo teste do consumidor tipo 2 da §1.5.1 do plano.
 
+### 2.9 Regex vê campo; não vê documento
+
+O portão de âncora confere os campos obrigatórios do frontmatter com
+`^([a-z_]+):`. **Seis dos dez registros com frontmatter desta base não eram YAML
+válido** — `- texto: mais texto` vira mapa, e crase é caractere indicador — e o
+portão aprovava os seis, porque o regex achava os campos.
+
+Frontmatter presente e ilegível é a forma mais limpa de sinal verde
+desconectado que esta base já produziu: o dado existe, o campo existe, o portão
+diz APROVADO, e **nenhum consumidor de máquina consegue ler**. Sobreviveu a duas
+sessões de auditoria — inclusive às minhas, que escreveram três dos seis.
+
+A correção não foi ensinar YAML ao PowerShell. Foi separar por natureza:
+**linha a linha fica no portão PowerShell; documento inteiro exige parser, e por
+isso a etapa 3 do pre-commit é Python.**
+
+### 2.10 Código de saída diz que bloqueou; só a mensagem diz por quê
+
+A primeira bateria de sondas do estado *depois* reportou 8 de 8, com um critério
+bloqueando que eu havia desenhado para passar. Não era o critério: o **fixture
+da própria sonda** trazia o defeito da §2.9, e o portão pegou a sonda.
+
+Numa bateria em que cada sonda deve disparar um critério **específico**,
+`returncode != 0` é evidência de que *algo* bloqueou — não de que o *alvo*
+bloqueou. É o refinamento da §2.5: lá o arnês contava "não rodou" como
+"reprovou"; aqui contava "reprovou por outro motivo" como "detector ativo".
+
 ## 3. Padrão que se acumulou — calibração bayesiana
 
-**"Sinal verde desconectado" chegou a 13 instâncias catalogadas**, mais três
+**"Sinal verde desconectado" chegou a 15 instâncias catalogadas**, mais quatro
 variantes novas nomeadas nesta sessão:
 
 | Variante | Exemplo |
@@ -155,6 +197,7 @@ variantes novas nomeadas nesta sessão:
 | **Nome errado para grandeza real** | `"KV Cache Alocado"` movia `num_predict`, não `num_ctx` |
 | **Habilitador estrutural** | `print` sem exit no despacho legado |
 | **Limpo por instrução** | `ignore = dirty` escondendo 62 fontes modificados |
+| **Dado presente e ilegível** | frontmatter que o regex valida e nenhum parser lê |
 
 **Priores atualizados:**
 
@@ -164,7 +207,12 @@ variantes novas nomeadas nesta sessão:
   tipos, e o `grep` só vê um (§1.5.1 do plano).
 - Árvore de git limpa → conferir se é limpa **de fato** ou por configuração.
 - Contagem em prosa de governança → suspeita por padrão. A §6 do `AGENTS.md`
-  dizia `395/395` com a suíte em 447.
+  dizia `395/395` com a suíte em 447. E a §2 do plano dizia "dois dos quatro
+  itens do portão"; medindo, eram **quatro de seis** critérios inativos.
+- Validação por **regex** → prova que o campo está lá, não que o documento é
+  legível. Para documento, parser.
+- `returncode != 0` numa bateria de sondas → prova que *algo* bloqueou, não que
+  o **alvo** bloqueou. Conferir a mensagem.
 
 ## 4. O que fica aberto
 
@@ -179,10 +227,12 @@ variantes novas nomeadas nesta sessão:
 
 ### 4.2 Execução — **mas nenhuma delas é livre de consequência**
 
-> **Frente 1 saiu desta lista em 2026-08-28** — entregue no commit `b3caaa1a`.
-> O índice canônico das 5 famílias está em
-> `data/INDICE_CANONICO_GOVERNANCA.json`, a regra de nomeação está enunciada
-> nele, e 11 guardas a sustentam (7 mutações detectadas). Ver §1.6 do plano.
+> **Frentes 1 e 2 saíram desta lista em 2026-08-28.** A 1 no commit `b3caaa1a`
+> (índice canônico das 5 famílias em `data/INDICE_CANONICO_GOVERNANCA.json`,
+> regra de nomeação, 11 guardas, 7 mutações — §1.6 do plano). A 2 no
+> `6634a3f0` (`RECORD_INDEX` derivado, `nexus index`, etapa 3 do pre-commit,
+> 18 guardas — §2.3 do plano). O portão §13.F passou de **3 de 7** critérios
+> ativos para **7 de 8**.
 >
 > **E o título desta seção foi corrigido.** Ela dizia *"sem decisão pendente"*,
 > e isso é falso para os cinco itens restantes: **todos tocam a árvore de
@@ -215,25 +265,31 @@ variantes novas nomeadas nesta sessão:
 ## 5. Prompt de continuação
 
 ```
-Retomando o NEXUS-CORE-SOTA (~/.gemini/Site), master b3caaa1a, suite 469.
+Retomando o NEXUS-CORE-SOTA (~/.gemini/Site), master 6634a3f0, suite 487.
 
 LEIA PRIMEIRO, nesta ordem:
   1. reports/HANDOFF-2026-08-28-auditorias-e-preludio.md — secoes 2, 3 e 4
   2. reports/PLANO-2B-CURADORIA-ESTRUTURAL.md — preludio 0.5, mapa 1.5,
-     FRENTE 1 ENTREGUE (secao 1.6), frente 3
+     FRENTE 1 (secao 1.6), FRENTE 2 (secao 2.3), frente 3
   3. data/INDICE_CANONICO_GOVERNANCA.json — o canonico de cada familia
-  4. reports/AUDITORIA-2026-08-28-skills.md — secoes 2, 4 e 5
-  5. ~/.gemini/CLAUDE.md e Site/CLAUDE.md
+  4. `nexus index --suspeitos` — estado derivado dos registros AGORA
+  5. reports/AUDITORIA-2026-08-28-skills.md — secoes 2, 4 e 5
+  6. ~/.gemini/CLAUDE.md e Site/CLAUDE.md
 
 PROXIMO PASSO RECOMENDADO
-Frente 2 do plano 2-B: data/RECORD_INDEX.json (M.O. 13.C) nao existe, e por
-isso DOIS dos quatro criterios do portao 13.F nunca tiveram o que ler. O portao
-passa, e sempre passou. Agora ha um precedente de formato: o indice canonico da
-frente 1 -- declaracao + guarda + mutacao com baseline.
+Frente 5 do plano 2-B (regras mestras e referenciais) ou frente 4 (routing).
+As frentes 1 e 2 fecharam a camada de GOVERNANCA DO REGISTRO: ha canonico
+declarado por familia, indice derivado, e 7 dos 8 criterios do portao ativos.
+O que sobra nas frentes 2 a 7 e majoritariamente ESTRUTURA DE ARQUIVO, e a
+frente 7 (higienizacao) continua sendo a ultima, por desenho.
 
-Antes de escrever o RECORD_INDEX, medir os DOIS estados do portao 13.F: quantos
-criterios avaliam hoje e quantos passariam a avaliar. Sem isso o indice novo e
-so mais um arquivo que ninguem le.
+Antes de qualquer frente nova, rodar `nexus index --suspeitos`. Se algum
+registro tiver virado SUSPEITO ou OBSOLETO desde 28/08, resolver isso primeiro:
+indice que acumula suspeito vira indice que ninguem olha.
+
+Ha tambem uma adocao barata e util: declarar `caminhos:` no frontmatter dos
+registros que afirmam fatos sobre codigo especifico. O criterio C2b esta ativo
+e com raio zero porque NINGUEM declara -- a protecao existe e nao esta em uso.
 
 Se o vertice preferir avancar por valor imediato: religar gemini-cli-security e
 padronizar .disabled continuam abertos -- mas nenhum dos dois e execucao pura
@@ -254,17 +310,24 @@ REGRAS QUE VALEM SEMPRE AQUI
   bloco. Estreitar escopo estruturalmente, nunca isentar arquivo.
 - Nome de componente e afirmacao: conferir contra o instalado.
 - Nunca medir exit code depois de um pipe.
+- Regex ve campo; nao ve documento. Para documento, parser.
+- Numa bateria de sondas, conferir a MENSAGEM: returncode != 0 prova que algo
+  bloqueou, nao que o alvo bloqueou.
 - Remocao e destrutiva: ordem explicita do vertice, item a item.
 - Nao contornar hook que falha -- inclusive nao ampliando a excecao dele.
 
 LINHA DE BASE
-458 passed. Portao de ancora APROVADO. Pre-commit com EXIT real medido sem pipe.
+487 passed. Portao de ancora APROVADO, portao de registro APROVADO.
+Pre-commit com EXIT real medido sem pipe. Indice: 9 VIGENTE, 0 SUSPEITO,
+1 OBSOLETO (o handoff de 27/08, corretamente aposentado).
 ```
 
 ## 6. Declaração (governança §5)
 
 Rodaram: a suíte completa após cada bloco; o portão de âncora antes de cada
-commit (um reprovou, e a causa foi corrigida, não contornada); **21 mutações**
+commit (**dois** reprovaram, e as causas foram corrigidas, não contornadas — o
+segundo foi o detector de ampliação de origem pegando o próprio teste que o
+exercita); as **8 sondas** da §13.F nos dois estados; **21 mutações**
 com reversão verificada — as 7 últimas com baseline explícita e contagem de
 coletados conferida; parse dos `.ps1` em duas versões do PowerShell; execução
 dos launchers de dentro e de fora do projeto; o corpus do RAG medido nos dois

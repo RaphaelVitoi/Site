@@ -50,6 +50,17 @@ verificado:
     em antigravity/scratch/, nao em Site/scripts/)
   - FRENTE 1 as 11 guardas do indice submetidas a 7 mutacoes com baseline
     explicita (11 passed antes) e contagem de COLETADOS conferida -- 7 detectadas
+  - FRENTE 2 (2026-08-28) os criterios da 13.F medidos nos DOIS estados,
+    encenando uma violacao de cada um em stage -- 3 de 7 sondas bloqueavam
+    antes, 7 de 8 depois, e cada bloqueio conferido pela MENSAGEM, nao so pelo
+    codigo de saida
+  - FRENTE 2 os 10 registros com frontmatter submetidos a yaml.safe_load -- 6
+    eram ilegiveis; apos a normalizacao os 10 parseiam e verificado/
+    nao_verificado sao listas de string
+  - FRENTE 2 indice gerado contra o corpus REAL de reports/ e docs/, nunca
+    sintetico -- 121 arquivos varridos
+  - FRENTE 2 cadeia de supersede exercitada -- o HANDOFF de 27/08 e derivado
+    OBSOLETO sem que nenhum registro declare estado
 nao_verificado:
   - Nenhum arquivo foi movido, renomeado ou removido por nenhuma frente. O
     PRELUDIO alterou o roteamento do perfil e travou o contrato de inferencia; a
@@ -85,6 +96,17 @@ nao_verificado:
   - FRENTE 1 -- os membros fora de Site/ so sao verificados quando a raiz
     multiprojeto e reconhecida; fora dela o teste PULA com motivo declarado, em
     vez de passar em silencio.
+  - FRENTE 2 -- o criterio C2b (ancora DECLARADA) NAO foi sondado de ponta a
+    ponta. A violacao exige registro ja rastreado e FORA do stage, e encena-la
+    exigiria commitar dentro da medicao. Provado em unidade.
+  - FRENTE 2 -- o portao de qualidade (npm run sota audit) ficou fora da
+    bateria de sondas; mede outra coisa (CWV, CVE, SRI) e levaria minutos por
+    sonda. Ele roda no pre-commit real, e rodou nos commits desta frente.
+  - FRENTE 2 -- nenhum registro declara o campo caminhos hoje. O criterio C2b
+    esta ativo e com raio de explosao zero por ausencia de adotantes, nao por
+    ausencia de defeito.
+  - FRENTE 2 -- os 111 arquivos sem frontmatter NAO foram convertidos em
+    registro. Continuam fora do indice, contados e declarados.
 supersede: null
 ---
 
@@ -455,6 +477,12 @@ A enumeração dos quatro arquivos, em vez de `*.md`, também é deliberada:
 Consequência medida: dos quatro itens do portão §13.F, **dois estão inativos** —
 não falham, simplesmente não têm o que ler.
 
+> **CORRIGIDO em 2026-08-28 — a §13.F tem seis critérios, não quatro, e o
+> buraco era maior.** Sondando um a um: **3 de 7 bloqueavam**. A contagem acima
+> foi escrita por leitura, não por medição, e errou para menos nas duas pontas.
+> Ver §2.3.1. *(Registro preservado: contagem citada que a medição desmentiu é
+> exatamente o que a §4 do `CLAUDE.md` manda declarar, não apagar.)*
+
 É a forma canônica do modo de falha desta casa: regra escrita, portão instalado,
 e dois dos quatro critérios sem fonte de dados. O portão passa. Sempre passou.
 Mesma família do `commit-msg` que morava em `.git/hooks/` com
@@ -488,6 +516,106 @@ dormentes do portão §13.F ativos e **provados nos dois estados**, e um teste q
 reprove se o índice divergir dos registros em disco.
 
 **Ordem:** depois da frente 1. A dependência está no grafo da §8.
+
+---
+
+## 2.3 FRENTE 2 — ENTREGUE em 2026-08-28
+
+### 2.3.1 A contagem citada estava errada, e para menos
+
+A §2 acima dizia *"dois dos quatro itens do portão §13.F"*. A §13.F tem **seis
+critérios numerados**, não quatro. Medindo — encenando uma violação de cada um
+em stage e observando o portão — o estado real era pior do que o citado:
+
+| Critério da §13.F | Antes | Depois |
+| :--- | :---: | :---: |
+| C1 frontmatter válido, `nao_verificado` presente | BLOQUEIA | BLOQUEIA |
+| **C1b frontmatter que nenhum parser lê** | *passa* | **BLOQUEIA** |
+| C2a âncora **citada na prosa** | *passa* | *passa* — **por desenho** |
+| C2b âncora **declarada** em `caminhos:` | *passa* | **BLOQUEIA** (unidade) |
+| C3 TTL externo vencido | *passa* | **BLOQUEIA** |
+| C4 `config_medida` divergente | *passa* | **BLOQUEIA** |
+| C5a credencial em texto claro | BLOQUEIA | BLOQUEIA |
+| C5b ampliação de ACL/CORS | *passa* | **BLOQUEIA** |
+| C6 supressor sem `Record-Id` | BLOQUEIA | BLOQUEIA |
+
+**3 de 7 sondas antes; 7 de 8 depois** — e cada bloqueio foi conferido pela
+*mensagem*, não só pelo código de saída, depois que a primeira rodada atribuiu
+um bloqueio ao critério errado (§2.3.4).
+
+### 2.3.2 O achado que veio de graça: frontmatter presente e ilegível
+
+Ao escrever o gerador, **seis dos dez registros com frontmatter não eram YAML
+válido**. Duas causas, nenhuma visível a olho nu:
+
+- `- texto: mais texto` não é string, é **mapa de uma chave** — e quando uma
+  linha de continuação segue, nem YAML válido é;
+- crase é **caractere indicador** do YAML: `` - `nexus ops maintenance` NAO… ``
+  é erro de sintaxe, não texto.
+
+O portão de âncora aprovava os seis, porque confere campo obrigatório com
+`^([a-z_]+):`. **Regex vê campo; não vê documento.** Campo presente num bloco
+que nenhum parser lê é a forma mais limpa de sinal verde desconectado que esta
+base já produziu — e sobreviveu a duas sessões de auditoria justamente porque o
+portão dizia APROVADO.
+
+Os seis foram normalizados (60 linhas, `: ` → ` -- `, sem perda semântica), e o
+novo portão passa a reprovar a recorrência. Foi por isso que o portão novo é
+**Python**: o PowerShell confere linha; ler documento exige parser.
+
+**E a guarda provou o valor em minutos.** Ao escrever esta própria seção,
+reintroduzi o defeito **três vezes** — `` `caminhos:` ``, `` `npm run
+sota:audit` `` e um `hoje: C2b` — todas em texto que eu acabara de escrever
+*sabendo* da armadilha. Não é descuido: crase e dois-pontos são a pontuação
+natural de quem documenta código em português, e o frontmatter é o único lugar
+do arquivo onde ela é sintaxe. Um formato que trai o autor informado precisa de
+guarda, não de disciplina.
+
+### 2.3.3 Três decisões de desenho, cada uma contra uma armadilha conhecida
+
+1. **O índice não é versionado.** A §13.C adverte que "índice mantido em
+   paralelo diverge". Cache commitado envelhece no primeiro registro editado sem
+   rebuild. Fora do git, a divergência deixa de ser política a policiar e passa
+   a ser **impossível por construção**.
+2. **O portão não lê o arquivo — importa o módulo e recalcula.** Portão que
+   confia em cache herda a idade do cache.
+3. **A âncora interna é declarada, nunca inferida da prosa.** A §13.F pede
+   marcar SUSPEITO todo registro VIGENTE cujo caminho o commit toque. Inferindo
+   da prosa, os handoffs citam `nexus.py` e **todo commit em `nexus.py` exigiria
+   superseder o handoff** — o portão travaria o repositório e seria desligado na
+   primeira semana, que é o modo de falha descrito na própria docstring do
+   portão de âncora. A âncora vive no campo `caminhos:`, que o autor preenche
+   quando quer a proteção: entra com raio de explosão **zero** e cresce por
+   adoção, igual ao frontmatter. A prosa continua sendo varrida, mas só como
+   `caminhos_citados_na_prosa` — **sugestão não é âncora**.
+
+### 2.3.4 O arnês mentiu de novo, e a lição é mais fina desta vez
+
+A primeira rodada de sondas do estado *depois* reportou **8 de 8**, com o C2a
+bloqueando — o único que eu havia desenhado para passar. Não bloqueou pelo
+critério: o **fixture da própria sonda** trazia
+`- nada: este arquivo existe apenas durante a medição`, que é justamente o
+defeito da §2.3.2. O portão pegou minha sonda, não o caso.
+
+Conferir só o código de saída teria registrado "C2 ativo" e fechado a frente com
+uma afirmação falsa. **Exit code diz que bloqueou; só a mensagem diz por quê.**
+Numa bateria em que cada sonda deve disparar um critério *específico*, verificar
+a identidade do achado não é zelo — é a diferença entre medir e supor.
+
+### 2.3.5 Estado do índice, medido
+
+```
+121 arquivos varridos em docs/ e reports/
+  9 VIGENTE · 0 SUSPEITO · 1 OBSOLETO · 111 sem frontmatter
+```
+
+O OBSOLETO é o `HANDOFF-2026-08-27`, corretamente aposentado pelo `supersede` do
+handoff de 28/08 — a cadeia da §13.B funcionando sem ninguém declarar estado.
+
+**Onde está:** `scripts/ops/record_index.py` (gerador + estados derivados),
+`scripts/ops/record_gate.py` (etapa 3 do pre-commit), `nexus index
+--rebuild|--suspeitos` (a CLI que a §13.C declara), 18 guardas em
+`tests/test_record_index.py`.
 
 ---
 
