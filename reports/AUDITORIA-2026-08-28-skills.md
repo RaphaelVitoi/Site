@@ -48,7 +48,7 @@ São **submódulos** apontando para upstreams públicos — `obra/superpowers`,
 `exa-labs/exa-mcp-server`, `gemini-cli-extensions/*`.
 
 Os "53 divergentes" não eram trabalho editado: eram **versões diferentes**. O
-`superpowers/CLAUDE.md` de 7.574 B não foi encolhido por alguém — é o que o
+`Site/skills/superpowers/CLAUDE.md` de 7.574 B não foi encolhido por alguém — é o que o
 upstream publica hoje, e o de 8.506 B em `extensions/` é uma cópia congelada de
 01/06.
 
