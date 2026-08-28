@@ -75,6 +75,12 @@ htmlcov/
 *.cover
 reports/cwv/
 engine/avatars/*.txt
+# Indice ancorado dos registros (M.O. 13.C). DERIVADO dos frontmatters, nunca
+# mantido. Versiona-lo criaria a divergencia que a propria 13.C adverte: cache
+# commitado envelhece no primeiro registro editado sem rebuild. Nao versionado,
+# a divergencia deixa de ser politica a policiar e passa a ser impossivel.
+# Regenerar com `nexus index --rebuild`; o portao nao le o arquivo, recalcula.
+data/RECORD_INDEX.json
 
 # 6. BACKUPS E ARCHIVES (PURA HIGIENE) ─────────────────────────────────────────
 _backups/

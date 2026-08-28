@@ -9,11 +9,11 @@ commit: 4cce6758
 classes: [interno]
 verificado:
   - leitura integral de llm/routing_policy.py apos as alteracoes desta data
-  - suite tests/test_routing_policy.py + tests/test_task_routing.py: 49 passed,
+  - suite tests/test_routing_policy.py + tests/test_task_routing.py -- 49 passed,
     identico a linha de base medida antes das alteracoes
   - rotas_suspeitas() exercitada em dois estados (0 hoje, 8 em 2027-01-01)
 nao_verificado:
-  - nao atribui peso de sensibilidade a nenhuma classe: e decisao do vertice
+  - nao atribui peso de sensibilidade a nenhuma classe -- e decisao do vertice
   - nao medi taxa de sucesso real por modelo por classe; nao ha serie historica
   - nao verifiquei se llm/routing.py (paradigma competitivo) tem lacuna analoga
 supersede: null

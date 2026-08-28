@@ -16,7 +16,7 @@ verificado:
     gitlinks modo 160000, HEAD de cada um batendo com o gitlink registrado)
   - estado sujo de cada submodulo medido por git status --porcelain
   - SKILL.md ativos e SKILL.md.bak contados em toda a arvore, por diretorio
-  - manifesto gemini-extension.json lido nos 8: versao, mcpServers, env
+  - manifesto gemini-extension.json lido nos 8 -- versao, mcpServers, env
   - registro de habilitacao e ledger de integridade do CLI conferidos
 nao_verificado:
   - NENHUMA skill foi executada. "Funcional" aqui significa estruturalmente
@@ -24,7 +24,7 @@ nao_verificado:
     nao renomeado), nunca observacao de funcionamento.
   - os servidores MCP nao foram levantados; nenhuma chamada foi feita.
   - o manifesto nao declarar variavel de ambiente NAO prova que a skill
-    dispensa credencial: o servidor MCP pode exigi-la em tempo de execucao.
+    dispensa credencial -- o servidor MCP pode exigi-la em tempo de execucao.
     As chaves deste ambiente estao revogadas.
   - as modificacoes locais nos submodulos foram contadas e classificadas por
     tipo de arquivo, mas o CONTEUDO dos 62 fontes modificados nao foi lido.

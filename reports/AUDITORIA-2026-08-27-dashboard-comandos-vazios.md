@@ -19,16 +19,16 @@ verificado:
   - exit code de comando inexistente no despacho legado, antes e depois
   - bool(typer.OptionInfo) e o comportamento de optimize_ram() sem argumentos
   - os 5 call-sites de comando typer chamado como funcao Python
-  - cwv_gate.ps1 executado: contagem de warnings e exit code reais
+  - cwv_gate.ps1 executado -- contagem de warnings e exit code reais
   - existencia em disco das 4 fontes de governanca que o handoff injeta
   - tres mutacoes aplicadas e revertidas, cada uma reprovando seu teste
-  - segunda rodada: 7 formas de mutacao sobre as 9 correcoes de fechamento,
+  - segunda rodada -- 7 formas de mutacao sobre as 9 correcoes de fechamento,
     cada uma reprovando seu teste, com a contagem de testes coletados conferida
 nao_verificado:
-  - `nexus ops maintenance` NAO foi executado ponta a ponta: o passo 3 e
+  - nexus ops maintenance NAO foi executado ponta a ponta -- o passo 3 e
     sanitize --apply, que deleta arquivos. A correcao foi provada por teste
     com as sub-etapas mockadas e pela execucao isolada do passo 1.
-  - `nexus ops quality-gate` completo (10 fases) nao foi executado; a derivacao
+  - nexus ops quality-gate completo (10 fases) nao foi executado; a derivacao
     foi provada com a saida real do cwv_gate.ps1 injetada em teste.
   - o loop interativo do dashboard nao foi exercitado; so o caminho --once.
   - nenhuma chamada real a provedor de LLM (chaves revogadas neste ambiente).

@@ -2447,6 +2447,54 @@ def run_or_list_routines(
 # ==========================================
 
 
+@app.command("index")
+def record_index_command(
+    rebuild: bool = typer.Option(False, "--rebuild", help="Regenera data/RECORD_INDEX.json"),
+    suspeitos: bool = typer.Option(False, "--suspeitos", help="Lista registros SUSPEITO e OBSOLETO"),
+):
+    """Indice ancorado dos registros -- M.O. secao 13.C.
+
+    O indice e DERIVADO dos frontmatters e nao e versionado: cache commitado
+    envelhece no primeiro registro editado sem rebuild, que e a divergencia que
+    a propria 13.C adverte. O portao de pre-commit nao le o arquivo -- recalcula.
+    """
+    sys.path.insert(0, str(BASE_DIR / "scripts" / "ops"))
+    from record_index import VIGENTE, construir, escrever
+
+    indice = construir(BASE_DIR)
+
+    if rebuild:
+        destino = escrever(indice, BASE_DIR / "data" / "RECORD_INDEX.json")
+        console.print(f"[green][INDICE][/] {destino.relative_to(BASE_DIR).as_posix()} regenerado.")
+
+    t = indice["totais"]
+    tabela = Table(title="Indice Ancorado de Registros (M.O. 13.C)", box=box.ROUNDED)
+    tabela.add_column("Estado", style="bold")
+    tabela.add_column("Registros", justify="right")
+    tabela.add_row("[green]VIGENTE[/]", str(t["vigente"]))
+    tabela.add_row("[yellow]SUSPEITO[/]", str(t["suspeito"]))
+    tabela.add_row("[red]OBSOLETO[/]", str(t["obsoleto"]))
+    tabela.add_row("[dim]sem frontmatter[/]", str(t["sem_frontmatter"]))
+    console.print(tabela)
+    console.print(
+        f"[dim]{indice['arquivos_varridos']} arquivos varridos em docs/ e reports/, "
+        f"HEAD {indice['commit_do_head']}.[/]"
+    )
+
+    if suspeitos:
+        problematicos = [r for r in indice["registros"] if r["estado"] != VIGENTE]
+        if not problematicos:
+            console.print("[green]Nenhum registro suspeito ou obsoleto.[/]")
+            return
+        for r in problematicos:
+            cor = "red" if r["estado"] == "OBSOLETO" else "yellow"
+            console.print(f"\n[bold {cor}][{r['estado']}][/] {r['arquivo']}")
+            for motivo in r["motivos"]:
+                console.print(f"    [dim]-[/] {motivo}")
+    elif not rebuild:
+        console.print("[dim]Use --rebuild para regenerar o arquivo, --suspeitos para detalhar.[/]")
+
+
 @app.command("task-audit")
 def audit_task_pipeline():
     """Valida o ciclo de vida completo da fila de tarefas sob o SOTA Guard Tri-State."""

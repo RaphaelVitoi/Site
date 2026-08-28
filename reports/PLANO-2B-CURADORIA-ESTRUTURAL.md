@@ -13,7 +13,7 @@ config_medida:
   exclusoes: [node_modules, .venv, .git]
 verificado:
   - inventario de colisoes de basename por find + comparacao byte a byte (cmp)
-  - extensions/ vs antigravity-cli/plugins/: 324 arquivos comparados por cmp
+  - extensions/ vs antigravity-cli/plugins/ -- 324 arquivos comparados por cmp
   - MODUS_OPERANDI.md localizado nas 5 ocorrencias e comparado por conteudo
   - contagem de SKILL.md e SKILL.md.bak em 3 recortes
   - manifesto do RAG lido e efeito de cada fonte medido arquivo a arquivo
@@ -30,7 +30,7 @@ verificado:
   - MAPA 1.5 Site/skills x extensions comparado arquivo a arquivo por cmp
     (79 identicos, 53 divergentes) e a direcao da divergencia medida por mtime
   - MAPA 1.5 registro de habilitacao e ledger de integridade do CLI conferidos
-    separadamente: provam coisas diferentes (regra x instalacao)
+    separadamente -- provam coisas diferentes (regra x instalacao)
   - FRENTE 3.1 ausencia do pacote lancedb e presenca do chromadb conferidas por
     importlib.util.find_spec, e as 10 afirmacoes de "LanceDB" localizadas em
     codigo vivo uma a uma
@@ -39,17 +39,17 @@ verificado:
     conferida no README
   - FRENTE 1 (2026-08-28) as 70 ocorrencias dos 5 basenames remedidas sob a raiz,
     agora com predicado ESTRUTURAL de declaracao por manifesto (manifesto irmao
-    que cita o nome do arquivo) em vez de uma chave literal: 26 declaradas, 44
+    que cita o nome do arquivo) em vez de uma chave literal -- 26 declaradas, 44
     nao. As tres grafias de chave (contextFileName, contextPath, context)
     localizadas nos manifestos que as usam
   - FRENTE 1 corpus do RAG medido nos DOIS estados com o coletor real do
-    memory_rag: 470 antes, 474 depois, delta de exatamente 4 arquivos
-  - FRENTE 1 barreira de traversal exercitada: fonte ".." coleta 0 arquivos
+    memory_rag -- 470 antes, 474 depois, delta de exatamente 4 arquivos
+  - FRENTE 1 barreira de traversal exercitada -- fonte ".." coleta 0 arquivos
   - FRENTE 1 consumidores de codigo declarados no indice reconferidos arquivo a
     arquivo; dois haviam envelhecido (nexus.py 2156->2172, e sota_hygiene.py fica
     em antigravity/scratch/, nao em Site/scripts/)
   - FRENTE 1 as 11 guardas do indice submetidas a 7 mutacoes com baseline
-    explicita (11 passed antes) e contagem de COLETADOS conferida: 7 detectadas
+    explicita (11 passed antes) e contagem de COLETADOS conferida -- 7 detectadas
 nao_verificado:
   - Nenhum arquivo foi movido, renomeado ou removido por nenhuma frente. O
     PRELUDIO alterou o roteamento do perfil e travou o contrato de inferencia; a
@@ -58,31 +58,31 @@ nao_verificado:
   - a arvore fora de ~/.gemini nao foi inspecionada
   - nao foi medido quem IMPORTA cada copia duplicada; so a duplicacao em si
   - antigravity-cli/ e antigravity-ide/ nao tiveram o conteudo auditado
-  - o proxy de inferencia NAO foi levantado: a semantica do 0.5.2 foi
+  - o proxy de inferencia NAO foi levantado -- a semantica do 0.5.2 foi
     estabelecida por leitura do servidor e travada por teste do payload do
     cliente, nao por observacao de temperatura real. As chaves deste ambiente
     estao revogadas e nenhum modelo foi consultado.
-  - MAPA 1.5: o Gemini CLI NAO foi executado. Que `extensions/` e a arvore
+  - MAPA 1.5 -- o Gemini CLI NAO foi executado. Que extensions/ e a arvore
     carregada vem de tres evidencias convergentes -- o registro de habilitacao
     do CLI vive dentro dela, e o caminho padrao da ferramenta, e Site/skills nao
     e diretorio de skills reconhecido -- e nao de observacao do carregamento.
-  - MAPA 1.5: nao foi medido POR QUE Site/skills divergiu, nem se o fork foi
+  - MAPA 1.5 -- nao foi medido POR QUE Site/skills divergiu, nem se o fork foi
     deliberado. So que divergiu, em que direcao e quando.
-  - MAPA 1.5: a arvore de `antigravity/brain/` foi excluida das buscas de
+  - MAPA 1.5 -- a arvore de antigravity/brain/ foi excluida das buscas de
     consumidor (e log de sessao, nao codigo vivo).
-  - FRENTE 3.2: o LanceDB NAO foi instalado nem exercitado. A particao de
+  - FRENTE 3.2 -- o LanceDB NAO foi instalado nem exercitado. A particao de
     corpus proposta e desenho, nao medicao -- o unico numero medido do lado
     LanceDB e o benchmark historico do CONTEXT_CHECKPOINT (54,7k reg/s), que
     nao foi reproduzido nesta sessao.
-  - FRENTE 3: nenhuma busca RAG real foi executada; o gemma_server nao foi
+  - FRENTE 3 -- nenhuma busca RAG real foi executada; o gemma_server nao foi
     levantado. A equivalencia ChromaDB vem de leitura de codigo e da ausencia
     do pacote lancedb.
-  - FRENTE 1: qual das TRES grafias de chave de contexto o Gemini CLI de fato
+  - FRENTE 1 -- qual das TRES grafias de chave de contexto o Gemini CLI de fato
     honra nao foi medido -- exigiria executar o CLI. O predicado estrutural
     adotado nao depende da resposta, e e por isso que ele foi adotado.
-  - FRENTE 1: nenhuma ingestao foi executada. O corpus foi medido pelo coletor
+  - FRENTE 1 -- nenhuma ingestao foi executada. O corpus foi medido pelo coletor
     (que arquivos ENTRAM), nao pela indexacao (o que a memoria devolve).
-  - FRENTE 1: os membros fora de Site/ so sao verificados quando a raiz
+  - FRENTE 1 -- os membros fora de Site/ so sao verificados quando a raiz
     multiprojeto e reconhecida; fora dela o teste PULA com motivo declarado, em
     vez de passar em silencio.
 supersede: null

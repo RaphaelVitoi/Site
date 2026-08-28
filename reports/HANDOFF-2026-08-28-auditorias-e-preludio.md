@@ -16,11 +16,11 @@ config_medida:
   commits_da_sessao: 11
   data: 2026-08-27 a 2026-08-28
 verificado:
-  - FRENTE 1: corpus do RAG medido nos dois estados com o coletor real
+  - FRENTE 1 -- corpus do RAG medido nos dois estados com o coletor real
     (470 -> 474) e a barreira de traversal exercitada (fonte ".." coleta 0)
-  - FRENTE 1: 7 mutacoes aplicadas as guardas do indice, com baseline explicita
+  - FRENTE 1 -- 7 mutacoes aplicadas as guardas do indice, com baseline explicita
     (11 passed antes) e contagem de COLETADOS conferida; 7 detectadas
-  - FRENTE 1: os consumidores de codigo declarados no indice reconferidos
+  - FRENTE 1 -- os consumidores de codigo declarados no indice reconferidos
     arquivo a arquivo -- dois haviam envelhecido
   - suite completa executada apos cada bloco de alteracao
   - portao de ancora executado antes de cada commit; um deles REPROVOU e a
@@ -30,18 +30,18 @@ verificado:
   - parse dos arquivos .ps1 alterados em pwsh 7 e em Windows PowerShell 5.1
   - launchers executados de dentro e de fora do projeto
 nao_verificado:
-  - nenhuma chamada real a provedor de LLM: as chaves deste ambiente estao
+  - nenhuma chamada real a provedor de LLM -- as chaves deste ambiente estao
     revogadas e nao foram substituidas
   - o proxy de inferencia (127.0.0.1:17043) nunca foi levantado
   - nenhuma skill foi executada; nenhum servidor MCP foi iniciado
   - o Gemini CLI nao foi executado
-  - `nexus ops maintenance` nao foi rodado ponta a ponta (o passo 3 e
-    `sanitize --apply`, que deleta arquivos)
-  - `nexus ops quality-gate` completo (10 fases) nao foi executado
+  - nexus ops maintenance nao foi rodado ponta a ponta (o passo 3 e
+    sanitize --apply, que deleta arquivos)
+  - nexus ops quality-gate completo (10 fases) nao foi executado
   - os patches em patches/skills NAO foram reaplicados sobre copia limpa
-  - FRENTE 1: nenhuma ingestao foi executada -- o corpus foi medido pelo
+  - FRENTE 1 -- nenhuma ingestao foi executada -- o corpus foi medido pelo
     coletor (que arquivos ENTRAM), nao pela indexacao (o que a memoria devolve)
-  - FRENTE 1: qual das tres grafias de chave de contexto o Gemini CLI honra de
+  - FRENTE 1 -- qual das tres grafias de chave de contexto o Gemini CLI honra de
     fato nao foi medido; exigiria executar o CLI
 supersede: handoff-2026-08-27-governanca-e-portoes
 ---

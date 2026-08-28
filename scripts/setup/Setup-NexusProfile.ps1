@@ -141,7 +141,7 @@ function Convert-DeepJsonStringSOTA {
 # continua, mas deixou de poder divergir em silencio.
 $Global:NexusTyperCommands = @(
     'agent', 'audit', 'autonomy', 'autopoiesis', 'dashboard', 'db', 'gate',
-    'graph', 'homeostasis', 'list', 'ops', 'routine', 'scripts', 'search',
+    'graph', 'homeostasis', 'index', 'list', 'ops', 'routine', 'scripts', 'search',
     'stats', 'status', 'sync-consciousness', 'task', 'task-audit', 'test', 'voice'
 )
 
