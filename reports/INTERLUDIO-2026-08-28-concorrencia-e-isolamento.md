@@ -6,6 +6,7 @@ ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T05:05-03:00
 commit: 71934ef7
+atualizado_em: 2026-08-28T09:40-03:00
 classes: [interno, medido]
 caminhos:
   - scripts/ops/suite_isolada.py
@@ -25,8 +26,10 @@ verificado:
   - o executor isolado exercitado com --sujo, --incluir-novos e --comando
   - guarda de subcomando git do executor provada -- pegou um `ls-files` novo
 nao_verificado:
-  - o handoff da outra sessao NAO foi commitado nem alterado; continua nao
-    rastreado e e decisao do vertice
+  - o handoff da outra sessao teve a ANCORA normalizada e entrou no historico em
+    c88ef53e -- so o frontmatter foi tocado, com verificado e nao_verificado
+    TRANSCRITOS das declaracoes do proprio documento; corpo intacto e autoria
+    preservada. Nada do CONTEUDO dele foi verificado por mim, exceto o P0
   - o risco P0 foi VERIFICADO em 2026-08-28T08:40 e nao reproduz na forma
     enunciada; ver secao 7. A rotacao das quatro chaves OpenRouter continua
     sendo ato do vertice no provedor, fora do alcance daqui
@@ -147,8 +150,7 @@ de bytes, 55 servidores MCP inventariados, 19 `.env` varridos, e a não-fuga do
 `.env` para a árvore isolada provada por três fontes mais verificação empírica.
 Três mutações com baseline explícita sobre a guarda nova.
 
-Não rodaram: o handoff da outra sessão continua não rastreado e intocado — é
-decisão do vértice; **nenhuma chave foi validada contra o provedor** (a
+Não rodaram: **nenhuma chave foi validada contra o provedor** (a
 governança proíbe verificação que pressuponha chamada real a provedor de LLM, e
 por isso forma é o que se mede, nunca liveness), então a rotação das quatro
 chaves OpenRouter continua pendente e é ato do vértice; o executor não foi
