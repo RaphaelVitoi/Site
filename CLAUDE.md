@@ -208,10 +208,16 @@ operacional da investigação; ela só pode ser contrariada por evidência concr
 e auditada.
 
 1. Registrar a linha do tempo de cada incidente: evento, processos, portas,
-   alterações e autor operacional. Separar fato observado, hipótese e decisão.
+   alterações e autor operacional. Distinguir rigorosamente **horário do
+   evento**, **horário da percepção humana**, **horário da captura** e
+   **horário do diagnóstico**; uma captura tardia jamais pode ser tratada como
+   instante de início sem confirmação explícita.
 2. Formular hipóteses concorrentes e atualizar a atribuição com evidências a
-   favor e contra. A ausência de prova formal não reduz, por si só, uma
-   atribuição operacional suficiente para restaurar e mitigar o sistema.
+   favor e contra. O relato direto do administrador sobre a ocorrência no seu
+   ambiente fechado é evidência operacional primária, não uma lacuna que o
+   agente possa preencher com "ausência de prova". Quando ele atribuir origem
+   à sessão, investigar primeiro o mecanismo dessa origem; somente evidência
+   independente, concreta e contraditória pode reabrir a atribuição.
 3. Manter o problema central no contexto. Um finding periférico não pode
    deslocar a demanda original sem vínculo causal demonstrado.
 4. Aplicar a escada obrigatória: **preservar capacidade → corrigir causa

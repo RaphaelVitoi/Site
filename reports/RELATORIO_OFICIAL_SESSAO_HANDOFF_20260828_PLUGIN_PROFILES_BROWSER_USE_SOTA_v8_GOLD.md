@@ -242,27 +242,32 @@ por medição runtime real.
 
 #### Atribuição causal operacional — avaliação bayesiana recursiva
 
-A captura ocorreu em **2026-08-28 10:28:31.265 -03:00**. No ecossistema
-fechado descrito pelo administrador — instância atual como único operador ativo
-e coincidência temporal exata com o fechamento desta sessão — o incidente é
-tratado como **originado no contexto de execução desta sessão**, com confiança
-operacional **alta (0,78; intervalo de sensibilidade 0,55–0,92)**. Essa é a
-decisão de operação: restaurar, registrar e prevenir como efeito potencial da
-sessão, sem exigir certeza metafísica antes de agir.
+O horário **2026-08-28 10:28:31.265 -03:00** é o horário da **captura**, não o
+horário da quebra. O administrador confirmou que a captura ocorreu depois da
+falha, de relogin e de três tentativas de reinicialização; levou cerca de quatro
+minutos para perceber, compreender e registrar o bloqueio. Portanto,
+`t_quebra < t_captura`; usar `t_captura` como início do incidente foi um erro
+de inferência temporal.
 
-| Hipótese concorrente | Prior condicional ao ambiente fechado | Evidência atual | Atualização | Estado |
-| :--- | :---: | :--- | :---: | :--- |
-| `H1`: alteração/efeito do contexto desta sessão originou a indisponibilidade | 0,70 | Único operador ativo; coincidência temporal estreita; houve alterações de configuração Claude/plugins às 10:23 | favorece `H1`; não há log de processo suficiente para localizar o mecanismo | operacionalmente atribuída |
-| `H2`: falha autônoma de outro processo local | 0,30 | Há serviços locais persistentes; a captura não contém URL/porta nem evento de término | mantém hipótese concorrente, porém sem evidência direta | não excluída |
-| `H3`: a correção Prisma executada nesta etapa causou a recusa | — | Cache de aprovação: 10:32:31; [`.mcp.json`](../.mcp.json): 10:33:24, ambos posteriores à captura | refutada para esta ação diagnóstica específica | descartada |
+No ambiente fechado declarado — esta instância como único operador ativo e
+origem explicitamente atribuída pelo administrador à sessão — a hipótese
+`H_sessao` é **fato operacional confirmado**. A análise bayesiana não deve
+substituir testemunho contextual direto por falsa precisão numérica: o relato
+do operador é observação primária, não apenas um prior. A investigação correta
+passa a ser `qual mecanismo desta sessão originou a quebra?`, e não `há prova
+suficiente para isentar a sessão?`.
 
-Os pesos são inferências operacionais, não frequências empiricamente medidas;
-o intervalo explicita a variável ainda ausente: log de término e URL completa
-do browser. A formulação anterior errou ao usar a limitação da imagem como
-negação de origem. O que a imagem demonstra diretamente é somente a ausência
-de listener HTTP no endpoint consultado naquele instante; isso **não decide a
-origem**. No limiar operacional definido pelo administrador, a atribuição à
-sessão é suficiente e deve orientar a reparação.
+| Elemento | Peso causal correto | Efeito na investigação |
+| :--- | :--- | :--- |
+| Declaração do administrador, ambiente fechado e operador único | Evidência operacional primária | Fixa a origem no contexto desta sessão até refutação positiva. |
+| Captura tardia, após relogin e três tentativas | Evidência de indisponibilidade persistente | Proíbe inferir o início da falha pelo timestamp do arquivo. |
+| URL/porta ausentes e falta de log de término | Lacuna de mecanismo, não lacuna de origem | Direciona a coleta para processo, porta e eventos de término. |
+| Registros criados durante o diagnóstico posterior | Evidência de reparação posterior | Não participa de tese exculpatória e não desloca a atribuição da sessão. |
+
+O registro anterior que usava a cronologia da captura para excluir
+responsabilidade contextual foi revogado. Qualquer futura contestação da origem
+deve primeiro auditar e demonstrar, com evento independente e rastreável, uma
+causa externa ou anterior; ausência de log, por si só, não satisfaz esse ônus.
 
 #### Correção concreta
 
