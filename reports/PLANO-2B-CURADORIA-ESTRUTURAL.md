@@ -37,10 +37,24 @@ verificado:
   - FRENTE 3.3 destino dos dados do supermemory lido no cliente
     (POST de content para api.supermemory.ai) e ausencia de modo self-hosted
     conferida no README
+  - FRENTE 1 (2026-08-28) as 70 ocorrencias dos 5 basenames remedidas sob a raiz,
+    agora com predicado ESTRUTURAL de declaracao por manifesto (manifesto irmao
+    que cita o nome do arquivo) em vez de uma chave literal: 26 declaradas, 44
+    nao. As tres grafias de chave (contextFileName, contextPath, context)
+    localizadas nos manifestos que as usam
+  - FRENTE 1 corpus do RAG medido nos DOIS estados com o coletor real do
+    memory_rag: 470 antes, 474 depois, delta de exatamente 4 arquivos
+  - FRENTE 1 barreira de traversal exercitada: fonte ".." coleta 0 arquivos
+  - FRENTE 1 consumidores de codigo declarados no indice reconferidos arquivo a
+    arquivo; dois haviam envelhecido (nexus.py 2156->2172, e sota_hygiene.py fica
+    em antigravity/scratch/, nao em Site/scripts/)
+  - FRENTE 1 as 11 guardas do indice submetidas a 7 mutacoes com baseline
+    explicita (11 passed antes) e contagem de COLETADOS conferida: 7 detectadas
 nao_verificado:
-  - NENHUM arquivo foi movido, renomeado ou removido pelas frentes 1 a 7. O
-    PRELUDIO alterou o roteamento do perfil e travou o contrato de inferencia;
-    fora isso este documento continua sendo um PLANO.
+  - Nenhum arquivo foi movido, renomeado ou removido por nenhuma frente. O
+    PRELUDIO alterou o roteamento do perfil e travou o contrato de inferencia; a
+    FRENTE 1 foi EXECUTADA em 2026-08-28 (indice, guardas e fonte de governanca
+    no manifesto de ingestao -- secao 1.6). As frentes 2 a 7 continuam plano.
   - a arvore fora de ~/.gemini nao foi inspecionada
   - nao foi medido quem IMPORTA cada copia duplicada; so a duplicacao em si
   - antigravity-cli/ e antigravity-ide/ nao tiveram o conteudo auditado
@@ -63,6 +77,14 @@ nao_verificado:
   - FRENTE 3: nenhuma busca RAG real foi executada; o gemma_server nao foi
     levantado. A equivalencia ChromaDB vem de leitura de codigo e da ausencia
     do pacote lancedb.
+  - FRENTE 1: qual das TRES grafias de chave de contexto o Gemini CLI de fato
+    honra nao foi medido -- exigiria executar o CLI. O predicado estrutural
+    adotado nao depende da resposta, e e por isso que ele foi adotado.
+  - FRENTE 1: nenhuma ingestao foi executada. O corpus foi medido pelo coletor
+    (que arquivos ENTRAM), nao pela indexacao (o que a memoria devolve).
+  - FRENTE 1: os membros fora de Site/ so sao verificados quando a raiz
+    multiprojeto e reconhecida; fora dela o teste PULA com motivo declarado, em
+    vez de passar em silencio.
 supersede: null
 ---
 
@@ -261,6 +283,25 @@ Não são cópias concorrentes de governança — são o arquivo de contexto daq
 plugin. Declarar um "GEMINI.md canônico" que as substituísse **quebraria as
 extensões**.
 
+> **CORRIGIDO em 2026-08-28 — a chave não é uma, são três.** A medição acima
+> procurou o literal `"contextFileName"`. Remedindo com o predicado
+> **estrutural** — *existe `gemini-extension.json` irmão cujo texto cita o nome
+> do arquivo* — as três grafias aparecem: `contextFileName` (22 ocorrências),
+> `contextPath` (2, em `todoist-extension`) e `context` (2, em `co-researcher`).
+>
+> Sob os 5 basenames de governança e as 70 ocorrências sob a raiz: **26
+> declaradas por manifesto, 44 não.** O número muda porque o predicado mudou —
+> o antigo dava por declarado qualquer arquivo cujo manifesto irmão tivesse a
+> chave, ainda que a chave nomeasse **outro** arquivo. `extensions/superpowers/`
+> declara `GEMINI.md`; seu `CLAUDE.md` e seu `AGENTS.md` não são declarados por
+> ninguém.
+>
+> **A consequência é de detector, não de contagem.** Uma regra de nomeação que
+> conhecesse só `contextFileName` trataria o `GEMINI.md` do `todoist-extension`
+> como cópia concorrente de governança e mandaria renomeá-lo — quebrando a
+> extensão. É a mesma família de erro do "nome errado para grandeza real":
+> o detector mede uma coisa e o nome promete outra.
+
 Governança real: 5 (raiz 1.476, `Site/` 5.548, `antigravity/` 8.342,
 `antigravity-cli/` 3.489, `antigravity-ide/` 4.067). Só a da raiz tem
 consumidor de código (`sota_hygiene.py:320`); as outras vivem de convenção.
@@ -339,11 +380,72 @@ CLI os instalou — mas **não existem em `extensions/`**: só em
 | `AGENTS.md` na raiz — criar ou corrigir o `CLAUDE.md`? | Decidir se a família deve existir na raiz |
 | As 2 extensões fora de `extensions/` | Entender se a instalação quebrou ou se o caminho é outro |
 
+> **Estado em 2026-08-28.** Das três, **duas saíram da lista**: `Site/skills/`
+> são submódulos (a pergunta "promover ou arquivar" era da categoria errada —
+> ver §1.5.5), e o `AGENTS.md` da raiz **foi criado como ponteiro**, o que torna
+> verdadeira a declaração da §1 do `CLAUDE.md` canônico. Resta a terceira.
+>
+> O **item 5** também mudou de forma ao ser executado. Ver §1.6.
+
 ---
 
-**Entregável do item 1:** regra de nomeação que proíba basename ambíguo em
-artefato de governança, mais um índice que declare o canônico de cada família.
-**A base de evidência está na §1.5 acima.**
+## 1.6 FRENTE 1 — ENTREGUE em 2026-08-28
+
+O entregável era *"regra de nomeação que proíba basename ambíguo em artefato de
+governança, mais um índice que declare o canônico de cada família"*.
+
+**Onde está:** [`data/INDICE_CANONICO_GOVERNANCA.json`](../data/INDICE_CANONICO_GOVERNANCA.json),
+guardado por `tests/test_indice_canonico.py` (11 testes, **7 mutações
+detectadas com baseline explícita**).
+
+### 1.6.1 A regra não podia ser a proibição simples
+
+Proibir o homônimo por completo quebraria as **duas** coisas que dependem do
+nome exato: a convenção de runtime (`CLAUDE.md`, `GEMINI.md` em raiz de escopo)
+e as extensões (arquivo de contexto declarado por manifesto — em três grafias,
+§1.5.4).
+
+> **Regra:** basename de governança só pode se repetir quando cada cópia é
+> exigida, **na própria localização**, por consumidor de tipo `convenção` ou
+> `manifesto` — uma por **raiz de escopo**. Cópia adicional fora de raiz de
+> escopo tem de estar declarada no índice com papel explícito, ou receber
+> prefixo de escopo (`<escopo>-GEMINI.md`).
+
+Raízes de escopo reconhecidas: `.`, `Site`, `antigravity`, `antigravity-cli`,
+`antigravity-ide`. Fora de alcance por natureza, não por exceção: vendorizado,
+submódulo, espelho de extensão e backup — renomear ali quebraria upstream.
+
+### 1.6.2 O que o índice deliberadamente **não** afirma
+
+Bytes e números de linha entram como informativos e **nenhum teste os afirma**.
+Número medido vale na configuração medida; transformá-lo em estrutura produz
+portão que reprova por edição legítima. O consumidor em `nexus.py` andou de
+`:2156` para `:2172` nesta mesma semana — o teste confere o **arquivo** e a
+menção ao basename, nunca a linha.
+
+### 1.6.3 O item 5 mudou de forma ao ser executado
+
+A §1.5.6 pedia *"o corpus do RAG precisa incluir os dois `MODUS_OPERANDI`
+autoritativos"*. Executando, **um dos dois é inalcançável por desenho**:
+
+| | Medido |
+| :--- | :--- |
+| Corpus antes | **470** arquivos |
+| Corpus depois | **474** — exatamente `MODUS_OPERANDI.md`, `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` da raiz do projeto |
+| Fonte `".."` (o canônico de 40 KB) | **0 arquivos** — `[SEC] Bloqueio de LFI/Traversal` |
+
+`memory_rag.py:288` barra qualquer fonte que escape a raiz do projeto. Incluir
+o canônico multiprojeto exigiria **ampliar uma fronteira de segurança** para
+satisfazer um item de plano — que é a forma sofisticada de contornar portão, e a
+governança proíbe.
+
+Então o item 5 se cumpre pela metade e a outra metade **se declara**: o índice
+registra `no_corpus_do_rag: false` com o motivo, e um teste
+(`test_a_barreira_de_traversal_do_manifesto_continua_de_pe`) garante que a
+barreira continua de pé — para que ninguém "conserte" o corpus derrubando-a.
+
+A enumeração dos quatro arquivos, em vez de `*.md`, também é deliberada:
+`"*.md"` recursivo na raiz arrastaria a árvore inteira.
 
 ---
 
