@@ -750,6 +750,14 @@ em 2026-08-27, nenhum chamador de produção escalona por esta tabela.
 **Entregável:** decidir qual das duas é a autoridade. Enquanto não decidir, toda
 melhoria em qualquer uma delas tem chance de virar retrabalho.
 
+> **Medido em 2026-08-28, e o enquadramento acima estava errado.** As duas não
+> competem — têm tipos diferentes e respondem perguntas diferentes. A pergunta
+> real era *"o caminho quente consulta a política?"*, e a resposta é não: 19 de
+> 19 agentes e 13 de 13 subagentes divergem. Ver
+> [`FRENTE-4-2026-08-28-autoridade-de-roteamento.md`](FRENTE-4-2026-08-28-autoridade-de-roteamento.md).
+> O parágrafo acima fica como estava, porque é o que se planejou — corrigi-lo
+> apagaria a evidência de que a medição contradisse o plano.
+
 ---
 
 ## 5. Regras mestras, referências e referenciais

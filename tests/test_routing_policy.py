@@ -300,7 +300,13 @@ def test_nunca_difere_todas():
 def test_core_config_expoe_modelo_concreto_por_agente():
     """Regressao guardada: a politica existiu por commits inteiros sem que
     nada a importasse, e o sistema seguia com todos os agentes no mesmo modelo.
-    'Integrado' significa que o comportamento em execucao mudou."""
+
+    Este teste guarda a metade de cima -- que `core.config` RESOLVE o mapa. A
+    frase 'entao o comportamento em execucao mudou', que estava aqui, nao se
+    sustenta: medido em 2026-08-28, o caminho quente le `primary_model` do
+    manifesto e os 19 agentes divergem, 19 de 19. Resolver o mapa e uma coisa;
+    alguem le-lo e outra. A metade que faltava esta em
+    `tests/test_frente4_autoridade_de_roteamento.py`."""
     mapa = cfg.AGENT_MODEL_MAP
     assert len(mapa) == 19, f"esperado 19 agentes resolvidos, veio {len(mapa)}"
     assert len(set(mapa.values())) >= 3, f"roteamento colapsou: {set(mapa.values())}"
