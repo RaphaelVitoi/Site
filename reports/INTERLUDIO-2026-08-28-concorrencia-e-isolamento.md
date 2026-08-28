@@ -13,8 +13,8 @@ caminhos:
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
-  suite_arvore_viva: 504 passed
-  suite_arvore_isolada: 500 passed, 4 skipped
+  suite_arvore_viva: 508 passed
+  suite_arvore_isolada: 504 passed, 4 skipped
   data: 2026-08-28
 verificado:
   - as 4 edicoes da outra sessao auditadas uma a uma por EXECUCAO, nao leitura
@@ -27,8 +27,9 @@ verificado:
 nao_verificado:
   - o handoff da outra sessao NAO foi commitado nem alterado; continua nao
     rastreado e e decisao do vertice
-  - o risco P0 de credencial em argumento de MCP que aquele handoff declara nao
-    foi verificado nem remediado -- exige rotacao no provedor, fora deste escopo
+  - o risco P0 foi VERIFICADO em 2026-08-28T08:40 e nao reproduz na forma
+    enunciada; ver secao 7. A rotacao das quatro chaves OpenRouter continua
+    sendo ato do vertice no provedor, fora do alcance daqui
   - o executor isolado nao foi rodado contra o repositorio antigravity; a
     parametrizacao por --repo foi testada so em unidade
   - nenhum servidor MCP, skill ou proxy foi levantado nesta passagem
@@ -141,7 +142,77 @@ versões de PowerShell e executado; o veredito único exercitado ponta a ponta; 
 identidade de módulo medida antes e depois; a suíte completa nas duas árvores;
 o executor isolado exercitado em três modos.
 
+No adendo da §7 rodaram também: 6 arquivos de configuração lidos com contagem
+de bytes, 55 servidores MCP inventariados, 19 `.env` varridos, e a não-fuga do
+`.env` para a árvore isolada provada por três fontes mais verificação empírica.
+Três mutações com baseline explícita sobre a guarda nova.
+
 Não rodaram: o handoff da outra sessão continua não rastreado e intocado — é
-decisão do vértice; o risco P0 de credencial que ele declara não foi verificado
-nem remediado; o executor não foi rodado contra o `antigravity` de fato, só
-testado em unidade; nenhum MCP, skill ou proxy foi levantado.
+decisão do vértice; **nenhuma chave foi validada contra o provedor** (a
+governança proíbe verificação que pressuponha chamada real a provedor de LLM, e
+por isso forma é o que se mede, nunca liveness), então a rotação das quatro
+chaves OpenRouter continua pendente e é ato do vértice; o executor não foi
+rodado contra o `antigravity` de fato, só testado em unidade; nenhum MCP, skill
+ou proxy foi levantado.
+
+## 7. O risco P0, verificado
+
+> Adendo de 2026-08-28T08:40, a pedido do vértice. **Nenhum valor de credencial
+> foi impresso em nenhum momento desta verificação** — só caminho, chave, tipo e
+> comprimento.
+
+### 7.1 Na forma enunciada, não reproduz
+
+O handoff da outra sessão declara *"uma credencial materializada como argumento
+em configuração local"*. Medido:
+
+| Verificação | Resultado |
+| :--- | :--- |
+| Arquivos de configuração lidos | **6**, com contagem de bytes confirmando a leitura |
+| Servidores MCP inventariados | **55** (45 na raiz, 10 no antigravity) |
+| Argumento de linha de comando com credencial | **0** |
+| Parâmetro de credencial em URL | **0** |
+| `env` com valor literal sensível | **0** — o único, `GITHUB_PERSONAL_ACCESS_TOKEN`, é `${env:GITHUB_TOKEN}` |
+
+O padrão em uso é o correto: referência a variável de ambiente. E `GITHUB_TOKEN`
+não está definido nesta shell, coerente com as chaves revogadas.
+
+### 7.2 A exposição real é outra, e mais estreita
+
+`Site/.env` tem **quatro chaves OpenRouter materializadas em texto claro**
+(`sk-or-v1-…`, 73 caracteres). O que as contém:
+
+- **não é rastreado** pelo git, e é coberto pelo `.gitignore` linha 102;
+- **não vaza para a árvore isolada** — provado por três fontes independentes
+  (`git diff HEAD`, `git ls-files --others --exclude-standard`, e o fato de o
+  worktree materializar só rastreados) mais verificação empírica: criei um
+  worktree e conferi que o arquivo não está lá.
+
+As cinco `GEMINI_API_KEY_*` são **placeholders** (`COLOQUE_A_NOVA_CHAVE_AQUI`) —
+casaram com um regex genérico durante a varredura, e é exatamente por isso que a
+lista de padrões passou a aceitar só alta precisão.
+
+**O que continua aberto e é do vértice:** rotação das quatro chaves no provedor.
+Não testei se estão vivas — a governança proíbe verificação que pressuponha
+chamada real a provedor de LLM, então **forma** é o que se mede, nunca liveness.
+
+### 7.3 O que a verificação melhorou
+
+**Fonte única de padrões.** Os mesmos padrões viviam duplicados no portão
+PowerShell e num teste Python. Duplicata de regra de segurança diverge por
+construção: quem acrescenta um padrão de um lado não sabe do outro, e o lado
+esquecido continua aprovando. Agora ambos leem
+`data/PADROES_DE_CREDENCIAL.json`, e o portão **falha duro** se ela sumir.
+
+**A pergunta que nenhum portão fazia.** O portão vê o *diff* — recorte certo,
+para não reprovar dívida preexistente. Ninguém via a **árvore**.
+`tests/test_credenciais.py` vê. Achou uma ocorrência: uma *fixture* que prova o
+filtro de mascaramento de log. Corrigida partindo o literal em tempo de execução
+— valor idêntico em runtime, nenhum pedaço com forma de credencial — nunca
+isentando o arquivo. **Décima primeira vez** que um detector desta base precisa
+separar citar de afirmar.
+
+**O arquivo de padrões contém o padrão PEM que procura.** A saída não foi
+isentá-lo — isentar cria ponto cego no único lugar que descreve os segredos. É
+uma propriedade do **achado**: credencial de verdade não contém metacaractere de
+regex.
