@@ -98,14 +98,25 @@ foreach ($arq in $arquivos) {
 # e vazamento igual.
 # Padroes de alta precisao apenas. Heuristica generica ("senha = ...") produz
 # falso positivo, e portao que cria ruido e portao que sera ignorado.
-$padroesCredencial = @{
-    'Chave OpenAI'        = 'sk-[A-Za-z0-9]{20,}'
-    'Chave Google'        = 'AIza[0-9A-Za-z_\-]{35}'
-    'Token GitHub'        = 'gh[pousr]_[A-Za-z0-9]{36,}'
-    'Token Slack'         = 'xox[baprs]-[A-Za-z0-9\-]{10,}'
-    'Chave privada PEM'   = '-----BEGIN [A-Z ]*PRIVATE KEY-----'
-    'Chave Anthropic'     = 'sk-ant-[A-Za-z0-9_\-]{20,}'
+$arquivoDePadroes = Join-Path $PSScriptRoot '..\..\data\PADROES_DE_CREDENCIAL.json'
+if (-not (Test-Path -LiteralPath $arquivoDePadroes)) {
+    # Falha DURA, e de proposito. Portao de seguranca que perde a fonte de
+    # padroes e continua rodando vira portao que aprova tudo em silencio --
+    # o modo de falha que esta secao inteira existe para impedir.
+    Write-Host "[ANCORA] FONTE DE PADROES AUSENTE: $arquivoDePadroes" -ForegroundColor Red
+    exit 1
 }
+# Fonte UNICA, compartilhada com tests/test_credenciais.py. Os mesmos padroes
+# viviam duplicados aqui e em Python; duplicata de regra de seguranca diverge
+# por construcao, e o lado esquecido continua aprovando.
+$padroesCredencial = @{}
+(Get-Content -LiteralPath $arquivoDePadroes -Raw -Encoding UTF8 | ConvertFrom-Json).padroes.PSObject.Properties |
+    ForEach-Object { $padroesCredencial[$_.Name] = $_.Value }
+if ($padroesCredencial.Count -eq 0) {
+    Write-Host "[ANCORA] A fonte de padroes nao declarou nenhum padrao." -ForegroundColor Red
+    exit 1
+}
+
 foreach ($linha in $adicionadas) {
     foreach ($nome in $padroesCredencial.Keys) {
         if ($linha -match $padroesCredencial[$nome]) {

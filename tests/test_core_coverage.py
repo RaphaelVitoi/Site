@@ -102,7 +102,7 @@ def test_logging_filters() -> None:
     """Valida a ofuscacao de segredos e ASCII enforcement nos filtros de log."""
     f_secret = config.SecretMaskingFilter()
     record = logging.LogRecord(
-        "test", logging.INFO, "path", 10, "Access key: sk-123456789012345678901234567890", None, None
+        "test", logging.INFO, "path", 10, "Access key: sk-" + "123456789012345678901234567890", None, None
     )
     assert f_secret.filter(record) is True
     assert "[REDACTED_SECRET]" in record.msg

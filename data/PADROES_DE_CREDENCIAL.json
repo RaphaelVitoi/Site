@@ -1,0 +1,37 @@
+{
+  "id": "padroes-de-credencial",
+  "versao": "1.0.0",
+  "_por_que_este_arquivo_existe": "Os mesmos padroes viviam duplicados no portao PowerShell e num teste Python. Duplicata de regra de seguranca diverge por construcao: quem acrescenta um padrao num lado nao sabe do outro, e o lado esquecido continua APROVANDO. Fonte unica, lida pelos dois.",
+  "_regra_de_precisao": "So padrao de ALTA precisao. Heuristica generica produz falso positivo, e portao que cria ruido e portao que sera ignorado. Na auditoria de 2026-08-28 um valor de 27 chars comecando por COLOQUE_A_NOVA_CHAVE_AQUI casou com um regex generico -- por isso os generosos ficam de fora.",
+  "padroes": {
+    "Chave OpenAI": "sk-[A-Za-z0-9]{20,}",
+    "Chave OpenRouter": "sk-or-v1-[A-Za-z0-9]{32,}",
+    "Chave Google": "AIza[0-9A-Za-z_-]{35}",
+    "Token GitHub": "gh[pousr]_[A-Za-z0-9]{36,}",
+    "Token HuggingFace": "hf_[A-Za-z0-9]{30,}",
+    "Token Slack": "xox[baprs]-[A-Za-z0-9-]{10,}",
+    "Chave Anthropic": "sk-ant-[A-Za-z0-9_-]{20,}",
+    "Chave privada PEM": "-----BEGIN [A-Z ]*PRIVATE KEY-----"
+  },
+  "_por_que_o_arquivo_nao_se_denuncia": "O padrao PEM contem, literalmente, o texto que ele procura. A saida NAO e isentar este arquivo -- isentar cria ponto cego no unico lugar que descreve os segredos. A saida e uma propriedade do ACHADO: credencial de verdade nao contem metacaractere de regex. O que casar trazendo colchete, chave, asterisco, mais ou contrabarra e PADRAO, nao segredo.",
+  "metacaracteres_que_denunciam_um_padrao": [
+    "[",
+    "]",
+    "{",
+    "}",
+    "*",
+    "+",
+    "\\"
+  ],
+  "placeholders_conhecidos": [
+    "COLOQUE_A_NOVA_CHAVE_AQUI",
+    "AIzaSyYourGeminiApiKeyHere",
+    "your_key_here",
+    "YOUR_API_KEY",
+    "CHANGEME",
+    "REPLACE_ME"
+  ],
+  "nao_verificado": [
+    "Nenhuma chave foi validada contra o provedor. A governanca proibe verificacao que pressuponha chamada real a provedor de LLM, entao FORMA de credencial e o que se mede -- nunca se ela esta viva."
+  ]
+}
