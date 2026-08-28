@@ -31,6 +31,12 @@ verificado:
     (79 identicos, 53 divergentes) e a direcao da divergencia medida por mtime
   - MAPA 1.5 registro de habilitacao e ledger de integridade do CLI conferidos
     separadamente: provam coisas diferentes (regra x instalacao)
+  - FRENTE 3.1 ausencia do pacote lancedb e presenca do chromadb conferidas por
+    importlib.util.find_spec, e as 10 afirmacoes de "LanceDB" localizadas em
+    codigo vivo uma a uma
+  - FRENTE 3.3 destino dos dados do supermemory lido no cliente
+    (POST de content para api.supermemory.ai) e ausencia de modo self-hosted
+    conferida no README
 nao_verificado:
   - NENHUM arquivo foi movido, renomeado ou removido pelas frentes 1 a 7. O
     PRELUDIO alterou o roteamento do perfil e travou o contrato de inferencia;
@@ -50,6 +56,13 @@ nao_verificado:
     deliberado. So que divergiu, em que direcao e quando.
   - MAPA 1.5: a arvore de `antigravity/brain/` foi excluida das buscas de
     consumidor (e log de sessao, nao codigo vivo).
+  - FRENTE 3.2: o LanceDB NAO foi instalado nem exercitado. A particao de
+    corpus proposta e desenho, nao medicao -- o unico numero medido do lado
+    LanceDB e o benchmark historico do CONTEXT_CHECKPOINT (54,7k reg/s), que
+    nao foi reproduzido nesta sessao.
+  - FRENTE 3: nenhuma busca RAG real foi executada; o gemma_server nao foi
+    levantado. A equivalencia ChromaDB vem de leitura de codigo e da ausencia
+    do pacote lancedb.
 supersede: null
 ---
 
@@ -387,8 +400,82 @@ atual é o que os globs alcançam, não o que foi decidido. Hoje ele inclui 249
 arquivos de código (`*.py`, `*.ps1` recursivos da raiz) — decisão que ninguém
 registrou.
 
+### 3.1 O motor era outro do que todo mundo dizia
+
+Medido em 2026-08-28: **`lancedb` não está instalado. `chromadb` está.** O
+`memory_rag.py` usa `chromadb.PersistentClient` com embeddings
+`ONNXMiniLM_L6_V2`, locais.
+
+"LanceDB" era afirmado em **dez pontos de código vivo** — painel do dashboard,
+quatro pontos do `gemma_server`, log de exceção, dashboard de avatares e o
+**`system_prompt` entregue ao modelo**, que informava ao LLM ser um *"Motor de
+RAG LanceDB"*. Todos corrigidos.
+
+A origem está no `CONTEXT_CHECKPOINT`: `lancedb 0.37.1` foi **benchmarkado**
+junto com `pyarrow 25.0.1` e `pyspark 4.2.0` (throughput medido de 54,7k reg/s).
+A narração foi escrita para o estado **pretendido** e nunca reconciliada com o
+**construído**. Nada acusou, porque nome errado não levanta exceção.
+
+### 3.2 Instalar LanceDB **junto** com o Chroma — a condição inegociável
+
+Foi levantado pelo vértice, e faz sentido técnico: LanceDB tem backend Rust,
+formato colunar Arrow/Lance, busca híbrida (vetorial + texto integral),
+versionamento de dados e leitura sem cópia. É outra classe de ferramenta, não
+um Chroma melhor.
+
+**Mas coexistência aqui tem precedente ruim.** Duas memórias e dois paradigmas
+de roteamento já são problema aberto nesta base (frente 4, e a decisão
+`supermemory` × `memory_rag` na §3.3). Instalar um terceiro motor "ao lado" sem
+partição declarada é reproduzir o padrão pela terceira vez.
+
+**Condição:** a partição de responsabilidade se declara ANTES da instalação, não
+depois. A que faz sentido pela natureza dos dados:
+
+| Corpus | Motor | Por quê |
+| :--- | :--- | :--- |
+| Governança, registros, memória de agente (~460 arquivos textuais) | **ChromaDB** | Pequeno, textual, já funciona, embeddings locais, zero configuração |
+| PDFs do Drive (`ingest_drive_pdfs`), séries de benchmark, dados tabulares | **LanceDB** | Volume, colunar, Arrow — é exatamente o domínio dos 54,7k reg/s já medidos |
+
+Sem essa linha escrita e testada, dois motores viram duas verdades.
+
+**Roteiro proposto, em ordem:**
+
+1. Declarar a partição acima (ou outra) num registro — **antes** de `pip install`.
+2. Instalar e indexar **só** o corpus da coluna LanceDB. Não duplicar o de Chroma.
+3. **Período de sombra medido:** para um conjunto de consultas de referência,
+   registrar o que cada motor devolve. Comparação, não impressão.
+4. Só então decidir se algum absorve o outro.
+5. Guarda: estender `test_o_motor_de_rag_declarado_e_o_instalado` para exigir
+   que **cada** motor citado no código esteja instalado **e** tenha corpus
+   declarado. Hoje ela já reprova nome sem pacote.
+
+**O que NÃO fazer:** instalar o LanceDB e reindexar o mesmo corpus nos dois. É
+como a situação já corrigida termina de volta.
+
+### 3.3 `supermemory` × `memory_rag` — decidido por fronteira, não por qualidade
+
+`gemini-supermemory` faz `POST` do conteúdo para `https://api.supermemory.ai`,
+exige `SUPERMEMORY_API_KEY` e não tem modo self-hosted (o *"local development"*
+do README é `npm link`). O `memory_rag` é local, zero egresso.
+
+O corpus em questão são POSTULADOs, handoffs, memória de agente e o código deste
+repositório. **Mandar isso para SaaS de terceiro é decisão de exfiltração, não
+de arquitetura** — e as chaves deste ambiente estão revogadas de propósito.
+
+**`memory_rag` é a autoridade.** Não por ser melhor: por ser o único que
+respeita a fronteira.
+
+O que vale importar do `supermemory` são **conceitos, não o serviço** — três que
+o `memory_rag` não tem:
+
+- `hooks/session-start.js` — injeção automática de memória no início da sessão.
+  Hoje o `nexus agent handoff` faz isso à mão.
+- `git-utils.js` — contexto ciente do estado do git.
+- `project-config.js` + `container-tag.js` — escopo e etiquetagem por projeto.
+
 **Entregável:** declaração explícita do corpus pretendido, com justificativa por
-fonte, e o manifesto derivado dela — não o contrário.
+fonte, o manifesto derivado dela — não o contrário — e a partição de motores da
+§3.2 escrita antes de qualquer instalação.
 
 ---
 

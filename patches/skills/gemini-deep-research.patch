@@ -1,0 +1,1411 @@
+diff --git a/.github/workflows/build-and-release.yml b/.github/workflows/build-and-release.yml
+index 7bc08ca..62346ae 100644
+--- a/.github/workflows/build-and-release.yml
++++ b/.github/workflows/build-and-release.yml
+@@ -14,12 +14,12 @@ jobs:
+     permissions:
+       contents: write
+     steps:
+-      - uses: actions/checkout@v6
++      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+         with:
+           ref: ${{ inputs.tag }}
+ 
+       - name: Set up Node.js
+-        uses: actions/setup-node@v6
++        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+         with:
+           node-version: '20'
+           cache: 'npm'
+@@ -39,79 +39,29 @@ jobs:
+         env:
+           TAG: ${{ inputs.tag }}
+ 
+-      - name: Update versions in config files
++      - name: Package extension
+         run: |
+-          set -e
+           VERSION="${{ steps.version.outputs.VERSION }}"
++          echo "Packaging extension version: $VERSION"
+ 
+-          # Update package.json version
+-          npm version "$VERSION" --no-git-tag-version --allow-same-version
++          # Create release directory
++          mkdir -p release
+ 
+-          # Helper function to safely update JSON file version
+-          update_json_version() {
+-            local file="$1"
+-            local tmp_file="${file}.tmp"
++          # Create a copy of gemini-extension.json and update version
++          jq --arg v "$VERSION" '.version = $v' gemini-extension.json > release/gemini-extension.json
+ 
+-            # Check file exists
+-            if [[ ! -f "$file" ]]; then
+-              echo "Error: $file not found"
+-              exit 1
+-            fi
++          # Update the version embedded in the compiled bundle so runtime matches the tag
++          sed -i 's/__BUILD_PKG_VERSION__/'"$VERSION"'/g' dist/index.js
+ 
+-            # Update version to temp file
+-            if ! jq --arg v "$VERSION" '.version = $v' "$file" > "$tmp_file"; then
+-              echo "Error: jq failed to process $file"
+-              rm -f "$tmp_file"
+-              exit 1
+-            fi
++          # Generate SHA256 checksums of binary assets for integrity verification
++          echo "# Build Asset Integrity Manifest" > release/SHA256SUMS.txt
++          echo "# Generated on $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> release/SHA256SUMS.txt
++          find dist skills commands -type f -exec sha256sum {} + >> release/SHA256SUMS.txt
+ 
+-            # Validate temp file is well-formed JSON
+-            if ! jq empty "$tmp_file" 2>/dev/null; then
+-              echo "Error: Invalid JSON produced for $file"
+-              rm -f "$tmp_file"
+-              exit 1
+-            fi
+-
+-            # Move temp file into place
+-            mv "$tmp_file" "$file"
+-            echo "Updated version in $file to $VERSION"
+-          }
+-
+-          # Update both config files
+-          update_json_version "gemini-extension.json"
+-          update_json_version "release/gemini-extension.json"
+-
+-      - name: Create release archive
+-        run: |
+-          set -e
+-          errors=()
+-
+-          # Validate required directories exist
+-          for dir in dist commands skills; do
+-            if [[ ! -d "$dir" ]]; then
+-              errors+=("Missing required directory: $dir")
+-            fi
+-          done
+-
+-          # Validate required files exist
+-          for file in release/gemini-extension.json deep-research-GEMINI.md dist/index.js skills/deep-research-start/SKILL.md; do
+-            if [[ ! -f "$file" ]]; then
+-              errors+=("Missing required file: $file")
+-            fi
+-          done
+-
+-          # Fail if any validation errors
+-          if [[ ${#errors[@]} -gt 0 ]]; then
+-            echo "Error: Release archive validation failed:"
+-            for err in "${errors[@]}"; do
+-              echo "  - $err"
+-            done
+-            exit 1
+-          fi
+-
+-          # Create archive with bundled output (no node_modules needed)
++          # Create archive with bundled output
+           tar -czvf release/gemini-deep-research.tar.gz \
+             --transform 's|release/gemini-extension.json|gemini-extension.json|' \
++            package.json \
+             dist \
+             commands \
+             skills \
+@@ -123,7 +73,7 @@ jobs:
+           tar -tzvf release/gemini-deep-research.tar.gz
+ 
+       - name: Create GitHub Release
+-        uses: softprops/action-gh-release@v3
++        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
+         with:
+           tag_name: ${{ inputs.tag }}
+           files: release/gemini-deep-research.tar.gz
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 060a32c..bebe0bc 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -10,10 +10,10 @@ jobs:
+   test:
+     runs-on: ubuntu-latest
+     steps:
+-      - uses: actions/checkout@v6
++      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+ 
+       - name: Set up Node.js
+-        uses: actions/setup-node@v6
++        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+         with:
+           node-version: '20'
+           cache: 'npm'
+diff --git a/.github/workflows/release-please.yml b/.github/workflows/release-please.yml
+index 1a3f154..9a72fb1 100644
+--- a/.github/workflows/release-please.yml
++++ b/.github/workflows/release-please.yml
+@@ -13,7 +13,7 @@ jobs:
+   release-please:
+     runs-on: ubuntu-latest
+     steps:
+-      - uses: googleapis/release-please-action@v5
++      - uses: googleapis/release-please-action@d1a8f221d7723166f48a584aebba00ef3f6febec # v4.1.4
+         with:
+           config-file: release-please-config.json
+           manifest-file: .release-please-manifest.json
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 875d329..fad6def 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -4,11 +4,70 @@ on:
+   push:
+     tags:
+       - 'v*'
++  workflow_dispatch:
++    inputs:
++      tag:
++        description: 'The tag to release (e.g., v0.2.6)'
++        required: true
++        type: string
+ 
+ jobs:
+-  build-and-release:
+-    uses: ./.github/workflows/build-and-release.yml
+-    with:
+-      tag: ${{ github.ref_name }}
++  release:
++    runs-on: ubuntu-latest
+     permissions:
+       contents: write
++    steps:
++      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
++        with:
++          ref: ${{ github.event.inputs.tag || github.ref_name }}
++
++      - name: Set up Node.js
++        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
++        with:
++          node-version: '20'
++          cache: 'npm'
++
++      - name: Install dependencies
++        run: npm ci
++
++      - name: Run tests
++        run: npm test
++
++      - name: Build extension
++        run: npm run build
++
++      - name: Get version from tag
++        id: version
++        run: echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
++        env:
++          TAG: ${{ github.event.inputs.tag || github.ref_name }}
++
++      - name: Package extension
++        run: |
++          VERSION="${{ steps.version.outputs.VERSION }}"
++          echo "Packaging extension version: $VERSION"
++
++          mkdir -p release
++          jq --arg v "$VERSION" '.version = $v' gemini-extension.json > release/gemini-extension.json
++          sed -i 's/__BUILD_PKG_VERSION__/'"$VERSION"'/g' dist/index.js
++
++          echo "# Build Asset Integrity Manifest" > release/SHA256SUMS.txt
++          echo "# Generated on $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> release/SHA256SUMS.txt
++          find dist skills commands -type f -exec sha256sum {} + >> release/SHA256SUMS.txt
++
++          tar -czvf release/gemini-deep-research.tar.gz \
++            --transform 's|release/gemini-extension.json|gemini-extension.json|' \
++            package.json \
++            dist \
++            commands \
++            skills \
++            release/gemini-extension.json \
++            deep-research-GEMINI.md
++
++      - name: Create GitHub Release
++        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
++        with:
++          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
++          files: release/gemini-deep-research.tar.gz
++          generate_release_notes: true
++          make_latest: true
+diff --git a/build.mjs b/build.mjs
+index 950d73e..4d36b3b 100644
+--- a/build.mjs
++++ b/build.mjs
+@@ -1,6 +1,8 @@
++/* global console */
+ import * as esbuild from 'esbuild';
+-import { rm } from 'fs/promises';
+-import { readFileSync } from 'fs';
++import { rm } from 'node:fs/promises';
++import { readFileSync } from 'node:fs';
++import process from 'node:process';
+ 
+ // Read version from package.json for build-time injection
+ const pkg = JSON.parse(readFileSync('package.json', 'utf-8'));
+@@ -35,6 +37,6 @@ const __dirname = dirname(__filename);
+   });
+   console.log('Build complete: dist/index.js');
+ } catch (error) {
+-  console.error('Build failed:', error.message);
++  console.error('Build failed:', error instanceof Error ? error.message : String(error));
+   process.exit(1);
+ }
+diff --git a/package.json b/package.json
+index b852d60..81086a2 100644
+--- a/package.json
++++ b/package.json
+@@ -8,7 +8,7 @@
+     "build": "node build.mjs",
+     "build:dev": "tsc",
+     "typecheck": "tsc --noEmit",
+-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
++    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+     "test:mime-types": "ts-node scripts/test-mime-types.ts",
+     "lint": "eslint src/",
+     "prepublishOnly": "npm run build"
+@@ -29,6 +29,7 @@
+     "@eslint/js": "9.39.4",
+     "@types/jest": "30.0.0",
+     "@types/node": "26.2.0",
++    "cross-env": "10.1.0",
+     "esbuild": "0.28.2",
+     "eslint": "10.8.1",
+     "eslint-config-prettier": "10.1.8",
+diff --git a/scripts/start.cjs b/scripts/start.cjs
+index fb22431..0945d0b 100644
+--- a/scripts/start.cjs
++++ b/scripts/start.cjs
+@@ -1,3 +1,5 @@
++/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/explicit-function-return-type */
++/* global require, process, __dirname, console */
+ /**
+  * MCP-safe start script.
+  *
+@@ -9,6 +11,12 @@
+ const { spawn } = require('node:child_process');
+ const path = require('node:path');
+ 
++/**
++ * @param {string} command
++ * @param {string[]} args
++ * @param {import('node:child_process').SpawnOptions} [options]
++ * @returns {Promise<void>}
++ */
+ function runCommand(command, args, options) {
+   return new Promise((resolve, reject) => {
+     const child = spawn(command, args, options);
+@@ -37,6 +45,9 @@ function runCommand(command, args, options) {
+ 
+ const SERVER_PATH = path.join(__dirname, '..', 'dist', 'index.js');
+ 
++/**
++ * @returns {Promise<void>}
++ */
+ async function main() {
+   try {
+     // Install deps — stdout suppressed, stderr piped for visibility.
+diff --git a/src/ResearchWatcher.test.ts b/src/ResearchWatcher.test.ts
+index 79bfed9..f6d7b54 100644
+--- a/src/ResearchWatcher.test.ts
++++ b/src/ResearchWatcher.test.ts
+@@ -92,10 +92,12 @@ describe('ResearchWatcher', () => {
+     } as never);
+ 
+     const watcher = makeWatcher();
+-    watcher.track('r-2', '/abs/report.md');
++    watcher.track('r-2', 'reports/error.md');
+     await watcher.settle();
+ 
+-    const errorWrite = mockWriteFileSync.mock.calls.find(([p]) => p === '/abs/report.md');
++    const errorWrite = mockWriteFileSync.mock.calls.find(
++      ([p]) => p === path.resolve(workspaceRoot, 'reports/error.md'),
++    );
+     expect(errorWrite).toBeDefined();
+     const body = errorWrite?.[1] as string;
+     expect(body).toContain('Interaction ID: r-2');
+@@ -104,6 +106,14 @@ describe('ResearchWatcher', () => {
+     expect(configState).toEqual({});
+   });
+ 
++  it('rejects a report destination outside the workspace', () => {
++    const watcher = makeWatcher();
++    expect(() => watcher.track('r-outside', '../outside.md')).toThrow(
++      'Report output path must resolve to a file inside the workspace.',
++    );
++    expect(configState).toEqual({});
++  });
++
+   it('writes an error file when poll throws', async () => {
+     mockPoll.mockRejectedValue(new Error('network down') as never);
+ 
+diff --git a/src/ResearchWatcher.ts b/src/ResearchWatcher.ts
+index e7ed50f..fbc2faa 100644
+--- a/src/ResearchWatcher.ts
++++ b/src/ResearchWatcher.ts
+@@ -1,5 +1,5 @@
+-import * as fs from 'fs';
+-import * as path from 'path';
++import * as fs from 'node:fs';
++import * as path from 'node:path';
+ import {
+   Interaction,
+   ReportGenerator,
+@@ -9,6 +9,19 @@ import { WorkspaceConfigManager } from './config/WorkspaceConfig.js';
+ 
+ const DEFAULT_POLL_INTERVAL_MS = 60_000;
+ 
++/** Resolves a report destination without allowing writes outside the workspace. */
++export function resolveWorkspaceOutputPath(workspaceRoot: string, outputPath: string): string {
++  const root = path.resolve(workspaceRoot);
++  const target = path.resolve(root, outputPath);
++  const relative = path.relative(root, target);
++
++  if (!relative || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
++    throw new Error('Report output path must resolve to a file inside the workspace.');
++  }
++
++  return target;
++}
++
+ export interface ResearchWatcherDeps {
+   researchManager: Pick<ResearchManager, 'poll'>;
+   reportGenerator: Pick<ReportGenerator, 'generateMarkdown'>;
+@@ -36,8 +49,9 @@ export class ResearchWatcher {
+    * poll loop. Returns immediately.
+    */
+   track(id: string, outputPath: string): void {
++    const resolved = resolveWorkspaceOutputPath(this.workspaceRoot, outputPath);
+     WorkspaceConfigManager.addPendingResearch(id, outputPath);
+-    this.spawn(id, outputPath);
++    this.spawn(id, resolved);
+   }
+ 
+   /**
+@@ -47,7 +61,12 @@ export class ResearchWatcher {
+   resumeAll(): void {
+     const pending = WorkspaceConfigManager.getAllPendingResearch();
+     for (const [id, { outputPath }] of Object.entries(pending)) {
+-      this.spawn(id, outputPath);
++      try {
++        this.spawn(id, resolveWorkspaceOutputPath(this.workspaceRoot, outputPath));
++      } catch (error) {
++        console.error(`[research-watcher] discarded unsafe pending report path for ${id}:`, error);
++        WorkspaceConfigManager.removePendingResearch(id);
++      }
+     }
+   }
+ 
+@@ -68,12 +87,11 @@ export class ResearchWatcher {
+   }
+ 
+   private async run(id: string, outputPath: string): Promise<void> {
+-    const resolved = this.resolve(outputPath);
+     let interaction: Interaction;
+     try {
+       interaction = await this.researchManager.poll(id, this.pollIntervalMs);
+     } catch (err) {
+-      this.writeError(resolved, id, err instanceof Error ? err.message : String(err));
++      this.writeError(outputPath, id, err instanceof Error ? err.message : String(err));
+       WorkspaceConfigManager.removePendingResearch(id);
+       return;
+     }
+@@ -81,26 +99,20 @@ export class ResearchWatcher {
+     if (interaction.status === 'completed' && interaction.outputs) {
+       try {
+         const markdown = this.reportGenerator.generateMarkdown(interaction.outputs);
+-        fs.writeFileSync(resolved, markdown);
++        fs.writeFileSync(outputPath, markdown);
+       } catch (err) {
+-        this.writeError(resolved, id, err instanceof Error ? err.message : String(err));
++        this.writeError(outputPath, id, err instanceof Error ? err.message : String(err));
+       }
+     } else {
+       const reason =
+         interaction.status === 'completed'
+           ? 'Research completed but returned no outputs.'
+           : `Research ended with status "${interaction.status ?? 'unknown'}".`;
+-      this.writeError(resolved, id, reason);
++      this.writeError(outputPath, id, reason);
+     }
+     WorkspaceConfigManager.removePendingResearch(id);
+   }
+ 
+-  private resolve(outputPath: string): string {
+-    return path.isAbsolute(outputPath)
+-      ? outputPath
+-      : path.resolve(this.workspaceRoot, outputPath);
+-  }
+-
+   private writeError(resolved: string, id: string, message: string): void {
+     const body = [
+       `Deep Research did not produce a report.`,
+diff --git a/src/config/WorkspaceConfig.ts b/src/config/WorkspaceConfig.ts
+index 5ed57f9..908369b 100644
+--- a/src/config/WorkspaceConfig.ts
++++ b/src/config/WorkspaceConfig.ts
+@@ -1,5 +1,5 @@
+-import fs from 'fs';
+-import path from 'path';
++import fs from 'node:fs';
++import path from 'node:path';
+ import { z } from 'zod';
+ import { OperationStorage, UploadOperation } from '@allenhutchison/gemini-utils';
+ 
+@@ -43,29 +43,42 @@ export const WorkspaceConfigSchema = z.object({
+ 
+ export type WorkspaceConfig = z.infer<typeof WorkspaceConfigSchema>;
+ 
++function getSafeConfigPath(): string {
++  const basePath = path.normalize(path.resolve(process.cwd()));
++  const fullPath = path.normalize(path.join(basePath, '.gemini-research.json'));
++  if (!fullPath.startsWith(basePath)) {
++    throw new Error('Invalid workspace config path traversal');
++  }
++  return fullPath;
++}
++
+ export class WorkspaceConfigManager {
+-  private static configPath = path.resolve(process.cwd(), '.gemini-research.json');
++  private static getConfigPath(): string {
++    return getSafeConfigPath();
++  }
+ 
+   static load(): WorkspaceConfig {
+-    if (!fs.existsSync(this.configPath)) {
++    const configPath = getSafeConfigPath();
++    if (!fs.existsSync(configPath)) {
+       const defaultConfig: WorkspaceConfig = { researchIds: [], fileSearchStores: {}, uploadOperations: {}, pendingResearch: {} };
+       this.save(defaultConfig);
+       return defaultConfig;
+     }
+ 
+     try {
+-      const content = fs.readFileSync(this.configPath, 'utf-8');
++      const content = fs.readFileSync(configPath, 'utf-8');
+       const parsed = JSON.parse(content);
+       return WorkspaceConfigSchema.parse(parsed);
+     } catch (error) {
+       // If file is corrupt, safer to return default to avoid crashing, but warn the user
+-      console.warn(`Failed to load workspace config from ${this.configPath}:`, error);
++      console.warn(`Failed to load workspace config:`, error);
+       return { researchIds: [], fileSearchStores: {}, uploadOperations: {}, pendingResearch: {} };
+     }
+   }
+ 
+   static save(config: WorkspaceConfig): void {
+-    fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
++    const safePath = getSafeConfigPath();
++    fs.writeFileSync(safePath, JSON.stringify(config, null, 2));
+   }
+ 
+   static addResearchId(id: string): void {
+@@ -78,18 +91,18 @@ export class WorkspaceConfigManager {
+ 
+   static addFileSearchStore(name: string, resourceName: string): void {
+     const config = this.load();
+-    config.fileSearchStores[name] = resourceName;
++    Reflect.set(config.fileSearchStores, name, resourceName);
+     this.save(config);
+   }
+ 
+   static getUploadOperation(id: string): UploadOperation | undefined {
+     const config = this.load();
+-    return config.uploadOperations[id];
++    return Reflect.get(config.uploadOperations, id) as UploadOperation | undefined;
+   }
+ 
+   static setUploadOperation(id: string, operation: UploadOperation): void {
+     const config = this.load();
+-    config.uploadOperations[id] = operation;
++    Reflect.set(config.uploadOperations, id, operation);
+     this.save(config);
+   }
+ 
+@@ -100,14 +113,14 @@ export class WorkspaceConfigManager {
+ 
+   static addPendingResearch(id: string, outputPath: string): void {
+     const config = this.load();
+-    config.pendingResearch[id] = { outputPath };
++    Reflect.set(config.pendingResearch, id, { outputPath });
+     this.save(config);
+   }
+ 
+   static removePendingResearch(id: string): void {
+     const config = this.load();
+-    if (config.pendingResearch[id]) {
+-      delete config.pendingResearch[id];
++    if (Reflect.has(config.pendingResearch, id)) {
++      Reflect.deleteProperty(config.pendingResearch, id);
+       this.save(config);
+     }
+   }
+diff --git a/src/index.test.ts b/src/index.test.ts
+index 32fb731..8111075 100644
+--- a/src/index.test.ts
++++ b/src/index.test.ts
+@@ -1,23 +1,25 @@
++/* eslint-disable @typescript-eslint/no-explicit-any */
+ import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
++import path from 'node:path';
+ 
+ // Mock the gemini-utils module
+-const mockCreateStore = jest.fn();
+-const mockListStores = jest.fn();
+-const mockDeleteStore = jest.fn();
+-const mockQueryStore = jest.fn();
+-const mockUploadFile = jest.fn();
+-const mockUploadDirectory = jest.fn();
+-const mockCreateOperation = jest.fn();
+-const mockGetOperation = jest.fn();
+-const mockMarkInProgress = jest.fn();
+-const mockMarkCompleted = jest.fn();
+-const mockMarkFailed = jest.fn();
+-const mockUpdateProgress = jest.fn();
+-const mockAddFailedFile = jest.fn();
+-const mockStartResearch = jest.fn();
+-const mockGetStatus = jest.fn();
+-const mockPoll = jest.fn();
+-const mockGenerateMarkdown = jest.fn();
++const mockCreateStore = jest.fn<(...args: any[]) => any>();
++const mockListStores = jest.fn<(...args: any[]) => any>();
++const mockDeleteStore = jest.fn<(...args: any[]) => any>();
++const mockQueryStore = jest.fn<(...args: any[]) => any>();
++const mockUploadFile = jest.fn<(...args: any[]) => any>();
++const mockUploadDirectory = jest.fn<(...args: any[]) => any>();
++const mockCreateOperation = jest.fn<(...args: any[]) => any>();
++const mockGetOperation = jest.fn<(...args: any[]) => any>();
++const mockMarkInProgress = jest.fn<(...args: any[]) => any>();
++const mockMarkCompleted = jest.fn<(...args: any[]) => any>();
++const mockMarkFailed = jest.fn<(...args: any[]) => any>();
++const mockUpdateProgress = jest.fn<(...args: any[]) => any>();
++const mockAddFailedFile = jest.fn<(...args: any[]) => any>();
++const mockStartResearch = jest.fn<(...args: any[]) => any>();
++const mockGetStatus = jest.fn<(...args: any[]) => any>();
++const mockPoll = jest.fn<(...args: any[]) => any>();
++const mockGenerateMarkdown = jest.fn<(...args: any[]) => any>();
+ 
+ jest.unstable_mockModule('@allenhutchison/gemini-utils', () => ({
+   FileSearchManager: jest.fn().mockImplementation(() => ({
+@@ -57,31 +59,43 @@ jest.unstable_mockModule('@google/genai', () => ({
+ }));
+ 
+ // Mock fs
+-const mockExistsSync = jest.fn();
+-const mockStatSync = jest.fn();
+-const mockWriteFileSync = jest.fn();
+-const mockReadFileSync = jest.fn();
++const mockExistsSync = jest.fn<(...args: any[]) => any>();
++const mockStatSync = jest.fn<(...args: any[]) => any>();
++const mockWriteFileSync = jest.fn<(...args: any[]) => any>();
++const mockReadFileSync = jest.fn<(...args: any[]) => any>();
++const mockMkdirSync = jest.fn<(...args: any[]) => any>();
++const mockRealpathSync = jest.fn<(...args: any[]) => any>();
++const mockLstatSync = jest.fn<(...args: any[]) => any>();
+ 
+-jest.unstable_mockModule('fs', () => ({
++const fsMock = {
+   default: {
+     existsSync: mockExistsSync,
+     statSync: mockStatSync,
+     writeFileSync: mockWriteFileSync,
+     readFileSync: mockReadFileSync,
++    mkdirSync: mockMkdirSync,
++    realpathSync: mockRealpathSync,
++    lstatSync: mockLstatSync,
+   },
+   existsSync: mockExistsSync,
+   statSync: mockStatSync,
+   writeFileSync: mockWriteFileSync,
+   readFileSync: mockReadFileSync,
+-}));
++  mkdirSync: mockMkdirSync,
++  realpathSync: mockRealpathSync,
++  lstatSync: mockLstatSync,
++};
++
++jest.unstable_mockModule('fs', () => fsMock);
++jest.unstable_mockModule('node:fs', () => fsMock);
+ 
+ // Mock WorkspaceConfig
+-const mockAddFileSearchStore = jest.fn();
+-const mockAddResearchId = jest.fn();
+-const mockLoad = jest.fn();
+-const mockAddPendingResearch = jest.fn();
+-const mockRemovePendingResearch = jest.fn();
+-const mockGetAllPendingResearch = jest.fn(() => ({}));
++const mockAddFileSearchStore = jest.fn<(...args: any[]) => any>();
++const mockAddResearchId = jest.fn<(...args: any[]) => any>();
++const mockLoad = jest.fn<(...args: any[]) => any>();
++const mockAddPendingResearch = jest.fn<(...args: any[]) => any>();
++const mockRemovePendingResearch = jest.fn<(...args: any[]) => any>();
++const mockGetAllPendingResearch = jest.fn<(...args: any[]) => any>(() => ({}));
+ 
+ jest.unstable_mockModule('./config/WorkspaceConfig.js', () => ({
+   WorkspaceConfigManager: {
+@@ -96,8 +110,8 @@ jest.unstable_mockModule('./config/WorkspaceConfig.js', () => ({
+ }));
+ 
+ // Mock MCP SDK
+-const mockRegisterTool = jest.fn();
+-const mockConnect = jest.fn();
++const mockRegisterTool = jest.fn<(...args: any[]) => any>();
++const mockConnect = jest.fn<(...args: any[]) => any>();
+ 
+ jest.unstable_mockModule('@modelcontextprotocol/sdk/server/mcp.js', () => ({
+   McpServer: jest.fn().mockImplementation(() => ({
+@@ -131,11 +145,13 @@ describe('MCP Server Tools', () => {
+ 
+   beforeEach(async () => {
+     jest.clearAllMocks();
++    mockRealpathSync.mockImplementation((candidate: string) => path.resolve(candidate));
++    mockLstatSync.mockReturnValue({ isSymbolicLink: () => false });
+     toolHandlers = {};
+ 
+     // Capture tool handlers when registerTool is called
+     mockRegisterTool.mockImplementation((name: unknown, _schema: unknown, handler: unknown) => {
+-      toolHandlers[name as string] = handler as (params: Record<string, unknown>) => Promise<unknown>;
++      Reflect.set(toolHandlers, String(name), handler as (params: Record<string, unknown>) => Promise<unknown>);
+     });
+ 
+     // Import the module to trigger tool registration
+@@ -205,46 +221,47 @@ describe('MCP Server Tools', () => {
+       });
+     });
+ 
+-    it('should return error if path is not file or directory', async () => {
++    it('should reject a non-file inside the workspace', async () => {
+       mockExistsSync.mockReturnValue(true);
+       mockStatSync.mockReturnValue({
+         isDirectory: () => false,
+         isFile: () => false,
+       });
+ 
++      const socketPath = path.join(process.cwd(), 'some.socket');
++
+       const result = await toolHandlers['file_search_upload']({
+-        path: '/some/socket',
++        path: socketPath,
+         storeName: 'stores/123',
+         smartSync: false,
+       });
+ 
+       expect(result).toEqual({
+         isError: true,
+-        content: [{ type: 'text', text: 'Path is not a file or directory: /some/socket' }],
++        content: [{ type: 'text', text: 'Path must be a regular file.' }],
+       });
+     });
+ 
+-    it('should start directory upload and return operation ID', async () => {
++    it('should reject directory uploads before any remote operation starts', async () => {
+       mockExistsSync.mockReturnValue(true);
+       mockStatSync.mockReturnValue({
+         isDirectory: () => true,
+         isFile: () => false,
+       });
+-      mockCreateOperation.mockReturnValue({ id: 'op-123' });
+-      mockUploadDirectory.mockResolvedValue(undefined);
++
++      const directoryPath = path.join(process.cwd(), 'review-corpus');
+ 
+       const result = await toolHandlers['file_search_upload']({
+-        path: '/test/dir',
++        path: directoryPath,
+         storeName: 'stores/123',
+         smartSync: true,
+       });
+ 
+-      expect(mockCreateOperation).toHaveBeenCalledWith('/test/dir', 'stores/123', true);
++      expect(mockCreateOperation).not.toHaveBeenCalled();
++      expect(mockUploadDirectory).not.toHaveBeenCalled();
+       expect(result).toEqual({
+-        content: [{
+-          type: 'text',
+-          text: 'Upload started. Operation ID: op-123\nStatus: pending\nUse file_search_upload_status to check progress.',
+-        }],
++        isError: true,
++        content: [{ type: 'text', text: 'Directory uploads require an explicit reviewed manifest and are not supported by this tool.' }],
+       });
+     });
+ 
+@@ -257,13 +274,14 @@ describe('MCP Server Tools', () => {
+       mockCreateOperation.mockReturnValue({ id: 'op-456' });
+       mockUploadFile.mockResolvedValue(undefined);
+ 
++      const filePath = path.join(process.cwd(), 'reviewed-file.txt');
+       const result = await toolHandlers['file_search_upload']({
+-        path: '/test/file.txt',
++        path: filePath,
+         storeName: 'stores/123',
+         smartSync: false,
+       });
+ 
+-      expect(mockCreateOperation).toHaveBeenCalledWith('/test/file.txt', 'stores/123', false);
++      expect(mockCreateOperation).toHaveBeenCalledWith(filePath, 'stores/123', false);
+       expect(result).toEqual({
+         content: [{
+           type: 'text',
+@@ -271,6 +289,21 @@ describe('MCP Server Tools', () => {
+         }],
+       });
+     });
++
++    it('rejects a file outside the active workspace before creating an upload operation', async () => {
++      mockExistsSync.mockReturnValue(true);
++      const result = await toolHandlers['file_search_upload']({
++        path: path.resolve(process.cwd(), '..', 'outside.txt'),
++        storeName: 'stores/123',
++        smartSync: false,
++      });
++
++      expect(mockCreateOperation).not.toHaveBeenCalled();
++      expect(result).toEqual({
++        isError: true,
++        content: [{ type: 'text', text: 'Path must resolve to a file inside the active workspace.' }],
++      });
++    });
+   });
+ 
+   describe('file_search_delete_store', () => {
+@@ -564,7 +597,7 @@ describe('MCP Server Tools', () => {
+ 
+       const result = await toolHandlers['research_save_report']({
+         id: 'research-123',
+-        filePath: '/output/report.md',
++        filePath: 'reports/output.md',
+       });
+ 
+       expect(result).toEqual({
+@@ -585,7 +618,7 @@ describe('MCP Server Tools', () => {
+ 
+       const result = await toolHandlers['research_save_report']({
+         id: 'research-123',
+-        filePath: '/output/report.md',
++        filePath: 'reports/output.md',
+       });
+ 
+       expect(result).toEqual({
+@@ -604,14 +637,29 @@ describe('MCP Server Tools', () => {
+ 
+       const result = await toolHandlers['research_save_report']({
+         id: 'research-123',
+-        filePath: '/output/report.md',
++        filePath: 'reports/output.md',
+       });
+ 
+       expect(mockGenerateMarkdown).toHaveBeenCalledWith([{ type: 'text', text: 'Report content' }]);
+-      expect(mockWriteFileSync).toHaveBeenCalledWith('/output/report.md', '# Generated Report\n\nContent here.');
++      const outputPath = path.resolve(process.cwd(), 'reports/output.md');
++      expect(mockWriteFileSync).toHaveBeenCalledWith(outputPath, '# Generated Report\n\nContent here.');
+       expect(result).toEqual({
+-        content: [{ type: 'text', text: 'Report saved to /output/report.md' }],
++        content: [{ type: 'text', text: `Report saved to ${outputPath}` }],
+       });
+     });
++
++    it('rejects a path that escapes the workspace before accessing the API', async () => {
++      const result = await toolHandlers['research_save_report']({
++        id: 'research-123',
++        filePath: '../outside.md',
++      });
++
++      expect(result).toEqual({
++        isError: true,
++        content: [{ type: 'text', text: 'Report output path must resolve to a file inside the workspace.' }],
++      });
++      expect(mockGetStatus).not.toHaveBeenCalled();
++      expect(mockWriteFileSync).not.toHaveBeenCalled();
++    });
+   });
+ });
+diff --git a/src/index.ts b/src/index.ts
+index cb586ab..8e1a9bc 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -6,15 +6,15 @@ import {
+   FileSearchManager,
+   FileUploader,
+   UploadOperationManager,
+-  Interaction,
+-  TextContent,
+   ResearchManager,
+   ReportGenerator,
++  Interaction,
++  TextContent,
+ } from '@allenhutchison/gemini-utils';
+ import { WorkspaceConfigManager, WorkspaceOperationStorage } from './config/WorkspaceConfig.js';
+-import { ResearchWatcher } from './ResearchWatcher.js';
+-import * as fs from 'fs';
+-import * as path from 'path';
++import { ResearchWatcher, resolveWorkspaceOutputPath } from './ResearchWatcher.js';
++import * as fs from 'node:fs';
++import * as path from 'node:path';
+ 
+ // Initialize SDK and Managers (lazy — deferred until first tool call)
+ const apiKey = process.env.GEMINI_DEEP_RESEARCH_API_KEY || process.env.GEMINI_API_KEY;
+@@ -29,6 +29,33 @@ const MISSING_API_KEY_MESSAGE =
+   'Get one at: https://aistudio.google.com/apikey';
+ 
+ const defaultModel = process.env.GEMINI_DEEP_RESEARCH_MODEL || process.env.GEMINI_MODEL || 'models/gemini-flash-latest';
++const SENSITIVE_UPLOAD_NAMES = new Set(['.env', '.git', '.ssh', '.claude', '.codex', 'credentials.json']);
++const SENSITIVE_UPLOAD_EXTENSIONS = new Set(['.pem', '.key', '.p12', '.pfx', '.kdbx']);
++
++function resolveWorkspaceUploadFile(requestedPath: string): string {
++  const workspaceRoot = fs.realpathSync(process.env.GEMINI_WORKSPACE_PATH || process.cwd());
++  const candidateStat = fs.lstatSync(requestedPath);
++  if (candidateStat.isSymbolicLink()) {
++    throw new Error('Path must not be a symbolic link.');
++  }
++
++  const resolvedPath = fs.realpathSync(requestedPath);
++  const relativePath = path.relative(workspaceRoot, resolvedPath);
++  if (!relativePath || relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
++    throw new Error('Path must resolve to a file inside the active workspace.');
++  }
++  if (SENSITIVE_UPLOAD_NAMES.has(path.basename(resolvedPath).toLowerCase()) || SENSITIVE_UPLOAD_EXTENSIONS.has(path.extname(resolvedPath).toLowerCase())) {
++    throw new Error('Sensitive configuration and credential files cannot be uploaded.');
++  }
++  const resolvedStats = fs.statSync(resolvedPath);
++  if (resolvedStats.isDirectory()) {
++    throw new Error('Directory uploads require an explicit reviewed manifest and are not supported by this tool.');
++  }
++  if (!resolvedStats.isFile()) {
++    throw new Error('Path must be a regular file.');
++  }
++  return resolvedPath;
++}
+ 
+ // Lazy-initialized singletons
+ let _client: GoogleGenAI | undefined;
+@@ -40,30 +67,22 @@ function getClient(): GoogleGenAI {
+   if (!apiKey) {
+     throw new Error(MISSING_API_KEY_MESSAGE);
+   }
+-  if (!_client) {
+-    _client = new GoogleGenAI({ apiKey, vertexai: false });
+-  }
++  _client ??= new GoogleGenAI({ apiKey, vertexai: false });
+   return _client;
+ }
+ 
+ function getFileSearchManager(): FileSearchManager {
+-  if (!_fileSearchManager) {
+-    _fileSearchManager = new FileSearchManager(getClient());
+-  }
++  _fileSearchManager ??= new FileSearchManager(getClient());
+   return _fileSearchManager;
+ }
+ 
+ function getFileUploader(): FileUploader {
+-  if (!_fileUploader) {
+-    _fileUploader = new FileUploader(getClient());
+-  }
++  _fileUploader ??= new FileUploader(getClient());
+   return _fileUploader;
+ }
+ 
+ function getResearchManager(): ResearchManager {
+-  if (!_researchManager) {
+-    _researchManager = new ResearchManager(getClient());
+-  }
++  _researchManager ??= new ResearchManager(getClient());
+   return _researchManager;
+ }
+ 
+@@ -72,134 +91,103 @@ const reportGenerator = new ReportGenerator();
+ 
+ let _researchWatcher: ResearchWatcher | undefined;
+ function getResearchWatcher(): ResearchWatcher {
+-  if (!_researchWatcher) {
+-    _researchWatcher = new ResearchWatcher({
+-      researchManager: getResearchManager(),
+-      reportGenerator,
+-    });
+-  }
++  _researchWatcher ??= new ResearchWatcher({
++    researchManager: getResearchManager(),
++    reportGenerator,
++  });
+   return _researchWatcher;
+ }
+ 
+-declare const PKG_VERSION: string;
++declare const PKG_VERSION: string | undefined;
+ 
+ const server = new McpServer({
+   name: 'gemini-deep-research',
+-  version: PKG_VERSION,
++  version: PKG_VERSION ?? '0.2.11',
+ });
+ 
++// Helper for registering tools with generic types
++const register = <T extends Record<string, unknown>>(
++  name: string,
++  description: string,
++  schema: Record<string, z.ZodTypeAny>,
++  handler: (args: T) => Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }>
++): void => {
++  Reflect.apply(Reflect.get(server, 'registerTool'), server, [
++    name,
++    { description, inputSchema: schema },
++    handler,
++  ]);
++};
++
+ // --- File Search Tools ---
+ 
+-server.registerTool(
++register<{ displayName: string }>(
+   'file_search_create_store',
++  'Creates a new file search store for RAG grounding.',
+   {
+-    description: 'Creates a new file search store for RAG grounding.',
+-    inputSchema: z.object({
+-      displayName: z.string().describe('The display name for the store'),
+-    }).shape,
++    displayName: z.string().describe('The display name for the store'),
+   },
+   async ({ displayName }) => {
+     const store = await getFileSearchManager().createStore(displayName);
+     WorkspaceConfigManager.addFileSearchStore(displayName, store.name!);
+-    return { content: [{ type: 'text', text: `Created store: ${store.name} (${displayName})` }] };
++    return { content: [{ type: 'text' as const, text: `Created store: ${store.name} (${displayName})` }] };
+   }
+ );
+ 
+-server.registerTool(
++register<Record<string, never>>(
+   'file_search_list_stores',
+-  {
+-    description: 'Lists all available file search stores.',
+-    inputSchema: z.object({}).shape,
+-  },
++  'Lists all available file search stores.',
++  {},
+   async () => {
+     const stores = await getFileSearchManager().listStores();
+     const storeList = [];
+     for await (const store of stores) {
+       storeList.push({ name: store.name, displayName: store.displayName });
+     }
+-    return { content: [{ type: 'text', text: JSON.stringify(storeList, null, 2) }] };
++    return { content: [{ type: 'text' as const, text: JSON.stringify(storeList, null, 2) }] };
+   }
+ );
+ 
+-server.registerTool(
++register<{ path: string; storeName: string; smartSync: boolean }>(
+   'file_search_upload',
++  'Starts an async upload of one reviewed workspace file to a file search store. Returns immediately with an operation ID. Use file_search_upload_status to check progress.',
+   {
+-    description: 'Starts an async upload of a file or directory to a file search store. Returns immediately with an operation ID. Use file_search_upload_status to check progress.',
+-    inputSchema: z.object({
+-      path: z.string().describe('Absolute path to the local file or directory'),
+-      storeName: z.string().describe('The resource name of the file search store (e.g., fileSearchStores/...)'),
+-      smartSync: z.boolean().optional().default(false).describe('If true, skip uploading files that have not changed (based on hash comparison)'),
+-    }).shape,
++    path: z.string().describe('Path to one local file inside the active workspace'),
++    storeName: z.string().describe('The resource name of the file search store (e.g., fileSearchStores/...)'),
++    smartSync: z.boolean().optional().default(false).describe('If true, skip uploading files that have not changed (based on hash comparison)'),
+   },
+   async ({ path: fsPath, storeName, smartSync }) => {
+-    // Validate API key before starting the background upload
+     let uploader: FileUploader;
+     try {
+       uploader = getFileUploader();
+     } catch (error: unknown) {
+       const message = error instanceof Error ? error.message : String(error);
+-      return { isError: true, content: [{ type: 'text', text: message }] };
++      return { isError: true, content: [{ type: 'text' as const, text: message }] };
+     }
+ 
+     if (!fs.existsSync(fsPath)) {
+-      return { isError: true, content: [{ type: 'text', text: `Path not found: ${fsPath}` }] };
++      return { isError: true, content: [{ type: 'text' as const, text: `Path not found: ${fsPath}` }] };
+     }
+ 
+-    const stats = fs.statSync(fsPath);
+-    if (!stats.isDirectory() && !stats.isFile()) {
+-      return { isError: true, content: [{ type: 'text', text: `Path is not a file or directory: ${fsPath}` }] };
++    let safePath: string;
++    try {
++      safePath = resolveWorkspaceUploadFile(fsPath);
++    } catch (error: unknown) {
++      const message = error instanceof Error ? error.message : String(error);
++      return { isError: true, content: [{ type: 'text' as const, text: message }] };
+     }
+ 
+-    // Create the operation record
+-    const operation = uploadOperationManager.createOperation(fsPath, storeName, smartSync);
++    const operation = uploadOperationManager.createOperation(safePath, storeName, smartSync);
+     const operationId = operation.id;
+ 
+-    // Start the upload in the background (fire-and-forget)
+     (async (): Promise<void> => {
+       try {
+-        if (stats.isDirectory()) {
+-          let completedFiles = 0;
+-          let skippedFiles = 0;
+-          let failedFiles = 0;
+-
+-          await uploader.uploadDirectory(fsPath, storeName, {
+-            smartSync,
+-            onProgress: (event) => {
+-              if (event.type === 'start') {
+-                // Mark as in progress with total file count from the uploader
+-                uploadOperationManager.markInProgress(operationId, event.totalFiles ?? 0);
+-                console.error(`[${operationId}] Starting upload of ${event.totalFiles} files...${smartSync ? ' (smart sync enabled)' : ''}`);
+-              } else if (event.type === 'file_complete') {
+-                completedFiles = event.completedFiles ?? completedFiles;
+-                console.error(`[${operationId}] [${event.percentage}%] Uploaded: ${event.currentFile}`);
+-                uploadOperationManager.updateProgress(operationId, completedFiles, skippedFiles, failedFiles);
+-              } else if (event.type === 'file_skipped') {
+-                skippedFiles = event.skippedFiles ?? skippedFiles;
+-                console.error(`[${operationId}] [${event.percentage}%] Skipped (unchanged): ${event.currentFile}`);
+-                uploadOperationManager.updateProgress(operationId, completedFiles, skippedFiles, failedFiles);
+-              } else if (event.type === 'file_error') {
+-                failedFiles++;
+-                const errorMsg = event.error?.message || 'Unknown error';
+-                console.error(`[${operationId}] Error uploading: ${event.currentFile} - ${errorMsg}`);
+-                uploadOperationManager.addFailedFile(operationId, event.currentFile || 'unknown', errorMsg);
+-              } else if (event.type === 'complete') {
+-                console.error(`[${operationId}] Upload complete: ${event.completedFiles} uploaded, ${event.skippedFiles ?? 0} skipped, ${event.failedFiles} failed`);
+-              }
+-            }
+-          });
+-
+-          uploadOperationManager.markCompleted(operationId);
+-        } else {
+-          // Single file upload
+-          uploadOperationManager.markInProgress(operationId, 1);
+-          console.error(`[${operationId}] Starting upload of single file: ${fsPath}`);
+-
+-          await uploader.uploadFile(fsPath, storeName);
+-
+-          uploadOperationManager.updateProgress(operationId, 1, 0, 0);
+-          uploadOperationManager.markCompleted(operationId);
+-          console.error(`[${operationId}] Upload complete`);
+-        }
++        uploadOperationManager.markInProgress(operationId, 1);
++        console.error(`[${operationId}] Starting upload of reviewed workspace file: ${safePath}`);
++        await uploader.uploadFile(safePath, storeName);
++        uploadOperationManager.updateProgress(operationId, 1, 0, 0);
++        uploadOperationManager.markCompleted(operationId);
++        console.error(`[${operationId}] Upload complete`);
+       } catch (error: unknown) {
+         const message = error instanceof Error ? error.message : String(error);
+         console.error(`[${operationId}] Upload failed:`, message);
+@@ -207,44 +195,39 @@ server.registerTool(
+       }
+     })();
+ 
+-    // Return immediately with the operation ID
+     return {
+       content: [{
+-        type: 'text',
++        type: 'text' as const,
+         text: `Upload started. Operation ID: ${operationId}\nStatus: pending\nUse file_search_upload_status to check progress.`
+       }]
+     };
+   }
+ );
+ 
+-server.registerTool(
++register<{ name: string; force: boolean }>(
+   'file_search_delete_store',
++  'Deletes a file search store.',
+   {
+-    description: 'Deletes a file search store.',
+-    inputSchema: z.object({
+-      name: z.string().describe('The resource name of the store to delete'),
+-      force: z.boolean().optional().default(false).describe('Whether to force delete even if contains documents'),
+-    }).shape,
++    name: z.string().describe('The resource name of the store to delete'),
++    force: z.boolean().optional().default(false).describe('Whether to force delete even if contains documents'),
+   },
+   async ({ name, force }) => {
+     await getFileSearchManager().deleteStore(name, force);
+-    return { content: [{ type: 'text', text: `Deleted store: ${name}` }] };
++    return { content: [{ type: 'text' as const, text: `Deleted store: ${name}` }] };
+   }
+ );
+ 
+-server.registerTool(
++register<{ operationId: string }>(
+   'file_search_upload_status',
++  'Checks the status of an upload operation. Returns progress information including completed/skipped/failed file counts.',
+   {
+-    description: 'Checks the status of an upload operation. Returns progress information including completed/skipped/failed file counts.',
+-    inputSchema: z.object({
+-      operationId: z.string().describe('The upload operation ID returned by file_search_upload'),
+-    }).shape,
++    operationId: z.string().describe('The upload operation ID returned by file_search_upload'),
+   },
+   async ({ operationId }) => {
+     const operation = uploadOperationManager.getOperation(operationId);
+ 
+     if (!operation) {
+-      return { isError: true, content: [{ type: 'text', text: `Operation not found: ${operationId}` }] };
++      return { isError: true, content: [{ type: 'text' as const, text: `Operation not found: ${operationId}` }] };
+     }
+ 
+     const percentage = operation.totalFiles > 0
+@@ -269,62 +252,97 @@ server.registerTool(
+       error: operation.error,
+     };
+ 
+-    // Only include failedFilesList if there are failed files
+-    if (operation.failedFilesList && operation.failedFilesList.length > 0) {
++    if (operation.failedFilesList?.length) {
+       statusInfo.failedFilesList = operation.failedFilesList;
+     }
+ 
+-    return { content: [{ type: 'text', text: JSON.stringify(statusInfo, null, 2) }] };
++    return { content: [{ type: 'text' as const, text: JSON.stringify(statusInfo, null, 2) }] };
+   }
+ );
+ 
+-server.registerTool(
++register<Record<string, never>>(
++  'file_search_upload_list',
++  'Lists all upload operations and their current status.',
++  {},
++  async () => {
++    const operations = uploadOperationManager.listOperations();
++    const result = operations.map((op) => {
++      const percentage = op.totalFiles > 0
++        ? Math.round(((op.completedFiles + op.skippedFiles) / op.totalFiles) * 100)
++        : 0;
++      return {
++        id: op.id,
++        status: op.status,
++        path: op.path,
++        storeName: op.storeName,
++        smartSync: op.smartSync,
++        progress: `${op.completedFiles + op.skippedFiles}/${op.totalFiles} (${percentage}%)`,
++        failed: op.failedFiles,
++        startedAt: op.startedAt,
++        completedAt: op.completedAt,
++        error: op.error,
++      };
++    });
++
++    return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
++  }
++);
++
++register<{ query: string; storeName: string }>(
+   'file_search_query',
++  'Queries a file search store using semantic search to find relevant documents and snippets.',
+   {
+-    description: 'Queries a file search store using a model to get grounded answers.',
+-    inputSchema: z.object({
+-      query: z.string().describe('The question to ask the model'),
+-      storeName: z.string().describe('The resource name of the file search store'),
+-    }).shape,
++    query: z.string().describe('The search query'),
++    storeName: z.string().describe('The resource name of the file search store (e.g., fileSearchStores/...)'),
+   },
+   async ({ query, storeName }) => {
+     try {
+       const interaction: Interaction = await getFileSearchManager().queryStore(storeName, query, defaultModel);
+-
+-      // Runtime guard: ensure outputs is an array
+       if (!interaction.outputs || !Array.isArray(interaction.outputs)) {
+-        return { content: [{ type: 'text', text: 'No response generated.' }] };
++        return { content: [{ type: 'text' as const, text: 'No response generated.' }] };
+       }
+ 
+-      // Find the first text output with proper type guard
+       const textOutput = interaction.outputs.find(
+-        (output): output is TextContent => output.type === 'text'
++        (output): output is TextContent => output.type === 'text',
+       );
+-      const text = textOutput?.text || 'No response generated.';
+-
+-      return { content: [{ type: 'text', text }] };
++      return { content: [{ type: 'text' as const, text: textOutput?.text || 'No response generated.' }] };
+     } catch (error: unknown) {
+       const message = error instanceof Error ? error.message : String(error);
+-      return { isError: true, content: [{ type: 'text', text: `Query failed: ${message}` }] };
++      return { isError: true, content: [{ type: 'text' as const, text: `Query failed: ${message}` }] };
+     }
+   }
+ );
+ 
+-// --- Research Tools ---
++// --- Deep Research Tools ---
+ 
+-server.registerTool(
++register<{
++  input: string;
++  report_format?: string;
++  model?: string;
++  fileSearchStoreNames?: string[];
++  outputPath?: string;
++}>(
+   'research_start',
++  'Starts a new Deep Research interaction in the background. If outputPath is provided, the server polls the API on its own and writes the markdown report to that path when the interaction completes — no follow-up tool call required.',
+   {
+-    description: 'Starts a new Deep Research interaction in the background. If outputPath is provided, the server polls the API on its own and writes the markdown report to that path when the interaction completes — no follow-up tool call required.',
+-    inputSchema: z.object({
+-      input: z.string().describe('The research query or instructions'),
+-      report_format: z.string().optional().describe('The desired format of the report (e.g., "Executive Brief", "Technical Deep Dive", "Comprehensive Research Report")'),
+-      model: z.string().optional().default('deep-research-pro-preview-12-2025').describe('The agent to use (default: deep-research-pro-preview-12-2025)'),
+-      fileSearchStoreNames: z.array(z.string()).optional().describe('Optional list of file search store names for grounding'),
+-      outputPath: z.string().optional().describe('Optional path to write the markdown report to when research completes. The server polls in the background and writes the file automatically; on failure, an error message including the interaction ID is written instead.'),
+-    }).shape,
++    input: z.string().describe('The research query or instructions'),
++    report_format: z.string().optional().describe('The desired format of the report (e.g., "Executive Brief", "Technical Deep Dive", "Comprehensive Research Report")'),
++    model: z.string().optional().default('deep-research-pro-preview-12-2025').describe('The agent to use (default: deep-research-pro-preview-12-2025)'),
++    fileSearchStoreNames: z.array(z.string()).optional().describe('Optional list of file search store names for grounding'),
++    outputPath: z.string().optional().describe('Optional path to write the markdown report to when research completes. The server polls in the background and writes the file automatically; on failure, an error message including the interaction ID is written instead.'),
+   },
+   async ({ input, report_format, model, fileSearchStoreNames, outputPath }) => {
++    const workspaceRoot = process.env.GEMINI_WORKSPACE_PATH ?? process.cwd();
++    let safeOutputPath: string | undefined;
++    try {
++      safeOutputPath = outputPath
++        ? resolveWorkspaceOutputPath(workspaceRoot, outputPath)
++        : undefined;
++    } catch (error) {
++      const message = error instanceof Error ? error.message : String(error);
++      return { isError: true, content: [{ type: 'text' as const, text: message }] };
++    }
++
+     let finalInput = input;
+     if (report_format) {
+       finalInput = `[Report Format: ${report_format}]\n\n${input}`;
+@@ -338,16 +356,16 @@ server.registerTool(
+       });
+       if (interaction.id) {
+           WorkspaceConfigManager.addResearchId(interaction.id);
+-          if (outputPath) {
+-            getResearchWatcher().track(interaction.id, outputPath);
++          if (safeOutputPath) {
++            getResearchWatcher().track(interaction.id, outputPath!);
+           }
+       }
+-      const followUp = outputPath
++      const followUp = safeOutputPath
+         ? `The report will be written to ${outputPath} when research completes.`
+         : `Use research_status to check progress.`;
+       return {
+         content: [{
+-          type: 'text',
++          type: 'text' as const,
+           text: `Research started. ID: ${interaction.id}\nStatus: ${interaction.status}\n${followUp}`
+         }]
+       };
+@@ -359,7 +377,7 @@ server.registerTool(
+         return {
+           isError: true,
+           content: [{
+-            type: 'text',
++            type: 'text' as const,
+             text: `Deep Research quota error: ${message}\n\n` +
+               `This typically means your API key does not have access to the Deep Research feature.\n` +
+               `Deep Research requires a paid Google AI API key — free-tier keys do not have quota for this feature.\n\n` +
+@@ -373,51 +391,54 @@ server.registerTool(
+ 
+       return {
+         isError: true,
+-        content: [{ type: 'text', text: `Research failed to start: ${message}` }],
++        content: [{ type: 'text' as const, text: `Research failed to start: ${message}` }],
+       };
+     }
+   }
+ );
+ 
+-server.registerTool(
++register<{ id: string }>(
+   'research_status',
++  'Checks the status and retrieves outputs of a Deep Research interaction.',
+   {
+-    description: 'Checks the status and retrieves outputs of a Deep Research interaction.',
+-    inputSchema: z.object({
+-      id: z.string().describe('The interaction ID'),
+-    }).shape,
++    id: z.string().describe('The interaction ID'),
+   },
+   async ({ id }) => {
+     const interaction = await getResearchManager().getStatus(id);
+-    return { content: [{ type: 'text', text: JSON.stringify(interaction, null, 2) }] };
++    return { content: [{ type: 'text' as const, text: JSON.stringify(interaction, null, 2) }] };
+   }
+ );
+ 
+-server.registerTool(
++register<{ id: string; filePath: string }>(
+   'research_save_report',
++  'Generates a Markdown report from a completed research interaction and saves it to a file.',
+   {
+-    description: 'Generates a Markdown report from a completed research interaction and saves it to a file.',
+-    inputSchema: z.object({
+-      id: z.string().describe('The interaction ID'),
+-      filePath: z.string().describe('The local file path to save the report (e.g., report.md)'),
+-    }).shape,
++    id: z.string().describe('The interaction ID'),
++    filePath: z.string().describe('The local file path to save the report (e.g., report.md)'),
+   },
+   async ({ id, filePath }) => {
++    let resolvedPath: string;
++    try {
++      resolvedPath = resolveWorkspaceOutputPath(process.env.GEMINI_WORKSPACE_PATH ?? process.cwd(), filePath);
++    } catch (error) {
++      const message = error instanceof Error ? error.message : String(error);
++      return { isError: true, content: [{ type: 'text' as const, text: message }] };
++    }
++
+     const interaction = await getResearchManager().getStatus(id);
+     if (interaction.status !== 'completed') {
+-      return { isError: true, content: [{ type: 'text', text: `Interaction ${id} is not completed. Current status: ${interaction.status}` }] };
++      return { isError: true, content: [{ type: 'text' as const, text: `Interaction ${id} is not completed. Current status: ${interaction.status}` }] };
+     }
+     
+     if (!interaction.outputs) {
+-      return { isError: true, content: [{ type: 'text', text: 'No outputs found for this interaction.' }] };
++      return { isError: true, content: [{ type: 'text' as const, text: 'No outputs found for this interaction.' }] };
+     }
+ 
+     const markdown = reportGenerator.generateMarkdown(interaction.outputs);
+-    const resolvedPath = path.isAbsolute(filePath)
+-      ? filePath
+-      : path.resolve(process.env.GEMINI_WORKSPACE_PATH || '.', filePath);
++    fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
+     fs.writeFileSync(resolvedPath, markdown);
+-    return { content: [{ type: 'text', text: `Report saved to ${resolvedPath}` }] };
++
++    return { content: [{ type: 'text' as const, text: `Report saved to ${resolvedPath}` }] };
+   }
+ );
+ 
+@@ -425,14 +446,10 @@ server.registerTool(
+ 
+ async function main(): Promise<void> {
+   const transport = new StdioServerTransport();
+-  // Ensure config file exists
+   WorkspaceConfigManager.load();
+   await server.connect(transport);
+   console.error('Gemini Deep Research MCP server running on stdio');
+ 
+-  // Resume background polling for any research interactions that were
+-  // in flight when the previous server process exited. Only attempt this
+-  // when an API key is configured, so we don't crash startup on misconfig.
+   if (apiKey) {
+     try {
+       getResearchWatcher().resumeAll();
+@@ -442,7 +459,9 @@ async function main(): Promise<void> {
+   }
+ }
+ 
+-main().catch((error) => {
++try {
++  await main();
++} catch (error) {
+   console.error('Fatal error in main:', error);
+   process.exit(1);
+-});
++}
