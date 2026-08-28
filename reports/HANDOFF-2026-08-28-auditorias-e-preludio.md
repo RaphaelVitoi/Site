@@ -5,17 +5,15 @@ escopo: multiprojeto
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T02:50-03:00
-atualizado_em: 2026-08-28T05:10-03:00
-commit: 71934ef7
+atualizado_em: 2026-08-28T09:20-03:00
+commit: 48b15e0e
 classes: [interno, medido]
-referencias_nao_resolviveis:
-  - reports/HANDOFF-2026-08-28-browser-sota-cdp.md
 config_medida:
   raiz: C:/Users/rapha/.gemini
   branch: master
   suite_no_inicio: 415 passed
-  suite_no_fim: 504 passed (arvore viva) / 500 passed + 4 skipped (isolada)
-  commits_da_sessao: 16
+  suite_no_fim: 508 passed na arvore viva; 504 passed e 4 skipped na isolada
+  commits_da_sessao: 21
   data: 2026-08-27 a 2026-08-28
 verificado:
   - FRENTE 2 -- criterios da 13.F sondados nos DOIS estados, um a um, com
@@ -75,18 +73,22 @@ que este documento **supersede** para efeito de retomada.
 ## 1. Estado
 
 ```
-master 71934ef7 · suíte 415 → 504 (viva) · 500 + 4 skipped (isolada)
+master 48b15e0e · suíte 415 → 508 (viva) · 504 + 4 skipped (isolada)
 ```
 
-Dezesseis commits.
+Vinte e um commits.
 
-> **A concorrência foi resolvida no INTERLÚDIO de 05:05.** As quatro edições da
-> outra sessão foram auditadas por execução e adotadas; as assimetrias que elas
-> expuseram, fechadas; e a suíte ganhou um caminho de execução isolado. Resta
-> intocado apenas o registro não rastreado
-> `reports/HANDOFF-2026-08-28-browser-sota-cdp.md` — decisão do vértice.
-> Ver [INTERLUDIO-2026-08-28](INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md)
-> e §4.5.
+> **Árvore limpa, e a concorrência resolvida.** As quatro edições da outra
+> sessão foram auditadas por execução e adotadas; as assimetrias que elas
+> expuseram, fechadas; a suíte ganhou execução isolada; e o registro de
+> Chrome/CDP daquela sessão teve a âncora normalizada — só o frontmatter, com
+> `verificado` e `nao_verificado` **transcritos** das declarações do próprio
+> documento — e entrou no histórico com a autoria preservada.
+>
+> Leitura de entrada: [`PLANO-2B.md`](../PLANO-2B.md) na raiz do projeto.
+> O relato completo está em
+> [RETROSPECTIVA-2026-08-28](RETROSPECTIVA-2026-08-28-sessao.md) e
+> [INTERLUDIO-2026-08-28](INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md).
 
 | Commit | O quê |
 | :--- | :--- |
@@ -105,6 +107,9 @@ Dezesseis commits.
 | `9e7f7d26` | Bloco de comentário é prosa — achado auditando a outra sessão |
 | `26f5e630` | **Interlúdio:** adota as edições concorrentes, unifica os vereditos |
 | `71934ef7` | **Interlúdio:** suíte em worktree isolado, e a simetria que ela expôs |
+| `96f0e800` | Registro do interlúdio — primeiro adotante da âncora declarada |
+| `f5263e96` | **Segurança:** fonte única de padrões + guarda de credencial na árvore |
+| `48b15e0e` | O veredito do P0, e a §6 reconciliada com a §7 |
 
 ## 2. O que se aprendeu — catorze lições com custo pago
 
@@ -332,7 +337,7 @@ Descoberto em 2026-08-28 às ~04:00, com o repositório em uso concorrente:
 | Item | Estado |
 | :--- | :--- |
 | `scripts/cli/nexus.py`, `scripts/ops/record_index.py`, `tests/test_patches_skills.py`, `scripts/ops/cwv_gate.ps1` | **ADOTADOS** no `26f5e630`, auditados por execução. Duas das mudanças consertavam defeitos reais |
-| `reports/HANDOFF-2026-08-28-browser-sota-cdp.md` | **Não rastreado, intocado.** Decisão do vértice |
+| `reports/HANDOFF-2026-08-28-browser-sota-cdp.md` | **Normalizado e commitado** em 2026-08-28. Só o frontmatter foi tocado, para satisfazer a §13.B; `verificado` e `nao_verificado` foram **transcritos** das declarações do próprio documento, nunca inferidos. O corpo está intacto e a autoria preservada |
 
 **Duas coisas que o vértice precisa saber sobre esse handoff:**
 
@@ -358,82 +363,60 @@ Descoberto em 2026-08-28 às ~04:00, com o repositório em uso concorrente:
 ## 5. Prompt de continuação
 
 ```
-Retomando o NEXUS-CORE-SOTA (~/.gemini/Site), master 71934ef7.
-Suite: 504 passed na arvore viva, 500 passed + 4 skipped na isolada.
+Retomando o NEXUS-CORE-SOTA (~/.gemini/Site), master 48b15e0e.
+Suite: 508 passed na arvore viva; 504 passed + 4 skipped na isolada.
 
-ANTES DE QUALQUER COISA: `git status`. Este repositorio ja teve duas sessoes ao
-mesmo tempo (secao 4.5 e o INTERLUDIO de 28/08). Nao commitar o que nao e seu,
-e usar `git add` com caminho explicito, nunca -A.
+ANTES DE QUALQUER COISA
+  1. `git status` -- este repositorio ja teve duas sessoes simultaneas.
+     `git add` com caminho explicito, NUNCA -A.
+  2. `nexus index --suspeitos` -- se algum registro virou SUSPEITO ou OBSOLETO
+     desde 28/08, resolver isso antes de abrir frente nova.
+  3. `nexus test --isolado` antes de afirmar que a suite esta verde. Passar
+     aqui nao prova que passa em clone limpo: tres testes so passavam nesta
+     maquina, e falhariam em CI.
 
-E antes de afirmar que a suite esta verde: `nexus test --isolado`. Passar aqui
-nao prova que passa em clone limpo -- tres testes so passavam nesta maquina.
-
-LEIA PRIMEIRO, nesta ordem:
-  1. reports/HANDOFF-2026-08-28-auditorias-e-preludio.md — secoes 2, 3 e 4
-  2. reports/PLANO-2B-CURADORIA-ESTRUTURAL.md — preludio 0.5, mapa 1.5,
-     FRENTE 1 (secao 1.6), FRENTE 2 (secao 2.3), frente 3
-  3. data/INDICE_CANONICO_GOVERNANCA.json — o canonico de cada familia
-  4. `nexus index --suspeitos` — estado derivado dos registros AGORA
-  5. reports/AUDITORIA-2026-08-28-skills.md — secoes 2, 4 e 5
-  6. ~/.gemini/CLAUDE.md e Site/CLAUDE.md
+LEIA PRIMEIRO, nesta ordem
+  1. PLANO-2B.md na raiz do projeto -- painel de estado das 7 frentes
+  2. reports/RETROSPECTIVA-2026-08-28-sessao.md -- secoes 5 e 6, os padroes
+     acumulados e o que eles mudam nos priores
+  3. reports/HANDOFF-2026-08-28-auditorias-e-preludio.md -- secoes 2, 3 e 4
+  4. reports/PLANO-2B-CURADORIA-ESTRUTURAL.md -- frentes 1.6, 2.3 e 5.1
+     entregues; 3, 4, 6 e 7 abertas
+  5. ~/.gemini/CLAUDE.md e Site/CLAUDE.md
 
 PROXIMO PASSO RECOMENDADO
-Frente 4 (routing) ou frente 6 (imports). As frentes 1, 2 e 5 fecharam a camada
-de GOVERNANCA DO REGISTRO: canonico declarado por familia, indice derivado,
-7 de 8 criterios do portao ativos, e referencia morta barrada no que prescreve.
+Frente 4 (routing). E a que mais destrava: enquanto nao se decidir se a
+autoridade e llm/routing_policy.py (declarada) ou llm/routing.py (executada),
+toda melhoria em qualquer uma tem chance de virar retrabalho -- e ela e
+pre-requisito da frente 6 no grafo da secao 8 do plano.
 
-A frente 4 e a que destrava mais: enquanto nao se decidir se a autoridade e
-llm/routing_policy.py (declarada) ou llm/routing.py (executada), toda melhoria
-em qualquer uma tem chance de virar retrabalho. E ela e PRE-REQUISITO da frente
-6 no grafo da secao 8 do plano.
-
-Antes de qualquer frente nova, rodar `nexus index --suspeitos`. Se algum
-registro tiver virado SUSPEITO ou OBSOLETO desde 28/08, resolver isso primeiro:
-indice que acumula suspeito vira indice que ninguem olha.
-
-Ha tambem uma adocao barata e util: declarar `caminhos:` no frontmatter dos
-registros que afirmam fatos sobre codigo especifico. O criterio C2b esta ativo
-e com raio zero porque NINGUEM declara -- a protecao existe e nao esta em uso.
-
-Se o vertice preferir avancar por valor imediato: religar gemini-cli-security e
-padronizar .disabled continuam abertos -- mas nenhum dos dois e execucao pura
-como o handoff dizia. Ambos tocam a arvore de extensoes fora do repositorio, e
-o .disabled sujaria o estado dos submodulos que os patches capturam.
+Adocao barata e util, disponivel a qualquer momento: declarar `caminhos` no
+frontmatter dos registros que afirmam fatos sobre codigo especifico. O criterio
+C2b esta ativo e so tem UM adotante; a protecao existe e quase nao esta em uso.
 
 REGRAS QUE VALEM SEMPRE AQUI
-- Escopo limita o que se ALTERA, jamais o que se LE (M.O. 1.2). E ler os DOIS
-  lados de uma fronteira antes de nomear defeito.
-- Natureza precede diferenca: perguntar "o que isto e?" antes de "sao
-  diferentes?".
+- Escopo limita o que se ALTERA, jamais o que se LE. E ler os DOIS lados de uma
+  fronteira antes de nomear defeito.
+- Afirmacao de sucesso e SUSPEITA por padrao: rastrear ate a origem do valor.
+- Natureza precede diferenca; nome de diretorio nao e nome canonico.
 - Presenca nao e funcao: alvo existir nao prova invocacao valida.
 - Procurar o HABILITADOR quando varias falhas silenciosas surgem na mesma
   camada.
-- Teste de mutacao SO vale com baseline: N passed antes, >=1 failed depois, e
-  conferir testes COLETADOS. "Reprovou" e "nao rodou" tem o mesmo returncode.
-- Detector precisa separar citar de afirmar. Comentario e linha, docstring e
-  bloco. Estreitar escopo estruturalmente, nunca isentar arquivo.
-- Nome de componente e afirmacao: conferir contra o instalado.
-- Nunca medir exit code depois de um pipe.
+- Mutacao SO vale com baseline: N passed antes, >=1 failed depois, contagem de
+  COLETADOS conferida, e a MENSAGEM do bloqueio lida.
+- Detector precisa separar citar de afirmar. Estreitar por forma; se a forma
+  nao separa, DECLARAR a excecao por item no frontmatter. Nunca isentar arquivo.
+- Onde houver duas fontes para um fato, elas ja divergem: eliminar a segunda.
 - Regex ve campo; nao ve documento. Para documento, parser.
-- Numa bateria de sondas, conferir a MENSAGEM: returncode != 0 prova que algo
-  bloqueou, nao que o alvo bloqueou.
-- Quando a FORMA nao separa citar de afirmar, a excecao se DECLARA por item no
-  frontmatter -- nunca se isenta o arquivo.
-- `git add` com caminho explicito. Ler o `git status` antes de commitar: pode
-  haver outra sessao no mesmo repositorio.
-- Sonda de portao e mutacao rodam em arvore ISOLADA (`suite_isolada.py`), nunca
-  no indice de trabalho: encenar violacao no indice de verdade e o unico risco
-  de concorrencia que disciplina de `git add` nao cobre.
-- Nome de diretorio nao e nome canonico de projeto.
+- Nunca medir exit code depois de um pipe.
 - Remocao e destrutiva: ordem explicita do vertice, item a item.
 - Nao contornar hook que falha -- inclusive nao ampliando a excecao dele.
 
 LINHA DE BASE
-504 passed (viva) / 500 + 4 skipped (isolada). Os 4 skips sao os que declaram
-nao poder verificar projeto irmao sem a raiz multiprojeto -- pular com motivo,
-nunca passar em silencio. Portao de ancora APROVADO, portao de registro APROVADO.
-Pre-commit com EXIT real medido sem pipe. Indice: 9 VIGENTE, 0 SUSPEITO,
-1 OBSOLETO (o handoff de 27/08, corretamente aposentado).
+508 passed (viva) / 504 + 4 skipped (isolada). Os 4 skips declaram o que nao
+podem verificar sem a raiz multiprojeto -- pular com motivo, nunca passar em
+silencio. Portao de ancora APROVADO, portao de registro APROVADO. Portao 13.F
+com 7 de 8 criterios ativos.
 ```
 
 ## 6. Declaração (governança §5)
