@@ -1,0 +1,157 @@
+{
+  "$schema_version": "1.0",
+  "projeto": "Site",
+  "declarado_em": "2026-08-29",
+  "declarado_por": "claude@opus-5",
+
+  "proposito": [
+    "Inventario das constantes que sao ATRIBUIDAS e nunca LIDAS, com um veredito",
+    "por item. Existe porque este e o padrao dominante desta base, e ate agora",
+    "cada instancia foi encontrada por acaso, uma de cada vez.",
+    "tests/test_declarado_e_lido.py varre a arvore por AST e compara com esta",
+    "lista: item novo reprova, item resolvido reprova. A conta so muda por",
+    "decisao registrada."
+  ],
+
+  "por_que_isto_importa": [
+    "Constante sem leitor nao e so codigo morto. Quando ela nomeia um TETO, um",
+    "PESO ou uma variavel de ambiente, ela e promessa ao operador -- quem a",
+    "configura acredita ter mudado alguma coisa. Cinco instancias foram",
+    "corrigidas a mao nesta sessao antes desta varredura existir:",
+    "  CHUNK_SIZE = 1200          teto usado so para dividir, nunca para juntar",
+    "  max_cache_size_mb = 4096   atribuido no __init__, eviccao contava baldes",
+    "  AGENT_MODEL_MAP            resolvido, sem consumidor de producao",
+    "  recursive: false           campo do manifesto que o codigo nunca lia",
+    "  $warnings                  lido no veredito e nunca populado"
+  ],
+
+  "metodo": [
+    "AST, nao texto: comentario e docstring que citam o nome nao contam como",
+    "leitura. Considera leitura em QUALQUER arquivo do projeto, entao constante",
+    "consumida por outro modulo nao aparece. Nomes em __all__ ficam de fora --",
+    "sao interface publica, e ausencia de leitor local nao e defeito.",
+    "Limite declarado: acesso por nome montado em runtime esta fora do alcance.",
+    "getattr com literal e coberto; f-string com nome computado, nao."
+  ],
+
+  "removidos_em_2026_08_29": [
+    {
+      "nome": "DO_PS1_PATH",
+      "onde": "task_executor.py",
+      "por_que": "nenhum leitor; task_executor nao invoca do.ps1 em lugar nenhum"
+    },
+    {
+      "nome": "DO_PS1_THRESHOLD",
+      "onde": "task_executor.py",
+      "por_que": [
+        "Pior que codigo morto: lia os.environ e prometia ao operador uma",
+        "variavel de ambiente que nao governava nada. Quem a define acredita ter",
+        "configurado alguma coisa."
+      ]
+    },
+    {
+      "nome": "AUTONOMY_MODE_CACHE",
+      "onde": "llm/budget.py",
+      "por_que": [
+        "Segundo mecanismo para um fato que ja tem dono: o modo autonomo vem de",
+        "manager.get_system_state('autonomy_mode') em agents/autonomy.py. E o",
+        "default era 'off', que nem esta em VALID_AUTONOMY_MODES."
+      ]
+    }
+  ],
+
+  "pendentes": [
+    {
+      "nome": "PRIORITY_WEIGHTS",
+      "onde": "core/config.py",
+      "veredito": "DECISAO DO VERTICE -- muda escalonamento de tarefa",
+      "medido": [
+        "O operador configura `priority_weights` em data/system_config.json --",
+        "{alpha: 1.0, beta: 1.5, gamma: 0.5, lambda_age: 0.01}. E uma FORMULA de",
+        "pontuacao com decaimento temporal. O valor e carregado para o global em",
+        "_reload_system_config e nao e lido por nada.",
+        "A prioridade que de fato governa e string ('high'/'medium'/'normal'),",
+        "ordenada por um CASE em SQL no queue_manager. Mesma forma do roteamento:",
+        "o mecanismo sofisticado declarado e inerte, o cru rodando.",
+        "Ligar muda a ordem em que as tarefas saem da fila -- por isso e decisao,",
+        "nao limpeza."
+      ]
+    },
+    {
+      "nome": "LOCAL_MODEL_MAP",
+      "onde": "engine/gemma_server.py",
+      "veredito": "a investigar -- mapa de modelo sem leitor, na mesma familia dos achados de hoje",
+      "medido": "atribuido e nunca lido; OLLAMA_MODEL_MAP e CLOUD_MODEL_MAP no mesmo arquivo tem leitores"
+    },
+    {
+      "nome": "_MODEL_31B",
+      "onde": "engine/gemma_server.py",
+      "veredito": "a investigar -- alias de modelo sem leitor"
+    },
+    {
+      "nome": "GEMINI_ALL_KEYS_WITH_POOLS",
+      "onde": "llm/budget.py",
+      "veredito": "a investigar -- estrutura de pools de chave sem leitor"
+    },
+    {
+      "nome": "DEFAULT_GEMINI_FAST_MODEL",
+      "onde": "core/config.py",
+      "veredito": "a investigar -- default de modelo sem leitor"
+    },
+    {
+      "nome": "DIR_CLAUDE",
+      "onde": "scripts/cli/nexus.py",
+      "veredito": "nome enganoso alem de morto",
+      "medido": [
+        "`DIR_CLAUDE = BASE_DIR / DIR_CEREBRO_NAME` -- o nome diz `claude` e o",
+        "valor aponta para `.cerebro`. Sem leitor hoje; se ganhar um, ele",
+        "acreditara estar falando de .claude. Nome errado para a grandeza,",
+        "dentro de um identificador."
+      ]
+    },
+    {
+      "nome": "AGENT_PROMPTER",
+      "onde": "agents/execution.py",
+      "veredito": "constante morta; o agente NAO esta morto",
+      "medido": [
+        "1 ocorrencia, que e a propria definicao -- os irmaos tem de 3 a 7.",
+        "O `@prompter` existe no manifesto e tem rota; e despachado por consulta",
+        "ao manifesto, nao pela constante. Remover a constante nao remove o",
+        "agente, e nao remove-la nao o desperta."
+      ]
+    },
+    {
+      "nome": "LN_60",
+      "onde": "engine/math_sota.py",
+      "veredito": "constante matematica pre-computada sem uso; inofensiva",
+      "medido": "LN_100 e INV_LN_60 na mesma familia tem leitores"
+    },
+    {
+      "nome": "ALTERNATIVE_VOICE_PTBR",
+      "onde": "scripts/cli/nexus_voice.py",
+      "veredito": "a investigar"
+    },
+    {
+      "nome": "GEMINI_VOICE_FEMALE",
+      "onde": "scripts/cli/nexus_voice.py",
+      "veredito": "a investigar"
+    },
+    {
+      "nome": "DO_PS1_FILE",
+      "onde": "locustfile.py",
+      "veredito": "a investigar -- arquivo de carga, fora do caminho de producao"
+    }
+  ],
+
+  "fora_de_escopo": {
+    "motivo": "codigo de terceiro, vendorizado; nao se corrige aqui",
+    "prefixos": [".gemini/.agents/skills/"]
+  },
+
+  "nao_verificado": [
+    "nao foi medido se cada constante pendente ja teve leitor no passado",
+    "acesso por nome montado em runtime esta fora do alcance da varredura",
+    "as remocoes foram validadas por suite verde e import limpo, nao por",
+    "execucao do caminho que as continha -- nenhum deles tinha caminho"
+  ]
+}

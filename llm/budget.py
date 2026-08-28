@@ -157,7 +157,11 @@ COMPRESSION_CIRCUIT_BREAKER = {"consecutive_failures": 0, "last_failure": 0.0}
 
 # Caches para otimizacao de performance
 SYSTEM_PROMPT_CACHE: dict[str, str] = {}
-AUTONOMY_MODE_CACHE = {"mode": "off", "timestamp": 0.0}
+# AUTONOMY_MODE_CACHE removido em 2026-08-29: zero leitores, medido por AST. O
+# modo autonomo vem de `manager.get_system_state("autonomy_mode")` em
+# agents/autonomy.py -- este era um segundo mecanismo para o mesmo fato, e o
+# segundo mecanismo nunca foi consultado. Ainda pior, tinha default "off",
+# que nem esta em VALID_AUTONOMY_MODES.
 
 
 # Trava de Seguranca Global para variaveis de telemetria mapeada por Event Loop

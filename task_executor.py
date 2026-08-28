@@ -106,8 +106,11 @@ if not logger.handlers:
     )
     logger.addHandler(rotating_handler)
 
-DO_PS1_PATH = Path(__file__).parent.resolve() / "do.ps1"
-DO_PS1_THRESHOLD = int(os.environ.get("DO_PS1_THRESHOLD", "5"))
+# DO_PS1_PATH e DO_PS1_THRESHOLD removidos em 2026-08-29: nenhum leitor em todo
+# o repositorio, medido por AST. O segundo era pior que codigo morto -- lia
+# `os.environ["DO_PS1_THRESHOLD"]`, entao prometia ao operador uma variavel de
+# ambiente que nao governava nada. Promessa que nao se cumpre e pior que
+# ausencia: quem a define acredita ter configurado alguma coisa.
 
 # ==========================================
 # 1. SCHEMAS E ROTEAMENTO BASE SOTA
