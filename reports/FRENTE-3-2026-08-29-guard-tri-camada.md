@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T01:10-03:00
+atualizado_em: 2026-08-29T02:05-03:00
 commit: db9acdd9
 classes: [interno, medido]
 caminhos:
@@ -21,6 +22,8 @@ config_medida:
   teto_ram_pct: 98
   teto_vram_pct: 85
   teto_cache_mb: 4096
+  teto_commit_pct: 92
+  camadas: 4
 verificado:
   - as tres camadas lidas em execucao contra a maquina real -- RAM 71,6%,
     VRAM 0,0% de 8,0 GiB, cache 0,0 MB
@@ -36,6 +39,8 @@ nao_verificado:
   - nao foi medido quanto cada acao efetivamente libera; o guard age e mede de
     novo no ciclo seguinte, mas nao ha estudo de eficacia por acao
   - o teto de VRAM em 85% e palpite declarado, nao medicao de KV cache
+  - o teto de commit em 92% tambem e palpite; nao houve episodio de exaustao
+    medido para calibra-lo
   - nenhuma chamada real a provedor de LLM
 supersede: null
 ---
@@ -132,3 +137,61 @@ dois estados foram provados com teto rebaixado e gauge dublado, não com a máqu
 saturada. Não foi medido quanto cada ação efetivamente libera. O teto de VRAM em
 85% é palpite declarado, não medição de KV cache. Nenhuma chamada real a provedor
 de LLM.
+
+---
+
+## 7. Adendo — virou quatro camadas, por uma observacao do operador
+
+> *"RAM utilizada: 72% estavel, mesmo a cache: 18% estavel."*
+>
+> A frase parecia confirmacao de que estava tudo bem. Medida, era o contrario:
+> **o guard que acabei de escrever vigiava a grandeza folgada.**
+
+### 7.1 A medicao
+
+| | medido em 2026-08-29 |
+| :--- | ---: |
+| RAM fisica (`virtual_memory().percent`) | **72,7%** |
+| standby reclaimavel | 6.846 MB (21% da RAM) |
+| **commit usado** | **74.583 MB** |
+| commit limite | 90.348 MB |
+| **commit % do limite** | **82,6%** |
+
+Com 32,6 GB fisicos e 74,6 GB comprometidos, o pagefile carrega ~42 GB.
+
+`virtual_memory().percent` conta `(total - disponivel)`, e **disponivel inclui
+standby**. Por isso a RAM fica estavel em 72%: ha 6,8 GB reclaimaveis que o
+numero ja desconta. O Windows recusa alocacao quando o **commit** bate no
+limite, nao quando a RAM fisica sobe.
+
+Um teto de 98% sobre a RAM fisica, nesta maquina, e **portao incapaz de ficar
+vermelho** — o defeito que a tecnica "medir os dois estados" existe para achar,
+e que eu acabara de introduzir num guard escrito para achar exatamente isso.
+
+### 7.2 O que mudou
+
+A camada `commit` entrou com medidor proprio (`GlobalMemoryStatusEx`), teto
+declarado em 92% e acao propria. **A acao NAO e trim de working set**: trim move
+pagina para standby, e pagina comprometida continua comprometida. O que devolve
+commit e descarregar processo que segura memoria privada — daqui a acao ser a
+mesma da VRAM, por motivos diferentes.
+
+E o efeito nao ficou no log. Mesmo instante, mesma maquina:
+
+| | intervalo do proximo ciclo |
+| :--- | ---: |
+| guard tri-camada (so RAM, VRAM, cache) | **172 s** |
+| com a camada `commit` | **75 s** |
+
+O guard passou a vigiar mais de perto porque enxerga a camada que esta a **90%
+do seu teto**, em vez da que esta a 74%.
+
+### 7.3 A licao, e ela e a mesma do dia inteiro
+
+Terceira vez nesta sessao que medi **a grandeza errada com precisao**: o custo
+por preco unitario em vez de por faixa, a recencia por `mtime` em vez de por
+data declarada, e agora a pressao de memoria por RAM fisica em vez de commit.
+
+O padrao nao e descuido de calculo — e escolher o campo obvio em vez do campo
+que decide. E o que o quebrou nas tres vezes foi a mesma coisa: **um numero
+estavel demais para ser verdade.**
