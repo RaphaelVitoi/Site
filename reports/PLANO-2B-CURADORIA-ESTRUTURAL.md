@@ -7,6 +7,10 @@ autor: claude@opus-5
 criado_em: 2026-08-27T18:35-03:00
 commit: 4cce6758
 classes: [interno, medido]
+referencias_historicas:
+  - superpowers/CLAUDE.md
+  - hooks/session-start.js
+  - implementation\_plan.md
 config_medida:
   raiz: C:/Users/rapha/.gemini
   data_das_medicoes: 2026-08-27
@@ -61,6 +65,12 @@ verificado:
     sintetico -- 121 arquivos varridos
   - FRENTE 2 cadeia de supersede exercitada -- o HANDOFF de 27/08 e derivado
     OBSOLETO sem que nenhum registro declare estado
+  - FRENTE 5 (2026-08-28) 518 arquivos .md rastreados varridos por citacao de
+    caminho -- 2586 citacoes, e cada estreitamento medido (1511 -> 46 -> 3)
+  - FRENTE 5 as 4 referencias suspeitas do recorte prescritivo conferidas a mao,
+    uma a uma -- 3 eram mortas de verdade e 1 era bloco LaTeX
+  - FRENTE 5 o criterio G6 provado nos dois estados -- sonda com caminho
+    inexistente bloqueia com EXIT=1, e o GEMINI.md com bloco LaTeX passa
 nao_verificado:
   - Nenhum arquivo foi movido, renomeado ou removido por nenhuma frente. O
     PRELUDIO alterou o roteamento do perfil e travou o contrato de inferencia; a
@@ -107,6 +117,14 @@ nao_verificado:
     ausencia de defeito.
   - FRENTE 2 -- os 111 arquivos sem frontmatter NAO foram convertidos em
     registro. Continuam fora do indice, contados e declarados.
+  - FRENTE 5 -- as 43 referencias mortas fora do recorte prescritivo NAO foram
+    corrigidas. Vivem em auditorias e planos datados, que descrevem estados
+    passados; corrigi-las reescreveria o registro do que se media entao.
+  - FRENTE 5 -- as 73 citacoes por basename puro de familia de governanca foram
+    MEDIDAS e nao viraram portao. Boa parte fala da convencao, nao de um arquivo
+    especifico, e exigir caminho em todas produziria prosa pior.
+  - FRENTE 5 -- nenhuma referencia em CODIGO foi varrida, so em markdown. O
+    caminho citado em .py e .ps1 ficou fora desta passagem.
 supersede: null
 ---
 
@@ -228,8 +246,8 @@ em `extensions/`. É a mesma árvore de plugins mantida em dois lugares.
 
 ### 1.3 A cópia perigosa: divergência silenciosa
 
-`superpowers/CLAUDE.md` existe em `Site/skills/` (7.574 B) e em `extensions/`
-(8.506 B) — e **diverge**. Duplicata idêntica é desperdício; duplicata
+`Site/skills/superpowers/CLAUDE.md` (7.574 B) e
+`extensions/superpowers/CLAUDE.md` (8.506 B) **divergem**. Duplicata idêntica é desperdício; duplicata
 divergente é armadilha, porque quem lê uma acredita estar lendo a outra.
 
 ### 1.4 Skills desativadas por rename
@@ -698,10 +716,18 @@ respeita a fronteira.
 O que vale importar do `supermemory` são **conceitos, não o serviço** — três que
 o `memory_rag` não tem:
 
-- `hooks/session-start.js` — injeção automática de memória no início da sessão.
-  Hoje o `nexus agent handoff` faz isso à mão.
-- `git-utils.js` — contexto ciente do estado do git.
-- `project-config.js` + `container-tag.js` — escopo e etiquetagem por projeto.
+- `Site/skills/gemini-supermemory/src/hooks/session-start.js` — injeção
+  automática de memória no início da sessão. Hoje o `nexus agent handoff` faz
+  isso à mão.
+- `Site/skills/gemini-supermemory/src/lib/git-utils.js` — contexto ciente do
+  estado do git.
+- `Site/skills/gemini-supermemory/src/lib/project-config.js` +
+  `container-tag.js` — escopo e etiquetagem por projeto.
+
+> Os caminhos acima apontam para `src/`, não para `dist/`: as duas árvores têm
+> os mesmos nomes, e `dist/` é build. Corrigido em 2026-08-28 — a primeira
+> versão desta lista citava só o basename, e a segunda apontou para um `hooks/`
+> que não contém os arquivos. **Referência só vale medida.**
 
 **Entregável:** declaração explícita do corpus pretendido, com justificativa por
 fonte, o manifesto derivado dela — não o contrário — e a partição de motores da
@@ -735,6 +761,107 @@ delas stubs de 9 a 92 bytes (`Site/skills/superpowers/AGENTS.md` tem 9 B).
 **Entregável:** mapa de quem referencia quem, e onde a referência aponta para
 cópia em vez de canônico. Precedente direto: o `README` do `hybrid_router`
 apontava para a cópia da raiz e para o `.venv` errado — corrigido nesta sessão.
+
+---
+
+### 5.1 FRENTE 5 — ENTREGUE em 2026-08-28
+
+#### 5.1.1 O primeiro número era 1511, e não valia nada
+
+Varrendo os 518 `.md` rastreados por citação de caminho: **2586 citações, 1511
+que não resolvem.** Detector com 1500 falsos positivos é detector desligado —
+então a pergunta virou *o que, dentro disso, é achado?*
+
+Três estreitamentos, cada um derivado do que a medição mostrou:
+
+| Estreitamento | Por quê | Resta |
+| :--- | :--- | ---: |
+| — | varredura ingênua | 1511 |
+| Só corpus **vivo** (`docs/`, `reports/`, raiz; sem `.ARQUIVE`) e citação **com barra** | `Next.js` casa com a extensão `.js`; `Dashboard.ts` é nome, não endereço; prompt de continuidade arquivado cita o que existia **naquele dia** | 46 |
+| Só o que **prescreve** — governança da raiz + registros de `reports/` **com frontmatter** | auditoria datada de março citando arquivo que sumiu depois é registro, não podridão | **3** |
+
+**As três são minhas, escritas nesta semana.** Duas citavam
+`superpowers/CLAUDE.md` sem dizer qual das duas cópias divergentes; uma citava
+`hooks/session-start.js` sem raiz. Corrigidas.
+
+E a correção errou na primeira tentativa: apontei para
+`gemini-supermemory/hooks/`, que existe e **não contém** os arquivos — eles
+moram em `src/hooks/` e em `dist/hooks/`. **Referência só vale medida**, e isso
+inclui a referência que corrige outra.
+
+#### 5.1.2 O falso positivo que sobrou, e por que ele importa
+
+O `GEMINI.md` da raiz do projeto "citava" `implementation\_plan.md`, que não
+existe. Só que a citação está dentro de um bloco LaTeX:
+
+```
+$$\text{Task List (task.md)} \longrightarrow \text{Implementation Plan (implementation\_plan.md)} \longrightarrow \dots$$
+```
+
+Não é referência a arquivo — é o nome de uma etapa num diagrama de ciclo de
+vida, e `\_` é escape de LaTeX, não separador. O detector agora rastreia bloco
+`$$` e pula. **Sétima vez** nesta base que um detector textual precisa
+distinguir *citar* de *afirmar*, e a forma continua sendo a mesma: estado de
+bloco, nunca isenção de arquivo.
+
+#### 5.1.3 As 73 citações ambíguas — medidas, não corrigidas
+
+Restam 73 menções por **basename puro** de família de governança: 27 `CLAUDE.md`,
+20 `GEMINI.md`, 13 `AGENTS.md`, 13 `MODUS_OPERANDI.md` — nomes que designam de 2
+a 5 arquivos diferentes sob a raiz.
+
+**Não viraram portão, e a razão é semântica:** boa parte dessas frases fala da
+*convenção* (`"o CLAUDE.md é carregado toda sessão"`), não de um arquivo
+específico. Exigir caminho completo em todas produziria prosa pior e um detector
+que o autor aprenderia a contornar. Ficam medidas aqui, disponíveis para quem
+quiser desambiguar caso a caso.
+
+#### 5.1.4 Quando a forma não separa, quem separa é a declaração
+
+Ao escrever a §5.1.1 acima, o detector reprovou este próprio plano: ele agora
+**cita** `superpowers/CLAUDE.md` e `hooks/session-start.js` para dizer que
+estavam errados. **Oitava vez** nesta base.
+
+As sete anteriores se resolveram estreitando a forma — pular linha que é só
+comentário, rastrear bloco de docstring, ignorar `$$`. Aqui a forma **não
+separa**: `X` citado para apontar e `X` citado para dizer *"isto sumiu"* são a
+mesma sequência de caracteres, no mesmo tipo de linha.
+
+Então a isenção passa a ser **declarada**, item a item, no frontmatter:
+
+```yaml
+referencias_historicas:
+  - superpowers/CLAUDE.md
+  - hooks/session-start.js
+```
+
+Não é exceção por arquivo — isso criaria ponto cego justamente no registro que
+fala dos caminhos mortos. É exceção **por caminho**, visível na revisão, e um
+teste garante que ela não vaza para caminhos não declarados no mesmo documento.
+Mesmo princípio do `caminhos:` da frente 2: **quando a inferência não decide, o
+autor declara e o portão obedece à declaração, não ao palpite.**
+
+#### 5.1.5 Duas sessões, uma chave duplicada, zero erros
+
+Aplicando o `referencias_historicas` acima, o frontmatter deste plano ficou com
+**a mesma chave duas vezes** — outra sessão estava editando o repositório em
+paralelo e acrescentou o mesmo bloco. `yaml.safe_load` aceita chave repetida em
+silêncio: a última vence, a primeira desaparece sem erro.
+
+É a mesma colisão que já fez uma auditoria desta casa **descartar o
+`MODUS_OPERANDI.md` canônico de 40 KB e exibir os dados do de 12 KB como se
+fossem dele**. Virou o critério **G1c** do portão e um teste sobre todos os
+registros.
+
+#### 5.1.6 O que ficou de guarda
+
+`record_gate.py` ganhou o critério **G6**: referência morta em documento que
+prescreve, sobre o que está em stage. E `tests/test_record_index.py` ganhou a
+varredura completa do recorte prescritivo — o portão garante que ninguém
+*aumenta* a dívida; o teste afirma que ela é **zero**.
+
+Provado nos dois estados: sonda com caminho inexistente bloqueia (`EXIT=1`),
+`GEMINI.md` com o bloco LaTeX passa.
 
 ---
 

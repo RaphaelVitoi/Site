@@ -15,6 +15,7 @@ auditoria justamente porque o portao dizia APROVADO.
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from datetime import date
@@ -92,13 +93,22 @@ def test_indice_fecha_a_cardinalidade():
     )
 
 
-def test_estado_e_derivado_e_nao_declarado():
-    """Nenhum registro declara `estado` no frontmatter: o estado vem da medicao."""
+def test_nenhum_registro_declara_um_estado_derivado():
+    """A 13.C exige que VIGENTE/SUSPEITO/OBSOLETO venham da medicao.
+
+    A primeira versao proibia a CHAVE `estado`, e isso era largo demais: um
+    handoff de outra sessao usa `estado: bloqueado-por-baseline-de-qualidade`
+    para dizer em que pe esta o TRABALHO, que e outra grandeza. O que nao pode
+    ser declarado e o estado de DECAIMENTO -- declarado, ele envelhece sem que
+    nada acuse, que e exatamente o que o indice existe para impedir.
+    """
+    derivados = {record_index.VIGENTE, record_index.SUSPEITO, record_index.OBSOLETO}
     for p in _registros_com_frontmatter():
         fm, _ = record_index.ler_frontmatter(p)
-        assert "estado" not in (fm or {}), (
-            f"{p.name} declara `estado` no frontmatter. A 13.C exige estado DERIVADO; "
-            "declarado, ele envelhece sem que nada acuse."
+        declarado = str((fm or {}).get("estado", "")).strip().upper()
+        assert declarado not in derivados, (
+            f"{p.name} declara `estado: {declarado}`, que e estado DERIVADO pela 13.C. "
+            "Quem decide isso e a varredura, nao o autor."
         )
 
 
@@ -262,6 +272,109 @@ def test_o_portao_detecta_ampliacao_de_origem():
         assert not any(p.search(inocente) for p in record_gate.PADROES_DE_AMPLIACAO.values()), (
             f"falso positivo em linha legitima: {inocente}"
         )
+
+
+def test_o_corpus_prescritivo_nao_tem_referencia_morta():
+    """Varredura completa, nao so o que esta em stage.
+
+    O portao so ve o stage -- por desenho, para nao reprovar divida
+    preexistente. Este teste ve a arvore inteira do recorte prescritivo, e por
+    isso pode afirmar que a divida e ZERO, e nao apenas que ninguem a aumentou.
+    """
+    saida = subprocess.run(
+        ["git", "ls-files", "*.md"], cwd=RAIZ, capture_output=True, text=True, check=False
+    )
+    mortas = {
+        rel: m
+        for rel in saida.stdout.splitlines()
+        if rel.strip() and record_gate._e_prescritivo(rel)
+        for m in [record_gate.referencias_mortas(rel)]
+        if m
+    }
+    assert not mortas, "referencia morta em documento que instrui:\n  " + "\n  ".join(
+        f"{k}: {v}" for k, v in mortas.items()
+    )
+
+
+def test_o_detector_de_referencia_nao_confunde_latex_com_caminho():
+    """Falso positivo medido: o GEMINI.md descreve um ciclo de artefatos em
+    `$$\\text{...(implementation\\_plan.md)}$$`. Nao e referencia a arquivo, e o
+    nome de uma etapa num diagrama -- e o primeiro rascunho o acusou."""
+    gemini = RAIZ / "GEMINI.md"
+    if not gemini.is_file():
+        pytest.skip("GEMINI.md ausente do projeto")
+    assert "implementation" in gemini.read_text(encoding="utf-8-sig"), (
+        "o caso que motivou a regra sumiu do arquivo; reavaliar se a excecao de "
+        "bloco matematico ainda tem lastro"
+    )
+    assert not record_gate.referencias_mortas("GEMINI.md"), (
+        "o detector voltou a ler bloco LaTeX como caminho"
+    )
+
+
+def test_o_detector_de_referencia_pega_caminho_que_nao_existe(tmp_path, monkeypatch):
+    (tmp_path / "reports").mkdir()
+    (tmp_path / "reports" / "X.md").write_text(
+        "Veja `scripts/ops/nao_existe_mesmo.py` para detalhes.\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    assert record_gate.referencias_mortas("reports/X.md") == ["scripts/ops/nao_existe_mesmo.py"]
+
+
+def test_referencia_historica_isenta_o_caminho_declarado_e_so_ele(tmp_path, monkeypatch):
+    """A isencao e por CAMINHO declarado, nunca por arquivo.
+
+    Isentar o documento inteiro criaria ponto cego exatamente onde ele nao pode
+    existir -- no registro que fala dos caminhos mortos. Declarando item a item,
+    a excecao aparece no frontmatter e o revisor a ve.
+    """
+    (tmp_path / "reports").mkdir()
+    (tmp_path / "reports" / "H.md").write_text(
+        "---\n"
+        "id: h\ntipo: relatorio\nescopo: Site\nautor: claude@opus-5\n"
+        "criado_em: 2026-08-28\n"
+        "referencias_historicas:\n  - antigo/sumiu.py\n"
+        "verificado:\n  - nada\nnao_verificado:\n  - nada\n"
+        "---\n\n"
+        "Antes o codigo vivia em `antigo/sumiu.py`; hoje nao existe mais.\n"
+        "Mas `outro/tambem_nao_existe.py` nao foi declarado.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    achadas = record_gate.referencias_mortas("reports/H.md")
+    assert achadas == ["outro/tambem_nao_existe.py"], (
+        f"a isencao vazou para caminho nao declarado, ou barrou o declarado: {achadas}"
+    )
+
+
+def test_nenhum_registro_tem_chave_duplicada_no_frontmatter():
+    """`yaml.safe_load` aceita chave repetida em silencio: a ultima vence.
+
+    Achado real de 2026-08-28 -- duas sessoes editando este repositorio
+    acrescentaram `referencias_historicas` ao mesmo frontmatter, e nada acusou.
+    Mesma familia da colisao que fez uma auditoria descartar o manual canonico
+    de 40 KB e exibir os dados do de 12 KB como se fossem dele.
+    """
+    repetidas = {}
+    for p in _registros_com_frontmatter():
+        bruto = p.read_text(encoding="utf-8-sig").split("\n---", 2)[0][3:]
+        chaves = [
+            linha.split(":", 1)[0]
+            for linha in bruto.splitlines()
+            if re.match(r"^[A-Za-z_][A-Za-z0-9_]*:", linha)
+        ]
+        dup = sorted({c for c in chaves if chaves.count(c) > 1})
+        if dup:
+            repetidas[p.name] = dup
+    assert not repetidas, f"chave duplicada no frontmatter: {repetidas}"
+
+
+def test_o_recorte_prescritivo_exclui_o_que_descreve_o_passado():
+    """Auditoria datada citando arquivo que sumiu depois e registro, nao podridao."""
+    assert record_gate._e_prescritivo("CLAUDE.md")
+    assert record_gate._e_prescritivo("reports/HANDOFF-2026-08-28-auditorias-e-preludio.md")
+    assert not record_gate._e_prescritivo("docs/audits/AUDITORIA_SISTEMA_20260328.md")
+    assert not record_gate._e_prescritivo("scripts/ops/record_gate.py")
 
 
 def test_o_portao_esta_no_pre_commit():
