@@ -81,6 +81,11 @@ engine/avatars/*.txt
 # a divergencia deixa de ser politica a policiar e passa a ser impossivel.
 # Regenerar com `nexus index --rebuild`; o portao nao le o arquivo, recalcula.
 data/RECORD_INDEX.json
+# Estado de plugin dentro do repositorio. Apareceu em 2026-08-28 as 08:23,
+# criado por um plugin carregado na sessao -- nao e trabalho de ninguem e nao
+# reproduz em outra maquina. Sem esta linha, o proximo `git add -A` o commita.
+.claude/data/
+
 
 # 6. BACKUPS E ARCHIVES (PURA HIGIENE) ─────────────────────────────────────────
 _backups/
