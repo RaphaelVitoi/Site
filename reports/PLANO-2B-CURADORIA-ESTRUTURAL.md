@@ -22,6 +22,15 @@ verificado:
     null e vazio; parse dos 2 arquivos em pwsh 7 e PS 5.1
   - PRELUDIO 0.5.2 semantica do system_prompt lida no servidor
     (_build_multiturn e _build_inference_options), nao inferida do cliente
+  - MAPA 1.5 (2026-08-28) as 5 familias inventariadas na raiz multiprojeto e
+    cada referencia resolvida para a COPIA que atinge, nos tres tipos de
+    consumidor (codigo, manifesto, convencao de runtime)
+  - MAPA 1.5 pertencimento ao corpus do RAG conferido copia a copia, resolvendo
+    o manifesto fonte a fonte
+  - MAPA 1.5 Site/skills x extensions comparado arquivo a arquivo por cmp
+    (79 identicos, 53 divergentes) e a direcao da divergencia medida por mtime
+  - MAPA 1.5 registro de habilitacao e ledger de integridade do CLI conferidos
+    separadamente: provam coisas diferentes (regra x instalacao)
 nao_verificado:
   - NENHUM arquivo foi movido, renomeado ou removido pelas frentes 1 a 7. O
     PRELUDIO alterou o roteamento do perfil e travou o contrato de inferencia;
@@ -33,6 +42,14 @@ nao_verificado:
     estabelecida por leitura do servidor e travada por teste do payload do
     cliente, nao por observacao de temperatura real. As chaves deste ambiente
     estao revogadas e nenhum modelo foi consultado.
+  - MAPA 1.5: o Gemini CLI NAO foi executado. Que `extensions/` e a arvore
+    carregada vem de tres evidencias convergentes -- o registro de habilitacao
+    do CLI vive dentro dela, e o caminho padrao da ferramenta, e Site/skills nao
+    e diretorio de skills reconhecido -- e nao de observacao do carregamento.
+  - MAPA 1.5: nao foi medido POR QUE Site/skills divergiu, nem se o fork foi
+    deliberado. So que divergiu, em que direcao e quando.
+  - MAPA 1.5: a arvore de `antigravity/brain/` foi excluida das buscas de
+    consumidor (e log de sessao, nao codigo vivo).
 supersede: null
 ---
 
@@ -163,8 +180,135 @@ divergente é armadilha, porque quem lê uma acredita estar lendo a outra.
 379 `SKILL.md.bak` (excluindo `node_modules`), **todos órfãos** — nenhum tem
 `SKILL.md` ao lado. Não são backup: são a própria skill desligada. 61 ativas.
 
+---
+
+## 1.5 MAPA DE REFERÊNCIA — quem lê qual cópia
+
+> Medido em 2026-08-28. **Nada foi movido, renomeado ou removido.** É a base de
+> evidência que transforma as declarações de canônico da frente 1 em decisões
+> mecânicas em vez de arbitrárias — `CLAUDE.md` §4: *"presumir que algo é órfão
+> e remover já quebrou a toolchain aqui."*
+
+### 1.5.1 Consumidor tem três tipos, e só um deles o `grep` enxerga
+
+Essa distinção é o produto mais importante desta medição. Sem ela, "zero
+referências" seria lido como "órfão", e a conclusão estaria errada em três das
+cinco famílias.
+
+| Tipo | Como se manifesta | Detectável por |
+| :--- | :--- | :--- |
+| **Código** | um script abre o caminho explicitamente | `grep` |
+| **Manifesto** | declarado em config (`gemini-extension.json`, `rag_ingestion_manifest.json`) | leitura do manifesto |
+| **Convenção do runtime** | carregado pelo agente por **nome + localização** (`CLAUDE.md` pelo Claude Code, `GEMINI.md` pelo Gemini CLI) | **invisível ao `grep`** |
+
+**Nenhuma remoção pode se basear apenas na ausência do tipo 1.**
+
+### 1.5.2 `MODUS_OPERANDI.md` — 5 cópias, consumidores resolvidos
+
+| Bytes | Cópia | Código | RAG | Veredito |
+| ---: | :--- | :--- | :--- | :--- |
+| **40.028** | `~/.gemini/MODUS_OPERANDI.md` | `nexus.py:2156` (handoff), auditoria mensal, `sota_hygiene.py:321` | **FORA** | **CANÔNICO** e mais lido |
+| 12.836 | `Site/MODUS_OPERANDI.md` | auditoria mensal (`SITE_ROOT /`) | **FORA** | governança de projeto |
+| 6.743 | `Site/.claude/MODUSOPERANDI/…` | nenhum | **DENTRO** | só a memória lê |
+| 6.743 | `Site/.cerebro/ops-deploy/…` | nenhum | **FORA** | **órfão real** — zero consumidores dos três tipos |
+| 4.616 | `antigravity/.claude/…` | `task_executor.py:604` | n/a | canônico do projeto irmão |
+
+**Achado 1 — a inversão do corpus.** O índice de memória contém a cópia
+derivada de 6.743 B e **exclui as duas autoritativas**. Quem consulta a memória
+sobre o Modus Operandi recebe o resumo, nunca o manual de 40 KB. As duas
+"cópias" gêmeas byte a byte não são equivalentes: uma alimenta a memória, a
+outra não alimenta nada.
+
+**Achado 2 — o único órfão verdadeiro de toda a varredura** é
+`Site/.cerebro/ops-deploy/MODUS_OPERANDI.md`. Nenhum código, nenhum manifesto,
+nenhuma convenção. O diretório `ops-deploy/` é referenciado em prosa
+(`project-context.md`) e outros arquivos dele estão no `document_manifest.json`
+— mas este não.
+
+### 1.5.3 `CLAUDE.md` — 4 de governança, 7 de componente
+
+| Bytes | Cópia | Consumidor |
+| ---: | :--- | :--- |
+| 4.796 | `~/.gemini/CLAUDE.md` | **convenção** — carregado toda sessão |
+| 3.576 | `Site/CLAUDE.md` | **convenção** — carregado com `cwd=Site`. FORA do RAG |
+| 3.483 | `Site/.claude/PROPOSITOS/CLAUDE.md` | só o RAG |
+| 2.281 | `antigravity/.claude/CLAUDE.md` | `do.ps1` ×3, `cognitive.py:33`, `task_executor.py:605`, `memory_rag.py:82` — **o mais lido por código de toda a varredura** |
+
+**Achado 3 — o manual canônico erra sobre o próprio diretório.** A §1 do
+`~/.gemini/CLAUDE.md`, linha 20, declara `AGENTS.md` na raiz. **Ele não
+existe.** É a única inconsistência interna verificável do documento que governa
+tudo — e ele é carregado em toda sessão, nas duas cópias (`~/.gemini/` e
+`~/.claude/`).
+
+### 1.5.4 `GEMINI.md` — a família de 35 era falsa
+
+30 das 35 ocorrências estão dentro de plugins e são **declaradas por
+manifesto**: cada `gemini-extension.json` traz `"contextFileName": "GEMINI.md"`.
+Não são cópias concorrentes de governança — são o arquivo de contexto daquele
+plugin. Declarar um "GEMINI.md canônico" que as substituísse **quebraria as
+extensões**.
+
+Governança real: 5 (raiz 1.476, `Site/` 5.548, `antigravity/` 8.342,
+`antigravity-cli/` 3.489, `antigravity-ide/` 4.067). Só a da raiz tem
+consumidor de código (`sota_hygiene.py:320`); as outras vivem de convenção.
+
+`FUNDAMENTOS_SOTA.md` é **única**. Não há família — não precisa de declaração.
+
+### 1.5.5 `Site/skills/` não é cópia obsoleta. É fork mais novo que não roda.
+
+Este é o achado de maior consequência da medição, e o que mais teria sido
+destruído por uma limpeza baseada em intuição.
+
+| Medida | Valor |
+| :--- | ---: |
+| Entradas em `Site/skills/` | 8 |
+| Também em `extensions/` | 6 |
+| **Só em `Site/skills/`** | **2** (`gemini-cli-security`, `gemini-deep-research`) |
+| Arquivos idênticos ao espelho | 79 |
+| **Arquivos divergentes** | **53** |
+| Divergentes em que `Site/skills` é **mais novo** | **53** |
+| Divergentes em que `extensions/` é mais novo | **0** |
+
+`Site/skills/superpowers/CLAUDE.md`: 2026-08-17, 7.574 B.
+`extensions/superpowers/CLAUDE.md`: 2026-06-01, 8.506 B.
+Dois meses e meio mais novo, e **menor** — editado, não apenas atualizado.
+
+**Achado 4 — a árvore que roda é a velha.** `extensions/` é a árvore que o CLI
+gerencia: o registro de habilitação (`extension-enablement.json`) vive dentro
+dela. `Site/skills/` não é diretório de skills reconhecido (`Site/.claude/skills`
+não existe, nenhum `settings.json` o menciona), não é declarado por manifesto e
+não é lido por código. **53 arquivos de trabalho mais recente não são carregados
+por nada** — e isso nunca produziu erro, porque o antigo continua funcionando.
+
+**Achado 5 — o espelho é incompleto nos dois sentidos.** Além dos 76 arquivos
+que só existem em `extensions/` (já medidos na §1.2), `gemini-cli-security` e
+`gemini-deep-research` estão no **ledger de integridade** do CLI — ou seja, o
+CLI os instalou — mas **não existem em `extensions/`**: só em
+`antigravity-cli/plugins/` e `Site/skills/`.
+
+### 1.5.6 O que a frente 1 já pode decidir, e o que ainda não
+
+**Decidível agora, com evidência:**
+
+1. Canônico de `MODUS_OPERANDI` = a raiz (40 KB) — é a mais lida por código.
+2. `Site/.cerebro/ops-deploy/MODUS_OPERANDI.md` é órfão dos três tipos. **Remoção continua exigindo ordem explícita**, mas a evidência está completa.
+3. `GEMINI.md` e `CLAUDE.md` de plugin **não entram** na declaração de canônico. A família de governança do `GEMINI.md` tem 5 membros, não 35.
+4. `FUNDAMENTOS_SOTA.md` sai da lista de homônimos: é única.
+5. O corpus do RAG precisa incluir os dois `MODUS_OPERANDI` autoritativos — hoje indexa só o derivado.
+
+**Ainda não decidível, e por quê:**
+
+| Questão | Falta |
+| :--- | :--- |
+| `Site/skills/` — promover, fundir ou arquivar os 53 arquivos mais novos? | Saber se o fork foi deliberado. É decisão do vértice, não inferência |
+| `AGENTS.md` na raiz — criar ou corrigir o `CLAUDE.md`? | Decidir se a família deve existir na raiz |
+| As 2 extensões fora de `extensions/` | Entender se a instalação quebrou ou se o caminho é outro |
+
+---
+
 **Entregável do item 1:** regra de nomeação que proíba basename ambíguo em
 artefato de governança, mais um índice que declare o canônico de cada família.
+**A base de evidência está na §1.5 acima.**
 
 ---
 

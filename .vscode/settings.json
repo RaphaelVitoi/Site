@@ -306,5 +306,6 @@
   "evenBetterToml.schema.enabled": true,
   "turboConsoleLog.addSemicolonInTheEnd": true,
   "turboConsoleLog.logMessagePrefix": "⚡ [SOTA-DEBUG]",
-  "redhat.telemetry.enabled": false
+  "redhat.telemetry.enabled": false,
+  "antigravity.enableTelemetry": false
 }
