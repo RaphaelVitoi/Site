@@ -8,6 +8,8 @@ criado_em: 2026-08-28T02:50-03:00
 atualizado_em: 2026-08-28T04:25-03:00
 commit: 9d02b9fa
 classes: [interno, medido]
+referencias_nao_resolviveis:
+  - reports/HANDOFF-2026-08-28-browser-sota-cdp.md
 config_medida:
   raiz: C:/Users/rapha/.gemini
   branch: master
@@ -28,7 +30,7 @@ verificado:
     medido (1511 -> 46 -> 3) e as 4 suspeitas do recorte prescritivo conferidas
     a mao, uma a uma
   - FRENTE 5 -- criterio G6 provado nos dois estados; a isencao por
-    referencias_historicas testada contra vazamento para caminho nao declarado
+    referencias_nao_resolviveis testada contra vazamento para caminho nao declarado
   - FRENTE 1 -- corpus do RAG medido nos dois estados com o coletor real
     (470 -> 474) e a barreira de traversal exercitada (fonte ".." coleta 0)
   - FRENTE 1 -- 7 mutacoes aplicadas as guardas do indice, com baseline explicita
@@ -212,7 +214,7 @@ na mesma espécie de linha. Nenhuma regra estrutural distingue intenção.
 
 A saída não é isentar o arquivo — isso abre ponto cego exatamente no registro
 que fala dos caminhos mortos. É **declarar a exceção por item**, no frontmatter,
-onde o revisor a vê: `referencias_historicas: [...]`. Mesmo princípio do
+onde o revisor a vê: `referencias_nao_resolviveis: [...]`. Mesmo princípio do
 `caminhos:` da frente 2. **Quando a inferência não decide, o autor declara e o
 portão obedece à declaração — nunca ao palpite.**
 
