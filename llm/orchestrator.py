@@ -148,9 +148,12 @@ async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[
     models_to_try = list(te.DEEP_THINKING_MODELS) if agent_type == "deep_thinking" else list(te.FAST_OPERATIONS_MODELS)
 
     agent_clean = task.agent.replace("@", "")
-    raw_model = (task.metadata or {}).get("model_override") or te.AGENTS_MANIFEST.get(agent_clean, {}).get(
-        "primary_model"
-    )
+    # A politica de roteamento e a autoridade aqui desde 2026-08-28. Antes esta
+    # linha lia `primary_model` do manifesto direto, e `AGENT_MODEL_MAP` --
+    # resolvido pela politica em core/config -- nao tinha consumidor de
+    # producao: 19 dos 19 agentes rodavam num modelo que a politica nao havia
+    # escolhido. `modelo_do_agente` e a fonte unica dos quatro leitores.
+    raw_model = te.modelo_do_agente(agent_clean, override=(task.metadata or {}).get("model_override"))
     designated_model = str(raw_model) if raw_model else None
     if designated_model:
         if designated_model in models_to_try:

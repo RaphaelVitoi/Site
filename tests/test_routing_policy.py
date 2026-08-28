@@ -26,6 +26,7 @@ from llm.routing_policy import (
     SUBAGENTES,
     ClasseTarefa,
     Faixa,
+    ForaDaAutoridadeDaPolitica,
     Origem,
     TierAgente,
     avaliar_uso_condicional_pro,
@@ -68,8 +69,10 @@ def test_sao_dezenove_agentes():
 
 
 def test_todo_nivel_de_subagente_do_mesh_tem_rota():
-    """SubagentTier vem de core/subagents_mesh.py; sem rota propria, um
-    varredor de seguranca herdaria o modelo de triagem do pai."""
+    """SubagentTier vem de core/subagents_mesh.py, e cada tier precisa ter a
+    CLASSE de tarefa declarada -- classificacao, nao atribuicao de modelo. O
+    modelo vem de SUBAGENT_MODEL_MAP; ver
+    test_a_politica_nao_atribui_modelo_a_subagente."""
     fonte = MESH.read_text(encoding="utf-8")
     niveis = set(re.findall(r'^\s+[A-Z]+ = "([a-z_]+)"', fonte, re.M))
     assert niveis, "nao consegui extrair SubagentTier do mesh"
@@ -177,9 +180,48 @@ def test_modelo_local_nao_quebra_a_matematica_de_economia():
     assert r["vale_a_pena"]
 
 
-def test_math_verifier_usa_a_frota_local():
-    """routing.py ja prioriza gemma-4-31b no dominio MATH; a politica concorda."""
-    assert e_local(rotear("math_verifier_sota"))
+def test_a_politica_nao_atribui_modelo_a_subagente():
+    """Decisao do operador em 2026-08-28: **subagente e sempre custo zero**, e a
+    autoridade e `core.subagents_mesh.SUBAGENT_MODEL_MAP`.
+
+    Antes daqui saia `e_local(rotear("math_verifier_sota"))` -- e passava, mas
+    por coincidencia: a classe LOCAL desse tier era a unica das treze a cair
+    numa rota local. Os outros doze recebiam nuvem paga, e ninguem media.
+    Agora pedir modelo a um tier levanta, em vez de devolver alias que ninguem
+    deveria usar."""
+    so_tier = sorted(set(SUBAGENTES) - set(AGENTES))
+    assert so_tier, "sem tier exclusivo nao ha o que este teste guarde"
+    for alvo in so_tier:
+        with pytest.raises(ForaDaAutoridadeDaPolitica):
+            rotear(alvo)
+        with pytest.raises(ForaDaAutoridadeDaPolitica):
+            decidir(alvo)
+
+
+def test_o_modelo_de_todo_subagente_tem_custo_zero():
+    """O invariante do operador, travado onde a autoridade de fato mora.
+
+    Nao ha copia da tabela aqui: o teste le `SUBAGENT_MODEL_MAP` e exige que
+    cada modelo esteja na frota local declarada em data/ollama_models.json."""
+    from core.subagents_mesh import SUBAGENT_MODEL_MAP  # noqa: PLC0415
+
+    fora = sorted({m for m in SUBAGENT_MODEL_MAP.values() if not e_local(m)})
+    assert not fora, (
+        f"subagente com modelo fora da frota local: {fora}. O invariante do "
+        "operador e custo zero -- se isto mudou, foi decisao, e ela precisa "
+        "estar no registro antes do teste."
+    )
+    assert all(custo(m, 10_000, 2_000) == 0.0 for m in SUBAGENT_MODEL_MAP.values())
+
+
+def test_nome_que_e_agente_E_tier_resolve_como_agente():
+    """`implementor`, `curator`, `architect` e `validador` existem nas duas
+    familias. A precedencia de `_classe_de` sempre foi AGENTES primeiro, e a
+    recusa acima nao pode ter mudado isso."""
+    ambos = sorted(set(SUBAGENTES) & set(AGENTES))
+    assert ambos, "a sobreposicao sumiu; releia a recusa em decidir()"
+    for alvo in ambos:
+        assert rotear(alvo) == ROTAS[AGENTES[alvo][1]].primario
 
 
 #  Assimetria e escalonamento
@@ -429,7 +471,10 @@ def test_rotear_e_decidir_nunca_divergem():
     Duas logicas de decisao paralelas divergiriam em silencio. Este teste e o
     que impede que voltem a existir.
     """
-    for alvo in list(AGENTES) + list(SUBAGENTES):
+    # So agentes: desde 2026-08-28 a politica nao atribui modelo a subagente, e
+    # os dois caminhos levantam juntos -- coberto por
+    # test_a_politica_nao_atribui_modelo_a_subagente.
+    for alvo in AGENTES:
         for escalado in (False, True):
             assert rotear(alvo, escalado=escalado) == decidir(alvo, escalado=escalado).modelo, alvo
 

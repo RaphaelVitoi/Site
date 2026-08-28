@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T11:20-03:00
+atualizado_em: 2026-08-28T13:30-03:00
 commit: 764694a5
 classes: [interno, medido]
 caminhos:
@@ -20,34 +21,54 @@ config_medida:
   branch: master
   data: 2026-08-28
   agentes: 19
-  agentes_que_divergem: 19
+  agentes_que_divergem_antes: 19
+  agentes_que_seguem_a_politica_depois: 19
   subagentes: 13
-  subagentes_que_divergem: 13
+  subagentes_que_divergiam: 13
+  subagentes_em_custo_zero: 13
+  agentes_em_custo_marginal_zero: 12
 verificado:
   - a divergencia foi medida por EXECUCAO -- core.config carregado, os dois mapas
     comparados chave a chave -- e nao por leitura dos modulos
-  - a lista de leitores de AGENT_MODEL_MAP foi derivada da arvore com fronteira
-    de palavra, depois de a busca por substring ter produzido um falso positivo
+  - a lista de leitores de AGENT_MODEL_MAP e derivada da AST, referencia de
+    CODIGO e nao de texto, depois de substring e depois de fronteira de palavra
+    terem produzido um falso positivo cada
   - as duas superficies medidas separadamente -- agentes e subagentes
   - 6 mutacoes com baseline explicita, contagem de coletados conferida e
     identidade da mensagem exigida
   - suite completa nas duas arvores antes do commit
   - o portao de mensagem de commit exercitado nos DOIS estados, 22 casos, mais
     uma mutacao que reverte a classe de caracteres e reprova 3 deles
+  - depois da decisao -- concordancia de 19 de 19 medida por execucao, e a
+    distribuicao por FAIXA orcamentaria, que corrigiu a conta de custo da
+    versao anterior deste registro
+  - 6 mutacoes novas, uma por parte da decisao, com baseline explicita e
+    identidade de mensagem exigida
+  - git status conferido depois de cada rodada de mutacao, porque uma delas
+    deixou arquivo mutado na arvore de trabalho
 nao_verificado:
   - nenhuma chamada real a provedor de LLM; liveness de credencial nao testada.
     O custo citado e o declarado no MODEL_REGISTRY, nao um gasto observado
   - nao foi medido o VOLUME de chamadas por agente, entao a multiplicacao de
     custo por chamada nao vira previsao de fatura
   - acesso a configuracao por nome inteiramente computado em runtime esta fora
-    do alcance da varredura lexica; as duas formas conhecidas foram conferidas
+    do alcance de varredura estatica; as duas formas conhecidas foram conferidas
+  - Rota.fallback continua sem consumidor, e NAO foi ligado de proposito -- o
+    fallback da classe LOCAL e gemma4:e4b, que por medicao anterior nao cabe na
+    VRAM desta maquina. E decisao sobre a TABELA, do operador
 supersede: null
 ---
 
 # FRENTE 4 — a autoridade de roteamento
 
-> **Entregue: a medição e o detector. Não entregue — porque não é minha — a
-> decisão.** O que mudou é que ela deixou de poder ser tomada em silêncio.
+> **As seções 1 a 6 descrevem o estado ANTES da decisão, e ficam como estão.**
+> Elas são a evidência de que a medição precedeu a escolha — reescrevê-las no
+> presente apagaria justamente isso. O que era pergunta virou resposta na
+> **seção 7**, onde o vértice decidiu, e a seção 7.1 corrige uma conta minha que
+> estava errada.
+>
+> Estado atual: a política é a autoridade nos agentes; a tabela local governa os
+> subagentes, com custo zero como invariante; o alias do `gemma4` foi corrigido.
 
 ## 1. O enquadramento do plano estava errado
 
@@ -202,28 +223,136 @@ sem cópia da regra — o teste **executa o hook**, porque regra de portão
 duplicada num teste é a forma mais silenciosa de duas fontes divergirem.
 Mutação com baseline explícita: reverter a classe reprova 3 dos 22.
 
-## 7. O que espera decisão do vértice
+## 7. A decisão, tomada pelo vértice em 2026-08-28
 
-| Superfície | Pergunta | Consequência medida |
+> Esta seção substitui a lista de perguntas que estava aqui. As três foram
+> respondidas no mesmo interlúdio, e a segunda foi respondida **como
+> restrição**, não como delegação.
+
+| Superfície | Decisão | Como ficou |
 | :--- | :--- | :--- |
-| **Agentes** | o caminho quente passa a ler `AGENT_MODEL_MAP`, ou o manifesto é a autoridade e a política sai? | custo por chamada ×5,5 para quem a tabela põe em `gemini-3.7-flash`; ×37 para `chico`, em `claude-opus-5` |
-| **Subagentes** | a tabela local de `subagents_mesh` governa e `SUBAGENTES` sai da política, ou o contrário? | ligar a política troca custo marginal zero por API paga |
-| **`gemma4`** | corrigir o alias do manifesto para a nomeação da frota | independe das duas acima |
+| **Agentes** | a política é a autoridade | o caminho quente resolve por `core.config.modelo_do_agente` |
+| **Subagentes** | *"subagente sempre = custo 0"* | a tabela local de `subagents_mesh` governa; a política **recusa** atribuir modelo a tier |
+| **`gemma4`** | corrigir o alias | `google/gemma-4-e2b-it` → `gemma4:12b` |
 
-A multiplicação de custo é **por chamada**, não por fatura: o volume por agente
-não foi medido. E é o desenho da tabela, não um defeito — capacidade por classe
-custa. Mas é o que transforma *"ligar a política"* de refatoração em decisão de
-gasto, e por isso não é minha.
+Em cada superfície havia duas fontes para o mesmo fato. A saída foi **apagar a
+segunda**, nunca mantê-las em acordo — duas fontes divergem por construção, e
+sincronizá-las só adia.
 
-## 8. Declaração (governança §5)
+### 7.1 Correção: minha conta de custo estava errada
 
-Rodaram: a divergência medida por execução nas duas superfícies; a lista de
-leitores derivada da árvore com fronteira de palavra; 6 mutações com baseline
-explícita, contagem de coletados e identidade de mensagem; a suíte completa nas
-duas árvores; os dois portões antes do commit.
+A §7 anterior dizia *"×5,5 para a maioria, ×37 para o `chico`"*. **Isso comparava
+preço unitário entre faixas — exatamente o que a docstring da política proíbe:**
+*"preço unitário só desempata DENTRO da mesma faixa"*. Medido por faixa:
 
-Não rodaram: nenhuma chamada real a provedor; nenhum teste de liveness de
-credencial; nenhuma medição de volume de chamadas por agente — então o custo
-citado é o declarado no registro, e não vira previsão de fatura. Acesso a
-configuração por nome inteiramente computado em runtime está fora do alcance da
-varredura léxica; as duas formas conhecidas foram conferidas e não existem.
+| Faixa | Agentes | Custo marginal |
+| :--- | ---: | :--- |
+| `local` | 1 | zero — frota Ollama |
+| `gratuita` | 11 | zero — cota do `gemini-3.7-flash` |
+| `api_paga` | 7 | pago |
+
+**12 dos 19 agentes ficam em custo marginal zero.** A superfície paga são 7, e
+são exatamente as classes em que o operador declarou que capacidade de fronteira
+é necessária: governança, estratégia, construção e raciocínio profundo. A
+decisão que apresentei como cara era, medida na unidade certa, a que respeita a
+Economia Generalizada que a própria tabela declara.
+
+Li a tabela e reportei o preço; não li a **faixa**, que é o campo que a tabela
+usa para decidir. Medir a grandeza errada com precisão continua sendo medir a
+grandeza errada.
+
+### 7.2 Como os agentes foram ligados
+
+`core.config.modelo_do_agente` é a **fonte única**, com três degraus:
+
+1. `model_override` da tarefa — designação explícita do operador, vence tudo;
+2. `AGENT_MODEL_MAP` — a política por classe de tarefa, a autoridade;
+3. `primary_model` do manifesto — rede de segurança **com aviso**, nunca
+   silenciosa. Cair aqui é anomalia, não operação normal.
+
+Os quatro consumidores passaram a chamá-la. Dois deles não roteiam — **informam
+ao agente, no system prompt, em que modelo ele roda**. Liam `primary_model`
+enquanto o orquestrador roteava por outra fonte: o agente era *informado* de um
+modelo e *executado* em outro. Ligar só o orquestrador teria consertado a
+execução e deixado o prompt mentindo.
+
+Medido depois: **19 de 19 agentes seguem a política** (era 0 de 19), e o caminho
+quente passou a distribuir 5 modelos distintos onde distribuía 2.
+
+**Por que a política entra como `designated_model` e não como um candidato
+comum:** `llm/routing._score_standard_preference` dá −4 a `gemini-3.5` e 9 aos
+modelos de fronteira, e `prefer_cost_saving_mode` está ligado. Se o modelo da
+política entrasse como candidato comum, o reordenador o mandaria para o fim e
+reporia o colapso que a política existe para curar. Isso está declarado como
+pendência: **a preferência por nome de modelo está embutida em duas camadas.**
+
+### 7.3 Subagentes: o invariante, travado onde a autoridade mora
+
+`decidir()` levanta `ForaDaAutoridadeDaPolitica` para tier que não é também
+agente. `SUBAGENTES` continua declarando a **classe de tarefa** de cada tier —
+informação diferente e legítima, usada por `_classe_de` e `cobertura()`.
+
+Os quatro nomes que existem nas duas famílias (`architect`, `curator`,
+`implementor`, `validador`) resolvem como **agente**, que é o que `_classe_de`
+sempre fez. Há teste para isso: a recusa não podia mudar a precedência.
+
+O invariante é travado onde a autoridade de fato mora — um teste lê
+`SUBAGENT_MODEL_MAP` e exige que todo modelo esteja na frota local, custo zero.
+Sem cópia da tabela.
+
+### 7.4 O que a decisão deixou aberto, e está declarado
+
+**`Rota.fallback` continua sem consumidor.** A política declara primário,
+fallback e escalonamento; o caminho quente consome só o primário, e o resto da
+cadeia vem das listas globais. Não liguei o fallback nesta passagem **de
+propósito**: o fallback da classe LOCAL é `gemma4:e4b`, e há medição anterior de
+que o e4b é multimodal e não cabe na VRAM desta máquina. Tornar o fallback
+alcançável sem revisar essa entrada criaria um caminho para um modelo que não
+carrega — trocaria um defeito silencioso por um barulhento. É decisão sobre a
+**tabela**, e ela é do operador.
+
+## 8. A quarta vez, já implementando a decisão
+
+A quarta apareceu ao implementar a decisão: o scanner de leitores de
+`AGENT_MODEL_MAP` acusou `llm/orchestrator.py`, que só **cita** o nome num
+comentário explicando por que passou a usar `modelo_do_agente`. Décima quinta
+instância na base.
+
+A escada foi subida até o fim: substring → fronteira de palavra → **AST**.
+Comentário e docstring não viram `Name` nem `Attribute`, então a medição passou
+a ser *"o código referencia isto"* em vez de *"o texto contém isto"*. E arquivo
+que não parseia virou falha explícita, porque ausência silenciosa esconderia um
+leitor. Nenhum arquivo isento.
+
+## 9. O arnês de mutação deixou a árvore mutada
+
+Rodando as seis mutações da decisão, um `OSError 22` do Windows explodiu
+**dentro do próprio bloco de restauração**. O script morreu e
+`core/subagents_mesh.py` ficou na árvore de trabalho com um subagente apontando
+para nuvem paga — a mutação virando estado real.
+
+`git status` pegou. A correção não foi só a retentativa: foi **conferir a
+restauração lendo de volta**. Restaurar sem verificar é a mesma família de
+defeito que este arnês existe para achar — a ação foi tentada e ninguém
+verificou o resultado, dentro da ferramenta escrita para perguntar exatamente
+isso.
+
+Regra que fica: **arnês que muta arquivo da árvore de trabalho confere a árvore
+depois de rodar.** `git status` faz parte da medição, não é zelo opcional.
+
+## 10. Declaração (governança §5)
+
+Rodaram: a divergência e depois a concordância medidas por execução nas duas
+superfícies; a lista de leitores derivada da árvore por AST; a distribuição por
+faixa orçamentária, que corrigiu a conta de custo da versão anterior deste
+registro; 6 mutações com baseline explícita, contagem de coletados e identidade
+da mensagem, mais 6 anteriores; a suíte completa nas duas árvores; os dois
+portões antes do commit; `git status` conferido depois de cada rodada de
+mutação.
+
+Não rodaram: nenhuma chamada real a provedor de LLM; nenhum teste de liveness de
+credencial; nenhuma medição de volume de chamadas por agente — o custo citado é
+o declarado no registro e na faixa, e não vira previsão de fatura. Acesso a
+configuração por nome inteiramente computado em runtime continua fora do alcance
+de qualquer varredura estática; as duas formas conhecidas foram conferidas e não
+existem.
