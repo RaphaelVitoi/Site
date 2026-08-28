@@ -31,6 +31,10 @@ CHROMA_PATH = Path(__file__).parent / CHROMA_DB_DIR
 # `return` antecipado quando o chromadb falta, entao atributo definido depois
 # dele nao existe sempre. Constante de modulo nao tem esse problema.
 RAIZ_DO_PROJETO = Path(__file__).resolve().parent
+# Marcador que uma arvore usa para se declarar superada. Predicado estrutural
+# em vez de lista de caminhos: viaja junto com a arvore e vale para
+# supersessoes futuras sem tocar no codigo de ingestao.
+MARCADOR_SUPERADO = "SUPERSEDED.md"
 OLLAMA_BASE_URL = "http://127.0.0.1:11434"
 EMBEDDING_MODEL = "nomic-embed-text"  # Requer: ollama pull nomic-embed-text
 
@@ -341,8 +345,41 @@ class MemoryRAG:
             Path(".claude") / ".ARQUIVE",  # 45 registros arquivados: tasks e cerimonias encerradas
         )
 
+        # Arvore que se DECLARA superada nao entra no indice.
+        #
+        # Nao e lista de caminhos: e predicado estrutural -- um diretorio que
+        # contem `SUPERSEDED.md` marcou a si mesmo. Lista literal envelhece e
+        # exige que alguem lembre de atualiza-la; o marcador viaja junto com a
+        # arvore e vale para supersessoes futuras sem tocar neste codigo.
+        #
+        # Medido em 2026-08-28: `.claude/AGENTS-MEMORY` foi declarada superada
+        # ao ser consolidada, e continuava contribuindo 89 fragmentos (2,1% do
+        # indice) que competiam com a canonica pelos mesmos tres lugares. Nao e
+        # conteudo errado -- e conteudo que ja esta na canonica, duas vezes.
+        # UM resolve, e ele e obrigatorio: os alvos vem de source_path.resolve()
+        # e sao absolutos, entao comparar com caminho relativo e comparar
+        # grandezas diferentes. A primeira versao nao resolvia nada -- nao
+        # excluiu NADA, nao levantou excecao, e so apareceu na contagem: 506
+        # alvos com 23 que deviam ter saido.
+        #
+        # A versao seguinte resolvia nos DOIS lados, e nenhuma mutacao isolada
+        # era detectavel porque cada resolve cobria o outro. Redundancia que
+        # teste nenhum distingue e redundancia que ninguem mantem.
+        superadas = {
+            m.parent.resolve()
+            for m in await asyncio.to_thread(lambda: list(base_path.rglob(MARCADOR_SUPERADO)))
+        }
+        if superadas:
+            logger.info(
+                "[RAG] %d arvore(s) declarada(s) superada(s) fora do indice: %s",
+                len(superadas),
+                ", ".join(sorted(d.name for d in superadas)),
+            )
+
         def _ignorado(caminho: Path, raiz: Path) -> bool:
             if any(part in ignore_dirs for part in caminho.parts):
+                return True
+            if any(caminho.is_relative_to(d) for d in superadas):
                 return True
             try:
                 rel = caminho.relative_to(raiz)
