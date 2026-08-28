@@ -1,106 +1,38 @@
 # Governança — projeto `Site`
 
-**Escopo:** este arquivo vale para **`C:\Users\rapha\.gemini\Site`** e nada além.
-Regras que valem para todos os projetos ficam em `..\AGENTS.md`, na raiz
-multiprojeto.
+> **Este arquivo é um ponteiro. A governança canônica está em
+> [`CLAUDE.md`](CLAUDE.md), na raiz deste projeto.**
 
-**Última revisão:** 2026-08-21 · Protocolo Chico SOTA v8.0 GOLD
+Existe porque a convenção [`agents.md`](https://agents.md) é lida por agentes
+que não carregam `CLAUDE.md` — Codex, Cursor e outros. Endereçabilidade
+cruzada tem valor; **segunda cópia da governança não tem.**
 
----
+## Por que ponteiro e não cópia
 
-## 1. O portão obrigatório — `pre-commit`
+Entre 2026-08-24 e 2026-08-26 este arquivo existiu como fork do `CLAUDE.md`.
+Em dois dias divergiu em três pontos, dois deles falsos — ambos nascidos de um
+search-replace mecânico de `claude` para `Codex`:
 
-Toda alteração passa por `scripts/ops/cwv_gate.ps1`, disparado pelo hook
-`pre-commit`. Cinco fases:
+| Divergência | Estado |
+| :--- | :--- |
+| Apontava para `..\AGENTS.md` na raiz multiprojeto | **não existia** |
+| Dizia que os 19 documentos de agente ficam em `.Codex/agents/` | **falso** — `sync_agents_reality.ps1:54` escreve em `.claude/agents/`, e `.Codex/agents/` não existe |
+| Trazia a §6, diretrizes de manutenção contínua | **conteúdo real** — incorporado ao `CLAUDE.md` §6 em 2026-08-28 |
 
-| # | Fase | O que barra |
-| :-- | :--- | :--- |
-| 1 | Core Web Vitals | Regressão de LCP / CLS / INP / TTFB |
-| 2 | Acessibilidade | Violação de padrão A11y |
-| 3 | **CVE** | Qualquer vulnerabilidade em `npm audit` |
-| 4 | **SRI** | Falha de integridade ou hash SHA-512 |
-| 5 | **Higiene de repositório** | Caminho de perfil de ferramenta versionado · blob >5 MB fora do LFS · binário sem `filter=lfs` |
+Duas mentiras em dois dias, nenhuma delas detectada por nada. Documento de
+governança duplicado não diverge *se* alguém descuidar — diverge **por
+padrão**, porque a cópia não tem como saber que o original mudou.
 
-**Nunca use `--no-verify` nem `SKIP_CWV_GATE=1`.** Este portão já barrou três
-CVEs altos invisíveis na branch de trabalho, e uma inconsistência de roteamento
-LFS introduzida na própria sessão que criou a fase 5.
+## Se você é um agente lendo este arquivo
 
-Se ele reprovar, "a regra está errada" é a hipótese **menos** provável.
+Leia `CLAUDE.md` neste mesmo diretório. Ele traz o portão obrigatório de
+pre-commit, a camada de dependências, as fontes únicas de roteamento de modelo,
+a obrigação de declaração e as diretrizes de manutenção contínua.
 
----
-
-## 2. Camada de dependências
-
-```
-npm audit --audit-level=low
-.venv/Scripts/python.exe -m pip_audit -r requirements.txt
-```
-
-**`pip-audit` sem `-r` audita o venv INSTALADO, não a declaração.** Essa
-distinção escondeu por uma sessão inteira um `requirements.txt` que não resolvia
-e um lock fixando `pillow` vulnerável.
-
-Para auditar o `uv.lock`, consultar `api.osv.dev` com os pares `nome==versão`
-extraídos do lock — a OSV inclui advisories GHSA que o `pip-audit` não cobre por
-padrão.
-
-**Transitiva:** `[tool.uv] constraint-dependencies` (Python) ou `overrides`
-(npm). Nunca `override-dependencies` — *constraint* respeita o teto do pai e
-falha alto; *override* atropela e produz combinações que não funcionam.
+A governança multiprojeto, que vale para todos os projetos sob `~/.gemini`,
+está em `../CLAUDE.md`.
 
 ---
 
-## 3. Roteamento de modelo — fonte única por decisão
-
-Auditado em 2026-08-21. **Não reintroduzir fontes paralelas.**
-
-| Decisão | Fonte única | Consumido em |
-| :--- | :--- | :--- |
-| Preferência por agente | `data/agents_manifest.json` → `model_preference` | `engine/llm_api.py:528`, `llm/orchestrator.py:147` |
-| Cadeias de fallback | `data/system_config.json` → `model_routing` | `core/config.py` |
-| Modelo concreto por agente | `llm/routing_policy.py` → `core.config.AGENT_MODEL_MAP` | resolução em `_resolver_modelos` |
-| Capacidade e preço de modelo de fronteira | `llm/model_registry.py` | `llm/adapters.py` |
-| Modelos locais (Ollama) | `data/ollama_models.json` | `scripts/ops/Ensure-OllamaModels.ps1` |
-
-`data/routing_map.json` é **fallback apenas** — sombreado por `system_config`.
-
-**Documentação não repete valor versionado.** Os 19 `.Codex/agents/*.md` são
-**gerados** por `scripts/routines/sync_agents_reality.ps1`; editá-los à mão é
-perda garantida na próxima sincronia. Para mudar o que aparece ali, edite o
-gerador ou o manifesto.
-
-`tests/test_desambiguacao.py` falha se qualquer uma dessas regras for revertida.
-
----
-
-## 4. Revisão do código
-
-Quando a skill `security-review` estiver disponível, rodar sobre os arquivos
-alterados antes de apresentar o trabalho como concluído. **Ela exige que o
-diretório de trabalho seja este repositório** — não a raiz multiprojeto, nem a
-pasta do usuário.
-
----
-
-## 5. Obrigação de declaração
-
-Dizer quais verificações rodaram e quais não. Verificação não executada não é
-verificação aprovada. O portão de 5 fases roda em todo commit e imprime seu
-veredito — declare esse veredito.
-
----
-
-## 6. Diretrizes de Manutenção Contínua SOTA (2026-08-26)
-
-1. **Invariância de Testes (Tolerância Zero):** Manter a regra de tolerância zero
-   para falhas na suite de testes ($395/395$). Toda nova funcionalidade deve
-   incluir mocks herméticos correspondentes.
-2. **Sanitização de Warnings:** O pipeline de CI/CD e o pre-commit rejeitam
-   builds que introduzam novos warnings no Pytest.
-3. **Controle de Roteamento:** O limiar do `ComplexityAnalyzer` (Edge vs Cloud)
-   deve ser calibrado periodicamente para manter o tráfego local na faixa ótima
-   de $60\%$ a $70\%$.
-4. **Imutabilidade de Encoding:** Todo script `.ps1` criado ou modificado deve
-   preservar a codificação **UTF-8 com BOM** (`utf-8-sig`) para compatibilidade
-   estrita com PowerShell 5.1.
-
+*`tests/test_governanca_agents.py` reprova se este arquivo voltar a crescer
+para além de um ponteiro, ou se o `CLAUDE.md` perder as seções que ele promete.*
