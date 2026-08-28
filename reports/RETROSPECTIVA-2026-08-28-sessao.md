@@ -33,6 +33,13 @@ supersede: null
 
 # RETROSPECTIVA — sessão de 2026-08-27/28
 
+> **Há uma segunda retrospectiva do mesmo dia, e ela não compete com esta.**
+> [`reports/agent-calibration/RETROSPECTIVA_20260828_PROCESSO_AGENTICO.md`](agent-calibration/RETROSPECTIVA_20260828_PROCESSO_AGENTICO.md),
+> de `codex@gpt-5.6`, cobre calibração de processo agêntico — processos órfãos,
+> ownership duplicado de plugin, callback OAuth. Esta cobre a auditoria de
+> governança e portões. Escopos complementares, ids distintos, e o ponteiro
+> existe para que quem chegar depois ache as duas em vez de uma.
+
 ## 1. O ANTES
 
 O repositório estava **verde e errado ao mesmo tempo**, e essa é a frase mais

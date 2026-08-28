@@ -4,6 +4,7 @@ tipo: mecanismo-de-calibracao-operacional
 escopo: Site
 autor: codex@gpt-5.6
 criado_em: 2026-08-28T23:59:00-03:00
+commit: fd64d6db
 classes: [interno, auditavel, tamper-evident]
 estado: ativo-com-validacao-obrigatoria
 verificado:
@@ -11,6 +12,9 @@ verificado:
 nao_verificado:
   - armazenamento local nao possui imutabilidade fisica; o ledger so detecta adulteracao quando a cadeia e verificada
   - mudanca de pesos internos de modelo nao e produzida por este mecanismo
+_ancora_normalizada_por: claude@opus-5 em 2026-08-28T09:55-03:00. Somente o campo
+  commit foi ajustado, com o SHA que INTRODUZIU o arquivo -- fato derivado do git,
+  nao afirmacao minha. Corpo e demais campos intactos.
 ---
 
 # Ledger de calibração do agente

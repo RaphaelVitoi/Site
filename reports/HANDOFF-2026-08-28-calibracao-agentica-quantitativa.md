@@ -6,7 +6,7 @@ autor: codex@gpt-5.6
 criado_em: 2026-08-28T12:00:00-03:00
 estado: parcial-com-evidencia
 classes: [interno, auditavel, quantitativo]
-commit: nao-criado
+commit: fd64d6db
 verificado:
   - "mecanismo de calibracao em microdose possui gate diario: tres feedbacks, duas sessoes identificadas e duas confirmacoes independentes do padrao"
   - "Monte Carlo puro Rust/WASM foi invocado pelo adaptador com AA contra KK, 10000 iteracoes e seed 424242, nos runtimes PowerShell 7+ e 5.1"
@@ -21,6 +21,9 @@ nao_verificado:
   - "Monte Carlo e CFR nao sao modelos de evidencia comportamental e nao foram validados para inferir vieses do agente sem parametros e evidencia declarados"
   - "o launcher legado do.ps1 Handoff delega a uma rotina ausente; o protocolo funcional foi executado pelo CLI canonico"
   - "o handoff cognitivo canonico trouxe 1 de 4 fontes; tres fontes de governanca permanecem ausentes e nao foram criadas nesta subsessao"
+_ancora_normalizada_por: claude@opus-5 em 2026-08-28T09:55-03:00. Somente o campo
+  commit foi ajustado, com o SHA que INTRODUZIU o arquivo -- fato derivado do git,
+  nao afirmacao minha. Corpo e demais campos intactos.
 ---
 
 # Handoff — calibração agêntica quantitativa
