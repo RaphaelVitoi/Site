@@ -1,0 +1,34 @@
+{
+  "browser_profile": {
+    "site-research-sandbox": {
+      "id": "site-research-sandbox",
+      "default": true,
+      "headless": false,
+      "user_data_dir": "C:\\Users\\rapha\\.claude\\browser-use-site-sandbox\\profile",
+      "downloads_path": "C:\\Users\\rapha\\.claude\\browser-use-site-sandbox\\downloads",
+      "file_system_path": "C:\\Users\\rapha\\.claude\\browser-use-site-sandbox\\artifacts",
+      "enable_default_extensions": true,
+      "disable_security": false,
+      "block_ip_addresses": false,
+      "keep_alive": false,
+      "use_cloud": false
+    }
+  },
+  "llm": {
+    "direct-control-only": {
+      "id": "direct-control-only",
+      "default": true,
+      "model": "qwen2.5-coder:7b-instruct-q5_K_M",
+      "temperature": 0.2,
+      "max_tokens": 4096
+    }
+  },
+  "agent": {
+    "safe-default": {
+      "id": "safe-default",
+      "default": true,
+      "max_steps": 20,
+      "use_vision": false
+    }
+  }
+}

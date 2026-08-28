@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "maximumAdditionalProfiles": 1,
+  "corePluginIds": [
+    "claude-security@claude-plugins-official",
+    "modern-web-guidance@claude-plugins-official",
+    "superpowers@claude-plugins-official",
+    "42crunch-api-security-testing@claude-plugins-official",
+    "vercel@claude-plugins-official",
+    "plugin-dev@claude-plugins-official",
+    "code-review@claude-plugins-official",
+    "playwright@claude-plugins-official",
+    "typescript-lsp@claude-plugins-official",
+    "frontend-design@claude-plugins-official"
+  ],
+  "profiles": [
+    {
+      "id": "core",
+      "displayName": "Core estável",
+      "activation": "local",
+      "pluginIds": [],
+      "requirements": {
+        "commands": [],
+        "environment": [],
+        "checks": []
+      }
+    },
+    {
+      "id": "local-ai",
+      "displayName": "Inferência local AMD/Ollama",
+      "activation": "local",
+      "pluginIds": [
+        "amd-skills@claude-plugins-official"
+      ],
+      "requirements": {
+        "commands": ["ollama"],
+        "environment": [],
+        "checks": ["ollama-list"]
+      }
+    },
+    {
+      "id": "research-browser",
+      "displayName": "Pesquisa Browser Use isolada",
+      "activation": "local-isolated",
+      "pluginIds": [
+        "browser-use@claude-plugins-official"
+      ],
+      "requirements": {
+        "commands": ["uv", "uvx", "ollama"],
+        "environment": [],
+        "checks": ["python-3.12", "browser-use-cli", "ollama-list"]
+      }
+    },
+    {
+      "id": "security-aikido",
+      "displayName": "SAST e secrets Aikido sob demanda",
+      "activation": "credential-gated",
+      "pluginIds": [
+        "aikido@claude-plugins-official"
+      ],
+      "requirements": {
+        "commands": ["node"],
+        "environment": ["AIKIDO_API_KEY"],
+        "checks": []
+      }
+    },
+    {
+      "id": "performance-ci",
+      "displayName": "CodSpeed em CI Linux",
+      "activation": "ci-linux-only",
+      "pluginIds": [
+        "codspeed@claude-plugins-official"
+      ],
+      "requirements": {
+        "commands": [],
+        "environment": ["CI"],
+        "checks": ["linux-host"]
+      }
+    },
+    {
+      "id": "media-studio",
+      "displayName": "HyperFrames Media Studio",
+      "activation": "local",
+      "pluginIds": [
+        "hyperframes@claude-plugins-official"
+      ],
+      "requirements": {
+        "commands": ["node"],
+        "environment": [],
+        "checks": []
+      }
+    }
+  ],
+  "credentialGates": [
+    {
+      "id": "security-endor",
+      "status": "blocked-until-installed",
+      "source": "endor-labs-agent-kit@endorlabs",
+      "requirements": ["endorctl", "ENDOR_API_CREDENTIALS", "Endor namespace with authorized MCP access"],
+      "reason": "O pacote ai-plugins instalado é um marketplace; o plugin filho Claude Code não está instalado como artefato executável do projeto."
+    }
+  ],
+  "governedMemory": {
+    "pluginId": "remember@claude-plugins-official",
+    "status": "disabled",
+    "policy": "Apenas um escritor automático de memória. A pasta .remember é evidência legada e não recebe nova captura automática sem política explícita de retenção e redaction."
+  },
+  "excluded": [
+    {
+      "pluginId": "datahub-skills@claude-plugins-official",
+      "reason": "Exige instância, CLI e catálogo DataHub reais; não há consumidor no Site."
+    },
+    {
+      "pluginId": "desktop-commander@claude-plugins-official",
+      "reason": "Execução arbitrária e filesystem amplo duplicam capacidades já disponíveis; allowedDirectories não é fronteira de segurança."
+    }
+  ]
+}
