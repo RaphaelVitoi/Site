@@ -7,6 +7,7 @@ Versao: v7.0 GOLD (Typer, Async, Zero I/O Friccao)
 
 import asyncio
 import contextlib
+import http.client
 import json
 import os
 import platform
@@ -447,9 +448,121 @@ def _fetch_amd_rocm_vram() -> tuple[float, float, float] | None:
     return None
 
 
+_VRAM_TOTAL_VULKAN: float | None = None
+_VRAM_PS_CACHE: tuple[float, float] | None = None
+_VRAM_PS_TTL_S = 2.0
+_OLLAMA_HOST = "127.0.0.1"
+_OLLAMA_PORT = 11434
+
+
+def _vram_total_do_log_do_ollama() -> float | None:
+    """Total de VRAM que o proprio Ollama declara enxergar, em GiB.
+
+    O servidor escreve, ao subir, uma linha `msg="inference compute" ...
+    total="8.0 GiB" available="7.2 GiB"`. E a fonte mais honesta do teto: nao e
+    a capacidade nominal da placa, e o que o backend de fato pode usar.
+    """
+    global _VRAM_TOTAL_VULKAN  # pylint: disable=global-statement
+    if _VRAM_TOTAL_VULKAN is not None:
+        return _VRAM_TOTAL_VULKAN or None
+
+    log = Path(os.environ.get("LOCALAPPDATA", "")) / "Ollama" / "server.log"
+    if not log.exists():
+        _VRAM_TOTAL_VULKAN = 0.0
+        return None
+    try:
+        texto = log.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        _VRAM_TOTAL_VULKAN = 0.0
+        return None
+
+    achado = None
+    for m in re.finditer(r'msg="inference compute".*?total="([\d.]+)\s*([GM])iB"', texto):
+        valor = float(m.group(1))
+        achado = valor if m.group(2) == "G" else valor / 1024
+    _VRAM_TOTAL_VULKAN = achado or 0.0
+    return achado
+
+
+def _fetch_vulkan_ollama_vram() -> tuple[float, float, float] | None:
+    """VRAM medida pelo backend que esta REALMENTE em uso nesta maquina.
+
+    Os tres leitores acima cobrem NVIDIA (`pynvml`), AMD nativo
+    (`pyamdgpuinfo`) e AMD via ROCm (`rocm-smi`). **Nenhum cobre Vulkan** -- e
+    Vulkan e o backend do Ollama aqui, numa Radeon RX 570 (Polaris), que nao tem
+    ROCm no Windows. Medido em 2026-08-28: os tres devolviam None, e
+    `_get_vram_usage` convertia isso em `(None, 0.0, 0.0)`.
+
+    Zero nao e desconhecido. Qualquer teto que consumisse esses numeros
+    concluiria que a VRAM esta vazia e nunca reagiria -- exatamente o padrao
+    desta base: o medidor reporta um valor plausivel sem estar ligado ao que
+    mede.
+
+    Aqui a ocupacao vem de `/api/ps`, que devolve `size_vram` por modelo
+    carregado -- e a mesma grandeza com que o Ollama calcula a divisao CPU/GPU
+    que ele mostra. Nao precisa de biblioteca de fornecedor nenhuma.
+
+    Limite declarado: mede o que o OLLAMA ocupa, nao o consumo da placa inteira
+    (desktop, navegador e outros processos ficam de fora). Para um teto de
+    modelos e a grandeza certa; para consumo de dispositivo, nao e.
+    """
+    total = _vram_total_do_log_do_ollama()
+    if not total:
+        return None
+
+    # Cache curto e timeout apertado porque isto roda no caminho de RENDER do
+    # dashboard, que atualiza em laco. A primeira versao usava timeout de 2 s e
+    # ia a rede a cada quadro: com o servidor no ar ja atrasava o quadro o
+    # bastante para o `Live` escrever DEPOIS de o CliRunner devolver o stdout
+    # -- o painel aparecia no terminal e `result.stdout` vinha vazio, e um teste
+    # pegou. Com o servidor fora do ar seriam 2 s de trava por quadro.
+    # Leitura de instrumento nao pode custar mais que o que ela instrumenta.
+    agora = time.monotonic()
+    global _VRAM_PS_CACHE  # pylint: disable=global-statement
+    if _VRAM_PS_CACHE and agora - _VRAM_PS_CACHE[0] < _VRAM_PS_TTL_S:
+        usado = _VRAM_PS_CACHE[1]
+    else:
+        # stdlib e nao `httpx`, e a diferenca foi MEDIDA. Um `httpx.get()` avulso
+        # constroi e destroi um Client por chamada, e este comando roda dentro do
+        # wrapper assincrono do typer: com ele no caminho de render,
+        # `test_nexus_dashboard_once` passou a ver `result.stdout` vazio enquanto
+        # o painel saia no stdout real. Com a stdlib, passa. Para um GET de JSON
+        # em loopback a stdlib basta e nao se enreda com o laco de eventos.
+        # `http.client` e nao `urlopen`: o portao de ancora reprovou um
+        # `# noqa: S310` aqui, e ele tinha razao. S310 existe porque `urlopen`
+        # aceita esquema arbitrario (`file:`, esquemas proprios) -- e a resposta
+        # certa nao era registrar a supressao, era tirar a ambiguidade: host,
+        # porta e caminho separados nao passam por parsing de URL nenhum. O
+        # achado deixa de existir em vez de ficar silenciado.
+        # A construcao entra no `try` junto com a chamada: um teste flagrou que,
+        # fora dele, um erro ao ABRIR a conexao escapava e derrubava
+        # `_get_vram_usage` inteiro. Instrumento nao pode quebrar o que mede --
+        # ausencia de leitura e None, nunca excecao subindo.
+        conexao = None
+        try:
+            conexao = http.client.HTTPConnection(_OLLAMA_HOST, _OLLAMA_PORT, timeout=0.4)
+            conexao.request("GET", "/api/ps")
+            modelos = json.loads(conexao.getresponse().read()).get("models", [])
+        except Exception:  # noqa: BLE001 - servidor fora do ar e ausencia de dado, nao erro
+            return None
+        finally:
+            if conexao is not None:
+                with contextlib.suppress(Exception):
+                    conexao.close()
+        usado = sum(float(m.get("size_vram") or 0) for m in modelos) / (1024**3)
+        _VRAM_PS_CACHE = (agora, usado)
+
+    return (usado / total) * 100, usado, total
+
+
 def _get_vram_usage() -> tuple[float | None, float, float]:
-    """Motor SOTA de Extracao VRAM O(1) - Acionamento Hibrido (Nvidia/AMD)."""
-    res = _fetch_nvidia_vram() or _fetch_amd_native_vram() or _fetch_amd_rocm_vram()
+    """Motor SOTA de Extracao VRAM O(1) - Nvidia, AMD nativo, ROCm e Vulkan.
+
+    A ordem nao e arbitraria: as tres primeiras leem o DISPOSITIVO e valem para
+    qualquer processo; a de Vulkan le o que o Ollama ocupa, que e um subconjunto.
+    Ela entra por ultimo, como a unica que responde nesta maquina.
+    """
+    res = _fetch_nvidia_vram() or _fetch_amd_native_vram() or _fetch_amd_rocm_vram() or _fetch_vulkan_ollama_vram()
     return res if res else (None, 0.0, 0.0)
 
 
