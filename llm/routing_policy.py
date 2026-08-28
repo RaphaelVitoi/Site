@@ -363,8 +363,33 @@ class Decisao:
         }[self.origem]
 
 
+class ForaDaAutoridadeDaPolitica(LookupError):
+    """A politica foi consultada sobre algo que ela nao decide.
+
+    Herda de `LookupError` para nao quebrar quem ja capturava o `KeyError` de
+    alvo desconhecido -- mas a mensagem separa os dois casos, que sao
+    diferentes: "nao conheco este alvo" e "conheco, e a autoridade e outra".
+    """
+
+
 def decidir(alvo: str, *, escalado: bool = False, primario_indisponivel: bool = False) -> Decisao:
     """Decisao de roteamento com procedencia. Caminho unico de decisao.
+
+    ## Subagente nao passa por aqui (decisao do operador, 2026-08-28)
+
+    **Subagente e sempre custo zero.** A autoridade de atribuicao de modelo para
+    os tiers do mesh e `core.subagents_mesh.SUBAGENT_MODEL_MAP`, que e toda de
+    frota local. Esta politica nao a duplica: medido antes da decisao, as duas
+    tabelas cobriam os mesmos 13 tiers e divergiam em 13 de 13, porque esta
+    roteava para nuvem paga. Duas fontes para o mesmo fato divergem por
+    construcao, e a saida foi apagar a segunda, nao sincroniza-la.
+
+    `SUBAGENTES` continua aqui porque declara a CLASSE DE TAREFA de cada tier --
+    informacao diferente, usada para classificacao e cobertura. Pedir um MODELO
+    para um tier levanta `ForaDaAutoridadeDaPolitica` em vez de devolver um
+    alias de nuvem que ninguem deveria usar. Nomes que sao agente E tier
+    (`implementor`, `curator`, `architect`, `validador`) resolvem como AGENTE,
+    que e o que `_classe_de` sempre fez.
 
     ## Ordem de precedencia dos dois sinais
 
@@ -381,6 +406,14 @@ def decidir(alvo: str, *, escalado: bool = False, primario_indisponivel: bool = 
     Ate esta data `Rota.fallback` estava declarado e nao tinha um unico
     consumidor  degradacao escrita na tabela e inalcancavel em execucao.
     """
+    if alvo not in AGENTES and alvo in SUBAGENTES:
+        raise ForaDaAutoridadeDaPolitica(
+            f"'{alvo}' e um tier de subagente, e a politica nao atribui modelo a subagente. "
+            "A autoridade e core.subagents_mesh.SUBAGENT_MODEL_MAP, e o invariante do "
+            "operador e custo zero: frota local. Para a CLASSE de tarefa do tier, use "
+            "`_classe_de` via `rota_de`."
+        )
+
     classe = _classe_de(alvo)
     rota = ROTAS[classe]
 
@@ -655,6 +688,7 @@ __all__ = [
     "Rota",
     "Origem",
     "Decisao",
+    "ForaDaAutoridadeDaPolitica",
     "ROTAS",
     "AGENTES",
     "SUBAGENTES",

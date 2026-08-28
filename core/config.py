@@ -162,6 +162,56 @@ def _resolver_modelos(manifesto: dict) -> dict:
     return resolvido
 
 
+# Avisos de fallback sao por AGENTE, nao por chamada: o caminho quente chama isto
+# a cada tarefa, e um warning por tarefa vira ruido que ninguem le -- o jeito
+# mais rapido de um sinal legitimo virar invisivel.
+_FALLBACK_JA_AVISADO: set[str] = set()
+
+
+def modelo_do_agente(agente: str, *, override: str | None = None) -> str | None:
+    """Modelo concreto de um agente. **Fonte unica do caminho quente.**
+
+    Existe porque havia quatro leitores independentes decidindo isto -- o
+    orquestrador, o `llm_api`, e os dois construtores de prompt -- todos lendo
+    `primary_model` do manifesto direto, enquanto `AGENT_MODEL_MAP`, resolvido
+    pela politica de roteamento, nao tinha um unico consumidor de producao.
+    Medido em 2026-08-28: os 19 agentes divergiam, 19 de 19, e dois dos quatro
+    leitores INFORMAVAM ao agente, no proprio system prompt, um modelo diferente
+    daquele em que ele ia rodar.
+
+    Precedencia, e ela e deliberada:
+
+    1. `override` -- `model_override` da tarefa. E designacao explicita do
+       operador para AQUELA tarefa, e vence tudo.
+    2. `AGENT_MODEL_MAP` -- a politica por classe de tarefa. A autoridade.
+    3. `primary_model` do manifesto -- rede de seguranca com AVISO, nunca
+       silenciosa. Cair aqui significa que a configuracao nao carregou na ordem
+       esperada, e isso e anomalia, nao operacao normal.
+
+    `_resolver_modelos` ja embute o degrau 3 quando a politica nao tem rota para
+    o agente; o degrau 3 aqui cobre o caso diferente de o MAPA nao ter sido
+    construido ainda.
+    """
+    if override:
+        return override
+
+    limpo = agente.replace("@", "")
+    modelo = AGENT_MODEL_MAP.get(f"@{limpo}")
+    if modelo:
+        return modelo
+
+    do_manifesto = AGENTS_MANIFEST.get(limpo, {}).get("primary_model")
+    if limpo not in _FALLBACK_JA_AVISADO:
+        _FALLBACK_JA_AVISADO.add(limpo)
+        logger.warning(
+            "[ROTEAMENTO] '%s' nao esta em AGENT_MODEL_MAP; usando primary_model do manifesto (%s). "
+            "A politica de roteamento nao foi consultada para este agente.",
+            limpo,
+            do_manifesto,
+        )
+    return do_manifesto
+
+
 def _reload_system_config() -> bool:
     # pylint: disable=global-statement
     global SYSTEM_CONFIG, ROUTING_CONFIG, MODEL_ROUTING, DEEP_THINKING_MODELS, FAST_OPERATIONS_MODELS

@@ -1,40 +1,53 @@
-"""Detector da frente 4: a relacao entre os dois modulos de roteamento.
+"""Detector da frente 4: a autoridade de roteamento, e o que a decisao travou.
+
+## Como esta frente chegou aqui
 
 O plano 2-B enquadrou a frente 4 como *"decidir qual das duas e a autoridade:
 `llm/routing_policy.py` (declarada) ou `llm/routing.py` (executada)"*. A medicao
-de 2026-08-28 mostra que o enquadramento era um **falso dilema**: as duas
-funcoes de entrada tem tipos diferentes e respondem perguntas diferentes.
-`rotear` e `str -> str` e responde *qual modelo*; `_reorder_models_for_economy`
-e `list -> list` e responde *em que ordem tentar os que ja recebi*. Duas funcoes
-de tipos diferentes nao disputam a mesma autoridade.
+de 2026-08-28 mostrou que o enquadramento era um **falso dilema**: as duas
+funcoes de entrada tem tipos diferentes. `rotear` e `str -> str` e responde
+*qual modelo*; `_reorder_models_for_economy` e `list -> list` e responde *em que
+ordem tentar os que ja recebi*. Nao competem -- estao em SERIE.
 
-A pergunta real e outra, e nenhuma leitura a teria dado: **o caminho quente
-consulta a politica?** Medido por execucao: nao. `AGENT_MODEL_MAP` e resolvido
-em `core/config.py`, e seus unicos leitores sao a auditoria mensal e dois
-testes. O `llm/orchestrator.py` le `primary_model` direto do manifesto. Os 19
-agentes divergem: 19 de 19.
+A pergunta real era outra: **o caminho quente consulta a politica?** Nao
+consultava. `AGENT_MODEL_MAP` era resolvido em `core/config.py` e lido so pela
+auditoria mensal e por dois testes, enquanto quatro consumidores de producao
+liam `primary_model` do manifesto direto. Divergencia: **19 de 19 agentes**, e
+**13 de 13 subagentes** numa segunda superficie.
 
-`tests/test_routing_policy.py::test_core_config_expoe_modelo_concreto_por_agente`
-guarda a metade de cima -- que `core.config` resolve o mapa. A docstring dele
-conclui dai que *"o comportamento em execucao mudou"*, e essa conclusao nao se
-sustenta: resolver o mapa e uma coisa, alguem le-lo e outra. Este arquivo e a
-metade que faltava.
+## A decisao do operador, 2026-08-28
 
-**Nenhum destes testes trava comportamento.** Todos comparam a arvore com
-`data/ESTADO_DE_ROTEAMENTO.json`. Ligar a politica ao caminho quente FAZ estes
-testes falharem -- de proposito: a decisao pendente e do vertice, e ela nao pode
-ser tomada em silencio. Falhou? A decisao foi tomada: atualize a declaracao e o
-registro da frente 4 no mesmo commit.
+- **Agentes:** a politica e a autoridade. O caminho quente resolve por
+  `core.config.modelo_do_agente`, fonte unica dos quatro consumidores.
+- **Subagentes:** a tabela local de `core/subagents_mesh.py` e a autoridade, e o
+  invariante e **custo zero**. A politica deixou de atribuir modelo a subagente
+  e levanta `ForaDaAutoridadeDaPolitica`.
+- **`gemma4`:** alias do manifesto corrigido para `gemma4:12b`.
 
-Limite declarado: a varredura de leitores acha referencia LEXICA ao
-identificador. Acesso montado em tempo de execucao (`getattr` com nome
-computado) esta fora do alcance. Medido em 2026-08-28: nao existe nesta base --
-nem `from core.config import *`, nem `getattr` sobre um alias de config para
-esta chave. O teste confere as duas formas; nome inteiramente computado, nao.
+Em cada superficie havia duas fontes para o mesmo fato. A saida foi **apagar a
+segunda**, nunca mante-las em acordo -- duas fontes divergem por construcao.
+
+## O que estes testes fazem
+
+Comparam a arvore com `data/ESTADO_DE_ROTEAMENTO.json`. Antes da decisao eles
+fixavam a divergencia para que ligar a politica NAO passasse despercebido; agora
+fixam as invariantes que a decisao criou. Se um falhar, alguma coisa saiu do
+combinado: **atualize a declaracao e o registro no mesmo commit, nunca afrouxe o
+teste.**
+
+Limite declarado: a varredura de leitores de `AGENT_MODEL_MAP` percorre a AST e
+acha referencia de CODIGO ao identificador -- comentario e docstring nao contam,
+e arquivo que nao parseia vira falha explicita em vez de ausencia silenciosa.
+Acesso montado em tempo de execucao (`getattr` com nome computado) continua fora
+do alcance de qualquer varredura estatica. Medido em 2026-08-28: nao existe
+nesta base -- nem import estrela de `core.config`, nem `getattr` sobre um alias
+de config para esta chave. O teste confere as duas formas; nome inteiramente
+computado, nao.
 """
 
 from __future__ import annotations
 
+import ast
 import inspect
 import json
 import re
@@ -51,8 +64,8 @@ RAIZ = Path(__file__).resolve().parent.parent
 DECLARACAO = RAIZ / "data" / "ESTADO_DE_ROTEAMENTO.json"
 
 PISTA = (
-    "Se isto falhou porque o roteamento MUDOU, entao a decisao pendente da "
-    "frente 4 foi tomada: atualize data/ESTADO_DE_ROTEAMENTO.json e o registro "
+    "Se isto falhou porque o roteamento MUDOU, a decisao da frente 4 foi "
+    "revista: atualize data/ESTADO_DE_ROTEAMENTO.json e o registro "
     "reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md no mesmo commit."
 )
 
@@ -124,15 +137,39 @@ def test_o_reordenador_nunca_inventa_modelo():
 
 
 def test_leitores_de_AGENT_MODEL_MAP_batem_com_a_declaracao(declaracao):
-    """O detector que forca a decisao a aparecer. Ligar o orchestrator a
-    politica acrescenta um leitor, e este teste falha na hora."""
-    # Fronteira de palavra, nao substring: `SUBAGENT_MODEL_MAP` contem
-    # `AGENT_MODEL_MAP` e a primeira versao deste teste o acusou de leitor.
-    # Sao mapas diferentes, de superficies diferentes -- ver
-    # test_a_mesma_desconexao_se_repete_nos_subagentes.
-    chave = re.compile(r"\bAGENT_MODEL" + r"_MAP\b")
-    medidos = {_rel(p) for p in _fontes_python() if chave.search(p.read_text(encoding="utf-8", errors="ignore"))}
-    medidos.add(_rel(Path(__file__)))  # este arquivo le o mapa pelo atributo
+    """Quem toca o mapa fica visivel. Um leitor novo -- em qualquer direcao --
+    faz este teste falhar e obriga a declarar o papel dele.
+
+    A medicao passou por duas correcoes, e as duas sao a mesma licao:
+
+    1. **Substring nao e referencia.** `SUBAGENT_MODEL_MAP` contem
+       `AGENT_MODEL_MAP`, e a primeira versao acusou `core/subagents_mesh.py` de
+       leitor. Sao mapas de superficies diferentes.
+    2. **Texto nao e codigo.** Com fronteira de palavra, a versao seguinte
+       acusou `llm/orchestrator.py`, que so CITA o nome num comentario
+       explicando por que passou a usar `modelo_do_agente`. Decima quinta vez
+       que um detector desta base precisa separar citar de afirmar.
+
+    A saida das duas foi a mesma: medir a coisa certa. `ast` ve referencia de
+    CODIGO -- comentario e docstring simplesmente nao viram no `Name` nem no
+    `Attribute`. Nao ha isencao de arquivo nenhum."""
+    chave = "AGENT_MODEL" + "_MAP"
+    medidos, ilegiveis = set(), []
+    for arquivo in _fontes_python():
+        try:
+            arvore = ast.parse(arquivo.read_text(encoding="utf-8", errors="ignore"))
+        except SyntaxError:
+            # Arquivo que nao parseia esconderia um leitor em silencio, entao
+            # ele vira falha explicita em vez de ausencia.
+            ilegiveis.append(_rel(arquivo))
+            continue
+        for no in ast.walk(arvore):
+            nome = no.attr if isinstance(no, ast.Attribute) else getattr(no, "id", None)
+            if nome == chave:
+                medidos.add(_rel(arquivo))
+                break
+
+    assert not ilegiveis, f"nao parseou, e um leitor poderia estar escondido ai: {ilegiveis}"
 
     declarados = {e["caminho"] for e in declaracao["consumidores_de_AGENT_MODEL_MAP"]["leitores"]}
 
@@ -142,12 +179,21 @@ def test_leitores_de_AGENT_MODEL_MAP_batem_com_a_declaracao(declaracao):
     )
 
 
-def test_nenhum_leitor_da_politica_e_de_producao(declaracao):
-    """A afirmacao central da frente 4. Os papeis vem da declaracao; o teste so
-    confere que nenhum deles e 'roteamento de producao'."""
-    papeis = {e["papel"] for e in declaracao["consumidores_de_AGENT_MODEL_MAP"]["leitores"]}
-    assert papeis <= {"escritor", "relatorio", "teste"}, (
-        f"a politica ganhou consumidor de producao: {sorted(papeis)}. {PISTA}"
+def test_o_mapa_tem_exatamente_uma_porta_de_producao(declaracao):
+    """Antes da decisao este teste era o oposto: exigia que NENHUM leitor fosse
+    de producao, porque nenhum era. Agora exige que a porta seja UMA.
+
+    Producao chega ao mapa por `core.config.modelo_do_agente` e por mais nada;
+    os outros leitores sao relatorio e teste. Quatro consumidores lendo o mapa
+    direto seria a mesma pluralidade que a decisao veio desfazer."""
+    leitores = declaracao["consumidores_de_AGENT_MODEL_MAP"]["leitores"]
+    portas = [e for e in leitores if "fonte unica" in e["papel"]]
+    assert len(portas) == 1, f"portas de producao declaradas: {portas}. {PISTA}"
+    assert portas[0]["caminho"] == "core/config.py", PISTA
+
+    outros = {e["papel"] for e in leitores if e not in portas}
+    assert outros <= {"relatorio", "teste"}, (
+        f"leitor de papel inesperado: {sorted(outros)}. {PISTA}"
     )
 
 
@@ -181,42 +227,109 @@ def test_nao_existe_acesso_dinamico_a_configuracao():
 
 
 # ---------------------------------------------------------------------------
-#  3. A divergencia medida, fixada como numero declarado
+#  3. A concordancia medida, fixada como numero declarado
 # ---------------------------------------------------------------------------
 
 
-def test_divergencia_entre_politica_e_caminho_quente(declaracao):
-    """Deriva a contagem em vez de cita-la, e compara com a declaracao. Falha
-    nos DOIS sentidos: se alguem ligar a politica (divergencia cai) ou se o
-    manifesto mudar (divergencia muda de forma)."""
+def test_o_caminho_quente_segue_a_politica(declaracao):
+    """Deriva a contagem em vez de cita-la. Antes da decisao esta assercao era o
+    contrario -- 19 de 19 DIVERGIAM. Falha nos dois sentidos."""
     medido = declaracao["o_que_foi_medido"]
-    mapa, manifesto = cfg.AGENT_MODEL_MAP, cfg.AGENTS_MANIFEST
+    manifesto = cfg.AGENTS_MANIFEST
 
-    concordam = sum(1 for n, d in manifesto.items() if mapa.get(f"@{n}") == d.get("primary_model"))
-    divergem = len(manifesto) - concordam
+    segue = sum(1 for n in manifesto if cfg.modelo_do_agente(n) == cfg.AGENT_MODEL_MAP.get(f"@{n}"))
+    diverge = len(manifesto) - segue
 
     assert len(manifesto) == medido["agentes_no_manifesto"], PISTA
-    assert len(mapa) == medido["agentes_em_AGENT_MODEL_MAP"], PISTA
-    assert concordam == medido["agentes_em_que_a_politica_e_o_caminho_quente_CONCORDAM"], (
-        f"concordancia medida {concordam}, declarada "
-        f"{medido['agentes_em_que_a_politica_e_o_caminho_quente_CONCORDAM']}. {PISTA}"
+    assert len(cfg.AGENT_MODEL_MAP) == medido["agentes_em_AGENT_MODEL_MAP"], PISTA
+    assert segue == medido["agentes_em_que_o_caminho_quente_SEGUE_a_politica"], (
+        f"seguem medido {segue}, declarado "
+        f"{medido['agentes_em_que_o_caminho_quente_SEGUE_a_politica']}. {PISTA}"
     )
-    assert divergem == medido["agentes_em_que_DIVERGEM"], (
-        f"divergencia medida {divergem}, declarada {medido['agentes_em_que_DIVERGEM']}. {PISTA}"
+    assert diverge == medido["agentes_em_que_DIVERGEM"], (
+        f"divergencia medida {diverge}, declarada {medido['agentes_em_que_DIVERGEM']}. {PISTA}"
     )
 
 
-def test_o_caminho_quente_colapsa_os_agentes_e_a_politica_nao(declaracao):
-    """O defeito que a politica foi escrita para curar, medido no lugar onde ela
-    nao chega: o manifesto ainda da quase o mesmo modelo aos 19 agentes."""
+def test_o_caminho_quente_deixou_de_colapsar_os_agentes(declaracao):
+    """O defeito que a politica foi escrita para curar, medido onde ele existia:
+    18 dos 19 agentes recebiam o mesmo modelo. Agora a distribuicao e por classe
+    de tarefa, e a faixa orcamentaria de cada uma esta declarada."""
     medido = declaracao["o_que_foi_medido"]
-    da_politica = {m for m in cfg.AGENT_MODEL_MAP.values() if m}
-    do_quente = {d.get("primary_model") for d in cfg.AGENTS_MANIFEST.values() if d.get("primary_model")}
+    resolvidos = {cfg.modelo_do_agente(n) for n in cfg.AGENTS_MANIFEST}
+    assert len(resolvidos) == medido["modelos_distintos_no_caminho_quente"], (
+        f"o caminho quente resolve {len(resolvidos)} modelos distintos, declarado "
+        f"{medido['modelos_distintos_no_caminho_quente']}: {sorted(resolvidos)}. {PISTA}"
+    )
 
-    assert len(da_politica) == medido["modelos_distintos_que_a_politica_atribui"], PISTA
-    assert len(do_quente) == medido["modelos_distintos_que_o_caminho_quente_atribui"], PISTA
-    assert len(do_quente) < len(da_politica), (
-        "o caminho quente deixou de ser o lado colapsado -- releia a frente 4. " + PISTA
+    faixas: dict[str, int] = {}
+    for nome in cfg.AGENTS_MANIFEST:
+        faixa = rp.rota_de(nome).faixa.value
+        faixas[faixa] = faixas.get(faixa, 0) + 1
+    assert faixas == medido["faixa_por_agente"], (
+        f"distribuicao por faixa medida {faixas}, declarada "
+        f"{medido['faixa_por_agente']}. {PISTA}"
+    )
+
+    zero = sum(q for f, q in faixas.items() if f in ("local", "gratuita"))
+    assert zero == medido["custo_marginal_zero"], (
+        f"agentes em custo marginal zero: medido {zero}, declarado "
+        f"{medido['custo_marginal_zero']}. {PISTA}"
+    )
+
+
+def test_a_precedencia_da_fonte_unica(declaracao):
+    """Os degraus de `modelo_do_agente`. O override do operador vence a
+    politica; a politica vence o manifesto."""
+    assert len(declaracao["fonte_unica_do_caminho_quente"]["precedencia"]) == 3, PISTA
+    assert cfg.modelo_do_agente("chico", override="modelo-cravado") == "modelo-cravado"
+    assert cfg.modelo_do_agente("chico") == cfg.AGENT_MODEL_MAP["@chico"]
+    assert cfg.modelo_do_agente("@chico") == cfg.AGENT_MODEL_MAP["@chico"]
+
+
+def test_o_degrau_de_seguranca_avisa(caplog, monkeypatch):
+    """Cair no `primary_model` do manifesto e anomalia, nao operacao normal.
+    Rede de seguranca silenciosa e a falha caracteristica desta base."""
+    monkeypatch.setattr(cfg, "AGENT_MODEL_MAP", {})
+    monkeypatch.setattr(cfg, "AGENTS_MANIFEST", {"fantasma": {"primary_model": "modelo-y"}})
+    monkeypatch.setattr(cfg, "_FALLBACK_JA_AVISADO", set())
+    with caplog.at_level("WARNING"):
+        assert cfg.modelo_do_agente("fantasma") == "modelo-y"
+    assert any("nao esta em AGENT_MODEL_MAP" in r.getMessage() for r in caplog.records), (
+        "o degrau de seguranca ficou silencioso. " + PISTA
+    )
+
+
+def test_os_consumidores_declarados_usam_a_fonte_unica(declaracao):
+    """Declaracao sem verificacao e a metade que sempre falta nesta base: os
+    quatro caminhos declarados tem de chamar `modelo_do_agente` de fato."""
+    for entrada in declaracao["fonte_unica_do_caminho_quente"]["consumidores"]:
+        arquivo = RAIZ / entrada["caminho"]
+        assert arquivo.exists(), f"{entrada['caminho']} sumiu. {PISTA}"
+        assert "modelo_do_agente(" in arquivo.read_text(encoding="utf-8", errors="ignore"), (
+            f"{entrada['caminho']} esta declarado como consumidor da fonte unica "
+            f"e nao a chama. {PISTA}"
+        )
+
+
+def test_ninguem_le_primary_model_direto_para_decidir_modelo():
+    """`primary_model` continua no manifesto -- e a rede de seguranca de
+    `_resolver_modelos` e de `modelo_do_agente`. O que nao pode voltar e
+    consumidor lendo a chave DIRETO para decidir em que modelo rodar: era assim
+    que existiam quatro decisores paralelos."""
+    chave = '"primary' + '_model"'
+    permitidos = {"core/config.py"}  # o resolvedor: e ele que TEM de ler a rede
+    achados = {}
+    for arquivo in _fontes_python():
+        rel = _rel(arquivo)
+        if rel.startswith("tests/") or rel in permitidos:
+            continue
+        for n, linha in enumerate(arquivo.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+            if chave in linha and ".get(" in linha:
+                achados[f"{rel}:{n}"] = linha.strip()
+    assert not achados, (
+        f"leitor direto de primary_model fora da fonte unica: {achados}. "
+        f"Use core.config.modelo_do_agente. {PISTA}"
     )
 
 
@@ -225,9 +338,8 @@ def test_o_caminho_quente_colapsa_os_agentes_e_a_politica_nao(declaracao):
 # ---------------------------------------------------------------------------
 
 
-def test_aliases_orfaos_do_manifesto_batem_com_a_declaracao(declaracao):
-    """Consertar um destes faz o teste falhar. E o desenho: a lista encolhe por
-    decisao registrada, nunca por acaso."""
+def test_nenhum_alias_do_manifesto_fica_fora_de_todo_registro(declaracao):
+    """A lista declarada esta vazia desde 2026-08-28. Cresce so por regressao."""
     orfaos = {
         m
         for d in cfg.AGENTS_MANIFEST.values()
@@ -236,56 +348,85 @@ def test_aliases_orfaos_do_manifesto_batem_com_a_declaracao(declaracao):
     declarados = {e["alias"] for e in declaracao["aliases_do_manifesto_ausentes_de_todo_registro"]["aliases"]}
     assert orfaos == declarados, (
         f"orfaos a mais: {sorted(orfaos - declarados)}; "
-        f"consertados (atualize a declaracao): {sorted(declarados - orfaos)}. {PISTA}"
+        f"resolvidos (atualize a declaracao): {sorted(declarados - orfaos)}. {PISTA}"
     )
 
 
-def test_a_mesma_desconexao_se_repete_nos_subagentes(declaracao):
-    """Segunda superficie, e ela INVERTE o sinal da frente 4.
+def test_o_alias_corrigido_do_gemma4_nao_regride(declaracao):
+    """Nome nao e natureza. O alias antigo era nomeacao de HuggingFace onde o
+    runtime local usa Ollama, e os dois modulos o liam diferente -- a heuristica
+    de `llm/routing.py` dizia 'local' pelo texto, `e_local` dizia que nao,
+    consultando a frota. Agora manifesto e politica concordam."""
+    correcoes = declaracao["aliases_do_manifesto_ausentes_de_todo_registro"]["corrigido_em_2026_08_28"]
+    assert correcoes, "a correcao sumiu da declaracao. " + PISTA
+    for correcao in correcoes:
+        antigo, novo, agente = correcao["de"], correcao["para"], correcao["agente"]
 
-    `core/subagents_mesh.SUBAGENT_MODEL_MAP` e a tabela executada e e toda de
-    frota local -- custo marginal zero. `routing_policy.SUBAGENTES` cobre os
-    mesmos 13 tiers e roteia para nuvem paga. Aqui nao vale dizer que a politica
-    e a resposta certa esperando fio: ligar a politica nesta superficie TROCARIA
-    custo zero por API paga. Por isso a decisao e por superficie."""
-    from core.subagents_mesh import SUBAGENT_MODEL_MAP, SubagentTier  # noqa: PLC0415
+        assert cfg.AGENTS_MANIFEST[agente]["primary_model"] == novo, PISTA
+        assert cfg.modelo_do_agente(agente) == novo, PISTA
+        assert rp.e_local(novo), f"{novo} saiu da frota local. {PISTA}"
+        assert rp.custo(novo, 10_000, 2_000) == 0.0
 
-    medido = declaracao["segunda_superficie_subagentes"]
-    executado = {t.value: m for t, m in SUBAGENT_MODEL_MAP.items()}
-    declarado = {k: rp.rotear(k) for k in rp.SUBAGENTES}
+        # E o alias antigo continua sendo o caso que os dois modulos leem
+        # diferente. E por isso que ele nao podia ficar.
+        assert _infer_provider_for_model(antigo) == "local"
+        assert not rp.e_local(antigo)
+        assert antigo not in MODEL_REGISTRY
 
-    assert set(executado) == set(declarado), (
-        "as duas tabelas deixaram de cobrir os mesmos tiers: "
-        f"so na executada {sorted(set(executado) - set(declarado))}, "
-        f"so na politica {sorted(set(declarado) - set(executado))}. {PISTA}"
+
+# ---------------------------------------------------------------------------
+#  5. Subagentes: custo zero, e a politica fora da autoridade
+# ---------------------------------------------------------------------------
+
+
+def test_subagente_e_sempre_custo_zero(declaracao):
+    """Invariante do operador, travado onde a autoridade de fato mora. Sem copia
+    da tabela: o teste le `SUBAGENT_MODEL_MAP` e exige frota local."""
+    from core.subagents_mesh import SUBAGENT_MODEL_MAP  # noqa: PLC0415
+
+    medido = declaracao["superficie_subagentes"]
+    assert len(SUBAGENT_MODEL_MAP) == medido["tiers"], PISTA
+
+    fora = sorted({m for m in SUBAGENT_MODEL_MAP.values() if not rp.e_local(m)})
+    assert not fora, f"subagente fora da frota local: {fora}. {PISTA}"
+    assert all(rp.custo(m, 10_000, 2_000) == 0.0 for m in SUBAGENT_MODEL_MAP.values())
+
+
+def test_a_politica_recusa_atribuir_modelo_a_subagente(declaracao):
+    """A segunda fonte foi apagada, nao sincronizada. Se `rotear` voltar a
+    responder por um tier, as duas tabelas voltam a poder divergir -- e antes da
+    decisao divergiam em 13 de 13."""
+    medido = declaracao["superficie_subagentes"]
+    assert medido["a_politica_atribui_modelo"] is False, PISTA
+
+    so_tier = sorted(set(rp.SUBAGENTES) - set(rp.AGENTES))
+    assert so_tier, "sem tier exclusivo nao ha o que este teste guarde. " + PISTA
+    for alvo in so_tier:
+        with pytest.raises(rp.ForaDaAutoridadeDaPolitica):
+            rp.rotear(alvo)
+        with pytest.raises(rp.ForaDaAutoridadeDaPolitica):
+            rp.decidir(alvo)
+
+
+def test_a_politica_ainda_classifica_o_subagente(declaracao):
+    """Recusar MODELO nao e recusar CLASSE. `SUBAGENTES` continua declarando a
+    classe de tarefa de cada tier, que e informacao diferente e legitima."""
+    from core.subagents_mesh import SUBAGENT_MODEL_MAP  # noqa: PLC0415
+
+    tiers = {t.value for t in SUBAGENT_MODEL_MAP}
+    assert tiers <= set(rp.SUBAGENTES), (
+        f"tier sem classe declarada: {sorted(tiers - set(rp.SUBAGENTES))}. {PISTA}"
     )
-    assert len(declarado) == medido["tiers"], PISTA
+    assert rp.cobertura()["subagentes"] == declaracao["superficie_subagentes"]["tiers"], PISTA
 
-    concordam = sum(1 for k in declarado if executado[k] == declarado[k])
-    assert concordam == medido["tiers_em_que_CONCORDAM"], (
-        f"concordancia medida {concordam}, declarada {medido['tiers_em_que_CONCORDAM']}. {PISTA}"
+
+def test_a_sobreposicao_de_nomes_resolve_como_agente(declaracao):
+    """Quatro nomes existem nas duas familias. A recusa acima nao pode ter
+    mudado a precedencia, que sempre foi AGENTES primeiro."""
+    medido = declaracao["superficie_subagentes"]
+    ambos = sorted(set(rp.SUBAGENTES) & set(rp.AGENTES))
+    assert ambos == sorted(medido["nomes_que_sao_agente_E_tier"]), (
+        f"a sobreposicao medida e {ambos}. {PISTA}"
     )
-
-    if medido["a_executada_e_toda_local"]:
-        nao_locais = sorted(m for m in executado.values() if not rp.e_local(m))
-        assert not nao_locais, (
-            f"a tabela executada de subagentes saiu da frota local: {nao_locais}. {PISTA}"
-        )
-
-    assert isinstance(SubagentTier.SELF.value, str)
-
-
-def test_os_dois_modulos_discordam_sobre_o_que_e_local(declaracao):
-    """Nome nao e natureza, quarta instancia nesta base -- e a primeira em que os
-    DOIS modulos de roteamento discordam sobre a mesma string. A heuristica de
-    `llm/routing.py` le o texto do alias; `e_local` consulta a frota declarada
-    em data/ollama_models.json. Para 'google/gemma-4-e2b-it' dao respostas
-    opostas."""
-    for entrada in declaracao["aliases_do_manifesto_ausentes_de_todo_registro"]["aliases"]:
-        alias = entrada["alias"]
-        por_heuristica = _infer_provider_for_model(alias) == "local"
-        por_declaracao = rp.e_local(alias)
-        assert por_heuristica != por_declaracao, (
-            f"os dois modulos passaram a concordar sobre {alias!r} "
-            f"(heuristica={por_heuristica}, frota declarada={por_declaracao}). {PISTA}"
-        )
+    for alvo in ambos:
+        assert rp.rotear(alvo) == rp.rota_de(alvo).primario

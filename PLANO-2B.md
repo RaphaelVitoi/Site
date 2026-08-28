@@ -9,7 +9,7 @@
 > O que este painel tem, e o outro não, é **estado**: em que pé está cada frente,
 > e o que exige decisão do vértice.
 
-**Atualizado em 2026-08-28** · frente 4 medida · suíte 518 (viva)
+**Atualizado em 2026-08-28** · frente 4 **resolvida** · suíte 549 (viva)
 
 ---
 
@@ -21,18 +21,26 @@
 | 1 | **Homônimos** — declarar o canônico | ✅ entregue | §1.6 do plano · [`data/INDICE_CANONICO_GOVERNANCA.json`](data/INDICE_CANONICO_GOVERNANCA.json) |
 | 2 | **Âncoras e índices** — `RECORD_INDEX` e §13.F | ✅ entregue | §2.3 do plano · [`scripts/ops/record_index.py`](scripts/ops/record_index.py) |
 | 3 | **Contexto e memória** — qual corpus a memória deve ter | ⏸ decisão do vértice | §3.1 a §3.3 do plano |
-| 4 | **Routing** — qual tabela governa cada superficie | ⏸ medida; decisao do vertice | [`reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md`](reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md) |
+| 4 | **Routing** — qual tabela governa cada superficie | ✅ entregue | [`reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md`](reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md) |
 | 5 | **Referenciais** — quem aponta para quem | ✅ entregue | §5.1 do plano · [`scripts/ops/record_gate.py`](scripts/ops/record_gate.py) |
 | 6 | **Imports e exports** — morto vs. não integrado | ⏳ aberta | §6 do plano |
 | 7 | **Higienização** — mover e remover | 🔒 terminal, só depois de 1 a 6 | §7 do plano |
 
-**A frente 4 foi medida, e o enquadramento dela estava errado.** As duas nao
-competem: `rotear` e `str -> str` e responde *qual modelo*; o reordenador de
-`routing.py` e `list -> list` e responde *em que ordem*. A pergunta real era
-outra -- **o caminho quente consulta a politica?** -- e a resposta e nao: 19 de
-19 agentes e 13 de 13 subagentes divergem. O que resta e decisao de gasto, nao
-de arquitetura; ver a tabela abaixo. A frente 6 fica destravada: sabe-se agora
-que a autoridade em producao e `primary_model` do manifesto.
+**A frente 4 foi medida e resolvida.** O enquadramento dela estava errado: as
+duas nao competem -- `rotear` e `str -> str` e responde *qual modelo*, o
+reordenador de `routing.py` e `list -> list` e responde *em que ordem*. A
+pergunta real era **o caminho quente consulta a politica?**, e nao consultava:
+19 de 19 agentes e 13 de 13 subagentes divergiam.
+
+O vertice decidiu por superficie. **Agentes:** a politica e a autoridade, e o
+caminho quente resolve por `core.config.modelo_do_agente` -- 19 de 19 seguem, e
+12 deles ficam em custo marginal zero (11 na cota gratuita, 1 na frota local).
+**Subagentes:** a tabela local de `subagents_mesh` governa, com custo zero como
+invariante travado em teste, e a politica passou a recusar atribuir modelo a
+tier. **`gemma4`:** alias corrigido para `gemma4:12b`.
+
+Em cada superficie havia duas fontes para o mesmo fato, e a saida foi apagar a
+segunda, nao sincroniza-la. A frente 6 fica destravada.
 
 ---
 
@@ -45,8 +53,7 @@ que a autoridade em producao e `primary_model` do manifesto.
 | 3 | Instalar LanceDB ao lado do Chroma | Faz sentido técnico, **com a partição declarada antes** (§3.2) |
 | 4 | Rotação das 4 chaves OpenRouter | Ato no provedor, fora do alcance daqui |
 | 5 | O handoff de Chrome/CDP de outra sessão | Trabalho de terceiro; só normalizei a âncora |
-| 6 | **Superficie de agentes:** o caminho quente le `AGENT_MODEL_MAP` ou o manifesto continua autoridade? | Custo por chamada x5,5 na maioria e x37 no `chico`. E decisao de gasto |
-| 7 | **Superficie de subagentes:** a tabela local de `subagents_mesh` governa, ou a politica? | Aqui a executada e toda local, custo zero; ligar a politica poe em API paga |
+| 6 | O fallback declarado em `Rota.fallback` continua sem consumidor | Liga-lo torna `gemma4:e4b` alcancavel, e ha medicao de que ele nao cabe na VRAM. E decisao sobre a TABELA |
 
 ---
 

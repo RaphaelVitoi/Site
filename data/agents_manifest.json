@@ -389,7 +389,7 @@
     "routing_pattern": "gemma|local|inferencia|borda|latencia|tatica|calibracao|sentinela|directml|ollama|nash-ia|ponto de ruptura",
     "model_preference": "fast_operations",
     "color": "light_salmon3",
-    "primary_model": "google/gemma-4-e2b-it",
+    "primary_model": "gemma4:12b",
     "skills": [
       "pmev-game-theory-poker",
       "sota-consciousness-memory-rag",

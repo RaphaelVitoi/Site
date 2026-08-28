@@ -20,6 +20,10 @@ from core.config import (
     _block_key,
     _is_key_blocked,
     _key_identifier,
+    # Importada como FUNCAO de proposito: os nomes acima sao rebindados no
+    # hot-reload de configuracao, entao esta copia deles envelhece. Uma funcao
+    # le os globais de `core.config` na hora da chamada e nao tem esse problema.
+    modelo_do_agente,
 )
 from core.schemas import Task
 from database.queue_manager import QueueManager
@@ -537,10 +541,11 @@ def _build_models_to_try(task: Task, agent_type: str, openrouter_keys: list[str]
         candidates.append(model_override)
 
     agent_clean = task.agent.replace("@", "")
-    manifest_entry = AGENTS_MANIFEST.get(agent_clean, {})
-    primary_model = manifest_entry.get("primary_model")
-    if primary_model and primary_model not in candidates:
-        candidates.append(primary_model)
+    # Mesma fonte unica do orquestrador: a politica por classe de tarefa, com o
+    # `primary_model` do manifesto so como rede de seguranca avisada.
+    modelo_da_politica = modelo_do_agente(agent_clean)
+    if modelo_da_politica and modelo_da_politica not in candidates:
+        candidates.append(modelo_da_politica)
 
     fallbacks = DEEP_THINKING_MODELS if agent_type == "deep_thinking" else FAST_OPERATIONS_MODELS
     for model_name in fallbacks:
