@@ -5,16 +5,23 @@ escopo: multiprojeto
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T02:50-03:00
-commit: dc231c69
+atualizado_em: 2026-08-28T03:10-03:00
+commit: b3caaa1a
 classes: [interno, medido]
 config_medida:
   raiz: C:/Users/rapha/.gemini
   branch: master
   suite_no_inicio: 415 passed
-  suite_no_fim: 458 passed
-  commits_da_sessao: 9
+  suite_no_fim: 469 passed
+  commits_da_sessao: 11
   data: 2026-08-27 a 2026-08-28
 verificado:
+  - FRENTE 1: corpus do RAG medido nos dois estados com o coletor real
+    (470 -> 474) e a barreira de traversal exercitada (fonte ".." coleta 0)
+  - FRENTE 1: 7 mutacoes aplicadas as guardas do indice, com baseline explicita
+    (11 passed antes) e contagem de COLETADOS conferida; 7 detectadas
+  - FRENTE 1: os consumidores de codigo declarados no indice reconferidos
+    arquivo a arquivo -- dois haviam envelhecido
   - suite completa executada apos cada bloco de alteracao
   - portao de ancora executado antes de cada commit; um deles REPROVOU e a
     causa foi corrigida em vez de contornada
@@ -32,6 +39,10 @@ nao_verificado:
     `sanitize --apply`, que deleta arquivos)
   - `nexus ops quality-gate` completo (10 fases) nao foi executado
   - os patches em patches/skills NAO foram reaplicados sobre copia limpa
+  - FRENTE 1: nenhuma ingestao foi executada -- o corpus foi medido pelo
+    coletor (que arquivos ENTRAM), nao pela indexacao (o que a memoria devolve)
+  - FRENTE 1: qual das tres grafias de chave de contexto o Gemini CLI honra de
+    fato nao foi medido; exigiria executar o CLI
 supersede: handoff-2026-08-27-governanca-e-portoes
 ---
 
@@ -43,10 +54,10 @@ que este documento **supersede** para efeito de retomada.
 ## 1. Estado
 
 ```
-master dc231c69 · árvore limpa · suíte 415 → 458
+master b3caaa1a · árvore limpa · suíte 415 → 469
 ```
 
-Nove commits. Nada pela metade em lugar nenhum.
+Onze commits. Nada pela metade em lugar nenhum.
 
 | Commit | O quê |
 | :--- | :--- |
@@ -58,9 +69,10 @@ Nove commits. Nada pela metade em lugar nenhum.
 | `4792e73b` | Mapa de referência das famílias de governança |
 | `a6712d6a` | `AGENTS.md` vira ponteiro + auditoria das 8 skills |
 | `dc231c69` | O motor é ChromaDB; o passo 5 do maintenance nunca existiu |
-| *(este)* | Patches dos submódulos + handoff + plano |
+| `9670b8a0` | Patches dos submódulos + handoff + frente 3 do plano |
+| `b3caaa1a` | **Frente 1 entregue:** índice canônico + regra de nomeação |
 
-## 2. O que se aprendeu — sete lições com custo pago
+## 2. O que se aprendeu — oito lições com custo pago
 
 ### 2.1 Procurar o **habilitador**, não catalogar instâncias
 
@@ -116,6 +128,23 @@ instalado. A narração foi escrita para o estado **pretendido** e nunca
 reconciliada com o **construído** — e chegou ao `system_prompt` do modelo. Nada
 acusou, porque nome errado não levanta exceção.
 
+### 2.8 Chave literal é aposta sobre vocabulário alheio — e falha ao contrário
+
+Para saber quais `GEMINI.md` são arquivo de contexto de plugin (e portanto
+**não** são cópias concorrentes de governança), medi o literal
+`"contextFileName"` nos manifestos. São **três** grafias: `contextFileName`,
+`contextPath`, `context`.
+
+O erro é o **espelho** do da §2.6. Lá o detector reprovava quem devia passar;
+aqui aprovava quem devia ser olhado — falso **negativo**. E a consequência seria
+concreta: a regra de nomeação mandaria renomear o `GEMINI.md` do
+`todoist-extension`, quebrando a extensão.
+
+A correção não foi acrescentar as outras duas chaves — seria a mesma aposta com
+mais fichas. Foi trocar por um predicado **estrutural**: *existe
+`gemini-extension.json` irmão cujo texto cita o nome deste arquivo*. Não depende
+de conhecer a grafia, e é o mesmo teste do consumidor tipo 2 da §1.5.1 do plano.
+
 ## 3. Padrão que se acumulou — calibração bayesiana
 
 **"Sinal verde desconectado" chegou a 13 instâncias catalogadas**, mais três
@@ -148,7 +177,18 @@ variantes novas nomeadas nesta sessão:
 | 3 | Portar os 3 conceitos do `supermemory` para o `memory_rag` local (§3.3 do plano) |
 | 4 | Instalar LanceDB ao lado do Chroma — **com a partição declarada antes** (§3.2 do plano) |
 
-### 4.2 Execução, sem decisão pendente
+### 4.2 Execução — **mas nenhuma delas é livre de consequência**
+
+> **Frente 1 saiu desta lista em 2026-08-28** — entregue no commit `b3caaa1a`.
+> O índice canônico das 5 famílias está em
+> `data/INDICE_CANONICO_GOVERNANCA.json`, a regra de nomeação está enunciada
+> nele, e 11 guardas a sustentam (7 mutações detectadas). Ver §1.6 do plano.
+>
+> **E o título desta seção foi corrigido.** Ela dizia *"sem decisão pendente"*,
+> e isso é falso para os cinco itens restantes: **todos tocam a árvore de
+> extensões, que está fora do repositório e fora de qualquer portão daqui.**
+> Renomear os 376 `.bak` sujaria o estado dos submódulos que os patches acabaram
+> de capturar. Nenhum é difícil; nenhum é gratuito.
 
 - Padronizar `.disabled` — 376 arquivos hoje `.bak`, nome que mente
 - `extensions/` com **0 skills ativas e 56 desligadas** — a árvore que o CLI carrega
@@ -175,21 +215,30 @@ variantes novas nomeadas nesta sessão:
 ## 5. Prompt de continuação
 
 ```
-Retomando o NEXUS-CORE-SOTA (~/.gemini/Site), master dc231c69, suite 458.
+Retomando o NEXUS-CORE-SOTA (~/.gemini/Site), master b3caaa1a, suite 469.
 
 LEIA PRIMEIRO, nesta ordem:
   1. reports/HANDOFF-2026-08-28-auditorias-e-preludio.md — secoes 2, 3 e 4
-  2. reports/PLANO-2B-CURADORIA-ESTRUTURAL.md — preludio 0.5, mapa 1.5, frente 3
-  3. reports/AUDITORIA-2026-08-28-skills.md — secoes 2, 4 e 5
-  4. ~/.gemini/CLAUDE.md e Site/CLAUDE.md
+  2. reports/PLANO-2B-CURADORIA-ESTRUTURAL.md — preludio 0.5, mapa 1.5,
+     FRENTE 1 ENTREGUE (secao 1.6), frente 3
+  3. data/INDICE_CANONICO_GOVERNANCA.json — o canonico de cada familia
+  4. reports/AUDITORIA-2026-08-28-skills.md — secoes 2, 4 e 5
+  5. ~/.gemini/CLAUDE.md e Site/CLAUDE.md
 
 PROXIMO PASSO RECOMENDADO
-Frente 1 do plano 2-B: declarar o canonico de cada familia de governanca. A
-base de evidencia esta medida na secao 1.5 do plano; 5 decisoes ja sao
-mecanicas e 3 dependem do vertice.
+Frente 2 do plano 2-B: data/RECORD_INDEX.json (M.O. 13.C) nao existe, e por
+isso DOIS dos quatro criterios do portao 13.F nunca tiveram o que ler. O portao
+passa, e sempre passou. Agora ha um precedente de formato: o indice canonico da
+frente 1 -- declaracao + guarda + mutacao com baseline.
 
-Se o vertice preferir avancar por valor imediato: religar gemini-cli-security
-e padronizar .disabled sao execucao pura, sem decisao pendente.
+Antes de escrever o RECORD_INDEX, medir os DOIS estados do portao 13.F: quantos
+criterios avaliam hoje e quantos passariam a avaliar. Sem isso o indice novo e
+so mais um arquivo que ninguem le.
+
+Se o vertice preferir avancar por valor imediato: religar gemini-cli-security e
+padronizar .disabled continuam abertos -- mas nenhum dos dois e execucao pura
+como o handoff dizia. Ambos tocam a arvore de extensoes fora do repositorio, e
+o .disabled sujaria o estado dos submodulos que os patches capturam.
 
 REGRAS QUE VALEM SEMPRE AQUI
 - Escopo limita o que se ALTERA, jamais o que se LE (M.O. 1.2). E ler os DOIS
@@ -215,9 +264,11 @@ LINHA DE BASE
 ## 6. Declaração (governança §5)
 
 Rodaram: a suíte completa após cada bloco; o portão de âncora antes de cada
-commit (um reprovou, e a causa foi corrigida, não contornada); 14 mutações com
-reversão verificada; parse dos `.ps1` em duas versões do PowerShell; execução
-dos launchers de dentro e de fora do projeto.
+commit (um reprovou, e a causa foi corrigida, não contornada); **21 mutações**
+com reversão verificada — as 7 últimas com baseline explícita e contagem de
+coletados conferida; parse dos `.ps1` em duas versões do PowerShell; execução
+dos launchers de dentro e de fora do projeto; o corpus do RAG medido nos dois
+estados com o coletor real e a barreira de traversal exercitada.
 
 Não rodaram, e por quê: nenhuma chamada real a provedor de LLM (chaves
 revogadas); o proxy de inferência nunca foi levantado; nenhuma skill executada
