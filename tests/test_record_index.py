@@ -377,6 +377,28 @@ def test_o_recorte_prescritivo_exclui_o_que_descreve_o_passado():
     assert not record_gate._e_prescritivo("scripts/ops/record_gate.py")
 
 
+def test_bloco_de_comentario_e_prosa_e_nao_diretiva(tmp_path, monkeypatch):
+    """Achado real: o cabecalho `<# ... #>` de um .ps1 de outra sessao explica
+    que a versao ANTERIOR usava a origem curinga. E documentacao correta, e o
+    detector a reprovaria -- ele so pulava linha que COMECA com `#` ou `//`.
+
+    Nona vez que um detector desta base confunde citar com afirmar. Estado de
+    BLOCO, nao prefixo de linha -- e a diretiva de verdade continua pega.
+    """
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    curinga = "--remote-allow-" + "origins=*"
+    (tmp_path / "x.ps1").write_text(
+        "<#\n"
+        f".DESCRIPTION\n    A versao antiga usava {curinga} na porta de depuracao.\n"
+        "#>\n"
+        f"$args = @('{curinga}')\n",
+        encoding="utf-8",
+    )
+    dentro = record_gate.linhas_em_bloco_de_comentario("x.ps1")
+    assert dentro == {1, 2, 3, 4}, f"bloco <# #> mal delimitado: {dentro}"
+    assert 5 not in dentro, "a linha de codigo entrou no bloco de comentario"
+
+
 def test_o_portao_esta_no_pre_commit():
     """Modulo que ninguem invoca nao e integracao."""
     hook = (RAIZ / ".husky" / "pre-commit").read_text(encoding="utf-8")

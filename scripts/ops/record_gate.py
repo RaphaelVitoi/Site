@@ -75,6 +75,73 @@ def linhas_adicionadas(arquivo: str) -> list[str]:
     return [line[1:] for line in saida.splitlines() if line.startswith("+") and not line.startswith("+++")]
 
 
+_RE_HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)")
+
+
+def linhas_adicionadas_numeradas(arquivo: str) -> list[tuple[int, str]]:
+    """(numero da linha no arquivo novo, texto). O numero vem do cabecalho de hunk.
+
+    Sem ele nao da para saber se a linha esta dentro de um bloco de comentario:
+    o diff entrega linhas soltas, e estado de bloco nao se deduz de linha solta.
+    """
+    saida = _git("diff", "--cached", "--unified=0", "--diff-filter=ACM", "--", arquivo)
+    numeradas: list[tuple[int, str]] = []
+    atual = 0
+    for line in saida.splitlines():
+        cabecalho = _RE_HUNK.match(line)
+        if cabecalho:
+            atual = int(cabecalho.group(1))
+            continue
+        if line.startswith("+") and not line.startswith("+++"):
+            numeradas.append((atual, line[1:]))
+            atual += 1
+    return numeradas
+
+
+def linhas_em_bloco_de_comentario(rel: str) -> set[int]:
+    """Numeros de linha que estao DENTRO de um bloco de comentario do arquivo.
+
+    Achado de 2026-08-28, auditando um arquivo de outra sessao: o cabecalho
+    `<# ... #>` de `Launch-ChromeSOTA.ps1` explica que a versao anterior usava
+    `--remote-allow-origins=*`. E documentacao correta -- e o detector de
+    ampliacao de origem a reprovaria, porque so pulava linha que COMECA com
+    `#` ou `//`. Nona vez que um detector desta base confunde citar com
+    afirmar, e de novo a resposta e estado de BLOCO, nao prefixo de linha.
+    """
+    caminho = RAIZ / rel
+    if not caminho.is_file():
+        return set()
+    dentro: set[int] = set()
+    em_bloco = False
+    delim_py: str | None = None
+    for n, linha in enumerate(
+        caminho.read_text(encoding="utf-8-sig", errors="ignore").splitlines(), start=1
+    ):
+        if rel.endswith((".ps1", ".psm1")):
+            if em_bloco:
+                dentro.add(n)
+                if "#>" in linha:
+                    em_bloco = False
+            elif "<#" in linha:
+                em_bloco = True
+                dentro.add(n)
+                if "#>" in linha.split("<#", 1)[1]:
+                    em_bloco = False
+        elif rel.endswith(".py"):
+            if delim_py:
+                dentro.add(n)
+                if delim_py in linha:
+                    delim_py = None
+            else:
+                for d in ('"""', "'''"):
+                    if d in linha:
+                        dentro.add(n)
+                        if linha.count(d) == 1:
+                            delim_py = d
+                        break
+    return dentro
+
+
 def _e_registro(rel: str) -> bool:
     return rel.endswith(".md") and (rel.startswith("docs/") or rel.startswith("reports/"))
 
@@ -270,9 +337,12 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
     for rel in em_stage:
         if not EXTENSOES_DE_CODIGO.search(rel):
             continue
-        for linha in linhas_adicionadas(rel):
+        em_comentario = linhas_em_bloco_de_comentario(rel)
+        for numero, linha in linhas_adicionadas_numeradas(rel):
             if re.match(r"^\s*(#|//)", linha):
                 continue  # linha que e so comentario nao amplia nada
+            if numero in em_comentario:
+                continue  # e prosa dentro de <# #> ou docstring, nao diretiva
             for nome, padrao in PADROES_DE_AMPLIACAO.items():
                 if padrao.search(linha):
                     erros.append(
