@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T19:10-03:00
-atualizado_em: 2026-08-28T22:30-03:00
+atualizado_em: 2026-08-28T23:15-03:00
 commit: a86168df
 classes: [interno, medido]
 caminhos:
@@ -50,6 +50,9 @@ nao_verificado:
   - nao avaliei a QUALIDADE de notepad_memory.py nem de replay_buffer.py; medi
     que nada os importa e por que nao ha consumidor, nao se sao bons
   - nao procurei consumidores desses dois modulos fora deste repositorio
+  - medi a QUALIDADE DO FRAGMENTO, nao a precisao da recuperacao. Nao ha
+    conjunto de consultas com resposta esperada nesta base, entao nao ha como
+    afirmar que o ranking melhorou -- so que o corpus deixou de ser picado
 supersede: null
 ---
 
@@ -456,3 +459,83 @@ Um dos cinco guarda a premissa em vez do fato — se aparecer sinal de RL de
 verdade (`td_error`, `policy_gradient`, `epsilon_greedy`) fora de `memory/`, o
 teste cai e obriga a reavaliar o `replay_buffer`. A decisão está amarrada à razão
 que a sustenta, não à conclusão.
+
+---
+
+## 12. Adendo — o passo 4 achou algo abaixo do ranking
+
+> A secao 5 recomendava score composto, limite de fragmentos e deduplicacao.
+> Medindo antes de escrever, **boa parte ja existia** — e o que faltava estava
+> uma camada abaixo.
+
+### 12.1 O que ja existia
+
+`_rank_documents` ja faz busca hibrida: `semantico × 0,6 + lexical × 0,4`, com
+cobertura de query em vez de Jaccard para nao penalizar fragmento longo.
+`_flatten_and_deduplicate_results` deduplica na consulta. O limite ja e 3, com
+over-fetch de ×5. Do que o documento propunha, faltavam **recencia** e
+**importancia** — e nenhuma das duas era o problema.
+
+### 12.2 `CHUNK_SIZE = 1200` era um valor declarado que o mecanismo nao honrava
+
+```python
+if len(p) <= chunk_size:
+    all_chunks.append(p)     # cada paragrafo curto virava um fragmento
+```
+
+O teto servia para **dividir**, nunca como alvo para **juntar**. E paragrafo
+curto e a norma em codigo e em markdown.
+
+| | fragmentado | atual |
+| :--- | ---: | ---: |
+| fragmentos | 14.227 | **4.239** |
+| mediana | **162** | **1009** |
+| p10 | 27 | 413 |
+| abaixo de 50 chars | 22,2% | **0,3%** |
+| acima do teto | ate 1404 | **0** |
+| duplicata literal | 12,6% | **3,1%** |
+| disco | 42 MB | **31 MB** |
+
+**3.165 fragmentos de uma linha disputavam os tres lugares de todo resultado**, e
+chegavam ao modelo sem contexto nenhum ao redor. Era isso que produzia os 12,6%
+de texto repetido: `logger = logging.getLogger(__name__)` como fragmento proprio
+40 vezes, cabecalhos de template 34 vezes.
+
+Nao se conserta isso com ranking melhor — **o corpus e que estava picado**. Por
+isso o score composto ficou para depois: ordenar fragmentos de uma linha ordena
+ruido.
+
+### 12.3 O teto passou a valer
+
+`_chunk_long_paragraph` estourava ate 1404 num teto de 1200 — 17% — porque a
+sobreposicao reentra no buffer antes da proxima conferencia. Como o modelo trunca
+em ~256 tokens, o excesso **nao e desperdicio: e texto que entra no indice e o
+embedding nao ve**. Em vez de perseguir a aritmetica do deslizamento, a
+invariante passou a ser imposta na fronteira, onde pode ser garantida.
+
+### 12.4 Um alarme falso do meu proprio instrumento
+
+Minha primeira conferencia de integridade acusou perda de texto. Era o
+instrumento: paragrafo dividido com sobreposicao nao aparece **contiguo** na
+concatenacao dos fragmentos. Medindo na granularidade certa e **contra
+baseline**, os dois chunkers perdem exatamente as mesmas 9 linhas de 2.877
+(0,31%) — linha fisica partida numa fronteira de frase, comportamento de sempre.
+
+Sem a baseline, 0,31% pareceria defeito novo. Foi a terceira vez nesta sessao que
+comparar contra o estado ANTERIOR, e nao contra o ideal, separou regressao de
+propriedade herdada.
+
+### 12.5 O que NAO foi medido
+
+Medi **qualidade de fragmento**, nao **precisao de recuperacao**. As distancias
+subiram (0,275 para 0,355 na mesma consulta), o que e esperado: fragmento maior e
+menos focado. Se isso e melhor ou pior para a resposta final, **nao sei** — nao
+existe nesta base um conjunto de consultas com resposta esperada, e sem ele
+qualquer afirmacao sobre ranking seria opiniao com numero ao lado.
+
+O que esta provado: o corpus deixou de ser picado, e cada fragmento recuperado
+agora carrega 600 a 800 caracteres de contexto em vez de uma linha solta.
+
+**Score composto (recencia e importancia) continua pendente**, e agora faz
+sentido: ha fragmentos de verdade para ordenar. Recencia exige um timestamp que o
+metadado ainda nao carrega.
