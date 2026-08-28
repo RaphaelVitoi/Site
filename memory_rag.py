@@ -206,19 +206,86 @@ class MemoryRAG:
 
         text = text.replace("\r\n", "\n")
         paragraphs = text.split("\n\n")
-        all_chunks = []
+        all_chunks: list[str] = []
+
+        # `chunk_size` era so um teto para DIVIDIR, nunca um alvo para JUNTAR:
+        # todo paragrafo com ate 1200 chars virava um fragmento inteiro, e
+        # paragrafo curto e a norma em codigo e em markdown. Medido no indice de
+        # 2026-08-28, com CHUNK_SIZE=1200 declarado: **mediana de 162 chars**,
+        # 22,2% dos fragmentos abaixo de 50, p10 em 27. `logger =
+        # logging.getLogger(__name__)` aparecia 40 vezes como fragmento proprio,
+        # e cabecalhos de template 34 vezes -- 12,6% do indice era texto
+        # literalmente repetido.
+        #
+        # O efeito nao e so desperdicio: 3.165 fragmentos de uma linha disputam
+        # os 3 lugares de todo resultado, e cada um chega ao modelo sem contexto
+        # nenhum ao redor. Nao se resolve isso com ranking melhor -- e o corpus
+        # que esta fragmentado.
+        #
+        # Agora os paragrafos se ACUMULAM ate encostar no teto, e a sobreposicao
+        # entre fragmentos vizinhos e feita por paragrafo inteiro, nunca cortando
+        # frase ao meio.
+        buffer: list[str] = []
+        buffer_len = 0
+
+        def _emitir() -> None:
+            nonlocal buffer, buffer_len
+            if buffer:
+                all_chunks.append("\n\n".join(buffer))
 
         for paragraph in paragraphs:
             p = paragraph.strip()
             if not p:
                 continue
 
-            if len(p) <= chunk_size:
-                all_chunks.append(p)
-            else:
+            if len(p) > chunk_size:
+                # Paragrafo colossal: fecha o que estava acumulado e delega.
+                _emitir()
+                buffer, buffer_len = [], 0
                 all_chunks.extend(self._chunk_long_paragraph(p, chunk_size, overlap))
+                continue
 
-        return all_chunks
+            if buffer and buffer_len + len(p) + 2 > chunk_size:
+                _emitir()
+                buffer, buffer_len = self._cauda_de_sobreposicao(buffer, overlap)
+
+            buffer.append(p)
+            buffer_len += len(p) + 2
+
+        _emitir()
+
+        # Rede de seguranca na FRONTEIRA: o teto que a constante declara passa a
+        # valer de fato. `_chunk_long_paragraph` estourava ate 1404 chars num
+        # teto de 1200 -- 17% -- porque a sobreposicao reentra no buffer antes
+        # da proxima conferencia. O modelo trunca em ~256 tokens, entao o excesso
+        # nao e desperdicio: e texto que entra no indice e o embedding nao ve.
+        # Em vez de perseguir a aritmetica do deslizamento, a invariante e
+        # imposta onde ela pode ser garantida.
+        finais: list[str] = []
+        for c in all_chunks:
+            if len(c) <= chunk_size:
+                finais.append(c)
+            else:
+                finais.extend(self._hard_split_sentence(c, chunk_size, overlap))
+        return finais
+
+    @staticmethod
+    def _cauda_de_sobreposicao(buffer: list[str], overlap: int) -> tuple[list[str], int]:
+        """Paragrafos finais do fragmento anterior que abrem o proximo.
+
+        Sobreposicao por PARAGRAFO e nao por caractere: cortar no meio de uma
+        frase produz um inicio de fragmento que nao significa nada sozinho, e o
+        embedding herda esse ruido. Se o ultimo paragrafo sozinho ja estoura o
+        orcamento de sobreposicao, o proximo fragmento comeca limpo.
+        """
+        cauda: list[str] = []
+        total = 0
+        for p in reversed(buffer):
+            if total + len(p) + 2 > overlap:
+                break
+            cauda.insert(0, p)
+            total += len(p) + 2
+        return cauda, total
 
     async def _read_manifest(self, manifest_path: Path) -> dict:
         exists = await asyncio.to_thread(manifest_path.exists)
