@@ -1989,6 +1989,11 @@ def run_thematic_test_suite(
     ),
     list_suites: bool = typer.Option(False, "--list", "-l", help="Lista todas as suites tematicas disponiveis"),
     coverage: bool = typer.Option(False, "--cov", help="Gera relatorio de cobertura completo"),
+    isolado: bool = typer.Option(
+        False,
+        "--isolado",
+        help="Roda num worktree git proprio, sem tocar o working tree (seguro com sessoes concorrentes)",
+    ),
 ):
     """Executa suites de testes tematicas com o SOTA Integrity Guard v8.0 GOLD e criterios especificos."""
     manifest_path = BASE_DIR / "tests" / "TEST_SUITES_MANIFEST.json"
@@ -2043,6 +2048,18 @@ def run_thematic_test_suite(
 
     if coverage:
         cmd += ["--cov=core", "--cov=database", "--cov=engine", "--cov=llm"]
+
+    if isolado:
+        # Worktree proprio: indice git proprio, e nenhuma interferencia com o
+        # working tree — nem com outra sessao rodando ao mesmo tempo.
+        cmd = [
+            sys.executable,
+            str(BASE_DIR / "scripts" / "ops" / "suite_isolada.py"),
+            "--sujo",
+            "--comando",
+            " ".join(["uv", "run", "pytest", *cmd[3:]]) if shutil.which("uv") else " ".join(cmd),
+        ]
+        console.print("[dim]Execucao ISOLADA: worktree proprio, working tree intocado.[/]")
 
     res = subprocess.run(cmd, cwd=str(BASE_DIR), check=False)
     if res.returncode != 0:

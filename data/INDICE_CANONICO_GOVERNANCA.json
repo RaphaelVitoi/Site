@@ -6,6 +6,9 @@
   "medido_em": "2026-08-28",
   "entregavel_de": "PLANO-2B-CURADORIA-ESTRUTURAL.md, frente 1",
 
+  "projeto": "Site",
+  "_por_que_o_nome_do_projeto_e_declarado": "Os caminhos deste indice comecam por 'Site/' porque enderecam a partir da raiz multiprojeto. Deduzir esse prefixo do NOME DO DIRETORIO quebra em qualquer arvore que nao se chame Site -- e a suite isolada cria worktrees chamados 'suite-isolada-Site-<pid>-<epoch>'. Tres testes reprovaram por isso em 2026-08-28. Nome canonico e dado declarado; nome de diretorio e acidente do sistema de arquivos.",
+
   "_leia_antes_de_editar": [
     "Os campos 'bytes_medidos' sao INFORMATIVOS e decaem a cada edicao do arquivo.",
     "Nenhum teste os afirma, e nenhum deve: numero medido vale na configuracao medida,",

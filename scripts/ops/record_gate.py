@@ -23,6 +23,7 @@ divida preexistente e portao que se desliga na primeira semana.
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import sys
@@ -184,16 +185,70 @@ def _e_prescritivo(rel: str) -> bool:
     ).startswith("---")
 
 
+def raizes_de_escopo() -> set[str]:
+    """Primeiros segmentos de caminho que enderecam FORA deste repositorio.
+
+    Vem do indice canonico da frente 1, nao de uma lista escrita a mao: um
+    registro multiprojeto enderaca `Site/CLAUDE.md` ou `antigravity/.claude/...`
+    a partir da raiz de cima, e desta arvore isso pode ser inverificavel sem ser
+    inexistente. Verifica-se o que da para verificar; o resto se declara.
+    """
+    fora = {"extensions", "antigravity-cli", "antigravity-ide", "config"}
+    try:
+        indice = json.loads(
+            (RAIZ / "data" / "INDICE_CANONICO_GOVERNANCA.json").read_text(encoding="utf-8")
+        )
+        regra = indice.get("regra_de_nomeacao", {})
+        fora |= {r for r in regra.get("raizes_de_escopo_reconhecidas", []) if r != "."}
+        for grupo in regra.get("fora_do_alcance_da_regra", {}).values():
+            if isinstance(grupo, list):
+                fora |= {p.split("/", 1)[0] for p in grupo}
+    except (OSError, json.JSONDecodeError):
+        pass
+    return fora
+
+
+def _e_derivado(rel: str) -> bool:
+    """Caminho coberto pelo .gitignore: artefato gerado, ausencia e normal."""
+    r = subprocess.run(
+        ["git", "check-ignore", "-q", rel], cwd=RAIZ, capture_output=True, text=True, check=False
+    )
+    return r.returncode == 0
+
+
+def submodulos_declarados() -> list[str]:
+    """Prefixos de submodulo, lidos do `.gitmodules` -- nao do disco.
+
+    `git worktree add` NAO inicializa submodulo, e clone raso tambem nao. Numa
+    arvore assim, `skills/gemini-supermemory/src/...` nao existe no disco e
+    ainda assim e um endereco legitimo. Achado na primeira execucao da suite
+    isolada: um teste que passava aqui reprovava em arvore limpa -- ou seja,
+    reprovaria em CI e em qualquer outra maquina.
+    """
+    saida = _git("config", "-f", ".gitmodules", "--get-regexp", r"^submodule\..*\.path$")
+    return [linha.split(" ", 1)[1].strip() for linha in saida.splitlines() if " " in linha]
+
+
 def referencias_mortas(rel: str) -> list[str]:
     """Caminhos citados pelo documento que nao aterrissam em lugar nenhum.
 
-    Duas isencoes, e as duas sao ESTRUTURAIS, nunca por caminho de arquivo:
+    Tres isencoes, e as tres sao ESTRUTURAIS, nunca por caminho de arquivo:
+
+    - caminho dentro de submodulo DECLARADO que nao esta materializado: o
+      endereco existe mesmo quando o conteudo nao foi baixado. Quando o
+      submodulo ESTA no disco, a verificacao volta a ser normal -- verifica-se
+      o que da para verificar, e declara-se o que nao da.
 
     - linha com `$$`: e LaTeX. O primeiro rascunho acusou o GEMINI.md por causa
       de `\\text{(implementation\\_plan.md)}`, que nao e referencia a arquivo e
       sim o nome de uma etapa num diagrama de ciclo de vida.
-    - caminho listado em `referencias_historicas:` no frontmatter: o registro
-      DECLARA que cita aquele caminho para dizer que ele nao existe mais. E a
+    - caminho listado em `referencias_nao_resolviveis:` no frontmatter: o
+      registro DECLARA que cita aquele caminho de proposito, sabendo que este
+      repositorio nao o resolve. Duas causas legitimas ja apareceram -- caminho
+      que SUMIU e esta sendo citado para dizer isso, e caminho que existe no
+      disco mas NUNCA foi rastreado (arquivo de outra sessao). O nome do campo
+      cobre as duas: o que importa nao e por que nao resolve, e que o autor
+      sabe que nao resolve. E a
       oitava vez que um detector desta base reprova a prosa que o documenta, e a
       resposta continua sendo a mesma -- so que aqui nao da para distinguir pela
       forma: `X` citado para apontar e `X` citado para dizer "sumiu" sao a mesma
@@ -205,10 +260,23 @@ def referencias_mortas(rel: str) -> list[str]:
         return []
 
     fm, _ = ler_frontmatter(caminho)
-    historicas = (fm or {}).get("referencias_historicas") or []
+    historicas = (fm or {}).get("referencias_nao_resolviveis") or []
     if isinstance(historicas, str):
         historicas = [historicas]
     historicas = set(historicas)
+
+    # Submodulo declarado e nao materializado: endereco valido, conteudo ausente.
+    # As duas grafias entram -- `skills/x/` e `<repo>/skills/x/` -- porque um
+    # registro multiprojeto cita a partir da raiz de cima.
+    prefixos: list[str] = []
+    for sub in submodulos_declarados():
+        pasta = RAIZ / sub
+        materializado = pasta.is_dir() and any(pasta.iterdir())
+        if not materializado:
+            prefixos.append(f"{sub}/")
+            prefixos.append(f"{RAIZ.name}/{sub}/")
+    prefixos_de_submodulo_vazio = tuple(prefixos)
+    escopos = raizes_de_escopo()
 
     mortas = []
     for linha in caminho.read_text(encoding="utf-8-sig", errors="ignore").splitlines():
@@ -221,6 +289,8 @@ def referencias_mortas(rel: str) -> list[str]:
             if citado in historicas:
                 continue
             limpo = citado.replace("\\_", "_").replace("\\", "/")
+            if prefixos_de_submodulo_vazio and limpo.startswith(prefixos_de_submodulo_vazio):
+                continue
             variantes = [limpo]
             if limpo.endswith(".ts"):
                 variantes.append(limpo + "x")
@@ -231,8 +301,16 @@ def referencias_mortas(rel: str) -> list[str]:
                 for var in variantes
                 for raiz in (RAIZ, caminho.parent, RAIZ.parent)
             )
-            if not achou:
-                mortas.append(citado)
+            if achou:
+                continue
+            # Nao resolveu. Antes de chamar de MORTA, separar o que este
+            # repositorio simplesmente nao tem como verificar.
+            primeiro = limpo.split("/", 1)[0]
+            if primeiro in escopos:
+                continue  # endereco de projeto irmao ou espelho
+            if _e_derivado(limpo):
+                continue  # artefato gerado, ausente por desenho
+            mortas.append(citado)
     return mortas
 
 
@@ -280,7 +358,7 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
         # primeira some sem erro. E a mesma colisao que ja fez uma auditoria
         # desta casa descartar o manual canonico de 40 KB e exibir os dados do
         # arquivo de 12 KB como se fossem dele. Achado real: duas sessoes
-        # editando este repositorio acrescentaram `referencias_historicas` ao
+        # editando este repositorio acrescentaram `referencias_nao_resolviveis` ao
         # mesmo frontmatter, e nada acusou.
         chaves = [
             line.split(":", 1)[0]

@@ -7,7 +7,7 @@ autor: claude@opus-5
 criado_em: 2026-08-27T18:35-03:00
 commit: 4cce6758
 classes: [interno, medido]
-referencias_historicas:
+referencias_nao_resolviveis:
   - superpowers/CLAUDE.md
   - hooks/session-start.js
   - implementation\_plan.md
@@ -830,7 +830,7 @@ mesma sequência de caracteres, no mesmo tipo de linha.
 Então a isenção passa a ser **declarada**, item a item, no frontmatter:
 
 ```yaml
-referencias_historicas:
+referencias_nao_resolviveis:
   - superpowers/CLAUDE.md
   - hooks/session-start.js
 ```
@@ -843,7 +843,7 @@ autor declara e o portão obedece à declaração, não ao palpite.**
 
 #### 5.1.5 Duas sessões, uma chave duplicada, zero erros
 
-Aplicando o `referencias_historicas` acima, o frontmatter deste plano ficou com
+Aplicando o `referencias_nao_resolviveis` acima, o frontmatter deste plano ficou com
 **a mesma chave duas vezes** — outra sessão estava editando o repositório em
 paralelo e acrescentou o mesmo bloco. `yaml.safe_load` aceita chave repetida em
 silêncio: a última vence, a primeira desaparece sem erro.

@@ -336,7 +336,7 @@ def test_referencia_historica_isenta_o_caminho_declarado_e_so_ele(tmp_path, monk
         "---\n"
         "id: h\ntipo: relatorio\nescopo: Site\nautor: claude@opus-5\n"
         "criado_em: 2026-08-28\n"
-        "referencias_historicas:\n  - antigo/sumiu.py\n"
+        "referencias_nao_resolviveis:\n  - antigo/sumiu.py\n"
         "verificado:\n  - nada\nnao_verificado:\n  - nada\n"
         "---\n\n"
         "Antes o codigo vivia em `antigo/sumiu.py`; hoje nao existe mais.\n"
@@ -354,7 +354,7 @@ def test_nenhum_registro_tem_chave_duplicada_no_frontmatter():
     """`yaml.safe_load` aceita chave repetida em silencio: a ultima vence.
 
     Achado real de 2026-08-28 -- duas sessoes editando este repositorio
-    acrescentaram `referencias_historicas` ao mesmo frontmatter, e nada acusou.
+    acrescentaram `referencias_nao_resolviveis` ao mesmo frontmatter, e nada acusou.
     Mesma familia da colisao que fez uma auditoria descartar o manual canonico
     de 40 KB e exibir os dados do de 12 KB como se fossem dele.
     """

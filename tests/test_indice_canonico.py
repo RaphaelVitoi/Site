@@ -62,6 +62,33 @@ def _raiz_multiprojeto() -> Path | None:
     return pai if pai.name == ".gemini" else None
 
 
+def _nome_do_projeto() -> str:
+    """O nome CANONICO do projeto, declarado no indice -- nunca `RAIZ.name`.
+
+    Os caminhos do indice comecam por `Site/` porque enderecam a partir da raiz
+    multiprojeto. Deduzir esse prefixo do nome do DIRETORIO quebra em qualquer
+    arvore que nao se chame Site, e a suite isolada cria worktrees chamados
+    `suite-isolada-Site-<pid>-<epoch>`. Tres testes reprovaram por isso.
+    Nome canonico e dado declarado; nome de diretorio e acidente do sistema de
+    arquivos.
+    """
+    return _indice().get("projeto", "Site")
+
+
+def _resolver(caminho: str) -> Path | None:
+    """Onde um caminho do indice aterrissa NESTA arvore, ou None se indecidivel.
+
+    Caminho do proprio projeto resolve contra RAIZ, seja qual for o nome do
+    diretorio. Caminho de irmao so resolve quando a raiz multiprojeto existe --
+    fora dela, None, e quem chama PULA com motivo em vez de reprovar.
+    """
+    prefixo = f"{_nome_do_projeto()}/"
+    if caminho.startswith(prefixo):
+        return RAIZ / caminho[len(prefixo) :]
+    raiz = _raiz_multiprojeto()
+    return (raiz / caminho) if raiz else None
+
+
 def _membros(indice: dict) -> list[tuple[str, dict]]:
     return [(fam["basename"], m) for fam in indice["familias"] for m in fam["membros"]]
 
@@ -106,11 +133,11 @@ def test_nenhum_membro_declarado_duas_vezes():
 
 def test_membros_dentro_do_repositorio_existem():
     """Sempre exigivel: nao depende da raiz multiprojeto estar montada."""
-    raiz_rel = RAIZ.name  # "Site"
+    prefixo = f"{_nome_do_projeto()}/"
     ausentes = [
         m["caminho"]
         for _, m in _membros(_indice())
-        if m["caminho"].startswith(f"{raiz_rel}/") and not (RAIZ.parent / m["caminho"]).is_file()
+        if m["caminho"].startswith(prefixo) and not (RAIZ / m["caminho"][len(prefixo) :]).is_file()
     ]
     assert not ausentes, f"membros declarados que nao existem no repositorio: {ausentes}"
 
@@ -126,7 +153,8 @@ def test_membros_fora_do_repositorio_existem():
     ausentes = [
         m["caminho"]
         for _, m in _membros(_indice())
-        if not m["caminho"].startswith("Site/") and not (raiz / m["caminho"]).is_file()
+        if not m["caminho"].startswith(f"{_nome_do_projeto()}/")
+        and not (raiz / m["caminho"]).is_file()
     ]
     assert not ausentes, f"membros fora do repositorio que nao existem: {ausentes}"
 
@@ -136,7 +164,6 @@ def test_consumidores_de_codigo_declarados_apontam_para_arquivo_vivo():
 
     Confere o ARQUIVO e a mencao ao basename, nao a linha: linha e medicao.
     """
-    raiz = _raiz_multiprojeto()
     quebrados: list[str] = []
     for basename, membro in _membros(_indice()):
         for consumidor in membro.get("consumidores", []):
@@ -144,10 +171,9 @@ def test_consumidores_de_codigo_declarados_apontam_para_arquivo_vivo():
                 continue
             alvo = consumidor.split(":", 1)[1].strip().split(" ")[0]
             arquivo_rel = alvo.rsplit(":", 1)[0]  # descarta o numero de linha
-            base = RAIZ.parent if arquivo_rel.startswith("Site/") else raiz
-            if base is None:
-                continue
-            caminho = base / arquivo_rel
+            caminho = _resolver(arquivo_rel)
+            if caminho is None:
+                continue  # consumidor em projeto irmao, sem raiz multiprojeto aqui
             if not caminho.is_file():
                 quebrados.append(f"{arquivo_rel} (declarado como consumidor de {basename}) nao existe")
             elif basename not in caminho.read_text(encoding="utf-8", errors="ignore"):
@@ -174,10 +200,11 @@ def test_pertinencia_ao_corpus_do_rag_bate_com_o_coletor_real():
     divergencias: list[str] = []
     for _, membro in _membros(_indice()):
         caminho = membro["caminho"]
-        if not caminho.startswith("Site/"):
+        if not caminho.startswith(f"{_nome_do_projeto()}/"):
             continue
         declarado = membro.get("no_corpus_do_rag")
-        real = (RAIZ.parent / caminho).resolve() in resolvidos
+        alvo = _resolver(caminho)
+        real = alvo is not None and alvo.resolve() in resolvidos
         if declarado != real:
             divergencias.append(f"{caminho}: indice diz {declarado}, o coletor diz {real}")
     assert not divergencias, "o indice descreve um corpus que nao e o coletado:\n  " + "\n  ".join(divergencias)
@@ -252,7 +279,7 @@ def test_nenhum_homonimo_de_governanca_fora_do_indice():
     for rel in _md_rastreados():
         if Path(rel).name not in basenames:
             continue
-        completo = f"{RAIZ.name}/{rel}"
+        completo = f"{_nome_do_projeto()}/{rel}"
         if completo in declarados:
             continue
         if rel.startswith(prefixos_isentos) or completo.startswith(prefixos_isentos):

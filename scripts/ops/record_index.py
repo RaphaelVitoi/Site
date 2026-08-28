@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
 import re
 import subprocess
@@ -300,8 +301,19 @@ def construir(raiz: Path = RAIZ, hoje: date | None = None) -> dict[str, Any]:
 
 
 def escrever(indice: dict[str, Any], destino: Path = DESTINO) -> Path:
+    """Escrita ATOMICA: arquivo temporario no mesmo diretorio, depois `replace`.
+
+    Duas sessoes rodando `nexus index --rebuild` ao mesmo tempo -- coisa que
+    aconteceu neste repositorio em 2026-08-28 -- podiam intercalar escritas e
+    deixar JSON pela metade no disco. Quem lesse no meio veria um arquivo
+    sintaticamente invalido e nao teria como saber que a causa foi concorrencia.
+    `os.replace` e atomico no mesmo volume: ou o arquivo antigo, ou o novo
+    inteiro, nunca a mistura.
+    """
     destino.parent.mkdir(parents=True, exist_ok=True)
-    destino.write_text(json.dumps(indice, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporario = destino.with_name(f".{destino.name}.{os.getpid()}.tmp")
+    temporario.write_text(json.dumps(indice, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(temporario, destino)
     return destino
 
 
