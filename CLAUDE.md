@@ -232,3 +232,61 @@ e auditada.
    capacidade preservada, risco técnico específico, alternativas aditivas,
    reversibilidade, teste de comportamento e autorização exigida. Sem os seis
    itens, limitar a mudança a diagnóstico e observabilidade.
+
+### 8.3 Calibração por feedback do administrador
+
+Ao encerrar um handoff, exceto se o administrador adiantar novo comando ou
+dispensar a etapa, solicitar feedback textual e uma nota inteira de `0` a `10`.
+Registrar somente a resposta recebida pelo script
+`Register-AgentCalibrationFeedback.ps1`; não inventar avaliação, nota ou
+aprendizado. O ledger correspondente é encadeado por SHA-256, deve ser
+verificado antes de uso e é tamper-evident, não fisicamente imutável.
+
+O ciclo diário tem duas camadas obrigatórias: **(1) observação recursiva** dos
+feedbacks, da evidência contextual, dos outliers e do efeito da hipótese
+anterior; **(2) auditoria precursiva**, que formula uma hipótese
+bayesiano-preditiva para o dia seguinte. Uma hipótese contém prior operacional,
+evidência a favor e contra, previsão observável, métrica(s) afetada(s),
+falsificador, critério de reversão e risco de degradação. Não declarar número
+de posterior, Bayes factor ou probabilidade quantitativa sem prior, modelo de
+verossimilhança e base empírica explicitamente verificáveis.
+
+Por padrão, o ciclo só pode planejar **uma** microcalibração procedimental para
+o dia seguinte quando, no mesmo dia, houver pelo menos três feedbacks em duas
+ou mais sessões identificadas e ao menos duas confirmações independentes do
+mesmo padrão operacional. O dia seguinte valida, ajusta ou reverte a hipótese;
+ausência de sessão, amostra insuficiente, padrão não recorrente ou cadeia
+inválida exige o registro literal `dados insuficientes — nenhuma calibração
+planejada`. Uma exceção ao limiar só existe mediante instrução explícita do
+administrador e deve constar do relatório.
+
+Microcalibração não pode otimizar uma métrica isolada se puder degradar outra
+métrica, a finalidade principal da tarefa, autonomia operacional ou
+integridade factual. O ciclo não ajusta pesos internos de modelo, permissões,
+ferramentas ou limites de forma automática. Toda conclusão separa fato
+verificado, inferência, limite e ação; sem smoothing, fabricação ou certeza
+além da evidência.
+
+Os núcleos existentes de Monte Carlo puro Rust/WASM e CFR puro iterativo podem
+apoiar a formulação de hipótese por
+`Invoke-AgentCalibrationQuantitativeSupport.ps1`, desde que o relatório
+registre parâmetros, fonte, resultado, limitações e evidência que justifica
+cada parâmetro. Monte Carlo ICM TypeScript e CFR unitário Python são somente
+fallbacks explicitamente rotulados. Nenhum motor quantitativo constitui
+evidência comportamental, libera o portão de suficiência ou transforma
+inferência em fato.
+
+Outliers são evidência retida, não erro descartável nem padrão implícito. Cada
+outlier é registrado separadamente por `Record-AgentCalibrationOutlier.ps1`,
+com referências de origem, métricas, hipótese e hash. Monte Carlo pode estimar
+sensibilidade de cenário com seed/parâmetros declarados; CFR pode comparar
+alternativas contrafactuais declaradas. Nenhum filtro pode apagar, ocultar,
+indexar como padrão ou promover automaticamente o outlier. Amostra baixa pode
+indicar padrão de origem específica: a promoção só ocorre após análise
+determinística posterior, reprodutível, com origem, contraprova e registro de
+padrão separado da evidência de outlier.
+
+O runtime operacional padrão é **PowerShell 7+** (`pwsh`). Windows PowerShell
+5.1 permanece requisito de compatibilidade para componentes legados e para os
+gates que o exigem; scripts novos devem funcionar nos dois, mas não devem
+rebaixar o caminho principal a 5.1.
