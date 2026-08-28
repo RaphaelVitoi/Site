@@ -1,0 +1,82 @@
+{
+  "$schema_version": "1.0",
+  "projeto": "Site",
+  "declarado_em": "2026-08-28",
+  "declarado_por": "claude@opus-5",
+  "proposito": [
+    "Declara o status dos modulos de memoria de trabalho e por que dois deles",
+    "NAO estao ligados. Existe porque a alternativa e alguem encontrar codigo",
+    "completo e sem importador e concluir que basta liga-lo -- que era",
+    "exatamente o que eu ia fazer antes de medir.",
+    "tests/test_memoria_de_trabalho.py compara esta declaracao com a arvore."
+  ],
+
+  "a_memoria_de_trabalho_QUE_EXISTE": {
+    "mecanismo": "task.metadata, persistido em SQLite",
+    "escrita": "database/queue_manager.py :: update_task_metadata",
+    "concorrencia": "BEGIN EXCLUSIVE, com merge cirurgico do JSON",
+    "consumidores": [
+      "agents/execution.py",
+      "agents/context_builder.py",
+      "llm/orchestrator.py"
+    ],
+    "nota": [
+      "E esta a memoria de trabalho em producao. Qualquer segundo mecanismo",
+      "para o mesmo papel repete a duplicacao que esta sessao passou o dia",
+      "desfazendo -- duas fontes para o mesmo fato divergem por construcao."
+    ]
+  },
+
+  "modulos_escritos_e_NAO_ligados": [
+    {
+      "caminho": "memory/notepad_memory.py",
+      "o_que_e": "scratchpad com TTL, tags, lock e persistencia em JSON",
+      "linhas": 192,
+      "importadores": 0,
+      "por_que_nao_foi_ligado": [
+        "Faria o mesmo papel de `task.metadata`, que ja e persistido em SQLite",
+        "e seguro para concorrencia. Ligar seria criar a segunda fonte.",
+        "Se um dia houver necessidade que `task.metadata` nao cubra -- estado",
+        "que atravessa TAREFAS, e nao vive dentro de uma -- o caso muda, e a",
+        "decisao entra aqui antes do codigo."
+      ],
+      "estado_em_disco": {
+        "arquivos": ["memory/notepad_state.json", "memory/notepad_active.md"],
+        "origem_medida": "saida do smoke test `test_notepad()` do proprio modulo",
+        "achado": [
+          "O bloco `PLAN_CURRENT` desse estado afirma, textualmente, 'Memoria",
+          "Notepad e Replay Memory integradas'. Medido por AST: zero",
+          "importadores. O unico artefato que atesta a integracao e uma fixture",
+          "de demonstracao do modulo que se diz integrado."
+        ]
+      }
+    },
+    {
+      "caminho": "memory/replay_buffer.py",
+      "o_que_e": "Prioritized Experience Replay sobre SumTree, com Transition e td_errors",
+      "linhas": 179,
+      "importadores": 0,
+      "por_que_nao_foi_ligado": [
+        "Nao e memoria de recuperacao: e componente de treino por REFORCO.",
+        "`sample()` devolve pesos de importance-sampling e `update_priorities`",
+        "espera erros de TD. Nada disso existe sem um laco de aprendizado.",
+        "Medido: a unica ocorrencia de `reward` no projeto e",
+        "math/rio_extended.py, e la e valor esperado de poker (pot x equity),",
+        "nao recompensa de RL. Nao ha politica, nao ha TD, nao ha episodio.",
+        "Portanto nao e codigo orfao esperando fio -- e peca de um sistema que",
+        "nunca foi construido. Liga-lo exigiria INVENTAR o laco de RL."
+      ]
+    }
+  ],
+
+  "o_que_faria_a_decisao_mudar": {
+    "notepad_memory": "aparecer estado que atravessa tarefas e que task.metadata nao carrega",
+    "replay_buffer": "existir um laco de aprendizado que produza recompensa e erro de TD medidos"
+  },
+
+  "nao_verificado": [
+    "nao avaliei a QUALIDADE das duas implementacoes; medi que nada as importa",
+    "e por que nao ha consumidor, nao se elas sao boas",
+    "nao procurei consumidores fora deste repositorio"
+  ]
+}

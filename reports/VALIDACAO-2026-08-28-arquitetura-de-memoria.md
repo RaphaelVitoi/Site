@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T19:10-03:00
-atualizado_em: 2026-08-28T21:40-03:00
+atualizado_em: 2026-08-28T22:30-03:00
 commit: a86168df
 classes: [interno, medido]
 caminhos:
@@ -47,6 +47,9 @@ nao_verificado:
     conteudo do projeto em vez de site-packages, nao que devolve o melhor trecho
   - os 3 documentos extras do chico e o memory.json do auditor ficaram VISIVEIS
     mas NAO foram absorvidos pela canonica -- a consolidacao so trata MEMORY.md
+  - nao avaliei a QUALIDADE de notepad_memory.py nem de replay_buffer.py; medi
+    que nada os importa e por que nao ha consumidor, nao se sao bons
+  - nao procurei consumidores desses dois modulos fora deste repositorio
 supersede: null
 ---
 
@@ -384,3 +387,72 @@ Consulta direta a colecao, sem passar por caminho de LLM:
 Antes, as mesmas consultas competiam com 239 mil fragmentos de `pandas`, `torch`
 e `sympy`. **A qualidade do ranking nao foi avaliada** — o que esta provado e que
 o corpus recuperado e o do projeto.
+
+---
+
+## 11. Adendo — o passo 3 mudou de forma ao ser medido
+
+> A seção 9.3 recomendava, como passo mais barato, **ligar** `notepad_memory` e
+> `replay_buffer`: código já escrito contra código a escrever. Medido, a
+> recomendação estava errada — e o motivo merece ficar travado, porque a próxima
+> pessoa a encontrar 371 linhas completas sem importador vai concluir o mesmo
+> que eu concluí.
+
+### 11.1 `replay_buffer.py` não é memória: é treino por reforço
+
+`SumTree`, `Transition(state, action, reward, next_state, done)`,
+`sample()` devolvendo pesos de *importance sampling*, `update_priorities`
+esperando erros de TD. É *Prioritized Experience Replay*.
+
+Medido: a única ocorrência de `reward` no projeto é `math/rio_extended.py`, e lá
+é `pot × equity` — valor esperado de pôquer, não recompensa de RL. **Não há
+política, episódio nem erro de TD em lugar nenhum.**
+
+Não é código órfão esperando fio. É peça de um sistema que nunca foi construído,
+e ligá-la exigiria **inventar** o laço de aprendizado. Isso não é integração: é
+começar um projeto novo achando que se está terminando um antigo.
+
+### 11.2 `notepad_memory.py` seria a segunda fonte
+
+A memória de trabalho em produção já existe: **`task.metadata`**, persistida em
+SQLite, escrita por `queue_manager.update_task_metadata` com `BEGIN EXCLUSIVE` e
+merge cirúrgico, consumida por `agents/execution.py`,
+`agents/context_builder.py` e `llm/orchestrator.py`.
+
+`NotepadMemory` faria o mesmo papel. Ligá-la criaria exatamente a duplicação que
+esta sessão passou o dia desfazendo — e pela mesma regra: onde há duas fontes
+para o mesmo fato, **apagar a segunda, nunca sincronizar**.
+
+O que mudaria a decisão está declarado: estado que atravessa *tarefas*, e que
+`task.metadata` não carrega por viver dentro de uma.
+
+### 11.3 O sinal verde mais autorreferente da sessão
+
+`memory/notepad_state.json` é a única evidência em disco de que o notepad roda.
+Ele é a **saída de `test_notepad()`**, o smoke test do próprio módulo — os dois
+blocos do arquivo são, literalmente, os dois que a função escreve.
+
+E o conteúdo do bloco `PLAN_CURRENT` é:
+
+> *"1. Memória Notepad e Replay Memory integradas. 2. Clustering de Agentes
+> calibrado. 3. Sanitização de Entropia concluída."*
+
+Medido por AST: **zero importadores**, para os dois. O único artefato que atesta
+a integração é uma fixture de demonstração do módulo que se diz integrado.
+
+### 11.4 O que foi entregue no lugar
+
+| Artefato | Papel |
+| :--- | :--- |
+| `data/ESTADO_DA_MEMORIA_DE_TRABALHO.json` | declara os três módulos, quem consome, e **o que faria cada decisão mudar** |
+| `tests/test_memoria_de_trabalho.py` | 5 testes que comparam a declaração com a árvore |
+
+Nenhum teste impede ligar. Eles fazem a decisão **aparecer**: se um importador
+surgir, o teste falha nominalmente pedindo que a declaração seja atualizada no
+mesmo commit. Mutação com baseline: um importador sintético reprova o detector
+pelo motivo certo.
+
+Um dos cinco guarda a premissa em vez do fato — se aparecer sinal de RL de
+verdade (`td_error`, `policy_gradient`, `epsilon_greedy`) fora de `memory/`, o
+teste cai e obriga a reavaliar o `replay_buffer`. A decisão está amarrada à razão
+que a sustenta, não à conclusão.
