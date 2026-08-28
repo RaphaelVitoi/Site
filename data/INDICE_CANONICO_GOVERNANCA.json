@@ -1,0 +1,214 @@
+{
+  "id": "indice-canonico-governanca",
+  "versao": "1.0.0",
+  "tipo": "indice",
+  "escopo": "multiprojeto",
+  "medido_em": "2026-08-28",
+  "entregavel_de": "PLANO-2B-CURADORIA-ESTRUTURAL.md, frente 1",
+
+  "_leia_antes_de_editar": [
+    "Os campos 'bytes_medidos' sao INFORMATIVOS e decaem a cada edicao do arquivo.",
+    "Nenhum teste os afirma, e nenhum deve: numero medido vale na configuracao medida,",
+    "e transformar medicao em estrutura cria portao que reprova por edicao legitima.",
+    "O que os testes afirmam e o que NAO decai: existencia, unicidade do canonico e",
+    "a regra de nomeacao."
+  ],
+
+  "raiz": {
+    "descricao": "Todo caminho aqui e relativo a RAIZ MULTIPROJETO (~/.gemini), nao ao repositorio.",
+    "resolucao": "variavel de ambiente GEMINI_ROOT; na ausencia, o pai do repositorio Site.",
+    "por_que_nao_literal": "CLAUDE.md secao 1, regra 3: projeto nao alcanca irmao por caminho absoluto."
+  },
+
+  "tipos_de_consumidor": {
+    "codigo": "um script abre o caminho explicitamente. Detectavel por grep.",
+    "manifesto": "declarado em config (gemini-extension.json, rag_ingestion_manifest.json). Detectavel lendo o manifesto.",
+    "convencao": "carregado pelo agente por nome + localizacao (CLAUDE.md pelo Claude Code, GEMINI.md pelo Gemini CLI). INVISIVEL ao grep.",
+    "nota": "Nenhuma remocao pode se basear apenas na ausencia do tipo 'codigo'."
+  },
+
+  "chaves_de_contexto_do_manifesto": {
+    "_por_que_existe_esta_lista": "A primeira medicao procurou UMA chave ('contextFileName') e produziu falso negativo: o manifesto de extensao declara seu arquivo de contexto por pelo menos tres grafias. Um detector que conheca so uma delas trata arquivo legitimo de plugin como copia concorrente de governanca.",
+    "conhecidas": ["contextFileName", "contextPath", "context"],
+    "predicado_estrutural": "existe gemini-extension.json irmao cujo TEXTO cita o nome do arquivo - independente da chave. E o unico predicado que nao depende de conhecer a grafia."
+  },
+
+  "familias": [
+    {
+      "basename": "MODUS_OPERANDI.md",
+      "canonico": "MODUS_OPERANDI.md",
+      "razao_do_canonico": "e a copia com mais consumidores de codigo medidos, e a unica que os tres consumidores de codigo apontam como manual de leis.",
+      "membros": [
+        {
+          "caminho": "MODUS_OPERANDI.md",
+          "bytes_medidos": 40028,
+          "papel": "canonico multiprojeto",
+          "consumidores": [
+            "codigo: Site/scripts/cli/nexus.py:2172 (BASE_DIR.parent)",
+            "codigo: Site/scripts/routines/audit_monthly_modus_operandi_and_routing.py:279",
+            "codigo: antigravity/scratch/sota_hygiene.py:321 (lista de protecao)"
+          ],
+          "no_corpus_do_rag": false,
+          "nota_rag": "INALCANCAVEL pelo RAG do Site por desenho: memory_rag.py bloqueia fonte que escape a raiz do projeto ([SEC] Bloqueio de LFI/Traversal). Medido em 2026-08-28: fonte '..' coleta 0 arquivos. Incluir exigiria ampliar fronteira de seguranca, o que a governanca proibe."
+        },
+        {
+          "caminho": "Site/MODUS_OPERANDI.md",
+          "bytes_medidos": 12836,
+          "papel": "governanca do projeto Site",
+          "consumidores": ["codigo: Site/scripts/routines/audit_monthly_modus_operandi_and_routing.py:280"],
+          "no_corpus_do_rag": true,
+          "nota_rag": "entrou em 2026-08-28 pela fonte de governanca de raiz do manifesto de ingestao."
+        },
+        {
+          "caminho": "Site/.claude/MODUSOPERANDI/MODUS_OPERANDI.md",
+          "bytes_medidos": 6743,
+          "papel": "derivado - resumo indexado pela memoria",
+          "consumidores": ["manifesto: rag_ingestion_manifest.json, fonte .claude"],
+          "no_corpus_do_rag": true
+        },
+        {
+          "caminho": "Site/.cerebro/ops-deploy/MODUS_OPERANDI.md",
+          "bytes_medidos": 6743,
+          "papel": "ORFAO MEDIDO - zero consumidores dos tres tipos",
+          "consumidores": [],
+          "no_corpus_do_rag": false,
+          "nota": "Byte a byte igual ao derivado acima. Remocao e destrutiva e exige ordem explicita do vertice, item a item. A evidencia esta completa; a ordem, nao."
+        },
+        {
+          "caminho": "antigravity/.claude/MODUS_OPERANDI.md",
+          "bytes_medidos": 4616,
+          "papel": "canonico do projeto irmao",
+          "consumidores": ["codigo: antigravity/task_executor.py:604"],
+          "no_corpus_do_rag": false
+        }
+      ]
+    },
+    {
+      "basename": "CLAUDE.md",
+      "canonico": "CLAUDE.md",
+      "razao_do_canonico": "e o unico carregado em TODA sessao, independente do cwd. Os demais sao de escopo, nao concorrentes.",
+      "nota_de_familia": "Este basename NAO pode ser renomeado nos escopos: e convencao de runtime. A regra de nomeacao (abaixo) permite a repeticao em raiz de escopo e proibe fora dela.",
+      "membros": [
+        {
+          "caminho": "CLAUDE.md",
+          "bytes_medidos": 4796,
+          "papel": "canonico multiprojeto",
+          "consumidores": ["convencao: Claude Code carrega por nome + localizacao"],
+          "no_corpus_do_rag": false
+        },
+        {
+          "caminho": "Site/CLAUDE.md",
+          "bytes_medidos": 5657,
+          "papel": "governanca do projeto Site",
+          "consumidores": ["convencao: carregado com cwd=Site"],
+          "no_corpus_do_rag": true,
+          "nota_rag": "entrou em 2026-08-28."
+        },
+        {
+          "caminho": "Site/.claude/PROPOSITOS/CLAUDE.md",
+          "bytes_medidos": 3483,
+          "papel": "registro de propositos - so a memoria le",
+          "consumidores": ["manifesto: rag_ingestion_manifest.json, fonte .claude"],
+          "no_corpus_do_rag": true
+        },
+        {
+          "caminho": "antigravity/.claude/CLAUDE.md",
+          "bytes_medidos": 2281,
+          "papel": "identidade do usuario para o projeto irmao",
+          "consumidores": [
+            "codigo: antigravity/engine/cognitive.py:33",
+            "codigo: antigravity/task_executor.py:605",
+            "codigo: antigravity/memory_rag.py:82"
+          ],
+          "no_corpus_do_rag": false,
+          "nota": "e o membro mais lido POR CODIGO de toda a varredura - e nao e o canonico. Consumo por codigo mede acoplamento, nao autoridade."
+        }
+      ]
+    },
+    {
+      "basename": "GEMINI.md",
+      "canonico": "GEMINI.md",
+      "razao_do_canonico": "unico membro da familia com consumidor de codigo (sota_hygiene.py:320), alem da convencao.",
+      "nota_de_familia": "A familia de governanca tem 5 membros, nao 35. As demais ocorrencias sao arquivo de contexto de extensao, declarado pelo manifesto irmao. Declarar um GEMINI.md canonico que as substituisse QUEBRARIA as extensoes.",
+      "membros": [
+        {
+          "caminho": "GEMINI.md",
+          "bytes_medidos": 1476,
+          "papel": "canonico multiprojeto",
+          "consumidores": [
+            "codigo: antigravity/scratch/sota_hygiene.py:320 (lista de protecao)",
+            "convencao: Gemini CLI carrega por nome + localizacao"
+          ],
+          "no_corpus_do_rag": false
+        },
+        { "caminho": "Site/GEMINI.md", "bytes_medidos": 5548, "papel": "contexto do projeto Site", "consumidores": ["convencao"], "no_corpus_do_rag": true },
+        { "caminho": "antigravity/GEMINI.md", "bytes_medidos": 8342, "papel": "contexto do projeto irmao", "consumidores": ["convencao"], "no_corpus_do_rag": false },
+        { "caminho": "antigravity-cli/GEMINI.md", "bytes_medidos": 3489, "papel": "contexto do componente", "consumidores": ["convencao"], "no_corpus_do_rag": false },
+        { "caminho": "antigravity-ide/GEMINI.md", "bytes_medidos": 4067, "papel": "contexto do componente", "consumidores": ["convencao"], "no_corpus_do_rag": false }
+      ]
+    },
+    {
+      "basename": "AGENTS.md",
+      "canonico": "AGENTS.md",
+      "razao_do_canonico": "e o ponteiro declarado pela secao 1 do CLAUDE.md canonico. Ate 2026-08-28 a declaracao era falsa - o arquivo nao existia.",
+      "nota_de_familia": "Ambos os membros sao PONTEIROS deliberados, nao governanca paralela. Ver Site/CLAUDE.md secao 7.",
+      "membros": [
+        {
+          "caminho": "AGENTS.md",
+          "bytes_medidos": 1685,
+          "papel": "ponteiro para o CLAUDE.md da raiz",
+          "consumidores": ["convencao: agentes que procuram AGENTS.md"],
+          "no_corpus_do_rag": false,
+          "criado_em": "2026-08-28"
+        },
+        {
+          "caminho": "Site/AGENTS.md",
+          "bytes_medidos": 1801,
+          "papel": "ponteiro para Site/CLAUDE.md",
+          "consumidores": ["convencao"],
+          "no_corpus_do_rag": true,
+          "guarda": "tests/test_governanca_agents.py"
+        }
+      ]
+    },
+    {
+      "basename": "FUNDAMENTOS_SOTA.md",
+      "canonico": "FUNDAMENTOS_SOTA.md",
+      "razao_do_canonico": "nao ha familia: o arquivo e unico sob a raiz. Declarado aqui para que a ausencia de homonimo seja um FATO REGISTRADO e nao uma lacuna.",
+      "membros": [
+        {
+          "caminho": "FUNDAMENTOS_SOTA.md",
+          "bytes_medidos": 3143,
+          "papel": "canonico multiprojeto, sem homonimo",
+          "consumidores": ["codigo: antigravity/scratch/sota_hygiene.py:323 (lista de protecao)"],
+          "no_corpus_do_rag": false
+        }
+      ]
+    }
+  ],
+
+  "regra_de_nomeacao": {
+    "enunciado": "Basename de governanca so pode se repetir quando cada copia e exigida, na propria localizacao, por consumidor de tipo 'convencao' ou 'manifesto' - isto e, uma por RAIZ DE ESCOPO. Copia adicional fora de raiz de escopo tem de ser declarada nesta familia com papel explicito, ou receber prefixo de escopo (<escopo>-GEMINI.md).",
+    "por_que_nao_e_proibicao_simples": "Proibir o homonimo por completo quebraria as duas coisas que dependem do nome exato: a convencao de runtime (CLAUDE.md, GEMINI.md em raiz de escopo) e as extensoes (arquivo de contexto declarado por manifesto).",
+    "raizes_de_escopo_reconhecidas": [".", "Site", "antigravity", "antigravity-cli", "antigravity-ide"],
+    "fora_do_alcance_da_regra": {
+      "vendorizado": ["Site/core/vendor/**", "config/plugins/**"],
+      "submodulo": ["Site/skills/**"],
+      "espelho_de_extensao": ["extensions/**", "antigravity-cli/plugins/**"],
+      "backup": ["remediacao_backup_aplicado/**"],
+      "razao": "nao sao artefatos autorais desta casa; renomea-los quebraria upstream, submodulo ou o carregamento do CLI."
+    },
+    "guarda": "Site/tests/test_indice_canonico.py"
+  },
+
+  "contexto_de_componente_nao_e_governanca": [
+    { "caminho": "Site/frontend/AGENTS.md", "bytes_medidos": 678 },
+    { "caminho": "Site/frontend/src/app/GEMINI.md", "bytes_medidos": 2962 }
+  ],
+
+  "nao_verificado": [
+    "Os membros fora de Site/ nao sao verificados quando a raiz multiprojeto nao e reconhecida: o teste PULA com motivo declarado, em vez de passar em silencio.",
+    "Qual das tres grafias de chave de contexto o Gemini CLI de fato honra: nao foi medido, porque exigiria executar o CLI. O predicado estrutural adotado nao depende da resposta.",
+    "Nenhuma extensao foi carregada e nenhum agente foi executado para confirmar o consumo por convencao."
+  ]
+}

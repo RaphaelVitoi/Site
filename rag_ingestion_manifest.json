@@ -38,6 +38,18 @@
             "recursive": false
         },
         {
+            "_nota": "Governanca da RAIZ DO PROJETO. Ate 2026-08-28 a fonte '.' so trazia *.py e *.ps1, entao os quatro documentos que governam este projeto estavam FORA da memoria: quem consultava o RAG sobre o Modus Operandi recebia o resumo derivado de 6.7 KB e nunca o manual. Medido: 470 arquivos antes, 474 depois -- exatamente os quatro, sem recursao. Enumerar em vez de usar '*.md' e deliberado: '*.md' recursivo na raiz arrastaria a arvore inteira.",
+            "_fora_de_alcance": "O canonico multiprojeto (~/.gemini/MODUS_OPERANDI.md, 40 KB) NAO entra e nao deve entrar por aqui: memory_rag bloqueia fonte que escape a raiz do projeto ([SEC] Bloqueio de LFI/Traversal). Medido: fonte '..' coleta 0 arquivos. Inclui-lo exigiria ampliar fronteira de seguranca.",
+            "path": ".",
+            "patterns": [
+                "MODUS_OPERANDI.md",
+                "CLAUDE.md",
+                "AGENTS.md",
+                "GEMINI.md"
+            ],
+            "recursive": false
+        },
+        {
             "path": ".",
             "patterns": [
                 "*.py",
