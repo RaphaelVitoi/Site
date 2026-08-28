@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T19:10-03:00
+atualizado_em: 2026-08-28T20:05-03:00
 commit: a86168df
 classes: [interno, medido]
 caminhos:
@@ -29,12 +30,19 @@ verificado:
   - as tres arvores de memoria comparadas arquivo a arquivo com cmp
   - consumidores de cada arvore derivados da arvore por grep, com caminho e linha
   - hardware medido -- VRAM pelo log do proprio Ollama, RAM por Win32_OperatingSystem
+  - adendo da secao 9 -- consumidores medidos por AST, separando uso interno ao
+    arquivo de importacao externa, depois de a primeira passagem ter rotulado
+    ContextBucket e SotaContextCacheEngine de orfaos sem serem
 nao_verificado:
   - nenhuma chamada real a provedor de LLM; nenhum servico novo foi instalado
   - nao medi latencia de recuperacao de nenhuma camada; os numeros de latencia
     do documento original sao dele, nao medicao minha
   - nao li o conteudo das 57 MEMORY.md; comparei bytes e datas, nao semantica
   - nao avaliei se o corpus de 821 MB tem valor -- so que esta triplicado
+  - nao verifiquei o estado de autenticacao dos conectores de nuvem (Drive,
+    OneDrive, Dropbox); a sessao e nao-interativa e nao roda fluxo OAuth
+  - nao medi latencia nem cota do gemma4:31b-cloud; medi que ele carrega sem
+    ocupar VRAM, nao quanto ele aguenta
 supersede: null
 ---
 
@@ -206,3 +214,79 @@ instalado; **nenhuma medição de latência de recuperação** — os números d
 latência do documento original são dele e não foram verificados aqui; não li o
 conteúdo das 57 `MEMORY.md`, comparei bytes e datas, não semântica; não avaliei
 se os 821 MB têm valor, apenas que estão triplicados.
+
+---
+
+## 9. Adendo — o inventário acima estava incompleto
+
+> Escrito 55 minutos depois da seção 8, a pedido do vértice, que apontou material
+> que eu não havia encontrado. **Ele tinha razão**, e a omissão muda uma
+> conclusão: a camada L1 que a seção 6 dizia faltar já está escrita.
+
+### 9.1 A pasta `memory/`, que eu não vi
+
+`./memory/` — 2,1 MB no topo do repositório, e nada nela apareceu na varredura
+original porque procurei por *árvores de memória agêntica*, não por *módulos de
+memória*. Medido por grandeza errada de novo.
+
+| Arquivo | O que é | Linhas | Quem importa |
+| :--- | :--- | ---: | :--- |
+| `memory/notepad_memory.py` | `MemoryBlock` + `NotepadMemory` — scratchpad com TTL, tags e lock | 192 | **ninguém** |
+| `memory/replay_buffer.py` | `Transition` + replay priorizado (PER) sobre ring buffer numpy | 179 | **ninguém** |
+| `memory/notepad_active.md` | estado vivo — mtime 2026-08-23 | — | — |
+| `memory/notepad_state.json` | estado serializado — mtime 2026-08-17 | — | — |
+
+Medido por AST, importação de módulo: **`memory`, `memory.notepad_memory` e
+`memory.replay_buffer` têm zero importadores.** Os arquivos de estado têm mtime
+recente, então algo os escreve — mas não é código que importe o módulo.
+
+Isto é exatamente o **Working Memory (Scratchpad)** e a **Memória Episódica com
+replay** que o documento propõe construir. **Estão construídos.** O que falta é
+o mesmo que falta em todo o resto desta base: ninguém os chama.
+
+### 9.2 Bucketing e cache: vivos, ao contrário
+
+`core/sota_context_engine.py` — `ContextBucket` com `hash_signature`, expiração e
+`touch()`; `SotaContextCacheEngine` com teto de 4096 MB; singleton `context_cache`
+**importado por `core/subagents_mesh.py`**. Esta camada está ligada.
+
+**Correção de método, e ela vale registrar:** minha primeira medição rotulou
+`ContextBucket` e `SotaContextCacheEngine` de órfãos. Falso positivo — eu
+excluíra usos no mesmo arquivo em que a classe é definida, que é o recorte certo
+para *"quem mais consome?"* e o recorte errado para *"isto é órfão?"*. Duas
+perguntas diferentes, uma medição só. Décima sexta vez nesta base que o nome de
+uma grandeza não descreve a grandeza medida.
+
+### 9.3 O que isso muda na ordem recomendada
+
+A seção 7 dizia "score composto + limite + dedupe" no passo 3. Com o notepad e o
+replay buffer já escritos, o passo mais barato passa a ser **ligá-los** — código
+que existe, testado ou não, contra código que ainda seria escrito.
+
+E muda o mapeamento da seção 6:
+
+| Nível | Antes eu disse | Medido |
+| :--- | :--- | :--- |
+| **L1 — cache/bucket** | `sota_context_engine`, já declarado | correto, **e consumido** |
+| **L1 — scratchpad** | não mencionei | `memory/notepad_memory.py`, **escrito e órfão** |
+| **L2 — episódica/replay** | "SQLite" | `memory/replay_buffer.py` com PER, **escrito e órfão** |
+
+### 9.4 Nuvem: L4 frio e computação sem VRAM
+
+O vértice apontou dois recursos que a seção 3 tratou como ausentes, e são
+distintos entre si:
+
+**Computação em nuvem sem VRAM local.** `gemma4:31b-cloud` foi medido nesta
+sessão: 32,7B em BF16, 262k de contexto, `thinking` e `tools`, **zero ocupação
+de VRAM**. É um degrau de capacidade que não disputa os 8 GiB da RX 570. Isso é
+real e verificado. O que **não** medi: latência e cota — sei que ele carrega sem
+VRAM, não quanto ele aguenta.
+
+**Armazenamento em nuvem como L4 frio.** Drive, OneDrive e Dropbox são
+candidatos naturais para o arquivamento que o documento coloca em S3/Parquet, e
+o alvo óbvio são os 821 MB triplicados. **Não verifiquei o estado de
+autenticação desses conectores** — esta sessão é não-interativa e não executa
+fluxo OAuth, então declaro como não medido em vez de assumir disponível.
+
+A ordem não muda por isso: arquivar num L4 o que ainda está triplicado
+arquivaria a triplicação. **Consolidar primeiro, arquivar depois.**
