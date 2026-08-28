@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T19:10-03:00
-atualizado_em: 2026-08-28T23:15-03:00
+atualizado_em: 2026-08-29T00:20-03:00
 commit: a86168df
 classes: [interno, medido]
 caminhos:
@@ -539,3 +539,77 @@ agora carrega 600 a 800 caracteres de contexto em vez de uma linha solta.
 **Score composto (recencia e importancia) continua pendente**, e agora faz
 sentido: ha fragmentos de verdade para ordenar. Recencia exige um timestamp que o
 metadado ainda nao carrega.
+
+---
+
+## 13. O passo 4, fechado — e o decaimento temporal foi REJEITADO com numero
+
+### 13.1 Por que `mtime` nao serve como recencia aqui
+
+Duas medicoes desqualificaram o `exp(-λΔt)` que eu ia acrescentar:
+
+| | medido |
+| :--- | ---: |
+| idade maxima do corpus | **123 dias** |
+| mediana | 7 dias |
+| modificados nos ultimos 7 dias | 45,4% |
+| acima de 365 dias | **0** |
+| documentos que declaram `criado_em` | **18 (4%)** |
+
+Um decaimento sobre uma janela de 123 dias, com metade do corpus abaixo de uma
+semana, quase nao separa nada. E o defeito e mais fundo: **`mtime` e *quando
+alguem salvou*, nao *quando o conteudo envelheceu***. Um `MODUS_OPERANDI.md`
+reformatado ontem pareceria fresco; um handoff canonico de junho, obsoleto.
+
+Seria um termo chamado "recencia" medindo "ultima gravacao" — **nome errado para
+a grandeza real**, o padrao que este registro cataloga. O sinal honesto seria
+`criado_em`, declarado em 4% dos documentos: esparso demais para pesar num
+ranking.
+
+### 13.2 O que entrou no lugar: obsolescencia DECLARADA
+
+`.claude/AGENTS-MEMORY` ganhou um `SUPERSEDED.md` na consolidacao da secao 9, e
+continuava contribuindo **89 fragmentos (2,1%)** que competiam com a canonica
+pelos mesmos tres lugares. Nao e conteudo errado — e conteudo que ja esta na
+canonica, duas vezes.
+
+O mecanismo e **predicado estrutural, nao lista de caminhos**: um diretorio que
+contem `SUPERSEDED.md` marcou a si mesmo, e o marcador viaja com a arvore. Lista
+literal envelhece e exige que alguem lembre — foi assim que `reports` como nome
+solto excluiu `docs/reports/` sem ninguem pedir.
+
+### 13.3 As cinco geracoes do indice, medidas
+
+| geracao | fragmentos | fontes | mediana | de arvore superada | duplicata |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| 1 contaminado | 241.480 | 4.040 | 157 | 62 | 14,7% |
+| 2 colisao de id | 13.373 | 449 | 167 | 120 | 10,0% |
+| 3 fragmentado | 14.227 | 494 | 162 | 373 | 12,6% |
+| 4 com superada | 4.239 | 496 | 1009 | 89 | 3,1% |
+| **5 atual** | **4.163** | **474** | **1009** | **0** | **2,0%** |
+
+De 241.480 fragmentos para 4.163, com o mesmo corpus de projeto — e duplicata
+literal de 14,7% para 2,0%.
+
+### 13.4 Tres defeitos meus nesta etapa, e o terceiro e o mais instrutivo
+
+1. **A exclusao nao excluia nada.** Comparava caminho relativo com absoluto. Nao
+   levantou excecao; apareceu na contagem — 506 alvos com 23 que deviam ter
+   saido.
+2. **O teste passava vazio.** `not any(...)` sobre colecao vazia e verdadeiro.
+   Faltava o controle positivo que prova que a descoberta achou alguma coisa.
+3. **O `.resolve()` estava duplicado**, e por isso **nenhuma mutacao isolada era
+   detectavel**: cada um cobria o outro. Removida a redundancia, as duas
+   mutacoes reprovam. *Redundancia que teste nenhum distingue e redundancia que
+   ninguem mantem.*
+
+E uma falha do arnes: ele nao verificava se a mutacao **aplicava**. Persegui a
+hipotese errada por tres rodadas por causa disso.
+
+### 13.5 O que fica pendente, e por que nao e omissao
+
+**Score composto com recencia e importancia continua fora** — nao por falta de
+tempo, mas porque nenhuma das duas tem sinal confiavel neste corpus hoje. O que
+mudaria isso esta declarado: um campo de data **declarado** em massa (hoje 4%),
+ou um sinal de importancia gravado no momento da escrita. Ate la, acrescentar os
+termos seria por dois numeros plausiveis num ranking sem saber o que eles medem.
