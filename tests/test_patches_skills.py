@@ -79,7 +79,11 @@ def test_patch_nao_carrega_artefato_regeneravel():
     """
     ofensores = []
     for p in PATCHES.glob("*.patch"):
-        cabecalhos = [l for l in p.read_text(encoding="utf-8", errors="ignore").splitlines() if l.startswith("diff --git")]
+        cabecalhos = [
+            line
+            for line in p.read_text(encoding="utf-8", errors="ignore").splitlines()
+            if line.startswith("diff --git")
+        ]
         for h in cabecalhos:
             if "/dist/" in h or "/build/" in h or "package-lock.json" in h:
                 ofensores.append(f"{p.name}: {h[:80]}")

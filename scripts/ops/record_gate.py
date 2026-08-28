@@ -32,9 +32,16 @@ from pathlib import Path
 import yaml
 
 RAIZ = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from record_index import (  # noqa: E402
+# A RAIZ do repositorio no path, nunca este diretorio: com `scripts/ops` no
+# path, `record_index` e `scripts.ops.record_index` viram DOIS objetos de modulo
+# para o mesmo arquivo (medido). Ver o docstring de `scripts/ops/__init__.py`.
+# Este script tambem roda direto pelo hook, quando sys.path[0] e `scripts/ops` —
+# por isso a raiz precisa entrar explicitamente.
+if str(RAIZ) not in sys.path:
+    sys.path.insert(0, str(RAIZ))
+
+from scripts.ops.record_index import (  # noqa: E402
     conferir_config_medida,
     ler_frontmatter,
     resolvedores_de_ambiente,
