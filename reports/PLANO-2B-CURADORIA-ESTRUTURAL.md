@@ -254,7 +254,29 @@ consumidor de código (`sota_hygiene.py:320`); as outras vivem de convenção.
 
 `FUNDAMENTOS_SOTA.md` é **única**. Não há família — não precisa de declaração.
 
-### 1.5.5 `Site/skills/` não é cópia obsoleta. É fork mais novo que não roda.
+### 1.5.5 `Site/skills/` — **RETIFICADO em 2026-08-28**
+
+> **A conclusão abaixo estava errada sobre a NATUREZA.** `Site/skills/` não é
+> fork nem cópia: são **8 submódulos git** apontando para upstreams públicos
+> (`.gitmodules` existe, os 8 são gitlinks modo `160000`, e o `HEAD` de cada um
+> bate com o gitlink). Os "53 divergentes" são **versões diferentes**, não
+> trabalho editado e perdido.
+>
+> **Por que errei:** medi `cmp` e `mtime`, que respondem *"são diferentes?"*, e
+> pulei `git ls-files -s`, que responde *"o que isto é?"*. A pergunta de
+> natureza precede a de diferença.
+>
+> **O que continua válido:** a árvore que o CLI carrega é `extensions/`, e ela
+> está mais velha. **O que muda:** o risco real não são os 53 arquivos de
+> versão — são **62 fontes modificados localmente** dentro dos submódulos,
+> invisíveis ao `git status` por `ignore = dirty` e destrutíveis por um
+> `git submodule update`.
+>
+> Auditoria completa em
+> [AUDITORIA-2026-08-28-skills](AUDITORIA-2026-08-28-skills.md).
+
+O texto original, preservado como registro do que foi medido e do que foi
+concluído a mais do que a medição autorizava:
 
 Este é o achado de maior consequência da medição, e o que mais teria sido
 destruído por uma limpeza baseada em intuição.

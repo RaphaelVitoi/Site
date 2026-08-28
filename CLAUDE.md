@@ -87,3 +87,43 @@ pasta do usuário.
 Dizer quais verificações rodaram e quais não. Verificação não executada não é
 verificação aprovada. O portão de 5 fases roda em todo commit e imprime seu
 veredito — declare esse veredito.
+
+---
+
+## 6. Diretrizes de manutenção contínua
+
+Incorporadas de `AGENTS.md` em 2026-08-28, onde tinham sido escritas em
+2026-08-26. Aquele arquivo era um fork deste e virou ponteiro — ver §7.
+
+1. **Invariância de testes, tolerância zero.** A suíte fica inteiramente verde.
+   Toda funcionalidade nova traz seus mocks herméticos.
+   **A contagem não mora aqui.** A redação original dizia "395/395"; quando isto
+   foi incorporado a suíte tinha 447, e o número em prosa já estava errado havia
+   dias sem que nada acusasse. Contagem é medição, e medição vive no portão que
+   a executa — este documento declara a *regra*, não o *valor*.
+2. **Sanitização de warnings.** O pre-commit e o CI rejeitam build que introduza
+   warning novo no pytest. O `conftest.py` deriva a contagem do hook
+   `pytest_warning_recorded`; é a fonte, e é honesta.
+3. **Controle de roteamento.** O limiar do `ComplexityAnalyzer` (Edge × Cloud) é
+   calibrado periodicamente para manter o tráfego local entre 60% e 70%.
+4. **Imutabilidade de encoding.** Todo `.ps1` criado ou modificado preserva
+   UTF-8 **com** BOM (`utf-8-sig`), exigência do PowerShell 5.1. BOM **único**:
+   dois BOMs quebram o parse nas duas versões do PowerShell.
+
+---
+
+## 7. `AGENTS.md` é ponteiro, não cópia
+
+A convenção `agents.md` é lida por outros agentes (Codex, Cursor), então o
+arquivo continua existindo — mas **como ponteiro para este documento**, nunca
+como segunda cópia.
+
+Motivo medido: entre 2026-08-24 e 2026-08-26 o `AGENTS.md` existiu como fork
+deste arquivo e divergiu em três pontos. Dois eram referências mortas nascidas
+de um search-replace `claude`→`Codex`: apontava para `..\AGENTS.md`, que não
+existe, e afirmava que os 19 documentos de agente ficam em `.Codex/agents/`,
+quando `sync_agents_reality.ps1:54` os escreve em `.claude/agents/`. O terceiro
+era a §6 acima — conteúdo real, preservado aqui.
+
+**Dois dias de coexistência produziram duas mentiras.** Não reabrir a cópia.
+`tests/test_governanca_agents.py` reprova se o `AGENTS.md` voltar a crescer.
