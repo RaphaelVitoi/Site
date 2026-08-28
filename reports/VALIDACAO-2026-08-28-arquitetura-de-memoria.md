@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T19:10-03:00
-atualizado_em: 2026-08-28T20:05-03:00
+atualizado_em: 2026-08-28T21:40-03:00
 commit: a86168df
 classes: [interno, medido]
 caminhos:
@@ -43,6 +43,10 @@ nao_verificado:
     OneDrive, Dropbox); a sessao e nao-interativa e nao roda fluxo OAuth
   - nao medi latencia nem cota do gemma4:31b-cloud; medi que ele carrega sem
     ocupar VRAM, nao quanto ele aguenta
+  - a QUALIDADE da recuperacao nao foi avaliada; provei que o indice devolve
+    conteudo do projeto em vez de site-packages, nao que devolve o melhor trecho
+  - os 3 documentos extras do chico e o memory.json do auditor ficaram VISIVEIS
+    mas NAO foram absorvidos pela canonica -- a consolidacao so trata MEMORY.md
 supersede: null
 ---
 
@@ -290,3 +294,93 @@ fluxo OAuth, então declaro como não medido em vez de assumir disponível.
 
 A ordem não muda por isso: arquivar num L4 o que ainda está triplicado
 arquivaria a triplicação. **Consolidar primeiro, arquivar depois.**
+
+---
+
+## 10. Adendo — os passos 1 e 2 executados, e o que eles acharam
+
+> 2026-08-28, mesma janela. A secao 7 recomendava consolidar e depois
+> reconstruir o indice. Os dois foram feitos, e o segundo revelou um defeito
+> que a secao 4 nao tinha alcancado.
+
+### 10.1 O id do fragmento nao era unico
+
+`memory_rag._process_single_file` montava o id a partir de `source_name` — o
+nome do diretorio para `MEMORY.md`, o *stem* para o resto. **Esse nome nao e
+unico no corpus**: 504 arquivos alvo colapsavam em 426 nomes. 36 nomes em
+colisao, **77 arquivos afetados**. `SPEC` ×4, `PRD` ×4, `dispatcher` ×4, e cada
+um dos 19 agentes duas ou tres vezes.
+
+E a escrita e `upsert`. O segundo arquivo de mesmo nome sobrescrevia os chunks
+`0..N` do primeiro e **deixava orfaos os de indice maior**, ainda apontando para
+outro arquivo. O indice nao perdia documentos: montava **documentos
+Frankenstein**. Medido no indice real:
+
+```
+ids dispatcher_chunk_*  ->  34 chunks de .claude/agent-memory/dispatcher/MEMORY.md
+                            24 chunks de .claude/AGENTS-MEMORY/dispatcher/MEMORY.md
+                             1 chunk  de agents/dispatcher.py
+```
+
+Mesma classe da colisao de basename da auditoria mensal. E o detector foi o
+mesmo nas duas vezes: **derivar a contagem** — 504 alvos contra 449 fontes.
+
+Corrigido: o id passou a vir do caminho relativo a raiz, unico por construcao e
+estavel se o repositorio mudar de lugar. `agent` continua sendo o nome amigavel,
+que e o que a filtragem usa.
+
+### 10.2 O indice, antes e depois
+
+| | contaminado | com colisao | atual |
+| :--- | ---: | ---: | ---: |
+| embeddings | 241.480 | 13.373 | **14.227** |
+| fontes distintas | 4.040 | 449 | **494** |
+| `.venv` | 239.062 (99,0%) | 0 | **0** |
+| prefixos de id misturando fontes | — | 36 | **0** |
+| tamanho | 727 MB | 44 MB | **42 MB** |
+
+Contabilidade fechada: **504 alvos, 494 indexados, 10 fora — todos com 0 bytes**
+(nove `__init__.py` vazios e um `.ps1` vazio).
+
+Nenhum indice foi apagado. `.chroma_db.contaminado-20260828` e
+`.chroma_db.colisao-20260828` continuam em disco, reversiveis por `mv`.
+
+### 10.3 O ignore escondia conteudo, nao lixo
+
+`.cerebro/agent-memory/` era ignorada **inteira**, e o efeito era o oposto do
+pretendido: escondia 23 `.md` de memoria agentica — o aprendizado que os proprios
+prompts mandavam gravar ali — enquanto o motivo real do ignore eram dois
+artefatos derivados: um render HTML de 20 MB e o banco Chroma.
+
+Mesmo defeito que `memory_rag.ignore_dirs` ja corrigira uma vez com `reports`:
+**nome solto casa demais**. A saida foi a mesma — excluir o artefato por forma,
+nunca a subarvore por nome. 24 arquivos entraram no controle de versao, e quatro
+deles eu nunca tinha visto:
+`.cerebro/agent-memory/chico/AUDITORIA_VITOI_V4.md`,
+`.cerebro/agent-memory/chico/SESSION_ANCHOR_20260316.md`,
+`.cerebro/agent-memory/chico/VERIFICACAO_CRUZADA_LOG.md` e
+`.cerebro/agent-memory/auditor/memory.json`.
+
+**Pendencia declarada:** esses quatro estao visiveis mas **nao** foram absorvidos
+pela canonica — `consolidar_memoria_agentica.py` so trata `MEMORY.md`.
+
+### 10.4 Um risco que eu mesmo criei
+
+Renomear `.chroma_db` para `.chroma_db.contaminado-20260828` fez o diretorio
+deixar de casar com o padrao `.chroma_db/`: **771 MB de binario viraram nao
+rastreados**, a um `git add -A` de entrar no historico para sempre. Peguei
+olhando `git status` antes de estagiar, nao por previsao. O padrao agora e
+`.chroma_db*/`, e o `.gitignore` registra o porque.
+
+### 10.5 A prova de recuperacao
+
+Consulta direta a colecao, sem passar por caminho de LLM:
+
+| Pergunta | Primeiro resultado |
+| :--- | :--- |
+| *aprendizado do chico sobre handoff e linters* | `reports/PLANO-2B-CURADORIA-ESTRUTURAL.md` (0,275), depois `HANDOFF_LATEST.md` do proprio chico |
+| *politica de roteamento por classe de tarefa* | `tests/test_routing_policy.py` (0,295), depois `.claude/MODUSOPERANDI/SYSTEM_ROUTING_MAP.md` |
+
+Antes, as mesmas consultas competiam com 239 mil fragmentos de `pandas`, `torch`
+e `sympy`. **A qualidade do ranking nao foi avaliada** — o que esta provado e que
+o corpus recuperado e o do projeto.

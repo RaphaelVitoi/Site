@@ -27,6 +27,10 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # Configuracao SOTA (Friccao Zero)
 CHROMA_DB_DIR = ".chroma_db"
 CHROMA_PATH = Path(__file__).parent / CHROMA_DB_DIR
+# Raiz do projeto, no nivel do MODULO de proposito: `MemoryRAG.__init__` tem um
+# `return` antecipado quando o chromadb falta, entao atributo definido depois
+# dele nao existe sempre. Constante de modulo nao tem esse problema.
+RAIZ_DO_PROJETO = Path(__file__).resolve().parent
 OLLAMA_BASE_URL = "http://127.0.0.1:11434"
 EMBEDDING_MODEL = "nomic-embed-text"  # Requer: ollama pull nomic-embed-text
 
@@ -427,7 +431,30 @@ class MemoryRAG:
             return []
 
         chunks = self._chunk_text(content)
-        ids = [f"{source_name}_chunk_{i}" for i in range(len(chunks))]
+        # O id vem do CAMINHO, nao do nome. `source_name` NAO e unico no corpus:
+        # medido em 2026-08-28, 503 arquivos alvo colapsavam em 426 nomes -- 36
+        # nomes em colisao, 77 arquivos afetados. `SPEC` aparecia 4 vezes, `PRD`
+        # 4, `dispatcher` 4, e cada um dos 19 agentes duas ou tres (porque
+        # `.claude/AGENTS/chico.md` e `.claude/agent-memory/chico/MEMORY.md`
+        # produzem o mesmo `chico`).
+        #
+        # Com `upsert`, quem chega depois sobrescreve os chunks 0..N do anterior
+        # e deixa orfaos os de indice maior -- ligados a OUTRO arquivo. O indice
+        # ficava com documentos Frankenstein: `dispatcher_chunk_*` reunia 34
+        # chunks de um MEMORY.md, 24 de outro e 1 de `agents/dispatcher.py`,
+        # tudo sob o mesmo espaco de id. Sobrescrita silenciosa nunca alcanca
+        # ramo de erro: e a mesma colisao de chave que ja havia acontecido na
+        # auditoria mensal, indexando manuais por basename.
+        #
+        # O caminho relativo a raiz e unico por construcao, e sobrevive a mover
+        # o repositorio. `agent` continua sendo o nome amigavel, que e o que a
+        # filtragem usa.
+        try:
+            chave = file_path.resolve().relative_to(RAIZ_DO_PROJETO).as_posix()
+        except ValueError:
+            # Fora da raiz declarada: cai no caminho absoluto, que ainda e unico.
+            chave = file_path.resolve().as_posix()
+        ids = [f"{chave}#chunk{i}" for i in range(len(chunks))]
         metadatas: Any = [{"agent": source_name, "source": str(file_path)} for _ in chunks]
 
         if chunks:
