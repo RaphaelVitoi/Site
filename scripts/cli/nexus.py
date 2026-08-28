@@ -1548,6 +1548,142 @@ def _execute_ram_cleanse(verbose: bool = True) -> int:
     return collected
 
 
+TETOS_PADRAO = BASE_DIR / "data" / "TETOS_DE_MEMORIA.json"
+
+
+@ops_app.command("guard")
+def memory_guard(
+    once: bool = typer.Option(False, "--once", "-1", help="Le as tres camadas, age se preciso, e sai"),
+    tetos_path: Path = typer.Option(TETOS_PADRAO, "--tetos", help="Arquivo que declara os tetos"),
+):
+    """Guard tri-camada: RAM, VRAM e cache num laco so, com tetos declarados.
+
+    O `optimize-ram --watch` que existia vigiava so RAM, com limiar e intervalo
+    passados por flag. Este le os tres niveis, os tetos vem do arquivo que os
+    declara junto com a medicao que os justifica, e o intervalo responde a
+    pressao em vez de ser constante.
+    """
+    tetos = _ler_tetos(tetos_path)
+    console.print("[bold magenta]=== [NEXUS] GUARD TRI-CAMADA (RAM / VRAM / CACHE) ===[/]")
+    for nome, cfg in tetos.items():
+        unidade = "%" if "teto_pct" in cfg else "MB"
+        console.print(f"  [dim]{nome:<6} teto {cfg.get('teto_pct', cfg.get('teto_mb'))}{unidade} -> {cfg['acao'].split(' -- ')[0]}[/]")
+
+    try:
+        while True:
+            leitura = _medir_pressao(tetos)
+            estourou = [n for n, c in leitura.items() if c["pressao"] is not None and c["valor"] >= c["teto"]]
+
+            for nome in estourou:
+                c = leitura[nome]
+                console.print(
+                    f"[bold red][TETO] {nome.upper()} em {c['valor']:.1f}{c['unidade']} "
+                    f"(teto {c['teto']}{c['unidade']}). Agindo...[/]"
+                )
+                console.print(f"        [dim]{_agir_por_camada(nome, c)}[/]")
+
+            if not estourou:
+                partes = [
+                    f"{n}={c['valor']:.1f}{c['unidade']}" if c["valor"] is not None else f"{n}=?"
+                    for n, c in leitura.items()
+                ]
+                logger.info("[GUARD] %s", " | ".join(partes))
+
+            if once:
+                return
+
+            espera = _intervalo_adaptativo(leitura)
+            logger.debug("[GUARD] proximo ciclo em %ds", espera)
+            time.sleep(espera)
+    except KeyboardInterrupt:
+        console.print("\n[bold cyan]Guard tri-camada finalizado.[/]")
+
+
+
+
+def _ler_tetos(caminho: Path = TETOS_PADRAO) -> dict:
+    """Tetos das tres camadas, do arquivo que os declara com a medicao junto.
+
+    Falha DURA se a fonte sumir. Guard de memoria que perde os tetos e segue
+    rodando nao protege nada e ainda parece que protege -- mesmo raciocinio do
+    portao de credencial, que morre se a lista de padroes desaparecer.
+    """
+    if not caminho.exists():
+        raise FileNotFoundError(
+            f"tetos de memoria ausentes em {caminho}. O guard nao roda as cegas: "
+            "sem teto declarado nao ha o que vigiar."
+        )
+    return json.loads(caminho.read_text(encoding="utf-8"))["camadas"]
+
+
+def _medir_pressao(tetos: dict) -> dict[str, dict]:
+    """Le as tres camadas e devolve a pressao de cada uma, de 0 a 1.
+
+    Camada sem medidor devolve `None` em vez de zero. Foi o defeito que o leitor
+    de VRAM tinha: os tres backends falhavam, `_get_vram_usage` convertia em
+    `(None, 0.0, 0.0)`, e qualquer teto concluiria VRAM vazia e nunca reagiria.
+    Desconhecido tem de ser distinguivel de folgado.
+    """
+    leitura: dict[str, dict] = {}
+
+    mem = psutil.virtual_memory()
+    teto_ram = float(tetos["ram"]["teto_pct"])
+    leitura["ram"] = {"valor": mem.percent, "teto": teto_ram, "unidade": "%", "pressao": mem.percent / teto_ram}
+
+    pct_vram, usado, total = _get_vram_usage()
+    teto_vram = float(tetos["vram"]["teto_pct"])
+    leitura["vram"] = (
+        {"valor": pct_vram, "teto": teto_vram, "unidade": "%", "pressao": pct_vram / teto_vram, "detalhe": f"{usado:.1f}/{total:.1f} GiB"}
+        if pct_vram is not None
+        else {"valor": None, "teto": teto_vram, "unidade": "%", "pressao": None, "detalhe": "sem medidor"}
+    )
+
+    teto_cache = float(tetos["cache"]["teto_mb"])
+    try:
+        from core.sota_context_engine import context_cache  # noqa: PLC0415
+
+        mb = context_cache.tamanho_mb()
+        leitura["cache"] = {"valor": mb, "teto": teto_cache, "unidade": "MB", "pressao": mb / teto_cache}
+    except Exception:  # noqa: BLE001 - camada indisponivel e ausencia de dado, nao erro
+        leitura["cache"] = {"valor": None, "teto": teto_cache, "unidade": "MB", "pressao": None, "detalhe": "sem medidor"}
+
+    return leitura
+
+
+def _intervalo_adaptativo(leitura: dict[str, dict], minimo: int = 15, maximo: int = 600) -> int:
+    """Intervalo que responde a pressao, em vez de constante.
+
+    O default anterior era 300 s fixo, e isso tem os dois defeitos ao mesmo
+    tempo: gasta CPU quando nao ha pressao nenhuma, e demora ate cinco minutos
+    para reagir quando ha. Longe do teto a vigilia e barata e rara; perto dele,
+    frequente.
+    """
+    pressoes = [c["pressao"] for c in leitura.values() if c["pressao"] is not None]
+    if not pressoes:
+        return maximo
+    p = min(1.0, max(0.0, max(pressoes)))
+    return int(maximo - (maximo - minimo) * p)
+
+
+def _agir_por_camada(camada: str, leitura: dict, verbose: bool = False) -> str:
+    """Acao da camada que estourou. Devolve o que foi feito, para o log."""
+    if camada == "ram":
+        liberados = _execute_ram_cleanse(verbose=verbose)
+        return f"GC liberou {liberados} objetos; working set dos workers de background minimizado"
+    if camada == "vram":
+        from utils.ram_optimizer import optimize_ollama_keepalive  # noqa: PLC0415
+
+        ok = optimize_ollama_keepalive(keepalive=0)
+        return "keepalive do Ollama zerado (modelo ocioso descarregado)" if ok else "falha ao zerar keepalive do Ollama"
+    if camada == "cache":
+        from core.sota_context_engine import context_cache  # noqa: PLC0415
+
+        antes = context_cache.tamanho_mb()
+        context_cache._enforce_lru_eviction()
+        return f"cache evictado de {antes:.1f} para {context_cache.tamanho_mb():.1f} MB"
+    return "camada desconhecida"
+
+
 @ops_app.command("optimize-ram")
 def optimize_ram(
     watch: bool = typer.Option(False, "--watch", "-w", help="Executa como daemon em background com auto-higienizacao"),

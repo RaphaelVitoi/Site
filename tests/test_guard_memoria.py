@@ -1,0 +1,186 @@
+"""Guard tri-camada: RAM, VRAM e cache num laço só, com tetos declarados.
+
+O `optimize-ram --watch` que existia vigiava **só RAM**, com limiar e intervalo
+passados por flag — 90% e 300 s por default. Tinha os dois defeitos ao mesmo
+tempo: gastava CPU sem pressão nenhuma e demorava até cinco minutos para reagir
+quando havia.
+
+E faltavam duas camadas. VRAM porque o medidor estava cego até `a86168df` (os
+três leitores cobriam NVIDIA, AMD nativo e ROCm; a máquina é Vulkan). Cache
+porque `max_cache_size_mb = 4096` era atribuído no `__init__` e **nunca lido** —
+a evicção olhava `len(buckets) > 100`, então o teto que nomeava megabytes era
+medido em quantidade de baldes, e 100 baldes podem ser 1 MB ou 400 MB.
+
+**Camada sem medidor devolve `None`, nunca zero.** Foi exatamente o defeito do
+leitor de VRAM: os três backends falhavam, `_get_vram_usage` convertia em
+`(None, 0.0, 0.0)`, e qualquer teto concluiria VRAM vazia e nunca reagiria.
+Desconhecido tem de ser distinguível de folgado.
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+import sys
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+RAIZ = Path(__file__).resolve().parent.parent
+
+
+@pytest.fixture(scope="module")
+def nx():
+    nome = "nexus_guard_sob_teste"
+    spec = importlib.util.spec_from_file_location(nome, RAIZ / "scripts" / "cli" / "nexus.py")
+    assert spec and spec.loader
+    m = importlib.util.module_from_spec(spec)
+    sys.modules[nome] = m
+    try:
+        spec.loader.exec_module(m)
+        yield m
+    except SystemExit:
+        yield m
+    finally:
+        sys.modules.pop(nome, None)
+
+
+@pytest.fixture(scope="module")
+def tetos(nx) -> dict:
+    return nx._ler_tetos()
+
+
+# ---------------------------------------------------------------------------
+#  Os tetos vem de fonte declarada, e a ausencia dela e fatal
+# ---------------------------------------------------------------------------
+
+
+def test_os_tres_tetos_estao_declarados(tetos):
+    assert set(tetos) == {"ram", "vram", "cache"}
+    assert tetos["ram"]["teto_pct"] == 98.0, "o operador pediu 98%, nao o default antigo de 90"
+    assert tetos["vram"]["teto_pct"] > 0
+    assert tetos["cache"]["teto_mb"] > 0
+    for camada, cfg in tetos.items():
+        assert cfg.get("acao"), f"{camada} declara teto sem declarar acao"
+        assert cfg.get("origem_do_numero"), f"{camada} tem teto sem origem -- literal que ninguem ousa mexer"
+
+
+def test_sem_o_arquivo_de_tetos_o_guard_NAO_roda(nx, tmp_path):
+    """Guard que perde os tetos e segue rodando nao protege nada e ainda parece
+    que protege. Mesmo raciocinio do portao de credencial."""
+    with pytest.raises(FileNotFoundError, match="nao roda as cegas"):
+        nx._ler_tetos(tmp_path / "inexistente.json")
+
+
+# ---------------------------------------------------------------------------
+#  Desconhecido nao e zero
+# ---------------------------------------------------------------------------
+
+
+def test_camada_sem_medidor_devolve_None_e_nao_zero(nx, tetos):
+    """A regressao que motivou o arquivo inteiro."""
+    with patch.object(nx, "_get_vram_usage", return_value=(None, 0.0, 0.0)):
+        leitura = nx._medir_pressao(tetos)
+    assert leitura["vram"]["valor"] is None, "VRAM sem medidor voltou a reportar um numero"
+    assert leitura["vram"]["pressao"] is None
+    assert leitura["vram"]["detalhe"] == "sem medidor"
+
+
+def test_camada_sem_medidor_nao_dispara_acao(nx, tetos):
+    """Zero de pressao e teto folgado sao a mesma coisa para quem so olha o
+    numero. Se `None` virasse 0, a camada ficaria muda para sempre; se virasse
+    100, dispararia sem parar. Nao pode ser nem um nem outro."""
+    with patch.object(nx, "_get_vram_usage", return_value=(None, 0.0, 0.0)):
+        leitura = nx._medir_pressao(tetos)
+    estourou = [n for n, c in leitura.items() if c["pressao"] is not None and c["valor"] >= c["teto"]]
+    assert "vram" not in estourou
+
+
+def test_as_tres_camadas_sao_lidas_de_verdade(nx, tetos):
+    leitura = nx._medir_pressao(tetos)
+    assert set(leitura) == {"ram", "vram", "cache"}
+    assert leitura["ram"]["valor"] is not None, "RAM sempre tem medidor via psutil"
+    for camada in leitura.values():
+        assert camada["teto"] > 0
+
+
+# ---------------------------------------------------------------------------
+#  Intervalo que responde a pressao
+# ---------------------------------------------------------------------------
+
+
+def _leitura(ram_pressao: float | None) -> dict:
+    return {"ram": {"valor": 0.0, "teto": 98.0, "unidade": "%", "pressao": ram_pressao}}
+
+
+def test_o_intervalo_encolhe_conforme_a_pressao_sobe(nx):
+    folgado = nx._intervalo_adaptativo(_leitura(0.0))
+    meio = nx._intervalo_adaptativo(_leitura(0.5))
+    apertado = nx._intervalo_adaptativo(_leitura(1.0))
+    assert folgado > meio > apertado, f"nao e monotonico: {folgado}, {meio}, {apertado}"
+    assert apertado >= 15 and folgado <= 600
+
+
+def test_sem_medidor_nenhum_o_intervalo_vai_ao_MAXIMO(nx):
+    """Vigiar de perto o que nao se consegue medir e so gastar CPU."""
+    assert nx._intervalo_adaptativo({"x": {"pressao": None}}) == 600
+
+
+def test_a_pressao_e_limitada_e_nao_produz_intervalo_negativo(nx):
+    """Camada muito acima do teto nao pode virar intervalo negativo."""
+    assert nx._intervalo_adaptativo(_leitura(5.0)) >= 15
+
+
+def test_manda_a_camada_MAIS_pressionada(nx):
+    """Duas camadas, uma folgada e outra no limite: quem decide o ritmo e a
+    pior. Media esconderia a que esta prestes a estourar."""
+    leitura = {
+        "ram": {"pressao": 0.05},
+        "vram": {"pressao": 0.99},
+    }
+    assert nx._intervalo_adaptativo(leitura) <= nx._intervalo_adaptativo({"ram": {"pressao": 0.05}})
+    assert nx._intervalo_adaptativo(leitura) < 60
+
+
+# ---------------------------------------------------------------------------
+#  As acoes, por camada
+# ---------------------------------------------------------------------------
+
+
+def test_cada_camada_tem_acao_propria(nx):
+    """Uma acao so para tres camadas seria expurgo de RAM tentando resolver
+    VRAM cheia."""
+    with patch.object(nx, "_execute_ram_cleanse", return_value=7) as limpeza:
+        assert "7" in nx._agir_por_camada("ram", {})
+    limpeza.assert_called_once()
+
+    falso = MagicMock(return_value=True)
+    with patch.dict(sys.modules, {"utils.ram_optimizer": MagicMock(optimize_ollama_keepalive=falso)}):
+        msg = nx._agir_por_camada("vram", {})
+    assert "keepalive" in msg
+    falso.assert_called_once_with(keepalive=0)
+
+
+def test_o_guard_le_e_sai_com_once(nx, tmp_path):
+    """Os dois estados do laco: com `--once` ele mede, age se preciso, e nao
+    entra em loop -- que e o que torna o guard testavel."""
+    from typer.testing import CliRunner  # noqa: PLC0415
+
+    resultado = CliRunner().invoke(nx.app, ["ops", "guard", "--once"])
+    assert resultado.exit_code == 0, resultado.output
+
+
+def test_o_guard_AGE_quando_a_camada_estoura(nx, tmp_path):
+    """O estado que importa, e o que nunca se observa esperando acontecer."""
+    from typer.testing import CliRunner  # noqa: PLC0415
+
+    tetos_falsos = json.loads((RAIZ / "data" / "TETOS_DE_MEMORIA.json").read_text(encoding="utf-8"))
+    tetos_falsos["camadas"]["ram"]["teto_pct"] = 0.1  # qualquer RAM em uso estoura
+    alvo = tmp_path / "tetos.json"
+    alvo.write_text(json.dumps(tetos_falsos), encoding="utf-8")
+
+    with patch.object(nx, "_execute_ram_cleanse", return_value=3) as limpeza:
+        resultado = CliRunner().invoke(nx.app, ["ops", "guard", "--once", "--tetos", str(alvo)])
+    assert resultado.exit_code == 0, resultado.output
+    limpeza.assert_called_once(), "o teto foi estourado e nenhuma acao rodou"

@@ -1,0 +1,101 @@
+{
+  "$schema_version": "1.0",
+  "projeto": "Site",
+  "declarado_em": "2026-08-28",
+  "declarado_por": "claude@opus-5",
+  "proposito": [
+    "Tetos das tres camadas de memoria, num lugar so, com a MEDICAO que",
+    "justifica cada numero. Existe porque teto sem origem declarada vira",
+    "literal que ninguem ousa mexer -- e porque duas das tres camadas tinham",
+    "teto escrito no codigo que o mecanismo nao honrava."
+  ],
+
+  "maquina_medida": {
+    "data": "2026-08-28",
+    "gpu": "Radeon RX 570",
+    "backend": "Vulkan (nao ROCm -- Polaris nao tem ROCm no Windows)",
+    "vram_total_gib": 8.0,
+    "vram_disponivel_ao_ollama_gib": 7.2,
+    "ram_total_gb": 31.9,
+    "nota": [
+      "Os tetos abaixo sao PERCENTUAIS de propósito. Numero absoluto amarra a",
+      "declaracao a esta placa e a esta quantidade de RAM; percentual sobrevive",
+      "a troca de hardware, e o total e sempre medido em tempo de execucao."
+    ]
+  },
+
+  "camadas": {
+    "ram": {
+      "gauge": "psutil.virtual_memory().percent",
+      "teto_pct": 98.0,
+      "origem_do_numero": [
+        "Decisao do operador em 2026-08-28. O default anterior era 90, e",
+        "disparava expurgo com folga de 3 GB ainda livres nesta maquina --",
+        "trabalho de limpeza sem pressao real."
+      ],
+      "acao": "_execute_ram_cleanse -- GC mais trim de working set dos workers de background",
+      "cuidado_declarado": [
+        "NAO trimar o processo que esta trabalhando. Ele pagina tudo de volta no",
+        "instante seguinte e troca RAM por I/O, ficando mais lento sem liberar",
+        "nada de forma estavel. Trim paga em processo OCIOSO.",
+        "E trim nao reduz commit charge: move paginas para standby, e pagina",
+        "comprometida continua comprometida. Medido nesta maquina, o aperto real",
+        "era commit em 90% do limite, nao working set."
+      ]
+    },
+    "vram": {
+      "gauge": "nexus._get_vram_usage -- soma de size_vram em /api/ps sobre o total do log do Ollama",
+      "teto_pct": 85.0,
+      "origem_do_numero": [
+        "Palpite declarado, nao medicao. 85% de 7,2 GiB deixa ~1,1 GiB de folga,",
+        "que e a ordem de grandeza do KV cache de um modelo pequeno com contexto",
+        "modesto. Se um dia houver medicao de quanto o KV cache de fato ocupa",
+        "por modelo, este numero deve ser refeito a partir dela."
+      ],
+      "acao": "ram_optimizer.optimize_ollama_keepalive(0) -- descarrega modelo ocioso",
+      "cuidado_declarado": [
+        "Mede o que o OLLAMA ocupa, nao o consumo da placa inteira. Para teto de",
+        "modelos e a grandeza certa; para consumo de dispositivo, nao e."
+      ]
+    },
+    "cache": {
+      "gauge": "core.sota_context_engine.context_cache.tamanho_mb",
+      "teto_mb": 4096,
+      "origem_do_numero": [
+        "Ja estava em `max_cache_size_mb = 4096` desde sempre -- e era atribuido",
+        "no __init__ e NUNCA LIDO. A eviccao olhava `len(buckets) > 100`, entao",
+        "o teto que nomeava megabytes era medido em quantidade de baldes, e 100",
+        "baldes podem ser 1 MB ou 400 MB. O numero foi mantido; o que mudou e",
+        "que agora ele vale."
+      ],
+      "acao": "_enforce_lru_eviction -- evicta o efemero menos usado ate voltar abaixo do teto",
+      "cuidado_declarado": [
+        "VRAM_HOT e RAM_COLD nao sao evictados: a primeira e declarada como",
+        "travada, a segunda ja e armazenamento frio."
+      ]
+    }
+  },
+
+  "periodicidade": {
+    "modelo": "intervalo que responde a pressao, nao constante",
+    "intervalo_min_s": 15,
+    "intervalo_max_s": 600,
+    "regra": [
+      "O intervalo interpola entre o maximo e o minimo conforme a camada mais",
+      "pressionada se aproxima do seu teto. Longe do teto a vigilia e barata e",
+      "rara; perto dela, frequente.",
+      "O default anterior era 300 s fixo, o que tem os dois defeitos ao mesmo",
+      "tempo: gasta CPU quando nao ha pressao, e demora ate 5 minutos para",
+      "reagir quando ha."
+    ],
+    "gatilho_reativo": "qualquer camada no seu teto dispara a acao imediatamente, sem esperar o ciclo"
+  },
+
+  "nao_verificado": [
+    "o teto de VRAM em 85% e palpite declarado, nao medicao de KV cache",
+    "nao foi medido quanto cada acao efetivamente libera; o guard age e mede",
+    "de novo no ciclo seguinte, mas nao ha estudo de eficacia por acao",
+    "o guard nao foi exercitado sob pressao real de 98% de RAM -- os dois",
+    "estados foram exercitados com gauge dublado, nao com a maquina saturada"
+  ]
+}
