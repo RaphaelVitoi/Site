@@ -46,9 +46,11 @@ class AgentTier(int, Enum):
     TIER_0_SOVEREIGN = 0
     TIER_1_MASTER = 1
     TIER_2_CLOUD_SUPERAGENT = 2
-    TIER_3_COMPANION = 3
+    TIER_3_CUSTOM_FLEET = 3
     TIER_4_SUBAGENT = 4
-    TIER_5_LOCAL_EDGE = 5
+    TIER_5_INTEGRATION_BOTS = 5
+    TIER_6_LOCAL_EDGE = 6
+    TIER_7_INFRA_GATE = 7
 
 
 @dataclass(frozen=True)
@@ -79,8 +81,8 @@ class TierPolicyEngine:
 
     @staticmethod
     def should_auto_ground(tier: AgentTier, query: str) -> bool:
-        # Tiers 3, 4, 5 benefit from mandatory grounding on ambiguous or recency queries
-        if tier.value >= AgentTier.TIER_3_COMPANION.value:
+        # Tiers 3 (Custom/Copilot), 4 (Subagents), 5 (Bots), 6 (Local/Edge) benefit from mandatory grounding
+        if tier.value >= AgentTier.TIER_3_CUSTOM_FLEET.value:
             return True
         # Tiers 0, 1, 2 only ground when explicit URL or search triggers appear
         triggers = ["http://", "https://", "search:", "pesquise:", "doc:", "paper:", "release:"]
