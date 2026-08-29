@@ -69,28 +69,14 @@ def _collect_keys(prefixes: tuple, exclude_prefixes: tuple = ()) -> list[str]:
     return list(dict.fromkeys(keys))
 
 
-def _collect_keys_with_pool(prefixes: tuple, exclude_prefixes: tuple = ()) -> list[dict[str, str]]:
-    """Coleta chaves e extrai o 'pool' (ex: nome do projeto) do nome da variavel."""
-    keys_with_pools = []
-    seen_keys = set()
-
-    for k, v in ALL_ENV_VARS.items():
-        key_name = k.upper()
-        if not _is_real_key_value(v) or v in seen_keys:
-            continue
-        if any(key_name.startswith(ex) for ex in exclude_prefixes):
-            continue
-
-        if any(key_name.startswith(pf) for pf in prefixes):
-            # SOTA: Extrai o nome do Pool do nome da variavel (GEMINI_[POOL_NAME]_...)
-            # Ex: GEMINI_PROJETO_B_KEY_1 -> pool 'projeto_b'
-            pool_match = re.search(r"GEMINI_([A-Z0-9_]+?)_KEY", key_name)
-            pool_name = pool_match.group(1).lower() if pool_match else "legacy"
-
-            keys_with_pools.append({"key": v, "pool": pool_name})
-            seen_keys.add(v)
-
-    return keys_with_pools
+# `_collect_keys_with_pool` e `GEMINI_ALL_KEYS_WITH_POOLS` foram removidos em
+# 2026-08-29 (registro-2026-08-29-tres-orfaos). A estrutura {key, pool} tem
+# consumidor -- `cli/commands.py:490` le `entry["pool"]` -- mas o consumidor
+# MONTA a propria lista a mao, com uma taxonomia de pool diferente: ali o pool
+# vem de QUAL lista a chave veio (pro/flash/legacy), e aqui vinha do NOME da
+# variavel de ambiente por regex. Dois produtores da mesma forma, vocabularios
+# diferentes, e o declarado era o que ninguem lia. Alem disso a estrutura
+# mantinha valores de chave em texto claro num agregado que nada consumia.
 
 
 GEMINI_PRO_KEYS = _collect_keys(("GEMINI_PRO", "GOOGLE_PRO"))
@@ -108,8 +94,6 @@ GEMINI_KEYS = _collect_keys(
 # Pool total para auditorias/telemetria.
 GEMINI_ALL_KEYS = list(dict.fromkeys(GEMINI_PRO_KEYS + GEMINI_FLASH_KEYS + GEMINI_KEYS))
 
-# SOTA: Nova fonte de verdade para auditoria com pools de projetos
-GEMINI_ALL_KEYS_WITH_POOLS = _collect_keys_with_pool(("GEMINI", "GOOGLE"), exclude_prefixes=("GEMINI_CLI",))
 
 OPENROUTER_KEYS = list(
     dict.fromkeys(

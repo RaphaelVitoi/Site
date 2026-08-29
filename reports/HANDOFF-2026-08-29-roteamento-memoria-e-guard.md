@@ -250,3 +250,22 @@ chamador de producao.
 
 **A conclusao do handoff nao muda:** o item 2 segue como decisao do operador
 sobre a tabela. Ver [[registro-2026-08-29-o-fallback-que-nao-carrega]].
+
+## Revisao de ancora -- 2026-08-29, os tres orfaos
+
+Ancora tocada: `data/DECLARADO_E_NAO_LIDO.json`.
+
+O item 5 da tabela da secao 2 -- *"`LOCAL_MODEL_MAP`, `_MODEL_31B`,
+`GEMINI_ALL_KEYS_WITH_POOLS`"* -- **esta fechado**. Os tres saem de `pendentes`
+com vereditos diferentes: `_MODEL_31B` foi ligado (existia para eliminar um
+literal duplicado que ficou tres linhas acima dela, intacto), e os outros dois
+foram removidos.
+
+**A conclusao do handoff nao muda** -- o item era "aguardando veredito" e o
+veredito veio. Mas ele agrupava por sintoma: os tres nao tinham nada em comum
+alem de ninguem os ler, e as tres causas eram distintas. Ver
+[[registro-2026-08-29-tres-orfaos]].
+
+Uma divergencia fica declarada e nao resolvida: `cli/commands.py` e o removido
+`_collect_keys_with_pool` produziam a mesma forma `{key, pool}` com taxonomias
+de pool diferentes.

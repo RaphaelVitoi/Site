@@ -174,11 +174,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# SOTA: Apontado para a instancia de 31B Cloud ativa no seu terminal
-MODEL_ID = os.environ.get("SOTA_LOCAL_MODEL", "gemma4:31b")
-
 # SOTA: Constantes de modelo para expurgo de literais duplicados (S1192)
+# Definido ANTES de MODEL_ID de proposito: a constante nasceu para eliminar a
+# duplicacao do literal e a unica duplicata ficou tres linhas acima dela, o que
+# a deixou orfa cumprindo zero do proprio proposito. Agora ela e usada.
 _MODEL_31B = "gemma4:31b"
+
+# SOTA: Apontado para a instancia de 31B Cloud ativa no seu terminal
+MODEL_ID = os.environ.get("SOTA_LOCAL_MODEL", _MODEL_31B)
 _SSE_PREFIX = "data: "
 _SSE_DONE = "[DONE]"
 _JSON_CONTENT = "application/json"
@@ -267,18 +270,12 @@ def _format_predictive_profile(profile: CognitiveProfile | None) -> str:
     return f"\n[PERFIL COGNITIVO (TELEMETRIA BAYESIANA)]\n{prof_str}\nDiretriz SOTA: Adapte sua argumentacao e justifique a jogada mitigando ativamente as maiores fraquezas numericas deste perfil.\n[END_PROFILE]\n"
 
 
-# SOTA: Mapeamento e Normalizacao de Modelos Gemma 4 (Foco Local: 12B/4B | Cloud: 31B)
-LOCAL_MODEL_MAP = {
-    "12b": "12b",
-    "e4b": "e4b",
-    "e2b": "e2b",
-    "4b": "e4b",
-    "31b_cloud": "31b_cloud",
-    "llama3_8b": "llama3_8b",
-    "qwen": "qwen",
-    "granite": "granite",
-    "deepseek": "deepseek",
-}
+# `LOCAL_MODEL_MAP` foi removido em 2026-08-29 (registro-2026-08-29-tres-orfaos).
+# Nao tinha leitor, era identidade em oito das nove entradas, e a unica que nao
+# era -- `4b -> e4b` -- CONTRADIZIA o mapa vivo, onde `4b -> gemma4:latest`.
+# Liga-lo teria mandado o alias `4b` para o gemma4:e4b, que nao cabe na VRAM
+# desta maquina. Quem resolve alias local e OLLAMA_MODEL_MAP, alimentado por
+# data/ollama_models.json.
 
 CLOUD_MODEL_MAP = {
     "12b": "gemma-4-12b-it",
