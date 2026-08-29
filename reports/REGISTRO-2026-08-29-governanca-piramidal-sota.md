@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: chico@v8-gold
 criado_em: 2026-08-29T18:33-03:00
-atualizado_em: 2026-08-29T18:44-03:00
+atualizado_em: 2026-08-29T19:22-03:00
 classes: [interno, medido]
 caminhos:
   - CLAUDE.md
@@ -22,11 +22,12 @@ config_medida:
   testes_passando: 658
 verificado:
   - formalizacao da hierarquia piramidal de 8 tiers com soberania de Raphael Vitoi no Tier 0
+  - refinamento do Tier 0 (Soberania & Lideranca -- Raphael Vitoi, CEO e desenvolvedor multidisciplinar)
+  - refinamento do Tier 1 (Nucleo Cognitivo Mestre -- Claude 5 Sonnet/Opus, Gemini 3.7 Flash High/Pro, ChatGPT 5.6 Luna/Terra/Sol, Codex, Antigravity 2.0/IDE/VSCode)
+  - refinamento do Tier 6 (Modelos Locais -- Ollama/llama.cpp gemma4:31b-cloud, gemma4:e4@latest, qwen2.5-coder)
   - subagents alocados em Tier 4 dedicado com auto-grounding Web e alcance universal
   - indexacao horizontal em CLAUDE.md secao 7 e MODUS_OPERANDI.md secao 10
   - invariante M.O. 13.G de SHA + Assinatura + Proposito regrada canonicamente
-  - instrucoes canonicas de GitHub Copilot criadas em .github/copilot-instructions.md
-  - suite de testes em tests/test_sota_web_browse.py validada com 100% de aprovacao
 nao_verificado:
   - chamadas reais de rede a APIs pagas durante os testes unitarios
 ---
