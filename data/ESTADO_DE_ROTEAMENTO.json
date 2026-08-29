@@ -13,7 +13,6 @@
     "atualize esta declaracao e o registro da frente 4 no mesmo commit, nunca",
     "afrouxe o teste."
   ],
-
   "a_decisao": {
     "data": "2026-08-28",
     "superficie_agentes": "a POLITICA e a autoridade; o caminho quente resolve por core.config.modelo_do_agente",
@@ -27,7 +26,6 @@
       "levantar ForaDaAutoridadeDaPolitica."
     ]
   },
-
   "os_dois_modulos": {
     "llm/routing_policy.py": {
       "pergunta_que_responde": "QUAL modelo este agente deve usar?",
@@ -54,7 +52,6 @@
       "tentativas em que esse modelo entra na cabeca."
     ]
   },
-
   "fonte_unica_do_caminho_quente": {
     "funcao": "core.config.modelo_do_agente",
     "precedencia": [
@@ -63,10 +60,22 @@
       "3. primary_model do manifesto -- rede de seguranca COM AVISO, nunca silenciosa"
     ],
     "consumidores": [
-      { "caminho": "llm/orchestrator.py", "papel": "roteamento de producao" },
-      { "caminho": "engine/llm_api.py", "papel": "roteamento de producao" },
-      { "caminho": "agents/prompts.py", "papel": "prompt" },
-      { "caminho": "agents/context_builder.py", "papel": "prompt" }
+      {
+        "caminho": "llm/orchestrator.py",
+        "papel": "roteamento de producao"
+      },
+      {
+        "caminho": "engine/llm_api.py",
+        "papel": "roteamento de producao"
+      },
+      {
+        "caminho": "agents/prompts.py",
+        "papel": "prompt"
+      },
+      {
+        "caminho": "agents/context_builder.py",
+        "papel": "prompt"
+      }
     ],
     "por_que_os_dois_de_prompt_entram": [
       "Eles INFORMAM ao agente, no system prompt, em que modelo ele roda. Ate",
@@ -74,7 +83,6 @@
       "fonte: o agente era informado de um modelo e executado em outro."
     ]
   },
-
   "consumidores_de_AGENT_MODEL_MAP": {
     "declaracao": [
       "Saida de llm.routing_policy, escrita por core/config.py:_resolver_modelos",
@@ -105,7 +113,6 @@
       }
     ]
   },
-
   "o_que_foi_medido": {
     "data": "2026-08-28, depois da decisao",
     "metodo": "execucao, nao leitura: core.config carregado e o caminho quente comparado com a politica agente a agente",
@@ -131,7 +138,6 @@
       "profundo."
     ]
   },
-
   "superficie_subagentes": {
     "autoridade": "core/subagents_mesh.py :: SUBAGENT_MODEL_MAP",
     "invariante_do_operador": "custo zero -- todo tier roda na frota local",
@@ -142,10 +148,14 @@
       "SUBAGENTES mapeia tier -> ClasseTarefa. E CLASSIFICACAO, nao atribuicao de",
       "modelo: informacao diferente, usada por _classe_de e por cobertura()."
     ],
-    "nomes_que_sao_agente_E_tier": ["architect", "curator", "implementor", "validador"],
+    "nomes_que_sao_agente_E_tier": [
+      "architect",
+      "curator",
+      "implementor",
+      "validador"
+    ],
     "resolucao_da_sobreposicao": "resolvem como AGENTE, que e o que _classe_de sempre fez"
   },
-
   "aliases_do_manifesto_ausentes_de_todo_registro": {
     "declaracao": [
       "primary_model que nao esta no MODEL_REGISTRY de nuvem NEM na frota local",
@@ -169,20 +179,36 @@
       }
     ]
   },
-
   "pendencias_que_a_decisao_nao_resolveu": [
     {
-      "item": "Rota.fallback continua sem consumidor",
+      "item": "Rota.fallback tem consumidor, e o consumidor nao tem chamador de producao",
       "detalhe": [
-        "A politica declara primario, fallback e escalona_para. O caminho quente",
-        "consome so o primario; o resto da cadeia de tentativas vem das listas",
-        "globais DEEP_THINKING_MODELS / FAST_OPERATIONS_MODELS.",
-        "Nao foi ligado nesta passagem de proposito: o fallback da classe LOCAL e",
-        "gemma4:e4b, e ha medicao anterior de que o e4b e multimodal e nao cabe na",
-        "VRAM desta maquina. Tornar o fallback alcancavel sem antes revisar essa",
-        "entrada criaria um caminho para um modelo que nao carrega.",
-        "E decisao do operador sobre a TABELA, nao sobre o encanamento."
-      ]
+        "REVISTO EM 2026-08-29. O texto anterior dizia que o fallback continuava",
+        "sem consumidor e explicava por que NAO liga-lo: o fallback da classe",
+        "LOCAL e gemma4:e4b, que nao cabe na VRAM desta maquina, e torna-lo",
+        "alcancavel criaria caminho para um modelo que nao carrega.",
+        "Medido: o consumidor FOI escrito em 2026-08-27 --",
+        "llm/routing_policy.py:426, `decidir(..., primario_indisponivel=True)`",
+        "devolve Decisao(rota.fallback, Origem.FALLBACK). A entrada LOCAL nao foi",
+        "revisada junto. O aviso acima foi atravessado, nao respondido.",
+        "O dano nao chegou porque `primario_indisponivel=True` nao tem UM chamador",
+        "de producao -- so tests/test_routing_policy.py, linhas 442, 451 e 463. O",
+        "caminho esta armado e desconectado; quando alguem ligar, chega.",
+        "Numeros do proprio repo, que a entrada anterior nao tinha:",
+        "  vram_disponivel_ao_ollama_gib = 7.2 (data/TETOS_DE_MEMORIA.json)",
+        "  gemma4:e4b  = 9.6 GB   -- fallback da classe LOCAL",
+        "  gemma4:12b  = 7.6 GB   -- primario da classe LOCAL",
+        "Ou seja: nao e so o fallback que nao cabe. O PRIMARIO tambem estoura o",
+        "teto declarado, por 0,4 GB. E o fallback e 2 GB MAIOR que o primario --",
+        "degradar deveria pedir menos, e ali pede mais. O nome esconde: 'e4b' soa",
+        "menor que '12b'.",
+        "Continua sendo decisao do operador sobre a TABELA. O que mudou e que",
+        "agora ha um detector: test_nenhuma_rota_local_nova_estoura_a_vram_declarada",
+        "fixa as duas violacoes conhecidas e reprova qualquer rota LOCAL nova com",
+        "o mesmo defeito."
+      ],
+      "revisado_em": "2026-08-29",
+      "registro": "registro-2026-08-29-o-fallback-que-nao-carrega"
     },
     {
       "item": "a heuristica de economia tem uma tabela de nomes embutida",
