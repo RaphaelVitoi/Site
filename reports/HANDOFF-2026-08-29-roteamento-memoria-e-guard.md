@@ -200,3 +200,16 @@ regra; em `nexus.py`, a faxina descrita acima.
 respeitando a constante declarada, e a arvore que se declara superada continua
 saindo do indice. A suite de chunking (`tests/test_chunking_rag.py`) cobre a
 extracao e esta verde.
+
+## Revisao de ancora -- 2026-08-29, pendencias 9 e 10 fechadas
+
+Ancoras atingidas: `data/TETOS_DE_MEMORIA.json`, `scripts/cli/nexus.py`.
+
+O que mudou nelas: a higienizacao periodica do `optimize-ram --watch` deixou de
+rodar por relogio e passou a exigir pressao medida em commit; o bloco
+`inalcancavel_nesta_maquina` do JSON ganhou a decisao de 2026-08-29 e passou a
+ser lido pelo codigo.
+
+**As conclusoes deste documento seguem de pe.** Nada aqui depende do ramo
+periodico do guard nem do teto de RAM. O roteamento e a memoria continuam como
+descritos.

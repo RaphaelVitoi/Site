@@ -311,3 +311,100 @@ def test_o_ritmo_segue_a_camada_pressionada_e_nao_a_folgada(nx, tetos):
     assert com_tudo <= so_ram, (
         f"a camada mais pressionada nao esta mandando no ritmo: {com_tudo}s com tudo, {so_ram}s so com RAM"
     )
+
+
+# ---------------------------------------------------------------------------
+# Higienizacao periodica: o ramo que fabricava o proprio teto
+# ---------------------------------------------------------------------------
+# Medido em 2026-08-29: `optimize-ram --watch --threshold 98 --interval 300`
+# rodou 7h54m. O limiar reativo nunca disparou -- 98% de RAM e inalcancavel
+# nesta maquina. Mas o ramo periodico disparava a cada 300 s SEM checar nada,
+# ~95 vezes, e o trim de working set que ele aciona empurra pagina para standby;
+# standby conta como disponivel; `percent` CAI. O guard fabricou o teto de
+# 72-73% que existia para vigiar. O reboot do operador foi o controle: sem o
+# guard, a RAM variou de 61,1% a 93,0%.
+
+
+def test_sem_pressao_de_commit_a_periodica_nao_age(nx):
+    """O defeito original: agia por relogio, e a acao derrubava a leitura."""
+    with patch.object(nx, "_commit_charge_pct", return_value=(40.0, 30.0, 75.0)):
+        agir, motivo = nx._pressao_justifica_higienizacao()
+    assert agir is False
+    assert "sem pressao real" in motivo, motivo
+
+
+def test_com_pressao_de_commit_a_periodica_age(nx):
+    """Controle: o portao tem de ter os DOIS estados, ou nao e portao."""
+    with patch.object(nx, "_commit_charge_pct", return_value=(88.0, 66.0, 75.0)):
+        agir, motivo = nx._pressao_justifica_higienizacao()
+    assert agir is True
+    assert "88.0%" in motivo and "piso" in motivo, motivo
+
+
+def test_sem_medidor_de_commit_a_periodica_suspende_em_vez_de_agir(nx):
+    """Ausencia de medidor nao e ausencia de pressao -- e tambem nao e pressao.
+
+    Nao agir e o lado seguro: a acao contaminaria `percent`, a unica leitura
+    que ainda sobraria, e o guard passaria a se auto-elogiar no escuro.
+    """
+    with patch.object(nx, "_commit_charge_pct", return_value=None):
+        agir, motivo = nx._pressao_justifica_higienizacao()
+    assert agir is False
+    assert "sem medidor" in motivo, motivo
+
+
+def test_a_decisao_nao_le_virtual_memory_percent(nx):
+    """A grandeza que decide nao pode ser a que a propria acao contamina.
+
+    Teste estrutural, e nao de valor: mesmo com a RAM inventada em 99%, sem
+    pressao de commit a periodica continua sem agir. Se alguem reintroduzir
+    `percent` no criterio, este teste reprova.
+    """
+    fake = MagicMock(percent=99.0)
+    with (
+        patch.object(nx.psutil, "virtual_memory", return_value=fake),
+        patch.object(nx, "_commit_charge_pct", return_value=(40.0, 30.0, 75.0)),
+    ):
+        agir, _ = nx._pressao_justifica_higienizacao()
+    assert agir is False, "a decisao voltou a olhar virtual_memory().percent"
+
+
+def test_o_piso_preditivo_fica_abaixo_do_teto_declarado_de_commit(nx, tetos):
+    """Piso acima do teto seria portao que so abre depois de o vermelho acender."""
+    assert nx._PISO_PREDITIVO_COMMIT_PCT < float(tetos["commit"]["teto_pct"])
+
+
+# ---------------------------------------------------------------------------
+# Teto inalcancavel: declarado no JSON desde 2026-08-29, lido por ninguem
+# ---------------------------------------------------------------------------
+
+
+def test_o_resumo_marca_a_camada_de_teto_inalcancavel(nx, tetos):
+    """O bloco existia no JSON e nao chegava ao operador -- aviso desconectado.
+
+    Para `ram` bater em 98% o livre teria de cair de 8,59 GB para 0,64 GB, fator
+    de 13. Portao que nao consegue ficar vermelho e decoracao, e decoracao sem
+    aviso e pior: parece vigilancia.
+    """
+    leitura = nx._medir_pressao(tetos)
+    assert leitura["ram"].get("inalcancavel") is True, "o bloco do JSON nao chegou na leitura"
+    assert "ram=" in nx._resumo_da_leitura(leitura)
+    rotulo_ram = next(p for p in nx._resumo_da_leitura(leitura).split(" | ") if p.startswith("ram="))
+    assert rotulo_ram.endswith("!"), f"a marca nao saiu no resumo: {rotulo_ram}"
+
+
+def test_camada_sem_o_bloco_no_json_nao_ganha_a_marca(nx, tetos):
+    """Controle: a marca tem de vir do JSON, e nao ser pintada em toda camada."""
+    leitura = nx._medir_pressao(tetos)
+    assert leitura["commit"].get("inalcancavel") is not True
+    rotulo = next(p for p in nx._resumo_da_leitura(leitura).split(" | ") if p.startswith("commit="))
+    assert not rotulo.endswith("!"), rotulo
+
+
+def test_a_marca_nao_atropela_o_interrogacao_de_camada_sem_medidor(nx):
+    """`?` e `!` dizem coisas diferentes: cego nao e o mesmo que decorativo."""
+    leitura = {
+        "cega": {"valor": None, "teto": 10.0, "unidade": "%", "pressao": None, "inalcancavel": True},
+        "viva": {"valor": 5.0, "teto": 10.0, "unidade": "%", "pressao": 0.5},
+    }
+    assert nx._resumo_da_leitura(leitura) == "cega=? | viva=5.0%"

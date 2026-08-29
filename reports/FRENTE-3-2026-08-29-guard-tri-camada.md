@@ -316,3 +316,22 @@ Um numero muda: os testes do guard foram renomeados para minusculas (N802). O
 comportamento medido e o mesmo; tres deles passavam por acaso e agora passam por
 contrato -- ver [[registro-2026-08-29-shell-true-nos-catalogos]] e a mensagem do
 commit desta revisao.
+
+## Revisao de ancora -- 2026-08-29, pendencias 9 e 10 fechadas
+
+Ancoras atingidas: `data/TETOS_DE_MEMORIA.json`, `scripts/cli/nexus.py`.
+
+**A secao 8 deste documento fica desatualizada em um ponto, e a correcao e
+favoravel.** Ela descrevia o `--once` que reportava teto e nao medicao. Isso
+segue corrigido, e agora o resumo carrega uma marca a mais: `ram=89.3%!`, onde
+`!` diz que aquele teto e inalcancavel nesta maquina. O bloco que declara isso
+existia no JSON e nao era lido por ninguem.
+
+**A secao 9 fica reforcada, nao contrariada.** Ela dizia que commit decide
+RECUSA e nao LENTIDAO. A higienizacao periodica do `optimize-ram --watch` passou
+a decidir por commit exatamente por isso -- e porque `virtual_memory().percent`
+e a grandeza que a propria acao contamina.
+
+Um numero deste documento nao muda: os quatro tetos seguem 98 / 92 / 85 / 4096.
+A decisao registrada foi **nao** baixar o de RAM, e o motivo esta no JSON e no
+handoff do diagnostico.

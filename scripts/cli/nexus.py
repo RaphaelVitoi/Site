@@ -1724,9 +1724,26 @@ def _medir_pressao(tetos: dict) -> dict[str, dict]:
     """
     leitura: dict[str, dict] = {}
 
+    def _marcar_inalcancavel(nome: str, camada: dict) -> dict:
+        """Repassa o aviso do JSON para dentro da leitura.
+
+        `TETOS_DE_MEMORIA.json` ja declarava, desde 2026-08-29, que o teto de
+        98% da RAM e INALCANCAVEL nesta maquina -- o livre teria de cair de
+        8,59 GB para 0,64 GB, fator de 13. Mas nada no codigo lia esse bloco,
+        entao o operador via `ram=71.5%` ao lado de um teto que nunca cruza e
+        concluia que havia vigilancia ali. Bloco de declaracao sem consumidor e
+        a mesma falha que o guard existe para achar: aviso desconectado do que
+        avisa.
+        """
+        if (tetos.get(nome) or {}).get("inalcancavel_nesta_maquina"):
+            camada["inalcancavel"] = True
+        return camada
+
     mem = psutil.virtual_memory()
     teto_ram = float(tetos["ram"]["teto_pct"])
-    leitura["ram"] = {"valor": mem.percent, "teto": teto_ram, "unidade": "%", "pressao": mem.percent / teto_ram}
+    leitura["ram"] = _marcar_inalcancavel(
+        "ram", {"valor": mem.percent, "teto": teto_ram, "unidade": "%", "pressao": mem.percent / teto_ram}
+    )
 
     # COMMIT e a grandeza que de fato falha, e a primeira versao deste guard nao
     # a media. Medido em 2026-08-29 nesta maquina: RAM fisica **estavel em 72%**
@@ -1773,11 +1790,18 @@ def _resumo_da_leitura(leitura: dict[str, dict]) -> str:
 
     `?` e nao `0`: zero diria "folgada" sobre uma camada que ninguem consegue
     medir, e foi exatamente assim que o leitor de VRAM ficou mudo por meses.
+
+    Camada com teto inalcancavel sai com `!`: ela MEDE, mas o portao dela nao
+    consegue ficar vermelho, e nao dizer isso e deixar o operador confundir
+    decoracao com vigilancia.
     """
-    return " | ".join(
-        f"{n}={c['valor']:.1f}{c['unidade']}" if c["valor"] is not None else f"{n}=?"
-        for n, c in leitura.items()
-    )
+    def _rotulo(nome: str, c: dict) -> str:
+        if c["valor"] is None:
+            return f"{nome}=?"
+        marca = "!" if c.get("inalcancavel") else ""
+        return f"{nome}={c['valor']:.1f}{c['unidade']}{marca}"
+
+    return " | ".join(_rotulo(n, c) for n, c in leitura.items())
 
 
 def _mais_pressionada(leitura: dict[str, dict]) -> tuple[str | None, float]:
@@ -1833,6 +1857,39 @@ def _agir_por_camada(camada: str, verbose: bool = False) -> str:
     return "camada desconhecida"
 
 
+# Piso da higienizacao periodica do `optimize-ram --watch`.
+#
+# Medido nesta maquina em 2026-08-29: com o guard rodando por 7h54m, a RAM
+# ficou imovel em 72-73%; depois do reboot, sem ele, variou de 61,1% a 93,0%.
+# A causa NAO era o limiar reativo -- era o ramo periodico, que disparava a
+# cada 300 s sem checar coisa alguma, ~95 vezes. O trim de working set que ele
+# aciona empurra pagina para a standby list, standby conta como disponivel, e
+# `virtual_memory().percent` CAI. A ferramenta fabricava o teto que existia
+# para vigiar, e mascarou a pressao real por oito horas.
+#
+# Daqui vem a regra: o piso NAO pode ser lido em `percent`, que e exatamente a
+# grandeza contaminada pela propria acao. Commit charge nao se move com trim --
+# pagina prometida continua prometida -- entao e ele quem decide.
+_PISO_PREDITIVO_COMMIT_PCT = 75.0
+
+
+def _pressao_justifica_higienizacao() -> tuple[bool, str]:
+    """A higienizacao periodica deve agir agora? Decide por COMMIT, nao por RAM.
+
+    Devolve tambem o motivo, porque ciclo que nao age precisa dizer por que nao
+    agiu: "nada aconteceu" e indistinguivel de "o guard morreu".
+    """
+    commit = _commit_charge_pct()
+    if commit is None:
+        # Sem medidor nao se inventa pressao nem se inventa folga. Nao agir e o
+        # lado seguro: a acao contaminaria a unica leitura que ainda sobraria.
+        return False, "commit sem medidor -- periodica suspensa"
+    pct, usado, limite = commit
+    if pct >= _PISO_PREDITIVO_COMMIT_PCT:
+        return True, f"commit {pct:.1f}% ({usado:.1f}/{limite:.1f} GB) >= piso {_PISO_PREDITIVO_COMMIT_PCT}%"
+    return False, f"commit {pct:.1f}% < piso {_PISO_PREDITIVO_COMMIT_PCT}% -- sem pressao real"
+
+
 @ops_app.command("optimize-ram")
 def optimize_ram(
     watch: bool = typer.Option(False, "--watch", "-w", help="Executa como daemon em background com auto-higienizacao"),
@@ -1860,11 +1917,26 @@ def optimize_ram(
                     time.sleep(2.0)
                     continue
 
-                # 2. Higienizacao Preditiva Periodica sem degradacao
+                # 2. Higienizacao periodica -- SOB PRESSAO MEDIDA, nunca por relogio.
+                #    O relogio marca quando OLHAR; quem decide se AGE e o commit.
                 if now - last_periodic >= interval:
-                    logger.info(f"[MEMORY-GUARD] Higienizacao ciclica preditiva executada. RAM: {current_percent:.1f}%")
-                    _execute_ram_cleanse(verbose=False)
                     last_periodic = now
+                    agir, motivo = _pressao_justifica_higienizacao()
+                    if not agir:
+                        logger.info("[MEMORY-GUARD] Ciclo sem acao -- %s", motivo)
+                    else:
+                        antes = _commit_charge_pct()
+                        _execute_ram_cleanse(verbose=False)
+                        depois = _commit_charge_pct()
+                        # O efeito e declarado em commit, e nao em `percent`: o
+                        # trim derruba `percent` mesmo quando nao liberou nada,
+                        # entao "melhorou" lido ali seria a acao se auto-elogiando.
+                        efeito = (
+                            f"{antes[0]:.1f}% -> {depois[0]:.1f}% ({depois[0] - antes[0]:+.1f} pontos)"
+                            if antes and depois
+                            else "nao medido"
+                        )
+                        logger.info("[MEMORY-GUARD] Higienizacao por %s. Commit %s", motivo, efeito)
 
                 time.sleep(3.0)
         except KeyboardInterrupt:
