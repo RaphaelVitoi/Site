@@ -10,6 +10,7 @@ commit: ff2e8742
 classes: [interno, medido, memoria]
 caminhos:
   - reports/RELATORIO-2026-08-29-analise-integral-ecossistema-sota-v8-gold.md
+  - reports/RELATORIO-2026-08-29-impacto-quantitativo-qualitativo-sota-v8-gold.md
   - memory/notepad_active.md
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
