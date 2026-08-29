@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 
 class MemoryBlock:
     def __init__(
-        self, key: str, title: str, content: str, tags: Optional[List[str]] = None, ttl_seconds: Optional[int] = None
+        self, key: str, title: str, content: str, tags: Optional[list[str]] = None, ttl_seconds: Optional[int] = None
     ):
         self.key = key
         self.title = title
@@ -27,7 +27,7 @@ class MemoryBlock:
             return False
         return (time.time() - self.updated_at) > self.ttl_seconds
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "key": self.key,
             "title": self.title,
@@ -39,7 +39,7 @@ class MemoryBlock:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MemoryBlock":
+    def from_dict(cls, data: dict[str, Any]) -> "MemoryBlock":
         block = cls(
             key=data["key"],
             title=data["title"],
@@ -61,7 +61,7 @@ class NotepadMemory:
     def __init__(self, storage_path: Optional[Path] = None):
         self.storage_path = storage_path or (Path(__file__).parent / "notepad_state.json")
         self.markdown_path = self.storage_path.parent / "notepad_active.md"
-        self._blocks: Dict[str, MemoryBlock] = {}
+        self._blocks: dict[str, MemoryBlock] = {}
         self._lock = threading.RLock()
         self._load()
 
@@ -90,7 +90,7 @@ class NotepadMemory:
             self.markdown_path.write_text(self.render_markdown(), encoding="utf-8")
 
     def write_block(
-        self, key: str, title: str, content: str, tags: Optional[List[str]] = None, ttl_seconds: Optional[int] = None
+        self, key: str, title: str, content: str, tags: Optional[list[str]] = None, ttl_seconds: Optional[int] = None
     ) -> MemoryBlock:
         with self._lock:
             if key in self._blocks:
@@ -123,7 +123,7 @@ class NotepadMemory:
                 return True
             return False
 
-    def list_blocks(self, tag_filter: Optional[str] = None) -> List[MemoryBlock]:
+    def list_blocks(self, tag_filter: Optional[str] = None) -> list[MemoryBlock]:
         with self._lock:
             self._evict_expired_internal()
             blocks = list(self._blocks.values())

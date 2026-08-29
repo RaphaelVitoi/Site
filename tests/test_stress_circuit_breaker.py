@@ -27,9 +27,9 @@ class LoadMetrics:
     local_ollama_hits: int = 0
     cloud_fallback_hits: int = 0
     circuit_trips: int = 0
-    latencies_ms: List[float] = field(default_factory=list)
+    latencies_ms: list[float] = field(default_factory=list)
 
-    def compute_percentiles(self) -> Dict[str, float]:
+    def compute_percentiles(self) -> dict[str, float]:
         if not self.latencies_ms:
             return {"p50": 0.0, "p95": 0.0, "p99": 0.0, "avg": 0.0}
         sorted_lat = sorted(self.latencies_ms)
@@ -124,7 +124,7 @@ class StressTestCircuitBreaker:
                 force_vulkan_failure=inject_failure,
             )
 
-    async def run_benchmark(self, failure_injection_rate: float = 0.3) -> Dict[str, Any]:
+    async def run_benchmark(self, failure_injection_rate: float = 0.3) -> dict[str, Any]:
         """
         Dispara tarefas concorrentes injetando taxa configurada de falhas na camada primaria.
         """

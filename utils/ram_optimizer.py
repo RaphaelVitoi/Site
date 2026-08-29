@@ -116,7 +116,7 @@ def get_ram_report(top_n: int = 10) -> RamReport:
 
 
 def apply_wsl_memory_limit(memory_gb: int = 6, processors: int = 4, swap_gb: int = 2) -> bool:
-    """Write or update C:\\Users\\<user>\\.wslconfig to cap WSL memory."""
+    r"""Write or update C:\Users\<user>\.wslconfig to cap WSL memory."""
     if platform.system() != "Windows":
         logger.info("[RAM_OPT] .wslconfig only applies on Windows host - skipping")
         return False

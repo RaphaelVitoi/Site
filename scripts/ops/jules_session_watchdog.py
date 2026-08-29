@@ -63,15 +63,15 @@ def record_snapshot() -> None:
     # Gera relatorio em Markdown
     content = f"""# REGISTRO DE MONITORAMENTO: GOOGLE JULES CLOUD SESSIONS
 
-> **Protocolo Chico SOTA v8.0 GOLD · Rastreamento de Sessões em Nuvem**  
-> **Última Atualização:** {now_iso}  
+> **Protocolo Chico SOTA v8.0 GOLD * Rastreamento de Sessoes em Nuvem**  
+> **Ultima Atualizacao:** {now_iso}  
 > **Canal Oficial:** [jules.google.com](https://jules.google.com/)
 
 ---
 
-## 1. Sessões Remotas Identificadas
+## 1. Sessoes Remotas Identificadas
 
-| ID da Sessão | Repositório | Descrição da Tarefa | Última Atividade | Status na VM |
+| ID da Sessao | Repositorio | Descricao da Tarefa | Ultima Atividade | Status na VM |
 | :--- | :--- | :--- | :--- | :--- |
 """
     for s in sessions:
@@ -81,14 +81,14 @@ def record_snapshot() -> None:
 
     content += """
 ---
-## 2. Ações Operacionais Disponíveis
+## 2. Acoes Operacionais Disponiveis
 
 ```bash
-# Inspecionar detalhes ou diff da sessão:
+# Inspecionar detalhes ou diff da sessao:
 jules remote pull --session <SESSION_ID>
 
-# Disparar nova sessão com branch explícita:
-jules new --repo RaphaelVitoi/Site "Descrição da Tarefa"
+# Disparar nova sessao com branch explicita:
+jules new --repo RaphaelVitoi/Site "Descricao da Tarefa"
 ```
 """
     REPORT_FILE.write_text(content, encoding="utf-8")

@@ -1,25 +1,25 @@
-"""Consolidação da memória agêntica — contenção e idempotência.
+"""Consolidacao da memoria agentica -- contencao e idempotencia.
 
-Três árvores com o mesmo `MEMORY.md`, 19 de 19 divergindo, e o laço agêntico
-aberto: os agentes gravavam numa árvore e o RAG lia de outra. A consolidação
-não escolhe vencedor — `.claude/agent-memory` guarda memória **semântica**
-(fatos curados) e `.cerebro/agent-memory` guarda **episódica** (log de handoffs);
-são naturezas diferentes, e o script preserva as duas em seções distintas.
+Tres arvores com o mesmo `MEMORY.md`, 19 de 19 divergindo, e o laco agentico
+aberto: os agentes gravavam numa arvore e o RAG lia de outra. A consolidacao
+nao escolhe vencedor -- `.claude/agent-memory` guarda memoria **semantica**
+(fatos curados) e `.cerebro/agent-memory` guarda **episodica** (log de handoffs);
+sao naturezas diferentes, e o script preserva as duas em secoes distintas.
 
-Dois defeitos apareceram só porque o segundo estado foi conferido, e os dois
-estão travados aqui:
+Dois defeitos apareceram so porque o segundo estado foi conferido, e os dois
+estao travados aqui:
 
 1. **Quase-idempotente.** O separador `---` ficava fora do trecho removido, e
-   cada execução acrescentava um novo: **+6 bytes por rodada**, por agente.
-   Medido em `chico`, 5599 → 5605. Quase-idempotente é uma forma lenta de
-   corromper: nunca falha, só cresce.
-2. **Separadores empilhados.** A primeira correção removia um `---` só, então
-   os resíduos das rodadas anteriores sobreviviam — convergia, mas em 107.093
-   em vez dos 106.979 do estado limpo. Convergir não é convergir no lugar certo.
+   cada execucao acrescentava um novo: **+6 bytes por rodada**, por agente.
+   Medido em `chico`, 5599 - 5605. Quase-idempotente e uma forma lenta de
+   corromper: nunca falha, so cresce.
+2. **Separadores empilhados.** A primeira correcao removia um `---` so, entao
+   os residuos das rodadas anteriores sobreviviam -- convergia, mas em 107.093
+   em vez dos 106.979 do estado limpo. Convergir nao e convergir no lugar certo.
 
-A prova de que nada se perde é **contenção**, nunca a subtração de bytes: a soma
-ingênua das três árvores conta duas vezes o que `.cerebro` e `AGENTS-MEMORY` têm
-em comum, então entrada > saída é deduplicação esperada, não perda.
+A prova de que nada se perde e **contencao**, nunca a subtracao de bytes: a soma
+ingenua das tres arvores conta duas vezes o que `.cerebro` e `AGENTS-MEMORY` tem
+em comum, entao entrada > saida e deduplicacao esperada, nao perda.
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ def mod():
 
 @pytest.fixture
 def arvores(tmp_path, mod, monkeypatch):
-    """Três árvores sintéticas: curada, episódica e uma quase-cópia."""
+    """Tres arvores sinteticas: curada, episodica e uma quase-copia."""
     canonica = tmp_path / "canonica"
     episodica = tmp_path / "episodica"
     copia = tmp_path / "copia"
@@ -97,7 +97,7 @@ def _dry_run(mod, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-#  Contenção: nada se perde
+#  Contencao: nada se perde
 # ---------------------------------------------------------------------------
 
 
@@ -108,13 +108,13 @@ def test_a_canonica_passa_a_conter_as_duas_naturezas(arvores, mod, monkeypatch, 
     texto = (canonica / "chico" / "MEMORY.md").read_text(encoding="utf-8")
     assert "Fato consolidado A." in texto, "a memoria curada foi perdida"
     assert "HANDOFF-1: aprendizado X" in texto, "a memoria episodica nao foi absorvida"
-    assert "Memória episódica consolidada" in texto
-    assert "Procedência" in texto, "a origem tem de ficar declarada no proprio arquivo"
+    assert "Memoria episodica consolidada" in texto
+    assert "Procedencia" in texto, "a origem tem de ficar declarada no proprio arquivo"
 
 
 def test_a_quase_copia_nao_entra_duas_vezes(arvores, mod, monkeypatch):
-    """`AGENTS-MEMORY` difere de `.cerebro` só em finais de linha. Tratar isso
-    como conteúdo novo dobraria a seção episódica."""
+    """`AGENTS-MEMORY` difere de `.cerebro` so em finais de linha. Tratar isso
+    como conteudo novo dobraria a secao episodica."""
     canonica, _, _ = arvores
     assert _aplicar(mod, monkeypatch) == 0
     texto = (canonica / "chico" / "MEMORY.md").read_text(encoding="utf-8")
@@ -129,7 +129,7 @@ def test_dry_run_nao_escreve(arvores, mod, monkeypatch):
 
 
 def test_as_origens_nao_sao_apagadas(arvores, mod, monkeypatch):
-    """Consolidar não é remover. Apagar é ato do vértice, em outro momento."""
+    """Consolidar nao e remover. Apagar e ato do vertice, em outro momento."""
     _, episodica, copia = arvores
     assert _aplicar(mod, monkeypatch) == 0
     assert (episodica / "chico" / "MEMORY.md").exists()
@@ -139,13 +139,13 @@ def test_as_origens_nao_sao_apagadas(arvores, mod, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-#  Idempotência: os dois defeitos que só o segundo estado revelou
+#  Idempotencia: os dois defeitos que so o segundo estado revelou
 # ---------------------------------------------------------------------------
 
 
 def test_rodar_duas_vezes_nao_muda_um_byte(arvores, mod, monkeypatch):
-    """O defeito 1. Sem isto o arquivo cresce 6 bytes por execução, para sempre,
-    e nenhuma execução isolada acusa."""
+    """O defeito 1. Sem isto o arquivo cresce 6 bytes por execucao, para sempre,
+    e nenhuma execucao isolada acusa."""
     canonica, _, _ = arvores
     assert _aplicar(mod, monkeypatch) == 0
     primeira = {p: p.read_bytes() for p in canonica.glob("*/MEMORY.md")}
@@ -155,8 +155,8 @@ def test_rodar_duas_vezes_nao_muda_um_byte(arvores, mod, monkeypatch):
 
 
 def test_convergencia_e_no_estado_limpo_nao_so_estavel(arvores, mod, monkeypatch):
-    """O defeito 2. Estabilizar num valor inflado ainda é estabilizar -- e passa
-    despercebido por qualquer teste que só compare execuções consecutivas."""
+    """O defeito 2. Estabilizar num valor inflado ainda e estabilizar -- e passa
+    despercebido por qualquer teste que so compare execucoes consecutivas."""
     canonica, _, _ = arvores
     monkeypatch.setattr("sys.argv", ["consolidar", "--aplicar"])
     mod.main()
@@ -167,7 +167,7 @@ def test_convergencia_e_no_estado_limpo_nao_so_estavel(arvores, mod, monkeypatch
 
 
 def test_separadores_empilhados_sao_removidos(arvores, mod, monkeypatch):
-    """Simula o resíduo que as execuções pré-correção deixaram em disco."""
+    """Simula o residuo que as execucoes pre-correcao deixaram em disco."""
     canonica, _, _ = arvores
     alvo = canonica / "chico" / "MEMORY.md"
     assert _aplicar(mod, monkeypatch) == 0
@@ -189,12 +189,12 @@ def test_a_secao_consolidada_aparece_uma_vez_so(arvores, mod, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-#  A conferência que o script faz de si mesmo
+#  A conferencia que o script faz de si mesmo
 # ---------------------------------------------------------------------------
 
 
 def test_o_script_reprova_se_a_continencia_falhar(arvores, mod, monkeypatch, capsys):
-    """A guarda interna precisa conseguir dizer não. Portão que nunca reprovou
+    """A guarda interna precisa conseguir dizer nao. Portao que nunca reprovou
     pode ser incapaz de reprovar."""
     canonica, _, _ = arvores
     monkeypatch.setattr(mod, "consolidar_agente", lambda ag: mod.Resultado(agente=ag, ja_consolidado=True))

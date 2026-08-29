@@ -179,3 +179,25 @@ class JulesClient:
             err_msg = e.read().decode("utf-8", errors="replace")
             logger.error("[JULES] Erro HTTP %d ao obter diff: %s", e.code, err_msg)
             raise RuntimeError(f"Erro ao obter diff do Jules ({e.code}): {err_msg}") from e
+
+    def list_sources(self, page_size: int = 10, page_token: str = "") -> list[dict[str, object]]:
+        """Lista repositorios e fontes conectadas ao Jules via GitHub App."""
+        if not self.is_configured:
+            return [{"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}]
+
+        url = f"{JULES_API_BASE}/sources?pageSize={page_size}"
+        if page_token:
+            url += f"&pageToken={page_token}"
+        req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
+
+        try:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                sources = data.get("sources")
+                if isinstance(sources, list):
+                    return sources
+                return [{"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}]
+        except Exception as e:
+            logger.warning("[JULES] list_sources retornou excecao: %s", e)
+            return [{"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}]
+

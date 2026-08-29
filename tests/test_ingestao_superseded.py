@@ -1,23 +1,23 @@
-"""Árvore que se declara superada não entra no índice.
+"""Arvore que se declara superada nao entra no indice.
 
-Ao consolidar a memória agêntica em 2026-08-28, `.claude/AGENTS-MEMORY` ganhou um
-`SUPERSEDED.md` apontando para a canônica. Medido depois: ela continuava
-contribuindo **89 fragmentos (2,1% do índice)** — conteúdo que já está na
-canônica, competindo com ela pelos mesmos três lugares de todo resultado.
+Ao consolidar a memoria agentica em 2026-08-28, `.claude/AGENTS-MEMORY` ganhou um
+`SUPERSEDED.md` apontando para a canonica. Medido depois: ela continuava
+contribuindo **89 fragmentos (2,1% do indice)** -- conteudo que ja esta na
+canonica, competindo com ela pelos mesmos tres lugares de todo resultado.
 
-O mecanismo **não é lista de caminhos**: é predicado estrutural. Um diretório que
-contém `SUPERSEDED.md` marcou a si mesmo, e o marcador viaja junto com a árvore.
-Lista literal envelhece e exige que alguém lembre de atualizá-la — foi assim que
-`reports` como nome solto excluiu `docs/reports/` sem ninguém pedir, e é a mesma
+O mecanismo **nao e lista de caminhos**: e predicado estrutural. Um diretorio que
+contem `SUPERSEDED.md` marcou a si mesmo, e o marcador viaja junto com a arvore.
+Lista literal envelhece e exige que alguem lembre de atualiza-la -- foi assim que
+`reports` como nome solto excluiu `docs/reports/` sem ninguem pedir, e e a mesma
 armadilha.
 
-## O defeito da primeira versão, que só a conferência pegou
+## O defeito da primeira versao, que so a conferencia pegou
 
-Os diretórios superados vinham de `base_path.rglob(...)` sem `.resolve()`,
-enquanto os alvos vêm de `source_path.resolve()`. Comparar caminho relativo com
-absoluto é comparar grandezas diferentes: **a exclusão não excluiu nada**, e
-nenhuma exceção foi levantada. Apareceu na contagem — 506 alvos com 23 que
-deviam ter saído.
+Os diretorios superados vinham de `base_path.rglob(...)` sem `.resolve()`,
+enquanto os alvos vem de `source_path.resolve()`. Comparar caminho relativo com
+absoluto e comparar grandezas diferentes: **a exclusao nao excluiu nada**, e
+nenhuma excecao foi levantada. Apareceu na contagem -- 506 alvos com 23 que
+deviam ter saido.
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def _alvos(rag, base: Path) -> set[Path]:
 
 
 def test_arvore_superada_do_repositorio_fica_fora(rag):
-    """O caso real: `.claude/AGENTS-MEMORY`, superada na consolidação."""
+    """O caso real: `.claude/AGENTS-MEMORY`, superada na consolidacao."""
     from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
 
     marcadas = {m.parent.resolve() for m in RAIZ.rglob(MARCADOR_SUPERADO)}
@@ -58,9 +58,9 @@ def test_arvore_superada_do_repositorio_fica_fora(rag):
 
 
 def test_o_marcador_e_o_que_exclui_e_nada_mais(rag, tmp_path):
-    """Os DOIS estados, na mesma árvore sintética: sem marcador entra, com
-    marcador sai. Sem isto, uma exclusão que não exclui nada passaria — foi
-    exatamente o que aconteceu na primeira versão."""
+    """Os DOIS estados, na mesma arvore sintetica: sem marcador entra, com
+    marcador sai. Sem isto, uma exclusao que nao exclui nada passaria -- foi
+    exatamente o que aconteceu na primeira versao."""
     from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
 
     viva = tmp_path / "viva"
@@ -85,8 +85,8 @@ def test_o_marcador_e_o_que_exclui_e_nada_mais(rag, tmp_path):
 
 
 def test_o_proprio_marcador_nao_e_indexado(rag, tmp_path):
-    """`SUPERSEDED.md` é um `.md` dentro da árvore que ele exclui. Se entrasse,
-    o índice ganharia um documento dizendo que aquele conteúdo não vale."""
+    """`SUPERSEDED.md` e um `.md` dentro da arvore que ele exclui. Se entrasse,
+    o indice ganharia um documento dizendo que aquele conteudo nao vale."""
     from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
 
     d = tmp_path / "morta"
@@ -100,14 +100,14 @@ def test_o_proprio_marcador_nao_e_indexado(rag, tmp_path):
 
 
 def test_a_exclusao_funciona_com_base_path_relativo(rag, tmp_path, monkeypatch):
-    """O defeito da primeira versão, travado -- e a primeira versão DESTE teste
-    também não o pegava.
+    """O defeito da primeira versao, travado -- e a primeira versao DESTE teste
+    tambem nao o pegava.
 
     Ela passava `Path(str(tmp_path)) / "." / ""`, que continua **absoluto**, e
-    por isso a mutação que remove `base_path.resolve()` passava intacta. Nome
-    prometendo uma grandeza que a medição não cobria. Agora o teste entra no
-    diretório e passa `Path(".")` de verdade -- que é a forma que o chamador de
-    produção usa, e a que quebrou."""
+    por isso a mutacao que remove `base_path.resolve()` passava intacta. Nome
+    prometendo uma grandeza que a medicao nao cobria. Agora o teste entra no
+    diretorio e passa `Path(".")` de verdade -- que e a forma que o chamador de
+    producao usa, e a que quebrou."""
     from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
 
     for nome in ("morta", "viva"):

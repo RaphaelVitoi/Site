@@ -70,7 +70,7 @@ PISTA = (
 )
 
 # Diretorios que nao sao codigo deste projeto.
-IGNORADOS = {".venv", "node_modules", "__pycache__", ".git", ".pytest_cache", "dist", "build"}
+IGNORADOS = {".venv", "node_modules", "__pycache__", ".git", ".pytest_cache", "dist", "build", "vendor"}
 
 # `getattr` cujo SEGUNDO argumento nomeia um mapa de modelo. Montado a partir de
 # pedacos porque o padrao descreve a coisa que procura: escrito inteiro, este

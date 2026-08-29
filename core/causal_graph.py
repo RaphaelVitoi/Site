@@ -18,7 +18,7 @@ class CausalNode(BaseModel):
     id: str = Field(..., min_length=1, max_length=100, description="Identificador unico (ex: pmev_dynamic_fold)")
     label: str = Field(..., min_length=1, max_length=200)
     category: str = Field(default="THEORY", pattern="^(THEORY|AXIOM|METRIC|SOLVER|AGENT|DIRECTIVE)$")
-    properties: Dict[str, Any] = Field(default_factory=dict)
+    properties: dict[str, Any] = Field(default_factory=dict)
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
@@ -27,7 +27,7 @@ class CausalEdge(BaseModel):
     target_id: str
     relation: str = Field(..., pattern="^(SUPPLANTS|OPTIMIZES|DEPENDS_ON|MITIGATES|CAUSES|EXPANDS)$")
     weight: float = Field(default=1.0, ge=0.0, le=1.0)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class CausalGraphEngine:
@@ -104,8 +104,8 @@ class CausalGraphEngine:
         """DFS para checar se o no target ja atinge o no source direta ou indiretamente."""
         if source == target:
             return True
-        visited: Set[str] = set()
-        stack: List[str] = [target]
+        visited: set[str] = set()
+        stack: list[str] = [target]
         with self._get_connection() as conn:
             while stack:
                 curr = stack.pop()
@@ -118,7 +118,7 @@ class CausalGraphEngine:
                         stack.append(row["target_id"])
         return False
 
-    def query_node(self, node_id: str) -> Dict[str, Any]:
+    def query_node(self, node_id: str) -> dict[str, Any]:
         with self._get_connection() as conn:
             row = conn.execute("SELECT * FROM causal_nodes WHERE id = ?", (node_id,)).fetchone()
             if not row:
@@ -148,7 +148,7 @@ class CausalGraphEngine:
                 "effects": [dict(e) for e in effects],
             }
 
-    def list_nodes(self, category: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_nodes(self, category: Optional[str] = None) -> list[dict[str, Any]]:
         with self._get_connection() as conn:
             if category:
                 rows = conn.execute(

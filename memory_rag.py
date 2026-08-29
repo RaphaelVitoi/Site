@@ -394,7 +394,7 @@ class MemoryRAG:
         # Ate 2026-08-27 entrava como nome solto, e nome solto casa QUALQUER
         # diretorio homonimo em qualquer profundidade. O alvo pretendido era
         # `reports/cwv` (384 artefatos regerados a cada portao), mas o efeito
-        # colateral foi excluir tambem `docs/reports/` — 20 auditorias e
+        # colateral foi excluir tambem `docs/reports/` -- 20 auditorias e
         # handovers que sao fonte declarada no manifesto. Medido sob o
         # manifesto de producao: 467 arquivos com o filtro cego, 487 com este.
         #

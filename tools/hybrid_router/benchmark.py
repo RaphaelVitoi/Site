@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""BENCHMARK DE CONCORRÊNCIA E CARGA ASSÍNCRONO PARA O HYBRID ROUTER.
+"""BENCHMARK DE CONCORRENCIA E CARGA ASSINCRONO PARA O HYBRID ROUTER.
 
-Mede latências estatísticas (p50, p90, p95, p99), vazão efetiva (RPS),
+Mede latencias estatisticas (p50, p90, p95, p99), vazao efetiva (RPS),
 tokens de pensamento consumidos e exporta dataset estruturado em JSON.
 """
 
@@ -32,15 +32,15 @@ PAYLOAD_POOL: list[dict[str, Any]] = [
     {
         "description": "Baixa Densidade (Candidato a Llama Local)",
         "payload": {
-            "prompt": "Explique brevemente a diferença entre compilação JIT e AOT em três tópicos concisos.",
-            "system_instruction": "Seja estritamente direto e técnico.",
+            "prompt": "Explique brevemente a diferenca entre compilacao JIT e AOT em tres topicos concisos.",
+            "system_instruction": "Seja estritamente direto e tecnico.",
         },
     },
     {
         "description": "Alta Densidade Teoria dos Jogos (Candidato a Gemini Thinking)",
         "payload": {
-            "prompt": "Dado um jogo matricial 2x2 com payoffs $U_1(A,A)=3$, $U_1(A,B)=0$, $U_1(B,A)=5$, $U_1(B,B)=1$, derive o equilíbrio de Nash misto, o valor esperado e a variância sob restrição de ICM.",
-            "system_instruction": "Atue como motor axiomático de Teoria dos Jogos.",
+            "prompt": "Dado um jogo matricial 2x2 com payoffs $U_1(A,A)=3$, $U_1(A,B)=0$, $U_1(B,A)=5$, $U_1(B,B)=1$, derive o equilibrio de Nash misto, o valor esperado e a variancia sob restricao de ICM.",
+            "system_instruction": "Atue como motor axiomatico de Teoria dos Jogos.",
         },
     },
     {
@@ -142,7 +142,7 @@ def export_results_to_json(results: list[RequestResult], filepath: str) -> None:
     serializable_data = [r.to_dict() for r in results]
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(serializable_data, f, indent=2, ensure_ascii=False)
-    print(f"\n[EXPORTAÇÃO] {len(serializable_data)} registros salvos em: {os.path.abspath(filepath)}")
+    print(f"\n[EXPORTACAO] {len(serializable_data)} registros salvos em: {os.path.abspath(filepath)}")
 
 
 async def run_benchmark(config: BenchmarkConfig) -> BenchmarkMetrics:
@@ -154,7 +154,7 @@ async def run_benchmark(config: BenchmarkConfig) -> BenchmarkMetrics:
     print("\n[INICIALIZANDO BENCHMARK SOTA]")
     print(f"Target URL:        {url}")
     print(f"Total Requests:    {config.total_requests}")
-    print(f"Concorrência:      {config.concurrency}")
+    print(f"Concorrencia:      {config.concurrency}")
     print(f"Export Target:     {config.output_json_file}\n")
 
     async with httpx.AsyncClient(limits=limits, timeout=timeout) as client:
@@ -200,16 +200,16 @@ def display_report(metrics: BenchmarkMetrics) -> None:
     max_latency = max(metrics.latencies) if metrics.latencies else 0.0
 
     print("=" * 75)
-    print("                RELATÓRIO DE DESEMPENHO E CONCORRÊNCIA                ")
+    print("                RELATORIO DE DESEMPENHO E CONCORRENCIA                ")
     print("=" * 75)
-    print(f"Tempo Total de Execução:    {metrics.total_time_seconds:.2f} s")
+    print(f"Tempo Total de Execucao:    {metrics.total_time_seconds:.2f} s")
     print(f"Taxa de Throughput (RPS):   {metrics.rps:.2f} req/s")
-    print(f"Requisições Totais:         {metrics.total_requests}")
+    print(f"Requisicoes Totais:         {metrics.total_requests}")
     print(f"Sucesso:                    {metrics.successful_requests} ({(metrics.successful_requests/metrics.total_requests)*100:.1f}%)")
     print(f"Falhas / Timeouts:          {metrics.failed_requests} ({(metrics.failed_requests/metrics.total_requests)*100:.1f}%)")
     print(f"Thinking Tokens Gerados:    {metrics.total_thinking_tokens}")
     print("-" * 75)
-    print("DISTRIBUIÇÃO DE LATÊNCIA (ms)")
+    print("DISTRIBUICAO DE LATENCIA (ms)")
     print(f"  Min:  {min_latency:9.2f} ms | Avg:  {avg_latency:9.2f} ms | Max: {max_latency:9.2f} ms")
     print(f"  p50:  {metrics.percentile(50):9.2f} ms | p90:  {metrics.percentile(90):9.2f} ms")
     print(f"  p95:  {metrics.percentile(95):9.2f} ms | p99:  {metrics.percentile(99):9.2f} ms")
@@ -217,7 +217,7 @@ def display_report(metrics: BenchmarkMetrics) -> None:
     print("ROTEAMENTO EXECUTADO POR TARGET")
     for target, count in metrics.targets_count.items():
         pct = (count / metrics.successful_requests) * 100 if metrics.successful_requests > 0 else 0
-        print(f"  • {target:<30} : {count:>4} reqs ({pct:5.1f}%)")
+        print(f"  * {target:<30} : {count:>4} reqs ({pct:5.1f}%)")
 
     if metrics.errors:
         print("-" * 75)

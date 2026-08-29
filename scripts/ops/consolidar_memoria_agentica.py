@@ -109,7 +109,7 @@ def _sem_secao_consolidada(texto: str) -> str:
 def consolidar_agente(agente: str) -> Resultado:
     res = Resultado(agente=agente)
     destino = CANONICA / agente / "MEMORY.md"
-    base = destino.read_text(encoding="utf-8", errors="replace") if destino.exists() else f"# MEMORIA — @{agente}\n"
+    base = destino.read_text(encoding="utf-8", errors="replace") if destino.exists() else f"# MEMORIA -- @{agente}\n"
     base = _sem_secao_consolidada(base)
 
     blocos: list[str] = []
@@ -124,7 +124,7 @@ def consolidar_agente(agente: str) -> Resultado:
         if _corpo_ja_presente(base, conteudo) or any(_corpo_ja_presente(b, conteudo) for b in blocos):
             continue
         rel = f.relative_to(RAIZ).as_posix()
-        blocos.append(f"### Procedência — `{rel}`\n\n{conteudo.strip()}\n")
+        blocos.append(f"### Procedencia -- `{rel}`\n\n{conteudo.strip()}\n")
         res.origens_usadas.append(rel)
         res.bytes_absorvidos += len(conteudo)
 
@@ -135,10 +135,10 @@ def consolidar_agente(agente: str) -> Resultado:
 
     secao = (
         f"\n\n---\n\n{MARCA_INICIO}\n\n"
-        "## Memória episódica consolidada\n\n"
-        "> Log de handoffs no formato *ação → resultado → aprendizado*, trazido das\n"
-        "> árvores que existiam em paralelo até 2026-08-28. É uma natureza de memória\n"
-        "> diferente da seção curada acima, e por isso fica separada em vez de\n"
+        "## Memoria episodica consolidada\n\n"
+        "> Log de handoffs no formato *acao - resultado - aprendizado*, trazido das\n"
+        "> arvores que existiam em paralelo ate 2026-08-28. E uma natureza de memoria\n"
+        "> diferente da secao curada acima, e por isso fica separada em vez de\n"
         "> misturada. Ver `reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`.\n\n"
         + "\n".join(blocos)
         + f"\n{MARCA_FIM}\n"
@@ -151,13 +151,13 @@ def consolidar_agente(agente: str) -> Resultado:
 def marcador_superseded(origem: Path) -> str:
     rel = CANONICA.relative_to(RAIZ).as_posix()
     return (
-        f"# Superseded — {origem.relative_to(RAIZ).as_posix()}\n\n"
-        f"Esta árvore deixou de ser fonte de memória agêntica em 2026-08-28.\n"
-        f"A canônica é `{rel}`, e o conteúdo daqui foi absorvido lá, na seção\n"
-        f"*Memória episódica consolidada*, com procedência por arquivo.\n\n"
-        f"**Nada foi apagado.** Os arquivos continuam aqui para conferência. Removê-los\n"
-        f"é ato do vértice, depois de a canônica estar verificada em uso.\n\n"
-        f"Medição que motivou a consolidação, e o desenho da fusão:\n"
+        f"# Superseded -- {origem.relative_to(RAIZ).as_posix()}\n\n"
+        f"Esta arvore deixou de ser fonte de memoria agentica em 2026-08-28.\n"
+        f"A canonica e `{rel}`, e o conteudo daqui foi absorvido la, na secao\n"
+        f"*Memoria episodica consolidada*, com procedencia por arquivo.\n\n"
+        f"**Nada foi apagado.** Os arquivos continuam aqui para conferencia. Remove-los\n"
+        f"e ato do vertice, depois de a canonica estar verificada em uso.\n\n"
+        f"Medicao que motivou a consolidacao, e o desenho da fusao:\n"
         f"`reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`.\n"
     )
 

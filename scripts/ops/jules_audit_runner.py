@@ -101,7 +101,7 @@ def check_typing_conformance(py_path: Path) -> dict[str, object]:
 def run_jules_audit() -> None:
     """Executa a rotina supervisionada de auditoria do Google Jules."""
     logger.info("=================================================================")
-    logger.info("INICIALIZANDO SESSAO DE SUPERVISAO JULES — PROTOCOLO CHICO v8.0 GOLD")
+    logger.info("INICIALIZANDO SESSAO DE SUPERVISAO JULES -- PROTOCOLO CHICO v8.0 GOLD")
     logger.info("Alvo: Auditoria Pure ASCII & Tipagem PEP 585/604 em Site/ (PMev Engine)")
     logger.info("Logs persistentes em: %s", LOG_FILE)
     logger.info("Stream JSONL em: %s", JSONL_STREAM_FILE)
@@ -180,7 +180,7 @@ def run_jules_audit() -> None:
 
     report_content = f"""# REGISTRO DE AUDITORIA JULES: PURE ASCII & TIPAGEM SOTA
 
-> **Protocolo Chico SOTA v8.0 GOLD · Supervisao Antigravity ➔ Google Jules**  
+> **Protocolo Chico SOTA v8.0 GOLD * Supervisao Antigravity  Google Jules**  
 > **Data:** {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%SZ')}  
 > **Status:** Concluido com Sucesso (Inspecao Nao-Destrutiva Positiva)
 
@@ -190,11 +190,11 @@ def run_jules_audit() -> None:
 
 | Metrica | Valor Medido | Status |
 | :--- | :--- | :--- |
-| **Modulos Auditados** | `{len(py_files)} arquivos Python` | ✅ Cobertura Total |
-| **Conformidade Pure ASCII** | `{ascii_passed}/{len(py_files)} modulos limpos ({round(ascii_passed/len(py_files)*100, 1)}%)` | ✅ Aprovado |
-| **Total de Funcoes Mapeadas** | `{total_funcs} funcoes` | ✅ Catalogado |
-| **Cobertura de Tipagem Estrita** | `{total_annotated}/{total_funcs} ({overall_coverage}%)` | ✅ Alta Densidade |
-| **Presenca de `__future__.annotations`** | `{sum(1 for r in typing_results if r.get('has_future_annotations'))}/{len(py_files)} modulos` | ✅ PEP 585/604 |
+| **Modulos Auditados** | `{len(py_files)} arquivos Python` |  Cobertura Total |
+| **Conformidade Pure ASCII** | `{ascii_passed}/{len(py_files)} modulos limpos ({round(ascii_passed/len(py_files)*100, 1)}%)` |  Aprovado |
+| **Total de Funcoes Mapeadas** | `{total_funcs} funcoes` |  Catalogado |
+| **Cobertura de Tipagem Estrita** | `{total_annotated}/{total_funcs} ({overall_coverage}%)` |  Alta Densidade |
+| **Presenca de `__future__.annotations`** | `{sum(1 for r in typing_results if r.get('has_future_annotations'))}/{len(py_files)} modulos` |  PEP 585/604 |
 
 ---
 
@@ -213,7 +213,7 @@ def run_jules_audit() -> None:
 """
 
     for r in sorted(typing_results, key=lambda x: str(x.get("file", ""))):
-        report_content += f"| `{r.get('file')}` | {r.get('func_count')} | {r.get('annotated_func_count')} | {r.get('coverage_pct')}% | {'✅' if r.get('has_future_annotations') else '⚠️'} |\n"
+        report_content += f"| `{r.get('file')}` | {r.get('func_count')} | {r.get('annotated_func_count')} | {r.get('coverage_pct')}% | {'' if r.get('has_future_annotations') else ''} |\n"
 
     report_content += """
 ---

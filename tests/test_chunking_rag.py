@@ -2,22 +2,22 @@
 
 ## O defeito, medido em 2026-08-28
 
-`CHUNK_SIZE = 1200` estava declarado, documentado (*"all-MiniLM-L6-v2 trunca após
-256 tokens (~1200 chars)"*) — e o chunker o usava **só como teto para dividir,
+`CHUNK_SIZE = 1200` estava declarado, documentado (*"all-MiniLM-L6-v2 trunca apos
+256 tokens (~1200 chars)"*) -- e o chunker o usava **so como teto para dividir,
 nunca como alvo para juntar**:
 
     if len(p) <= chunk_size:
         all_chunks.append(p)     # cada paragrafo curto virava um fragmento
 
-Parágrafo curto é a norma em código e em markdown. Medido no índice real:
+Paragrafo curto e a norma em codigo e em markdown. Medido no indice real:
 **mediana de 162 chars** contra 1200 declarados, **22,2% dos fragmentos abaixo de
 50**, p10 em 27. `logger = logging.getLogger(__name__)` aparecia 40 vezes como
-fragmento próprio; cabeçalhos de template, 34. **12,6% do índice era texto
+fragmento proprio; cabecalhos de template, 34. **12,6% do indice era texto
 literalmente repetido.**
 
-O custo não é desperdício de espaço: 3.165 fragmentos de uma linha disputavam os
-três lugares de todo resultado, e chegavam ao modelo sem contexto nenhum ao
-redor. Não se conserta isso com ranking melhor — o corpus é que estava
+O custo nao e desperdicio de espaco: 3.165 fragmentos de uma linha disputavam os
+tres lugares de todo resultado, e chegavam ao modelo sem contexto nenhum ao
+redor. Nao se conserta isso com ranking melhor -- o corpus e que estava
 fragmentado.
 
 Depois: mediana **1017**, fragmentos abaixo de 50 em **0,4%**, e nenhum acima do
@@ -25,18 +25,18 @@ teto.
 
 ## O teto passou a valer
 
-`_chunk_long_paragraph` estourava até 1404 num teto de 1200 — 17% — porque a
-sobreposição reentra no buffer antes da próxima conferência. Como o modelo trunca
-em ~256 tokens, o excesso não é desperdício: é texto que entra no índice e o
-embedding **não vê**. Em vez de perseguir a aritmética do deslizamento, a
+`_chunk_long_paragraph` estourava ate 1404 num teto de 1200 -- 17% -- porque a
+sobreposicao reentra no buffer antes da proxima conferencia. Como o modelo trunca
+em ~256 tokens, o excesso nao e desperdicio: e texto que entra no indice e o
+embedding **nao ve**. Em vez de perseguir a aritmetica do deslizamento, a
 invariante passou a ser imposta na fronteira, onde pode ser garantida.
 
-## Cobertura: comparada contra a versão anterior, não contra o ideal
+## Cobertura: comparada contra a versao anterior, nao contra o ideal
 
-Uma linha física pode ficar partida entre dois fragmentos quando o corte cai numa
+Uma linha fisica pode ficar partida entre dois fragmentos quando o corte cai numa
 fronteira de frase. Medido nos dois chunkers sobre o mesmo corpus: **9 de 2.877
-linhas (0,31%) nos dois**. Não é regressão — é o comportamento de sempre do split
-por frase, e a comparação com baseline é o que prova isso.
+linhas (0,31%) nos dois**. Nao e regressao -- e o comportamento de sempre do split
+por frase, e a comparacao com baseline e o que prova isso.
 """
 
 from __future__ import annotations

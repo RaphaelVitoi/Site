@@ -128,7 +128,7 @@ class Rota:
     # externo decai pelo TEMPO, nao por diff.
     #
     # O gatilho real e o release do fornecedor. A cada upgrade a fronteira de
-    # capacidade se move e papeis migram — sempre na mesma direcao, do barato e
+    # capacidade se move e papeis migram -- sempre na mesma direcao, do barato e
     # especializado para o caro e generalista, porque cada release torna o
     # modelo de fronteira plausivelmente capaz da tarefa barata e nada empurra
     # de volta. Deriva com direcao nao se corrige na media.
@@ -200,7 +200,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "Faixa gratuita ANTES de preco unitario. A Luna e mais barata por "
             "token ($0.20/$1.20) mas nao tem cota livre; o Flash tem. "
             "COTA LIVRE VENCE PRECO UNITARIO MENOR QUANDO A QUALIDADE NAO "
-            "DISCRIMINA — e uma regra de desempate DENTRO do custo, aplicavel "
+            "DISCRIMINA -- e uma regra de desempate DENTRO do custo, aplicavel "
             "so depois que a analise de custo-beneficio concluiu que a "
             "qualidade nao e o fator decisivo nesta classe. A Luna fica como "
             "fallback pago."
@@ -473,7 +473,7 @@ TTL_ROTA_DIAS = 90
 def rotas_suspeitas(hoje: date | None = None, *, ttl_dias: int = TTL_ROTA_DIAS) -> dict[ClasseTarefa, str]:
     """Rotas cuja ancora de capacidade venceu, ou que nunca foi declarada.
 
-    Existe para que os campos de ancora nao virem dado que ninguem le — falha
+    Existe para que os campos de ancora nao virem dado que ninguem le -- falha
     que esta propria tabela ja cometeu com `Rota.fallback`, que ate 2026-08-27
     so era lido por `economia_do_escalonamento` como substituto do degrau caro,
     e nunca no caminho de decisao para o qual foi escrito. Hoje `decidir()` o

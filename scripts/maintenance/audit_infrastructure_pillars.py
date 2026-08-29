@@ -33,7 +33,7 @@ SECRET_PATTERNS = [
 ]
 
 
-def audit_logs_pillar() -> Tuple[List[str], List[str], Dict]:
+def audit_logs_pillar() -> tuple[list[str], list[str], dict]:
     """Audita a governanca de logs."""
     errors = []
     warnings = []
@@ -70,7 +70,7 @@ def audit_logs_pillar() -> Tuple[List[str], List[str], Dict]:
     return errors, warnings, stats
 
 
-def audit_temps_pillar() -> Tuple[List[str], List[str], Dict]:
+def audit_temps_pillar() -> tuple[list[str], list[str], dict]:
     """Audita e higieniza a zona de temporarios."""
     errors = []
     warnings = []
@@ -111,7 +111,7 @@ def audit_temps_pillar() -> Tuple[List[str], List[str], Dict]:
     return errors, warnings, stats
 
 
-def audit_artifacts_pillar() -> Tuple[List[str], List[str], Dict]:
+def audit_artifacts_pillar() -> tuple[list[str], list[str], dict]:
     """Audita a integridade de artefatos markdown e KaTeX."""
     errors = []
     warnings = []
@@ -147,7 +147,7 @@ def audit_artifacts_pillar() -> Tuple[List[str], List[str], Dict]:
     return errors, warnings, stats
 
 
-def audit_skills_pillar() -> Tuple[List[str], List[str], Dict]:
+def audit_skills_pillar() -> tuple[list[str], list[str], dict]:
     """Audita a conformidade das skills do Antigravity/Agent Mesh."""
     errors = []
     warnings = []
