@@ -68,6 +68,16 @@ $$\text{Task List (task.md)} \longrightarrow \text{Implementation Plan (implemen
 2. **Entrega de Código Autocontida:** Blocos executáveis, com tratamento estruturado de erros, docstrings semânticas, links com protocolo `file://` e diffs limitados a 120-150 linhas.
 3. **Execução em Ambiente Virtual:** Comandos executados estritamente via `.venv/Scripts/python.exe` ou `uv run`, com auditoria silenciosa em background e entrega condensada de resultados.
 
+## X. DELEGAÇÃO ASSÍNCRONA EM NUVEM (GOOGLE JULES VIA MCP)
+
+1. **Topologia Trilateral Canônica:**
+   - `C:\Users\rapha`: Monorepo administrativo e gestão de chaves/ambiente (`HKCU:\Environment:JULES_API_KEY`, `GOOGLE_CLOUD_PROJECT`).
+   - `C:\Users\rapha\.gemini`: Raiz multiprojeto canônica, registro de MCP Servers (`mcp_config.json`) e skills globais.
+   - `C:\Users\rapha\.gemini\Site`: Raiz do projeto principal (PMev + Website), consumidor do bridge MCP e despachador de tarefas pesadas.
+2. **Padrão Fire-and-Poll & Invariância de Testes:**
+   - Tarefas de longa duração (simulações Monte Carlo de alta densidade no motor PMev, upgrades de framework, suítes massivas de testes) são despachadas via `engine/jules_bridge.py` ou `.mcp.json` (`google-jules`).
+   - Execução em background não-bloqueante com monitoramento por `jules_get_session_status`, aprovação formal de plano via `jules_approve_plan` e inspeção de patch com `jules_get_diff` antes de qualquer merge no workspace local.
+
 ---
 *Protocolo Site v8.0 GOLD integrado e ativo sob Soberania de Raphael Vitoi.*
 
