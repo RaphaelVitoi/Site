@@ -31,7 +31,7 @@ flowchart TB
     end
 
     subgraph T4["⚡ TIER 4: SUBAGENTS DEDICADOS (EXECUÇÃO DINÂMICA)"]
-        SUBAGENTS["Subagents Dinâmicos (research, flutter_a11y_agent, self, task-subagents)"]
+        SUBAGENTS["Subagents Dinâmicos (generalist, research, flutter_a11y_agent, self, task-subagents)"]
     end
 
     subgraph T5["🤖 TIER 5: BOTS DE INTEGRAÇÃO & CVE SCANNERS"]
@@ -92,7 +92,7 @@ flowchart TB
 | **Tier 2: Devin** | Resolução avançada de CI/CD, gerenciamento de dependências e automação DevOps. | Risco de modificar lockfiles sem respeitar a topologia do monorepo. | Portão M.O. 13.F exige lockfile raiz único e compilação limpa do Turbopack. |
 | **Tier 3: Frota de 19 Agentes** | Especialização temática cirúrgica (`@arquiteto`, `@cientista`, `@guardiao`, etc.). | Desalinhamento se os manifestos divergirem. | `sync_agents_reality.ps1` sincroniza os 19 arquivos em fonte única viva. |
 | **Tier 3: GitHub Copilot** | Autocomplete instantâneo na IDE, PR descriptions e scaffolding rápido de testes. | Tendência a alucinar "Boy Scout refactorings" e tipagem fraca (`Any`). | `.github/copilot-instructions.md` impõe Target Lock, Pure ASCII, PEP 585/604 e KaTeX. |
-| **Tier 4: Subagents Dedicados** | Execução paralela e isolada de subtarefas (`research`, `flutter_a11y_agent`, `self`). | Contexto isolado e sem visão holística do monorepo. | Recebem escopo limitado estrito e herdam auto-grounding via `TierPolicyEngine`. |
+| **Tier 4: Subagents Dedicados** | Execução paralela e isolada de subtarefas (`generalist`, `research`, `flutter_a11y_agent`, `self`). | Contexto isolado e sem visão holística do monorepo. | Recebem escopo limitado estrito e herdam auto-grounding via `TierPolicyEngine`. |
 | **Tier 5: Dependabot / Bots** | Detecção automatizada de CVEs e integrações de tickets (Linear, Tactiq). | Cria PRs isolados em subpastas que quebram o lockfile raiz. | Revisão humana/Tier 1; aplicação centralizada no `package.json` raiz via `overrides`. |
 | **Tier 6: Modelos Locais & Edge AI (Ollama & llama.cpp: gemma4:31b-cloud, gemma4:e4@latest, qwen2.5-coder · Gemini Nano · C++ SIMD)** | Soberania de dados local, inferência offline de zero-custo para tarefas privadas. | Menor janela de contexto e poder de raciocínio que os modelos de nuvem Tier 1. | Utilizado como filtro prévio, sumarizador local e fallback para tarefas de baixa entropia. |
 | **Tier 6: Gemini Nano** | Inferência ultrarrápida no navegador (CDP 9222/9223) sem chamada de rede externa. | Capacidade limitada a tarefas de Prompt API e sumarizações curtas. | Usado no DevTools MCP para diagnósticos em tempo real de Core Web Vitals e LoAF. |

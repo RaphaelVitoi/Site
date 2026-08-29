@@ -300,7 +300,7 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 - **Tier 1:** Núcleo Cognitivo Mestre (`Claude 5 Sonnet/Opus`, `Gemini 3.7 Flash High/Pro`, `ChatGPT 5.6 Luna/Terra/Sol`, `Codex`, `Antigravity 2.0 / Antigravity IDE / VS Code`)
 - **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`)
 - **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Companions (`GitHub Copilot`)
-- **Tier 4:** Subagents Dedicados (`research`, `flutter_a11y_agent`, `self`, task-subagents)
+- **Tier 4:** Subagents Dedicados (`generalist`, `research`, `flutter_a11y_agent`, `self`, task-subagents)
 - **Tier 5:** Bots de Integração & Scanners (`Dependabot`, `Linear`, `Tactiq`, `Atlassian`)
 - **Tier 6:** Modelos Locais & Edge AI (`Ollama & llama.cpp: gemma4:31b-cloud, gemma4:e4@latest, qwen2.5-coder`, `Gemini Nano`, `C++ SIMD`)
 - **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)

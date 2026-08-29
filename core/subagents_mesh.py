@@ -38,6 +38,7 @@ class SubagentTier(StrEnum):
     IMPLEMENTOR = "implementor"
     CURATOR = "curator"
     ARCHITECT = "architect"
+    GENERALIST = "generalist"
     SELF = "self"
 
 
@@ -54,6 +55,7 @@ SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
     SubagentTier.IMPLEMENTOR: "qwen2.5-coder:7b",
     SubagentTier.CURATOR: "qwen2.5-coder:7b-instruct-q5_K_M",
     SubagentTier.ARCHITECT: "gemma4:31b-cloud",
+    SubagentTier.GENERALIST: "gemma4:31b-cloud",
     SubagentTier.SELF: "qwen-code-surgical:latest",
 }
 
