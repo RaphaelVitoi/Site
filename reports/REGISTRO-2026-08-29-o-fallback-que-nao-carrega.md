@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T10:05-03:00
+commit: bc32e8c1
 classes: [interno]
 decide: nada sobre a tabela -- instala o detector e devolve a escolha do modelo ao vertice
 caminhos:
