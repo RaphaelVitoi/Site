@@ -613,3 +613,15 @@ tempo, mas porque nenhuma das duas tem sinal confiavel neste corpus hoje. O que
 mudaria isso esta declarado: um campo de data **declarado** em massa (hoje 4%),
 ou um sinal de importancia gravado no momento da escrita. Ate la, acrescentar os
 termos seria por dois numeros plausiveis num ranking sem saber o que eles medem.
+
+## Revisao de ancora -- 2026-08-29, faxina do antecessor
+
+Ancora atingida: `memory_rag.py`.
+
+O que mudou nela: extracao de dois metodos (`_accumulate_paragraphs`,
+`_is_path_ignored`) a partir de codigo que ja existia inline. Nenhuma regra de
+ingestao, de exclusao ou de fragmentacao foi alterada.
+
+**Esta validacao nao muda.** Os numeros medidos aqui continuam validos: a
+extracao nao altera nem o que entra no indice nem como o texto e partido, e a
+suite completa segue em 623 verdes.

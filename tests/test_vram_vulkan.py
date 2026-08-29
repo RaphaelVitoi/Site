@@ -98,7 +98,7 @@ def test_o_teto_aceita_mebibytes(nx, tmp_path):
         assert nx._vram_total_do_log_do_ollama() == pytest.approx(0.5)
 
 
-def test_o_teto_e_a_ULTIMA_linha_de_inference_compute(nx, tmp_path):
+def test_o_teto_e_a_ultima_linha_de_inference_compute(nx, tmp_path):
     """O servidor reescreve a linha a cada subida. Vale a mais recente, senao o
     teto envelhece calado quando a maquina muda de placa."""
     antiga = LINHA_DO_LOG.replace('total="8.0 GiB"', 'total="4.0 GiB"')
@@ -106,7 +106,7 @@ def test_o_teto_e_a_ULTIMA_linha_de_inference_compute(nx, tmp_path):
         assert nx._vram_total_do_log_do_ollama() == 8.0
 
 
-def test_sem_log_o_teto_e_None_nunca_zero(nx, tmp_path):
+def test_sem_log_o_teto_e_none_nunca_zero(nx, tmp_path):
     """A distincao que motivou este arquivo: ausencia de dado nao vira 0."""
     with patch.dict("os.environ", {"LOCALAPPDATA": str(tmp_path / "inexistente")}):
         assert nx._vram_total_do_log_do_ollama() is None
@@ -137,7 +137,7 @@ def test_nada_carregado_e_zero_de_verdade(nx, tmp_path):
     assert (pct, usado, total) == (0.0, 0.0, 8.0)
 
 
-def test_servidor_fora_do_ar_e_None_nao_zero(nx, tmp_path):
+def test_servidor_fora_do_ar_e_none_nao_zero(nx, tmp_path):
     with (
         _com_log(nx, tmp_path, LINHA_DO_LOG),
         patch.object(nx.http.client, "HTTPConnection", side_effect=OSError("recusada")),

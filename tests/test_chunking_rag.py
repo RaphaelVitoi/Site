@@ -112,7 +112,7 @@ def test_fragmentos_minusculos_sao_raros(rag, corpus):
 # ---------------------------------------------------------------------------
 
 
-def test_paragrafos_curtos_consecutivos_sao_JUNTADOS(rag):
+def test_paragrafos_curtos_consecutivos_sao_juntados(rag):
     """O defeito em uma linha: dez paragrafos curtos davam dez fragmentos."""
     texto = "\n\n".join(f"Paragrafo numero {i} com algum conteudo curto." for i in range(10))
     fragmentos = rag._chunk_text(texto)
@@ -165,7 +165,7 @@ def test_texto_vazio_e_so_espaco_nao_geram_fragmento(rag):
 # ---------------------------------------------------------------------------
 
 
-def test_a_cobertura_nao_piorou_em_relacao_ao_chunker_ANTIGO(rag, corpus):
+def test_a_cobertura_nao_piorou_em_relacao_ao_chunker_antigo(rag, corpus):
     """Uma linha fisica pode ficar partida entre dois fragmentos quando o corte
     cai numa fronteira de frase -- e isso ja acontecia antes. Sem a baseline, o
     numero isolado (0,31%) pareceria defeito novo."""

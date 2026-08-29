@@ -181,7 +181,7 @@ def test_a_varredura_acha_uma_constante_orfa_plantada(tmp_path):
     assert "USADO" not in orfas
 
 
-def test_citar_o_nome_num_comentario_NAO_conta_como_leitura(tmp_path):
+def test_citar_o_nome_num_comentario_nao_conta_como_leitura(tmp_path):
     """A razão de medir por AST. A versão textual desta varredura daria a
     constante como viva só porque a documentação a menciona."""
     fonte = '"""Docstring que fala de TETO_CITADO."""\nTETO_CITADO = 7\n# TETO_CITADO tambem aqui\n'
@@ -196,7 +196,7 @@ def test_citar_o_nome_num_comentario_NAO_conta_como_leitura(tmp_path):
     assert "TETO_CITADO" in orfas, "citacao em prosa passou por leitura"
 
 
-def test_constante_lida_por_OUTRO_modulo_nao_conta_como_orfa(tmp_path):
+def test_constante_lida_por_outro_modulo_nao_conta_como_orfa(tmp_path):
     """O recorte certo e o projeto inteiro, nao o arquivo."""
     (tmp_path / "define.py").write_text("TETO_COMPARTILHADO = 3\n", encoding="utf-8")
     (tmp_path / "usa.py").write_text("from define import TETO_COMPARTILHADO\nprint(TETO_COMPARTILHADO)\n", encoding="utf-8")

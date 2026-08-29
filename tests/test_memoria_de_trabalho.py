@@ -93,7 +93,7 @@ def test_os_modulos_declarados_existem_de_fato(declaracao):
         )
 
 
-def test_a_memoria_de_trabalho_QUE_EXISTE_continua_ligada(declaracao):
+def test_a_memoria_de_trabalho_que_existe_continua_ligada(declaracao):
     """A contrapartida: se `task.metadata` deixasse de ser consumido, o argumento
     para não ligar o notepad cairia junto."""
     viva = declaracao["a_memoria_de_trabalho_QUE_EXISTE"]

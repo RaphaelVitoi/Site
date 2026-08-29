@@ -103,6 +103,10 @@ class SotaContextCacheEngine:
         """
         return sum(b.bytes_payload for b in self.buckets.values()) / (1024 * 1024)
 
+    def enforce_lru_eviction(self) -> None:
+        """API publica para forcar a eviccao LRU automatica."""
+        self._enforce_lru_eviction()
+
     def _enforce_lru_eviction(self) -> None:
         """Eviccao LRU automatica para impedir estouro de memoria RAM/Cache."""
         expired_keys = [k for k, v in self.buckets.items() if v.is_expired()]
@@ -163,7 +167,7 @@ class StructuredOutputEngine:
             data = json.loads(cleaned)
             return model_cls.model_validate(data)
         except Exception as e:
-            logger.error("Erro na validacao de Structured Output (%s): %s", model_cls.__name__, e)
+            logger.exception("Erro na validacao de Structured Output (%s)", model_cls.__name__)
             raise ValueError(f"Violacao de Structured Output ({model_cls.__name__}): {e}") from e
 
 
@@ -259,7 +263,7 @@ class SotaHookBus:
                     ctx.approved = False
                     return False
             except Exception as e:
-                logger.error("[HOOK DECIDE] Bloqueio por falha de hook: %s", e)
+                logger.exception("[HOOK DECIDE] Bloqueio por falha de hook")
                 ctx.approved = False
                 ctx.rejection_reason = str(e)
                 return False

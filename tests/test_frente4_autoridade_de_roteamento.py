@@ -136,7 +136,7 @@ def test_o_reordenador_nunca_inventa_modelo():
 # ---------------------------------------------------------------------------
 
 
-def test_leitores_de_AGENT_MODEL_MAP_batem_com_a_declaracao(declaracao):
+def test_leitores_de_agent_model_map_batem_com_a_declaracao(declaracao):
     """Quem toca o mapa fica visivel. Um leitor novo -- em qualquer direcao --
     faz este teste falhar e obriga a declarar o papel dele.
 
