@@ -279,3 +279,69 @@ chamavam `_agir_por_camada("ram", {})` depois que a assinatura perdeu o
 parametro `leitura`. O dict caia no lugar de `verbose`, e `bool({})` e `False`
 -- passavam por acaso. Agora passam por contrato. Vale como instancia nova do
 padrao ja catalogado nesta base: verde que nao esta ligado ao que mede.
+
+## Pendencias 9 e 10 -- fechadas em 2026-08-29, com uma correcao ao proprio handoff
+
+### 9. A higienizacao periodica agora exige pressao medida
+
+`nexus._pressao_justifica_higienizacao()` decide se o ramo periodico age, e
+decide por **commit charge**, nao por `virtual_memory().percent`. O motivo esta
+no proprio achado: `percent` e a grandeza que a acao contamina -- trim empurra
+pagina para standby, standby conta como disponivel, `percent` cai. Usar `percent`
+como criterio seria pedir a acao que avalie a si mesma.
+
+Commit nao se move com trim: pagina prometida continua prometida. Piso em 75%,
+abaixo do teto declarado de 92%.
+
+Tres coisas mudaram junto:
+
+- ciclo que **nao** age agora diz por que nao agiu. "Nada aconteceu" era
+  indistinguivel de "o guard morreu".
+- ciclo que age mede commit **antes e depois** e registra o delta. Se a
+  higienizacao nao devolver commit, isso aparece no log em vez de sair como
+  "executada" sem evidencia.
+- sem medidor de commit, a periodica **suspende**. Ausencia de medidor nao e
+  ausencia de pressao, e agir no escuro contaminaria a unica leitura restante.
+
+Exercitado por mutacao nos dois sentidos: fazer o criterio devolver sempre
+`True` reprova `test_sem_pressao_de_commit_a_periodica_nao_age`; reintroduzir
+`virtual_memory().percent` no criterio reprova
+`test_a_decisao_nao_le_virtual_memory_percent`.
+
+### 10. O teto de 98% FICA -- e a pendencia como eu a escrevi estava errada
+
+Eu havia registrado: *"trocar 98% por uma grandeza que cruza (free GB, ou
+pagefile)"*. A medicao contradiz isso, e vale mais que o que eu escrevi.
+
+Baixar o teto faria a camada `ram` disparar `_execute_ram_cleanse`, cuja acao e
+o trim. Ou seja: **resolveria a pendencia 10 reintroduzindo o defeito da
+pendencia 9.** O guard voltaria a fabricar a leitura que julga, agora com a
+minha assinatura em vez de por acidente.
+
+E nao ha saida trocando de grandeza: `free GB` tambem sobe com o trim, porque a
+acao e sobre RAM fisica. Nenhuma leitura de RAM fisica escapa de uma acao que
+mexe em RAM fisica.
+
+O que a camada `ram` e, entao: **reportadora, nao atuadora.** Quem atua e
+`commit`. Isso ja estava certo; o que faltava era dizer.
+
+O defeito real da pendencia 10 nao era o numero -- era o silencio. O bloco
+`inalcancavel_nesta_maquina` existia no JSON desde 2026-08-29 e **nenhuma linha
+de codigo o lia**, entao o operador via `ram=71.5%` ao lado de um teto de 98% e
+concluia que havia vigilancia ali. Declaracao sem consumidor e a mesma falha que
+este guard existe para achar nos outros.
+
+Agora `_medir_pressao` le o bloco e o resumo imprime a marca:
+
+```
+ram=89.3%! | commit=82.7% | vram=? | cache=0.0MB
+```
+
+`!` e `?` dizem coisas diferentes e nao se atropelam: **cego** nao e o mesmo que
+**decorativo**. Ha teste para cada um, e a mutacao que pinta `!` em toda camada
+reprova dois deles.
+
+Medido de passagem, e vale registrar: entre duas execucoes seguidas do
+`--once`, a RAM foi de 88,4% a 89,3%. Com o guard antigo rodando ela nao saia
+de 72-73% por oito horas. A variacao voltou.
+
