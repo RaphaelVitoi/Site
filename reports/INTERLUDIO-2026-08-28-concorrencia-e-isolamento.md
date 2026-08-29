@@ -243,3 +243,21 @@ Corrigido: o padrao passou a reconhecer `skipped`, `xfailed` e `xpassed`, e foi
 exercitado nos tres estados (so passados; falhas com pulos; entrada sem resumo
 reconhecivel). A execucao seguinte imprimiu `514 passed, 4 skipped` -- os mesmos
 4 pulos de sempre, agora visiveis.
+
+## Revisao de ancora -- 2026-08-29, o portao passou a ler o indice
+
+Ancora tocada: `scripts/ops/record_gate.py`.
+
+O portao pegava a LISTA de arquivos do indice (`git diff --cached`) e lia o
+CONTEUDO do disco. Quatro leituras sobre arquivo em stage passaram a vir do
+indice, por `git show :caminho`; a quinta, que consulta documentos FORA do
+stage, ficou lendo a arvore de proposito.
+
+**A conclusao deste interludio nao muda** -- ele trata de concorrencia entre
+sessoes e isolamento de `basetemp`, e a correcao nao toca nisso. Mas reforca a
+tese dele por outro caminho: o mesmo repositorio observado por dois relogios
+diferentes produz julgamento sobre estado que ja passou. Aqui os dois relogios
+eram o indice e a arvore, dentro de um unico processo.
+
+Ver [[registro-2026-08-29-o-portao-le-o-indice]]. O portao PowerShell
+(`record_anchor_gate.ps1`, linha 134) tem a mesma falha e continua aberta.
