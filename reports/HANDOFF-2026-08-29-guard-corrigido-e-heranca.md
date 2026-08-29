@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T04:45-03:00
-atualizado_em: 2026-08-29T17:34-03:00
+atualizado_em: 2026-08-29T17:58-03:00
 commit: 07492035
 classes: [interno]
 caminhos:
