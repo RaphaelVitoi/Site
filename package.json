@@ -4,12 +4,7 @@
   "packageManager": "npm@10.9.2",
   "description": "Monorepo SOTA: Orquestrador de Agentes LLM (Python) + Frontend Next.js",
   "workspaces": [
-    "frontend",
-    "antigravity-plus",
-    "skills/gemini-cli-jules/mcp-server",
-    "skills/gemini-cli-security/mcp-server",
-    "skills/gemini-deep-research",
-    "skills/gemini-supermemory"
+    "frontend"
   ],
   "engines": {
     "node": ">=22.0.0",
