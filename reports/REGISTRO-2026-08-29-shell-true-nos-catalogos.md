@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T04:10-03:00
+commit: 434d2967
 classes: [interno]
 decide: supressao de S602 em scripts/cli/nexus.py, duas ocorrencias
 verificado:
