@@ -1,32 +1,27 @@
 # SOTA Working Memory & Notepad Scratchpad
-> **Protocolo Chico v8.0 GOLD** | Última Atualização: 2026-08-23 04:58:00
+> **Protocolo Chico v8.0 GOLD** | Última Atualização: 2026-08-29 20:00:00
 
-**Total de Blocos Ativos:** `3`
+**Total de Blocos Ativos:** `4`
 ---
 
-## [HARDWARE_TOPOLOGY] Topologia do Core i9-9900K & Z370M `#hardware` `#topology`
-*Atualizado em: 2026-08-23 04:58:00*
+## [GOVERNANCE_TOPOLOGY] Topologia de 8 Tiers & Soberania `#governance` `#sota` `#gold`
+*Atualizado em: 2026-08-29 20:00:00*
 
-8 Cores / 16 Threads | 16MB L3 Cache | 32GB RAM | BIOS F14.
-
----
-
-## [SIMULATOR_STATUS] Simulador Quântico & Matriz 169 SOTA v8.0 GOLD `#simulator` `#sota` `#gold`
-*Atualizado em: 2026-08-23 04:58:00*
-
-1. Matriz 169 (13×13) reformulada em full-width (100% visível, 169 mãos AA-22).
-2. Zero Jitter / Zero Hover Chatter com invariância de altura no inspetor ($\Delta H = 0\text{px}$).
-3. Radar Topológico 7D com camadas duplas de SVG e diretrizes Axioma Lipe Piv.
-4. Bug de Viewport Scroll na aba QUANTUM PM resolvido (`scrollTop`).
-5. Handoff e relatório oficial canônico arquivados em `PROMPT_CONTINUIDADE_20260823_V33.md`.
+Tier 0: Raphael Vitoi (Soberania & Liderança, CEO) | Tier 1: Núcleo Mestre | Tier 2: Superagentes Nuvem | Tier 3: 19 Agentes + Copilot | Tier 4: Subagents Dedicados (generalist, research, flutter_a11y, self) | Tier 5: Bots | Tier 6: Modelos Locais & Edge | Tier 7: Barramento & Quality Gate.
 
 ---
 
-## [PLAN_CURRENT] Próximos Passos Prioritários `#plan` `#active`
-*Atualizado em: 2026-08-23 04:58:00*
+## [SECURITY_VULNERABILITIES] Erradicação de Vulnerabilidades Dependabot `#security` `#cve`
+*Atualizado em: 2026-08-29 20:00:00*
 
-1. Curadoria e integração dos textos teóricos da Aula 1.
-2. Expansão da física de PKO Bounty Power.
-3. Phantom stacks para Heads-Up no `rpDeriver`.
+72 vulnerabilidades eliminadas em todos os 5 submódulos de skills. 25/25 manifestos com 0 vulnerabilidades (100% limpo).
 
 ---
+
+## [SIMULATOR_STATUS] Suítes de Teste & Baseline Git `#simulator` `#tests` `#master`
+*Atualizado em: 2026-08-29 20:00:00*
+
+658/658 testes Python aprovados | 95/95 testes Jest frontend aprovados | Chrome Dev CDP porta 9223 ativo | Motor `-Web` universal operacional. Handoff oficial arquivado em `PROMPT_CONTINUIDADE_20260829_V34.md`.
+
+---
+
