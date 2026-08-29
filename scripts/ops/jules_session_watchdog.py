@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -22,12 +23,13 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 def parse_jules_sessions() -> list[dict[str, str]]:
     """Executa 'jules remote list --session' e analisa a tabela de saida."""
+    jules_bin = shutil.which("jules") or "jules"
     try:
         res = subprocess.run(
-            ["jules", "remote", "list", "--session"],
+            [jules_bin, "remote", "list", "--session"],
             capture_output=True,
             text=True,
-            shell=True,
+            shell=False,
             check=False,
         )
         output = res.stdout
@@ -62,9 +64,8 @@ def record_snapshot() -> None:
 
     # Gera relatorio em Markdown
     content = f"""# REGISTRO DE MONITORAMENTO: GOOGLE JULES CLOUD SESSIONS
-
-> **Protocolo Chico SOTA v8.0 GOLD * Rastreamento de Sessoes em Nuvem**  
-> **Ultima Atualizacao:** {now_iso}  
+\n> **Protocolo Chico SOTA v8.0 GOLD * Rastreamento de Sessoes em Nuvem**
+> **Ultima Atualizacao:** {now_iso}
 > **Canal Oficial:** [jules.google.com](https://jules.google.com/)
 
 ---
