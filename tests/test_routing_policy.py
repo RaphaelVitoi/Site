@@ -501,3 +501,55 @@ def test_rotear_registra_o_escalonamento_que_nao_aconteceu(caplog):
     with caplog.at_level(logging.WARNING, logger="llm.routing_policy"):
         rotear("implementor", escalado=True)
     assert not caplog.records, "escalonamento atendido nao deve gerar ruido"
+
+
+def test_nenhuma_rota_local_nova_estoura_a_vram_declarada():
+    """A degradacao da faixa LOCAL aponta para um modelo que nao carrega.
+
+    `Rota.fallback` ficou anos declarado sem consumidor. `data/
+    ESTADO_DE_ROTEAMENTO.json` registrava por que NAO liga-lo: *"o fallback da
+    classe LOCAL e gemma4:e4b (...) tornar o fallback alcancavel sem antes
+    revisar essa entrada criaria um caminho para um modelo que nao carrega"*.
+    Em 2026-08-27 o consumidor foi escrito em `decidir()` e a entrada LOCAL
+    nao foi revisada -- o aviso foi atravessado, nao respondido.
+
+    O dano nao chegou porque `primario_indisponivel=True` nao tem chamador de
+    producao: o caminho esta armado e desconectado. Quando alguem ligar,
+    chega.
+
+    Este teste NAO declara saude. Ele **fixa uma doenca conhecida** para que ela
+    nao mude nem seja esquecida em silencio, e reprova qualquer rota LOCAL nova
+    com o mesmo defeito. Ver registro-2026-08-29-o-fallback-que-nao-carrega.
+    """
+    tetos = json.loads((Path(__file__).resolve().parents[1] / "data" / "TETOS_DE_MEMORIA.json").read_text("utf-8"))
+    frota = json.loads((Path(__file__).resolve().parents[1] / "data" / "ollama_models.json").read_text("utf-8"))
+
+    teto_gib = tetos["maquina_medida"]["vram_disponivel_ao_ollama_gib"]
+    tamanho = {m["tag"]: m["size_gb"] for m in frota["models"] if m.get("size_gb")}
+
+    # Quem, na faixa LOCAL, pede mais VRAM do que ha.
+    estouram = {
+        classe.value: sorted(
+            {
+                alias
+                for alias in (rota.primario, rota.fallback)
+                if tamanho.get(alias, 0) > teto_gib
+            }
+        )
+        for classe, rota in ROTAS.items()
+        if rota.faixa is Faixa.LOCAL
+    }
+    estouram = {c: v for c, v in estouram.items() if v}
+
+    assert estouram == {"local": ["gemma4:12b", "gemma4:e4b"]}, (
+        f"o conjunto de rotas LOCAL que estouram a VRAM mudou: {estouram}. "
+        f"Teto declarado: {teto_gib} GiB. Se uma rota foi corrigida, atualize o "
+        "registro no mesmo commit; se uma rota nova entrou quebrada, ela nao passa."
+    )
+
+    # A inversao que o nome esconde: 'e4b' soa menor que '12b' e e 2 GB maior.
+    local = ROTAS[ClasseTarefa.LOCAL]
+    assert tamanho[local.fallback] > tamanho[local.primario], (
+        "o fallback LOCAL deixou de ser maior que o primario -- se foi decisao, "
+        "esta assercao e o lugar de registra-la, junto do registro."
+    )

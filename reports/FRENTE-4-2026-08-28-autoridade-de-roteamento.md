@@ -367,3 +367,28 @@ minusculas. Nenhuma assercao, nenhum dado, nenhum comportamento.
 
 **Este documento nao muda.** A autoridade de roteamento via
 `core.config.modelo_do_agente` segue como descrita.
+
+## Revisao de ancora -- 2026-08-29, o fallback que nao carrega
+
+Ancora tocada: `data/ESTADO_DE_ROTEAMENTO.json`.
+
+Esta frente registrou, como pendencia nao resolvida, que `Rota.fallback` seguia
+sem consumidor, **e escreveu a condicao para liga-lo**: revisar antes a entrada
+da classe LOCAL, porque o fallback dela e `gemma4:e4b` e ele nao cabe na VRAM
+desta maquina.
+
+Medido em 2026-08-29: **o consumidor foi escrito no mesmo dia 2026-08-27**
+(`llm/routing_policy.py:426`) e a entrada LOCAL nao foi revisada. A condicao foi
+atravessada, nao respondida. O dano nao chegou porque `primario_indisponivel`
+nao tem chamador de producao -- o caminho esta armado e desconectado.
+
+Numeros novos, lidos do repositorio: o teto e 7,2 GB, o fallback `gemma4:e4b`
+pesa 9,6 GB e o **primario `gemma4:12b` pesa 7,6 GB**. Nao e so o fallback que
+estoura; o primario tambem, e a degradacao pede 2 GB a mais que o degrau de
+cima.
+
+**A conclusao desta frente nao muda:** a autoridade de roteamento continua sendo
+`llm/routing_policy.py`, e a escolha do modelo da faixa LOCAL continua sendo do
+operador. O que mudou e que agora existe detector --
+`test_nenhuma_rota_local_nova_estoura_a_vram_declarada`. Ver
+[[registro-2026-08-29-o-fallback-que-nao-carrega]].

@@ -233,3 +233,20 @@ vertice, e por um motivo mais forte do que o registrado -- alem de mudar a ordem
 de saida da fila, o mapeamento entre as chaves do config (`alpha`, `beta`,
 `gamma`, `lambda_age`) e as constantes do arbitrador (`TIME_DECAY_ALPHA`,
 `PROPAGATION_GAMMA`) nao e inferivel do codigo.
+
+## Revisao de ancora -- 2026-08-29, o fallback que nao carrega
+
+Ancora tocada: `data/ESTADO_DE_ROTEAMENTO.json`.
+
+O item 2 da tabela da secao 2 diz: *"`Rota.fallback` sem consumidor -- ligar
+torna `gemma4:e4b` alcancavel, e ele nao cabe na VRAM"*. **A primeira metade
+esta desatualizada**: o consumidor existe desde 2026-08-27 em
+`llm/routing_policy.py:426`. A segunda continua valendo, e piorou -- alem do
+fallback (9,6 GB), o *primario* da classe LOCAL (`gemma4:12b`, 7,6 GB) tambem
+estoura o teto declarado de 7,2 GB.
+
+O caminho so nao esta em uso porque `primario_indisponivel=True` nao tem
+chamador de producao.
+
+**A conclusao do handoff nao muda:** o item 2 segue como decisao do operador
+sobre a tabela. Ver [[registro-2026-08-29-o-fallback-que-nao-carrega]].
