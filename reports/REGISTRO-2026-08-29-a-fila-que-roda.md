@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T09:20-03:00
+commit: 392957a5
 classes: [interno]
 decide: corrige o registro da pendencia 1 e devolve a decisao ao vertice
 caminhos:
