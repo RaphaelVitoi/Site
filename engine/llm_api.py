@@ -13,7 +13,6 @@ import aiohttp
 
 from core.config import (
     AGENT_ROUTING_MAP,
-    AGENTS_MANIFEST,
     DEEP_THINKING_MODELS,
     FAST_OPERATIONS_MODELS,
     KEY_BLOCKLIST,

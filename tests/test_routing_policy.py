@@ -214,7 +214,7 @@ def test_o_modelo_de_todo_subagente_tem_custo_zero():
     assert all(custo(m, 10_000, 2_000) == 0.0 for m in SUBAGENT_MODEL_MAP.values())
 
 
-def test_nome_que_e_agente_E_tier_resolve_como_agente():
+def test_nome_que_e_agente_e_tier_resolve_como_agente():
     """`implementor`, `curator`, `architect` e `validador` existem nas duas
     familias. A precedencia de `_classe_de` sempre foi AGENTES primeiro, e a
     recusa acima nao pode ter mudado isso."""

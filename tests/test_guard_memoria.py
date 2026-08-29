@@ -72,7 +72,7 @@ def test_os_quatro_tetos_estao_declarados(tetos):
         assert cfg.get("origem_do_numero"), f"{camada} tem teto sem origem -- literal que ninguem ousa mexer"
 
 
-def test_sem_o_arquivo_de_tetos_o_guard_NAO_roda(nx, tmp_path):
+def test_sem_o_arquivo_de_tetos_o_guard_nao_roda(nx, tmp_path):
     """Guard que perde os tetos e segue rodando nao protege nada e ainda parece
     que protege. Mesmo raciocinio do portao de credencial."""
     with pytest.raises(FileNotFoundError, match="nao roda as cegas"):
@@ -84,7 +84,7 @@ def test_sem_o_arquivo_de_tetos_o_guard_NAO_roda(nx, tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_camada_sem_medidor_devolve_None_e_nao_zero(nx, tetos):
+def test_camada_sem_medidor_devolve_none_e_nao_zero(nx, tetos):
     """A regressao que motivou o arquivo inteiro."""
     with patch.object(nx, "_get_vram_usage", return_value=(None, 0.0, 0.0)):
         leitura = nx._medir_pressao(tetos)
@@ -128,7 +128,7 @@ def test_o_intervalo_encolhe_conforme_a_pressao_sobe(nx):
     assert apertado >= 15 and folgado <= 600
 
 
-def test_sem_medidor_nenhum_o_intervalo_vai_ao_MAXIMO(nx):
+def test_sem_medidor_nenhum_o_intervalo_vai_ao_maximo(nx):
     """Vigiar de perto o que nao se consegue medir e so gastar CPU."""
     assert nx._intervalo_adaptativo({"x": {"pressao": None}}) == 600
 
@@ -138,7 +138,7 @@ def test_a_pressao_e_limitada_e_nao_produz_intervalo_negativo(nx):
     assert nx._intervalo_adaptativo(_leitura(5.0)) >= 15
 
 
-def test_manda_a_camada_MAIS_pressionada(nx):
+def test_manda_a_camada_mais_pressionada(nx):
     """Duas camadas, uma folgada e outra no limite: quem decide o ritmo e a
     pior. Media esconderia a que esta prestes a estourar."""
     leitura = {
@@ -158,12 +158,12 @@ def test_cada_camada_tem_acao_propria(nx):
     """Uma acao so para tres camadas seria expurgo de RAM tentando resolver
     VRAM cheia."""
     with patch.object(nx, "_execute_ram_cleanse", return_value=7) as limpeza:
-        assert "7" in nx._agir_por_camada("ram", {})
+        assert "7" in nx._agir_por_camada("ram")
     limpeza.assert_called_once()
 
     falso = MagicMock(return_value=True)
     with patch.dict(sys.modules, {"utils.ram_optimizer": MagicMock(optimize_ollama_keepalive=falso)}):
-        msg = nx._agir_por_camada("vram", {})
+        msg = nx._agir_por_camada("vram")
     assert "keepalive" in msg
     falso.assert_called_once_with(keepalive=0)
 
@@ -177,7 +177,7 @@ def test_o_guard_le_e_sai_com_once(nx, tmp_path):
     assert resultado.exit_code == 0, resultado.output
 
 
-def test_once_IMPRIME_o_que_mediu_e_nao_so_os_tetos(nx):
+def test_once_imprime_o_que_mediu_e_nao_so_os_tetos(nx):
     """A versao anterior deste teste conferia so `exit_code == 0`, e por isso
     nao viu o defeito: `--once` imprimia as quatro linhas de teto, mandava a
     LEITURA para o logger (silencioso) e saia com zero. Quem rodava via um
@@ -206,7 +206,7 @@ def test_once_IMPRIME_o_que_mediu_e_nao_so_os_tetos(nx):
     )
 
 
-def test_once_DIZ_quando_esta_cego_em_vez_de_sair_verde(nx):
+def test_once_diz_quando_esta_cego_em_vez_de_sair_verde(nx):
     """Guard sem medidor nenhum nao pode se despedir com uma linha tranquila.
 
     E o estado que o leitor de VRAM viveu por meses -- e ninguem soube, porque
@@ -235,7 +235,7 @@ def test_mais_pressionada_aponta_a_camada_e_nao_a_media(nx):
     assert nx._mais_pressionada({"vram": {"pressao": None}}) == (None, 0.0)
 
 
-def test_o_guard_AGE_quando_a_camada_estoura(nx, tmp_path):
+def test_o_guard_age_quando_a_camada_estoura(nx, tmp_path):
     """O estado que importa, e o que nunca se observa esperando acontecer."""
     from typer.testing import CliRunner  # noqa: PLC0415
 
@@ -255,7 +255,7 @@ def test_o_guard_AGE_quando_a_camada_estoura(nx, tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_commit_e_medido_e_nao_e_a_mesma_coisa_que_RAM(nx, tetos):
+def test_commit_e_medido_e_nao_e_a_mesma_coisa_que_ram(nx, tetos):
     """A primeira versao do guard vigiava so `virtual_memory().percent`.
 
     Medido em 2026-08-29 nesta maquina: RAM fisica **estavel em 72%** com 6,8 GB
@@ -278,7 +278,7 @@ def test_fora_do_windows_o_commit_declara_ausencia_em_vez_de_zero(nx):
         assert nx._commit_charge_pct() is None
 
 
-def test_a_acao_de_commit_NAO_e_trim_de_working_set(nx):
+def test_a_acao_de_commit_nao_e_trim_de_working_set(nx):
     """Trim move pagina para standby, e pagina comprometida continua
     comprometida. Usar a acao de RAM aqui seria gastar I/O sem devolver commit."""
     falso = MagicMock(return_value=True)
@@ -286,13 +286,13 @@ def test_a_acao_de_commit_NAO_e_trim_de_working_set(nx):
         patch.dict(sys.modules, {"utils.ram_optimizer": MagicMock(optimize_ollama_keepalive=falso)}),
         patch.object(nx, "_execute_ram_cleanse") as limpeza,
     ):
-        msg = nx._agir_por_camada("commit", {})
+        msg = nx._agir_por_camada("commit")
     assert "keepalive" in msg
     falso.assert_called_once_with(keepalive=0)
     limpeza.assert_not_called(), "a acao de commit chamou o expurgo de RAM, que nao reduz commit"
 
 
-def test_a_camada_de_RAM_declara_que_e_a_folgada(tetos):
+def test_a_camada_de_ram_declara_que_e_a_folgada(tetos):
     """Sem isto, alguem le teto 98% e conclui que a RAM e o sinal principal."""
     cuidados = " ".join(tetos["ram"]["cuidado_declarado"]).lower()
     assert "folgada" in cuidados and "commit" in cuidados

@@ -187,3 +187,16 @@ documento.
 O padrão da §3 ganha uma variante que vale registrar: aqui **o número estava
 certo e a interpretação não**. Três fontes independentes concordavam no valor.
 Concordância entre fontes valida a medição, não a conclusão.
+
+## Revisao de ancora -- 2026-08-29, faxina do antecessor
+
+Ancoras atingidas: `memory_rag.py`, `scripts/cli/nexus.py`.
+
+O que mudou nelas: em `memory_rag.py`, extracao de `_accumulate_paragraphs` e
+`_is_path_ignored` -- logica movida para metodo proprio, sem alteracao de
+regra; em `nexus.py`, a faxina descrita acima.
+
+**As conclusoes deste documento seguem de pe.** O tamanho do fragmento continua
+respeitando a constante declarada, e a arvore que se declara superada continua
+saindo do indice. A suite de chunking (`tests/test_chunking_rag.py`) cobre a
+extracao e esta verde.

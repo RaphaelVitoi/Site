@@ -154,7 +154,7 @@ def test_rodar_duas_vezes_nao_muda_um_byte(arvores, mod, monkeypatch):
     assert primeira == segunda, "o script deriva a cada execucao"
 
 
-def test_convergencia_e_no_estado_LIMPO_nao_so_estavel(arvores, mod, monkeypatch):
+def test_convergencia_e_no_estado_limpo_nao_so_estavel(arvores, mod, monkeypatch):
     """O defeito 2. Estabilizar num valor inflado ainda é estabilizar -- e passa
     despercebido por qualquer teste que só compare execuções consecutivas."""
     canonica, _, _ = arvores

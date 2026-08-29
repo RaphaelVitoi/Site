@@ -1,9 +1,25 @@
 """Auditoria Estrita do Orquestrador SOTA (nexus.py)."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from pathlib import Path
+import re as _re
+import sqlite3
+import subprocess
+import sys
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 from typer.testing import CliRunner
 
-from scripts.cli.nexus import app
+import scripts.cli.nexus as nexus_mod
+from scripts.cli.nexus import (
+    _ensure_active_model,
+    _get_key,
+    _imprimir_resumo_tri_state,
+    _warnings_declarados,
+    app,
+)
+from scripts.llm_inference import run_inference as ri
+import task_executor
 
 runner = CliRunner()
 
@@ -223,8 +239,6 @@ def test_warnings_declarados_distingue_zero_de_ausente():
     Warnings: 0" fixo, inclusive o do QUALITY GATE, cuja fase cwv_gate.ps1
     declara 2 warnings e sai 0.
     """
-    from scripts.cli.nexus import _warnings_declarados
-
     assert _warnings_declarados(" Total de Warnings: 0 (Teto Maximo Permitido: 2)") == 0
     assert _warnings_declarados(" Total de Warnings: 2 (Teto Maximo Permitido: 2)") == 2
     assert _warnings_declarados("saida qualquer sem contagem") is None
@@ -233,8 +247,6 @@ def test_warnings_declarados_distingue_zero_de_ausente():
 
 def test_resumo_tri_state_alcanca_fragil():
     """FRAGIL era inalcancavel: com warnings literalmente 0, o tri-state era bi-state."""
-    from scripts.cli.nexus import _imprimir_resumo_tri_state
-
     assert _imprimir_resumo_tri_state("T", 0, {"a": 0, "b": 0}, "ok") == "SUCESSO (VERDE)"
     assert _imprimir_resumo_tri_state("T", 0, {"a": 2, "b": 0}, "ok") == "FRAGIL (AMARELO)"
     assert _imprimir_resumo_tri_state("T", 0, {"a": 3}, "ok") == "FALHOU (VERMELHO)"
@@ -243,8 +255,6 @@ def test_resumo_tri_state_alcanca_fragil():
 
 def test_resumo_tri_state_reage_a_saida_real_do_cwv_gate():
     """A saida REAL que o resumo antigo ignorava agora tem que mover o veredito."""
-    from scripts.cli.nexus import _imprimir_resumo_tri_state, _warnings_declarados
-
     saida_real_cwv = (
         " Total de Erros:    0 (Teto Maximo Permitido: 0 | Peso: CRITICO)\n"
         " Total de Warnings: 2 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)\n"
@@ -257,8 +267,6 @@ def test_resumo_tri_state_reage_a_saida_real_do_cwv_gate():
 
 def test_resumo_declara_piso_quando_a_fase_e_muda(capsys):
     """Fase que nao declara contagem nao pode ser arredondada para zero."""
-    from scripts.cli.nexus import _imprimir_resumo_tri_state
-
     _imprimir_resumo_tri_state("T", 0, {"fala": 0, "muda": None}, "homeostase")
     saida = capsys.readouterr().out
     assert "PISO, NAO TETO" in saida
@@ -321,11 +329,6 @@ def test_nexus_nao_reintroduz_contagem_literal_de_warnings():
     fixo. Os testes dos helpers nao pegariam a reintroducao, porque testam o
     helper, nao quem o chama. Este pega: proibe o digito literal na fonte.
     """
-    import re as _re
-    from pathlib import Path
-
-    import scripts.cli.nexus as nexus_mod
-
     fonte = Path(nexus_mod.__file__).read_text(encoding="utf-8")
     # Linha que e SO comentario nao imprime nada: a prosa que CITA o literal ao
     # documentar por que ele foi removido nao e o literal. Mesma distincao
@@ -346,10 +349,6 @@ def test_comando_desconhecido_do_worker_reprova():
     Era o habilitador estrutural: atalho do dashboard apontando para um nome
     errado ficava indistinguivel de um que funciona, e check=True nao percebia.
     """
-    import subprocess
-    import sys
-    from pathlib import Path
-
     raiz = Path(__file__).resolve().parent.parent
     res = subprocess.run(
         [sys.executable, str(raiz / "task_executor.py"), "comando-que-nao-existe-mesmo"],
@@ -369,12 +368,6 @@ def test_comando_desconhecido_do_worker_reprova():
 # unico do run_inference. Todos exercitam a direcao da FALHA -- e o defeito
 # em todos era exatamente essa direcao devolver 0.
 # ============================================================================
-
-import sqlite3  # noqa: E402
-import sys as _sys  # noqa: E402
-from unittest.mock import Mock  # noqa: E402
-
-import pytest  # noqa: E402
 
 
 @pytest.mark.parametrize(
@@ -427,8 +420,6 @@ def test_route_com_malha_quebrada_reprova():
     Ele capturava a excecao, imprimia em vermelho e saia 0 -- reportando
     sucesso exatamente quando tinha achado o problema que procurava.
     """
-    import task_executor
-
     with patch.object(task_executor, "intelligent_route_task", side_effect=RuntimeError("malha morta")):
         result = runner.invoke(app, ["agent", "route", "qualquer coisa"])
         assert result.exit_code == 1
@@ -471,40 +462,46 @@ def test_worker_vivo_e_aprovado():
 
 def test_proxy_que_nunca_sobe_reprova():
     """Esperava 20s e seguia adiante calado, abrindo o chat contra um proxy morto."""
-    from scripts.cli import nexus as nx
-
     with (
-        patch.object(nx, "_is_port_open", return_value=False),
-        patch.object(nx, "start_gemma"),
-        patch.object(nx.time, "sleep"),
+        patch.object(nexus_mod, "_is_port_open", return_value=False),
+        patch.object(nexus_mod, "start_gemma"),
+        patch.object(nexus_mod.time, "sleep"),
         pytest.raises(Exception, match="1|Exit"),
     ):
-        nx._ensure_active_model("12b")
+        _ensure_active_model("12b")
 
 
-def test_teclado_indisponivel_avisa_uma_vez_e_para(capsys):
-    """Degradava em silencio para sempre: as teclas nao respondiam e nada dizia por que."""
-    from scripts.cli import nexus as nx
+def test_teclado_indisponivel_avisa_uma_vez_e_para():
+    """Degradava em silencio para sempre: as teclas nao respondiam e nada dizia por que.
 
-    if hasattr(nx._get_key, "_indisponivel"):
-        del nx._get_key._indisponivel
+    O estado mora em `nexus._TECLADO_INDISPONIVEL`, flag de modulo. Antes era um
+    atributo pendurado na propria funcao, forma que ruff e Pyright reprovam por
+    motivos diferentes; o COMPORTAMENTO exigido aqui e o mesmo dos dois jeitos --
+    avisar uma vez e parar de tentar --, entao o teste mede o aviso, e nao onde
+    o booleano guarda residencia.
+    """
+    anterior = nexus_mod._TECLADO_INDISPONIVEL
+    nexus_mod._TECLADO_INDISPONIVEL = False
     try:
-        with patch.object(nx.sys, "platform", "win32"), patch.dict("sys.modules", {"msvcrt": None}):
-            assert nx._get_key() is None
-            assert nx._get_key() is None
-        assert getattr(nx._get_key, "_indisponivel", False) is True
+        with (
+            patch.object(nexus_mod.sys, "platform", "win32"),
+            patch.dict("sys.modules", {"msvcrt": None}),
+            patch.object(nexus_mod.console, "print") as avisou,
+        ):
+            assert _get_key() is None
+            assert _get_key() is None
+            # Uma vez, nao duas: o segundo retorno sai pelo atalho da flag.
+            assert avisou.call_count == 1
+        assert nexus_mod._TECLADO_INDISPONIVEL is True
     finally:
-        if hasattr(nx._get_key, "_indisponivel"):
-            del nx._get_key._indisponivel
+        nexus_mod._TECLADO_INDISPONIVEL = anterior
 
 
 def test_turno_unico_sem_resposta_reprova():
     """`main()` saia 0 com saida vazia: para do.ps1, indistinguivel de sucesso."""
-    from scripts.llm_inference import run_inference as ri
-
     with (
         patch.object(ri, "query_gemma_proxy", return_value=""),
-        patch.object(_sys, "argv", ["run_inference.py", "diga", "algo"]),
+        patch.object(sys, "argv", ["run_inference.py", "diga", "algo"]),
         pytest.raises(SystemExit) as exc,
     ):
         ri.main()
@@ -513,10 +510,8 @@ def test_turno_unico_sem_resposta_reprova():
 
 def test_turno_unico_com_resposta_e_aprovado():
     """Controle: resposta valida nao pode ter passado a reprovar."""
-    from scripts.llm_inference import run_inference as ri
-
     with (
         patch.object(ri, "query_gemma_proxy", return_value="resposta real"),
-        patch.object(_sys, "argv", ["run_inference.py", "diga", "algo"]),
+        patch.object(sys, "argv", ["run_inference.py", "diga", "algo"]),
     ):
         ri.main()  # nao pode levantar

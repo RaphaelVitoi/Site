@@ -99,7 +99,7 @@ def test_o_proprio_marcador_nao_e_indexado(rag, tmp_path):
     assert not any(Path(f).name == MARCADOR_SUPERADO for f in alvos)
 
 
-def test_a_exclusao_funciona_com_base_path_RELATIVO(rag, tmp_path, monkeypatch):
+def test_a_exclusao_funciona_com_base_path_relativo(rag, tmp_path, monkeypatch):
     """O defeito da primeira versão, travado -- e a primeira versão DESTE teste
     também não o pegava.
 

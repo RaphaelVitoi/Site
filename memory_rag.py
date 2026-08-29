@@ -200,6 +200,54 @@ class MemoryRAG:
             chunks.append(" ".join(buffer))
         return chunks
 
+    def _accumulate_paragraphs(self, paragraphs: list[str], chunk_size: int, overlap: int) -> list[str]:
+        """Acumula paragrafos respeitando o limite de chunk_size e calculando sobreposicao."""
+        all_chunks: list[str] = []
+        buffer: list[str] = []
+        buffer_len = 0
+
+        # `chunk_size` era so um teto para DIVIDIR, nunca um alvo para JUNTAR:
+        # cada paragrafo com ate 1200 chars virava um fragmento inteiro, e
+        # paragrafo curto e a norma em codigo e em markdown. Medido no indice de
+        # 2026-08-28, com CHUNK_SIZE=1200 declarado: **mediana de 162 chars**,
+        # 22,2% dos fragmentos abaixo de 50, p10 em 27. `logger =
+        # logging.getLogger(__name__)` aparecia 40 vezes como fragmento proprio,
+        # e cabecalhos de template 34 vezes -- 12,6% do indice era texto
+        # literalmente repetido.
+        #
+        # O efeito nao e so desperdicio: 3.165 fragmentos de uma linha disputam
+        # os 3 lugares de cada resultado, e cada um chega ao modelo sem contexto
+        # nenhum ao redor. Nao se resolve isso com ranking melhor -- e o corpus
+        # que esta fragmentado.
+        #
+        # Agora os paragrafos se ACUMULAM ate encostar no teto, e a sobreposicao
+        # entre fragmentos vizinhos e feita por paragrafo inteiro, nunca cortando
+        # frase ao meio.
+        for paragraph in paragraphs:
+            p = paragraph.strip()
+            if not p:
+                continue
+
+            if len(p) > chunk_size:
+                # Paragrafo colossal: fecha o que estava acumulado e delega.
+                if buffer:
+                    all_chunks.append("\n\n".join(buffer))
+                buffer, buffer_len = [], 0
+                all_chunks.extend(self._chunk_long_paragraph(p, chunk_size, overlap))
+                continue
+
+            if buffer and buffer_len + len(p) + 2 > chunk_size:
+                all_chunks.append("\n\n".join(buffer))
+                buffer, buffer_len = self._cauda_de_sobreposicao(buffer, overlap)
+
+            buffer.append(p)
+            buffer_len += len(p) + 2
+
+        if buffer:
+            all_chunks.append("\n\n".join(buffer))
+
+        return all_chunks
+
     def _chunk_text(self, text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
         """Quebra o texto em fragmentos, respeitando os limites semanticos (paragrafos e frases)."""
         if overlap >= chunk_size:
@@ -210,53 +258,7 @@ class MemoryRAG:
 
         text = text.replace("\r\n", "\n")
         paragraphs = text.split("\n\n")
-        all_chunks: list[str] = []
-
-        # `chunk_size` era so um teto para DIVIDIR, nunca um alvo para JUNTAR:
-        # todo paragrafo com ate 1200 chars virava um fragmento inteiro, e
-        # paragrafo curto e a norma em codigo e em markdown. Medido no indice de
-        # 2026-08-28, com CHUNK_SIZE=1200 declarado: **mediana de 162 chars**,
-        # 22,2% dos fragmentos abaixo de 50, p10 em 27. `logger =
-        # logging.getLogger(__name__)` aparecia 40 vezes como fragmento proprio,
-        # e cabecalhos de template 34 vezes -- 12,6% do indice era texto
-        # literalmente repetido.
-        #
-        # O efeito nao e so desperdicio: 3.165 fragmentos de uma linha disputam
-        # os 3 lugares de todo resultado, e cada um chega ao modelo sem contexto
-        # nenhum ao redor. Nao se resolve isso com ranking melhor -- e o corpus
-        # que esta fragmentado.
-        #
-        # Agora os paragrafos se ACUMULAM ate encostar no teto, e a sobreposicao
-        # entre fragmentos vizinhos e feita por paragrafo inteiro, nunca cortando
-        # frase ao meio.
-        buffer: list[str] = []
-        buffer_len = 0
-
-        def _emitir() -> None:
-            nonlocal buffer, buffer_len
-            if buffer:
-                all_chunks.append("\n\n".join(buffer))
-
-        for paragraph in paragraphs:
-            p = paragraph.strip()
-            if not p:
-                continue
-
-            if len(p) > chunk_size:
-                # Paragrafo colossal: fecha o que estava acumulado e delega.
-                _emitir()
-                buffer, buffer_len = [], 0
-                all_chunks.extend(self._chunk_long_paragraph(p, chunk_size, overlap))
-                continue
-
-            if buffer and buffer_len + len(p) + 2 > chunk_size:
-                _emitir()
-                buffer, buffer_len = self._cauda_de_sobreposicao(buffer, overlap)
-
-            buffer.append(p)
-            buffer_len += len(p) + 2
-
-        _emitir()
+        all_chunks = self._accumulate_paragraphs(paragraphs, chunk_size, overlap)
 
         # Rede de seguranca na FRONTEIRA: o teto que a constante declara passa a
         # valer de fato. `_chunk_long_paragraph` estourava ate 1404 chars num
@@ -311,8 +313,67 @@ class MemoryRAG:
             logger.exception("[RAG] Falha ao ler ou parsear o manifesto de ingestao.")
             return {}
 
+    @staticmethod
+    def _is_path_ignored(
+        caminho: Path,
+        raiz: Path,
+        ignore_dirs: set[str],
+        superadas: set[Path],
+        ignore_subtrees: tuple[Path, ...],
+    ) -> bool:
+        """Verifica se um caminho deve ser ignorado na coleta do RAG."""
+        if any(part in ignore_dirs for part in caminho.parts):
+            return True
+        if any(caminho.is_relative_to(d) for d in superadas):
+            return True
+        try:
+            rel = caminho.relative_to(raiz)
+        except ValueError:
+            return False
+        return any(rel.is_relative_to(sub) for sub in ignore_subtrees)
+
+    async def _expand_source_files(
+        self,
+        source: dict,
+        base_path: Path,
+        resolved_base: Path,
+        superadas: set[Path],
+        ignore_dirs: set[str],
+        ignore_subtrees: tuple[Path, ...],
+    ) -> list[Path]:
+        """Expande os arquivos de uma fonte do manifesto com protecao LFI e filtros."""
+        source_path_str = source.get("path", ".")
+        source_path = await asyncio.to_thread((base_path / source_path_str).resolve)
+
+        # SOTA: Blindagem absoluta contra Path Traversal (LFI) via Manifesto
+        if not source_path.is_relative_to(resolved_base):
+            logger.error(f"[SEC] Bloqueio de LFI/Traversal. O caminho de ingestao escapa a raiz: {source_path}")
+            return []
+
+        # `recursive` era campo DECLARADO E NUNCA LIDO: `rglob` sempre
+        # recursa, entao `"recursive": false` mentia. Honrar a flag e o que
+        # a torna auditavel  mas honrar sozinho seria destrutivo: a fonte
+        # `.claude` declarava `false` enquanto DEPENDIA de recursao, e
+        # passar a obedecer tiraria 39 registros de governanca vivos
+        # (MODUSOPERANDI, GOVERNANCA, ARQUITETURA, PROPOSITOS) do indice.
+        #
+        # Por isso a correcao e conjunta: aqui o codigo passa a obedecer, no
+        # manifesto `.claude` passa a declarar `true` (que e o que sempre
+        # precisou), e `.claude/.ARQUIVE` sai por subarvore. Corrigir so um
+        # dos tres decapitaria a memoria ou legitimaria o arquivo morto.
+        recursivo = source.get("recursive", True)
+        files_found: list[Path] = []
+        for pattern in source.get("patterns", []):
+            files = await asyncio.to_thread(
+                lambda p=pattern, sp=source_path, r=recursivo: list(sp.rglob(p) if r else sp.glob(p))
+            )
+            for f in files:
+                if not self._is_path_ignored(f, resolved_base, ignore_dirs, superadas, ignore_subtrees):
+                    files_found.append(f)
+        return files_found
+
     async def _collect_target_files_async(self, manifest: dict, base_path: Path) -> set:
-        target_files = []
+        target_files: list[Path] = []
         ignore_dirs = {
             ".venv",
             ".venv-wsl",
@@ -376,46 +437,13 @@ class MemoryRAG:
                 ", ".join(sorted(d.name for d in superadas)),
             )
 
-        def _ignorado(caminho: Path, raiz: Path) -> bool:
-            if any(part in ignore_dirs for part in caminho.parts):
-                return True
-            if any(caminho.is_relative_to(d) for d in superadas):
-                return True
-            try:
-                rel = caminho.relative_to(raiz)
-            except ValueError:
-                return False
-            return any(rel.is_relative_to(sub) for sub in ignore_subtrees)
-
+        resolved_base = await asyncio.to_thread(base_path.resolve)
         for source in manifest.get("sources", []):
-            source_path_str = source.get("path", ".")
-            source_path = await asyncio.to_thread((base_path / source_path_str).resolve)
-            resolved_base = await asyncio.to_thread(base_path.resolve)
+            files = await self._expand_source_files(
+                source, base_path, resolved_base, superadas, ignore_dirs, ignore_subtrees
+            )
+            target_files.extend(files)
 
-            # SOTA: Blindagem absoluta contra Path Traversal (LFI) via Manifesto
-            if not source_path.is_relative_to(resolved_base):
-                logger.error(f"[SEC] Bloqueio de LFI/Traversal. O caminho de ingestao escapa a raiz: {source_path}")
-                continue
-
-            # `recursive` era campo DECLARADO E NUNCA LIDO: `rglob` sempre
-            # recursa, entao `"recursive": false` mentia. Honrar a flag e o que
-            # a torna auditavel  mas honrar sozinho seria destrutivo: a fonte
-            # `.claude` declarava `false` enquanto DEPENDIA de recursao, e
-            # passar a obedecer tiraria 39 registros de governanca vivos
-            # (MODUSOPERANDI, GOVERNANCA, ARQUITETURA, PROPOSITOS) do indice.
-            #
-            # Por isso a correcao e conjunta: aqui o codigo passa a obedecer, no
-            # manifesto `.claude` passa a declarar `true` (que e o que sempre
-            # precisou), e `.claude/.ARQUIVE` sai por subarvore. Corrigir so um
-            # dos tres decapitaria a memoria ou legitimaria o arquivo morto.
-            recursivo = source.get("recursive", True)
-            for pattern in source.get("patterns", []):
-                files = await asyncio.to_thread(
-                    lambda p=pattern, sp=source_path, r=recursivo: list(sp.rglob(p) if r else sp.glob(p))
-                )
-                for f in files:
-                    if not _ignorado(f, resolved_base):
-                        target_files.append(f)
         return set(target_files)
 
     async def _extract_docx(self, file_path: Path) -> str:

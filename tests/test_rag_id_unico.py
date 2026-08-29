@@ -108,7 +108,7 @@ def test_a_chave_de_id_e_unica_em_todo_o_corpus():
     assert len(contagem) == len(alvos), "toda chave tem de corresponder a exatamente um arquivo"
 
 
-def test_o_esquema_ANTIGO_de_fato_colidia():
+def test_o_esquema_antigo_de_fato_colidia():
     """Prova que a invariante acima não é vacuidade.
 
     Um teste de unicidade sobre um esquema que nunca colide passa por acidente.

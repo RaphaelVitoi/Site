@@ -113,8 +113,36 @@ WORKER_API_CMD = "worker-api"
 MEMORY_RAG_SCRIPT = "memory_rag.py"
 
 STYLE_BOLD_WHITE = "bold #f8f8f2"
+STYLE_BOLD_YELLOW = "bold yellow"
+STYLE_BOLD_RED = "bold red"
+STYLE_BOLD_GREEN = "bold green"
 STATUS_PASS = "[green]PASS[/]"  # noqa: S105
 STATUS_FAIL = "[red]FAIL[/]"
+MSG_SEM_MEDIDOR = "sem medidor"
+TRI_STATE_GUARD_BANNER = (
+    "[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
+)
+TRI_STATE_SCRIPTS_BANNER = (
+    "[bold green] Tri-State Guard para Scripts:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
+)
+
+_CMD_PREFIX_PYTHON = "python "
+_CMD_PREFIX_PWSH = "pwsh "
+_CMD_PREFIX_NODE = "node "
+
+
+def _resolver_comando(cmd_str: str) -> str:
+    """Resolve prefixos de runtime (python/pwsh/node) para binarios absolutos."""
+    if cmd_str.startswith(_CMD_PREFIX_PYTHON):
+        return f'"{sys.executable}" ' + cmd_str[len(_CMD_PREFIX_PYTHON):]
+    if cmd_str.startswith(_CMD_PREFIX_PWSH):
+        pwsh_bin = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
+        return f'"{pwsh_bin}" ' + cmd_str[len(_CMD_PREFIX_PWSH):]
+    if cmd_str.startswith(_CMD_PREFIX_NODE):
+        node_bin = shutil.which("node") or "node"
+        return f'"{node_bin}" ' + cmd_str[len(_CMD_PREFIX_NODE):]
+    return cmd_str
+
 
 # Nao reintroduzir aqui as constantes do Tri-State Guard (MSG_WARNINGS_SOTA,
 # STATUS_TRI_STATE_*, FOOTER_DIVIDER_CYAN, PREFIX_*). Existiram sem consumidor
@@ -161,11 +189,11 @@ def _imprimir_resumo_tri_state(
     total_w = sum(declarados)
 
     if erros > 0 or total_w >= 3:
-        tri_state, cor = "FALHOU (VERMELHO)", "bold red"
+        tri_state, cor = "FALHOU (VERMELHO)", STYLE_BOLD_RED
     elif total_w > 0:
-        tri_state, cor = "FRAGIL (AMARELO)", "bold yellow"
+        tri_state, cor = "FRAGIL (AMARELO)", STYLE_BOLD_YELLOW
     else:
-        tri_state, cor = "SUCESSO (VERDE)", "bold green"
+        tri_state, cor = "SUCESSO (VERDE)", STYLE_BOLD_GREEN
 
     console.print("\n" + "=" * 80)
     console.print(f"[bold cyan]===== SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD ({titulo}) =====[/]")
@@ -213,7 +241,7 @@ def main():
         )
     else:
         # Best-effort por desenho: roda a cada invocacao do CLI, entao gritar no
-        # console seria ruido em todo comando. Mas sumir sem deixar rastro nao e
+        # console seria ruido em cada comando. Mas sumir sem deixar rastro nao e
         # opcao -- o gatilho pararia de existir sem ninguem notar. Vai para o log.
         logger.warning(f"[HIGIENE] Gatilho silencioso NAO executado: {script_path} ausente.")
 
@@ -519,8 +547,9 @@ def _fetch_vulkan_ollama_vram() -> tuple[float, float, float] | None:
     # Leitura de instrumento nao pode custar mais que o que ela instrumenta.
     agora = time.monotonic()
     global _VRAM_PS_CACHE  # pylint: disable=global-statement
-    if _VRAM_PS_CACHE and agora - _VRAM_PS_CACHE[0] < _VRAM_PS_TTL_S:
-        usado = _VRAM_PS_CACHE[1]
+    cache = _VRAM_PS_CACHE
+    if cache is not None and agora - cache[0] < _VRAM_PS_TTL_S:
+        usado = cache[1]
     else:
         # stdlib e nao `httpx`, e a diferenca foi MEDIDA. Um `httpx.get()` avulso
         # constroi e destroi um Client por chamada, e este comando roda dentro do
@@ -529,7 +558,7 @@ def _fetch_vulkan_ollama_vram() -> tuple[float, float, float] | None:
         # o painel saia no stdout real. Com a stdlib, passa. Para um GET de JSON
         # em loopback a stdlib basta e nao se enreda com o laco de eventos.
         # `http.client` e nao `urlopen`: o portao de ancora reprovou um
-        # `# noqa: S310` aqui, e ele tinha razao. S310 existe porque `urlopen`
+        # `noqa S310` aqui, e ele tinha razao. S310 existe porque `urlopen`
         # aceita esquema arbitrario (`file:`, esquemas proprios) -- e a resposta
         # certa nao era registrar a supressao, era tirar a ambiguidade: host,
         # porta e caminho separados nao passam por parsing de URL nenhum. O
@@ -543,7 +572,8 @@ def _fetch_vulkan_ollama_vram() -> tuple[float, float, float] | None:
             conexao = http.client.HTTPConnection(_OLLAMA_HOST, _OLLAMA_PORT, timeout=0.4)
             conexao.request("GET", "/api/ps")
             modelos = json.loads(conexao.getresponse().read()).get("models", [])
-        except Exception:  # noqa: BLE001 - servidor fora do ar e ausencia de dado, nao erro
+        # Servidor fora do ar e ausencia de dado, nao erro.
+        except Exception:  # noqa: BLE001
             return None
         finally:
             if conexao is not None:
@@ -757,12 +787,20 @@ def _generate_dashboard_ui(counts: dict) -> Group:
     return Group(header, col_table, footer)
 
 
+# Flag de modulo, e nao atributo pendurado na propria funcao. As duas formas do
+# atributo sao reprovadas por ferramentas diferentes -- `setattr(f, "x", True)`
+# pelo ruff (B010) e `f.x = True` pelo Pyright (reportFunctionMemberAccess) --
+# e trocar uma pela outra so muda quem reclama. Estado de modulo mora no modulo.
+_TECLADO_INDISPONIVEL = False
+
+
 def _get_key() -> str | None:
     # Degradava em silencio: qualquer excecao do msvcrt virava "nenhuma tecla",
     # para sempre, e o dashboard parecia travado sem nada explicar. Agora degrada
     # UMA vez, dizendo o motivo, e para de tentar. So ImportError e OSError sao
     # esperados (modulo ausente, processo sem console); o resto deve aparecer.
-    if sys.platform != "win32" or getattr(_get_key, "_indisponivel", False):
+    global _TECLADO_INDISPONIVEL  # noqa: PLW0603
+    if sys.platform != "win32" or _TECLADO_INDISPONIVEL:
         return None
     try:
         import msvcrt
@@ -770,7 +808,7 @@ def _get_key() -> str | None:
         if msvcrt.kbhit():
             return msvcrt.getch().decode("utf-8", errors="ignore").lower()
     except (ImportError, OSError) as e:
-        _get_key._indisponivel = True  # type: ignore[attr-defined]
+        _TECLADO_INDISPONIVEL = True
         console.print(f"[yellow][AVISO] Atalhos de teclado indisponiveis ({e}). Use Ctrl+C para sair.[/]")
     return None
 
@@ -1551,6 +1589,46 @@ def _execute_ram_cleanse(verbose: bool = True) -> int:
 TETOS_PADRAO = BASE_DIR / "data" / "TETOS_DE_MEMORIA.json"
 
 
+def _executar_ciclo_guard(tetos: dict, once: bool) -> bool:
+    """Executa um ciclo unico do guard de memoria. Retorna True se deve continuar o laco."""
+    leitura = _medir_pressao(tetos)
+    estourou = [n for n, c in leitura.items() if c["pressao"] is not None and c["valor"] >= c["teto"]]
+
+    for nome in estourou:
+        c = leitura[nome]
+        console.print(
+            f"[bold red][TETO] {nome.upper()} em {c['valor']:.1f}{c['unidade']} "
+            f"(teto {c['teto']}{c['unidade']}). Agindo...[/]"
+        )
+        console.print(f"        [dim]{_agir_por_camada(nome)}[/]")
+
+    if not estourou:
+        logger.info("[GUARD] %s", _resumo_da_leitura(leitura))
+
+    if once:
+        # `--once` e comando de diagnostico: quem o roda quer ver O QUE
+        # FOI MEDIDO. Mandar a leitura so para o logger fazia o comando
+        # imprimir os tetos, sair com 0 e nao dizer uma palavra sobre o
+        # estado -- verde que nao carrega a medicao que o justifica, que
+        # e a falha que este guard existe para achar nos outros.
+        if not estourou:
+            console.print(f"  [green]{_resumo_da_leitura(leitura)}[/]")
+        camada, folga = _mais_pressionada(leitura)
+        if camada is None:
+            console.print(f"  [{STYLE_BOLD_YELLOW}]nenhuma camada tem medidor -- o guard esta cego[/]")
+        else:
+            console.print(
+                f"  [dim]mais pressionada: {camada} a {folga * 100:.0f}% do seu teto; "
+                f"num laco, o proximo ciclo seria em {_intervalo_adaptativo(leitura)}s[/]"
+            )
+        return False
+
+    espera = _intervalo_adaptativo(leitura)
+    logger.debug("[GUARD] proximo ciclo em %ds", espera)
+    time.sleep(espera)
+    return True
+
+
 @ops_app.command("guard")
 def memory_guard(
     once: bool = typer.Option(False, "--once", "-1", help="Le as tres camadas, age se preciso, e sai"),
@@ -1575,41 +1653,8 @@ def memory_guard(
 
     try:
         while True:
-            leitura = _medir_pressao(tetos)
-            estourou = [n for n, c in leitura.items() if c["pressao"] is not None and c["valor"] >= c["teto"]]
-
-            for nome in estourou:
-                c = leitura[nome]
-                console.print(
-                    f"[bold red][TETO] {nome.upper()} em {c['valor']:.1f}{c['unidade']} "
-                    f"(teto {c['teto']}{c['unidade']}). Agindo...[/]"
-                )
-                console.print(f"        [dim]{_agir_por_camada(nome, c)}[/]")
-
-            if not estourou:
-                logger.info("[GUARD] %s", _resumo_da_leitura(leitura))
-
-            if once:
-                # `--once` e comando de diagnostico: quem o roda quer ver O QUE
-                # FOI MEDIDO. Mandar a leitura so para o logger fazia o comando
-                # imprimir os tetos, sair com 0 e nao dizer uma palavra sobre o
-                # estado -- verde que nao carrega a medicao que o justifica, que
-                # e a falha que este guard existe para achar nos outros.
-                if not estourou:
-                    console.print(f"  [green]{_resumo_da_leitura(leitura)}[/]")
-                camada, folga = _mais_pressionada(leitura)
-                if camada is None:
-                    console.print("  [bold yellow]nenhuma camada tem medidor -- o guard esta cego[/]")
-                else:
-                    console.print(
-                        f"  [dim]mais pressionada: {camada} a {folga * 100:.0f}% do seu teto; "
-                        f"num laco, o proximo ciclo seria em {_intervalo_adaptativo(leitura)}s[/]"
-                    )
-                return
-
-            espera = _intervalo_adaptativo(leitura)
-            logger.debug("[GUARD] proximo ciclo em %ds", espera)
-            time.sleep(espera)
+            if not _executar_ciclo_guard(tetos, once):
+                break
     except KeyboardInterrupt:
         console.print("\n[bold cyan]Guard tri-camada finalizado.[/]")
 
@@ -1656,8 +1701,7 @@ def _commit_charge_pct() -> tuple[float, float, float] | None:
                 ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
             ]
 
-        st = _Status()
-        st.dwLength = ctypes.sizeof(_Status)
+        st = _Status(dwLength=ctypes.sizeof(_Status))
         if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(st)):
             return None
         limite = st.ullTotalPageFile
@@ -1665,7 +1709,8 @@ def _commit_charge_pct() -> tuple[float, float, float] | None:
             return None
         usado = limite - st.ullAvailPageFile
         return (usado / limite) * 100, usado / 1e9, limite / 1e9
-    except Exception:  # noqa: BLE001 - ausencia de medidor, nao erro
+    # Ausencia de medidor, nao erro.
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -1699,7 +1744,7 @@ def _medir_pressao(tetos: dict) -> dict[str, dict]:
         {"valor": commit[0], "teto": teto_commit, "unidade": "%", "pressao": commit[0] / teto_commit,
          "detalhe": f"{commit[1]:.1f}/{commit[2]:.1f} GB"}
         if commit
-        else {"valor": None, "teto": teto_commit, "unidade": "%", "pressao": None, "detalhe": "sem medidor"}
+        else {"valor": None, "teto": teto_commit, "unidade": "%", "pressao": None, "detalhe": MSG_SEM_MEDIDOR}
     )
 
     pct_vram, usado, total = _get_vram_usage()
@@ -1707,7 +1752,7 @@ def _medir_pressao(tetos: dict) -> dict[str, dict]:
     leitura["vram"] = (
         {"valor": pct_vram, "teto": teto_vram, "unidade": "%", "pressao": pct_vram / teto_vram, "detalhe": f"{usado:.1f}/{total:.1f} GiB"}
         if pct_vram is not None
-        else {"valor": None, "teto": teto_vram, "unidade": "%", "pressao": None, "detalhe": "sem medidor"}
+        else {"valor": None, "teto": teto_vram, "unidade": "%", "pressao": None, "detalhe": MSG_SEM_MEDIDOR}
     )
 
     teto_cache = float(tetos["cache"]["teto_mb"])
@@ -1716,8 +1761,9 @@ def _medir_pressao(tetos: dict) -> dict[str, dict]:
 
         mb = context_cache.tamanho_mb()
         leitura["cache"] = {"valor": mb, "teto": teto_cache, "unidade": "MB", "pressao": mb / teto_cache}
-    except Exception:  # noqa: BLE001 - camada indisponivel e ausencia de dado, nao erro
-        leitura["cache"] = {"valor": None, "teto": teto_cache, "unidade": "MB", "pressao": None, "detalhe": "sem medidor"}
+    # Camada indisponivel e ausencia de dado, nao erro.
+    except Exception:  # noqa: BLE001
+        leitura["cache"] = {"valor": None, "teto": teto_cache, "unidade": "MB", "pressao": None, "detalhe": MSG_SEM_MEDIDOR}
 
     return leitura
 
@@ -1758,11 +1804,13 @@ def _intervalo_adaptativo(leitura: dict[str, dict], minimo: int = 15, maximo: in
     pressoes = [c["pressao"] for c in leitura.values() if c["pressao"] is not None]
     if not pressoes:
         return maximo
-    p = min(1.0, max(0.0, max(pressoes)))
+    p = max(0.0, *pressoes)
+    if p > 1.0:
+        p = 1.0
     return int(maximo - (maximo - minimo) * p)
 
 
-def _agir_por_camada(camada: str, leitura: dict, verbose: bool = False) -> str:
+def _agir_por_camada(camada: str, verbose: bool = False) -> str:
     """Acao da camada que estourou. Devolve o que foi feito, para o log."""
     if camada == "ram":
         liberados = _execute_ram_cleanse(verbose=verbose)
@@ -1780,7 +1828,7 @@ def _agir_por_camada(camada: str, leitura: dict, verbose: bool = False) -> str:
         from core.sota_context_engine import context_cache  # noqa: PLC0415
 
         antes = context_cache.tamanho_mb()
-        context_cache._enforce_lru_eviction()
+        context_cache.enforce_lru_eviction()
         return f"cache evictado de {antes:.1f} para {context_cache.tamanho_mb():.1f} MB"
     return "camada desconhecida"
 
@@ -1882,7 +1930,7 @@ def run_maintenance():
     #
     # O ChromaDB nao expoe operacao de compactacao aqui. A manutencao real do
     # indice e reindexar, que e `memory_rag.py ingest` -- caro (embeddings sobre
-    # todo o corpus) e por isso NAO disparado automaticamente. Rode a mao quando
+    # o corpus inteiro) e por isso NAO disparado automaticamente. Rode a mao quando
     # o corpus mudar de forma relevante.
     console.print("[dim]5/5 RAG vetorial: sem operacao de otimizacao. Reindexar e `memory_rag.py ingest` (manual).[/]")
 
@@ -2121,7 +2169,7 @@ def _restore_lightningcss(lib_name: str, lib_path: Path, cache_path: Path) -> bo
     return False
 
 
-async def _auto_cure_lightningcss() -> None:
+def _auto_cure_lightningcss() -> None:
     # --- Auto-Cure & O(1) Cache Recovery for LightningCSS Native Binaries ---
     node_modules_dir = BASE_DIR / "node_modules"
     cache_dir = NEXUS_ZONE_CACHE / "lightningcss"
@@ -2248,7 +2296,7 @@ async def quality_gate():
         console.print("[bold red][ENTROPIA CRITICA] Executaveis vitais (npm) ausentes no PATH da membrana.[/]")
         raise typer.Exit(1)
 
-    await _auto_cure_lightningcss()
+    _auto_cure_lightningcss()
 
     build_env = os.environ.copy()
     build_env["NEXT_PUBLIC_SOTA_BUILD_MODE"] = "1"
@@ -2329,6 +2377,165 @@ async def quality_gate():
     )
 
 
+# ---------------------------------------------------------------------------
+# Helpers extraidos para reduzir complexidade cognitiva dos comandos CLI.
+# Cada um encapsula um bloco auto-contido que antes vivia inline.
+# ---------------------------------------------------------------------------
+
+
+def _render_suites_catalog(suites: dict) -> None:
+    """Imprime catalogo tabelado de suites tematicas."""
+    console.print("\n[bold cyan]=== [SUITES DE TESTES TEMATICAS SOTA v8.0 GOLD] ===[/]\n")
+    table = Table(title="Catalogo de Suites Tematicas (Pytest & SOTA Guard)", box=box.ROUNDED)
+    table.add_column("Suite ID", style=STYLE_BOLD_YELLOW)
+    table.add_column("Nome Tematico", style="white")
+    table.add_column("Testes", justify="right", style="cyan")
+    table.add_column("SLA", justify="right", style="green")
+    table.add_column("Criterio Tematico Chave", style="dim")
+
+    for sid, sinfo in suites.items():
+        crit_list = sinfo.get("thematic_criteria", [])
+        key_crit = crit_list[0] if crit_list else sinfo.get("description", "")
+        table.add_row(
+            sid,
+            sinfo.get("name", ""),
+            str(sinfo.get("test_count", 0)),
+            f"{sinfo.get('sla_seconds', 0)}s",
+            key_crit[:55] + "...",
+        )
+    console.print(table)
+    console.print(TRI_STATE_GUARD_BANNER)
+
+
+def _render_scripts_catalog(taxonomy: dict, category: str | None) -> None:
+    """Imprime catalogo tabelado de scripts por categoria."""
+    console.print("\n[bold cyan]=== [CATALOGO DE SCRIPTS SOTA v8.0 GOLD] ===[/]\n")
+    for cat_id, cat_info in taxonomy.items():
+        if category and category.lower() != cat_id.lower():
+            continue
+        table = Table(title=f"Categoria: {cat_info.get('name')} ({cat_id})", box=box.ROUNDED)
+        table.add_column("Script Path", style=STYLE_BOLD_YELLOW)
+        table.add_column("Runtime", style="cyan")
+        table.add_column("SLA", justify="right", style="green")
+        table.add_column("Descricao", style="white")
+
+        for s_path, s_data in cat_info.get("scripts", {}).items():
+            table.add_row(
+                s_path,
+                s_data.get("runtime", ""),
+                f"{s_data.get('sla_seconds', 0)}s",
+                s_data.get("description", "")[:55] + "...",
+            )
+        console.print(table)
+        console.print("")
+
+    console.print(TRI_STATE_SCRIPTS_BANNER)
+
+
+def _executar_categoria_scripts(run_cat: str, taxonomy: dict) -> None:
+    """Executa todos os scripts de uma categoria sob o Tri-State Guard."""
+    cat_key = run_cat.lower()
+    if cat_key not in taxonomy:
+        console.print(f"[bold red][ERRO] Categoria '{run_cat}' desconhecida. Use 'nexus scripts --list'.[/]")
+        raise typer.Exit(1)
+
+    cat_info = taxonomy[cat_key]
+    console.print(f"\n[bold cyan]=== [EXECUTANDO BATERIA DE SCRIPTS: {cat_info.get('name')} ({cat_key})] ===[/]\n")
+    for crit in cat_info.get("thematic_criteria", []):
+        console.print(f"  [cyan] Criterio:[/] [white]{crit}[/]")
+    console.print("")
+
+    script_errors: list[tuple[str, str]] = []
+    warnings_por_script: dict[str, int | None] = {}
+    for s_path, s_data in cat_info.get("scripts", {}).items():
+        cmd_str = _resolver_comando(s_data.get("command", ""))
+        console.print(f"[bold yellow] Disparando:[/] [white]{s_path}[/] [dim]({cmd_str})[/]...")
+        t0 = time.monotonic()
+        res = subprocess.run(  # noqa: S602  # Record-Id: registro-2026-08-29-shell-true-nos-catalogos
+            cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False
+        )
+        dt = time.monotonic() - t0
+        sla = s_data.get("sla_seconds", 10.0)
+
+        warnings_por_script[s_path] = _warnings_declarados(res.stdout)
+        if res.returncode == 0:
+            console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)")
+        else:
+            console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}")
+            script_errors.append((s_path, res.stderr or res.stdout))
+
+    _imprimir_resumo_tri_state(
+        "SCRIPTS",
+        len(script_errors),
+        warnings_por_script,
+        "Todos os scripts da categoria executados com excelencia.",
+    )
+
+    if script_errors:
+        raise typer.Exit(1)
+
+
+def _resolver_targets_operacao(items: dict, target_id: str) -> dict | None:
+    """Resolve 'all' ou um ID especifico em dicionario de targets. None = desconhecido."""
+    if target_id == "all":
+        return items
+    if target_id in items:
+        return {target_id: items[target_id]}
+    return None
+
+
+def _render_operations_catalog(
+    titulo_secao: str, titulo_tabela: str, id_col: str, items: dict
+) -> None:
+    """Imprime catalogo tabelado de operacoes (auditorias ou rotinas)."""
+    console.print(f"\n[bold cyan]=== [{titulo_secao}] ===[/]\n")
+    table = Table(title=titulo_tabela, box=box.ROUNDED)
+    table.add_column(id_col, style=STYLE_BOLD_YELLOW)
+    table.add_column("Nome", style="white")
+    table.add_column("SLA", justify="right", style="green")
+    table.add_column("Descricao", style="dim")
+    for item_id, info in items.items():
+        table.add_row(
+            item_id, info.get("name", ""), f"{info.get('sla_seconds', 0)}s", info.get("description", "")[:55] + "..."
+        )
+    console.print(table)
+    console.print(TRI_STATE_GUARD_BANNER)
+
+
+def _executar_bloco_operacoes(
+    tipo_plural: str,
+    tipo_singular: str,
+    targets: dict,
+    titulo_tri_state: str,
+    msg_sucesso: str,
+) -> None:
+    """Executa um bloco de operacoes (auditorias ou rotinas) sob o Tri-State Guard."""
+    console.print(f"\n[bold cyan]=== [EXECUTANDO {tipo_plural} SOTA: {len(targets)} {tipo_plural}] ===[/]\n")
+    op_errors: list[tuple[str, str]] = []
+    warnings_por_op: dict[str, int | None] = {}
+    for op_id, op_info in targets.items():
+        cmd_str = _resolver_comando(op_info.get("command", ""))
+        console.print(f"[bold yellow] {tipo_singular}:[/] [white]{op_info.get('name')}[/] [dim]({cmd_str})[/]")
+        for c in op_info.get("thematic_criteria", []):
+            console.print(f"  [cyan] Criterio:[/] [white]{c}[/]")
+        t0 = time.monotonic()
+        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)  # noqa: S602  # Record-Id: registro-2026-08-29-shell-true-nos-catalogos
+        dt = time.monotonic() - t0
+        sla = op_info.get("sla_seconds", 10.0)
+
+        warnings_por_op[str(op_info.get("name") or op_id)] = _warnings_declarados(res.stdout)
+        if res.returncode == 0:
+            console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)\n")
+        else:
+            console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}\n")
+            op_errors.append((op_id, res.stderr or res.stdout))
+
+    _imprimir_resumo_tri_state(titulo_tri_state, len(op_errors), warnings_por_op, msg_sucesso)
+
+    if op_errors:
+        raise typer.Exit(1)
+
+
 @app.command("test")
 def run_thematic_test_suite(
     suite: str = typer.Option(
@@ -2355,28 +2562,7 @@ def run_thematic_test_suite(
     suites = manifest.get("thematic_suites", {})
 
     if list_suites:
-        console.print("\n[bold cyan]=== [SUITES DE TESTES TEMATICAS SOTA v8.0 GOLD] ===[/]\n")
-        table = Table(title="Catalogo de Suites Tematicas (Pytest & SOTA Guard)", box=box.ROUNDED)
-        table.add_column("Suite ID", style="bold yellow")
-        table.add_column("Nome Tematico", style="white")
-        table.add_column("Testes", justify="right", style="cyan")
-        table.add_column("SLA", justify="right", style="green")
-        table.add_column("Criterio Tematico Chave", style="dim")
-
-        for sid, sinfo in suites.items():
-            crit_list = sinfo.get("thematic_criteria", [])
-            key_crit = crit_list[0] if crit_list else sinfo.get("description", "")
-            table.add_row(
-                sid,
-                sinfo.get("name", ""),
-                str(sinfo.get("test_count", 0)),
-                f"{sinfo.get('sla_seconds', 0)}s",
-                key_crit[:55] + "...",
-            )
-        console.print(table)
-        console.print(
-            "[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
-        )
+        _render_suites_catalog(suites)
         return
 
     if suite == "all":
@@ -2415,7 +2601,6 @@ def run_thematic_test_suite(
     if res.returncode != 0:
         raise typer.Exit(res.returncode)
 
-
 @app.command("scripts")
 @ops_app.command("scripts")
 def list_and_run_scripts(
@@ -2443,80 +2628,10 @@ def list_and_run_scripts(
     taxonomy = catalog.get("taxonomy", {})
 
     if not list_all and run_cat:
-        cat_key = run_cat.lower()
-        if cat_key not in taxonomy:
-            console.print(f"[bold red][ERRO] Categoria '{run_cat}' desconhecida. Use 'nexus scripts --list'.[/]")
-            raise typer.Exit(1)
-
-        cat_info = taxonomy[cat_key]
-        console.print(f"\n[bold cyan]=== [EXECUTANDO BATERIA DE SCRIPTS: {cat_info.get('name')} ({cat_key})] ===[/]\n")
-        for crit in cat_info.get("thematic_criteria", []):
-            console.print(f"  [cyan] Criterio:[/] [white]{crit}[/]")
-        console.print("")
-
-        script_errors = []
-        warnings_por_script: dict[str, int | None] = {}
-        for s_path, s_data in cat_info.get("scripts", {}).items():
-            cmd_str = s_data.get("command", "")
-            if cmd_str.startswith("python "):
-                cmd_str = f'"{sys.executable}" ' + cmd_str[7:]
-            elif cmd_str.startswith("pwsh "):
-                pwsh_bin = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
-                cmd_str = f'"{pwsh_bin}" ' + cmd_str[5:]
-            elif cmd_str.startswith("node "):
-                node_bin = shutil.which("node") or "node"
-                cmd_str = f'"{node_bin}" ' + cmd_str[5:]
-
-            console.print(f"[bold yellow] Disparando:[/] [white]{s_path}[/] [dim]({cmd_str})[/]...")
-            t0 = time.monotonic()
-            res = subprocess.run(  # noqa: S602
-                cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False
-            )
-            dt = time.monotonic() - t0
-            sla = s_data.get("sla_seconds", 10.0)
-
-            warnings_por_script[s_path] = _warnings_declarados(res.stdout)
-            if res.returncode == 0:
-                console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)")
-            else:
-                console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}")
-                script_errors.append((s_path, res.stderr or res.stdout))
-
-        _imprimir_resumo_tri_state(
-            "SCRIPTS",
-            len(script_errors),
-            warnings_por_script,
-            "Todos os scripts da categoria executados com excelencia.",
-        )
-
-        if script_errors:
-            raise typer.Exit(1)
+        _executar_categoria_scripts(run_cat, taxonomy)
         return
 
-    # Modo Listagem por padrao
-    console.print("\n[bold cyan]=== [CATALOGO DE SCRIPTS SOTA v8.0 GOLD] ===[/]\n")
-    for cat_id, cat_info in taxonomy.items():
-        if category and category.lower() != cat_id.lower():
-            continue
-        table = Table(title=f"Categoria: {cat_info.get('name')} ({cat_id})", box=box.ROUNDED)
-        table.add_column("Script Path", style="bold yellow")
-        table.add_column("Runtime", style="cyan")
-        table.add_column("SLA", justify="right", style="green")
-        table.add_column("Descricao", style="white")
-
-        for s_path, s_data in cat_info.get("scripts", {}).items():
-            table.add_row(
-                s_path,
-                s_data.get("runtime", ""),
-                f"{s_data.get('sla_seconds', 0)}s",
-                s_data.get("description", "")[:55] + "...",
-            )
-        console.print(table)
-        console.print("")
-
-    console.print(
-        "[bold green] Tri-State Guard para Scripts:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
-    )
+    _render_scripts_catalog(taxonomy, category)
 
 
 # ==========================================
@@ -2524,28 +2639,22 @@ def list_and_run_scripts(
 # ==========================================
 
 
-@agent_app.command("handoff")
-def execute_handoff(
-    web: bool = typer.Option(False, "--web", help="Copia contexto para Clipboard da Web (Claude/Gemini Pro)"),
-    agent: str = typer.Option("chico", "--agent", help="Focar contexto num agente especifico"),
-):
-    """Monta contexto hierarquico isolado e realiza o Handoff Cognitivo de Sessao."""
-    mode_desc = "Web Clipboard (Claude/Gemini Pro)" if web else "Padrao SOTA"
-    console.print(f"\n[bold cyan]=== [PROTOCOLO DE HANDOFF COGNITIVO SOTA v8.0 GOLD ({mode_desc})] ===[/]\n")
-    context = []
+def _coletar_fontes_handoff(
+    claude_dir: Path, agent: str
+) -> tuple[list[str], list[str]]:
+    """Coleta fontes de governanca e memoria para o handoff.
 
-    claude_dir = BASE_DIR / ".claude" if (BASE_DIR / ".claude").exists() else BASE_DIR / ".cerebro"
+    Retorna (context_parts, ausentes). Ausencia declarada, nao silenciosa.
+    Medido em 2026-08-27: 3 dos 4 arquivos nao existiam e o handoff saia
+    com um quarto da carga anunciada dizendo "persistido com sucesso".
+    """
     files_to_inject = {
         "MODUS OPERANDI v8.0 GOLD": BASE_DIR.parent / "MODUS_OPERANDI.md",
         "INSTRUCOES GLOBAIS": BASE_DIR / "GLOBAL_INSTRUCTIONS.md",
         "COSMOVISAO": claude_dir / "COSMOVISAO.md",
         "INVARIANTES ARQUITETURAIS": claude_dir / "ARCHITECTURAL_INVARIANTS.md",
     }
-    # Ausencia declarada, nao silenciosa. Medido em 2026-08-27: 3 dos 4 arquivos
-    # nao existiam (GLOBAL_INSTRUCTIONS, COSMOVISAO, ARCHITECTURAL_INVARIANTS), e
-    # o handoff saia com um quarto da carga anunciada dizendo "persistido com
-    # sucesso". Handoff incompleto que se declara completo e pior que handoff
-    # que falha: o proximo agente herda o vazio sem saber.
+    context: list[str] = []
     ausentes: list[str] = []
     for title, path in files_to_inject.items():
         if path.exists():
@@ -2555,32 +2664,23 @@ def execute_handoff(
         else:
             ausentes.append(f"{title} ({path})")
 
-    agents_dir = claude_dir / "agents"
-    specific_agent = agents_dir / f"{agent}.md"
-    if specific_agent.exists():
-        context.append(
-            f"\n=================================================================\n## PERFIL ATIVO: {specific_agent.name}\n=================================================================\n{specific_agent.read_text(encoding='utf-8', errors='ignore')}"
-        )
+    for label, path in [
+        (f"PERFIL ATIVO: {agent}.md", claude_dir / "agents" / f"{agent}.md"),
+        (f"MEMORIA SIMBIOTICA: {agent}", claude_dir / "agent-memory" / agent / "MEMORY.md"),
+    ]:
+        if path.exists():
+            context.append(
+                f"\n=================================================================\n## {label}\n=================================================================\n{path.read_text(encoding='utf-8', errors='ignore')}"
+            )
 
-    memory_file = claude_dir / "agent-memory" / agent / "MEMORY.md"
-    if memory_file.exists():
-        context.append(
-            f"\n=================================================================\n## MEMORIA SIMBIOTICA: {agent}\n=================================================================\n{memory_file.read_text(encoding='utf-8', errors='ignore')}"
-        )
+    return context, ausentes
 
-    handoff_text = "\n".join(context)
 
-    if not context:
-        console.print("[bold red][FALHA] Nenhuma fonte de contexto encontrada. Handoff vazio NAO sera gravado.[/]")
-        for a in ausentes:
-            console.print(f"  [red]-> ausente:[/] {a}")
-        raise typer.Exit(1)
-
-    handoff_output_file = claude_dir / "agent-memory" / agent / "HANDOFF_LATEST.md"
-    handoff_output_file.parent.mkdir(parents=True, exist_ok=True)
-    handoff_output_file.write_text(handoff_text, encoding="utf-8")
-
-    total = len(files_to_inject)
+def _reportar_handoff(
+    handoff_output_file: Path, ausentes: list[str], handoff_text: str
+) -> None:
+    """Imprime resumo do handoff e copia para clipboard se disponivel."""
+    total = 4  # fontes de governanca (files_to_inject tem 4 chaves)
     if ausentes:
         console.print(
             f"[bold yellow] Handoff PARCIAL:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/] "
@@ -2602,6 +2702,33 @@ def execute_handoff(
     except Exception:
         console.print("[dim] Clipboard nao disponivel ou pyperclip ausente (texto salvo em arquivo).[/]")
 
+
+
+
+@agent_app.command("handoff")
+def execute_handoff(
+    web: bool = typer.Option(False, "--web", help="Copia contexto para Clipboard da Web (Claude/Gemini Pro)"),
+    agent: str = typer.Option("chico", "--agent", help="Focar contexto num agente especifico"),
+):
+    """Monta contexto hierarquico isolado e realiza o Handoff Cognitivo de Sessao."""
+    mode_desc = "Web Clipboard (Claude/Gemini Pro)" if web else "Padrao SOTA"
+    console.print(f"\n[bold cyan]=== [PROTOCOLO DE HANDOFF COGNITIVO SOTA v8.0 GOLD ({mode_desc})] ===[/]\n")
+
+    claude_dir = BASE_DIR / ".claude" if (BASE_DIR / ".claude").exists() else BASE_DIR / ".cerebro"
+    context, ausentes = _coletar_fontes_handoff(claude_dir, agent)
+
+    if not context:
+        console.print("[bold red][FALHA] Nenhuma fonte de contexto encontrada. Handoff vazio NAO sera gravado.[/]")
+        for a in ausentes:
+            console.print(f"  [red]-> ausente:[/] {a}")
+        raise typer.Exit(1)
+
+    handoff_text = "\n".join(context)
+    handoff_output_file = claude_dir / "agent-memory" / agent / "HANDOFF_LATEST.md"
+    handoff_output_file.parent.mkdir(parents=True, exist_ok=True)
+    handoff_output_file.write_text(handoff_text, encoding="utf-8")
+
+    _reportar_handoff(handoff_output_file, ausentes, handoff_text)
     console.print("\n[bold cyan]======================== FIM DO HANDOFF ========================[/]\n")
 
 
@@ -2653,7 +2780,6 @@ def voice_speak(
 # COMANDOS DE AUDITORIAS (AUDITS) SOTA v8.0 GOLD
 # ==========================================
 
-
 @audit_app.callback(invoke_without_command=True)
 @app.command("audit")
 def run_or_list_audits(
@@ -2670,68 +2796,23 @@ def run_or_list_audits(
     audits = manifest.get("audits", {})
 
     if list_all:
-        console.print("\n[bold cyan]=== [CATALOGO DE AUDITORIAS SOTA v8.0 GOLD] ===[/]\n")
-        table = Table(title="Auditorias do Ecossistema", box=box.ROUNDED)
-        table.add_column("Audit ID", style="bold yellow")
-        table.add_column("Nome", style="white")
-        table.add_column("SLA", justify="right", style="green")
-        table.add_column("Descricao", style="dim")
-        for aid, ainfo in audits.items():
-            table.add_row(
-                aid, ainfo.get("name", ""), f"{ainfo.get('sla_seconds', 0)}s", ainfo.get("description", "")[:55] + "..."
-            )
-        console.print(table)
-        console.print(
-            "[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
-        )
+        _render_operations_catalog("CATALOGO DE AUDITORIAS SOTA v8.0 GOLD", "Auditorias do Ecossistema", "Audit ID", audits)
         return
 
-    targets = audits if audit_id == "all" else ({audit_id: audits[audit_id]} if audit_id in audits else None)
-    if not targets:
+    targets = _resolver_targets_operacao(audits, audit_id)
+    if targets is None:
         console.print(f"[bold red][ERRO] Auditoria '{audit_id}' desconhecida. Use 'nexus audit --list'.[/]")
         raise typer.Exit(1)
 
-    console.print(f"\n[bold cyan]=== [EXECUTANDO AUDITORIAS SOTA: {len(targets)} AUDITORIAS] ===[/]\n")
-    audit_errors = []
-    warnings_por_auditoria: dict[str, int | None] = {}
-    for aid, ainfo in targets.items():
-        cmd_str = ainfo.get("command", "")
-        if cmd_str.startswith("python "):
-            cmd_str = f'"{sys.executable}" ' + cmd_str[7:]
-        elif cmd_str.startswith("pwsh "):
-            pwsh_bin = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
-            cmd_str = f'"{pwsh_bin}" ' + cmd_str[5:]
-
-        console.print(f"[bold yellow] Auditoria:[/] [white]{ainfo.get('name')}[/] [dim]({cmd_str})[/]")
-        for c in ainfo.get("thematic_criteria", []):
-            console.print(f"  [cyan] Criterio:[/] [white]{c}[/]")
-        t0 = time.monotonic()
-        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)  # noqa: S602
-        dt = time.monotonic() - t0
-        sla = ainfo.get("sla_seconds", 10.0)
-
-        warnings_por_auditoria[str(ainfo.get("name") or aid)] = _warnings_declarados(res.stdout)
-        if res.returncode == 0:
-            console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)\n")
-        else:
-            console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}\n")
-            audit_errors.append((aid, res.stderr or res.stdout))
-
-    _imprimir_resumo_tri_state(
-        "AUDITS",
-        len(audit_errors),
-        warnings_por_auditoria,
+    _executar_bloco_operacoes(
+        "AUDITORIAS", "Auditoria", targets, "AUDITS",
         "Todas as auditorias selecionadas aprovadas com excelencia.",
     )
-
-    if audit_errors:
-        raise typer.Exit(1)
 
 
 # ==========================================
 # COMANDOS DE ROTINAS (ROUTINES) SOTA v8.0 GOLD
 # ==========================================
-
 
 @routine_app.callback(invoke_without_command=True)
 @app.command("routine")
@@ -2749,64 +2830,18 @@ def run_or_list_routines(
     routines = manifest.get("routines", {})
 
     if list_all:
-        console.print("\n[bold cyan]=== [CATALOGO DE ROTINAS SOTA v8.0 GOLD] ===[/]\n")
-        table = Table(title="Rotinas Operacionais", box=box.ROUNDED)
-        table.add_column("Routine ID", style="bold yellow")
-        table.add_column("Nome", style="white")
-        table.add_column("SLA", justify="right", style="green")
-        table.add_column("Descricao", style="dim")
-        for rid, rinfo in routines.items():
-            table.add_row(
-                rid, rinfo.get("name", ""), f"{rinfo.get('sla_seconds', 0)}s", rinfo.get("description", "")[:55] + "..."
-            )
-        console.print(table)
-        console.print(
-            "[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
-        )
+        _render_operations_catalog("CATALOGO DE ROTINAS SOTA v8.0 GOLD", "Rotinas Operacionais", "Routine ID", routines)
         return
 
-    targets = (
-        routines if routine_id == "all" else ({routine_id: routines[routine_id]} if routine_id in routines else None)
-    )
-    if not targets:
+    targets = _resolver_targets_operacao(routines, routine_id)
+    if targets is None:
         console.print(f"[bold red][ERRO] Rotina '{routine_id}' desconhecida. Use 'nexus routine --list'.[/]")
         raise typer.Exit(1)
 
-    console.print(f"\n[bold cyan]=== [EXECUTANDO ROTINAS SOTA: {len(targets)} ROTINAS] ===[/]\n")
-    routine_errors = []
-    warnings_por_rotina: dict[str, int | None] = {}
-    for rid, rinfo in targets.items():
-        cmd_str = rinfo.get("command", "")
-        if cmd_str.startswith("python "):
-            cmd_str = f'"{sys.executable}" ' + cmd_str[7:]
-        elif cmd_str.startswith("pwsh "):
-            pwsh_bin = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
-            cmd_str = f'"{pwsh_bin}" ' + cmd_str[5:]
-
-        console.print(f"[bold yellow] Rotina:[/] [white]{rinfo.get('name')}[/] [dim]({cmd_str})[/]")
-        for c in rinfo.get("thematic_criteria", []):
-            console.print(f"  [cyan] Criterio:[/] [white]{c}[/]")
-        t0 = time.monotonic()
-        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)  # noqa: S602
-        dt = time.monotonic() - t0
-        sla = rinfo.get("sla_seconds", 10.0)
-
-        warnings_por_rotina[str(rinfo.get("name") or rid)] = _warnings_declarados(res.stdout)
-        if res.returncode == 0:
-            console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)\n")
-        else:
-            console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}\n")
-            routine_errors.append((rid, res.stderr or res.stdout))
-
-    _imprimir_resumo_tri_state(
-        "ROUTINES",
-        len(routine_errors),
-        warnings_por_rotina,
+    _executar_bloco_operacoes(
+        "ROTINAS", "Rotina", targets, "ROUTINES",
         "Todas as rotinas selecionadas executadas com excelencia.",
     )
-
-    if routine_errors:
-        raise typer.Exit(1)
 
 
 # ==========================================

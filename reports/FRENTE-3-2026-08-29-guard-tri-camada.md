@@ -296,3 +296,23 @@ para 0,64 GB** — um fator de **13x**. Nao e um teto folgado: e um teto
 `TETOS_DE_MEMORIA.json`, e a decisao sobre troca-lo por uma grandeza que cruza
 (GB livres, ou o proprio pagefile) e do vertice, porque muda quando a maquina
 age sozinha.
+
+## Revisao de ancora -- 2026-08-29, faxina do antecessor
+
+Ancoras atingidas: `core/sota_context_engine.py`, `scripts/cli/nexus.py`.
+
+O que mudou nelas: extracao de oito helpers do nexus.py sem alteracao de
+comportamento; `enforce_lru_eviction` virou publico porque o nexus chamava o
+privado de fora; o estado do teclado saiu de atributo-em-funcao para a flag de
+modulo `_TECLADO_INDISPONIVEL`; as justificativas dos `noqa: BLE001` mudaram de
+lugar (linha de cima) sem mudar de conteudo.
+
+**As conclusoes deste documento seguem de pe.** A leitura tri-camada, os tetos e
+o intervalo adaptativo nao foram tocados. O que a secao 8 descreve -- `--once`
+que reportava teto e nao medicao -- continua corrigido. A secao 9 tambem: commit
+decide RECUSA, nao LENTIDAO.
+
+Um numero muda: os testes do guard foram renomeados para minusculas (N802). O
+comportamento medido e o mesmo; tres deles passavam por acaso e agora passam por
+contrato -- ver [[registro-2026-08-29-shell-true-nos-catalogos]] e a mensagem do
+commit desta revisao.

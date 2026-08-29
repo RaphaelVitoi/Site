@@ -356,3 +356,14 @@ o declarado no registro e na faixa, e não vira previsão de fatura. Acesso a
 configuração por nome inteiramente computado em runtime continua fora do alcance
 de qualquer varredura estática; as duas formas conhecidas foram conferidas e não
 existem.
+
+## Revisao de ancora -- 2026-08-29, faxina do antecessor
+
+Ancora atingida: `tests/test_frente4_autoridade_de_roteamento.py`.
+
+O que mudou nela: **apenas o nome de um teste**, de
+`test_leitores_de_AGENT_MODEL_MAP_batem_com_a_declaracao` para a forma em
+minusculas. Nenhuma assercao, nenhum dado, nenhum comportamento.
+
+**Este documento nao muda.** A autoridade de roteamento via
+`core.config.modelo_do_agente` segue como descrita.

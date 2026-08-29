@@ -256,3 +256,26 @@ diagnóstico precisa ser confirmado por quem mantém `record_gate.py`.
 
 Enquanto não for corrigido, a regra prática é: **re-estagiar sempre depois de
 qualquer correção, mesmo que o portão já tenha ficado verde.**
+
+## Revisao de ancora -- 2026-08-29, faxina do antecessor
+
+Ancoras atingidas: `scripts/cli/nexus.py`, `tests/test_guard_memoria.py`.
+
+O que mudou nelas: a faxina do agente antecessor (Opus 4.6), preservada em
+commit porque ficou solta na arvore quando a sessao dele terminou. Extracao de
+helpers, `logger.exception` no lugar de `logger.error`, constante
+`MSG_SEM_MEDIDOR`, flag de modulo para o teclado, e os testes do guard em
+minusculas.
+
+**O achado central deste handoff continua valendo, e nao foi corrigido.**
+`nexus.py`, higienizacao periodica do `optimize-ram --watch`: roda
+`_execute_ram_cleanse` a cada 300 s sem checar limiar, o trim derruba
+`virtual_memory().percent`, e foi isso que fabricou o teto de 72-73% por oito
+horas. Segue como pendencia 9. A faxina arrumou a forma ao redor; o defeito de
+comportamento esta intacto porque muda o que a maquina faz sozinha.
+
+Uma correcao ao proprio handoff: tres testes de `test_guard_memoria.py`
+chamavam `_agir_por_camada("ram", {})` depois que a assinatura perdeu o
+parametro `leitura`. O dict caia no lugar de `verbose`, e `bool({})` e `False`
+-- passavam por acaso. Agora passam por contrato. Vale como instancia nova do
+padrao ja catalogado nesta base: verde que nao esta ligado ao que mede.
