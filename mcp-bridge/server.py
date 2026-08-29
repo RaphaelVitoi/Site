@@ -93,5 +93,34 @@ def list_sota_tasks() -> str:
         return f"Error listing tasks: {e!s}"
 
 
+@mcp.tool()
+def delegate_pmev_to_jules(prompt: str, source: str = "sources/github/RaphaelVitoi/Site", branch: str = "main") -> str:
+    """Delega simulacoes intensivas de Teoria dos Jogos PMev ou refatoracoes de grande porte para o Google Jules."""
+    try:
+        from engine.jules_bridge import JulesClient, JulesSessionRequest
+
+        client = JulesClient()
+        if not client.is_configured:
+            return "Erro: JULES_API_KEY ou GOOGLE_CLOUD_PROJECT nao configurados no ambiente."
+        req = JulesSessionRequest(source=source, prompt=prompt, branch=branch)
+        status = client.create_session(req)
+        return f"Sessao Jules criada com sucesso! Session ID: {status.session_id}, Estado: {status.state}"
+    except Exception as e:
+        return f"Falha ao delegar para o Jules: {e!s}"
+
+
+@mcp.tool()
+def get_jules_task_status(session_id: str) -> str:
+    """Consulta o status e o progresso de uma sessao em execucao no Google Jules."""
+    try:
+        from engine.jules_bridge import JulesClient
+
+        client = JulesClient()
+        status = client.get_session_status(session_id)
+        return f"Session ID: {status.session_id} | Estado: {status.state} | PR: {status.pr_url or 'N/A'}"
+    except Exception as e:
+        return f"Falha ao consultar status no Jules: {e!s}"
+
+
 if __name__ == "__main__":
     mcp.run()
