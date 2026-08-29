@@ -50,8 +50,8 @@ def _alvos_do_manifesto() -> set[Path]:
     """
     import memory_rag  # noqa: PLC0415
 
-    # `ast.literal_eval` e nao `exec`: o portao de ancora reprovou um
-    # `# noqa: S102` aqui, e tinha razao. Registrar a supressao seria manter o
+    # `ast.literal_eval` e nao `exec`: o portao de ancora reprovou uma
+    # supressao de S102 aqui, e tinha razao. Registrar a supressao seria manter o
     # risco com um carimbo; `literal_eval` avalia SO literais e o achado deixa
     # de existir. A lista continua vindo do modulo vivo, nunca de uma copia --
     # duplicar regra de filtragem e a segunda fonte que diverge.

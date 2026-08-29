@@ -179,9 +179,8 @@ def run_jules_audit() -> None:
     logger.info("[CONCLUSAO] Gravando relatorio padrao-ouro em %s...", REPORT_FILE)
 
     report_content = f"""# REGISTRO DE AUDITORIA JULES: PURE ASCII & TIPAGEM SOTA
-
-> **Protocolo Chico SOTA v8.0 GOLD * Supervisao Antigravity  Google Jules**  
-> **Data:** {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%SZ')}  
+\n> **Protocolo Chico SOTA v8.0 GOLD * Supervisao Antigravity Google Jules**
+> **Data:** {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%SZ')}
 > **Status:** Concluido com Sucesso (Inspecao Nao-Destrutiva Positiva)
 
 ---

@@ -3024,9 +3024,9 @@ def triad_status():
     tabela.add_column("Status Operacional", style="bold green", justify="center")
 
     comp = health.get("triad_components", {})
-    tabela.add_row("EXA MCP", "Pesquisa Neural & Deep Web Retrieval", "OPERATIONAL")
-    tabela.add_row("STITCH MCP", "UI Generativa & Design System SOTA", "OPERATIONAL")
-    tabela.add_row("GOOGLE JULES", "Agente Coding Cloud Assincrono (VM)", "OPERATIONAL" if health.get("jules_cli_installed") else "STANDBY (CLI)")
+    tabela.add_row("EXA MCP", "Pesquisa Neural & Deep Web Retrieval", comp.get("exa", "OPERATIONAL"))
+    tabela.add_row("STITCH MCP", "UI Generativa & Design System SOTA", comp.get("stitch", "OPERATIONAL"))
+    tabela.add_row("GOOGLE JULES", "Agente Coding Cloud Assincrono (VM)", comp.get("jules", "OPERATIONAL" if health.get("jules_cli_installed") else "STANDBY (CLI)"))
 
     console.print(tabela)
     console.print(f"[dim]Design System: {'[green]OK[/]' if health.get('design_system_ready') else '[red]AUSENTE[/]'} | MCP Config: {'[green]OK[/]' if health.get('mcp_config_ready') else '[red]AUSENTE[/]'}[/]\n")
