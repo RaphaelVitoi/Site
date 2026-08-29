@@ -9,13 +9,10 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
-import re
 import subprocess
 import time
-import urllib.parse
 import urllib.request
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
@@ -118,7 +115,7 @@ class CDPBrowserBridge:
                 continue
         return None
 
-    def check_health(self) -> dict[str, str | int | bool]:
+    def check_health(self) -> dict[str, str | int | bool | None]:
         port = self.get_active_port()
         if not port:
             return {"online": False, "port": None, "engine": "Unavailable"}
