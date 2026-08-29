@@ -28,10 +28,30 @@ import subprocess
 
 import pytest
 
-RAIZ = __import__("pathlib").Path(__file__).resolve().parent.parent
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parent.parent
 HOOK = RAIZ / ".husky" / "commit-msg"
 
-SH = shutil.which("sh") or shutil.which("bash")
+
+def _localizar_sh() -> str | None:
+    encontrado = shutil.which("sh") or shutil.which("bash")
+    if encontrado:
+        return encontrado
+    candidatos = [
+        r"C:\Program Files\Git\bin\sh.exe",
+        r"C:\Program Files\Git\bin\bash.exe",
+        r"C:\Program Files\Git\usr\bin\sh.exe",
+        r"C:\Program Files\Git\usr\bin\bash.exe",
+        r"C:\Program Files (x86)\Git\bin\sh.exe",
+    ]
+    for c in candidatos:
+        if Path(c).is_file():
+            return c
+    return None
+
+
+SH = _localizar_sh()
 
 pytestmark = pytest.mark.skipif(
     SH is None or not HOOK.exists(),
