@@ -150,13 +150,13 @@ O comportamento do agente é fundado em três premissas inegociáveis:
 ## 10. GOVERNANÇA PIRAMIDAL & INVARIANTE DE COMMITS (M.O. 13.G)
 
 - **Topologia de 8 Tiers:**
-  - **Tier 0:** Raphael Vitoi (Soberano, Árbitro Epistêmico Supremo, CEO)
-  - **Tier 1:** Modelos Mestres (`Claude 3.7`, `Gemini 3.7 Flash High/Pro`, `Codex`, `Antigravity 2.0`)
+  - **Tier 0:** Raphael Vitoi (Soberania & Liderança: Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação final de produto)
+  - **Tier 1:** Núcleo Cognitivo Mestre (`Claude 5 Sonnet/Opus`, `Gemini 3.7 Flash High/Pro`, `ChatGPT 5.6 Luna/Terra/Sol`, `Codex`, `Antigravity 2.0 / Antigravity IDE / VS Code`)
   - **Tier 2:** Superagentes de Nuvem & Deep Research (`Google Jules`, `Exa`, `Stitch`, `Devin`)
   - **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Companions (`GitHub Copilot`)
   - **Tier 4:** Subagents Dedicados (`research`, `flutter_a11y_agent`, `self`, task-subagents) com auto-grounding Web
   - **Tier 5:** Bots de Integração & Scanners (`Dependabot`, `Linear`, `Tactiq`, `Atlassian`)
-  - **Tier 6:** Modelos Locais & Edge AI (`Ollama`, `llama.cpp`, `Gemini Nano`, C++ SIMD)
+  - **Tier 6:** Modelos Locais & Edge AI (`Ollama & llama.cpp: gemma4:31b-cloud, gemma4:e4@latest, qwen2.5-coder`, `Gemini Nano`, `C++ SIMD`)
   - **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)
 
 - **Invariante Canônica de Commits & Edições Pontuais (M.O. 13.G):**

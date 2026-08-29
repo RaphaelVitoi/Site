@@ -10,12 +10,12 @@
 
 ```mermaid
 flowchart TB
-    subgraph T0["👑 TIER 0: SOBERANIA & DIRECIONAMENTO HUMANO"]
-        VITOI["Raphael Vitoi\n(Criador do PMev, Árbitro Epistêmico Supremo, CEO)"]
+    subgraph T0["👑 TIER 0: SOBERANIA & LIDERANÇA"]
+        VITOI["Raphael Vitoi\n(Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação)"]
     end
 
-    subgraph T1["🏛️ TIER 1: NÚCLEO DE COGNIÇÃO & ARQUITETURA MESTRE"]
-        CORE_LLM["Claude 3.7 Sonnet / Opus · Gemini 3.7 Flash High / Pro\nAntigravity 2.0 (Daemon / IDE / CLI) · Codex"]
+    subgraph T1["🏛️ TIER 1: NÚCLEO COGNITIVO MESTRE"]
+        CORE_LLM["Claude 5 Sonnet / Opus · Gemini 3.7 Flash High / Pro · ChatGPT 5.6 Luna / Terra / Sol\nCodex · Antigravity 2.0 / Antigravity IDE / VS Code"]
     end
 
     subgraph T2["🚀 TIER 2: SUPERAGENTES DE NUVEM & DEEP RESEARCH"]
@@ -40,7 +40,7 @@ flowchart TB
     end
 
     subgraph T6["🖥️ TIER 6: MODELOS LOCAIS, EDGE AI & ACELERAÇÃO NUMÉRICA"]
-        LOCAL_LLM["Ollama & llama.cpp (gemma4:12b, qwen2.5-coder)"]
+        LOCAL_LLM["Ollama & llama.cpp (gemma4:31b-cloud, gemma4:e4@latest, qwen2.5-coder)"]
         NANO["Gemini Nano On-Device (Chrome Prompt API / Summarization)"]
         NUMERIC["Motores Numéricos & SIMD (AVX-512 / Vulkan / C++ Eigen 3.4.0)"]
     end
@@ -84,8 +84,8 @@ flowchart TB
 
 | Tier / Agente | Função & Especialidade Máxima | Fraqueza Intrínseca | Protocolo de Mitigação SOTA |
 | :--- | :--- | :--- | :--- |
-| **Tier 0: Raphael Vitoi** | Soberania conceitual, Teoria PMev, validação epistemológica de axiomas e decisões de produto. | Tempo e largura de banda de digitação manual. | Orquestração autônoma em background com apresentação condensada do produto final. |
-| **Tier 1: Claude / Gemini / Codex** | Raciocínio profundo, arquitetura multi-arquivo, síntese diacrônica e aplicação do Quality Gate. | Custo computacional e latência em tarefas triviais repetitivas. | Delegação de tarefas pontuais para Tiers inferiores (2 a 6), retendo apenas a validação. |
+| **Tier 0: Raphael Vitoi (Soberania & Liderança)** | Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor de projetos multidisciplinares, veto e validação final de produto. | Tempo e largura de banda de digitação manual. | Orquestração autônoma em background com apresentação condensada do produto final. |
+| **Tier 1: Núcleo Cognitivo Mestre (Claude 5 Sonnet/Opus · Gemini 3.7 Flash High/Pro · ChatGPT 5.6 Luna/Terra/Sol · Codex · Antigravity 2.0 / IDE / VS Code)** | Raciocínio profundo, integridade arquitetural multi-arquivo e aplicação do Quality Gate. | Custo computacional e latência em tarefas triviais repetitivas. | Delegação de tarefas pontuais para Tiers inferiores (2 a 6), retendo apenas a validação. |
 | **Tier 2: Google Jules** | Refatorações assíncronas em larga escala em VMs Linux na nuvem com isolamento total. | Dificuldade com subárvores locais do Windows e dependências C++ não-rasas. | `jules_bridge.py` gerencia clone raso com `core/vendor/eigen` fixado e aterrissagem inspecionada. |
 | **Tier 2: Exa AI** | Busca semântica de papers acadêmicos em Teoria dos Jogos e documentações atualizadas. | Não executa código nem gera arquitetura de projeto. | `ExaKnowledgeBridge` sintetiza fórmulas LaTeX e alimenta o `@cientista` e o Stitch. |
 | **Tier 2: Stitch MCP** | Prototipagem generativa de telas e congelamento do Design System Dark Gold (`#090D16`, `#D4AF37`). | Não implementa a lógica do backend nem valida contratos de API. | `StitchDesignBridge` converte designs em tokens Tailwind para implementação no Next.js. |
@@ -94,7 +94,7 @@ flowchart TB
 | **Tier 3: GitHub Copilot** | Autocomplete instantâneo na IDE, PR descriptions e scaffolding rápido de testes. | Tendência a alucinar "Boy Scout refactorings" e tipagem fraca (`Any`). | `.github/copilot-instructions.md` impõe Target Lock, Pure ASCII, PEP 585/604 e KaTeX. |
 | **Tier 4: Subagents Dedicados** | Execução paralela e isolada de subtarefas (`research`, `flutter_a11y_agent`, `self`). | Contexto isolado e sem visão holística do monorepo. | Recebem escopo limitado estrito e herdam auto-grounding via `TierPolicyEngine`. |
 | **Tier 5: Dependabot / Bots** | Detecção automatizada de CVEs e integrações de tickets (Linear, Tactiq). | Cria PRs isolados em subpastas que quebram o lockfile raiz. | Revisão humana/Tier 1; aplicação centralizada no `package.json` raiz via `overrides`. |
-| **Tier 6: Ollama / llama.cpp** | Soberania de dados local, inferência offline de zero-custo para tarefas privadas (`gemma4:12b`). | Menor janela de contexto e poder de raciocínio que os modelos de nuvem Tier 1. | Utilizado como filtro prévio, sumarizador local e fallback para tarefas de baixa entropia. |
+| **Tier 6: Modelos Locais & Edge AI (Ollama & llama.cpp: gemma4:31b-cloud, gemma4:e4@latest, qwen2.5-coder · Gemini Nano · C++ SIMD)** | Soberania de dados local, inferência offline de zero-custo para tarefas privadas. | Menor janela de contexto e poder de raciocínio que os modelos de nuvem Tier 1. | Utilizado como filtro prévio, sumarizador local e fallback para tarefas de baixa entropia. |
 | **Tier 6: Gemini Nano** | Inferência ultrarrápida no navegador (CDP 9222/9223) sem chamada de rede externa. | Capacidade limitada a tarefas de Prompt API e sumarizações curtas. | Usado no DevTools MCP para diagnósticos em tempo real de Core Web Vitals e LoAF. |
 | **Tier 7: FastAPI / aiohttp / MCP** | Barramento transacional, rate limiting, proteção anti-starvation e bridge para 50+ ferramentas. | Sem autonomia decisória. | Monitorado continuamente pelo `task_executor.py` e auditado pelo `record_gate.py`. |
 
