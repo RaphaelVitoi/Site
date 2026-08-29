@@ -107,14 +107,6 @@
     },
     "system_heuristics": {
         "heuristic_threshold": 2,
-        "rag_ignore_patterns": [
-            ".venv",
-            ".git",
-            ".chroma_db",
-            "__pycache__",
-            "node_modules",
-            ".archive"
-        ],
         "technical_agents": [
             "@implementor",
             "@verifier",
