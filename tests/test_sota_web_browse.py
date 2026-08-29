@@ -32,10 +32,11 @@ class TestSotaWebBrowseEngine:
             pytest.fail(f"engine/sota_web_browse.py contains non-ASCII character: {e}")
 
     def test_tier_policy_auto_grounding_hierarchy(self) -> None:
-        # Tier 3 (Copilot), Tier 4 (Subagents), Tier 5 (Local/Edge) must auto-ground
-        assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_3_COMPANION, "calculo de equidade") is True
-        assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_4_SUBAGENT, "qual a cotação") is True
-        assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_5_LOCAL_EDGE, "resumo da release") is True
+        # Tier 3 (Custom/Copilot), Tier 4 (Subagents), Tier 5 (Bots), Tier 6 (Local/Edge) must auto-ground
+        assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_3_CUSTOM_FLEET, "calculo de equidade") is True
+        assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_4_SUBAGENT, "qual a cotacao") is True
+        assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_5_INTEGRATION_BOTS, "atualizacao de CVE") is True
+        assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_6_LOCAL_EDGE, "resumo da release") is True
 
         # Tier 0 (Sovereign) and Tier 1 (Master) only ground on explicit triggers
         assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_0_SOVEREIGN, "apenas logica interna") is False
@@ -70,7 +71,7 @@ class TestSotaWebBrowseEngine:
         orchestrator = SotaWebBrowseOrchestrator()
         req = WebQueryRequest(
             query_or_url="Teoremas de Vitoi e ICM dinamico",
-            tier=AgentTier.TIER_3_COMPANION,
+            tier=AgentTier.TIER_3_CUSTOM_FLEET,
             requester="test-suite",
         )
         res = await orchestrator.execute_query(req)

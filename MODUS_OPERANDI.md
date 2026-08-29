@@ -146,4 +146,24 @@ O comportamento do agente é fundado em três premissas inegociáveis:
 - **Produção Literária & Filosofia:** Processamento integral de manuscritos ("Homem-Bomba", ensaios e poemas) via janela de 2M tokens com densidade aforística e temperatura controlada ($\text{Temp} \approx 0.3 - 0.7$).
 
 ---
+
+## 10. GOVERNANÇA PIRAMIDAL & INVARIANTE DE COMMITS (M.O. 13.G)
+
+- **Topologia de 8 Tiers:**
+  - **Tier 0:** Raphael Vitoi (Soberano, Árbitro Epistêmico Supremo, CEO)
+  - **Tier 1:** Modelos Mestres (`Claude 3.7`, `Gemini 3.7 Flash High/Pro`, `Codex`, `Antigravity 2.0`)
+  - **Tier 2:** Superagentes de Nuvem & Deep Research (`Google Jules`, `Exa`, `Stitch`, `Devin`)
+  - **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Companions (`GitHub Copilot`)
+  - **Tier 4:** Subagents Dedicados (`research`, `flutter_a11y_agent`, `self`, task-subagents) com auto-grounding Web
+  - **Tier 5:** Bots de Integração & Scanners (`Dependabot`, `Linear`, `Tactiq`, `Atlassian`)
+  - **Tier 6:** Modelos Locais & Edge AI (`Ollama`, `llama.cpp`, `Gemini Nano`, C++ SIMD)
+  - **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)
+
+- **Invariante Canônica de Commits & Edições Pontuais (M.O. 13.G):**
+  Todo commit e mutação pontual deve expressar sinteticamente:
+  1. `SHA`: Hash criptográfico do commit
+  2. `Assinatura`: Autor institucional e Tier correspondente
+  3. `Propósito`: Finalidade técnica e arquivos sob Target Lock
+
+---
 *Protocolo Site M.O. v8.0 GOLD ativo e persistente (Data de Corte: Agosto de 2026).*

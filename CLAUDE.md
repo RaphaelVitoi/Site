@@ -290,3 +290,24 @@ O runtime operacional padrão é **PowerShell 7+** (`pwsh`). Windows PowerShell
 5.1 permanece requisito de compatibilidade para componentes legados e para os
 gates que o exigem; scripts novos devem funcionar nos dois, mas não devem
 rebaixar o caminho principal a 5.1.
+
+---
+
+## 7. Governança Piramidal & Invariante de Commits (M.O. 13.G)
+
+Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
+- **Tier 0:** Raphael Vitoi (Soberano, Árbitro Epistêmico Supremo, CEO)
+- **Tier 1:** Modelos Mestres (`Claude 3.7`, `Gemini 3.7 Flash High/Pro`, `Codex`, `Antigravity 2.0`)
+- **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`)
+- **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Companions (`GitHub Copilot`)
+- **Tier 4:** Subagents Dedicados (`research`, `flutter_a11y_agent`, `self`, task-subagents)
+- **Tier 5:** Bots de Integração & Scanners (`Dependabot`, `Linear`, `Tactiq`, `Atlassian`)
+- **Tier 6:** Modelos Locais & Edge AI (`Ollama`, `llama.cpp`, `Gemini Nano`, C++ SIMD)
+- **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)
+
+**Invariante de Commits e Mutações:**
+Todo commit e registro deve declarar sinteticamente:
+- **SHA:** Hash criptográfico Git
+- **Assinatura:** Autor e Tier correspondente (ex: `Chico v8.0 GOLD [Tier 1.B]`)
+- **Propósito:** Razão de ser técnica da alteração e escopo protegido.
+
