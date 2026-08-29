@@ -177,6 +177,64 @@ def test_o_guard_le_e_sai_com_once(nx, tmp_path):
     assert resultado.exit_code == 0, resultado.output
 
 
+def test_once_IMPRIME_o_que_mediu_e_nao_so_os_tetos(nx):
+    """A versao anterior deste teste conferia so `exit_code == 0`, e por isso
+    nao viu o defeito: `--once` imprimia as quatro linhas de teto, mandava a
+    LEITURA para o logger (silencioso) e saia com zero. Quem rodava via um
+    verde que nao carregava a medicao que o justifica.
+
+    O contrato agora e o valor na tela. Nome de camada nao basta: ele ja aparece
+    na linha do teto, entao um teste que buscasse `commit` passaria com a
+    leitura ausente."""
+    from typer.testing import CliRunner  # noqa: PLC0415
+
+    leitura = {
+        "ram": {"valor": 73.0, "teto": 98.0, "unidade": "%", "pressao": 0.74},
+        "commit": {"valor": 87.8, "teto": 92.0, "unidade": "%", "pressao": 0.95},
+        "vram": {"valor": None, "teto": 85.0, "unidade": "%", "pressao": None},
+        "cache": {"valor": 0.0, "teto": 4096.0, "unidade": "MB", "pressao": 0.0},
+    }
+    with patch.object(nx, "_medir_pressao", return_value=leitura):
+        saida = CliRunner().invoke(nx.app, ["ops", "guard", "--once"]).output
+    saida = " ".join(saida.split())  # o console quebra linha na largura do terminal
+
+    assert "73.0%" in saida, f"a leitura de RAM nao aparece na saida: {saida!r}"
+    assert "87.8%" in saida, f"a leitura de commit nao aparece na saida: {saida!r}"
+    assert "vram=?" in saida, "camada sem medidor tem de sair como `?`, nunca como 0"
+    assert "commit" in saida.split("mais pressionada:")[1], (
+        "a camada mais pressionada e o commit a 95% do teto, e e ela que decide o ritmo"
+    )
+
+
+def test_once_DIZ_quando_esta_cego_em_vez_de_sair_verde(nx):
+    """Guard sem medidor nenhum nao pode se despedir com uma linha tranquila.
+
+    E o estado que o leitor de VRAM viveu por meses -- e ninguem soube, porque
+    a ausencia de medicao tinha exatamente a mesma cara que folga."""
+    from typer.testing import CliRunner  # noqa: PLC0415
+
+    cega = {
+        n: {"valor": None, "teto": 1.0, "unidade": "%", "pressao": None}
+        for n in ("ram", "commit", "vram", "cache")
+    }
+    with patch.object(nx, "_medir_pressao", return_value=cega):
+        saida = CliRunner().invoke(nx.app, ["ops", "guard", "--once"]).output
+    assert "cego" in " ".join(saida.split()), f"o guard cego nao se declarou cego: {saida!r}"
+
+
+def test_mais_pressionada_aponta_a_camada_e_nao_a_media(nx):
+    """Unitario do que decide o ritmo. Media diluiria a camada que vai estourar."""
+    leitura = {
+        "ram": {"pressao": 0.10},
+        "commit": {"pressao": 0.95},
+        "vram": {"pressao": None},
+    }
+    camada, folga = nx._mais_pressionada(leitura)
+    assert camada == "commit"
+    assert folga == pytest.approx(0.95)
+    assert nx._mais_pressionada({"vram": {"pressao": None}}) == (None, 0.0)
+
+
 def test_o_guard_AGE_quando_a_camada_estoura(nx, tmp_path):
     """O estado que importa, e o que nunca se observa esperando acontecer."""
     from typer.testing import CliRunner  # noqa: PLC0415

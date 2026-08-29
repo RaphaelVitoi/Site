@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T03:00-03:00
+atualizado_em: 2026-08-29T04:40-03:00
 commit: 50322a68
 classes: [interno, medido]
 caminhos:
@@ -21,7 +22,7 @@ config_medida:
   arquivos: 81
   linhas: 7114 insercoes e 58 remocoes
   suite_no_inicio: 518
-  suite_no_fim: 620
+  suite_no_fim: 623
   data: 2026-08-28 a 2026-08-29
 verificado:
   - suite completa antes de cada um dos 13 commits
@@ -73,6 +74,7 @@ supersede: null
 | 5 | **`LOCAL_MODEL_MAP`, `_MODEL_31B`, `GEMINI_ALL_KEYS_WITH_POOLS`** | Órfãos declarados em `DECLARADO_E_NAO_LIDO.json`, à espera de veredito |
 | 6 | Rotação das 4 chaves OpenRouter | Ato no provedor |
 | 7 | Os 62 fontes modificados nos submódulos | Direção é sua |
+| 8 | **O teto de RAM em 98% é inalcançável nesta máquina** — o livre teria de cair de 8,59 GB para 0,64 GB (13×) | Trocar a grandeza muda **quando a máquina age sozinha**. Alternativas medidas em `TETOS_DE_MEMORIA.json` |
 
 ## 3. O padrão que dominou a janela
 
@@ -153,3 +155,35 @@ sob pressão real de memória; a **qualidade** da recuperação do RAG não foi
 avaliada — não existe nesta base um conjunto de consultas com resposta esperada, e
 sem ele qualquer afirmação sobre ranking seria opinião com número ao lado; o
 estado de autenticação dos conectores de nuvem não foi verificado.
+
+---
+
+## 7. Adendo pós-handoff — o comando de checagem não reportava nada
+
+Rodar as três verificações que a §5 manda rodar achou um defeito **na terceira
+delas**. `nexus ops guard --once` imprimia as quatro linhas de teto, mandava a
+leitura para `logger.info` (silencioso) e saía com código 0. O comando que o
+próximo agente usaria para conhecer o estado da máquina **não dizia o estado da
+máquina**, e parecia saudável por sair verde.
+
+O teste que deveria cobrir isso conferia `exit_code == 0` — *não quebrou*, quando
+o contrato é *relatar*. Corrigido, com três mutações detectadas. Suíte 620 → 623.
+
+E aí a medição corrigiu **a mim**, a partir de duas observações do vértice
+(*"estável demais a RAM"*, *"não senti prejuízo no meu flow"*):
+
+| grandeza | o que ela decide | agora |
+| :--- | :--- | ---: |
+| commit / limite | alocação passa a ser **recusada** | 87,6% |
+| pagefile em uso | a máquina fica **lenta** | 19,7% |
+| RAM física | nada, nesta máquina | 73% |
+
+**55% do commit cobrado (41,6 de 75,6 GB) nunca foi tocado** — reserva que o
+Windows cobra do limite e que jamais virou página. Por isso o número alto não
+dói. O relatório da frente 3 dizia "a pressão de memória é commit"; correto para
+recusa de alocação, **errado para desempenho**. Corrigido na §9 daquele
+documento.
+
+O padrão da §3 ganha uma variante que vale registrar: aqui **o número estava
+certo e a interpretação não**. Três fontes independentes concordavam no valor.
+Concordância entre fontes valida a medição, não a conclusão.
