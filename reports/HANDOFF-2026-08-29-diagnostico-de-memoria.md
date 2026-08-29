@@ -23,7 +23,7 @@ verificado:
   - tres mutacoes no guard --once, todas detectadas, arquivo restaurado byte a byte
   - experimento de alocacao rodado DUAS vezes, resultados a 0.1 ponto um do outro
   - latencia do medidor amostrada a 50 ms durante alocacao e liberacao
-  - snapshot do RAMMap (.RMP, 401 MB) decodificado e VALIDADO contra a tela:
+  - snapshot do RAMMap (.RMP, 401 MB) decodificado e VALIDADO contra a tela --
     os 14 contadores de UseCounts e os 7 de ListCounts batem exatamente
   - as listas <PFNs> por processo somam 1.461.262 paginas = Process Private
     Active da tabela, confirmando o parse
@@ -32,7 +32,7 @@ nao_verificado:
   - nenhuma chamada real a provedor de LLM
   - NAO foi possivel separar quanto do pagefile e do Repurposed veio de carga
     real e quanto foi fabricado pelo trim periodico do guard antigo
-  - desgaste dos SSD nao medido: dois discos atras de controladora RAID
+  - desgaste dos SSD nao medido -- dois discos atras de controladora RAID
     bloqueiam SMART, e o NVMe nao devolveu contadores
   - exclusoes do Defender nao lidas (exigem privilegio elevado)
   - o experimento de alocacao NAO foi rodado com a maquina carregada; o estado
@@ -44,11 +44,13 @@ supersede: null
 
 **Estado:** `master 1fc6ec64` · **623 passed** · índice 20 VIGENTE, 0 SUSPEITO.
 
-> **Árvore suja por outra sessão.** `.mcp.json`, `core/sota_context_engine.py`,
-> `engine/llm_api.py`, `memory_rag.py`, `scripts/cli/nexus.py` e
-> `tests/test_cli_nexus.py` têm alterações que **não são desta sessão** — uma
-> refatoração em curso (608 linhas só em `nexus.py`). Nada disso foi estagiado.
-> Confira antes de commitar qualquer coisa.
+> **Árvore com trabalho em voo de outro agente.** `.mcp.json`,
+> `core/sota_context_engine.py`, `engine/llm_api.py`, `memory_rag.py`,
+> `scripts/cli/nexus.py` e `tests/test_cli_nexus.py` estão sendo **limpos por
+> um agente irmão (Opus 4.6)** — 608 linhas só em `nexus.py`. É correção de
+> código que **esta linhagem escreveu**, não refatoração cosmética. Nada disso
+> foi estagiado aqui: o motivo é estar em voo e não revisado por mim, não ser
+> de outro autor. Confira com `git status` antes de commitar.
 
 ## 1. O achado principal, e ele é sobre código nosso
 
@@ -156,10 +158,11 @@ Os 8 itens do handoff anterior seguem abertos. Somam-se:
 ```
 Contexto: Site em master 1fc6ec64, suite 623 passed, indice 20 VIGENTE.
 
-ATENCAO: a arvore pode estar suja com refatoracao de OUTRA sessao
-(.mcp.json, core/sota_context_engine.py, engine/llm_api.py, memory_rag.py,
-scripts/cli/nexus.py, tests/test_cli_nexus.py). Rode `git status` e NAO
-estagie o que nao for seu. `git add` sempre com caminho explicito.
+ATENCAO: a arvore pode ter trabalho EM VOO de um agente irmao limpando
+codigo que esta linhagem escreveu (.mcp.json, core/sota_context_engine.py,
+engine/llm_api.py, memory_rag.py, scripts/cli/nexus.py,
+tests/test_cli_nexus.py). Rode `git status` e nao estagie o que voce nao
+revisou. `git add` sempre com caminho explicito, nunca -A.
 
 Leia primeiro:
   reports/HANDOFF-2026-08-29-diagnostico-de-memoria.md   (este)
