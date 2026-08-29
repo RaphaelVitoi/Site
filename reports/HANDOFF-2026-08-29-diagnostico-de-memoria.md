@@ -152,6 +152,7 @@ Os 8 itens do handoff anterior seguem abertos. Somam-se:
 | 11 | **Frota MCP** — 99 `node` num boot novo, 6,63 GB de commit | A alavanca real; é configuração do operador |
 | 12 | Exclusões do Defender para diretórios de build | Estreita uma proteção; decisão dele |
 | 13 | C: e D: abaixo de 10% livres (101 GB e 42,9 GB) | Higiene de disco |
+| 14 | **O portão de registro lê a ÁRVORE, o commit leva o ÍNDICE** | Achado ao commitar este relatório — ver §9 |
 
 ## 6. Prompt de continuação
 
@@ -226,3 +227,32 @@ contadores). Exclusões do Defender não lidas (exigem elevação).
    para ser verdade.
 5. **Derivei standby com `psutil`** onde `free` e `available` são o mesmo campo:
    a conta dava zero por construção, não por medição.
+
+## 9. O portão aprovou conteúdo que não foi commitado
+
+Achado ao commitar **este** relatório, e é a mesma família que o projeto
+cataloga — desta vez dentro do próprio portão.
+
+Sequência: estagiei o arquivo → o portão reprovou por YAML inválido → **corrigi
+o arquivo na árvore e re-rodei o portão sem re-estagiar** → o portão leu a
+árvore (corrigida) e **APROVOU** → o `git commit` levou o índice (ainda
+quebrado). Resultado: commit `826ea31a` com frontmatter inválido, carimbado por
+um portão verde.
+
+Prova direta:
+
+```
+git show 826ea31a:reports/HANDOFF-...md  →  YAML INVALIDO
+o mesmo arquivo na arvore                →  YAML valido
+```
+
+**O portão não valida o que vai ser commitado.** Ele enumera os caminhos em
+stage e depois lê esses caminhos do disco. Enquanto índice e árvore coincidem,
+ninguém percebe; divergiram, e o verde passou a se referir a outro conteúdo.
+
+A correção certa é o portão ler `git show :<caminho>` (o conteúdo do índice) em
+vez de abrir o arquivo. Não corrigi: mexe em portão de governança, e o
+diagnóstico precisa ser confirmado por quem mantém `record_gate.py`.
+
+Enquanto não for corrigido, a regra prática é: **re-estagiar sempre depois de
+qualquer correção, mesmo que o portão já tenha ficado verde.**
