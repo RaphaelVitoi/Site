@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T12:00-03:00
+commit: aede6a21
 classes: [interno]
 decide: remove rag_ignore_patterns (declarado sem leitor) e inventaria os indices para que apagar deixe de ser cego
 caminhos:
