@@ -83,12 +83,14 @@ def arquivos_de_registro(raiz: Path = RAIZ) -> list[Path]:
     return [raiz / linha for linha in saida.stdout.splitlines() if linha.strip()]
 
 
-def ler_frontmatter(caminho: Path) -> tuple[dict[str, Any] | None, str]:
-    """Devolve (frontmatter, corpo). frontmatter None quando nao ha bloco YAML."""
-    try:
-        texto = caminho.read_text(encoding="utf-8-sig")
-    except OSError:
-        return None, ""
+def ler_frontmatter_de_texto(texto: str) -> tuple[dict[str, Any] | None, str]:
+    """Igual a `ler_frontmatter`, mas a partir do TEXTO ja em maos.
+
+    Existe porque o portao precisa analisar o conteudo que esta no INDICE, e nao
+    o que esta na arvore -- `git show :caminho` devolve texto, nao um Path. Sem
+    esta separacao o portao teria de reimplementar o parser, e duas
+    implementacoes do mesmo formato divergem em silencio.
+    """
     if not texto.startswith("---"):
         return None, texto
     partes = texto.split("\n---", 2)
@@ -101,6 +103,15 @@ def ler_frontmatter(caminho: Path) -> tuple[dict[str, Any] | None, str]:
     except yaml.YAMLError:
         return None, corpo
     return (dados if isinstance(dados, dict) else None), corpo
+
+
+def ler_frontmatter(caminho: Path) -> tuple[dict[str, Any] | None, str]:
+    """Devolve (frontmatter, corpo). frontmatter None quando nao ha bloco YAML."""
+    try:
+        texto = caminho.read_text(encoding="utf-8-sig")
+    except OSError:
+        return None, ""
+    return ler_frontmatter_de_texto(texto)
 
 
 # ---------------------------------------------------------------------------

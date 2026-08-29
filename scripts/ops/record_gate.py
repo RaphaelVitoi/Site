@@ -45,6 +45,7 @@ if str(RAIZ) not in sys.path:
 from scripts.ops.record_index import (  # noqa: E402
     conferir_config_medida,
     ler_frontmatter,
+    ler_frontmatter_de_texto,
     resolvedores_de_ambiente,
     ttl_vencido,
 )
@@ -71,6 +72,32 @@ PADROES_DE_AMPLIACAO = {
 def _git(*args: str) -> str:
     r = subprocess.run(["git", *args], cwd=RAIZ, capture_output=True, text=True, check=False)
     return r.stdout
+
+
+def texto_como_vai_ao_commit(rel: str) -> str | None:
+    """Conteudo do arquivo COMO ELE VAI PARA O COMMIT -- do INDICE, nao da arvore.
+
+    Ate 2026-08-29 este portao pegava a LISTA de arquivos do indice
+    (`git diff --cached`) e depois lia o CONTEUDO do disco. Sao dois estados
+    diferentes: `git add` congela uma versao, e a edicao seguinte nao entra no
+    commit mas entra na leitura. O portao aprovava o que estava na tela enquanto
+    o commit levava outra coisa -- e ja aprovou, nesta casa, conteudo que nao foi
+    commitado.
+
+    Fora de um repositorio, ou para caminho que nao esta no indice, cai para a
+    arvore: ali ela e a unica fonte que existe. Isso nao reabre o buraco, porque
+    em `verificar()` os caminhos vem de `--cached --diff-filter=ACM` e portanto
+    estao sempre no indice.
+    """
+    r = subprocess.run(
+        ["git", "show", f":{rel}"], cwd=RAIZ, capture_output=True, check=False
+    )
+    if r.returncode == 0:
+        return r.stdout.decode("utf-8-sig", errors="ignore")
+    caminho = RAIZ / rel
+    if not caminho.is_file():
+        return None
+    return caminho.read_text(encoding="utf-8-sig", errors="ignore")
 
 
 def arquivos_em_stage() -> list[str]:
@@ -116,15 +143,13 @@ def linhas_em_bloco_de_comentario(rel: str) -> set[int]:
     `#` ou `//`. Nona vez que um detector desta base confunde citar com
     afirmar, e de novo a resposta e estado de BLOCO, nao prefixo de linha.
     """
-    caminho = RAIZ / rel
-    if not caminho.is_file():
+    texto = texto_como_vai_ao_commit(rel)
+    if texto is None:
         return set()
     dentro: set[int] = set()
     em_bloco = False
     delim_py: str | None = None
-    for n, linha in enumerate(
-        caminho.read_text(encoding="utf-8-sig", errors="ignore").splitlines(), start=1
-    ):
+    for n, linha in enumerate(texto.splitlines(), start=1):
         if rel.endswith((".ps1", ".psm1")):
             if em_bloco:
                 dentro.add(n)
@@ -179,10 +204,7 @@ def _e_prescritivo(rel: str) -> bool:
         return True  # governanca na raiz do projeto: sempre prescritiva
     if not rel.startswith("reports/"):
         return False
-    caminho = RAIZ / rel
-    return caminho.is_file() and caminho.read_text(
-        encoding="utf-8-sig", errors="ignore"
-    ).startswith("---")
+    return (texto_como_vai_ao_commit(rel) or "").startswith("---")
 
 
 def raizes_de_escopo() -> set[str]:
@@ -255,11 +277,14 @@ def referencias_mortas(rel: str) -> list[str]:
       sequencia de caracteres. Quando a forma nao separa, quem separa e a
       DECLARACAO do autor, visivel na revisao, item a item.
     """
-    caminho = RAIZ / rel
-    if not caminho.is_file():
+    texto = texto_como_vai_ao_commit(rel)
+    if texto is None:
         return []
+    # `caminho` fica so para ARITMETICA de caminho (resolver citacao relativa ao
+    # diretorio do documento). O CONTEUDO vem do indice, acima.
+    caminho = RAIZ / rel
 
-    fm, _ = ler_frontmatter(caminho)
+    fm, _ = ler_frontmatter_de_texto(texto)
     historicas = (fm or {}).get("referencias_nao_resolviveis") or []
     if isinstance(historicas, str):
         historicas = [historicas]
@@ -279,7 +304,7 @@ def referencias_mortas(rel: str) -> list[str]:
     escopos = raizes_de_escopo()
 
     mortas = []
-    for linha in caminho.read_text(encoding="utf-8-sig", errors="ignore").splitlines():
+    for linha in texto.splitlines():
         if "$$" in linha:
             continue
         for m in RE_CAMINHO_CITADO.finditer(linha):
@@ -325,10 +350,9 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
     registros_em_stage = [r for r in em_stage if _e_registro(r)]
 
     for rel in registros_em_stage:
-        caminho = RAIZ / rel
-        if not caminho.is_file():
+        texto = texto_como_vai_ao_commit(rel)
+        if texto is None:
             continue
-        texto = caminho.read_text(encoding="utf-8-sig", errors="ignore")
         if not texto.startswith("---"):
             continue  # ausencia de frontmatter e AVISO do outro portao; nao duplicar
 
