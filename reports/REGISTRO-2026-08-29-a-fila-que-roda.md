@@ -113,3 +113,16 @@ arquivo e manual.
   por sua vez, assume `'medium'` quando o metadata nao traz prioridade, enquanto
   o banco assume `'normal'`. Os dois valem 1000.0 em `PRIORITY_SCALARS`, entao
   hoje coincidem por acidente. Mexer em qualquer um dos escalares separa os dois.
+
+## Revisao de ancora -- 2026-08-29, os tres orfaos
+
+Ancora tocada: `data/DECLARADO_E_NAO_LIDO.json`.
+
+O arquivo mudou por outro motivo: `LOCAL_MODEL_MAP`, `_MODEL_31B` e
+`GEMINI_ALL_KEYS_WITH_POOLS` sairam de `pendentes` com veredito
+([[registro-2026-08-29-tres-orfaos]]).
+
+**A entrada de `PRIORITY_WEIGHTS`, que e a ancora deste registro, nao foi
+tocada** -- continua em `pendentes`, com o texto corrigido aqui, aguardando a
+decisao do vertice sobre o mapeamento config -> arbitrador. A conclusao deste
+registro nao muda.

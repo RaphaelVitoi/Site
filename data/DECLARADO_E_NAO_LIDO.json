@@ -90,22 +90,6 @@
       ]
     },
     {
-      "nome": "LOCAL_MODEL_MAP",
-      "onde": "engine/gemma_server.py",
-      "veredito": "a investigar -- mapa de modelo sem leitor, na mesma familia dos achados de hoje",
-      "medido": "atribuido e nunca lido; OLLAMA_MODEL_MAP e CLOUD_MODEL_MAP no mesmo arquivo tem leitores"
-    },
-    {
-      "nome": "_MODEL_31B",
-      "onde": "engine/gemma_server.py",
-      "veredito": "a investigar -- alias de modelo sem leitor"
-    },
-    {
-      "nome": "GEMINI_ALL_KEYS_WITH_POOLS",
-      "onde": "llm/budget.py",
-      "veredito": "a investigar -- estrutura de pools de chave sem leitor"
-    },
-    {
       "nome": "DEFAULT_GEMINI_FAST_MODEL",
       "onde": "core/config.py",
       "veredito": "a investigar -- default de modelo sem leitor"
@@ -165,5 +149,57 @@
     "acesso por nome montado em runtime esta fora do alcance da varredura",
     "as remocoes foram validadas por suite verde e import limpo, nao por",
     "execucao do caminho que as continha -- nenhum deles tinha caminho"
+  ],
+  "resolvidos_em_2026_08_29_tarde": [
+    {
+      "nome": "_MODEL_31B",
+      "onde": "engine/gemma_server.py",
+      "veredito": "LIGADO -- a constante passou a ser usada onde deveria",
+      "por_que": [
+        "Nasceu com proposito declarado no proprio comentario: 'expurgo de literais",
+        "duplicados (S1192)'. O unico duplicado que ela existia para eliminar --",
+        "MODEL_ID = os.environ.get('SOTA_LOCAL_MODEL', 'gemma4:31b') -- ficou tres",
+        "linhas ACIMA dela, intacto. Orfa cumprindo zero do proprio proposito.",
+        "Definicao movida para antes de MODEL_ID e o literal substituido. Mesma",
+        "string, zero mudanca de comportamento."
+      ],
+      "registro": "registro-2026-08-29-tres-orfaos"
+    },
+    {
+      "nome": "LOCAL_MODEL_MAP",
+      "onde": "engine/gemma_server.py",
+      "veredito": "REMOVIDO -- sem leitor, e contradizia o mapa vivo",
+      "por_que": [
+        "Zero leitores em duas buscas independentes. Identidade em oito das nove",
+        "entradas. A unica que nao era identidade, '4b' -> 'e4b', CONTRADIZ o mapa",
+        "que roda: OLLAMA_MODEL_MAP leva '4b' para 'gemma4:latest'.",
+        "Liga-lo teria mandado o alias 4b para o gemma4:e4b, que pesa 9,6 GB contra",
+        "7,2 GB de VRAM disponivel -- o mesmo modelo da pendencia 2.",
+        "Quem resolve alias local e OLLAMA_MODEL_MAP, alimentado por",
+        "data/ollama_models.json. Segundo mecanismo para um fato que ja tem dono."
+      ],
+      "registro": "registro-2026-08-29-tres-orfaos"
+    },
+    {
+      "nome": "GEMINI_ALL_KEYS_WITH_POOLS",
+      "onde": "llm/budget.py",
+      "veredito": "REMOVIDO -- o consumidor da forma monta a propria lista, com outra taxonomia",
+      "por_que": [
+        "A forma {key, pool} TEM consumidor: cli/commands.py:490 le entry['pool'] e",
+        "decide o modelo de teste com ele. Mas o consumidor nao usa esta estrutura --",
+        "ele monta a lista a mao em _cmd_run_gemini_health, linhas 565-573.",
+        "E as duas taxonomias de 'pool' divergem: la o pool vem de QUAL lista a chave",
+        "veio (pro/flash/legacy); aqui vinha do NOME da variavel de ambiente, por",
+        "regex GEMINI_([A-Z0-9_]+?)_KEY, produzindo tambem nomes de projeto.",
+        "Dois produtores da mesma forma, vocabularios diferentes, e o declarado era o",
+        "que ninguem lia. Removido junto o _collect_keys_with_pool, que ficou sem",
+        "chamador.",
+        "Motivo adicional: a estrutura mantinha VALOR de chave em texto claro num",
+        "agregado de modulo que nada consumia. Agregado sem leitor nao e backup.",
+        "A divergencia de taxonomia fica DECLARADA, nao resolvida: unificar mudaria",
+        "qual modelo testa qual chave."
+      ],
+      "registro": "registro-2026-08-29-tres-orfaos"
+    }
   ]
 }
