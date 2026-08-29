@@ -213,3 +213,23 @@ ser lido pelo codigo.
 **As conclusoes deste documento seguem de pe.** Nada aqui depende do ramo
 periodico do guard nem do teto de RAM. O roteamento e a memoria continuam como
 descritos.
+
+## Revisao de ancora -- 2026-08-29, a fila que roda
+
+Ancora tocada: `data/DECLARADO_E_NAO_LIDO.json`.
+
+**A linha 1 da tabela da secao 2 esta errada e fica registrada como errada.** Ela
+diz que `PRIORITY_WEIGHTS` esta desligado e que *"a fila ordena por string em
+SQL"*. A primeira metade se confirma. A segunda nao: o `CASE` em SQL de
+`queue_manager.get_next_task` **nao tem chamador de producao** -- so um teste. A
+fila que roda e `worker/loop.py:_dispatch_optimal_task`, que decide pelo
+`UniversalArbitrator`, cujas constantes estao hardcoded e ignoram o
+`system_config.json`.
+
+Ver [[registro-2026-08-29-a-fila-que-roda]] para a medicao.
+
+**A conclusao deste handoff nao muda:** o item 1 continua sendo decisao do
+vertice, e por um motivo mais forte do que o registrado -- alem de mudar a ordem
+de saida da fila, o mapeamento entre as chaves do config (`alpha`, `beta`,
+`gamma`, `lambda_age`) e as constantes do arbitrador (`TIME_DECAY_ALPHA`,
+`PROPAGATION_GAMMA`) nao e inferivel do codigo.
