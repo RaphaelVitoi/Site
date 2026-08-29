@@ -1,8 +1,15 @@
 # Mapa de Roteamento de Tarefas (SOTA)
 
-Este diagrama é gerado dinamicamente pela rotina `invoke_routing_map_visualization.ps1`.
-Ele representa o fluxo de vida de uma tarefa, desde a ignição até a absorção na memória coletiva.
-É um artefato vivo que se atualiza conforme a configuração do sistema (`system_config.json`) evolui.
+> **Revisão de 2026-08-29 — este arquivo é escrito à mão.** O texto anterior
+> dizia que ele é "gerado dinamicamente pela rotina
+> `invoke_routing_map_visualization.ps1`" e que é "um artefato vivo que se
+> atualiza conforme a configuração do sistema evolui". Essa rotina **não existe
+> no repositório** — nenhum arquivo com esse nome, nenhuma referência a ela fora
+> desta frase. Nada regenera este diagrama, e foi por isso que ele passou a
+> nomear uma função que a produção não chama. Ao mudar o fluxo, edite aqui.
+
+Este diagrama representa o fluxo de vida de uma tarefa, desde a ignição até a
+absorção na memória coletiva.
 
 ```mermaid
 graph TD
@@ -13,12 +20,12 @@ graph TD
     end
 
     subgraph "Fase 1: Triagem"
-        E(Worker) -->|`get_next_task`| F{@dispatcher}
+        E(Worker) -->|`get_tasks` + `UniversalArbitrator`| F{@dispatcher}
         F -->|Gera Sub-tarefas| D
     end
 
     subgraph "Fase 2: Execução Especializada"
-        E -->|`get_next_task`| G{@implementor}
+        E -->|`get_tasks` + `UniversalArbitrator`| G{@implementor}
         subgraph "Omnisciência Sistemica"
             direction LR
             H1[<font size=5>🧠</font><br/>RAG<br/>(memory_rag.py)]

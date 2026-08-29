@@ -3,7 +3,6 @@
   "projeto": "Site",
   "declarado_em": "2026-08-29",
   "declarado_por": "claude@opus-5",
-
   "proposito": [
     "Inventario das constantes que sao ATRIBUIDAS e nunca LIDAS, com um veredito",
     "por item. Existe porque este e o padrao dominante desta base, e ate agora",
@@ -12,7 +11,6 @@
     "lista: item novo reprova, item resolvido reprova. A conta so muda por",
     "decisao registrada."
   ],
-
   "por_que_isto_importa": [
     "Constante sem leitor nao e so codigo morto. Quando ela nomeia um TETO, um",
     "PESO ou uma variavel de ambiente, ela e promessa ao operador -- quem a",
@@ -24,7 +22,6 @@
     "  recursive: false           campo do manifesto que o codigo nunca lia",
     "  $warnings                  lido no veredito e nunca populado"
   ],
-
   "metodo": [
     "AST, nao texto: comentario e docstring que citam o nome nao contam como",
     "leitura. Considera leitura em QUALQUER arquivo do projeto, entao constante",
@@ -33,7 +30,6 @@
     "Limite declarado: acesso por nome montado em runtime esta fora do alcance.",
     "getattr com literal e coberto; f-string com nome computado, nao."
   ],
-
   "removidos_em_2026_08_29": [
     {
       "nome": "DO_PS1_PATH",
@@ -59,22 +55,38 @@
       ]
     }
   ],
-
   "pendentes": [
     {
       "nome": "PRIORITY_WEIGHTS",
       "onde": "core/config.py",
-      "veredito": "DECISAO DO VERTICE -- muda escalonamento de tarefa",
+      "veredito": "DECISAO DO VERTICE -- o mapeamento alpha/beta/gamma para as constantes do arbitrador nao e inferivel",
       "medido": [
-        "O operador configura `priority_weights` em data/system_config.json --",
-        "{alpha: 1.0, beta: 1.5, gamma: 0.5, lambda_age: 0.01}. E uma FORMULA de",
-        "pontuacao com decaimento temporal. O valor e carregado para o global em",
-        "_reload_system_config e nao e lido por nada.",
-        "A prioridade que de fato governa e string ('high'/'medium'/'normal'),",
-        "ordenada por um CASE em SQL no queue_manager. Mesma forma do roteamento:",
-        "o mecanismo sofisticado declarado e inerte, o cru rodando.",
-        "Ligar muda a ordem em que as tarefas saem da fila -- por isso e decisao,",
-        "nao limpeza."
+        "CORRIGIDO EM 2026-08-29. A versao anterior desta entrada dizia que a",
+        "prioridade e ordenada por um CASE em SQL no queue_manager. Medido: esse",
+        "CASE nao roda em producao.",
+        "A fila que roda e worker/loop.py:_dispatch_optimal_task, que busca TODAS",
+        "as pendentes com get_tasks(status='pending') e entrega a",
+        "UniversalArbitrator.extract_optimal_task (worker/loop.py:218).",
+        "queue_manager.get_next_task (o CTE + CASE) e promote_starved_tasks tem",
+        "UM unico chamador cada, e e um teste -- tests/test_database_sota.py",
+        "linhas 102 e 325. Nenhum caminho de producao os invoca.",
+        "Logo existem TRES mecanismos para a mesma grandeza:",
+        "  1. priority_weights no system_config.json -- carregado, sem leitor;",
+        "  2. o CASE em SQL + promote_starved_tasks -- vivos, sem chamador;",
+        "  3. UniversalArbitrator -- o unico que roda, com as constantes",
+        "     TIME_DECAY_ALPHA=1.5, PROPAGATION_GAMMA=0.8 e PRIORITY_SCALARS",
+        "     HARDCODED, ignorando o system_config.json.",
+        "O botao do operador nao chega ao mecanismo que decide. Ligar exige",
+        "decidir o mapeamento, e ele nao se infere: o config diz alpha=1.0 e",
+        "beta=1.5, o codigo diz TIME_DECAY_ALPHA=1.5 -- o valor do alpha do",
+        "codigo e o beta do config. Nomear isso por semelhanca numerica seria",
+        "inventar convencao."
+      ],
+      "registro": "registro-2026-08-29-a-fila-que-roda",
+      "tambem_em": [
+        "core/arbitrator.py",
+        "database/queue_manager.py",
+        "worker/loop.py"
       ]
     },
     {
@@ -142,12 +154,12 @@
       "veredito": "a investigar -- arquivo de carga, fora do caminho de producao"
     }
   ],
-
   "fora_de_escopo": {
     "motivo": "codigo de terceiro, vendorizado; nao se corrige aqui",
-    "prefixos": [".gemini/.agents/skills/"]
+    "prefixos": [
+      ".gemini/.agents/skills/"
+    ]
   },
-
   "nao_verificado": [
     "nao foi medido se cada constante pendente ja teve leitor no passado",
     "acesso por nome montado em runtime esta fora do alcance da varredura",
