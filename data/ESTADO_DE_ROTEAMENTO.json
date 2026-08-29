@@ -141,7 +141,7 @@
   "superficie_subagentes": {
     "autoridade": "core/subagents_mesh.py :: SUBAGENT_MODEL_MAP",
     "invariante_do_operador": "custo zero -- todo tier roda na frota local",
-    "tiers": 13,
+    "tiers": 14,
     "a_politica_atribui_modelo": false,
     "excecao_levantada": "llm.routing_policy.ForaDaAutoridadeDaPolitica",
     "o_que_a_politica_ainda_declara": [
