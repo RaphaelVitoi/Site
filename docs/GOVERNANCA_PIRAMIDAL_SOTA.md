@@ -104,3 +104,39 @@ flowchart TB
 4. **Scaffolding e Assistência:** Copilot (Tier 3) apoia o desenvolvedor na escrita de testes locais.
 5. **Convergência Local & Quality Gate:** O Tier 1 aterrissa os patches, executa a suíte de 651 testes Pytest e compila as 55 rotas Next.js.
 6. **Entrega Soberana:** O produto final validado é entregue ao Tier 0 em formato de artefatos visuais de alta densidade.
+
+---
+
+## 4. Barramento Universal Web & Auto-Browse (-Web Modernizado)
+
+O antigo comando `-Web` (anteriormente um montador interativo de clipboard) foi refatorado e elevado a **motor global de pesquisa, auto-browse e handoff** em `engine/sota_web_browse.py`:
+
+```mermaid
+flowchart LR
+    REQ["Requisição de Consulta\n(nexus web / -Web)"] --> TIER_POL{"Política de Tier\n(TierPolicyEngine)"}
+    
+    TIER_POL -->|Tier 3, 4, 5\n(Grounding Fortemente Incentivado)| AUTO_SEARCH["Auto-Grounding AI / Search"]
+    TIER_POL -->|Tier 0, 1, 2\n(Sob Demanda / Cirúrgico)| CDP_BROWSE["Chrome Dev CDP (9222/9223)"]
+    TIER_POL -->|Handoff Explícito| CLIP["Clipboard Bridge SOTA"]
+
+    AUTO_SEARCH --> AUDIT["Auditoria Transacional\n(logs/web_browsing_audit.jsonl)"]
+    CDP_BROWSE --> AUDIT
+    CLIP --> AUDIT
+
+    classDef req fill:#1e1e38,stroke:#8b5cf6,stroke-width:2px,color:#fff;
+    classDef pol fill:#14232e,stroke:#0ea5e9,stroke-width:2px,color:#fff;
+    classDef tool fill:#1a2332,stroke:#10b981,stroke-width:2px,color:#fff;
+    classDef log fill:#2a1c2e,stroke:#f59e0b,stroke-width:2px,color:#fff;
+
+    class REQ req;
+    class TIER_POL pol;
+    class AUTO_SEARCH,CDP_BROWSE,CLIP tool;
+    class AUDIT log;
+```
+
+### Modos Operacionais:
+1. **CDP Browser Bridge:** Automação assíncrona do Google Chrome Dev (portas 9222/9223) com lock de concorrência (`_CDP_LOCK`) para interação com Paid Tiers web (ChatGPT Plus, Claude Web, Gemini Advanced, Perplexity Pro, Google AI Mode, Lovable).
+2. **AI Web Search Bridge:** Grounding semântico em tempo real para enriquecimento de contexto e fatos atualizados.
+3. **Clipboard Handoff Bridge:** Montagem instantânea de payload estruturado sem IO de disco para transferência ao operador.
+4. **Log de Auditoria Estruturada:** Registro obrigatório em `logs/web_browsing_audit.jsonl` com `audit_id`, `tier`, `requester`, `prompt`, `mode_used`, `latency_ms` e `status`.
+

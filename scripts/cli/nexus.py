@@ -3062,6 +3062,109 @@ def triad_run(objective: str = typer.Argument(..., help="Objetivo funcional a ex
 
 
 # ==========================================
+# SUBCOMANDO: WEB & AUTO-BROWSE SOTA
+# ==========================================
+
+web_app = typer.Typer(help="Motor Universal SOTA de Auto-Browse, CDP e Pesquisa Web")
+app.add_typer(web_app, name="web")
+
+
+@web_app.command("status")
+def web_status():
+    """Inspeciona o estado do Google Chrome Dev CDP e do motor de busca."""
+    from engine.sota_web_browse import CDPBrowserBridge
+
+    bridge = CDPBrowserBridge()
+    health = bridge.check_health()
+
+    console.print("\n[bold cyan]=== [SOTA WEB & CDP BROWSER: STATUS] ===[/]\n")
+    if health.get("online"):
+        console.print(f"[bold green][+][/] [bold white]Google Chrome Dev (CDP):[/] [bold green]ONLINE[/] na porta [yellow]{health.get('port')}[/]")
+        console.print(f"    Engine: [dim]{health.get('engine')}[/] | Protocol: [dim]{health.get('protocol')}[/]\n")
+    else:
+        console.print("[bold yellow][!][/] [bold white]Google Chrome Dev (CDP):[/] [yellow]STANDBY / OFFLINE[/] (Portas 9222/9223)\n")
+
+
+@web_app.command("query")
+def web_query(
+    prompt: str = typer.Argument(..., help="Query de busca ou URL"),
+    tier: int = typer.Option(1, "--tier", "-t", help="Nivel hierarquico do agente (0 a 5)"),
+    mode: str = typer.Option("auto_detect", "--mode", "-m", help="Modo (auto_detect, cdp_browser, ai_search, clipboard_handoff)"),
+):
+    """Executa consulta com grounding contextual e registro de auditoria."""
+    import asyncio
+    from engine.sota_web_browse import AgentTier, SotaWebBrowseOrchestrator, WebBrowseMode, WebQueryRequest
+
+    orchestrator = SotaWebBrowseOrchestrator()
+    req = WebQueryRequest(
+        query_or_url=prompt,
+        mode=WebBrowseMode(mode),
+        tier=AgentTier(tier),
+        requester="nexus-cli",
+    )
+    res = asyncio.run(orchestrator.execute_query(req))
+
+    console.print("\n[bold green]=== [SOTA WEB ENGINE: RESPOSTA] ===[/]")
+    console.print(f"[bold cyan]Modo:[/] {res.mode_used.value} | [bold yellow]Latencia:[/] {res.latency_ms:.2f}ms | [dim]ID: {res.audit_id}[/]\n")
+    console.print(res.content)
+    console.print()
+
+
+@web_app.command("handoff")
+def web_handoff(
+    task: str = typer.Argument(..., help="Descricao da tarefa a ser preparada para Web LLM"),
+    llm: str = typer.Option("claude", "--llm", "-l", help="LLM de destino (claude, gemini, deepseek)"),
+    context: str = typer.Option("", "--context", "-c", help="Contexto adicional opcional"),
+):
+    """Prepara e copia payload estruturado SOTA para o Clipboard para Paid Web Tiers."""
+    import asyncio
+    from engine.sota_web_browse import AgentTier, SotaWebBrowseOrchestrator, WebBrowseMode, WebQueryRequest
+
+    orchestrator = SotaWebBrowseOrchestrator()
+    req = WebQueryRequest(
+        query_or_url=task,
+        mode=WebBrowseMode.CLIPBOARD_HANDOFF,
+        tier=AgentTier.TIER_0_SOVEREIGN,
+        context=context or None,
+        requester="nexus-handoff",
+        target_llm=llm,
+    )
+    res = asyncio.run(orchestrator.execute_query(req))
+    console.print(f"\n[bold green][+][/] [bold white]{res.content}[/]")
+    console.print(f"[dim]Destino: {llm.upper()} | Protocolo Chico SOTA v8.0 GOLD ativo.[/]\n")
+
+
+@web_app.command("audit")
+def web_audit(limit: int = typer.Option(5, "--limit", "-n", help="Numero de registros a exibir")):
+    """Exibe os ultimos registros de auditoria de navegacao e busca web."""
+    from engine.sota_web_browse import SotaWebBrowseOrchestrator
+
+    orchestrator = SotaWebBrowseOrchestrator()
+    audits = orchestrator.get_recent_audits(limit)
+
+    console.print(f"\n[bold cyan]=== [SOTA WEB AUDIT LOG] (Ultimos {len(audits)} registros) ===[/]\n")
+    tabela = Table(title="Auditoria de Requisicoes Web", box=box.ROUNDED)
+    tabela.add_column("Audit ID", style="dim", justify="left")
+    tabela.add_column("Tier", style="bold yellow", justify="center")
+    tabela.add_column("Modo", style="cyan", justify="left")
+    tabela.add_column("Prompt / URL", style="white", justify="left")
+    tabela.add_column("Status", style="bold green", justify="center")
+    tabela.add_column("Latencia", style="magenta", justify="right")
+
+    for a in audits:
+        tabela.add_row(
+            str(a.get("audit_id", "-")),
+            str(a.get("tier", "-")),
+            str(a.get("mode_used", "-")),
+            str(a.get("prompt", "-"))[:40],
+            "OK" if a.get("success") else "ERRO",
+            f"{a.get('latency_ms', 0):.1f}ms",
+        )
+    console.print(tabela)
+    console.print()
+
+
+# ==========================================
 # ENTRYPOINT TYPER
 # ==========================================
 
