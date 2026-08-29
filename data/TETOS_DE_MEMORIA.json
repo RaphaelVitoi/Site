@@ -40,7 +40,25 @@
         "comprometida continua comprometida. Medido nesta maquina, o aperto real",
         "era commit em 90% do limite, nao working set.",
         "RAM fisica e a grandeza FOLGADA nesta maquina -- ver a camada `commit`, que e a que falha primeiro. Este teto continua util como rede de ultima instancia, nao como sinal principal."
-      ]
+      ],
+      "inalcancavel_nesta_maquina": {
+        "medido_em": "2026-08-29",
+        "fato": [
+          "Nao e folgado: e INALCANCAVEL. Para percent bater em 98, o livre teria",
+          "de cair de 8,59 GB para 0,64 GB -- fator de 13x. Tres fontes",
+          "independentes concordam no valor (Mem Reduct 72,50%, script proprio",
+          "72,0-73,3%, WMI 73,0%), e ele oscila numa faixa de 0,9 ponto.",
+          "Portao que nao consegue ficar vermelho e decoracao. Fica declarado",
+          "aqui em vez de corrigido porque trocar a grandeza muda QUANDO a",
+          "maquina age sozinha, e isso e decisao do vertice."
+        ],
+        "alternativas_se_o_vertice_quiser_um_teto_que_cruza": [
+          "GB livres abaixo de um piso (grandeza absoluta, cruza de verdade)",
+          "uso do pagefile -- 19,7% agora, pico 18,09 GB de 54,42 (33%). E a",
+          "grandeza que acompanha LENTIDAO, que e o que o operador sentiria; o",
+          "commit acompanha RECUSA de alocacao, que e outro modo de falha."
+        ]
+      }
     },
     "vram": {
       "gauge": "nexus._get_vram_usage -- soma de size_vram em /api/ps sobre o total do log do Ollama",

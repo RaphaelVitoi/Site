@@ -1587,13 +1587,24 @@ def memory_guard(
                 console.print(f"        [dim]{_agir_por_camada(nome, c)}[/]")
 
             if not estourou:
-                partes = [
-                    f"{n}={c['valor']:.1f}{c['unidade']}" if c["valor"] is not None else f"{n}=?"
-                    for n, c in leitura.items()
-                ]
-                logger.info("[GUARD] %s", " | ".join(partes))
+                logger.info("[GUARD] %s", _resumo_da_leitura(leitura))
 
             if once:
+                # `--once` e comando de diagnostico: quem o roda quer ver O QUE
+                # FOI MEDIDO. Mandar a leitura so para o logger fazia o comando
+                # imprimir os tetos, sair com 0 e nao dizer uma palavra sobre o
+                # estado -- verde que nao carrega a medicao que o justifica, que
+                # e a falha que este guard existe para achar nos outros.
+                if not estourou:
+                    console.print(f"  [green]{_resumo_da_leitura(leitura)}[/]")
+                camada, folga = _mais_pressionada(leitura)
+                if camada is None:
+                    console.print("  [bold yellow]nenhuma camada tem medidor -- o guard esta cego[/]")
+                else:
+                    console.print(
+                        f"  [dim]mais pressionada: {camada} a {folga * 100:.0f}% do seu teto; "
+                        f"num laco, o proximo ciclo seria em {_intervalo_adaptativo(leitura)}s[/]"
+                    )
                 return
 
             espera = _intervalo_adaptativo(leitura)
@@ -1709,6 +1720,31 @@ def _medir_pressao(tetos: dict) -> dict[str, dict]:
         leitura["cache"] = {"valor": None, "teto": teto_cache, "unidade": "MB", "pressao": None, "detalhe": "sem medidor"}
 
     return leitura
+
+
+def _resumo_da_leitura(leitura: dict[str, dict]) -> str:
+    """Uma linha com o valor de cada camada. Camada sem medidor sai como `?`.
+
+    `?` e nao `0`: zero diria "folgada" sobre uma camada que ninguem consegue
+    medir, e foi exatamente assim que o leitor de VRAM ficou mudo por meses.
+    """
+    return " | ".join(
+        f"{n}={c['valor']:.1f}{c['unidade']}" if c["valor"] is not None else f"{n}=?"
+        for n, c in leitura.items()
+    )
+
+
+def _mais_pressionada(leitura: dict[str, dict]) -> tuple[str | None, float]:
+    """Camada mais perto do SEU teto, e a fracao percorrida ate ele.
+
+    A que decide o intervalo. Media esconderia justamente a que esta prestes a
+    estourar, e foi por olhar a camada folgada -- RAM fisica, com o commit a 90%
+    do limite -- que a primeira versao deste guard vigiava a grandeza errada.
+    """
+    medidas = [(n, c["pressao"]) for n, c in leitura.items() if c["pressao"] is not None]
+    if not medidas:
+        return None, 0.0
+    return max(medidas, key=lambda par: par[1])
 
 
 def _intervalo_adaptativo(leitura: dict[str, dict], minimo: int = 15, maximo: int = 600) -> int:

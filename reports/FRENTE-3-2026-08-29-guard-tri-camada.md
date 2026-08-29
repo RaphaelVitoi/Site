@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T01:10-03:00
-atualizado_em: 2026-08-29T02:05-03:00
+atualizado_em: 2026-08-29T04:20-03:00
 commit: db9acdd9
 classes: [interno, medido]
 caminhos:
@@ -195,3 +195,104 @@ data declarada, e agora a pressao de memoria por RAM fisica em vez de commit.
 O padrao nao e descuido de calculo — e escolher o campo obvio em vez do campo
 que decide. E o que o quebrou nas tres vezes foi a mesma coisa: **um numero
 estavel demais para ser verdade.**
+
+---
+
+## 8. Adendo — `guard --once` nao dizia o que mediu
+
+Achado ao rodar o proprio comando que o prompt de continuacao manda rodar como
+checagem de estado. Ele imprimia as quatro linhas de teto, saia com codigo 0 e
+**nao dizia uma palavra sobre a medicao**: a leitura ia para `logger.info`, que
+nesta invocacao e silencioso.
+
+O comando parecia saudavel porque saia verde. Era **verde que nao carrega a
+medicao que o justifica** — exatamente a familia de defeito que este guard foi
+escrito para achar nos outros.
+
+O teste existente nao pegou porque media a grandeza errada: conferia
+`exit_code == 0`, isto e, *nao quebrou*, quando o contrato do comando e *relatar
+o estado*.
+
+### 8.1 O que mudou
+
+`--once` agora imprime a leitura no console. `_resumo_da_leitura` e
+`_mais_pressionada` sairam do corpo do laco para virarem testaveis em separado,
+e quando **nenhuma** camada tem medidor o comando diz que esta cego em vez de se
+despedir com uma linha tranquila.
+
+Tres testes novos, cada um com sua mutacao detectada: a leitura sumindo da
+saida, `?` virando `0` para camada sem medidor, e `_mais_pressionada` devolvendo
+a camada menos pressionada.
+
+### 8.2 E a maquina andou
+
+| medido | 2026-08-29 02:05 | 2026-08-29 04:20 |
+| :--- | ---: | ---: |
+| RAM fisica | 72,7% | 73,5% |
+| **commit % do limite** | **82,6%** | **88,0%** |
+| intervalo do proximo ciclo | 75 s | **40 s** |
+
+A RAM fisica andou 0,8 ponto em duas horas; o commit andou 5,4 e esta a **96% do
+caminho ate o teto de 92%**. A camada que o guard passou a vigiar e a que se
+move — mais uma leitura a favor de ter trocado a grandeza.
+
+---
+
+## 9. Correcao — o commit decide RECUSA, nao LENTIDAO
+
+Duas observacoes do operador derrubaram parte da secao 7.3:
+
+> *"estavel demais a RAM. nunca sobe alem de 72%."*
+> *"nao senti prejuizo no meu flow de trabalho, e estranho. nao melhorou tbm."*
+
+A segunda e a que corrige. Se o commit estivesse a 88% de um limite real e
+doloroso, a maquina estaria paginando e ele sentiria. Nao sente. Entao ou o
+numero esta errado, ou ele nao mede o que eu disse que media.
+
+### 9.1 Tres fontes concordam, e ainda assim eu estava errado
+
+| | Mem Reduct | script proprio | WMI |
+| :--- | ---: | ---: | ---: |
+| RAM fisica | 72,50% | 72,0–73,3% | 73,0% (23,27 / 31,86 GB) |
+| pagefile | 19,75% | — | 19,7% (10,72 / 54,42 GB) |
+
+O numero nunca foi o problema. A **interpretacao** era.
+
+### 9.2 A decomposicao
+
+| | GB |
+| :--- | ---: |
+| commit cobrado | 75,60 (87,6% do limite) |
+| RAM fisica em uso | 23,27 |
+| pagefile escrito | 10,72 |
+| **de fato materializado** | **33,99** |
+| **comprometido e nunca tocado** | **41,61 — 55% do commit** |
+
+Confirmado pelo outro lado: a soma de *private bytes* dos processos e 59,18 GB
+e a soma dos *working sets*, 15,06 GB. O `codex` da sessao vizinha sozinho tem
+2,49 GB comprometidos e 0,04 GB residentes.
+
+**Mais da metade do commit e ar.** Reserva que o Windows cobra do limite e que
+nunca virou pagina em lugar nenhum.
+
+### 9.3 Sao dois modos de falha, e eu tratei como um
+
+| grandeza | o que ela decide | agora |
+| :--- | :--- | ---: |
+| commit / limite | **alocacao passa a ser RECUSADA** | 87,6% |
+| pagefile em uso | **a maquina fica LENTA** | 19,7% (pico 33%) |
+| RAM fisica | nada, aqui | 73% |
+
+A secao 7.3 disse "a pressao de memoria e commit". Correto para *recusa de
+alocacao*; **errado para desempenho**, que e o que a palavra "pressao" sugere.
+O guard vigia a grandeza certa para o modo de falha duro, e nao vigia nenhuma
+para o modo mole — que e justamente o que o operador sentiria.
+
+### 9.4 O teto de RAM nao consegue ficar vermelho
+
+Para `virtual_memory().percent` bater em 98%, o livre teria de cair de **8,59 GB
+para 0,64 GB** — um fator de **13x**. Nao e um teto folgado: e um teto
+**inalcancavel** nesta maquina. Fica declarado como tal em
+`TETOS_DE_MEMORIA.json`, e a decisao sobre troca-lo por uma grandeza que cruza
+(GB livres, ou o proprio pagefile) e do vertice, porque muda quando a maquina
+age sozinha.
