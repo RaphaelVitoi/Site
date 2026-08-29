@@ -23,9 +23,9 @@ config_medida:
   agentes: 19
   agentes_que_divergem_antes: 19
   agentes_que_seguem_a_politica_depois: 19
-  subagentes: 13
+  subagentes: 14
   subagentes_que_divergiam: 13
-  subagentes_em_custo_zero: 13
+  subagentes_em_custo_zero: 14
   agentes_em_custo_marginal_zero: 12
 verificado:
   - a divergencia foi medida por EXECUCAO -- core.config carregado, os dois mapas

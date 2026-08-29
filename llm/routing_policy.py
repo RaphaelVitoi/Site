@@ -294,6 +294,7 @@ SUBAGENTES: dict[str, ClasseTarefa] = {
     "implementor": ClasseTarefa.CONSTRUCAO,
     "curator": ClasseTarefa.RACIOCINIO_PROFUNDO,
     "architect": ClasseTarefa.CONSTRUCAO,
+    "generalist": ClasseTarefa.OPERACIONAL,
     "self": ClasseTarefa.OPERACIONAL,  # copia do pai para fan-out barato
 }
 
