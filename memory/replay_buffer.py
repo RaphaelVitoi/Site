@@ -15,7 +15,7 @@ class Transition(NamedTuple):
     reward: float
     next_state: Any
     done: bool
-    info: Dict[str, Any]
+    info: dict[str, Any]
 
 
 class SumTree:
@@ -65,7 +65,7 @@ class SumTree:
         self.tree[idx] = priority
         self._propagate(idx, change)
 
-    def get(self, s: float) -> Tuple[int, float, Any]:
+    def get(self, s: float) -> tuple[int, float, Any]:
         idx = self._retrieve(0, s)
         data_idx = idx - self.capacity + 1
         return idx, self.tree[idx], self.data[data_idx]
@@ -95,16 +95,16 @@ class PrioritizedReplayMemory:
         self._rng = np.random.default_rng(seed)
 
     def push(
-        self, state: Any, action: Any, reward: float, next_state: Any, done: bool, info: Optional[Dict[str, Any]] = None
+        self, state: Any, action: Any, reward: float, next_state: Any, done: bool, info: Optional[dict[str, Any]] = None
     ):
         """Armazena uma transicao de agente com prioridade maxima inicial."""
         transition = Transition(state, action, reward, next_state, done, info or {})
         priority = self.max_priority**self.alpha
         self.tree.add(priority, transition)
 
-    def sample(self, batch_size: int) -> Tuple[List[Transition], np.ndarray, np.ndarray]:
+    def sample(self, batch_size: int) -> tuple[list[Transition], np.ndarray, np.ndarray]:
         """Amostra um lote de transicoes proporcionalmente a prioridade de TD-error."""
-        batch: List[Transition] = []
+        batch: list[Transition] = []
         idxs = np.zeros(batch_size, dtype=np.int32)
         priorities = np.zeros(batch_size, dtype=np.float64)
 

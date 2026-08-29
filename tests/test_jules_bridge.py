@@ -126,3 +126,81 @@ def test_jules_client_get_diff() -> None:
         assert isinstance(diff_res, JulesDiffResult)
         assert "engine/math_sota.py" in diff_res.files_changed
         assert "PMev optimization" in diff_res.diff_content
+
+
+def test_jules_client_list_sources() -> None:
+    """Valida a listagem de repositorios autorizados."""
+    mock_resp_data = {
+        "sources": [
+            {"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}
+        ]
+    }
+
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp):
+        client = JulesClient(api_key="AIzaFakeKey", project_id="original-498419")
+        sources = client.list_sources()
+        assert len(sources) == 1
+        assert sources[0]["name"] == "sources/github/RaphaelVitoi/Site"
+
+
+def test_jules_mcp_server_tools() -> None:
+    """Valida a execucao e formato das ferramentas do Jules MCP Server."""
+    from engine.jules_mcp_server import (
+        jules_approve_plan,
+        jules_create_session,
+        jules_get_diff,
+        jules_get_session_status,
+        jules_list_sources,
+        start_new_jules_task,
+    )
+
+    with patch.object(JulesClient, "create_session") as mock_create, \
+         patch.object(JulesClient, "get_session_status") as mock_status, \
+         patch.object(JulesClient, "approve_plan", return_value=True), \
+         patch.object(JulesClient, "get_diff") as mock_diff, \
+         patch.object(JulesClient, "list_sources", return_value=[{"name": "test"}]):
+
+        mock_create.return_value = JulesSessionStatus(
+            session_id="sess-100",
+            state="QUEUED",
+            create_time="2026-08-29T12:00:00Z",
+            update_time="2026-08-29T12:00:00Z",
+        )
+        mock_status.return_value = JulesSessionStatus(
+            session_id="sess-100",
+            state="COMPLETED",
+            create_time="2026-08-29T12:00:00Z",
+            update_time="2026-08-29T12:00:00Z",
+        )
+        mock_diff.return_value = JulesDiffResult(
+            session_id="sess-100",
+            diff_content="+ test",
+            files_changed=["test.py"],
+        )
+
+        res_create = json.loads(jules_create_session("src", "prompt"))
+        assert res_create["status"] == "SUCCESS"
+        assert res_create["sessionId"] == "sess-100"
+
+        res_status = json.loads(jules_get_session_status("sess-100"))
+        assert res_status["status"] == "SUCCESS"
+        assert res_status["state"] == "COMPLETED"
+
+        res_approve = json.loads(jules_approve_plan("sess-100", "act-1"))
+        assert res_approve["status"] == "SUCCESS"
+        assert res_approve["approved"] is True
+
+        res_diff = json.loads(jules_get_diff("sess-100"))
+        assert res_diff["status"] == "SUCCESS"
+        assert res_diff["filesChanged"] == ["test.py"]
+
+        res_sources = json.loads(jules_list_sources())
+        assert res_sources["status"] == "SUCCESS"
+
+        res_task = json.loads(start_new_jules_task("RaphaelVitoi/Site", "test task"))
+        assert res_task["status"] == "SUCCESS"
+

@@ -1,25 +1,25 @@
-"""Constante atribuída e nunca lida: o padrão dominante desta base, como detector.
+"""Constante atribuida e nunca lida: o padrao dominante desta base, como detector.
 
-Cinco instâncias foram encontradas **por acaso**, uma de cada vez, ao longo de
-uma sessão:
+Cinco instancias foram encontradas **por acaso**, uma de cada vez, ao longo de
+uma sessao:
 
 | declarado | o que o mecanismo fazia |
 | :--- | :--- |
-| `CHUNK_SIZE = 1200` | teto usado só para dividir, nunca para juntar — mediana 162 |
-| `max_cache_size_mb = 4096` | atribuído no `__init__`; a evicção contava baldes |
-| `AGENT_MODEL_MAP` | resolvido a cada carga, sem consumidor de produção |
-| `recursive: false` | campo do manifesto que o código nunca lia |
+| `CHUNK_SIZE = 1200` | teto usado so para dividir, nunca para juntar -- mediana 162 |
+| `max_cache_size_mb = 4096` | atribuido no `__init__`; a eviccao contava baldes |
+| `AGENT_MODEL_MAP` | resolvido a cada carga, sem consumidor de producao |
+| `recursive: false` | campo do manifesto que o codigo nunca lia |
 | `$warnings` | lido no veredito e nunca populado |
 
-Constante sem leitor não é só código morto. Quando ela nomeia um **teto**, um
-**peso** ou uma **variável de ambiente**, é promessa ao operador — quem a
+Constante sem leitor nao e so codigo morto. Quando ela nomeia um **teto**, um
+**peso** ou uma **variavel de ambiente**, e promessa ao operador -- quem a
 configura acredita ter mudado alguma coisa. `DO_PS1_THRESHOLD` lia
-`os.environ` e não governava nada.
+`os.environ` e nao governava nada.
 
 Este arquivo transforma o achado em varredura. A lista vive em
 `data/DECLARADO_E_NAO_LIDO.json` com um **veredito por item**, e o teste compara
-a declaração com a árvore: item novo reprova, item resolvido reprova. A conta só
-muda por decisão registrada.
+a declaracao com a arvore: item novo reprova, item resolvido reprova. A conta so
+muda por decisao registrada.
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 DECLARACAO = RAIZ / "data" / "DECLARADO_E_NAO_LIDO.json"
 IGNORADOS = {
     ".venv", ".venv-wsl", "node_modules", "__pycache__", ".git", ".pytest_cache",
-    "dist", "build", "target", "wasm-equity", "frontend", ".trunk",
+    "dist", "build", "target", "wasm-equity", "frontend", ".trunk", "vendor",
 }
 
 PISTA = (
@@ -141,7 +141,7 @@ def test_o_inventario_bate_com_a_arvore(declaracao, arvores):
 
 
 def test_todo_pendente_tem_veredito_e_onde(declaracao):
-    """Lista sem veredito vira lista de exceção, e lista de exceção cresce."""
+    """Lista sem veredito vira lista de excecao, e lista de excecao cresce."""
     for e in declaracao["pendentes"]:
         assert e.get("veredito"), f"{e['nome']} esta na lista sem veredito -- isso e isencao, nao analise"
         assert e.get("onde"), f"{e['nome']} sem caminho"
@@ -149,7 +149,7 @@ def test_todo_pendente_tem_veredito_e_onde(declaracao):
 
 
 def test_o_que_foi_removido_ficou_removido(declaracao, arvores):
-    """As remoções de 2026-08-29 não podem voltar por copiar-e-colar."""
+    """As remocoes de 2026-08-29 nao podem voltar por copiar-e-colar."""
     lidos = set()
     definidos = set()
     for arv in arvores.values():
@@ -182,8 +182,8 @@ def test_a_varredura_acha_uma_constante_orfa_plantada(tmp_path):
 
 
 def test_citar_o_nome_num_comentario_nao_conta_como_leitura(tmp_path):
-    """A razão de medir por AST. A versão textual desta varredura daria a
-    constante como viva só porque a documentação a menciona."""
+    """A razao de medir por AST. A versao textual desta varredura daria a
+    constante como viva so porque a documentacao a menciona."""
     fonte = '"""Docstring que fala de TETO_CITADO."""\nTETO_CITADO = 7\n# TETO_CITADO tambem aqui\n'
     (tmp_path / "m.py").write_text(fonte, encoding="utf-8")
     arv = {tmp_path / "m.py": ast.parse(fonte)}

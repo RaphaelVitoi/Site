@@ -316,7 +316,7 @@ def run_monthly_audit() -> dict[str, Any]:
 - **Total de Agentes Cobertos:** {cob["agentes"]} agentes / {cob["subagentes"]} tiers de subagente
 - **Mapa Concreto Ativo:** {len(AGENT_MODEL_MAP)} agentes operando sem fallbacks orfaos
 - **Validacao de Gatilho de ROI (Gemini 3.1 Pro vs. 3.7 Flash):** Aprovado e calibrado
-- **Ancoras de Rota:** {len(ROTAS) - len(suspeitas)} de {len(ROTAS)} dentro do TTL de {TTL_ROTA_DIAS} dias{" — **" + str(len(suspeitas)) + " exigem reconsulta ao fornecedor**" if suspeitas else ""}
+- **Ancoras de Rota:** {len(ROTAS) - len(suspeitas)} de {len(ROTAS)} dentro do TTL de {TTL_ROTA_DIAS} dias{" -- **" + str(len(suspeitas)) + " exigem reconsulta ao fornecedor**" if suspeitas else ""}
 - **Status dos Manuais de Modus Operandi:** 100% Sincronizados com a Arquitetura de 4 Camadas
 
 ---
@@ -365,7 +365,7 @@ def run_monthly_audit() -> dict[str, Any]:
             f"sem verificacao dentro do TTL. Reconsulta ao fornecedor e ato humano:\n\n"
         )
         for classe, motivo in suspeitas.items():
-            md_content += f"- `{classe.value}` — {motivo}\n"
+            md_content += f"- `{classe.value}` -- {motivo}\n"
     else:
         md_content += (
             f"Nenhuma das {len(ROTAS)} rotas venceu o TTL na data desta execucao "

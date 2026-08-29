@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SUITE DE TESTES UNITÁRIOS PARA O HYBRID ROUTER SOTA."""
+"""SUITE DE TESTES UNITARIOS PARA O HYBRID ROUTER SOTA."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ class TestComplexityAnalyzer(unittest.TestCase):
         )
 
     def test_low_density_prompt_routes_to_local(self) -> None:
-        prompt = "Resuma as diferenças entre compilação JIT e AOT em três tópicos."
+        prompt = "Resuma as diferencas entre compilacao JIT e AOT em tres topicos."
         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt)
         self.assertEqual(metrics.selected_target, ExecutionTarget.LOCAL_LLAMA_VULKAN)
         self.assertIsNone(metrics.thinking_budget)
@@ -36,7 +36,7 @@ class TestComplexityAnalyzer(unittest.TestCase):
     def test_high_density_game_theory_routes_to_thinking(self) -> None:
         prompt = (
             "Dado um jogo matricial 2x2 com payoffs $U_1(A,A)=3$, $U_1(A,B)=0$, $U_1(B,A)=5$, "
-            "$U_1(B,B)=1$, derive o equilíbrio de Nash misto, o valor esperado e a variância sob restrição de ICM e PMev."
+            "$U_1(B,B)=1$, derive o equilibrio de Nash misto, o valor esperado e a variancia sob restricao de ICM e PMev."
         )
         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt)
         self.assertEqual(metrics.selected_target, ExecutionTarget.GEMINI_37_FLASH_THINKING)
@@ -44,7 +44,7 @@ class TestComplexityAnalyzer(unittest.TestCase):
         self.assertGreater(metrics.thinking_budget or 0, 0)
 
     def test_tools_provided_routes_to_cloud_standard(self) -> None:
-        prompt = "Consulte o status do repositório git e execute os testes."
+        prompt = "Consulte o status do repositorio git e execute os testes."
         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt, tools_provided=True)
         self.assertEqual(metrics.selected_target, ExecutionTarget.GEMINI_37_FLASH_STANDARD)
         self.assertTrue(metrics.requires_tools)

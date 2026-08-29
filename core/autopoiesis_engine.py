@@ -39,9 +39,9 @@ class HomeostasisReport:
     timestamp: str
     overall_status: str  # "SUCESSO (VERDE)" | "FRAGIL (AMARELO)" | "FALHOU (VERMELHO)"
     entropy_index: float  # 0.0 = Homeostase Pura
-    subsystems: Dict[str, SubsystemHealth] = field(default_factory=dict)
-    actions_taken: List[str] = field(default_factory=list)
-    remediation_required: List[str] = field(default_factory=list)
+    subsystems: dict[str, SubsystemHealth] = field(default_factory=dict)
+    actions_taken: list[str] = field(default_factory=list)
+    remediation_required: list[str] = field(default_factory=list)
 
 
 class AutopoiesisEngine:
@@ -76,7 +76,7 @@ class AutopoiesisEngine:
         """Libera trava de processo."""
         LOCK_FILE.unlink(missing_ok=True)
 
-    def check_and_heal_agents_drift(self) -> Tuple[bool, str]:
+    def check_and_heal_agents_drift(self) -> tuple[bool, str]:
         """Detecta se a realidade dos agentes esta desatualizada e sincroniza proativamente."""
         manifest_file = self.base_dir / "data" / "agents_manifest.json"
         agents_dir = self.base_dir / ".claude" / "agents"
@@ -108,7 +108,7 @@ class AutopoiesisEngine:
 
         return False, "Realidade dos agentes 100% sincronizada."
 
-    def check_and_heal_temps_entropy(self) -> Tuple[int, str]:
+    def check_and_heal_temps_entropy(self) -> tuple[int, str]:
         """Purga pastas e arquivos temporarios obsoletos e orfaos."""
         now = time.time()
         purged = 0
@@ -136,7 +136,7 @@ class AutopoiesisEngine:
         )
         return purged, msg
 
-    def check_and_heal_sqlite_wal(self) -> Tuple[bool, str]:
+    def check_and_heal_sqlite_wal(self) -> tuple[bool, str]:
         """Verifica integridade do banco SQLite e aciona VACUUM/WAL checkpoint se necessario."""
         db_path = self.nexus_zone / "runtime" / "queue" / "tasks.db"
         if not db_path.exists():

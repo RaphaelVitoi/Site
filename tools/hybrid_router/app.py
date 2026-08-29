@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""MICROSERVIÇO DE ROTEAMENTO HÍBRIDO SOTA (EDGE LOCAL VULKAN + GEMINI 3.7 FLASH).
+"""MICROSERVICO DE ROTEAMENTO HIBRIDO SOTA (EDGE LOCAL VULKAN + GEMINI 3.7 FLASH).
 
-Arquitetura de inferência de alta vazão com tolerância a falhas, medição
-estática de densidade semântica, suporte a Extended Thinking dinâmico e
+Arquitetura de inferencia de alta vazao com tolerancia a falhas, medicao
+estatica de densidade semantica, suporte a Extended Thinking dinamico e
 conformidade estrita com schemas Pydantic v2.
 """
 
@@ -71,44 +71,44 @@ class RouteMetrics(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     estimated_tokens: int = Field(..., description="Contagem estimada de tokens no prompt.")
-    math_latex_density: float = Field(..., description="Densidade de formalismo matemático e Teoria dos Jogos (0.0 a 1.0).")
-    code_complexity_score: float = Field(..., description="Score de complexidade sintática de código (0.0 a 1.0).")
-    overall_complexity: float = Field(..., description="Métrica composta ponderada de complexidade analítica.")
-    requires_tools: bool = Field(..., description="Indica necessidade de execução de ferramentas.")
-    requires_strict_json: bool = Field(..., description="Indica exigência de validação via JSON Schema estrito.")
-    selected_target: ExecutionTarget = Field(..., description="Destino de execução selecionado.")
-    thinking_budget: int | None = Field(default=None, description="Orçamento de tokens de Extended Thinking.")
-    rationale: str = Field(..., description="Fundamentação lógica da decisão de roteamento.")
+    math_latex_density: float = Field(..., description="Densidade de formalismo matematico e Teoria dos Jogos (0.0 a 1.0).")
+    code_complexity_score: float = Field(..., description="Score de complexidade sintatica de codigo (0.0 a 1.0).")
+    overall_complexity: float = Field(..., description="Metrica composta ponderada de complexidade analitica.")
+    requires_tools: bool = Field(..., description="Indica necessidade de execucao de ferramentas.")
+    requires_strict_json: bool = Field(..., description="Indica exigencia de validacao via JSON Schema estrito.")
+    selected_target: ExecutionTarget = Field(..., description="Destino de execucao selecionado.")
+    thinking_budget: int | None = Field(default=None, description="Orcamento de tokens de Extended Thinking.")
+    rationale: str = Field(..., description="Fundamentacao logica da decisao de roteamento.")
 
 
 class GenerateRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "prompt": "Calcule o equilíbrio de Nash misto no payoff $U_1(s) = \\sum p_i u_i$ e avalie a variância sob restrição de ICM.",
-                "system_instruction": "Atue como motor axiomático de Teoria dos Jogos e PMev.",
+                "prompt": "Calcule o equilibrio de Nash misto no payoff $U_1(s) = \\sum p_i u_i$ e avalie a variancia sob restricao de ICM.",
+                "system_instruction": "Atue como motor axiomatico de Teoria dos Jogos e PMev.",
                 "thinking_budget_override": 4096,
             }
         }
     )
 
-    prompt: str = Field(..., min_length=1, description="Payload de entrada para inferência.")
-    system_instruction: str = Field(default="", description="Instruções de sistema ou metaprompt de governança.")
-    force_target: ExecutionTarget | None = Field(default=None, description="Sobrescreve a heurística do roteador.")
-    thinking_budget_override: int | None = Field(default=None, ge=-1, le=65536, description="Orçamento de raciocínio (-1=dinâmico, 0=off, >0=fixo).")
-    response_schema: dict[str, JsonValue] | None = Field(default=None, description="JSON Schema para decodificação gramatical estrita.")
-    tools_provided: bool = Field(default=False, description="Flag indicando presença de ferramentas no pipeline.")
+    prompt: str = Field(..., min_length=1, description="Payload de entrada para inferencia.")
+    system_instruction: str = Field(default="", description="Instrucoes de sistema ou metaprompt de governanca.")
+    force_target: ExecutionTarget | None = Field(default=None, description="Sobrescreve a heuristica do roteador.")
+    thinking_budget_override: int | None = Field(default=None, ge=-1, le=65536, description="Orcamento de raciocinio (-1=dinamico, 0=off, >0=fixo).")
+    response_schema: dict[str, JsonValue] | None = Field(default=None, description="JSON Schema para decodificacao gramatical estrita.")
+    tools_provided: bool = Field(default=False, description="Flag indicando presenca de ferramentas no pipeline.")
 
 
 class GenerateResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     content: str = Field(..., description="Texto gerado pelo modelo.")
-    target_executed: ExecutionTarget = Field(..., description="Ambiente que executou a inferência.")
-    latency_ms: float = Field(..., description="Latência ponta a ponta em milissegundos.")
+    target_executed: ExecutionTarget = Field(..., description="Ambiente que executou a inferencia.")
+    latency_ms: float = Field(..., description="Latencia ponta a ponta em milissegundos.")
     tokens_evaluated: int = Field(..., description="Tokens estimados no prompt de entrada.")
     thinking_tokens_used: int = Field(default=0, description="Tokens consumidos durante o Extended Thinking.")
-    metrics: RouteMetrics = Field(..., description="Métricas analíticas calculadas na triagem.")
+    metrics: RouteMetrics = Field(..., description="Metricas analiticas calculadas na triagem.")
 
 
 class HealthCheckResponse(BaseModel):
@@ -122,17 +122,17 @@ class HealthCheckResponse(BaseModel):
 
 
 # =====================================================================
-# 2. ANALISADOR ESTÁTICO DE COMPLEXIDADE E DENSIDADE
+# 2. ANALISADOR ESTATICO DE COMPLEXIDADE E DENSIDADE
 # =====================================================================
 
 class ComplexityAnalyzer:
-    """Motor analítico para triagem estática de densidade simbólica e código."""
+    """Motor analitico para triagem estatica de densidade simbolica e codigo."""
 
     LATEX_PATTERNS: re.Pattern[str] = re.compile(
         r"(\$|\\\[|\\begin\{equation\}|\\frac|\\sum|\\int|\\forall|\\exists|\\matrix|\\lambda|\\mu|\\sigma)"
     )
     MATH_GAME_THEORY: re.Pattern[str] = re.compile(
-        r"(ICM|PMev|Nash|GTO|payoff|matriz|probabilidade|equação|autovalor|variância|EV|PioSolver|Risk Premium)",
+        r"(ICM|PMev|Nash|GTO|payoff|matriz|probabilidade|equacao|autovalor|variancia|EV|PioSolver|Risk Premium)",
         re.IGNORECASE,
     )
     CODE_KEYWORDS: re.Pattern[str] = re.compile(
@@ -171,15 +171,15 @@ class ComplexityAnalyzer:
         if force_target is not None:
             selected_target = force_target
             thinking_budget = thinking_override if force_target == ExecutionTarget.GEMINI_37_FLASH_THINKING else None
-            rationale = f"Destino forçado explicitamente ({force_target.value})."
+            rationale = f"Destino forcado explicitamente ({force_target.value})."
         elif requires_tools:
             selected_target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
             thinking_budget = None
-            rationale = "Requisição com Tool Calling delegada ao Gemini Cloud."
+            rationale = "Requisicao com Tool Calling delegada ao Gemini Cloud."
         elif overall_complexity >= self.complexity_threshold:
             selected_target = ExecutionTarget.GEMINI_37_FLASH_THINKING
             thinking_budget = thinking_override if thinking_override is not None else (4096 if overall_complexity < 0.75 else 16384)
-            rationale = f"Alta complexidade analítica ({overall_complexity:.2f}). Ativação de Extended Thinking."
+            rationale = f"Alta complexidade analitica ({overall_complexity:.2f}). Ativacao de Extended Thinking."
         elif estimated_tokens > self.local_max_tokens:
             selected_target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
             thinking_budget = 0
@@ -187,11 +187,11 @@ class ComplexityAnalyzer:
         elif requires_strict_json:
             selected_target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
             thinking_budget = 0
-            rationale = "Decodificação de JSON Schema estrito delegada ao cluster Cloud."
+            rationale = "Decodificacao de JSON Schema estrito delegada ao cluster Cloud."
         else:
             selected_target = ExecutionTarget.LOCAL_LLAMA_VULKAN
             thinking_budget = None
-            rationale = f"Carga compatível com runtime local Vulkan ({estimated_tokens} tokens, complexidade={overall_complexity:.2f})."
+            rationale = f"Carga compativel com runtime local Vulkan ({estimated_tokens} tokens, complexidade={overall_complexity:.2f})."
 
         return RouteMetrics(
             estimated_tokens=estimated_tokens,
@@ -207,11 +207,11 @@ class ComplexityAnalyzer:
 
 
 # =====================================================================
-# 3. CLIENTES DE INFERÊNCIA ASSÍNCRONOS
+# 3. CLIENTES DE INFERENCIA ASSINCRONOS
 # =====================================================================
 
 class LocalLlamaVulkanClient:
-    """Cliente HTTP com conexão assíncrona persistente para llama.cpp."""
+    """Cliente HTTP com conexao assincrona persistente para llama.cpp."""
 
     def __init__(self, endpoint_url: str = "http://127.0.0.1:8080/v1") -> None:
         self.endpoint_url = endpoint_url.rstrip("/")
@@ -239,7 +239,7 @@ class LocalLlamaVulkanClient:
 
     async def generate(self, prompt: str, system_instruction: str = "") -> str:
         if not self._client:
-            raise RuntimeError("Cliente local llama.cpp não inicializado.")
+            raise RuntimeError("Cliente local llama.cpp nao inicializado.")
 
         messages: list[dict[str, str]] = []
         if system_instruction:
@@ -264,7 +264,7 @@ class LocalLlamaVulkanClient:
 
 
 class GeminiCloudClient:
-    """Cliente nativo assíncrono para a API Gemini utilizando google-genai SDK."""
+    """Cliente nativo assincrono para a API Gemini utilizando google-genai SDK."""
 
     def __init__(self, api_key: str | None = None, model_id: str = "gemini-2.5-flash") -> None:
         self.api_key = api_key or os.getenv("GEMINI_API_KEY", "")
@@ -285,10 +285,10 @@ class GeminiCloudClient:
         thinking_budget: int | None = None,
         response_schema: dict[str, JsonValue] | None = None,
     ) -> tuple[str, int]:
-        """Executa geração assíncrona não-bloqueante via client.aio."""
+        """Executa geracao assincrona nao-bloqueante via client.aio."""
         client = self._client
         if client is None or types is None:
-            raise RuntimeError("SDK Google GenAI não inicializado ou GEMINI_API_KEY ausente.")
+            raise RuntimeError("SDK Google GenAI nao inicializado ou GEMINI_API_KEY ausente.")
 
         thinking_cfg = (
             types.ThinkingConfig(thinking_budget=thinking_budget)
@@ -304,7 +304,7 @@ class GeminiCloudClient:
             response_schema=response_schema,
         )
 
-        # Chamada assíncrona nativa pelo barramento client.aio
+        # Chamada assincrona nativa pelo barramento client.aio
         response = await client.aio.models.generate_content(
             model=self.model_id,
             contents=prompt,
@@ -326,7 +326,7 @@ class GeminiCloudClient:
 
 
 # =====================================================================
-# 4. ORQUESTRADOR HÍBRIDO COM RESILIÊNCIA E FAILOVER
+# 4. ORQUESTRADOR HIBRIDO COM RESILIENCIA E FAILOVER
 # =====================================================================
 
 class HybridOrchestrator:
@@ -355,7 +355,7 @@ class HybridOrchestrator:
         content = ""
         thinking_tokens = 0
 
-        # Rota Local Vulkan com Failover automático
+        # Rota Local Vulkan com Failover automatico
         if target == ExecutionTarget.LOCAL_LLAMA_VULKAN:
             is_alive = await self.local.is_available()
             if is_alive:
@@ -371,20 +371,20 @@ class HybridOrchestrator:
                         metrics=metrics,
                     )
                 except Exception as err:
-                    sys.stderr.write(f"[FAILOVER LOCAL->CLOUD] Erro de inferência local: {err}\n")
+                    sys.stderr.write(f"[FAILOVER LOCAL->CLOUD] Erro de inferencia local: {err}\n")
 
             # Fallback para nuvem em caso de indisponibilidade
             target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
 
         # Rota Nuvem (Standard ou Extended Thinking)
         if not self.cloud.is_configured:
-            # Modo de simulação offline opcional para testes de infraestrutura
+            # Modo de simulacao offline opcional para testes de infraestrutura
             if os.getenv("SIMULATE_INFERENCE", "false").lower() in ("true", "1", "yes"):
                 sim_latency = 120.0 if target == ExecutionTarget.LOCAL_LLAMA_VULKAN else (450.0 if target == ExecutionTarget.GEMINI_37_FLASH_STANDARD else 1200.0)
                 await asyncio.sleep(sim_latency / 1000.0)
                 latency = (time.perf_counter() - start_time) * 1000.0
                 return GenerateResponse(
-                    content="[SIMULAÇÃO SOTA] Resposta sintética gerada para teste de vazão e roteamento.",
+                    content="[SIMULACAO SOTA] Resposta sintetica gerada para teste de vazao e roteamento.",
                     target_executed=target,
                     latency_ms=latency,
                     tokens_evaluated=metrics.estimated_tokens,
@@ -394,7 +394,7 @@ class HybridOrchestrator:
 
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Serviço Cloud não configurado e runtime local offline.",
+                detail="Servico Cloud nao configurado e runtime local offline.",
             )
 
         content, thinking_tokens = await self.cloud.generate(
@@ -416,7 +416,7 @@ class HybridOrchestrator:
 
 
 # =====================================================================
-# 5. LIFESPAN E APLICAÇÃO FASTAPI
+# 5. LIFESPAN E APLICACAO FASTAPI
 # =====================================================================
 
 local_llama_client = LocalLlamaVulkanClient(
@@ -442,7 +442,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(
     title="Hybrid Edge/Cloud LLM Router API SOTA",
-    description="Microserviço de alta densidade para roteamento dinâmico entre llama.cpp (Vulkan) e Google Gemini 3.7 Flash.",
+    description="Microservico de alta densidade para roteamento dinamico entre llama.cpp (Vulkan) e Google Gemini 3.7 Flash.",
     version="2.0.0",
     lifespan=lifespan,
 )
@@ -479,7 +479,7 @@ async def analyze_prompt(request: GenerateRequest) -> RouteMetrics:
     )
 
 
-@app.post("/v1/chat/generate", response_model=GenerateResponse, tags=["Inferência"])
+@app.post("/v1/chat/generate", response_model=GenerateResponse, tags=["Inferencia"])
 async def generate_completion(request: GenerateRequest) -> GenerateResponse:
     try:
         return await orchestrator.dispatch(request)
@@ -488,7 +488,7 @@ async def generate_completion(request: GenerateRequest) -> GenerateResponse:
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Falha durante o pipeline de geração: {str(exc)}",
+            detail=f"Falha durante o pipeline de geracao: {str(exc)}",
         ) from exc
 
 

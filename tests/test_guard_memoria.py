@@ -1,26 +1,26 @@
-"""Guard de memória: RAM, commit, VRAM e cache num laço só, com tetos declarados.
+"""Guard de memoria: RAM, commit, VRAM e cache num laco so, com tetos declarados.
 
-Nasceu tri-camada e virou quatro no mesmo dia, por uma observação do operador:
-*"RAM utilizada 72% estável, mesmo a cache 18% estável"*. Estável em 72% com
-6,8 GB em standby reclaimável — e o **commit** em 82,6% do limite. Um teto de
-98% sobre a RAM física é guard incapaz de ficar vermelho, porque no Windows o
-que falha é o commit, não a RAM. Ver a seção `Commit` no fim do arquivo.
+Nasceu tri-camada e virou quatro no mesmo dia, por uma observacao do operador:
+*"RAM utilizada 72% estavel, mesmo a cache 18% estavel"*. Estavel em 72% com
+6,8 GB em standby reclaimavel -- e o **commit** em 82,6% do limite. Um teto de
+98% sobre a RAM fisica e guard incapaz de ficar vermelho, porque no Windows o
+que falha e o commit, nao a RAM. Ver a secao `Commit` no fim do arquivo.
 
-O `optimize-ram --watch` que existia vigiava **só RAM**, com limiar e intervalo
-passados por flag — 90% e 300 s por default. Tinha os dois defeitos ao mesmo
-tempo: gastava CPU sem pressão nenhuma e demorava até cinco minutos para reagir
+O `optimize-ram --watch` que existia vigiava **so RAM**, com limiar e intervalo
+passados por flag -- 90% e 300 s por default. Tinha os dois defeitos ao mesmo
+tempo: gastava CPU sem pressao nenhuma e demorava ate cinco minutos para reagir
 quando havia.
 
-E faltavam três camadas. VRAM porque o medidor estava cego até `a86168df` (os
-três leitores cobriam NVIDIA, AMD nativo e ROCm; a máquina é Vulkan). Cache
-porque `max_cache_size_mb = 4096` era atribuído no `__init__` e **nunca lido** —
-a evicção olhava `len(buckets) > 100`, então o teto que nomeava megabytes era
+E faltavam tres camadas. VRAM porque o medidor estava cego ate `a86168df` (os
+tres leitores cobriam NVIDIA, AMD nativo e ROCm; a maquina e Vulkan). Cache
+porque `max_cache_size_mb = 4096` era atribuido no `__init__` e **nunca lido** --
+a eviccao olhava `len(buckets) > 100`, entao o teto que nomeava megabytes era
 medido em quantidade de baldes, e 100 baldes podem ser 1 MB ou 400 MB.
 
 **Camada sem medidor devolve `None`, nunca zero.** Foi exatamente o defeito do
-leitor de VRAM: os três backends falhavam, `_get_vram_usage` convertia em
+leitor de VRAM: os tres backends falhavam, `_get_vram_usage` convertia em
 `(None, 0.0, 0.0)`, e qualquer teto concluiria VRAM vazia e nunca reagiria.
-Desconhecido tem de ser distinguível de folgado.
+Desconhecido tem de ser distinguivel de folgado.
 """
 
 from __future__ import annotations

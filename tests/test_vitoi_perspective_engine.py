@@ -315,11 +315,11 @@ class TestVitoiPerspectiveEngine:
         assert isinstance(report["pmev_value"], (int, float))
 
     # ==========================================================================
-    # TESTES DEDICADOS DAS ETAPAS 1, 2 E 3 (TRÍADE AXIOMÁTICA PMev)
+    # TESTES DEDICADOS DAS ETAPAS 1, 2 E 3 (TRIADE AXIOMATICA PMev)
     # ==========================================================================
 
     def test_ev_fold_monotonicity_with_blinds_proximity(self):
-        """[Etapa 1] Garante que estar em Late Position retém mais equidade de fold que no UTG."""
+        """[Etapa 1] Garante que estar em Late Position retem mais equidade de fold que no UTG."""
         state = TableState(
             stacks=[25.0, 50.0, 15.0, 8.0],
             payouts=[1000.0, 600.0, 400.0],
@@ -335,7 +335,7 @@ class TestVitoiPerspectiveEngine:
         assert ev_fold_btn > ev_fold_utg
 
     def test_bystander_gain_elevates_fold_value_with_short_stacks(self):
-        """[Etapa 1] Garante que a presença de Short Stacks eleva o valor do Fold do Hero."""
+        """[Etapa 1] Garante que a presenca de Short Stacks eleva o valor do Fold do Hero."""
         state_balanced = TableState(
             stacks=[30.0, 30.0, 30.0],
             payouts=[1000.0, 500.0],
@@ -357,7 +357,7 @@ class TestVitoiPerspectiveEngine:
         assert gain_short > gain_balanced
 
     def test_realization_factor_ip_superior_to_oop(self):
-        """[Etapa 2] Garante que a realização de equidade em posição (IP) é superior a fora de posição (OOP)."""
+        """[Etapa 2] Garante que a realizacao de equidade em posicao (IP) e superior a fora de posicao (OOP)."""
         ctx_ip = HandContext(
             raw_equity=0.45,
             is_in_position=True,
@@ -379,7 +379,7 @@ class TestVitoiPerspectiveEngine:
         assert r_ip > r_oop
 
     def test_multiway_structural_liability_scales_quadratically(self):
-        """[Etapa 2] Garante que o passivo de risco escala com N^2 conforme o número de oponentes."""
+        """[Etapa 2] Garante que o passivo de risco escala com N^2 conforme o numero de oponentes."""
         ctx_2opp = HandContext(raw_equity=0.35, is_in_position=True, spr=2.0, num_opponents=2)
         ctx_3opp = HandContext(raw_equity=0.35, is_in_position=True, spr=2.0, num_opponents=3)
 
@@ -392,7 +392,7 @@ class TestVitoiPerspectiveEngine:
         assert ratio == pytest.approx(expected_ratio, rel=1e-2)
 
     def test_prospect_theory_loss_aversion_ratio(self):
-        """[Etapa 3] Garante que a perda é penalizada em razão de lambda = 2.25 sobre ganhos idênticos."""
+        """[Etapa 3] Garante que a perda e penalizada em razao de lambda = 2.25 sobre ganhos identicos."""
         engine = ProspectRiskEngine(
             RiskContext(
                 delta_win_dollars=150.0,
@@ -410,7 +410,7 @@ class TestVitoiPerspectiveEngine:
         assert (u_lose / u_win) == pytest.approx(2.25, rel=1e-2)
 
     def test_edge_and_deep_structure_attenuates_risk_premium(self):
-        """[Etapa 3] Garante que jogadores com alto Edge em estruturas lentas têm menor corte de equidade."""
+        """[Etapa 3] Garante que jogadores com alto Edge em estruturas lentas tem menor corte de equidade."""
         ctx_high_edge = RiskContext(
             delta_win_dollars=200.0,
             delta_lose_dollars=400.0,

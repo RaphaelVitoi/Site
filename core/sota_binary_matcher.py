@@ -6,12 +6,12 @@ Protocol Chico SOTA v7.0 GOLD - Raymond Hill (uBOL) Algorithmic Port for Python 
 from typing import List, Optional, Tuple
 
 
-def sort_key(s: str) -> Tuple[int, str]:
+def sort_key(s: str) -> tuple[int, str]:
     """Chave canonica de ordenacao: Comprimento ascendente, depois ordem alfabetica."""
     return (len(s), s)
 
 
-def binary_search_length_lex(haystack: List[str], needle: str, high: Optional[int] = None) -> int:
+def binary_search_length_lex(haystack: list[str], needle: str, high: Optional[int] = None) -> int:
     """
     Executa busca binaria de alta precisao baseada em comprimento e ordem lexicografica.
     """
@@ -38,7 +38,7 @@ def binary_search_length_lex(haystack: List[str], needle: str, high: Optional[in
     return ~mid
 
 
-def compute_domain_hierarchy(hostname: str) -> List[str]:
+def compute_domain_hierarchy(hostname: str) -> list[str]:
     """
     Decompoe um hostname hierarquicamente em sufixos e coringas.
     Ex: 'app.sub.gemini.google.com' -> ['app.sub.gemini.google.com', 'sub.gemini.google.com', 'gemini.google.com', 'google.com', 'com', '*']

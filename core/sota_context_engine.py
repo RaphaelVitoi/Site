@@ -40,7 +40,7 @@ class ContextBucket:
     last_accessed: float = field(default_factory=time.time)
     ttl_seconds: int = 3600
     token_count: int = 0
-    payload: Dict[str, Any] = field(default_factory=dict)
+    payload: dict[str, Any] = field(default_factory=dict)
     hash_signature: str = ""
     # Medido uma vez, na criacao. `token_count` e uma estimativa (chars // 4) e
     # serve para orcamento de prompt; para teto de MEMORIA o que vale e byte.
@@ -58,7 +58,7 @@ class SotaContextCacheEngine:
 
     def __init__(self, max_cache_size_mb: int = 4096):
         self.max_cache_size_mb = max_cache_size_mb
-        self.buckets: Dict[str, ContextBucket] = {}
+        self.buckets: dict[str, ContextBucket] = {}
 
     def compute_signature(self, text: str) -> str:
         """Calcula a assinatura criptografica SHA-256 para prefix-caching."""
@@ -146,12 +146,12 @@ class StructuredOutputEngine:
     """Validador e Forcador de Esquemas JSON Estritos / Pydantic."""
 
     @staticmethod
-    def generate_json_schema(model_cls: Type[T]) -> dict:
+    def generate_json_schema(model_cls: type[T]) -> dict:
         """Exporta o JSON Schema estrito do Pydantic para injection em LLMs."""
         return model_cls.model_json_schema()
 
     @staticmethod
-    def enforce_pydantic(payload_str: str, model_cls: Type[T]) -> T:
+    def enforce_pydantic(payload_str: str, model_cls: type[T]) -> T:
         """Parseia e valida deterministicamente a saida da IA contra o contrato."""
         try:
             # Limpeza de blocos de markdown caso o modelo tenha emitido ```json
@@ -225,8 +225,8 @@ class HookType(str, Enum):
 class HookContext:
     hook_type: HookType
     agent_name: str
-    payload: Dict[str, Any]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    payload: dict[str, Any]
+    metadata: dict[str, Any] = field(default_factory=dict)
     approved: bool = True
     rejection_reason: Optional[str] = None
 
@@ -235,9 +235,9 @@ class SotaHookBus:
     """Barramento de Hooks e Interceptores Agenticos SOTA."""
 
     def __init__(self):
-        self._inspect_hooks: List[Callable[[HookContext], None]] = []
-        self._decide_hooks: List[Callable[[HookContext], bool]] = []
-        self._transform_hooks: List[Callable[[HookContext], Dict[str, Any]]] = []
+        self._inspect_hooks: list[Callable[[HookContext], None]] = []
+        self._decide_hooks: list[Callable[[HookContext], bool]] = []
+        self._transform_hooks: list[Callable[[HookContext], dict[str, Any]]] = []
 
     def register_inspect(self, fn: Callable[[HookContext], None]) -> None:
         self._inspect_hooks.append(fn)
@@ -245,7 +245,7 @@ class SotaHookBus:
     def register_decide(self, fn: Callable[[HookContext], bool]) -> None:
         self._decide_hooks.append(fn)
 
-    def register_transform(self, fn: Callable[[HookContext], Dict[str, Any]]) -> None:
+    def register_transform(self, fn: Callable[[HookContext], dict[str, Any]]) -> None:
         self._transform_hooks.append(fn)
 
     def trigger_inspect(self, ctx: HookContext) -> None:
@@ -269,7 +269,7 @@ class SotaHookBus:
                 return False
         return True
 
-    def trigger_transform(self, ctx: HookContext) -> Dict[str, Any]:
+    def trigger_transform(self, ctx: HookContext) -> dict[str, Any]:
         data = ctx.payload
         for hook in self._transform_hooks:
             try:

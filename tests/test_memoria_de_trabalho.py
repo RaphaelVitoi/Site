@@ -1,29 +1,29 @@
-"""Os módulos de memória de trabalho: qual está ligado, e por que dois não estão.
+"""Os modulos de memoria de trabalho: qual esta ligado, e por que dois nao estao.
 
 O passo 3 do plano dizia *"ligar `notepad_memory` e `replay_buffer`"*. Medir
-mudou o passo — e é bom que a razão fique travada, porque a próxima pessoa a
-encontrar 371 linhas de código completo sem importador vai concluir, como eu
-concluí, que basta ligá-lo.
+mudou o passo -- e e bom que a razao fique travada, porque a proxima pessoa a
+encontrar 371 linhas de codigo completo sem importador vai concluir, como eu
+conclui, que basta liga-lo.
 
-**`memory/replay_buffer.py`** é Prioritized Experience Replay: `SumTree`,
+**`memory/replay_buffer.py`** e Prioritized Experience Replay: `SumTree`,
 `Transition(state, action, reward, next_state, done)`, `update_priorities` com
-erros de TD. Não é memória de recuperação, é treino por reforço. Medido: a única
-ocorrência de `reward` no projeto é `math/rio_extended.py`, e lá é
-`pot × equity` — valor esperado de pôquer, não recompensa de RL. Não há política,
-episódio nem TD. Ligá-lo exigiria **inventar** o laço de aprendizado.
+erros de TD. Nao e memoria de recuperacao, e treino por reforco. Medido: a unica
+ocorrencia de `reward` no projeto e `math/rio_extended.py`, e la e
+`pot x equity` -- valor esperado de poquer, nao recompensa de RL. Nao ha politica,
+episodio nem TD. Liga-lo exigiria **inventar** o laco de aprendizado.
 
-**`memory/notepad_memory.py`** faria o papel de `task.metadata`, que já existe,
-é persistido em SQLite e tem `BEGIN EXCLUSIVE` com merge cirúrgico. Ligá-lo
+**`memory/notepad_memory.py`** faria o papel de `task.metadata`, que ja existe,
+e persistido em SQLite e tem `BEGIN EXCLUSIVE` com merge cirurgico. Liga-lo
 criaria a segunda fonte para o mesmo fato.
 
-E o achado que fecha o argumento: `memory/notepad_state.json` — a única evidência
-em disco de que o notepad roda — é a **saída do smoke test do próprio módulo**, e
-o bloco `PLAN_CURRENT` dele afirma textualmente *"Memória Notepad e Replay Memory
+E o achado que fecha o argumento: `memory/notepad_state.json` -- a unica evidencia
+em disco de que o notepad roda -- e a **saida do smoke test do proprio modulo**, e
+o bloco `PLAN_CURRENT` dele afirma textualmente *"Memoria Notepad e Replay Memory
 integradas"*. Medido por AST: zero importadores. O artefato que atesta a
-integração é uma fixture de demonstração do módulo que se diz integrado.
+integracao e uma fixture de demonstracao do modulo que se diz integrado.
 
-Estes testes não impedem ligar. Eles fazem a decisão aparecer: se um importador
-surgir, o teste falha pedindo que a declaração seja atualizada no mesmo commit.
+Estes testes nao impedem ligar. Eles fazem a decisao aparecer: se um importador
+surgir, o teste falha pedindo que a declaracao seja atualizada no mesmo commit.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ import pytest
 
 RAIZ = Path(__file__).resolve().parent.parent
 DECLARACAO = RAIZ / "data" / "ESTADO_DA_MEMORIA_DE_TRABALHO.json"
-IGNORADOS = {".venv", "node_modules", "__pycache__", ".git", ".pytest_cache", "dist", "build", "wasm-equity"}
+IGNORADOS = {".venv", "node_modules", "__pycache__", ".git", ".pytest_cache", "dist", "build", "wasm-equity", "vendor"}
 
 PISTA = (
     "Se isto falhou porque um modulo foi ligado, a decisao mudou: atualize "
@@ -73,7 +73,7 @@ def _importadores(modulo: str) -> set[str]:
 
 
 def test_os_modulos_declarados_como_nao_ligados_continuam_sem_importador(declaracao):
-    """O detector que faz a decisão aparecer."""
+    """O detector que faz a decisao aparecer."""
     for entrada in declaracao["modulos_escritos_e_NAO_ligados"]:
         modulo = entrada["caminho"].removesuffix(".py").replace("/", ".")
         quem = _importadores(modulo)
@@ -82,7 +82,7 @@ def test_os_modulos_declarados_como_nao_ligados_continuam_sem_importador(declara
 
 
 def test_os_modulos_declarados_existem_de_fato(declaracao):
-    """Declaração que aponta para arquivo inexistente é pior que ausência."""
+    """Declaracao que aponta para arquivo inexistente e pior que ausencia."""
     for entrada in declaracao["modulos_escritos_e_NAO_ligados"]:
         alvo = RAIZ / entrada["caminho"]
         assert alvo.exists(), f"{entrada['caminho']} sumiu; a declaracao envelheceu. {PISTA}"
@@ -95,7 +95,7 @@ def test_os_modulos_declarados_existem_de_fato(declaracao):
 
 def test_a_memoria_de_trabalho_que_existe_continua_ligada(declaracao):
     """A contrapartida: se `task.metadata` deixasse de ser consumido, o argumento
-    para não ligar o notepad cairia junto."""
+    para nao ligar o notepad cairia junto."""
     viva = declaracao["a_memoria_de_trabalho_QUE_EXISTE"]
     escritor = RAIZ / viva["escrita"].split(" :: ")[0]
     assert escritor.exists(), PISTA
@@ -109,10 +109,10 @@ def test_a_memoria_de_trabalho_que_existe_continua_ligada(declaracao):
 
 
 def test_nao_existe_laco_de_reforco_que_justifique_o_replay_buffer():
-    """A premissa que sustenta a decisão sobre o replay buffer.
+    """A premissa que sustenta a decisao sobre o replay buffer.
 
-    Se aparecer um laço de RL de verdade, esta asserção cai e o buffer deixa de
-    ser peça de sistema inexistente para virar candidato legítimo."""
+    Se aparecer um laco de RL de verdade, esta assercao cai e o buffer deixa de
+    ser peca de sistema inexistente para virar candidato legitimo."""
     sinais = ("td_error", "q_learning", "epsilon_greedy", "policy_gradient", "replay_batch")
     achados = {}
     for p in _fontes_python():
@@ -130,11 +130,11 @@ def test_nao_existe_laco_de_reforco_que_justifique_o_replay_buffer():
 
 
 def test_o_estado_do_notepad_ainda_e_a_fixture_do_smoke_test():
-    """O achado que fecha o argumento, travado para não virar folclore.
+    """O achado que fecha o argumento, travado para nao virar folclore.
 
-    `notepad_state.json` afirma que o notepad está integrado. Ele é a saída de
-    `test_notepad()`. Se um dia o conteúdo mudar, é porque algo de verdade
-    passou a escrever ali -- e aí a decisão precisa ser revista."""
+    `notepad_state.json` afirma que o notepad esta integrado. Ele e a saida de
+    `test_notepad()`. Se um dia o conteudo mudar, e porque algo de verdade
+    passou a escrever ali -- e ai a decisao precisa ser revista."""
     estado = RAIZ / "memory" / "notepad_state.json"
     if not estado.exists():
         pytest.skip("o estado do notepad foi removido; nada a guardar aqui")

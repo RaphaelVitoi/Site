@@ -20,7 +20,7 @@ type PlayerIndex = int
 
 
 # ==============================================================================
-# 1. NÚCLEO DA ETAPA 1: EV_dyn(fold) & BYSTANDER DRIFT
+# 1. NUCLEO DA ETAPA 1: EV_dyn(fold) & BYSTANDER DRIFT
 # ==============================================================================
 
 @dataclass(frozen=True, slots=True)
@@ -79,13 +79,13 @@ class DynamicFoldEngine:
                 shorter_stack = min(stack_j, stack_k)
                 larger_stack = max(stack_j, stack_k)
 
-                # 1. Probabilidade de all-in: Stacks mais curtos sofrem maior urgência de all-in
+                # 1. Probabilidade de all-in: Stacks mais curtos sofrem maior urgencia de all-in
                 p_allin = math.exp(-0.08 * shorter_stack)
 
-                # 2. Probabilidade de eliminação do stack menor no confronto
+                # 2. Probabilidade de eliminacao do stack menor no confronto
                 p_elim = larger_stack / max(EPSILON, stack_j + stack_k)
 
-                # 3. Salto de equidade para o Hero ao subir de colocação
+                # 3. Salto de equidade para o Hero ao subir de colocacao
                 hero_share = self._state.stacks[hero_idx] / max(EPSILON, self._state.total_chips - shorter_stack)
                 payjump_value = (total_payout / max(1, n)) * 0.40
 
@@ -109,7 +109,7 @@ class DynamicFoldEngine:
 
 
 # ==============================================================================
-# 2. NÚCLEO DA ETAPA 2: REALIZAÇÃO (R) & PASSIVO MULTIWAY (L_multi)
+# 2. NUCLEO DA ETAPA 2: REALIZACAO (R) & PASSIVO MULTIWAY (L_multi)
 # ==============================================================================
 
 @dataclass(frozen=True, slots=True)
@@ -150,7 +150,7 @@ class PerspectiveActionEvaluator:
 
 
 # ==============================================================================
-# 3. NÚCLEO DA ETAPA 3: UTILIDADE PROSPECTIVA & PRÊMIO DE RISCO DINÂMICO
+# 3. NUCLEO DA ETAPA 3: UTILIDADE PROSPECTIVA & PREMIO DE RISCO DINAMICO
 # ==============================================================================
 
 @dataclass(frozen=True, slots=True)

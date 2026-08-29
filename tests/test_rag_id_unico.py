@@ -1,4 +1,4 @@
-"""O id de um fragmento vem do CAMINHO, e o caminho é único por construção.
+"""O id de um fragmento vem do CAMINHO, e o caminho e unico por construcao.
 
 ## O defeito, medido em 2026-08-28
 
@@ -7,26 +7,26 @@
     source_name = file_path.parent.name if file_path.name == "MEMORY.md" else file_path.stem
     ids = [f"{source_name}_chunk_{i}" for i in range(len(chunks))]
 
-`source_name` **não é único no corpus**. Dos 503 arquivos que o manifesto alcança,
-sobravam **426 nomes distintos** — 36 nomes em colisão, **77 arquivos afetados**.
+`source_name` **nao e unico no corpus**. Dos 503 arquivos que o manifesto alcanca,
+sobravam **426 nomes distintos** -- 36 nomes em colisao, **77 arquivos afetados**.
 `SPEC` aparecia 4 vezes, `PRD` 4, `dispatcher` 4, e cada um dos 19 agentes duas ou
-três, porque `.claude/AGENTS/chico.md` e `.claude/agent-memory/chico/MEMORY.md`
+tres, porque `.claude/AGENTS/chico.md` e `.claude/agent-memory/chico/MEMORY.md`
 produzem o mesmo `chico`.
 
-E a escrita é `upsert`. Quem chega depois sobrescreve os chunks `0..N` do anterior
-e **deixa órfãos os de índice maior**, que continuam apontando para outro arquivo.
-O índice não perdia documentos: montava documentos Frankenstein. Medido no índice
-real, o espaço de id `dispatcher_chunk_*` reunia 34 chunks de um `MEMORY.md`, 24 de
+E a escrita e `upsert`. Quem chega depois sobrescreve os chunks `0..N` do anterior
+e **deixa orfaos os de indice maior**, que continuam apontando para outro arquivo.
+O indice nao perdia documentos: montava documentos Frankenstein. Medido no indice
+real, o espaco de id `dispatcher_chunk_*` reunia 34 chunks de um `MEMORY.md`, 24 de
 outro e 1 de `agents/dispatcher.py`.
 
-Sobrescrita silenciosa nunca alcança ramo de erro — é a mesma colisão de chave que
-já havia acontecido na auditoria mensal, indexando manuais por basename. O detector
-que a revelou nas duas vezes foi o mesmo: **derivar a contagem** (503 alvos → 449
+Sobrescrita silenciosa nunca alcanca ramo de erro -- e a mesma colisao de chave que
+ja havia acontecido na auditoria mensal, indexando manuais por basename. O detector
+que a revelou nas duas vezes foi o mesmo: **derivar a contagem** (503 alvos - 449
 fontes) em vez de confiar no verde.
 
-O `agent` continua sendo o nome amigável, que é o que a filtragem usa. Só o **id**
-passou a vir do caminho relativo à raiz — único por construção e estável se o
-repositório mudar de lugar.
+O `agent` continua sendo o nome amigavel, que e o que a filtragem usa. So o **id**
+passou a vir do caminho relativo a raiz -- unico por construcao e estavel se o
+repositorio mudar de lugar.
 """
 
 from __future__ import annotations
@@ -43,9 +43,9 @@ MANIFESTO = RAIZ / "rag_ingestion_manifest.json"
 
 
 def _alvos_do_manifesto() -> set[Path]:
-    """Reproduz a descoberta do manifesto, lendo os filtros do próprio módulo.
+    """Reproduz a descoberta do manifesto, lendo os filtros do proprio modulo.
 
-    Sem cópia da lista de exclusão: `memory_rag` é a fonte, e duplicá-la aqui
+    Sem copia da lista de exclusao: `memory_rag` e a fonte, e duplica-la aqui
     seria a segunda fonte que diverge.
     """
     import memory_rag  # noqa: PLC0415
@@ -82,7 +82,7 @@ def _alvos_do_manifesto() -> set[Path]:
 
 
 def _chave_de(caminho: Path) -> str:
-    """A chave que o módulo usa hoje, extraída dele, não reimplementada."""
+    """A chave que o modulo usa hoje, extraida dele, nao reimplementada."""
     import memory_rag  # noqa: PLC0415
 
     try:
@@ -97,8 +97,8 @@ def _chave_de(caminho: Path) -> str:
 
 
 def test_a_chave_de_id_e_unica_em_todo_o_corpus():
-    """A regressão que este arquivo existe para impedir. Se voltar a colidir,
-    o índice volta a montar documentos Frankenstein — e nada acusa."""
+    """A regressao que este arquivo existe para impedir. Se voltar a colidir,
+    o indice volta a montar documentos Frankenstein -- e nada acusa."""
     alvos = _alvos_do_manifesto()
     assert len(alvos) > 100, f"descoberta do manifesto degradou: so {len(alvos)} alvos"
 
@@ -109,11 +109,11 @@ def test_a_chave_de_id_e_unica_em_todo_o_corpus():
 
 
 def test_o_esquema_antigo_de_fato_colidia():
-    """Prova que a invariante acima não é vacuidade.
+    """Prova que a invariante acima nao e vacuidade.
 
     Um teste de unicidade sobre um esquema que nunca colide passa por acidente.
-    Este mede o esquema antigo no MESMO corpus e exige que ele reprove — se um
-    dia parar de colidir, é porque o corpus mudou, e a força do teste acima
+    Este mede o esquema antigo no MESMO corpus e exige que ele reprove -- se um
+    dia parar de colidir, e porque o corpus mudou, e a forca do teste acima
     precisa ser reavaliada."""
     alvos = _alvos_do_manifesto()
     antigo = collections.Counter(
@@ -129,7 +129,7 @@ def test_o_esquema_antigo_de_fato_colidia():
 
 
 def test_a_chave_e_relativa_e_sobrevive_a_mudanca_de_raiz():
-    """Caminho absoluto no id amarraria o índice a esta máquina."""
+    """Caminho absoluto no id amarraria o indice a esta maquina."""
     import memory_rag  # noqa: PLC0415
 
     alvo = memory_rag.RAIZ_DO_PROJETO / ".claude" / "agent-memory" / "chico" / "MEMORY.md"
@@ -140,7 +140,7 @@ def test_a_chave_e_relativa_e_sobrevive_a_mudanca_de_raiz():
 
 
 def test_arquivo_fora_da_raiz_ainda_recebe_id_unico():
-    """O ramo de fallback existe e precisa continuar produzindo algo único."""
+    """O ramo de fallback existe e precisa continuar produzindo algo unico."""
     fora = Path("/tmp/fora-da-raiz/documento.md") if Path("/tmp").exists() else Path("C:/temp/fora/documento.md")
     chave = _chave_de(fora)
     assert chave, "o fallback nao pode devolver vazio"
@@ -148,15 +148,15 @@ def test_arquivo_fora_da_raiz_ainda_recebe_id_unico():
 
 
 def test_o_nome_amigavel_continua_no_metadado():
-    """A correção mexe no id, não na filtragem. `agent` tem de continuar sendo o
-    nome curto, senão consulta por agente para de funcionar."""
+    """A correcao mexe no id, nao na filtragem. `agent` tem de continuar sendo o
+    nome curto, senao consulta por agente para de funcionar."""
     fonte = (RAIZ / "memory_rag.py").read_text(encoding="utf-8")
     assert '"agent": source_name' in fonte, "o metadado `agent` deixou de ser o nome amigavel"
 
 
 def test_o_id_nao_e_mais_derivado_so_do_nome():
-    """Guarda estrutural: se alguém voltar a montar o id a partir de
-    `source_name`, a colisão volta inteira."""
+    """Guarda estrutural: se alguem voltar a montar o id a partir de
+    `source_name`, a colisao volta inteira."""
     fonte = (RAIZ / "memory_rag.py").read_text(encoding="utf-8")
     padrao_antigo = "source_name" + '}_chunk_{'
     assert padrao_antigo not in fonte, (
@@ -173,7 +173,7 @@ def test_o_id_nao_e_mais_derivado_so_do_nome():
     ],
 )
 def test_pares_que_colidiam_agora_se_separam(caminho_a, caminho_b):
-    """Os casos concretos medidos no índice real, um a um."""
+    """Os casos concretos medidos no indice real, um a um."""
     import memory_rag  # noqa: PLC0415
 
     a = memory_rag.RAIZ_DO_PROJETO / caminho_a

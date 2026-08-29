@@ -37,7 +37,7 @@ RAIZ = Path(__file__).resolve().parents[2]
 # A RAIZ do repositorio no path, nunca este diretorio: com `scripts/ops` no
 # path, `record_index` e `scripts.ops.record_index` viram DOIS objetos de modulo
 # para o mesmo arquivo (medido). Ver o docstring de `scripts/ops/__init__.py`.
-# Este script tambem roda direto pelo hook, quando sys.path[0] e `scripts/ops` —
+# Este script tambem roda direto pelo hook, quando sys.path[0] e `scripts/ops` --
 # por isso a raiz precisa entrar explicitamente.
 if str(RAIZ) not in sys.path:
     sys.path.insert(0, str(RAIZ))
@@ -404,7 +404,7 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
         # --- G4. config_medida divergente do ambiente ------------------------
         divergencias, _ = conferir_config_medida(fm.get("config_medida"), ambiente)
         for d in divergencias:
-            erros.append(f"{rel}: config_medida divergente -- {d}. Remeça ou marque o registro.")
+            erros.append(f"{rel}: config_medida divergente -- {d}. Remeca ou marque o registro.")
 
     # --- G2. ancora interna: caminho DECLARADO que o commit toca --------------
     # Ancora e o campo `caminhos:`, nunca a prosa. Inferir da prosa travaria o

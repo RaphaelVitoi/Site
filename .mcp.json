@@ -1,10 +1,9 @@
 {
   "mcpServers": {
     "google-jules": {
-      "command": "npx",
+      "command": ".venv/Scripts/python.exe",
       "args": [
-        "-y",
-        "@google/jules-mcp-bridge"
+        "engine/jules_mcp_server.py"
       ],
       "env": {
         "JULES_API_KEY": "${env:JULES_API_KEY}",

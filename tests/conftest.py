@@ -73,8 +73,8 @@ def isolate_test_simulation_logs():
 
 
 class SotaGuardState:
-    errors: List[Dict[str, Any]] = []
-    warnings_list: List[Dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
+    warnings_list: list[dict[str, Any]] = []
 
     @classmethod
     def reset(cls) -> None:

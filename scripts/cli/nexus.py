@@ -2659,7 +2659,7 @@ def run_thematic_test_suite(
 
     if isolado:
         # Worktree proprio: indice git proprio, e nenhuma interferencia com o
-        # working tree — nem com outra sessao rodando ao mesmo tempo.
+        # working tree -- nem com outra sessao rodando ao mesmo tempo.
         cmd = [
             sys.executable,
             str(BASE_DIR / "scripts" / "ops" / "suite_isolada.py"),
