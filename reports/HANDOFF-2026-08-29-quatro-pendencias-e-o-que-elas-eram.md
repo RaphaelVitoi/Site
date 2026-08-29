@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T14:00-03:00
+commit: edfba490
 classes: [interno]
 caminhos:
   - scripts/ops/record_gate.py
