@@ -39,6 +39,7 @@ nao_verificado:
 Formalização da matriz de governança piramidal de 8 Tiers, inclusão do Tier 4 exclusivo para Subagents, indexação horizontal em `CLAUDE.md` e `MODUS_OPERANDI.md`, e imposição canônica da invariante de commits (SHA + Assinatura + Propósito).
 
 ## Componentes Estabelecidos
+
 1. `CLAUDE.md` (§7): Governança de 8 Tiers e invariante M.O. 13.G.
 2. `MODUS_OPERANDI.md` (§10): Topologia piramidal e pré-requisitos de mutação atômica.
 3. `docs/GOVERNANCA_PIRAMIDAL_SOTA.md`: Especificação mestre dos 8 Tiers.

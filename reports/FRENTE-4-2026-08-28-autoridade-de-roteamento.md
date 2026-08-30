@@ -94,7 +94,7 @@ nesta base.
 
 **O caminho quente consulta a política?** Não.
 
-```
+```text
 core/config.py:253   AGENT_MODEL_MAP = _resolver_modelos(...)   <- chama routing_policy.rotear
 llm/orchestrator.py:151   te.AGENTS_MANIFEST[agente]["primary_model"]   <- NAO le o mapa
 ```
@@ -113,7 +113,7 @@ que a declara saudável.
 
 E a divergência não é parcial:
 
-```
+```text
 agentes:     19 de 19 divergem   (politica atribui 5 modelos; o manifesto, 2)
 subagentes:  13 de 13 divergem   (13 tiers, duas tabelas, zero acordo)
 ```
