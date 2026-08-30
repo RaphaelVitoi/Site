@@ -10,7 +10,7 @@ import logging
 import os
 import urllib.error
 import urllib.request
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Final
 
 logger = logging.getLogger(__name__)

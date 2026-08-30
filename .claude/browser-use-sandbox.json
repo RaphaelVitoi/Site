@@ -2,12 +2,12 @@
   "browser_profile": {
     "site-research-sandbox": {
       "id": "site-research-sandbox",
-      "default": true,
-      "headless": false,
-      "user_data_dir": "C:\\Users\\rapha\\.claude\\browser-use-site-sandbox\\profile",
-      "downloads_path": "C:\\Users\\rapha\\.claude\\browser-use-site-sandbox\\downloads",
-      "file_system_path": "C:\\Users\\rapha\\.claude\\browser-use-site-sandbox\\artifacts",
-      "enable_default_extensions": true,
+      "default": false,
+      "headless": true,
+      "user_data_dir": null,
+      "downloads_path": null,
+      "file_system_path": null,
+      "enable_default_extensions": false,
       "disable_security": false,
       "block_ip_addresses": false,
       "keep_alive": false,

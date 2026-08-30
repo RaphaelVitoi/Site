@@ -6,6 +6,8 @@ Coordena a auto-regeneracao, integridade contra concorrencia, retroalimentacao,
 purificacao de entropia e autocura do ecossistema Nexus / Antigravity / Site.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import shutil
@@ -15,7 +17,6 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 NEXUS_ZONE = BASE_DIR / "temp" / "nexus_zone"
@@ -47,7 +48,7 @@ class HomeostasisReport:
 class AutopoiesisEngine:
     """Motor central de homeostase, autocura e controle de concorrencia."""
 
-    def __init__(self, base_dir: Optional[Path] = None):
+    def __init__(self, base_dir: Path | None = None):
         self.base_dir = base_dir or BASE_DIR
         self.nexus_zone = self.base_dir / "temp" / "nexus_zone"
         self.nexus_zone.mkdir(parents=True, exist_ok=True)

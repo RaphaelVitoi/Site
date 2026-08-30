@@ -8,7 +8,6 @@ from __future__ import annotations
 import ast
 import json
 import logging
-import os
 import sys
 import time
 from datetime import UTC, datetime
@@ -166,8 +165,10 @@ def run_jules_audit() -> None:
     for py_file in py_files:
         res = check_typing_conformance(py_file)
         typing_results.append(res)
-        total_funcs += int(res.get("func_count", 0))
-        total_annotated += int(res.get("annotated_func_count", 0))
+        f_cnt = res.get("func_count")
+        a_cnt = res.get("annotated_func_count")
+        total_funcs += int(f_cnt) if isinstance(f_cnt, int) else 0
+        total_annotated += int(a_cnt) if isinstance(a_cnt, int) else 0
         emit_stream_event("FILE_TYPING_AUDITED", res)
 
     overall_coverage = round((total_annotated / total_funcs * 100) if total_funcs > 0 else 100.0, 1)

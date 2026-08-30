@@ -53,7 +53,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 RAIZ = Path(__file__).resolve().parents[2]          # .../Site
 DESTINO = RAIZ / "data" / "RECORD_INDEX.json"
@@ -72,7 +72,13 @@ _RE_CAMINHO = re.compile(r"[`\(\[]([A-Za-z0-9_./-]+\.(?:py|ps1|psm1|json|md|ts|t
 
 
 def _git(*args: str, cwd: Path = RAIZ) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=False)
+    return subprocess.run(
+        ["git", "-c", "core.quotePath=false", *args],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
 
 def arquivos_de_registro(raiz: Path = RAIZ) -> list[Path]:

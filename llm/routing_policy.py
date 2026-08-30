@@ -293,12 +293,13 @@ SUBAGENTES: dict[str, ClasseTarefa] = {
     "streaming_fim_companion": ClasseTarefa.OPERACIONAL,
     "ui_design_curator": ClasseTarefa.CONSTRUCAO,
     "research": ClasseTarefa.RACIOCINIO_PROFUNDO,
-    "validador": ClasseTarefa.VERIFICACAO,
-    "implementor": ClasseTarefa.CONSTRUCAO,
-    "curator": ClasseTarefa.RACIOCINIO_PROFUNDO,
-    "architect": ClasseTarefa.CONSTRUCAO,
+    "sub_validador": ClasseTarefa.VERIFICACAO,
+    "sub_implementor": ClasseTarefa.CONSTRUCAO,
+    "sub_curator": ClasseTarefa.RACIOCINIO_PROFUNDO,
+    "sub_architect": ClasseTarefa.CONSTRUCAO,
     "generalist": ClasseTarefa.OPERACIONAL,
     "self": ClasseTarefa.OPERACIONAL,  # copia do pai para fan-out barato
+    "flutter_a11y_agent": ClasseTarefa.VERIFICACAO,
 }
 
 # Divergencias entre a tabela do operador e o manifesto, preservadas para

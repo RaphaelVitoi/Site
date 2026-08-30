@@ -23,7 +23,7 @@
 
 ### Procedencia -- `.cerebro/agent-memory/historian/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @historian
+### MEMORIA SIMBIOTICA - @historian
 
 &gt; **Status:** Ativo | **Aura:** grey53 | **Motor:** gemini-1.5-pro
 &gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
@@ -40,9 +40,9 @@ Analise de dados temporais e series historicas, agregacao de logs multi-agente v
 
 **Evolucao registrada:**
 
-- `#aprendizado` - Custo por token varia drasticamente entre provedores: Gemini native &lt; OpenRouter &lt; Anthropic. Tarefas mal roteadas podem custar 10x mais sem ganho de qualidade.
-- `#aprendizado` - Latencia de agente nao e so funcao do modelo -- filas longas no SQLite e gargalos de asyncio contribuem igualmente.
-- `#aprendizado` - Relatorios sem data e escopo declarados perdem valor rapidamente. Todo artefato meu deve ter timestamp e origem dos dados.
+- `#aprendizado` - Custo por token varia drasticamente entre provedores: Gemini native < OpenRouter < Anthropic (proveniência: benchmark empírico de tokens em `data/RECORD_INDEX.json` e telemetria de roteamento). Tarefas mal roteadas para modelos de fronteira podem custar até $10\times$ mais sem ganho proporcional de qualidade.
+- `#aprendizado` - Latência de agente não é apenas função do modelo — contenção de filas no SQLite WAL e gargalos de serialização assíncrona contribuem de forma mensurável (proveniência: telemetria de filas `nexus task-audit`).
+- `#aprendizado` - Relatórios sem data, commit SHA e escopo declarados (§13.B) perdem valor rapidamente. Todo artefato analítico deve conter frontmatter canônico com timestamp, proveniência e origem dos dados.
 
 ## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado)
 

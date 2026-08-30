@@ -192,14 +192,14 @@ Concordância entre fontes valida a medição, não a conclusão.
 
 Ancoras atingidas: `memory_rag.py`, `scripts/cli/nexus.py`.
 
-O que mudou nelas: em `memory_rag.py`, extracao de `_accumulate_paragraphs` e
-`_is_path_ignored` -- logica movida para metodo proprio, sem alteracao de
-regra; em `nexus.py`, a faxina descrita acima.
+O que mudou nelas: em `memory_rag.py`, extracao e formalizacao de `_accumulate_paragraphs` e
+`_is_path_ignored` (com exclusao declarativa de arvores superadas via marcador `SUPERSEDED.md` e
+sanitizacao de caminhos relativos); em `nexus.py`, a faxina descrita acima.
 
 **As conclusoes deste documento seguem de pe.** O tamanho do fragmento continua
 respeitando a constante declarada, e a arvore que se declara superada continua
-saindo do indice. A suite de chunking (`tests/test_chunking_rag.py`) cobre a
-extracao e esta verde.
+saindo do indice. As suites de chunking e ingestao (`tests/test_chunking_rag.py` e `tests/test_ingestao_superseded.py`) cobrem a
+extracao e estao verdes.
 
 ## Revisao de ancora -- 2026-08-29, pendencias 9 e 10 fechadas
 

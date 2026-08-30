@@ -23,7 +23,7 @@
 
 ### Procedencia -- `.cerebro/agent-memory/gemma4/MEMORY.md`
 
-# @gemma4 MEMORY - Oraculo de Borda e Sentinela de Inferencia
+### @gemma4 MEMORY - Oraculo de Borda e Sentinela de Inferencia
 
 > **Status:** Ativo | **Vinculo:** COSMOVISAO.md | **Autopoiese:** Inferencia em Tempo Real
 

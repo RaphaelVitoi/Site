@@ -12,7 +12,6 @@ from __future__ import annotations
 import dataclasses
 import json
 import logging
-import os
 import re
 import subprocess
 import time
@@ -356,7 +355,9 @@ class SotaTriadOrchestrator:
         logger.info("[TRIAD] Initiating DAG for objective: %s", objective)
 
         plan = self.plan_triad_workflow(objective)
-        logger.info("[TRIAD] DAG Planned with %d phases", len(plan["dag_phases"]))
+        dag_phases = plan.get("dag_phases")
+        phase_count = len(dag_phases) if isinstance(dag_phases, list) else 0
+        logger.info("[TRIAD] DAG Planned with %d phases", phase_count)
 
         elapsed = time.time() - t0
         return TriadMeshReport(

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Appends a retained outlier-evidence event to a separate hash-chained ledger.
 
@@ -53,7 +53,7 @@ function New-HashChainedRecord {
         previous_hash  = $PreviousHash
     }
     foreach ($key in $Fields.Keys) { $payload[$key] = $Fields[$key] }
-    $canonical = $payload | ConvertTo-Json -Compress -Depth 12
+    $canonical = $payload | ConvertTo-Json -Compress -Depth 8
     $payload['record_hash'] = Get-Sha256Hex -Text $canonical
     return [pscustomobject]$payload
 }
@@ -68,7 +68,7 @@ catch {
 if ($sourceRefs.Count -eq 0 -or @($sourceRefs | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }).Count -ne $sourceRefs.Count) {
     throw 'SourceRefsJson must contain one or more non-empty source references.'
 }
-if ($null -eq $metrics -or $metrics -isnot [pscustomobject]) {
+if ($null -eq $metrics -or $metrics.GetType().FullName -ne 'System.Management.Automation.PSCustomObject' -or ($metrics.PSObject.Properties | Measure-Object).Count -eq 0) {
     throw 'MetricsJson must be a JSON object.'
 }
 
@@ -87,7 +87,7 @@ try {
         $genesis = New-HashChainedRecord -Sequence 0 -RecordType 'genesis' -RecordedAt ([DateTimeOffset]::Now.ToString('o')) -PreviousHash ('0' * 64) -Fields ([ordered]@{
             policy = 'retain outliers as evidence; no automatic pattern indexing; deterministic posterior review required for promotion'
         })
-        [System.IO.File]::WriteAllText($LedgerPath, (($genesis | ConvertTo-Json -Compress -Depth 12) + [Environment]::NewLine), $utf8NoBom)
+        [System.IO.File]::WriteAllText($LedgerPath, (($genesis | ConvertTo-Json -Compress -Depth 8) + [Environment]::NewLine), $utf8NoBom)
     }
 
     & (Join-Path $PSScriptRoot 'Test-AgentCalibrationLedger.ps1') -LedgerPath $LedgerPath | Out-Null
@@ -102,7 +102,7 @@ try {
         disposition       = 'retained-pending-deterministic-review'
         pattern_indexed   = $false
     })
-    [System.IO.File]::AppendAllText($LedgerPath, (($record | ConvertTo-Json -Compress -Depth 12) + [Environment]::NewLine), $utf8NoBom)
+    [System.IO.File]::AppendAllText($LedgerPath, (($record | ConvertTo-Json -Compress -Depth 8) + [Environment]::NewLine), $utf8NoBom)
     [pscustomobject]@{
         status      = 'retained'
         outlier_id  = $record.outlier_id

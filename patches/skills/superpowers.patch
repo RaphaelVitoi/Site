@@ -10,7 +10,7 @@ index f2b95f2..2c936bf 100644
   * Injects superpowers bootstrap context via system prompt transform.
   * Auto-registers skills directory via config hook (no symlinks needed).
   */
- 
+
 -import path from 'path';
 -import fs from 'fs';
 -import os from 'os';
@@ -18,9 +18,9 @@ index f2b95f2..2c936bf 100644
 +import path from 'node:path';
 +import fs from 'node:fs';
 +import { fileURLToPath } from 'node:url';
- 
+
  const __dirname = path.dirname(fileURLToPath(import.meta.url));
- 
+
 @@ -25,8 +25,8 @@ const extractAndStripFrontmatter = (content) => {
      const colonIdx = line.indexOf(':');
      if (colonIdx > 0) {
@@ -31,7 +31,7 @@ index f2b95f2..2c936bf 100644
 +      Reflect.set(frontmatter, key, value);
      }
    }
- 
+
 @@ -43,34 +43,31 @@ const normalizePath = (p, homeDir) => {
    } else if (normalized === '~') {
      normalized = homeDir;
@@ -39,14 +39,14 @@ index f2b95f2..2c936bf 100644
 -  return path.resolve(normalized);
 +  return path.normalize(path.resolve(normalized));
  };
- 
+
  // Module-level cache for bootstrap content.
 -// The SKILL.md file does not change during a session, so reading + parsing it
 -// once eliminates redundant fs.existsSync + fs.readFileSync + regex work on
 -// every agent step.  See #1202 for the full analysis.
 -let _bootstrapCache = undefined; // undefined = not yet loaded, null = file missing
 +let _bootstrapCache;
- 
+
 -export const SuperpowersPlugin = async ({ client, directory }) => {
 -  const homeDir = os.homedir();
 -  const superpowersSkillsDir = path.resolve(__dirname, '../../skills');
@@ -54,12 +54,12 @@ index f2b95f2..2c936bf 100644
 -  const configDir = envConfigDir || path.join(homeDir, '.config/opencode');
 +export const SuperpowersPlugin = async (_options) => {
 +  const basePath = path.normalize(path.join(__dirname, '../../skills'));
- 
+
    // Helper to generate bootstrap content (cached after first call)
    const getBootstrapContent = () => {
 -    // Return cached result on subsequent calls
      if (_bootstrapCache !== undefined) return _bootstrapCache;
- 
+
 -    // Try to load using-superpowers skill
 -    const skillPath = path.join(superpowersSkillsDir, 'using-superpowers', 'SKILL.md');
 -    if (!fs.existsSync(skillPath)) {
@@ -73,16 +73,16 @@ index f2b95f2..2c936bf 100644
        _bootstrapCache = null;
        return null;
      }
- 
+
 -    const fullContent = fs.readFileSync(skillPath, 'utf8');
 +    const fullContent = fs.readFileSync(fullPath, 'utf8');
      const { content } = extractAndStripFrontmatter(fullContent);
- 
+
      const toolMapping = `**Tool Mapping for OpenCode:**
 @@ -82,24 +79,17 @@ When skills reference tools you don't have, substitute OpenCode equivalents:
- 
+
  Use OpenCode's native \`skill\` tool to list and load skills.`;
- 
+
 -    _bootstrapCache = `<EXTREMELY_IMPORTANT>
 -You have superpowers.
 -
@@ -98,10 +98,10 @@ index f2b95f2..2c936bf 100644
 +      `${content}\n\n` +
 +      `${toolMapping}\n` +
 +      `</EXTREMELY_IMPORTANT>`;
- 
+
      return _bootstrapCache;
    };
- 
+
    return {
 -    // Inject skills path into live config so OpenCode discovers superpowers skills
 -    // without requiring manual symlinks or config file edits.
@@ -113,7 +113,7 @@ index f2b95f2..2c936bf 100644
 @@ -108,24 +98,12 @@ ${toolMapping}
        }
      },
- 
+
 -    // Inject bootstrap into the first user message of each session.
 -    // Using a user message instead of a system message avoids:
 -    //   1. Token bloat from system messages repeated every turn (#750)
@@ -129,12 +129,12 @@ index f2b95f2..2c936bf 100644
        const firstUser = output.messages.find(m => m.info.role === 'user');
 -      if (!firstUser || !firstUser.parts.length) return;
 +      if (!firstUser?.parts?.length) return;
- 
+
 -      // Guard: skip if first user message already contains bootstrap.
 -      // This prevents double injection when OpenCode passes an already
 -      // transformed in-memory message array through the hook again.
        if (firstUser.parts.some(p => p.type === 'text' && p.text.includes('EXTREMELY_IMPORTANT'))) return;
- 
+
        const ref = firstUser.parts[0];
 diff --git a/skills/brainstorming/SKILL.md b/skills/brainstorming/SKILL.md
 deleted file mode 100644
@@ -331,7 +331,7 @@ index dcfe018..ba185c0 100644
 +    <h1><a href="https://github.com/obra/superpowers">Superpowers Brainstorming</a></h1>
      <div class="status">Connected</div>
    </div>
- 
+
 diff --git a/skills/brainstorming/scripts/helper.js b/skills/brainstorming/scripts/helper.js
 index 111f97f..9d20e3f 100644
 --- a/skills/brainstorming/scripts/helper.js
@@ -343,9 +343,9 @@ index 111f97f..9d20e3f 100644
 +  const WS_URL = (isSecure ? 'wss://' : 'ws://') + window.location.host;
    let ws = null;
    let eventQueue = [];
- 
+
 @@ -25,7 +26,7 @@
- 
+
    function sendEvent(event) {
      event.timestamp = Date.now();
 -    if (ws && ws.readyState === WebSocket.OPEN) {
@@ -375,7 +375,7 @@ index 111f97f..9d20e3f 100644
      }, 0);
    });
 @@ -66,7 +72,7 @@
- 
+
    window.toggleSelect = function(el) {
      const container = el.closest('.options') || el.closest('.cards');
 -    const multi = container && container.dataset.multiselect !== undefined;
@@ -397,18 +397,18 @@ index 562c17f..2c72a01 100644
 +const fs = require('node:fs');
 +const path = require('node:path');
 +const os = require('node:os');
- 
+
  // ========== WebSocket Protocol (RFC 6455) ==========
- 
+
 @@ -9,7 +10,8 @@ const OPCODES = { TEXT: 0x01, CLOSE: 0x08, PING: 0x09, PONG: 0x0A };
  const WS_MAGIC = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
- 
+
  function computeAcceptKey(clientKey) {
 -  return crypto.createHash('sha1').update(clientKey + WS_MAGIC).digest('base64');
 +  // RFC 6455 Section 1.3 Sec-WebSocket-Accept requires SHA-1 hashing
 +  return crypto.createHash('sha1').update(clientKey + WS_MAGIC).digest('base64'); // NOSONAR
  }
- 
+
  function encodeFrame(opcode, payload) {
 @@ -65,7 +67,8 @@ function decodeFrame(buffer) {
    const mask = buffer.slice(maskOffset, dataOffset);
@@ -418,12 +418,12 @@ index 562c17f..2c72a01 100644
 +    const unmaskedByte = buffer.readUInt8(dataOffset + i) ^ mask[i % 4];
 +    data.writeUInt8(unmaskedByte, i);
    }
- 
+
    return { opcode, payload: data, bytesConsumed: totalLen };
 @@ -73,10 +76,10 @@ function decodeFrame(buffer) {
- 
+
  // ========== Configuration ==========
- 
+
 -const PORT = process.env.BRAINSTORM_PORT || (49152 + Math.floor(Math.random() * 16383));
 +const PORT = process.env.BRAINSTORM_PORT || crypto.randomInt(49152, 65535);
  const HOST = process.env.BRAINSTORM_HOST || '127.0.0.1';
@@ -435,11 +435,11 @@ index 562c17f..2c72a01 100644
  let ownerPid = process.env.BRAINSTORM_OWNER_PID ? Number(process.env.BRAINSTORM_OWNER_PID) : null;
 @@ -274,7 +277,7 @@ function startServer() {
    server.on('upgrade', handleUpgrade);
- 
+
    const watcher = fs.watch(CONTENT_DIR, (eventType, filename) => {
 -    if (!filename || !filename.endsWith('.html')) return;
 +    if (!filename?.endsWith('.html')) return;
- 
+
      if (debounceTimers.has(filename)) clearTimeout(debounceTimers.get(filename));
      debounceTimers.set(filename, setTimeout(() => {
 @@ -339,7 +342,7 @@ function startServer() {
@@ -2485,129 +2485,6 @@ index 134d371..0000000
 -- Verify directory is ignored for project-local
 -- Auto-detect and run project setup
 -- Verify clean test baseline
-diff --git a/skills/using-superpowers/SKILL.md b/skills/using-superpowers/SKILL.md
-deleted file mode 100644
-index c8a8570..0000000
---- a/skills/using-superpowers/SKILL.md
-+++ /dev/null
-@@ -1,117 +0,0 @@
-----
--name: using-superpowers
--description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
-----
--
--<SUBAGENT-STOP>
--If you were dispatched as a subagent to execute a specific task, skip this skill.
--</SUBAGENT-STOP>
--
--<EXTREMELY-IMPORTANT>
--If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
--
--IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
--
--This is not negotiable. This is not optional. You cannot rationalize your way out of this.
--</EXTREMELY-IMPORTANT>
--
--## Instruction Priority
--
--Superpowers skills override default system prompt behavior, but **user instructions always take precedence**:
--
--1. **User's explicit instructions** (CLAUDE.md, GEMINI.md, AGENTS.md, direct requests) — highest priority
--2. **Superpowers skills** — override default system behavior where they conflict
--3. **Default system prompt** — lowest priority
--
--If CLAUDE.md, GEMINI.md, or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
--
--## How to Access Skills
--
--**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
--
--**In Copilot CLI:** Use the `skill` tool. Skills are auto-discovered from installed plugins. The `skill` tool works the same as Claude Code's `Skill` tool.
--
--**In Gemini CLI:** Skills activate via the `activate_skill` tool. Gemini loads skill metadata at session start and activates the full content on demand.
--
--**In other environments:** Check your platform's documentation for how skills are loaded.
--
--## Platform Adaptation
--
--Skills use Claude Code tool names. Non-CC platforms: see `references/copilot-tools.md` (Copilot CLI), `references/codex-tools.md` (Codex) for tool equivalents. Gemini CLI users get the tool mapping loaded automatically via GEMINI.md.
--
--# Using Skills
--
--## The Rule
--
--**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
--
--```dot
--digraph skill_flow {
--    "User message received" [shape=doublecircle];
--    "About to EnterPlanMode?" [shape=doublecircle];
--    "Already brainstormed?" [shape=diamond];
--    "Invoke brainstorming skill" [shape=box];
--    "Might any skill apply?" [shape=diamond];
--    "Invoke Skill tool" [shape=box];
--    "Announce: 'Using [skill] to [purpose]'" [shape=box];
--    "Has checklist?" [shape=diamond];
--    "Create TodoWrite todo per item" [shape=box];
--    "Follow skill exactly" [shape=box];
--    "Respond (including clarifications)" [shape=doublecircle];
--
--    "About to EnterPlanMode?" -> "Already brainstormed?";
--    "Already brainstormed?" -> "Invoke brainstorming skill" [label="no"];
--    "Already brainstormed?" -> "Might any skill apply?" [label="yes"];
--    "Invoke brainstorming skill" -> "Might any skill apply?";
--
--    "User message received" -> "Might any skill apply?";
--    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
--    "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
--    "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
--    "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
--    "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
--    "Has checklist?" -> "Follow skill exactly" [label="no"];
--    "Create TodoWrite todo per item" -> "Follow skill exactly";
--}
--```
--
--## Red Flags
--
--These thoughts mean STOP—you're rationalizing:
--
--| Thought | Reality |
--|---------|---------|
--| "This is just a simple question" | Questions are tasks. Check for skills. |
--| "I need more context first" | Skill check comes BEFORE clarifying questions. |
--| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
--| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
--| "Let me gather information first" | Skills tell you HOW to gather information. |
--| "This doesn't need a formal skill" | If a skill exists, use it. |
--| "I remember this skill" | Skills evolve. Read current version. |
--| "This doesn't count as a task" | Action = task. Check for skills. |
--| "The skill is overkill" | Simple things become complex. Use it. |
--| "I'll just do this one thing first" | Check BEFORE doing anything. |
--| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
--| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
--
--## Skill Priority
--
--When multiple skills could apply, use this order:
--
--1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task
--2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution
--
--"Let's build X" → brainstorming first, then implementation skills.
--"Fix this bug" → debugging first, then domain-specific skills.
--
--## Skill Types
--
--**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
--
--**Flexible** (patterns): Adapt principles to context.
--
--The skill itself tells you which.
--
--## User Instructions
--
--Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
 diff --git a/skills/verification-before-completion/SKILL.md b/skills/verification-before-completion/SKILL.md
 deleted file mode 100644
 index 2f14076..0000000
@@ -2928,7 +2805,7 @@ index c3b73d8..0000000
 -
 -**Writing skills IS Test-Driven Development applied to process documentation.**
 -
--**Personal skills live in agent-specific directories (`~/.claude/skills` for Claude Code, `~/.agents/skills/` for Codex)** 
+-**Personal skills live in agent-specific directories (`~/.claude/skills` for Claude Code, `~/.agents/skills/` for Codex)**
 -
 -You write test cases (pressure scenarios with subagents), watch them fail (baseline behavior), write the skill (documentation), watch tests pass (agents comply), and refactor (close loopholes).
 -
@@ -3592,16 +3469,16 @@ index 9f3f6ec..fa53a7c 100644
 -        return ''
 +        return ""
  ```
- 
+
  **Bad example: Punt to Claude**:
 @@ -902,7 +902,7 @@ MAX_RETRIES = 3
- 
+
  ```python  theme={null}
  TIMEOUT = 47  # Why 47?
 -RETRIES = 5   # Why 5?
 +RETRIES = 5  # Why 5?
  ```
- 
+
  ### Provide utility scripts
 diff --git a/skills/writing-skills/render-graphs.js b/skills/writing-skills/render-graphs.js
 index 1d670fb..b6928a3 100755
@@ -3610,7 +3487,7 @@ index 1d670fb..b6928a3 100755
 @@ -13,9 +13,22 @@
   * Requires: graphviz (dot) installed on system
   */
- 
+
 -const fs = require('fs');
 -const path = require('path');
 -const { execSync } = require('child_process');
@@ -3630,29 +3507,29 @@ index 1d670fb..b6928a3 100755
 +  }
 +  return fullPath;
 +}
- 
+
  function extractDotBlocks(markdown) {
    const blocks = [];
 @@ -26,7 +39,7 @@ function extractDotBlocks(markdown) {
      const content = match[1].trim();
- 
+
      // Extract digraph name
 -    const nameMatch = content.match(/digraph\s+(\w+)/);
 +    const nameMatch = /digraph\s+(\w+)/.exec(content);
      const name = nameMatch ? nameMatch[1] : `graph_${blocks.length + 1}`;
- 
+
      blocks.push({ name, content });
 @@ -37,15 +50,17 @@ function extractDotBlocks(markdown) {
- 
+
  function extractGraphBody(dotContent) {
    // Extract just the body (nodes and edges) from a digraph
 -  const match = dotContent.match(/digraph\s+\w+\s*\{([\s\S]*)\}/);
 +  const match = /digraph\s+\w+\s*\{([\s\S]*)\}/.exec(dotContent);
    if (!match) return '';
- 
+
 -  let body = match[1];
 +  const body = match[1];
- 
+
 -  // Remove rankdir (we'll set it once at the top level)
 -  body = body.replace(/^\s*rankdir\s*=\s*\w+\s*;?\s*$/gm, '');
 -
@@ -3664,10 +3541,10 @@ index 1d670fb..b6928a3 100755
 +    .join('\n')
 +    .trim();
  }
- 
+
  function combineGraphs(blocks, skillName) {
 @@ -69,7 +84,7 @@ ${bodies.join('\n\n')}
- 
+
  function renderToSvg(dotContent) {
    try {
 -    return execSync('dot -Tsvg', {
@@ -3678,7 +3555,7 @@ index 1d670fb..b6928a3 100755
 @@ -81,6 +96,35 @@ function renderToSvg(dotContent) {
    }
  }
- 
+
 +function renderCombined(blocks, skillName, outputDir) {
 +  const combined = combineGraphs(blocks, skillName);
 +  const svg = renderToSvg(combined);
@@ -3714,20 +3591,19 @@ index 1d670fb..b6928a3 100755
 @@ -98,22 +142,20 @@ function main() {
      process.exit(1);
    }
- 
+
 -  const skillDir = path.resolve(skillDirArg);
 -  const skillFile = path.join(skillDir, 'SKILL.md');
 -  const skillName = path.basename(skillDir).replace(/-/g, '_');
-+  const baseDir = path.normalize(path.resolve(process.cwd()));
-+  const skillDir = assertSafePath(baseDir, skillDirArg);
-+  const skillFile = assertSafePath(skillDir, 'SKILL.md');
+  const skillDir = path.normalize(path.resolve(skillDirArg));
+  const skillFile = assertSafePath(skillDir, 'SKILL.md');
 +  const skillName = path.basename(skillDir).replaceAll('-', '_');
- 
+
    if (!fs.existsSync(skillFile)) {
      console.error(`Error: ${skillFile} not found`);
      process.exit(1);
    }
- 
+
 -  // Check if dot is available
    try {
 -    execSync('which dot', { encoding: 'utf-8' });
@@ -3739,18 +3615,18 @@ index 1d670fb..b6928a3 100755
 +    console.error('Error: graphviz (dot) not found.');
      process.exit(1);
    }
- 
+
 @@ -127,39 +169,15 @@ function main() {
- 
+
    console.log(`Found ${blocks.length} diagram(s) in ${path.basename(skillDir)}/SKILL.md`);
- 
+
 -  const outputDir = path.join(skillDir, 'diagrams');
 +  const outputDir = assertSafePath(skillDir, 'diagrams');
    if (!fs.existsSync(outputDir)) {
 -    fs.mkdirSync(outputDir);
 +    fs.mkdirSync(outputDir, { recursive: true });
    }
- 
+
    if (combine) {
 -    // Combine all graphs into one
 -    const combined = combineGraphs(blocks, skillName);
@@ -3782,7 +3658,7 @@ index 1d670fb..b6928a3 100755
 -    }
 +    renderIndividual(blocks, outputDir);
    }
- 
+
    console.log(`\nOutput: ${outputDir}/`);
 diff --git a/tests/brainstorm-server/package.json b/tests/brainstorm-server/package.json
 index a089f03..e14988d 100644
@@ -3803,7 +3679,7 @@ index 4797cbb..823d72a 100644
 @@ -8,22 +8,45 @@
   * not shipped to end users).
   */
- 
+
 -const { spawn } = require('child_process');
 -const http = require('http');
 +const { spawn } = require('node:child_process');
@@ -3816,7 +3692,7 @@ index 4797cbb..823d72a 100644
 +const path = require('node:path');
 +const os = require('node:os');
 +const assert = require('node:assert');
- 
+
 -const SERVER_PATH = path.join(__dirname, '../../skills/brainstorming/scripts/server.cjs');
 +const safeFs = {
 +  existsSync: (p) => fs.existsSync(p), // NOSONAR
@@ -3847,7 +3723,7 @@ index 4797cbb..823d72a 100644
 +const TEST_DIR = path.normalize(path.resolve(os.tmpdir(), 'brainstorm-test')); // NOSONAR
 +const CONTENT_DIR = path.normalize(path.resolve(TEST_DIR, 'content')); // NOSONAR
 +const STATE_DIR = path.normalize(path.resolve(TEST_DIR, 'state')); // NOSONAR
- 
+
  function cleanup() {
 -  if (fs.existsSync(TEST_DIR)) {
 -    fs.rmSync(TEST_DIR, { recursive: true });
@@ -3856,10 +3732,10 @@ index 4797cbb..823d72a 100644
 +    safeFs.rmSync(safeTestDir, { recursive: true });
    }
  }
- 
+
 @@ -92,6 +115,14 @@ async function runTests() {
    }
- 
+
    try {
 +    await test('rejects traversal into a sibling with the same path prefix', () => {
 +      assert.throws(
@@ -3871,10 +3747,10 @@ index 4797cbb..823d72a 100644
 +
      // ========== Server Startup ==========
      console.log('\n--- Server Startup ---');
- 
+
 @@ -105,9 +136,9 @@ async function runTests() {
      });
- 
+
      await test('writes server-info to state/', () => {
 -      const infoPath = path.join(STATE_DIR, 'server-info');
 -      assert(fs.existsSync(infoPath), 'state/server-info should exist');
@@ -3886,33 +3762,33 @@ index 4797cbb..823d72a 100644
        assert.strictEqual(info.port, TEST_PORT);
        assert.strictEqual(info.screen_dir, CONTENT_DIR, 'screen_dir should point to content/');
 @@ -133,12 +164,13 @@ async function runTests() {
- 
+
      await test('returns Content-Type text/html', async () => {
        const res = await fetch(`http://localhost:${TEST_PORT}/`);
 -      assert(res.headers['content-type'].includes('text/html'), 'Should be text/html');
 +      const contentType = Reflect.get(res.headers, 'content-type') || '';
 +      assert(contentType.includes('text/html'), 'Should be text/html');
      });
- 
+
      await test('serves full HTML documents as-is (not wrapped)', async () => {
        const fullDoc = '<!DOCTYPE html>\n<html><head><title>Custom</title></head><body><h1>Custom Page</h1></body></html>';
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'full-doc.html'), fullDoc);
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'full-doc.html'), fullDoc);
        await sleep(300);
- 
+
        const res = await fetch(`http://localhost:${TEST_PORT}/`);
 @@ -149,7 +181,7 @@ async function runTests() {
- 
+
      await test('wraps content fragments in frame template', async () => {
        const fragment = '<h2>Pick a layout</h2>\n<div class="options"><div class="option" data-choice="a"><div class="letter">A</div></div></div>';
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'fragment.html'), fragment);
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'fragment.html'), fragment);
        await sleep(300);
- 
+
        const res = await fetch(`http://localhost:${TEST_PORT}/`);
 @@ -160,9 +192,9 @@ async function runTests() {
      });
- 
+
      await test('serves newest file by mtime', async () => {
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'older.html'), '<h2>Older</h2>');
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'older.html'), '<h2>Older</h2>');
@@ -3920,17 +3796,17 @@ index 4797cbb..823d72a 100644
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'newer.html'), '<h2>Newer</h2>');
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'newer.html'), '<h2>Newer</h2>');
        await sleep(300);
- 
+
        const res = await fetch(`http://localhost:${TEST_PORT}/`);
 @@ -170,8 +202,7 @@ async function runTests() {
      });
- 
+
      await test('ignores non-html files for serving', async () => {
 -      // Write a newer non-HTML file — should still serve newest .html
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'data.json'), '{"not": "html"}');
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'data.json'), '{"not": "html"}');
        await sleep(300);
- 
+
        const res = await fetch(`http://localhost:${TEST_PORT}/`);
 @@ -193,6 +224,7 @@ async function runTests() {
          ws.on('open', resolve);
@@ -3939,23 +3815,23 @@ index 4797cbb..823d72a 100644
 +      assert(ws.readyState === WebSocket.OPEN, 'WebSocket should be open');
        ws.close();
      });
- 
+
 @@ -210,9 +242,8 @@ async function runTests() {
      });
- 
+
      await test('writes choice events to state/events', async () => {
 -      // Clean up events from prior tests
 -      const eventsFile = path.join(STATE_DIR, 'events');
 -      if (fs.existsSync(eventsFile)) fs.unlinkSync(eventsFile);
 +      const eventsFile = safeJoin(STATE_DIR, 'events');
 +      if (safeFs.existsSync(eventsFile)) safeFs.unlinkSync(eventsFile);
- 
+
        const ws = new WebSocket(`ws://localhost:${TEST_PORT}`);
        await new Promise(resolve => ws.on('open', resolve));
 @@ -220,17 +251,18 @@ async function runTests() {
        ws.send(JSON.stringify({ type: 'click', choice: 'b', text: 'Option B' }));
        await sleep(300);
- 
+
 -      assert(fs.existsSync(eventsFile), '.events should exist');
 -      const lines = fs.readFileSync(eventsFile, 'utf-8').trim().split('\n');
 -      const event = JSON.parse(lines[lines.length - 1]);
@@ -3969,38 +3845,38 @@ index 4797cbb..823d72a 100644
 +      assert.strictEqual(Reflect.get(event, 'text'), 'Option B');
        ws.close();
      });
- 
+
      await test('does NOT write non-choice events to state/events', async () => {
 -      const eventsFile = path.join(STATE_DIR, 'events');
 -      if (fs.existsSync(eventsFile)) fs.unlinkSync(eventsFile);
 +      const eventsFile = safeJoin(STATE_DIR, 'events');
 +      if (safeFs.existsSync(eventsFile)) safeFs.unlinkSync(eventsFile);
- 
+
        const ws = new WebSocket(`ws://localhost:${TEST_PORT}`);
        await new Promise(resolve => ws.on('open', resolve));
 @@ -238,8 +270,7 @@ async function runTests() {
        ws.send(JSON.stringify({ type: 'hover', text: 'Something' }));
        await sleep(300);
- 
+
 -      // Non-choice events should not create .events file
 -      assert(!fs.existsSync(eventsFile), '.events should not exist for non-choice events');
 +      assert(!safeFs.existsSync(eventsFile), '.events should not exist for non-choice events');
        ws.close();
      });
- 
+
 @@ -260,7 +291,7 @@ async function runTests() {
          if (JSON.parse(data.toString()).type === 'reload') ws2Reload = true;
        });
- 
+
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'multi-client.html'), '<h2>Multi</h2>');
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'multi-client.html'), '<h2>Multi</h2>');
        await sleep(500);
- 
+
        assert(ws1Reload, 'Client 1 should receive reload');
 @@ -275,21 +306,18 @@ async function runTests() {
        ws1.close();
        await sleep(100);
- 
+
 -      // This should not throw even though ws1 is closed
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'after-close.html'), '<h2>After</h2>');
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'after-close.html'), '<h2>After</h2>');
@@ -4008,15 +3884,15 @@ index 4797cbb..823d72a 100644
 -      // If we got here without error, the test passes
 +      assert.strictEqual(ws1.readyState, WebSocket.CLOSED, 'Client 1 should be closed');
      });
- 
+
      await test('handles malformed JSON from client gracefully', async () => {
        const ws = new WebSocket(`ws://localhost:${TEST_PORT}`);
        await new Promise(resolve => ws.on('open', resolve));
- 
+
 -      // Send invalid JSON — server should not crash
        ws.send('not json at all {{{');
        await sleep(300);
- 
+
 -      // Verify server is still responsive
        const res = await fetch(`http://localhost:${TEST_PORT}/`);
        assert.strictEqual(res.status, 200, 'Server should still be running');
@@ -4024,44 +3900,44 @@ index 4797cbb..823d72a 100644
 @@ -307,7 +335,7 @@ async function runTests() {
          if (JSON.parse(data.toString()).type === 'reload') gotReload = true;
        });
- 
+
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'watch-new.html'), '<h2>New</h2>');
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'watch-new.html'), '<h2>New</h2>');
        await sleep(500);
- 
+
        assert(gotReload, 'Should send reload on new file');
 @@ -315,8 +343,8 @@ async function runTests() {
      });
- 
+
      await test('sends reload on .html file change', async () => {
 -      const filePath = path.join(CONTENT_DIR, 'watch-change.html');
 -      fs.writeFileSync(filePath, '<h2>Original</h2>');
 +      const filePath = safeJoin(CONTENT_DIR, 'watch-change.html');
 +      safeFs.writeFileSync(filePath, '<h2>Original</h2>');
        await sleep(500);
- 
+
        const ws = new WebSocket(`ws://localhost:${TEST_PORT}`);
 @@ -327,7 +355,7 @@ async function runTests() {
          if (JSON.parse(data.toString()).type === 'reload') gotReload = true;
        });
- 
+
 -      fs.writeFileSync(filePath, '<h2>Modified</h2>');
 +      safeFs.writeFileSync(filePath, '<h2>Modified</h2>');
        await sleep(500);
- 
+
        assert(gotReload, 'Should send reload on file change');
 @@ -343,7 +371,7 @@ async function runTests() {
          if (JSON.parse(data.toString()).type === 'reload') gotReload = true;
        });
- 
+
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'data.txt'), 'not html');
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'data.txt'), 'not html');
        await sleep(500);
- 
+
        assert(!gotReload, 'Should NOT reload for non-HTML files');
 @@ -351,32 +379,31 @@ async function runTests() {
      });
- 
+
      await test('clears state/events on new screen', async () => {
 -      // Create an events file
 -      const eventsFile = path.join(STATE_DIR, 'events');
@@ -4070,40 +3946,40 @@ index 4797cbb..823d72a 100644
 +      const eventsFile = safeJoin(STATE_DIR, 'events');
 +      safeFs.writeFileSync(eventsFile, '{"choice":"a"}\n');
 +      assert(safeFs.existsSync(eventsFile));
- 
+
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'clear-events.html'), '<h2>New screen</h2>');
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'clear-events.html'), '<h2>New screen</h2>');
        await sleep(500);
- 
+
 -      assert(!fs.existsSync(eventsFile), 'state/events should be cleared on new screen');
 +      assert(!safeFs.existsSync(eventsFile), 'state/events should be cleared on new screen');
      });
- 
+
      await test('logs screen-added on new file', async () => {
        stdoutAccum = '';
 -      fs.writeFileSync(path.join(CONTENT_DIR, 'log-test.html'), '<h2>Log</h2>');
 +      safeFs.writeFileSync(safeJoin(CONTENT_DIR, 'log-test.html'), '<h2>Log</h2>');
        await sleep(500);
- 
+
        assert(stdoutAccum.includes('screen-added'), 'Should log screen-added');
      });
- 
+
      await test('logs screen-updated on file change', async () => {
 -      const filePath = path.join(CONTENT_DIR, 'log-update.html');
 -      fs.writeFileSync(filePath, '<h2>V1</h2>');
 +      const filePath = safeJoin(CONTENT_DIR, 'log-update.html');
 +      safeFs.writeFileSync(filePath, '<h2>V1</h2>');
        await sleep(500);
- 
+
        stdoutAccum = '';
 -      fs.writeFileSync(filePath, '<h2>V2</h2>');
 +      safeFs.writeFileSync(filePath, '<h2>V2</h2>');
        await sleep(500);
- 
+
        assert(stdoutAccum.includes('screen-updated'), 'Should log screen-updated');
 @@ -386,8 +413,8 @@ async function runTests() {
      console.log('\n--- Helper.js Verification ---');
- 
+
      await test('helper.js defines required APIs', () => {
 -      const helperContent = fs.readFileSync(
 -        path.join(__dirname, '../../skills/brainstorming/scripts/helper.js'), 'utf-8'
@@ -4114,7 +3990,7 @@ index 4797cbb..823d72a 100644
        assert(helperContent.includes('sendEvent'), 'Should define sendEvent');
 @@ -400,8 +427,8 @@ async function runTests() {
      console.log('\n--- Frame Template Verification ---');
- 
+
      await test('frame template has required structure', () => {
 -      const template = fs.readFileSync(
 -        path.join(__dirname, '../../skills/brainstorming/scripts/frame-template.html'), 'utf-8'
@@ -4130,14 +4006,14 @@ index 4f2540d..eb08d39 100644
 @@ -11,9 +11,9 @@
   *   - OPCODES: { TEXT, CLOSE, PING, PONG }
   */
- 
+
 -const assert = require('assert');
 -const crypto = require('crypto');
 -const path = require('path');
 +const assert = require('node:assert');
 +const crypto = require('node:crypto');
 +const path = require('node:path');
- 
+
  // The module under test — will be the new zero-dep server file
  const SERVER_PATH = path.join(__dirname, '../../skills/brainstorming/scripts/server.cjs');
 @@ -73,33 +73,33 @@ function runTests() {
@@ -4152,7 +4028,7 @@ index 4f2540d..eb08d39 100644
 +    assert.strictEqual(frame.subarray(2).toString(), 'Hello');
      assert.strictEqual(frame.length, 7);
    });
- 
+
    test('encodes empty text frame', () => {
      const frame = ws.encodeFrame(ws.OPCODES.TEXT, Buffer.alloc(0));
 -    assert.strictEqual(frame[0], 0x81);
@@ -4161,7 +4037,7 @@ index 4f2540d..eb08d39 100644
 +    assert.strictEqual(frame.readUInt8(1), 0);
      assert.strictEqual(frame.length, 2);
    });
- 
+
    test('encodes medium text frame (126-65535 bytes)', () => {
      const payload = Buffer.alloc(200, 0x41); // 200 'A's
      const frame = ws.encodeFrame(ws.OPCODES.TEXT, payload);
@@ -4174,7 +4050,7 @@ index 4f2540d..eb08d39 100644
 +    assert.strictEqual(frame.subarray(4).toString(), payload.toString());
      assert.strictEqual(frame.length, 204);
    });
- 
+
    test('encodes frame at exactly 126 bytes (boundary)', () => {
      const payload = Buffer.alloc(126, 0x42);
      const frame = ws.encodeFrame(ws.OPCODES.TEXT, payload);
@@ -4191,7 +4067,7 @@ index 4f2540d..eb08d39 100644
 +    assert.strictEqual(frame.readUInt8(1), 125);
      assert.strictEqual(frame.length, 127);
    });
- 
+
    test('encodes large frame (> 65535 bytes)', () => {
      const payload = Buffer.alloc(70000, 0x44);
      const frame = ws.encodeFrame(ws.OPCODES.TEXT, payload);
@@ -4203,7 +4079,7 @@ index 4f2540d..eb08d39 100644
      const len = Number(frame.readBigUInt64BE(2));
      assert.strictEqual(len, 70000);
 @@ -124,22 +124,22 @@ function runTests() {
- 
+
    test('encodes close frame', () => {
      const frame = ws.encodeFrame(ws.OPCODES.CLOSE, Buffer.alloc(0));
 -    assert.strictEqual(frame[0], 0x88); // FIN + CLOSE
@@ -4211,7 +4087,7 @@ index 4f2540d..eb08d39 100644
 +    assert.strictEqual(frame.readUInt8(0), 0x88); // FIN + CLOSE
 +    assert.strictEqual(frame.readUInt8(1), 0);
    });
- 
+
    test('encodes pong frame with payload', () => {
      const payload = Buffer.from('ping-data');
      const frame = ws.encodeFrame(ws.OPCODES.PONG, payload);
@@ -4222,14 +4098,14 @@ index 4f2540d..eb08d39 100644
 +    assert.strictEqual(frame.readUInt8(1), payload.length);
 +    assert.strictEqual(frame.subarray(2).toString(), 'ping-data');
    });
- 
+
    test('server frames are never masked (per RFC 6455)', () => {
      const frame = ws.encodeFrame(ws.OPCODES.TEXT, Buffer.from('test'));
      // Bit 7 of byte 1 is the mask bit — must be 0 for server frames
 -    assert.strictEqual(frame[1] & 0x80, 0);
 +    assert.strictEqual(frame.readUInt8(1) & 0x80, 0);
    });
- 
+
    // ========== Frame Decoding ==========
 @@ -151,26 +151,26 @@ function runTests() {
      const mask = crypto.randomBytes(4);
@@ -4238,7 +4114,7 @@ index 4f2540d..eb08d39 100644
 -      masked[i] = buf[i] ^ mask[i % 4];
 +      masked.writeUInt8(buf.readUInt8(i) ^ mask.readUInt8(i % 4), i);
      }
- 
+
      let header;
      const finBit = fin ? 0x80 : 0x00;
      if (buf.length < 126) {
@@ -4299,7 +4175,7 @@ index 4f2540d..eb08d39 100644
 @@ -269,7 +269,7 @@ function runTests() {
      assert.strictEqual(result1.payload.toString(), 'first');
      assert.strictEqual(result1.bytesConsumed, frame1.length);
- 
+
 -    const result2 = ws.decodeFrame(combined.slice(result1.bytesConsumed));
 +    const result2 = ws.decodeFrame(combined.subarray(result1.bytesConsumed));
      assert(result2, 'Should decode second frame');
@@ -4312,7 +4188,7 @@ index 4f2540d..eb08d39 100644
 -      masked[i] = payload[i] ^ mask[i % 4];
 +      masked.writeUInt8(payload.readUInt8(i) ^ mask.readUInt8(i % 4), i);
      }
- 
+
      // Build frame manually
      const header = Buffer.alloc(6);
 -    header[0] = 0x81; // FIN + TEXT
@@ -4321,7 +4197,7 @@ index 4f2540d..eb08d39 100644
 +    header.writeUInt8(0x80 | payload.length, 1);
      mask.copy(header, 2);
      const frame = Buffer.concat([header, masked]);
- 
+
 @@ -300,7 +300,7 @@ function runTests() {
    test('encodes frame at exactly 65535 bytes (max 16-bit)', () => {
      const payload = Buffer.alloc(65535, 0x45);
@@ -4347,12 +4223,12 @@ index 4f2540d..eb08d39 100644
 -    assert.strictEqual(result.payload.slice(2).toString(), reason);
 +    assert.strictEqual(result.payload.subarray(2).toString(), reason);
    });
- 
+
    // ========== JSON Roundtrip ==========
 @@ -361,18 +361,16 @@ function runTests() {
      const payload = Buffer.from(JSON.stringify(msg));
      const serverFrame = ws.encodeFrame(ws.OPCODES.TEXT, payload);
- 
+
 -    // Verify we can read what we encoded (unmasked server frame)
 -    // Server frames don't go through decodeFrame (that expects masked),
 -    // so just verify the payload bytes directly
@@ -4371,7 +4247,7 @@ index 4f2540d..eb08d39 100644
 +    const decoded = JSON.parse(serverFrame.subarray(offset).toString());
      assert.deepStrictEqual(decoded, msg);
    });
- 
+
 diff --git a/tests/opencode/test-bootstrap-caching.mjs b/tests/opencode/test-bootstrap-caching.mjs
 index 55c4e9e..fa50aa6 100644
 --- a/tests/opencode/test-bootstrap-caching.mjs
@@ -4381,6 +4257,6 @@ index 55c4e9e..fa50aa6 100644
 -import { pathToFileURL } from 'url';
 +import fs from 'node:fs';
 +import { pathToFileURL } from 'node:url';
- 
+
  const [, , pluginPath, scenario] = process.argv;
- 
+

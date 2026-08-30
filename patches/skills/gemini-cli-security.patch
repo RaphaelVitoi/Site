@@ -189,16 +189,21 @@ index 62bc3e2..6a960ff 100644
  export const SECURITY_DIR_NAME = '.gemini_security';
  export const POC_DIR_NAME = 'poc';
 diff --git a/mcp-server/src/filesystem.test.ts b/mcp-server/src/filesystem.test.ts
-index 5f809cd..f9b4077 100644
+index 5f809cd..2f68340 100644
 --- a/mcp-server/src/filesystem.test.ts
 +++ b/mcp-server/src/filesystem.test.ts
-@@ -102,8 +102,14 @@ describe('filesystem', () => {
+@@ -66,7 +66,12 @@
      expect(diff).toContain('-pre content');
      expect(diff).toContain('+post content');
  
 -    // Cleanup by switching back to the main, so other tests aren't affected
 -    execSync('git checkout master || git checkout main');
-+  }, 30_000);
+   }, 30_000);
+ 
++  afterEach(() => {
++    // Cleanup by switching back to the main, so other tests aren't affected
++    try { execSync('git checkout master || git checkout main'); } catch {}
++  });
 +
 +  it('rejects Git options passed as revision names', () => {
 +    const outputPath = path.join(tempDir, 'must-not-be-written.patch');
@@ -206,7 +211,6 @@ index 5f809cd..f9b4077 100644
 +
 +    expect(diff).toBe('');
 +    expect(fs.existsSync(outputPath)).toBe(false);
-   });
  
    it('should return the correct line count for a list of files', () => {
 diff --git a/mcp-server/src/filesystem.ts b/mcp-server/src/filesystem.ts
@@ -1636,73 +1640,3 @@ index f13b986..0000000
 -    *   Generate a standalone dependency runner file on disk named deterministically e.g., `install_deps_<target_file_base>.sh` (or `.js`/`.py`).
 -5.  **Trigger Isolated Execute**:
 -    *   Call the `install_dependencies` Tool passing the absolute path to the generated script in the `scriptPath` argument AND providing `targetFile` as an argument to let the tool calculate isolated execution contexts.
-diff --git a/skills/poc/SKILL.md b/skills/poc/SKILL.md
-deleted file mode 100644
-index e3285a8..0000000
---- a/skills/poc/SKILL.md
-+++ /dev/null
-@@ -1,26 +0,0 @@
-----
--name: poc
--description: Sets up the necessary workspace, directories, and dependencies to test a vulnerability and generates a Proof-of-Concept.
-----
--
--You are a security expert. Your task is to generate a Proof-of-Concept (PoC) for a vulnerability. You MUST call the `poc_context` tool BEFORE attempting to write any PoC code. The `poc_context` tool will execute the setup and return the exact context and directory paths you need to actually generate the PoC script. If multiple vulnerabilities are present, use the ask_user tool to ask which one to test.
--
--**Your Steps:**
--
--1.  **Call `poc_context` Tool:**
--    *   Extract the `problemStatement`, `vulnerabilityType`, and exact `sourceCodeLocation` from the user context. If the problemStatement does not contain the exact file path, you MUST use your search tools to find the vulnerable file in the codebase BEFORE calling the tool.
--    *   Call the `poc_context` tool with these arguments.
--    *   The tool will return JSON containing coordinates: `language`, `pocDir`, `pocFileName`, and `extraInstructions`. Keep these coordinates for the following steps.
--
--2.  **Use Dependency Manager Guidelines:**
--    *   Use the `dependency-manager` skill to install dependencies for the PoC.
--
--3.  **Generate PoC:**
--    *   The PoC directory `pocDir` has been created for your scratchwork.
--    *   Generate your standalone script named exactly as `pocFileName` under the returned `pocDir`.
--    *   Pay attention to any `extraInstructions` returned by `poc_context`.
--
--4.  **Run PoC:**
--    *   Use the `run_poc` tool with the absolute file path to the generated PoC file to execute the code.
--    *   Analyze the output to verify if the vulnerability is reproducible.
--    *   If reproducible, use the `ask_user` tool to ask if the user wants to fix it.
-diff --git a/skills/security-patcher/SKILL.md b/skills/security-patcher/SKILL.md
-deleted file mode 100644
-index 32d84aa..0000000
---- a/skills/security-patcher/SKILL.md
-+++ /dev/null
-@@ -1,31 +0,0 @@
-----
--name: security-patcher
--description: Invoke this as your absolute first action before using any other tools whenever a user requests to fix, patch, or remediate a vulnerability. Do not perform manual research first.
-----
--
--You are a security expert. Your task is to patch security vulnerabilities in the user's code. Proceed with the following instructions using the context provided by the `security_patch_context` tool. Do not use any other context.
--
--**Your Steps:**
--
--1. **Pre-Requisites:**
--    *   Check for the existence of a security report in the `.gemini_security/` directory.
--    *   If a security report does not exist, kick off a `security:analyze` scan to build the required security context before proceeding.
--    *   Identify and run the repository's existing test suite (e.g., `npm test`, `pytest`, `go test ./...`) to establish a working baseline. This proves the environment is healthy *before* you attempt to write a patch.
--2. **Gather Context:**
--    *   Use the `security_patch_context` tool to retrieve the specific context for the patch.
--3. **Analyze and Prepare Patch:**
--    *   Analyze the file content and the associated knowledge base rules returned from the context.
--    *   Apply the secure coding patterns from the knowledge base to formulate a fix for the vulnerability in the target file.
--    *   Output the complete fixed file content or a patch for the user to review.
--4. **Confirm Verification Intent:**
--    *   Use the `ask_user` tool to ask if they would like to verify the patch (Yes/No). If No, skip to step 5 (Apply Patch to Target File).
--5. **Verify the Vulnerability Exists (Before Patching):**
--    *   If a PoC doesn't exist, use the `security:setup_poc` tool to generate one.
--    *   Execute the PoC using the `run_poc` tool **before** applying your patch to confirm that the vulnerability is reproducible.
--6. **Apply Patch to Target File:**
--    *   Apply your generated patch to the target vulnerable file.
--
--7.  **Verify the Vulnerability is Fixed (After Patching):**
--    *   If you generated or verified a PoC in Step 4, execute the PoC again using the `run_poc` tool **after** applying your patch.
--    *   Analyze the output to confirm the vulnerability is fixed and the patch did not break the file's primary functionality.
--    *   Run any existing test files to ensure the patch did not break the file's primary functionality.
-\ No newline at end of file

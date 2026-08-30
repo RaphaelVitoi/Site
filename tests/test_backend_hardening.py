@@ -323,7 +323,6 @@ def test_o_motor_de_rag_declarado_e_o_instalado():
     CONSTRUIDO. Nada nunca acusou, porque nome errado nao levanta excecao.
     """
     import importlib.util
-    from pathlib import Path
 
     raiz = Path(__file__).resolve().parent.parent
     lancedb_instalado = importlib.util.find_spec("lancedb") is not None
@@ -349,7 +348,8 @@ def test_o_motor_de_rag_declarado_e_o_instalado():
             abria = em_docstring
             if marcas % 2 == 1:
                 em_docstring = not em_docstring
-            if abria or em_docstring or linha.lstrip().startswith(("#", "*")):
+            uma_linha_so = not abria and marcas >= 2 and marcas % 2 == 0
+            if abria or em_docstring or uma_linha_so or linha.lstrip().startswith(("#", "*")):
                 continue
             if "LanceDB" in linha or "lancedb" in linha:
                 ofensores.append(f"{arq.name}:{n}: {linha.strip()[:90]}")

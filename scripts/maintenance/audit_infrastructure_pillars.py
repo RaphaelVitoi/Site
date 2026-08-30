@@ -16,7 +16,6 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 NEXUS_ZONE = BASE_DIR / "temp" / "nexus_zone"
@@ -28,7 +27,8 @@ BRAIN_DIR = BASE_DIR.parent / "antigravity" / "brain"
 SECRET_PATTERNS = [
     re.compile(r"(?:AIzaSy[A-Za-z0-9-_]{33})"),  # Google Gemini / Firebase API Key
     re.compile(r"(?:sk-[A-Za-z0-9-_]{32,})"),  # OpenAI / Anthropic Secret Key
-    re.compile(r"(?:ghp_[A-Za-z0-9]{36})"),  # GitHub Personal Token
+    re.compile(r"(?:gh[pousr]_[A-Za-z0-9]{36,})"),  # GitHub Personal Token (Classic)
+    re.compile(r"(?:github_pat_[A-Za-z0-9_]{82,})"),  # GitHub Fine-Grained Personal Access Token
     re.compile(r"(?:Bearer\s+[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*)"),  # JWT
 ]
 

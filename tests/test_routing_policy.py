@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 
 import core.config as cfg
+from core.subagents_mesh import SUBAGENT_MODEL_MAP
 from llm.model_registry import MODEL_REGISTRY
 from llm.routing_policy import (
     AGENTES,
@@ -203,8 +204,6 @@ def test_o_modelo_de_todo_subagente_tem_custo_zero():
 
     Nao ha copia da tabela aqui: o teste le `SUBAGENT_MODEL_MAP` e exige que
     cada modelo esteja na frota local declarada em data/ollama_models.json."""
-    from core.subagents_mesh import SUBAGENT_MODEL_MAP  # noqa: PLC0415
-
     fora = sorted({m for m in SUBAGENT_MODEL_MAP.values() if not e_local(m)})
     assert not fora, (
         f"subagente com modelo fora da frota local: {fora}. O invariante do "
@@ -215,13 +214,10 @@ def test_o_modelo_de_todo_subagente_tem_custo_zero():
 
 
 def test_nome_que_e_agente_e_tier_resolve_como_agente():
-    """`implementor`, `curator`, `architect` e `validador` existem nas duas
-    familias. A precedencia de `_classe_de` sempre foi AGENTES primeiro, e a
-    recusa acima nao pode ter mudado isso."""
+    """Valida a separacao total de namespaces: nao ha colisao de nomes entre os
+    19 agentes customizados e os 15 subagentes apos a renomeacao dos 4 subagentes."""
     ambos = sorted(set(SUBAGENTES) & set(AGENTES))
-    assert ambos, "a sobreposicao sumiu; releia a recusa em decidir()"
-    for alvo in ambos:
-        assert rotear(alvo) == ROTAS[AGENTES[alvo][1]].primario
+    assert not ambos, f"sobreposicao nao resolvida: {ambos}"
 
 
 #  Assimetria e escalonamento

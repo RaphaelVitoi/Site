@@ -1,5 +1,7 @@
-# pylint: disable=logging-fstring-interpolation, broad-exception-caught, redefined-outer-name, line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, import-outside-toplevel
+# pylint: disable=logging-fstring-interpolation, broad-exception-caught, redefined-outer-name, line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, import-outside-toplevel, too-many-lines
 # pyright: reportMissingImports=false
+
+from __future__ import annotations
 
 import asyncio
 import json
@@ -9,7 +11,7 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 import aiofiles
 
@@ -90,15 +92,15 @@ class LanceDBBackend:
         self,
         ids: list[str],
         texts: list[str],
-        vectors: list[list[float]],
+        vectors: Sequence[Sequence[float]] | Sequence[Any],
         metadatas: list[dict],
     ):
         now = time.time()
         records = []
-        for i in range(len(ids)):
+        for i, doc_id in enumerate(ids):
             records.append(
                 {
-                    "id": ids[i],
+                    "id": doc_id,
                     "vector": vectors[i],
                     "text": texts[i],
                     "agent": metadatas[i].get("agent", "Unknown"),
@@ -119,7 +121,7 @@ class LanceDBBackend:
 
     def search_hybrid(
         self,
-        query_vector: list[float],
+        query_vector: Sequence[float] | Any,
         query_text: str,
         limit: int = 5,
     ) -> list[dict]:
@@ -639,11 +641,11 @@ class MemoryRAG:
         ext = file_path.suffix.lower()
         if ext == ".docx":
             return await self._extract_docx(file_path)
-        elif ext == ".pdf":
+        if ext == ".pdf":
             return await self._extract_pdf(file_path)
-        elif ext == ".csv":
+        if ext == ".csv":
             return await self._extract_csv(file_path)
-        elif ext == ".xlsx":
+        if ext == ".xlsx":
             return await self._extract_xlsx(file_path)
         return await self._extract_fallback(file_path)
 

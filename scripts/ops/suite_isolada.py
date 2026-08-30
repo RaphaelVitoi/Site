@@ -113,9 +113,6 @@ def aplicar_sujo(repo: Path, destino: Path, incluir_novos: bool = False) -> tupl
     if nomes.returncode != 0:
         return False, "nao foi possivel listar as modificacoes do working tree"
     arquivos = [linha for linha in nomes.stdout.splitlines() if linha.strip()]
-    if not arquivos:
-        return True, "working tree limpo -- nada a copiar"
-
     if incluir_novos:
         # `--others --exclude-standard` = nao rastreado E nao ignorado. Fica
         # atras de flag de proposito: numa maquina com duas sessoes, arquivo
@@ -124,6 +121,9 @@ def aplicar_sujo(repo: Path, destino: Path, incluir_novos: bool = False) -> tupl
         novos = _git("ls-files", "--others", "--exclude-standard", cwd=repo)
         if novos.returncode == 0:
             arquivos += [linha for linha in novos.stdout.splitlines() if linha.strip()]
+
+    if not arquivos:
+        return True, "working tree limpo -- nada a copiar"
 
     copiados = removidos = 0
     for rel in arquivos:

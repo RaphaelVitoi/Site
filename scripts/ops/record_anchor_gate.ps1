@@ -42,9 +42,13 @@ function Add-Erro  { param([string]$m) $script:erros.Add($m) }
 function Add-Aviso { param([string]$m) $script:avisos.Add($m) }
 
 # --- arquivos e linhas em stage --------------------------------------------
+$repoRoot = (& git rev-parse --show-toplevel 2>$null)
+if (-not $repoRoot) {
+    $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+}
 $difArgs = if ($Staged) { @('diff', '--cached') } else { @('diff', 'HEAD') }
 
-$arquivos = & git @difArgs --name-only --diff-filter=ACM 2>$null
+$arquivos = & git -C $repoRoot @difArgs --name-only --diff-filter=ACM 2>$null
 if (-not $arquivos) {
     Write-Host "[ANCORA] Nada em stage. Nada a verificar." -ForegroundColor DarkGray
     exit 0
@@ -57,7 +61,7 @@ if (-not $arquivos) {
 # expor. Divida preexistente continua fora: so linhas ADICIONADAS contam.
 function Get-LinhasAdicionadas {
     param([string]$Arquivo)
-    return @(& git @difArgs --unified=0 --diff-filter=ACM -- $Arquivo 2>$null |
+    return @(& git -C $repoRoot @difArgs --unified=0 --diff-filter=ACM -- $Arquivo 2>$null |
         Where-Object { $_ -match '^\+' -and $_ -notmatch '^\+\+\+' } |
         ForEach-Object { $_.Substring(1) })
 }
@@ -130,8 +134,9 @@ foreach ($linha in $adicionadas) {
 $camposObrigatorios = @('id', 'tipo', 'escopo', 'autor', 'criado_em', 'verificado', 'nao_verificado')
 
 foreach ($arq in ($arquivos | Where-Object { $_ -like '*.md' })) {
-    if (-not (Test-Path $arq)) { continue }
-    $linhas = Get-Content -LiteralPath $arq -Encoding UTF8 -ErrorAction SilentlyContinue
+    $caminhoCompleto = Join-Path $repoRoot $arq
+    if (-not (Test-Path $caminhoCompleto)) { continue }
+    $linhas = Get-Content -LiteralPath $caminhoCompleto -Encoding UTF8 -ErrorAction SilentlyContinue
     if (-not $linhas) { continue }
 
     $temFm = ($linhas[0] -eq '---')
@@ -154,7 +159,7 @@ foreach ($arq in ($arquivos | Where-Object { $_ -like '*.md' })) {
         continue
     }
 
-    $bloco = $linhas[1..($fim - 1)]
+    $bloco = @($linhas[1..($fim - 1)])
     $chaves = @()
     foreach ($l in $bloco) {
         if ($l -match '^([a-z_]+):') { $chaves += $Matches[1] }

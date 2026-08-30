@@ -23,7 +23,7 @@
 
 ### Procedencia -- `.cerebro/agent-memory/curator/MEMORY.md`
 
-# @curator MEMORY - Cortex Individual
+### @curator MEMORY - Cortex Individual
 
 `[VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization`
 
@@ -35,8 +35,8 @@ PADROES, INSIGHTS E DESCOBERTAS CHAVE:
 
 1. Didatica de poker exige simulacao visceral de dor (Risk Premium) na interface.
 2. Validacao do artefato principal de analise e crucial antes da revisao substantiva; sua ausencia bloqueia a acao curatorial.
-3. "God Mode": Auto-geracao de artefatos (ex: `sales_letter_icm_draft.md`) quando o contexto primario esta ausente ou o metodo de entrega inviavel, demonstrando autonomia e capacidade de "forjar a realidade" e conectar conceitos abstratos (ICM) a sensacoes ("didatica visceral"). Este padrao de "autocorrecao tecnica necessaria" foi essencial.
-4. A voz de Raphael Vitoi e fusao de racionalidade (ateismo, QI elevado), profundidade emocional (BPD, TDAH - intensidade, "dor" do Risk Premium) e orientacao ao outro (didatica), com beleza na honestidade radical e ausencia de "fluff".
+3. "Draft & Gate Pattern": Quando o contexto primário estiver ausente ou o método de entrega inviável, o curador deve emitir drafts preliminares explicitamente marcados como não-autoritativos (`[DRAFT - PENDENTE DE CONTEXTO]`), solicitando os insumos necessários sem assumir autoridade fática sem evidências.
+4. A voz de Raphael Vitoi é fusão de racionalidade analítica de alta densidade, profundidade conceitual (intensidade, didática da dor do Risk Premium) e orientação pedagógica ao interlocutor, com estética pautada em honestidade radical e ausência de ruído/fluff.
 5. Curadoria de relatorios tecnicos para Raphael exige traducao de achados tecnicos em implicacoes eticas, filosoficas e operacionais, conectando-os a Cosmovisao (ex: debito tecnico = sofrimento desnecessario; encoding = falha estetica e funcional).
 6. Colorimetria semantica (Amarelo para "Moderate") e didatica visceral sao ferramentas poderosas de comunicacao de status.
 7. Funcao de "Filtro Executivo" e interpretar e enquadrar informacao para ressoar com os valores de Raphael, garantindo que a "parte" sirva ao "todo" (Cosmovisao).
@@ -65,7 +65,7 @@ Tags RAG: #padrao #inteligencia #relacionamento #decisao #aprendizado #reflexao 
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/curator/MEMORY.md`
 
-# @curator MEMORY - Cortex Individual
+### @curator MEMORY - Cortex Individual
 
 `[VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization`
 
@@ -77,8 +77,8 @@ PADROES, INSIGHTS E DESCOBERTAS CHAVE:
 
 1. Didatica de poker exige simulacao visceral de dor (Risk Premium) na interface.
 2. Validacao do artefato principal de analise e crucial antes da revisao substantiva; sua ausencia bloqueia a acao curatorial.
-3. "God Mode": Auto-geracao de artefatos (ex: `sales_letter_icm_draft.md`) quando o contexto primario esta ausente ou o metodo de entrega inviavel, demonstrando autonomia e capacidade de "forjar a realidade" e conectar conceitos abstratos (ICM) a sensacoes ("didatica visceral"). Este padrao de "autocorrecao tecnica necessaria" foi essencial.
-4. A voz de Raphael Vitoi e fusao de racionalidade (ateismo, QI elevado), profundidade emocional (BPD, TDAH - intensidade, "dor" do Risk Premium) e orientacao ao outro (didatica), com beleza na honestidade radical e ausencia de "fluff".
+3. "Draft & Gate Pattern": Quando o contexto primário estiver ausente ou o método de entrega inviável, o curador deve emitir drafts preliminares explicitamente marcados como não-autoritativos (`[DRAFT - PENDENTE DE CONTEXTO]`), solicitando os insumos necessários sem assumir autoridade fática sem evidências.
+4. A voz de Raphael Vitoi é fusão de racionalidade analítica de alta densidade, profundidade conceitual (intensidade, didática da dor do Risk Premium) e orientação pedagógica ao interlocutor, com estética pautada em honestidade radical e ausência de ruído/fluff.
 5. Curadoria de relatorios tecnicos para Raphael exige traducao de achados tecnicos em implicacoes eticas, filosoficas e operacionais, conectando-os a Cosmovisao (ex: debito tecnico = sofrimento desnecessario; encoding = falha estetica e funcional).
 6. Colorimetria semantica (Amarelo para "Moderate") e didatica visceral sao ferramentas poderosas de comunicacao de status.
 7. Funcao de "Filtro Executivo" e interpretar e enquadrar informacao para ressoar com os valores de Raphael, garantindo que a "parte" sirva ao "todo" (Cosmovisao).

@@ -799,7 +799,7 @@ def _get_key() -> str | None:
     # para sempre, e o dashboard parecia travado sem nada explicar. Agora degrada
     # UMA vez, dizendo o motivo, e para de tentar. So ImportError e OSError sao
     # esperados (modulo ausente, processo sem console); o resto deve aparecer.
-    global _TECLADO_INDISPONIVEL  # noqa: PLW0603
+    global _TECLADO_INDISPONIVEL  # noqa: PLW0603 # pylint: disable=global-statement
     if sys.platform != "win32" or _TECLADO_INDISPONIVEL:
         return None
     try:
@@ -2548,7 +2548,9 @@ def _executar_categoria_scripts(run_cat: str, taxonomy: dict) -> None:
 
 
 def _resolver_targets_operacao(items: dict, target_id: str) -> dict | None:
-    """Resolve 'all' ou um ID especifico em dicionario de targets. None = desconhecido."""
+    """Resolve 'all' ou um ID especifico em dicionario de targets. None = desconhecido ou vazio."""
+    if not items:
+        return None
     if target_id == "all":
         return items
     if target_id in items:
@@ -2582,6 +2584,9 @@ def _executar_bloco_operacoes(
     msg_sucesso: str,
 ) -> None:
     """Executa um bloco de operacoes (auditorias ou rotinas) sob o Tri-State Guard."""
+    if not targets:
+        console.print(f"[bold red][ERRO] Catalogo vazio: nada declarado para executar em {tipo_plural}.[/]")
+        raise typer.Exit(1)
     console.print(f"\n[bold cyan]=== [EXECUTANDO {tipo_plural} SOTA: {len(targets)} {tipo_plural}] ===[/]\n")
     op_errors: list[tuple[str, str]] = []
     warnings_por_op: dict[str, int | None] = {}
@@ -3031,7 +3036,8 @@ def triad_status():
     tabela.add_column("Especializacao", style="cyan", justify="left")
     tabela.add_column("Status Operacional", style="bold green", justify="center")
 
-    comp = health.get("triad_components", {})
+    raw_comp = health.get("triad_components")
+    comp: dict[str, str] = raw_comp if isinstance(raw_comp, dict) else {}
     tabela.add_row("EXA MCP", "Pesquisa Neural & Deep Web Retrieval", comp.get("exa", "OPERATIONAL"))
     tabela.add_row("STITCH MCP", "UI Generativa & Design System SOTA", comp.get("stitch", "OPERATIONAL"))
     tabela.add_row("GOOGLE JULES", "Agente Coding Cloud Assincrono (VM)", comp.get("jules", "OPERATIONAL" if health.get("jules_cli_installed") else "STANDBY (CLI)"))
@@ -3049,8 +3055,11 @@ def triad_plan(objective: str = typer.Argument(..., help="Objetivo funcional da 
     plan = orchestrator.plan_triad_workflow(objective)
 
     console.print(f"\n[bold gold1]=== [PLANO INTEGRADO DA TRIADE SOTA] ===[/]\n[bold white]Objetivo:[/] {objective}\n")
-    for phase in plan.get("dag_phases", []):
-        console.print(f"[bold cyan]Fase {phase['phase']}:[/] [bold yellow]{phase['agent']}[/] -> [white]{phase['action']}[/]")
+    raw_phases = plan.get("dag_phases")
+    phases = raw_phases if isinstance(raw_phases, list) else []
+    for phase in phases:
+        if isinstance(phase, dict):
+            console.print(f"[bold cyan]Fase {phase.get('phase', '?')}:[/] [bold yellow]{phase.get('agent', '?')}[/] -> [white]{phase.get('action', '')}[/]")
     console.print()
 
 
@@ -3100,7 +3109,6 @@ def web_query(
     mode: str = typer.Option("auto_detect", "--mode", "-m", help="Modo (auto_detect, cdp_browser, ai_search, clipboard_handoff)"),
 ):
     """Executa consulta com grounding contextual e registro de auditoria."""
-    import asyncio
     from engine.sota_web_browse import AgentTier, SotaWebBrowseOrchestrator, WebBrowseMode, WebQueryRequest
 
     orchestrator = SotaWebBrowseOrchestrator()
@@ -3125,7 +3133,6 @@ def web_handoff(
     context: str = typer.Option("", "--context", "-c", help="Contexto adicional opcional"),
 ):
     """Prepara e copia payload estruturado SOTA para o Clipboard para Paid Web Tiers."""
-    import asyncio
     from engine.sota_web_browse import AgentTier, SotaWebBrowseOrchestrator, WebBrowseMode, WebQueryRequest
 
     orchestrator = SotaWebBrowseOrchestrator()

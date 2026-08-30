@@ -711,8 +711,7 @@ index ab85f69..a33f4a9 100644
    "version": "3.2.1",
    "packages": [
      {
--      "registryType": "npm",
-+      "registry_type": "npm",
+       "registryType": "npm",
        "identifier": "exa-mcp-server",
 -      "version": "3.2.1"
 +      "version": "3.2.1",

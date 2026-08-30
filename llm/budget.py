@@ -5,7 +5,6 @@ import contextlib
 import hashlib
 import logging
 import os
-import re
 import threading
 import time
 from datetime import UTC, datetime, timedelta

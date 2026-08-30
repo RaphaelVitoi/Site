@@ -23,7 +23,7 @@
 
 ### Procedencia -- `.cerebro/agent-memory/prompter/MEMORY.md`
 
-# @prompter MEMORY - O Cortex Individual
+### @prompter MEMORY - O Cortex Individual
 
 &gt; **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 

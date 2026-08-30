@@ -103,12 +103,13 @@ class SubagentTier(StrEnum):
     STREAMING_FIM = "streaming_fim_companion"
     UI = "ui_design_curator"
     RESEARCH = "research"
-    VALIDADOR = "validador"
-    IMPLEMENTOR = "implementor"
-    CURATOR = "curator"
-    ARCHITECT = "architect"
+    VALIDADOR = "sub_validador"
+    IMPLEMENTOR = "sub_implementor"
+    CURATOR = "sub_curator"
+    ARCHITECT = "sub_architect"
     GENERALIST = "generalist"
     SELF = "self"
+    FLUTTER_A11Y = "flutter_a11y_agent"
 
 
 SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
@@ -126,6 +127,7 @@ SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
     SubagentTier.ARCHITECT: "gemma4:31b-cloud",
     SubagentTier.GENERALIST: "gemma4:31b-cloud",
     SubagentTier.SELF: "qwen-code-surgical:latest",
+    SubagentTier.FLUTTER_A11Y: "qwen-code-surgical:latest",
 }
 
 
@@ -203,6 +205,10 @@ class SubagentMeshController:
         # 7. Heuristica de Autocompletion / FIM
         if any(term in desc_lower for term in ("autocomplete", "fim", "inline", "tab")):
             return SubagentTier.STREAMING_FIM
+
+        # 8. Heuristica Flutter / Dart / A11y / WCAG
+        if any(term in desc_lower for term in ("flutter", "dart", "a11y", "wcag", "semantics", "tap_target", "screen_reader")):
+            return SubagentTier.FLUTTER_A11Y
 
         return SubagentTier.SELF
 

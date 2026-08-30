@@ -314,7 +314,7 @@ decide RECUSA, nao LENTIDAO.
 
 Um numero muda: os testes do guard foram renomeados para minusculas (N802). O
 comportamento medido e o mesmo; tres deles passavam por acaso e agora passam por
-contrato -- ver [[registro-2026-08-29-shell-true-nos-catalogos]] e a mensagem do
+contrato formal de mocks na suite `tests/test_guard_memoria.py` e na mensagem do
 commit desta revisao.
 
 ## Revisao de ancora -- 2026-08-29, pendencias 9 e 10 fechadas

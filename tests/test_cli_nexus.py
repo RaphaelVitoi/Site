@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 """Auditoria Estrita do Orquestrador SOTA (nexus.py)."""
 
 from pathlib import Path
@@ -8,6 +9,7 @@ import sys
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
+from typer import Exit as TyperExit
 from typer.testing import CliRunner
 
 import scripts.cli.nexus as nexus_mod
@@ -466,9 +468,10 @@ def test_proxy_que_nunca_sobe_reprova():
         patch.object(nexus_mod, "_is_port_open", return_value=False),
         patch.object(nexus_mod, "start_gemma"),
         patch.object(nexus_mod.time, "sleep"),
-        pytest.raises(Exception, match="1|Exit"),
+        pytest.raises(TyperExit) as exc_info,
     ):
         _ensure_active_model("12b")
+    assert exc_info.value.exit_code == 1
 
 
 def test_teclado_indisponivel_avisa_uma_vez_e_para():

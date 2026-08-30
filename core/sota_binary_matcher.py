@@ -3,7 +3,7 @@ SOTA High-Performance Binary Search & Context Resolution Engine
 Protocol Chico SOTA v7.0 GOLD - Raymond Hill (uBOL) Algorithmic Port for Python / Nexus
 """
 
-from typing import List, Optional, Tuple
+from __future__ import annotations
 
 
 def sort_key(s: str) -> tuple[int, str]:
@@ -11,7 +11,7 @@ def sort_key(s: str) -> tuple[int, str]:
     return (len(s), s)
 
 
-def binary_search_length_lex(haystack: list[str], needle: str, high: Optional[int] = None) -> int:
+def binary_search_length_lex(haystack: list[str], needle: str, high: int | None = None) -> int:
     """
     Executa busca binaria de alta precisao baseada em comprimento e ordem lexicografica.
     """

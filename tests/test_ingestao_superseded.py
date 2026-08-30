@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name, protected-access
 """Arvore que se declara superada nao entra no indice.
 
 Ao consolidar a memoria agentica em 2026-08-28, `.claude/AGENTS-MEMORY` ganhou um
@@ -24,31 +25,26 @@ from __future__ import annotations
 
 import asyncio
 import json
-import warnings
 from pathlib import Path
 
 import pytest
+from memory_rag import MARCADOR_SUPERADO, MemoryRAG
 
-warnings.filterwarnings("ignore")
 RAIZ = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(scope="module")
 def rag():
-    from memory_rag import MemoryRAG  # noqa: PLC0415
-
     return MemoryRAG()
 
 
-def _alvos(rag, base: Path) -> set[Path]:
+def _alvos(rag_instance: MemoryRAG, base: Path) -> set[Path]:
     manifesto = json.loads((RAIZ / "rag_ingestion_manifest.json").read_text(encoding="utf-8"))
-    return asyncio.run(rag._collect_target_files_async(manifesto, base))
+    return asyncio.run(rag_instance._collect_target_files_async(manifesto, base))
 
 
 def test_arvore_superada_do_repositorio_fica_fora(rag):
     """O caso real: `.claude/AGENTS-MEMORY`, superada na consolidacao."""
-    from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
-
     marcadas = {m.parent.resolve() for m in RAIZ.rglob(MARCADOR_SUPERADO)}
     assert marcadas, "nenhuma arvore declarada superada -- este teste ficou sem alvo"
 
@@ -61,8 +57,6 @@ def test_o_marcador_e_o_que_exclui_e_nada_mais(rag, tmp_path):
     """Os DOIS estados, na mesma arvore sintetica: sem marcador entra, com
     marcador sai. Sem isto, uma exclusao que nao exclui nada passaria -- foi
     exatamente o que aconteceu na primeira versao."""
-    from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
-
     viva = tmp_path / "viva"
     morta = tmp_path / "morta"
     for d in (viva, morta):
@@ -87,8 +81,6 @@ def test_o_marcador_e_o_que_exclui_e_nada_mais(rag, tmp_path):
 def test_o_proprio_marcador_nao_e_indexado(rag, tmp_path):
     """`SUPERSEDED.md` e um `.md` dentro da arvore que ele exclui. Se entrasse,
     o indice ganharia um documento dizendo que aquele conteudo nao vale."""
-    from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
-
     d = tmp_path / "morta"
     d.mkdir()
     (d / "doc.md").write_text("# x\n", encoding="utf-8")
@@ -108,8 +100,6 @@ def test_a_exclusao_funciona_com_base_path_relativo(rag, tmp_path, monkeypatch):
     prometendo uma grandeza que a medicao nao cobria. Agora o teste entra no
     diretorio e passa `Path(".")` de verdade -- que e a forma que o chamador de
     producao usa, e a que quebrou."""
-    from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
-
     for nome in ("morta", "viva"):
         (tmp_path / nome).mkdir()
         (tmp_path / nome / "doc.md").write_text("# x\n\nconteudo de teste.\n", encoding="utf-8")

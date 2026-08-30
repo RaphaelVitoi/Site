@@ -291,7 +291,6 @@
   "securecoder.disabledRules": ["jsx-not-internationalized", "i18n", "internationalization"],
   "google.cloud.project": "original-498419",
   "google.cloud.billingQuotaProject": "original-498419",
-  "cloudcode.project": "original-498419",
   "cloudcode.enableTelemetry": false,
   "cloudcode.autoDependencies": "on",
   "cloudcode.cloudRun.showExplorer": true,
