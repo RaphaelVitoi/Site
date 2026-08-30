@@ -4,14 +4,13 @@ tipo: auditoria
 escopo: Site
 ecossistema: gemini-antigravity
 autor: sota-routine-daemon@scripts/routines/audit_monthly_modus_operandi_and_routing.py
-criado_em: 2026-08-30T13:02-03:00
-atualizado_em: 2026-08-30T13:20-03:00
-commit: ba052a19
+criado_em: 2026-08-30T15:40-03:00
+commit: b1f24239
 classes: [interno, externo, medido]
 fontes:
-  - {fonte: llm/model_registry.py, consultado_em: 2026-08-30T13:02-03:00, versao_alvo: local}
-  - {fonte: llm/routing_policy.py, consultado_em: 2026-08-30T13:02-03:00, versao_alvo: local}
-  - {fonte: data/agents_manifest.json, consultado_em: 2026-08-30T13:02-03:00, versao_alvo: local}
+  - {fonte: llm/model_registry.py, consultado_em: 2026-08-30T15:40-03:00, versao_alvo: local}
+  - {fonte: llm/routing_policy.py, consultado_em: 2026-08-30T15:40-03:00, versao_alvo: local}
+  - {fonte: data/agents_manifest.json, consultado_em: 2026-08-30T15:40-03:00, versao_alvo: local}
 ttl_dias: 90
 config_medida:
   python: '3.14.6'
@@ -33,10 +32,9 @@ nao_verificado:
   - "as rotas suspeitas foram CONTADAS, nao revalidadas: reconsulta ao fornecedor e ato humano e continua pendente."
 supersede: null
 ---
-
 # RELATORIO DE AUDITORIA MENSAL: MODUS OPERANDI & ROUTING SOTA v8.0 GOLD
 
-> **Data de Execucao:** 2026-08-30 13:02:52
+> **Data de Execucao:** 2026-08-30 15:40:20
 > **Mes de Referencia:** 2026_08
 > **Status Global:** **APROVADO**
 > **Auditor Responsavel:** Chico / SOTA Routine Daemon
