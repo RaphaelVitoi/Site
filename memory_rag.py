@@ -804,7 +804,7 @@ class MemoryRAG:
                 logger.info("[RAG] Tentando expansao de query via Gemini (Free Tier)...")
                 response, _ = await call_gemini(
                     session,
-                    "gemini-2.0-flash",
+                    "gemini-3.5-flash-lite",
                     system_prompt,
                     user_prompt,
                     GEMINI_KEYS[0],
@@ -820,7 +820,7 @@ class MemoryRAG:
                 logger.info("[RAG] Tentando expansao de query via OpenRouter (Fallback)...")
                 response, _ = await call_openrouter(
                     session,
-                    "google/gemini-2.0-flash",
+                    "google/gemini-3.5-flash-lite",
                     system_prompt,
                     user_prompt,
                     OPENROUTER_KEYS[0],
