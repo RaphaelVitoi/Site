@@ -159,7 +159,7 @@
     "routing_pattern": "prompt|contexto|instrucao|comando|linguagem|diretriz|formato|otimiz|refin",
     "model_preference": "fast_operations",
     "color": "orchid",
-    "primary_model": "gemini-3.7-flash",
+    "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "neuropsychology-high-performance"
@@ -168,7 +168,7 @@
       "core/sota_context_engine.py"
     ],
     "fallback_model": "gemma4:e4b",
-    "tier": "Tier 3: Prompt Engineering SOTA",
+    "tier": "Tier 3: Prompt Engineering SOTA (Free Tier Workhorse)",
     "memory_affinity": "RAM_CACHE"
   },
   "auditor": {
@@ -181,7 +181,7 @@
     "routing_pattern": "audit|revis|check|seguran|integridade|conformidade|compliance|etica|governanca|qualidade",
     "model_preference": "deep_thinking",
     "color": "indian_red",
-    "primary_model": "gemini-3.7-flash",
+    "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "sota-ecosystem-auditor",
       "firebase-security-rules-auditor",
@@ -193,7 +193,7 @@
       "scripts/ops/sri_integrity_verifier.py"
     ],
     "fallback_model": "qwen2.5-coder:1.5b",
-    "tier": "Tier 3: Quality Gate & CVE Audit",
+    "tier": "Tier 3: Quality Gate & CVE Audit (Free Tier Workhorse)",
     "memory_affinity": "RAM_CACHE & STATIC_ANALYSIS"
   },
   "implementor": {
@@ -347,7 +347,7 @@
     "routing_pattern": "vulnerab|xss|acesso|autentica|login|senha|rbac|permissao|auth|vazamento|firewall|cripto|ameaca|risco|seguranca|privacidade",
     "model_preference": "deep_thinking",
     "color": "sienna",
-    "primary_model": "gemini-3.7-flash",
+    "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "credentials",
       "firebase-security-rules-auditor",
@@ -359,7 +359,7 @@
       "scripts/ops/sri_integrity_verifier.py"
     ],
     "fallback_model": "qwen2.5-coder:1.5b",
-    "tier": "Tier 3: Zero Trust & Semgrep",
+    "tier": "Tier 3: Zero Trust & Semgrep (Free Tier Workhorse)",
     "memory_affinity": "RAM_CACHE & SHA512_BUCKETS"
   },
   "bibliotecario": {
@@ -396,7 +396,7 @@
     "routing_pattern": "backup|manuten|atualiz|cron|tarefa|rotina|limpeza|otimizacao|agend",
     "model_preference": "fast_operations",
     "color": "dark_khaki",
-    "primary_model": "gemini-3.7-flash",
+    "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "skill-repair",
       "mcp-extension-troubleshooting",
@@ -408,7 +408,7 @@
       "scripts/routines/sync_agents_reality.ps1"
     ],
     "fallback_model": "qwen2.5-coder:1.5b",
-    "tier": "Tier 3: Skill Governance & Tools",
+    "tier": "Tier 3: Skill Governance & Tools (Free Tier Workhorse)",
     "memory_affinity": "RAM_CACHE & FASTMCP"
   },
   "historian": {
