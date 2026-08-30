@@ -21,6 +21,17 @@ from llm.routing import _infer_provider_for_model, _score_model
 from utils.cache import SOTACache
 from utils.ram_optimizer import optimize_ollama_keepalive
 
+# Ate 2026-08-30 o manifesto era localizado por um caminho absoluto para o
+# diretorio de perfil do operador (o literal nao e reproduzido aqui de
+# proposito, para nao devolver ao repositorio a string que este commit remove).
+# O arquivo existe; o caminho e que so existia numa maquina. O teste de
+# integridade dos 19 agentes falhava em qualquer clone, e a fase 5 do
+# `cwv_gate.ps1` nao pode pegar isto: ela compara PREFIXOS DE DIRETORIO dos
+# arquivos staged, entao cobre um arquivo *sob* `.gemini/`, nunca um literal
+# `C:\Users\...` *dentro* do conteudo. Ancorar no proprio arquivo de teste faz
+# o caminho seguir o repositorio para onde ele for.
+RAIZ = Path(__file__).resolve().parent.parent
+
 
 @pytest.fixture
 def queue_manager(tmp_path: Path) -> QueueManager:
@@ -141,8 +152,8 @@ def test_provider_inference_across_all_tiers(model_name: str, expected_provider:
 # =========================================================================
 def test_all_19_agents_manifest_integrity():
     """Valida que todos os 19 agentes possuem modelos primarios, fallbacks e afinidade declarada."""
-    manifest_path = Path(r"C:\Users\rapha\.gemini\Site\data\agents_manifest.json")
-    assert manifest_path.exists(), "agents_manifest.json deve existir"
+    manifest_path = RAIZ / "data" / "agents_manifest.json"
+    assert manifest_path.exists(), f"agents_manifest.json deve existir em {manifest_path}"
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert len(manifest) == 19, f"Devem existir exatamente 19 agentes, encontrados {len(manifest)}"

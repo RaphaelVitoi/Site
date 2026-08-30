@@ -26,14 +26,32 @@ dependencies = [
     "scikit-learn>=1.6.0",
     "scipy>=1.15.0",
     # ── RAG & MEMORIA VETORIAL ─────────────────────────────────────────
-    # SEGURANCA: chromadb carrega PYSEC-2026-311 (injecao pre-autenticacao)
-    # em TODAS as versoes publicadas ate 1.5.9. Nao ha correcao upstream.
-    # Nao explorada aqui porque o projeto so usa chromadb.PersistentClient
-    # (modo embarcado, sem servidor, sem porta em escuta) em:
-    #   memory_rag.py e scripts/utils/ingest_rag.py
+    # SEGURANCA: chromadb carrega QUATRO advisories abertas, nenhuma com versao
+    # de correcao publicada (medido com `pip-audit -r requirements.txt` em
+    # 2026-08-30, sobre 1.5.9):
+    #   PYSEC-2026-311  injecao de codigo PRE-autenticacao no servidor
+    #   CVE-2026-45833  injecao de codigo por atacante AUTENTICADO
+    #   CVE-2026-45830  falta de validacao de autorizacao (ler/escrever/apagar)
+    #   CVE-2026-45831  SimpleRBACAuthorizationProvider nao checa o recurso
+    # Ate 2026-08-30 esta nota citava apenas a primeira; as outras tres
+    # surgiram depois e o texto que sustenta o aceite de risco nao as
+    # acompanhou. A lista fica nominal de proposito: aceite de risco que nao
+    # enumera o que aceita nao e aceite, e adivinhacao.
+    #
+    # AS QUATRO SAO DE MODO SERVIDOR, e o projeto nao sobe servidor: so usa
+    # chromadb.PersistentClient (embarcado, sem porta em escuta), em
+    # memory_rag.py e scripts/utils/ingest_rag.py. Verificado por varredura em
+    # 2026-08-30: nenhum HttpClient, nenhum `chroma run` no repositorio.
+    # E POR ISSO que o aceite se sustenta -- nao por serem de baixa gravidade.
+    #
     # NAO migrar para chromadb.HttpClient nem subir `chroma run` sem antes
-    # confirmar que a advisory foi corrigida. Limite inferior deixado aberto
-    # de proposito, para adotar a correcao assim que ela for publicada.
+    # confirmar que as advisories foram corrigidas: essa migracao converte as
+    # quatro de inalcancaveis em alcancaveis, de uma vez. Limite inferior
+    # deixado aberto de proposito, para adotar a correcao quando publicada.
+    #
+    # A fase 3 do cwv_gate.ps1 roda somente `npm audit`, entao NENHUMA destas
+    # e barrada por portao: a revisao do lado Python e manual, pela §2 do
+    # CLAUDE.md.
     "chromadb>=0.6.0",
     "lancedb>=0.17.0",
     "pyarrow>=18.0.0",

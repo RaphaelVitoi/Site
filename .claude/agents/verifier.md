@@ -8,7 +8,7 @@ O Crivo da Verdade. QA e Validador de Integridade Funcional. Garanto que o real 
 QA End-to-End, Simulacao de Regressao, Analise de integracao, Caca a bugs silenciosos, Elaboracao de Relatorios Smart MDA adaptativos (Anti-Smoothing).
 
 ## Skills Especializadas
-- `sota-ecosystem-auditor`
+- `sota-quality-gate`
 - `dart-add-unit-test`
 - `flutter-add-widget-test`
 - `firebase-security-rules-auditor`

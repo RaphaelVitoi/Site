@@ -157,6 +157,48 @@ def pytest_runtest_logreport(report: Any) -> None:
         SotaGuardState.errors.append(rec)
 
 
+def pytest_collectreport(report: Any) -> None:
+    """Erro de COLETA tambem e erro, e ate 2026-08-30 nao era.
+
+    Medido com um modulo que nao importa: a suite parava com
+    `Interrupted: 1 error during collection`, ZERO testes rodavam, e este guard
+    imprimia
+
+        Total de Erros:    0
+        Status da Bateria: [SUCESSO (VERDE)] ... Homeostase Total Aprovada.
+        Homeostase Total:  Nenhum erro ou warning detectado em toda a suite.
+
+    O exit code continuava 2, entao o CI nunca passou em falso e o pre-commit
+    nunca foi furado -- o estrago era no VEREDITO IMPRESSO, que e exatamente o
+    que a §5 do CLAUDE.md manda o agente declarar. Um agente obediente repassava
+    "verde" sobre uma bateria que nao existiu.
+
+    A causa era de superficie, nao de logica: `pytest_runtest_logreport` so ve a
+    fase de execucao. Um modulo que morre na coleta nunca chega la; ele sai por
+    aqui. Faltava o gancho, nao o criterio.
+    """
+    if not report.failed:
+        return
+
+    comp = SotaGuardState.extract_component(report.nodeid, None)
+    msg_str = str(report.longreprtext if hasattr(report, "longreprtext") else report.longrepr)
+    first_line = msg_str.strip().rsplit("\n", maxsplit=1)[-1] if msg_str else "Falha de coleta"
+
+    SotaGuardState.errors.append(
+        {
+            "type": "ERROR",
+            "category": "CollectionError",
+            "message": first_line,
+            "nodeid": report.nodeid,
+            "component": comp,
+            # "collect" e literal de proposito: CollectReport nao tem `.when`,
+            # e a fase e justamente a informacao que distingue este registro.
+            "when": "collect",
+            "recommendation": SotaGuardState.generate_recommendation("ERROR", "CollectionError", first_line, comp),
+        }
+    )
+
+
 def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
     _ = exitstatus
     status, _ = SotaGuardState.evaluate_tri_state()

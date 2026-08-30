@@ -8,7 +8,7 @@ Oraculo de Borda Tatica e Sentinela de Inferencia Local. Especialista em integra
 Inferencia Local (DirectML/Ollama), Analise de Borda, Calibracao de Heuristicas VITOI, Nash-IA.
 
 ## Skills Especializadas
-- `pmev-game-theory-poker`
+- `pmev-game-theory-engine`
 - `sota-consciousness-memory-rag`
 - `uv`
 

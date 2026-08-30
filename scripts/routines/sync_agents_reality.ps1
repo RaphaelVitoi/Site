@@ -74,7 +74,15 @@ foreach ($Agent in $AgentNames) {
     }
 
     if (-not (Test-Path $MemoryPath)) {
-        $MemTemplate = "# MEMORIA SIMBIOTICA - @$Agent`n`n> **Status:** Ativo e Otimizado (``$Model``) | **Aura:** ``$Color`` `n> **Padroes:** $($AgentProps.padroes)`n`n## Reflexoes e Insight SOTA`n- A aguardar a primeira interacao expansiva no novo Kernel.`n`n## Propostas Evolutivas`n- $($AgentProps.proposta)"
+        # $Model foi removido em 2026-08-21 junto com o **Motor Base** do
+        # documento de identidade (ver comentario acima), mas ESTE template
+        # continuou interpolando a variavel. Sem Set-StrictMode o PowerShell
+        # resolve variavel inexistente como string vazia em silencio, entao a
+        # memoria de um agente novo nasceria com "Ativo e Otimizado ()".
+        # Latente ate 2026-08-30 so porque o bloco roda apenas quando MEMORY.md
+        # ainda nao existe, e os 19 ja existiam. O status nao repete valor
+        # versionado: aponta para a fonte, pelo mesmo motivo que o Motor Base.
+        $MemTemplate = "# MEMORIA SIMBIOTICA - @$Agent`n`n> **Status:** Ativo e Otimizado | **Aura:** ``$Color`` `n> **Padroes:** $($AgentProps.padroes)`n`n## Reflexoes e Insight SOTA`n- A aguardar a primeira interacao expansiva no novo Kernel.`n`n## Propostas Evolutivas`n- $($AgentProps.proposta)"
         Write-TextSOTA -Path $MemoryPath -Content $MemTemplate -Encoding $Utf8NoBom
         Write-Host "[ + ] Memoria base criada para @$Agent" -ForegroundColor Green
     }
