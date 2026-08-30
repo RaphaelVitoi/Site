@@ -107,6 +107,38 @@
         "pyproject.toml"
       ]
     },
+    "qwen_autocomplete_05b": {
+      "name": "Qwen 2.5 0.5B Autocomplete (400 MB)",
+      "model_path": "qwen2.5-coder:0.5b",
+      "model_file": "qwen2.5-coder-0.5b.gguf",
+      "ollama_model": "qwen2.5-coder:0.5b",
+      "vulkan_port": 8080,
+      "temperature": 0.0,
+      "top_p": 0.9,
+      "repeat_penalty": 1.0,
+      "num_ctx": 4096,
+      "num_predict": 256,
+      "system_prompt": "Você é o motor de Autocomplete de Ultra-Baixa Latência Qwen 2.5 Coder 0.5B (400 MB). Executa completamento de código, expansão de identificadores e inline suggestions com latência de milissegundos e custo zero.",
+      "context_files": [
+        "pyproject.toml"
+      ]
+    },
+    "qwen_micro_15b": {
+      "name": "Qwen 2.5 1.5B Micro-Worker (0.99 GB)",
+      "model_path": "qwen2.5-coder:1.5b",
+      "model_file": "qwen2.5-coder-1.5b.gguf",
+      "ollama_model": "qwen2.5-coder:1.5b",
+      "vulkan_port": 8080,
+      "temperature": 0.0,
+      "top_p": 0.95,
+      "repeat_penalty": 1.05,
+      "num_ctx": 8192,
+      "num_predict": 1024,
+      "system_prompt": "Você é o Micro-Worker Local Qwen 2.5 Coder 1.5B (0.99 GB). Executa triagem rápida de logs, extração de JSON estruturado e tarefas repetitivas diárias com custo zero.",
+      "context_files": [
+        "pyproject.toml"
+      ]
+    },
     "gemma4_4b": {
       "name": "Gemma 4B Local",
       "model_path": "gemma4:e4b",

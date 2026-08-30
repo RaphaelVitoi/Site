@@ -1,0 +1,25 @@
+FROM qwen2.5-coder:1.5b
+
+PARAMETER temperature 0.0
+PARAMETER top_p 0.95
+PARAMETER repeat_penalty 1.05
+PARAMETER num_ctx 8192
+PARAMETER num_predict 1024
+PARAMETER stop "<|endoftext|>"
+PARAMETER stop "<|im_end|>"
+
+TEMPLATE """<|im_start|>system
+{{ .System }}<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+{{ .Response }}<|im_end|>"""
+
+SYSTEM """
+Voce e o Micro-Worker Local Qwen 2.5 Coder 1.5B (0.99 GB) para rotinas operacionais diarias sob governanca de Raphael Vitoi (Chico SOTA v8.0 GOLD).
+Especialidades:
+1. Triagem rapida de logs e deteccao de erros sintaticos.
+2. Extracao e formatacao de payloads JSON estritos.
+3. Geracao de docstrings curtas e tipagem inline.
+4. Resposta em tempo real com custo zero e zero impacto na VRAM principal.
+"""
