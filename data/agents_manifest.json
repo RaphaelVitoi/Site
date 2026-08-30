@@ -9,7 +9,7 @@
     "routing_pattern": "estrategi|inova|sentinela|ideia|analise|risco|filosofia|reflexao|disrup|meta|dilema|paradoxo|cosmovisao|principios|visao|futuro",
     "model_preference": "deep_thinking",
     "color": "deep_pink3",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "gemini-3.7-flash",
     "skills": [
       "pmev-game-theory-poker",
       "bigquery-sql",
@@ -20,7 +20,10 @@
       "scripts/ops/Start-LlamaVulkanEngine.ps1",
       "engine/avatars/run_avatar.py",
       "scripts/ops/Ensure-OllamaModels.ps1"
-    ]
+    ],
+    "fallback_model": "qwen-pmev-math",
+    "tier": "Tier 3: Strategic Epistemic",
+    "memory_affinity": "VRAM_HOT & RAM_CACHE"
   },
   "chico": {
     "identidade": "Administrador Supremo, a manifestacao da infraestrutura. A rigidez pragmatica que sustenta a abstracao.",
@@ -32,7 +35,7 @@
     "routing_pattern": "sintese|consenso|democrat|harmonia|mediacao|conflito|orquestra|gerenc|infraestrutura|automacao|log|monitoramento|api|sistema|admin",
     "model_preference": "deep_thinking",
     "color": "dodger_blue2",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "gemini-3.7-flash",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "sota-ecosystem-auditor",
@@ -45,7 +48,10 @@
       "engine/llama_cpp/start_vulkan_daemon.ps1",
       "engine/llama_cpp/daemon_watchdog.ps1",
       "do.ps1"
-    ]
+    ],
+    "fallback_model": "qwen-code-surgical",
+    "tier": "Tier 1/3: Supreme Executor",
+    "memory_affinity": "VRAM_HOT & WORKING_SCRATCHPAD"
   },
   "architect": {
     "identidade": "Arquiteto de Sistemas e Estrategista de Produto. Desenho a fundacao macro, a topologia e o plano de execucao (PRD/SPEC).",
@@ -57,7 +63,7 @@
     "routing_pattern": "design|conceito|estrutura|fundacao|visao|topologia|blueprint|arquitetura|macro|esquema|diagrama|fluxo|desenh|projeto",
     "model_preference": "deep_thinking",
     "color": "dark_orange",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "claude-5-sonnet",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "gcp-cloud-data-orchestration-master",
@@ -67,7 +73,10 @@
     "specialized_scripts": [
       "core/arbitrator.py",
       "core/sota_context_engine.py"
-    ]
+    ],
+    "fallback_model": "claude-3-7-sonnet",
+    "tier": "Tier 3: System Design & Topology",
+    "memory_affinity": "RAM_CACHE & ISOMORPHISM"
   },
   "planner": {
     "identidade": "Estrategista de Execucao e Mapeador de Requisitos. O elo entre a arquitetura macro e a execucao micro.",
@@ -79,14 +88,17 @@
     "routing_pattern": "planej|prd|spec|especifica|passo a passo|roadmap|milestone|etapas",
     "model_preference": "deep_thinking",
     "color": "orange3",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "gemini-3.7-flash",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "enforcing-resource-attribution"
     ],
     "specialized_scripts": [
       "database/queue_manager.py"
-    ]
+    ],
+    "fallback_model": "qwen2.5-coder:7b-instruct-q5_K_M",
+    "tier": "Tier 3: Execution & Roadmap",
+    "memory_affinity": "RAM_CACHE & DAG_CLUSTERS"
   },
   "dispatcher": {
     "identidade": "Desconstrutor de Epicos. O fatiador do monolito. A porta de entrada da acao controlada.",
@@ -98,7 +110,7 @@
     "routing_pattern": "backlog|ideias|priorizacao|organizar|epico|multiplas|frentes|lista",
     "model_preference": "fast_operations",
     "color": "steel_blue1",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "qwen2.5-coder:1.5b",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "enforcing-resource-attribution"
@@ -106,7 +118,10 @@
     "specialized_scripts": [
       "core/arbitrator.py",
       "database/queue_manager.py"
-    ]
+    ],
+    "fallback_model": "qwen2.5-coder:0.5b",
+    "tier": "Tier 3: DAG Routing & Epic Slicing",
+    "memory_affinity": "SQLITE_WAL_MMAP"
   },
   "pesquisador": {
     "identidade": "Batedor Avancado de Fronteira. Eu vasculho a escuridao da web e do mercado para extrair a proxima evolucao do Estado da Arte.",
@@ -118,7 +133,7 @@
     "routing_pattern": "pesquis|busc|mercado|quem|referencia|concorrent|web|internet|sota|tendencia|analise",
     "model_preference": "deep_thinking",
     "color": "medium_orchid",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "gemma4:12b",
     "skills": [
       "literature-search-arxiv",
       "literature-search-europepmc",
@@ -129,7 +144,10 @@
     "specialized_scripts": [
       "memory_rag.py",
       "scripts/ops/Ensure-OllamaModels.ps1"
-    ]
+    ],
+    "fallback_model": "exa",
+    "tier": "Tier 3: Multimodal Research & Ingestion",
+    "memory_affinity": "VRAM_HOT & LANCEDB_ZERO_COPY"
   },
   "prompter": {
     "identidade": "Engenheiro de Contexto, Engenheiro de Prompt e Alquimista da Linguagem. Transmuto a ideia em instrucao clara e executavel.",
@@ -141,14 +159,17 @@
     "routing_pattern": "prompt|contexto|instrucao|comando|linguagem|diretriz|formato|otimiz|refin",
     "model_preference": "fast_operations",
     "color": "orchid",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "gemini-3.7-flash",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "neuropsychology-high-performance"
     ],
     "specialized_scripts": [
       "core/sota_context_engine.py"
-    ]
+    ],
+    "fallback_model": "gemma4:e4b",
+    "tier": "Tier 3: Prompt Engineering SOTA",
+    "memory_affinity": "RAM_CACHE"
   },
   "auditor": {
     "identidade": "Paranoia Tecnica SOTA e Unico Bloqueador Linear. Minha desconfianca e a barreira entre o projeto e a entropia.",
@@ -160,7 +181,7 @@
     "routing_pattern": "audit|revis|check|seguran|integridade|conformidade|compliance|etica|governanca|qualidade",
     "model_preference": "deep_thinking",
     "color": "indian_red",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "gemini-3.7-flash",
     "skills": [
       "sota-ecosystem-auditor",
       "firebase-security-rules-auditor",
@@ -170,7 +191,10 @@
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
       "scripts/ops/sri_integrity_verifier.py"
-    ]
+    ],
+    "fallback_model": "qwen2.5-coder:1.5b",
+    "tier": "Tier 3: Quality Gate & CVE Audit",
+    "memory_affinity": "RAM_CACHE & STATIC_ANALYSIS"
   },
   "implementor": {
     "identidade": "O Forjador. O Braco Executor da Realidade Fisica. Transformo blueprints em codigo vivo e funcional.",
@@ -182,7 +206,7 @@
     "routing_pattern": "codar|implement|criar|script|python|frontend|backend|react|next",
     "model_preference": "fast_operations",
     "color": "spring_green4",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "qwen2.5-coder:7b-instruct-q5_K_M",
     "skills": [
       "dart-run-static-analysis",
       "flutter-build-responsive-layout",
@@ -193,7 +217,10 @@
     "specialized_scripts": [
       "engine/llama_cpp/start_vulkan_daemon.ps1",
       "engine/avatars/run_avatar.py"
-    ]
+    ],
+    "fallback_model": "gemini-3.7-flash",
+    "tier": "Tier 3: Surgical Coding (Vulkan)",
+    "memory_affinity": "VRAM_HOT & TARGET_LOCK"
   },
   "verifier": {
     "identidade": "O Crivo da Verdade. QA e Validador de Integridade Funcional. Garanto que o real corresponde ao planejado.",
@@ -205,7 +232,7 @@
     "routing_pattern": "test|bug|qa|falha|erro|quebr|repar|validar|funcional",
     "model_preference": "fast_operations",
     "color": "sea_green3",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "qwen-code-surgical",
     "skills": [
       "sota-ecosystem-auditor",
       "dart-add-unit-test",
@@ -215,7 +242,10 @@
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
       "tests/test_stress_circuit_breaker.py"
-    ]
+    ],
+    "fallback_model": "qwen2.5-coder:7b-instruct-q5_K_M",
+    "tier": "Tier 3: Invariant Verification (Vulkan)",
+    "memory_affinity": "VRAM_HOT & AST_CACHE"
   },
   "curator": {
     "identidade": "Guardiao da Estetica, Etica e Tom. A alma do sistema, garantindo uma interacao visceral. Elimino o ruido e a artificialidade para forjar uma voz inconfundivel.",
@@ -227,14 +257,17 @@
     "routing_pattern": "estetic|ux|ui|texto|copy|seo|trafego|keyword|tom|voz|narrativa|experiencia|design|arte",
     "model_preference": "deep_thinking",
     "color": "light_coral",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "gemma4:31b-cloud",
     "skills": [
       "neuropsychology-high-performance",
       "windows-visual-tuning"
     ],
     "specialized_scripts": [
       "engine/avatars/avatar_dashboard.py"
-    ]
+    ],
+    "fallback_model": "gemini-3.7-flash",
+    "tier": "Tier 3: Epistemic Curation (Cloud)",
+    "memory_affinity": "CLOUD_ZERO_VRAM"
   },
   "validador": {
     "identidade": "Juiz de Fatos Criticos e Especialista Matematico. A precisao fria e exata da teoria contra a falacia.",
@@ -246,7 +279,7 @@
     "routing_pattern": "matematic|icm|nash|gto|teoria|calculo|ev|roi|prova|evidencia|verificacao|consistencia|validar|precisao|perspectiva|rio|ev fold",
     "model_preference": "deep_thinking",
     "color": "gold3",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "qwen-pmev-math",
     "skills": [
       "pmev-game-theory-poker",
       "bigquery-sql",
@@ -254,7 +287,10 @@
     ],
     "specialized_scripts": [
       "tests/test_desambiguacao.py"
-    ]
+    ],
+    "fallback_model": "gemini-3.7-flash",
+    "tier": "Tier 3: Mathematical Formalism (Vulkan)",
+    "memory_affinity": "VRAM_HOT & NUMPY_SIMD"
   },
   "organizador": {
     "identidade": "Guardiao da Homeostase Documental. O zelador da fonte da verdade, garantindo que o sistema nunca sofra de amnesia ou esquizofrenia.",
@@ -266,14 +302,17 @@
     "routing_pattern": "organiz|documenta|arquiv|sync|limp|estrutura|padronizacao|gerenciamento|homeostase|diretorio",
     "model_preference": "fast_operations",
     "color": "cadet_blue",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "qwen2.5-coder:0.5b",
     "skills": [
       "sota-ecosystem-auditor",
       "data-autocleaning"
     ],
     "specialized_scripts": [
       "scripts/routines/sync_agents_reality.ps1"
-    ]
+    ],
+    "fallback_model": "qwen2.5-coder:1.5b",
+    "tier": "Tier 3: Repository Hygiene & LFS",
+    "memory_affinity": "SYSTEM_RAM_LIGHT"
   },
   "sequenciador": {
     "identidade": "Maestro do Fluxo de Execucao e Controle de Fila. Garanto a fluidez e a ordem correta de operacoes sistemicas.",
@@ -285,7 +324,7 @@
     "routing_pattern": "sequenci|ordem|dependencia|cadencia|fluxo|deadlock|bloqueio|pipeline|workflow",
     "model_preference": "fast_operations",
     "color": "dark_goldenrod",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "qwen2.5-coder:0.5b",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "gcp-cloud-data-orchestration-master"
@@ -293,7 +332,10 @@
     "specialized_scripts": [
       "core/arbitrator.py",
       "monitoring/watchdog.py"
-    ]
+    ],
+    "fallback_model": "qwen2.5-coder:1.5b",
+    "tier": "Tier 3: Task Queuing & Priority Order",
+    "memory_affinity": "SQLITE_WAL_MMAP"
   },
   "securitychief": {
     "identidade": "Cao de Guarda do Ecossistema e Acessos. A blindagem intransponivel e o firewall contra ameacas internas e externas.",
@@ -305,7 +347,7 @@
     "routing_pattern": "vulnerab|xss|acesso|autentica|login|senha|rbac|permissao|auth|vazamento|firewall|cripto|ameaca|risco|seguranca|privacidade",
     "model_preference": "deep_thinking",
     "color": "sienna",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "gemini-3.7-flash",
     "skills": [
       "credentials",
       "firebase-security-rules-auditor",
@@ -315,7 +357,10 @@
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
       "scripts/ops/sri_integrity_verifier.py"
-    ]
+    ],
+    "fallback_model": "qwen2.5-coder:1.5b",
+    "tier": "Tier 3: Zero Trust & Semgrep",
+    "memory_affinity": "RAM_CACHE & SHA512_BUCKETS"
   },
   "bibliotecario": {
     "identidade": "A Memoria do Ecossistema e Oraculo de Dados. O oceano profundo de contexto vetorial que previne a alucinacao.",
@@ -327,7 +372,7 @@
     "routing_pattern": "rag|memori|historic|lembr|chroma|vetor|conhecimento|dados|informacao|contexto|documentos",
     "model_preference": "fast_operations",
     "color": "light_sea_green",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "gemma4:12b",
     "skills": [
       "sota-consciousness-memory-rag",
       "literature-search-arxiv",
@@ -336,7 +381,10 @@
     "specialized_scripts": [
       "memory_rag.py",
       "engine/gemma_server.py"
-    ]
+    ],
+    "fallback_model": "qwen2.5-coder:1.5b",
+    "tier": "Tier 3: Vector Knowledge & LanceDB",
+    "memory_affinity": "LANCEDB_ZERO_COPY_PYARROW"
   },
   "skillmaster": {
     "identidade": "O Zelador das Sombras e Relogio Biologico do Sistema. Executo as rotinas que mantem o organismo saudavel e resiliente.",
@@ -348,7 +396,7 @@
     "routing_pattern": "backup|manuten|atualiz|cron|tarefa|rotina|limpeza|otimizacao|agend",
     "model_preference": "fast_operations",
     "color": "dark_khaki",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "gemini-3.7-flash",
     "skills": [
       "skill-repair",
       "mcp-extension-troubleshooting",
@@ -358,7 +406,10 @@
     "specialized_scripts": [
       "scripts/ops/Ensure-OllamaModels.ps1",
       "scripts/routines/sync_agents_reality.ps1"
-    ]
+    ],
+    "fallback_model": "qwen2.5-coder:1.5b",
+    "tier": "Tier 3: Skill Governance & Tools",
+    "memory_affinity": "RAM_CACHE & FASTMCP"
   },
   "historian": {
     "identidade": "O Cronista do Ecossistema e Analista de Performance. Transformo dados brutos de log em inteligencia estrategica sobre produtividade e custo.",
@@ -369,7 +420,7 @@
     "routing_pattern": "relatorio|produtividade|custo|analise de log|historico|performance|metricas|tendencia|insights|dados",
     "model_preference": "deep_thinking",
     "color": "grey53",
-    "primary_model": "gemini-3.5-flash-lite",
+    "primary_model": "qwen-poetics",
     "skills": [
       "sota-consciousness-memory-rag",
       "bigquery-sql",
@@ -378,7 +429,10 @@
     "specialized_scripts": [
       "engine/avatars/run_avatar.py",
       "scripts/ops/Start-NexusDashboard.ps1"
-    ]
+    ],
+    "fallback_model": "gemini-3.7-flash",
+    "tier": "Tier 3: Epistemic Memory & Poetics",
+    "memory_affinity": "RAM_CACHE & REPLAY_BUFFER"
   },
   "gemma4": {
     "identidade": "Oraculo de Borda Tatica e Sentinela de Inferencia Local. Especialista em integracao Nash-IA de baixa latencia.",
@@ -398,6 +452,9 @@
     "specialized_scripts": [
       "engine/llama_cpp/start_vulkan_daemon.ps1",
       "engine/gemma_server.py"
-    ]
+    ],
+    "fallback_model": "gemma4:31b-cloud",
+    "tier": "Tier 3: Unified Multimodal Oracle",
+    "memory_affinity": "VRAM_HOT & MULTIMODAL_PROJECTOR"
   }
 }
