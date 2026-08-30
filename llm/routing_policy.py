@@ -1,8 +1,16 @@
 """Politica de roteamento economico e especializado  SOTA v8.0 GOLD.
 
 Implementa a tabela de roteamento por tier definida pelo operador, estendida
-para cobrir o ecossistema inteiro: **19 agentes** do manifesto mais os **6
-niveis de subagente** de `core.subagents_mesh.SubagentTier`.
+para cobrir o ecossistema inteiro: os **19 agentes** do manifesto mais **todos
+os niveis** de `core.subagents_mesh.SubagentTier`.
+
+O numero de subagentes nao e repetido aqui de proposito. Ate 2026-08-30 esta
+linha dizia "6 niveis"; o enum ja tinha 15, e os nove faltantes -- entre eles
+`GENERALIST`, `SELF` e `FLUTTER_A11Y`, que o CLAUDE.md lista nominalmente no
+Tier 4 -- estavam fora da contagem escrita havia tempo indeterminado. A
+contagem de agentes sobrevive porque uma invariante a guarda; a de subagentes
+nao tinha guarda nenhuma, entao envelheceu em silencio. Documentacao nao repete
+valor versionado (§3): aponte para o enum, que e a fonte.
 
 ## Ordem de precedencia das decisoes
 

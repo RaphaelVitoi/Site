@@ -7,8 +7,10 @@
 camada de skills e camada de memoria agentica.
 **Metodo:** medicao no repositorio, nao leitura de documentacao. Toda afirmacao
 abaixo foi executada; o que nao rodou esta declarado em §5.
-**Estado das correcoes:** A1, A2, A3 e A7 foram corrigidos nesta mesma branch
-apos aprovacao do vertice — ver §6. A4, A5, A6, A8 e A9 permanecem abertos.
+**Estado das correcoes:** A1, A2, A3, A5 e A7 foram corrigidos nesta mesma
+branch apos aprovacao do vertice — ver §6. A4, A6, A8 e A9 permanecem abertos.
+**Este relatorio carrega duas retificacoes a si mesmo** (§3/A1 e §3/A5), ambas
+descobertas ao aplicar as correcoes. Estao no corpo, nao em nota de rodape.
 
 ---
 
@@ -174,22 +176,34 @@ em qualquer sessao Linux ou remota**, sem degradacao anunciada. O servidor
 
 ### A5 — MEDIO · A documentacao do roteamento subdeclara a malha que descreve
 
-Duas afirmacoes em `llm/routing_policy.py` nao batem com o modulo:
+O docstring de `llm/routing_policy.py` diz cobrir "os **6 niveis de subagente**
+de `core.subagents_mesh.SubagentTier`". `SubagentTier` tem **15 membros**
+(`core/subagents_mesh.py:95-112`). Nove niveis — entre eles `FLUTTER_A11Y`,
+`SELF` e `GENERALIST`, que o `CLAUDE.md` Tier 4 lista nominalmente — estavam
+fora da contagem escrita.
 
-1. O docstring diz cobrir "os **6 niveis de subagente** de
-   `core.subagents_mesh.SubagentTier`". `SubagentTier` tem **15 membros**
-   (`core/subagents_mesh.py:95-112`). Nove niveis — entre eles `FLUTTER_A11Y`,
-   `SELF` e `GENERALIST`, que o `CLAUDE.md` Tier 4 lista nominalmente — estao
-   fora da contagem escrita.
-2. `CONFLITOS_MANIFESTO` (`routing_policy.py:307`) registra **2** conflitos
-   entre tabela e manifesto (`implementor`, `historian`). O conflito medido e de
-   **17 em 19**: so `architect` e `gemma4` resolvem para o proprio
-   `primary_model`.
+A contagem de **agentes** na mesma frase sobreviveu porque uma invariante a
+guarda (`test_all_19_agents_manifest_integrity`); a de subagentes nao tinha
+guarda nenhuma. Numero sem guarda envelhece em silencio — e a mesma licao da
+§6.1 sobre "395/395".
 
-O item 2 nao e bug de roteamento — a politica e a autoridade por design, e
-`core/config.py:176-181` registra que a divergencia era 19/19 e foi
-deliberadamente resolvida em favor da politica. E um bug de **declaracao**: o
-dicionario que existe para tornar a divergencia visivel mostra 2 de 17.
+> **Segunda correcao a esta auditoria, feita ao tentar aplicar A5.**
+> A redacao original trazia um item 2 afirmando que `CONFLITOS_MANIFESTO`
+> "registra 2 conflitos onde o conflito medido e de 17 em 19". **Isso estava
+> errado, e a retificacao importa mais que o achado.**
+> `CONFLITOS_MANIFESTO` documenta conflito de **classe de tarefa** — manifesto
+> dizendo `fast_operations` onde a tabela poe o agente numa classe pesada, ou
+> vice-versa. Sao exatamente `implementor` e `historian`, e **2 esta correto**.
+> Os 17/19 que eu medi sao outra grandeza: divergencia entre o `primary_model`
+> do manifesto e o modelo concreto resolvido pela politica — que e **por
+> design**, com a politica como autoridade (`core/config.py:176-181`). Misturei
+> as duas.
+> Ao procurar conflitos de classe nao declarados, encontrei `auditor`,
+> `validador` e `securitychief` — mas so porque classifiquei `VERIFICACAO` como
+> classe "leve", balde que **eu inventei** e que o modulo nao define. Os tres
+> sao `deep_thinking` e resolvem para `gemini-3.7-flash`, que e o topo da
+> propria cadeia `deep_thinking`: nao ha contradicao. Nenhum conflito faltava
+> ser declarado.
 
 ---
 
@@ -278,13 +292,13 @@ so usa `PersistentClient` embarcado. Duas observacoes, nenhuma delas urgente:
    code que ja esta correto.
 4. **A4** — resolver o interpretador do `.mcp.json` por plataforma devolve
    Tier 2 as sessoes nao-Windows.
-5. **A5, A6** — reconciliacao de texto: contagem de `SubagentTier`,
-   `CONFLITOS_MANIFESTO` e a leitura local-first do manifesto.
+5. **A5, A6** — reconciliacao de texto: contagem de `SubagentTier` e a leitura
+   local-first do manifesto.
 6. **A7, A8, A9** — higiene.
 
-A auditoria foi entregue sem correcoes. **A1, A2, A3 e A7 foram corrigidos em
-seguida, sob aprovacao explicita do vertice** — registrados na §6. A4, A5, A6,
-A8 e A9 continuam abertos.
+A auditoria foi entregue sem correcoes. **A1, A2, A3, A5 e A7 foram corrigidos
+em seguida, sob aprovacao explicita do vertice** — registrados na §6. A4, A6, A8
+e A9 continuam abertos.
 
 ---
 
@@ -455,6 +469,22 @@ O exit code permanece nao-zero nos dois casos — o CI nunca esteve furado, e a
 correcao nao muda isso. O que muda e o veredito que a §5 manda declarar deixar
 de contradizer o que aconteceu. Execucao limpa continua verde (85 passed,
 exit 0): a mudanca nao introduz falso positivo.
+
+### A5 — `llm/routing_policy.py` (parcial: so a metade que era verdade)
+
+A correcao **nao** foi trocar "6" por "15". Trocar um numero sem guarda por
+outro numero sem guarda so reinicia o relogio do mesmo apodrecimento — o enum
+ganha um membro amanha e a linha volta a mentir.
+
+O docstring passa a apontar para `SubagentTier` sem repetir a contagem, que e o
+idioma que o proprio repositorio ja adotou quando removeu o **Motor Base** dos
+19 documentos gerados (`sync_agents_reality.ps1:46`). A contagem de agentes na
+mesma frase fica, porque ela tem guarda —
+`test_all_19_agents_manifest_integrity` reprova se deixar de ser 19. A regra que
+sobra e simples: numero em prosa so se algo o verificar.
+
+A outra metade de A5 foi **retirada, nao corrigida** — era erro meu de leitura.
+Ver a retificacao na §3/A5.
 
 ### A7 — `scripts/routines/sync_agents_reality.ps1`
 
