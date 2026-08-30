@@ -56,7 +56,7 @@ def _secoes_prescritivas(p: Path) -> str:
     a mesma: estreitar o escopo estruturalmente, nunca isentar o arquivo.
     """
     texto = _ler(p)
-    corte = re.search(r"^##\s+Por que ponteiro e (?:não cópia|nao copia)", texto, re.M)
+    corte = re.search(r"^##\s+Por que ponteiro e\s+(?:n[aã]o\s+c[oó]pia|nao copia)", texto, re.M | re.IGNORECASE)
     if not corte:
         return texto
     resto = texto[corte.end() :]
