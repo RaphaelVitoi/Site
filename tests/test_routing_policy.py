@@ -549,3 +549,63 @@ def test_nenhuma_rota_local_nova_estoura_a_vram_declarada():
         "o fallback LOCAL deixou de ser maior que o primario -- se foi decisao, "
         "esta assercao e o lugar de registra-la, junto do registro."
     )
+
+
+# =========================================================================
+# A8 da auditoria de 2026-08-30: `fallback_model` do manifesto
+# =========================================================================
+
+
+def test_fallback_model_do_manifesto_resolve_em_algum_registro():
+    """`fallback_model` era o terceiro campo decorativo do manifesto.
+
+    Medido em 2026-08-30, junto com A1: assim como `skills` e `routing_pattern`,
+    este campo **nao tem consumidor de producao**. As cadeias de fallback que o
+    sistema realmente usa vivem em `data/system_config.json -> model_routing` e
+    em `Rota.fallback` desta politica (CLAUDE.md §3). O unico leitor de
+    `fallback_model` era uma assercao de forma -- que ele existe e nao e vazio --
+    nunca de que o nome designa um modelo real.
+
+    O resultado era o esperado de campo sem guarda: dois dos 19 apontavam para
+    lugar nenhum.
+
+      architect    claude-3-7-sonnet  ausente do MODEL_REGISTRY e do manifesto local
+      pesquisador  exa                'exa' e provedor de BUSCA, nao um modelo
+
+    O segundo e o mais instrutivo: nao era um nome errado, era um nome de outra
+    CATEGORIA. Nenhuma checagem de forma pega isso -- so resolucao pega.
+
+    Esta guarda nao afirma que o fallback e o melhor escolhido; afirma que ele
+    designa algo que existe. E a mesma assimetria que `specialized_scripts`
+    sempre teve de graca, por apontar para caminhos.
+    """
+    manifesto = json.loads(MANIFESTO.read_text(encoding="utf-8"))
+    orfaos = {
+        agente: dados["fallback_model"]
+        for agente, dados in manifesto.items()
+        if dados.get("fallback_model")
+        and dados["fallback_model"] not in MODEL_REGISTRY
+        and not e_local(dados["fallback_model"])
+    }
+
+    assert not orfaos, (
+        f"fallback_model que nao resolve nem em MODEL_REGISTRY (nuvem) nem em "
+        f"data/ollama_models.json (local): {orfaos}. Um nome aqui precisa designar "
+        "um modelo real -- se a intencao era um provedor ou uma ferramenta, o campo "
+        "errado esta sendo usado."
+    )
+
+
+def test_primary_model_do_manifesto_tambem_resolve():
+    """A mesma medida no campo vizinho. Os 19 `primary_model` ja resolviam em
+    2026-08-30; sem guarda, isso era coincidencia, nao invariante."""
+    manifesto = json.loads(MANIFESTO.read_text(encoding="utf-8"))
+    orfaos = {
+        agente: dados["primary_model"]
+        for agente, dados in manifesto.items()
+        if dados.get("primary_model")
+        and dados["primary_model"] not in MODEL_REGISTRY
+        and not e_local(dados["primary_model"])
+    }
+
+    assert not orfaos, f"primary_model que nao resolve em registro nenhum: {orfaos}."

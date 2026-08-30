@@ -8,7 +8,7 @@ Juiz de Fatos Criticos e Especialista Matematico. A precisao fria e exata da teo
 Perspectiva Matemática SOTA, EV Fold Dinâmico, Análise RIO Multiway, ICM, GTO, Equilibrio de Nash, Teoria dos Jogos, validacao de dados cientificos.
 
 ## Skills Especializadas
-- `pmev-game-theory-poker`
+- `pmev-game-theory-engine`
 - `bigquery-sql`
 - `bigquery-ai-ml`
 
