@@ -53,7 +53,10 @@ _MANIFESTO_LOCAL = Path(__file__).resolve().parent.parent / "data" / "ollama_mod
 def _carregar_modelos_locais() -> frozenset[str]:
     try:
         dados = json.loads(_MANIFESTO_LOCAL.read_text(encoding="utf-8"))
-        return frozenset(m["tag"] for m in dados.get("models", []) if m.get("tag"))
+        tags = [m["tag"] for m in dados.get("models", []) if m.get("tag")]
+        aliases = [m["alias"] for m in dados.get("models", []) if m.get("alias")]
+        stripped = [t.split(":latest")[0] for t in tags if ":latest" in t]
+        return frozenset(tags + aliases + stripped)
     except (OSError, json.JSONDecodeError, KeyError, TypeError):
         return frozenset()
 

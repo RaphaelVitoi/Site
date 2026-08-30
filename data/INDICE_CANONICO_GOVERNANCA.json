@@ -74,7 +74,7 @@
           "bytes_medidos": 6743,
           "papel": "ORFAO MEDIDO - zero consumidores dos tres tipos",
           "consumidores": [],
-          "no_corpus_do_rag": false,
+          "no_corpus_do_rag": true,
           "nota": "Byte a byte igual ao derivado acima. Remocao e destrutiva e exige ordem explicita do vertice, item a item. A evidencia esta completa; a ordem, nao."
         },
         {

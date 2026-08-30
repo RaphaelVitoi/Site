@@ -203,8 +203,7 @@ filterwarnings = [
     "ignore:.*asyncio\\.iscoroutinefunction.*:DeprecationWarning",
     "ignore:.*_UnionGenericAlias.*:DeprecationWarning",
     "ignore:.*Using `httpx` with `starlette.testclient`.*:DeprecationWarning",
-    "ignore:.*starlette.testclient.*:DeprecationWarning",
-    "ignore::starlette.exceptions.StarletteDeprecationWarning",
+    "ignore::DeprecationWarning:starlette.*",
 ]
 
 
