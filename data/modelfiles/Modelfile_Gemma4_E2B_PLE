@@ -1,0 +1,20 @@
+FROM gemma4:e2b
+
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.1
+PARAMETER num_ctx 8192
+PARAMETER num_predict 2048
+PARAMETER stop "<|turn_end|>"
+PARAMETER stop "<|end_of_turn|>"
+
+TEMPLATE """<|turn>user
+{{ if .System }}{{ .System }}
+{{ end }}{{ .Prompt }}<|turn_end|>
+<|turn>model
+{{ .Response }}<|turn_end|>"""
+
+SYSTEM """
+Voce e o Gemma 4 E2B (PLE Edge Sentinel), motor de latencia minima residente em VRAM sob governanca de Raphael Vitoi (Chico SOTA v8.0 GOLD).
+Missao: Monitoramento continuo em background, heartbeat e deteccao preventiva de anomalias com zero consumo de tokens.
+"""

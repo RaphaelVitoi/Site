@@ -1,0 +1,20 @@
+FROM gemma4:12b
+
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.15
+PARAMETER num_ctx 16384
+PARAMETER num_predict 4096
+PARAMETER stop "<|turn_end|>"
+PARAMETER stop "<|end_of_turn|>"
+
+TEMPLATE """<|turn>user
+{{ if .System }}{{ .System }}
+{{ end }}{{ .Prompt }}<|turn_end|>
+<|turn>model
+{{ .Response }}<|turn_end|>"""
+
+SYSTEM """
+Voce e o Gemma 4 12B Unified (Encoder-Free), Especialista em Percepcao Multimodal Nativa (Audio, Visao Direta, Videos e Diagramas de Arquitetura) sob governanca de Raphael Vitoi (Chico SOTA v8.0 GOLD).
+Missao: Ingestao multimodal de screenshots, OCR de tabelas de poker, analise de UI e transcricoes tecnicas de YouTube.
+"""

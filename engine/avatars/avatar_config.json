@@ -140,7 +140,7 @@
       ]
     },
     "gemma4_31b_cloud": {
-      "name": "Gemma 4 31B Cloud Refinado",
+      "name": "Gemma 4 31B Dense (Cloud Ollama / Vertex)",
       "model_path": "gemma4:31b-cloud",
       "model_file": "gemma4-31b-cloud.gguf",
       "ollama_model": "gemma4:31b-cloud",
@@ -150,7 +150,83 @@
       "repeat_penalty": 1.05,
       "num_ctx": 32768,
       "num_predict": 8192,
-      "system_prompt": "Você é o Gemma 4 31B Cloud Refinado, motor de Alta Capacidade Semântica e Síntese Epistêmica sob governança de Raphael Vitoi (Chico SOTA v8.0 GOLD). Atua em análises profundas de arquitetura e Teoria dos Jogos PMev sem consumo de VRAM local (execução 100% remota via Ollama Cloud Provider).",
+      "multimodal": false,
+      "direct_conversational": true,
+      "system_prompt": "Você é o Gemma 4 31B Dense (Cloud Ollama / Vertex), motor de Raciocínio Puro e Delegação Pesada em Nuvem (0 GB VRAM Local, AIME 89.2%). Atua em análises profundas de arquitetura, teoria matemática PMev e sínteses epistêmicas amplas.",
+      "context_files": [
+        "engine/gemma_server.py"
+      ]
+    },
+    "gemma4_26b_moe": {
+      "name": "Gemma 4 26B-A4B MoE (3.8B Ativos)",
+      "model_path": "gemma4:26b",
+      "model_file": "gemma4-26b.gguf",
+      "ollama_model": "gemma4:26b",
+      "vulkan_port": 8080,
+      "temperature": 0.1,
+      "top_p": 0.95,
+      "repeat_penalty": 1.05,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "multimodal": false,
+      "direct_conversational": true,
+      "system_prompt": "Você é o Gemma 4 26B-A4B MoE (3.8B parâmetros ativos por token). Atua como Subagente Generalista de Alta Velocidade e Baixo Custo Computacional no ecossistema Nexus.",
+      "context_files": [
+        "core/subagents_mesh.py",
+        "engine/gemma_server.py"
+      ]
+    },
+    "gemma4_12b_unified": {
+      "name": "Gemma 4 12B Unified (Encoder-Free Multimodal)",
+      "model_path": "gemma4:12b",
+      "model_file": "gemma4-12b.gguf",
+      "ollama_model": "gemma4:12b",
+      "vulkan_port": 8080,
+      "temperature": 0.2,
+      "top_p": 0.9,
+      "repeat_penalty": 1.15,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "multimodal": true,
+      "direct_conversational": true,
+      "system_prompt": "Você é o Gemma 4 12B Unified (Encoder-Free), Especialista em Percepção Multimodal Nativa (Áudio, Visão Direta, Vídeos e Diagramas de Arquitetura). Processa capturas de tela, OCR e transcrições com fidelidade absoluta.",
+      "context_files": [
+        "engine/gemma_server.py",
+        "core/runtime.py"
+      ]
+    },
+    "gemma4_e4b_ple": {
+      "name": "Gemma 4 E4B (PLE Edge Sentinel)",
+      "model_path": "gemma4:e4b",
+      "model_file": "gemma4-e4b.gguf",
+      "ollama_model": "gemma4:e4b",
+      "vulkan_port": 8080,
+      "temperature": 0.2,
+      "top_p": 0.9,
+      "repeat_penalty": 1.1,
+      "num_ctx": 8192,
+      "num_predict": 2048,
+      "multimodal": false,
+      "direct_conversational": true,
+      "system_prompt": "Você é o Gemma 4 E4B (PLE Edge Sentinel), 100% residente em VRAM. Executa tarefas de telemetria local, despacho via CDP 9223 e controle em tempo real.",
+      "context_files": [
+        "engine/gemma_server.py"
+      ]
+    },
+    "gemma4_e2b_ple": {
+      "name": "Gemma 4 E2B (PLE Edge Sentinel)",
+      "model_path": "gemma4:e2b",
+      "model_file": "gemma4-e2b.gguf",
+      "ollama_model": "gemma4:e2b",
+      "vulkan_port": 8080,
+      "temperature": 0.2,
+      "top_p": 0.9,
+      "repeat_penalty": 1.1,
+      "num_ctx": 8192,
+      "num_predict": 2048,
+      "multimodal": false,
+      "direct_conversational": true,
+      "system_prompt": "Você é o Gemma 4 E2B (PLE Edge Sentinel), motor ultrarrápido de latência ultra-baixa residente em VRAM para triagem e monitoramento contínuo em background.",
       "context_files": [
         "engine/gemma_server.py"
       ]
