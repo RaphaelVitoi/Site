@@ -58,7 +58,7 @@ def test_parse_gemma4_channel_output_with_thoughts():
     raw_response = (
         "<|channel>thought\n"
         "1. Analisar equidade no river.\n"
-        "2. Aplicar Teorema de Vitoi para risco assimétrico.\n"
+        "2. Aplicar Teorema de Vitoi para risco assimetrico.\n"
         "<channel|>"
         "A decisao otima e Shove com +2.4bb de EV."
     )
