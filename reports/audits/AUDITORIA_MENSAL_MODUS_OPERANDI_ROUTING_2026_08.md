@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: sota-routine-daemon@scripts/routines/audit_monthly_modus_operandi_and_routing.py
 criado_em: 2026-08-30T13:02-03:00
+atualizado_em: 2026-08-30T13:20-03:00
 commit: ba052a19
 classes: [interno, externo, medido]
 fontes:
@@ -42,6 +43,7 @@ supersede: null
 ---
 
 ## 1. RESUMO EXECUTIVO
+
 - **Total de Agentes Cobertos:** 19 agentes / 15 tiers de subagente
 - **Mapa Concreto Ativo:** 19 agentes operando sem fallbacks orfaos
 - **Validacao de Gatilho de ROI (Gemini 3.1 Pro vs. 3.7 Flash):** Aprovado e calibrado
@@ -51,6 +53,7 @@ supersede: null
 ---
 
 ## 2. CONFORMIDADE DAS 4 CAMADAS FUNCIONAIS
+
 | Modelo | Camada | Context Window | Max Output | Preco In/Out ($/1M) | Thinking | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | `gemini-3.5-flash-lite` | camada_1_triagem | 1,048,576 | 65,536 | $0.15 / $0.60 | `low` | OK |
@@ -62,6 +65,7 @@ supersede: null
 ---
 
 ## 3. AUDITORIA DE MANUAIS E GOVERNANCA
+
 | Arquivo | Presente | Tamanho | 4 Camadas | Barramento MCP |
 | :--- | :--- | :--- | :--- | :--- |
 | `MODUS_OPERANDI.md` | Sim | 40028 B | Sim | Sim |
