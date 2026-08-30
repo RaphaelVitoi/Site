@@ -27,7 +27,7 @@ except ImportError:
         logger.critical("mcp SDK nao encontrado no ambiente.")
         sys.exit(1)
 
-# Importa a engine de conexao canônica do Jules
+# Importa a engine de conexao canonica do Jules
 try:
     from engine.jules_bridge import JulesClient, JulesSessionRequest
 except ImportError:
