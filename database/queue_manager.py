@@ -132,15 +132,14 @@ class QueueManager:
             return fallback
 
     async def _connect_raw(self) -> aiosqlite.Connection:
-        """SOTA: Criacao de conexao aiosqlite com timeout configurado."""
+        """SOTA: Criacao de conexao aiosqlite com timeout configurado e WAL mode."""
         if getattr(self, "_is_memory", False):
             conn = await aiosqlite.connect(self.db_path, uri=True)
         else:
             db_path = self.db_path
             if not isinstance(db_path, Path):
                 db_path = Path(db_path)
-            uri_path = f"{db_path.absolute().as_uri()}?cache=shared"
-            conn = await aiosqlite.connect(uri_path, uri=True)
+            conn = await aiosqlite.connect(str(db_path.resolve()), timeout=10.0)
         await conn.execute(_PRAGMA_BUSY_TIMEOUT)
         return conn
 
