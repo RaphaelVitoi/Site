@@ -155,6 +155,23 @@
       "context_files": [
         "engine/gemma_server.py"
       ]
+    },
+    "gemma4_26b_moe": {
+      "name": "Gemma 4 26B MoE",
+      "model_path": "gemma4:26b",
+      "model_file": "gemma4-26b-moe.gguf",
+      "ollama_model": "gemma4:26b",
+      "vulkan_port": 8080,
+      "temperature": 0.1,
+      "top_p": 0.95,
+      "repeat_penalty": 1.05,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "system_prompt": "Você é o Gemma 4 26B MoE (3.8B parâmetros ativos por token). Motor local de raciocínio profundo, otimização matemática e arquitetura sob demanda com preservação estrita de VRAM local.",
+      "context_files": [
+        "engine/gemma_server.py",
+        "core/subagents_mesh.py"
+      ]
     }
   }
 }
