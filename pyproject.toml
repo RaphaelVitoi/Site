@@ -35,6 +35,8 @@ dependencies = [
     # confirmar que a advisory foi corrigida. Limite inferior deixado aberto
     # de proposito, para adotar a correcao assim que ela for publicada.
     "chromadb>=0.6.0",
+    "lancedb>=0.17.0",
+    "pyarrow>=18.0.0",
     "onnxruntime>=1.20.0",
     "sentence-transformers>=3.3.0",
     # ── CLIENTES LLM ──────────────────────────────────────────────────
