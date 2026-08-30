@@ -510,13 +510,24 @@ if ($Web -or $Ola) {
 
         # 1. Base Arquitetural e Governanca
         $globalInstrPath = Join-Path $ClaudeDir 'GLOBAL_INSTRUCTIONS.md'
+        if (-not (Test-Path -LiteralPath $globalInstrPath)) { $globalInstrPath = Join-Path $ScriptDirectory '.cerebro\governance\GLOBAL_INSTRUCTIONS.md' }
         if (-not (Test-Path -LiteralPath $globalInstrPath)) { $globalInstrPath = Join-Path $ScriptDirectory 'GLOBAL_INSTRUCTIONS.md' }
         &$InjectFile 'INSTRUCOES GLOBAIS' $globalInstrPath
         &$InjectFile 'MODUS OPERANDI v8.0 GOLD' (Join-Path $ScriptDirectory 'MODUS_OPERANDI.md')
-        &$InjectFile 'COSMOVISAO (FILOSOFIA)' (Join-Path $ClaudeDir 'COSMOVISAO.md')
-        &$InjectFile 'INVARIANTES ARQUITETURAIS' (Join-Path $ClaudeDir 'ARCHITECTURAL_INVARIANTS.md')
+
+        $cosmovisaoPath = Join-Path $ClaudeDir 'COSMOVISAO.md'
+        if (-not (Test-Path -LiteralPath $cosmovisaoPath)) { $cosmovisaoPath = Join-Path $ScriptDirectory '.cerebro\philosophy\COSMOVISAO.md' }
+        &$InjectFile 'COSMOVISAO (FILOSOFIA)' $cosmovisaoPath
+
+        $invariantsPath = Join-Path $ClaudeDir 'ARCHITECTURAL_INVARIANTS.md'
+        if (-not (Test-Path -LiteralPath $invariantsPath)) { $invariantsPath = Join-Path $ScriptDirectory '.cerebro\architecture\ARCHITECTURAL_INVARIANTS.md' }
+        &$InjectFile 'INVARIANTES ARQUITETURAIS' $invariantsPath
+
         &$InjectFile 'PROTOCOLO GEMINI SOTA' (Join-Path $ScriptDirectory 'GEMINI.md')
-        &$InjectFile 'IDENTIDADE SOTA' (Join-Path $ClaudeDir 'CLAUDE.md')
+
+        $claudePath = Join-Path $ClaudeDir 'CLAUDE.md'
+        if (-not (Test-Path -LiteralPath $claudePath)) { $claudePath = Join-Path $ScriptDirectory 'CLAUDE.md' }
+        &$InjectFile 'IDENTIDADE SOTA' $claudePath
 
         # 2. Working Scratchpad (NotepadMemory)
         &$InjectFile 'WORKING SCRATCHPAD (NOTEPAD MEMORY ATIVA)' (Join-Path $ScriptDirectory 'memory\notepad_active.md')
