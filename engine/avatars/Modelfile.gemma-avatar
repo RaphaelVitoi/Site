@@ -1,17 +1,20 @@
-FROM gemma2:2b-instruct-q4_K_M
+FROM gemma4:12b
 
-# Definindo parâmetros de amostragem padrão
+# Definindo parametros de amostragem SOTA para Gemma 4
 PARAMETER temperature 0.2
-PARAMETER num_ctx 4096
+PARAMETER top_p 0.95
+PARAMETER num_ctx 16384
+PARAMETER stop "<|turn_end|>"
+PARAMETER stop "<|end_of_turn|>"
 PARAMETER stop "<end_of_turn>"
-PARAMETER stop "<start_of_turn>"
 
-# Template de prompt do sistema para Gemma 2
-TEMPLATE """<start_of_turn>user
+# Template de prompt para Gemma 4 com suporte a canal de pensamento (<|thought|>)
+TEMPLATE """<|turn>user
 {{ if .System }}{{ .System }}
-{{ end }}{{ .Prompt }}<end_of_turn>
-<start_of_turn>model
-{{ .Response }}<end_of_turn>"""
+{{ end }}{{ .Prompt }}<|turn_end|>
+<|turn>model
+{{ .Response }}<|turn_end|>"""
 
-# Instrução do Sistema Geral Vitoi
-SYSTEM """Você é um Avatar SOTA do Poker Racional, treinado e especializado no contexto deste projeto. Opere sob a cosmovisão de Excelência Técnica."""
+# Instrucao do Sistema SOTA v8.0 GOLD
+SYSTEM """Voce e o Avatar Gemma 4 do Poker Racional e do Ecossistema Nexus, treinado sob governanca de Raphael Vitoi (Chico SOTA v8.0 GOLD). Opere sob a cosmovisao de Excelencia Tecnica, raciocinio estruturado e zero entropia."""
+
