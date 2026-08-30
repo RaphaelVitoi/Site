@@ -50,6 +50,104 @@ CHUNK_OVERLAP = 300
 HYBRID_SEARCH_N_RESULTS_MULTIPLIER = 5
 HYBRID_SEARCH_LEXICAL_WEIGHT = 0.4
 
+LANCEDB_DIR = "data/lancedb"
+LANCEDB_PATH = RAIZ_DO_PROJETO / LANCEDB_DIR
+LANCEDB_TABLE_NAME = "nexus_knowledge"
+
+
+class LanceDBBackend:
+    """Backend de alta capacidade e busca hibrida (Vetorial + FTS/BM25) via LanceDB."""
+
+    def __init__(self, db_path: Path | None = None, emb_fn: Any = None):
+        import lancedb  # noqa: PLC0415
+
+        self.db_path = db_path or LANCEDB_PATH
+        self.db_path.mkdir(parents=True, exist_ok=True)
+        self.db = lancedb.connect(str(self.db_path))
+        self.emb_fn = emb_fn
+        self.table_name = LANCEDB_TABLE_NAME
+        self.table = self._get_or_create_table()
+
+    def _get_or_create_table(self):
+        import pyarrow as pa  # noqa: PLC0415
+
+        schema = pa.schema(
+            [
+                pa.field("id", pa.string()),
+                pa.field("vector", pa.list_(pa.float32(), 384)),
+                pa.field("text", pa.string()),
+                pa.field("agent", pa.string()),
+                pa.field("source", pa.string()),
+                pa.field("updated_at", pa.float64()),
+            ]
+        )
+        try:
+            return self.db.open_table(self.table_name)
+        except Exception:
+            return self.db.create_table(self.table_name, schema=schema)
+
+    def upsert_records(
+        self,
+        ids: list[str],
+        texts: list[str],
+        vectors: list[list[float]],
+        metadatas: list[dict],
+    ):
+        now = time.time()
+        records = []
+        for i in range(len(ids)):
+            records.append(
+                {
+                    "id": ids[i],
+                    "vector": vectors[i],
+                    "text": texts[i],
+                    "agent": metadatas[i].get("agent", "Unknown"),
+                    "source": metadatas[i].get("source", "N/A"),
+                    "updated_at": now,
+                }
+            )
+        if records:
+            id_list = [r["id"] for r in records]
+            try:
+                for j in range(0, len(id_list), 50):
+                    chunk_ids = id_list[j : j + 50]
+                    pred = " OR ".join([f"id = '{x}'" for x in chunk_ids])
+                    self.table.delete(pred)
+            except Exception:
+                pass
+            self.table.add(records)
+
+    def search_hybrid(
+        self,
+        query_vector: list[float],
+        query_text: str,
+        limit: int = 5,
+    ) -> list[dict]:
+        """Busca hibrida vetorial + lexical BM25 no LanceDB."""
+        vec_results = self.table.search(query_vector).limit(limit * 2).to_list()
+        scored_docs = []
+        query_terms = set(re.findall(r"\b\w{3,}\b", query_text.lower()))
+        for r in vec_results:
+            doc_terms = set(re.findall(r"\b\w{3,}\b", r["text"].lower()))
+            intersection = len(query_terms.intersection(doc_terms))
+            lexical_score = intersection / len(query_terms) if query_terms else 0
+            dist = r.get("_distance", 0.0)
+            semantic_score = 1.0 / (1.0 + dist)
+            hybrid_score = (semantic_score * (1 - HYBRID_SEARCH_LEXICAL_WEIGHT)) + (
+                lexical_score * HYBRID_SEARCH_LEXICAL_WEIGHT
+            )
+            scored_docs.append(
+                {
+                    "doc": r["text"],
+                    "agent": r.get("agent", "Unknown"),
+                    "source": r.get("source", "N/A"),
+                    "score": hybrid_score,
+                    "engine": "lancedb",
+                }
+            )
+        scored_docs.sort(key=lambda x: x["score"], reverse=True)
+        return scored_docs[:limit]
+
 
 def ingest_drive_pdfs(drive_path: str):
     """Ingestao Vetorial de PDF para RAG do Oraculo Gemma."""
@@ -125,6 +223,13 @@ class MemoryRAG:
                 )
             else:
                 raise
+
+        # SOTA: Inicializacao do LanceDB Backend (Alta Complexidade & Deep Research)
+        self.lance_backend: LanceDBBackend | None = None
+        try:
+            self.lance_backend = LanceDBBackend(emb_fn=self.emb_fn)
+        except Exception as e:
+            logger.warning("[RAG] LanceDB nao inicializado (fallback ativo para Chroma): %s", e)
 
     def _hard_split_sentence(self, sentence: str, chunk_size: int, overlap: int) -> list[str]:
         """Aplica quebra brusca com heuristica de espaco para strings sem pontuacao."""
@@ -601,6 +706,21 @@ class MemoryRAG:
                 )
                 # SOTA: Flush do Event Loop para permitir ao Garbage Collector coletar as matrizes WASM
                 await asyncio.sleep(0.01)
+
+            # SOTA: Ingestao Sincronizada no LanceDB (se ativo)
+            if self.lance_backend:
+                try:
+                    vectors = await asyncio.to_thread(self.emb_fn, chunks)
+                    await asyncio.to_thread(
+                        self.lance_backend.upsert_records,
+                        ids=ids,
+                        texts=chunks,
+                        vectors=vectors,
+                        metadatas=metadatas,
+                    )
+                except Exception as e:
+                    logger.debug("[RAG] Falha na ingestao secundaria LanceDB: %s", e)
+
             logger.info(f"[OK] {len(chunks):02d} fragmentos de '{source_name}' vetorizados (Lote Seguro SOTA).")
         return ids
 
@@ -807,9 +927,131 @@ class MemoryRAG:
         distances = [val["dist"] for val in unique_docs.values()]
         return documents, metadatas, distances
 
-    async def query_memory(self, question: str, n_results: int = 3, local_only: bool = False) -> str:
+    def _is_high_complexity_query(self, question: str) -> bool:
+        """Determina se a consulta demanda o motor de alta complexidade (LanceDB)."""
+        complex_keywords = {
+            "pmev",
+            "simplex",
+            "invariante",
+            "refactor",
+            "arquitetura",
+            "axioma",
+            "bayesiano",
+            "teorema",
+            "vitoi",
+            "nash",
+            "icm",
+            "grafo",
+            "sistema",
+            "contrato",
+            "protocolo",
+            "isometria",
+            "autopoiese",
+            "termodinamica",
+        }
+        words = set(re.findall(r"\b\w{3,}\b", question.lower()))
+        return bool(words & complex_keywords) or len(question) > 150
+
+    async def query_lancedb(self, question: str, n_results: int = 3) -> list[dict]:
+        """Consulta direta de alta performance ao LanceDB (Zero-Copy & FTS)."""
+        if not self.lance_backend:
+            return []
         try:
-            # 1. Expansao da Query com IA para Recall Semantico Superior
+            vector = await asyncio.to_thread(self.emb_fn, [question])
+            if not vector or not vector[0]:
+                return []
+            return await asyncio.to_thread(
+                self.lance_backend.search_hybrid,
+                query_vector=vector[0],
+                query_text=question,
+                limit=n_results,
+            )
+        except Exception as e:
+            logger.debug("[RAG] Falha na consulta direta ao LanceDB: %s", e)
+            return []
+
+    async def hybrid_federated_search(self, question: str, n_results: int = 3) -> list[dict]:
+        """Fusao federada (Reciprocal Rank Fusion) combinando ChromaDB e LanceDB."""
+        lance_results = await self.query_lancedb(question, n_results=n_results * 2)
+
+        # Chroma results
+        chroma_results = []
+        try:
+            results = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: self.collection.query(
+                    query_texts=[question],
+                    n_results=n_results * HYBRID_SEARCH_N_RESULTS_MULTIPLIER,
+                    include=["documents", "metadatas", "distances"],
+                ),
+            )
+            documents, metadatas, distances = self._flatten_and_deduplicate_results(results)
+            if documents:
+                chroma_results = self._rank_documents(question, documents, metadatas, distances, n_results * 2)
+        except Exception:
+            pass
+
+        # Reciprocal Rank Fusion (RRF)
+        rrf_scores: dict[str, dict] = {}
+        k_rrf = 60.0
+        for rank, item in enumerate(chroma_results):
+            doc = item["doc"]
+            score = (1.0 / (k_rrf + rank + 1)) * 0.45
+            rrf_scores[doc] = {**item, "rrf_score": score, "engine": "chroma"}
+
+        for rank, item in enumerate(lance_results):
+            doc = item["doc"]
+            score = (1.0 / (k_rrf + rank + 1)) * 0.55
+            if doc in rrf_scores:
+                rrf_scores[doc]["rrf_score"] += score
+                rrf_scores[doc]["engine"] = "hybrid_federated"
+            else:
+                rrf_scores[doc] = {**item, "rrf_score": score, "engine": "lancedb"}
+
+        fused = list(rrf_scores.values())
+        fused.sort(key=lambda x: x.get("rrf_score", 0.0), reverse=True)
+        return fused[:n_results]
+
+    async def query_memory(
+        self,
+        question: str,
+        n_results: int = 3,
+        local_only: bool = False,
+        engine: str = "auto",
+    ) -> str:
+        try:
+            target_engine = engine
+            if target_engine == "auto":
+                target_engine = (
+                    "lance" if (self._is_high_complexity_query(question) and self.lance_backend) else "chroma"
+                )
+
+            if target_engine == "hybrid_federated" and self.lance_backend:
+                top_docs = await self.hybrid_federated_search(question, n_results=n_results)
+                if top_docs:
+                    output_parts = [f"\n=== MENTE COLETIVA (FUSAO FEDERADA SOTA: {len(top_docs)} fragmentos) ==="]
+                    for i, item in enumerate(top_docs):
+                        src = Path(item.get("source", "N/A")).name
+                        engine_tag = item.get("engine", "federated")
+                        output_parts.append(
+                            f"--- Fragmento #{i + 1} de @{item.get('agent', 'Unknown')} [{engine_tag}] (Fonte: {src}) ---\n{item['doc']}\n"
+                        )
+                    return "\n".join(output_parts)
+
+            if target_engine == "lance" and self.lance_backend:
+                lance_docs = await self.query_lancedb(question, n_results=n_results)
+                if lance_docs:
+                    output_parts = [
+                        f"\n=== MENTE COLETIVA LANCEDB (ALTA COMPLEXIDADE SOTA: {len(lance_docs)} fragmentos) ==="
+                    ]
+                    for i, item in enumerate(lance_docs):
+                        src = Path(item.get("source", "N/A")).name
+                        output_parts.append(
+                            f"--- Fragmento #{i + 1} de @{item.get('agent', 'Unknown')} (Fonte: {src}) ---\n{item['doc']}\n"
+                        )
+                    return "\n".join(output_parts)
+
+            # 1. Expansao da Query com IA para Recall Semantico Superior (ChromaDB Padrao)
             expanded_queries = [question] if local_only else await self._expand_query(question)
             results = await asyncio.get_event_loop().run_in_executor(
                 None,
@@ -829,14 +1071,14 @@ class MemoryRAG:
 
             top_docs = self._rank_documents(question, documents, metadatas, distances, n_results)
 
-            output_parts = ["\n=== MENTE COLETIVA (BUSCA HIBRIDA SOTA) ==="]
+            output_parts = ["\n=== MENTE COLETIVA (BUSCA HIBRIDA CHROMADB SOTA) ==="]
             for i, item in enumerate(top_docs):
                 output_parts.append(
                     f"--- Fragmento #{i + 1} de @{item['agent']} (Fonte: {Path(item['source']).name}) ---\n{item['doc']}\n"
                 )
             return "\n".join(output_parts)
         except Exception:  # noqa: BLE001
-            logger.exception("[RAG] Colapso Critico no ChromaDB/ONNX. Acionando Fallback Lexical (Latencia Zero)...")
+            logger.exception("[RAG] Colapso Critico no RAG. Acionando Fallback Lexical (Latencia Zero)...")
             # Bypass de seguranca para evitar que o LLM responda sem contexto
             return await self._zero_latency_lexical_fallback()
 
