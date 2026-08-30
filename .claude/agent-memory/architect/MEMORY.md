@@ -14,14 +14,14 @@
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
 
-## Memória episódica consolidada
+## Memoria episodica consolidada
 
-> Log de handoffs no formato *ação → resultado → aprendizado*, trazido das
-> árvores que existiam em paralelo até 2026-08-28. É uma natureza de memória
-> diferente da seção curada acima, e por isso fica separada em vez de
+> Log de handoffs no formato *acao - resultado - aprendizado*, trazido das
+> arvores que existiam em paralelo ate 2026-08-28. E uma natureza de memoria
+> diferente da secao curada acima, e por isso fica separada em vez de
 > misturada. Ver `reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`.
 
-### Procedência — `.cerebro/agent-memory/architect/MEMORY.md`
+### Procedencia -- `.cerebro/agent-memory/architect/MEMORY.md`
 
 # @architect MEMORY - O Cortex Individual
 
@@ -79,7 +79,7 @@ _A forma segue a funcao, mas a beleza e a medida da integridade._
 **Tags para Ingestao RAG:**
 `#padrao` `#inteligencia` `#relacionamento` `#decisao` `#aprendizado` `#reflexao` `#etica` `#proposta` `#database_design` `#nash_solver` `#prisma` `#sqlite` `#poker_strategy` `#schema_versioning` `#game_theory` `#gto` `#icm` `#seed_data` `#game_tree_modeling`
 
-### Procedência — `.claude/AGENTS-MEMORY/architect/MEMORY.md`
+### Procedencia -- `.claude/AGENTS-MEMORY/architect/MEMORY.md`
 
 # @architect MEMORY - O Cortex Individual
 

@@ -1,11 +1,11 @@
-# Superseded — .cerebro/agent-memory
+# Superseded -- .cerebro/agent-memory
 
-Esta árvore deixou de ser fonte de memória agêntica em 2026-08-28.
-A canônica é `.claude/agent-memory`, e o conteúdo daqui foi absorvido lá, na seção
-*Memória episódica consolidada*, com procedência por arquivo.
+Esta arvore deixou de ser fonte de memoria agentica em 2026-08-28.
+A canonica e `.claude/agent-memory`, e o conteudo daqui foi absorvido la, na secao
+*Memoria episodica consolidada*, com procedencia por arquivo.
 
-**Nada foi apagado.** Os arquivos continuam aqui para conferência. Removê-los
-é ato do vértice, depois de a canônica estar verificada em uso.
+**Nada foi apagado.** Os arquivos continuam aqui para conferencia. Remove-los
+e ato do vertice, depois de a canonica estar verificada em uso.
 
-Medição que motivou a consolidação, e o desenho da fusão:
+Medicao que motivou a consolidacao, e o desenho da fusao:
 `reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`.

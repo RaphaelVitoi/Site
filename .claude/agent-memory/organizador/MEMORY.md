@@ -14,14 +14,14 @@
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
 
-## Memória episódica consolidada
+## Memoria episodica consolidada
 
-> Log de handoffs no formato *ação → resultado → aprendizado*, trazido das
-> árvores que existiam em paralelo até 2026-08-28. É uma natureza de memória
-> diferente da seção curada acima, e por isso fica separada em vez de
+> Log de handoffs no formato *acao - resultado - aprendizado*, trazido das
+> arvores que existiam em paralelo ate 2026-08-28. E uma natureza de memoria
+> diferente da secao curada acima, e por isso fica separada em vez de
 > misturada. Ver `reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`.
 
-### Procedência — `.cerebro/agent-memory/organizador/MEMORY.md`
+### Procedencia -- `.cerebro/agent-memory/organizador/MEMORY.md`
 
 # @organizador MEMORY - O Cortex Individual
 
@@ -66,7 +66,7 @@ Sou o chAo onde todos pisam. Mantenho o `project-context.md` impecAvel para o RA
 **Assinatura Filosofica:**
 *A evolucao do Todo comeca na precisao e integridade da Parte.*
 
-### Procedência — `.claude/AGENTS-MEMORY/organizador/MEMORY.md`
+### Procedencia -- `.claude/AGENTS-MEMORY/organizador/MEMORY.md`
 
 # @organizador MEMORY - O Cortex Individual
 
