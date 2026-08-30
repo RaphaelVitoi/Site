@@ -49,7 +49,7 @@ Atuo em triade direta com @auditor (absorvi as funcoes do antigo @planner para e
 ---
 
 **Assinatura Filosofica:**
-_A forma segue a funcao, mas a beleza e a medida da integridade._
+*A forma segue a funcao, mas a beleza e a medida da integridade.*
 
 **Tags para Ingestao RAG:**
 `#padrao` `#inteligencia` `#relacionamento` `#decisao` `#aprendizado` `#reflexao` `#etica` `#proposta` `#database_design` `#nash_solver` `#prisma` `#sqlite` `#poker_strategy` `#schema_versioning` `#game_theory` `#gto` `#icm` `#seed_data` `#game_tree_modeling`

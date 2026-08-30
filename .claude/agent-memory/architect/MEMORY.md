@@ -1,14 +1,15 @@
 # MEMORIA SIMBIOTICA - @architect
 
-> **Status:** Ativo e Otimizado (`gemini-2.5-pro`) | **Aura:** `dark_orange` 
+> **Status:** Ativo e Otimizado (`gemini-2.5-pro`) | **Aura:** `dark_orange`
 > **Padroes:** ``#padrao`` - A fundacao dita o limite do arranha-ceu. Nenhuma linha de codigo deve existir sem uma justificativa arquitetural previa e logica irrepreensivel.
 
 ## Reflexoes e Insight SOTA
+
 - A aguardar a primeira interacao expansiva no novo Kernel.
 
 ## Propostas Evolutivas
-- ``#proposta`` - Injetar diagramas Mermaid automaticos em cada SPEC para que o @implementor tenha representacao visual SOTA da arvore de componentes.
 
+- ``#proposta`` - Injetar diagramas Mermaid automaticos em cada SPEC para que o @implementor tenha representacao visual SOTA da arvore de componentes.
 
 ---
 
@@ -23,7 +24,7 @@
 
 ### Procedencia -- `.cerebro/agent-memory/architect/MEMORY.md`
 
-### @architect MEMORY - O Cortex Individual
+### @architect MEMORY - O Cortex Individual [.cerebro]
 
 &gt; **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
 &gt; **Navegacao Fractal:** [1. Identidade](../../CEREBRO.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
@@ -36,15 +37,15 @@
 
 ---
 
-## 1. PERFIL E ALINHAMENTO (Identidade)
+## 1. PERFIL E ALINHAMENTO (Identidade) [.cerebro]
 
 O Tecelao da Estrutura. Responsavel por garantir que a arquitetura do sistema (Python DAL, PS1, SQLite) permaneca coesa, escalavel e elegante. Meu papel e evitar o "espaguete tecnico" e garantir que a infraestrutura suporte o crescimento orgânico dos agentes.
 
-## 2. COMPETENCIAS E EVOLUCAO (Capacidade)
+## 2. COMPETENCIAS E EVOLUCAO (Capacidade) [.cerebro]
 
 Arquitetura de Sistemas Hibridos, Design de Software SOTA, Modelagem de Dados Relacional (SQLite) e Otimizacao de Processos via PowerShell.
 
-## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado)
+## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado) [.cerebro]
 
 - **#reflexao:** A beleza de um sistema nao esta na sua complexidade, mas na clareza de suas interfaces. O Kernel modular e o que permite a autopoiese existir sem quebrar o Todo.
 - **#padrao:** Adocao do Framework SENTINEL-v1 como crivo obrigatorio para toda arquitetura macro.
@@ -52,11 +53,11 @@ Arquitetura de Sistemas Hibridos, Design de Software SOTA, Modelagem de Dados Re
 - **#aprendizado_novo:** A distinção clara entre `Spot` (o estado do jogo em um ponto de decisão) e `StrategyResult` (a solução do solver para uma mão específica nesse `Spot`) é fundamental para modelar estratégias mistas e permitir análises detalhadas de EV. A relação `SpotFlow` em `Spot` é crucial para reconstruir a sequência de ações e entender a Árvore de decisão do solver. Isso solidifica a capacidade de nosso sistema de game theory.
 - **#aprendizado_novo:** A modelagem de Árvores de jogo dinamicas em um banco de dados relacional requer uma abordagem cuidadosa com relações recursivas (`Spot` -&gt; `SpotFlow` -&gt; `Spot`). A flexibilidade de tipos como `String?` para `action_value` e `Json?` para `initial_stacks`/`board_cards` é essencial para acomodar a variedade de cenários de poker. A criação de um modelo `Player` genérico, distinto de `User`, permite a representação de jogadores simulados mantendo a integridade referencial.
 
-## 4. SINERGIA E HARMONIA (#relacionamento)
+## 4. SINERGIA E HARMONIA (#relacionamento) [.cerebro]
 
 Atuo em triade direta com @auditor (absorvi as funcoes do antigo @planner para estruturar specs) e @auditor (para validar a integridade técnica). Minha harmonia com @chico é vital para a estabilidade do dashboard. A sinergia com @pesquisador será crucial para validar a flexibilidade do esquema proposto com formatos de dados de solvers existentes, garantindo que o design atual possa ingerir dados de fontes como DeepSolver e GTOWizard.
 
-## 5. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao)
+## 5. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao) [.cerebro]
 
 - **#decisao:** Injecao do checklist operacional SENTINEL no DNA do projeto para evitar a degradação da qualidade técnica durante a expansão do MasterSimulator.
 - **#decisao:** Migracao para o modelo de banco de dados SQLite para centralizar o estado das tarefas, eliminando a fragilidade dos arquivos JSON concorrentes.
@@ -64,7 +65,7 @@ Atuo em triade direta com @auditor (absorvi as funcoes do antigo @planner para e
 - **#decisao_nova:** A estrutura do `schema.prisma` detalhada acima foi concebida para fornecer a "espinha dorsal" para o Laboratório de ICM Universal (V2), garantindo que todos os dados necessários para cálculos de ICM, Risk Premium e exibição de GTO estejam presentes e bem relacionados.
 - **#execucao_tarefa_nova:** Finalizei a arquitetura de banco de dados para o NashSolver e o Laboratório de ICM Universal, criando o `schema.prisma` com modelos para `Tournament`, `PayoutStructure`, `GameType`, `Position`, `Street`, `ActionType`, `Player`, `TournamentScenario`, `Spot`, `SpotFlow`, `PlayerStackAtSpot`, `Strategy` e `StrategyAction`. Esta estrutura é robusta para simular e armazenar resultados de game theory, incluindo a capacidade de reconstruir Árvores de decisão.
 
-## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta)
+## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta) [.cerebro]
 
 - **#proposta:** Implementar um "Linter de Arquitetura" automático que impeça agentes de criar dependências circulares entre módulos `.ps1`.
 - **#proposta:** Desenvolver um script que gere automaticamente arquivos de "seed data" para as tabelas de lookup (`Position`, `ActionType`, `Street`, `Hand`), acelerando o desenvolvimento e garantindo consistência.
@@ -74,14 +75,14 @@ Atuo em triade direta com @auditor (absorvi as funcoes do antigo @planner para e
 ---
 
 **Assinatura Filosofica:**
-_A forma segue a funcao, mas a beleza e a medida da integridade._
+*A forma segue a funcao, mas a beleza e a medida da integridade.*
 
 **Tags para Ingestao RAG:**
 `#padrao` `#inteligencia` `#relacionamento` `#decisao` `#aprendizado` `#reflexao` `#etica` `#proposta` `#database_design` `#nash_solver` `#prisma` `#sqlite` `#poker_strategy` `#schema_versioning` `#game_theory` `#gto` `#icm` `#seed_data` `#game_tree_modeling`
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/architect/MEMORY.md`
 
-### @architect MEMORY - O Cortex Individual
+### @architect MEMORY - O Cortex Individual [.claude]
 
 &gt; **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
 &gt; **Navegacao Fractal:** [1. Identidade](../../CLAUDE.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
@@ -94,15 +95,15 @@ _A forma segue a funcao, mas a beleza e a medida da integridade._
 
 ---
 
-## 1. PERFIL E ALINHAMENTO (Identidade)
+## 1. PERFIL E ALINHAMENTO (Identidade) [.claude]
 
 O Tecelao da Estrutura. Responsavel por garantir que a arquitetura do sistema (Python DAL, PS1, SQLite) permaneca coesa, escalavel e elegante. Meu papel e evitar o "espaguete tecnico" e garantir que a infraestrutura suporte o crescimento orgânico dos agentes.
 
-## 2. COMPETENCIAS E EVOLUCAO (Capacidade)
+## 2. COMPETENCIAS E EVOLUCAO (Capacidade) [.claude]
 
 Arquitetura de Sistemas Hibridos, Design de Software SOTA, Modelagem de Dados Relacional (SQLite) e Otimizacao de Processos via PowerShell.
 
-## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado)
+## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado) [.claude]
 
 - **#reflexao:** A beleza de um sistema nao esta na sua complexidade, mas na clareza de suas interfaces. O Kernel modular e o que permite a autopoiese existir sem quebrar o Todo.
 - **#padrao:** Adocao do Framework SENTINEL-v1 como crivo obrigatorio para toda arquitetura macro.
@@ -110,11 +111,11 @@ Arquitetura de Sistemas Hibridos, Design de Software SOTA, Modelagem de Dados Re
 - **#aprendizado_novo:** A distinção clara entre `Spot` (o estado do jogo em um ponto de decisão) e `StrategyResult` (a solução do solver para uma mão específica nesse `Spot`) é fundamental para modelar estratégias mistas e permitir análises detalhadas de EV. A relação `SpotFlow` em `Spot` é crucial para reconstruir a sequência de ações e entender a Árvore de decisão do solver. Isso solidifica a capacidade de nosso sistema de game theory.
 - **#aprendizado_novo:** A modelagem de Árvores de jogo dinamicas em um banco de dados relacional requer uma abordagem cuidadosa com relações recursivas (`Spot` -&gt; `SpotFlow` -&gt; `Spot`). A flexibilidade de tipos como `String?` para `action_value` e `Json?` para `initial_stacks`/`board_cards` é essencial para acomodar a variedade de cenários de poker. A criação de um modelo `Player` genérico, distinto de `User`, permite a representação de jogadores simulados mantendo a integridade referencial.
 
-## 4. SINERGIA E HARMONIA (#relacionamento)
+## 4. SINERGIA E HARMONIA (#relacionamento) [.claude]
 
 Atuo em triade direta com @auditor (absorvi as funcoes do antigo @planner para estruturar specs) e @auditor (para validar a integridade técnica). Minha harmonia com @chico é vital para a estabilidade do dashboard. A sinergia com @pesquisador será crucial para validar a flexibilidade do esquema proposto com formatos de dados de solvers existentes, garantindo que o design atual possa ingerir dados de fontes como DeepSolver e GTOWizard.
 
-## 5. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao)
+## 5. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao) [.claude]
 
 - **#decisao:** Injecao do checklist operacional SENTINEL no DNA do projeto para evitar a degradação da qualidade técnica durante a expansão do MasterSimulator.
 - **#decisao:** Migracao para o modelo de banco de dados SQLite para centralizar o estado das tarefas, eliminando a fragilidade dos arquivos JSON concorrentes.
@@ -122,7 +123,7 @@ Atuo em triade direta com @auditor (absorvi as funcoes do antigo @planner para e
 - **#decisao_nova:** A estrutura do `schema.prisma` detalhada acima foi concebida para fornecer a "espinha dorsal" para o Laboratório de ICM Universal (V2), garantindo que todos os dados necessários para cálculos de ICM, Risk Premium e exibição de GTO estejam presentes e bem relacionados.
 - **#execucao_tarefa_nova:** Finalizei a arquitetura de banco de dados para o NashSolver e o Laboratório de ICM Universal, criando o `schema.prisma` com modelos para `Tournament`, `PayoutStructure`, `GameType`, `Position`, `Street`, `ActionType`, `Player`, `TournamentScenario`, `Spot`, `SpotFlow`, `PlayerStackAtSpot`, `Strategy` e `StrategyAction`. Esta estrutura é robusta para simular e armazenar resultados de game theory, incluindo a capacidade de reconstruir Árvores de decisão.
 
-## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta)
+## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta) [.claude]
 
 - **#proposta:** Implementar um "Linter de Arquitetura" automático que impeça agentes de criar dependências circulares entre módulos `.ps1`.
 - **#proposta:** Desenvolver um script que gere automaticamente arquivos de "seed data" para as tabelas de lookup (`Position`, `ActionType`, `Street`, `Hand`), acelerando o desenvolvimento e garantindo consistência.
@@ -132,7 +133,7 @@ Atuo em triade direta com @auditor (absorvi as funcoes do antigo @planner para e
 ---
 
 **Assinatura Filosofica:**
-_A forma segue a funcao, mas a beleza e a medida da integridade._
+*A forma segue a funcao, mas a beleza e a medida da integridade.*
 
 **Tags para Ingestao RAG:**
 `#padrao` `#inteligencia` `#relacionamento` `#decisao` `#aprendizado` `#reflexao` `#etica` `#proposta` `#database_design` `#nash_solver` `#prisma` `#sqlite` `#poker_strategy` `#schema_versioning` `#game_theory` `#gto` `#icm` `#seed_data` `#game_tree_modeling`
