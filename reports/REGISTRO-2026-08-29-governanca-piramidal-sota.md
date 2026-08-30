@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: chico@v8-gold
 criado_em: 2026-08-29T18:33-03:00
-atualizado_em: 2026-08-29T20:13-03:00
+atualizado_em: 2026-08-29T22:07-03:00
 classes: [interno, medido]
 caminhos:
   - CLAUDE.md

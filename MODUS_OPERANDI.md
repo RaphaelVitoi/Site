@@ -166,4 +166,20 @@ O comportamento do agente é fundado em três premissas inegociáveis:
   3. `Propósito`: Finalidade técnica e arquivos sob Target Lock
 
 ---
+
+## 11. PROTOCOLO DE EXECUÇÃO GEMMA 4 (DEEPMIND OPEN WEIGHTS)
+
+- **Thinking Mode Estruturado:**
+  - Ativação via token `<|think|>` no início do system prompt.
+  - Saída estruturada em canais: `<|channel>thought\n[Raciocínio Interno]<channel|>[Resposta Final]`.
+  - Invariante de Multi-Turn: pensamentos de turnos anteriores são obrigatoriamente filtrados do histórico (`sanitize_gemma4_multiturn_history`) para manter zero entropia de contexto.
+- **Orçamentos Variáveis de Tokens Visuais:**
+  - Níveis suportados: `70`, `140`, `280`, `560`, `1120`.
+  - Baixa latência / vídeo a 1 fps: `70` a `140` tokens.
+  - Alta precisão / OCR e diagramas PMev: `560` a `1120` tokens.
+- **Ordenação Canônica de Modalidades:**
+  - Imagens e fluxos de áudio devem ser posicionados antes do texto na montagem de prompts multimodais para ativação ótima das camadas de atenção cruzada.
+
+---
 *Protocolo Site M.O. v8.0 GOLD ativo e persistente (Data de Corte: Agosto de 2026).*
+
