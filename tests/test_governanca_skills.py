@@ -176,19 +176,44 @@ def test_toda_externa_declara_origem():
     assert not sem_origem, f"externas sem campo 'origem': {sem_origem}"
 
 
+def _frontmatter(texto: str) -> list[str] | None:
+    """Linhas do bloco YAML entre o primeiro `---` e o `---` seguinte.
+
+    `None` quando o bloco nao existe ou nao fecha. A distincao importa: o
+    chamador precisa poder reprovar frontmatter ausente em vez de trata-lo como
+    bloco vazio, que passaria silenciosamente.
+    """
+    linhas = texto.splitlines()
+    if not linhas or linhas[0].strip() != "---":
+        return None
+    for i, ln in enumerate(linhas[1:], start=1):
+        if ln.strip() == "---":
+            return linhas[1:i]
+    return None
+
+
 def test_skill_local_declara_o_proprio_nome_no_frontmatter():
     """Diretorio e frontmatter divergentes tornam a resolucao por diretorio uma
     coincidencia. `sota-triad-mesh` usa `id:` alem de `name:`; o que precisa
-    bater e o `name:`."""
+    bater e o `name:`.
+
+    A busca e restrita ao bloco YAML de proposito. A primeira versao desta
+    guarda varria o arquivo inteiro, e um `name:` no CORPO do Markdown a
+    satisfazia mesmo com frontmatter ausente ou declarando outro nome --
+    apontado pelo CodeRabbit na revisao do PR #24 e confirmado no codigo. Uma
+    guarda que pode ser satisfeita por coincidencia e o defeito que esta
+    auditoria mede, entao ela nao podia ficar assim.
+    """
     divergentes = []
     for nome, caminho in _skills_locais().items():
-        texto = caminho.read_text(encoding="utf-8", errors="ignore")
-        linha = next(
-            (ln for ln in texto.splitlines() if ln.startswith("name:")),
-            None,
-        )
+        bloco = _frontmatter(caminho.read_text(encoding="utf-8", errors="ignore"))
+        if bloco is None:
+            divergentes.append(f"{nome}: SKILL.md sem bloco de frontmatter delimitado por '---'")
+            continue
+
+        linha = next((ln for ln in bloco if ln.startswith("name:")), None)
         if linha is None:
-            divergentes.append(f"{nome}: SKILL.md sem 'name:'")
+            divergentes.append(f"{nome}: frontmatter sem 'name:'")
         elif linha.split(":", 1)[1].strip() != nome:
             divergentes.append(f"{nome}: frontmatter diz '{linha.split(':', 1)[1].strip()}'")
 
