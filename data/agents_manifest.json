@@ -75,7 +75,7 @@
       "core/arbitrator.py",
       "core/sota_context_engine.py"
     ],
-    "fallback_model": "claude-3-7-sonnet",
+    "fallback_model": "gemini-3.7-flash",
     "tier": "Tier 3: System Design & Topology",
     "memory_affinity": "RAM_CACHE & ISOMORPHISM"
   },
@@ -147,7 +147,7 @@
       "memory_rag.py",
       "scripts/ops/Ensure-OllamaModels.ps1"
     ],
-    "fallback_model": "exa",
+    "fallback_model": "gemma4:31b-cloud",
     "tier": "Tier 3: Multimodal Research & Ingestion",
     "memory_affinity": "VRAM_HOT & LANCEDB_ZERO_COPY"
   },
