@@ -306,5 +306,11 @@
   "turboConsoleLog.addSemicolonInTheEnd": true,
   "turboConsoleLog.logMessagePrefix": "⚡ [SOTA-DEBUG]",
   "redhat.telemetry.enabled": false,
-  "antigravity.enableTelemetry": false
+  "antigravity.enableTelemetry": false,
+  "gdl.openTarget": "system",
+  "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": ["build/QuantumTensorEngine.sln"],
+  "ruff.format.preview": true,
+  "ruff.codeAction.disableRuleComment": {
+    "enable": false
+  }
 }

@@ -64,6 +64,10 @@
   - Resultado: Sucesso Total (696 testes verdes, 0 erros/warnings de AST/Linter, commit 9dc7c243 enviado para origin/master com portas CWV, Ancoras e Registros 100% aprovadas).
   - Aprendizado: A concatenação de memórias consolidadas exige governança semântica de AST em Markdown (MD025/MD024/MD032). O isolamento explícito de prefixos (`sub_`) para subagentes locais elimina risco de colisão nominal em DAGs e manifestos sem introduzir custos marginais de tokens.
 
+- \[HANDOFF-20260830-SAN\] - Sanitização de Linters de Fixtures, Configuração Ruff Global e Homeostase
+  - Resultado: Sucesso Total (696/696 testes verdes, erradicação de warnings de escopo de fixtures em testes, exclusões e regras Bandit ajustadas em .ruff.toml/pyproject.toml).
+  - Aprendizado: No ecossistema de linting Python/Ruff em monorepos com múltiplos plugins (.agents, skills, hermes), o arquivo .ruff.toml tem precedência sobre pyproject.toml para certas diretivas de linter. Configurar extend-exclude e regras declarativas em ambos os manifestos mantém sincronia absoluta e evita ruídos no IDE sem intervenções intrusivas no código de produção.
+
 ## Padrões Observados [.cerebro]
 
 - Padrão 1: Para garantir conformidade com scanners SAST e segurança efetiva de containers, aplicar atualizações explícitas de pacotes (`apk update && apk upgrade --no-cache`) e fixar digests SHA-256 canônicos da imagem base.

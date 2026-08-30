@@ -12,7 +12,7 @@ def test_intentmap_covers_all_agents():
     """Valida que todos os agentes possuem padroes no intentmap.json."""
     intent_file = Path("data/intentmap.json")
     assert intent_file.exists()
-    
+
     data = json.loads(intent_file.read_text(encoding="utf-8"))
     assert len(data) >= 18
     assert "@implementor" in data
@@ -25,7 +25,7 @@ def test_aphorisms_exist_and_not_empty():
     """Valida a lista de aforismos do Maverick."""
     aphorisms_file = Path("data/aphorisms.json")
     assert aphorisms_file.exists()
-    
+
     aphorisms = json.loads(aphorisms_file.read_text(encoding="utf-8"))
     assert isinstance(aphorisms, list)
     assert len(aphorisms) >= 5
@@ -52,7 +52,7 @@ def test_resolve_intent_heuristics():
             pat = cfg.get("pattern", "")
             agent_syns = synonyms.get(agent, [])
             combined_patterns = [pat] + agent_syns if agent_syns else [pat]
-            
+
             score = 0
             for p in combined_patterns:
                 if not p:
