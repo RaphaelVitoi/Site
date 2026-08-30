@@ -7,8 +7,9 @@
 camada de skills e camada de memoria agentica.
 **Metodo:** medicao no repositorio, nao leitura de documentacao. Toda afirmacao
 abaixo foi executada; o que nao rodou esta declarado em §5.
-**Estado das correcoes:** A1, A2, A3, A5 e A7 foram corrigidos nesta mesma
-branch apos aprovacao do vertice — ver §6. A4, A6, A8 e A9 permanecem abertos.
+**Estado das correcoes:** A1, A2, A3, A5, A7, A8 e A9 corrigidos nesta mesma
+branch; A6 avaliado e deliberadamente NAO corrigido, com o motivo medido. Ver
+§6. Resta A4.
 **Este relatorio carrega duas retificacoes a si mesmo** (§3/A1 e §3/A5), ambas
 descobertas ao aplicar as correcoes. Estao no corpo, nao em nota de rodape.
 
@@ -296,9 +297,9 @@ so usa `PersistentClient` embarcado. Duas observacoes, nenhuma delas urgente:
    local-first do manifesto.
 6. **A7, A8, A9** — higiene.
 
-A auditoria foi entregue sem correcoes. **A1, A2, A3, A5 e A7 foram corrigidos
-em seguida, sob aprovacao explicita do vertice** — registrados na §6. A4, A6, A8
-e A9 continuam abertos.
+A auditoria foi entregue sem correcoes. **A1, A2, A3, A5, A7, A8 e A9 foram
+corrigidos em seguida** e **A6 foi avaliado e recusado com motivo medido** —
+todos registrados na §6. Resta A4.
 
 ---
 
@@ -502,6 +503,75 @@ nao foi executado. A mudanca e a remocao de uma interpolacao dentro de uma
 string de aspas duplas — sem alteracao de estrutura, controle de fluxo ou
 encoding — mas isso e argumento, nao medicao. Rodar o gerador em maquina de
 trabalho fecha esta lacuna.
+
+### A8 — `fallback_model` vira contrato, e o campo revela o terceiro decorativo
+
+Medicao feita ao aplicar a correcao: `fallback_model` **nao tem consumidor de
+producao**. Junta-se a `skills` e `routing_pattern` — tres dos campos do
+manifesto sao lidos apenas pelo gerador de documentos e por assercoes de forma.
+As cadeias de fallback que o sistema usa de verdade estao em
+`data/system_config.json -> model_routing` e em `Rota.fallback` da politica.
+
+Os dois orfaos e por que sao diferentes entre si:
+
+| Agente | Valor | Natureza do defeito |
+| :--- | :--- | :--- |
+| `architect` | `claude-3-7-sonnet` | nome de modelo que nao existe em registro nenhum |
+| `pesquisador` | `exa` | **nome de outra categoria** — Exa e provedor de busca, nao modelo |
+
+O segundo e o instrutivo: nenhuma checagem de forma pega um erro de categoria.
+So resolucao pega.
+
+Substituicoes, ambas idiomaticas e nao inventadas:
+
+- `architect` → `gemini-3.7-flash`. O primario e `claude-sonnet-5` (nuvem paga);
+  a faixa gratuita e o degrau seguinte pela ordem de precedencia da propria
+  politica, e `gemini-3.7-flash` ja era o fallback declarado de outros quatro
+  agentes.
+- `pesquisador` → `gemma4:31b-cloud`. Irmao do primario (`gemma4:12b`) e o
+  modelo do tier `RESEARCH` em `SUBAGENT_MODEL_MAP` — o mesmo papel, ja
+  decidido em outro lugar do sistema.
+
+**Guarda:** dois testes em `tests/test_routing_policy.py` — `fallback_model` e
+`primary_model` precisam resolver em `MODEL_REGISTRY` (nuvem) ou em
+`data/ollama_models.json` (local). O de `primary_model` documenta que os 19 ja
+resolviam: sem guarda isso era coincidencia, nao invariante.
+
+**Sonda:** reintroduzir `exa` reprova, nomeando agente, valor e a hipotese de
+campo errado. Suite: 363 → **365 passed**.
+
+### A9 — a nota que sustenta o aceite de risco passa a enumerar o que aceita
+
+O comentario do `pyproject.toml` citava `PYSEC-2026-311`. As outras tres
+(`CVE-2026-45830`, `-45831`, `-45833`) surgiram depois e o texto nao as
+acompanhou. Agora as quatro estao nominadas, com o que cada uma e.
+
+A mudanca e de **texto, nao de dependencia**: o aceite continua valendo, e
+continua valendo pelo motivo certo — as quatro sao de modo servidor e o projeto
+so usa `PersistentClient` embarcado, verificado por varredura. A nota agora diz
+isso explicitamente ("e POR ISSO que o aceite se sustenta, nao por serem de
+baixa gravidade") e registra que a fase 3 do portao roda so `npm audit`, entao
+nenhuma das quatro e barrada automaticamente.
+
+Aceite de risco que nao enumera o que aceita nao e aceite, e adivinhacao.
+
+### A6 — decisao: **nao corrigir no codigo**, e a tentativa e o argumento
+
+A leitura enganosa existe so no JSON cru: todo consumidor e todo documento
+gerado ja apontam para a autoridade real. Os 19 `.md` dizem, no cabecalho,
+"Motor Base: roteado dinamicamente — ver `data/agents_manifest.json`
+(preferencia) e `llm/routing_policy.py` (modelo concreto)", e a §3 do
+`CLAUDE.md` diz o mesmo.
+
+Tentei mesmo assim inserir um bloco `_manifesto` com o aviso no proprio arquivo.
+**Quebrou 9 testes na hora** (13 → 22 falhas): quatro consumidores tratam *toda*
+chave do manifesto como agente, e `data/routing_map.json` so tolera chaves `_`
+porque os consumidores DELE toleram. Revertido no mesmo minuto.
+
+Fazer o campo aceitar metadado exigiria mexer no carregamento de roteamento —
+o caminho mais quente do sistema — para corrigir uma leitura cosmetica de um
+arquivo que ninguem le cru. Custo sistemico desproporcional ao ganho. A6 fica
+**registrado e aceito**, nao aberto por omissao.
 
 ---
 
