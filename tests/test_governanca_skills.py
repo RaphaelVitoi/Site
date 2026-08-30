@@ -5,7 +5,10 @@ O que a auditoria mediu, antes desta guarda existir:
     31 skills distintas declaradas nos 19 agentes
      0 resolviam em qualquer raiz de skill do repositorio
     21 nao resolviam em lugar nenhum
-    11 diretorios de skill existiam sem nenhum agente declara-los
+     3 skills existiam em .agents/skills sem nenhum agente declara-las
+
+(Os 8 diretorios sob `skills/` nao entram nessa conta: sao submodulos git de
+extensoes do Gemini CLI e servidores MCP, outra classe de artefato.)
 
 E os dois conjuntos eram **disjuntos**. A prova de que era drift, e nao desenho,
 estava nos quase-acertos: declarava-se `pmev-game-theory-poker` e existia
@@ -159,18 +162,16 @@ def test_status_de_externa_e_de_um_vocabulario_fechado(status: str):
         if not nome.startswith("_") and dados.get("status") not in validos
     }
     assert not invalidos, f"status fora do vocabulario {sorted(validos)}: {invalidos}"
-    assert any(
-        d.get("status") == status for n, d in registro.items() if not n.startswith("_")
-    ), f"nenhuma externa com status '{status}' -- o parametro deixou de medir algo real"
+    assert any(d.get("status") == status for n, d in registro.items() if not n.startswith("_")), (
+        f"nenhuma externa com status '{status}' -- o parametro deixou de medir algo real"
+    )
 
 
 def test_toda_externa_declara_origem():
     """Sem origem, 'externa' vira sinonimo de 'nao encontrei', que e o estado
     que este registro existe para acabar."""
     sem_origem = sorted(
-        nome
-        for nome, dados in _registro()["externas"].items()
-        if not nome.startswith("_") and not dados.get("origem")
+        nome for nome, dados in _registro()["externas"].items() if not nome.startswith("_") and not dados.get("origem")
     )
     assert not sem_origem, f"externas sem campo 'origem': {sem_origem}"
 
