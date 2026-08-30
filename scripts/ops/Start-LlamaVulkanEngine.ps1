@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Orquestrador Nativo SOTA do llama-server Vulkan (AMD RX 570 8GB + Intel i9-9900K).
 .DESCRIPTION
@@ -43,7 +43,7 @@ function Stop-LlamaEngine {
             } catch {}
         }
         Start-Sleep -Seconds 1
-        Write-Host "[✓] Porta $TargetPort liberada." -ForegroundColor Green
+        Write-Host "[[OK]] Porta $TargetPort liberada." -ForegroundColor Green
     } else {
         Write-Host "[i] Nenhum processo escutando na porta $TargetPort." -ForegroundColor DarkGray
     }
@@ -56,11 +56,18 @@ if ($Stop) {
 
 function Resolve-GgufBlob {
     param([string]$Tag)
+    if (Test-Path $Tag) { return (Resolve-Path $Tag).Path }
+
     $tagParts = $Tag -split ":"
     $modelName = $tagParts[0]
     $tagVariant = if ($tagParts.Count -gt 1) { $tagParts[1] } else { "latest" }
 
     $manifestPath = "$env:USERPROFILE\.ollama\models\manifests\registry.ollama.ai\library\$modelName\$tagVariant"
+    if (-not (Test-Path $manifestPath)) {
+        $hfRel = $Tag -replace ":", "\" -replace "/", "\"
+        $manifestPath = "$env:USERPROFILE\.ollama\models\manifests\$hfRel"
+    }
+
     if (Test-Path $manifestPath) {
         $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
         $modelLayer = $manifest.layers | Where-Object { $_.mediaType -match "model" }
@@ -114,7 +121,7 @@ $ServerArgs = @(
 )
 
 Write-Host "================================================================================" -ForegroundColor Cyan
-Write-Host " SOTA VULKAN ENGINE — LLAMA.CPP DAEMON NATIVO (PORTA $Port)" -ForegroundColor Cyan
+Write-Host " SOTA VULKAN ENGINE - LLAMA.CPP DAEMON NATIVO (PORTA $Port)" -ForegroundColor Cyan
 Write-Host "================================================================================" -ForegroundColor Cyan
 Write-Host "  Modelo     : $ModelTag" -ForegroundColor DarkGray
 Write-Host "  Blob GGUF  : $ModelPath" -ForegroundColor DarkGray
@@ -132,7 +139,7 @@ if ($Background) {
 
     $Proc = [System.Diagnostics.Process]::Start($ProcessInfo)
 
-    Write-Host "[✓] Servidor Vulkan iniciado em segundo plano (PID: $($Proc.Id))." -ForegroundColor Green
+    Write-Host "[[OK]] Servidor Vulkan iniciado em segundo plano (PID: $($Proc.Id))." -ForegroundColor Green
     Write-Host "    Aguardando aquecimento do endpoint..." -NoNewline
 
     for ($i = 0; $i -lt 15; $i++) {
