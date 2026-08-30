@@ -7,6 +7,8 @@
 camada de skills e camada de memoria agentica.
 **Metodo:** medicao no repositorio, nao leitura de documentacao. Toda afirmacao
 abaixo foi executada; o que nao rodou esta declarado em §5.
+**Estado das correcoes:** A2, A3 e A7 foram corrigidos nesta mesma branch apos
+aprovacao do vertice — ver §6. Os demais achados permanecem abertos.
 
 ---
 
@@ -37,7 +39,7 @@ inverso tambem vale: o que passou precisa constar.
 | :-- | :--- | :--- |
 | S1 | Documentos de agente sao gerados, nao editados | **19/19 byte-identicos** ao template reproduzido a partir do manifesto. Zero drift. |
 | S2 | Autoridade de roteamento e unica | `AGENT_MODEL_MAP` resolve 19/19; precedencia `override → mapa → manifesto (com aviso)` intacta em `core/config.py:195-212`. |
-| S3 | Suite de governanca | 84 passed, 0 failed em `test_governanca_agents`, `test_desambiguacao`, `test_routing_policy`, `test_subagents_mesh`, `test_frente4_autoridade_de_roteamento`. |
+| S3 | Suite de governanca | **85 passed, 0 failed** sob Python 3.13 em `test_governanca_agents`, `test_desambiguacao`, `test_routing_policy`, `test_subagents_mesh`, `test_frente4_autoridade_de_roteamento`. |
 | S4 | Mesh de subagentes sem modelo fantasma | 15/15 entradas de `SUBAGENT_MODEL_MAP` resolvem em `data/ollama_models.json`. |
 | S5 | `specialized_scripts` apontam para arquivos reais | 0 caminhos quebrados nos 19 agentes. |
 | S6 | Memoria agentica consolidada | `.claude/AGENTS-MEMORY` marcada `SUPERSEDED.md`, excluida do RAG (`memory_rag.py:523`), procedencia preservada por arquivo, guardada por `test_ingestao_superseded.py`. Consolidacao correta. |
@@ -270,8 +272,10 @@ so usa `PersistentClient` embarcado. Duas observacoes, nenhuma delas urgente:
    `CONFLITOS_MANIFESTO` e a leitura local-first do manifesto.
 6. **A7, A8, A9** — higiene.
 
-Nenhuma correcao foi aplicada: o pedido foi auditoria. Os achados sao
-apresentados para decisao do vertice.
+A auditoria foi entregue sem correcoes. **A2, A3 e A7 foram corrigidos em
+seguida, sob aprovacao explicita do vertice** — registrados na §6. A1 continua
+aberto por ser decisao de design, nao patch; A4, A5, A6, A8 e A9 continuam
+abertos.
 
 ---
 
@@ -280,8 +284,9 @@ apresentados para decisao do vertice.
 **Executado nesta sessao:**
 
 - Suite completa `pytest tests/` sob Python 3.13 — 353 passed, 14 failed,
-  1 skipped, 72 errors.
-- Subconjunto de governanca/roteamento (5 modulos) — **84 passed, 0 failed**.
+  1 skipped, 72 errors **antes** das correcoes da §6; 354 passed, 13 failed
+  depois. A diferenca e exatamente A2, e nenhum outro teste mudou de estado.
+- Subconjunto de governanca/roteamento (5 modulos) — **85 passed, 0 failed**.
 - `npm audit --audit-level=low` — 0 vulnerabilidades.
 - `pip-audit -r requirements.txt` — 4 advisories (A9).
 - Reproducao do template do gerador e diff contra os 19 `.md`.
@@ -317,6 +322,62 @@ tambem** — o interpretador e que estava errado. Sob Python 3.13 o teste passa.
 A maioria dos 72 errors da suite completa e da mesma natureza: modulos ausentes
 neste container (`torch`, `psutil`, `lancedb` e outros), nao defeito do
 repositorio.
+
+---
+
+## 6. Correcoes aplicadas (A2, A3, A7)
+
+Aplicadas apos aprovacao do vertice, na mesma branch da auditoria. Escopo
+deliberadamente minimo: cada uma corrige o defeito medido e nada alem dele.
+
+### A2 — `tests/test_architectural_stress_and_failover.py`
+
+Caminho absoluto de perfil trocado por ancora no proprio arquivo de teste
+(`RAIZ = Path(__file__).resolve().parent.parent`), que e a convencao dominante
+da suite. O comentario que acompanha registra por que o portao nao podia pegar
+isto: a fase 5 compara prefixos de diretorio, nao conteudo.
+
+**Verificacao:** o teste passa e volta a exercer o que prometia — os 19 agentes,
+`primary_model`, `fallback_model`, `tier`, `memory_affinity` e a forma de
+`skills`. Era o unico teste da suite que a correcao mudou de estado:
+14 failed → 13 failed, 353 passed → 354 passed.
+
+### A3 — `tests/conftest.py`
+
+Adicionado `pytest_collectreport`, que registra erro de coleta em
+`SotaGuardState.errors` com categoria `CollectionError` e fase `"collect"`.
+Faltava o gancho, nao o criterio: `pytest_runtest_logreport` so ve a fase de
+execucao, e um modulo que morre na coleta nunca chega la.
+
+**Verificacao, com a mesma sonda que produziu o achado:**
+
+| | Antes | Depois |
+| :--- | :--- | :--- |
+| Veredito impresso | `[SUCESSO (VERDE)] ... Homeostase Total Aprovada` | `[FALHOU (VERMELHO)] ... (1 Erros, 0 Warnings)` |
+| Causa nomeada | nenhuma | `ModuleNotFoundError: No module named ...` |
+| Exit code | 2 | 1 |
+
+O exit code permanece nao-zero nos dois casos — o CI nunca esteve furado, e a
+correcao nao muda isso. O que muda e o veredito que a §5 manda declarar deixar
+de contradizer o que aconteceu. Execucao limpa continua verde (85 passed,
+exit 0): a mudanca nao introduz falso positivo.
+
+### A7 — `scripts/routines/sync_agents_reality.ps1`
+
+Removida a interpolacao de `$Model`, variavel que deixou de existir na
+de-duplicacao de 2026-08-21. O status do template de memoria passa a nao repetir
+valor versionado, pelo mesmo motivo que o **Motor Base** ja nao repetia.
+
+**Verificacao:** `$Model` agora so aparece em comentario; BOM UTF-8 unico
+preservado (§6.4 do `CLAUDE.md`), decodifica como `utf-8-sig`, 91 CRLF
+preservados; os 19 documentos gerados continuam byte-identicos ao manifesto.
+
+**Limite desta verificacao, declarado:** nao ha `pwsh` nem `powershell` neste
+container, entao **a sintaxe do `.ps1` nao foi validada por parser** e o script
+nao foi executado. A mudanca e a remocao de uma interpolacao dentro de uma
+string de aspas duplas — sem alteracao de estrutura, controle de fluxo ou
+encoding — mas isso e argumento, nao medicao. Rodar o gerador em maquina de
+trabalho fecha esta lacuna.
 
 ---
 
