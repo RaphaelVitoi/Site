@@ -31,6 +31,8 @@ repositorio mudar de lugar.
 
 from __future__ import annotations
 
+# pylint: disable=import-outside-toplevel
+
 import ast
 import collections
 import json

@@ -48,7 +48,8 @@ def _capturar_payload(**kwargs) -> dict:
 
     capturado: dict = {}
 
-    def _fake_urlopen(req, timeout=None):  # noqa: ARG001
+    def _fake_urlopen(req, timeout=None):
+        _ = timeout
         capturado.update(json.loads(req.data.decode("utf-8")))
         return resposta
 

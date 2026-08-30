@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: chico@v8-gold
 criado_em: 2026-08-29T17:58-03:00
-atualizado_em: 2026-08-30T13:10-03:00
+atualizado_em: 2026-08-30T20:15-03:00
 classes: [interno, medido]
 caminhos:
   - engine/sota_triad_mesh.py

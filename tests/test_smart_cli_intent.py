@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-import pytest
 
 
 def test_intentmap_covers_all_agents():
@@ -64,7 +63,7 @@ def test_resolve_intent_heuristics():
 
         if not scores:
             return "@maverick"
-        return max(scores, key=scores.get)
+        return max(scores, key=lambda k: scores[k])
 
     assert resolve("quero implementar uma tela no frontend") == "@implementor"
     assert resolve("qual o calculo de equity e icm desta mao?") == "@validador"

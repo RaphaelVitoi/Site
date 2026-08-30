@@ -1,5 +1,5 @@
 """Modulo de configuracao central SOTA."""
-# pylint: disable=broad-exception-caught, global-statement, line-too-long
+# pylint: disable=broad-exception-caught, global-statement, line-too-long, import-outside-toplevel
 
 import atexit
 import json
@@ -130,7 +130,7 @@ def _resolver_modelos(manifesto: dict) -> dict:
     manifesto  o comportamento anterior  em vez de derrubar a configuracao.
     """
     try:
-        from llm.routing_policy import rotear
+        from llm.routing_policy import rotear  # noqa: PLC0415
     except Exception:  # noqa: BLE001 - configuracao nao pode falhar por isto
         logger.warning("[ROTEAMENTO] llm.routing_policy indisponivel; usando primary_model do manifesto.")
         return {f"@{n}": d.get("primary_model") for n, d in manifesto.items()}

@@ -312,5 +312,11 @@
   "ruff.format.preview": true,
   "ruff.codeAction.disableRuleComment": {
     "enable": false
+  },
+  "workbench.editorAssociations": {
+    "**/.claude/**/*.bin": "default",
+    "**/CMakeFiles/**/*.bin": "default",
+    "**/.chroma_db/**/*.bin": "default",
+    "*.bin": "default"
   }
 }

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-# pylint: disable=missing-module-docstring, broad-exception-caught, line-too-long, import-error, no-name-in-module
+# pylint: disable=missing-module-docstring, broad-exception-caught, line-too-long, import-error, no-name-in-module, import-outside-toplevel
 # ruff: noqa: S404, S603, BLE001
+
+from __future__ import annotations
 
 import importlib
 import re

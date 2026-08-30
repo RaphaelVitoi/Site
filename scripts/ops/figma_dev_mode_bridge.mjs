@@ -101,7 +101,7 @@ async function handleMessage(msg) {
       const remoteRes = await forwardToFigma(msg);
       sendRpcResponse(remoteRes);
       return;
-    } catch (_) {
+    } catch {
       // Fallback gracefully if forward fails mid-flight
     }
   }
@@ -230,7 +230,7 @@ rl.on('line', (line) => {
   try {
     const parsed = JSON.parse(trimmed);
     handleMessage(parsed);
-  } catch (_) {
+  } catch {
     // Ignore malformed lines to prevent crashes
   }
 });

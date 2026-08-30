@@ -341,7 +341,9 @@ function handleMessage(line) {
         });
         break;
     }
-  } catch (_) {}
+  } catch {
+    // Ignore malformed JSON lines
+  }
 }
 
 const rl = readline.createInterface({

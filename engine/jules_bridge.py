@@ -200,4 +200,3 @@ class JulesClient:
         except Exception as e:
             logger.warning("[JULES] list_sources retornou excecao: %s", e)
             return [{"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}]
-

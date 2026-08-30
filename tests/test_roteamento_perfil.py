@@ -33,7 +33,9 @@ ARQUIVOS_COM_A_LISTA = [
 
 
 def _comandos_registrados_no_typer() -> set[str]:
-    return set(typer.main.get_command(app).commands.keys())
+    cmd = typer.main.get_command(app)
+    cmds = getattr(cmd, "commands", {})
+    return set(cmds.keys())
 
 
 def _ler(caminho: Path) -> str:

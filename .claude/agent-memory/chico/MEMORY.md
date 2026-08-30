@@ -68,6 +68,10 @@
   - Resultado: Sucesso Total (696/696 testes verdes, erradicação de warnings de escopo de fixtures em testes, exclusões e regras Bandit ajustadas em .ruff.toml/pyproject.toml).
   - Aprendizado: No ecossistema de linting Python/Ruff em monorepos com múltiplos plugins (.agents, skills, hermes), o arquivo .ruff.toml tem precedência sobre pyproject.toml para certas diretivas de linter. Configurar extend-exclude e regras declarativas em ambos os manifestos mantém sincronia absoluta e evita ruídos no IDE sem intervenções intrusivas no código de produção.
 
+- \[HANDOFF-20260830-TEORIA-JOGOS-PMEV\] - Teoria dos Jogos SOTA, Solvers de Informação Imperfeita e Unificação PMev
+  - Resultado: Sucesso Total (45/45 testes verdes, 0 erros/warnings, integração de Claudico, DeepStack, Libratus, Pluribus, AlphaZero PUCT, Student of Games GT-CFR e ReBeL PBS em engine/game_theory_solvers.py, resolução de editorAssociations no VS Code).
+  - Aprendizado: A unificação de busca em árvore assimétrica (GT-CFR) com ponderação de risco modulada por volatilidade (PUCT PMev) e garantias de contra-valor (Gadget Game) viabiliza resolver jogos de informação imperfeita com consumo de memória constante e imunidade matemática à exploração. No VS Code / Antigravity IDE, isolar explicitamente a extensão `*.bin` em `workbench.editorAssociations` previne tentativas de unpickling indevidas por visualizadores especializados em PyTorch sobre índices vetoriais do ChromaDB ou artefatos CMake.
+
 ## Padrões Observados [.cerebro]
 
 - Padrão 1: Para garantir conformidade com scanners SAST e segurança efetiva de containers, aplicar atualizações explícitas de pacotes (`apk update && apk upgrade --no-cache`) e fixar digests SHA-256 canônicos da imagem base.

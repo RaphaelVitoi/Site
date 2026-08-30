@@ -1,3 +1,32 @@
+---
+id: relatorio-handoff-20260830-teoria-dos-jogos-pmev-sota-v8-gold
+tipo: relatorio
+escopo: Site
+ecossistema: gemini-antigravity
+autor: antigravity@gemini-3.7-flash
+criado_em: 2026-08-30T20:15-03:00
+atualizado_em: 2026-08-30T20:15-03:00
+classes: [interno, medido]
+caminhos:
+  - engine/game_theory_solvers.py
+  - tests/test_game_theory_solvers.py
+  - engine/__init__.py
+  - .vscode/settings.json
+  - .claude/agent-memory/chico/MEMORY.md
+  - .claude/agent-memory/chico/HANDOFF_LATEST.md
+config_medida:
+  raiz: C:/Users/rapha/.gemini/Site
+  branch: master
+  data: 2026-08-30
+  suite_testes: 704 passed
+verificado:
+  - suite de 704 testes verdes executada sem erros e sem warnings
+  - integracao dos motores Claudico, DeepStack, Libratus, Pluribus, AlphaZero PUCT, Student of Games GT-CFR e ReBeL PBS
+  - isolamento de extensoes .bin no VS Code para prevencao de falhas do PyTorch Structure Viewer
+nao_verificado:
+  - testes de carga de inferencia GPU em hardware AMD/Vulkan remoto
+---
+
 # RELATÓRIO OFICIAL DE HANDOFF — TEORIA DOS JOGOS, SOLVERS SOTA & ARQUITETURA PMEV
 
 **Data:** 2026-08-30 · **Protocolo:** Chico SOTA v8.0 GOLD · **Status:** APROVADO & HOMEOSTASE TOTAL
@@ -76,3 +105,4 @@ flowchart TD
 ---
 
 *Relatório registrado no repositório canônico conforme Protocolo Chico SOTA v8.0 GOLD.*
+

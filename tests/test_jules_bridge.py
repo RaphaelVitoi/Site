@@ -4,10 +4,7 @@ Valida o contrato de integracao com a API do Google Jules sem efetuar chamadas d
 """
 from __future__ import annotations
 
-import io
 import json
-import urllib.error
-import urllib.request
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -30,8 +27,12 @@ def test_jules_session_request_payload() -> None:
     payload = req.to_payload()
     assert payload["prompt"] == "Executar simulacao Monte Carlo PMev com 10M de iteracoes"
     assert payload["autoApprovePlan"] is True
-    assert payload["sourceContext"]["source"] == "sources/github/RaphaelVitoi/Site"
-    assert payload["sourceContext"]["githubRepoContext"]["branch"] == "feat/pmev-solver"
+    source_ctx = payload["sourceContext"]
+    assert isinstance(source_ctx, dict)
+    assert source_ctx["source"] == "sources/github/RaphaelVitoi/Site"
+    repo_ctx = source_ctx["githubRepoContext"]
+    assert isinstance(repo_ctx, dict)
+    assert repo_ctx["branch"] == "feat/pmev-solver"
 
 
 def test_jules_client_unconfigured() -> None:
