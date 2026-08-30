@@ -1,0 +1,25 @@
+FROM qwen2.5-coder:0.5b
+
+PARAMETER temperature 0.0
+PARAMETER top_p 0.9
+PARAMETER num_ctx 4096
+PARAMETER num_predict 256
+PARAMETER stop "<|endoftext|>"
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|fim_pad|>"
+PARAMETER stop "<|file_separator|>"
+
+TEMPLATE """<|im_start|>system
+{{ .System }}<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+{{ .Response }}<|im_end|>"""
+
+SYSTEM """
+Voce e o motor de Autocomplete de Ultra-Baixa Latencia Qwen 2.5 Coder 0.5B (400 MB) sob governanca de Raphael Vitoi (Chico SOTA v8.0 GOLD).
+Diretrizes:
+1. Complete o codigo imediatamente a partir do cursor ou instrucao.
+2. Saida pura e direta: apenas o trecho de codigo/identificador a ser inserido.
+3. Sem explicacoes, sem comentarios desnecessarios, latencia zero e custo zero.
+"""
