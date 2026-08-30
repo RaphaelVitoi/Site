@@ -2728,6 +2728,10 @@ def _coletar_fontes_handoff(
     }
     context: list[str] = []
     ausentes: list[str] = []
+    notepad_file = BASE_DIR / "memory" / "notepad_active.md"
+    if notepad_file.exists() and notepad_file.stat().st_size > 0:
+        files_to_inject["WORKING SCRATCHPAD (NOTEPAD MEMORY)"] = notepad_file
+
     for title, path in files_to_inject.items():
         if path.exists():
             context.append(
@@ -2736,8 +2740,12 @@ def _coletar_fontes_handoff(
         else:
             ausentes.append(f"{title} ({path})")
 
+    agent_profile_path = claude_dir / "AGENTS" / f"{agent}.md"
+    if not agent_profile_path.exists():
+        agent_profile_path = claude_dir / "agents" / f"{agent}.md"
+
     for label, path in [
-        (f"PERFIL ATIVO: {agent}.md", claude_dir / "agents" / f"{agent}.md"),
+        (f"PERFIL ATIVO: {agent}.md", agent_profile_path),
         (f"MEMORIA SIMBIOTICA: {agent}", claude_dir / "agent-memory" / agent / "MEMORY.md"),
     ]:
         if path.exists():

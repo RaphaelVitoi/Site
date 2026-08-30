@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     A Membrana Inteligente (CLI Interativa) e ponto de entrada para o ecossistema de agentes.
     Orquestra a enfileiracao de tarefas e executa comandos com seguranca.
@@ -31,7 +31,7 @@
 .PARAMETER SyncAgents
     Sincroniza os agentes (Manifesto -> Realidade Fisica). Cria arquivos .md e memorias ausentes.
 .PARAMETER DailyReport
-    Aciona a compilação do relatório diário de autonomia, sintetizando todas as mutações e tarefas executadas pelo sistema.
+    Aciona a compilacao do relatorio diario de autonomia, sintetizando todas as mutacoes e tarefas executadas pelo sistema.
 .PARAMETER Backup
     Aciona o Protocolo de Salvaguarda Sistemica, criando um snapshot (backup) imediato.
 #>
@@ -429,10 +429,10 @@ if ($Backup) {
 }
 
 if ($DailyReport) {
-    Write-Host '=== [SISTEMA] GERANDO RELATÓRIOS DIÁRIOS (GERAL E CONFIDENCIAL) ===' -ForegroundColor Magenta
+    Write-Host '=== [SISTEMA] GERANDO RELATORIOS DIARIOS (GERAL E CONFIDENCIAL) ===' -ForegroundColor Magenta
     $ReportDate = (Get-Date).ToString('yyyy-MM-dd')
 
-    # SOTA: Extração Fricção Zero dos dados no Kernel para blindar o LLM contra alucinações
+    # SOTA: Extracao Friccao Zero dos dados no Kernel para blindar o LLM contra alucinacoes
     $DailyStats = & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') daily-stats
 
     # SOTA: Autonomia Plena (Friccao Zero). Busca o GDrive ativamente ou usa a raiz do disco C:
@@ -443,13 +443,13 @@ if ($DailyReport) {
     if (-not (Test-Path -LiteralPath $TargetDir)) { New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null }
     $ReportDir = $TargetDir -replace '\\', '/'
 
-    # 1. Relatório Geral da Máquina (Historian)
+    # 1. Relatorio Geral da Maquina (Historian)
     $DescHistorian = "SISTEMA: VITOI 3.2`nOBJETIVO: Relatorio Diario Geral do Ecossistema.`nDATA: $ReportDate`n`nDADOS EXTRAIDOS:`n$DailyStats`n`nINSTRUCAO: Escreva o relatorio analitico de performance global (produtividade, gargalos, falhas). Forje o resultado absoluto no caminho exato: '$ReportDir/historian_general_$ReportDate.md'."
     $TaskHist = [ordered]@{ id = "REPORT-GEN-$(Get-Date -Format 'yyyyMMdd-HHmmss-ffff')"; description = $DescHistorian; status = 'pending'; timestamp = (Get-Date -Format 'o'); agent = '@historian'; metadata = @{ priority = 'medium'; type = 'daily_report' } } | ConvertTo-Json -Depth 10 -Compress
     $TaskHistB64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($TaskHist))
     & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') db-add $TaskHistB64 | Out-Null
 
-    # 2. Relatório Confidencial de Autonomia (Chico + Maverick)
+    # 2. Relatorio Confidencial de Autonomia (Chico + Maverick)
     $DescChico = "SISTEMA: VITOI 3.2`nOBJETIVO: Prestacao de Contas Confidencial (Tier 1 -> Tier 0).`nDATA: $ReportDate`n`nDADOS EXTRAIDOS:`n$DailyStats`n`nINSTRUCAO: Escreva seu relatorio executivo privado (Chico) relatando SUAS intervencoes de Autonomia Plena, expurgos e mutacoes criticas. Solicite a analise de @maverick para que ele acrescente os insights estrategicos/filosoficos dele ao final do documento. Forje o resultado absoluto no caminho exato: '$ReportDir/chico_confidential_$ReportDate.md'."
     $TaskChico = [ordered]@{ id = "REPORT-CONF-$(Get-Date -Format 'yyyyMMdd-HHmmss-ffff')"; description = $DescChico; status = 'pending'; timestamp = (Get-Date -Format 'o'); agent = '@chico'; metadata = @{ priority = 'high'; type = 'confidential_report'; observers = @('@maverick') } } | ConvertTo-Json -Depth 10 -Compress
     $TaskChicoB64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($TaskChico))
@@ -461,27 +461,38 @@ if ($DailyReport) {
 
 if ($Web -or $Ola) {
     if (-not $TestMode) { Invoke-TypeScriptGateSOTA }
-    Write-Host '=== [PROTOCOLO DE HANDOFF E IGNICAO WEB] CEREBRO HIBRIDO ===' -ForegroundColor Cyan
-    Write-Host '1. Claude 3.7 Sonnet / Opus (Codificacao Cirurgica e Paranoia Tecnologica)'
-    Write-Host '2. Gemini 2.0 Flash (Contexto Massivo, RAG e Visao Holistica)'
-    Write-Host '3. Modelos Abertos / DeepSeek (Raciocinio Bruto Step-by-Step)'
+    Write-Host '=== [PROTOCOLO DE HANDOFF E IGNICAO WEB] CEREBRO HIBRIDO (v8.0 GOLD) ===' -ForegroundColor Cyan
+    Write-Host '1. Claude 5 (Sonnet / Opus) - Extended Thinking, 200k/128k, Codificacao Cirurgica'
+    Write-Host '2. Gemini 3.7 (Flash High / Pro) - 2M Context, Multimodal Nativo, Zero-Latency Tools'
+    Write-Host '3. ChatGPT / Codex 5.6 (Luna / Terra / Sol) - 1.05M Context, Reasoning Effort none->max'
+    Write-Host '4. Gemma 4 31B Dense (Cloud Ollama / Vertex) - Raciocinio Puro, 0 GB VRAM Local, AIME 89.2%'
 
-    $MenuChoice = if ($Force -or $Ola) { '1' } else { Read-Host 'Selecione o motor cognitivo alvo [1/2/3]' }
+    $MenuChoice = if ($Force -or $Ola) { '1' } else { Read-Host 'Selecione o motor cognitivo alvo [1/2/3/4]' }
 
     $RecomendacaoLLM = switch ($MenuChoice) {
-        '1' { 'Recomendacao LLM: Use Claude. Ideal para codigo restrito e arquitetura impecavel.' }
-        '2' { 'Recomendacao LLM: Use Gemini. Cole todo o contexto; ele vai engolir a complexidade do projeto.' }
-        '3' { 'Recomendacao LLM: Use DeepSeek/Llama. Excelente para resolucao de gargalos algoritmicos.' }
-        default { 'Recomendacao LLM: Oraculo indefinido. Assumindo Claude Opus por padrao.' }
+        '1' { 'Recomendacao LLM: Use Claude 5. Ideal para arquitetura impecavel, Extended Adaptive Thinking e diffs cirurgicos.' }
+        '2' { 'Recomendacao LLM: Use Gemini 3.7. Cole todo o macro-contexto; ele vai absorver 2M tokens de multimodabilidade nativa.' }
+        '3' { 'Recomendacao LLM: Use ChatGPT / Codex 5.6. Excelente para scaffolding, CI/CD e raciocinio profundo.' }
+        '4' { 'Recomendacao LLM: Use Gemma 4 31B Cloud. Raciocinio denso de ponta com zero consumo de VRAM local.' }
+        default { 'Recomendacao LLM: Oraculo indefinido. Assumindo Claude 5 Sonnet por padrao.' }
     }
 
-    Write-Host "`n[INFO] Sintetizando artefatos e memorias no Clipboard..." -ForegroundColor Yellow
+    Write-Host "`n[INFO] Sintetizando artefatos, memorias e scratchpad no Clipboard..." -ForegroundColor Yellow
 
     $ClaudeDir = Join-Path $ScriptDirectory '.claude'
 
     try {
         # --- Montagem 100% em Memoria (Anti-IOException e Bypass Absoluto de Temps) ---
         $contextBuilder = [System.Text.StringBuilder]::new()
+
+        # Injeta saudacao de ignicao no topo se -Ola foi passado
+        if (-not [string]::IsNullOrWhiteSpace($Ola)) {
+            [void]$contextBuilder.AppendLine("=================================================================")
+            [void]$contextBuilder.AppendLine("## PROTOCOLO DE IGNICAO COGNITIVA SOTA: OLA @$($Ola.ToUpper())")
+            [void]$contextBuilder.AppendLine("=================================================================`n")
+            [void]$contextBuilder.AppendLine("Ola, $Ola! Desperte sob a governanca de Raphael Vitoi (Chico SOTA v8.0 GOLD).")
+            [void]$contextBuilder.AppendLine("Assuma integralmente o seu perfil ativo e memoria persistida abaixo para prosseguirmos na sessao.`n")
+        }
 
         $InjectFile = {
             param([string]$Title, [string]$Path)
@@ -497,19 +508,22 @@ if ($Web -or $Ola) {
             }
         }
 
-        # 1. Base Arquitetural
+        # 1. Base Arquitetural e Governanca
         $globalInstrPath = Join-Path $ClaudeDir 'GLOBAL_INSTRUCTIONS.md'
         if (-not (Test-Path -LiteralPath $globalInstrPath)) { $globalInstrPath = Join-Path $ScriptDirectory 'GLOBAL_INSTRUCTIONS.md' }
         &$InjectFile 'INSTRUCOES GLOBAIS' $globalInstrPath
+        &$InjectFile 'MODUS OPERANDI v8.0 GOLD' (Join-Path $ScriptDirectory 'MODUS_OPERANDI.md')
         &$InjectFile 'COSMOVISAO (FILOSOFIA)' (Join-Path $ClaudeDir 'COSMOVISAO.md')
         &$InjectFile 'INVARIANTES ARQUITETURAIS' (Join-Path $ClaudeDir 'ARCHITECTURAL_INVARIANTS.md')
-
-        # 2. Arquivos Core de Roteamento solicitados
-        &$InjectFile 'CONTEXTO DO PROJETO' (Join-Path $ClaudeDir 'project-context.md')
+        &$InjectFile 'PROTOCOLO GEMINI SOTA' (Join-Path $ScriptDirectory 'GEMINI.md')
         &$InjectFile 'IDENTIDADE SOTA' (Join-Path $ClaudeDir 'CLAUDE.md')
 
+        # 2. Working Scratchpad (NotepadMemory)
+        &$InjectFile 'WORKING SCRATCHPAD (NOTEPAD MEMORY ATIVA)' (Join-Path $ScriptDirectory 'memory\notepad_active.md')
+
         # 3. Injeta Perfis dos Agentes
-        $AgentsDir = Join-Path $ClaudeDir 'agents'
+        $AgentsDir = Join-Path $ClaudeDir 'AGENTS'
+        if (-not (Test-Path -LiteralPath $AgentsDir)) { $AgentsDir = Join-Path $ClaudeDir 'agents' }
         if (Test-Path -LiteralPath $AgentsDir) {
             $AgentFiles = Get-ChildItem -LiteralPath $AgentsDir -Filter *.md
             if ($AgentFiles) {
@@ -686,7 +700,7 @@ if ($Description) {
 
         try {
             $Response = Invoke-RestMethod -Uri $Uri -Method Post -Body $PayloadBytes -ContentType 'application/json; charset=utf-8' -Headers @{'X-Vitoi-Auth' = $AuthToken }
-            Write-Host "`n=== ANÁLISE ESTRATÉGICA @GEMMA4 ===" -ForegroundColor Green
+            Write-Host "`n=== ANALISE ESTRATEGICA @GEMMA4 ===" -ForegroundColor Green
             Write-Host $Response
             exit 0
         }
@@ -696,7 +710,7 @@ if ($Description) {
             exit $LASTEXITCODE
         }
     }
-    # --- SOTA: Roteamento Semântico Local via Kernel Python ---
+    # --- SOTA: Roteamento Semantico Local via Kernel Python ---
     $TargetAgent = if ($ExplicitAgent) { $ExplicitAgent } else { '@dispatcher' }
     $Metadata = @{}
     try {
@@ -713,7 +727,7 @@ if ($Description) {
         }
     }
     catch {
-        Write-Warning '[AVISO] Falha ao invocar roteamento semântico SOTA local. Usando fallback.'
+        Write-Warning '[AVISO] Falha ao invocar roteamento semantico SOTA local. Usando fallback.'
     }
 
     if ($CortexOverride) {
