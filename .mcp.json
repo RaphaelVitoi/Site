@@ -1,8 +1,11 @@
 {
   "mcpServers": {
     "google-jules": {
-      "command": ".venv/Scripts/python.exe",
+      "command": "uv",
       "args": [
+        "run",
+        "--no-sync",
+        "python",
         "engine/jules_mcp_server.py"
       ],
       "env": {
@@ -11,8 +14,11 @@
       }
     },
     "nexus-bridge": {
-      "command": ".venv/Scripts/python.exe",
+      "command": "uv",
       "args": [
+        "run",
+        "--no-sync",
+        "python",
         "mcp-bridge/server.py"
       ]
     },
