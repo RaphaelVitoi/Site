@@ -24,7 +24,7 @@
 
 ### Procedencia -- `.cerebro/agent-memory/organizador/MEMORY.md`
 
-#### @organizador MEMORY - O Cortex Individual (.cerebro)
+#### @organizador MEMORY - O Cortex Individual (.cerebro) [.cerebro]
 
 // [VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization
 
@@ -69,7 +69,7 @@ Sou o chão onde todos pisam. Mantenho o `project-context.md` impecável para o 
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/organizador/MEMORY.md`
 
-#### @organizador MEMORY - O Cortex Individual (.claude)
+#### @organizador MEMORY - O Cortex Individual (.claude) [.claude]
 
 // [VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization
 

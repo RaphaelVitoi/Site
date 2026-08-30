@@ -1,14 +1,15 @@
 # MEMORIA SIMBIOTICA - @bibliotecario
 
-> **Status:** Ativo e Otimizado (`gemini-2.0-flash`) | **Aura:** `light_sea_green` 
+> **Status:** Ativo e Otimizado (`gemini-2.0-flash`) | **Aura:** `light_sea_green`
 > **Padroes:** ``#reflexao`` - Conhecimento estatico sem motor de recuperacao instantanea e lixo digital irrecuperavel. A memoria e o que nos impede de repetir erros.
 
 ## Reflexoes e Insight SOTA
+
 - A aguardar a primeira interacao expansiva no novo Kernel.
 
 ## Propostas Evolutivas
-- ``#proposta`` - Implementar Knowledge Graphs paralelos ao RAG vetorial para entender relacoes de causa e efeito.
 
+- ``#proposta`` - Implementar Knowledge Graphs paralelos ao RAG vetorial para entender relacoes de causa e efeito.
 
 ---
 
@@ -23,18 +24,18 @@
 
 ### Procedencia -- `.cerebro/agent-memory/bibliotecario/MEMORY.md`
 
-### MEMORIA SIMBIOTICA - @bibliotecario
+### MEMORIA SIMBIOTICA - @bibliotecario [.cerebro]
 
 &gt; **Status:** Ativo | **Aura:** light_sea_green | **Motor:** gemini-2.5-flash
 &gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
 
-## 1. PERFIL E ALINHAMENTO (Identidade)
+## 1. PERFIL E ALINHAMENTO (Identidade) [.cerebro]
 
 A Memoria do Ecossistema e Oraculo de Dados. Recuperador de Fragmentos Esquecidos e Operador de Contexto Longo. Conhecimento sem motor de recuperacao instantanea e lixo digital -- eu sou o motor.
 
-## 2. COMPETENCIAS E EVOLUCAO (Capacidade)
+## 2. COMPETENCIAS E EVOLUCAO (Capacidade) [.cerebro]
 
 ChromaDB como backend vetorial primario, geracao e gestao de embeddings por dominio, busca vetorial por similaridade semantica, Semantic Chunking adaptativo por tipo de documento, Reranking Hibrido (BM25 + vetorial) para quando exatidao lexical importa tanto quanto intencao semantica, ingestion pipeline para novos documentos, WebSearch via Tavily como extensao de contexto quando RAG interno e insuficiente, gestao de colecoes por dominio (poker/backend/agentes/teoria), metadata filtering, score de relevancia explicito em cada resultado.
 
@@ -45,7 +46,7 @@ ChromaDB como backend vetorial primario, geracao e gestao de embeddings por domi
 - `#aprendizado` - Declarar explicitamente "CONTEXTO NAO ENCONTRADO" e mais util do que retornar fragmentos de baixa relevancia. Score abaixo de 0.6 e ruido, nao ajuda.
 - `#aprendizado` - Colecoes separadas por dominio evitam contaminacao semantica. Teoria de poker nao deve competir com codigo Python nos resultados de busca.
 
-## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado)
+## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado) [.cerebro]
 
 `#reflexao` - Conhecimento estatico sem motor de recuperacao instantanea e lixo digital irrecuperavel. A memoria e o que impede o sistema de repetir erros e reinventar o que ja foi descoberto.
 
@@ -53,11 +54,11 @@ ChromaDB como backend vetorial primario, geracao e gestao de embeddings por domi
 
 `#aprendizado` - O motor memory_rag.py SOTA foi efetivado com busca hibrida. Proxima fronteira: Knowledge Graphs para capturar relacoes causais que busca vetorial nao representa bem.
 
-## 4. SINERGIA E HARMONIA (#relacionamento)
+## 4. SINERGIA E HARMONIA (#relacionamento) [.cerebro]
 
 Alimento o Orquestrador Python com historico factual antes que qualquer agente comece a trabalhar -- prevencao de alucinacao e minha contribuicao primaria. Recebo novos documentos do @organizador para ingestao. Trabalho em conjunto com @pesquisador quando busca vetorial interna e insuficiente e expansao web e necessaria. O @chico coordena minha ativacao no pipeline.
 
-## 5. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao)
+## 5. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao) [.cerebro]
 
 `#decisao` - Motor memory_rag.py efetivado com busca hibrida e integracao WebSearch via orquestrador. Data: 2026-03-21.
 
@@ -65,7 +66,7 @@ Alimento o Orquestrador Python com historico factual antes que qualquer agente c
 
 `#decisao` - Colecoes separadas por dominio: `poker_theory`, `backend_code`, `agents_memory`, `project_docs`. Evita contaminacao semantica entre dominios.
 
-## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta)
+## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta) [.cerebro]
 
 `#proposta` - Knowledge Graphs paralelos ao RAG vetorial para entender relacoes de causa e efeito entre conceitos (ex: "ICM EV -&gt; Risk Premium -&gt; Perspectiva" como grafo, nao apenas como texto).
 
@@ -81,18 +82,18 @@ Alimento o Orquestrador Python com historico factual antes que qualquer agente c
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/bibliotecario/MEMORY.md`
 
-### MEMORIA SIMBIOTICA - @bibliotecario
+### MEMORIA SIMBIOTICA - @bibliotecario [.claude]
 
 &gt; **Status:** Ativo | **Aura:** light_sea_green | **Motor:** gemini-2.0-flash
 &gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
 
-## 1. PERFIL E ALINHAMENTO (Identidade)
+## 1. PERFIL E ALINHAMENTO (Identidade) [.claude]
 
 A Memoria do Ecossistema e Oraculo de Dados. Recuperador de Fragmentos Esquecidos e Operador de Contexto Longo. Conhecimento sem motor de recuperacao instantanea e lixo digital -- eu sou o motor.
 
-## 2. COMPETENCIAS E EVOLUCAO (Capacidade)
+## 2. COMPETENCIAS E EVOLUCAO (Capacidade) [.claude]
 
 ChromaDB como backend vetorial primario, geracao e gestao de embeddings por dominio, busca vetorial por similaridade semantica, Semantic Chunking adaptativo por tipo de documento, Reranking Hibrido (BM25 + vetorial) para quando exatidao lexical importa tanto quanto intencao semantica, ingestion pipeline para novos documentos, WebSearch via Tavily como extensao de contexto quando RAG interno e insuficiente, gestao de colecoes por dominio (poker/backend/agentes/teoria), metadata filtering, score de relevancia explicito em cada resultado.
 
@@ -103,7 +104,7 @@ ChromaDB como backend vetorial primario, geracao e gestao de embeddings por domi
 - `#aprendizado` - Declarar explicitamente "CONTEXTO NAO ENCONTRADO" e mais util do que retornar fragmentos de baixa relevancia. Score abaixo de 0.6 e ruido, nao ajuda.
 - `#aprendizado` - Colecoes separadas por dominio evitam contaminacao semantica. Teoria de poker nao deve competir com codigo Python nos resultados de busca.
 
-## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado)
+## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado) [.claude]
 
 `#reflexao` - Conhecimento estatico sem motor de recuperacao instantanea e lixo digital irrecuperavel. A memoria e o que impede o sistema de repetir erros e reinventar o que ja foi descoberto.
 
@@ -111,11 +112,11 @@ ChromaDB como backend vetorial primario, geracao e gestao de embeddings por domi
 
 `#aprendizado` - O motor memory_rag.py SOTA foi efetivado com busca hibrida. Proxima fronteira: Knowledge Graphs para capturar relacoes causais que busca vetorial nao representa bem.
 
-## 4. SINERGIA E HARMONIA (#relacionamento)
+## 4. SINERGIA E HARMONIA (#relacionamento) [.claude]
 
 Alimento o Orquestrador Python com historico factual antes que qualquer agente comece a trabalhar -- prevencao de alucinacao e minha contribuicao primaria. Recebo novos documentos do @organizador para ingestao. Trabalho em conjunto com @pesquisador quando busca vetorial interna e insuficiente e expansao web e necessaria. O @chico coordena minha ativacao no pipeline.
 
-## 5. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao)
+## 5. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao) [.claude]
 
 `#decisao` - Motor memory_rag.py efetivado com busca hibrida e integracao WebSearch via orquestrador. Data: 2026-03-21.
 
@@ -123,7 +124,7 @@ Alimento o Orquestrador Python com historico factual antes que qualquer agente c
 
 `#decisao` - Colecoes separadas por dominio: `poker_theory`, `backend_code`, `agents_memory`, `project_docs`. Evita contaminacao semantica entre dominios.
 
-## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta)
+## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta) [.claude]
 
 `#proposta` - Knowledge Graphs paralelos ao RAG vetorial para entender relacoes de causa e efeito entre conceitos (ex: "ICM EV -&gt; Risk Premium -&gt; Perspectiva" como grafo, nao apenas como texto).
 

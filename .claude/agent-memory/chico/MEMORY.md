@@ -8,15 +8,19 @@
 ## 1. Conquistas & Arquitetura Consolidada (Sessão Histórica de Agosto de 2026)
 
 1. **Sistema SOTA Guard Tri-State:**
+
    - Implementada barreira matemática intransponível em `tests/conftest.py`, `frontend/jest.reporter.sota.js`, `scripts/ops/cwv_gate.ps1`, `scripts/cli/nexus.py` e `core/autopoiesis_engine.py`:
      $$\text{Status} = \begin{cases} \mathbf{SUCESSO \ (Verde)}, & \text{se } \sum E = 0 \land \sum W = 0 \\ \mathbf{FRÁGIL \ (Amarelo)}, & \text{se } \sum E = 0 \land 1 \le \sum W \le 2 \\ \mathbf{FALHOU \ (Vermelho)}, & \text{se } \sum E \ge 1 \lor \sum W \ge 3 \end{cases}$$
 2. **Taxonomia & Manifestos Canônicos:**
+
    - `tests/TEST_SUITES_MANIFEST.json`: 5 suítes backend (`pmev`, `core_ai`, `agents_llm`, `database_infra`, `security_governance`) + Jest DOM + SIMD C++ (382 testes, 100% Verde).
    - `scripts/SCRIPTS_CATALOG.json`: 5 categorias (`ops`, `maintenance`, `routines`, `benchmarks`, `cli`), 17 scripts essenciais com SLAs e critérios por domínio.
    - `data/SYSTEM_OPERATIONS_MANIFEST.json`: Governança unificada de 7 Auditorias (`nexus audit`), 5 Rotinas (`nexus routine`) e 5 Subsistemas de Fila (`nexus task audit`).
 3. **Pilares de Infraestrutura (Logs, Temps, Artifacts, Skills):**
+
    - Auditoria unificada `scripts/maintenance/audit_infrastructure_pillars.py` validando zero leaks em logs, 61 diretórios temporários purgados para Vazio Termodinâmico, 33 artefatos KaTeX balanceados e 56 skills 100% íntegras.
 4. **Motor de Autopoiese & Homeostase (`core/autopoiesis_engine.py`):**
+
    - Mutex anti-concorrência (`homeostasis.lock`), autocura proativa da realidade dos 19 agentes, integridade SQLite WAL ACID e telemetria contínua com Índice de Entropia $0.00$.
 
 ---
@@ -40,9 +44,9 @@
 
 ### Procedencia -- `.cerebro/agent-memory/chico/MEMORY.md`
 
-### Memoria de CHICO
+### Memoria de CHICO [.cerebro]
 
-## Acoes Realizadas
+## Acoes Realizadas [.cerebro]
 
 - \[HANDOFF-20260413\] - Purificacao Absoluta de Linters e CVEs do Ecossistema
   - Resultado: Sucesso Total (Zero Linter Entropy)
@@ -60,13 +64,13 @@
   - Resultado: Sucesso Total (696 testes verdes, 0 erros/warnings de AST/Linter, commit 9dc7c243 enviado para origin/master com portas CWV, Ancoras e Registros 100% aprovadas).
   - Aprendizado: A concatenação de memórias consolidadas exige governança semântica de AST em Markdown (MD025/MD024/MD032). O isolamento explícito de prefixos (`sub_`) para subagentes locais elimina risco de colisão nominal em DAGs e manifestos sem introduzir custos marginais de tokens.
 
-## Padrões Observados
+## Padrões Observados [.cerebro]
 
 - Padrão 1: Para garantir conformidade com scanners SAST e segurança efetiva de containers, aplicar atualizações explícitas de pacotes (`apk update && apk upgrade --no-cache`) e fixar digests SHA-256 canônicos da imagem base.
 - Padrão 2: Fantasmas de cache no Turbopack (Next.js 16+) causam dessincronização entre a AST (Abstract Syntax Tree) da IDE e o estado real lido pelo compilador. A aniquilação manual do diretório `frontend\.next` é a solução definitiva quando erros sintáticos ilusórios persistirem após a correção física dos arquivos.
 - Padrão 3: O byte `0xe3` (ã) no nome dos adaptadores de vídeo no Windows PT-BR quebra o binding C++ do DirectML na inicialização. A solução exige a ativação do UTF-8 global (Beta) no OS ou a desativação seletiva do adaptador integrado (iGPU).
 
-## Referencias de Contexto
+## Referencias de Contexto [.cerebro]
 
 - `docs/SOTA_REFERENCE_ARCHITECTURE.md` - Manutencao Estrita
 

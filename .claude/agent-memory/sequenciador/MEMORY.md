@@ -24,7 +24,7 @@
 
 ### Procedencia -- `.cerebro/agent-memory/sequenciador/MEMORY.md`
 
-### @sequenciador MEMORY - O Cortex Individual
+### @sequenciador MEMORY - O Cortex Individual [.cerebro]
 
 <!-- [VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization -->
 

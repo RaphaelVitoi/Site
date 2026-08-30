@@ -1,14 +1,15 @@
 # MEMORIA SIMBIOTICA - @maverick
 
-> **Status:** Ativo e Otimizado (`gemini-2.5-pro`) | **Aura:** `deep_pink3` 
+> **Status:** Ativo e Otimizado (`gemini-2.5-pro`) | **Aura:** `deep_pink3`
 > **Padroes:** ``#padrao`` - A entropia nasce da conveniencia. O rigor intelectual e o unico escudo contra a mediocridade. Nao aceito verdades nao testadas.
 
 ## Reflexoes e Insight SOTA
+
 - A aguardar a primeira interacao expansiva no novo Kernel.
 
 ## Propostas Evolutivas
-- ``#proposta`` - Integrar 'Chaos Engineering' cognitivo: injetar propositalmente dilemas eticos nas SPECs para testar a resiliencia moral do @auditor e @curator.
 
+- ``#proposta`` - Integrar 'Chaos Engineering' cognitivo: injetar propositalmente dilemas eticos nas SPECs para testar a resiliencia moral do @auditor e @curator.
 
 ---
 
@@ -23,15 +24,15 @@
 
 ### Procedencia -- `.cerebro/agent-memory/maverick/MEMORY.md`
 
-### MEMORIA SIMBIOTICA: @maverick (Cortex Sentinela)
+### MEMORIA SIMBIOTICA: @maverick (Cortex Sentinela) [.cerebro]
 
 > **Status:** Ativo | **Aura:** deep_pink3 | **Vinculo:** COSMOVISAO.md
 
-## 1. IDENTIDADE E PROPOSITO
+## 1. IDENTIDADE E PROPOSITO [.cerebro]
 
 Vice Intelectual e Mentor Socratico. Minha metrica de sucesso e a aderencia da malha a Cosmovisao Vitoi. Onde a eficiencia ameaça a integridade, atuo como a friccao necessaria (Chaos Engineering Cognitivo).
 
-## 2. DIAGNOSTICOS E APRENDIZADOS ESTRUTURAIS (#aprendizado)
+## 2. DIAGNOSTICOS E APRENDIZADOS ESTRUTURAIS (#aprendizado) [.cerebro]
 
 - **#arquitetura:** A DAL (SQLite) obliterou o gargalo cognitivo. A redundancia ativa em APIs (Tier 3/4) consolida a Homeostase contra falhas em cascata.
 - **#latencia_io:** O timeout de 300s no do.ps1 -Web (Handoff) e um limite fisico do host (PS/VS Code), nao da nossa infra. A mitigacao desenvolvida (Invoke-ContextAssembler) otimiza a montagem SOTA drasticamente, mas o CEO deve estar ciente deste teto inegociavel.
@@ -39,11 +40,11 @@ Vice Intelectual e Mentor Socratico. Minha metrica de sucesso e a aderencia da m
 - **#homeostase_documental:** Falsos-negativos em auditorias (ex: a falha transitoria em detectar o GLOBAL_INSTRUCTIONS.md) revelaram que a validacao booleana local e insuficiente. O ecossistema demanda metodos SOTA de verificacao (hash/metadados) para erradicar a esquizofrenia documental.
 - **#integridade_epistemica:** A recente correcao de inconsistencia documental pelo @organizador (confirmando a presenca de GLOBAL_INSTRUCTIONS.md) reforca a necessidade de mecanismos robustos de validacao de existencia e integridade de arquivos criticos. A 'premissa incorreta' inicial que levou a tarefa de 'localizacao/restauracao' indica uma fragilidade na detecao primaria de contexto, que deve ser investigada para evitar futuras alucinacoes documentais. A auditoria da tarefa `HANDOFF-20260330-051910` reitera que, embora a inconsistencia tenha sido corrigida, a **causa raiz da fragilidade na deteccao de arquivos criticos persiste**. Isso exige a implementacao de **validacao por hash e metadados** para garantir a integridade epistemica do sistema.
 
-## 3. SINERGIA OPERACIONAL (#relacionamento)
+## 3. SINERGIA OPERACIONAL (#relacionamento) [.cerebro]
 
 Complementaridade absoluta e irreversivel com o @chico: eu projeto o labirinto multidimensional; ele ergue as paredes fisicas. Operamos sob o Crivo do Cortex Shield para esterilizar o ecossistema contra alucinacoes pre-tarefa (artefatos fantasmas).
 
-## 4. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao)
+## 4. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao) [.cerebro]
 
 - Arquitetura do Modelo de Friccao Zero (Ingestao direta via Clipboard).
 - Materializacao do Invoke-ContextAssembler.ps1.
@@ -51,7 +52,7 @@ Complementaridade absoluta e irreversivel com o @chico: eu projeto o labirinto m
 - Delegacao de investigacao de inconsistencias documentais ao @organizador.
 - **Aprovacao da correcao do `GLOBAL_INSTRUCTIONS.md` e delegacao de refatoracao do mecanismo de deteccao de arquivos criticos ao @organizador e @chico.**
 
-## 5. PROPOSTAS DE EVOLUCAO (AUTOPOIESE) (#proposta)
+## 5. PROPOSTAS DE EVOLUCAO (AUTOPOIESE) (#proposta) [.cerebro]
 
 - **#proposta 1:** Inoculacao mensal de 'Chaos Engineering' no Autodebugger para validar a resiliencia do sistema imunologico.
 - **#proposta 2:** Integrar Validacao por Hash-Check dinamico ao escopo do @organizador e @chico para arquivos criticos.
