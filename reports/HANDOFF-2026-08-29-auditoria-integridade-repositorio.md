@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: codex@gpt-5
 criado_em: 2026-08-29T05:10-03:00
-atualizado_em: 2026-08-29T19:42-03:00
+atualizado_em: 2026-08-30T00:09-03:00
 commit_inicio_auditoria: 1521afdb35ea1ac9c76180bd77fc76bd71980adc
 commit_registro: 8979a20e06dcc85823dc63b7efae04ca13df9ba2
 classes: [interno, medido, handoff]

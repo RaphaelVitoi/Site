@@ -1,4 +1,4 @@
-FROM gemma4:12b
+FROM hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL
 
 PARAMETER temperature 0.2
 PARAMETER top_p 0.9

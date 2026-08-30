@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: chico@v8-gold
 criado_em: 2026-08-29T19:55-03:00
-atualizado_em: 2026-08-29T22:07-03:00
+atualizado_em: 2026-08-30T00:09-03:00
 commit: c4b42fdb
 classes: [interno, medido, oficial]
 caminhos:

@@ -63,7 +63,7 @@
     "routing_pattern": "design|conceito|estrutura|fundacao|visao|topologia|blueprint|arquitetura|macro|esquema|diagrama|fluxo|desenh|projeto",
     "model_preference": "deep_thinking",
     "color": "dark_orange",
-    "primary_model": "claude-5-sonnet",
+    "primary_model": "claude-sonnet-5",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "gcp-cloud-data-orchestration-master",

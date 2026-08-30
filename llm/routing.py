@@ -21,6 +21,8 @@ def _infer_provider_for_model(model: str) -> str | None:
     model_l = model.lower()
     if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
         return "local"
+    if "qwen" in model_l and "/" not in model_l:
+        return "local"
     if "gemini" in model_l:
         return "gemini"
     if "claude" in model_l or "anthropic" in model_l:

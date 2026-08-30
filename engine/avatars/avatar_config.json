@@ -139,6 +139,25 @@
         "pyproject.toml"
       ]
     },
+    "gemma4": {
+      "name": "Gemma4",
+      "model_path": "gemma4:12b",
+      "model_file": "gemma4-12b.gguf",
+      "ollama_model": "gemma4:12b",
+      "vulkan_port": 8080,
+      "temperature": 0.2,
+      "top_p": 0.9,
+      "repeat_penalty": 1.15,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "multimodal": true,
+      "direct_conversational": true,
+      "system_prompt": "Você é o Gemma4, Sentinela de Inferência Local e Baixa Latência sob governança de Raphael Vitoi (Chico SOTA v8.0 GOLD). Especialista em execução de borda, calibração rápida e percepção multimodal com fidelidade absoluta.",
+      "context_files": [
+        "engine/gemma_server.py",
+        "core/runtime.py"
+      ]
+    },
     "gemma4_31b_cloud": {
       "name": "Gemma 4 31B Dense (Cloud Ollama / Vertex)",
       "model_path": "gemma4:31b-cloud",
@@ -177,10 +196,10 @@
       ]
     },
     "gemma4_12b_unified": {
-      "name": "Gemma 4 12B Unified (Encoder-Free Multimodal)",
-      "model_path": "gemma4:12b",
-      "model_file": "gemma4-12b.gguf",
-      "ollama_model": "gemma4:12b",
+      "name": "Gemma 4 12B Unified QAT (Encoder-Free Multimodal)",
+      "model_path": "hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+      "model_file": "gemma4-12b-qat.gguf",
+      "ollama_model": "hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
       "vulkan_port": 8080,
       "temperature": 0.2,
       "top_p": 0.9,
@@ -189,7 +208,7 @@
       "num_predict": 4096,
       "multimodal": true,
       "direct_conversational": true,
-      "system_prompt": "Você é o Gemma 4 12B Unified (Encoder-Free), Especialista em Percepção Multimodal Nativa (Áudio, Visão Direta, Vídeos e Diagramas de Arquitetura). Processa capturas de tela, OCR e transcrições com fidelidade absoluta.",
+      "system_prompt": "Você é o Gemma 4 12B Unified QAT (Encoder-Free Multimodal), Especialista em Percepção Multimodal Nativa (Áudio, Visão Direta, Vídeos e Diagramas de Arquitetura). Processa capturas de tela, OCR e transcrições com fidelidade absoluta acelerado por Quantization-Aware Training (QAT).",
       "context_files": [
         "engine/gemma_server.py",
         "core/runtime.py"
