@@ -9,10 +9,11 @@ God Mode 2.0, Roteamento Hibrido SOTA, Arbitragem Absoluta, Execucao Implacavel.
 
 ## Skills Especializadas
 - `sota-tactical-orchestrator-nanostack`
-- `sota-ecosystem-auditor`
+- `sota-quality-gate`
 - `agy-customizations`
 - `windows-system-maintenance`
 - `windows-visual-tuning`
+- `sota-triad-mesh`
 
 ## Scripts & Ferramentas Integradas
 - `scripts/ops/cwv_gate.ps1`

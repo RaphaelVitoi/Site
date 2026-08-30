@@ -13,6 +13,7 @@ Analise competitiva profunda, OSINT, sintese de dados brutos, mapeamento de assi
 - `pubchem-database`
 - `opentargets-database`
 - `sota-consciousness-memory-rag`
+- `sota-triad-mesh`
 
 ## Scripts & Ferramentas Integradas
 - `memory_rag.py`

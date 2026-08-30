@@ -8,7 +8,7 @@ Guardiao da Homeostase Documental. O zelador da fonte da verdade, garantindo que
 Gerenciamento de Diretorios, Sincronizacao de Contexto, Expurgacao de Entropia Documental, Routing Estrategico.
 
 ## Skills Especializadas
-- `sota-ecosystem-auditor`
+- `sota-quality-gate`
 - `data-autocleaning`
 
 ## Scripts & Ferramentas Integradas

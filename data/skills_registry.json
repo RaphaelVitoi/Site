@@ -1,0 +1,41 @@
+{
+  "_uso": "Fonte unica de RESOLUCAO de skill declarada em data/agents_manifest.json. Criado em 2026-08-30 pelo achado A1 da auditoria da malha agentica: as 31 skills declaradas nos 19 agentes eram renderizadas nos documentos de identidade como afirmacao de capacidade, e nenhuma era verificada por nada. tests/test_governanca_skills.py reprova se um nome declarado nao resolver nem como skill local nem como entrada aqui.",
+  "_nao_liste_skills_locais_aqui": "Skill que vive em 'raizes_locais' e DESCOBERTA por varredura de diretorio, nunca copiada para ca. Repetir aqui o que ja esta em disco criaria a segunda copia que a §7 do CLAUDE.md proibe, e ela divergiria como o AGENTS.md divergiu.",
+  "raizes_locais": [
+    ".agents/skills"
+  ],
+  "_sobre_skills_slash_": "O diretorio 'skills/' NAO e raiz de skill de agente: sao 8 submodulos git de extensoes do Gemini CLI e servidores MCP (Stitch, exa-mcp-server, superpowers, ...), outra classe de artefato. Declara-los em 'skills' de um agente seria erro de categoria.",
+  "externas": {
+    "_uso": "Skill que o operador depende mas que NAO vive neste repositorio: pacote de plugin, escopo de usuario ou marketplace. Entrada aqui e declaracao do operador, nao verificacao do portao. 'status' diz ate onde a evidencia vai, e essa distincao e o ponto: 'verificada' foi observada carregada; 'nao-verificada' e declarada e nao observavel a partir do repositorio. Ausencia de observacao NAO e prova de ausencia (§8.2), por isso nenhuma foi removida do manifesto.",
+    "bigquery-sql": { "origem": "pacote GCP data (escopo de usuario)", "status": "verificada" },
+    "bigquery-ai-ml": { "origem": "pacote GCP data (escopo de usuario)", "status": "verificada" },
+    "data-autocleaning": { "origem": "pacote GCP data (escopo de usuario)", "status": "verificada" },
+    "enforcing-resource-attribution": { "origem": "pacote GCP data (escopo de usuario)", "status": "verificada" },
+    "gcloud-auth-verification": { "origem": "pacote GCP data (escopo de usuario)", "status": "verificada" },
+    "windows-system-maintenance": { "origem": "pacote de manutencao Windows (escopo de usuario)", "status": "verificada" },
+    "windows-visual-tuning": { "origem": "pacote de manutencao Windows (escopo de usuario)", "status": "verificada" },
+    "skill-repair": { "origem": "pacote de manutencao de agente (escopo de usuario)", "status": "verificada" },
+    "mcp-extension-troubleshooting": { "origem": "pacote de manutencao de agente (escopo de usuario)", "status": "verificada" },
+    "hf-cli-management": { "origem": "pacote de manutencao de agente (escopo de usuario)", "status": "verificada" },
+
+    "gcp-cloud-data-orchestration-master": { "origem": "pacote GCP data", "status": "nao-verificada" },
+    "gcp-bigquery-lakehouse-master": { "origem": "pacote GCP data", "status": "nao-verificada" },
+    "flutter-apply-architecture-best-practices": { "origem": "pacote Flutter/Dart", "status": "nao-verificada" },
+    "flutter-build-responsive-layout": { "origem": "pacote Flutter/Dart", "status": "nao-verificada" },
+    "flutter-fix-layout-issues": { "origem": "pacote Flutter/Dart", "status": "nao-verificada" },
+    "flutter-add-widget-test": { "origem": "pacote Flutter/Dart", "status": "nao-verificada" },
+    "dart-run-static-analysis": { "origem": "pacote Flutter/Dart", "status": "nao-verificada" },
+    "dart-add-unit-test": { "origem": "pacote Flutter/Dart", "status": "nao-verificada" },
+    "literature-search-arxiv": { "origem": "pacote de pesquisa academica", "status": "nao-verificada" },
+    "literature-search-europepmc": { "origem": "pacote de pesquisa academica", "status": "nao-verificada" },
+    "pubchem-database": { "origem": "pacote de pesquisa academica", "status": "nao-verificada" },
+    "opentargets-database": { "origem": "pacote de pesquisa academica", "status": "nao-verificada" },
+    "firebase-security-rules-auditor": { "origem": "pacote de seguranca Firebase", "status": "nao-verificada" },
+    "credentials": { "origem": "pacote de seguranca", "status": "nao-verificada" },
+    "sota-tactical-orchestrator-nanostack": { "origem": "skill SOTA do operador", "status": "nao-verificada" },
+    "sota-consciousness-memory-rag": { "origem": "skill SOTA do operador", "status": "nao-verificada" },
+    "neuropsychology-high-performance": { "origem": "skill do operador", "status": "nao-verificada" },
+    "agy-customizations": { "origem": "skill do operador (Antigravity)", "status": "nao-verificada" },
+    "uv": { "origem": "skill de tooling Python", "status": "nao-verificada" }
+  }
+}

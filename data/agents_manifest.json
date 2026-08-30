@@ -11,7 +11,7 @@
     "color": "deep_pink3",
     "primary_model": "gemini-3.7-flash",
     "skills": [
-      "pmev-game-theory-poker",
+      "pmev-game-theory-engine",
       "bigquery-sql",
       "bigquery-ai-ml",
       "neuropsychology-high-performance"
@@ -38,10 +38,11 @@
     "primary_model": "gemini-3.7-flash",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
-      "sota-ecosystem-auditor",
+      "sota-quality-gate",
       "agy-customizations",
       "windows-system-maintenance",
-      "windows-visual-tuning"
+      "windows-visual-tuning",
+      "sota-triad-mesh"
     ],
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
@@ -139,7 +140,8 @@
       "literature-search-europepmc",
       "pubchem-database",
       "opentargets-database",
-      "sota-consciousness-memory-rag"
+      "sota-consciousness-memory-rag",
+      "sota-triad-mesh"
     ],
     "specialized_scripts": [
       "memory_rag.py",
@@ -183,7 +185,7 @@
     "color": "indian_red",
     "primary_model": "gemini-3.5-flash-lite",
     "skills": [
-      "sota-ecosystem-auditor",
+      "sota-quality-gate",
       "firebase-security-rules-auditor",
       "credentials",
       "windows-system-maintenance"
@@ -234,7 +236,7 @@
     "color": "sea_green3",
     "primary_model": "qwen-code-surgical",
     "skills": [
-      "sota-ecosystem-auditor",
+      "sota-quality-gate",
       "dart-add-unit-test",
       "flutter-add-widget-test",
       "firebase-security-rules-auditor"
@@ -281,7 +283,7 @@
     "color": "gold3",
     "primary_model": "qwen-pmev-math",
     "skills": [
-      "pmev-game-theory-poker",
+      "pmev-game-theory-engine",
       "bigquery-sql",
       "bigquery-ai-ml"
     ],
@@ -304,7 +306,7 @@
     "color": "cadet_blue",
     "primary_model": "qwen2.5-coder:0.5b",
     "skills": [
-      "sota-ecosystem-auditor",
+      "sota-quality-gate",
       "data-autocleaning"
     ],
     "specialized_scripts": [
@@ -351,7 +353,7 @@
     "skills": [
       "credentials",
       "firebase-security-rules-auditor",
-      "sota-ecosystem-auditor",
+      "sota-quality-gate",
       "gcloud-auth-verification"
     ],
     "specialized_scripts": [
@@ -445,7 +447,7 @@
     "color": "light_salmon3",
     "primary_model": "gemma4:12b",
     "skills": [
-      "pmev-game-theory-poker",
+      "pmev-game-theory-engine",
       "sota-consciousness-memory-rag",
       "uv"
     ],
