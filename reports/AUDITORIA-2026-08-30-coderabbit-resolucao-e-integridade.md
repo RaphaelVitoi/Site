@@ -5,8 +5,8 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-30T12:40-03:00
-atualizado_em: 2026-08-30T13:22-03:00
-commit: ba052a19
+atualizado_em: 2026-08-30T14:59-03:00
+commit: pending
 classes: [interno, medido]
 caminhos:
   - .cerebro/agent-memory/architect/MEMORY.md

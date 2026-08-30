@@ -18,10 +18,10 @@ def temp_queue_manager():
     temp_dir = Path("temp") / "pytest_dbs"
     temp_dir.mkdir(parents=True, exist_ok=True)
     db_path = temp_dir / f"test_queue_{db_id}.db"
-    
+
     qm = QueueManager(queue_path=str(db_path))
     yield qm
-    
+
     # Cleanup apos os testes
     try:
         if db_path.exists():
@@ -36,7 +36,7 @@ def temp_queue_manager():
 async def test_queue_acid_concurrent_insertions(temp_queue_manager: QueueManager):
     """Valida insercao concorrente massiva com WAL mode e transacoes ACID."""
     qm = temp_queue_manager
-    
+
     num_tasks = 20
     priorities = ["critical", "high", "medium", "low"]
 

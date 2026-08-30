@@ -49,7 +49,7 @@ def test_lancedb_backend_upsert_and_hybrid_search(temp_lance_dir: Path):
 
 def test_memory_rag_complexity_detection():
     rag = MemoryRAG.__new__(MemoryRAG)
-    
+
     assert rag._is_high_complexity_query("Como calcular o Teorema de Vitoi na PMev?") is True
     assert rag._is_high_complexity_query("Explique a autopoiese do simplex e invariantes de risco.") is True
     assert rag._is_high_complexity_query("A" * 151) is True
@@ -63,7 +63,7 @@ def test_memory_rag_complexity_detection():
 async def test_memory_rag_dual_engine_routing(temp_lance_dir: Path):
     rag = MemoryRAG()
     rag.lance_backend = LanceDBBackend(db_path=temp_lance_dir, emb_fn=rag.emb_fn)
-    
+
     rag.lance_backend.upsert_records(
         ids=["pmev_axiom#0"],
         texts=["Axioma de Vitoi: O PMev supera o ICM sob dinamicas convexas de torneio."],

@@ -1,20 +1,18 @@
 # tests/test_architectural_stress_and_failover.py
 # Protocolo Chico SOTA v8.0 GOLD - Bateria Empirica de Estresse, Failover e Memoria
+# pylint: disable=redefined-outer-name
 from __future__ import annotations
 
-import asyncio
 import json
-import time
 import uuid
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
-    KEY_BLOCKLIST,
     _block_key,
     _is_key_blocked,
     _rank_keys_by_health,
@@ -27,8 +25,7 @@ from utils.ram_optimizer import optimize_ollama_keepalive
 @pytest.fixture
 def queue_manager(tmp_path: Path) -> QueueManager:
     db_file = str(tmp_path / "test_stress.db")
-    manager = QueueManager(queue_path=db_file)
-    return manager
+    return QueueManager(queue_path=db_file)
 
 
 @pytest.fixture
@@ -67,21 +64,17 @@ def test_vram_single_active_slot_and_keepalive_unpin():
 async def test_cascading_failover_and_circuit_breaker(queue_manager: QueueManager):
     """Testa a rotacao de chaves sob erro 429 e fallback em cascata."""
     mock_keys = ["AIzaSyKeyA_FreeTier_1", "AIzaSyKeyB_FreeTier_2"]
-    
+
     prov_key_1 = f"gemini:{mock_keys[0]}"
     await _block_key(prov_key_1)
-    
+
     is_blocked_1 = await _is_key_blocked(prov_key_1)
     assert is_blocked_1 is True, "Chave 1 deveria estar em cool-down"
-    
+
     prov_key_2 = f"gemini:{mock_keys[1]}"
     is_blocked_2 = await _is_key_blocked(prov_key_2)
     assert is_blocked_2 is False, "Chave 2 deve estar disponivel"
-    
-    stats_map = {
-        mock_keys[0]: {"attempts": 5, "successes": 0, "failures": 5},
-        mock_keys[1]: {"attempts": 5, "successes": 5, "failures": 0},
-    }
+
     ranked = await _rank_keys_by_health("gemini", mock_keys, queue_manager)
     assert len(ranked) == 2, "Devem ser retornadas todas as chaves avaliadas"
 
@@ -95,7 +88,7 @@ async def test_cascading_failover_and_circuit_breaker(queue_manager: QueueManage
         metadata={"pmev_risk": 0.85},
     )
     await queue_manager.add_task(task)
-    
+
     saved_task = await queue_manager.get_task(unique_id)
     assert saved_task is not None, "Tarefa deve ser persistida com seguranca ACID"
     assert saved_task.status == "pending"
@@ -150,7 +143,7 @@ def test_all_19_agents_manifest_integrity():
     """Valida que todos os 19 agentes possuem modelos primarios, fallbacks e afinidade declarada."""
     manifest_path = Path(r"C:\Users\rapha\.gemini\Site\data\agents_manifest.json")
     assert manifest_path.exists(), "agents_manifest.json deve existir"
-    
+
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert len(manifest) == 19, f"Devem existir exatamente 19 agentes, encontrados {len(manifest)}"
 
@@ -164,7 +157,7 @@ def test_all_19_agents_manifest_integrity():
     for agent_id in expected_agents:
         assert agent_id in manifest, f"Agente @{agent_id} ausente no manifesto"
         data = manifest[agent_id]
-        
+
         assert "primary_model" in data and bool(data["primary_model"]), f"@{agent_id} sem primary_model"
         assert "fallback_model" in data and bool(data["fallback_model"]), f"@{agent_id} sem fallback_model"
         assert "tier" in data and bool(data["tier"]), f"@{agent_id} sem tier"
