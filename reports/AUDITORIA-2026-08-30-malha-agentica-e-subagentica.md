@@ -7,9 +7,9 @@
 camada de skills e camada de memoria agentica.
 **Metodo:** medicao no repositorio, nao leitura de documentacao. Toda afirmacao
 abaixo foi executada; o que nao rodou esta declarado em §5.
-**Estado das correcoes:** A1, A2, A3, A5, A7, A8 e A9 corrigidos nesta mesma
-branch; A6 avaliado e deliberadamente NAO corrigido, com o motivo medido. Ver
-§6. Resta A4.
+**Estado das correcoes:** A1, A2, A3, A4, A5, A7, A8 e A9 corrigidos nesta
+mesma branch; A6 avaliado e deliberadamente NAO corrigido, com o motivo medido. Ver
+§6. **Nenhum achado permanece aberto.**
 **Este relatorio carrega duas retificacoes a si mesmo** (§3/A1 e §3/A5), ambas
 descobertas ao aplicar as correcoes. Estao no corpo, nao em nota de rodape.
 
@@ -297,9 +297,10 @@ so usa `PersistentClient` embarcado. Duas observacoes, nenhuma delas urgente:
    local-first do manifesto.
 6. **A7, A8, A9** — higiene.
 
-A auditoria foi entregue sem correcoes. **A1, A2, A3, A5, A7, A8 e A9 foram
-corrigidos em seguida** e **A6 foi avaliado e recusado com motivo medido** —
-todos registrados na §6. Resta A4.
+A auditoria foi entregue sem correcoes. **A1, A2, A3, A4, A5, A7, A8 e A9
+foram corrigidos em seguida** e **A6 foi avaliado e recusado com motivo
+medido** —
+todos registrados na §6. **Nenhum achado permanece aberto.**
 
 ---
 
@@ -503,6 +504,40 @@ nao foi executado. A mudanca e a remocao de uma interpolacao dentro de uma
 string de aspas duplas — sem alteracao de estrutura, controle de fluxo ou
 encoding — mas isso e argumento, nao medicao. Rodar o gerador em maquina de
 trabalho fecha esta lacuna.
+
+### A4 — o `.mcp.json` deixa de codificar o layout do venv
+
+`command: ".venv/Scripts/python.exe"` nos dois servidores locais. `Scripts/` e
+layout de venv de Windows; em POSIX e `bin/`. Dai o `ENOENT` que derrubou
+`google-jules` (Tier 2) e `nexus-bridge` nesta sessao.
+
+**A correcao nao troca uma barra pela outra** — isso apenas moveria a quebra de
+plataforma. Passa a `uv run --no-sync python <script>`, que resolve o venv do
+projeto em qualquer plataforma. O layout do venv **sai do arquivo**: nao ha mais
+o que quebrar quando a plataforma muda.
+
+`--no-sync` nao e detalhe: sem ele, `uv run` tentaria sincronizar dependencias
+no start do servidor MCP — o que num arranque de MCP significa travar ou baixar
+gigabytes. Com ele, usa o `.venv` que ja existe, que e exatamente o que o
+caminho antigo fazia.
+
+`uv` nao e dependencia nova: o CI roda `uv sync --frozen --extra dev`, o
+`pyproject.toml` tem `[tool.uv]`, o `uv.lock` e versionado, o perfil
+`research-browser` ja exige `uv`/`uvx` — e o proprio `.venv` que o caminho
+antigo apontava e criado por ele.
+
+**Verificado aqui (POSIX):** `uv run --no-sync python -c ...` resolve
+`.venv/bin/python3`, e `uv run --no-sync python engine/jules_mcp_server.py`
+executa o servidor ate a checagem de dependencia dele proprio. O `.venv` de
+teste foi removido.
+
+**NAO verificado, e este e o limite honesto desta correcao:** nao ha Windows
+neste ambiente. O mecanismo e declaradamente multiplataforma — mais forte que um
+caminho fixo de uma plataforma so — mas o unico risco residual e `uv` nao estar
+no PATH do processo que hospeda o MCP no Windows. Se isso acontecer, o sintoma e
+o mesmo `ENOENT`, agora do outro lado, e **a reversao e uma linha por servidor**.
+Por isso esta correcao esta em commit proprio e por ultimo: e a unica da serie
+cuja validacao final depende da maquina do operador.
 
 ### A8 — `fallback_model` vira contrato, e o campo revela o terceiro decorativo
 
