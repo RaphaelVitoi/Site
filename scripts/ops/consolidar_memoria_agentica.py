@@ -77,6 +77,7 @@ class Resultado:
     bytes_absorvidos: int = 0
     origens_usadas: list[str] = field(default_factory=list)
     ja_consolidado: bool = False
+    texto_final: str = ""
 
 
 def _normalizar(texto: str) -> str:
@@ -144,7 +145,7 @@ def consolidar_agente(agente: str) -> Resultado:
         + f"\n{MARCA_FIM}\n"
     )
     res.bytes_canonica = len(base + secao)
-    res._texto_final = base + secao  # type: ignore[attr-defined]
+    res.texto_final = base + secao
     return res
 
 
@@ -195,7 +196,7 @@ def main() -> int:
         if args.aplicar and not r.ja_consolidado:
             destino = CANONICA / ag / "MEMORY.md"
             destino.parent.mkdir(parents=True, exist_ok=True)
-            destino.write_text(r._texto_final, encoding="utf-8")  # type: ignore[attr-defined]
+            destino.write_text(r.texto_final, encoding="utf-8")
 
     saida_total = sum(r.bytes_canonica for r in resultados)
     print()
@@ -217,7 +218,7 @@ def main() -> int:
     for ag in agentes:
         destino = CANONICA / ag / "MEMORY.md"
         atual = destino.read_text(encoding="utf-8", errors="replace") if destino.exists() else ""
-        previsto = next((getattr(r, "_texto_final", None) for r in resultados if r.agente == ag), None)
+        previsto = next((r.texto_final for r in resultados if r.agente == ag and r.texto_final), None)
         referencia = atual if args.aplicar or previsto is None else previsto
         for origem in ORIGENS:
             f = origem / ag / "MEMORY.md"

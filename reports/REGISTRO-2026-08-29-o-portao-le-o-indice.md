@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T13:00-03:00
-atualizado_em: 2026-08-30T13:10-03:00
+atualizado_em: 2026-08-30T20:15-03:00
 commit: 2fd5da40
 classes: [interno]
 decide: o portao de registro passa a julgar o conteudo do INDICE, nao o da arvore

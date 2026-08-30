@@ -13,8 +13,9 @@ O segundo e o mais perigoso dos dois: colisao de chave NAO alcanca ramo de
 erro. O arquivo existe, so nao e o que a tabela afirma. Nenhuma auditoria que
 le output pega isso  so a que compara cardinalidade.
 """
-
 from __future__ import annotations
+
+# pylint: disable=redefined-outer-name
 
 import datetime
 from pathlib import Path
@@ -113,8 +114,8 @@ def _bloco(texto: str) -> dict[str, str]:
     return chaves
 
 
-def _frontmatter_de_exemplo(**over):
-    base = dict(
+def _frontmatter_de_exemplo(**over: object) -> str:
+    base: dict[str, object] = dict(
         agora=datetime.datetime(2026, 8, 27, 15, 30),
         mes_ano="2026_08",
         status_camadas={"m1": {"status": "OK"}, "m2": {"status": "OK"}},
@@ -124,7 +125,15 @@ def _frontmatter_de_exemplo(**over):
         n_agentes_resolvidos=19,
     )
     base.update(over)
-    return _frontmatter(**base)
+    return _frontmatter(
+        agora=base["agora"],  # type: ignore[arg-type]
+        mes_ano=str(base["mes_ano"]),
+        status_camadas=base["status_camadas"],  # type: ignore[arg-type]
+        mo_status=base["mo_status"],  # type: ignore[arg-type]
+        suspeitas=base["suspeitas"],  # type: ignore[arg-type]
+        cob=base["cob"],  # type: ignore[arg-type]
+        n_agentes_resolvidos=int(base["n_agentes_resolvidos"]),  # type: ignore[arg-type]
+    )
 
 
 def test_frontmatter_tem_todos_os_campos_obrigatorios():

@@ -24,6 +24,8 @@ em comum, entao entrada > saida e deduplicacao esperada, nao perda.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name
+
 import importlib.util
 import sys
 from pathlib import Path
@@ -101,8 +103,8 @@ def _dry_run(mod, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_a_canonica_passa_a_conter_as_duas_naturezas(arvores, mod, monkeypatch, capsys):
-    canonica, episodica, _ = arvores
+def test_a_canonica_passa_a_conter_as_duas_naturezas(arvores, mod, monkeypatch):
+    canonica, _, _ = arvores
     assert _aplicar(mod, monkeypatch) == 0
 
     texto = (canonica / "chico" / "MEMORY.md").read_text(encoding="utf-8")
@@ -196,7 +198,7 @@ def test_a_secao_consolidada_aparece_uma_vez_so(arvores, mod, monkeypatch):
 def test_o_script_reprova_se_a_continencia_falhar(arvores, mod, monkeypatch, capsys):
     """A guarda interna precisa conseguir dizer nao. Portao que nunca reprovou
     pode ser incapaz de reprovar."""
-    canonica, _, _ = arvores
+    _ = arvores
     monkeypatch.setattr(mod, "consolidar_agente", lambda ag: mod.Resultado(agente=ag, ja_consolidado=True))
     assert _aplicar(mod, monkeypatch) == 1
     assert "conteudo que NAO esta contido" in capsys.readouterr().out

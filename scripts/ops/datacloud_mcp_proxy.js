@@ -6,10 +6,10 @@
  * methods (initialize, tools, resources, prompts, ping) when offline.
  */
 
-const net = require("net");
-const os = require("os");
-const path = require("path");
-const readline = require("readline");
+const net = require("node:net");
+const os = require("node:os");
+const path = require("node:path");
+const readline = require("node:readline");
 
 const RETRY_DELAY_MS = 3000;
 
@@ -42,7 +42,7 @@ function main() {
     if (!trimmed) return;
     try {
       const msg = JSON.parse(trimmed);
-      const { id, method, params } = msg;
+      const { id, method } = msg;
 
       // Notifications (no id) must never receive a response
       if (id === undefined) {
@@ -158,7 +158,9 @@ function main() {
           });
           break;
       }
-    } catch (_) {}
+    } catch {
+      // Graceful fallback for non-JSON lines
+    }
   }
 
   const rl = readline.createInterface({
@@ -171,7 +173,7 @@ function main() {
     if (isConnected && activeClient && !activeClient.destroyed) {
       try {
         activeClient.write(line + "\n");
-      } catch (_) {
+      } catch {
         handleFallbackStdin(line);
       }
     } else {
@@ -197,7 +199,7 @@ function main() {
         activeClient = null;
         setTimeout(tryConnect, RETRY_DELAY_MS);
       });
-    } catch (_) {
+    } catch {
       setTimeout(tryConnect, RETRY_DELAY_MS);
     }
   }

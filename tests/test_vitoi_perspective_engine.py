@@ -430,4 +430,3 @@ class TestVitoiPerspectiveEngine:
         req_low = ProspectRiskEngine(ctx_low_edge).evaluate_required_equilibrium_equity(raw_pot_odds=0.33)
 
         assert req_high < req_low
-

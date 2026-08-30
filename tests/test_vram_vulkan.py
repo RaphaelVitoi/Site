@@ -25,6 +25,8 @@ arvore isolada e em CI sem GPU.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name,protected-access
+
 import importlib.util
 import json
 from pathlib import Path
@@ -45,8 +47,8 @@ def nx():
         spec.loader.exec_module(modulo)
     except SystemExit:  # pragma: no cover - typer pode sair no import em algumas versoes
         pass
-    modulo._VRAM_TOTAL_VULKAN = None
-    modulo._VRAM_PS_CACHE = None
+    vars(modulo)["_VRAM_TOTAL_VULKAN"] = None
+    vars(modulo)["_VRAM_PS_CACHE"] = None
     return modulo
 
 
@@ -59,6 +61,7 @@ LINHA_DO_LOG = (
 
 
 def _com_log(nx, tmp_path, conteudo: str):
+    _ = nx
     log = tmp_path / "Ollama" / "server.log"
     log.parent.mkdir(parents=True, exist_ok=True)
     log.write_text(conteudo, encoding="utf-8")
@@ -185,7 +188,7 @@ def test_leitor_de_dispositivo_tem_precedencia_sobre_o_de_processo(nx):
     vulkan.assert_not_called()
 
 
-def test_tudo_indisponivel_continua_declarando_desconhecido(nx, tmp_path):
+def test_tudo_indisponivel_continua_declarando_desconhecido(nx):
     """Sem nenhum leitor, o contrato antigo se mantem: None no percentual. O
     consumidor tem de tratar None, e e por isso que ele nao virou 0."""
     with (

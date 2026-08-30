@@ -41,6 +41,8 @@ por frase, e a comparacao com baseline e o que prova isso.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name,protected-access
+
 import re
 import statistics
 import warnings
@@ -48,14 +50,14 @@ from pathlib import Path
 
 import pytest
 
+from memory_rag import CHUNK_OVERLAP, CHUNK_SIZE, MemoryRAG
+
 warnings.filterwarnings("ignore")
 RAIZ = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(scope="module")
 def rag():
-    from memory_rag import MemoryRAG  # noqa: PLC0415
-
     return MemoryRAG()
 
 
@@ -80,16 +82,12 @@ def _tamanhos(rag, corpus) -> list[int]:
 
 def test_nenhum_fragmento_passa_do_teto(rag, corpus):
     """O que o modelo nao ve nao deveria estar no fragmento."""
-    from memory_rag import CHUNK_SIZE  # noqa: PLC0415
-
     excedentes = [t for t in _tamanhos(rag, corpus) if t > CHUNK_SIZE]
     assert not excedentes, f"{len(excedentes)} fragmentos acima de {CHUNK_SIZE}; maior = {max(excedentes)}"
 
 
 def test_a_mediana_se_aproxima_do_alvo(rag, corpus):
     """A regressao central. Antes: mediana 162 num alvo de 1200 -- 13%."""
-    from memory_rag import CHUNK_SIZE  # noqa: PLC0415
-
     mediana = statistics.median(_tamanhos(rag, corpus))
     assert mediana >= CHUNK_SIZE * 0.55, (
         f"mediana {mediana:.0f} contra alvo {CHUNK_SIZE} -- o chunker voltou a "
@@ -135,8 +133,6 @@ def test_boilerplate_isolado_nao_vira_fragmento_proprio(rag):
 
 def test_paragrafo_colossal_continua_sendo_dividido(rag):
     """A acumulacao nao pode ter quebrado o caminho oposto."""
-    from memory_rag import CHUNK_SIZE  # noqa: PLC0415
-
     texto = " ".join(f"Esta e a frase numero {i} do paragrafo enorme." for i in range(200))
     fragmentos = rag._chunk_text(texto)
     assert len(fragmentos) > 1, "paragrafo muito acima do teto nao foi dividido"
@@ -169,11 +165,10 @@ def test_a_cobertura_nao_piorou_em_relacao_ao_chunker_antigo(rag, corpus):
     """Uma linha fisica pode ficar partida entre dois fragmentos quando o corte
     cai numa fronteira de frase -- e isso ja acontecia antes. Sem a baseline, o
     numero isolado (0,31%) pareceria defeito novo."""
-    norm = lambda s: re.sub(r"\s+", " ", s).strip()  # noqa: E731
+    def norm(s: str) -> str:
+        return re.sub(r"\s+", " ", s).strip()
 
     def antigo(texto: str) -> list[str]:
-        from memory_rag import CHUNK_OVERLAP, CHUNK_SIZE  # noqa: PLC0415
-
         saida: list[str] = []
         for par in texto.replace("\r\n", "\n").split("\n\n"):
             p = par.strip()

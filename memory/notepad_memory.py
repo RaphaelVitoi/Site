@@ -1,13 +1,10 @@
-"""
-SOTA Notepad Memory & Working Scratchpad Engine (Chico v7.0 GOLD)
-Protocol Chico SOTA v7.0 GOLD - Multi-Agent Working Memory & Dynamic Epistemic Scratchpad
-"""
+from __future__ import annotations
 
 import json
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 class MemoryBlock:

@@ -47,6 +47,8 @@ computado, nao.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name
+
 import ast
 import inspect
 import json
@@ -85,7 +87,7 @@ def declaracao() -> dict:
 
 
 def _fontes_python() -> list[Path]:
-    return [p for p in RAIZ.rglob("*.py") if not (set(p.parts) & IGNORADOS)]
+    return [p for p in RAIZ.rglob("*.py") if not set(p.parts) & IGNORADOS]
 
 
 def _rel(p: Path) -> str:
@@ -259,7 +261,7 @@ def test_o_caminho_quente_deixou_de_colapsar_os_agentes(declaracao):
     resolvidos = {cfg.modelo_do_agente(n) for n in cfg.AGENTS_MANIFEST}
     assert len(resolvidos) == medido["modelos_distintos_no_caminho_quente"], (
         f"o caminho quente resolve {len(resolvidos)} modelos distintos, declarado "
-        f"{medido['modelos_distintos_no_caminho_quente']}: {sorted(resolvidos)}. {PISTA}"
+        f"{medido['modelos_distintos_no_caminho_quente']}: {sorted(str(r) for r in resolvidos)}. {PISTA}"
     )
 
     faixas: dict[str, int] = {}

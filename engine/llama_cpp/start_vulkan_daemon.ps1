@@ -7,7 +7,7 @@
 param (
     [string]$ModelPath = "",
     [int]$Port = 8080,
-    [string]$Host = "127.0.0.1",
+    [string]$ListenHost = "127.0.0.1",
     [int]$CtxSize = 8192,
     [int]$Slots = 4,              # Paralelismo de agentes (Continuous Batching)
     [int]$PhysicalCores = 8,      # Threads dedicadas a P-Cores
@@ -45,7 +45,7 @@ $UbatchSize = 512      # Micro-batching para saturacao de VRAM/Vulkan
 
 $Arguments = @(
     # --- Configuracao de Rede e Endpoints ---
-    "--host", $Host,
+    "--host", $ListenHost,
     "--port", $Port,
 
     # --- Carregamento de Modelo e Memoria ---
@@ -76,7 +76,7 @@ $Arguments = @(
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  NEXUS CORE: INICIALIZANDO DAEMON VULKAN / LLAMA-SERVER" -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "Endpoint:       http://${Host}:${Port}"
+Write-Host "Endpoint:       http://${ListenHost}:${Port}"
 Write-Host "Modelo:         $ModelPath"
 Write-Host "Slots Concor.:  $Slots (Continuous Batching Ativo)"
 Write-Host "KV Cache Type:  $KVCacheType"

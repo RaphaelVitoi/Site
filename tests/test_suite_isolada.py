@@ -13,6 +13,8 @@ isso: nada aqui pode escrever no repositorio de origem.
 
 from __future__ import annotations
 
+# pylint: disable=wrong-import-position
+
 import json
 import re
 import sys

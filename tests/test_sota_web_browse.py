@@ -4,7 +4,6 @@ Chico Protocol v8.0 GOLD - Pyramidal Governance & Universal Web Tooling.
 """
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 import pytest
 
@@ -16,7 +15,6 @@ from engine.sota_web_browse import (
     TierPolicyEngine,
     WebBrowseMode,
     WebQueryRequest,
-    WebQueryResponse,
 )
 
 

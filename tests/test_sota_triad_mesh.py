@@ -14,12 +14,9 @@ from engine.sota_triad_mesh import (
     ExaQueryRequest,
     ExaResearchResult,
     JulesCloudBridge,
-    JulesTaskRequest,
-    JulesTaskResult,
     SotaTriadOrchestrator,
     StitchDesignBridge,
     StitchScreenRequest,
-    StitchScreenResult,
     TriadMeshReport,
 )
 
@@ -89,17 +86,22 @@ class TestSotaTriadMesh(unittest.TestCase):
         self.assertEqual(metrics["files_count"], 2)
         self.assertEqual(metrics["insertions"], 3)
         self.assertEqual(metrics["deletions"], 1)
-        self.assertIn("engine/core.py", metrics["files"])
-        self.assertIn("tests/test_core.py", metrics["files"])
+        files = metrics["files"]
+        assert isinstance(files, list)
+        self.assertIn("engine/core.py", files)
+        self.assertIn("tests/test_core.py", files)
 
     def test_triad_orchestrator_planning_and_dag_generation(self) -> None:
         plan = self.orchestrator.plan_triad_workflow("Simulador de Equidade Flop PMev")
         self.assertIn("objective", plan)
-        self.assertEqual(len(plan["dag_phases"]), 4)
-        self.assertEqual(plan["dag_phases"][0]["agent"], "Exa (Neural Research)")
-        self.assertEqual(plan["dag_phases"][1]["agent"], "Stitch (Generative UI)")
-        self.assertEqual(plan["dag_phases"][2]["agent"], "Google Jules (Cloud VM)")
-        self.assertEqual(plan["dag_phases"][3]["agent"], "Antigravity 2.0 (Local Gate)")
+        dag_phases = plan["dag_phases"]
+        self.assertIsInstance(dag_phases, list)
+        assert isinstance(dag_phases, list)
+        self.assertEqual(len(dag_phases), 4)
+        self.assertEqual(dag_phases[0]["agent"], "Exa (Neural Research)")
+        self.assertEqual(dag_phases[1]["agent"], "Stitch (Generative UI)")
+        self.assertEqual(dag_phases[2]["agent"], "Google Jules (Cloud VM)")
+        self.assertEqual(dag_phases[3]["agent"], "Antigravity 2.0 (Local Gate)")
 
     def test_triad_orchestrator_dag_execution(self) -> None:
         report = self.orchestrator.execute_triad_dag("Validacao de Teoremas de Vitoi")

@@ -24,8 +24,6 @@ $ServerBin  = Join-Path $LlamaDir "llama-server.exe"
 $LogsDir    = Join-Path $RepoRoot "logs"
 
 if (-not (Test-Path $LogsDir)) { New-Item -Path $LogsDir -ItemType Directory -Force | Out-Null }
-$StdoutLog  = Join-Path $LogsDir "llama_vulkan_stdout.log"
-$StderrLog  = Join-Path $LogsDir "llama_vulkan_stderr.log"
 
 function Stop-LlamaEngine {
     param([int]$TargetPort)

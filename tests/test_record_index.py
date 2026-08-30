@@ -15,6 +15,8 @@ auditoria justamente porque o portao dizia APROVADO.
 
 from __future__ import annotations
 
+# pylint: disable=protected-access,wrong-import-position,fixme
+
 import re
 import subprocess
 import sys
@@ -35,7 +37,7 @@ from scripts.ops import record_gate, record_index  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
-# todo registro tem de ser legivel por maquina
+# Todo registro tem de ser legivel por maquina
 # ---------------------------------------------------------------------------
 
 

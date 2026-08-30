@@ -24,8 +24,11 @@ muda por decisao registrada.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name,global-statement
+
 import ast
 import json
+from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
@@ -95,7 +98,8 @@ def _exportados(arvore: ast.AST) -> set[str]:
 def _constantes(arvore: ast.AST) -> set[str]:
     """UPPER_CASE no nivel do modulo -- a forma que este projeto usa para teto."""
     achados: set[str] = set()
-    for no in arvore.body:
+    body = getattr(arvore, "body", [])
+    for no in body:
         if isinstance(no, (ast.Assign, ast.AnnAssign)):
             alvos = no.targets if isinstance(no, ast.Assign) else [no.target]
             for a in alvos:
@@ -104,7 +108,7 @@ def _constantes(arvore: ast.AST) -> set[str]:
     return achados
 
 
-def _orfas(arvores: dict[Path, ast.AST], fora: tuple[str, ...]) -> dict[str, str]:
+def _orfas(arvores: Mapping[Path, ast.AST], fora: tuple[str, ...]) -> dict[str, str]:
     lidos = set()
     for arv in arvores.values():
         lidos |= _nomes_lidos(arv)

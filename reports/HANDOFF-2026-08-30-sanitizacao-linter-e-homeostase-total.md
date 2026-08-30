@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: gemini@3.7-flash
 criado_em: 2026-08-30T14:58-03:00
+atualizado_em: 2026-08-30T20:15-03:00
 commit: c5b26fdf
 classes: [interno, medido]
 caminhos:

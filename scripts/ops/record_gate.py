@@ -23,6 +23,8 @@ divida preexistente e portao que se desliga na primeira semana.
 
 from __future__ import annotations
 
+# pylint: disable=wrong-import-position
+
 import json
 import re
 import subprocess
@@ -32,7 +34,7 @@ from pathlib import Path
 
 import yaml
 
-RAIZ = Path(__file__).resolve().parents[2]
+RAIZ: Path = Path(__file__).resolve().parent.parent.parent
 
 # A RAIZ do repositorio no path, nunca este diretorio: com `scripts/ops` no
 # path, `record_index` e `scripts.ops.record_index` viram DOIS objetos de modulo

@@ -6,13 +6,10 @@ e invariantes de custo zero na malha de subagentes SOTA v8.0 GOLD.
 
 from __future__ import annotations
 
-import pytest
-
 from core.subagents_mesh import (
     GEMMA4_THINK_TOKEN,
     GEMMA4_THOUGHT_CHANNEL_END,
     GEMMA4_THOUGHT_CHANNEL_START,
-    GEMMA4_VALID_VISUAL_BUDGETS,
     SUBAGENT_MODEL_MAP,
     SubagentTier,
     format_gemma4_system_prompt,

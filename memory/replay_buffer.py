@@ -1,10 +1,7 @@
-"""
-SOTA Vectorized Replay Memory & Trajectory Ring-Buffer Engine (Chico v7.0 GOLD)
-Protocol Chico SOTA v7.0 GOLD - Prioritized Experience Replay (PER) & Agent State Memory
-"""
+from __future__ import annotations
 
 import threading
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple
+from typing import Any, NamedTuple, Optional
 
 import numpy as np
 

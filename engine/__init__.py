@@ -9,6 +9,21 @@ from .cognitive import (
     get_rag,
     process_agent_task,
 )
+from .game_theory_solvers import (
+    CFRPlusEngine,
+    ClaudicoActionTranslator,
+    ContinualResolvingEngine,
+    DeepStackSubgame,
+    GrowingTreeCFRSolver,
+    GrowingTreeNode,
+    PluribusDepthLimitedSolver,
+    PluribusMultiwayState,
+    PotentialAwareAbstraction,
+    PublicBeliefState,
+    PUCTNode,
+    PUCTPerspectiveSelector,
+    Street,
+)
 from .llm_api import call_llm_api
 from .math_rio import calculate_rio_risk
 from .math_sota import (
@@ -29,4 +44,17 @@ __all__ = [
     "get_agent_system_prompt",
     "process_agent_task",
     "call_llm_api",
+    "PotentialAwareAbstraction",
+    "ClaudicoActionTranslator",
+    "DeepStackSubgame",
+    "ContinualResolvingEngine",
+    "CFRPlusEngine",
+    "PluribusMultiwayState",
+    "PluribusDepthLimitedSolver",
+    "PUCTNode",
+    "PUCTPerspectiveSelector",
+    "GrowingTreeNode",
+    "GrowingTreeCFRSolver",
+    "PublicBeliefState",
+    "Street",
 ]

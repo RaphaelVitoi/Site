@@ -23,12 +23,11 @@ teste e a forma mais silenciosa disso -- o lado esquecido continua aprovando.
 
 from __future__ import annotations
 
+from pathlib import Path
 import shutil
 import subprocess
 
 import pytest
-
-from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 HOOK = RAIZ / ".husky" / "commit-msg"
@@ -60,11 +59,12 @@ pytestmark = pytest.mark.skipif(
 
 
 def _rodar(mensagem: str, tmp_path) -> subprocess.CompletedProcess:
+    assert SH is not None
     arquivo = tmp_path / "COMMIT_EDITMSG"
     arquivo.write_text(mensagem, encoding="utf-8")
     return subprocess.run(
         [SH, str(HOOK), str(arquivo)],
-        cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", errors="replace",
+        cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
     )
 
 
