@@ -75,6 +75,13 @@
                 "*.xlsx"
             ],
             "recursive": true
+        },
+        {
+            "path": ".cerebro",
+            "patterns": [
+                "*.md"
+            ],
+            "recursive": true
         }
     ]
 }
