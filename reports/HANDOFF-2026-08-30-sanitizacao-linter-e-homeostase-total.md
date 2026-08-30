@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: gemini@3.7-flash
 criado_em: 2026-08-30T14:58-03:00
-commit: pending
+commit: c5b26fdf
 classes: [interno, medido]
 caminhos:
   - .ruff.toml
@@ -39,9 +39,9 @@ supersede: handoff-2026-08-30-resolucao-coderabbit-linters-e-malha-sota
 
 Esta iteração consolidou as correções de integridade estática apontadas pelo IDE e linters estritos no ambiente Python 3.12+ (PEP 585/604, Zero-Any, Pure ASCII):
 
-1. **Fixture Shadowing em Testes**: Resolução de avisos estáticos de escopo em `tests/test_architectural_stress_and_failover.py` decorrentes de fixtures pytest (`queue_manager` e `memory_cache`).
-2. **Hermes Plugins & Skills Linter Shield**: Configuração em `.ruff.toml` e `pyproject.toml` para estender exclusões a `skills`, `plugins` e `.agents`, prevenindo falsos positivos de nomenclatura de módulo (N999) e delimitadores especiais de LLM (S105, N818).
-3. **Homeostase de Testes**: Validação empírica de 100% da suíte de testes (696 testes passados, 0 erros, 0 warnings).
+- **Fixture Shadowing em Testes**: Resolução de avisos estáticos de escopo em `tests/test_architectural_stress_and_failover.py` decorrentes de fixtures pytest (`queue_manager` e `memory_cache`).
+- **Hermes Plugins & Skills Linter Shield**: Configuração em `.ruff.toml` e `pyproject.toml` para estender exclusões a `skills`, `plugins` e `.agents`, prevenindo falsos positivos de nomenclatura de módulo (N999) e delimitadores especiais de LLM (S105, N818).
+- **Homeostase de Testes**: Validação empírica de 100% da suíte de testes (696 testes passados, 0 erros, 0 warnings).
 
 ---
 
