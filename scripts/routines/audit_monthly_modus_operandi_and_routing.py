@@ -317,6 +317,7 @@ def run_monthly_audit() -> dict[str, Any]:
 ---
 
 ## 1. RESUMO EXECUTIVO
+
 - **Total de Agentes Cobertos:** {cob["agentes"]} agentes / {cob["subagentes"]} tiers de subagente
 - **Mapa Concreto Ativo:** {len(AGENT_MODEL_MAP)} agentes operando sem fallbacks orfaos
 - **Validacao de Gatilho de ROI (Gemini 3.1 Pro vs. 3.7 Flash):** Aprovado e calibrado
@@ -326,6 +327,7 @@ def run_monthly_audit() -> dict[str, Any]:
 ---
 
 ## 2. CONFORMIDADE DAS 4 CAMADAS FUNCIONAIS
+
 | Modelo | Camada | Context Window | Max Output | Preco In/Out ($/1M) | Thinking | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 """
@@ -339,6 +341,7 @@ def run_monthly_audit() -> dict[str, Any]:
 ---
 
 ## 3. AUDITORIA DE MANUAIS E GOVERNANCA
+
 | Arquivo | Presente | Tamanho | 4 Camadas | Barramento MCP |
 | :--- | :--- | :--- | :--- | :--- |
 """
