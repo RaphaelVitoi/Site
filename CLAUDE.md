@@ -311,3 +311,37 @@ Todo commit e registro deve declarar sinteticamente:
 - **Assinatura:** Autor e Tier correspondente (ex: `Chico v8.0 GOLD [Tier 1.B]`)
 - **Propósito:** Razão de ser técnica da alteração e escopo protegido.
 
+### Identidade de autoria — agente não assina como humano
+
+A Assinatura acima vive no **corpo** da mensagem. Ela não basta: o GitHub liga um
+commit a um perfil pelo **e-mail do autor**, não pelo nome nem pelo corpo. Um
+agente que commita com o e-mail do administrador aparece, na interface, como se
+o administrador tivesse escrito — e o corpo que o desmente só é lido por quem
+abre o commit.
+
+**Regra.** Commit feito por agente usa e-mail que **não resolve para o perfil de
+nenhum humano** (`noreply@anthropic.com` para a linhagem Claude; o equivalente
+para as demais). O nome do autor identifica o agente. A responsabilidade humana
+é expressa por propriedade do repositório, autorização e merge — nunca por
+autoria emprestada.
+
+**Medição que originou a regra, 2026-08-30.** Nesta data, commits desta linhagem
+saíram com o e-mail do administrador e o GitHub os exibiu como autoria dele —
+inclusive uma **resposta de revisão** e um *learning* que o CodeRabbit gravou
+como `Learnt from: RaphaelVitoi`, quando quem escreveu e justificou foi o
+agente. No mesmo dia foi aberto um incidente sobre agente agindo sob a
+identidade do administrador; os discriminantes que o resolveram foram **nome,
+fuso horário e trailer** — precisamente porque o e-mail **não** discriminava.
+Uma malha com múltiplos agentes que não distingue quem escreveu o quê não
+consegue auditar a si mesma.
+
+**Comentários e revisões no GitHub** não têm campo de autor separado: eles saem
+sob a conta do token usado, e isso não é configurável pelo agente. Ali o único
+discriminante possível é o rodapé de atribuição, que portanto é **obrigatório**
+em todo comentário, revisão ou resposta de agente.
+
+**Não reescrever histórico publicado para retroagir esta regra.** Aplica-se
+daqui em diante, e a transição fica registrada. Força-push numa branch já
+publicada quebra checkout alheio e âncora de revisão — custo maior que a
+inconsistência que corrigiria.
+
