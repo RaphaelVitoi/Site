@@ -36,6 +36,7 @@ nao_verificado:
 Implementacao da malha de superagentes sinergica e unificada no ecossistema Antigravity 2.0 / Nexus / Site.
 
 ## Componentes Entregues
+
 1. `design/DESIGN_SYSTEM_SOTA.md`: Tokens dark/gold (#090D16, #D4AF37), glassmorphism, KaTeX e WCAG AAA.
 2. `engine/sota_triad_mesh.py`: Motor assincrono em 4 fases conectando Exa, Stitch, Jules e Quality Gate local.
 3. `scripts/cli/nexus.py`: Comandos `triad status`, `triad plan`, `triad run`.

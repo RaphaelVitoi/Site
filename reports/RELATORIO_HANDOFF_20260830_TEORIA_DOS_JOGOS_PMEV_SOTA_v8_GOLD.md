@@ -105,4 +105,3 @@ flowchart TD
 ---
 
 *Relatório registrado no repositório canônico conforme Protocolo Chico SOTA v8.0 GOLD.*
-
