@@ -47,6 +47,9 @@ param (
     [switch]$Web,
 
     [Parameter()]
+    [switch]$Ingest,
+
+    [Parameter()]
     [string]$Execute,
 
     [Parameter()]
@@ -797,6 +800,57 @@ if ($Description) {
     exit 0
 }
 
+if ($Ingest) {
+    Write-Host "=== [SISTEMA] INGESTAO SOTA DE CLIPBOARD (RECEPTOR WEB) ===" -ForegroundColor Magenta
+    try {
+        Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
+        $ClipText = [System.Windows.Forms.Clipboard]::GetText()
+    }
+    catch {
+        $ClipText = Get-Clipboard -Raw -ErrorAction SilentlyContinue
+    }
+
+    if (-not $ClipText -or [string]::IsNullOrWhiteSpace($ClipText)) {
+        Write-Warning "[INGEST] Clipboard vazio ou sem texto detectado."
+        exit 0
+    }
+
+    Write-Host "[INGEST] Capturados $($ClipText.Length) caracteres do clipboard. Processando blocos de codigo..." -ForegroundColor Cyan
+    $TempDir = Join-Path $ScriptDirectory "temp"
+    if (-not (Test-Path -LiteralPath $TempDir)) { New-Item -ItemType Directory -Path $TempDir -Force | Out-Null }
+    $IngestDropzone = Join-Path $TempDir "dropzone.md"
+    [System.IO.File]::WriteAllText($IngestDropzone, $ClipText, [System.Text.Encoding]::UTF8)
+
+    & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') apply-god-mode $IngestDropzone
+    if (Test-Path $IngestDropzone) { Remove-Item $IngestDropzone -Force -ErrorAction SilentlyContinue }
+    Write-Host "[INGEST] Ciclo de assimilacao concluido com sucesso." -ForegroundColor Green
+    exit 0
+}
+
 if ($PSBoundParameters.Count -eq 0) {
-    Get-Help -Full $PSCommandPath
+    Write-Host "=== CHICO SMART CLI v2.0 - A MEMBRANA INTELIGENTE ===" -ForegroundColor Cyan
+    
+    # Easter Egg: 10% de chance de aforismo do Maverick
+    $RandomVal = Get-Random -Minimum 1 -Maximum 101
+    $AphorismsFile = Join-Path $ScriptDirectory "data\aphorisms.json"
+    if ($RandomVal -le 10 -and (Test-Path -LiteralPath $AphorismsFile)) {
+        try {
+            $Aphorisms = Get-Content $AphorismsFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            $Chosen = $Aphorisms | Get-Random
+            if ($Chosen) {
+                Write-Host "[MAVERICK] `"$Chosen`"" -ForegroundColor DarkMagenta
+            }
+        }
+        catch {}
+    }
+
+    Write-Host "[NEXUS] Awaiting Directive > " -ForegroundColor Cyan -NoNewline
+    $InteractiveInput = Read-Host
+    if (-not $InteractiveInput -or [string]::IsNullOrWhiteSpace($InteractiveInput)) {
+        Write-Host "[NEXUS] Sessao encerrada. Vazio Operacional mantido." -ForegroundColor DarkGray
+        exit 0
+    }
+
+    & $PSCommandPath $InteractiveInput
+    exit 0
 }
