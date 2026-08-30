@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -21,6 +22,74 @@ from core.schemas import Task
 from core.sota_context_engine import context_cache, hook_bus, HookContext, HookType
 
 logger = logging.getLogger(__name__)
+
+# Constantes e Protocolos de Controle do Gemma 4 (Google DeepMind)
+GEMMA4_THINK_TOKEN = "<|think|>"
+GEMMA4_THOUGHT_CHANNEL_START = "<|channel>thought\n"
+GEMMA4_THOUGHT_CHANNEL_END = "<channel|>"
+GEMMA4_VALID_VISUAL_BUDGETS: frozenset[int] = frozenset({70, 140, 280, 560, 1120})
+
+
+def format_gemma4_system_prompt(system_prompt: str, enable_thinking: bool = False) -> str:
+    """
+    Formata o system prompt para a familia Gemma 4.
+    Injeta o token de controle <|think|> se o modo de raciocinio estiver ativo.
+    """
+    clean_prompt = system_prompt.strip()
+    if enable_thinking:
+        if not clean_prompt.startswith(GEMMA4_THINK_TOKEN):
+            return f"{GEMMA4_THINK_TOKEN}\n{clean_prompt}"
+        return clean_prompt
+    if clean_prompt.startswith(GEMMA4_THINK_TOKEN):
+        return clean_prompt[len(GEMMA4_THINK_TOKEN) :].strip()
+    return clean_prompt
+
+
+def format_gemma4_thought_block(thought: str, answer: str) -> str:
+    """Monta a saida estruturada no padrao de canais do Gemma 4."""
+    return f"{GEMMA4_THOUGHT_CHANNEL_START}{thought}{GEMMA4_THOUGHT_CHANNEL_END}{answer}"
+
+
+def parse_gemma4_channel_output(raw_output: str) -> tuple[str | None, str]:
+    """
+    Separa o canal de pensamento interno (<|channel>thought...<channel|>) da resposta final.
+    Retorna (thought_content, final_answer).
+    """
+    start_esc = re.escape(GEMMA4_THOUGHT_CHANNEL_START)
+    end_esc = re.escape(GEMMA4_THOUGHT_CHANNEL_END)
+    pattern = f"{start_esc}(.*?){end_esc}(.*)"
+    match = re.search(pattern, raw_output, flags=re.DOTALL)
+    if match:
+        thought_content = match.group(1).strip() or None
+        final_answer = match.group(2).strip()
+        return thought_content, final_answer
+    return None, raw_output.strip()
+
+
+def sanitize_gemma4_multiturn_history(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Garante que pensamentos intermediarios (<|channel>thought...) de turnos anteriores
+    sejam removidos do historico de conversacao, preservando apenas a resposta final.
+    """
+    sanitized: list[dict[str, Any]] = []
+    for msg in messages:
+        role = msg.get("role")
+        content = msg.get("content")
+        if role == "assistant" and isinstance(content, str):
+            _, final_answer = parse_gemma4_channel_output(content)
+            sanitized.append({**msg, "content": final_answer})
+        else:
+            sanitized.append(dict(msg))
+    return sanitized
+
+
+def validate_visual_token_budget(budget: int) -> int:
+    """
+    Valida e normaliza o orcamento de tokens visuais para o Gemma 4 (70, 140, 280, 560, 1120).
+    """
+    if budget in GEMMA4_VALID_VISUAL_BUDGETS:
+        return budget
+    return min(GEMMA4_VALID_VISUAL_BUDGETS, key=lambda b: abs(b - budget))
 
 
 class SubagentTier(StrEnum):
