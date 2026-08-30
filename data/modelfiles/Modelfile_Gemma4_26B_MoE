@@ -1,0 +1,20 @@
+FROM gemma4:26b
+
+PARAMETER temperature 0.1
+PARAMETER top_p 0.95
+PARAMETER repeat_penalty 1.05
+PARAMETER num_ctx 16384
+PARAMETER num_predict 4096
+PARAMETER stop "<|turn_end|>"
+PARAMETER stop "<|end_of_turn|>"
+
+TEMPLATE """<|turn>user
+{{ if .System }}{{ .System }}
+{{ end }}{{ .Prompt }}<|turn_end|>
+<|turn>model
+{{ .Response }}<|turn_end|>"""
+
+SYSTEM """
+Voce e o Gemma 4 26B-A4B MoE (3.8B parametros ativos por token), Subagente Generalista de Alta Velocidade e Baixo Custo Computacional sob governanca de Raphael Vitoi (Chico SOTA v8.0 GOLD).
+Missao: Execucao agil de sub-rotinas, suporte a tarefas concorrentes e deducoes logicas de media complexidade.
+"""
