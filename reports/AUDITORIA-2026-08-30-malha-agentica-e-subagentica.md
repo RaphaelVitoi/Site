@@ -7,8 +7,8 @@
 camada de skills e camada de memoria agentica.
 **Metodo:** medicao no repositorio, nao leitura de documentacao. Toda afirmacao
 abaixo foi executada; o que nao rodou esta declarado em §5.
-**Estado das correcoes:** A2, A3 e A7 foram corrigidos nesta mesma branch apos
-aprovacao do vertice — ver §6. Os demais achados permanecem abertos.
+**Estado das correcoes:** A1, A2, A3 e A7 foram corrigidos nesta mesma branch
+apos aprovacao do vertice — ver §6. A4, A5, A6, A8 e A9 permanecem abertos.
 
 ---
 
@@ -60,11 +60,21 @@ Medicao das 31 skills distintas declaradas nos 19 agentes:
 | Resolvem como skill global do usuario (fora do repo, fora do versionamento) | 10 |
 | **Nao resolvem em lugar nenhum** | **21** |
 
-E os conjuntos sao **disjuntos**: as 11 skills que de fato existem no repositorio
-(`pmev-game-theory-engine`, `sota-quality-gate`, `sota-triad-mesh`,
-`gemini-deep-research`, `token-efficiency`, `superpowers`, `Stitch`,
-`exa-mcp-server`, `gemini-cli-jules`, `gemini-cli-security`,
-`gemini-supermemory`) **nao sao declaradas por nenhum agente.**
+E os conjuntos sao **disjuntos**: as skills que de fato existem no repositorio
+**nao sao declaradas por nenhum agente.**
+
+> **Correcao a esta propria auditoria, feita ao aplicar a correcao de A1.**
+> A primeira redacao contou "11 skills orfas" varrendo `skills/` e
+> `.agents/skills/` como se fossem a mesma coisa. Nao sao. Os 8 diretorios sob
+> `skills/` sao **submodulos git** de extensoes do Gemini CLI e servidores MCP
+> (`Stitch`, `exa-mcp-server`, `superpowers`, `token-efficiency`,
+> `gemini-*`) — outra classe de artefato, nao skill de agente, e nem sequer
+> presentes no container (submodulo nao inicializado). Declara-los em `skills`
+> de um agente seria erro de categoria.
+> **O numero correto de skills de agente orfas era 3**, todas em
+> `.agents/skills/`: `pmev-game-theory-engine`, `sota-quality-gate` e
+> `sota-triad-mesh`. O achado central — 0 de 31 resolvendo, conjuntos disjuntos —
+> nao muda; a contagem do lado orfao, sim.
 
 A evidencia de que isto e drift, e nao design, esta nos quase-acertos:
 `@maverick` e `@validador` declaram `pmev-game-theory-poker`; o que existe em
@@ -272,10 +282,9 @@ so usa `PersistentClient` embarcado. Duas observacoes, nenhuma delas urgente:
    `CONFLITOS_MANIFESTO` e a leitura local-first do manifesto.
 6. **A7, A8, A9** — higiene.
 
-A auditoria foi entregue sem correcoes. **A2, A3 e A7 foram corrigidos em
-seguida, sob aprovacao explicita do vertice** — registrados na §6. A1 continua
-aberto por ser decisao de design, nao patch; A4, A5, A6, A8 e A9 continuam
-abertos.
+A auditoria foi entregue sem correcoes. **A1, A2, A3 e A7 foram corrigidos em
+seguida, sob aprovacao explicita do vertice** — registrados na §6. A4, A5, A6,
+A8 e A9 continuam abertos.
 
 ---
 
@@ -284,8 +293,10 @@ abertos.
 **Executado nesta sessao:**
 
 - Suite completa `pytest tests/` sob Python 3.13 — 353 passed, 14 failed,
-  1 skipped, 72 errors **antes** das correcoes da §6; 354 passed, 13 failed
-  depois. A diferenca e exatamente A2, e nenhum outro teste mudou de estado.
+  1 skipped, 72 errors **antes** das correcoes da §6; **363 passed, 13 failed**
+  depois. O delta e inteiramente explicado: +1 por A2 e +9 pela guarda nova de
+  A1. Nenhum outro teste mudou de estado; os 72 errors sao os mesmos.
+- Mutacao deliberada das 5 guardas de A1, para provar que sabem falhar.
 - Subconjunto de governanca/roteamento (5 modulos) — **85 passed, 0 failed**.
 - `npm audit --audit-level=low` — 0 vulnerabilidades.
 - `pip-audit -r requirements.txt` — 4 advisories (A9).
@@ -305,6 +316,15 @@ abertos.
   afirmacao deste relatorio substitui o veredito dele. Ao commitar em maquina de
   trabalho, o portao roda e o veredito dele e que vale.
 - **Skill `security-review` nao executada** (§4) — nao disponivel nesta sessao.
+- **`sync_agents_reality.ps1` nao foi executado.** Os 19 documentos da §6/A1
+  foram regenerados por reproducao em Python do template, provada byte-a-byte
+  contra o estado anterior. Isso valida o TEXTO gerado, nao o script: a sintaxe
+  do `.ps1` corrigido em A7 continua sem passar por parser. Rodar o gerador em
+  maquina de trabalho fecha as duas lacunas de uma vez, e o resultado esperado e
+  "nenhuma mudanca".
+- **Skills marcadas `nao-verificada` no registro nao foram confirmadas.** Sao 19,
+  e o registro diz isso explicitamente. Confirma-las exige a maquina do
+  operador, nao este container.
 - `pip-audit` das dependencias **instaladas** e auditoria OSV do `uv.lock` — nao
   rodadas; so a declaracao (`requirements.txt`) foi auditada, que e a distincao
   que a §2 do `CLAUDE.md` exige explicitar.
@@ -329,6 +349,80 @@ repositorio.
 
 Aplicadas apos aprovacao do vertice, na mesma branch da auditoria. Escopo
 deliberadamente minimo: cada uma corrige o defeito medido e nada alem dele.
+
+### A1 — `skills` vira contrato com guarda
+
+Decisao do vertice: contrato, nao remocao. O campo passa a ter **modelo de
+resolucao explicito, fonte unica e guarda que reprova**.
+
+**Modelo de resolucao.** Um nome declarado resolve de duas maneiras, e so duas:
+
+1. **Local** — diretorio com `SKILL.md` sob uma `raiz_local` de
+   `data/skills_registry.json` (hoje `.agents/skills`). E **descoberto por
+   varredura, nunca listado no registro**: repetir em JSON o que ja esta em
+   disco criaria a segunda copia que a §7 proibe, e ela divergiria como o
+   `AGENTS.md` divergiu.
+2. **Externa** — entrada em `externas` do registro, para o que vive fora do
+   repositorio (plugin, escopo de usuario, marketplace).
+
+Nome em nenhum dos dois **reprova a suite**. O buraco fecha para frente: skill
+nova entra com resolucao declarada ou nao entra.
+
+**Reconciliacao dos 31 nomes.** Duas correcoes de rename, ambas com evidencia
+no proprio `SKILL.md`, nao por semelhanca de string:
+
+| De | Para | Evidencia | Declarantes |
+| :--- | :--- | :--- | ---: |
+| `pmev-game-theory-poker` | `pmev-game-theory-engine` | frontmatter descreve exatamente PMev, ICMev, Teoremas de Vitoi e aceleracao Rust/WASM | 3 |
+| `sota-ecosystem-auditor` | `sota-quality-gate` | frontmatter descreve as 5 fases do portao, CVE e sanitizacao de warnings — o escopo de `@auditor` (tier "Quality Gate & CVE Audit") e de `@chico` (dono de `cwv_gate.ps1`) | 5 |
+
+E `sota-triad-mesh`, que existia sem nenhum declarante, foi atribuida a
+`@pesquisador` e `@chico`: a skill orquestra Exa + Stitch + Google Jules, o Exa
+e o dominio declarado do pesquisador (cujo `fallback_model` e literalmente
+`exa`) e o chico e o orquestrador. **Este e o unico ponto de julgamento da
+correcao, e esta marcado como tal.**
+
+**Os 29 nomes restantes foram para o registro, nenhum removido.** Dez estao como
+`verificada` (observadas carregadas nesta sessao); dezenove como
+`nao-verificada` — declaradas pelo operador e nao observaveis a partir do
+repositorio. A distincao e o ponto: **ausencia de observacao nao e prova de
+ausencia** (§8.2), e apagar a declaracao de uma skill porque um container Linux
+nao a enxerga seria exatamente o erro que aquela secao proibe. O que muda e que
+os 19 nomes duvidosos agora estao **enumerados num lugar so, com status
+escrito**, em vez de implicitos em 19 documentos gerados.
+
+**A guarda** — `tests/test_governanca_skills.py`, 9 testes:
+
+| Invariante | O que impede |
+| :--- | :--- |
+| Toda skill declarada resolve | o achado A1 original |
+| Toda skill local e declarada por alguem | capacidade em disco que nenhum agente alcanca |
+| Registro nao acumula entrada morta | o registro envelhecer como o campo que ele guarda |
+| Local e externa nao disputam nome | ambiguidade de resolucao (§3) |
+| `status` de vocabulario fechado | a distincao observado/declarado virar prosa livre |
+| Toda externa declara `origem` | "externa" virar sinonimo de "nao encontrei" |
+| Nome de diretorio bate com `name:` do frontmatter | resolucao por diretorio ser coincidencia |
+| Documentos publicam exatamente as skills do manifesto | o que o humano LE envelhecer mesmo com o manifesto correto |
+
+**Verificacao — cada guarda foi quebrada de proposito antes de ser aceita.**
+Teste que passa nao prova nada ate se mostrar que ele sabe falhar:
+
+| Sonda | Resultado |
+| :--- | :--- |
+| Reintroduzir `pmev-game-theory-poker` | reprova, nomeando skill e agente |
+| Remover `sota-triad-mesh` de todos | reprova, nomeando a skill ociosa |
+| Entrada fantasma no registro | reprova, nomeando a entrada morta |
+| Editar um `.md` gerado a mao | reprova, e manda rodar o gerador |
+| `status: "talvez"` | reprova, mostrando o vocabulario valido |
+
+Suite: 354 → **363 passed** (os 9 novos), 13 failed e 72 errors inalterados.
+
+**Propagacao aos documentos.** Alterar o manifesto obriga a regenerar os 19
+`.md`. Sem `pwsh` neste ambiente, foram regenerados por uma reproducao fiel do
+template do `sync_agents_reality.ps1` — **provada fiel antes do uso**: aplicada
+ao manifesto antigo, reproduziu os 19 arquivos byte a byte, incluindo ausencia
+de BOM, LF e ausencia de newline final. Nove arquivos mudaram, todos no bloco de
+skills.
 
 ### A2 — `tests/test_architectural_stress_and_failover.py`
 

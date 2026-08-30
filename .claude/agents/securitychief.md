@@ -10,7 +10,7 @@ SecOps, intercepcao de Regex destrutivo, Protecao de Permissoes (GDPR/IP), RBAC,
 ## Skills Especializadas
 - `credentials`
 - `firebase-security-rules-auditor`
-- `sota-ecosystem-auditor`
+- `sota-quality-gate`
 - `gcloud-auth-verification`
 
 ## Scripts & Ferramentas Integradas
