@@ -148,13 +148,20 @@ async def get_agent_system_prompt(agent_name: str, task: Task | None = None, tas
 
 async def _read_memory_and_context(agent_clean: str) -> tuple[str, str]:
     agent_memory = ""
-    memory_file = Path(f".cerebro/agent-memory/{agent_clean}/MEMORY.md")
-    if memory_file.exists():
-        async with aiofiles.open(memory_file, encoding="utf-8") as f:
+    canonical_file = Path(f".claude/agent-memory/{agent_clean}/MEMORY.md")
+    if canonical_file.exists():
+        async with aiofiles.open(canonical_file, encoding="utf-8") as f:
             agent_memory = await f.read()
+    else:
+        memory_file = Path(f".cerebro/agent-memory/{agent_clean}/MEMORY.md")
+        if memory_file.exists():
+            async with aiofiles.open(memory_file, encoding="utf-8") as f:
+                agent_memory = await f.read()
 
     project_context = ""
     context_file = Path(".cerebro/project-context.md")
+    if not context_file.exists():
+        context_file = Path(".claude/project-context.md")
     if context_file.exists():
         async with aiofiles.open(context_file, encoding="utf-8") as f:
             project_context = await f.read()

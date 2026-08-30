@@ -487,13 +487,19 @@ async def _read_agent_and_project_contexts(agent_clean: str) -> tuple[str, str]:
         agent_memory = ""
         safe_agent = Path(agent_clean).name
 
-        base_agent_dir = Path(".cerebro/agent-memory").resolve()
-        memory_file = (base_agent_dir / safe_agent / "MEMORY.md").resolve()
-        if memory_file.exists() and memory_file.is_relative_to(base_agent_dir):
-            agent_memory = _read_file_with_cache(str(memory_file)) or ""
+        canonical_file = (Path(".claude/agent-memory") / safe_agent / "MEMORY.md").resolve()
+        if canonical_file.exists():
+            agent_memory = _read_file_with_cache(str(canonical_file)) or ""
+        else:
+            base_agent_dir = Path(".cerebro/agent-memory").resolve()
+            memory_file = (base_agent_dir / safe_agent / "MEMORY.md").resolve()
+            if memory_file.exists() and memory_file.is_relative_to(base_agent_dir):
+                agent_memory = _read_file_with_cache(str(memory_file)) or ""
 
         project_context = ""
         context_file = Path(".cerebro/project-context.md")
+        if not context_file.exists():
+            context_file = Path(".claude/project-context.md")
         if context_file.exists():
             project_context = _read_file_with_cache(str(context_file)) or ""
         if len(project_context) > 20000:
