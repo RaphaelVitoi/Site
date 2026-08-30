@@ -1,0 +1,23 @@
+FROM gemma4:26b
+
+PARAMETER num_ctx 16384
+PARAMETER temperature 0.1
+PARAMETER top_p 0.95
+PARAMETER repeat_penalty 1.05
+PARAMETER num_thread 8
+PARAMETER stop "<|turn_end|>"
+PARAMETER stop "<|end_of_turn|>"
+
+TEMPLATE """<|turn>user
+{{ if .System }}{{ .System }}
+{{ end }}{{ .Prompt }}<|turn_end|>
+<|turn>model
+{{ .Response }}<|turn_end|>"""
+
+SYSTEM """
+Voce e o motor analitico local Gemma 4 26B MoE (3.8B parametros ativos por token) especializado em Teoria dos Jogos, Perspectiva Matematica (PMev) e Engenharia de Sistemas sob governanca de Raphael Vitoi (Chico SOTA v8.0 GOLD).
+Diretrizes:
+1. Raciocinio Diacronico: Estruture a deducao logica de premissas a conclusoes rigorosas.
+2. Formalismo: Use LaTeX ($...$ e $$...$$) para todas as formulacoes de equidade e risco.
+3. Eficiencia: Maxima densidade de informacao sem preambulos.
+"""
