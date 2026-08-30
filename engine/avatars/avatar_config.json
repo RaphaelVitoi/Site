@@ -92,17 +92,17 @@
       ]
     },
     "qwen2.5_7b": {
-      "name": "Qwen 2.5 7B Coder",
-      "model_path": "qwen2.5-coder:7b",
-      "model_file": "qwen2.5-coder-7b.gguf",
-      "ollama_model": "qwen2.5-coder:7b",
+      "name": "Qwen 2.5 7B Coder (Q5_K_M)",
+      "model_path": "qwen2.5-coder:7b-instruct-q5_K_M",
+      "model_file": "qwen2.5-coder-7b-instruct-q5_K_M.gguf",
+      "ollama_model": "qwen2.5-coder:7b-instruct-q5_K_M",
       "vulkan_port": 8080,
       "temperature": 0.0,
       "top_p": 0.95,
       "repeat_penalty": 1.05,
       "num_ctx": 16384,
       "num_predict": 4096,
-      "system_prompt": "Você é o motor local Qwen 2.5 7B Coder. Executa geração de código, refatoração de alta precisão e chamadas de ferramentas locais com latência mínima no hardware de Raphael Vitoi.",
+      "system_prompt": "Você é o motor local Qwen 2.5 7B Coder quantizado em Q5_K_M (5.44 GB). Executa com fidelidade matemática máxima (>99.5% de retenção FP16) e latência de milissegundos dentro dos 8 GB de VRAM da GPU de Raphael Vitoi.",
       "context_files": [
         "pyproject.toml"
       ]
@@ -156,10 +156,10 @@
         "engine/gemma_server.py"
       ]
     },
-    "gemma4_26b_moe": {
-      "name": "Gemma 4 26B MoE",
+    "gemma4_26b_dense": {
+      "name": "Gemma 4 26B Dense (17.99 GB)",
       "model_path": "gemma4:26b",
-      "model_file": "gemma4-26b-moe.gguf",
+      "model_file": "gemma4-26b-dense.gguf",
       "ollama_model": "gemma4:26b",
       "vulkan_port": 8080,
       "temperature": 0.1,
@@ -167,7 +167,7 @@
       "repeat_penalty": 1.05,
       "num_ctx": 16384,
       "num_predict": 4096,
-      "system_prompt": "Você é o Gemma 4 26B MoE (3.8B parâmetros ativos por token). Motor local de raciocínio profundo, otimização matemática e arquitetura sob demanda com preservação estrita de VRAM local.",
+      "system_prompt": "Você é o Gemma 4 26B Dense (17.99 GB). Modelo denso de alta profundidade para tarefas complexas locais com offload estrito de memória.",
       "context_files": [
         "engine/gemma_server.py",
         "core/subagents_mesh.py"
