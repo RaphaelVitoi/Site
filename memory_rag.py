@@ -958,7 +958,7 @@ class MemoryRAG:
             return []
         try:
             vector = await asyncio.to_thread(self.emb_fn, [question])
-            if not vector or not vector[0]:
+            if not vector or len(vector) == 0 or len(vector[0]) == 0:
                 return []
             return await asyncio.to_thread(
                 self.lance_backend.search_hybrid,
