@@ -23,7 +23,7 @@
 
 ### Procedencia -- `.cerebro/agent-memory/skillmaster/MEMORY.md`
 
-# @skillmaster MEMORY - O Cortex Individual
+### @skillmaster MEMORY - O Cortex Individual
 
 &gt; **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 

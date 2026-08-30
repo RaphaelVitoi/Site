@@ -5,7 +5,6 @@ registra transicoes de status em JSONL/Log e consolida relatorios SOTA.
 """
 from __future__ import annotations
 
-import json
 import re
 import shutil
 import subprocess

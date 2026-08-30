@@ -23,7 +23,7 @@
 
 ### Procedencia -- `.cerebro/agent-memory/bibliotecario/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @bibliotecario
+### MEMORIA SIMBIOTICA - @bibliotecario
 
 &gt; **Status:** Ativo | **Aura:** light_sea_green | **Motor:** gemini-2.5-flash
 &gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
@@ -81,7 +81,7 @@ Alimento o Orquestrador Python com historico factual antes que qualquer agente c
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/bibliotecario/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @bibliotecario
+### MEMORIA SIMBIOTICA - @bibliotecario
 
 &gt; **Status:** Ativo | **Aura:** light_sea_green | **Motor:** gemini-2.0-flash
 &gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas

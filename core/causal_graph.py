@@ -10,7 +10,7 @@ import json
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 from pydantic import BaseModel, Field
 
 
@@ -31,7 +31,7 @@ class CausalEdge(BaseModel):
 
 
 class CausalGraphEngine:
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Path | None = None):
         if db_path is None:
             base_dir = Path(__file__).resolve().parent.parent
             self.db_path = base_dir / "database" / "knowledge_graph.db"
@@ -148,7 +148,7 @@ class CausalGraphEngine:
                 "effects": [dict(e) for e in effects],
             }
 
-    def list_nodes(self, category: Optional[str] = None) -> list[dict[str, Any]]:
+    def list_nodes(self, category: str | None = None) -> list[dict[str, Any]]:
         with self._get_connection() as conn:
             if category:
                 rows = conn.execute(

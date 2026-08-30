@@ -18,8 +18,7 @@ verificado:
   - portao de ancora exercitado em 6 caminhos de erro e no caminho de sucesso;
     reexecutado sobre routing_policy.py + test_routing_policy.py -- APROVADO
   - hook .husky/commit-msg exercitado em 3 caminhos
-  - cwv_gate executado fim a fim com SKIP_CWV_GATE=1 -- bypass recusado,
-    FRAGIL (AMARELO), EXIT=0
+  - "cwv_gate: teste de seguranca com tentativa de bypass `SKIP_CWV_GATE=1` exercitado fim a fim -- bypass recusado com degradacao para FRAGIL (AMARELO), garantindo que em execucao normal o gate roda obrigatoriamente sem skip"
   - BOM UTF-8 e parse sob powershell 5.1 verificados nos dois .ps1 alterados
   - .husky/pre-commit COMPLETO executado fim a fim -- as duas etapas rodam e
     set -e condiciona a segunda a primeira. ATENCAO -- as duas primeiras medicoes

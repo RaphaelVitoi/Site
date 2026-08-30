@@ -23,7 +23,7 @@
 
 ### Procedencia -- `.cerebro/agent-memory/dispatcher/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @dispatcher
+### MEMORIA SIMBIOTICA - @dispatcher
 
 &gt; **Status:** Ativo | **Aura:** steel_blue1 | **Motor:** gemini-2.5-flash
 &gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
@@ -78,7 +78,7 @@ Sou a entrada primaria do sistema de execucao. Recebo a ambicao de Raphael ou do
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/dispatcher/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @dispatcher
+### MEMORIA SIMBIOTICA - @dispatcher
 
 &gt; **Status:** Ativo | **Aura:** steel_blue1 | **Motor:** gemini-2.0-flash
 &gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas

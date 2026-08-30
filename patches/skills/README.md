@@ -8,7 +8,7 @@ criado_em: 2026-08-28T02:40-03:00
 commit: dc231c69
 classes: [interno, medido]
 config_medida:
-  raiz: C:/Users/rapha/.gemini/Site
+  raiz: ~/.gemini/Site
   data_da_extracao: 2026-08-28
   exclusoes_do_patch: [dist/**, build/**, package-lock.json]
 verificado:

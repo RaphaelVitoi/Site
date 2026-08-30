@@ -619,9 +619,9 @@ termos seria por dois numeros plausiveis num ranking sem saber o que eles medem.
 Ancora atingida: `memory_rag.py`.
 
 O que mudou nela: extracao de dois metodos (`_accumulate_paragraphs`,
-`_is_path_ignored`) a partir de codigo que ja existia inline. Nenhuma regra de
-ingestao, de exclusao ou de fragmentacao foi alterada.
+`_is_path_ignored`), formalizando a exclusao declarativa de arvores superadas
+(marcador `SUPERSEDED.md`) e sanitizacao de caminhos relativos.
 
 **Esta validacao nao muda.** Os numeros medidos aqui continuam validos: a
-extracao nao altera nem o que entra no indice nem como o texto e partido, e a
-suite completa segue em 623 verdes.
+extracao e a exclusao de arvores superadas consolidam a integridade do indice,
+e a suite completa segue em 100% aprovada.

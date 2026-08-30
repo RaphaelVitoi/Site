@@ -38,7 +38,7 @@ Recebo a SPEC blindada do `@auditor` e a transformo em materia. Sob coordenacao 
 ## 5. REGISTRO DE EXECUCAO E AUTONOMIA (#decisao)
 
 Executei diversas features de UI/UX para o frontend. Participei da implementacao do `icm_toy_game_simulator.html`. Implementei o `RiskVisualizer.tsx` com Framer Motion e Tailwind CSS apos autodebug de erro de protocolo.
-Guiado pelo CORTEX SHIELD e as diretrizes de CHICO, forjei a Fase 3 (Painel de Convergencia Nash), injetando o componente `<NashConvergenceMatrix />`, integrando-o ao `TheoryPanel.tsx`, criando o worker `insolvency.worker.ts` para offloading do Motor QuA?ntico em Rust, e consolidando a rota de API local de FricA?A?o Zero para o RAG Knowledge Graph.
+Guiado pelo CORTEX SHIELD e as diretrizes de CHICO, forjei a Fase 3 (Painel de Convergencia Nash), injetando o componente `<NashConvergenceMatrix />`, integrando-o ao `TheoryPanel.tsx`, criando o worker `insolvency.worker.ts` para offloading do Motor Quântico em Rust, e consolidando a rota de API local de Fricção Zero para o RAG Knowledge Graph.
 
 ## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta)
 

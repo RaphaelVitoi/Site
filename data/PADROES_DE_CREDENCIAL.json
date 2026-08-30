@@ -8,6 +8,7 @@
     "Chave OpenRouter": "sk-or-v1-[A-Za-z0-9]{32,}",
     "Chave Google": "AIza[0-9A-Za-z_-]{35}",
     "Token GitHub": "gh[pousr]_[A-Za-z0-9]{36,}",
+    "Token GitHub Fine-Grained": "github_pat_[A-Za-z0-9_]{82,}",
     "Token HuggingFace": "hf_[A-Za-z0-9]{30,}",
     "Token Slack": "xox[baprs]-[A-Za-z0-9-]{10,}",
     "Chave Anthropic": "sk-ant-[A-Za-z0-9_-]{20,}",

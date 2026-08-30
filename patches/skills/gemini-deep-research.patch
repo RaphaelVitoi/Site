@@ -411,11 +411,12 @@ index e7ed50f..fbc2faa 100644
        WorkspaceConfigManager.removePendingResearch(id);
        return;
      }
-@@ -81,26 +99,20 @@ export class ResearchWatcher {
+@@ -81,26 +99,21 @@ export class ResearchWatcher {
      if (interaction.status === 'completed' && interaction.outputs) {
        try {
          const markdown = this.reportGenerator.generateMarkdown(interaction.outputs);
 -        fs.writeFileSync(resolved, markdown);
++        fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 +        fs.writeFileSync(outputPath, markdown);
        } catch (err) {
 -        this.writeError(resolved, id, err instanceof Error ? err.message : String(err));
@@ -439,6 +440,9 @@ index e7ed50f..fbc2faa 100644
 -  }
 -
    private writeError(resolved: string, id: string, message: string): void {
++    try {
++      fs.mkdirSync(path.dirname(resolved), { recursive: true });
++    } catch {}
      const body = [
        `Deep Research did not produce a report.`,
 diff --git a/src/config/WorkspaceConfig.ts b/src/config/WorkspaceConfig.ts

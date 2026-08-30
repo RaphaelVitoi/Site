@@ -10,6 +10,7 @@ Executa no 1o dia de cada mes ou sob demanda para auditar:
 from __future__ import annotations
 
 import datetime
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -172,9 +173,9 @@ def _frontmatter(
         f"  rotas_suspeitas: {len(suspeitas)}",
         f"  agentes_resolvidos: {n_agentes_resolvidos}",
         "verificado:",
-        *[f"  - {v}" for v in verificado],
+        *[f"  - {json.dumps(v, ensure_ascii=False)}" for v in verificado],
         "nao_verificado:",
-        *[f"  - {n}" for n in nao_verificado],
+        *[f"  - {json.dumps(n, ensure_ascii=False)}" for n in nao_verificado],
         f"supersede: {_auditoria_anterior(agora)}",
         "---",
         "",
@@ -303,6 +304,9 @@ def run_monthly_audit() -> dict[str, Any]:
         n_agentes_resolvidos=len(AGENT_MODEL_MAP),
     )
 
+    total_manuais = len(mo_status)
+    manuais_ok = sum(1 for m in mo_status.values() if m.get("presente") and m.get("quatro_camadas") and m.get("barramento_mcp"))
+
     md_content += f"""# RELATORIO DE AUDITORIA MENSAL: MODUS OPERANDI & ROUTING SOTA v8.0 GOLD
 
 > **Data de Execucao:** {timestamp_str}
@@ -317,7 +321,7 @@ def run_monthly_audit() -> dict[str, Any]:
 - **Mapa Concreto Ativo:** {len(AGENT_MODEL_MAP)} agentes operando sem fallbacks orfaos
 - **Validacao de Gatilho de ROI (Gemini 3.1 Pro vs. 3.7 Flash):** Aprovado e calibrado
 - **Ancoras de Rota:** {len(ROTAS) - len(suspeitas)} de {len(ROTAS)} dentro do TTL de {TTL_ROTA_DIAS} dias{" -- **" + str(len(suspeitas)) + " exigem reconsulta ao fornecedor**" if suspeitas else ""}
-- **Status dos Manuais de Modus Operandi:** 100% Sincronizados com a Arquitetura de 4 Camadas
+- **Status dos Manuais de Modus Operandi:** {manuais_ok} de {total_manuais} sincronizados com a Arquitetura de 4 Camadas
 
 ---
 
@@ -348,12 +352,13 @@ def run_monthly_audit() -> dict[str, Any]:
 ---
 
 ## 4. ALERTAS E RECOMENDACOES PARA O PROXIMO MES
+
 """
     if audit_results["alertas"]:
         for al in audit_results["alertas"]:
-            md_content += f"-  **Alerta:** {al}\n"
+            md_content += f"- **Alerta:** {al}\n"
     else:
-        md_content += "-  **Zero inconformidades detectadas.** O ecossistema opera no Padrao-Ouro termodinamico.\n"
+        md_content += "- **Zero inconformidades detectadas.** O ecossistema opera no Padrao-Ouro termodinamico.\n"
 
     # O estado das ancoras e sempre reportado, com alerta ou sem  e o unico
     # item desta secao que fala de decaimento EXTERNO, que corre por tempo e

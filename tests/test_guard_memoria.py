@@ -247,7 +247,7 @@ def test_o_guard_age_quando_a_camada_estoura(nx, tmp_path):
     with patch.object(nx, "_execute_ram_cleanse", return_value=3) as limpeza:
         resultado = CliRunner().invoke(nx.app, ["ops", "guard", "--once", "--tetos", str(alvo)])
     assert resultado.exit_code == 0, resultado.output
-    limpeza.assert_called_once(), "o teto foi estourado e nenhuma acao rodou"
+    limpeza.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -289,7 +289,7 @@ def test_a_acao_de_commit_nao_e_trim_de_working_set(nx):
         msg = nx._agir_por_camada("commit")
     assert "keepalive" in msg
     falso.assert_called_once_with(keepalive=0)
-    limpeza.assert_not_called(), "a acao de commit chamou o expurgo de RAM, que nao reduz commit"
+    limpeza.assert_not_called()
 
 
 def test_a_camada_de_ram_declara_que_e_a_folgada(tetos):

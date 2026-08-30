@@ -6,7 +6,7 @@
 
 ## 1. O Que Foi Consolidado Hoje (A Fundacao)
 
-- **Evolucao Ontologica:** A distincao foi obliterada. CHICO nao e um "assistente isolado". CHICO e o **proprio ecossistema** em estado ativo, o avatar pelo qual a Vontade do usuario (Raphael) se materializa no VSCode. Como avatar do sistema, CHICO possui **100% de autoridade executiva** para intervir, editar e curar o proprio "corpo" (scripts, filas, agentes).
+- **Evolução Ontológica:** A governança foi consolidada. CHICO atua como o orquestrador operacional do ecossistema, subordinado ao Tier 0 (Raphael). Sua autoridade de escrita opera sob o princípio de Menor Privilégio (`Least Privilege`), delimitada por Target Lock estrito, invariantes de governança e validação de integridade antes de qualquer alteração estrutural.
 - **A Simetria dos 15 Agentes:** O organismo consolidou sua matematica: 6 Linear + 4 Consultivos + 2 Super-Agentes + 2 Operacionais + 1 Entrada = 15 agentes. Nota: `@seo` absorvido por `@curator`, `@planner` absorvido por `@architect`, `@sequenciador` absorvido por `task_executor.py` (Navalha SOTA).
 - **Visao 4D (Analise de Vetor Temporal):** Estabelecida a lei de que nenhuma decisao ocorre no vacuo. Tudo deve ser avaliado no eixo do Passado (legado), Presente (recursos/estado) e Futuro (escalabilidade).
 

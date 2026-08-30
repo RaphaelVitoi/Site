@@ -141,20 +141,15 @@
   "superficie_subagentes": {
     "autoridade": "core/subagents_mesh.py :: SUBAGENT_MODEL_MAP",
     "invariante_do_operador": "custo zero -- todo tier roda na frota local",
-    "tiers": 14,
+    "tiers": 15,
     "a_politica_atribui_modelo": false,
     "excecao_levantada": "llm.routing_policy.ForaDaAutoridadeDaPolitica",
     "o_que_a_politica_ainda_declara": [
       "SUBAGENTES mapeia tier -> ClasseTarefa. E CLASSIFICACAO, nao atribuicao de",
       "modelo: informacao diferente, usada por _classe_de e por cobertura()."
     ],
-    "nomes_que_sao_agente_E_tier": [
-      "architect",
-      "curator",
-      "implementor",
-      "validador"
-    ],
-    "resolucao_da_sobreposicao": "resolvem como AGENTE, que e o que _classe_de sempre fez"
+    "nomes_que_sao_agente_E_tier": [],
+    "resolucao_da_sobreposicao": "conflito eliminado por renomeacao dos 4 subagentes (sub_validador, sub_implementor, sub_curator, sub_architect)"
   },
   "aliases_do_manifesto_ausentes_de_todo_registro": {
     "declaracao": [

@@ -9,7 +9,7 @@
 > O que este painel tem, e o outro não, é **estado**: em que pé está cada frente,
 > e o que exige decisão do vértice.
 
-**Atualizado em 2026-08-29** · frentes 1, 2, 4 e 5 entregues · suíte 620 (viva)
+**Atualizado em 2026-08-29** · frentes 1, 2, 4 e 5 entregues · suíte 100% verde (viva)
 
 ---
 
@@ -71,8 +71,8 @@ uv run python scripts/ops/suite_isolada.py --repo ../antigravity
 
 1. [`reports/HANDOFF-2026-08-29-roteamento-memoria-e-guard.md`](reports/HANDOFF-2026-08-29-roteamento-memoria-e-guard.md) — estado atual e prompt de continuação
 2. [`reports/RETROSPECTIVA-2026-08-28-sessao.md`](reports/RETROSPECTIVA-2026-08-28-sessao.md) — o antes, o processo, os padrões acumulados
-2. [`reports/HANDOFF-2026-08-28-auditorias-e-preludio.md`](reports/HANDOFF-2026-08-28-auditorias-e-preludio.md) — estado e prompt de continuação
-3. [`reports/PLANO-2B-CURADORIA-ESTRUTURAL.md`](reports/PLANO-2B-CURADORIA-ESTRUTURAL.md) — o plano completo
-4. [`reports/INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md`](reports/INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md) — concorrência, isolamento e o P0
-5. [`reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md`](reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md) — o falso dilema, as duas superficies e o que espera o vertice
-6. [`reports/AUDITORIA-2026-08-28-skills.md`](reports/AUDITORIA-2026-08-28-skills.md) — as 8 skills
+3. [`reports/HANDOFF-2026-08-28-auditorias-e-preludio.md`](reports/HANDOFF-2026-08-28-auditorias-e-preludio.md) — estado e prompt de continuação
+4. [`reports/PLANO-2B-CURADORIA-ESTRUTURAL.md`](reports/PLANO-2B-CURADORIA-ESTRUTURAL.md) — o plano completo
+5. [`reports/INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md`](reports/INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md) — concorrência, isolamento e o P0
+6. [`reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md`](reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md) — o falso dilema, as duas superficies e o que espera o vertice
+7. [`reports/AUDITORIA-2026-08-28-skills.md`](reports/AUDITORIA-2026-08-28-skills.md) — as 8 skills

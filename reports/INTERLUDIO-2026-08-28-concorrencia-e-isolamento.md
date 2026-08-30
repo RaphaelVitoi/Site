@@ -6,7 +6,7 @@ ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T05:05-03:00
 commit: 71934ef7
-atualizado_em: 2026-08-29T17:34-03:00
+atualizado_em: 2026-08-30T13:10-03:00
 classes: [interno, medido]
 caminhos:
   - scripts/ops/suite_isolada.py
