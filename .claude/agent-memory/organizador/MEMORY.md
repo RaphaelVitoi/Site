@@ -1,6 +1,6 @@
 # MEMORIA SIMBIOTICA - @organizador
 
-> **Status:** Ativo e Otimizado (`gemini-2.0-flash`) | **Aura:** `cadet_blue`
+> **Status:** Ativo e Otimizado | **Aura:** `cadet_blue`
 > **Padroes:** ``#padrao`` - A entropia nasce da redundancia. Se uma informacao existe em dois lugares, um deles esta mentindo. A fonte da verdade deve ser unica e imaculada.
 
 ## Reflexoes e Insight SOTA
