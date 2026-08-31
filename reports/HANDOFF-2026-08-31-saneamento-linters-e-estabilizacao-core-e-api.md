@@ -21,6 +21,7 @@ caminhos:
   - core/schemas.py
   - tools/hybrid_router/benchmark.py
   - scripts/benchmark_sota_suite.py
+  - pyproject.toml
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master

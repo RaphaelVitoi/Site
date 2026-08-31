@@ -285,7 +285,6 @@ ignore = [
     "E501",   # line-too-long: gerenciado pelo formatter
     "T201",   # print: permitido em scripts CLI e task_executor
     "S101",   # assert: permitido em testes
-    "S404",   # subprocess-import: gerenciado pela camada de autonomy / ops
     "S603",   # subprocess: gerenciado pela camada de autonomy
     "S607",   # partial-executable: idem
     "ERA001", # commented-out code: comentarios SOTA sao documentacao
@@ -304,7 +303,25 @@ ignore = [
     "SIM117", # nested with em testes
 ]
 "task_executor.py" = ["T201", "S603", "S607", "ERA001"]
-"scripts/**" = ["T201", "S603", "S607", "PLC0415", "PT", "B008", "B904", "S110", "S112", "E741"]
+"scripts/**" = ["T201", "S603", "S607", "PLC0415", "PT", "B008", "E741"]
+"scripts/cli/nexus.py" = ["S404", "S110", "S112", "B904"]
+"scripts/cli/nexus_voice.py" = ["S404"]
+"scripts/ops/*" = ["S404", "S110"]
+"scripts/maintenance/*" = ["S404", "S110"]
+"scripts/benchmark_sota_suite.py" = ["S404"]
+"scripts/routines/*" = ["S404"]
+"utils/os_integration.py" = ["S404"]
+"utils/notifications.py" = ["S404"]
+"core/autopoiesis_engine.py" = ["S404"]
+"engine/clippy_clipboard.py" = ["S404"]
+"engine/gemma_server.py" = ["S404"]
+"engine/sota_triad_mesh.py" = ["S404"]
+"engine/avatars/*" = ["S404"]
+"engine/cognitive.py" = ["S110"]
+"engine/solver_importers/*" = ["S110"]
+"engine/sota_web_browse.py" = ["S112"]
+"engine/vitoi_perspective_engine.py" = ["S110"]
+"tools/hybrid_router/plot_benchmark.py" = ["S404"]
 "memory_rag.py" = ["N806"]  # convencao vetorial
 "skills/**" = ["N999"]
 "**/.hermes-plugin/**" = ["N999"]
