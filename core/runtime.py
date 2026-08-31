@@ -24,7 +24,7 @@ def __getattr__(name: str) -> Any:
     if name == "PID_FILE":
         return _config.PATH_PID_FILE
     if name == "SYSTEM_PROMPT_CACHE":
-        from llm.budget import SYSTEM_PROMPT_CACHE  # pylint: disable=import-outside-toplevel
+        from llm.budget import SYSTEM_PROMPT_CACHE  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
         return SYSTEM_PROMPT_CACHE
     raise AttributeError(
@@ -37,7 +37,7 @@ def get_rag() -> Any:
     # pylint: disable=global-statement
     global _RAG_INSTANCE
     if _RAG_INSTANCE is None:
-        from memory_rag import MemoryRAG  # pylint: disable=import-outside-toplevel
+        from memory_rag import MemoryRAG  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
         _RAG_INSTANCE = MemoryRAG()
     return _RAG_INSTANCE
@@ -51,7 +51,7 @@ async def get_rag_async() -> Any:
 
 async def start_worker_and_api() -> Any:
     """Inicia o Worker e o Servidor de API."""
-    from worker.startup import start_worker_and_api as _start_worker_and_api  # pylint: disable=import-outside-toplevel
+    from worker.startup import start_worker_and_api as _start_worker_and_api  # noqa: PLC0415
 
     return await _start_worker_and_api()
 

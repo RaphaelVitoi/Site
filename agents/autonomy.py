@@ -7,11 +7,11 @@ import asyncio
 import json
 import logging
 import os
+from pathlib import Path
 import re
 import shlex
 import shutil
 import time
-from pathlib import Path
 
 import aiofiles
 

@@ -1,8 +1,8 @@
 """Modulo para diagnostico de conectividade de rede para a API Gemini."""
 # pylint: disable=wrong-import-position
 
-import sys
 from pathlib import Path
+import sys
 
 import requests
 

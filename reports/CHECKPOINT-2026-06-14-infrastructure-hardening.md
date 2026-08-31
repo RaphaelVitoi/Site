@@ -1,6 +1,27 @@
+---
+id: checkpoint-2026-06-14-infrastructure-hardening
+tipo: relatorio
+escopo: Site
+ecossistema: gemini-antigravity
+autor: chico
+criado_em: 2026-06-14T18:00-03:00
+atualizado_em: 2026-08-31T08:25-03:00
+commit: 5a9f8c86
+classes: [interno, historico]
+caminhos:
+  - CLAUDE.md
+  - MODUS_OPERANDI.md
+verificado:
+  - consolidacao de infraestrutura e paridade de governanca v7.0.4-gold
+nao_verificado:
+  - benchmark em hardware legado
+supersede: null
+---
+
 # CHECKPOINT SOTA v7.0 GOLD - INFRASTRUCTURE HARDENING & GOVERNANCE PARITY
 
 ## Estado do Sistema
+
 - **Versao**: 7.0.4-GOLD (Hardened & Consolidated)
 - **Integridade**: Soberana, Validada e Blindada contra Entropia
 - **Data**: 2026-08-15 | **Governanca**: Raphael Vitoi | **Orquestracao**: Chico
@@ -8,6 +29,7 @@
 ---
 
 ## Conquistas da Sessao
+
 1. **Auditoria e Saneamento Geral:**
    - Reducao de 61 para 50 servidores MCP estritamente ativos e operantes em `mcp_config.json`.
    - Limpeza de plugins clonados `.disabled` e pastas redundantes em `config/plugins` e `antigravity-cli/plugins`.
@@ -26,10 +48,14 @@
 ---
 
 ## Contexto Tecnico
+
 - **Frontend**: Next.js 16.2.9, React 19, Tailwind 4, TypeScript.
 - **Backend & Motores**: Python 3.14 (FastAPI, PySpark, PyArrow, Vitoi Perspective Engine).
 - **RAG & Memoria**: LanceDB (vetores locais em `.cerebro/agent-memory`) + ChromaDB + `.cerebro`.
 - **Governanca**: Tier 0 (Raphael Vitoi) / Tier 1 (Chico). Relação: Raphael direciona; Chico analisa, pondera e executa com rigor máximo (+EV).
 
 ---
-*Assinado: Chico (Manifestação do Sistema SOTA v7.0 GOLD)*
+
+## Assinatura
+
+Chico (Manifestação do Sistema SOTA v7.0 GOLD)

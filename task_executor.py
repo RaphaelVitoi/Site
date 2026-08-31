@@ -1,22 +1,25 @@
-# pylint: disable=logging-fstring-interpolation, broad-exception-caught, redefined-outer-name, line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, import-outside-toplevel
+"""Motor central de execucao e orquestracao de tarefas SOTA (TaskExecutor)."""
 
+from __future__ import annotations
+
+# pylint: disable=logging-fstring-interpolation, broad-exception-caught, redefined-outer-name, line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, import-outside-toplevel
+import asyncio
+import contextlib
+from datetime import UTC, datetime
 import json
 import logging
 import logging.handlers
 import os
+from pathlib import Path
+import shutil
+import sqlite3
 import sys
 import time
-import asyncio
-from datetime import datetime, timezone
-import contextlib
-from pathlib import Path
 from typing import Any
 
 from rich.console import Console
 from rich.logging import RichHandler
 
-# SOTA 8.0: Importa o novo cerebro de arbitragem
-import core.config as _core_config
 from agents.execution import (
     AGENT_ARCHITECT,
     AGENT_CHICO,
@@ -25,6 +28,9 @@ from agents.execution import (
     AGENT_IMPLEMENTOR,
     AGENT_MAVERICK,
 )
+
+# SOTA 8.0: Importa o novo cerebro de arbitragem
+import core.config as _core_config
 from core.schemas import Task
 from database.queue_manager import QueueManager
 
@@ -43,8 +49,6 @@ ERR_DB_CORRUPTED = "[ENTROPIA] Banco de dados de tarefas SOTA nao encontrado ou 
 
 def _resolve_tasks_db_path() -> Path | None:
     """SOTA: Resolve o caminho do banco de dados priorizando a fila assincrona."""
-    import sqlite3
-
     # Prioridade SOTA: Pipeline Assincrono (queue) > Contexto Claude > Root (Legado)
     for candidate in [DB_PATH_QUEUE, DB_PATH_CLAUDE, "tasks.db"]:
         p = Path(candidate)
@@ -318,7 +322,7 @@ class DynamicYieldManager:
                         description=f"A tarefa {task.id} (Agente: {task.agent}) atingiu limite de starvation. Diagnostico de dependencias: {deps_info}. Requer intervencao cirurgica (God Mode).",
                         agent=AGENT_CHICO,
                         status="pending",
-                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        timestamp=datetime.now(UTC).isoformat(),
                         metadata={"priority": "high", "blocked_task": task.id},
                     )
                     await manager.add_task(alert_task)
@@ -355,7 +359,7 @@ def _cli_route_task(sys_argv: list[str]) -> None:
 
 
 def _cli_train_predictive() -> None:
-    from predictive_forest import PredictiveForestEngine  # type: ignore
+    from predictive_forest import PredictiveForestEngine  # type: ignore # noqa: PLC0415
 
     logger.info("=== [SISTEMA] Iniciando Calibracao Preditiva (Random Forest) ===")
     engine = PredictiveForestEngine()
@@ -363,7 +367,7 @@ def _cli_train_predictive() -> None:
 
 
 def _cli_predictive_profile() -> None:
-    from predictive_forest import PredictiveForestEngine  # type: ignore
+    from predictive_forest import PredictiveForestEngine  # type: ignore # noqa: PLC0415
 
     engine = PredictiveForestEngine()
     print(json.dumps(engine.get_predictive_profile()))
@@ -372,10 +376,10 @@ def _cli_predictive_profile() -> None:
 
 async def _process_telemetry_file(path: Path) -> list[dict]:
     """SOTA: Processador atomico de buffer linear."""
-    import aiofiles
+    import aiofiles  # noqa: PLC0415
 
     data = []
-    async with aiofiles.open(path, "r", encoding="ascii", errors="backslashreplace") as f:
+    async with aiofiles.open(path, encoding="ascii", errors="backslashreplace") as f:
         async for line in f:
             content = line.strip()
             if content:
@@ -407,8 +411,6 @@ async def _read_telemetry_dump() -> list[dict]:
         return []
 
     try:
-        import shutil
-
         processing_path = dump_path.with_suffix(".jsonl.processing")
         # SOTA: Offload de I/O bloqueante para Thread Pool, impedindo asfixia do Event Loop
         await asyncio.to_thread(shutil.move, str(dump_path), str(processing_path))
@@ -437,7 +439,7 @@ def _build_profile(fail_rate: float, engine: Any) -> dict:
 
 
 async def _generate_historian_reports_async(qm: Any) -> None:
-    from predictive_forest import PredictiveForestEngine  # type: ignore
+    from predictive_forest import PredictiveForestEngine  # type: ignore # noqa: PLC0415
 
     try:
         tasks_stats = await qm.get_task_counts()
@@ -484,7 +486,7 @@ def _cli_daily_stats() -> None:
     async def _generate_daily_stats(qm: Any) -> None:
         try:
             tasks = await qm.get_tasks()
-            today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            today_str = datetime.now(UTC).strftime("%Y-%m-%d")
             today_tasks = [t for t in tasks if t.timestamp.startswith(today_str)]
 
             stats = {
@@ -537,8 +539,6 @@ def _extract_dependencies(meta_str: str | None) -> list[str]:
 
 
 def _cli_db_audit_dag() -> None:
-    import sqlite3
-
     logger.info("=== [SISTEMA] Iniciando Auditoria Estrutural de DAGs (Friccao Zero) ===")
     db_path = _resolve_tasks_db_path()
     if not db_path:
@@ -569,8 +569,6 @@ def _cli_db_audit_dag() -> None:
 
 
 def _cli_db_purge_orphans() -> None:
-    import sqlite3
-
     logger.info("=== [SISTEMA] Iniciando Expurgo de Tarefas 'failed' com Dependencias Orfas ===")
     db_path = _resolve_tasks_db_path()
     if not db_path:
@@ -613,8 +611,6 @@ def _cli_db_purge_orphans() -> None:
 
 
 def _cli_db_vacuum() -> None:
-    import sqlite3
-
     logger.info("=== [SISTEMA] Iniciando Otimizacao de Banco de Dados (VACUUM) ===")
     db_path = _resolve_tasks_db_path()
     if not db_path:

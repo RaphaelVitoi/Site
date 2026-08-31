@@ -6,9 +6,10 @@ Chico Protocol v7.0 GOLD
 
 import hashlib
 import json
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
+
 from rich.console import Console
 from rich.table import Table
 
@@ -34,7 +35,7 @@ def verify_package_lock_integrity() -> dict:
     if not lock_path.exists():
         return {"status": "FAIL", "error": "package-lock.json ausente"}
 
-    with open(lock_path, "r", encoding="utf-8") as f:
+    with open(lock_path, encoding="utf-8") as f:
         data = json.load(f)
 
     packages = data.get("packages", {})
@@ -159,24 +160,52 @@ def run_full_sri_audit(strict: bool = True) -> bool:
 
     console.print(table)
 
-    all_passed = pkg_res["status"] == "PASS" and sri_res["status"] == "PASS" and wasm_res["status"] == "PASS"
+    failed_components = []
+    if pkg_res["status"] != "PASS":
+        failed_components.append("Integridade de Pacotes (package-lock.json)")
+    if sri_res["status"] != "PASS":
+        failed_components.append("SRI Mandate")
+    if wasm_res["status"] != "PASS":
+        failed_components.append("Binarios WebAssembly (WASM)")
 
-    if not all_passed and strict:
+    all_passed = len(failed_components) == 0
+
+    if all_passed:
+        console.print(
+            "\n[bold green][GATE APPROVED] 100% dos recursos atendem ao padrao criptografico SHA-512 / SRI SOTA.[/]"
+        )
+        console.print(
+            "\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (SRI/SHA-512) ==========[/]"
+        )
+        console.print("• Total de Erros:    0 (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+        console.print("• Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+        console.print(
+            "• Status da Bateria: [bold green][SUCESSO (VERDE)][/] 100% dos recursos atendem ao padrao criptografico."
+        )
+        console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+        return True
+
+    total_errors = len(failed_components)
+    if strict:
         console.print("[bold red]\n[GATE BLOCKED] Falha de integridade criptografica detectada.[/]")
-        return False
+    else:
+        console.print(
+            "[bold yellow]\n[GATE WARNING] Falha de integridade criptografica detectada (Modo Nao-Estrito).[/]"
+        )
 
     console.print(
-        "\n[bold green][GATE APPROVED] 100% dos recursos atendem ao padrao criptografico SHA-512 / SRI SOTA.[/]"
+        "\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (SRI/SHA-512) ==========[/]"
     )
-    console.print("\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (SRI/SHA-512) ==========[/]")
-    console.print("• Total de Erros:    0 (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+    console.print(f"• Total de Erros:    {total_errors} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
     console.print("• Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
-    console.print("• Status da Bateria: [bold green][SUCESSO (VERDE)][/] 100% dos recursos atendem ao padrao criptografico.")
+    console.print(
+        f"• Status da Bateria: [bold red][FALHOU (VERMELHO)][/] Componentes com falha: {', '.join(failed_components)}."
+    )
     console.print("[bold cyan]" + "=" * 80 + "[/]\n")
-    return True
+    return False
 
 
 if __name__ == "__main__":
     is_strict = "--no-strict" not in sys.argv
     SUCCESS = run_full_sri_audit(strict=is_strict)
-    sys.exit(0 if SUCCESS else 1)
+    sys.exit(0 if (SUCCESS or not is_strict) else 1)

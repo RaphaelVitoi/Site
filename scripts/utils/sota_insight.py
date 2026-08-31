@@ -6,8 +6,8 @@ PRINCIPLE: Antevisao Semantica e Friccao Zero.
 """
 
 import argparse
-import re
 from pathlib import Path
+import re
 
 
 def scan_file(filepath: str, chunk: int = 1, size: int = 50):

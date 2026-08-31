@@ -27,7 +27,7 @@ caminhos:
   - .claude/agent-memory/sequenciador/MEMORY.md
   - .claude/agent-memory/validador/MEMORY.md
   - .claude/agent-memory/verifier/MEMORY.md
-  - PLANO-2B.md
+  - reports/PLANO-2B-PAINEL-DE-ESTADO.md
   - reports/HANDOFF-2026-08-29-roteamento-memoria-e-guard.md
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site

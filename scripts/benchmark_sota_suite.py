@@ -190,7 +190,7 @@ def run_benchmark_inference():
     # Inspecao do daemon Ollama
     try:
         req = urllib.request.Request("http://127.0.0.1:11434/api/tags")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with urllib.request.urlopen(req, timeout=5) as resp:  # nosec B310 # noqa: S310 -- Record-Id: auditoria-2026-08-31-saneamento-linters-e-estabilizacao-core-e-api
             data = json.loads(resp.read().decode())
             models = [m["name"] for m in data.get("models", [])]
             print(f"   Modelos Ativos no Daemon Ollama: {', '.join(models)}")

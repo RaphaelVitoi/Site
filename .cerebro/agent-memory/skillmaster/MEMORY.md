@@ -1,6 +1,6 @@
 # @skillmaster MEMORY - O Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** COSMOVISAO.md
+> **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
 ---
 

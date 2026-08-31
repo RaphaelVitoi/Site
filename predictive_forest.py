@@ -1,9 +1,9 @@
-"""Modulo contendo a engine preditiva (Random Forest)."""
+from __future__ import annotations
 
 import json
 import logging
-import sqlite3
 from pathlib import Path
+import sqlite3
 
 import numpy as np
 
@@ -199,7 +199,7 @@ class PredictiveForestEngine:
         # Caso contrario, tenta carregar o arquivo persistido
         if self.profile_path.exists():
             try:
-                with open(self.profile_path, "r", encoding="ascii") as f:
+                with open(self.profile_path, encoding="ascii") as f:
                     profile = json.load(f)
                 # Mapeia chaves acentuadas antigas para ASCII puro caso existam
                 ascii_profile = {}

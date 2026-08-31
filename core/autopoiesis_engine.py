@@ -8,15 +8,16 @@ purificacao de entropia e autocura do ecossistema Nexus / Antigravity / Site.
 
 from __future__ import annotations
 
+import contextlib
+from dataclasses import dataclass, field
 import json
 import os
+from pathlib import Path
 import shutil
 import sqlite3
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, field
-from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 NEXUS_ZONE = BASE_DIR / "temp" / "nexus_zone"
@@ -114,21 +115,16 @@ class AutopoiesisEngine:
         now = time.time()
         purged = 0
         for item in self.nexus_zone.iterdir():
-            if item.is_dir() and item.name.startswith("pytest_"):
-                if now - item.stat().st_mtime > 3600:  # > 1h
-                    try:
-                        shutil.rmtree(item, ignore_errors=True)
-                        purged += 1
-                    except Exception:
-                        pass
+            if item.is_dir() and item.name.startswith("pytest_") and (now - item.stat().st_mtime > 3600):  # > 1h
+                with contextlib.suppress(Exception):
+                    shutil.rmtree(item, ignore_errors=True)
+                    purged += 1
 
         # Purga arquivos .tmp na raiz
         for f in self.base_dir.glob("*.tmp"):
-            try:
+            with contextlib.suppress(Exception):
                 f.unlink(missing_ok=True)
                 purged += 1
-            except Exception:
-                pass
 
         msg = (
             f"{purged} artefatos e diretorios temporarios purgados."
@@ -274,23 +270,20 @@ class AutopoiesisEngine:
             )
 
             # Persistencia Atomica de Telemetria
-            try:
-                line = (
-                    json.dumps(
-                        {
-                            "timestamp": report.timestamp,
-                            "overall_status": report.overall_status,
-                            "entropy_index": report.entropy_index,
-                            "actions_taken": report.actions_taken,
-                            "subsystems_count": len(report.subsystems),
-                        }
-                    )
-                    + "\n"
+            line = (
+                json.dumps(
+                    {
+                        "timestamp": report.timestamp,
+                        "overall_status": report.overall_status,
+                        "entropy_index": report.entropy_index,
+                        "actions_taken": report.actions_taken,
+                        "subsystems_count": len(report.subsystems),
+                    }
                 )
-                with open(TELEMETRY_LOG, "a", encoding="utf-8") as f:
-                    f.write(line)
-            except Exception:
-                pass
+                + "\n"
+            )
+            with contextlib.suppress(Exception), open(TELEMETRY_LOG, "a", encoding="utf-8") as f:
+                f.write(line)
 
             return report
 

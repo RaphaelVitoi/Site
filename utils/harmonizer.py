@@ -1,11 +1,11 @@
 """Global Harmonizer for orchestrating async tasks and latency reduction."""
 
 import asyncio
+from collections.abc import Callable
+from functools import wraps
 import inspect
 import logging
 import time
-from collections.abc import Callable
-from functools import wraps
 
 logger = logging.getLogger(__name__)
 

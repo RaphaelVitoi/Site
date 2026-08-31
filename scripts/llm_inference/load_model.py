@@ -1,8 +1,8 @@
 # ruff: noqa: D100, D101, D103, T201
 # pylint: disable=missing-module-docstring, missing-function-docstring, wrong-import-position
+from pathlib import Path
 import socket
 import sys
-from pathlib import Path
 
 # SOTA: Garantir que o root do projeto esteja no sys.path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()

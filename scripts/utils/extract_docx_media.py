@@ -1,7 +1,7 @@
+from pathlib import Path
 import shutil
 import sys
 import zipfile
-from pathlib import Path
 
 
 def _process_media_files(docx_zip: zipfile.ZipFile, media_files: list, public_dir: Path) -> list:

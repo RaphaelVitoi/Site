@@ -4,13 +4,15 @@ Mapeia operacoes do .cerebro/settings.local.json para rotas ativas do Model Cont
 Implementa Antevisao de I/O: Bypass de interop WSL se executado nativamente no Linux.
 """
 # pylint: disable=broad-exception-caught, no-member
+from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
 
 from mcp import types
 from mcp.server import Server
@@ -31,7 +33,7 @@ def load_operations() -> dict:
         logger.error(f"Manifesto de operacoes ausente: {SETTINGS_PATH}")
         return {}
     try:
-        with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+        with open(SETTINGS_PATH, encoding="utf-8") as f:
             data = json.load(f)
             return data.get("operations", {})
     except (OSError, json.JSONDecodeError) as e:
@@ -138,11 +140,9 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
 
         try:
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=15.0)
-        except asyncio.TimeoutError:
-            try:
+        except TimeoutError:
+            with contextlib.suppress(ProcessLookupError):
                 process.kill()
-            except ProcessLookupError:
-                pass
             return [
                 types.TextContent(
                     type="text",

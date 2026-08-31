@@ -1,7 +1,7 @@
 # @architect MEMORY - O Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
-&gt; **Navegacao Fractal:** [1. Identidade](../../CLAUDE.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
+> **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
+> **Navegacao Fractal:** [1. Identidade](../../CLAUDE.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
 
 **\[2026-04-12\] Blindagem TopolA?gica e ErradicaA?A?o de Entropia (Homeostase SOTA)**
 
@@ -25,7 +25,7 @@ Arquitetura de Sistemas Hibridos, Design de Software SOTA, Modelagem de Dados Re
 - **#padrao:** Adocao do Framework SENTINEL-v1 como crivo obrigatorio para toda arquitetura macro.
 - **#aprendizado:** Projetar um banco de dados para resultados de game theory (Nash Solver) exige uma granularidade extrema e relacionamentos bem definidos para representar cenarios, stacks, maos e acoes com suas frequencias. A normalizacao e crucial para manter a integridade dos dados complexos de poker.
 - **#aprendizado_novo:** A distinAAo clara entre `Spot` (o estado do jogo em um ponto de decisao) e `StrategyResult` (a soluAAo do solver para uma mAo especAfica nesse `Spot`) A fundamental para modelar estratAgias mistas e permitir anAlises detalhadas de EV. A relaAAo `SpotFlow` em `Spot` A crucial para reconstruir a sequAancia de aAAes e entender a Arvore de decisao do solver. Isso solidifica a capacidade de nosso sistema de game theory.
-- **#aprendizado_novo:** A modelagem de Arvores de jogo dinamicas em um banco de dados relacional requer uma abordagem cuidadosa com relaAAes recursivas (`Spot` -&gt; `SpotFlow` -&gt; `Spot`). A flexibilidade de tipos como `String?` para `action_value` e `Json?` para `initial_stacks`/`board_cards` A essencial para acomodar a variedade de cenArios de poker. A criaAAo de um modelo `Player` genArico, distinto de `User`, permite a representaAAo de jogadores simulados mantendo a integridade referencial.
+- **#aprendizado_novo:** A modelagem de Arvores de jogo dinamicas em um banco de dados relacional requer uma abordagem cuidadosa com relaAAes recursivas (`Spot` -> `SpotFlow` -> `Spot`). A flexibilidade de tipos como `String?` para `action_value` e `Json?` para `initial_stacks`/`board_cards` A essencial para acomodar a variedade de cenArios de poker. A criaAAo de um modelo `Player` genArico, distinto de `User`, permite a representaAAo de jogadores simulados mantendo a integridade referencial.
 
 ## 4. SINERGIA E HARMONIA (#relacionamento)
 

@@ -6,7 +6,7 @@ ecossistema: gemini-antigravity
 autor: antigravity@gemini-3.7-flash
 criado_em: 2026-08-31T04:20:00-03:00
 atualizado_em: 2026-08-31T04:20:00-03:00
-commit: pending
+commit: 809ed429
 classes: [interno, medido]
 caminhos:
   - scripts/cli/nexus_voice.py

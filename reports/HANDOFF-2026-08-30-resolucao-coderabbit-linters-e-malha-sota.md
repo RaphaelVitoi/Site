@@ -66,7 +66,7 @@ Em conformidade com a arquitetura do ecossistema e o M.O. v8.0 GOLD:
 
 No início da sessão, o ecossistema encontrava-se em estado funcional, porém com passivos de qualidade e avisos nos ambientes estáticos:
 
-- **Apontamentos CodeRabbit:** 22 itens reportados sobre corrupção de encoding/mojibake em arquivos de memória (`.cerebro` e `.claude`), contagens fixas em [`PLANO-2B.md`](file:///c:/Users/rapha/.gemini/Site/PLANO-2B.md), omissão de registro de mudanças no handoff de 2026-08-29, e risco de colisão de nomes em 4 subagentes homônimos aos agentes primários.
+- **Apontamentos CodeRabbit:** 22 itens reportados sobre corrupção de encoding/mojibake em arquivos de memória (`.cerebro` e `.claude`), contagens fixas em [`reports/PLANO-2B-PAINEL-DE-ESTADO.md`](file:///c:/Users/rapha/.gemini/Site/reports/PLANO-2B-PAINEL-DE-ESTADO.md), omissão de registro de mudanças no handoff de 2026-08-29, e risco de colisão de nomes em 4 subagentes homônimos aos agentes primários.
 - **Linters do IDE:** Aviso em [`settings.json`](file:///c:/Users/rapha/.gemini/Site/.vscode/settings.json) alertando depreciação da propriedade `cloudcode.project` em favor de `google.cloud.project`.
 - **Markdownlint Warnings:** Mais de 50 warnings em cascata nos arquivos de memória (`.claude/agent-memory/*/MEMORY.md`) e em `HANDOFF_LATEST.md`, englobando quebras de linha em cabeçalhos (MD022), listas sem respiro (MD032), linhas em branco múltiplas (MD012), espaços no fim de linha (MD009), cabeçalhos H1 múltiplos (MD025) e fragmentação de tabelas (MD055/MD056).
 

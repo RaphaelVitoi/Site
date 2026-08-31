@@ -1,12 +1,16 @@
 # python
+from datetime import UTC, datetime
 import json
 import logging
 import os
 import uuid
-from datetime import UTC, datetime
 
 from dotenv import load_dotenv
-from locust import HttpUser, between, task  # type: ignore[import-untyped,import-not-found] # pylint: disable=import-error
+from locust import (  # type: ignore[import-untyped,import-not-found] # pylint: disable=import-error
+    HttpUser,
+    between,
+    task,
+)
 
 load_dotenv()
 

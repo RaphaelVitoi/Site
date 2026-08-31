@@ -76,6 +76,11 @@
       },
       "editor.formatOnSave": true,
     },
+    "ruff.path": ["${workspaceFolder}/.venv/Scripts/ruff.exe"],
+    "ruff.interpreter": ["${workspaceFolder}/.venv/Scripts/python.exe"],
+    "ruff.configuration": "${workspaceFolder}/pyproject.toml",
+    "ruff.nativeServer": "on",
+    "ruff.importStrategy": "fromEnvironment",
     // ── PARIDADE FRONTEND (PRETTIER/ESLINT) ──────────────────────
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "[typescript]": {
@@ -156,7 +161,6 @@
     "securecoder.disabledRules": ["jsx-not-internationalized", "i18n", "internationalization"],
     "google.cloud.project": "original-498419",
     "google.cloud.billingQuotaProject": "original-498419",
-    "cloudcode.project": "original-498419",
     "cloudcode.enableTelemetry": false,
     "cloudcode.autoDependencies": "on",
     "cloudcode.cloudRun.showExplorer": true,

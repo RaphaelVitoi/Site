@@ -4,6 +4,9 @@ OS INTEGRATION - Membrana Cognitiva SOTA (v7.0 GOLD)
 Provides unified interfaces for default browser resolution, system clipboard, and OS notifications.
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
 import os
 import platform
@@ -34,7 +37,8 @@ def get_chrome_dev_path() -> str:
             path = res.stdout.strip().split("\n")[0]
             if path and os.path.exists(path):
                 return path
-        except Exception:
+        except Exception as e:
+            logger.debug("[OS] Binario '%s' nao localizado: %s", bin_name, e)
             continue
     return "chrome"  # Generic fallback
 
@@ -118,7 +122,5 @@ def show_toast(title: str, message: str) -> None:
             logger.warning(f"[OS Notification] Failed to trigger Windows balloon tip: {e}")
     elif sys.platform == "linux" or (sys.platform == "posix" and platform.system() == "Linux"):
         # notify-send on Linux/WSL if GUI session is active
-        try:
+        with contextlib.suppress(Exception):
             subprocess.Popen(["notify-send", title, message], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except Exception:
-            pass

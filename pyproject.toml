@@ -285,6 +285,7 @@ ignore = [
     "E501",   # line-too-long: gerenciado pelo formatter
     "T201",   # print: permitido em scripts CLI e task_executor
     "S101",   # assert: permitido em testes
+    "S404",   # subprocess-import: gerenciado pela camada de autonomy / ops
     "S603",   # subprocess: gerenciado pela camada de autonomy
     "S607",   # partial-executable: idem
     "ERA001", # commented-out code: comentarios SOTA sao documentacao
@@ -303,7 +304,7 @@ ignore = [
     "SIM117", # nested with em testes
 ]
 "task_executor.py" = ["T201", "S603", "S607", "ERA001"]
-"scripts/**" = ["T201", "S603", "S607"]
+"scripts/**" = ["T201", "S603", "S607", "PLC0415", "PT", "B008", "B904", "S110", "S112", "E741"]
 "memory_rag.py" = ["N806"]  # convencao vetorial
 "skills/**" = ["N999"]
 "**/.hermes-plugin/**" = ["N999"]

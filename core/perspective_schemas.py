@@ -1,13 +1,8 @@
-# core/perspective_schemas.py
-# ruff: noqa: N815
-"""
-Esquemas Pydantic v2 para o Motor de Perspectiva Matematica (PMev)
-e Importacao Universal de Solvers (DeepSolver, GTOWizard, Monker, HRC Pro, PioSolver).
-"""
+from __future__ import annotations
 
 from typing import Any, Literal
-from pydantic import BaseModel, Field
 
+from pydantic import BaseModel, Field
 
 SolverType = Literal["deep_solver", "gtowizard", "monker_solver", "hrc_pro", "pio_solver", "auto"]
 

@@ -23,14 +23,14 @@ divida preexistente e portao que se desliga na primeira semana.
 
 from __future__ import annotations
 
-# pylint: disable=wrong-import-position
+from datetime import date
 
+# pylint: disable=wrong-import-position
 import json
+from pathlib import Path
 import re
 import subprocess
 import sys
-from datetime import date
-from pathlib import Path
 
 import yaml
 
@@ -46,7 +46,6 @@ if str(RAIZ) not in sys.path:
 
 from scripts.ops.record_index import (  # noqa: E402
     conferir_config_medida,
-    ler_frontmatter,
     ler_frontmatter_de_texto,
     resolvedores_de_ambiente,
     ttl_vencido,
@@ -91,9 +90,7 @@ def texto_como_vai_ao_commit(rel: str) -> str | None:
     em `verificar()` os caminhos vem de `--cached --diff-filter=ACM` e portanto
     estao sempre no indice.
     """
-    r = subprocess.run(
-        ["git", "show", f":{rel}"], cwd=RAIZ, capture_output=True, check=False
-    )
+    r = subprocess.run(["git", "show", f":{rel}"], cwd=RAIZ, capture_output=True, check=False)
     if r.returncode == 0:
         return r.stdout.decode("utf-8-sig", errors="ignore")
     caminho = RAIZ / rel
@@ -135,7 +132,7 @@ def linhas_adicionadas_numeradas(arquivo: str) -> list[tuple[int, str]]:
     return numeradas
 
 
-def linhas_em_bloco_de_comentario(rel: str) -> set[int]:
+def linhas_em_bloco_de_comentario(rel: str, texto: str | None = None) -> set[int]:
     """Numeros de linha que estao DENTRO de um bloco de comentario do arquivo.
 
     Achado de 2026-08-28, auditando um arquivo de outra sessao: o cabecalho
@@ -145,7 +142,8 @@ def linhas_em_bloco_de_comentario(rel: str) -> set[int]:
     `#` ou `//`. Nona vez que um detector desta base confunde citar com
     afirmar, e de novo a resposta e estado de BLOCO, nao prefixo de linha.
     """
-    texto = texto_como_vai_ao_commit(rel)
+    if texto is None:
+        texto = texto_como_vai_ao_commit(rel)
     if texto is None:
         return set()
     dentro: set[int] = set()
@@ -178,7 +176,7 @@ def linhas_em_bloco_de_comentario(rel: str) -> set[int]:
 
 
 def _e_registro(rel: str) -> bool:
-    return rel.endswith(".md") and (rel.startswith("docs/") or rel.startswith("reports/"))
+    return rel.endswith(".md") and rel.startswith(("docs/", "reports/"))
 
 
 def _e_prescritivo(rel: str) -> bool:
@@ -219,9 +217,7 @@ def raizes_de_escopo() -> set[str]:
     """
     fora = {"extensions", "antigravity-cli", "antigravity-ide", "config"}
     try:
-        indice = json.loads(
-            (RAIZ / "data" / "INDICE_CANONICO_GOVERNANCA.json").read_text(encoding="utf-8")
-        )
+        indice = json.loads((RAIZ / "data" / "INDICE_CANONICO_GOVERNANCA.json").read_text(encoding="utf-8"))
         regra = indice.get("regra_de_nomeacao", {})
         fora |= {r for r in regra.get("raizes_de_escopo_reconhecidas", []) if r != "."}
         for grupo in regra.get("fora_do_alcance_da_regra", {}).values():
@@ -234,9 +230,7 @@ def raizes_de_escopo() -> set[str]:
 
 def _e_derivado(rel: str) -> bool:
     """Caminho coberto pelo .gitignore: artefato gerado, ausencia e normal."""
-    r = subprocess.run(
-        ["git", "check-ignore", "-q", rel], cwd=RAIZ, capture_output=True, text=True, check=False
-    )
+    r = subprocess.run(["git", "check-ignore", "-q", rel], cwd=RAIZ, capture_output=True, text=True, check=False)
     return r.returncode == 0
 
 
@@ -323,11 +317,7 @@ def referencias_mortas(rel: str) -> list[str]:
                 variantes.append(limpo + "x")
             elif limpo.endswith(".js"):
                 variantes.append(limpo[:-3] + ".jsx")
-            achou = any(
-                (raiz / var).exists()
-                for var in variantes
-                for raiz in (RAIZ, caminho.parent, RAIZ.parent)
-            )
+            achou = any((raiz / var).exists() for var in variantes for raiz in (RAIZ, caminho.parent, RAIZ.parent))
             if achou:
                 continue
             # Nao resolveu. Antes de chamar de MORTA, separar o que este
@@ -375,8 +365,7 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
             itens = fm.get(campo) or []
             if isinstance(itens, list) and any(not isinstance(x, str) for x in itens):
                 erros.append(
-                    f"'{campo}' tem item que nao e texto em {rel}. "
-                    "Item de lista com ': ' vira mapa: troque por ' -- '."
+                    f"'{campo}' tem item que nao e texto em {rel}. Item de lista com ': ' vira mapa: troque por ' -- '."
                 )
 
         # --- G1c. chave duplicada no frontmatter ------------------------------
@@ -386,11 +375,7 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
         # arquivo de 12 KB como se fossem dele. Achado real: duas sessoes
         # editando este repositorio acrescentaram `referencias_nao_resolviveis` ao
         # mesmo frontmatter, e nada acusou.
-        chaves = [
-            line.split(":", 1)[0]
-            for line in bruto.splitlines()
-            if re.match(r"^[A-Za-z_][A-Za-z0-9_]*:", line)
-        ]
+        chaves = [line.split(":", 1)[0] for line in bruto.splitlines() if re.match(r"^[A-Za-z_][A-Za-z0-9_]*:", line)]
         repetidas = sorted({c for c in chaves if chaves.count(c) > 1})
         if repetidas:
             erros.append(
@@ -428,7 +413,10 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
     for rel in _git("ls-files", "docs/*.md", "reports/*.md").splitlines():
         if not rel.strip():
             continue
-        fm, _ = ler_frontmatter(RAIZ / rel)
+        texto = texto_como_vai_ao_commit(rel)
+        if not texto:
+            continue
+        fm, _ = ler_frontmatter_de_texto(texto)
         if not fm:
             continue
         if fm.get("supersede") and str(fm.get("supersede")).lower() not in {"null", "none"}:

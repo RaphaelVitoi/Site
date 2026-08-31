@@ -3,8 +3,11 @@
 Valida a resiliencia da Area de Transferencia, integridade dos payloads de handoff
 e conformidade dos fluxos de commit e sincronizacao linear.
 """
+
 from __future__ import annotations
 
+from pathlib import Path
+import sys
 from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
@@ -18,27 +21,43 @@ runner = CliRunner()
 
 def test_clippy_clipboard_copy_and_empty_check():
     assert not ClippyClipboard.copy("")
-    with patch("subprocess.Popen") as mock_popen:
+    with patch.object(sys, "platform", "win32"), patch("subprocess.Popen") as mock_popen:
         mock_proc = MagicMock()
         mock_proc.returncode = 0
         mock_proc.communicate.return_value = ("", "")
         mock_popen.return_value = mock_proc
 
-        assert ClippyClipboard.copy("Teste de Copia SOTA v8.0 GOLD")
+        payload = "Teste de Copia SOTA v8.0 GOLD"
+        assert ClippyClipboard.copy(payload) is True
+        mock_proc.communicate.assert_called_once_with(input=payload)
+
+    # Teste de falha quando todos os backends falham
+    with (
+        patch.object(sys, "platform", "linux"),
+        patch("engine.clippy_clipboard.pyperclip", None),
+    ):
+        assert ClippyClipboard.copy("Texto sem backend disponivel") is False
 
 
 def test_clippy_assemble_and_copy_handoff():
-    res = ClippyClipboard.assemble_and_copy_handoff(
-        summary="Sessao concluida com 10/10 fases verdes no Quality Gate.",
-        files_modified=["engine/clippy_clipboard.py", "scripts/cli/nexus.py"],
-        test_status="SUCESSO (0E/0W)",
-        decisions=["Substituicao de gemini-3.1 por qwen2.5-coder:7b-instruct-q5_K_M e gemma4:31b-cloud"],
-        next_tasks=["Validar endpoints de inferencia"],
-        continuity_prompt="Continue a partir da validacao dos clusters.",
-    )
-    assert res["success"] in (True, False)
-    assert isinstance(res["char_count"], int)
-    assert res["char_count"] > 100
+    with patch.object(ClippyClipboard, "copy", return_value=True) as mock_copy:
+        res = ClippyClipboard.assemble_and_copy_handoff(
+            summary="Sessao concluida com 10/10 fases verdes no Quality Gate.",
+            files_modified=["engine/clippy_clipboard.py", "scripts/cli/nexus.py"],
+            test_status="SUCESSO (0E/0W)",
+            decisions=["Substituicao de gemini-3.1 por qwen2.5-coder:7b-instruct-q5_K_M e gemma4:31b-cloud"],
+            next_tasks=["Validar endpoints de inferencia"],
+            continuity_prompt="Continue a partir da validacao dos clusters.",
+        )
+        assert res["success"] is True
+        assert isinstance(res["char_count"], int)
+        assert res["char_count"] > 100
+        mock_copy.assert_called_once()
+        copied_text = mock_copy.call_args[0][0]
+        assert "PROTOCOLO DE HANDOFF SOTA" in copied_text
+        assert "RESUMO EXECUTIVO DA SESSAO:" in copied_text
+        assert "engine/clippy_clipboard.py" in copied_text
+        assert "PROMPT DE CONTINUACAO IMEDIATA" in copied_text
 
 
 def test_git_sota_workflow_commit_validation():
@@ -53,7 +72,24 @@ def test_git_sota_workflow_commit_validation():
     assert not invalido_curto
 
 
-def test_nexus_clippy_command():
-    result = runner.invoke(app, ["clippy"])
-    # Deve executar ou reportar status sem lancar excecao fatal
-    assert result.exit_code in (0, 1)
+def test_nexus_clippy_command_success():
+    with (
+        patch.object(Path, "exists", return_value=True),
+        patch.object(Path, "stat", return_value=MagicMock(st_size=256)),
+        patch.object(Path, "read_text", return_value="# Handoff Mock Content"),
+        patch("engine.clippy_clipboard.ClippyClipboard.copy", return_value=True) as mock_copy,
+    ):
+        result = runner.invoke(app, ["clippy"])
+        assert result.exit_code == 0
+        mock_copy.assert_called_once_with("# Handoff Mock Content")
+
+
+def test_nexus_clippy_command_failure():
+    with (
+        patch.object(Path, "exists", return_value=True),
+        patch.object(Path, "stat", return_value=MagicMock(st_size=256)),
+        patch.object(Path, "read_text", return_value="# Handoff Mock Content"),
+        patch("engine.clippy_clipboard.ClippyClipboard.copy", return_value=False),
+    ):
+        result = runner.invoke(app, ["clippy"])
+        assert result.exit_code == 1

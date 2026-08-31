@@ -3,11 +3,11 @@ SOTA Intelligent Entropy Sanitizer & Multi-Tier Garbage Collector (Chico v7.0 GO
 Protocol Chico SOTA v7.0 GOLD - Systems Maintenance, WAL Vacuum & Zero-Loss Entropy Expurgation
 """
 
+from pathlib import Path
 import shutil
 import sqlite3
 import tempfile
 import time
-from pathlib import Path
 
 
 def log(msg: str, status: str = "OK") -> None:

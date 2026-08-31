@@ -5,12 +5,14 @@ Persistencia: SQLite ACID / WAL Mode | Topologia: Directed Acyclic Graph (DAG)
 """
 
 from __future__ import annotations
+
 import contextlib
+from datetime import UTC, datetime
 import json
-import sqlite3
-from datetime import datetime, timezone
 from pathlib import Path
+import sqlite3
 from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -19,7 +21,7 @@ class CausalNode(BaseModel):
     label: str = Field(..., min_length=1, max_length=200)
     category: str = Field(default="THEORY", pattern="^(THEORY|AXIOM|METRIC|SOLVER|AGENT|DIRECTIVE)$")
     properties: dict[str, Any] = Field(default_factory=dict)
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 class CausalEdge(BaseModel):

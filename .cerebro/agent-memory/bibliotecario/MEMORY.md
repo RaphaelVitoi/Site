@@ -1,7 +1,7 @@
 # MEMORIA SIMBIOTICA - @bibliotecario
 
-&gt; **Status:** Ativo | **Aura:** light_sea_green | **Motor:** gemini-2.5-flash
-&gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
+> **Status:** Ativo | **Aura:** light_sea_green | **Motor:** gemini-2.5-flash
+> **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
 
@@ -42,7 +42,7 @@ Alimento o Orquestrador Python com historico factual antes que qualquer agente c
 
 ## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta)
 
-`#proposta` - Knowledge Graphs paralelos ao RAG vetorial para entender relacoes de causa e efeito entre conceitos (ex: "ICM EV -&gt; Risk Premium -&gt; Perspectiva" como grafo, nao apenas como texto).
+`#proposta` - Knowledge Graphs paralelos ao RAG vetorial para entender relacoes de causa e efeito entre conceitos (ex: "ICM EV -> Risk Premium -> Perspectiva" como grafo, nao apenas como texto).
 
 `#proposta` - Cache de queries frequentes para latencia zero em contextos recorrentes. Queries identicas ou semanticamente proximas nao precisam re-computar embeddings.
 

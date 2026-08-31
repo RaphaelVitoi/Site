@@ -29,7 +29,7 @@ class Task(BaseModel):
     def validate_agent_existence(cls, v: str) -> str:
         """Valida a consistencia do agente no core. Late import para respeitar hot-reload."""
         # pylint: disable=import-outside-toplevel
-        from core.config import VALID_AGENTS as _LIVE_AGENTS
+        from core.config import VALID_AGENTS as _LIVE_AGENTS  # noqa: PLC0415
 
         if v not in _LIVE_AGENTS:
             raise ValueError(f"Agente desconhecido: {v}")

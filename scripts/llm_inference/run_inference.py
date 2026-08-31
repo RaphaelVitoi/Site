@@ -3,9 +3,9 @@
 import argparse
 import json
 import os
+from pathlib import Path
 import sys
 import urllib.request
-from pathlib import Path
 
 # SOTA: Garantir que o root do projeto esteja no sys.path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()

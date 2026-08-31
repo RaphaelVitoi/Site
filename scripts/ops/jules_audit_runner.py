@@ -6,12 +6,12 @@ com streaming de logs em tempo real, persistencia em JSONL e geracao de relatori
 from __future__ import annotations
 
 import ast
+from datetime import UTC, datetime
 import json
 import logging
+from pathlib import Path
 import sys
 import time
-from datetime import UTC, datetime
-from pathlib import Path
 from typing import Final
 
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent.parent

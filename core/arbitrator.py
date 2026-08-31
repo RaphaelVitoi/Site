@@ -1,13 +1,14 @@
 """Modulo de Arbitragem Universal (DAG) SOTA."""
+from __future__ import annotations
 
+from datetime import UTC, datetime
 import json
 import logging
-import math
 import time
-from datetime import UTC, datetime
 from typing import Any, ClassVar
 
 from core.schemas import Task
+import math
 
 try:
     import nexus_core_rust  # type: ignore # pylint: disable=import-error

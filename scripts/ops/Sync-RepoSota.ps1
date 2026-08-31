@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Sincronizador SOTA de Repositorio (Rebase Linear + CWV Gate)
     Protocolo Chico SOTA v8.0 GOLD
@@ -8,7 +8,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$TargetBranch = "master"
+    [string]$TargetBranch = "main"
 )
 
 $ErrorActionPreference = "Stop"

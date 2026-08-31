@@ -47,13 +47,13 @@ from __future__ import annotations
 
 import argparse
 import os
+from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
-from pathlib import Path
 
 RAIZ_PADRAO = Path(__file__).resolve().parents[2]
 # `skipped` e `xfailed` entram aqui porque sao a categoria "nao verificado", e

@@ -65,7 +65,7 @@ logger = logging.getLogger(__name__)
 
 async def handle_predictive_profile(_request: web.Request) -> web.Response:
     """Endpoint Proxy para expor o perfil preditivo ao front-end."""
-    from predictive_forest import PredictiveForestEngine
+    from predictive_forest import PredictiveForestEngine  # noqa: PLC0415
 
     def _get_profile():
         engine = PredictiveForestEngine()

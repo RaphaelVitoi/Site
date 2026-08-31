@@ -2,8 +2,8 @@
 Script SOTA para Purificacao e Correcao de Encoding (Mojibake UTF-8 -> Latin1 -> UTF-8)
 """
 
-import re
 from pathlib import Path
+import re
 
 # Dicionario deterministico de substituicoes para casos complexos ou corrompidos
 DIRECT_REPLACEMENTS = {
