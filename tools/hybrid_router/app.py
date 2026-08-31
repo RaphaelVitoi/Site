@@ -291,12 +291,12 @@ class GeminiCloudClient:
             raise RuntimeError("SDK Google GenAI nao inicializado ou GEMINI_API_KEY ausente.")
 
         thinking_cfg = (
-            types.ThinkingConfig(thinking_budget=thinking_budget)
+            types.ThinkingConfigDict(thinking_budget=thinking_budget)
             if thinking_budget is not None
             else None
         )
 
-        config = types.GenerateContentConfig(
+        config = types.GenerateContentConfigDict(
             temperature=0.2,
             system_instruction=system_instruction if system_instruction else None,
             thinking_config=thinking_cfg,

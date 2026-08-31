@@ -112,7 +112,7 @@ commit, nunca afrouxe o teste.
 
 ## 5. Prompt de continuação
 
-```
+```text
 Contexto: Site em master 50322a68, arvore limpa, suite 620 passed.
 Leia primeiro reports/HANDOFF-2026-08-29-roteamento-memoria-e-guard.md e
 reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md.

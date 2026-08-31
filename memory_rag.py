@@ -533,18 +533,24 @@ class MemoryRAG:
         # A versao seguinte resolvia nos DOIS lados, e nenhuma mutacao isolada
         # era detectavel porque cada resolve cobria o outro. Redundancia que
         # teste nenhum distingue e redundancia que ninguem mantem.
+        resolved_base = await asyncio.to_thread(base_path.resolve)
         superadas = {
             m.parent.resolve()
             for m in await asyncio.to_thread(lambda: list(base_path.rglob(MARCADOR_SUPERADO)))
         }
         if superadas:
+            nomes_formatados = []
+            for d in superadas:
+                try:
+                    nomes_formatados.append(d.relative_to(resolved_base).as_posix())
+                except ValueError:
+                    nomes_formatados.append(d.name)
             logger.info(
-                "[RAG] %d arvore(s) declarada(s) superada(s) fora do indice: %s",
+                "[RAG] %d arvore(s) legada(s) superada(s) excluidas do indice: %s | Canonica ativa: .claude/agent-memory",
                 len(superadas),
-                ", ".join(sorted(d.name for d in superadas)),
+                ", ".join(sorted(nomes_formatados)),
             )
 
-        resolved_base = await asyncio.to_thread(base_path.resolve)
         for source in manifest.get("sources", []):
             files = await self._expand_source_files(
                 source, base_path, resolved_base, superadas, ignore_dirs, ignore_subtrees

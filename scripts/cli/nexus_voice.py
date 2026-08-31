@@ -91,31 +91,31 @@ def synthesize_gemini_audio(text: str, voice_name: str, output_path: Path) -> bo
         response = generate_fn(
             model="gemini-2.5-flash",
             contents=text,
-            config=types.GenerateContentConfig(
+            config=types.GenerateContentConfigDict(
                 response_modalities=["AUDIO"],
-                speech_config=types.SpeechConfig(
-                    voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voice_name)
+                speech_config=types.SpeechConfigDict(
+                    voice_config=types.VoiceConfigDict(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfigDict(voice_name=voice_name)
                     )
                 ),
                 safety_settings=[
-                    types.SafetySetting(
+                    types.SafetySettingDict(
                         category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
                         threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
                     ),
-                    types.SafetySetting(
+                    types.SafetySettingDict(
                         category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
                         threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
                     ),
-                    types.SafetySetting(
+                    types.SafetySettingDict(
                         category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
                         threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
                     ),
-                    types.SafetySetting(
+                    types.SafetySettingDict(
                         category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
                         threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
                     ),
-                    types.SafetySetting(
+                    types.SafetySettingDict(
                         category=types.HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
                         threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
                     ),

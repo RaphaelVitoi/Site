@@ -1,7 +1,8 @@
 """
-SOTA Dynamic Agent Clustering & Swarm Specialization Engine (Chico v7.0 GOLD)
-Protocol Chico SOTA v7.0 GOLD - Multi-Agent Cluster Topologies & Hardware Affinity Routing
+SOTA Dynamic Agent Clustering & Swarm Specialization Engine (Chico v8.0 GOLD)
+Protocol Chico SOTA v8.0 GOLD - Multi-Agent Cluster Topologies & Hardware Affinity Routing
 """
+from __future__ import annotations
 
 import enum
 from dataclasses import dataclass
@@ -15,7 +16,8 @@ class ClusterType(str, enum.Enum):
 
 
 MODEL_GEMINI_35_FLASH_LITE = "gemini-3.5-flash-lite"
-MODEL_GEMINI_31_FLASH_LITE = "gemini-3.1-flash-lite"
+MODEL_QWEN_25_7B_Q5 = "qwen2.5-coder:7b-instruct-q5_K_M"
+MODEL_GEMMA_31B_CLOUD = "gemma4:31b-cloud"
 MODEL_GEMINI_36_FLASH = "gemini-3.6-flash"
 MODEL_GEMINI_37_FLASH = "gemini-3.7-flash"
 MODEL_GEMINI_31_PRO = "gemini-3.1-pro"
@@ -49,6 +51,7 @@ class AgentClusteringMesh:
                 primary_models=[
                     MODEL_GEMINI_37_FLASH,
                     MODEL_GEMINI_35_FLASH_LITE,
+                    MODEL_GEMMA_31B_CLOUD,
                     MODEL_GEMINI_31_PRO,
                     MODEL_CLAUDE_37_SONNET,
                 ],
@@ -63,7 +66,8 @@ class AgentClusteringMesh:
                 description="Geracao de codigo de baixa latencia, modificacoes atomicas de arquivos e execucao de comandos.",
                 primary_models=[
                     MODEL_GEMINI_35_FLASH_LITE,
-                    MODEL_GEMINI_31_FLASH_LITE,
+                    MODEL_QWEN_25_7B_Q5,
+                    MODEL_GEMMA_31B_CLOUD,
                     MODEL_GEMINI_36_FLASH,
                     MODEL_GEMINI_37_FLASH,
                 ],
@@ -76,7 +80,7 @@ class AgentClusteringMesh:
                 cluster_type=ClusterType.GAMMA_AUDITING,
                 name="Cluster Gamma (Auditing, Linting & Empirical Verification)",
                 description="Varredura de seguranca, auditoria estatica de codigo, execucao de testes unitarios e linting.",
-                primary_models=[MODEL_GEMINI_35_FLASH_LITE, MODEL_GEMINI_31_FLASH_LITE],
+                primary_models=[MODEL_GEMINI_35_FLASH_LITE, MODEL_QWEN_25_7B_Q5],
                 cpu_affinity_cores=[0, 1, 8, 9],
                 max_concurrency=6,
                 enable_thinking=False,

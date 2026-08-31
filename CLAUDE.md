@@ -31,7 +31,7 @@ Se ele reprovar, "a regra está errada" é a hipótese **menos** provável.
 
 ## 2. Camada de dependências
 
-```
+```bash
 npm audit --audit-level=low
 .venv/Scripts/python.exe -m pip_audit -r requirements.txt
 ```
@@ -296,6 +296,7 @@ rebaixar o caminho principal a 5.1.
 ## 7. Governança Piramidal & Invariante de Commits (M.O. 13.G)
 
 Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
+
 - **Tier 0:** Raphael Vitoi (Soberania & Liderança: Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação final de produto)
 - **Tier 1:** Núcleo Cognitivo Mestre (`Claude 5 Sonnet/Opus`, `Gemini 3.7 Flash High/Pro`, `ChatGPT 5.6 Luna/Terra/Sol`, `Codex`, `Antigravity 2.0 / Antigravity IDE / VS Code`)
 - **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`)
@@ -306,7 +307,9 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 - **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)
 
 **Invariante de Commits e Mutações:**
+
 Todo commit e registro deve declarar sinteticamente:
+
 - **SHA:** Hash criptográfico Git
 - **Assinatura:** Autor e Tier correspondente (ex: `Chico v8.0 GOLD [Tier 1.B]`)
 - **Propósito:** Razão de ser técnica da alteração e escopo protegido.
@@ -345,3 +348,15 @@ daqui em diante, e a transição fica registrada. Força-push numa branch já
 publicada quebra checkout alheio e âncora de revisão — custo maior que a
 inconsistência que corrigiria.
 
+---
+
+## 9. Taxonomia Canônica de Relatórios, Auditorias, Handoffs e Documentação
+
+O repositório estabelece uma separação formal e estrita de responsabilidades entre pastas para receber documentações oficiais, relatórios e memórias:
+
+| Diretório | Responsabilidade Canônica | Tipo de Arquivo / Padrão de Nomenclatura | Esquema Obrigatório |
+| :--- | :--- | :--- | :--- |
+| **`reports/`** | Registros empíricos, auditorias situadas no tempo, validações, postulados e handoffs oficiais. | `AUDITORIA-YYYY-MM-DD-*.md`<br>`VALIDACAO-YYYY-MM-DD-*.md`<br>`POSTULADO-XXX-*.md`<br>`HANDOFF-YYYY-MM-DD-*.md`<br>`PLANO-XXX-*.md` | Frontmatter YAML de 13 campos validado por `scripts/ops/record_gate.py` |
+| **`docs/`** | Documentação permanente, arquitetura viva, manuais, especificações e formalismos matemáticos. | `docs/architecture/*.md`<br>`docs/specs/*.md`<br>`docs/guides/*.md`<br>`docs/math/*.md` | Documentos Markdown com referências e âncoras canônicas |
+| **`.claude/agent-memory/`** | Memória episódica e contextual viva consumida pelo runtime dos agentes e pelo RAG. | `.claude/agent-memory/<agente>/MEMORY.md`<br>`.claude/agent-memory/chico/HANDOFF_LATEST.md` | Estrutura de tópicos semânticos e aprendizados consolidados |
+| **`data/`** | Catálogos estruturados, esquemas e configurações de sistema em formato serializado. | `system_config.json`<br>`routing_map.json`<br>`agents_manifest.json`<br>`SYSTEM_OPERATIONS_MANIFEST.json` | JSON formatado e tipado |

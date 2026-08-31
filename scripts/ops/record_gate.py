@@ -413,11 +413,28 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
     # repositorio: os handoffs citam nexus.py, e todo commit em nexus.py
     # exigiria superseder o handoff.
     tocados = set(em_stage)
+    supersedidos_em_stage: set[str] = set()
+    for rel in registros_em_stage:
+        texto = texto_como_vai_ao_commit(rel)
+        if texto:
+            fm_stg, _ = ler_frontmatter_de_texto(texto)
+            if fm_stg and fm_stg.get("supersede"):
+                sup = fm_stg.get("supersede")
+                if isinstance(sup, list):
+                    supersedidos_em_stage.update(str(s) for s in sup)
+                elif isinstance(sup, str) and sup.lower() not in {"null", "none"}:
+                    supersedidos_em_stage.add(sup)
+
     for rel in _git("ls-files", "docs/*.md", "reports/*.md").splitlines():
         if not rel.strip():
             continue
         fm, _ = ler_frontmatter(RAIZ / rel)
         if not fm:
+            continue
+        if fm.get("supersede") and str(fm.get("supersede")).lower() not in {"null", "none"}:
+            continue
+        doc_id = str(fm.get("id") or "")
+        if doc_id in supersedidos_em_stage or rel in supersedidos_em_stage:
             continue
         declarados = fm.get("caminhos") or []
         if isinstance(declarados, str):

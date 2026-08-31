@@ -231,7 +231,8 @@
         "drop_only_free_models": true,
         "protect_models": [
             "gemini-3.5-flash-lite",
-            "gemini-3.1-flash-lite",
+            "qwen2.5-coder:7b-instruct-q5_K_M",
+            "gemma4:31b-cloud",
             "gemini-3.5-flash",
             "gemini-3.6-flash",
             "gemini-3.7-flash"
@@ -243,13 +244,15 @@
             "gemini-3.6-flash",
             "gemini-3.5-flash",
             "gemini-3.5-flash-lite",
-            "gemini-3.1-flash-lite",
+            "gemma4:31b-cloud",
+            "qwen2.5-coder:7b-instruct-q5_K_M",
             "deepseek/deepseek-r1:free",
             "meta-llama/llama-3.3-70b-instruct:free"
         ],
         "fast_operations": [
             "gemini-3.5-flash-lite",
-            "gemini-3.1-flash-lite",
+            "qwen2.5-coder:7b-instruct-q5_K_M",
+            "gemma4:31b-cloud",
             "gemini-3.5-flash",
             "gemini-3.6-flash",
             "meta-llama/llama-3.1-8b-instruct:free"
@@ -259,7 +262,8 @@
             "gemini-3.6-flash",
             "gemini-3.5-flash",
             "gemini-3.5-flash-lite",
-            "gemini-3.1-flash-lite",
+            "qwen2.5-coder:7b-instruct-q5_K_M",
+            "gemma4:31b-cloud",
             "qwen/qwen-2.5-coder-32b-instruct:free",
             "deepseek/deepseek-r1:free"
         ],
@@ -268,7 +272,8 @@
             "gemini-3.6-flash",
             "gemini-3.5-flash",
             "gemini-3.5-flash-lite",
-            "gemini-3.1-flash-lite",
+            "qwen2.5-coder:7b-instruct-q5_K_M",
+            "gemma4:31b-cloud",
             "meta-llama/llama-3.3-70b-instruct:free"
         ],
         "openrouter_alternatives": [

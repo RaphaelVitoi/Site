@@ -327,6 +327,10 @@ function FileViewerBody({
               <img
                 src={`data:image/${fileContent.data.format?.toLowerCase() || 'png'};base64,${fileContent.data.base64}`}
                 alt={selectedFile.name}
+                width={800}
+                height={600}
+                loading="lazy"
+                decoding="async"
                 className="max-h-110 max-w-full rounded border border-white/10 object-contain shadow-2xl"
               />
             ) : (

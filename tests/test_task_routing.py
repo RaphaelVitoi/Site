@@ -45,6 +45,7 @@ KNOWN_VALID_MODEL_PREFIXES = (
     "deepseek/",
     "mistralai/",
     "qwen",
+    "gemma",
 )
 
 GHOST_MODEL_PATTERNS = (

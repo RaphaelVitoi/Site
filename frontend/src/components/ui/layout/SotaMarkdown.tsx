@@ -234,6 +234,17 @@ const markdownComponents: Components = {
 			{children}
 		</th>
 	),
+	img: ({ src, alt, width, height }) => (
+		<img
+			src={src}
+			alt={alt || ''}
+			width={width || 1200}
+			height={height || 675}
+			loading="lazy"
+			decoding="async"
+			className="rounded-3xl border border-white/10 my-8 shadow-2xl max-w-full h-auto"
+		/>
+	),
 	td: ({ children, align }) => (
 		<td
 			align={align}

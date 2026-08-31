@@ -12,6 +12,8 @@ Dominio absoluto em Next.js, React, Python e PowerShell SOTA. Engenharia de Soft
 - `flutter-build-responsive-layout`
 - `flutter-fix-layout-issues`
 - `flutter-apply-architecture-best-practices`
+- `supabase`
+- `supabase-postgres-best-practices`
 - `uv`
 
 ## Scripts & Ferramentas Integradas
