@@ -84,3 +84,34 @@ As seguintes variáveis de ambiente foram gravadas no registro de usuário para 
 
 ---
 *Relatório oficial emitido, auditado e selado sob o Protocolo Chico SOTA v8.0 GOLD.*
+
+---
+
+## ADENDO PÓS-HANDOFF (31/08/2026 11:33 BRT)
+
+### Vulnerabilidades Dependabot (7 alertas abertos)
+
+O push do commit `635a2498` reportou 7 vulnerabilidades no Dependabot (2 critical, 3 high, 1 moderate, 1 low).
+
+**Diagnóstico:** `npm audit` retorna 0 vulnerabilidades. As 4 confirmadas via `pip-audit` são todas do pacote `chromadb 1.5.9`, que é a última versão disponível no PyPI — **não existe fix upstream**:
+
+| CVE | Severidade | Fix Disponível |
+|:---|:---|:---|
+| PYSEC-2026-311 | critical | ❌ Sem patch |
+| CVE-2026-45830 | critical | ❌ Sem patch |
+| CVE-2026-45831 | high | ❌ Sem patch |
+| CVE-2026-45833 | high | ❌ Sem patch |
+
+**Mitigação ativa:** o projeto usa exclusivamente `chromadb.PersistentClient` (embarcado, sem servidor HTTP), não expondo o vetor de ataque. Documentado em `requirements.txt` L25-27.
+
+As 3 vulnerabilidades restantes são presumivelmente transitivas do `chromadb` ou de outras deps Python. Confirmação pendente de acesso à API do Dependabot.
+
+### Feedback do Administrador
+
+**Nota:** 8/10. Pontos de calibração: reduzir complexidade desnecessária, aumentar proatividade e percepção do contexto do usuário.
+
+### Commit e Push
+
+* **Commit:** `635a2498` em `master`, pushado para `origin/master`.
+* **Autor:** `Chico SOTA v8.0 GOLD <noreply@google.com>` [Tier 1.B].
+* **Pre-commit:** CWV Gate ✅ | Record Gate ✅ | Pytest 720/720 ✅.
