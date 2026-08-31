@@ -177,8 +177,8 @@ Item **C** (`SilentlyContinue` -> `Stop`) segue sob governanca estrita de tratam
 ### 8.5 Implementacao Integral do Item D (Medicao Real de CWV e A11y, 2026-08-31)
 
 Em 2026-08-31, o Item D foi concluido com sucesso sob diretriz padrao-ouro do operador:
+
 - **Fase 1 (CWV & Resource Economy):** Instrumentacao dupla com suporte a medicao ativa via CDP (`9223`/`9222`) e extracao deterministica de metricas a partir dos 202 chunks JS/WASM reais de `frontend/.next/static/chunks/`.
 - **Fase 2 (Acessibilidade & Best Practice):** Varredura real AST/DOM sobre todas as 55 rotas HTML geradas em `frontend/.next/server/app/**/*.html` e arquivos CSS compilados em `frontend/.next/static/css/`.
 - **Sanitizacao Anti-CLS:** Integracao de dimensoes explicitas (`width`/`height`), `loading="lazy"` e `decoding="async"` no componente `<SotaMarkdown>` e rotas estaticas, zerando todas as 23 violacoes reais detectadas.
 - **Resultado Sistemico:** O portao atingiu `SUCESSO (VERDE)` absoluto com 0 erros, 0 warnings e homeostase total nas 5 fases medidas.
-
