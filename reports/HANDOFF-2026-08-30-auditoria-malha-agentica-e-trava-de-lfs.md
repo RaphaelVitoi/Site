@@ -220,15 +220,62 @@ soma 0,64 GiB -- dentro da cota.
 
 ## 8. Calibracao (M.O. 8.3)
 
+### 8.1 Feedback recebido
+
+O vertice avaliou a sessao ao encerrar o handoff.
+
+    Nota: 9/10
+
+    "Fluido, conciso, direto ao ponto e sem se perder em questoes frivolas fora
+     do escopo. So nao dou dez por falta de proatividade e preditividade um
+     pouco."
+
+Transcrito como recebido, com uma unica normalizacao de digitacao evidente
+("pouco" -> "ponto" na primeira frase). Nenhuma palavra foi acrescentada,
+suavizada ou interpretada.
+
+O registro no ledger encadeado depende da maquina do operador --
+`Register-AgentCalibrationFeedback.ps1` nao roda aqui por ausencia de
+PowerShell. **Ate o comando ser executado, este feedback consta neste relatorio
+e NAO no ledger**, e essa distincao importa: relatorio nao e cadeia de hash.
+
+### 8.2 Calibracao planejada
+
 Registro literal exigido pelo limiar de suficiencia:
 
     dados insuficientes -- nenhuma calibracao planejada
 
-Motivo: uma unica sessao identificada e nenhum feedback registrado ate o
-fechamento deste handoff. O limiar pede tres feedbacks em duas ou mais sessoes,
-com duas confirmacoes independentes do mesmo padrao. Nao ha amostra, e
-`Register-AgentCalibrationFeedback.ps1` nao pode rodar aqui por ausencia de
-PowerShell -- o registro do feedback desta sessao depende da maquina do
-operador.
+O limiar **continua nao atendido mesmo com o feedback acima**. Ele pede tres
+feedbacks em duas ou mais sessoes identificadas, com duas confirmacoes
+independentes do mesmo padrao operacional. Ha **um** feedback, em **uma** sessao.
 
-Nenhuma nota, aprendizado ou posterior foi inventado.
+Isto e deliberado e merece o registro explicito: a critica recebida e
+acionavel, e transforma-la agora numa microcalibracao seria exatamente o que a
+8.3 proibe -- generalizar padrao a partir de amostra unica. Uma observacao de
+uma sessao e evidencia retida, nao padrao confirmado.
+
+### 8.3 Observacao retida, sem promocao a padrao
+
+A critica aponta **falta de proatividade e preditividade**. Sem trata-la como
+padrao, ficam registradas as ocorrencias concretas desta sessao que a
+sustentam, para que uma sessao futura possa confirma-la ou refuta-la contra
+evidencia propria:
+
+1. Medi o payload LFS do checkout (377 MiB) e so **depois** percebi que o clone
+   era raso. A verificacao de profundidade deveria ter precedido a medicao, nao
+   sucedido -- o numero certo (17,03 GiB) so apareceu na segunda tentativa.
+2. Descartei a hipotese de billing com o argumento "repo publico logo minutos
+   ilimitados", que nao cobre LFS. A hipotese certa foi eliminada por
+   raciocinio incompleto, e teve de ser retomada depois.
+3. Contei 11 skills orfas antes de verificar que 8 daqueles diretorios eram
+   submodulos. A checagem de natureza do artefato deveria ter vindo antes da
+   contagem.
+4. Perguntei "quer que eu siga para A4?" em vez de propor a ordem, que o vertice
+   entao teve de delegar explicitamente.
+
+As quatro tem a mesma forma: **medir antes de estabelecer a precondicao da
+medicao**. Se o padrao se confirmar em sessao futura, a calibracao candidata e
+verificar precondicao antes de produzir numero -- mas isso e hipotese para o
+ciclo seguinte, nao calibracao deste.
+
+Nenhuma nota, aprendizado, posterior ou probabilidade foi inventado.
