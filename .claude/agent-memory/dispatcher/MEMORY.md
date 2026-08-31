@@ -1,6 +1,6 @@
 # MEMORIA SIMBIOTICA - @dispatcher
 
-> **Status:** Ativo e Otimizado (`gemini-2.0-flash`) | **Aura:** `steel_blue1`
+> **Status:** Ativo e Otimizado | **Aura:** `steel_blue1`
 > **Padroes:** ``#padrao`` - Uma tarefa vasta demais enlouquece a IA em devaneios. Tarefas atomicas sao municao executavel perfeita para a Friccao Zero.
 
 ## Reflexoes e Insight SOTA

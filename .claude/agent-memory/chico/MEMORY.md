@@ -31,6 +31,29 @@
 - `nexus.py`: CLI Maestro enriquecido com `nexus test`, `nexus scripts`, `nexus audit`, `nexus routine`, `nexus task-audit`, `nexus homeostasis` e `nexus gate`.
 - Governança estrita: Limited Scope Policy (Target Lock), Zero-Delinquência e Soberania Total sob governança de Raphael Vitoi.
 
+## 3. Portões — o que 2026-08-30 mediu sobre eles
+
+- **Portão escrito não é portão instalado.** Os três hooks de `.husky/` estavam
+  commitados como `100644`, sem bit de execução, e `core.hooksPath` nunca foi
+  versionado — config local não viaja com o repositório. Resultado: a regra
+  existia em disco e **nenhum clone a executava**. Foi assim que 16 GiB de
+  `.gemini/` entraram no LFS apesar de a fase 5 já proibir aquele prefixo.
+  Corrigido com `git update-index --chmod=+x` e um `prepare` que roda
+  `git config core.hooksPath .husky` a cada `npm install`. O `husky` não é
+  dependência e não precisou ser: os hooks são `#!/bin/sh` puros, sem shim.
+- **Remover do HEAD não libera objeto LFS.** O modelo Ollama de 14,16 GiB
+  continua cobrado meses depois de sair da árvore. Purga só pelo suporte do
+  GitHub ou destruindo o repositório. **Portão criado depois do estrago não
+  desfaz o estrago** — a fase 5 impede a repetição, não o passivo.
+- **CI que nunca passou não é CI.** 225 execuções, zero sucessos desde 21/08,
+  cada uma morrendo em 2–4 segundos sem log: conta travada por excedente de
+  LFS. Todo "verde" declarado em commit nesse período é medição local, não
+  veredito de portão — a §5 exige separar as duas coisas.
+- **A grandeza que decide não pode ser a que a ação contamina.** Vale para o
+  guard de memória (commit charge, não `percent`) e vale para o portão: um
+  gate cujo veredito impresso ignora erro de coleta declara VERDE sobre bateria
+  que não rodou. Corrigido em `conftest.py` no mesmo dia.
+
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->

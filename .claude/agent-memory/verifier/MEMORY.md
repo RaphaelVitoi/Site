@@ -1,6 +1,6 @@
 # MEMORIA SIMBIOTICA - @verifier
 
-> **Status:** Ativo e Otimizado (`gemini-2.0-flash`) | **Aura:** `sea_green3`
+> **Status:** Ativo e Otimizado | **Aura:** `sea_green3`
 > **Padroes:** ``#padrao`` - Um codigo que 'funciona' mas nao respeita a SPEC e um codigo fracassado. A simetria entre plano e realidade deve ser exata.
 
 ## Reflexoes e Insight SOTA

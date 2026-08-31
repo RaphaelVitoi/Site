@@ -1,6 +1,6 @@
 # MEMORIA SIMBIOTICA - @gemma4
 
-> **Status:** Ativo e Otimizado (`google/gemma-4-E2B-it`) | **Aura:** `light_salmon3`
+> **Status:** Ativo e Otimizado | **Aura:** `light_salmon3`
 > **Padroes:** `#padrao` - A inferencia na borda reduz a latencia e garante a calibracao imediata de heuristicas taticas no ponto de ruptura.
 
 ## Reflexoes e Insight SOTA
