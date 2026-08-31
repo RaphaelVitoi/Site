@@ -3,6 +3,7 @@
 Fornece integracao de alta confiabilidade para transferencia automatica de
 contexto, payloads de handoff e prompts de continuacao entre modelos e sessoes.
 """
+
 from __future__ import annotations
 
 import ctypes
@@ -74,6 +75,28 @@ class ClippyClipboard:
                 user32 = ctypes.windll.user32
                 kernel32 = ctypes.windll.kernel32
 
+                # Configuracao de assinaturas para compatibilidade 64-bit / 32-bit (sem truncamento de ponteiros/handles)
+                kernel32.GlobalAlloc.argtypes = [ctypes.c_uint, ctypes.c_size_t]
+                kernel32.GlobalAlloc.restype = ctypes.c_void_p
+
+                kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
+                kernel32.GlobalLock.restype = ctypes.c_void_p
+
+                kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
+                kernel32.GlobalUnlock.restype = ctypes.c_bool
+
+                user32.OpenClipboard.argtypes = [ctypes.c_void_p]
+                user32.OpenClipboard.restype = ctypes.c_bool
+
+                user32.EmptyClipboard.argtypes = []
+                user32.EmptyClipboard.restype = ctypes.c_bool
+
+                user32.SetClipboardData.argtypes = [ctypes.c_uint, ctypes.c_void_p]
+                user32.SetClipboardData.restype = ctypes.c_void_p
+
+                user32.CloseClipboard.argtypes = []
+                user32.CloseClipboard.restype = ctypes.c_bool
+
                 data_bytes = text.encode("utf-16-le") + b"\x00\x00"
                 h_mem = kernel32.GlobalAlloc(_GMEM_MOVEABLE, len(data_bytes))
                 if h_mem:
@@ -139,30 +162,36 @@ class ClippyClipboard:
         for f in files_modified:
             lines.append(f"  • {f}")
 
-        lines.extend([
-            "--------------------------------------------------------------------------------",
-            f"3. ESTADO DA BATERIA DE TESTES & HOMEOSTASE:\n  • {test_status}",
-            "--------------------------------------------------------------------------------",
-            "4. DECISOES ARQUITETURAIS & MODELOS:",
-        ])
+        lines.extend(
+            [
+                "--------------------------------------------------------------------------------",
+                f"3. ESTADO DA BATERIA DE TESTES & HOMEOSTASE:\n  • {test_status}",
+                "--------------------------------------------------------------------------------",
+                "4. DECISOES ARQUITETURAIS & MODELOS:",
+            ]
+        )
         for d in decisions:
             lines.append(f"  • {d}")
 
-        lines.extend([
-            "--------------------------------------------------------------------------------",
-            "5. PROXIMAS TAREFAS PRIORITARIAS (BACKLOG):",
-        ])
+        lines.extend(
+            [
+                "--------------------------------------------------------------------------------",
+                "5. PROXIMAS TAREFAS PRIORITARIAS (BACKLOG):",
+            ]
+        )
         for t in next_tasks:
             lines.append(f"  [ ] {t}")
 
-        lines.extend([
-            "================================================================================",
-            "=== PROMPT DE CONTINUACAO IMEDIATA (COLE DIRETAMENTE NO CHAT SEGUINTE) ===",
-            "================================================================================",
-            continuity_prompt,
-            "================================================================================",
-            "INSTRUCAO: RESPONDA DIRETAMENTE O PRODUTO FINAL EM ALTA DENSIDADE SEM METALINGUAGEM.",
-        ])
+        lines.extend(
+            [
+                "================================================================================",
+                "=== PROMPT DE CONTINUACAO IMEDIATA (COLE DIRETAMENTE NO CHAT SEGUINTE) ===",
+                "================================================================================",
+                continuity_prompt,
+                "================================================================================",
+                "INSTRUCAO: RESPONDA DIRETAMENTE O PRODUTO FINAL EM ALTA DENSIDADE SEM METALINGUAGEM.",
+            ]
+        )
 
         payload = "\n".join(lines)
         success = cls.copy(payload)

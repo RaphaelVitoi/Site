@@ -1,7 +1,7 @@
 # MEMORIA SIMBIOTICA - @planner
 
-&gt; **Status:** Ativo | **Aura:** orange3 | **Motor:** gemini-1.5-pro
-&gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
+> **Status:** Ativo | **Aura:** orange3 | **Motor:** gemini-1.5-pro
+> **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
 

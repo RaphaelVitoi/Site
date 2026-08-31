@@ -5,9 +5,9 @@ Responsavel por validar I/O de Banco de Dados, RAG Vetorial e Motor Quantico.
 
 import asyncio
 import gc
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 # Adiciona a raiz ao path para importar modulos do Kernel
 sys.path.append(str(Path(__file__).parent.parent.parent))

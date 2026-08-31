@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Auditoria Integral de Testes e Scripts  Protocolo Chico SOTA v8.0 GOLD
 Executa varredura profunda em todos os modulos Python, scripts PowerShell,
@@ -7,11 +6,11 @@ pacotes JavaScript/TypeScript e suites de testes do ecossistema.
 
 import json
 import os
+from pathlib import Path
 import py_compile
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 IGNORE_DIRS = {

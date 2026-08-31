@@ -4,11 +4,11 @@ Protocol Chico SOTA v8.0 GOLD - Multi-Agent Cluster Topologies & Hardware Affini
 """
 from __future__ import annotations
 
-import enum
 from dataclasses import dataclass
+import enum
 
 
-class ClusterType(str, enum.Enum):
+class ClusterType(enum.StrEnum):
     ALPHA_REASONING = "ALPHA_REASONING"  # Arquitetura, Teoria dos Jogos (PMev), Provas Formais
     BETA_EXECUTION = "BETA_EXECUTION"  # Geracao de Codigo, Edicao Atomica, CLI Ops
     GAMMA_AUDITING = "GAMMA_AUDITING"  # Verificacao Empirica, Linting, Type-Check, DevTools

@@ -3,9 +3,9 @@ Fallback do Dispatcher -- Plano de contingencia quando o @dispatcher nao retorna
 """
 # pylint: disable=protected-access, import-outside-toplevel
 
+from datetime import UTC, datetime
 import json
 import logging
-from datetime import UTC, datetime
 
 import core.runtime as te
 from core.schemas import Task
@@ -29,7 +29,7 @@ AGENT_VERIFIER = "@verifier"
 def _feature_enabled(flag_name: str) -> bool:
     """Resolve flag com prioridade para task_executor quando presente (facilita testes)."""
     try:
-        import task_executor as _task_executor  # import local para evitar ciclo no startup
+        import task_executor as _task_executor  # noqa: PLC0415  # import local para evitar ciclo no startup
 
         attr = "_feature_enabled"
         if hasattr(_task_executor, attr):
@@ -47,7 +47,7 @@ def _feature_enabled(flag_name: str) -> bool:
 def _heuristic_terms(group_name: str) -> dict[str, int]:
     """Resolve termos heuristicos com fallback para task_executor (testability)."""
     try:
-        import task_executor as _task_executor
+        import task_executor as _task_executor  # noqa: PLC0415
 
         attr = "_heuristic_terms"
         if hasattr(_task_executor, attr):

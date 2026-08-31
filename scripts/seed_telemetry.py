@@ -1,10 +1,10 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring, line-too-long
 
+from datetime import UTC, datetime
+from pathlib import Path
 import random
 import sqlite3
 import time
-from datetime import UTC, datetime
-from pathlib import Path
 
 
 def seed_telemetry():

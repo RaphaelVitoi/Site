@@ -309,6 +309,11 @@
   "antigravity.enableTelemetry": false,
   "gdl.openTarget": "system",
   "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": ["build/QuantumTensorEngine.sln"],
+  "ruff.path": ["${workspaceFolder}/.venv/Scripts/ruff.exe"],
+  "ruff.interpreter": ["${workspaceFolder}/.venv/Scripts/python.exe"],
+  "ruff.configuration": "${workspaceFolder}/pyproject.toml",
+  "ruff.nativeServer": "on",
+  "ruff.importStrategy": "fromEnvironment",
   "ruff.format.preview": true,
   "ruff.codeAction.disableRuleComment": {
     "enable": false
@@ -320,9 +325,9 @@
     "*.bin": "default"
   },
   "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
-  "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": true,
+  "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,
   "markdown-preview-enhanced.enableTypographer": true,
-  "markdown-preview-enhanced.enableScriptExecution": true,
+  "markdown-preview-enhanced.enableScriptExecution": false,
   "markdown-preview-enhanced.enableHTML5Embed": true,
   "markdown-preview-enhanced.enableExtendedTableSyntax": true,
   "markdown-preview-enhanced.enableCriticMarkupSyntax": true,

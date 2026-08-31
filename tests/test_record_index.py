@@ -15,13 +15,13 @@ auditoria justamente porque o portao dizia APROVADO.
 
 from __future__ import annotations
 
-# pylint: disable=protected-access,wrong-import-position,fixme
+from datetime import date
+from pathlib import Path
 
+# pylint: disable=protected-access,wrong-import-position,fixme
 import re
 import subprocess
 import sys
-from datetime import date
-from pathlib import Path
 
 import pytest
 import yaml
@@ -34,7 +34,6 @@ if str(RAIZ) not in sys.path:
 # sys.path o mesmo arquivo vira dois objetos de modulo, e o `monkeypatch` de um
 # nao alcanca o outro. Ver `scripts/ops/__init__.py`.
 from scripts.ops import record_gate, record_index  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Todo registro tem de ser legivel por maquina
@@ -122,10 +121,14 @@ def test_supersede_marca_obsoleto():
     por_id = {r["id"]: r for r in indice["registros"]}
     for r in indice["registros"]:
         alvo = r.get("supersede")
-        if alvo and str(alvo).lower() not in {"null", "none"} and alvo in por_id:
-            assert por_id[alvo]["estado"] == "OBSOLETO", (
-                f"{alvo} foi superseded por {r['id']} e continua {por_id[alvo]['estado']}"
-            )
+        if not alvo:
+            continue
+        alvos = alvo if isinstance(alvo, list) else [alvo]
+        for a in alvos:
+            if a and str(a).lower() not in {"null", "none"} and a in por_id:
+                assert por_id[a]["estado"] == "OBSOLETO", (
+                    f"{a} foi superseded por {r['id']} e continua {por_id[a]['estado']}"
+                )
 
 
 def test_ttl_vencido_e_detectado_e_ttl_vivo_nao():
@@ -155,9 +158,7 @@ def test_config_medida_aceita_as_duas_leituras_de_raiz():
 def test_chave_desconhecida_nao_e_dada_por_conferida():
     """Tratar chave sem resolvedor como 'bate' seria inventar sinal verde."""
     ambiente = record_index.resolvedores_de_ambiente(RAIZ)
-    divergencias, nao_conferiveis = record_index.conferir_config_medida(
-        {"quantizador": "Q4_K_M"}, ambiente
-    )
+    divergencias, nao_conferiveis = record_index.conferir_config_medida({"quantizador": "Q4_K_M"}, ambiente)
     assert not divergencias
     assert nao_conferiveis == ["quantizador"]
 
@@ -167,12 +168,18 @@ def test_o_indice_nao_e_versionado():
     divergencia contra a qual a propria 13.C adverte."""
     saida = subprocess.run(
         ["git", "check-ignore", "data/RECORD_INDEX.json"],
-        cwd=RAIZ, capture_output=True, text=True, check=False,
+        cwd=RAIZ,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     assert saida.returncode == 0, "data/RECORD_INDEX.json nao esta no .gitignore"
     rastreado = subprocess.run(
         ["git", "ls-files", "--error-unmatch", "data/RECORD_INDEX.json"],
-        cwd=RAIZ, capture_output=True, text=True, check=False,
+        cwd=RAIZ,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     assert rastreado.returncode != 0, "o indice derivado esta rastreado pelo git"
 
@@ -213,7 +220,7 @@ def test_o_portao_reprova_frontmatter_ilegivel(tmp_path, monkeypatch):
     monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: ["reports/RUIM.md"])
     (tmp_path / "reports").mkdir()
     (tmp_path / "reports" / "RUIM.md").write_text(ruim.read_text(encoding="utf-8"), encoding="utf-8")
-    monkeypatch.setattr(record_gate, "_git", lambda *a: "")
+    monkeypatch.setattr(record_gate, "_git", lambda *_: "")
     erros, _ = record_gate.verificar()
     assert any("YAML valido" in e for e in erros), f"o portao aceitou frontmatter ilegivel: {erros}"
 
@@ -236,22 +243,16 @@ def test_o_portao_cobra_ancora_declarada(tmp_path, monkeypatch):
     monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
     # O caminho ancorado mudou; o registro NAO foi revisado no mesmo commit.
     monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: ["engine/alvo.py"])
-    monkeypatch.setattr(
-        record_gate, "_git", lambda *a: "reports/ANCORADO.md\n" if a[:1] == ("ls-files",) else ""
-    )
+    monkeypatch.setattr(record_gate, "_git", lambda *a: "reports/ANCORADO.md\n" if a[:1] == ("ls-files",) else "")
     erros, _ = record_gate.verificar()
     assert any("ANCORADO.md" in e and "engine/alvo.py" in e for e in erros), (
         f"o portao nao cobrou a ancora declarada: {erros}"
     )
 
     # E o caso legitimo: registro revisado no MESMO commit nao pode ser acusado.
-    monkeypatch.setattr(
-        record_gate, "arquivos_em_stage", lambda: ["engine/alvo.py", "reports/ANCORADO.md"]
-    )
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: ["engine/alvo.py", "reports/ANCORADO.md"])
     erros, _ = record_gate.verificar()
-    assert not any("ANCORADO.md" in e for e in erros), (
-        f"registro revisado junto foi acusado assim mesmo: {erros}"
-    )
+    assert not any("ANCORADO.md" in e for e in erros), f"registro revisado junto foi acusado assim mesmo: {erros}"
 
 
 def test_o_portao_detecta_ampliacao_de_origem():
@@ -286,9 +287,7 @@ def test_o_corpus_prescritivo_nao_tem_referencia_morta():
     preexistente. Este teste ve a arvore inteira do recorte prescritivo, e por
     isso pode afirmar que a divida e ZERO, e nao apenas que ninguem a aumentou.
     """
-    saida = subprocess.run(
-        ["git", "ls-files", "*.md"], cwd=RAIZ, capture_output=True, text=True, check=False
-    )
+    saida = subprocess.run(["git", "ls-files", "*.md"], cwd=RAIZ, capture_output=True, text=True, check=False)
     mortas = {
         rel: m
         for rel in saida.stdout.splitlines()
@@ -309,12 +308,9 @@ def test_o_detector_de_referencia_nao_confunde_latex_com_caminho():
     if not gemini.is_file():
         pytest.skip("GEMINI.md ausente do projeto")
     assert "implementation" in gemini.read_text(encoding="utf-8-sig"), (
-        "o caso que motivou a regra sumiu do arquivo; reavaliar se a excecao de "
-        "bloco matematico ainda tem lastro"
+        "o caso que motivou a regra sumiu do arquivo; reavaliar se a excecao de bloco matematico ainda tem lastro"
     )
-    assert not record_gate.referencias_mortas("GEMINI.md"), (
-        "o detector voltou a ler bloco LaTeX como caminho"
-    )
+    assert not record_gate.referencias_mortas("GEMINI.md"), "o detector voltou a ler bloco LaTeX como caminho"
 
 
 def test_o_detector_de_referencia_pega_caminho_que_nao_existe(tmp_path, monkeypatch):
@@ -364,9 +360,7 @@ def test_nenhum_registro_tem_chave_duplicada_no_frontmatter():
     for p in _registros_com_frontmatter():
         bruto = p.read_text(encoding="utf-8-sig").split("\n---", 2)[0][3:]
         chaves = [
-            linha.split(":", 1)[0]
-            for linha in bruto.splitlines()
-            if re.match(r"^[A-Za-z_][A-Za-z0-9_]*:", linha)
+            linha.split(":", 1)[0] for linha in bruto.splitlines() if re.match(r"^[A-Za-z_][A-Za-z0-9_]*:", linha)
         ]
         dup = sorted({c for c in chaves if chaves.count(c) > 1})
         if dup:
@@ -393,10 +387,7 @@ def test_bloco_de_comentario_e_prosa_e_nao_diretiva(tmp_path, monkeypatch):
     monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
     curinga = "--remote-allow-" + "origins=*"
     (tmp_path / "x.ps1").write_text(
-        "<#\n"
-        f".DESCRIPTION\n    A versao antiga usava {curinga} na porta de depuracao.\n"
-        "#>\n"
-        f"$args = @('{curinga}')\n",
+        f"<#\n.DESCRIPTION\n    A versao antiga usava {curinga} na porta de depuracao.\n#>\n$args = @('{curinga}')\n",
         encoding="utf-8",
     )
     dentro = record_gate.linhas_em_bloco_de_comentario("x.ps1")
@@ -421,21 +412,15 @@ def test_ha_um_unico_caminho_de_import_para_os_modulos_de_ops():
         if arquivo.name == "__init__.py":
             continue
         rel = arquivo.relative_to(RAIZ).as_posix()
-        # Este proprio docstring CITA o import solto para explicar por que ele e
-        # proibido -- e o detector o reprovou na primeira execucao. Decima vez
-        # nesta base, e desta vez a ferramenta ja existia: reaproveitar o mesmo
-        # rastreador de bloco do portao, em vez de escrever um segundo.
-        em_docstring = record_gate.linhas_em_bloco_de_comentario(rel)
-        for n, linha in enumerate(
-            arquivo.read_text(encoding="utf-8", errors="ignore").splitlines(), start=1
-        ):
+        texto_arquivo = arquivo.read_text(encoding="utf-8", errors="ignore")
+        em_docstring = record_gate.linhas_em_bloco_de_comentario(rel, texto=texto_arquivo)
+        for n, linha in enumerate(texto_arquivo.splitlines(), start=1):
             if n in em_docstring or linha.lstrip().startswith("#"):
                 continue
             if re.match(r"^\s*(from|import)\s+record_(index|gate)\b", linha):
                 ofensores.append(f"{rel}:{n}  {linha.strip()}")
-    assert not ofensores, (
-        "import solto de modulo de scripts/ops (use scripts.ops.<modulo>):\n  "
-        + "\n  ".join(ofensores)
+    assert not ofensores, "import solto de modulo de scripts/ops (use scripts.ops.<modulo>):\n  " + "\n  ".join(
+        ofensores
     )
 
 
@@ -455,8 +440,7 @@ def test_o_portao_esta_no_pre_commit():
     hook = (RAIZ / ".husky" / "pre-commit").read_text(encoding="utf-8")
     assert "record_gate.py" in hook, "o portao de registro nao e chamado pelo pre-commit"
     assert "set -e" in hook, (
-        "sem `set -e` o hook devolve o codigo do ULTIMO comando e as etapas "
-        "anteriores deixam de bloquear em silencio"
+        "sem `set -e` o hook devolve o codigo do ULTIMO comando e as etapas anteriores deixam de bloquear em silencio"
     )
 
 

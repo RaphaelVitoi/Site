@@ -1,13 +1,30 @@
+---
+id: plano-2b-painel-de-estado
+tipo: relatorio
+escopo: Site
+ecossistema: gemini-antigravity
+autor: chico
+criado_em: 2026-08-28T20:00:00-03:00
+atualizado_em: 2026-08-31T08:37:00-03:00
+commit: 809ed429
+classes: [interno, medido]
+caminhos:
+  - reports/PLANO-2B-CURADORIA-ESTRUTURAL.md
+  - data/INDICE_CANONICO_GOVERNANCA.json
+  - scripts/ops/record_index.py
+  - scripts/ops/record_gate.py
+verificado:
+  - estado das 7 frentes da curadoria estrutural
+  - suite de testes 100% aprovada
+nao_verificado:
+  - rotacoes de chaves no provedor
+supersede: null
+---
+
 # PLANO 2-B — painel de acesso rápido
 
-> **Este arquivo é um PONTEIRO, não uma cópia.** O plano vive inteiro em
-> [`reports/PLANO-2B-CURADORIA-ESTRUTURAL.md`](reports/PLANO-2B-CURADORIA-ESTRUTURAL.md).
-> Duplicar o conteúdo aqui produziria a divergência que este plano existe para
-> resolver — foi exatamente assim que dois `MODUS_OPERANDI.md` passaram meses
-> contando histórias diferentes.
->
-> O que este painel tem, e o outro não, é **estado**: em que pé está cada frente,
-> e o que exige decisão do vértice.
+> **Este arquivo é um painel de estado complementar.** O plano vive inteiro em
+> [`reports/PLANO-2B-CURADORIA-ESTRUTURAL.md`](PLANO-2B-CURADORIA-ESTRUTURAL.md).
 
 **Atualizado em 2026-08-29** · frentes 1, 2, 4 e 5 entregues · suíte 100% verde (viva)
 
@@ -18,11 +35,11 @@
 | # | Frente | Estado | Onde ler |
 | :--- | :--- | :--- | :--- |
 | 0.5 | **Prelúdio** — as duas portas de entrada | ✅ concluído | §0.5 do plano |
-| 1 | **Homônimos** — declarar o canônico | ✅ entregue | §1.6 do plano · [`data/INDICE_CANONICO_GOVERNANCA.json`](data/INDICE_CANONICO_GOVERNANCA.json) |
-| 2 | **Âncoras e índices** — `RECORD_INDEX` e §13.F | ✅ entregue | §2.3 do plano · [`scripts/ops/record_index.py`](scripts/ops/record_index.py) |
-| 3 | **Contexto e memória** — qual corpus a memória deve ter | 🔶 parcial — memória consolidada, índice reconstruído, guard entregue | [`reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`](reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md) |
-| 4 | **Routing** — qual tabela governa cada superficie | ✅ entregue | [`reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md`](reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md) |
-| 5 | **Referenciais** — quem aponta para quem | ✅ entregue | §5.1 do plano · [`scripts/ops/record_gate.py`](scripts/ops/record_gate.py) |
+| 1 | **Homônimos** — declarar o canônico | ✅ entregue | §1.6 do plano · [`data/INDICE_CANONICO_GOVERNANCA.json`](../data/INDICE_CANONICO_GOVERNANCA.json) |
+| 2 | **Âncoras e índices** — `RECORD_INDEX` e §13.F | ✅ entregue | §2.3 do plano · [`scripts/ops/record_index.py`](../scripts/ops/record_index.py) |
+| 3 | **Contexto e memória** — qual corpus a memória deve ter | 🔶 parcial — memória consolidada, índice reconstruído, guard entregue | [`reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`](VALIDACAO-2026-08-28-arquitetura-de-memoria.md) |
+| 4 | **Routing** — qual tabela governa cada superficie | ✅ entregue | [`reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md`](FRENTE-4-2026-08-28-autoridade-de-roteamento.md) |
+| 5 | **Referenciais** — quem aponta para quem | ✅ entregue | §5.1 do plano · [`scripts/ops/record_gate.py`](../scripts/ops/record_gate.py) |
 | 6 | **Imports e exports** — morto vs. não integrado | ⏳ aberta | §6 do plano |
 | 7 | **Higienização** — mover e remover | 🔒 terminal, só depois de 1 a 6 | §7 do plano |
 
@@ -69,10 +86,10 @@ uv run python scripts/ops/suite_isolada.py --repo ../antigravity
 
 ## Leitura, em ordem
 
-1. [`reports/HANDOFF-2026-08-29-roteamento-memoria-e-guard.md`](reports/HANDOFF-2026-08-29-roteamento-memoria-e-guard.md) — estado atual e prompt de continuação
-2. [`reports/RETROSPECTIVA-2026-08-28-sessao.md`](reports/RETROSPECTIVA-2026-08-28-sessao.md) — o antes, o processo, os padrões acumulados
-3. [`reports/HANDOFF-2026-08-28-auditorias-e-preludio.md`](reports/HANDOFF-2026-08-28-auditorias-e-preludio.md) — estado e prompt de continuação
-4. [`reports/PLANO-2B-CURADORIA-ESTRUTURAL.md`](reports/PLANO-2B-CURADORIA-ESTRUTURAL.md) — o plano completo
-5. [`reports/INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md`](reports/INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md) — concorrência, isolamento e o P0
-6. [`reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md`](reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md) — o falso dilema, as duas superficies e o que espera o vertice
-7. [`reports/AUDITORIA-2026-08-28-skills.md`](reports/AUDITORIA-2026-08-28-skills.md) — as 8 skills
+1. [`reports/HANDOFF-2026-08-29-roteamento-memoria-e-guard.md`](HANDOFF-2026-08-29-roteamento-memoria-e-guard.md) — estado atual e prompt de continuação
+2. [`reports/RETROSPECTIVA-2026-08-28-sessao.md`](RETROSPECTIVA-2026-08-28-sessao.md) — o antes, o processo, os padrões acumulados
+3. [`reports/HANDOFF-2026-08-28-auditorias-e-preludio.md`](HANDOFF-2026-08-28-auditorias-e-preludio.md) — estado e prompt de continuação
+4. [`reports/PLANO-2B-CURADORIA-ESTRUTURAL.md`](PLANO-2B-CURADORIA-ESTRUTURAL.md) — o plano completo
+5. [`reports/INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md`](INTERLUDIO-2026-08-28-concorrencia-e-isolamento.md) — concorrência, isolamento e o P0
+6. [`reports/FRENTE-4-2026-08-28-autoridade-de-roteamento.md`](FRENTE-4-2026-08-28-autoridade-de-roteamento.md) — o falso dilema, as duas superficies e o que espera o vertice
+7. [`reports/AUDITORIA-2026-08-28-skills.md`](AUDITORIA-2026-08-28-skills.md) — as 8 skills

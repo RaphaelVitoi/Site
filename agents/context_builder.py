@@ -6,11 +6,11 @@ Context Builder -- Modulo especializado na construcao e compressao de contexto p
 import asyncio
 import hashlib
 import logging
-import time
 from pathlib import Path
+import time
 
-import core.runtime as te
 from agents.prompts import get_agent_system_prompt
+import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (

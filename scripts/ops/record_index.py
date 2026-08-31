@@ -43,19 +43,19 @@ TRES DECISOES DE DESENHO, e o motivo de cada uma
 from __future__ import annotations
 
 import argparse
+from datetime import date, datetime
 import json
 import os
+from pathlib import Path
 import platform
 import re
 import subprocess
 import sys
-from datetime import date, datetime
-from pathlib import Path
 from typing import Any
 
 import yaml  # type: ignore[import-untyped]
 
-RAIZ = Path(__file__).resolve().parents[2]          # .../Site
+RAIZ = Path(__file__).resolve().parents[2]  # .../Site
 DESTINO = RAIZ / "data" / "RECORD_INDEX.json"
 DIRETORIOS_DE_REGISTRO = ("docs", "reports")
 
@@ -185,11 +185,7 @@ def ttl_vencido(fm: dict[str, Any], hoje: date) -> str | None:
     ttl = fm.get("ttl_dias")
     if not isinstance(ttl, int):
         return None
-    consultas = [
-        _como_data(f.get("consultado_em"))
-        for f in (fm.get("fontes") or [])
-        if isinstance(f, dict)
-    ]
+    consultas = [_como_data(f.get("consultado_em")) for f in (fm.get("fontes") or []) if isinstance(f, dict)]
     consultas = [c for c in consultas if c]
     if not consultas:
         return "classe externa com ttl_dias e sem consultado_em: o TTL nao tem de onde contar"
@@ -278,11 +274,17 @@ def construir(raiz: Path = RAIZ, hoje: date | None = None) -> dict[str, Any]:
         )
 
     # OBSOLETO por supersede: quem foi aposentado por outro registro.
-    aposentados = {
-        str(r["supersede"]).strip()
-        for r in brutos
-        if r.get("supersede") and str(r["supersede"]).lower() not in {"null", "none"}
-    }
+    aposentados: set[str] = set()
+    for r in brutos:
+        sup = r.get("supersede")
+        if not sup:
+            continue
+        if isinstance(sup, list):
+            for item in sup:
+                if item and str(item).lower() not in {"null", "none"}:
+                    aposentados.add(str(item).strip())
+        elif str(sup).lower() not in {"null", "none"}:
+            aposentados.add(str(sup).strip())
 
     for r in brutos:
         if r["id"] in aposentados:
@@ -307,9 +309,7 @@ def construir(raiz: Path = RAIZ, hoje: date | None = None) -> dict[str, Any]:
         "gerado_por": "scripts/ops/record_index.py",
         "commit_do_head": head,
         "recorte": [f"{d}/**/*.md rastreados pelo git" for d in DIRETORIOS_DE_REGISTRO],
-        "ambiente_conferivel": {
-            k: (sorted(v) if isinstance(v, set) else v) for k, v in ambiente.items()
-        },
+        "ambiente_conferivel": {k: (sorted(v) if isinstance(v, set) else v) for k, v in ambiente.items()},
         "totais": totais,
         "arquivos_varridos": varridos,
         "sem_frontmatter": sorted(sem_frontmatter),

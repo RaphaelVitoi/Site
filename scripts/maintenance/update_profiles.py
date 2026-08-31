@@ -82,7 +82,7 @@ export NODE_OPTIONS="--max-old-space-size=4096"
 def update_user_bashrc():
     path = "/home/RaphaelVitoi/.bashrc"
     print(f"Updating {path}...")
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         lines = f.read()
 
     # Locate where the early return is, and insert SOTA_BLOCK before it
@@ -115,7 +115,7 @@ def update_user_bashrc():
 def update_user_profile():
     path = "/home/RaphaelVitoi/.profile"
     print(f"Updating {path}...")
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         content = f.read()
 
     # Strip existing SOTA variables

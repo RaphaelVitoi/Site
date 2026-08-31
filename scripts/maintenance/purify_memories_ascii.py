@@ -1,6 +1,6 @@
 import os
-import unicodedata
 from pathlib import Path
+import unicodedata
 
 
 def purify_text_to_ascii(text: str) -> str:

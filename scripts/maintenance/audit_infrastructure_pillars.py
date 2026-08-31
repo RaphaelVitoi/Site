@@ -12,10 +12,10 @@ Audita, valida e aplica o sistema Tri-State Guard com rigor matematico sobre:
 
 import json
 import os
+from pathlib import Path
 import re
 import sys
 import time
-from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 NEXUS_ZONE = BASE_DIR / "temp" / "nexus_zone"

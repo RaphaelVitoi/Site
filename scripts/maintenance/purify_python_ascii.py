@@ -1,12 +1,12 @@
-import unicodedata
 from pathlib import Path
+import unicodedata
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 def purify_file(path: Path):
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             content = f.read()
 
         # Normalize to NFKD (separates accents from characters)

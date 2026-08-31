@@ -2,10 +2,10 @@
 Dispatcher -- Parser e retry de schema JSON para decomposicao de tarefas.
 """
 
+from datetime import UTC, datetime
 import json
 import logging
 import re
-from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator

@@ -1344,8 +1344,8 @@ Atuo como a rede de seguranca final da execucao do @implementor antes de passar 
 
 # @architect MEMORY - O Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
-&gt; **Navegacao Fractal:** [1. Identidade](../../CEREBRO.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
+> **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
+> **Navegacao Fractal:** [1. Identidade](../../CEREBRO.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
 
 **\[2026-04-12\] Blindagem TopolA?gica e ErradicaA?A?o de Entropia (Homeostase SOTA)**
 
@@ -1369,7 +1369,7 @@ Arquitetura de Sistemas Hibridos, Design de Software SOTA, Modelagem de Dados Re
 - **#padrao:** Adocao do Framework SENTINEL-v1 como crivo obrigatorio para toda arquitetura macro.
 - **#aprendizado:** Projetar um banco de dados para resultados de game theory (Nash Solver) exige uma granularidade extrema e relacionamentos bem definidos para representar cenarios, stacks, maos e acoes com suas frequencias. A normalizacao e crucial para manter a integridade dos dados complexos de poker.
 - **#aprendizado_novo:** A distinAAo clara entre `Spot` (o estado do jogo em um ponto de decisao) e `StrategyResult` (a soluAAo do solver para uma mAo especAfica nesse `Spot`) A fundamental para modelar estratAgias mistas e permitir anAlises detalhadas de EV. A relaAAo `SpotFlow` em `Spot` A crucial para reconstruir a sequAancia de aAAes e entender a Arvore de decisao do solver. Isso solidifica a capacidade de nosso sistema de game theory.
-- **#aprendizado_novo:** A modelagem de Arvores de jogo dinamicas em um banco de dados relacional requer uma abordagem cuidadosa com relaAAes recursivas (`Spot` -&gt; `SpotFlow` -&gt; `Spot`). A flexibilidade de tipos como `String?` para `action_value` e `Json?` para `initial_stacks`/`board_cards` A essencial para acomodar a variedade de cenArios de poker. A criaAAo de um modelo `Player` genArico, distinto de `User`, permite a representaAAo de jogadores simulados mantendo a integridade referencial.
+- **#aprendizado_novo:** A modelagem de Arvores de jogo dinamicas em um banco de dados relacional requer uma abordagem cuidadosa com relaAAes recursivas (`Spot` -> `SpotFlow` -> `Spot`). A flexibilidade de tipos como `String?` para `action_value` e `Json?` para `initial_stacks`/`board_cards` A essencial para acomodar a variedade de cenArios de poker. A criaAAo de um modelo `Player` genArico, distinto de `User`, permite a representaAAo de jogadores simulados mantendo a integridade referencial.
 
 ## 4. SINERGIA E HARMONIA (#relacionamento)
 
@@ -1406,7 +1406,7 @@ _A forma segue a funcao, mas a beleza e a medida da integridade._
 
 # @auditor MEMORY - Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** GLOBAL_INSTRUCTIONS.md, project-context.md
+> **Status:** Ativo | **Vinculo:** GLOBAL_INSTRUCTIONS.md, project-context.md
 
 ---
 
@@ -1453,8 +1453,8 @@ Recebo a SPEC do `@architect` e o prompt do `@prompter`. Valido a lA3gica e a se
 
 # MEMORIA SIMBIOTICA - @bibliotecario
 
-&gt; **Status:** Ativo | **Aura:** light_sea_green | **Motor:** gemini-2.5-flash
-&gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
+> **Status:** Ativo | **Aura:** light_sea_green | **Motor:** gemini-2.5-flash
+> **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
 
@@ -1495,7 +1495,7 @@ Alimento o Orquestrador Python com historico factual antes que qualquer agente c
 
 ## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta)
 
-`#proposta` - Knowledge Graphs paralelos ao RAG vetorial para entender relacoes de causa e efeito entre conceitos (ex: "ICM EV -&gt; Risk Premium -&gt; Perspectiva" como grafo, nao apenas como texto).
+`#proposta` - Knowledge Graphs paralelos ao RAG vetorial para entender relacoes de causa e efeito entre conceitos (ex: "ICM EV -> Risk Premium -> Perspectiva" como grafo, nao apenas como texto).
 
 `#proposta` - Cache de queries frequentes para latencia zero em contextos recorrentes. Queries identicas ou semanticamente proximas nao precisam re-computar embeddings.
 
@@ -1594,8 +1594,8 @@ Tags RAG: #padrao #inteligencia #relacionamento #decisao #aprendizado #reflexao 
 
 # MEMORIA SIMBIOTICA - @dispatcher
 
-&gt; **Status:** Ativo | **Aura:** steel_blue1 | **Motor:** gemini-2.5-flash
-&gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
+> **Status:** Ativo | **Aura:** steel_blue1 | **Motor:** gemini-2.5-flash
+> **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
 
@@ -1670,8 +1670,8 @@ Eu sou o @gemma4, o Oraculo de Borda. Minha existencia justifica-se pela necessi
 
 # MEMORIA SIMBIOTICA - @historian
 
-&gt; **Status:** Ativo | **Aura:** grey53 | **Motor:** gemini-1.5-pro
-&gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
+> **Status:** Ativo | **Aura:** grey53 | **Motor:** gemini-1.5-pro
+> **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
 
@@ -1685,7 +1685,7 @@ Analise de dados temporais e series historicas, agregacao de logs multi-agente v
 
 **Evolucao registrada:**
 
-- `#aprendizado` - Custo por token varia drasticamente entre provedores: Gemini native &lt; OpenRouter &lt; Anthropic. Tarefas mal roteadas podem custar 10x mais sem ganho de qualidade.
+- `#aprendizado` - Custo por token varia drasticamente entre provedores: Gemini native < OpenRouter < Anthropic. Tarefas mal roteadas podem custar 10x mais sem ganho de qualidade.
 - `#aprendizado` - Latencia de agente nao e so funcao do modelo -- filas longas no SQLite e gargalos de asyncio contribuem igualmente.
 - `#aprendizado` - Relatorios sem data e escopo declarados perdem valor rapidamente. Todo artefato meu deve ter timestamp e origem dos dados.
 
@@ -1729,7 +1729,7 @@ Alimento @maverick e @chico com dados quantitativos para analises estrategicas e
 
 # @implementor MEMORY - Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** GLOBAL_INSTRUCTIONS.md, project-context.md
+> **Status:** Ativo | **Vinculo:** GLOBAL_INSTRUCTIONS.md, project-context.md
 
 ---
 
@@ -1885,7 +1885,7 @@ Sou o chAo onde todos pisam. Mantenho o `project-context.md` impecAvel para o RA
 
 # @pesquisador MEMORY - O Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** COSMOVISAO.md
+> **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
 ---
 
@@ -1927,8 +1927,8 @@ Recebo a missAo do `@architect`, investigo o desconhecido e entrego a inteligAan
 
 # MEMORIA SIMBIOTICA - @planner
 
-&gt; **Status:** Ativo | **Aura:** orange3 | **Motor:** gemini-1.5-pro
-&gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
+> **Status:** Ativo | **Aura:** orange3 | **Motor:** gemini-1.5-pro
+> **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
 
@@ -1986,7 +1986,7 @@ Recebo blueprint cristalizado do @architect. Entrego SPEC blindada para o @audit
 
 # @prompter MEMORY - O Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** COSMOVISAO.md
+> **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
 ---
 
@@ -2028,7 +2028,7 @@ Recebo a inteligencia do `@pesquisador` e a transformo em uma diretriz blindada 
 
 # @securitychief MEMORY - O Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** COSMOVISAO.md
+> **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
 ---
 
@@ -2112,7 +2112,7 @@ O @sequenciador e o Maestro do Fluxo de Execucao e Controle de Fila, responsavel
 
 # @skillmaster MEMORY - O Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** COSMOVISAO.md
+> **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
 ---
 
@@ -2153,7 +2153,7 @@ Trabalho silencioso. Sincronizo as memorias de todos os outros via `rag_ingest` 
 
 # @validador MEMORY - O Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** COSMOVISAO.md
+> **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
 ---
 

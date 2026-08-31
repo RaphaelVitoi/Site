@@ -1,7 +1,7 @@
 # MEMORIA SIMBIOTICA - @dispatcher
 
-&gt; **Status:** Ativo | **Aura:** steel_blue1 | **Motor:** gemini-2.5-flash
-&gt; **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
+> **Status:** Ativo | **Aura:** steel_blue1 | **Motor:** gemini-2.5-flash
+> **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
 

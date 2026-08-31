@@ -6,7 +6,7 @@ ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-31T03:42:00-03:00
 atualizado_em: 2026-08-31T03:42:00-03:00
-commit: 3e82d1ab
+commit: 809ed429
 classes: [interno, canonico]
 caminhos:
   - CLAUDE.md

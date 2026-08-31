@@ -9,6 +9,7 @@ e alocacao de tokens de Extended Thinking.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import subprocess
@@ -54,10 +55,10 @@ TEXT_MUTED = "#64748B"       # Texto secundario (Slate 500)
 GRID_COLOR = "#E2E8F0"       # Grid discreto
 
 PALETTE_MAP: dict[str, str] = {
-    "LOCAL_LLAMA_VULKAN": "#10B981",       # Esmeralda (Edge Local)
-    "GEMINI_37_FLASH_STANDARD": "#2563EB", # Azul Real (Cloud Standard)
-    "GEMINI_37_FLASH_THINKING": "#DC2626", # Carmesim (Extended Thinking)
-    "FAILED": "#94A3B8",                   # Cinza Neutro (Falhas)
+    "LOCAL_LLAMA_VULKAN": "#10B981",        # Esmeralda (Edge Local)
+    "GEMINI_37_FLASH_STANDARD": "#2563EB",  # Azul Real (Cloud Standard)
+    "GEMINI_37_FLASH_THINKING": "#DC2626",  # Carmesim (Extended Thinking)
+    "FAILED": "#94A3B8",                    # Cinza Neutro (Falhas)
 }
 
 TARGET_LABELS: dict[str, str] = {
@@ -106,7 +107,7 @@ def generate_synthetic_data(samples: int = 60) -> pd.DataFrame:
 def load_dataset(file_path: str | None) -> pd.DataFrame:
     if file_path and os.path.exists(file_path):
         if file_path.endswith(".json"):
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
             df = pd.DataFrame(data)
         elif file_path.endswith(".csv"):
@@ -159,8 +160,16 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
         f"Cauda p99: {p99:.1f}ms  |  "
         f"Thinking Tokens: {total_thinking:,}"
     )
-    fig.text(0.96, 0.942, kpi_text, fontsize=10.5, fontweight="bold", color=TEXT_PRIMARY,
-             ha="right", bbox=dict(boxstyle="round,pad=0.5", facecolor=CARD_BG, edgecolor=BORDER_COLOR, alpha=0.9))
+    fig.text(
+        0.96,
+        0.942,
+        kpi_text,
+        fontsize=10.5,
+        fontweight="bold",
+        color=TEXT_PRIMARY,
+        ha="right",
+        bbox={"boxstyle": "round,pad=0.5", "facecolor": CARD_BG, "edgecolor": BORDER_COLOR, "alpha": 0.9},
+    )
 
     present_targets = df["target_executed"].unique()
 
@@ -230,7 +239,7 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
             fontsize=8.5,
             fontweight="bold",
             color=color,
-            bbox=dict(boxstyle="round,pad=0.25", fc=CARD_BG, ec=color, alpha=0.9),
+            bbox={"boxstyle": "round,pad=0.25", "fc": CARD_BG, "ec": color, "alpha": 0.9},
         )
 
     ax2.set_title("2. Distribuicao Cumulativa de Latencia (eCDF & Percentis de Cauda)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
@@ -279,7 +288,7 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
         autopct="%1.1f%%",
         startangle=140,
         pctdistance=0.75,
-        wedgeprops=dict(width=0.45, edgecolor=CARD_BG, linewidth=2),
+        wedgeprops={"width": 0.45, "edgecolor": CARD_BG, "linewidth": 2},
     )
 
     for at in autotexts:
@@ -304,18 +313,15 @@ def _load_env_file(env_path: str | None = None) -> None:
     if env_path is None:
         env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
     if os.path.exists(env_path):
-        try:
-            with open(env_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith("#") or "=" not in line:
-                        continue
-                    key, val = line.split("=", 1)
-                    key, val = key.strip(), val.strip().strip("'\"")
-                    if key and key not in os.environ:
-                        os.environ[key] = val
-        except Exception:
-            pass
+        with contextlib.suppress(Exception), open(env_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, val = line.split("=", 1)
+                key, val = key.strip(), val.strip().strip("'\"")
+                if key and key not in os.environ:
+                    os.environ[key] = val
 
 
 _load_env_file()
@@ -327,37 +333,27 @@ def open_image(file_path: str) -> None:
     opened = False
     if sys.platform == "win32":
         # 1. Tenta via explorer.exe (garante abertura mesmo em console elevado Administrator)
-        try:
+        with contextlib.suppress(Exception):
             subprocess.Popen(["explorer.exe", abs_path])  # noqa: S603, S607 # nosec B603, B607
             opened = True
-        except Exception:
-            pass
         # 2. Fallback via os.startfile
         if not opened:
-            try:
+            with contextlib.suppress(Exception):
                 os.startfile(abs_path)  # noqa: S606 # nosec B606
                 opened = True
-            except Exception:
-                pass
         # 3. Fallback via cmd start
         if not opened:
-            try:
+            with contextlib.suppress(Exception):
                 subprocess.Popen(["cmd.exe", "/c", "start", "", abs_path], shell=False)  # noqa: S603, S607 # nosec B603, B607
                 opened = True
-            except Exception:
-                pass
     elif sys.platform == "darwin":
-        try:
+        with contextlib.suppress(Exception):
             subprocess.run(["open", abs_path], check=False)  # noqa: S603, S607 # nosec B603, B607
             opened = True
-        except Exception:
-            pass
     else:
-        try:
+        with contextlib.suppress(Exception):
             subprocess.run(["xdg-open", abs_path], check=False)  # noqa: S603, S607 # nosec B603, B607
             opened = True
-        except Exception:
-            pass
 
     if opened:
         print(f"[VISUALIZACAO] Dashboard aberto na tela com sucesso: {abs_path}")
@@ -381,7 +377,6 @@ def main() -> None:
 
     if not args.no_open and os.path.exists(args.output):
         open_image(args.output)
-
 
 
 if __name__ == "__main__":

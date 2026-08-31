@@ -3,11 +3,11 @@
 import base64
 import html
 import logging
+from pathlib import Path
 import re
 import shutil
 import subprocess  # nosec # noqa: S404
 import sys
-from pathlib import Path
 
 # ruff: noqa: S404, S603
 

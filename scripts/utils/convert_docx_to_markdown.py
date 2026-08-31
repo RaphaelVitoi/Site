@@ -1,9 +1,9 @@
 # pylint: disable=c-extension-no-member
 
+from pathlib import Path
 import shutil
 import sys
 import zipfile
-from pathlib import Path
 
 from lxml import etree  # type: ignore
 

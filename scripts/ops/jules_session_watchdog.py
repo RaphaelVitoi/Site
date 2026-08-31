@@ -5,11 +5,11 @@ registra transicoes de status em JSONL/Log e consolida relatorios SOTA.
 """
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from pathlib import Path
 import re
 import shutil
 import subprocess
-from datetime import UTC, datetime
-from pathlib import Path
 from typing import Final
 
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent.parent

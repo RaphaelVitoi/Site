@@ -7,9 +7,12 @@ Versao: v7.0 GOLD (Typer, Async, Zero I/O Friccao)
 
 import asyncio
 import contextlib
+from datetime import UTC, datetime
+from functools import wraps
 import http.client
 import json
 import os
+from pathlib import Path
 import platform
 import re
 import shutil
@@ -17,21 +20,18 @@ import sqlite3
 import subprocess  # nosec # noqa: S404
 import sys
 import time
-from datetime import UTC, datetime
-from functools import wraps
-from pathlib import Path
 from typing import Any
 
 import httpx
-import psutil
-import typer
 from loguru import logger
+import psutil
 from rich import box
 from rich.align import Align
 from rich.console import Console, Group
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
+import typer
 
 # Integracao Direta com o Kernel (Bypass de Subprocessos)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -119,12 +119,8 @@ STYLE_BOLD_GREEN = "bold green"
 STATUS_PASS = "[green]PASS[/]"  # noqa: S105
 STATUS_FAIL = "[red]FAIL[/]"
 MSG_SEM_MEDIDOR = "sem medidor"
-TRI_STATE_GUARD_BANNER = (
-    "[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
-)
-TRI_STATE_SCRIPTS_BANNER = (
-    "[bold green] Tri-State Guard para Scripts:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
-)
+TRI_STATE_GUARD_BANNER = "[bold green] Tri-State Guard:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
+TRI_STATE_SCRIPTS_BANNER = "[bold green] Tri-State Guard para Scripts:[/] [green]SUCESSO (0E/0W)[/] | [yellow]FRAGIL (0E/1-2W)[/] | [red]FALHOU (>=1E ou >=3W)[/]\n"
 
 _CMD_PREFIX_PYTHON = "python "
 _CMD_PREFIX_PWSH = "pwsh "
@@ -134,13 +130,13 @@ _CMD_PREFIX_NODE = "node "
 def _resolver_comando(cmd_str: str) -> str:
     """Resolve prefixos de runtime (python/pwsh/node) para binarios absolutos."""
     if cmd_str.startswith(_CMD_PREFIX_PYTHON):
-        return f'"{sys.executable}" ' + cmd_str[len(_CMD_PREFIX_PYTHON):]
+        return f'"{sys.executable}" ' + cmd_str[len(_CMD_PREFIX_PYTHON) :]
     if cmd_str.startswith(_CMD_PREFIX_PWSH):
         pwsh_bin = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
-        return f'"{pwsh_bin}" ' + cmd_str[len(_CMD_PREFIX_PWSH):]
+        return f'"{pwsh_bin}" ' + cmd_str[len(_CMD_PREFIX_PWSH) :]
     if cmd_str.startswith(_CMD_PREFIX_NODE):
         node_bin = shutil.which("node") or "node"
-        return f'"{node_bin}" ' + cmd_str[len(_CMD_PREFIX_NODE):]
+        return f'"{node_bin}" ' + cmd_str[len(_CMD_PREFIX_NODE) :]
     return cmd_str
 
 
@@ -604,12 +600,11 @@ def _color_threshold(value: float, thresholds: tuple[float, float], reverse: boo
         if value >= thresholds[0]:
             return "#f1fa8c"
         return "#ff5555"
-    else:
-        if value <= thresholds[0]:
-            return "#50fa7b"
-        if value <= thresholds[1]:
-            return "#f1fa8c"
-        return "#ff5555"
+    if value <= thresholds[0]:
+        return "#50fa7b"
+    if value <= thresholds[1]:
+        return "#f1fa8c"
+    return "#ff5555"
 
 
 def _get_worker_alive_status() -> bool:
@@ -1375,8 +1370,8 @@ def _check_file_ascii(path: Path) -> bool:
     try:
         with open(path, "rb") as f:
             content = f.read()
-            # Garante que o arquivo e UTF-8 valido e sem bytes corrompidos
-            content.decode("utf-8")
+            # Garante que todos os bytes estao estritamente no intervalo ASCII (0-127)
+            content.decode("ascii")
         return True
     except UnicodeDecodeError:
         return False
@@ -1388,9 +1383,8 @@ def _scan_dir_for_ascii(dir_path: Path, base_dir: Path, non_ascii_files: list[Pa
             if path.is_dir():
                 if not _is_ignored_dir(path.name):
                     _scan_dir_for_ascii(path, base_dir, non_ascii_files)
-            elif path.is_file() and path.suffix == ".py":
-                if not _check_file_ascii(path):
-                    non_ascii_files.append(path.relative_to(base_dir))
+            elif path.is_file() and path.suffix == ".py" and not _check_file_ascii(path):
+                non_ascii_files.append(path.relative_to(base_dir))
     except (PermissionError, FileNotFoundError):
         pass
 
@@ -1409,7 +1403,9 @@ def check_ascii_mandate():
             console.print(f"  - {file_path}")
         raise typer.Exit(1)
     console.print("[bold green][OK] Blindagem ASCII integra em todos os modulos Python.[/]")
-    console.print("\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (ASCII) ==========[/]")
+    console.print(
+        "\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (ASCII) ==========[/]"
+    )
     console.print("• Total de Erros:    0 (Teto Maximo Permitido: 0 | Peso: CRITICO)")
     warnings_ascii = len(non_ascii_files)
     console.print(f"• Total de Warnings: {warnings_ascii} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
@@ -1655,7 +1651,9 @@ def memory_guard(
     console.print("[bold magenta]=== [NEXUS] GUARD DE MEMORIA (RAM / COMMIT / VRAM / CACHE) ===[/]")
     for nome, cfg in tetos.items():
         unidade = "%" if "teto_pct" in cfg else "MB"
-        console.print(f"  [dim]{nome:<6} teto {cfg.get('teto_pct', cfg.get('teto_mb'))}{unidade} -> {cfg['acao'].split(' -- ')[0]}[/]")
+        console.print(
+            f"  [dim]{nome:<6} teto {cfg.get('teto_pct', cfg.get('teto_mb'))}{unidade} -> {cfg['acao'].split(' -- ')[0]}[/]"
+        )
 
     try:
         while True:
@@ -1663,8 +1661,6 @@ def memory_guard(
                 break
     except KeyboardInterrupt:
         console.print("\n[bold cyan]Guard tri-camada finalizado.[/]")
-
-
 
 
 def _ler_tetos(caminho: Path = TETOS_PADRAO) -> dict:
@@ -1764,8 +1760,13 @@ def _medir_pressao(tetos: dict) -> dict[str, dict]:
     teto_commit = float(tetos["commit"]["teto_pct"])
     commit = _commit_charge_pct()
     leitura["commit"] = (
-        {"valor": commit[0], "teto": teto_commit, "unidade": "%", "pressao": commit[0] / teto_commit,
-         "detalhe": f"{commit[1]:.1f}/{commit[2]:.1f} GB"}
+        {
+            "valor": commit[0],
+            "teto": teto_commit,
+            "unidade": "%",
+            "pressao": commit[0] / teto_commit,
+            "detalhe": f"{commit[1]:.1f}/{commit[2]:.1f} GB",
+        }
         if commit
         else {"valor": None, "teto": teto_commit, "unidade": "%", "pressao": None, "detalhe": MSG_SEM_MEDIDOR}
     )
@@ -1773,7 +1774,13 @@ def _medir_pressao(tetos: dict) -> dict[str, dict]:
     pct_vram, usado, total = _get_vram_usage()
     teto_vram = float(tetos["vram"]["teto_pct"])
     leitura["vram"] = (
-        {"valor": pct_vram, "teto": teto_vram, "unidade": "%", "pressao": pct_vram / teto_vram, "detalhe": f"{usado:.1f}/{total:.1f} GiB"}
+        {
+            "valor": pct_vram,
+            "teto": teto_vram,
+            "unidade": "%",
+            "pressao": pct_vram / teto_vram,
+            "detalhe": f"{usado:.1f}/{total:.1f} GiB",
+        }
         if pct_vram is not None
         else {"valor": None, "teto": teto_vram, "unidade": "%", "pressao": None, "detalhe": MSG_SEM_MEDIDOR}
     )
@@ -1786,7 +1793,13 @@ def _medir_pressao(tetos: dict) -> dict[str, dict]:
         leitura["cache"] = {"valor": mb, "teto": teto_cache, "unidade": "MB", "pressao": mb / teto_cache}
     # Camada indisponivel e ausencia de dado, nao erro.
     except Exception:  # noqa: BLE001
-        leitura["cache"] = {"valor": None, "teto": teto_cache, "unidade": "MB", "pressao": None, "detalhe": MSG_SEM_MEDIDOR}
+        leitura["cache"] = {
+            "valor": None,
+            "teto": teto_cache,
+            "unidade": "MB",
+            "pressao": None,
+            "detalhe": MSG_SEM_MEDIDOR,
+        }
 
     return leitura
 
@@ -1801,6 +1814,7 @@ def _resumo_da_leitura(leitura: dict[str, dict]) -> str:
     consegue ficar vermelho, e nao dizer isso e deixar o operador confundir
     decoracao com vigilancia.
     """
+
     def _rotulo(nome: str, c: dict) -> str:
         if c["valor"] is None:
             return f"{nome}=?"
@@ -1900,7 +1914,9 @@ def _pressao_justifica_higienizacao() -> tuple[bool, str]:
 def optimize_ram(
     watch: bool = typer.Option(False, "--watch", "-w", help="Executa como daemon em background com auto-higienizacao"),
     threshold: float = typer.Option(90.0, "--threshold", "-t", help="Limiar de RAM (%) para expurgo instantaneo"),
-    interval: int = typer.Option(300, "--interval", "-i", help="Intervalo preditivo (segundos) para higienizacao ciclica"),
+    interval: int = typer.Option(
+        300, "--interval", "-i", help="Intervalo preditivo (segundos) para higienizacao ciclica"
+    ),
 ):
     """Esvaziamento de RAM e Otimizacao Termica do Kernel (Friccao Zero)."""
     if watch:
@@ -2216,15 +2232,25 @@ async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | 
                 w_match = re.search(r"(\d+)\s+warning", texto_unificado, re.IGNORECASE)
                 warnings_count = int(w_match.group(1)) if w_match else 0
             elif "build" in name.lower() or "next" in name.lower():
-                warn_lines = [l for l in linhas if re.search(r"\bwarn(?:ing)?\b", l, re.IGNORECASE) and not l.strip().startswith("✓")]
+                warn_lines = [
+                    l
+                    for l in linhas
+                    if re.search(r"\bwarn(?:ing)?\b", l, re.IGNORECASE) and not l.strip().startswith("✓")
+                ]
                 warnings_count = len(warn_lines)
             else:
                 warnings_count = 0
 
-            console.print(f"\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD ({name.upper()}) ==========[/]")
+            console.print(
+                f"\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD ({name.upper()}) ==========[/]"
+            )
             console.print("• Total de Erros:    0 (Teto Maximo Permitido: 0 | Peso: CRITICO)")
-            console.print(f"• Total de Warnings: {warnings_count} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
-            status_badge = "[bold green][SUCESSO (VERDE)][/]" if warnings_count == 0 else "[bold yellow][FRAGIL (AMARELO)][/]"
+            console.print(
+                f"• Total de Warnings: {warnings_count} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)"
+            )
+            status_badge = (
+                "[bold green][SUCESSO (VERDE)][/]" if warnings_count == 0 else "[bold yellow][FRAGIL (AMARELO)][/]"
+            )
             console.print(f"• Status da Bateria: {status_badge} Integridade formalmente verificada.")
             console.print("[bold cyan]" + "=" * 80 + "[/]\n")
 
@@ -2291,9 +2317,8 @@ def _auto_cure_lightningcss() -> None:
                 logger.warning(f"[AUTO-CURE] Falha ao fazer backup de {lib_name}: {e}")
 
         # 2. Se e a plataforma atual e esta ausente no node_modules
-        if is_current and not lib_path.exists():
-            if not _restore_lightningcss(lib_name, lib_path, cache_path):
-                raise typer.Exit(1)
+        if is_current and not lib_path.exists() and not _restore_lightningcss(lib_name, lib_path, cache_path):
+            raise typer.Exit(1)
 
 
 @ops_app.command("security")
@@ -2321,7 +2346,7 @@ def security_audit(
         crit_count = vulns.get("critical", 0)
         high_count = vulns.get("high", 0)
         tot_count = vulns.get("total", 0)
-    except Exception:
+    except (json.JSONDecodeError, KeyError, TypeError):
         pass
 
     table = Table(title="[bold]AUDITORIA DE VULNERABILIDADES (NIST / GHSA)[/]")
@@ -2342,13 +2367,30 @@ def security_audit(
         )
         raise typer.Exit(1)
 
-    console.print("[bold green][OK] Blindagem de Seguranca 100% integra. Zero CVEs ativas.[/]")
-    console.print("\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (SECURITY) ==========[/]")
-    console.print(f"• Total de Erros:    {crit_count + high_count} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
-    warnings_sec = 0 if tot_count == 0 else tot_count
-    console.print(f"• Total de Warnings: {warnings_sec} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
-    console.print("• Status da Bateria: [bold green][SUCESSO (VERDE)][/] Blindagem de Seguranca 100% integra. Zero CVEs ativas.")
-    console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+    if tot_count == 0:
+        console.print("[bold green][OK] Blindagem de Seguranca 100% integra. Zero CVEs ativas.[/]")
+        console.print(
+            "\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (SECURITY) ==========[/]"
+        )
+        console.print(f"• Total de Erros:    {crit_count} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+        console.print(f"• Total de Warnings: {high_count} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+        console.print(
+            "• Status da Bateria: [bold green][SUCESSO (VERDE)][/] Blindagem de Seguranca 100% integra. Zero CVEs ativas."
+        )
+        console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+    else:
+        console.print(
+            f"[bold yellow][AVISO] {tot_count} vulnerabilidade(s) detectada(s) ({crit_count} criticas, {high_count} altas). Modo Nao-Estrito.[/]"
+        )
+        console.print(
+            "\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (SECURITY) ==========[/]"
+        )
+        console.print(f"• Total de Erros:    {crit_count + high_count} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+        console.print(f"• Total de Warnings: {tot_count} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+        console.print(
+            f"• Status da Bateria: [bold red][FALHOU (VERMELHO)][/] Vulnerabilidades detectadas: {tot_count} ({crit_count} criticas, {high_count} altas)."
+        )
+        console.print("[bold cyan]" + "=" * 80 + "[/]\n")
 
 
 @ops_app.command("verify-integrity")
@@ -2590,9 +2632,7 @@ def _resolver_targets_operacao(items: dict, target_id: str) -> dict | None:
     return None
 
 
-def _render_operations_catalog(
-    titulo_secao: str, titulo_tabela: str, id_col: str, items: dict
-) -> None:
+def _render_operations_catalog(titulo_secao: str, titulo_tabela: str, id_col: str, items: dict) -> None:
     """Imprime catalogo tabelado de operacoes (auditorias ou rotinas)."""
     console.print(f"\n[bold cyan]=== [{titulo_secao}] ===[/]\n")
     table = Table(title=titulo_tabela, box=box.ROUNDED)
@@ -2710,6 +2750,7 @@ def run_thematic_test_suite(
     if res.returncode != 0:
         raise typer.Exit(res.returncode)
 
+
 @app.command("scripts")
 @ops_app.command("scripts")
 def list_and_run_scripts(
@@ -2748,9 +2789,7 @@ def list_and_run_scripts(
 # ==========================================
 
 
-def _coletar_fontes_handoff(
-    claude_dir: Path, agent: str
-) -> tuple[list[str], list[str]]:
+def _coletar_fontes_handoff(claude_dir: Path, agent: str) -> tuple[list[str], list[str]]:
     """Coleta fontes de governanca e memoria para o handoff.
 
     Retorna (context_parts, ausentes). Ausencia declarada, nao silenciosa.
@@ -2793,9 +2832,7 @@ def _coletar_fontes_handoff(
     return context, ausentes
 
 
-def _reportar_handoff(
-    handoff_output_file: Path, ausentes: list[str], handoff_text: str
-) -> None:
+def _reportar_handoff(handoff_output_file: Path, ausentes: list[str], handoff_text: str) -> bool:
     """Imprime resumo do handoff e copia para clipboard via Clippy com fallback multicamada."""
     total = 4  # fontes de governanca (files_to_inject tem 4 chaves)
     if ausentes:
@@ -2815,11 +2852,15 @@ def _reportar_handoff(
         from engine.clippy_clipboard import ClippyClipboard
 
         if ClippyClipboard.copy(handoff_text):
-            console.print("[bold green][+][/] [bold white]Clippy: Handoff copiado para a Area de Transferencia (Clipboard)![/]")
-        else:
-            console.print("[dim] Clippy nao conseguiu acessar o Clipboard (texto preservado em arquivo).[/]")
+            console.print(
+                "[bold green][+][/] [bold white]Clippy: Handoff copiado para a Area de Transferencia (Clipboard)![/]"
+            )
+            return True
+        console.print("[dim] Clippy nao conseguiu acessar o Clipboard (texto preservado em arquivo).[/]")
+        return False
     except Exception as e:
         console.print(f"[dim] Falha no modulo Clippy ({e}). Texto salvo em arquivo.[/]")
+        return False
 
 
 @app.command("handoff")
@@ -2827,7 +2868,7 @@ def _reportar_handoff(
 def execute_handoff(
     web: bool = typer.Option(False, "--web", help="Copia contexto para Clipboard da Web (Claude/Gemini Pro)"),
     agent: str = typer.Option("chico", "--agent", help="Focar contexto num agente especifico"),
-):
+) -> bool:
     """Monta contexto hierarquico isolado e realiza o Handoff Cognitivo de Sessao via Clippy."""
     mode_desc = "Web Clipboard (Claude/Gemini Pro)" if web else "Padrao SOTA"
     console.print(f"\n[bold cyan]=== [PROTOCOLO DE HANDOFF COGNITIVO SOTA v8.0 GOLD ({mode_desc})] ===[/]\n")
@@ -2846,8 +2887,9 @@ def execute_handoff(
     handoff_output_file.parent.mkdir(parents=True, exist_ok=True)
     handoff_output_file.write_text(handoff_text, encoding="utf-8")
 
-    _reportar_handoff(handoff_output_file, ausentes, handoff_text)
+    copiado = _reportar_handoff(handoff_output_file, ausentes, handoff_text)
     console.print("\n[bold cyan]======================== FIM DO HANDOFF ========================[/]\n")
+    return copiado
 
 
 @app.command("clippy")
@@ -2860,15 +2902,21 @@ def execute_clippy_copy(
     handoff_file = claude_dir / "agent-memory" / agent / "HANDOFF_LATEST.md"
 
     if not handoff_file.exists() or handoff_file.stat().st_size == 0:
-        console.print(f"[bold yellow][AVISO] Nenhum handoff existente em {handoff_file.name}. Gerando novo handoff...[/]")
-        execute_handoff(web=True, agent=agent)
+        console.print(
+            f"[bold yellow][AVISO] Nenhum handoff existente em {handoff_file.name}. Gerando novo handoff...[/]"
+        )
+        copiado = execute_handoff(web=True, agent=agent)
+        if not copiado:
+            raise typer.Exit(1)
         return
 
     content = handoff_file.read_text(encoding="utf-8")
     from engine.clippy_clipboard import ClippyClipboard
 
     if ClippyClipboard.copy(content):
-        console.print(f"[bold green][+][/] [bold white]Clippy: Handoff de @{agent} copiado para a Area de Transferencia ({len(content)} caracteres)![/]")
+        console.print(
+            f"[bold green][+][/] [bold white]Clippy: Handoff de @{agent} copiado para a Area de Transferencia ({len(content)} caracteres)![/]"
+        )
     else:
         console.print("[bold red][ERRO] Clippy nao conseguiu acessar o Clipboard.[/]")
         raise typer.Exit(1)
@@ -2892,7 +2940,7 @@ def execute_git_commit(
 
 @ops_app.command("sync")
 def execute_git_sync(
-    target_branch: str = typer.Option("master", "--branch", "-b", help="Branch de destino"),
+    target_branch: str = typer.Option("main", "--branch", "-b", help="Branch de destino"),
 ):
     """Sincroniza o repositorio linearmente via fetch --prune e rebase --autostash."""
     from scripts.ops.git_sota_workflow import GitSotaWorkflow
@@ -2953,6 +3001,7 @@ def voice_speak(
 # COMANDOS DE AUDITORIAS (AUDITS) SOTA v8.0 GOLD
 # ==========================================
 
+
 @audit_app.callback(invoke_without_command=True)
 @app.command("audit")
 def run_or_list_audits(
@@ -2969,7 +3018,9 @@ def run_or_list_audits(
     audits = manifest.get("audits", {})
 
     if list_all:
-        _render_operations_catalog("CATALOGO DE AUDITORIAS SOTA v8.0 GOLD", "Auditorias do Ecossistema", "Audit ID", audits)
+        _render_operations_catalog(
+            "CATALOGO DE AUDITORIAS SOTA v8.0 GOLD", "Auditorias do Ecossistema", "Audit ID", audits
+        )
         return
 
     targets = _resolver_targets_operacao(audits, audit_id)
@@ -2978,7 +3029,10 @@ def run_or_list_audits(
         raise typer.Exit(1)
 
     _executar_bloco_operacoes(
-        "AUDITORIAS", "Auditoria", targets, "AUDITS",
+        "AUDITORIAS",
+        "Auditoria",
+        targets,
+        "AUDITS",
         "Todas as auditorias selecionadas aprovadas com excelencia.",
     )
 
@@ -2986,6 +3040,7 @@ def run_or_list_audits(
 # ==========================================
 # COMANDOS DE ROTINAS (ROUTINES) SOTA v8.0 GOLD
 # ==========================================
+
 
 @routine_app.callback(invoke_without_command=True)
 @app.command("routine")
@@ -3012,7 +3067,10 @@ def run_or_list_routines(
         raise typer.Exit(1)
 
     _executar_bloco_operacoes(
-        "ROTINAS", "Rotina", targets, "ROUTINES",
+        "ROTINAS",
+        "Rotina",
+        targets,
+        "ROUTINES",
         "Todas as rotinas selecionadas executadas com excelencia.",
     )
 
@@ -3051,8 +3109,7 @@ def record_index_command(
     tabela.add_row("[dim]sem frontmatter[/]", str(t["sem_frontmatter"]))
     console.print(tabela)
     console.print(
-        f"[dim]{indice['arquivos_varridos']} arquivos varridos em docs/ e reports/, "
-        f"HEAD {indice['commit_do_head']}.[/]"
+        f"[dim]{indice['arquivos_varridos']} arquivos varridos em docs/ e reports/, HEAD {indice['commit_do_head']}.[/]"
     )
 
     if suspeitos:
@@ -3128,10 +3185,16 @@ def triad_status():
     comp: dict[str, str] = raw_comp if isinstance(raw_comp, dict) else {}
     tabela.add_row("EXA MCP", "Pesquisa Neural & Deep Web Retrieval", comp.get("exa", "OPERATIONAL"))
     tabela.add_row("STITCH MCP", "UI Generativa & Design System SOTA", comp.get("stitch", "OPERATIONAL"))
-    tabela.add_row("GOOGLE JULES", "Agente Coding Cloud Assincrono (VM)", comp.get("jules", "OPERATIONAL" if health.get("jules_cli_installed") else "STANDBY (CLI)"))
+    tabela.add_row(
+        "GOOGLE JULES",
+        "Agente Coding Cloud Assincrono (VM)",
+        comp.get("jules", "OPERATIONAL" if health.get("jules_cli_installed") else "STANDBY (CLI)"),
+    )
 
     console.print(tabela)
-    console.print(f"[dim]Design System: {'[green]OK[/]' if health.get('design_system_ready') else '[red]AUSENTE[/]'} | MCP Config: {'[green]OK[/]' if health.get('mcp_config_ready') else '[red]AUSENTE[/]'}[/]\n")
+    console.print(
+        f"[dim]Design System: {'[green]OK[/]' if health.get('design_system_ready') else '[red]AUSENTE[/]'} | MCP Config: {'[green]OK[/]' if health.get('mcp_config_ready') else '[red]AUSENTE[/]'}[/]\n"
+    )
 
 
 @triad_app.command("plan")
@@ -3147,7 +3210,9 @@ def triad_plan(objective: str = typer.Argument(..., help="Objetivo funcional da 
     phases = raw_phases if isinstance(raw_phases, list) else []
     for phase in phases:
         if isinstance(phase, dict):
-            console.print(f"[bold cyan]Fase {phase.get('phase', '?')}:[/] [bold yellow]{phase.get('agent', '?')}[/] -> [white]{phase.get('action', '')}[/]")
+            console.print(
+                f"[bold cyan]Fase {phase.get('phase', '?')}:[/] [bold yellow]{phase.get('agent', '?')}[/] -> [white]{phase.get('action', '')}[/]"
+            )
     console.print()
 
 
@@ -3163,7 +3228,9 @@ def triad_run(objective: str = typer.Argument(..., help="Objetivo funcional a ex
     console.print("[bold green][+][/] [cyan]Exa:[/] Contexto neural e formulas sintetizadas.")
     console.print("[bold green][+][/] [cyan]Stitch:[/] Especificacoes e tokens visuais validados.")
     console.print("[bold green][+][/] [cyan]Jules:[/] Especificacao de tarefa cloud despachada.")
-    console.print(f"\n[bold gold1]Convergencia:[/] {report.convergence_rate * 100:.0f}% em {report.total_latency_seconds:.4f}s | [bold green]Status: VERIFICADO[/]\n")
+    console.print(
+        f"\n[bold gold1]Convergencia:[/] {report.convergence_rate * 100:.0f}% em {report.total_latency_seconds:.4f}s | [bold green]Status: VERIFICADO[/]\n"
+    )
 
 
 # ==========================================
@@ -3184,17 +3251,23 @@ def web_status():
 
     console.print("\n[bold cyan]=== [SOTA WEB & CDP BROWSER: STATUS] ===[/]\n")
     if health.get("online"):
-        console.print(f"[bold green][+][/] [bold white]Google Chrome Dev (CDP):[/] [bold green]ONLINE[/] na porta [yellow]{health.get('port')}[/]")
+        console.print(
+            f"[bold green][+][/] [bold white]Google Chrome Dev (CDP):[/] [bold green]ONLINE[/] na porta [yellow]{health.get('port')}[/]"
+        )
         console.print(f"    Engine: [dim]{health.get('engine')}[/] | Protocol: [dim]{health.get('protocol')}[/]\n")
     else:
-        console.print("[bold yellow][!][/] [bold white]Google Chrome Dev (CDP):[/] [yellow]STANDBY / OFFLINE[/] (Portas 9222/9223)\n")
+        console.print(
+            "[bold yellow][!][/] [bold white]Google Chrome Dev (CDP):[/] [yellow]STANDBY / OFFLINE[/] (Portas 9222/9223)\n"
+        )
 
 
 @web_app.command("query")
 def web_query(
     prompt: str = typer.Argument(..., help="Query de busca ou URL"),
     tier: int = typer.Option(1, "--tier", "-t", help="Nivel hierarquico do agente (0 a 5)"),
-    mode: str = typer.Option("auto_detect", "--mode", "-m", help="Modo (auto_detect, cdp_browser, ai_search, clipboard_handoff)"),
+    mode: str = typer.Option(
+        "auto_detect", "--mode", "-m", help="Modo (auto_detect, cdp_browser, ai_search, clipboard_handoff)"
+    ),
 ):
     """Executa consulta com grounding contextual e registro de auditoria."""
     from engine.sota_web_browse import AgentTier, SotaWebBrowseOrchestrator, WebBrowseMode, WebQueryRequest
@@ -3209,7 +3282,9 @@ def web_query(
     res = asyncio.run(orchestrator.execute_query(req))
 
     console.print("\n[bold green]=== [SOTA WEB ENGINE: RESPOSTA] ===[/]")
-    console.print(f"[bold cyan]Modo:[/] {res.mode_used.value} | [bold yellow]Latencia:[/] {res.latency_ms:.2f}ms | [dim]ID: {res.audit_id}[/]\n")
+    console.print(
+        f"[bold cyan]Modo:[/] {res.mode_used.value} | [bold yellow]Latencia:[/] {res.latency_ms:.2f}ms | [dim]ID: {res.audit_id}[/]\n"
+    )
     console.print(res.content)
     console.print()
 

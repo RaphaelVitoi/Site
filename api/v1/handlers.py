@@ -2,17 +2,19 @@
 Web Handlers -- Endpoints HTTP do micro-servidor SOTA.
 """
 # pylint: disable=broad-exception-caught
+from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import json
 import logging
 import os
+from pathlib import Path
 import re
 import time
-import zipfile
-from pathlib import Path
 from typing import Any, Literal, cast
+import zipfile
 
 try:
     import psutil
@@ -30,6 +32,8 @@ from utils.cache import cache as sota_cache
 from utils.harmonizer import harmonizer
 from utils.resources import ResourceGuard
 from utils.storage import buckets as sota_buckets
+
+BASE_WORKSPACE_DIR: Path = Path(__file__).resolve().parent.parent.parent
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +69,7 @@ async def handle_get_status(request: web.Request) -> web.Response:
     """Retorna o status das tarefas na fila (todas ou filtradas)."""
     manager = request.app["manager"]
     try:
-        status = request.query.get("status", None)
+        status = request.rel_url.query.get("status", None)
         if status == "all":
             status = None
         tasks = await manager.get_tasks(status)
@@ -78,7 +82,7 @@ async def handle_get_key_health_summary(request: web.Request) -> web.Response:
     """Retorna o relatorio de saude e latencia das chaves de API."""
     manager = request.app["manager"]
     try:
-        raw_window = request.query.get("window_minutes", "180")
+        raw_window = request.rel_url.query.get("window_minutes", "180")
         window_minutes = int(raw_window)
         window_minutes = max(5, min(window_minutes, 10080))
 
@@ -110,7 +114,7 @@ async def handle_get_key_health_summary(request: web.Request) -> web.Response:
 async def handle_get_task_result(request: web.Request) -> web.Response:
     """Obtem o resultado de uma tarefa finalizada a partir do disco."""
     try:
-        task_id = request.query.get("id", "").strip()
+        task_id = request.rel_url.query.get("id", "").strip()
         if not task_id:
             return web.json_response({"error": "Parametro 'id' ausente."}, status=400)
         # Guardrail: aceita ids alfanumericos, '-', '_' e '@' para evitar path traversal.
@@ -149,7 +153,7 @@ async def handle_get_state(request: web.Request) -> web.Response:
     """Recupera uma variavel de estado dinamico do sistema."""
     manager = request.app["manager"]
     try:
-        key = request.query.get("key")
+        key = request.rel_url.query.get("key")
         if not key:
             return web.json_response({"error": "key param missing"}, status=400)
         val = await manager.get_system_state(key)
@@ -454,7 +458,7 @@ def _get_allowed_roots(base_dir: Path) -> list[tuple[str, Path]]:
 
 async def handle_list_files(_request: web.Request) -> web.Response:
     """SOTA CLI/API: Lists files in the allowed workspace and Google Drive folders."""
-    base_dir = Path(__file__).resolve().parent.parent.parent
+    base_dir = BASE_WORKSPACE_DIR
     ignored_folders = {
         ".venv",
         ".venv-wsl",
@@ -491,7 +495,7 @@ async def handle_list_files(_request: web.Request) -> web.Response:
 
 
 def _parse_spreadsheet(ext: str, file_path: Path) -> dict[str, Any]:
-    import pandas as pd  # pylint: disable=import-outside-toplevel
+    import pandas as pd  # pylint: disable=import-outside-toplevel # noqa: PLC0415
 
     if ext == ".csv":
         df = pd.read_csv(file_path, nrows=50)  # pyright: ignore[reportUnknownMemberType]
@@ -503,7 +507,7 @@ def _parse_spreadsheet(ext: str, file_path: Path) -> dict[str, Any]:
 
 
 def _list_zip(file_path: Path) -> list[dict[str, Any]]:
-    from utils.os_integration import get_winrar_path  # pylint: disable=import-outside-toplevel
+    from utils.os_integration import get_winrar_path  # pylint: disable=import-outside-toplevel # noqa: PLC0415
 
     files: list[dict[str, Any]] = []
     if zipfile.is_zipfile(file_path):
@@ -519,8 +523,8 @@ def _list_zip(file_path: Path) -> list[dict[str, Any]]:
 
 
 def _parse_image(file_path: Path) -> dict[str, Any]:
-    from PIL import Image  # pylint: disable=import-outside-toplevel
-    from PIL.ExifTags import TAGS  # pylint: disable=import-outside-toplevel
+    from PIL import Image  # pylint: disable=import-outside-toplevel # noqa: PLC0415
+    from PIL.ExifTags import TAGS  # pylint: disable=import-outside-toplevel # noqa: PLC0415
 
     with Image.open(file_path) as img:
         exif_data: dict[str, str] = {}
@@ -572,13 +576,13 @@ def _get_raw_content_type(ext: str) -> str:
 
 async def handle_view_file(request: web.Request) -> web.StreamResponse:
     """SOTA CLI/API: Serves or parses the file content securely with traversal guards."""
-    path_param = request.query.get("path", "").strip()
-    raw_param = request.query.get("raw", "false").strip().lower() == "true"
+    path_param = request.rel_url.query.get("path", "").strip()
+    raw_param = request.rel_url.query.get("raw", "false").strip().lower() == "true"
 
     if not path_param:
         return web.json_response({"error": "Parametro 'path' ausente."}, status=400)
 
-    file_path = Path(path_param).resolve()
+    file_path = await asyncio.to_thread(lambda: Path(path_param).resolve())
     if not _is_file_access_allowed(file_path):
         return web.json_response({"error": "[SEC] Acesso negado: Caminho fora das fronteiras autorizadas."}, status=403)
 
@@ -646,19 +650,19 @@ async def handle_view_file(request: web.Request) -> web.StreamResponse:
 async def handle_web_search(request: web.Request) -> web.Response:
     """Realiza busca na web via Tavily/DDG fallback e retorna JSON."""
     try:
-        query = request.query.get("q", "").strip()
+        query = request.rel_url.query.get("q", "").strip()
         if not query:
             return web.json_response({"error": "Query parameter 'q' is required"}, status=400)
 
-        max_results_str = request.query.get("max", "5")
+        max_results_str = request.rel_url.query.get("max", "5")
         try:
             max_results = int(max_results_str)
         except ValueError:
             max_results = 5
 
-        provider = request.query.get("provider", "auto")
+        provider = request.rel_url.query.get("provider", "auto")
 
-        from utils.web_search import get_search_engine_from_env  # pylint: disable=import-outside-toplevel
+        from utils.web_search import get_search_engine_from_env  # noqa: PLC0415
 
         engine = get_search_engine_from_env()
 
@@ -693,8 +697,8 @@ async def handle_web_search(request: web.Request) -> web.Response:
 
 async def handle_calculate_perspective(request: web.Request) -> web.Response:
     """Calcula pontualmente a Perspectiva Matematica (PMev) VITOI."""
-    from core.perspective_schemas import PerspectiveCalculationRequest, PerspectivaResult  # pylint: disable=import-outside-toplevel
-    from engine.vitoi_perspective_engine import VitoiPerspectiveEngine  # pylint: disable=import-outside-toplevel
+    from core.perspective_schemas import PerspectivaResult, PerspectiveCalculationRequest  # noqa: PLC0415
+    from engine.vitoi_perspective_engine import VitoiPerspectiveEngine  # noqa: PLC0415
 
     try:
         data = await request.json()
@@ -759,8 +763,8 @@ async def handle_calculate_perspective(request: web.Request) -> web.Response:
 
 async def handle_simulate_perspective_tree(request: web.Request) -> web.Response:
     """Executa a simulacao recursiva da arvore de decisao de Perspectiva Matematica."""
-    from core.perspective_schemas import PerspectiveTreeRequest, PerspectiveTreeResponse  # pylint: disable=import-outside-toplevel
-    from engine.vitoi_perspective_engine import VitoiPerspectiveEngine  # pylint: disable=import-outside-toplevel
+    from core.perspective_schemas import PerspectiveTreeRequest, PerspectiveTreeResponse  # noqa: PLC0415
+    from engine.vitoi_perspective_engine import VitoiPerspectiveEngine  # noqa: PLC0415
 
     try:
         data = await request.json()
@@ -813,8 +817,8 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
 
 async def handle_import_solver_tree(request: web.Request) -> web.Response:
     """Importa e normaliza arvores de DeepSolver, GTOWizard, Monker, HRC Pro e PioSolver."""
-    from core.perspective_schemas import SolverImportRequest  # pylint: disable=import-outside-toplevel
-    from engine.solver_importers import UniversalSolverImporter  # pylint: disable=import-outside-toplevel
+    from core.perspective_schemas import SolverImportRequest  # noqa: PLC0415
+    from engine.solver_importers import UniversalSolverImporter  # noqa: PLC0415
 
     try:
         data = await request.json()
@@ -837,9 +841,9 @@ async def handle_import_solver_tree(request: web.Request) -> web.Response:
 
 async def handle_pmev_heatmap(request: web.Request) -> web.Response:
     """Gera matriz comparativa 13x13 (DeepSolver vs. PMev) e analise diferencial de combos."""
-    from core.perspective_schemas import PmevHeatmapRequest, PmevHeatmapResponse  # pylint: disable=import-outside-toplevel
-    from engine.bayesian_range import calculate_pmev_call_threshold  # pylint: disable=import-outside-toplevel
-    from engine.solver_importers.deep_solver import DeepSolverImporter  # pylint: disable=import-outside-toplevel
+    from core.perspective_schemas import PmevHeatmapRequest, PmevHeatmapResponse  # noqa: PLC0415
+    from engine.bayesian_range import calculate_pmev_call_threshold  # noqa: PLC0415
+    from engine.solver_importers.deep_solver import DeepSolverImporter  # noqa: PLC0415
 
     try:
         data = await request.json()
@@ -904,21 +908,17 @@ async def handle_prometheus_metrics(request: web.Request) -> web.Response:
     manager = request.app.get("manager")
     db_metrics: dict[str, Any] = {}
     if manager and hasattr(manager, "get_realtime_metrics"):
-        try:
+        with contextlib.suppress(Exception):
             db_metrics = await manager.get_realtime_metrics()
-        except Exception:
-            pass
 
     # Coleta de metricas do SO em tempo real
     cpu_load = 8.0
     vram_bytes = 6151575960
     ram_free_mb = 6400.0
     if psutil is not None:
-        try:
+        with contextlib.suppress(Exception):
             cpu_load = float(psutil.cpu_percent())
             ram_free_mb = float(psutil.virtual_memory().available / (1024 * 1024))
-        except Exception:
-            pass
 
     lines = [
         "# HELP nexus_tasks_total Total de tarefas registradas na fila por status",

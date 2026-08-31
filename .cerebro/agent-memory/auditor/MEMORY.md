@@ -1,6 +1,6 @@
 # @auditor MEMORY - Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** GLOBAL_INSTRUCTIONS.md, project-context.md
+> **Status:** Ativo | **Vinculo:** GLOBAL_INSTRUCTIONS.md, project-context.md
 
 ---
 

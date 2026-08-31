@@ -53,10 +53,10 @@ contiver tudo que entrou. Consolidacao que perde conteudo e pior que divergencia
 from __future__ import annotations
 
 import argparse
-import re
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+import re
+import sys
 
 RAIZ = Path(__file__).resolve().parents[2]
 

@@ -6,11 +6,11 @@ previsao de task, RUNNING & ETA e status das ultimas 5 tarefas.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import json
+from pathlib import Path
 import socket
 import sqlite3
-from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -32,7 +32,7 @@ def get_model_status() -> dict:
     models_manifest = {}
     if OLLAMA_MODELS_PATH.exists():
         try:
-            with open(OLLAMA_MODELS_PATH, "r", encoding="utf-8") as f:
+            with open(OLLAMA_MODELS_PATH, encoding="utf-8") as f:
                 manifest_data = json.load(f)
                 for m in manifest_data.get("models", []):
                     models_manifest[m.get("alias")] = m
@@ -98,17 +98,17 @@ def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tu
         s == "completed" and (meta.get("soft_failure") or meta.get("last_error_class"))
     ):
         return "completa_falhou", "Completa mas falhou"
-    elif s == "review_required" or (s == "completed" and (meta.get("review_required") or meta.get("requires_review"))):
+    if s == "review_required" or (s == "completed" and (meta.get("review_required") or meta.get("requires_review"))):
         return "completa_revisao", "Completa mas requer revisao adicional"
-    elif s in ("failed", "error"):
+    if s in ("failed", "error"):
         return "failed", "Failed (Falha Dura)"
-    elif s in ("suspended", "paused", "holding"):
+    if s in ("suspended", "paused", "holding"):
         return "suspensa", "Suspensa"
-    elif s in ("pending", "queued", "triggered", "forecasted"):
+    if s in ("pending", "queued", "triggered", "forecasted"):
         return "prevista_engatilhada", "Prevista e engatilhada (Fila)"
-    elif s == "completed":
+    if s == "completed":
         return "completed", "Concluida com Sucesso"
-    elif s == "running":
+    if s == "running":
         return "running", "Em Execucao (RUNNING)"
     return "unknown", s.capitalize()
 

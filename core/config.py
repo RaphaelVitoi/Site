@@ -1,15 +1,17 @@
 """Modulo de configuracao central SOTA."""
 # pylint: disable=broad-exception-caught, global-statement, line-too-long, import-outside-toplevel
+from __future__ import annotations
 
 import atexit
+from datetime import UTC, datetime, timedelta
 import json
 import logging
 import os
+from pathlib import Path
+import re
 import sys
 import threading
 import time
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from typing import Any
 
 from utils.env_loader import load_env
@@ -451,8 +453,6 @@ class SecretMaskingFilter(logging.Filter):
     def __init__(self, name: str = ""):
         super().__init__(name)
         # Padrao para chaves: sk-..., gsk-..., anthropic-..., google-..., etc.
-        import re  # pylint: disable=import-outside-toplevel
-
         self.secret_pattern = re.compile(
             r"(sk-[a-zA-Z0-9]{20,}|AIza[a-zA-Z0-9\-_]{35}|xox[pb]-[0-9]{12}-[a-zA-Z0-9]{12,}|"
             r"ghp_[a-zA-Z0-9]{36}|(?:api[-_])?key[=:][\s\"']?([a-zA-Z0-9\-_]{20,})[\s\"']?)",

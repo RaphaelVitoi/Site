@@ -3,14 +3,15 @@
 Protocolo Chico SOTA v8.0 GOLD - Pre-Commit, Semantic Commit, Linear Sync e Push.
 Garante que nenhum commit ou push ocorra sem aprovacao formal do Quality Gate.
 """
+
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 from typing import Final
 
 logger = logging.getLogger("git_sota_workflow")
@@ -67,30 +68,35 @@ class GitSotaWorkflow:
         gate_script = BASE_DIR / "scripts/ops/cwv_gate.ps1"
         pwsh = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
 
-        if gate_script.exists():
-            res = subprocess.run(
-                [pwsh, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(gate_script)],
-                cwd=str(BASE_DIR),
-                check=False,
-            )
-            if res.returncode != 0:
-                logger.error("[GIT-GATE] cwv_gate.ps1 reprovou com codigo %d.", res.returncode)
-                return False
+        if not gate_script.exists():
+            logger.error("[GIT-GATE] cwv_gate.ps1 nao encontrado em %s.", gate_script)
+            return False
+
+        res = subprocess.run(
+            [pwsh, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(gate_script)],
+            cwd=str(BASE_DIR),
+            check=False,
+        )
+        if res.returncode != 0:
+            logger.error("[GIT-GATE] cwv_gate.ps1 reprovou com codigo %d.", res.returncode)
+            return False
 
         # Valida registros e relatorios via record_gate se houver relatorios em staging
         staged = cls.get_staged_files()
-        reports_staged = [f for f in staged if f.startswith("reports/") or f.startswith("docs/reports/")]
+        reports_staged = [f for f in staged if f.startswith(("reports/", "docs/reports/"))]
         if reports_staged:
             record_gate_script = BASE_DIR / "scripts/ops/record_gate.py"
-            if record_gate_script.exists():
-                res_rec = subprocess.run(
-                    [sys.executable, str(record_gate_script)],
-                    cwd=str(BASE_DIR),
-                    check=False,
-                )
-                if res_rec.returncode != 0:
-                    logger.error("[GIT-GATE] record_gate.py reprovou a formatacao dos relatorios.")
-                    return False
+            if not record_gate_script.exists():
+                logger.error("[GIT-GATE] record_gate.py nao encontrado em %s.", record_gate_script)
+                return False
+            res_rec = subprocess.run(
+                [sys.executable, str(record_gate_script)],
+                cwd=str(BASE_DIR),
+                check=False,
+            )
+            if res_rec.returncode != 0:
+                logger.error("[GIT-GATE] record_gate.py reprovou a formatacao dos relatorios.")
+                return False
 
         return True
 
@@ -122,13 +128,22 @@ class GitSotaWorkflow:
         return res.returncode == 0
 
     @classmethod
-    def sync_linear(cls, target_branch: str = "master") -> bool:
+    def sync_linear(cls, target_branch: str = "main") -> bool:
         """Sincroniza repositorio linearmente via fetch --prune e rebase --autostash."""
         sync_script = BASE_DIR / "scripts/ops/Sync-RepoSota.ps1"
         pwsh = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
         if sync_script.exists():
             res = subprocess.run(
-                [pwsh, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(sync_script), "-TargetBranch", target_branch],
+                [
+                    pwsh,
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    str(sync_script),
+                    "-TargetBranch",
+                    target_branch,
+                ],
                 cwd=str(BASE_DIR),
                 check=False,
             )

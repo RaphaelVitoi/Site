@@ -13,9 +13,9 @@ import argparse
 import asyncio
 import concurrent.futures
 import os
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 from typing import Any
 
 try:

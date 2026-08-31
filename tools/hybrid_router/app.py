@@ -9,17 +9,18 @@ conformidade estrita com schemas Pydantic v2.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+from enum import StrEnum
 import os
 import re
 import sys
 import time
-from contextlib import asynccontextmanager
-from enum import StrEnum
-from typing import AsyncGenerator, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-import httpx
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+import httpx
 from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
 
@@ -28,7 +29,7 @@ def _load_env_file(env_path: str | None = None) -> None:
         env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
     if os.path.exists(env_path):
         try:
-            with open(env_path, "r", encoding="utf-8") as f:
+            with open(env_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line or line.startswith("#") or "=" not in line:
@@ -37,7 +38,7 @@ def _load_env_file(env_path: str | None = None) -> None:
                     key, val = key.strip(), val.strip().strip("'\"")
                     if key and key not in os.environ:
                         os.environ[key] = val
-        except Exception:
+        except (OSError, UnicodeDecodeError):
             pass
 
 
@@ -61,6 +62,7 @@ else:
 # 1. MODELOS DE DADOS E ESQUEMAS PYDANTIC V2
 # =====================================================================
 
+
 class ExecutionTarget(StrEnum):
     LOCAL_LLAMA_VULKAN = "LOCAL_LLAMA_VULKAN"
     GEMINI_37_FLASH_STANDARD = "GEMINI_37_FLASH_STANDARD"
@@ -71,7 +73,9 @@ class RouteMetrics(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     estimated_tokens: int = Field(..., description="Contagem estimada de tokens no prompt.")
-    math_latex_density: float = Field(..., description="Densidade de formalismo matematico e Teoria dos Jogos (0.0 a 1.0).")
+    math_latex_density: float = Field(
+        ..., description="Densidade de formalismo matematico e Teoria dos Jogos (0.0 a 1.0)."
+    )
     code_complexity_score: float = Field(..., description="Score de complexidade sintatica de codigo (0.0 a 1.0).")
     overall_complexity: float = Field(..., description="Metrica composta ponderada de complexidade analitica.")
     requires_tools: bool = Field(..., description="Indica necessidade de execucao de ferramentas.")
@@ -95,8 +99,12 @@ class GenerateRequest(BaseModel):
     prompt: str = Field(..., min_length=1, description="Payload de entrada para inferencia.")
     system_instruction: str = Field(default="", description="Instrucoes de sistema ou metaprompt de governanca.")
     force_target: ExecutionTarget | None = Field(default=None, description="Sobrescreve a heuristica do roteador.")
-    thinking_budget_override: int | None = Field(default=None, ge=-1, le=65536, description="Orcamento de raciocinio (-1=dinamico, 0=off, >0=fixo).")
-    response_schema: dict[str, JsonValue] | None = Field(default=None, description="JSON Schema para decodificacao gramatical estrita.")
+    thinking_budget_override: int | None = Field(
+        default=None, ge=-1, le=65536, description="Orcamento de raciocinio (-1=dinamico, 0=off, >0=fixo)."
+    )
+    response_schema: dict[str, JsonValue] | None = Field(
+        default=None, description="JSON Schema para decodificacao gramatical estrita."
+    )
     tools_provided: bool = Field(default=False, description="Flag indicando presenca de ferramentas no pipeline.")
 
 
@@ -124,6 +132,7 @@ class HealthCheckResponse(BaseModel):
 # =====================================================================
 # 2. ANALISADOR ESTATICO DE COMPLEXIDADE E DENSIDADE
 # =====================================================================
+
 
 class ComplexityAnalyzer:
     """Motor analitico para triagem estatica de densidade simbolica e codigo."""
@@ -178,7 +187,9 @@ class ComplexityAnalyzer:
             rationale = "Requisicao com Tool Calling delegada ao Gemini Cloud."
         elif overall_complexity >= self.complexity_threshold:
             selected_target = ExecutionTarget.GEMINI_37_FLASH_THINKING
-            thinking_budget = thinking_override if thinking_override is not None else (4096 if overall_complexity < 0.75 else 16384)
+            thinking_budget = (
+                thinking_override if thinking_override is not None else (4096 if overall_complexity < 0.75 else 16384)
+            )
             rationale = f"Alta complexidade analitica ({overall_complexity:.2f}). Ativacao de Extended Thinking."
         elif estimated_tokens > self.local_max_tokens:
             selected_target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
@@ -210,6 +221,7 @@ class ComplexityAnalyzer:
 # 3. CLIENTES DE INFERENCIA ASSINCRONOS
 # =====================================================================
 
+
 class LocalLlamaVulkanClient:
     """Cliente HTTP com conexao assincrona persistente para llama.cpp."""
 
@@ -235,7 +247,6 @@ class LocalLlamaVulkanClient:
             return res.status_code == 200
         except httpx.RequestError:
             return False
-
 
     async def generate(self, prompt: str, system_instruction: str = "") -> str:
         if not self._client:
@@ -291,9 +302,7 @@ class GeminiCloudClient:
             raise RuntimeError("SDK Google GenAI nao inicializado ou GEMINI_API_KEY ausente.")
 
         thinking_cfg = (
-            types.ThinkingConfigDict(thinking_budget=thinking_budget)
-            if thinking_budget is not None
-            else None
+            types.ThinkingConfigDict(thinking_budget=thinking_budget) if thinking_budget is not None else None
         )
 
         config = types.GenerateContentConfigDict(
@@ -328,6 +337,7 @@ class GeminiCloudClient:
 # =====================================================================
 # 4. ORQUESTRADOR HIBRIDO COM RESILIENCIA E FAILOVER
 # =====================================================================
+
 
 class HybridOrchestrator:
     def __init__(
@@ -380,7 +390,11 @@ class HybridOrchestrator:
         if not self.cloud.is_configured:
             # Modo de simulacao offline opcional para testes de infraestrutura
             if os.getenv("SIMULATE_INFERENCE", "false").lower() in ("true", "1", "yes"):
-                sim_latency = 120.0 if target == ExecutionTarget.LOCAL_LLAMA_VULKAN else (450.0 if target == ExecutionTarget.GEMINI_37_FLASH_STANDARD else 1200.0)
+                sim_latency = (
+                    120.0
+                    if target == ExecutionTarget.LOCAL_LLAMA_VULKAN
+                    else (450.0 if target == ExecutionTarget.GEMINI_37_FLASH_STANDARD else 1200.0)
+                )
                 await asyncio.sleep(sim_latency / 1000.0)
                 latency = (time.perf_counter() - start_time) * 1000.0
                 return GenerateResponse(
@@ -419,9 +433,7 @@ class HybridOrchestrator:
 # 5. LIFESPAN E APLICACAO FASTAPI
 # =====================================================================
 
-local_llama_client = LocalLlamaVulkanClient(
-    endpoint_url=os.getenv("LOCAL_LLAMA_URL", "http://127.0.0.1:8080/v1")
-)
+local_llama_client = LocalLlamaVulkanClient(endpoint_url=os.getenv("LOCAL_LLAMA_URL", "http://127.0.0.1:8080/v1"))
 gemini_cloud_client = GeminiCloudClient(
     api_key=os.getenv("GEMINI_API_KEY"),
     model_id=os.getenv("GEMINI_MODEL_ID", "gemini-2.5-flash"),
@@ -494,6 +506,7 @@ async def generate_completion(request: GenerateRequest) -> GenerateResponse:
 
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.getenv("PORT", "8000"))
     host = os.getenv("HOST", "0.0.0.0")  # noqa: S104 # nosec B104
     uvicorn.run("app:app", host=host, port=port, reload=False, log_level="info")

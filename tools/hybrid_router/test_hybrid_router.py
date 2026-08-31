@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 import sys
 import unittest
-from pathlib import Path
 
 _REPO_ROOT = str(Path(__file__).resolve().parents[2])
 if _REPO_ROOT not in sys.path:
@@ -30,8 +30,8 @@ class TestComplexityAnalyzer(unittest.TestCase):
     def test_low_density_prompt_routes_to_local(self) -> None:
         prompt = "Resuma as diferencas entre compilacao JIT e AOT em tres topicos."
         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt)
-        self.assertEqual(metrics.selected_target, ExecutionTarget.LOCAL_LLAMA_VULKAN)
-        self.assertIsNone(metrics.thinking_budget)
+        assert metrics.selected_target == ExecutionTarget.LOCAL_LLAMA_VULKAN
+        assert metrics.thinking_budget is None
 
     def test_high_density_game_theory_routes_to_thinking(self) -> None:
         prompt = (
@@ -39,22 +39,22 @@ class TestComplexityAnalyzer(unittest.TestCase):
             "$U_1(B,B)=1$, derive o equilibrio de Nash misto, o valor esperado e a variancia sob restricao de ICM e PMev."
         )
         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt)
-        self.assertEqual(metrics.selected_target, ExecutionTarget.GEMINI_37_FLASH_THINKING)
-        self.assertIsNotNone(metrics.thinking_budget)
-        self.assertGreater(metrics.thinking_budget or 0, 0)
+        assert metrics.selected_target == ExecutionTarget.GEMINI_37_FLASH_THINKING
+        assert metrics.thinking_budget is not None
+        assert (metrics.thinking_budget or 0) > 0
 
     def test_tools_provided_routes_to_cloud_standard(self) -> None:
         prompt = "Consulte o status do repositorio git e execute os testes."
         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt, tools_provided=True)
-        self.assertEqual(metrics.selected_target, ExecutionTarget.GEMINI_37_FLASH_STANDARD)
-        self.assertTrue(metrics.requires_tools)
+        assert metrics.selected_target == ExecutionTarget.GEMINI_37_FLASH_STANDARD
+        assert metrics.requires_tools is True
 
     def test_strict_json_schema_routes_to_cloud_standard(self) -> None:
         prompt = "Extraia os dados cadastrais do cliente."
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt, response_schema=schema)
-        self.assertEqual(metrics.selected_target, ExecutionTarget.GEMINI_37_FLASH_STANDARD)
-        self.assertTrue(metrics.requires_strict_json)
+        assert metrics.selected_target == ExecutionTarget.GEMINI_37_FLASH_STANDARD
+        assert metrics.requires_strict_json is True
 
     def test_force_target_override(self) -> None:
         prompt = "Mensagem simples."
@@ -63,8 +63,8 @@ class TestComplexityAnalyzer(unittest.TestCase):
             force_target=ExecutionTarget.GEMINI_37_FLASH_THINKING,
             thinking_override=8192,
         )
-        self.assertEqual(metrics.selected_target, ExecutionTarget.GEMINI_37_FLASH_THINKING)
-        self.assertEqual(metrics.thinking_budget, 8192)
+        assert metrics.selected_target == ExecutionTarget.GEMINI_37_FLASH_THINKING
+        assert metrics.thinking_budget == 8192
 
     def test_pydantic_generate_request_validation(self) -> None:
         req = GenerateRequest(
@@ -72,8 +72,8 @@ class TestComplexityAnalyzer(unittest.TestCase):
             system_instruction="Sistema",
             thinking_budget_override=2048,
         )
-        self.assertEqual(req.prompt, "Teste de prompt estruturado")
-        self.assertEqual(req.thinking_budget_override, 2048)
+        assert req.prompt == "Teste de prompt estruturado"
+        assert req.thinking_budget_override == 2048
 
 
 if __name__ == "__main__":

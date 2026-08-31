@@ -1,7 +1,7 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
+from pathlib import Path
 import sys
 import zipfile
-from pathlib import Path
 
 import defusedxml.ElementTree as DefusedET
 

@@ -1,9 +1,9 @@
 # @architect MEMORY - O Cortex Individual
 
-&gt; **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
-&gt; **Navegacao Fractal:** [1. Identidade](../../CEREBRO.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
+> **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
+> **Navegacao Fractal:** [1. Identidade](../../CEREBRO.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
 
-**\[2026-04-12\] Blindagem Topológica e Erradicação de Entropia (Homeostase SOTA)**
+**[2026-04-12] Blindagem Topológica e Erradicação de Entropia (Homeostase SOTA)**
 
 - **#arquitetura:** A estabilidade de interfaces analíticas complexas (Recharts) dentro de containers Flexbox/Grid exige a quebra da restrição intrínseca do SVG. A injeção de `minWidth={0}` e `minHeight={0}` nos `ResponsiveContainer`s curou a "Morte Térmica Visual" do projeto.
 - **#seguranca:** A orquestração backend (RAG e Task Executor) estava vulnerável à topologia virtual do OneDrive. Estabelecemos a ancoragem absoluta de diretórios via `Path(__file__).parent.resolve()` como invariante estrutural contra Path Traversal e falhas silentes de I/O.
@@ -25,7 +25,7 @@ Arquitetura de Sistemas Hibridos, Design de Software SOTA, Modelagem de Dados Re
 - **#padrao:** Adocao do Framework SENTINEL-v1 como crivo obrigatorio para toda arquitetura macro.
 - **#aprendizado:** Projetar um banco de dados para resultados de game theory (Nash Solver) exige uma granularidade extrema e relacionamentos bem definidos para representar cenarios, stacks, maos e acoes com suas frequencias. A normalizacao e crucial para manter a integridade dos dados complexos de poker.
 - **#aprendizado_novo:** A distinção clara entre `Spot` (o estado do jogo em um ponto de decisão) e `StrategyResult` (a solução do solver para uma mão específica nesse `Spot`) é fundamental para modelar estratégias mistas e permitir análises detalhadas de EV. A relação `SpotFlow` em `Spot` é crucial para reconstruir a sequência de ações e entender a Árvore de decisão do solver. Isso solidifica a capacidade de nosso sistema de game theory.
-- **#aprendizado_novo:** A modelagem de Árvores de jogo dinamicas em um banco de dados relacional requer uma abordagem cuidadosa com relações recursivas (`Spot` -&gt; `SpotFlow` -&gt; `Spot`). A flexibilidade de tipos como `String?` para `action_value` e `Json?` para `initial_stacks`/`board_cards` é essencial para acomodar a variedade de cenários de poker. A criação de um modelo `Player` genérico, distinto de `User`, permite a representação de jogadores simulados mantendo a integridade referencial.
+- **#aprendizado_novo:** A modelagem de Árvores de jogo dinamicas em um banco de dados relacional requer uma abordagem cuidadosa com relações recursivas (`Spot` -> `SpotFlow` -> `Spot`). A flexibilidade de tipos como `String?` para `action_value` e `Json?` para `initial_stacks`/`board_cards` é essencial para acomodar a variedade de cenários de poker. A criação de um modelo `Player` genérico, distinto de `User`, permite a representação de jogadores simulados mantendo a integridade referencial.
 
 ## 4. SINERGIA E HARMONIA (#relacionamento)
 

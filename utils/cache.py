@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import contextlib
 import hashlib
 import json
 import logging
@@ -72,7 +75,7 @@ class SOTACache:
         cache_file = os.path.join(self.cache_dir, f"{hashed_key}.json")
         try:
             if os.path.exists(cache_file):
-                with open(cache_file, "r", encoding="utf-8") as f:
+                with open(cache_file, encoding="utf-8") as f:
                     data = json.load(f)
                 expiry = data.get("expiry", 0)
                 if expiry > now:
@@ -84,10 +87,8 @@ class SOTACache:
                 os.remove(cache_file)
         except json.JSONDecodeError:
             logger.warning("[CACHE] Arquivo corrompido detectado para a chave '%s'. Reciclando...", key)
-            try:
+            with contextlib.suppress(OSError):
                 os.remove(cache_file)
-            except OSError:
-                pass
         except Exception as e:
             logger.debug("[CACHE] Falha ao recuperar chave do disco '%s': %s", key, e)
         return None
@@ -113,7 +114,7 @@ def _read_file_with_cache(path: str) -> str:
     val = _read_file_cached_internal(path)
     if not val and os.path.exists(path):
         try:
-            with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(path, encoding="utf-8", errors="ignore") as f:
                 val = f.read()
                 cache.set(f"file:{path}", val)
         except Exception:

@@ -4,14 +4,15 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Sequence
 import json
 import logging
 import os
+from pathlib import Path
 import re
 import sys
 import time
-from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import aiofiles
 
@@ -115,8 +116,8 @@ class LanceDBBackend:
                     chunk_ids = id_list[j : j + 50]
                     pred = " OR ".join([f"id = '{x}'" for x in chunk_ids])
                     self.table.delete(pred)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("[LANCEDB] Falha ao expurgar lote de ids: %s", e)
             self.table.add(records)
 
     def search_hybrid(
@@ -154,10 +155,10 @@ class LanceDBBackend:
 def ingest_drive_pdfs(drive_path: str):
     """Ingestao Vetorial de PDF para RAG do Oraculo Gemma."""
     try:
-        from langchain_community.document_loaders import PyPDFDirectoryLoader
-        from langchain_community.embeddings import OllamaEmbeddings
-        from langchain_community.vectorstores import Chroma
-        from langchain_text_splitters import RecursiveCharacterTextSplitter
+        from langchain_community.document_loaders import PyPDFDirectoryLoader  # noqa: PLC0415
+        from langchain_community.embeddings import OllamaEmbeddings  # noqa: PLC0415
+        from langchain_community.vectorstores import Chroma  # noqa: PLC0415
+        from langchain_text_splitters import RecursiveCharacterTextSplitter  # noqa: PLC0415
     except ImportError:
         logger.error(
             "[ERRO CRITICO] O ecossistema langchain nao esta instalado. Execute: pip install langchain-community langchain-text-splitters chromadb"
@@ -196,8 +197,8 @@ def ingest_drive_pdfs(drive_path: str):
 class MemoryRAG:
     def __init__(self, memory_dir: str = ".claude/agent-memory"):
         try:
-            import chromadb
-            from chromadb.utils import embedding_functions
+            import chromadb  # noqa: PLC0415
+            from chromadb.utils import embedding_functions  # noqa: PLC0415
         except ImportError:
             logger.error("[ERRO CRITICO] ChromaDB nao instalado. O RAG ficara inoperante.")
             return
@@ -407,7 +408,7 @@ class MemoryRAG:
             return {}
 
         try:
-            async with aiofiles.open(manifest_path, "r", encoding="utf-8") as f:
+            async with aiofiles.open(manifest_path, encoding="utf-8") as f:
                 manifest_content = await f.read()
                 # SOTA: Expurgar comentarios // sem corromper URLs dentro de strings (ex: "http://...")
                 manifest_content = re.sub(
@@ -561,14 +562,14 @@ class MemoryRAG:
 
     async def _extract_docx(self, file_path: Path) -> str:
         def _read_docx_sync():
-            from docx import Document  # type: ignore
+            from docx import Document  # type: ignore # noqa: PLC0415
 
             doc = Document(str(file_path))
             return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
 
         try:
             return await asyncio.wait_for(asyncio.to_thread(_read_docx_sync), timeout=60)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(f"[RAG] Timeout (60s) ao extrair DOCX: {file_path.name}")
             return ""
         except Exception:  # noqa: BLE001
@@ -578,7 +579,7 @@ class MemoryRAG:
     async def _extract_pdf(self, file_path: Path) -> str:
         def _read_pdf_sync():
             try:
-                import pypdf  # type: ignore
+                import pypdf  # type: ignore # noqa: PLC0415
 
                 reader = pypdf.PdfReader(str(file_path))
                 return "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
@@ -588,7 +589,7 @@ class MemoryRAG:
 
         try:
             return await asyncio.wait_for(asyncio.to_thread(_read_pdf_sync), timeout=120)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(f"[RAG] Timeout (120s) ao extrair PDF: {file_path.name}")
             return ""
         except Exception:  # noqa: BLE001
@@ -598,7 +599,7 @@ class MemoryRAG:
     async def _extract_csv(self, file_path: Path) -> str:
         def _read_csv_sync():
             try:
-                import pandas as pd  # type: ignore
+                import pandas as pd  # type: ignore # noqa: PLC0415
 
                 # SOTA: Limita a 1000 linhas para evitar OOM no RAG
                 df = pd.read_csv(str(file_path), nrows=1000)
@@ -609,7 +610,7 @@ class MemoryRAG:
 
         try:
             return await asyncio.wait_for(asyncio.to_thread(_read_csv_sync), timeout=60)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(f"[RAG] Timeout (60s) ao extrair CSV: {file_path.name}")
             return ""
         except Exception:  # noqa: BLE001
@@ -619,7 +620,7 @@ class MemoryRAG:
     async def _extract_xlsx(self, file_path: Path) -> str:
         def _read_xlsx_sync():
             try:
-                import pandas as pd  # type: ignore
+                import pandas as pd  # type: ignore # noqa: PLC0415
 
                 # SOTA: Limita a 1000 linhas para evitar OOM no RAG
                 df = pd.read_excel(str(file_path), nrows=1000)
@@ -632,7 +633,7 @@ class MemoryRAG:
 
         try:
             return await asyncio.wait_for(asyncio.to_thread(_read_xlsx_sync), timeout=60)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(f"[RAG] Timeout (60s) ao extrair XLSX: {file_path.name}")
             return ""
         except Exception:  # noqa: BLE001
@@ -640,7 +641,7 @@ class MemoryRAG:
             return ""
 
     async def _extract_fallback(self, file_path: Path) -> str:
-        async with aiofiles.open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        async with aiofiles.open(file_path, encoding="utf-8", errors="ignore") as f:
             return await f.read()
 
     async def _extract_text_from_file(self, file_path: Path) -> str:
@@ -694,11 +695,12 @@ class MemoryRAG:
         # O caminho relativo a raiz e unico por construcao, e sobrevive a mover
         # o repositorio. `agent` continua sendo o nome amigavel, que e o que a
         # filtragem usa.
+        resolved_path = await asyncio.to_thread(file_path.resolve)
         try:
-            chave = file_path.resolve().relative_to(RAIZ_DO_PROJETO).as_posix()
+            chave = resolved_path.relative_to(RAIZ_DO_PROJETO).as_posix()
         except ValueError:
             # Fora da raiz declarada: cai no caminho absoluto, que ainda e unico.
-            chave = file_path.resolve().as_posix()
+            chave = resolved_path.as_posix()
         ids = [f"{chave}#chunk{i}" for i in range(len(chunks))]
         metadatas: Any = [{"agent": source_name, "source": str(file_path)} for _ in chunks]
 
@@ -744,7 +746,7 @@ class MemoryRAG:
             for fpath in core_files:
                 exists = await asyncio.to_thread(fpath.exists)
                 if exists:
-                    async with aiofiles.open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+                    async with aiofiles.open(fpath, encoding="utf-8", errors="ignore") as f:
                         text = await f.read()
                         # Extrai a essencia inicial (primeiros 2000 caracteres) para nao estourar tokens
                         fallback_docs.append(f"--- Documento Vital ({fpath.name}) ---\n{text[:2000]}...\n")
@@ -996,8 +998,8 @@ class MemoryRAG:
             documents, metadatas, distances = self._flatten_and_deduplicate_results(results)
             if documents:
                 chroma_results = self._rank_documents(question, documents, metadatas, distances, n_results * 2)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("[CHROMA] Falha na busca vetorial Chroma: %s", e)
 
         # Reciprocal Rank Fusion (RRF)
         rrf_scores: dict[str, dict] = {}

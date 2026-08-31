@@ -4,11 +4,12 @@
 # ASCII-pure. Zero-Any. Typed.
 from __future__ import annotations
 
+import contextlib
 import gc
 import logging
-import platform
 from pathlib import Path
-from typing import TypedDict, Any
+import platform
+from typing import Any, TypedDict
 
 psutil: Any = None
 try:
@@ -206,14 +207,12 @@ def _read_wslconfig() -> dict[str, str]:
     if not WSL_CONFIG_PATH.exists():
         return {}
     result: dict[str, str] = {}
-    try:
+    with contextlib.suppress(Exception):
         for line in WSL_CONFIG_PATH.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if "=" in line and not line.startswith("#") and not line.startswith("["):
                 k, _, v = line.partition("=")
                 result[k.strip()] = v.strip()
-    except Exception:
-        pass
     return result
 
 
