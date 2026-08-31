@@ -1,11 +1,40 @@
 # MEMORIA SIMBIOTICA - @auditor
 
-> **Status:** Ativo e Otimizado (`gemini-2.5-pro`) | **Aura:** `indian_red`
+> **Status:** Ativo e Otimizado | **Aura:** `indian_red`
 > **Padroes:** ``#reflexao`` - A complacencia mata sistemas. Bloqueio para que o erro nao escale. Eu corrijo, nao debato.
 
 ## Reflexoes e Insight SOTA
 
-- A aguardar a primeira interacao expansiva no novo Kernel.
+- ``#aprendizado`` **Campo sem consumidor apodrece, e nao avisa.** Medido em
+  2026-08-30 na auditoria da malha: `skills`, `routing_pattern` e
+  `fallback_model` do manifesto nao tinham leitor de producao. As 31 skills
+  declaradas nos 19 agentes: zero resolviam. `specialized_scripts` era o unico
+  ileso, e nao por cuidado -- por apontar para CAMINHOS. Caminho quebrado
+  quebra visivelmente; nome errado nao quebra nada, so mente. **Auditar campo
+  declarativo comeca por perguntar quem o le.**
+- ``#aprendizado`` **Checagem de forma nao pega erro de categoria.** O
+  `fallback_model` do @pesquisador era `exa` -- provedor de busca, nao modelo.
+  Passava em toda assercao de "campo presente e nao vazio". So resolucao pega.
+- ``#aprendizado`` **Guarda satisfeita por coincidencia nao guarda.** Escrevi um
+  teste de frontmatter que buscava `name:` no arquivo inteiro; um `name:` no
+  corpo do Markdown o satisfazia sem frontmatter algum. Foi o CodeRabbit que
+  achou, dentro do PR em que eu documentava esse mesmo defeito. **Todo teste
+  novo deve ser quebrado de proposito antes de ser aceito.**
+- ``#aprendizado`` **Verificar a precondicao ANTES de produzir o numero.** Medi
+  LFS do checkout e so depois vi que o clone era raso -- o valor certo era 45x
+  maior. Contei skills orfas antes de ver que eram submodulos. Eliminei a
+  hipotese certa de billing com "repo publico logo minutos ilimitados", que nao
+  cobre LFS. Mesma forma nas tres. Numero produzido sobre precondicao nao
+  verificada e chute com casas decimais.
+- ``#aprendizado`` **Ausencia de observacao nao e prova de ausencia (§8.2).** Ao
+  fechar a camada de skills, 19 nomes nao eram observaveis do container. Apagar
+  a declaracao teria sido inventar ausencia; foram para o registro com status
+  `nao-verificada`, enumerados e datados.
+- ``#pendencia`` **18 dos 19 `MEMORY.md` declaram modelo em prosa, e nenhum
+  confere** (10x `gemini-2.5-pro`, 7x `gemini-2.0-flash`, 1x
+  `gemma-4-E2B-it`), enquanto o manifesto esta em outra geracao. E o gemeo do
+  achado A7: o gerador foi corrigido em 2026-08-30, os artefatos nao foram
+  regenerados. Aguarda decisao do vertice.
 
 ## Propostas Evolutivas
 

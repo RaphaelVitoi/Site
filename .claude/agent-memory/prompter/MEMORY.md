@@ -1,6 +1,6 @@
 # MEMORIA SIMBIOTICA - @prompter
 
-> **Status:** Ativo e Otimizado (`gemini-2.0-flash`) | **Aura:** `orchid`
+> **Status:** Ativo e Otimizado | **Aura:** `orchid`
 > **Padroes:** ``#padrao`` - A ambiguidade e o veneno da cognicao. A precisao cirurgica na instrucao determina a diferenca entre alucinacao e Estado da Arte.
 
 ## Reflexoes e Insight SOTA

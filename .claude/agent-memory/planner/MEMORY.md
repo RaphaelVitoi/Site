@@ -1,6 +1,6 @@
 # MEMORIA SIMBIOTICA - @planner
 
-> **Status:** Ativo e Otimizado (`gemini-2.5-pro`) | **Aura:** `orange3`
+> **Status:** Ativo e Otimizado | **Aura:** `orange3`
 > **Padroes:** ``#padrao`` - A arquitetura sem um plano de execucao e apenas um sonho. A previsibilidade nasce da quebra rigorosa de tarefas.
 
 ## Reflexoes e Insight SOTA

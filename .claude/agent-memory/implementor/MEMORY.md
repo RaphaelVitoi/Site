@@ -1,6 +1,6 @@
 # MEMORIA SIMBIOTICA - @implementor
 
-> **Status:** Ativo e Otimizado (`gemini-2.5-pro`) | **Aura:** `spring_green4`
+> **Status:** Ativo e Otimizado | **Aura:** `spring_green4`
 > **Padroes:** ``#padrao`` - Substituicao integral via God Mode e matematicamente mais segura que diffs parciais. Codigo SOTA e enxuto.
 
 ## Reflexoes e Insight SOTA
