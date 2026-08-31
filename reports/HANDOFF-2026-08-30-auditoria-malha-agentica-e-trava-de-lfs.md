@@ -207,8 +207,16 @@ soma 0,64 GiB -- dentro da cota.
 - **O portao nao protege nada desde 2026-08-21.** 114 execucoes, zero sucessos.
   Todo commit em `master` desde entao entrou sem lint, tipos, testes ou build.
   Isso e maior que qualquer achado que esta auditoria corrigiu.
-- **Os hooks do husky nao estao instalados neste clone.** Portao nao instalado
-  nao protege: foi assim que 16 GiB entraram apesar de a regra existir.
+- **Os hooks do husky nunca estiveram ligados — causa encontrada e corrigida.**
+  Portao nao instalado nao protege, e foi assim que 16 GiB entraram apesar de a
+  regra existir. Eram **dois** defeitos independentes, e o primeiro era
+  versionado: (1) os tres hooks estavam commitados como `100644`, sem bit de
+  execucao, em todo clone; (2) `core.hooksPath` nunca foi versionado, e config
+  local nao viaja com o repositorio. O `husky` sequer e dependencia do projeto
+  — mas os hooks sao `#!/bin/sh` puros, sem shim, entao nao precisam do pacote.
+  Corrigido com `git update-index --chmod=+x` nos tres e um script `prepare`
+  que roda `git config core.hooksPath .husky` a cada `npm install`, sem
+  adicionar dependencia.
 - **A fase 5 tem lacunas.** `frontend/backups/` e `.claude/.ARQUIVE/` nao sao
   bloqueados, e `.gemini_security/` escapa porque o teste e `-like ".gemini/*"`,
   que nao casa com `.gemini_security/`. Ali ha 152 MiB em tres HTML de 50 MiB.
