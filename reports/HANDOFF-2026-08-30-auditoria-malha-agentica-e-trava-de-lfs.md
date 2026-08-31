@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-30T18:05-03:00
-commit: 3166f625
+commit: f1cfcc0d
 classes: [interno]
 caminhos:
   - data/skills_registry.json
@@ -19,6 +19,12 @@ caminhos:
   - .mcp.json
   - pyproject.toml
   - CLAUDE.md
+  - package.json
+  - .husky/pre-commit
+  - .husky/commit-msg
+  - .husky/pre-push
+  - .claude/agent-memory/auditor/MEMORY.md
+  - .claude/agent-memory/chico/MEMORY.md
   - reports/AUDITORIA-2026-08-30-malha-agentica-e-subagentica.md
 commits:
   - "6ae093a3 -- auditoria por medicao da malha agentica, sem correcoes"
@@ -31,6 +37,9 @@ commits:
   - "60258885 -- furo na propria guarda de frontmatter, achado pelo CodeRabbit"
   - "3a9bb283 -- identidade de autoria agentica na M.O. 13.G"
   - "3166f625 -- merge do PR 24 em master, autorizado pelo vertice"
+  - "2c3d439c -- este registro de handoff"
+  - "a97c7eca -- feedback 9/10 do vertice, sem promocao a padrao"
+  - "f1cfcc0d -- hooks do husky ligados em todo clone"
 verificado:
   - suite 353 -> 365 passed sob Python 3.13, com o delta inteiramente explicado (+1 de A2, +9 da guarda de A1, +2 da de A8)
   - as 13 falhas e 72 erros remanescentes sao preexistentes e por modulo ausente no container; nenhum mudou de estado
@@ -42,8 +51,11 @@ verificado:
   - LFS medido no historico COMPLETO apos git fetch --unshallow, 284 commits desde 2026-05-01
   - 3794 objetos LFS distintos somando 17,03 GiB, com 95,6% sob prefixos que a fase 5 ja bloqueia
   - autoria do commit 2b066450 conferida como externa a esta sessao por nome, e-mail, fuso -03:00 e reflog
+  - "hook commit-msg exercitado por quatro sondas: fora do padrao e titulo de 119 caracteres reprovam; mensagem valida e merge passam"
+  - "`npm run prepare` move `git rev-parse --git-path hooks` de `.git/hooks` para `.husky`"
+  - 18 dos 19 MEMORY.md declaram modelo em prosa e nenhum confere com o manifesto (10x gemini-2.5-pro, 7x gemini-2.0-flash, 1x gemma-4-E2B-it)
 nao_verificado:
-  - cwv_gate.ps1 nao rodou, por ausencia de PowerShell no ambiente; e os hooks do husky nao estao instalados neste clone, entao o portao nao disparou em commit nenhum desta sessao
+  - cwv_gate.ps1 nao rodou, por ausencia de PowerShell no ambiente; o wiring dos hooks foi corrigido no repositorio mas deliberadamente desligado neste container, entao o portao nao disparou em commit nenhum desta sessao
   - sync_agents_reality.ps1 nao foi executado, e a sintaxe do .ps1 corrigido em A7 nao passou por parser
   - skill security-review indisponivel nesta sessao
   - pip-audit do venv instalado e auditoria OSV do uv.lock nao rodaram; so a declaracao foi auditada
@@ -52,6 +64,8 @@ nao_verificado:
   - A4 nao foi exercitado no Windows; o CONNECTION_CLOSED que substituiu o ENOENT e evidencia POSIX, nao prova na plataforma alvo
   - nenhum check de CI validou o merge, porque a conta esta travada
   - o valor e a existencia do debito de LFS nao foram vistos; a fatura nao e acessivel daqui
+  - "o hook pre-commit nao pode ser exercitado aqui: chama cwv_gate.ps1 via pwsh, ausente no ambiente, e sai 127 -- medido"
+  - o script `prepare` nao foi validado pelo caminho real (`npm ci` num runner limpo), porque o CI nao roda; so o mecanismo foi testado a mao
 ---
 
 # Handoff -- a malha auditada, e a trava que o CI escondia
@@ -287,3 +301,57 @@ verificar precondicao antes de produzir numero -- mas isso e hipotese para o
 ciclo seguinte, nao calibracao deste.
 
 Nenhuma nota, aprendizado, posterior ou probabilidade foi inventado.
+
+---
+
+## 9. Prompt de continuidade
+
+> Voce assume o `Site`, unico repositorio git desta raiz. Leia `CLAUDE.md`
+> inteiro antes de propor arquitetura -- em especial a §3 (fonte unica por
+> decisao), a §5 (obrigacao de declaracao) e a §8.2 (coerencia causal). A M.O.
+> 13.G ganhou em 2026-08-30 uma regra de identidade de autoria: **agente nao
+> assina commit com e-mail que resolve para perfil humano**. Commite como
+> `Claude <noreply@anthropic.com>`; a responsabilidade do vertice se expressa por
+> propriedade e merge, nunca por autoria emprestada.
+>
+> **Rode `git status` antes de tudo e nunca use `git add -A` as cegas.** Outra
+> sessao (`chico@antigravity`) edita este repo em paralelo e empurra direto no
+> `master` -- aconteceu tres vezes em 2026-08-30, uma delas a tres segundos de um
+> commit meu. Nao houve sobreposicao, mas isso foi sorte, nao desenho.
+>
+> **O CI nao roda.** A conta esta travada por excedente de Git LFS: 17,03 GiB em
+> 3794 objetos distintos contra 1 GiB de cota, sendo 95,6% sob prefixos que a
+> fase 5 ja bloqueia, e um unico blob de modelo Ollama respondendo por 14,16 GiB.
+> Sao 225 execucoes com **zero** sucessos desde 21/08. Nenhum push resolve isso;
+> nao gaste re-run. Enquanto durar, todo verde declarado em commit e medicao
+> local, nao veredito de portao -- diga qual dos dois voce esta reportando.
+>
+> **Os hooks foram ligados em 2026-08-30**, mas o wiring so vale apos um
+> `npm install` (o script `prepare` roda `git config core.hooksPath .husky`).
+> Feito isso, `pre-commit` chama `cwv_gate.ps1` via `pwsh`: em ambiente sem
+> PowerShell ele sai 127 e bloqueia todo commit. **Nunca use `--no-verify`.** Se
+> o portao nao puder executar, declare isso -- portao que nao roda nao e portao
+> burlado, mas tambem nao e portao aprovado.
+>
+> Quando o billing destravar, a primeira execucao real deve falhar em
+> `uv run ruff format --check .`: sao **48 arquivos** preexistentes fora de
+> formatacao, medidos no `master`. Nao e regressao de PR nenhum, e cabe num
+> commit mecanico separado.
+>
+> **A regra que esta sessao pagou para aprender: verifique a precondicao antes
+> de produzir o numero.** Medi LFS de um clone raso e errei por 45x; contei
+> skills orfas antes de ver que eram submodulos; eliminei a hipotese certa de
+> billing com um argumento que nao cobria LFS. As tres tem a mesma forma. Antes
+> de publicar qualquer medicao, pergunte de que universo ela saiu.
+>
+> **E a irma dela: teste que passa nao prova nada ate mostrar que sabe
+> reprovar.** Toda guarda escrita aqui foi quebrada de proposito antes de ser
+> aceita. Mesmo assim escrevi uma que podia ser satisfeita por coincidencia, e
+> foi um bot que achou.
+>
+> Pendencias abertas, nenhuma delas codigo: o chamado ao suporte do GitHub
+> (texto pronto), rodar `.\scripts\routines\sync_agents_reality.ps1` na maquina
+> do operador (esperado: `git status` vazio), abrir sessao MCP no Windows para
+> fechar A4, e decidir sobre os **18 `MEMORY.md` que declaram modelo em prosa
+> sem nenhum conferir** -- gemeo do achado A7, registrado na memoria do
+> @auditor.
