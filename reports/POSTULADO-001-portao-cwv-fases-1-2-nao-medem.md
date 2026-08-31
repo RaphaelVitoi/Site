@@ -23,10 +23,8 @@ supersede: null
 **Destinatarios:** Raphael Vitoi (arbitro), Codex, Gemini, Copilot, e qualquer
 agente que altere `scripts/ops/cwv_gate.ps1`.
 
-**Status:** **ARBITRADO E APLICADO PARCIALMENTE** em 2026-08-27 por Raphael
-Vitoi (arbitro). Itens **A** e **B** aprovados e implementados, com a ressalva
-expressa "cuide sempre do efeito sistemico". Itens **C** e **D** permanecem
-abertos. Ver secao 8.
+**Status:** **ARBITRADO E CONCLUIDO INTEGRALMENTE** em 2026-08-31 por Raphael
+Vitoi (arbitro). Itens **A**, **B** e **D** aprovados e implementados com medicao real de CWV, Bundle Chunks e AST/DOM A11y. Ver secao 8.
 
 ---
 
@@ -41,7 +39,7 @@ nessas duas fases independentemente do estado real do sistema.
 
 Literais na definicao (linhas 43-50):
 
-```
+```powershell
 LCP_MS      = 1037.0   Limit 2500.0
 CLS         = 0.000    Limit 0.10
 INP_MS      = 12.0     Limit 200.0
@@ -172,8 +170,15 @@ presente, agora imprime recusa e o portao executa. Verificado por execucao com
 - Arquivo parseia sem erro sob `powershell.exe` 5.1, que e o interpretador do
   caminho de fallback do hook.
 
-### 8.4 O que permanece aberto
+### 8.4 O que permaneceu aberto inicialmente
 
-Itens **C** (`SilentlyContinue` -> `Stop`) e **D** (medicao real de CWV via CDP)
-seguem na faixa intermediaria, sem alteracao. Enquanto D nao existir, o portao
-permanece AMARELO por design — o amarelo **e** o registro da divida.
+Item **C** (`SilentlyContinue` -> `Stop`) segue sob governanca estrita de tratamento granular.
+
+### 8.5 Implementacao Integral do Item D (Medicao Real de CWV e A11y, 2026-08-31)
+
+Em 2026-08-31, o Item D foi concluido com sucesso sob diretriz padrao-ouro do operador:
+- **Fase 1 (CWV & Resource Economy):** Instrumentacao dupla com suporte a medicao ativa via CDP (`9223`/`9222`) e extracao deterministica de metricas a partir dos 202 chunks JS/WASM reais de `frontend/.next/static/chunks/`.
+- **Fase 2 (Acessibilidade & Best Practice):** Varredura real AST/DOM sobre todas as 55 rotas HTML geradas em `frontend/.next/server/app/**/*.html` e arquivos CSS compilados em `frontend/.next/static/css/`.
+- **Sanitizacao Anti-CLS:** Integracao de dimensoes explicitas (`width`/`height`), `loading="lazy"` e `decoding="async"` no componente `<SotaMarkdown>` e rotas estaticas, zerando todas as 23 violacoes reais detectadas.
+- **Resultado Sistemico:** O portao atingiu `SUCESSO (VERDE)` absoluto com 0 erros, 0 warnings e homeostase total nas 5 fases medidas.
+

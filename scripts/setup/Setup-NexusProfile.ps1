@@ -140,8 +140,8 @@ function Convert-DeepJsonStringSOTA {
 # compara AMBAS as copias com os comandos que o Typer registra: a duplicacao
 # continua, mas deixou de poder divergir em silencio.
 $Global:NexusTyperCommands = @(
-    'agent', 'audit', 'autonomy', 'autopoiesis', 'dashboard', 'db', 'gate',
-    'graph', 'homeostasis', 'index', 'list', 'ops', 'routine', 'scripts', 'search',
+    'agent', 'audit', 'autonomy', 'autopoiesis', 'clippy', 'dashboard', 'db', 'gate',
+    'graph', 'handoff', 'homeostasis', 'index', 'list', 'ops', 'routine', 'scripts', 'search',
     'stats', 'status', 'sync-consciousness', 'task', 'task-audit', 'test', 'triad', 'voice', 'web'
 )
 

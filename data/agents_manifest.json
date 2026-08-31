@@ -214,6 +214,8 @@
       "flutter-build-responsive-layout",
       "flutter-fix-layout-issues",
       "flutter-apply-architecture-best-practices",
+      "supabase",
+      "supabase-postgres-best-practices",
       "uv"
     ],
     "specialized_scripts": [

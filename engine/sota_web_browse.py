@@ -10,7 +10,6 @@ import asyncio
 import json
 import logging
 import re
-import subprocess
 import time
 import urllib.request
 from dataclasses import dataclass, field
@@ -18,6 +17,8 @@ from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Final
+
+from engine.clippy_clipboard import ClippyClipboard
 
 logger = logging.getLogger("sota_web_browse")
 if not logger.handlers:
@@ -166,15 +167,7 @@ class ClipboardHandoffBridge:
 
     @staticmethod
     def copy_to_clipboard(text: str) -> bool:
-        try:
-            # Fast PowerShell set-clipboard execution
-            ps_cmd = ["powershell.exe", "-NoProfile", "-Command", "Set-Clipboard -Value ([Console]::In.ReadToEnd())"]
-            proc = subprocess.Popen(ps_cmd, stdin=subprocess.PIPE, text=True, encoding="utf-8")
-            proc.communicate(input=text)
-            return proc.returncode == 0
-        except Exception as e:
-            logger.warning("[CLIPBOARD] PowerShell copy failed: %s", e)
-            return False
+        return ClippyClipboard.copy(text)
 
     @classmethod
     def assemble_payload(cls, task_desc: str, context: str | None = None, target_llm: str | None = None) -> str:

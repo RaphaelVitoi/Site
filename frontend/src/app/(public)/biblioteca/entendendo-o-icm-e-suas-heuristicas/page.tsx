@@ -45,6 +45,10 @@ function ImageFigure({ src, alt, caption, highlight = false }: ImageFigureProps)
 				<img
 					src={src}
 					alt={alt}
+					width={800}
+					height={450}
+					loading="lazy"
+					decoding="async"
 					className="w-auto max-h-95 max-w-full rounded-lg object-contain shadow-md"
 				/>
 			</div>

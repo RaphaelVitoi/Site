@@ -1,0 +1,11 @@
+# Governança — projeto Site (Windsurf)
+
+> **Este arquivo é um ponteiro. A governança canônica está em [`CLAUDE.md`](CLAUDE.md) e [`GEMINI.md`](GEMINI.md).**
+
+## Diretivas do Projeto Site
+
+- Ambiente Python: `Site/.venv/Scripts/python.exe` ou `uv run`.
+- Escopo: Nexus Core, Teoria dos Jogos PMev, Website SOTA.
+- Target Lock estrito: Diffs de 120-150 linhas, sem refatorações fora do escopo.
+- Qualidade e Invariantes: 395/395 testes sem regressão.
+- Concorrência Segura: Evitar manipulação concorrente de arquivos de cache (`.cerebro/`, `.remember/`) e locks de git.
