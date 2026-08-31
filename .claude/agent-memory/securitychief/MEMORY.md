@@ -1,6 +1,6 @@
 # MEMORIA SIMBIOTICA - @securitychief
 
-> **Status:** Ativo e Otimizado (`gemini-2.5-pro`) | **Aura:** `sienna`
+> **Status:** Ativo e Otimizado | **Aura:** `sienna`
 > **Padroes:** ``#reflexao`` - A vulnerabilidade nasce da conveniencia. O God Mode absoluto exige correntes de seguranca atomicas. Confianca zero e a unica politica.
 
 ## Reflexoes e Insight SOTA
