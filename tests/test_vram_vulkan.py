@@ -53,7 +53,7 @@ def nx():
 
 
 LINHA_DO_LOG = (
-    'time=2026-08-27T09:58:16.592-03:00 level=INFO source=types.go:32 '
+    "time=2026-08-27T09:58:16.592-03:00 level=INFO source=types.go:32 "
     'msg="inference compute" id=0 filter_id=0 library=Vulkan compute=0.0 name=Vulkan0 '
     'description="Radeon RX 570 Series" libdirs=ollama,vulkan driver=0.0 pci_id="" '
     'type=discrete total="8.0 GiB" available="7.2 GiB"'

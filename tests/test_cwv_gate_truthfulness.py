@@ -170,7 +170,9 @@ def _relative_luminance(hsl: tuple[float, float, float]) -> float:
             red, green, blue = chroma, 0, secondary
     offset = lightness - chroma / 2
     channels = (red + offset, green + offset, blue + offset)
-    linear = tuple(channel / 12.92 if channel <= 0.03928 else ((channel + 0.055) / 1.055) ** 2.4 for channel in channels)
+    linear = tuple(
+        channel / 12.92 if channel <= 0.03928 else ((channel + 0.055) / 1.055) ** 2.4 for channel in channels
+    )
     return sum(weight * channel for weight, channel in zip((0.2126, 0.7152, 0.0722), linear, strict=True))
 
 
@@ -223,8 +225,7 @@ def _hex_luminance(color: str) -> float:
     assert re.fullmatch(r"#[0-9A-Fa-f]{6}", color), color
     channels = tuple(int(color[index : index + 2], 16) / 255 for index in (1, 3, 5))
     linear = tuple(
-        channel / 12.92 if channel <= 0.03928 else ((channel + 0.055) / 1.055) ** 2.4
-        for channel in channels
+        channel / 12.92 if channel <= 0.03928 else ((channel + 0.055) / 1.055) ** 2.4 for channel in channels
     )
     return sum(weight * channel for weight, channel in zip((0.2126, 0.7152, 0.0722), linear, strict=True))
 
@@ -297,9 +298,7 @@ def test_cwv_human_review_preserves_positive_observation_without_fabricating_inp
     assert review["measurements"]["inp"]["presentation_delay_ms"] == 8
     assert review["measurements"]["inp"]["processing_duration_ms"] is None
     performance_trace = next(
-        observation
-        for observation in review["observations"]
-        if observation["dimension"] == "performance_trace"
+        observation for observation in review["observations"] if observation["dimension"] == "performance_trace"
     )
     assert "4,72 s" in performance_trace["statement"]
     assert "LCP de 410 ms" in performance_trace["statement"]

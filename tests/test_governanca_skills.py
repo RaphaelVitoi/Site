@@ -82,13 +82,17 @@ def test_ponte_antigravity_descobre_a_fonte_versionada_sem_copia():
     A ponte torna a suite versionada descobrivel pelo Antigravity sem copiar
     manifests para uma segunda arvore global, que inevitavelmente divergiria.
     """
-    assert PONTE_ANTIGRAVITY.is_file(), ".agents/skills.json ausente; o Antigravity nao tem ponte versionada para a suite local"
+    assert PONTE_ANTIGRAVITY.is_file(), (
+        ".agents/skills.json ausente; o Antigravity nao tem ponte versionada para a suite local"
+    )
     ponte = json.loads(PONTE_ANTIGRAVITY.read_text(encoding="utf-8"))
     assert ponte == {
-        "entries": [{
-            "path": ".agents/skills",
-            "include_only": ["^(pmev-game-theory-engine|sota-quality-gate|sota-triad-mesh)$"],
-        }]
+        "entries": [
+            {
+                "path": ".agents/skills",
+                "include_only": ["^(pmev-game-theory-engine|sota-quality-gate|sota-triad-mesh)$"],
+            }
+        ]
     }, (
         ".agents/skills.json deve conter somente a ponte relativa e o allowlist da suite canonica; "
         "nao adicione copias, caminhos absolutos ou skills de plugins vendorizados"

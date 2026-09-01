@@ -432,10 +432,14 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
                 if not isinstance(registro, str) or not registro.strip():
                     erros.append(f"{rel}: revisoes_de_ancora[{indice}].registro deve ser um id nao vazio.")
                     continue
-                if not isinstance(caminhos, list) or not caminhos or any(
-                    not isinstance(caminho, str) or not caminho.strip() for caminho in caminhos
+                if (
+                    not isinstance(caminhos, list)
+                    or not caminhos
+                    or any(not isinstance(caminho, str) or not caminho.strip() for caminho in caminhos)
                 ):
-                    erros.append(f"{rel}: revisoes_de_ancora[{indice}].caminhos deve ser uma lista nao vazia de caminhos.")
+                    erros.append(
+                        f"{rel}: revisoes_de_ancora[{indice}].caminhos deve ser uma lista nao vazia de caminhos."
+                    )
                     continue
                 if not isinstance(parecer, str) or not parecer.strip():
                     erros.append(f"{rel}: revisoes_de_ancora[{indice}].parecer deve explicar a revisao.")

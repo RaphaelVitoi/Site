@@ -1,6 +1,7 @@
 """
 Web Handlers -- Endpoints HTTP do micro-servidor SOTA.
 """
+
 # pylint: disable=broad-exception-caught
 from __future__ import annotations
 

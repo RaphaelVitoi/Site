@@ -120,9 +120,7 @@ def test_validate_visual_token_budget():
 
 def test_gemma4_mesh_subagents_cost_zero_invariant():
     """Garante que todos os subagentes mapeados para Gemma 4 mantem custo marginal zero."""
-    gemma_subagents = {
-        tier: model for tier, model in SUBAGENT_MODEL_MAP.items() if "gemma" in model.lower()
-    }
+    gemma_subagents = {tier: model for tier, model in SUBAGENT_MODEL_MAP.items() if "gemma" in model.lower()}
     assert SubagentTier.GENERALIST in gemma_subagents
     assert SubagentTier.RESEARCH in gemma_subagents
     assert SubagentTier.ARCHITECT in gemma_subagents

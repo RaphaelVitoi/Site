@@ -159,10 +159,25 @@ def test_all_19_agents_manifest_integrity():
     assert len(manifest) == 19, f"Devem existir exatamente 19 agentes, encontrados {len(manifest)}"
 
     expected_agents = [
-        "maverick", "chico", "architect", "planner", "dispatcher",
-        "implementor", "validador", "auditor", "historian", "pesquisador",
-        "curator", "gemma4", "bibliotecario", "securitychief", "verifier",
-        "prompter", "organizador", "sequenciador", "skillmaster"
+        "maverick",
+        "chico",
+        "architect",
+        "planner",
+        "dispatcher",
+        "implementor",
+        "validador",
+        "auditor",
+        "historian",
+        "pesquisador",
+        "curator",
+        "gemma4",
+        "bibliotecario",
+        "securitychief",
+        "verifier",
+        "prompter",
+        "organizador",
+        "sequenciador",
+        "skillmaster",
     ]
 
     for agent_id in expected_agents:

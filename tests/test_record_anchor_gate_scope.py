@@ -19,9 +19,7 @@ GATE = RAIZ / "scripts" / "ops" / "record_anchor_gate.ps1"
 def test_ancora_processa_frontmatter_apenas_de_registros_canonicos():
     """`SKILL.md` com YAML nao pode receber campos obrigatorios de relatorio."""
     fonte = GATE.read_text(encoding="utf-8-sig")
-    bloco_ancora = fonte.split("# --- E3/E4/W1. ancora dos registros", 1)[1].split(
-        "# --- veredito", 1
-    )[0]
+    bloco_ancora = fonte.split("# --- E3/E4/W1. ancora dos registros", 1)[1].split("# --- veredito", 1)[0]
 
     assert re.search(
         r"\$arquivosDeRegistro\s*=\s*@\(\$arquivos\s*\|\s*Where-Object\s*\{\s*\$_\s*-match\s*'\^\(docs\|reports\)/\.\*\\\.md\$'\s*\}\)",
