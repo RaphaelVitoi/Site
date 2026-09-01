@@ -72,7 +72,7 @@ def _alvos_do_manifesto() -> set[Path]:
             continue
         recursivo = origem.get("recursive", True)
         for padrao in origem.get("patterns", []):
-            for f in (base.rglob(padrao) if recursivo else base.glob(padrao)):
+            for f in base.rglob(padrao) if recursivo else base.glob(padrao):
                 if set(f.parts) & ignore_dirs:
                     continue
                 rel = f.resolve().relative_to(RAIZ)
@@ -118,9 +118,7 @@ def test_o_esquema_antigo_de_fato_colidia():
     dia parar de colidir, e porque o corpus mudou, e a forca do teste acima
     precisa ser reavaliada."""
     alvos = _alvos_do_manifesto()
-    antigo = collections.Counter(
-        (f.parent.name if f.name == "MEMORY.md" else f.stem) for f in alvos
-    )
+    antigo = collections.Counter((f.parent.name if f.name == "MEMORY.md" else f.stem) for f in alvos)
     colisoes = {k: q for k, q in antigo.items() if q > 1}
     assert colisoes, (
         "o esquema antigo deixou de colidir neste corpus -- o teste de unicidade "
@@ -160,10 +158,8 @@ def test_o_id_nao_e_mais_derivado_so_do_nome():
     """Guarda estrutural: se alguem voltar a montar o id a partir de
     `source_name`, a colisao volta inteira."""
     fonte = (RAIZ / "memory_rag.py").read_text(encoding="utf-8")
-    padrao_antigo = "source_name" + '}_chunk_{'
-    assert padrao_antigo not in fonte, (
-        "o id voltou a ser derivado do nome curto; ver a docstring deste modulo"
-    )
+    padrao_antigo = "source_name" + "}_chunk_{"
+    assert padrao_antigo not in fonte, "o id voltou a ser derivado do nome curto; ver a docstring deste modulo"
 
 
 @pytest.mark.parametrize(

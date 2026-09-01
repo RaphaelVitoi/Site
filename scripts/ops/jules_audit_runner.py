@@ -3,6 +3,7 @@
 Realiza a auditoria de conformidade Pure ASCII e tipagem estrita PEP 585/604 no projeto Site,
 com streaming de logs em tempo real, persistencia em JSONL e geracao de relatorio padrao-ouro.
 """
+
 from __future__ import annotations
 
 import ast
@@ -109,12 +110,15 @@ def run_jules_audit() -> None:
     # Limpar stream anterior
     JSONL_STREAM_FILE.write_text("", encoding="utf-8")
 
-    emit_stream_event("SESSION_INIT", {
-        "task": "Auditoria de Pure ASCII e Tipagem PEP 585/604",
-        "target_repo": "RaphaelVitoi/Site",
-        "initiator": "Antigravity 2.0 Host",
-        "worker": "Google Jules Cloud Bridge",
-    })
+    emit_stream_event(
+        "SESSION_INIT",
+        {
+            "task": "Auditoria de Pure ASCII e Tipagem PEP 585/604",
+            "target_repo": "RaphaelVitoi/Site",
+            "initiator": "Antigravity 2.0 Host",
+            "worker": "Google Jules Cloud Bridge",
+        },
+    )
 
     time.sleep(0.5)
 
@@ -148,7 +152,9 @@ def run_jules_audit() -> None:
             emit_stream_event("FILE_ASCII_AUDITED", {"file": rel_path, "status": "PASS"})
         else:
             ascii_violations.append({"file": rel_path, "count": len(non_ascii), "samples": non_ascii[:3]})
-            emit_stream_event("FILE_ASCII_AUDITED", {"file": rel_path, "status": "NON_ASCII_DETECTED", "count": len(non_ascii)})
+            emit_stream_event(
+                "FILE_ASCII_AUDITED", {"file": rel_path, "status": "NON_ASCII_DETECTED", "count": len(non_ascii)}
+            )
 
     logger.info("Conformidade Pure ASCII: %d/%d arquivos em conformidade absoluta.", ascii_passed, len(py_files))
     if ascii_violations:
@@ -172,7 +178,12 @@ def run_jules_audit() -> None:
         emit_stream_event("FILE_TYPING_AUDITED", res)
 
     overall_coverage = round((total_annotated / total_funcs * 100) if total_funcs > 0 else 100.0, 1)
-    logger.info("Total de funcoes auditadas: %d | Funcoes tipadas: %d (Cobertura: %.1f%%)", total_funcs, total_annotated, overall_coverage)
+    logger.info(
+        "Total de funcoes auditadas: %d | Funcoes tipadas: %d (Cobertura: %.1f%%)",
+        total_funcs,
+        total_annotated,
+        overall_coverage,
+    )
 
     time.sleep(0.5)
 
@@ -181,7 +192,7 @@ def run_jules_audit() -> None:
 
     report_content = f"""# REGISTRO DE AUDITORIA JULES: PURE ASCII & TIPAGEM SOTA
 \n> **Protocolo Chico SOTA v8.0 GOLD * Supervisao Antigravity Google Jules**
-> **Data:** {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%SZ')}
+> **Data:** {datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%SZ")}
 > **Status:** Concluido com Sucesso (Inspecao Nao-Destrutiva Positiva)
 
 ---
@@ -191,10 +202,10 @@ def run_jules_audit() -> None:
 | Metrica | Valor Medido | Status |
 | :--- | :--- | :--- |
 | **Modulos Auditados** | `{len(py_files)} arquivos Python` |  Cobertura Total |
-| **Conformidade Pure ASCII** | `{ascii_passed}/{len(py_files)} modulos limpos ({round(ascii_passed/len(py_files)*100, 1)}%)` |  Aprovado |
+| **Conformidade Pure ASCII** | `{ascii_passed}/{len(py_files)} modulos limpos ({round(ascii_passed / len(py_files) * 100, 1)}%)` |  Aprovado |
 | **Total de Funcoes Mapeadas** | `{total_funcs} funcoes` |  Catalogado |
 | **Cobertura de Tipagem Estrita** | `{total_annotated}/{total_funcs} ({overall_coverage}%)` |  Alta Densidade |
-| **Presenca de `__future__.annotations`** | `{sum(1 for r in typing_results if r.get('has_future_annotations'))}/{len(py_files)} modulos` |  PEP 585/604 |
+| **Presenca de `__future__.annotations`** | `{sum(1 for r in typing_results if r.get("has_future_annotations"))}/{len(py_files)} modulos` |  PEP 585/604 |
 
 ---
 
@@ -221,12 +232,15 @@ def run_jules_audit() -> None:
 """
 
     REPORT_FILE.write_text(report_content, encoding="utf-8")
-    emit_stream_event("SESSION_COMPLETED", {
-        "status": "SUCCESS",
-        "total_files": len(py_files),
-        "typing_coverage_pct": overall_coverage,
-        "report_path": REPORT_FILE.as_posix(),
-    })
+    emit_stream_event(
+        "SESSION_COMPLETED",
+        {
+            "status": "SUCCESS",
+            "total_files": len(py_files),
+            "typing_coverage_pct": overall_coverage,
+            "report_path": REPORT_FILE.as_posix(),
+        },
+    )
 
     logger.info("=================================================================")
     logger.info("SESSAO CONCLUIDA COM SUCESSO! Relatorio e Logs gravados.")

@@ -28,7 +28,7 @@ from pathlib import Path
 
 import pytest
 
-RAIZ = Path(__file__).resolve().parent.parent          # .../Site
+RAIZ = Path(__file__).resolve().parent.parent  # .../Site
 INDICE = RAIZ / "data" / "INDICE_CANONICO_GOVERNANCA.json"
 
 CAMPOS_OBRIGATORIOS = (
@@ -153,8 +153,7 @@ def test_membros_fora_do_repositorio_existem():
     ausentes = [
         m["caminho"]
         for _, m in _membros(_indice())
-        if not m["caminho"].startswith(f"{_nome_do_projeto()}/")
-        and not (raiz / m["caminho"]).is_file()
+        if not m["caminho"].startswith(f"{_nome_do_projeto()}/") and not (raiz / m["caminho"]).is_file()
     ]
     assert not ausentes, f"membros fora do repositorio que nao existem: {ausentes}"
 
@@ -191,9 +190,7 @@ def test_pertinencia_ao_corpus_do_rag_bate_com_o_coletor_real():
 
     manifesto = json.loads((RAIZ / "rag_ingestion_manifest.json").read_text(encoding="utf-8"))
     coletados = asyncio.run(
-        memory_rag.MemoryRAG._collect_target_files_async(
-            object.__new__(memory_rag.MemoryRAG), manifesto, RAIZ
-        )
+        memory_rag.MemoryRAG._collect_target_files_async(object.__new__(memory_rag.MemoryRAG), manifesto, RAIZ)
     )
     resolvidos = {p.resolve() for p in coletados}
 
@@ -221,13 +218,9 @@ def test_a_barreira_de_traversal_do_manifesto_continua_de_pe():
 
     escape = {"sources": [{"path": "..", "patterns": ["MODUS_OPERANDI.md"], "recursive": False}]}
     coletados = asyncio.run(
-        memory_rag.MemoryRAG._collect_target_files_async(
-            object.__new__(memory_rag.MemoryRAG), escape, RAIZ
-        )
+        memory_rag.MemoryRAG._collect_target_files_async(object.__new__(memory_rag.MemoryRAG), escape, RAIZ)
     )
-    assert not coletados, (
-        f"fonte que escapa a raiz coletou {len(coletados)} arquivo(s): a blindagem de LFI caiu"
-    )
+    assert not coletados, f"fonte que escapa a raiz coletou {len(coletados)} arquivo(s): a blindagem de LFI caiu"
 
 
 # --------------------------------------------------------------------------

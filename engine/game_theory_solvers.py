@@ -295,7 +295,9 @@ class PluribusDepthLimitedSolver:
         # Simulacao de iteracoes de self-play
         for _ in range(max(1, iterations)):
             call_ev = (effective_equity * self.state.pot) - ((1.0 - effective_equity) * (self.state.pot * 0.5))
-            raise_ev = (effective_equity * self.state.pot * 1.5) - ((1.0 - effective_equity) * self.state.pot) - liability
+            raise_ev = (
+                (effective_equity * self.state.pot * 1.5) - ((1.0 - effective_equity) * self.state.pot) - liability
+            )
             fold_ev = 0.0
 
             node_ev = (fold_ev + call_ev + raise_ev) / 3.0
@@ -388,7 +390,6 @@ class PUCTPerspectiveSelector:
                 best_action = n.action
 
         return best_action
-
 
 
 # ==============================================================================
