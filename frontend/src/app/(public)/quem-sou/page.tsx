@@ -45,7 +45,10 @@ export default function QuemSouPage() {
 
         <div className="mx-auto max-w-[1040px] px-10">
           {/* Breadcrumb */}
-          <nav aria-label="Caminho de navegação" className="mb-14 flex items-center gap-3 font-mono text-[0.55rem] tracking-[0.45em] text-[#888680] uppercase">
+          <nav
+            aria-label="Caminho de navegação"
+            className="mb-14 flex items-center gap-3 font-mono text-[0.55rem] tracking-[0.45em] text-[#888680] uppercase"
+          >
             <Link href="/" className="text-[#888680] no-underline transition-colors hover:text-[#0D0C0A]">
               Home
             </Link>
@@ -214,7 +217,7 @@ export default function QuemSouPage() {
 
           {/* Video — gallery frame aesthetic */}
           <div className="relative overflow-hidden rounded border border-[#DED9D2] bg-[#0D0C0A] shadow-[0_8px_64px_rgba(13,12,10,0.12),0_2px_8px_rgba(13,12,10,0.06)]">
-            <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-linear-to-b from-black/40 to-transparent px-5 py-[14px] font-mono text-[0.52rem] tracking-[0.38em] text-white/25 uppercase">
+            <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-[#0D0C0A] px-5 py-[14px] font-mono text-[0.52rem] tracking-[0.38em] text-white uppercase">
               <div className="flex items-center gap-2">
                 <span
                   className={`inline-block h-[5px] w-[5px] rounded-full ${isPlaying ? 'bg-white/50' : 'bg-white/15'}`}

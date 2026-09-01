@@ -39,6 +39,10 @@ verificado:
   - aprovacao de todos os portoes de qualidade M.O. 13.F e CWV Gate
 nao_verificado:
   - chamadas reais de rede a APIs pagas durante os testes unitarios
+revisoes_de_ancora:
+  - registro: auditoria-cwv-lighthouse-2026-09-01
+    caminhos: [package.json]
+    parecer: O manifesto foi reavaliado no baseline atual; as comparacoes permanecem ligadas a sua janela historica.
 ---
 
 # Relatório de Impacto Quantitativo e Qualitativo: SOTA v8.0 GOLD

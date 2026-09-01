@@ -267,7 +267,7 @@ export default function Home() {
           <div className="rounded-md border border-[#DED9D2] bg-[#FAFAF8] p-3 shadow-[0_8px_32px_rgba(13,12,10,0.04)]">
             <div className="relative overflow-hidden rounded border border-[#B09460] bg-[#0D0C0A]">
               {/* Overlay label */}
-              <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-linear-to-b from-black/45 to-transparent px-6 py-3.5 font-mono text-[0.55rem] tracking-[0.35em] text-white/30 uppercase">
+              <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-[#0D0C0A] px-6 py-3.5 font-mono text-[0.55rem] tracking-[0.35em] text-white uppercase">
                 <span>raphaelvitoi.mp4</span>
                 <span>Poker Racional · SOTA</span>
               </div>
@@ -715,6 +715,8 @@ function DownwardDriftWidget() {
   const controlY = 110 - (betFreq / 100) * 160;
   const controlX = (xStart + xEnd) / 2;
   const activePath = `M ${xStart},110 Q ${controlX},${controlY} ${xEnd},110 Z`;
+  const cutoffLabelX = Math.max(15, xStart - 45);
+  const cutoffBackdropX = Math.max(10, cutoffLabelX - 5);
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-[#DED9D2] bg-[#FAFAF8] p-10 transition-all duration-500 hover:shadow-[0_12px_40px_rgba(13,12,10,0.04)]">
@@ -775,8 +777,19 @@ function DownwardDriftWidget() {
           <text x="310" y="25" fill="#625f5a" fontFamily="var(--font-mono)" fontSize="7" letterSpacing="1">
             MÃOS FORTES
           </text>
+          {/* Superficie opaca: a curva dinamica nunca disputa legibilidade com o rotulo de corte. */}
+          <rect
+            data-a11y-contrast-backdrop="downward-drift-cutoff"
+            x={cutoffBackdropX}
+            y="94"
+            width="100"
+            height="16"
+            rx="2"
+            fill="#F5F3EE"
+            pointerEvents="none"
+          />
           <text
-            x={Math.max(15, xStart - 45)}
+            x={cutoffLabelX}
             y="105"
             fill={sizingColorHex}
             fontFamily="var(--font-mono)"

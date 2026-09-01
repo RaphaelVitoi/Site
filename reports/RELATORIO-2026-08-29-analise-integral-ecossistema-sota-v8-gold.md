@@ -35,6 +35,10 @@ verificado:
   - cumprimento irrestrito do Quality Gate (CWV, A11y, CVE Guard, SRI e Higiene de Repositorio)
 nao_verificado:
   - chamadas reais de rede a APIs pagas durante os testes unitarios
+revisoes_de_ancora:
+  - registro: auditoria-cwv-lighthouse-2026-09-01
+    caminhos: [package.json]
+    parecer: O manifesto foi reavaliado no baseline atual; o relatorio permanece historico.
 ---
 
 # Relatório Oficial: Análise Integral do Ecossistema Nexus SOTA v8.0 GOLD
