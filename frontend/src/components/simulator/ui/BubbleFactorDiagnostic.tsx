@@ -1,6 +1,6 @@
 'use client';
 
-import { calcBF } from '@/components/simulator/solver/utils';
+import { calculateRiskAdvantageDelta, calcBF } from '@/components/simulator/solver/utils';
 import { SotaTooltip } from '@/components/simulator/ui/SotaTooltip';
 
 interface BubbleFactorDiagnosticProps {
@@ -11,29 +11,29 @@ interface BubbleFactorDiagnosticProps {
 export const BubbleFactorDiagnostic = ({ ipRp, oopRp }: Readonly<BubbleFactorDiagnosticProps>) => {
 	const ipBf = calcBF(ipRp);
 	const oopBf = calcBF(oopRp);
-	const deltaRp = ipRp - oopRp;
+	const riskAdvantageDelta = calculateRiskAdvantageDelta(ipRp, oopRp);
 	const ipEquity = ipBf / (ipBf + 2);
 	const oopEquity = oopBf / (oopBf + 2);
 	const chipEvEquity = 1 / 3;
 	const ipDelta = ((ipEquity - chipEvEquity) * 100).toFixed(1);
 	const oopDelta = ((oopEquity - chipEvEquity) * 100).toFixed(1);
 
-	const hasIpAdvantage = deltaRp < 0;
+	const hasIpAdvantage = riskAdvantageDelta > 0;
 
-	let deltaLabel = 'Simetria de Pressão (ΔRP 0%)';
+	let deltaLabel = 'Simetria de Pressão (ΔRP 0 p.p.)';
 	let panelBgClass = 'bg-bg-panel/40 border-white/5';
 	let iconBgClass = 'bg-white/5 text-text-muted';
 	let iconClass = 'fa-equals';
 	let textClass = 'text-text-muted';
 
 	if (hasIpAdvantage) {
-		deltaLabel = `IP com Vantagem de Risco (ΔRP ${Math.abs(deltaRp).toFixed(1)}%)`;
+		deltaLabel = `IP com Vantagem de Risco (ΔRP(IP→OOP) +${riskAdvantageDelta.toFixed(1)} p.p.)`;
 		panelBgClass = 'bg-accent-emerald/5 border-accent-emerald/20';
 		iconBgClass = 'bg-accent-emerald/10 text-accent-emerald';
 		iconClass = 'fa-bolt-lightning';
 		textClass = 'text-accent-emerald';
-	} else if (deltaRp > 0) {
-		deltaLabel = `IP sob Punição de Valuation (ΔRP +${deltaRp.toFixed(1)}%)`;
+	} else if (riskAdvantageDelta < 0) {
+		deltaLabel = `IP sob maior pressão de risco (ΔRP(IP→OOP) ${riskAdvantageDelta.toFixed(1)} p.p.)`;
 		panelBgClass = 'bg-accent-rose/5 border-accent-rose/20';
 		iconBgClass = 'bg-accent-rose/10 text-accent-rose';
 		iconClass = 'fa-biohazard';
@@ -156,8 +156,8 @@ export const BubbleFactorDiagnostic = ({ ipRp, oopRp }: Readonly<BubbleFactorDia
 					<p
 						className={`text-2xl font-black m-0 font-heading tracking-tighter tabular-nums ${textClass}`}
 					>
-						{deltaRp > 0 ? '+' : ''}
-						{deltaRp.toFixed(1)}% <span className="text-sm ml-1 opacity-60">ΔRP</span>
+						{riskAdvantageDelta > 0 ? '+' : ''}
+						{riskAdvantageDelta.toFixed(1)} p.p. <span className="text-sm ml-1 opacity-60">ΔRP (IP→OOP)</span>
 					</p>
 					<p className="text-xs text-text-muted m-0 mt-1 font-medium">{deltaLabel}</p>
 				</div>

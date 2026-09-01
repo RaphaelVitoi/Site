@@ -334,5 +334,6 @@
   "markdown-preview-enhanced.d2Sketch": true,
   "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true,
   "markdown-preview-enhanced.alwaysShowBacklinksInPreview": true,
-  "markdown-preview-enhanced.aiTranslationAutoUpdate": true
+  "markdown-preview-enhanced.aiTranslationAutoUpdate": true,
+  "wam.switchDevinCli": true
 }

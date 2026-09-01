@@ -1,16 +1,15 @@
 ---
-id: skill-sota-triad-mesh
-tipo: skill
-escopo: Site
-ecossistema: nexus-sota
-autor: chico@v8-gold
-criado_em: 2026-08-29T17:58-03:00
 name: sota-triad-mesh
-description: Orquestrador da Triade de Superagentes SOTA (Exa + Stitch + Google Jules). Coordena pesquisa neural profunda de papers e docs com Exa, prototipagem de UI e Design System com Stitch, e execucao assincrona em Cloud VMs com Google Jules.
-verificado:
-  - motor sota_triad_mesh.py implementado e validado por testes unitarios
-nao_verificado:
-  - chamadas reais de rede durante testes unitarios
+description: Use para planejar uma investigação que combine pesquisa com Exa, prototipagem com Stitch e trabalho assíncrono com Google Jules, somente quando as ferramentas necessárias estiverem registradas, prontas e autorizadas.
+metadata:
+  id: skill-sota-triad-mesh
+  tipo: skill
+  escopo: Site
+  ecossistema: nexus-sota
+  autor: chico@v8-gold
+  criado_em: 2026-08-29T17:58-03:00
+  verificado: motor sota_triad_mesh.py implementado e validado por testes unitarios
+  nao_verificado: chamadas reais de rede durante testes unitarios
 ---
 
 # SKILL: SOTA TRIAD MESH (EXA + STITCH + GOOGLE JULES)
@@ -20,47 +19,54 @@ nao_verificado:
 
 ---
 
-## 1. Topologia da Triade
+## 1. Pré-condições e topologia da tríade
 
-A triade opera em 4 fases sequenciais e complementares:
+Antes de delegar, verificar para cada capacidade: ferramenta registrada,
+autenticação disponível, escopo de dados, custo, destino do artefato e critério
+de parada. Catálogo instalado não prova ferramenta carregada; ferramenta
+carregada não autoriza ações remotas.
+
+A tríade opera em fases sequenciais e complementares:
 
 1. **Exa (Neural Research & Knowledge Extraction):**
-   * Ferramentas: `exa:web_search_exa`, `exa:web_fetch_exa`.
+   * Ferramentas: usar apenas os identificadores que estiverem expostos na sessão.
    * Quando usar: Pesquisar papers em Teoria dos Jogos (CFR+, ICM dinamico, subgame solving), recuperar formulas em KaTeX/LaTeX, e buscar breaking changes de Next.js, Supabase ou Prisma.
    * Modulo de Suporte: `engine/sota_triad_mesh.py -> ExaKnowledgeBridge`.
 
 2. **Stitch (Generative UI & Design System):**
-   * Ferramentas: `StitchMCP:create_design_system_from_design_md`, `generate_screen_from_text`, `generate_variants`, `get_screen`.
+   * Ferramentas: usar apenas os identificadores que estiverem expostos na sessão.
    * Quando usar: Congelar ou atualizar o Design System com `design/DESIGN_SYSTEM_SOTA.md`, prototipar telas escuras com acentos dourados (`#D4AF37`), gerar 3 variantes visuais antes de codificar.
    * Modulo de Suporte: `engine/sota_triad_mesh.py -> StitchDesignBridge`.
 
 3. **Google Jules (Cloud Asynchronous Agent):**
-   * Ferramentas / CLI: `google-jules` MCP, CLI `jules new`, `jules remote list`, `jules remote pull --apply`.
-   * Quando usar: Refatoracoes em massa no repositorio, geracao paralela de testes unitarios (`jules new --parallel 3 "..."`), e calibrações numericas pesadas em background.
+   * Ferramentas / CLI: confirmar disponibilidade e comandos via `--help` antes
+     de uso; não presumir MCP, CLI, credenciais nem sintaxe.
+   * Quando usar: tarefas pesadas com escopo isolado, plano revisável e retorno
+     verificável. Aplicar um diff remoto exige autorização específica.
    * Modulo de Suporte: `engine/sota_triad_mesh.py -> JulesCloudBridge`.
 
-4. **Antigravity 2.0 (Local Convergence & Quality Gate):**
-   * Aterrissa os patches (`jules remote pull --apply`), executa a suite de testes locais (pytest 620+ testes, Next.js build), valida portao M.O. 13.F e realiza o commit/push no `origin/master`.
+4. **Antigravity (Convergência local e quality gate):**
+   * Recebe artefatos para revisão, executa os gates locais aplicáveis e separa
+     resultado medido de alegação. Não aplica diff, não realiza commit e não
+     faz push sem autorização explícita e verificação do hash final.
 
 ---
 
-## 2. Comandos CLI Nexus
+## 2. Operação local
 
 ```powershell
-# Inspecionar status de todos os 3 pilares
-uv run nexus triad status
-
-# Planejar um DAG completo para uma nova funcionalidade
-uv run nexus triad plan "Simulador de Risco de Ressurreicao PMev"
-
-# Executar a esteira integrada
-uv run nexus triad run "Simulador de Risco de Ressurreicao PMev"
+# Descobrir comandos realmente instalados antes de usá-los
+uv run nexus --help
+uv run nexus triad --help
 ```
 
 ---
 
 ## 3. Diretrizes de Qualidade SOTA v8.0
 
-* **Pure ASCII:** Todo codigo e docstrings em Python devem obedecer a estrita codificacao ASCII.
-* **PEP 585/604 & Zero-Any:** Tipagem estrita com `from __future__ import annotations`, sem anotacoes `Any` soltas.
-* **WCAG AAA:** Componentes de interface desenhados pelo Stitch devem respeitar contraste minimo de 7:1 e acessibilidade total.
+* **Integridade de evidência:** declarar o que foi executado, o que apenas foi
+  configurado e o que não pôde ser verificado nesta sessão.
+* **Mudanças reversíveis:** pesquisar e prototipar não autoriza escrever em
+  repositório, ambiente remoto ou serviços externos.
+* **Qualidade web:** contraste, semântica, responsividade e fluxo de teclado
+  requerem validação apropriada; design gerado não substitui testes de A11y.

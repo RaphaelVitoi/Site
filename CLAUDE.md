@@ -136,18 +136,50 @@ Os plugins abaixo formam uma cadeia única, com responsabilidades não
 sobrepostas. Esta governança é a fonte contextual do projeto; instruções de
 plugin que a contradigam não têm precedência.
 
-| Camada | Plugin | Contrato operacional |
-| :--- | :--- | :--- |
-| Orquestração | `superpowers` | Especificação, plano, TDD, debugging e delegação; não decide segurança do produto. |
-| Engenharia de plugins | `plugin-dev` | Alterações em skills, comandos, hooks, MCP e manifests; validar antes de distribuir. |
-| Web | `modern-web-guidance` | APIs nativas, acessibilidade, performance e compatibilidade; é a base técnica do frontend. |
-| Design | `frontend-design` | Direção visual, tipografia, tokens e UX; não substitui A11y, testes ou CWV. |
-| Código | `typescript-lsp` | Diagnósticos, definição e referências TS/JS; somente fonte de verdade do servidor LSP. |
-| Runtime web | `playwright` | Smoke/E2E e evidência visual depois da implementação; sem uploads ou submissões externas por padrão. |
-| Segurança de API | `42crunch-api-security-testing` | OpenAPI, conformance, BOLA/BFLA e autorização; não duplicar como scan genérico. |
-| Segurança de código | `claude-security` | Threat model, findings verificados e patches em scratch; nunca aplicar, commitar ou publicar automaticamente. |
-| Revisão | `code-review` | Revisão de PR e confiança; comentário via `gh` exige autorização explícita separada. |
-| Plataforma | `vercel` | Contexto Next/Vercel e inspeção read-only; deploy, link, env e alterações remotas ficam bloqueados até autorização. |
+### 8.0 Contexto e instrução default — qualquer agente
+
+Todo agente, independentemente de identidade, Tier ou função, recebe por
+padrão somente o núcleo abaixo e este contexto de governança. O núcleo de oito
+skills é a configuração default, não uma lista fechada de capacidade.
+
+| Núcleo default | Função transversal |
+| :--- | :--- |
+| `superpowers` | Planejamento, TDD, debugging e coordenação |
+| `modern-web-guidance` | Web, APIs nativas, acessibilidade e compatibilidade |
+| `typescript-lsp` | Diagnóstico estrutural TypeScript/JavaScript |
+| `playwright` | Smoke/E2E e evidência visual |
+| `claude-security` | Threat model e revisão de segurança de código |
+| `code-review` | Revisão final, confiança e limites de publicação |
+| `frontend-design` | Direção visual, UX e sistema de design |
+| `plugin-dev` | Skills, plugins, hooks, MCPs e manifests |
+
+Todas as demais skills, plugins e perfis são **OPCIONAIS**. O agente pode,
+conforme a função e a tarefa concreta:
+
+1. invocar uma capacidade opcional;
+2. trocar uma capacidade do núcleo por outra mais adequada;
+3. combinar mais de uma capacidade opcional;
+4. aumentar temporariamente a quantidade de capacidades ativas;
+5. retornar ao núcleo default assim que a tarefa especializada terminar.
+
+A escolha deve ser proporcional e explícita no registro da tarefa: função,
+capacidade adicional, motivo técnico, pré-requisito, superfície criada e
+critério de desativação. A descrição curta da skill deve orientar a seleção;
+as instruções completas ficam no `SKILL.md`. Catálogo instalado não significa
+skill carregada, e skill carregada não significa execução comprovada.
+
+| Modo | Camada | Plugin | Contrato operacional |
+| :--- | :--- | :--- | :--- |
+| DEFAULT | Orquestração | `superpowers` | Especificação, plano, TDD, debugging e delegação; não decide segurança do produto. |
+| DEFAULT | Engenharia de plugins | `plugin-dev` | Alterações em skills, comandos, hooks, MCP e manifests; validar antes de distribuir. |
+| DEFAULT | Web | `modern-web-guidance` | APIs nativas, acessibilidade, performance e compatibilidade; é a base técnica do frontend. |
+| DEFAULT | Design | `frontend-design` | Direção visual, tipografia, tokens e UX; não substitui A11y, testes ou CWV. |
+| DEFAULT | Código | `typescript-lsp` | Diagnósticos, definição e referências TS/JS; somente fonte de verdade do servidor LSP. |
+| DEFAULT | Runtime web | `playwright` | Smoke/E2E e evidência visual depois da implementação; sem uploads ou submissões externas por padrão. |
+| OPCIONAL | Segurança de API | `42crunch-api-security-testing` | OpenAPI, conformance, BOLA/BFLA e autorização; não duplicar como scan genérico. |
+| DEFAULT | Segurança de código | `claude-security` | Threat model, findings verificados e patches em scratch; nunca aplicar, commitar ou publicar automaticamente. |
+| DEFAULT | Revisão | `code-review` | Revisão de PR e confiança; comentário via `gh` exige autorização explícita separada. |
+| OPCIONAL | Plataforma | `vercel` | Contexto Next/Vercel e inspeção read-only; deploy, link, env e alterações remotas ficam bloqueados até autorização. |
 
 Regras de composição:
 
@@ -163,12 +195,14 @@ Regras de composição:
    revertido se aumentar a superfície de execução, o tempo de startup ou
    produzir conflito.
 
-### 8.1 Perfis especializados — exclusividade mecânica
+### 8.1 Perfis especializados — opcionais e selecionáveis
 
-O core acima permanece a configuração normal do projeto. Capacidades adicionais
-não entram em `enabledPlugins` globalmente: o seletor
-`scripts/ops/Set-ClaudePluginProfile.ps1` preserva o core e habilita **no máximo
-um** perfil adicional definido em `.claude/plugin-profiles.json`.
+O núcleo default acima permanece em `enabledPlugins` globalmente. Capacidades
+adicionais são **OPCIONAIS** e não entram no carregamento padrão. O seletor
+`scripts/ops/Set-ClaudePluginProfile.ps1` pode ativar, trocar ou combinar perfis
+quando a função exigir; a regra de exclusividade é uma proteção default contra
+truncamento e sobrecarga, não uma proibição absoluta. Combinações maiores
+exigem justificativa operacional e verificação dos pré-requisitos.
 
 | Perfil | Plugin | Uso permitido | Pré-requisito inegociável |
 | :--- | :--- | :--- | :--- |
@@ -197,6 +231,24 @@ Regras adicionais:
    por heurística sem medição.
 4. `hyperframes` recebe artefatos aprovados em staging depois de direção visual
    e evidência Playwright; não autentica nem publica.
+
+### 8.1.1 Hooks de integração — default seguro
+
+Hooks de integração só podem constar como ativos quando houver, no mesmo
+ambiente, executável, configuração, permissões compatíveis e evidência de
+runtime. Referência declarada não é registro ativo.
+
+A malha global `PreToolUse`, `PostToolUse` e eventos relacionados ao
+`superbased-observer` está **DESATIVADA** porque o executável `observer.exe`, a
+configuração `C:\Users\rapha\.observer\config.toml` e o processo residente
+não foram encontrados. Esses hooks não fazem parte do contexto default de
+nenhum agente e não devem ser reativados por inferência.
+
+Enquanto a implementação não for restaurada e validada, o override
+`C:\Users\rapha\.claude\settings.local.json` com `"hooks": {}` é a barreira
+operacional. Qualquer futura reativação exige restaurar o alvo, executar um
+smoke test de cada evento e confirmar ausência de falhas; sem isso, a
+configuração correta permanece sem hooks globais.
 
 ### 8.2 Protocolo de coerência causal e não-regressão experimental
 

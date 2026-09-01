@@ -2233,9 +2233,9 @@ async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | 
                 warnings_count = int(w_match.group(1)) if w_match else 0
             elif "build" in name.lower() or "next" in name.lower():
                 warn_lines = [
-                    l
-                    for l in linhas
-                    if re.search(r"\bwarn(?:ing)?\b", l, re.IGNORECASE) and not l.strip().startswith("✓")
+                    line
+                    for line in linhas
+                    if re.search(r"\bwarn(?:ing)?\b", line, re.IGNORECASE) and not line.strip().startswith("✓")
                 ]
                 warnings_count = len(warn_lines)
             else:

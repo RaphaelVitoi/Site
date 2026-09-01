@@ -12,52 +12,52 @@ import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 const content = `
 # 📊 Classificação de Estruturas de Prêmios (Framework VITOI)
 
-O entendimento estrutural das premiações é crucial para calibrar as adaptações de ICM de um jogador. Diferentes curvas de pagamento forçam diferentes respostas estratégicas no longo prazo.
+O entendimento estrutural das premiações ajuda a organizar adaptações de ICM, desde que a curva completa e o estado da mesa estejam declarados. Os templates abaixo são didáticos: não substituem a leitura do vetor de payouts nem a análise do confronto efetivo.
 
 ---
 
 ## 1. O Princípio do Denominador Correto
 
-O percentual do 1º lugar deve ser sempre calculado sobre o **Prize Pool Total** do torneio, NÃO sobre a soma dos prêmios in-the-money (ITM).
+O percentual do 1º lugar deve ser calculado sobre o **Prize Pool Total** do torneio, não sobre a soma parcial dos prêmios in-the-money (ITM). Ele é um sinal inicial, não a classificação completa da estrutura.
 
 $$ \\%_{1st} = \\frac{Prêmio_{1st}}{TOTAL\\_POOL} $$
 
 ---
 
-## 2. Os 5 Arquétipos SOTA
+## 2. Templates operacionais
 
 ### A. TOP-HEAVY (▲)
-- **Regra:** 1º lugar $\\geq$ 25% do pool total.
-- **Dinâmica:** Laddering pouco valioso. O foco é a vitória absoluta, onde a recompensa cobre o risco massivo de bolhas estouradas.
-- **Impacto:** Bubble Factor (BF) elevado e pressão ICM severa. A sobrevivência é subjugada pela busca implacável da vitória.
+- **Sinal inicial:** 1º lugar $\\geq$ 25% do pool total.
+- **Leitura necessária:** confirmar se a concentração dos primeiros saltos e o restante da curva sustentam a classificação.
+- **Limite:** BF e pressão ICM devem ser calculados por confronto; não são propriedades fixas do rótulo.
 
 ### B. FLAT (▬)
-- **Regra:** 1º lugar $\\leq$ 18% do pool total.
-- **Dinâmica:** Laddering extremamente relevante. Subir uma posição tem valor real tangível e imediato.
-- **Impacto:** Jogo se aproxima muito de ChipEV (distorção mínima de ICM). A preservação de stack se torna essencial para garantir os degraus (payjumps).
+- **Sinal inicial:** 1º lugar $\\leq$ 18% do pool total.
+- **Leitura necessária:** avaliar distribuição efetiva de posições e ITM.
+- **Limite:** a curva flat não transforma um MTT em ChipEV puro; continua sendo necessário medir ICM no spot.
 
 ### C. HÍBRIDA (◆)
-- **Regra:** 1º lugar entre 18% e 24%.
-- **Método:** A classificação definitiva demanda Análise por Exclusão, sendo necessário avaliar a inclinação da curva de payjumps para calibrar o peso entre laddering e busca pela ponta.
+- **Sinal inicial:** 1º lugar entre 18% e 24%.
+- **Método:** analisar a inclinação de todos os payjumps; o percentual do primeiro isolado não fecha a classe.
 
 ### D. PKO (💥)
-- **Classificação:** Top-heavyssimo estático.
-- **Dinâmica:** A compensação real da agressividade e expansão de ranges não vem pelos saltos de tabela de prêmios convencional, mas pelo Bounty acumulado (ICM dinâmico de eliminação instantânea).
+- **Status:** fora do escopo do template Vanilla inicial.
+- **Motivo:** bounties exigem modelo próprio e regras documentadas da sala; não devem ser reduzidos à curva estática de payouts.
 
 ### E. SATÉLITE (🎫)
-- **Classificação:** ICM Binário e Terminal.
-- **Dinâmica:** Sobrevivência pura. O jogo torna-se altamente distorcido, pois acumular fichas além do necessário para o ticket tem EV matemático absolutamente zero. A agressividade é puramente focada na eliminação de ameaças e preservação estrita do stack atual.
+- **Status:** fora do escopo do template Vanilla inicial.
+- **Motivo:** a utilidade de ticket exige modelo terminal separado e não deve ser tratada pelo mesmo contrato de MTT.
 
 ---
 
-## 3. Âncora Científica (Aula 1.2)
+## 3. Referência interna (Aula 1.2)
 
-Dados empíricos e observacionais extraídos de um torneio de calibração no motor SOTA v5.2:
+Dados declarados do cenário didático:
 
 - **Total Players:** 126
 - **Total Pool:** $1260
 - **1st Prize:** $237.34 (18.8%)
-- **Status:** FLAT (no limiar exato de uma transição para Híbrida)
+- **Leitura:** 18,8% é um limiar operacional entre flat e híbrida; a classificação depende do vetor integral e de sua fonte.
 
 **Impacto Paramétrico no Contexto (Mesa Final):**
 
@@ -67,7 +67,7 @@ Dados empíricos e observacionais extraídos de um torneio de calibração no mo
 | **BTN** | 1.27x | 21.4% |
 
 ---
-*Fonte: Documento de Governança de Estruturas, 2026. Paradigma VITOI.*
+*Fonte: registro interno de estruturas, 2026. O cenário não certifica médias de salas ou validação externa.*
 `;
 
 export default function EstruturasDeTorneioPage() {

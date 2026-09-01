@@ -33,26 +33,26 @@ export function ContentPageHeader({
 			<div className="sota-container relative z-10 animate-sota-in">
 				<div className="flex flex-col gap-10">
 					{/* Breadcrumb SOTA High-Fidelity */}
-					<nav className="flex items-center gap-4 text-[0.6rem] font-black uppercase tracking-[0.3em] opacity-40 hover:opacity-100 transition-opacity">
+					<nav aria-label="Caminho de navegação" className="flex items-center gap-4 text-[0.6rem] font-black uppercase tracking-[0.3em] text-white/70">
 						<Link
 							href="/"
-							className="hover:text-accent-indigo transition-colors flex items-center gap-2"
+							className="hover:text-accent-indigo-light transition-colors flex items-center gap-2"
 						>
 							<i className="fa-solid fa-house text-[0.55rem]" /> Home
 						</Link>
-						<i className="fa-solid fa-chevron-right text-[0.45rem] text-text-darker" />
+						<i className="fa-solid fa-chevron-right text-[0.45rem] text-white/50" />
 						{category && (
 							<>
 								<Link
 									href="/biblioteca"
-									className="hover:text-accent-indigo transition-colors"
+									className="hover:text-accent-indigo-light transition-colors"
 								>
 									{category}
 								</Link>
-								<i className="fa-solid fa-chevron-right text-[0.45rem] text-text-darker" />
+								<i className="fa-solid fa-chevron-right text-[0.45rem] text-white/50" />
 							</>
 						)}
-						<span className="text-text-muted truncate max-w-50">{title}</span>
+						<span className="text-white/70 truncate max-w-50">{title}</span>
 					</nav>
 
 					<div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12">
@@ -91,9 +91,9 @@ export function ContentPageHeader({
 						</div>
 
 						<div className="hidden xl:block">
-							<div className="text-right space-y-3 opacity-30 hover:opacity-60 transition-all duration-700">
+							<div className="text-right space-y-3 transition-all duration-700">
 								<div className="space-y-1">
-									<span className="text-[0.65rem] font-black uppercase tracking-[0.4em] text-white block">
+									<span className="text-[0.65rem] font-black uppercase tracking-[0.4em] text-white/80 block">
 										Paradigma VITOI
 									</span>
 									<span className="text-[0.5rem] font-mono font-black uppercase tracking-[0.5em] text-accent-indigo-light">
@@ -101,7 +101,7 @@ export function ContentPageHeader({
 									</span>
 								</div>
 								<div className="h-px w-32 bg-linear-to-l from-accent-indigo/40 to-transparent ml-auto" />
-								<div className="flex justify-end gap-4 opacity-50">
+								<div className="flex justify-end gap-4 text-white/60">
 									<i className="fa-solid fa-microchip text-[0.6rem]" />
 									<i className="fa-solid fa-dna text-[0.6rem]" />
 									<i className="fa-solid fa-satellite-dish text-[0.6rem]" />

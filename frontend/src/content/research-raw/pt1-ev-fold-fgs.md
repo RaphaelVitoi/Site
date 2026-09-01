@@ -1,27 +1,34 @@
-# PT1: EV do Fold e a Ditadura do FGS (Future Game Simulation)
+# PT1 — EV do Fold e Future Game Simulation (rascunho de pesquisa)
 
-> "O fold não é zero. É o custo de estar vivo ou o lucro de não morrer."
+> **Fronteira:** hipótese didática PMev. Não é uma fórmula universal de MTT e
+> não substitui ICM, ranges ou uma árvore de solver.
 
-## 1. O Axioma do -0.125bb
+## 1. O custo de continuar existindo
 
-No vácuo de um SRP (Single Raised Pot), desistir custa o valor do seu investimento morto. Contudo, em uma estrutura de torneio com Antes, o seu baseline de existência é negativo. A cada mão que você "passa", seu stack sofre uma erosão de aproximadamente **-0.125bb** (em mesas 8-max com 12.5% ante).
+O fold não é automaticamente zero. Contudo, o custo de uma órbita depende de
+modelo de ante (BBA ou antes distribuídos), número de jogadores, posição,
+blinds, stack e horizonte de decisão. O exemplo `-0,125 BB` pode ilustrar um
+ante de 12,5% em uma convenção específica, mas não deve aparecer como constante
+de toda mesa 8-max ou de todo MTT.
 
-Ignorar esse custo é o primeiro passo para a insolvência.
+O cálculo deve separar: investimento já comprometido, custo futuro da órbita e
+valor condicional de sobreviver a eliminações alheias. Só o primeiro é conhecido
+sem projeção; os demais precisam de premissas registradas.
 
-## 2. O Fold Positivo (Laddering)
+## 2. Fold positivo e laddering
 
-Em cenários de ICM extremo (ex: 3 left, um micro-stack de 0.5bb em outra mesa), o seu EV do Fold torna-se **positivo**.
+Próximo a um payjump, um fold pode carregar valor monetário condicional quando
+há probabilidade relevante de eliminação de outro jogador. Isso não garante
+fold, nem transforma qualquer micro-stack em fonte de EV positivo. O modelo
+precisa declarar payouts, stacks, posição, jogadores remanescentes e a hipótese
+de ocorrência que produziu a projeção.
 
-* **Ação:** Fold.
-* **Resultado:** Sobrevivência garantida enquanto o oponente cai.
-* **Valor:** O salto de premiação (Payjump).
+## 3. Antevisão de órbita
 
-## 3. A Antevisão t-3 (A Órbita)
+Distância até o Big Blind pode ser uma variável útil de FGS. A quantidade de
+mãos até a blind não é constante: muda com o tamanho da mesa e com a posição.
+Ela deve ser calculada a partir do assento real, não fixada como “UTG = 6” ou
+“BTN = 2” fora de uma configuração declarada.
 
-O FGS (Future Game Simulation) não deve olhar apenas para a próxima mão, mas para o "Ponto de Colisão" (BB).
-
-* **UTG:** Tem 6 mãos de "vida" antes do imposto máximo.
-* **BTN:** Tem 2 mãos de "vida".
-* **SB:** Está no corredor da morte.
-
-A agressividade deve ser inversamente proporcional ao tempo restante até o Big Blind, ponderada pela probabilidade de subida de blinds (Blind Jump).
+O resultado correto é um sinal para comparar linhas sob o mesmo cenário. Não é
+uma autorização automática para ampliar ou reduzir ranges.

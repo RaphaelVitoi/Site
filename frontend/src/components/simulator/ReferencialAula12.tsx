@@ -675,7 +675,7 @@ function ToyGamesFramework() {
                 delta: 15,
                 bluff: 25,
                 def: 28,
-                effect: 'Vantagem de Risco: IP impõe custo de colisão',
+                effect: 'Assimetria direcional: menor RP define a Vantagem de Risco no confronto',
               },
               {
                 no: 'TG6',
@@ -964,9 +964,9 @@ export default function ReferencialAula12() {
                         <i className="fa-solid fa-bullseye text-2xl" /> Exploitation Directive
                       </h4>
                       <p className="text-text-muted m-0 text-[1rem] leading-relaxed font-medium">
-                        Com um Risk Premium menor ({rpBtn.toFixed(1)}%), o BTN opera sob regime de{' '}
-                        <strong className="text-white">Agressão Descontada</strong>. O limiar de equidade é reduzido,
-                        tornando o overshove no River matematicamente inquestionável.
+                        O BB tem o menor Risk Premium ({rpBb.toFixed(1)}%) no confronto BTN→BB e,
+                        portanto, a Vantagem de Risco direcional. Esse dado orienta a investigação de
+                        pressão relativa, mas não torna qualquer overshove ou frequência automaticamente correto.
                       </p>
                     </div>
                   </div>

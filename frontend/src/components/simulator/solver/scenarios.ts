@@ -69,15 +69,15 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'A Assimetria de Sobrevivência',
     narrativeSubtitle: 'Mid vs Big Stack',
     icon: 'fa-scale-unbalanced', color: 'rose',
-    theory: `O BTN (40bb, RP 21.4%) paga mais caro por cada erro do que o BB (55bb, RP 12.9%). A assimetria de ΔRP (+8.5pp a favor do BB) permite ao BB ser mais agressivo — ele pode absorver perdas que destruiriam o BTN. Os hero-bluffs do BTN custam mais em $EV do que valem: a agressão é estrangulada pelo próprio RP do agressor. O overfold do BTN não é fraqueza — é equilíbrio estrutural.`,
-    exploit: [ 'Aceite o overfold estratégico como BTN.', 'Como BB: explore com thin value — o BTN não pode punir.' ],
+    theory: `O BTN (40bb, RP 21.4%) paga mais caro por cada erro do que o BB (55bb, RP 12.9%). No confronto direcional BTN→BB, ΔRP = 12.9 − 21.4 = -8.5 p.p.: o BB, por ter o menor RP, detém a Vantagem de Risco. Isso autoriza investigar pressão relativa do BB, mas não determina sozinho uma frequência, um sizing ou um overfold: payouts, stacks efetivos, pote, posição e ranges ainda governam a decisão.`,
+    exploit: [ 'BTN: trate o RP maior como custo contextual, não como ordem automática de fold.', 'BB: investigue thin value e pressão relativa apenas contra ranges e sizings definidos.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 12.9 }, { name: 'FLOP', potSize: 7.5, rpValue: 10.4 }, { name: 'TURN', potSize: 22.5, rpValue: 5.8 }, { name: 'RIVER', potSize: 40, rpValue: 2.6 } ],
     defaultStreetFreqs: {
       flop: { ip_check: 2, ip_bet_small: 65, ip_bet_large: 33, oop_call: 45, oop_fold: 40, oop_raise: 15 },
       turn: { ip_check: 20, ip_bet_small: 45, ip_bet_large: 35, oop_call: 55, oop_fold: 35, oop_raise: 10 },
       river: { ip_check: 35, ip_bet_small: 10, ip_bet_large: 55, oop_call: 65, oop_fold: 28, oop_raise: 7 },
     },
-    quiz: { question: 'Por que o BTN sofre mais neste confronto?', options: [ { id: 'A', text: 'RP maior (21.4%) significa que cada chip perdido vale mais em $EV.', isCorrect: true }, { id: 'B', text: 'Porque está fora de posição.', isCorrect: false }, { id: 'C', text: 'Porque o BB tem cartas melhores.', isCorrect: false }, { id: 'D', text: 'Porque o pot é grande demais.', isCorrect: false } ], explanation: 'A assimetria de RP (21.4% vs 12.9%) cria um ΔRP de +8.5pp a favor do BB. O BTN arrisca proporcionalmente mais por cada ficha investida — a dor da perda é estruturalmente maior.' }
+    quiz: { question: 'Por que o BTN enfrenta maior pressão de risco neste confronto?', options: [ { id: 'A', text: 'RP maior (21.4%) eleva o custo contextual de perder fichas; o BB tem menor RP e Vantagem de Risco.', isCorrect: true }, { id: 'B', text: 'Porque está fora de posição.', isCorrect: false }, { id: 'C', text: 'Porque o BB tem cartas melhores.', isCorrect: false }, { id: 'D', text: 'Porque o pote é grande demais.', isCorrect: false } ], explanation: 'ΔRP(BTN→BB) = 12.9 − 21.4 = -8.5 p.p. O sinal identifica que a Vantagem de Risco está com o BB; não é uma regra linear que, sozinha, produza uma frequência de bet, call ou fold.' }
   },
   {
     id: 'pacto',

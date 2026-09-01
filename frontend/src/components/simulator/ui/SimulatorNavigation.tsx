@@ -57,7 +57,7 @@ export default function SimulatorNavigation({
 	];
 
 	return (
-		<nav className="flex items-center gap-1.5 p-1.5 bg-slate-950/60 rounded-2xl border border-white/10 shadow-inner relative overflow-x-auto no-scrollbar w-full max-w-full justify-start md:justify-between">
+		<nav aria-label="Ferramentas do simulador" className="flex items-center gap-1.5 p-1.5 bg-slate-950/60 rounded-2xl border border-white/10 shadow-inner relative overflow-x-auto no-scrollbar w-full max-w-full justify-start md:justify-between">
 			<div className="absolute inset-0 bg-radial-[at_top_left] from-accent-indigo/5 to-transparent pointer-events-none min-w-full" />
 
 			{tools.map((t) => {

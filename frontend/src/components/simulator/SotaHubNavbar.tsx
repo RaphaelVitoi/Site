@@ -17,7 +17,7 @@ export function SotaHubNavbar() {
 		<div className="sticky top-24 z-40 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-2 pb-4">
 			<div className="sota-glass-pill px-5 py-3 flex flex-col lg:flex-row items-center justify-between gap-4 w-full">
 				{/* Navigation Links */}
-				<nav className="flex items-center justify-center gap-2 flex-wrap w-full lg:w-auto">
+				<nav aria-label="Navegação do hub de simulação" className="flex items-center justify-center gap-2 flex-wrap w-full lg:w-auto">
 					<Link
 						href="/simulador"
 						className={`px-4 py-2 rounded-full text-[0.65rem] font-black uppercase tracking-widest transition-all ${isActive('/simulador') ? 'bg-accent-indigo text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}

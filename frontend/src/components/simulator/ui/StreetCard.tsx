@@ -1,6 +1,7 @@
 'use client';
 
 import {
+	calculateRiskAdvantageDelta,
 	formatDeltaRp,
 	formatEvFold,
 	formatPm,
@@ -33,12 +34,14 @@ function getCardData(
 	const villainLabel = heroIsIp ? oopLabel : ipLabel;
 
 	if (isBaseline) {
-		return { heroRp: 0, villainRp: 0, deltaRp: 0, heroLabel, villainLabel };
+		return { heroRp: 0, villainRp: 0, riskAdvantageDelta: 0, heroLabel, villainLabel };
 	}
+	const heroRp = heroIsIp ? result.ipRp : result.oopRp;
+	const villainRp = heroIsIp ? result.oopRp : result.ipRp;
 	return {
-		heroRp: heroIsIp ? result.ipRp : result.oopRp,
-		villainRp: heroIsIp ? result.oopRp : result.ipRp,
-		deltaRp: result.deltaRp,
+		heroRp,
+		villainRp,
+		riskAdvantageDelta: calculateRiskAdvantageDelta(heroRp, villainRp),
 		heroLabel,
 		villainLabel,
 	};
@@ -61,7 +64,7 @@ export const StreetCard = ({
 	heroIsIp,
 	isBaseline = false,
 }: Readonly<StreetCardProps>) => {
-	const { heroRp, villainRp, deltaRp, heroLabel, villainLabel } = getCardData(
+	const { heroRp, villainRp, riskAdvantageDelta, heroLabel, villainLabel } = getCardData(
 		result,
 		heroIsIp,
 		isBaseline,
@@ -70,7 +73,7 @@ export const StreetCard = ({
 	);
 
 	const evFoldData = formatEvFold(result.evFoldStreet);
-	const deltaRpData = formatDeltaRp(deltaRp);
+	const riskAdvantageData = formatDeltaRp(riskAdvantageDelta);
 	const pmData = formatPm(result.pmStreet);
 	const ciData = getCiStyle(result.ciStreet);
 
@@ -114,9 +117,9 @@ export const StreetCard = ({
 					colorClass="text-accent-indigo/60"
 				/>
 				<MetricRow
-					label="Risk Advantage"
-					value={deltaRpData.text}
-					colorClass={deltaRpData.colorClass}
+					label={`ΔRP ${heroLabel}→${villainLabel}`}
+					value={riskAdvantageData.text}
+					colorClass={riskAdvantageData.colorClass}
 				/>
 			</div>
 

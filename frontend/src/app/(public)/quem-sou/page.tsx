@@ -45,7 +45,7 @@ export default function QuemSouPage() {
 
         <div className="mx-auto max-w-[1040px] px-10">
           {/* Breadcrumb */}
-          <nav className="mb-14 flex items-center gap-3 font-mono text-[0.55rem] tracking-[0.45em] text-[#888680] uppercase">
+          <nav aria-label="Caminho de navegação" className="mb-14 flex items-center gap-3 font-mono text-[0.55rem] tracking-[0.45em] text-[#888680] uppercase">
             <Link href="/" className="text-[#888680] no-underline transition-colors hover:text-[#0D0C0A]">
               Home
             </Link>

@@ -1,25 +1,79 @@
-# PRD: Calculadora de Perspectiva Matemática (ICM Toy SOTA)
+# PRD interno — Calculadora de Perspectiva Matemática para Toy Games de MTT
 
-> Documento de Requisitos de Produto (Alinhado à Especificação Matemática)
+> **Estado editorial:** especificação de produto em revisão; não é uma rota,
+> nem um simulador publicado, nem evidência independente de estratégia.
 
-## Estrutura Simétrica
+## 1. Problema delimitado
 
-### 1. Problema
+Em MTTs, Pot Odds descrevem o preço local de continuar, mas não esgotam o
+spot: payouts, stacks, risco de eliminação, posição, realização de equidade e
+oponentes remanescentes também importam. Elas são uma condição necessária da
+análise, não uma regra suficiente. ChipEV puro entra somente como referência
+contrafactual de comparação; não deve ser apresentado como o estado operacional
+normal de um MTT.
 
-O modelo tradicional de cálculo de poker (ChipEV/ICM estático) baseia-se em heurísticas falhas, principalmente as "Pot Odds". Essa abordagem ignora o fluxo dinâmico do jogo, não precifica o passivo estrutural das Reverse Implied Odds (RIO) em potes multiway, e desconsidera a Edge Relativa, levando jogadores à insolvência estratégica e à abstenção de lucro.
+O produto deve tornar essas dependências explícitas sem converter hipóteses
+PMev em frequência, sizing ou recomendação de solver sem evidência de nó.
 
-### 2. Resultado Esperado
+## 2. Resultado de produto
 
-Um simulador visual interativo (Toy Game) no frontend que demonstre matematicamente a degradação da utilidade real (Perspectiva Matemática) frente ao incentivo ilusório das Pot Odds. A ferramenta deve exibir graficamente o ponto exato onde um "call barato" se torna letal.
+Um Toy Game de mesa final que receba o estado declarado pelo estudante, valide
+a conservação de fichas e separe visualmente:
 
-### 3. Requisitos
+1. dados recebidos e pressupostos escolhidos;
+2. cálculo ICM/BF/RP reproduzível para o estado informado;
+3. sinais PMev/FGS/RIO que ainda são hipóteses de modelo;
+4. lacunas que impedem um veredito quantitativo.
 
-- **R-01 (Motor de Cálculo):** Implementar as equações de EV_fold dinâmico (t-3, payjumps) e Coeficiente de Insolvência (C_i).
-- **R-02 (Simulação MW):** O sistema deve recalcular exponencialmente o peso das RIO ao escalar o número de jogadores ativos (cenário Multiway).
-- **R-03 (Camada Visual):** Plotar a "Curva de Insolvência" usando Recharts, sobrepondo a linha estática de Pot Odds contra a curva decrescente da Perspectiva Matemática.
-- **R-04 (Inputs Reativos):** Fornecer controles UI para `stack_efetivo`, `tempo_blinds_min`, `distancia_payjump` e `edge_oponentes`.
+O resultado deve dizer **“dados insuficientes para frequência”** quando não
+houver ranges, ações, pote, posição ou fonte de solver necessários. O objetivo
+didático é explicar a árvore de decisão, não preencher essa árvore com números
+inventados.
 
-### 4. Riscos
+## 3. Recorte de versão inicial
 
-- **Sobrecarga Cognitiva (UX):** A complexidade da tese matemática (Fator de Realização, Amortização de Edge) pode confundir o usuário se não for exposta de forma progressiva e visual na UI.
-- **Performance Matemática:** Cálculo excessivo na thread principal do React (Frontend) caso os cenários sejam simulados iterativamente para a geração dos eixos do gráfico.
+- MTT Vanilla de Texas Hold'em, mesa final de 8 ou 9 lugares.
+- O estudante pode informar de 2 a 9 jogadores remanescentes; em heads-up de
+  mesa final, o motor exibe uma referência terminal winner-take-all/ICM-neutra,
+  sem declarar que o torneio “vira ChipEV puro”.
+- PKO, Mystery, satélite, rebuy e bounties ficam visíveis como extensões futuras
+  e não entram no cálculo desta versão. Re-entry pode compor o field declarado,
+  mas não deve ser inferido sem registro.
+
+## 4. Contrato de entradas
+
+| Grupo | Campo obrigatório | Regra de validade |
+| :-- | :-- | :-- |
+| Torneio | prize pool total, buy-in, field após late registration | valores positivos; o pool total não é a soma automática dos prêmios da FT se existirem payouts anteriores. |
+| Mesa final | número de lugares (8/9), jogadores remanescentes e vetor de payouts da FT | `2 ≤ remanescentes ≤ lugares`; vetor estritamente não negativo e em ordem de colocação. |
+| Fichas | stack de cada jogador, em fichas ou BB, e blind level/ante | uma única unidade por cálculo; soma de fichas preservada entre cenários. |
+| Spot | agressor, defensor, posição, pote e investimento atual | índices pertencem à mesa; valores não negativos; stack efetivo coerente. |
+| Evidência opcional | hand history e origem de solver/ranges | HH só preenche após reconhecer formato e FT compatível; output de solver recebe fonte, versão e nó. |
+
+Templates top-heavy, híbrido e flat podem sugerir uma distribuição inicial,
+mas devem mostrar fonte, período e universo. Nenhum template pode substituir o
+vetor de payouts informado nem fingir que representa PokerStars ou GGPoker sem
+amostra documentada.
+
+## 5. Saídas e limites
+
+- Exibir BF/RP com a direção explícita: `ΔRP(A→D) = RP_defensor − RP_agressor`.
+  Valor positivo identifica a Vantagem de Risco do agressor; a unidade é p.p.
+  dentro da leitura ICMev/RP.
+- Exibir RIO/FGS/PMev como componentes e pressupostos do motor, não como
+  veredito de equilíbrio externo.
+- Nunca converter `ΔRP` diretamente em percentagem de agressão, defesa ou
+  sizing. Essa transformação exige payout, stacks efetivos, pote, posição,
+  ranges e jogadores remanescentes — e, para validação, nós reprodutíveis.
+- Recusar inputs impossíveis (stack negativo, soma de chips incompatível,
+  payout vazio, jogador fora da mesa) com mensagem pedagógica e sem completar
+  dados ausentes por suposição silenciosa.
+
+## 6. Riscos e critérios de aceite
+
+| Risco | Tratamento de aceite |
+| :-- | :-- |
+| Saída visual parecer resultado de solver | cada métrica traz proveniência: entrada do usuário, cálculo de motor ou referência externa. |
+| Perda de fichas entre cenários | teste de conservação de stack e erro bloqueante no formulário. |
+| Confusão entre Pot Odds e decisão final | interface descreve Pot Odds como condição necessária, não como sentença de ação. |
+| Hipótese ser promovida a fato | publicação só após revisão editorial, parâmetros versionados e comparação reproduzível. |

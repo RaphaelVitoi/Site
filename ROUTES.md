@@ -7,7 +7,9 @@
 
 - Next.js 14 (App Router)
 - Cada rota = pasta com `page.tsx` dentro de `frontend/src/app/`
-- Rotas dinamicas usam `[slug]` e consomem Prisma (SQLite)
+- Rotas dinâmicas usam `[slug]`. O consumo de conteúdo dinâmico só pode ser
+  declarado quando o provedor de API e seu contrato de publicação estiverem
+  efetivamente registrados.
 
 ## Arvore de Rotas (Next.js 16.2 App Router)
 
@@ -43,7 +45,7 @@
 /api/v1/rag                    Cognitive memory retrieve/store (RAG)
 /api/v1/profile                User Profile data endpoints
 /api/v1/predictive             Telemetry-based predictive stats
-/api/v1/content/[slug]         CMS dynamically retrieved lesson/article content
+/api/v1/content/[slug]         Contrato reservado de CMS; não registrado na API local atual
 ```
 
 ## Regras de Routing
@@ -52,7 +54,10 @@
 2. **Artigos e Ensaios** vivem em `/biblioteca/`.
 3. **Ferramentas interativas** (simuladores, calculadoras) devem ser componentes dentro de aulas, nao rotas separadas.
 4. **Redirects** nao devem existir como rotas. Se uma URL mudou, resolver via `next.config.ts` redirects.
-5. **Rotas dinamicas** (`[slug]`) consomem `prisma.lesson.findUnique()` ou equivalente.
+5. **Rotas dinâmicas** (`[slug]`) só consomem `prisma.lesson.findUnique()` ou
+   equivalente depois que o endpoint, a política de autenticação e o contrato
+   de publicação estiverem registrados e testados. A página não deve rotular
+   falha de autorização como slug inexistente.
 
 ## Rotas Removidas (historico)
 
