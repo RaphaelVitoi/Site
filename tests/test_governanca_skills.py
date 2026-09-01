@@ -28,10 +28,15 @@ apontava para nomes, e nome errado nao quebra nada -- so mente.
 
 Um nome declarado resolve de duas maneiras, e so duas:
 
-1. **Skill local** -- diretorio com `SKILL.md` sob uma das `raizes_locais` de
-   `data/skills_registry.json`. E DESCOBERTA por varredura, nunca listada no
-   registro: repetir em JSON o que ja esta em disco criaria a segunda copia que
-   a §7 do CLAUDE.md proibe, e ela divergiria como o `AGENTS.md` divergiu.
+1. **Skill local** -- diretorio VERSIONADO com `SKILL.md` sob uma das
+   `raizes_locais` de `data/skills_registry.json`. E DESCOBERTA por varredura,
+   nunca listada no registro: repetir em JSON o que ja esta em disco criaria a
+   segunda copia que a §7 do CLAUDE.md proibe, e ela divergiria como o
+   `AGENTS.md` divergiu. Diretorio coberto pelo `.gitignore` nao conta: ele e
+   instalacao de plugin numa maquina, nao conteudo deste repositorio, e tratar
+   presenca em disco como resolucao faz a guarda medir o perfil do operador em
+   vez do que qualquer clone tem (mesmo criterio de `_e_derivado` em
+   `scripts/ops/record_gate.py`).
 2. **Skill externa** -- entrada em `externas` do registro. E declaracao do
    operador sobre algo que vive fora do repositorio (plugin, escopo de usuario,
    marketplace), com `status` dizendo ate onde a evidencia vai.
@@ -52,6 +57,7 @@ vez de estar implicita em 19 documentos gerados.
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -101,6 +107,23 @@ def _externas() -> set[str]:
     return {k for k in _registro()["externas"] if not k.startswith("_")}
 
 
+def _versionado(caminho: Path) -> bool:
+    """O arquivo esta rastreado por este repositorio, e nao so presente no disco.
+
+    Sem esta distincao a suite passava na maquina onde o plugin da Supabase
+    instalou `.agents/skills/supabase/` -- diretorio que o proprio
+    `.agents/skills/.gitignore` exclui -- e reprovava em CI e em qualquer clone
+    novo, que e onde a afirmacao de capacidade precisa valer.
+    """
+    r = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", str(caminho.relative_to(RAIZ)).replace("\\", "/")],
+        cwd=RAIZ,
+        capture_output=True,
+        check=False,
+    )
+    return r.returncode == 0
+
+
 def _skills_locais() -> dict[str, Path]:
     achadas: dict[str, Path] = {}
     for raiz_rel in _registro()["raizes_locais"]:
@@ -108,8 +131,9 @@ def _skills_locais() -> dict[str, Path]:
         if not raiz.is_dir():
             continue
         for d in sorted(raiz.iterdir()):
-            if d.is_dir() and (d / "SKILL.md").is_file():
-                achadas[d.name] = d / "SKILL.md"
+            skill = d / "SKILL.md"
+            if d.is_dir() and skill.is_file() and _versionado(skill):
+                achadas[d.name] = skill
     return achadas
 
 
