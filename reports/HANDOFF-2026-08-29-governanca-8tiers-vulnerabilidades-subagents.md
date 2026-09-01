@@ -36,6 +36,10 @@ verificado:
   - cumprimento irrestrito do Quality Gate (CWV, A11y, CVE Guard, SRI e Higiene de Repositorio)
 nao_verificado:
   - chamadas reais de rede a APIs pagas durante os testes unitarios
+revisoes_de_ancora:
+  - registro: auditoria-cwv-lighthouse-2026-09-01
+    caminhos: [package.json]
+    parecer: A ancora do manifesto foi reavaliada no baseline atual; o handoff permanece historico.
 ---
 
 # RELATÓRIO OFICIAL DE HANDOFF — SOTA v8.0 GOLD

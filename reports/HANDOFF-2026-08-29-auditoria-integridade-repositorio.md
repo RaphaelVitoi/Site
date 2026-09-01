@@ -41,6 +41,10 @@ nao_verificado:
   - nenhuma chamada real a provedor de LLM foi feita; credenciais ativas nao sao pressupostas
   - clone limpo com download LFS e migracao do video legado para LFS nao foram executados
 supersede: null
+revisoes_de_ancora:
+  - registro: auditoria-cwv-lighthouse-2026-09-01
+    caminhos: [scripts/ops/cwv_gate.ps1]
+    parecer: A ancora do handoff foi reavaliada no baseline atual; suas metricas permanecem limitadas a data original.
 ---
 
 # HANDOFF — auditoria de integridade, qualidade e publicacao

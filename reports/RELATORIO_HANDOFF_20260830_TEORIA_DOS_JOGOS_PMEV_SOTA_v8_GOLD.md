@@ -25,6 +25,10 @@ verificado:
   - isolamento de extensoes .bin no VS Code para prevencao de falhas do PyTorch Structure Viewer
 nao_verificado:
   - testes de carga de inferencia GPU em hardware AMD/Vulkan remoto
+revisoes_de_ancora:
+  - registro: auditoria-cwv-lighthouse-2026-09-01
+    caminhos: [.vscode/settings.json]
+    parecer: A configuracao foi reavaliada no baseline atual; o handoff teorico permanece evidencia historica.
 ---
 
 # RELATÓRIO OFICIAL DE HANDOFF — TEORIA DOS JOGOS, SOLVERS SOTA & ARQUITETURA PMEV

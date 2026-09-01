@@ -16,6 +16,10 @@ verificado:
   - uso ativo limitado a PersistentClient, sem HttpClient, chroma run ou listener de servidor
 nao_verificado:
   - metadados individuais dos sete alertas Dependabot exigem autenticacao GitHub do proprietario e nao foram inferidos do contador remoto
+revisoes_de_ancora:
+  - registro: auditoria-cwv-lighthouse-2026-09-01
+    caminhos: [scripts/ops/cwv_gate.ps1]
+    parecer: A ancora do plano foi reavaliada no baseline atual; o plano permanece valido e nao recebe certificacao retroativa.
 ---
 
 # Dependency Boundary Reconciliation — Implementation Plan

@@ -9,14 +9,27 @@ param(
     [double]$LcpThreshold = 2500.0,
     [double]$ClsThreshold = 0.10,
     [double]$InpThreshold = 200.0,
+    [double]$TbtThreshold = 200.0,
     [double]$TtfbThreshold = 800.0,
     [double]$MaxHeapThresholdMb = 128.0,
     [int[]]$CdpPorts = @(9223, 9222),
-    [string]$ReportDir = "$env:USERPROFILE\.gemini\Site\reports\cwv"
+    [string]$ReportDir = "$env:USERPROFILE\.gemini\Site\reports\cwv",
+    [string]$A11yReviewBaselinePath = "",
+    [string]$CwvManualReviewPath = "",
+    [string]$LighthouseArtifactPath = ""
 )
 
 $ErrorActionPreference = 'SilentlyContinue'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\\..')).Path
+if ([string]::IsNullOrWhiteSpace($A11yReviewBaselinePath)) {
+    $A11yReviewBaselinePath = Join-Path $RepoRoot 'data\a11y_manual_review_baselines.json'
+}
+if ([string]::IsNullOrWhiteSpace($CwvManualReviewPath)) {
+    $CwvManualReviewPath = Join-Path $RepoRoot 'data\cwv_manual_review_records.json'
+}
+if ([string]::IsNullOrWhiteSpace($LighthouseArtifactPath)) {
+    $LighthouseArtifactPath = Join-Path $RepoRoot 'reports\cwv\latest_lighthouse_production.json'
+}
 
 Write-Host "`n======================================================================" -ForegroundColor Cyan
 Write-Host "[SOTA QUALITY GATE] Full Performance, A11y, CVE & SRI Integrity Audit" -ForegroundColor Yellow
@@ -72,6 +85,7 @@ if (-not $cdpActive) {
 $perfMetrics = [ordered]@{
     "LCP_MS"                        = @{ Val = $null; Limit = $LcpThreshold;        Unit = "ms"; Category = "Performance";      Enforcement = "Fail";    Desc = "Maior pintura observada no navegador" }
     "CLS"                           = @{ Val = $null; Limit = $ClsThreshold;        Unit = "";   Category = "Performance";      Enforcement = "Fail";    Desc = "Deslocamento visual cumulativo observado" }
+    "TBT_MS"                        = @{ Val = $null; Limit = $TbtThreshold;        Unit = "ms"; Category = "Performance";      Enforcement = "Fail";    Desc = "Total Blocking Time calculado pelo Lighthouse em build de producao e Chrome isolado" }
     "TTFB_MS"                       = @{ Val = $null; Limit = $TtfbThreshold;       Unit = "ms"; Category = "Performance";      Enforcement = "Fail";    Desc = "Resposta inicial observada via Navigation Timing" }
     "MAX_HEAP_MB"                   = @{ Val = $null; Limit = $MaxHeapThresholdMb; Unit = "MB"; Category = "Resource Economy"; Enforcement = "Fail";    Desc = "Heap JavaScript observado" }
     "OBSERVED_EVENT_LATENCY_MS"     = @{ Val = $null; Limit = $null;                Unit = "ms"; Category = "Diagnostic";       Enforcement = "Observe"; Desc = "Event Timing observado; não certifica INP sem interação humana" }
@@ -81,7 +95,7 @@ $perfMetrics = [ordered]@{
 # 2. Accessibility & Quality Rules Matrix
 $a11yRules = [ordered]@{
     "AXE_VIOLATIONS" = @{ Val = $null; Limit = 0; Unit = "violations"; Enforcement = "Fail"; Desc = "Violacoes detectadas por axe-core no DOM renderizado" }
-    "AXE_INCOMPLETE" = @{ Val = $null; Limit = 0; Unit = "items"; Enforcement = "Warn"; Desc = "Regras axe que exigem revisao humana" }
+    "AXE_INCOMPLETE" = @{ Val = $null; Limit = 0; Unit = "items"; Enforcement = "Warn"; Desc = "Regras axe que exigem revisao humana"; ManualReview = $null }
 }
 
 $failures = @()
@@ -125,6 +139,236 @@ function Add-QualityFinding {
     }
 }
 
+function New-AxeManualReviewResult {
+    param(
+        [bool]$Approved,
+        [string]$Code,
+        [string]$Message,
+        [object]$Review = $null,
+        [string]$ObservedHash = ""
+    )
+
+    return [pscustomobject]@{
+        Approved     = $Approved
+        Code         = $Code
+        Message      = $Message
+        ReviewId     = if ($Review -and $Review.id) { [string]$Review.id } else { $null }
+        Reviewer     = if ($Review -and $Review.reviewer_authority) { [string]$Review.reviewer_authority } else { $null }
+        ReviewedAt   = if ($Review -and $Review.reviewed_at) { [string]$Review.reviewed_at } else { $null }
+        SourcePath   = if ($Review -and $Review.source -and $Review.source.path) { [string]$Review.source.path } else { $null }
+        ExpectedHash = if ($Review -and $Review.source -and $Review.source.sha256) { [string]$Review.source.sha256 } else { $null }
+        ObservedHash = $ObservedHash
+    }
+}
+
+function Test-AxeManualReviewApproval {
+    param(
+        [object[]]$IncompleteDetails,
+        [string]$BaselinePath,
+        [string]$RepositoryRoot
+    )
+
+    if (-not (Test-Path -LiteralPath $BaselinePath -PathType Leaf)) {
+        return New-AxeManualReviewResult -Approved $false -Code 'BASELINE_MISSING' -Message "baseline de revisao humana ausente: $BaselinePath"
+    }
+
+    try {
+        $baseline = Get-Content -LiteralPath $BaselinePath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        return New-AxeManualReviewResult -Approved $false -Code 'BASELINE_INVALID' -Message "baseline de revisao humana invalido: $($_.Exception.Message)"
+    }
+
+    if ($baseline.schema_version -ne '1.0') {
+        return New-AxeManualReviewResult -Approved $false -Code 'SCHEMA_MISMATCH' -Message 'schema_version de baseline nao suportada; esperado 1.0'
+    }
+
+    $runtimeRules = @($IncompleteDetails)
+    if ($runtimeRules.Count -ne 1) {
+        return New-AxeManualReviewResult -Approved $false -Code 'RULE_MISMATCH' -Message "o baseline exige uma unica regra inconclusiva; runtime retornou $($runtimeRules.Count)"
+    }
+
+    $runtimeRule = $runtimeRules[0]
+    $candidates = @($baseline.reviews | Where-Object {
+        $_.status -eq 'approved' -and $_.rule_id -eq [string]$runtimeRule.id
+    })
+    if ($candidates.Count -ne 1) {
+        return New-AxeManualReviewResult -Approved $false -Code 'REVIEW_NOT_UNIQUE' -Message "nenhuma ou mais de uma revisao aprovada corresponde a regra '$($runtimeRule.id)'"
+    }
+
+    $review = $candidates[0]
+    if ([string]::IsNullOrWhiteSpace([string]$review.id) -or [string]::IsNullOrWhiteSpace([string]$review.reviewer_authority) -or [string]::IsNullOrWhiteSpace([string]$review.reviewed_at)) {
+        return New-AxeManualReviewResult -Approved $false -Code 'REVIEW_METADATA_MISSING' -Message 'a revisao aprovada nao possui id, autoridade e data obrigatorios' -Review $review
+    }
+
+    $sourceRelativePath = if ($review.source -and $review.source.path) { [string]$review.source.path } else { '' }
+    $expectedHash = if ($review.source -and $review.source.sha256) { [string]$review.source.sha256 } else { '' }
+    if ([string]::IsNullOrWhiteSpace($sourceRelativePath) -or [string]::IsNullOrWhiteSpace($expectedHash)) {
+        return New-AxeManualReviewResult -Approved $false -Code 'SOURCE_METADATA_MISSING' -Message 'a revisao aprovada nao possui caminho e SHA-256 de origem obrigatorios' -Review $review
+    }
+    if ([System.IO.Path]::IsPathRooted($sourceRelativePath) -or $sourceRelativePath -match '(^|[\\/])\.\.([\\/]|$)') {
+        return New-AxeManualReviewResult -Approved $false -Code 'SOURCE_PATH_INVALID' -Message "caminho de origem fora do repositorio recusado: $sourceRelativePath" -Review $review
+    }
+
+    $sourceFullPath = [System.IO.Path]::GetFullPath((Join-Path $RepositoryRoot $sourceRelativePath))
+    $repoFullPath = [System.IO.Path]::GetFullPath($RepositoryRoot).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    if (-not $sourceFullPath.StartsWith("$repoFullPath$([System.IO.Path]::DirectorySeparatorChar)", [System.StringComparison]::OrdinalIgnoreCase) -or -not (Test-Path -LiteralPath $sourceFullPath -PathType Leaf)) {
+        return New-AxeManualReviewResult -Approved $false -Code 'SOURCE_PATH_INVALID' -Message "origem declarada nao existe dentro do repositorio: $sourceRelativePath" -Review $review
+    }
+
+    $observedHash = (Get-FileHash -LiteralPath $sourceFullPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
+    if ($observedHash -cne $expectedHash.ToLowerInvariant()) {
+        return New-AxeManualReviewResult -Approved $false -Code 'HASH_MISMATCH' -Message "o hash da origem mudou; a aprovacao humana expirou para $sourceRelativePath" -Review $review -ObservedHash $observedHash
+    }
+
+    $expectedTargets = @($review.targets | ForEach-Object { [string]$_ } | Sort-Object)
+    $runtimeTargets = @(
+        foreach ($targetInfo in @($runtimeRule.targets)) {
+            $parts = @($targetInfo.target | ForEach-Object { [string]$_ } | Where-Object { $_ })
+            if ($parts.Count -gt 0) { $parts -join ' > ' }
+        }
+    ) | Sort-Object
+    $targetDifference = @(Compare-Object -ReferenceObject $expectedTargets -DifferenceObject $runtimeTargets)
+    if ($expectedTargets.Count -eq 0 -or $targetDifference.Count -gt 0) {
+        return New-AxeManualReviewResult -Approved $false -Code 'TARGET_MISMATCH' -Message 'os alvos inconclusivos diferem da revisao humana aprovada; a aprovacao expirou' -Review $review -ObservedHash $observedHash
+    }
+
+    return New-AxeManualReviewResult -Approved $true -Code 'MANUAL_REVIEW_APPROVED' -Message 'revisao humana positiva corresponde exatamente a regra, aos alvos e ao hash da origem' -Review $review -ObservedHash $observedHash
+}
+
+function Read-CwvManualReviewRecord {
+    param(
+        [string]$RecordPath,
+        [string]$ExpectedTargetUrl
+    )
+
+    if (-not (Test-Path -LiteralPath $RecordPath -PathType Leaf)) {
+        return [pscustomobject]@{ Recorded = $false; Code = 'CWV_REVIEW_MISSING'; Message = "registro humano CWV ausente: $RecordPath"; Review = $null }
+    }
+
+    try {
+        $record = Get-Content -LiteralPath $RecordPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        return [pscustomobject]@{ Recorded = $false; Code = 'CWV_REVIEW_INVALID'; Message = "registro humano CWV invalido: $($_.Exception.Message)"; Review = $null }
+    }
+
+    if ($record.schema_version -ne '1.0') {
+        return [pscustomobject]@{ Recorded = $false; Code = 'CWV_REVIEW_SCHEMA_MISMATCH'; Message = 'schema_version de registro humano CWV nao suportada; esperado 1.0'; Review = $null }
+    }
+
+    $normalizedTarget = $ExpectedTargetUrl.TrimEnd('/')
+    $candidates = @($record.reviews | Where-Object {
+        $_.status -eq 'positive_observation' -and ([string]$_.target_url).TrimEnd('/') -eq $normalizedTarget
+    })
+    if ($candidates.Count -ne 1) {
+        return [pscustomobject]@{ Recorded = $false; Code = 'CWV_REVIEW_NOT_UNIQUE'; Message = "nenhuma ou mais de uma observacao humana positiva corresponde a $ExpectedTargetUrl"; Review = $null }
+    }
+
+    $review = $candidates[0]
+    $required = @('id', 'reviewer_authority', 'reviewed_at', 'target_url')
+    $missing = @($required | Where-Object {
+        $property = $review.PSObject.Properties[$_]
+        $null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)
+    })
+    if ($missing.Count -gt 0 -or @($review.observations).Count -eq 0 -or @($review.limitations).Count -eq 0) {
+        return [pscustomobject]@{ Recorded = $false; Code = 'CWV_REVIEW_METADATA_MISSING'; Message = "registro humano CWV sem campos obrigatorios: $($missing -join ', ')"; Review = $review }
+    }
+    if ($null -eq $review.measurements -or $null -eq $review.measurements.inp -or $null -eq $review.measurements.inp.local_ms -or $null -eq $review.measurements.inp.field_p75_ms) {
+        return [pscustomobject]@{ Recorded = $false; Code = 'CWV_REVIEW_MEASUREMENTS_MISSING'; Message = 'registro humano CWV sem INP local e p75 de campo obrigatorios'; Review = $review }
+    }
+
+    return [pscustomobject]@{ Recorded = $true; Code = 'CWV_HUMAN_REVIEW_RECORDED'; Message = 'observacao humana positiva e INP manualmente atestado; nao certifica TBT sem trace laboratorial proprio'; Review = $review }
+}
+
+function New-LighthouseProductionAuditResult {
+    param(
+        [bool]$Measured,
+        [string]$Code,
+        [string]$Message,
+        [object]$Artifact = $null,
+        [string]$ObservedFingerprint = "",
+        [string]$ExpectedFingerprint = ""
+    )
+
+    return [pscustomobject]@{
+        Measured            = $Measured
+        Code                = $Code
+        Message             = $Message
+        Artifact            = $Artifact
+        ObservedFingerprint = $ObservedFingerprint
+        ExpectedFingerprint = $ExpectedFingerprint
+    }
+}
+
+function Test-FiniteNonNegativeNumber {
+    param([object]$Value)
+
+    if ($null -eq $Value) { return $false }
+    try {
+        $number = [double]$Value
+        return -not [double]::IsNaN($number) -and -not [double]::IsInfinity($number) -and $number -ge 0
+    } catch {
+        return $false
+    }
+}
+
+function Read-LighthouseProductionAudit {
+    param(
+        [string]$ArtifactPath,
+        [string]$RepositoryRoot
+    )
+
+    if (-not (Test-Path -LiteralPath $ArtifactPath -PathType Leaf)) {
+        return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_ARTIFACT_MISSING' -Message "artefato Lighthouse de producao ausente: $ArtifactPath"
+    }
+
+    try {
+        $artifact = Get-Content -LiteralPath $ArtifactPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_ARTIFACT_INVALID' -Message "artefato Lighthouse invalido: $($_.Exception.Message)"
+    }
+
+    if ($artifact.schema_version -ne '1.0' -or $artifact.source -ne 'lighthouse') {
+        return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_SCHEMA_MISMATCH' -Message 'artefato nao declara schema 1.0 e fonte lighthouse'
+    }
+
+    $required = @('generated_at', 'target_url', 'input_fingerprint_sha256')
+    $missing = @($required | Where-Object {
+        $property = $artifact.PSObject.Properties[$_]
+        $null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)
+    })
+    if ($missing.Count -gt 0 -or $null -eq $artifact.metrics -or -not (Test-FiniteNonNegativeNumber -Value $artifact.metrics.tbtMs)) {
+        return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_METADATA_MISSING' -Message "artefato Lighthouse sem campos obrigatorios ou TBT numerico: $($missing -join ', ')" -Artifact $artifact
+    }
+
+    $rawTbt = if ($artifact.lighthouse_report -and $artifact.lighthouse_report.audits -and $artifact.lighthouse_report.audits.'total-blocking-time') { $artifact.lighthouse_report.audits.'total-blocking-time'.numericValue } else { $null }
+    if (-not (Test-FiniteNonNegativeNumber -Value $rawTbt) -or [Math]::Abs(([double]$artifact.metrics.tbtMs) - ([double]$rawTbt)) -gt 0.001) {
+        return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_TBT_MISMATCH' -Message 'o TBT resumido diverge do audit total-blocking-time bruto do Lighthouse' -Artifact $artifact
+    }
+
+    $collector = Join-Path $PSScriptRoot 'lighthouse_cwv_audit.mjs'
+    if (-not (Test-Path -LiteralPath $collector -PathType Leaf)) {
+        return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_COLLECTOR_MISSING' -Message "coletor Lighthouse ausente: $collector" -Artifact $artifact
+    }
+
+    try {
+        $nodeExe = (Get-Command node.exe -ErrorAction Stop).Source
+        $sourceRoot = Join-Path $RepositoryRoot 'frontend'
+        $currentFingerprint = (& $nodeExe $collector --fingerprint --source-root $sourceRoot 2>&1 | Out-String).Trim()
+        if ($LASTEXITCODE -ne 0 -or $currentFingerprint -notmatch '^[a-f0-9]{64}$') {
+            throw "coletor de fingerprint falhou: $currentFingerprint"
+        }
+    } catch {
+        return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_FINGERPRINT_UNAVAILABLE' -Message "nao foi possivel recalcular o fingerprint de producao: $($_.Exception.Message)" -Artifact $artifact
+    }
+
+    $expectedFingerprint = ([string]$artifact.input_fingerprint_sha256).ToLowerInvariant()
+    if ($currentFingerprint.ToLowerInvariant() -cne $expectedFingerprint) {
+        return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_FINGERPRINT_MISMATCH' -Message 'o input de frontend mudou depois da auditoria Lighthouse; o resultado expirou' -Artifact $artifact -ObservedFingerprint $currentFingerprint -ExpectedFingerprint $expectedFingerprint
+    }
+
+    return New-LighthouseProductionAuditResult -Measured $true -Code 'LIGHTHOUSE_PRODUCTION_MEASURED' -Message 'TBT de producao foi calculado pelo Lighthouse em um input de frontend correspondente' -Artifact $artifact -ObservedFingerprint $currentFingerprint -ExpectedFingerprint $expectedFingerprint
+}
+
 # ============================================================================
 # INSTRUMENTACAO DAS FASES 1 E 2: navegador real ou resultado NAO MEDIDO.
 # Um bundle, uma resposta HTTP ou uma constante nao sao CWV/A11y medidos.
@@ -134,6 +378,12 @@ $FASE2_MEDE = $false
 $runtimeProbe = $null
 $probeErro = $null
 $probeScript = Join-Path $PSScriptRoot "runtime_quality_probe.mjs"
+$axeManualReview = $null
+$cwvManualReview = Read-CwvManualReviewRecord -RecordPath $CwvManualReviewPath -ExpectedTargetUrl $TargetUrl
+$lighthouseProductionAudit = Read-LighthouseProductionAudit -ArtifactPath $LighthouseArtifactPath -RepositoryRoot $RepoRoot
+if ($lighthouseProductionAudit.Measured) {
+    $perfMetrics["TBT_MS"].Val = [double]$lighthouseProductionAudit.Artifact.metrics.tbtMs
+}
 
 if ($cdpActive -and $cdpPort -and (Test-Path $probeScript)) {
     try {
@@ -155,6 +405,10 @@ if ($cdpActive -and $cdpPort -and (Test-Path $probeScript)) {
         $requiredCwv = @("LCP_MS", "CLS", "TTFB_MS", "MAX_HEAP_MB")
         $FASE1_MEDE = @($requiredCwv | Where-Object { $null -eq $perfMetrics[$_].Val }).Count -eq 0
         $FASE2_MEDE = $null -ne $a11yRules["AXE_VIOLATIONS"].Val
+        if ($FASE2_MEDE -and $a11yRules["AXE_INCOMPLETE"].Val -gt 0) {
+            $axeManualReview = Test-AxeManualReviewApproval -IncompleteDetails @($runtimeProbe.axe.incompleteDetails) -BaselinePath $A11yReviewBaselinePath -RepositoryRoot $RepoRoot
+            $a11yRules["AXE_INCOMPLETE"].ManualReview = $axeManualReview
+        }
     } catch {
         $probeErro = $_.Exception.Message
     }
@@ -191,10 +445,23 @@ foreach ($k in $perfMetrics.Keys) {
 }
 
 if ($FASE1_MEDE) {
-    Add-QualityFinding -Severity 'WARNING' -Component 'cwv.cobertura' -Detail 'Cobertura CWV parcial: INP e TBT nao foram certificados.' -Reason 'O probe observa uma aba temporaria, mas nao executa interacao humana controlada exigida pelo INP nem coleta trace laboratorial exigido pelo TBT; Event Timing e long tasks permanecem diagnosticos.' -Action 'Executar um roteiro humano controlado para INP e uma coleta laboratorial de trace para TBT; registrar ambos sem inferi-los a partir de outras metricas.'
+    if ($cwvManualReview.Recorded -and $lighthouseProductionAudit.Measured) {
+        $inp = $cwvManualReview.Review.measurements.inp
+        Write-Host "    [CWV] Cobertura composta: INP humano $($inp.local_ms) ms / $($inp.field_p75_ms) ms p75; TBT Lighthouse $($perfMetrics['TBT_MS'].Val) ms." -ForegroundColor Green
+    } elseif ($cwvManualReview.Recorded) {
+        $inp = $cwvManualReview.Review.measurements.inp
+        Add-QualityFinding -Severity 'WARNING' -Component 'cwv.cobertura' -Detail 'Cobertura CWV parcial: INP foi atestado manualmente; TBT nao foi certificado.' -Reason "O arbitro humano registrou INP local de $($inp.local_ms) ms e p75 de campo de $($inp.field_p75_ms) ms para a interacao pointer. O artefato Lighthouse nao esta valido: $($lighthouseProductionAudit.Code) — $($lighthouseProductionAudit.Message)" -Action 'Executar a auditoria Lighthouse de producao em Chrome isolado e vincular o artefato ao fingerprint atual do frontend; nao inferir TBT de estabilidade observada ou long tasks do probe.'
+    } else {
+        Add-QualityFinding -Severity 'WARNING' -Component 'cwv.cobertura' -Detail 'Cobertura CWV parcial: INP e TBT nao foram certificados.' -Reason 'O probe observa uma aba temporaria, mas nao executa interacao humana controlada exigida pelo INP nem coleta trace laboratorial exigido pelo TBT; Event Timing e long tasks permanecem diagnosticos.' -Action 'Executar um roteiro humano controlado para INP e uma coleta laboratorial de trace para TBT; registrar ambos sem inferi-los a partir de outras metricas.'
+    }
 } else {
     $fase1Motivo = if ($probeErro) { "$probeErro. Metricas ausentes permaneceram nulas, sem estimativa estatica." } else { 'O probe runtime nao retornou as metricas exigidas; valores ausentes permaneceram nulos.' }
     Add-QualityFinding -Severity 'WARNING' -Component 'cwv.cobertura' -Detail 'Fase 1 (Core Web Vitals) nao mediu integralmente.' -Reason $fase1Motivo -Action "Restabelecer o frontend em $TargetUrl e uma instancia Chrome Dev com CDP somente em loopback; executar novamente o gate antes de concluir sobre CWV."
+}
+if ($cwvManualReview.Recorded) {
+    $inp = $cwvManualReview.Review.measurements.inp
+    $tbtSummary = if ($lighthouseProductionAudit.Measured) { "TBT Lighthouse $($perfMetrics['TBT_MS'].Val) ms (producao isolada)." } else { "TBT permanece sem artefato Lighthouse valido ($($lighthouseProductionAudit.Code))." }
+    Write-Host "    [CWV] Observacao humana positiva registrada: $($cwvManualReview.Review.id) ($($cwvManualReview.Review.reviewer_authority)); INP $($inp.local_ms) ms local / $($inp.field_p75_ms) ms p75; $tbtSummary" -ForegroundColor Cyan
 }
 
 Write-Host ("`n[2] ACCESSIBILITY & BEST PRACTICE QUALITY AUDIT") -ForegroundColor Yellow
@@ -209,8 +476,9 @@ foreach ($k in $a11yRules.Keys) {
     $measured = $null -ne $r.Val
     $passed = $measured -and $r.Val -le $r.Limit
     $review = $measured -and -not $passed -and $r.Enforcement -eq "Warn"
-    $status = if (-not $measured) { "[N/MED]" } elseif ($passed) { "[PASS]" } elseif ($review) { "[REVIEW]" } else { "[FAIL]" }
-    $color = if (-not $measured) { "DarkGray" } elseif ($passed) { "Green" } elseif ($review) { "Yellow" } else { "Red" }
+    $reviewApproved = $review -and $null -ne $r.ManualReview -and $r.ManualReview.Approved
+    $status = if (-not $measured) { "[N/MED]" } elseif ($passed) { "[PASS]" } elseif ($reviewApproved) { "[REVIEW APPROVED]" } elseif ($review) { "[REVIEW]" } else { "[FAIL]" }
+    $color = if (-not $measured) { "DarkGray" } elseif ($passed -or $reviewApproved) { "Green" } elseif ($review) { "Yellow" } else { "Red" }
 
     $valStr = if ($measured) { "$($r.Val) $($r.Unit)" } else { "NAO MEDIDO" }
     Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f $k, $valStr, "<= $($r.Limit)", $status) -ForegroundColor $color
@@ -219,10 +487,13 @@ foreach ($k in $a11yRules.Keys) {
         $axeRuleIds = @($runtimeProbe.axe.violationDetails | ForEach-Object { $_.id } | Where-Object { $_ }) -join ', '
         if ([string]::IsNullOrWhiteSpace($axeRuleIds)) { $axeRuleIds = 'ids nao retornados pelo probe' }
         Add-QualityFinding -Severity 'ERROR' -Component "a11y.$k" -Detail "${k}: $($r.Val) violation(s)." -Reason "$($r.Desc). axe-core confirmou violacao(oes) no DOM renderizado; regras: $axeRuleIds." -Action 'Corrigir os elementos e seletores reportados pelo axe-core, revisar a semantica acessivel e repetir a auditoria contra o DOM renderizado.'
+    } elseif ($review -and $reviewApproved) {
+        Write-Host "    [A11Y] Revisao humana aprovada: $($r.ManualReview.ReviewId) ($($r.ManualReview.Reviewer))." -ForegroundColor Green
     } elseif ($review) {
         $axeRuleIds = @($runtimeProbe.axe.incompleteDetails | ForEach-Object { $_.id } | Where-Object { $_ }) -join ', '
         if ([string]::IsNullOrWhiteSpace($axeRuleIds)) { $axeRuleIds = 'ids nao retornados pelo probe' }
-        Add-QualityFinding -Severity 'WARNING' -Component "a11y.$k" -Detail "${k}: $($r.Val) item(ns) inconclusivo(s)." -Reason "$($r.Desc). axe-core classificou a verificacao como inconclusiva, nao como violacao confirmada; regras: $axeRuleIds." -Action 'Inspecionar manualmente cada alvo incompleto no DOM renderizado, registrar a decisao e corrigir somente a violacao que for confirmada.'
+        $baselineDetail = if ($null -ne $r.ManualReview) { " Baseline: $($r.ManualReview.Code) -- $($r.ManualReview.Message)" } else { '' }
+        Add-QualityFinding -Severity 'WARNING' -Component "a11y.$k" -Detail "${k}: $($r.Val) item(ns) inconclusivo(s)." -Reason "$($r.Desc). axe-core classificou a verificacao como inconclusiva, nao como violacao confirmada; regras: $axeRuleIds. Alvos e motivos detalhados constam na secao 2.1 do relatorio.$baselineDetail" -Action 'Inspecionar manualmente cada alvo incompleto no DOM renderizado, registrar a decisao e corrigir somente a violacao que for confirmada.'
     }
 }
 Write-Host ("-" * 68) -ForegroundColor DarkGray
@@ -584,6 +855,25 @@ $reportStatusMarkdown = switch ($reportStatus) {
     default { "❌ **REJECTED**" }
 }
 $allFindings = @($failures) + @($warnings)
+$lighthouseAuditSummary = [ordered]@{
+    Measured = $lighthouseProductionAudit.Measured
+    Code = $lighthouseProductionAudit.Code
+    Message = $lighthouseProductionAudit.Message
+    ObservedFingerprint = $lighthouseProductionAudit.ObservedFingerprint
+    ExpectedFingerprint = $lighthouseProductionAudit.ExpectedFingerprint
+    Artifact = if ($null -ne $lighthouseProductionAudit.Artifact) {
+        [ordered]@{
+            SchemaVersion = $lighthouseProductionAudit.Artifact.schema_version
+            Source = $lighthouseProductionAudit.Artifact.source
+            GeneratedAt = $lighthouseProductionAudit.Artifact.generated_at
+            TargetUrl = $lighthouseProductionAudit.Artifact.target_url
+            Metrics = $lighthouseProductionAudit.Artifact.metrics
+            PerformanceScore = $lighthouseProductionAudit.Artifact.performance_score
+        }
+    } else {
+        $null
+    }
+}
 
 $reportData = [ordered]@{
     Timestamp = (Get-Date).ToString("o")
@@ -593,6 +883,12 @@ $reportData = [ordered]@{
     RuntimeProbe = $runtimeProbe
     RuntimeProbeError = $probeErro
     Status = $reportStatus
+    A11yReviewBaselinePath = $A11yReviewBaselinePath
+    AccessibilityManualReview = $axeManualReview
+    CwvManualReviewPath = $CwvManualReviewPath
+    CoreWebVitalsManualReview = $cwvManualReview
+    LighthouseArtifactPath = $LighthouseArtifactPath
+    LighthouseProductionAudit = $lighthouseAuditSummary
     CoreWebVitals = $perfMetrics
     AccessibilityRules = $a11yRules
     SecurityRules = $secRules
@@ -605,6 +901,126 @@ $reportData = [ordered]@{
 
 $reportData | ConvertTo-Json -Depth 8 | Set-Content -Path $reportJsonPath -Encoding UTF8
 
+$axeReviewEvidenceMarkdown = ''
+if ($FASE2_MEDE -and $null -ne $runtimeProbe -and $null -ne $runtimeProbe.axe -and $null -ne $runtimeProbe.axe.incompleteDetails) {
+    $axeEvidenceLines = @()
+    foreach ($rule in @($runtimeProbe.axe.incompleteDetails)) {
+        $ruleId = if ($rule.id) { [string]$rule.id } else { 'regra sem id retornado' }
+        $ruleHelp = if ($rule.help) { [string]$rule.help } else { 'sem descricao retornada pelo axe-core' }
+        $ruleTargets = @($rule.targets)
+        $axeEvidenceLines += "### Regra $ruleId ($($ruleTargets.Count) alvo(s))"
+        $axeEvidenceLines += "- **Descricao do axe-core:** $ruleHelp"
+
+        if ($ruleTargets.Count -eq 0) {
+            $axeEvidenceLines += '- **Alvos e motivos detalhados:** nenhum seletor retornado pelo axe-core nesta execucao.'
+            continue
+        }
+
+        foreach ($targetInfo in $ruleTargets) {
+            $selectorParts = @()
+            foreach ($selectorPart in @($targetInfo.target)) {
+                if ($null -ne $selectorPart) { $selectorParts += [string]$selectorPart }
+            }
+            $selector = if ($selectorParts.Count -gt 0) { $selectorParts -join ' > ' } else { 'seletor nao retornado pelo axe-core' }
+            $reason = ([string]$targetInfo.failureSummary -replace '\s+', ' ').Trim()
+            if ([string]::IsNullOrWhiteSpace($reason)) { $reason = 'motivo nao retornado pelo axe-core' }
+            $axeEvidenceLines += "- **Alvo:** $selector  `n  **Motivo:** $reason"
+        }
+    }
+
+    if ($axeEvidenceLines.Count -gt 0) {
+        $axeReviewEvidenceMarkdown = @"
+## 2.1 Evidencia de revisao humana do axe
+> **Alvos e motivos detalhados.** Esta secao preserva a evidencia que o axe-core nao consegue decidir automaticamente. Um item aqui nao e uma violacao confirmada e a regra permanece ativa.
+
+$($axeEvidenceLines -join "`n")
+
+"@
+    }
+}
+
+$cwvManualReviewMarkdown = ''
+if ($cwvManualReview.Recorded) {
+    $cwvObservationLines = @($cwvManualReview.Review.observations | ForEach-Object {
+        "- **$($_.dimension):** $($_.verdict) — $($_.statement)"
+    })
+    $cwvLimitationLines = @($cwvManualReview.Review.limitations | ForEach-Object { "- $_" })
+    $manualInp = $cwvManualReview.Review.measurements.inp
+    $tbtManualStatement = if ($lighthouseProductionAudit.Measured) { "**TBT certificado pelo Lighthouse: $($perfMetrics['TBT_MS'].Val) ms em producao isolada.**" } else { '**TBT permanece sem artefato Lighthouse valido.**' }
+    $cwvManualReviewMarkdown = @"
+## 1.1 Observacao humana de responsividade
+> **POSITIVA E REGISTRADA.** Esta e uma arbitragem humana sobre a experiencia observada. O INP foi atestado manualmente; o TBT depende exclusivamente de um artefato Lighthouse de producao vinculado ao input atual.
+
+- **Registro:** $($cwvManualReview.Review.id)
+- **Autoridade:** $($cwvManualReview.Review.reviewer_authority)
+- **Data declarada:** $($cwvManualReview.Review.reviewed_at)
+- **Escopo:** $($cwvManualReview.Review.target_url)
+- **INP atestado manualmente: $($manualInp.local_ms) ms local / $($manualInp.field_p75_ms) ms p75 de campo.**
+- **Decomposicao pointer:** Input Delay $($manualInp.input_delay_ms) ms; Processing Duration $(if ($null -eq $manualInp.processing_duration_ms) { 'nao exposta numericamente na captura' } else { "$($manualInp.processing_duration_ms) ms" }); Presentation Delay $($manualInp.presentation_delay_ms) ms.
+- $tbtManualStatement
+
+### Observacoes
+$($cwvObservationLines -join "`n")
+
+### Limites declarados
+$($cwvLimitationLines -join "`n")
+
+"@
+}
+
+$lighthouseProductionMarkdown = if ($lighthouseProductionAudit.Measured) {
+@"
+## 1.2 Lighthouse de producao isolada
+> **MEDIDO E VINCULADO AO INPUT.** O artefato abaixo veio de uma build de producao, em Chrome efemero sem extensoes; o fingerprint do `frontend/` atual corresponde exatamente ao registrado.
+
+- **Artefato:** $LighthouseArtifactPath
+- **Alvo:** $($lighthouseProductionAudit.Artifact.target_url)
+- **Gerado em:** $($lighthouseProductionAudit.Artifact.generated_at)
+- **TBT:** $($perfMetrics['TBT_MS'].Val) ms (limite <= $TbtThreshold ms)
+- **LCP no Lighthouse:** $($lighthouseProductionAudit.Artifact.metrics.lcpMs) ms
+- **CLS no Lighthouse:** $($lighthouseProductionAudit.Artifact.metrics.cls)
+- **Fingerprint SHA-256:** $($lighthouseProductionAudit.ObservedFingerprint)
+
+"@
+} else {
+@"
+## 1.2 Lighthouse de producao isolada
+> **NAO APLICAVEL NESTA EXECUCAO.** O gate nao certificou TBT.
+
+- **Codigo:** $($lighthouseProductionAudit.Code)
+- **Motivo:** $($lighthouseProductionAudit.Message)
+- **Acao:** executar a auditoria de producao isolada e manter o artefato vinculado ao input atual.
+
+"@
+}
+
+$axeManualReviewMarkdown = ''
+if ($null -ne $axeManualReview) {
+    if ($axeManualReview.Approved) {
+        $axeManualReviewMarkdown = @"
+## 2.2 Decisao humana versionada
+> **APROVADA.** Esta decisao nao desliga o axe-core: ela se aplica somente a regra, aos alvos e ao hash abaixo. Qualquer divergencia expira a aprovacao e devolve o item para revisao humana.
+
+- **Baseline:** $($axeManualReview.ReviewId)
+- **Autoridade:** $($axeManualReview.Reviewer)
+- **Data declarada:** $($axeManualReview.ReviewedAt)
+- **Origem vinculada:** $($axeManualReview.SourcePath)
+- **SHA-256 observado:** $($axeManualReview.ObservedHash)
+- **Decisao:** $($axeManualReview.Message)
+
+"@
+    } else {
+        $axeManualReviewMarkdown = @"
+## 2.2 Baseline humano nao aplicavel
+> **NAO APROVADO NESTA EXECUCAO.** O axe-core continua ativo e a revisao humana nao foi dispensada.
+
+- **Codigo:** $($axeManualReview.Code)
+- **Motivo:** $($axeManualReview.Message)
+
+"@
+    }
+}
+
 $mdContent = @"
 # ⚡ SOTA Quality Gate, Security & SRI Audit Report
 **Timestamp:** $((Get-Date).ToString("yyyy-MM-dd HH:mm:ss"))
@@ -612,7 +1028,7 @@ $mdContent = @"
 **Status:** $reportStatusMarkdown
 
 ## 1. Runtime Performance & CWV Coverage
-$(if ($FASE1_MEDE) { "> **COBERTURA PARCIAL.** LCP, CLS, TTFB e heap foram observados no navegador real. INP exige interacao humana controlada e TBT exige trace laboratorial; Event Timing e long tasks abaixo sao diagnosticos, nao substitutos.`n" } else { "> **NAO MEDIDO INTEGRALMENTE.** Ausencias de metrica permanecem nulas; nenhuma estimativa estatica e aceita como CWV.`n" })
+$(if ($FASE1_MEDE) { "> **COBERTURA RUNTIME.** LCP, CLS, TTFB e heap foram observados no navegador real. INP vem de interacao humana controlada; TBT so e valido pelo Lighthouse de producao isolada. Event Timing e long tasks abaixo sao diagnosticos, nao substitutos.`n" } else { "> **NAO MEDIDO INTEGRALMENTE.** Ausencias de metrica permanecem nulas; nenhuma estimativa estatica e aceita como CWV.`n" })
 | Metric | Observed Value | Threshold | Status | Motivo / Acao quando nao verde |
 | :--- | :--- | :--- | :--- | :--- |
 $($perfMetrics.Keys | ForEach-Object {
@@ -626,6 +1042,9 @@ $($perfMetrics.Keys | ForEach-Object {
     "| **$_** | $value | $threshold | $status | $explanation |"
 } | Out-String)
 
+$cwvManualReviewMarkdown
+$lighthouseProductionMarkdown
+
 ## 2. Accessibility & A11y Standards Summary
 $(if ($FASE2_MEDE) { "> **MEDIDO NO DOM RENDERIZADO.** Violacoes axe confirmadas bloqueiam; itens incomplete preservam uma revisao humana explicita.`n" } else { "> **NAO MEDIDO.** axe-core nao executou contra um DOM renderizado nesta execucao.`n" })
 | Standard / Check | Observed Count | Max Allowed | Description | Status | Motivo / Acao quando nao verde |
@@ -634,10 +1053,14 @@ $($a11yRules.Keys | ForEach-Object {
     $rule = $a11yRules[$_]
     $measured = $null -ne $rule.Val
     $review = $measured -and $rule.Val -gt $rule.Limit -and $rule.Enforcement -eq 'Warn'
-    $status = if (-not $measured) { '⚠️ NAO MEDIDO' } elseif ($rule.Val -le $rule.Limit) { '✅ PASS' } elseif ($review) { '⚠️ REVISAO HUMANA' } else { '❌ FAIL' }
-    $explanation = if (-not $measured) { "Motivo: $probeErro. Acao: executar axe-core no DOM renderizado via CDP." } elseif ($review) { 'Motivo: axe-core marcou revisao inconclusiva, nao violacao confirmada. Acao: inspecionar cada alvo manualmente.' } elseif ($rule.Val -gt $rule.Limit) { 'Motivo: axe-core confirmou violacao acima do limite. Acao: corrigir os alvos e repetir a auditoria.' } else { '-' }
+    $reviewApproved = $review -and $null -ne $rule.ManualReview -and $rule.ManualReview.Approved
+    $status = if (-not $measured) { '⚠️ NAO MEDIDO' } elseif ($rule.Val -le $rule.Limit) { '✅ PASS' } elseif ($reviewApproved) { '✅ PASS — REVISAO HUMANA APROVADA' } elseif ($review) { '⚠️ REVISAO HUMANA' } else { '❌ FAIL' }
+    $explanation = if (-not $measured) { "Motivo: $probeErro. Acao: executar axe-core no DOM renderizado via CDP." } elseif ($reviewApproved) { "Motivo: baseline $($rule.ManualReview.ReviewId) corresponde a regra, alvos e SHA-256. Acao: repetir revisao se qualquer um deles mudar." } elseif ($review) { "Motivo: axe-core marcou revisao inconclusiva, nao violacao confirmada. Baseline: $($rule.ManualReview.Code). Acao: inspecionar cada alvo manualmente." } elseif ($rule.Val -gt $rule.Limit) { 'Motivo: axe-core confirmou violacao acima do limite. Acao: corrigir os alvos e repetir a auditoria.' } else { '-' }
     "| **$_** | $(if ($measured) { $rule.Val } else { 'NAO MEDIDO' }) | <= $($rule.Limit) | $($rule.Desc) | $status | $explanation |"
 } | Out-String)
+
+$axeReviewEvidenceMarkdown
+$axeManualReviewMarkdown
 
 ## 3. Security Vulnerability & CVE Summary (NIST / GHSA)
 | Security Indicator | Detected Count | Max Allowed | Description | Status |

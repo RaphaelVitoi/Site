@@ -102,6 +102,9 @@ revisoes_de_ancora:
   - registro: registro-2026-08-29-o-portao-le-o-indice
     caminhos: [scripts/ops/record_gate.py]
     parecer: O portao foi reavaliado no baseline atual; o registro conserva sua evidencia datada e seus limites de hash.
+  - registro: auditoria-cwv-lighthouse-2026-09-01
+    caminhos: [frontend/src/app/(public)/page.tsx, scripts/ops/cwv_gate.ps1, tests/test_cwv_gate_truthfulness.py]
+    parecer: As ancoras foram reavaliadas no baseline atual; esta auditoria preserva sua janela historica e nao transfere certificacao entre hashes.
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master

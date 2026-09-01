@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "proposito": "Registros de arbitragem humana sobre responsividade observada. Estes registros qualificam a leitura do runtime, mas nao transformam observacao em medicao laboratorial de INP ou TBT.",
+  "reviews": [
+    {
+      "id": "cwv-human-observation-localhost-20260901",
+      "status": "positive_observation",
+      "reviewed_at": "2026-09-01",
+      "reviewer_authority": "Tier 0 — Raphael Vitoi",
+      "target_url": "http://localhost:3000/",
+      "measurements": {
+        "lcp": {
+          "local_ms": 170,
+          "field_p75_ms": 1380
+        },
+        "cls": {
+          "local": 0,
+          "field_p75": 0.04
+        },
+        "inp": {
+          "local_ms": 16,
+          "field_p75_ms": 106,
+          "input_delay_ms": 8,
+          "processing_duration_ms": null,
+          "presentation_delay_ms": 8
+        }
+      },
+      "observations": [
+        {
+          "dimension": "input_delay",
+          "verdict": "within_typical_range",
+          "statement": "Input Delay avaliado pelo arbitro humano como dentro da media."
+        },
+        {
+          "dimension": "processing_duration",
+          "verdict": "within_typical_range",
+          "statement": "Processing Duration avaliado pelo arbitro humano como dentro da media."
+        },
+        {
+          "dimension": "presentation_delay",
+          "verdict": "within_typical_range",
+          "statement": "Presentation Delay avaliado pelo arbitro humano como dentro da media."
+        },
+        {
+          "dimension": "main_thread_long_tasks",
+          "verdict": "stable",
+          "statement": "A trilha Main permaneceu estavel inclusive em tarefas longas, segundo arbitragem humana."
+        },
+        {
+          "dimension": "performance_trace",
+          "verdict": "positive_observation",
+          "statement": "Captura subsequente do Chrome DevTools Performance exibiu trace local de 4,72 s, LCP de 410 ms, CLS 0 e dez insights aprovados; o resumo visual tambem mostrou 2.016 ms de scripting e 985 ms de system no intervalo observado."
+        }
+      ],
+      "context": {
+        "tool_surface": "Chrome DevTools Performance / Network condition profiles",
+        "evidence_surface": "Chrome DevTools Local and field metrics, detalhe da interacao pointer INP e captura subsequente de Performance, examinados pelo arbitro no ambiente local",
+        "artifact_retention": "capturas foram examinadas pelo arbitro no ambiente local e nao foram versionadas como artefatos de medicao"
+      },
+      "limitations": [
+        "a avaliacao humana positiva nao certifica TBT: nao ha trace laboratorial versionado",
+        "o total de scripting e system da captura de Performance nao e uma medicao de TBT e nao deve ser convertido em uma",
+        "perfis padrao de throttling e rede vistos no DevTools descrevem possibilidades de emulacao, nao valores da sessao por si so"
+      ]
+    }
+  ]
+}

@@ -88,6 +88,9 @@ revisoes_de_ancora:
     caminhos:
       - .claude/agent-memory/chico/MEMORY.md
     parecer: "A memoria de Chico recebeu um adendo operacional de hooks em 2026-09-01; o escopo e as conclusoes do relatorio de teoria dos jogos nao foram alterados."
+  - registro: auditoria-cwv-lighthouse-2026-09-01
+    caminhos: [package.json]
+    parecer: "O manifesto foi reavaliado no baseline atual; a evidencia historica de malha e LFS permanece delimitada."
 ---
 
 # Handoff -- a malha auditada, e a trava que o CI escondia

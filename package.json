@@ -29,6 +29,7 @@
     "python:typecheck": "uv run --no-sync pyright",
     "python:coverage": "uv run --no-sync pytest --cov=engine tests/",
     "sota:audit": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/ops/cwv_gate.ps1",
+    "sota:audit:production": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/ops/invoke_lighthouse_production_audit.ps1",
     "sota:full": "npm run python:lint && npm run python:typecheck && npm run lint && npm run typecheck && npm run test && npm run python:test",
     "watch:all": "concurrently -n \"RUFF,TEST\" -c \"yellow,green\" \"npm run python:watch\" \"npm run python:test:watch\"",
     "dev:all": "concurrently -n \"NEXT,RUFF,TEST\" -c \"cyan,yellow,green\" \"npm run dev\" \"npm run python:watch\" \"npm run python:test:watch\""
@@ -39,6 +40,7 @@
     "concurrently": "10.0.5",
     "jest": "30.4.2",
     "jest-environment-jsdom": "30.4.1",
+    "lighthouse": "13.4.1",
     "prettier": "3.9.6",
     "prettier-plugin-tailwindcss": "0.8.1",
     "rimraf": "6.1.3",

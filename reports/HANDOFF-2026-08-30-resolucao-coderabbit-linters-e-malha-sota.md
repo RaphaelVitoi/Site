@@ -45,6 +45,10 @@ verificado:
 nao_verificado:
   - "Nao foram realizadas chamadas externas tarifadas com tokens reais durante a homologacao local"
 supersede: null
+revisoes_de_ancora:
+  - registro: auditoria-cwv-lighthouse-2026-09-01
+    caminhos: [.vscode/settings.json]
+    parecer: A configuracao foi reavaliada no baseline atual; o handoff preserva sua evidencia datada.
 ---
 
 # HANDOFF SOTA — Resolução CodeRabbit, Higienização de Linters e Malha Agêntica
