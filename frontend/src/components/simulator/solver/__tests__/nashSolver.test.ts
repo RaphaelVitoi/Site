@@ -2,10 +2,10 @@
 
 /**
  * TESTE DE VALIDAÇÃO: NashSolver — Motor ICM pós-flop
- * PATH: src/components/simulator/engine/__tests__/nashSolver.test.ts
+ * PATH: src/components/simulator/solver/__tests__/nashSolver.test.ts
  *
  * Valida propriedades estruturais e comportamentais do motor.
- * Âncora empírica: BTN 39bb (RP 21.4%) vs BB 54bb (RP 12.9%), ΔRP = +8.5pp
+ * Âncora empírica: BTN 38bb (RP 21.4%) vs BB 53bb (RP 12.9%), ΔRP = +8.5pp
  * Fonte: 93 nodes HRC vs GTO Wizard, Aula 1.2 (board KJT-2-3)
  */
 
@@ -181,4 +181,3 @@ describe( 'Clamping e sanitização de inputs', () => {
     expect( result.oop.call.spread ).toBeGreaterThan( 0 );
   } );
 } );
-

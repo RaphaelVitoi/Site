@@ -1,6 +1,6 @@
 /**
  * IDENTITY: Motor de Distorcao ICM pos-flop
- * PATH: src/components/simulator/engine/nashSolver.ts
+ * PATH: src/components/simulator/solver/nashSolver.ts
  * ROLE: Aplicar distorcao ICM sobre frequencias ChipEV via equacao concava.
  *       Sintetiza a distorcao baseado estritamente na Hierarquia da Perspectiva Matematica (PMev).
  *       Export principal: solveIcmDistortion. solveNash = alias deprecated para retrocompatibilidade.

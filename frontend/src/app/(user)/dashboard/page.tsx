@@ -2,6 +2,11 @@ import { SniperAdvisor } from '@/components/analytics/SniperAdvisor';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { buildNexusServerUrl } from '@/lib/api-contract';
+import { shouldQueryDashboardOrchestrator } from '@/lib/server/dashboard-orchestrator';
+
+// Painel privado: telemetria e predição dependem da sessão e do relay local.
+// Nunca pré-renderizar durante o build sem esse contexto operacional.
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
 	title: 'Telemetria AGN | Dashboard SOTA',
@@ -47,6 +52,16 @@ function parseProfileMap(rawData: unknown): Map<string, number> {
 }
 
 async function getOrchestratorTelemetry() {
+	if (!shouldQueryDashboardOrchestrator()) {
+		return {
+			available: false,
+			activeTasks: 0,
+			dailyBudget: 0,
+			consumedBudget: 0,
+			agentsOnline: 0,
+		};
+	}
+
 	try {
 		// Busca telemetria SOTA da API do Orquestrador Python (Latência Zero SSR)
 		const token = process.env['API_SECRET_TOKEN'] || '';
@@ -59,6 +74,7 @@ async function getOrchestratorTelemetry() {
 		const data = await res.json();
 
 		return {
+			available: true,
 			activeTasks: (data?.tasks?.running || 0) + (data?.tasks?.pending || 0),
 			dailyBudget: 5000,
 			consumedBudget:
@@ -75,15 +91,20 @@ async function getOrchestratorTelemetry() {
 		}
 		// SOTA Guard: Fallback resiliente caso o Orquestrador esteja offline (evita quebra de UI)
 		return {
+			available: false,
 			activeTasks: 0,
-			dailyBudget: 5000,
+			dailyBudget: 0,
 			consumedBudget: 0,
-			agentsOnline: 15,
+			agentsOnline: 0,
 		};
 	}
 }
 
 async function getPredictiveProfile() {
+	if (!shouldQueryDashboardOrchestrator()) {
+		return { available: false, topVazamento: 'Indisponível', evLoss: 0 };
+	}
+
 	try {
 		// SOTA: Fricção Zero. Substitui o subprocesso CLI pesado por um fetch direto
 		// ao motor aiohttp, unificando a topologia de comunicação no SSR.
@@ -101,6 +122,7 @@ async function getPredictiveProfile() {
 		const topLeak = sortedEntries[0]?.[0] || 'Risk Premium';
 
 		return {
+			available: true,
 			topVazamento: topLeak,
 			evLoss: 12,
 		};
@@ -113,7 +135,7 @@ async function getPredictiveProfile() {
 			console.error('[Predictive SOTA] Falha na inferência preditiva:', error);
 		}
 		// Fallback silencioso (Fricção Zero) para evitar ruptura em tela caso o modelo preditivo não esteja treinado
-		return { topVazamento: 'Entropia', evLoss: 0 };
+		return { available: false, topVazamento: 'Indisponível', evLoss: 0 };
 	}
 }
 
@@ -131,7 +153,16 @@ export default async function DashboardPage() {
 			/>
 
 			<div className="sota-container -mt-12 relative z-10">
-				<SniperAdvisor topVazamento={predictive.topVazamento} evLoss={predictive.evLoss} />
+				{!telemetry.available || !predictive.available ? (
+					<GlassPanel className="mb-6 border-amber-400/30 p-4 text-sm text-text-muted">
+						Dados operacionais indisponíveis: o relay autenticado do orquestrador não está
+						configurado neste ambiente. O painel não estima nem substitui telemetria real.
+					</GlassPanel>
+				) : null}
+
+				{predictive.available ? (
+					<SniperAdvisor topVazamento={predictive.topVazamento} evLoss={predictive.evLoss} />
+				) : null}
 
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
 					<GlassPanel className="p-6 border-accent-indigo/20">
@@ -139,7 +170,7 @@ export default async function DashboardPage() {
 							Tarefas Ativas
 						</div>
 						<div className="text-3xl font-black text-white">
-							{telemetry.activeTasks}
+							{telemetry.available ? telemetry.activeTasks : '—'}
 						</div>
 					</GlassPanel>
 
@@ -148,10 +179,16 @@ export default async function DashboardPage() {
 							Custo Diário (Tokens)
 						</div>
 						<div className="text-3xl font-black text-accent-emerald-light">
-							{telemetry.consumedBudget}{' '}
-							<span className="text-sm text-text-muted font-medium">
-								/ {telemetry.dailyBudget}
-							</span>
+							{telemetry.available ? (
+								<>
+									{telemetry.consumedBudget}{' '}
+									<span className="text-sm text-text-muted font-medium">
+										/ {telemetry.dailyBudget}
+									</span>
+								</>
+							) : (
+								'—'
+							)}
 						</div>
 					</GlassPanel>
 
@@ -160,7 +197,7 @@ export default async function DashboardPage() {
 							Agentes Vivos
 						</div>
 						<div className="text-3xl font-black text-white">
-							{telemetry.agentsOnline}
+							{telemetry.available ? telemetry.agentsOnline : '—'}
 						</div>
 					</GlassPanel>
 
@@ -169,7 +206,7 @@ export default async function DashboardPage() {
 							Vazamento Principal
 						</div>
 						<div className="text-3xl font-black text-rose-400">
-							{predictive.topVazamento}
+							{predictive.available ? predictive.topVazamento : '—'}
 						</div>
 					</GlassPanel>
 				</div>
