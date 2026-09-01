@@ -170,7 +170,9 @@ def test_config_medida_congelada_nao_e_conferida_contra_esta_maquina():
     divergencias, nao_conferiveis = record_index.conferir_config_medida(passada, ambiente)
 
     assert not divergencias, "config declarada congelada foi conferida contra o ambiente de hoje"
-    assert nao_conferiveis == ["branch", "congelada_em", "raiz"], "chave de medicao congelada precisa constar como nao conferida"
+    assert nao_conferiveis == ["branch", "congelada_em", "raiz"], (
+        "chave de medicao congelada precisa constar como nao conferida"
+    )
     viva = {k: v for k, v in passada.items() if k != "congelada_em"}
     assert record_index.conferir_config_medida(viva, ambiente)[0], (
         "sem o marcador, a mesma config divergente tem de continuar reprovando"

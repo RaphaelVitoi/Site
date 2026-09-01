@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: devin@cognition
 criado_em: 2026-09-01T12:40-03:00
-atualizado_em: 2026-09-01T12:40-03:00
+atualizado_em: 2026-09-01T13:05-03:00
 classes: [interno, medido]
 config_medida:
   raiz: C:/Users/Administrator/repos/Site2
@@ -141,4 +141,7 @@ suite fecha com duas falhas. `ruff check .` limpo.
 
 Fora de alcance nesta maquina, e sem mudanca desde o registro anterior: o job de frontend do
 CI depende de binarios Git LFS que nao materializam enquanto o orcamento de LFS do repositorio
-estiver esgotado, e `ruff format --check .` so fica limpo com a PR de formatacao integrada.
+estiver esgotado, e `ruff format --check .` so fica limpo com a PR de formatacao integrada. A
+asserção nova em `tests/test_record_index.py` ja sai no formato do `ruff format`, entao a
+divida que resta naquele passo do CI e inteira da PR de formatacao -- nenhuma linha deste diff
+entra nela.
