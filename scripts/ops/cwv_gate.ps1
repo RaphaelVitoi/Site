@@ -314,6 +314,15 @@ function Test-FiniteNonNegativeNumber {
     }
 }
 
+function Resolve-NodeExecutable {
+    # node.exe e Windows-only, mesmo defeito ja corrigido para python.exe na
+    # fase SRI: pwsh 7+ e cross-platform, mas Get-Command node.exe nunca
+    # resolve em Linux/macOS, onde o binario se chama node.
+    $cmd = Get-Command node.exe, node -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $cmd) { throw 'nenhum interpretador Node.js encontrado (node.exe/node fora do PATH)' }
+    return $cmd.Source
+}
+
 function Read-LighthouseProductionAudit {
     param(
         [string]$ArtifactPath,
@@ -354,7 +363,7 @@ function Read-LighthouseProductionAudit {
     }
 
     try {
-        $nodeExe = (Get-Command node.exe -ErrorAction Stop).Source
+        $nodeExe = Resolve-NodeExecutable
         $sourceRoot = Join-Path $RepositoryRoot 'frontend'
         $currentFingerprint = (& $nodeExe $collector --fingerprint --source-root $sourceRoot 2>&1 | Out-String).Trim()
         if ($LASTEXITCODE -ne 0 -or $currentFingerprint -notmatch '^[a-f0-9]{64}$') {
@@ -390,7 +399,7 @@ if ($lighthouseProductionAudit.Measured) {
 
 if ($cdpActive -and $cdpPort -and (Test-Path $probeScript)) {
     try {
-        $nodeExe = (Get-Command node.exe -ErrorAction Stop).Source
+        $nodeExe = Resolve-NodeExecutable
         $probeOutput = & $nodeExe $probeScript --cdp "http://127.0.0.1:${cdpPort}" --url $TargetUrl 2>&1
         if ($LASTEXITCODE -ne 0) { throw "probe runtime saiu com codigo ${LASTEXITCODE}: $probeOutput" }
         $runtimeProbe = ($probeOutput | Out-String | ConvertFrom-Json)
@@ -600,9 +609,20 @@ Write-Host ("-" * 68) -ForegroundColor DarkGray
 # se existe. Mesma classe de falha aberta da fase 3.
 $sriSuccess = $false
 $sriErro = ''
-$venvPy    = Join-Path $RepoRoot '.venv\Scripts\python.exe'
+# pwsh 7+ e cross-platform (SS8.2); o .venv Windows usa Scripts\python.exe,
+# o POSIX usa bin/python. Resolver so o primeiro quebrava silenciosamente
+# em qualquer host Linux/macOS -- inclusive CI ubuntu-latest.
+$venvPyWindows = Join-Path $RepoRoot '.venv\Scripts\python.exe'
+$venvPyPosix   = Join-Path $RepoRoot '.venv/bin/python'
 $sriScript = Join-Path $PSScriptRoot 'sri_integrity_verifier.py'
-$pythonExe = if (Test-Path $venvPy) { $venvPy } else { (Get-Command python.exe -ErrorAction SilentlyContinue).Source }
+$pythonExe = if (Test-Path $venvPyWindows) {
+    $venvPyWindows
+} elseif (Test-Path $venvPyPosix) {
+    $venvPyPosix
+} else {
+    $cmd = Get-Command python.exe, python3, python -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($cmd) { $cmd.Source } else { $null }
+}
 
 if (-not $pythonExe) {
     $sriErro = 'nenhum interpretador Python encontrado (venv ausente e python.exe fora do PATH)'
@@ -733,6 +753,15 @@ foreach ($arquivo in $staged) {
 # Auditoria de 2026-08-21: 270 .ps1 no ambiente, 10 ja quebrados no 5.1 e 94
 # em risco. Esta fase impede que o numero volte a crescer.
 $violPs = @()
+$ps51NaoVerificado = @()
+
+# powershell.exe (Windows PowerShell 5.1) nao tem build para Linux/macOS —
+# nao existe versao a instalar, diferente da lacuna de python.exe na fase
+# SRI. Em host sem o binario, o parse abaixo nunca poderia rodar; tratar
+# como FALHOU seria bloqueio por ausencia de medicao (SS8.2), tratar como
+# PASS seria fabricar aprovacao. Fica como cobertura nao medida, no mesmo
+# padrao das fases 1 e 2 quando o CDP nao responde.
+$ps51Interpreter = Get-Command powershell.exe -ErrorAction SilentlyContinue
 
 # Script do processo filho, codificado uma unica vez. Le o alvo de
 # $env:SOTA_PS51_ALVO — o caminho e DADO, nunca texto de comando.
@@ -746,6 +775,11 @@ foreach ($arquivo in $staged) {
     if ($arquivo -notmatch '\.ps1$') { continue }
     $abs = Join-Path $RepoRoot $arquivo
     if (-not (Test-Path $abs)) { continue }
+
+    if (-not $ps51Interpreter) {
+        $ps51NaoVerificado += $arquivo
+        continue
+    }
 
     $bytes = [System.IO.File]::ReadAllBytes($abs)
     $temBom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF
@@ -817,6 +851,9 @@ if ($violRoute.Count -gt 0) {
 }
 if ($violPs.Count -gt 0) {
     Add-QualityFinding -Severity 'ERROR' -Component 'repository.powershell51' -Detail "$($violPs.Count) script(s) .ps1 falham no PowerShell 5.1: $($violPs -join '; ')." -Reason 'O hook e tarefas agendadas executam com PowerShell 5.1; arquivo sem BOM UTF-8 com caracteres nao ASCII ou sintaxe invalida falha no interpretador efetivo.' -Action 'Adicionar BOM UTF-8 unico quando houver caracteres nao ASCII ou corrigir a sintaxe indicada; validar novamente com o parser do PowerShell 5.1.'
+}
+if ($ps51NaoVerificado.Count -gt 0) {
+    Add-QualityFinding -Severity 'WARNING' -Component 'repository.powershell51.cobertura' -Detail "$($ps51NaoVerificado.Count) script(s) .ps1 nao verificados contra PowerShell 5.1: $($ps51NaoVerificado -join '; ')." -Reason 'powershell.exe (Windows PowerShell 5.1) nao esta disponivel neste host; nao existe build para Linux/macOS, entao a verificacao nao pode ser executada aqui.' -Action 'Validar estes arquivos com o parser 5.1 real em um host Windows antes de assumir compatibilidade; esta fase nao substitui aquela verificacao.'
 }
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
