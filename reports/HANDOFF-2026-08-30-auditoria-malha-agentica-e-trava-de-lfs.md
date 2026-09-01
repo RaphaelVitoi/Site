@@ -58,7 +58,7 @@ verificado:
   - "hook commit-msg exercitado por quatro sondas: fora do padrao e titulo de 119 caracteres reprovam; mensagem valida e merge passam"
   - "`npm run prepare` move `git rev-parse --git-path hooks` de `.git/hooks` para `.husky`"
   - 18 dos 19 MEMORY.md declaram modelo em prosa e nenhum confere com o manifesto (10x gemini-2.5-pro, 7x gemini-2.0-flash, 1x gemma-4-E2B-it)
-  - "2026-08-31, maquina do operador: `git config core.hooksPath` responde `.husky`, entao o script `prepare` executou no caminho real de `npm install`"
+  - "2026-08-31, maquina do operador: `git config core.hooksPath` responde `.husky`; a configuracao efetiva aponta para o destino esperado do `prepare`, mas a execucao de `npm install` em ambiente limpo nao foi observada"
   - "2026-08-31, maquina do operador: sync_agents_reality.ps1 executado sob PowerShell, 19 identidades sincronizadas, arvore limpa depois -- A7 e a remocao dos 18 MEMORY.md sobreviveram a sincronia"
   - "sync_agents_reality.ps1:9 deriva a raiz de $PSScriptRoot, entao o diretorio de invocacao nao altera onde os 19 documentos sao escritos"
   - "2026-09-01, `f55a6486` e o push normal subsequente executaram pre-commit e pre-push na maquina do operador; as cinco fases, a ancora e o registro imprimiram veredito sem bypass"
@@ -215,12 +215,16 @@ billing como hipotese principal e a matei pelo motivo errado: "repo publico logo
 minutos ilimitados". Minutos ilimitados nao imunizam contra bloqueio de conta.
 A hipotese certa foi descartada por argumento ruim.
 
-**A causa raiz, medida.** LFS cobra repositorio publico, e remover do HEAD nao
-libera objeto. No historico completo -- que so apareceu depois de eu perceber
-que o clone era **raso** e rodar `git fetch --unshallow` -- ha **17,03 GiB** em
-3794 objetos distintos, contra 1 GiB de cota. Um unico objeto responde por 14,16
-GiB: `.gemini/.ollama/models/blobs/sha256-4c27e0f5b5ad...`, o modelo Ollama que o
-proprio `CLAUDE.md` cita como motivo da criacao da fase 5.
+**A hipotese causal forte, ainda nao confirmada pela conta.** LFS cobra
+repositorio publico, e remover do HEAD nao libera objeto. No historico completo
+-- que so apareceu depois de eu perceber que o clone era **raso** e rodar
+`git fetch --unshallow` -- ha **17,03 GiB** em 3794 objetos distintos. A
+franquia Free atual documentada e de 10 GiB, nao 1 GiB; portanto a formulacao
+anterior da cota estava errada. Um unico objeto responde por 14,16 GiB:
+`.gemini/.ollama/models/blobs/sha256-4c27e0f5b5ad...`, o modelo Ollama que o
+proprio `CLAUDE.md` cita como motivo da criacao da fase 5. O historico explica
+uma hipotese material para a trava, mas so o suporte pode confirmar se ele e a
+causa de conta que bloqueia Actions.
 
 **95,6% do passivo esta sob prefixos que a fase 5 hoje ja bloqueia.** O portao
 nasceu depois do estrago, e o estrago nao se desfaz sozinho. O conteudo legitimo
@@ -230,10 +234,12 @@ soma 0,64 GiB -- dentro da cota.
 
 **Do vertice, e nada disso e codigo:**
 
-1. Chamado ao suporte do GitHub. Texto redigido e entregue, com evidencias,
-   pedido de purga e isencao, e a pergunta que decide o proximo passo -- se
-   apagar o repositorio destrava a conta, ou se o debito persiste. Deletar antes
-   de saber custaria historico, issues e PRs **e** poderia manter a trava.
+1. Chamado ao suporte do GitHub. **Aberto como #4716843**, com inventario local,
+   conta Free sem uso medido corrente e a pergunta que decide o proximo passo:
+   qual condicao de conta bloqueia Actions e qual remediacao e suportada. Ate a
+   resposta humana, nao adicionar forma de pagamento, nao reescrever historico,
+   nao apagar repositorio e nao comentar novamente no ticket. Deletar antes de
+   saber custaria historico, issues e PRs **e** poderia manter a trava.
 2. ~~Rodar `sync_agents_reality.ps1` na sua maquina.~~ **Fechado em 2026-08-31**
    -- ver §7.1.
 3. Abrir sessao MCP no Windows para fechar A4.
@@ -246,20 +252,22 @@ soma 0,64 GiB -- dentro da cota.
 Duas pendencias da §7 original foram exercitadas na plataforma alvo. As duas
 passaram, e uma delas quase produziu um falso resultado.
 
-**Os hooks estao ligados.** `git config core.hooksPath` responde `.husky` no
-clone do operador. Isso fecha a metade do achado que dependia do `prepare`: o
-script rodou no caminho real de `npm install`, nao so no mecanismo testado a
-mao. O que **nao** esta fechado e o efeito: nenhum commit foi feito ali desde a
-ativacao, entao o `cwv_gate.ps1` ainda nao imprimiu veredito. Config correta nao
-e portao exercitado -- e a mesma distincao que originou o achado.
+**Os hooks estao configurados.** `git config core.hooksPath` responde `.husky`
+no clone do operador. Isso confirma o estado efetivo esperado do `prepare`, mas
+nao prova que o ciclo de vida `npm install` o tenha produzido: essa execucao em
+ambiente limpo continua nao observada. O que **nao** esta fechado e o efeito:
+nenhum commit foi feito ali desde a ativacao, entao o `cwv_gate.ps1` ainda nao
+imprimiu veredito. Config correta nao e portao exercitado -- e a mesma distincao
+que originou o achado.
 
 **A sincronia dos 19 documentos e idempotente, e a arvore ficou limpa.** O
 script foi executado sob PowerShell, sincronizou as 19 identidades e nao deixou
-diff. Isso vale por tres confirmacoes de uma vez: (1) a sintaxe do `.ps1`
-corrigido em A7 passa pelo parser real; (2) o template gerado e byte-a-byte
-identico ao que esta commitado; (3) a remocao do modelo obsoleto dos 18
-`MEMORY.md` sobreviveu -- o script cria memoria ausente, nao sobrescreve a
-existente, o que ate aqui era leitura de codigo e agora e medicao.
+diff. Isso confirma duas propriedades observadas: (1) a sintaxe do `.ps1`
+corrigido em A7 passa pelo parser real; (2) a remocao do modelo obsoleto dos 18
+`MEMORY.md` sobreviveu a esta sincronia. A arvore limpa, por si so, nao prova
+que uma memoria antes ausente foi criada nem que todo arquivo e byte-a-byte
+identico ao template; essas afirmacoes permanecem dependentes das verificacoes
+dedicadas registradas na auditoria.
 
 **A armadilha que nao disparou.** O script foi invocado de dentro de
 `scripts\routines\`, nao da raiz. Se ele resolvesse caminhos pelo diretorio
@@ -388,12 +396,14 @@ Nenhuma nota, aprendizado, posterior ou probabilidade foi inventado.
 > `master` -- aconteceu tres vezes em 2026-08-30, uma delas a tres segundos de um
 > commit meu. Nao houve sobreposicao, mas isso foi sorte, nao desenho.
 >
-> **O CI nao roda.** A conta esta travada por excedente de Git LFS: 17,03 GiB em
-> 3794 objetos distintos contra 1 GiB de cota, sendo 95,6% sob prefixos que a
-> fase 5 ja bloqueia, e um unico blob de modelo Ollama respondendo por 14,16 GiB.
-> Sao 225 execucoes com **zero** sucessos desde 21/08. Nenhum push resolve isso;
-> nao gaste re-run. Enquanto durar, todo verde declarado em commit e medicao
-> local, nao veredito de portao -- diga qual dos dois voce esta reportando.
+> **O CI nao roda.** A anotacao do GitHub confirma uma trava de billing, mas a
+> causa de conta ainda esta com o suporte. O historico LFS e uma hipotese forte:
+> 17,03 GiB em 3794 objetos distintos, contra a franquia Free atual documentada
+> de 10 GiB, sendo 95,6% sob prefixos que a fase 5 ja bloqueia e um unico blob
+> de modelo Ollama respondendo por 14,16 GiB. Sao 225 execucoes com **zero**
+> sucessos desde 21/08. Nenhum push resolve isso; nao gaste re-run. Enquanto
+> durar, todo verde declarado em commit e medicao local, nao veredito de portao
+> remoto -- diga qual dos dois voce esta reportando.
 >
 > **Os hooks foram ligados em 2026-08-30 e o wiring foi confirmado na maquina
 > do operador em 2026-08-31** (`git config core.hooksPath` responde `.husky`).
