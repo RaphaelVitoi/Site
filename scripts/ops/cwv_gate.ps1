@@ -13,7 +13,7 @@ param(
     [double]$TtfbThreshold = 800.0,
     [double]$MaxHeapThresholdMb = 128.0,
     [int[]]$CdpPorts = @(9223, 9222),
-    [string]$ReportDir = "$env:USERPROFILE\.gemini\Site\reports\cwv",
+    [string]$ReportDir = "",
     [string]$A11yReviewBaselinePath = "",
     [string]$CwvManualReviewPath = "",
     [string]$LighthouseArtifactPath = ""
@@ -21,6 +21,9 @@ param(
 
 $ErrorActionPreference = 'SilentlyContinue'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\\..')).Path
+if ([string]::IsNullOrWhiteSpace($ReportDir)) {
+    $ReportDir = Join-Path $RepoRoot 'reports\cwv'
+}
 if ([string]::IsNullOrWhiteSpace($A11yReviewBaselinePath)) {
     $A11yReviewBaselinePath = Join-Path $RepoRoot 'data\a11y_manual_review_baselines.json'
 }
@@ -597,8 +600,8 @@ Write-Host ("-" * 68) -ForegroundColor DarkGray
 # se existe. Mesma classe de falha aberta da fase 3.
 $sriSuccess = $false
 $sriErro = ''
-$venvPy    = "$env:USERPROFILE\.gemini\Site\.venv\Scripts\python.exe"
-$sriScript = "$env:USERPROFILE\.gemini\Site\scripts\ops\sri_integrity_verifier.py"
+$venvPy    = Join-Path $RepoRoot '.venv\Scripts\python.exe'
+$sriScript = Join-Path $PSScriptRoot 'sri_integrity_verifier.py'
 $pythonExe = if (Test-Path $venvPy) { $venvPy } else { (Get-Command python.exe -ErrorAction SilentlyContinue).Source }
 
 if (-not $pythonExe) {
