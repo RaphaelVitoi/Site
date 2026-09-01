@@ -41,6 +41,14 @@
   Corrigido com `git update-index --chmod=+x` e um `prepare` que roda
   `git config core.hooksPath .husky` a cada `npm install`. O `husky` não é
   dependência e não precisou ser: os hooks são `#!/bin/sh` puros, sem shim.
+  Confirmado na máquina do operador em 2026-08-31: `core.hooksPath` responde
+  `.husky`, então o `prepare` executa no caminho real, não apenas no mecanismo
+  testado à mão. **Mas configuração não é execução:** o veredito das 5 fases só
+  será observado no primeiro commit feito ali. Portão silencioso naquele commit
+  significa que o hook não está sendo chamado. **Atualização de 2026-09-01:**
+  `f55a6486` e seu push normal exercitaram pre-commit e pre-push; as cinco fases,
+  a âncora e o registro imprimiram veredito. O resultado foi `FRAGIL` com zero
+  erros e duas limitações de medição declaradas, não um falso verde.
 - **Remover do HEAD não libera objeto LFS.** O modelo Ollama de 14,16 GiB
   continua cobrado meses depois de sair da árvore. Purga só pelo suporte do
   GitHub ou destruindo o repositório. **Portão criado depois do estrago não
