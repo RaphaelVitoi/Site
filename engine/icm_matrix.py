@@ -10,7 +10,11 @@ Formalismo:
 3. Delta $EV_i(Win) = $EV_i(s_i + s_eff, s_j - s_eff) - $EV_i(Base)
 4. Delta $EV_i(Lose) = $EV_i(Base) - $EV_i(s_i - s_eff, s_j + s_eff)
 5. BF_{i,j} = Delta $EV_i(Lose) / Delta $EV_i(Win)
-6. RP_{i,j} = (BF_{i,j} - 1) / (BF_{i,j} + 1) * 100%
+6. Para um all-in binario simetrico, RP_{i,j} = (BF_{i,j} - 1) / (BF_{i,j} + 1) * 100%.
+
+Limite: esta matriz nao calcula pot odds, bounties, rake, ranges, arvores
+pos-flop nem transicoes futuras. Portanto, a RP produzida e uma baseline
+pairwise de all-in, nao uma recomendacao universal de call ou sizing.
 """
 
 from __future__ import annotations
@@ -107,7 +111,7 @@ def compute_bubble_factor_matrix(
     payouts: list[float],
     player_names: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Calcula a matriz completa de Bubble Factors (BF), Risk Premiums (RP) e Equidade Requerida entre todos os pares (i, j).
+    """Calcula uma baseline pairwise de all-in para BF, RP e equity requerida.
 
     Args:
         stacks: Stacks dos jogadores em fichas.
@@ -115,7 +119,8 @@ def compute_bubble_factor_matrix(
         player_names: Nomes/labels opcionais dos jogadores.
 
     Returns:
-        Dicionario contendo as matrizes estruturadas e metricas taticas.
+        Dicionario contendo matrizes estruturadas. A conversao RP/equity requerida
+        assume confronto binario simetrico; nao substitui uma arvore de decisao.
     """
     n = len(stacks)
     if player_names is None:
