@@ -2,6 +2,7 @@
 
 Chico Protocol v8.0 GOLD - Pyramidal Governance & Universal Web Tooling.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -39,7 +40,9 @@ class TestSotaWebBrowseEngine:
         # Tier 0 (Sovereign) and Tier 1 (Master) only ground on explicit triggers
         assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_0_SOVEREIGN, "apenas logica interna") is False
         assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_1_MASTER, "apenas logica interna") is False
-        assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_1_MASTER, "https://github.com/RaphaelVitoi/Site") is True
+        assert (
+            TierPolicyEngine.should_auto_ground(AgentTier.TIER_1_MASTER, "https://github.com/RaphaelVitoi/Site") is True
+        )
         assert TierPolicyEngine.should_auto_ground(AgentTier.TIER_1_MASTER, "doc: nextjs 16 turbopack") is True
 
     def test_tier_policy_mode_resolution(self) -> None:

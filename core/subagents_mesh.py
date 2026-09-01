@@ -207,7 +207,10 @@ class SubagentMeshController:
             return SubagentTier.STREAMING_FIM
 
         # 8. Heuristica Flutter / Dart / A11y / WCAG
-        if any(term in desc_lower for term in ("flutter", "dart", "a11y", "wcag", "semantics", "tap_target", "screen_reader")):
+        if any(
+            term in desc_lower
+            for term in ("flutter", "dart", "a11y", "wcag", "semantics", "tap_target", "screen_reader")
+        ):
             return SubagentTier.FLUTTER_A11Y
 
         return SubagentTier.SELF
