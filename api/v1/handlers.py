@@ -1,6 +1,7 @@
 """
 Web Handlers -- Endpoints HTTP do micro-servidor SOTA.
 """
+
 # pylint: disable=broad-exception-caught
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ from pathlib import Path
 import re
 import time
 from typing import Any, Literal, cast
+from uuid import uuid4
 import zipfile
 
 try:
@@ -36,6 +38,22 @@ from utils.storage import buckets as sota_buckets
 BASE_WORKSPACE_DIR: Path = Path(__file__).resolve().parent.parent.parent
 
 logger = logging.getLogger(__name__)
+
+
+def _internal_error(exc: BaseException, contexto: str, **extra: Any) -> web.Response:
+    """Loga a excecao com um id de correlacao e devolve resposta 500 sem detalhe interno.
+
+    O texto de `exc` pode conter caminho de disco, SQL, nome de chave e stack de
+    provider. Nada disso atravessa a fronteira HTTP: o cliente recebe apenas o id.
+    """
+    error_id = uuid4().hex[:12]
+    logger.error("[%s] %s: %s", error_id, contexto, exc, exc_info=exc)
+    payload: dict[str, Any] = {
+        "error": "Erro interno do servidor.",
+        "error_id": error_id,
+        **extra,
+    }
+    return web.json_response(payload, status=500)
 
 
 def _get_bg_tasks(app: web.Application) -> set[asyncio.Task[Any]]:
@@ -62,7 +80,7 @@ async def handle_add_task(request: web.Request) -> web.Response:
     except ValidationError as ve:
         return web.json_response({"error": str(ve)}, status=400)
     except Exception as e:  # noqa: BLE001
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_add_task")
 
 
 async def handle_get_status(request: web.Request) -> web.Response:
@@ -75,7 +93,7 @@ async def handle_get_status(request: web.Request) -> web.Response:
         tasks = await manager.get_tasks(status)
         return web.json_response([t.model_dump() for t in tasks])
     except Exception as e:  # noqa: BLE001
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_get_status")
 
 
 async def handle_get_key_health_summary(request: web.Request) -> web.Response:
@@ -108,7 +126,7 @@ async def handle_get_key_health_summary(request: web.Request) -> web.Response:
     except ValueError:
         return web.json_response({"error": "window_minutes invalido."}, status=400)
     except Exception as e:  # noqa: BLE001
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_get_key_health_summary")
 
 
 async def handle_get_task_result(request: web.Request) -> web.Response:
@@ -146,7 +164,7 @@ async def handle_get_task_result(request: web.Request) -> web.Response:
             }
         )
     except Exception as e:  # noqa: BLE001
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_get_task_result")
 
 
 async def handle_get_state(request: web.Request) -> web.Response:
@@ -159,7 +177,7 @@ async def handle_get_state(request: web.Request) -> web.Response:
         val = await manager.get_system_state(key)
         return web.json_response({"value": val})
     except Exception as e:  # noqa: BLE001
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_get_state")
 
 
 async def handle_set_state(request: web.Request) -> web.Response:
@@ -174,7 +192,7 @@ async def handle_set_state(request: web.Request) -> web.Response:
         await manager.set_system_state(key, value)
         return web.json_response({"status": "SUCCESS"})
     except Exception as e:  # noqa: BLE001
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_set_state")
 
 
 async def handle_ask_oracle(request: web.Request) -> web.Response:
@@ -199,8 +217,7 @@ async def handle_ask_oracle(request: web.Request) -> web.Response:
         answer = await rag.query_memory(question, n_results=n_results, local_only=True)
         return web.json_response({"status": "SUCCESS", "answer": answer})
     except Exception as e:  # noqa: BLE001
-        logger.exception("Falha na consulta ao Oraculo: %s", e)
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_ask_oracle")
 
 
 async def handle_health(request: web.Request) -> web.Response:
@@ -223,7 +240,7 @@ async def handle_health(request: web.Request) -> web.Response:
             }
         )
     except Exception as e:  # noqa: BLE001
-        return web.json_response({"status": "error", "error": str(e)}, status=500)
+        return _internal_error(e, "handle_health", status="error")
 
 
 async def handle_get_db_summary(request: web.Request) -> web.Response:
@@ -240,8 +257,7 @@ async def handle_get_db_summary(request: web.Request) -> web.Response:
             }
         )
     except Exception as e:  # noqa: BLE001
-        logger.exception("Falha ao obter sumario do DB: %s", e)
-        return web.json_response({"status": "error", "error": str(e)}, status=500)
+        return _internal_error(e, "handle_get_db_summary", status="error")
 
 
 async def handle_get_system_status(_request: web.Request) -> web.Response:  # NOSONAR
@@ -261,8 +277,7 @@ async def handle_get_system_status(_request: web.Request) -> web.Response:  # NO
         }
         return web.json_response(status_data, status=200)
     except Exception as e:  # noqa: BLE001
-        logger.exception("Falha ao coletar status do sistema: %s", e)
-        return web.json_response({"error": f"Falha ao coletar status: {e!s}"}, status=500)
+        return _internal_error(e, "handle_get_system_status")
 
 
 async def handle_get_tournaments(request: web.Request) -> web.Response:
@@ -274,7 +289,7 @@ async def handle_get_tournaments(request: web.Request) -> web.Response:
         tournaments = await lab_manager.get_tournaments()
         return web.json_response({"status": "SUCCESS", "data": tournaments})
     except Exception as e:  # noqa: BLE001
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_get_tournaments")
 
 
 async def handle_rag_ingest(request: web.Request) -> web.Response:
@@ -301,8 +316,7 @@ async def handle_rag_ingest(request: web.Request) -> web.Response:
             status=202,
         )
     except Exception as e:  # noqa: BLE001
-        logger.exception("Falha ao disparar ingestao RAG: %s", e)
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_rag_ingest")
 
 
 async def handle_get_resource_usage(_request: web.Request) -> web.Response:
@@ -319,7 +333,7 @@ async def handle_get_resource_usage(_request: web.Request) -> web.Response:
         usage = await asyncio.to_thread(_get_usage)
         return web.json_response({"status": "SUCCESS", "usage": usage})
     except Exception as e:
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_get_resource_usage")
 
 
 async def handle_rag_query(request: web.Request) -> web.Response:
@@ -342,7 +356,7 @@ async def handle_rag_query(request: web.Request) -> web.Response:
 
         return web.json_response({"status": "SUCCESS", "answer": answer, "cached": False})
     except Exception as e:
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_rag_query")
 
 
 class BucketOpRequest(BaseModel):
@@ -373,7 +387,7 @@ async def handle_bucket_op(request: web.Request) -> web.Response:
     except ValueError as exc:
         return web.json_response({"error": str(exc)}, status=400)
     except Exception as e:
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_bucket_op")
 
 
 class FrontendLogsRequest(BaseModel):
@@ -398,8 +412,7 @@ async def handle_frontend_logs(request: web.Request) -> web.Response:
     except ValidationError as ve:
         return web.json_response({"error": str(ve)}, status=400)
     except Exception as e:  # noqa: BLE001
-        logger.exception("Falha ao processar logs do frontend: %s", e)
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_frontend_logs")
 
 
 IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg")
@@ -491,7 +504,7 @@ async def handle_list_files(_request: web.Request) -> web.Response:
         tree = await asyncio.to_thread(_scan)
         return web.json_response({"status": "SUCCESS", "tree": tree})
     except Exception as e:
-        return web.json_response({"error": str(e)}, status=500)
+        return _internal_error(e, "handle_list_files")
 
 
 def _parse_spreadsheet(ext: str, file_path: Path) -> dict[str, Any]:
@@ -644,7 +657,7 @@ async def handle_view_file(request: web.Request) -> web.StreamResponse:
         text_content = await asyncio.to_thread(_read_text)
         return web.json_response({"type": "text", "content": text_content})
     except Exception as e:
-        return web.json_response({"error": f"Falha ao ler arquivo: {e!s}"}, status=500)
+        return _internal_error(e, "handle_view_file")
 
 
 async def handle_web_search(request: web.Request) -> web.Response:
@@ -692,7 +705,7 @@ async def handle_web_search(request: web.Request) -> web.Response:
             }
         )
     except Exception as e:
-        return web.json_response({"error": f"Search failed: {e!s}"}, status=500)
+        return _internal_error(e, "handle_web_search")
 
 
 async def handle_calculate_perspective(request: web.Request) -> web.Response:
@@ -758,7 +771,7 @@ async def handle_calculate_perspective(request: web.Request) -> web.Response:
     except ValidationError as ve:
         return web.json_response({"error": str(ve)}, status=400)
     except Exception as e:
-        return web.json_response({"error": f"Erro no calculo de perspectiva: {e!s}"}, status=500)
+        return _internal_error(e, "handle_calculate_perspective")
 
 
 async def handle_simulate_perspective_tree(request: web.Request) -> web.Response:
@@ -812,7 +825,7 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
     except ValidationError as ve:
         return web.json_response({"error": str(ve)}, status=400)
     except Exception as e:
-        return web.json_response({"error": f"Erro na simulacao de arvore: {e!s}"}, status=500)
+        return _internal_error(e, "handle_simulate_perspective_tree")
 
 
 async def handle_import_solver_tree(request: web.Request) -> web.Response:
@@ -836,7 +849,7 @@ async def handle_import_solver_tree(request: web.Request) -> web.Response:
     except ValidationError as ve:
         return web.json_response({"error": str(ve), "status": "ERROR"}, status=400)
     except Exception as e:
-        return web.json_response({"error": f"Erro na importacao de solver: {e!s}", "status": "ERROR"}, status=500)
+        return _internal_error(e, "handle_import_solver_tree", status="ERROR")
 
 
 async def handle_pmev_heatmap(request: web.Request) -> web.Response:
@@ -900,7 +913,7 @@ async def handle_pmev_heatmap(request: web.Request) -> web.Response:
     except ValidationError as ve:
         return web.json_response({"error": str(ve), "status": "ERROR"}, status=400)
     except Exception as e:
-        return web.json_response({"error": f"Erro na geracao de heatmap PMev: {e!s}", "status": "ERROR"}, status=500)
+        return _internal_error(e, "handle_pmev_heatmap", status="ERROR")
 
 
 async def handle_prometheus_metrics(request: web.Request) -> web.Response:

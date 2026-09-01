@@ -16,8 +16,10 @@ Marcadores: unit (sem I/O externo), integration (requer servicos).
 # pylint: disable=import-outside-toplevel
 
 import asyncio
+import base64
 import contextlib
 import shutil
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -71,6 +73,118 @@ async def test_auth_middleware_blocks_browser_origin_when_token_is_not_configure
     response = await middleware.auth_middleware(cast(web.Request, request), handler)
     assert response.status == 403
     assert "Security Token not configured" in (response.text or "")
+
+
+def _jwt(header: dict, payload: dict, secret: str) -> str:
+    """Monta um JWT assinado em HS256, ou com assinatura vazia quando o alg nao a exige."""
+    import hashlib
+    import hmac
+    import json
+
+    def seg(data: dict) -> str:
+        raw = json.dumps(data, separators=(",", ":")).encode()
+        return base64.urlsafe_b64encode(raw).decode().rstrip("=")
+
+    signing_input = f"{seg(header)}.{seg(payload)}"
+    if header.get("alg") == "none":
+        return f"{signing_input}."
+    mac = hmac.new(secret.encode(), signing_input.encode(), hashlib.sha256).digest()
+    return f"{signing_input}.{base64.urlsafe_b64encode(mac).decode().rstrip('=')}"
+
+
+@pytest.mark.unit
+def test_jwt_aceita_apenas_hs256_declarado_no_header() -> None:
+    """Ate 2026-09-01 o algoritmo era inferido do formato (3 segmentos), nunca lido.
+
+    Com `alg: none` o token nao carrega assinatura -- o verificador HS256 comparava
+    o HMAC contra bytes vazios e negava, mas nada no codigo AFIRMAVA a restricao.
+    A checagem explicita e o que impede que uma futura extensao de algoritmos
+    aceite silenciosamente um header hostil.
+    """
+    segredo = "segredo-de-teste"
+    agora = int(time.time())
+
+    valido = _jwt({"alg": "HS256", "typ": "JWT"}, {"sub": "u1", "exp": agora + 300}, segredo)
+    assert middleware.verify_hs256_jwt(valido, segredo) is not None
+
+    alg_none = _jwt({"alg": "none", "typ": "JWT"}, {"sub": "u1", "exp": agora + 300}, segredo)
+    assert middleware.verify_hs256_jwt(alg_none, segredo) is None
+
+    alg_trocado = _jwt({"alg": "HS512", "typ": "JWT"}, {"sub": "u1", "exp": agora + 300}, segredo)
+    assert middleware.verify_hs256_jwt(alg_trocado, segredo) is None
+
+
+@pytest.mark.unit
+def test_jwt_valida_a_janela_temporal_completa() -> None:
+    """exp era a unica claim temporal verificada; nbf e iat passavam livres."""
+    segredo = "segredo-de-teste"
+    agora = int(time.time())
+    skew = middleware.JWT_CLOCK_SKEW_SECONDS
+
+    expirado = _jwt({"alg": "HS256"}, {"sub": "u1", "exp": agora - skew - 60}, segredo)
+    assert middleware.verify_hs256_jwt(expirado, segredo) is None
+
+    futuro = _jwt({"alg": "HS256"}, {"sub": "u1", "nbf": agora + skew + 60, "exp": agora + 900}, segredo)
+    assert middleware.verify_hs256_jwt(futuro, segredo) is None
+
+    emitido_no_futuro = _jwt({"alg": "HS256"}, {"sub": "u1", "iat": agora + skew + 60, "exp": agora + 900}, segredo)
+    assert middleware.verify_hs256_jwt(emitido_no_futuro, segredo) is None
+
+
+@pytest.mark.unit
+def test_jwt_confere_issuer_e_audience_quando_declarados(monkeypatch) -> None:
+    """iss/aud so sao exigidos se o ambiente os declarar -- ausencia nao vira falha."""
+    segredo = "segredo-de-teste"
+    agora = int(time.time())
+    token = _jwt(
+        {"alg": "HS256"},
+        {"sub": "u1", "exp": agora + 300, "iss": "https://proj.supabase.co/auth/v1", "aud": ["authenticated"]},
+        segredo,
+    )
+
+    monkeypatch.setenv("SUPABASE_JWT_ISSUER", "https://proj.supabase.co/auth/v1")
+    monkeypatch.setenv("SUPABASE_JWT_AUDIENCE", "authenticated")
+    assert middleware.verify_hs256_jwt(token, segredo) is not None
+
+    monkeypatch.setenv("SUPABASE_JWT_ISSUER", "https://outro.supabase.co/auth/v1")
+    assert middleware.verify_hs256_jwt(token, segredo) is None
+
+
+@pytest.mark.unit
+def test_rotas_de_arquivos_e_busca_estao_registradas(local_tmp_dir: Path) -> None:
+    """O dashboard de arquivos chama /api/files/list e /api/files/view.
+
+    Os handlers existiam em api/v1/handlers.py e nunca foram adicionados a tabela
+    de rotas: o frontend recebia 404 de um endpoint que o backend implementava.
+    """
+    from api.v1.server import create_app
+
+    manager = QueueManager(queue_path=str(local_tmp_dir / "rotas.db"))
+    app = create_app(manager)
+    rotas = {(r.method, r.resource.canonical) for r in app.router.routes() if r.resource}
+
+    assert ("GET", "/api/files/list") in rotas
+    assert ("GET", "/api/files/view") in rotas
+    assert ("GET", "/api/web-search") in rotas
+
+
+@pytest.mark.unit
+def test_erro_interno_nao_vaza_detalhe_da_excecao() -> None:
+    """Handlers devolviam `str(e)` cru em 500 -- caminho de disco, SQL e nome de chave."""
+    import json as _json
+
+    from api.v1.handlers import _internal_error
+
+    response = _internal_error(
+        RuntimeError(r"no such table: tasks (C:\Users\raphael\.gemini\Site\queue\tasks.db)"),
+        "handle_get_status",
+    )
+
+    assert response.status == 500
+    corpo = _json.loads(response.text or "{}")
+    assert "tasks.db" not in (response.text or "")
+    assert corpo["error"] == "Erro interno do servidor."
+    assert corpo["error_id"]
 
 
 @pytest.mark.asyncio
