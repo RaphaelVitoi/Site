@@ -30,11 +30,30 @@
   fechar a camada de skills, 19 nomes nao eram observaveis do container. Apagar
   a declaracao teria sido inventar ausencia; foram para o registro com status
   `nao-verificada`, enumerados e datados.
-- ``#pendencia`` **18 dos 19 `MEMORY.md` declaram modelo em prosa, e nenhum
-  confere** (10x `gemini-2.5-pro`, 7x `gemini-2.0-flash`, 1x
-  `gemma-4-E2B-it`), enquanto o manifesto esta em outra geracao. E o gemeo do
-  achado A7: o gerador foi corrigido em 2026-08-30, os artefatos nao foram
-  regenerados. Aguarda decisao do vertice.
+- ``#aprendizado`` **Corrigir o gerador nao corrige o artefato ja gravado.** Os
+  18 `MEMORY.md` declaravam modelo em prosa e nenhum conferia (10x
+  `gemini-2.5-pro`, 7x `gemini-2.0-flash`, 1x `gemma-4-E2B-it`) enquanto o
+  manifesto estava duas geracoes a frente. Era o gemeo do A7: o gerador foi
+  corrigido em 2026-08-30 e os artefatos ficaram como estavam. Saneados em
+  `bf9f982e`; a sincronia rodada na maquina do operador em 2026-08-31 nao os
+  reintroduziu -- o script cria memoria ausente, nao sobrescreve a existente,
+  o que era leitura de codigo e virou medicao. **Todo achado em gerador tem um
+  segundo achado nos artefatos que ele ja produziu.**
+- ``#aprendizado`` **Config correta nao e portao exercitado.**
+  `core.hooksPath` respondendo `.husky` prova que o `prepare` rodou; nao prova
+  que o `cwv_gate.ps1` dispara. O primeiro commit e que decide. Declarar
+  "hooks ligados" a partir da config seria a mesma classe de erro que criou o
+  achado -- regra escrita confundida com regra em execucao. **O efeito foi
+  finalmente observado em 2026-09-01:** o commit `f55a6486` e o push normal
+  subsequente executaram os hooks, imprimiram as cinco fases e aprovaram as
+  ancoras e o registro; o gate permaneceu `FRAGIL` por duas limitacoes medidas,
+  nao por erro oculto.
+- ``#aprendizado`` **A licao de precondicao pagou na primeira aplicacao.** O
+  `sync_agents_reality.ps1` foi invocado de dentro de `scripts\routines\`. Se
+  ele resolvesse caminho por CWD, teria escrito os 19 documentos na subpasta e
+  a arvore limpa seria falso negativo. Li a resolucao de raiz (linha 9,
+  `$PSScriptRoot`) **antes** de aceitar o resultado. Verificar o universo de
+  onde o numero saiu, antes de publica-lo, deixou de ser retrospectiva.
 
 ## Propostas Evolutivas
 
