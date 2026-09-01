@@ -189,7 +189,7 @@ async def get_agent_system_prompt(agent_name: str) -> str:
         system_prompt_parts.append(infra_ctx)
 
         # 3. A Parte: Identidade Especifica do Agente
-        agent_file = Path(f".cerebro/agents/{agent_clean}.md")
+        agent_file = Path(f".claude/agents/{agent_clean}.md")
         agent_content = _read_file_with_cache(str(agent_file))
         if agent_content:
             system_prompt_parts.append(f"=== SUA IDENTIDADE ESPECIFICA ({agent_name}) ===\n{agent_content}\n\n")

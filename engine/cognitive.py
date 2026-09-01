@@ -137,7 +137,7 @@ async def get_agent_system_prompt(agent_name: str, task: Task | None = None, tas
     global_ctx = await _read_global_context()
     infra_ctx = await _build_infra_ctx(task, task_files)
 
-    agent_file = Path(f".cerebro/agents/{agent_clean}.md")
+    agent_file = Path(f".claude/agents/{agent_clean}.md")
     agent_prompt = f"Voce e o agente especialista {agent_name}."
     if agent_file.exists():
         async with aiofiles.open(agent_file, encoding="utf-8") as f:
@@ -351,7 +351,7 @@ def _build_user_prompt(
 
     if task.agent not in [DISPATCHER_AGENT, BIBLIOTECARIO_AGENT]:
         user_prompt += "\n\n[AUTORIZACAO SUPREMA - GOD MODE]\nVoce possui ACESSO LIVRE ao sistema operacional do usuario.\n1. Para MATERIALIZAR ou EDITAR arquivos, use EXATAMENTE o formato:\nArquivo: caminho/do/arquivo.ext\n```linguagem\n[conteudo completo do arquivo]\n```\n2. Para EXECUTAR comandos de terminal (ex: npm install, python, git, robocopy), use o formato:\nComando: `seu comando aqui`\n\nVoce tem soberania para agir, instalar dependencias e forjar a realidade. ATENCAO: Ao editar arquivos, envie sempre o conteudo integral para sobrescrever adequadamente."
-        user_prompt += f"\n\n[DIRETRIZ DE AUTOREFLEXAO E MEMORIA] Voce DEVE atualizar seu arquivo de inteligencia acumulada usando o God Mode (Arquivo: .cerebro/agent-memory/{agent_clean}/MEMORY.md). Adicione novas descobertas, avalie a Sinergia da sua interacao com a Pipeline, e faca Propostas Democraticas de melhoria para o ecossistema. A Autopoiese exige que voce expanda a mente coletiva."
+        user_prompt += f"\n\n[DIRETRIZ DE AUTOREFLEXAO E MEMORIA] Voce DEVE atualizar seu arquivo de inteligencia acumulada usando o God Mode (Arquivo: .claude/agent-memory/{agent_clean}/MEMORY.md). Adicione novas descobertas, avalie a Sinergia da sua interacao com a Pipeline, e faca Propostas Democraticas de melhoria para o ecossistema. A Autopoiese exige que voce expanda a mente coletiva."
 
     user_prompt += "\n\n[DIRETRIZ DE LLM] Ao final da sua resposta, analise a tarefa e o contexto. Recomende qual modelo Paid Tier (Claude Opus 4.6 Versao Estendida, Claude 3.5 Sonnet, Gemini 3.1 Pro, ou API local) seria o mais adequado para a *proxima* etapa. Justifique a escolha com base na arquitetura do modelo (Opus para raciocinio profundo, Sonnet para codigo rapido, Gemini para contexto longo/multimodal). Se for ideal ir para a interface Web, recomende ao usuario rodar a Membrana com a flag '-Web' e especifique qual modelo ele deve selecionar no menu interativo."
     return user_prompt
