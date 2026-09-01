@@ -168,6 +168,100 @@ def test_rotas_de_arquivos_e_busca_estao_registradas(local_tmp_dir: Path) -> Non
     assert ("GET", "/api/web-search") in rotas
 
 
+def _cliente_local(local_tmp_dir: Path, monkeypatch, nome_db: str):
+    """TestClient sobre create_app() no modo local sem token (loopback + origem confiavel).
+
+    Exercita a rota registrada, e nao apenas a tabela de rotas: registrar
+    /api/files/view sem verificar a resposta so troca 404 por 500.
+    """
+    from aiohttp.test_utils import TestClient, TestServer
+
+    from api.v1 import handlers
+    from api.v1.server import create_app
+
+    monkeypatch.setattr(middleware, "API_SECRET_TOKEN", "")
+    monkeypatch.setattr(middleware, "SUPABASE_JWT_SECRET", None)
+    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
+    monkeypatch.setattr(handlers, "BASE_WORKSPACE_DIR", local_tmp_dir)
+
+    manager = QueueManager(queue_path=str(local_tmp_dir / nome_db))
+    return TestClient(TestServer(create_app(manager)))
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_view_file_recusa_caminho_fora_das_fronteiras(local_tmp_dir: Path, monkeypatch) -> None:
+    """Path traversal e ausencia de 'path' respondem 403/400, nunca conteudo."""
+    async with _cliente_local(local_tmp_dir, monkeypatch, "traversal.db") as cliente:
+        sem_path = await cliente.get("/api/files/view")
+        assert sem_path.status == 400
+
+        fora = await cliente.get(
+            "/api/files/view", params={"path": str(Path(REPO_ROOT.anchor) / "windows" / "win.ini")}
+        )
+        assert fora.status == 403
+
+        inexistente = await cliente.get("/api/files/view", params={"path": str(local_tmp_dir / "nao_existe.txt")})
+        assert inexistente.status == 404
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_view_file_entrega_texto_e_barra_arquivo_gigante(local_tmp_dir: Path, monkeypatch) -> None:
+    """Arquivo permitido volta como texto; acima do teto de 5 MB volta aviso, nao o conteudo."""
+    pequeno = local_tmp_dir / "nota.txt"
+    pequeno.write_text("conteudo-visivel", encoding="utf-8")
+
+    gigante = local_tmp_dir / "gigante.txt"
+
+    def _criar_gigante() -> None:
+        with open(gigante, "wb") as f:
+            f.seek(6 * 1024 * 1024)
+            f.write(b"\0")
+
+    await asyncio.to_thread(_criar_gigante)
+
+    async with _cliente_local(local_tmp_dir, monkeypatch, "texto.db") as cliente:
+        ok = await cliente.get("/api/files/view", params={"path": str(pequeno)})
+        assert ok.status == 200
+        corpo = await ok.json()
+        assert corpo["type"] == "text"
+        assert corpo["content"] == "conteudo-visivel"
+
+        grande = await cliente.get("/api/files/view", params={"path": str(gigante)})
+        assert grande.status == 200
+        aviso = await grande.json()
+        assert "[Aviso]" in aviso["content"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_list_files_e_web_search_respondem_o_contrato_do_dashboard(local_tmp_dir: Path, monkeypatch) -> None:
+    """/api/files/list devolve a arvore esperada; /api/web-search exige 'q'."""
+    (local_tmp_dir / "visivel.md").write_text("# doc", encoding="utf-8")
+
+    async with _cliente_local(local_tmp_dir, monkeypatch, "lista.db") as cliente:
+        listagem = await cliente.get("/api/files/list")
+        assert listagem.status == 200
+        payload = await listagem.json()
+        assert payload["status"] == "SUCCESS"
+        nomes = {arquivo["name"] for raiz in payload["tree"] for arquivo in raiz["files"]}
+        assert "visivel.md" in nomes
+
+        sem_query = await cliente.get("/api/web-search")
+        assert sem_query.status == 400
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_rotas_novas_respeitam_o_middleware_de_origem(local_tmp_dir: Path, monkeypatch) -> None:
+    """As rotas novas nao criam um bypass: origem nao confiavel continua barrada."""
+    async with _cliente_local(local_tmp_dir, monkeypatch, "origem.db") as cliente:
+        for rota in ("/api/files/list", "/api/files/view", "/api/web-search"):
+            resposta = await cliente.get(rota, headers={"Origin": "http://malicious.example"})
+            assert resposta.status == 403, rota
+
+
 @pytest.mark.unit
 def test_erro_interno_nao_vaza_detalhe_da_excecao() -> None:
     """Handlers devolviam `str(e)` cru em 500 -- caminho de disco, SQL e nome de chave."""
