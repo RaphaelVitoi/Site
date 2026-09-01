@@ -36,6 +36,8 @@
     "sota-consciousness-memory-rag": { "origem": "skill SOTA do operador", "status": "nao-verificada" },
     "neuropsychology-high-performance": { "origem": "skill do operador", "status": "nao-verificada" },
     "agy-customizations": { "origem": "skill do operador (Antigravity)", "status": "nao-verificada" },
-    "uv": { "origem": "skill de tooling Python", "status": "nao-verificada" }
+    "uv": { "origem": "skill de tooling Python", "status": "nao-verificada" },
+    "supabase": { "origem": "plugin supabase@claude-plugins-official; instalado em .agents/skills/ e ignorado pelo versionamento (.agents/skills/.gitignore)", "status": "nao-verificada" },
+    "supabase-postgres-best-practices": { "origem": "plugin supabase@claude-plugins-official; instalado em .agents/skills/ e ignorado pelo versionamento (.agents/skills/.gitignore)", "status": "nao-verificada" }
   }
 }

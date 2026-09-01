@@ -146,9 +146,21 @@ def resolvedores_de_ambiente(raiz: Path = RAIZ) -> dict[str, Any]:
 
 
 def conferir_config_medida(config: Any, ambiente: dict[str, Any]) -> tuple[list[str], list[str]]:
-    """Devolve (divergencias, nao_conferiveis)."""
+    """Devolve (divergencias, nao_conferiveis).
+
+    `congelada_em` e a metade que faltava do "remeca OU marque" que o portao
+    manda fazer: com ela, a config descreve uma medicao PASSADA e para de ser
+    conferida contra a maquina de hoje. Sem isso, so a primeira metade existia,
+    e revisar um registro antigo -- corrigir uma referencia, declarar um caminho
+    que nunca resolveu -- exigia reescrever numeros medidos noutra maquina para
+    que eles casassem com esta. Marcar como congelada e o oposto de afrouxar:
+    nao ha o que conferir numa medicao que o registro ja declara encerrada, e a
+    data fica no documento em vez de virar reescrita silenciosa.
+    """
     if not isinstance(config, dict):
         return [], []
+    if config.get("congelada_em"):
+        return [], sorted(config)
     divergencias, nao_conferiveis = [], []
     for chave, declarado in config.items():
         if chave not in ambiente:
