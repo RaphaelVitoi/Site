@@ -44,6 +44,7 @@ from api.v1.handlers import (
     handle_get_tournaments,
     handle_health,
     handle_import_solver_tree,
+    handle_list_files,
     handle_ping,
     handle_pmev_heatmap,
     handle_prometheus_metrics,
@@ -51,6 +52,8 @@ from api.v1.handlers import (
     handle_rag_query,
     handle_set_state,
     handle_simulate_perspective_tree,
+    handle_view_file,
+    handle_web_search,
 )
 from api.v1.middleware import (
     auth_middleware,
@@ -75,8 +78,8 @@ async def handle_predictive_profile(_request: web.Request) -> web.Response:
     return web.json_response({"profile": profile})
 
 
-async def start_api_server(manager: QueueManager, port: int = 17042):
-    """Inicializa, configura rotas e executa o servidor web SOTA na porta especificada."""
+def create_app(manager: QueueManager) -> web.Application:
+    """Monta a aplicacao aiohttp com middlewares, estado e tabela de rotas."""
     app = web.Application(
         middlewares=[
             cors_middleware,
@@ -111,6 +114,9 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
             web.get("/resources", handle_get_resource_usage),
             web.post("/rag/query", handle_rag_query),
             web.post("/buckets", handle_bucket_op),
+            web.get("/api/files/list", handle_list_files),
+            web.get("/api/files/view", handle_view_file),
+            web.get("/api/web-search", handle_web_search),
             web.post("/api/v1/perspective", handle_calculate_perspective),
             web.post("/api/v1/perspective/tree", handle_simulate_perspective_tree),
             web.post("/api/v1/perspective/import-solver", handle_import_solver_tree),
@@ -118,6 +124,12 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
             web.post("/api/v1/perspective/heatmap", handle_pmev_heatmap),
         ]
     )
+    return app
+
+
+async def start_api_server(manager: QueueManager, port: int = 17042):
+    """Inicializa, configura rotas e executa o servidor web SOTA na porta especificada."""
+    app = create_app(manager)
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -133,5 +145,6 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
             port,
             e,
         )
+        raise
     finally:
         await runner.cleanup()
