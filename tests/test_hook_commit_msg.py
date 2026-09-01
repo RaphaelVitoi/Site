@@ -64,7 +64,12 @@ def _rodar(mensagem: str, tmp_path) -> subprocess.CompletedProcess:
     arquivo.write_text(mensagem, encoding="utf-8")
     return subprocess.run(
         [SH, str(HOOK), str(arquivo)],
-        cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
+        cwd=RAIZ,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
     )
 
 
@@ -90,7 +95,7 @@ REJEITADAS = [
 
 DE_OPERACAO_DO_GIT = [
     "Merge branch 'master'",
-    "Revert \"feat(x): y\"",
+    'Revert "feat(x): y"',
     "fixup! feat(x): y",
     "squash! feat(x): y",
     "WIP: rascunho",

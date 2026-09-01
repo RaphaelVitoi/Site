@@ -2,6 +2,7 @@
 SOTA Dynamic Agent Clustering & Swarm Specialization Engine (Chico v8.0 GOLD)
 Protocol Chico SOTA v8.0 GOLD - Multi-Agent Cluster Topologies & Hardware Affinity Routing
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

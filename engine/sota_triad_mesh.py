@@ -164,7 +164,9 @@ class ExaKnowledgeBridge:
     @staticmethod
     def build_game_theory_query(topic: str, math_density: str = "high") -> ExaQueryRequest:
         prefix = "academic papers and technical deep dive on"
-        keywords = "poker game theory CFR+ ICM subgame solving convex equity" if math_density == "high" else "poker strategy"
+        keywords = (
+            "poker game theory CFR+ ICM subgame solving convex equity" if math_density == "high" else "poker strategy"
+        )
         query = f"{prefix} {topic} with {keywords} formulas and proofs"
         return ExaQueryRequest(
             topic=topic,

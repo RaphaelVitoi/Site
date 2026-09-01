@@ -509,7 +509,7 @@ class MemoryRAG:
         # Por isso subarvore em vez de nome: o prefixo relativo acerta so o que
         # a maquina regenera e nao alcanca homonimo nenhum.
         ignore_subtrees = (
-            Path("reports") / "cwv",       # 384 artefatos por execucao de portao, gitignored
+            Path("reports") / "cwv",  # 384 artefatos por execucao de portao, gitignored
             Path("reports") / "coverage",  # saida de cobertura, regenerada
             Path(".claude") / ".ARQUIVE",  # 45 registros arquivados: tasks e cerimonias encerradas
         )
@@ -536,8 +536,7 @@ class MemoryRAG:
         # teste nenhum distingue e redundancia que ninguem mantem.
         resolved_base = await asyncio.to_thread(base_path.resolve)
         superadas = {
-            m.parent.resolve()
-            for m in await asyncio.to_thread(lambda: list(base_path.rglob(MARCADOR_SUPERADO)))
+            m.parent.resolve() for m in await asyncio.to_thread(lambda: list(base_path.rglob(MARCADOR_SUPERADO)))
         }
         if superadas:
             nomes_formatados = []

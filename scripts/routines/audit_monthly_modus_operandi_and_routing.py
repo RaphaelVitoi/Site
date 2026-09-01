@@ -305,7 +305,9 @@ def run_monthly_audit() -> dict[str, Any]:
     )
 
     total_manuais = len(mo_status)
-    manuais_ok = sum(1 for m in mo_status.values() if m.get("presente") and m.get("quatro_camadas") and m.get("barramento_mcp"))
+    manuais_ok = sum(
+        1 for m in mo_status.values() if m.get("presente") and m.get("quatro_camadas") and m.get("barramento_mcp")
+    )
 
     md_content += f"""# RELATORIO DE AUDITORIA MENSAL: MODUS OPERANDI & ROUTING SOTA v8.0 GOLD
 

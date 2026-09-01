@@ -73,8 +73,10 @@ async def test_synthesize_edge_tts_execution(tmp_path: Path):
     out_file = tmp_path / "francisca.mp3"
 
     mock_communicate = MagicMock()
+
     async def mock_save(path: str) -> None:
         Path(path).write_bytes(b"MOCK_MP3_EDGE_TTS_PAYLOAD")
+
     mock_communicate.save = mock_save
 
     with patch("scripts.cli.nexus_voice.edge_tts") as mock_etts:
@@ -91,8 +93,10 @@ async def test_async_speak_text_execution(tmp_path: Path):
     out_file = tmp_path / "async_test.mp3"
 
     mock_communicate = MagicMock()
+
     async def mock_save(path: str) -> None:
         Path(path).write_bytes(b"MOCK_ASYNC_AUDIO_PAYLOAD")
+
     mock_communicate.save = mock_save
 
     with patch("scripts.cli.nexus_voice.edge_tts") as mock_etts:
@@ -108,8 +112,10 @@ def test_speak_text_synchronous_wrapper(tmp_path: Path):
     out_file = tmp_path / "sync_test.mp3"
 
     mock_communicate = MagicMock()
+
     async def mock_save(path: str) -> None:
         Path(path).write_bytes(b"MOCK_SYNC_AUDIO_PAYLOAD")
+
     mock_communicate.save = mock_save
 
     with patch("scripts.cli.nexus_voice.edge_tts") as mock_etts:
@@ -117,7 +123,6 @@ def test_speak_text_synchronous_wrapper(tmp_path: Path):
         result_path = speak_text("Validacao do wrapper sincrono.", output_file=str(out_file), play=False)
         assert result_path.exists()
         assert result_path.stat().st_size > 0
-
 
 
 def test_play_audio_windows_dispatch(tmp_path: Path):

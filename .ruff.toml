@@ -20,6 +20,12 @@ extend-exclude = [
   ".cerebro",
   ".chroma_db",
   "core/vendor",
+  # O ruff 0.16 tambem formata blocos de codigo dentro de Markdown. Registro e
+  # documento imutavel sob o portao de registro (M.O. 13.F): reindentar um bloco
+  # citado adultera prova e o portao bloqueia o commit. Estes diretorios contem
+  # apenas prosa e prescricao, nenhum modulo executavel.
+  "reports",
+  ".github",
 ]
 
 [lint]

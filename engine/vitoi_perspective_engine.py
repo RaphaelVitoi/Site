@@ -23,6 +23,7 @@ type PlayerIndex = int
 # 1. NUCLEO DA ETAPA 1: EV_dyn(fold) & BYSTANDER DRIFT
 # ==============================================================================
 
+
 @dataclass(frozen=True, slots=True)
 class TableState:
     """Representacao imutavel do estado da mesa de torneio."""
@@ -93,7 +94,6 @@ class DynamicFoldEngine:
 
         return bystander_gain_total
 
-
     def evaluate_dynamic_ev_fold(self, pos_from_bb: int = 2) -> float:
         hero_stack = self._state.stacks[self._state.hero_index]
         friction = self.calculate_orbit_friction(pos_from_bb)
@@ -111,6 +111,7 @@ class DynamicFoldEngine:
 # ==============================================================================
 # 2. NUCLEO DA ETAPA 2: REALIZACAO (R) & PASSIVO MULTIWAY (L_multi)
 # ==============================================================================
+
 
 @dataclass(frozen=True, slots=True)
 class HandContext:
@@ -152,6 +153,7 @@ class PerspectiveActionEvaluator:
 # ==============================================================================
 # 3. NUCLEO DA ETAPA 3: UTILIDADE PROSPECTIVA & PREMIO DE RISCO DINAMICO
 # ==============================================================================
+
 
 @dataclass(frozen=True, slots=True)
 class RiskContext:
@@ -242,7 +244,6 @@ class VitoiPerspectiveEngine:
     SOTA: Motor Hibrido de Perspectiva Matematica (VITOI 3.2).
     Substitui a metrica estatica de Pot Odds e o FGS Limitado pela Antevisao de Fluxo.
     """
-
 
     @staticmethod
     def calculate_dynamic_ev_fold(

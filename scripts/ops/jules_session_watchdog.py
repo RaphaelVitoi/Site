@@ -3,6 +3,7 @@
 Captura o estado em tempo real das sessoes do Jules Cloud,
 registra transicoes de status em JSONL/Log e consolida relatorios SOTA.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -41,13 +42,15 @@ def parse_jules_sessions() -> list[dict[str, str]]:
     for line in lines[1:]:  # Pula o cabecalho
         parts = re.split(r"\s{2,}", line)
         if len(parts) >= 4:
-            sessions.append({
-                "session_id": parts[0],
-                "description": parts[1],
-                "repo": parts[2],
-                "last_active": parts[3] if len(parts) > 3 else "N/A",
-                "status": parts[4] if len(parts) > 4 else "Unknown",
-            })
+            sessions.append(
+                {
+                    "session_id": parts[0],
+                    "description": parts[1],
+                    "repo": parts[2],
+                    "last_active": parts[3] if len(parts) > 3 else "N/A",
+                    "status": parts[4] if len(parts) > 4 else "Unknown",
+                }
+            )
     return sessions
 
 
@@ -59,7 +62,9 @@ def record_snapshot() -> None:
     with LOG_FILE.open("a", encoding="utf-8") as f:
         f.write(f"[{now_iso}] Snapshot: {len(sessions)} sessoes rastreadas\n")
         for s in sessions:
-            f.write(f"  - ID: {s.get('session_id')} | Status: {s.get('status')} | Repo: {s.get('repo')} | Desc: {s.get('description')}\n")
+            f.write(
+                f"  - ID: {s.get('session_id')} | Status: {s.get('status')} | Repo: {s.get('repo')} | Desc: {s.get('description')}\n"
+            )
 
     # Gera relatorio em Markdown
     content = f"""# REGISTRO DE MONITORAMENTO: GOOGLE JULES CLOUD SESSIONS

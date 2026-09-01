@@ -235,7 +235,7 @@ def test_nexus_dashboard_once():
 
 
 def test_warnings_declarados_distingue_zero_de_ausente():
-    """"Declarou zero" e "nao declarou" NAO sao a mesma coisa.
+    """ "Declarou zero" e "nao declarou" NAO sao a mesma coisa.
 
     Confundir os dois foi o defeito: quatro resumos imprimiam " Total de
     Warnings: 0" fixo, inclusive o do QUALITY GATE, cuja fase cwv_gate.ps1

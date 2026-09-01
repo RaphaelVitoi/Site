@@ -40,7 +40,11 @@ def _diff_de_fonte(sub: Path) -> str:
     try:
         r = subprocess.run(
             ["git", "diff", "--", ".", *EXCLUSOES],
-            cwd=str(sub), capture_output=True, text=True, check=False, timeout=120,
+            cwd=str(sub),
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=120,
         )
     except (OSError, subprocess.SubprocessError):
         pytest.skip(f"git indisponivel para {sub.name}")

@@ -3,6 +3,7 @@ SOTA GOLD: Motor MCP Dinamico.
 Mapeia operacoes do .cerebro/settings.local.json para rotas ativas do Model Context Protocol.
 Implementa Antevisao de I/O: Bypass de interop WSL se executado nativamente no Linux.
 """
+
 # pylint: disable=broad-exception-caught, no-member
 from __future__ import annotations
 

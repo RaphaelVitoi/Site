@@ -172,7 +172,15 @@ def main() -> int:
         print(f"[ERRO] canonica ausente: {CANONICA}")
         return 1
 
-    agentes = sorted({d.name for base in (CANONICA, *ORIGENS) if base.exists() for d in base.iterdir() if d.is_dir() and not d.name.startswith(".")})
+    agentes = sorted(
+        {
+            d.name
+            for base in (CANONICA, *ORIGENS)
+            if base.exists()
+            for d in base.iterdir()
+            if d.is_dir() and not d.name.startswith(".")
+        }
+    )
 
     entrada_total = 0
     for base in (CANONICA, *ORIGENS):

@@ -147,7 +147,7 @@ class Rota:
     # Nao ha como detectar release sem consultar o fornecedor, entao o TTL e o
     # proxy honesto: passado o prazo, a rota vira SUSPEITA e exige reconsulta em
     # vez de continuar valendo em silencio.
-    ancorado_em: str = ""              # ISO YYYY-MM-DD da ultima verificacao
+    ancorado_em: str = ""  # ISO YYYY-MM-DD da ultima verificacao
     modelos_citados: tuple[str, ...] = ()  # de quem a justificativa depende
 
 

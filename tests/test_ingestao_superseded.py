@@ -115,6 +115,4 @@ def test_a_exclusao_funciona_com_base_path_relativo(rag, tmp_path, monkeypatch):
     assert any("viva" in str(f) for f in alvos), (
         "nenhum alvo foi descoberto -- a assercao abaixo passaria por vacuidade"
     )
-    assert not any("morta" in str(f) for f in alvos), (
-        "a exclusao voltou a depender da FORMA do caminho, nao do caminho"
-    )
+    assert not any("morta" in str(f) for f in alvos), "a exclusao voltou a depender da FORMA do caminho, nao do caminho"

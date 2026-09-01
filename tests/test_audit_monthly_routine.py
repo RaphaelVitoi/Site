@@ -13,6 +13,7 @@ O segundo e o mais perigoso dos dois: colisao de chave NAO alcanca ramo de
 erro. O arquivo existe, so nao e o que a tabela afirma. Nenhuma auditoria que
 le output pega isso  so a que compara cardinalidade.
 """
+
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name

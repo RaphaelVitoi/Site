@@ -113,8 +113,7 @@ def test_as_duas_entradas_tem_tipos_diferentes():
         f"rotear deixou de devolver str: {politica.return_annotation!r}. {PISTA}"
     )
     assert "list" in str(quente.return_annotation), (
-        f"_reorder_models_for_economy deixou de devolver lista: "
-        f"{quente.return_annotation!r}. {PISTA}"
+        f"_reorder_models_for_economy deixou de devolver lista: {quente.return_annotation!r}. {PISTA}"
     )
 
     primeiro_da_politica = next(iter(politica.parameters.values()))
@@ -176,8 +175,7 @@ def test_leitores_de_agent_model_map_batem_com_a_declaracao(declaracao):
     declarados = {e["caminho"] for e in declaracao["consumidores_de_AGENT_MODEL_MAP"]["leitores"]}
 
     assert medidos == declarados, (
-        f"leitores a mais: {sorted(medidos - declarados)}; "
-        f"leitores a menos: {sorted(declarados - medidos)}. {PISTA}"
+        f"leitores a mais: {sorted(medidos - declarados)}; leitores a menos: {sorted(declarados - medidos)}. {PISTA}"
     )
 
 
@@ -194,9 +192,7 @@ def test_o_mapa_tem_exatamente_uma_porta_de_producao(declaracao):
     assert portas[0]["caminho"] == "core/config.py", PISTA
 
     outros = {e["papel"] for e in leitores if e not in portas}
-    assert outros <= {"relatorio", "teste"}, (
-        f"leitor de papel inesperado: {sorted(outros)}. {PISTA}"
-    )
+    assert outros <= {"relatorio", "teste"}, f"leitor de papel inesperado: {sorted(outros)}. {PISTA}"
 
 
 def test_nao_existe_acesso_dinamico_a_configuracao():
@@ -245,8 +241,7 @@ def test_o_caminho_quente_segue_a_politica(declaracao):
     assert len(manifesto) == medido["agentes_no_manifesto"], PISTA
     assert len(cfg.AGENT_MODEL_MAP) == medido["agentes_em_AGENT_MODEL_MAP"], PISTA
     assert segue == medido["agentes_em_que_o_caminho_quente_SEGUE_a_politica"], (
-        f"seguem medido {segue}, declarado "
-        f"{medido['agentes_em_que_o_caminho_quente_SEGUE_a_politica']}. {PISTA}"
+        f"seguem medido {segue}, declarado {medido['agentes_em_que_o_caminho_quente_SEGUE_a_politica']}. {PISTA}"
     )
     assert diverge == medido["agentes_em_que_DIVERGEM"], (
         f"divergencia medida {diverge}, declarada {medido['agentes_em_que_DIVERGEM']}. {PISTA}"
@@ -269,14 +264,12 @@ def test_o_caminho_quente_deixou_de_colapsar_os_agentes(declaracao):
         faixa = rp.rota_de(nome).faixa.value
         faixas[faixa] = faixas.get(faixa, 0) + 1
     assert faixas == medido["faixa_por_agente"], (
-        f"distribuicao por faixa medida {faixas}, declarada "
-        f"{medido['faixa_por_agente']}. {PISTA}"
+        f"distribuicao por faixa medida {faixas}, declarada {medido['faixa_por_agente']}. {PISTA}"
     )
 
     zero = sum(q for f, q in faixas.items() if f in ("local", "gratuita"))
     assert zero == medido["custo_marginal_zero"], (
-        f"agentes em custo marginal zero: medido {zero}, declarado "
-        f"{medido['custo_marginal_zero']}. {PISTA}"
+        f"agentes em custo marginal zero: medido {zero}, declarado {medido['custo_marginal_zero']}. {PISTA}"
     )
 
 
@@ -309,8 +302,7 @@ def test_os_consumidores_declarados_usam_a_fonte_unica(declaracao):
         arquivo = RAIZ / entrada["caminho"]
         assert arquivo.exists(), f"{entrada['caminho']} sumiu. {PISTA}"
         assert "modelo_do_agente(" in arquivo.read_text(encoding="utf-8", errors="ignore"), (
-            f"{entrada['caminho']} esta declarado como consumidor da fonte unica "
-            f"e nao a chama. {PISTA}"
+            f"{entrada['caminho']} esta declarado como consumidor da fonte unica e nao a chama. {PISTA}"
         )
 
 
@@ -330,8 +322,7 @@ def test_ninguem_le_primary_model_direto_para_decidir_modelo():
             if chave in linha and ".get(" in linha:
                 achados[f"{rel}:{n}"] = linha.strip()
     assert not achados, (
-        f"leitor direto de primary_model fora da fonte unica: {achados}. "
-        f"Use core.config.modelo_do_agente. {PISTA}"
+        f"leitor direto de primary_model fora da fonte unica: {achados}. Use core.config.modelo_do_agente. {PISTA}"
     )
 
 
@@ -416,9 +407,7 @@ def test_a_politica_ainda_classifica_o_subagente(declaracao):
     from core.subagents_mesh import SUBAGENT_MODEL_MAP  # noqa: PLC0415
 
     tiers = {t.value for t in SUBAGENT_MODEL_MAP}
-    assert tiers <= set(rp.SUBAGENTES), (
-        f"tier sem classe declarada: {sorted(tiers - set(rp.SUBAGENTES))}. {PISTA}"
-    )
+    assert tiers <= set(rp.SUBAGENTES), f"tier sem classe declarada: {sorted(tiers - set(rp.SUBAGENTES))}. {PISTA}"
     assert rp.cobertura()["subagentes"] == declaracao["superficie_subagentes"]["tiers"], PISTA
 
 
@@ -427,8 +416,6 @@ def test_a_sobreposicao_de_nomes_resolve_como_agente(declaracao):
     mudado a precedencia, que sempre foi AGENTES primeiro."""
     medido = declaracao["superficie_subagentes"]
     ambos = sorted(set(rp.SUBAGENTES) & set(rp.AGENTES))
-    assert ambos == sorted(medido["nomes_que_sao_agente_E_tier"]), (
-        f"a sobreposicao medida e {ambos}. {PISTA}"
-    )
+    assert ambos == sorted(medido["nomes_que_sao_agente_E_tier"]), f"a sobreposicao medida e {ambos}. {PISTA}"
     for alvo in ambos:
         assert rp.rotear(alvo) == rp.rota_de(alvo).primario

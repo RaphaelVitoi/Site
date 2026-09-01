@@ -525,13 +525,7 @@ def test_nenhuma_rota_local_nova_estoura_a_vram_declarada():
 
     # Quem, na faixa LOCAL, pede mais VRAM do que ha.
     estouram = {
-        classe.value: sorted(
-            {
-                alias
-                for alias in (rota.primario, rota.fallback)
-                if tamanho.get(alias, 0) > teto_gib
-            }
-        )
+        classe.value: sorted({alias for alias in (rota.primario, rota.fallback) if tamanho.get(alias, 0) > teto_gib})
         for classe, rota in ROTAS.items()
         if rota.faixa is Faixa.LOCAL
     }
