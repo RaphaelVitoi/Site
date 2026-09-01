@@ -14,6 +14,7 @@ caminhos:
   - tests/test_pmev_controlled_experiments.py
 verificado:
   - divergencia do commit historico contra master e os contratos existentes foram inspecionados antes do port seletivo
+  - revisao posterior adicionou testes de regressao para entradas nao finitas, cardinalidade ICM, baseline H4, snapshots imutaveis e estrutura proporcional H9
 nao_verificado:
   - este plano nao constitui validacao empirica de PMev, integracao de runtime ou avaliacao por solver
 ---
@@ -44,7 +45,7 @@ nao_verificado:
 
 **Steps:**
 1. Implement `PMevTier` with the seven declared research tiers.
-2. Implement frozen `TournamentState(stacks, payouts)` with positive total stack mass, non-negative values, and a non-empty positive payout pool.
+2. Implement frozen `TournamentState(stacks, payouts)` with finite, non-negative values, positive total stack mass, a non-empty positive payout pool, and no more payouts than active players; normalize input sequences to immutable snapshots.
 3. Implement frozen `PMevConfiguration` and `recovers_icmev()`, returning true only for `PMev-0` with every extension disabled.
 4. Add tests for baseline recovery and invalid mass.
 
@@ -63,9 +64,9 @@ nao_verificado:
 1. Declare required state fields and the allowed intervention field set for each hypothesis.
 2. Validate that both arms contain the complete hypothesis-specific state.
 3. Require exactly one changed field. A change must be one allowed intervention, so H8 may change `payouts` **or** `utility_model`, never both in the same causal comparison.
-4. Require non-empty primary metric and falsification rule.
-5. Test an allowed H3 clock intervention, a confounded H3 stack intervention, incomplete H4 river state, and the H8 double-intervention rejection.
-6. Phrase the H4 falsification reference as ICMev/Malmuth-Harville, never as a pure-ChipEV MTT baseline.
+4. Require non-empty primary metric and falsification rule, and snapshot both arms recursively before validation so later caller mutation cannot alter accepted evidence.
+5. Test an allowed H3 clock intervention, a confounded H3 stack intervention, incomplete H4 river state, missing key versus `None`, snapshot immutability, and the H8 double-intervention rejection.
+6. Require the literal H4 equity baseline `ICMev/Malmuth-Harville` in both arms; never admit a pure-ChipEV MTT baseline.
 
 **Verification:**
 ```powershell
@@ -80,10 +81,10 @@ nao_verificado:
 
 **Steps:**
 1. Model a deterministic late entrant, net contribution, and post-entry payout vector.
-2. Fail closed unless post-entry payouts equal prior payout pool plus the net contribution.
+2. Fail closed unless post-entry payouts equal prior payout pool plus the net contribution, preserve the prior payout cardinality, and scale every pre-entry payout proportionally. A same-sum payout redistribution is a separate model intervention, not this benchmark baseline.
 3. Use the repository's existing exact Malmuth-Harville calculation for both states.
 4. Return incumbent deltas, entrant equity, entrant bonus, and a numeric conservation residual.
-5. Test a conservative small-field transition and rejection of a non-conservative one.
+5. Test a conservative small-field transition and rejection of non-conservative, non-finite, cardinality-changing, and same-sum redistributed transitions.
 
 **Verification:**
 ```powershell

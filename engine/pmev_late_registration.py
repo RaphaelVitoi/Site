@@ -8,6 +8,7 @@ identidade contabil que uma transicao conservativa precisa satisfazer.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isclose, isfinite
 
 from engine.icm_matrix import calculate_malmuth_harville_icm
 from engine.pmev_spec import TournamentState
@@ -17,9 +18,10 @@ from engine.pmev_spec import TournamentState
 class LateRegistrationScenario:
     """Transicao deterministica de entrada tardia para H9.
 
-    ``payouts_after`` deve adicionar exatamente ``net_contribution`` ao prize
-    pool anterior. Rake, overlay, bounties e alteracoes de payout exigem
-    operadores proprios e sao rejeitados neste benchmark-base.
+    ``payouts_after`` escala proporcionalmente a estrutura anterior, somando
+    exatamente ``net_contribution`` ao prize pool. Rake, overlay, bounties,
+    novos lugares pagos e alteracoes de estrutura exigem operadores proprios
+    e sao rejeitados neste benchmark-base.
     """
 
     before: TournamentState
@@ -28,17 +30,29 @@ class LateRegistrationScenario:
     payouts_after: tuple[float, ...]
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "payouts_after", tuple(self.payouts_after))
+        if not all(isfinite(value) for value in (self.entrant_stack, self.net_contribution, *self.payouts_after)):
+            raise ValueError("H9 exige valores financeiros finitos.")
         if self.entrant_stack <= 0:
             raise ValueError("O stack inicial do entrante deve ser positivo.")
         if self.net_contribution < 0:
             raise ValueError("A contribuicao liquida nao pode ser negativa.")
         if not self.payouts_after or any(payout < 0 for payout in self.payouts_after):
             raise ValueError("Payouts posteriores devem ser nao negativos e nao vazios.")
+        if len(self.payouts_after) != len(self.before.payouts):
+            raise ValueError("H9 exige a mesma quantidade de payouts do estado anterior.")
         expected_pool = sum(self.before.payouts) + self.net_contribution
-        if abs(sum(self.payouts_after) - expected_pool) > 1e-9:
+        if not isclose(sum(self.payouts_after), expected_pool, rel_tol=0.0, abs_tol=1e-9):
             raise ValueError(
                 "H9 exige transicao conservativa: payouts_after deve somar prize_pool_before + net_contribution."
             )
+        scale = expected_pool / sum(self.before.payouts)
+        expected_payouts = tuple(payout * scale for payout in self.before.payouts)
+        if any(
+            not isclose(actual, expected, rel_tol=1e-12, abs_tol=1e-9)
+            for actual, expected in zip(self.payouts_after, expected_payouts, strict=True)
+        ):
+            raise ValueError("H9 exige crescimento proporcional dos payouts sem alterar sua estrutura.")
 
 
 @dataclass(frozen=True)
