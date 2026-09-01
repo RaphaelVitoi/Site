@@ -22,7 +22,7 @@ function getNavLinkClass(isLightPage: boolean, isActive: boolean): string {
 	if (isLightPage) {
 		return isActive
 			? 'text-[#0D0C0A] drop-shadow-[0_0_12px_rgba(0,0,0,0.05)]'
-			: 'text-[#8A8880] hover:text-[#0D0C0A]';
+			: 'text-[#706D66] hover:text-[#0D0C0A]';
 	}
 	return isActive
 		? 'text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]'
@@ -223,7 +223,7 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
 				</div>
 				<span
 					className={`text-[0.55rem] font-black uppercase tracking-[0.4em] ${
-						isLightPage ? 'text-[#B09460]' : 'text-accent-indigo-light'
+				isLightPage ? 'text-[#765421]' : 'text-accent-indigo-light'
 					} mt-2 leading-none transition-all duration-500`}
 				>
 					{HEADER_STRINGS.tagline}
@@ -252,7 +252,7 @@ const HeaderDesktopNav: React.FC<{
 		: 'bg-bg-deep/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-2.5 flex flex-col gap-1 overflow-hidden relative';
 
 	return (
-		<nav className="hidden lg:flex items-center justify-center">
+		<nav aria-label="Navegação principal" className="hidden lg:flex items-center justify-center">
 			<ul className={menuPillClass}>
 				{NAV_ITEMS.map((item) => {
 					const isActive =
@@ -317,7 +317,7 @@ const HeaderDesktopNav: React.FC<{
 														<i
 															className={`fa-solid ${sub.icon} ${
 																isLightPage
-																	? 'text-[#8A8880] group-hover/sub:text-[#B09460] text-xs'
+																	? 'text-[#706D66] group-hover/sub:text-[#B09460] text-xs'
 																	: 'text-text-muted group-hover/sub:text-accent-indigo-light text-xs'
 															}`}
 														/>
@@ -325,7 +325,7 @@ const HeaderDesktopNav: React.FC<{
 													<span
 														className={`text-[0.65rem] font-bold uppercase tracking-widest transition-colors ${
 															isLightPage
-																? 'text-[#8A8880] group-hover/sub:text-[#0D0C0A]'
+																? 'text-[#706D66] group-hover/sub:text-[#0D0C0A]'
 																: 'text-text-muted group-hover/sub:text-white'
 														}`}
 													>
@@ -375,7 +375,7 @@ const HeaderMobileDrawer: React.FC<{
 							type="button"
 							className={`absolute top-6 right-6 w-10 h-10 rounded-xl flex items-center justify-center transition-all focus:outline-none ${
 								isLightPage
-									? 'bg-black/5 border border-black/10 text-[#8A8880] hover:text-[#0D0C0A] hover:bg-black/10'
+									? 'bg-black/5 border border-black/10 text-[#706D66] hover:text-[#0D0C0A] hover:bg-black/10'
 									: 'bg-white/5 border border-white/10 text-text-muted hover:text-white hover:bg-white/10'
 							}`}
 							onClick={onClose}
@@ -510,7 +510,7 @@ const HeaderMobileDrawer: React.FC<{
 								onClick={onClose}
 								className={`flex items-center gap-4 text-xs font-black uppercase tracking-widest transition-colors ${
 									isLightPage
-										? 'text-[#8A8880] hover:text-[#0D0C0A]'
+										? 'text-[#706D66] hover:text-[#0D0C0A]'
 										: 'text-text-muted hover:text-white'
 								}`}
 							>
@@ -603,7 +603,7 @@ export const Header: React.FC = () => {
 							type="button"
 							className={`w-11 h-11 rounded-xl flex items-center justify-center lg:hidden transition-all focus:outline-none ${
 								isLightPage
-									? 'bg-black/5 border border-black/10 text-[#8A8880] hover:text-[#0D0C0A] hover:bg-black/10'
+									? 'bg-black/5 border border-black/10 text-[#706D66] hover:text-[#0D0C0A] hover:bg-black/10'
 									: 'bg-white/5 border border-white/10 text-text-muted hover:text-white hover:bg-white/10'
 							}`}
 							onClick={() => setMobileOpen(true)}
