@@ -234,8 +234,8 @@ interface AdjustmentParams {
 function getShortStackPressureAdjustment(baseFreq: number): { adjustedFreq: number; justification: string } | null {
 	if (baseFreq > 0 && baseFreq < 0.9) {
 		return {
-			adjustedFreq: Math.max(0.0, baseFreq - 0.4),
-			justification: 'Contração pelo Teto do RP: Preservação de stack para payjump passivo iminente.',
+			adjustedFreq: baseFreq,
+			justification: 'Sinal de payjump/short stack: exige comparação de payouts, stacks e ranges. Sem nó de solver ou regra calibrada, a frequência de referência não é alterada.',
 		};
 	}
 	return null;
@@ -254,14 +254,14 @@ function getTimeToBlindAdjustment(
 
 	if (baseFreq === 0.0 && (handName.includes('s') || isPair)) {
 		return {
-			adjustedFreq: 0.65,
-			justification: 'Resgate por EV_fold Negativo: Ataque obrigatório antes da sangria da órbita.',
+			adjustedFreq: baseFreq,
+			justification: 'Sinal de urgência da órbita: é necessário um range de referência e um modelo temporal reproduzível antes de alterar uma frequência.',
 		};
 	}
 	if (baseFreq > 0.0 && baseFreq < 1.0) {
 		return {
-			adjustedFreq: Math.min(1.0, baseFreq + 0.35),
-			justification: 'Expansão de Agressão: Diluição de RP e maximização de Fold Equity.',
+			adjustedFreq: baseFreq,
+			justification: 'Sinal de erosão de stack: o painel preserva a frequência de referência até que cenário, ranges e modelo de FGS estejam calibrados.',
 		};
 	}
 	return null;
@@ -274,14 +274,14 @@ function getRiskAdvantageAdjustment(
 ): { adjustedFreq: number; justification: string } | null {
 	if (riskAdvantage > 3 && baseFreq > 0 && baseFreq < 1.0) {
 		return {
-			adjustedFreq: Math.min(1.0, baseFreq + 0.25),
-			justification: 'Alavancagem de Risk Advantage: Pressão sobre stacks médios com menor RP.',
+			adjustedFreq: baseFreq,
+			justification: 'Vantagem de Risco positiva é um sinal direcional; não produz, por si só, um deslocamento numérico de frequência.',
 		};
 	}
 	if (riskAdvantage < -3 && handType === 'OFFSUIT' && baseFreq > 0) {
 		return {
-			adjustedFreq: Math.max(0.0, baseFreq - 0.35),
-			justification: 'Mitigação de Passivo Estrutural (RIO): Evita colisão dominada contra stack maior.',
+			adjustedFreq: baseFreq,
+			justification: 'Desvantagem de Risco negativa pede revisão do spot, não redução automática de frequência sem ranges, pote e payout definidos.',
 		};
 	}
 	return null;
@@ -450,10 +450,6 @@ interface RangeViewerTabProps {
 	readonly calculatedEvFold: number;
 	readonly stats: {
 		readonly baseCombos: number;
-		readonly vitoiCombos: number;
-		readonly deltaCombos: number;
-		readonly expandedCount: number;
-		readonly contractedCount: number;
 	};
 	readonly viewMode: ViewMode;
 	readonly setViewMode: (mode: ViewMode) => void;
@@ -617,10 +613,6 @@ interface RangeKpiSummaryProps {
 	readonly calculatedEvFold: number;
 	readonly stats: {
 		readonly baseCombos: number;
-		readonly vitoiCombos: number;
-		readonly deltaCombos: number;
-		readonly expandedCount: number;
-		readonly contractedCount: number;
 	};
 }
 
@@ -628,41 +620,39 @@ function RangeKpiSummary({ calculatedEvFold, stats }: RangeKpiSummaryProps) {
 	return (
 		<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">EV do Fold no Spot</span>
+				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Sinal EV_fold do modelo</span>
 				<div className={`text-xl font-black mt-1 ${calculatedEvFold > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
 					{calculatedEvFold > 0 ? `+${calculatedEvFold.toFixed(3)} BB` : `${calculatedEvFold.toFixed(3)} BB`}
 				</div>
 				<p className="text-[10px] text-slate-500 mt-1">
-					{calculatedEvFold > 0 ? 'Fold positivo: Payjump passivo sem risco' : 'Piso de ChipEV / Sangria de antes'}
+					{calculatedEvFold > 0 ? 'Hipótese de payjump: requer payouts e nós reproduzíveis.' : 'Referência de erosão: depende de ante, posição e mesa declarados.'}
 				</p>
 			</div>
 
 			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Combos Poker Racional</span>
+				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Combos de referência</span>
 				<div className="text-xl font-black text-amber-400 mt-1">
-					{stats.vitoiCombos} <span className="text-xs text-slate-500 font-normal">/ {stats.baseCombos} GTO</span>
+					{stats.baseCombos} <span className="text-xs text-slate-500 font-normal">do baseline carregado</span>
 				</div>
 				<p className="text-[10px] text-slate-500 mt-1">
-					Delta: <strong className={stats.deltaCombos >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-						{stats.deltaCombos >= 0 ? `+${stats.deltaCombos}` : stats.deltaCombos} combos
-					</strong>
+					Recalibração quantitativa: <strong className="text-amber-400">aguarda nó/ranges</strong>
 				</p>
 			</div>
 
 			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mãos Resgatadas (Agressão)</span>
+				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Expansões calibradas</span>
 				<div className="text-xl font-black text-emerald-400 mt-1">
-					+{stats.expandedCount}
+					—
 				</div>
-				<p className="text-[10px] text-slate-500 mt-1">Ataque contra over-fold e sangria</p>
+				<p className="text-[10px] text-slate-500 mt-1">Não derivadas de slider sem nó verificável.</p>
 			</div>
 
 			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Teto do Risk Premium (Folds)</span>
+				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Contrações calibradas</span>
 				<div className="text-xl font-black text-rose-400 mt-1">
-					-{stats.contractedCount}
+					—
 				</div>
-				<p className="text-[10px] text-slate-500 mt-1">Proteção contra passivo de RIO</p>
+				<p className="text-[10px] text-slate-500 mt-1">Não derivadas de RP/RIO isolados.</p>
 			</div>
 		</div>
 	);
@@ -732,14 +722,14 @@ function SingleMatrixWithInspector({
 							</div>
 
 							<div className="flex justify-between items-center text-sm">
-								<span className="text-slate-400 font-semibold">Frequência Poker Racional:</span>
+								<span className="text-slate-400 font-semibold">Frequência de referência:</span>
 								<span className="text-amber-400 font-extrabold">{(selectedHand.vitoiFreq * 100).toFixed(0)}%</span>
 							</div>
 
 							<div className="flex justify-between items-center text-sm">
-								<span className="text-slate-400 font-semibold">Delta Diferencial (Δ):</span>
+								<span className="text-slate-400 font-semibold">Delta calculado:</span>
 								<span className={`font-black ${getDeltaColor(selectedHand.delta)}`}>
-									{selectedHand.delta > 0 ? `+${(selectedHand.delta * 100).toFixed(0)}%` : `${(selectedHand.delta * 100).toFixed(0)}%`}
+									{selectedHand.delta === 0 ? '— (aguarda nó)' : selectedHand.delta > 0 ? `+${(selectedHand.delta * 100).toFixed(0)}%` : `${(selectedHand.delta * 100).toFixed(0)}%`}
 								</span>
 							</div>
 
@@ -762,7 +752,7 @@ function SingleMatrixWithInspector({
 				<div className="pt-4 border-t border-slate-800 text-[11px] space-y-1.5 text-slate-400">
 					<div className="flex items-center gap-2">
 						<span className="w-3 h-3 rounded bg-emerald-500 inline-block"></span>
-						<span><strong>Verde:</strong> Expande ação pelo EV_fold e Fold Equity.</span>
+						<span><strong>Verde:</strong> reservado para expansão comprovada por nó importado.</span>
 					</div>
 					<div className="flex items-center gap-2">
 						<span className="w-3 h-3 rounded bg-slate-700 inline-block"></span>
@@ -770,7 +760,7 @@ function SingleMatrixWithInspector({
 					</div>
 					<div className="flex items-center gap-2">
 						<span className="w-3 h-3 rounded bg-rose-600 inline-block"></span>
-						<span><strong>Vermelho:</strong> Contrai ação pelo Teto do Risk Premium / RIO.</span>
+						<span><strong>Vermelho:</strong> reservado para contração comprovada por nó importado.</span>
 					</div>
 				</div>
 			</div>
@@ -782,7 +772,6 @@ interface DualGridComparisonProps {
 	readonly gridCells: HandCellInfo[];
 	readonly stats: {
 		readonly baseCombos: number;
-		readonly vitoiCombos: number;
 	};
 }
 
@@ -808,8 +797,8 @@ function DualGridComparison({ gridCells, stats }: DualGridComparisonProps) {
 
 			<div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
 				<div className="flex justify-between items-center mb-3">
-					<h4 className="text-xs font-black uppercase text-amber-400 tracking-wider">2. Poker Racional (Vitoi Framework)</h4>
-					<span className="text-xs text-amber-400 font-bold">{stats.vitoiCombos} Combos</span>
+					<h4 className="text-xs font-black uppercase text-amber-400 tracking-wider">2. Campo PMev (calibração pendente)</h4>
+					<span className="text-xs text-amber-400 font-bold">sem delta automático</span>
 				</div>
 				<div className="grid grid-cols-13 gap-1 aspect-square">
 					{gridCells.map((cell) => (
@@ -888,7 +877,7 @@ function RangeViewerTab({
 								: 'bg-slate-900 text-slate-400 hover:text-white'
 						}`}
 					>
-						Diferencial (Deltas Δ)
+						Diferencial (aguarda nó)
 					</button>
 
 					<button
@@ -900,7 +889,7 @@ function RangeViewerTab({
 								: 'bg-slate-900 text-slate-400 hover:text-white'
 						}`}
 					>
-						Poker Racional (Ajustado)
+						Campo PMev (referência)
 					</button>
 
 					<button
@@ -1218,24 +1207,14 @@ export function PmevRangeViewer() {
 
 	const stats = useMemo(() => {
 		let totalBase = 0;
-		let totalVitoi = 0;
-		let expandedCount = 0;
-		let contractedCount = 0;
 
 		gridCells.forEach((c) => {
 			const weight = getHandWeight(c.type);
 			totalBase += c.baselineFreq * weight;
-			totalVitoi += c.vitoiFreq * weight;
-			if (c.action === 'EXPAND') expandedCount++;
-			if (c.action === 'CONTRACT') contractedCount++;
 		});
 
 		return {
 			baseCombos: Math.round(totalBase),
-			vitoiCombos: Math.round(totalVitoi),
-			deltaCombos: Math.round(totalVitoi - totalBase),
-			expandedCount,
-			contractedCount,
 		};
 	}, [gridCells]);
 

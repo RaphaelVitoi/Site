@@ -79,7 +79,7 @@ export interface IcmDistortionResult {
     fold: FreqResult;
     raise: FreqResult;
   };
-  /** Risk Advantage: RP_ip - RP_oop. Positivo = IP sob maior pressao ICM */
+  /** Delta bruto RP_IP - RP_OOP; nao e a Vantagem de Risco direcional. */
   deltaRp: number;
   /** Expoente b da curva concava — transparencia do modelo */
   bExponent: number;
@@ -173,4 +173,3 @@ export interface QuantumMetrics {
   isActionable: boolean;
   bayesianWinProb?: number;
 }
-

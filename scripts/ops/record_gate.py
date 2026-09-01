@@ -397,8 +397,15 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
     # Ancora e o campo `caminhos:`, nunca a prosa. Inferir da prosa travaria o
     # repositorio: os handoffs citam nexus.py, e todo commit em nexus.py
     # exigiria superseder o handoff.
+    #
+    # Uma auditoria central pode declarar `revisoes_de_ancora` para reconciliar
+    # diversos registros historicos sem reescreve-los. Nao e uma dispensa: cada
+    # item precisa apontar o id existente, cobrir somente caminhos que aquele
+    # registro declarou e explicar o parecer. A cobertura continua limitada aos
+    # caminhos efetivamente tocados neste commit.
     tocados = set(em_stage)
     supersedidos_em_stage: set[str] = set()
+    revisoes_candidatas: list[tuple[str, str, set[str], str]] = []
     for rel in registros_em_stage:
         texto = texto_como_vai_ao_commit(rel)
         if texto:
@@ -409,7 +416,34 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
                     supersedidos_em_stage.update(str(s) for s in sup)
                 elif isinstance(sup, str) and sup.lower() not in {"null", "none"}:
                     supersedidos_em_stage.add(sup)
+            if not fm_stg or not fm_stg.get("revisoes_de_ancora"):
+                continue
+            revisoes = fm_stg["revisoes_de_ancora"]
+            if not isinstance(revisoes, list):
+                erros.append(f"{rel}: revisoes_de_ancora deve ser uma lista de mapas.")
+                continue
+            for indice, revisao in enumerate(revisoes, start=1):
+                if not isinstance(revisao, dict):
+                    erros.append(f"{rel}: revisoes_de_ancora[{indice}] deve ser um mapa.")
+                    continue
+                registro = revisao.get("registro")
+                caminhos = revisao.get("caminhos")
+                parecer = revisao.get("parecer")
+                if not isinstance(registro, str) or not registro.strip():
+                    erros.append(f"{rel}: revisoes_de_ancora[{indice}].registro deve ser um id nao vazio.")
+                    continue
+                if not isinstance(caminhos, list) or not caminhos or any(
+                    not isinstance(caminho, str) or not caminho.strip() for caminho in caminhos
+                ):
+                    erros.append(f"{rel}: revisoes_de_ancora[{indice}].caminhos deve ser uma lista nao vazia de caminhos.")
+                    continue
+                if not isinstance(parecer, str) or not parecer.strip():
+                    erros.append(f"{rel}: revisoes_de_ancora[{indice}].parecer deve explicar a revisao.")
+                    continue
+                revisoes_candidatas.append((rel, registro.strip(), set(caminhos), parecer.strip()))
 
+    registros_por_id: dict[str, tuple[str, dict]] = {}
+    registros_lidos: list[tuple[str, dict]] = []
     for rel in _git("ls-files", "docs/*.md", "reports/*.md").splitlines():
         if not rel.strip():
             continue
@@ -419,6 +453,31 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
         fm, _ = ler_frontmatter_de_texto(texto)
         if not fm:
             continue
+        registros_lidos.append((rel, fm))
+        doc_id = str(fm.get("id") or "")
+        if doc_id:
+            registros_por_id[doc_id] = (rel, fm)
+
+    revisoes_aceitas: dict[str, set[str]] = {}
+    for origem, registro_id, caminhos_revisados, _parecer in revisoes_candidatas:
+        alvo = registros_por_id.get(registro_id)
+        if alvo is None:
+            erros.append(f"{origem}: revisoes_de_ancora declara registro inexistente: {registro_id}.")
+            continue
+        alvo_rel, alvo_fm = alvo
+        caminhos_declarados = alvo_fm.get("caminhos") or []
+        if isinstance(caminhos_declarados, str):
+            caminhos_declarados = [caminhos_declarados]
+        nao_declarados = sorted(caminhos_revisados - set(caminhos_declarados))
+        if nao_declarados:
+            erros.append(
+                f"{origem}: revisoes_de_ancora para {registro_id} cita caminho nao declarado em "
+                f"{alvo_rel}: {nao_declarados}."
+            )
+            continue
+        revisoes_aceitas.setdefault(registro_id, set()).update(caminhos_revisados)
+
+    for rel, fm in registros_lidos:
         if fm.get("supersede") and str(fm.get("supersede")).lower() not in {"null", "none"}:
             continue
         doc_id = str(fm.get("id") or "")
@@ -429,9 +488,13 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
             declarados = [declarados]
         atingidos = sorted(set(declarados) & tocados)
         if atingidos and rel not in tocados:
+            pendentes = sorted(set(atingidos) - revisoes_aceitas.get(doc_id, set()))
+            if not pendentes:
+                continue
             erros.append(
-                f"{rel} declara ancora em {atingidos} e esses caminhos mudaram neste commit, "
-                "mas o registro nao foi revisado. Atualize-o ou declare `supersede` no mesmo commit."
+                f"{rel} declara ancora em {pendentes} e esses caminhos mudaram neste commit, "
+                "mas o registro nao foi revisado. Atualize-o, declare `supersede` ou registre "
+                "revisoes_de_ancora valida no mesmo commit."
             )
 
     # --- G6. referencia morta em documento que PRESCREVE ----------------------

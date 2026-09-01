@@ -255,6 +255,45 @@ def test_o_portao_cobra_ancora_declarada(tmp_path, monkeypatch):
     assert not any("ANCORADO.md" in e for e in erros), f"registro revisado junto foi acusado assim mesmo: {erros}"
 
 
+def test_reconciliacao_central_de_ancora_exige_registro_caminho_e_parecer(tmp_path, monkeypatch):
+    """Um auditor central evita reescrita historica sem criar dispensa generica."""
+    (tmp_path / "reports").mkdir()
+    ancorado = tmp_path / "reports" / "ANCORADO.md"
+    ancorado.write_text(
+        "---\nid: ancorado\ntipo: relatorio\nescopo: Site\nautor: codex@gpt-5\n"
+        "criado_em: 2026-08-28\ncaminhos:\n  - engine/alvo.py\n"
+        "verificado:\n  - estado anterior\nnao_verificado:\n  - estado posterior\n---\n\ncorpo\n",
+        encoding="utf-8",
+    )
+    revisao = tmp_path / "reports" / "REVISAO.md"
+    revisao.write_text(
+        "---\nid: revisao-central\ntipo: auditoria\nescopo: Site\nautor: codex@gpt-5\n"
+        "criado_em: 2026-09-01\nverificado:\n  - ancora reavaliada\n"
+        "nao_verificado:\n  - nenhum estado adicional\nrevisoes_de_ancora:\n"
+        "  - registro: ancorado\n    caminhos:\n      - engine/alvo.py\n"
+        "    parecer: A evidencia historica foi preservada; a implementacao atual foi reavaliada.\n"
+        "---\n\ncorpo\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(
+        record_gate,
+        "arquivos_em_stage",
+        lambda: ["engine/alvo.py", "reports/REVISAO.md"],
+    )
+    monkeypatch.setattr(record_gate, "_git", lambda *a: "reports/ANCORADO.md\n" if a[:1] == ("ls-files",) else "")
+
+    erros, _ = record_gate.verificar()
+    assert not any("ANCORADO.md" in e for e in erros), erros
+
+    revisao.write_text(
+        revisao.read_text(encoding="utf-8").replace("engine/alvo.py\n    parecer", "engine/outro.py\n    parecer"),
+        encoding="utf-8",
+    )
+    erros, _ = record_gate.verificar()
+    assert any("ANCORADO.md" in e and "engine/alvo.py" in e for e in erros), erros
+
+
 def test_o_portao_detecta_ampliacao_de_origem():
     """Padroes montados em tempo de execucao: embutir o literal no teste faria
     este arquivo disparar o proprio detector.

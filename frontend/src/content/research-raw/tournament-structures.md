@@ -1,57 +1,35 @@
-# 📊 Classificação de Estruturas de Prêmios (Framework VITOI)
+# Estruturas de prêmio — templates operacionais PMev
 
-## O Princípio do Denominador Correto
+> **Fronteira:** taxonomia didática interna. Os limiares abaixo são pontos de
+> partida de curadoria; não descrevem uma classificação universal de MTT.
 
-O percentual do 1º lugar deve ser calculado sobre o **Prize Pool Total** do torneio, NÃO sobre a soma dos prêmios ITM.
+## Princípio do denominador correto
 
-$$ \%_{1st} = \frac{Prêmio_{1st}}{TOTAL\_POOL} $$
+O peso do primeiro lugar é calculado sobre o **prize pool total**:
 
----
+`%_1st = premio_1st / prize_pool_total`
 
-## Os 5 Arquétipos SOTA
+Esse percentual é um sinal inicial. A classificação exige também o vetor de
+payouts, número de premiados, inclinação dos payjumps e estágio do torneio.
 
-### 1. TOP-HEAVY (▲)
+## Templates de trabalho
 
-- **Regra:** 1º lugar ≥ 25% do pool total.
-- **Dinâmica:** Laddering pouco valioso. O foco é a vitória absoluta.
-- **Impacto:** BF (Bubble Factor) elevado e pressão ICM severa.
+| Template | Sinal inicial de 1º lugar | Leitura requerida |
+| :-- | :-- | :-- |
+| Top-heavy | `≥ 25%` | confirmar se os primeiros saltos concentram valor e se o restante da curva sustenta a leitura. |
+| Híbrida | `18–24%` | avaliar a curva inteira; o percentual do 1º isolado não resolve a classe. |
+| Flat | `≤ 18%` | verificar distribuição efetiva de posições e ITM; não concluir aproximação a ChipEV por um único limiar. |
+| PKO / Mystery | fora do escopo v1 | requer modelagem separada de bounty e regras da sala. |
+| Satélite | fora do escopo v1 | requer utilidade terminal de ticket e modelo próprio. |
 
-### 2. FLAT (▬)
+## Referência interna da Aula 1.2
 
-- **Regra:** 1º lugar ≤ 18% do pool total.
-- **Dinâmica:** Laddering extremamente relevante. Subir uma posição tem valor real tangível.
-- **Impacto:** Jogo se aproxima de ChipEV (distorção mínima).
+- Field declarado: 126 entradas.
+- Prize pool declarado: US$ 1.260.
+- Primeiro prêmio: US$ 237,34 (18,8% do pool total).
+- Vetor da FT: deve permanecer anexado ao cenário que o usa.
 
-### 3. HÍBRIDA (◆)
-
-- **Regra:** 1º lugar entre 18% e 24%.
-- **Método:** Análise por Exclusão. Avaliar a inclinação da curva de payjumps.
-
-### 4. PKO (💥)
-
-- **Classificação:** Top-heavyssimo estático.
-- **Dinâmica:** A compensação vem pelo Bounty acumulado (ICM dinâmico).
-
-### 5. SATÉLITE (🎫)
-
-- **Classificação:** ICM Binário e Terminal.
-- **Dinâmica:** Sobrevivência pura. Acumular fichas além do necessário para o ticket tem EV zero.
-
----
-
-## Âncora Científica (Aula 1.2)
-
-Dados reais do torneio de calibração do motor SOTA v5.2:
-
-- **Total Players:** 126
-- **Total Pool:** $1260
-- **1st Prize:** $237.34 (18.8%)
-- **Status:** FLAT (no limiar da Híbrida)
-
-| Hero (Def) | BF vs BTN | RP vs BTN |
-| :--- | :--- | :--- |
-| **BB** | 1.15x | 12.9% |
-| **BTN** | 1.27x | 21.4% |
-
----
-*Fonte: Documento de Governança de Estruturas, 2026.*
+O valor de 18,8% é uma referência no limiar operacional entre flat e híbrida;
+ele não certifica a estrutura sem o vetor integral e a fonte do torneio. BF/RP
+devem ser recalculados por confronto e não copiados como propriedade estática
+da categoria de payout.

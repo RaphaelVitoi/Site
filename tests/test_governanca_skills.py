@@ -59,6 +59,7 @@ import pytest
 RAIZ = Path(__file__).resolve().parent.parent
 MANIFESTO = RAIZ / "data" / "agents_manifest.json"
 REGISTRO = RAIZ / "data" / "skills_registry.json"
+PONTE_ANTIGRAVITY = RAIZ / ".agents" / "skills.json"
 
 PISTA = (
     "Declare a skill em data/skills_registry.json -> externas (se ela vive fora "
@@ -73,6 +74,25 @@ def _manifesto() -> dict:
 
 def _registro() -> dict:
     return json.loads(REGISTRO.read_text(encoding="utf-8"))
+
+
+def test_ponte_antigravity_descobre_a_fonte_versionada_sem_copia():
+    """A configuracao de descoberta deve apontar para a unica raiz local.
+
+    A ponte torna a suite versionada descobrivel pelo Antigravity sem copiar
+    manifests para uma segunda arvore global, que inevitavelmente divergiria.
+    """
+    assert PONTE_ANTIGRAVITY.is_file(), ".agents/skills.json ausente; o Antigravity nao tem ponte versionada para a suite local"
+    ponte = json.loads(PONTE_ANTIGRAVITY.read_text(encoding="utf-8"))
+    assert ponte == {
+        "entries": [{
+            "path": ".agents/skills",
+            "include_only": ["^(pmev-game-theory-engine|sota-quality-gate|sota-triad-mesh)$"],
+        }]
+    }, (
+        ".agents/skills.json deve conter somente a ponte relativa e o allowlist da suite canonica; "
+        "nao adicione copias, caminhos absolutos ou skills de plugins vendorizados"
+    )
 
 
 def _externas() -> set[str]:

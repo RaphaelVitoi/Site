@@ -223,9 +223,20 @@ export function formatEvFold(evFold: number) {
 export function formatDeltaRp(delta: number) {
 	const isPositive = delta >= 0;
 	return {
-		text: `${isPositive ? '+' : ''}${delta.toFixed(1)}%`,
+		text: `${isPositive ? '+' : ''}${delta.toFixed(1)} p.p.`,
 		colorClass: delta > 0 ? 'text-accent-amber' : 'text-text-muted',
 	};
+}
+
+/**
+ * Diferença direcional de RP dentro de um confronto.
+ *
+ * ΔRP(A→D) = RP_defensor − RP_agressor. Valor positivo significa que o
+ * agressor possui o menor RP e, portanto, a Vantagem de Risco naquele spot.
+ * O valor é um sinal contextual, não uma frequência ou sizing automático.
+ */
+export function calculateRiskAdvantageDelta(aggressorRp: number, defenderRp: number): number {
+	return defenderRp - aggressorRp;
 }
 
 export function formatPm(pm: number) {

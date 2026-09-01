@@ -16,7 +16,7 @@ const content = `
 # Masterclass 1.2: Entendendo o ICM e suas Heurísticas
 ### Aplicações de Risk Premium no Pós-Flop
 
-Nesta aula, realizamos um comparativo exegético entre o modelo linear (**ChipEV - GTO Wizard**) e o modelo utilitário (**ICMev - HRC Pós-Flop**) em uma Mesa Final de 126 entradas.
+Nesta aula, usamos um cenário didático de mesa final para separar a referência linear de ChipEV das camadas ICM/ICMev. Frequências pós-flop só podem ser tratadas como output externo quando vierem acompanhadas de solver, versão, ranges e nó reproduzível.
 
 ---
 
@@ -25,17 +25,17 @@ Nesta aula, realizamos um comparativo exegético entre o modelo linear (**ChipEV
 Analisamos um spot clássico de **BTN vs BB**.
 *   **BU (38bb):** Risk Premium de 21.4%
 *   **BB (53bb):** Risk Premium de 12.9%
-*   **Risk Advantage:** +8.5% para o BTN.
+*   **ΔRP(BTN→BB):** 12.9% − 21.4% = **-8.5 p.p.**
 
-O BTN possui a "autorização matemática" para ser o agressor dominante, pois sua sobrevivência está menos ameaçada em termos relativos de valuation de stack do que a do BB, apesar de ter menos fichas nominais.
+O BB possui o menor RP e, portanto, a Vantagem de Risco nesse confronto. O sinal identifica uma assimetria a investigar; não concede ao BB ou ao BTN uma frequência automática de agressão. Payouts, pote, posição, stacks efetivos e ranges determinam a linha concreta.
 
 ---
 
 ## 2. A Mutação do Flop (C-bet vs Check)
 
-No ChipEV, o agressor mantém o "piloto automático" de agressão. Sob ICM:
-1.  **Aumento substancial de Checks:** A preservação de valuation desencoraja inflar o pote.
-2.  **Sizings de Controle:** Apostas de 20% a 25% dominam a árvore.
+No referencial linear, o range de agressão vem do nó e dos ranges definidos. Sob ICM/ICMev, a comparação deve testar como o risco de eliminação e a assimetria de RP alteram esse nó:
+1.  **Checks adicionais:** podem aparecer quando a preservação de valuation torna a expansão de pote menos atraente.
+2.  **Sizings de controle:** são hipóteses de exploração didática; 20% a 25% não são um padrão universal.
 
 ![Comparativo de Linhas de C-bet](/images/aulas/entendendo-o-icm-e-suas-heuristicas/image1.png)
 
@@ -43,25 +43,25 @@ No ChipEV, o agressor mantém o "piloto automático" de agressão. Sob ICM:
 
 ## 3. O Colapso do Bluffcatcher
 
-Quando o pote atinge o River, o **Pot Entrapment** (Aprisionamento) força o defensor a um dilema brutal. O EV do Fold não é mais zero; é o total investido. 
+Quando o pote atinge o River, o **Pot Entrapment** (Aprisionamento) torna o custo de abandonar a linha uma variável relevante. Investimento passado não torna um call correto por si só: o ponto deve ser reavaliado com preço, equidade, ranges, ICM e ação futura inexistente no River.
 
 ![Matriz de Defesa River](/images/aulas/entendendo-o-icm-e-suas-heuristicas/image7.png)
 
-*Note na imagem acima como o range de call do BB "derrete" nas extremidades. Mãos marginais que seriam call por pot odds puras tornam-se folds obrigatórios pela Perspectiva de sobrevivência.*
+*A imagem é material didático de cenário. Mãos marginais podem migrar de call para fold quando os parâmetros ICM alteram o limiar de equidade; a frequência só é verificável com o nó, as ranges e o estado de payouts correspondentes.*
 
 ---
 
 ## 4. O Fenômeno do Bunching Effect
 
-O HRC Pós-Flop introduz uma variável que o GTO Wizard ignora: o impacto das cartas descartadas pelos outros 7 jogadores da mesa. Isso altera a densidade de blockers no board, tornando a leitura de range bayesiana muito mais precisa.
+Em árvores multiway, cartas bloqueadas, ranges remanescentes e ações de jogadores fora do pote podem alterar a densidade de blockers. A disponibilidade e o tratamento dessa informação dependem da ferramenta e da configuração do nó; o material não presume equivalência nem omissão entre solvers sem export verificável.
 
 ---
 
 ## 5. Conclusões Práticas
 
-*   **Sizings Pequenos:** São a ferramenta de mitigação de variância.
-*   **Agressão Seletiva:** O teto do RP proíbe overbluffs sem blockers de alta fidelidade.
-*   **Check-Back:** AA e KK devem ser checkados com mais frequência para controlar o SPR e evitar o "Pacto Silencioso" sendo quebrado prematuramente.
+*   **Sizings Pequenos:** hipótese a comparar contra o nó de referência, não prescrição universal.
+*   **Agressão Seletiva:** RP, blockers e range adversário delimitam a investigação; nenhum componente isolado “proíbe” uma linha.
+*   **Check-Back:** mãos fortes podem mudar de frequência conforme SPR, ICM e ranges. A decisão exige contexto de spot e não decorre apenas do rótulo da mão.
 `;
 
 export default function MasterclassLessonPage() {

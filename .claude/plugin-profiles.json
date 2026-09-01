@@ -1,17 +1,15 @@
 {
   "schemaVersion": 1,
-  "maximumAdditionalProfiles": 1,
+  "maximumAdditionalProfiles": 6,
   "corePluginIds": [
     "claude-security@claude-plugins-official",
     "modern-web-guidance@claude-plugins-official",
     "superpowers@claude-plugins-official",
-    "42crunch-api-security-testing@claude-plugins-official",
-    "vercel@claude-plugins-official",
-    "plugin-dev@claude-plugins-official",
     "code-review@claude-plugins-official",
     "playwright@claude-plugins-official",
     "typescript-lsp@claude-plugins-official",
-    "frontend-design@claude-plugins-official"
+    "frontend-design@claude-plugins-official",
+    "plugin-dev@claude-plugins-official"
   ],
   "profiles": [
     {
@@ -86,6 +84,58 @@
       ],
       "requirements": {
         "commands": ["node"],
+        "environment": [],
+        "checks": []
+      }
+    },
+    {
+      "id": "design",
+      "displayName": "Design visual e UX opcional",
+      "activation": "on-demand",
+      "pluginIds": [
+        "frontend-design@claude-plugins-official"
+      ],
+      "requirements": {
+        "commands": [],
+        "environment": [],
+        "checks": []
+      }
+    },
+    {
+      "id": "api-security",
+      "displayName": "Segurança de API opcional",
+      "activation": "on-demand",
+      "pluginIds": [
+        "42crunch-api-security-testing@claude-plugins-official"
+      ],
+      "requirements": {
+        "commands": [],
+        "environment": [],
+        "checks": []
+      }
+    },
+    {
+      "id": "plugin-engineering",
+      "displayName": "Engenharia de plugins opcional",
+      "activation": "on-demand",
+      "pluginIds": [
+        "plugin-dev@claude-plugins-official"
+      ],
+      "requirements": {
+        "commands": [],
+        "environment": [],
+        "checks": []
+      }
+    },
+    {
+      "id": "deployment",
+      "displayName": "Vercel e plataforma opcional",
+      "activation": "on-demand",
+      "pluginIds": [
+        "vercel@claude-plugins-official"
+      ],
+      "requirements": {
+        "commands": [],
         "environment": [],
         "checks": []
       }

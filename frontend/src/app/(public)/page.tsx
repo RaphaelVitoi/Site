@@ -107,7 +107,7 @@ export default function Home() {
         </div>
 
         {/* Eyebrow */}
-        <div className="mb-12 flex items-center gap-5 opacity-50">
+        <div className="mb-12 flex items-center gap-5 opacity-75">
           <div className="h-px w-8.5 bg-[#1C1B1A]" />
           <span className="font-mono text-[0.6rem] tracking-[0.55em] text-[#1C1B1A] uppercase">
             Poker Racional · Risk Premium Edition
@@ -150,7 +150,7 @@ export default function Home() {
         </p>
 
         {/* Tertiary line */}
-        <p className="mb-14 font-mono text-[0.62rem] tracking-[0.45em] text-[#888680] uppercase">
+        <p className="mb-14 font-mono text-[0.62rem] tracking-[0.45em] text-[#625f5a] uppercase">
           ICM Pós-Flop · Downward Drift · Risk Premium
         </p>
 
@@ -170,7 +170,7 @@ export default function Home() {
           </Link>
           <Link
             href="/biblioteca"
-            className="flex items-center gap-2.5 rounded-md border border-[#EDE8E1] bg-transparent px-8.5 py-3.75 font-mono text-[0.68rem] tracking-[0.28em] text-[#888680] uppercase transition-all duration-300 hover:border-[#DED9D2] hover:text-[#262423]"
+            className="flex items-center gap-2.5 rounded-md border border-[#EDE8E1] bg-transparent px-8.5 py-3.75 font-mono text-[0.68rem] tracking-[0.28em] text-[#625f5a] uppercase transition-all duration-300 hover:border-[#DED9D2] hover:text-[#262423]"
           >
             <i className="fa-solid fa-book-open" /> Biblioteca
           </Link>
@@ -278,11 +278,23 @@ export default function Home() {
                 muted
                 loop
                 playsInline
+                aria-describedby="video-raphaelvitoi-description"
                 className={`block aspect-video w-full object-cover transition-opacity duration-[1.2s] ${videoReady ? 'opacity-100' : 'opacity-0'}`}
                 onCanPlay={() => setVideoReady(true)}
               >
+                <track
+                  kind="captions"
+                  src="/captions/raphaelvitoi.pt-BR.vtt"
+                  srcLang="pt-BR"
+                  label="Português"
+                  default
+                />
                 Seu navegador não suporta a tag de vídeo.
               </video>
+              <p id="video-raphaelvitoi-description" className="sr-only">
+                Vídeo visual de apresentação do Poker Racional. O áudio permanece desativado nesta página; o conteúdo
+                técnico está disponível em texto nas seções adjacentes.
+              </p>
             </div>
           </div>
         </div>
@@ -362,11 +374,11 @@ export default function Home() {
                   className={`flex items-center justify-between rounded border px-5 py-4 text-left font-mono text-[0.66rem] tracking-[0.12em] transition-all duration-300 ${
                     activeModule === idx
                       ? 'border-[#0D0C0A] bg-[#0D0C0A] text-[#F5F3EE]'
-                      : 'border-[#DED9D2] bg-transparent text-[#8A8880] hover:border-[#0D0C0A] hover:text-[#0D0C0A]'
+                      : 'border-[#DED9D2] bg-transparent text-[#5d5a55] hover:border-[#0D0C0A] hover:text-[#0D0C0A]'
                   }`}
                 >
                   <span className="font-bold">MÓDULO 0{m.num}</span>
-                  <span className="max-w-30 text-right text-[0.6rem] leading-tight opacity-80">{m.title}</span>
+                  <span className="max-w-30 text-right text-[0.6rem] leading-tight">{m.title}</span>
                 </button>
               ))}
             </div>
@@ -379,7 +391,7 @@ export default function Home() {
                 return (
                   <div className="space-y-8">
                     <div>
-                      <p className="mb-3.5 font-mono text-[0.6rem] font-bold tracking-[0.35em] text-[#B09460] uppercase">
+                      <p className="mb-3.5 font-mono text-[0.6rem] font-bold tracking-[0.35em] text-[#765421] uppercase">
                         Módulo 0{currentModule.num} · {currentModule.desc}
                       </p>
                       <h3 className="font-display text-[1.8rem] leading-[1.2] tracking-tight text-[#0D0C0A]">
@@ -477,7 +489,7 @@ export default function Home() {
       <Section>
         <div className="flex flex-col items-center justify-between gap-12 rounded-xl border border-[#DED9D2] bg-[#FAFAF8] p-10 shadow-[0_4px_20px_rgba(13,12,10,0.02)] md:flex-row md:p-14">
           <div className="max-w-xl space-y-5">
-            <p className="font-mono text-[0.6rem] font-bold tracking-[0.4em] text-[#B09460] uppercase">
+            <p className="font-mono text-[0.6rem] font-bold tracking-[0.4em] text-[#765421] uppercase">
               Bônus Exclusivo
             </p>
             <h3 className="font-display text-[clamp(1.6rem,3vw,2.2rem)] leading-tight tracking-tight text-[#0D0C0A]">
@@ -517,7 +529,7 @@ export default function Home() {
                 <br />
                 Vitoi
               </h2>
-              <p className="mt-4 font-mono text-[0.6rem] font-bold tracking-[0.45em] text-[#B09460] uppercase">
+              <p className="mt-4 font-mono text-[0.6rem] font-bold tracking-[0.45em] text-[#765421] uppercase">
                 Educador · Profissional · Escritor
               </p>
             </div>
@@ -532,10 +544,10 @@ export default function Home() {
                 { value: '10', label: 'Fontes Validadas' },
               ].map((s, i) => (
                 <div key={s.label} className={`pb-1 ${i > 0 ? 'border-l border-[#DED9D2] pl-4' : ''}`}>
-                  <p className="font-display text-[1.8rem] leading-none font-bold tracking-[-0.03em] text-[#B09460]">
+                  <p className="font-display text-[1.8rem] leading-none font-bold tracking-[-0.03em] text-[#765421]">
                     {s.value}
                   </p>
-                  <p className="mt-2 font-mono text-[0.52rem] tracking-[0.3em] text-[#888680] uppercase">{s.label}</p>
+                  <p className="mt-2 font-mono text-[0.52rem] tracking-[0.3em] text-[#625f5a] uppercase">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -566,7 +578,7 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                   title={s.label}
-                  className="flex h-10.5 w-10.5 items-center justify-center rounded-md border border-[#DED9D2] bg-[#FAFAF7] text-[#888680] transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
+                  className="flex h-10.5 w-10.5 items-center justify-center rounded-md border border-[#DED9D2] bg-[#FAFAF7] text-[#625f5a] transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
                 >
                   <i className={`fa-brands ${s.icon} text-[14px]`} />
                 </Link>
@@ -579,7 +591,7 @@ export default function Home() {
             <div className="h-px bg-[#DED9D2]" />
 
             <div className="space-y-6 font-serif text-[1.15rem] leading-[1.85] text-[#262423]">
-              <p className="font-mono text-[0.62rem] font-bold tracking-[0.4em] text-[#B09460] uppercase">
+              <p className="font-mono text-[0.62rem] font-bold tracking-[0.4em] text-[#765421] uppercase">
                 A intersecção entre Geometria do Risco, Teoria dos Jogos e Ciência do Comportamento
               </p>
               <p>
@@ -643,7 +655,7 @@ function Label({ children }: { readonly children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-4">
       <div className="h-px w-6 bg-[#B09460]" />
-      <span className="font-mono text-[0.6rem] font-bold tracking-[0.45em] text-[#888680] uppercase">{children}</span>
+      <span className="font-mono text-[0.6rem] font-bold tracking-[0.45em] text-[#625f5a] uppercase">{children}</span>
     </div>
   );
 }
@@ -652,7 +664,7 @@ function EyebrowCentered({ children }: { readonly children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-center gap-5">
       <div className="h-px w-6 bg-[#DED9D2]" />
-      <span className="font-mono text-[0.6rem] font-bold tracking-[0.45em] text-[#888680] uppercase">{children}</span>
+      <span className="font-mono text-[0.6rem] font-bold tracking-[0.45em] text-[#625f5a] uppercase">{children}</span>
       <div className="h-px w-6 bg-[#DED9D2]" />
     </div>
   );
@@ -673,8 +685,8 @@ function PillarCard({
     <div
       className={`group rounded border border-[#DED9D2] bg-[#FAFAF7] px-8 py-7.5 transition-all duration-500 hover:border-[#B09460]/55 hover:shadow-[0_6px_30px_rgba(176,148,96,0.06)] ${wide ? 'md:col-span-2' : ''}`}
     >
-      <p className="mb-4.5 font-mono text-[0.58rem] font-bold tracking-[0.35em] text-[#B09460]">{num}</p>
-      <h4 className="mb-3 text-[0.88rem] font-bold tracking-wider text-[#0D0C0A] uppercase">{title}</h4>
+      <p className="mb-4.5 font-mono text-[0.58rem] font-bold tracking-[0.35em] text-[#765421]">{num}</p>
+      <h3 className="mb-3 text-[0.88rem] font-bold tracking-wider text-[#0D0C0A] uppercase">{title}</h3>
       <p className="font-serif text-[1.05rem] leading-[1.76] text-[#262423]">{desc}</p>
     </div>
   );
@@ -685,16 +697,16 @@ function DownwardDriftWidget() {
   const betFreq = Math.max(12, Math.round(65 - rp * 1.35));
   const minEquity = Math.min(80, Math.round(50 + rp * 0.5));
   let sizing = 'Grande — 75% pot';
-  let sizingColorClass = 'text-[#B09460]';
-  let sizingColorHex = '#B09460';
+  let sizingColorClass = 'text-[#765421]';
+  let sizingColorHex = '#765421';
   if (rp > 10 && rp <= 22) {
     sizing = 'Pequeno — 30% pot';
-    sizingColorClass = 'text-[#4A8C6F]';
-    sizingColorHex = '#4A8C6F';
+    sizingColorClass = 'text-[#286247]';
+    sizingColorHex = '#286247';
   } else if (rp > 22) {
     sizing = 'Check — 0% pot';
-    sizingColorClass = 'text-[#9B4444]';
-    sizingColorHex = '#9B4444';
+    sizingColorClass = 'text-[#6e3636]';
+    sizingColorHex = '#6e3636';
   }
 
   // SVG dimensions: width = 380 (viewbox 0 0 400 120, range from 10 to 390)
@@ -710,8 +722,8 @@ function DownwardDriftWidget() {
         <span className="font-mono text-[0.62rem] font-bold tracking-[0.3em] text-[#0D0C0A] uppercase">
           Downward Drift Model
         </span>
-        <span className="flex items-center gap-2 font-mono text-[0.55rem] font-bold tracking-[0.3em] text-[#B09460] uppercase">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#B09460]" /> Active
+        <span className="flex items-center gap-2 font-mono text-[0.55rem] font-bold tracking-[0.3em] text-[#765421] uppercase">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#765421]" /> Active
         </span>
       </div>
 
@@ -720,8 +732,8 @@ function DownwardDriftWidget() {
         <svg viewBox="0 0 400 120" className="block h-full w-full">
           <defs>
             <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#B09460" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="#B09460" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="#765421" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#765421" stopOpacity="0.0" />
             </linearGradient>
             <linearGradient id="grayGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#B2B0AB" stopOpacity="0.1" />
@@ -737,7 +749,7 @@ function DownwardDriftWidget() {
           <path d={activePath} fill="url(#goldGradient)" className="transition-[d] duration-300 ease-in-out" />
           <path
             d={`M ${xStart},110 Q ${controlX},${controlY} ${xEnd},110`}
-            stroke="#B09460"
+            stroke="#765421"
             strokeWidth="1.5"
             fill="none"
             className="transition-[d] duration-300 ease-in-out"
@@ -757,10 +769,10 @@ function DownwardDriftWidget() {
           <circle cx={xStart} cy="60" r="3" fill={sizingColorHex} className="transition-all duration-300 ease-in-out" />
 
           {/* Text labels */}
-          <text x="15" y="25" fill="#888680" fontFamily="var(--font-mono)" fontSize="7" letterSpacing="1">
+          <text x="15" y="25" fill="#625f5a" fontFamily="var(--font-mono)" fontSize="7" letterSpacing="1">
             MÃOS FRACAS
           </text>
-          <text x="310" y="25" fill="#888680" fontFamily="var(--font-mono)" fontSize="7" letterSpacing="1">
+          <text x="310" y="25" fill="#625f5a" fontFamily="var(--font-mono)" fontSize="7" letterSpacing="1">
             MÃOS FORTES
           </text>
           <text
@@ -779,7 +791,7 @@ function DownwardDriftWidget() {
       </div>
 
       <div className="space-y-4">
-        <div className="flex justify-between font-mono text-[0.6rem] tracking-[0.25em] text-[#888680] uppercase">
+        <div className="flex justify-between font-mono text-[0.6rem] tracking-[0.25em] text-[#625f5a] uppercase">
           <span>Risk Premium da Mesa</span>
           <span className="font-bold text-[#0D0C0A]">{rp}%</span>
         </div>
@@ -811,7 +823,7 @@ function DownwardDriftWidget() {
             key={item.label}
             className="rounded-xl border border-[#DED9D2] bg-[#F5F3EE] px-4.5 py-4 transition-all duration-300"
           >
-            <p className="mb-2 font-mono text-[0.56rem] font-bold tracking-[0.25em] text-[#888680] uppercase">
+            <p className="mb-2 font-mono text-[0.56rem] font-bold tracking-[0.25em] text-[#625f5a] uppercase">
               {item.label}
             </p>
             <p className="font-display text-[1.45rem] leading-none font-bold tracking-[-0.02em] text-[#0D0C0A]">
@@ -822,7 +834,7 @@ function DownwardDriftWidget() {
       </div>
 
       <div className="flex items-center justify-between rounded-xl border border-[#DED9D2] bg-[#F5F3EE] px-5 py-4.5 transition-all duration-300">
-        <span className="font-mono text-[0.58rem] font-bold tracking-[0.25em] text-[#888680] uppercase">
+        <span className="font-mono text-[0.58rem] font-bold tracking-[0.25em] text-[#625f5a] uppercase">
           Sizing recomendado
         </span>
         <span className={`font-mono text-[0.72rem] font-bold transition-colors duration-300 ${sizingColorClass}`}>

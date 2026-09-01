@@ -23,7 +23,9 @@ No **Paradigma VITOI**, reduzimos a complexidade sistêmica a **Toy Games** — 
 O limite mecânico de defesa imposto pelo Risk Premium. Não é binário (como a "Death Zone" em 40%) - é gradual e já opera em níveis baixos como 6%. O defensor (OOP) defende até onde o RP permite, e não pelo MDF clássico. No "Teto", qualquer desvio adicional de defesa pioraria seu EV monetário, permitindo que o agressor expanda blefes impunemente.
 
 ### B. Vantagem de Risco (Risk Advantage)
-Calculada como $\\Delta RP = RP_{agressor} - RP_{defensor}$. É a métrica da proporção de agressividade permitida. No Estado da Arte, a agressividade permitida ao Chip Leader (CL) é quase a proporção exata da subtração dos dois RPs.
+Em um confronto direcional entre agressor (A) e defensor (D), a assimetria é expressa como $\\Delta RP_{A\\to D} = RP_{defensor} - RP_{agressor}$. Quando o resultado é positivo, o agressor possui o menor RP e, portanto, a **Vantagem de Risco** naquele confronto. A unidade é ponto percentual (p.p.) da diferença entre os RPs dentro da leitura ICMev/RP do spot.
+
+Essa diferença não é um conversor linear de agressividade. Ela informa a direção e a gravidade relativa da pressão; estrutura de payouts, stacks efetivos, pote, posição, ranges e jogadores remanescentes determinam a transformação concreta em frequência e sizing. A Vantagem de Risco pertence ao jogador com menor RP, não a um rótulo fixo como “Hero”.
 
 ### C. Negal de Perspectiva
 O CL não briga por fichas; briga por **Perspectiva Matemática**. Ele aposta para negar perspectiva alheia, mantendo rivais "algemados" pela pressão de sobrevivência.
@@ -32,7 +34,7 @@ O CL não briga por fichas; briga por **Perspectiva Matemática**. Ele aposta pa
 O Mid-stack entra no pote não por *pot odds*, mas por **implied odds de ICM**. Investe pouco, absorve agressividade obrigatória do CL, e realiza equity passivamente. Se acerta, sua Perspectiva explode, enquanto o CL sofre pouco dano relativo.
 
 ### E. Fold Estrutural (A Falácia do "Overfold")
-75% de fold contra o CL não é um erro - é a frequência GTO sob pressão de ICM severo. "Overfold" é um vício de linguagem herdado do ChipEV. O termo técnico correto é **Fold Estrutural**.
+Em um toy game de ICM severo, uma frequência de fold muito alta contra o CL pode ser coerente com o spot e não um erro automático. "Overfold" é um vício de linguagem herdado do ChipEV quando ignora a utilidade não linear do torneio. O termo técnico correto é **Fold Estrutural**; a frequência concreta depende do cenário e deve ser calculada, não presumida como regra universal.
 
 ---
 

@@ -10,9 +10,9 @@
 
 ### 2. Vantagem de Risco (Risk Advantage)
 
-- $\Delta RP = RP_{agressor} - RP_{defensor}$.
-- Metrica da proporção de agressividade permitida.
-- **Hipótese SOTA:** A agressividade permitida ao CL (Chip Leader) é quase a proporção exata da subtração dos dois RPs.
+- Em um confronto direcional entre agressor (A) e defensor (D), $\Delta RP_{A\to D} = RP_{defensor} - RP_{agressor}$.
+- Quando o resultado é positivo, o agressor tem o menor RP e possui a **Vantagem de Risco** naquele confronto. A diferença é expressa em pontos percentuais (p.p.) dentro da leitura ICMev/RP do spot.
+- A diferença não é um conversor linear de agressividade. Ela indica direção e gravidade relativa da pressão; payout, stacks efetivos, pote, posição, ranges e jogadores remanescentes definem a frequência e o sizing concretos.
 
 ### 3. Economia de Perspectiva vs Fichas
 
@@ -28,8 +28,8 @@
 
 ### 5. Fold Estrutural (A Falácia do "Overfold")
 
-- 75% de fold contra o CL não é um erro - é a frequência GTO sob pressão de ICM severo.
-- "Overfold" é um vício de linguagem herdado do ChipEV. O termo técnico correto é **Fold Estrutural**.
+- Uma frequência de fold muito alta contra o CL pode ser coerente em um toy game de ICM severo, mas não é uma frequência GTO universal.
+- "Overfold" é um vício de linguagem herdado do ChipEV quando ignora a utilidade não linear do torneio. O termo técnico correto é **Fold Estrutural**; a frequência precisa ser calculada para o cenário.
 
 ---
 
@@ -58,4 +58,4 @@
 **Mecanismo:** Dobrar o IP (agressor) aumenta a stack dele e reduz a pressão ICM da mesa inteira, beneficiando todos os outros jogadores. O custo de "dar fichas" ao nêmesis supera o EV de capturar o blefe.
 
 ---
-*Fonte: Transcrição Aula 1.2, Paradigma VITOI.*
+*Fonte: Transcrição Aula 1.2, Paradigma VITOI. Documento de hipótese autoral em curadoria; exemplos de toy game não substituem uma validação geral por solver ou dados externos.*

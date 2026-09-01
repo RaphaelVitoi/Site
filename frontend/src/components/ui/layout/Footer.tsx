@@ -84,7 +84,7 @@ export default function Footer() {
 				</div>
 
 				{/* Navigation / Quick Links */}
-				<nav className="flex flex-wrap justify-center gap-x-10 gap-y-6 mb-16 text-[0.65rem] font-black uppercase tracking-[0.3em] text-text-dim relative">
+				<nav aria-label="Navegação de atalhos" className="flex flex-wrap justify-center gap-x-10 gap-y-6 mb-16 text-[0.65rem] font-black uppercase tracking-[0.3em] text-text-dim relative">
 					<div className="absolute -inset-x-20 inset-y-0 bg-white/2 blur-2xl rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
 					<Link
 						href={ROUTES.AULAS.MASTERCLASS}

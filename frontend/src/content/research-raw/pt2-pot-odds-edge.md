@@ -1,23 +1,27 @@
-# PT2: A Insolvência das Pot Odds e o Colapso da Edge
+# PT2 — Pot Odds, realização e Edge (rascunho de pesquisa)
 
-> "Pot Odds são o preço. Perspectiva é o valor. Nunca confunda os dois."
+> **Fronteira:** hipótese didática PMev. O texto descreve condições a testar,
+> não uma prova de que Pot Odds ou Edge deixem de operar.
 
-## 1. A Falácia do Preço Barato
+## 1. Preço local e valor contextual
 
-Pot Odds são uma métrica linear para um jogo não-linear. Elas ignoram:
+Pot Odds são o preço imediato de continuar e permanecem uma condição necessária
+da análise. Elas não capturam, por si, realização de equidade, posições futuras,
+range adversário, RIO, ICM ou payjumps. A decisão requer integrar essas camadas,
+não descartar a métrica de preço.
 
-1. **Realização de Equidade (R):** De que adianta ter 25% de odds se você só vai ver o showdown 10% das vezes?
-2. **Reverse Implied Odds (RIO):** O custo de "acertar e perder o stack".
+## 2. Multiway e RIO
 
-## 2. O Multiway como Cemitério Estratégico
+Em potes multiway, mais linhas, ranges e risco de dominação podem reduzir a
+realização de equidade e aumentar RIO. A implementação atual usa uma penalidade
+quadrática no número de oponentes como heurística de modelo; “exponencial” não
+é a descrição matemática desse contrato. A magnitude deve ser calibrada contra
+cenários reproduzíveis antes de ser tratada como previsão de jogo real.
 
-Em potes com 3 ou mais jogadores, as RIO crescem **exponencialmente**. O sistema entra em estado de entropia onde a força absoluta da mão é secundária à **Tensão Posicional**. Se você está no meio (Sandwich), suas Pot Odds são irrelevantes; você está insolventemente preso.
+## 3. Edge e profundidade
 
-## 3. O Colapso Mecânico da Edge
-
-A Edge (superioridade técnica) não é fixa. Ela é uma função do **Stack Depth**.
-
-* **100bb:** Edge Infinita (Árvore Complexa).
-* **10bb:** Edge Nula (Colapso Binário).
-
-O solver protege o jogador fraco ao simplificar o jogo. A missão do SOTA é forçar a complexidade onde a edge existe e aceitar a variância onde o colapso é inevitável.
+Profundidade de stack altera tamanho da árvore, realizabilidade e espaço de
+erro, mas não torna a Edge infinita a 100 BB nem nula a 10 BB. A relação precisa
+de ranges, posições, ação anterior, skill model e evidência de solver. A função
+do Toy Game é exibir a dependência e os dados ausentes, não transformar stack
+depth em uma decisão automática.

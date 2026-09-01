@@ -1,0 +1,10 @@
+{
+  "entries": [
+    {
+      "path": ".agents/skills",
+      "include_only": [
+        "^(pmev-game-theory-engine|sota-quality-gate|sota-triad-mesh)$"
+      ]
+    }
+  ]
+}

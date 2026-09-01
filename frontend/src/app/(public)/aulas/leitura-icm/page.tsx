@@ -43,13 +43,12 @@ export default function TeoriaICMPage() {
 				<GlassPanel className="p-8 sm:p-12 lg:p-16">
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted">
 						<p>
-							Antes de mergulhar na Perspectiva, é essencial calibrar as réguas de
-							medição de pressão do torneio. É fundamental distinguir entre{' '}
-							<strong>Ruído de Simulação</strong> (comum em modelos simplificados como
-							GTO Wizard pós-flop) e a <strong>Influência Real do ICM</strong>. No
-							Framework ICM, calibramos o motor contra os 93 nodes do HRC para
-							garantir que os desvios observados sejam fruto da matemática de colisão,
-							e não de imprecisões algorítmicas (e-Nash).
+							Antes de mergulhar na Perspectiva, é essencial distinguir a régua ICM
+							da evidência que a sustenta. BF e RP descrevem um confronto condicionado
+							a stacks e payouts; qualquer extensão pós-flop precisa declarar ranges,
+							ações, nó e fonte do solver antes de ser tratada como validação. Os 93
+							nós registrados no projeto são material de reprodução em curadoria, não
+							uma certificação genérica do motor.
 						</p>
 
 						<ul className="ml-6 text-text-main leading-relaxed list-disc">
@@ -64,8 +63,9 @@ export default function TeoriaICMPage() {
 								<strong>Risk Premium (RP):</strong> É a equity adicional, acima das
 								pot odds puras, necessária para justificar um call. O motor SOTA
 								adota o RP como padrão pois ele opera em uma{' '}
-								<strong>escala percentual intuitiva</strong> (0% a ~24% em mesas
-								finais reais; teto teórico mais alto em cenários extremos).
+								<strong>escala percentual intuitiva</strong>. Seus valores dependem
+								do confronto, dos payouts e dos stacks; exemplos de mesa final não
+								constituem um teto universal.
 							</li>
 						</ul>
 
@@ -77,10 +77,12 @@ export default function TeoriaICMPage() {
 								RP = 100 &times; (BF &minus; 1) / BF
 							</p>
 							<p className="mb-0 text-sm">
-								Por que usar &Delta;RP (Risk Advantage)? Subtrair RPs (IP &minus;
-								OOP) gera um delta percentual linear que dita diretamente a
-								proporção de agressividade permitida em um cenário. O BF não permite
-								essa extração de forma natural.
+								Em um confronto direcional entre agressor A e defensor D, usamos
+								&Delta;RP(A&rarr;D) = RP<sub>D</sub> &minus; RP<sub>A</sub>. Valor
+								positivo identifica que A tem menor RP e Vantagem de Risco; a unidade
+								é p.p. dentro do spot. Esse diferencial não dita linearmente
+								frequência ou sizing: pote, posição, ranges, stacks efetivos e payouts
+								definem a transformação concreta.
 							</p>
 						</div>
 					</div>
@@ -107,12 +109,13 @@ export default function TeoriaICMPage() {
 						</p>
 						<ul className="ml-6 text-text-main leading-relaxed list-disc">
 							<li>
-								<strong>ChipEV:</strong>{' '}
+								<strong>Referência linear:</strong>{' '}
 								<span>
 									EV<sub>fold</sub>
 								</span>{' '}
-								= &minus;antes. O piso é negativo. Para uma ação ser coerente, ela
-								não precisa ter EV positivo, basta superar o abismo do fold.
+								= custo dos antes conforme o modelo declarado. É um limite
+								contrafactual útil — não o estado operacional normal de um MTT — e o
+								custo varia por BBA/ante, posição e tamanho da mesa.
 							</li>
 							<li>
 								<strong>O Paradoxo do ICM:</strong> Em bolhas ou payjumps, o{' '}
@@ -177,10 +180,10 @@ export default function TeoriaICMPage() {
 							Camada 4: Perspectiva Matemática
 						</h3>
 						<p>
-							A síntese definitiva e fechada. Não é o output simples das camadas
-							anteriores — é uma métrica que <strong>aprendeu iterativamente</strong>{' '}
-							de todas elas (ICM EV, Esperança, Expectativa com FGS integrado).
-							Substitui o ICM EV como refinamento superior.
+							Uma proposta autoral de síntese. Ela organiza ICM, Esperança,
+							Expectativa e hipóteses de FGS em um mesmo vocabulário de decisão;
+							não é uma certificação fechada, nem substitui outputs externos de solver
+							sem comparação reproduzível.
 						</p>
 					</div>
 				</GlassPanel>
@@ -211,18 +214,18 @@ export default function TeoriaICMPage() {
 
 						<h3 className="text-text-bright font-heading">2. O Fator &Psi; (Psi)</h3>
 						<p>
-							Se a probabilidade de o oponente ter nuts é de 4%, mas a taxa
-							estatística de <em>&ldquo;Bobagem Humana&rdquo;</em> (tilt, erro
-							cognitivo) no spot é de 10%, a Esperança Matemática exige o call,
-							ignorando o conservadorismo GTO.
+							O Fator &Psi; é uma hipótese para registrar incerteza comportamental
+							(tilt, erro cognitivo ou ruído). Sem amostra, origem e modelo de
+							verossimilhança, ele não autoriza um call nem substitui a análise de
+							range.
 						</p>
 
 						<h3 className="text-text-bright font-heading">3. O Veneno das RIO</h3>
 						<p>
-							Pot Odds são uma heurística engessada. Elas mascaram as{' '}
-							<strong>Reverse Implied Odds (RIO)</strong>. Pagar pelas odds atrai a
-							especulação, prendendo o jogador a um passivo estrutural onde ele acerta
-							a mão marginal e perde um pote gigantesco.
+							Pot Odds descrevem o preço imediato e são condição necessária, não
+							suficiente, da decisão. <strong>Reverse Implied Odds (RIO)</strong>,
+							realização de equidade, ranges e ICM precisam ser adicionados ao spot;
+							o peso de cada componente exige parâmetros e validação declarados.
 						</p>
 					</div>
 				</GlassPanel>
@@ -240,12 +243,13 @@ export default function TeoriaICMPage() {
 					<div className="prose prose-invert prose-lg max-w-none text-text-muted">
 						<ul className="ml-6 text-text-main leading-relaxed list-disc">
 							<li>
-								<strong>O Teto do RP:</strong> A âncora empírica é 24%. O OOP não
-								defende pelo MDF clássico, mas até onde o RP permite.
+								<strong>O Teto do RP:</strong> hipótese de limite contextual de defesa;
+								qualquer âncora numérica depende do cenário, da amostra e do nó.
 							</li>
 							<li>
-								<strong>&Delta;RP (Diferencial de Risco):</strong> RP<sub>IP</sub>{' '}
-								&minus; RP<sub>OOP</sub>. Define o teto abstrativo de defesa.
+								<strong>&Delta;RP (Diferencial de Risco):</strong> RP<sub>defensor</sub>{' '}
+								&minus; RP<sub>agressor</sub>. Indica a direção da pressão relativa, sem
+								converter-se sozinho em teto ou frequência.
 							</li>
 							<li>
 								<strong>Especulação Assimétrica:</strong> Mid-stacks entram no pote

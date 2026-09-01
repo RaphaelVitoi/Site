@@ -5,7 +5,6 @@ Chico Protocol v7.0 GOLD
 """
 
 import json
-import os
 import sys
 import urllib.request
 
@@ -85,15 +84,30 @@ def _audit_a11y(a11y: dict) -> list[str]:
 def run_gate_audit(
     target_url: str = "http://localhost:3000", sample_metrics: dict | None = None, sample_a11y: dict | None = None
 ) -> int:
+    """Refuse the retired synthetic implementation.
+
+    ``cwv_gate.ps1`` is the sole authoritative gate because it connects to the
+    canonical CDP runtime and reports unavailable observations as such.  This
+    compatibility file must never turn fixtures or constants into a green
+    production verdict.
+    """
+    del target_url, sample_metrics, sample_a11y
+    print(
+        "[GATE NAO EXECUTADO] cwv_gate.py foi aposentado: execute "
+        "scripts/ops/cwv_gate.ps1 para uma medicao real ou um estado FRAGIL.",
+        file=sys.stderr,
+    )
+    return 1
+
+
+def _retired_synthetic_gate(
+    target_url: str = "http://localhost:3000", sample_metrics: dict | None = None, sample_a11y: dict | None = None
+) -> int:
+    """Implementacao historica mantida fora do caminho vivo para referencia."""
     print("\n" + "=" * 70)
     print(" NEXUS CI/CD SOTA QUALITY GATE - CORE WEB VITALS & ACCESSIBILITY")
     print(f" Target: {target_url}")
     print("=" * 70)
-
-    # Bypass de emergencia
-    if os.environ.get("SKIP_CWV_GATE") == "1":
-        print(" [BYPASS] SKIP_CWV_GATE=1 detectado. Auditoria de performance ignorada.")
-        return 0
 
     cdp_status = get_live_metrics()
     if cdp_status["active"]:

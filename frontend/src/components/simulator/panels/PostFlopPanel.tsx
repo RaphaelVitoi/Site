@@ -410,7 +410,7 @@ export default function PostFlopPanel({
                   key={p.label}
                   onClick={() => handlePresetChange(i)}
                   aria-pressed={presetIdx === i}
-                  className={`rounded-xl border px-4 py-2.5 text-[0.55rem] font-black transition-all duration-500 ${presetIdx === i ? 'bg-accent-indigo border-accent-indigo-light text-white shadow-lg' : 'text-text-muted border-white/5 bg-slate-800/40 hover:border-white/10 hover:text-white'}`}
+					className={`rounded-xl border px-4 py-2.5 text-[0.55rem] font-black transition-all duration-500 ${presetIdx === i ? 'bg-indigo-600 border-accent-indigo-light text-white shadow-lg' : 'text-text-muted border-white/5 bg-slate-800/40 hover:border-white/10 hover:text-white'}`}
                 >
                   {p.label}
                 </button>

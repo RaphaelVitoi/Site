@@ -132,20 +132,17 @@ foreach ($linha in $adicionadas) {
 
 # --- E3/E4/W1. ancora dos registros -----------------------------------------
 $camposObrigatorios = @('id', 'tipo', 'escopo', 'autor', 'criado_em', 'verificado', 'nao_verificado')
+$arquivosDeRegistro = @($arquivos | Where-Object { $_ -match '^(docs|reports)/.*\.md$' })
 
-foreach ($arq in ($arquivos | Where-Object { $_ -like '*.md' })) {
+foreach ($arq in $arquivosDeRegistro) {
     $caminhoCompleto = Join-Path $repoRoot $arq
     if (-not (Test-Path $caminhoCompleto)) { continue }
     $linhas = Get-Content -LiteralPath $caminhoCompleto -Encoding UTF8 -ErrorAction SilentlyContinue
     if (-not $linhas) { continue }
 
     $temFm = ($linhas[0] -eq '---')
-    $ehLocalDeRegistro = ($arq -match '^(docs|reports)/')
-
     if (-not $temFm) {
-        if ($ehLocalDeRegistro) {
-            Add-Aviso "Registro sem frontmatter (adocao pendente, M.O. 13.B): $arq"
-        }
+        Add-Aviso "Registro sem frontmatter (adocao pendente, M.O. 13.B): $arq"
         continue
     }
 

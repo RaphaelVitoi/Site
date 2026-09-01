@@ -18,7 +18,20 @@ import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SITE_CONFIG } from '@/constants/site';
 import { ROUTES } from '@/constants/routes';
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+type ContentFetchError = Error & { status?: number };
+
+const fetcher = async (url: string) => {
+	const response = await fetch(url);
+	if (!response.ok) {
+		const error = new Error(
+			`Falha ao consultar o catálogo dinâmico (${response.status}).`,
+		) as ContentFetchError;
+		error.status = response.status;
+		throw error;
+	}
+
+	return response.json();
+};
 
 export default function DynamicArticlePage() {
 	const { slug } = useParams();
@@ -31,15 +44,34 @@ export default function DynamicArticlePage() {
 			</div>
 		);
 
-	if (error || !content || content.error)
+	if (error || !content || content.error) {
+		const status = (error as ContentFetchError | undefined)?.status;
+		const catalogState =
+			status === 401 || status === 403
+				? {
+						title: 'Catálogo Protegido',
+						message:
+							'O catálogo dinâmico exige uma sessão autorizada. A publicação pública deste conteúdo ainda não está habilitada.',
+					}
+				: status === 404
+					? {
+							title: 'Artefato Não Publicado',
+							message: `O slug "${slug}" ainda não foi publicado no catálogo dinâmico.`,
+						}
+					: {
+							title: 'Catálogo Indisponível',
+							message:
+								'Não foi possível consultar o catálogo dinâmico neste momento. Tente novamente mais tarde.',
+						};
+
 		return (
 			<div className="min-h-screen flex flex-col items-center justify-center bg-bg-base text-accent-danger gap-6">
 				<i className="fa-solid fa-triangle-exclamation text-5xl" />
 				<h1 className="text-2xl font-black uppercase tracking-widest">
-					Artefato Não Encontrado
+					{catalogState.title}
 				</h1>
 				<p className="text-text-dim font-medium uppercase tracking-tighter">
-					O slug &quot;{slug}&quot; não existe na base de dados SOTA.
+					{catalogState.message}
 				</p>
 				<Link
 					href="/biblioteca"
@@ -49,6 +81,7 @@ export default function DynamicArticlePage() {
 				</Link>
 			</div>
 		);
+	}
 
 	return (
 		<div className="min-h-screen bg-bg-base relative overflow-x-hidden font-body">
@@ -71,31 +104,31 @@ export default function DynamicArticlePage() {
 
 					<aside className="hidden lg:block sticky top-32 space-y-12 animate-sota-in animation-delay-300">
 						<div className="glass-panel p-8 rounded-3xl border-white/5 bg-black/40">
-							<h4 className="text-[0.6rem] font-black text-text-muted uppercase tracking-[0.2em] mb-6 border-b border-white/5 pb-4">
+							<h2 className="text-[0.6rem] font-black text-text-muted uppercase tracking-[0.2em] mb-6 border-b border-white/5 pb-4">
 								Neste Artefato
-							</h4>
+							</h2>
 							<TableOfContents content={content.body || ''} />
 						</div>
 
 						<div className="p-8 bg-accent-indigo/5 border border-accent-indigo/10 rounded-3xl">
-							<h4 className="text-[0.6rem] font-black text-white uppercase tracking-widest mb-4 text-glow-indigo">
+							<h2 className="text-[0.6rem] font-black text-white uppercase tracking-widest mb-4 text-glow-indigo">
 								Metadados SOTA
-							</h4>
+							</h2>
 							<div className="space-y-4">
 								<div className="flex justify-between items-center">
 									<span className="text-[0.55rem] text-text-dim uppercase font-bold">
 										Status
 									</span>
-									<span className="text-[0.55rem] text-accent-emerald uppercase font-black tracking-widest bg-accent-emerald/10 px-2 py-0.5 rounded border border-emerald-500/20 text-glow-emerald">
-										Validado
+									<span className="text-[0.55rem] text-accent-indigo-light uppercase font-black tracking-widest bg-accent-indigo/10 px-2 py-0.5 rounded border border-accent-indigo/20">
+										Conteúdo dinâmico
 									</span>
 								</div>
 								<div className="flex justify-between items-center">
 									<span className="text-[0.55rem] text-text-dim uppercase font-bold">
-										Arquitetura
+										Canal
 									</span>
 									<span className="text-[0.55rem] text-text-bright uppercase font-mono font-black">
-										v7.0 GOLD
+										Contrato API v1
 									</span>
 								</div>
 							</div>

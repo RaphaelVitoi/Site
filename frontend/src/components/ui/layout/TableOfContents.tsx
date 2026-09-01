@@ -46,7 +46,7 @@ export default function TableOfContents({ toc, content }: Readonly<TableOfConten
 	if (finalToc.length === 0) return null;
 
 	return (
-		<nav className="mb-10 p-6 rounded-lg bg-slate-900/40 border border-white/5 shadow-inner">
+		<nav aria-label="Índice do conteúdo" className="mb-10 p-6 rounded-lg bg-slate-900/40 border border-white/5 shadow-inner">
 			<h4 className="text-xs font-mono text-emerald-400 uppercase tracking-widest mb-4 flex items-center">
 				<i className="fa-solid fa-list-ul mr-3" /> Índice de Navegação
 			</h4>
