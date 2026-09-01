@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from math import isfinite
 
 
 class PMevTier(StrEnum):
@@ -37,14 +38,23 @@ class TournamentState:
     payouts: tuple[float, ...]
 
     def __post_init__(self) -> None:
+        # A declaracao aceita sequencias no limite Python; o contrato guarda um
+        # snapshot imutavel para que uma mutacao posterior do chamador nao
+        # altere um estado que ja passou pela validacao.
+        object.__setattr__(self, "stacks", tuple(self.stacks))
+        object.__setattr__(self, "payouts", tuple(self.payouts))
         if not self.stacks:
             raise ValueError("TournamentState requer ao menos um stack.")
+        if not all(isfinite(stack) for stack in self.stacks) or not all(isfinite(payout) for payout in self.payouts):
+            raise ValueError("Stacks e payouts devem conter apenas valores finitos.")
         if any(stack < 0 for stack in self.stacks):
             raise ValueError("Stacks nao podem ser negativos.")
         if sum(self.stacks) <= 0:
             raise ValueError("A soma dos stacks deve ser positiva.")
         if not self.payouts:
             raise ValueError("TournamentState requer ao menos um payout.")
+        if len(self.payouts) > len(self.stacks):
+            raise ValueError("Os payouts nao podem exceder a quantidade de jogadores ativos.")
         if any(payout < 0 for payout in self.payouts):
             raise ValueError("Payouts nao podem ser negativos.")
         if sum(self.payouts) <= 0:

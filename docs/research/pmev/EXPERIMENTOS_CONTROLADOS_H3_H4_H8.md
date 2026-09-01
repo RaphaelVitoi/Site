@@ -9,7 +9,7 @@ caminhos:
   - engine/pmev_controlled_experiments.py
   - tests/test_pmev_controlled_experiments.py
 verificado:
-  - estados H3, H4 e H8 exercitam intervencao permitida, estado ausente e confusao causal
+  - estados H3, H4 e H8 exercitam intervencao permitida, estado ausente, confusao causal, chave ausente versus None e snapshot imutavel dos bracos
 nao_verificado:
   - nenhuma hipotese foi validada por solver ou por dados de jogadores neste protocolo de desenho
 ---
@@ -27,12 +27,15 @@ causa definida.
 | Hipotese | Estado minimo adicional | Unica intervencao permitida |
 | --- | --- | --- |
 | H3 — erosao temporal | stacks, payouts, posicoes, blinds, ranges, arvore, tempo ate o blind | `time_to_blind_jump_minutes` |
-| H4 — defesa no river | stacks, payouts, posicoes, board, ranges, pote, aposta, arvore | `payouts` |
+| H4 — defesa no river | stacks, payouts, posicoes, board, ranges, pote, aposta, arvore, baseline de equidade | `payouts` |
 | H8 — downward drift | stacks, payouts, posicoes, board, ranges, arvore, modelo de utilidade | `payouts` **ou** `utility_model` |
 
-Para H4, a referencia de MTT e a baseline ICMev/Malmuth-Harville declarada no
-controle. ChipEV pode compor uma comparacao limite, mas nao substitui essa
-referencia dentro de uma final table.
+Para H4, a referencia de MTT e a baseline literal
+`ICMev/Malmuth-Harville`, declarada identicamente nos dois bracos. ChipEV pode
+compor uma comparacao limite, mas nao substitui essa referencia dentro de uma
+final table. O contrato cria um snapshot imutavel e recursivo dos dois bracos
+antes de validar a intervencao; mutacao posterior do dicionario de entrada nao
+pode transformar retroativamente um experimento ja aceito.
 
 ## Artefato por execucao
 
@@ -55,5 +58,6 @@ solver e uma metodologia de validacao estejam disponiveis.
 ## Verificacao
 
 O gate executavel esta em `engine/pmev_controlled_experiments.py`; a cobertura
-de entradas permitidas, campos ausentes e dupla intervencao vive em
+de entradas permitidas, baseline H4, campos ausentes, chave ausente versus
+`None`, snapshot imutavel e dupla intervencao vive em
 `tests/test_pmev_controlled_experiments.py`.

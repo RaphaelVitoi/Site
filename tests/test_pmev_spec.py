@@ -22,6 +22,20 @@ def test_tournament_state_rejects_invalid_mass() -> None:
         TournamentState(stacks=(100.0, 100.0), payouts=(0.0,))
 
 
+@pytest.mark.parametrize("non_finite", (float("nan"), float("inf"), float("-inf")))
+def test_tournament_state_rejects_non_finite_financial_inputs(non_finite: float) -> None:
+    with pytest.raises(ValueError, match="finitos"):
+        TournamentState(stacks=(non_finite, 100.0), payouts=(100.0,))
+
+    with pytest.raises(ValueError, match="finitos"):
+        TournamentState(stacks=(100.0, 100.0), payouts=(non_finite,))
+
+
+def test_tournament_state_rejects_more_payouts_than_active_players() -> None:
+    with pytest.raises(ValueError, match="payouts nao podem exceder"):
+        TournamentState(stacks=(60.0, 40.0), payouts=(80.0, 10.0, 10.0))
+
+
 def test_h9_conserves_value_in_exact_small_field_transition() -> None:
     before = TournamentState(stacks=(60.0, 25.0, 15.0), payouts=(70.0, 30.0))
     scenario = LateRegistrationScenario(
@@ -47,4 +61,57 @@ def test_h9_rejects_non_conservative_transition() -> None:
             entrant_stack=25.0,
             net_contribution=20.0,
             payouts_after=(119.0,),
+        )
+
+
+def test_h9_rejects_redistributed_payouts_that_preserve_only_total_mass() -> None:
+    before = TournamentState(stacks=(60.0, 25.0, 15.0), payouts=(70.0, 30.0))
+
+    with pytest.raises(ValueError, match="proporcional"):
+        LateRegistrationScenario(
+            before=before,
+            entrant_stack=20.0,
+            net_contribution=20.0,
+            payouts_after=(120.0, 0.0),
+        )
+
+
+def test_h9_rejects_a_changed_payout_cardinality() -> None:
+    before = TournamentState(stacks=(50.0, 50.0), payouts=(100.0,))
+
+    with pytest.raises(ValueError, match="quantidade de payouts"):
+        LateRegistrationScenario(
+            before=before,
+            entrant_stack=25.0,
+            net_contribution=20.0,
+            payouts_after=(80.0, 20.0, 20.0),
+        )
+
+
+@pytest.mark.parametrize("non_finite", (float("nan"), float("inf"), float("-inf")))
+def test_h9_rejects_non_finite_transition_inputs(non_finite: float) -> None:
+    before = TournamentState(stacks=(50.0, 50.0), payouts=(100.0,))
+
+    with pytest.raises(ValueError, match="finitos"):
+        LateRegistrationScenario(
+            before=before,
+            entrant_stack=non_finite,
+            net_contribution=20.0,
+            payouts_after=(120.0,),
+        )
+
+    with pytest.raises(ValueError, match="finitos"):
+        LateRegistrationScenario(
+            before=before,
+            entrant_stack=20.0,
+            net_contribution=non_finite,
+            payouts_after=(120.0,),
+        )
+
+    with pytest.raises(ValueError, match="finitos"):
+        LateRegistrationScenario(
+            before=before,
+            entrant_stack=20.0,
+            net_contribution=20.0,
+            payouts_after=(non_finite,),
         )
