@@ -62,6 +62,22 @@
   gate cujo veredito impresso ignora erro de coleta declara VERDE sobre bateria
   que não rodou. Corrigido em `conftest.py` no mesmo dia.
 
+## 4. Correção de rumo — 2026-09-01
+
+- **Feedback humano literal:** `7.5/10`. O resultado técnico publicado foi
+  material, mas a sessão consumiu latência e ciclos demais em frentes
+  periféricas ao propósito PMev central. Isso é falha de priorização registrada,
+  não deve ser suavizada como “rigor”.
+- **Regra ativa:** uma frente lateral só inicia com vínculo causal demonstrado
+  com a entrega principal ou ordem explícita de Raphael Vitoi. Sem isso,
+  registrar em backlog e retornar à trilha central.
+- **Próximo foco:** converter três pares verificáveis de `Aula 1.2.docx` em
+  fixtures, invariantes e contrato de simulador. Não recalibrar coeficiente
+  global por cenário isolado.
+- **Fidelidade de feedback:** `Register-AgentCalibrationFeedback.ps1` usa
+  `decimal`; o teste de regressão confirmou que `7.5` é preservado no ledger,
+  em vez de arredondado para `8`.
+
 
 ---
 

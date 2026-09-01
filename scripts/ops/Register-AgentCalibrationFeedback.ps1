@@ -13,7 +13,7 @@
 param(
     [Parameter(Mandatory)]
     [ValidateRange(0, 10)]
-    [int]$Score,
+    [decimal]$Score,
 
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
