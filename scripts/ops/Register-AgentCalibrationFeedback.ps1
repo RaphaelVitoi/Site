@@ -23,6 +23,12 @@ param(
 
     [string]$SessionId = '',
 
+    # Instante de inicio da SESSAO (nao do feedback), em formato parseavel por
+    # DateTimeOffset. Sessao = do inicio ao fim de um trabalho; compactacao de
+    # contexto nao a reinicia. Todos os feedbacks de uma mesma sessao devem
+    # declarar o MESMO valor aqui.
+    [string]$SessionStartedAt = '',
+
     [string]$LedgerPath = ''
 )
 
@@ -91,13 +97,22 @@ try {
 
     $rows = @(Get-Content -LiteralPath $ledgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json })
     $tail = $rows[-1]
-    $record = New-HashChainedRecord -Sequence ([int]$tail.sequence + 1) -RecordType 'feedback' -RecordedAt ([DateTimeOffset]::Now.ToString('o')) -PreviousHash ([string]$tail.record_hash) -Fields ([ordered]@{
+    $campos = [ordered]@{
         event_id   = [guid]::NewGuid().ToString()
         session_id = $SessionId
         score      = $Score
         feedback   = $Feedback.Trim()
         scope      = $Scope.Trim()
-    })
+    }
+    # Ancora temporal da sessao. Sessao vai do inicio ao fim de um trabalho e
+    # compactacao de contexto NAO a encerra; sem esta marca, uma sessao partida
+    # por compactacao e indistinguivel de duas sessoes legitimas. Opcional para
+    # nao invalidar registros anteriores, mas quando presente o portao de
+    # suficiencia usa a divergencia dela para detectar sessao partida.
+    if (-not [string]::IsNullOrWhiteSpace($SessionStartedAt)) {
+        $campos['session_started_at'] = ([DateTimeOffset]::Parse($SessionStartedAt)).ToString('o')
+    }
+    $record = New-HashChainedRecord -Sequence ([int]$tail.sequence + 1) -RecordType 'feedback' -RecordedAt ([DateTimeOffset]::Now.ToString('o')) -PreviousHash ([string]$tail.record_hash) -Fields $campos
     [System.IO.File]::AppendAllText($ledgerPath, (($record | ConvertTo-Json -Compress -Depth 8) + [Environment]::NewLine), $utf8NoBom)
     [pscustomobject]@{
         status      = 'appended'
