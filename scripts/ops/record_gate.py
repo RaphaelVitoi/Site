@@ -104,6 +104,57 @@ def arquivos_em_stage() -> list[str]:
     return [linha for linha in saida.splitlines() if linha.strip()]
 
 
+def _blob(revisao_e_caminho: str) -> str | None:
+    """Hash do blob de um caminho numa revisao (`HEAD:x`) ou no indice (`:x`)."""
+    r = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", revisao_e_caminho],
+        cwd=RAIZ,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    saida = r.stdout.strip()
+    return saida if r.returncode == 0 and saida else None
+
+
+def caminhos_herdados_de_merge() -> set[str]:
+    """Num merge, os caminhos cujo conteudo em stage veio inteiro de um pai.
+
+    `arquivos_em_stage()` usa `git diff --cached`, que compara o indice com HEAD
+    -- o PRIMEIRO pai. Num merge isso varre tambem tudo que veio do outro lado,
+    inclusive o que ja cumpriu sua obrigacao de ancora na branch de origem.
+
+    Medido em 2026-09-01: o merge da fusao `.cerebro` -> `.claude` recobrou 15
+    ancoras ja reconciliadas do lado remoto, em 12 caminhos cujo resultado era
+    byte a byte identico a ele. Reconciliar de novo nao acrescenta verificacao
+    -- so custa ao operador escrever parecer para mudanca que nao e dele, o que
+    empurra na direcao do parecer generico, e parecer generico e pior que
+    nenhum.
+
+    A regra: um caminho e DO MERGE quando difere de TODOS os pais -- e isso que
+    a resolucao de fato decidiu, e so isso e obrigacao de quem commita o merge.
+    Batendo com qualquer pai, foi herdado.
+
+    Fora de um merge devolve conjunto vazio, e nada muda.
+    """
+    git_dir = _git("rev-parse", "--git-dir").strip()
+    if not git_dir:
+        return set()
+    merge_head = (RAIZ / git_dir / "MERGE_HEAD").resolve()
+    if not merge_head.is_file():
+        return set()
+
+    pais = ["HEAD", *merge_head.read_text(encoding="utf-8").split()]
+    herdados: set[str] = set()
+    for rel in arquivos_em_stage():
+        no_indice = _blob(f":{rel}")
+        if not no_indice:
+            continue
+        if any(no_indice == _blob(f"{pai}:{rel}") for pai in pais):
+            herdados.add(rel)
+    return herdados
+
+
 def linhas_adicionadas(arquivo: str) -> list[str]:
     saida = _git("diff", "--cached", "--unified=0", "--diff-filter=ACM", "--", arquivo)
     return [line[1:] for line in saida.splitlines() if line.startswith("+") and not line.startswith("+++")]
@@ -419,7 +470,11 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
     # item precisa apontar o id existente, cobrir somente caminhos que aquele
     # registro declarou e explicar o parecer. A cobertura continua limitada aos
     # caminhos efetivamente tocados neste commit.
-    tocados = set(em_stage)
+    #
+    # Num merge, "tocado neste commit" exclui o que veio pronto de um dos pais:
+    # ver `caminhos_herdados_de_merge`. Fora de um merge o conjunto e vazio e
+    # esta linha nao muda nada.
+    tocados = set(em_stage) - caminhos_herdados_de_merge()
     supersedidos_em_stage: set[str] = set()
     revisoes_candidatas: list[tuple[str, str, set[str], str]] = []
     for rel in registros_em_stage:
