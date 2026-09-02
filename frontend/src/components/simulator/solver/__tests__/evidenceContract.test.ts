@@ -312,12 +312,23 @@ describe( 'Conservação de combos', () => {
 // === CARDINALIDADE / COMPARABILIDADE ===
 describe( 'Cardinalidade incompatível entre os cenários', () => {
   test( 'contagens diferentes de ações são SINALIZADAS', () => {
+    /*
+     * Nó em que se pode pedir mesa: um lado oferece uma sizing de aposta, o
+     * outro oferece duas. É a forma do par 4 da Aula 1.2.
+     *
+     * A versão anterior deste caso usava `[Check, Bet, Raise]` de um lado. Isso
+     * não é nó legal de pôquer — não se aumenta onde se pode pedir mesa —, e
+     * desde `classifyActionNoCenario` aquele `Raise` normaliza para `bet`. O
+     * caso foi reescrito para um nó legal em vez de ter sua expectativa
+     * ajustada ao novo comportamento: teste que só acompanha a implementação
+     * não verifica nada.
+     */
     const p = par(
-      cenario( 'chipEV', [ acao( 'Check', read( 50 ) ), acao( 'Bet', read( 50 ) ) ] ),
+      cenario( 'chipEV', [ acao( 'Check', read( 50 ) ), acao( 'Bet 50%', read( 50 ) ) ] ),
       cenario( 'icmEV', [
         acao( 'Check', read( 40 ) ),
-        acao( 'Bet', read( 40 ) ),
-        acao( 'Raise', read( 20 ) ),
+        acao( 'Bet 50%', read( 40 ) ),
+        acao( 'Bet 75%', read( 20 ) ),
       ] ),
     );
     const violations = validateEvidencePair( p );
@@ -326,6 +337,29 @@ describe( 'Cardinalidade incompatível entre os cenários', () => {
     // SINALIZADO, e deliberadamente NÃO bloqueante: ChipEV e ICMev são modelos
     // essencialmente distintos e não precisam oferecer as mesmas ações. A
     // divergência é restrição do solver, não defeito do dado.
+    expect( sinal[ 0 ].severity ).toBe( 'warning' );
+    expect( sinal[ 0 ].details ).toMatchObject( {
+      classesDivergentes: [ 'bet' ],
+    } );
+  } );
+
+  test( 'classe `raise` presente num só lado é sinalizada — em nó onde raise é legal', () => {
+    /*
+     * Diante de aposta pendente (o cenário oferece fold e call, não check), um
+     * `Raise` continua sendo `raise`. A normalização de all-in/raise para bet
+     * vale SÓ onde pedir mesa é opção; não é global.
+     */
+    const p = par(
+      cenario( 'chipEV', [ acao( 'Fold', read( 30 ) ), acao( 'Call', read( 70 ) ) ] ),
+      cenario( 'icmEV', [
+        acao( 'Fold', read( 30 ) ),
+        acao( 'Call', read( 60 ) ),
+        acao( 'Raise', read( 10 ) ),
+      ] ),
+    );
+    const sinal = validateEvidencePair( p )
+      .filter( v => v.code === 'ACTION_SET_INCOMPARABLE' );
+    expect( sinal ).toHaveLength( 1 );
     expect( sinal[ 0 ].severity ).toBe( 'warning' );
     expect( sinal[ 0 ].details ).toMatchObject( {
       classesDivergentes: [ 'raise' ],

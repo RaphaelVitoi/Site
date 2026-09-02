@@ -10,6 +10,8 @@
 import {
   validateEvidencePair,
   hasBlockingViolation,
+  classifyAction,
+  classifyActionNoCenario,
   DEFAULT_FREQUENCY_SUM_TOLERANCE_PCT,
   isRead,
   isUnreadable,
@@ -20,6 +22,9 @@ import {
   PAR_1_BB_LEADING,
   PAR_2_IP_APOS_CHECK,
   PAR_3_IP_VS_CBET_TURN,
+  PAR_4_OOP_RIVER,
+  CADEIA_TURN_RIVER,
+  PAINEL_CHIPEV_RIVER,
   ESCOPO_PRIMEIRO_CORTE,
   RANGES_PREFLOP,
   MESA_COMPLETA_NO_OPEN,
@@ -80,7 +85,7 @@ describe( 'Aula 1.2 — escopo e contexto pré-flop', () => {
 } );
 
 describe( 'Aula 1.2 — integridade das transcrições', () => {
-  it( 'os três pares carregam o mesmo SHA-256 da fonte', () => {
+  it( 'todos os pares carregam o mesmo SHA-256 da fonte', () => {
     const shas = new Set( AULA_1_2_PAIRS.map( p => p.source.documentSha256 ) );
     expect( shas.size ).toBe( 1 );
     expect( [ ...shas ][ 0 ] ).toMatch( /^[0-9a-f]{64}$/ );
@@ -118,10 +123,12 @@ describe( 'Aula 1.2 — conservação de combos do lado ChipEV', () => {
   // 752.61 + 0.22 = 752.83 vs 752.8 declarado
   // 24.4 + 306.02 + 32.14 + 8.38 = 370.94 vs 370.9 declarado
   // 61.32 + 188.36 + 0.01 + 2.27 = 251.96 vs 252 declarado
+  // 9.38 + 0.05 + 18.39 = 27.82 vs 27.8 declarado
   it.each( [
     [ 'par 1', PAR_1_BB_LEADING ],
     [ 'par 2', PAR_2_IP_APOS_CHECK ],
     [ 'par 3', PAR_3_IP_VS_CBET_TURN ],
+    [ 'par 4', PAR_4_OOP_RIVER ],
   ] )( '%s: os combos do ChipEV fecham dentro da tolerância', ( _nome, par ) => {
     const encontrados = codes( validateEvidencePair( par ) )
       .filter( c => c === 'COMBO_CONSERVATION_MISMATCH' );
@@ -178,8 +185,14 @@ describe( 'Aula 1.2 — comparabilidade: a regra precisa DISCRIMINAR', () => {
      * ChipEV oferece raise 23.4 e allin 35; ICMev oferece 17.44 e 32.81. As
      * classes de ação correspondem (a árvore de referência é a mesma: Bet
      * 20/50/75%, Raise 50%, all-in a partir de SPR 5), mas os valores em bb
-     * divergem porque o GTO Wizard modela stack efetiva 40/40 e o HRC modela
-     * as stacks reais 39.88/53.88 — potes diferentes no mesmo ramo.
+     * divergem.
+     *
+     * A CAUSA NÃO ESTÁ DETERMINADA. Uma versão anterior deste comentário
+     * afirmava que "o GTO Wizard modela stack efetiva 40/40 e o HRC modela as
+     * stacks reais 39.88/53.88 — potes diferentes no mesmo ramo". Isso foi
+     * DESCARTADO pelo autor da fonte: a stack efetiva é 40bb nos dois cenários
+     * antes do open. A explicação caiu junto com a premissa; a fixture já fora
+     * corrigida e este comentário era o resíduo.
      *
      * ChipEV e ICMev são modelos essencialmente distintos. Divergência entre
      * eles é fato observado sobre a árvore de cada motor, e o par continua
@@ -211,8 +224,119 @@ describe( 'Aula 1.2 — comparabilidade: a regra precisa DISCRIMINAR', () => {
   } );
 } );
 
+describe( 'Aula 1.2 — Etapa B: o river, e o que ele verifica da Etapa A', () => {
+  it( 'a cadeia turn → river fecha: pote, call e stacks', () => {
+    /*
+     * Duas capturas transcritas sem que uma informasse a outra. Encaixadas,
+     * fecham uma aritmética que nenhuma contém sozinha. Se um dígito do par 3
+     * ou do par 4 estivesse errado, estas igualdades quebrariam.
+     */
+    const c = CADEIA_TURN_RIVER;
+    expect( c.potTurnBb + c.callDoIpBb ).toBeCloseTo( c.potRiverBb, 5 );
+    expect( c.stackIpNoTurnBb - c.callDoIpBb ).toBeCloseTo( c.stackNoRiverBb, 5 );
+
+    // E os valores da cadeia são os MESMOS que as fixtures declaram.
+    const turn = PAR_3_IP_VS_CBET_TURN.context.potBb;
+    const river = PAR_4_OOP_RIVER.context.potBb;
+    expect( isRead( turn ) && turn.value ).toBe( c.potTurnBb );
+    expect( isRead( river ) && river.value ).toBe( c.potRiverBb );
+  } );
+
+  it( 'os combos do call no turn reaparecem como range do IP no river', () => {
+    // 188.36 (par 3, ação `Call`) contra 188.3 (par 4, painel do BTN).
+    // Nós distintos da mesma árvore; o número atravessa.
+    const call = PAR_3_IP_VS_CBET_TURN.chipEv.actions.find(
+      a => classifyAction( a.label ) === 'call',
+    );
+    expect( call ).toBeDefined();
+    const combos = call!.combos;
+    expect( combos ).toBeDefined();
+    expect( isRead( combos! ) ).toBe( true );
+    if ( isRead( combos! ) ) {
+      expect( combos.value ).toBe( CADEIA_TURN_RIVER.combosDoCallNoTurn );
+      expect( Math.abs( combos.value - PAINEL_CHIPEV_RIVER.btnIp.combos ) )
+        .toBeLessThanOrEqual( 0.1 );
+    }
+  } );
+
+  it( 'o glifo antes do EV é indicador de direção — prova interna, não leitura', () => {
+    /*
+     * Nenhum dos dois leitores decidiu o sinal; o Leitor 2 declarou não
+     * distingui-lo. Não é preciso: duas equidades complementares somam 100 e
+     * não podem ser ambas negativas, e os combos do BB reaparecem como a soma
+     * das ações. Prova interna, por mecanismo diferente do usado na Etapa A.
+     */
+    expect(
+      PAINEL_CHIPEV_RIVER.bbOop.equidadePct + PAINEL_CHIPEV_RIVER.btnIp.equidadePct,
+    ).toBeCloseTo( PAINEL_CHIPEV_RIVER.somaDasEquidadesPct, 5 );
+
+    const soma = PAR_4_OOP_RIVER.chipEv.actions.reduce( ( acc, a ) => {
+      const c = a.combos;
+      return acc + ( c !== undefined && isRead( c ) ? c.value : 0 );
+    }, 0 );
+    expect( soma ).toBeCloseTo( PAINEL_CHIPEV_RIVER.bbOop.combos, 1 );
+  } );
+
+  it( 'um all-in sem aposta pendente é BET, não raise — regra de pôquer', () => {
+    /*
+     * Não se aumenta onde se pode pedir mesa. O GTO Wizard escreve
+     * `Allin 27.2 (87%)` e o HRC escreve `bets 24.94bb` para o mesmo tipo de
+     * ramo; classificar por grafia recriaria, um nível acima, exatamente o
+     * defeito que `classifyAction` existe para eliminar.
+     */
+    const rotulo = 'Allin 27.2 (87%)';
+    expect( classifyAction( rotulo ) ).toBe( 'raise' );
+    expect( classifyActionNoCenario( rotulo, PAR_4_OOP_RIVER.chipEv ) ).toBe( 'bet' );
+
+    // E onde HÁ aposta pendente (par 3: o cenário oferece fold e call, não
+    // check), o all-in continua sendo raise. A correção não é global.
+    const allinDoTurn = PAR_3_IP_VS_CBET_TURN.chipEv.actions.find(
+      a => /allin/i.test( a.label ),
+    );
+    expect( allinDoTurn ).toBeDefined();
+    expect( classifyActionNoCenario( allinDoTurn!.label, PAR_3_IP_VS_CBET_TURN.chipEv ) )
+      .toBe( 'raise' );
+  } );
+
+  it( 'par 4 é incomparável por CARDINALIDADE de sizings, e isso é aviso', () => {
+    /*
+     * ICMev oferece três sizings de aposta onde o ChipEV oferece dois. É
+     * diferença real de árvore, não de nomenclatura — e restrição do solver,
+     * portanto nunca bloqueante.
+     */
+    const violacoes = validateEvidencePair( PAR_4_OOP_RIVER );
+    const incomparavel = violacoes.find( v => v.code === 'ACTION_SET_INCOMPARABLE' );
+    expect( incomparavel ).toBeDefined();
+    expect( incomparavel!.severity ).toBe( 'warning' );
+    expect( hasBlockingViolation( violacoes ) ).toBe( false );
+
+    // O motivo reportado NÃO pode ser um artefato do classificador: depois da
+    // normalização, nenhum dos lados tem `raise`.
+    const det = incomparavel!.details as {
+      chipEvPorClasse: Record<string, number>;
+      icmEvPorClasse: Record<string, number>;
+    };
+    expect( det.chipEvPorClasse.raise ).toBe( 0 );
+    expect( det.icmEvPorClasse.raise ).toBe( 0 );
+    expect( det.chipEvPorClasse.bet ).toBe( 2 );
+    expect( det.icmEvPorClasse.bet ).toBe( 3 );
+  } );
+
+  it( 'a soma 100.1% aparece pela terceira vez, agora no HRC pós-flop', () => {
+    // Par 2 (GTO Wizard), defesa pré-flop do BB (HRC) e agora o river do HRC.
+    // Três painéis, dois solvers: é padrão de exibição da fonte.
+    const soma = PAR_4_OOP_RIVER.icmEv.actions.reduce( ( acc, a ) => {
+      const f = a.frequencyPct;
+      return acc + ( f !== undefined && isRead( f ) ? f.value : 0 );
+    }, 0 );
+    expect( soma ).toBeCloseTo( 100.1, 5 );
+    expect( codes( validateEvidencePair( PAR_4_OOP_RIVER ) ) )
+      .not.toContain( 'FREQUENCY_SUM_MISMATCH' );
+  } );
+} );
+
 describe( 'Aula 1.2 — o que a evidência NÃO autoriza', () => {
-  it( 'os três pares são evidência válida: nenhum é descartado por divergir', () => {
+  it( 'todos os pares são evidência válida: nenhum é descartado por divergir', () => {
     const bloqueados = AULA_1_2_PAIRS.filter( p =>
       hasBlockingViolation( validateEvidencePair( p ) ),
     );
