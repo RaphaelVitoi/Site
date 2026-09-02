@@ -11,6 +11,7 @@ from aiohttp import web
 
 from database.lab_manager import LabManager
 from database.queue_manager import QueueManager
+from api.v1.keys import AUDIT_ENGINE_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
 
 try:
     from monitoring.audit_engine import AuditEngine  # type: ignore
@@ -89,10 +90,10 @@ def create_app(manager: QueueManager) -> web.Application:
             security_headers_middleware,
         ]
     )
-    app["manager"] = manager
-    app["lab_manager"] = LabManager()  # Instancia o DAO do Laboratorio SOTA
-    app["audit_engine"] = AuditEngine(manager)  # Instancia o Motor de Auditoria SOTA
-    app["start_time"] = time.time()
+    app[MANAGER_KEY] = manager
+    app[LAB_MANAGER_KEY] = LabManager()  # Instancia o DAO do Laboratorio SOTA
+    app[AUDIT_ENGINE_KEY] = AuditEngine(manager)  # Instancia o Motor de Auditoria SOTA
+    app[START_TIME_KEY] = time.time()
     app.add_routes(
         [
             web.get("/ping", handle_ping),
