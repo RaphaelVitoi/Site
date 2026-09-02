@@ -1,5 +1,7 @@
 /**
- * Evidência primária — Aula 1.2, três pares ChipEV × ICMev.
+ * Evidência primária — Aula 1.2, pares ChipEV × ICMev.
+ *
+ * ETAPA A (pares 1-3): flop e turn. ETAPA B (par 4): river.
  *
  * PROCEDÊNCIA
  * Documento de estudo autoral de Raphael Vitoi, mantido FORA do repositório.
@@ -8,10 +10,11 @@
  * lidos, com a procedência de cada um.
  *
  * MÉTODO — dupla leitura cega
- * Dois leitores independentes transcreveram as mesmas seis capturas sem acesso
- * à leitura um do outro. Resultado: concordância total em todos os dígitos,
- * zero conflitos. A dupla leitura corrigiu três coisas que leitor único não
- * pegaria, e as três estão refletidas neste arquivo:
+ * Dois leitores independentes transcreveram as mesmas oito capturas sem acesso
+ * à leitura um do outro — seis na Etapa A, duas na Etapa B. Resultado:
+ * concordância total em todos os dígitos, zero conflitos nas duas etapas. A
+ * dupla leitura corrigiu três coisas que leitor único não pegaria, e as três
+ * estão refletidas neste arquivo:
  *
  *   1. O glifo antes do campo EV é TRIÂNGULO DE DIREÇÃO, não sinal aritmético
  *      — provado internamente: o mesmo glifo precede `Equidade -35.2%`, e
@@ -35,7 +38,7 @@
  *      captura — tarefa executável.
  *
  * O QUE ESTE ARQUIVO NÃO AUTORIZA
- * Três pares transcritos NÃO são calibração. O ledger exige pares
+ * Quatro pares transcritos NÃO são calibração. O ledger exige pares
  * independentes E REPRODUZÍVEIS; reprodutibilidade não foi obtida — estes
  * números são transcrição de captura de terceiro, não medição própria. Versão
  * de solver, build e e-Nash seguem ausentes DESTAS capturas, e o ledger os
@@ -424,6 +427,186 @@ export const PAR_3_IP_VS_CBET_TURN: EvidencePair = {
 };
 
 /**
+ * PAR 4 — BB (OOP) age no RIVER, depois que o IP paga o turn.
+ *
+ * ChipEV: figura 35 (`image80.png`), nó 29.
+ * ICMev:  figura 52 (`image43.png`), nó 46.
+ *
+ * Ambas as capturas aparecem UMA ÚNICA VEZ no documento — verificado contra as
+ * 97 inserções de figura sobre 84 arquivos: nada de reuso, ao contrário de
+ * `image7.png` (4 inserções, 4 legendas) e dos nós 74/75/76, que reciclam as
+ * capturas de 39/41/42.
+ *
+ * ESTE PAR É A CONTINUAÇÃO DIRETA DO PAR 3, e a aritmética fecha sozinha —
+ * ver `CADEIA_TURN_RIVER`. É a primeira verificação da Etapa A por uma captura
+ * que não participou dela.
+ *
+ * DUAS OBSERVAÇÕES, nenhuma delas defeito:
+ *
+ * 1. O ICMev oferece TRÊS sizings de aposta (6.30 / 15.75 / 24.94bb) onde o
+ *    ChipEV oferece DUAS (7.80 e o all-in de 27.2). A divergência é de
+ *    cardinalidade da árvore, não de grafia — e por isso o par é sinalizado
+ *    `ACTION_SET_INCOMPARABLE`, que é aviso, não erro.
+ *
+ *    O que mudou desde o par 3: o all-in do ChipEV aqui NÃO é um raise. O BB
+ *    age primeiro no river, sem aposta pendente, então `Allin 27.2` e
+ *    `bets 24.94bb` são o mesmo tipo de ramo. `classifyActionNoCenario` passou
+ *    a normalizar isso; sem a correção, o relatório acusaria uma diferença
+ *    `raise 1 × 0` que só existia na nomenclatura. A divergência real (2 bets
+ *    contra 3) permanece e continua sendo reportada.
+ *
+ * 2. A soma das frequências do ICMev é 100.1% — 30.7 + 1.1 + 22.5 + 45.8.
+ *    Terceira ocorrência do mesmo arredondamento de exibição, e a PRIMEIRA no
+ *    HRC pós-flop (as anteriores foram o GTO Wizard no par 2 e o HRC no painel
+ *    pré-flop). Três painéis diferentes, dois solvers: é padrão da fonte.
+ *    Não normalizar.
+ *
+ * O QUE NÃO SE SABE: o pote do lado HRC continua fora do recorte. Os sizings
+ * 6.30 e 15.75 seriam 20% e 50% de um pote de 31.50 — próximo dos 31.23 do
+ * ChipEV, e coerente com a árvore declarada —, mas 31.50 é ARITMÉTICA
+ * REVERSA, não leitura. Não entra como valor medido e não vira explicação.
+ */
+export const PAR_4_OOP_RIVER: EvidencePair = {
+  source: {
+    documentSha256: AULA_1_2_SHA256,
+    figureIndex: 34, // 0-based; 35ª inserção de figura
+    nodeLabel:
+      '29 OOP action river after IP calls turn (river 3h) / 46 idem',
+  },
+  context: {
+    street: 'river',
+    board: read(BOARD_ATE_O_RIVER),
+    potBb: read(31.23),
+    // Remanescentes exibidos NESTE nó. A stack de referência do GTO Wizard
+    // continua sendo 40bb; ver MESA_COMPLETA_NO_OPEN.
+    players: [
+      { id: 'BB', position: 'OOP', stackBb: read(27.2) },
+      { id: 'BTN', position: 'IP', stackBb: read(27.2) },
+    ],
+  },
+  chipEv: {
+    regime: 'chipEV',
+    solver: 'GTO Wizard',
+    // Painel superior direito, linha `Combos` do BB (jogador da vez).
+    totalCombos: read(27.8),
+    actions: [
+      { label: 'Check', frequencyPct: read(33.7), combos: read(9.38) },
+      {
+        label: 'Bet 7.8 (25%)',
+        sizingBb: read(7.8),
+        frequencyPct: read(0.2),
+        combos: read(0.05),
+      },
+      {
+        label: 'Allin 27.2 (87%)',
+        sizingBb: read(27.2),
+        frequencyPct: read(66.1),
+        combos: read(18.39),
+      },
+    ],
+  },
+  icmEv: {
+    regime: 'icmEV',
+    solver: 'HRC',
+    totalCombos: unreadable(HRC_RECORTE_SEM_COMBOS),
+    actions: [
+      {
+        label: 'checks',
+        frequencyPct: read(30.7),
+        combos: unreadable(HRC_RECORTE_SEM_COMBOS),
+      },
+      {
+        label: 'bets 6.30bb',
+        sizingBb: read(6.3),
+        frequencyPct: read(1.1),
+        combos: unreadable(HRC_RECORTE_SEM_COMBOS),
+      },
+      {
+        label: 'bets 15.75bb',
+        sizingBb: read(15.75),
+        frequencyPct: read(22.5),
+        combos: unreadable(HRC_RECORTE_SEM_COMBOS),
+      },
+      {
+        label: 'bets 24.94bb',
+        sizingBb: read(24.94),
+        frequencyPct: read(45.8),
+        combos: unreadable(HRC_RECORTE_SEM_COMBOS),
+      },
+    ],
+  },
+};
+
+/**
+ * A CADEIA TURN → RIVER, e por que ela vale mais que os pares isolados.
+ *
+ * Os pares 3 e 4 foram transcritos de capturas diferentes, em sessões
+ * diferentes, sem que a leitura de uma informasse a outra. Encaixadas, fecham
+ * uma aritmética que nenhuma das duas contém sozinha:
+ *
+ *   pote do turn        23.43  (par 3, pote central da mesa)
+ *   + call do IP         7.80
+ *   = pote do river     31.23  (par 4, campo declarado)          ✓
+ *
+ *   stack do IP no turn 35.00  (par 3)
+ *   − call do IP         7.80
+ *   = 27.20 = stack do IP no river, e = stack do OOP             ✓
+ *
+ * E o mesmo 7.80 reaparece como sizing de `Bet 7.8 (25%)` no river, sobre um
+ * pote diferente — coincidência de valor, não de ramo.
+ *
+ * A CONTAGEM DE COMBOS FECHA O CIRCUITO POR OUTRO CAMINHO. No par 3 o IP paga
+ * o turn com 188.36 combos; no par 4 o painel do GTO Wizard exibe o range do
+ * BTN em 188.3 combos. São nós distintos da mesma árvore, e o número atravessa.
+ *
+ * Isto NÃO é calibração e não vira reprodutibilidade: continua sendo
+ * transcrição de captura de terceiro. O que estabelece é que a Etapa A foi
+ * lida corretamente — quatro identidades independentes teriam que falhar
+ * juntas para um erro de dígito sobreviver.
+ */
+export const CADEIA_TURN_RIVER = {
+  potTurnBb: 23.43,
+  callDoIpBb: 7.8,
+  potRiverBb: 31.23,
+  stackIpNoTurnBb: 35,
+  stackNoRiverBb: 27.2,
+  combosDoCallNoTurn: 188.36,
+  combosDoRangeIpNoRiver: 188.3,
+  nota:
+    'O cbet do OOP no turn foi 7.80 = 50% dos 15.63 de pote anteriores; o pote ' +
+    '23.43 do par 3 já o inclui, que é como o GTO Wizard exibe pote diante de aposta.',
+} as const;
+
+/**
+ * Painel superior direito da captura do par 4 (`image80.png`), lado ChipEV.
+ *
+ * O CONTRATO NÃO MODELA EV, e este objeto não o reintroduz pela porta dos
+ * fundos: ele existe porque encerra, com prova interna, a dúvida do glifo.
+ *
+ * Cada um dos oito campos vem precedido de uma marca curta. A dupla leitura
+ * cega registrou a marca sem decidir se era menos ou triângulo — o Leitor 2
+ * declarou explicitamente não distinguir na resolução disponível. Não é
+ * preciso distinguir:
+ *
+ *   equidade do BB + equidade do BTN = 51.26 + 48.74 = 100.00
+ *
+ * Duas equidades complementares não podem ser ambas negativas, e combos
+ * tampouco: 27.8 do BB reaparece como a soma das ações (18.39 + 0.05 + 9.38 =
+ * 27.82). A marca é INDICADOR DE DIREÇÃO, e agora está provado por um mecanismo
+ * interno diferente do que a Etapa A usou.
+ *
+ * Por isso os valores abaixo ficam SEM SINAL: o sinal nunca foi lido.
+ */
+export const PAINEL_CHIPEV_RIVER = {
+  bbOop: { ev: 18.33, equidadePct: 51.26, eqrPct: 114, combos: 27.8 },
+  btnIp: { ev: 12.9, equidadePct: 48.74, eqrPct: 85, combos: 188.3 },
+  somaDasEquidadesPct: 100.0,
+  glifo:
+    'indicador de direção do widget, não sinal aritmético — provado pela ' +
+    'complementaridade das equidades e pela positividade dos combos',
+} as const;
+
+/**
  * ESCOPO DO PRIMEIRO CORTE, por decisão do Tier 0.
  *
  * O objeto é o PÓS-FLOP APÓS O CALL DO BB: BTN abre min-raise, SB folda, BB
@@ -446,11 +629,12 @@ export const ESCOPO_PRIMEIRO_CORTE = {
     'posta 0.50bb (entra no pote) e é um dos nove assentos do ICM no HRC',
 } as const;
 
-/** Os três pares transcritos, na ordem em que aparecem no documento. */
+/** Os pares transcritos, na ordem em que aparecem no documento. */
 export const AULA_1_2_PAIRS: readonly EvidencePair[] = [
   PAR_1_BB_LEADING,
   PAR_2_IP_APOS_CHECK,
   PAR_3_IP_VS_CBET_TURN,
+  PAR_4_OOP_RIVER,
 ];
 
 /**

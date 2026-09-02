@@ -373,6 +373,41 @@ export function classifyAction( label: string ): ActionClass {
   return 'unknown';
 }
 
+/**
+ * A classe da ação DENTRO do cenário em que ela aparece.
+ *
+ * O rótulo sozinho não decide entre `bet` e `raise`, e a Etapa B expôs o caso:
+ * no nó de river em que o BB age primeiro, o GTO Wizard escreve
+ * `Allin 27.2 (87%)` enquanto o HRC escreve `bets 24.94bb`. O mesmo ramo —
+ * apostar toda a stack sem que haja aposta pendente — era classificado `raise`
+ * de um lado e `bet` do outro, puramente pela grafia. Isso é exatamente o
+ * defeito que `classifyAction` foi criada para eliminar, reaparecendo um nível
+ * acima.
+ *
+ * O discriminante é regra de pôquer, não heurística: **não se aumenta onde se
+ * pode pedir mesa**. Se o cenário oferece `check`, não há aposta pendente, e
+ * toda ação agressiva ali é `bet` — inclusive o all-in.
+ *
+ * Por que `check` e não `fold`: um `fold` a 0% aparece no HRC mesmo sem aposta
+ * pendente (par 1, o BB liderando o flop). `fold` não discrimina; `check` sim,
+ * porque pedir mesa e pagar são mutuamente excludentes.
+ *
+ * Isto NÃO faz par algum passar: no par 4 as contagens seguem divergentes
+ * (2 sizings de bet contra 3). O que muda é o motivo reportado deixar de ser
+ * um artefato do classificador e passar a ser a diferença real entre as duas
+ * árvores.
+ */
+export function classifyActionNoCenario(
+  label: string,
+  scenario: EvidenceScenario,
+): ActionClass {
+  const classe = classifyAction( label );
+  if ( classe !== 'raise' ) return classe;
+  const acoes = Array.isArray( scenario.actions ) ? scenario.actions : [];
+  const podePedirMesa = acoes.some( a => classifyAction( a.label ) === 'check' );
+  return podePedirMesa ? 'bet' : 'raise';
+}
+
 /** Sizings equivalentes dentro da tolerância declarada (absoluta ou relativa). */
 function sizingsEquivalentes(
   a: number,
@@ -430,7 +465,7 @@ function perfilar(
   };
 
   for ( const acao of scenario.actions ) {
-    const classe = classifyAction( acao.label );
+    const classe = classifyActionNoCenario( acao.label, scenario );
     if ( classe === 'fold' && !outroTemFold ) {
       const f = acao.frequencyPct;
       if ( f !== undefined && isRead( f ) && f.value === 0 ) continue;
