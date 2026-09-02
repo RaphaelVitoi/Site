@@ -3,7 +3,7 @@
  *
  * Estes testes existem porque "módulo que ninguém importa não é integração"
  * (CLAUDE.md §4). O contrato foi escrito contra fixtures sintéticas; aqui ele
- * encontra as três transcrições reais, em dupla leitura cega, e precisa
+ * encontra as seis transcrições reais, em dupla leitura cega, e precisa
  * discriminar entre um par legitimamente comparável e um par que não é.
  */
 
@@ -23,7 +23,13 @@ import {
   PAR_2_IP_APOS_CHECK,
   PAR_3_IP_VS_CBET_TURN,
   PAR_4_OOP_RIVER,
+  PAR_5_IP_VS_XR_FLOP,
+  PAR_6_BB_TURN_APOS_CALL,
   CADEIA_TURN_RIVER,
+  CADEIA_FLOP_TURN_RIVER,
+  ATRIBUICAO_AMBIGUA_NODELOCK,
+  NODELOCK_IP_CBET_SMALL,
+  HIPOTESE_BASE_DO_ALLIN,
   PAINEL_CHIPEV_RIVER,
   ESCOPO_PRIMEIRO_CORTE,
   RANGES_PREFLOP,
@@ -124,11 +130,15 @@ describe( 'Aula 1.2 — conservação de combos do lado ChipEV', () => {
   // 24.4 + 306.02 + 32.14 + 8.38 = 370.94 vs 370.9 declarado
   // 61.32 + 188.36 + 0.01 + 2.27 = 251.96 vs 252 declarado
   // 9.38 + 0.05 + 18.39 = 27.82 vs 27.8 declarado
+  // 113.13 + 252.95 + 4.82 + 0.01 = 370.91 vs 370.9 declarado
+  // 28.38 + 9.33 + 11.76 = 49.47 vs 49.5 declarado
   it.each( [
     [ 'par 1', PAR_1_BB_LEADING ],
     [ 'par 2', PAR_2_IP_APOS_CHECK ],
     [ 'par 3', PAR_3_IP_VS_CBET_TURN ],
     [ 'par 4', PAR_4_OOP_RIVER ],
+    [ 'par 5', PAR_5_IP_VS_XR_FLOP ],
+    [ 'par 6', PAR_6_BB_TURN_APOS_CALL ],
   ] )( '%s: os combos do ChipEV fecham dentro da tolerância', ( _nome, par ) => {
     const encontrados = codes( validateEvidencePair( par ) )
       .filter( c => c === 'COMBO_CONSERVATION_MISMATCH' );
@@ -332,6 +342,129 @@ describe( 'Aula 1.2 — Etapa B: o river, e o que ele verifica da Etapa A', () =
     expect( soma ).toBeCloseTo( 100.1, 5 );
     expect( codes( validateEvidencePair( PAR_4_OOP_RIVER ) ) )
       .not.toContain( 'FREQUENCY_SUM_MISMATCH' );
+  } );
+} );
+
+describe( 'Aula 1.2 — Etapa C: a linha inteira, e a ambiguidade que ela nao apaga', () => {
+  it( 'a cadeia flop -> turn -> river fecha em seis identidades', () => {
+    /*
+     * Quatro capturas, transcritas sem que uma informasse a outra. Um erro de
+     * digito em qualquer par quebraria pelo menos uma destas igualdades.
+     */
+    const c = CADEIA_FLOP_TURN_RIVER;
+    expect( c.flop.potBb + c.flop.callDoIpBb ).toBeCloseTo( c.turn.potBb, 5 );
+    expect( c.flop.stackBtnBb - c.flop.callDoIpBb ).toBeCloseTo( c.turn.stacksBb, 5 );
+    expect( c.turn.potBb * 0.5 ).toBeCloseTo( c.turn.cbetDe50PctBb, 1 );
+    expect( c.turn.potBb + c.turn.cbetDe50PctBb )
+      .toBeCloseTo( c.turnDianteDaAposta.potBb, 5 );
+    expect( c.turn.stacksBb - c.turn.cbetDe50PctBb )
+      .toBeCloseTo( c.turnDianteDaAposta.stackBbBb, 5 );
+    expect( c.turnDianteDaAposta.potBb + c.turnDianteDaAposta.callDoIpBb )
+      .toBeCloseTo( c.river.potBb, 5 );
+  } );
+
+  it( 'a cadeia bate com o que cada fixture declara — nao e numero paralelo', () => {
+    const c = CADEIA_FLOP_TURN_RIVER;
+    const potes: [ typeof PAR_5_IP_VS_XR_FLOP, number ][] = [
+      [ PAR_5_IP_VS_XR_FLOP, c.flop.potBb ],
+      [ PAR_6_BB_TURN_APOS_CALL, c.turn.potBb ],
+      [ PAR_3_IP_VS_CBET_TURN, c.turnDianteDaAposta.potBb ],
+      [ PAR_4_OOP_RIVER, c.river.potBb ],
+    ];
+    for ( const [ par, esperado ] of potes ) {
+      const p = par.context.potBb;
+      expect( isRead( p ) && p.value ).toBe( esperado );
+    }
+  } );
+
+  it( 'o range do IP de 370.9 atravessa tres capturas — e explicado pelo nodelock', () => {
+    /*
+     * 370.9 combos e o range INTEIRO do IP. So faz sentido no par 5 porque o
+     * lock obriga o IP a apostar 1.1 com 100% da mao; sem esse contexto, o
+     * numero pareceria defeito.
+     */
+    expect( NODELOCK_IP_CBET_SMALL.acoes.bet.frequencyPct ).toBe( 100 );
+    expect( NODELOCK_IP_CBET_SMALL.acoes.bet.combos )
+      .toBe( CADEIA_FLOP_TURN_RIVER.rangeDoIp );
+
+    const chip2 = PAR_2_IP_APOS_CHECK.chipEv.totalCombos;
+    const chip5 = PAR_5_IP_VS_XR_FLOP.chipEv.totalCombos;
+    expect( isRead( chip2! ) && chip2.value ).toBe( CADEIA_FLOP_TURN_RIVER.rangeDoIp );
+    expect( isRead( chip5! ) && chip5.value ).toBe( CADEIA_FLOP_TURN_RIVER.rangeDoIp );
+  } );
+
+  it( 'o shove 32.81bb do HRC no turn aparece em duas capturas independentes', () => {
+    const sizings = ( par: typeof PAR_3_IP_VS_CBET_TURN ) =>
+      par.icmEv.actions
+        .map( a => a.sizingBb )
+        .filter( s => s !== undefined && isRead( s ) )
+        .map( s => ( s as { value: number } ).value );
+    expect( sizings( PAR_3_IP_VS_CBET_TURN ) )
+      .toContain( CADEIA_FLOP_TURN_RIVER.shoveDoHrcNoTurnBb );
+    expect( sizings( PAR_6_BB_TURN_APOS_CALL ) )
+      .toContain( CADEIA_FLOP_TURN_RIVER.shoveDoHrcNoTurnBb );
+  } );
+
+  it( 'par 5 tem classes correspondentes e sizings divergentes — como o par 3', () => {
+    // Diante de aposta pendente nao ha `check`, entao `Allin 40` continua sendo
+    // raise. Os dois lados oferecem fold, call e dois raises.
+    const violacoes = validateEvidencePair( PAR_5_IP_VS_XR_FLOP );
+    const encontrados = codes( violacoes );
+    expect( encontrados ).not.toContain( 'ACTION_SET_INCOMPARABLE' );
+    expect( encontrados ).toContain( 'SIZING_CORRESPONDENCE_UNVERIFIABLE' );
+    expect( hasBlockingViolation( violacoes ) ).toBe( false );
+    expect( classifyActionNoCenario( 'Allin 40 (224%)', PAR_5_IP_VS_XR_FLOP.chipEv ) )
+      .toBe( 'raise' );
+  } );
+
+  it( 'par 6 repete a forma do par 4: cardinalidade de bets, e aviso', () => {
+    const violacoes = validateEvidencePair( PAR_6_BB_TURN_APOS_CALL );
+    const sinal = violacoes.find( v => v.code === 'ACTION_SET_INCOMPARABLE' );
+    expect( sinal ).toBeDefined();
+    expect( sinal!.severity ).toBe( 'warning' );
+    const det = sinal!.details as { chipEvPorClasse: Record<string, number>; icmEvPorClasse: Record<string, number> };
+    expect( det.chipEvPorClasse.raise ).toBe( 0 );
+    expect( det.chipEvPorClasse.bet ).toBe( 2 );
+    expect( det.icmEvPorClasse.bet ).toBe( 3 );
+    expect( hasBlockingViolation( violacoes ) ).toBe( false );
+  } );
+
+  it( 'a soma 100.1% chega a quarta ocorrencia, a segunda no GTO Wizard', () => {
+    const soma = PAR_6_BB_TURN_APOS_CALL.chipEv.actions.reduce( ( acc, a ) => {
+      const f = a.frequencyPct;
+      return acc + ( f !== undefined && isRead( f ) ? f.value : 0 );
+    }, 0 );
+    expect( soma ).toBeCloseTo( 100.1, 5 );
+    expect( codes( validateEvidencePair( PAR_6_BB_TURN_APOS_CALL ) ) )
+      .not.toContain( 'FREQUENCY_SUM_MISMATCH' );
+  } );
+
+  it( 'a ambiguidade de atribuicao esta DECLARADA nos dois pares que ela afeta', () => {
+    /*
+     * O documento reusa image55 e image45 entre passes de nodelock diferentes.
+     * Esconder isso tornaria os pares mais limpos e menos verdadeiros. Este
+     * teste falha se alguem apagar a ressalva do nodeLabel.
+     */
+    expect( ATRIBUICAO_AMBIGUA_NODELOCK.pendenteDeArbitragem ).toBe( true );
+    for ( const par of [ PAR_5_IP_VS_XR_FLOP, PAR_6_BB_TURN_APOS_CALL ] ) {
+      expect( par.source.nodeLabel ).toMatch( /ATRIBUIÇÃO AMBÍGUA/ );
+    }
+    // E a prova de que a atribuicao do documento e falivel continua registrada.
+    expect( NODELOCK_IP_CBET_SMALL.legendas ).toHaveLength( 3 );
+    expect( NODELOCK_IP_CBET_SMALL.legendas[ 2 ] ).toMatch( /INCOMPATÍVEL/ );
+  } );
+
+  it( 'a hipotese da base do all-in NAO vira explicacao', () => {
+    /*
+     * `Allin 40` contra `raises 37.88bb` e observacao numerica, nao causa. O
+     * Tier 0 descartou a explicacao de stacks efetivas distintas por regime, e
+     * a causa da divergencia de sizing segue NAO DETERMINADA. Este teste falha
+     * se alguem promover a hipotese a fato sem a recaptura que a falsificaria.
+     */
+    expect( HIPOTESE_BASE_DO_ALLIN.confirmada ).toBe( false );
+    expect( HIPOTESE_BASE_DO_ALLIN.causaDaDivergenciaDeSizing ).toBe( 'NAO DETERMINADA' );
+    expect( HIPOTESE_BASE_DO_ALLIN.icmEvAllinBb ).toBe( MESA_COMPLETA_NO_OPEN.efetivaPosFlopBb );
+    expect( HIPOTESE_BASE_DO_ALLIN.falsificador.length ).toBeGreaterThan( 0 );
   } );
 } );
 
