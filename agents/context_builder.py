@@ -497,9 +497,7 @@ async def _read_agent_and_project_contexts(agent_clean: str) -> tuple[str, str]:
                 agent_memory = _read_file_with_cache(str(memory_file)) or ""
 
         project_context = ""
-        context_file = Path(".claude/MODUSOPERANDI/project-context.md")
-        if not context_file.exists():
-            context_file = Path(".claude/project-context.md")
+        context_file = Path(".claude/project-context.md")
         if context_file.exists():
             project_context = _read_file_with_cache(str(context_file)) or ""
         if len(project_context) > 20000:
