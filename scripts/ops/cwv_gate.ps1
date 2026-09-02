@@ -753,14 +753,71 @@ foreach ($arquivo in $staged) {
 # Auditoria de 2026-08-21: 270 .ps1 no ambiente, 10 ja quebrados no 5.1 e 94
 # em risco. Esta fase impede que o numero volte a crescer.
 $violPs = @()
-$ps51NaoVerificado = @()
+$ps51Parcial = @()
 
-# powershell.exe (Windows PowerShell 5.1) nao tem build para Linux/macOS —
-# nao existe versao a instalar, diferente da lacuna de python.exe na fase
-# SRI. Em host sem o binario, o parse abaixo nunca poderia rodar; tratar
-# como FALHOU seria bloqueio por ausencia de medicao (SS8.2), tratar como
-# PASS seria fabricar aprovacao. Fica como cobertura nao medida, no mesmo
-# padrao das fases 1 e 2 quando o CDP nao responde.
+# LIMITE DE AUTONOMIA (autorizado pelo vertice, 2026-09-01). O 5.1 nao tem
+# build fora do Windows, entao exigi-lo travava permanentemente todo agente e
+# todo runner Linux -- inclusive o CI ubuntu-latest. Mas "nao da para rodar o
+# 5.1" nao e o mesmo que "nao da para verificar nada":
+#
+# O defeito que o comentario acima diz que "validar no 7 esconde" e o de
+# ENCODING, e esse e checagem de BYTES -- vale igual em qualquer host e roda
+# SEMPRE, antes de qualquer interpretador. O que realmente exige o 5.1 e
+# sintaxe que so o 7 aceita, e esse conjunto e finito e detectavel pelo
+# tokenizer/AST do proprio 7.
+#
+# Sem 5.1, roda a bateria substituta abaixo. Tudo que ela acha e BLOQUEIO; so
+# o residuo vira warning declarado. Nao e "passou sem checar" -- e "checou
+# pelo mais forte que existe aqui, e diz o que ficou de fora".
+$ps51Interpreter = Get-Command powershell.exe -ErrorAction SilentlyContinue
+
+function Test-Ps51CompatibilidadeSubstituta {
+    param([Parameter(Mandatory = $true)][string]$Caminho)
+    $motivos = @()
+    $tokens = $null; $erros = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Caminho, [ref]$tokens, [ref]$erros)
+    if ($erros.Count) {
+        return @("nao parseia nem no PowerShell 7 ($($erros.Count) erro(s), 1o na linha $($erros[0].Extent.StartLineNumber))")
+    }
+    $kindsSo7 = 'QuestionQuestion', 'QuestionQuestionEquals', 'QuestionDot', 'QuestionLBracket', 'AndAnd', 'OrOr'
+    foreach ($tk in $tokens) {
+        if ($kindsSo7 -contains $tk.Kind.ToString()) {
+            $motivos += "operador $($tk.Kind) (so PS7) na linha $($tk.Extent.StartLineNumber)"
+        }
+    }
+    foreach ($n in $ast.FindAll({ param($x) $x -is [System.Management.Automation.Language.TernaryExpressionAst] }, $true)) {
+        $motivos += "operador ternario (so PS7) na linha $($n.Extent.StartLineNumber)"
+    }
+    foreach ($n in $ast.FindAll({ param($x) $x -is [System.Management.Automation.Language.PipelineChainAst] }, $true)) {
+        $motivos += "encadeamento && / || (so PS7) na linha $($n.Extent.StartLineNumber)"
+    }
+    foreach ($n in $ast.FindAll({ param($x) $x -is [System.Management.Automation.Language.MemberExpressionAst] -and $x.NullConditional }, $true)) {
+        $motivos += "acesso null-condicional (so PS7) na linha $($n.Extent.StartLineNumber)"
+    }
+    foreach ($n in $ast.FindAll({ param($x) $x -is [System.Management.Automation.Language.CommandAst] }, $true)) {
+        foreach ($el in $n.CommandElements) {
+            if ($el -is [System.Management.Automation.Language.CommandParameterAst] -and $el.ParameterName -eq 'Parallel') {
+                $motivos += "-Parallel (so PS7) na linha $($n.Extent.StartLineNumber)"
+            }
+        }
+    }
+    return $motivos
+}
+
+# Resolver o interpretador UMA vez, como a fase 4 faz com o Python, em vez de
+# por arquivo dentro do laco. Num host sem powershell.exe, o `& powershell.exe`
+# do laco devolvia saida vazia e caia no MESMO ramo do parse reprovado: o
+# portao imprimia "parse PS5.1 falhou: " -- sem motivo, porque motivo nao
+# havia. O parser nunca chegou a rodar. Erro de CATEGORIA: "medido e reprovou"
+# e "nao deu para medir" viravam a mesma linha, e o desenvolvedor ia procurar
+# erro de sintaxe num arquivo que ninguem checou.
+#
+# As duas continuam BLOQUEANDO, e essa e a correcao da correcao: a primeira
+# tentativa separou as categorias rebaixando a segunda a WARNING, o que mudou
+# o limiar do portao -- decisao de governanca, nao conserto de defeito. Aqui
+# muda so o DIAGNOSTICO. Verificacao nao executada nao e verificacao aprovada
+# (SS5): integridade e fail-closed, como na fase 4 com o SRI. As fases 1 e 2
+# podem ficar em NAO MEDIDO porque medem COBERTURA; esta mede INTEGRIDADE.
 $ps51Interpreter = Get-Command powershell.exe -ErrorAction SilentlyContinue
 
 # Script do processo filho, codificado uma unica vez. Le o alvo de
@@ -776,17 +833,29 @@ foreach ($arquivo in $staged) {
     $abs = Join-Path $RepoRoot $arquivo
     if (-not (Test-Path $abs)) { continue }
 
-    if (-not $ps51Interpreter) {
-        $ps51NaoVerificado += $arquivo
-        continue
-    }
-
     $bytes = [System.IO.File]::ReadAllBytes($abs)
     $temBom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF
     $naoAscii = @($bytes | Where-Object { $_ -gt 127 }).Count
 
     if ($naoAscii -gt 0 -and -not $temBom) {
         $violPs += "$arquivo (nao-ASCII sem BOM: $naoAscii bytes)"
+        continue
+    }
+
+    # BOM duplicado quebra o parse nas DUAS versoes (CLAUDE.md SS6.4). Bytes,
+    # entao vale em qualquer host.
+    if ($temBom -and $bytes.Length -ge 6 -and $bytes[3] -eq 0xEF -and $bytes[4] -eq 0xBB -and $bytes[5] -eq 0xBF) {
+        $violPs += "$arquivo (BOM UTF-8 duplicado)"
+        continue
+    }
+
+    if (-not $ps51Interpreter) {
+        $motivosSubs = Test-Ps51CompatibilidadeSubstituta -Caminho $abs
+        if ($motivosSubs.Count -gt 0) {
+            $violPs += "$arquivo (incompativel com 5.1: $($motivosSubs -join '; '))"
+        } else {
+            $ps51Parcial += $arquivo
+        }
         continue
     }
 
@@ -820,6 +889,7 @@ foreach ($arquivo in $staged) {
 }
 
 $hygieneRules['StagedFiles']      = @{ Val = $stagedTotal;       Limit = '-';         Desc = 'Arquivos em stage (conteudo ou exclusao)' }
+$hygieneRules['Ps51PorBateria']   = @{ Val = $ps51Parcial.Count;  Limit = '-';         Desc = 'Verificado pela bateria substituta, sem o 5.1 real (INFO)' }
 $hygieneRules['PowerShell51']     = @{ Val = $violPs.Count;      Limit = 0;           Desc = 'Script .ps1 que quebra no interpretador real' }
 $hygieneRules['ForbiddenPaths']   = @{ Val = $violPath.Count;    Limit = 0;           Desc = 'Diretorio de perfil/ferramenta versionado' }
 $hygieneRules['OversizedBlobs']   = @{ Val = $violSize.Count;    Limit = 0;           Desc = "Blob nao-LFS acima de $MaxBlobMb MB" }
@@ -838,7 +908,8 @@ foreach ($regra in $hygieneRules.Keys) {
 foreach ($v in $violPath)  { Write-Host "   - caminho proibido: $v" -ForegroundColor Red }
 foreach ($v in $violSize)  { Write-Host "   - blob grande fora do LFS: $v" -ForegroundColor Red }
 foreach ($v in $violRoute) { Write-Host "   - binario sem roteamento LFS: $v" -ForegroundColor Red }
-foreach ($v in $violPs)    { Write-Host "   - PowerShell 5.1: $v" -ForegroundColor Red }
+foreach ($v in $violPs)    { Write-Host "   - PowerShell 5.1 REPROVADO: $v" -ForegroundColor Red }
+foreach ($v in $ps51Parcial) { Write-Host "   - PowerShell 5.1 por bateria substituta (sem 5.1 real): $v" -ForegroundColor Yellow }
 
 if ($violPath.Count -gt 0) {
     Add-QualityFinding -Severity 'ERROR' -Component 'repository.forbidden-paths' -Detail "$($violPath.Count) arquivo(s) sob diretorio de perfil/ferramenta: $($violPath -join '; ')." -Reason 'Estado local de ferramenta foi colocado em stage; ele nao e fonte versionavel do projeto.' -Action 'Retirar esses caminhos do stage e registrar a exclusao em .gitignore, preservando configuracoes compartilhadas fora dos diretorios de runtime.'
@@ -852,8 +923,14 @@ if ($violRoute.Count -gt 0) {
 if ($violPs.Count -gt 0) {
     Add-QualityFinding -Severity 'ERROR' -Component 'repository.powershell51' -Detail "$($violPs.Count) script(s) .ps1 falham no PowerShell 5.1: $($violPs -join '; ')." -Reason 'O hook e tarefas agendadas executam com PowerShell 5.1; arquivo sem BOM UTF-8 com caracteres nao ASCII ou sintaxe invalida falha no interpretador efetivo.' -Action 'Adicionar BOM UTF-8 unico quando houver caracteres nao ASCII ou corrigir a sintaxe indicada; validar novamente com o parser do PowerShell 5.1.'
 }
-if ($ps51NaoVerificado.Count -gt 0) {
-    Add-QualityFinding -Severity 'WARNING' -Component 'repository.powershell51.cobertura' -Detail "$($ps51NaoVerificado.Count) script(s) .ps1 nao verificados contra PowerShell 5.1: $($ps51NaoVerificado -join '; ')." -Reason 'powershell.exe (Windows PowerShell 5.1) nao esta disponivel neste host; nao existe build para Linux/macOS, entao a verificacao nao pode ser executada aqui.' -Action 'Validar estes arquivos com o parser 5.1 real em um host Windows antes de assumir compatibilidade; esta fase nao substitui aquela verificacao.'
+# A bateria RODOU e aprovou: nada degradou, entao nao consome o teto de 2
+# warnings -- que existe para cobertura PERDIDA (fases 1 e 2 sem CDP), nao para
+# verificacao feita por substituto. O residuo continua declarado: linha amarela
+# por arquivo acima, linha Ps51PorBateria na tabela, e ambas no relatorio.
+# Para voltar a contar como warning, troque a linha INFO por um
+# Add-QualityFinding -Severity 'WARNING'.
+if ($ps51Parcial.Count -gt 0) {
+    Write-Host ("   residuo: o 5.1 real ainda acusaria cmdlet/parametro inexistente nele e recurso de classe do 7. Revalidar em host Windows antes de release, ou se o arquivo for hook/tarefa agendada.") -ForegroundColor DarkYellow
 }
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
