@@ -104,9 +104,35 @@ class SOTACache:
 
 
 # Backward Compatibility SOTA v6.2.1
+def _chave_de_arquivo(path: str) -> str:
+    """Chave de cache que inclui o mtime, para edicao invalidar sozinha.
+
+    Ate 2026-09-01 a chave era so `file:<caminho>`. Como o Tier 2 e EM DISCO
+    (temp/nexus_zone/cache, TTL 3600 s), documento editado continuava servindo a
+    versao velha por ate uma hora -- inclusive em processo novo, porque reiniciar
+    nao limpa disco.
+
+    Medido no mesmo dia: a correcao dos 14 caminhos de
+    docs/document_manifest.json nao teve efeito NENHUM sobre o system prompt do
+    @auditor (100.797 caracteres antes e depois). So depois de
+    `rm temp/nexus_zone/cache/*.json` os 216.330 apareceram. Um documento de
+    governanca corrigido e um worker reiniciado nao bastavam, e nada avisava.
+
+    Com o mtime na chave, arquivo editado gera chave nova e erra o cache
+    naturalmente. A entrada velha nao e removida: expira sozinha pelo TTL, o que
+    mantem esta funcao sem efeito colateral de escrita.
+    """
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        # Arquivo ausente: chave estavel, e o chamador cai no caminho de disco.
+        return f"file:{path}"
+    return f"file:{path}:{mtime}"
+
+
 def _read_file_cached_internal(path: str) -> str:
     """Internal legacy cached reader."""
-    return cache.get(f"file:{path}") or ""
+    return cache.get(_chave_de_arquivo(path)) or ""
 
 
 def _read_file_with_cache(path: str) -> str:
@@ -116,7 +142,7 @@ def _read_file_with_cache(path: str) -> str:
         try:
             with open(path, encoding="utf-8", errors="ignore") as f:
                 val = f.read()
-                cache.set(f"file:{path}", val)
+                cache.set(_chave_de_arquivo(path), val)
         except Exception:
             return ""
     return val

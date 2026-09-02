@@ -159,9 +159,7 @@ async def _read_memory_and_context(agent_clean: str) -> tuple[str, str]:
                 agent_memory = await f.read()
 
     project_context = ""
-    context_file = Path(".claude/MODUSOPERANDI/project-context.md")
-    if not context_file.exists():
-        context_file = Path(".claude/project-context.md")
+    context_file = Path(".claude/project-context.md")
     if context_file.exists():
         async with aiofiles.open(context_file, encoding="utf-8") as f:
             project_context = await f.read()
