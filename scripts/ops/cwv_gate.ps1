@@ -804,22 +804,6 @@ function Test-Ps51CompatibilidadeSubstituta {
     return $motivos
 }
 
-# Resolver o interpretador UMA vez, como a fase 4 faz com o Python, em vez de
-# por arquivo dentro do laco. Num host sem powershell.exe, o `& powershell.exe`
-# do laco devolvia saida vazia e caia no MESMO ramo do parse reprovado: o
-# portao imprimia "parse PS5.1 falhou: " -- sem motivo, porque motivo nao
-# havia. O parser nunca chegou a rodar. Erro de CATEGORIA: "medido e reprovou"
-# e "nao deu para medir" viravam a mesma linha, e o desenvolvedor ia procurar
-# erro de sintaxe num arquivo que ninguem checou.
-#
-# As duas continuam BLOQUEANDO, e essa e a correcao da correcao: a primeira
-# tentativa separou as categorias rebaixando a segunda a WARNING, o que mudou
-# o limiar do portao -- decisao de governanca, nao conserto de defeito. Aqui
-# muda so o DIAGNOSTICO. Verificacao nao executada nao e verificacao aprovada
-# (SS5): integridade e fail-closed, como na fase 4 com o SRI. As fases 1 e 2
-# podem ficar em NAO MEDIDO porque medem COBERTURA; esta mede INTEGRIDADE.
-$ps51Interpreter = Get-Command powershell.exe -ErrorAction SilentlyContinue
-
 # Script do processo filho, codificado uma unica vez. Le o alvo de
 # $env:SOTA_PS51_ALVO — o caminho e DADO, nunca texto de comando.
 $EncPs51 = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes(
@@ -842,7 +826,7 @@ foreach ($arquivo in $staged) {
         continue
     }
 
-    # BOM duplicado quebra o parse nas DUAS versoes (CLAUDE.md SS6.4). Bytes,
+    # BOM duplicado quebra o parse nas DUAS versoes (CLAUDE.md §6.4). Bytes,
     # entao vale em qualquer host.
     if ($temBom -and $bytes.Length -ge 6 -and $bytes[3] -eq 0xEF -and $bytes[4] -eq 0xBB -and $bytes[5] -eq 0xBF) {
         $violPs += "$arquivo (BOM UTF-8 duplicado)"
@@ -908,7 +892,7 @@ foreach ($regra in $hygieneRules.Keys) {
 foreach ($v in $violPath)  { Write-Host "   - caminho proibido: $v" -ForegroundColor Red }
 foreach ($v in $violSize)  { Write-Host "   - blob grande fora do LFS: $v" -ForegroundColor Red }
 foreach ($v in $violRoute) { Write-Host "   - binario sem roteamento LFS: $v" -ForegroundColor Red }
-foreach ($v in $violPs)    { Write-Host "   - PowerShell 5.1 REPROVADO: $v" -ForegroundColor Red }
+foreach ($v in $violPs)    { Write-Host "   - PowerShell 5.1: $v" -ForegroundColor Red }
 foreach ($v in $ps51Parcial) { Write-Host "   - PowerShell 5.1 por bateria substituta (sem 5.1 real): $v" -ForegroundColor Yellow }
 
 if ($violPath.Count -gt 0) {
@@ -925,10 +909,11 @@ if ($violPs.Count -gt 0) {
 }
 # A bateria RODOU e aprovou: nada degradou, entao nao consome o teto de 2
 # warnings -- que existe para cobertura PERDIDA (fases 1 e 2 sem CDP), nao para
-# verificacao feita por substituto. O residuo continua declarado: linha amarela
-# por arquivo acima, linha Ps51PorBateria na tabela, e ambas no relatorio.
-# Para voltar a contar como warning, troque a linha INFO por um
-# Add-QualityFinding -Severity 'WARNING'.
+# verificacao feita por substituto. Sem isso, toda alteracao de .ps1 por agente
+# gastaria uma das duas vagas e a autonomia autorizada nao existiria na pratica.
+# O residuo continua declarado: linha abaixo, linha Ps51PorBateria na tabela, e
+# ambas no relatorio. Para voltar a contar como warning, troque a linha abaixo
+# por um Add-QualityFinding -Severity 'WARNING'.
 if ($ps51Parcial.Count -gt 0) {
     Write-Host ("   residuo: o 5.1 real ainda acusaria cmdlet/parametro inexistente nele e recurso de classe do 7. Revalidar em host Windows antes de release, ou se o arquivo for hook/tarefa agendada.") -ForegroundColor DarkYellow
 }

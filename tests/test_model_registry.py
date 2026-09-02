@@ -16,6 +16,7 @@ from llm.adapters import (
     GoogleGenAIAdapter,
     OpenAIAdapter,
     ParametroRejeitadoError,
+    aplicar_padding_neutro,
     build_request,
 )
 from llm.model_registry import (
@@ -185,8 +186,6 @@ def test_custo_cresce_com_tokens():
 
 def test_padding_neutro_limite_contexto():
     """Verifica se payloads na fronteira de 32k-40k tokens recebem padding neutro."""
-    from llm.adapters import aplicar_padding_neutro
-
     # Payload pequeno (sem padding)
     pequeno = [{"role": "user", "parts": [{"text": "Hello world"}]}]
     assert aplicar_padding_neutro(pequeno) == pequeno

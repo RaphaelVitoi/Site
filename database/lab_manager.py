@@ -1,9 +1,12 @@
 """
 Gerenciamento e persistencia de dados experimentais e cenarios SOTA (Lab Manager).
 """
+from __future__ import annotations
 
+import json
 import logging
 import sqlite3
+import uuid
 from pathlib import Path
 
 import aiosqlite
@@ -49,9 +52,6 @@ class LabManager:
 
     async def save_pmev_benchmark_study(self, study_data: dict[str, str | float | int]) -> bool:
         """Persiste um estudo quantitativo de benchmark PMev no banco do laboratorio."""
-        import json
-        import uuid
-
         try:
             async with aiosqlite.connect(self.db_path) as db:
                 await db.execute(

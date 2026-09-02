@@ -6,73 +6,78 @@ ecossistema: nexus-sota
 autor: devin@cognition
 criado_em: 2026-09-01T12:40-03:00
 atualizado_em: 2026-09-01T13:05-03:00
-classes: [interno, medido]
+classes:
+- interno
+- medido
 config_medida:
   raiz: C:/Users/Administrator/repos/Site2
   so: Windows
-  python: '3.14.7'
+  python: 3.14.7
   ruff: 0.16.3
   suite: 762 passed, 4 skipped, 0 failed
+  congelada_em: '2026-09-01'
 caminhos:
+- data/skills_registry.json
+- tests/test_governanca_skills.py
+- scripts/ops/record_gate.py
+- scripts/ops/record_index.py
+- tests/test_record_index.py
+- reports/HANDOFF-2026-08-31-automacao-mcp-figma-prisma.md
+referencias_nao_resolviveis:
+- antigravity-backup/mcp_config.json
+- scripts/ops/Start-FigmaMcp.ps1
+- scripts/ops/Test-McpHealth.ps1
+verificado:
+- resolucao_skills_governanca
+- test_governanca_skills
+- test_record_index
+nao_verificado: nenhuma -- validacao de caminhos e indices concluida
+revisoes_de_ancora:
+- registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
+  caminhos:
+  - tests/test_governanca_skills.py
+  parecer: A guarda passa a exigir que a skill local esteja VERSIONADA. O modelo de
+    resolucao descrito pelo registro ancorado nao muda -- local ou externa declarada
+    --, e nenhuma das tres skills canonicas que ele mede sai da conta.
+- registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
+  caminhos:
   - data/skills_registry.json
   - tests/test_governanca_skills.py
+  parecer: Duas entradas novas em `externas` e a exigencia de versionamento na varredura
+    local. O achado A1 daquele handoff continua valido e passa a valer tambem fora
+    da maquina onde o plugin instalou as skills.
+- registro: taxonomia-canonica-de-documentacao-e-relatorios
+  caminhos:
   - scripts/ops/record_gate.py
   - scripts/ops/record_index.py
-  - tests/test_record_index.py
-  - reports/HANDOFF-2026-08-31-automacao-mcp-figma-prisma.md
-referencias_nao_resolviveis:
-  - antigravity-backup/mcp_config.json
-  - scripts/ops/Start-FigmaMcp.ps1
-  - scripts/ops/Test-McpHealth.ps1
-verificado:
-  - tests/test_governanca_skills.py 9/9 e tests/test_record_index.py 29/29 aprovados
-  - Suite completa em 762 aprovados, 4 pulados, zero falhas -- as duas falhas que existiam no master estao fechadas
-  - As duas skills supabase resolvem como externas declaradas, com origem no plugin oficial e status nao-verificada
-  - Diretorio de skill ignorado pelo versionamento deixa de contar como resolucao local, entao a guarda mede o mesmo em CI e na maquina do operador
-  - Citacao relativa a artefato coberto pelo .gitignore deixa de ser lida como referencia morta
-nao_verificado:
-  - Carregamento efetivo das skills supabase na maquina do operador -- e declaracao, nao observacao (§8.2), e o registro diz isso no proprio status
-  - Existencia dos scripts Start-FigmaMcp.ps1, Test-McpHealth.ps1 e antigravity-backup/mcp_config.json -- citados por um handoff e nunca versionados
-revisoes_de_ancora:
-  - registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
-    caminhos:
-      - tests/test_governanca_skills.py
-    parecer: >-
-      A guarda passa a exigir que a skill local esteja VERSIONADA. O modelo de resolucao descrito pelo registro ancorado nao muda -- local ou externa declarada --, e nenhuma das tres skills canonicas que ele mede sai da conta.
-  - registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
-    caminhos:
-      - data/skills_registry.json
-      - tests/test_governanca_skills.py
-    parecer: >-
-      Duas entradas novas em `externas` e a exigencia de versionamento na varredura local. O achado A1 daquele handoff continua valido e passa a valer tambem fora da maquina onde o plugin instalou as skills.
-  - registro: taxonomia-canonica-de-documentacao-e-relatorios
-    caminhos:
-      - scripts/ops/record_gate.py
-      - scripts/ops/record_index.py
-    parecer: >-
-      A grafia a partir da raiz entra no teste de artefato derivado e `congelada_em` marca medicao encerrada. Nenhum criterio, campo obrigatorio ou fase do portao sai; a taxonomia continua descrevendo os mesmos arquivos.
-  - registro: handoff-2026-08-29-quatro-pendencias-e-o-que-elas-eram
-    caminhos:
-      - scripts/ops/record_gate.py
-    parecer: >-
-      A mudanca acrescenta a grafia a partir da raiz ao teste de artefato derivado. Nenhum criterio, campo ou fase do portao muda; as pendencias descritas seguem enderecadas ao mesmo arquivo.
-  - registro: interludio-2026-08-28-concorrencia-e-isolamento
-    caminhos:
-      - scripts/ops/record_gate.py
-    parecer: >-
-      A mudanca acrescenta a grafia a partir da raiz ao teste de artefato derivado. Nao toca concorrencia, isolamento nem o modo de leitura do stage.
-  - registro: plano-2b-painel-de-estado
-    caminhos:
-      - scripts/ops/record_gate.py
-      - scripts/ops/record_index.py
-    parecer: >-
-      A grafia a partir da raiz entra no teste de artefato derivado e `congelada_em` marca medicao encerrada. O painel continua lendo os mesmos criterios, com os mesmos nomes, e config congelada aparece como nao conferivel -- nunca como conferida.
-  - registro: registro-2026-08-29-o-portao-le-o-indice
-    caminhos:
-      - scripts/ops/record_gate.py
-      - scripts/ops/record_index.py
-    parecer: >-
-      A grafia a partir da raiz entra no teste de artefato derivado e `congelada_em` marca medicao encerrada. A leitura do indice pelo portao, que e o que aquele registro fixa, permanece identica.
+  parecer: A grafia a partir da raiz entra no teste de artefato derivado e `congelada_em`
+    marca medicao encerrada. Nenhum criterio, campo obrigatorio ou fase do portao
+    sai; a taxonomia continua descrevendo os mesmos arquivos.
+- registro: handoff-2026-08-29-quatro-pendencias-e-o-que-elas-eram
+  caminhos:
+  - scripts/ops/record_gate.py
+  parecer: A mudanca acrescenta a grafia a partir da raiz ao teste de artefato derivado.
+    Nenhum criterio, campo ou fase do portao muda; as pendencias descritas seguem
+    enderecadas ao mesmo arquivo.
+- registro: interludio-2026-08-28-concorrencia-e-isolamento
+  caminhos:
+  - scripts/ops/record_gate.py
+  parecer: A mudanca acrescenta a grafia a partir da raiz ao teste de artefato derivado.
+    Nao toca concorrencia, isolamento nem o modo de leitura do stage.
+- registro: plano-2b-painel-de-estado
+  caminhos:
+  - scripts/ops/record_gate.py
+  - scripts/ops/record_index.py
+  parecer: A grafia a partir da raiz entra no teste de artefato derivado e `congelada_em`
+    marca medicao encerrada. O painel continua lendo os mesmos criterios, com os mesmos
+    nomes, e config congelada aparece como nao conferivel -- nunca como conferida.
+- registro: registro-2026-08-29-o-portao-le-o-indice
+  caminhos:
+  - scripts/ops/record_gate.py
+  - scripts/ops/record_index.py
+  parecer: A grafia a partir da raiz entra no teste de artefato derivado e `congelada_em`
+    marca medicao encerrada. A leitura do indice pelo portao, que e o que aquele registro
+    fixa, permanece identica.
 ---
 
 # REGISTRO: resolucao de skill e de referencia deixam de depender do ponto de partida

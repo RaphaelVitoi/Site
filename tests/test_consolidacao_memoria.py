@@ -3,7 +3,7 @@
 Tres arvores com o mesmo `MEMORY.md`, 19 de 19 divergindo, e o laco agentico
 aberto: os agentes gravavam numa arvore e o RAG lia de outra. A consolidacao
 nao escolhe vencedor -- `.claude/agent-memory` guarda memoria **semantica**
-(fatos curados) e `.cerebro/agent-memory` guarda **episodica** (log de handoffs);
+(fatos curados) e `.claude/agent-memory` guarda **episodica** (log de handoffs);
 sao naturezas diferentes, e o script preserva as duas em secoes distintas.
 
 Dois defeitos apareceram so porque o segundo estado foi conferido, e os dois

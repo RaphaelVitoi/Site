@@ -1,6 +1,7 @@
 # ARQUITETURA DO CEREBRO HIBRIDO (IDE Assistant  Background Executor)
 
-> **Status:** Ativo e Integrado (Workflow v6.4 - Quartetos Dinamicos & Economia Generalizada)
+> **Status:** Ativo e Integrado (Workflow v8.0 GOLD - Quartetos Dinamicos & Economia Generalizada)
+> **Última revisão:** 2026-09-01 · Protocolo Chico SOTA v8.0 GOLD
 > **Objetivo (Economia Generalizada x Estado da Arte):** Maximizar a capacidade cognitiva usando assinaturas premium na IDE (custo marginal zero). A API local opera exclusivamente no Free Tier (Gemini/Google). "Economia" aqui transcende o financeiro: significa otimizacao de latencia, gestao cirurgica de contexto (evitando rate-limits) e zero desperdicio de energia computacional e humana.
 
 ## O Paradigma

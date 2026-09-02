@@ -130,7 +130,7 @@ async def get_agent_system_prompt(agent_name: str) -> str:
         agent_clean = agent_name.replace("@", "").replace("/", "").replace("\\", "").replace(".", "")
 
         # 1. Base Global (A Alma do Sistema)
-        global_content = _read_file_with_cache(str(Path(".cerebro/governance/GLOBAL_INSTRUCTIONS.md")))
+        global_content = _read_file_with_cache(str(Path(".claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md")))
         if global_content:
             system_prompt_parts.append(f"=== INSTRUCOES GLOBAIS ===\n{global_content}\n\n")
 

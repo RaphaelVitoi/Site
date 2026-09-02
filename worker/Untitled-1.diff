@@ -1,0 +1,2257 @@
+diff --git a/core/autopoiesis_engine.py b/core/autopoiesis_engine.py
+index b36fd3db..cf0d2da9 100644
+--- a/core/autopoiesis_engine.py
++++ b/core/autopoiesis_engine.py
+@@ -15,8 +15,6 @@ import sys
+ import time
+ from dataclasses import dataclass, field
+ from pathlib import Path
+-from typing import Dict, List, Optional, Tuple
+-
+ BASE_DIR = Path(__file__).resolve().parent.parent
+ NEXUS_ZONE = BASE_DIR / "temp" / "nexus_zone"
+ LOCK_FILE = NEXUS_ZONE / "homeostasis.lock"
+@@ -39,15 +37,15 @@ class HomeostasisReport:
+     timestamp: str
+     overall_status: str  # "SUCESSO (VERDE)" | "FRAGIL (AMARELO)" | "FALHOU (VERMELHO)"
+     entropy_index: float  # 0.0 = Homeostase Pura
+-    subsystems: Dict[str, SubsystemHealth] = field(default_factory=dict)
+-    actions_taken: List[str] = field(default_factory=list)
+-    remediation_required: List[str] = field(default_factory=list)
++    subsystems: dict[str, SubsystemHealth] = field(default_factory=dict)
++    actions_taken: list[str] = field(default_factory=list)
++    remediation_required: list[str] = field(default_factory=list)
+
+
+ class AutopoiesisEngine:
+     """Motor central de homeostase, autocura e controle de concorrencia."""
+
+-    def __init__(self, base_dir: Optional[Path] = None):
++    def __init__(self, base_dir: Path | None = None):
+         self.base_dir = base_dir or BASE_DIR
+         self.nexus_zone = self.base_dir / "temp" / "nexus_zone"
+         self.nexus_zone.mkdir(parents=True, exist_ok=True)
+@@ -76,7 +74,7 @@ class AutopoiesisEngine:
+         """Libera trava de processo."""
+         LOCK_FILE.unlink(missing_ok=True)
+
+-    def check_and_heal_agents_drift(self) -> Tuple[bool, str]:
++    def check_and_heal_agents_drift(self) -> tuple[bool, str]:
+         """Detecta se a realidade dos agentes esta desatualizada e sincroniza proativamente."""
+         manifest_file = self.base_dir / "data" / "agents_manifest.json"
+         agents_dir = self.base_dir / ".claude" / "agents"
+@@ -108,7 +106,7 @@ class AutopoiesisEngine:
+
+         return False, "Realidade dos agentes 100% sincronizada."
+
+-    def check_and_heal_temps_entropy(self) -> Tuple[int, str]:
++    def check_and_heal_temps_entropy(self) -> tuple[int, str]:
+         """Purga pastas e arquivos temporarios obsoletos e orfaos."""
+         now = time.time()
+         purged = 0
+@@ -136,7 +134,7 @@ class AutopoiesisEngine:
+         )
+         return purged, msg
+
+-    def check_and_heal_sqlite_wal(self) -> Tuple[bool, str]:
++    def check_and_heal_sqlite_wal(self) -> tuple[bool, str]:
+         """Verifica integridade do banco SQLite e aciona VACUUM/WAL checkpoint se necessario."""
+         db_path = self.nexus_zone / "runtime" / "queue" / "tasks.db"
+         if not db_path.exists():
+diff --git a/core/causal_graph.py b/core/causal_graph.py
+index 8e9df89b..d0261dee 100644
+--- a/core/causal_graph.py
++++ b/core/causal_graph.py
+@@ -10,7 +10,7 @@ import json
+ import sqlite3
+ from datetime import datetime, timezone
+ from pathlib import Path
+-from typing import Any, Dict, List, Optional, Set
++from typing import Any
+ from pydantic import BaseModel, Field
+
+
+@@ -18,7 +18,7 @@ class CausalNode(BaseModel):
+     id: str = Field(..., min_length=1, max_length=100, description="Identificador unico (ex: pmev_dynamic_fold)")
+     label: str = Field(..., min_length=1, max_length=200)
+     category: str = Field(default="THEORY", pattern="^(THEORY|AXIOM|METRIC|SOLVER|AGENT|DIRECTIVE)$")
+-    properties: Dict[str, Any] = Field(default_factory=dict)
++    properties: dict[str, Any] = Field(default_factory=dict)
+     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+@@ -27,11 +27,11 @@ class CausalEdge(BaseModel):
+     target_id: str
+     relation: str = Field(..., pattern="^(SUPPLANTS|OPTIMIZES|DEPENDS_ON|MITIGATES|CAUSES|EXPANDS)$")
+     weight: float = Field(default=1.0, ge=0.0, le=1.0)
+-    metadata: Dict[str, Any] = Field(default_factory=dict)
++    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+ class CausalGraphEngine:
+-    def __init__(self, db_path: Optional[Path] = None):
++    def __init__(self, db_path: Path | None = None):
+         if db_path is None:
+             base_dir = Path(__file__).resolve().parent.parent
+             self.db_path = base_dir / "database" / "knowledge_graph.db"
+@@ -104,8 +104,8 @@ class CausalGraphEngine:
+         """DFS para checar se o no target ja atinge o no source direta ou indiretamente."""
+         if source == target:
+             return True
+-        visited: Set[str] = set()
+-        stack: List[str] = [target]
++        visited: set[str] = set()
++        stack: list[str] = [target]
+         with self._get_connection() as conn:
+             while stack:
+                 curr = stack.pop()
+@@ -118,7 +118,7 @@ class CausalGraphEngine:
+                         stack.append(row["target_id"])
+         return False
+
+-    def query_node(self, node_id: str) -> Dict[str, Any]:
++    def query_node(self, node_id: str) -> dict[str, Any]:
+         with self._get_connection() as conn:
+             row = conn.execute("SELECT * FROM causal_nodes WHERE id = ?", (node_id,)).fetchone()
+             if not row:
+@@ -148,7 +148,7 @@ class CausalGraphEngine:
+                 "effects": [dict(e) for e in effects],
+             }
+
+-    def list_nodes(self, category: Optional[str] = None) -> List[Dict[str, Any]]:
++    def list_nodes(self, category: str | None = None) -> list[dict[str, Any]]:
+         with self._get_connection() as conn:
+             if category:
+                 rows = conn.execute(
+diff --git a/core/quantum_tensor_engine.pyi b/core/quantum_tensor_engine.pyi
+index b6bde61a..4806f386 100644
+--- a/core/quantum_tensor_engine.pyi
++++ b/core/quantum_tensor_engine.pyi
+@@ -3,7 +3,6 @@
+ # pyright: reportUnusedVariable=false
+ """Type stub definitions for quantum_tensor_engine C++ AVX2 extension module."""
+
+-from typing import Tuple, Union
+ import numpy as np
+ import numpy.typing as npt
+
+@@ -13,18 +12,18 @@ class TensorDimensionError(RuntimeError):
+     pass
+
+ def calculate_perspective_simd(
+-    equity: Union[FloatArray, npt.ArrayLike],
+-    pot: Union[FloatArray, npt.ArrayLike],
++    equity: FloatArray | npt.ArrayLike,
++    pot: FloatArray | npt.ArrayLike,
+     human_noise_factor: float = 0.05,
+ ) -> FloatArray: ...
+ def solve_icm_distortion_simd(
+-    fold_arr: Union[FloatArray, npt.ArrayLike],
+-    call_arr: Union[FloatArray, npt.ArrayLike],
+-    raise_arr: Union[FloatArray, npt.ArrayLike],
+-    ip_rp_arr: Union[FloatArray, npt.ArrayLike],
+-    oop_rp_arr: Union[FloatArray, npt.ArrayLike],
+-    pot_size_arr: Union[FloatArray, npt.ArrayLike],
++    fold_arr: FloatArray | npt.ArrayLike,
++    call_arr: FloatArray | npt.ArrayLike,
++    raise_arr: FloatArray | npt.ArrayLike,
++    ip_rp_arr: FloatArray | npt.ArrayLike,
++    oop_rp_arr: FloatArray | npt.ArrayLike,
++    pot_size_arr: FloatArray | npt.ArrayLike,
+     topologic_aggression: float,
+     active_players: int,
+     street_idx: int,
+-) -> Tuple[FloatArray, FloatArray, FloatArray]: ...
++) -> tuple[FloatArray, FloatArray, FloatArray]: ...
+diff --git a/core/sota_binary_matcher.py b/core/sota_binary_matcher.py
+index 9bb522b9..711a3716 100644
+--- a/core/sota_binary_matcher.py
++++ b/core/sota_binary_matcher.py
+@@ -3,15 +3,12 @@ SOTA High-Performance Binary Search & Context Resolution Engine
+ Protocol Chico SOTA v7.0 GOLD - Raymond Hill (uBOL) Algorithmic Port for Python / Nexus
+ """
+
+-from typing import List, Optional, Tuple
+-
+-
+-def sort_key(s: str) -> Tuple[int, str]:
++def sort_key(s: str) -> tuple[int, str]:
+     """Chave canonica de ordenacao: Comprimento ascendente, depois ordem alfabetica."""
+     return (len(s), s)
+
+
+-def binary_search_length_lex(haystack: List[str], needle: str, high: Optional[int] = None) -> int:
++def binary_search_length_lex(haystack: list[str], needle: str, high: int | None = None) -> int:
+     """
+     Executa busca binaria de alta precisao baseada em comprimento e ordem lexicografica.
+     """
+@@ -38,7 +35,7 @@ def binary_search_length_lex(haystack: List[str], needle: str, high: Optional[in
+     return ~mid
+
+
+-def compute_domain_hierarchy(hostname: str) -> List[str]:
++def compute_domain_hierarchy(hostname: str) -> list[str]:
+     """
+     Decompoe um hostname hierarquicamente em sufixos e coringas.
+     Ex: 'app.sub.gemini.google.com' -> ['app.sub.gemini.google.com', 'sub.gemini.google.com', 'gemini.google.com', 'google.com', 'com', '*']
+diff --git a/core/sota_context_engine.py b/core/sota_context_engine.py
+index e35e9b0f..11235c19 100644
+--- a/core/sota_context_engine.py
++++ b/core/sota_context_engine.py
+@@ -11,7 +11,7 @@ import logging
+ import time
+ from dataclasses import dataclass, field
+ from enum import Enum
+-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
++from typing import Any, Callable, Type, TypeVar
+ from pydantic import BaseModel
+
+ logger = logging.getLogger(__name__)
+@@ -40,7 +40,7 @@ class ContextBucket:
+     last_accessed: float = field(default_factory=time.time)
+     ttl_seconds: int = 3600
+     token_count: int = 0
+-    payload: Dict[str, Any] = field(default_factory=dict)
++    payload: dict[str, Any] = field(default_factory=dict)
+     hash_signature: str = ""
+     # Medido uma vez, na criacao. `token_count` e uma estimativa (chars // 4) e
+     # serve para orcamento de prompt; para teto de MEMORIA o que vale e byte.
+@@ -58,7 +58,7 @@ class SotaContextCacheEngine:
+
+     def __init__(self, max_cache_size_mb: int = 4096):
+         self.max_cache_size_mb = max_cache_size_mb
+-        self.buckets: Dict[str, ContextBucket] = {}
++        self.buckets: dict[str, ContextBucket] = {}
+
+     def compute_signature(self, text: str) -> str:
+         """Calcula a assinatura criptografica SHA-256 para prefix-caching."""
+@@ -146,12 +146,12 @@ class StructuredOutputEngine:
+     """Validador e Forcador de Esquemas JSON Estritos / Pydantic."""
+
+     @staticmethod
+-    def generate_json_schema(model_cls: Type[T]) -> dict:
++    def generate_json_schema(model_cls: type[T]) -> dict:
+         """Exporta o JSON Schema estrito do Pydantic para injection em LLMs."""
+         return model_cls.model_json_schema()
+
+     @staticmethod
+-    def enforce_pydantic(payload_str: str, model_cls: Type[T]) -> T:
++    def enforce_pydantic(payload_str: str, model_cls: type[T]) -> T:
+         """Parseia e valida deterministicamente a saida da IA contra o contrato."""
+         try:
+             # Limpeza de blocos de markdown caso o modelo tenha emitido ```json
+@@ -225,19 +225,19 @@ class HookType(str, Enum):
+ class HookContext:
+     hook_type: HookType
+     agent_name: str
+-    payload: Dict[str, Any]
+-    metadata: Dict[str, Any] = field(default_factory=dict)
++    payload: dict[str, Any]
++    metadata: dict[str, Any] = field(default_factory=dict)
+     approved: bool = True
+-    rejection_reason: Optional[str] = None
++    rejection_reason: str | None = None
+
+
+ class SotaHookBus:
+     """Barramento de Hooks e Interceptores Agenticos SOTA."""
+
+     def __init__(self):
+-        self._inspect_hooks: List[Callable[[HookContext], None]] = []
+-        self._decide_hooks: List[Callable[[HookContext], bool]] = []
+-        self._transform_hooks: List[Callable[[HookContext], Dict[str, Any]]] = []
++        self._inspect_hooks: list[Callable[[HookContext], None]] = []
++        self._decide_hooks: list[Callable[[HookContext], bool]] = []
++        self._transform_hooks: list[Callable[[HookContext], dict[str, Any]]] = []
+
+     def register_inspect(self, fn: Callable[[HookContext], None]) -> None:
+         self._inspect_hooks.append(fn)
+@@ -245,7 +245,7 @@ class SotaHookBus:
+     def register_decide(self, fn: Callable[[HookContext], bool]) -> None:
+         self._decide_hooks.append(fn)
+
+-    def register_transform(self, fn: Callable[[HookContext], Dict[str, Any]]) -> None:
++    def register_transform(self, fn: Callable[[HookContext], dict[str, Any]]) -> None:
+         self._transform_hooks.append(fn)
+
+     def trigger_inspect(self, ctx: HookContext) -> None:
+@@ -269,7 +269,7 @@ class SotaHookBus:
+                 return False
+         return True
+
+-    def trigger_transform(self, ctx: HookContext) -> Dict[str, Any]:
++    def trigger_transform(self, ctx: HookContext) -> dict[str, Any]:
+         data = ctx.payload
+         for hook in self._transform_hooks:
+             try:
+diff --git a/engine/vitoi_perspective_engine.py b/engine/vitoi_perspective_engine.py
+index b621ca0d..e58c0f00 100644
+--- a/engine/vitoi_perspective_engine.py
++++ b/engine/vitoi_perspective_engine.py
+@@ -20,7 +20,7 @@ type PlayerIndex = int
+
+
+ # ==============================================================================
+-# 1. NÚCLEO DA ETAPA 1: EV_dyn(fold) & BYSTANDER DRIFT
++# 1. NUCLEO DA ETAPA 1: EV_dyn(fold) & BYSTANDER DRIFT
+ # ==============================================================================
+
+ @dataclass(frozen=True, slots=True)
+@@ -79,13 +79,13 @@ class DynamicFoldEngine:
+                 shorter_stack = min(stack_j, stack_k)
+                 larger_stack = max(stack_j, stack_k)
+
+-                # 1. Probabilidade de all-in: Stacks mais curtos sofrem maior urgência de all-in
++                # 1. Probabilidade de all-in: Stacks mais curtos sofrem maior urgencia de all-in
+                 p_allin = math.exp(-0.08 * shorter_stack)
+
+-                # 2. Probabilidade de eliminação do stack menor no confronto
++                # 2. Probabilidade de eliminacao do stack menor no confronto
+                 p_elim = larger_stack / max(EPSILON, stack_j + stack_k)
+
+-                # 3. Salto de equidade para o Hero ao subir de colocação
++                # 3. Salto de equidade para o Hero ao subir de colocacao
+                 hero_share = self._state.stacks[hero_idx] / max(EPSILON, self._state.total_chips - shorter_stack)
+                 payjump_value = (total_payout / max(1, n)) * 0.40
+
+@@ -109,7 +109,7 @@ class DynamicFoldEngine:
+
+
+ # ==============================================================================
+-# 2. NÚCLEO DA ETAPA 2: REALIZAÇÃO (R) & PASSIVO MULTIWAY (L_multi)
++# 2. NUCLEO DA ETAPA 2: REALIZACAO (R) & PASSIVO MULTIWAY (L_multi)
+ # ==============================================================================
+
+ @dataclass(frozen=True, slots=True)
+@@ -150,7 +150,7 @@ class PerspectiveActionEvaluator:
+
+
+ # ==============================================================================
+-# 3. NÚCLEO DA ETAPA 3: UTILIDADE PROSPECTIVA & PRÊMIO DE RISCO DINÂMICO
++# 3. NUCLEO DA ETAPA 3: UTILIDADE PROSPECTIVA & PREMIO DE RISCO DINAMICO
+ # ==============================================================================
+
+ @dataclass(frozen=True, slots=True)
+diff --git a/llm/routing_policy.py b/llm/routing_policy.py
+index 6d4858e8..544fe1f6 100644
+--- a/llm/routing_policy.py
++++ b/llm/routing_policy.py
+@@ -128,7 +128,7 @@ class Rota:
+     # externo decai pelo TEMPO, nao por diff.
+     #
+     # O gatilho real e o release do fornecedor. A cada upgrade a fronteira de
+-    # capacidade se move e papeis migram — sempre na mesma direcao, do barato e
++    # capacidade se move e papeis migram -- sempre na mesma direcao, do barato e
+     # especializado para o caro e generalista, porque cada release torna o
+     # modelo de fronteira plausivelmente capaz da tarefa barata e nada empurra
+     # de volta. Deriva com direcao nao se corrige na media.
+@@ -200,7 +200,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
+             "Faixa gratuita ANTES de preco unitario. A Luna e mais barata por "
+             "token ($0.20/$1.20) mas nao tem cota livre; o Flash tem. "
+             "COTA LIVRE VENCE PRECO UNITARIO MENOR QUANDO A QUALIDADE NAO "
+-            "DISCRIMINA — e uma regra de desempate DENTRO do custo, aplicavel "
++            "DISCRIMINA -- e uma regra de desempate DENTRO do custo, aplicavel "
+             "so depois que a analise de custo-beneficio concluiu que a "
+             "qualidade nao e o fator decisivo nesta classe. A Luna fica como "
+             "fallback pago."
+@@ -473,7 +473,7 @@ TTL_ROTA_DIAS = 90
+ def rotas_suspeitas(hoje: date | None = None, *, ttl_dias: int = TTL_ROTA_DIAS) -> dict[ClasseTarefa, str]:
+     """Rotas cuja ancora de capacidade venceu, ou que nunca foi declarada.
+
+-    Existe para que os campos de ancora nao virem dado que ninguem le — falha
++    Existe para que os campos de ancora nao virem dado que ninguem le -- falha
+     que esta propria tabela ja cometeu com `Rota.fallback`, que ate 2026-08-27
+     so era lido por `economia_do_escalonamento` como substituto do degrau caro,
+     e nunca no caminho de decisao para o qual foi escrito. Hoje `decidir()` o
+diff --git a/memory/notepad_memory.py b/memory/notepad_memory.py
+index f576838f..810b5411 100644
+--- a/memory/notepad_memory.py
++++ b/memory/notepad_memory.py
+@@ -7,12 +7,12 @@ import json
+ import threading
+ import time
+ from pathlib import Path
+-from typing import Any, Dict, List, Optional
++from typing import Any
+
+
+ class MemoryBlock:
+     def __init__(
+-        self, key: str, title: str, content: str, tags: Optional[List[str]] = None, ttl_seconds: Optional[int] = None
++        self, key: str, title: str, content: str, tags: list[str] | None = None, ttl_seconds: int | None = None
+     ):
+         self.key = key
+         self.title = title
+@@ -27,7 +27,7 @@ class MemoryBlock:
+             return False
+         return (time.time() - self.updated_at) > self.ttl_seconds
+
+-    def to_dict(self) -> Dict[str, Any]:
++    def to_dict(self) -> dict[str, Any]:
+         return {
+             "key": self.key,
+             "title": self.title,
+@@ -39,7 +39,7 @@ class MemoryBlock:
+         }
+
+     @classmethod
+-    def from_dict(cls, data: Dict[str, Any]) -> "MemoryBlock":
++    def from_dict(cls, data: dict[str, Any]) -> "MemoryBlock":
+         block = cls(
+             key=data["key"],
+             title=data["title"],
+@@ -58,10 +58,10 @@ class NotepadMemory:
+     Permite compartilhamento de estado, hipoteses, planos de acao e checkpointing entre subagentes.
+     """
+
+-    def __init__(self, storage_path: Optional[Path] = None):
++    def __init__(self, storage_path: Path | None = None):
+         self.storage_path = storage_path or (Path(__file__).parent / "notepad_state.json")
+         self.markdown_path = self.storage_path.parent / "notepad_active.md"
+-        self._blocks: Dict[str, MemoryBlock] = {}
++        self._blocks: dict[str, MemoryBlock] = {}
+         self._lock = threading.RLock()
+         self._load()
+
+@@ -90,7 +90,7 @@ class NotepadMemory:
+             self.markdown_path.write_text(self.render_markdown(), encoding="utf-8")
+
+     def write_block(
+-        self, key: str, title: str, content: str, tags: Optional[List[str]] = None, ttl_seconds: Optional[int] = None
++        self, key: str, title: str, content: str, tags: list[str] | None = None, ttl_seconds: int | None = None
+     ) -> MemoryBlock:
+         with self._lock:
+             if key in self._blocks:
+@@ -106,7 +106,7 @@ class NotepadMemory:
+             self.flush()
+             return block
+
+-    def read_block(self, key: str) -> Optional[MemoryBlock]:
++    def read_block(self, key: str) -> MemoryBlock | None:
+         with self._lock:
+             block = self._blocks.get(key)
+             if block and block.is_expired():
+@@ -123,7 +123,7 @@ class NotepadMemory:
+                 return True
+             return False
+
+-    def list_blocks(self, tag_filter: Optional[str] = None) -> List[MemoryBlock]:
++    def list_blocks(self, tag_filter: str | None = None) -> list[MemoryBlock]:
+         with self._lock:
+             self._evict_expired_internal()
+             blocks = list(self._blocks.values())
+diff --git a/memory/replay_buffer.py b/memory/replay_buffer.py
+index 2b749490..4bf9c0f6 100644
+--- a/memory/replay_buffer.py
++++ b/memory/replay_buffer.py
+@@ -4,7 +4,7 @@ Protocol Chico SOTA v7.0 GOLD - Prioritized Experience Replay (PER) & Agent Stat
+ """
+
+ import threading
+-from typing import Any, Dict, List, NamedTuple, Optional, Tuple
++from typing import Any, NamedTuple
+
+ import numpy as np
+
+@@ -15,7 +15,7 @@ class Transition(NamedTuple):
+     reward: float
+     next_state: Any
+     done: bool
+-    info: Dict[str, Any]
++    info: dict[str, Any]
+
+
+ class SumTree:
+@@ -65,7 +65,7 @@ class SumTree:
+         self.tree[idx] = priority
+         self._propagate(idx, change)
+
+-    def get(self, s: float) -> Tuple[int, float, Any]:
++    def get(self, s: float) -> tuple[int, float, Any]:
+         idx = self._retrieve(0, s)
+         data_idx = idx - self.capacity + 1
+         return idx, self.tree[idx], self.data[data_idx]
+@@ -83,7 +83,7 @@ class PrioritizedReplayMemory:
+         alpha: float = 0.6,
+         beta: float = 0.4,
+         beta_increment: float = 0.001,
+-        seed: Optional[int] = None,
++        seed: int | None = None,
+     ):
+         self.tree = SumTree(capacity)
+         self.capacity = capacity
+@@ -95,16 +95,16 @@ class PrioritizedReplayMemory:
+         self._rng = np.random.default_rng(seed)
+
+     def push(
+-        self, state: Any, action: Any, reward: float, next_state: Any, done: bool, info: Optional[Dict[str, Any]] = None
++        self, state: Any, action: Any, reward: float, next_state: Any, done: bool, info: Optional[dict[str, Any]] = None
+     ):
+         """Armazena uma transicao de agente com prioridade maxima inicial."""
+         transition = Transition(state, action, reward, next_state, done, info or {})
+         priority = self.max_priority**self.alpha
+         self.tree.add(priority, transition)
+
+-    def sample(self, batch_size: int) -> Tuple[List[Transition], np.ndarray, np.ndarray]:
++    def sample(self, batch_size: int) -> tuple[list[Transition], np.ndarray, np.ndarray]:
+         """Amostra um lote de transicoes proporcionalmente a prioridade de TD-error."""
+-        batch: List[Transition] = []
++        batch: list[Transition] = []
+         idxs = np.zeros(batch_size, dtype=np.int32)
+         priorities = np.zeros(batch_size, dtype=np.float64)
+
+diff --git a/memory_rag.py b/memory_rag.py
+index 78e69d62..96997ac6 100644
+--- a/memory_rag.py
++++ b/memory_rag.py
+@@ -394,7 +394,7 @@ class MemoryRAG:
+         # Ate 2026-08-27 entrava como nome solto, e nome solto casa QUALQUER
+         # diretorio homonimo em qualquer profundidade. O alvo pretendido era
+         # `reports/cwv` (384 artefatos regerados a cada portao), mas o efeito
+-        # colateral foi excluir tambem `docs/reports/` — 20 auditorias e
++        # colateral foi excluir tambem `docs/reports/` -- 20 auditorias e
+         # handovers que sao fonte declarada no manifesto. Medido sob o
+         # manifesto de producao: 467 arquivos com o filtro cego, 487 com este.
+         #
+diff --git a/quantum_tensor_engine.pyi b/quantum_tensor_engine.pyi
+index b6bde61a..4806f386 100644
+--- a/quantum_tensor_engine.pyi
++++ b/quantum_tensor_engine.pyi
+@@ -3,7 +3,6 @@
+ # pyright: reportUnusedVariable=false
+ """Type stub definitions for quantum_tensor_engine C++ AVX2 extension module."""
+
+-from typing import Tuple, Union
+ import numpy as np
+ import numpy.typing as npt
+
+@@ -13,18 +12,18 @@ class TensorDimensionError(RuntimeError):
+     pass
+
+ def calculate_perspective_simd(
+-    equity: Union[FloatArray, npt.ArrayLike],
+-    pot: Union[FloatArray, npt.ArrayLike],
++    equity: FloatArray | npt.ArrayLike,
++    pot: FloatArray | npt.ArrayLike,
+     human_noise_factor: float = 0.05,
+ ) -> FloatArray: ...
+ def solve_icm_distortion_simd(
+-    fold_arr: Union[FloatArray, npt.ArrayLike],
+-    call_arr: Union[FloatArray, npt.ArrayLike],
+-    raise_arr: Union[FloatArray, npt.ArrayLike],
+-    ip_rp_arr: Union[FloatArray, npt.ArrayLike],
+-    oop_rp_arr: Union[FloatArray, npt.ArrayLike],
+-    pot_size_arr: Union[FloatArray, npt.ArrayLike],
++    fold_arr: FloatArray | npt.ArrayLike,
++    call_arr: FloatArray | npt.ArrayLike,
++    raise_arr: FloatArray | npt.ArrayLike,
++    ip_rp_arr: FloatArray | npt.ArrayLike,
++    oop_rp_arr: FloatArray | npt.ArrayLike,
++    pot_size_arr: FloatArray | npt.ArrayLike,
+     topologic_aggression: float,
+     active_players: int,
+     street_idx: int,
+-) -> Tuple[FloatArray, FloatArray, FloatArray]: ...
++) -> tuple[FloatArray, FloatArray, FloatArray]: ...
+diff --git a/scripts/cli/nexus.py b/scripts/cli/nexus.py
+index f85f8ee1..ef243783 100644
+--- a/scripts/cli/nexus.py
++++ b/scripts/cli/nexus.py
+@@ -2659,7 +2659,7 @@ def run_thematic_test_suite(
+
+     if isolado:
+         # Worktree proprio: indice git proprio, e nenhuma interferencia com o
+-        # working tree — nem com outra sessao rodando ao mesmo tempo.
++        # working tree -- nem com outra sessao rodando ao mesmo tempo.
+         cmd = [
+             sys.executable,
+             str(BASE_DIR / "scripts" / "ops" / "suite_isolada.py"),
+diff --git a/scripts/maintenance/audit_infrastructure_pillars.py b/scripts/maintenance/audit_infrastructure_pillars.py
+index 961b9c1a..3539fddb 100644
+--- a/scripts/maintenance/audit_infrastructure_pillars.py
++++ b/scripts/maintenance/audit_infrastructure_pillars.py
+@@ -16,8 +16,6 @@ import re
+ import sys
+ import time
+ from pathlib import Path
+-from typing import Dict, List, Tuple
+-
+ BASE_DIR = Path(__file__).resolve().parent.parent.parent
+ NEXUS_ZONE = BASE_DIR / "temp" / "nexus_zone"
+ USER_SKILLS_DIR = Path(r"c:\Users\rapha\.agents\skills")
+@@ -33,7 +31,7 @@ SECRET_PATTERNS = [
+ ]
+
+
+-def audit_logs_pillar() -> Tuple[List[str], List[str], Dict]:
++def audit_logs_pillar() -> tuple[list[str], list[str], dict]:
+     """Audita a governanca de logs."""
+     errors = []
+     warnings = []
+@@ -70,7 +68,7 @@ def audit_logs_pillar() -> Tuple[List[str], List[str], Dict]:
+     return errors, warnings, stats
+
+
+-def audit_temps_pillar() -> Tuple[List[str], List[str], Dict]:
++def audit_temps_pillar() -> tuple[list[str], list[str], dict]:
+     """Audita e higieniza a zona de temporarios."""
+     errors = []
+     warnings = []
+@@ -111,7 +109,7 @@ def audit_temps_pillar() -> Tuple[List[str], List[str], Dict]:
+     return errors, warnings, stats
+
+
+-def audit_artifacts_pillar() -> Tuple[List[str], List[str], Dict]:
++def audit_artifacts_pillar() -> tuple[list[str], list[str], dict]:
+     """Audita a integridade de artefatos markdown e KaTeX."""
+     errors = []
+     warnings = []
+@@ -147,7 +145,7 @@ def audit_artifacts_pillar() -> Tuple[List[str], List[str], Dict]:
+     return errors, warnings, stats
+
+
+-def audit_skills_pillar() -> Tuple[List[str], List[str], Dict]:
++def audit_skills_pillar() -> tuple[list[str], list[str], dict]:
+     """Audita a conformidade das skills do Antigravity/Agent Mesh."""
+     errors = []
+     warnings = []
+diff --git a/scripts/ops/consolidar_memoria_agentica.py b/scripts/ops/consolidar_memoria_agentica.py
+index f4204922..88525cbf 100644
+--- a/scripts/ops/consolidar_memoria_agentica.py
++++ b/scripts/ops/consolidar_memoria_agentica.py
+@@ -109,7 +109,7 @@ def _sem_secao_consolidada(texto: str) -> str:
+ def consolidar_agente(agente: str) -> Resultado:
+     res = Resultado(agente=agente)
+     destino = CANONICA / agente / "MEMORY.md"
+-    base = destino.read_text(encoding="utf-8", errors="replace") if destino.exists() else f"# MEMORIA — @{agente}\n"
++    base = destino.read_text(encoding="utf-8", errors="replace") if destino.exists() else f"# MEMORIA -- @{agente}\n"
+     base = _sem_secao_consolidada(base)
+
+     blocos: list[str] = []
+@@ -124,7 +124,7 @@ def consolidar_agente(agente: str) -> Resultado:
+         if _corpo_ja_presente(base, conteudo) or any(_corpo_ja_presente(b, conteudo) for b in blocos):
+             continue
+         rel = f.relative_to(RAIZ).as_posix()
+-        blocos.append(f"### Procedência — `{rel}`\n\n{conteudo.strip()}\n")
++        blocos.append(f"### Procedencia -- `{rel}`\n\n{conteudo.strip()}\n")
+         res.origens_usadas.append(rel)
+         res.bytes_absorvidos += len(conteudo)
+
+@@ -135,10 +135,10 @@ def consolidar_agente(agente: str) -> Resultado:
+
+     secao = (
+         f"\n\n---\n\n{MARCA_INICIO}\n\n"
+-        "## Memória episódica consolidada\n\n"
+-        "> Log de handoffs no formato *ação → resultado → aprendizado*, trazido das\n"
+-        "> árvores que existiam em paralelo até 2026-08-28. É uma natureza de memória\n"
+-        "> diferente da seção curada acima, e por isso fica separada em vez de\n"
++        "## Memoria episodica consolidada\n\n"
++        "> Log de handoffs no formato *acao - resultado - aprendizado*, trazido das\n"
++        "> arvores que existiam em paralelo ate 2026-08-28. E uma natureza de memoria\n"
++        "> diferente da secao curada acima, e por isso fica separada em vez de\n"
+         "> misturada. Ver `reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`.\n\n"
+         + "\n".join(blocos)
+         + f"\n{MARCA_FIM}\n"
+@@ -151,13 +151,13 @@ def consolidar_agente(agente: str) -> Resultado:
+ def marcador_superseded(origem: Path) -> str:
+     rel = CANONICA.relative_to(RAIZ).as_posix()
+     return (
+-        f"# Superseded — {origem.relative_to(RAIZ).as_posix()}\n\n"
+-        f"Esta árvore deixou de ser fonte de memória agêntica em 2026-08-28.\n"
+-        f"A canônica é `{rel}`, e o conteúdo daqui foi absorvido lá, na seção\n"
+-        f"*Memória episódica consolidada*, com procedência por arquivo.\n\n"
+-        f"**Nada foi apagado.** Os arquivos continuam aqui para conferência. Removê-los\n"
+-        f"é ato do vértice, depois de a canônica estar verificada em uso.\n\n"
+-        f"Medição que motivou a consolidação, e o desenho da fusão:\n"
++        f"# Superseded -- {origem.relative_to(RAIZ).as_posix()}\n\n"
++        f"Esta arvore deixou de ser fonte de memoria agentica em 2026-08-28.\n"
++        f"A canonica e `{rel}`, e o conteudo daqui foi absorvido la, na secao\n"
++        f"*Memoria episodica consolidada*, com procedencia por arquivo.\n\n"
++        f"**Nada foi apagado.** Os arquivos continuam aqui para conferencia. Remove-los\n"
++        f"e ato do vertice, depois de a canonica estar verificada em uso.\n\n"
++        f"Medicao que motivou a consolidacao, e o desenho da fusao:\n"
+         f"`reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`.\n"
+     )
+
+diff --git a/scripts/ops/jules_audit_runner.py b/scripts/ops/jules_audit_runner.py
+index 98dd5084..481581c1 100644
+--- a/scripts/ops/jules_audit_runner.py
++++ b/scripts/ops/jules_audit_runner.py
+@@ -101,7 +101,7 @@ def check_typing_conformance(py_path: Path) -> dict[str, object]:
+ def run_jules_audit() -> None:
+     """Executa a rotina supervisionada de auditoria do Google Jules."""
+     logger.info("=================================================================")
+-    logger.info("INICIALIZANDO SESSAO DE SUPERVISAO JULES — PROTOCOLO CHICO v8.0 GOLD")
++    logger.info("INICIALIZANDO SESSAO DE SUPERVISAO JULES -- PROTOCOLO CHICO v8.0 GOLD")
+     logger.info("Alvo: Auditoria Pure ASCII & Tipagem PEP 585/604 em Site/ (PMev Engine)")
+     logger.info("Logs persistentes em: %s", LOG_FILE)
+     logger.info("Stream JSONL em: %s", JSONL_STREAM_FILE)
+@@ -180,7 +180,7 @@ def run_jules_audit() -> None:
+
+     report_content = f"""# REGISTRO DE AUDITORIA JULES: PURE ASCII & TIPAGEM SOTA
+
+-> **Protocolo Chico SOTA v8.0 GOLD · Supervisao Antigravity ➔ Google Jules**
++> **Protocolo Chico SOTA v8.0 GOLD * Supervisao Antigravity  Google Jules**
+ > **Data:** {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%SZ')}
+ > **Status:** Concluido com Sucesso (Inspecao Nao-Destrutiva Positiva)
+
+@@ -190,11 +190,11 @@ def run_jules_audit() -> None:
+
+ | Metrica | Valor Medido | Status |
+ | :--- | :--- | :--- |
+-| **Modulos Auditados** | `{len(py_files)} arquivos Python` | ✅ Cobertura Total |
+-| **Conformidade Pure ASCII** | `{ascii_passed}/{len(py_files)} modulos limpos ({round(ascii_passed/len(py_files)*100, 1)}%)` | ✅ Aprovado |
+-| **Total de Funcoes Mapeadas** | `{total_funcs} funcoes` | ✅ Catalogado |
+-| **Cobertura de Tipagem Estrita** | `{total_annotated}/{total_funcs} ({overall_coverage}%)` | ✅ Alta Densidade |
+-| **Presenca de `__future__.annotations`** | `{sum(1 for r in typing_results if r.get('has_future_annotations'))}/{len(py_files)} modulos` | ✅ PEP 585/604 |
++| **Modulos Auditados** | `{len(py_files)} arquivos Python` |  Cobertura Total |
++| **Conformidade Pure ASCII** | `{ascii_passed}/{len(py_files)} modulos limpos ({round(ascii_passed/len(py_files)*100, 1)}%)` |  Aprovado |
++| **Total de Funcoes Mapeadas** | `{total_funcs} funcoes` |  Catalogado |
++| **Cobertura de Tipagem Estrita** | `{total_annotated}/{total_funcs} ({overall_coverage}%)` |  Alta Densidade |
++| **Presenca de `__future__.annotations`** | `{sum(1 for r in typing_results if r.get('has_future_annotations'))}/{len(py_files)} modulos` |  PEP 585/604 |
+
+ ---
+
+@@ -213,7 +213,7 @@ def run_jules_audit() -> None:
+ """
+
+     for r in sorted(typing_results, key=lambda x: str(x.get("file", ""))):
+-        report_content += f"| `{r.get('file')}` | {r.get('func_count')} | {r.get('annotated_func_count')} | {r.get('coverage_pct')}% | {'✅' if r.get('has_future_annotations') else '⚠️'} |\n"
++        report_content += f"| `{r.get('file')}` | {r.get('func_count')} | {r.get('annotated_func_count')} | {r.get('coverage_pct')}% | {'' if r.get('has_future_annotations') else ''} |\n"
+
+     report_content += """
+ ---
+diff --git a/scripts/ops/jules_session_watchdog.py b/scripts/ops/jules_session_watchdog.py
+index fdc7b5d3..b498fbcd 100644
+--- a/scripts/ops/jules_session_watchdog.py
++++ b/scripts/ops/jules_session_watchdog.py
+@@ -63,15 +63,15 @@ def record_snapshot() -> None:
+     # Gera relatorio em Markdown
+     content = f"""# REGISTRO DE MONITORAMENTO: GOOGLE JULES CLOUD SESSIONS
+
+-> **Protocolo Chico SOTA v8.0 GOLD · Rastreamento de Sessões em Nuvem**
+-> **Última Atualização:** {now_iso}
++> **Protocolo Chico SOTA v8.0 GOLD * Rastreamento de Sessoes em Nuvem**
++> **Ultima Atualizacao:** {now_iso}
+ > **Canal Oficial:** [jules.google.com](https://jules.google.com/)
+
+ ---
+
+-## 1. Sessões Remotas Identificadas
++## 1. Sessoes Remotas Identificadas
+
+-| ID da Sessão | Repositório | Descrição da Tarefa | Última Atividade | Status na VM |
++| ID da Sessao | Repositorio | Descricao da Tarefa | Ultima Atividade | Status na VM |
+ | :--- | :--- | :--- | :--- | :--- |
+ """
+     for s in sessions:
+@@ -81,14 +81,14 @@ def record_snapshot() -> None:
+
+     content += """
+ ---
+-## 2. Ações Operacionais Disponíveis
++## 2. Acoes Operacionais Disponiveis
+
+ ```bash
+-# Inspecionar detalhes ou diff da sessão:
++# Inspecionar detalhes ou diff da sessao:
+ jules remote pull --session <SESSION_ID>
+
+-# Disparar nova sessão com branch explícita:
+-jules new --repo RaphaelVitoi/Site "Descrição da Tarefa"
++# Disparar nova sessao com branch explicita:
++jules new --repo RaphaelVitoi/Site "Descricao da Tarefa"
+ ```
+ """
+     REPORT_FILE.write_text(content, encoding="utf-8")
+diff --git a/scripts/ops/record_gate.py b/scripts/ops/record_gate.py
+index b1362cb3..4502fde9 100644
+--- a/scripts/ops/record_gate.py
++++ b/scripts/ops/record_gate.py
+@@ -37,7 +37,7 @@ RAIZ = Path(__file__).resolve().parents[2]
+ # A RAIZ do repositorio no path, nunca este diretorio: com `scripts/ops` no
+ # path, `record_index` e `scripts.ops.record_index` viram DOIS objetos de modulo
+ # para o mesmo arquivo (medido). Ver o docstring de `scripts/ops/__init__.py`.
+-# Este script tambem roda direto pelo hook, quando sys.path[0] e `scripts/ops` —
++# Este script tambem roda direto pelo hook, quando sys.path[0] e `scripts/ops` --
+ # por isso a raiz precisa entrar explicitamente.
+ if str(RAIZ) not in sys.path:
+     sys.path.insert(0, str(RAIZ))
+@@ -404,7 +404,7 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
+         # --- G4. config_medida divergente do ambiente ------------------------
+         divergencias, _ = conferir_config_medida(fm.get("config_medida"), ambiente)
+         for d in divergencias:
+-            erros.append(f"{rel}: config_medida divergente -- {d}. Remeça ou marque o registro.")
++            erros.append(f"{rel}: config_medida divergente -- {d}. Remeca ou marque o registro.")
+
+     # --- G2. ancora interna: caminho DECLARADO que o commit toca --------------
+     # Ancora e o campo `caminhos:`, nunca a prosa. Inferir da prosa travaria o
+diff --git a/scripts/routines/audit_monthly_modus_operandi_and_routing.py b/scripts/routines/audit_monthly_modus_operandi_and_routing.py
+index 061bb42d..60e38ad0 100644
+--- a/scripts/routines/audit_monthly_modus_operandi_and_routing.py
++++ b/scripts/routines/audit_monthly_modus_operandi_and_routing.py
+@@ -316,7 +316,7 @@ def run_monthly_audit() -> dict[str, Any]:
+ - **Total de Agentes Cobertos:** {cob["agentes"]} agentes / {cob["subagentes"]} tiers de subagente
+ - **Mapa Concreto Ativo:** {len(AGENT_MODEL_MAP)} agentes operando sem fallbacks orfaos
+ - **Validacao de Gatilho de ROI (Gemini 3.1 Pro vs. 3.7 Flash):** Aprovado e calibrado
+-- **Ancoras de Rota:** {len(ROTAS) - len(suspeitas)} de {len(ROTAS)} dentro do TTL de {TTL_ROTA_DIAS} dias{" — **" + str(len(suspeitas)) + " exigem reconsulta ao fornecedor**" if suspeitas else ""}
++- **Ancoras de Rota:** {len(ROTAS) - len(suspeitas)} de {len(ROTAS)} dentro do TTL de {TTL_ROTA_DIAS} dias{" -- **" + str(len(suspeitas)) + " exigem reconsulta ao fornecedor**" if suspeitas else ""}
+ - **Status dos Manuais de Modus Operandi:** 100% Sincronizados com a Arquitetura de 4 Camadas
+
+ ---
+@@ -365,7 +365,7 @@ def run_monthly_audit() -> dict[str, Any]:
+             f"sem verificacao dentro do TTL. Reconsulta ao fornecedor e ato humano:\n\n"
+         )
+         for classe, motivo in suspeitas.items():
+-            md_content += f"- `{classe.value}` — {motivo}\n"
++            md_content += f"- `{classe.value}` -- {motivo}\n"
+     else:
+         md_content += (
+             f"Nenhuma das {len(ROTAS)} rotas venceu o TTL na data desta execucao "
+diff --git a/tests/conftest.py b/tests/conftest.py
+index 0cd97431..67fe388f 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -1,5 +1,5 @@
+ import logging
+-from typing import Any, Dict, List, Optional
++from typing import Any
+ import pytest
+
+
+@@ -73,8 +73,8 @@ def isolate_test_simulation_logs():
+
+
+ class SotaGuardState:
+-    errors: List[Dict[str, Any]] = []
+-    warnings_list: List[Dict[str, Any]] = []
++    errors: list[dict[str, Any]] = []
++    warnings_list: list[dict[str, Any]] = []
+
+     @classmethod
+     def reset(cls) -> None:
+@@ -82,7 +82,7 @@ class SotaGuardState:
+         cls.warnings_list.clear()
+
+     @classmethod
+-    def extract_component(cls, nodeid: Optional[str], filename: Optional[str]) -> str:
++    def extract_component(cls, nodeid: str | None, filename: str | None) -> str:
+         if nodeid:
+             parts = nodeid.replace("tests/", "").replace("tests\\", "").split("::")
+             return parts[0].replace("test_", "").replace(".py", "")
+diff --git a/tests/test_chunking_rag.py b/tests/test_chunking_rag.py
+index 8244f759..00cbf7f4 100644
+--- a/tests/test_chunking_rag.py
++++ b/tests/test_chunking_rag.py
+@@ -2,22 +2,22 @@
+
+ ## O defeito, medido em 2026-08-28
+
+-`CHUNK_SIZE = 1200` estava declarado, documentado (*"all-MiniLM-L6-v2 trunca após
+-256 tokens (~1200 chars)"*) — e o chunker o usava **só como teto para dividir,
++`CHUNK_SIZE = 1200` estava declarado, documentado (*"all-MiniLM-L6-v2 trunca apos
++256 tokens (~1200 chars)"*) -- e o chunker o usava **so como teto para dividir,
+ nunca como alvo para juntar**:
+
+     if len(p) <= chunk_size:
+         all_chunks.append(p)     # cada paragrafo curto virava um fragmento
+
+-Parágrafo curto é a norma em código e em markdown. Medido no índice real:
++Paragrafo curto e a norma em codigo e em markdown. Medido no indice real:
+ **mediana de 162 chars** contra 1200 declarados, **22,2% dos fragmentos abaixo de
+ 50**, p10 em 27. `logger = logging.getLogger(__name__)` aparecia 40 vezes como
+-fragmento próprio; cabeçalhos de template, 34. **12,6% do índice era texto
++fragmento proprio; cabecalhos de template, 34. **12,6% do indice era texto
+ literalmente repetido.**
+
+-O custo não é desperdício de espaço: 3.165 fragmentos de uma linha disputavam os
+-três lugares de todo resultado, e chegavam ao modelo sem contexto nenhum ao
+-redor. Não se conserta isso com ranking melhor — o corpus é que estava
++O custo nao e desperdicio de espaco: 3.165 fragmentos de uma linha disputavam os
++tres lugares de todo resultado, e chegavam ao modelo sem contexto nenhum ao
++redor. Nao se conserta isso com ranking melhor -- o corpus e que estava
+ fragmentado.
+
+ Depois: mediana **1017**, fragmentos abaixo de 50 em **0,4%**, e nenhum acima do
+@@ -25,18 +25,18 @@ teto.
+
+ ## O teto passou a valer
+
+-`_chunk_long_paragraph` estourava até 1404 num teto de 1200 — 17% — porque a
+-sobreposição reentra no buffer antes da próxima conferência. Como o modelo trunca
+-em ~256 tokens, o excesso não é desperdício: é texto que entra no índice e o
+-embedding **não vê**. Em vez de perseguir a aritmética do deslizamento, a
++`_chunk_long_paragraph` estourava ate 1404 num teto de 1200 -- 17% -- porque a
++sobreposicao reentra no buffer antes da proxima conferencia. Como o modelo trunca
++em ~256 tokens, o excesso nao e desperdicio: e texto que entra no indice e o
++embedding **nao ve**. Em vez de perseguir a aritmetica do deslizamento, a
+ invariante passou a ser imposta na fronteira, onde pode ser garantida.
+
+-## Cobertura: comparada contra a versão anterior, não contra o ideal
++## Cobertura: comparada contra a versao anterior, nao contra o ideal
+
+-Uma linha física pode ficar partida entre dois fragmentos quando o corte cai numa
++Uma linha fisica pode ficar partida entre dois fragmentos quando o corte cai numa
+ fronteira de frase. Medido nos dois chunkers sobre o mesmo corpus: **9 de 2.877
+-linhas (0,31%) nos dois**. Não é regressão — é o comportamento de sempre do split
+-por frase, e a comparação com baseline é o que prova isso.
++linhas (0,31%) nos dois**. Nao e regressao -- e o comportamento de sempre do split
++por frase, e a comparacao com baseline e o que prova isso.
+ """
+
+ from __future__ import annotations
+diff --git a/tests/test_consolidacao_memoria.py b/tests/test_consolidacao_memoria.py
+index 8e0b3fa1..fa8c84fa 100644
+--- a/tests/test_consolidacao_memoria.py
++++ b/tests/test_consolidacao_memoria.py
+@@ -1,25 +1,25 @@
+-"""Consolidação da memória agêntica — contenção e idempotência.
++"""Consolidacao da memoria agentica -- contencao e idempotencia.
+
+-Três árvores com o mesmo `MEMORY.md`, 19 de 19 divergindo, e o laço agêntico
+-aberto: os agentes gravavam numa árvore e o RAG lia de outra. A consolidação
+-não escolhe vencedor — `.claude/agent-memory` guarda memória **semântica**
+-(fatos curados) e `.cerebro/agent-memory` guarda **episódica** (log de handoffs);
+-são naturezas diferentes, e o script preserva as duas em seções distintas.
++Tres arvores com o mesmo `MEMORY.md`, 19 de 19 divergindo, e o laco agentico
++aberto: os agentes gravavam numa arvore e o RAG lia de outra. A consolidacao
++nao escolhe vencedor -- `.claude/agent-memory` guarda memoria **semantica**
++(fatos curados) e `.cerebro/agent-memory` guarda **episodica** (log de handoffs);
++sao naturezas diferentes, e o script preserva as duas em secoes distintas.
+
+-Dois defeitos apareceram só porque o segundo estado foi conferido, e os dois
+-estão travados aqui:
++Dois defeitos apareceram so porque o segundo estado foi conferido, e os dois
++estao travados aqui:
+
+ 1. **Quase-idempotente.** O separador `---` ficava fora do trecho removido, e
+-   cada execução acrescentava um novo: **+6 bytes por rodada**, por agente.
+-   Medido em `chico`, 5599 → 5605. Quase-idempotente é uma forma lenta de
+-   corromper: nunca falha, só cresce.
+-2. **Separadores empilhados.** A primeira correção removia um `---` só, então
+-   os resíduos das rodadas anteriores sobreviviam — convergia, mas em 107.093
+-   em vez dos 106.979 do estado limpo. Convergir não é convergir no lugar certo.
++   cada execucao acrescentava um novo: **+6 bytes por rodada**, por agente.
++   Medido em `chico`, 5599 - 5605. Quase-idempotente e uma forma lenta de
++   corromper: nunca falha, so cresce.
++2. **Separadores empilhados.** A primeira correcao removia um `---` so, entao
++   os residuos das rodadas anteriores sobreviviam -- convergia, mas em 107.093
++   em vez dos 106.979 do estado limpo. Convergir nao e convergir no lugar certo.
+
+-A prova de que nada se perde é **contenção**, nunca a subtração de bytes: a soma
+-ingênua das três árvores conta duas vezes o que `.cerebro` e `AGENTS-MEMORY` têm
+-em comum, então entrada > saída é deduplicação esperada, não perda.
++A prova de que nada se perde e **contencao**, nunca a subtracao de bytes: a soma
++ingenua das tres arvores conta duas vezes o que `.cerebro` e `AGENTS-MEMORY` tem
++em comum, entao entrada > saida e deduplicacao esperada, nao perda.
+ """
+
+ from __future__ import annotations
+@@ -57,7 +57,7 @@ def mod():
+
+ @pytest.fixture
+ def arvores(tmp_path, mod, monkeypatch):
+-    """Três árvores sintéticas: curada, episódica e uma quase-cópia."""
++    """Tres arvores sinteticas: curada, episodica e uma quase-copia."""
+     canonica = tmp_path / "canonica"
+     episodica = tmp_path / "episodica"
+     copia = tmp_path / "copia"
+@@ -97,7 +97,7 @@ def _dry_run(mod, monkeypatch):
+
+
+ # ---------------------------------------------------------------------------
+-#  Contenção: nada se perde
++#  Contencao: nada se perde
+ # ---------------------------------------------------------------------------
+
+
+@@ -108,13 +108,13 @@ def test_a_canonica_passa_a_conter_as_duas_naturezas(arvores, mod, monkeypatch,
+     texto = (canonica / "chico" / "MEMORY.md").read_text(encoding="utf-8")
+     assert "Fato consolidado A." in texto, "a memoria curada foi perdida"
+     assert "HANDOFF-1: aprendizado X" in texto, "a memoria episodica nao foi absorvida"
+-    assert "Memória episódica consolidada" in texto
+-    assert "Procedência" in texto, "a origem tem de ficar declarada no proprio arquivo"
++    assert "Memoria episodica consolidada" in texto
++    assert "Procedencia" in texto, "a origem tem de ficar declarada no proprio arquivo"
+
+
+ def test_a_quase_copia_nao_entra_duas_vezes(arvores, mod, monkeypatch):
+-    """`AGENTS-MEMORY` difere de `.cerebro` só em finais de linha. Tratar isso
+-    como conteúdo novo dobraria a seção episódica."""
++    """`AGENTS-MEMORY` difere de `.cerebro` so em finais de linha. Tratar isso
++    como conteudo novo dobraria a secao episodica."""
+     canonica, _, _ = arvores
+     assert _aplicar(mod, monkeypatch) == 0
+     texto = (canonica / "chico" / "MEMORY.md").read_text(encoding="utf-8")
+@@ -129,7 +129,7 @@ def test_dry_run_nao_escreve(arvores, mod, monkeypatch):
+
+
+ def test_as_origens_nao_sao_apagadas(arvores, mod, monkeypatch):
+-    """Consolidar não é remover. Apagar é ato do vértice, em outro momento."""
++    """Consolidar nao e remover. Apagar e ato do vertice, em outro momento."""
+     _, episodica, copia = arvores
+     assert _aplicar(mod, monkeypatch) == 0
+     assert (episodica / "chico" / "MEMORY.md").exists()
+@@ -139,13 +139,13 @@ def test_as_origens_nao_sao_apagadas(arvores, mod, monkeypatch):
+
+
+ # ---------------------------------------------------------------------------
+-#  Idempotência: os dois defeitos que só o segundo estado revelou
++#  Idempotencia: os dois defeitos que so o segundo estado revelou
+ # ---------------------------------------------------------------------------
+
+
+ def test_rodar_duas_vezes_nao_muda_um_byte(arvores, mod, monkeypatch):
+-    """O defeito 1. Sem isto o arquivo cresce 6 bytes por execução, para sempre,
+-    e nenhuma execução isolada acusa."""
++    """O defeito 1. Sem isto o arquivo cresce 6 bytes por execucao, para sempre,
++    e nenhuma execucao isolada acusa."""
+     canonica, _, _ = arvores
+     assert _aplicar(mod, monkeypatch) == 0
+     primeira = {p: p.read_bytes() for p in canonica.glob("*/MEMORY.md")}
+@@ -155,8 +155,8 @@ def test_rodar_duas_vezes_nao_muda_um_byte(arvores, mod, monkeypatch):
+
+
+ def test_convergencia_e_no_estado_limpo_nao_so_estavel(arvores, mod, monkeypatch):
+-    """O defeito 2. Estabilizar num valor inflado ainda é estabilizar -- e passa
+-    despercebido por qualquer teste que só compare execuções consecutivas."""
++    """O defeito 2. Estabilizar num valor inflado ainda e estabilizar -- e passa
++    despercebido por qualquer teste que so compare execucoes consecutivas."""
+     canonica, _, _ = arvores
+     monkeypatch.setattr("sys.argv", ["consolidar", "--aplicar"])
+     mod.main()
+@@ -167,7 +167,7 @@ def test_convergencia_e_no_estado_limpo_nao_so_estavel(arvores, mod, monkeypatch
+
+
+ def test_separadores_empilhados_sao_removidos(arvores, mod, monkeypatch):
+-    """Simula o resíduo que as execuções pré-correção deixaram em disco."""
++    """Simula o residuo que as execucoes pre-correcao deixaram em disco."""
+     canonica, _, _ = arvores
+     alvo = canonica / "chico" / "MEMORY.md"
+     assert _aplicar(mod, monkeypatch) == 0
+@@ -189,12 +189,12 @@ def test_a_secao_consolidada_aparece_uma_vez_so(arvores, mod, monkeypatch):
+
+
+ # ---------------------------------------------------------------------------
+-#  A conferência que o script faz de si mesmo
++#  A conferencia que o script faz de si mesmo
+ # ---------------------------------------------------------------------------
+
+
+ def test_o_script_reprova_se_a_continencia_falhar(arvores, mod, monkeypatch, capsys):
+-    """A guarda interna precisa conseguir dizer não. Portão que nunca reprovou
++    """A guarda interna precisa conseguir dizer nao. Portao que nunca reprovou
+     pode ser incapaz de reprovar."""
+     canonica, _, _ = arvores
+     monkeypatch.setattr(mod, "consolidar_agente", lambda ag: mod.Resultado(agente=ag, ja_consolidado=True))
+diff --git a/tests/test_declarado_e_lido.py b/tests/test_declarado_e_lido.py
+index a829b766..4f9de0d6 100644
+--- a/tests/test_declarado_e_lido.py
++++ b/tests/test_declarado_e_lido.py
+@@ -1,25 +1,25 @@
+-"""Constante atribuída e nunca lida: o padrão dominante desta base, como detector.
++"""Constante atribuida e nunca lida: o padrao dominante desta base, como detector.
+
+-Cinco instâncias foram encontradas **por acaso**, uma de cada vez, ao longo de
+-uma sessão:
++Cinco instancias foram encontradas **por acaso**, uma de cada vez, ao longo de
++uma sessao:
+
+ | declarado | o que o mecanismo fazia |
+ | :--- | :--- |
+-| `CHUNK_SIZE = 1200` | teto usado só para dividir, nunca para juntar — mediana 162 |
+-| `max_cache_size_mb = 4096` | atribuído no `__init__`; a evicção contava baldes |
+-| `AGENT_MODEL_MAP` | resolvido a cada carga, sem consumidor de produção |
+-| `recursive: false` | campo do manifesto que o código nunca lia |
++| `CHUNK_SIZE = 1200` | teto usado so para dividir, nunca para juntar -- mediana 162 |
++| `max_cache_size_mb = 4096` | atribuido no `__init__`; a eviccao contava baldes |
++| `AGENT_MODEL_MAP` | resolvido a cada carga, sem consumidor de producao |
++| `recursive: false` | campo do manifesto que o codigo nunca lia |
+ | `$warnings` | lido no veredito e nunca populado |
+
+-Constante sem leitor não é só código morto. Quando ela nomeia um **teto**, um
+-**peso** ou uma **variável de ambiente**, é promessa ao operador — quem a
++Constante sem leitor nao e so codigo morto. Quando ela nomeia um **teto**, um
++**peso** ou uma **variavel de ambiente**, e promessa ao operador -- quem a
+ configura acredita ter mudado alguma coisa. `DO_PS1_THRESHOLD` lia
+-`os.environ` e não governava nada.
++`os.environ` e nao governava nada.
+
+ Este arquivo transforma o achado em varredura. A lista vive em
+ `data/DECLARADO_E_NAO_LIDO.json` com um **veredito por item**, e o teste compara
+-a declaração com a árvore: item novo reprova, item resolvido reprova. A conta só
+-muda por decisão registrada.
++a declaracao com a arvore: item novo reprova, item resolvido reprova. A conta so
++muda por decisao registrada.
+ """
+
+ from __future__ import annotations
+@@ -141,7 +141,7 @@ def test_o_inventario_bate_com_a_arvore(declaracao, arvores):
+
+
+ def test_todo_pendente_tem_veredito_e_onde(declaracao):
+-    """Lista sem veredito vira lista de exceção, e lista de exceção cresce."""
++    """Lista sem veredito vira lista de excecao, e lista de excecao cresce."""
+     for e in declaracao["pendentes"]:
+         assert e.get("veredito"), f"{e['nome']} esta na lista sem veredito -- isso e isencao, nao analise"
+         assert e.get("onde"), f"{e['nome']} sem caminho"
+@@ -149,7 +149,7 @@ def test_todo_pendente_tem_veredito_e_onde(declaracao):
+
+
+ def test_o_que_foi_removido_ficou_removido(declaracao, arvores):
+-    """As remoções de 2026-08-29 não podem voltar por copiar-e-colar."""
++    """As remocoes de 2026-08-29 nao podem voltar por copiar-e-colar."""
+     lidos = set()
+     definidos = set()
+     for arv in arvores.values():
+@@ -182,8 +182,8 @@ def test_a_varredura_acha_uma_constante_orfa_plantada(tmp_path):
+
+
+ def test_citar_o_nome_num_comentario_nao_conta_como_leitura(tmp_path):
+-    """A razão de medir por AST. A versão textual desta varredura daria a
+-    constante como viva só porque a documentação a menciona."""
++    """A razao de medir por AST. A versao textual desta varredura daria a
++    constante como viva so porque a documentacao a menciona."""
+     fonte = '"""Docstring que fala de TETO_CITADO."""\nTETO_CITADO = 7\n# TETO_CITADO tambem aqui\n'
+     (tmp_path / "m.py").write_text(fonte, encoding="utf-8")
+     arv = {tmp_path / "m.py": ast.parse(fonte)}
+diff --git a/tests/test_governanca_agents.py b/tests/test_governanca_agents.py
+index 2ce2da11..aeafb0a5 100644
+--- a/tests/test_governanca_agents.py
++++ b/tests/test_governanca_agents.py
+@@ -56,7 +56,7 @@ def _secoes_prescritivas(p: Path) -> str:
+     a mesma: estreitar o escopo estruturalmente, nunca isentar o arquivo.
+     """
+     texto = _ler(p)
+-    corte = re.search(r"^##\s+Por que ponteiro e nao copia|^##\s+Por que ponteiro e não cópia", texto, re.M)
++    corte = re.search(r"^##\s+Por que ponteiro e nao copia|^##\s+Por que ponteiro e nao copia", texto, re.M)
+     if not corte:
+         return texto
+     resto = texto[corte.end() :]
+diff --git a/tests/test_guard_memoria.py b/tests/test_guard_memoria.py
+index 9b8bfc1a..8ea6ed3e 100644
+--- a/tests/test_guard_memoria.py
++++ b/tests/test_guard_memoria.py
+@@ -1,26 +1,26 @@
+-"""Guard de memória: RAM, commit, VRAM e cache num laço só, com tetos declarados.
++"""Guard de memoria: RAM, commit, VRAM e cache num laco so, com tetos declarados.
+
+-Nasceu tri-camada e virou quatro no mesmo dia, por uma observação do operador:
+-*"RAM utilizada 72% estável, mesmo a cache 18% estável"*. Estável em 72% com
+-6,8 GB em standby reclaimável — e o **commit** em 82,6% do limite. Um teto de
+-98% sobre a RAM física é guard incapaz de ficar vermelho, porque no Windows o
+-que falha é o commit, não a RAM. Ver a seção `Commit` no fim do arquivo.
++Nasceu tri-camada e virou quatro no mesmo dia, por uma observacao do operador:
++*"RAM utilizada 72% estavel, mesmo a cache 18% estavel"*. Estavel em 72% com
++6,8 GB em standby reclaimavel -- e o **commit** em 82,6% do limite. Um teto de
++98% sobre a RAM fisica e guard incapaz de ficar vermelho, porque no Windows o
++que falha e o commit, nao a RAM. Ver a secao `Commit` no fim do arquivo.
+
+-O `optimize-ram --watch` que existia vigiava **só RAM**, com limiar e intervalo
+-passados por flag — 90% e 300 s por default. Tinha os dois defeitos ao mesmo
+-tempo: gastava CPU sem pressão nenhuma e demorava até cinco minutos para reagir
++O `optimize-ram --watch` que existia vigiava **so RAM**, com limiar e intervalo
++passados por flag -- 90% e 300 s por default. Tinha os dois defeitos ao mesmo
++tempo: gastava CPU sem pressao nenhuma e demorava ate cinco minutos para reagir
+ quando havia.
+
+-E faltavam três camadas. VRAM porque o medidor estava cego até `a86168df` (os
+-três leitores cobriam NVIDIA, AMD nativo e ROCm; a máquina é Vulkan). Cache
+-porque `max_cache_size_mb = 4096` era atribuído no `__init__` e **nunca lido** —
+-a evicção olhava `len(buckets) > 100`, então o teto que nomeava megabytes era
++E faltavam tres camadas. VRAM porque o medidor estava cego ate `a86168df` (os
++tres leitores cobriam NVIDIA, AMD nativo e ROCm; a maquina e Vulkan). Cache
++porque `max_cache_size_mb = 4096` era atribuido no `__init__` e **nunca lido** --
++a eviccao olhava `len(buckets) > 100`, entao o teto que nomeava megabytes era
+ medido em quantidade de baldes, e 100 baldes podem ser 1 MB ou 400 MB.
+
+ **Camada sem medidor devolve `None`, nunca zero.** Foi exatamente o defeito do
+-leitor de VRAM: os três backends falhavam, `_get_vram_usage` convertia em
++leitor de VRAM: os tres backends falhavam, `_get_vram_usage` convertia em
+ `(None, 0.0, 0.0)`, e qualquer teto concluiria VRAM vazia e nunca reagiria.
+-Desconhecido tem de ser distinguível de folgado.
++Desconhecido tem de ser distinguivel de folgado.
+ """
+
+ from __future__ import annotations
+diff --git a/tests/test_ingestao_superseded.py b/tests/test_ingestao_superseded.py
+index d7865685..916cd7c8 100644
+--- a/tests/test_ingestao_superseded.py
++++ b/tests/test_ingestao_superseded.py
+@@ -1,23 +1,23 @@
+-"""Árvore que se declara superada não entra no índice.
++"""Arvore que se declara superada nao entra no indice.
+
+-Ao consolidar a memória agêntica em 2026-08-28, `.claude/AGENTS-MEMORY` ganhou um
+-`SUPERSEDED.md` apontando para a canônica. Medido depois: ela continuava
+-contribuindo **89 fragmentos (2,1% do índice)** — conteúdo que já está na
+-canônica, competindo com ela pelos mesmos três lugares de todo resultado.
++Ao consolidar a memoria agentica em 2026-08-28, `.claude/AGENTS-MEMORY` ganhou um
++`SUPERSEDED.md` apontando para a canonica. Medido depois: ela continuava
++contribuindo **89 fragmentos (2,1% do indice)** -- conteudo que ja esta na
++canonica, competindo com ela pelos mesmos tres lugares de todo resultado.
+
+-O mecanismo **não é lista de caminhos**: é predicado estrutural. Um diretório que
+-contém `SUPERSEDED.md` marcou a si mesmo, e o marcador viaja junto com a árvore.
+-Lista literal envelhece e exige que alguém lembre de atualizá-la — foi assim que
+-`reports` como nome solto excluiu `docs/reports/` sem ninguém pedir, e é a mesma
++O mecanismo **nao e lista de caminhos**: e predicado estrutural. Um diretorio que
++contem `SUPERSEDED.md` marcou a si mesmo, e o marcador viaja junto com a arvore.
++Lista literal envelhece e exige que alguem lembre de atualiza-la -- foi assim que
++`reports` como nome solto excluiu `docs/reports/` sem ninguem pedir, e e a mesma
+ armadilha.
+
+-## O defeito da primeira versão, que só a conferência pegou
++## O defeito da primeira versao, que so a conferencia pegou
+
+-Os diretórios superados vinham de `base_path.rglob(...)` sem `.resolve()`,
+-enquanto os alvos vêm de `source_path.resolve()`. Comparar caminho relativo com
+-absoluto é comparar grandezas diferentes: **a exclusão não excluiu nada**, e
+-nenhuma exceção foi levantada. Apareceu na contagem — 506 alvos com 23 que
+-deviam ter saído.
++Os diretorios superados vinham de `base_path.rglob(...)` sem `.resolve()`,
++enquanto os alvos vem de `source_path.resolve()`. Comparar caminho relativo com
++absoluto e comparar grandezas diferentes: **a exclusao nao excluiu nada**, e
++nenhuma excecao foi levantada. Apareceu na contagem -- 506 alvos com 23 que
++deviam ter saido.
+ """
+
+ from __future__ import annotations
+@@ -46,7 +46,7 @@ def _alvos(rag, base: Path) -> set[Path]:
+
+
+ def test_arvore_superada_do_repositorio_fica_fora(rag):
+-    """O caso real: `.claude/AGENTS-MEMORY`, superada na consolidação."""
++    """O caso real: `.claude/AGENTS-MEMORY`, superada na consolidacao."""
+     from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
+
+     marcadas = {m.parent.resolve() for m in RAIZ.rglob(MARCADOR_SUPERADO)}
+@@ -58,9 +58,9 @@ def test_arvore_superada_do_repositorio_fica_fora(rag):
+
+
+ def test_o_marcador_e_o_que_exclui_e_nada_mais(rag, tmp_path):
+-    """Os DOIS estados, na mesma árvore sintética: sem marcador entra, com
+-    marcador sai. Sem isto, uma exclusão que não exclui nada passaria — foi
+-    exatamente o que aconteceu na primeira versão."""
++    """Os DOIS estados, na mesma arvore sintetica: sem marcador entra, com
++    marcador sai. Sem isto, uma exclusao que nao exclui nada passaria -- foi
++    exatamente o que aconteceu na primeira versao."""
+     from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
+
+     viva = tmp_path / "viva"
+@@ -85,8 +85,8 @@ def test_o_marcador_e_o_que_exclui_e_nada_mais(rag, tmp_path):
+
+
+ def test_o_proprio_marcador_nao_e_indexado(rag, tmp_path):
+-    """`SUPERSEDED.md` é um `.md` dentro da árvore que ele exclui. Se entrasse,
+-    o índice ganharia um documento dizendo que aquele conteúdo não vale."""
++    """`SUPERSEDED.md` e um `.md` dentro da arvore que ele exclui. Se entrasse,
++    o indice ganharia um documento dizendo que aquele conteudo nao vale."""
+     from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
+
+     d = tmp_path / "morta"
+@@ -100,14 +100,14 @@ def test_o_proprio_marcador_nao_e_indexado(rag, tmp_path):
+
+
+ def test_a_exclusao_funciona_com_base_path_relativo(rag, tmp_path, monkeypatch):
+-    """O defeito da primeira versão, travado -- e a primeira versão DESTE teste
+-    também não o pegava.
++    """O defeito da primeira versao, travado -- e a primeira versao DESTE teste
++    tambem nao o pegava.
+
+     Ela passava `Path(str(tmp_path)) / "." / ""`, que continua **absoluto**, e
+-    por isso a mutação que remove `base_path.resolve()` passava intacta. Nome
+-    prometendo uma grandeza que a medição não cobria. Agora o teste entra no
+-    diretório e passa `Path(".")` de verdade -- que é a forma que o chamador de
+-    produção usa, e a que quebrou."""
++    por isso a mutacao que remove `base_path.resolve()` passava intacta. Nome
++    prometendo uma grandeza que a medicao nao cobria. Agora o teste entra no
++    diretorio e passa `Path(".")` de verdade -- que e a forma que o chamador de
++    producao usa, e a que quebrou."""
+     from memory_rag import MARCADOR_SUPERADO  # noqa: PLC0415
+
+     for nome in ("morta", "viva"):
+diff --git a/tests/test_memoria_de_trabalho.py b/tests/test_memoria_de_trabalho.py
+index 965903d2..20b16087 100644
+--- a/tests/test_memoria_de_trabalho.py
++++ b/tests/test_memoria_de_trabalho.py
+@@ -1,29 +1,29 @@
+-"""Os módulos de memória de trabalho: qual está ligado, e por que dois não estão.
++"""Os modulos de memoria de trabalho: qual esta ligado, e por que dois nao estao.
+
+ O passo 3 do plano dizia *"ligar `notepad_memory` e `replay_buffer`"*. Medir
+-mudou o passo — e é bom que a razão fique travada, porque a próxima pessoa a
+-encontrar 371 linhas de código completo sem importador vai concluir, como eu
+-concluí, que basta ligá-lo.
++mudou o passo -- e e bom que a razao fique travada, porque a proxima pessoa a
++encontrar 371 linhas de codigo completo sem importador vai concluir, como eu
++conclui, que basta liga-lo.
+
+-**`memory/replay_buffer.py`** é Prioritized Experience Replay: `SumTree`,
++**`memory/replay_buffer.py`** e Prioritized Experience Replay: `SumTree`,
+ `Transition(state, action, reward, next_state, done)`, `update_priorities` com
+-erros de TD. Não é memória de recuperação, é treino por reforço. Medido: a única
+-ocorrência de `reward` no projeto é `math/rio_extended.py`, e lá é
+-`pot × equity` — valor esperado de pôquer, não recompensa de RL. Não há política,
+-episódio nem TD. Ligá-lo exigiria **inventar** o laço de aprendizado.
++erros de TD. Nao e memoria de recuperacao, e treino por reforco. Medido: a unica
++ocorrencia de `reward` no projeto e `math/rio_extended.py`, e la e
++`pot x equity` -- valor esperado de poquer, nao recompensa de RL. Nao ha politica,
++episodio nem TD. Liga-lo exigiria **inventar** o laco de aprendizado.
+
+-**`memory/notepad_memory.py`** faria o papel de `task.metadata`, que já existe,
+-é persistido em SQLite e tem `BEGIN EXCLUSIVE` com merge cirúrgico. Ligá-lo
++**`memory/notepad_memory.py`** faria o papel de `task.metadata`, que ja existe,
++e persistido em SQLite e tem `BEGIN EXCLUSIVE` com merge cirurgico. Liga-lo
+ criaria a segunda fonte para o mesmo fato.
+
+-E o achado que fecha o argumento: `memory/notepad_state.json` — a única evidência
+-em disco de que o notepad roda — é a **saída do smoke test do próprio módulo**, e
+-o bloco `PLAN_CURRENT` dele afirma textualmente *"Memória Notepad e Replay Memory
++E o achado que fecha o argumento: `memory/notepad_state.json` -- a unica evidencia
++em disco de que o notepad roda -- e a **saida do smoke test do proprio modulo**, e
++o bloco `PLAN_CURRENT` dele afirma textualmente *"Memoria Notepad e Replay Memory
+ integradas"*. Medido por AST: zero importadores. O artefato que atesta a
+-integração é uma fixture de demonstração do módulo que se diz integrado.
++integracao e uma fixture de demonstracao do modulo que se diz integrado.
+
+-Estes testes não impedem ligar. Eles fazem a decisão aparecer: se um importador
+-surgir, o teste falha pedindo que a declaração seja atualizada no mesmo commit.
++Estes testes nao impedem ligar. Eles fazem a decisao aparecer: se um importador
++surgir, o teste falha pedindo que a declaracao seja atualizada no mesmo commit.
+ """
+
+ from __future__ import annotations
+@@ -73,7 +73,7 @@ def _importadores(modulo: str) -> set[str]:
+
+
+ def test_os_modulos_declarados_como_nao_ligados_continuam_sem_importador(declaracao):
+-    """O detector que faz a decisão aparecer."""
++    """O detector que faz a decisao aparecer."""
+     for entrada in declaracao["modulos_escritos_e_NAO_ligados"]:
+         modulo = entrada["caminho"].removesuffix(".py").replace("/", ".")
+         quem = _importadores(modulo)
+@@ -82,7 +82,7 @@ def test_os_modulos_declarados_como_nao_ligados_continuam_sem_importador(declara
+
+
+ def test_os_modulos_declarados_existem_de_fato(declaracao):
+-    """Declaração que aponta para arquivo inexistente é pior que ausência."""
++    """Declaracao que aponta para arquivo inexistente e pior que ausencia."""
+     for entrada in declaracao["modulos_escritos_e_NAO_ligados"]:
+         alvo = RAIZ / entrada["caminho"]
+         assert alvo.exists(), f"{entrada['caminho']} sumiu; a declaracao envelheceu. {PISTA}"
+@@ -95,7 +95,7 @@ def test_os_modulos_declarados_existem_de_fato(declaracao):
+
+ def test_a_memoria_de_trabalho_que_existe_continua_ligada(declaracao):
+     """A contrapartida: se `task.metadata` deixasse de ser consumido, o argumento
+-    para não ligar o notepad cairia junto."""
++    para nao ligar o notepad cairia junto."""
+     viva = declaracao["a_memoria_de_trabalho_QUE_EXISTE"]
+     escritor = RAIZ / viva["escrita"].split(" :: ")[0]
+     assert escritor.exists(), PISTA
+@@ -109,10 +109,10 @@ def test_a_memoria_de_trabalho_que_existe_continua_ligada(declaracao):
+
+
+ def test_nao_existe_laco_de_reforco_que_justifique_o_replay_buffer():
+-    """A premissa que sustenta a decisão sobre o replay buffer.
++    """A premissa que sustenta a decisao sobre o replay buffer.
+
+-    Se aparecer um laço de RL de verdade, esta asserção cai e o buffer deixa de
+-    ser peça de sistema inexistente para virar candidato legítimo."""
++    Se aparecer um laco de RL de verdade, esta assercao cai e o buffer deixa de
++    ser peca de sistema inexistente para virar candidato legitimo."""
+     sinais = ("td_error", "q_learning", "epsilon_greedy", "policy_gradient", "replay_batch")
+     achados = {}
+     for p in _fontes_python():
+@@ -130,11 +130,11 @@ def test_nao_existe_laco_de_reforco_que_justifique_o_replay_buffer():
+
+
+ def test_o_estado_do_notepad_ainda_e_a_fixture_do_smoke_test():
+-    """O achado que fecha o argumento, travado para não virar folclore.
++    """O achado que fecha o argumento, travado para nao virar folclore.
+
+-    `notepad_state.json` afirma que o notepad está integrado. Ele é a saída de
+-    `test_notepad()`. Se um dia o conteúdo mudar, é porque algo de verdade
+-    passou a escrever ali -- e aí a decisão precisa ser revista."""
++    `notepad_state.json` afirma que o notepad esta integrado. Ele e a saida de
++    `test_notepad()`. Se um dia o conteudo mudar, e porque algo de verdade
++    passou a escrever ali -- e ai a decisao precisa ser revista."""
+     estado = RAIZ / "memory" / "notepad_state.json"
+     if not estado.exists():
+         pytest.skip("o estado do notepad foi removido; nada a guardar aqui")
+diff --git a/tests/test_rag_id_unico.py b/tests/test_rag_id_unico.py
+index 73227c07..2d54e43d 100644
+--- a/tests/test_rag_id_unico.py
++++ b/tests/test_rag_id_unico.py
+@@ -1,4 +1,4 @@
+-"""O id de um fragmento vem do CAMINHO, e o caminho é único por construção.
++"""O id de um fragmento vem do CAMINHO, e o caminho e unico por construcao.
+
+ ## O defeito, medido em 2026-08-28
+
+@@ -7,26 +7,26 @@
+     source_name = file_path.parent.name if file_path.name == "MEMORY.md" else file_path.stem
+     ids = [f"{source_name}_chunk_{i}" for i in range(len(chunks))]
+
+-`source_name` **não é único no corpus**. Dos 503 arquivos que o manifesto alcança,
+-sobravam **426 nomes distintos** — 36 nomes em colisão, **77 arquivos afetados**.
++`source_name` **nao e unico no corpus**. Dos 503 arquivos que o manifesto alcanca,
++sobravam **426 nomes distintos** -- 36 nomes em colisao, **77 arquivos afetados**.
+ `SPEC` aparecia 4 vezes, `PRD` 4, `dispatcher` 4, e cada um dos 19 agentes duas ou
+-três, porque `.claude/AGENTS/chico.md` e `.claude/agent-memory/chico/MEMORY.md`
++tres, porque `.claude/AGENTS/chico.md` e `.claude/agent-memory/chico/MEMORY.md`
+ produzem o mesmo `chico`.
+
+-E a escrita é `upsert`. Quem chega depois sobrescreve os chunks `0..N` do anterior
+-e **deixa órfãos os de índice maior**, que continuam apontando para outro arquivo.
+-O índice não perdia documentos: montava documentos Frankenstein. Medido no índice
+-real, o espaço de id `dispatcher_chunk_*` reunia 34 chunks de um `MEMORY.md`, 24 de
++E a escrita e `upsert`. Quem chega depois sobrescreve os chunks `0..N` do anterior
++e **deixa orfaos os de indice maior**, que continuam apontando para outro arquivo.
++O indice nao perdia documentos: montava documentos Frankenstein. Medido no indice
++real, o espaco de id `dispatcher_chunk_*` reunia 34 chunks de um `MEMORY.md`, 24 de
+ outro e 1 de `agents/dispatcher.py`.
+
+-Sobrescrita silenciosa nunca alcança ramo de erro — é a mesma colisão de chave que
+-já havia acontecido na auditoria mensal, indexando manuais por basename. O detector
+-que a revelou nas duas vezes foi o mesmo: **derivar a contagem** (503 alvos → 449
++Sobrescrita silenciosa nunca alcanca ramo de erro -- e a mesma colisao de chave que
++ja havia acontecido na auditoria mensal, indexando manuais por basename. O detector
++que a revelou nas duas vezes foi o mesmo: **derivar a contagem** (503 alvos - 449
+ fontes) em vez de confiar no verde.
+
+-O `agent` continua sendo o nome amigável, que é o que a filtragem usa. Só o **id**
+-passou a vir do caminho relativo à raiz — único por construção e estável se o
+-repositório mudar de lugar.
++O `agent` continua sendo o nome amigavel, que e o que a filtragem usa. So o **id**
++passou a vir do caminho relativo a raiz -- unico por construcao e estavel se o
++repositorio mudar de lugar.
+ """
+
+ from __future__ import annotations
+@@ -43,9 +43,9 @@ MANIFESTO = RAIZ / "rag_ingestion_manifest.json"
+
+
+ def _alvos_do_manifesto() -> set[Path]:
+-    """Reproduz a descoberta do manifesto, lendo os filtros do próprio módulo.
++    """Reproduz a descoberta do manifesto, lendo os filtros do proprio modulo.
+
+-    Sem cópia da lista de exclusão: `memory_rag` é a fonte, e duplicá-la aqui
++    Sem copia da lista de exclusao: `memory_rag` e a fonte, e duplica-la aqui
+     seria a segunda fonte que diverge.
+     """
+     import memory_rag  # noqa: PLC0415
+@@ -82,7 +82,7 @@ def _alvos_do_manifesto() -> set[Path]:
+
+
+ def _chave_de(caminho: Path) -> str:
+-    """A chave que o módulo usa hoje, extraída dele, não reimplementada."""
++    """A chave que o modulo usa hoje, extraida dele, nao reimplementada."""
+     import memory_rag  # noqa: PLC0415
+
+     try:
+@@ -97,8 +97,8 @@ def _chave_de(caminho: Path) -> str:
+
+
+ def test_a_chave_de_id_e_unica_em_todo_o_corpus():
+-    """A regressão que este arquivo existe para impedir. Se voltar a colidir,
+-    o índice volta a montar documentos Frankenstein — e nada acusa."""
++    """A regressao que este arquivo existe para impedir. Se voltar a colidir,
++    o indice volta a montar documentos Frankenstein -- e nada acusa."""
+     alvos = _alvos_do_manifesto()
+     assert len(alvos) > 100, f"descoberta do manifesto degradou: so {len(alvos)} alvos"
+
+@@ -109,11 +109,11 @@ def test_a_chave_de_id_e_unica_em_todo_o_corpus():
+
+
+ def test_o_esquema_antigo_de_fato_colidia():
+-    """Prova que a invariante acima não é vacuidade.
++    """Prova que a invariante acima nao e vacuidade.
+
+     Um teste de unicidade sobre um esquema que nunca colide passa por acidente.
+-    Este mede o esquema antigo no MESMO corpus e exige que ele reprove — se um
+-    dia parar de colidir, é porque o corpus mudou, e a força do teste acima
++    Este mede o esquema antigo no MESMO corpus e exige que ele reprove -- se um
++    dia parar de colidir, e porque o corpus mudou, e a forca do teste acima
+     precisa ser reavaliada."""
+     alvos = _alvos_do_manifesto()
+     antigo = collections.Counter(
+@@ -129,7 +129,7 @@ def test_o_esquema_antigo_de_fato_colidia():
+
+
+ def test_a_chave_e_relativa_e_sobrevive_a_mudanca_de_raiz():
+-    """Caminho absoluto no id amarraria o índice a esta máquina."""
++    """Caminho absoluto no id amarraria o indice a esta maquina."""
+     import memory_rag  # noqa: PLC0415
+
+     alvo = memory_rag.RAIZ_DO_PROJETO / ".claude" / "agent-memory" / "chico" / "MEMORY.md"
+@@ -140,7 +140,7 @@ def test_a_chave_e_relativa_e_sobrevive_a_mudanca_de_raiz():
+
+
+ def test_arquivo_fora_da_raiz_ainda_recebe_id_unico():
+-    """O ramo de fallback existe e precisa continuar produzindo algo único."""
++    """O ramo de fallback existe e precisa continuar produzindo algo unico."""
+     fora = Path("/tmp/fora-da-raiz/documento.md") if Path("/tmp").exists() else Path("C:/temp/fora/documento.md")
+     chave = _chave_de(fora)
+     assert chave, "o fallback nao pode devolver vazio"
+@@ -148,15 +148,15 @@ def test_arquivo_fora_da_raiz_ainda_recebe_id_unico():
+
+
+ def test_o_nome_amigavel_continua_no_metadado():
+-    """A correção mexe no id, não na filtragem. `agent` tem de continuar sendo o
+-    nome curto, senão consulta por agente para de funcionar."""
++    """A correcao mexe no id, nao na filtragem. `agent` tem de continuar sendo o
++    nome curto, senao consulta por agente para de funcionar."""
+     fonte = (RAIZ / "memory_rag.py").read_text(encoding="utf-8")
+     assert '"agent": source_name' in fonte, "o metadado `agent` deixou de ser o nome amigavel"
+
+
+ def test_o_id_nao_e_mais_derivado_so_do_nome():
+-    """Guarda estrutural: se alguém voltar a montar o id a partir de
+-    `source_name`, a colisão volta inteira."""
++    """Guarda estrutural: se alguem voltar a montar o id a partir de
++    `source_name`, a colisao volta inteira."""
+     fonte = (RAIZ / "memory_rag.py").read_text(encoding="utf-8")
+     padrao_antigo = "source_name" + '}_chunk_{'
+     assert padrao_antigo not in fonte, (
+@@ -173,7 +173,7 @@ def test_o_id_nao_e_mais_derivado_so_do_nome():
+     ],
+ )
+ def test_pares_que_colidiam_agora_se_separam(caminho_a, caminho_b):
+-    """Os casos concretos medidos no índice real, um a um."""
++    """Os casos concretos medidos no indice real, um a um."""
+     import memory_rag  # noqa: PLC0415
+
+     a = memory_rag.RAIZ_DO_PROJETO / caminho_a
+diff --git a/tests/test_stress_circuit_breaker.py b/tests/test_stress_circuit_breaker.py
+index 6e673d93..f451a325 100644
+--- a/tests/test_stress_circuit_breaker.py
++++ b/tests/test_stress_circuit_breaker.py
+@@ -8,7 +8,7 @@ import asyncio
+ import time
+ from dataclasses import dataclass, field
+ from enum import Enum
+-from typing import Any, Dict, List
++from typing import Any
+ import aiohttp
+ import pytest
+
+@@ -27,9 +27,9 @@ class LoadMetrics:
+     local_ollama_hits: int = 0
+     cloud_fallback_hits: int = 0
+     circuit_trips: int = 0
+-    latencies_ms: List[float] = field(default_factory=list)
++    latencies_ms: list[float] = field(default_factory=list)
+
+-    def compute_percentiles(self) -> Dict[str, float]:
++    def compute_percentiles(self) -> dict[str, float]:
+         if not self.latencies_ms:
+             return {"p50": 0.0, "p95": 0.0, "p99": 0.0, "avg": 0.0}
+         sorted_lat = sorted(self.latencies_ms)
+@@ -124,7 +124,7 @@ class StressTestCircuitBreaker:
+                 force_vulkan_failure=inject_failure,
+             )
+
+-    async def run_benchmark(self, failure_injection_rate: float = 0.3) -> Dict[str, Any]:
++    async def run_benchmark(self, failure_injection_rate: float = 0.3) -> dict[str, Any]:
+         """
+         Dispara tarefas concorrentes injetando taxa configurada de falhas na camada primaria.
+         """
+diff --git a/tests/test_vitoi_perspective_engine.py b/tests/test_vitoi_perspective_engine.py
+index bc33af13..65900b1b 100644
+--- a/tests/test_vitoi_perspective_engine.py
++++ b/tests/test_vitoi_perspective_engine.py
+@@ -315,11 +315,11 @@ class TestVitoiPerspectiveEngine:
+         assert isinstance(report["pmev_value"], (int, float))
+
+     # ==========================================================================
+-    # TESTES DEDICADOS DAS ETAPAS 1, 2 E 3 (TRÍADE AXIOMÁTICA PMev)
++    # TESTES DEDICADOS DAS ETAPAS 1, 2 E 3 (TRIADE AXIOMATICA PMev)
+     # ==========================================================================
+
+     def test_ev_fold_monotonicity_with_blinds_proximity(self):
+-        """[Etapa 1] Garante que estar em Late Position retém mais equidade de fold que no UTG."""
++        """[Etapa 1] Garante que estar em Late Position retem mais equidade de fold que no UTG."""
+         state = TableState(
+             stacks=[25.0, 50.0, 15.0, 8.0],
+             payouts=[1000.0, 600.0, 400.0],
+@@ -335,7 +335,7 @@ class TestVitoiPerspectiveEngine:
+         assert ev_fold_btn > ev_fold_utg
+
+     def test_bystander_gain_elevates_fold_value_with_short_stacks(self):
+-        """[Etapa 1] Garante que a presença de Short Stacks eleva o valor do Fold do Hero."""
++        """[Etapa 1] Garante que a presenca de Short Stacks eleva o valor do Fold do Hero."""
+         state_balanced = TableState(
+             stacks=[30.0, 30.0, 30.0],
+             payouts=[1000.0, 500.0],
+@@ -357,7 +357,7 @@ class TestVitoiPerspectiveEngine:
+         assert gain_short > gain_balanced
+
+     def test_realization_factor_ip_superior_to_oop(self):
+-        """[Etapa 2] Garante que a realização de equidade em posição (IP) é superior a fora de posição (OOP)."""
++        """[Etapa 2] Garante que a realizacao de equidade em posicao (IP) e superior a fora de posicao (OOP)."""
+         ctx_ip = HandContext(
+             raw_equity=0.45,
+             is_in_position=True,
+@@ -379,7 +379,7 @@ class TestVitoiPerspectiveEngine:
+         assert r_ip > r_oop
+
+     def test_multiway_structural_liability_scales_quadratically(self):
+-        """[Etapa 2] Garante que o passivo de risco escala com N^2 conforme o número de oponentes."""
++        """[Etapa 2] Garante que o passivo de risco escala com N^2 conforme o numero de oponentes."""
+         ctx_2opp = HandContext(raw_equity=0.35, is_in_position=True, spr=2.0, num_opponents=2)
+         ctx_3opp = HandContext(raw_equity=0.35, is_in_position=True, spr=2.0, num_opponents=3)
+
+@@ -392,7 +392,7 @@ class TestVitoiPerspectiveEngine:
+         assert ratio == pytest.approx(expected_ratio, rel=1e-2)
+
+     def test_prospect_theory_loss_aversion_ratio(self):
+-        """[Etapa 3] Garante que a perda é penalizada em razão de lambda = 2.25 sobre ganhos idênticos."""
++        """[Etapa 3] Garante que a perda e penalizada em razao de lambda = 2.25 sobre ganhos identicos."""
+         engine = ProspectRiskEngine(
+             RiskContext(
+                 delta_win_dollars=150.0,
+@@ -410,7 +410,7 @@ class TestVitoiPerspectiveEngine:
+         assert (u_lose / u_win) == pytest.approx(2.25, rel=1e-2)
+
+     def test_edge_and_deep_structure_attenuates_risk_premium(self):
+-        """[Etapa 3] Garante que jogadores com alto Edge em estruturas lentas têm menor corte de equidade."""
++        """[Etapa 3] Garante que jogadores com alto Edge em estruturas lentas tem menor corte de equidade."""
+         ctx_high_edge = RiskContext(
+             delta_win_dollars=200.0,
+             delta_lose_dollars=400.0,
+diff --git a/tools/hybrid_router/app.py b/tools/hybrid_router/app.py
+index 840dab8f..b8a8cbf0 100644
+--- a/tools/hybrid_router/app.py
++++ b/tools/hybrid_router/app.py
+@@ -1,8 +1,8 @@
+ #!/usr/bin/env python3
+-"""MICROSERVIÇO DE ROTEAMENTO HÍBRIDO SOTA (EDGE LOCAL VULKAN + GEMINI 3.7 FLASH).
++"""MICROSERVICO DE ROTEAMENTO HIBRIDO SOTA (EDGE LOCAL VULKAN + GEMINI 3.7 FLASH).
+
+-Arquitetura de inferência de alta vazão com tolerância a falhas, medição
+-estática de densidade semântica, suporte a Extended Thinking dinâmico e
++Arquitetura de inferencia de alta vazao com tolerancia a falhas, medicao
++estatica de densidade semantica, suporte a Extended Thinking dinamico e
+ conformidade estrita com schemas Pydantic v2.
+ """
+
+@@ -71,44 +71,44 @@ class RouteMetrics(BaseModel):
+     model_config = ConfigDict(frozen=True)
+
+     estimated_tokens: int = Field(..., description="Contagem estimada de tokens no prompt.")
+-    math_latex_density: float = Field(..., description="Densidade de formalismo matemático e Teoria dos Jogos (0.0 a 1.0).")
+-    code_complexity_score: float = Field(..., description="Score de complexidade sintática de código (0.0 a 1.0).")
+-    overall_complexity: float = Field(..., description="Métrica composta ponderada de complexidade analítica.")
+-    requires_tools: bool = Field(..., description="Indica necessidade de execução de ferramentas.")
+-    requires_strict_json: bool = Field(..., description="Indica exigência de validação via JSON Schema estrito.")
+-    selected_target: ExecutionTarget = Field(..., description="Destino de execução selecionado.")
+-    thinking_budget: int | None = Field(default=None, description="Orçamento de tokens de Extended Thinking.")
+-    rationale: str = Field(..., description="Fundamentação lógica da decisão de roteamento.")
++    math_latex_density: float = Field(..., description="Densidade de formalismo matematico e Teoria dos Jogos (0.0 a 1.0).")
++    code_complexity_score: float = Field(..., description="Score de complexidade sintatica de codigo (0.0 a 1.0).")
++    overall_complexity: float = Field(..., description="Metrica composta ponderada de complexidade analitica.")
++    requires_tools: bool = Field(..., description="Indica necessidade de execucao de ferramentas.")
++    requires_strict_json: bool = Field(..., description="Indica exigencia de validacao via JSON Schema estrito.")
++    selected_target: ExecutionTarget = Field(..., description="Destino de execucao selecionado.")
++    thinking_budget: int | None = Field(default=None, description="Orcamento de tokens de Extended Thinking.")
++    rationale: str = Field(..., description="Fundamentacao logica da decisao de roteamento.")
+
+
+ class GenerateRequest(BaseModel):
+     model_config = ConfigDict(
+         json_schema_extra={
+             "example": {
+-                "prompt": "Calcule o equilíbrio de Nash misto no payoff $U_1(s) = \\sum p_i u_i$ e avalie a variância sob restrição de ICM.",
+-                "system_instruction": "Atue como motor axiomático de Teoria dos Jogos e PMev.",
++                "prompt": "Calcule o equilibrio de Nash misto no payoff $U_1(s) = \\sum p_i u_i$ e avalie a variancia sob restricao de ICM.",
++                "system_instruction": "Atue como motor axiomatico de Teoria dos Jogos e PMev.",
+                 "thinking_budget_override": 4096,
+             }
+         }
+     )
+
+-    prompt: str = Field(..., min_length=1, description="Payload de entrada para inferência.")
+-    system_instruction: str = Field(default="", description="Instruções de sistema ou metaprompt de governança.")
+-    force_target: ExecutionTarget | None = Field(default=None, description="Sobrescreve a heurística do roteador.")
+-    thinking_budget_override: int | None = Field(default=None, ge=-1, le=65536, description="Orçamento de raciocínio (-1=dinâmico, 0=off, >0=fixo).")
+-    response_schema: dict[str, JsonValue] | None = Field(default=None, description="JSON Schema para decodificação gramatical estrita.")
+-    tools_provided: bool = Field(default=False, description="Flag indicando presença de ferramentas no pipeline.")
++    prompt: str = Field(..., min_length=1, description="Payload de entrada para inferencia.")
++    system_instruction: str = Field(default="", description="Instrucoes de sistema ou metaprompt de governanca.")
++    force_target: ExecutionTarget | None = Field(default=None, description="Sobrescreve a heuristica do roteador.")
++    thinking_budget_override: int | None = Field(default=None, ge=-1, le=65536, description="Orcamento de raciocinio (-1=dinamico, 0=off, >0=fixo).")
++    response_schema: dict[str, JsonValue] | None = Field(default=None, description="JSON Schema para decodificacao gramatical estrita.")
++    tools_provided: bool = Field(default=False, description="Flag indicando presenca de ferramentas no pipeline.")
+
+
+ class GenerateResponse(BaseModel):
+     model_config = ConfigDict(frozen=True)
+
+     content: str = Field(..., description="Texto gerado pelo modelo.")
+-    target_executed: ExecutionTarget = Field(..., description="Ambiente que executou a inferência.")
+-    latency_ms: float = Field(..., description="Latência ponta a ponta em milissegundos.")
++    target_executed: ExecutionTarget = Field(..., description="Ambiente que executou a inferencia.")
++    latency_ms: float = Field(..., description="Latencia ponta a ponta em milissegundos.")
+     tokens_evaluated: int = Field(..., description="Tokens estimados no prompt de entrada.")
+     thinking_tokens_used: int = Field(default=0, description="Tokens consumidos durante o Extended Thinking.")
+-    metrics: RouteMetrics = Field(..., description="Métricas analíticas calculadas na triagem.")
++    metrics: RouteMetrics = Field(..., description="Metricas analiticas calculadas na triagem.")
+
+
+ class HealthCheckResponse(BaseModel):
+@@ -122,17 +122,17 @@ class HealthCheckResponse(BaseModel):
+
+
+ # =====================================================================
+-# 2. ANALISADOR ESTÁTICO DE COMPLEXIDADE E DENSIDADE
++# 2. ANALISADOR ESTATICO DE COMPLEXIDADE E DENSIDADE
+ # =====================================================================
+
+ class ComplexityAnalyzer:
+-    """Motor analítico para triagem estática de densidade simbólica e código."""
++    """Motor analitico para triagem estatica de densidade simbolica e codigo."""
+
+     LATEX_PATTERNS: re.Pattern[str] = re.compile(
+         r"(\$|\\\[|\\begin\{equation\}|\\frac|\\sum|\\int|\\forall|\\exists|\\matrix|\\lambda|\\mu|\\sigma)"
+     )
+     MATH_GAME_THEORY: re.Pattern[str] = re.compile(
+-        r"(ICM|PMev|Nash|GTO|payoff|matriz|probabilidade|equação|autovalor|variância|EV|PioSolver|Risk Premium)",
++        r"(ICM|PMev|Nash|GTO|payoff|matriz|probabilidade|equacao|autovalor|variancia|EV|PioSolver|Risk Premium)",
+         re.IGNORECASE,
+     )
+     CODE_KEYWORDS: re.Pattern[str] = re.compile(
+@@ -171,15 +171,15 @@ class ComplexityAnalyzer:
+         if force_target is not None:
+             selected_target = force_target
+             thinking_budget = thinking_override if force_target == ExecutionTarget.GEMINI_37_FLASH_THINKING else None
+-            rationale = f"Destino forçado explicitamente ({force_target.value})."
++            rationale = f"Destino forcado explicitamente ({force_target.value})."
+         elif requires_tools:
+             selected_target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
+             thinking_budget = None
+-            rationale = "Requisição com Tool Calling delegada ao Gemini Cloud."
++            rationale = "Requisicao com Tool Calling delegada ao Gemini Cloud."
+         elif overall_complexity >= self.complexity_threshold:
+             selected_target = ExecutionTarget.GEMINI_37_FLASH_THINKING
+             thinking_budget = thinking_override if thinking_override is not None else (4096 if overall_complexity < 0.75 else 16384)
+-            rationale = f"Alta complexidade analítica ({overall_complexity:.2f}). Ativação de Extended Thinking."
++            rationale = f"Alta complexidade analitica ({overall_complexity:.2f}). Ativacao de Extended Thinking."
+         elif estimated_tokens > self.local_max_tokens:
+             selected_target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
+             thinking_budget = 0
+@@ -187,11 +187,11 @@ class ComplexityAnalyzer:
+         elif requires_strict_json:
+             selected_target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
+             thinking_budget = 0
+-            rationale = "Decodificação de JSON Schema estrito delegada ao cluster Cloud."
++            rationale = "Decodificacao de JSON Schema estrito delegada ao cluster Cloud."
+         else:
+             selected_target = ExecutionTarget.LOCAL_LLAMA_VULKAN
+             thinking_budget = None
+-            rationale = f"Carga compatível com runtime local Vulkan ({estimated_tokens} tokens, complexidade={overall_complexity:.2f})."
++            rationale = f"Carga compativel com runtime local Vulkan ({estimated_tokens} tokens, complexidade={overall_complexity:.2f})."
+
+         return RouteMetrics(
+             estimated_tokens=estimated_tokens,
+@@ -207,11 +207,11 @@ class ComplexityAnalyzer:
+
+
+ # =====================================================================
+-# 3. CLIENTES DE INFERÊNCIA ASSÍNCRONOS
++# 3. CLIENTES DE INFERENCIA ASSINCRONOS
+ # =====================================================================
+
+ class LocalLlamaVulkanClient:
+-    """Cliente HTTP com conexão assíncrona persistente para llama.cpp."""
++    """Cliente HTTP com conexao assincrona persistente para llama.cpp."""
+
+     def __init__(self, endpoint_url: str = "http://127.0.0.1:8080/v1") -> None:
+         self.endpoint_url = endpoint_url.rstrip("/")
+@@ -239,7 +239,7 @@ class LocalLlamaVulkanClient:
+
+     async def generate(self, prompt: str, system_instruction: str = "") -> str:
+         if not self._client:
+-            raise RuntimeError("Cliente local llama.cpp não inicializado.")
++            raise RuntimeError("Cliente local llama.cpp nao inicializado.")
+
+         messages: list[dict[str, str]] = []
+         if system_instruction:
+@@ -264,7 +264,7 @@ class LocalLlamaVulkanClient:
+
+
+ class GeminiCloudClient:
+-    """Cliente nativo assíncrono para a API Gemini utilizando google-genai SDK."""
++    """Cliente nativo assincrono para a API Gemini utilizando google-genai SDK."""
+
+     def __init__(self, api_key: str | None = None, model_id: str = "gemini-2.5-flash") -> None:
+         self.api_key = api_key or os.getenv("GEMINI_API_KEY", "")
+@@ -285,10 +285,10 @@ class GeminiCloudClient:
+         thinking_budget: int | None = None,
+         response_schema: dict[str, JsonValue] | None = None,
+     ) -> tuple[str, int]:
+-        """Executa geração assíncrona não-bloqueante via client.aio."""
++        """Executa geracao assincrona nao-bloqueante via client.aio."""
+         client = self._client
+         if client is None or types is None:
+-            raise RuntimeError("SDK Google GenAI não inicializado ou GEMINI_API_KEY ausente.")
++            raise RuntimeError("SDK Google GenAI nao inicializado ou GEMINI_API_KEY ausente.")
+
+         thinking_cfg = (
+             types.ThinkingConfig(thinking_budget=thinking_budget)
+@@ -304,7 +304,7 @@ class GeminiCloudClient:
+             response_schema=response_schema,
+         )
+
+-        # Chamada assíncrona nativa pelo barramento client.aio
++        # Chamada assincrona nativa pelo barramento client.aio
+         response = await client.aio.models.generate_content(
+             model=self.model_id,
+             contents=prompt,
+@@ -326,7 +326,7 @@ class GeminiCloudClient:
+
+
+ # =====================================================================
+-# 4. ORQUESTRADOR HÍBRIDO COM RESILIÊNCIA E FAILOVER
++# 4. ORQUESTRADOR HIBRIDO COM RESILIENCIA E FAILOVER
+ # =====================================================================
+
+ class HybridOrchestrator:
+@@ -355,7 +355,7 @@ class HybridOrchestrator:
+         content = ""
+         thinking_tokens = 0
+
+-        # Rota Local Vulkan com Failover automático
++        # Rota Local Vulkan com Failover automatico
+         if target == ExecutionTarget.LOCAL_LLAMA_VULKAN:
+             is_alive = await self.local.is_available()
+             if is_alive:
+@@ -371,20 +371,20 @@ class HybridOrchestrator:
+                         metrics=metrics,
+                     )
+                 except Exception as err:
+-                    sys.stderr.write(f"[FAILOVER LOCAL->CLOUD] Erro de inferência local: {err}\n")
++                    sys.stderr.write(f"[FAILOVER LOCAL->CLOUD] Erro de inferencia local: {err}\n")
+
+             # Fallback para nuvem em caso de indisponibilidade
+             target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
+
+         # Rota Nuvem (Standard ou Extended Thinking)
+         if not self.cloud.is_configured:
+-            # Modo de simulação offline opcional para testes de infraestrutura
++            # Modo de simulacao offline opcional para testes de infraestrutura
+             if os.getenv("SIMULATE_INFERENCE", "false").lower() in ("true", "1", "yes"):
+                 sim_latency = 120.0 if target == ExecutionTarget.LOCAL_LLAMA_VULKAN else (450.0 if target == ExecutionTarget.GEMINI_37_FLASH_STANDARD else 1200.0)
+                 await asyncio.sleep(sim_latency / 1000.0)
+                 latency = (time.perf_counter() - start_time) * 1000.0
+                 return GenerateResponse(
+-                    content="[SIMULAÇÃO SOTA] Resposta sintética gerada para teste de vazão e roteamento.",
++                    content="[SIMULACAO SOTA] Resposta sintetica gerada para teste de vazao e roteamento.",
+                     target_executed=target,
+                     latency_ms=latency,
+                     tokens_evaluated=metrics.estimated_tokens,
+@@ -394,7 +394,7 @@ class HybridOrchestrator:
+
+             raise HTTPException(
+                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+-                detail="Serviço Cloud não configurado e runtime local offline.",
++                detail="Servico Cloud nao configurado e runtime local offline.",
+             )
+
+         content, thinking_tokens = await self.cloud.generate(
+@@ -416,7 +416,7 @@ class HybridOrchestrator:
+
+
+ # =====================================================================
+-# 5. LIFESPAN E APLICAÇÃO FASTAPI
++# 5. LIFESPAN E APLICACAO FASTAPI
+ # =====================================================================
+
+ local_llama_client = LocalLlamaVulkanClient(
+@@ -442,7 +442,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
+
+ app = FastAPI(
+     title="Hybrid Edge/Cloud LLM Router API SOTA",
+-    description="Microserviço de alta densidade para roteamento dinâmico entre llama.cpp (Vulkan) e Google Gemini 3.7 Flash.",
++    description="Microservico de alta densidade para roteamento dinamico entre llama.cpp (Vulkan) e Google Gemini 3.7 Flash.",
+     version="2.0.0",
+     lifespan=lifespan,
+ )
+@@ -479,7 +479,7 @@ async def analyze_prompt(request: GenerateRequest) -> RouteMetrics:
+     )
+
+
+-@app.post("/v1/chat/generate", response_model=GenerateResponse, tags=["Inferência"])
++@app.post("/v1/chat/generate", response_model=GenerateResponse, tags=["Inferencia"])
+ async def generate_completion(request: GenerateRequest) -> GenerateResponse:
+     try:
+         return await orchestrator.dispatch(request)
+@@ -488,7 +488,7 @@ async def generate_completion(request: GenerateRequest) -> GenerateResponse:
+     except Exception as exc:
+         raise HTTPException(
+             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+-            detail=f"Falha durante o pipeline de geração: {str(exc)}",
++            detail=f"Falha durante o pipeline de geracao: {str(exc)}",
+         ) from exc
+
+
+diff --git a/tools/hybrid_router/benchmark.py b/tools/hybrid_router/benchmark.py
+index f18e56f1..4a0dd1a2 100644
+--- a/tools/hybrid_router/benchmark.py
++++ b/tools/hybrid_router/benchmark.py
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env python3
+-"""BENCHMARK DE CONCORRÊNCIA E CARGA ASSÍNCRONO PARA O HYBRID ROUTER.
++"""BENCHMARK DE CONCORRENCIA E CARGA ASSINCRONO PARA O HYBRID ROUTER.
+
+-Mede latências estatísticas (p50, p90, p95, p99), vazão efetiva (RPS),
++Mede latencias estatisticas (p50, p90, p95, p99), vazao efetiva (RPS),
+ tokens de pensamento consumidos e exporta dataset estruturado em JSON.
+ """
+
+@@ -32,15 +32,15 @@ PAYLOAD_POOL: list[dict[str, Any]] = [
+     {
+         "description": "Baixa Densidade (Candidato a Llama Local)",
+         "payload": {
+-            "prompt": "Explique brevemente a diferença entre compilação JIT e AOT em três tópicos concisos.",
+-            "system_instruction": "Seja estritamente direto e técnico.",
++            "prompt": "Explique brevemente a diferenca entre compilacao JIT e AOT em tres topicos concisos.",
++            "system_instruction": "Seja estritamente direto e tecnico.",
+         },
+     },
+     {
+         "description": "Alta Densidade Teoria dos Jogos (Candidato a Gemini Thinking)",
+         "payload": {
+-            "prompt": "Dado um jogo matricial 2x2 com payoffs $U_1(A,A)=3$, $U_1(A,B)=0$, $U_1(B,A)=5$, $U_1(B,B)=1$, derive o equilíbrio de Nash misto, o valor esperado e a variância sob restrição de ICM.",
+-            "system_instruction": "Atue como motor axiomático de Teoria dos Jogos.",
++            "prompt": "Dado um jogo matricial 2x2 com payoffs $U_1(A,A)=3$, $U_1(A,B)=0$, $U_1(B,A)=5$, $U_1(B,B)=1$, derive o equilibrio de Nash misto, o valor esperado e a variancia sob restricao de ICM.",
++            "system_instruction": "Atue como motor axiomatico de Teoria dos Jogos.",
+         },
+     },
+     {
+@@ -142,7 +142,7 @@ def export_results_to_json(results: list[RequestResult], filepath: str) -> None:
+     serializable_data = [r.to_dict() for r in results]
+     with open(filepath, "w", encoding="utf-8") as f:
+         json.dump(serializable_data, f, indent=2, ensure_ascii=False)
+-    print(f"\n[EXPORTAÇÃO] {len(serializable_data)} registros salvos em: {os.path.abspath(filepath)}")
++    print(f"\n[EXPORTACAO] {len(serializable_data)} registros salvos em: {os.path.abspath(filepath)}")
+
+
+ async def run_benchmark(config: BenchmarkConfig) -> BenchmarkMetrics:
+@@ -154,7 +154,7 @@ async def run_benchmark(config: BenchmarkConfig) -> BenchmarkMetrics:
+     print("\n[INICIALIZANDO BENCHMARK SOTA]")
+     print(f"Target URL:        {url}")
+     print(f"Total Requests:    {config.total_requests}")
+-    print(f"Concorrência:      {config.concurrency}")
++    print(f"Concorrencia:      {config.concurrency}")
+     print(f"Export Target:     {config.output_json_file}\n")
+
+     async with httpx.AsyncClient(limits=limits, timeout=timeout) as client:
+@@ -200,16 +200,16 @@ def display_report(metrics: BenchmarkMetrics) -> None:
+     max_latency = max(metrics.latencies) if metrics.latencies else 0.0
+
+     print("=" * 75)
+-    print("                RELATÓRIO DE DESEMPENHO E CONCORRÊNCIA                ")
++    print("                RELATORIO DE DESEMPENHO E CONCORRENCIA                ")
+     print("=" * 75)
+-    print(f"Tempo Total de Execução:    {metrics.total_time_seconds:.2f} s")
++    print(f"Tempo Total de Execucao:    {metrics.total_time_seconds:.2f} s")
+     print(f"Taxa de Throughput (RPS):   {metrics.rps:.2f} req/s")
+-    print(f"Requisições Totais:         {metrics.total_requests}")
++    print(f"Requisicoes Totais:         {metrics.total_requests}")
+     print(f"Sucesso:                    {metrics.successful_requests} ({(metrics.successful_requests/metrics.total_requests)*100:.1f}%)")
+     print(f"Falhas / Timeouts:          {metrics.failed_requests} ({(metrics.failed_requests/metrics.total_requests)*100:.1f}%)")
+     print(f"Thinking Tokens Gerados:    {metrics.total_thinking_tokens}")
+     print("-" * 75)
+-    print("DISTRIBUIÇÃO DE LATÊNCIA (ms)")
++    print("DISTRIBUICAO DE LATENCIA (ms)")
+     print(f"  Min:  {min_latency:9.2f} ms | Avg:  {avg_latency:9.2f} ms | Max: {max_latency:9.2f} ms")
+     print(f"  p50:  {metrics.percentile(50):9.2f} ms | p90:  {metrics.percentile(90):9.2f} ms")
+     print(f"  p95:  {metrics.percentile(95):9.2f} ms | p99:  {metrics.percentile(99):9.2f} ms")
+@@ -217,7 +217,7 @@ def display_report(metrics: BenchmarkMetrics) -> None:
+     print("ROTEAMENTO EXECUTADO POR TARGET")
+     for target, count in metrics.targets_count.items():
+         pct = (count / metrics.successful_requests) * 100 if metrics.successful_requests > 0 else 0
+-        print(f"  • {target:<30} : {count:>4} reqs ({pct:5.1f}%)")
++        print(f"  * {target:<30} : {count:>4} reqs ({pct:5.1f}%)")
+
+     if metrics.errors:
+         print("-" * 75)
+diff --git a/tools/hybrid_router/plot_benchmark.py b/tools/hybrid_router/plot_benchmark.py
+index 00fb2bdc..24528daf 100644
+--- a/tools/hybrid_router/plot_benchmark.py
++++ b/tools/hybrid_router/plot_benchmark.py
+@@ -1,9 +1,9 @@
+ #!/usr/bin/env python3
+-"""GERADOR DE VISUALIZAÇÃO ESTRATIFICADA DE LATÊNCIA SOTA GOLD (CDF, PDF, TIMELINE E TOKENOMICS).
++"""GERADOR DE VISUALIZACAO ESTRATIFICADA DE LATENCIA SOTA GOLD (CDF, PDF, TIMELINE E TOKENOMICS).
+
+-Gera um dashboard executivo moderno, didático e de alta fidelidade visual (300 DPI)
+-consolidando métricas de latência, distribuição cumulativa, estabilidade de cauda
+-e alocação de tokens de Extended Thinking.
++Gera um dashboard executivo moderno, didatico e de alta fidelidade visual (300 DPI)
++consolidando metricas de latencia, distribuicao cumulativa, estabilidade de cauda
++e alocacao de tokens de Extended Thinking.
+ """
+
+ from __future__ import annotations
+@@ -32,7 +32,7 @@ else:
+         import pandas as pd
+         import seaborn as sns
+     except ImportError as exc:
+-        print(f"[AVISO] Dependências de plotagem não encontradas ({exc}).")
++        print(f"[AVISO] Dependencias de plotagem nao encontradas ({exc}).")
+         print("Instale com: pip install matplotlib seaborn pandas numpy")
+         matplotlib = None  # type: ignore[assignment]
+         gridspec = None  # type: ignore[assignment]
+@@ -43,14 +43,14 @@ else:
+
+
+ # =====================================================================
+-# 1. PALETA DE CORES E ESPECIFICAÇÕES DE IDENTIDADE VISUAL
++# 1. PALETA DE CORES E ESPECIFICACOES DE IDENTIDADE VISUAL
+ # =====================================================================
+
+ THEME_BG = "#F8F9FA"         # Fundo geral sofisticado
+-CARD_BG = "#FFFFFF"          # Fundo dos painéis
++CARD_BG = "#FFFFFF"          # Fundo dos paineis
+ BORDER_COLOR = "#E2E8F0"     # Bordas sutis
+ TEXT_PRIMARY = "#1E293B"     # Texto principal (Slate 800)
+-TEXT_MUTED = "#64748B"       # Texto secundário (Slate 500)
++TEXT_MUTED = "#64748B"       # Texto secundario (Slate 500)
+ GRID_COLOR = "#E2E8F0"       # Grid discreto
+
+ PALETTE_MAP: dict[str, str] = {
+@@ -69,11 +69,11 @@ TARGET_LABELS: dict[str, str] = {
+
+
+ # =====================================================================
+-# 2. CARREGAMENTO E SÍNTESE DE DADOS
++# 2. CARREGAMENTO E SINTESE DE DADOS
+ # =====================================================================
+
+ def generate_synthetic_data(samples: int = 60) -> pd.DataFrame:
+-    """Gera massa de dados sintética realista para preview do dashboard."""
++    """Gera massa de dados sintetica realista para preview do dashboard."""
+     np.random.seed(42)
+     n_standard = int(samples * 0.667)
+     n_thinking = samples - n_standard
+@@ -99,7 +99,7 @@ def generate_synthetic_data(samples: int = 60) -> pd.DataFrame:
+             "is_success": True,
+         })
+
+-    # Embaralhar para simular sequência de requisições real
++    # Embaralhar para simular sequencia de requisicoes real
+     return pd.DataFrame(records).sample(frac=1.0, random_state=42).reset_index(drop=True)
+
+
+@@ -112,9 +112,9 @@ def load_dataset(file_path: str | None) -> pd.DataFrame:
+         elif file_path.endswith(".csv"):
+             df = pd.read_csv(file_path)
+         else:
+-            raise ValueError("Formato não suportado. Utilize .json ou .csv")
++            raise ValueError("Formato nao suportado. Utilize .json ou .csv")
+     else:
+-        print("[AVISO] Dataset não encontrado. Gerando dados sintéticos de alta fidelidade...")
++        print("[AVISO] Dataset nao encontrado. Gerando dados sinteticos de alta fidelidade...")
+         df = generate_synthetic_data()
+
+     if "is_success" in df.columns:
+@@ -124,13 +124,13 @@ def load_dataset(file_path: str | None) -> pd.DataFrame:
+
+
+ # =====================================================================
+-# 3. MOTOR DE RENDERIZAÇÃO GRÁFICA SOTA GOLD (DASHBOARD QUAD-PANEL)
++# 3. MOTOR DE RENDERIZACAO GRAFICA SOTA GOLD (DASHBOARD QUAD-PANEL)
+ # =====================================================================
+
+ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_report.png") -> None:
+     sns.set_theme(style="whitegrid", font="sans-serif")
+
+-    # Criação do Canvas Master com Banner Superior e 4 Painéis
++    # Criacao do Canvas Master com Banner Superior e 4 Paineis
+     fig = plt.figure(figsize=(20, 12), dpi=300, facecolor=THEME_BG)
+     gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.32, wspace=0.22, top=0.88, bottom=0.07, left=0.06, right=0.96)
+
+@@ -145,18 +145,18 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
+     p99 = float(np.percentile(latency_vals, 99)) if total_reqs else 0.0
+     total_thinking = int(np.sum(df["thinking_tokens"].to_numpy())) if "thinking_tokens" in df.columns else 0
+
+-    # Título Principal e Subtítulo
+-    fig.text(0.06, 0.955, "HYBRID ROUTER SOTA — RELATÓRIO DE DESEMPENHO E LATÊNCIA",
++    # Titulo Principal e Subtitulo
++    fig.text(0.06, 0.955, "HYBRID ROUTER SOTA -- RELATORIO DE DESEMPENHO E LATENCIA",
+              fontsize=17, fontweight="bold", color=TEXT_PRIMARY, ha="left")
+-    fig.text(0.06, 0.932, "Protocolo Chico SOTA v8.0 GOLD • Arquitetura Google Gemini 3.7 Flash & Llama.cpp Vulkan Edge",
++    fig.text(0.06, 0.932, "Protocolo Chico SOTA v8.0 GOLD * Arquitetura Google Gemini 3.7 Flash & Llama.cpp Vulkan Edge",
+              fontsize=11, color=TEXT_MUTED, ha="left")
+
+-    # Cards de Métricas no Topo Direito
++    # Cards de Metricas no Topo Direito
+     kpi_text = (
+-        f"Requisições: {total_reqs} (100% Sucesso)  │  "
+-        f"Latência Média: {avg_lat:.1f}ms  │  "
+-        f"Mediana p50: {p50:.1f}ms  │  "
+-        f"Cauda p99: {p99:.1f}ms  │  "
++        f"Requisicoes: {total_reqs} (100% Sucesso)  |  "
++        f"Latencia Media: {avg_lat:.1f}ms  |  "
++        f"Mediana p50: {p50:.1f}ms  |  "
++        f"Cauda p99: {p99:.1f}ms  |  "
+         f"Thinking Tokens: {total_thinking:,}"
+     )
+     fig.text(0.96, 0.942, kpi_text, fontsize=10.5, fontweight="bold", color=TEXT_PRIMARY,
+@@ -180,24 +180,24 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
+             kde=True,
+             stat="density",
+             color=color,
+-            label=f"{label} ({count} reqs • {pct:.1f}%)",
++            label=f"{label} ({count} reqs * {pct:.1f}%)",
+             ax=ax1,
+             alpha=0.30,
+             edgecolor=color,
+             linewidth=1.5,
+         )
+-        # Linha vertical indicando a média do grupo
++        # Linha vertical indicando a media do grupo
+         mean_val = float(np.mean(np.asarray(subset["latency_ms"])))
+         ax1.axvline(mean_val, color=color, linestyle="--", linewidth=1.2, alpha=0.8)
+
+-    ax1.set_title("1. Densidade de Probabilidade de Latência (PDF / KDE Bimodal)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
+-    ax1.set_xlabel("Latência Ponta a Ponta (ms)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
++    ax1.set_title("1. Densidade de Probabilidade de Latencia (PDF / KDE Bimodal)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
++    ax1.set_xlabel("Latencia Ponta a Ponta (ms)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
+     ax1.set_ylabel("Densidade de Probabilidade", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
+     ax1.legend(frameon=True, facecolor=CARD_BG, edgecolor=BORDER_COLOR, fontsize=8.5, loc="upper right")
+     ax1.grid(True, linestyle="--", alpha=0.35, color=GRID_COLOR)
+
+     # -------------------------------------------------------------
+-    # PAINEL 2: FUNÇÃO DE DISTRIBUIÇÃO CUMULATIVA EMPÍRICA (eCDF)
++    # PAINEL 2: FUNCAO DE DISTRIBUICAO CUMULATIVA EMPIRICA (eCDF)
+     # -------------------------------------------------------------
+     ax2 = fig.add_subplot(gs[0, 1], facecolor=CARD_BG)
+     for target in present_targets:
+@@ -233,8 +233,8 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
+             bbox=dict(boxstyle="round,pad=0.25", fc=CARD_BG, ec=color, alpha=0.9),
+         )
+
+-    ax2.set_title("2. Distribuição Cumulativa de Latência (eCDF & Percentis de Cauda)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
+-    ax2.set_xlabel("Latência Ponta a Ponta (ms)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
++    ax2.set_title("2. Distribuicao Cumulativa de Latencia (eCDF & Percentis de Cauda)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
++    ax2.set_xlabel("Latencia Ponta a Ponta (ms)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
+     ax2.set_ylabel(r"Probabilidade Acumulada $P(X \leq x)$", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
+     ax2.set_ylim(-0.02, 1.05)
+     ax2.legend(frameon=True, facecolor=CARD_BG, edgecolor=BORDER_COLOR, fontsize=8.5, loc="lower right")
+@@ -253,18 +253,18 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
+         label = TARGET_LABELS.get(str(target), str(target))
+         ax3.scatter(subset["request_id"], subset["latency_ms"], color=color, label=label, alpha=0.85, s=36, edgecolors="none")
+
+-    # Média móvel global para verificar estabilidade temporal
++    # Media movel global para verificar estabilidade temporal
+     rolling_mean = df_seq["latency_ms"].rolling(window=max(3, len(df_seq) // 10), min_periods=1).mean()
+-    ax3.plot(df_seq["request_id"], rolling_mean, color=TEXT_PRIMARY, linestyle="-", linewidth=1.8, label="Média Móvel (Rolling Avg)")
++    ax3.plot(df_seq["request_id"], rolling_mean, color=TEXT_PRIMARY, linestyle="-", linewidth=1.8, label="Media Movel (Rolling Avg)")
+
+-    ax3.set_title("3. Estabilidade Temporal sob Carga Concorrente (Timeline de Requisições)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
+-    ax3.set_xlabel("Número Sequencial da Requisição (#)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
+-    ax3.set_ylabel("Latência de Resposta (ms)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
++    ax3.set_title("3. Estabilidade Temporal sob Carga Concorrente (Timeline de Requisicoes)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
++    ax3.set_xlabel("Numero Sequencial da Requisicao (#)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
++    ax3.set_ylabel("Latencia de Resposta (ms)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
+     ax3.legend(frameon=True, facecolor=CARD_BG, edgecolor=BORDER_COLOR, fontsize=8.5, loc="upper right")
+     ax3.grid(True, linestyle="--", alpha=0.35, color=GRID_COLOR)
+
+     # -------------------------------------------------------------
+-    # PAINEL 4: PARTICIONAMENTO DE ROTAS & ALOCAÇÃO DE THINKING TOKENS
++    # PAINEL 4: PARTICIONAMENTO DE ROTAS & ALOCACAO DE THINKING TOKENS
+     # -------------------------------------------------------------
+     ax4 = fig.add_subplot(gs[1, 1], facecolor=CARD_BG)
+
+@@ -292,12 +292,12 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
+
+     # Texto central no donut
+     ax4.text(0, 0, f"{total_reqs}\nReqs", ha="center", va="center", fontsize=13, fontweight="bold", color=TEXT_PRIMARY)
+-    ax4.set_title("4. Alocação de Tráfego e Especialização de Roteamento", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
++    ax4.set_title("4. Alocacao de Trafego e Especializacao de Roteamento", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
+
+-    # Salvamento de Alta Resolução
++    # Salvamento de Alta Resolucao
+     plt.savefig(output_image, dpi=300, facecolor=THEME_BG, edgecolor="none", bbox_inches="tight")
+     plt.close()
+-    print(f"\n[SUCESSO] Dashboard SOTA Gold exportado com alta resolução em: {os.path.abspath(output_image)}")
++    print(f"\n[SUCESSO] Dashboard SOTA Gold exportado com alta resolucao em: {os.path.abspath(output_image)}")
+
+
+ def _load_env_file(env_path: str | None = None) -> None:
+@@ -322,7 +322,7 @@ _load_env_file()
+
+
+ def open_image(file_path: str) -> None:
+-    """Abre automaticamente o arquivo de imagem no visualizador padrão do sistema operacional."""
++    """Abre automaticamente o arquivo de imagem no visualizador padrao do sistema operacional."""
+     abs_path = os.path.abspath(file_path)
+     opened = False
+     if sys.platform == "win32":
+@@ -360,20 +360,20 @@ def open_image(file_path: str) -> None:
+             pass
+
+     if opened:
+-        print(f"[VISUALIZAÇÃO] Dashboard aberto na tela com sucesso: {abs_path}")
++        print(f"[VISUALIZACAO] Dashboard aberto na tela com sucesso: {abs_path}")
+     else:
+-        print(f"[AVISO] Arquivo disponível em: {abs_path}")
++        print(f"[AVISO] Arquivo disponivel em: {abs_path}")
+
+
+ def main() -> None:
+     if matplotlib is None or plt is None:
+-        print("[ERRO] Bibliotecas de plotagem indisponíveis. Instale com: pip install -r requirements.txt")
++        print("[ERRO] Bibliotecas de plotagem indisponiveis. Instale com: pip install -r requirements.txt")
+         return
+
+-    parser = argparse.ArgumentParser(description="Plota dashboard executivo SOTA de métricas de latência.")
++    parser = argparse.ArgumentParser(description="Plota dashboard executivo SOTA de metricas de latencia.")
+     parser.add_argument("--input", "-i", type=str, default=None, help="Caminho do arquivo JSON/CSV com resultados.")
+     parser.add_argument("--output", "-o", type=str, default="benchmark_latency_report.png", help="Arquivo de imagem (.png).")
+-    parser.add_argument("--no-open", action="store_true", help="Não abre a imagem automaticamente na tela.")
++    parser.add_argument("--no-open", action="store_true", help="Nao abre a imagem automaticamente na tela.")
+     args = parser.parse_args()
+
+     df = load_dataset(args.input)
+diff --git a/tools/hybrid_router/test_hybrid_router.py b/tools/hybrid_router/test_hybrid_router.py
+index 202d0245..5a385895 100644
+--- a/tools/hybrid_router/test_hybrid_router.py
++++ b/tools/hybrid_router/test_hybrid_router.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""SUITE DE TESTES UNITÁRIOS PARA O HYBRID ROUTER SOTA."""
++"""SUITE DE TESTES UNITARIOS PARA O HYBRID ROUTER SOTA."""
+
+ from __future__ import annotations
+
+@@ -28,7 +28,7 @@ class TestComplexityAnalyzer(unittest.TestCase):
+         )
+
+     def test_low_density_prompt_routes_to_local(self) -> None:
+-        prompt = "Resuma as diferenças entre compilação JIT e AOT em três tópicos."
++        prompt = "Resuma as diferencas entre compilacao JIT e AOT em tres topicos."
+         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt)
+         self.assertEqual(metrics.selected_target, ExecutionTarget.LOCAL_LLAMA_VULKAN)
+         self.assertIsNone(metrics.thinking_budget)
+@@ -36,7 +36,7 @@ class TestComplexityAnalyzer(unittest.TestCase):
+     def test_high_density_game_theory_routes_to_thinking(self) -> None:
+         prompt = (
+             "Dado um jogo matricial 2x2 com payoffs $U_1(A,A)=3$, $U_1(A,B)=0$, $U_1(B,A)=5$, "
+-            "$U_1(B,B)=1$, derive o equilíbrio de Nash misto, o valor esperado e a variância sob restrição de ICM e PMev."
++            "$U_1(B,B)=1$, derive o equilibrio de Nash misto, o valor esperado e a variancia sob restricao de ICM e PMev."
+         )
+         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt)
+         self.assertEqual(metrics.selected_target, ExecutionTarget.GEMINI_37_FLASH_THINKING)
+@@ -44,7 +44,7 @@ class TestComplexityAnalyzer(unittest.TestCase):
+         self.assertGreater(metrics.thinking_budget or 0, 0)
+
+     def test_tools_provided_routes_to_cloud_standard(self) -> None:
+-        prompt = "Consulte o status do repositório git e execute os testes."
++        prompt = "Consulte o status do repositorio git e execute os testes."
+         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt, tools_provided=True)
+         self.assertEqual(metrics.selected_target, ExecutionTarget.GEMINI_37_FLASH_STANDARD)
+         self.assertTrue(metrics.requires_tools)

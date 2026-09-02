@@ -78,7 +78,6 @@
   `decimal`; o teste de regressão confirmou que `7.5` é preservado no ledger,
   em vez de arredondado para `8`.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
@@ -90,7 +89,7 @@
 > diferente da secao curada acima, e por isso fica separada em vez de
 > misturada. Ver `reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`.
 
-### Procedencia -- `.cerebro/agent-memory/chico/MEMORY.md`
+### Procedencia -- `.claude/agent-memory/chico/MEMORY.md`
 
 # Memoria de CHICO
 

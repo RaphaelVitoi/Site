@@ -1000,7 +1000,7 @@ def sync_consciousness():
 
 
 def _resolve_tasks_db_path() -> Path | None:
-    for candidate in ["queue/tasks.db", ".cerebro/tasks.db", "tasks.db"]:
+    for candidate in ["queue/tasks.db", ".claude/tasks.db", "tasks.db"]:
         p = BASE_DIR / candidate
         if p.exists() and p.stat().st_size > 0:
             return p
@@ -1296,7 +1296,7 @@ def watch_files():
             ".venv",
             "node_modules",
             ".chroma_db",
-            ".cerebro/logs",
+            ".claude/logs",
         ]
         return not any(ign in path for ign in ignore_list)
 

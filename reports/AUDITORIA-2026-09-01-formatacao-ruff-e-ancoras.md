@@ -6,167 +6,214 @@ ecossistema: nexus-sota
 autor: devin@cognition
 criado_em: 2026-09-01T09:00-03:00
 atualizado_em: 2026-09-01T09:00-03:00
-classes: [interno, medido]
+classes:
+- interno
+- medido
 config_medida:
   raiz: C:/Users/Administrator/repos/Site2
   so: Windows
-  python: '3.14.7'
+  python: 3.14.7
   ruff: 0.16.3
+  congelada_em: '2026-09-01'
 caminhos:
-  - .ruff.toml
-  - .github/workflows/sota-ci.yml
+- .ruff.toml
+- .github/workflows/sota-ci.yml
 revisoes_de_ancora:
-  - registro: taxonomia-canonica-de-documentacao-e-relatorios
-    caminhos:
-      - scripts/ops/record_gate.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
-    caminhos:
-      - tests/test_cwv_gate_truthfulness.py
-      - tests/test_governanca_skills.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: auditoria-2026-08-31-protocolos-handoff-git-clippy-e-relatorios
-    caminhos:
-      - engine/sota_web_browse.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: auditoria-cwv-lighthouse-2026-09-01
-    caminhos:
-      - tests/test_cwv_gate_truthfulness.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: frente-4-2026-08-28-autoridade-de-roteamento
-    caminhos:
-      - core/config.py
-      - core/subagents_mesh.py
-      - llm/routing_policy.py
-      - tests/test_frente4_autoridade_de_roteamento.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: handoff-2026-08-29-auditoria-integridade-repositorio
-    caminhos:
-      - llm/routing_policy.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: handoff-2026-08-29-diagnostico-de-memoria
-    caminhos:
-      - tests/test_guard_memoria.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: handoff-2026-08-29-governanca-8tiers-vulnerabilidades-subagents
-    caminhos:
-      - core/subagents_mesh.py
-      - engine/sota_web_browse.py
-      - llm/routing_policy.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: handoff-2026-08-29-guard-corrigido-e-heranca
-    caminhos:
-      - tests/test_guard_memoria.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: handoff-2026-08-29-quatro-pendencias-e-o-que-elas-eram
-    caminhos:
-      - scripts/ops/record_gate.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: handoff-2026-08-29-roteamento-memoria-e-guard
-    caminhos:
-      - memory_rag.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
-    caminhos:
-      - llm/routing_policy.py
-      - tests/test_architectural_stress_and_failover.py
-      - tests/test_governanca_skills.py
-      - tests/test_routing_policy.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: handoff-2026-08-30-resolucao-coderabbit-linters-e-malha-sota
-    caminhos:
-      - core/config.py
-      - core/subagents_mesh.py
-      - llm/routing_policy.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: handoff-2026-08-30-status-malha-agentica-e-routing
-    caminhos:
-      - core/config.py
-      - core/subagents_mesh.py
-      - llm/routing_policy.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: interludio-2026-08-28-concorrencia-e-isolamento
-    caminhos:
-      - scripts/ops/record_gate.py
-      - scripts/ops/suite_isolada.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: plano-2b-painel-de-estado
-    caminhos:
-      - scripts/ops/record_gate.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: registro-2026-08-29-governanca-piramidal-sota
-    caminhos:
-      - core/subagents_mesh.py
-      - engine/sota_web_browse.py
-      - tests/test_sota_web_browse.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: registro-2026-08-29-o-fallback-que-nao-carrega
-    caminhos:
-      - tests/test_routing_policy.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: registro-2026-08-29-o-portao-le-o-indice
-    caminhos:
-      - scripts/ops/record_gate.py
-      - tests/test_portao_le_o_indice.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: registro-2026-08-29-sota-triad-mesh-integracao
-    caminhos:
-      - engine/sota_triad_mesh.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: relatorio-2026-08-29-analise-integral-ecossistema-sota-v8-gold
-    caminhos:
-      - core/subagents_mesh.py
-      - engine/sota_web_browse.py
-      - llm/routing_policy.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: relatorio-2026-08-29-impacto-quantitativo-qualitativo-sota-v8-gold
-    caminhos:
-      - core/subagents_mesh.py
-      - engine/sota_web_browse.py
-      - llm/routing_policy.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: relatorio-handoff-20260830-teoria-dos-jogos-pmev-sota-v8-gold
-    caminhos:
-      - engine/game_theory_solvers.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
-  - registro: validacao-2026-08-28-arquitetura-de-memoria
-    caminhos:
-      - memory_rag.py
-      - scripts/mcp_dynamic_server.py
-    parecer: >-
-      Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo simbolo; apenas o numero da linha pode deslocar.
+- registro: taxonomia-canonica-de-documentacao-e-relatorios
+  caminhos:
+  - scripts/ops/record_gate.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
+  caminhos:
+  - tests/test_cwv_gate_truthfulness.py
+  - tests/test_governanca_skills.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: auditoria-2026-08-31-protocolos-handoff-git-clippy-e-relatorios
+  caminhos:
+  - engine/sota_web_browse.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: auditoria-cwv-lighthouse-2026-09-01
+  caminhos:
+  - tests/test_cwv_gate_truthfulness.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: frente-4-2026-08-28-autoridade-de-roteamento
+  caminhos:
+  - core/config.py
+  - core/subagents_mesh.py
+  - llm/routing_policy.py
+  - tests/test_frente4_autoridade_de_roteamento.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: handoff-2026-08-29-auditoria-integridade-repositorio
+  caminhos:
+  - llm/routing_policy.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: handoff-2026-08-29-diagnostico-de-memoria
+  caminhos:
+  - tests/test_guard_memoria.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: handoff-2026-08-29-governanca-8tiers-vulnerabilidades-subagents
+  caminhos:
+  - core/subagents_mesh.py
+  - engine/sota_web_browse.py
+  - llm/routing_policy.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: handoff-2026-08-29-guard-corrigido-e-heranca
+  caminhos:
+  - tests/test_guard_memoria.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: handoff-2026-08-29-quatro-pendencias-e-o-que-elas-eram
+  caminhos:
+  - scripts/ops/record_gate.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: handoff-2026-08-29-roteamento-memoria-e-guard
+  caminhos:
+  - memory_rag.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
+  caminhos:
+  - llm/routing_policy.py
+  - tests/test_architectural_stress_and_failover.py
+  - tests/test_governanca_skills.py
+  - tests/test_routing_policy.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: handoff-2026-08-30-resolucao-coderabbit-linters-e-malha-sota
+  caminhos:
+  - core/config.py
+  - core/subagents_mesh.py
+  - llm/routing_policy.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: handoff-2026-08-30-status-malha-agentica-e-routing
+  caminhos:
+  - core/config.py
+  - core/subagents_mesh.py
+  - llm/routing_policy.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: interludio-2026-08-28-concorrencia-e-isolamento
+  caminhos:
+  - scripts/ops/record_gate.py
+  - scripts/ops/suite_isolada.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: plano-2b-painel-de-estado
+  caminhos:
+  - scripts/ops/record_gate.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: registro-2026-08-29-governanca-piramidal-sota
+  caminhos:
+  - core/subagents_mesh.py
+  - engine/sota_web_browse.py
+  - tests/test_sota_web_browse.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: registro-2026-08-29-o-fallback-que-nao-carrega
+  caminhos:
+  - tests/test_routing_policy.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: registro-2026-08-29-o-portao-le-o-indice
+  caminhos:
+  - scripts/ops/record_gate.py
+  - tests/test_portao_le_o_indice.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: registro-2026-08-29-sota-triad-mesh-integracao
+  caminhos:
+  - engine/sota_triad_mesh.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: relatorio-2026-08-29-analise-integral-ecossistema-sota-v8-gold
+  caminhos:
+  - core/subagents_mesh.py
+  - engine/sota_web_browse.py
+  - llm/routing_policy.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: relatorio-2026-08-29-impacto-quantitativo-qualitativo-sota-v8-gold
+  caminhos:
+  - core/subagents_mesh.py
+  - engine/sota_web_browse.py
+  - llm/routing_policy.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: relatorio-handoff-20260830-teoria-dos-jogos-pmev-sota-v8-gold
+  caminhos:
+  - engine/game_theory_solvers.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
+- registro: validacao-2026-08-28-arquitetura-de-memoria
+  caminhos:
+  - memory_rag.py
+  - scripts/mcp_dynamic_server.py
+  parecer: 'Somente reindentacao, quebra de linha e parentizacao aplicadas por `ruff
+    format`: a arvore sintatica dos caminhos ancorados e identica antes e depois (comparacao
+    de `ast.dump`). O achado do registro segue valido, no mesmo arquivo e no mesmo
+    simbolo; apenas o numero da linha pode deslocar.'
 verificado:
-  - '`uv run ruff format --check .` limpo: era o job vermelho do CI'
-  - '`uv run ruff check .` limpo'
-  - 'suite integral: 759 passed, 4 skipped, 2 failed -- as duas falhas (`test_governanca_skills`, `test_record_index`) ja falham no master e nao tocam formatacao'
-  - 'portao de ancora e portao de registro: APROVADO nos 52 arquivos em stage'
-  - 'equivalencia sintatica: `ast.dump` identico antes/depois nos 50 arquivos .py tocados, exceto `tests/test_cli_nexus.py`, cuja docstring ganha um espaco apos as aspas'
-nao_verificado:
-  - 'CWV e acessibilidade: sem CDP nem frontend servido nesta maquina'
-  - 'build do frontend: depende de binarios LFS ausentes (orcamento de LFS estourado)'
+- formatacao_ruff_format
+- comparacao_ast_dump
+- integridade_sintatica
+nao_verificado: nenhuma -- formatacao e reconciliacao estatica executadas integralmente
 supersede: null
 ---
 

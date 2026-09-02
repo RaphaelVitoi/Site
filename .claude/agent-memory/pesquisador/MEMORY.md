@@ -23,7 +23,7 @@
 > diferente da secao curada acima, e por isso fica separada em vez de
 > misturada. Ver `reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`.
 
-### Procedencia -- `.cerebro/agent-memory/pesquisador/MEMORY.md`
+### Procedencia -- `.claude/agent-memory/pesquisador/MEMORY.md`
 
 # @pesquisador MEMORY - O Cortex Individual
 
