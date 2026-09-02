@@ -47,6 +47,29 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# ARMADILHA DE CULTURA -- nao remover esta indirecao.
+#
+# ConvertFrom-Json converte a string ISO-8601 de `recorded_at` num [DateTime].
+# Ao voltar para texto, `[string]` usa a InvariantCulture e escreve MM/dd/yyyy.
+# `[DateTimeOffset]::Parse` sem cultura explicita le com a CurrentCulture. Numa
+# maquina pt-BR (dd/MM/yyyy) os dois discordam, e o resultado depende do dia:
+#
+#   dia <= 12 -> troca silenciosa. 2026-09-02 vira 2026-02-09, e o recorte
+#                diario passa a contar o dia errado sem emitir erro.
+#   dia >  12 -> excecao. '09/18/2026' nao e data valida em pt-BR e o script
+#                inteiro morre.
+#
+# Em en-US os dois formatos coincidem e o defeito fica invisivel, e foi assim
+# que ele sobreviveu ate 2026-09-02. Medido nesta data: 4 dos 7 guards de
+# tests/test_calibracao_portao_por_sessao.py reprovavam sob pt-BR.
+#
+# A cultura de leitura passa a ser sempre a Invariante, que e a mesma que
+# escreveu o texto. O portao nao muda; muda so a leitura da data.
+function Get-InstanteDoRegistro {
+    param([Parameter(Mandatory)]$Registro)
+    return [DateTimeOffset]::Parse([string]$Registro.recorded_at, [cultureinfo]::InvariantCulture)
+}
+
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $ledgerPath = if ($LedgerPath) { $LedgerPath } else { Join-Path $repositoryRoot 'reports\agent-calibration\feedback-ledger.jsonl' }
 $outlierLedgerPath = if ($OutlierLedgerPath) { $OutlierLedgerPath } else { Join-Path $repositoryRoot 'reports\agent-calibration\outlier-evidence-ledger.jsonl' }
@@ -72,7 +95,7 @@ if (Test-Path -LiteralPath $ledgerPath) {
 # errado -- entao a contagem varre o ledger INTEIRO por session_id, e o dia
 # apenas decide quais sessoes tiveram atividade para serem avaliadas agora.
 $recordsDoDia = @($allFeedback | Where-Object {
-    [DateTimeOffset]::Parse([string]$_.recorded_at).LocalDateTime.ToString('yyyy-MM-dd') -eq $day
+    (Get-InstanteDoRegistro $_).LocalDateTime.ToString('yyyy-MM-dd') -eq $day
 })
 # O @() externo NAO e decorativo: atribuir o resultado de um `if` desembrulha
 # array vazio para $null, e sob StrictMode `.Count` em $null estoura. Foi
@@ -100,12 +123,12 @@ $sessoesAtivasNoDia = @($records |
 # basta remover o filtro por $marcoUltimaCalibracao.
 $calibracoes = @($allFeedback | Where-Object { $_.record_type -eq 'calibration' })
 $marcoUltimaCalibracao = if ($calibracoes.Count -gt 0) {
-    ($calibracoes | ForEach-Object { [DateTimeOffset]::Parse([string]$_.recorded_at) } | Sort-Object)[-1]
+    ($calibracoes | ForEach-Object { Get-InstanteDoRegistro $_ } | Sort-Object)[-1]
 } else {
     [DateTimeOffset]::MinValue
 }
 $universo = @($allFeedback | Where-Object {
-    [DateTimeOffset]::Parse([string]$_.recorded_at) -gt $marcoUltimaCalibracao
+    (Get-InstanteDoRegistro $_) -gt $marcoUltimaCalibracao
 })
 
 $todasAsSessoes = @($universo |
@@ -118,7 +141,7 @@ $todasAsSessoes = @($universo |
 $porSessao = @($todasAsSessoes | ForEach-Object {
     $sid = $_
     $daSessao = @($universo | Where-Object { [string]$_.session_id -eq $sid })
-    $instantes = @($daSessao | ForEach-Object { [DateTimeOffset]::Parse([string]$_.recorded_at) } | Sort-Object)
+    $instantes = @($daSessao | ForEach-Object { Get-InstanteDoRegistro $_ } | Sort-Object)
     $declarados = @($daSessao |
         Where-Object { $_.PSObject.Properties.Name -contains 'session_started_at' -and -not [string]::IsNullOrWhiteSpace([string]$_.session_started_at) } |
         ForEach-Object { [string]$_.session_started_at } |
@@ -154,7 +177,7 @@ $scoresDoDia = @($records | ForEach-Object { [double]$_.score })
 $outliers = @()
 if (Test-Path -LiteralPath $outlierLedgerPath) {
     $outliers = @(Get-Content -LiteralPath $outlierLedgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object {
-        $_.record_type -eq 'outlier' -and ([DateTimeOffset]::Parse([string]$_.recorded_at).LocalDateTime.ToString('yyyy-MM-dd') -eq $day)
+        $_.record_type -eq 'outlier' -and ((Get-InstanteDoRegistro $_).LocalDateTime.ToString('yyyy-MM-dd') -eq $day)
     })
 }
 $distinctSessionIds = @($records |
