@@ -27,14 +27,12 @@ caminhos:
 - data/agents_manifest.json
 - data/system_config.json
 revisoes_de_ancora:
-- registro: relatorio-fusao-cerebro-claude-quality-gate-2026-09-01
+- registro: registro-2026-09-01-fronteira-http-e-portao-independente-de-perfil
   caminhos:
-  - data/INDICE_CANONICO_GOVERNANCA.json
-  parecer: Ajuste de grafia de caminho para GOVERNANCA no indice canonico em 2026-09-01.
-- registro: plano-2b-painel-de-estado
-  caminhos:
-  - data/INDICE_CANONICO_GOVERNANCA.json
-  parecer: Ajuste de grafia de caminho para GOVERNANCA no indice canonico em 2026-09-01.
+  - api/v1/handlers.py
+  - api/v1/server.py
+  parecer: Saneamento de AppKeys no aiohttp para eliminacao de NotAppKeyWarning em
+    2026-09-01.
 ---
 
 # ✅ RELATÓRIO FINAL: FUSÃO COMPLETA E SOTA QUALITY GATE
@@ -133,7 +131,6 @@ revisoes_de_ancora:
 **Warnings (3):**
 - UnicodeDecodeError em subprocess threading (cwv_gate_truthfulness)
 
----
 
 ## 📋 FUSÃO CONCLUÍDA
 

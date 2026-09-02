@@ -26,6 +26,8 @@ except ImportError:
 from aiohttp import web
 from pydantic import BaseModel, ValidationError
 
+from api.v1.keys import BG_TASKS_KEY, MANAGER_KEY, START_TIME_KEY
+
 from core.perspective_schemas import (
     PerspectivaResult,
     PerspectiveCalculationRequest,
@@ -72,9 +74,9 @@ def _internal_error(exc: BaseException, contexto: str, **extra: Any) -> web.Resp
 
 def _get_bg_tasks(app: web.Application) -> set[asyncio.Task[Any]]:
     """Recupera ou inicializa o set de background tasks no app aiohttp."""
-    if "bg_tasks" not in app:
-        app["bg_tasks"] = set()
-    return cast(set[asyncio.Task[Any]], app["bg_tasks"])
+    if BG_TASKS_KEY not in app:
+        app[BG_TASKS_KEY] = set()
+    return app[BG_TASKS_KEY]
 
 
 @harmonizer.ultra_fast_async  # pyright: ignore[reportUnknownMemberType]
@@ -85,7 +87,7 @@ async def handle_ping(_request: web.Request) -> web.Response:
 
 async def handle_add_task(request: web.Request) -> web.Response:
     """Lida com a adicao de novas tarefas a fila."""
-    manager = request.app["manager"]
+    manager = request.app[MANAGER_KEY]
     try:
         post_data = await request.json()
         new_task = Task.model_validate(post_data)
@@ -99,7 +101,7 @@ async def handle_add_task(request: web.Request) -> web.Response:
 
 async def handle_get_status(request: web.Request) -> web.Response:
     """Retorna o status das tarefas na fila (todas ou filtradas)."""
-    manager = request.app["manager"]
+    manager = request.app[MANAGER_KEY]
     try:
         status = request.rel_url.query.get("status", None)
         if status == "all":
@@ -112,7 +114,7 @@ async def handle_get_status(request: web.Request) -> web.Response:
 
 async def handle_get_key_health_summary(request: web.Request) -> web.Response:
     """Retorna o relatorio de saude e latencia das chaves de API."""
-    manager = request.app["manager"]
+    manager = request.app[MANAGER_KEY]
     try:
         raw_window = request.rel_url.query.get("window_minutes", "180")
         window_minutes = int(raw_window)
@@ -183,7 +185,7 @@ async def handle_get_task_result(request: web.Request) -> web.Response:
 
 async def handle_get_state(request: web.Request) -> web.Response:
     """Recupera uma variavel de estado dinamico do sistema."""
-    manager = request.app["manager"]
+    manager = request.app[MANAGER_KEY]
     try:
         key = request.rel_url.query.get("key")
         if not key:
@@ -196,7 +198,7 @@ async def handle_get_state(request: web.Request) -> web.Response:
 
 async def handle_set_state(request: web.Request) -> web.Response:
     """Define uma variavel de estado dinamico do sistema."""
-    manager = request.app["manager"]
+    manager = request.app[MANAGER_KEY]
     try:
         data = await request.json()
         key = data.get("key")
@@ -236,10 +238,10 @@ async def handle_ask_oracle(request: web.Request) -> web.Response:
 
 async def handle_health(request: web.Request) -> web.Response:
     """Retorna status operacional do worker: contagens de tarefas e uptime."""
-    manager = request.app["manager"]
+    manager = request.app[MANAGER_KEY]
     try:
         counts = await manager.get_task_counts()
-        start_time = request.app.get("start_time", time.time())
+        start_time = request.app.get(START_TIME_KEY, time.time())
         uptime_s = int(time.time() - start_time)
 
         agents_manifest = getattr(_te, "AGENTS_MANIFEST", {})
@@ -259,7 +261,7 @@ async def handle_health(request: web.Request) -> web.Response:
 
 async def handle_get_db_summary(request: web.Request) -> web.Response:
     """Retorna um sumario de metricas do banco de dados (contagens e orcamento)."""
-    manager = request.app["manager"]
+    manager = request.app[MANAGER_KEY]
     try:
         # SOTA: Centraliza a leitura de metricas via API para evitar lock de DB
         counts = await manager.get_task_counts()
