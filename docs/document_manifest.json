@@ -1,95 +1,95 @@
 {
-    "philosophical_docs": [
-        "ARQUITETURA DE REFERENCIA SOTA (FONTE DA VERDADE)",
-        "COSMOVISAO FILOSOFICA (GUIA ETICO/INTELECTUAL)",
-        "IDENTIDADE DO USUARIO",
-        "LIDERANCA E GOVERNANCA",
-        "TEMPLO DO APRENDIZADO GENERATIVO"
-    ],
-    "documents": [
-        {
-            "name": "INSTRUCOES GLOBAIS",
-            "path": ".cerebro/governance/GLOBAL_INSTRUCTIONS.md"
-        },
-        {
-            "name": "COSMOVISAO FILOSOFICA (GUIA ETICO/INTELECTUAL)",
-            "path": ".cerebro/philosophy/COSMOVISAO.md"
-        },
-        {
-            "name": "ARQUITETURA DE REFERENCIA SOTA (FONTE DA VERDADE)",
-            "path": ".cerebro/architecture/SOTA_REFERENCE_ARCHITECTURE.md"
-        },
-        {
-            "name": "MANIFESTO DOS AGENTES (VERDADE UNICA DE FUNCAO EXECUTIVA)",
-            "path": "data/agents_manifest.json"
-        },
-        {
-            "name": "STATUS RUNTIME DE CHAVES E ROTEAMENTO",
-            "path": ".cerebro/reports/RUNTIME_KEYS_ROUTING_STATUS.md"
-        },
-        {
-            "name": "IDENTIDADE DO USUARIO",
-            "path": ".cerebro/context/CHICO_PERSONA.md"
-        },
-        {
-            "name": "LIDERANCA E GOVERNANCA",
-            "path": ".cerebro/governance/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"
-        },
-        {
-            "name": "TEMPLO DO APRENDIZADO GENERATIVO",
-            "path": ".cerebro/philosophy/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"
-        },
-        {
-            "name": "MANUAL DO WORKFLOW",
-            "path": ".cerebro/ops-deploy/MANUAL_WORKFLOW_AGENTES.md"
-        },
-        {
-            "name": "INDICE MESTRE",
-            "path": ".cerebro/ops-deploy/INDEX_MESTRE.md"
-        },
-        {
-            "name": "GUIA DE DEPLOY E STACK",
-            "path": ".cerebro/ops-deploy/DEPLOY.md"
-        },
-        {
-            "name": "INVENTARIO DE FERRAMENTAS",
-            "path": ".cerebro/reports/INVENTARIO_FERRAMENTAS.md"
-        },
-        {
-            "name": "PROTOCOLO DE ROTEAMENTO HOLOGRAFICO",
-            "path": ".cerebro/architecture/HOLOGRAPHIC_ROUTING_PROTOCOL.md"
-        },
-        {
-            "name": "ARQUITETURA DO CEREBRO HIBRIDO",
-            "path": ".cerebro/architecture/HYBRID_BRAIN_ARCHITECTURE.md"
-        },
-        {
-            "name": "MANIFESTO DE COERENCIA E HARMONIA",
-            "path": ".cerebro/governance/COHERENCE_MANIFEST.md"
-        },
-        {
-            "name": "TEORIA SOTA CONVENCIONAL (PERSPECTIVA E ESPERANCA)",
-            "path": "docs/architecture/THEORY_SOTA_CONVENCIONAL.md"
-        },
-        {
-            "name": "ARQUITETURA TECNICA PADRAO-OURO (SOTA v8.0 GOLD 2026)",
-            "path": "docs/ARQUITETURA_PADRAO_OURO_SOTA_2026.md"
-        },
-        {
-            "name": "TOPOLOGIA DO ECOSSISTEMA MCP SOTA v8.0 GOLD (2026)",
-            "path": "docs/MCP_ECOSYSTEM_TOPOLOGY_2026.md"
-        },
-        {
-            "name": "PERSPECTIVA MATEMATICA PMEV TRATADO MASTER",
-            "path": "docs/PERSPECTIVA_MATEMATICA_PMEV_MASTER.md"
-        },
-        {
-            "name": "RELATORIO OFICIAL DE SESSAO 2026-08-24 SOTA v8.0 GOLD",
-            "path": "reports/RELATORIO_SESSAO_2026_08_24_SOTA_v8_GOLD.md"
-        },
-        {
-            "name": "AUDITORIA MENSAL MODUS OPERANDI E ROUTING (2026_08)",
-            "path": "reports/audits/AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_2026_08.md"
-        }
-    ]
+  "philosophical_docs": [
+    "ARQUITETURA DE REFERENCIA SOTA (FONTE DA VERDADE)",
+    "COSMOVISAO FILOSOFICA (GUIA ETICO/INTELECTUAL)",
+    "IDENTIDADE DO USUARIO",
+    "LIDERANCA E GOVERNANCA",
+    "TEMPLO DO APRENDIZADO GENERATIVO"
+  ],
+  "documents": [
+    {
+      "name": "INSTRUCOES GLOBAIS",
+      "path": ".claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md"
+    },
+    {
+      "name": "COSMOVISAO FILOSOFICA (GUIA ETICO/INTELECTUAL)",
+      "path": ".claude/GOVERNANCA/COSMOVISAO.md"
+    },
+    {
+      "name": "ARQUITETURA DE REFERENCIA SOTA (FONTE DA VERDADE)",
+      "path": ".claude/ARQUITETURA/SOTA_REFERENCE_ARCHITECTURE.md"
+    },
+    {
+      "name": "MANIFESTO DOS AGENTES (VERDADE UNICA DE FUNCAO EXECUTIVA)",
+      "path": "data/agents_manifest.json"
+    },
+    {
+      "name": "STATUS RUNTIME DE CHAVES E ROTEAMENTO",
+      "path": ".claude/RUNTIME_KEYS_ROUTING_STATUS.md"
+    },
+    {
+      "name": "IDENTIDADE DO USUARIO",
+      "path": ".claude/ARQUITETURA/CHICO_PERSONA.md"
+    },
+    {
+      "name": "LIDERANCA E GOVERNANCA",
+      "path": ".claude/GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"
+    },
+    {
+      "name": "TEMPLO DO APRENDIZADO GENERATIVO",
+      "path": ".claude/GOVERNANCA/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"
+    },
+    {
+      "name": "MANUAL DO WORKFLOW",
+      "path": ".claude/DEPLOY/MANUAL_WORKFLOW_AGENTES.md"
+    },
+    {
+      "name": "INDICE MESTRE",
+      "path": ".claude/DEPLOY/INDEX_MESTRE.md"
+    },
+    {
+      "name": "GUIA DE DEPLOY E STACK",
+      "path": ".claude/DEPLOY/DEPLOY.md"
+    },
+    {
+      "name": "INVENTARIO DE FERRAMENTAS",
+      "path": ".claude/RELATORIOS/INVENTARIO_FERRAMENTAS.md"
+    },
+    {
+      "name": "PROTOCOLO DE ROTEAMENTO HOLOGRAFICO",
+      "path": ".claude/ARQUITETURA/HOLOGRAPHIC_ROUTING_PROTOCOL.md"
+    },
+    {
+      "name": "ARQUITETURA DO CEREBRO HIBRIDO",
+      "path": ".claude/ARQUITETURA/HYBRID_BRAIN_ARCHITECTURE.md"
+    },
+    {
+      "name": "MANIFESTO DE COERENCIA E HARMONIA",
+      "path": ".claude/GOVERNANCA/COHERENCE_MANIFEST.md"
+    },
+    {
+      "name": "TEORIA SOTA CONVENCIONAL (PERSPECTIVA E ESPERANCA)",
+      "path": "docs/architecture/THEORY_SOTA_CONVENCIONAL.md"
+    },
+    {
+      "name": "ARQUITETURA TECNICA PADRAO-OURO (SOTA v8.0 GOLD 2026)",
+      "path": "docs/ARQUITETURA_PADRAO_OURO_SOTA_2026.md"
+    },
+    {
+      "name": "TOPOLOGIA DO ECOSSISTEMA MCP SOTA v8.0 GOLD (2026)",
+      "path": "docs/MCP_ECOSYSTEM_TOPOLOGY_2026.md"
+    },
+    {
+      "name": "PERSPECTIVA MATEMATICA PMEV TRATADO MASTER",
+      "path": "docs/PERSPECTIVA_MATEMATICA_PMEV_MASTER.md"
+    },
+    {
+      "name": "RELATORIO OFICIAL DE SESSAO 2026-08-24 SOTA v8.0 GOLD",
+      "path": "reports/RELATORIO_SESSAO_2026_08_24_SOTA_v8_GOLD.md"
+    },
+    {
+      "name": "AUDITORIA MENSAL MODUS OPERANDI E ROUTING (2026_08)",
+      "path": "reports/audits/AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_2026_08.md"
+    }
+  ]
 }
