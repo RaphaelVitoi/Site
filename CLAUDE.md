@@ -341,7 +341,12 @@ e auditada.
 ### 8.3 Calibração por feedback do administrador
 
 Ao encerrar um handoff, exceto se o administrador adiantar novo comando ou
-dispensar a etapa, solicitar feedback textual e uma nota inteira de `0` a `10`.
+dispensar a etapa, solicitar feedback textual e uma nota de `0` a `10`, que
+**aceita decimal**. A nota entra no ledger **literal, sem arredondamento e sem
+conversão de escala** — `0.8` é `0.8`, não `1`. Até 2026-09-02 esta linha dizia
+"nota inteira", enquanto o script já validava `[decimal]` e o ledger já
+guardava `7.5` e `0.8`: era a prosa que estava errada, e o Tier 0 alinhou o
+texto ao comportamento medido.
 Registrar somente a resposta recebida pelo script
 `Register-AgentCalibrationFeedback.ps1`; não inventar avaliação, nota ou
 aprendizado. O ledger correspondente é encadeado por SHA-256, deve ser

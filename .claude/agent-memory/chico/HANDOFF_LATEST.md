@@ -1,10 +1,26 @@
-# HANDOFF LATEST — integridade recuperada, portão sem margem
+# HANDOFF LATEST — integridade recuperada, e o portão de calibração por sessão
 
 **Data:** 2026-09-02 · **Protocolo:** Chico SOTA v8.0 GOLD · **Estado:** publicado, `master == origin/master`.
+
+## ⚠ Primeira coisa a fazer na próxima sessão
+
+**O limiar de calibração bate na próxima nota.** Há **2 de 3 sessões** com feedback no ledger — `codex-site-2026-09-01-prioridade` e `claude-opus5-site-2026-09-02-integridade`. A sessão seguinte, ao receber feedback, fecha as três.
+
+Quando isso acontecer, a obrigação é **avisar proativamente** e propor a calibração assistida, **se não houver tarefa em andamento** — calibração não interrompe trabalho. Não esperar as 23:59: aquela corrida é lastro de auditoria, não gatilho.
+
+Confira antes de afirmar qualquer coisa:
+
+```
+pwsh -File scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+```
+
+E declare o `session_id` **e** o `session_started_at` ao registrar o feedback. Sessão vai do início ao fim de um trabalho; **compactação não a encerra**. Uma sessão partida ao meio vira duas na contagem e falsearia o portão — o script detecta e recusa contar.
 
 ## Fonte canônica
 
 - Handoff integral: `reports/HANDOFF-2026-09-02-integridade-portao-no-teto-e-fila-para-o-sucessor.md`.
+- Portão de calibração por sessão: `reports/REGISTRO-2026-09-02-portao-de-calibracao-por-sessao.md`.
+- Retrospectiva e feedback `0.8`: `reports/AUDITORIA-2026-09-02-retrospectiva-e-observacao-de-calibracao.md`.
 - Auditoria de integridade: `reports/AUDITORIA-2026-09-02-integridade-do-projeto-e-piso-de-transformers.md`.
 - Registro do motor tensorial e da varredura: `reports/REGISTRO-2026-09-02-tensor-portavel-e-varredura-fora-de-python.md`.
 - Fonte de trabalho prioritária, ainda intocada: `docs/research/pmev/AULA_1_2_EVIDENCE_LEDGER.md`.
@@ -28,6 +44,7 @@
 
 ## Fila
 
+0. **Registrar a tarefa das 23:59** na máquina Windows: `pwsh -File scripts/ops/Register-AgentCalibrationDailyTask.ps1`. Hoje ela sai com `NAO REGISTRADO` fora do Windows — e, por ser tarefa agendada, exige revalidação em PS 5.1 real (§1.1).
 1. **PMev** — a extração de três pares verificáveis da Aula 1.2 segue intocada; é a prioridade herdada do handoff de 2026-09-01.
 2. Certificar TBT e arbitrar o `color-contrast` na máquina Windows.
 3. Smoke de embedding com `transformers` 5.15.1 (salto de seis minor releases).
@@ -37,4 +54,21 @@
 
 ## Calibração
 
-Feedback desta sessão **ainda não coletado**. Nota e texto só entram no ledger pelo `Register-AgentCalibrationFeedback.ps1`, com a resposta literal do administrador. Nada foi inventado nem estimado.
+Feedback desta sessão: **`0.8`**, gravado literal, sem arredondamento — *"fluxo pouco linear e organizado; bom administrador de empresa, mas não de equipes"*. Cadeia `valid`, 3 registros, tail `9ec18e81`.
+
+A crítica tem base factual verificável, e está registrada como fato, não como interpretação: operei como executor único, com **zero delegações** aos 19 agentes, zero subagentes e zero uso de `queue/tasks.db`, num repositório cuja arquitetura inteira é uma malha multiagente. E o fechamento teve quatro reversões de fluxo que verificação prévia teria evitado. **Quem herdar isto deveria tentar o caminho oposto: delegar de fato à malha.**
+
+### A regra do portão, como ficou
+
+| | |
+| :--- | :--- |
+| **Métrica** | ≥3 **sessões distintas** com feedback |
+| **Densidade intra-sessão** | 3 feedbacks numa sessão é **dado retido**, não gatilho |
+| **Acumulação** | não expira — dia sem sessão é dia sem avaliação, não dia que apaga evidência |
+| **Nota** | aceita **decimal**, gravada literal (`0.8` é `0.8`) |
+| **Gatilho** | aviso proativo ao bater o limiar, se não houver tarefa em andamento |
+| **Lastro** | corrida diária às 23:59 — **ainda não registrada**, exige Windows |
+
+Não contam, falhando fechado: feedback sem `session_id`, sessão com `session_started_at` divergente, cadeia inválida.
+
+Guard em `tests/test_calibracao_portao_por_sessao.py` (7 testes) reprova quem voltar a contar por dia, deixar densidade abrir o portão, ou fizer evidência expirar.

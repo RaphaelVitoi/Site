@@ -21,9 +21,15 @@ _ancora_normalizada_por: claude@opus-5 em 2026-08-28T09:55-03:00. Somente o camp
 
 ## Contrato
 
-Cada feedback do usuário recebe nota inteira de `0` a `10`, texto livre,
-escopo, timestamp, identificador de sessão e hash SHA-256 encadeado ao registro
-anterior. O verificador rejeita sequência, predecessor ou hash alterados.
+Cada feedback do usuário recebe nota de `0` a `10` — **decimal é aceito** —,
+texto livre, escopo, timestamp, identificador de sessão, `session_started_at`
+opcional e hash SHA-256 encadeado ao registro anterior. O verificador rejeita
+sequência, predecessor ou hash alterados.
+
+A nota é gravada **literal: sem arredondamento e sem conversão de escala**.
+`0.8` é `0.8`. O script sempre validou `[decimal]`; até 2026-09-02 era a
+documentação que dizia "inteira", e o Tier 0 alinhou o texto ao comportamento
+medido.
 
 O ledger é **tamper-evident**, não fisicamente incorruptível. Imutabilidade
 absoluta exigiria mídia WORM ou um ledger externo assinado, ambos fora deste

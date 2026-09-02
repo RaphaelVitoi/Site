@@ -11,6 +11,7 @@ classes: [interno, medido, governanca]
 caminhos:
   - CLAUDE.md
   - reports/agent-calibration/README.md
+  - .claude/agent-memory/chico/HANDOFF_LATEST.md
   - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
   - scripts/ops/Register-AgentCalibrationFeedback.ps1
   - scripts/ops/Register-AgentCalibrationDailyTask.ps1
@@ -72,6 +73,14 @@ verificado:
     claude-opus5-site-2026-09-02-integridade), falta UMA para o limiar. O
     registro literal exigido permanece "dados insuficientes -- nenhuma
     calibracao planejada".
+  - >-
+    Divergencia de texto resolvida por decisao do Tier 0 no mesmo dia: o
+    CLAUDE.md SS8.3 e o README diziam "nota inteira de 0 a 10", enquanto o
+    script sempre validou [decimal] e o ledger ja guardava 7.5 e 0.8 sem
+    arredondamento. Era a PROSA que estava errada, nao o comportamento. Os dois
+    textos foram alinhados ao medido: nota aceita decimal e e gravada literal,
+    sem arredondamento e sem conversao de escala. Nenhuma linha de codigo
+    precisou mudar, porque o codigo ja estava certo.
   - Suite completa em 785 aprovados, 7 pulados, zero falhas; ruff check limpo.
 nao_verificado:
   - >-
@@ -105,11 +114,10 @@ nao_verificado:
     deteccao de sessao partida nao se aplica retroativamente a eles. A
     propriedade so vale para o que for gravado daqui em diante.
   - >-
-    Divergencia de texto que NAO corrigi por ser fora do pedido: o CLAUDE.md
-    SS8.3 continua dizendo "nota inteira de 0 a 10", enquanto o script aceita
-    decimal (ValidateRange sobre [decimal]) e o ledger ja tem 7.5 e 0.8
-    gravados sem arredondamento. A pratica e o codigo dizem decimal; so a prosa
-    diz inteira. Fica declarado para decisao do Tier 0.
+    O aviso proativo depende de o agente perceber o limiar. Se a proxima sessao
+    nao consultar New-AgentCalibrationDailyEvidence.ps1, ela pode fechar as tres
+    sessoes sem que ninguem avise. O HANDOFF_LATEST abre com essa instrucao,
+    mas instrucao lida por humano ou agente nao e garantia executavel.
 revisoes_de_ancora:
   - registro: handoff-2026-09-01-prioridade-pmev-continuacao
     caminhos:
@@ -161,6 +169,26 @@ revisoes_de_ancora:
       - CLAUDE.md
     parecer: >-
       Aquele handoff ancora o CLAUDE.md pela auditoria da malha agentica, pelas onze guardas quebradas de proposito antes de aceitas e pela trava de roteamento LFS da fase 5. A fase 5 nao e tocada. A pratica que ele estabeleceu foi seguida aqui: os sete guards novos foram exercitados contra o comportamento real, e um deles achou um defeito verdadeiro no script antes do aceite.
+  - registro: handoff-2026-09-02-integridade-portao-no-teto-e-fila-para-o-sucessor
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer: >-
+      Aquele handoff, publicado horas antes nesta mesma sessao, ancora o HANDOFF_LATEST como ponteiro para o estado corrente. O ponteiro nao troca de destino: continua apontando para ele como handoff integral, e apenas ACRESCENTA o registro do portao por sessao, a retrospectiva do feedback 0.8 e o aviso de que o limiar bate na proxima nota. Nenhuma invariante que ele fixou e removida -- portao sem margem, aceite condicional do chromadb, piso como constraint, ancora que nao se inventa e numero de terceiro que nao vira proprio seguem todas na lista.
+  - registro: auditoria-2026-08-30-coderabbit-resolucao-e-integridade
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer: >-
+      Aquela auditoria ancora este arquivo pela purificacao de mojibake e UTF-8 e pela conformidade de AST dos cabecalhos. As duas se mantem: o texto acrescentado e UTF-8 limpo, sem residuo de codificacao, com um unico H1 e hierarquia de titulos sequencial, incluindo a secao nova que entra como H2 e as suas subsecoes como H3.
+  - registro: handoff-2026-08-30-resolucao-coderabbit-linters-e-malha-sota
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer: >-
+      Aquele handoff ancora este arquivo por reports/ ser a pasta canonica de handoff e este ser a memoria central do agente, mais o saneamento de markdownlint. Os dois seguem valendo: a atualizacao continua apontando para reports/ como fonte integral, e mantem a estrutura de listas e titulos que o saneamento deixou.
+  - registro: relatorio-handoff-20260830-teoria-dos-jogos-pmev-sota-v8-gold
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer: >-
+      Aquele relatorio ancora este arquivo no contexto da trilha PMev. A direcao que ele fixou nao e desfeita e continua explicita na fila, agora como item 1 e ainda declarada como intocada. O unico item que passou a frente dela e o registro da tarefa agendada, que e operacional e de minutos, nao uma trilha concorrente.
   - registro: taxonomia-canonica-de-documentacao-e-relatorios
     caminhos:
       - CLAUDE.md
