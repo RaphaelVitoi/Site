@@ -75,11 +75,19 @@ def isolate_test_simulation_logs():
 class SotaGuardState:
     errors: list[dict[str, Any]] = []
     warnings_list: list[dict[str, Any]] = []
+    # Verificacao NAO EXECUTADA nao e verificacao aprovada (CLAUDE.md SS5). Ate
+    # 2026-09-01 este guard declarava erros e warnings e ficava calado sobre o
+    # que nunca rodou: a suite dizia "9 skipped" numa linha do pytest e o
+    # veredito SOTA impresso logo abaixo nao mencionava nenhum. Quem lesse so o
+    # veredito -- que e o que a SS5 manda o agente repassar -- nao ficava sabendo
+    # que havia cobertura ausente, nem por que.
+    skips: list[dict[str, Any]] = []
 
     @classmethod
     def reset(cls) -> None:
         cls.errors.clear()
         cls.warnings_list.clear()
+        cls.skips.clear()
 
     @classmethod
     def extract_component(cls, nodeid: Optional[str], filename: Optional[str]) -> str:
@@ -156,6 +164,24 @@ def pytest_runtest_logreport(report: Any) -> None:
         }
         SotaGuardState.errors.append(rec)
 
+    elif report.skipped and report.when == "call" or (report.skipped and report.when == "setup"):
+        # longrepr de um skip e (arquivo, linha, "Skipped: <motivo>").
+        motivo = "motivo nao declarado"
+        origem = report.nodeid
+        longrepr = getattr(report, "longrepr", None)
+        if isinstance(longrepr, tuple) and len(longrepr) == 3:
+            arquivo, linha, texto = longrepr
+            motivo = str(texto).removeprefix("Skipped: ").strip() or motivo
+            origem = f"{arquivo}:{linha}"
+        SotaGuardState.skips.append(
+            {
+                "component": SotaGuardState.extract_component(report.nodeid, None),
+                "nodeid": report.nodeid,
+                "origem": origem,
+                "motivo": motivo,
+            }
+        )
+
 
 def pytest_collectreport(report: Any) -> None:
     """Erro de COLETA tambem e erro, e ate 2026-08-30 nao era.
@@ -217,6 +243,9 @@ def pytest_terminal_summary(terminalreporter: Any, exitstatus: int, config: Any)
     tr.write_sep("=", "SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD", cyan=True, bold=True)
     tr.write_line(f" Total de Erros:    {total_errors} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
     tr.write_line(f" Total de Warnings: {total_warnings} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+    tr.write_line(
+        f" Nao Executados:    {len(SotaGuardState.skips)} (sem teto | NAO contam como aprovacao -- CLAUDE.md SS5)"
+    )
 
     if status == "SUCESSO":
         tr.write_line(
@@ -251,5 +280,20 @@ def pytest_terminal_summary(terminalreporter: Any, exitstatus: int, config: Any)
             tr.write_line("")
     else:
         tr.write_line(" Homeostase Total:  Nenhum erro ou warning detectado em toda a suite.", green=True)
+
+    if SotaGuardState.skips:
+        tr.write_sep(
+            "-",
+            f"COBERTURA NAO EXECUTADA ({len(SotaGuardState.skips)} TESTE(S) PULADO(S))",
+            cyan=True,
+        )
+        tr.write_line(
+            " Nenhum destes reprovou -- nenhum foi verificado. Declare isto junto com o veredito, nao no lugar dele.",
+            cyan=True,
+        )
+        for idx, s in enumerate(sorted(SotaGuardState.skips, key=lambda x: x["nodeid"]), 1):
+            tr.write_line(f"[{idx}] PULADO -> Componente: '{s['component']}' | Teste: {s['nodeid']}", cyan=True)
+            tr.write_line(f"    Origem:  {s['origem']}")
+            tr.write_line(f"    Motivo:  {s['motivo']}")
 
     tr.write_sep("=", "FIM DO SUMARIO SOTA", cyan=True, bold=True)
