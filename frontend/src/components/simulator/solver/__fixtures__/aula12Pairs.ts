@@ -2,8 +2,10 @@
  * Evidência primária — Aula 1.2, pares ChipEV × ICMev.
  *
  * ETAPA A (pares 1-3): flop e turn. ETAPA B (par 4): river.
- * ETAPA C (pares 5-6): a linha de check-raise do flop ao turn, que amarra
- * os quatro anteriores numa cadeia aritmetica continua.
+ * ETAPA C (pares 5-7): a linha de check-raise do flop ao turn, que amarra
+ * os quatro anteriores numa cadeia aritmetica continua. O par 7 REVERTE uma
+ * rejeicao da Etapa A que se apoiava em contagem de insercoes em vez de
+ * leitura da captura -- ver o docblock de PAR_7_BB_VS_CBET_SMALL.
  *
  * PROCEDÊNCIA
  * Documento de estudo autoral de Raphael Vitoi, mantido FORA do repositório.
@@ -12,11 +14,11 @@
  * lidos, com a procedência de cada um.
  *
  * MÉTODO — dupla leitura cega
- * Dois leitores independentes transcreveram as mesmas doze capturas sem acesso
- * à leitura um do outro — seis na Etapa A, duas na Etapa B, quatro na Etapa C.
- * Resultado: concordância total em todos os dígitos, zero conflitos nas três. A
- * dupla leitura corrigiu três coisas que leitor único não pegaria, e as três
- * estão refletidas neste arquivo:
+ * Dois leitores independentes transcreveram as mesmas catorze capturas sem
+ * acesso à leitura um do outro — seis na Etapa A, duas na Etapa B, seis na
+ * Etapa C. Resultado: concordância total em todos os dígitos, zero conflitos
+ * nas três. A dupla leitura corrigiu três coisas que leitor único não pegaria,
+ * e as três estão refletidas neste arquivo:
  *
  *   1. O glifo antes do campo EV é TRIÂNGULO DE DIREÇÃO, não sinal aritmético
  *      — provado internamente: o mesmo glifo precede `Equidade -35.2%`, e
@@ -42,7 +44,7 @@
  *      captura — tarefa executável.
  *
  * O QUE ESTE ARQUIVO NÃO AUTORIZA
- * Seis pares transcritos NÃO são calibração. O ledger exige pares
+ * Sete pares transcritos NÃO são calibração. O ledger exige pares
  * independentes E REPRODUZÍVEIS; reprodutibilidade não foi obtida — estes
  * números são transcrição de captura de terceiro, não medição própria. Versão
  * de solver, build e e-Nash seguem ausentes DESTAS capturas, e o ledger os
@@ -336,8 +338,14 @@ export const PAR_2_IP_APOS_CHECK: EvidencePair = {
  * ICMev:  figura 51 (`image10.png`), nó 45.
  *
  * Escolhido porque `image9.png` e `image10.png` são as ÚNICAS capturas do par
- * sem reuso no documento. O nó 13 foi descartado: sua captura (`image7.png`) é
- * reciclada em quatro inserções com quatro legendas diferentes.
+ * sem reuso no documento.
+ *
+ * NOTA DE RETIFICAÇÃO (Etapa C): este comentário dizia também que "o nó 13 foi
+ * descartado" porque `image7.png` é reciclada em quatro inserções com legendas
+ * diferentes. O critério de ESCOLHA acima segue válido — ausência de reuso é
+ * uma boa razão para começar por aqui —, mas a rejeição do nó 13 NÃO era. As
+ * quatro legendas descrevem o mesmo nó em vistas diferentes, e o par existe:
+ * `PAR_7_BB_VS_CBET_SMALL`.
  *
  * DOIS ALERTAS ESTRUTURAIS:
  *
@@ -643,8 +651,18 @@ export const PAINEL_CHIPEV_RIVER = {
  * inserções e este objeto declara a ambiguidade em vez de escondê-la.
  */
 export const ATRIBUICAO_AMBIGUA_NODELOCK = {
-  afetaPares: [ 'PAR_5_IP_VS_XR_FLOP', 'PAR_6_BB_TURN_APOS_CALL' ] as const,
+  afetaPares: [
+    'PAR_5_IP_VS_XR_FLOP',
+    'PAR_6_BB_TURN_APOS_CALL',
+    'PAR_7_BB_VS_CBET_SMALL',
+  ] as const,
   capturas: {
+    'image7.png': [
+      '13 BB X-R vs IP cbet size small',
+      '16 Range de ataque OOP vs IP cbet small',
+      '20 Range de defesa OOP vs IP cbet small',
+      '25 Range de defesa OOP vs IP cbet small',
+    ],
     'image55.png': [
       '14 IP reaction vs XR - after cbet small flop',
       'Range de defesa IP vs BB xR',
@@ -867,6 +885,127 @@ export const PAR_6_BB_TURN_APOS_CALL: EvidencePair = {
 };
 
 /**
+ * PAR 7 — o BB reage à cbet pequena do IP no flop.
+ *
+ * ChipEV: figura 19 (`image7.png`), nó 13.
+ * ICMev:  figura 48 (`image12.png`), nó 42.
+ *
+ * ═══ CORREÇÃO DE UMA REJEIÇÃO MINHA, NÃO DO TIER 0 ═══
+ *
+ * A Etapa A rejeitou este par, e a Etapa C repetiu a rejeição. O motivo dado
+ * foi que `image7.png` aparece em quatro inserções cujas legendas descreveriam
+ * OBJETOS DIFERENTES — "range de ataque" contra "range de defesa" —, de modo
+ * que nem o spot seria recuperável.
+ *
+ * **O motivo era falso, e o conteúdo da captura o desmente.** `image7.png`
+ * mostra um único nó: o BB diante da cbet de 1.1 do IP, pote 6.73, stacks
+ * BTN 38.9 e BB 40, com Fold / Call / Raise 5 (50%) / Allin 40 (497%). As
+ * quatro legendas são QUATRO VISTAS DA MESMA TELA — "ataque" é o ramo de raise
+ * (6.8%), "defesa" é call mais raise (57.4% + 6.8%). Não são nós distintos.
+ *
+ * O segundo leitor, sem contexto, chegou à mesma conclusão por conta própria e
+ * pelo argumento mais forte: o rótulo `Allin 40` casa com o badge do BB (40) e
+ * NÃO com o do BTN (38.9), logo o painel é do BB.
+ *
+ * O erro foi contar inserções em vez de ler a captura. A ambiguidade REAL de
+ * `image7.png` é a mesma dos pares 5 e 6 — a qual passe de nodelock pertence —,
+ * e essa fica declarada em `ATRIBUICAO_AMBIGUA_NODELOCK`, não elimina o par.
+ *
+ * ═══ O QUE O PAR TRAZ ═══
+ *
+ * As classes correspondem dos dois lados (fold, call, dois raises) e os sizings
+ * não. O caso é instrutivo porque UM DELES QUASE CORRESPONDE: `Raise 5` contra
+ * `raises 5.06bb` diverge 0.06, contra uma folga de 0.0506. Reprova por 0.0094.
+ *
+ * NÃO ALARGAR A TOLERÂNCIA PARA ACOMODAR. A folga é `max(0.05 absoluto, 1%
+ * relativo)`, declarada antes de existir este par. Mexer nela agora seria
+ * ajustar o instrumento ao resultado — a mesma falha que a Etapa B recusou
+ * quando um teste sintético quebrou.
+ *
+ * A soma das frequências do ChipEV é **99.9%** — 0 + 6.8 + 57.4 + 35.7. É a
+ * primeira ocorrência ABAIXO de 100 em sete pares; as anteriores eram 100.0 ou
+ * 100.1. Confirma que o arredondamento de exibição da fonte desvia para os dois
+ * lados, e que uma tolerância simétrica era a escolha certa.
+ */
+export const PAR_7_BB_VS_CBET_SMALL: EvidencePair = {
+  source: {
+    documentSha256: AULA_1_2_SHA256,
+    figureIndex: 18, // 0-based; 19ª inserção
+    nodeLabel:
+      '13 BB X-R vs IP cbet size small / 42 idem ' +
+      '(ATRIBUIÇÃO AMBÍGUA: image7.png tem 4 inserções; todas do MESMO nó, ' +
+      'mas em blocos de nodelock possivelmente distintos)',
+  },
+  context: {
+    street: 'flop',
+    board: read('Kd Jc Ts'),
+    potBb: read(6.73),
+    players: [
+      { id: 'BB', position: 'OOP', stackBb: read(40) },
+      { id: 'BTN', position: 'IP', stackBb: read(38.9) },
+    ],
+  },
+  chipEv: {
+    regime: 'chipEV',
+    solver: 'GTO Wizard',
+    totalCombos: read(752.7),
+    actions: [
+      { label: 'Fold', frequencyPct: read(35.7), combos: read(268.83) },
+      { label: 'Call', frequencyPct: read(57.4), combos: read(432.38) },
+      {
+        label: 'Raise 5 (50%)',
+        sizingBb: read(5),
+        frequencyPct: read(6.8),
+        combos: read(51.52),
+      },
+      {
+        label: 'Allin 40 (497%)',
+        sizingBb: read(40),
+        frequencyPct: read(0),
+        combos: read(0),
+      },
+    ],
+  },
+  icmEv: {
+    regime: 'icmEV',
+    solver: 'HRC',
+    totalCombos: unreadable(HRC_RECORTE_SEM_COMBOS),
+    actions: [
+      { label: 'folds', frequencyPct: read(42.6), combos: unreadable(HRC_RECORTE_SEM_COMBOS) },
+      { label: 'calls', frequencyPct: read(48.1), combos: unreadable(HRC_RECORTE_SEM_COMBOS) },
+      {
+        label: 'raises 5.06bb',
+        sizingBb: read(5.06),
+        frequencyPct: read(9.3),
+        combos: unreadable(HRC_RECORTE_SEM_COMBOS),
+      },
+      {
+        label: 'raises 37.88bb',
+        sizingBb: read(37.88),
+        frequencyPct: read(0.0),
+        combos: unreadable(HRC_RECORTE_SEM_COMBOS),
+      },
+    ],
+  },
+};
+
+/**
+ * O QUASE-ENCONTRO DE SIZING DO PAR 7, medido.
+ *
+ * Existe para que a decisão de NÃO alargar a tolerância fique auditável, e para
+ * que o próximo leitor veja de quanto foi. Se alguém um dia afrouxar a folga,
+ * o teste que consome este objeto denuncia o motivo real da mudança.
+ */
+export const QUASE_ENCONTRO_DE_SIZING_PAR_7 = {
+  chipEvBb: 5,
+  icmEvBb: 5.06,
+  diferenca: 0.06,
+  folgaVigente: 0.0506,
+  reprovaPor: 0.0094,
+  decisao: 'manter a tolerancia; ajustar o instrumento ao resultado e o defeito que a Etapa B recusou',
+} as const;
+
+/**
  * HIPÓTESE NÃO CONFIRMADA — a base de que cada motor calcula o all-in.
  *
  * ESTE OBJETO NÃO É EVIDÊNCIA E NÃO EXPLICA NADA. Ele existe para que uma
@@ -907,6 +1046,118 @@ export const HIPOTESE_BASE_DO_ALLIN = {
 } as const;
 
 /**
+ * A TRILHA DO GTO WIZARD — `image59.png`, nó 17. Uma captura que verifica quatro.
+ *
+ * Diferente de todas as outras, esta inclui a BARRA DE NAVEGAÇÃO do solver: a
+ * árvore inteira, coluna por coluna, do flop até o nó atual. Cada coluna traz o
+ * jogador da vez, a stack, e TODAS as ações disponíveis naquele ponto.
+ *
+ * O efeito é que ela confere, de uma vez e por fonte independente, os conjuntos
+ * de ação de quatro capturas transcritas separadamente:
+ *
+ *   BB 40    Check | Bet 1.4 (25%)                              -> par 1
+ *   BTN 40   Check | Bet 1.1 (20%)                              -> nodelock
+ *   BB 40    Fold | Call | Raise 5 (50%) | Allin 40 (497%)      -> par 7
+ *   BTN 38.9 Fold | Call | Raise 12.8 (50%) | Allin 40 (224%)   -> par 5
+ *   TURN 15.63 (2♦), BB 35, BTN 35                              -> par 6
+ *
+ * Os rótulos batem dígito a dígito com o que cada captura mostra isoladamente,
+ * inclusive os sizings e os percentuais entre parênteses.
+ *
+ * ELA TAMBÉM CONVERTE UM PASSO INFERIDO EM PASSO LIDO. A cadeia da Etapa C
+ * precisava calcular `15.63 x 50% = 7.815 ~ 7.80` para ligar o par 6 ao par 3.
+ * Aqui o ramo `Bet 7.8 (50%)` está na tela, e o painel mede sua frequência em
+ * 57.6% com 28.48 combos. A ligação deixou de ser aritmética minha.
+ *
+ * E EXPÕE O QUE OS BLOCOS DE NODELOCK FAZEM. Este nó do turn tem exatamente o
+ * mesmo pote (15.63), as mesmas stacks (35/35), as mesmas equidades
+ * (48.63/51.37) e os mesmos combos (49.5 e 252) que o par 6 — mas um MENU DE
+ * SIZINGS DIFERENTE: aqui `Check | Bet 7.8 (50%)`, lá `Check | Bet 3.9 (25%) |
+ * Allin 35 (224%)`. É o mesmo nó resolvido sob locks distintos, e é a
+ * demonstração concreta do que `ATRIBUICAO_AMBIGUA_NODELOCK` adverte.
+ *
+ * Não é par: não há gêmeo ICMev para o nó 17.
+ */
+export const TRILHA_GTO_WIZARD = {
+  captura: 'image59.png',
+  legenda: '17 Action BB turn after IP calls no XR (2d)',
+  cabecalho: { stackBb: 40, potBb: 5.63, rotulo: 'BB vs. BTN' },
+  colunas: [
+    { street: 'FLOP', potBb: 5.63, cartas: 'K♦ J♣ T♠' },
+    { jogador: 'BB', stackBb: 40, acoes: [ 'Check', 'Bet 1.4 (25%)' ], confirma: 'PAR_1_BB_LEADING' },
+    { jogador: 'BTN', stackBb: 40, acoes: [ 'Check', 'Bet 1.1 (20%)' ], confirma: 'NODELOCK_IP_CBET_SMALL' },
+    {
+      jogador: 'BB',
+      stackBb: 40,
+      acoes: [ 'Fold', 'Call', 'Raise 5 (50%)', 'Allin 40 (497%)' ],
+      confirma: 'PAR_7_BB_VS_CBET_SMALL',
+    },
+    {
+      jogador: 'BTN',
+      stackBb: 38.9,
+      acoes: [ 'Fold', 'Call', 'Raise 12.8 (50%)', 'Allin 40 (224%)' ],
+      confirma: 'PAR_5_IP_VS_XR_FLOP',
+    },
+    { street: 'TURN', potBb: 15.63, cartas: '2♦' },
+    { jogador: 'BB', stackBb: 35, acoes: [ 'Check', 'Bet 7.8 (50%)' ] },
+    {
+      jogador: 'BTN',
+      stackBb: 35,
+      acoes: [ 'Check', 'Bet 3.1 (20%)', 'Bet 7.8 (50%)', 'Bet 11.7 (75%)', 'Allin 35 (224%)' ],
+    },
+  ],
+  noAtual: {
+    potBb: 15.63,
+    stacksBb: 35,
+    acoes: [
+      { label: 'Bet 7.8 (50%)', frequencyPct: 57.6, combos: 28.48 },
+      { label: 'Check', frequencyPct: 42.4, combos: 21 },
+    ],
+    painel: {
+      bbOop: { ev: 8.76, equidadePct: 48.63, eqrPct: 115, combos: 49.5 },
+      btnIp: { ev: 6.87, equidadePct: 51.37, eqrPct: 86, combos: 252 },
+    },
+  },
+  mesmoNoQueOPar6ComMenuDiferente: true,
+} as const;
+
+/**
+ * O GLIFO, ENCERRADO POR OBSERVAÇÃO DIRETA.
+ *
+ * Desde a Etapa A este arquivo afirma que a marca antes dos campos do painel é
+ * indicador de direção e não sinal negativo. A prova era sempre INDIRETA:
+ * equidade não pode ser negativa; equidades complementares somam 100; combos
+ * não podem ser negativos. Bons argumentos, mas todos aritméticos.
+ *
+ * `image59.png` está em resolução maior, e o segundo leitor — perguntado campo a
+ * campo, sem saber o que se esperava — respondeu que os oito símbolos **NÃO são
+ * iguais entre si**: quatro apontam para cima em verde, quatro para baixo em
+ * vermelho. Um sinal de menos não aponta para cima.
+ *
+ * E as direções são ANTI-CORRELACIONADAS entre os dois jogadores, campo a
+ * campo: onde o BB sobe, o BTN desce. É o comportamento de um comparador entre
+ * as duas mãos, não de um sinal aritmético.
+ *
+ * HONESTIDADE SOBRE A CONFIANÇA: o leitor declarou confiança ALTA em seis dos
+ * oito e MÉDIA em dois (os campos `Combos`, cujo glifo é menor). A afirmação
+ * que este objeto sustenta é a NÃO-UNIFORMIDADE e as CORES, ambas declaradas
+ * com segurança — e a não-uniformidade sozinha já basta.
+ */
+export const GLIFO_DE_DIRECAO = {
+  provaDireta: 'image59.png',
+  simbolosUniformes: false,
+  direcoes: {
+    bbOop: { ev: 'cima', equidade: 'baixo', eqr: 'cima', combos: 'baixo' },
+    btnIp: { ev: 'baixo', equidade: 'cima', eqr: 'baixo', combos: 'cima' },
+  },
+  antiCorrelacionadoEntreJogadores: true,
+  confiancaDeclaradaPeloLeitor: { alta: 6, media: 2 },
+  conclusao:
+    'indicador de direcao do widget; um sinal de menos nao aponta para cima, e ' +
+    'as oito marcas nao sao iguais entre si',
+} as const;
+
+/**
  * A LINHA COMPLETA, do flop ao river, e o que ela fecha.
  *
  * Os pares 5, 6, 3 e 4 são nós consecutivos, transcritos de quatro capturas
@@ -940,7 +1191,9 @@ export const CADEIA_FLOP_TURN_RIVER = {
   turn: { potBb: 15.63, stacksBb: 35, cbetDe50PctBb: 7.8 },
   turnDianteDaAposta: { potBb: 23.43, stackBbBb: 27.2, callDoIpBb: 7.8 },
   river: { potBb: 31.23, stacksBb: 27.2 },
+  flopDianteDaCbet: { potBb: 6.73, stackBbBb: 40, raiseDoBbBb: 5 },
   rangeDoIp: 370.9,
+  rangeDoBbNoFlop: 752.7,
   rangeDoBtnNoTurn: 252,
   shoveDoHrcNoTurnBb: 32.81,
 } as const;
@@ -972,6 +1225,7 @@ export const ESCOPO_PRIMEIRO_CORTE = {
 export const AULA_1_2_PAIRS: readonly EvidencePair[] = [
   PAR_1_BB_LEADING,
   PAR_2_IP_APOS_CHECK,
+  PAR_7_BB_VS_CBET_SMALL,
   PAR_5_IP_VS_XR_FLOP,
   PAR_6_BB_TURN_APOS_CALL,
   PAR_3_IP_VS_CBET_TURN,
