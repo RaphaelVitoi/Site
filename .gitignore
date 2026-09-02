@@ -183,3 +183,13 @@ reports/agent-calibration/*.lock
 #
 # O que vale para todos continua em `.claude/settings.json`.
 .claude/settings.local.json
+
+# Configuracao de MCP do Codex, POR MAQUINA. Declara o que EXECUTA -- hoje
+# `uv run python mcp-bridge/server.py`, cujas ferramentas chamam do.ps1 via
+# PowerShell e delegam ao Google Jules. Config de execucao versionada vale para
+# todo clone, que e a mesma classe de problema fechada acima no allowlist.
+#
+# `.codex/environments/environment.toml` permanece versionado: ja esta no
+# historico, e autogerado e carrega apenas o nome do projeto. A inconsistencia
+# fica registrada aqui em vez de silenciada.
+.codex/config.toml
