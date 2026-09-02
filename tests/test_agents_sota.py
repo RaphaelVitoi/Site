@@ -13,6 +13,7 @@ import pytest
 import agents.autonomy as autonomy
 import agents.context_builder as cb
 import agents.execution as execution
+import core.config
 from core.schemas import Task
 from database.queue_manager import QueueManager
 
@@ -22,8 +23,6 @@ logger = logging.getLogger(__name__)
 @pytest.fixture(autouse=True)
 def patch_valid_agents_sota(monkeypatch: pytest.MonkeyPatch) -> None:
     """Garante allowlist SOTA de agentes para testes."""
-    import core.config
-
     monkeypatch.setattr(
         core.config, "VALID_AGENTS", ["@maverick", "@chico", "@gemma4", "@dispatcher", "@pesquisador", "@securitychief"]
     )
@@ -188,7 +187,7 @@ async def test_run_native_command_success_and_failures() -> None:
             await autonomy._run_native_command("echo hello")
 
     # Caso 3: Timeout
-    async def _wait_for_timeout_side_effect(coro, *args, **kwargs):
+    async def _wait_for_timeout_side_effect(coro, *_args, **_kwargs):
         if hasattr(coro, "close"):
             coro.close()
         raise TimeoutError()
@@ -218,14 +217,14 @@ async def test_run_sandboxed_command() -> None:
 
     exec_calls: list[tuple] = []
 
-    async def _fake_exec(*args, **kwargs):
+    async def _fake_exec(*args, **_kwargs):
         exec_calls.append(args)
         return _FakeProcess()
 
     # Python 3.14: process.communicate() cria um coroutine antes de ser passado para wait_for.
     # Como wait_for e mockado, esse coroutine fica pendente -> GC emite RuntimeWarning.
     # O side_effect abaixo fecha o coroutine explicitamente antes de retornar.
-    async def _wait_for_side_effect(coro, *args, **kwargs):
+    async def _wait_for_side_effect(coro, *_args, **_kwargs):
         if hasattr(coro, "close"):
             coro.close()
         return b"", b""
@@ -273,10 +272,10 @@ async def test_apply_god_mode_orchestration() -> None:
 
                 exec_cmd_calls: list = []
 
-                async def _fake_execute_commands(*args, **kwargs):
+                async def _fake_execute_commands(*args, **_kwargs):
                     exec_cmd_calls.append(args)
 
-                async def _fake_subprocess_exec2(*args, **kwargs):
+                async def _fake_subprocess_exec2(*_args, **_kwargs):
                     return _FakeProcess2()
 
                 with (

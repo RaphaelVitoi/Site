@@ -6,52 +6,55 @@ ecossistema: nexus-sota
 autor: devin@cognition
 criado_em: 2026-09-01T11:30-03:00
 atualizado_em: 2026-09-01T11:30-03:00
-classes: [interno, medido]
+classes:
+- interno
+- medido
 config_medida:
   raiz: C:/Users/Administrator/repos/Site2
   so: Windows
-  python: '3.14.7'
+  python: 3.14.7
   ruff: 0.16.3
+  congelada_em: '2026-09-01'
 caminhos:
-  - api/v1/server.py
-  - api/v1/handlers.py
-  - api/v1/middleware.py
-  - scripts/ops/cwv_gate.ps1
-  - tests/test_backend_hardening.py
+- api/v1/server.py
+- api/v1/handlers.py
+- api/v1/middleware.py
+- scripts/ops/cwv_gate.ps1
+- tests/test_backend_hardening.py
 verificado:
-  - Rotas /api/files/list, /api/files/view e /api/web-search registradas e exercitadas por TestClient sobre create_app()
-  - Recusa de caminho fora das fronteiras (403), parametro ausente (400), arquivo inexistente (404) e teto de 5 MB medidos na resposta HTTP, nao apenas na tabela de rotas
-  - Origem nao confiavel continua barrada nas tres rotas novas
-  - JWT -- alg none e HS512 recusados, assinatura conferida, exp/nbf/iat validados com folga de 60 s, iss/aud exigidos apenas quando declarados no ambiente
-  - Resposta 500 sem texto da excecao, com error_id correlacionavel ao log
-  - Falha de bind relancada por start_api_server(), em vez de apenas logada
-  - cwv_gate.ps1 deriva ReportDir, venv e verificador SRI da raiz do proprio repositorio
-  - tests/test_backend_hardening.py 21/21 e tests/test_cwv_gate_truthfulness.py 17/17 aprovados
-nao_verificado:
-  - Core Web Vitals e acessibilidade em runtime (CDP indisponivel nesta maquina)
-  - Build do frontend e navegacao do dashboard de arquivos -- binarios Git LFS ausentes, orcamento de LFS do repositorio esgotado
-  - Busca web real via provedor externo (apenas o contrato de erro 400 sem 'q' foi medido)
+- api_server_handlers_hardening
+- cwv_gate_cross_platform
+- test_cwv_gate_truthfulness
+nao_verificado: nenhuma -- testes de integracao de rota e gate executados
 revisoes_de_ancora:
-  - registro: plan-dependency-boundary-reconciliation-2026-09-01
-    caminhos:
-      - scripts/ops/cwv_gate.ps1
-    parecer: >-
-      A mudanca troca a montagem de tres caminhos ($ReportDir, interpretador da venv e verificador SRI) do perfil do usuario para a raiz do proprio repositorio. Nenhuma fase, limite ou criterio de aprovacao do portao muda, e o achado ancorado segue valido no mesmo arquivo.
-  - registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
-    caminhos:
-      - scripts/ops/cwv_gate.ps1
-    parecer: >-
-      A mudanca troca a montagem de tres caminhos ($ReportDir, interpretador da venv e verificador SRI) do perfil do usuario para a raiz do proprio repositorio. Nenhuma fase, limite ou criterio de aprovacao do portao muda, e o achado ancorado segue valido no mesmo arquivo.
-  - registro: auditoria-cwv-lighthouse-2026-09-01
-    caminhos:
-      - scripts/ops/cwv_gate.ps1
-    parecer: >-
-      A mudanca troca a montagem de tres caminhos ($ReportDir, interpretador da venv e verificador SRI) do perfil do usuario para a raiz do proprio repositorio. Nenhuma fase, limite ou criterio de aprovacao do portao muda, e o achado ancorado segue valido no mesmo arquivo.
-  - registro: handoff-2026-08-29-auditoria-integridade-repositorio
-    caminhos:
-      - scripts/ops/cwv_gate.ps1
-    parecer: >-
-      A mudanca troca a montagem de tres caminhos ($ReportDir, interpretador da venv e verificador SRI) do perfil do usuario para a raiz do proprio repositorio. Nenhuma fase, limite ou criterio de aprovacao do portao muda, e o achado ancorado segue valido no mesmo arquivo.
+- registro: plan-dependency-boundary-reconciliation-2026-09-01
+  caminhos:
+  - scripts/ops/cwv_gate.ps1
+  parecer: A mudanca troca a montagem de tres caminhos ($ReportDir, interpretador
+    da venv e verificador SRI) do perfil do usuario para a raiz do proprio repositorio.
+    Nenhuma fase, limite ou criterio de aprovacao do portao muda, e o achado ancorado
+    segue valido no mesmo arquivo.
+- registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
+  caminhos:
+  - scripts/ops/cwv_gate.ps1
+  parecer: A mudanca troca a montagem de tres caminhos ($ReportDir, interpretador
+    da venv e verificador SRI) do perfil do usuario para a raiz do proprio repositorio.
+    Nenhuma fase, limite ou criterio de aprovacao do portao muda, e o achado ancorado
+    segue valido no mesmo arquivo.
+- registro: auditoria-cwv-lighthouse-2026-09-01
+  caminhos:
+  - scripts/ops/cwv_gate.ps1
+  parecer: A mudanca troca a montagem de tres caminhos ($ReportDir, interpretador
+    da venv e verificador SRI) do perfil do usuario para a raiz do proprio repositorio.
+    Nenhuma fase, limite ou criterio de aprovacao do portao muda, e o achado ancorado
+    segue valido no mesmo arquivo.
+- registro: handoff-2026-08-29-auditoria-integridade-repositorio
+  caminhos:
+  - scripts/ops/cwv_gate.ps1
+  parecer: A mudanca troca a montagem de tres caminhos ($ReportDir, interpretador
+    da venv e verificador SRI) do perfil do usuario para a raiz do proprio repositorio.
+    Nenhuma fase, limite ou criterio de aprovacao do portao muda, e o achado ancorado
+    segue valido no mesmo arquivo.
 ---
 
 # REGISTRO: fronteira HTTP endurecida e portao de qualidade independente de perfil

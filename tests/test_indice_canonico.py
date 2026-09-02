@@ -20,6 +20,8 @@ andou de 2156 para 2172 nesta mesma semana.
 
 from __future__ import annotations
 
+# pylint: disable=protected-access
+
 import asyncio
 import json
 import os
@@ -27,6 +29,8 @@ import subprocess
 from pathlib import Path
 
 import pytest
+
+import memory_rag
 
 RAIZ = Path(__file__).resolve().parent.parent  # .../Site
 INDICE = RAIZ / "data" / "INDICE_CANONICO_GOVERNANCA.json"
@@ -186,8 +190,6 @@ def test_consumidores_de_codigo_declarados_apontam_para_arquivo_vivo():
 
 
 def test_pertinencia_ao_corpus_do_rag_bate_com_o_coletor_real():
-    import memory_rag
-
     manifesto = json.loads((RAIZ / "rag_ingestion_manifest.json").read_text(encoding="utf-8"))
     coletados = asyncio.run(
         memory_rag.MemoryRAG._collect_target_files_async(object.__new__(memory_rag.MemoryRAG), manifesto, RAIZ)
@@ -214,8 +216,6 @@ def test_a_barreira_de_traversal_do_manifesto_continua_de_pe():
     falsa e alguem pode 'corrigir' o corpus ampliando fronteira -- que e
     exatamente o contorno de portao que a governanca proibe.
     """
-    import memory_rag
-
     escape = {"sources": [{"path": "..", "patterns": ["MODUS_OPERANDI.md"], "recursive": False}]}
     coletados = asyncio.run(
         memory_rag.MemoryRAG._collect_target_files_async(object.__new__(memory_rag.MemoryRAG), escape, RAIZ)

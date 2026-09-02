@@ -2,6 +2,7 @@
 >
 > **Guardião:** @organizador
 > **Propósito:** A fonte unica da verdade sobre a topologia, componentes e fluxos de dados do Ecossistema Nexus. Este mapa e a representacao fiel do territorio.
+> **Última revisão:** 2026-09-01 · Protocolo Chico SOTA v8.0 GOLD
 
 ## 1. Topologia de Componentes Core
 
@@ -50,7 +51,7 @@ O sistema é operado por uma equipe de **19 agentes de IA especializados**, cada
 
 ## 4. Leis Operacionais (Modus Operandi)
 
-A execução e a evolução do sistema são regidas por um conjunto de leis de engenharia imutáveis, agora consolidadas no `.claude/GLOBAL_INSTRUCTIONS.md`. Este documento é a constituição técnica do ecossistema e detalha princípios como:
+A execução e a evolução do sistema são regidas por um conjunto de leis de engenharia imutáveis, agora consolidadas no `.claude/GOVERNANÇA/GLOBAL_INSTRUCTIONS.md`. Este documento é a constituição técnica do ecossistema e detalha princípios como:
 
 * **A Navalha SOTA:** Um framework para organizar, rotear, fundir, elevar e expurgar componentes, combatendo a entropia.
 * **A Lei da Estabilidade Absoluta:** Nenhuma melhoria pode comprometer a confiabilidade do sistema (Zero-Regression).
@@ -92,21 +93,21 @@ graph TD
     end
 
     subgraph "Camada 3: Identidade do Agente"
-        C1["Perfil Específico<br/>(.claude/agents/agent.md)"]:::core
+        C1["Perfil Específico<br/>(.cerebro/agents/agent.md)"]:::core
     end
 
     subgraph "Camada 2: Leis e Mapas do Ecossistema"
         B1("document_manifest.json"):::manifest
-        B_GLOBAL[".claude/GLOBAL_INSTRUCTIONS.md"]:::docs
+        B_GLOBAL[".cerebro/GLOBAL_INSTRUCTIONS.md"]:::docs
         B_ARCH["docs/SOTA_REFERENCE_ARCHITECTURE.md"]:::docs
         B_WORKFLOW["docs/MANUAL_WORKFLOW_AGENTES.md"]:::docs
         B_OTHERS["... outros documentos do manifesto"]:::docs
     end
 
     subgraph "Camada 1: Fundação Filosófica"
-        A1[".claude/COSMOVISAO.md"]:::philosophy
-        A2[".claude/CLAUDE.md"]:::philosophy
-        A3[".claude/LIDERANCA_GOVERNANCE..."]:::philosophy
+        A1[".cerebro/COSMOVISAO.md"]:::philosophy
+        A2[".cerebro/CEREBRO.md"]:::philosophy
+        A3[".cerebro/LIDERANCA_GOVERNANCE..."]:::philosophy
     end
 
     MenteAgente["Mente do Agente<br/>(System Prompt)"]:::mind

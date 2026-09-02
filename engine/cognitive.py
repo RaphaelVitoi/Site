@@ -35,7 +35,7 @@ def get_rag():
 
 
 async def _read_global_context() -> str:
-    global_file = Path(".cerebro/GLOBAL_INSTRUCTIONS.md")
+    global_file = Path(".claude/GLOBAL_INSTRUCTIONS.md")
     if global_file.exists():
         async with aiofiles.open(global_file, encoding="ascii", errors="ignore") as f:
             return await f.read() + "\n\n"
@@ -47,32 +47,32 @@ async def _build_infra_ctx(task: Task | None, task_files: list | None) -> str:
     successfully_read_files = []
 
     docs_to_read = [
-        ("COSMOVISAO FILOSOFICA", [".cerebro/philosophy/COSMOVISAO.md"]),
-        ("IDENTIDADE DO USUARIO", [".cerebro/context/CEREBRO.md"]),
+        ("COSMOVISAO FILOSOFICA", [".claude/ESSENCIA MORAL/COSMOVISAO.md"]),
+        ("IDENTIDADE DO USUARIO", [".claude/MODUSOPERANDI/CEREBRO.md"]),
         (
             "LIDERANCA E GOVERNANCA",
-            [".cerebro/governance/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"],
+            [".claude/GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"],
         ),
         (
             "TEMPLO DO APRENDIZADO GENERATIVO",
-            [".cerebro/philosophy/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"],
+            [".claude/ESSENCIA MORAL/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"],
         ),
         (
             "MANUAL DO WORKFLOW",
             [
+                ".claude/DEPLOY/MANUAL_WORKFLOW_AGENTES.md",
                 "docs/MANUAL_WORKFLOW_AGENTES.md",
-                "docs/tasks/MANUAL_WORKFLOW_AGENTES.md",
             ],
         ),
-        ("INDICE MESTRE", ["docs/INDEX_MESTRE.md", "docs/tasks/INDEX_MESTRE.md"]),
-        ("GUIA DE DEPLOY E STACK", ["docs/DEPLOY.md", "DEPLOY.md"]),
-        ("INVENTARIO DE FERRAMENTAS", ["docs/INVENTARIO_FERRAMENTAS.md"]),
+        ("INDICE MESTRE", [".claude/DEPLOY/INDEX_MESTRE.md", "docs/INDEX_MESTRE.md"]),
+        ("GUIA DE DEPLOY E STACK", [".claude/DEPLOY/DEPLOY.md", "DEPLOY.md"]),
+        ("INVENTARIO DE FERRAMENTAS", [".claude/RELATORIOS/INVENTARIO_FERRAMENTAS.md"]),
         (
             "PROTOCOLO DE ROTEAMENTO HOLOGRAFICO",
-            [".cerebro/architecture/HOLOGRAPHIC_ROUTING_PROTOCOL.md"],
+            [".claude/ARQUITETURA/HOLOGRAPHIC_ROUTING_PROTOCOL.md"],
         ),
-        ("ARQUITETURA DO CEREBRO HIBRIDO", [".cerebro/architecture/HYBRID_BRAIN_ARCHITECTURE.md"]),
-        ("MANIFESTO DE COERENCIA E HARMONIA", [".cerebro/governance/COHERENCE_MANIFEST.md"]),
+        ("ARQUITETURA DO CEREBRO HIBRIDO", [".claude/ARQUITETURA/HYBRID_BRAIN_ARCHITECTURE.md"]),
+        ("MANIFESTO DE COERENCIA E HARMONIA", [".claude/GOVERNANCA/COHERENCE_MANIFEST.md"]),
     ]
 
     for doc_name, doc_paths in docs_to_read:
@@ -153,13 +153,13 @@ async def _read_memory_and_context(agent_clean: str) -> tuple[str, str]:
         async with aiofiles.open(canonical_file, encoding="utf-8") as f:
             agent_memory = await f.read()
     else:
-        memory_file = Path(f".cerebro/agent-memory/{agent_clean}/MEMORY.md")
+        memory_file = Path(f".claude/agent-memory/{agent_clean}/MEMORY.md")
         if memory_file.exists():
             async with aiofiles.open(memory_file, encoding="utf-8") as f:
                 agent_memory = await f.read()
 
     project_context = ""
-    context_file = Path(".cerebro/project-context.md")
+    context_file = Path(".claude/MODUSOPERANDI/project-context.md")
     if not context_file.exists():
         context_file = Path(".claude/project-context.md")
     if context_file.exists():
@@ -402,7 +402,7 @@ async def process_agent_task(task: Task, manager: QueueManager):
 
     response_text = await _call(task, system_prompt, user_prompt, manager, response_format=response_format)
 
-    result_dir = Path(".cerebro/task_results")
+    result_dir = Path(".claude/RELATORIOS")
     result_dir.mkdir(parents=True, exist_ok=True)
     async with aiofiles.open(result_dir / f"{task.id}.md", mode="w", encoding="utf-8") as f:
         await f.write(f"# Resposta: {task.id} ({task.agent})\n\n{response_text}")

@@ -378,5 +378,14 @@
   "search.useGlobalIgnoreFiles": true,
   "accessibility.openChatEditedFiles": true,
   "accessibility.signalOptions.debouncePositionChanges": true,
-  "editor.inlineSuggest.experimental.showOnSuggestConflict": "always"
+  "editor.inlineSuggest.experimental.showOnSuggestConflict": "always",
+  "claudeCode.enableNewConversationShortcut": true,
+  "chatgpt.openOnStartup": true,
+  "chatgpt.runCodexInWindowsSubsystemForLinux": true,
+  "windsurfPyright.analysis.typeCheckingMode": "standard",
+  "windsurfPyright.analysis.inlayHints.callArgumentNames": true,
+  "windsurfPyright.analysis.inlayHints.callArgumentNamesMatching": true,
+  "windsurfPyright.analysis.inlayHints.functionReturnTypes": true,
+  "windsurfPyright.analysis.inlayHints.variableTypes": true,
+  "windsurfPyright.analysis.inlayHints.genericTypes": true
 }

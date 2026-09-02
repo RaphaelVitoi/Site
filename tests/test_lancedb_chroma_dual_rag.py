@@ -5,6 +5,8 @@ Valida LanceDBBackend, roteamento automatico por complexidade, fusao federada RR
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name,protected-access
+
 from pathlib import Path
 import pytest
 

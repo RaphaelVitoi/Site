@@ -23,7 +23,7 @@
 > diferente da secao curada acima, e por isso fica separada em vez de
 > misturada. Ver `reports/VALIDACAO-2026-08-28-arquitetura-de-memoria.md`.
 
-### Procedencia -- `.cerebro/agent-memory/skillmaster/MEMORY.md`
+### Procedencia -- `.claude/agent-memory/skillmaster/MEMORY.md`
 
 # @skillmaster MEMORY - O Cortex Individual
 

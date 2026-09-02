@@ -4,7 +4,7 @@
 
 Tres arvores, 19 agentes cada, e as tres com o MESMO nome de arquivo:
 
-    .cerebro/agent-memory      62.889 bytes de MEMORY.md   escrita dos agentes
+    .claude/agent-memory      62.889 bytes de MEMORY.md   escrita dos agentes
     .claude/agent-memory       11.465 bytes de MEMORY.md   leitura do RAG e do CLI
     .claude/AGENTS-MEMORY      62.884 bytes de MEMORY.md   nenhum consumidor
 
@@ -13,7 +13,7 @@ outra -- sao **tipos diferentes de memoria** que cairam em arvores diferentes:
 
 - `.claude/agent-memory` guarda memoria SEMANTICA -- fatos consolidados, curados,
   recentes. Para o `chico`, arquitetura de agosto de 2026.
-- `.cerebro/agent-memory` guarda memoria EPISODICA -- log de handoffs no formato
+- `.claude/agent-memory` guarda memoria EPISODICA -- log de handoffs no formato
   acao, resultado, aprendizado. Para o `chico`, entradas de abril e maio.
 - `.claude/AGENTS-MEMORY` e quase-copia de `.cerebro` (difere em ~5 bytes no
   total, quase todo em finais de linha). Entra so onde acrescenta.
