@@ -169,3 +169,17 @@ skills-lock.json
 
 # Lock transitorio do ledger de calibracao (Register-AgentCalibrationFeedback.ps1)
 reports/agent-calibration/*.lock
+
+# Allowlist de permissoes POR MAQUINA. O sufixo `.local` ja diz que ela nao e
+# compartilhada, mas o arquivo estava versionado -- e permissao versionada vale
+# para todo clone, nao so para a maquina que a aprovou.
+#
+# Medido em 2026-09-02: o arquivo acumulara entradas com wildcard que
+# auto-aprovavam execucao arbitraria (`python -c ' *`, `node -e ' *`,
+# `python -`, `cd <dir>; *`), publicacao irreversivel (`git push *`) e
+# `git config *` -- este ultimo capaz de reapontar `core.hooksPath` e desligar
+# o portao de 5 fases, uma terceira porta para o mesmo lugar que `--no-verify`
+# e `SKIP_CWV_GATE=1`, e que ninguem havia fechado porque nao tem o nome delas.
+#
+# O que vale para todos continua em `.claude/settings.json`.
+.claude/settings.local.json
