@@ -234,6 +234,22 @@ def _e_derivado(rel: str) -> bool:
     return r.returncode == 0
 
 
+def _grafias_a_partir_da_raiz(limpo: str, documento: Path) -> list[str]:
+    """O caminho citado, reescrito a partir da raiz do repositorio.
+
+    A citacao dentro de um documento e RELATIVA ao diretorio dele -- um registro
+    em `reports/` que aponta `cwv/relatorio.md` fala de `reports/cwv/`, que o
+    .gitignore cobre. Testar so a grafia literal fazia o artefato gerado ser
+    lido como referencia morta por causa do ponto de partida, nao por ausencia.
+    """
+    grafias = [limpo]
+    try:
+        grafias.append((documento.parent / limpo).resolve().relative_to(RAIZ).as_posix())
+    except ValueError:
+        pass
+    return grafias
+
+
 def submodulos_declarados() -> list[str]:
     """Prefixos de submodulo, lidos do `.gitmodules` -- nao do disco.
 
@@ -325,7 +341,7 @@ def referencias_mortas(rel: str) -> list[str]:
             primeiro = limpo.split("/", 1)[0]
             if primeiro in escopos:
                 continue  # endereco de projeto irmao ou espelho
-            if _e_derivado(limpo):
+            if any(_e_derivado(v) for v in _grafias_a_partir_da_raiz(limpo, caminho)):
                 continue  # artefato gerado, ausente por desenho
             mortas.append(citado)
     return mortas
@@ -432,10 +448,14 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
                 if not isinstance(registro, str) or not registro.strip():
                     erros.append(f"{rel}: revisoes_de_ancora[{indice}].registro deve ser um id nao vazio.")
                     continue
-                if not isinstance(caminhos, list) or not caminhos or any(
-                    not isinstance(caminho, str) or not caminho.strip() for caminho in caminhos
+                if (
+                    not isinstance(caminhos, list)
+                    or not caminhos
+                    or any(not isinstance(caminho, str) or not caminho.strip() for caminho in caminhos)
                 ):
-                    erros.append(f"{rel}: revisoes_de_ancora[{indice}].caminhos deve ser uma lista nao vazia de caminhos.")
+                    erros.append(
+                        f"{rel}: revisoes_de_ancora[{indice}].caminhos deve ser uma lista nao vazia de caminhos."
+                    )
                     continue
                 if not isinstance(parecer, str) or not parecer.strip():
                     erros.append(f"{rel}: revisoes_de_ancora[{indice}].parecer deve explicar a revisao.")

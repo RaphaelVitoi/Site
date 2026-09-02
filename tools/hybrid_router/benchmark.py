@@ -205,8 +205,12 @@ def display_report(metrics: BenchmarkMetrics) -> None:
     print(f"Tempo Total de Execucao:    {metrics.total_time_seconds:.2f} s")
     print(f"Taxa de Throughput (RPS):   {metrics.rps:.2f} req/s")
     print(f"Requisicoes Totais:         {metrics.total_requests}")
-    print(f"Sucesso:                    {metrics.successful_requests} ({((metrics.successful_requests / metrics.total_requests) * 100):.1f}%)")
-    print(f"Falhas / Timeouts:          {metrics.failed_requests} ({((metrics.failed_requests / metrics.total_requests) * 100):.1f}%)")
+    print(
+        f"Sucesso:                    {metrics.successful_requests} ({((metrics.successful_requests / metrics.total_requests) * 100):.1f}%)"
+    )
+    print(
+        f"Falhas / Timeouts:          {metrics.failed_requests} ({((metrics.failed_requests / metrics.total_requests) * 100):.1f}%)"
+    )
     print(f"Thinking Tokens Gerados:    {metrics.total_thinking_tokens}")
     print("-" * 75)
     print("DISTRIBUICAO DE LATENCIA (ms)")

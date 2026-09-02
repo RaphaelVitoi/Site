@@ -2,6 +2,7 @@
 
 Valida o contrato de integracao com a API do Google Jules sem efetuar chamadas de rede externas reais.
 """
+
 from __future__ import annotations
 
 import json
@@ -131,11 +132,7 @@ def test_jules_client_get_diff() -> None:
 
 def test_jules_client_list_sources() -> None:
     """Valida a listagem de repositorios autorizados."""
-    mock_resp_data = {
-        "sources": [
-            {"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}
-        ]
-    }
+    mock_resp_data = {"sources": [{"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}]}
 
     mock_resp = MagicMock()
     mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
@@ -159,12 +156,13 @@ def test_jules_mcp_server_tools() -> None:
         start_new_jules_task,
     )
 
-    with patch.object(JulesClient, "create_session") as mock_create, \
-         patch.object(JulesClient, "get_session_status") as mock_status, \
-         patch.object(JulesClient, "approve_plan", return_value=True), \
-         patch.object(JulesClient, "get_diff") as mock_diff, \
-         patch.object(JulesClient, "list_sources", return_value=[{"name": "test"}]):
-
+    with (
+        patch.object(JulesClient, "create_session") as mock_create,
+        patch.object(JulesClient, "get_session_status") as mock_status,
+        patch.object(JulesClient, "approve_plan", return_value=True),
+        patch.object(JulesClient, "get_diff") as mock_diff,
+        patch.object(JulesClient, "list_sources", return_value=[{"name": "test"}]),
+    ):
         mock_create.return_value = JulesSessionStatus(
             session_id="sess-100",
             state="QUEUED",
@@ -204,4 +202,3 @@ def test_jules_mcp_server_tools() -> None:
 
         res_task = json.loads(start_new_jules_task("RaphaelVitoi/Site", "test task"))
         assert res_task["status"] == "SUCCESS"
-

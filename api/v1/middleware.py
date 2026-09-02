@@ -28,6 +28,31 @@ DEFAULT_TRUSTED_ORIGINS = (
 
 SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET")
 
+# Tolerancia para relogios dessincronizados entre emissor e backend (segundos).
+JWT_CLOCK_SKEW_SECONDS = 60
+
+
+def _jwt_secret() -> str | None:
+    """Segredo JWT vigente: o ambiente atual tem precedencia sobre o lido no import.
+
+    Assim uma rotacao de segredo em runtime passa a valer sem reiniciar o processo,
+    e o valor de modulo continua servindo de default sobrescrivel.
+    """
+    return os.environ.get("SUPABASE_JWT_SECRET") or SUPABASE_JWT_SECRET
+
+
+def _expected_claim(var: str) -> str | None:
+    value = os.environ.get(var, "").strip()
+    return value or None
+
+
+def _audience_matches(claim: object, expected: str) -> bool:
+    if isinstance(claim, str):
+        return claim == expected
+    if isinstance(claim, list):
+        return expected in claim
+    return False
+
 
 def base64url_decode(payload: str) -> bytes:
     """Decodifica uma string base64url em bytes."""
@@ -35,6 +60,19 @@ def base64url_decode(payload: str) -> bytes:
     if rem > 0:
         payload += "=" * (4 - rem)
     return base64.urlsafe_b64decode(payload)
+
+
+def _header_is_hs256(header_segment: str) -> bool:
+    """Aceita apenas HS256 declarado no proprio header.
+
+    Sem esta checagem, o algoritmo era inferido do formato do token: qualquer JWT
+    de tres segmentos entrava no verificador HS256, inclusive `alg: none`.
+    """
+    try:
+        header = json.loads(base64url_decode(header_segment).decode("utf-8"))
+    except Exception:  # noqa: BLE001
+        return False
+    return isinstance(header, dict) and header.get("alg") == "HS256"
 
 
 def _verify_hs256_signature(header_segment: str, payload_segment: str, crypto_segment: str, secret: str) -> bool:
@@ -57,20 +95,39 @@ def verify_hs256_jwt(token: str, secret: str) -> dict | None:
     header_segment, payload_segment, crypto_segment = parts
 
     try:
-        # 1. Verificar a assinatura
+        # 1. Algoritmo declarado
+        if not _header_is_hs256(header_segment):
+            return None
+
+        # 2. Verificar a assinatura
         if not _verify_hs256_signature(header_segment, payload_segment, crypto_segment, secret):
             return None
 
-        # 2. Decodificar o payload
+        # 3. Decodificar o payload
         payload_data = base64url_decode(payload_segment)
         payload = json.loads(payload_data.decode("utf-8"))
+        if not isinstance(payload, dict):
+            return None
 
-        # 3. Verificar expiracao
+        # 4. Janela temporal (exp / nbf / iat)
+        now = time.time()
         exp = payload.get("exp")
-        if exp is not None:
-            now = time.time()
-            if now > exp:
-                return None  # Token expirado
+        if exp is not None and now > float(exp) + JWT_CLOCK_SKEW_SECONDS:
+            return None  # Token expirado
+        nbf = payload.get("nbf")
+        if nbf is not None and now < float(nbf) - JWT_CLOCK_SKEW_SECONDS:
+            return None  # Token ainda nao valido
+        iat = payload.get("iat")
+        if iat is not None and now < float(iat) - JWT_CLOCK_SKEW_SECONDS:
+            return None  # Emitido no futuro
+
+        # 5. Emissor e audiencia, quando declarados no ambiente
+        expected_iss = _expected_claim("SUPABASE_JWT_ISSUER")
+        if expected_iss and payload.get("iss") != expected_iss:
+            return None
+        expected_aud = _expected_claim("SUPABASE_JWT_AUDIENCE")
+        if expected_aud and not _audience_matches(payload.get("aud"), expected_aud):
+            return None
 
         return payload
     except Exception:  # noqa: BLE001
@@ -106,12 +163,13 @@ async def _handle_no_token_auth(request, origin, handler):
 
 async def _handle_jwt_token_auth(token: str, request, handler):
     """Verifica um token JWT contra a chave secreta do Supabase."""
-    if not SUPABASE_JWT_SECRET:
+    secret = _jwt_secret()
+    if not secret:
         return web.json_response(
             {"error": "Configuracao de autenticacao JWT ausente no backend (SUPABASE_JWT_SECRET nao definido)."},
             status=500,
         )
-    payload = verify_hs256_jwt(token, SUPABASE_JWT_SECRET)
+    payload = verify_hs256_jwt(token, secret)
     if payload is None:
         return web.json_response({"error": "Token JWT do Supabase invalido ou expirado."}, status=403)
     request["user_id"] = payload.get("sub")
@@ -145,7 +203,7 @@ async def auth_middleware(request, handler):
         return await handler(request)
 
     origin = request.headers.get("Origin")
-    if not API_SECRET_TOKEN and not SUPABASE_JWT_SECRET:
+    if not API_SECRET_TOKEN and not _jwt_secret():
         return await _handle_no_token_auth(request, origin, handler)
 
     auth_header = request.headers.get("Authorization")

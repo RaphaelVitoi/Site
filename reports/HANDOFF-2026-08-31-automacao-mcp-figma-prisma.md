@@ -5,7 +5,7 @@ escopo: automacao MCP Figma e Prisma
 ecossistema: nexus-sota
 autor: Chico SOTA v8.0 GOLD [Tier 1.B] <noreply@google.com>
 criado_em: 2026-08-31T23:17-03:00
-atualizado_em: 2026-08-31T23:20-03:00
+atualizado_em: 2026-09-01T12:10-03:00
 commit_inicio_auditoria: d6b425c429e125c45471b40cd19af492b23ab7f4
 commit_registro: pendente
 classes: [interno, medido, handoff]
@@ -21,7 +21,12 @@ nao_verificado:
 caminhos:
   - scripts/ops/Start-FigmaMcp.ps1
   - scripts/ops/Test-McpHealth.ps1
+referencias_nao_resolviveis:
+  - scripts/ops/Start-FigmaMcp.ps1
+  - scripts/ops/Test-McpHealth.ps1
+  - antigravity-backup/mcp_config.json
 config_medida:
+  congelada_em: 2026-08-31
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   origem: origin/master

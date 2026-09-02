@@ -216,8 +216,7 @@ def test_once_diz_quando_esta_cego_em_vez_de_sair_verde(nx):
     from typer.testing import CliRunner  # noqa: PLC0415
 
     cega = {
-        n: {"valor": None, "teto": 1.0, "unidade": "%", "pressao": None}
-        for n in ("ram", "commit", "vram", "cache")
+        n: {"valor": None, "teto": 1.0, "unidade": "%", "pressao": None} for n in ("ram", "commit", "vram", "cache")
     }
     with patch.object(nx, "_medir_pressao", return_value=cega):
         saida = CliRunner().invoke(nx.app, ["ops", "guard", "--once"]).output

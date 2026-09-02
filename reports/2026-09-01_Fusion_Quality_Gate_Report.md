@@ -27,173 +27,197 @@ caminhos:
 - data/agents_manifest.json
 - data/system_config.json
 revisoes_de_ancora:
+- registro: taxonomia-canonica-de-documentacao-e-relatorios
+  caminhos:
+  - scripts/ops/record_gate.py
+  - scripts/ops/record_index.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: plan-dependency-boundary-reconciliation-2026-09-01
   caminhos:
   - scripts/ops/cwv_gate.ps1
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
-- registro: auditoria-2026-08-30-coderabbit-resolucao-e-integridade
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
+- registro: relatorio-fusao-cerebro-claude-quality-gate-2026-09-01
   caminhos:
-  - .cerebro/agent-memory/architect/MEMORY.md
-  - .cerebro/agent-memory/implementor/MEMORY.md
-  - .cerebro/agent-memory/maverick/MEMORY.md
-  - .cerebro/agent-memory/organizador/MEMORY.md
-  - .cerebro/agent-memory/pesquisador/MEMORY.md
-  - .cerebro/agent-memory/securitychief/MEMORY.md
-  - .cerebro/agent-memory/validador/MEMORY.md
-  - .cerebro/agent-memory/verifier/MEMORY.md
-  - .claude/agent-memory/auditor/MEMORY.md
-  - .claude/agent-memory/chico/MEMORY.md
-  - .claude/agent-memory/implementor/MEMORY.md
-  - .claude/agent-memory/organizador/MEMORY.md
-  - .claude/agent-memory/pesquisador/MEMORY.md
-  - .claude/agent-memory/securitychief/MEMORY.md
-  - .claude/agent-memory/sequenciador/MEMORY.md
-  - .claude/agent-memory/validador/MEMORY.md
-  - .claude/agent-memory/verifier/MEMORY.md
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - package-lock.json
+  - package.json
+  - scripts/ops/cwv_gate.ps1
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
   caminhos:
   - scripts/ops/cwv_gate.ps1
   - tests/test_cwv_gate_truthfulness.py
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - tests/test_governanca_skills.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: auditoria-2026-08-31-protocolos-handoff-git-clippy-e-relatorios
   caminhos:
-  - scripts/cli/nexus.py
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - engine/sota_web_browse.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: auditoria-cwv-lighthouse-2026-09-01
   caminhos:
-  - .vscode/settings.json
   - package-lock.json
   - package.json
   - scripts/ops/cwv_gate.ps1
-  - scripts/ops/lighthouse_cwv_audit.mjs
   - tests/test_cwv_gate_truthfulness.py
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
-- registro: checkpoint-2026-06-14-infrastructure-hardening
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
+- registro: auditoria-2026-09-01-formatacao-ruff-e-ancoras
   caminhos:
-  - MODUS_OPERANDI.md
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
-- registro: frente-3-2026-08-29-guard-tri-camada
+  - .ruff.toml
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
+- registro: frente-4-2026-08-28-autoridade-de-roteamento
   caminhos:
-  - scripts/cli/nexus.py
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - core/config.py
+  - core/subagents_mesh.py
+  - llm/routing_policy.py
+  - tests/test_frente4_autoridade_de_roteamento.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: handoff-2026-08-29-auditoria-integridade-repositorio
   caminhos:
+  - llm/routing_policy.py
   - scripts/ops/cwv_gate.ps1
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: handoff-2026-08-29-diagnostico-de-memoria
   caminhos:
-  - scripts/cli/nexus.py
   - tests/test_guard_memoria.py
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: handoff-2026-08-29-governanca-8tiers-vulnerabilidades-subagents
   caminhos:
-  - MODUS_OPERANDI.md
+  - core/subagents_mesh.py
+  - engine/sota_web_browse.py
+  - llm/routing_policy.py
   - package.json
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: handoff-2026-08-29-guard-corrigido-e-heranca
   caminhos:
-  - scripts/cli/nexus.py
   - tests/test_guard_memoria.py
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: handoff-2026-08-29-quatro-pendencias-e-o-que-elas-eram
   caminhos:
-  - data/system_config.json
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - scripts/ops/record_gate.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: handoff-2026-08-29-roteamento-memoria-e-guard
   caminhos:
-  - scripts/cli/nexus.py
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - memory_rag.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
   caminhos:
-  - .claude/agent-memory/auditor/MEMORY.md
-  - .claude/agent-memory/chico/MEMORY.md
-  - data/agents_manifest.json
+  - data/skills_registry.json
+  - llm/routing_policy.py
   - package.json
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - tests/test_architectural_stress_and_failover.py
+  - tests/test_governanca_skills.py
+  - tests/test_routing_policy.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: handoff-2026-08-30-resolucao-coderabbit-linters-e-malha-sota
   caminhos:
-  - .claude/agent-memory/auditor/MEMORY.md
-  - .claude/agent-memory/chico/MEMORY.md
-  - .claude/agent-memory/implementor/MEMORY.md
-  - .claude/agent-memory/organizador/MEMORY.md
-  - .claude/agent-memory/pesquisador/MEMORY.md
-  - .claude/agent-memory/securitychief/MEMORY.md
-  - .claude/agent-memory/sequenciador/MEMORY.md
-  - .claude/agent-memory/validador/MEMORY.md
-  - .claude/agent-memory/verifier/MEMORY.md
-  - .vscode/settings.json
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - core/config.py
+  - core/subagents_mesh.py
+  - llm/routing_policy.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: handoff-2026-08-30-status-malha-agentica-e-routing
   caminhos:
-  - data/agents_manifest.json
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - core/config.py
+  - core/subagents_mesh.py
+  - llm/routing_policy.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
+- registro: interludio-2026-08-28-concorrencia-e-isolamento
+  caminhos:
+  - scripts/ops/record_gate.py
+  - scripts/ops/suite_isolada.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: plano-2b-painel-de-estado
   caminhos:
-  - data/INDICE_CANONICO_GOVERNANCA.json
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - scripts/ops/record_gate.py
+  - scripts/ops/record_index.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: registro-2026-08-29-governanca-piramidal-sota
   caminhos:
-  - MODUS_OPERANDI.md
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
-- registro: registro-2026-08-29-os-indices-postos-de-lado
+  - core/subagents_mesh.py
+  - engine/sota_web_browse.py
+  - tests/test_sota_web_browse.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
+- registro: registro-2026-08-29-o-fallback-que-nao-carrega
   caminhos:
-  - data/system_config.json
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - tests/test_routing_policy.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
+- registro: registro-2026-08-29-o-portao-le-o-indice
+  caminhos:
+  - scripts/ops/record_gate.py
+  - scripts/ops/record_index.py
+  - tests/test_portao_le_o_indice.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: registro-2026-08-29-sota-triad-mesh-integracao
   caminhos:
-  - scripts/cli/nexus.py
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
-- registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
+  - engine/sota_triad_mesh.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
+- registro: registro-2026-09-01-fronteira-http-e-portao-independente-de-perfil
   caminhos:
-  - MODUS_OPERANDI.md
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - api/v1/handlers.py
+  - api/v1/middleware.py
+  - api/v1/server.py
+  - scripts/ops/cwv_gate.ps1
+  - tests/test_backend_hardening.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
+- registro: registro-2026-09-01-resolucao-de-skill-e-referencia-por-ponto-de-partida
+  caminhos:
+  - data/skills_registry.json
+  - reports/HANDOFF-2026-08-31-automacao-mcp-figma-prisma.md
+  - scripts/ops/record_gate.py
+  - scripts/ops/record_index.py
+  - tests/test_governanca_skills.py
+  - tests/test_record_index.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: relatorio-2026-08-29-analise-integral-ecossistema-sota-v8-gold
   caminhos:
-  - MODUS_OPERANDI.md
+  - core/subagents_mesh.py
+  - engine/sota_web_browse.py
+  - llm/routing_policy.py
   - package.json
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: relatorio-2026-08-29-impacto-quantitativo-qualitativo-sota-v8-gold
   caminhos:
-  - MODUS_OPERANDI.md
+  - core/subagents_mesh.py
+  - engine/sota_web_browse.py
+  - llm/routing_policy.py
   - package.json
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: relatorio-handoff-20260830-teoria-dos-jogos-pmev-sota-v8-gold
   caminhos:
-  - .claude/agent-memory/chico/MEMORY.md
-  - .vscode/settings.json
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  - engine/game_theory_solvers.py
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 - registro: validacao-2026-08-28-arquitetura-de-memoria
   caminhos:
-  - agents/context_builder.py
-  - engine/cognitive.py
+  - memory_rag.py
   - scripts/mcp_dynamic_server.py
-  parecer: Reconciliado pela fusao canonica .cerebro -> .claude, atualizacao de dependencias
-    e saneamento do portao SOTA v8.0 GOLD.
+  parecer: Reconciliado pela integracao origin/master e fusao canonica SOTA v8.0 GOLD
+    em 2026-09-01.
 ---
 
 # ✅ RELATÓRIO FINAL: FUSÃO COMPLETA E SOTA QUALITY GATE
@@ -215,7 +239,6 @@ revisoes_de_ancora:
 - ⚠️ Python tests: 9 failed, 756 passed (falhas esperadas por fusão)
 - ⚠️ Quality Gate: FRAGIL (2 warnings, 0 errors)
 
----
 
 ## 🎯 FASES DO SOTA QUALITY GATE
 

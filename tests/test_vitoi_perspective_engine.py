@@ -18,7 +18,6 @@ from engine.vitoi_perspective_engine import (
 class TestVitoiPerspectiveEngine:
     """Suite de testes de validacao dos axiomas matematicos de VitoiPerspectiveEngine."""
 
-
     def test_calculate_dynamic_ev_fold_utg_penalty(self):
         """Valida que a posicao UTG aplica a penalidade posicional de 0.5."""
         ev_btn = VitoiPerspectiveEngine.calculate_dynamic_ev_fold(
@@ -383,8 +382,12 @@ class TestVitoiPerspectiveEngine:
         ctx_2opp = HandContext(raw_equity=0.35, is_in_position=True, spr=2.0, num_opponents=2)
         ctx_3opp = HandContext(raw_equity=0.35, is_in_position=True, spr=2.0, num_opponents=3)
 
-        l_2opp = PerspectiveActionEvaluator(ctx_2opp).calculate_multiway_structural_liability(pot_size=12.0, hero_stack=25.0)
-        l_3opp = PerspectiveActionEvaluator(ctx_3opp).calculate_multiway_structural_liability(pot_size=12.0, hero_stack=25.0)
+        l_2opp = PerspectiveActionEvaluator(ctx_2opp).calculate_multiway_structural_liability(
+            pot_size=12.0, hero_stack=25.0
+        )
+        l_3opp = PerspectiveActionEvaluator(ctx_3opp).calculate_multiway_structural_liability(
+            pot_size=12.0, hero_stack=25.0
+        )
 
         ratio = l_3opp / l_2opp
         expected_ratio = 9.0 / 4.0  # 2.25

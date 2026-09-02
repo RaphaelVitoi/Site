@@ -1,4 +1,5 @@
 """Modulo de Arbitragem Universal (DAG) SOTA."""
+
 from __future__ import annotations
 
 from datetime import UTC, datetime

@@ -13,7 +13,7 @@ param(
     [double]$TtfbThreshold = 800.0,
     [double]$MaxHeapThresholdMb = 128.0,
     [int[]]$CdpPorts = @(9223, 9222),
-    [string]$ReportDir = "$env:USERPROFILE\.gemini\Site\reports\cwv",
+    [string]$ReportDir = "",
     [string]$A11yReviewBaselinePath = "",
     [string]$CwvManualReviewPath = "",
     [string]$LighthouseArtifactPath = ""
@@ -21,6 +21,9 @@ param(
 
 $ErrorActionPreference = 'SilentlyContinue'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\\..')).Path
+if ([string]::IsNullOrWhiteSpace($ReportDir)) {
+    $ReportDir = Join-Path $RepoRoot 'reports\cwv'
+}
 if ([string]::IsNullOrWhiteSpace($A11yReviewBaselinePath)) {
     $A11yReviewBaselinePath = Join-Path $RepoRoot 'data\a11y_manual_review_baselines.json'
 }
@@ -311,6 +314,15 @@ function Test-FiniteNonNegativeNumber {
     }
 }
 
+function Resolve-NodeExecutable {
+    # node.exe e Windows-only, mesmo defeito ja corrigido para python.exe na
+    # fase SRI: pwsh 7+ e cross-platform, mas Get-Command node.exe nunca
+    # resolve em Linux/macOS, onde o binario se chama node.
+    $cmd = Get-Command node.exe, node -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $cmd) { throw 'nenhum interpretador Node.js encontrado (node.exe/node fora do PATH)' }
+    return $cmd.Source
+}
+
 function Read-LighthouseProductionAudit {
     param(
         [string]$ArtifactPath,
@@ -351,7 +363,7 @@ function Read-LighthouseProductionAudit {
     }
 
     try {
-        $nodeExe = (Get-Command node.exe -ErrorAction Stop).Source
+        $nodeExe = Resolve-NodeExecutable
         $sourceRoot = Join-Path $RepositoryRoot 'frontend'
         $currentFingerprint = (& $nodeExe $collector --fingerprint --source-root $sourceRoot 2>&1 | Out-String).Trim()
         if ($LASTEXITCODE -ne 0 -or $currentFingerprint -notmatch '^[a-f0-9]{64}$') {
@@ -387,7 +399,7 @@ if ($lighthouseProductionAudit.Measured) {
 
 if ($cdpActive -and $cdpPort -and (Test-Path $probeScript)) {
     try {
-        $nodeExe = (Get-Command node.exe -ErrorAction Stop).Source
+        $nodeExe = Resolve-NodeExecutable
         $probeOutput = & $nodeExe $probeScript --cdp "http://127.0.0.1:${cdpPort}" --url $TargetUrl 2>&1
         if ($LASTEXITCODE -ne 0) { throw "probe runtime saiu com codigo ${LASTEXITCODE}: $probeOutput" }
         $runtimeProbe = ($probeOutput | Out-String | ConvertFrom-Json)
@@ -597,9 +609,20 @@ Write-Host ("-" * 68) -ForegroundColor DarkGray
 # se existe. Mesma classe de falha aberta da fase 3.
 $sriSuccess = $false
 $sriErro = ''
-$venvPy    = "$env:USERPROFILE\.gemini\Site\.venv\Scripts\python.exe"
-$sriScript = "$env:USERPROFILE\.gemini\Site\scripts\ops\sri_integrity_verifier.py"
-$pythonExe = if (Test-Path $venvPy) { $venvPy } else { (Get-Command python.exe -ErrorAction SilentlyContinue).Source }
+# pwsh 7+ e cross-platform (SS8.2); o .venv Windows usa Scripts\python.exe,
+# o POSIX usa bin/python. Resolver so o primeiro quebrava silenciosamente
+# em qualquer host Linux/macOS -- inclusive CI ubuntu-latest.
+$venvPyWindows = Join-Path $RepoRoot '.venv\Scripts\python.exe'
+$venvPyPosix   = Join-Path $RepoRoot '.venv/bin/python'
+$sriScript = Join-Path $PSScriptRoot 'sri_integrity_verifier.py'
+$pythonExe = if (Test-Path $venvPyWindows) {
+    $venvPyWindows
+} elseif (Test-Path $venvPyPosix) {
+    $venvPyPosix
+} else {
+    $cmd = Get-Command python.exe, python3, python -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($cmd) { $cmd.Source } else { $null }
+}
 
 if (-not $pythonExe) {
     $sriErro = 'nenhum interpretador Python encontrado (venv ausente e python.exe fora do PATH)'

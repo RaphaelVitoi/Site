@@ -4,6 +4,7 @@
 Fornece interface padrao MCP sobre STDIO para orquestracao de sessoes em VMs isoladas do Google Jules.
 Conformidade: Protocolo Chico SOTA v8.0 GOLD (Python 3.12+, Zero-Any, Logging stderr-only).
 """
+
 from __future__ import annotations
 
 import json
@@ -32,6 +33,7 @@ try:
     from engine.jules_bridge import JulesClient, JulesSessionRequest
 except ImportError:
     from pathlib import Path
+
     current_dir = Path(__file__).resolve().parent
     sys.path.insert(0, str(current_dir.parent))
     from engine.jules_bridge import JulesClient, JulesSessionRequest

@@ -36,8 +36,19 @@ import pytest
 RAIZ = Path(__file__).resolve().parent.parent
 DECLARACAO = RAIZ / "data" / "DECLARADO_E_NAO_LIDO.json"
 IGNORADOS = {
-    ".venv", ".venv-wsl", "node_modules", "__pycache__", ".git", ".pytest_cache",
-    "dist", "build", "target", "wasm-equity", "frontend", ".trunk", "vendor",
+    ".venv",
+    ".venv-wsl",
+    "node_modules",
+    "__pycache__",
+    ".git",
+    ".pytest_cache",
+    "dist",
+    "build",
+    "target",
+    "wasm-equity",
+    "frontend",
+    ".trunk",
+    "vendor",
 }
 
 PISTA = (
@@ -203,7 +214,9 @@ def test_citar_o_nome_num_comentario_nao_conta_como_leitura(tmp_path):
 def test_constante_lida_por_outro_modulo_nao_conta_como_orfa(tmp_path):
     """O recorte certo e o projeto inteiro, nao o arquivo."""
     (tmp_path / "define.py").write_text("TETO_COMPARTILHADO = 3\n", encoding="utf-8")
-    (tmp_path / "usa.py").write_text("from define import TETO_COMPARTILHADO\nprint(TETO_COMPARTILHADO)\n", encoding="utf-8")
+    (tmp_path / "usa.py").write_text(
+        "from define import TETO_COMPARTILHADO\nprint(TETO_COMPARTILHADO)\n", encoding="utf-8"
+    )
     arv = {p: ast.parse(p.read_text(encoding="utf-8")) for p in tmp_path.glob("*.py")}
     global RAIZ  # noqa: PLW0603
     original, RAIZ = RAIZ, tmp_path
