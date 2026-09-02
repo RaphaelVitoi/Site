@@ -35,7 +35,7 @@ def get_rag():
 
 
 async def _read_global_context() -> str:
-    global_file = Path(".claude/GLOBAL_INSTRUCTIONS.md")
+    global_file = Path(".claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md")
     if global_file.exists():
         async with aiofiles.open(global_file, encoding="ascii", errors="ignore") as f:
             return await f.read() + "\n\n"
@@ -47,15 +47,15 @@ async def _build_infra_ctx(task: Task | None, task_files: list | None) -> str:
     successfully_read_files = []
 
     docs_to_read = [
-        ("COSMOVISAO FILOSOFICA", [".claude/ESSENCIA MORAL/COSMOVISAO.md"]),
-        ("IDENTIDADE DO USUARIO", [".claude/MODUSOPERANDI/CEREBRO.md"]),
+        ("COSMOVISAO FILOSOFICA", [".claude/GOVERNANCA/COSMOVISAO.md"]),
+        ("IDENTIDADE DO USUARIO", [".claude/CEREBRO.md"]),
         (
             "LIDERANCA E GOVERNANCA",
             [".claude/GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"],
         ),
         (
             "TEMPLO DO APRENDIZADO GENERATIVO",
-            [".claude/ESSENCIA MORAL/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"],
+            [".claude/GOVERNANCA/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"],
         ),
         (
             "MANUAL DO WORKFLOW",
