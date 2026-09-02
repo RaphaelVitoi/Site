@@ -76,13 +76,31 @@ qualitativa e marcada como hipótese — nunca como fato.
 
 ### Portão de suficiência
 
-Por padrão, uma análise diária só pode **planejar** microcalibração se houver,
-no mesmo dia, pelo menos três feedbacks em duas ou mais sessões identificadas
-e duas confirmações independentes do mesmo padrão operacional. O script de
-evidência mede os dois primeiros requisitos; o auditor precisa citar os dois
-registros que satisfazem a recorrência. Ausência de sessão, amostra abaixo do
-limiar, padrão não recorrente ou cadeia inválida produz exatamente o registro
-`dados insuficientes — nenhuma calibração planejada`.
+**Revisado em 2026-09-02 por decisão do Tier 0: a unidade de contagem era o
+dia, e passou a ser a sessão.**
+
+*Sessão* vai do início ao fim de um trabalho; compactação de contexto não a
+encerra, e ela pode atravessar a meia-noite.
+
+Uma análise só pode **planejar** microcalibração quando houver pelo menos
+**três sessões distintas com feedback** e duas confirmações independentes do
+mesmo padrão operacional. Três feedbacks numa mesma sessão são dado retido e
+reportado, mas não abrem o portão: uma origem só não é recorrência.
+
+A contagem **acumula e não expira** — dia sem sessão é dia sem avaliação, não
+dia que apaga evidência —, e só reinicia após uma calibração registrada.
+
+Não contam para o limiar, falhando fechado: feedback sem `session_id`, sessão
+com `session_started_at` divergente (sessão partida inflaria a contagem) e
+cadeia de ledger inválida.
+
+O script de evidência mede a contagem de sessões; o auditor precisa citar os
+dois registros que satisfazem a recorrência. Qualquer condição faltando produz
+exatamente o registro `dados insuficientes — nenhuma calibração planejada`.
+
+O gatilho primário é o **aviso proativo** no instante em que o limiar é
+atingido, se não houver tarefa em andamento. A corrida das **23:59** é lastro
+de auditoria, não gatilho.
 
 O administrador pode instruir uma análise ou experiência fora desse limiar,
 mas a exceção deve ficar explícita no relatório. Uma microcalibração não pode

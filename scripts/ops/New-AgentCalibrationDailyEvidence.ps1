@@ -9,31 +9,148 @@
 param(
     [datetime]$Date = (Get-Date),
 
+    # JANELA DE CONTAGEM E MOMENTO DE AVALIACAO SAO COISAS DIFERENTES.
+    #
+    # Ate 2026-09-02 os dois eram o dia: o limiar exigia tres feedbacks no
+    # mesmo dia, em duas ou mais sessoes distintas. Por decisao do Tier 0 nesta
+    # data:
+    #   - a janela de CONTAGEM passou a ser a SESSAO -- tres feedbacks na mesma
+    #     sessao;
+    #   - o momento da AVALIACAO continua diario, as 23:59, agendado por
+    #     Register-AgentCalibrationDailyTask.ps1.
+    #
+    # A exigencia de duas sessoes distintas caiu porque e insatisfazivel sob
+    # contagem por sessao. Nao foi afrouxamento: foi consequencia aritmetica de
+    # trocar a janela, e esta declarada em vez de silenciada.
+    #
+    # A corrida das 23:59 avalia o dia inteiro agrupando por sessao, e o portao
+    # abre quando QUALQUER sessao daquele dia alcanca o minimo. -SessionId
+    # restringe a analise a uma sessao especifica.
+    [string]$SessionId = '',
+
+    # Metrica do portao: sessoes DISTINTAS com feedback, acumuladas.
+    [ValidateRange(1, 100)]
+    [int]$MinimumDistinctSessions = 3,
+
+    # Densidade intra-sessao: quantos feedbacks numa mesma sessao tornam aquela
+    # sessao notavel. NAO abre o portao; e dado retido para a analise.
     [ValidateRange(1, 100)]
     [int]$MinimumFeedbackRecords = 3,
 
-    [ValidateRange(1, 100)]
-    [int]$MinimumDistinctSessions = 2
+    # Caminhos injetaveis para permitir guard hermetico em tmp_path. Vazio usa
+    # os canonicos do repositorio.
+    [string]$LedgerPath = '',
+
+    [string]$OutlierLedgerPath = ''
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$ledgerPath = Join-Path $repositoryRoot 'reports\agent-calibration\feedback-ledger.jsonl'
-$outlierLedgerPath = Join-Path $repositoryRoot 'reports\agent-calibration\outlier-evidence-ledger.jsonl'
+$ledgerPath = if ($LedgerPath) { $LedgerPath } else { Join-Path $repositoryRoot 'reports\agent-calibration\feedback-ledger.jsonl' }
+$outlierLedgerPath = if ($OutlierLedgerPath) { $OutlierLedgerPath } else { Join-Path $repositoryRoot 'reports\agent-calibration\outlier-evidence-ledger.jsonl' }
 & (Join-Path $PSScriptRoot 'Test-AgentCalibrationLedger.ps1') -LedgerPath $ledgerPath | Out-Null
 & (Join-Path $PSScriptRoot 'Test-AgentCalibrationLedger.ps1') -LedgerPath $outlierLedgerPath | Out-Null
 
 $day = $Date.ToString('yyyy-MM-dd')
-$records = @()
+$scoped = -not [string]::IsNullOrWhiteSpace($SessionId)
+
+$allFeedback = @()
 if (Test-Path -LiteralPath $ledgerPath) {
-    $records = @(Get-Content -LiteralPath $ledgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object {
-        $_.record_type -eq 'feedback' -and ([DateTimeOffset]::Parse([string]$_.recorded_at).LocalDateTime.ToString('yyyy-MM-dd') -eq $day)
+    $allFeedback = @(Get-Content -LiteralPath $ledgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object {
+        $_.record_type -eq 'feedback'
     })
 }
 
-$scores = @($records | ForEach-Object { [double]$_.score })
+# O dia SELECIONA quais sessoes entram na avaliacao desta noite; ele NAO e a
+# janela de contagem.
+#
+# Sessao = do inicio ao fim de um trabalho (definicao do Tier 0, 2026-09-02).
+# Compactacao de contexto NAO encerra sessao, e uma sessao pode atravessar a
+# meia-noite. Contar so o recorte do dia partiria uma sessao ao meio e mediria
+# errado -- entao a contagem varre o ledger INTEIRO por session_id, e o dia
+# apenas decide quais sessoes tiveram atividade para serem avaliadas agora.
+$recordsDoDia = @($allFeedback | Where-Object {
+    [DateTimeOffset]::Parse([string]$_.recorded_at).LocalDateTime.ToString('yyyy-MM-dd') -eq $day
+})
+# O @() externo NAO e decorativo: atribuir o resultado de um `if` desembrulha
+# array vazio para $null, e sob StrictMode `.Count` em $null estoura. Foi
+# exatamente assim que o caso "dia sem feedback" quebrou no guard.
+$records = @(if ($scoped) {
+    $recordsDoDia | Where-Object { [string]$_.session_id -eq $SessionId }
+} else {
+    $recordsDoDia
+})
+
+$sessoesAtivasNoDia = @($records |
+    Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.session_id) } |
+    ForEach-Object { [string]$_.session_id } |
+    Sort-Object -Unique)
+
+# A CONTAGEM E ACUMULATIVA E NAO EXPIRA. Dado nao morre por ausencia de sessao
+# num dia: um dia sem sessao e um dia sem avaliacao, nao um dia que apaga
+# evidencia. Por isso o universo abaixo e o ledger inteiro desde a ultima
+# calibracao, e nao o recorte do dia.
+#
+# INFERENCIA MINHA, DECLARADA PARA PODER SER VETADA: contar "desde a ultima
+# calibracao" nao foi pedido explicitamente. Sem isso, porem, o portao ficaria
+# permanentemente aberto a partir da terceira sessao, o que contradiz a
+# intencao de calibrar a cada tres. Se o vertice preferir contagem absoluta,
+# basta remover o filtro por $marcoUltimaCalibracao.
+$calibracoes = @($allFeedback | Where-Object { $_.record_type -eq 'calibration' })
+$marcoUltimaCalibracao = if ($calibracoes.Count -gt 0) {
+    ($calibracoes | ForEach-Object { [DateTimeOffset]::Parse([string]$_.recorded_at) } | Sort-Object)[-1]
+} else {
+    [DateTimeOffset]::MinValue
+}
+$universo = @($allFeedback | Where-Object {
+    [DateTimeOffset]::Parse([string]$_.recorded_at) -gt $marcoUltimaCalibracao
+})
+
+$todasAsSessoes = @($universo |
+    Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.session_id) } |
+    ForEach-Object { [string]$_.session_id } |
+    Sort-Object -Unique)
+
+# Perfil por sessao sobre o universo acumulado. Feedback sem session_id nao
+# entra em nenhuma sessao: amostra sem origem identificada nao abre portao.
+$porSessao = @($todasAsSessoes | ForEach-Object {
+    $sid = $_
+    $daSessao = @($universo | Where-Object { [string]$_.session_id -eq $sid })
+    $instantes = @($daSessao | ForEach-Object { [DateTimeOffset]::Parse([string]$_.recorded_at) } | Sort-Object)
+    $declarados = @($daSessao |
+        Where-Object { $_.PSObject.Properties.Name -contains 'session_started_at' -and -not [string]::IsNullOrWhiteSpace([string]$_.session_started_at) } |
+        ForEach-Object { [string]$_.session_started_at } |
+        Sort-Object -Unique)
+    [pscustomobject]@{
+        session_id            = $sid
+        feedback_count        = $daSessao.Count
+        # Densidade intra-sessao e DADO RETIDO, nao gatilho. Tres feedbacks na
+        # mesma sessao e evidencia forte e fica registrada, mas quem autoriza a
+        # avaliacao e a contagem de sessoes distintas.
+        densidade_relevante   = ($daSessao.Count -ge $MinimumFeedbackRecords)
+        primeiro_feedback     = if ($instantes.Count -gt 0) { $instantes[0].ToString('o') } else { $null }
+        ultimo_feedback       = if ($instantes.Count -gt 0) { $instantes[-1].ToString('o') } else { $null }
+        atravessa_meia_noite  = ($instantes.Count -gt 1 -and $instantes[0].LocalDateTime.ToString('yyyy-MM-dd') -ne $instantes[-1].LocalDateTime.ToString('yyyy-MM-dd'))
+        session_started_at    = $declarados
+        inicio_inconsistente  = ($declarados.Count -gt 1)
+    }
+} | Sort-Object -Property feedback_count -Descending)
+
+# Um session_id com mais de um session_started_at declarado indica sessao
+# partida -- tipicamente compactacao tratada, erradamente, como reinicio.
+#
+# Sob contagem POR SESSAO isto deixa de ser detalhe e vira risco direto ao
+# portao: uma sessao partida ao meio vira duas na contagem e pode abrir a
+# calibracao com evidencia de uma so origem. Sessao inconsistente nao conta.
+$sessoesInconsistentes = @($porSessao | Where-Object { $_.inicio_inconsistente } | ForEach-Object { $_.session_id })
+$sessoesValidas = @($porSessao | Where-Object { -not $_.inicio_inconsistente } | ForEach-Object { $_.session_id })
+$sessoesComDensidade = @($porSessao | Where-Object { $_.densidade_relevante } | ForEach-Object { $_.session_id })
+$feedbackSemSessao = @($universo | Where-Object { [string]::IsNullOrWhiteSpace([string]$_.session_id) }).Count
+
+$scores = @($universo | ForEach-Object { [double]$_.score })
+$scoresDoDia = @($records | ForEach-Object { [double]$_.score })
 $outliers = @()
 if (Test-Path -LiteralPath $outlierLedgerPath) {
     $outliers = @(Get-Content -LiteralPath $outlierLedgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object {
@@ -44,23 +161,55 @@ $distinctSessionIds = @($records |
     Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.session_id) } |
     ForEach-Object { [string]$_.session_id } |
     Sort-Object -Unique)
-$structuralEvidenceSufficient = ($records.Count -ge $MinimumFeedbackRecords) -and ($distinctSessionIds.Count -ge $MinimumDistinctSessions)
+
+# METRICA DO PORTAO: numero de SESSOES DISTINTAS com feedback, acumulado e sem
+# prazo. Densidade intra-sessao e dado retido, nao gatilho. Falha fechado.
+$structuralEvidenceSufficient = ($sessoesValidas.Count -ge $MinimumDistinctSessions)
+$faltam = [Math]::Max(0, $MinimumDistinctSessions - $sessoesValidas.Count)
+$gateWindowReason = if ($sessoesInconsistentes.Count -gt 0 -and -not $structuralEvidenceSufficient) {
+    "Sessao(oes) com mais de um session_started_at declarado: $($sessoesInconsistentes -join ', '). Sessao partida vira duas na contagem e falsearia o portao, entao nao conta ate a origem ser reconciliada."
+} elseif (-not $structuralEvidenceSufficient) {
+    "$($sessoesValidas.Count) de $MinimumDistinctSessions sessoes com feedback; faltam $faltam. A contagem e acumulativa e NAO expira -- dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. Registro literal exigido enquanto isso: dados insuficientes -- nenhuma calibracao planejada."
+} else {
+    "$($sessoesValidas.Count) sessoes com feedback ($($sessoesValidas -join ', ')) alcancam o minimo de $MinimumDistinctSessions. A recorrencia de padrao continua sendo obrigacao do auditor, e nao e medida aqui."
+}
+
 [pscustomobject]@{
-    schema_version                 = 'agent-calibration-daily-evidence/v2'
+    schema_version                 = 'agent-calibration-evidence/v4'
     date                           = $day
-    feedback_count                 = $records.Count
-    distinct_session_count         = $distinctSessionIds.Count
+    gate_metric                    = 'distinct_sessions_with_feedback'
+    gate_definition                = 'Sessao = do inicio ao fim de um trabalho; compactacao de contexto NAO encerra sessao. A metrica que autoriza avaliacao e o numero de SESSOES DISTINTAS com feedback, acumulado desde a ultima calibracao e sem prazo de validade. Densidade intra-sessao (varios feedbacks numa mesma sessao) e dado retido, nao gatilho.'
+    evaluated_at_policy            = 'Gatilho primario: aviso proativo no instante em que o limiar e atingido, se nao houver tarefa em andamento. Lastro: corrida diaria as 23:59 (Register-AgentCalibrationDailyTask.ps1), que registra a evidencia do dia inclusive quando ela e insuficiente.'
+    session_filter                 = $SessionId
+    ultima_calibracao              = if ($marcoUltimaCalibracao -eq [DateTimeOffset]::MinValue) { $null } else { $marcoUltimaCalibracao.ToString('o') }
+    sessoes_com_feedback           = $sessoesValidas
+    sessoes_com_feedback_count     = $sessoesValidas.Count
+    sessoes_faltantes              = $faltam
+    sessoes_com_inicio_inconsistente = $sessoesInconsistentes
+    sessoes_com_densidade_relevante = $sessoesComDensidade
+    sessoes_ativas_no_dia          = $sessoesAtivasNoDia
+    feedback_count_acumulado       = $universo.Count
+    feedback_count_no_dia          = $recordsDoDia.Count
+    feedback_sem_sessao            = $feedbackSemSessao
+    por_sessao                     = $porSessao
     score_mean                     = if ($scores.Count -gt 0) { [Math]::Round((($scores | Measure-Object -Average).Average), 2) } else { $null }
     score_min                      = if ($scores.Count -gt 0) { ($scores | Measure-Object -Minimum).Minimum } else { $null }
     score_max                      = if ($scores.Count -gt 0) { ($scores | Measure-Object -Maximum).Maximum } else { $null }
+    score_mean_no_dia              = if ($scoresDoDia.Count -gt 0) { [Math]::Round((($scoresDoDia | Measure-Object -Average).Average), 2) } else { $null }
     evidence_gate                  = [ordered]@{
-        minimum_feedback_records     = $MinimumFeedbackRecords
+        metric                       = 'distinct_sessions_with_feedback'
         minimum_distinct_sessions    = $MinimumDistinctSessions
+        minimum_feedback_records     = $MinimumFeedbackRecords
         structural_gate_passed       = $structuralEvidenceSufficient
-        pattern_confirmation_required = 'At least two independently corroborating feedback records must identify the same operational pattern. The daily reviewer must cite both records or report insufficiency.'
+        reason                       = $gateWindowReason
+        intra_session_density_is_data_not_trigger = 'Tres feedbacks numa mesma sessao e evidencia forte e fica registrada, mas nao autoriza calibracao por si: a metrica e a contagem de sessoes distintas.'
+        accumulation_never_expires   = 'Dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. O ledger e append-only e a contagem so reinicia apos uma calibracao registrada.'
+        unsessioned_feedback_ignored = 'Feedback sem session_id nao conta para nenhuma sessao: amostra sem origem identificada nao abre portao.'
+        split_session_not_counted    = 'session_id com mais de um session_started_at indica sessao partida. Sob contagem por sessao isso inflaria o portao, entao a sessao nao conta ate a origem ser reconciliada.'
+        pattern_confirmation_required = 'At least two independently corroborating feedback records must identify the same operational pattern. The reviewer must cite both records or report insufficiency.'
     }
     calibration_planning_permitted = $structuralEvidenceSufficient
-    records                        = $records
+    records                        = $universo
     outlier_evidence               = [ordered]@{
         ledger_path                = $outlierLedgerPath
         count                      = $outliers.Count

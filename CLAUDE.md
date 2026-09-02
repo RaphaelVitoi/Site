@@ -347,7 +347,7 @@ Registrar somente a resposta recebida pelo script
 aprendizado. O ledger correspondente é encadeado por SHA-256, deve ser
 verificado antes de uso e é tamper-evident, não fisicamente imutável.
 
-O ciclo diário tem duas camadas obrigatórias: **(1) observação recursiva** dos
+O ciclo tem duas camadas obrigatórias: **(1) observação recursiva** dos
 feedbacks, da evidência contextual, dos outliers e do efeito da hipótese
 anterior; **(2) auditoria precursiva**, que formula uma hipótese
 bayesiano-preditiva para o dia seguinte. Uma hipótese contém prior operacional,
@@ -356,14 +356,54 @@ falsificador, critério de reversão e risco de degradação. Não declarar núm
 de posterior, Bayes factor ou probabilidade quantitativa sem prior, modelo de
 verossimilhança e base empírica explicitamente verificáveis.
 
-Por padrão, o ciclo só pode planejar **uma** microcalibração procedimental para
-o dia seguinte quando, no mesmo dia, houver pelo menos três feedbacks em duas
-ou mais sessões identificadas e ao menos duas confirmações independentes do
-mesmo padrão operacional. O dia seguinte valida, ajusta ou reverte a hipótese;
-ausência de sessão, amostra insuficiente, padrão não recorrente ou cadeia
-inválida exige o registro literal `dados insuficientes — nenhuma calibração
-planejada`. Uma exceção ao limiar só existe mediante instrução explícita do
-administrador e deve constar do relatório.
+#### O portão de suficiência — a unidade é a sessão
+
+**Revisado em 2026-09-02 por decisão do Tier 0. A unidade de contagem era o
+dia; passou a ser a sessão.**
+
+**Sessão** vai do **início ao fim de um trabalho**. Compactação de contexto
+**não** encerra sessão, e sessão pode atravessar a meia-noite. Todos os
+feedbacks de uma sessão declaram o mesmo `session_started_at`; divergência
+denuncia sessão partida.
+
+A métrica que autoriza avaliação é o número de **sessões distintas com
+feedback**, mínimo **três**. Três feedbacks numa mesma sessão **também são
+dado** — ficam retidos e reportados como densidade —, mas não abrem o portão
+sozinhos: uma origem só não é recorrência.
+
+A contagem é **acumulativa e não expira**. *Dados não morrem por ausência de
+sessão no dia*: dia sem sessão é dia sem avaliação, não dia que apaga
+evidência. O ledger é append-only e a contagem só reinicia após uma calibração
+registrada.
+
+Três coisas nunca contam para o limiar, e as três falham fechado:
+
+| Não conta | Por quê |
+| :--- | :--- |
+| Feedback sem `session_id` | amostra sem origem identificada |
+| Sessão com `session_started_at` divergente | sessão partida vira duas e infla o portão |
+| Cadeia do ledger inválida | evidência não verificada |
+
+Atingido o limiar, ainda é preciso **duas confirmações independentes do mesmo
+padrão operacional** — isso é obrigação do auditor, não medição do script.
+Enquanto qualquer condição faltar, o registro literal exigido é `dados
+insuficientes — nenhuma calibração planejada`. Exceção ao limiar só existe por
+instrução explícita do administrador, e consta do relatório.
+
+#### Quando avaliar — aviso proativo, com lastro diário
+
+O gatilho primário é **proativo e sem hora marcada**: ao perceber que o limiar
+foi atingido, o agente **avisa** e propõe a calibração assistida, desde que
+**não haja tarefa em andamento** — calibração não interrompe trabalho.
+
+A corrida diária das **23:59** (`Register-AgentCalibrationDailyTask.ps1`) é
+**lastro de auditoria**, não o gatilho: ela grava a evidência do dia inclusive
+quando insuficiente, para que exista trilha dos dias em que nada abriu.
+
+`New-AgentCalibrationDailyEvidence.ps1` mede; ele não interpreta nem planeja.
+`tests/test_calibracao_portao_por_sessao.py` reprova se alguém voltar a contar
+por dia, deixar densidade intra-sessão abrir o portão, ou fizer evidência
+expirar.
 
 Microcalibração não pode otimizar uma métrica isolada se puder degradar outra
 métrica, a finalidade principal da tarefa, autonomia operacional ou
