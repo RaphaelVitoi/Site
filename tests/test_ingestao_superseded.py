@@ -43,10 +43,52 @@ def _alvos(rag_instance: MemoryRAG, base: Path) -> set[Path]:
     return asyncio.run(rag_instance._collect_target_files_async(manifesto, base))
 
 
+def test_mecanismo_de_exclusao_por_marcador(rag, tmp_path: Path):
+    """O predicado estrutural, verificado sobre alvo proprio.
+
+    Ate 2026-09-01 esta cobertura dependia de existir, no repositorio, uma arvore
+    marcada de verdade -- e a fusao `.cerebro` -> `.claude` removeu as quatro que
+    havia. O teste caiu na propria assercao de "ficou sem alvo", que o autor
+    escreveu justamente para nao passar em falso. Ele estava certo: sem alvo, o
+    mecanismo nao era verificado.
+
+    A correcao e o teste construir o alvo. Assim o predicado fica guardado
+    sempre, exista ou nao arvore superada no repositorio -- que e uma condicao
+    de conteudo, nao de codigo.
+    """
+    viva = tmp_path / "arvore_viva"
+    superada = tmp_path / "arvore_superada"
+    viva.mkdir()
+    superada.mkdir()
+    (viva / "doc.md").write_text("conteudo canonico\n", encoding="utf-8")
+    (superada / "doc.md").write_text("conteudo duplicado\n", encoding="utf-8")
+    (superada / MARCADOR_SUPERADO).write_text("superada; a canonica e arvore_viva\n", encoding="utf-8")
+
+    manifesto = {"sources": [{"path": ".", "patterns": ["**/*.md"]}]}
+    alvos = {Path(f).resolve() for f in asyncio.run(rag._collect_target_files_async(manifesto, tmp_path))}
+
+    assert (viva / "doc.md").resolve() in alvos, "a arvore nao marcada tem de continuar entrando no indice"
+    assert (superada / "doc.md").resolve() not in alvos, (
+        "arquivo sob arvore com SUPERSEDED.md entrou no indice -- o predicado nao excluiu"
+    )
+    assert (superada / MARCADOR_SUPERADO).resolve() not in alvos, "o proprio marcador nao deve ser indexado"
+
+
 def test_arvore_superada_do_repositorio_fica_fora(rag):
-    """O caso real: `.claude/AGENTS-MEMORY`, superada na consolidacao."""
+    """O caso real, quando existe: nenhum alvo vindo de arvore marcada.
+
+    Diferente do teste acima, este depende do CONTEUDO do repositorio. Sem
+    nenhuma arvore marcada ele nao tem o que verificar, e entao PULA com motivo
+    declarado -- que o guard do conftest imprime na secao COBERTURA NAO
+    EXECUTADA. Pular declarando e honesto; passar sem alvo seria falso verde, e
+    falhar sem alvo cobrava do operador uma condicao que nao e dele.
+    """
     marcadas = {m.parent.resolve() for m in RAIZ.rglob(MARCADOR_SUPERADO)}
-    assert marcadas, "nenhuma arvore declarada superada -- este teste ficou sem alvo"
+    if not marcadas:
+        pytest.skip(
+            "nenhuma arvore declarada superada no repositorio -- nada a excluir. "
+            "O predicado em si segue coberto por test_mecanismo_de_exclusao_por_marcador."
+        )
 
     alvos = _alvos(rag, RAIZ)
     dentro = [f for f in alvos if any(Path(f).resolve().is_relative_to(d) for d in marcadas)]
