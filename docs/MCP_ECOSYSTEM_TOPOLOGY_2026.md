@@ -115,7 +115,7 @@ Localização: `C:\Users\rapha\.gemini\extensions\`
 
 ## 4. O SERVIDOR MCP DINÂMICO LOCAL (`nexus-dynamic-mcp`)
 
-Localização: `Site/scripts/mcp_dynamic_server.py` + `Site/.cerebro/settings.local.json`
+Localização: `Site/scripts/mcp_dynamic_server.py` + `Site/.claude/settings.local.json`
 
 O servidor dinâmico expõe operações atômicas locais via protocolo MCP/STDIO, com **Sanitização de Injeção e Path Traversal Guard**:
 
