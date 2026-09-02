@@ -59,12 +59,9 @@ def test_le_o_indice_e_nao_a_arvore(repo):
 
     lido = record_gate.texto_como_vai_ao_commit("reports/X.md")
     assert lido == "sem frontmatter nenhum\n", (
-        "o portao leu a arvore. O commit levaria o conteudo do indice, e o "
-        "julgamento teria recaido sobre outro texto."
+        "o portao leu a arvore. O commit levaria o conteudo do indice, e o julgamento teria recaido sobre outro texto."
     )
-    assert not record_gate._e_prescritivo("reports/X.md"), (
-        "classificou pelo frontmatter que so existe na arvore"
-    )
+    assert not record_gate._e_prescritivo("reports/X.md"), "classificou pelo frontmatter que so existe na arvore"
 
 
 def test_stage_bom_e_arvore_quebrada_continua_bom(repo):

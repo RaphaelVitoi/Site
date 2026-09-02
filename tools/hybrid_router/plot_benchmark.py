@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 else:
     try:
         import matplotlib
+
         matplotlib.use("Agg")  # Backend headless seguro
         import matplotlib.gridspec as gridspec
         import matplotlib.pyplot as plt
@@ -47,18 +48,18 @@ else:
 # 1. PALETA DE CORES E ESPECIFICACOES DE IDENTIDADE VISUAL
 # =====================================================================
 
-THEME_BG = "#F8F9FA"         # Fundo geral sofisticado
-CARD_BG = "#FFFFFF"          # Fundo dos paineis
-BORDER_COLOR = "#E2E8F0"     # Bordas sutis
-TEXT_PRIMARY = "#1E293B"     # Texto principal (Slate 800)
-TEXT_MUTED = "#64748B"       # Texto secundario (Slate 500)
-GRID_COLOR = "#E2E8F0"       # Grid discreto
+THEME_BG = "#F8F9FA"  # Fundo geral sofisticado
+CARD_BG = "#FFFFFF"  # Fundo dos paineis
+BORDER_COLOR = "#E2E8F0"  # Bordas sutis
+TEXT_PRIMARY = "#1E293B"  # Texto principal (Slate 800)
+TEXT_MUTED = "#64748B"  # Texto secundario (Slate 500)
+GRID_COLOR = "#E2E8F0"  # Grid discreto
 
 PALETTE_MAP: dict[str, str] = {
-    "LOCAL_LLAMA_VULKAN": "#10B981",        # Esmeralda (Edge Local)
+    "LOCAL_LLAMA_VULKAN": "#10B981",  # Esmeralda (Edge Local)
     "GEMINI_37_FLASH_STANDARD": "#2563EB",  # Azul Real (Cloud Standard)
     "GEMINI_37_FLASH_THINKING": "#DC2626",  # Carmesim (Extended Thinking)
-    "FAILED": "#94A3B8",                    # Cinza Neutro (Falhas)
+    "FAILED": "#94A3B8",  # Cinza Neutro (Falhas)
 }
 
 TARGET_LABELS: dict[str, str] = {
@@ -73,6 +74,7 @@ TARGET_LABELS: dict[str, str] = {
 # 2. CARREGAMENTO E SINTESE DE DADOS
 # =====================================================================
 
+
 def generate_synthetic_data(samples: int = 60) -> pd.DataFrame:
     """Gera massa de dados sintetica realista para preview do dashboard."""
     np.random.seed(42)
@@ -84,21 +86,25 @@ def generate_synthetic_data(samples: int = 60) -> pd.DataFrame:
 
     records: list[dict[str, Any]] = []
     for lat in std_lat:
-        records.append({
-            "target_executed": "GEMINI_37_FLASH_STANDARD",
-            "latency_ms": float(lat),
-            "thinking_tokens": 0,
-            "tokens_evaluated": int(np.random.randint(20, 45)),
-            "is_success": True,
-        })
+        records.append(
+            {
+                "target_executed": "GEMINI_37_FLASH_STANDARD",
+                "latency_ms": float(lat),
+                "thinking_tokens": 0,
+                "tokens_evaluated": int(np.random.randint(20, 45)),
+                "is_success": True,
+            }
+        )
     for lat in thk_lat:
-        records.append({
-            "target_executed": "GEMINI_37_FLASH_THINKING",
-            "latency_ms": float(lat),
-            "thinking_tokens": 4096,
-            "tokens_evaluated": int(np.random.randint(45, 80)),
-            "is_success": True,
-        })
+        records.append(
+            {
+                "target_executed": "GEMINI_37_FLASH_THINKING",
+                "latency_ms": float(lat),
+                "thinking_tokens": 4096,
+                "tokens_evaluated": int(np.random.randint(45, 80)),
+                "is_success": True,
+            }
+        )
 
     # Embaralhar para simular sequencia de requisicoes real
     return pd.DataFrame(records).sample(frac=1.0, random_state=42).reset_index(drop=True)
@@ -128,6 +134,7 @@ def load_dataset(file_path: str | None) -> pd.DataFrame:
 # 3. MOTOR DE RENDERIZACAO GRAFICA SOTA GOLD (DASHBOARD QUAD-PANEL)
 # =====================================================================
 
+
 def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_report.png") -> None:
     sns.set_theme(style="whitegrid", font="sans-serif")
 
@@ -147,10 +154,23 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
     total_thinking = int(np.sum(df["thinking_tokens"].to_numpy())) if "thinking_tokens" in df.columns else 0
 
     # Titulo Principal e Subtitulo
-    fig.text(0.06, 0.955, "HYBRID ROUTER SOTA -- RELATORIO DE DESEMPENHO E LATENCIA",
-             fontsize=17, fontweight="bold", color=TEXT_PRIMARY, ha="left")
-    fig.text(0.06, 0.932, "Protocolo Chico SOTA v8.0 GOLD * Arquitetura Google Gemini 3.7 Flash & Llama.cpp Vulkan Edge",
-             fontsize=11, color=TEXT_MUTED, ha="left")
+    fig.text(
+        0.06,
+        0.955,
+        "HYBRID ROUTER SOTA -- RELATORIO DE DESEMPENHO E LATENCIA",
+        fontsize=17,
+        fontweight="bold",
+        color=TEXT_PRIMARY,
+        ha="left",
+    )
+    fig.text(
+        0.06,
+        0.932,
+        "Protocolo Chico SOTA v8.0 GOLD * Arquitetura Google Gemini 3.7 Flash & Llama.cpp Vulkan Edge",
+        fontsize=11,
+        color=TEXT_MUTED,
+        ha="left",
+    )
 
     # Cards de Metricas no Topo Direito
     kpi_text = (
@@ -199,7 +219,13 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
         mean_val = float(np.mean(np.asarray(subset["latency_ms"])))
         ax1.axvline(mean_val, color=color, linestyle="--", linewidth=1.2, alpha=0.8)
 
-    ax1.set_title("1. Densidade de Probabilidade de Latencia (PDF / KDE Bimodal)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
+    ax1.set_title(
+        "1. Densidade de Probabilidade de Latencia (PDF / KDE Bimodal)",
+        fontsize=12,
+        fontweight="bold",
+        color=TEXT_PRIMARY,
+        pad=10,
+    )
     ax1.set_xlabel("Latencia Ponta a Ponta (ms)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
     ax1.set_ylabel("Densidade de Probabilidade", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
     ax1.legend(frameon=True, facecolor=CARD_BG, edgecolor=BORDER_COLOR, fontsize=8.5, loc="upper right")
@@ -220,7 +246,15 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
 
     global_sorted = np.sort(df["latency_ms"])
     global_yvals = np.arange(1, len(global_sorted) + 1) / len(global_sorted)
-    ax2.step(global_sorted, global_yvals, label="Global Agregado", color=TEXT_PRIMARY, linewidth=2.4, linestyle="--", where="post")
+    ax2.step(
+        global_sorted,
+        global_yvals,
+        label="Global Agregado",
+        color=TEXT_PRIMARY,
+        linewidth=2.4,
+        linestyle="--",
+        where="post",
+    )
 
     # Linhas de percentis com badges estilizados
     pct_configs = [
@@ -242,7 +276,13 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
             bbox={"boxstyle": "round,pad=0.25", "fc": CARD_BG, "ec": color, "alpha": 0.9},
         )
 
-    ax2.set_title("2. Distribuicao Cumulativa de Latencia (eCDF & Percentis de Cauda)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
+    ax2.set_title(
+        "2. Distribuicao Cumulativa de Latencia (eCDF & Percentis de Cauda)",
+        fontsize=12,
+        fontweight="bold",
+        color=TEXT_PRIMARY,
+        pad=10,
+    )
     ax2.set_xlabel("Latencia Ponta a Ponta (ms)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
     ax2.set_ylabel(r"Probabilidade Acumulada $P(X \leq x)$", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
     ax2.set_ylim(-0.02, 1.05)
@@ -260,13 +300,28 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
         subset = df_seq[df_seq["target_executed"] == target]
         color = PALETTE_MAP.get(str(target), "#333333")
         label = TARGET_LABELS.get(str(target), str(target))
-        ax3.scatter(subset["request_id"], subset["latency_ms"], color=color, label=label, alpha=0.85, s=36, edgecolors="none")
+        ax3.scatter(
+            subset["request_id"], subset["latency_ms"], color=color, label=label, alpha=0.85, s=36, edgecolors="none"
+        )
 
     # Media movel global para verificar estabilidade temporal
     rolling_mean = df_seq["latency_ms"].rolling(window=max(3, len(df_seq) // 10), min_periods=1).mean()
-    ax3.plot(df_seq["request_id"], rolling_mean, color=TEXT_PRIMARY, linestyle="-", linewidth=1.8, label="Media Movel (Rolling Avg)")
+    ax3.plot(
+        df_seq["request_id"],
+        rolling_mean,
+        color=TEXT_PRIMARY,
+        linestyle="-",
+        linewidth=1.8,
+        label="Media Movel (Rolling Avg)",
+    )
 
-    ax3.set_title("3. Estabilidade Temporal sob Carga Concorrente (Timeline de Requisicoes)", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
+    ax3.set_title(
+        "3. Estabilidade Temporal sob Carga Concorrente (Timeline de Requisicoes)",
+        fontsize=12,
+        fontweight="bold",
+        color=TEXT_PRIMARY,
+        pad=10,
+    )
     ax3.set_xlabel("Numero Sequencial da Requisicao (#)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
     ax3.set_ylabel("Latencia de Resposta (ms)", fontsize=10, fontweight="bold", color=TEXT_PRIMARY)
     ax3.legend(frameon=True, facecolor=CARD_BG, edgecolor=BORDER_COLOR, fontsize=8.5, loc="upper right")
@@ -301,7 +356,13 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
 
     # Texto central no donut
     ax4.text(0, 0, f"{total_reqs}\nReqs", ha="center", va="center", fontsize=13, fontweight="bold", color=TEXT_PRIMARY)
-    ax4.set_title("4. Alocacao de Trafego e Especializacao de Roteamento", fontsize=12, fontweight="bold", color=TEXT_PRIMARY, pad=10)
+    ax4.set_title(
+        "4. Alocacao de Trafego e Especializacao de Roteamento",
+        fontsize=12,
+        fontweight="bold",
+        color=TEXT_PRIMARY,
+        pad=10,
+    )
 
     # Salvamento de Alta Resolucao
     plt.savefig(output_image, dpi=300, facecolor=THEME_BG, edgecolor="none", bbox_inches="tight")
@@ -368,7 +429,9 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="Plota dashboard executivo SOTA de metricas de latencia.")
     parser.add_argument("--input", "-i", type=str, default=None, help="Caminho do arquivo JSON/CSV com resultados.")
-    parser.add_argument("--output", "-o", type=str, default="benchmark_latency_report.png", help="Arquivo de imagem (.png).")
+    parser.add_argument(
+        "--output", "-o", type=str, default="benchmark_latency_report.png", help="Arquivo de imagem (.png)."
+    )
     parser.add_argument("--no-open", action="store_true", help="Nao abre a imagem automaticamente na tela.")
     args = parser.parse_args()
 

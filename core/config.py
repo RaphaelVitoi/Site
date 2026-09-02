@@ -1,4 +1,5 @@
 """Modulo de configuracao central SOTA."""
+
 # pylint: disable=broad-exception-caught, global-statement, line-too-long, import-outside-toplevel
 from __future__ import annotations
 

@@ -4,6 +4,7 @@ Chico Protocol v8.0 GOLD - Pyramidal Governance & Universal Web Tooling.
 Connects Chrome Dev CDP (9222/9223), AI Web Search, Clipboard Handoff and
 automated context-grounding based on Agent Tier authority.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -142,7 +143,9 @@ class CDPBrowserBridge:
         async with _CDP_LOCK:
             # Safe HTTP fetch via Chrome Dev endpoint / fallback to direct content parser
             try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) SOTA/8.0"})
+                req = urllib.request.Request(
+                    url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) SOTA/8.0"}
+                )
                 loop = asyncio.get_running_loop()
                 content = await loop.run_in_executor(None, self._sync_fetch, req, timeout_sec)
                 title_match = re.search(r"<title>(.*?)</title>", content, re.IGNORECASE | re.DOTALL)
@@ -185,11 +188,13 @@ class ClipboardHandoffBridge:
             "--------------------------------------------------------------------------------",
         ]
         if context:
-            lines.extend([
-                "CONTEXTO DO ECOSSISTEMA / REPOSITORIO:",
-                context,
-                "--------------------------------------------------------------------------------",
-            ])
+            lines.extend(
+                [
+                    "CONTEXTO DO ECOSSISTEMA / REPOSITORIO:",
+                    context,
+                    "--------------------------------------------------------------------------------",
+                ]
+            )
         lines.append("RESPONDA DIRETAMENTE O PRODUTO FINAL EM ALTA DENSIDADE SEM METALINGUAGEM.")
         payload = "\n".join(lines)
         cls.copy_to_clipboard(payload)

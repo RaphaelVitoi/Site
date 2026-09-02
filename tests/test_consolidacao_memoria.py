@@ -78,9 +78,7 @@ def arvores(tmp_path, mod, monkeypatch):
         # `\n` para `\r\n`, entao um `.replace("\n", "\r\n")` ingenuo grava
         # `\r\r\n` e a "quase-copia" vira conteudo genuinamente diferente. O
         # fixture passa a fabricar o caso que quer testar, em vez de um artefato.
-        (copia / agente / "MEMORY.md").write_text(
-            episodio.replace("\n", "\r\n"), encoding="utf-8", newline=""
-        )
+        (copia / agente / "MEMORY.md").write_text(episodio.replace("\n", "\r\n"), encoding="utf-8", newline="")
 
     monkeypatch.setattr(mod, "RAIZ", tmp_path)
     monkeypatch.setattr(mod, "CANONICA", canonica)

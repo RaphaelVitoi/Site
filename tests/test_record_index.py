@@ -155,6 +155,30 @@ def test_config_medida_aceita_as_duas_leituras_de_raiz():
     assert divergencias, "raiz de outro mundo passou"
 
 
+def test_config_medida_congelada_nao_e_conferida_contra_esta_maquina():
+    """Medicao encerrada em outra maquina para de ser conferida contra esta.
+
+    Sem o marcador, revisar um registro antigo -- declarar um caminho que nunca
+    resolveu, corrigir uma citacao -- so passava reescrevendo numeros medidos
+    noutra arvore. A alternativa que o portao ja anunciava ('remeca ou marque')
+    nao tinha implementacao, e nada conferido nao pode ser dado por conferido:
+    as chaves saem como nao conferiveis, nunca como acordo.
+    """
+    ambiente = record_index.resolvedores_de_ambiente(RAIZ)
+    passada = {"congelada_em": "2026-08-31", "raiz": "/planeta/inexistente", "branch": "master"}
+
+    divergencias, nao_conferiveis = record_index.conferir_config_medida(passada, ambiente)
+
+    assert not divergencias, "config declarada congelada foi conferida contra o ambiente de hoje"
+    assert nao_conferiveis == ["branch", "congelada_em", "raiz"], (
+        "chave de medicao congelada precisa constar como nao conferida"
+    )
+    viva = {k: v for k, v in passada.items() if k != "congelada_em"}
+    assert record_index.conferir_config_medida(viva, ambiente)[0], (
+        "sem o marcador, a mesma config divergente tem de continuar reprovando"
+    )
+
+
 def test_chave_desconhecida_nao_e_dada_por_conferida():
     """Tratar chave sem resolvedor como 'bate' seria inventar sinal verde."""
     ambiente = record_index.resolvedores_de_ambiente(RAIZ)

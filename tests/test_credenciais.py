@@ -26,8 +26,25 @@ RAIZ = Path(__file__).resolve().parent.parent
 FONTE = RAIZ / "data" / "PADROES_DE_CREDENCIAL.json"
 
 TEXTO = {
-    ".py", ".ps1", ".psm1", ".md", ".json", ".yml", ".yaml", ".toml", ".txt",
-    ".js", ".jsx", ".ts", ".tsx", ".cmd", ".sh", ".cfg", ".ini", ".env", ".example",
+    ".py",
+    ".ps1",
+    ".psm1",
+    ".md",
+    ".json",
+    ".yml",
+    ".yaml",
+    ".toml",
+    ".txt",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".cmd",
+    ".sh",
+    ".cfg",
+    ".ini",
+    ".env",
+    ".example",
 }
 
 
@@ -102,9 +119,7 @@ def test_o_env_com_credencial_nao_e_rastreado():
     env = RAIZ / ".env"
     if not env.is_file():
         return  # nao ha .env nesta arvore (clone limpo, worktree): nada a proteger
-    ignorado = subprocess.run(
-        ["git", "check-ignore", "-q", ".env"], cwd=RAIZ, capture_output=True, check=False
-    )
+    ignorado = subprocess.run(["git", "check-ignore", "-q", ".env"], cwd=RAIZ, capture_output=True, check=False)
     assert ignorado.returncode == 0, ".env deixou de ser ignorado pelo git"
     rastreado = subprocess.run(
         ["git", "ls-files", "--error-unmatch", ".env"], cwd=RAIZ, capture_output=True, check=False

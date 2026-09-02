@@ -71,10 +71,38 @@ async def test_queue_priority_ordering_under_concurrency(temp_queue_manager: Que
     now = datetime.now(UTC).isoformat()
     uid = uuid.uuid4().hex[:6]
 
-    t_low = Task(id=f"T-LOW-{uid}", description="Low", status="pending", agent="@implementor", timestamp=now, metadata={"priority": "low"})
-    t_med = Task(id=f"T-MED-{uid}", description="Med", status="pending", agent="@implementor", timestamp=now, metadata={"priority": "medium"})
-    t_high = Task(id=f"T-HIGH-{uid}", description="High", status="pending", agent="@implementor", timestamp=now, metadata={"priority": "high"})
-    t_crit = Task(id=f"T-CRIT-{uid}", description="Crit", status="pending", agent="@implementor", timestamp=now, metadata={"priority": "critical"})
+    t_low = Task(
+        id=f"T-LOW-{uid}",
+        description="Low",
+        status="pending",
+        agent="@implementor",
+        timestamp=now,
+        metadata={"priority": "low"},
+    )
+    t_med = Task(
+        id=f"T-MED-{uid}",
+        description="Med",
+        status="pending",
+        agent="@implementor",
+        timestamp=now,
+        metadata={"priority": "medium"},
+    )
+    t_high = Task(
+        id=f"T-HIGH-{uid}",
+        description="High",
+        status="pending",
+        agent="@implementor",
+        timestamp=now,
+        metadata={"priority": "high"},
+    )
+    t_crit = Task(
+        id=f"T-CRIT-{uid}",
+        description="Crit",
+        status="pending",
+        agent="@implementor",
+        timestamp=now,
+        metadata={"priority": "critical"},
+    )
 
     await qm.add_task(t_low)
     await qm.add_task(t_med)

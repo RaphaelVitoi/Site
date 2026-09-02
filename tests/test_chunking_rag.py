@@ -100,9 +100,7 @@ def test_fragmentos_minusculos_sao_raros(rag, corpus):
     modelo sem contexto nenhum e ainda disputa lugar no resultado."""
     tam = _tamanhos(rag, corpus)
     minusculos = sum(1 for t in tam if t < 50)
-    assert minusculos / len(tam) < 0.05, (
-        f"{minusculos / len(tam) * 100:.1f}% dos fragmentos abaixo de 50 chars"
-    )
+    assert minusculos / len(tam) < 0.05, f"{minusculos / len(tam) * 100:.1f}% dos fragmentos abaixo de 50 chars"
 
 
 # ---------------------------------------------------------------------------
@@ -121,11 +119,7 @@ def test_paragrafos_curtos_consecutivos_sao_juntados(rag):
 
 def test_boilerplate_isolado_nao_vira_fragmento_proprio(rag):
     """O caso concreto medido: `logger = ...` como fragmento de 37 chars, 40 vezes."""
-    texto = (
-        "import logging\n\n"
-        "logger = logging.getLogger(__name__)\n\n"
-        "def alguma_funcao():\n    return 42\n"
-    )
+    texto = "import logging\n\nlogger = logging.getLogger(__name__)\n\ndef alguma_funcao():\n    return 42\n"
     fragmentos = rag._chunk_text(texto)
     assert len(fragmentos) == 1
     assert fragmentos[0].count("logger = logging.getLogger") == 1
@@ -146,9 +140,7 @@ def test_a_sobreposicao_e_por_paragrafo_inteiro(rag):
     fragmentos = rag._chunk_text("\n\n".join(paragrafos))
     assert len(fragmentos) > 1, "o corpus de teste nao gerou fragmentos suficientes"
     for f in fragmentos[1:]:
-        assert f.lstrip().startswith("Bloco "), (
-            f"fragmento comeca no meio de um paragrafo: {f[:60]!r}"
-        )
+        assert f.lstrip().startswith("Bloco "), f"fragmento comeca no meio de um paragrafo: {f[:60]!r}"
 
 
 def test_texto_vazio_e_so_espaco_nao_geram_fragmento(rag):
@@ -165,6 +157,7 @@ def test_a_cobertura_nao_piorou_em_relacao_ao_chunker_antigo(rag, corpus):
     """Uma linha fisica pode ficar partida entre dois fragmentos quando o corte
     cai numa fronteira de frase -- e isso ja acontecia antes. Sem a baseline, o
     numero isolado (0,31%) pareceria defeito novo."""
+
     def norm(s: str) -> str:
         return re.sub(r"\s+", " ", s).strip()
 

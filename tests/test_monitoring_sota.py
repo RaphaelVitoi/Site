@@ -34,6 +34,8 @@ def test_send_toast_success(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.platform", "win32")
     with (
         patch("utils.notifications.Path.exists", return_value=True),
+        # shutil.which real, sob win32 espelhado num runtime nao-Windows, usa _winapi (ausente) e estoura -- send_toast engole a excecao em silencio.
+        patch("utils.notifications.shutil.which", return_value="powershell.exe"),
         patch("subprocess.Popen") as mock_popen,
     ):
         send_toast("Teste SOTA", "Mensagem de teste")

@@ -97,6 +97,7 @@ async def test_harmonizer_ultra_fast_async_propagates_exceptions() -> None:
 @pytest.mark.unit
 async def test_harmonizer_batch_process_all_items() -> None:
     """batch_process deve processar todos os itens independente do batch_size."""
+
     async def double(x: int) -> int:
         await asyncio.sleep(0)
         return x * 2
@@ -110,6 +111,7 @@ async def test_harmonizer_batch_process_all_items() -> None:
 @pytest.mark.unit
 async def test_harmonizer_batch_process_empty_list() -> None:
     """batch_process com lista vazia deve retornar lista vazia sem erro."""
+
     async def noop(x: int) -> int:
         await asyncio.sleep(0)
         return x

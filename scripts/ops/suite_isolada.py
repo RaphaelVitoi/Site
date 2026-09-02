@@ -155,7 +155,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--repo", default=str(RAIZ_PADRAO), help="repositorio alvo (padrao: este)")
     ap.add_argument("--ref", default="HEAD", help="commit/ref a materializar (padrao: HEAD)")
     ap.add_argument("--sujo", action="store_true", help="aplica as modificacoes rastreadas do working tree")
-    ap.add_argument("--incluir-novos", dest="incluir_novos", action="store_true", help="com --sujo, leva tambem os arquivos nao rastreados e nao ignorados")
+    ap.add_argument(
+        "--incluir-novos",
+        dest="incluir_novos",
+        action="store_true",
+        help="com --sujo, leva tambem os arquivos nao rastreados e nao ignorados",
+    )
     ap.add_argument("--manter", action="store_true", help="nao remove o worktree ao final")
     ap.add_argument("--comando", default=None, help="comando de suite (padrao: descoberto por convencao)")
     ap.add_argument("--base", default=None, help="diretorio onde criar o worktree (padrao: temporario do SO)")
@@ -172,10 +177,7 @@ def main(argv: list[str] | None = None) -> int:
 
     comando = args.comando.split() if args.comando else comando_padrao(repo)
     if not comando:
-        print(
-            f"[ISOLADA] Nenhuma suite reconhecida em {repo.name}. "
-            "Use --comando para declarar qual e."
-        )
+        print(f"[ISOLADA] Nenhuma suite reconhecida em {repo.name}. Use --comando para declarar qual e.")
         return 2
 
     base = Path(args.base).expanduser().resolve() if args.base else Path(tempfile.gettempdir())

@@ -3,6 +3,7 @@
 Permite a delegacao de simulacoes massivas de Teoria dos Jogos PMev,
 migracoes de repositorio e geracao de testes em background para VMs isoladas do Jules.
 """
+
 from __future__ import annotations
 
 import json
