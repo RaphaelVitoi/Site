@@ -27,6 +27,59 @@ LFS introduzida na própria sessão que criou a fase 5.
 
 Se ele reprovar, "a regra está errada" é a hipótese **menos** provável.
 
+### 1.1 Operar de host sem Windows PowerShell 5.1
+
+A fase 5 parseia todo `.ps1` em stage com `powershell.exe` — o 5.1, que é o
+interpretador que o hook e as tarefas agendadas de fato usam. **Ele não tem
+build para Linux ou macOS, e não haverá**: é componente do Windows, não pacote
+instalável. Agentes e runners de CI operam sem ele.
+
+Nesse host o portão roda a **bateria substituta** (`Test-Ps51CompatibilidadeSubstituta`
+em `scripts/ops/cwv_gate.ps1`). Ela não é dispensa — **tudo que acha bloqueia**:
+
+| Verificação | Instrumento | Alcance |
+| :--- | :--- | :--- |
+| Não-ASCII sem BOM | bytes do arquivo | exata; é o defeito que a fase documenta |
+| BOM UTF-8 duplicado | bytes do arquivo | exata; quebra nas duas versões (§6.4) |
+| Não parseia nem no 7 | AST do `pwsh` | conservadora: falha no 7 ⇒ falha no 5.1 |
+| Construto exclusivo do 7 | token + AST | `??` `??=` `?.` `?[` `&&` `\|\|`, ternário, `PipelineChain`, `-Parallel` |
+
+As checagens de bytes rodam **sempre**, antes de qualquer ramo de interpretador:
+elas nunca dependeram do 5.1.
+
+Aprovar na bateria **não consome vaga de warning**. O teto de dois existe para
+cobertura *perdida* — fases 1 e 2 sem CDP, onde nada foi medido. Aqui a
+verificação aconteceu, e contá-la como degradação gastaria uma das duas vagas em
+toda alteração de `.ps1` feita por agente. O resíduo aparece na linha
+`Ps51PorBateria` (INFO) da tabela de higiene, numa linha amarela e no relatório.
+
+**O que a bateria não alcança, e continua exigindo Windows:** cmdlet ou
+parâmetro que não existe na 5.1, e recurso de classe do 7 — falham em *tempo de
+execução*, e nenhum parser os pega. Antes de release, e para qualquer `.ps1` que
+seja hook ou tarefa agendada, revalide em host Windows.
+
+### 1.2 Âncoras num merge — obrigação é do que a resolução decidiu
+
+O portão de registro (`scripts/ops/record_gate.py`) coleta caminhos com
+`git diff --cached`, que compara o índice com HEAD — o **primeiro** pai. Num
+merge isso varreria também tudo que veio do outro lado, incluindo o que já
+cumpriu sua obrigação de âncora na branch de origem.
+
+**A regra em vigor:** um caminho é *do merge* quando difere de **todos** os pais.
+Batendo com qualquer pai, foi herdado, e o parecer é de quem o commitou lá —
+`caminhos_herdados_de_merge()` faz essa subtração, e só num merge.
+
+Ao resolver um merge, portanto, você deve revisão de âncora **apenas** para o
+que a sua resolução mudou. Para o resto, o parecer correto é apontar a
+reconciliação já feita na origem, não reescrevê-la.
+
+Medição que originou a regra, 2026-09-01: o merge da fusão `.cerebro` →
+`.claude` recobrou 15 âncoras já reconciliadas, em 12 caminhos byte a byte
+idênticos ao lado remoto. Reconciliar de novo não acrescenta verificação — só
+empurra o operador para o parecer genérico, e **parecer genérico é pior que
+nenhum**, porque parece revisão sem ser. Guard em
+`tests/test_record_gate_merge.py`.
+
 ---
 
 ## 2. Camada de dependências
