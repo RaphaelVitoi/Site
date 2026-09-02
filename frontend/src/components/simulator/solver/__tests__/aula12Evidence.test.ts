@@ -13,6 +13,8 @@ import {
   classifyAction,
   classifyActionNoCenario,
   DEFAULT_FREQUENCY_SUM_TOLERANCE_PCT,
+  DEFAULT_SIZING_EQUIVALENCE_TOLERANCE_BB,
+  DEFAULT_SIZING_EQUIVALENCE_RELATIVE,
   isRead,
   isUnreadable,
   type EvidenceViolationCode,
@@ -25,6 +27,10 @@ import {
   PAR_4_OOP_RIVER,
   PAR_5_IP_VS_XR_FLOP,
   PAR_6_BB_TURN_APOS_CALL,
+  PAR_7_BB_VS_CBET_SMALL,
+  QUASE_ENCONTRO_DE_SIZING_PAR_7,
+  TRILHA_GTO_WIZARD,
+  GLIFO_DE_DIRECAO,
   CADEIA_TURN_RIVER,
   CADEIA_FLOP_TURN_RIVER,
   ATRIBUICAO_AMBIGUA_NODELOCK,
@@ -132,6 +138,7 @@ describe( 'Aula 1.2 — conservação de combos do lado ChipEV', () => {
   // 9.38 + 0.05 + 18.39 = 27.82 vs 27.8 declarado
   // 113.13 + 252.95 + 4.82 + 0.01 = 370.91 vs 370.9 declarado
   // 28.38 + 9.33 + 11.76 = 49.47 vs 49.5 declarado
+  // 268.83 + 432.38 + 51.52 + 0 = 752.73 vs 752.7 declarado
   it.each( [
     [ 'par 1', PAR_1_BB_LEADING ],
     [ 'par 2', PAR_2_IP_APOS_CHECK ],
@@ -139,6 +146,7 @@ describe( 'Aula 1.2 — conservação de combos do lado ChipEV', () => {
     [ 'par 4', PAR_4_OOP_RIVER ],
     [ 'par 5', PAR_5_IP_VS_XR_FLOP ],
     [ 'par 6', PAR_6_BB_TURN_APOS_CALL ],
+    [ 'par 7', PAR_7_BB_VS_CBET_SMALL ],
   ] )( '%s: os combos do ChipEV fecham dentro da tolerância', ( _nome, par ) => {
     const encontrados = codes( validateEvidencePair( par ) )
       .filter( c => c === 'COMBO_CONSERVATION_MISMATCH' );
@@ -465,6 +473,126 @@ describe( 'Aula 1.2 — Etapa C: a linha inteira, e a ambiguidade que ela nao ap
     expect( HIPOTESE_BASE_DO_ALLIN.causaDaDivergenciaDeSizing ).toBe( 'NAO DETERMINADA' );
     expect( HIPOTESE_BASE_DO_ALLIN.icmEvAllinBb ).toBe( MESA_COMPLETA_NO_OPEN.efetivaPosFlopBb );
     expect( HIPOTESE_BASE_DO_ALLIN.falsificador.length ).toBeGreaterThan( 0 );
+  } );
+} );
+
+describe( 'Aula 1.2 — a trilha do solver, que verifica quatro capturas de uma vez', () => {
+  it( 'a trilha confirma os conjuntos de acao de tres pares e do nodelock', () => {
+    /*
+     * `image59.png` inclui a barra de navegacao do GTO Wizard: a arvore inteira.
+     * Cada coluna lista o jogador, a stack e TODAS as acoes daquele ponto. Os
+     * rotulos batem com o que cada captura mostra isoladamente.
+     */
+    const porConfirmacao = ( alvo: string ) =>
+      TRILHA_GTO_WIZARD.colunas.find( c => 'confirma' in c && c.confirma === alvo );
+
+    const rotulos = ( par: typeof PAR_7_BB_VS_CBET_SMALL ) =>
+      par.chipEv.actions.map( a => a.label ).sort();
+
+    const col7 = porConfirmacao( 'PAR_7_BB_VS_CBET_SMALL' );
+    expect( col7 ).toBeDefined();
+    expect( [ ...col7!.acoes! ].sort() ).toEqual( rotulos( PAR_7_BB_VS_CBET_SMALL ) );
+
+    const col5 = porConfirmacao( 'PAR_5_IP_VS_XR_FLOP' );
+    expect( col5 ).toBeDefined();
+    expect( [ ...col5!.acoes! ].sort() ).toEqual( rotulos( PAR_5_IP_VS_XR_FLOP ) );
+
+    // As stacks da trilha tambem batem com o contexto de cada par.
+    const stackIp5 = PAR_5_IP_VS_XR_FLOP.context.players.find( p => p.position === 'IP' )!.stackBb;
+    expect( isRead( stackIp5 ) && stackIp5.value ).toBe( col5!.stackBb );
+  } );
+
+  it( 'o ramo Bet 7.8 (50%) esta NA TELA — a ligacao par 6 -> par 3 deixou de ser inferida', () => {
+    /*
+     * A cadeia da Etapa C calculava 15.63 x 50% para chegar aos 7.80. Aqui o
+     * ramo aparece rotulado, com frequencia e combos medidos.
+     */
+    const bet = TRILHA_GTO_WIZARD.noAtual.acoes.find( a => a.label.startsWith( 'Bet 7.8' ) );
+    expect( bet ).toBeDefined();
+    expect( bet!.frequencyPct ).toBe( 57.6 );
+    expect( TRILHA_GTO_WIZARD.noAtual.potBb ).toBe( CADEIA_FLOP_TURN_RIVER.turn.potBb );
+    expect( CADEIA_FLOP_TURN_RIVER.turn.cbetDe50PctBb ).toBe( 7.8 );
+  } );
+
+  it( 'mesmo no que o par 6, menu de sizings diferente — o nodelock em acao', () => {
+    /*
+     * Mesmo pote, mesmas stacks, mesmas equidades e mesmos combos que o par 6,
+     * com menu de apostas diferente. E a demonstracao concreta do que a
+     * ambiguidade de atribuicao adverte.
+     */
+    expect( TRILHA_GTO_WIZARD.mesmoNoQueOPar6ComMenuDiferente ).toBe( true );
+    const p6 = PAR_6_BB_TURN_APOS_CALL.context.potBb;
+    expect( isRead( p6 ) && p6.value ).toBe( TRILHA_GTO_WIZARD.noAtual.potBb );
+    const combos6 = PAR_6_BB_TURN_APOS_CALL.chipEv.totalCombos;
+    expect( isRead( combos6! ) && combos6.value )
+      .toBe( TRILHA_GTO_WIZARD.noAtual.painel.bbOop.combos );
+
+    // ... e os menus divergem de fato.
+    const menuTrilha = TRILHA_GTO_WIZARD.colunas[ 6 ]!.acoes!;
+    const menuPar6 = PAR_6_BB_TURN_APOS_CALL.chipEv.actions.map( a => a.label );
+    expect( menuTrilha.length ).not.toBe( menuPar6.length );
+  } );
+
+  it( 'o glifo esta encerrado por OBSERVACAO DIRETA, nao so por aritmetica', () => {
+    /*
+     * Ate a Etapa C a prova era indireta: equidade nao e negativa, equidades
+     * complementares somam 100. Aqui o leitor cego respondeu campo a campo que
+     * os oito simbolos NAO sao iguais entre si -- quatro para cima, quatro para
+     * baixo. Um sinal de menos nao aponta para cima.
+     */
+    expect( GLIFO_DE_DIRECAO.simbolosUniformes ).toBe( false );
+    expect( GLIFO_DE_DIRECAO.antiCorrelacionadoEntreJogadores ).toBe( true );
+
+    const bb = GLIFO_DE_DIRECAO.direcoes.bbOop;
+    const ip = GLIFO_DE_DIRECAO.direcoes.btnIp;
+    const oposto = ( a: string, b: string ) => ( a === 'cima' ) !== ( b === 'cima' );
+    expect( oposto( bb.ev, ip.ev ) ).toBe( true );
+    expect( oposto( bb.equidade, ip.equidade ) ).toBe( true );
+    expect( oposto( bb.eqr, ip.eqr ) ).toBe( true );
+    expect( oposto( bb.combos, ip.combos ) ).toBe( true );
+
+    // A prova aritmetica anterior continua valendo, por caminho independente.
+    expect(
+      TRILHA_GTO_WIZARD.noAtual.painel.bbOop.equidadePct +
+      TRILHA_GTO_WIZARD.noAtual.painel.btnIp.equidadePct,
+    ).toBeCloseTo( 100, 5 );
+  } );
+
+  it( 'par 7: o quase-encontro de sizing NAO afrouxou a tolerancia', () => {
+    /*
+     * `Raise 5` contra `raises 5.06bb` reprova por 0.0094. Alargar a folga para
+     * acomodar seria ajustar o instrumento ao resultado.
+     */
+    const q = QUASE_ENCONTRO_DE_SIZING_PAR_7;
+    expect( q.diferenca ).toBeGreaterThan( q.folgaVigente );
+    expect( q.folgaVigente ).toBeCloseTo(
+      Math.max( DEFAULT_SIZING_EQUIVALENCE_TOLERANCE_BB, q.icmEvBb * DEFAULT_SIZING_EQUIVALENCE_RELATIVE ),
+      6,
+    );
+    expect( codes( validateEvidencePair( PAR_7_BB_VS_CBET_SMALL ) ) )
+      .toContain( 'SIZING_CORRESPONDENCE_UNVERIFIABLE' );
+  } );
+
+  it( 'par 7: a soma 99.9% e a primeira ABAIXO de 100 — o desvio e simetrico', () => {
+    const soma = PAR_7_BB_VS_CBET_SMALL.chipEv.actions.reduce( ( acc, a ) => {
+      const f = a.frequencyPct;
+      return acc + ( f !== undefined && isRead( f ) ? f.value : 0 );
+    }, 0 );
+    expect( soma ).toBeCloseTo( 99.9, 5 );
+    expect( codes( validateEvidencePair( PAR_7_BB_VS_CBET_SMALL ) ) )
+      .not.toContain( 'FREQUENCY_SUM_MISMATCH' );
+  } );
+
+  it( 'par 7 esta no conjunto, e a retificacao da rejeicao esta registrada', () => {
+    /*
+     * A Etapa A rejeitou o no 13 por CONTAR insercoes em vez de LER a captura.
+     * Este teste falha se alguem remover o par sem antes desfazer a retificacao.
+     */
+    expect( AULA_1_2_PAIRS ).toContain( PAR_7_BB_VS_CBET_SMALL );
+    expect( ATRIBUICAO_AMBIGUA_NODELOCK.afetaPares )
+      .toContain( 'PAR_7_BB_VS_CBET_SMALL' );
+    expect( Object.keys( ATRIBUICAO_AMBIGUA_NODELOCK.capturas ) )
+      .toContain( 'image7.png' );
   } );
 } );
 
