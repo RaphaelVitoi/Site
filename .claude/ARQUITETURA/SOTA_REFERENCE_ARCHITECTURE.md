@@ -93,21 +93,21 @@ graph TD
     end
 
     subgraph "Camada 3: Identidade do Agente"
-        C1["Perfil Específico<br/>(.cerebro/agents/agent.md)"]:::core
+        C1["Perfil Específico<br/>(.claude/agents/agent.md)"]:::core
     end
 
     subgraph "Camada 2: Leis e Mapas do Ecossistema"
         B1("document_manifest.json"):::manifest
-        B_GLOBAL[".cerebro/GLOBAL_INSTRUCTIONS.md"]:::docs
+        B_GLOBAL[".claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md"]:::docs
         B_ARCH["docs/SOTA_REFERENCE_ARCHITECTURE.md"]:::docs
         B_WORKFLOW["docs/MANUAL_WORKFLOW_AGENTES.md"]:::docs
         B_OTHERS["... outros documentos do manifesto"]:::docs
     end
 
     subgraph "Camada 1: Fundação Filosófica"
-        A1[".cerebro/COSMOVISAO.md"]:::philosophy
-        A2[".cerebro/CEREBRO.md"]:::philosophy
-        A3[".cerebro/LIDERANCA_GOVERNANCE..."]:::philosophy
+        A1[".claude/GOVERNANCA/COSMOVISAO.md"]:::philosophy
+        A2[".claude/CEREBRO.md"]:::philosophy
+        A3[".claude/GOVERNANCA/LIDERANCA_GOVERNANCE..."]:::philosophy
     end
 
     MenteAgente["Mente do Agente<br/>(System Prompt)"]:::mind

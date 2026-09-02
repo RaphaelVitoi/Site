@@ -14,7 +14,7 @@ import { resolveTelemetryIdentity } from '@/lib/server/telemetry-identity';
 const SHARED_TELEMETRY_PATH = path.resolve(
 	process.cwd(),
 	'..',
-	'.cerebro/logs/wasm_telemetry_dump.jsonl',
+	'.claude/logs/wasm_telemetry_dump.jsonl',
 );
 
 function logToOrchestrator(payload: Record<string, unknown>) {

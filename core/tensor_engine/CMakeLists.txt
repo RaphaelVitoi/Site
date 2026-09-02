@@ -60,5 +60,22 @@ include_directories(${VENDOR_DIR}/eigen)
 # 3. Forjamento do Módulo (Extensão C++ para o Python)
 nanobind_add_module(quantum_tensor_engine src/quantum_kernel.cpp)
 
-# 4. Otimização Termodinâmica LLVM/MSVC
-target_compile_options(quantum_tensor_engine PRIVATE /O2 /fp:fast /arch:AVX2)
+# 4. Otimizacao Termodinamica -- flags por compilador, nao por suposicao
+#
+# Ate 2026-09-01 esta linha era `PRIVATE /O2 /fp:fast /arch:AVX2`, sintaxe
+# exclusiva do MSVC. O g++ e o clang rejeitam, entao o modulo NAO compilava fora
+# do Windows e os tres testes de isometria de tests/test_tensor_engine.py
+# pulavam com "Modulo quantum_tensor_engine nao compilado no ambiente" -- em
+# qualquer agente, e no CI ubuntu-latest.
+#
+# A equivalencia nao e exata e nao se finge que e: /fp:fast e -ffast-math dao
+# garantias diferentes de ponto flutuante. O que autoriza o port sao os proprios
+# testes, que ja declaram tolerancia de fast-math (rtol 5e-3 no ICM, 1e-5 na
+# perspectiva) e exigem conservacao estrita de probabilidade a 1e-4. Se o port
+# violasse a isometria, eles reprovariam -- e e assim que ele foi verificado,
+# nao por analogia entre nomes de flag.
+if(MSVC)
+    target_compile_options(quantum_tensor_engine PRIVATE /O2 /fp:fast /arch:AVX2)
+else()
+    target_compile_options(quantum_tensor_engine PRIVATE -O2 -ffast-math -mavx2)
+endif()
