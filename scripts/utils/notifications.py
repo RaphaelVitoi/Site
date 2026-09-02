@@ -1,3 +1,4 @@
+"""Utilitario de notificacoes Toast SOTA do sistema."""
 from __future__ import annotations
 
 # pylint: disable=missing-module-docstring, missing-function-docstring, unused-argument

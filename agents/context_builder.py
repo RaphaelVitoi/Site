@@ -397,7 +397,7 @@ def _add_autonomy_and_guidelines(user_prompt: str, task: Task, agent_clean: str,
         )
 
     prompt_parts.append(
-        f"\n\n[DIRETRIZ DE AUTOREFLEXAO E MEMORIA] Voce DEVE atualizar seu arquivo de inteligencia acumulada usando o God Mode (Arquivo: .cerebro/agent-memory/{agent_clean}/MEMORY.md). Adicione novas descobertas, avalie a Sinergia da sua interacao com a Pipeline, e faca Propostas Democraticas de melhoria para o ecossistema. A Autopoiese exige que voce expanda a mente coletiva."
+        f"\n\n[DIRETRIZ DE AUTOREFLEXAO E MEMORIA] Voce DEVE atualizar seu arquivo de inteligencia acumulada usando o God Mode (Arquivo: .claude/agent-memory/{agent_clean}/MEMORY.md). Adicione novas descobertas, avalie a Sinergia da sua interacao com a Pipeline, e faca Propostas Democraticas de melhoria para o ecossistema. A Autopoiese exige que voce expanda a mente coletiva."
     )
 
     return _finalize_prompt(prompt_parts, agent_clean)
@@ -491,13 +491,13 @@ async def _read_agent_and_project_contexts(agent_clean: str) -> tuple[str, str]:
         if canonical_file.exists():
             agent_memory = _read_file_with_cache(str(canonical_file)) or ""
         else:
-            base_agent_dir = Path(".cerebro/agent-memory").resolve()
+            base_agent_dir = Path(".claude/agent-memory").resolve()
             memory_file = (base_agent_dir / safe_agent / "MEMORY.md").resolve()
             if memory_file.exists() and memory_file.is_relative_to(base_agent_dir):
                 agent_memory = _read_file_with_cache(str(memory_file)) or ""
 
         project_context = ""
-        context_file = Path(".cerebro/project-context.md")
+        context_file = Path(".claude/MODUSOPERANDI/project-context.md")
         if not context_file.exists():
             context_file = Path(".claude/project-context.md")
         if context_file.exists():

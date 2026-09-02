@@ -730,6 +730,56 @@ foreach ($arquivo in $staged) {
 # Auditoria de 2026-08-21: 270 .ps1 no ambiente, 10 ja quebrados no 5.1 e 94
 # em risco. Esta fase impede que o numero volte a crescer.
 $violPs = @()
+$ps51Parcial = @()
+
+# LIMITE DE AUTONOMIA (autorizado pelo vertice, 2026-09-01). O 5.1 nao tem
+# build fora do Windows, entao exigi-lo travava permanentemente todo agente e
+# todo runner Linux -- inclusive o CI ubuntu-latest. Mas "nao da para rodar o
+# 5.1" nao e o mesmo que "nao da para verificar nada":
+#
+# O defeito que o comentario acima diz que "validar no 7 esconde" e o de
+# ENCODING, e esse e checagem de BYTES -- vale igual em qualquer host e roda
+# SEMPRE, antes de qualquer interpretador. O que realmente exige o 5.1 e
+# sintaxe que so o 7 aceita, e esse conjunto e finito e detectavel pelo
+# tokenizer/AST do proprio 7.
+#
+# Sem 5.1, roda a bateria substituta abaixo. Tudo que ela acha e BLOQUEIO; so
+# o residuo vira warning declarado. Nao e "passou sem checar" -- e "checou
+# pelo mais forte que existe aqui, e diz o que ficou de fora".
+$ps51Interpreter = Get-Command powershell.exe -ErrorAction SilentlyContinue
+
+function Test-Ps51CompatibilidadeSubstituta {
+    param([Parameter(Mandatory = $true)][string]$Caminho)
+    $motivos = @()
+    $tokens = $null; $erros = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Caminho, [ref]$tokens, [ref]$erros)
+    if ($erros.Count) {
+        return @("nao parseia nem no PowerShell 7 ($($erros.Count) erro(s), 1o na linha $($erros[0].Extent.StartLineNumber))")
+    }
+    $kindsSo7 = 'QuestionQuestion', 'QuestionQuestionEquals', 'QuestionDot', 'QuestionLBracket', 'AndAnd', 'OrOr'
+    foreach ($tk in $tokens) {
+        if ($kindsSo7 -contains $tk.Kind.ToString()) {
+            $motivos += "operador $($tk.Kind) (so PS7) na linha $($tk.Extent.StartLineNumber)"
+        }
+    }
+    foreach ($n in $ast.FindAll({ param($x) $x -is [System.Management.Automation.Language.TernaryExpressionAst] }, $true)) {
+        $motivos += "operador ternario (so PS7) na linha $($n.Extent.StartLineNumber)"
+    }
+    foreach ($n in $ast.FindAll({ param($x) $x -is [System.Management.Automation.Language.PipelineChainAst] }, $true)) {
+        $motivos += "encadeamento && / || (so PS7) na linha $($n.Extent.StartLineNumber)"
+    }
+    foreach ($n in $ast.FindAll({ param($x) $x -is [System.Management.Automation.Language.MemberExpressionAst] -and $x.NullConditional }, $true)) {
+        $motivos += "acesso null-condicional (so PS7) na linha $($n.Extent.StartLineNumber)"
+    }
+    foreach ($n in $ast.FindAll({ param($x) $x -is [System.Management.Automation.Language.CommandAst] }, $true)) {
+        foreach ($el in $n.CommandElements) {
+            if ($el -is [System.Management.Automation.Language.CommandParameterAst] -and $el.ParameterName -eq 'Parallel') {
+                $motivos += "-Parallel (so PS7) na linha $($n.Extent.StartLineNumber)"
+            }
+        }
+    }
+    return $motivos
+}
 
 # Script do processo filho, codificado uma unica vez. Le o alvo de
 # $env:SOTA_PS51_ALVO — o caminho e DADO, nunca texto de comando.
@@ -750,6 +800,23 @@ foreach ($arquivo in $staged) {
 
     if ($naoAscii -gt 0 -and -not $temBom) {
         $violPs += "$arquivo (nao-ASCII sem BOM: $naoAscii bytes)"
+        continue
+    }
+
+    # BOM duplicado quebra o parse nas DUAS versoes (CLAUDE.md §6.4). Bytes,
+    # entao vale em qualquer host.
+    if ($temBom -and $bytes.Length -ge 6 -and $bytes[3] -eq 0xEF -and $bytes[4] -eq 0xBB -and $bytes[5] -eq 0xBF) {
+        $violPs += "$arquivo (BOM UTF-8 duplicado)"
+        continue
+    }
+
+    if (-not $ps51Interpreter) {
+        $motivosSubs = Test-Ps51CompatibilidadeSubstituta -Caminho $abs
+        if ($motivosSubs.Count -gt 0) {
+            $violPs += "$arquivo (incompativel com 5.1: $($motivosSubs -join '; '))"
+        } else {
+            $ps51Parcial += $arquivo
+        }
         continue
     }
 
@@ -802,6 +869,7 @@ foreach ($v in $violPath)  { Write-Host "   - caminho proibido: $v" -ForegroundC
 foreach ($v in $violSize)  { Write-Host "   - blob grande fora do LFS: $v" -ForegroundColor Red }
 foreach ($v in $violRoute) { Write-Host "   - binario sem roteamento LFS: $v" -ForegroundColor Red }
 foreach ($v in $violPs)    { Write-Host "   - PowerShell 5.1: $v" -ForegroundColor Red }
+foreach ($v in $ps51Parcial) { Write-Host "   - PowerShell 5.1 por bateria substituta (sem 5.1 real): $v" -ForegroundColor Yellow }
 
 if ($violPath.Count -gt 0) {
     Add-QualityFinding -Severity 'ERROR' -Component 'repository.forbidden-paths' -Detail "$($violPath.Count) arquivo(s) sob diretorio de perfil/ferramenta: $($violPath -join '; ')." -Reason 'Estado local de ferramenta foi colocado em stage; ele nao e fonte versionavel do projeto.' -Action 'Retirar esses caminhos do stage e registrar a exclusao em .gitignore, preservando configuracoes compartilhadas fora dos diretorios de runtime.'
@@ -814,6 +882,9 @@ if ($violRoute.Count -gt 0) {
 }
 if ($violPs.Count -gt 0) {
     Add-QualityFinding -Severity 'ERROR' -Component 'repository.powershell51' -Detail "$($violPs.Count) script(s) .ps1 falham no PowerShell 5.1: $($violPs -join '; ')." -Reason 'O hook e tarefas agendadas executam com PowerShell 5.1; arquivo sem BOM UTF-8 com caracteres nao ASCII ou sintaxe invalida falha no interpretador efetivo.' -Action 'Adicionar BOM UTF-8 unico quando houver caracteres nao ASCII ou corrigir a sintaxe indicada; validar novamente com o parser do PowerShell 5.1.'
+}
+if ($ps51Parcial.Count -gt 0) {
+    Add-QualityFinding -Severity 'WARNING' -Component 'repository.powershell51.cobertura' -Detail "$($ps51Parcial.Count) script(s) .ps1 aprovados pela bateria substituta, sem o parser 5.1 real: $($ps51Parcial -join '; ')." -Reason 'powershell.exe nao existe neste host e nao ha build dele fora do Windows. Rodou o que independe dele e cobre o defeito documentado: BOM/nao-ASCII e BOM duplicado por bytes, parse no PowerShell 7 e varredura de construtos exclusivos do 7. Fica de fora o que so o 5.1 acusa em tempo de execucao -- cmdlet ou parametro inexistente na 5.1, e recurso de classe do 7.' -Action 'Aceitavel para trabalho de agente e CI. Antes de release, ou se o arquivo for hook ou tarefa agendada, revalidar num host Windows com o parser 5.1 real.'
 }
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 

@@ -25,6 +25,8 @@ Desconhecido tem de ser distinguivel de folgado.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name,protected-access,import-outside-toplevel,unused-argument
+
 import importlib.util
 import json
 import sys

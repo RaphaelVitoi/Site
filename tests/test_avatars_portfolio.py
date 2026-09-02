@@ -14,6 +14,8 @@ import pytest
 from engine.avatars.run_avatar import (
     assemble_context,
     clean_text_to_ascii,
+    main as run_main,
+    query_multimodal_cli,
 )
 
 
@@ -169,8 +171,6 @@ async def test_maverick_multimodal_agentic_pipeline():
             ],
         ),
     ):
-        from engine.avatars.run_avatar import main as run_main
-
         run_main()
 
         # Verifica se o Gemma 4b Vision foi invocado
@@ -189,8 +189,6 @@ async def test_maverick_multimodal_agentic_pipeline():
 
 def test_query_multimodal_cli_args():
     """Valida a geracao de comandos no query_multimodal_cli com threads e ngl."""
-    from engine.avatars.run_avatar import query_multimodal_cli
-
     persona_cfg = {
         "vision_model_path": "openbmb/MiniCPM-V-2_6-gguf",
         "temperature": 0.3,

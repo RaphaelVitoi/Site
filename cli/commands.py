@@ -786,7 +786,7 @@ async def _cmd_verify_keys(manager: QueueManager):
         }
         await manager.set_system_state("keys_last_audit", json.dumps(audit_payload, ensure_ascii=True))
 
-        runtime_file = Path(".cerebro/RUNTIME_KEYS_ROUTING_STATUS.md")
+        runtime_file = Path(".claude/RELATORIOS/RUNTIME_KEYS_ROUTING_STATUS.md")
         runtime_file.parent.mkdir(parents=True, exist_ok=True)  # noqa: ASYNC240
         lines = [
             "# Runtime Keys and Routing Status",
@@ -1068,7 +1068,7 @@ async def _cli_db_cleanup(argv: list, manager: QueueManager) -> None:
     days = int(argv[2]) if len(argv) > 2 else 15
     await manager.cleanup(days)
     deleted_files = 0
-    results_dir = Path(".cerebro/task_results")
+    results_dir = Path(".claude/RELATORIOS")
     if results_dir.exists():  # noqa: ASYNC240
         cutoff_time = time.time() - (days * 86400)
         for f in results_dir.glob("*.md"):  # noqa: ASYNC240

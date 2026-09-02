@@ -1,4 +1,5 @@
 """Modulo Orquestrador SOTA de APIs de Inferencia e Circuit Breaker."""
+from __future__ import annotations
 
 import asyncio
 import logging
