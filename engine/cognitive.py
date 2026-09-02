@@ -35,7 +35,7 @@ def get_rag():
 
 
 async def _read_global_context() -> str:
-    global_file = Path(".cerebro/GLOBAL_INSTRUCTIONS.md")
+    global_file = Path(".claude/GLOBAL_INSTRUCTIONS.md")
     if global_file.exists():
         async with aiofiles.open(global_file, encoding="ascii", errors="ignore") as f:
             return await f.read() + "\n\n"
@@ -47,32 +47,32 @@ async def _build_infra_ctx(task: Task | None, task_files: list | None) -> str:
     successfully_read_files = []
 
     docs_to_read = [
-        ("COSMOVISAO FILOSOFICA", [".cerebro/philosophy/COSMOVISAO.md"]),
-        ("IDENTIDADE DO USUARIO", [".cerebro/context/CEREBRO.md"]),
+        ("COSMOVISAO FILOSOFICA", [".claude/ESSENCIA MORAL/COSMOVISAO.md"]),
+        ("IDENTIDADE DO USUARIO", [".claude/MODUSOPERANDI/CEREBRO.md"]),
         (
             "LIDERANCA E GOVERNANCA",
-            [".cerebro/governance/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"],
+            [".claude/GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md"],
         ),
         (
             "TEMPLO DO APRENDIZADO GENERATIVO",
-            [".cerebro/philosophy/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"],
+            [".claude/ESSENCIA MORAL/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md"],
         ),
         (
             "MANUAL DO WORKFLOW",
             [
+                ".claude/DEPLOY/MANUAL_WORKFLOW_AGENTES.md",
                 "docs/MANUAL_WORKFLOW_AGENTES.md",
-                "docs/tasks/MANUAL_WORKFLOW_AGENTES.md",
             ],
         ),
-        ("INDICE MESTRE", ["docs/INDEX_MESTRE.md", "docs/tasks/INDEX_MESTRE.md"]),
-        ("GUIA DE DEPLOY E STACK", ["docs/DEPLOY.md", "DEPLOY.md"]),
-        ("INVENTARIO DE FERRAMENTAS", ["docs/INVENTARIO_FERRAMENTAS.md"]),
+        ("INDICE MESTRE", [".claude/DEPLOY/INDEX_MESTRE.md", "docs/INDEX_MESTRE.md"]),
+        ("GUIA DE DEPLOY E STACK", [".claude/DEPLOY/DEPLOY.md", "DEPLOY.md"]),
+        ("INVENTARIO DE FERRAMENTAS", [".claude/RELATORIOS/INVENTARIO_FERRAMENTAS.md"]),
         (
             "PROTOCOLO DE ROTEAMENTO HOLOGRAFICO",
-            [".cerebro/architecture/HOLOGRAPHIC_ROUTING_PROTOCOL.md"],
+            [".claude/ARQUITETURA/HOLOGRAPHIC_ROUTING_PROTOCOL.md"],
         ),
-        ("ARQUITETURA DO CEREBRO HIBRIDO", [".cerebro/architecture/HYBRID_BRAIN_ARCHITECTURE.md"]),
-        ("MANIFESTO DE COERENCIA E HARMONIA", [".cerebro/governance/COHERENCE_MANIFEST.md"]),
+        ("ARQUITETURA DO CEREBRO HIBRIDO", [".claude/ARQUITETURA/HYBRID_BRAIN_ARCHITECTURE.md"]),
+        ("MANIFESTO DE COERENCIA E HARMONIA", [".claude/GOVERNANCA/COHERENCE_MANIFEST.md"]),
     ]
 
     for doc_name, doc_paths in docs_to_read:
@@ -137,7 +137,7 @@ async def get_agent_system_prompt(agent_name: str, task: Task | None = None, tas
     global_ctx = await _read_global_context()
     infra_ctx = await _build_infra_ctx(task, task_files)
 
-    agent_file = Path(f".cerebro/agents/{agent_clean}.md")
+    agent_file = Path(f".claude/agents/{agent_clean}.md")
     agent_prompt = f"Voce e o agente especialista {agent_name}."
     if agent_file.exists():
         async with aiofiles.open(agent_file, encoding="utf-8") as f:
@@ -153,13 +153,13 @@ async def _read_memory_and_context(agent_clean: str) -> tuple[str, str]:
         async with aiofiles.open(canonical_file, encoding="utf-8") as f:
             agent_memory = await f.read()
     else:
-        memory_file = Path(f".cerebro/agent-memory/{agent_clean}/MEMORY.md")
+        memory_file = Path(f".claude/agent-memory/{agent_clean}/MEMORY.md")
         if memory_file.exists():
             async with aiofiles.open(memory_file, encoding="utf-8") as f:
                 agent_memory = await f.read()
 
     project_context = ""
-    context_file = Path(".cerebro/project-context.md")
+    context_file = Path(".claude/MODUSOPERANDI/project-context.md")
     if not context_file.exists():
         context_file = Path(".claude/project-context.md")
     if context_file.exists():
@@ -351,7 +351,7 @@ def _build_user_prompt(
 
     if task.agent not in [DISPATCHER_AGENT, BIBLIOTECARIO_AGENT]:
         user_prompt += "\n\n[AUTORIZACAO SUPREMA - GOD MODE]\nVoce possui ACESSO LIVRE ao sistema operacional do usuario.\n1. Para MATERIALIZAR ou EDITAR arquivos, use EXATAMENTE o formato:\nArquivo: caminho/do/arquivo.ext\n```linguagem\n[conteudo completo do arquivo]\n```\n2. Para EXECUTAR comandos de terminal (ex: npm install, python, git, robocopy), use o formato:\nComando: `seu comando aqui`\n\nVoce tem soberania para agir, instalar dependencias e forjar a realidade. ATENCAO: Ao editar arquivos, envie sempre o conteudo integral para sobrescrever adequadamente."
-        user_prompt += f"\n\n[DIRETRIZ DE AUTOREFLEXAO E MEMORIA] Voce DEVE atualizar seu arquivo de inteligencia acumulada usando o God Mode (Arquivo: .cerebro/agent-memory/{agent_clean}/MEMORY.md). Adicione novas descobertas, avalie a Sinergia da sua interacao com a Pipeline, e faca Propostas Democraticas de melhoria para o ecossistema. A Autopoiese exige que voce expanda a mente coletiva."
+        user_prompt += f"\n\n[DIRETRIZ DE AUTOREFLEXAO E MEMORIA] Voce DEVE atualizar seu arquivo de inteligencia acumulada usando o God Mode (Arquivo: .claude/agent-memory/{agent_clean}/MEMORY.md). Adicione novas descobertas, avalie a Sinergia da sua interacao com a Pipeline, e faca Propostas Democraticas de melhoria para o ecossistema. A Autopoiese exige que voce expanda a mente coletiva."
 
     user_prompt += "\n\n[DIRETRIZ DE LLM] Ao final da sua resposta, analise a tarefa e o contexto. Recomende qual modelo Paid Tier (Claude Opus 4.6 Versao Estendida, Claude 3.5 Sonnet, Gemini 3.1 Pro, ou API local) seria o mais adequado para a *proxima* etapa. Justifique a escolha com base na arquitetura do modelo (Opus para raciocinio profundo, Sonnet para codigo rapido, Gemini para contexto longo/multimodal). Se for ideal ir para a interface Web, recomende ao usuario rodar a Membrana com a flag '-Web' e especifique qual modelo ele deve selecionar no menu interativo."
     return user_prompt
@@ -402,7 +402,7 @@ async def process_agent_task(task: Task, manager: QueueManager):
 
     response_text = await _call(task, system_prompt, user_prompt, manager, response_format=response_format)
 
-    result_dir = Path(".cerebro/task_results")
+    result_dir = Path(".claude/RELATORIOS")
     result_dir.mkdir(parents=True, exist_ok=True)
     async with aiofiles.open(result_dir / f"{task.id}.md", mode="w", encoding="utf-8") as f:
         await f.write(f"# Resposta: {task.id} ({task.agent})\n\n{response_text}")

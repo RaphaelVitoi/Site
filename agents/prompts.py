@@ -130,7 +130,7 @@ async def get_agent_system_prompt(agent_name: str) -> str:
         agent_clean = agent_name.replace("@", "").replace("/", "").replace("\\", "").replace(".", "")
 
         # 1. Base Global (A Alma do Sistema)
-        global_content = _read_file_with_cache(str(Path(".cerebro/governance/GLOBAL_INSTRUCTIONS.md")))
+        global_content = _read_file_with_cache(str(Path(".claude/GOVERNANÇA/GLOBAL_INSTRUCTIONS.md")))
         if global_content:
             system_prompt_parts.append(f"=== INSTRUCOES GLOBAIS ===\n{global_content}\n\n")
 
@@ -189,7 +189,7 @@ async def get_agent_system_prompt(agent_name: str) -> str:
         system_prompt_parts.append(infra_ctx)
 
         # 3. A Parte: Identidade Especifica do Agente
-        agent_file = Path(f".cerebro/agents/{agent_clean}.md")
+        agent_file = Path(f".claude/agents/{agent_clean}.md")
         agent_content = _read_file_with_cache(str(agent_file))
         if agent_content:
             system_prompt_parts.append(f"=== SUA IDENTIDADE ESPECIFICA ({agent_name}) ===\n{agent_content}\n\n")

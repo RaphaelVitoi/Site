@@ -19,7 +19,7 @@ class AuditEngine:
 
     def __init__(self, manager):
         self.manager = manager
-        self.log_dir = Path(".cerebro/audit_logs")
+        self.log_dir = Path(".claude/AUDITORIA")
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.active_buffer = []
         self.MAX_BUFFER: int = 50

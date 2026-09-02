@@ -76,7 +76,8 @@
     "markdownlint-cli": "^0.49.1",
     "tar": "^7.5.21",
     "undici": "^6.27.1",
-    "deepmerge-ts": "8.0.1"
+    "deepmerge-ts": "8.0.1",
+    "mysql2": "^3.22.0"
   },
   "allowScripts": {
     "@prisma/engines": true,

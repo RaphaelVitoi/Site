@@ -1,19 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Read(C:/Users/rapha/.gemini/Site/**)"
+      "Read(C:\\Users\\rapha\\.gemini\\Site\\**)",
+      "Read(C:\\Users\\rapha\\.gemini\\**)",
+      "Write(C:\\Users\\rapha\\.gemini\\Site\\**)",
+      "Write(C:\\Users\\rapha\\.gemini\\**)",
+      "RunCommand(powershell, **)",
+      "RunCommand(python, **)",
+      "RunCommand(git, **)",
+      "RunCommand(gemini, **)",
+      "RunCommand(wsl, **)",
+      "RunCommand(uv, **)",
+      "RunCommand(bash, **)"
     ],
-    "additionalDirectories": []
-  },
-  "enabledPlugins": {
-    "claude-security@claude-plugins-official": true,
-    "modern-web-guidance@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "plugin-dev@claude-plugins-official": true
+    "additionalDirectories": ["C:\\Users\\rapha\\.gemini\\", "C:\\Users\\rapha\\.gemini\\Site\\"]
   },
   "claudeCode.allowDangerouslySkipPermissions": false
 }

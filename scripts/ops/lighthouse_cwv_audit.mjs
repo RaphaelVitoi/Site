@@ -42,8 +42,9 @@ const NON_PRODUCTION_INPUT_DIRECTORIES = new Set(['.git', '.next', 'coverage', '
 
 async function listProductionInputs(root, directory = root) {
   const entries = await readdir(directory, { withFileTypes: true });
+  const sortedEntries = entries.toSorted((left, right) => left.name.localeCompare(right.name));
   const files = [];
-  for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+  for (const entry of sortedEntries) {
     const candidate = path.join(directory, entry.name);
     if (entry.isDirectory()) {
       if (!NON_PRODUCTION_INPUT_DIRECTORIES.has(entry.name)) {
@@ -152,8 +153,10 @@ async function main() {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch((error) => {
+  try {
+    await main();
+  } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 1;
-  });
+  }
 }

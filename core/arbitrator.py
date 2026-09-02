@@ -4,11 +4,11 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import json
 import logging
+import math
 import time
 from typing import Any, ClassVar
 
 from core.schemas import Task
-import math
 
 try:
     import nexus_core_rust  # type: ignore # pylint: disable=import-error

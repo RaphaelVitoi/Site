@@ -24,14 +24,28 @@ except ImportError:
 from aiohttp import web
 from pydantic import BaseModel, ValidationError
 
+from core.perspective_schemas import (
+    PerspectivaResult,
+    PerspectiveCalculationRequest,
+    PerspectiveTreeRequest,
+    PerspectiveTreeResponse,
+    PmevHeatmapRequest,
+    PmevHeatmapResponse,
+    SolverImportRequest,
+)
 import core.runtime as _te
 from core.schemas import RAGQuery, Task
+from engine.bayesian_range import calculate_pmev_call_threshold
+from engine.solver_importers import UniversalSolverImporter
+from engine.solver_importers.deep_solver import DeepSolverImporter
+from engine.vitoi_perspective_engine import VitoiPerspectiveEngine
 from llm.budget import _RATE_LIMITERS  # pyright: ignore[reportPrivateUsage]
 from utils.cache import _read_file_cached_internal  # pyright: ignore[reportPrivateUsage]
 from utils.cache import cache as sota_cache
 from utils.harmonizer import harmonizer
 from utils.resources import ResourceGuard
 from utils.storage import buckets as sota_buckets
+from utils.web_search import get_search_engine_from_env
 
 BASE_WORKSPACE_DIR: Path = Path(__file__).resolve().parent.parent.parent
 
@@ -123,8 +137,8 @@ async def handle_get_task_result(request: web.Request) -> web.Response:
 
         # SOTA: Isolamento de I/O bloqueante (disco) para fora do Event Loop
         def _resolve_and_read():
-            result_path = (Path(".cerebro/task_results") / f"{task_id}.md").resolve()
-            base_dir = Path(".cerebro/task_results").resolve()
+            result_path = (Path(".claude/RELATORIOS") / f"{task_id}.md").resolve()
+            base_dir = Path(".claude/RELATORIOS").resolve()
             if not str(result_path).startswith(str(base_dir)):
                 return False, "INVALID_PATH"
             if not result_path.exists():
@@ -662,8 +676,6 @@ async def handle_web_search(request: web.Request) -> web.Response:
 
         provider = request.rel_url.query.get("provider", "auto")
 
-        from utils.web_search import get_search_engine_from_env  # noqa: PLC0415
-
         engine = get_search_engine_from_env()
 
         resp = await engine.search(query, max_results=max_results, preferred_provider=provider)  # type: ignore
@@ -697,9 +709,6 @@ async def handle_web_search(request: web.Request) -> web.Response:
 
 async def handle_calculate_perspective(request: web.Request) -> web.Response:
     """Calcula pontualmente a Perspectiva Matematica (PMev) VITOI."""
-    from core.perspective_schemas import PerspectivaResult, PerspectiveCalculationRequest  # noqa: PLC0415
-    from engine.vitoi_perspective_engine import VitoiPerspectiveEngine  # noqa: PLC0415
-
     try:
         data = await request.json()
         req = PerspectiveCalculationRequest.model_validate(data)
@@ -763,9 +772,6 @@ async def handle_calculate_perspective(request: web.Request) -> web.Response:
 
 async def handle_simulate_perspective_tree(request: web.Request) -> web.Response:
     """Executa a simulacao recursiva da arvore de decisao de Perspectiva Matematica."""
-    from core.perspective_schemas import PerspectiveTreeRequest, PerspectiveTreeResponse  # noqa: PLC0415
-    from engine.vitoi_perspective_engine import VitoiPerspectiveEngine  # noqa: PLC0415
-
     try:
         data = await request.json()
         req = PerspectiveTreeRequest.model_validate(data)
@@ -817,9 +823,6 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
 
 async def handle_import_solver_tree(request: web.Request) -> web.Response:
     """Importa e normaliza arvores de DeepSolver, GTOWizard, Monker, HRC Pro e PioSolver."""
-    from core.perspective_schemas import SolverImportRequest  # noqa: PLC0415
-    from engine.solver_importers import UniversalSolverImporter  # noqa: PLC0415
-
     try:
         data = await request.json()
         req = SolverImportRequest.model_validate(data)
@@ -841,10 +844,6 @@ async def handle_import_solver_tree(request: web.Request) -> web.Response:
 
 async def handle_pmev_heatmap(request: web.Request) -> web.Response:
     """Gera matriz comparativa 13x13 (DeepSolver vs. PMev) e analise diferencial de combos."""
-    from core.perspective_schemas import PmevHeatmapRequest, PmevHeatmapResponse  # noqa: PLC0415
-    from engine.bayesian_range import calculate_pmev_call_threshold  # noqa: PLC0415
-    from engine.solver_importers.deep_solver import DeepSolverImporter  # noqa: PLC0415
-
     try:
         data = await request.json()
         req = PmevHeatmapRequest.model_validate(data)

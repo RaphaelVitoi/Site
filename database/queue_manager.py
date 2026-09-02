@@ -1039,9 +1039,9 @@ class QueueManager:
     def _purge_obsolete_files(self, cutoff_date: datetime) -> None:
         """Itera sobre os diretorios alvo aniquilando arquivos inativos."""
         directories_to_clean = [
-            ".cerebro/logs/audit",
-            ".cerebro/logs",
-            ".cerebro/task_results",
+            ".claude/AUDITORIA",
+            ".claude/logs",
+            ".claude/RELATORIOS",
         ]
         empty_dirs = []
         deleted_count = 0

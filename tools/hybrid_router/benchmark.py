@@ -10,13 +10,12 @@ from __future__ import annotations
 import asyncio
 from dataclasses import asdict, dataclass, field
 import json
+import math
 import os
 import time
 from typing import Any
 
 import httpx
-
-import math
 
 
 @dataclass(frozen=True)
