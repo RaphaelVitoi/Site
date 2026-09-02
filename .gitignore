@@ -166,3 +166,6 @@ null
 skills-lock.json
 
 .agentsmithy
+
+# Lock transitorio do ledger de calibracao (Register-AgentCalibrationFeedback.ps1)
+reports/agent-calibration/*.lock
