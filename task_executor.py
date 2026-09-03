@@ -31,6 +31,7 @@ from agents.execution import (
 
 # SOTA 8.0: Importa o novo cerebro de arbitragem
 import core.config as _core_config
+from core.mcp_routing import apply_mcp_addon_routing
 from core.schemas import Task
 from database.queue_manager import QueueManager
 
@@ -184,7 +185,7 @@ def _intelligent_route_task(description: str, explicit_agent: str | None = None)
     """
     Intercepta o roteamento para aplicar a Lei da Friccao Zero.
     """
-    metadata = {}
+    metadata = apply_mcp_addon_routing(description)
 
     # SOTA: Avaliacao preguicosa (Lazy Evaluation) para contencao de alocacao desnecessaria
     # FIX: A Hierarquia Absoluta e inviolavel. O Tier 1 (@chico) nao sofre downgrade por complexidade.

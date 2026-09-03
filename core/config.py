@@ -109,6 +109,7 @@ FAST_OPERATIONS_MODELS = ()
 PROTECTED_AGENTS_FROM_CLEANUP = ()
 HANDOFF_PIPELINE = {}
 WORKFLOW_FLAGS = {}
+MCP_ADDON_ROUTING = {}
 ROUTING_HEURISTICS = {}
 AGENT_SLA = {}
 MODEL_HEALTH_GATE = {}
@@ -218,7 +219,7 @@ def modelo_do_agente(agente: str, *, override: str | None = None) -> str | None:
 def _reload_system_config() -> bool:
     # pylint: disable=global-statement
     global SYSTEM_CONFIG, ROUTING_CONFIG, MODEL_ROUTING, DEEP_THINKING_MODELS, FAST_OPERATIONS_MODELS
-    global PROTECTED_AGENTS_FROM_CLEANUP, HANDOFF_PIPELINE, WORKFLOW_FLAGS
+    global PROTECTED_AGENTS_FROM_CLEANUP, HANDOFF_PIPELINE, WORKFLOW_FLAGS, MCP_ADDON_ROUTING
     global ROUTING_HEURISTICS, AGENT_SLA, MODEL_HEALTH_GATE, OPENROUTER_ALTERNATIVE_MODELS
     global HEURISTIC_THRESHOLD, TECHNICAL_AGENTS, PRIORITY_WEIGHTS
     try:
@@ -247,6 +248,7 @@ def _reload_system_config() -> bool:
                 )
                 HANDOFF_PIPELINE = SYSTEM_CONFIG.get("handoff_pipeline", {})
                 WORKFLOW_FLAGS = SYSTEM_CONFIG.get("workflow_flags", {})
+                MCP_ADDON_ROUTING = SYSTEM_CONFIG.get("mcp_addon_routing", {})
                 ROUTING_HEURISTICS = SYSTEM_CONFIG.get("routing_heuristics", {})
                 AGENT_SLA = SYSTEM_CONFIG.get("agent_sla", {})
                 MODEL_HEALTH_GATE = SYSTEM_CONFIG.get("model_health_gate", {})
