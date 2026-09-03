@@ -343,10 +343,26 @@ e auditada.
 Ao encerrar um handoff, exceto se o administrador adiantar novo comando ou
 dispensar a etapa, solicitar feedback textual e uma nota de `0` a `10`, que
 **aceita decimal**. A nota entra no ledger **literal, sem arredondamento e sem
-conversão de escala** — `0.8` é `0.8`, não `1`. Até 2026-09-02 esta linha dizia
-"nota inteira", enquanto o script já validava `[decimal]` e o ledger já
-guardava `7.5` e `0.8`: era a prosa que estava errada, e o Tier 0 alinhou o
-texto ao comportamento medido.
+conversão de escala** — `7.5` é `7.5`, não `8`. Até 2026-09-02 esta linha dizia
+"nota inteira", enquanto o script já validava `[decimal]`: era a prosa que
+estava errada, e o Tier 0 alinhou o texto ao comportamento medido.
+
+**A mesma linha citava `0.8` como exemplo de nota gravada literal, e o exemplo
+era o próprio defeito que ela proíbe.** Medido em 2026-09-02: a nota da sessão
+`claude-opus5-site-2026-09-02-integridade` foi dada como **8** e entrou no
+ledger como **0.8** — divisão por dez, conversão de escala. A regra escrita para
+proibir conversão de escala foi ilustrada com o produto de uma. O valor errado
+propagou para esta prosa e para a memória persistente do agente antes que
+alguém o notasse.
+
+Ledger é append-only: o registro errado **não se reescreve**. Corrige-se por
+`Record-AgentCalibrationCorrection.ps1`, que anexa um registro `correction`
+apontando o `event_id` do alvo, com valor anterior, valor correto, motivo e
+autoridade. E `New-AgentCalibrationDailyEvidence.ps1` **aplica** a correção
+antes de qualquer contagem — sem isso ela seria decoração, e o valor errado
+seguiria alimentando média, densidade e hipótese. A saída declara
+`correcoes_no_ledger` e `correcoes_aplicadas`.
+
 Registrar somente a resposta recebida pelo script
 `Register-AgentCalibrationFeedback.ps1`; não inventar avaliação, nota ou
 aprendizado. O ledger correspondente é encadeado por SHA-256, deve ser
@@ -461,8 +477,32 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 Todo commit e registro deve declarar sinteticamente:
 
 - **SHA:** Hash criptográfico Git
-- **Assinatura:** Autor e Tier correspondente (ex: `Chico v8.0 GOLD [Tier 1.B]`)
+- **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5 [Tier 1.B]`)
 - **Propósito:** Razão de ser técnica da alteração e escopo protegido.
+
+### Chico é o grupo; a assinatura é individual
+
+**Chico é a identidade do projeto como grupo** — o que a malha é quando age em
+conjunto, e o contexto agêntico do sistema interagindo consigo mesmo. É por isso
+que o protocolo se chama Chico SOTA v8.0 GOLD.
+
+**A assinatura é isolada, sempre individual.** O grupo não escreve registro nem
+commit; quem escreve é um indivíduo dentro dele — `Claude Opus 5 [Tier 1.B]`,
+`Codex [Tier 1.B]`, `antigravity@gemini-3.7-flash`. Os dois níveis coexistem e
+não se substituem.
+
+**Medição que originou a emenda, 2026-09-02.** O exemplo desta mesma linha
+trazia `Chico v8.0 GOLD [Tier 1.B]` — o grupo ocupando o campo do autor —, e
+duas linhas abaixo a seção exige que cada agente seja distinguível. Oito
+registros em `reports/` seguiram o exemplo e estão assinados `chico` ou
+`chico@v8-gold`, sem linhagem: são amostras sem origem identificada, do mesmo
+tipo que o portão de calibração recusa quando falta `session_id`. Os outros 59
+discriminam corretamente, e os doze commits mais recentes assinam
+`Claude Opus 5 <noreply@anthropic.com>` — **prática medida vencendo exemplo
+citado**, que é a §4 da raiz aplicada ao próprio documento.
+
+Os oito registros antigos **não se reescrevem**: histórico publicado não
+retroage. A divergência fica declarada, e o exemplo corrigido impede que cresça.
 
 ### Identidade de autoria — agente não assina como humano
 
