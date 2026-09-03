@@ -86,6 +86,32 @@ if (Test-Path -LiteralPath $ledgerPath) {
     })
 }
 
+# CORRECOES SAO APLICADAS AQUI, antes de qualquer contagem.
+#
+# O ledger e append-only: nota gravada errada nao se reescreve, se corrige por
+# registro `correction` anexado apontando o `event_id` do alvo. Se a automacao
+# nao APLICASSE a correcao, ela viraria decoracao -- o valor errado seguiria
+# alimentando media, densidade, outlier e hipotese, e o ledger diria uma coisa
+# enquanto a evidencia dizia outra.
+#
+# Motivo medido, 2026-09-02: a nota da sessao
+# `claude-opus5-site-2026-09-02-integridade` foi dada como 8 e gravada como 0.8.
+$correcoes = @()
+if (Test-Path -LiteralPath $ledgerPath) {
+    $correcoes = @(Get-Content -LiteralPath $ledgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object {
+        $_.record_type -eq 'correction'
+    })
+}
+$correcoesAplicadas = 0
+foreach ($correcao in $correcoes) {
+    $campo = [string]$correcao.field
+    $alvos = @($allFeedback | Where-Object { [string]$_.event_id -eq [string]$correcao.target_event_id })
+    foreach ($alvo in $alvos) {
+        $alvo | Add-Member -NotePropertyName $campo -NotePropertyValue $correcao.corrected_value -Force
+        $correcoesAplicadas++
+    }
+}
+
 # O dia SELECIONA quais sessoes entram na avaliacao desta noite; ele NAO e a
 # janela de contagem.
 #
@@ -212,6 +238,8 @@ $gateWindowReason = if ($sessoesInconsistentes.Count -gt 0 -and -not $structural
     sessoes_com_densidade_relevante = $sessoesComDensidade
     sessoes_ativas_no_dia          = $sessoesAtivasNoDia
     feedback_count_acumulado       = $universo.Count
+    correcoes_no_ledger            = $correcoes.Count
+    correcoes_aplicadas            = $correcoesAplicadas
     feedback_count_no_dia          = $recordsDoDia.Count
     feedback_sem_sessao            = $feedbackSemSessao
     por_sessao                     = $porSessao

@@ -12,6 +12,23 @@ if ([string]::IsNullOrWhiteSpace($LedgerPath)) {
     $LedgerPath = Join-Path $repositoryRoot 'reports\agent-calibration\feedback-ledger.jsonl'
 }
 
+function Get-LiteralJsonString {
+    <#
+      Recupera o valor de um campo string direto do TEXTO CRU da linha JSONL,
+      sem passar por ConvertFrom-Json. Existe porque o PowerShell 7 converte
+      string ISO 8601 em DateTime, e re-serializar o objeto convertido produz
+      texto diferente do original -- o que faria um ledger integro reprovar.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Line,
+        [Parameter(Mandatory)][string]$Name
+    )
+    $pattern = '"' + [regex]::Escape($Name) + '"\s*:\s*"(?<valor>[^"]*)"'
+    $match = [regex]::Match($Line, $pattern)
+    if (-not $match.Success) { return $null }
+    return $match.Groups['valor'].Value
+}
+
 function Get-Sha256Hex {
     param([Parameter(Mandatory)][string]$Text)
     $sha = [System.Security.Cryptography.SHA256]::Create()
@@ -43,9 +60,14 @@ for ($index = 0; $index -lt $lines.Count; $index++) {
     # strings. Hashing the converted value would make a valid cross-runtime
     # ledger appear altered. Preserve the literal JSON timestamp in the
     # canonical payload; it is emitted by all writers as an ISO 8601 string.
-    $timestampMatch = [regex]::Match($lines[$index], '"recorded_at"\s*:\s*"(?<timestamp>[^"]+)"')
-    if (-not $timestampMatch.Success) { throw "Missing literal recorded_at string at line $($index + 1)." }
-    $recordedAt = $timestampMatch.Groups['timestamp'].Value
+    #
+    # A protecao vale para TODO campo de data, nao so `recorded_at`. Medido em
+    # 2026-09-02: o portao por sessao acrescentou `session_started_at` ao
+    # escritor sem estender esta protecao, e o primeiro registro a carrega-lo
+    # quebrou a cadeia. Um segundo caso especial adiaria o mesmo defeito para o
+    # proximo campo de data; a generalizacao o fecha.
+    $recordedAt = Get-LiteralJsonString -Line $lines[$index] -Name 'recorded_at'
+    if ($null -eq $recordedAt) { throw "Missing literal recorded_at string at line $($index + 1)." }
     $payload = [ordered]@{
         schema_version = [string]$row.schema_version
         sequence       = [int]$row.sequence
@@ -55,7 +77,14 @@ for ($index = 0; $index -lt $lines.Count; $index++) {
     }
     foreach ($property in $row.PSObject.Properties) {
         if ($property.Name -notin @('schema_version', 'sequence', 'record_type', 'recorded_at', 'previous_hash', 'record_hash')) {
-            $payload[$property.Name] = $property.Value
+            if ($property.Value -is [datetime]) {
+                $literal = Get-LiteralJsonString -Line $lines[$index] -Name $property.Name
+                if ($null -eq $literal) { throw "Missing literal $($property.Name) string at line $($index + 1)." }
+                $payload[$property.Name] = $literal
+            }
+            else {
+                $payload[$property.Name] = $property.Value
+            }
         }
     }
     $actualHash = Get-Sha256Hex -Text ($payload | ConvertTo-Json -Compress -Depth 8)
