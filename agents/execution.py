@@ -23,6 +23,7 @@ from agents.dispatcher import (
 )
 from agents.fallback import _create_dispatcher_fallback_plan
 import core.runtime as te
+from core.mcp_routing import MCP_OUTPUT_KEYS, apply_mcp_addon_routing
 from core.schemas import Task
 from database.queue_manager import QueueManager
 import engine.cognitive as local_engine
@@ -103,6 +104,17 @@ async def process_agent_task(task: Task, manager: QueueManager, timing_metrics: 
             f"[[{te._c(task.agent)}]{task.agent}[/]] [bold green]BYPASS COGNITIVO[/] Operacao estatica de I/O identificada. Contornando LLM."
         )
         return task.description
+
+    # Recalcula a selecao para a descricao atual. Isso evita que uma subtask
+    # herde silenciosamente o addon escolhido para o pai e torna o uso
+    # observavel na DAL sem iniciar servidores ou chamadas externas.
+    original_metadata = dict(task.metadata or {})
+    routed_metadata = apply_mcp_addon_routing(task.description, original_metadata)
+    if routed_metadata != original_metadata:
+        object.__setattr__(task, "metadata", routed_metadata)
+        mcp_patch = {key: routed_metadata[key] for key in MCP_OUTPUT_KEYS if key in routed_metadata}
+        if mcp_patch:
+            await manager.update_task_metadata(task.id, mcp_patch, merge=True)
 
     agent_clean = task.agent.replace("@", "")
     strategic_agents = (AGENT_MAVERICK, AGENT_PESQUISADOR, AGENT_ARCHITECT)
@@ -233,6 +245,11 @@ async def _enqueue_subtasks(
 
         if st.metadata:
             meta.update(st.metadata)
+
+        # O plano MCP e contextual, nao uma heranca cega do pai. Pedidos
+        # explicitos continuam validos; selecoes automaticas sao recalculadas
+        # para a descricao concreta da subtask.
+        meta = apply_mcp_addon_routing(st.description, meta)
 
         new_task = Task(
             id=sub_id,

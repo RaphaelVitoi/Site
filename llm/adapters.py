@@ -109,6 +109,73 @@ class AnthropicAdapter:
         return limite is not None and max_tokens > limite
 
     @staticmethod
+    def e_geracao_atual(alias: str) -> bool:
+        """O alias esta no registro E e Anthropic.
+
+        Existe porque nem toda chamada Anthropic do projeto vai para a geracao 5:
+        `cli/commands.py` valida chave de API com `claude-3-haiku-20240307`, que
+        e geracao 3, nao esta no registro e ACEITA amostragem legada. Sanear
+        aquele ping como se fosse Opus 5 removeria `temperature` de um modelo que
+        o aceita, e o caminho legado deixaria de funcionar sem que nada acusasse.
+
+        A pergunta certa nunca foi "o codigo manda temperature?", e sim "manda
+        para um modelo que a rejeita?".
+        """
+        try:
+            return get(alias).adapter is AdapterType.ANTHROPIC
+        except KeyError:
+            return False
+
+    @staticmethod
+    def build_http(
+        alias: str,
+        messages: list[dict[str, Any]],
+        *,
+        max_tokens: int | None = None,
+        system: str | list[dict[str, Any]] | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
+    ) -> tuple[dict[str, Any], dict[str, str]]:
+        """`build()` traduzido para HTTP cru: devolve (corpo, headers_extra).
+
+        `build()` monta o payload do SDK, onde `betas` e argumento nomeado de
+        `client.beta.messages.create`. No HTTP cru esse campo NAO existe no
+        corpo: vira o header `anthropic-beta`. Mandar `betas` dentro do JSON e
+        um 400 silencioso  o servidor recusa campo desconhecido, e o beta que
+        se queria ativar nunca chega. `fallbacks`, ao contrario, e campo de
+        corpo e permanece onde esta.
+        """
+        req = AnthropicAdapter.build(
+            alias, messages, max_tokens=max_tokens, system=system, tools=tools, **kwargs
+        )
+        betas = req.pop("betas", None)
+        headers = {"anthropic-beta": ", ".join(betas)} if betas else {}
+        return req, headers
+
+    @staticmethod
+    def extrair_texto(resposta: Any) -> str:
+        """O primeiro bloco de `content` nao e necessariamente o texto.
+
+        Com thinking adaptativo  ligado por PADRAO em Opus 5  o bloco 0 costuma
+        ser `thinking`, que nao tem chave `text`. Indexar `content[0]["text"]`
+        levanta KeyError exatamente nos modelos para os quais este projeto
+        roteia. E `display` omitido nao ajuda: o texto vem vazio, mas o bloco
+        continua existindo.
+
+        Aceita dict (HTTP cru) e objeto do SDK.
+        """
+        blocos = resposta.get("content") if isinstance(resposta, dict) else getattr(resposta, "content", None)
+        partes: list[str] = []
+        for bloco in blocos or []:
+            tipo = bloco.get("type") if isinstance(bloco, dict) else getattr(bloco, "type", None)
+            if tipo != "text":
+                continue
+            texto = bloco.get("text") if isinstance(bloco, dict) else getattr(bloco, "text", "")
+            if texto:
+                partes.append(texto)
+        return "".join(partes)
+
+    @staticmethod
     def instrucao_mid_conversation(alias: str, texto: str) -> dict[str, Any]:
         """Bloco de instrucao do operador que NAO invalida o prefixo cacheado.
 
@@ -127,8 +194,32 @@ class AnthropicAdapter:
     @staticmethod
     def houve_recusa(response: Any) -> bool:
         """`stop_reason == 'refusal'` chega como HTTP 200. Checar antes de ler
-        `content`, ou o codigo trata uma recusa como resposta vazia."""
+        `content`, ou o codigo trata uma recusa como resposta vazia.
+
+        Aceita dict (HTTP cru) e objeto do SDK: a versao anterior so fazia
+        `getattr`, entao devolvia False para TODA resposta vinda de
+        `await response.json()`  isto e, para os dois unicos caminhos de chamada
+        Anthropic que este projeto executa.
+        """
+        if isinstance(response, dict):
+            return response.get("stop_reason") == "refusal"
         return getattr(response, "stop_reason", None) == "refusal"
+
+    @staticmethod
+    def motivo_da_recusa(response: Any) -> str:
+        """Categoria e explicacao de `stop_details`, quando houver.
+
+        `stop_details` so vem preenchido quando `stop_reason == 'refusal'`; em
+        qualquer outro caso e nulo, e ler seus campos sem checar antes levanta.
+        """
+        detalhes = response.get("stop_details") if isinstance(response, dict) else getattr(response, "stop_details", None)
+        if not detalhes:
+            return "recusa sem stop_details"
+        if isinstance(detalhes, dict):
+            categoria, explicacao = detalhes.get("category"), detalhes.get("explanation")
+        else:
+            categoria, explicacao = getattr(detalhes, "category", None), getattr(detalhes, "explanation", None)
+        return f"{categoria or 'categoria nao declarada'}: {explicacao or 'sem explicacao'}"
 
 
 # ==============================================================================

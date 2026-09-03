@@ -8,6 +8,7 @@ import json
 import logging
 
 import core.runtime as te
+from core.mcp_routing import apply_mcp_addon_routing
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from utils.heuristics import _calculate_heuristic_score
@@ -198,6 +199,7 @@ async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
             if code not in existing_reasons:
                 existing_reasons.append(code)
         meta["reason_codes"] = existing_reasons
+        meta = apply_mcp_addon_routing(f"{task.description} {spec['description']}", meta)
         depends_on = [created_ids[idx] for idx in spec["depends_on"] if idx < len(created_ids)]
         if depends_on:
             meta["depends_on"] = depends_on

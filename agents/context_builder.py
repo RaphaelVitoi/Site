@@ -11,6 +11,7 @@ import time
 
 from agents.prompts import get_agent_system_prompt
 import core.runtime as te
+from core.mcp_routing import mcp_addon_prompt_data, resolve_mcp_addons
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
@@ -443,6 +444,22 @@ def _inject_domain_skills(task: Task) -> str:
     return skill_blocks.get(domain, "")
 
 
+def _inject_mcp_addons(task: Task) -> str:
+    """Informa apenas os addons MCP selecionados para a tarefa atual."""
+    decision = resolve_mcp_addons(task.description, task.metadata)
+    prompt_data = mcp_addon_prompt_data(decision)
+    if not prompt_data:
+        return ""
+
+    lines = [
+        "\n\n[MCP ADDONS SELECIONADOS - USO LAZY E AUDITAVEL]\n",
+        f"Ordem recomendada: {', '.join(name for name, _ in prompt_data)}.\n",
+        "Use somente se a ferramenta estiver registrada nesta sessao; nao invente ferramentas, nao faca chamadas redundantes e prefira leitura antes de mutacao.\n",
+    ]
+    lines.extend(f"- {name}: {instruction}\n" for name, instruction in prompt_data)
+    return enforce_pure_ascii("".join(lines))
+
+
 async def _assemble_prompt(
     task: Task,
     project_context: str,
@@ -477,6 +494,8 @@ async def _assemble_prompt(
         )
     else:
         user_prompt += _inject_domain_skills(task)
+
+    user_prompt += _inject_mcp_addons(task)
 
     user_prompt = _add_autonomy_and_guidelines(user_prompt, task, agent_clean, autonomy_mode)
     return system_prompt, user_prompt

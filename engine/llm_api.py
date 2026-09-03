@@ -102,12 +102,20 @@ async def call_anthropic(
         "x-api-key": api_key,
         "anthropic-version": "2023-06-01",
     }
-    data = {
-        "model": model,
-        "max_tokens": 4096,
-        "system": system_prompt,
-        "messages": [{"role": "user", "content": user_prompt}],
-    }
+    mensagens = [{"role": "user", "content": user_prompt}]
+    if AnthropicAdapter.e_geracao_atual(model):
+        # O adaptador decide max_tokens pelo registro, liga thinking adaptativo,
+        # aplica effort e converte `betas` em header. O 4096 fixo que estava aqui
+        # ignorava que a geracao 5 comporta 128k.
+        data, headers_extra = AnthropicAdapter.build_http(model, mensagens, system=system_prompt)
+        headers.update(headers_extra)
+    else:
+        data = {
+            "model": model,
+            "max_tokens": 4096,
+            "system": system_prompt,
+            "messages": mensagens,
+        }
     if response_format:
         logger.warning("[SOTA RAG] Anthropic API nativa nao suporta json_schema estrito. Passando ignorado.")
     async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
@@ -115,7 +123,9 @@ async def call_anthropic(
             error_text = await response.text()
             raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
         result = await response.json()
-        text = result["content"][0]["text"]
+        if AnthropicAdapter.houve_recusa(result):
+            raise RuntimeError(f"Recusa da Anthropic (HTTP 200): {AnthropicAdapter.motivo_da_recusa(result)}")
+        text = AnthropicAdapter.extrair_texto(result)
         usage = result.get("usage", {})
         return text, usage
 

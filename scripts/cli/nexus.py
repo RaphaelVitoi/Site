@@ -39,6 +39,7 @@ if str(BASE_DIR) not in sys.path:
     sys.path.append(str(BASE_DIR))
 
 # pylint: disable=wrong-import-position
+from core.mcp_routing import apply_mcp_addon_routing  # noqa: E402
 from core.schemas import Task  # noqa: E402
 from database.queue_manager import QueueManager  # noqa: E402
 from utils.env_loader import load_env  # noqa: E402
@@ -287,6 +288,11 @@ async def add_task(
         metadata["cortex_override"] = True
         metadata["cortex_override_rationale"] = rationale
         console.print(f"[bold red]CORTEX_OVERRIDE ativado. Bypass registrado: {rationale}[/]")
+
+    # Seleciona os addons MCP por intencao no momento da entrada. Nenhum
+    # servidor e iniciado aqui; o worker recebe apenas um plano auditavel e
+    # lazy, que sera recalculado para cada subtask.
+    metadata = apply_mcp_addon_routing(desc_text, metadata)
 
     # Friccao zero: Em vez de sub-processos ou requests falhos, inserimos direto na malha DAG.
     task_id = f"TASK-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S-%f')}"

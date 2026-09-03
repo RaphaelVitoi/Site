@@ -46,6 +46,105 @@
         "prefer_cost_saving_mode": true,
         "anthropic_last": true
     },
+    "mcp_addon_routing": {
+        "enabled": true,
+        "mode": "lazy",
+        "default_threshold": 2,
+        "max_auto_addons": 3,
+        "addons": {
+            "sequential-thinking": {
+                "order": 10,
+                "minimum_score": 2,
+                "minimum_words": 80,
+                "terms": {
+                    "sequential thinking": 8,
+                    "sequentialthinking": 8,
+                    "raciocinio": 3,
+                    "decompos": 3,
+                    "planej": 2,
+                    "arquitet": 2,
+                    "debug": 2,
+                    "causa raiz": 3,
+                    "tradeoff": 2,
+                    "incerteza": 2,
+                    "ambigu": 2,
+                    "prova": 2,
+                    "multietapa": 3,
+                    "multi-step": 3,
+                    "complex": 2,
+                    "epico": 3,
+                    "sistema inteiro": 3,
+                    "refatorar tudo": 3,
+                    "modulo completo": 3
+                },
+                "explicit_terms": [
+                    "sequential thinking",
+                    "sequentialthinking",
+                    "raciocinio sequencial"
+                ],
+                "purpose": "Decomposicao iterativa e verificacao de tarefas complexas ou ambiguas.",
+                "prompt": "Se o servidor estiver registrado, use sequentialthinking para decompor a tarefa em passos verificaveis; nao invente a ferramenta nem repita etapas sem ganho informativo."
+            },
+            "mcp-server-neon": {
+                "order": 20,
+                "minimum_score": 3,
+                "terms": {
+                    "neon": 10,
+                    "postgres": 8,
+                    "postgresql": 8,
+                    "database": 2,
+                    "banco": 2,
+                    "sql": 2,
+                    "schema": 2,
+                    "migra": 2,
+                    "query": 2,
+                    "prisma": 2,
+                    "branch": 2,
+                    "tuning": 2,
+                    "slow query": 3
+                },
+                "explicit_terms": [
+                    "neon",
+                    "postgres",
+                    "postgresql"
+                ],
+                "blocked_terms": [
+                    "sqlite",
+                    "sqlite3",
+                    "chromadb",
+                    "lancedb"
+                ],
+                "block_without_explicit": true,
+                "purpose": "Inspecao, consulta e tuning de PostgreSQL hospedado no Neon.",
+                "prompt": "Se o servidor estiver registrado, comece por leitura e schema no Neon; explique antes de qualquer run_sql ou migracao e nunca execute mutacao destrutiva sem autorizacao explicita."
+            },
+            "firebase-mcp-server": {
+                "order": 30,
+                "minimum_score": 3,
+                "terms": {
+                    "firebase": 10,
+                    "firestore": 8,
+                    "firebase auth": 8,
+                    "firebase functions": 8,
+                    "cloud functions": 4,
+                    "security rules": 4,
+                    "firebase hosting": 6,
+                    "hosting": 2,
+                    "emulator": 3,
+                    "firebase storage": 6,
+                    "storage": 2,
+                    "sdk": 2
+                },
+                "explicit_terms": [
+                    "firebase",
+                    "firestore",
+                    "firebase auth"
+                ],
+                "purpose": "Contexto de Firebase, Firestore, Auth, Functions, Hosting e Security Rules.",
+                "prompt": "Se o servidor estiver registrado, leia primeiro projeto, recursos e security rules do Firebase; preserve least privilege e exija autorizacao antes de login, deploy ou alteracao remota."
+            }
+        }
+    },
     "priority_weights": {
         "alpha": 1.0,
         "beta": 1.5,
