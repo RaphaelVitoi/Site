@@ -523,7 +523,7 @@ Write-Host ("-" * 68) -ForegroundColor DarkGray
 $secRules = [ordered]@{
     "CRITICAL_CVE_COUNT" = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Critical severity vulnerabilities" }
     "HIGH_CVE_COUNT"     = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "High severity vulnerabilities" }
-    "TOTAL_VULNERABILITY"= @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Total open vulnerabilities across dependencies" }
+    "TOTAL_VULNERABILITY"= @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Total open vulnerabilities across ALL npm manifests in the repository" }
 }
 
 # SEGURANCA (2026-08-22): esta fase FALHAVA ABERTA.
@@ -547,29 +547,97 @@ if (Test-Path $fnmPath) { $env:PATH = "$fnmPath;" + $env:PATH }
 
 $cveMedido = $false
 $cveErro = ''
+$cveManifestos = 0
+
+# COBERTURA (2026-09-03): a fase auditava o diretorio corrente e mais nada.
+#
+# `npm audit` so enxerga onde roda, entao TOTAL_VULNERABILITY = 0 significava
+# "zero no diretorio em que o portao calhou de estar" -- enquanto o nome da
+# metrica promete "zero nas dependencias", e e a segunda coisa que o operador
+# le. Se algum dia este repositorio ganhar um segundo projeto npm versionado,
+# a versao antiga passaria por cima dele em silencio.
+#
+# A ENUMERACAO PERGUNTA AO GIT, NAO AO DISCO, e a distincao e o ponto todo.
+# Submodulo entra no indice como gitlink (modo 160000) e `git ls-files` nao
+# lista arquivo nenhum dentro dele. Logo skills/*/package-lock.json fica de
+# fora POR CONSTRUCAO -- e e o correto: aqueles lockfiles pertencem a
+# exa-labs/exa-mcp-server e afins, sao governados pelos repositorios de origem,
+# e `npm audit fix` neles produz alteracao local, que este repositorio nao pode
+# commitar e que o proximo `submodule update` descarta.
+#
+# Medido em 2026-09-03: varrer o DISCO encontrava 4 manifestos e reprovava com
+# 5 vulnerabilidades (browserslist HIGH, @humanfs/node, qs) -- todas de codigo
+# de terceiros, nenhuma corrigivel aqui de forma persistente. Pior que o falso
+# positivo: o veredito passaria a depender de quais submodulos estao
+# inicializados na maquina, e o MESMO commit aprovaria numa e reprovaria noutra.
+#
+# Vale a mesma regra que a nota de 2026-08-22 fixou logo acima: um portao que
+# nao mede NAO aprova. Manifesto que falhe em medir e ERRO, nunca zero, e as
+# falhas sao acumuladas para o operador ver todas de uma vez.
+
+$manifestosNpm = @()
+$lockfilesRastreados = @()
+try {
+    $lockfilesRastreados = @(& git -C $RepoRoot ls-files --full-name '*package-lock.json' 2>$null)
+} catch {
+    $lockfilesRastreados = @()
+}
+foreach ($lockRelativo in $lockfilesRastreados) {
+    if ([string]::IsNullOrWhiteSpace($lockRelativo)) { continue }
+    $dirManifesto = Split-Path -Parent (Join-Path $RepoRoot $lockRelativo)
+    if ([string]::IsNullOrWhiteSpace($dirManifesto)) { $dirManifesto = $RepoRoot }
+    if ($manifestosNpm -notcontains $dirManifesto) { $manifestosNpm += $dirManifesto }
+}
+# Sem git no PATH a enumeracao volta vazia. Cair para a raiz preserva a medicao
+# que sempre existiu; o que NAO se pode fazer e aprovar por lista vazia.
+if ($manifestosNpm.Count -eq 0 -and (Test-Path (Join-Path $RepoRoot 'package-lock.json'))) {
+    $manifestosNpm += $RepoRoot
+}
+$cveManifestos = $manifestosNpm.Count
 
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     $cveErro = 'npm nao foi encontrado no PATH'
+} elseif ($cveManifestos -eq 0) {
+    $cveErro = 'nenhum package-lock.json encontrado no repositorio'
 } else {
-    try {
-        $auditRaw = (npm audit --json 2>&1 | Out-String).Trim()
-        if ($auditRaw.StartsWith("{")) {
-            $auditJson = $auditRaw | ConvertFrom-Json
-            $metadata = $auditJson.metadata.vulnerabilities
-            if ($null -ne $metadata) {
-                $secRules["CRITICAL_CVE_COUNT"].Val = [int]($metadata.critical)
-                $secRules["HIGH_CVE_COUNT"].Val     = [int]($metadata.high)
-                $secRules["TOTAL_VULNERABILITY"].Val= [int]($metadata.total)
-                $cveMedido = $true
+    $cveCritico = 0
+    $cveAlto = 0
+    $cveTotal = 0
+    $cveFalhas = @()
+
+    foreach ($manifesto in $manifestosNpm) {
+        $dirAnterior = Get-Location
+        try {
+            Set-Location -Path $manifesto
+            $auditRaw = (npm audit --json 2>&1 | Out-String).Trim()
+            if ($auditRaw.StartsWith("{")) {
+                $auditJson = $auditRaw | ConvertFrom-Json
+                $metadata = $auditJson.metadata.vulnerabilities
+                if ($null -ne $metadata) {
+                    $cveCritico += [int]($metadata.critical)
+                    $cveAlto    += [int]($metadata.high)
+                    $cveTotal   += [int]($metadata.total)
+                } else {
+                    $cveFalhas += "$manifesto : JSON sem metadata.vulnerabilities"
+                }
             } else {
-                $cveErro = 'JSON sem metadata.vulnerabilities'
+                $trecho = $auditRaw.Substring(0, [Math]::Min(70, $auditRaw.Length))
+                $cveFalhas += "$manifesto : npm audit nao devolveu JSON: $trecho"
             }
-        } else {
-            $trecho = $auditRaw.Substring(0, [Math]::Min(70, $auditRaw.Length))
-            $cveErro = "npm audit nao devolveu JSON: $trecho"
+        } catch {
+            $cveFalhas += "$manifesto : excecao ao rodar npm audit: $($_.Exception.Message)"
+        } finally {
+            Set-Location -Path $dirAnterior
         }
-    } catch {
-        $cveErro = "excecao ao rodar npm audit: $($_.Exception.Message)"
+    }
+
+    if ($cveFalhas.Count -gt 0) {
+        $cveErro = ($cveFalhas -join ' | ')
+    } else {
+        $secRules["CRITICAL_CVE_COUNT"].Val = $cveCritico
+        $secRules["HIGH_CVE_COUNT"].Val     = $cveAlto
+        $secRules["TOTAL_VULNERABILITY"].Val= $cveTotal
+        $cveMedido = $true
     }
 }
 
@@ -590,6 +658,8 @@ foreach ($k in $secRules.Keys) {
 $execStatus = if ($cveMedido) { "[PASS]" } else { "[FAIL]" }
 $execColor  = if ($cveMedido) { "Green" } else { "Red" }
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_AUDIT_EXECUTADO', $(if ($cveMedido) { 'sim' } else { 'NAO' }), 'sim', $execStatus) -ForegroundColor $execColor
+# Cobertura declarada: sem ela, "0 cves" nao diz sobre QUANTOS projetos.
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_MANIFESTOS_AUDITADOS', "$cveManifestos npm", '-', 'INFO') -ForegroundColor DarkGray
 if (-not $cveMedido) {
     Write-Host "   motivo: $cveErro" -ForegroundColor Red
     Add-QualityFinding -Severity 'ERROR' -Component 'security.execucao' -Detail 'O audit de CVE nao executou.' -Reason "$cveErro. Zero por ausencia de medicao nao e resultado de seguranca." -Action 'Corrigir a disponibilidade do npm ou a falha de rede/JSON indicada, executar npm audit com sucesso e somente entao avaliar a contagem de CVEs.'
