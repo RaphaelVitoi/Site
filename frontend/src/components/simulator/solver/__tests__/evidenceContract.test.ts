@@ -13,7 +13,11 @@ import {
   DEFAULT_SIZING_EQUIVALENCE_TOLERANCE_BB,
   DEFAULT_SIZING_EQUIVALENCE_RELATIVE,
   DEFAULT_FREQUENCY_SUM_TOLERANCE_PCT,
+  assessReproducibility,
+  camposDeProcedenciaFaltando,
+  countReproduciblePairs,
   hasBlockingViolation,
+  isRead,
   isUnreadable,
   read,
   resolveTolerances,
@@ -27,7 +31,9 @@ import type {
   EvidenceScenario,
   EvidenceSource,
   EvidenceViolation,
+  ENashUnit,
   EvidenceViolationCode,
+  SolverProvenance,
 } from '../evidenceContract';
 
 // === FIXTURES SINTÉTICAS ===
@@ -56,6 +62,24 @@ function acao(
   return { label, frequencyPct, ...extras };
 }
 
+/**
+ * Procedência sintética COMPLETA, aplicada por padrão.
+ *
+ * Os fixtures deste arquivo perguntam sobre INTEGRIDADE do dado — soma de
+ * frequência, conservação de combos, ilegível que não vira zero. Deixá-los sem
+ * procedência misturaria a essas perguntas a de REPRODUTIBILIDADE, que é outra
+ * e tem função própria (`assessReproducibility`). Um teste sobre tolerância de
+ * arredondamento não deveria falhar por falta de build de solver.
+ *
+ * A ausência de procedência é exercitada explicitamente por
+ * `cenarioSemProcedencia`, onde essa é a pergunta.
+ */
+const PROCEDENCIA_SINTETICA: SolverProvenance = {
+  build: read( 'SOLVER-SINTETICO build 0.0.0' ),
+  eNash: read( 0.15 ),
+  eNashUnit: read( 'pctOfPot' ),
+};
+
 /** Cenário mínimo de duas ações que fecha exatamente em 100%. */
 function cenario(
   regime: EvidenceScenario[ 'regime' ],
@@ -65,9 +89,20 @@ function cenario(
   const base: EvidenceScenario = {
     regime,
     solver: regime === 'chipEV' ? 'SOLVER-SINTETICO-A' : 'SOLVER-SINTETICO-B',
+    provenance: PROCEDENCIA_SINTETICA,
     actions,
   };
   return totalCombos === undefined ? base : { ...base, totalCombos };
+}
+
+/** Mesmo cenário, sem qualquer declaração de procedência. */
+function cenarioSemProcedencia(
+  regime: EvidenceScenario[ 'regime' ],
+  actions: EvidenceAction[],
+): EvidenceScenario {
+  const base = cenario( regime, actions );
+  delete base.provenance;
+  return base;
 }
 
 function par(
@@ -455,5 +490,175 @@ describe( 'Contexto do spot', () => {
     };
     const violations = validateEvidencePair( p );
     expect( has( violations, 'INVALID_PLAYER_SET' ) ).toBe( true );
+  } );
+} );
+
+// === PROCEDÊNCIA E REPRODUTIBILIDADE ===
+describe( 'Procedência do solve', () => {
+  test( 'par com build e e-Nash nos dois lados é reproduzível', () => {
+    const avaliacao = assessReproducibility( parValido() );
+    expect( avaliacao.reproducible ).toBe( true );
+    expect( avaliacao.missing ).toEqual( { chipEv: [], icmEv: [] } );
+  } );
+
+  test( 'par sem procedência não é reproduzível, e o motivo é nomeado', () => {
+    const semNada = par(
+      cenarioSemProcedencia( 'chipEV', [ acao( 'Check', read( 100 ) ) ] ),
+      cenarioSemProcedencia( 'icmEV', [ acao( 'Check', read( 100 ) ) ] ),
+    );
+    const avaliacao = assessReproducibility( semNada );
+    expect( avaliacao.reproducible ).toBe( false );
+    expect( avaliacao.missing.chipEv ).toEqual( [ 'provenance' ] );
+    expect( avaliacao.missing.icmEv ).toEqual( [ 'provenance' ] );
+  } );
+
+  test( 'procedência num lado só NÃO basta: reprodutibilidade é do par', () => {
+    const meioTermo = par(
+      cenario( 'chipEV', [ acao( 'Check', read( 100 ) ) ] ),
+      cenarioSemProcedencia( 'icmEV', [ acao( 'Check', read( 100 ) ) ] ),
+    );
+    const avaliacao = assessReproducibility( meioTermo );
+    expect( avaliacao.reproducible ).toBe( false );
+    expect( avaliacao.missing.chipEv ).toEqual( [] );
+    expect( avaliacao.missing.icmEv ).toEqual( [ 'provenance' ] );
+  } );
+
+  test( 'e-Nash lido SEM unidade não se interpreta: falta eNashUnit', () => {
+    /*
+     * 0.4 é "0,4% do pote" (solve apertado) ou "0,4bb" (solve grosseiro)?
+     * O número sozinho não decide, e adotar uma unidade padrão transformaria
+     * a ambiguidade em número confiável.
+     */
+    const semUnidade = cenario( 'chipEV', [ acao( 'Check', read( 100 ) ) ] );
+    semUnidade.provenance = { build: read( 'X v1' ), eNash: read( 0.4 ) };
+    expect( camposDeProcedenciaFaltando( semUnidade ) ).toEqual( [ 'eNashUnit' ] );
+  } );
+
+  test( 'e-Nash ILEGÍVEL não é e-Nash zero', () => {
+    /*
+     * e-Nash 0 é convergência perfeita — a afirmação mais forte possível sobre
+     * um solve. Ilegível é ignorância. Colapsá-los alegaria convergência que
+     * ninguém observou.
+     */
+    const ilegivel = cenario( 'chipEV', [ acao( 'Check', read( 100 ) ) ] );
+    ilegivel.provenance = {
+      build: read( 'X v1' ),
+      eNash: unreadable( 'painel fora do recorte' ),
+    };
+    expect( camposDeProcedenciaFaltando( ilegivel ) ).toEqual( [ 'eNash' ] );
+
+    const convergido = cenario( 'chipEV', [ acao( 'Check', read( 100 ) ) ] );
+    convergido.provenance = {
+      build: read( 'X v1' ),
+      eNash: read( 0 ),
+      eNashUnit: read( 'pctOfPot' ),
+    };
+    expect( camposDeProcedenciaFaltando( convergido ) ).toEqual( [] );
+  } );
+
+  test( 'procedência incompleta é WARNING, não descarta o par', () => {
+    const semNada = par(
+      cenarioSemProcedencia( 'chipEV', [ acao( 'Check', read( 100 ) ) ] ),
+      cenarioSemProcedencia( 'icmEV', [ acao( 'Check', read( 100 ) ) ] ),
+    );
+    const violations = validateEvidencePair( semNada );
+    const procedencia = violations.filter( v => v.code === 'PROVENANCE_INCOMPLETE' );
+    expect( procedencia ).toHaveLength( 2 );
+    for ( const v of procedencia ) expect( v.severity ).toBe( 'warning' );
+    expect( hasBlockingViolation( violations ) ).toBe( false );
+  } );
+
+  test( 'a contagem do ledger conta reprodutíveis, não válidos', () => {
+    const reproduzivel = parValido();
+    const apenasValido = par(
+      cenarioSemProcedencia( 'chipEV', [ acao( 'Check', read( 100 ) ) ] ),
+      cenarioSemProcedencia( 'icmEV', [ acao( 'Check', read( 100 ) ) ] ),
+    );
+    // Os dois são válidos; só um é reproduzível.
+    expect( hasBlockingViolation( validateEvidencePair( apenasValido ) ) ).toBe( false );
+    expect( countReproduciblePairs( [ reproduzivel, apenasValido ] ) ).toBe( 1 );
+  } );
+
+  test( 'o tipo de procedência aceita as unidades declaradas', () => {
+    const p: SolverProvenance = {
+      build: read( 'HoldemResources Calculator Pro Export v2.4.1' ),
+      eNash: read( 0.12 ),
+      eNashUnit: read( 'bbPer100' ),
+    };
+    expect( isUnreadable( p.build ) ).toBe( false );
+  } );
+} );
+
+describe( 'O rótulo nativo da distância ao Nash', () => {
+  test( 'o rótulo NÃO entra na completude: build já ancora o solver', () => {
+    /*
+     * e-Nash é o conceito; `CI` no HRC, `MES` no PioSOLVER. O rótulo é
+     * derivável de qual solver produziu o solve, e `build` já o ancora. Exigi-lo
+     * elevaria a barreira sem acrescentar informação.
+     */
+    const semRotulo = cenario( 'chipEV', [ acao( 'Check', read( 100 ) ) ] );
+    semRotulo.provenance = {
+      build: read( 'HRC v2.4.1' ),
+      eNash: read( 0.28 ),
+      eNashUnit: read( 'pct' ),
+    };
+    expect( camposDeProcedenciaFaltando( semRotulo ) ).toEqual( [] );
+  } );
+
+  test( 'o rótulo é preservado quando lido, para auditoria', () => {
+    const comRotulo = cenario( 'icmEV', [ acao( 'Check', read( 100 ) ) ] );
+    comRotulo.provenance = {
+      build: read( 'HRC v2.4.1' ),
+      eNash: read( 0.28 ),
+      eNashUnit: read( 'pct' ),
+      eNashLabel: read( 'CI' ),
+    };
+    const rotulo = comRotulo.provenance.eNashLabel;
+    expect( rotulo !== undefined && isRead( rotulo ) ? rotulo.value : null ).toBe( 'CI' );
+    expect( camposDeProcedenciaFaltando( comRotulo ) ).toEqual( [] );
+  } );
+
+  test( '`pct` e `pctOfPot` são unidades DIFERENTES, e a distinção é o ponto', () => {
+    /*
+     * Ler `%` na tela autoriza dizer que a grandeza é percentual, e nada além.
+     * "Por cento de quê" é decidido pelo atalho de convergência do solver — no
+     * HRC, proprietário. `pctOfPot` afirma um referente que o símbolo não dá.
+     */
+    const percentual: ENashUnit = 'pct';
+    const doPote: ENashUnit = 'pctOfPot';
+    expect( percentual ).not.toBe( doPote );
+  } );
+} );
+
+describe( 'Motor efetivo × produto', () => {
+  test( 'engine não entra na completude, e motor comum é controle e não suspeita', () => {
+    /*
+     * A disputa em estudo é ChipEV × ICMev. O HRC calcula os dois regimes, então
+     * um par com o MESMO motor dos dois lados isola exatamente a variável de
+     * interesse. Motores diferentes é que misturam efeito de regime com efeito
+     * de motor.
+     */
+    const semEngine = cenario( 'chipEV', [ acao( 'Check', read( 100 ) ) ] );
+    semEngine.provenance = {
+      build: read( 'HRC v2.4.1' ),
+      eNash: read( 0.2 ),
+      eNashUnit: read( 'bb' ),
+    };
+    expect( camposDeProcedenciaFaltando( semEngine ) ).toEqual( [] );
+
+    const mesmoMotorNosDoisLados = par(
+      { ...semEngine, provenance: { ...semEngine.provenance, engine: read( 'HRC' ) } },
+      {
+        ...cenario( 'icmEV', [ acao( 'Check', read( 100 ) ) ] ),
+        provenance: {
+          build: read( 'HRC v2.4.1' ),
+          engine: read( 'HRC' ),
+          eNash: read( 0.2 ),
+          eNashUnit: read( 'bb' ),
+        },
+      },
+    );
+    expect( assessReproducibility( mesmoMotorNosDoisLados ).reproducible ).toBe( true );
+    expect( hasBlockingViolation( validateEvidencePair( mesmoMotorNosDoisLados ) ) ).toBe( false );
   } );
 } );

@@ -122,10 +122,142 @@ export interface EvidenceAction {
 /** Regime de cálculo do solver que produziu o cenário. */
 export type EvidenceRegime = 'chipEV' | 'icmEV';
 
+/**
+ * Unidade do e-Nash. NÃO tem padrão, e isso é deliberado.
+ *
+ * Solvers reportam a distância ao equilíbrio em grandezas diferentes — fração
+ * do pote, big blinds por 100 mãos, fichas absolutas. Um `eNash: 0.4` sem
+ * unidade é indistinguível entre "0,4% do pote" (solve apertado) e "0,4 bb"
+ * (solve grosseiro). Assumir uma unidade padrão converteria a ambiguidade em
+ * número confiável, que é o defeito que este contrato inteiro existe para
+ * impedir.
+ *
+ * `pct` E `pctOfPot` SÃO COISAS DIFERENTES, E A DISTINÇÃO É O PONTO. Ler um
+ * símbolo `%` na tela autoriza dizer que a grandeza é percentual — `pct` — e
+ * nada além. "Por cento de quê" é decidido pelo algoritmo do solver, não pela
+ * teoria, e no HRC esse algoritmo não é público. `pctOfPot` só se usa quando o
+ * próprio export declara o referente.
+ */
+export type ENashUnit = 'pct' | 'pctOfPot' | 'bb' | 'bbPer100' | 'chips';
+
+/**
+ * Procedência computacional do solve — o que separa transcrição de MEDIÇÃO.
+ *
+ * POR QUE ISTO É UM TIPO, E NÃO PROSA NUM COMENTÁRIO:
+ *   `AULA_1_2_EVIDENCE_LEDGER.md` exige "versão do solver, parâmetros da árvore
+ *   e e-Nash quando disponível" antes de qualquer par ser considerado
+ *   reproduzível. Até esta extensão, `EvidenceScenario` declarava apenas
+ *   `solver: string` — o NOME. Não havia onde pousar build nem e-Nash, e a
+ *   consequência prática é que uma recaptura que os trouxesse não teria destino
+ *   tipado: viraria comentário, e comentário não é verificável.
+ *
+ * O CAMPO É `Measured<T>` PELO MESMO MOTIVO DE TODOS OS OUTROS: um solve cujo
+ * e-Nash não foi lido é diferente de um solve com e-Nash zero. O segundo é
+ * convergência perfeita; o primeiro é ignorância. Colapsá-los seria afirmar
+ * convergência que ninguém observou.
+ */
+export interface SolverProvenance {
+  /**
+   * Versão/build exatamente como o solver a declara (ex.: 'v2.4.1').
+   *
+   * NÃO É METADADO DECORATIVO. A teoria — distância ao equilíbrio, ICM, CFR —
+   * é o caminho, e é pública. O que é proprietário são os ATALHOS: como chegar
+   * ao mesmo destino mais rápido, e com que critério parar. No HRC em especial.
+   *
+   * O atalho é o que decide ONDE o solve para, então é ele quem produz o número
+   * do e-Nash. Daí a consequência mecânica: uma versão nova, com atalho novo,
+   * para em outro ponto com os MESMOS inputs. Dois `0.3` de builds diferentes
+   * podem não ser o mesmo fato, e é por isso que `build` é âncora e não enfeite.
+   */
+  build: Measured<string>;
+  /**
+   * Motor que EFETIVAMENTE computou o número, quando difere do produto onde ele
+   * foi lido. Produto não é motor.
+   *
+   * O GTO Wizard usa redes neurais nas features avançadas, mas suas features
+   * médias e básicas foram computadas **via HRC, em CIs subótimos** (Tier 0,
+   * 2026-09-03). Um número lido na interface do GTO Wizard pode portanto ter
+   * saído do HRC — e nesse caso a versão que importa é a do HRC, não a do
+   * produto, e o solve pode não estar convergido.
+   *
+   * MOTOR COMUM NOS DOIS LADOS FORTALECE O PAR, NÃO O ENFRAQUECE. O HRC calcula
+   * ChipEV além de ICMev, então um par ChipEV(HRC) × ICMev(HRC) roda o MESMO
+   * modelo nos dois lados, e a única variável que resta variando é o REGIME —
+   * que é precisamente o que o par existe para isolar. É controle experimental.
+   *
+   * O risco está no contrário: motores diferentes misturam o efeito do regime
+   * com o efeito do motor, e nenhuma análise separa os dois depois. Declarar só
+   * o produto esconde qual dos dois casos se tem.
+   *
+   * O GTO WIZARD TEM DOIS CAMINHOS, E SÓ UM DELES É DELE:
+   *
+   * - **Biblioteca / tabelas estáticas** — os spots pré-computados **foram
+   *   rodados no HRC e apresentados como biblioteca** (Tier 0, 2026-09-03). É
+   *   por isso que aquele painel também reporta `CI`: é o rótulo do HRC.
+   * - **GTO Wizard AI** — depth-limited subgame solving com counterfactual
+   *   value networks (linhagem DeepStack/ReBeL): CFR só na street ativa, e os
+   *   terminais truncados avaliados por rede treinada em self-play.
+   *
+   * A diferença NÃO é de rótulo, é de ESCOPO DO CÁLCULO. Exploitability de
+   * árvore completa e exploitability de subjogo truncado com terminais
+   * estimados por rede não são a mesma grandeza — a segunda é residual em
+   * relação a um jogo que nunca foi inteiramente percorrido. Comparar as duas
+   * como se fossem o mesmo número é o erro que este campo existe para evitar.
+   *
+   * CONSEQUÊNCIA PARA OS SETE PARES DA AULA 1.2: se o lado ChipEV veio da
+   * biblioteca, ele saiu do HRC — o mesmo motor do lado ICMev. Motor comum é
+   * controle, não coincidência suspeita, e portanto aqueles pares já isolam o
+   * regime melhor do que sua procedência declarada deixava ver. O que resta
+   * confirmar caso a caso é se a captura é de biblioteca ou do AI, e o
+   * discriminante está na tela: `CI` no painel indica biblioteca.
+   *
+   * Ainda assim: quem transcreve decide e declara. Este contrato nunca infere
+   * `engine` sozinho, pela mesma razão que nunca redistribui frequência.
+   */
+  engine?: Measured<string>;
+  /** Distância ao equilíbrio residual do solve. Sem unidade não se interpreta. */
+  eNash: MeasuredNumber;
+  /** Unidade do e-Nash. Ausente quando o próprio e-Nash é ilegível. */
+  eNashUnit?: Measured<ENashUnit>;
+  /**
+   * Rótulo NATIVO da métrica, exatamente como o solver a nomeia:
+   *
+   * - `CI` (HRC) — Convergence Indicator, dos cálculos de Monte Carlo do HRC.
+   *   A documentação pública o lista entre os essenciais do cálculo por
+   *   amostragem; a fórmula exata não foi obtida.
+   * - `Nash Distance` / `dEV` (GTO Wizard) — máxima perda de EV potencial da
+   *   solução, em big blinds **dividida pelo pote**. O AI resolve a ~0,1% pot.
+   * - `MES` (PioSOLVER) — Maximally Exploitative Strategy.
+   *
+   * Indicador de convergência de amostragem e EV-loss máximo relativo ao pote
+   * NÃO são a mesma grandeza. A proibição de comparar entre solvers tem base
+   * documental, não é cautela genérica.
+   *
+   * e-Nash é o CONCEITO; o nome é de cada um. Guardar só o número perderia qual
+   * métrica foi lida, e é o mesmo motivo pelo qual `classifyAction` existe: o
+   * rótulo varia, o ramo não. Aqui a variação é mais séria — rótulos distintos
+   * saem de algoritmos distintos, então os valores NÃO se comparam entre
+   * solvers. O campo qualifica quão convergido está aquele solve isoladamente.
+   *
+   * A incomparabilidade é máxima quando um dos lados é rede neural: aproximação
+   * de rede e CFR convergido não produzem grandezas da mesma natureza.
+   *
+   * Não entra em `assessReproducibility`: o rótulo é derivável do solver, que
+   * `build` já ancora. Existe para auditoria.
+   */
+  eNashLabel?: Measured<string>;
+}
+
 export interface EvidenceScenario {
   regime: EvidenceRegime;
   /** Solver que produziu o cenário (ex.: 'GTO Wizard', 'HRC'). */
   solver: string;
+  /**
+   * Procedência do solve. OPCIONAL no tipo porque os sete pares da Aula 1.2 são
+   * anteriores a este campo e não podem ganhá-lo retroativamente — a captura de
+   * origem não o expunha. Omitir é honesto; inventar não seria.
+   */
+  provenance?: SolverProvenance;
   actions: EvidenceAction[];
   /** Total de combos do range do jogador no nó, quando exposto pela captura. */
   totalCombos?: MeasuredNumber;
@@ -195,7 +327,18 @@ export type EvidenceViolationCode =
    */
   | 'SIZING_CORRESPONDENCE_UNVERIFIABLE'
   /** Contexto estruturalmente inválido (posições ausentes/duplicadas). */
-  | 'INVALID_PLAYER_SET';
+  | 'INVALID_PLAYER_SET'
+  /**
+   * Procedência ausente ou parcial: falta build, e-Nash, ou a unidade sem a
+   * qual o e-Nash não se interpreta.
+   *
+   * SEVERIDADE `warning`, e a distinção importa: o par continua sendo evidência
+   * legítima do que a captura mostrou. O que ele NÃO sustenta é a alegação de
+   * REPRODUTIBILIDADE, e é só essa alegação que o ledger exige antes de mexer
+   * numa constante de `solveIcmDistortion`. Reprovar como `error` descartaria
+   * sete pares honestos; silenciar deixaria a barreira existir apenas em prosa.
+   */
+  | 'PROVENANCE_INCOMPLETE';
 
 /**
  * `error`  — o dado viola o contrato e não pode ser usado como evidência.
@@ -512,12 +655,57 @@ function validateContext( context: EvidenceContext, out: EvidenceViolation[] ): 
   } );
 }
 
+/**
+ * Verifica a procedência do cenário e reporta o que falta para sustentar
+ * reprodutibilidade. NUNCA infere: campo ausente é reportado, não completado.
+ */
+export function camposDeProcedenciaFaltando( scenario: EvidenceScenario ): string[] {
+  const p = scenario.provenance;
+  if ( p === undefined ) return [ 'provenance' ];
+
+  const faltando: string[] = [];
+  if ( p.build === undefined || isUnreadable( p.build ) ) faltando.push( 'build' );
+  if ( p.eNash === undefined || isUnreadable( p.eNash ) ) {
+    faltando.push( 'eNash' );
+  } else if ( p.eNashUnit === undefined || isUnreadable( p.eNashUnit ) ) {
+    // Unidade só é exigível quando há e-Nash lido: sem número, a unidade não
+    // descreve nada, e cobrá-la seria ruído.
+    faltando.push( 'eNashUnit' );
+  }
+  return faltando;
+}
+
+function validateProvenance(
+  scenario: EvidenceScenario,
+  scenarioPath: string,
+  out: EvidenceViolation[],
+): void {
+  // readFinite já devolve null para ausente e para ilegível; o que ele acrescenta
+  // aqui é reportar NON_FINITE_NUMBER num e-Nash lido como NaN/Infinity.
+  readFinite( scenario.provenance?.eNash, `${ scenarioPath }.provenance.eNash`, out );
+
+  const faltando = camposDeProcedenciaFaltando( scenario );
+  if ( faltando.length > 0 ) {
+    out.push(
+      violation(
+        'PROVENANCE_INCOMPLETE',
+        'warning',
+        `${ scenarioPath }.provenance`,
+        'Procedência incompleta: o cenário não sustenta alegação de reprodutibilidade. Continua sendo evidência válida do que a captura mostrou.',
+        { solver: scenario.solver, camposFaltando: faltando },
+      ),
+    );
+  }
+}
+
 function validateScenario(
   scenario: EvidenceScenario,
   scenarioPath: string,
   tolerances: ResolvedEvidenceTolerances,
   out: EvidenceViolation[],
 ): void {
+  validateProvenance( scenario, scenarioPath, out );
+
   const actions = Array.isArray( scenario.actions ) ? scenario.actions : [];
 
   if ( actions.length === 0 ) {
@@ -764,4 +952,57 @@ export function validateEvidencePair(
 /** Conveniência: o par tem alguma violação de severidade `error`? */
 export function hasBlockingViolation( violations: EvidenceViolation[] ): boolean {
   return violations.some( v => v.severity === 'error' );
+}
+
+// ---------------------------------------------------------------------------
+// 8. Reprodutibilidade — o discriminante que autoriza calibrar
+// ---------------------------------------------------------------------------
+
+export interface ReproducibilityAssessment {
+  /** Verdadeiro só quando AMBOS os regimes declaram procedência completa. */
+  reproducible: boolean;
+  /** Campos faltantes por regime; vazio quando o lado está completo. */
+  missing: { chipEv: string[]; icmEv: string[] };
+}
+
+/**
+ * Um par é REPRODUZÍVEL quando os dois lados declaram build e e-Nash com
+ * unidade — nunca por consistência interna, por mais densa que ela fique.
+ *
+ * POR QUE ESTA FUNÇÃO EXISTE:
+ *   `AULA_1_2_EVIDENCE_LEDGER.md` condiciona qualquer ajuste de constante em
+ *   `solveIcmDistortion` a "ao menos três pares independentes E REPRODUZÍVEIS".
+ *   Até aqui, "reproduzível" era uma palavra em documento: nada no código
+ *   sabia distinguir um par reproduzível de um par apenas consistente, e a
+ *   separação dependia de quem estivesse lendo lembrar dela.
+ *
+ *   Os sete pares da Aula 1.2 são transcrições de captura de terceiro. São
+ *   consistentes — sete somas de frequência fechando, combos conservados,
+ *   uma verificação cruzada dígito a dígito por `image59.png` — e nada disso
+ *   os torna reproduzíveis. Consistência é ausência de contradição interna;
+ *   reprodutibilidade é outra pessoa poder rodar o mesmo solve e obter o mesmo
+ *   número, o que exige saber QUAL solve foi rodado.
+ *
+ * ESTA FUNÇÃO RETORNA `false` PARA OS SETE PARES ATUAIS, E ISSO É O ESPERADO.
+ * Ela não é um teste que se conserta: é o portão que se abre quando o export
+ * do HRC trouxer o que a captura não trazia.
+ */
+export function assessReproducibility( pair: EvidencePair ): ReproducibilityAssessment {
+  const chipEv = camposDeProcedenciaFaltando( pair.chipEv );
+  const icmEv = camposDeProcedenciaFaltando( pair.icmEv );
+  return {
+    reproducible: chipEv.length === 0 && icmEv.length === 0,
+    missing: { chipEv, icmEv },
+  };
+}
+
+/**
+ * Quantos pares do conjunto são reproduzíveis. O ledger exige três.
+ *
+ * Não confundir com "quantos são válidos": os sete são válidos hoje, e zero
+ * são reproduzíveis. Contar validade no lugar de reprodutibilidade é
+ * exatamente o erro que abriria a calibração cedo demais.
+ */
+export function countReproduciblePairs( pairs: readonly EvidencePair[] ): number {
+  return pairs.filter( p => assessReproducibility( p ).reproducible ).length;
 }

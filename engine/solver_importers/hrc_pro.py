@@ -6,7 +6,7 @@ Importador especializado para Holdem Resources Calculator Pro (HRC Pro).
 import json
 import re
 from typing import Any
-from core.perspective_schemas import NormalizedGameTree, SolverNode, SolverType
+from core.perspective_schemas import NormalizedGameTree, SolverNode, SolverProvenance, SolverType
 from engine.bayesian_range import RANKS, apply_pmev_range_filter, get_preflop_hand_strength_matrix
 from engine.solver_importers.base import BaseSolverImporter
 
@@ -38,6 +38,7 @@ class HRCProImporter(BaseSolverImporter):
         """Processa ranges de push/fold e calculos de ICM do HRC Pro."""
         trimmed = raw_content.strip()
         nodes_dict: dict[str, SolverNode] = {}
+        dados_json: dict[str, Any] | None = None
         stacks: dict[str, float] = {"Hero": 20.0, "Villain": 25.0}
         starting_pot = 2.5
         board: list[str] = []
@@ -45,6 +46,7 @@ class HRCProImporter(BaseSolverImporter):
         if trimmed.startswith("{") and trimmed.endswith("}"):
             try:
                 data = json.loads(trimmed)
+                dados_json = data
                 starting_pot = float(data.get("pot", data.get("starting_pot", 2.5)))
                 if "stacks" in data:
                     stacks = {k: float(v) for k, v in data["stacks"].items()}
@@ -110,6 +112,7 @@ class HRCProImporter(BaseSolverImporter):
             nodes_dict["root"] = node
 
         return NormalizedGameTree(
+            provenance=self.extrair_procedencia(raw_content, dados_json),
             solver_type="hrc_pro",
             source_format="HRC Pro Export",
             game_type="ICM Tournament",
@@ -120,6 +123,133 @@ class HRCProImporter(BaseSolverImporter):
             nodes=nodes_dict,
             root_node_id="root",
         )
+
+    #: Rotulos nativos da distancia ao equilibrio, por solver. O conceito e um so;
+    #  o nome NEM SEMPRE mede a mesma coisa, e por isso o rotulo lido e guardado.
+    #
+    #  - `CI` (HRC): Convergence Indicator, parte dos calculos de Monte Carlo do
+    #    HRC. A documentacao publica o lista entre os essenciais do calculo por
+    #    amostragem; a formula exata nao foi obtida.
+    #  - `Nash Distance` / `dEV` (GTO Wizard): maxima perda de EV potencial da
+    #    solucao, em big blinds DIVIDIDA PELO POTE. O GTO Wizard AI resolve a
+    #    cerca de 0.1% do pote.
+    #  - `MES` (PioSOLVER): Maximally Exploitative Strategy.
+    #
+    #  Indicador de convergencia de amostragem e EV-loss maximo relativo ao pote
+    #  NAO sao a mesma grandeza. Isso agora tem base documental, nao e cautela.
+    ROTULOS_DE_E_NASH = ("CI", "MES", "dEV", "e-Nash", "eNash", "Exploitability", "Nash Distance")
+
+    #: Chaves equivalentes num export JSON, na ordem em que sao tentadas.
+    CHAVES_JSON_DE_E_NASH = ("ci", "mes", "dev", "e_nash", "enash", "exploitability", "nash_distance")
+
+    #: Unidades que um export pode declarar explicitamente.
+    UNIDADES_DECLARAVEIS = ("pct", "pctOfPot", "bb", "bbPer100", "chips")
+
+    @staticmethod
+    def extrair_procedencia(raw_content: str, data: dict[str, Any] | None = None) -> SolverProvenance:
+        """Extrai build e distancia-ao-Nash do export do HRC.
+
+        O `detect_format` deste importador ja reconhecia `hrc_version` desde
+        sempre -- e a usava apenas para IDENTIFICAR o formato, descartando o
+        valor em seguida. O ledger de evidencia PMev exige exatamente esse campo
+        antes de aceitar um par como reproduzivel, entao ele era reconhecido e
+        jogado fora no mesmo arquivo.
+
+        O ROTULO E GUARDADO JUNTO COM O NUMERO. e-Nash e o conceito -- a
+        distancia da solucao ao equilibrio --, e cada solver lhe da nome proprio:
+        `CI` no HRC, `MES` no PioSOLVER. Guardar so o numero perderia qual
+        metrica foi lida, e rotulos distintos podem ter definicoes operacionais
+        distintas.
+
+        A TEORIA E O CAMINHO; OS ATALHOS SAO A CAIXA-PRETA -- e no HRC em especial
+        (Tier 0, 2026-09-03). Distancia ao equilibrio, ICM e CFR estao na
+        literatura, e o destino e o mesmo. O que e proprietario e COMO chegar la
+        mais rapido: as heuristicas de aceleracao e o criterio de parada.
+
+        Isso e mais forte do que "o solver e opaco". Atalho e o que decide ONDE o
+        solve para, e portanto o que o `CI` mede: o solver dizendo "parei aqui"
+        segundo o criterio dele. Duas consequencias diretas -- uma versao nova
+        com atalho novo para em outro ponto com os MESMOS inputs, e um `CI` baixo
+        em dois solvers nao afirma o mesmo grau de convergencia.
+
+        Disso decorrem tres consequencias que este metodo respeita:
+
+        1. `build` deixa de ser boa pratica e vira ancora INDISPENSAVEL. Se quem
+           define o numero e a implementacao, ele so significa algo amarrado a
+           versao que o produziu: dois `CI: 0.3` de builds diferentes podem nao
+           ser o mesmo fato.
+        2. Um sufixo `%` vira `pct`, NAO `pctOfPot`. "Por cento de que" e
+           decidido pelo algoritmo, nao pela teoria; escrever `pctOfPot` seria
+           afirmar um referente a partir de um simbolo de exibicao. `pctOfPot` so
+           entra quando o proprio export o declara.
+        3. O valor extraido e o que o SOLVER REPORTA sobre si mesmo. Ele
+           identifica e qualifica aquele solve; nao e verificacao independente de
+           convergencia, e nada aqui o promove a isso.
+
+        O REFERENTE DO PERCENTUAL E DOCUMENTADO PARA UM DOS LADOS, NAO PARA O
+        OUTRO. O GTO Wizard define Nash Distance como bb sobre pote, entao ali um
+        `%` E do pote -- por documentacao publica, nao por suposicao. Do lado do
+        HRC o referente do CI nao foi obtido. Este metodo mantem `pct` nos dois
+        casos e NAO promove por rotulo: promover seria o importador inferindo
+        semantica, e quem transcreve e quem declara `pctOfPot` com o fundamento
+        na mao.
+
+        SEPARADOR OBRIGATORIO. `CI` e curto demais para ser buscado solto: sem
+        exigir `:` ou `=` logo apos o rotulo, casaria com qualquer par de letras
+        seguido de numero. Exports usam a forma `Campo: valor`, e o sample do
+        proprio repositorio a segue.
+
+        Nada aqui inventa: campo ausente permanece `None`, jamais 0.0.
+        """
+        build: str | None = None
+        e_nash: float | None = None
+        unidade: str | None = None
+        rotulo: str | None = None
+
+        if data:
+            for chave in ("hrc_version", "solver_version", "version", "build"):
+                valor = data.get(chave)
+                if valor is not None:
+                    build = str(valor)
+                    break
+            for chave in HRCProImporter.CHAVES_JSON_DE_E_NASH:
+                valor = data.get(chave)
+                if isinstance(valor, (int, float)) and not isinstance(valor, bool):
+                    e_nash = float(valor)
+                    rotulo = chave
+                    break
+            declarada = data.get("e_nash_unit") or data.get("ci_unit")
+            if isinstance(declarada, str) and declarada in HRCProImporter.UNIDADES_DECLARAVEIS:
+                unidade = declarada
+
+        if build is None:
+            m = re.search(
+                r"(?:HoldemResources|HRC)[^\r\n]{0,80}?\bv(\d+(?:\.\d+){0,3})",
+                raw_content,
+                re.IGNORECASE,
+            )
+            if m:
+                build = "v" + m.group(1)
+
+        if e_nash is None:
+            alternativas = "|".join(
+                rot.replace(" ", r"\s+").replace("-", "-?") for rot in HRCProImporter.ROTULOS_DE_E_NASH
+            )
+            m = re.search(
+                r"\b(" + alternativas + r")\b\s*[:=]\s*(\d+(?:\.\d+)?)\s*(%|bb)?",
+                raw_content,
+                re.IGNORECASE,
+            )
+            if m:
+                rotulo = m.group(1)
+                e_nash = float(m.group(2))
+                sufixo = (m.group(3) or "").lower()
+                if sufixo == "%":
+                    unidade = "pct"
+                elif sufixo == "bb":
+                    unidade = "bb"
+
+        return SolverProvenance(build=build, e_nash=e_nash, e_nash_unit=unidade, e_nash_label=rotulo)
 
     @staticmethod
     def get_hand_label(r: int, c: int) -> str:

@@ -16,6 +16,8 @@ import {
   DEFAULT_SIZING_EQUIVALENCE_TOLERANCE_BB,
   DEFAULT_SIZING_EQUIVALENCE_RELATIVE,
   isRead,
+  assessReproducibility,
+  countReproduciblePairs,
   isUnreadable,
   type EvidenceViolationCode,
 } from '../evidenceContract';
@@ -619,5 +621,51 @@ describe( 'Aula 1.2 — o que a evidência NÃO autoriza', () => {
       const avisos = validateEvidencePair( par ).filter( v => v.severity === 'warning' );
       expect( avisos.length ).toBeGreaterThan( 0 );
     }
+  } );
+} );
+
+describe( 'Aula 1.2 — o portão de reprodutibilidade do ledger', () => {
+  /*
+   * `AULA_1_2_EVIDENCE_LEDGER.md` condiciona qualquer ajuste de constante em
+   * `solveIcmDistortion` a "ao menos três pares independentes E REPRODUZÍVEIS".
+   *
+   * Até esta extensão, "reproduzível" era palavra em documento: nada no código
+   * distinguia um par reproduzível de um par apenas consistente, e a separação
+   * dependia de quem lesse lembrar dela.
+   *
+   * ESTE BLOCO NÃO É UM TESTE A CONSERTAR. Ele afirma o estado real de hoje —
+   * zero de sete —, e o número sobe sozinho quando o export do HRC trouxer
+   * build e e-Nash. Se alguém "consertá-lo" preenchendo procedência sem o
+   * export, terá inventado a evidência que o ledger exige.
+   */
+  const MINIMO_DO_LEDGER = 3;
+
+  it( 'nenhum dos sete pares é reproduzível hoje', () => {
+    expect( countReproduciblePairs( AULA_1_2_PAIRS ) ).toBe( 0 );
+    expect( countReproduciblePairs( AULA_1_2_PAIRS ) ).toBeLessThan( MINIMO_DO_LEDGER );
+  } );
+
+  it( 'e o motivo é nomeado par a par: procedência ausente dos dois lados', () => {
+    for ( const par of AULA_1_2_PAIRS ) {
+      const avaliacao = assessReproducibility( par );
+      expect( avaliacao.reproducible ).toBe( false );
+      expect( avaliacao.missing.chipEv ).toContain( 'provenance' );
+      expect( avaliacao.missing.icmEv ).toContain( 'provenance' );
+    }
+  } );
+
+  it( 'consistência interna NÃO é reprodutibilidade', () => {
+    /*
+     * Os sete pares são consistentes: somas de frequência fechando dentro da
+     * tolerância declarada, combos conservados onde legíveis, e uma verificação
+     * cruzada dígito a dígito por `image59.png`. Nenhum deles bloqueia.
+     * E nenhum é reproduzível. As duas coisas coexistem, e é exatamente essa
+     * coexistência que faria alguém calibrar cedo demais.
+     */
+    const bloqueados = AULA_1_2_PAIRS.filter( p =>
+      hasBlockingViolation( validateEvidencePair( p ) ),
+    );
+    expect( bloqueados ).toHaveLength( 0 );
+    expect( countReproduciblePairs( AULA_1_2_PAIRS ) ).toBe( 0 );
   } );
 } );

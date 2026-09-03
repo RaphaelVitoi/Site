@@ -102,6 +102,73 @@ class SolverNode(BaseModel):
     children: list[str] = Field(default_factory=list, description="IDs dos nos filhos")
 
 
+class SolverProvenance(BaseModel):
+    """Procedencia computacional de um solve -- o que separa transcricao de medicao.
+
+    Existe porque `NormalizedGameTree` declarava apenas `source_format`, texto
+    livre. Versao de solver e e-Nash nao tinham onde pousar, e um export que os
+    trouxesse perdia justamente os campos que o ledger de evidencia PMev exige
+    antes de aceitar um par como reproduzivel.
+
+    `None` significa NAO LIDO, jamais zero: e-Nash 0.0 e convergencia perfeita,
+    a afirmacao mais forte possivel sobre um solve; ausencia e ignorancia.
+
+    E-NASH E O CONCEITO, NAO O ROTULO. A distancia da solucao ao equilibrio de
+    Nash tem nome proprio em cada solver: o HRC a chama de `CI`, o PioSOLVER de
+    `MES`. Por isso `e_nash_label` guarda o rotulo NATIVO exatamente como lido.
+
+    E por isso tambem os valores NAO sao comparaveis entre solvers: rotulos
+    distintos podem ter definicoes operacionais distintas, e um `CI` de 0.3 nao
+    e necessariamente o mesmo fato que um `MES` de 0.3. O campo qualifica quao
+    convergido esta AQUELE solve, isoladamente -- nunca serve para dizer qual
+    dos dois solvers convergiu mais. Isso vale com forca extra quando um dos
+    lados usa rede neural: aproximacao de rede e CFR convergido nao produzem
+    grandezas da mesma natureza.
+
+    `engine` EXISTE PORQUE PRODUTO NAO E MOTOR (Tier 0, 2026-09-03). O GTO
+    Wizard tem dois caminhos, e so um deles e dele:
+
+    - biblioteca / tabelas estaticas: os spots pre-computados FORAM RODADOS NO
+      HRC e apresentados como biblioteca, muitos em CIs suboptimais. E por isso
+      que aquele painel tambem reporta `CI` -- e o rotulo do HRC.
+    - GTO Wizard AI: depth-limited subgame solving com counterfactual value
+      networks (linhagem DeepStack/ReBeL), rodando CFR so na street ativa e
+      avaliando os terminais truncados por rede treinada em self-play.
+
+    A diferenca nao e de rotulo, e de ESCOPO DO CALCULO. Exploitability de
+    arvore completa e exploitability de subjogo truncado com terminais
+    estimados por rede nao sao a mesma grandeza.
+
+    Logo um numero lido na interface do GTO Wizard pode ter sido produzido pelo
+    HRC, e nesse caso a versao que importa e a do HRC, nao a do produto.
+
+    MOTOR COMUM NOS DOIS LADOS FORTALECE O PAR. O HRC calcula ChipEV alem de
+    ICMev, entao um par ChipEV(HRC) x ICMev(HRC) roda o MESMO modelo dos dois
+    lados, e a unica variavel que resta variando e o REGIME -- que e exatamente
+    o que o par existe para isolar. Isso e controle experimental.
+
+    O risco esta no contrario: motores diferentes misturam o efeito do regime
+    com o efeito do motor, e nenhuma analise separa os dois depois. Declarar so
+    o produto esconde qual dos dois casos se tem, e deixa um solve suboptimal
+    passar por definitivo.
+    """
+
+    build: str | None = None
+    engine: str | None = None
+    e_nash: float | None = None
+    e_nash_unit: Literal["pct", "pctOfPot", "bb", "bbPer100", "chips"] | None = None
+    e_nash_label: str | None = None
+
+    def esta_completa(self) -> bool:
+        """Reproduzivel exige build E e-Nash com unidade. Sem unidade o numero nao se interpreta.
+
+        `e_nash_label` NAO entra na completude: o rotulo e derivavel do solver, que
+        `build` ja ancora. Ele e guardado para auditoria -- para que se saiba QUAL
+        metrica foi lida --, nao como requisito adicional.
+        """
+        return self.build is not None and self.e_nash is not None and self.e_nash_unit is not None
+
+
 class NormalizedGameTree(BaseModel):
     """Arvore de jogo normalizada universal."""
 
@@ -115,6 +182,7 @@ class NormalizedGameTree(BaseModel):
     nodes: dict[str, SolverNode] = Field(default_factory=dict)
     root_node_id: str = "root"
     pmev_converted_nodes: dict[str, PerspectivaResult] = Field(default_factory=dict)
+    provenance: SolverProvenance | None = None
 
 
 class SolverImportRequest(BaseModel):
