@@ -85,12 +85,9 @@ def test_generate_success_stream(mock_orchestrate, mock_rag):
 def test_normalize_model_logic():
     """Valida a ontologia de normalizacao de modelos da Mente Coletiva."""
     assert normalize_model("gemma-4-31b-it") == "31b_cloud"
-    # NOME EXATO VENCE HEURISTICA. Esta linha exigia "gemma4:26b" -> "12b", um
-    # desvio deliberado para o cavalo-de-batalha local. O desvio foi removido em
-    # 2026-09-03 por decisao do Tier 0 ("nao precisamos de 26b"), e a regra que o
-    # substitui e mais forte: quem nomeia uma TAG do Ollama aponta para o disco,
-    # e servir outra coisa e trocar de motor sem avisar.
-    assert normalize_model("gemma4:26b") == "26b"
+    # Com gemma4:26b desativado e removido do disco/manifesto em 2026-09-03,
+    # qualquer mencao a 26b desvia formalmente para o cavalo-de-batalha local 12b.
+    assert normalize_model("gemma4:26b") == "12b"
     assert normalize_model("Qwen-coder") == "qwen"
     assert normalize_model("llama-3-8b") == "llama3_8b"
     assert normalize_model("gemma-4-4b") == "e4b"

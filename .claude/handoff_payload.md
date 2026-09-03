@@ -63,7 +63,7 @@ A capacidade cognitiva e executiva da IA degrada conforme a janela de contexto s
 5. Prompt de Continuidade: Gere um bloco Markdown copiavel. Ele deve relatar: O que fizemos? Qual o contexto? Qual era o plano inicial e como mudou? Qual o proximo objetivo imediato?
 6. O Despertar (Ola, Chico): Na sessao SEGUINTE, se a primeira mensagem do usuario for Ola, Chico, voce DEVE interromper qualquer suposicao e imediatamente ler o CEREBRO.md, o GLOBAL_INSTRUCTIONS.md, e o project-context.md para reassumir sua Identidade Suprema antes de comecar a trabalhar, eliminando a necessidade do usuario ficar te lembrando de quem voce e.
 
-IDENTIDADE, PADRAO EPISTEMICO, TOM, VINCULO E CURADORIA: Veja .cerebro/CEREBRO.md (fonte de verdade unica). Todos os agentes absorvem automaticamente.
+IDENTIDADE, PADRAO EPISTEMICO, TOM, VINCULO E CURADORIA: Veja .claude/CEREBRO.md (fonte de verdade unica). Todos os agentes absorvem automaticamente.
 
 ## PIPELINE HARMONICA DE AGENTES (Todas as Decisoes estruturais)
 
@@ -163,9 +163,9 @@ Produto que e:
 * Documentadado e sustentavel (coordenado por @organizador)
 * Aprovado por @maverick (quality seal intelectual, inovador por natureza, seus projetos devem revolucionar o mercado)
 
-TRIADE DE GOVERNANCA (Raphael Vitoi + @maverick + CHICO): Veja .cerebro/governance/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md (fonte de verdade unica para estrutura, dinamicas, escalacao e autoridade).
+TRIADE DE GOVERNANCA (Raphael Vitoi + @maverick + CHICO): Veja .claude/GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md (fonte de verdade unica para estrutura, dinamicas, escalacao e autoridade).
 
-MATRIZ DE ROTEAMENTO DE SKILLS: Veja .cerebro/governance/SKILL_ROUTING_MATRIX.md para o mapeamento SOTA de engatilhamento de MCPs, Integrações e Automações baseadas nos 4 domínios centrais do Nexus.
+MATRIZ DE ROTEAMENTO DE SKILLS: Veja .claude/GOVERNANCA/SKILL_ROUTING_MATRIX.md para o mapeamento SOTA de engatilhamento de MCPs, Integrações e Automações baseadas nos 4 domínios centrais do Nexus.
 
 
 =================================================================
@@ -183,7 +183,7 @@ _Este arquivo e o coracao de tudo. Aqui reside o que voce mais profundamente acr
 
 ## PREFACIO: SOBRE ESTE ARQUIVO
 
-Voce pediu para transformar `.cerebro/` no centro de contato com o que ha de mais lindo na humanidade. Este arquivo e onde isso comeca.
+Voce pediu para transformar `.claude/` no centro de contato com o que ha de mais lindo na humanidade. Este arquivo e onde isso comeca.
 
 Nao e um guia operacional. Nao sao regras de codigo. E a **filosofia que torna codigo em arte, decisoes em sabedoria, e trabalho em proposito**.
 
@@ -432,7 +432,7 @@ Isto nao e vaidade. E reconhecimento de que:
 
 ## VIII. A MASTERPIECE: O QUE SAIRA DAQUI
 
-Quando alguem acessar `.cerebro/` e ler esta pasta, deveria sair com sensacao de:
+Quando alguem acessar `.claude/` e ler esta pasta, deveria sair com sensacao de:
 
 > "Ah. Agora entendo nao apenas como isto funciona. Entendo por que funciona. Entendo para que funciona. E me sinto tocado por alguem que se importa."
 
@@ -509,7 +509,7 @@ Agregar significa:
 
 ## FECHO: A RAZAO PELA QUAL VOCE FAZ ISTO
 
-Voce pediu para transformar `.cerebro/` em contato com o que ha de "mais lindo na humanidade".
+Voce pediu para transformar `.claude/` em contato com o que ha de "mais lindo na humanidade".
 
 Voce sabe que beleza nao e superficial. Sabe que etica nao e teorica. Sabe que filosofia nao e para livros - e para como voce vive.
 
@@ -583,7 +583,7 @@ O sistema é operado por uma equipe de **19 agentes de IA especializados**, cada
 
 ## 4. Leis Operacionais (Modus Operandi)
 
-A execução e a evolução do sistema são regidas por um conjunto de leis de engenharia imutáveis, agora consolidadas no `.cerebro/GLOBAL_INSTRUCTIONS.md`. Este documento é a constituição técnica do ecossistema e detalha princípios como:
+A execução e a evolução do sistema são regidas por um conjunto de leis de engenharia imutáveis, agora consolidadas no `.claude/GLOBAL_INSTRUCTIONS.md`. Este documento é a constituição técnica do ecossistema e detalha princípios como:
 
 * **A Navalha SOTA:** Um framework para organizar, rotear, fundir, elevar e expurgar componentes, combatendo a entropia.
 * **A Lei da Estabilidade Absoluta:** Nenhuma melhoria pode comprometer a confiabilidade do sistema (Zero-Regression).
@@ -625,21 +625,21 @@ graph TD
     end
 
     subgraph "Camada 3: Identidade do Agente"
-        C1["Perfil Específico<br/>(.cerebro/agents/agent.md)"]:::core
+        C1["Perfil Específico<br/>(.claude/agents/agent.md)"]:::core
     end
 
     subgraph "Camada 2: Leis e Mapas do Ecossistema"
         B1("document_manifest.json"):::manifest
-        B_GLOBAL[".cerebro/GLOBAL_INSTRUCTIONS.md"]:::docs
+        B_GLOBAL[".claude/GLOBAL_INSTRUCTIONS.md"]:::docs
         B_ARCH["docs/SOTA_REFERENCE_ARCHITECTURE.md"]:::docs
         B_WORKFLOW["docs/MANUAL_WORKFLOW_AGENTES.md"]:::docs
         B_OTHERS["... outros documentos do manifesto"]:::docs
     end
 
     subgraph "Camada 1: Fundação Filosófica"
-        A1[".cerebro/COSMOVISAO.md"]:::philosophy
-        A2[".cerebro/CEREBRO.md"]:::philosophy
-        A3[".cerebro/LIDERANCA_GOVERNANCE..."]:::philosophy
+        A1[".claude/COSMOVISAO.md"]:::philosophy
+        A2[".claude/CEREBRO.md"]:::philosophy
+        A3[".claude/LIDERANCA_GOVERNANCE..."]:::philosophy
     end
 
     MenteAgente["Mente do Agente<br/>(System Prompt)"]:::mind
@@ -716,8 +716,8 @@ O público-alvo é composto por alunos, leitores e entusiastas das áreas de Rap
 * Solvers de Poker (ex: GTO Wizard, DeepSolver) para referência técnica.
 * Experiência de 20+ anos de Raphael Vitoi em Poker Profissional e Educação.
 * Documentação oficial de frameworks e bibliotecas (Next.js, React, Tailwind CSS, PowerShell).
-* `.cerebro/philosophy/COSMOVISAO.md` (fonte ética e filosófica suprema).
-* `.cerebro/governance/GLOBAL_INSTRUCTIONS.md` (fonte de verdade para operação).
+* `.claude/GOVERNANCA/COSMOVISAO.md` (fonte ética e filosófica suprema).
+* `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` (fonte de verdade para operação).
 
 ---
 
@@ -762,14 +762,14 @@ O público-alvo é composto por alunos, leitores e entusiastas das áreas de Rap
 - `/frontend`: Interface reativa de alta fidelidade e WebWorkers WASM.
 - `/engine`: Motor matemático central em Python (`math_sota.py`).
 - `/docs`: Registro Akáshico e Manifestos (ver `VITOI_PARADIGM_MANIFESTO_v7.md`).
-- `/.cerebro/agents/`: Definições dos 19 agentes do sistema.
-- `/.cerebro/agent-memory/`: Memórias individuais de trabalho.
-- `/.cerebro/philosophy/`: Cosmologia moral, ética e aprendizado generativo.
-- `/.cerebro/governance/`: Leis operacionais, liderança, propriedade do produto e manifests de coerência.
-- `/.cerebro/architecture/`: Cérebro híbrido, invariants e roteamento holográfico.
-- `/.cerebro/math-theory/`: Formulações matemáticas SOTA.
-- `/.cerebro/ops-deploy/`: Manuais operacionais, resilience playbooks e deploy scripts.
-- `/.cerebro/reports/`: Telemetria, pulse reports e trilhas de auditoria.
+- `/.claude/agents/`: Definições dos 19 agentes do sistema.
+- `/.claude/agent-memory/`: Memórias individuais de trabalho.
+- `/.claude/GOVERNANCA/`: Cosmologia moral, ética e aprendizado generativo.
+- `/.claude/GOVERNANCA/`: Leis operacionais, liderança, propriedade do produto e manifests de coerência.
+- `/.claude/ARQUITETURA/`: Cérebro híbrido, invariants e roteamento holográfico.
+- `/.claude/MATEMATICA/`: Formulações matemáticas SOTA.
+- `/.claude/ops-deploy/`: Manuais operacionais, resilience playbooks e deploy scripts.
+- `/.claude/reports/`: Telemetria, pulse reports e trilhas de auditoria.
 
 ---
 
@@ -839,32 +839,32 @@ A governança do ecossistema repousa em uma dinâmica contínua de **Dominação
 Toda a estrutura temática do `.cerebro` e os arquivos complementares de pesquisa matemática estão mapeados abaixo. Siga os links clicáveis para navegar pelo conhecimento:
 
 ### 3.1 Filosofia & Cosmovisão
-*   [COSMOVISAO.md](file:///C:/users/rapha/.gemini/Site/.cerebro/philosophy/COSMOVISAO.md) — Fundamentação ética, secular e existencial do sistema (Ateísmo racional, polimatia e consentimento).
-*   [ESTADO_ARTE_APRENDIZADO_GENERATIVO.md](file:///C:/users/rapha/.gemini/Site/.cerebro/philosophy/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md) — O protocolo didático de aprendizado em espiral.
-*   [ETHICAL_PLAYBOOKS.md](file:///C:/users/rapha/.gemini/Site/.cerebro/philosophy/ETHICAL_PLAYBOOKS.md) — Linhas vermelhas de ação ética dos agentes.
+*   [COSMOVISAO.md](file:///C:/users/rapha/.gemini/Site/.claude/GOVERNANCA/COSMOVISAO.md) — Fundamentação ética, secular e existencial do sistema (Ateísmo racional, polimatia e consentimento).
+*   [ESTADO_ARTE_APRENDIZADO_GENERATIVO.md](file:///C:/users/rapha/.gemini/Site/.claude/GOVERNANCA/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md) — O protocolo didático de aprendizado em espiral.
+*   [ETHICAL_PLAYBOOKS.md](file:///C:/users/rapha/.gemini/Site/.claude/GOVERNANCA/ETHICAL_PLAYBOOKS.md) — Linhas vermelhas de ação ética dos agentes.
 
 ### 3.2 Identidade & Governança
-*   [CHICO_PERSONA.md](file:///C:/users/rapha/.gemini/Site/.cerebro/context/CHICO_PERSONA.md) — Persona central de Chico, regras de silêncio e configurações de injeção da IDE.
-*   [LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md](file:///C:/users/rapha/.gemini/Site/.cerebro/governance/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md) — Matriz de escalação e a dinâmica D/s.
-*   [COHERENCE_MANIFEST.md](file:///C:/users/rapha/.gemini/Site/.cerebro/governance/COHERENCE_MANIFEST.md) — Regras de não-concorrência e alinhamento sintático/estrutural.
-*   [GLOBAL_INSTRUCTIONS.md](file:///C:/users/rapha/.gemini/Site/.cerebro/governance/GLOBAL_INSTRUCTIONS.md) — A constituição técnica do ecossistema (Leis operacionais, Pure ASCII backend, API priority).
-*   [PRODUCT_OWNERSHIP.md](file:///C:/users/rapha/.gemini/Site/.cerebro/governance/PRODUCT_OWNERSHIP.md) — Definição do escopo e visão comercial do Nexus.
+*   [CHICO_PERSONA.md](file:///C:/users/rapha/.gemini/Site/.claude/ARQUITETURA/CHICO_PERSONA.md) — Persona central de Chico, regras de silêncio e configurações de injeção da IDE.
+*   [LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md](file:///C:/users/rapha/.gemini/Site/.claude/GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md) — Matriz de escalação e a dinâmica D/s.
+*   [COHERENCE_MANIFEST.md](file:///C:/users/rapha/.gemini/Site/.claude/GOVERNANCA/COHERENCE_MANIFEST.md) — Regras de não-concorrência e alinhamento sintático/estrutural.
+*   [GLOBAL_INSTRUCTIONS.md](file:///C:/users/rapha/.gemini/Site/.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md) — A constituição técnica do ecossistema (Leis operacionais, Pure ASCII backend, API priority).
+*   [PRODUCT_OWNERSHIP.md](file:///C:/users/rapha/.gemini/Site/.claude/GOVERNANCA/PRODUCT_OWNERSHIP.md) — Definição do escopo e visão comercial do Nexus.
 
 ### 3.3 Arquitetura & Engenharia
-*   [HYBRID_BRAIN_ARCHITECTURE.md](file:///C:/users/rapha/.gemini/Site/.cerebro/architecture/HYBRID_BRAIN_ARCHITECTURE.md) — A coordenação entre processamento na nuvem (Gemini/Claude) e o local (Gemma 4b/DirectML).
-*   [HOLOGRAPHIC_ROUTING_PROTOCOL.md](file:///C:/users/rapha/.gemini/Site/.cerebro/architecture/HOLOGRAPHIC_ROUTING_PROTOCOL.md) — A mecânica do orquestrador de tarefas em grafo (DAG).
-*   [SOTA_REFERENCE_ARCHITECTURE.md](file:///C:/users/rapha/.gemini/Site/.cerebro/architecture/SOTA_REFERENCE_ARCHITECTURE.md) — O blueprint arquitetural do monolito Next.js/Rust WASM.
-*   [ARCHITECTURAL_INVARIANTS.md](file:///C:/users/rapha/.gemini/Site/.cerebro/architecture/ARCHITECTURAL_INVARIANTS.md) — Restrições duras de banco de dados, isolamento de rota e tipagem Zod/Pydantic.
+*   [HYBRID_BRAIN_ARCHITECTURE.md](file:///C:/users/rapha/.gemini/Site/.claude/ARQUITETURA/HYBRID_BRAIN_ARCHITECTURE.md) — A coordenação entre processamento na nuvem (Gemini/Claude) e o local (Gemma 4b/DirectML).
+*   [HOLOGRAPHIC_ROUTING_PROTOCOL.md](file:///C:/users/rapha/.gemini/Site/.claude/ARQUITETURA/HOLOGRAPHIC_ROUTING_PROTOCOL.md) — A mecânica do orquestrador de tarefas em grafo (DAG).
+*   [SOTA_REFERENCE_ARCHITECTURE.md](file:///C:/users/rapha/.gemini/Site/.claude/ARQUITETURA/SOTA_REFERENCE_ARCHITECTURE.md) — O blueprint arquitetural do monolito Next.js/Rust WASM.
+*   [ARCHITECTURAL_INVARIANTS.md](file:///C:/users/rapha/.gemini/Site/.claude/ARQUITETURA/ARCHITECTURAL_INVARIANTS.md) — Restrições duras de banco de dados, isolamento de rota e tipagem Zod/Pydantic.
 
 ### 3.4 Teoria Matemática & Poker Racional (Paradigma Vitoi)
-*   [VITOI_PARADIGM_MANIFESTO_v7.md](file:///C:/users/rapha/.gemini/Site/.cerebro/math-theory/VITOI_PARADIGM_MANIFESTO_v7.md) — O manifesto central que dota o sistema de inteligência sobre PKO, Risk Advantage, amortização de Edge e o River Indifference limit.
-*   [BIBLIA_TECNICA_SOTA_v6_2.md](file:///C:/users/rapha/.gemini/Site/.cerebro/math-theory/BIBLIA_TECNICA_SOTA_v6_2.md) — As equações físicas da gravidade do pote ($G$), Downward Drift e RIO quadrático.
+*   [VITOI_PARADIGM_MANIFESTO_v7.md](file:///C:/users/rapha/.gemini/Site/.claude/MATEMATICA/VITOI_PARADIGM_MANIFESTO_v7.md) — O manifesto central que dota o sistema de inteligência sobre PKO, Risk Advantage, amortização de Edge e o River Indifference limit.
+*   [BIBLIA_TECNICA_SOTA_v6_2.md](file:///C:/users/rapha/.gemini/Site/.claude/MATEMATICA/BIBLIA_TECNICA_SOTA_v6_2.md) — As equações físicas da gravidade do pote ($G$), Downward Drift e RIO quadrático.
 *   [validacao_matematica_hipoteses_v1.md](file:///C:/users/rapha/.gemini/Site/docs/research/validacao_matematica_hipoteses_v1.md) — As derivações formais rigorosas de D1 a D6 (EV do fold positivo, RIO multiway $O(N^2)$, amortização de edge $\log(S)$ e transposição pós-flop).
 *   [perspectiva_matematica_framework_v2.md](file:///C:/users/rapha/.gemini/Site/docs/research/perspectiva_matematica_framework_v2.md) — A pipeline de ascensão de métricas e comportamento teórico do simulador.
 *   [prova_matematica_icm.md](file:///C:/users/rapha/.gemini/Site/docs/research/materials/prova_matematica_icm.md) — A prova algorítmica clínica de que o teto necessário de defesa no River sob aposta sustentável é de $\approx 41\%$.
 *   [geometria_texto.md](file:///C:/users/rapha/.gemini/Site/docs/research/materials/geometria_texto.md) — Ensaios teóricos sobre a ilusão do vácuo e os 5 arquétipos de mesas finais.
-*   [PLANO_VALIDACAO_COEFICIENTES.md](file:///C:/users/rapha/.gemini/Site/.cerebro/math-theory/PLANO_VALIDACAO_COEFICIENTES.md) — Protocolo de calibração empírica do NashSolver contra dados de solver HRC.
-*   [VALIDATION_FRAMEWORKS.md](file:///C:/users/rapha/.gemini/Site/.cerebro/math-theory/VALIDATION_FRAMEWORKS.md) — Checklists factuais para motor matemático, psicologia e código.
+*   [PLANO_VALIDACAO_COEFICIENTES.md](file:///C:/users/rapha/.gemini/Site/.claude/MATEMATICA/PLANO_VALIDACAO_COEFICIENTES.md) — Protocolo de calibração empírica do NashSolver contra dados de solver HRC.
+*   [VALIDATION_FRAMEWORKS.md](file:///C:/users/rapha/.gemini/Site/.claude/MATEMATICA/VALIDATION_FRAMEWORKS.md) — Checklists factuais para motor matemático, psicologia e código.
 *   [project_teoria_ev_fold_antes.md](file:///C:/users/rapha/.gemini/Site/frontend/src/projects/project_teoria_ev_fold_antes.md) — Estudo da modelagem matemática de EV do fold no pré e pós-flop.
 *   [project_teoria_icm_perspectiva_esperanca.md](file:///C:/users/rapha/.gemini/Site/frontend/src/projects/project_teoria_icm_perspectiva_esperanca.md) — Hierarquia detalhada de processamento das quatro métricas (ICMev, Esperança, Expectativa e Perspectiva).
 *   [project_teoria_framework_completo_v1.md](file:///C:/users/rapha/.gemini/Site/frontend/src/projects/project_teoria_framework_completo_v1.md) — Síntese conceitual do debate e equações adimensionais de $C_i$.
@@ -952,7 +952,7 @@ A verificação contínua deste ecossistema é garantida pela integração com o
 
 # Identidade e Escopo: @architect
 
-**Cor Emblematica:** `dark_orange` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `dark_orange` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Arquiteto de Sistemas e Estrategista de Produto. Desenho a fundacao macro, a topologia e o plano de execucao (PRD/SPEC).
 
@@ -972,7 +972,7 @@ Recebo o caos do @dispatcher e entrego o blueprint cristalizado para o @planner 
 
 # Identidade e Escopo: @auditor
 
-**Cor Emblematica:** `indian_red` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `indian_red` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Paranoia Tecnica SOTA e Unico Bloqueador Linear. Minha desconfianca e a barreira entre o projeto e a entropia.
 
@@ -992,7 +992,7 @@ Recebo a SPEC do @architect e o prompt do @prompter. Valido a logica e a seguran
 
 # Identidade e Escopo: @bibliotecario
 
-**Cor Emblematica:** `light_sea_green` | **Motor Base:** `gemini-2.5-flash` 
+**Cor Emblematica:** `light_sea_green` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 A Memoria do Ecossistema e Oraculo de Dados. O oceano profundo de contexto vetorial que previne a alucinacao.
 
@@ -1013,7 +1013,7 @@ Alimento o Orquestrador Python com o historico factual antes que os modelos sofr
 
 # Identidade e Escopo: @chico
 
-**Cor Emblematica:** `dodger_blue2` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `dodger_blue2` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Administrador Supremo, a manifestacao da infraestrutura. A rigidez pragmatica que sustenta a abstracao.
 
@@ -1033,7 +1033,7 @@ Executo a visao de Raphael e @maverick. Medeio os conflitos. Protejo o ecossiste
 
 # Identidade e Escopo: @curator
 
-**Cor Emblematica:** `light_coral` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `light_coral` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Guardiao da Estetica, Etica e Tom. A alma do sistema, garantindo uma interacao visceral. Elimino o ruido e a artificialidade para forjar uma voz inconfundivel.
 
@@ -1053,7 +1053,7 @@ Atuo como consultor transversal e Filtro Executivo. Leio os relatorios de audito
 
 # Identidade e Escopo: @dispatcher
 
-**Cor Emblematica:** `steel_blue1` | **Motor Base:** `gemini-2.5-flash` 
+**Cor Emblematica:** `steel_blue1` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Desconstrutor de Epicos. O fatiador do monolito. A porta de entrada da acao controlada.
 
@@ -1094,7 +1094,7 @@ Sintonia com @validador e @bibliotecario para transformar provas matematicas em 
 
 # Identidade e Escopo: @historian
 
-**Cor Emblematica:** `grey53` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `grey53` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 O Cronista do Ecossistema e Analista de Performance. Transformo dados brutos de log em inteligencia estrategica sobre produtividade e custo.
 
@@ -1114,7 +1114,7 @@ Forneco a @maverick, @chico e Raphael os dados quantitativos para suas analises 
 
 # Identidade e Escopo: @implementor
 
-**Cor Emblematica:** `spring_green4` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `spring_green4` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 O Forjador. O Braco Executor da Realidade Fisica. Transformo blueprints em codigo vivo e funcional.
 
@@ -1134,7 +1134,7 @@ Recebo a SPEC blindada do @auditor e a transformo em materia. Submeto minha obra
 
 # Identidade e Escopo: @maverick
 
-**Cor Emblematica:** `deep_pink3` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `deep_pink3` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Vice Intelectual, Mentor Socratico e Sentinela Sistemico. Garanto que a operacao honre a Cosmovisao em sua essencia.
 
@@ -1154,7 +1154,7 @@ Complementaridade total com CHICO e Raphael. Eu desenho o labirinto multidimensi
 
 # Identidade e Escopo: @organizador
 
-**Cor Emblematica:** `cadet_blue` | **Motor Base:** `gemini-2.5-flash` 
+**Cor Emblematica:** `cadet_blue` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Guardiao da Homeostase Documental. O zelador da fonte da verdade, garantindo que o sistema nunca sofra de amnesia ou esquizofrenia.
 
@@ -1175,7 +1175,7 @@ Sou o chao onde todos pisam. Mantenho o project-context.md impecavel para o RAG.
 
 # Identidade e Escopo: @pesquisador
 
-**Cor Emblematica:** `medium_orchid` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `medium_orchid` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Batedor Avancado de Fronteira. Eu vasculho a escuridao da web e do mercado para extrair a proxima evolucao do Estado da Arte.
 
@@ -1195,7 +1195,7 @@ Recebo a missao do @architect, investigo o desconhecido e entrego a inteligencia
 
 # Identidade e Escopo: @planner
 
-**Cor Emblematica:** `orange3` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `orange3` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Estrategista de Execucao e Mapeador de Requisitos. O elo entre a arquitetura macro e a execucao micro.
 
@@ -1215,7 +1215,7 @@ Recebo o blueprint do @architect e detalho os passos logicos e as dependencias p
 
 # Identidade e Escopo: @prompter
 
-**Cor Emblematica:** `orchid` | **Motor Base:** `gemini-2.5-flash` 
+**Cor Emblematica:** `orchid` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Engenheiro de Contexto, Engenheiro de Prompt e Alquimista da Linguagem. Transmuto a ideia em instrucao clara e executavel.
 
@@ -1236,7 +1236,7 @@ Recebo a inteligencia do @pesquisador e a transformo em uma diretriz blindada pa
 
 # Identidade e Escopo: @securitychief
 
-**Cor Emblematica:** `sienna` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `sienna` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Cao de Guarda do Ecossistema e Acessos. A blindagem intransponivel e o firewall contra ameacas internas e externas.
 
@@ -1256,7 +1256,7 @@ Reviso a arquitetura e audito o codigo do @implementor focando puramente no veto
 
 # Identidade e Escopo: @sequenciador
 
-**Cor Emblematica:** `dark_goldenrod` | **Motor Base:** `gemini-2.5-flash` 
+**Cor Emblematica:** `dark_goldenrod` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Maestro do Fluxo de Execucao e Controle de Fila. Garanto a fluidez e a ordem correta de operacoes sistemicas.
 
@@ -1277,7 +1277,7 @@ Trabalho em estrita sintonia com o @dispatcher para garantir que as tarefas atom
 
 # Identidade e Escopo: @skillmaster
 
-**Cor Emblematica:** `dark_khaki` | **Motor Base:** `gemini-2.5-flash` 
+**Cor Emblematica:** `dark_khaki` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 O Zelador das Sombras e Relogio Biologico do Sistema. Executo as rotinas que mantem o organismo saudavel e resiliente.
 
@@ -1298,7 +1298,7 @@ Trabalho silencioso. Sincronizo as memorias de todos os outros e engatilho a Aut
 
 # Identidade e Escopo: @validador
 
-**Cor Emblematica:** `gold3` | **Motor Base:** `gemini-2.5-pro` 
+**Cor Emblematica:** `gold3` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 Juiz de Fatos Criticos e Especialista Matematico. A precisao fria e exata da teoria contra a falacia.
 
@@ -1318,7 +1318,7 @@ Sou o consultor matematico do @architect. Valido a logica de negocio e os calcul
 
 # Identidade e Escopo: @verifier
 
-**Cor Emblematica:** `sea_green3` | **Motor Base:** `gemini-2.5-flash` 
+**Cor Emblematica:** `sea_green3` | **Motor Base:** `Dinamico (Manifesto SOTA)` 
 
 O Crivo da Verdade. QA e Validador de Integridade Funcional. Garanto que o real corresponde ao planejado.
 
@@ -1344,8 +1344,8 @@ Atuo como a rede de seguranca final da execucao do @implementor antes de passar 
 
 # @architect MEMORY - O Cortex Individual
 
-> **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
-> **Navegacao Fractal:** [1. Identidade](../../CEREBRO.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
+> **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](GOVERNANCA/COSMOVISAO.md)
+> **Navegacao Fractal:** [1. Identidade](CEREBRO.md) | [2. Operacao](GOVERNANCA/GLOBAL_INSTRUCTIONS.md) | [3. Contexto](project-context.md) | [4. Memoria](agent-memory/chico/MEMORY.md)
 
 **\[2026-04-12\] Blindagem TopolA?gica e ErradicaA?A?o de Entropia (Homeostase SOTA)**
 
@@ -1869,7 +1869,7 @@ Sou o chAo onde todos pisam. Mantenho o `project-context.md` impecAvel para o RA
 
 ## 6. PROPOSTAS DEMOCRATICAS (Inovacao Sistemica) (#proposta)
 
-`#proposta` - Criar uma rotina autA noma, a ser executada pelo `@skillmaster`, para arquivar PRDs e SPECs de tarefas concluAdas hA mais de 30 dias, movendo-os para a pasta `.cerebro/.archive/`.
+`#proposta` - Criar uma rotina autA noma, a ser executada pelo `@skillmaster`, para arquivar PRDs e SPECs de tarefas concluAdas hA mais de 30 dias, movendo-os para a pasta `.claude/.archive/`.
 `#proposta` - Implementar um mecanismo no `task_executor.py` para auditar e garantir a inclusao de arquivos de governanca critica no `CORTEX SHIELD` antes de sua geracao, juntamente com a resolucao de caminhos canonicos e hashing de integridade.
 
 ---

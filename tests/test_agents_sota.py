@@ -457,7 +457,7 @@ async def test_create_system_task() -> None:
 
 @pytest.mark.unit
 def test_escalate_security_cognition() -> None:
-    """Valida escalonamento de modelo cognitivo de seguranca para gemini-2.5-pro."""
+    """Valida escalonamento de modelo cognitivo de seguranca para gemini-3.8-flash."""
     task = Task(
         id="T_SEC",
         description="security audit",
@@ -466,7 +466,7 @@ def test_escalate_security_cognition() -> None:
         metadata={"priority": "critical"},
     )
     execution._escalate_security_cognition(task)
-    assert task.metadata.get("model_override") == "gemini-2.5-pro"  # pylint: disable=no-member
+    assert task.metadata.get("model_override") == "gemini-3.8-flash"  # pylint: disable=no-member
 
 
 @pytest.mark.asyncio

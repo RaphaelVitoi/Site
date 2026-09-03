@@ -89,7 +89,7 @@ def synthesize_gemini_audio(text: str, voice_name: str, output_path: Path) -> bo
         client = genai.Client(api_key=api_key)
         generate_fn = client.models.generate_content
         response = generate_fn(
-            model="gemini-2.5-flash",
+            model="gemini-3.8-flash",
             contents=text,
             config=types.GenerateContentConfigDict(
                 response_modalities=["AUDIO"],

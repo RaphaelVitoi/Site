@@ -304,7 +304,8 @@ async def test_inject_task_docs_ignores_markdown_paths_outside_workspace(local_t
     # Mock do root do repo para os testes
     monkeypatch.setattr("agents.context_builder.WORKSPACE_ROOT", local_tmp_dir)
     monkeypatch.setattr(
-        "agents.context_builder.ALLOWED_TASK_DOC_ROOTS", (local_tmp_dir / "docs", local_tmp_dir / ".cerebro")
+        "agents.context_builder.ALLOWED_TASK_DOC_ROOTS",
+        (local_tmp_dir / "docs", local_tmp_dir / ".claude", local_tmp_dir / ".cerebro"),
     )
 
     # Caminho malicioso simulado
@@ -351,13 +352,13 @@ async def test_queue_manager_cache_lookup_matches_real_model_key(
     # Simulando persistencia de cache
     key = "test_prompt_hash"
     value = "cached_response"
-    await manager.update_llm_cache(model="gemini-2.0-flash", prompt=key, response=value)
+    await manager.update_llm_cache(model="gemini-3.8-flash", prompt=key, response=value)
 
-    cached = await manager.get_llm_cache(model="gemini-2.0-flash", prompt=key)
+    cached = await manager.get_llm_cache(model="gemini-3.8-flash", prompt=key)
     assert cached == value
 
     # Diferente modelo = Miss no cache (Isolamento de Contexto)
-    miss = await manager.get_llm_cache(model="gemini-1.5-pro", prompt=key)
+    miss = await manager.get_llm_cache(model="gemini-3.7-flash", prompt=key)
     assert miss is None
 
 

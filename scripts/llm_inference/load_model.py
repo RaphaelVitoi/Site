@@ -20,12 +20,6 @@ MODELS_CONFIG = {
         "hf": "bartowski/gemma-4-31b-it-GGUF",
         "port": 17045,
     },
-    "26b": {
-        "name": "Gemma 4 26b MTP",
-        "gguf": "gemma-4-26b-it-Q4_K_M.gguf",
-        "hf": "bartowski/gemma-4-26b-it-MTP-GGUF",
-        "port": 17045,
-    },
     "4b": {"name": "Gemma 4 4b", "gguf": "gemma-4-4b-it-Q4_K_M.gguf", "hf": "google/gemma-4-4b-it-GGUF", "port": 17045},
     "8b": {
         "name": "Llama 3 8b",

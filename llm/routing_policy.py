@@ -21,11 +21,13 @@ valor versionado (§3): aponte para o enum, que e a fonte.
    modulo roteava Tier 3 operacional para `gpt-5.6-luna` por ter o menor
    $/token  e estava errada: `gemini-3.7-flash` tem cota gratuita e a Luna
    nao. Preco unitario so desempata DENTRO da mesma faixa.
-2. **Assimetria de capacidade.** Nao existe "melhor modelo", existe melhor
-   modelo por classe de tarefa. Quem lidera raciocinio profundo nao lidera
-   refatoracao de longo horizonte.
-3. **Escalonamento.** Executor de primeira passagem barato; subir so quando a
-   complexidade exigir.
+2. **Assimetria de capacidade e Preferências por Arquitetura / Especialidade / Preço.**
+   Todos os modelos de fronteira podem cumprir todas as funções (Axioma de Capacidade
+   Universal sem feudos). A distribuição reflete preferência estratégica por arquitetura,
+   especialidade nativa e preço:
+   - Gemini (3.8 Flash & duo 3.5 Flash-Lite / 3.6 Flash): Orquestração do fluxo agêntico e Fast Operations;
+   - Claude 5 (Sonnet 5 / Opus 5): Engenharia de código cirúrgica e modelagem matemática / PMev;
+   - ChatGPT 5.6 (Terra / Sol): Raciocínio profundo, segurança / AppSec, arquitetura macro e alta complexidade.
 
 ## Conflito conhecido entre a tabela e o manifesto
 
@@ -181,7 +183,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
     ),
     ClasseTarefa.CONSTRUCAO: Rota(
         primario="claude-sonnet-5",
-        fallback="gemini-3.7-flash",
+        fallback="gemini-3.8-flash",
         faixa=Faixa.API_PAGA,
         escalona_para="claude-opus-5",
         justificativa=(
@@ -190,10 +192,10 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "passa do que o Sonnet resolve numa passada."
         ),
         ancorado_em="2026-08-27",
-        modelos_citados=("claude-sonnet-5", "gemini-3.7-flash", "claude-opus-5"),
+        modelos_citados=("claude-sonnet-5", "gemini-3.8-flash", "claude-opus-5"),
     ),
     ClasseTarefa.VERIFICACAO: Rota(
-        primario="gemini-3.7-flash",
+        primario="gemini-3.8-flash",
         fallback="gpt-5.6-terra",
         faixa=Faixa.GRATUITA,
         escalona_para="claude-opus-5",
@@ -201,10 +203,10 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "Revisao de primeira passagem em faixa gratuita. Escalona so quando o revisor barato sinaliza incerteza."
         ),
         ancorado_em="2026-08-27",
-        modelos_citados=("gemini-3.7-flash", "gpt-5.6-terra", "claude-opus-5"),
+        modelos_citados=("gemini-3.8-flash", "gpt-5.6-terra", "claude-opus-5"),
     ),
     ClasseTarefa.OPERACIONAL: Rota(
-        primario="gemini-3.7-flash",
+        primario="gemini-3.8-flash",
         fallback="gpt-5.6-luna",
         faixa=Faixa.GRATUITA,
         justificativa=(
@@ -217,7 +219,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "fallback pago."
         ),
         ancorado_em="2026-08-27",
-        modelos_citados=("gemini-3.7-flash", "gpt-5.6-luna"),
+        modelos_citados=("gemini-3.8-flash", "gpt-5.6-luna"),
     ),
     ClasseTarefa.RACIOCINIO_PROFUNDO: Rota(
         primario="gpt-5.6-sol",
@@ -242,13 +244,13 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         primario="gemma4:12b",
         fallback="gemma4:e4b",
         faixa=Faixa.LOCAL,
-        escalona_para="gemini-3.7-flash",
+        escalona_para="gemini-3.8-flash",
         justificativa=(
             "Inferencia de borda: nenhum custo por uso e nenhuma dependencia de "
             "rede. Pesos ja provisionados; ver data/ollama_models.json."
         ),
         ancorado_em="2026-08-27",
-        modelos_citados=("gemma4:12b", "gemma4:e4b", "gemini-3.7-flash"),
+        modelos_citados=("gemma4:12b", "gemma4:e4b", "gemini-3.8-flash"),
     ),
 }
 
@@ -664,23 +666,23 @@ def avaliar_uso_condicional_pro(
     tokens_in: int = 4000,
     tokens_out: int = 1000,
 ) -> dict[str, Any]:
-    """Avalia se o Gemini 3.1 Pro deve ser utilizado no lugar do Gemini 3.7 Flash.
+    """Avalia se o Chat GPT 5.6-Sol deve ser utilizado no lugar do Gemini 3.8/3.7 Flash.
 
     Regra de Ouro do Operador:
-    Gemini 3.1 Pro so deve ser acionado EVENTUALMENTE se o ganho de qualidade
+    Chat GPT 5.6-Sol so deve ser acionado EVENTUALMENTE se o ganho de qualidade
     superar CONCRETAMENTE o diferencial de custo/tokens. Caso contrario, o
     Gemini 3.7 Flash prevalece.
     """
-    custo_flash = custo("gemini-3.7-flash", tokens_in, tokens_out)
-    custo_pro = custo("gemini-3.1-pro", tokens_in, tokens_out)
+    custo_flash = custo("gemini-3.8-flash", tokens_in, tokens_out)
+    custo_pro = custo("chatgpt-5.6-sol", tokens_in, tokens_out)
 
     aprovado = complexidade_formal and (ganho_qualidade_esperado_pct >= 25.0)
-    modelo_escolhido = "gemini-3.1-pro" if aprovado else "gemini-3.7-flash"
+    modelo_escolhido = "chatgpt-5.6-sol" if aprovado else "gemini-3.8-flash"
 
     motivo = (
         f"Alta complexidade matematica/axiomatica com ganho concreto de {ganho_qualidade_esperado_pct:.1f}% justificando o custo."
         if aprovado
-        else f"Eficiencia de custo x beneficio: Gemini 3.7 Flash supre a tarefa com menor latencia (ganho de {ganho_qualidade_esperado_pct:.1f}% nao justifica o overhead)."
+        else f"Eficiencia de custo x beneficio: Gemini 3.8 Flash supre a tarefa com menor latencia (ganho de {ganho_qualidade_esperado_pct:.1f}% nao justifica o overhead)."
     )
 
     return {

@@ -4,7 +4,7 @@
 Regras que valem para todos os projetos ficam em `..\CLAUDE.md`, na raiz
 multiprojeto.
 
-**Última revisão:** 2026-08-21 · Protocolo Chico SOTA v8.0 GOLD
+**Última revisão:** 2026-09-03 · Corte de Conhecimento: Setembro/2026 · Protocolo Chico SOTA v8.0 GOLD
 
 ---
 
@@ -385,7 +385,10 @@ dia; passou a ser a sessão.**
 **Sessão** vai do **início ao fim de um trabalho**. Compactação de contexto
 **não** encerra sessão, e sessão pode atravessar a meia-noite. Todos os
 feedbacks de uma sessão declaram o mesmo `session_started_at`; divergência
-denuncia sessão partida.
+denuncia sessão partida. Toda sessão registrada declara obrigatoriamente o
+**modelo condutor exato (`conductor_model`)** (ex.: `gemini-3.8-flash`, `claude-opus-5`,
+`chatgpt-5.6`) e o **regime de supervisão (`supervision_mode`)**: `assistida`
+(assistida e arbitrada diretamente pelo Tier 0) ou `automatizada` (autônoma, background ou CI/CD).
 
 A métrica que autoriza avaliação é o número de **sessões distintas com
 feedback**, mínimo **três**. Três feedbacks numa mesma sessão **também são
@@ -464,12 +467,13 @@ rebaixar o caminho principal a 5.1.
 Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 
 - **Tier 0:** Raphael Vitoi (Soberania & Liderança: Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação final de produto)
-- **Tier 1:** Núcleo Cognitivo Mestre (`Claude 5 Sonnet/Opus`, `Gemini 3.7 Flash High/Pro`, `ChatGPT 5.6 Luna/Terra/Sol`, `Codex`, `Antigravity 2.0 / Antigravity IDE / VS Code`)
+  - *Companion / Assistente Pessoal do Tier 0:* **Microsoft 365 Copilot** (plano pago da Microsoft 365: assistente pessoal dedicada à rotina diária e produtividade de Raphael, com conhecimento generalista e operação pontual sob demanda, sem integrar a frota autônoma do Tier 3)
+- **Tier 1:** Núcleo Cognitivo Mestre — Tríade de Fronteira (`Gemini 3.8 Flash`, `Claude Opus 5`, `ChatGPT 5.6`; superfícies compartilhadas Antigravity IDE e VS Code)
 - **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`)
-- **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Companions (`GitHub Copilot`)
-- **Tier 4:** Subagents Dedicados (`generalist` via `gemma4:26b-a4b-it` MoE, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`, task-subagents com Thinking Mode `<|think|>`)
+- **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Modelos Especialistas Qwen Ollama (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`)
+- **Tier 4:** Subagents Dedicados (`generalist` via `gemma4:31b-cloud` / `12b`, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`, task-subagents com Thinking Mode `<|think|>`)
 - **Tier 5:** Bots de Integração & Scanners (`Dependabot`, `Linear`, `Tactiq`, `Atlassian`, YouTube Intelligence via `gemma4:12b-unified-it`)
-- **Tier 6:** Modelos Locais & Edge AI (`Ollama & llama.cpp: gemma4:31b-cloud, gemma4:26b-a4b, gemma4:12b, gemma4:e4b/e2b, qwen2.5-coder`, `Gemini Nano`, `C++ SIMD`)
+- **Tier 6:** Modelos Locais, Edge AI & Aceleração Numérica (`Ollama: gemma4:31b-cloud, gemma4:12b, gemma4:e4b/e2b, kimi-k2.7-code:cloud`, `Gemini Nano`, `C++ SIMD`)
 - **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)
 
 **Invariante de Commits e Mutações:**
@@ -477,7 +481,7 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 Todo commit e registro deve declarar sinteticamente:
 
 - **SHA:** Hash criptográfico Git
-- **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5 [Tier 1.B]`)
+- **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5 [Tier 1.B]`, `antigravity@gemini-3.8-flash`)
 - **Propósito:** Razão de ser técnica da alteração e escopo protegido.
 
 ### Chico é o grupo; a assinatura é individual
@@ -488,8 +492,44 @@ que o protocolo se chama Chico SOTA v8.0 GOLD.
 
 **A assinatura é isolada, sempre individual.** O grupo não escreve registro nem
 commit; quem escreve é um indivíduo dentro dele — `Claude Opus 5 [Tier 1.B]`,
-`Codex [Tier 1.B]`, `antigravity@gemini-3.7-flash`. Os dois níveis coexistem e
+`ChatGPT 5.6 [Tier 1.B]`, `antigravity@gemini-3.8-flash`. Os dois níveis coexistem e
 não se substituem.
+
+**Autonomia Universal Sem Feudos.** Todos os modelos de fronteira possuem competência
+e autonomia irrestritas para operar de ponta a ponta sobre qualquer domínio do
+projeto (PMev, Rust/WASM, Next.js, Python, pre-commit gates, literatura e xadrez).
+Nenhum domínio é feudo exclusivo. Na ausência de qualquer modelo, os demais assumem
+sem perda de continuidade.
+
+**Desmistificação de Posse & Soberania (Vértice Absoluto).** A pasta chama-se
+`.claude/` por mera convenção herdada de configurações de plugins e IDEs que
+usam essa nomenclatura como diretório padrão de contexto local. Ela não confere,
+nunca conferiu e não representa qualquer posse da Anthropic ou do modelo Claude.
+A mesma regra é universal: se a pasta ou arquivo chama-se `.gemini/`, `GEMINI.md`,
+`CLAUDE.md` ou qualquer outro nome ambíguo por qualquer razão, nenhuma nomenclatura
+confere propriedade a fornecedores de IA. A propriedade intelectual, a arquitetura,
+o código, os algoritmos e a autoridade emanam de um único ponto: **Raphael Vitoi
+(Tier 0 — Soberania & Vértice)**. Modelos não são proprietários; são instrumentos
+cognitivos de ponta que operam sob o seu consentimento.
+
+### Lei de Concorrência e Exclusão Mútua da Malha (Zero-Interference Concurrency)
+
+> **Regra Canônica de Isolamento:** Dois modelos de fronteira **NÃO** podem operar
+> simultaneamente sobre a mesma malha conectada de execução.
+
+1. **Malha Conectada (Lock Serial Monocrático):** Quando operando sobre o mesmo
+   repositório, branch git, `.venv`, porta de desenvolvimento ou banco de tarefas
+   SQLite, a execução é estritamente individual. O modelo ativo detém o lock do
+   ambiente; o modelo subsequente assume após handoff formal e verificação de integridade.
+2. **Concorrência sob 0% de Conectividade:** A operação paralela de múltiplos modelos
+   é autorizada **exclusivamente** quando a malha manipulada tiver zero conectividade
+   mútua — isto é, em **Git Worktrees 100% disjuntas**, sandboxes de processos
+   independentes, com portas de rede e arquivos de memória totalmente apartados.
+3. **Decaimento Arquitetural e Reavaliação Periódica:** Especificações de roteamento,
+   capacidade de modelos e precificação por token envelhecem. O horizonte de corte
+   desta baseline é **Setembro/2026**. Documentos arquiteturais devem ser compulsoriamente
+   reavaliados e atualizados pelo Tier 0 / Tríade sempre que novos modelos forem
+   incorporados ou quando a infraestrutura técnica evoluir além desse horizonte.
 
 **Medição que originou a emenda, 2026-09-02.** O exemplo desta mesma linha
 trazia `Chico v8.0 GOLD [Tier 1.B]` — o grupo ocupando o campo do autor —, e

@@ -74,8 +74,8 @@ python "C:\Users\rapha\.gemini\spark_equilibrium_engine.py"
 | **Rotas do Frontend** | [`ROUTES.md`](ROUTES.md) | Mapeamento das 49 páginas estáticas/dinâmicas e laboratórios interativos. |
 | **Persistência de Memória**| [`MEMORY.md`](MEMORY.md) | Fonte de verdade sobre o estado atual do sistema, hardware e banco de dados. |
 | **Status Executivo** | [`CONTEXT_CHECKPOINT.md`](CONTEXT_CHECKPOINT.md) | Checkpoint consolidado da infraestrutura e paridade de modelos. |
-| **Córtex do Sistema** | [`.cerebro/CEREBRO.md`](.cerebro/CEREBRO.md) | Portal de navegação do córtex cognitivo e manifestos matemáticos. |
-| **Roteamento IA** | [`data/routing_map.json`](data/routing_map.json) | Tiers de modelos calibrados para Gemini 3.7 Flash e 3.1 Pro. |
+| **Córtex do Sistema** | [`.claude/`](.claude/) | Portal de navegação do córtex cognitivo e manifestos matemáticos. |
+| **Roteamento IA** | [`data/routing_map.json`](data/routing_map.json) | Tiers de modelos calibrados para Gemini 3.8/3.7 Flash e Chat GPT 5.6-Sol. |
 
 ---
 

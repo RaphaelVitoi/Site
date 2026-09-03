@@ -251,6 +251,18 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         ),
     ),
     #  GOOGLE  Gemini 3
+    "gemini-3.8-flash": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-3.8-flash",
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=0.75,
+        price_per_1m_out=3.75,
+        thinking_level="high",
+        thought_signature_mode="stateful",
+        verification=VerificationStatus.VERIFICADO,
+        notas="Modelo de fronteira da geracao Gemini 3.8 lancado em Setembro/2026. Motor primario do sistema.",
+    ),
     "gemini-3.7-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.7-flash",
@@ -303,17 +315,17 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         verification=VerificationStatus.VERIFICADO,
         notas="Camada 1: Triagem, parsing rapido e borda de baixa latencia.",
     ),
-    "gemini-3.1-pro": ModelCapability(
-        adapter=AdapterType.GOOGLE,
-        model_name="gemini-3.1-pro-preview",
-        context_window_in=2_000_000,
-        max_output_tokens=65_536,
-        price_per_1m_in=2.00,
-        price_per_1m_out=10.00,
-        thinking_level="high",
-        thought_signature_mode="stateful",
-        verification=VerificationStatus.NAO_VERIFICADO,
-        notas="Preview. Janela de 2M tokens para analise de manuscritos inteiros e deducoes logicas profundas.",
+    "chatgpt-5.6-sol": ModelCapability(
+        adapter=AdapterType.OPENAI,
+        model_name="gpt-5.6-sol",
+        context_window_in=1_050_000,
+        max_output_tokens=131_072,
+        price_per_1m_in=5.00,
+        price_per_1m_out=30.00,
+        reasoning_effort="max",
+        supports_subagents=True,
+        verification=VerificationStatus.VERIFICADO,
+        notas="OpenAI Chat GPT 5.6-Sol. Modelo de fronteira analitica e raciocinio profundo.",
     ),
 }
 

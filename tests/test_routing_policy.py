@@ -101,9 +101,9 @@ def test_operacional_usa_faixa_gratuita_e_nao_o_menor_preco():
     cota gratuita. Custo marginal zero vence barato."""
     rota = ROTAS[ClasseTarefa.OPERACIONAL]
     assert rota.faixa is Faixa.GRATUITA
-    assert rota.primario == "gemini-3.7-flash"
+    assert rota.primario == "gemini-3.8-flash"
     luna = MODEL_REGISTRY["gpt-5.6-luna"]
-    flash = MODEL_REGISTRY["gemini-3.7-flash"]
+    flash = MODEL_REGISTRY["gemini-3.8-flash"]
     assert luna.price_per_1m_in < flash.price_per_1m_in  # a Luna E mais barata...
     assert rota.primario != "gpt-5.6-luna"  # ...e ainda assim nao e primaria
     assert rota.fallback == "gpt-5.6-luna"  # fica como fallback pago
@@ -124,14 +124,14 @@ def test_ordem_de_consumo_respeita_a_economia_generalizada():
     [
         ("chico", "claude-opus-5", "gpt-5.6-sol"),
         ("maverick", "gpt-5.6-sol", "claude-opus-5"),
-        ("architect", "claude-sonnet-5", "gemini-3.7-flash"),
-        ("implementor", "claude-sonnet-5", "gemini-3.7-flash"),
-        ("auditor", "gemini-3.7-flash", "gpt-5.6-terra"),
-        ("verifier", "gemini-3.7-flash", "gpt-5.6-terra"),
-        ("securitychief", "gemini-3.7-flash", "gpt-5.6-terra"),
-        ("dispatcher", "gemini-3.7-flash", "gpt-5.6-luna"),
-        ("organizador", "gemini-3.7-flash", "gpt-5.6-luna"),
-        ("historian", "gemini-3.7-flash", "gpt-5.6-luna"),
+        ("architect", "claude-sonnet-5", "gemini-3.8-flash"),
+        ("implementor", "claude-sonnet-5", "gemini-3.8-flash"),
+        ("auditor", "gemini-3.8-flash", "gpt-5.6-terra"),
+        ("verifier", "gemini-3.8-flash", "gpt-5.6-terra"),
+        ("securitychief", "gemini-3.8-flash", "gpt-5.6-terra"),
+        ("dispatcher", "gemini-3.8-flash", "gpt-5.6-luna"),
+        ("organizador", "gemini-3.8-flash", "gpt-5.6-luna"),
+        ("historian", "gemini-3.8-flash", "gpt-5.6-luna"),
     ],
 )
 def test_tabela_do_operador(agente, primario, fallback):
@@ -349,7 +349,7 @@ def test_core_config_expoe_modelo_concreto_por_agente():
     assert len(mapa) == 19, f"esperado 19 agentes resolvidos, veio {len(mapa)}"
     assert len(set(mapa.values())) >= 3, f"roteamento colapsou: {set(mapa.values())}"
     assert mapa["@chico"] == "claude-opus-5"
-    assert mapa["@dispatcher"] == "gemini-3.7-flash"
+    assert mapa["@dispatcher"] == "gemini-3.8-flash"
     assert mapa["@gemma4"] == "gemma4:12b"
 
 
@@ -380,16 +380,16 @@ def test_avaliar_uso_condicional_pro():
         complexidade_formal=False,
         ganho_qualidade_esperado_pct=10.0,
     )
-    assert res_flash["modelo_escolhido"] == "gemini-3.7-flash"
+    assert res_flash["modelo_escolhido"] == "gemini-3.8-flash"
     assert res_flash["aprovado_pro"] is False
-    assert "Gemini 3.7 Flash supre a tarefa" in res_flash["motivo"]
+    assert "Gemini 3.8 Flash supre a tarefa" in res_flash["motivo"]
 
-    # 2. Tarefa de alta complexidade matematica e ganho expressivo -> Gemini 3.1 Pro
+    # 2. Tarefa de alta complexidade matematica e ganho expressivo -> Chat GPT 5.6-Sol
     res_pro = avaliar_uso_condicional_pro(
         complexidade_formal=True,
         ganho_qualidade_esperado_pct=40.0,
     )
-    assert res_pro["modelo_escolhido"] == "gemini-3.1-pro"
+    assert res_pro["modelo_escolhido"] == "chatgpt-5.6-sol"
     assert res_pro["aprovado_pro"] is True
     assert res_pro["beneficio_estimado_pct"] == 40.0
     assert "Alta complexidade matematica" in res_pro["motivo"]

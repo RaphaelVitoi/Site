@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 WORKSPACE_ROOT = Path.cwd().resolve()
 ALLOWED_TASK_DOC_ROOTS = (
     WORKSPACE_ROOT / "docs",
+    WORKSPACE_ROOT / ".claude",
     WORKSPACE_ROOT / ".cerebro",
 )
 
@@ -416,7 +417,7 @@ def _finalize_prompt(prompt_parts: list[str], agent_clean: str) -> str:
     )
 
     prompt_parts.append(
-        "\n\n[PROTOCOLO DE DIRETRIZES OPERACIONAIS: SOTA 3.1 PRO VITOI CORE]\n"
+        "\n\n[PROTOCOLO DE DIRETRIZES OPERACIONAIS: SOTA CHATGPT 5.6-SOL VITOI CORE]\n"
         "1. ANTEVISAO SEMANTICA: Proibida a analise isolada. Audite a arvore de dependencias.\n"
         "2. DIAGNOSTICO BAYESIANO E STEELMANING: Opere na causa raiz. Provoque o bug ate o estado mais catastrofico "
         "antes de propor a solucao.\n"

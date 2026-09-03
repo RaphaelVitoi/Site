@@ -1,7 +1,7 @@
 {
     "system_info": {
         "workspace_path": "C:\\Users\\rapha\\.gemini\\Site",
-        "settings_local": ".cerebro\\settings.local.json",
+        "settings_local": ".claude\\settings.local.json",
         "version": "8.0.0",
         "last_sync": "2026-09-01T12:00:00Z",
         "environment": "production",
@@ -330,18 +330,18 @@
         "drop_only_free_models": true,
         "protect_models": [
             "gemini-3.5-flash-lite",
+            "gemini-3.6-flash",
             "qwen2.5-coder:7b-instruct-q5_K_M",
             "gemma4:31b-cloud",
-            "gemini-3.5-flash",
-            "gemini-3.6-flash",
-            "gemini-3.7-flash"
+            "gemini-3.7-flash",
+            "gemini-3.8-flash"
         ]
     },
     "model_routing": {
         "deep_thinking": [
+            "gemini-3.8-flash",
             "gemini-3.7-flash",
             "gemini-3.6-flash",
-            "gemini-3.5-flash",
             "gemini-3.5-flash-lite",
             "gemma4:31b-cloud",
             "qwen2.5-coder:7b-instruct-q5_K_M",
@@ -350,16 +350,15 @@
         ],
         "fast_operations": [
             "gemini-3.5-flash-lite",
+            "gemini-3.6-flash",
             "qwen2.5-coder:7b-instruct-q5_K_M",
             "gemma4:31b-cloud",
-            "gemini-3.5-flash",
-            "gemini-3.6-flash",
             "meta-llama/llama-3.1-8b-instruct:free"
         ],
         "coding": [
+            "gemini-3.8-flash",
             "gemini-3.7-flash",
             "gemini-3.6-flash",
-            "gemini-3.5-flash",
             "gemini-3.5-flash-lite",
             "qwen2.5-coder:7b-instruct-q5_K_M",
             "gemma4:31b-cloud",
@@ -367,9 +366,9 @@
             "deepseek/deepseek-r1:free"
         ],
         "general_purpose": [
+            "gemini-3.8-flash",
             "gemini-3.7-flash",
             "gemini-3.6-flash",
-            "gemini-3.5-flash",
             "gemini-3.5-flash-lite",
             "qwen2.5-coder:7b-instruct-q5_K_M",
             "gemma4:31b-cloud",

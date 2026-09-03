@@ -126,7 +126,9 @@ def test_sota_cache_lru_eviction_under_stress(memory_cache: SOTACache):
 @pytest.mark.parametrize(
     ("model_name", "expected_provider"),
     [
+        ("gemini-3.8-flash", "gemini"),
         ("gemini-3.7-flash", "gemini"),
+        ("gemini-3.6-flash", "gemini"),
         ("gemini-3.5-flash-lite", "gemini"),
         ("gemma4:12b", "local"),
         ("gemma4:31b-cloud", "local"),
@@ -138,7 +140,7 @@ def test_sota_cache_lru_eviction_under_stress(memory_cache: SOTACache):
         ("qwen/qwen-2.5-coder-32b-instruct:free", "openrouter"),
         ("meta-llama/llama-3.3-70b-instruct:free", "openrouter"),
         ("openrouter/free", "openrouter"),
-        ("claude-3-7-sonnet", "anthropic"),
+        ("claude-opus-5", "anthropic"),
     ],
 )
 def test_provider_inference_across_all_tiers(model_name: str, expected_provider: str):

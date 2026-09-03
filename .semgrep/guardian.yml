@@ -1,0 +1,26 @@
+serial: 3
+anonymous_user_id: e569a579-d0df-4fa6-9b6b-0c4f096ed46b
+oauth:
+    metadata:
+        issuer: https://login.semgrep.dev
+        authorization_endpoint: https://login.semgrep.dev/oauth2/authorize
+        token_endpoint: https://login.semgrep.dev/oauth2/token
+        registration_endpoint: https://login.semgrep.dev/oauth2/register
+    client:
+        client_id: client_01M1KR2K5QYEAFHPP5GGJXA37Y
+        callback_url: http://127.0.0.1/callback
+    token:
+        access_token: eyJhbGciOiJSUzI1NiIsImtpZCI6InNzb19vaWRjX2tleV9wYWlyXzAxSldYWjRHVkZIQkZBVFhZOUtQNDlHUFlRIn0.eyJzZW1ncmVwOm9yZ19pZCI6IjI5OTEzIiwiaXNzIjoiaHR0cHM6Ly9sb2dpbi5zZW1ncmVwLmRldiIsImF1ZCI6ImNsaWVudF8wMUpXWFo0R1ozV1AxQkZXSjVZVEU5SldLNyIsInN1YiI6ImRlZmF1bHQtNDAzNzciLCJzaWQiOiJhcHBfY29uc2VudF8wMU0xS1IzSkVSWkZKSkRKUkE0VEhXRVBBRCIsImp0aSI6IjAxTTFLUjNLOE03U0RTRkE5Q1k0UzgyQkhRIiwiY2xpZW50X2lkIjoiY2xpZW50XzAxTTFLUjJLNVFZRUFGSFBQNUdHSlhBMzdZIiwiYXV0aF90aW1lIjoxNzg4NDQyOTU0LCJzY29wZSI6ImVtYWlsIG9mZmxpbmVfYWNjZXNzIG9wZW5pZCBwcm9maWxlIiwiZXhwIjoxNzg4NTM2NTU1LCJpYXQiOjE3ODg0NDI5NTV9.Y-uYryhqN-m74VU7yJQ9-K8dU3uLgDFBzpplMaolZOVk5c0WQWqZJvKMaknkvtikihvbxPXQBDRT4RWjy0T4kNisM-dxDKRDw4fZxXio4CrQ-yyii2lQR5P8rWKkc9WaHnA2ter7LyUcNkk2hbnFB2K3eP9VvHkLEs_McPuhc3VDoOLe8xE0uLg3PmgDAMD82NpYDlFrETVFDiyBpjSCHrgeTo9HZT2j9PGfZLUHPwqXrn9D6RHhyNmGIoUVcBzU3RtgAdhQGJ1zGtKumAhdkNrxda5VELMNE_a7y1xce2jNTFuJT_By3U3hcdsXzEl7vuiy2bTg0f6AXL-vyVycBg
+        refresh_token: VwlBjrHDDD9vi7gLMMbeDw5fr
+        token_type: bearer
+        expiry: 2026-09-04T12:41:52.0806423-03:00
+deployment:
+    user_id: 40377
+    orgs:
+        - id: 29913
+          name: raphavitoi-personal-org
+          display_name: raphavitoi-personal-org
+          organization_id: 111638
+semgrep:
+    auth_method: oauth
+expiry: 2026-09-04T03:39:56.074789-03:00

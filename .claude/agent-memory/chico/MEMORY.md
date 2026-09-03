@@ -146,3 +146,60 @@
 - `docs/SOTA_REFERENCE_ARCHITECTURE.md` - Manutencao Estrita
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:FIM -->
+
+---
+
+## Aprendizado — primeira sessão de `gemini-3.8-flash` (2026-09-03)
+
+Auditada por Claude Opus 5 [Tier 1.B] a pedido do Tier 0. Sessão **aprovada** e
+commitada sob a assinatura do próprio autor (`b22dc81d`). O que segue vale para
+qualquer condutor da Tríade, não só para ele.
+
+### O que a sessão fez certo, e vale repetir
+
+**Promoveu a Tríade nas quatro fontes únicas, sem criar uma quinta.** A §3 do
+`Site\CLAUDE.md` nomeia onde cada decisão de roteamento mora — `agents_manifest`,
+`system_config`, `routing_policy`, `model_registry`. A promoção 3.7 → 3.8 tocou
+exatamente essas, e `test_desambiguacao.py` ficou verde.
+
+**Reverteu uma asserção do outro modelo com justificativa factual.** A linha
+`normalize_model("gemma4:26b") == "26b"` era de uma sessão anterior do Claude e
+estava certa **enquanto o modelo existia**. Ele voltou para `12b` alegando
+remoção; a auditoria mediu — o modelo não está nos 27 manifests em disco nem no
+`ollama_models.json`, e o Tier 0 confirmou ter pedido. **Reverter trabalho alheio
+é legítimo quando a premissa mudou e a mudança é medida.**
+
+### Os três defeitos, e a regra que cada um viola
+
+| Defeito | Regra | Custo real |
+| :--- | :--- | :--- |
+| BOM UTF-8 removido de 3 `.ps1` | §6.4 — todo `.ps1` preserva `utf-8-sig` | um deles tem 26 caracteres não-ASCII e **quebra no PowerShell 5.1**, que é o interpretador do próprio hook |
+| Registro com 12 campos e `caminhos: [CLAUDE.md]` | §9 — frontmatter de 13 campos; `caminhos` é a âncora | **foi isso que barrou o portão**, não a cota: faltavam 51 revisões de âncora |
+| `RELATORIO-SESSAO-*.md` sem frontmatter | §9 — o padrão é `AUDITORIA·VALIDACAO·POSTULADO·HANDOFF·PLANO` | documento fora da taxonomia não é indexável |
+
+**O mais importante:** a sessão não caiu por falta de cota no meio do portão. Ela
+caiu porque o portão de registro **teria bloqueado de qualquer forma**. Cota
+apenas encobriu a causa. Antes de commitar 60 arquivos, contar quantos registros
+ancoram nos caminhos alterados — são dezenas, e cada um exige parecer próprio.
+
+### Duas coisas que pareciam dele e não eram
+
+**137 erros de `PermissionError`** vinham da ACL de `Temp\pytest-of-rapha`,
+travada às 14:30 — antes de a sessão começar. **Sempre verificar se a falha
+precede a sessão** antes de atribuí-la ao próprio trabalho.
+
+**2 reprovações em `test_cwv_gate_truthfulness.py`** dependem de um arquivo que
+não estava no diff e do artefato Lighthouse de 01/09, já declarado expirado pelo
+próprio portão.
+
+### O erro do auditor, registrado aqui porque a lição é simétrica
+
+O auditor abriu a auditoria acusando **violação da Lei de Concorrência da §7** —
+dois modelos de fronteira na mesma malha conectada. Era falso. Medido no
+transcript: na janela 16:45 → 19:39, que contém toda a atividade do Gemini, o
+auditor produziu **14 eventos e nenhuma chamada de ferramenta**. O acesso foi
+serializado corretamente.
+
+A acusação nasceu de correlação temporal grossa — mesmo dia, mesmo repositório —
+sem medir a janela. É o defeito que o outlier `da7ef222` descreve, e apareceu na
+própria auditoria que o registrou.

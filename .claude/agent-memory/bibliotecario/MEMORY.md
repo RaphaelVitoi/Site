@@ -27,7 +27,7 @@
 
 # MEMORIA SIMBIOTICA - @bibliotecario
 
-> **Status:** Ativo | **Aura:** light_sea_green | **Motor:** gemini-2.5-flash
+> **Status:** Ativo | **Aura:** light_sea_green | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
@@ -85,7 +85,7 @@ Alimento o Orquestrador Python com historico factual antes que qualquer agente c
 
 # MEMORIA SIMBIOTICA - @bibliotecario
 
-> **Status:** Ativo | **Aura:** light_sea_green | **Motor:** gemini-2.0-flash
+> **Status:** Ativo | **Aura:** light_sea_green | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---

@@ -172,6 +172,14 @@ $porSessao = @($todasAsSessoes | ForEach-Object {
         Where-Object { $_.PSObject.Properties.Name -contains 'session_started_at' -and -not [string]::IsNullOrWhiteSpace([string]$_.session_started_at) } |
         ForEach-Object { [string]$_.session_started_at } |
         Sort-Object -Unique)
+    $modelos = @($daSessao |
+        Where-Object { $_.PSObject.Properties.Name -contains 'conductor_model' -and -not [string]::IsNullOrWhiteSpace([string]$_.conductor_model) } |
+        ForEach-Object { [string]$_.conductor_model } |
+        Sort-Object -Unique)
+    $regimes = @($daSessao |
+        Where-Object { $_.PSObject.Properties.Name -contains 'supervision_mode' -and -not [string]::IsNullOrWhiteSpace([string]$_.supervision_mode) } |
+        ForEach-Object { [string]$_.supervision_mode } |
+        Sort-Object -Unique)
     [pscustomobject]@{
         session_id            = $sid
         feedback_count        = $daSessao.Count
@@ -184,6 +192,8 @@ $porSessao = @($todasAsSessoes | ForEach-Object {
         atravessa_meia_noite  = ($instantes.Count -gt 1 -and $instantes[0].LocalDateTime.ToString('yyyy-MM-dd') -ne $instantes[-1].LocalDateTime.ToString('yyyy-MM-dd'))
         session_started_at    = $declarados
         inicio_inconsistente  = ($declarados.Count -gt 1)
+        conductor_models      = $modelos
+        supervision_modes     = $regimes
     }
 } | Sort-Object -Property feedback_count -Descending)
 

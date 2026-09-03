@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="[MCP SOTA] %(
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).parent.parent.resolve()
-SETTINGS_PATH = BASE_DIR / ".cerebro" / "settings.local.json"
+SETTINGS_PATH = BASE_DIR / ".claude" / "settings.local.json"
 
 app = Server("nexus-dynamic-mcp")
 

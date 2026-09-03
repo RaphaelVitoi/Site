@@ -27,7 +27,7 @@
 
 # MEMORIA SIMBIOTICA - @historian
 
-> **Status:** Ativo | **Aura:** grey53 | **Motor:** gemini-1.5-pro
+> **Status:** Ativo | **Aura:** grey53 | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
@@ -82,7 +82,7 @@ Alimento @maverick e @chico com dados quantitativos para analises estrategicas e
 
 # MEMORIA SIMBIOTICA - @historian
 
-> **Status:** Ativo | **Aura:** grey53 | **Motor:** gemini-1.5-pro
+> **Status:** Ativo | **Aura:** grey53 | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---

@@ -104,8 +104,8 @@ app.add_typer(voice_app)
 app.add_typer(audit_app)
 app.add_typer(routine_app)
 
-DIR_CEREBRO_NAME = ".cerebro"
-DIR_CLAUDE = BASE_DIR / DIR_CEREBRO_NAME
+DIR_CLAUDE_NAME = ".claude"
+DIR_CLAUDE = BASE_DIR / DIR_CLAUDE_NAME
 
 #  Constantes do Orquestrador SOTA
 WORKER_SCRIPT_NAME = "task_executor.py"
@@ -1360,7 +1360,8 @@ def _is_ignored_dir(name: str) -> bool:
         "temp",
         "triage",
         ".git",
-        DIR_CEREBRO_NAME,
+        DIR_CLAUDE_NAME,
+        ".cerebro",
         "target",
         ".next",
         "dist",
@@ -2050,7 +2051,7 @@ def run_maintenance():
     console.print(f"\n[bold green][SUCESSO] As {total_executaveis} etapas executaveis da manutencao concluiram.[/]")
 
 
-HELP_MODEL_CHOICES = "Modelo: 31b, 26b, 12b, 4b, 8b, llama3_8b, qwen, granite"
+HELP_MODEL_CHOICES = "Modelo: 31b, 31b_cloud, 12b, 4b, 8b, llama3_8b, qwen, granite"
 
 
 @ops_app.command("start-gemma")
@@ -2148,7 +2149,7 @@ def chat_gemma(
     if not model:
         console.print("\n[bold magenta]=== [NEXUS] MEMBRANA DE INGRESSO DE MODELOS ===[/]")
         console.print("[1] Gemma 4 31b Dense (Raciocinio Estrategico & RAG)")
-        console.print("[2] Gemma 4 26b MTP (Geracao de Codigo de Alta Vazao)")
+        console.print("[2] Gemma 4 31b Cloud (Raciocinio em Nuvem Zero-RAM)")
         console.print("[3] Gemma 4 12b Balanced (Modelo Intermediario)")
         console.print("[4] Gemma 4 4b (Edge Tatica e Baixa Latencia)")
         console.print("[5] Gemma 4 8b (Modelo Geral Balanced)")
@@ -2159,7 +2160,7 @@ def chat_gemma(
         choice = typer.prompt("\nSelecione o modelo para ingressar (1-8)", default="1")
         model = {
             "1": "31b",
-            "2": "26b",
+            "2": "31b_cloud",
             "3": "12b",
             "4": "4b",
             "5": "8b",

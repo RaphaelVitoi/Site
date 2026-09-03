@@ -13,7 +13,7 @@ $ScriptDir = $PSScriptRoot
 $SiteDir = Split-Path -Parent (Split-Path -Parent $ScriptDir)
 $BackupRoot = Join-Path (Split-Path -Parent $SiteDir) "Backups"
 
-$LogDir = Join-Path $SiteDir ".cerebro\logs"
+$LogDir = Join-Path $SiteDir ".claude\logs"
 if (-not (Test-Path -LiteralPath $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
 $LogFile = Join-Path $LogDir "backup_ghost.log"
 

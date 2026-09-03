@@ -45,11 +45,13 @@ Toda interação com o runtime agêntico é interceptada por três categorias de
 
 ---
 
-## VI. ADAPTAÇÃO PARA MODELOS GEMINI 3.7 FLASH
+## VI. TRÍADE DE FRONTEIRA, AUTONOMIA UNIVERSAL & MATRIZ DE PREFERÊNCIAS
 
-- **Gemini 3.7 Flash High (Deep Architecture & PMev):** Dedicado à formulação teórica de Poker / Teoria dos Jogos (PMev vs ICMev), modelos matemáticos em LaTeX, análise bayesiana e steelmaning profundo.
-- **Gemini 3.7 Flash Medium (Code & Tool Sprints):** Engenharia de software cirúrgica, aplicação de Target Lock, diffs SEARCH/REPLACE e testes unitários.
-- **Gemini 3.7 Flash Low / Nano (Low-Latency / Chrome Dev):** Ações ultra-rápidas em tempo real, autocomplete, dispatch via CDP e formatação de dados em JSON.
+1. **Axioma de Capacidade Universal:** Todos os modelos da tríade possuem competência plena para cumprir todas as funções e demandas do ecossistema. Não existem feudos funcionais ou proibições artificiais.
+2. **Preferências por Arquitetura, Especialidade e Preço:**
+   - **Gemini 3.8 Flash (e 3.5 Flash-Lite duo com 3.6 Flash):** Preferência primária para **Orquestração de Fluxo Agêntico**, coordenação assíncrona, context caching massivo em TPUs e **Fast Operations** com custo marginal mínimo.
+   - **Claude 5 (Sonnet 5 / Opus 5):** Preferência primária para **Engenharia de Código Cirúrgica + Modelagem Matemática** (teoria dos jogos PMev, formalismos de Nash, contratos Rust/WASM e tipagem estrita).
+   - **ChatGPT 5.6 (Terra / Sol):** Preferência primária para **Raciocínio Profundo (Deep Reasoning), Auditorias de Segurança AppSec, Arquitetura Macro de Sistemas e Atividades de Altíssima Complexidade Conceitual**.
 
 ---
 

@@ -27,8 +27,8 @@
 
 # @architect MEMORY - O Cortex Individual
 
-> **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
-> **Navegacao Fractal:** [1. Identidade](../../CEREBRO.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
+> **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../GOVERNANCA/COSMOVISAO.md)
+> **Navegacao Fractal:** [1. Identidade](../../CEREBRO.md) | [2. Operacao](../../GOVERNANCA/GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
 
 **[2026-04-12] Blindagem Topológica e Erradicação de Entropia (Homeostase SOTA)**
 
@@ -85,8 +85,8 @@ Atuo em triade direta com @auditor (absorvi as funcoes do antigo @planner para e
 
 # @architect MEMORY - O Cortex Individual
 
-> **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../COSMOVISAO.md)
-> **Navegacao Fractal:** [1. Identidade](../../CLAUDE.md) | [2. Operacao](../../GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
+> **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../GOVERNANCA/COSMOVISAO.md)
+> **Navegacao Fractal:** [1. Identidade](../../GOVERNANCA/CLAUDE.md) | [2. Operacao](../../GOVERNANCA/GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
 
 **\[2026-04-12\] Blindagem TopolA?gica e ErradicaA?A?o de Entropia (Homeostase SOTA)**
 

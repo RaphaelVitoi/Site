@@ -32,7 +32,7 @@
                                         ▼
  ┌─────────────────────────────────────────────────────────────────────────────┐
  │ CAMADA 3: RACIOCÍNIO TEÓRICO PROFUNDO (Análise Arquitetural & Provas)       │
- │ • Modelos: Gemini 3.1 Pro (preview/custom)                                  │
+ │ • Modelos: Chat GPT 5.6-Sol (preview/custom)                                │
  │ • Gatilho: Acionamento estrito e EVENTUAL onde o ganho supera o custo (ROI) │
  │ • Função: Provas axiomáticas da PMev, Teoria dos Jogos / Nash, modelagem de │
  │   sistemas complexos e auditorias de segurança de alta densidade.           │
@@ -59,8 +59,12 @@
 ## 3. DIRETRIZ ESTRUTURANTE: CICLO DE VIDA DINÂMICO DOS MODELOS
 
 1. **Atualização Periódica por Dados:** Os modelos declarados representam o estado da arte verificado em **Agosto de 2026**. Devem ser reavaliados continuamente conforme novos modelos e benchmarks forem publicados.
-2. **Critério Estrito de Eficiência ($ROI$):** Um modelo mais caro (ex.: Gemini 3.1 Pro) só deve ser acionado quando houver comprovação empírica de que seu produto final é significativamente superior ($\\Delta_{\\text{qualidade}} \\ge 25\\%$) e justifica o gasto de tokens/créditos.
+2. **Critério Estrito de Eficiência ($ROI$):** Um modelo mais caro (ex.: Chat GPT 5.6-Sol) só deve ser acionado quando houver comprovação empírica de que seu produto final é significativamente superior ($\Delta_{\text{qualidade}} \ge 25\%$) e justifica o gasto de tokens/créditos.
 3. **Transparência de Output:** Toda resposta em pipeline de alta densidade expõe o modelo selecionado, a justificativa e o ganho verificado em relação ao baseline.
+4. **Matriz de Preferências por Arquitetura & Especialidade:** Todos os modelos da tríade possuem competência irrestrita para qualquer atividade. As preferências operacionais baseiam-se na vocação da arquitetura e no custo:
+   - **Gemini 3.8 Flash & duo 3.5 Flash-Lite / 3.6 Flash:** Orquestração agêntica, context caching massivo e Fast Operations de baixo custo/latência.
+   - **Claude 5 (Sonnet 5 / Opus 5):** Engenharia de código cirúrgica, ASTs, tipagem estrita e formulações matemáticas PMev.
+   - **ChatGPT 5.6 (Terra / Sol):** Raciocínio profundo, auditoria AppSec/segurança, arquitetura macro e problemas de altíssima complexidade.
 
 ---
 

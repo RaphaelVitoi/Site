@@ -27,7 +27,7 @@
 
 # MEMORIA SIMBIOTICA - @dispatcher
 
-> **Status:** Ativo | **Aura:** steel_blue1 | **Motor:** gemini-2.5-flash
+> **Status:** Ativo | **Aura:** steel_blue1 | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---
@@ -82,7 +82,7 @@ Sou a entrada primaria do sistema de execucao. Recebo a ambicao de Raphael ou do
 
 # MEMORIA SIMBIOTICA - @dispatcher
 
-> **Status:** Ativo | **Aura:** steel_blue1 | **Motor:** gemini-2.0-flash
+> **Status:** Ativo | **Aura:** steel_blue1 | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---

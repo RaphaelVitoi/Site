@@ -23,7 +23,7 @@ _ancora_normalizada_por: claude@opus-5 em 2026-08-28T09:55-03:00. Somente o camp
 
 Cada feedback do usuário recebe nota de `0` a `10` — **decimal é aceito** —,
 texto livre, escopo, timestamp, identificador de sessão, `session_started_at`
-opcional e hash SHA-256 encadeado ao registro anterior. O verificador rejeita
+opcional, **modelo condutor exato (`conductor_model`)**, **regime de supervisão (`supervision_mode`: `assistida` [arbitrada pelo Tier 0] ou `automatizada`)** e hash SHA-256 encadeado ao registro anterior. O verificador rejeita
 sequência, predecessor ou hash alterados.
 
 A nota é gravada **literal: sem arredondamento e sem conversão de escala**.
@@ -39,7 +39,7 @@ mas não são acionados automaticamente por este mecanismo.
 ## Uso
 
 ```powershell
-pwsh -NoProfile -File .\scripts\ops\Register-AgentCalibrationFeedback.ps1 -Score 8 -Feedback '...' -Scope handoff
+pwsh -NoProfile -File .\scripts\ops\Register-AgentCalibrationFeedback.ps1 -Score 8 -Feedback '...' -Scope handoff -SessionId 'gemini-flash-site-2026-09-03' -ConductorModel 'gemini-3.8-flash' -SupervisionMode 'assistida'
 pwsh -NoProfile -File .\scripts\ops\Test-AgentCalibrationLedger.ps1
 pwsh -NoProfile -File .\scripts\ops\New-AgentCalibrationDailyEvidence.ps1
 ```

@@ -41,17 +41,17 @@ Toda a estrutura temática do `.claude` e os arquivos complementares de pesquisa
 
 ### 3.1 Filosofia & Cosmovisão
 
-* [COSMOVISAO.md](GOVERNANÇA/COSMOVISAO.md) — Fundamentação ética, secular e existencial do sistema (Ateísmo racional, polimatia e consentimento).
-* [ESTADO_ARTE_APRENDIZADO_GENERATIVO.md](GOVERNANÇA/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md) — O protocolo didático de aprendizado em espiral.
-* [ETHICAL_PLAYBOOKS.md](GOVERNANÇA/ETHICAL_PLAYBOOKS.md) — Linhas vermelhas de ação ética dos agentes.
+* [COSMOVISAO.md](GOVERNANCA/COSMOVISAO.md) — Fundamentação ética, secular e existencial do sistema (Ateísmo racional, polimatia e consentimento).
+* [ESTADO_ARTE_APRENDIZADO_GENERATIVO.md](GOVERNANCA/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md) — O protocolo didático de aprendizado em espiral.
+* [ETHICAL_PLAYBOOKS.md](GOVERNANCA/ETHICAL_PLAYBOOKS.md) — Linhas vermelhas de ação ética dos agentes.
 
 ### 3.2 Identidade & Governança
 
 * [CHICO_PERSONA.md](ARQUITETURA/CHICO_PERSONA.md) — Persona central de Chico, regras de silêncio e configurações de injeção da IDE.
-* [LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md](GOVERNANÇA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md) — Matriz de escalação e a dinâmica D/s.
-* [COHERENCE_MANIFEST.md](GOVERNANÇA/COHERENCE_MANIFEST.md) — Regras de não-concorrência e alinhamento sintático/estrutural.
-* [GLOBAL_INSTRUCTIONS.md](GOVERNANÇA/GLOBAL_INSTRUCTIONS.md) — A constituição técnica do ecossistema (Leis operacionais, Pure ASCII backend, API priority).
-* [PRODUCT_OWNERSHIP.md](GOVERNANÇA/PRODUCT_OWNERSHIP.md) — Definição do escopo e visão comercial do Nexus.
+* [LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md](GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md) — Matriz de escalação e a dinâmica D/s.
+* [COHERENCE_MANIFEST.md](GOVERNANCA/COHERENCE_MANIFEST.md) — Regras de não-concorrência e alinhamento sintático/estrutural.
+* [GLOBAL_INSTRUCTIONS.md](GOVERNANCA/GLOBAL_INSTRUCTIONS.md) — A constituição técnica do ecossistema (Leis operacionais, Pure ASCII backend, API priority).
+* [PRODUCT_OWNERSHIP.md](GOVERNANCA/PRODUCT_OWNERSHIP.md) — Posse Exclusiva do Tier 0, desmistificação de nomenclaturas e Autonomia Universal Sem Feudos.
 
 ### 3.3 Arquitetura & Engenharia
 
@@ -70,11 +70,11 @@ Toda a estrutura temática do `.claude` e os arquivos complementares de pesquisa
 * [geometria_texto.md](../docs/research/materials/geometria_texto.md) — Ensaios teóricos sobre a ilusão do vácuo e os 5 arquétipos de mesas finais.
 * [PLANO_VALIDACAO_COEFICIENTES.md](MATEMATICA/PLANO_VALIDACAO_COEFICIENTES.md) — Protocolo de calibração empírica do NashSolver contra dados de solver HRC.
 * [VALIDATION_FRAMEWORKS.md](MATEMATICA/VALIDATION_FRAMEWORKS.md) — Checklists factuais para motor matemático, psicologia e código.
-* [project_teoria_ev_fold_antes.md](../../frontend/src/projects/project_teoria_ev_fold_antes.md) — Estudo da modelagem matemática de EV do fold no pré e pós-flop.
-* [project_teoria_icm_perspectiva_esperanca.md](../../frontend/src/projects/project_teoria_icm_perspectiva_esperanca.md) — Hierarquia detalhada de processamento das quatro métricas (ICMev, Esperança, Expectativa e Perspectiva).
-* [project_teoria_framework_completo_v1.md](../../frontend/src/projects/project_teoria_framework_completo_v1.md) — Síntese conceitual do debate e equações adimensionais de $C_i$.
-* [project_teoria_icm_original_20260321.md](../../frontend/src/projects/project_teoria_icm_original_20260321.md) — Os axiomas originais de Vantagem de Risco, Donk Bet explotatória e Especulação Assimétrica.
-* [TEORIA_PERSPECTIVA_MATEMATICA_VITOI.md](../../frontend/src/content/artigos/TEORIA_PERSPECTIVA_MATEMATICA_VITOI.md) — Artigo final e glossário de termos algorítmicos.
+* [project_teoria_ev_fold_antes.md](../frontend/src/projects/project_teoria_ev_fold_antes.md) — Estudo da modelagem matemática de EV do fold no pré e pós-flop.
+* [project_teoria_icm_perspectiva_esperanca.md](../frontend/src/projects/project_teoria_icm_perspectiva_esperanca.md) — Hierarquia detalhada de processamento das quatro métricas (ICMev, Esperança, Expectativa e Perspectiva).
+* [project_teoria_framework_completo_v1.md](../frontend/src/projects/project_teoria_framework_completo_v1.md) — Síntese conceitual do debate e equações adimensionais de $C_i$.
+* [project_teoria_icm_original_20260321.md](../frontend/src/projects/project_teoria_icm_original_20260321.md) — Os axiomas originais de Vantagem de Risco, Donk Bet explotatória e Especulação Assimétrica.
+* [TEORIA_PERSPECTIVA_MATEMATICA_VITOI.md](../frontend/src/content/artigos/TEORIA_PERSPECTIVA_MATEMATICA_VITOI.md) — Artigo final e glossário de termos algorítmicos.
 
 ---
 
