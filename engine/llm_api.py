@@ -27,6 +27,7 @@ from core.config import (
 )
 from core.schemas import Task
 from database.queue_manager import QueueManager
+from llm.adapters import AnthropicAdapter
 from utils.env_loader import load_env
 
 # SOTA: Circuit Breaker de Provedores (Impede pingar APIs caidas)
