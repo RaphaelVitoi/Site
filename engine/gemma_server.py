@@ -414,9 +414,47 @@ MODEL_INFERENCE_PARAMS = {
 
 
 def normalize_model(model_name: str | None) -> str:
+    """Resolve o nome pedido para um alias do manifesto.
+
+    PRECEDENCIA DO NOME EXATO, e ela e o ponto desta funcao.
+
+    A cascata de substring abaixo existe para pedidos VAGOS -- "um modelo bom",
+    "gemma", "algo rapido". Aplicada a um nome exato, ela mente: qualquer string
+    contendo "qwen" colapsava no alias `qwen`, que aponta para
+    `qwen2.5-coder:3b`, o unico qwen NAO instalado nesta maquina. E qualquer
+    nome contendo "latest" caia em `e4b` antes de ser testado contra "qwen" --
+    de modo que `qwen-pmev-math:latest`, `qwen-code-surgical:latest` e
+    `qwen-poetics:latest`, os tres perfis especializados marcados
+    `required: true`, eram servidos como `gemma4:e4b`.
+
+    Isso e precisamente o que `_names_local_engine` descreve como inaceitavel --
+    "e outro motor, escolhido sem avisar" -- so que acontecendo DENTRO do
+    caminho local, onde aquela guarda nao alcanca.
+
+    Medido em 2026-09-03: dos 6 modelos qwen instalados, 6 resolviam errado.
+
+    Ordem correta, e o manifesto e a fonte unica (CLAUDE.md do projeto, SS3):
+      1. alias exato do manifesto        -> devolve o proprio alias
+      2. tag exata do manifesto          -> devolve o alias dono daquela tag
+      3. heuristica de substring         -> so entao, para pedidos vagos
+    """
     if not model_name:
         return "12b"
-    model_name_lower = model_name.lower()
+    bruto = model_name.strip()
+    model_name_lower = bruto.lower()
+
+    # 1) O chamador nomeou um alias que o manifesto conhece.
+    if bruto in OLLAMA_MODEL_MAP:
+        return bruto
+
+    # 2) O chamador nomeou uma TAG real do Ollama. Resolver pelo dono dela, e
+    #    nunca por semelhanca de texto: `qwen2.5-coder:0.5b` e `qwen2.5-coder:3b`
+    #    diferem em um caractere e sao modelos distintos, um instalado e o outro
+    #    nao.
+    for alias, tag in OLLAMA_MODEL_MAP.items():
+        if str(tag).lower() == model_name_lower:
+            return alias
+
     if "31b" in model_name_lower or "cloud" in model_name_lower:
         return "31b_cloud"
     if "26b" in model_name_lower:
