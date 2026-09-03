@@ -193,3 +193,4 @@ reports/agent-calibration/*.lock
 # historico, e autogerado e carrega apenas o nome do projeto. A inconsistencia
 # fica registrada aqui em vez de silenciada.
 .codex/config.toml
+.claude/settings.local.json.bak-*
