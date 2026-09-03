@@ -1,77 +1,68 @@
-# HANDOFF LATEST — a camada Anthropic ligada, e o push travado em credencial
+# HANDOFF LATEST — procedência de solve, e o que o Tier 0 ensinou no meio da construção
 
-**Data:** 2026-09-03 · **Protocolo:** Chico SOTA v8.0 GOLD · **Estado:** commitado, **não empurrado**.
-**Sessão:** `claude-opus5-site-2026-09-02-guarda` · **Assinatura individual:** Claude Opus 5 [Tier 1.B]
+**Data:** 2026-09-03 · **Protocolo:** Chico SOTA v8.0 GOLD · **Estado:** commitado em `4d89a192`, **1 ahead de origin**.
+**Sessão:** `claude-opus5-site-2026-09-03-procedencia` · **Assinatura individual:** Claude Opus 5 [Tier 1.B]
 
 ---
 
-## ⚠ A primeira coisa: o push está bloqueado, e não é seu código
+## A primeira coisa: a ordem da prioridade 1 foi invertida, com autorização
 
-`git push` devolve **403 — "Permission to RaphaelVitoi/Site.git denied"** a
-partir de sessão de agente. `rulesets` volta `[]`, o que descarta branch
-protection.
+O prompt de continuação mandava **recapturar o HRC**. A medição inicial mostrou que
+fazê-lo primeiro produziria dado sem destino: nem `EvidenceScenario` (TS) nem
+`NormalizedGameTree` (Py) tinham onde guardar build ou e-Nash. A recaptura voltaria
+com os campos na tela e o único destino seria prosa em comentário — exatamente o que
+`evidenceContract.ts` existe para impedir.
 
-**Bloqueia o agente, não o Tier 0.** O repositório é **público**
-(`private: false`), então `git ls-remote` responde **sem credencial nenhuma** —
-leitura funcionando não prova credencial válida. As duas vias de escrita falham
-aqui: o PAT fine-grained do `gh` não escreve, e o SSH não tem chave
-(`Permission denied (publickey)`). O Git Credential Manager tem credencial
-expirada e **só renova abrindo prompt**, o que uma sessão não-interativa não
-permite.
-
-**Num terminal interativo do Tier 0 o `git push` passa**, porque o GCM abre o
-navegador. Alternativa permanente, se agentes forem empurrar: conceder
-**`Contents: Read and write`** ao fine-grained PAT, ou cadastrar chave SSH.
-
-Não aceitar credencial colada no chat, em nenhuma hipótese.
-
-O remoto está em `a73ba184`. **Três commits locais não publicados:**
-
-```text
-f8523a3e  fix(llm): o import que faltava em dfbbcb9e, e a correcao da nota no ledger
-692df105  chore(calibracao): registrar feedback 9.5 no ledger encadeado
-dfbbcb9e  chore(mcp): quarentena reversivel, roteamento lazy de addons
-```
+O Tier 0 autorizou inverter, e confirmou que **o HRC exporta arquivo**. Isso muda a
+natureza do alvo: export estruturado ataca a barreira real (transcrição de terceiro
+contra medição própria), enquanto três campos a mais numa transcrição não atacariam.
 
 ---
 
 ## O que esta sessão entregou
 
-**Guarda executável do canônico e do ponteiro** —
-`tests/test_governanca_canonico_e_ponteiro.py`, 7 testes. Alcança
-`~\.gemini\CLAUDE.md` e `~\.claude\CLAUDE.md` por derivação (`RAIZ.parent`,
-`Path.home()`), nunca por literal absoluto — §1 regra 3. Cada detector foi
-provado por mutação: cópia byte a byte reprova 5; piso crescendo para 5 reprova;
-piso **encolhendo para 3 passa**, que é o que a cláusula permite.
+**Procedência tipada nas duas camadas.** `SolverProvenance` como `Measured<T>` no TS e
+modelo Pydantic no Python, com `build`, `eNash`, `eNashUnit`, `eNashLabel` e `engine`.
 
-**`llm/adapters.py` ligado ao caminho real.** Ele conhecia o drift da geração 5 e
-era importado por **um único arquivo de teste** — módulo que ninguém importa não
-é integração (raiz §4). Os dois `call_anthropic` em uso tinham dois defeitos:
-`temperature` indo a modelos que a rejeitam com 400, e `content[0]["text"]`, que
-é `KeyError` quando o bloco 0 é `thinking` — e em Opus 5 o thinking está ligado
-por padrão. 19 testes herméticos, nenhuma chamada a provedor.
+**O campo que era reconhecido e jogado fora.** `HRCProImporter.detect_format` reconhecia
+`hrc_version` desde sempre — e a usava só para identificar o formato, **descartando o
+valor**. O campo que o ledger exige era tocado e descartado no mesmo arquivo. Agora é
+lido, do JSON e do cabeçalho de texto.
 
-**A escolha passou a ser do registro, não de heurística de nome.** O ping de
-chave em `cli/commands.py` usa `claude-3-haiku-20240307`, geração 3, que
-**aceita** amostragem. Remover `temperature` incondicionalmente teria quebrado a
-validação de chave — preservar capacidade antes de corrigir, §8.2.
+**A barreira virou número.** `assessReproducibility` e `countReproduciblePairs`
+retornam **zero de sete** contra o mínimo de três do ledger, afirmado em teste.
 
-**Um commit alheio, quebrado, consertado.** `dfbbcb9e` (sessão
-`gemini-flash-site-2026-09-02-mcp-curation`) levou junto trabalho desta sessão
-ainda em andamento e saiu sem o import: `engine/llm_api.py` referenciava
-`AnthropicAdapter` em 5 pontos → `NameError`. `f8523a3e` corrige de forma
-aditiva, sem reescrever história.
-
-> **Achado do portão, que vale mais que o incidente:** ele aprovou `dfbbcb9e`
-> porque **mede o working tree, não o índice**. O import existia em disco e não
-> no que foi commitado. Qualquer commit parcial pode repetir isto.
+> Não é teste a consertar. O número sobe quando o export chegar; quem o preencher sem
+> o export terá inventado a evidência que o ledger exige.
 
 ---
 
-## Calibração
+## O que o Tier 0 ensinou, e que eu não teria acertado sozinho
 
-Ledger `valid`, 8 registros, **5 sessões distintas**, 0 faltantes, 0 com início
-inconsistente. Min 7,5 · máx 9,5 · média **8,6**.
+| Correção | Consequência no código |
+| :--- | :--- |
+| Os rótulos que supus não existem — HRC usa `CI`, Pio usa `MES`, GTO Wizard usa `Nash Distance`/`dEV` | o extrator não acharia o campo real; rótulo nativo agora é guardado |
+| A caixa-preta não é a teoria, são os **atalhos** de convergência | `build` virou âncora mecânica: atalho novo para em outro ponto com os mesmos inputs |
+| Produto não é motor — a biblioteca do GTO Wizard **foi rodada no HRC** | campo `engine`, separado do produto |
+| **Motor comum FORTALECE o par** | inverteu uma conclusão minha; ver abaixo |
+
+### A inversão, que é o item mais importante daqui
+
+Eu havia escrito que motor comum nos dois lados era risco. **O HRC calcula ChipEV além
+de ICMev**, e a disputa em estudo é ChipEV × ICMev. Motor único deixa o regime como
+única variável — isso é **controle experimental**. O confundidor é o contrário.
+
+E como a biblioteca do GTO Wizard é HRC, **os sete pares existentes provavelmente já
+têm motor comum**: o controle que eu disse faltar já estava lá, invisível porque a
+procedência não tinha campo para expressá-lo. Falta conferir captura a captura, e o
+discriminante está na tela — `CI` no painel indica biblioteca.
+
+---
+
+## Calibração — o portão está aberto E o padrão tem duas confirmações
+
+Ledger `valid`, **9 registros**, **6 sessões distintas**, 0 faltantes, 0 com início
+inconsistente. Média **8,50** · min 7,5 · máx 9,5 · `correcoes_aplicadas` 2.
 
 | Sessão | Nota |
 | :--- | ---: |
@@ -79,46 +70,36 @@ inconsistente. Min 7,5 · máx 9,5 · média **8,6**.
 | `claude-opus5-site-2026-09-02-integridade` | 8 (corrigida de `0.8`) |
 | `claude-opus5-site-2026-09-02-pmev` | 9 |
 | `gemini-flash-site-2026-09-02-mcp-curation` | 9.0 (corrigida de `9.5`) |
-| `claude-opus5-site-2026-09-02-guarda` | **9.5** |
+| `claude-opus5-site-2026-09-02-guarda` | 9.5 |
+| `claude-opus5-site-2026-09-03-procedencia` | **8** |
 
-A correção `110a52e7` é do Tier 0 e **foi consumida**: `correcoes_aplicadas` = 2.
-O registro errado não se reescreve.
+**O feedback de 8:** *"Você não deveria me perguntar aquilo que é open source. Pelo
+contexto, vc pode aferir que a fonte primária e muitas vezes mais fidedigna é
+WebSearch avançado e inteligente."*
 
-### O que o feedback de 9.5 diz, e é a coisa mais acionável daqui
+Agravante que registro contra mim: eu **considerei** pesquisar e decidi transferir a
+ele, raciocinando que resolveria rápido abrindo o app. Quando finalmente busquei, a
+fonte deu o que a pergunta não daria — `dEV` entrou no extrator, e a proibição de
+comparar métricas entre solvers ganhou base documental em vez de cautela.
 
-> *"Os erros são os mesmos, mas você não só os percebe mais rápido e corrige
-> mais rápido, como também eles diminuíram. Isso em apenas 2 sessões de
-> calibragem."*
-
-A leitura correta **não** é "melhorou, siga assim". É que o custo residual
-continua sendo auto-correção — o Tier 0 já dissera, na nota 9, que ela gasta
-tempo e token que não deveriam ser gastos. A meta não é corrigir mais rápido; é
-não precisar corrigir. Ver `conferir-o-instrumento-antes-da-medicao`.
-
-**Portão estrutural aberto — e isso NÃO é autorização.** Faltam duas
-confirmações independentes do mesmo padrão operacional, obrigação do auditor.
-Registro literal exigido: **dados insuficientes — nenhuma calibração planejada.**
+> **O padrão tem duas confirmações independentes, e isso é obrigação do auditor
+> declarar.** Nota 8 de `...-pmev`: *executor único num repositório feito de 19
+> agentes, delegar de fato*. Nota 8 desta sessão: *não usar WebSearch para o que é
+> público*. Sessões diferentes, feedbacks independentes, **mesmo padrão operacional:
+> subutilizar capacidade disponível e resolver pelo caminho mais estreito**.
+>
+> Com 6 sessões ≥ 3 e duas confirmações do mesmo padrão, as condições da §8.3 estão
+> satisfeitas. **A calibração assistida pode ser proposta ao Tier 0** — e proposta é o
+> limite: o portão estrutural nunca foi autorização.
 
 ---
 
-## Uma armadilha que custou caro aqui, duas vezes
+## Ambiente — corrigindo o meu próprio prompt anterior
 
-**Conferir o instrumento antes de acreditar na medição.**
-
-1. Greppei o log da suíte por `cwv` e obtive zero — mas eu mesmo o truncara com
-   `Select-Object -Last 18`.
-2. Usei `Select-String -SimpleMatch` com um pattern `a|b|c`: `-SimpleMatch`
-   desliga a regex, ele buscou a string literal com os pipes, achou zero, e
-   concluí **perda de trabalho** que nunca houve — cheguei a atribuí-la a outra
-   sessão.
-
-O mesmo reflexo funcionou **a favor** no portão: as 3 violações axe
-(`landmark-one-main`, `meta-viewport`, `region`) não eram do frontend — o dev
-server em `:3000` tinha caído, e o axe auditava um DOM de página de erro. Subir o
-Next.js zerou as violações.
-
-**O dev server está rodando em `:3000`, iniciado nesta sessão.** O portão precisa
-dele.
+O handoff anterior dizia *"dev server Next.js em :3000 precisa estar no ar"*. **Isso é
+insuficiente.** O dev server estava no ar nesta sessão e as fases 1 e 2 do portão
+**não mediram assim mesmo**: `nenhuma porta CDP canonica respondeu`. O que elas exigem
+é o **CDP**, não o dev server. As duas vagas de warning foram consumidas por isso.
 
 ---
 
@@ -126,26 +107,25 @@ dele.
 
 | Item | Estado |
 | :--- | :--- |
-| **Push** | **bloqueado em credencial** — só Tier 0 |
-| Recaptura do HRC | **prioridade 1** — fecha 3 campos do ledger + arbitragem do nodelock |
+| Push de `4d89a192` | **1 ahead**, não empurrado |
+| Recaptura do HRC | **prioridade 1**, agora com destino tipado pronto; preferir `ChipEV(HRC) × ICMev(HRC)`, mesmo build |
+| Conferir captura a captura se o lado ChipEV é biblioteca ou AI | discriminante é o painel `CI`; não feito |
+| Fases 1 e 2 do portão | **não mediram** — CDP ausente |
+| `pyo3` 0.20.3 no `Cargo.lock` | única vulnerabilidade aberta sem aceite; fix 0.29.0, breaking |
 | Arbitragem do nodelock | só Tier 0 |
-| Duplicação `engine/llm_api.py` × `llm/anthropic.py` | aberta desde `HANDOFF-2026-08-27` item 3; **não paga** — hoje só passaram a compartilhar a fonte do conhecimento da API |
-| `anthropic>=0.42.0` declarado e **não importado** | instalado 0.103.1; PyPI já em 1.3.0 (major); pin aberto para cima. Mexer exige autorização |
-| Portão mede working tree, não índice | achado novo, sem guarda |
-| `AXE_INCOMPLETE`: 2 inconclusivas | `aria-hidden-focus`, `color-contrast`; baseline exige 1 — exige inspeção humana |
-| TBT sem artefato Lighthouse | `LIGHTHOUSE_FINGERPRINT_MISMATCH`, precede a sessão |
-| `ruff format` divergente | `engine/llm_api.py`, `llm/adapters.py`, `llm/anthropic.py` já estavam fora do formato; CI roda `--check .` |
-| 8 alertas Dependabot | não conciliados com `npm audit` = 0 |
+| Portão mede working tree, não índice | achado da sessão anterior, **sem guarda** |
+| Algoritmos no repo (CFR 45, Monte Carlo 31, DeepStack 3, Pluribus 3, Libratus 2) | **contados por grep**, integração não auditada |
+| Duplicação `engine/llm_api.py` × `llm/anthropic.py` | aberta desde `HANDOFF-2026-08-27` |
 
 ---
 
 ## Regras que esta sessão fixou
 
-- **Conferir o instrumento antes da medição.** Log truncado e `-SimpleMatch` com
-  alternância produziram duas conclusões falsas na mesma sessão.
-- **Âncora é o campo `caminhos:`, não menção em prosa.** Duas revisões foram
-  rejeitadas por citar caminho que o registro alvo não declara.
-- **O portão mede o working tree, não o índice.** Commit parcial passa quebrado.
-- **A pergunta certa não era "manda `temperature`?", e sim "manda para quem a
-  rejeita?".** Ler o sistema antes de agir sobre o artefato evitou quebrar o
-  ping de chave.
+- **Fato público é meu para buscar.** Reservar a pergunta ao Tier 0 para o que só ele
+  sabe: o ambiente dele, a origem real dos dados, escopo, autorização.
+- **Heredoc dentro de script Python tem escape duplo.** `[^\r\n]` virou quebra de linha
+  real dentro da regex e o arquivo ficou quebrado. Escrever em arquivo literal com
+  heredoc *quoted*, conferir os escapes, e só então inserir.
+- **A suíte Python só vale pelo PowerShell.** Pelo Bash, 3 falsas falhas em
+  `test_cwv_gate_truthfulness` — `subprocess.run` de PowerShell devolve `stdout=None`.
+- **`pct` não é `pctOfPot`.** Ler `%` autoriza dizer que é percentual, e nada além.
