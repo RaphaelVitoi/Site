@@ -4,21 +4,25 @@ tipo: handoff
 escopo: Site
 ecossistema: nexus-sota
 autor: gemini-3.8-flash-high
-criado_em: 2026-09-02T23:30:00-03:00
-atualizado_em: 2026-09-02T23:30:00-03:00
+criado_em: 2026-09-02 23:30:00-03:00
+atualizado_em: 2026-09-02 23:30:00-03:00
 commit: pendente
-classes: [interno, continuidade, medido]
+classes:
+  - interno
+  - continuidade
+  - medido
 caminhos:
   - core/mcp_routing.py
   - tests/test_mcp_addon_routing.py
   - data/system_config.json
   - reports/AUDITORIA-2026-09-02-curadoria-mcp-e-processos-residuais.md
+  - reports/agent-calibration/feedback-ledger.jsonl
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   origem: origin/master
   so: Windows
-  python: '3.14.6'
+  python: 3.14.6
   suite: 807 passed, 1 skipped, 0 failed
   portao_5_fases: FRAGIL -- 0 erros, 1 warning, teto 2
 referencias_nao_resolviveis:
@@ -26,28 +30,22 @@ referencias_nao_resolviveis:
   - C:/Users/rapha/.gemini/extensions-quarantine-20260902-mcp-suite
 revisoes_de_ancora: []
 verificado:
-  - >-
-    Base de trabalho auditada e estavel -- 807 testes aprovados, 1 skip documentado
+  - Base de trabalho auditada e estavel -- 807 testes aprovados, 1 skip documentado
     e zero erros em pytest.
-  - >-
-    Superficie Gemini CLI reduzida de 20 para 17 extensoes via quarentena reversivel
+  - Superficie Gemini CLI reduzida de 20 para 17 extensoes via quarentena reversivel
     em C:/Users/rapha/.gemini/extensions-quarantine-20260902-mcp-suite.
-  - >-
-    Configuracao Antigravity mcp_config.json saneada -- MCPBrowser e genkit-mcp-server
+  - Configuracao Antigravity mcp_config.json saneada -- MCPBrowser e genkit-mcp-server
     desabilitados; flag allowUnrestrictedPaths removida de chrome-devtools-mcp.
-  - >-
-    Addons mcp-server-neon, firebase-mcp-server e sequential-thinking mantidos ativos
+  - Addons mcp-server-neon, firebase-mcp-server e sequential-thinking mantidos ativos
     e integrados no core atraves de avaliacao lazy e roteamento por intencao.
-  - >-
-    Quatro processos zumbis residuais do desktop-commander terminados sob autorizacao
+  - Quatro processos zumbis residuais do desktop-commander terminados sob autorizacao
     do Tier 0 -- contagem ativa no sistema zerada.
-  - >-
-    Portao oficial de 5 fases cwv_gate.ps1 executado com rota local aquecida -- aprovado
-    com zero erros e 1 warning no teto de 2 (cobertura CWV parcial com INP humano positivo).
+  - Portao oficial de 5 fases cwv_gate.ps1 executado com rota local aquecida -- aprovado
+    com zero erros e 1 warning no teto de 2 (cobertura CWV parcial com INP humano
+    positivo).
 nao_verificado:
-  - >-
-    A chave da API Figma em mcp_config.json foi preservada por ordem expressa do
-    usuario e necessita de rotacao manual pelo operador.
+  - A chave da API Figma em mcp_config.json foi preservada por ordem expressa do usuario
+    e necessita de rotacao manual pelo operador.
 ---
 
 # HANDOFF — Curadoria MCP, Quarentena Reversível e Roteamento Lazy de Addons
