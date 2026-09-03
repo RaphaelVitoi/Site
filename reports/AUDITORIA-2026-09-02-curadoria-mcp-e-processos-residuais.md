@@ -15,6 +15,7 @@ caminhos:
   - core/mcp_routing.py
   - tests/test_mcp_addon_routing.py
   - data/system_config.json
+  - reports/agent-calibration/feedback-ledger.jsonl
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
@@ -130,6 +131,30 @@ revisoes_de_ancora:
       - agents/context_builder.py
     parecer: A arquitetura de memoria em context_builder.py foi mantida intacta; foi
       inserido apenas _inject_mcp_addons no user prompt.
+  - registro: agent-calibration-daily-2026-09-02
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: O ledger e append-only; o novo feedback 9.5 da sessao de curadoria MCP
+      foi anexado e a cadeia SHA-256 verificada e valida.
+  - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: A correcao de escala e timestamp no ledger anterior segue valida; o novo
+      append preserva a integridade da cadeia.
+  - registro: auditoria-2026-09-02-retrospectiva-e-observacao-de-calibracao
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: A retrospectiva anterior ancorou o ledger na sequencia anterior; o append
+      atual anexa a sequencia 5 sem violar a serie temporal.
+  - registro: auditoria-2026-09-01-retrospectiva-prioridade-sessao
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: O feedback historico da sessao 2026-09-01 permanece integro no ledger
+      append-only.
+  - registro: handoff-2026-09-01-prioridade-pmev-continuacao
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: O registro historico do handoff anterior permanece preservado no ledger.
 verificado:
   - Superficie Gemini CLI reduzida de 20 para 17 extensoes ativas -- tres isoladas
     em quarentena reversivel em pasta datada sem delecao definitiva.
