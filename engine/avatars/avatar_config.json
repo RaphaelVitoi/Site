@@ -176,22 +176,21 @@
         "engine/gemma_server.py"
       ]
     },
-    "gemma4_26b_moe": {
-      "name": "Gemma 4 26B-A4B MoE (3.8B Ativos)",
-      "model_path": "gemma4:26b",
-      "model_file": "gemma4-26b.gguf",
-      "ollama_model": "gemma4:26b",
+    "kimi_code_cloud": {
+      "name": "Kimi K2.7 Code Cloud (Ollama Cloud)",
+      "model_path": "kimi-k2.7-code:cloud",
+      "model_file": "kimi-k2.7-code-cloud",
+      "ollama_model": "kimi-k2.7-code:cloud",
       "vulkan_port": 8080,
       "temperature": 0.1,
       "top_p": 0.95,
       "repeat_penalty": 1.05,
-      "num_ctx": 16384,
-      "num_predict": 4096,
+      "num_ctx": 32768,
+      "num_predict": 8192,
       "multimodal": false,
       "direct_conversational": true,
-      "system_prompt": "Você é o Gemma 4 26B-A4B MoE (3.8B parâmetros ativos por token). Atua como Subagente Generalista de Alta Velocidade e Baixo Custo Computacional no ecossistema Nexus.",
+      "system_prompt": "Você é o Kimi K2.7 Code Cloud via Ollama Cloud. Atua como motor de geração e refatoração técnica de código em nuvem no ecossistema Nexus.",
       "context_files": [
-        "core/subagents_mesh.py",
         "engine/gemma_server.py"
       ]
     },

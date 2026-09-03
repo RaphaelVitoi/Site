@@ -22,4 +22,4 @@
 ## Y 3. Topologia de DiretA3rios
 - `/docs/reports/` -> RelatA3rios Sentinela e Health Checks.
 - `/docs/tasks/` -> Areas de isolamento para implementaAAes (ex: aula-icm-rp).
-- `/.cerebro/agent-memory/` -> O cA3rtex de memA3ria persistente dos agentes.
+- `/.claude/agent-memory/` -> O cortex de memoria persistente dos agentes.

@@ -27,7 +27,7 @@
 
 # MEMORIA SIMBIOTICA - @planner
 
-> **Status:** Ativo | **Aura:** orange3 | **Motor:** gemini-1.5-pro
+> **Status:** Ativo | **Aura:** orange3 | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
 
 ---

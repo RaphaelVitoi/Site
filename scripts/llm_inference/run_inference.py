@@ -44,7 +44,6 @@ except ImportError:
 OLLAMA_MODEL_MAP = {
     "31b": "gemma4:31b",
     "31b_cloud": "gemma4:31b-cloud",
-    "26b": "gemma4:26b",
     "12b": "gemma4:12b",
     "4b": "gemma4:latest",
     "8b": "gemma4:8b",
@@ -75,7 +74,7 @@ if _manifesto_aliases:
 
 MODEL_DISPLAY = {
     "31b": "Gemma 4 31b Dense",
-    "26b": "Gemma 4 26b MTP",
+    "31b_cloud": "Gemma 4 31b Cloud",
     "12b": "Gemma 4 12b",
     "4b": "Gemma 4 4b",
     "8b": "Gemma 4 8b",
@@ -243,7 +242,7 @@ def main():
         "--model",
         type=str,
         default="31b",
-        choices=["31b", "26b", "12b", "4b", "8b", "llama3_8b", "qwen", "granite"],
+        choices=["31b", "31b_cloud", "12b", "4b", "8b", "llama3_8b", "qwen", "granite"],
         help="Modelo alvo",
     )
     parser.add_argument("--chat", action="store_true", help="Modo chat interativo")

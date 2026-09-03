@@ -7,7 +7,7 @@
 ## [GOVERNANCE_TOPOLOGY] Topologia de 8 Tiers & Soberania `#governance` `#sota` `#gold`
 *Atualizado em: 2026-08-29 20:00:00*
 
-Tier 0: Raphael Vitoi (Soberania & Liderança, CEO) | Tier 1: Núcleo Mestre | Tier 2: Superagentes Nuvem | Tier 3: 19 Agentes + Copilot | Tier 4: Subagents Dedicados (generalist, research, flutter_a11y, self) | Tier 5: Bots | Tier 6: Modelos Locais & Edge | Tier 7: Barramento & Quality Gate.
+Tier 0: Raphael Vitoi (Soberania & Liderança, CEO; Microsoft 365 Copilot = Assistente Pessoal de Rotina / Plano Pago M365) | Tier 1: Núcleo Mestre | Tier 2: Superagentes Nuvem | Tier 3: 19 Agentes + Modelos Qwen Ollama | Tier 4: Subagents Dedicados (generalist, research, flutter_a11y, self) | Tier 5: Bots | Tier 6: Modelos Locais & Edge (Gemma 4, Nano, SIMD) | Tier 7: Barramento & Quality Gate.
 
 ---
 

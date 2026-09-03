@@ -29,6 +29,13 @@ param(
     # declarar o MESMO valor aqui.
     [string]$SessionStartedAt = '',
 
+    # Modelo exato que conduziu a sessao (ex.: gemini-3.8-flash, claude-opus-5, chatgpt-5.6).
+    [string]$ConductorModel = '',
+
+    # Regime de operacao da sessao: assistida (arbitrada pelo Tier 0) ou automatizada.
+    [ValidateSet('', 'assistida', 'automatizada')]
+    [string]$SupervisionMode = '',
+
     [string]$LedgerPath = ''
 )
 
@@ -111,6 +118,12 @@ try {
     # suficiencia usa a divergencia dela para detectar sessao partida.
     if (-not [string]::IsNullOrWhiteSpace($SessionStartedAt)) {
         $campos['session_started_at'] = ([DateTimeOffset]::Parse($SessionStartedAt)).ToString('o')
+    }
+    if (-not [string]::IsNullOrWhiteSpace($ConductorModel)) {
+        $campos['conductor_model'] = $ConductorModel.Trim()
+    }
+    if (-not [string]::IsNullOrWhiteSpace($SupervisionMode)) {
+        $campos['supervision_mode'] = $SupervisionMode.Trim()
     }
     $record = New-HashChainedRecord -Sequence ([int]$tail.sequence + 1) -RecordType 'feedback' -RecordedAt ([DateTimeOffset]::Now.ToString('o')) -PreviousHash ([string]$tail.record_hash) -Fields $campos
     [System.IO.File]::AppendAllText($ledgerPath, (($record | ConvertTo-Json -Compress -Depth 8) + [Environment]::NewLine), $utf8NoBom)

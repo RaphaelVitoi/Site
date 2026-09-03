@@ -116,7 +116,7 @@
     "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[yaml]": {
     "editor.defaultFormatter": "redhat.vscode-yaml"
@@ -387,5 +387,16 @@
   "windsurfPyright.analysis.inlayHints.callArgumentNamesMatching": true,
   "windsurfPyright.analysis.inlayHints.functionReturnTypes": true,
   "windsurfPyright.analysis.inlayHints.variableTypes": true,
-  "windsurfPyright.analysis.inlayHints.genericTypes": true
+  "windsurfPyright.analysis.inlayHints.genericTypes": true,
+  "ollamaDirectCustomAgent.vectorSearchEnabled": true,
+  "ollamaDirectCustomAgent.whisperUseCloud": true,
+  "ollamaDirectCustomAgent.roleSplitEnabled": true,
+  "ollamaDirectCustomAgent.openOnStartup": true,
+  "ollamaDirectCustomAgent.modelWarmupEnabled": true,
+  "ollamaDirectCustomAgent.fullControlMode": false,
+  "ollamaDirectCustomAgent.fileWatcherEnabled": true,
+  "ollamaDirectCustomAgent.debugMode": true,
+  "ollamaDirectCustomAgent.cloudAutoRotateAccounts": true,
+  "ollamaDirectCustomAgent.assistantAutoLaunch": true,
+  "qwen-code.apiKey": "AQ.Ab8RN6Lrevq4r7JBnUfVpiL1_Z31fSudC6_bLiKu3TtMwecAEA"
 }

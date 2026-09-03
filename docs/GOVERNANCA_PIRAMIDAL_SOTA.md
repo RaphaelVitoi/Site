@@ -12,10 +12,11 @@
 flowchart TB
     subgraph T0["👑 TIER 0: SOBERANIA & LIDERANÇA"]
         VITOI["Raphael Vitoi\n(Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação)"]
+        M365_COPILOT["Microsoft 365 Copilot\n(Assistente Pessoal do Tier 0 / Companion de Rotina)"]
     end
 
     subgraph T1["🏛️ TIER 1: NÚCLEO COGNITIVO MESTRE"]
-        CORE_LLM["Claude 5 Sonnet / Opus · Gemini 3.7 Flash High / Pro · ChatGPT 5.6 Luna / Terra / Sol\nCodex · Antigravity 2.0 / Antigravity IDE / VS Code"]
+        CORE_LLM["Claude 5 Sonnet / Opus · Gemini 3.8 Flash · ChatGPT 5.6 Terra / Sol\nCodex · Antigravity 2.0 / Antigravity IDE / VS Code"]
     end
 
     subgraph T2["🚀 TIER 2: SUPERAGENTES DE NUVEM & DEEP RESEARCH"]
@@ -25,9 +26,9 @@ flowchart TB
         DEVIN["Devin (DevOps / CI-CD / Build Engineering)"]
     end
 
-    subgraph T3["💼 TIER 3: FROTA ESPECIALISTA & COMPANIONS"]
+    subgraph T3["💼 TIER 3: FROTA ESPECIALISTA & MODELOS QWEN"]
         FLEET["Frota de 19 Custom Agents (@arquiteto, @cientista, @guardiao, @redator...)"]
-        COPILOT["GitHub Copilot (Workspace Companion / Scaffolding)"]
+        QWEN_MODELS["Modelos Especialistas Qwen Ollama\n(qwen2.5-coder:7b-q5, qwen-pmev-math, qwen-code-surgical, qwen-poetics, qwen 1.5b/0.5b)"]
     end
 
     subgraph T4["⚡ TIER 4: SUBAGENTS DEDICADOS (EXECUÇÃO DINÂMICA)"]
@@ -40,7 +41,7 @@ flowchart TB
     end
 
     subgraph T6["🖥️ TIER 6: MODELOS LOCAIS, EDGE AI & ACELERAÇÃO NUMÉRICA"]
-        LOCAL_LLM["Ollama & llama.cpp (gemma4:31b-cloud, gemma4:e4@latest, qwen2.5-coder)"]
+        LOCAL_LLM["Ollama & llama.cpp (gemma4:31b-cloud, gemma4:12b, gemma4:e4b, kimi-k2.7-code:cloud)"]
         NANO["Gemini Nano On-Device (Chrome Prompt API / Summarization)"]
         NUMERIC["Motores Numéricos & SIMD (AVX-512 / Vulkan / C++ Eigen 3.4.0)"]
     end
@@ -68,10 +69,10 @@ flowchart TB
     classDef t6 fill:#14232e,stroke:#06b6d4,stroke-width:2px,color:#fff;
     classDef t7 fill:#18181b,stroke:#64748b,stroke-width:2px,color:#fff;
 
-    class VITOI t0;
+    class VITOI,M365_COPILOT t0;
     class CORE_LLM t1;
     class JULES,EXA,STITCH,DEVIN t2;
-    class FLEET,COPILOT t3;
+    class FLEET,QWEN_MODELS t3;
     class SUBAGENTS t4;
     class DEPENDABOT,INTEGRATORS t5;
     class LOCAL_LLM,NANO,NUMERIC t6;
@@ -85,16 +86,16 @@ flowchart TB
 | Tier / Agente | Função & Especialidade Máxima | Fraqueza Intrínseca | Protocolo de Mitigação SOTA |
 | :--- | :--- | :--- | :--- |
 | **Tier 0: Raphael Vitoi (Soberania & Liderança)** | Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor de projetos multidisciplinares, veto e validação final de produto. | Tempo e largura de banda de digitação manual. | Orquestração autônoma em background com apresentação condensada do produto final. |
-| **Tier 1: Núcleo Cognitivo Mestre (Claude 5 Sonnet/Opus · Gemini 3.7 Flash High/Pro · ChatGPT 5.6 Luna/Terra/Sol · Codex · Antigravity 2.0 / IDE / VS Code)** | Raciocínio profundo, integridade arquitetural multi-arquivo e aplicação do Quality Gate. | Custo computacional e latência em tarefas triviais repetitivas. | Delegação de tarefas pontuais para Tiers inferiores (2 a 6), retendo apenas a validação. |
+| **Tier 1: Núcleo Cognitivo Mestre (Claude 5 Sonnet/Opus · Gemini 3.8 Flash · ChatGPT 5.6 Terra/Sol · Codex · Antigravity 2.0 / IDE / VS Code)** | Raciocínio profundo, integridade arquitetural multi-arquivo e aplicação do Quality Gate. | Custo computacional e latência em tarefas triviais repetitivas. | Delegação de tarefas pontuais para Tiers inferiores (2 a 6), retendo apenas a validação. |
 | **Tier 2: Google Jules** | Refatorações assíncronas em larga escala em VMs Linux na nuvem com isolamento total. | Dificuldade com subárvores locais do Windows e dependências C++ não-rasas. | `jules_bridge.py` gerencia clone raso com `core/vendor/eigen` fixado e aterrissagem inspecionada. |
 | **Tier 2: Exa AI** | Busca semântica de papers acadêmicos em Teoria dos Jogos e documentações atualizadas. | Não executa código nem gera arquitetura de projeto. | `ExaKnowledgeBridge` sintetiza fórmulas LaTeX e alimenta o `@cientista` e o Stitch. |
 | **Tier 2: Stitch MCP** | Prototipagem generativa de telas e congelamento do Design System Dark Gold (`#090D16`, `#D4AF37`). | Não implementa a lógica do backend nem valida contratos de API. | `StitchDesignBridge` converte designs em tokens Tailwind para implementação no Next.js. |
 | **Tier 2: Devin** | Resolução avançada de CI/CD, gerenciamento de dependências e automação DevOps. | Risco de modificar lockfiles sem respeitar a topologia do monorepo. | Portão M.O. 13.F exige lockfile raiz único e compilação limpa do Turbopack. |
-| **Tier 3: Frota de 19 Agentes** | Especialização temática cirúrgica (`@arquiteto`, `@cientista`, `@guardiao`, etc.). | Desalinhamento se os manifestos divergirem. | `sync_agents_reality.ps1` sincroniza os 19 arquivos em fonte única viva. |
-| **Tier 3: GitHub Copilot** | Autocomplete instantâneo na IDE, PR descriptions e scaffolding rápido de testes. | Tendência a alucinar "Boy Scout refactorings" e tipagem fraca (`Any`). | `.github/copilot-instructions.md` impõe Target Lock, Pure ASCII, PEP 585/604 e KaTeX. |
-| **Tier 4: Subagents Dedicados** | Execução paralela e isolada de subtarefas (`generalist` via `gemma4:26b-a4b-it` MoE, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`). Suporte a Thinking Mode `<|think|>` e isolamento de canais. | Contexto isolado e sem visão holística do monorepo. | Recebem escopo limitado estrito, orçamentos visuais dinâmicos (70 a 1120 tokens) e herdam auto-grounding via `TierPolicyEngine`. |
+| **Tier 3: Frota de 19 Agentes & Modelos Especialistas Qwen** | Especialização temática cirúrgica (`@arquiteto`, `@cientista`, `@guardiao`, etc.) e execução de tarefas especializadas locais via modelos Qwen (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`). | Janela menor que modelos de fronteira do Tier 1; desalinhamento se manifestos divergirem. | Escopo limitado (Target Lock), diffs atômicos de 120-150 linhas e orquestração local/Vulkan via `Ensure-OllamaModels.ps1`. |
+| **Tier 0 Companion: Microsoft 365 Copilot (Assistente Pessoal)** | Assistente pessoal direta de Raphael Vitoi (Tier 0 Companion, plano pago Microsoft 365). Conhecimento generalista ("entende um pouco de tudo"), apoio à rotina diária, produtividade pessoal e suporte contínuo ao fluxo de trabalho, podendo operar pontualmente no sistema sob supervisão direta. | Não opera como agente autônomo de backend da frota Tier 3 nem possui autonomia W3. | Opera estritamente sob comando e acompanhamento direto do Tier 0, dedicada à otimização da rotina e demandas pessoais do usuário. |
+| **Tier 4: Subagents Dedicados** | Execução paralela e isolada de subtarefas (`generalist` via `gemma4:31b-cloud` / `12b`, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`). Suporte a Thinking Mode `<|think|>` e isolamento de canais. | Contexto isolado e sem visão holística do monorepo. | Recebem escopo limitado estrito, orçamentos visuais dinâmicos (70 a 1120 tokens) e herdam auto-grounding via `TierPolicyEngine`. |
 | **Tier 5: Dependabot / Bots** | Detecção automatizada de CVEs e integrações de tickets (Linear, Tactiq, YouTube Intelligence via `gemma4:12b-unified-it` Encoder-Free). | Cria PRs isolados em subpastas que quebram o lockfile raiz. | Revisão humana/Tier 1; aplicação centralizada no `package.json` raiz via `overrides`. |
-| **Tier 6: Modelos Locais & Edge AI (Ollama & llama.cpp: gemma4:31b-cloud, gemma4:26b-a4b, gemma4:12b, gemma4:e4b/e2b, qwen2.5-coder · Gemini Nano · C++ SIMD)** | Soberania de dados local, inferência offline de zero-custo para tarefas privadas. Suporte nativo à cloud do Ollama no 31B Dense e MoE 26B (3.8B ativos). | Menor capacidade que modelos proprietários de mais de 1 trilhão de parâmetros. | Utilizado como motor de provas matemáticas PMev, validador de invariantes e execução contínua de subagentes. |
+| **Tier 6: Modelos Locais & Edge AI (Ollama: gemma4:31b-cloud, gemma4:12b, gemma4:e4b/e2b, kimi-k2.7-code:cloud · Gemini Nano · C++ SIMD)** | Soberania de dados local e inferência cloud com zero custo de VRAM local para tarefas privadas. Suporte nativo à cloud do Ollama no 31B Dense e Kimi Code. | Menor capacidade que modelos proprietários de mais de 1 trilhão de parâmetros. | Utilizado como motor de provas matemáticas PMev, validador de invariantes e execução contínua de subagentes. |
 | **Tier 6: Gemini Nano** | Inferência ultrarrápida no navegador (CDP 9222/9223) sem chamada de rede externa. | Capacidade limitada a tarefas de Prompt API e sumarizações curtas. | Usado no DevTools MCP para diagnósticos em tempo real de Core Web Vitals e LoAF. |
 | **Tier 7: FastAPI / aiohttp / MCP** | Barramento transacional, rate limiting, proteção anti-starvation e bridge para 50+ ferramentas. | Sem autonomia decisória. | Monitorado continuamente pelo `task_executor.py` e auditado pelo `record_gate.py`. |
 
@@ -109,7 +110,7 @@ flowchart TB
    - Prototipagem visual -> Stitch (Tier 2).
    - Codificação em lote -> Google Jules (Tier 2).
    - Tarefas pontuais paralelas -> Subagents Dedicados (Tier 4).
-4. **Scaffolding e Assistência:** Copilot e Frota Custom (Tier 3) apoiam na escrita e scaffolding.
+4. **Scaffolding e Assistência:** Modelos Especialistas Qwen e Frota Custom (Tier 3) apoiam na escrita e scaffolding; Microsoft 365 Copilot provê apoio pessoal à rotina do Tier 0.
 5. **Convergência Local & Quality Gate:** O Tier 1 aterrissa os patches, executa a suíte de testes Pytest e compila as rotas Next.js.
 6. **Entrega Soberana:** O produto final validado é entregue ao Tier 0 em formato de artefatos visuais de alta densidade.
 

@@ -17,7 +17,7 @@
 
 **Tempo:** 25 minutos
 
-**Localização:** [`GOVERNANÇA/COSMOVISAO.md`](GOVERNANÇA/COSMOVISAO.md)
+**Localização:** [`GOVERNANCA/COSMOVISAO.md`](GOVERNANCA/COSMOVISAO.md)
 
 ---
 
@@ -31,7 +31,7 @@
 
 **Tempo:** 10 minutos
 
-**Localização:** [`GOVERNANÇA/CLAUDE.md`](GOVERNANÇA/CLAUDE.md)
+**Localização:** [`GOVERNANCA/CLAUDE.md`](GOVERNANCA/CLAUDE.md)
 
 ---
 
@@ -45,7 +45,7 @@
 
 **Tempo:** 20 minutos
 
-**Localização:** [`GOVERNANÇA/GLOBAL_INSTRUCTIONS.md`](GOVERNANÇA/GLOBAL_INSTRUCTIONS.md)
+**Localização:** [`GOVERNANCA/GLOBAL_INSTRUCTIONS.md`](GOVERNANCA/GLOBAL_INSTRUCTIONS.md)
 
 ---
 
@@ -59,7 +59,7 @@
 
 **Tempo:** 15 minutos
 
-**Localização:** [`../docs/project-context.md`](../docs/project-context.md)
+**Localização:** [`project-context.md`](project-context.md)
 
 ---
 
@@ -73,7 +73,7 @@
 
 **Tempo:** 20 minutos
 
-**Localização:** [`GOVERNANÇA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md`](GOVERNANÇA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md)
+**Localização:** [`GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md`](GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md)
 
 ---
 
@@ -127,16 +127,16 @@
 ## 📂 Estrutura de .CLAUDE/
 
 ### Camada 0: Fundação Filosófica
-- **`GOVERNANÇA/COSMOVISAO.md`** — Fundamentação ética, secular e existencial
-- **`GOVERNANÇA/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md`** — Protocolo didático
-- **`GOVERNANÇA/ETHICAL_PLAYBOOKS.md`** — Linhas vermelhas éticas
+- **`GOVERNANCA/COSMOVISAO.md`** — Fundamentação ética, secular e existencial
+- **`GOVERNANCA/ESTADO_ARTE_APRENDIZADO_GENERATIVO.md`** — Protocolo didático
+- **`GOVERNANCA/ETHICAL_PLAYBOOKS.md`** — Linhas vermelhas éticas
 
 ### Camada 1: Identidade & Governança
-- **`GOVERNANÇA/CLAUDE.md`** — Identidade de Raphael; ponte para cosmovisão
-- **`GOVERNANÇA/GLOBAL_INSTRUCTIONS.md`** — Padrão operacional
-- **`GOVERNANÇA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md`** — Triade
-- **`GOVERNANÇA/COHERENCE_MANIFEST.md`** — Regras de não-concorrência
-- **`GOVERNANÇA/PRODUCT_OWNERSHIP.md`** — Escopo e visão comercial
+- **`GOVERNANCA/CLAUDE.md`** — Identidade de Raphael; ponte para cosmovisão
+- **`GOVERNANCA/GLOBAL_INSTRUCTIONS.md`** — Padrão operacional
+- **`GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md`** — Triade
+- **`GOVERNANCA/COHERENCE_MANIFEST.md`** — Regras de não-concorrência
+- **`GOVERNANCA/PRODUCT_OWNERSHIP.md`** — Escopo e visão comercial
 
 ### Camada 2: Arquitetura & Engenharia
 - **`ARQUITETURA/HYBRID_BRAIN_ARCHITECTURE.md`** — Coordenação nuvem/local

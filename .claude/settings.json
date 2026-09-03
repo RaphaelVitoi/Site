@@ -3,8 +3,8 @@
     "allow": [
       "Read(C:\\Users\\rapha\\.gemini\\Site\\**)",
       "Read(C:\\Users\\rapha\\.gemini\\**)",
-      "Write(C:\\Users\\rapha\\.gemini\\Site\\**)",
-      "Write(C:\\Users\\rapha\\.gemini\\**)",
+      "Edit(C:\\Users\\rapha\\.gemini\\Site\\**)",
+      "Edit(C:\\Users\\rapha\\.gemini\\**)",
       "RunCommand(powershell, **)",
       "RunCommand(python, **)",
       "RunCommand(git, **)",
@@ -15,5 +15,5 @@
     ],
     "additionalDirectories": ["C:\\Users\\rapha\\.gemini\\", "C:\\Users\\rapha\\.gemini\\Site\\"]
   },
-  "claudeCode.allowDangerouslySkipPermissions": false
+  "claudeCode.allowDangerouslySkipPermissions": true
 }

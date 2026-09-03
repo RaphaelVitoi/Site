@@ -11,9 +11,9 @@ O monorepo [`Site/`](file:///C:/Users/rapha/.gemini/Site) concentra toda a lógi
 - **`core/`**: Schemas unificados (Pydantic), gerenciador de runtime (`runtime.py`), pool de metadados e guardiões de recursos.
 - **`engine/`**: Implementação dos motores analíticos (`vitoi_perspective_engine.py`, `math_sota.py`, `cognitive.py`, `bayesian_range.py`).
 - **`frontend/`**: Aplicação Next.js 16.2.9 estruturada em grupos de rotas com Tailwind 4 e React 19.
-- **`llm/`**: Roteamento de IA para `gemini-3.7-flash` e `gemini-3.1-pro` com Dynamic Thinking Budget.
+- **`llm/`**: Roteamento de IA para `gemini-3.8/3.7-flash` e `chatgpt-5.6-sol` com Dynamic Thinking Budget.
 - **`tests/`**: Suíte de 20 arquivos de teste (239 testes unitários e de integração aprovados).
-- **`.cerebro/`**: Membrana de inteligência holográfica, memórias dos 19 agentes e teorias matemáticas.
+- **`.claude/`**: Membrana de inteligência holográfica, memórias dos 19 agentes e teorias matemáticas.
 
 ### B. Blindagem e Controle de Versão
 - **`.gitignore` Otimizado:** Bloqueio cirúrgico de alvos Rust WASM (`**/target/`), binários de modelos, caches de linters e vetores locais.
@@ -49,7 +49,7 @@ O monorepo [`Site/`](file:///C:/Users/rapha/.gemini/Site) concentra toda a lógi
 - **Throughput:** 54.704 registros/segundo em processamento vetorizado colunar com Adaptive Query Execution (AQE).
 
 ### C. Roteamento de Inteligência Artificial (`llm/routing.py`)
-- **Tiers Ativos:** `gemini-3.7-flash` (Deep Thinking / Fast Ops) e `gemini-3.1-pro` com fallback para motor local em domínio `MATH`.
+- **Tiers Ativos:** `gemini-3.8/3.7-flash` (Deep Thinking / Fast Ops) e `chatgpt-5.6-sol` com fallback para motor local em domínio `MATH`.
 - **Resiliência:** Tratamento assíncrono com fallback nativo (urllib) para isolamento de TCP Drops.
 
 ---

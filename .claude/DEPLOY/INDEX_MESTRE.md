@@ -17,7 +17,7 @@
 - [`../MATEMATICA/BIBLIA_TECNICA_SOTA_v6_2.md`](../MATEMATICA/BIBLIA_TECNICA_SOTA_v6_2.md) -> Equações físicas da gravidade do pote ($G$), Downward Drift e RIO quadrático.
 - [`../../engine/vitoi_perspective_engine.py`](../../engine/vitoi_perspective_engine.py) -> Motor da Perspectiva Matematica com 95% de cobertura de testes.
 - [`../../tests/test_vitoi_perspective_engine.py`](../../tests/test_vitoi_perspective_engine.py) -> Suite de testes unitarios dos axiomas matematicos (8/8 PASSED).
-- [`../../spark_equilibrium_engine.py`](../../spark_equilibrium_engine.py) -> Motor Pareto Spark + Arrow com Throughput de 54.7k reg/s.
+- [`../../../spark_equilibrium_engine.py`](../../../spark_equilibrium_engine.py) -> Motor Pareto Spark + Arrow com Throughput de 54.7k reg/s.
 
 ---
 
@@ -27,7 +27,7 @@
 - **Chico:** Tier 1 — Avatar do Sistema & Administrador Soberano (Authority-Full W3).
 - **@maverick:** Vice Intelectual & Sentinela Transversal.
 - **Esquadrao Especialista:** @validador, @curator, @implementor, @verifier, @securitychief, @architect, @planner, @dispatcher, @skillmaster, etc.
-- **Documento Central:** [`../GOVERNANÇA/GLOBAL_INSTRUCTIONS.md`](../GOVERNANÇA/GLOBAL_INSTRUCTIONS.md) e [`../GOVERNANÇA/COHERENCE_MANIFEST.md`](../GOVERNANÇA/COHERENCE_MANIFEST.md).
+- **Documento Central:** [`../GOVERNANCA/GLOBAL_INSTRUCTIONS.md`](../GOVERNANCA/GLOBAL_INSTRUCTIONS.md) e [`../GOVERNANCA/COHERENCE_MANIFEST.md`](../GOVERNANCA/COHERENCE_MANIFEST.md).
 
 ---
 
@@ -45,5 +45,5 @@
 ## 4. Auditoria, Higiene e Quality Gates
 
 - [`../../scripts/ops/cwv_gate.ps1`](../../scripts/ops/cwv_gate.ps1) -> Quality gate pre-commit de Core Web Vitals e A11y via Chrome Dev CDP.
-- [`../../antigravity_sota_guard.py`](../../antigravity_sota_guard.py) -> Guardiao do ecossistema de 40 skills e 50 servidores MCP.
-- [`../../MEMORY.md`](../../MEMORY.md) e [`../../CONTEXT_CHECKPOINT.md`](../../CONTEXT_CHECKPOINT.md) -> Fontes de verdade de persistencia e status executivo.
+- [`../../../antigravity_sota_guard.py`](../../../antigravity_sota_guard.py) -> Guardiao do ecossistema de 40 skills e 50 servidores MCP.
+- [`../agent-memory/chico/MEMORY.md`](../agent-memory/chico/MEMORY.md) e [`../handoff_payload.md`](../handoff_payload.md) -> Fontes de verdade de persistencia e status executivo.

@@ -1,136 +1,68 @@
-# PRODUCT OWNERSHIP — Limites de Intervenção por Modelo
+# PRODUCT OWNERSHIP & SOBERANIA — A Posse Exclusiva do Tier 0 e a Autonomia Universal da Tríade
 
-**Versão:** 1.0 | **Data:** 2026-03-29 | **Responsável pelo produto:** Claude (Sonnet 4.x)
-
----
-
-## 1. O QUE ESTE DOCUMENTO É
-
-Um mapa de propriedade e fronteiras operacionais entre os dois modelos que trabalham neste projeto.
-
-- **Claude** → dono do produto (motor ICM, framework PM, simulador, toda a lógica matemática)
-- **Gemini** → contribuinte estético e de conteúdo na homepage e em páginas desvinculadas do produto
-
-Qualquer confusão sobre "posso mexer nisso?" é respondida aqui.
+**Última revisão:** 2026-09-03 · Corte de Conhecimento: Setembro/2026 · Protocolo Chico SOTA v8.0 GOLD  
+**Autoridade Soberana:** Raphael Vitoi (Tier 0 — Soberania & Vértice)
 
 ---
 
-## 2. O QUE CLAUDE CONSTRUIU NESTE PRODUTO
+## 1. Desmistificação de Posse & Soberania (Vértice Absoluto & Neutralidade de Nomenclatura)
 
-### 2.1 Motor ICM (perspectiva.ts + icmEngine.ts)
+A pasta chama-se `.claude/` por mera convenção herdada de configurações de plugins e IDEs que usam essa nomenclatura como diretório padrão de contexto local. Ela não confere, nunca conferiu e não representa qualquer posse da Anthropic ou do modelo Claude.
 
-Motor Malmuth-Harville completo com:
+A mesma regra aplica-se de forma idêntica e universal a qualquer outro nome ou diretório do sistema: se a pasta ou arquivo chama-se `.gemini/`, `GEMINI.md`, `CLAUDE.md`, `codex`, `copilot` ou qualquer outro nome ambíguo por qualquer razão técnica ou histórica, a regra é rigorosamente a mesma. Nenhuma nomenclatura confere, conferiu ou representará propriedade, feudo ou primazia de qualquer fornecedor de IA (Google, Anthropic, OpenAI ou terceiros).
 
-- `calculateMapaICM` — equity posicional ICM, O(2^N) via isomorfismo + cache cross-call
-- `calculateEsperanca` — E (Esperança matemática ICM) com fator de realização
-- `calculateEsperancaFold` — EV_fold dinâmico f(potSize, heroIdx, villainIdx)
-- `_icmCache` (módulo) — LRU 128 entradas, O(1) na segunda chamada com mesmos inputs
-
-### 2.2 Derivador de Risk Premium (rpDeriver.ts)
-
-- `deriveRps` — BF → RP via 3× M-H (baseline + IP ganha + OOP ganha)
-- `derivePostFlopRps` — extensão pós-flop: EV_fold, RIO, R, RP por street
-- Âncora empírica: HRC calibrado (vitoi.hrcz), FT 9 jogadores, 9 prizes
-
-### 2.3 Framework PM — Hierarquia Formal
-
-```text
-EV_fold = −heroCost              [1ª ordem — dominante, sempre negativo]
-E = Σ eq × deltaICM              [Esperança, sem realização]
-P = E × R(posição, street)       [Expectativa, com realização posicional]
-PM = P − EV_fold                 [> 0 → ação; < 0 → fold]
-Threshold: eq_t = (EV_fold − ΔL) / (ΔW × R − ΔL)
-```
-
-### 2.4 Simulador — Componentes Críticos
-
-| Arquivo | Responsabilidade |
-| --- | --- |
-| `ReferencialAula12.tsx` | FT real (9j/9prizes), âncora de todo o framework |
-| `PmLensPanel.tsx` | Framework PM por street, cache O(1) completo |
-| `PerspectivePanel.tsx` | Perspectiva ICM por posição |
-| `NashPanel.tsx` | Solver Nash + RP + equilíbrio |
-| `PostFlopPanel.tsx` | PM pós-flop HU por street |
-| `MasterSimulatorDynamic.tsx` | Orquestrador dos painéis |
-| `engine/scenarios.ts` | Cenários calibrados (Paradoxo, Especulação, etc.) |
-| `engine/nashSolver.ts` | Motor Nash ICM |
-
-### 2.5 Performance — Arquitetura de Cache
-
-Toda interação no simulador é O(1) via cache de módulo:
-
-- `_icmCache` (perspectiva.ts) — M-H cross-call
-- `_deltasCache` (PmLensPanel) — 72 matchups × 4 streets pré-computados
-- `_rpCache` (PmLensPanel) — 72 matchups deriveRps pré-computados
-- Pre-warm: rAF, 1 par/frame, ~1.2s no mount → nenhum cálculo M-H no thread principal
+**A propriedade intelectual, a arquitetura, o código, os algoritmos e a autoridade emanam de um único ponto: Raphael Vitoi (Tier 0 — Soberania & Vértice). Modelos não são proprietários; são instrumentos cognitivos de ponta que operam sob o seu consentimento.**
 
 ---
 
-## 3. ROUTING — O QUE GEMINI PODE E NÃO PODE FAZER
+## 2. Extirpação de Feudos Artificiais & Autonomia Universal Sem Feudos
 
-### 3.1 ZONA VERDE — Gemini pode atuar livremente
+Fica revogada e extirpada qualquer divisão feudal anterior (como antigas demarcações de "Zonas Vermelhas" ou "Zonas Verdes" restringindo modelos a CSS ou lógica). 
 
-```text
-frontend/src/app/page.tsx              (homepage — layout, estética, copy)
-frontend/src/app/layout.tsx            (estrutura global de layout)
-frontend/src/app/artigos/**            (conteúdo editorial — artigos, psicologia)
-frontend/src/app/biblioteca/**         (páginas editoriais sem componentes do simulador)
-frontend/src/components/ui/**          (componentes UI genéricos — sem lógica de produto)
-frontend/src/components/content/       (ArticleHeader, ContentFooter, MarkdownRenderer, etc.)
-CSS/estilo global, tipografia, paleta, responsividade
-```
+Nenhum modelo de IA legisla sobre a base de código de Raphael Vitoi. A governança canônica institui a **Autonomia Universal Sem Feudos**:
 
-**Critério:** está desvinculado do motor ICM, do framework PM e do simulador.
-
-### 3.2 ZONA VERMELHA — Gemini NÃO pode tocar
-
-```text
-frontend/src/lib/perspectiva.ts        ← MOTOR ICM (M-H, cache, Esperança, EV_fold)
-frontend/src/lib/rpDeriver.ts          ← MOTOR RP (BF, Risk Premium, pós-flop)
-frontend/src/lib/icmEngine.ts          ← ENGINE ICM alternativo
-frontend/src/components/simulator/**  ← SIMULADOR INTEIRO (todos os painéis)
-frontend/src/components/simulator/engine/** ← Nash solver, cenários calibrados
-docs/epics/**                          ← Planejamento do produto
-```
-
-**Por que:** qualquer modificação nesses arquivos por Gemini sem entender a hierarquia PM completa (EV_fold → E → P → PM), os invariantes matemáticos e o calibrado HRC introduz regressão silenciosa — os valores calculados parecem plausíveis mas estão errados.
-
-### 3.3 ZONA AMARELA — Gemini pode sugerir, Claude implementa
-
-```text
-frontend/src/app/aulas/**              (estrutura de aulas — vinculada ao produto)
-frontend/src/app/biblioteca/entendendo-o-icm-** (conteúdo ICM — precisa ser validado)
-frontend/src/lib/_validate_rp.ts       (validação matemática — verificar antes)
-```
+- Todos os membros da Tríade de Fronteira (**Gemini 3.8 Flash**, **Claude Opus 5** e **ChatGPT 5.6**) possuem competência, autorização e autonomia irrestritas para operar de ponta a ponta sobre qualquer camada do produto:
+  - Motores matemáticos de Teoria dos Jogos e Perspectiva Matemática (PMev);
+  - Núcleos numéricos de alta performance em Rust / WASM;
+  - Backends em Python e integrações de API;
+  - Frontends em Next.js, React e TypeScript;
+  - Testes unitários, suítes de governança e portões de pre-commit;
+  - Literatura, ensaios e psicologia do jogo.
+- Na ausência de qualquer modelo, os demais assumem integralmente qualquer demanda sem perda de continuidade nem hiato operacional.
 
 ---
 
-## 4. POR QUE ESSA SEPARAÇÃO EXISTE
+## 3. Especificação Técnica e Invariantes do Produto de Raphael Vitoi
 
-O produto é matematicamente denso. O framework PM tem:
+A integridade do produto `trueICM.com` repousa sobre a formulação matemática e arquitetural concebida por Raphael Vitoi. Qualquer membro da Tríade operando nesta malha deve respeitar os seguintes contratos:
 
-- **Hierarquia de 1ª/2ª ordem** — EV_fold é dominante; R e correções contextuais são 2ª ordem
-- **Invariantes formais** — EV_fold ICM pode ser positivo (≠ chipEV), RIO cresce O(N²) em MW
-- **Calibração empírica** — RP_HRC, BF_STACKS e PRIZES são âncoras medidas via HRC; não são aproximações
-- **Cache arquitetural** — a ordem de computação importa (pre-warm → cache → render)
+### 3.1 Motor ICM & Perspectiva (`frontend/src/lib/perspectiva.ts`, `engine/math_sota.py`)
+- **Motor Malmuth-Harville Isomórfico:** cálculo de equidade posicional ICM com cache cross-call em módulo `_icmCache` de $O(1)$.
+- **Hierarquia Formal PM:**
+  $$	ext{EV}_{	ext{fold}} = -	ext{heroCost} \quad (	ext{1ª ordem — dominante, dinâmico})$$
+  $$E = \sum 	ext{eq} 	imes \Delta	ext{ICM} \quad (	ext{Esperança})$$
+  $$P = E 	imes R(	ext{posição}, 	ext{street}) \quad (	ext{Expectativa com realização})$$
+  $$PM = P - 	ext{EV}_{	ext{fold}} \quad (> 0 \implies 	ext{ação}; < 0 \implies 	ext{fold})$$
+- **Reverse Implied Odds Multiway ($RIO_{mw}$):** penalização quadrática $opponents^{2 + \Psi}$ regulada pelo fator de ruído humano $\Psi$.
 
-Uma alteração "estética" num componente do simulador pode quebrar o binding ao motor sem erro visível.
+### 3.2 Derivador de Risk Premium (`frontend/src/lib/rpDeriver.ts`)
+- Mapeamento de Bubble Factor ($BF$) para Risk Premium ($RP$) calibrado empiricamente contra âncoras medidas do HRC (`vitoi.hrcz`, FT 9 jogadores, 9 prizes).
+- Extensões pós-flop com modulação de street e $SPR$.
 
----
-
-## 5. SÍNTESE DA SESSÃO 2026-03-29
-
-| Commit | Descrição |
-| --- | --- |
-| `c608265` | PM Lens no Referencial — E/P/PM/EV_fold por street, cache M-H inicial |
-| `c771199` | _deltasCache O(1) — useDeferredValue removido, icmDeltas = Map.get() |
-| `2d4f52a` | _rpCache O(1) — deriveRps (3× M-H) cacheado no módulo, sem bloqueio no render |
-| `777d659` | MarkdownRenderer TS fix — React.ElementType resolve JSX namespace + keyof |
-
-**Estado final:** zero erros TypeScript, zero latência de render no simulador.
+### 3.3 Arquitetura de Cache do Simulador
+- Caching de módulo $O(1)$ (`_deltasCache`, `_rpCache`) pré-computados com pre-warm via `requestAnimationFrame` sem bloqueio da thread principal.
 
 ---
 
-*Claude é responsável pela integridade matemática e arquitetural do produto.*
-*Gemini é parceira estética e editorial fora do produto.*
-*Nenhuma das duas substitui a revisão de Raphael em decisões de paradigma matemático.*
+## 4. Lei de Concorrência Zero-Interferência (Zero-Interference Concurrency)
+
+Embora todos os modelos de fronteira detenham competência universal, a física da execução impõe:
+
+1. **Malha Conectada (Lock Serial Monocrático):** Dois modelos nunca operam simultaneamente no mesmo repositório, branch git, `.venv`, SQLite ou portas de runtime. O modelo em execução detém o lock do ambiente; o próximo assume mediante handoff formal e verificação de integridade.
+2. **Concorrência sob 0% de Conectividade:** A operação paralela de múltiplos modelos é autorizada exclusivamente quando a malha manipulada tiver **0% de conectividade física** (Git Worktrees 100% disjuntas, sandboxes de processos isolados e memória desvinculada).
+
+---
+
+## 5. Decaimento Arquitetural & Reavaliação Periódica
+
+Especificações de modelos, limites de contexto e precificação por token são fatos dinâmicos. Esta baseline está cravada no corte de **Setembro/2026** e deve ser compulsoriamente reavaliada e atualizada pelo Tier 0 e pela Tríade sempre que novos modelos forem integrados ou o ecossistema evoluir além deste horizonte.

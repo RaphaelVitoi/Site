@@ -73,10 +73,10 @@ Esses agentes sao interceptados ou injetados proativamente pelo `task_executor.p
 
 O modelo e escolhido por prioridade:
 
-1. `task.metadata["model_override"]` (injetado dinamicamente, ex: @securitychief em tarefa critica → gemini-1.5-pro)
+1. `task.metadata["model_override"]` (injetado dinamicamente, ex: @securitychief em tarefa critica → gemini-3.8-flash)
 2. `primary_model` do agente no `agents_manifest.json`
 3. Categoria (`model_preference`: `deep_thinking` ou `fast_operations`) mapeada em `routing_map.json`
-4. Fallback: `gemini-2.5-flash`
+4. Fallback: `gemini-3.8-flash` / `gemini-3.7-flash`
 
 ---
 

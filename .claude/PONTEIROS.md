@@ -27,7 +27,7 @@
 
 ### Documentação de Projeto
 - **Canônico:** [`../docs/`](../docs/) — Documentação técnica e pesquisa
-- **Contexto:** [`../docs/project-context.md`](../docs/project-context.md)
+- **Contexto:** [`project-context.md`](project-context.md)
 
 ### Matemática e Pesquisa
 - **Research:** [`../docs/research/`](../docs/research/) — Pesquisa matemática e teórica
@@ -38,9 +38,9 @@
 ## 🔗 Ponteiros Internos (.claude/)
 
 ### Governança
-- **Cosmovisão:** [`GOVERNANÇA/COSMOVISAO.md`](GOVERNANÇA/COSMOVISAO.md)
-- **Instruções Globais:** [`GOVERNANÇA/GLOBAL_INSTRUCTIONS.md`](GOVERNANÇA/GLOBAL_INSTRUCTIONS.md)
-- **Liderança:** [`GOVERNANÇA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md`](GOVERNANÇA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md)
+- **Cosmovisão:** [`GOVERNANCA/COSMOVISAO.md`](GOVERNANCA/COSMOVISAO.md)
+- **Instruções Globais:** [`GOVERNANCA/GLOBAL_INSTRUCTIONS.md`](GOVERNANCA/GLOBAL_INSTRUCTIONS.md)
+- **Liderança:** [`GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md`](GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md)
 
 ### Arquitetura
 - **Híbrido:** [`ARQUITETURA/HYBRID_BRAIN_ARCHITECTURE.md`](ARQUITETURA/HYBRID_BRAIN_ARCHITECTURE.md)

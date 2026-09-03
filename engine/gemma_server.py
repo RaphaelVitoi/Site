@@ -741,7 +741,6 @@ def _calculate_dynamic_context(
 def _validate_thermodynamic_hardware(model_name: str) -> str | None:
     """SOTA: Valida limite fisico de VRAM para prevenir colapso termodinamico (OOM)."""
     vram_map = {
-        "26b": 6.0,
         "31b": 18.0,
         "12b": 4.0,
         "8b": 3.0,

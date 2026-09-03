@@ -37,13 +37,13 @@
       "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
     },
     {
-      "alias": "26b",
-      "tag": "gemma4:26b",
-      "tier": "local",
-      "required": true,
-      "size_gb": 17.0,
-      "role": "Modelo local de alta capacidade para inferencia pesada.",
-      "consumers": ["scripts/llm_inference/run_inference.py", "tests/test_gemma_server_sota.py"]
+      "alias": "kimi_code_cloud",
+      "tag": "kimi-k2.7-code:cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "Modelo cloud avancado para codificacao e raciocinio tecnico via Ollama Cloud.",
+      "consumers": ["engine/gemma_server.py"]
     },
     {
       "alias": "31b",

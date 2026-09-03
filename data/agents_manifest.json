@@ -9,7 +9,7 @@
     "routing_pattern": "estrategi|inova|sentinela|ideia|analise|risco|filosofia|reflexao|disrup|meta|dilema|paradoxo|cosmovisao|principios|visao|futuro|diagnostico|bayes|antevisao",
     "model_preference": "deep_thinking",
     "color": "deep_pink3",
-    "primary_model": "gemini-3.7-flash",
+    "primary_model": "gemini-3.8-flash",
     "skills": [
       "pmev-game-theory-engine",
       "bigquery-sql",
@@ -35,7 +35,7 @@
     "routing_pattern": "sintese|consenso|democrat|harmonia|mediacao|conflito|orquestra|gerenc|infraestrutura|automacao|log|monitoramento|api|sistema|admin|auto-coracao|debug",
     "model_preference": "deep_thinking",
     "color": "dodger_blue2",
-    "primary_model": "gemini-3.7-flash",
+    "primary_model": "gemini-3.8-flash",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "sota-quality-gate",
@@ -75,7 +75,7 @@
       "core/arbitrator.py",
       "core/sota_context_engine.py"
     ],
-    "fallback_model": "gemini-3.7-flash",
+    "fallback_model": "gemini-3.8-flash",
     "tier": "Tier 3: System Design & Topology (Pipeline)",
     "memory_affinity": "RAM_CACHE & ISOMORPHISM"
   },
@@ -89,7 +89,7 @@
     "routing_pattern": "planej|prd|spec|especifica|passo a passo|roadmap|milestone|etapas|dependencia|impacto",
     "model_preference": "deep_thinking",
     "color": "orange3",
-    "primary_model": "gemini-3.7-flash",
+    "primary_model": "gemini-3.8-flash",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "enforcing-resource-attribution"
@@ -169,7 +169,7 @@
     "specialized_scripts": [
       "core/sota_context_engine.py"
     ],
-    "fallback_model": "gemma4:e4b",
+    "fallback_model": "gemini-3.6-flash",
     "tier": "Tier 3: Prompt Engineering SOTA (Free Tier Workhorse)",
     "memory_affinity": "RAM_CACHE"
   },
@@ -194,7 +194,7 @@
       "scripts/ops/cwv_gate.ps1",
       "scripts/ops/sri_integrity_verifier.py"
     ],
-    "fallback_model": "qwen2.5-coder:1.5b",
+    "fallback_model": "gemini-3.6-flash",
     "tier": "Tier 3: Quality Gate & CVE Audit (Pipeline)",
     "memory_affinity": "RAM_CACHE & STATIC_ANALYSIS"
   },
@@ -222,7 +222,7 @@
       "engine/llama_cpp/start_vulkan_daemon.ps1",
       "engine/avatars/run_avatar.py"
     ],
-    "fallback_model": "gemini-3.7-flash",
+    "fallback_model": "gemini-3.8-flash",
     "tier": "Tier 3: Surgical Coding (Vulkan)",
     "memory_affinity": "VRAM_HOT & TARGET_LOCK"
   },
@@ -269,7 +269,7 @@
     "specialized_scripts": [
       "engine/avatars/avatar_dashboard.py"
     ],
-    "fallback_model": "gemini-3.7-flash",
+    "fallback_model": "gemini-3.8-flash",
     "tier": "Tier 3: Epistemic Curation (Cloud)",
     "memory_affinity": "CLOUD_ZERO_VRAM"
   },
@@ -292,7 +292,7 @@
     "specialized_scripts": [
       "tests/test_desambiguacao.py"
     ],
-    "fallback_model": "gemini-3.7-flash",
+    "fallback_model": "gemini-3.8-flash",
     "tier": "Tier 3: Mathematical Formalism (Vulkan)",
     "memory_affinity": "VRAM_HOT & NUMPY_SIMD"
   },
@@ -362,7 +362,7 @@
       "scripts/ops/cwv_gate.ps1",
       "scripts/ops/sri_integrity_verifier.py"
     ],
-    "fallback_model": "qwen2.5-coder:1.5b",
+    "fallback_model": "gemini-3.6-flash",
     "tier": "Tier 3: Zero Trust & Semgrep (Free Tier Workhorse)",
     "memory_affinity": "RAM_CACHE & SHA512_BUCKETS"
   },
@@ -411,7 +411,7 @@
       "scripts/ops/Ensure-OllamaModels.ps1",
       "scripts/routines/sync_agents_reality.ps1"
     ],
-    "fallback_model": "qwen2.5-coder:1.5b",
+    "fallback_model": "gemini-3.6-flash",
     "tier": "Tier 3: Skill Governance & Tools (Free Tier Workhorse)",
     "memory_affinity": "RAM_CACHE & FASTMCP"
   },
@@ -435,7 +435,7 @@
       "engine/avatars/run_avatar.py",
       "scripts/ops/Start-NexusDashboard.ps1"
     ],
-    "fallback_model": "gemini-3.7-flash",
+    "fallback_model": "gemini-3.8-flash",
     "tier": "Tier 3: Epistemic Memory & Poetics (Pipeline)",
     "memory_affinity": "RAM_CACHE & REPLAY_BUFFER"
   },

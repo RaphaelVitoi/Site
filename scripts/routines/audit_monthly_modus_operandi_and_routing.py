@@ -213,9 +213,9 @@ def run_monthly_audit() -> dict[str, Any]:
 
     # 1. Auditoria das 4 Camadas Funcionais no Model Registry
     camadas = {
-        "camada_1_triagem": ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash"],
-        "camada_2_agente_principal": ["gemini-3.7-flash"],
-        "camada_3_raciocinio_profundo": ["gemini-3.1-pro"],
+        "camada_1_triagem": ["gemini-3.5-flash-lite", "gemini-3.6-flash"],
+        "camada_2_agente_principal": ["gemini-3.7-flash", "gemini-3.8-flash"],
+        "camada_3_raciocinio_profundo": ["chatgpt-5.6-sol"],
     }
 
     status_camadas = {}
@@ -255,8 +255,8 @@ def run_monthly_audit() -> dict[str, Any]:
         "total_agentes_cobertos": cob["agentes"],
         "total_subagentes_cobertos": cob["subagentes"],
         "mapa_agentes_resolvidos": len(AGENT_MODEL_MAP),
-        "roi_trigger_flash_ok": test_roi_flash["modelo_escolhido"] == "gemini-3.7-flash",
-        "roi_trigger_pro_ok": test_roi_pro["modelo_escolhido"] == "gemini-3.1-pro",
+        "roi_trigger_flash_ok": test_roi_flash["modelo_escolhido"] == "gemini-3.8-flash",
+        "roi_trigger_pro_ok": test_roi_pro["modelo_escolhido"] == "chatgpt-5.6-sol",
         "ttl_rota_dias": TTL_ROTA_DIAS,
         "rotas_suspeitas": {c.value: motivo for c, motivo in suspeitas.items()},
     }
@@ -322,7 +322,7 @@ def run_monthly_audit() -> dict[str, Any]:
 
 - **Total de Agentes Cobertos:** {cob["agentes"]} agentes / {cob["subagentes"]} tiers de subagente
 - **Mapa Concreto Ativo:** {len(AGENT_MODEL_MAP)} agentes operando sem fallbacks orfaos
-- **Validacao de Gatilho de ROI (Gemini 3.1 Pro vs. 3.7 Flash):** Aprovado e calibrado
+- **Validacao de Gatilho de ROI (Chat GPT 5.6-Sol vs. 3.8 Flash):** Aprovado e calibrado
 - **Ancoras de Rota:** {len(ROTAS) - len(suspeitas)} de {len(ROTAS)} dentro do TTL de {TTL_ROTA_DIAS} dias{" -- **" + str(len(suspeitas)) + " exigem reconsulta ao fornecedor**" if suspeitas else ""}
 - **Status dos Manuais de Modus Operandi:** {manuais_ok} de {total_manuais} sincronizados com a Arquitetura de 4 Camadas
 

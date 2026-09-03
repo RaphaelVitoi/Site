@@ -127,7 +127,7 @@ O servidor dinâmico expõe operações atômicas locais via protocolo MCP/STDIO
   "sota_inject_ipc": "Injeta tarefa diretamente no DAL via IPC nativo (Base64)",
   "sota_pmev_eval": "Avalia spot na Perspectiva Matematica (10 Teoremas Canônicos)",
   "sota_monthly_audit": "Executa a rotina analitica mensal de auditoria de Modus Operandi & Roteamento",
-  "sota_model_roi": "Avalia o ROI condicional do Gemini 3.1 Pro vs. 3.7 Flash",
+  "sota_model_roi": "Avalia o ROI condicional do Chat GPT 5.6-Sol vs. 3.7 Flash",
   "sota_test_suite": "Executa a suite completa de 364 testes de regressao do Nexus Core"
 }
 ```
