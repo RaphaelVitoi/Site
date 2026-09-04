@@ -210,11 +210,17 @@ function main() {
         client.pipe(process.stdout);
       });
       client.on("error", () => {
+        try {
+          client.destroy();
+        } catch {}
         isConnected = false;
         activeClient = null;
         scheduleRetry();
       });
       client.on("close", () => {
+        try {
+          client.destroy();
+        } catch {}
         isConnected = false;
         activeClient = null;
         scheduleRetry();
