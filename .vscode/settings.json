@@ -1,6 +1,6 @@
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-  "python.languageServer": "Jedi",
+  "python.languageServer": "Default",
   "python.terminal.activateEnvironment": true,
   "python.analysis.typeCheckingMode": "standard",
   "python.analysis.diagnosticMode": "workspace",
@@ -62,6 +62,7 @@
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,
+    "**/.husky/**": true,
     "**/node_modules/**": true,
     "**/.venv/**": true,
     "**/.next/**": true,
@@ -397,6 +398,5 @@
   "ollamaDirectCustomAgent.fileWatcherEnabled": true,
   "ollamaDirectCustomAgent.debugMode": true,
   "ollamaDirectCustomAgent.cloudAutoRotateAccounts": true,
-  "ollamaDirectCustomAgent.assistantAutoLaunch": true,
-  "qwen-code.apiKey": "AQ.Ab8RN6Lrevq4r7JBnUfVpiL1_Z31fSudC6_bLiKu3TtMwecAEA"
+  "ollamaDirectCustomAgent.assistantAutoLaunch": true
 }
