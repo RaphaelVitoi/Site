@@ -63,7 +63,7 @@ function main() {
               },
               serverInfo: {
                 name: `datacloud-${arg}`,
-                version: "0.9.1",
+                version: "0.10.0",
               },
             },
           });
@@ -165,7 +165,6 @@ function main() {
 
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout,
     terminal: false,
   });
 
@@ -181,6 +180,27 @@ function main() {
     }
   });
 
+  rl.on("close", () => {
+    if (activeClient && !activeClient.destroyed) {
+      activeClient.destroy();
+    }
+    process.exit(0);
+  });
+
+  process.stdin.on("end", () => {
+    if (activeClient && !activeClient.destroyed) {
+      activeClient.destroy();
+    }
+    process.exit(0);
+  });
+
+  function scheduleRetry() {
+    const t = setTimeout(tryConnect, RETRY_DELAY_MS);
+    if (t && typeof t.unref === "function") {
+      t.unref();
+    }
+  }
+
   function tryConnect() {
     try {
       const client = net.createConnection(socketPath);
@@ -192,15 +212,15 @@ function main() {
       client.on("error", () => {
         isConnected = false;
         activeClient = null;
-        setTimeout(tryConnect, RETRY_DELAY_MS);
+        scheduleRetry();
       });
       client.on("close", () => {
         isConnected = false;
         activeClient = null;
-        setTimeout(tryConnect, RETRY_DELAY_MS);
+        scheduleRetry();
       });
     } catch {
-      setTimeout(tryConnect, RETRY_DELAY_MS);
+      scheduleRetry();
     }
   }
 
