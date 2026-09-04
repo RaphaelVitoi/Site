@@ -1,35 +1,41 @@
-# HANDOFF LATEST — Google Workspace Master Skill & Curadoria Estratégica
+# HANDOFF LATEST — Refinamento SOTA Radar, Telemetria & MCPs Google
 
 **Data:** 2026-09-04 · **Protocolo:** Chico SOTA v8.0 GOLD  
-**Estado:** publicado em `7b36594a` (aguardando commit do handoff), `master`  
-**Condutor:** Gemini 3.8 Flash [Tier 1.A] · **Regime:** assistida / autonomia calibrada  
+**Estado:** Publicado em `080cda35`, `master`  
+**Condutor:** Gemini 3.8 Flash [Tier 1.A] · **Regime:** Assistida (Arbitrada diretamente pelo Tier 0 — Raphael Vitoi)  
 **Avaliação Operacional Tier 0:** **9.5 / 10** (Excelente)  
 
 ---
 
 ## 1. O que foi consolidado nesta sessão
 
-1. **Ativação da Suite Google Workspace:**
-   - APIs do Google Drive, Google Sheets, Google Calendar e Gmail habilitadas no GCP `original-498419`.
-   - Servidores MCP oficiais configurados com rotas canônicas `/mcp/v1`.
-   - Autenticação e 7 escopos estabelecidos no ADC via Desktop OAuth Client (`C:\Users\rapha\.gemini\gcp_oauth_client.json`).
-2. **Curadoria do Acervo no Google Drive:**
-   - Varredura profunda de 852 arquivos e diretórios.
-   - Catalogação de 149 aulas e masterclasses de Poker (HRC pós-flop, PioSolver, GTO, contagem de combos, ICM e heurísticas de Risk Premium).
-   - 27 gravações de reuniões do Google Meet em MP4 e dezenas de anotações inteligentes do Gemini AI e transcrições de áudio.
-3. **Skill Padrão-Ouro `google-workspace`:**
-   - Implantada no escopo global (`~/.gemini/config/skills/`) e sincronizada no repositório (`.agents/skills/`).
-   - Scripts utilitários embutidos: `probe_workspace.mjs` (healthcheck paralelo) e `drive_export.mjs` (extrator instantâneo de texto de Docs/Meet).
-4. **Governança Git & Portão SOTA:**
-   - Pré-commit executado com 5 fases e 0 erros.
-   - Commits `1efb11e5` e `7b36594a` publicados com sucesso via Git LFS em `origin/master`.
+1. **Refinamento Frontend SOTA (Simulador Mestre, Telemetria & Scanner Gravitacional):**
+   - Correção gramatical canônica de `Cockpit de Telemetria & Radars SOTA` para `Cockpit de Telemetria & Radar SOTA` em `MasterSimulator.tsx`.
+   - Recharts em `TelemetryCharts.tsx`: cursor opaco retangular branco removido; implementados 5 gradientes de luxo, `HistogramTooltip` holográfico fundamentado nos axiomas de Raphael Vitoi e grade de 5 patamares PMev.
+   - Reconstrução do `GravitationalScannerPanel.tsx` sob astrofísica PMev: órbitas concêntricas rotuladas (*Horizonte de Eventos*, *Paradoxo do Valuation*, *Órbita Estável*), vetores de tensão geodésica $\vec{F}_g$, corpos celestes com % de fichas da mesa e HUD holográfico.
+   - Sanados cortes no Radar Studio Switcher (`DashboardSOTA.tsx`), liberado o container de overflow da Matriz de Insolvência e eliminados halos borrados no `SelectBtn.tsx`.
+2. **Estabilização do MCP Toolbox for Databases:**
+   - Erradicação de timeout `context deadline exceeded` e avisos de wildcard via migração direta para binário nativo Go x64 em `C:\Users\rapha\.gemini\bin\toolbox.exe`.
+   - Latência de handshake reduzida para $< 50\text{ms}$ e zero poluição STDIO.
+3. **Absorção das Atualizações Google & Roteamento de Modelos:**
+   - Jules Cloud operando sob `Gemini 3.6 Flash` (default / tarefas automatizadas `Bolt ⚡`) e `Gemini 3.1 Pro` (deep reasoning).
+   - Stitch MCP operando sob `Gemini 3.8 Flash` (Balanced default) e `Gemini 3.5 Flash-Lite` (Speed).
+   - Orquestrador diário não-concorrente em `scripts/ops/autopoietic_daily_cycle.py` (execução em $18.7\text{s}$, 100% verde).
+   - 5 novas skills padrão-ouro adicionadas em `.agents/skills/`.
+4. **Governança Git SOTA:**
+   - Pré-commit aprovado em 5 fases com dev server ativo em `:3000` e CDP em `9223`.
+   - Reconciliação formal de âncoras M.O. 13.F em `reports/REGISTRO-2026-09-04-refinamento-sota-radar-telemetria-scanner-e-mcps.md`.
+   - Commit `080cda35` publicado com autoria de `Gemini 3.8 Flash <noreply@google.com>`, assinatura de modelo e timestamp.
 
 ---
 
-## 2. Calibração Cognitiva Registrada (Zoom Out Preditivo)
+## 2. Calibração Cognitiva Registrada (Modus Operandi & Padrões)
 
-- **Observação do Operador:** *"Talvez falte um pouco de calibragem em proatividade e zoom out. Você verifica por associação, e eu gosto, vai eliminando hipóteses associadas: mas às vezes, quando atualizamos a árvore associativa, precisamos dar um zoom out e ver ela completa e de forma preditiva, imaginando onde os nós vão dar."*
-- **Ajuste Sistêmico:** Incorporado o recuo preditivo após cada atualização de nós da árvore de dependências. Em vez de testar sequencialmente por associação pura, o raciocínio executa o zoom out da topologia completa, antecipando 2 a 3 nós adiante para agir de maneira proativa e condensada.
+- **Observação do Operador:** *"Feedback 9.5/10, excelente. Faltou um pouco de atenção no final, embora a janela de contexto esteja grande, seu modelo ainda assim deveria ser capaz de lembrar-se de modus operandi. Lembre-se: padrões. Todas as operações têm um protocolo. Jamais esqueça o modus operandi."*
+- **Ajuste Sistêmico Mandatório:**
+  1. Fixação contínua do protocolo M.O. 13.G: Toda mutação de código deve carregar a assinatura de modelo, propósito e timestamp antes do commit.
+  2. Verificação prévia e automática do `user.name` e `user.email` do Git correspondente ao modelo condutor da sessão.
+  3. Manutenção estrita da atenção mesmo em contextos extensos: a disciplina de execução é constante do início ao fim.
 
 ---
 
@@ -37,9 +43,9 @@
 
 | Item | Valor |
 | :--- | :--- |
-| Branch Git | `master` sincronizada |
-| Dev Server Frontend | Ativo em `:3000` (Next.js 16.3.1 Turbopack) |
-| Portas CDP | 9222 e 9223 ouvindo |
-| MCPs Google Workspace | 4 servidores ativos em `/mcp/v1` |
-| Latências MCP Médias | Drive: 432ms · Calendar: 436ms · Gmail: 497ms · Sheets: 1397ms |
-| Relatório Formal | `reports/HANDOFF-2026-09-04-google-workspace-skill-e-curadoria-de-midia.md` |
+| **Branch Git** | `master` sincronizada (Commit `080cda35`) |
+| **Dev/Prod Server** | Ativo em `:3000` (Next.js 16.3.1 Turbopack) |
+| **Portas CDP** | 9222 e 9223 ouvindo |
+| **MCP Toolbox DB** | Ativo nativo (`toolbox.exe v1.9.0`) |
+| **Ledger de Calibração** | Sequência 12 gravada (`Score: 9.5`, `valid`) |
+| **Relatório Oficial** | [`reports/HANDOFF-2026-09-04-refinamento-sota-radar-telemetria-e-mcps-google.md`](file:///c:/Users/rapha/.gemini/Site/reports/HANDOFF-2026-09-04-refinamento-sota-radar-telemetria-e-mcps-google.md) |
