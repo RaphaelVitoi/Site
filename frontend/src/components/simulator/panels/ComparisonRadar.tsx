@@ -27,12 +27,14 @@ interface ComparisonRadarProps {
 	scenarios: Scenario[];
 	currentId: string;
 	nashFlop: IcmDistortionResult | undefined;
+	embedded?: boolean;
 }
 
 export default function ComparisonRadar({
 	scenarios,
 	currentId,
 	nashFlop,
+	embedded = false,
 }: Readonly<ComparisonRadarProps>) {
 	const [compareId, setCompareId] = useState<string>('');
 
@@ -51,8 +53,12 @@ export default function ComparisonRadar({
 
 	const handleClear = useCallback(() => setCompareId(''), []);
 
+	const wrapperClasses = embedded
+		? 'flex flex-col gap-6 w-full'
+		: 'glass-panel p-6 sm:p-8 lg:p-10 flex flex-col gap-8 animate-sota-in relative rounded-4xl bg-bg-panel/40 backdrop-blur-2xl border border-white/8 shadow-2xl transition-all duration-700 hover:border-white/12 group/radar';
+
 	return (
-		<div className="glass-panel p-6 sm:p-8 lg:p-10 flex flex-col gap-8 animate-sota-in relative rounded-4xl bg-bg-panel/40 backdrop-blur-2xl border border-white/8 shadow-2xl transition-all duration-700 hover:border-white/12 group/radar">
+		<div className={wrapperClasses}>
 			<div className="absolute inset-0 bg-grain mix-blend-overlay opacity-5 pointer-events-none" />
 			{/* Subtle depth glow layers */}
 			<div className="absolute top-0 right-0 w-64 h-64 bg-accent-indigo/8 blur-[120px] rounded-full pointer-events-none transition-all duration-1000 group-hover/radar:bg-accent-indigo/15" />

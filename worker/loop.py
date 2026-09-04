@@ -3,12 +3,15 @@ Worker Loop -- Daemon principal de processamento de tarefas (NEXUS ORCHESTRATOR)
 """
 # pylint: disable=broad-exception-caught, global-statement, protected-access, invalid-name, missing-function-docstring, line-too-long
 
+from __future__ import annotations
+
 import asyncio
 import contextlib
 from datetime import UTC, datetime
 import logging
 import os
 import time
+from typing import Any
 
 import aiofiles
 from rich.console import Console
@@ -64,7 +67,7 @@ async def _recover_zombies(manager: QueueManager) -> None:
         logger.exception("[SISTEMA] Falha ao executar Crash Recovery no SQLite")
 
 
-async def _handle_hibernation(manager: QueueManager, status_line) -> bool:
+async def _handle_hibernation(manager: QueueManager, status_line: Any) -> bool:
     """Gerencia a homeostase de limite de budget. Retorna True se o worker deve aguardar."""
     hibernation_ts = await manager.get_system_state("hibernation_until")
     if not hibernation_ts:
@@ -104,7 +107,7 @@ async def _handle_hibernation(manager: QueueManager, status_line) -> bool:
     return False
 
 
-def _update_terminal_status(counts: dict, running_tasks_count: int, status_line) -> None:
+def _update_terminal_status(counts: dict[str, int], running_tasks_count: int, status_line: Any) -> None:
     """Atualiza o terminal com metricas operacionais de forma otimizada (Throttle anti-overhead)."""
     global _LAST_STATUS_UPDATE  # pylint: disable=global-statement
     now = time.monotonic()
@@ -176,7 +179,7 @@ async def _process_task_error(e: Exception, task: Task, manager: QueueManager, s
     return False
 
 
-async def _task_wrapper(task: Task, manager: QueueManager, sem: asyncio.Semaphore):
+async def _task_wrapper(task: Task, manager: QueueManager, sem: asyncio.Semaphore) -> None:
     released = False
     try:
         await execute_task_workflow(task, manager)
@@ -189,7 +192,7 @@ async def _task_wrapper(task: Task, manager: QueueManager, sem: asyncio.Semaphor
             sem.release()
 
 
-async def _handle_deadlock(pending_tasks: list, manager: QueueManager) -> None:
+async def _handle_deadlock(pending_tasks: list[Task], manager: QueueManager) -> None:
     if pending_tasks and not any(t.agent == "@chico" and "DEADLOCK-DAG" in t.id for t in pending_tasks):
         alert_task = Task(
             id=f"DEADLOCK-DAG-{int(time.time())}",
@@ -206,7 +209,9 @@ async def _handle_deadlock(pending_tasks: list, manager: QueueManager) -> None:
         logger.error("[STARVATION FATAL] Ciclo Topologico detectado na fila. @chico acionado para arbitrar.")
 
 
-async def _dispatch_optimal_task(manager: QueueManager, semaphore: asyncio.Semaphore, running_tasks: set) -> None:
+async def _dispatch_optimal_task(
+    manager: QueueManager, semaphore: asyncio.Semaphore, running_tasks: set[asyncio.Future[Any]]
+) -> None:
     """Extrai e despacha a tarefa de maior utilidade usando o Grafo Topologico CPU."""
     pending_tasks = await manager.get_tasks(status="pending")
     if not pending_tasks:
@@ -236,7 +241,7 @@ async def _dispatch_optimal_task(manager: QueueManager, semaphore: asyncio.Semap
         await asyncio.sleep(2.0)
 
 
-async def _cleanup_worker(manager: QueueManager, running_tasks: set) -> None:
+async def _cleanup_worker(manager: QueueManager, running_tasks: set[asyncio.Future[Any]]) -> None:
     """Mitigacao de orfanizacao de tarefas e processos zombies no encerramento."""
     if running_tasks:
         logger.info(
@@ -269,7 +274,7 @@ async def _cleanup_worker(manager: QueueManager, running_tasks: set) -> None:
         setattr(_llm_session_mod, "_global_http_session", None)  # noqa: B010
 
 
-async def start_worker(manager: QueueManager | None = None):
+async def start_worker(manager: QueueManager | None = None) -> None:
     if manager is None:
         manager = QueueManager()
 

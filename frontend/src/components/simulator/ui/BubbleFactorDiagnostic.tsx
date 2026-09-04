@@ -56,6 +56,7 @@ export const BubbleFactorDiagnostic = ({ ipRp, oopRp }: Readonly<BubbleFactorDia
 						title="Agressor (IP)"
 						content="O agressor dita o preço. Se o RP dele é significativamente menor, ele usa o Leverage para extrair Fold Equity não-linear da mesa."
 						theme="indigo"
+						fullWidth
 					>
 						<div className="h-full p-6 rounded-2xl bg-bg-panel/40 border border-accent-indigo/20 relative overflow-hidden group transition-all hover:bg-bg-panel/60">
 							<div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity">
@@ -100,6 +101,7 @@ export const BubbleFactorDiagnostic = ({ ipRp, oopRp }: Readonly<BubbleFactorDia
 						title="Defensor (OOP)"
 						content="O defensor paga a conta do ICM. Ele precisa de uma mão exponencialmente mais forte para justificar o call, ancorando a defesa no Teto de Risco."
 						theme="indigo"
+						fullWidth
 					>
 						<div className="h-full p-6 rounded-2xl bg-bg-panel/40 border border-accent-rose/20 relative overflow-hidden group transition-all hover:bg-bg-panel/60">
 							<div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity">

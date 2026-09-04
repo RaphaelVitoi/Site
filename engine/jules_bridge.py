@@ -18,6 +18,10 @@ logger = logging.getLogger(__name__)
 
 JULES_API_BASE: Final[str] = "https://jules.googleapis.com/v1alpha"
 
+# Modelos oficiais de operacao do Google Jules (SOTA 2026 - jules.google.com/settings/general)
+JULES_MODEL_FLASH: Final[str] = "Gemini 3.6 Flash"  # Default / Fast Coding, Refactors e cron Bolt ⚡
+JULES_MODEL_PRO: Final[str] = "Gemini 3.1 Pro"      # Deep Reasoning e arquiteturas complexas
+
 
 @dataclass(frozen=True, slots=True)
 class JulesSessionRequest:
@@ -123,9 +127,6 @@ class JulesClient:
             raise ValueError("JulesClient nao configurado: JULES_API_KEY ausente.")
 
         url = f"{JULES_API_BASE}/sessions/{session_id}"
-        if include_activities:
-            url += "?view=FULL"
-
         req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
 
         try:
@@ -201,3 +202,44 @@ class JulesClient:
         except Exception as e:
             logger.warning("[JULES] list_sources retornou excecao: %s", e)
             return [{"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}]
+
+    def list_sessions(self, page_size: int = 20, page_token: str = "") -> list[dict[str, object]]:
+        """Lista todas as sessoes registradas na nuvem no Google Jules."""
+        if not self.is_configured:
+            return []
+
+        url = f"{JULES_API_BASE}/sessions?pageSize={page_size}"
+        if page_token:
+            url += f"&pageToken={page_token}"
+        req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
+
+        try:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                sessions = data.get("sessions")
+                if isinstance(sessions, list):
+                    return sessions
+                return []
+        except Exception as e:
+            logger.warning("[JULES] list_sessions retornou excecao: %s", e)
+            return []
+
+    def get_activities(self, session_id: str) -> list[dict[str, object]]:
+        """Recupera todas as atividades detalhadas de uma sessao."""
+        if not self.is_configured:
+            return []
+
+        url = f"{JULES_API_BASE}/sessions/{session_id}/activities"
+        req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
+
+        try:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                activities = data.get("activities")
+                if isinstance(activities, list):
+                    return activities
+                return []
+        except Exception as e:
+            logger.warning("[JULES] get_activities para %s retornou excecao: %s", session_id, e)
+            return []
+

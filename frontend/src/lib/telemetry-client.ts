@@ -35,15 +35,13 @@ class SotaTelemetryClient {
 		const batch = [...this.queue];
 		this.queue = [];
 
-		// Disparo assíncrono O(1). A flag 'keepalive' assegura o envio mesmo na morte da aba.
-		batch.forEach((data) => {
-			fetch('/api/v1/telemetry', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data),
-				keepalive: true,
-			}).catch(() => {}); // Omissão silenciosa para preservar a UI
-		});
+		// Disparo atômico em lote O(1). A flag 'keepalive' assegura o envio mesmo na morte da aba.
+		fetch('/api/v1/telemetry', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ batch }),
+			keepalive: true,
+		}).catch(() => {}); // Omissão silenciosa para preservar a UI
 	}
 }
 

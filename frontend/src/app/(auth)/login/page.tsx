@@ -10,11 +10,12 @@ import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SotaButton } from '@/components/ui/layout/SotaButton';
+import { safeRedirectPath } from '@/app/(auth)/callback/redirect';
 
 function LoginContent() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
-	const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+	const callbackUrl = safeRedirectPath(searchParams.get('callbackUrl')) || '/dashboard';
 
 	const [loading, setLoading] = useState(false);
 

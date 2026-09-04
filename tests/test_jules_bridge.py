@@ -202,3 +202,42 @@ def test_jules_mcp_server_tools() -> None:
 
         res_task = json.loads(start_new_jules_task("RaphaelVitoi/Site", "test task"))
         assert res_task["status"] == "SUCCESS"
+
+
+def test_jules_client_list_sessions_and_activities() -> None:
+    """Valida a listagem de sessoes e recuperacao de atividades via API."""
+    mock_sessions_data = {
+        "sessions": [
+            {
+                "name": "projects/p/locations/global/sessions/sess-1",
+                "title": "Task 1",
+                "state": "COMPLETED",
+            }
+        ]
+    }
+    mock_acts_data = {
+        "activities": [
+            {
+                "name": "projects/p/locations/global/sessions/sess-1/activities/act-1",
+                "originator": "SYSTEM",
+            }
+        ]
+    }
+
+    mock_resp = MagicMock()
+    mock_resp.read.side_effect = [
+        json.dumps(mock_sessions_data).encode("utf-8"),
+        json.dumps(mock_acts_data).encode("utf-8"),
+    ]
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp):
+        client = JulesClient(api_key="AIzaFakeKey", project_id="original-498419")
+        sessions = client.list_sessions()
+        assert len(sessions) == 1
+        assert sessions[0]["title"] == "Task 1"
+
+        activities = client.get_activities("sess-1")
+        assert len(activities) == 1
+        assert activities[0]["originator"] == "SYSTEM"
+

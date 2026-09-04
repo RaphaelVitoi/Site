@@ -56,8 +56,41 @@ export async function POST(req: Request) {
 
 		const rawPayload = await req.json();
 
-		// Roteamento Híbrido Fricção Zero: Distingue TelemetryEvent de PerspectiveMetric
-		if ('category' in rawPayload) {
+		// Roteamento Híbrido Fricção Zero: Distingue TelemetryBatch, TelemetryEvent de PerspectiveMetric
+		if ('batch' in rawPayload && Array.isArray(rawPayload.batch)) {
+			const recordIds: string[] = [];
+			for (const item of rawPayload.batch) {
+				const parsed = TelemetryPayloadSchema.parse(item);
+				const identity = resolveTelemetryIdentity(session.user?.id, parsed.user_id);
+				if (!identity.ok) continue;
+
+				const record = await prisma.telemetryEvent.create({
+					data: {
+						userId: identity.userId,
+						category: parsed.category,
+						componentName: parsed.componentName || parsed.type || 'unknown',
+						scenarioContext: parsed.scenarioContext
+							? JSON.stringify(parsed.scenarioContext)
+							: null,
+						userAction: parsed.userAction ?? null,
+						optimalAction: parsed.optimalAction ?? null,
+						evLoss: parsed.evLoss ?? parsed.ev_loss ?? 0,
+						isCorrect: parsed.isCorrect ?? parsed.is_correct ?? true,
+						latency: parsed.latency ?? parsed.time_ms ?? 0,
+						metadata: parsed.metadata ? JSON.stringify(parsed.metadata) : null,
+					},
+				});
+				logToOrchestrator({ type: 'TelemetryEvent', ...parsed });
+				recordIds.push(record.id);
+			}
+
+			return NextResponse.json({
+				status: 'SUCCESS',
+				type: 'TelemetryBatch',
+				count: recordIds.length,
+				ids: recordIds,
+			});
+		} else if ('category' in rawPayload) {
 			const parsed = TelemetryPayloadSchema.parse(rawPayload);
 			const identity = resolveTelemetryIdentity(session.user?.id, parsed.user_id);
 			if (!identity.ok) {

@@ -331,7 +331,7 @@ export default function PerspectivePanel({
       <div className="grid grid-cols-1 gap-6 rounded-3xl border border-white/5 bg-black/40 p-6 shadow-inner md:grid-cols-2 lg:p-10">
         {/* SOTA Scanner Gravitacional */}
         <div className="mb-4 md:col-span-2">
-          <GravitationalScannerPanel stacks={stacks} heroIdx={0} />
+          <GravitationalScannerPanel stacks={stacks.slice(0, numPlayers)} heroIdx={0} />
         </div>
 
         <div className="space-y-4 rounded-2xl border border-white/5 bg-black/40 p-5 shadow-2xl hover:border-white/10 transition-colors duration-300">

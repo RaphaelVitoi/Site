@@ -2,6 +2,7 @@
 
 import { ROUTES } from '@/constants/routes';
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
@@ -114,6 +115,7 @@ function useHeaderState() {
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [gemmaOnline, setGemmaOnline] = useState(false);
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const isLightPage = pathname === '/' || pathname === '/quem-sou';
   const isContentPage = pathname.startsWith('/biblioteca/') || pathname.startsWith('/aulas/');
@@ -124,7 +126,14 @@ function useHeaderState() {
     restDelta: 0.001,
   });
 
+  const shouldCheckGemma = Boolean(session) || pathname.startsWith('/templo');
+
   useEffect(() => {
+    if (!shouldCheckGemma) {
+      setGemmaOnline(false);
+      return;
+    }
+
     const checkGemma = () => {
       fetch('/api/v1/gemma')
         .then((res) => setGemmaOnline(res.ok))
@@ -133,17 +142,25 @@ function useHeaderState() {
     checkGemma();
     const intervalId = setInterval(checkGemma, 30000);
 
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
-
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-
     return () => {
       clearInterval(intervalId);
+    };
+  }, [shouldCheckGemma]);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => {
       document.body.style.overflow = '';
-      window.removeEventListener('scroll', handleScroll);
     };
   }, [mobileOpen]);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   return {
     mobileOpen,
@@ -268,9 +285,23 @@ const HeaderDesktopNav: React.FC<{
               className="group/nav relative"
               onMouseEnter={() => item.submenu && setActiveSubmenu(item.label)}
               onMouseLeave={() => setActiveSubmenu(null)}
+              onKeyDown={(e) => {
+                if (item.submenu) {
+                  if (e.key === 'Escape') {
+                    setActiveSubmenu(null);
+                  } else if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                    if (activeSubmenu !== item.label) {
+                      e.preventDefault();
+                      setActiveSubmenu(item.label);
+                    }
+                  }
+                }
+              }}
             >
               <Link
                 href={item.href}
+                aria-haspopup={item.submenu ? 'true' : undefined}
+                aria-expanded={item.submenu ? activeSubmenu === item.label : undefined}
                 className={`relative z-10 flex items-center gap-2 px-6 py-2.5 text-[0.65rem] font-black tracking-[0.2em] whitespace-nowrap uppercase transition-all duration-300 ${getNavLinkClass(isLightPage, isActive)}`}
               >
                 {item.label}
