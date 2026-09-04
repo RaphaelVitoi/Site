@@ -62,6 +62,87 @@ interface QuadrantMetric {
 	severity: 'OPTIMAL' | 'MODERATE' | 'HIGH' | 'CRITICAL';
 }
 
+interface HistogramTooltipPayload {
+	id: string;
+	range: string;
+	label: string;
+	tier: string;
+	concept: string;
+	pmevRole: string;
+	count: number;
+	pct: number;
+	totalLoss: number;
+	color: string;
+}
+
+interface CustomHistogramTooltipProps {
+	active?: boolean;
+	payload?: Array<{
+		payload: HistogramTooltipPayload;
+		value: number;
+	}>;
+}
+
+const HistogramTooltip = ({ active, payload }: CustomHistogramTooltipProps) => {
+	if (!active || !payload || payload.length === 0) return null;
+	const item = payload[0]?.payload;
+	if (!item) return null;
+
+	return (
+		<div className="rounded-2xl border border-white/10 bg-slate-950/95 p-4 font-mono shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-xl pointer-events-none min-w-[240px] space-y-3">
+			<div className="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
+				<div>
+					<span className="text-[0.7rem] font-black uppercase tracking-wider text-white block">
+						{item.tier}
+					</span>
+					<span className="text-[0.55rem] font-bold text-text-dim uppercase tracking-wider">
+						Faixa: {item.range}
+					</span>
+				</div>
+				<span
+					className="text-[0.55rem] font-black px-2 py-0.5 rounded-full uppercase shrink-0"
+					style={{
+						backgroundColor: `${item.color}20`,
+						color: item.color,
+						border: `1px solid ${item.color}50`,
+						boxShadow: `0 0 10px ${item.color}30`,
+					}}
+				>
+					{item.concept}
+				</span>
+			</div>
+
+			<div className="grid grid-cols-2 gap-2 bg-black/40 p-2.5 rounded-xl border border-white/5">
+				<div>
+					<span className="text-[0.52rem] uppercase tracking-wider text-text-muted block">
+						Frequência
+					</span>
+					<span className="text-sm font-black text-white">
+						{item.count} <span className="text-[0.6rem] text-text-dim font-medium">({item.pct}%)</span>
+					</span>
+				</div>
+				<div>
+					<span className="text-[0.52rem] uppercase tracking-wider text-text-muted block">
+						Perda Total
+					</span>
+					<span className="text-sm font-black font-mono" style={{ color: item.color }}>
+						-{item.totalLoss.toFixed(1)} bb
+					</span>
+				</div>
+			</div>
+
+			<div className="border-t border-white/5 pt-2">
+				<span className="text-[0.5rem] font-black uppercase tracking-widest text-text-muted block mb-0.5">
+					Axioma PMev Vitoi
+				</span>
+				<p className="m-0 text-[0.62rem] leading-relaxed font-sans text-text-dim">
+					{item.pmevRole}
+				</p>
+			</div>
+		</div>
+	);
+};
+
 const TXT_EXPORT_MD = 'Exportar MD';
 const TXT_EXPORT_JSON = 'JSON';
 
@@ -250,12 +331,67 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 		let totalEvLoss = 0;
 		let maxLoss = 0;
 
-		const bins: Record<'bin0' | 'bin1' | 'bin2' | 'bin3' | 'bin4', { range: string; count: number; color: string }> = {
-			bin0: { range: '0.0 bb (Ideal)', count: 0, color: '#10b981' },
-			bin1: { range: '0.1 - 0.5 bb', count: 0, color: '#f59e0b' },
-			bin2: { range: '0.6 - 1.5 bb', count: 0, color: '#6366f1' },
-			bin3: { range: '1.6 - 3.0 bb', count: 0, color: '#a855f7' },
-			bin4: { range: '> 3.0 bb (Crítico)', count: 0, color: '#f43f5e' },
+		const bins: Record<'bin0' | 'bin1' | 'bin2' | 'bin3' | 'bin4', HistogramTooltipPayload> = {
+			bin0: {
+				id: 'bin0',
+				range: '0.0 bb',
+				label: '0.0 bb (Zero Leak)',
+				tier: 'Equilíbrio Ótimo',
+				concept: 'Zero Leak',
+				pmevRole: 'Decisão matematicamente alinhada ao Nash. Preservação total de fichas e equity.',
+				count: 0,
+				pct: 0,
+				totalLoss: 0,
+				color: '#10b981',
+			},
+			bin1: {
+				id: 'bin1',
+				range: '0.1 - 0.5 bb',
+				label: '0.1 - 0.5 bb (Marginal)',
+				tier: 'Erosão Residual',
+				concept: 'Marginal',
+				pmevRole: 'Imprecisão tática aceitável. Sangria leve que não desestabiliza o tier de stack.',
+				count: 0,
+				pct: 0,
+				totalLoss: 0,
+				color: '#f59e0b',
+			},
+			bin2: {
+				id: 'bin2',
+				range: '0.6 - 1.5 bb',
+				label: '0.6 - 1.5 bb (Sangria)',
+				tier: 'Risco Estrutural ICM',
+				concept: 'Diluição',
+				pmevRole: 'Violação do Prêmio de Risco (RP). Sangria contínua que degrada o valor de fold.',
+				count: 0,
+				pct: 0,
+				totalLoss: 0,
+				color: '#6366f1',
+			},
+			bin3: {
+				id: 'bin3',
+				range: '1.6 - 3.0 bb',
+				label: '1.6 - 3.0 bb (Crash)',
+				tier: 'Dano de Valuation',
+				concept: 'Payjump Crash',
+				pmevRole: 'Colisão assimétrica com stacks dominantes. Quebra severa do Axioma de Vitoi.',
+				count: 0,
+				pct: 0,
+				totalLoss: 0,
+				color: '#a855f7',
+			},
+			bin4: {
+				id: 'bin4',
+				range: '> 3.0 bb',
+				label: '> 3.0 bb (Crítico)',
+				tier: 'Insolvência Crítica',
+				concept: 'Death Zone',
+				pmevRole: 'Catástrofe de sobrevivência. Overcall suicida ou blefe em colisão contra o Sol da mesa.',
+				count: 0,
+				pct: 0,
+				totalLoss: 0,
+				color: '#f43f5e',
+			},
 		};
 
 		filteredData.forEach((d) => {
@@ -268,20 +404,33 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 				coreCount++;
 				coreLoss += loss;
 				bins.bin0.count++;
+				bins.bin0.totalLoss += loss;
 			} else if (loss <= 0.5) {
 				marginalCount++;
 				marginalLoss += loss;
 				bins.bin1.count++;
+				bins.bin1.totalLoss += loss;
 			} else if (loss <= 2.0) {
 				riskyCount++;
 				riskyLoss += loss;
-				if (loss <= 1.5) bins.bin2.count++;
-				else bins.bin3.count++;
+				if (loss <= 1.5) {
+					bins.bin2.count++;
+					bins.bin2.totalLoss += loss;
+				} else {
+					bins.bin3.count++;
+					bins.bin3.totalLoss += loss;
+				}
 			} else {
 				deathCount++;
 				deathLoss += loss;
 				bins.bin4.count++;
+				bins.bin4.totalLoss += loss;
 			}
+		});
+
+		// Calcular percentuais relativos da amostra
+		Object.values(bins).forEach((b) => {
+			b.pct = Number(((b.count / total) * 100).toFixed(1));
 		});
 
 		const zones: RiskZoneMetrics[] = [
@@ -649,15 +798,37 @@ ${zoneRows}
 				</div>
 			)}
 
-			{/* Modo 1: Histograma de Densidade de Perda de EV */}
+			{/* Modo 1: Histograma de Densidade de Perda de EV (Teoria PMev Vitoi) */}
 			{viewMode === 'HISTOGRAM' && (
-				<div className="space-y-4">
-					<div className="w-full h-64">
+				<div className="space-y-6">
+					<div className="w-full h-72">
 						<ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
 							<BarChart
 								data={analytics.histogramData}
-								margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+								margin={{ top: 20, right: 15, left: -20, bottom: 6 }}
 							>
+								<defs>
+									<linearGradient id="histGrad-bin0" x1="0" y1="0" x2="0" y2="1">
+										<stop offset="0%" stopColor="#10b981" stopOpacity={0.85} />
+										<stop offset="100%" stopColor="#10b981" stopOpacity={0.15} />
+									</linearGradient>
+									<linearGradient id="histGrad-bin1" x1="0" y1="0" x2="0" y2="1">
+										<stop offset="0%" stopColor="#f59e0b" stopOpacity={0.85} />
+										<stop offset="100%" stopColor="#f59e0b" stopOpacity={0.15} />
+									</linearGradient>
+									<linearGradient id="histGrad-bin2" x1="0" y1="0" x2="0" y2="1">
+										<stop offset="0%" stopColor="#6366f1" stopOpacity={0.85} />
+										<stop offset="100%" stopColor="#6366f1" stopOpacity={0.15} />
+									</linearGradient>
+									<linearGradient id="histGrad-bin3" x1="0" y1="0" x2="0" y2="1">
+										<stop offset="0%" stopColor="#a855f7" stopOpacity={0.85} />
+										<stop offset="100%" stopColor="#a855f7" stopOpacity={0.15} />
+									</linearGradient>
+									<linearGradient id="histGrad-bin4" x1="0" y1="0" x2="0" y2="1">
+										<stop offset="0%" stopColor="#f43f5e" stopOpacity={0.85} />
+										<stop offset="100%" stopColor="#f43f5e" stopOpacity={0.15} />
+									</linearGradient>
+								</defs>
 								<CartesianGrid
 									strokeDasharray="3 3"
 									stroke="rgba(255,255,255,0.05)"
@@ -668,7 +839,7 @@ ${zoneRows}
 									stroke="#475569"
 									tick={{
 										fill: '#94a3b8',
-										fontSize: 9,
+										fontSize: 10,
 										fontWeight: 800,
 										fontFamily: 'var(--font-mono)',
 									}}
@@ -685,38 +856,64 @@ ${zoneRows}
 									}}
 									axisLine={false}
 									tickLine={false}
+									allowDecimals={false}
 								/>
 								<Tooltip
 									isAnimationActive={false}
-									contentStyle={{
-										backgroundColor: '#020617',
-										borderColor: 'rgba(99,102,241,0.3)',
-										borderRadius: '12px',
-										boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+									cursor={{
+										fill: 'rgba(255, 255, 255, 0.03)',
+										stroke: 'rgba(255, 255, 255, 0.1)',
+										strokeWidth: 1,
+										strokeDasharray: '3 3',
+										rx: 8,
 									}}
-									itemStyle={{
-										fontWeight: 900,
-										fontFamily: 'var(--font-mono)',
-										fontSize: '12px',
-										color: '#fff',
-									}}
-									labelStyle={{
-										color: '#94a3b8',
-										fontWeight: 800,
-										marginBottom: '4px',
-										fontSize: '10px',
-									}}
+									wrapperStyle={{ zIndex: 1000 }}
+									content={<HistogramTooltip />}
 								/>
-								<Bar dataKey="count" name="Decisões" radius={[6, 6, 0, 0]} isAnimationActive={false}>
+								<Bar
+									dataKey="count"
+									name="Decisões"
+									radius={[8, 8, 0, 0]}
+									isAnimationActive={false}
+								>
 									{analytics.histogramData.map((entry) => (
-										<Cell key={`hist-cell-${entry.range}`} fill={entry.color} />
+										<Cell
+											key={`hist-cell-${entry.range}`}
+											fill={`url(#histGrad-${entry.id})`}
+											stroke={entry.color}
+											strokeWidth={1.5}
+										/>
 									))}
 								</Bar>
 							</BarChart>
 						</ResponsiveContainer>
 					</div>
-					<p className="text-[0.65rem] text-text-muted font-mono uppercase tracking-wider text-center">
-						Frequência de erros para amostra selecionada ({filteredData.length} decisões registradas)
+
+					{/* Grade Didática de Zonas de Risco PMev */}
+					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-4 border-t border-white/5">
+						{analytics.histogramData.map((b) => (
+							<div
+								key={`legend-${b.id}`}
+								className="flex flex-col gap-1 p-2.5 rounded-2xl bg-black/30 border border-white/5 hover:border-white/10 transition-all"
+							>
+								<div className="flex items-center justify-between gap-1.5">
+									<span className="flex items-center gap-1.5 text-[0.62rem] font-black uppercase tracking-wider text-white">
+										<span className="w-2 h-2 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: b.color }} />
+										{b.concept}
+									</span>
+									<span className="text-[0.6rem] font-mono font-bold text-white">
+										{b.count} <span className="text-text-darker text-[0.52rem]">({b.pct}%)</span>
+									</span>
+								</div>
+								<div className="text-[0.55rem] font-mono text-text-dim">
+									{b.range} • {b.tier}
+								</div>
+							</div>
+						))}
+					</div>
+
+					<p className="text-[0.62rem] text-text-muted font-mono uppercase tracking-wider text-center m-0">
+						Densidade Estocástica de Perda de EV na Amostra ({filteredData.length} decisões auditadas)
 					</p>
 				</div>
 			)}
@@ -881,6 +1078,8 @@ ${zoneRows}
 							/>
 							<Tooltip
 								isAnimationActive={false}
+								allowEscapeViewBox={{ x: true, y: true }}
+								wrapperStyle={{ zIndex: 1000 }}
 								contentStyle={{
 									backgroundColor: '#020617',
 									borderColor: 'rgba(99,102,241,0.3)',

@@ -738,45 +738,23 @@ export default function MasterSimulator() {
               )}
 
               {activeWorkspaceTab === 'dashboard' && (
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-sota-in" aria-label="Dashboard Quântico">
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-sota-in" aria-label="Dashboard Quântico de Telemetria e Radar">
                   <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
                     <SectionHeader
                       step="00"
-                      label="Telemetria Sistêmica"
-                      title="Dashboard SOTA"
-                      description="A sua Assinatura Bayesiana. A Mente Preditiva monitora seus erros de EV e distorções de Nash em tempo real."
+                      label="Telemetria & Radar Studio"
+                      title="Cockpit de Telemetria & Radar SOTA"
+                      description="A sua Assinatura Bayesiana. A Mente Preditiva monitora seus erros de EV, tensões de insolvência e distorções de Nash em tempo real."
                     />
                     <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
                   </div>
                   <Suspense fallback={<LoadingFallback />}>
-                    <div className="flex flex-col gap-8">
-                      <DashboardSOTA />
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                        <GemmaAnalysisPanel
-                          heroPos={heroPosition}
-                          villainPos={isIp ? 'OOP' : 'IP'}
-                          potSize={safeCurrentPot}
-                          heroStack={heroUpdatedStack}
-                          villainStack={villainUpdatedStack}
-                          heroInvested={safeHeroInvested}
-                          riskAdvantage={apiQuantumMetrics?.riskAdvantage ?? 0}
-                          bountyPower={0}
-                        />
-                        <div className="glass-panel border-white/10 p-6 relative overflow-hidden rounded-3xl bg-slate-950/50 shadow-inner">
-                          <div className="relative z-10 mb-6 flex flex-col items-center gap-2 text-center">
-                            <div className="text-accent-rose flex h-10 w-10 items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
-                              <i className="fa-solid fa-radar animate-pulse text-lg" />
-                            </div>
-                            <h3 className="m-0 text-base font-black tracking-[0.25em] text-white uppercase">
-                              Diagnóstico de Insolvência
-                            </h3>
-                          </div>
-                          <div className="relative h-96 w-full">
-                            <InsolvencyRadar data={insolvencyRadarData} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <DashboardSOTA
+                      scenarios={scenarios}
+                      currentScenario={scenario}
+                      nashFlop={nashFlop ?? undefined}
+                      insolvencyRadarData={insolvencyRadarData}
+                    />
                   </Suspense>
                 </section>
               )}

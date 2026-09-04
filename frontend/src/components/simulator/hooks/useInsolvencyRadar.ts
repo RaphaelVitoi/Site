@@ -1,11 +1,20 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { QuantumMetrics } from '../solver/types';
 
-export function useInsolvencyRadar(apiQuantumMetrics: QuantumMetrics | null) {
+export interface InsolvencyMetricsInput {
+	rioMw: number;
+	adjustedEvFold: number;
+	riskAdvantage?: number | undefined;
+	marginInstability: number;
+	isSolvent: boolean;
+	perspectiva: number;
+}
+
+export function useInsolvencyRadar(apiQuantumMetrics: InsolvencyMetricsInput | null | undefined) {
 	return useMemo(() => {
 		if (!apiQuantumMetrics) return [];
+		const ra = apiQuantumMetrics.riskAdvantage ?? 0;
 		return [
 			{
 				subject: 'Pressão RIO',
@@ -19,7 +28,7 @@ export function useInsolvencyRadar(apiQuantumMetrics: QuantumMetrics | null) {
 				subject: 'Risk Disparity',
 				// Vantagem de Risco alta = Ameaça baixa. 
 				// Se RA < 0 (Desvantagem), a ameaça sobe.
-				Ameaça: Math.min(100, Math.max(0, 50 - apiQuantumMetrics.riskAdvantage * 2.5)),
+				Ameaça: Math.min(100, Math.max(0, 50 - ra * 2.5)),
 			},
 			{
 				subject: 'Instabilidade',

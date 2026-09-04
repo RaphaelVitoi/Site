@@ -203,6 +203,7 @@ const EntropyModulators = ({
       title="Agressividade Humana (Fator Ψ)"
       content="Modulador bayesiano SOTA. Se o oponente real desvia do equilíbrio (ex: paga demais ou blefa de menos), a distribuição de Nash é forçada a se contrair ou expandir."
       theme="indigo"
+      fullWidth
     >
       <div className="hover:border-accent-indigo/40 group/psi relative overflow-hidden rounded-[2.5rem] border border-white/5 bg-slate-900/40 p-10 shadow-inner transition-all hover:bg-slate-900/60">
         <div className="from-accent-indigo/5 pointer-events-none absolute inset-0 bg-radial-[at_top_right] to-transparent" />

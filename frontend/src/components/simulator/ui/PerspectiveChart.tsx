@@ -54,6 +54,8 @@ export const PerspectiveChart = ({ chartData }: Readonly<PerspectiveChartProps>)
 					/>
 					<Tooltip
 						isAnimationActive={false}
+						allowEscapeViewBox={{ x: true, y: true }}
+						wrapperStyle={{ zIndex: 1000 }}
 						contentStyle={{
 							background: 'var(--bg-panel)',
 							border: '1px solid rgba(255,255,255,0.1)',

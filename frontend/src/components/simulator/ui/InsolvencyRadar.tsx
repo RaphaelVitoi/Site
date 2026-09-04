@@ -34,7 +34,7 @@ export function InsolvencyRadar({ data }: Readonly<InsolvencyRadarProps>) {
 
 	return (
 		<ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-			<RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+			<RadarChart cx="50%" cy="50%" outerRadius="75%" data={data}>
 				<defs>
 					<linearGradient id="gradInsolvency" x1="0" y1="0" x2="1" y2="1">
 						<stop offset="5%" stopColor="var(--color-accent-rose)" stopOpacity={0.7} />
@@ -64,6 +64,8 @@ export function InsolvencyRadar({ data }: Readonly<InsolvencyRadarProps>) {
 				/>
 				<RechartsTooltip
 					isAnimationActive={false}
+					allowEscapeViewBox={{ x: true, y: true }}
+					wrapperStyle={{ zIndex: 1000 }}
 					contentStyle={{
 						backgroundColor: '#020617',
 						border: '1px solid rgba(244,63,94,0.4)',
@@ -82,7 +84,7 @@ export function InsolvencyRadar({ data }: Readonly<InsolvencyRadarProps>) {
 				<Legend
 					verticalAlign="bottom"
 					wrapperStyle={{
-						paddingTop: '50px',
+						paddingTop: '16px',
 						fontSize: '0.7rem',
 						fontWeight: '900',
 						textTransform: 'uppercase',

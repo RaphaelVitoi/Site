@@ -430,6 +430,7 @@ export default function PmLensPanel({
                     key={p}
                     label={`${p} ${initialStacks.at(i) ?? 0}bb`}
                     active={heroIdx === i}
+                    variant="hero"
                     impossible={villainIndices.includes(i)}
                     onClick={() => setHeroIdx(i)}
                   />
@@ -451,6 +452,7 @@ export default function PmLensPanel({
                     key={p}
                     label={`${p} ${initialStacks.at(i) ?? 0}bb`}
                     active={villainIndices.includes(i)}
+                    variant="villain"
                     impossible={i === heroIdx}
                     onClick={() => toggleVillain(i)}
                   />

@@ -312,6 +312,8 @@ export default function ResurrectionRiskSimulator() {
 							<YAxis domain={['auto', 'auto']} hide />
 							<RechartsTooltip
 								isAnimationActive={false}
+								allowEscapeViewBox={{ x: true, y: true }}
+								wrapperStyle={{ zIndex: 1000 }}
 								contentStyle={{
 									backgroundColor: 'var(--bg-panel)',
 									border: '1px solid rgba(255,255,255,0.05)',

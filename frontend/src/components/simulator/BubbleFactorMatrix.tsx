@@ -283,8 +283,22 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 									return (
 										<td
 											key={`cell-${i}-${colName}-${j}`}
+											role="gridcell"
+											tabIndex={isDiag ? -1 : 0}
+											aria-selected={isSelected}
+											aria-label={
+												isDiag
+													? `${rowName} diagonal nula`
+													: `${rowName} contra ${colName}: ${formatCellValue(i, j)}`
+											}
 											onClick={() => handleCellClick(i, j)}
-											className={`p-2 border transition-all cursor-pointer select-none ${
+											onKeyDown={(e) => {
+												if (e.key === 'Enter' || e.key === ' ') {
+													e.preventDefault();
+													handleCellClick(i, j);
+												}
+											}}
+											className={`p-2 border transition-all cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 ${
 												isSelected
 													? 'ring-2 ring-indigo-400 scale-105 z-10'
 													: 'hover:brightness-125'

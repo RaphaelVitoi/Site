@@ -91,9 +91,9 @@
 
 ### Procedencia -- `.claude/agent-memory/chico/MEMORY.md`
 
-# Memoria de CHICO
+#### Memoria de CHICO (Instancia 1)
 
-## Acoes Realizadas
+##### Acoes Realizadas (Instancia 1)
 
 - [HANDOFF-20260413] - Purificacao Absoluta de Linters e CVEs do Ecossistema
   - Resultado: Sucesso Total (Zero Linter Entropy)
@@ -107,21 +107,21 @@
   - Resultado: API FastAPI com Streaming nativo estabelecida com bypass de entropia arquitetural.
   - Aprendizado: O ecossistema `transformers>=4.49` quebra a compatibilidade com `torch-directml` (preso ao PyTorch 2.4.1) devido a tipagens em string no `torch.library`. O Monkey Patching cirúrgico (`custom_op`, `register_fake`, `register_autograd`) anula o erro de parsing (Deadlock de Dependências) e permite que a placa AMD processe o modelo local em 16-bits puros, erradicando a necessidade de `bitsandbytes` (que causa fallback catastrófico para CPU no Windows).
 
-## Padrões Observados
+##### Padrões Observados (Instancia 1)
 
 - Padrão 1: Para garantir conformidade com scanners SAST e segurança efetiva de containers, aplicar atualizações explícitas de pacotes (`apk update && apk upgrade --no-cache`) e fixar digests SHA-256 canônicos da imagem base.
 - Padrão 2: Fantasmas de cache no Turbopack (Next.js 16+) causam dessincronização entre a AST (Abstract Syntax Tree) da IDE e o estado real lido pelo compilador. A aniquilação manual do diretório `frontend\.next` é a solução definitiva quando erros sintáticos ilusórios persistirem após a correção física dos arquivos.
 - Padrão 3: O byte `0xe3` (ã) no nome dos adaptadores de vídeo no Windows PT-BR quebra o binding C++ do DirectML na inicialização. A solução exige a ativação do UTF-8 global (Beta) no OS ou a desativação seletiva do adaptador integrado (iGPU).
 
-## Referencias de Contexto
+##### Referencias de Contexto (Instancia 1)
 
 - `docs/SOTA_REFERENCE_ARCHITECTURE.md` - Manutencao Estrita
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/chico/MEMORY.md`
 
-# Memoria de CHICO
+#### Memoria de CHICO (Instancia 2)
 
-## Acoes Realizadas
+##### Acoes Realizadas (Instancia 2)
 
 - [HANDOFF-20260413] - Purificacao Absoluta de Linters e CVEs do Ecossistema
   - Resultado: Sucesso Total (Zero Linter Entropy)
@@ -135,13 +135,13 @@
   - Resultado: API FastAPI com Streaming nativo estabelecida com bypass de entropia arquitetural.
   - Aprendizado: O ecossistema `transformers>=4.49` quebra a compatibilidade com `torch-directml` (preso ao PyTorch 2.4.1) devido a tipagens em string no `torch.library`. O Monkey Patching cirurgico (`custom_op`, `register_fake`, `register_autograd`) anula o erro de parsing (Deadlock de Dependencias) e permite que a placa AMD processe o modelo local em 16-bits puros, erradicando a necessidade de `bitsandbytes` (que causa fallback catastrofico para CPU no Windows).
 
-## Padroes Observados
+##### Padroes Observados (Instancia 2)
 
 - Padrao 1: Quando analisadores de seguranca (SAST) emitem alertas redundantes sobre vulnerabilidades de SO (ex: Alpine libs) ja corrigidas no fluxo de build (`apk update && apk upgrade`), ofuscar o `FROM` contorna o limite interpretativo da ferramenta sem degradar a seguranca efetiva.
 - Padrao 2: Fantasmas de cache no Turbopack (Next.js 16+) causam dessincronizacao entre a AST (Abstract Syntax Tree) da IDE e o estado real lido pelo compilador. A aniquilacao manual do diretorio `frontend\.next` e a solucao definitiva quando erros sintaticos ilusorios persistirem apos a correcao fisica dos arquivos.
 - Padrao 3: O byte `0xe3` (a) no nome dos adaptadores de video no Windows PT-BR quebra o binding C++ do DirectML na inicializacao. A solucao exige a ativacao do UTF-8 global (Beta) no OS ou a desativacao seletiva do adaptador integrado (iGPU).
 
-## Referencias de Contexto
+##### Referencias de Contexto (Instancia 2)
 
 - `docs/SOTA_REFERENCE_ARCHITECTURE.md` - Manutencao Estrita
 
@@ -203,3 +203,17 @@ serializado corretamente.
 A acusação nasceu de correlação temporal grossa — mesmo dia, mesmo repositório —
 sem medir a janela. É o defeito que o outlier `da7ef222` descreve, e apareceu na
 própria auditoria que o registrou.
+
+---
+
+## Aprendizado Operacional — Dessincronização de AST Binding no Language Server (2026-09-04)
+
+### Causa Raiz de Falsos Positivos Generalizados no Editor
+
+- **Sintoma:** Todos os `import` e variáveis locais de um arquivo (`worker/loop.py`) são marcados na aba de problemas como não acessados (`reportUnusedImport` / `reportUnusedVariable`), mesmo sendo consumidos nas linhas imediatamente seguintes.
+- **Mecanismo:** O binder in-memory do Language Server (Pylance/Pyright LSP) conclui a fase de declaração de símbolos no escopo, mas o avaliador falha ou aborta a fase de amarração de nós de referência (AST Reference Binding). Como o contador de referências permanece zero para cada identificador, o editor assume falsamente que nada é utilizado.
+- **Protocolo de Ground Truth:** Nunca tentar refatorações destrutivas com base apenas no feedback in-memory do editor. Executar via CLI no ambiente canônico:
+  1. `ruff check <arquivo>` (validação de lint e dead code real)
+  2. `pyright -p . <arquivo>` (checagem estrita de tipos)
+  3. `pytest <testes_relevantes>` (integridade funcional)
+- **Ação SOTA:** Aplicar o mandato `from __future__ import annotations` (Seção 11 do MODUS_OPERANDI), estender anotações estritas PEP 585/604 e regravar o arquivo atomicamente para invalidar o cache corrompido do LSP. Registrado formalmente em `reports/REGISTRO-2026-09-04-sanear-worker-loop-e-desambiguacao-lsp.md`.

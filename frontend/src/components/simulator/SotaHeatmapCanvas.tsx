@@ -210,7 +210,19 @@ export function SotaHeatmapCanvas({ tensorRef, width = 260, height = 260 }: Read
       tooltipEl.append(headerDiv, densityDiv);
 
       // Mutação direta via Compositor Thread (GPU), ignorando o React Render Cycle
-      tooltipEl.style.transform = `translate(${e.clientX + 15}px, ${e.clientY + 15}px)`;
+      // SOTA: Clamping com consciência de viewport contra corte e overflow em bordas
+      const tooltipWidth = 160;
+      const tooltipHeight = 65;
+      const posX =
+        e.clientX + 15 + tooltipWidth > window.innerWidth
+          ? Math.max(10, e.clientX - tooltipWidth - 15)
+          : e.clientX + 15;
+      const posY =
+        e.clientY + 15 + tooltipHeight > window.innerHeight
+          ? Math.max(10, e.clientY - tooltipHeight - 15)
+          : e.clientY + 15;
+
+      tooltipEl.style.transform = `translate(${posX}px, ${posY}px)`;
       tooltipEl.style.opacity = '1';
     };
 

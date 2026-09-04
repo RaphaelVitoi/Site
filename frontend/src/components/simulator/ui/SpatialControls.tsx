@@ -41,27 +41,37 @@ export const SpatialControls = ({
 	const isMultiway = activePlayers > 2;
 
 	return (
-		<div className="glass-panel p-5 sm:p-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 items-end relative animate-sota-in overflow-hidden rounded-3xl bg-slate-950/60 border border-white/10 shadow-xl">
-			<div className="absolute top-5 right-6 flex items-center gap-2.5">
-				<span
-					id="label-antevisao"
-					className="text-[0.58rem] font-mono text-text-dim uppercase tracking-wider transition-colors group-hover:text-text-muted"
-				>
-					Modo Antevisão
-				</span>
-				<button
-					type="button"
-					aria-labelledby="label-antevisao"
-					aria-checked={isPredictive}
-					role="switch"
-					onClick={() => setIsPredictive(!isPredictive)}
-					className={`w-9 h-4.5 rounded-full transition-all relative focus-visible:ring-2 focus-visible:ring-accent-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base shadow-inner cursor-pointer ${isPredictive ? 'bg-accent-emerald shadow-emerald-500/20' : 'bg-slate-900 border border-white/10'}`}
-				>
-					<div
-						className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-md transition-all duration-300 ${isPredictive ? 'left-4.5' : 'left-0.5'}`}
-					/>
-				</button>
+		<div className="glass-panel p-5 sm:p-7 flex flex-col gap-6 relative animate-sota-in rounded-3xl bg-slate-950/60 border border-white/10 shadow-xl">
+			<div className="flex items-center justify-between border-b border-white/5 pb-3">
+				<div className="flex items-center gap-2.5">
+					<div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_8px_var(--color-accent-indigo)]" />
+					<span className="text-[0.62rem] font-mono font-black text-text-muted uppercase tracking-[0.25em]">
+						Física de Mesa & Parâmetros Espaciais
+					</span>
+				</div>
+				<div className="flex items-center gap-2.5">
+					<span
+						id="label-antevisao"
+						className="text-[0.58rem] font-mono text-text-dim uppercase tracking-wider transition-colors group-hover:text-text-muted"
+					>
+						Modo Antevisão
+					</span>
+					<button
+						type="button"
+						aria-labelledby="label-antevisao"
+						aria-checked={isPredictive}
+						role="switch"
+						onClick={() => setIsPredictive(!isPredictive)}
+						className={`w-9 h-4.5 rounded-full transition-all relative focus-visible:ring-2 focus-visible:ring-accent-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base shadow-inner cursor-pointer ${isPredictive ? 'bg-accent-emerald shadow-emerald-500/20' : 'bg-slate-900 border border-white/10'}`}
+					>
+						<div
+							className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-md transition-all duration-300 ${isPredictive ? 'left-4.5' : 'left-0.5'}`}
+						/>
+					</button>
+				</div>
 			</div>
+
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 items-end">
 
 			<div className="space-y-2.5">
 				<SotaTooltip
@@ -202,6 +212,7 @@ export const SpatialControls = ({
 					</span>
 				</div>
 			</div>
+		</div>
 		</div>
 	);
 };

@@ -1,24 +1,21 @@
-import React from 'react';
+'use client';
 
-interface SotaTooltipProps {
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+export type TooltipAlign = 'left' | 'center' | 'right';
+export type TooltipTheme = 'indigo' | 'emerald' | 'rose';
+
+export interface SotaTooltipProps {
 	title: string;
 	content?: string;
 	desc?: string;
-	align?: 'left' | 'center' | 'right';
+	align?: TooltipAlign;
 	position?: 'top' | 'bottom';
-	theme?: 'indigo' | 'emerald' | 'rose';
+	theme?: TooltipTheme;
 	fullWidth?: boolean;
 	children: React.ReactNode;
 }
-
-type TooltipAlign = 'left' | 'center' | 'right';
-type TooltipTheme = 'indigo' | 'emerald' | 'rose';
-
-const ALIGN_CLASSES: ReadonlyMap<TooltipAlign, string> = new Map([
-	['left', 'left-0 origin-bottom-left'],
-	['center', 'left-1/2 -translate-x-1/2 origin-bottom'],
-	['right', 'right-0 origin-bottom-right'],
-]);
 
 const THEME_CLASSES: ReadonlyMap<TooltipTheme, string> = new Map([
 	['indigo', 'border-accent-indigo/40 bg-[#080b14]/95 shadow-[0_30px_60px_-15px_rgba(99,102,241,0.5)]'],
@@ -38,6 +35,13 @@ const TITLE_CLASSES: ReadonlyMap<TooltipTheme, string> = new Map([
 	['rose', 'text-accent-rose-light'],
 ]);
 
+interface TooltipCoords {
+	top: number;
+	left: number;
+	arrowLeft: number;
+	actualPosition: 'top' | 'bottom';
+}
+
 export function SotaTooltip({
 	title,
 	content,
@@ -48,19 +52,128 @@ export function SotaTooltip({
 	fullWidth = false,
 	children,
 }: Readonly<SotaTooltipProps>): React.JSX.Element {
-	const positionClasses = position === 'bottom' ? 'top-full mt-3' : 'bottom-full mb-3';
-	const animationClasses =
-		position === 'bottom'
-			? '-translate-y-4 group-hover:translate-y-0'
-			: 'translate-y-4 group-hover:translate-y-0';
-	const gapBridge =
-		position === 'bottom' ? '-top-4 left-0 w-full h-4' : '-bottom-4 left-0 w-full h-4';
-	const arrowClasses =
-		position === 'bottom'
-			? '-top-2 border-l border-t border-inherit'
-			: '-bottom-2 border-r border-b border-inherit';
+	const [isOpen, setIsOpen] = useState(false);
+	const [isVisible, setIsVisible] = useState(false);
+	const [mounted, setMounted] = useState(false);
+	const [coords, setCoords] = useState<TooltipCoords>({
+		top: 0,
+		left: 0,
+		arrowLeft: 20,
+		actualPosition: position,
+	});
 
-	const safeAlignClass = ALIGN_CLASSES.get(align) ?? 'left-1/2 -translate-x-1/2 origin-bottom';
+	const triggerRef = useRef<HTMLDivElement>(null);
+	const tooltipRef = useRef<HTMLDivElement>(null);
+	const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const tooltipId = useId();
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	const updateCoords = useCallback(() => {
+		if (!triggerRef.current) return;
+		const triggerRect = triggerRef.current.getBoundingClientRect();
+		const tooltipEl = tooltipRef.current;
+		const tooltipWidth = tooltipEl?.offsetWidth || 260;
+		const tooltipHeight = tooltipEl?.offsetHeight || 80;
+		const GAP = 10;
+
+		// Calculate available space
+		const spaceAbove = triggerRect.top;
+		const spaceBelow = window.innerHeight - triggerRect.bottom;
+
+		let actualPosition: 'top' | 'bottom' = position;
+		if (position === 'top') {
+			if (spaceAbove < tooltipHeight + GAP + 10 && spaceBelow > spaceAbove) {
+				actualPosition = 'bottom';
+			}
+		} else {
+			if (spaceBelow < tooltipHeight + GAP + 10 && spaceAbove > spaceBelow) {
+				actualPosition = 'top';
+			}
+		}
+
+		let top = 0;
+		if (actualPosition === 'top') {
+			top = triggerRect.top - tooltipHeight - GAP;
+		} else {
+			top = triggerRect.bottom + GAP;
+		}
+
+		let left = 0;
+		if (align === 'center') {
+			left = triggerRect.left + triggerRect.width / 2 - tooltipWidth / 2;
+		} else if (align === 'left') {
+			left = triggerRect.left;
+		} else if (align === 'right') {
+			left = triggerRect.right - tooltipWidth;
+		}
+
+		// Clamp horizontally within viewport
+		const maxLeft = window.innerWidth - tooltipWidth - 12;
+		const clampedLeft = Math.max(12, Math.min(left, maxLeft));
+
+		// Center arrow on trigger element center
+		const triggerCenter = triggerRect.left + triggerRect.width / 2;
+		const arrowLeft = Math.max(16, Math.min(triggerCenter - clampedLeft, tooltipWidth - 16));
+
+		setCoords({
+			top,
+			left: clampedLeft,
+			arrowLeft,
+			actualPosition,
+		});
+	}, [align, position]);
+
+	const showTooltip = useCallback(() => {
+		if (timeoutRef.current) {
+			clearTimeout(timeoutRef.current);
+			timeoutRef.current = null;
+		}
+		setIsOpen(true);
+	}, []);
+
+	const hideTooltip = useCallback(() => {
+		timeoutRef.current = setTimeout(() => {
+			setIsVisible(false);
+			setIsOpen(false);
+		}, 60);
+	}, []);
+
+	// Position and animation lifecycle
+	useEffect(() => {
+		if (!isOpen) {
+			setIsVisible(false);
+			return;
+		}
+
+		updateCoords();
+		const rafId = requestAnimationFrame(() => {
+			updateCoords();
+			setIsVisible(true);
+		});
+
+		const handleReposition = () => {
+			updateCoords();
+		};
+
+		window.addEventListener('scroll', handleReposition, { passive: true, capture: true });
+		window.addEventListener('resize', handleReposition, { passive: true });
+
+		return () => {
+			cancelAnimationFrame(rafId);
+			window.removeEventListener('scroll', handleReposition, { capture: true });
+			window.removeEventListener('resize', handleReposition);
+		};
+	}, [isOpen, updateCoords]);
+
+	useEffect(() => {
+		return () => {
+			if (timeoutRef.current) clearTimeout(timeoutRef.current);
+		};
+	}, []);
+
 	const safeThemeClass =
 		THEME_CLASSES.get(theme) ??
 		'border-accent-indigo/40 bg-[#080b14]/95 shadow-[0_30px_60px_-15px_rgba(99,102,241,0.5)]';
@@ -68,32 +181,74 @@ export function SotaTooltip({
 		DOT_CLASSES.get(theme) ?? 'bg-accent-indigo shadow-[0_0_10px_rgba(99,102,241,0.8)]';
 	const safeTitleClass = TITLE_CLASSES.get(theme) ?? 'text-accent-indigo-light';
 
+	const arrowClasses =
+		coords.actualPosition === 'bottom'
+			? '-top-2 border-l border-t border-inherit'
+			: '-bottom-2 border-r border-b border-inherit';
+
+	const animationTranslate =
+		coords.actualPosition === 'bottom'
+			? isVisible
+				? 'translate-y-0'
+				: '-translate-y-2'
+			: isVisible
+				? 'translate-y-0'
+				: 'translate-y-2';
+
+	const bodyText = content || desc;
+
 	return (
 		<div
-			className={`relative group cursor-help items-center ${fullWidth ? 'flex w-full' : 'inline-flex'}`}
+			ref={triggerRef}
+			onMouseEnter={showTooltip}
+			onMouseLeave={hideTooltip}
+			onFocus={showTooltip}
+			onBlur={hideTooltip}
+			onKeyDown={(e) => {
+				if (e.key === 'Escape') {
+					hideTooltip();
+				}
+			}}
+			aria-describedby={isOpen ? tooltipId : undefined}
+			className={`relative cursor-help ${fullWidth ? 'flex w-full' : 'inline-flex items-center'}`}
 		>
 			{children}
-			<div
-				className={`absolute ${positionClasses} ${safeAlignClass} w-max max-w-70 p-5 backdrop-blur-3xl border rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible ${animationClasses} transition-all duration-300 ease-out z-99999 pointer-events-none ${safeThemeClass}`}
-			>
-				{/* Bridge gap for hover continuity */}
-				<div className={`absolute ${gapBridge} pointer-events-auto`} />
 
-				<div className="flex items-center gap-3 mb-3 border-b border-white/10 pb-3">
-					<div className={`w-2 h-2 rounded-full ${safeDotClass} animate-pulse`} />
-					<p
-						className={`text-[0.7rem] font-black uppercase tracking-[0.25em] m-0 ${safeTitleClass}`}
+			{mounted &&
+				isOpen &&
+				createPortal(
+					<div
+						id={tooltipId}
+						role="tooltip"
+						ref={tooltipRef}
+						style={{
+							position: 'fixed',
+							top: `${coords.top}px`,
+							left: `${coords.left}px`,
+							zIndex: 999999,
+						}}
+						className={`pointer-events-none w-max max-w-[min(280px,calc(100vw-24px))] sm:max-w-72 p-4 sm:p-5 backdrop-blur-3xl border rounded-2xl shadow-2xl transition-all duration-200 ease-out font-sans ${safeThemeClass} ${isVisible ? 'opacity-100' : 'opacity-0'} ${animationTranslate}`}
 					>
-						{title}
-					</p>
-				</div>
-				<p className="text-text-light text-[0.8rem] leading-relaxed font-medium m-0 normal-case tracking-normal text-left drop-shadow-md whitespace-pre-wrap">
-					{content || desc}
-				</p>
-				<div
-					className={`absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-inherit rotate-45 backdrop-blur-3xl ${arrowClasses}`}
-				/>
-			</div>
+						<div className="flex items-center gap-2.5 mb-2.5 border-b border-white/10 pb-2.5">
+							<div className={`w-2 h-2 rounded-full ${safeDotClass} animate-pulse`} />
+							<p
+								className={`text-[0.68rem] font-black uppercase tracking-[0.2em] m-0 leading-tight ${safeTitleClass}`}
+							>
+								{title}
+							</p>
+						</div>
+						{bodyText && (
+							<p className="text-text-light text-[0.75rem] leading-relaxed font-medium m-0 normal-case tracking-normal text-left drop-shadow-md whitespace-pre-wrap">
+								{bodyText}
+							</p>
+						)}
+						<div
+							className={`absolute w-3.5 h-3.5 bg-inherit rotate-45 backdrop-blur-3xl ${arrowClasses}`}
+							style={{ left: `${coords.arrowLeft}px`, transform: 'translateX(-50%) rotate(45deg)' }}
+						/>
+					</div>,
+					document.body
+				)}
 		</div>
 	);
 }
