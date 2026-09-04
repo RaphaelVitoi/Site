@@ -6,7 +6,7 @@
     },
   ],
   "settings": {
-    // ── SOTA v6 GOLD PERFORMANCE ───────────────────────────────
+    // ── SOTA v8.0 GOLD PERFORMANCE ─────────────────────────────
     "editor.unicodeHighlight.nonBasicASCII": true,
     "editor.unicodeHighlight.invisibleCharacters": true,
     "editor.unicodeHighlight.ambiguousCharacters": true,
@@ -22,7 +22,7 @@
     "files.autoSave": "onFocusChange",
     // ── NUCLEO DE INTELIGENCIA (GEMINI) ─────────────────────────
     "gemini-cli.approvalMode": "auto_edit",
-    "gemini-cli.model": "gemini-2.5-pro",
+    "gemini-cli.model": "gemini-3.8-flash",
     "geminicodeassist.outlines.automaticOutlineGeneration": false,
     "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
     "geminicodeassist.verboseLogging": false,
@@ -30,7 +30,7 @@
     "geminicodeassist.rules": "Excelência SOTA: Proibida a artificialização. Priorizar lógica, ciência e SteelManning Protocol. Blindagem ASCII no Backend.",
     // ── PARIDADE BACKEND (RUFF & RUNTIME SOTA) ──────────────────
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-    "python.languageServer": "Jedi",
+    "python.languageServer": "Default",
     "python-envs.defaultEnvManager": "ms-python.python:venv",
     "python-envs.defaultPackageManager": "ms-python.python:pip",
     "python-envs.pythonProjects": [
@@ -103,11 +103,14 @@
     // ── BLINDAGEM DE WATCHER (SISTEMA INTEGRADO) ────────────────
     "files.watcherExclude": {
       "**/.git/objects/**": true,
+      "**/.husky/**": true,
       "**/node_modules/**": true,
       "**/.venv/**": true,
       "**/.next/**": true,
       "**/.turbo/**": true,
       "**/__pycache__/**": true,
+      "**/.pytest_cache/**": true,
+      "**/.ruff_cache/**": true,
       "**/dist/**": true,
       "**/dist-workers/**": true,
       "**/build/**": true,
@@ -136,8 +139,8 @@
         "source": "PowerShell",
       },
       "Gemini-SOTA": {
-        "path": "powershell.exe",
-        "args": ["-NoExit", "-Command", "gemini --approval-mode auto_edit"],
+        "path": "pwsh.exe",
+        "args": ["-NoProfile", "-NoExit", "-Command", "gemini --approval-mode auto_edit"],
       },
     },
     // ── ESTETICA & ORGANIZACAO ──────────────────────────────────
