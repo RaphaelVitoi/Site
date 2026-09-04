@@ -1,131 +1,79 @@
-# HANDOFF LATEST — procedência de solve, e o que o Tier 0 ensinou no meio da construção
+# HANDOFF LATEST — a sessão outlier de infraestrutura
 
-**Data:** 2026-09-03 · **Protocolo:** Chico SOTA v8.0 GOLD · **Estado:** commitado em `4d89a192`, **1 ahead de origin**.
-**Sessão:** `claude-opus5-site-2026-09-03-procedencia` · **Assinatura individual:** Claude Opus 5 [Tier 1.B]
-
----
-
-## A primeira coisa: a ordem da prioridade 1 foi invertida, com autorização
-
-O prompt de continuação mandava **recapturar o HRC**. A medição inicial mostrou que
-fazê-lo primeiro produziria dado sem destino: nem `EvidenceScenario` (TS) nem
-`NormalizedGameTree` (Py) tinham onde guardar build ou e-Nash. A recaptura voltaria
-com os campos na tela e o único destino seria prosa em comentário — exatamente o que
-`evidenceContract.ts` existe para impedir.
-
-O Tier 0 autorizou inverter, e confirmou que **o HRC exporta arquivo**. Isso muda a
-natureza do alvo: export estruturado ataca a barreira real (transcrição de terceiro
-contra medição própria), enquanto três campos a mais numa transcrição não atacariam.
+**Data:** 2026-09-03 · **Protocolo:** Chico SOTA v8.0 GOLD
+**Estado:** publicado em `b36a9ea4`, `master == origin/master`
+**Condutor:** Claude Opus 5 [Tier 1.B] · **Regime:** assistida
 
 ---
 
-## O que esta sessão entregou
+## A regra que abre: esta sessão não tem nota, e isso não é zero
 
-**Procedência tipada nas duas camadas.** `SolverProvenance` como `Measured<T>` no TS e
-modelo Pydantic no Python, com `build`, `eNash`, `eNashUnit`, `eNashLabel` e `engine`.
+Decisão explícita do Tier 0. A instabilidade dos servidores da Anthropic
+influenciou erros e processo; o desgaste não é atribuível ao modelo.
 
-**O campo que era reconhecido e jogado fora.** `HRCProImporter.detect_format` reconhecia
-`hrc_version` desde sempre — e a usava só para identificar o formato, **descartando o
-valor**. O campo que o ledger exige era tocado e descartado no mesmo arquivo. Agora é
-lido, do JSON e do cabeçalho de texto.
-
-**A barreira virou número.** `assessReproducibility` e `countReproduciblePairs`
-retornam **zero de sete** contra o mínimo de três do ledger, afirmado em teste.
-
-> Não é teste a consertar. O número sobe quando o export chegar; quem o preencher sem
-> o export terá inventado a evidência que o ledger exige.
+**Ausência de nota não é zero**, não entra em média, e não sofre multiplicação
+nem divisão. Registrada como outlier `2d55d92a`, sequência 3, em ledger próprio
+sem campo de nota. **O portão de suficiência continua em 6 sessões distintas.**
 
 ---
 
-## O que o Tier 0 ensinou, e que eu não teria acertado sozinho
+## Três commits publicados
 
-| Correção | Consequência no código |
+| Commit | Autor | O quê |
+| :--- | :--- | :--- |
+| `b36a9ea4` | `antigravity@gemini-3.8-flash` | Tríade em 3.8, `conductor_model`, `supervision_mode` — **auditado por Opus 5** |
+| `7a747145` | Claude Opus 5 | nota 10 e outlier de aceleração no ledger |
+| `fed9c19f` | Claude Opus 5 | roteador: nome exato vence heurística |
+
+---
+
+## O incidente das extensões, encerrado
+
+Não foi um evento às 03:33 — foram **sete instalações em 39 minutos**, das quais
+três de Ollama. O padrão: cada start de componente do IDE disparava rajada de
+24–36 `/api/pull`, uma por modelo instalado.
+
+Removidas as três e limpo o `extensions.json`, o ciclo completo de reinício deu
+**zero pulls**. Previsão falsificada, causa confirmada.
+
+**Não determinado:** o mecanismo. Nenhuma delas declara `pull` no código.
+
+---
+
+## Estado do ambiente
+
+| Item | Valor |
 | :--- | :--- |
-| Os rótulos que supus não existem — HRC usa `CI`, Pio usa `MES`, GTO Wizard usa `Nash Distance`/`dEV` | o extrator não acharia o campo real; rótulo nativo agora é guardado |
-| A caixa-preta não é a teoria, são os **atalhos** de convergência | `build` virou âncora mecânica: atalho novo para em outro ponto com os mesmos inputs |
-| Produto não é motor — a biblioteca do GTO Wizard **foi rodada no HRC** | campo `engine`, separado do produto |
-| **Motor comum FORTALECE o par** | inverteu uma conclusão minha; ver abaixo |
+| `C:` livre | 260,7 GB (era 8,2) |
+| Plugins Claude Code | 9 (era 58) |
+| MCP Antigravity | 3 (era 15), paridade §6 preservada |
+| Credenciais literais em `.gemini` | **0** (eram 40) |
+| Ollama | 0.33.3, 27 modelos, 91,6 GB |
+| Suíte | 852 passed · 1 skipped · 2 failed |
 
-### A inversão, que é o item mais importante daqui
-
-Eu havia escrito que motor comum nos dois lados era risco. **O HRC calcula ChipEV além
-de ICMev**, e a disputa em estudo é ChipEV × ICMev. Motor único deixa o regime como
-única variável — isso é **controle experimental**. O confundidor é o contrário.
-
-E como a biblioteca do GTO Wizard é HRC, **os sete pares existentes provavelmente já
-têm motor comum**: o controle que eu disse faltar já estava lá, invisível porque a
-procedência não tinha campo para expressá-lo. Falta conferir captura a captura, e o
-discriminante está na tela — `CI` no painel indica biblioteca.
+**Portas que o portão exige:** CDP **9222 e 9224** e dev server **:3000**.
+Faltando qualquer uma, a fase 2 dá 3 violações axe **falsas** — não mexer no
+frontend antes de medir a porta.
 
 ---
 
-## Calibração — o portão está aberto E o padrão tem duas confirmações
+## Pendências, em ordem de risco
 
-Ledger `valid`, **9 registros**, **6 sessões distintas**, 0 faltantes, 0 com início
-inconsistente. Média **8,50** · min 7,5 · máx 9,5 · `correcoes_aplicadas` 2.
-
-| Sessão | Nota |
-| :--- | ---: |
-| `codex-site-2026-09-01-prioridade` | 7.5 |
-| `claude-opus5-site-2026-09-02-integridade` | 8 (corrigida de `0.8`) |
-| `claude-opus5-site-2026-09-02-pmev` | 9 |
-| `gemini-flash-site-2026-09-02-mcp-curation` | 9.0 (corrigida de `9.5`) |
-| `claude-opus5-site-2026-09-02-guarda` | 9.5 |
-| `claude-opus5-site-2026-09-03-procedencia` | **8** |
-
-**O feedback de 8:** *"Você não deveria me perguntar aquilo que é open source. Pelo
-contexto, vc pode aferir que a fonte primária e muitas vezes mais fidedigna é
-WebSearch avançado e inteligente."*
-
-Agravante que registro contra mim: eu **considerei** pesquisar e decidi transferir a
-ele, raciocinando que resolveria rápido abrindo o app. Quando finalmente busquei, a
-fonte deu o que a pergunta não daria — `dEV` entrou no extrator, e a proibição de
-comparar métricas entre solvers ganhou base documental em vez de cautela.
-
-> **O padrão tem duas confirmações independentes, e isso é obrigação do auditor
-> declarar.** Nota 8 de `...-pmev`: *executor único num repositório feito de 19
-> agentes, delegar de fato*. Nota 8 desta sessão: *não usar WebSearch para o que é
-> público*. Sessões diferentes, feedbacks independentes, **mesmo padrão operacional:
-> subutilizar capacidade disponível e resolver pelo caminho mais estreito**.
->
-> Com 6 sessões ≥ 3 e duas confirmações do mesmo padrão, as condições da §8.3 estão
-> satisfeitas. **A calibração assistida pode ser proposta ao Tier 0** — e proposta é o
-> limite: o portão estrutural nunca foi autorização.
+1. **Dependabot acusa 8 vulnerabilidades** (2 críticas, 4 altas) no default
+   branch, enquanto `npm audit` local dá 0. **A divergência não foi investigada**
+   e é o item mais sério em aberto.
+2. **Chave do Figma em 33 arquivos de log**, mesmo revogada — transcripts do
+   brain do Antigravity, `config/config.json`, `language_server.log`.
+3. **Placeholder errado:** escrevi `${FIGMA_API_KEY}`; a variável real em
+   `HKCU:\Environment` é `FIGMA_ACCESS_TOKEN`. `GITHUB_TOKEN` não existe lá.
+4. **Fingerprint do Lighthouse expirado** desde 01/09 — é a origem do único
+   warning do portão e das 2 falhas de `test_cwv_gate_truthfulness`.
+5. **`gemma4:26b` saiu**; `HANDOFF` anteriores que o citam estão defasados.
 
 ---
 
-## Ambiente — corrigindo o meu próprio prompt anterior
+## Prioridade que atravessou o dia sem ser tocada
 
-O handoff anterior dizia *"dev server Next.js em :3000 precisa estar no ar"*. **Isso é
-insuficiente.** O dev server estava no ar nesta sessão e as fases 1 e 2 do portão
-**não mediram assim mesmo**: `nenhuma porta CDP canonica respondeu`. O que elas exigem
-é o **CDP**, não o dev server. As duas vagas de warning foram consumidas por isso.
-
----
-
-## Pendências
-
-| Item | Estado |
-| :--- | :--- |
-| Push de `4d89a192` | **1 ahead**, não empurrado |
-| Recaptura do HRC | **prioridade 1**, agora com destino tipado pronto; preferir `ChipEV(HRC) × ICMev(HRC)`, mesmo build |
-| Conferir captura a captura se o lado ChipEV é biblioteca ou AI | discriminante é o painel `CI`; não feito |
-| Fases 1 e 2 do portão | **não mediram** — CDP ausente |
-| `pyo3` 0.20.3 no `Cargo.lock` | única vulnerabilidade aberta sem aceite; fix 0.29.0, breaking |
-| Arbitragem do nodelock | só Tier 0 |
-| Portão mede working tree, não índice | achado da sessão anterior, **sem guarda** |
-| Algoritmos no repo (CFR 45, Monte Carlo 31, DeepStack 3, Pluribus 3, Libratus 2) | **contados por grep**, integração não auditada |
-| Duplicação `engine/llm_api.py` × `llm/anthropic.py` | aberta desde `HANDOFF-2026-08-27` |
-
----
-
-## Regras que esta sessão fixou
-
-- **Fato público é meu para buscar.** Reservar a pergunta ao Tier 0 para o que só ele
-  sabe: o ambiente dele, a origem real dos dados, escopo, autorização.
-- **Heredoc dentro de script Python tem escape duplo.** `[^\r\n]` virou quebra de linha
-  real dentro da regex e o arquivo ficou quebrado. Escrever em arquivo literal com
-  heredoc *quoted*, conferir os escapes, e só então inserir.
-- **A suíte Python só vale pelo PowerShell.** Pelo Bash, 3 falsas falhas em
-  `test_cwv_gate_truthfulness` — `subprocess.run` de PowerShell devolve `stdout=None`.
-- **`pct` não é `pctOfPot`.** Ler `%` autoriza dizer que é percentual, e nada além.
+**Recaptura do HRC.** Destino tipado pronto — `SolverProvenance` nas duas
+camadas. Preferir `ChipEV(HRC) × ICMev(HRC)` no mesmo build: motor comum é
+controle experimental, não confundidor.
