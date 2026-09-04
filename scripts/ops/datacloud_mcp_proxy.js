@@ -11,17 +11,20 @@ const os = require("node:os");
 const path = require("node:path");
 const readline = require("node:readline");
 
-const RETRY_DELAY_MS = 3000;
+const INITIAL_RETRY_DELAY_MS = 5000;
+const MAX_RETRY_DELAY_MS = 60000;
+const RETRY_BACKOFF_FACTOR = 1.5;
 
 function getSocketPath(idOrPath) {
   if (path.isAbsolute(idOrPath)) {
     return idOrPath;
   }
-  if (idOrPath.startsWith("\\\\?\\pipe\\")) {
+  if (idOrPath.startsWith("\\\\?\\pipe\\") || idOrPath.startsWith("\\\\.\\pipe\\")) {
     return idOrPath;
   }
   if (process.platform === "win32") {
-    return path.join("\\\\?\\pipe\\", `datacloud-mcp-${idOrPath}`);
+    // Windows named pipes: formatar canonicamente sem normalizacao do path.join
+    return `\\\\.\\pipe\\datacloud-mcp-${idOrPath}`;
   }
   return path.join(os.tmpdir(), `datacloud-mcp-${idOrPath}.sock`);
 }
@@ -36,6 +39,10 @@ function main() {
 
   let isConnected = false;
   let activeClient = null;
+  let connectingClient = null;
+  let retryTimer = null;
+  let currentRetryDelay = INITIAL_RETRY_DELAY_MS;
+  let isTerminating = false;
 
   function handleFallbackStdin(line) {
     const trimmed = line.trim();
@@ -180,52 +187,110 @@ function main() {
     }
   });
 
-  rl.on("close", () => {
-    if (activeClient && !activeClient.destroyed) {
-      activeClient.destroy();
-    }
-    process.exit(0);
-  });
+  function shutdown(code = 0) {
+    if (isTerminating) return;
+    isTerminating = true;
 
-  process.stdin.on("end", () => {
-    if (activeClient && !activeClient.destroyed) {
-      activeClient.destroy();
+    if (retryTimer) {
+      clearTimeout(retryTimer);
+      retryTimer = null;
     }
-    process.exit(0);
-  });
+    if (connectingClient) {
+      connectingClient.removeAllListeners();
+      try {
+        connectingClient.destroy();
+      } catch {}
+      connectingClient = null;
+    }
+    if (activeClient) {
+      activeClient.removeAllListeners();
+      try {
+        activeClient.unpipe(process.stdout);
+      } catch {}
+      try {
+        activeClient.destroy();
+      } catch {}
+      activeClient = null;
+    }
+    process.exit(code);
+  }
+
+  rl.on("close", () => shutdown(0));
+  process.stdin.on("end", () => shutdown(0));
+  process.on("SIGINT", () => shutdown(0));
+  process.on("SIGTERM", () => shutdown(0));
 
   function scheduleRetry() {
-    const t = setTimeout(tryConnect, RETRY_DELAY_MS);
-    if (t && typeof t.unref === "function") {
-      t.unref();
+    if (isTerminating || isConnected || retryTimer || connectingClient) {
+      return;
     }
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      tryConnect();
+    }, currentRetryDelay);
+    if (retryTimer && typeof retryTimer.unref === "function") {
+      retryTimer.unref();
+    }
+    currentRetryDelay = Math.min(
+      Math.round(currentRetryDelay * RETRY_BACKOFF_FACTOR),
+      MAX_RETRY_DELAY_MS
+    );
   }
 
   function tryConnect() {
+    if (isTerminating || isConnected || connectingClient || activeClient) {
+      return;
+    }
+
     try {
       const client = net.createConnection(socketPath);
+      connectingClient = client;
+
+      let handled = false;
+      function cleanupAndRetry() {
+        if (handled) return;
+        handled = true;
+
+        client.removeAllListeners();
+        try {
+          client.unpipe(process.stdout);
+        } catch {}
+        try {
+          client.destroy();
+        } catch {}
+
+        if (connectingClient === client) {
+          connectingClient = null;
+        }
+        if (activeClient === client) {
+          isConnected = false;
+          activeClient = null;
+        }
+        scheduleRetry();
+      }
+
       client.on("connect", () => {
+        if (isTerminating) {
+          try {
+            client.destroy();
+          } catch {}
+          return;
+        }
         isConnected = true;
         activeClient = client;
+        connectingClient = null;
+        currentRetryDelay = INITIAL_RETRY_DELAY_MS;
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+          retryTimer = null;
+        }
         client.pipe(process.stdout);
       });
-      client.on("error", () => {
-        try {
-          client.destroy();
-        } catch {}
-        isConnected = false;
-        activeClient = null;
-        scheduleRetry();
-      });
-      client.on("close", () => {
-        try {
-          client.destroy();
-        } catch {}
-        isConnected = false;
-        activeClient = null;
-        scheduleRetry();
-      });
+
+      client.on("error", cleanupAndRetry);
+      client.on("close", cleanupAndRetry);
     } catch {
+      connectingClient = null;
       scheduleRetry();
     }
   }
