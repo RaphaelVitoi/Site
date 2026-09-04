@@ -607,11 +607,18 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
 
     foreach ($manifesto in $manifestosNpm) {
         $dirAnterior = Get-Location
+        $prevNodeOptions = $env:NODE_OPTIONS
         try {
             Set-Location -Path $manifesto
+            if ($env:NODE_OPTIONS -notlike "*dns-result-order*") {
+                $env:NODE_OPTIONS = ("$env:NODE_OPTIONS --dns-result-order=ipv4first").Trim()
+            }
             $auditRaw = (npm audit --json 2>&1 | Out-String).Trim()
-            if ($auditRaw.StartsWith("{")) {
-                $auditJson = $auditRaw | ConvertFrom-Json
+            $firstBrace = $auditRaw.IndexOf('{')
+            $lastBrace = $auditRaw.LastIndexOf('}')
+            if ($firstBrace -ge 0 -and $lastBrace -gt $firstBrace) {
+                $jsonOnly = $auditRaw.Substring($firstBrace, $lastBrace - $firstBrace + 1)
+                $auditJson = $jsonOnly | ConvertFrom-Json
                 $metadata = $auditJson.metadata.vulnerabilities
                 if ($null -ne $metadata) {
                     $cveCritico += [int]($metadata.critical)
@@ -627,6 +634,7 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
         } catch {
             $cveFalhas += "$manifesto : excecao ao rodar npm audit: $($_.Exception.Message)"
         } finally {
+            $env:NODE_OPTIONS = $prevNodeOptions
             Set-Location -Path $dirAnterior
         }
     }
