@@ -79,12 +79,19 @@ $outlierLedgerPath = if ($OutlierLedgerPath) { $OutlierLedgerPath } else { Join-
 $day = $Date.ToString('yyyy-MM-dd')
 $scoped = -not [string]::IsNullOrWhiteSpace($SessionId)
 
-$allFeedback = @()
+# O LEDGER E LIDO UMA VEZ SO, E OS RECORTES SAEM DAQUI.
+#
+# Ate 2026-09-05 cada tipo de registro era relido do disco com seu proprio
+# filtro, e o marco da ultima calibracao (linha ~150) filtrava 'calibration'
+# sobre $allFeedback -- que ja vinha filtrado por 'feedback'. Conjunto vazio
+# por construcao: o marco nunca seria encontrado, nem depois de existir um
+# escritor. O portao sabia abrir e nao sabia fechar, e o universo crescia para
+# sempre.
+$allRecords = @()
 if (Test-Path -LiteralPath $ledgerPath) {
-    $allFeedback = @(Get-Content -LiteralPath $ledgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object {
-        $_.record_type -eq 'feedback'
-    })
+    $allRecords = @(Get-Content -LiteralPath $ledgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json })
 }
+$allFeedback = @($allRecords | Where-Object { $_.record_type -eq 'feedback' })
 
 # CORRECOES SAO APLICADAS AQUI, antes de qualquer contagem.
 #
@@ -96,12 +103,7 @@ if (Test-Path -LiteralPath $ledgerPath) {
 #
 # Motivo medido, 2026-09-02: a nota da sessao
 # `claude-opus5-site-2026-09-02-integridade` foi dada como 8 e gravada como 0.8.
-$correcoes = @()
-if (Test-Path -LiteralPath $ledgerPath) {
-    $correcoes = @(Get-Content -LiteralPath $ledgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object {
-        $_.record_type -eq 'correction'
-    })
-}
+$correcoes = @($allRecords | Where-Object { $_.record_type -eq 'correction' })
 $correcoesAplicadas = 0
 foreach ($correcao in $correcoes) {
     $campo = [string]$correcao.field
@@ -147,15 +149,34 @@ $sessoesAtivasNoDia = @($records |
 # permanentemente aberto a partir da terceira sessao, o que contradiz a
 # intencao de calibrar a cada tres. Se o vertice preferir contagem absoluta,
 # basta remover o filtro por $marcoUltimaCalibracao.
-$calibracoes = @($allFeedback | Where-Object { $_.record_type -eq 'calibration' })
+#
+# O CORTE E POR SEQUENCIA, NAO POR RELOGIO.
+#
+# "Desde a ultima calibracao" e uma pergunta sobre POSICAO NA CADEIA, e a
+# cadeia ja responde: o ledger e append-only e encadeado por SHA-256, entao
+# `sequence` e monotonica por construcao e nao ha como um registro anterior
+# ter sequencia maior. `recorded_at` nao tem essa garantia -- depende do
+# relogio da maquina que gravou, e um relogio adiantado, um fuso trocado ou um
+# registro de teste com data futura fazem o feedback parecer posterior a uma
+# calibracao que na verdade veio depois dele. O efeito seria silencioso e
+# exatamente o pior possivel: a contagem nao zeraria, e o portao ficaria
+# permanentemente aberto -- o mesmo sintoma do filtro morto que existia acima.
+#
+# `ultima_calibracao` continua reportando o INSTANTE, que e o que um humano le.
+# Medir por sequencia e reportar em tempo nao e inconsistencia: e usar, para
+# cada coisa, a fonte que a garante.
+$calibracoes = @($allRecords | Where-Object { $_.record_type -eq 'calibration' })
+$marcoSequencia = if ($calibracoes.Count -gt 0) {
+    (@($calibracoes | ForEach-Object { [int]$_.sequence }) | Sort-Object)[-1]
+} else {
+    -1
+}
 $marcoUltimaCalibracao = if ($calibracoes.Count -gt 0) {
-    ($calibracoes | ForEach-Object { Get-InstanteDoRegistro $_ } | Sort-Object)[-1]
+    Get-InstanteDoRegistro (@($calibracoes | Sort-Object { [int]$_.sequence })[-1])
 } else {
     [DateTimeOffset]::MinValue
 }
-$universo = @($allFeedback | Where-Object {
-    (Get-InstanteDoRegistro $_) -gt $marcoUltimaCalibracao
-})
+$universo = @($allFeedback | Where-Object { [int]$_.sequence -gt $marcoSequencia })
 
 $todasAsSessoes = @($universo |
     Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.session_id) } |

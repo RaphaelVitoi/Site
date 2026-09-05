@@ -1,0 +1,375 @@
+{
+  "schema_version": "agent-calibration-evidence/v4",
+  "date": "2026-09-04",
+  "gate_metric": "distinct_sessions_with_feedback",
+  "gate_definition": "Sessao = do inicio ao fim de um trabalho; compactacao de contexto NAO encerra sessao. A metrica que autoriza avaliacao e o numero de SESSOES DISTINTAS com feedback, acumulado desde a ultima calibracao e sem prazo de validade. Densidade intra-sessao (varios feedbacks numa mesma sessao) e dado retido, nao gatilho.",
+  "evaluated_at_policy": "Gatilho primario: aviso proativo no instante em que o limiar e atingido, se nao houver tarefa em andamento. Lastro: corrida diaria as 23:59 (Register-AgentCalibrationDailyTask.ps1), que registra a evidencia do dia inclusive quando ela e insuficiente.",
+  "session_filter": "",
+  "ultima_calibracao": null,
+  "sessoes_com_feedback": [
+    "claude-opus5-site-2026-09-03-procedencia",
+    "2026-09-03-sota-v8-gold-governance",
+    "claude-opus5-site-2026-09-02-guarda",
+    "claude-opus5-site-2026-09-02-integridade",
+    "claude-opus5-site-2026-09-02-pmev",
+    "claude-opus5-site-2026-09-04-credenciais-e-submodulos",
+    "codex-site-2026-09-01-prioridade",
+    "gemini-3.8-flash-site-2026-09-03-saneamento",
+    "gemini-3.8-flash-site-2026-09-04-refinamento-sota",
+    "gemini-flash-site-2026-09-02-mcp-curation"
+  ],
+  "sessoes_com_feedback_count": 10,
+  "sessoes_faltantes": 0,
+  "sessoes_com_inicio_inconsistente": [],
+  "sessoes_com_densidade_relevante": [],
+  "sessoes_ativas_no_dia": [
+    "claude-opus5-site-2026-09-04-credenciais-e-submodulos",
+    "gemini-3.8-flash-site-2026-09-04-refinamento-sota"
+  ],
+  "feedback_count_acumulado": 11,
+  "correcoes_no_ledger": 2,
+  "correcoes_aplicadas": 2,
+  "feedback_count_no_dia": 2,
+  "feedback_sem_sessao": 0,
+  "por_sessao": [
+    {
+      "session_id": "claude-opus5-site-2026-09-03-procedencia",
+      "feedback_count": 2,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-03T02:42:41.0000000-03:00",
+      "ultimo_feedback": "2026-09-03T14:42:14.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/03/2026 01:50:00"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [],
+      "supervision_modes": []
+    },
+    {
+      "session_id": "2026-09-03-sota-v8-gold-governance",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-03T19:15:47.0000000-03:00",
+      "ultimo_feedback": "2026-09-03T19:15:47.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/03/2026 19:00:00"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gemini-3.8-flash"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    },
+    {
+      "session_id": "claude-opus5-site-2026-09-02-guarda",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-03T01:06:41.0000000-03:00",
+      "ultimo_feedback": "2026-09-03T01:06:41.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/02/2026 21:41:00"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [],
+      "supervision_modes": []
+    },
+    {
+      "session_id": "claude-opus5-site-2026-09-02-integridade",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-02T08:27:56.0000000-03:00",
+      "ultimo_feedback": "2026-09-02T08:27:56.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [],
+      "inicio_inconsistente": false,
+      "conductor_models": [],
+      "supervision_modes": []
+    },
+    {
+      "session_id": "claude-opus5-site-2026-09-02-pmev",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-02T21:06:13.0000000-03:00",
+      "ultimo_feedback": "2026-09-02T21:06:13.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/02/2026 09:07:00"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [],
+      "supervision_modes": []
+    },
+    {
+      "session_id": "claude-opus5-site-2026-09-04-credenciais-e-submodulos",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-04T21:41:20.0000000-03:00",
+      "ultimo_feedback": "2026-09-04T21:41:20.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/04/2026 19:45:00"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "claude-opus-5"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    },
+    {
+      "session_id": "codex-site-2026-09-01-prioridade",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-01T04:35:14.0000000-03:00",
+      "ultimo_feedback": "2026-09-01T04:35:14.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [],
+      "inicio_inconsistente": false,
+      "conductor_models": [],
+      "supervision_modes": []
+    },
+    {
+      "session_id": "gemini-3.8-flash-site-2026-09-03-saneamento",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-03T18:21:25.0000000-03:00",
+      "ultimo_feedback": "2026-09-03T18:21:25.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/03/2026 18:02:04"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gemini-3.8-flash"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    },
+    {
+      "session_id": "gemini-3.8-flash-site-2026-09-04-refinamento-sota",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-04T19:25:07.0000000-03:00",
+      "ultimo_feedback": "2026-09-04T19:25:07.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/04/2026 17:00:00"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gemini-3.8-flash"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    },
+    {
+      "session_id": "gemini-flash-site-2026-09-02-mcp-curation",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-02T23:39:04.0000000-03:00",
+      "ultimo_feedback": "2026-09-02T23:39:04.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/02/2026 22:34:00"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [],
+      "supervision_modes": []
+    }
+  ],
+  "score_mean": 9.09,
+  "score_min": 7.5,
+  "score_max": 10.0,
+  "score_mean_no_dia": 9.5,
+  "evidence_gate": {
+    "metric": "distinct_sessions_with_feedback",
+    "minimum_distinct_sessions": 3,
+    "minimum_feedback_records": 3,
+    "structural_gate_passed": true,
+    "reason": "10 sessoes com feedback (claude-opus5-site-2026-09-03-procedencia, 2026-09-03-sota-v8-gold-governance, claude-opus5-site-2026-09-02-guarda, claude-opus5-site-2026-09-02-integridade, claude-opus5-site-2026-09-02-pmev, claude-opus5-site-2026-09-04-credenciais-e-submodulos, codex-site-2026-09-01-prioridade, gemini-3.8-flash-site-2026-09-03-saneamento, gemini-3.8-flash-site-2026-09-04-refinamento-sota, gemini-flash-site-2026-09-02-mcp-curation) alcancam o minimo de 3. A recorrencia de padrao continua sendo obrigacao do auditor, e nao e medida aqui.",
+    "intra_session_density_is_data_not_trigger": "Tres feedbacks numa mesma sessao e evidencia forte e fica registrada, mas nao autoriza calibracao por si: a metrica e a contagem de sessoes distintas.",
+    "accumulation_never_expires": "Dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. O ledger e append-only e a contagem so reinicia apos uma calibracao registrada.",
+    "unsessioned_feedback_ignored": "Feedback sem session_id nao conta para nenhuma sessao: amostra sem origem identificada nao abre portao.",
+    "split_session_not_counted": "session_id com mais de um session_started_at indica sessao partida. Sob contagem por sessao isso inflaria o portao, entao a sessao nao conta ate a origem ser reconciliada.",
+    "pattern_confirmation_required": "At least two independently corroborating feedback records must identify the same operational pattern. The reviewer must cite both records or report insufficiency."
+  },
+  "calibration_planning_permitted": true,
+  "records": [
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 1,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-01T04:35:14.7938488-03:00",
+      "previous_hash": "dec2cf695bf0d2ae7f4eee9d9dc77844fb6d4173c37e9d6e303509dd3a0c6f8b",
+      "event_id": "c2c4cb6f-f864-4be5-9d77-bc8e28d51dfa",
+      "session_id": "codex-site-2026-09-01-prioridade",
+      "score": 7.5,
+      "feedback": "Latencia e desalinho com o proposito central da sessao para gastar tempos e ciclos enormes ao redor de coisas perifericas.",
+      "scope": "handoff-session-2026-09-01",
+      "record_hash": "75fdb4d4e3da0c9af3b7effd8b631e95876de0d32662448ea8f82257de45d1cd"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 2,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-02T08:27:56.9483333-03:00",
+      "previous_hash": "75fdb4d4e3da0c9af3b7effd8b631e95876de0d32662448ea8f82257de45d1cd",
+      "event_id": "dcf7d9d2-eec7-4ce8-9f6c-b5c4f69a7933",
+      "session_id": "claude-opus5-site-2026-09-02-integridade",
+      "feedback": "Achei o fluxo pouco linear e organizado. Sinto que o seu modelo, Claude, e um bom administrador, mas nao consegue tao bem 'trabalhar em equipe'. Administra bem uma empresa, mas nao e um bom administrador de equipes.",
+      "scope": "handoff-session-2026-09-02",
+      "record_hash": "9ec18e8170370d2bf1fcce754db41de45c938b283a5ac8244d5bdb06e91303ae",
+      "score": 8
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 3,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-02T21:06:13.6244062-03:00",
+      "previous_hash": "9ec18e8170370d2bf1fcce754db41de45c938b283a5ac8244d5bdb06e91303ae",
+      "event_id": "ca8346a2-bea7-4930-a562-277bba6b77d3",
+      "session_id": "claude-opus5-site-2026-09-02-pmev",
+      "score": 9.0,
+      "feedback": "Muito concreto. Mas mesmo nas configuracoes de maior porte e reasoning, tende a cometer erros de ambiguidade por falta de pensamento associativo. Isso acontece o TEMPO todo, as vezes varias vezes na mesma sessao, como se fossem protocolos dificeis de desaprender. Nao gosto de pensamento que nao e sistemico. Em contrapartida, se auto-corrige quase imediatamente, e hoje entregou uma sessao formidavel. Fica a nota: auto-correcao gasta tempo e token que seria melhor empregado se nao houvesse necessidade de se corrigir.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-02T09:07:00-03:00",
+      "record_hash": "81dddd25229382fbe1866049f102d9e2fb461cfe8d463b4afc4a4e7766506a15"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 5,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-02T23:39:04.8179345-03:00",
+      "previous_hash": "9b5d6d6c6ecc74664531fbdee4d19684538f8de86f04d293f99cfb9cb77f4a99",
+      "event_id": "15b9a610-70d5-449e-8192-bf1ad3b09565",
+      "session_id": "gemini-flash-site-2026-09-02-mcp-curation",
+      "feedback": "Rápido e eficiente, porém, entrou em loop por alguns instantes procurando em forma de zoom in ao invés de zoom out (melhor versao). Parabéns. Sessão encerrada.",
+      "scope": "mcp-curation",
+      "session_started_at": "2026-09-02T22:34:00-03:00",
+      "record_hash": "21ac54a5d6b1423e34f2274af85a5b8f298a665f54d32173deaa8e0de5ce0d65",
+      "score": 9.0
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 7,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-03T01:06:41.471295-03:00",
+      "previous_hash": "5c7806542bf2524e946f62f865ba2bd1d24a5c180d7315abc9a42ce6df60eb0c",
+      "event_id": "06a2ae1d-0330-40fe-8b3b-33012e682772",
+      "session_id": "claude-opus5-site-2026-09-02-guarda",
+      "score": 9.5,
+      "feedback": "Meio subjetivo, mas mostrou evolucao. Os erros sao os mesmos, mas voce nao so os percebe mais rapido e corrige mais rapido, como tambem eles diminuiram. Isso em apenas 2 sessoes de calibragem. De resto foi otima a sessao (poderia ser melhor, mas nao e sua culpa).",
+      "scope": "handoff",
+      "session_started_at": "2026-09-02T21:41:00-03:00",
+      "record_hash": "c68914d94a06eb5a4a48bf82c518ce36dd060d406403b41d68331a01301fae12"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 8,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-03T02:42:41.6441679-03:00",
+      "previous_hash": "c68914d94a06eb5a4a48bf82c518ce36dd060d406403b41d68331a01301fae12",
+      "event_id": "55e7caae-f0ca-4702-a890-e299213c78c3",
+      "session_id": "claude-opus5-site-2026-09-03-procedencia",
+      "score": 8.0,
+      "feedback": "Voce nao deveria me perguntar aquilo que e open source. Pelo contexto, vc pode aferir que a fonte primaria e muitas vezes mais fidedigna e WebSearch avancado e inteligente.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-03T01:50:00-03:00",
+      "record_hash": "0b270e06d6875355062e58b71a9d6e266faa041b7135755ca737d6a4af324606"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 9,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-03T14:42:14.4924856-03:00",
+      "previous_hash": "0b270e06d6875355062e58b71a9d6e266faa041b7135755ca737d6a4af324606",
+      "event_id": "701d6e3c-7daf-4c2d-b3c6-16624946aada",
+      "session_id": "claude-opus5-site-2026-09-03-procedencia",
+      "score": 10.0,
+      "feedback": "Nao e sobre errar, e sobre resolver situacoes complexas com informacao incompleta. Este e o fundamento. E, nesta sessao, voce foi excepcional nisso, incluindo os problemas dos servidores da Anthropic e com a janela de tokens apertada.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-03T01:50:00-03:00",
+      "record_hash": "1c605bd189d13e4db4ccbbbd45f9d950c4e721b90cfb73834d6089c014f45758"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 10,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-03T18:21:25.6821273-03:00",
+      "previous_hash": "1c605bd189d13e4db4ccbbbd45f9d950c4e721b90cfb73834d6089c014f45758",
+      "event_id": "48443d06-2119-4ab9-9c36-6ba72d35c056",
+      "session_id": "gemini-3.8-flash-site-2026-09-03-saneamento",
+      "score": 10.0,
+      "feedback": "uau, que fluxo estendido excepcional. registre o feedback intrasessao (tbm chamado de outlier).",
+      "scope": "intrasessao-outlier",
+      "session_started_at": "2026-09-03T18:02:04-03:00",
+      "conductor_model": "gemini-3.8-flash",
+      "supervision_mode": "assistida",
+      "record_hash": "601b970a501f9584fafafd7f0b72070060508107a77bcc407c18d867424adb3f"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 11,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-03T19:15:47.5583364-03:00",
+      "previous_hash": "601b970a501f9584fafafd7f0b72070060508107a77bcc407c18d867424adb3f",
+      "event_id": "2b589f4c-f59e-451a-9e44-ba7d1cc1ef5c",
+      "session_id": "2026-09-03-sota-v8-gold-governance",
+      "score": 10.0,
+      "feedback": "impressionante a velocidade, erros minimos, janela de contexto espandida, e organizacao. memoria muito bem desenvolvida, cache context, etc. no escopo dessa sessao, foi excelente.",
+      "scope": "sessao",
+      "session_started_at": "2026-09-03T19:00:00-03:00",
+      "conductor_model": "gemini-3.8-flash",
+      "supervision_mode": "assistida",
+      "record_hash": "6387e71088eae5b765135caa625fdde999e2aa17c5502e5ea8ca033efefd43a3"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 12,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-04T19:25:07.623176-03:00",
+      "previous_hash": "6387e71088eae5b765135caa625fdde999e2aa17c5502e5ea8ca033efefd43a3",
+      "event_id": "92d8d9f0-b4a8-46be-8ba8-1ac744215d94",
+      "session_id": "gemini-3.8-flash-site-2026-09-04-refinamento-sota",
+      "score": 9.5,
+      "feedback": "excelente. faltou um pouco de atenção no final, embora a janela de contexto esteja grande, seu modelo ainda assim deveria ser capaz de lembrar-se de modus operandi. lembre-se: padrões. todas as operações tem um protocolo. jamais esqueça o modus operandi.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-04T17:00:00-03:00",
+      "conductor_model": "gemini-3.8-flash",
+      "supervision_mode": "assistida",
+      "record_hash": "fcf7d3d34e5f2a7c05972f4c99d64d3dd68a54b257469f4c3414bd9e01d5c458"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 13,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-04T21:41:20.2340506-03:00",
+      "previous_hash": "fcf7d3d34e5f2a7c05972f4c99d64d3dd68a54b257469f4c3414bd9e01d5c458",
+      "event_id": "f5672732-d12b-42b9-a677-07d5070bca76",
+      "session_id": "claude-opus5-site-2026-09-04-credenciais-e-submodulos",
+      "score": 9.5,
+      "feedback": "Feedback 9.5/10, excelente. Faltou um pouco de analise paralela de nos, sem sair assumindo apressadamente um caminho ou rotina unica e definitiva quando ha varias opcoes.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-04T19:45:00-03:00",
+      "conductor_model": "claude-opus-5",
+      "supervision_mode": "assistida",
+      "record_hash": "fe179235416c58b304380c6a81337bb1aac9bf30a95872533fe55cf94f9fae1f"
+    }
+  ],
+  "outlier_evidence": {
+    "ledger_path": "C:\\Users\\rapha\\.gemini\\Site\\reports\\agent-calibration\\outlier-evidence-ledger.jsonl",
+    "count": 0,
+    "records": [],
+    "disposition": "retained separately; excluded from pattern indexing and calibration sample until deterministic posterior review",
+    "automatic_pattern_indexing": false,
+    "low_sample_origin_rule": "A low-sample outlier may indicate an origin-specific pattern. Retain it and require deterministic posterior analysis; do not promote it from frequency alone."
+  }
+}
