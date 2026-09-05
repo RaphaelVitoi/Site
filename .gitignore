@@ -88,7 +88,23 @@ reports/coverage/
 .coverage
 htmlcov/
 *.cover
-reports/cwv/
+# Artefatos do portao CWV. O DIRETORIO e ignorado, o CERTIFICADO nao.
+#
+# Medido em 2026-09-04: reports/cwv/ tinha 1218 arquivos e 9,6 MB, dos quais 1209
+# eram cwv_report_*.json/.md gerados A CADA execucao do portao -- dois por commit,
+# crescendo sem teto. Versionar o diretorio inteiro poria esse ruido auto-gerado
+# no historico, que e o oposto do que a fase 5 (higiene de repositorio) protege.
+#
+# `latest_lighthouse_production.json` e outra coisa: e o CERTIFICADO que o
+# cwv_gate.ps1 le para decidir se o TBT esta atestado (cwv_gate.ps1:34). Enquanto
+# ele ficou ignorado, a certificacao era LOCAL POR MAQUINA -- outro condutor, ou
+# o CI, via o warning de cobertura parcial ate rodar a propria auditoria. Ele e
+# autocontido (embute o lighthouse_report) e pesa ~515 KB.
+#
+# A negacao exige ignorar o CONTEUDO e nao o diretorio: com `reports/cwv/` o git
+# nao desce na pasta e o `!` nunca e avaliado.
+reports/cwv/*
+!reports/cwv/latest_lighthouse_production.json
 engine/avatars/*.txt
 # Indice ancorado dos registros (M.O. 13.C). DERIVADO dos frontmatters, nunca
 # mantido. Versiona-lo criaria a divergencia que a propria 13.C adverte: cache

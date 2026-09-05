@@ -378,6 +378,49 @@ Trilhas de teoria que NAO dependem dele, em ordem de retorno:
      transcricao aumenta a base -- mas lembre: mais pares CONSISTENTES nao
      movem o portao de reprodutibilidade nem um passo.
 
+=== PRELUDIO OBRIGATORIO, ANTES DA TEORIA ===
+
+Decisao do Tier 0 em 2026-09-04: esta sessao ABRE retirando as credenciais
+expostas do historico de origin/master.
+
+  Tres credenciais, todas em commits ja empurrados:
+    - API key do Stitch, literal em engine/stitch_bridge.py:21   (080cda35)
+    - agenticAssistant.geminiApiKey, em JULES_REPORT.md (x2)
+    - qwen-code.apiKey, em JULES_REPORT.md (x2)
+
+  Em 96ac0bc6 elas sairam do working tree e o vetor estrutural foi fechado
+  (redigir_segredos em sync_jules_report.py). O HISTORICO NAO FOI TOCADO: os
+  blobs antigos continuam recuperaveis.
+
+  ORDEM CORRETA -- confirmar com o Tier 0 antes de executar:
+    1. As tres chaves foram REVOGADAS no provedor? O expurgo nao invalida chave
+       nenhuma; se ainda estiverem vivas, revogar vem primeiro.
+    2. So entao git filter-repo (ou BFG) e forca-push em master.
+
+  A secao 7 do Site\CLAUDE.md proibe reescrever historico publicado, porque
+  forca-push quebra checkout alheio e ancora de revisao. Aqui ha EXCECAO
+  decidida pelo Tier 0: contencao de credencial vence preservacao de historico.
+  Declare a excecao no registro.
+
+=== DUAS PENDENCIAS QUE NAO SAO REGRESSAO ===
+
+  DEPENDABOT: os 8 alertas (2 criticos, 4 altos, 1 moderado, 1 baixo) que o push
+  reporta sao ANTIGOS e ja verificados pelo Tier 0. NAO decorrem da volta dos
+  quatro submodulos ao HEAD publico em 96ac0bc6. Serao tratados em momento
+  proprio; nao os investigue por iniciativa propria.
+
+  LIGHTHOUSE/TBT: RESOLVIDO em 2026-09-04, mas com ressalva estrutural.
+  Auditoria de producao executada em Chrome isolado: TBT 0 ms, LCP 447,576 ms,
+  CLS 0, performanceScore 1.0, fingerprint 1c8c2fc6... vinculado e conferido.
+  A RESSALVA: reports/cwv/ esta no .gitignore (linha 91), entao o artefato NAO
+  VIAJA NO COMMIT -- a certificacao e local por maquina. Outro condutor vera o
+  warning ate rodar a propria auditoria com
+  scripts/ops/invoke_lighthouse_production_audit.ps1.
+  E o fingerprint cobre TODA a arvore frontend/ menos .git, .next, coverage,
+  node_modules e reports -- 792 arquivos, dos quais 28 sao de teste. Um
+  .test.ts novo invalida a certificacao de performance sem tocar no bundle.
+  Refinar isso e REDUCAO MATERIAL de portao (secao 8.2) e exige autorizacao.
+
 === REGRAS QUE ABREM ESTA SESSAO ===
 
 ANALISE PARALELA DE NOS -- e o feedback 9.5 desta sessao. Ao chegar num no de

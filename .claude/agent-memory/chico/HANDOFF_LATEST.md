@@ -73,11 +73,27 @@ antes de medi-los.
 
 ## 4. Fila para o sucessor
 
-1. **Revogar as três credenciais no provedor** — seguem no histórico de
-   `origin/master`; trocar a variável não as invalida.
-2. **Conferir o cron do Jules após 03:20 UTC** — é a prova de que o clone voltou.
-3. **PMev, prioridade 1:** dois exports do HRC do mesmo nó (um ChipEV, outro
+**PRELÚDIO da próxima sessão, decidido pelo Tier 0:** retirar as três credenciais
+expostas do histórico de `origin/master`. Elas saíram do working tree em
+`96ac0bc6`, mas os blobs antigos continuam recuperáveis. **Ordem correta:**
+confirmar se foram revogadas no provedor — o expurgo não invalida chave nenhuma —
+e só então `git filter-repo` + força-push. É exceção explícita à §7, decidida pelo
+Tier 0: contenção de credencial vence preservação de histórico.
+
+1. **PMev, prioridade 1:** dois exports do HRC do mesmo nó (um ChipEV, outro
    ICMev) com o painel `CI` visível. O adaptador existe; falta o dado.
-4. **Aberto:** `autopoietic_daily_cycle.py` não tem agendamento nenhum.
+2. **Conferir o cron do Jules após 03:20 UTC** — é a prova de que o clone voltou.
+3. **Aberto:** `autopoietic_daily_cycle.py` não tem agendamento nenhum.
+
+### Duas pendências que NÃO são regressão
+
+- **Dependabot (8 alertas)** — antigos e já verificados pelo Tier 0. Não decorrem
+  da volta dos submódulos ao HEAD público. Tratar em momento próprio.
+- **Lighthouse/TBT — RESOLVIDO em 2026-09-04**, com ressalva estrutural. Auditoria
+  de produção em Chrome isolado: **TBT 0 ms, LCP 447,576 ms, CLS 0, score 1.0**,
+  fingerprint `1c8c2fc6…` conferido. **Mas `reports/cwv/` está no `.gitignore`**:
+  o artefato não viaja no commit, e a certificação é **local por máquina**. Outro
+  condutor verá o warning até rodar
+  `scripts/ops/invoke_lighthouse_production_audit.ps1`.
 
 **O prompt de continuação da teoria PMev está na §7 do relatório oficial.**
