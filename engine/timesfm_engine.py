@@ -13,8 +13,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import logging
+from typing import Literal
 
 import numpy as np
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger("nexus.timesfm")
 
@@ -80,6 +82,63 @@ class ForecastResult:
     model_used: str
     license_tier: str
 
+    def to_item(self) -> ForecastItem:
+        return ForecastItem(
+            target_name=self.target_name,
+            history_length=self.history_length,
+            forecast_horizon=self.forecast_horizon,
+            mean_prediction=self.mean_prediction,
+            quantile_10=self.quantile_10,
+            quantile_90=self.quantile_90,
+            model_used=self.model_used,
+            license_tier=self.license_tier,
+        )
+
+
+class ForecastItem(BaseModel):
+    """Resultado de previsao estruturado para uma serie temporal."""
+
+    target_name: str
+    history_length: int
+    forecast_horizon: int
+    mean_prediction: list[float]
+    quantile_10: list[float]
+    quantile_90: list[float]
+    model_used: str
+    license_tier: str
+
+
+class TimesFMForecastRequest(BaseModel):
+    """Payload de requisicao para previsao temporal via TimesFM."""
+
+    series: list[float] | None = Field(
+        None,
+        description="Serie temporal univariada (ex: historico de bankroll ou EV)",
+    )
+    series_dict: dict[str, list[float]] | None = Field(
+        None,
+        description="Series temporais multivariadas (ex: Fator Psi, RIO, ICM)",
+    )
+    horizon: int = Field(12, ge=1, le=128, description="Horizonte de passos futuros a prever")
+    frequency_indicator: int = Field(0, ge=0, description="Indicador de frequencia temporal (0=padrao)")
+    target_name: str = Field("metric", description="Nome semantico da variavel prevista")
+    mode: ExecutionMode = Field(
+        ExecutionMode.COMMERCIAL_PRODUCTION,
+        description="Modo de execucao (commercial_production ou research_benchmark)",
+    )
+    preferred_model_key: str = Field("timesfm-2.0-500m", description="Chave do modelo no catalogo TimesFM")
+
+
+class TimesFMForecastResponse(BaseModel):
+    """Envelope de resposta para inferencia TimesFM."""
+
+    status: str = "SUCCESS"
+    forecast_type: Literal["univariate", "multivariate"]
+    results: dict[str, ForecastItem]
+    model_used: str
+    license_tier: str
+    error: str | None = None
+
 
 class TimesFMGovernanceError(PermissionError):
     """Lançado quando uma tentativa de deploy comercial viola a licença do TimesFM 3.0."""
@@ -116,7 +175,7 @@ class TimesFMEngine:
                 "ou utilize o serviço gerenciado Google Cloud BigQuery ML (AI.FORECAST)."
             )
 
-        logger.info(
+        logger.debug(
             "TimesFM Inicializado | Modo: %s | Modelo: %s | Licença: %s",
             mode.value,
             meta.model_id,
@@ -139,7 +198,8 @@ class TimesFMEngine:
 
         # Simulação analítica com decaimento/drift bayesiano para fallback zero-token ou inferência direta
         last_val = float(history[-1])
-        trend = float(np.mean(np.diff(history[-10:]))) if len(history) >= 10 else 0.0
+        window = min(len(history), 10)
+        trend = float(np.mean(np.diff(history[-window:]))) if len(history) >= 2 else 0.0
         volatility = float(np.std(history)) if len(history) > 1 else 1.0
 
         steps = np.arange(1, horizon + 1)
@@ -172,3 +232,172 @@ class TimesFMEngine:
                 target_name=name,
             )
         return results
+
+
+def forecast_bankroll_trajectory(
+    history_bb: list[float],
+    horizon_tournaments: int = 12,
+    mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
+    preferred_model_key: str = "timesfm-2.0-500m",
+) -> ForecastResult:
+    """Funcao de dominio SOTA: Projeta a trajetoria estocastica de Bankroll (em BB).
+
+    Retorna previsao media esperada e tunel de variancia (q10 a q90).
+    """
+    engine = TimesFMEngine(mode=mode, preferred_model_key=preferred_model_key)
+    return engine.forecast_univariate(
+        series=history_bb,
+        horizon=horizon_tournaments,
+        target_name="Bankroll_Trajectory_BB",
+    )
+
+
+def forecast_pmev_risk_dynamics(
+    history_psi: list[float],
+    history_rio: list[float],
+    history_icm: list[float],
+    horizon_steps: int = 10,
+    mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
+    preferred_model_key: str = "timesfm-2.0-500m",
+) -> dict[str, ForecastResult]:
+    """Funcao de dominio SOTA: Projeta a evolucao conjunta dos tensores de risco PMev.
+
+    Combina Fator Psi (entropia/agressao), Passivo RIO e Pressao de ICM.
+    """
+    engine = TimesFMEngine(mode=mode, preferred_model_key=preferred_model_key)
+    return engine.forecast_multivariate(
+        series_dict={
+            "Fator_Psi": history_psi,
+            "Divida_RIO": history_rio,
+            "Pressao_ICM": history_icm,
+        },
+        horizon=horizon_steps,
+    )
+
+
+class AgentCalibrationForecast(BaseModel):
+    """Projecao estocastica TimesFM para calibracao de agentes."""
+
+    status: Literal["PROJECTION_ACTIVE", "INSUFFICIENT_HISTORY"]
+    history_points: int
+    horizon_sessions: int
+    mean_trajectory: list[float]
+    quantile_10: list[float]
+    quantile_90: list[float]
+    drift_per_session: float
+    drift_direction: Literal["EXPANSAO", "ESTAVEL", "DOWNWARD_DRIFT"]
+    risk_of_degradation: float
+    model_used: str
+    license_tier: str
+    conductor_model: str | None = None
+    notes: str | None = None
+
+
+def forecast_agent_calibration_trajectory(
+    history_scores: list[float],
+    horizon_sessions: int = 3,
+    conductor_model: str | None = None,
+    mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
+    preferred_model_key: str = "timesfm-2.0-500m",
+) -> AgentCalibrationForecast:
+    """Funcao de Dominio: Projeta a trajetoria e volatilidade de notas de calibracao dos agentes.
+
+    Utiliza TimesFM 2.0 (Apache 2.0) para antecipar desvios de performance, quantis e downward drift.
+    """
+    if len(history_scores) < 4:
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG["timesfm-2.0-500m"])
+        return AgentCalibrationForecast(
+            status="INSUFFICIENT_HISTORY",
+            history_points=len(history_scores),
+            horizon_sessions=horizon_sessions,
+            mean_trajectory=[],
+            quantile_10=[],
+            quantile_90=[],
+            drift_per_session=0.0,
+            drift_direction="ESTAVEL",
+            risk_of_degradation=0.0,
+            model_used=meta.model_id,
+            license_tier=meta.license_tier.value,
+            conductor_model=conductor_model,
+            notes="TimesFM exige ao menos 4 pontos historicos de feedback para inferencia temporal.",
+        )
+
+    engine = TimesFMEngine(mode=mode, preferred_model_key=preferred_model_key)
+    res = engine.forecast_univariate(
+        series=history_scores,
+        horizon=horizon_sessions,
+        target_name=f"agent_scores_{conductor_model or 'aggregate'}",
+    )
+
+    import math
+
+    # O domínio da avaliação do Tier 0 é estritamente limitado no suporte [0.0, 10.0].
+    # Nenhum cenário estocástico pode extrapolar a nota máxima (10.0) ou mínima (0.0).
+    raw_mean = res.mean_prediction
+
+    # Estimativa de dispersão fiel à volatilidade recente de avaliações do Tier 0
+    recent_volatility = (
+        float(np.std(history_scores[-6:])) if len(history_scores) >= 6 else float(np.std(history_scores))
+    )
+    sigma_est = max(0.15, recent_volatility * math.sqrt(max(1, horizon_sessions) / 3.0))
+
+    # Clamping rigoroso no espaço de notas [0.0, 10.0]
+    mean_clamped = [round(max(0.0, min(10.0, float(v))), 2) for v in raw_mean]
+    # Túnel estocástico coerente ancorado na média e desvio padrão do domínio
+    q10_clamped = [
+        round(max(0.0, min(m, m - 1.28 * sigma_est * math.sqrt(i + 1))), 2) for i, m in enumerate(mean_clamped)
+    ]
+    q90_clamped = [
+        round(min(10.0, max(m, m + 1.28 * sigma_est * math.sqrt(i + 1))), 2) for i, m in enumerate(mean_clamped)
+    ]
+
+    initial_score = history_scores[-1]
+    final_mean = mean_clamped[-1]
+    drift = (final_mean - initial_score) / max(1, horizon_sessions)
+    if drift > 0.05:
+        direction: Literal["EXPANSAO", "ESTAVEL", "DOWNWARD_DRIFT"] = "EXPANSAO"
+    elif drift < -0.05:
+        direction = "DOWNWARD_DRIFT"
+    else:
+        direction = "ESTAVEL"
+
+    # Probabilidade analítica de cauda gaussiana abaixo do limiar de excelência do portão (8.5)
+    critical_threshold = 8.5
+    final_clamped_mean = mean_clamped[-1]
+    z_score = (critical_threshold - final_clamped_mean) / sigma_est
+    degradation_prob = 0.5 * (1.0 + math.erf(z_score / math.sqrt(2.0)))
+    degradation_prob = max(0.0, min(1.0, degradation_prob))
+
+    return AgentCalibrationForecast(
+        status="PROJECTION_ACTIVE",
+        history_points=len(history_scores),
+        horizon_sessions=horizon_sessions,
+        mean_trajectory=mean_clamped,
+        quantile_10=q10_clamped,
+        quantile_90=q90_clamped,
+        drift_per_session=round(drift, 4),
+        drift_direction=direction,
+        risk_of_degradation=round(degradation_prob, 4),
+        model_used=res.model_used,
+        license_tier=res.license_tier,
+        conductor_model=conductor_model,
+    )
+
+
+def forecast_multimodel_calibration(
+    series_by_model: dict[str, list[float]],
+    horizon_sessions: int = 3,
+    mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
+    preferred_model_key: str = "timesfm-2.0-500m",
+) -> dict[str, AgentCalibrationForecast]:
+    """Escalonamento Multivariado: Projeta series temporais segmentadas por modelo condutor."""
+    return {
+        model: forecast_agent_calibration_trajectory(
+            history_scores=scores,
+            horizon_sessions=horizon_sessions,
+            conductor_model=model,
+            mode=mode,
+            preferred_model_key=preferred_model_key,
+        )
+        for model, scores in series_by_model.items()
+    }

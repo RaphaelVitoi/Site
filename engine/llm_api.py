@@ -1,4 +1,5 @@
 """Modulo Orquestrador SOTA de APIs de Inferencia e Circuit Breaker."""
+
 from __future__ import annotations
 
 import asyncio
@@ -567,7 +568,12 @@ def _build_models_to_try(task: Task, agent_type: str, openrouter_keys: list[str]
         extras = (
             ["anthropic/claude-opus-5", "anthropic/claude-sonnet-5", "deepseek/deepseek-chat"]
             if agent_type == "deep_thinking"
-            else ["google/gemini-3.5-flash-lite", "google/gemini-3.6-flash", "google/gemini-3.8-flash", "meta-llama/llama-3.1-8b-instruct"]
+            else [
+                "google/gemini-3.5-flash-lite",
+                "google/gemini-3.6-flash",
+                "google/gemini-3.8-flash",
+                "meta-llama/llama-3.1-8b-instruct",
+            ]
         )
         candidates.extend(m for m in extras if m not in candidates)
 

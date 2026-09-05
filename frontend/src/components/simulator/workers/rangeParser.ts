@@ -355,6 +355,8 @@ export function rangeToBitmask(rangeStr: string): bigint {
 		const c1 = (r1 << 2) | s1;
 		const c2 = (r2 << 2) | s2;
 
+		if (c1 === c2) continue;
+
 		const h = Math.max(c1, c2);
 		const l = Math.min(c1, c2);
 		const idx = h * 52 + l;
@@ -365,10 +367,13 @@ export function rangeToBitmask(rangeStr: string): bigint {
 	return mask;
 }
 
+// ABI esparsa do WASM: bit highCard * 52 + lowCard, máximo 2702.
+export const RANGE_MASK_BYTE_LENGTH = 338;
+
 export function maskToBytes(mask: bigint): Uint8Array {
-	const bytes = new Uint8Array(166);
+	const bytes = new Uint8Array(RANGE_MASK_BYTE_LENGTH);
 	let temp = mask;
-	for (let i = 0; i < 166; i++) {
+	for (let i = 0; i < RANGE_MASK_BYTE_LENGTH; i++) {
 		bytes.set([Number(temp & BigInt(0xff))], i);
 		temp >>= BigInt(8);
 	}

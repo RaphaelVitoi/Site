@@ -133,10 +133,7 @@ def test_tres_sessoes_com_um_feedback_cada_abrem_o_portao(tmp_path: Path) -> Non
 def test_uma_sessao_com_tres_feedbacks_e_dado_mas_nao_abre(tmp_path: Path) -> None:
     """Densidade intra-sessao fica registrada, e nao autoriza calibracao."""
     dia = "2026-09-10"
-    feedbacks = [
-        {"session_id": "sessao-A", "recorded_at": _instante(dia, f"1{n}:00:00")}
-        for n in range(3)
-    ]
+    feedbacks = [{"session_id": "sessao-A", "recorded_at": _instante(dia, f"1{n}:00:00")} for n in range(3)]
     r = _avaliar(tmp_path, feedbacks, dia)
 
     assert r["sessoes_com_densidade_relevante"] == ["sessao-A"], "a densidade e retida"
@@ -206,9 +203,7 @@ def test_sessao_partida_nao_conta_para_o_limiar(tmp_path: Path) -> None:
 def test_feedback_sem_sessao_nao_abre_portao(tmp_path: Path) -> None:
     """Amostra sem origem identificada e evidencia, mas nao e autorizacao."""
     dia = "2026-09-16"
-    feedbacks = [
-        {"session_id": "", "recorded_at": _instante(dia, f"1{n}:00:00")} for n in range(3)
-    ]
+    feedbacks = [{"session_id": "", "recorded_at": _instante(dia, f"1{n}:00:00")} for n in range(3)]
     r = _avaliar(tmp_path, feedbacks, dia)
 
     assert r["feedback_sem_sessao"] == 3

@@ -28,7 +28,7 @@ export function ScenarioQuickSelector({
             <i className="fa-solid fa-layer-group" />
           </div>
           <span className="font-mono text-[0.6rem] font-black uppercase tracking-[0.2em] text-white">
-            Atlas · 8 Cenários
+            Atlas · {scenarios.length} Cenários
           </span>
         </div>
         <span className="text-[0.5rem] font-mono text-text-dim uppercase tracking-wider bg-black/25 px-2 py-0.5 rounded-md border border-white/5">
@@ -55,13 +55,13 @@ export function ScenarioQuickSelector({
               }`}
             >
               <div className="flex items-center justify-between w-full mb-1.5">
-                <span className={`text-[0.48rem] font-mono font-black ${isActive ? 'text-accent-indigo' : 'text-text-darker'}`}>
+                <span className={`text-[0.48rem] font-mono font-black ${isActive ? 'text-accent-indigo-light' : 'text-text-darker'}`}>
                   0{index + 1}
                 </span>
                 {isActive ? (
                   <span className="w-1.5 h-1.5 rounded-full bg-accent-indigo animate-pulse shadow-[0_0_6px_rgba(99,102,241,1)]" />
                 ) : (
-                  <span className="text-[0.42rem] font-mono text-text-dim opacity-40 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[0.42rem] font-mono text-text-dim">
                     RP {s.ipRp}%
                   </span>
                 )}

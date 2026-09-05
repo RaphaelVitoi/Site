@@ -52,6 +52,7 @@ from api.v1.handlers import (
     handle_rag_query,
     handle_set_state,
     handle_simulate_perspective_tree,
+    handle_timesfm_forecast,
     handle_view_file,
     handle_web_search,
 )
@@ -123,6 +124,7 @@ def create_app(manager: QueueManager) -> web.Application:
             web.post("/api/v1/perspective/import-solver", handle_import_solver_tree),
             web.post("/api/v1/pmev/heatmap", handle_pmev_heatmap),
             web.post("/api/v1/perspective/heatmap", handle_pmev_heatmap),
+            web.post("/api/v1/timesfm/forecast", handle_timesfm_forecast),
         ]
     )
     return app

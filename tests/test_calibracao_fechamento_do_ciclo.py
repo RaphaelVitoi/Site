@@ -119,9 +119,22 @@ def _tres_sessoes(dia: str) -> list[dict]:
 
 def _avaliar(ledger: Path, outliers: Path, dia: str) -> dict:
     proc = subprocess.run(
-        ["pwsh", "-NoProfile", "-File", str(EVIDENCIA), "-Date", dia,
-         "-LedgerPath", str(ledger), "-OutlierLedgerPath", str(outliers)],
-        capture_output=True, text=True, check=True, cwd=str(RAIZ),
+        [
+            "pwsh",
+            "-NoProfile",
+            "-File",
+            str(EVIDENCIA),
+            "-Date",
+            dia,
+            "-LedgerPath",
+            str(ledger),
+            "-OutlierLedgerPath",
+            str(outliers),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=str(RAIZ),
     )
     return json.loads(proc.stdout)
 
@@ -135,12 +148,20 @@ def _calibrar(
     extra: list[str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     argumentos = [
-        "pwsh", "-NoProfile", "-File", str(CALIBRACAO),
-        "-LedgerPath", str(ledger),
-        "-Pattern", padrao,
-        "-CorroboratingEventIds", ",".join(corroboracoes),
-        "-ObservacaoRecursiva", "Serie lida por inteiro; outliers considerados.",
-        "-HypothesisJson", json.dumps(hipotese if hipotese is not None else HIPOTESE_COMPLETA),
+        "pwsh",
+        "-NoProfile",
+        "-File",
+        str(CALIBRACAO),
+        "-LedgerPath",
+        str(ledger),
+        "-Pattern",
+        padrao,
+        "-CorroboratingEventIds",
+        ",".join(corroboracoes),
+        "-ObservacaoRecursiva",
+        "Serie lida por inteiro; outliers considerados.",
+        "-HypothesisJson",
+        json.dumps(hipotese if hipotese is not None else HIPOTESE_COMPLETA),
     ]
     if extra:
         argumentos += extra
@@ -188,10 +209,23 @@ def test_feedback_posterior_a_calibracao_volta_a_contar(cenario) -> None:
 
     registrar = RAIZ / "scripts" / "ops" / "Register-AgentCalibrationFeedback.ps1"
     proc = subprocess.run(
-        ["pwsh", "-NoProfile", "-File", str(registrar), "-Score", "9",
-         "-Feedback", "sessao posterior a calibracao", "-SessionId", "sessao-D",
-         "-LedgerPath", str(ledger)],
-        capture_output=True, text=True, cwd=str(RAIZ),
+        [
+            "pwsh",
+            "-NoProfile",
+            "-File",
+            str(registrar),
+            "-Score",
+            "9",
+            "-Feedback",
+            "sessao posterior a calibracao",
+            "-SessionId",
+            "sessao-D",
+            "-LedgerPath",
+            str(ledger),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(RAIZ),
     )
     assert proc.returncode == 0, proc.stderr
 
@@ -221,7 +255,8 @@ def test_excecao_ao_limiar_exige_motivo_e_fica_gravada(tmp_path: Path) -> None:
     _ledger(tmp_path / "outlier-evidence-ledger.jsonl", [])
 
     proc = _calibrar(
-        ledger, ["evt-A", "evt-B"],
+        ledger,
+        ["evt-A", "evt-B"],
         extra=["-GateOverrideReason", "Tier 0 autorizou em 2026-09-23."],
     )
     assert proc.returncode == 0, proc.stderr
@@ -235,9 +270,13 @@ def test_excecao_ao_limiar_exige_motivo_e_fica_gravada(tmp_path: Path) -> None:
 def test_corroboracoes_precisam_ser_de_sessoes_distintas(cenario) -> None:
     """Independente = origem diferente. Uma origem so nao e recorrencia."""
     dia, ledger, _ = cenario
-    _ledger(ledger, _tres_sessoes(dia) + [
-        {"session_id": "sessao-A", "event_id": "evt-A2", "recorded_at": _instante(dia, "10:00:00")},
-    ])
+    _ledger(
+        ledger,
+        _tres_sessoes(dia)
+        + [
+            {"session_id": "sessao-A", "event_id": "evt-A2", "recorded_at": _instante(dia, "10:00:00")},
+        ],
+    )
 
     proc = _calibrar(ledger, ["evt-A", "evt-A2"])
     assert proc.returncode != 0
@@ -295,7 +334,10 @@ def test_calibracao_preserva_a_cadeia(cenario) -> None:
     verificador = RAIZ / "scripts" / "ops" / "Test-AgentCalibrationLedger.ps1"
     proc = subprocess.run(
         ["pwsh", "-NoProfile", "-File", str(verificador), "-LedgerPath", str(ledger)],
-        capture_output=True, text=True, check=True, cwd=str(RAIZ),
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=str(RAIZ),
     )
     assert json.loads(proc.stdout)["status"] == "valid"
 

@@ -76,7 +76,7 @@ export const InsolvencyRioPanel = ({
 					{safeInsolvency.trueInsolvencyEv.toFixed(2)} bb
 				</span>
 				<span className="text-[0.65rem] text-text-darker mt-1 italic">
-					Ajustado pelo Sizing Geométrico
+					Modelo exploratório • parâmetros provisórios
 				</span>
 			</div>
 

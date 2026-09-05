@@ -2,6 +2,19 @@
 /// <reference types="jest" />
 
 import { MonteCarloParallelPool, monteCarloPool } from '../../lib/monteCarloParallelPool';
+import { initializeMonteCarloWasm } from '../../lib/monteCarloWasmRuntime.node';
+import { maskToBytes, rangeToBitmask } from '../../components/simulator/workers/rangeParser';
+
+it('the actual WASM distinguishes AA/KK from AA/AA after serialization', async () => {
+  const calculate = await initializeMonteCarloWasm();
+  const aa = maskToBytes(rangeToBitmask('AA'));
+  const kk = maskToBytes(rangeToBitmask('KK'));
+  const unequal = calculate(aa, kk, '', 10000, 123, 1);
+  const symmetric = calculate(aa, aa, '', 10000, 123, 1);
+  expect(unequal).toBeGreaterThan(0.7);
+  expect(symmetric).toBeGreaterThan(0.45);
+  expect(symmetric).toBeLessThan(0.55);
+});
 
 describe('MonteCarloParallelPool (SOTA v7.0 GOLD)', () => {
 	it('should return a singleton instance of MonteCarloParallelPool', () => {
@@ -28,7 +41,7 @@ describe('MonteCarloParallelPool (SOTA v7.0 GOLD)', () => {
 		expect(result.equityPercentage).toBeLessThanOrEqual(100.0);
 		expect(result.stdError).toBeGreaterThanOrEqual(0);
 		expect(result.confidenceInterval95).toHaveLength(2);
-		expect(result.confidenceInterval95[0]).toBeLessThanOrEqual(result.confidenceInterval95[1]);
+		expect(result.confidenceInterval95?.[0]).toBeLessThanOrEqual(result.confidenceInterval95?.[1]);
 		expect(result.simulationId).toMatch(/^sim_/);
 		expect(['SHARED_ARRAY_BUFFER', 'TRANSFERABLE_WORKERS', 'SINGLE_THREAD_FALLBACK']).toContain(result.mode);
 	});

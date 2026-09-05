@@ -1,3 +1,5 @@
+import type { InsolvencyPayload, DistortionPayload, MultiwayPayload, NashDistortionResults, InsolvencyMetrics, InsolvencyWorkerRequest, InsolvencyWorkerResponse } from '../workers/insolvencyProtocol';
+export type { InsolvencyPayload, DistortionPayload, MultiwayPayload, NashDistortionResults, InsolvencyMetrics } from '../workers/insolvencyProtocol';
 /** @format */
 
 import { calculatePerspectivaVitoi } from '@/lib/perspectiva';
@@ -14,18 +16,6 @@ import type {
   SprStage,
   StreetChipEvFreqs,
 } from '../solver/types';
-
-export interface InsolvencyPayload {
-  villainRange: string;
-  board: string;
-  rpFactor: number;
-  heroInvested: number;
-  currentPot: number;
-  activePlayers: number;
-  kappaOverride?: number;
-  heroRange?: string;
-  betSizing?: number;
-}
 
 export interface QuantumEngineParams {
   scenario: Scenario;
@@ -46,54 +36,8 @@ export interface QuantumEngineParams {
   predictiveProfile?: Record<string, number> | null;
 }
 
-export interface DistortionPayload {
-  ipRpFlop: number;
-  oopRpFlop: number;
-  freqFlop: ChipEvFreqs;
-  ipRpTurn: number;
-  oopRpTurn: number;
-  freqTurn: ChipEvFreqs;
-  ipRpRiver: number;
-  oopRpRiver: number;
-  freqRiver: ChipEvFreqs;
-  topologicAggression: number;
-  activePlayers: number;
-  pots: [number, number, number];
-}
-
-export interface MultiwayPayload {
-  rangesData: Float64Array; // SOTA Zero-Copy Array
-  numPlayers: number;
-  boardMask: number;
-  targetIterations: number;
-  seed?: number;
-}
-
-export interface NashDistortionResults {
-  flop?: IcmDistortionResult;
-  turn?: IcmDistortionResult;
-  river?: IcmDistortionResult;
-}
-
-export interface InsolvencyMetrics {
-  winRate: number;
-  loseRate: number;
-  tieRate: number;
-  trueInsolvencyEv: number;
-  riskIndex: number;
-}
-
 export type QuantumMetricsResult = InsolvencyMetrics;
 export type QuantumMetricsPayload = InsolvencyPayload;
-
-interface InsolvencyWorkerResponse {
-  id: number;
-  error?: string;
-  type?: 'DISTORTION' | 'MATRIX' | 'MULTIWAY_MATRIX';
-  nashResults?: NashDistortionResults;
-  matrix?: number[];
-  multiwayResult?: Float64Array;
-}
 
 export function useQuantumEngine({
   scenario,
@@ -159,7 +103,7 @@ export function useQuantumEngine({
   const multiwayTensorRef = useRef<Float64Array | null>(null);
   const [isCalculatingMultiway, setIsCalculatingMultiway] = useState(false);
 
-  const lastRequestIdRef = useRef<number>(0);
+  const lastRequestIdRef = useRef({ MATRIX: 0, DISTORTION: 0, MULTIWAY_MATRIX: 0 });
   const matrixTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const distortionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const multiwayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -172,12 +116,14 @@ export function useQuantumEngine({
     insolvencyWorkerRef.current = worker;
 
     worker.onmessage = (e: MessageEvent<InsolvencyWorkerResponse>) => {
+      if (!e.data || !['MATRIX', 'DISTORTION', 'MULTIWAY_MATRIX'].includes(e.data.type)) return;
       // Validação de versão: Ignora resultados de requisições antigas
-      if (e.data.id !== lastRequestIdRef.current) return;
+      if (e.data.id !== lastRequestIdRef.current[e.data.type]) return;
 
       if (e.data.error) {
         console.warn('[SotaEcosystem] Entropia de Input (Insolvency WASM):', e.data.error);
-        setIsCalculatingInsolvency(false);
+        if (e.data.type === 'MULTIWAY_MATRIX') setIsCalculatingMultiway(false);
+        if (e.data.type === 'MATRIX') setIsCalculatingInsolvency(false);
       } else if (e.data.type === 'DISTORTION' && e.data.nashResults) {
         setNashResults(e.data.nashResults);
       } else if (e.data.type === 'MATRIX' && e.data.matrix) {
@@ -217,6 +163,7 @@ export function useQuantumEngine({
     worker.onerror = (e) => {
       console.error('[SotaEcosystem] Falha catastrófica no Worker:', e);
       setIsCalculatingInsolvency(false);
+      setIsCalculatingMultiway(false);
     };
 
     return () => {
@@ -256,8 +203,8 @@ export function useQuantumEngine({
       if (!insolvencyWorkerRef.current) return;
       setIsCalculatingInsolvency(true);
       if (matrixTimeoutRef.current) clearTimeout(matrixTimeoutRef.current);
+      const id = ++lastRequestIdRef.current.MATRIX;
       matrixTimeoutRef.current = setTimeout(() => {
-        const id = ++lastRequestIdRef.current;
         insolvencyWorkerRef.current?.postMessage({
           type: 'MATRIX',
           heroRange,
@@ -271,7 +218,7 @@ export function useQuantumEngine({
           betSizing,
           humanNoiseFactor,
           id,
-        });
+        } satisfies InsolvencyWorkerRequest);
       }, 150);
     },
     [effectiveKappa, humanNoiseFactor],
@@ -281,14 +228,15 @@ export function useQuantumEngine({
     (payload: DistortionPayload) => {
       if (!insolvencyWorkerRef.current) return;
       if (distortionTimeoutRef.current) clearTimeout(distortionTimeoutRef.current);
+      setNashResults(null);
+      const id = ++lastRequestIdRef.current.DISTORTION;
       distortionTimeoutRef.current = setTimeout(() => {
-        const id = ++lastRequestIdRef.current;
         insolvencyWorkerRef.current?.postMessage({
           type: 'DISTORTION',
           ...payload,
           humanNoiseFactor,
           id,
-        });
+        } satisfies InsolvencyWorkerRequest);
       }, 150);
     },
     [humanNoiseFactor],
@@ -310,8 +258,8 @@ export function useQuantumEngine({
     setIsCalculatingMultiway(true);
     if (multiwayTimeoutRef.current) clearTimeout(multiwayTimeoutRef.current);
 
+    const id = ++lastRequestIdRef.current.MULTIWAY_MATRIX;
     multiwayTimeoutRef.current = setTimeout(() => {
-      const id = ++lastRequestIdRef.current;
       // SOTA ZERO-COPY TRANSFER: Transferimos o ArrayBuffer nativo diretamente para o Worker.
       // Isso extirpa a clonagem pesada (Structured Clone) do JS e aniquila os vazamentos de GC no React.
       insolvencyWorkerRef.current?.postMessage(
@@ -323,7 +271,7 @@ export function useQuantumEngine({
           targetIterations,
           seed,
           id,
-        },
+        } satisfies InsolvencyWorkerRequest,
         [rangesData.buffer],
       ); // <- A Mágica SOTA: Transferência absoluta de posse da memória.
     }, 150);
@@ -390,6 +338,7 @@ export function useQuantumEngine({
     heroPosition,
     heroIsIp,
     effectiveKappa,
+    humanNoiseFactor,
   ]);
 
   // Derivar RP automaticamente via Malmuth-Harville (Base)
@@ -662,7 +611,7 @@ export function useQuantumEngine({
       nashFlop:
         nashResults?.flop ??
         formatSyncSolverResult(
-          solveIcmDistortion(ipRpFlop, oopRpFlop, effectiveStreetFreqs.flop, topologicAggression),
+          solveIcmDistortion(ipRpFlop, oopRpFlop, effectiveStreetFreqs.flop, topologicAggression, postFlopPots[0], 0, activePlayers),
           effectiveStreetFreqs.flop,
           ipRpFlop,
           oopRpFlop,
@@ -670,7 +619,7 @@ export function useQuantumEngine({
       nashTurn:
         nashResults?.turn ??
         formatSyncSolverResult(
-          solveIcmDistortion(ipRpTurn, oopRpTurn, effectiveStreetFreqs.turn, topologicAggression),
+          solveIcmDistortion(ipRpTurn, oopRpTurn, effectiveStreetFreqs.turn, topologicAggression, postFlopPots[1], 1, activePlayers),
           effectiveStreetFreqs.turn,
           ipRpTurn,
           oopRpTurn,
@@ -678,7 +627,7 @@ export function useQuantumEngine({
       nashRiver:
         nashResults?.river ??
         formatSyncSolverResult(
-          solveIcmDistortion(ipRpRiver, oopRpRiver, effectiveStreetFreqs.river, topologicAggression),
+          solveIcmDistortion(ipRpRiver, oopRpRiver, effectiveStreetFreqs.river, topologicAggression, postFlopPots[2], 2, activePlayers),
           effectiveStreetFreqs.river,
           ipRpRiver,
           oopRpRiver,
@@ -694,6 +643,8 @@ export function useQuantumEngine({
       oopRpRiver,
       effectiveStreetFreqs,
       topologicAggression,
+      postFlopPots,
+      activePlayers,
     ],
   );
 

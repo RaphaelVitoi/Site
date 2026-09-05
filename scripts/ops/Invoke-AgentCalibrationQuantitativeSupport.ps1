@@ -9,9 +9,14 @@
     model scope, and limitations must be copied into the daily audit report.
 
     Available engines:
+      - monte-carlo-equity-wasm: wasm-equity/lib.rs::calculate_equity_monte_carlo_binary
       - monte-carlo-icm: frontend/src/lib/montecarlo.ts
       - cfr-regret: engine/math_sota.py::cfr_mock_strategy
+      - cfr-pure: frontend/src/components/simulator/workers/cfr.worker.ts
+      - timesfm-forecast: engine/timesfm_engine.py::forecast_agent_calibration_trajectory
 
+    TimesFM is Google Research's zero-shot foundation model for time series forecasting,
+    providing inductive statistical drift projection for agent calibration scores.
     CFR means Counterfactual Regret Minimization. It is a bounded quantitative
     support layer, not an autonomous decision maker.
 #>
@@ -87,9 +92,23 @@ param(
     [ValidateRange(0.0, 1.0)]
     [double]$CfrKappa = 1.0,
 
-    [Parameter(ParameterSetName = 'CfrPure')]
+    [Parameter(Mandatory, ParameterSetName = 'CfrPure')]
     [ValidateRange(1, 100000)]
-    [int]$CfrIterations = 32
+    [int]$CfrIterations = 32,
+
+    [Parameter(Mandatory, ParameterSetName = 'TimesFm')]
+    [ValidateSet('timesfm-forecast')]
+    [string]$TimesFmMode,
+
+    [Parameter(ParameterSetName = 'TimesFm')]
+    [string]$ScoresJson,
+
+    [Parameter(ParameterSetName = 'TimesFm')]
+    [ValidateRange(1, 30)]
+    [int]$TimesFmHorizon = 3,
+
+    [Parameter(ParameterSetName = 'TimesFm')]
+    [string]$ConductorModel
 )
 
 Set-StrictMode -Version Latest
@@ -241,6 +260,86 @@ console.log(JSON.stringify({ matrix, summary: { cells: matrix.length, minimum: M
             'The active worker is a pure iterative CFR-style regret-matching implementation over its declared 13x13-style abstraction.',
             'Pot, stack, kappa, node count, and iteration count are audit inputs and must be derived and cited before invocation.',
             'The matrix compares declared alternatives under its abstraction; it does not establish that a calibration is true or safe.'
+        )
+    } | ConvertTo-Json -Depth 8
+    exit 0
+}
+
+if ($PSCmdlet.ParameterSetName -eq 'TimesFm') {
+    $pythonPath = Join-Path $repositoryRoot '.venv\Scripts\python.exe'
+    if (-not (Test-Path -LiteralPath $pythonPath)) { throw 'Project Python runtime (.venv\Scripts\python.exe) was not found.' }
+
+    $numericScores = @()
+    if (-not [string]::IsNullOrWhiteSpace($ScoresJson)) {
+        try {
+            $parsed = @($ScoresJson | ConvertFrom-Json)
+            foreach ($item in $parsed) {
+                $val = 0.0
+                if (-not [double]::TryParse([string]$item, [ref]$val)) { throw 'ScoresJson must contain only numeric values.' }
+                $numericScores += $val
+            }
+        } catch {
+            throw 'ScoresJson must be a valid JSON array of numbers.'
+        }
+    } else {
+        $ledgerPath = Join-Path $repositoryRoot 'reports\agent-calibration\feedback-ledger.jsonl'
+        if (Test-Path -LiteralPath $ledgerPath) {
+            $lines = Get-Content -LiteralPath $ledgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+            foreach ($line in $lines) {
+                try {
+                    $entry = $line | ConvertFrom-Json
+                    if ($entry.record_type -eq 'feedback' -and $null -ne $entry.score) {
+                        if ([string]::IsNullOrWhiteSpace($ConductorModel) -or [string]$entry.conductor_model -eq $ConductorModel) {
+                            $val = 0.0
+                            if ([double]::TryParse([string]$entry.score, [ref]$val)) {
+                                $numericScores += $val
+                            }
+                        }
+                    }
+                } catch {}
+            }
+        }
+    }
+
+    if ($numericScores.Count -lt 4) {
+        throw "TimesFM requires at least 4 historical calibration score points. Found: $($numericScores.Count)."
+    }
+
+    $env:AGENT_CALIBRATION_SCORES = ConvertTo-Json -InputObject $numericScores -Compress
+    $env:AGENT_CALIBRATION_HORIZON = [string]$TimesFmHorizon
+    $env:AGENT_CALIBRATION_CONDUCTOR = if ($ConductorModel) { $ConductorModel } else { '' }
+
+    $pythonCode = @'
+import json
+import os
+from engine.timesfm_engine import forecast_agent_calibration_trajectory
+
+scores = [float(x) for x in json.loads(os.environ["AGENT_CALIBRATION_SCORES"])]
+horizon = int(os.environ.get("AGENT_CALIBRATION_HORIZON", "3"))
+conductor = os.environ.get("AGENT_CALIBRATION_CONDUCTOR") or None
+
+fc = forecast_agent_calibration_trajectory(scores, horizon_sessions=horizon, conductor_model=conductor)
+print(fc.model_dump_json())
+'@
+
+    $rawResult = & $pythonPath -c $pythonCode
+    if ($LASTEXITCODE -ne 0) { throw 'TimesFM calibration forecast engine failed.' }
+    $result = $rawResult | ConvertFrom-Json
+
+    [pscustomobject]@{
+        schema_version = 'agent-calibration-quantitative-support/v2'
+        engine         = 'google-timesfm-2.0'
+        source         = 'engine/timesfm_engine.py::forecast_agent_calibration_trajectory'
+        inputs         = [ordered]@{
+            scores_count    = $numericScores.Count
+            horizon         = $TimesFmHorizon
+            conductor_model = $ConductorModel
+        }
+        output         = $result
+        limitations    = @(
+            'Google Research TimesFM 2.0 (Apache 2.0) zero-shot foundation model estimates score drift, predictive mean trajectory and degradation risks over upcoming sessions.',
+            'It is an inductive statistical prior and bounded quantitative support layer; it does not replace empirical session evaluation or gate criteria.',
+            'Degradation detection triggers when 10th percentile crosses the gate threshold (8.5) or mean trajectory slopes downwards.'
         )
     } | ConvertTo-Json -Depth 8
     exit 0

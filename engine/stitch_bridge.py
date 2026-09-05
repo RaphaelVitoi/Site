@@ -174,9 +174,7 @@ class StitchClient:
         if not self.is_configured:
             raise ValueError("StitchClient nao configurado: STITCH_API_KEY ausente.")
         formatted_name = (
-            project_name_or_id
-            if project_name_or_id.startswith("projects/")
-            else f"projects/{project_name_or_id}"
+            project_name_or_id if project_name_or_id.startswith("projects/") else f"projects/{project_name_or_id}"
         )
         return self._call_tool("get_project", {"name": formatted_name})
 
@@ -191,9 +189,7 @@ class StitchClient:
         if not self.is_configured:
             raise ValueError("StitchClient nao configurado: STITCH_API_KEY ausente.")
         formatted_name = (
-            project_name_or_id
-            if project_name_or_id.startswith("projects/")
-            else f"projects/{project_name_or_id}"
+            project_name_or_id if project_name_or_id.startswith("projects/") else f"projects/{project_name_or_id}"
         )
         try:
             self._call_tool("delete_project", {"name": formatted_name})
@@ -275,7 +271,10 @@ class StitchClient:
         """Faz o upload base64 de um documento DESIGN.md para o projeto Stitch."""
         clean_id = project_id.replace("projects/", "")
         b64_content = base64.b64encode(design_md_text.encode("utf-8")).decode("utf-8")
-        return self._call_tool("upload_design_md", {
-            "projectId": clean_id,
-            "designMdBase64": b64_content,
-        })
+        return self._call_tool(
+            "upload_design_md",
+            {
+                "projectId": clean_id,
+                "designMdBase64": b64_content,
+            },
+        )

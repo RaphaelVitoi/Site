@@ -250,6 +250,46 @@ $gateWindowReason = if ($sessoesInconsistentes.Count -gt 0 -and -not $structural
     "$($sessoesValidas.Count) sessoes com feedback ($($sessoesValidas -join ', ')) alcancam o minimo de $MinimumDistinctSessions. A recorrencia de padrao continua sendo obrigacao do auditor, e nao e medida aqui."
 }
 
+# PROJECAO TEMPORAL TIMESFM (ATRELADA POR DEFAULT).
+#
+# Utiliza o Google Research TimesFM 2.0 (Apache 2.0) para projetar a trajetoria
+# estocastica das notas nas proximas sessoes (H=3, correspondente ao limiar do portao).
+# Detecta antecipadamente derivas negativas (downward drift) e risco de degradacao.
+$timesfmForecast = $null
+$pythonExe = Join-Path $repositoryRoot '.venv\Scripts\python.exe'
+if ($scores.Count -ge 4 -and (Test-Path -LiteralPath $pythonExe)) {
+    $scoresJson = ConvertTo-Json -InputObject $scores -Compress
+    $env:AGENT_CALIBRATION_SCORES = $scoresJson
+    $pyCode = @'
+import json
+import os
+from engine.timesfm_engine import forecast_agent_calibration_trajectory
+
+scores = [float(x) for x in json.loads(os.environ["AGENT_CALIBRATION_SCORES"])]
+fc = forecast_agent_calibration_trajectory(scores, horizon_sessions=3)
+print(fc.model_dump_json())
+'@
+    try {
+        $rawOutput = & $pythonExe -c $pyCode
+        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($rawOutput)) {
+            $timesfmForecast = $rawOutput | ConvertFrom-Json
+        }
+    }
+    catch {
+        $timesfmForecast = [ordered]@{
+            status = 'EXECUTION_ERROR'
+            error  = $_.Exception.Message
+        }
+    }
+} else {
+    $timesfmForecast = [ordered]@{
+        status           = 'INSUFFICIENT_HISTORY'
+        required_points  = 4
+        available_points = $scores.Count
+        reason           = 'TimesFM exige ao menos 4 pontos historicos de feedback para projecao estocastica.'
+    }
+}
+
 [pscustomobject]@{
     schema_version                 = 'agent-calibration-evidence/v4'
     date                           = $day
@@ -258,6 +298,7 @@ $gateWindowReason = if ($sessoesInconsistentes.Count -gt 0 -and -not $structural
     evaluated_at_policy            = 'Gatilho primario: aviso proativo no instante em que o limiar e atingido, se nao houver tarefa em andamento. Lastro: corrida diaria as 23:59 (Register-AgentCalibrationDailyTask.ps1), que registra a evidencia do dia inclusive quando ela e insuficiente.'
     session_filter                 = $SessionId
     ultima_calibracao              = if ($marcoUltimaCalibracao -eq [DateTimeOffset]::MinValue) { $null } else { $marcoUltimaCalibracao.ToString('o') }
+    timesfm_forecast               = $timesfmForecast
     sessoes_com_feedback           = $sessoesValidas
     sessoes_com_feedback_count     = $sessoesValidas.Count
     sessoes_faltantes              = $faltam

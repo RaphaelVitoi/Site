@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 SolverType = Literal["deep_solver", "gtowizard", "monker_solver", "hrc_pro", "pio_solver", "auto"]
 
 
 class PerspectiveCalculationRequest(BaseModel):
     """Requisicao para calculo pontual da Perspectiva Matematica (PMev)."""
+
+    model_config = ConfigDict(allow_inf_nan=False)
 
     equity: float = Field(..., ge=0.0, le=1.0, description="Equidade nominal de showdown [0.0 - 1.0]")
     realization_factor: float = Field(1.0, ge=0.1, le=2.5, description="Fator de Realizacao R de equidade")
@@ -46,6 +48,8 @@ class PerspectivaResult(BaseModel):
 class PerspectiveTreeRequest(BaseModel):
     """Requisicao para simulacao de arvore recursiva de decisao."""
 
+    model_config = ConfigDict(allow_inf_nan=False)
+
     equity: float = Field(..., ge=0.0, le=1.0)
     pot_size: float = Field(..., ge=0.1)
     stack_eff: float = Field(..., ge=0.1)
@@ -62,7 +66,7 @@ class PerspectiveTreeRequest(BaseModel):
     loss_aversion_base: float = Field(2.25)
     fgs_health: float = Field(1.0)
     rp_opp: float = Field(20.0)
-    fold_equity: float = Field(0.30)
+    fold_equity: float = Field(0.30, ge=0.0, le=1.0)
 
 
 class DecisionNodeResponse(BaseModel):

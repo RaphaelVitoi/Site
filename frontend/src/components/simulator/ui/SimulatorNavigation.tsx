@@ -5,6 +5,7 @@
  */
 
 import { motion } from 'framer-motion';
+import { useRef } from 'react';
 import type { ActiveTool } from '../MasterSimulator';
 
 interface SimulatorNavigationProps {
@@ -16,6 +17,7 @@ export default function SimulatorNavigation({
 	activeTool,
 	onSelectTool,
 }: Readonly<SimulatorNavigationProps>) {
+	const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 	const tools: {
 		id: ActiveTool;
 		label: string;
@@ -57,10 +59,10 @@ export default function SimulatorNavigation({
 	];
 
 	return (
-		<nav aria-label="Ferramentas do simulador" className="flex items-center gap-1.5 p-1.5 bg-slate-950/60 rounded-2xl border border-white/10 shadow-inner relative overflow-x-auto no-scrollbar w-full max-w-full justify-start md:justify-between">
+		<div role="tablist" aria-label="Ferramentas do simulador" className="flex items-center gap-1.5 p-1.5 bg-slate-950/60 rounded-2xl border border-white/10 shadow-inner relative overflow-x-auto no-scrollbar w-full max-w-full justify-start md:justify-between">
 			<div className="absolute inset-0 bg-radial-[at_top_left] from-accent-indigo/5 to-transparent pointer-events-none min-w-full" />
 
-			{tools.map((t) => {
+			{tools.map((t, index) => {
 				const isActive = activeTool === t.id;
 
 				return (
@@ -68,7 +70,22 @@ export default function SimulatorNavigation({
 						type="button"
 						key={t.id}
 						onClick={() => onSelectTool(t.id)}
-						aria-current={isActive ? 'page' : undefined}
+						id={`simulator-tab-${t.id}`}
+                        aria-controls="simulator-tool-panel"
+                        tabIndex={isActive ? 0 : -1}
+                        ref={(node) => { tabRefs.current[index] = node; }}
+                        onKeyDown={(event) => {
+                          let next: number;
+                          if (event.key === 'ArrowRight') next = (index + 1) % tools.length;
+                          else if (event.key === 'ArrowLeft') next = (index - 1 + tools.length) % tools.length;
+                          else if (event.key === 'Home') next = 0;
+                          else if (event.key === 'End') next = tools.length - 1;
+                          else return;
+                          event.preventDefault();
+                          const tool = tools.at(next);
+                          if (tool) onSelectTool(tool.id);
+                          tabRefs.current.at(next)?.focus();
+                        }}
 						aria-selected={isActive}
 						role="tab"
 						className={`relative px-3 sm:px-4 py-2 rounded-xl text-[0.58rem] sm:text-[0.62rem] font-black uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 whitespace-nowrap active:scale-95 group/btn shrink-0 cursor-pointer ${
@@ -97,6 +114,6 @@ export default function SimulatorNavigation({
 					</button>
 				);
 			})}
-		</nav>
+		</div>
 	);
 }

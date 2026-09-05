@@ -146,8 +146,8 @@ def _parse_hsl_token(css: str, token: str) -> tuple[float, float, float]:
         css,
     )
     assert match, f"Token ausente ou nao-HSL: {token}"
-    h, s, l = (float(value) for value in match.groups())
-    return (h, s, l)
+    h, s, lum = (float(value) for value in match.groups())
+    return (h, s, lum)
 
 
 def _relative_luminance(hsl: tuple[float, float, float]) -> float:

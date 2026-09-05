@@ -52,9 +52,7 @@ def test_selecao_por_intencao_e_exclusao_de_contexto_local(description: str, exp
 
 @pytest.mark.unit
 def test_pedido_explicito_supera_bloqueio_de_contexto() -> None:
-    decision = resolve_mcp_addons(
-        "Comparar a migracao do SQLite para um branch", {"mcp_addons": ["mcp-server-neon"]}
-    )
+    decision = resolve_mcp_addons("Comparar a migracao do SQLite para um branch", {"mcp_addons": ["mcp-server-neon"]})
     assert list(decision.selected) == ["mcp-server-neon"]
     assert "mcp-server-neon" in decision.explicit
 

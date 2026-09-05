@@ -82,9 +82,7 @@ def _cenario(raw: str, regime: str) -> dict[str, Any]:
     # distingue ausente de ilegivel e ambos reprovam -- o que muda e a mensagem.
     provenance["eNashUnit"] = _medido(
         proc.e_nash_unit,
-        "e-Nash ausente: unidade nao descreve nada"
-        if proc.e_nash is None
-        else "export declara e-Nash sem unidade",
+        "e-Nash ausente: unidade nao descreve nada" if proc.e_nash is None else "export declara e-Nash sem unidade",
     )
 
     if proc.e_nash_label is not None:

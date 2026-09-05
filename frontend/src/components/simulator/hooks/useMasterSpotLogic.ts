@@ -5,6 +5,7 @@ import type { Scenario, HeroPosition, QuantumMetrics } from '../solver/types';
 import { calculateActionMetrics, calculateBaseFgsErosion, createSpotData } from '../solver/utils';
 import type { PerspectivaResult } from '@/lib/perspectiva';
 import type {
+	InsolvencyMetrics,
 	NashDistortionResults,
 	InsolvencyPayload,
 	DistortionPayload,
@@ -23,6 +24,7 @@ interface UseMasterSpotLogicParams {
 	quantumPerspectiva: PerspectivaResult | null;
 	apiQuantumMetrics: QuantumMetrics | null;
 	nativeRangeMetric: { equity: number; isCalculating: boolean };
+	insolvencyMatrixData: InsolvencyMetrics | null;
 	isCalculatingInsolvency: boolean;
 	dispatchInsolvencyMatrix: (payload: InsolvencyPayload) => void;
 	dispatchIcmDistortion: (payload: DistortionPayload) => void;
@@ -57,6 +59,7 @@ export function useMasterSpotLogic({
 	quantumPerspectiva,
 	apiQuantumMetrics,
 	nativeRangeMetric,
+	insolvencyMatrixData,
 	isCalculatingInsolvency,
 	dispatchInsolvencyMatrix,
 	dispatchIcmDistortion,
@@ -256,7 +259,7 @@ export function useMasterSpotLogic({
 	const wasmContextValue = useMemo(
 		() => ({
 			nativeRangeMetric,
-			insolvencyMatrixData: null,
+			insolvencyMatrixData,
 			isCalculatingInsolvency,
 			dispatchInsolvencyMatrix,
 			dispatchIcmDistortion,
@@ -265,6 +268,7 @@ export function useMasterSpotLogic({
 		}),
 		[
 			nativeRangeMetric,
+			insolvencyMatrixData,
 			isCalculatingInsolvency,
 			dispatchInsolvencyMatrix,
 			dispatchIcmDistortion,

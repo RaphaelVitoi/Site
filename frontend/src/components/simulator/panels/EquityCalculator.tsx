@@ -290,7 +290,7 @@ export default function EquityCalculator() {
               {players.map((p) => (
                 <div
                   key={p.id}
-                  className={`group flex items-center gap-3 p-3 rounded-2xl border transition-all ${heroId === p.id ? 'bg-accent-indigo/10 border-accent-indigo/30 shadow-[0_0_20px_rgba(99,102,241,0.1)]' : 'bg-black/40 border-white/5 hover:border-white/10'}`}
+                  className={`group flex flex-wrap sm:flex-nowrap items-center gap-2 p-3 rounded-2xl border transition-all ${heroId === p.id ? 'bg-accent-indigo/10 border-accent-indigo/30 shadow-[0_0_20px_rgba(99,102,241,0.1)]' : 'bg-black/40 border-white/5 hover:border-white/10'}`}
                 >
                   <button
                     type="button"
@@ -306,7 +306,7 @@ export default function EquityCalculator() {
                     placeholder="Nome"
                     value={p.name}
                     onChange={(e) => updateName(p.id, e.target.value)}
-                    className="flex-1 bg-transparent border-none text-[0.75rem] font-bold text-text-light focus:outline-none focus:ring-0"
+                    className="min-w-0 flex-1 bg-transparent border-none text-[0.75rem] font-bold text-text-light focus:outline-none focus:ring-0"
                   />
                   <div className="flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-xl border border-white/5 shadow-inner">
                     <input
@@ -352,7 +352,7 @@ export default function EquityCalculator() {
                 <i className="fa-solid fa-plus text-[0.5rem]" /> Posição
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2 max-h-100 overflow-y-auto pr-2 scrollbar-hide">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-100 overflow-y-auto pr-2 scrollbar-hide">
               {prizes.map((val, i) => (
                 <div
                   key={`prize-pos-${i}` /* NOSONAR */}
@@ -366,7 +366,7 @@ export default function EquityCalculator() {
                     placeholder="0"
                     value={val}
                     onChange={(e) => updatePrize(i, Number.parseFloat(e.target.value) || 0)}
-                    className="flex-1 bg-black/60 border border-white/5 rounded-lg px-3 py-1.5 text-[0.75rem] font-mono font-black text-right text-accent-emerald focus:outline-none focus:border-accent-emerald shadow-inner"
+                    className="min-w-0 flex-1 bg-black/60 border border-white/5 rounded-lg px-3 py-1.5 text-[0.75rem] font-mono font-black text-right text-accent-emerald focus:outline-none focus:border-accent-emerald shadow-inner"
                   />
                   {i === prizes.length - 1 && prizes.length > 1 && (
                     <button

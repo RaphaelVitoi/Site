@@ -158,7 +158,9 @@ def main() -> None:
         print(f"Duracao Total:         {summary['duration_seconds']}s")
         print(f"Jules Cloud (3.6/3.1): [{summary['jules']['status']}] -> {summary['jules']['report']}")
         print(f"Stitch UI (3.8/3.5):   [{summary['stitch']['status']}] -> {summary['stitch']['report']}")
-        print(f"Homeostase & Testes:   [{summary['homeostasis']['status']}] ({summary['homeostasis']['tested_suites']} suites validadas)")
+        print(
+            f"Homeostase & Testes:   [{summary['homeostasis']['status']}] ({summary['homeostasis']['tested_suites']} suites validadas)"
+        )
         print(f"Economia de CPU Local: {summary['roi_metrics']['local_compute_savings']}")
         print(f"Velocidade de Design:  {summary['roi_metrics']['design_velocity']}")
         print(f"Integridade Geral:     {summary['roi_metrics']['governance_integrity']}")

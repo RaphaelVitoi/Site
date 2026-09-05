@@ -251,4 +251,3 @@ def test_jules_client_list_sessions_and_activities() -> None:
         activities = client.get_activities("sess-1")
         assert len(activities) == 1
         assert activities[0]["originator"] == "SYSTEM"
-

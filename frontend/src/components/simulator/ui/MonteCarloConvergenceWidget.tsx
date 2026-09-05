@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import AnimatedNumber from './AnimatedNumber';
 
 function getSimulationModeLabel(mode: string | undefined): string {
+	if (mode === 'DEMO_FALLBACK') return 'Molde demonstrativo • motor indisponível';
 	if (mode === 'SHARED_ARRAY_BUFFER') {
 		return 'SharedArrayBuffer Atômico';
 	}
@@ -222,7 +223,7 @@ export function MonteCarloConvergenceWidget({
 				<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-black/40 p-4 rounded-2xl border border-white/5">
 					<div className="flex flex-col gap-0.5">
 						<span className="text-[0.5rem] font-black text-text-darker uppercase tracking-wider">
-							Equidade Monte Carlo
+							{result.mode === 'DEMO_FALLBACK' ? 'Equidade demonstrativa' : 'Equidade Monte Carlo'}
 						</span>
 						<span className="text-xl font-black font-mono text-accent-emerald tabular-nums">
 							<AnimatedNumber value={result.equityPercentage} decimals={2} />%
@@ -234,7 +235,7 @@ export function MonteCarloConvergenceWidget({
 							Erro Padrão (SE)
 						</span>
 						<span className="text-xl font-black font-mono text-white tabular-nums">
-							±{(result.stdError * 100).toFixed(2)}%
+							{result.stdError === null ? 'Não medido' : `±${(result.stdError * 100).toFixed(2)}%`}
 						</span>
 					</div>
 
@@ -243,7 +244,7 @@ export function MonteCarloConvergenceWidget({
 							Intervalo 95% CI
 						</span>
 						<span className="text-sm font-bold font-mono text-text-light tabular-nums mt-1">
-							[{result.confidenceInterval95[0]}% — {result.confidenceInterval95[1]}%]
+							{result.confidenceInterval95 === null ? 'Não medido' : `[${result.confidenceInterval95[0]}% — ${result.confidenceInterval95[1]}%]`}
 						</span>
 					</div>
 
@@ -261,7 +262,7 @@ export function MonteCarloConvergenceWidget({
 			{result && (
 				<div className="space-y-1.5">
 					<div className="flex justify-between text-[0.55rem] font-mono text-text-dim">
-						<span>Convergência Estocástica ({result.iterations.toLocaleString('pt-BR')} mãos simuladas)</span>
+						<span>{result.mode === 'DEMO_FALLBACK' ? 'Molde ativo • nenhuma mão simulada' : `Convergência Estocástica (${result.iterations.toLocaleString('pt-BR')} mãos simuladas)`}</span>
 						<span className="text-accent-emerald font-bold">{result.equityPercentage.toFixed(2)}% Equidade</span>
 					</div>
 					<div className="h-2 w-full bg-black/60 rounded-full overflow-hidden border border-white/5 relative">

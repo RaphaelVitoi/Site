@@ -91,8 +91,7 @@ def test_manifesto_que_falha_em_medir_e_erro_e_nao_zero(gate_texto: str):
     ramo_ok = trecho.split("if ($cveFalhas.Count -gt 0)")
     assert len(ramo_ok) == 2, "o ramo que distingue falha de sucesso sumiu"
     assert "$cveMedido = $true" in ramo_ok[1], (
-        "medicao declarada valida fora do ramo sem falhas: um manifesto que falhou "
-        "voltaria a ser contado como zero."
+        "medicao declarada valida fora do ramo sem falhas: um manifesto que falhou voltaria a ser contado como zero."
     )
 
 
@@ -106,7 +105,7 @@ def test_cobertura_e_declarada_na_saida(gate_texto: str):
 
 def test_a_metrica_promete_o_que_mede(gate_texto: str):
     linha = next(
-        (l for l in gate_texto.splitlines() if '"TOTAL_VULNERABILITY"' in l and "Desc" in l),
+        (line for line in gate_texto.splitlines() if '"TOTAL_VULNERABILITY"' in line and "Desc" in line),
         None,
     )
     assert linha is not None, "a regra TOTAL_VULNERABILITY sumiu"
@@ -119,6 +118,5 @@ def test_sem_git_ainda_mede_a_raiz_em_vez_de_aprovar_vazio(gate_texto: str):
     """Lista vazia nao pode virar aprovacao silenciosa."""
     trecho = _fase_cve(gate_texto)
     assert "$manifestosNpm.Count -eq 0" in trecho, (
-        "o fallback para a raiz sumiu; sem git no PATH a enumeracao volta vazia "
-        "e o portao aprovaria sem medir nada."
+        "o fallback para a raiz sumiu; sem git no PATH a enumeracao volta vazia e o portao aprovaria sem medir nada."
     )

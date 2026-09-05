@@ -1,0 +1,351 @@
+{
+  "capturado_em": "2026-09-05T15:19:43.191567-03:00",
+  "base": "d6bace4df5f404e8fb4dd711df087cc7db0aedcf",
+  "files": [
+    {
+      "path": ".vscode/settings.json",
+      "sha256": "7293186389354d63a527d817f1398bc2aca89a54194a04e0adcd49ad3c28e71d",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "c4f4a88711341f2617fea2cdf2fbe8b6ffc6b5d1f9cc4029434174b85869b5d3",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "GEMINI.md",
+      "sha256": "3af4ce38fb94b1a50399cd18f374fc0964e03bde44bd77ed95fa5e4d7ee0fd3c",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "JULES_REPORT.md",
+      "sha256": "7c984392336184147f648bfe52d277fb34c4ca51c5f354537a13d39e951ee844",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "STITCH_REPORT.md",
+      "sha256": "57dd3ec7d942d8521c7455f9f312b3a53997ef43e9de1abfea1f29863f2ec4c9",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "agents/fallback.py",
+      "sha256": "6f3c18e21a5f09f139abbc7dd4725add86abb729f4c78ef944a3d1e950e57288",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "api/v1/handlers.py",
+      "sha256": "9a70b49e0190de86baa963a244874d55ddbc1ac4ef783a43861cd2392d516c3b",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "api/v1/server.py",
+      "sha256": "aa0726113c546260cf591c4e2bbbbf5313c94d8eaed9570c603ed30989823640",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "core/mcp_routing.py",
+      "sha256": "55e48aa81dbcab63032fcceca521e6bc43456c8fa70e731e6bca639c17a3b9f5",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "core/perspective_schemas.py",
+      "sha256": "67eae7680edd491611c27304b2d21869bdad8588adeef406034c8e40a7dd7a15",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "database/lab_manager.py",
+      "sha256": "5c6242ed41aef4299dde6b04b0824ddd3a64a0e5c31c756287df244f022f9bd0",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "engine/icm_matrix.py",
+      "sha256": "f13f565f3783a59f0cd9a4c54cdc9ce1a30acac0e7cc8966479fc9177aef714f",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "engine/llm_api.py",
+      "sha256": "2525dc75aa51b3effa8765921516642323c18ff5e926f8ae6c415cf8fc2bfe38",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "engine/solver_importers/hrc_evidence.py",
+      "sha256": "e7f29f154316e4f696d160f523ca2a09486e807871f4cd2f57d61da144790b1b",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "engine/stitch_bridge.py",
+      "sha256": "f75a6dd21edcd10d8ff77271336d614992649f1aa36b45ccf6ee2d358399e728",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "engine/timesfm_engine.py",
+      "sha256": "6ac53e8c963f615888681be1266a9927d71b8697d28c5164fd185c0974d40ff9",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "frontend/package.json",
+      "sha256": "a616e4c76d0c5849c1a79ee6db6c24525267b82f1ead8436329471cae166b10d",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/app/api/sota/timesfm-forecast/route.ts",
+      "sha256": "0e0f79e99bafc16718e0ccb2049ed34c86e3852c2f78464df1dd8fd3089956fb",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "frontend/src/components/simulator/DownwardDriftSimulator.tsx",
+      "sha256": "ae50111ad5faedf1316cbd7b90ab37af4e821ced5297d0f6f0c00a6c11a15393",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/MasterSimulator.tsx",
+      "sha256": "27ab4ca1e337e2c8e1f55566098d9f4d721425c980c4438efae2edf219d9fd99",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/hooks/useMasterSpotLogic.ts",
+      "sha256": "516b8dc8a7aada89caa224c7d76ff6c0b0dbe217d225f2490f1eed414db1b430",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/hooks/useQuantumEngine.ts",
+      "sha256": "c810ce7c150e4d7808f180779b6cd7218df4d4c2ea80e62634a296916ede426e",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/panels/EquityCalculator.tsx",
+      "sha256": "977b0399d46875d7b92fcf8cf583976e184eb3b6bb67a55da8df3d60f907c42f",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/panels/NashPanel.tsx",
+      "sha256": "32a046ba6d94b6af2fd46ab9e7bdc8b1171a92d2272067a4bcc6da9963cd15ea",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/panels/PerspectivePanel.tsx",
+      "sha256": "3ebec2dbfaf4bf545b81c5511670fbb71303050bc1826dc7d3cfa5866a8a562e",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/panels/PmLensPanel.tsx",
+      "sha256": "1612c0640d0543f1a34080485635c96506aa8b96b84aea5e93cd339a5abf9436",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/ui/InsolvencyRioPanel.tsx",
+      "sha256": "556c2cb719297fb0acd03522785bae0cb475b531aca15b0766a5ae95eac52b31",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/ui/MonteCarloConvergenceWidget.tsx",
+      "sha256": "93563be36b176e0a7aa0e3fa4097af96caf8563a0c9bf385db1028ea591a269c",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/ui/ScenarioQuickSelector.tsx",
+      "sha256": "29daff8aa2854fe06de5f3c0c51268872fe573fe34c797ee15168dff25c63cb8",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/ui/SimulatorNavigation.tsx",
+      "sha256": "dc835d8b2009acc6d3a7b89a1a2eba1d66416936c1feee2c3f2df3d503ba3f50",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/ui/SimulatorTour.tsx",
+      "sha256": "0012d70497724d19a9068713de3a2bd361165fb2a23a81d103953a31fd026a55",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/workers/equity.worker.ts",
+      "sha256": "68bfed97b92ed1be6c4655a874b5c183ffea1828b31fbb93c8a16ffeb4735ce4",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/workers/insolvency.worker.ts",
+      "sha256": "f14f7b8b5b70e40d44ae29d7ebad3a2ce29bb5c01caf54261073acbc084854bf",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/workers/insolvencyProcessor.ts",
+      "sha256": "c0171b9903755a3905111fd2dca8e87af1793dc8e9f0ae19c4208bd1d4a3574e",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/workers/insolvencyProtocol.ts",
+      "sha256": "86a64525c567a9f786b7633f840b1d072b4eedb6755eee07afdd44a790b451da",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/components/simulator/workers/rangeParser.ts",
+      "sha256": "4e4c7de28037b2fc4a2f9fe06ccb7b0c5a3d17ab1849bd8d2cfbff2ef3dc968f",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/lib/icmMatrix.ts",
+      "sha256": "9b2e0cb75eaa441f8259e9dba632bcfbfc8de8cc32072a9e387bf9cf6418083c",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/lib/monteCarloParallelPool.ts",
+      "sha256": "588a74024a59eba6914a51cfe31c94e8187e731a758c5802a2ac7024c1c50a24",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/lib/timesfm-client.ts",
+      "sha256": "497e91a55809f54ed801a538bca71c74ec3e25a3703364786d0973c7f1ab2614",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "frontend/src/tests/simulator/computationalMolds.test.ts",
+      "sha256": "608d6a895f817ce4c73d42e42f700b771f2ebe6845492393304f3b19eded25be",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/tests/simulator/insolvencyConsumer.test.tsx",
+      "sha256": "a78e757003acc4ac74a7279e607e9e8fbd4840999f413cb30c4c63f9292c3fde",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/tests/simulator/insolvencyWorkerContract.test.ts",
+      "sha256": "efab5c8fc02b7e5359bc67095468106808daa7f86f916c9c5ca8d9bf1026ab70",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/tests/simulator/monteCarloDemoFallback.test.ts",
+      "sha256": "0f20ffd9992b989ae5c81e61fd26da482ed8a53b4f4238552c3792003662fb46",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/tests/simulator/monteCarloParallelPool.test.ts",
+      "sha256": "293c01d91ab1497a4b89a55d477518b801bd6b521da1620536bb06b49e07b284",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/src/tests/simulator/simulatorNavigation.test.tsx",
+      "sha256": "984acc9071cb77e88a39362646c615830dca0ef85817c629086eefb0362530ba",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "frontend/tsconfig.worker.json",
+      "sha256": "6fd612dbb8bd473bba88248abf52ee1914f19588d8f2b5197a387de8b6e9fceb",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "llm/adapters.py",
+      "sha256": "bc2f27ae68412c9e450666302341baf3ee2ade056315d1427eb3bbe18f98ff25",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "llm/anthropic.py",
+      "sha256": "ec439b75d8ff3d706947b6fecc07e22fbb68b13741269b32d8f10a9656b8c2a8",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "reports/agent-calibration/README.md",
+      "sha256": "a85b59f6f321d62d164591cb9eb5dc26b8764f260933bbd7775c6948719403a3",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "reports/agent-calibration/feedback-ledger.jsonl",
+      "sha256": "24b10594933783efa577fe780fba104d3d97b97731bc8e5de9c703fdaf69b73b",
+      "attribution": "feedback desta sessao"
+    },
+    {
+      "path": "scripts/ops/Invoke-AgentCalibrationQuantitativeSupport.ps1",
+      "sha256": "e9a433da229aecb8850c9e509e86eaabd5b07ea3895ae5c780a129a94d1ba1db",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "scripts/ops/New-AgentCalibrationDailyEvidence.ps1",
+      "sha256": "c16579f974886362eaa87277ce4546b6857d35b69573fe738a77b75cfeb7aca7",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "scripts/ops/autopoietic_daily_cycle.py",
+      "sha256": "c34fc91340b6900bdf33e32d09996ae560f72e03ba61898214a6e950087c5304",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "scripts/ops/sync_jules_report.py",
+      "sha256": "af9b74714594a578385dbcfdab43b27fa87109b8cac37a27f4075d3c9f462b79",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "scripts/ops/sync_stitch_report.py",
+      "sha256": "61f3427dc81ea33a54444f2d3415ed6ea06a0d935f7f67e3369f9e2188e1c149",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "scripts/utils/notifications.py",
+      "sha256": "383755c7d7c99a7e4a28f14a63f5cf9eda5afe21d2970e26695fff4d91134e93",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "task_executor.py",
+      "sha256": "0161b85555ecc1f6945bf15ba476127a64b686102bd741d5d60132e9c30f4887",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/conftest.py",
+      "sha256": "85b8c0137c24640bba5304dc749d667ae5fe17089e5a901f12b1da89c19d48cf",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/test_agent_calibration_feedback.py",
+      "sha256": "e767361a4b54341fb7267bbc16e0269359363e26e4965dba1f9ce33638bebda1",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/test_calibracao_fechamento_do_ciclo.py",
+      "sha256": "bba72fb7553ac3e54df14ace5d095a34e184a3bee39b37cf90f479fd6fe12d53",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/test_calibracao_portao_por_sessao.py",
+      "sha256": "c073a870f611e8aa6f0f4da331c8ea5d4ed95289491efce0022e33745f8cfc85",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/test_computational_molds.py",
+      "sha256": "c4775f5f8020811af0048525e6ebcaae71190a0fb6d0d7566edc3bf6cfd2ee1d",
+      "attribution": "implementacao desta sessao"
+    },
+    {
+      "path": "tests/test_cwv_gate_cobertura_cve.py",
+      "sha256": "2480ed36ace92d78d96a92ce8f171427205d7431dbc53fa4acd203fe8800ba4c",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/test_cwv_gate_truthfulness.py",
+      "sha256": "740bce7582c197911ed003c408f88897395b1ae9f20c0bc8a7596921e5d5555a",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/test_jules_bridge.py",
+      "sha256": "ad38d072a18f793e6962b9fc208a1ea1853d949ad4785bb91da83459b8cb9d03",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/test_mcp_addon_routing.py",
+      "sha256": "82572b4f8722f80d1f8005e9193850e43a408a48f66ca6d47339aa85aab5150e",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/test_sync_jules_redacao.py",
+      "sha256": "6cd1af488c00f411f36bfe035ebea39b5ae7470eb547f6c1e982018932f7d76d",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/test_timesfm_agent_calibration.py",
+      "sha256": "a0da63eb4f2d9b9acb1c3dbef111a0b0ef73d69c78e54b54b130b688b1a1cc8d",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    },
+    {
+      "path": "tests/test_timesfm_engine.py",
+      "sha256": "1a942d64c9e5cea140b896fd9c422453f31087a79b08388dc24ced631789d59b",
+      "attribution": "incorporado por autorizacao; origem delegada"
+    }
+  ]
+}

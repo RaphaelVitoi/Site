@@ -40,21 +40,23 @@ def fetch_all_stitch_data() -> dict[str, Any]:
         # Buscar design systems
         design_systems = client.list_design_systems(proj_id)
 
-        enriched_projects.append({
-            "id": proj_id,
-            "name": raw_name,
-            "title": p.get("title", "Sem titulo"),
-            "visibility": p.get("visibility", "PRIVATE"),
-            "project_type": p.get("projectType", "PROJECT_DESIGN"),
-            "origin": p.get("origin", "STITCH"),
-            "create_time": p.get("createTime", ""),
-            "update_time": p.get("updateTime", ""),
-            "screens_count": len(screens),
-            "screens": screens,
-            "design_systems_count": len(design_systems),
-            "design_systems": design_systems,
-            "metadata": p.get("metadata", {}),
-        })
+        enriched_projects.append(
+            {
+                "id": proj_id,
+                "name": raw_name,
+                "title": p.get("title", "Sem titulo"),
+                "visibility": p.get("visibility", "PRIVATE"),
+                "project_type": p.get("projectType", "PROJECT_DESIGN"),
+                "origin": p.get("origin", "STITCH"),
+                "create_time": p.get("createTime", ""),
+                "update_time": p.get("updateTime", ""),
+                "screens_count": len(screens),
+                "screens": screens,
+                "design_systems_count": len(design_systems),
+                "design_systems": design_systems,
+                "metadata": p.get("metadata", {}),
+            }
+        )
     return {
         "projects": enriched_projects,
         "total_projects": len(enriched_projects),
@@ -85,15 +87,25 @@ def format_markdown_report(data: dict[str, Any]) -> str:
     lines.append("| :--- | :--- | :--- |")
     lines.append(f"| **Projetos Stitch Ativos** | `{total_proj}` | ✅ Conectado e Operacional |")
     lines.append(f"| **Telas Cadastradas** | `{total_screens}` | 🎨 Em expansão contínua |")
-    lines.append("| **Modelos Suportados** | `Gemini 3.8 Flash` (Balanced - Padrão) & `Gemini 3.5 Flash-Lite` (Speed) | SOTA visual duo ativo no Stitch |")
+    lines.append(
+        "| **Modelos Suportados** | `Gemini 3.8 Flash` (Balanced - Padrão) & `Gemini 3.5 Flash-Lite` (Speed) | SOTA visual duo ativo no Stitch |"
+    )
     lines.append("| **Integração Frontend** | Tailwind CSS 4 + Next.js 16 | Tokens sincronizados em `globals.css` |")
     lines.append("")
     lines.append("> [!NOTE]")
     lines.append("> **Atualização de Modelos de Fronteira no Stitch:**")
-    lines.append("> Conforme verificado na interface de produção do Stitch (`stitch.withgoogle.com`), a geração de UI opera com dois tiers:")
-    lines.append("> - ⚡ **Speed**: `Gemini 3.5 Flash-Lite` (*rapid collaboration, still good quality*) — menor latência e custo marginal nulo.")
-    lines.append("> - ✨ **Balanced (Padrão)**: `Gemini 3.8 Flash` (*balance between speed and high quality*) — alta fidelidade estética e adesão a design systems.")
-    lines.append("> - *Nota de Descontinuação:* Os modelos da geração anterior (`Gemini 3 Flash` e `Gemini 3.1 Pro`) foram descontinuados na produção.")
+    lines.append(
+        "> Conforme verificado na interface de produção do Stitch (`stitch.withgoogle.com`), a geração de UI opera com dois tiers:"
+    )
+    lines.append(
+        "> - ⚡ **Speed**: `Gemini 3.5 Flash-Lite` (*rapid collaboration, still good quality*) — menor latência e custo marginal nulo."
+    )
+    lines.append(
+        "> - ✨ **Balanced (Padrão)**: `Gemini 3.8 Flash` (*balance between speed and high quality*) — alta fidelidade estética e adesão a design systems."
+    )
+    lines.append(
+        "> - *Nota de Descontinuação:* Os modelos da geração anterior (`Gemini 3 Flash` e `Gemini 3.1 Pro`) foram descontinuados na produção."
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -157,7 +169,9 @@ def format_markdown_report(data: dict[str, Any]) -> str:
                         font = str(theme.get("font", font))
                 lines.append(f"  - 🎨 **{display_name}** (`{ds_name}`)")
                 lines.append(f"    - Tipografia: `{font}` / `JetBrains Mono` | Acento Primário: `{custom_color}`")
-                lines.append("    - Filosofia Visual: *Dark Obsidian Glassmorphism*, bordas com brilho de 1px e contraste WCAG AAA.")
+                lines.append(
+                    "    - Filosofia Visual: *Dark Obsidian Glassmorphism*, bordas com brilho de 1px e contraste WCAG AAA."
+                )
 
         lines.append("")
 
@@ -167,12 +181,14 @@ def format_markdown_report(data: dict[str, Any]) -> str:
     lines.append("")
     lines.append("```mermaid")
     lines.append("flowchart TD")
-    lines.append("    Prompt[\"📝 Prompt Conceitual / Teoria PMev\"] --> Stitch[\"✨ Stitch MCP (generate_screen_from_text)\"]")
-    lines.append("    Stitch --> Variants[\"🔀 Geração de Variantes (generate_variants)\"]")
-    lines.append("    Variants --> Screen[\"🖥️ get_screen (HTML/Tailwind Assets)\"]")
-    lines.append("    Screen --> TokenAlign[\"🎨 Alinhamento de Tokens com globals.css\"]")
-    lines.append("    TokenAlign --> Components[\"🧩 Componentes Modulares (frontend/src/components/)\"]")
-    lines.append("    Components --> QGate[\"🛡️ Quality Gate & CWV (cwv_gate.ps1)\"]")
+    lines.append(
+        '    Prompt["📝 Prompt Conceitual / Teoria PMev"] --> Stitch["✨ Stitch MCP (generate_screen_from_text)"]'
+    )
+    lines.append('    Stitch --> Variants["🔀 Geração de Variantes (generate_variants)"]')
+    lines.append('    Variants --> Screen["🖥️ get_screen (HTML/Tailwind Assets)"]')
+    lines.append('    Screen --> TokenAlign["🎨 Alinhamento de Tokens com globals.css"]')
+    lines.append('    TokenAlign --> Components["🧩 Componentes Modulares (frontend/src/components/)"]')
+    lines.append('    Components --> QGate["🛡️ Quality Gate & CWV (cwv_gate.ps1)"]')
     lines.append("")
     lines.append("    classDef stitch fill:#1a2332,stroke:#ec4899,stroke-width:2px,color:#fff;")
     lines.append("    classDef next fill:#111927,stroke:#3b82f6,stroke-width:2px,color:#fff;")
@@ -190,13 +206,15 @@ def format_markdown_report(data: dict[str, Any]) -> str:
     lines.append("client = StitchClient()")
     lines.append("")
     lines.append("# 1. Gerar nova tela para o Simulador Gravitacional PMev:")
-    lines.append('res = client.generate_screen_from_text(')
+    lines.append("res = client.generate_screen_from_text(")
     lines.append(f'    project_id="{projects[0]["id"] if projects else "18242753218562483944"}",')
-    lines.append('    prompt="Painel SOTA de Scanner Gravitacional PMev com glassmorphism dark/gold e radar de insolvencia",')
+    lines.append(
+        '    prompt="Painel SOTA de Scanner Gravitacional PMev com glassmorphism dark/gold e radar de insolvencia",'
+    )
     lines.append("    # Sem model_tier: pelo bridge, a escolha de modelo nao passa pelo portao MCP.")
     lines.append("    # Balanced (Gemini 3.8 Flash) e Speed (Gemini 3.5 Flash-Lite) ficam no seletor da UI.")
     lines.append('    device_type="DESKTOP",')
-    lines.append(')')
+    lines.append(")")
     lines.append("")
     lines.append("# 2. Sincronizar relatorio atualizado:")
     lines.append("# python scripts/ops/sync_stitch_report.py --write")
