@@ -12,8 +12,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from engine.stitch_bridge import (
-    STITCH_MODEL_BALANCED,
-    STITCH_MODEL_SPEED,
     StitchClient,
     StitchProject,
     StitchScreen,
@@ -173,10 +171,66 @@ def test_stitch_client_generate_screen() -> None:
         res = client.generate_screen_from_text(
             project_id="10",
             prompt="Dashboard SOTA PMev",
-            model_tier=STITCH_MODEL_BALANCED,
             device_type="DESKTOP",
         )
         assert res["name"] == "projects/10/screens/20"
+
+
+def _args_enviados(mock_urlopen_patch) -> dict[str, object]:
+    """Extrai os argumentos que o bridge de fato enviou ao portao MCP."""
+    req = mock_urlopen_patch.call_args[0][0]
+    corpo = json.loads(req.data.decode("utf-8"))
+    return corpo["params"]["arguments"]
+
+
+def test_o_enum_oficial_do_portao_chega_ao_payload() -> None:
+    """O contrato da porta e conservado: enum reconhecido vira `modelId`.
+
+    O portao de entrada do MCP tem enum proprio, e ele NAO acompanha o nome
+    comercial do modelo do dia -- o produto opera hoje em Gemini 3.8 Flash e
+    3.5 Flash-Lite, e o enum da porta continua sendo o que sempre foi.
+    """
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {"structuredContent": {"name": "projects/10/screens/21"}},
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        client.generate_screen_from_text(
+            project_id="10",
+            prompt="Dashboard SOTA PMev",
+            model_tier="GEMINI_3_FLASH",
+        )
+
+    assert _args_enviados(m)["modelId"] == "GEMINI_3_FLASH"
+
+
+def test_sem_modelo_declarado_a_escolha_fica_com_o_produto() -> None:
+    """Omitir `model_tier` NAO inventa um default: `modelId` nem e enviado.
+
+    Este e o comportamento correto, porque quem seleciona entre os tiers do
+    Stitch e o proprio produto. Um default aqui seria o cliente decidindo por
+    ele com base num rotulo de UI que o portao nao aceita.
+    """
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {"structuredContent": {"name": "projects/10/screens/22"}},
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        client.generate_screen_from_text(project_id="10", prompt="Dashboard SOTA PMev")
+
+    assert "modelId" not in _args_enviados(m)
 
 
 def test_stitch_client_upload_design_md() -> None:

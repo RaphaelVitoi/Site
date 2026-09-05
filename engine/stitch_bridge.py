@@ -18,15 +18,34 @@ import urllib.request
 logger = logging.getLogger(__name__)
 
 STITCH_MCP_URL: Final[str] = "https://stitch.googleapis.com/mcp"
-DEFAULT_STITCH_API_KEY: Final[str] = "AQ.Ab8RN6IuGpd7fad2pSZ5BS48KTCwBMVdJtsThMYT8GMaVghAmw"
+
+# NAO HA CHAVE PADRAO AQUI, E NUNCA PODE VOLTAR A HAVER.
+#
+# Ate esta revisao existia DEFAULT_STITCH_API_KEY com uma credencial LITERAL,
+# introduzida em 080cda35 e empurrada para origin/master. A secao 3 do CLAUDE.md
+# da raiz e o piso de seguranca do escopo de usuario proibem credencial em texto
+# claro sem excecao -- e o proprio codigo ja lia STITCH_API_KEY do ambiente
+# ANTES do literal, entao o fallback nao habilitava nada: so vazava a chave.
+#
+# Chave sem fonte configurada agora falha ALTO, com mensagem, em vez de
+# autenticar silenciosamente com uma credencial versionada.
 
 
-# Tiers de modelos do Google Stitch (SOTA 2026)
-# Na UI oficial do Stitch (stitch.withgoogle.com):
-# - Balanced (Padrao): Gemini 3.8 Flash (alta fidelidade visual e raciocinio espacial)
-# - Speed: Gemini 3.5 Flash-Lite (colaboracao rapida e baixa latencia)
-STITCH_MODEL_BALANCED: Final[str] = "BALANCED"  # Gemini 3.8 Flash
-STITCH_MODEL_SPEED: Final[str] = "SPEED"        # Gemini 3.5 Flash-Lite
+# NAO HA CONSTANTE DE TIER DE MODELO AQUI, E A RAZAO E MEDIDA.
+#
+# A UI do Stitch mostra Balanced e Speed, e desde a atualizacao do Google de
+# 2026-09-04 eles correspondem a Gemini 3.8 Flash e Gemini 3.5 Flash-Lite. Mas
+# 'BALANCED' e 'SPEED' sao rotulos de PRODUTO, nao valores do PORTAO DE ENTRADA:
+# `generate_screen_from_text` so repassa `modelId` para os enums oficiais do MCP,
+# e nenhum dos dois rotulos esta entre eles.
+#
+# Enquanto STITCH_MODEL_BALANCED e STITCH_MODEL_SPEED existiram aqui (de
+# 080cda35 ate esta revisao), chamar o metodo com STITCH_MODEL_SPEED produzia
+# EXATAMENTE a mesma requisicao que a chamada padrao -- sem erro e sem aviso.
+# Quem selecionasse SPEED esperando baixa latencia nao mudava nada.
+#
+# O enum oficial do portao fica conservado no metodo (Tier 0, 2026-09-04): ele e
+# o contrato da porta e nao acompanha o nome comercial do modelo do dia.
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,7 +87,7 @@ class StitchClient:
         base_url: str = STITCH_MCP_URL,
         timeout: float = 30.0,
     ) -> None:
-        self._api_key = api_key or os.getenv("STITCH_API_KEY") or DEFAULT_STITCH_API_KEY
+        self._api_key = api_key or os.getenv("STITCH_API_KEY", "")
         self._base_url = base_url
         self._timeout = timeout
 
@@ -202,17 +221,29 @@ class StitchClient:
         self,
         project_id: str,
         prompt: str,
-        model_tier: str = STITCH_MODEL_BALANCED,
+        model_tier: str | None = None,
         device_type: str = "DESKTOP",
         design_system: str | None = None,
     ) -> dict[str, object]:
         """Dispara a geracao de uma nova tela no Stitch.
-        
-        Modelos Suportados no Stitch:
-        - BALANCED (Padrao): Gemini 3.8 Flash (equilibrio ideal entre velocidade e alta qualidade visual)
-        - SPEED: Gemini 3.5 Flash-Lite (colaboracao rapida e baixa latencia)
-        
-        Nota de Descontinuacao: Gemini 3 Flash e 3.1 Pro foram descontinuados no Stitch de producao.
+
+        SOBRE MODELO: O SELETOR DA UI E O PORTAO DE ENTRADA NAO SAO A MESMA COISA.
+
+        O Stitch opera hoje em Gemini 3.8 Flash (`Balanced`, padrao) e Gemini 3.5
+        Flash-Lite (`Speed`), apos a atualizacao do Google de 2026-09-04. Esses
+        dois rotulos vivem no SELETOR DA INTERFACE, onde quem escolhe e o
+        OPERADOR -- verificado em tela pelo Tier 0 na mesma data.
+
+        O PORTAO DE ENTRADA do MCP e outra coisa: aceita apenas os enums oficiais
+        de `modelId`, e sao eles que este metodo repassa. O enum e conservado
+        deliberadamente (Tier 0, 2026-09-04) -- e o contrato da porta, e nao
+        acompanha o nome comercial do modelo do dia.
+
+        Por isso `model_tier` e opcional e sem default: pelo bridge, omitir e o
+        uso correto. Passar um rotulo de UI que o portao nao reconhece NAO altera
+        a requisicao, e por isso nao existe mais constante aqui sugerindo o
+        contrario. Para alternar entre `Speed` e `Balanced`, use o seletor da
+        propria interface do Stitch.
         """
         clean_id = project_id.replace("projects/", "")
         args: dict[str, object] = {

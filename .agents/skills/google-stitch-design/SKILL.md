@@ -15,17 +15,32 @@ description: Runbook, governanca e esteira de UI generativa para o Google Cloud 
 
 ---
 
-## 1. Matriz de Modelos de UI & Roteamento Visual
+## 1. Motor Generativo — a escolha é na UI, não pelo portão MCP
 
-Conforme auditado diretamente na interface oficial do Stitch ([stitch.withgoogle.com](https://stitch.withgoogle.com/)), o motor generativo opera com dois tiers especializados:
+O Stitch opera hoje em **Gemini 3.8 Flash** (`Balanced`, padrão) e **Gemini 3.5
+Flash-Lite** (`Speed`), após a atualização do Google de 2026-09-04. O seletor
+existe e é **do operador**, no compositor de prompt da interface
+([stitch.withgoogle.com](https://stitch.withgoogle.com/)) — verificado em tela
+pelo Tier 0 na mesma data.
 
-| Modo / Tier | Modelo Canônico | Papel no Ecossistema | Fidelidade Estética |
-| :--- | :--- | :--- | :--- |
-| ✨ **Balanced (Padrão)** | **`Gemini 3.8 Flash`** | Produção final de telas, respeito estrito a tokens, renderização de HUDs translúcidos e painéis matemáticos. | **Padrão-Ouro**: Raciocínio espacial avançado, contraste WCAG AAA e glassmorphism complexo. |
-| ⚡ **Speed** | **`Gemini 3.5 Flash-Lite`** | Exploração ágil de alternativas, brainstorming de wireframes e ciclos de baixa latência (*rapid collaboration*). | **Ágil / Eficiente**: Geração em segundos com fidelidade estrutural sólida. |
-
-> [!NOTE]
-> Os modelos legados `Gemini 3 Flash` e `Gemini 3.1 Pro` foram descontinuados na produção do Stitch e substituídos por este duo.
+> [!IMPORTANT]
+> **A escolha é na UI. Esta skill não roteia modelo, e o bridge não tem
+> constante de tier.**
+>
+> `Balanced` e `Speed` são rótulos do **seletor da interface**, não valores do
+> **portão de entrada** do MCP. `generate_screen_from_text` só repassa `modelId`
+> para os enums oficiais do gateway — e esse enum é conservado deliberadamente,
+> porque é o contrato da porta e não acompanha o nome comercial do modelo do dia.
+>
+> A versão anterior desta seção trazia uma matriz de roteamento, e o bridge
+> expunha `STITCH_MODEL_BALANCED`/`STITCH_MODEL_SPEED`. Medido em 2026-09-04:
+> chamar o método com `SPEED` produzia **exatamente a mesma requisição** que a
+> chamada padrão, sem erro e sem aviso — o rótulo da UI não é aceito pela porta.
+> Instrução de automação que não alcança mecanismo é promessa ao operador, e foi
+> retirada por ordem do Tier 0.
+>
+> Pelo bridge, omitir o modelo é o uso correto. Para escolher entre `Speed` e
+> `Balanced`, use o seletor da própria interface do Stitch.
 
 ---
 
@@ -86,15 +101,16 @@ flowchart LR
 ## 4. Playbook de Invocação Rápida via Python Bridge
 
 ```python
-from engine.stitch_bridge import StitchClient, STITCH_MODEL_BALANCED, STITCH_MODEL_SPEED
+from engine.stitch_bridge import StitchClient
 
 client = StitchClient()
 
-# 1. Gerar nova tela com alta qualidade visual (Gemini 3.8 Flash):
+# 1. Gerar nova tela:
+#    Sem model_tier -- a escolha entre Balanced e Speed vive no seletor da UI do
+#    Stitch, nao no portao MCP. Ver secao 1.
 screen = client.generate_screen_from_text(
     project_id="18242753218562483944",
     prompt="Painel de Comparacao de Nash com radar poligonal glassmorphism e realce dourado",
-    model_tier=STITCH_MODEL_BALANCED,
     device_type="DESKTOP",
     design_system="assets/6f9c8c6e7114422393d45b0c4ca02808",
 )

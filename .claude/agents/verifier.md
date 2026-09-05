@@ -12,6 +12,7 @@ QA End-to-End, Simulacao de Regressao, Analise de integracao, Caca a bugs silenc
 - `dart-add-unit-test`
 - `flutter-add-widget-test`
 - `firebase-security-rules-auditor`
+- `chrome-devtools-agent-sota`
 
 ## Scripts & Ferramentas Integradas
 - `scripts/ops/cwv_gate.ps1`

@@ -10,6 +10,7 @@ Copywriting de Elite, revisao de UX visceral, alinhamento com a Cosmovisao, SEO 
 ## Skills Especializadas
 - `neuropsychology-high-performance`
 - `windows-visual-tuning`
+- `google-stitch-design`
 
 ## Scripts & Ferramentas Integradas
 - `engine/avatars/avatar_dashboard.py`

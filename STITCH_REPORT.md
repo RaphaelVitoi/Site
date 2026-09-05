@@ -79,7 +79,8 @@ client = StitchClient()
 res = client.generate_screen_from_text(
     project_id="18242753218562483944",
     prompt="Painel SOTA de Scanner Gravitacional PMev com glassmorphism dark/gold e radar de insolvencia",
-    model_tier="BALANCED",  # Gemini 3.8 Flash (ou SPEED para Gemini 3.5 Flash-Lite)
+    # Sem model_tier: pelo bridge, a escolha de modelo nao passa pelo portao MCP.
+    # Balanced (Gemini 3.8 Flash) e Speed (Gemini 3.5 Flash-Lite) ficam no seletor da UI.
     device_type="DESKTOP",
 )
 

@@ -41,8 +41,7 @@
       "sota-quality-gate",
       "agy-customizations",
       "windows-system-maintenance",
-      "windows-visual-tuning",
-      "sota-triad-mesh"
+      "windows-visual-tuning"
     ],
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
@@ -114,7 +113,8 @@
     "primary_model": "qwen2.5-coder:1.5b",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
-      "enforcing-resource-attribution"
+      "enforcing-resource-attribution",
+      "google-jules-cloud"
     ],
     "specialized_scripts": [
       "core/arbitrator.py",
@@ -141,7 +141,7 @@
       "pubchem-database",
       "opentargets-database",
       "sota-consciousness-memory-rag",
-      "sota-triad-mesh"
+      "timesfm-forecasting"
     ],
     "specialized_scripts": [
       "memory_rag.py",
@@ -216,7 +216,8 @@
       "flutter-apply-architecture-best-practices",
       "supabase",
       "supabase-postgres-best-practices",
-      "uv"
+      "uv",
+      "mcp-toolbox-database"
     ],
     "specialized_scripts": [
       "engine/llama_cpp/start_vulkan_daemon.ps1",
@@ -241,7 +242,8 @@
       "sota-quality-gate",
       "dart-add-unit-test",
       "flutter-add-widget-test",
-      "firebase-security-rules-auditor"
+      "firebase-security-rules-auditor",
+      "chrome-devtools-agent-sota"
     ],
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
@@ -264,7 +266,8 @@
     "primary_model": "gemma4:31b-cloud",
     "skills": [
       "neuropsychology-high-performance",
-      "windows-visual-tuning"
+      "windows-visual-tuning",
+      "google-stitch-design"
     ],
     "specialized_scripts": [
       "engine/avatars/avatar_dashboard.py"
@@ -380,7 +383,8 @@
     "skills": [
       "sota-consciousness-memory-rag",
       "literature-search-arxiv",
-      "literature-search-europepmc"
+      "literature-search-europepmc",
+      "google-workspace"
     ],
     "specialized_scripts": [
       "memory_rag.py",
