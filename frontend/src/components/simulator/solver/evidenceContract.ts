@@ -1006,3 +1006,111 @@ export function assessReproducibility( pair: EvidencePair ): ReproducibilityAsse
 export function countReproduciblePairs( pairs: readonly EvidencePair[] ): number {
   return pairs.filter( p => assessReproducibility( p ).reproducible ).length;
 }
+
+// ---------------------------------------------------------------------------
+// 9. Convergência — o portão que o valor do e-Nash abre, e a completude não
+// ---------------------------------------------------------------------------
+
+/**
+ * Teto de CI aceitável para o HRC, medido pelo Tier 0 em 2026-09-04.
+ *
+ * É O MÍNIMO ACEITÁVEL, E ELE BASTA PARA O QUE ESTÁ EM ESTUDO. As árvores
+ * estáticas da biblioteca do GTO Wizard vêm do HRC nesse patamar — e o GTO
+ * Wizard entrou no estudo por ter a biblioteca acumulada mais ampla, não por
+ * qualidade de solve.
+ *
+ * O QUE SE APRESENTA É A TENDÊNCIA TEÓRICA do contraste ICMev × ChipEV, e em
+ * 4.9 ela se demonstra bem. Este teto não promete precisão de nó individual, e
+ * este contrato não a promete em lugar nenhum.
+ *
+ * O TRADE-OFF É LATÊNCIA: quanto menor o CI, mais tempo o solve custa. O teto é
+ * um ponto de equilíbrio escolhido, não uma deficiência tolerada.
+ *
+ * NÃO SE APLICA A OUTRO SOLVER. `CI` é o rótulo do HRC; `MES` (PioSOLVER) e
+ * `Nash Distance`/`dEV` (GTO Wizard AI) saem de algoritmos distintos, e um `4.9`
+ * de MES não é o mesmo fato. `assessConvergence` recusa julgar o que não é CI.
+ */
+export const CI_MAXIMO_ACEITAVEL_HRC = 4.9;
+
+/** Lado do par, para reportar qual deles excedeu o teto. */
+export type EvidenceSide = 'chipEv' | 'icmEv';
+
+export interface ConvergenceAssessment {
+  /**
+   * Pior (maior) CI entre os dois lados. Ilegível quando algum lado não é
+   * julgável — o par vale o que vale seu pior lado, e MÉDIA SERIA MENTIRA:
+   * 0,1 com 9,7 não é um par de 4,9.
+   */
+  worst: MeasuredNumber;
+  /** Verdadeiro só quando os DOIS lados são julgáveis e nenhum excede o teto. */
+  withinThreshold: boolean;
+  /**
+   * Verdadeiro quando algum lado não pôde ser julgado — e-Nash não lido, sem
+   * unidade `pct`, ou métrica que não é o `CI` do HRC.
+   *
+   * INDETERMINAÇÃO NÃO É REPROVAÇÃO. Um par que ninguém conseguiu medir é
+   * diferente de um par medido e mal convergido, pelo mesmo motivo que
+   * `unreadable` é diferente de zero em todo este contrato.
+   */
+  indeterminate: boolean;
+  /** Lados julgáveis cujo CI excede o teto; vazio quando nenhum excede. */
+  aboveThreshold: EvidenceSide[];
+}
+
+/**
+ * CI julgável do cenário, ou `null` quando não há o que julgar.
+ *
+ * Três condições, e as três são sobre COMPARABILIDADE, não sobre qualidade:
+ * o número precisa ter sido lido, estar em `pct`, e ser o `CI` do HRC. Faltando
+ * qualquer uma, comparar contra `CI_MAXIMO_ACEITAVEL_HRC` seria confrontar
+ * grandezas de naturezas diferentes — o erro que este contrato inteiro combate.
+ */
+function ciJulgavel( scenario: EvidenceScenario ): number | null {
+  const p = scenario.provenance;
+  if ( p === undefined || !isRead( p.eNash ) ) return null;
+
+  const unidade = p.eNashUnit;
+  if ( unidade === undefined || !isRead( unidade ) || unidade.value !== 'pct' ) return null;
+
+  const rotulo = p.eNashLabel;
+  if ( rotulo === undefined || !isRead( rotulo ) ) return null;
+  if ( rotulo.value.trim().toUpperCase() !== 'CI' ) return null;
+
+  return p.eNash.value;
+}
+
+/**
+ * Avalia se o par convergiu o bastante para sustentar leitura do contraste.
+ *
+ * RESPONDE OUTRA PERGUNTA QUE `assessReproducibility`. Aquela mede completude de
+ * campo — build, e-Nash, unidade — e passa independentemente do VALOR. Esta olha
+ * o valor. Um par pode ser reproduzível e mal convergido, e sem este portão ele
+ * abriria a calibração de `solveIcmDistortion` sem que nada registrasse em que
+ * patamar se estava operando.
+ *
+ * O OBJETO CONTINUA SENDO A TEORIA. Nada aqui audita solver: o rigor existe para
+ * que o contraste ICMev × ChipEV observado seja atribuível ao REGIME, e não a
+ * quanto cada lado caminhou rumo ao equilíbrio.
+ */
+export function assessConvergence( pair: EvidencePair ): ConvergenceAssessment {
+  const lados: readonly [ EvidenceSide, number | null ][] = [
+    [ 'chipEv', ciJulgavel( pair.chipEv ) ],
+    [ 'icmEv', ciJulgavel( pair.icmEv ) ],
+  ];
+
+  const indeterminate = lados.some( ( [ , ci ] ) => ci === null );
+  const aboveThreshold = lados
+    .filter( ( [ , ci ] ) => ci !== null && ci > CI_MAXIMO_ACEITAVEL_HRC )
+    .map( ( [ lado ] ) => lado );
+
+  const worst: MeasuredNumber = indeterminate
+    ? unreadable( 'algum lado não expõe CI comparável ao teto' )
+    : read( Math.max( ...lados.map( ( [ , ci ] ) => ci as number ) ) );
+
+  return {
+    worst,
+    withinThreshold: !indeterminate && aboveThreshold.length === 0,
+    indeterminate,
+    aboveThreshold,
+  };
+}

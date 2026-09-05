@@ -10,6 +10,7 @@ Quebra de problemas massivos (Grafo Aciclico Direcionado), mapeamento de depende
 ## Skills Especializadas
 - `sota-tactical-orchestrator-nanostack`
 - `enforcing-resource-attribution`
+- `google-jules-cloud`
 
 ## Scripts & Ferramentas Integradas
 - `core/arbitrator.py`

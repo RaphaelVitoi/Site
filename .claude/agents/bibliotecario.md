@@ -11,6 +11,7 @@ ChromaDB, Embeddings, Busca Vetorial, Semantic Chunking, Reranking Hibrido, WebS
 - `sota-consciousness-memory-rag`
 - `literature-search-arxiv`
 - `literature-search-europepmc`
+- `google-workspace`
 
 ## Scripts & Ferramentas Integradas
 - `memory_rag.py`

@@ -18,9 +18,21 @@ logger = logging.getLogger(__name__)
 
 JULES_API_BASE: Final[str] = "https://jules.googleapis.com/v1alpha"
 
-# Modelos oficiais de operacao do Google Jules (SOTA 2026 - jules.google.com/settings/general)
-JULES_MODEL_FLASH: Final[str] = "Gemini 3.6 Flash"  # Default / Fast Coding, Refactors e cron Bolt ⚡
-JULES_MODEL_PRO: Final[str] = "Gemini 3.1 Pro"      # Deep Reasoning e arquiteturas complexas
+# NAO HA CONSTANTE DE MODELO AQUI, E ISSO E DELIBERADO.
+#
+# O SELETOR EXISTE, MAS FICA NA UI -- mesmo padrao do Stitch (Tier 0,
+# 2026-09-04). Quem escolhe o modelo do Jules e o operador, nas preferencias da
+# plataforma (jules.google.com/settings/general), e nao a chamada.
+#
+# Medido em 2026-09-04: a createSession da API v1alpha aceita prompt, title,
+# sourceContext, requirePlanApproval e automationMode; as ferramentas do MCP
+# google-jules aceitam source, prompt, branch e auto_approve_plan. Nenhuma das
+# duas expoe selecao de modelo.
+#
+# As constantes JULES_MODEL_FLASH e JULES_MODEL_PRO viveram aqui entre 080cda35
+# e esta revisao, sem um unico leitor, porque nao havia onde serem lidas. Uma
+# constante que nomeia escolha inexistente e promessa ao operador: quem a
+# configura acredita ter mudado alguma coisa. Retiradas por ordem do Tier 0.
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,19 +43,48 @@ class JulesSessionRequest:
     prompt: str
     branch: str = "main"
     auto_approve_plan: bool = False
+    title: str = ""
 
     def to_payload(self) -> dict[str, object]:
-        """Converte para o formato de payload da API v1alpha do Jules."""
-        return {
+        """Converte para o payload da API v1alpha do Jules.
+
+        DOIS CAMPOS ESTAVAM ERRADOS ATE 2026-09-04, e o segundo era perigoso.
+        Medido contra a documentacao oficial e confirmado por sessao criada com
+        sucesso via POST direto:
+
+            enviado antes            campo real da API
+            -----------------------  --------------------------------
+            githubRepoContext.branch githubRepoContext.startingBranch
+            autoApprovePlan          requirePlanApproval
+
+        `branch` fazia a sessao rodar no branch DEFAULT do repositorio, nao no
+        pedido -- o valor era descartado por nao existir no contrato.
+
+        `autoApprovePlan` INVERTIA UMA GARANTIA. A documentacao e literal: "If
+        true, plans require explicit approval before execution. If not set, plans
+        are auto-approved." Como o campo nao era reconhecido, ele sumia, e o
+        default da API e AUTO-APROVAR. Ou seja, `auto_approve_plan=False`
+        produzia o oposto do que promete: o plano rodava sem revisao humana, sem
+        aviso nenhum.
+
+        A negacao abaixo e o ponto exato da correcao -- os dois campos existem e
+        significam coisas contrarias.
+        """
+        payload: dict[str, object] = {
             "sourceContext": {
                 "source": self.source,
                 "githubRepoContext": {
-                    "branch": self.branch,
+                    "startingBranch": self.branch,
                 },
             },
             "prompt": self.prompt,
-            "autoApprovePlan": self.auto_approve_plan,
+            "requirePlanApproval": not self.auto_approve_plan,
         }
+        # Titulo vazio nao e titulo: sem ele a API gera um, e um "" enviado so
+        # produziria sessao sem nome legivel na interface.
+        if self.title:
+            payload["title"] = self.title
+        return payload
 
 
 @dataclass(frozen=True, slots=True)

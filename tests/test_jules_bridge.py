@@ -18,7 +18,17 @@ from engine.jules_bridge import (
 
 
 def test_jules_session_request_payload() -> None:
-    """Valida a serializacao correta do payload para a API do Jules."""
+    """Valida a serializacao do payload para a API do Jules.
+
+    CORRIGIDO EM 2026-09-04. A versao anterior afirmava `autoApprovePlan` e
+    `githubRepoContext.branch` -- os dois nomes que o bridge enviava e que a API
+    v1alpha NAO reconhece. O teste passava porque media o bridge contra ele
+    mesmo, nunca contra o contrato real; foi preciso criar uma sessao de verdade
+    para descobrir a divergencia.
+
+    Os nomes corretos, e o porque de cada um, estao em
+    tests/test_jules_payload_contrato.py.
+    """
     req = JulesSessionRequest(
         source="sources/github/RaphaelVitoi/Site",
         prompt="Executar simulacao Monte Carlo PMev com 10M de iteracoes",
@@ -27,13 +37,14 @@ def test_jules_session_request_payload() -> None:
     )
     payload = req.to_payload()
     assert payload["prompt"] == "Executar simulacao Monte Carlo PMev com 10M de iteracoes"
-    assert payload["autoApprovePlan"] is True
+    # auto_approve_plan=True significa NAO exigir aprovacao -- campos contrarios.
+    assert payload["requirePlanApproval"] is False
     source_ctx = payload["sourceContext"]
     assert isinstance(source_ctx, dict)
     assert source_ctx["source"] == "sources/github/RaphaelVitoi/Site"
     repo_ctx = source_ctx["githubRepoContext"]
     assert isinstance(repo_ctx, dict)
-    assert repo_ctx["branch"] == "feat/pmev-solver"
+    assert repo_ctx["startingBranch"] == "feat/pmev-solver"
 
 
 def test_jules_client_unconfigured() -> None:

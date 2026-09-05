@@ -16,15 +16,16 @@
 | **Sessões com Falha de Execução** | `5` | ⚠️ Diagnóstico detalhado abaixo |
 | **Sessões Ativas no Momento** | `0` | 💤 Standby |
 | **Plano Ativo** | `Jules in Pro` | Cota: 100 sessões/dia (1/100 consumida) |
-| **Modelo Padrão (Default)** | `Gemini 3.6 Flash` | Execução rápida, refatores e cron Bolt ⚡ |
-| **Modelo Avançado (Deep)** | `Gemini 3.1 Pro` | Raciocínio profundo e arquiteturas densas |
-| **Cron Noturno Automatizado** | Ativo (~03:15–03:25 UTC) | Persona `Bolt ⚡` (Gemini 3.6 Flash) |
+| **Cron Noturno Automatizado** | Ativo (~03:15–03:25 UTC) | Persona `Bolt ⚡` |
 
 > [!NOTE]
-> **Configuração de Modelos no Google Jules (`jules.google.com/settings/general`):**
-> - **Gemini 3.6 Flash (Padrão/Default)**: Modelo ativo de produção selecionado para o agente Jules. É o motor do cron diário `Bolt ⚡` para micro-otimizações contínuas de código.
-> - **Gemini 3.1 Pro**: Modelo de alta capacidade selecionável para tarefas de alta densidade cognitiva, provas de teoremas PMev e migrações estruturais.
-> - **Subscrição**: `Jules in Pro`, autorizando até 100 sessões concorrentes/diárias na nuvem da Google.
+> **Modelo: a escolha é na UI, não pelo portão MCP.**
+>
+> O seletor de modelo do Jules existe e é do operador, mas vive nas preferências da plataforma (`jules.google.com/settings/general`) — mesmo padrão do Stitch.
+> Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam parâmetro de modelo, então nenhuma automática daqui o roteia (medido em 2026-09-04).
+> Este relatório deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instrução que não alcança mecanismo é promessa ao operador.
+>
+> **Subscrição**: `Jules in Pro`, autorizando até 100 sessões concorrentes/diárias na nuvem da Google.
 
 ---
 
@@ -280,7 +281,7 @@ fatal: Fetched in submodule path 'skills/exa-mcp-server', but it did not contain
   "wam.switchDevinCli": true,
   "markdown-preview-enhanced.useGitHubStylePipedLink": true,
   "markdown-preview-enhanced.useVSCodeThemeForContextMenu": true,
-  "agenticAssistant.geminiApiKey": "AQ.Ab8RN6LEK4nsUAEvTvdCEFN4bfhZiAbcHjtNavCOb4f4wJhDsQ",
+  "agenticAssistant.geminiApiKey": "[REDIGIDO]",
   "qwen-code.provider": "api-key",
   "claudeCode.allowDangerouslySkipPermissions": true,
   "claudeCode.disableLoginPrompt": true,
@@ -375,7 +376,7 @@ fatal: Fetched in submodule path 'skills/exa-mcp-server', but it did not contain
   "ollamaDirectCustomAgent.modelWarmupEnabled": true,
   "ollamaDirectCustomAgent.openOnStartup": true,
   "ollamaDirectCustomAgent.whisperUseCloud": true,
-  "qwen-code.apiKey": "AQ.Ab8RN6Lrevq4r7JBnUfVpiL1_Z31fSudC6_bLiKu3TtMwecAEA",
+  "qwen-code.apiKey": "[REDIGIDO]",
 }
 
 ```
@@ -533,7 +534,7 @@ File: c:\Users\rapha\AppData\Roaming\Antigravity IDE\User\settings.json
   "wam.switchDevinCli": true,
   "markdown-preview-enhanced.useGitHubStylePipedLink": true,
   "markdown-preview-enhanced.useVSCodeThemeForContextMenu": true,
-  "agenticAssistant.geminiApiKey": "AQ.Ab8RN6LEK4nsUAEvTvdCEFN4bfhZiAbcHjtNavCOb4f4wJhDsQ",
+  "agenticAssistant.geminiApiKey": "[REDIGIDO]",
   "qwen-code.provider": "api-key",
   "claudeCode.allowDangerouslySkipPermissions": true,
   "claudeCode.disableLoginPrompt": true,
@@ -628,7 +629,7 @@ File: c:\Users\rapha\AppData\Roaming\Antigravity IDE\User\settings.json
   "ollamaDirectCustomAgent.modelWarmupEnabled": true,
   "ollamaDirectCustomAgent.openOnStartup": true,
   "ollamaDirectCustomAgent.whisperUseCloud": true,
-  "qwen-code.apiKey": "AQ.Ab8RN6Lrevq4r7JBnUfVpiL1_Z31fSudC6_bLiKu3TtMwecAEA",
+  "qwen-code.apiKey": "[REDIGIDO]",
 }
 
 ```
@@ -1039,7 +1040,14 @@ fatal: Fetched in submodule path 'skills/exa-mcp-server', but it did not contain
 + git config --global core.hooksPath /dev/null
 + git clone --depth 1 --shallow-submodules --no-single-branch --recursive https://github.com/RaphaelVitoi/Site -b master /app
 Cloning into '/app'...
-Updating files:  94% (1444/1523)Updating files:  95% (1447/1523)Updating files:  96% (1463/1523)Updating files:  97% (1478/1523)Updating files:  98% (1493/1523)Updating files:  99% (1508/1523)Updating files: 100% (1523/1523)Updating files: 100% (1523/1523), done.
+Updating files:  94% (1444/1523)
+Updating files:  95% (1447/1523)
+Updating files:  96% (1463/1523)
+Updating files:  97% (1478/1523)
+Updating files:  98% (1493/1523)
+Updating files:  99% (1508/1523)
+Updating files: 100% (1523/1523)
+Updating files: 100% (1523/1523), done.
 Submodule 'core/vendor/eigen' (https://gitlab.com/libeigen/eigen.git) registered for path 'core/vendor/eigen'
 Submodule 'skills/Stitch' (https://github.com/gemini-cli-extensions/stitch.git) registered for path 'skills/Stitch'
 Submodule 'skills/exa-mcp-server' (https://github.com/exa-labs/exa-mcp-server.git) registered for path 'skills/exa-mcp-server'

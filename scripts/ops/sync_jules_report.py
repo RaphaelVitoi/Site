@@ -8,6 +8,7 @@ RaphaelVitoi/Site, gerando o JULES_REPORT.md fidedigno e lastreado em dados reai
 from __future__ import annotations
 
 import argparse
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Final
@@ -16,6 +17,71 @@ from engine.jules_bridge import JulesClient
 
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent.parent
 JULES_REPORT_FILE: Final[Path] = BASE_DIR / "JULES_REPORT.md"
+
+# ---------------------------------------------------------------------------
+# Redacao de segredo -- a fronteira entre texto de terceiro e arquivo versionado
+# ---------------------------------------------------------------------------
+#
+# ESTE MODULO REPUBLICA O PROMPT ORIGINAL DE CADA SESSAO, e o prompt e texto que
+# alguem digitou. Em 2026-09-03 uma sessao foi criada colando o settings.json
+# inteiro do Antigravity IDE -- e aquele arquivo carregava
+# `agenticAssistant.geminiApiKey` e `qwen-code.apiKey`. O relatorio gerado foi
+# commitado e empurrado com quatro ocorrencias de duas chaves em texto claro.
+#
+# O PROMPT VIVE DO LADO DO GOOGLE JULES. Sanear o .md a mao apaga a copia e
+# deixa a fonte intacta: a proxima sincronizacao traz a chave de volta. A
+# correcao tem de estar AQUI, no ponto exato em que o texto cruza para dentro de
+# um arquivo versionado.
+#
+# ISTO NAO SUBSTITUI REVOGACAO. Chave que apareceu em texto claro esta
+# comprometida, e o que este modulo controla e apenas a REPUBLICACAO.
+
+#: Prefixo das chaves do ecossistema Google observadas neste ambiente.
+_SEGREDO_PREFIXADO: Final[str] = r"AQ\.[A-Za-z0-9_\-]{20,}"
+
+#: Valor com forma de credencial: longo e do charset de token.
+_VALOR_DE_SEGREDO: Final[str] = r"[A-Za-z0-9_\-.]{24,}"
+
+#: Campo cujo NOME anuncia credencial. O nome sozinho nunca basta -- veja abaixo.
+_CAMPO_DE_SEGREDO: Final[str] = r"[\w.\-]*(?:api[_-]?key|apikey|secret|token|password)"
+
+# O DISCRIMINANTE E A FORMA DO VALOR, NAO O NOME DO CAMPO. `"provider": "api-key"`
+# tem 'key' no nome e e configuracao legivel; redigir por nome transformaria
+# configuracao em ruido. Por isso todo padrao exige valor longo.
+_ATRIBUICAO_DE_SEGREDO: Final[re.Pattern[str]] = re.compile(
+    r"(?P<prefixo>[\"']?" + _CAMPO_DE_SEGREDO + r"[\"']?\s*[:=]\s*[\"']?)"
+    r"(?P<valor>" + _VALOR_DE_SEGREDO + r")",
+    re.IGNORECASE,
+)
+
+#: Deteccao, para o guard de regressao sobre o arquivo ja publicado.
+CHAVES_SUSPEITAS: Final[re.Pattern[str]] = re.compile(
+    _SEGREDO_PREFIXADO
+    + r"|(?:[\"']?"
+    + _CAMPO_DE_SEGREDO
+    + r"[\"']?\s*[:=]\s*[\"']?)"
+    + _VALOR_DE_SEGREDO,
+    re.IGNORECASE,
+)
+
+MARCADOR_REDIGIDO: Final[str] = "[REDIGIDO]"
+
+
+def redigir_segredos(texto: str) -> str:
+    """Substitui o VALOR de credenciais, preservando o nome do campo.
+
+    Redige o valor e nao a linha inteira porque as duas informacoes tem destinos
+    diferentes: saber QUE havia uma chave ali e auditoria, saber QUAL era e o
+    vazamento. Apagar a linha destruiria a primeira para conter a segunda.
+
+    Duas passadas, e a ordem importa: a atribuicao nomeada primeiro, para que o
+    nome do campo sobreviva; o prefixo conhecido depois, para alcancar a chave
+    solta que nao esteja atribuida a campo nenhum.
+    """
+    saida = _ATRIBUICAO_DE_SEGREDO.sub(
+        lambda m: m.group("prefixo") + MARCADOR_REDIGIDO, texto
+    )
+    return re.sub(_SEGREDO_PREFIXADO, MARCADOR_REDIGIDO, saida)
 
 
 def fetch_all_sessions_and_activities() -> list[dict[str, Any]]:
@@ -104,15 +170,16 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     lines.append(f"| **Sessões com Falha de Execução** | `{failed}` | ⚠️ Diagnóstico detalhado abaixo |")
     lines.append(f"| **Sessões Ativas no Momento** | `{in_progress}` | 💤 Standby |")
     lines.append("| **Plano Ativo** | `Jules in Pro` | Cota: 100 sessões/dia (1/100 consumida) |")
-    lines.append("| **Modelo Padrão (Default)** | `Gemini 3.6 Flash` | Execução rápida, refatores e cron Bolt ⚡ |")
-    lines.append("| **Modelo Avançado (Deep)** | `Gemini 3.1 Pro` | Raciocínio profundo e arquiteturas densas |")
-    lines.append("| **Cron Noturno Automatizado** | Ativo (~03:15–03:25 UTC) | Persona `Bolt ⚡` (Gemini 3.6 Flash) |")
+    lines.append("| **Cron Noturno Automatizado** | Ativo (~03:15–03:25 UTC) | Persona `Bolt ⚡` |")
     lines.append("")
     lines.append("> [!NOTE]")
-    lines.append("> **Configuração de Modelos no Google Jules (`jules.google.com/settings/general`):**")
-    lines.append("> - **Gemini 3.6 Flash (Padrão/Default)**: Modelo ativo de produção selecionado para o agente Jules. É o motor do cron diário `Bolt ⚡` para micro-otimizações contínuas de código.")
-    lines.append("> - **Gemini 3.1 Pro**: Modelo de alta capacidade selecionável para tarefas de alta densidade cognitiva, provas de teoremas PMev e migrações estruturais.")
-    lines.append("> - **Subscrição**: `Jules in Pro`, autorizando até 100 sessões concorrentes/diárias na nuvem da Google.")
+    lines.append("> **Modelo: a escolha é na UI, não pelo portão MCP.**")
+    lines.append(">")
+    lines.append("> O seletor de modelo do Jules existe e é do operador, mas vive nas preferências da plataforma (`jules.google.com/settings/general`) — mesmo padrão do Stitch.")
+    lines.append("> Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam parâmetro de modelo, então nenhuma automática daqui o roteia (medido em 2026-09-04).")
+    lines.append("> Este relatório deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instrução que não alcança mecanismo é promessa ao operador.")
+    lines.append(">")
+    lines.append("> **Subscrição**: `Jules in Pro`, autorizando até 100 sessões concorrentes/diárias na nuvem da Google.")
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -175,7 +242,7 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
         lines.append(f"- **Link Direto:** https://jules.google.com/session/{sid}")
         lines.append("- **Prompt Original:**")
         lines.append("  ```text")
-        prompt_lines = s["prompt"].strip().splitlines()
+        prompt_lines = redigir_segredos(s["prompt"].strip()).splitlines()
         for pl in prompt_lines[:15]:
             lines.append(f"  {pl}")
         if len(prompt_lines) > 15:

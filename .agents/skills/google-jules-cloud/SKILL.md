@@ -1,6 +1,6 @@
 ---
 name: google-jules-cloud
-description: Runbook, governanca e ponte de execucao para o Google Jules Cloud (jules.google.com). Use ao despachar tarefas assincronas em VMs descartaveis na nuvem (otimizacoes noturnas Bolt, refatoracoes em massa, geracao de testes), inspecionar sessoes e atividades, aprovar planos via MCP, sincronizar telemetria em JULES_REPORT.md e gerenciar o roteamento de modelos (Gemini 3.6 Flash default vs Gemini 3.1 Pro deep reasoning) sob o plano Jules in Pro.
+description: Runbook, governanca e ponte de execucao para o Google Jules Cloud (jules.google.com). Use ao despachar tarefas assincronas em VMs descartaveis na nuvem (otimizacoes noturnas Bolt, refatoracoes em massa, geracao de testes), inspecionar sessoes e atividades, aprovar planos via MCP e sincronizar telemetria em JULES_REPORT.md sob o plano Jules in Pro.
 ---
 
 # SKILL: Google Jules Cloud — Orquestração Assíncrona & Engenharia em Nuvem
@@ -14,14 +14,28 @@ description: Runbook, governanca e ponte de execucao para o Google Jules Cloud (
 
 ---
 
-## 1. Matriz de Modelos & Alinhamento de Produção
+## 1. Alinhamento de Produção — a escolha é na UI, não pelo portão MCP
 
-Conforme verificado nas preferências do ecossistema ([jules.google.com/settings/general](https://jules.google.com/settings/general)), o Google Jules opera estritamente com dois modelos de fronteira:
-
-| Modelo | Tier / Modo | Propósito Primário | Características Operacionais |
-| :--- | :--- | :--- | :--- |
-| **`Gemini 3.6 Flash`** | **Padrão (Default)** | Micro-otimizações diárias, refatores rápidos, cron noturno `Bolt ⚡`. | Máxima velocidade de clone/análise, consumo marginal de tokens, execução em < 120s. |
-| **`Gemini 3.1 Pro`** | **Avançado (Deep)** | Auditorias arquiteturais densas, teoremas matemáticos PMev, migrações pesadas. | Raciocínio profundo multi-step, geração massiva de testes, resolução de conflitos complexos. |
+> **O MODELO NÃO É CONFIGURÁVEL POR REQUISIÇÃO, E ESTA SKILL NÃO O ROTEIA.**
+>
+> **Mesmo padrão do Stitch** (Tier 0, 2026-09-04): o seletor de modelo existe e é
+> do operador, mas vive nas **preferências da interface**
+> ([jules.google.com/settings/general](https://jules.google.com/settings/general)) —
+> não no portão de entrada.
+>
+> Medido em 2026-09-04 nos dois lados da fronteira. A `createSession` da API
+> v1alpha aceita `prompt`, `title`, `sourceContext`, `requirePlanApproval` e
+> `automationMode`; as ferramentas do MCP `google-jules` aceitam `source`,
+> `prompt`, `branch` e `auto_approve_plan`. Nenhuma das duas expõe seleção de
+> modelo.
+>
+> A versão anterior desta seção trazia uma matriz de roteamento e um exemplo
+> passando `model=...` para `JulesSessionRequest`. Aquele exemplo lançaria
+> `TypeError`: a dataclass é `frozen/slots` e nunca teve o campo. Instrução de
+> automação que não alcança mecanismo é promessa ao operador, e foi retirada por
+> ordem do Tier 0.
+>
+> Para trocar o modelo do Jules, use as preferências da própria plataforma.
 
 ### Configuração da Conta & Cotas
 - **Assinatura:** `Jules in Pro` (Workflows intensivos contínuos)
@@ -37,8 +51,8 @@ O ecossistema opera sob estrita **não-concorrência** e **isolamento térmico**
 ```mermaid
 flowchart TD
     subgraph Nuvem["☁️ Google Cloud VM (Jules Assíncrono)"]
-        Cron["⏰ Cron Noturno (03:20 UTC)\nPersona 'Bolt ⚡' (Gemini 3.6 Flash)"]
-        Task["🎯 Tarefas Sob Demanda\n(Gemini 3.1 Pro / 3.6 Flash)"]
+        Cron["⏰ Cron Noturno (03:20 UTC)\nPersona 'Bolt ⚡'"]
+        Task["🎯 Tarefas Sob Demanda"]
         Clone["📦 git clone --recursive\n(Ambiente Hermético /app)"]
         Exec["⚙️ Execução de Otimizações & Testes"]
         Diff["📄 Emissão de Diff / Pull Request"]
@@ -72,18 +86,17 @@ flowchart TD
 ## 3. Playbook de Invocação Rápida via Python Bridge
 
 ```python
-from engine.jules_bridge import JulesClient, JulesSessionRequest, JULES_MODEL_FLASH, JULES_MODEL_PRO
+from engine.jules_bridge import JulesClient, JulesSessionRequest
 
 client = JulesClient()
 
-# 1. Disparar otimizacao rapida de performance (Gemini 3.6 Flash):
+# 1. Disparar otimizacao rapida de performance:
 status = client.create_session(
     JulesSessionRequest(
         source="sources/github/RaphaelVitoi/Site",
         prompt="Bolt ⚡: Identificar e otimizar funcoes de ordenacao no frontend/src/lib/telemetry-client.ts",
         branch="master",
         auto_approve_plan=True,
-        model=JULES_MODEL_FLASH,
     )
 )
 print(f"Sessao criada: {status.session_id} | Status: {status.state}")
