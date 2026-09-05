@@ -15,6 +15,7 @@ import { GravitationalScannerPanel } from '@/components/simulator/ui/Gravitation
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { WasmTelemetryWidget } from './WasmTelemetryWidget';
 import { useSotaSync } from '@/components/simulator/hooks/useSotaSync';
+import type { PerspectiveWorkerRequest, SimulatorWorkerResponse } from '../workers/insolvencyProtocol';
 
 const DEFAULT_STACKS = [9.4, 52.4, 22.2, 7, 44.3, 24.3, 40, 13.4, 55];
 const DEFAULT_PRIZES = [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
@@ -145,10 +146,11 @@ export default function PerspectivePanel({
 
   // ... (rest of states unchanged)
   const [wasmLogs, setWasmLogs] = useState<string[]>([
-    '> [SOTA ENGINE] Inicializando cálculo de cenário: GOLD_STANDARD',
-    '> [SOLVER] Aguardando acoplamento do WebWorker (WASM FFI)...',
+    '> [MODELO] Inicializando cálculo exploratório de cenário.',
+    '> [WORKER] Aguardando cálculo em segundo plano...',
   ]);
   const workerRef = useRef<Worker | null>(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     // SOTA: Delegação O(1) para a Thread do WebWorker, blindando a Main Thread do React
@@ -156,14 +158,13 @@ export default function PerspectivePanel({
       type: 'module',
     });
 
-    workerRef.current.onmessage = (e: MessageEvent) => {
-      if (e.data?.type === 'WASM_LOG') {
-        setWasmLogs((prev) => {
-          const newLogs = [...prev, e.data.payload];
-          return newLogs.length > 50 ? newLogs.slice(-50) : newLogs;
-        });
-      } else if (e.data?.type === 'WASM_RESULT') {
-        setWasmLogs((prev) => [...prev, `> [INFO] Convergência de Nash alcançada. Fricção Zero.`]);
+    workerRef.current.onmessage = (e: MessageEvent<SimulatorWorkerResponse | undefined>) => {
+      if (!e.data || e.data.id !== requestIdRef.current) return;
+      if (e.data.type === 'WASM_RESULT') {
+        setWasmLogs((prev) => [...prev, '> [MODELO] Cenário calculado pelo modelo TypeScript existente.'].slice(-50));
+      } else if (e.data.type === 'ERROR') {
+        const detail = e.data.error;
+        setWasmLogs((prev) => [...prev, `> [ERRO] ${detail}`].slice(-50));
       }
     };
 
@@ -194,14 +195,15 @@ export default function PerspectivePanel({
   useEffect(() => {
     setWasmLogs((prev) => [
       ...prev,
-      `> [MATH] Invocando FFI: solve_perspectiva_v7_gold(9-max stress, Ψ=${humanNoiseFactor.toFixed(2)})`,
-    ]);
+      `> [MODELO] Calculando cenário com ${stacks.length} stacks, Ψ=${humanNoiseFactor.toFixed(2)}.`,
+    ].slice(-50));
 
     const heroRp = prizes.length > 0 ? 15 : 0; // Simplificação para o log, o worker usa real
     const villainRp = prizes.length > 0 ? 15 : 0;
 
     workerRef.current?.postMessage({
       type: 'CALCULATE_PERSPECTIVE',
+      id: ++requestIdRef.current,
       payload: { 
         stacks, 
         prizes, 
@@ -221,7 +223,7 @@ export default function PerspectivePanel({
         stackEff: stacks[0] || 40,
         referenceStatus,
       },
-    });
+    } satisfies PerspectiveWorkerRequest);
   }, [stacks, prizes, kappa, numPlayers, bountyValue, potSize, heroCost, winProb, realization, edgeBase, isNearPayjump, blindsRising, humanNoiseFactor, referenceStatus]);
 
   // SOTA v4.2: Orquestração de Cálculo Modularizada

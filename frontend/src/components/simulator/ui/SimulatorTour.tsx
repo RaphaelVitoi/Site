@@ -18,7 +18,7 @@ const TOUR_STEPS: Step[] = [
 		targetId: 'anchor-aula12',
 		title: 'A Gênese: Âncora Aula 1.2',
 		content:
-			'Todo o motor SOTA é alimentado por estes dados empíricos. Aqui você vê a realidade de uma mesa final real calculada em alta resolução.',
+			'Explore a estrutura de uma mesa final. Os cenários e outputs funcionam como moldes de trabalho para uma teoria ainda em desenvolvimento.',
 		openDetails: true,
 	},
 	{

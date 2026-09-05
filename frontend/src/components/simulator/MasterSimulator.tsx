@@ -220,6 +220,7 @@ export default function MasterSimulator() {
     nashRiver,
     streetRps,
     quantumPerspectiva,
+    insolvencyMatrixData,
     isCalculatingInsolvency,
     nashResults,
     dispatchInsolvencyMatrix,
@@ -259,6 +260,7 @@ export default function MasterSimulator() {
     quantumPerspectiva,
     apiQuantumMetrics,
     nativeRangeMetric,
+    insolvencyMatrixData,
     isCalculatingInsolvency,
     dispatchInsolvencyMatrix,
     dispatchIcmDistortion,
@@ -476,7 +478,7 @@ export default function MasterSimulator() {
                     <span className="text-[0.48rem] font-black uppercase tracking-wider text-text-dim block mb-0.5">
                       IP Risk Premium
                     </span>
-                    <span className="font-mono text-base font-black text-accent-indigo">
+                    <span className="font-mono text-base font-black text-accent-indigo-light">
                       {finalIpRp.toFixed(1)}%
                     </span>
                   </div>
@@ -728,6 +730,9 @@ export default function MasterSimulator() {
 
                   {/* Palco Central de Execução */}
                   <div
+                    id="simulator-tool-panel"
+                    role="tabpanel"
+                    aria-labelledby={`simulator-tab-${activeTool}`}
                     className={`transition-all duration-200 ${
                       isPending ? 'scale-[0.995] opacity-50 blur-xs' : 'scale-100 opacity-100'
                     }`}
@@ -783,7 +788,7 @@ export default function MasterSimulator() {
                       step="02"
                       label="Framework"
                       title="Lente de Perspectiva (PM)"
-                      description="O algoritmo matemático desenvolvido por Raphael Vitoi para quantificação do Fator Ψ."
+                      description="Ambiente de exploração da Perspectiva Matemática: cenários e modelos em desenvolvimento."
                     />
                     <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
                   </div>

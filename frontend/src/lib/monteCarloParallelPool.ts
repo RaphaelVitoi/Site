@@ -18,14 +18,14 @@ export interface MonteCarloSimulationOptions {
 	timeoutMs?: number;
 }
 
-export type ParallelismMode = 'SHARED_ARRAY_BUFFER' | 'TRANSFERABLE_WORKERS' | 'SINGLE_THREAD_FALLBACK';
+export type ParallelismMode = 'SHARED_ARRAY_BUFFER' | 'TRANSFERABLE_WORKERS' | 'SINGLE_THREAD_FALLBACK' | 'DEMO_FALLBACK';
 
 export interface MonteCarloSimulationResult {
 	equity: number; // [0, 1]
 	equityPercentage: number; // [0, 100]
 	iterations: number;
-	stdError: number;
-	confidenceInterval95: [number, number]; // [min, max] em porcentagem
+	stdError: number | null;
+	confidenceInterval95: [number, number] | null; // [min, max] em porcentagem
 	latencyMs: number;
 	throughputIps: number; // Iterations per second
 	concurrency: number;
@@ -290,13 +290,13 @@ export class MonteCarloParallelPool {
 			return {
 				equity: 0.5,
 				equityPercentage: 50.0,
-				iterations,
-				stdError: 0.005,
-				confidenceInterval95: [49.02, 50.98],
+				iterations: 0,
+				stdError: null,
+				confidenceInterval95: null,
 				latencyMs,
 				throughputIps: 0,
 				concurrency: 1,
-				mode: 'SINGLE_THREAD_FALLBACK',
+				mode: 'DEMO_FALLBACK',
 				simulationId,
 			};
 		}

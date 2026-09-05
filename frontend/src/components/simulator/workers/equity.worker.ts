@@ -67,7 +67,7 @@ self.onmessage = async (e: MessageEvent<EquityWorkerRequest>) => {
 			return;
 		}
 
-		// Vetorização bitwise estrita para Uint8Array (166 bytes) compatível com &[u8] do Rust
+		// Vetorização bitwise estrita para Uint8Array (338 bytes, índice esparso h * 52 + l) compatível com &[u8] do Rust
 		const heroBigInt = typeof heroRange === 'string' ? rangeToBitmask(heroRange) : BigInt(0);
 		const villainBigInt = typeof villainRange === 'string' ? rangeToBitmask(villainRange) : BigInt(0);
 

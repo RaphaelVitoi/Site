@@ -1,6 +1,7 @@
 """
 Gerenciamento e persistencia de dados experimentais e cenarios SOTA (Lab Manager).
 """
+
 from __future__ import annotations
 
 import json

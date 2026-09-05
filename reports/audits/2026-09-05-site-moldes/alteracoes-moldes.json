@@ -1,0 +1,130 @@
+{
+  "files": [
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\core\\perspective_schemas.py",
+      "sha256": "67eae7680edd491611c27304b2d21869bdad8588adeef406034c8e40a7dd7a15"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\engine\\icm_matrix.py",
+      "sha256": "f13f565f3783a59f0cd9a4c54cdc9ce1a30acac0e7cc8966479fc9177aef714f"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\package.json",
+      "sha256": "a616e4c76d0c5849c1a79ee6db6c24525267b82f1ead8436329471cae166b10d"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\DownwardDriftSimulator.tsx",
+      "sha256": "ae50111ad5faedf1316cbd7b90ab37af4e821ced5297d0f6f0c00a6c11a15393"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\hooks\\useMasterSpotLogic.ts",
+      "sha256": "516b8dc8a7aada89caa224c7d76ff6c0b0dbe217d225f2490f1eed414db1b430"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\hooks\\useQuantumEngine.ts",
+      "sha256": "c810ce7c150e4d7808f180779b6cd7218df4d4c2ea80e62634a296916ede426e"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\MasterSimulator.tsx",
+      "sha256": "27ab4ca1e337e2c8e1f55566098d9f4d721425c980c4438efae2edf219d9fd99"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\panels\\EquityCalculator.tsx",
+      "sha256": "977b0399d46875d7b92fcf8cf583976e184eb3b6bb67a55da8df3d60f907c42f"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\panels\\NashPanel.tsx",
+      "sha256": "32a046ba6d94b6af2fd46ab9e7bdc8b1171a92d2272067a4bcc6da9963cd15ea"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\panels\\PerspectivePanel.tsx",
+      "sha256": "3ebec2dbfaf4bf545b81c5511670fbb71303050bc1826dc7d3cfa5866a8a562e"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\panels\\PmLensPanel.tsx",
+      "sha256": "1612c0640d0543f1a34080485635c96506aa8b96b84aea5e93cd339a5abf9436"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\ui\\InsolvencyRioPanel.tsx",
+      "sha256": "556c2cb719297fb0acd03522785bae0cb475b531aca15b0766a5ae95eac52b31"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\ui\\MonteCarloConvergenceWidget.tsx",
+      "sha256": "93563be36b176e0a7aa0e3fa4097af96caf8563a0c9bf385db1028ea591a269c"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\ui\\ScenarioQuickSelector.tsx",
+      "sha256": "29daff8aa2854fe06de5f3c0c51268872fe573fe34c797ee15168dff25c63cb8"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\ui\\SimulatorNavigation.tsx",
+      "sha256": "dc835d8b2009acc6d3a7b89a1a2eba1d66416936c1feee2c3f2df3d503ba3f50"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\ui\\SimulatorTour.tsx",
+      "sha256": "0012d70497724d19a9068713de3a2bd361165fb2a23a81d103953a31fd026a55"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\workers\\equity.worker.ts",
+      "sha256": "68bfed97b92ed1be6c4655a874b5c183ffea1828b31fbb93c8a16ffeb4735ce4"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\workers\\insolvency.worker.ts",
+      "sha256": "f14f7b8b5b70e40d44ae29d7ebad3a2ce29bb5c01caf54261073acbc084854bf"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\workers\\insolvencyProcessor.ts",
+      "sha256": "c0171b9903755a3905111fd2dca8e87af1793dc8e9f0ae19c4208bd1d4a3574e"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\workers\\insolvencyProtocol.ts",
+      "sha256": "86a64525c567a9f786b7633f840b1d072b4eedb6755eee07afdd44a790b451da"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\components\\simulator\\workers\\rangeParser.ts",
+      "sha256": "4e4c7de28037b2fc4a2f9fe06ccb7b0c5a3d17ab1849bd8d2cfbff2ef3dc968f"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\lib\\icmMatrix.ts",
+      "sha256": "9b2e0cb75eaa441f8259e9dba632bcfbfc8de8cc32072a9e387bf9cf6418083c"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\lib\\monteCarloParallelPool.ts",
+      "sha256": "588a74024a59eba6914a51cfe31c94e8187e731a758c5802a2ac7024c1c50a24"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\tests\\simulator\\computationalMolds.test.ts",
+      "sha256": "608d6a895f817ce4c73d42e42f700b771f2ebe6845492393304f3b19eded25be"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\tests\\simulator\\insolvencyConsumer.test.tsx",
+      "sha256": "a78e757003acc4ac74a7279e607e9e8fbd4840999f413cb30c4c63f9292c3fde"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\tests\\simulator\\insolvencyWorkerContract.test.ts",
+      "sha256": "efab5c8fc02b7e5359bc67095468106808daa7f86f916c9c5ca8d9bf1026ab70"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\tests\\simulator\\monteCarloDemoFallback.test.ts",
+      "sha256": "0f20ffd9992b989ae5c81e61fd26da482ed8a53b4f4238552c3792003662fb46"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\tests\\simulator\\monteCarloParallelPool.test.ts",
+      "sha256": "293c01d91ab1497a4b89a55d477518b801bd6b521da1620536bb06b49e07b284"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\tests\\simulator\\simulatorNavigation.test.tsx",
+      "sha256": "984acc9071cb77e88a39362646c615830dca0ef85817c629086eefb0362530ba"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\tsconfig.worker.json",
+      "sha256": "6fd612dbb8bd473bba88248abf52ee1914f19588d8f2b5197a387de8b6e9fceb"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\tests\\test_computational_molds.py",
+      "sha256": "c4775f5f8020811af0048525e6ebcaae71190a0fb6d0d7566edc3bf6cfd2ee1d"
+    }
+  ],
+  "head": "d6bace4df5f404e8fb4dd711df087cc7db0aedcf",
+  "scope": "Arquivos desta implementacao; demais alteracoes locais nao sao atribuidas a esta tarefa."
+}

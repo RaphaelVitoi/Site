@@ -19,91 +19,50 @@ pairwise de all-in, nao uma recomendacao universal de call ou sizing.
 
 from __future__ import annotations
 
+from math import isfinite
 from typing import Any
-
-
-def _compute_branch(
-    current_pos: int,
-    used_players: list[int],
-    current_prob: float,
-    remaining_chips: float,
-    stacks: list[float],
-    n_payouts: int,
-    prob_matrix: list[list[float]],
-) -> None:
-    if current_pos >= n_payouts or remaining_chips <= 0:
-        return
-
-    for p_idx, stack in enumerate(stacks):
-        if p_idx in used_players or stack <= 0:
-            continue
-
-        prob_this_pos = stack / remaining_chips
-        branch_prob = current_prob * prob_this_pos
-        prob_matrix[p_idx][current_pos] += branch_prob
-
-        if current_pos + 1 < n_payouts and remaining_chips - stack > 0:
-            _compute_branch(
-                current_pos + 1,
-                used_players + [p_idx],
-                branch_prob,
-                remaining_chips - stack,
-                stacks,
-                n_payouts,
-                prob_matrix,
-            )
 
 
 def calculate_malmuth_harville_icm(
     stacks: list[float],
     payouts: list[float],
 ) -> list[float]:
-    """Calcula a equidade financeira ($EV) de cada jogador pelo modelo Malmuth-Harville.
+    """Malmuth-Harville exato, agregando ordens pelo conjunto ja premiado.
 
-    Args:
-        stacks: Lista com o stack de cada jogador em fichas.
-        payouts: Lista com os payouts ordenados do 1o ao M-esimo colocado.
-
-    Returns:
-        Lista com o $EV esperado de cada jogador no torneio.
+    Stacks zero ocupam as ultimas posicoes. Sem ordem de eliminacao informada,
+    dividem igualmente os premios dessas posicoes (convencao de empate).
+    O vetor totalmente zerado continua sendo um cenario vazio, sem resultado.
+    Esta convencao pertence ao baseline ICM, nao define a teoria PMev.
     """
-    n_players = len(stacks)
-    if n_players == 0:
-        return []
+    n = len(stacks)
+    if any(not isfinite(value) or value < 0 for value in [*stacks, *payouts]):
+        raise ValueError("Stacks e payouts devem ser finitos e nao negativos")
+    ev = [0.0] * n
+    if not n or not payouts or sum(stacks) <= 0:
+        return ev
+    active = [i for i, stack in enumerate(stacks) if stack > 0]
+    zeros = n - len(active)
+    prizes = payouts[:n]
+    if zeros:
+        terminal_prize = sum(prizes[len(active):]) / zeros
+        for i, stack in enumerate(stacks):
+            if stack == 0:
+                ev[i] = terminal_prize
 
-    total_chips = sum(stacks)
-    if total_chips <= 0:
-        return [0.0] * n_players
-
-    # Ajusta payouts caso haja mais premios que jogadores
-    n_payouts = min(len(payouts), n_players)
-    active_payouts = payouts[:n_payouts]
-
-    # Probabilidades de cada jogador i terminar na posicao pos (0-indexed)
-    prob_matrix = [[0.0 for _ in range(n_payouts)] for _ in range(n_players)]
-
-    # 1o Lugar: probabilidade proporcional direta do stack
-    for i in range(n_players):
-        prob_matrix[i][0] = stacks[i] / total_chips
-
-    # 2o ao M-esimo lugar via permutacao recursiva exata
-    if n_payouts > 1:
-        for first_player, stack in enumerate(stacks):
-            if stack > 0:
-                rem_chips = total_chips - stack
-                if rem_chips > 0:
-                    _compute_branch(
-                        1,
-                        [first_player],
-                        prob_matrix[first_player][0],
-                        rem_chips,
-                        stacks,
-                        n_payouts,
-                        prob_matrix,
-                    )
-
-    # Multiplica pela estrutura de payouts
-    return [sum(prob_matrix[i][k] * active_payouts[k] for k in range(n_payouts)) for i in range(n_players)]
+    # Cada estado agrega todas as permutacoes do mesmo conjunto de vencedores.
+    states = {0: 1.0}
+    for prize in prizes[:len(active)]:
+        next_states: dict[int, float] = {}
+        for mask, probability in states.items():
+            remaining = [i for i in active if not mask & (1 << i)]
+            chips = sum(stacks[i] for i in remaining)
+            for i in remaining:
+                branch = probability * stacks[i] / chips
+                ev[i] += branch * prize
+                next_mask = mask | (1 << i)
+                next_states[next_mask] = next_states.get(next_mask, 0.0) + branch
+        states = next_states
+    return ev
 
 
 def compute_bubble_factor_matrix(

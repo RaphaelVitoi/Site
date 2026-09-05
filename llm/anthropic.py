@@ -37,9 +37,7 @@ def _montar(model: str, system_prompt: str, user_prompt: str, kwargs: dict) -> t
         return corpo, {}
 
     max_tokens = kwargs.get("max_tokens")
-    corpo, headers_extra = AnthropicAdapter.build_http(
-        model, mensagens, max_tokens=max_tokens, system=system_prompt
-    )
+    corpo, headers_extra = AnthropicAdapter.build_http(model, mensagens, max_tokens=max_tokens, system=system_prompt)
     # Erro local no lugar de um timeout remoto: acima deste teto a API exige
     # streaming, e este caminho e requisicao unica.
     if AnthropicAdapter.precisa_streaming(model, corpo["max_tokens"]):

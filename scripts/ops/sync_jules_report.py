@@ -56,11 +56,7 @@ _ATRIBUICAO_DE_SEGREDO: Final[re.Pattern[str]] = re.compile(
 
 #: Deteccao, para o guard de regressao sobre o arquivo ja publicado.
 CHAVES_SUSPEITAS: Final[re.Pattern[str]] = re.compile(
-    _SEGREDO_PREFIXADO
-    + r"|(?:[\"']?"
-    + _CAMPO_DE_SEGREDO
-    + r"[\"']?\s*[:=]\s*[\"']?)"
-    + _VALOR_DE_SEGREDO,
+    _SEGREDO_PREFIXADO + r"|(?:[\"']?" + _CAMPO_DE_SEGREDO + r"[\"']?\s*[:=]\s*[\"']?)" + _VALOR_DE_SEGREDO,
     re.IGNORECASE,
 )
 
@@ -78,9 +74,7 @@ def redigir_segredos(texto: str) -> str:
     nome do campo sobreviva; o prefixo conhecido depois, para alcancar a chave
     solta que nao esteja atribuida a campo nenhum.
     """
-    saida = _ATRIBUICAO_DE_SEGREDO.sub(
-        lambda m: m.group("prefixo") + MARCADOR_REDIGIDO, texto
-    )
+    saida = _ATRIBUICAO_DE_SEGREDO.sub(lambda m: m.group("prefixo") + MARCADOR_REDIGIDO, texto)
     return re.sub(_SEGREDO_PREFIXADO, MARCADOR_REDIGIDO, saida)
 
 
@@ -122,20 +116,22 @@ def fetch_all_sessions_and_activities() -> list[dict[str, Any]]:
                 if raw_branch:
                     branch_name = str(raw_branch)
 
-        enriched_sessions.append({
-            "id": session_id,
-            "title": s.get("title", "Sem titulo"),
-            "state": s.get("state", "STATE_UNSPECIFIED"),
-            "create_time": s.get("createTime", ""),
-            "update_time": s.get("updateTime", ""),
-            "prompt": s.get("prompt", ""),
-            "source": source_name,
-            "branch": branch_name,
-            "pr_url": pr_url,
-            "failure_reason": failure_reason,
-            "activities_count": len(activities),
-            "activities": activities,
-        })
+        enriched_sessions.append(
+            {
+                "id": session_id,
+                "title": s.get("title", "Sem titulo"),
+                "state": s.get("state", "STATE_UNSPECIFIED"),
+                "create_time": s.get("createTime", ""),
+                "update_time": s.get("updateTime", ""),
+                "prompt": s.get("prompt", ""),
+                "source": source_name,
+                "branch": branch_name,
+                "pr_url": pr_url,
+                "failure_reason": failure_reason,
+                "activities_count": len(activities),
+                "activities": activities,
+            }
+        )
 
     # Ordenar cronologicamente inverso (mais recente primeiro)
     enriched_sessions.sort(key=lambda x: x["create_time"], reverse=True)
@@ -175,11 +171,19 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     lines.append("> [!NOTE]")
     lines.append("> **Modelo: a escolha é na UI, não pelo portão MCP.**")
     lines.append(">")
-    lines.append("> O seletor de modelo do Jules existe e é do operador, mas vive nas preferências da plataforma (`jules.google.com/settings/general`) — mesmo padrão do Stitch.")
-    lines.append("> Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam parâmetro de modelo, então nenhuma automática daqui o roteia (medido em 2026-09-04).")
-    lines.append("> Este relatório deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instrução que não alcança mecanismo é promessa ao operador.")
+    lines.append(
+        "> O seletor de modelo do Jules existe e é do operador, mas vive nas preferências da plataforma (`jules.google.com/settings/general`) — mesmo padrão do Stitch."
+    )
+    lines.append(
+        "> Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam parâmetro de modelo, então nenhuma automática daqui o roteia (medido em 2026-09-04)."
+    )
+    lines.append(
+        "> Este relatório deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instrução que não alcança mecanismo é promessa ao operador."
+    )
     lines.append(">")
-    lines.append("> **Subscrição**: `Jules in Pro`, autorizando até 100 sessões concorrentes/diárias na nuvem da Google.")
+    lines.append(
+        "> **Subscrição**: `Jules in Pro`, autorizando até 100 sessões concorrentes/diárias na nuvem da Google."
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -187,19 +191,31 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     lines.append("")
     lines.append("> [!CAUTION]")
     lines.append("> **Por que o relatório anterior estava vazio e as tarefas diárias falhavam:**")
-    lines.append("> 1. **Relatório Alienígena no Git:** O arquivo `JULES_REPORT.md` anterior foi incorporado no commit `b36a9ea4` com um template copiado de `robinbakshi007/ollama-direct-custom-agent` (projeto de extensão VS Code alheio), sem qualquer vínculo com a API do Jules.")
-    lines.append("> 2. **Falha Sistêmica no Clone da VM do Jules:** Toda noite às ~03:20 UTC, o runner em nuvem do Google Jules inicia uma VM descartável e executa:")
+    lines.append(
+        "> 1. **Relatório Alienígena no Git:** O arquivo `JULES_REPORT.md` anterior foi incorporado no commit `b36a9ea4` com um template copiado de `robinbakshi007/ollama-direct-custom-agent` (projeto de extensão VS Code alheio), sem qualquer vínculo com a API do Jules."
+    )
+    lines.append(
+        "> 2. **Falha Sistêmica no Clone da VM do Jules:** Toda noite às ~03:20 UTC, o runner em nuvem do Google Jules inicia uma VM descartável e executa:"
+    )
     lines.append(">    ```bash")
-    lines.append(">    git clone --depth 1 --shallow-submodules --no-single-branch --recursive https://github.com/RaphaelVitoi/Site -b master /app")
+    lines.append(
+        ">    git clone --depth 1 --shallow-submodules --no-single-branch --recursive https://github.com/RaphaelVitoi/Site -b master /app"
+    )
     lines.append(">    ```")
-    lines.append("> 3. **Submódulo Quebrado (`skills/exa-mcp-server`):** O commit `fb578584d9bf8df7afc53890c5daabb6956200b7` foi registrado localmente no submódulo, mas **nunca foi (e não pode ser) enviado para o repositório público upstream** (`exa-labs/exa-mcp-server.git`). O GitHub rejeitava o fetch com `upload-pack: not our ref fb578584d9...`, abortando o clone antes do agente Jules rodar.")
-    lines.append("> 4. **Bug de Parâmetro no `engine/jules_bridge.py`:** A query `?view=FULL` era rejeitada pela API v1alpha com HTTP 400 Bad Request (sanado nesta sessão).")
+    lines.append(
+        "> 3. **Submódulo Quebrado (`skills/exa-mcp-server`):** O commit `fb578584d9bf8df7afc53890c5daabb6956200b7` foi registrado localmente no submódulo, mas **nunca foi (e não pode ser) enviado para o repositório público upstream** (`exa-labs/exa-mcp-server.git`). O GitHub rejeitava o fetch com `upload-pack: not our ref fb578584d9...`, abortando o clone antes do agente Jules rodar."
+    )
+    lines.append(
+        "> 4. **Bug de Parâmetro no `engine/jules_bridge.py`:** A query `?view=FULL` era rejeitada pela API v1alpha com HTTP 400 Bad Request (sanado nesta sessão)."
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## 3. Histórico Consolidado de Sessões no Google Jules")
     lines.append("")
-    lines.append("| ID da Sessão | Data (UTC) | Persona / Prompt | Branch | Status | Atividades | Observação / Causa da Falha |")
+    lines.append(
+        "| ID da Sessão | Data (UTC) | Persona / Prompt | Branch | Status | Atividades | Observação / Causa da Falha |"
+    )
     lines.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
 
     for s in sessions:
@@ -225,7 +241,9 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
         else:
             obs = "—"
 
-        lines.append(f"| [{sid}](https://jules.google.com/session/{sid}) | `{created}` | **{title}** | `{branch}` | {state_badge} | `{acts_count}` | {obs} |")
+        lines.append(
+            f"| [{sid}](https://jules.google.com/session/{sid}) | `{created}` | **{title}** | `{branch}` | {state_badge} | `{acts_count}` | {obs} |"
+        )
 
     lines.append("")
     lines.append("---")
@@ -269,12 +287,20 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     lines.append("## 5. Plano de Resolução e Próximos Passos")
     lines.append("")
     lines.append("1. **Normalização do Submódulo `skills/exa-mcp-server`:**")
-    lines.append("   - Realinhar o ponteiro gitlink do submódulo para `15ffb50519e719dc791cdc750ce5ed1934c0a1ed` (HEAD canônico do `origin/main`).")
-    lines.append("   - Manter as customizações locais do pacote isoladas ou arquivadas sem poluir o commit tracked pelo repositório pai.")
+    lines.append(
+        "   - Realinhar o ponteiro gitlink do submódulo para `15ffb50519e719dc791cdc750ce5ed1934c0a1ed` (HEAD canônico do `origin/main`)."
+    )
+    lines.append(
+        "   - Manter as customizações locais do pacote isoladas ou arquivadas sem poluir o commit tracked pelo repositório pai."
+    )
     lines.append("2. **Sincronização Contínua do `JULES_REPORT.md`:**")
-    lines.append("   - Executar `python scripts/ops/sync_jules_report.py --write` para regenerar este relatório automaticamente via cron ou pré-commit.")
+    lines.append(
+        "   - Executar `python scripts/ops/sync_jules_report.py --write` para regenerar este relatório automaticamente via cron ou pré-commit."
+    )
     lines.append("3. **Disparo de Teste de Sanidade na Nuvem:**")
-    lines.append("   - Criar uma nova sessão via `engine/jules_bridge.py` com o submódulo normalizado para verificar se a VM do Jules conclui o clone sem erros.")
+    lines.append(
+        "   - Criar uma nova sessão via `engine/jules_bridge.py` com o submódulo normalizado para verificar se a VM do Jules conclui o clone sem erros."
+    )
     lines.append("")
     lines.append("---")
     lines.append("*Relatório emitido pelo Sincronizador de Telemetria Google Jules — Protocolo Chico SOTA v8.0 GOLD*")

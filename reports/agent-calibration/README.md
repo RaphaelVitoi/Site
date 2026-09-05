@@ -134,10 +134,19 @@ pwsh -NoProfile -File .\scripts\ops\Invoke-AgentCalibrationQuantitativeSupport.p
 
 pwsh -NoProfile -File .\scripts\ops\Invoke-AgentCalibrationQuantitativeSupport.ps1 `
   -CfrPureMode cfr-pure -CfrPot 10 -CfrStack 100 -CfrKappa 0.95 -CfrIterations 32
+
+pwsh -NoProfile -File .\scripts\ops\Invoke-AgentCalibrationQuantitativeSupport.ps1 `
+  -TimesFmMode timesfm-forecast -TimesFmHorizon 3
+```
+
+Ou diretamente pela CLI do Nexus (com suporte a escalonamento multivariado por modelo condutor):
+```bash
+python scripts/cli/nexus.py agent calibration-forecast --multimodel --horizon 3
 ```
 
 | Motor | Fonte canônica | Uso permitido | Limite inegociável |
 |---|---|---|---|
+| Google TimesFM 2.0 | `engine/timesfm_engine.py::forecast_agent_calibration_trajectory` | Projeção temporal estocástica de notas, túnel de quantis ($q_{10} \dots q_{90}$) e detecção de downward drift ($H=3$ sessões por default no portão) | Estimador indutivo de séries temporais (Apache 2.0); não substitui avaliação empírica de sessão nem abre portão sozinho. |
 | Monte Carlo puro | `wasm-equity/lib.rs::calculate_equity_monte_carlo_binary` | Equidade estocástica de ranges/board declarados, com seed auditável | Não é modelo de comportamento nem libera o portão de evidência. |
 | CFR puro | `frontend/src/components/simulator/workers/cfr.worker.ts` | Matriz iterativa de Regret Matching sobre a abstração declarada | Não prova equilíbrio convergido nem estabelece a validade de uma calibração. |
 | Monte Carlo ICM destilado | `frontend/src/lib/montecarlo.ts` | Fallback explícito para cenário ICM | Usa `Math.random` sem seed exposta; não equivale ao núcleo puro/WASM. |

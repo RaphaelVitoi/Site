@@ -22,6 +22,7 @@ import {
 	YAxis,
 } from 'recharts';
 import { useSotaSync } from './hooks/useSotaSync';
+import type { MultiwayRioRequest, SimulatorWorkerResponse } from './workers/insolvencyProtocol';
 
 export function DownwardDriftSimulator() {
 	const isMounted = useMounted();
@@ -34,26 +35,29 @@ export function DownwardDriftSimulator() {
 	const sprLevels = 20;
 
 	useEffect(() => {
-		workerRef.current = new Worker(new URL('./workers/insolvency.worker.ts', import.meta.url), {
+		const worker = new Worker(new URL('./workers/insolvency.worker.ts', import.meta.url), {
 			type: 'module',
 		});
 
-		workerRef.current.onmessage = (e) => {
-			if (e.data.type === 'MULTIWAY_RIO_RESULT') {
+		workerRef.current = worker;
+		worker.onmessage = (e: MessageEvent<SimulatorWorkerResponse | undefined>) => {
+			if (e.data?.type === 'MULTIWAY_RIO_RESULT' && e.data.id === 'drift_rio' &&
+				e.data.matrix instanceof Float32Array && e.data.matrix.length === maxPlayers * sprLevels &&
+				e.data.matrix.every(Number.isFinite)) {
 				setMultiwayRioMatrix(e.data.matrix);
 			}
 		};
 
-		// Ignição do Profiler N^2 na VRAM
-		workerRef.current.postMessage({
+		// Grade do modelo de trabalho existente, calculada fora da interface.
+		worker.postMessage({
 			type: 'MULTIWAY_RIO',
 			maxPlayers,
 			sprLevels,
 			baseTension: 0.15,
 			id: 'drift_rio',
-		});
+		} satisfies MultiwayRioRequest);
 
-		return () => workerRef.current?.terminate();
+		return () => { worker.terminate(); workerRef.current = null; };
 	}, []);
 
 	const [baseRioLiability] = useState(15);
@@ -351,4 +355,3 @@ export function DownwardDriftSimulator() {
 		</div>
 	);
 }
-

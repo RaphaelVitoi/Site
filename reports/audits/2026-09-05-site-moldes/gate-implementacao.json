@@ -1,0 +1,543 @@
+{
+  "Timestamp": "2026-09-05T15:05:34.5723830-03:00",
+  "TargetUrl": "http://127.0.0.1:3105/simulador",
+  "CdpActive": true,
+  "CdpPort": 9222,
+  "RuntimeProbe": {
+    "runtime": {
+      "lcpMs": 241.7850000038743,
+      "cls": 0,
+      "eventLatencyMs": 184,
+      "ttfbMs": 9.145000003278255,
+      "longTaskBlockingMs": 1283,
+      "maxHeapMb": 96.35013008117676
+    },
+    "axe": {
+      "violations": 0,
+      "incomplete": 1,
+      "violationDetails": [],
+      "incompleteDetails": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": 125,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "targets": [
+            {
+              "target": [
+                ".px-6[href$=\"icm-masterclass\"][aria-haspopup=\"true\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".px-6[href$=\"biblioteca\"][aria-haspopup=\"true\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".px-6[href$=\"analytics\"][aria-haspopup=\"true\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#simulator-tab-scenario > .z-10.relative:nth-child(3)"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#simulator-tab-perspectiva > .z-10.relative:nth-child(2)"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#simulator-tab-calculator > .z-10.relative:nth-child(2)"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#simulator-tab-matchup > .z-10.relative:nth-child(2)"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#simulator-tab-comparar > .z-10.relative:nth-child(2)"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#simulator-tab-posflop > .z-10.relative:nth-child(2)"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#simulator-tab-cfr > .z-10.relative:nth-child(2)"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".text-\\[0\\.68rem\\]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".bg-emerald-500\\/15"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".bg-indigo-500\\/15"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+            },
+            {
+              "target": [
+                ".bg-rose-500\\/10"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".tracking-\\[0\\.6em\\]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(0, 0)\"] > .text-\\[0\\.95rem\\][y=\"20\"][fill=\"#38bdf8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+            },
+            {
+              "target": [
+                ".text-\\[0\\.95rem\\][fill=\"#34d399\"][y=\"20\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+            },
+            {
+              "target": [
+                ".text-\\[0\\.95rem\\][fill=\"#f1f5f9\"][y=\"20\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(126, 0)\"] > .text-\\[0\\.95rem\\][y=\"20\"][fill=\"#38bdf8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(168, 0)\"] > .text-\\[0\\.95rem\\][y=\"20\"][fill=\"#38bdf8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+            },
+            {
+              "target": [
+                ".text-\\[0\\.45rem\\]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"10\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"134.5\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"147.5\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"79.53842240176148\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"92.53842240176148\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"79.53842240176144\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"92.53842240176144\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"134.49999999999994\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"147.49999999999994\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[x=\"576.35386072293\"][y=\"218.70602220836628\"][fill=\"#94a3b8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                ".text-\\[0\\.52rem\\][x=\"576.35386072293\"][y=\"231.70602220836628\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[x=\"494.26902632476947\"][y=\"292.75555538987226\"][fill=\"#94a3b8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                ".text-\\[0\\.52rem\\][x=\"494.26902632476947\"][y=\"305.75555538987226\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"322\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"335\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"3.5\"][fill=\"#818cf8\"][x=\"0\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[x=\"185.73097367523056\"][y=\"292.75555538987226\"][fill=\"#94a3b8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                ".text-\\[0\\.52rem\\][x=\"185.73097367523056\"][y=\"305.75555538987226\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[x=\"103.64613927707006\"][y=\"218.70602220836628\"][fill=\"#34d399\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                ".text-\\[0\\.52rem\\][x=\"103.64613927707006\"][y=\"231.70602220836628\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[y=\"3.5\"][fill=\"#34d399\"][x=\"0\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                ".tracking-\\[0\\.25em\\].text-\\[0\\.62rem\\].text-text-muted"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#label-antevisao"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#label-hero-pos"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#sim-hero-pos"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "label[for=\"sim-hero-invest\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "#sim-hero-invest"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                ".group.relative > .right-4.top-3\\.5.pointer-events-none"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "target": [
+                "label[for=\"sim-current-pot\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "RuntimeProbeError": null,
+  "Status": "FRAGILE",
+  "A11yReviewBaselinePath": "C:\\Users\\rapha\\.gemini\\Site\\data\\a11y_manual_review_baselines.json",
+  "AccessibilityManualReview": {
+    "Approved": false,
+    "Code": "TARGET_MISMATCH",
+    "Message": "os alvos inconclusivos diferem da revisao humana aprovada; a aprovacao expirou",
+    "ReviewId": "a11y-color-contrast-downward-drift-20260901",
+    "Reviewer": "Tier 0 — Raphael Vitoi",
+    "ReviewedAt": "2026-09-01",
+    "SourcePath": "frontend/src/app/(public)/page.tsx",
+    "ExpectedHash": "647f9d6ba0dff8a7ad09421559877a4bf325a5b6003cf75f57009857c2d9e2b4",
+    "ObservedHash": "647f9d6ba0dff8a7ad09421559877a4bf325a5b6003cf75f57009857c2d9e2b4"
+  },
+  "CwvManualReviewPath": "C:\\Users\\rapha\\.gemini\\Site\\data\\cwv_manual_review_records.json",
+  "CoreWebVitalsManualReview": {
+    "Recorded": false,
+    "Code": "CWV_REVIEW_NOT_UNIQUE",
+    "Message": "nenhuma ou mais de uma observacao humana positiva corresponde a http://127.0.0.1:3105/simulador",
+    "Review": null
+  },
+  "LighthouseArtifactPath": "C:\\Users\\rapha\\.gemini\\Site\\reports\\cwv\\latest_lighthouse_production.json",
+  "LighthouseProductionAudit": {
+    "Measured": false,
+    "Code": "LIGHTHOUSE_FINGERPRINT_MISMATCH",
+    "Message": "o input de frontend mudou depois da auditoria Lighthouse; o resultado expirou",
+    "ObservedFingerprint": "5e780262126971e3177be0ed1596b16d8cbf4dfee23b18d746f7220bf663f437",
+    "ExpectedFingerprint": "1c8c2fc656b846ef9b32ff9a76a680c98a0dd6d427dd0ff3c5b31eab5b132712",
+    "Artifact": {
+      "SchemaVersion": "1.0",
+      "Source": "lighthouse",
+      "GeneratedAt": "2026-09-05T00:50:17.804Z",
+      "TargetUrl": "http://127.0.0.1:3100/",
+      "Metrics": {
+        "tbtMs": 0,
+        "lcpMs": 447.576,
+        "cls": 0
+      },
+      "PerformanceScore": 1
+    }
+  },
+  "CoreWebVitals": {
+    "LCP_MS": {
+      "Unit": "ms",
+      "Enforcement": "Fail",
+      "Val": 241.7850000038743,
+      "Desc": "Maior pintura observada no navegador",
+      "Limit": 2500.0,
+      "Category": "Performance"
+    },
+    "CLS": {
+      "Unit": "",
+      "Enforcement": "Fail",
+      "Val": 0,
+      "Desc": "Deslocamento visual cumulativo observado",
+      "Limit": 0.1,
+      "Category": "Performance"
+    },
+    "TBT_MS": {
+      "Unit": "ms",
+      "Enforcement": "Fail",
+      "Val": null,
+      "Desc": "Total Blocking Time calculado pelo Lighthouse em build de producao e Chrome isolado",
+      "Limit": 200.0,
+      "Category": "Performance"
+    },
+    "TTFB_MS": {
+      "Unit": "ms",
+      "Enforcement": "Fail",
+      "Val": 9.145000003278255,
+      "Desc": "Resposta inicial observada via Navigation Timing",
+      "Limit": 800.0,
+      "Category": "Performance"
+    },
+    "MAX_HEAP_MB": {
+      "Unit": "MB",
+      "Enforcement": "Fail",
+      "Val": 96.35013008117676,
+      "Desc": "Heap JavaScript observado",
+      "Limit": 128.0,
+      "Category": "Resource Economy"
+    },
+    "OBSERVED_EVENT_LATENCY_MS": {
+      "Unit": "ms",
+      "Enforcement": "Observe",
+      "Val": 184,
+      "Desc": "Event Timing observado; não certifica INP sem interação humana",
+      "Limit": null,
+      "Category": "Diagnostic"
+    },
+    "OBSERVED_LONG_TASK_BLOCKING_MS": {
+      "Unit": "ms",
+      "Enforcement": "Observe",
+      "Val": 1283,
+      "Desc": "Soma de long tasks observada; não equivale a TBT laboratorial",
+      "Limit": null,
+      "Category": "Diagnostic"
+    }
+  },
+  "AccessibilityRules": {
+    "AXE_VIOLATIONS": {
+      "Desc": "Violacoes detectadas por axe-core no DOM renderizado",
+      "Limit": 0,
+      "Enforcement": "Fail",
+      "Unit": "violations",
+      "Val": 0
+    },
+    "AXE_INCOMPLETE": {
+      "Unit": "items",
+      "Enforcement": "Warn",
+      "Val": 1,
+      "Desc": "Regras axe que exigem revisao humana",
+      "ManualReview": {
+        "Approved": false,
+        "Code": "TARGET_MISMATCH",
+        "Message": "os alvos inconclusivos diferem da revisao humana aprovada; a aprovacao expirou",
+        "ReviewId": "a11y-color-contrast-downward-drift-20260901",
+        "Reviewer": "Tier 0 — Raphael Vitoi",
+        "ReviewedAt": "2026-09-01",
+        "SourcePath": "frontend/src/app/(public)/page.tsx",
+        "ExpectedHash": "647f9d6ba0dff8a7ad09421559877a4bf325a5b6003cf75f57009857c2d9e2b4",
+        "ObservedHash": "647f9d6ba0dff8a7ad09421559877a4bf325a5b6003cf75f57009857c2d9e2b4"
+      },
+      "Limit": 0
+    }
+  },
+  "SecurityRules": {
+    "CRITICAL_CVE_COUNT": {
+      "Val": 0,
+      "Unit": "cves",
+      "Desc": "Critical severity vulnerabilities",
+      "Limit": 0
+    },
+    "HIGH_CVE_COUNT": {
+      "Val": 0,
+      "Unit": "cves",
+      "Desc": "High severity vulnerabilities",
+      "Limit": 0
+    },
+    "TOTAL_VULNERABILITY": {
+      "Val": 0,
+      "Unit": "cves",
+      "Desc": "Total open vulnerabilities across ALL npm manifests in the repository",
+      "Limit": 0
+    }
+  },
+  "SriIntegrity": "VERIFIED",
+  "RepositoryHygiene": {
+    "StagedFiles": {
+      "Val": 0,
+      "Desc": "Arquivos em stage (conteudo ou exclusao)",
+      "Limit": "-"
+    },
+    "Ps51PorBateria": {
+      "Val": 0,
+      "Desc": "Verificado pela bateria substituta, sem o 5.1 real (INFO)",
+      "Limit": "-"
+    },
+    "PowerShell51": {
+      "Val": 0,
+      "Desc": "Script .ps1 que quebra no interpretador real",
+      "Limit": 0
+    },
+    "ForbiddenPaths": {
+      "Val": 0,
+      "Desc": "Diretorio de perfil/ferramenta versionado",
+      "Limit": 0
+    },
+    "OversizedBlobs": {
+      "Val": 0,
+      "Desc": "Blob nao-LFS acima de 5 MB",
+      "Limit": 0
+    },
+    "UnroutedBinaries": {
+      "Val": 0,
+      "Desc": "Binario sem filter=lfs no .gitattributes",
+      "Limit": 0
+    }
+  },
+  "Failures": [],
+  "Warnings": [
+    {
+      "Severity": "WARNING",
+      "Component": "cwv.cobertura",
+      "Detail": "Cobertura CWV parcial: INP e TBT nao foram certificados.",
+      "Reason": "O probe observa uma aba temporaria, mas nao executa interacao humana controlada exigida pelo INP nem coleta trace laboratorial exigido pelo TBT; Event Timing e long tasks permanecem diagnosticos.",
+      "Action": "Executar um roteiro humano controlado para INP e uma coleta laboratorial de trace para TBT; registrar ambos sem inferi-los a partir de outras metricas."
+    },
+    {
+      "Severity": "WARNING",
+      "Component": "a11y.AXE_INCOMPLETE",
+      "Detail": "AXE_INCOMPLETE: 1 item(ns) inconclusivo(s).",
+      "Reason": "Regras axe que exigem revisao humana. axe-core classificou a verificacao como inconclusiva, nao como violacao confirmada; regras: color-contrast. Alvos e motivos detalhados constam na secao 2.1 do relatorio. Baseline: TARGET_MISMATCH -- os alvos inconclusivos diferem da revisao humana aprovada; a aprovacao expirou",
+      "Action": "Inspecionar manualmente cada alvo incompleto no DOM renderizado, registrar a decisao e corrigir somente a violacao que for confirmada."
+    }
+  ],
+  "Findings": [
+    {
+      "Severity": "WARNING",
+      "Component": "cwv.cobertura",
+      "Detail": "Cobertura CWV parcial: INP e TBT nao foram certificados.",
+      "Reason": "O probe observa uma aba temporaria, mas nao executa interacao humana controlada exigida pelo INP nem coleta trace laboratorial exigido pelo TBT; Event Timing e long tasks permanecem diagnosticos.",
+      "Action": "Executar um roteiro humano controlado para INP e uma coleta laboratorial de trace para TBT; registrar ambos sem inferi-los a partir de outras metricas."
+    },
+    {
+      "Severity": "WARNING",
+      "Component": "a11y.AXE_INCOMPLETE",
+      "Detail": "AXE_INCOMPLETE: 1 item(ns) inconclusivo(s).",
+      "Reason": "Regras axe que exigem revisao humana. axe-core classificou a verificacao como inconclusiva, nao como violacao confirmada; regras: color-contrast. Alvos e motivos detalhados constam na secao 2.1 do relatorio. Baseline: TARGET_MISMATCH -- os alvos inconclusivos diferem da revisao humana aprovada; a aprovacao expirou",
+      "Action": "Inspecionar manualmente cada alvo incompleto no DOM renderizado, registrar a decisao e corrigir somente a violacao que for confirmada."
+    }
+  ]
+}

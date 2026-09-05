@@ -145,69 +145,37 @@ export const TOURNAMENT_PRESETS: ICMTournamentPreset[] = [
  * Calcula a equidade de Malmuth-Harville exata para N jogadores e M payouts
  */
 export function calculateMalmuthHarville(stacks: number[], payouts: number[]): number[] {
-	const n = stacks.length;
-	if (n === 0) return [];
-
-	const totalChips = stacks.reduce((sum, s) => sum + Math.max(0, s), 0);
-	if (totalChips <= 0) return new Array(n).fill(0);
-
-	const m = Math.min(payouts.length, n);
-	const activePayouts = payouts.slice(0, m);
-
-	// Matriz de probabilidades: P[player_i][position_k]
-	const probMatrix: number[][] = Array.from({ length: n }, () => new Array(m).fill(0));
-
-	// 1º Lugar
-	for (let i = 0; i < n; i++) {
-		const row = getItem(probMatrix, i, 'probMatrix');
-		const stack = getItem(stacks, i, 'stacks');
-		setItem(row, 0, Math.max(0, stack) / totalChips, 'probMatrixRow');
-	}
-
-	if (m > 1) {
-		const computeBranch = (
-			pos: number,
-			usedBitmask: number,
-			currentProb: number,
-			remChips: number
-		) => {
-			if (pos >= m || remChips <= 0) return;
-
-			for (let p = 0; p < n; p++) {
-				const stack = getItem(stacks, p, 'stacks');
-				if ((usedBitmask & (1 << p)) !== 0 || stack <= 0) continue;
-
-				const probThis = stack / remChips;
-				const branchProb = currentProb * probThis;
-				const row = getItem(probMatrix, p, 'probMatrix');
-				const currentProbVal = row.at(pos) ?? 0;
-				setItem(row, pos, currentProbVal + branchProb, 'probMatrixRow');
-
-				if (pos + 1 < m && remChips - stack > 0) {
-					computeBranch(
-						pos + 1,
-						usedBitmask | (1 << p),
-						branchProb,
-						remChips - stack
-					);
-				}
-			}
-		};
-
-		for (let p0 = 0; p0 < n; p0++) {
-			const stack = getItem(stacks, p0, 'stacks');
-			if (stack > 0) {
-				const rem = totalChips - stack;
-				if (rem > 0) {
-					computeBranch(1, 1 << p0, matrixValue(probMatrix, p0, 0, 'probMatrix'), rem);
-				}
-			}
-		}
-	}
-
-	return probMatrix.map((probs) =>
-		probs.reduce((sum, p, k) => sum + p * (activePayouts.at(k) ?? 0), 0)
-	);
+  if ([...stacks, ...payouts].some((value) => !Number.isFinite(value) || value < 0)) {
+    throw new RangeError('Stacks e payouts devem ser finitos e não negativos');
+  }
+  const n = stacks.length;
+  const ev: number[] = new Array(n).fill(0);
+  if (!n || !payouts.length || stacks.every((stack) => stack === 0)) return ev;
+  const active = stacks.flatMap((stack, i) => stack > 0 ? [i] : []);
+  const prizes = payouts.slice(0, n);
+  const zeros = n - active.length;
+  // Sem ordem de eliminação, stacks zero dividem os últimos prêmios.
+  if (zeros) {
+    const terminalPrize = prizes.slice(active.length).reduce((sum, value) => sum + value, 0) / zeros;
+    stacks.forEach((stack, i) => { if (stack === 0) ev.splice(i, 1, terminalPrize); });
+  }
+  // Agrega permutações pelo conjunto de jogadores já premiados: O(n * 2^n).
+  let states = new Map<bigint, number>([[0n, 1]]);
+  for (const prize of prizes.slice(0, active.length)) {
+    const nextStates = new Map<bigint, number>();
+    for (const [mask, probability] of states) {
+      const remaining = active.filter((i) => !(mask & (1n << BigInt(i))));
+      const chips = remaining.reduce((sum, i) => sum + getItem(stacks, i, 'stacks'), 0);
+      for (const i of remaining) {
+        const branch = probability * getItem(stacks, i, 'stacks') / chips;
+        ev.splice(i, 1, getItem(ev, i, 'ev') + branch * prize);
+        const nextMask = mask | (1n << BigInt(i));
+        nextStates.set(nextMask, (nextStates.get(nextMask) ?? 0) + branch);
+      }
+    }
+    states = nextStates;
+  }
+  return ev;
 }
 
 /**

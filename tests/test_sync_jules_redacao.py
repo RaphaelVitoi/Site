@@ -27,9 +27,7 @@ import importlib.util
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
-_spec = importlib.util.spec_from_file_location(
-    "sync_jules_report", RAIZ / "scripts" / "ops" / "sync_jules_report.py"
-)
+_spec = importlib.util.spec_from_file_location("sync_jules_report", RAIZ / "scripts" / "ops" / "sync_jules_report.py")
 assert _spec and _spec.loader
 _mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_mod)

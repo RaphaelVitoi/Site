@@ -145,9 +145,7 @@ class AnthropicAdapter:
         se queria ativar nunca chega. `fallbacks`, ao contrario, e campo de
         corpo e permanece onde esta.
         """
-        req = AnthropicAdapter.build(
-            alias, messages, max_tokens=max_tokens, system=system, tools=tools, **kwargs
-        )
+        req = AnthropicAdapter.build(alias, messages, max_tokens=max_tokens, system=system, tools=tools, **kwargs)
         betas = req.pop("betas", None)
         headers = {"anthropic-beta": ", ".join(betas)} if betas else {}
         return req, headers
@@ -212,7 +210,9 @@ class AnthropicAdapter:
         `stop_details` so vem preenchido quando `stop_reason == 'refusal'`; em
         qualquer outro caso e nulo, e ler seus campos sem checar antes levanta.
         """
-        detalhes = response.get("stop_details") if isinstance(response, dict) else getattr(response, "stop_details", None)
+        detalhes = (
+            response.get("stop_details") if isinstance(response, dict) else getattr(response, "stop_details", None)
+        )
         if not detalhes:
             return "recusa sem stop_details"
         if isinstance(detalhes, dict):

@@ -54,6 +54,7 @@ def isolate_test_simulation_logs():
         "database.lab_manager",
         "database.queue_manager",
         "llm.routing",
+        "nexus.timesfm",
         "utils.notifications",
         "utils.harmonizer",
         "task_executor",

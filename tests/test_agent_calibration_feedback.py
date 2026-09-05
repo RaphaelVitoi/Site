@@ -77,4 +77,3 @@ def test_feedback_ledger_records_conductor_model_and_supervision_mode(tmp_path: 
     assert response["status"] == "appended"
     assert rows[-1]["conductor_model"] == "gemini-3.8-flash"
     assert rows[-1]["supervision_mode"] == "assistida"
-

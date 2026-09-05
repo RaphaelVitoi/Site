@@ -166,7 +166,9 @@ def resolve_mcp_addons(
 
         terms = _normalise_terms(raw_rule.get("terms"))
         score = _calculate_heuristic_score(text, terms) if terms else 0
-        explicit_by_text = any(_contains_term(text, term) for term in _normalise_term_list(raw_rule.get("explicit_terms")))
+        explicit_by_text = any(
+            _contains_term(text, term) for term in _normalise_term_list(raw_rule.get("explicit_terms"))
+        )
         is_explicit = name in known_requested or explicit_by_text
         blocked = bool(raw_rule.get("block_without_explicit")) and any(
             _contains_term(text, term) for term in _normalise_term_list(raw_rule.get("blocked_terms"))
@@ -185,8 +187,12 @@ def resolve_mcp_addons(
             reason = f"mcp_explicit:{name}" if name in known_requested else f"mcp_intent:{name}"
             explicit_candidates.append((_rule_order(raw_rule, name), name, max(score, threshold), reason))
         else:
-            reason = f"mcp_auto:{name}:long_task" if long_task and score < threshold else f"mcp_auto:{name}:score_{score}"
-            auto_candidates.append((_rule_order(raw_rule, name), name, max(score, threshold) if long_task else score, reason))
+            reason = (
+                f"mcp_auto:{name}:long_task" if long_task and score < threshold else f"mcp_auto:{name}:score_{score}"
+            )
+            auto_candidates.append(
+                (_rule_order(raw_rule, name), name, max(score, threshold) if long_task else score, reason)
+            )
 
         if score > 0 or is_explicit:
             scores[name] = max(score, threshold if is_explicit or long_task else score)

@@ -50,8 +50,8 @@ Toda interação com o runtime agêntico é interceptada por três categorias de
 1. **Axioma de Capacidade Universal:** Todos os modelos da tríade possuem competência plena para cumprir todas as funções e demandas do ecossistema. Não existem feudos funcionais ou proibições artificiais.
 2. **Preferências por Arquitetura, Especialidade e Preço:**
    - **Gemini 3.8 Flash (e 3.5 Flash-Lite duo com 3.6 Flash):** Preferência primária para **Orquestração de Fluxo Agêntico**, coordenação assíncrona, context caching massivo em TPUs e **Fast Operations** com custo marginal mínimo.
-   - **Claude 5 (Sonnet 5 / Opus 5):** Preferência primária para **Engenharia de Código Cirúrgica + Modelagem Matemática** (teoria dos jogos PMev, formalismos de Nash, contratos Rust/WASM e tipagem estrita).
-   - **ChatGPT 5.6 (Terra / Sol):** Preferência primária para **Raciocínio Profundo (Deep Reasoning), Auditorias de Segurança AppSec, Arquitetura Macro de Sistemas e Atividades de Altíssima Complexidade Conceitual**.
+   - **Claude Opus 5 e Claude Sonnet 5:** Preferência primária para **Engenharia de Código Cirúrgica + Modelagem Matemática** (teoria dos jogos PMev, formalismos de Nash, contratos Rust/WASM e tipagem estrita).
+   - **ChatGPT 5.6 (Terra e Luna):** Preferência primária para **Raciocínio Profundo (Deep Reasoning), Auditorias de Segurança AppSec, Arquitetura Macro de Sistemas e Atividades de Altíssima Complexidade Conceitual**.
 
 ---
 

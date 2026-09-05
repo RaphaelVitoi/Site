@@ -162,6 +162,11 @@ Incorporadas de `AGENTS.md` em 2026-08-28, onde tinham sido escritas em
 4. **Imutabilidade de encoding.** Todo `.ps1` criado ou modificado preserva
    UTF-8 **com** BOM (`utf-8-sig`), exigência do PowerShell 5.1. BOM **único**:
    dois BOMs quebram o parse nas duas versões do PowerShell.
+5. **Consumo real obrigatório (antientropia):** Se ninguém consome, é descuido
+   ou entropia. Módulo, bridge ou classe sem consumidor real no fluxo de runtime
+   (API, pipeline, worker, UI) e desprovido de suíte de testes automatizados é
+   código órfão ou capacidade de fachada. Declarar entrega concluída exige
+   comprovar o consumidor ativo no sistema e a verificação ponta a ponta.
 
 ---
 
@@ -436,14 +441,26 @@ ferramentas ou limites de forma automática. Toda conclusão separa fato
 verificado, inferência, limite e ação; sem smoothing, fabricação ou certeza
 além da evidência.
 
-Os núcleos existentes de Monte Carlo puro Rust/WASM e CFR puro iterativo podem
-apoiar a formulação de hipótese por
-`Invoke-AgentCalibrationQuantitativeSupport.ps1`, desde que o relatório
-registre parâmetros, fonte, resultado, limitações e evidência que justifica
-cada parâmetro. Monte Carlo ICM TypeScript e CFR unitário Python são somente
-fallbacks explicitamente rotulados. Nenhum motor quantitativo constitui
-evidência comportamental, libera o portão de suficiência ou transforma
-inferência em fato.
+#### Invariante Processual de Atividade: Proibição de Turno Nulo e Anti-Smoothing
+
+O agente jamais encerra um ciclo de ferramentas com payload vazio (`content: None`).
+Toda conclusão de turno exige retorno explícito, audível e visível ao operador humano.
+Diante de qualquer reporte de travamento, latência anormal ("freeze") ou inconsistência
+pelo Tier 0, o agente é terminantemente proibido de fabricar diretrizes ad hoc ou
+minimizar a latência observada ("smoothing"). Deve consultar imediatamente a telemetria
+factual em `transcript.jsonl` para auto-diagnóstico rigoroso ancorado em evidências
+reais de relógio, steps e ferramentas.
+
+Os núcleos existentes de Monte Carlo puro Rust/WASM, CFR puro iterativo e o
+motor de séries temporais Google Research TimesFM 2.0 (Apache 2.0) apoiam a
+formulação de hipótese e detecção preditiva de deriva (downward drift) por
+`Invoke-AgentCalibrationQuantitativeSupport.ps1` e
+`New-AgentCalibrationDailyEvidence.ps1` (onde o TimesFM opera por default
+projetando a trajetória de $H=3$ sessões, limiar natural do portão, com suporte
+a escalonamento multivariado por modelo condutor via CLI `nexus agent calibration-forecast`).
+Monte Carlo ICM TypeScript e CFR unitário Python são somente fallbacks
+explicitamente rotulados. Nenhum motor quantitativo constitui evidência
+comportamental, libera o portão de suficiência ou transforma inferência em fato.
 
 Outliers são evidência retida, não erro descartável nem padrão implícito. Cada
 outlier é registrado separadamente por `Record-AgentCalibrationOutlier.ps1`,
@@ -468,7 +485,7 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 
 - **Tier 0:** Raphael Vitoi (Soberania & Liderança: Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação final de produto)
   - *Companion / Assistente Pessoal do Tier 0:* **Microsoft 365 Copilot** (plano pago da Microsoft 365: assistente pessoal dedicada à rotina diária e produtividade de Raphael, com conhecimento generalista e operação pontual sob demanda, sem integrar a frota autônoma do Tier 3)
-- **Tier 1:** Núcleo Cognitivo Mestre — Tríade de Fronteira (`Gemini 3.8 Flash`, `Claude Opus 5`, `ChatGPT 5.6`; superfícies compartilhadas Antigravity IDE e VS Code)
+- **Tier 1:** Núcleo Cognitivo Mestre — Tríade de Fronteira (`Gemini 3.8 Flash`, `Claude Opus 5`, `Claude Sonnet 5`, `ChatGPT 5.6 (Terra e Luna)`; superfícies compartilhadas Antigravity IDE e VS Code)
 - **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`)
 - **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Modelos Especialistas Qwen Ollama (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`)
 - **Tier 4:** Subagents Dedicados (`generalist` via `gemma4:31b-cloud` / `12b`, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`, task-subagents com Thinking Mode `<|think|>`)
@@ -481,7 +498,7 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 Todo commit e registro deve declarar sinteticamente:
 
 - **SHA:** Hash criptográfico Git
-- **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5 [Tier 1.B]`, `antigravity@gemini-3.8-flash`)
+- **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5 [Tier 1.B]`, `Claude Sonnet 5 [Tier 1.B]`, `antigravity@gemini-3.8-flash`)
 - **Propósito:** Razão de ser técnica da alteração e escopo protegido.
 
 ### Chico é o grupo; a assinatura é individual
@@ -492,7 +509,7 @@ que o protocolo se chama Chico SOTA v8.0 GOLD.
 
 **A assinatura é isolada, sempre individual.** O grupo não escreve registro nem
 commit; quem escreve é um indivíduo dentro dele — `Claude Opus 5 [Tier 1.B]`,
-`ChatGPT 5.6 [Tier 1.B]`, `antigravity@gemini-3.8-flash`. Os dois níveis coexistem e
+`Claude Sonnet 5 [Tier 1.B]`, `ChatGPT 5.6 [Tier 1.B]`, `antigravity@gemini-3.8-flash`. Os dois níveis coexistem e
 não se substituem.
 
 **Autonomia Universal Sem Feudos.** Todos os modelos de fronteira possuem competência

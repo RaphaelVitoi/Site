@@ -1,0 +1,68 @@
+{
+  "purpose": "Localizar materiais para revisao por unidade conceitual; nao alimentar routing automaticamente.",
+  "sources": [
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\docs\\research\\materials\\icmteoriaadicionalpt1.txt",
+      "bytes": 51272,
+      "sha256": "3e0dfd0e92fadecb6759594fb374abe492d4fef563545453dc5a5ca5ccfd4400",
+      "status": "candidate_not_authorially_verified",
+      "content_review": "partial_or_pending"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\docs\\research\\materials\\icmteoriaadicionalpt2.txt",
+      "bytes": 30768,
+      "sha256": "c7ab71b55a781db19b9e6e2485e489a252d9cdfe3ddbf3aea525a2eba7eaf5dd",
+      "status": "candidate_not_authorially_verified",
+      "content_review": "partial_or_pending"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\docs\\research\\perspectiva_matematica_framework_v2.md",
+      "bytes": 9007,
+      "sha256": "3a763e39b2cc4b4233eedcf8273751b66b56fd229e2f3eb7d9ee597224235f80",
+      "status": "candidate_not_authorially_verified",
+      "content_review": "partial_or_pending"
+    },
+    {
+      "path": "C:\\Users\\rapha\\.gemini\\Site\\frontend\\src\\projects\\project_teoria_icm_original_20260321.md",
+      "bytes": 7329,
+      "sha256": "d3be36a58b113efd89eba093428b26ba8a81a04124fb918743680977d3e00f65",
+      "status": "candidate_not_authorially_verified",
+      "content_review": "partial_or_pending"
+    },
+    {
+      "path": "C:\\Restored_Backups\\Site_GodMode\\docs\\research\\materials\\TEORIA_PERSPECTIVA_MATEMATICA_VITOI.pdf",
+      "bytes": 120870,
+      "sha256": "3372e34e06f89fca41ca5dfd066b8f7f90bc64ebc46fbca7b86faff6c5889aaf",
+      "status": "candidate_not_authorially_verified",
+      "content_review": "partial_or_pending"
+    },
+    {
+      "path": "C:\\Restored_Backups\\Site_GodMode\\frontend\\src\\content\\artigos\\TEORIA_PERSPECTIVA_MATEMATICA_VITOI.md",
+      "bytes": 5577,
+      "sha256": "0e8303b4b00396aeba8f2c98af88f4f58185a64585156760ae8faf21f5bb1a0b",
+      "status": "candidate_not_authorially_verified",
+      "content_review": "partial_or_pending"
+    },
+    {
+      "path": "C:\\Restored_Backups\\Site_GodMode\\frontend\\src\\projects\\project_teoria_ev_fold_antes.md",
+      "bytes": 6927,
+      "sha256": "ec70bc27cf7d32192560ecb9954818407e95d2fe07f92190ee0c8307cd029169",
+      "status": "candidate_not_authorially_verified",
+      "content_review": "partial_or_pending"
+    },
+    {
+      "path": "C:\\Restored_Backups\\Site_GodMode\\frontend\\src\\projects\\project_teoria_framework_completo_v1.md",
+      "bytes": 12203,
+      "sha256": "864bb79ded5e544613e6b7b6d92f6eefa5071079a85ab17896c8a47c0b3e2505",
+      "status": "candidate_not_authorially_verified",
+      "content_review": "partial_or_pending"
+    },
+    {
+      "path": "C:\\Users\\rapha\\Downloads\\Entendendo o ICM e suas heurísticas.docx",
+      "bytes": 5723893,
+      "sha256": "bf33306453167d3a375cf08e535cf2e7017924df127649f9f0835b98b742b013",
+      "status": "candidate_not_authorially_verified",
+      "content_review": "partial_or_pending"
+    }
+  ]
+}

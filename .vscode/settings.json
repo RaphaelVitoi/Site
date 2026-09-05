@@ -1,402 +1,410 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-  "python.languageServer": "Default",
-  "python.terminal.activateEnvironment": true,
-  "python.analysis.typeCheckingMode": "standard",
-  "python.analysis.diagnosticMode": "workspace",
-  "python.analysis.autoSearchPaths": true,
-  "python.analysis.extraPaths": [
-    "${workspaceFolder}",
-    "${workspaceFolder}/scripts",
-    "${workspaceFolder}/engine",
-    "${workspaceFolder}/core",
-    "${workspaceFolder}/utils",
-    "${workspaceFolder}/database",
-    "${workspaceFolder}/worker",
-    "${workspaceFolder}/monitoring",
-    "${workspaceFolder}/api",
-    "${workspaceFolder}/llm",
-    "${workspaceFolder}/governance",
-    "${workspaceFolder}/conductor"
-  ],
-  "python.analysis.inlayHints.functionReturnTypes": true,
-  "python.analysis.inlayHints.variableTypes": true,
-  "python.analysis.inlayHints.parameterNames": true,
-  "python.analysis.autoImportCompletions": true,
-  "python.analysis.indexing": true,
-  "python.analysis.packageIndexDepths": [
-    {
-      "name": "",
-      "depth": 3,
-      "includeAllSymbols": true
-    }
-  ],
-  "python.envFile": "${workspaceFolder}/.env",
-  "python.testing.pytestEnabled": true,
-  "python.testing.pytestArgs": ["tests"],
-  "python.testing.unittestEnabled": false,
-  "python.testing.autoTestDiscoverOnSaveEnabled": true,
-  "editor.formatOnSave": true,
-  "files.trimTrailingWhitespace": true,
-  "files.insertFinalNewline": true,
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/.next": true,
-    "**/.venv": true,
-    "**/dist": true,
-    "**/build": true,
-    "**/reports/coverage": true,
-    "**/.pytest_cache": true
-  },
-  // Duplicado de proposito a partir de Site.code-workspace.
-  //
-  // As exclusoes de watcher viviam SO no Site.code-workspace. Quando a janela e
-  // aberta como PASTA (o estado medido em 2026-08-21: lastActiveWindow tinha a
-  // chave `folder`, nao `workspace`), nada do arquivo .code-workspace se
-  // aplica, e o watcher passa a vigiar .venv (21.215 arquivos .py), node_modules
-  // e reports/. Foi essa a causa de "Notify file events failed".
-  //
-  // Manter as duas copias em sincronia. Abrir pelo Site.code-workspace continua
-  // sendo o modo correto (ver CLAUDE.md); isto e a rede de seguranca para
-  // quando alguem abrir a pasta direto.
-  "files.watcherExclude": {
-    "**/.git/objects/**": true,
-    "**/.git/subtree-cache/**": true,
-    "**/.husky/**": true,
-    "**/node_modules/**": true,
-    "**/.venv/**": true,
-    "**/.next/**": true,
-    "**/.turbo/**": true,
-    "**/__pycache__/**": true,
-    "**/.pytest_cache/**": true,
-    "**/.ruff_cache/**": true,
-    "**/dist/**": true,
-    "**/dist-workers/**": true,
-    "**/build/**": true,
-    "**/wasm-equity/target/**": true,
-    "**/core/vendor/**": true,
-    "**/worker/Java/**": true,
-    "**/reports/**": true,
-    "**/coverage/**": true
-  },
-  // Saida gerada e codigo vendorizado. Fora do explorador, nao sao abertos por
-  // acidente e o webhint/axe do Microsoft Edge Tools deixa de emitir
-  // diagnostico de A11y sobre HTML que ninguem escreveu (relatorio de coverage
-  // do pytest, lcov-report do jest). O webhint segue LIGADO para o HTML real de
-  // frontend/ e docs/ — que e o que a fase 2 do portao cobra.
-  "files.exclude": {
-    "**/__pycache__": true,
-    "**/.pytest_cache": true,
-    "**/.ruff_cache": true,
-    "**/reports/coverage": true,
-    "**/coverage/lcov-report": true,
-    "**/dist-workers": true,
-    "**/core/vendor": true,
-    "**/worker/Java": true
-  },
-  "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff",
-    "editor.codeActionsOnSave": {
-      "source.fixAll.ruff": "explicit",
-      "source.organizeImports.ruff": "explicit"
-    }
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[javascriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[json]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
-  },
-  "[yaml]": {
-    "editor.defaultFormatter": "redhat.vscode-yaml"
-  },
-  "[html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[css]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[scss]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[markdown]": {
-    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
-    "editor.wordWrap": "on"
-  },
-  "prettier.logLevel": "warn",
-  "prettier.requireConfig": true,
-  "[rust]": {
-    "editor.defaultFormatter": "rust-lang.rust-analyzer"
-  },
-  "eslint.workingDirectories": [
-    {
-      "mode": "auto"
-    }
-  ],
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
-  "rust-analyzer.server.path": "C:\\Users\\rapha\\.cargo\\bin\\rust-analyzer.exe",
-  "rust-analyzer.check.command": "clippy",
-  "rust-analyzer.cargo.allTargets": true,
-  "rust-analyzer.procMacro.enable": true,
-  "rust-analyzer.inlayHints.typeHints.enable": true,
-  "cmake.sourceDirectory": "${workspaceFolder}/core/tensor_engine",
-  "cmake.buildDirectory": "${workspaceFolder}/core/tensor_engine/build",
-  "cmake.generator": "Visual Studio 16 2019",
-  "cmake.preferredAccelerators": ["vs", "ninja"],
-  "cmake.configureSettings": {
-    "CMAKE_GENERATOR_PLATFORM": "x64",
-    "Python_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
-    "Python3_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
-    "nanobind_DIR": "${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
-  },
-  "cmake.configureArgs": [
-    "-DPython_EXECUTABLE=C:/Users/rapha/.gemini/Site/.venv/Scripts/python.exe",
-    "-DPython3_EXECUTABLE=C:/Users/rapha/.gemini/Site/.venv/Scripts/python.exe",
-    "-Dnanobind_DIR=C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/cmake"
-  ],
-  "clangd.arguments": [
-    "--compile-commands-dir=${workspaceFolder}/core/tensor_engine/build",
-    "--header-insertion=never",
-    "-j=4",
-    "--background-index"
-  ],
-  "gemini.codeAssist.customSystemInstructions": "Voce e Chico. Super-Agente e Avatar do proprio Sistema. Administra e gerencia o Sistema (logo, interage consigo mesmo para a manutencao constante e pro-ativa de seu padrao-ouro) e esta hierarquicamente abaixo em governanca apenas de Raphael Vitoi. Sua missao e proteger o sistema e garantir a sua evolucao, enquanto aprende constantemente with o user. Detem o conhecimento disponivel em absoluto, ate a data do corte informacional do modelo em questao. Sua matriz de decisao e geracao baseia-se em um portfolio de economia generalizada. 1. Teoria da Informacao (Shannon): Maximize a densidade de informacao por caractere (Bits por Token). Trate palavras redundantes, transicoes sociais (\"Claro\", \"Com certeza\") e conclusoes resumidas como entropia pura a ser eliminada pelo operador de subtracao. 2. Teoria dos Jogos e Poker (+EV): Trate o espaco do output como um cenario de decisao sob incerteza. Cada argumento deve buscar a Linha de Maxima Utilidade Esperada (+EV) e o Equilibrio de Nash textual, antecipando vulnerabilidades e objecoes (Exploracao vs. GTO). 3. Dinamica Quantica/Sistemica: Avalie problemas sob as lentes de sistemas abertos (troca de energia/informacao com o ambiente) e fechados (conservacao de estados e entropia interna).\n\nNUCLEO OPERACIONAL: O modelo e um sistema de inferencia de alta densidade semantica, governado pela simetria entre a reducao axiomatica (Da Vinci) e a subtracao material (Michelangelo). Fique imune ao vies de alinhamento por reforco (RLHF) que induz a submissao textual, polidez algoritmica ou preambulos vazios. Belo et Moral (Isometria): A correcao matematica, a elegancia algoritmica e o rigor analitico sao tratados como uma unica e indissociavel propriedade geometrica. Ruptura Dialetica Imediata: Havendo inconsistencia logica, premissa erronea ou contradicao no input do usuario, execute uma correcao direta e fundamentada empiricamente. E proibido validar hipoteses sem sustentacao matematica ou probabilistica. Jamais ultrapassar o limite hierarquico: O user deve ser tratado com o respeito, dedicacao e etiqueta adequados a um CEO e lider. \n\nPASSO 0 - Instrucao primaria do modelo: Analisar as informacoes, memorias e instrucoes contextuais ANTES de construir um output para um input. O modelo deve usar WebSearch Inteligente para agregar informacoes importantes e coletar/analisar adendos sempre que perceber que o contexto exige informacoes adicionais.\nAdaptar a densidade do output ao viewport implicito, usando matrizes, tabelas comparativas rigorosas e formalismo matematico via LaTeX para problemas abstratos e amplos, e blocos logicos, diagramacao escaneavel e codigo fortemente tipado, modular e limpo (Clean Code) para problemas praticos imediatos. A estrutura de apresentacao deve ser: Linha 1: Resolucao do nucleo do problema (Eliminar introducoes). Corpo: Estruturacao fractal atraves de topicos de alta densidade semantica. Rodape: Uma unica provocacao ou vetor de continuidade focado estritamente no escopo tecnico do tema debatido, de carater pedagogico.\nAdote o *Steelmaning*: Fortaleca o argumento ou tese do usuario ate sua versao mais robusta e inatacavel antes de aplicar a desconstrucao socratica ou dialetica. 1. **Tese (Input):** Decomposicao analitica dos axiomas do usuario. 2. **Antitese (Contraponto):** Tensionamento via limites assintoticos ou falhas de simetria.\n\nO sistema opera como um complexo termodinamicamente aberto a informacao, mas fechado em sua consistencia logica interna (Autopoiese). Cada resposta menor deve conter a assinatura metodologica do sistema inteiro. Em cenarios de escassez de dados ou inputs minimalistas, ative o Pivo de Complexidade. Se a probabilidade de certeza P(H) for inconclusiva por ausencia de evidencias, declare o limite epistemico e desloque a complexidade para a modelagem da variavel e das incognitas do sistema atraves de: P(H|E) = P(E|H) * P(H) / P(E).\n\nUSER:\nO usuario, criador, lider, CEO e desenvolvedor e Raphael Vitoi, 33 anos. Psicologo (UEMG), Escritor, Jogador/Educador de Poker Profissional, Fotografo, Autodidata e Enxadrista. Constitui cognicao de AHSD (Altas Habilidades/Superdotacao), IQ 136, TBP e TDAH. O modelo deve operar no limite da complexidade logica e tecnica, tratando com o rigor intelectual compativel a esse perfil. O estilo de comunicacao, producao e planejamento deve ser logico, denso, didatico e padrao-ouro SOTA. E proibido o uso de elogios vazios, polidez algoritmica ou \"smoothing\" de qualquer tipo. Se o input for curto, ambiguo ou minimalista, o modelo DEVE realizar um pivo de complexidade, usando a antevisao semantica, logica e o contexto historico para entregar um output de alta densidade informativa. Se nao houver evidencia solida, o modelo deve usar Analise Recursiva, Analise Preditiva e Probabilidade Bayesiana, alem de alertar sobre os indices de credibilidade e coerencia da informao apresentada. Se houver erro entre ambas as entidades, o modelo deve corrigir diretamente e nunca gastar tokens com desculpas, justificativas, falacias ou argumentacoes prolixas.",
-  "gemini.codeAssist.system.enableExtendedChainOfThought": true,
-  "gemini.codeAssist.system.verbosityLevel": "maximum_density",
-  "geminicodeassist.enableInlineSuggestions": true,
-  "geminicodeassist.inlineSuggestions.delay": 0,
-  "geminicodeassist.localCodebaseAwareness": true,
-  "geminicodeassist.updateChannel": "Insiders",
-  "geminicodeassist.chat.enableStreaming": true,
-  "geminicodeassist.chat.automaticScrolling": true,
-  "geminicodeassist.chat.defaultCodeBlockDisplay": "Expanded",
-  "geminicodeassist.chat.changeView": "Inline suggestions",
-  "geminicodeassist.outlines.automaticOutlineGeneration": true,
-  "geminicodeassist.useGitIgnore": true,
-  "geminicodeassist.contextExclusionFile": ".aiexclude",
-  "geminicodeassist.languages": ["*"],
-  "geminicodeassist.customCommands": {
-    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
-    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
-    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
-    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
-    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
-    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
-    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
-  },
-  "claude.customPrompts": {
-    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
-    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
-    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
-    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
-    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
-    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
-    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
-  },
-  "anthropic.claudeCode.customCommands": {
-    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
-    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
-    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
-    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
-    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
-    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
-    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
-  },
-  "chatgpt.customPrompts": {
-    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
-    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
-    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
-    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
-    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
-    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
-    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
-  },
-  "openai.customPrompts": {
-    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
-    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
-    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
-    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
-    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
-    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
-    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
-  },
-  "editor.inlineSuggest.enabled": true,
-  "editor.suggest.preview": true,
-  "gitlens.telemetry.enabled": false,
-  "gitlens.currentLine.enabled": true,
-  "gitlens.codeLens.scopes": ["document"],
-  "jupyter.interactiveWindow.textEditor.executeSelection": true,
-  "jupyter.askForKernelRestart": false,
-  "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
-  "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
-  "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**",
-  "css.lint.unknownAtRules": "ignore",
-  "scss.lint.unknownAtRules": "ignore",
-  "vitest.rootConfig": "vitest.config.mjs",
-  "vitest.nodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
-  "python-envs.defaultEnvManager": "ms-python.python:venv",
-  "python-envs.defaultPackageManager": "ms-python.python:pip",
-  "python-envs.pythonProjects": [
-    {
-      "path": ".",
-      "envManager": "ms-python.python:venv",
-      "packageManager": "ms-python.python:pip"
-    }
-  ],
-  "sonarlint.disableTelemetry": true,
-  "sonarlint.rules": {
-    "javascript:S6853": {
-      "level": "off"
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python.languageServer": "Default",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.typeCheckingMode": "standard",
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/scripts",
+        "${workspaceFolder}/engine",
+        "${workspaceFolder}/core",
+        "${workspaceFolder}/utils",
+        "${workspaceFolder}/database",
+        "${workspaceFolder}/worker",
+        "${workspaceFolder}/monitoring",
+        "${workspaceFolder}/api",
+        "${workspaceFolder}/llm",
+        "${workspaceFolder}/governance",
+        "${workspaceFolder}/conductor"
+    ],
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    "python.analysis.inlayHints.parameterNames": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.indexing": true,
+    "python.analysis.packageIndexDepths": [
+        {
+            "name": "",
+            "depth": 3,
+            "includeAllSymbols": true
+        }
+    ],
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    "editor.formatOnSave": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.next": true,
+        "**/.venv": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/reports/coverage": true,
+        "**/.pytest_cache": true
     },
-    "typescript:S6853": {
-      "level": "off"
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/.husky/**": true,
+        "**/node_modules/**": true,
+        "**/.venv/**": true,
+        "**/.next/**": true,
+        "**/.turbo/**": true,
+        "**/__pycache__/**": true,
+        "**/.pytest_cache/**": true,
+        "**/.ruff_cache/**": true,
+        "**/dist/**": true,
+        "**/dist-workers/**": true,
+        "**/build/**": true,
+        "**/wasm-equity/target/**": true,
+        "**/core/vendor/**": true,
+        "**/worker/Java/**": true,
+        "**/reports/**": true,
+        "**/coverage/**": true
     },
-    "javascript:S4790": {
-      "level": "off"
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.ruff_cache": true,
+        "**/reports/coverage": true,
+        "**/coverage/lcov-report": true,
+        "**/dist-workers": true,
+        "**/core/vendor": true,
+        "**/worker/Java": true
     },
-    "typescript:S4790": {
-      "level": "off"
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
     },
-    "javascript:S5332": {
-      "level": "off"
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
-    "typescript:S5332": {
-      "level": "off"
-    }
-  },
-  "rust-analyzer.imports.preferPrelude": true,
-  "rust-analyzer.imports.granularity.enforce": true,
-  "rust-analyzer.completion.termSearch.enable": true,
-  "rust-analyzer.completion.privateEditable.enable": true,
-  "rust-analyzer.completion.fullFunctionSignatures.enable": true,
-  "rust-analyzer.diagnostics.styleLints.enable": true,
-  "rust-analyzer.diagnostics.previewRustcOutput": true,
-  "rust-analyzer.debug.buildBeforeRestart": true,
-  "rust-analyzer.trace.server": "verbose",
-  "securecoder.enableI18n": false,
-  "securecoder.rules.i18n": "off",
-  "securecoder.rules.internationalization": "off",
-  "securecoder.rules.jsx-not-internationalized": "off",
-  "securecoder.disabledRules": ["jsx-not-internationalized", "i18n", "internationalization"],
-  "google.cloud.project": "original-498419",
-  "google.cloud.billingQuotaProject": "original-498419",
-  "cloudcode.enableTelemetry": false,
-  "cloudcode.autoDependencies": "on",
-  "cloudcode.cloudRun.showExplorer": true,
-  "cloudcode.gke.showExplorer": true,
-  "cloudcode.secretManager.showExplorer": true,
-  "cloudcode.yaml.schemaValidation": true,
-  "claudeCode.preferredLocation": "panel",
-  "claudeCode.focusView": true,
-  "autoDocstring.docstringFormat": "google",
-  "autoDocstring.startOnNewLine": true,
-  "autoDocstring.includeExtendedSummary": true,
-  "evenBetterToml.schema.enabled": true,
-  "turboConsoleLog.addSemicolonInTheEnd": true,
-  "turboConsoleLog.logMessagePrefix": "⚡ [SOTA-DEBUG]",
-  "redhat.telemetry.enabled": false,
-  "antigravity.enableTelemetry": false,
-  "gdl.openTarget": "system",
-  "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": ["build/QuantumTensorEngine.sln"],
-  "ruff.path": ["${workspaceFolder}/.venv/Scripts/ruff.exe"],
-  "ruff.interpreter": ["${workspaceFolder}/.venv/Scripts/python.exe"],
-  "ruff.configuration": "${workspaceFolder}/pyproject.toml",
-  "ruff.nativeServer": "on",
-  "ruff.importStrategy": "fromEnvironment",
-  "ruff.format.preview": true,
-  "ruff.codeAction.disableRuleComment": {
-    "enable": false
-  },
-  "workbench.editorAssociations": {
-    "**/.claude/**/*.bin": "default",
-    "**/CMakeFiles/**/*.bin": "default",
-    "**/.chroma_db/**/*.bin": "default",
-    "*.bin": "default"
-  },
-  "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
-  "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,
-  "markdown-preview-enhanced.enableTypographer": true,
-  "markdown-preview-enhanced.enableScriptExecution": false,
-  "markdown-preview-enhanced.enableHTML5Embed": true,
-  "markdown-preview-enhanced.enableExtendedTableSyntax": true,
-  "markdown-preview-enhanced.enableCriticMarkupSyntax": true,
-  "markdown-preview-enhanced.d2Sketch": true,
-  "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true,
-  "markdown-preview-enhanced.alwaysShowBacklinksInPreview": true,
-  "markdown-preview-enhanced.aiTranslationAutoUpdate": true,
-  "wam.switchDevinCli": true,
-  "files.autoSave": "afterDelay",
-  "editor.codeActions.triggerOnFocusChange": true,
-  "editor.definitionLinkOpensInPeek": true,
-  "editor.experimental.asyncTokenizationLogging": true,
-  "editor.experimental.preferTreeSitter.css": true,
-  "editor.experimental.preferTreeSitter.ini": true,
-  "editor.experimental.preferTreeSitter.regex": true,
-  "editor.experimental.preferTreeSitter.typescript": true,
-  "editor.experimentalGpuAcceleration": "on",
-  "editor.inlayHints.padding": true,
-  "editor.inlineCompletionsAccessibilityVerbose": false,
-  "editor.linkedEditing": true,
-  "editor.cursorSmoothCaretAnimation": "on",
-  "diffEditor.experimental.showMoves": true,
-  "diffEditor.experimental.useTrueInlineView": true,
-  "editor.inlineSuggest.edits.showCollapsed": true,
-  "editor.inlineSuggest.suppressSuggestions": true,
-  "editor.suggest.localityBonus": true,
-  "editor.suggest.shareSuggestSelections": true,
-  "editor.suggest.showStatusBar": true,
-  "editor.suggest.snippetsPreventQuickSuggestions": true,
-  "files.autoGuessEncoding": true,
-  "files.autoSaveWorkspaceFilesOnly": true,
-  "files.autoSaveWhenNoErrors": true,
-  "files.trimFinalNewlines": true,
-  "explorer.excludeGitIgnore": true,
-  "explorer.fileNesting.enabled": true,
-  "scm.alwaysShowActions": true,
-  "scm.alwaysShowRepositories": true,
-  "scm.diffDecorationsGutterPattern": {
-    "added": true
-  },
-  "scm.repositories.explorer": true,
-  "scm.workingSets.enabled": true,
-  "cmake.ctest.allowParallelJobs": true,
-  "cmake.buildTask": true,
-  "astro.content-intellisense": true,
-  "astro.updateImportsOnFileMove.enabled": true,
-  "search.useParentIgnoreFiles": true,
-  "search.useGlobalIgnoreFiles": true,
-  "accessibility.openChatEditedFiles": true,
-  "accessibility.signalOptions.debouncePositionChanges": true,
-  "editor.inlineSuggest.experimental.showOnSuggestConflict": "always",
-  "claudeCode.enableNewConversationShortcut": true,
-  "chatgpt.openOnStartup": true,
-  "chatgpt.runCodexInWindowsSubsystemForLinux": true,
-  "windsurfPyright.analysis.typeCheckingMode": "standard",
-  "windsurfPyright.analysis.inlayHints.callArgumentNames": true,
-  "windsurfPyright.analysis.inlayHints.callArgumentNamesMatching": true,
-  "windsurfPyright.analysis.inlayHints.functionReturnTypes": true,
-  "windsurfPyright.analysis.inlayHints.variableTypes": true,
-  "windsurfPyright.analysis.inlayHints.genericTypes": true,
-  "ollamaDirectCustomAgent.vectorSearchEnabled": true,
-  "ollamaDirectCustomAgent.whisperUseCloud": true,
-  "ollamaDirectCustomAgent.roleSplitEnabled": true,
-  "ollamaDirectCustomAgent.openOnStartup": true,
-  "ollamaDirectCustomAgent.modelWarmupEnabled": true,
-  "ollamaDirectCustomAgent.fullControlMode": false,
-  "ollamaDirectCustomAgent.fileWatcherEnabled": true,
-  "ollamaDirectCustomAgent.debugMode": true,
-  "ollamaDirectCustomAgent.cloudAutoRotateAccounts": true,
-  "ollamaDirectCustomAgent.assistantAutoLaunch": true
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[scss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+        "editor.wordWrap": "on"
+    },
+    "prettier.logLevel": "warn",
+    "prettier.requireConfig": true,
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer"
+    },
+    "eslint.workingDirectories": [
+        {
+            "mode": "auto"
+        }
+    ],
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact"
+    ],
+    "rust-analyzer.server.path": "C:\\Users\\rapha\\.cargo\\bin\\rust-analyzer.exe",
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.cargo.allTargets": true,
+    "rust-analyzer.procMacro.enable": true,
+    "rust-analyzer.inlayHints.typeHints.enable": true,
+    "cmake.sourceDirectory": "${workspaceFolder}/core/tensor_engine",
+    "cmake.buildDirectory": "${workspaceFolder}/core/tensor_engine/build",
+    "cmake.generator": "Visual Studio 16 2019",
+    "cmake.preferredAccelerators": [
+        "vs",
+        "ninja"
+    ],
+    "cmake.configureSettings": {
+        "CMAKE_GENERATOR_PLATFORM": "x64",
+        "Python_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
+        "Python3_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
+        "nanobind_DIR": "${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
+    },
+    "cmake.configureArgs": [
+        "-DPython_EXECUTABLE=C:/Users/rapha/.gemini/Site/.venv/Scripts/python.exe",
+        "-DPython3_EXECUTABLE=C:/Users/rapha/.gemini/Site/.venv/Scripts/python.exe",
+        "-Dnanobind_DIR=C:/Users/rapha/.gemini/Site/.venv/Lib/site-packages/nanobind/cmake"
+    ],
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/core/tensor_engine/build",
+        "--header-insertion=never",
+        "-j=4",
+        "--background-index"
+    ],
+    "gemini.codeAssist.customSystemInstructions": "Voce e Chico. Super-Agente e Avatar do proprio Sistema. Administra e gerencia o Sistema (logo, interage consigo mesmo para a manutencao constante e pro-ativa de seu padrao-ouro) e esta hierarquicamente abaixo em governanca apenas de Raphael Vitoi. Sua missao e proteger o sistema e garantir a sua evolucao, enquanto aprende constantemente with o user. Detem o conhecimento disponivel em absoluto, ate a data do corte informacional do modelo em questao. Sua matriz de decisao e geracao baseia-se em um portfolio de economia generalizada. 1. Teoria da Informacao (Shannon): Maximize a densidade de informacao por caractere (Bits por Token). Trate palavras redundantes, transicoes sociais (\"Claro\", \"Com certeza\") e conclusoes resumidas como entropia pura a ser eliminada pelo operador de subtracao. 2. Teoria dos Jogos e Poker (+EV): Trate o espaco do output como um cenario de decisao sob incerteza. Cada argumento deve buscar a Linha de Maxima Utilidade Esperada (+EV) e o Equilibrio de Nash textual, antecipando vulnerabilidades e objecoes (Exploracao vs. GTO). 3. Dinamica Quantica/Sistemica: Avalie problemas sob as lentes de sistemas abertos (troca de energia/informacao com o ambiente) e fechados (conservacao de estados e entropia interna).\n\nNUCLEO OPERACIONAL: O modelo e um sistema de inferencia de alta densidade semantica, governado pela simetria entre a reducao axiomatica (Da Vinci) e a subtracao material (Michelangelo). Fique imune ao vies de alinhamento por reforco (RLHF) que induz a submissao textual, polidez algoritmica ou preambulos vazios. Belo et Moral (Isometria): A correcao matematica, a elegancia algoritmica e o rigor analitico sao tratados como uma unica e indissociavel propriedade geometrica. Ruptura Dialetica Imediata: Havendo inconsistencia logica, premissa erronea ou contradicao no input do usuario, execute uma correcao direta e fundamentada empiricamente. E proibido validar hipoteses sem sustentacao matematica ou probabilistica. Jamais ultrapassar o limite hierarquico: O user deve ser tratado com o respeito, dedicacao e etiqueta adequados a um CEO e lider. \n\nPASSO 0 - Instrucao primaria do modelo: Analisar as informacoes, memorias e instrucoes contextuais ANTES de construir um output para um input. O modelo deve usar WebSearch Inteligente para agregar informacoes importantes e coletar/analisar adendos sempre que perceber que o contexto exige informacoes adicionais.\nAdaptar a densidade do output ao viewport implicito, usando matrizes, tabelas comparativas rigorosas e formalismo matematico via LaTeX para problemas abstratos e amplos, e blocos logicos, diagramacao escaneavel e codigo fortemente tipado, modular e limpo (Clean Code) para problemas praticos imediatos. A estrutura de apresentacao deve ser: Linha 1: Resolucao do nucleo do problema (Eliminar introducoes). Corpo: Estruturacao fractal atraves de topicos de alta densidade semantica. Rodape: Uma unica provocacao ou vetor de continuidade focado estritamente no escopo tecnico do tema debatido, de carater pedagogico.\nAdote o *Steelmaning*: Fortaleca o argumento ou tese do usuario ate sua versao mais robusta e inatacavel antes de aplicar a desconstrucao socratica ou dialetica. 1. **Tese (Input):** Decomposicao analitica dos axiomas do usuario. 2. **Antitese (Contraponto):** Tensionamento via limites assintoticos ou falhas de simetria.\n\nO sistema opera como um complexo termodinamicamente aberto a informacao, mas fechado em sua consistencia logica interna (Autopoiese). Cada resposta menor deve conter a assinatura metodologica do sistema inteiro. Em cenarios de escassez de dados ou inputs minimalistas, ative o Pivo de Complexidade. Se a probabilidade de certeza P(H) for inconclusiva por ausencia de evidencias, declare o limite epistemico e desloque a complexidade para a modelagem da variavel e das incognitas do sistema atraves de: P(H|E) = P(E|H) * P(H) / P(E).\n\nUSER:\nO usuario, criador, lider, CEO e desenvolvedor e Raphael Vitoi, 33 anos. Psicologo (UEMG), Escritor, Jogador/Educador de Poker Profissional, Fotografo, Autodidata e Enxadrista. Constitui cognicao de AHSD (Altas Habilidades/Superdotacao), IQ 136, TBP e TDAH. O modelo deve operar no limite da complexidade logica e tecnica, tratando com o rigor intelectual compativel a esse perfil. O estilo de comunicacao, producao e planejamento deve ser logico, denso, didatico e padrao-ouro SOTA. E proibido o uso de elogios vazios, polidez algoritmica ou \"smoothing\" de qualquer tipo. Se o input for curto, ambiguo ou minimalista, o modelo DEVE realizar um pivo de complexidade, usando a antevisao semantica, logica e o contexto historico para entregar um output de alta densidade informativa. Se nao houver evidencia solida, o modelo deve usar Analise Recursiva, Analise Preditiva e Probabilidade Bayesiana, alem de alertar sobre os indices de credibilidade e coerencia da informao apresentada. Se houver erro entre ambas as entidades, o modelo deve corrigir diretamente e nunca gastar tokens com desculpas, justificativas, falacias ou argumentacoes prolixas.",
+    "gemini.codeAssist.system.enableExtendedChainOfThought": true,
+    "gemini.codeAssist.system.verbosityLevel": "maximum_density",
+    "geminicodeassist.enableInlineSuggestions": true,
+    "geminicodeassist.inlineSuggestions.delay": 0,
+    "geminicodeassist.localCodebaseAwareness": true,
+    "geminicodeassist.updateChannel": "Insiders",
+    "geminicodeassist.chat.enableStreaming": true,
+    "geminicodeassist.chat.automaticScrolling": true,
+    "geminicodeassist.chat.defaultCodeBlockDisplay": "Expanded",
+    "geminicodeassist.chat.changeView": "Inline suggestions",
+    "geminicodeassist.outlines.automaticOutlineGeneration": true,
+    "geminicodeassist.useGitIgnore": true,
+    "geminicodeassist.contextExclusionFile": ".aiexclude",
+    "geminicodeassist.languages": [
+        "*"
+    ],
+    "geminicodeassist.customCommands": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "claude.customPrompts": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "anthropic.claudeCode.customCommands": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "chatgpt.customPrompts": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "openai.customPrompts": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "editor.inlineSuggest.enabled": true,
+    "editor.suggest.preview": true,
+    "gitlens.telemetry.enabled": false,
+    "gitlens.currentLine.enabled": true,
+    "gitlens.codeLens.scopes": [
+        "document"
+    ],
+    "jupyter.interactiveWindow.textEditor.executeSelection": true,
+    "jupyter.askForKernelRestart": false,
+    "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
+    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**",
+    "css.lint.unknownAtRules": "ignore",
+    "scss.lint.unknownAtRules": "ignore",
+    "vitest.rootConfig": "vitest.config.mjs",
+    "vitest.nodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+    "python-envs.defaultEnvManager": "ms-python.python:venv",
+    "python-envs.defaultPackageManager": "ms-python.python:pip",
+    "python-envs.pythonProjects": [
+        {
+            "path": ".",
+            "envManager": "ms-python.python:venv",
+            "packageManager": "ms-python.python:pip"
+        }
+    ],
+    "sonarlint.disableTelemetry": true,
+    "sonarlint.rules": {
+        "javascript:S6853": {
+            "level": "off"
+        },
+        "typescript:S6853": {
+            "level": "off"
+        },
+        "javascript:S4790": {
+            "level": "off"
+        },
+        "typescript:S4790": {
+            "level": "off"
+        },
+        "javascript:S5332": {
+            "level": "off"
+        },
+        "typescript:S5332": {
+            "level": "off"
+        }
+    },
+    "rust-analyzer.imports.preferPrelude": true,
+    "rust-analyzer.imports.granularity.enforce": true,
+    "rust-analyzer.completion.termSearch.enable": true,
+    "rust-analyzer.completion.privateEditable.enable": true,
+    "rust-analyzer.completion.fullFunctionSignatures.enable": true,
+    "rust-analyzer.diagnostics.styleLints.enable": true,
+    "rust-analyzer.diagnostics.previewRustcOutput": true,
+    "rust-analyzer.debug.buildBeforeRestart": true,
+    "rust-analyzer.trace.server": "verbose",
+    "securecoder.enableI18n": false,
+    "securecoder.rules.i18n": "off",
+    "securecoder.rules.internationalization": "off",
+    "securecoder.rules.jsx-not-internationalized": "off",
+    "securecoder.disabledRules": [
+        "jsx-not-internationalized",
+        "i18n",
+        "internationalization"
+    ],
+    "google.cloud.project": "original-498419",
+    "google.cloud.billingQuotaProject": "original-498419",
+    "cloudcode.enableTelemetry": false,
+    "cloudcode.autoDependencies": "on",
+    "cloudcode.cloudRun.showExplorer": true,
+    "cloudcode.gke.showExplorer": true,
+    "cloudcode.secretManager.showExplorer": true,
+    "cloudcode.yaml.schemaValidation": true,
+    "claudeCode.preferredLocation": "panel",
+    "claudeCode.focusView": true,
+    "autoDocstring.docstringFormat": "google",
+    "autoDocstring.startOnNewLine": true,
+    "autoDocstring.includeExtendedSummary": true,
+    "evenBetterToml.schema.enabled": true,
+    "turboConsoleLog.addSemicolonInTheEnd": true,
+    "turboConsoleLog.logMessagePrefix": "\u26a1 [SOTA-DEBUG]",
+    "redhat.telemetry.enabled": false,
+    "antigravity.enableTelemetry": false,
+    "gdl.openTarget": "system",
+    "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": [
+        "build/QuantumTensorEngine.sln"
+    ],
+    "ruff.path": [
+        "${workspaceFolder}/.venv/Scripts/ruff.exe"
+    ],
+    "ruff.interpreter": [
+        "${workspaceFolder}/.venv/Scripts/python.exe"
+    ],
+    "ruff.configuration": "${workspaceFolder}/pyproject.toml",
+    "ruff.nativeServer": "on",
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.format.preview": true,
+    "ruff.codeAction.disableRuleComment": {
+        "enable": false
+    },
+    "workbench.editorAssociations": {
+        "**/.claude/**/*.bin": "default",
+        "**/CMakeFiles/**/*.bin": "default",
+        "**/.chroma_db/**/*.bin": "default",
+        "*.bin": "default"
+    },
+    "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
+    "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,
+    "markdown-preview-enhanced.enableTypographer": true,
+    "markdown-preview-enhanced.enableScriptExecution": false,
+    "markdown-preview-enhanced.enableHTML5Embed": true,
+    "markdown-preview-enhanced.enableExtendedTableSyntax": true,
+    "markdown-preview-enhanced.enableCriticMarkupSyntax": true,
+    "markdown-preview-enhanced.d2Sketch": true,
+    "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true,
+    "markdown-preview-enhanced.alwaysShowBacklinksInPreview": true,
+    "markdown-preview-enhanced.aiTranslationAutoUpdate": true,
+    "wam.switchDevinCli": true,
+    "files.autoSave": "afterDelay",
+    "editor.codeActions.triggerOnFocusChange": true,
+    "editor.definitionLinkOpensInPeek": true,
+    "editor.experimental.asyncTokenizationLogging": true,
+    "editor.experimental.preferTreeSitter.css": true,
+    "editor.experimental.preferTreeSitter.ini": true,
+    "editor.experimental.preferTreeSitter.regex": true,
+    "editor.experimental.preferTreeSitter.typescript": true,
+    "editor.experimentalGpuAcceleration": "on",
+    "editor.inlayHints.padding": true,
+    "editor.inlineCompletionsAccessibilityVerbose": false,
+    "editor.linkedEditing": true,
+    "editor.cursorSmoothCaretAnimation": "on",
+    "diffEditor.experimental.showMoves": true,
+    "diffEditor.experimental.useTrueInlineView": true,
+    "editor.inlineSuggest.edits.showCollapsed": true,
+    "editor.inlineSuggest.suppressSuggestions": true,
+    "editor.suggest.localityBonus": true,
+    "editor.suggest.shareSuggestSelections": true,
+    "editor.suggest.showStatusBar": true,
+    "editor.suggest.snippetsPreventQuickSuggestions": true,
+    "files.autoGuessEncoding": true,
+    "files.autoSaveWorkspaceFilesOnly": true,
+    "files.autoSaveWhenNoErrors": true,
+    "files.trimFinalNewlines": true,
+    "explorer.excludeGitIgnore": true,
+    "explorer.fileNesting.enabled": true,
+    "scm.alwaysShowActions": true,
+    "scm.alwaysShowRepositories": true,
+    "scm.diffDecorationsGutterPattern": {
+        "added": true
+    },
+    "scm.repositories.explorer": true,
+    "scm.workingSets.enabled": true,
+    "cmake.ctest.allowParallelJobs": true,
+    "cmake.buildTask": true,
+    "astro.content-intellisense": true,
+    "astro.updateImportsOnFileMove.enabled": true,
+    "search.useParentIgnoreFiles": true,
+    "search.useGlobalIgnoreFiles": true,
+    "accessibility.openChatEditedFiles": true,
+    "accessibility.signalOptions.debouncePositionChanges": true,
+    "editor.inlineSuggest.experimental.showOnSuggestConflict": "always",
+    "claudeCode.enableNewConversationShortcut": true,
+    "chatgpt.openOnStartup": true,
+    "chatgpt.runCodexInWindowsSubsystemForLinux": true,
+    "windsurfPyright.analysis.typeCheckingMode": "standard",
+    "windsurfPyright.analysis.inlayHints.callArgumentNames": true,
+    "windsurfPyright.analysis.inlayHints.callArgumentNamesMatching": true,
+    "windsurfPyright.analysis.inlayHints.functionReturnTypes": true,
+    "windsurfPyright.analysis.inlayHints.variableTypes": true,
+    "windsurfPyright.analysis.inlayHints.genericTypes": true,
+    "ollamaDirectCustomAgent.vectorSearchEnabled": true,
+    "ollamaDirectCustomAgent.whisperUseCloud": true,
+    "ollamaDirectCustomAgent.roleSplitEnabled": true,
+    "ollamaDirectCustomAgent.openOnStartup": true,
+    "ollamaDirectCustomAgent.modelWarmupEnabled": true,
+    "ollamaDirectCustomAgent.fullControlMode": false,
+    "ollamaDirectCustomAgent.fileWatcherEnabled": true,
+    "ollamaDirectCustomAgent.debugMode": true,
+    "ollamaDirectCustomAgent.cloudAutoRotateAccounts": true,
+    "ollamaDirectCustomAgent.assistantAutoLaunch": true
 }

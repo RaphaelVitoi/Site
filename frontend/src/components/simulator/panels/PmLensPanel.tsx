@@ -54,7 +54,7 @@ const LABELS = {
   villainRange: 'Villain Range',
   boardStructural: 'Board Structural',
   sizing: 'Sizing',
-  computeShaderDesc: 'Invoca Compute Shader p/ Monte Carlo O(1)',
+  computeShaderDesc: 'Simulação de ranges para explorar este cenário.',
 } as const;
 
 interface PmLensPanelProps {
@@ -680,7 +680,7 @@ export default function PmLensPanel({
                   disabled={isCalculatingEq || !heroRange || !villainRange}
                   className="bg-accent-indigo border-accent-indigo-light/30 shadow-accent-indigo/20 w-full rounded-2xl border py-5 text-[0.8rem] font-black tracking-[0.3em] text-white uppercase shadow-2xl transition-all hover:bg-indigo-500 hover:shadow-indigo-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isCalculatingEq ? 'Triturando VRAM...' : 'Injetar GTO (WebGPU)'}
+                  {isCalculatingEq ? 'Calculando cenário...' : 'Calcular cenário'}
                 </button>
                 <p className="text-text-darker m-0 mt-4 text-center text-[0.55rem] leading-tight font-black tracking-widest uppercase">
                   {LABELS.computeShaderDesc}

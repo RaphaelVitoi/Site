@@ -42,6 +42,12 @@ from core.schemas import RAGQuery, Task
 from engine.bayesian_range import calculate_pmev_call_threshold
 from engine.solver_importers import UniversalSolverImporter
 from engine.solver_importers.deep_solver import DeepSolverImporter
+from engine.timesfm_engine import (
+    TimesFMEngine,
+    TimesFMForecastRequest,
+    TimesFMForecastResponse,
+    TimesFMGovernanceError,
+)
 from engine.vitoi_perspective_engine import VitoiPerspectiveEngine
 from llm.budget import _RATE_LIMITERS  # pyright: ignore[reportPrivateUsage]
 from utils.cache import _read_file_cached_internal  # pyright: ignore[reportPrivateUsage]
@@ -978,3 +984,77 @@ async def handle_prometheus_metrics(request: web.Request) -> web.Response:
         content_type="text/plain",
         charset="utf-8",
     )
+
+
+async def handle_timesfm_forecast(request: web.Request) -> web.Response:
+    """Endpoint de inferencia e previsao temporal via Google Research TimesFM."""
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response({"status": "ERROR", "error": "Invalid JSON body"}, status=400)
+
+    try:
+        req = TimesFMForecastRequest.model_validate(data)
+    except ValidationError as ve:
+        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
+
+    if req.series is None and req.series_dict is None:
+        return web.json_response(
+            {
+                "status": "ERROR",
+                "error": "Ao menos um dos campos 'series' ou 'series_dict' deve ser fornecido.",
+            },
+            status=400,
+        )
+
+    try:
+        engine = TimesFMEngine(
+            mode=req.mode,
+            preferred_model_key=req.preferred_model_key,
+        )
+
+        if req.series_dict is not None:
+            multi_results = engine.forecast_multivariate(
+                series_dict=req.series_dict,
+                horizon=req.horizon,
+            )
+            items = {k: v.to_item() for k, v in multi_results.items()}
+            resp = TimesFMForecastResponse(
+                status="SUCCESS",
+                forecast_type="multivariate",
+                results=items,
+                model_used=engine.metadata.model_id,
+                license_tier=engine.metadata.license_tier.value,
+            )
+        else:
+            assert req.series is not None
+            result = engine.forecast_univariate(
+                series=req.series,
+                horizon=req.horizon,
+                frequency_indicator=req.frequency_indicator,
+                target_name=req.target_name,
+            )
+            resp = TimesFMForecastResponse(
+                status="SUCCESS",
+                forecast_type="univariate",
+                results={req.target_name: result.to_item()},
+                model_used=engine.metadata.model_id,
+                license_tier=engine.metadata.license_tier.value,
+            )
+
+        return web.json_response(resp.model_dump())
+
+    except TimesFMGovernanceError as ge:
+        logger.warning("TimesFM Violacao de Governanca: %s", ge)
+        return web.json_response(
+            {
+                "status": "FORBIDDEN",
+                "error": str(ge),
+                "license_tier": "TimesFM Non-Commercial License v1.0 (Apenas Pesquisa)",
+            },
+            status=403,
+        )
+    except ValueError as ve:
+        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
+    except Exception as e:
+        return _internal_error(e, "handle_timesfm_forecast", status="ERROR")

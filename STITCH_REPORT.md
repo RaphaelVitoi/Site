@@ -2,7 +2,7 @@
 
 > **Repositório Monitorado:** `RaphaelVitoi/Site`
 > **Governança:** Protocolo Master Chico SOTA v8.0 GOLD · Tríade Stitch, Exa & Jules
-> **Data de Atualização:** `2026-09-04 22:05:44 UTC`
+> **Data de Atualização:** `2026-09-05 14:56:10 UTC`
 > **Origem dos Dados:** Google Cloud Stitch MCP (`https://stitch.googleapis.com/mcp`)
 
 ---
@@ -12,7 +12,7 @@
 | Dimensão | Valor | Status Operacional |
 | :--- | :--- | :--- |
 | **Projetos Stitch Ativos** | `1` | ✅ Conectado e Operacional |
-| **Telas Cadastradas** | `1` | 🎨 Em expansão contínua |
+| **Telas Cadastradas** | `2` | 🎨 Em expansão contínua |
 | **Modelos Suportados** | `Gemini 3.8 Flash` (Balanced - Padrão) & `Gemini 3.5 Flash-Lite` (Speed) | SOTA visual duo ativo no Stitch |
 | **Integração Frontend** | Tailwind CSS 4 + Next.js 16 | Tokens sincronizados em `globals.css` |
 
@@ -29,7 +29,7 @@
 
 | ID do Projeto | Título | Visibilidade | Telas | Design Systems | Criado em (UTC) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `18242753218562483944` | **Nexus PMev & Poker Racional UI** | `PRIVATE` | `1` | `1` | `2026-09-04 21:43:23` |
+| `18242753218562483944` | **Nexus PMev & Poker Racional UI** | `PRIVATE` | `2` | `1` | `2026-09-04 21:43:23` |
 
 ---
 
@@ -38,10 +38,11 @@
 ### Projeto `18242753218562483944` — Nexus PMev & Poker Racional UI
 - **Nome Canônico:** `projects/18242753218562483944`
 - **Tipo de Projeto:** `PROJECT_DESIGN` | **Origem:** `STITCH`
-- **Última Atualização:** `2026-09-04T21:53:33.116138Z`
+- **Última Atualização:** `2026-09-04T23:23:30.776763Z`
 - **Permissão / Papel:** `OWNER`
-- **Inventário de Telas (1):**
+- **Inventário de Telas (2):**
   - `projects/18242753218562483944/screens/3260535219730569926`: **DESIGN.md** (`DESKTOP`)
+  - `projects/18242753218562483944/screens/6fbe16eba4d84af4be932290191c26ad`: **Nexus PMev - Ping Test** (`DESKTOP`)
 - **Design Systems Integrados (1):**
   - 🎨 **Obsidian Analytics** (`assets/6f9c8c6e7114422393d45b0c4ca02808`)
     - Tipografia: `GEIST` / `JetBrains Mono` | Acento Primário: `#f2b72b`

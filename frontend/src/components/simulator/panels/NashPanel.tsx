@@ -342,9 +342,9 @@ export default function NashPanel({
         <div className="space-y-4">
           <div className="flex items-center gap-4">
             <div className="bg-accent-indigo h-2.5 w-2.5 animate-pulse rounded-full shadow-[0_0_20px_var(--color-accent-indigo)]" />
-            <h3 className="group-hover/nash:text-glow-indigo m-0 text-[0.85rem] font-black tracking-[0.4em] text-white uppercase transition-all duration-500">
+            <h2 className="group-hover/nash:text-glow-indigo m-0 text-[0.85rem] font-black tracking-[0.4em] text-white uppercase transition-all duration-500">
               Frequências ICM Quantum
-            </h3>
+            </h2>
           </div>
           <p className="text-text-dim m-0 flex items-center gap-3 text-[0.7rem] leading-none font-medium tracking-[0.3em] uppercase">
             <span className="text-accent-indigo-light group-hover/nash:text-glow-indigo font-black transition-all duration-500">
@@ -464,10 +464,10 @@ export default function NashPanel({
       {/* ORÁCULO DE BORDA (GEMMA 4) - ANÁLISE DE DISTORÇÃO */}
       <div className="relative z-10 mt-10 border-t border-white/5 pt-12">
         <div className="mb-10 flex items-center justify-between">
-          <h4 className="flex items-center gap-4 text-[0.9rem] font-black tracking-[0.4em] text-white uppercase">
+          <h3 className="flex items-center gap-4 text-[0.9rem] font-black tracking-[0.4em] text-white uppercase">
             <i className="fa-solid fa-microchip text-accent-indigo" />
             <span>Análise Preditiva (Gemma Edge)</span>
-          </h4>
+          </h3>
           <button
             type="button"
             onClick={handleConsultGemma}

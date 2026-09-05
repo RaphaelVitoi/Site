@@ -1,60 +1,34 @@
-/** @format */
-
 import init, {
-	solve_icm_distortion_v2,
-	solve_insolvency_matrix_binary,
+  alloc_range_buffer, free_range_buffer,
+  calculate_equity_monte_carlo_binary, calculate_multiway_equity_zerocopy,
 } from '../../../lib/engine/generated/vitoi_equity_engine';
+import { dispatchSimulatorMessage } from './insolvencyProcessor';
 
 declare const self: DedicatedWorkerGlobalScope;
 
-let wasmInitialized = false;
-
-self.onmessage = async (e: MessageEvent) => {
-	const { matrixData, icmData, simulationId } = e.data;
-
-	try {
-		if (!wasmInitialized) {
-			await init();
-			wasmInitialized = true;
-		}
-
-		let result = null;
-		if (matrixData) {
-			result = solve_insolvency_matrix_binary(
-				matrixData.villainMask,
-				matrixData.board,
-				matrixData.rpFactor,
-				matrixData.heroInvested,
-				matrixData.currentPot,
-				matrixData.activePlayers,
-				matrixData.iterations,
-				matrixData.seed,
-				matrixData.kappa
-			);
-		} else if (icmData) {
-			result = solve_icm_distortion_v2(
-				icmData.ipRp,
-				icmData.oopRp,
-				icmData.topologicAggression,
-				icmData.activePlayers,
-				icmData.potSize,
-				icmData.streetIdx,
-				icmData.fold,
-				icmData.raise
-			);
-		}
-
-		self.postMessage({
-			type: 'SUCCESS',
-			simulationId,
-			result,
-		});
-	} catch (err: unknown) {
-		const errorMessage = err instanceof Error ? err.message : String(err);
-		self.postMessage({
-			type: 'ERROR',
-			simulationId,
-			error: errorMessage,
-		});
-	}
+// Concurrent messages share initialization; a failed load can be retried.
+let initialization: ReturnType<typeof init> | undefined;
+self.onmessage = async ({ data }: MessageEvent<unknown>) => {
+  const response = await dispatchSimulatorMessage(data, async () => {
+    initialization ??= init().catch((error: unknown) => {
+      initialization = undefined;
+      throw error;
+    });
+    const wasm = await initialization;
+    return {
+      equity: calculate_equity_monte_carlo_binary,
+      multiway: (request) => {
+        const size = request.rangesData.length;
+        const ptr = alloc_range_buffer(size);
+        try {
+          new Float64Array(wasm.memory.buffer, ptr, size).set(request.rangesData);
+          return calculate_multiway_equity_zerocopy(ptr, request.numPlayers,
+            BigInt(request.boardMask), request.targetIterations, request.seed ?? 1);
+        } finally {
+          free_range_buffer(ptr, size);
+        }
+      },
+    };
+  });
+  self.postMessage(response);
 };
