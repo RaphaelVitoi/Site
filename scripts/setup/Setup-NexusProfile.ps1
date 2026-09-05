@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Integra o Ecossistema Nexus ao terminal Windows permanentemente.
 .DESCRIPTION
@@ -140,7 +140,7 @@ function Convert-DeepJsonStringSOTA {
 # compara AMBAS as copias com os comandos que o Typer registra: a duplicacao
 # continua, mas deixou de poder divergir em silencio.
 $Global:NexusTyperCommands = @(
-    'agent', 'audit', 'autonomy', 'autopoiesis', 'clippy', 'dashboard', 'db', 'gate',
+    'agent', 'audit', 'autonomy', 'autopoiesis', 'calib-forecast', 'chat', 'clippy', 'dashboard', 'db', 'gate',
     'graph', 'handoff', 'homeostasis', 'index', 'list', 'ops', 'routine', 'scripts', 'search',
     'stats', 'status', 'sync-consciousness', 'task', 'task-audit', 'test', 'triad', 'voice', 'web'
 )
@@ -331,7 +331,7 @@ Set-Alias -Name vitoi_dashboard -Value Invoke-Dashboard
 Set-Alias -Name gemini-cli -Value nexus-cli
 Set-Alias -Name sota -Value nexus
 
-# --- Substituição de Aliases Nativos (Fricção Zero) ---
+# --- Substituicao de Aliases Nativos (Friccao Zero) ---
 Remove-Item Alias:gc -Force -ErrorAction SilentlyContinue
 function gc { nexus @args }
 

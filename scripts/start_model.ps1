@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Script de Inicializacao Otimizada de Modelos SOTA (Windows).
 .DESCRIPTION
@@ -7,18 +7,17 @@
 #>
 param (
     [Parameter(Mandatory=$false)]
-    [ValidateSet("12b", "e4b", "e2b", "4b", "31b", "31b_cloud", "8b", "llama3_8b", "qwen", "qwen_coder_7b_q5", "qwen_coder_7b", "granite", "deepseek", "kimi_code_cloud")]
     [string]$Model = "qwen_coder_7b_q5",
 
     [Parameter(Mandatory=$false)]
     [switch]$Force
 )
 
-# 1. Mapeamento de Tags do Ollama — lido da FONTE UNICA DE VERDADE
+# 1. Mapeamento de Tags do Ollama - lido da FONTE UNICA DE VERDADE
 #    data/ollama_models.json. Antes existiam tres mapas hardcoded divergentes
 #    (aqui, engine/gemma_server.py e scripts/llm_inference/run_inference.py).
 #    O mapa local abaixo e apenas fallback se o manifesto estiver indisponivel.
-#    NOTA: nao usar $M como nome de variavel — PowerShell trata $M e $m como
+#    NOTA: nao usar $M como nome de variavel - PowerShell trata $M e $m como
 #    a mesma variavel, e qualquer 'foreach ($m in ...)' sobrescreveria o mapa.
 $ManifestoModelos = Join-Path $PSScriptRoot "..\data\ollama_models.json"
 $OllamaTags = @{}
@@ -34,7 +33,7 @@ if (Test-Path $ManifestoModelos) {
 }
 
 if ($OllamaTags.Count -eq 0) {
-    # Fallback minimo — mantido em paridade com o manifesto.
+    # Fallback minimo - mantido em paridade com o manifesto.
     $OllamaTags = @{
         "12b"       = "gemma4:12b"
         "e4b"       = "gemma4:e4b"
@@ -50,8 +49,12 @@ if ($OllamaTags.Count -eq 0) {
 
 $ModelTag = $OllamaTags[$Model]
 if (-not $ModelTag) {
-    Write-Error "[SOTA INIT] Alias '$Model' nao existe no manifesto. Aliases: $(($OllamaTags.Keys | Sort-Object) -join ', ')"
-    exit 1
+    if ($OllamaTags.Values -contains $Model) {
+        $ModelTag = $Model
+    } else {
+        Write-Error "[SOTA INIT] Alias ou tag '$Model' nao existe no manifesto. Aliases: $(($OllamaTags.Keys | Sort-Object) -join ', ')"
+        exit 1
+    }
 }
 Write-Output "[SOTA INIT] Inicializando modelo: $Model ($ModelTag)..."
 
