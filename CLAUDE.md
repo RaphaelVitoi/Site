@@ -590,3 +590,135 @@ O repositório estabelece uma separação formal e estrita de responsabilidades 
 | **`docs/`** | Documentação permanente, arquitetura viva, manuais, especificações e formalismos matemáticos. | `docs/architecture/*.md`<br>`docs/specs/*.md`<br>`docs/guides/*.md`<br>`docs/math/*.md` | Documentos Markdown com referências e âncoras canônicas |
 | **`.claude/agent-memory/`** | Memória episódica e contextual viva consumida pelo runtime dos agentes e pelo RAG. | `.claude/agent-memory/<agente>/MEMORY.md`<br>`.claude/agent-memory/chico/HANDOFF_LATEST.md` | Estrutura de tópicos semânticos e aprendizados consolidados |
 | **`data/`** | Catálogos estruturados, esquemas e configurações de sistema em formato serializado. | `system_config.json`<br>`routing_map.json`<br>`agents_manifest.json`<br>`SYSTEM_OPERATIONS_MANIFEST.json` | JSON formatado e tipado |
+
+---
+
+## 10. Régua para agente autônomo de nuvem — Jules / `Bolt ⚡`
+
+**Motivo medido, 2026-09-05.** A sessão do cron das 03:11 UTC
+(`14536923137986406349`) explorou o repositório por 16 minutos, levantou três
+hipóteses de performance, **não ordenou nenhuma** e parou para perguntar qual
+seguir. Eram 03:46 da manhã; o administrador dormia. A sessão ficou em
+`AWAITING_USER_FEEDBACK` e não produziu uma linha.
+
+O custo real não foi o tempo perdido. Medidas nesta data, as três hipóteses se
+mostraram **duas contraproducentes e uma irrelevante por confissão da própria
+sessão**. Tivesse ela escolhido qualquer uma, teria piorado o código. Não
+modificar era o resultado correto — mas ela chegou lá por bloqueio, não por
+método, e um bloqueio não é reproduzível.
+
+### 10.1 Não otimize o que não mediu
+
+Alteração de performance exige **um número medido antes**: tempo, alocação,
+contagem de render desperdiçado. Sem número, a sessão entrega um relatório de
+medição — não um patch.
+
+**Medir e refutar é ENTREGA, não fracasso.** Uma sessão que levanta três
+hipóteses, mede as três, refuta as três e explica por quê cumpriu seu propósito
+integralmente. Fechar sem patch é resultado legítimo. Fechar sem medição não é.
+
+Sem esta cláusula o agente se sente obrigado a produzir diff, e produz o diff
+errado.
+
+### 10.2 Havendo mais de um caminho, ordene — não pergunte
+
+**A ordenação é a resposta, não a pergunta.** O critério é *impacto medido
+dividido pelo raio de alteração*; empate resolve-se pelo menor raio.
+
+Perguntar qual caminho seguir só é aceitável quando os caminhos permanecem
+indistinguíveis **depois** de medidos — o que raramente sobrevive a uma medição
+honesta. Três caminhos sem número não são três caminhos válidos: são três
+hipóteses não testadas, e a tarefa é testá-las.
+
+### 10.3 A régua de segurança — o que não se faz sem autorização
+
+As classes abaixo transformam ganho local em erro sistêmico. As duas primeiras
+não são hipotéticas: são exatamente o que a sessão de 2026-09-05 propôs.
+
+1. **Dependência de hook que existe para SELAR referência.** Quando o código
+   deriva uma dependência (string, hash, `join`, `stringify`) para estabilizar
+   uma referência, isso é **arquitetura, não descuido** — em geral o próprio
+   código o declara. Trocá-la por igualdade profunda, ou pelo objeto cru, troca
+   risco de *performance* por risco de *correção*, e valor obsoleto na tela é
+   pior que render a mais.
+   *Medido: `useQuantumEngine.ts` sela 18 números — 3 streets × 6 campos — para
+   proteger 26 memos a jusante de um cálculo O(N³). O `JSON.stringify` que
+   parecia caro custa microssegundos.*
+
+2. **Memoização em massa.** `React.memo`, `useMemo` ou `useCallback` aplicados
+   por varredura, sem medir render desperdiçado. Memo só entra **depois** que as
+   props já são estáveis; antes disso ele é custo puro.
+   *Medido: `ActionRow` recebe `onChange={(f) => ...}` inline nas seis
+   instâncias de `NashPanel.tsx`. `React.memo` ali teria zero acertos — a
+   referência muda todo render — e só somaria a comparação de 8 props.*
+
+3. **Portões e ops:** `.husky/`, `scripts/ops/`, `record_gate.py`,
+   `cwv_gate.ps1`. Um agente não altera o instrumento que o mede.
+
+4. **Credencial, ACL, origem CORS ou CDP.** Vale aqui a §3 da raiz, sem exceção.
+
+5. **Raio maior que o declarado.** A alteração toca os arquivos que a medição
+   apontou, e só. Varredura de repositório inteiro é redução material e cai na
+   escada da §8.2.
+
+### 10.4 O formato da entrega
+
+Toda sessão fecha declarando: hipóteses levantadas, **o número medido de cada
+uma**, a ordenação resultante, o que foi executado e o que foi descartado com o
+motivo. Sem esse bloco a sessão não é auditável, e sessão não auditável não
+entra na malha.
+
+### 10.5 Alcance
+
+Esta régua vive no repositório de propósito. O prompt do cron mora na plataforma
+do Jules e não é versionado aqui — mas toda sessão começa por `git clone`, e o
+`AGENTS.md` da raiz aponta para este arquivo. A régua viaja com o código,
+portanto, e vale igual para a corrida noturna e para tarefa sob demanda.
+
+### 10.6 Adequação ao protocolo — as três lacunas que o Jules abre
+
+A §10 rege o que o agente **decide**. Esta seção rege como o que ele **produz**
+entra na malha. As três lacunas foram medidas na sessão `14536923137986406349`.
+
+**(a) O diário do agente é memória episódica, e a §9 já diz onde ela mora.**
+A sessão criou `.jules/bolt.md` por conta própria. O conteúdo é bom, o lugar
+não: a §9 estabelece `.claude/agent-memory/<agente>/MEMORY.md` como o diretório
+canônico de memória viva de agente. `.jules/` é um segundo lugar para a mesma
+classe de artefato, e a §3 chama isso de fonte paralela.
+
+**Regra:** aprendizado de sessão do Jules vai para
+`.claude/agent-memory/bolt/MEMORY.md`. `.jules/` não é diretório canônico e não
+deve ser criado. A convenção de nome é do fornecedor; a taxonomia é do projeto,
+e ela vence — pela mesma razão que `.claude/` não confere posse à Anthropic.
+
+**(b) A atribuição é obrigatória no CORPO, porque o campo de autor está fora
+de alcance.** Medido: o commit `4d90a05b` saiu com
+`Author: RaphaelVitoi <...@users.noreply.github.com>` e o bot apenas como
+co-autor. Isso viola a regra de identidade de autoria da §7 — mas o e-mail não
+foi escolhido por agente algum desta malha: vem da integração GitHub App do
+Jules, que commita sob a conta que autorizou a instalação. Não há `git config`
+local nem instrução de prompt que o corrija.
+
+É exatamente a situação que a §7 já resolveu para comentários e revisões no
+GitHub, onde o autor também não é configurável: ali *"o único discriminante
+possível é o rodapé de atribuição, que portanto é obrigatório"*. **A mesma
+solução se aplica.** Todo commit de sessão do Jules declara no corpo:
+
+```
+Assinatura: google-labs-jules[bot] via Jules -- sessao <session_id>
+Proposito: <razao tecnica e escopo protegido>
+```
+
+Sem esse bloco, o commit é indistinguível de trabalho humano na interface, e a
+malha perde a capacidade de auditar a si mesma.
+
+**(c) O trabalho do Jules NÃO passou pelo portão de 5 fases.** A VM do runner
+roda a suíte de frontend, e só. `cwv_gate.ps1` exige Windows PowerShell, CDP na
+9222 e dev server na 3000; `record_gate.py` exige o índice de registros. Nada
+disso existe no contêiner descartável.
+
+**Consequência operacional, e não é opcional:** branch do Jules entra na malha
+**apenas por merge local revisado**, onde o `pre-commit` roda de fato. Suíte
+verde na VM é evidência parcial e deve ser declarada como tal — nunca reportada
+como "portões aprovados". Merge direto para `master` pelo lado da nuvem
+contornaria as cinco fases, e a §1 proíbe contornar o portão.
