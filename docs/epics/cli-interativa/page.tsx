@@ -19,7 +19,7 @@ function getReadTime( text: string ): number {
 function getExcerpt( text: string ): string {
     if ( !text ) return '';
     // Limpeza de entropia do markdown para resumo limpo
-    const cleanText = text.replaceAll( /[#*`_[\]]/g, '' ).trim();
+    const cleanText = text.replace( /[#*`_[\]]/g, '' ).trim();
     return cleanText.length > 140 ? cleanText.substring( 0, 140 ) + '...' : cleanText;
 }
 

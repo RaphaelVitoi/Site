@@ -42,7 +42,7 @@ const InsolvencyTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 	if (!active || !payload || payload.length === 0) return null;
 
 	return (
-		<div className="rounded-xl border border-emerald-500/30 bg-slate-950/95 p-3 font-mono shadow-2xl backdrop-blur-md pointer-events-none min-w-[160px]">
+		<div className="rounded-xl border border-emerald-500/30 bg-slate-950/95 p-3 font-mono shadow-2xl backdrop-blur-md pointer-events-none min-w-40">
 			<div className="mb-2 flex items-center justify-between gap-3 border-b border-white/10 pb-1.5">
 				<span className="text-[0.65rem] font-black uppercase tracking-wider text-white">{label}</span>
 				<span className="text-[0.5rem] font-bold text-text-dim uppercase tracking-wider">Métricas Street</span>

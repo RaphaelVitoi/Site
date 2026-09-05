@@ -847,6 +847,93 @@ function validateScenario(
   }
 }
 
+function validateActionsComparability(
+  pair: EvidencePair,
+  tolerances: ReturnType<typeof resolveTolerances>,
+  out: EvidenceViolation[],
+): void {
+  const chipActions = Array.isArray( pair.chipEv.actions ) ? pair.chipEv.actions : [];
+  const icmActions = Array.isArray( pair.icmEv.actions ) ? pair.icmEv.actions : [];
+
+  if ( chipActions.length === 0 || icmActions.length === 0 ) return;
+
+  const chipTemFold = temFold( pair.chipEv );
+  const icmTemFold = temFold( pair.icmEv );
+  const chip = perfilar( pair.chipEv, icmTemFold );
+  const icm = perfilar( pair.icmEv, chipTemFold );
+
+  const classes: ActionClass[] = [ 'fold', 'check', 'call', 'bet', 'raise', 'unknown' ];
+  const divergentes = classes.filter(
+    c => chip.contagem[ c ] !== icm.contagem[ c ],
+  );
+
+  // Percentuais declarados no rótulo só discriminam quando AMBOS os lados os
+  // expõem. O GTO Wizard escreve `Bet 2.8 (50%)`; o HRC escreve `bets 2.81bb`
+  // e não declara percentual algum.
+  const percentuaisDivergentes: Record<string, unknown>[] = [];
+  for ( const classe of [ 'bet', 'raise' ] as ActionClass[] ) {
+    const a = chip.percentuais[ classe ];
+    const b = icm.percentuais[ classe ];
+    if ( a.length === 0 || b.length === 0 || a.length !== b.length ) continue;
+    a.forEach( ( pct, i ) => {
+      const outro = b[ i ];
+      if ( outro !== undefined && pct !== outro ) {
+        percentuaisDivergentes.push( { classe, indice: i, chipEvPct: pct, icmEvPct: outro } );
+      }
+    } );
+  }
+
+  if ( divergentes.length > 0 || percentuaisDivergentes.length > 0 ) {
+    out.push(
+      violation(
+        'ACTION_SET_INCOMPARABLE',
+        'warning',
+        'pair.actions',
+        'Os cenários oferecem conjuntos de ações diferentes. Isso é restrição do solver -- ChipEV e ICMev são modelos essencialmente distintos e não precisam oferecer as mesmas ações --, não defeito do dado. O par é sinalizado para não ser comparado ação-a-ação, e segue sendo evidência válida.',
+        {
+          classesDivergentes: divergentes,
+          percentuaisDivergentes,
+          chipEvPorClasse: chip.contagem,
+          icmEvPorClasse: icm.contagem,
+        },
+      ),
+    );
+    return;
+  }
+
+  // Classes batem: a ÁRVORE DE REFERÊNCIA é a mesma. Resta conferir se os
+  // sizings absolutos também correspondem. Quando não correspondem, isso
+  // NÃO invalida o par — dois solvers que modelam stacks diferentes
+  // acumulam potes diferentes no mesmo ramo. Fica como não verificável.
+  const naoCorrespondem: Record<string, unknown>[] = [];
+  for ( const classe of [ 'bet', 'raise' ] as ActionClass[] ) {
+    const a = chip.sizings[ classe ];
+    const b = icm.sizings[ classe ];
+    if ( a.length !== b.length ) continue;
+    a.forEach( ( valor, i ) => {
+      const par = b[ i ];
+      if ( par !== undefined && !sizingsEquivalentes( valor, par, tolerances ) ) {
+        naoCorrespondem.push( { classe, indice: i, chipEvBb: valor, icmEvBb: par } );
+      }
+    } );
+  }
+  if ( naoCorrespondem.length > 0 ) {
+    out.push(
+      violation(
+        'SIZING_CORRESPONDENCE_UNVERIFIABLE',
+        'warning',
+        'pair.actions',
+        'As classes de ação correspondem, mas os sizings em bb divergem. Solvers que modelam stacks diferentes acumulam potes diferentes no mesmo ramo; a captura não expõe o pote de ambos os lados, então a correspondência de ramo não é verificável.',
+        {
+          divergencias: naoCorrespondem,
+          toleranciaAbsolutaBb: tolerances.sizingEquivalenceToleranceBb,
+          toleranciaRelativa: tolerances.sizingEquivalenceRelative,
+        },
+      ),
+    );
+  }
+}
+
 /**
  * Valida um par de evidência e DEVOLVE as violações encontradas.
  * Não lança exceção, não muta o par, não normaliza nada.
@@ -864,87 +951,7 @@ export function validateEvidencePair(
   validateContext( pair.context, out );
   validateScenario( pair.chipEv, 'chipEv', tolerances, out );
   validateScenario( pair.icmEv, 'icmEv', tolerances, out );
-
-  // --- Comparabilidade dos dois cenários ---
-  const chipActions = Array.isArray( pair.chipEv.actions ) ? pair.chipEv.actions : [];
-  const icmActions = Array.isArray( pair.icmEv.actions ) ? pair.icmEv.actions : [];
-
-  if ( chipActions.length > 0 && icmActions.length > 0 ) {
-    const chipTemFold = temFold( pair.chipEv );
-    const icmTemFold = temFold( pair.icmEv );
-    const chip = perfilar( pair.chipEv, icmTemFold );
-    const icm = perfilar( pair.icmEv, chipTemFold );
-
-    const classes: ActionClass[] = [ 'fold', 'check', 'call', 'bet', 'raise', 'unknown' ];
-    const divergentes = classes.filter(
-      c => chip.contagem[ c ] !== icm.contagem[ c ],
-    );
-
-    // Percentuais declarados no rótulo só discriminam quando AMBOS os lados os
-    // expõem. O GTO Wizard escreve `Bet 2.8 (50%)`; o HRC escreve `bets 2.81bb`
-    // e não declara percentual algum.
-    const percentuaisDivergentes: Record<string, unknown>[] = [];
-    for ( const classe of [ 'bet', 'raise' ] as ActionClass[] ) {
-      const a = chip.percentuais[ classe ];
-      const b = icm.percentuais[ classe ];
-      if ( a.length === 0 || b.length === 0 || a.length !== b.length ) continue;
-      a.forEach( ( pct, i ) => {
-        const outro = b[ i ];
-        if ( outro !== undefined && pct !== outro ) {
-          percentuaisDivergentes.push( { classe, indice: i, chipEvPct: pct, icmEvPct: outro } );
-        }
-      } );
-    }
-
-    if ( divergentes.length > 0 || percentuaisDivergentes.length > 0 ) {
-      out.push(
-        violation(
-          'ACTION_SET_INCOMPARABLE',
-          'warning',
-          'pair.actions',
-          'Os cenários oferecem conjuntos de ações diferentes. Isso é restrição do solver -- ChipEV e ICMev são modelos essencialmente distintos e não precisam oferecer as mesmas ações --, não defeito do dado. O par é sinalizado para não ser comparado ação-a-ação, e segue sendo evidência válida.',
-          {
-            classesDivergentes: divergentes,
-            percentuaisDivergentes,
-            chipEvPorClasse: chip.contagem,
-            icmEvPorClasse: icm.contagem,
-          },
-        ),
-      );
-    } else {
-      // Classes batem: a ÁRVORE DE REFERÊNCIA é a mesma. Resta conferir se os
-      // sizings absolutos também correspondem. Quando não correspondem, isso
-      // NÃO invalida o par — dois solvers que modelam stacks diferentes
-      // acumulam potes diferentes no mesmo ramo. Fica como não verificável.
-      const naoCorrespondem: Record<string, unknown>[] = [];
-      for ( const classe of [ 'bet', 'raise' ] as ActionClass[] ) {
-        const a = chip.sizings[ classe ];
-        const b = icm.sizings[ classe ];
-        if ( a.length !== b.length ) continue;
-        a.forEach( ( valor, i ) => {
-          const par = b[ i ];
-          if ( par !== undefined && !sizingsEquivalentes( valor, par, tolerances ) ) {
-            naoCorrespondem.push( { classe, indice: i, chipEvBb: valor, icmEvBb: par } );
-          }
-        } );
-      }
-      if ( naoCorrespondem.length > 0 ) {
-        out.push(
-          violation(
-            'SIZING_CORRESPONDENCE_UNVERIFIABLE',
-            'warning',
-            'pair.actions',
-            'As classes de ação correspondem, mas os sizings em bb divergem. Solvers que modelam stacks diferentes acumulam potes diferentes no mesmo ramo; a captura não expõe o pote de ambos os lados, então a correspondência de ramo não é verificável.',
-            {
-              divergencias: naoCorrespondem,
-              toleranciaAbsolutaBb: tolerances.sizingEquivalenceToleranceBb,
-              toleranciaRelativa: tolerances.sizingEquivalenceRelative,
-            },
-          ),
-        );
-      }
-    }
-  }
+  validateActionsComparability( pair, tolerances, out );
 
   return out;
 }

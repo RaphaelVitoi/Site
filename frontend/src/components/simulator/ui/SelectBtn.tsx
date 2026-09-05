@@ -8,6 +8,13 @@ interface SelectBtnProps {
 	onClick: () => void;
 }
 
+function getStackTextClasses(active: boolean, variant: 'hero' | 'villain'): string {
+	if (!active) {
+		return 'text-text-darker group-hover:text-text-muted';
+	}
+	return variant === 'villain' ? 'text-accent-rose-light' : 'text-accent-indigo-light';
+}
+
 export const SelectBtn = ({
 	label,
 	active,
@@ -50,13 +57,7 @@ export const SelectBtn = ({
 			<span className="font-black text-white">{position}</span>
 			{stack && (
 				<span
-					className={`font-mono text-[0.6rem] font-bold transition-colors ${
-						active
-							? variant === 'villain'
-								? 'text-accent-rose-light'
-								: 'text-accent-indigo-light'
-							: 'text-text-darker group-hover:text-text-muted'
-					}`}
+					className={`font-mono text-[0.6rem] font-bold transition-colors ${getStackTextClasses(active, variant)}`}
 				>
 					{stack}
 				</span>

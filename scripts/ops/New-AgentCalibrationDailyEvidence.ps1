@@ -237,10 +237,6 @@ if (Test-Path -LiteralPath $outlierLedgerPath) {
         $_.record_type -eq 'outlier' -and ((Get-InstanteDoRegistro $_).LocalDateTime.ToString('yyyy-MM-dd') -eq $day)
     })
 }
-$distinctSessionIds = @($records |
-    Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.session_id) } |
-    ForEach-Object { [string]$_.session_id } |
-    Sort-Object -Unique)
 
 # METRICA DO PORTAO: numero de SESSOES DISTINTAS com feedback, acumulado e sem
 # prazo. Densidade intra-sessao e dado retido, nao gatilho. Falha fechado.

@@ -11,7 +11,6 @@ from aiohttp import web
 
 from database.lab_manager import LabManager
 from database.queue_manager import QueueManager
-from api.v1.keys import AUDIT_ENGINE_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
 
 try:
     from monitoring.audit_engine import AuditEngine  # type: ignore
@@ -56,6 +55,7 @@ from api.v1.handlers import (
     handle_view_file,
     handle_web_search,
 )
+from api.v1.keys import AUDIT_ENGINE_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
 from api.v1.middleware import (
     auth_middleware,
     cookie_middleware,
