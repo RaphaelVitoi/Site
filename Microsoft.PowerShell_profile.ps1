@@ -1,4 +1,4 @@
-﻿# === START SYSTEM CONSTRAINTS & STABILITY ===
+# === START SYSTEM CONSTRAINTS & STABILITY ===
 $env:POWERSHELL_UPDATECHECK = 'Off'
 # === END SYSTEM CONSTRAINTS & STABILITY ===
 
@@ -24,7 +24,7 @@ $Global:NexusPythonExe = if (Test-Path "$Global:NexusProjectRoot\.venv\Scripts\p
 # compara esta lista com os comandos que o Typer de fato registra, nos DOIS
 # arquivos que a duplicam.
 $Global:NexusTyperCommands = @(
-    'agent', 'audit', 'autonomy', 'autopoiesis', 'clippy', 'dashboard', 'db', 'gate',
+    'agent', 'audit', 'autonomy', 'autopoiesis', 'calib-forecast', 'chat', 'clippy', 'dashboard', 'db', 'gate',
     'graph', 'handoff', 'homeostasis', 'index', 'list', 'ops', 'routine', 'scripts', 'search',
     'stats', 'status', 'sync-consciousness', 'task', 'task-audit', 'test', 'triad', 'voice', 'web'
 )
@@ -91,9 +91,9 @@ function Stop-NexusWorker {
                     Write-Host "[OK] Orquestrador SOTA offline (parada graciosa)." -ForegroundColor Green
                 }
                 else {
-                    Write-Warning "[AVISO] Parada graciosa falhou ou demorou. Forçando o encerramento..."
+                    Write-Warning "[AVISO] Parada graciosa falhou ou demorou. Forcando o encerramento..."
                     Stop-Process -Id $WorkerPid -Force
-                    Write-Host "[OK] Orquestrador SOTA offline (parada forçada)." -ForegroundColor Green
+                    Write-Host "[OK] Orquestrador SOTA offline (parada forcada)." -ForegroundColor Green
                 }
             }
             else {
@@ -110,7 +110,7 @@ function Stop-NexusWorker {
         $workers = Get-CimInstance Win32_Process -Filter "name LIKE 'python%'" | Where-Object { $_.CommandLine -match "task_executor.py\s+worker" }
         if ($workers) {
             $workers | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
-            Write-Host "[OK] Orquestrador SOTA offline (parada forçada via fallback)." -ForegroundColor Green
+            Write-Host "[OK] Orquestrador SOTA offline (parada forcada via fallback)." -ForegroundColor Green
         }
         else {
             Write-Host "[INFO] Nenhum Orquestrador SOTA ativo foi detectado." -ForegroundColor DarkGray

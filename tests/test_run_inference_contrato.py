@@ -91,3 +91,104 @@ def test_max_tokens_viaja_como_teto_de_saida():
     """max_tokens vira num_predict no proxy, nunca num_ctx. Ver instancia 11."""
     payload = _capturar_payload(max_tokens=8192)
     assert payload["max_tokens"] == 8192
+
+
+def test_compact_conversation_preserva_persona_e_reduz_a_dez_porcento():
+    """Garante que a compactacao de contexto retem ~10% das mensagens mais recentes e preserva o system prompt."""
+    conversa = [{"role": "system", "content": "Persona SOTA Chico"}]
+    for i in range(20):
+        role = "user" if i % 2 == 0 else "assistant"
+        conversa.append({"role": role, "content": f"Mensagem {i}"})
+
+    compactada = ri._compact_conversation(conversa, keep_ratio=0.10)
+
+    assert compactada[0]["role"] == "system"
+    assert compactada[0]["content"] == "Persona SOTA Chico"
+    # Compact marker inserido
+    assert "[COMPACT SOTA]" in compactada[1]["content"]
+    # Retém ~10% de 20 msgs (2 mensagens mais recentes)
+    dialogos = [m for m in compactada if m["role"] in ("user", "assistant")]
+    assert len(dialogos) == 2
+    assert dialogos[0]["content"] == "Mensagem 18"
+    assert dialogos[1]["content"] == "Mensagem 19"
+
+
+def test_compact_conversation_atualiza_tag_de_modelo_quando_fornecida():
+    """Garante que a persona tem sua referencia de modelo atualizada no hot-swap."""
+    conversa = [
+        {"role": "system", "content": "Voce e o modelo open-source gemma4:12b, rodando localmente."},
+        {"role": "user", "content": "pergunta"},
+        {"role": "assistant", "content": "resposta"},
+    ]
+    compactada = ri._compact_conversation(conversa, keep_ratio=0.10, new_model_tag="qwen2.5-coder:7b")
+    assert "open-source qwen2.5-coder:7b," in compactada[0]["content"]
+
+
+def test_compact_conversation_curta_permanece_inalterada():
+    """Conversas com 2 ou menos mensagens de dialogo nao devem ser descartadas."""
+    conversa = [
+        {"role": "system", "content": "Persona"},
+        {"role": "user", "content": "ola"},
+        {"role": "assistant", "content": "tudo bem"},
+    ]
+    compactada = ri._compact_conversation(conversa, keep_ratio=0.10)
+    assert len(compactada) == 3
+    assert compactada == conversa
+
+
+def test_select_model_interactively_por_numero_e_alias():
+    """Valida selecao interativa por numero de indice e por alias/tag."""
+    mock_models = [
+        {"tag": "gemma4:12b", "tier": "local", "size_str": "7.3 GB"},
+        {"tag": "qwen2.5-coder:7b", "tier": "local", "size_str": "4.7 GB"},
+    ]
+    with patch("builtins.input", return_value="2"):
+        tag_selecionada = ri._select_model_interactively(mock_models)
+        assert tag_selecionada == "qwen2.5-coder:7b"
+
+    with patch("builtins.input", return_value="1"):
+        tag_selecionada = ri._select_model_interactively(mock_models)
+        assert tag_selecionada == "gemma4:12b"
+
+
+def test_run_chat_loop_comandos_in_chat():
+    """Valida o processamento dos comandos /status, /compact e /exit no loop de chat."""
+    conversa = [{"role": "system", "content": "Persona"}]
+    for i in range(10):
+        conversa.append({"role": "user" if i % 2 == 0 else "assistant", "content": f"msg {i}"})
+
+    inputs = ["/status", "/compact", "/exit"]
+    with (
+        patch("builtins.input", side_effect=inputs),
+        patch.object(ri.console, "print") as mock_print,
+    ):
+        ri._run_chat_loop("gemma4:12b", "Persona", conversa, max_tokens=2048)
+        assert mock_print.called
+
+
+def test_run_chat_loop_hot_swap_troca_de_modelo():
+    """Valida a troca de modelo a quente via /model retendo 10% do contexto."""
+    conversa = [{"role": "system", "content": "Persona SOTA open-source gemma4:12b,"}]
+    for i in range(20):
+        conversa.append({"role": "user" if i % 2 == 0 else "assistant", "content": f"msg {i}"})
+
+    mock_installed = [
+        {"tag": "gemma4:12b", "tier": "local", "size_str": "7.3 GB"},
+        {"tag": "qwen2.5-coder:7b", "tier": "local", "size_str": "4.7 GB"},
+    ]
+
+    # Fluxo do usuario:
+    # 1. Digita /model 2 (troca para qwen2.5-coder:7b)
+    # 2. Escolhe opcao 1 (Hot-swap: manter 10% do contexto)
+    # 3. Digita /exit
+    inputs = ["/model 2", "1", "/exit"]
+
+    with (
+        patch("builtins.input", side_effect=inputs),
+        patch.object(ri, "discover_ollama_models", return_value=mock_installed),
+        patch.object(ri.console, "print") as mock_print,
+    ):
+        ri._run_chat_loop("gemma4:12b", "Persona SOTA open-source gemma4:12b,", conversa, max_tokens=2048)
+        assert mock_print.called
+
+

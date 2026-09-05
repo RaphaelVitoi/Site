@@ -2,12 +2,8 @@
   "$schema_version": "1.0",
   "_comment": [
     "FONTE UNICA DE VERDADE para modelos Ollama do ecossistema SOTA.",
-    "Substitui tres mapas hardcoded e divergentes que existiam em:",
-    "  scripts/start_model.ps1  ($OllamaTags, 9 entradas)",
-    "  engine/gemma_server.py   (OLLAMA_MODEL_MAP, 8 entradas)",
-    "  scripts/llm_inference/run_inference.py (OLLAMA_MODEL_MAP, 5 entradas)",
-    "Os pesos NAO sao versionados em git. Sao provisionados sob demanda por",
-    "scripts/ops/Ensure-OllamaModels.ps1, que le este arquivo."
+    "Modelos densos pesados (Gemma 31B local e Qwen 27B local) foram expurgados.",
+    "Apenas modelos quantizados, destilados ou cloud (Zero-RAM) sao mantidos."
   ],
   "runtime": {
     "api_base_env": "OLLAMA_API_BASE",
@@ -24,8 +20,17 @@
       "tier": "local",
       "required": true,
       "size_gb": 7.6,
-      "role": "Modelo local padrao. Default do gemma_server e do start_model.",
+      "role": "Modelo local equilibrado e destilado para inferencia rapida.",
       "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1", "engine/avatars/avatar_config.json", "scripts/llm_inference/run_inference.py"]
+    },
+    {
+      "alias": "12b_qat",
+      "tag": "hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+      "tier": "local",
+      "required": true,
+      "size_gb": 6.9,
+      "role": "Gemma 4 12B com quantizacao QAT GGUF de alta fidelidade.",
+      "consumers": ["scripts/llm_inference/run_inference.py"]
     },
     {
       "alias": "e4b",
@@ -33,70 +38,25 @@
       "tier": "local",
       "required": true,
       "size_gb": 9.6,
-      "role": "Variante efficient de 4B ativos. Usada quando ha pressao de RAM.",
-      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
-    },
-    {
-      "alias": "kimi_code_cloud",
-      "tag": "kimi-k2.7-code:cloud",
-      "tier": "cloud",
-      "required": false,
-      "size_gb": 0,
-      "role": "Modelo cloud avancado para codificacao e raciocinio tecnico via Ollama Cloud.",
-      "consumers": ["engine/gemma_server.py"]
-    },
-    {
-      "alias": "31b",
-      "tag": "gemma4:31b",
-      "tier": "local",
-      "required": true,
-      "size_gb": 19.0,
-      "role": "Maior modelo local. CORRECAO: o alias '31b' apontava para a variante cloud em start_model.ps1, ignorando estes 19 GB ja presentes em disco.",
-      "consumers": ["engine/gemma_server.py"]
-    },
-    {
-      "alias": "31b_cloud",
-      "tag": "gemma4:31b-cloud",
-      "tier": "cloud",
-      "required": true,
-      "size_gb": 0,
-      "role": "Inferencia remota. Sem custo de disco local.",
-      "consumers": ["engine/avatars/run_avatar.py", "engine/avatars/query_current.py", "engine/avatars/avatar_config.json", "scripts/llm_inference/run_inference.py"]
-    },
-    {
-      "alias": "e2b",
-      "tag": "gemma4:e2b",
-      "tier": "local",
-      "required": false,
-      "size_gb": null,
-      "role": "Referenciado por gemma_server.py e start_model.ps1, mas NAO instalado. Puxar so se for usado de fato.",
+      "role": "Variante efficient de 4B ativos. Destilada para raciocinio.",
       "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
     },
     {
       "alias": "4b",
       "tag": "gemma4:latest",
       "tier": "local",
-      "required": false,
-      "size_gb": null,
-      "role": "Referenciado pelos mapas, mas NAO instalado. Tag 'latest' e movel: evitar em producao.",
+      "required": true,
+      "size_gb": 9.6,
+      "role": "Gemma 4 Latest (aponta para e4b / 9.6 GB).",
       "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1", "scripts/llm_inference/run_inference.py"]
     },
     {
-      "alias": "8b",
-      "tag": "gemma4:8b",
+      "alias": "e2b",
+      "tag": "gemma4:e2b",
       "tier": "local",
-      "required": false,
-      "size_gb": null,
-      "role": "Referenciado apenas por run_inference.py. NAO instalado.",
-      "consumers": ["scripts/llm_inference/run_inference.py"]
-    },
-    {
-      "alias": "llama3_8b",
-      "tag": "llama3.1:8b",
-      "tier": "local",
-      "required": false,
-      "size_gb": null,
-      "role": "Alias legado. NAO instalado e sem consumidor ativo alem do proprio mapa.",
+      "required": true,
+      "size_gb": 7.2,
+      "role": "Variante efficient ultra-compacta de 2B ativos.",
       "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
     },
     {
@@ -105,8 +65,17 @@
       "tier": "local",
       "required": true,
       "size_gb": 5.4,
-      "role": "Modelo local primario SOTA para codificacao, tool-calling deterministico e refatoracao agantica via Vulkan/Ollama.",
+      "role": "Modelo local primario SOTA quantizado Q5_K_M para codificacao e tool-calling.",
       "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1", "engine/avatars/run_avatar.py", "scripts/llm_inference/run_inference.py"]
+    },
+    {
+      "alias": "qwen",
+      "tag": "qwen2.5-coder:7b-instruct-q5_K_M",
+      "tier": "local",
+      "required": true,
+      "size_gb": 5.4,
+      "role": "Alias rapido para Qwen Coder 7B Q5_K_M.",
+      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
     },
     {
       "alias": "qwen_coder_7b",
@@ -114,7 +83,7 @@
       "tier": "local",
       "required": false,
       "size_gb": 4.7,
-      "role": "Variante Q4_K_M de baixa latencia para execucao rapida em background.",
+      "role": "Variante Q4_K_M de baixa latencia.",
       "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
     },
     {
@@ -123,7 +92,7 @@
       "tier": "local",
       "required": true,
       "size_gb": 5.4,
-      "role": "Perfil especializado para Teoria dos Jogos, formulação PMev, análise Bayesiana e modelagem em Rust/Python.",
+      "role": "Perfil especializado para Teoria dos Jogos, formulacao PMev e analise Bayesiana.",
       "consumers": [".continue/config.json", "engine/vitoi_perspective_engine.py"]
     },
     {
@@ -132,7 +101,7 @@
       "tier": "local",
       "required": true,
       "size_gb": 5.4,
-      "role": "Perfil especializado em refatoração cirúrgica SEARCH/REPLACE sob Target Lock e imutabilidade de contratos.",
+      "role": "Perfil especializado em refatoracao cirurgica SEARCH/REPLACE sob Target Lock.",
       "consumers": [".continue/config.json", "scripts/ops/cwv_gate.ps1"]
     },
     {
@@ -141,7 +110,7 @@
       "tier": "local",
       "required": true,
       "size_gb": 5.4,
-      "role": "Perfil especializado em prosa poética, composição lírica e ensaios existenciais de alta densidade semântica.",
+      "role": "Perfil especializado em prosa poetica, composicao lirica e alta densidade semantica.",
       "consumers": [".continue/config.json"]
     },
     {
@@ -150,7 +119,7 @@
       "tier": "local",
       "required": true,
       "size_gb": 0.98,
-      "role": "Motor FIM ultra-leve de preenchimento inline e tab-autocomplete de baixissima latencia (<50ms).",
+      "role": "Motor FIM ultra-leve de preenchimento inline e tab-autocomplete (<50ms).",
       "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1", ".continue/config.json"]
     },
     {
@@ -159,35 +128,80 @@
       "tier": "local",
       "required": true,
       "size_gb": 0.39,
-      "role": "Despachante Nano sub-10ms para classificação de intenção, parsing de AST e validação sintática pre-flight.",
+      "role": "Despachante Nano sub-10ms para classificacao de intencao e parsing.",
       "consumers": ["agents/dispatcher.py", "engine/llm_api.py", "scripts/ops/cwv_gate.ps1"]
     },
     {
-      "alias": "qwen",
-      "tag": "qwen2.5-coder:3b",
-      "tier": "local",
-      "required": false,
-      "size_gb": null,
-      "role": "Alias legado (<4B). Puxar sob demanda se houver necessidade de autocompletion intermediario.",
-      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
+      "alias": "31b",
+      "tag": "gemma4:31b-cloud",
+      "tier": "cloud",
+      "required": true,
+      "size_gb": 0,
+      "role": "Gemma 4 31B via Cloud Zero-RAM. Sem custo de VRAM ou RAM local.",
+      "consumers": ["engine/gemma_server.py", "scripts/llm_inference/run_inference.py"]
     },
     {
-      "alias": "granite",
-      "tag": "granite3.3:8b",
-      "tier": "local",
-      "required": false,
-      "size_gb": null,
-      "role": "Alias legado. NAO instalado e sem consumidor ativo alem do proprio mapa.",
-      "consumers": ["engine/gemma_server.py", "scripts/start_model.ps1"]
+      "alias": "31b_cloud",
+      "tag": "gemma4:31b-cloud",
+      "tier": "cloud",
+      "required": true,
+      "size_gb": 0,
+      "role": "Inferencia remota Gemma 4 31B sem custo de disco local.",
+      "consumers": ["engine/avatars/run_avatar.py", "engine/avatars/query_current.py", "engine/avatars/avatar_config.json", "scripts/llm_inference/run_inference.py"]
     },
     {
-      "alias": "deepseek",
-      "tag": "deepseek-coder:1.3b",
-      "tier": "local",
+      "alias": "kimi_code_cloud",
+      "tag": "kimi-k2.7-code:cloud",
+      "tier": "cloud",
       "required": false,
-      "size_gb": null,
-      "role": "Alias legado presente so em gemma_server.py. NAO instalado.",
+      "size_gb": 0,
+      "role": "Modelo cloud avancado para codificacao e raciocinio tecnico.",
       "consumers": ["engine/gemma_server.py"]
+    },
+    {
+      "alias": "kimi_2_6_cloud",
+      "tag": "kimi-k2.6:cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "Kimi K2.6 Cloud via Ollama.",
+      "consumers": []
+    },
+    {
+      "alias": "glm_cloud",
+      "tag": "glm-5.1:cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "GLM 5.1 Cloud via Ollama.",
+      "consumers": []
+    },
+    {
+      "alias": "minimax_m3_cloud",
+      "tag": "minimax-m3:cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "Minimax M3 Cloud via Ollama.",
+      "consumers": []
+    },
+    {
+      "alias": "minimax_m2_7_cloud",
+      "tag": "minimax-m2.7:cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "Minimax M2.7 Cloud via Ollama.",
+      "consumers": []
+    },
+    {
+      "alias": "nemotron_cloud",
+      "tag": "nemotron-3-ultra:cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "Nemotron 3 Ultra Cloud via Ollama.",
+      "consumers": []
     },
     {
       "alias": "deepseek_pro",
@@ -195,7 +209,7 @@
       "tier": "cloud",
       "required": false,
       "size_gb": 0,
-      "role": "INSTALADO mas sem nenhuma referencia no codigo. Candidato a remocao se nao houver uso planejado.",
+      "role": "DeepSeek V4 Pro Cloud via Ollama.",
       "consumers": []
     },
     {
@@ -204,7 +218,43 @@
       "tier": "cloud",
       "required": false,
       "size_gb": 0,
-      "role": "INSTALADO mas sem nenhuma referencia no codigo. Candidato a remocao se nao houver uso planejado.",
+      "role": "DeepSeek V4 Flash Cloud via Ollama.",
+      "consumers": []
+    },
+    {
+      "alias": "deepseek_flash_0731",
+      "tag": "deepseek-v4-flash:0731-cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "DeepSeek V4 Flash 0731 Cloud via Ollama.",
+      "consumers": []
+    },
+    {
+      "alias": "deepseek_flash_preview",
+      "tag": "deepseek-v4-flash:preview-cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "DeepSeek V4 Flash Preview Cloud via Ollama.",
+      "consumers": []
+    },
+    {
+      "alias": "gpt_oss_120b_cloud",
+      "tag": "gpt-oss:120b-cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "GPT-OSS 120B Cloud via Ollama.",
+      "consumers": []
+    },
+    {
+      "alias": "gpt_oss_20b_cloud",
+      "tag": "gpt-oss:20b-cloud",
+      "tier": "cloud",
+      "required": false,
+      "size_gb": 0,
+      "role": "GPT-OSS 20B Cloud via Ollama.",
       "consumers": []
     }
   ]

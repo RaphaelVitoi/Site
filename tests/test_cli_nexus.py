@@ -225,6 +225,16 @@ def test_nexus_dashboard_once():
         assert "NEXUS SOTA GOD MODE DASHBOARD" in result.stdout
 
 
+def test_nexus_stats_timesfm_command():
+    """Valida comando de previsao de series temporais TimesFM via CLI."""
+    result = runner.invoke(app, ["stats", "timesfm", "--horizon", "6"])
+    assert result.exit_code == 0
+    assert "ORACULO DE PREVISAO DE SERIES TEMPORAIS TIMESFM" in result.stdout
+    assert "Trajetoria de Bankroll Estocastico" in result.stdout
+    assert "Dinamica Conjunta dos Tensores de Risco PMev" in result.stdout
+    assert "SUMARIO EXECUTIVO DE RISCO" in result.stdout
+
+
 # ============================================================================
 # Auditoria do dashboard, 2026-08-27: comando vazio devolvendo 0 gracioso.
 #

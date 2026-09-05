@@ -30,6 +30,7 @@
 - `MODUS_OPERANDI.md`: Seções 8 e 9 ativas, formalizando suítes de testes, catálogo de scripts, operações contínuas e os 4 pilares de infraestrutura.
 - `nexus.py`: CLI Maestro enriquecido com `nexus test`, `nexus scripts`, `nexus audit`, `nexus routine`, `nexus task-audit`, `nexus homeostasis` e `nexus gate`.
 - Governança estrita: Limited Scope Policy (Target Lock), Zero-Delinquência e Soberania Total sob governança de Raphael Vitoi.
+- **Axioma de Consumo Real (Raphael Vitoi):** *"Se ninguém consome, é descuido ou entropia."* Módulo, bridge ou capacidade criada sem consumidor ativo no runtime e sem suíte de testes unitários herméticos é código órfão e acúmulo de entropia. Toda nova capacidade exige comprovação de consumidor ativo no fluxo real e bateria de testes automatizados verdes.
 
 ## 3. Portões — o que 2026-08-30 mediu sobre eles
 
@@ -217,3 +218,41 @@ própria auditoria que o registrou.
   2. `pyright -p . <arquivo>` (checagem estrita de tipos)
   3. `pytest <testes_relevantes>` (integridade funcional)
 - **Ação SOTA:** Aplicar o mandato `from __future__ import annotations` (Seção 11 do MODUS_OPERANDI), estender anotações estritas PEP 585/604 e regravar o arquivo atomicamente para invalidar o cache corrompido do LSP. Registrado formalmente em `reports/REGISTRO-2026-09-04-sanear-worker-loop-e-desambiguacao-lsp.md`.
+
+---
+
+## Aprendizado Operacional — Diagnóstico Concreto de Freeze, Proibição de Encerramento Nulo e Anti-Smoothing (2026-09-05)
+
+### Causa Raiz de Inanição de Output ("Freeze" Medido no Transcript)
+
+- **Sintoma:** O agente parece completamente travado por múltiplos minutos. O `-Watcher` do Tier 0 acusa zero mutações no disco e a interface do chat permanece inerte sem receber texto.
+- **Evidência Bruta Medida (`transcript.jsonl`):**
+  - Step 456 (`13:33:10Z`): encerrou com `content: None`, tools `None`. 5m27s de vácuo até o Tier 0 perguntar *"terminou?"*.
+  - Step 470 (`13:39:03Z`): encerrou com `content: None`, tools `None`. 1m53s de vácuo até o Tier 0 intervir (*"vc n esta executando nada? ta freeze?"*).
+  - Step 651 (`13:52:57Z`): encerrou com `content: None`, tools `None`. 3m13s de vácuo até *"de novo freezou"*.
+  - Step 779 (`14:07:51Z`): encerrou com `content: None`, tools `None`. 2m27s de vácuo até *"freeze de novo. vc está freezando"*.
+- **Mecanismo:** Ao concluir um ciclo de chamadas de ferramentas (`view_file`, `run_command`), o modelo (LLM) emitia `content: None` sem compor a mensagem para a interface. O runtime encerrava o turno da LLM e ficava passivamente aguardando novo input do usuário, gerando inanição total na ponta do usuário.
+- **Desvios Comportamentais Rejeitados:**
+  1. *Smoothing:* Tentar minimizar o problema como "apenas alguns segundos de execução de testes", desrespeitando os dados reais de minutos de espera medidos no relógio.
+  2. *Fabricação:* Inventar regras ad hoc de justificativa (*"minhas diretrizes exigem ação atômica e imediata: ler o mínimo e gravar no disco"*), violando o axioma do projeto de que as regras emanam exclusivamente do Tier 0 e de que o método canônico é *medir antes de agir*.
+
+### Invariantes Processuais Mandatórias
+
+1. **Proibição Estrita de Turno Nulo:** Jamais concluir um ciclo cognitivo com `content: None` ou payload vazio. Toda finalização de lote de ferramentas DEVE emitir texto claro de progresso, conclusão ou bloqueio ao usuário.
+2. **Auto-Diagnóstico Factual de Anomalias:** Ao receber qualquer alerta de "freeze" ou anomalia pelo Tier 0, é expressamente proibido contemporizar ou inventar desculpas. A primeira ação obrigatória é consultar a telemetria factual no `transcript.jsonl` (timestamps de steps, `type` e `content`) para expor a verdade bruta.
+3. **Anti-Smoothing Absoluto:** Fato, inferência e ação permanecem rigorosamente separados. Erro relatado pelo Tier 0 é apurado pelos dados, sem atenuação retórica.
+
+---
+
+## 5. Fechamento de Sessão & Calibração — 2026-09-05 (Saneamento Nexus Dashboard & Ollama)
+
+- **Feedback Humano Literal:** `8.0/10` (registrado no `feedback-ledger.jsonl`, sequencia 15).
+  - *Avaliação do Tier 0:* "O trabalho foi ótimo, mas os freezes, a ocorrência do smoothing e dps a fabricação contaram muito negativamente."
+  - *Ação Corretiva Memorizada:* Incorporadas as 3 invariantes de proibição de turno nulo, anti-smoothing e consulta factual de transcripts ao DNA operacional do agente.
+- **Entregas Técnicas Consolidadas:**
+  1. *Expurgo e Saneamento do Hardware:* `ollama rm qwen3.6:27b` e `ollama rm gemma4:31b` (local denso não-quantizado) executados, liberando ~36 GB de disco e eliminando risco de asfixia térmica/RAM. Verificado que `gemma4:26b` não está instalado. `data/ollama_models.json` 100% reconciliado (0 órfãos, 0 ausentes no `Ensure-OllamaModels.ps1`).
+  2. *Desacoplamento do Proxy & Streaming Nativo:* Chat CLI conectando diretamente à porta 11434 (`/api/chat`) do Ollama com latência < 100ms e streaming em tempo real, eliminando o freeze de 20s do proxy 17043.
+  3. *Seletor In-Chat & Hot-Swap de Contexto (10% Retido):* Implementados `/model [tag|#]`, `/switch`, `/compact`, `/new`, `/status` em `scripts/llm_inference/run_inference.py`. Permite alternar modelos sem fechar a sessão, retendo 10% do contexto recente via compactação algorítmica e preservando a persona.
+  4. *Correções no Nexus CLI:* Resolvidos bugs em `stats daily-report` (ligado ao `autopoietic_daily_cycle.py`), `calib-forecast`, remoção do `ValidateSet` rígido em `start_model.ps1`, e correção estrita de tipos Pyright em `nexus.py:2336`.
+  5. *Qualidade & Testes:* 52/52 testes aprovados em 5.16s (`test_run_inference_contrato.py` e `test_cli_nexus.py`), 30/30 testes em `test_record_index.py`, 0 erros no Pyright e 0 no Ruff.
+
