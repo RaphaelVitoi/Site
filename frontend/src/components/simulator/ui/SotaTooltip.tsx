@@ -42,6 +42,13 @@ interface TooltipCoords {
 	actualPosition: 'top' | 'bottom';
 }
 
+function getTooltipAnimationTranslate(isVisible: boolean, actualPosition: 'top' | 'bottom'): string {
+	if (isVisible) {
+		return 'translate-y-0';
+	}
+	return actualPosition === 'bottom' ? '-translate-y-2' : 'translate-y-2';
+}
+
 export function SotaTooltip({
 	title,
 	content,
@@ -88,10 +95,8 @@ export function SotaTooltip({
 			if (spaceAbove < tooltipHeight + GAP + 10 && spaceBelow > spaceAbove) {
 				actualPosition = 'bottom';
 			}
-		} else {
-			if (spaceBelow < tooltipHeight + GAP + 10 && spaceAbove > spaceBelow) {
-				actualPosition = 'top';
-			}
+		} else if (spaceBelow < tooltipHeight + GAP + 10 && spaceAbove > spaceBelow) {
+			actualPosition = 'top';
 		}
 
 		let top = 0;
@@ -158,15 +163,23 @@ export function SotaTooltip({
 			updateCoords();
 		};
 
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') {
+				hideTooltip();
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
 		window.addEventListener('scroll', handleReposition, { passive: true, capture: true });
 		window.addEventListener('resize', handleReposition, { passive: true });
 
 		return () => {
 			cancelAnimationFrame(rafId);
+			window.removeEventListener('keydown', handleKeyDown);
 			window.removeEventListener('scroll', handleReposition, { capture: true });
 			window.removeEventListener('resize', handleReposition);
 		};
-	}, [isOpen, updateCoords]);
+	}, [isOpen, updateCoords, hideTooltip]);
 
 	useEffect(() => {
 		return () => {
@@ -186,14 +199,7 @@ export function SotaTooltip({
 			? '-top-2 border-l border-t border-inherit'
 			: '-bottom-2 border-r border-b border-inherit';
 
-	const animationTranslate =
-		coords.actualPosition === 'bottom'
-			? isVisible
-				? 'translate-y-0'
-				: '-translate-y-2'
-			: isVisible
-				? 'translate-y-0'
-				: 'translate-y-2';
+	const animationTranslate = getTooltipAnimationTranslate(isVisible, coords.actualPosition);
 
 	const bodyText = content || desc;
 
@@ -204,11 +210,6 @@ export function SotaTooltip({
 			onMouseLeave={hideTooltip}
 			onFocus={showTooltip}
 			onBlur={hideTooltip}
-			onKeyDown={(e) => {
-				if (e.key === 'Escape') {
-					hideTooltip();
-				}
-			}}
 			aria-describedby={isOpen ? tooltipId : undefined}
 			className={`relative cursor-help ${fullWidth ? 'flex w-full' : 'inline-flex items-center'}`}
 		>

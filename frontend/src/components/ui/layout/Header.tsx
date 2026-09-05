@@ -197,7 +197,7 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={`relative z-10 transition-transform duration-700 group-hover:scale-110 ${
-            isLightPage ? 'text-[var(--color-light-text-main)]' : 'text-white'
+            isLightPage ? 'text-light-text-main' : 'text-white'
           }`}
         >
           <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="0.8" />
@@ -222,13 +222,13 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
         <div className="flex items-center gap-2">
           <span
             className={`text-[1.2rem] font-black tracking-tighter ${
-              isLightPage ? 'text-[var(--color-light-text-main)]' : 'text-white'
+              isLightPage ? 'text-light-text-main' : 'text-white'
             } leading-none transition-all duration-500`}
           >
             {HEADER_STRINGS.brandTitle}{' '}
             <span
               className={`font-light ${
-                isLightPage ? 'text-[var(--color-light-text-muted)]' : 'text-text-muted'
+                isLightPage ? 'text-light-text-muted' : 'text-text-muted'
               } ml-0.5 tracking-[0.2em] transition-colors duration-500`}
             >
               {HEADER_STRINGS.brandSubtitle}
@@ -245,7 +245,7 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
         </div>
         <span
           className={`text-[0.55rem] font-black tracking-[0.4em] uppercase ${
-            isLightPage ? 'text-[var(--color-light-text-accent)]' : 'text-accent-indigo-light'
+            isLightPage ? 'text-light-text-accent' : 'text-accent-indigo-light'
           } mt-2 leading-none transition-all duration-500`}
         >
           {HEADER_STRINGS.tagline}
@@ -262,7 +262,7 @@ const HeaderDesktopNav: React.FC<{
   setActiveSubmenu: (label: string | null) => void;
 }> = ({ pathname, isLightPage, activeSubmenu, setActiveSubmenu }) => {
   const menuPillClass = isLightPage
-    ? 'flex items-center p-1.5 bg-[var(--color-light-surface)] border border-[var(--color-light-border)] rounded-full gap-1.5 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.01)]'
+    ? 'flex items-center p-1.5 bg-light-surface border border-light-border rounded-full gap-1.5 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.01)]'
     : 'flex items-center p-1.5 sota-glass-pill gap-1.5 backdrop-blur-2xl';
 
   const activeIndicatorBg = isLightPage
@@ -270,7 +270,7 @@ const HeaderDesktopNav: React.FC<{
     : 'absolute inset-0 bg-white/10 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]';
 
   const submenuCardClass = isLightPage
-    ? 'bg-[var(--color-light-surface)] border border-[var(--color-light-border)] rounded-2xl shadow-xl p-2.5 flex flex-col gap-1 overflow-hidden relative'
+    ? 'bg-light-surface border border-light-border rounded-2xl shadow-xl p-2.5 flex flex-col gap-1 overflow-hidden relative'
     : 'bg-bg-deep/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-2.5 flex flex-col gap-1 overflow-hidden relative';
 
   return (
@@ -285,23 +285,23 @@ const HeaderDesktopNav: React.FC<{
               className="group/nav relative"
               onMouseEnter={() => item.submenu && setActiveSubmenu(item.label)}
               onMouseLeave={() => setActiveSubmenu(null)}
-              onKeyDown={(e) => {
-                if (item.submenu) {
-                  if (e.key === 'Escape') {
-                    setActiveSubmenu(null);
-                  } else if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
-                    if (activeSubmenu !== item.label) {
-                      e.preventDefault();
-                      setActiveSubmenu(item.label);
-                    }
-                  }
-                }
-              }}
             >
               <Link
                 href={item.href}
                 aria-haspopup={item.submenu ? 'true' : undefined}
                 aria-expanded={item.submenu ? activeSubmenu === item.label : undefined}
+                onKeyDown={(e) => {
+                  if (item.submenu) {
+                    if (e.key === 'Escape') {
+                      setActiveSubmenu(null);
+                    } else if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                      if (activeSubmenu !== item.label) {
+                        e.preventDefault();
+                        setActiveSubmenu(item.label);
+                      }
+                    }
+                  }
+                }}
                 className={`relative z-10 flex items-center gap-2 px-6 py-2.5 text-[0.65rem] font-black tracking-[0.2em] whitespace-nowrap uppercase transition-all duration-300 ${getNavLinkClass(isLightPage, isActive)}`}
               >
                 {item.label}
@@ -351,7 +351,7 @@ const HeaderDesktopNav: React.FC<{
                             <i
                               className={`fa-solid ${sub.icon} ${
                                 isLightPage
-                                  ? 'text-xs text-[var(--color-light-text-muted)] group-hover/sub:text-[var(--color-light-text-accent)]'
+                                  ? 'text-xs text-light-text-muted group-hover/sub:text-light-text-accent'
                                   : 'text-text-muted group-hover/sub:text-accent-indigo-light text-xs'
                               }`}
                             />
@@ -359,7 +359,7 @@ const HeaderDesktopNav: React.FC<{
                           <span
                             className={`text-[0.65rem] font-bold tracking-widest uppercase transition-colors ${
                               isLightPage
-                                ? 'text-[var(--color-light-text-muted)] group-hover/sub:text-[var(--color-light-text-main)]'
+                                ? 'text-light-text-muted group-hover/sub:text-light-text-main'
                                 : 'text-text-muted group-hover/sub:text-white'
                             }`}
                           >
@@ -403,7 +403,7 @@ const HeaderMobileDrawer: React.FC<{
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={`fixed top-0 right-0 bottom-0 z-50 flex w-[85vw] max-w-sm flex-col overflow-y-auto border-l px-8 pt-24 pb-8 shadow-2xl transition-colors duration-300 lg:hidden ${
               isLightPage
-                ? 'border-[var(--color-light-border)] bg-[var(--color-light-surface)]'
+                ? 'border-light-border bg-light-surface'
                 : 'bg-bg-deep border-white/10'
             }`}
           >
@@ -411,7 +411,7 @@ const HeaderMobileDrawer: React.FC<{
               type="button"
               className={`absolute top-6 right-6 flex h-10 w-10 items-center justify-center rounded-xl transition-all focus:outline-none ${
                 isLightPage
-                  ? 'border border-black/10 bg-black/5 text-[var(--color-light-text-muted)] hover:bg-black/10 hover:text-[var(--color-light-text-main)]'
+                  ? 'border border-black/10 bg-black/5 text-light-text-muted hover:bg-black/10 hover:text-light-text-main'
                   : 'text-text-muted border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white'
               }`}
               onClick={onClose}
@@ -439,13 +439,13 @@ const HeaderMobileDrawer: React.FC<{
                           onClick={onClose}
                           className={`flex items-center gap-4 py-1.5 text-sm font-bold transition-colors ${
                             isLightPage
-                              ? 'text-[var(--color-light-text-muted)] hover:text-[var(--color-light-text-main)]'
+                              ? 'text-light-text-muted hover:text-light-text-main'
                               : 'text-text-main hover:text-white'
                           }`}
                         >
                           <i
                             className={`fa-solid ${sub.icon} ${
-                              isLightPage ? 'text-[var(--color-light-text-muted)]' : 'text-text-darker'
+                              isLightPage ? 'text-light-text-muted' : 'text-text-darker'
                             } w-5`}
                           />
                           {sub.label}
@@ -458,7 +458,7 @@ const HeaderMobileDrawer: React.FC<{
                       onClick={onClose}
                       className={`flex items-center gap-4 py-1 pl-2 text-sm font-bold transition-colors ${
                         isLightPage
-                          ? 'text-[var(--color-light-text-muted)] hover:text-[var(--color-light-text-main)]'
+                          ? 'text-light-text-muted hover:text-light-text-main'
                           : 'text-text-main hover:text-white'
                       }`}
                     >
@@ -487,7 +487,7 @@ const HeaderMobileDrawer: React.FC<{
                 onClick={onClose}
                 className={`flex items-center gap-4 py-1 pl-2 text-sm font-bold transition-colors ${
                   isLightPage
-                    ? 'text-[var(--color-light-text-muted)] hover:text-[var(--color-light-text-main)]'
+                    ? 'text-light-text-muted hover:text-light-text-main'
                     : 'text-text-main hover:text-white'
                 }`}
               >
@@ -503,7 +503,7 @@ const HeaderMobileDrawer: React.FC<{
                 onClick={onClose}
                 className={`flex items-center gap-4 py-1 pl-2 text-sm font-bold transition-colors ${
                   isLightPage
-                    ? 'text-[var(--color-light-text-muted)] hover:text-[var(--color-light-text-main)]'
+                    ? 'text-light-text-muted hover:text-light-text-main'
                     : 'text-text-main hover:text-white'
                 }`}
               >
@@ -515,7 +515,7 @@ const HeaderMobileDrawer: React.FC<{
                 onClick={onClose}
                 className={`flex items-center gap-4 py-1 pl-2 text-sm font-bold transition-colors ${
                   isLightPage
-                    ? 'text-[var(--color-light-text-muted)] hover:text-[var(--color-light-text-main)]'
+                    ? 'text-light-text-muted hover:text-light-text-main'
                     : 'text-text-main hover:text-white'
                 }`}
               >
@@ -534,7 +534,7 @@ const HeaderMobileDrawer: React.FC<{
                 onClick={onClose}
                 className={`flex items-center gap-4 text-xs font-black tracking-widest uppercase transition-colors ${
                   isLightPage
-                    ? 'text-[var(--color-light-text-muted)] hover:text-[var(--color-light-text-main)]'
+                    ? 'text-light-text-muted hover:text-light-text-main'
                     : 'text-text-muted hover:text-white'
                 }`}
               >
@@ -567,7 +567,7 @@ export const Header: React.FC = () => {
   const headerBgClass = getHeaderBgClass(scrolled, isLightPage);
 
   const actionButtonClass = isLightPage
-    ? 'hidden sm:flex relative group px-7 py-3 rounded-full overflow-hidden bg-[var(--color-light-text-main)] border border-[var(--color-light-text-main)] transition-all duration-700 hover:bg-[#2A2825] hover:shadow-[0_4px_20px_rgba(0,0,0,0.15)] active:scale-95'
+    ? 'hidden sm:flex relative group px-7 py-3 rounded-full overflow-hidden bg-light-text-main border border-light-text-main transition-all duration-700 hover:bg-[#2A2825] hover:shadow-[0_4px_20px_rgba(0,0,0,0.15)] active:scale-95'
     : 'hidden sm:flex relative group px-7 py-3 rounded-full overflow-hidden bg-accent-indigo/10 border border-accent-indigo/30 transition-all duration-700 hover:border-accent-indigo hover:bg-accent-indigo/20 hover:shadow-[0_0_40px_rgba(99,102,241,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] active:scale-95';
 
   return (
@@ -621,7 +621,7 @@ export const Header: React.FC = () => {
               type="button"
               className={`flex h-11 w-11 items-center justify-center rounded-xl transition-all focus:outline-none lg:hidden ${
                 isLightPage
-                  ? 'border border-black/10 bg-black/5 text-[var(--color-light-text-muted)] hover:bg-black/10 hover:text-[var(--color-light-text-main)]'
+                  ? 'border border-black/10 bg-black/5 text-light-text-muted hover:bg-black/10 hover:text-light-text-main'
                   : 'text-text-muted border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white'
               }`}
               onClick={() => setMobileOpen(true)}

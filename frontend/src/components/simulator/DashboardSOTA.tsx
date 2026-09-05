@@ -54,6 +54,196 @@ interface DashboardSOTAProps {
 
 type RadarStudioMode = 'insolvency' | 'comparison' | 'vulnerabilities';
 
+interface HudViewProps {
+  readonly radarData: Array<{ subject: string; Deficiencia: number }>;
+  readonly topLeaks: [string, number][];
+}
+
+function HudView({ radarData, topLeaks }: HudViewProps) {
+  return (
+    <div className="animate-sota-in flex flex-col gap-10">
+      <div className="glass-panel group/hud-dash relative overflow-hidden border-white/5 p-8! shadow-2xl lg:p-10!">
+        <div className="from-accent-indigo/5 pointer-events-none absolute inset-0 bg-radial-[at_top_left] to-transparent opacity-50" />
+        <div className="relative z-10 mb-8 flex items-center justify-between border-b border-white/10 pb-6">
+          <div className="flex items-center gap-4">
+            <i className="fa-solid fa-brain text-accent-indigo text-sm shadow-[0_0_10px_var(--accent-indigo)]" />
+            <h3 className="m-0 text-xs font-black tracking-[0.4em] text-white uppercase">
+              Assinatura <span className="text-text-darker ml-1">Bayesiana</span>
+            </h3>
+          </div>
+          <div className="bg-accent-emerald h-1.5 w-1.5 animate-pulse rounded-full shadow-[0_0_10px_var(--accent-emerald)]" />
+        </div>
+
+        <div className="relative z-10 h-60 w-full rounded-3xl bg-black/20 p-2 shadow-inner">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
+              <defs>
+                <linearGradient id="hudLeakGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="5%" stopColor="var(--color-accent-indigo)" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="var(--color-accent-indigo)" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <PolarGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+              <PolarAngleAxis
+                dataKey="subject"
+                tick={{
+                  fill: 'var(--color-text-muted)',
+                  fontSize: 8,
+                  fontWeight: 900,
+                  fontFamily: 'var(--font-mono)',
+                  letterSpacing: '0.05em',
+                }}
+              />
+              <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+              <Radar
+                name="Deficiência"
+                dataKey="Deficiencia"
+                stroke="var(--color-accent-indigo)"
+                strokeWidth={2}
+                fill="url(#hudLeakGradient)"
+                fillOpacity={0.3}
+                isAnimationActive={false}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="relative z-10 mt-8 space-y-4 rounded-2xl border border-white/5 bg-slate-950/40 p-4 shadow-inner">
+          {topLeaks.map(([name, value], idx) => (
+            <div key={name} className="group/leak flex flex-col gap-2 transition-all duration-300 hover:translate-x-1">
+              <div className="flex items-center justify-between px-1">
+                <span
+                  className={`text-[0.55rem] font-black tracking-widest uppercase transition-colors duration-300 ${idx === 0 ? 'text-accent-rose group-hover/leak:text-accent-rose-light' : 'text-text-muted group-hover/leak:text-white'}`}
+                >
+                  {name}
+                </span>
+                <span className="font-mono text-[0.65rem] font-black text-white">{(value * 100).toFixed(0)}%</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5 shadow-inner">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${value * 100}%` }}
+                  transition={{ duration: 1.5, ease: 'easeOut', delay: idx * 0.2 }}
+                  className={`h-full rounded-full ${idx === 0 ? 'bg-accent-rose shadow-[0_0_8px_var(--color-accent-rose)]' : 'bg-accent-indigo shadow-[0_0_8px_var(--color-accent-indigo)]'}`}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface ExecutiveKpiSectionProps {
+  readonly marginInstability: number;
+  readonly riskAdvantage: number;
+  readonly aggFactor: number;
+  readonly deltaRp: number;
+  readonly bayesianWinProb: number | null;
+  readonly isSolvent: boolean;
+}
+
+function ExecutiveKpiSection({
+  marginInstability,
+  riskAdvantage,
+  aggFactor,
+  deltaRp,
+  bayesianWinProb,
+  isSolvent,
+}: ExecutiveKpiSectionProps) {
+  return (
+    <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4" aria-label="KPIs Executivos de Telemetria">
+      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
+        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+          Instabilidade
+        </span>
+        <div className="flex items-baseline gap-2">
+          <span className={`font-mono text-xl font-black ${marginInstability > 15 ? 'text-accent-rose' : 'text-white'}`}>
+            {marginInstability.toFixed(1)}%
+          </span>
+        </div>
+        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
+          Margem &delta;
+        </span>
+      </div>
+
+      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
+        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+          Vantagem Risco
+        </span>
+        <div className="flex items-baseline gap-2">
+          <span className={`font-mono text-xl font-black ${riskAdvantage >= 0 ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+            {riskAdvantage > 0 ? '+' : ''}{riskAdvantage.toFixed(1)}%
+          </span>
+        </div>
+        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
+          {riskAdvantage >= 0 ? 'IP Domina' : 'OOP Vulnerável'}
+        </span>
+      </div>
+
+      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
+        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+          Fator &Psi;
+        </span>
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-xl font-black text-accent-indigo-light">
+            {aggFactor.toFixed(1)}x
+          </span>
+        </div>
+        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
+          Agressão Real
+        </span>
+      </div>
+
+      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
+        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+          Assimetria &Delta;RP
+        </span>
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-xl font-black text-white">
+            {deltaRp.toFixed(1)}%
+          </span>
+        </div>
+        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
+          Distorção de Preço
+        </span>
+      </div>
+
+      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
+        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+          Posterior Bayes
+        </span>
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-xl font-black text-accent-indigo">
+            {bayesianWinProb !== null ? `${bayesianWinProb.toFixed(1)}%` : '--'}
+          </span>
+        </div>
+        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
+          Win Prob Posterior
+        </span>
+      </div>
+
+      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
+        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+          Solvência
+        </span>
+        <div className="flex items-center gap-2">
+          <div
+            className={`h-2.5 w-2.5 rounded-full ${isSolvent ? 'bg-accent-emerald shadow-[0_0_10px_var(--accent-emerald)]' : 'bg-accent-rose shadow-[0_0_10px_var(--accent-rose)] animate-pulse'}`}
+          />
+          <span className={`font-mono text-sm font-black uppercase tracking-wider ${isSolvent ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+            {isSolvent ? 'Solvente' : 'Insolvente'}
+          </span>
+        </div>
+        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
+          Equilíbrio de Nash
+        </span>
+      </div>
+    </section>
+  );
+}
+
 export default function DashboardSOTA({
   initialData,
   hudMode = false,
@@ -191,79 +381,7 @@ export default function DashboardSOTA({
 
   // HUD Minimalista (se ativado)
   if (hudMode) {
-    return (
-      <div className="animate-sota-in flex flex-col gap-10">
-        <div className="glass-panel group/hud-dash relative overflow-hidden border-white/5 p-8! shadow-2xl lg:p-10!">
-          <div className="from-accent-indigo/5 pointer-events-none absolute inset-0 bg-radial-[at_top_left] to-transparent opacity-50" />
-          <div className="relative z-10 mb-8 flex items-center justify-between border-b border-white/10 pb-6">
-            <div className="flex items-center gap-4">
-              <i className="fa-solid fa-brain text-accent-indigo text-sm shadow-[0_0_10px_var(--accent-indigo)]" />
-              <h3 className="m-0 text-xs font-black tracking-[0.4em] text-white uppercase">
-                Assinatura <span className="text-text-darker ml-1">Bayesiana</span>
-              </h3>
-            </div>
-            <div className="bg-accent-emerald h-1.5 w-1.5 animate-pulse rounded-full shadow-[0_0_10px_var(--accent-emerald)]" />
-          </div>
-
-          <div className="relative z-10 h-60 w-full rounded-3xl bg-black/20 p-2 shadow-inner">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
-                <defs>
-                  <linearGradient id="hudLeakGradient" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="5%" stopColor="var(--color-accent-indigo)" stopOpacity={0.5} />
-                    <stop offset="95%" stopColor="var(--color-accent-indigo)" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <PolarGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
-                <PolarAngleAxis
-                  dataKey="subject"
-                  tick={{
-                    fill: 'var(--color-text-muted)',
-                    fontSize: 8,
-                    fontWeight: 900,
-                    fontFamily: 'var(--font-mono)',
-                    letterSpacing: '0.05em',
-                  }}
-                />
-                <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar
-                  name="Deficiência"
-                  dataKey="Deficiencia"
-                  stroke="var(--color-accent-indigo)"
-                  strokeWidth={2}
-                  fill="url(#hudLeakGradient)"
-                  fillOpacity={0.3}
-                  isAnimationActive={false}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="relative z-10 mt-8 space-y-4 rounded-2xl border border-white/5 bg-slate-950/40 p-4 shadow-inner">
-            {topLeaks.map(([name, value], idx) => (
-              <div key={name} className="group/leak flex flex-col gap-2 transition-all duration-300 hover:translate-x-1">
-                <div className="flex items-center justify-between px-1">
-                  <span
-                    className={`text-[0.55rem] font-black tracking-widest uppercase transition-colors duration-300 ${idx === 0 ? 'text-accent-rose group-hover/leak:text-accent-rose-light' : 'text-text-muted group-hover/leak:text-white'}`}
-                  >
-                    {name}
-                  </span>
-                  <span className="font-mono text-[0.65rem] font-black text-white">{(value * 100).toFixed(0)}%</span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5 shadow-inner">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${value * 100}%` }}
-                    transition={{ duration: 1.5, ease: 'easeOut', delay: idx * 0.2 }}
-                    className={`h-full rounded-full ${idx === 0 ? 'bg-accent-rose shadow-[0_0_8px_var(--color-accent-rose)]' : 'bg-accent-indigo shadow-[0_0_8px_var(--color-accent-indigo)]'}`}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <HudView radarData={radarData} topLeaks={topLeaks} />;
   }
 
   const qMetrics = metricsContext?.apiQuantumMetrics;
@@ -275,94 +393,14 @@ export default function DashboardSOTA({
   return (
     <div className="sota-panel-gap animate-sota-in tabular-nums flex flex-col gap-10">
       {/* ═══ 1. FAIXA SUPERIOR DE KPIS EXECUTIVOS SOTA ═══ */}
-      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4" aria-label="KPIs Executivos de Telemetria">
-        <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-          <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
-            Instabilidade
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className={`font-mono text-xl font-black ${marginInstability > 15 ? 'text-accent-rose' : 'text-white'}`}>
-              {marginInstability.toFixed(1)}%
-            </span>
-          </div>
-          <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
-            Margem &delta;
-          </span>
-        </div>
-
-        <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-          <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
-            Vantagem Risco
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className={`font-mono text-xl font-black ${riskAdvantage >= 0 ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-              {riskAdvantage > 0 ? '+' : ''}{riskAdvantage.toFixed(1)}%
-            </span>
-          </div>
-          <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
-            {riskAdvantage >= 0 ? 'IP Domina' : 'OOP Vulnerável'}
-          </span>
-        </div>
-
-        <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-          <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
-            Fator &Psi;
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="font-mono text-xl font-black text-accent-indigo-light">
-              {aggFactor.toFixed(1)}x
-            </span>
-          </div>
-          <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
-            Agressão Real
-          </span>
-        </div>
-
-        <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-          <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
-            Assimetria &Delta;RP
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="font-mono text-xl font-black text-white">
-              {deltaRp.toFixed(1)}%
-            </span>
-          </div>
-          <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
-            Distorção de Preço
-          </span>
-        </div>
-
-        <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-          <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
-            Posterior Bayes
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="font-mono text-xl font-black text-accent-indigo">
-              {bayesianWinProb !== null ? `${bayesianWinProb.toFixed(1)}%` : '--'}
-            </span>
-          </div>
-          <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
-            Win Prob Posterior
-          </span>
-        </div>
-
-        <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-          <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
-            Solvência
-          </span>
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2.5 w-2.5 rounded-full ${isSolvent ? 'bg-accent-emerald shadow-[0_0_10px_var(--accent-emerald)]' : 'bg-accent-rose shadow-[0_0_10px_var(--accent-rose)] animate-pulse'}`}
-            />
-            <span className={`font-mono text-sm font-black uppercase tracking-wider ${isSolvent ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-              {isSolvent ? 'Solvente' : 'Insolvente'}
-            </span>
-          </div>
-          <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
-            Equilíbrio de Nash
-          </span>
-        </div>
-      </section>
+      <ExecutiveKpiSection
+        marginInstability={marginInstability}
+        riskAdvantage={riskAdvantage}
+        aggFactor={aggFactor}
+        deltaRp={deltaRp}
+        bayesianWinProb={bayesianWinProb}
+        isSolvent={isSolvent}
+      />
 
       {/* ═══ 2. RADAR STUDIO SOTA: HUB MULTIDIMENSIONAL INTEGRADO ═══ */}
       <section className="glass-panel p-6 sm:p-8 rounded-4xl bg-slate-950/50 border border-white/8 shadow-2xl relative overflow-hidden" aria-label="Radar Studio SOTA">
@@ -723,7 +761,7 @@ export default function DashboardSOTA({
         <div className="mb-6 flex items-center gap-6">
           <h3 className="text-glow-indigo m-0 flex items-center gap-4 text-xl font-black tracking-tight text-white uppercase">
             <i className="fa-solid fa-microchip text-accent-indigo shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
-            Motor de Inferência (Gemma Edge)
+            <span>Motor de Inferência (Gemma Edge)</span>
           </h3>
           <div className="h-px grow bg-linear-to-r from-white/10 to-transparent" />
         </div>

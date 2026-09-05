@@ -43,6 +43,105 @@ function logToOrchestrator(payload: Record<string, unknown>) {
 	}
 }
 
+function buildTelemetryEventData(parsed: ReturnType<typeof TelemetryPayloadSchema.parse>, userId: string) {
+	return {
+		userId,
+		category: parsed.category,
+		componentName: parsed.componentName || parsed.type || 'unknown',
+		scenarioContext: parsed.scenarioContext ? JSON.stringify(parsed.scenarioContext) : null,
+		userAction: parsed.userAction ?? null,
+		optimalAction: parsed.optimalAction ?? null,
+		evLoss: parsed.evLoss ?? parsed.ev_loss ?? 0,
+		isCorrect: parsed.isCorrect ?? parsed.is_correct ?? true,
+		latency: parsed.latency ?? parsed.time_ms ?? 0,
+		metadata: parsed.metadata ? JSON.stringify(parsed.metadata) : null,
+	};
+}
+
+async function handleTelemetryBatch(sessionUserId: string | undefined, batch: unknown[]) {
+	const recordIds: string[] = [];
+	for (const item of batch) {
+		const parsed = TelemetryPayloadSchema.parse(item);
+		const identity = resolveTelemetryIdentity(sessionUserId, parsed.user_id);
+		if (!identity.ok) continue;
+
+		const record = await prisma.telemetryEvent.create({
+			data: buildTelemetryEventData(parsed, identity.userId),
+		});
+		logToOrchestrator({ type: 'TelemetryEvent', ...parsed });
+		recordIds.push(record.id);
+	}
+
+	return NextResponse.json({
+		status: 'SUCCESS',
+		type: 'TelemetryBatch',
+		count: recordIds.length,
+		ids: recordIds,
+	});
+}
+
+async function handleSingleTelemetryEvent(sessionUserId: string | undefined, rawPayload: unknown) {
+	const parsed = TelemetryPayloadSchema.parse(rawPayload);
+	const identity = resolveTelemetryIdentity(sessionUserId, parsed.user_id);
+	if (!identity.ok) {
+		return NextResponse.json({ error: identity.error }, { status: identity.status });
+	}
+
+	const record = await prisma.telemetryEvent.create({
+		data: buildTelemetryEventData(parsed, identity.userId),
+	});
+
+	logToOrchestrator({ type: 'TelemetryEvent', ...parsed });
+
+	return NextResponse.json({
+		status: 'SUCCESS',
+		id: record.id,
+		type: 'TelemetryEvent',
+		recordId: record.id,
+	});
+}
+
+async function handlePerspectiveMetric(rawPayload: unknown) {
+	const parsed = PerspectiveMetricSchema.parse(rawPayload);
+
+	const record = await prisma.vitoiPerspectiveMetric.create({
+		data: {
+			scenarioId: parsed.scenarioId,
+			...parsed.baseState,
+			...parsed.dynamicModifiers,
+			...parsed.structuralLiabilities,
+			...parsed.edgeRelative,
+			...parsed.insolvency,
+		},
+	});
+
+	logToOrchestrator({ type: 'PerspectiveMetric', ...parsed });
+
+	return NextResponse.json({
+		status: 'SUCCESS',
+		id: record.id,
+		type: 'PerspectiveMetric',
+	});
+}
+
+function handleTelemetryError(error: unknown) {
+	console.error('[VITOI TELEMETRY] Erro Catastrófico de Injeção:', error);
+
+	if (error instanceof ZodError) {
+		return NextResponse.json(
+			{ error: 'Validação de Payload Falhou', details: error.issues },
+			{ status: 400 },
+		);
+	}
+
+	return NextResponse.json(
+		{
+			error: error instanceof Error ? error.message : 'Entropia não tratada',
+		},
+		{ status: 500 },
+	);
+}
+
 export async function POST(req: Request) {
 	try {
 		// SEC-008: Proteção contra poluição de BD (Telemetria Autenticada SOTA)
@@ -58,110 +157,13 @@ export async function POST(req: Request) {
 
 		// Roteamento Híbrido Fricção Zero: Distingue TelemetryBatch, TelemetryEvent de PerspectiveMetric
 		if ('batch' in rawPayload && Array.isArray(rawPayload.batch)) {
-			const recordIds: string[] = [];
-			for (const item of rawPayload.batch) {
-				const parsed = TelemetryPayloadSchema.parse(item);
-				const identity = resolveTelemetryIdentity(session.user?.id, parsed.user_id);
-				if (!identity.ok) continue;
-
-				const record = await prisma.telemetryEvent.create({
-					data: {
-						userId: identity.userId,
-						category: parsed.category,
-						componentName: parsed.componentName || parsed.type || 'unknown',
-						scenarioContext: parsed.scenarioContext
-							? JSON.stringify(parsed.scenarioContext)
-							: null,
-						userAction: parsed.userAction ?? null,
-						optimalAction: parsed.optimalAction ?? null,
-						evLoss: parsed.evLoss ?? parsed.ev_loss ?? 0,
-						isCorrect: parsed.isCorrect ?? parsed.is_correct ?? true,
-						latency: parsed.latency ?? parsed.time_ms ?? 0,
-						metadata: parsed.metadata ? JSON.stringify(parsed.metadata) : null,
-					},
-				});
-				logToOrchestrator({ type: 'TelemetryEvent', ...parsed });
-				recordIds.push(record.id);
-			}
-
-			return NextResponse.json({
-				status: 'SUCCESS',
-				type: 'TelemetryBatch',
-				count: recordIds.length,
-				ids: recordIds,
-			});
-		} else if ('category' in rawPayload) {
-			const parsed = TelemetryPayloadSchema.parse(rawPayload);
-			const identity = resolveTelemetryIdentity(session.user?.id, parsed.user_id);
-			if (!identity.ok) {
-				return NextResponse.json({ error: identity.error }, { status: identity.status });
-			}
-
-			// SOTA: Persistência no Banco de Dados (Prisma)
-			const record = await prisma.telemetryEvent.create({
-				data: {
-					userId: identity.userId,
-					category: parsed.category,
-					componentName: parsed.componentName || parsed.type || 'unknown',
-					scenarioContext: parsed.scenarioContext
-						? JSON.stringify(parsed.scenarioContext)
-						: null,
-					userAction: parsed.userAction ?? null,
-					optimalAction: parsed.optimalAction ?? null,
-					evLoss: parsed.evLoss ?? parsed.ev_loss ?? 0,
-					isCorrect: parsed.isCorrect ?? parsed.is_correct ?? true,
-					latency: parsed.latency ?? parsed.time_ms ?? 0,
-					metadata: parsed.metadata ? JSON.stringify(parsed.metadata) : null,
-				},
-			});
-
-			// SOTA: Ponte para o Orquestrador Python (Logs unificados)
-			logToOrchestrator({ type: 'TelemetryEvent', ...parsed });
-
-			return NextResponse.json({
-				status: 'SUCCESS',
-				id: record.id,
-				type: 'TelemetryEvent',
-				recordId: record.id, // For compatibility
-			});
-		} else {
-			const parsed = PerspectiveMetricSchema.parse(rawPayload);
-
-			const record = await prisma.vitoiPerspectiveMetric.create({
-				data: {
-					scenarioId: parsed.scenarioId,
-					...parsed.baseState,
-					...parsed.dynamicModifiers,
-					...parsed.structuralLiabilities,
-					...parsed.edgeRelative,
-					...parsed.insolvency,
-				},
-			});
-
-			// SOTA: Ponte para o Orquestrador Python
-			logToOrchestrator({ type: 'PerspectiveMetric', ...parsed });
-
-			return NextResponse.json({
-				status: 'SUCCESS',
-				id: record.id,
-				type: 'PerspectiveMetric',
-			});
+			return await handleTelemetryBatch(session.user?.id, rawPayload.batch);
 		}
+		if ('category' in rawPayload) {
+			return await handleSingleTelemetryEvent(session.user?.id, rawPayload);
+		}
+		return await handlePerspectiveMetric(rawPayload);
 	} catch (error: unknown) {
-		console.error('[VITOI TELEMETRY] Erro Catastrófico de Injeção:', error);
-
-		if (error instanceof ZodError) {
-			return NextResponse.json(
-				{ error: 'Validação de Payload Falhou', details: error.issues },
-				{ status: 400 },
-			);
-		}
-
-		return NextResponse.json(
-			{
-				error: error instanceof Error ? error.message : 'Entropia não tratada',
-			},
-			{ status: 500 },
-		);
+		return handleTelemetryError(error);
 	}
 }

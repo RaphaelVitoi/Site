@@ -76,6 +76,73 @@ const TIER_META: Record<
 
 const DEFAULT_POSITIONS = ['HERO', 'VILÃO 1', 'VILÃO 2', 'VILÃO 3', 'CO', 'BTN', 'SB', 'BB'];
 
+type CelestialBody = {
+  stack: number;
+  idx: number;
+  name: string;
+  isHero: boolean;
+  tier: StackTier;
+  massPct: number;
+};
+
+function resolvePlayerNames(
+  stacks: readonly number[],
+  playerNames?: readonly string[]
+): readonly string[] {
+  if (playerNames && playerNames.length >= stacks.length) {
+    return playerNames;
+  }
+  if (stacks.length === 2) {
+    return ['HERO', 'VILÃO'];
+  }
+  return DEFAULT_POSITIONS.slice(0, stacks.length);
+}
+
+function getActiveInspectedBody(
+  inspectedIdx: number | null,
+  center: CelestialBody,
+  planets: readonly CelestialBody[]
+): CelestialBody {
+  if (inspectedIdx === null || center.idx === inspectedIdx) {
+    return center;
+  }
+  return planets.find((p) => p.idx === inspectedIdx) ?? center;
+}
+
+function StrategicAdvice({ isCenter, tier }: { readonly isCenter: boolean; readonly tier: StackTier }) {
+  if (isCenter) {
+    return (
+      <span>
+        <strong className="text-accent-amber-light">Ação Predadora:</strong> Você detém a Singularidade da mesa.
+        A sua força gravitacional deforma as Pot Odds dos oponentes e impõe um severo teto de fold equity.
+        Use o Poder de Veto para induzir overfolds matemáticos.
+      </span>
+    );
+  }
+  if (tier === 'mid') {
+    return (
+      <span>
+        <strong className="text-amber-400">Paradoxo do Valuation de Vitoi:</strong> Este stack (15-35bb) tem muito valor monetário a perder em payjump.
+        A colisão contra o Sol resulta em sangria catastrófica de EV de sobrevivência, forçando-o à defensiva passiva.
+      </span>
+    );
+  }
+  if (tier === 'micro' || tier === 'short') {
+    return (
+      <span>
+        <strong className="text-rose-400">Horizonte de Eventos:</strong> Stack crítico em órbita terminal.
+        A força de maré dos blinds anula a vantagem de esperar. Agressão polarizada de Shove/Fold é o único escape de sobrevivência.
+      </span>
+    );
+  }
+  return (
+    <span>
+      <strong className="text-emerald-400">Órbita Estável:</strong> Stack profundo capaz de amortecer colisões de médio porte.
+      Permite exploração máxima da realização de equidade posicional (R) sem risco iminente de payjump jump.
+    </span>
+  );
+}
+
 export function GravitationalScannerPanel({
   stacks,
   heroIdx = 0,
@@ -87,13 +154,9 @@ export function GravitationalScannerPanel({
     const totalChips = stacks.reduce((a, b) => a + b, 0);
     if (totalChips === 0) return { center: null, planets: [], totalChips: 0 };
 
-    const resolvedNames = playerNames && playerNames.length >= stacks.length
-      ? playerNames
-      : stacks.length === 2
-        ? ['HERO', 'VILÃO']
-        : DEFAULT_POSITIONS.slice(0, stacks.length);
+    const resolvedNames = resolvePlayerNames(stacks, playerNames);
 
-    const indexedStacks = stacks.map((stack, idx) => ({
+    const indexedStacks: CelestialBody[] = stacks.map((stack, idx) => ({
       stack,
       idx,
       name: resolvedNames[idx] ?? `P${idx + 1}`,
@@ -113,11 +176,7 @@ export function GravitationalScannerPanel({
   if (!systemData.center) return null;
   const center = systemData.center;
 
-  const activeInspected = inspectedIdx !== null
-    ? (center.idx === inspectedIdx
-        ? center
-        : systemData.planets.find((p) => p.idx === inspectedIdx) ?? center)
-    : center;
+  const activeInspected = getActiveInspectedBody(inspectedIdx, center, systemData.planets);
 
   const centerTier = TIER_META[center.tier];
 
@@ -146,7 +205,7 @@ export function GravitationalScannerPanel({
       </div>
 
       {/* Palco Orbital Gravitacional (SVG e Corpos Celestes) */}
-      <div className="relative my-4 flex aspect-square w-full max-w-[380px] items-center justify-center select-none">
+      <div className="relative my-4 flex aspect-square w-full max-w-95 items-center justify-center select-none">
         {/* SVG: Órbitas Concéntricas e Vetores Geodésicos de Força */}
         <svg
           className="pointer-events-none absolute inset-0 h-full w-full"
@@ -389,28 +448,10 @@ export function GravitationalScannerPanel({
         </div>
 
         <p className="m-0 mt-3 text-[0.68rem] leading-relaxed font-sans text-text-dim">
-          {activeInspected.idx === systemData.center.idx ? (
-            <span>
-              <strong className="text-accent-amber-light">Ação Predadora:</strong> Você detém a Singularidade da mesa.
-              A sua força gravitacional deforma as Pot Odds dos oponentes e impõe um severo teto de fold equity.
-              Use o Poder de Veto para induzir overfolds matemáticos.
-            </span>
-          ) : activeInspected.tier === 'mid' ? (
-            <span>
-              <strong className="text-amber-400">Paradoxo do Valuation de Vitoi:</strong> Este stack (15-35bb) tem muito valor monetário a perder em payjump.
-              A colisão contra o Sol resulta em sangria catastrófica de EV de sobrevivência, forçando-o à defensiva passiva.
-            </span>
-          ) : activeInspected.tier === 'micro' || activeInspected.tier === 'short' ? (
-            <span>
-              <strong className="text-rose-400">Horizonte de Eventos:</strong> Stack crítico em órbita terminal.
-              A força de maré dos blinds anula a vantagem de esperar. Agressão polarizada de Shove/Fold é o único escape de sobrevivência.
-            </span>
-          ) : (
-            <span>
-              <strong className="text-emerald-400">Órbita Estável:</strong> Stack profundo capaz de amortecer colisões de médio porte.
-              Permite exploração máxima da realização de equidade posicional (R) sem risco iminente de payjump jump.
-            </span>
-          )}
+          <StrategicAdvice
+            isCenter={activeInspected.idx === systemData.center.idx}
+            tier={activeInspected.tier}
+          />
         </p>
       </div>
     </div>

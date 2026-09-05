@@ -56,7 +56,9 @@
     html,
     body {
         @apply scroll-smooth antialiased;
-        scrollbar-width: none;
+        @supports (scrollbar-width: none) {
+            scrollbar-width: none;
+        }
         /* Firefox */
         -ms-overflow-style: none;
         /* IE/Edge */

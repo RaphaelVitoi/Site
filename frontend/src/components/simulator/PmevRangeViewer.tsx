@@ -370,6 +370,14 @@ function getDeltaColor(delta: number): string {
 	return 'text-slate-400';
 }
 
+function formatDeltaDisplay(delta: number): string {
+	if (delta === 0) {
+		return '— (aguarda nó)';
+	}
+	const percentage = (delta * 100).toFixed(0);
+	return delta > 0 ? `+${percentage}%` : `${percentage}%`;
+}
+
 function getBaselineColor(freq: number): string {
 	if (freq === 0) return 'bg-slate-900/80 text-slate-600';
 	if (freq >= 0.8) return 'bg-sky-600 text-white font-bold';
@@ -729,7 +737,7 @@ function SingleMatrixWithInspector({
 							<div className="flex justify-between items-center text-sm">
 								<span className="text-slate-400 font-semibold">Delta calculado:</span>
 								<span className={`font-black ${getDeltaColor(selectedHand.delta)}`}>
-									{selectedHand.delta === 0 ? '— (aguarda nó)' : selectedHand.delta > 0 ? `+${(selectedHand.delta * 100).toFixed(0)}%` : `${(selectedHand.delta * 100).toFixed(0)}%`}
+									{formatDeltaDisplay(selectedHand.delta)}
 								</span>
 							</div>
 

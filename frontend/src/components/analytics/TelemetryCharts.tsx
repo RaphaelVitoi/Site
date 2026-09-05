@@ -89,7 +89,7 @@ const HistogramTooltip = ({ active, payload }: CustomHistogramTooltipProps) => {
 	if (!item) return null;
 
 	return (
-		<div className="rounded-2xl border border-white/10 bg-slate-950/95 p-4 font-mono shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-xl pointer-events-none min-w-[240px] space-y-3">
+		<div className="rounded-2xl border border-white/10 bg-slate-950/95 p-4 font-mono shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-xl pointer-events-none min-w-60 space-y-3">
 			<div className="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
 				<div>
 					<span className="text-[0.7rem] font-black uppercase tracking-wider text-white block">

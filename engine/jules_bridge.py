@@ -179,7 +179,7 @@ class JulesClient:
                     create_time=data.get("createTime", ""),
                     update_time=data.get("updateTime", ""),
                     pr_url=data.get("githubPullRequestUrl"),
-                    activities=data.get("activities", []),
+                    activities=data.get("activities", []) if include_activities else [],
                 )
         except urllib.error.HTTPError as e:
             err_msg = e.read().decode("utf-8", errors="replace")
@@ -283,4 +283,3 @@ class JulesClient:
         except Exception as e:
             logger.warning("[JULES] get_activities para %s retornou excecao: %s", session_id, e)
             return []
-
