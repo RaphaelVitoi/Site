@@ -216,17 +216,46 @@ def test_o_indice_nao_e_versionado():
 def test_ancora_interna_nao_e_inferida_da_prosa():
     """Inferir caminho de prosa travaria o repositorio: os handoffs citam
     nexus.py, e todo commit em nexus.py exigiria superseder o handoff."""
-    indice = record_index.construir(RAIZ)
-    citados = sum(len(r["caminhos_citados_na_prosa"]) for r in indice["registros"])
-    declarados = sum(len(r["caminhos_declarados"]) for r in indice["registros"])
-    assert citados > declarados, (
-        "a prosa deveria citar muito mais caminhos do que os declarados; "
-        "se isso se inverteu, conferir se a varredura de prosa ainda funciona"
-    )
     fonte = Path(record_gate.__file__).read_text(encoding="utf-8")
     assert "caminhos_citados_na_prosa" not in fonte, (
         "o portao passou a usar a prosa como ancora. Sugestao nao e ancora."
     )
+
+
+def test_a_varredura_de_prosa_acha_arquivo_e_ignora_o_que_nao_e():
+    """Sentinela de que a varredura de prosa continua funcionando.
+
+    Ate 2026-09-05 esta garantia era uma comparacao agregada -- `citados >
+    declarados` sobre o corpus inteiro -- com a mensagem "se isso se inverteu,
+    conferir se a varredura de prosa ainda funciona". O discriminante nao era
+    especifico para o que dizia medir: os dois totais dependem de ESTILO DE
+    REDACAO dos registros, nao da varredura.
+
+    Ele inverteu em 2026-09-05, com 460 contra 461, e a varredura estava
+    intacta. A causa medida foi acumulacao: registros recentes declaram muitos
+    `caminhos:` e citam poucos na prosa, com saldos de -21, -16 e -11 nos tres
+    piores. Uma sentinela que dispara por prosa bem ou mal escrita treina o
+    operador a ignora-la -- e sentinela ignorada e pior que sentinela ausente.
+
+    A intencao original fica preservada aqui, com um discriminante que so pode
+    falhar se a varredura de fato quebrar: um corpo conhecido, entradas que
+    DEVEM ser achadas e ruido que NAO deve.
+    """
+    corpo = (
+        "Reais, e os dois existem: `scripts/ops/record_index.py` e\n"
+        "`scripts/ops/record_gate.py`.\n\n"
+        "Ruido que a varredura tem que recusar, porque nenhum e arquivo:\n"
+        "- `.claude/agents/` -- diretorio\n"
+        "- `Chrome/154.0.8025.0` -- versao\n"
+        "- `http://127.0.0.1:9224` -- URL\n"
+        "- `scripts/ops/este-arquivo-nao-existe.py` -- caminho morto\n"
+    )
+    achados = record_index.caminhos_citados(corpo, RAIZ)
+
+    assert achados == [
+        "scripts/ops/record_gate.py",
+        "scripts/ops/record_index.py",
+    ], "a varredura de prosa parou de achar caminho real, ou passou a aceitar o que nao e arquivo"
 
 
 # ---------------------------------------------------------------------------

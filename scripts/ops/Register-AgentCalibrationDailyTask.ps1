@@ -10,8 +10,12 @@
     atingido; esta corrida diaria das 23:59 e o LASTRO de auditoria, que
     registra a evidencia do dia inclusive quando ela e insuficiente.
 
-    A tarefa executa New-AgentCalibrationDailyEvidence.ps1 para o dia corrente e
-    grava o JSON determinista em reports/agent-calibration/daily/. Ela NAO
+    A tarefa executa Write-AgentCalibrationDailyEvidence.ps1, que por sua vez
+    chama New-AgentCalibrationDailyEvidence.ps1 para o dia corrente e grava o
+    JSON determinista em reports/agent-calibration/daily/. A indirecao existe
+    porque a tarefa e registrada com -File: ate 2026-09-05 ela usava -Command
+    com aspas aninhadas, o nome do arquivo evaporava no parser e a tarefa
+    falhava em silencio com LastTaskResult 1. Ela NAO
     interpreta, NAO planeja calibracao e NAO altera comportamento: quem decide
     continua sendo a revisao, e o portao so abre quando alguma sessao do dia
     alcanca o minimo.
@@ -50,21 +54,39 @@ $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $evidenceScript = Join-Path $repositoryRoot 'scripts\ops\New-AgentCalibrationDailyEvidence.ps1'
+$writerScript = Join-Path $repositoryRoot 'scripts\ops\Write-AgentCalibrationDailyEvidence.ps1'
 $outputDirectory = Join-Path $repositoryRoot 'reports\agent-calibration\daily'
 
 if (-not (Test-Path -LiteralPath $evidenceScript)) {
     throw "script de evidencia ausente: $evidenceScript"
 }
+if (-not (Test-Path -LiteralPath $writerScript)) {
+    throw "script gravador ausente: $writerScript"
+}
 
 # O comando roda em pwsh 7+, runtime operacional padrao (CLAUDE.md SS8.2).
 $pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue)
 $interpreter = if ($pwshPath) { $pwshPath.Source } else { 'pwsh.exe' }
+
+# -File, NAO -Command. E a diferenca entre funcionar e falhar em silencio.
+#
+# Ate 2026-09-05 esta tarefa era registrada com `-Command` carregando a
+# expressao inteira -- pipe, Join-Path e um `-f` com aspas duplas e simples
+# aninhadas. O Agendador entrega tudo como UMA linha de comando, o parser
+# consome as aspas externas, e o nome do arquivo evaporava:
+#
+#   LastTaskResult: 1
+#   Out-File: Could not find a part of the path '...\daily\'.
+#
+# A tarefa constava "Ready", com proxima execucao agendada, e nao produzia
+# nada. Foi por isso que `daily/` nunca teve um unico .json em toda a sua
+# existencia. `-File` nao interpreta a linha: nao ha aspas aninhadas a perder.
 $argumentList = @(
     '-NoProfile'
     '-ExecutionPolicy'
     'Bypass'
-    '-Command'
-    ('& "{0}" | Out-File -FilePath (Join-Path "{1}" ("{2}.json" -f (Get-Date -Format ''yyyy-MM-dd''))) -Encoding utf8' -f $evidenceScript, $outputDirectory, '{0}')
+    '-File'
+    ('"{0}"' -f $writerScript)
 ) -join ' '
 
 $plano = [ordered]@{
@@ -72,6 +94,7 @@ $plano = [ordered]@{
     time             = $Time
     interpreter      = $interpreter
     evidence_script  = $evidenceScript
+    writer_script    = $writerScript
     output_directory = $outputDirectory
     gate_metric      = 'distinct_sessions_with_feedback'
     minimum_distinct_sessions = 3
