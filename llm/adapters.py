@@ -16,7 +16,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from llm.model_registry import AdapterType, ModelCapability, get
+from llm.model_registry import (
+    ESFORCOS_OPENAI_VALIDOS,
+    AdapterType,
+    ModelCapability,
+    get,
+)
 
 # Parametros que NAO podem chegar a um modelo de raciocinio da geracao atual.
 # Anthropic (geracao 5), OpenAI (GPT-5.6) e Google (Gemini 3) retornam 400.
@@ -232,7 +237,13 @@ class OpenAIAdapter:
 
     O estudo acertou o diagnostico  parametros de amostragem legados provocam
     400 em modelos de raciocinio  mas errou a escala de esforco: usa `"ultra"`,
-    valor que nao aparece na documentacao. A escala vai de `none` a `max`.
+    valor que nao aparece na documentacao. A escala vai de `none` a `max`, e
+    ganhou `xhigh` com o GPT-6 Astra em 2026-09-03.
+
+    O que a API ACEITA e o que esta malha AUTORIZA sao dois limites distintos.
+    O Astra aceita ate `max`; o Tier 0 autorizou so `low` e `medium`, por
+    preco. Quem declara o teto e `ModelCapability.esforcos_autorizados`, e e
+    aqui que ele deixa de ser prosa e passa a reprovar chamada.
     """
 
     @staticmethod
@@ -242,19 +253,34 @@ class OpenAIAdapter:
         *,
         max_output_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        effort_override: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         cap = get(alias)
         if cap.adapter is not AdapterType.OPENAI:
             raise ParametroRejeitadoError(f"{alias} nao e um modelo OpenAI.")
 
+        esforco = effort_override or cap.reasoning_effort
+        if esforco is not None:
+            if esforco not in ESFORCOS_OPENAI_VALIDOS:
+                raise ParametroRejeitadoError(
+                    f"{alias}: esforco '{esforco}' nao existe na escala da OpenAI "
+                    f"{sorted(ESFORCOS_OPENAI_VALIDOS)}."
+                )
+            if cap.esforcos_autorizados and esforco not in cap.esforcos_autorizados:
+                raise ParametroRejeitadoError(
+                    f"{alias}: a API aceita '{esforco}', mas esta malha autoriza "
+                    f"apenas {list(cap.esforcos_autorizados)}. Elevar o teto e "
+                    "decisao de custo do Tier 0, nao do chamador."
+                )
+
         req = _sanear(kwargs, cap.model_name)
         req["model"] = cap.model_name
         req["input"] = messages
         req["max_output_tokens"] = min(max_output_tokens or 16_000, cap.max_output_tokens)
 
-        if cap.reasoning_effort:
-            req["reasoning"] = {"effort": cap.reasoning_effort}
+        if esforco:
+            req["reasoning"] = {"effort": esforco}
         if tools:
             req["tools"] = tools
 

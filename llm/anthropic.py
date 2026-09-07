@@ -14,9 +14,14 @@ def _montar(model: str, system_prompt: str, user_prompt: str, kwargs: dict) -> t
 
     Dois caminhos, e a escolha e do registro  nao de uma heuristica de nome:
 
-    - **Geracao 5** (`claude-opus-5`, `claude-sonnet-5`, `claude-fable-5`): passa
-      pelo `AnthropicAdapter`, que remove amostragem legada, liga thinking
-      adaptativo, aplica `effort` e converte `betas` em header.
+    - **Geracao 5** (`claude-opus-5`, `claude-sonnet-5`): passa pelo
+      `AnthropicAdapter`, que remove amostragem legada, liga thinking
+      adaptativo, aplica `effort` e converte `betas` em header. A familia
+      `claude-fable-5*` saiu daqui em 2026-09-07 -- retirada por decisao do
+      Tier 0, ver `MODELOS_RETIRADOS` em `llm/model_registry.py`.
+    - **Geracao 4.6** (`claude-opus-4-6`, `claude-sonnet-4-6`): disponiveis e
+      fora do Tier 1. Diferenca que importa: eles ACEITAM amostragem legada,
+      entao `reject_legacy_sampling=False` neles nao e descuido.
     - **Legado** (`claude-3-haiku-20240307`, usado pelo ping de chave em
       `cli/commands.py`): caminho preservado, `temperature` incluida. Geracao 3
       aceita amostragem, e sanea-la quebraria a validacao de chave.

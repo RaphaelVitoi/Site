@@ -164,10 +164,14 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         faixa=Faixa.API_PAGA,
         justificativa=(
             "Mediacao de conflito e decisao final exigem julgamento com "
-            "consciencia de codigo. Opus 5 lidera horizonte longo e custa menos "
-            "na saida que o Sol ($25 contra $30)."
+            "consciencia de codigo, e o Opus 5 lidera horizonte longo. "
+            "A VANTAGEM DE PRECO INVERTEU em 2026-09-07: o Sol caiu para "
+            "$4/$20 e agora custa MENOS que o Opus ($25) na saida. A rota "
+            "permanece no Opus pelo julgamento, nao pelo preco -- e a "
+            "justificativa passa a dizer isso, em vez de citar uma "
+            "comparacao que deixou de valer."
         ),
-        ancorado_em="2026-08-27",
+        ancorado_em="2026-09-07",
         modelos_citados=("claude-opus-5", "gpt-5.6-sol"),
     ),
     ClasseTarefa.ESTRATEGIA: Rota(
@@ -187,11 +191,15 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         faixa=Faixa.API_PAGA,
         escalona_para="claude-opus-5",
         justificativa=(
-            "Sonnet 5 sustenta a maior parte da alteracao multi-arquivo por 60% "
-            "do preco do Opus. Escalona ao Opus quando o grafo de dependencia "
-            "passa do que o Sonnet resolve numa passada."
+            "Sonnet 5 sustenta a maior parte da alteracao multi-arquivo por "
+            "40% do preco do Opus -- e nao 60%, como esta linha dizia ate "
+            "2026-09-07. O registro cobrava $3/$15 pelo Sonnet 5 quando a "
+            "Anthropic cobra $2/$10; $3/$15 e o Sonnet 4.6. A rota ja estava "
+            "certa, e a razao dela era ainda mais forte do que se supunha. "
+            "Escalona ao Opus quando o grafo de dependencia passa do que o "
+            "Sonnet resolve numa passada."
         ),
-        ancorado_em="2026-08-27",
+        ancorado_em="2026-09-07",
         modelos_citados=("claude-sonnet-5", "gemini-3.8-flash", "claude-opus-5"),
     ),
     ClasseTarefa.VERIFICACAO: Rota(
@@ -225,20 +233,32 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         primario="gpt-5.6-sol",
         fallback="claude-opus-5",
         faixa=Faixa.API_PAGA,
-        escalona_para=None,
-        justificativa="Planejamento, pesquisa e prova formal. Sem degrau acima.",
-        ancorado_em="2026-08-27",
-        modelos_citados=("gpt-5.6-sol", "claude-opus-5"),
+        escalona_para="gpt-6-astra",
+        justificativa=(
+            "Planejamento, pesquisa e prova formal. 'Sem degrau acima' deixou "
+            "de ser verdade em 2026-09-03: o GPT-6 Astra e o degrau, e entra "
+            "so por ESCALONAMENTO -- a $10/$50 ele e teto, nao piso. O Sol "
+            "segue primario porque cobre a classe a $4/$20."
+        ),
+        ancorado_em="2026-09-07",
+        modelos_citados=("gpt-5.6-sol", "claude-opus-5", "gpt-6-astra"),
     ),
     ClasseTarefa.SESSAO_MULTI_DIA: Rota(
-        primario="claude-fable-5",
-        fallback="claude-opus-5",
+        primario="claude-opus-5",
+        fallback="gpt-5.6-sol",
         faixa=Faixa.API_PAGA,
+        escalona_para="gpt-6-astra",
         justificativa=(
-            "Unico com auto-verificacao assincrona e raciocinio multi-sessao. A $10/$50, reservar ao que so ele faz."
+            "O Fable 5 era o primario por ser o unico com auto-verificacao "
+            "assincrona. O Tier 0 DESCARTOU a familia Fable em 2026-09-07 por "
+            "cotas e preco, e uma rota nao pode apontar para modelo que a "
+            "malha nao usa. O Opus 5 sobe do fallback. "
+            "PERDA DECLARADA, e nao dissimulada: a auto-verificacao assincrona "
+            "multi-sessao do Fable nao tem substituto nesta tabela -- o que "
+            "esta classe ganha de volta e horizonte longo, nao aquele recurso."
         ),
-        ancorado_em="2026-08-27",
-        modelos_citados=("claude-fable-5", "claude-opus-5"),
+        ancorado_em="2026-09-07",
+        modelos_citados=("claude-opus-5", "gpt-5.6-sol", "gpt-6-astra"),
     ),
     ClasseTarefa.LOCAL: Rota(
         primario="gemma4:12b",

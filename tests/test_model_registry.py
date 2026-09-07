@@ -59,7 +59,7 @@ def test_modelo_nao_verificado_fica_fora_e_explica_o_motivo():
 
 def test_anthropic_nunca_emite_budget_tokens():
     """budget_tokens foi removido da API e retorna 400 na geracao 5."""
-    for alias in ("claude-opus-5", "claude-sonnet-5", "claude-fable-5"):
+    for alias in ("claude-opus-5", "claude-sonnet-5"):
         req = AnthropicAdapter.build(alias, USUARIO)
         assert "budget_tokens" not in req
         assert req["thinking"] == {"type": "adaptive"}
@@ -90,9 +90,14 @@ def test_max_tokens_e_limitado_pela_capacidade():
     assert req["max_tokens"] == get("claude-opus-5").max_output_tokens
 
 
-def test_fallback_server_side_em_opus5_e_fable5():
-    """server-side-fallback-2026-07-01 e o unico beta header do estudo que existe."""
-    for alias in ("claude-opus-5", "claude-fable-5"):
+def test_fallback_server_side_em_opus5():
+    """server-side-fallback-2026-07-01 e o unico beta header do estudo que existe.
+
+    O Fable 5 saiu deste par em 2026-09-07 -- foi RETIRADO do registro por
+    decisao do Tier 0 (ver MODELOS_RETIRADOS). O Opus 5 e agora o unico modelo
+    do registro com fallback server-side, e o invariante segue coberto por ele.
+    """
+    for alias in ("claude-opus-5",):
         req = AnthropicAdapter.build(alias, USUARIO)
         assert req["fallbacks"] == "default"
         assert "server-side-fallback-2026-07-01" in req["betas"]
