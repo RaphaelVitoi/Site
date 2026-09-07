@@ -66,7 +66,6 @@ async def _build_infra_ctx(task: Task | None, task_files: list | None) -> str:
         ),
         ("INDICE MESTRE", [".claude/DEPLOY/INDEX_MESTRE.md", "docs/INDEX_MESTRE.md"]),
         ("GUIA DE DEPLOY E STACK", [".claude/DEPLOY/DEPLOY.md", "DEPLOY.md"]),
-        ("INVENTARIO DE FERRAMENTAS", [".claude/RELATORIOS/INVENTARIO_FERRAMENTAS.md"]),
         (
             "PROTOCOLO DE ROTEAMENTO HOLOGRAFICO",
             [".claude/ARQUITETURA/HOLOGRAPHIC_ROUTING_PROTOCOL.md"],
