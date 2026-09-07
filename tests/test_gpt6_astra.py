@@ -39,6 +39,7 @@ from llm.adapters import OpenAIAdapter, ParametroRejeitadoError
 from llm.model_registry import (
     ESFORCOS_OPENAI_VALIDOS,
     MODEL_REGISTRY,
+    ModelCapability,
     MODELOS_NAO_VERIFICADOS,
     MODELOS_RETIRADOS,
     AdapterType,
@@ -244,15 +245,31 @@ def test_o_teto_de_esforco_protege_a_cota_e_nao_so_o_token() -> None:
     assert get(ALIAS).esforcos_autorizados == ("low", "medium")
 
 
-def test_o_default_de_faixa_significa_nao_declarado() -> None:
-    """Refinacao delegada ao Gemini 3.5 Flash-Lite concluida em 2026-09-07:
-    todos os modelos ativos de fronteira possuem cota_por_assinatura=True.
-    A familia Fable teve a faixa declarada e saiu por causa dela (pay-as-you-go);
-    o motivo sobrevive em MODELOS_RETIRADOS, nao no campo."""
+def test_toda_faixa_e_declarada_e_nenhuma_vem_do_default() -> None:
+    """A delegacao ao Gemini 3.5 Flash-Lite (2026-09-07) levantou a faixa dos 14
+    modelos ativos, e o Tier 0 confirmou o dado. Mas a entrega original o
+    aplicou INVERTENDO O DEFAULT do campo para True, e um booleano
+    obrigatoriamente True para todos deixa de discriminar -- era exatamente
+    este campo que separava o Astra do Fable.
+
+    O guard exige as duas coisas ao mesmo tempo: que a faixa esteja levantada
+    em todo modelo ativo, e que cada uma tenha sido DECLARADA na entrada em vez
+    de herdada. `model_fields_set` e o discriminante: ele so contem o campo
+    quando o valor foi passado ao construtor. Sem esta segunda metade, um
+    modelo novo nasceria afirmando ter cota que ninguem levantou -- que e a
+    mesma falha de ler ausencia como evidencia, apenas invertida."""
+    assert ModelCapability.model_fields["cota_por_assinatura"].default is False, (
+        "O default tem que continuar False = NAO DECLARADO. Inverte-lo faz "
+        "modelo novo nascer com faixa que ninguem mediu."
+    )
+    sem_declaracao = {a for a, c in MODEL_REGISTRY.items() if "cota_por_assinatura" not in c.model_fields_set}
+    assert not sem_declaracao, f"faixa herdada do default, nao declarada: {sorted(sem_declaracao)}"
+
     com_cota = {a for a, c in MODEL_REGISTRY.items() if c.cota_por_assinatura}
     assert com_cota == set(MODEL_REGISTRY.keys()), (
-        "Com a conclusao da delegacao (§6), todos os modelos ativos do registro "
-        "possuem cota_por_assinatura=True declarada e verificada."
+        "Os 14 ativos tiveram a faixa levantada e todos tem cota: Anthropic "
+        "por Claude Pro/Max, OpenAI por Plus/Pro/Business, Google por Gemini "
+        "Advanced e free tier do AI Studio."
     )
     # A familia Fable teve a faixa declarada e saiu por causa dela; o motivo
     # sobrevive em MODELOS_RETIRADOS, nao no campo.
