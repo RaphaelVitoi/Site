@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import {
 	CartesianGrid,
 	Line,
@@ -22,7 +23,7 @@ interface PerspectiveChartProps {
 
 const INITIAL_CHART_DIMENSION = { width: 100, height: 100 };
 
-export const PerspectiveChart = ({ chartData }: Readonly<PerspectiveChartProps>) => {
+export const PerspectiveChart = React.memo(({ chartData }: Readonly<PerspectiveChartProps>) => {
 	return (
 		<div className="w-full h-full min-h-0 bg-slate-950/60 rounded-2xl pt-6 pr-4 pb-2 border border-white/5 shadow-inner">
 			<ResponsiveContainer
@@ -76,4 +77,4 @@ export const PerspectiveChart = ({ chartData }: Readonly<PerspectiveChartProps>)
 			</ResponsiveContainer>
 		</div>
 	);
-};
+});
