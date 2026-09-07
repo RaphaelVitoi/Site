@@ -54,10 +54,19 @@ def test_modelo_nao_verificado_fica_fora_e_explica_o_motivo():
         get("gpt-5.6-sol-ultrafast")
 
 
-def test_cota_por_assinatura_modelos_ativos():
-    """Modelos ativos de fronteira possuem cota de assinatura ou free tier verificado."""
+def test_cota_por_assinatura_e_declarada_entrada_por_entrada():
+    """Modelos ativos possuem cota de assinatura ou free tier -- levantado pela
+    delegacao ao Gemini 3.5 Flash-Lite em 2026-09-07.
+
+    A faixa e declarada NA ENTRADA, nunca herdada do default: `False` no campo
+    significa "nao levantado", e um modelo novo tem que nascer nesse estado.
+    A entrega original da delegacao inverteu o default para True; o dado estava
+    certo, o mecanismo nao -- ver o guard equivalente em test_gpt6_astra.py."""
     for alias, cap in MODEL_REGISTRY.items():
         assert cap.cota_por_assinatura is True, f"{alias} deveria ter cota_por_assinatura=True"
+        assert "cota_por_assinatura" in cap.model_fields_set, (
+            f"{alias}: faixa veio do default em vez de declarada na entrada"
+        )
 
 
 #  Anthropic: as correcoes criticas

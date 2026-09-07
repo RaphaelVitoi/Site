@@ -36,3 +36,10 @@ está em `../CLAUDE.md`.
 
 *`tests/test_governanca_agents.py` reprova se este arquivo voltar a crescer
 para além de um ponteiro, ou se o `CLAUDE.md` perder as seções que ele promete.*
+
+## Se você é um agente de nuvem (Jules / `Bolt ⚡`)
+
+A **§10 do `CLAUDE.md`** é a sua régua, e é vinculante: meça antes de otimizar,
+**ordene em vez de perguntar**, não aplique `React.memo` por varredura e não
+crie `.jules/` — sua memória mora em `.claude/agent-memory/bolt/MEMORY.md`.
+Leia-a **antes** da primeira alteração.

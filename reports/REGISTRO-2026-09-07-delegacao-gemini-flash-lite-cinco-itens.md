@@ -10,6 +10,7 @@ classes: [interno, medido, governanca, roteamento, precificacao]
 caminhos:
   - llm/model_registry.py
   - tests/test_model_registry.py
+  - tests/test_gpt6_astra.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master

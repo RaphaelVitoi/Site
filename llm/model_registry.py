@@ -144,11 +144,25 @@ class ModelCapability(BaseModel):
     # este modulo -- por isso o campo e booleano e nao o enum: declarar o tipo
     # aqui inverteria a direcao da dependencia.
     #
-    # LEVANTADO em 2026-09-07 pelo Gemini 3.5 Flash-Lite (delegacao §6):
-    # Modelos Anthropic (Opus 5, Sonnet 5, Opus 4.6, Sonnet 4.6), OpenAI (Sol, Terra, Luna)
-    # e Google (Gemini 3.8/3.7/3.6/3.5/3.5-Lite) possuem faixas de cota de assinatura web /
-    # free tier API. A familia Fable (ver MODELOS_RETIRADOS) e pay-as-you-go exclusivo.
-    cota_por_assinatura: bool = True
+    # ATENCAO AO DEFAULT: `False` aqui significa "nao declarado", e NAO
+    # "confirmado sem cota" -- ausencia nunca e evidencia. Por isso a faixa e
+    # declarada ENTRADA POR ENTRADA, e nao pelo default: modelo novo nasce sem
+    # faixa levantada, que e o estado seguro, e o guard
+    # `test_toda_faixa_e_declarada_e_nenhuma_vem_do_default` cobra a declaracao.
+    #
+    # LEVANTADO em 2026-09-07 pela delegacao ao Gemini 3.5 Flash-Lite (conduzida
+    # pelo Gemini 3.6 Flash Low; registro
+    # `REGISTRO-2026-09-07-delegacao-gemini-flash-lite-cinco-itens.md`): os 14
+    # modelos ativos tem cota -- Anthropic por Claude Pro/Max, OpenAI por
+    # Plus/Pro/Business, Google por Gemini Advanced e pelo free tier do AI
+    # Studio. A familia Fable e a excecao, e foi por isso que saiu; o motivo
+    # sobrevive em MODELOS_RETIRADOS.
+    #
+    # A ENTREGA ORIGINAL DA DELEGACAO INVERTIA ESTE DEFAULT para True. O dado
+    # estava certo e o Tier 0 o confirmou; a implementacao, nao: um booleano
+    # obrigatoriamente True para todos deixa de discriminar, e era justamente
+    # este campo que separava o Astra do Fable. Corrigido em 2026-09-07.
+    cota_por_assinatura: bool = False
 
     #  Anthropic
     # thinking adaptativo e o unico modo suportado na geracao 5.
@@ -214,6 +228,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "claude-opus-5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-opus-5",
+        cota_por_assinatura=True,
         context_window_in=1_000_000,
         max_output_tokens=131_072,
         price_per_1m_in=5.00,
@@ -229,6 +244,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "claude-sonnet-5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-sonnet-5",
+        cota_por_assinatura=True,
         context_window_in=1_000_000,
         max_output_tokens=131_072,  # CORRIGIDO: estudo dizia 65_536
         price_per_1m_in=2.00,  # CORRIGIDO 2026-09-07: estava 3.00
@@ -255,6 +271,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "claude-opus-4-6": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-opus-4-6",
+        cota_por_assinatura=True,
         context_window_in=1_000_000,
         max_output_tokens=131_072,
         price_per_1m_in=5.00,
@@ -279,6 +296,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "claude-sonnet-4-6": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-sonnet-4-6",
+        cota_por_assinatura=True,
         context_window_in=1_000_000,
         max_output_tokens=131_072,
         price_per_1m_in=3.00,
@@ -302,6 +320,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gpt-5.6-sol": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-5.6-sol",
+        cota_por_assinatura=True,
         context_window_in=1_050_000,
         max_output_tokens=131_072,  # CORRIGIDO: estudo dizia 65_536
         price_per_1m_in=4.00,  # CORRIGIDO 2026-09-07: estava 5.00
@@ -319,6 +338,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gpt-5.6-terra": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-5.6-terra",
+        cota_por_assinatura=True,
         context_window_in=1_050_000,
         max_output_tokens=131_072,
         price_per_1m_in=2.00,  # CORRIGIDO: estudo dizia 2.50
@@ -329,6 +349,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gpt-5.6-luna": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-5.6-luna",
+        cota_por_assinatura=True,
         context_window_in=1_050_000,  # CORRIGIDO: estudo dizia 512_000
         max_output_tokens=131_072,  # CORRIGIDO: estudo dizia 32_768
         price_per_1m_in=0.20,  # CORRIGIDO: estudo dizia 1.00
@@ -345,6 +366,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gemini-3.8-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.8-flash",
+        cota_por_assinatura=True,
         context_window_in=1_048_576,
         max_output_tokens=65_536,
         price_per_1m_in=0.75,
@@ -357,6 +379,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gemini-3.7-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.7-flash",
+        cota_por_assinatura=True,
         context_window_in=1_048_576,
         max_output_tokens=65_536,
         price_per_1m_in=0.75,
@@ -373,6 +396,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gemini-3.6-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.6-flash",
+        cota_por_assinatura=True,
         context_window_in=1_048_576,
         max_output_tokens=65_536,
         price_per_1m_in=0.50,
@@ -385,6 +409,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gemini-3.5-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.5-flash",
+        cota_por_assinatura=True,
         context_window_in=1_048_576,
         max_output_tokens=65_536,
         price_per_1m_in=0.35,
@@ -397,6 +422,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gemini-3.5-flash-lite": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.5-flash-lite",
+        cota_por_assinatura=True,
         context_window_in=1_048_576,
         max_output_tokens=65_536,
         price_per_1m_in=0.15,
@@ -409,6 +435,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "chatgpt-5.6-sol": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-5.6-sol",
+        cota_por_assinatura=True,
         context_window_in=1_050_000,
         max_output_tokens=131_072,
         price_per_1m_in=4.00,  # CORRIGIDO 2026-09-07: estava 5.00
@@ -427,6 +454,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gpt-6-astra": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-6-astra",
+        cota_por_assinatura=True,
         context_window_in=1_050_000,
         # A pagina do Astra escreve "128,000 max output tokens". A familia 5.6
         # usa 131_072 ("128K"). Sao numeros diferentes e o menor e o seguro:
@@ -437,7 +465,6 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         reasoning_effort="low",
         esforcos_autorizados=("low", "medium"),
         supports_subagents=True,
-        cota_por_assinatura=True,
         verification=VerificationStatus.VERIFICADO,
         notas=(
             "Verificado em 2026-09-07 contra developers.openai.com/api/docs/"
