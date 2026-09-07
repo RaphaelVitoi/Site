@@ -102,7 +102,7 @@ describe( 'Aula 1.2 — integridade das transcrições', () => {
   it( 'todos os pares carregam o mesmo SHA-256 da fonte', () => {
     const shas = new Set( AULA_1_2_PAIRS.map( p => p.source.documentSha256 ) );
     expect( shas.size ).toBe( 1 );
-    expect( [ ...shas ][ 0 ] ).toMatch( /^[0-9a-f]{64}$/ );
+    expect( Array.from( shas )[ 0 ] ).toMatch( /^[0-9a-f]{64}$/ );
   } );
 
   it( 'nenhum par apresenta valor não-finito nem frequência fora de faixa', () => {
@@ -485,19 +485,26 @@ describe( 'Aula 1.2 — a trilha do solver, que verifica quatro capturas de uma 
      * Cada coluna lista o jogador, a stack e TODAS as acoes daquele ponto. Os
      * rotulos batem com o que cada captura mostra isoladamente.
      */
-    const porConfirmacao = ( alvo: string ) =>
-      TRILHA_GTO_WIZARD.colunas.find( c => 'confirma' in c && c.confirma === alvo );
+    type ColunaComConfirmacao = Extract<
+      ( typeof TRILHA_GTO_WIZARD.colunas )[ number ],
+      { confirma: string }
+    >;
+
+    const porConfirmacao = ( alvo: string ): ColunaComConfirmacao | undefined =>
+      TRILHA_GTO_WIZARD.colunas.find(
+        ( c ): c is ColunaComConfirmacao => 'confirma' in c && c.confirma === alvo
+      );
 
     const rotulos = ( par: typeof PAR_7_BB_VS_CBET_SMALL ) =>
       par.chipEv.actions.map( a => a.label ).sort();
 
     const col7 = porConfirmacao( 'PAR_7_BB_VS_CBET_SMALL' );
     expect( col7 ).toBeDefined();
-    expect( [ ...col7!.acoes! ].sort() ).toEqual( rotulos( PAR_7_BB_VS_CBET_SMALL ) );
+    expect( Array.from( col7!.acoes ).sort() ).toEqual( rotulos( PAR_7_BB_VS_CBET_SMALL ) );
 
     const col5 = porConfirmacao( 'PAR_5_IP_VS_XR_FLOP' );
     expect( col5 ).toBeDefined();
-    expect( [ ...col5!.acoes! ].sort() ).toEqual( rotulos( PAR_5_IP_VS_XR_FLOP ) );
+    expect( Array.from( col5!.acoes ).sort() ).toEqual( rotulos( PAR_5_IP_VS_XR_FLOP ) );
 
     // As stacks da trilha tambem batem com o contexto de cada par.
     const stackIp5 = PAR_5_IP_VS_XR_FLOP.context.players.find( p => p.position === 'IP' )!.stackBb;
@@ -532,7 +539,7 @@ describe( 'Aula 1.2 — a trilha do solver, que verifica quatro capturas de uma 
     // ... e os menus divergem de fato.
     const menuTrilha = TRILHA_GTO_WIZARD.colunas[ 6 ]!.acoes!;
     const menuPar6 = PAR_6_BB_TURN_APOS_CALL.chipEv.actions.map( a => a.label );
-    expect( menuTrilha.length ).not.toBe( menuPar6.length );
+    expect( menuTrilha ).not.toHaveLength( menuPar6.length );
   } );
 
   it( 'o glifo esta encerrado por OBSERVACAO DIRETA, nao so por aritmetica', () => {
