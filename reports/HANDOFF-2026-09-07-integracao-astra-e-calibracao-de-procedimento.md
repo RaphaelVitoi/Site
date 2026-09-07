@@ -319,33 +319,71 @@ Flash-Lite para rota.
 ## 6. Prompt de continuação
 
 > Continuação em `C:\Users\rapha\.gemini\Site`. A sessão
-> `claude-opus5-site-2026-09-07-astra` foi encerrada com **nota 9.0** e o
-> trabalho está publicado em `30dbc8fe`. Esta abre identidade **nova**.
+> `claude-opus5-site-2026-09-07-astra` foi encerrada com **nota 9.0** e tudo
+> está publicado em `7baaa0aa`. Esta abre identidade **nova**.
 >
-> **Não há dívida administrativa a pagar na abertura:** o handoff e o ledger
-> foram commitados na própria sessão anterior, e o repositório está
-> sincronizado. **Abra direto no trabalho.**
+> ### Abra por PRELÚDIO, não por PMev — decisão do Tier 0
 >
-> **O foco é PMev** — decidido em 2026-09-05 e não retomado desde,
-> porque duas sessões seguidas foram desviadas por trabalho de infraestrutura. O
-> objeto é o **contraste ICMev × ChipEV no mesmo nó**; procedência é meio, não
-> fim. A barreira é `countReproduciblePairs(AULA_1_2_PAIRS) = 0 de 7`, mínimo 3,
-> e **ela não é defeito — é o portão**. Não "consertar" esse teste: o número
-> sobe quando o export chegar, e preenchê-lo sem export é inventar evidência.
-> Ler a §7 de `reports/HANDOFF-2026-09-04-pmev-credenciais-e-submodulos.md` e as
-> seções 8 e 9 de `evidenceContract.ts`.
+> **1. Verifique as operações do `Jules` e do `Astra`:** relatórios, commits e
+> push produzidos desde este handoff. As duas frentes operam fora desta malha e
+> entram nela por merge local revisado — a VM do Jules roda só a suíte de
+> frontend, e a §10.6(c) proíbe tratar isso como "portões aprovados".
 >
-> **Sobre o modelo novo:** o `gpt-6-astra` está integrado e restrito a
-> `low`/`medium`; ele é `escalona_para`, nunca primário, e elevar o teto é
-> decisão do Tier 0. A família Fable está **retirada** — se algo pedir por ela,
-> ler `MODELOS_RETIRADOS` antes de reintroduzir.
+> **2. Corrija o que estiver em aberto** que a verificação revelar.
 >
-> **Sobre procedimento, e isto é o que a nota 9.0 cobra:** ler
-> `a-negativa-e-o-gatilho` antes de começar. **Toda frase que afirme que algo não
-> existe, não rodou ou não foi feito exige rodar antes o comando que a
-> refutaria.** Seis de seis erros desta classe foram negativas. Se esta sessão
-> fechar sem nenhuma negativa não verificada, a hipótese se confirma; se
-> reincidir, o problema é o momento de leitura da memória e não sua redação.
+> **3. Só então retome PMev.** O prelúdio leva ao PMev; ele não o substitui.
+>
+> ### Baseline medido em 2026-09-07, para separar o novo do herdado
+>
+> | Branch remota | Head hoje | Autor |
+> | :--- | :--- | :--- |
+> | `master` | `7baaa0aa` | Claude Opus 5 |
+> | `bolt-journaling-…14536923137986406349` | `436c1f87` | google-labs-jules[bot] |
+> | `dependabot/npm_and_yarn/frontend-…` | `7e7c796b` | dependabot |
+> | `dependabot/pip/python-…` | `1105c5dc` | dependabot |
+> | `devin/*` (3 branches) | `c78cf097`, `d36988ca`, `126b46d9` | Devin AI |
+> | `claude/auditoria-arquitetura-agentica-skbogu` | `1395f4cf` | Codex |
+> | `integrate/*` (3 branches) | `10cb47a8`, `54fb6a5e`, `38427d34` | Raphael Vitoi |
+>
+> **Qualquer coisa fora desta tabela é nova, e é o objeto do prelúdio.** As três
+> `integrate/*` e a `claude/auditoria-*` estavam `ahead:0` — já contidas no
+> master, portanto mortas; as três worktrees em `Site-worktrees/` apontam para
+> elas. O `npm audit` devolvia **zero** vulnerabilidades, então as duas branches
+> Dependabot não têm urgência de CVE: são salto de versão, risco de regressão.
+>
+> **Sobre o Jules:** o cron das ~03:20 UTC é o **primeiro teste real da §10**.
+> O que dirá se ela funcionou não é o diff — é se a sessão fechar sozinha
+> declarando *hipótese, número medido, ordenação*, sem perguntar. Se voltar a
+> perguntar, o problema é de **alcance**: a régua vive no repositório e depende
+> de o runner ler `AGENTS.md`/`CLAUDE.md` ao clonar, o que segue **não
+> verificado**. O aprendizado dela vai para `.claude/agent-memory/bolt/`;
+> `.jules/` não é diretório canônico.
+>
+> **Sobre o Astra:** integrado e restrito a `low`/`medium`; é `escalona_para`,
+> nunca primário, e elevar o teto é decisão do Tier 0. A família Fable está
+> **retirada** — se algo pedir por ela, ler `MODELOS_RETIRADOS` antes de
+> reintroduzir. O `sequence 16` do ledger já registra uma sessão conduzida por
+> `Codex GPT-6`, então a linhagem GPT-6 opera na malha por mais de uma
+> superfície.
+>
+> ### Depois do prelúdio — PMev
+>
+> O foco foi decidido em 2026-09-05 e **não retomado desde**, porque três
+> sessões seguidas foram desviadas por infraestrutura. O objeto é o **contraste
+> ICMev × ChipEV no mesmo nó**; procedência é meio, não fim. A barreira é
+> `countReproduciblePairs(AULA_1_2_PAIRS) = 0 de 7`, mínimo 3, e **ela não é
+> defeito — é o portão**. Não "consertar" esse teste: o número sobe quando o
+> export chegar, e preenchê-lo sem export é inventar evidência. Ler a §7 de
+> `reports/HANDOFF-2026-09-04-pmev-credenciais-e-submodulos.md` e as seções 8 e
+> 9 de `evidenceContract.ts`.
+>
+> ### Procedimento — o que a nota 9.0 cobra
+>
+> Ler `a-negativa-e-o-gatilho` **antes** de começar. **Toda frase que afirme que
+> algo não existe, não rodou ou não foi feito exige rodar antes o comando que a
+> refutaria.** Seis de seis erros desta classe foram negativas. Isso vale em
+> dobro num prelúdio, que é feito de afirmações sobre o que existe e o que não
+> existe no remoto.
 >
 > **Não abrir com credenciais** — as chaves foram completamente inutilizadas e o
 > expurgo do histórico é delegável, não pendência de segurança.
@@ -355,4 +393,4 @@ Flash-Lite para rota.
 **Assinatura:** `Claude Opus 5 [Tier 1.B]`
 **Propósito:** encerrar a sessão de integração do GPT-6 Astra, registrar o
 feedback 9.0 e a resposta de procedimento que ele cobra, e entregar a fila
-seguinte com PMev no topo.
+seguinte — prelúdio de verificação do Jules e do Astra, depois PMev.
