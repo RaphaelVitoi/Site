@@ -368,14 +368,26 @@ def _run_chat_loop(
             # Help
             if user_input.lower() in {"/help", "/?"}:
                 console.print("\n[bold cyan]=== COMANDOS DISPONIVEIS NO CHAT SOTA ===[/]")
-                console.print("  [bold green]/model [tag|#][/]    : Seletor de modelos e hot-swap (mantem 10% do contexto ou nova sessao)")
+                console.print(
+                    "  [bold green]/model [tag|#][/]    : Seletor de modelos e hot-swap (mantem 10% do contexto ou nova sessao)"
+                )
                 console.print("  [bold green]/switch [tag|#][/]   : Alias direto para /model")
                 console.print("  [bold green]/models[/]           : Lista catalogo dinamico de modelos instalados")
-                console.print("  [bold green]/compact[/]          : Reduz historico a ~10% das mensagens recentes preservando persona")
-                console.print("  [bold green]/new[/]              : Encerra sessao atual e inicia nova do zero com o mesmo modelo")
-                console.print("  [bold green]/reset[/] ou [bold green]/clear[/]  : Limpa historico de mensagens preservando persona")
-                console.print("  [bold green]/status[/]           : Exibe telemetria da sessao (modelo, mensagens, tokens)")
-                console.print("  [bold green]/exit[/] ou [bold green]/quit[/]     : Encerra o chat e retorna ao terminal\n")
+                console.print(
+                    "  [bold green]/compact[/]          : Reduz historico a ~10% das mensagens recentes preservando persona"
+                )
+                console.print(
+                    "  [bold green]/new[/]              : Encerra sessao atual e inicia nova do zero com o mesmo modelo"
+                )
+                console.print(
+                    "  [bold green]/reset[/] ou [bold green]/clear[/]  : Limpa historico de mensagens preservando persona"
+                )
+                console.print(
+                    "  [bold green]/status[/]           : Exibe telemetria da sessao (modelo, mensagens, tokens)"
+                )
+                console.print(
+                    "  [bold green]/exit[/] ou [bold green]/quit[/]     : Encerra o chat e retorna ao terminal\n"
+                )
                 continue
 
             # Status da sessao
@@ -481,13 +493,9 @@ def _run_chat_loop(
                     )
                 else:
                     before_cnt = len([m for m in conversation if m.get("role") in ("user", "assistant")])
-                    conversation = _compact_conversation(
-                        conversation, keep_ratio=0.10, new_model_tag=new_model_tag
-                    )
+                    conversation = _compact_conversation(conversation, keep_ratio=0.10, new_model_tag=new_model_tag)
                     if system_prompt:
-                        system_prompt = re.sub(
-                            r"open-source [^,]+,", f"open-source {new_model_tag},", system_prompt
-                        )
+                        system_prompt = re.sub(r"open-source [^,]+,", f"open-source {new_model_tag},", system_prompt)
                     model_tag = new_model_tag
                     model_family = model_tag.split(":")[0].split("/")[-1].capitalize()
                     after_cnt = len([m for m in conversation if m.get("role") in ("user", "assistant")])
