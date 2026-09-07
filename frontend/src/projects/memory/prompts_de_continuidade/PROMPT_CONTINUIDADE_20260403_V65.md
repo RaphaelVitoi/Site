@@ -7,6 +7,7 @@ type: project
 ## Estado Atual (V65 — 2026-04-03)
 
 ### Commit
+
 `b1e62f2` — feat(simulator+content): formalizar E/P/E, expandir quiz/theory 12 cenários, corrigir QuantumSynthesis
 
 ### O que foi feito nesta sessão
@@ -48,12 +49,14 @@ type: project
    - Comentário do FT_PRIZES atualizado com contexto (126 jogadores, TOTAL_POOL)
 
 ### Arquivos modificados nesta sessão
+
 - `frontend/src/app/aulas/conceitos-icm/page.tsx` — E/P/E formalizado, referências expandidas
 - `frontend/src/components/simulator/engine/scenarios.ts` — quiz 4 opções, theory denso, exploit 2 dicas, FT_STACKS removido
 - `frontend/src/components/simulator/ui/QuantumSynthesis.tsx` — if-chain corrigida, narrativas refinadas
 - `frontend/src/components/simulator/panels/PerspectivePanel.tsx` — layout Layer 4, κ visível, import limpo
 
 ### Issues resolvidos nesta sessão
+
 | # | Sev | Item | Status |
 |---|-----|------|--------|
 | 1 | Alto | Quiz 1 opção em todos os cenários | RESOLVIDO (4 opções) |
@@ -62,14 +65,17 @@ type: project
 | 4 | Info | Axioma Lipe Piv sem atribuição formal | RESOLVIDO |
 
 ### Issues pendentes
+
 | # | Sev | Item | Status |
 |---|-----|------|--------|
 | 1 | Info | dangerouslySetInnerHTML em TheoryPanel | MONITORAR |
 | 2 | Pendente | CSS vars nos painéis do simulador | PIPELINE |
 
 ### Pipeline de próximos passos
+
 1. **CSS vars** — Migrar cores hardcoded (hex) nos painéis do simulador para CSS variables de globals.css.
 2. **NashPanel.tsx** — Reescrever para Opção B (6 ações). Inputs: chipEvFreqs editável + aggressionFactor. Outputs: center%, spread(±), delta vs ChipEV.
 
 ### Build
+
 Zero erros. Lint passa.

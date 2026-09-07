@@ -21,6 +21,7 @@ type: project
 ## O Que Foi Descoberto
 
 ### 1. Coeficientes Alterados
+
 | Componente | Original (HRC) | Novo | Mudança |
 |-----------|----------------|------|---------|
 | defense ipRp coef | 0.3 | 0.2 | -33% |
@@ -30,6 +31,7 @@ type: project
 **Impacto:** Outputs incorretos, contradizendo a pedagogia.
 
 ### 2. Death Zone Inadequado
+
 Cenários como "Sniper" (oopRp=45%, RP massivo) produziam bluff% = 73%, não 100% (ATC esperado).
 
 ---
@@ -37,6 +39,7 @@ Cenários como "Sniper" (oopRp=45%, RP massivo) produziam bluff% = 73%, não 100
 ## Soluções Aplicadas
 
 ### Solução 1: Revert aos Coeficientes HRC
+
 ```typescript
 // Arquivo: frontend/src/components/simulator/engine/nashSolver.ts
 defense = 50 - (oopRp * 1.4) + (ipRp * 0.3)   // ← 0.3 restaurado
@@ -44,6 +47,7 @@ bluff = 33.3 + (oopRp * 1.1) - (ipRp * 0.8)   // ← 1.1, 0.8 restaurados
 ```
 
 ### Solução 2: Lógica Especial para Death Zone
+
 ```typescript
 if (oopRp >= 40) {
   bluff = 100  // ATC: Any Two Cards
@@ -65,6 +69,7 @@ if (oopRp >= 40) {
 | Sniper | 12.0 | 45.0 | 100% | ✓ Death Zone ATC |
 
 ### Padrões Pedagógicos ✅
+
 - ChipEV (RP=0): Baseline GTO puro (33.3%, 50%)
 - Cenários moderados: Desvios proporcionais ao RP
 - Death Zone (RP≥40): Agressor em modo "Any Two Cards" (100%)
@@ -93,11 +98,13 @@ if (oopRp >= 40) {
 ## Rastreabilidade
 
 **Origem dos coeficientes:**
+
 - Fonte: `archive/legacy_icm_components/RiskGeometryMasterclass.tsx:263`
 - Validação: Hold'em Resource Calculator (HRC)
 - Validador: Raphael Vitoi (educador profissional desde 2013)
 
 **Coeficientes:**
+
 - Defesa: `-1.4 * oopRp + 0.3 * ipRp` (heurística ICM)
 - Bluff: `+1.1 * oopRp - 0.8 * ipRp` (heurística ICM)
 - Death Zone: `oopRp >= 40 → bluff = 100%` (qualitativa)
@@ -116,6 +123,7 @@ if (oopRp >= 40) {
 ## Status Final
 
 ✅ **Motor ICM pronto para produção**
+
 - Coeficientes validados contra HRC
 - Death Zone implementado
 - Testes criados

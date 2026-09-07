@@ -7,6 +7,7 @@ type: project
 ## Estado Atual (V67 — 2026-04-04)
 
 ### Commits da sessão
+
 1. `413c40f` — CSS vars migração principal (17 arquivos, ~540 hex → var())
 2. `16d29d1` — CSS vars residuais NashPanel + PmLensPanel
 3. `327a25c` — Build limpo (artigos/[slug] export + PsychologyHub TS fix)
@@ -34,6 +35,7 @@ type: project
    - Ci por street: PM / pot_odds
 
 ### Arquivos modificados
+
 - `frontend/src/app/globals.css` — 10 novas CSS vars
 - 17 arquivos simulador — hex → var()
 - `frontend/src/app/artigos/[slug]/page.tsx` — default export
@@ -41,9 +43,11 @@ type: project
 - `frontend/src/lib/rpDeriver.ts` — motor D6 completo
 
 ### Pipeline de próximos passos
+
 1. **Conectar D6 ao PostFlopPanel** — Exibir os novos campos (rioMwStreet, valuationStreet, pmStreet, ciStreet, potEntrapmentRatio) no painel visual. Adicionar slider numPlayers para cenários MW pós-flop.
 2. **Expandir conteúdo educacional pós-flop** — Criar/expandir página de conceitos pós-flop usando D6 como base teórica.
 3. **NashPanel** — já implementado (Opção B com 6 ações). Feito.
 
 ### Build
+
 Zero erros TS. Lint passa.

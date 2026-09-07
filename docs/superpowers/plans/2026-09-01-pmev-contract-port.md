@@ -40,16 +40,19 @@ nao_verificado:
 ## Task 1 — Add the baseline-state and tier contract
 
 **Files:**
+
 - Create `engine/pmev_spec.py`
 - Create `tests/test_pmev_spec.py`
 
 **Steps:**
+
 1. Implement `PMevTier` with the seven declared research tiers.
 2. Implement frozen `TournamentState(stacks, payouts)` with finite, non-negative values, positive total stack mass, a non-empty positive payout pool, and no more payouts than active players; normalize input sequences to immutable snapshots.
 3. Implement frozen `PMevConfiguration` and `recovers_icmev()`, returning true only for `PMev-0` with every extension disabled.
 4. Add tests for baseline recovery and invalid mass.
 
 **Verification:**
+
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_pmev_spec.py -q
 ```
@@ -57,10 +60,12 @@ nao_verificado:
 ## Task 2 — Add anti-confounding contracts for H3/H4/H8
 
 **Files:**
+
 - Create `engine/pmev_controlled_experiments.py`
 - Create `tests/test_pmev_controlled_experiments.py`
 
 **Steps:**
+
 1. Declare required state fields and the allowed intervention field set for each hypothesis.
 2. Validate that both arms contain the complete hypothesis-specific state.
 3. Require exactly one changed field. A change must be one allowed intervention, so H8 may change `payouts` **or** `utility_model`, never both in the same causal comparison.
@@ -69,6 +74,7 @@ nao_verificado:
 6. Require the literal H4 equity baseline `ICMev/Malmuth-Harville` in both arms; never admit a pure-ChipEV MTT baseline.
 
 **Verification:**
+
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_pmev_controlled_experiments.py -q
 ```
@@ -76,10 +82,12 @@ nao_verificado:
 ## Task 3 — Add the H9 late-registration conservation benchmark
 
 **Files:**
+
 - Create `engine/pmev_late_registration.py`
 - Extend `tests/test_pmev_spec.py`
 
 **Steps:**
+
 1. Model a deterministic late entrant, net contribution, and post-entry payout vector.
 2. Fail closed unless post-entry payouts equal prior payout pool plus the net contribution, preserve the prior payout cardinality, and scale every pre-entry payout proportionally. A same-sum payout redistribution is a separate model intervention, not this benchmark baseline.
 3. Use the repository's existing exact Malmuth-Harville calculation for both states.
@@ -87,6 +95,7 @@ nao_verificado:
 5. Test a conservative small-field transition and rejection of non-conservative, non-finite, cardinality-changing, and same-sum redistributed transitions.
 
 **Verification:**
+
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_pmev_spec.py -q
 ```
@@ -94,14 +103,17 @@ nao_verificado:
 ## Task 4 — Make the existing ICM matrix boundary explicit
 
 **Files:**
+
 - Modify `engine/icm_matrix.py`
 
 **Steps:**
+
 1. Document that the BF/RP result is a pairwise, symmetric all-in baseline.
 2. State that it does not calculate pot odds, ranges, rake, bounties, post-flop trees, or future transitions.
 3. Keep calculation behavior unchanged; this task narrows interpretation rather than altering arithmetic.
 
 **Verification:**
+
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_pmev_spec.py tests/test_pmev_controlled_experiments.py -q
 .\.venv\Scripts\python.exe -m ruff check engine/pmev_spec.py engine/pmev_controlled_experiments.py engine/pmev_late_registration.py tests/test_pmev_spec.py tests/test_pmev_controlled_experiments.py engine/icm_matrix.py
@@ -110,16 +122,19 @@ nao_verificado:
 ## Task 5 — Preserve research provenance
 
 **Files:**
+
 - Create `docs/research/pmev/PMEV_SPEC_V0_1.md`
 - Create `docs/research/pmev/EXPERIMENTOS_CONTROLADOS_H3_H4_H8.md`
 
 **Steps:**
+
 1. Explain the baseline-recovery contract and H9 identity without presenting it as an empirical validation.
 2. Explain one-intervention causal discipline, minimum artifacts, and falsification boundaries for H3/H4/H8.
 3. Link code paths and tests by relative path.
 4. Declare unimplemented tiers and absent solver/hand-history/real-player validation as limitations.
 
 **Verification:**
+
 ```powershell
 git diff --check
 .\.venv\Scripts\python.exe -m pytest tests/test_pmev_spec.py tests/test_pmev_controlled_experiments.py -q

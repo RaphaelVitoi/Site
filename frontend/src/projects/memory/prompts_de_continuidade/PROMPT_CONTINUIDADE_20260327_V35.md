@@ -25,6 +25,7 @@ Arquivo: 3395 linhas (era 3410). Syntax limpa (py_compile OK).
 | B7 BAIXO | `from core.schemas import Task` importado duas vezes. Removida duplicata |
 
 **Codigo morto removido (D1-D6):**
+
 - `FALLBACK_MODEL = "gemini-2.0-flash"` (nunca usado, modelo descontinuado)
 - `console_progress` (Rich Progress nunca usado) + `task_progress_id`
 - Imports orphans removidos: `Progress, SpinnerColumn, TimeElapsedColumn, TextColumn`
@@ -33,15 +34,18 @@ Arquivo: 3395 linhas (era 3410). Syntax limpa (py_compile OK).
 - `autonomy-full` removido (duplicava `autonomy full`)
 
 **Design refinado:**
+
 - P1: Sufixo de chave revogada hardcoded `("XfUE",)` → configuravel via `REVOKED_KEY_SUFFIXES` no env
 - P3: Triple `_register_route_failure` para "connection closed" substituido por loop que usa `ROUTE_FAILURE_THRESHOLD` explicitamente (`extra = max(0, ROUTE_FAILURE_THRESHOLD - 1)`)
 
 **Arquitetural (A1):**
+
 - `start_worker()` agora aceita `manager: Optional[QueueManager] = None`
 - `start_worker_and_api()` passa o mesmo manager para API server, worker e watchdog
 - Antes: 2 instancias independentes de QueueManager em producao
 
 **Perplexity - contexto importante:**
+
 - Perplexity e usada como fallback de busca web para AGENTES DO BACKEND (Nexus), nao tem relacao com o site de poker
 - Fluxo: quando @pesquisador/@maverick/etc precisam buscar na web → Tavily (primario) → Perplexity (fallback)
 - Raphael NAO tem assinatura paga Perplexity → modelo `sonar` (free tier, ~5 RPM)
@@ -57,6 +61,7 @@ Arquivo: 3395 linhas (era 3410). Syntax limpa (py_compile OK).
 ## COMMIT PENDENTE
 
 Nada foi commitado. Acumulado significativo de 2+ sessoes:
+
 - Limpeza da raiz do projeto
 - Reestruturacao de routing frontend (/aulas/*)
 - ROUTES.md criado

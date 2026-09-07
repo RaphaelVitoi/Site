@@ -9,6 +9,7 @@ type: project
 ## Implementado nesta sessao
 
 ### Fase A - EquityCalculator Refinamento
+
 - Resumo visual: 4 cards (Jogadores, Fichas, Pool, BF Range)
 - Delta ICM: badge colorido chip% vs ICM% por jogador
 - Barras sobrepostas (ICM sobre fichas)
@@ -16,11 +17,13 @@ type: project
 - Arquivo: `frontend/src/components/simulator/panels/EquityCalculator.tsx`
 
 ### Fase B - Paineis Interativos
+
 - ComparisonRadar: bluff/defense conectados ao IcmDistortionResult (nashFlop prop)
 - MatchupSelector + ComparisonRadar integrados como tabs lazy-loaded
 - 5 tabs no MasterSimulator: Cenario | Calculadora ICM | Matchups FT | Comparar | Perspectiva
 
 ### Perspectiva/Esperanca Matematica (FEATURE PRINCIPAL)
+
 - Engine: `frontend/src/lib/perspectiva.ts`
   - calculatePerspectiva(): matriz posicional M-H completa
   - calculateEsperanca(): delta equity torneio por acao
@@ -34,17 +37,20 @@ type: project
   - Insight textual automatico
 
 ### Conexao dos Motores
+
 - `frontend/src/lib/rpDeriver.ts`: deriveRps() calcula RP de M-H
   - RP(i) = chip_percent(i) - icm_equity_percent(i), clamp [0,60]
   - NAO integrado nos cenarios existentes (funcao exportada para uso futuro)
 
 ### Renomeacao do Solver
+
 - solveNash -> solveIcmDistortion (alias deprecated mantido)
 - NashResult -> IcmDistortionResult (alias deprecated mantido)
 - Headers IDENTITY atualizados em nashSolver.ts, types.ts, hooks, panels
 - Variaveis locais nashFlop/Turn/River preservadas
 
 ### Auditoria Completa
+
 - fontSize: 0.58rem enforced em TODO o simulador (0 violacoes)
   - Corrigidos: PayoutsPanel, RangeMatrix, TheoryPanel, RiskGauge, simulator.module.css
 - Teoria: normalizacao soma=100 corrigida no nashSolver (aggressionFactor)
@@ -52,14 +58,17 @@ type: project
 - handParser: regex robustecido (virgulas, decimais, cifrao)
 
 ## Commits pendentes
+
 Nenhum commit foi feito nesta sessao. Todos os arquivos estao modificados mas nao commitados.
 
 ## Arquivos criados nesta sessao
+
 1. `frontend/src/lib/perspectiva.ts` (engine)
 2. `frontend/src/lib/rpDeriver.ts` (conector de motores)
 3. `frontend/src/components/simulator/panels/PerspectivePanel.tsx` (UI)
 
 ## Arquivos modificados nesta sessao
+
 1. `frontend/src/components/simulator/panels/EquityCalculator.tsx` (Fase A)
 2. `frontend/src/components/simulator/panels/ComparisonRadar.tsx` (Fase B + rename)
 3. `frontend/src/components/simulator/MasterSimulator.tsx` (5 tabs + rename)
@@ -76,6 +85,7 @@ Nenhum commit foi feito nesta sessao. Todos os arquivos estao modificados mas na
 14. `frontend/src/components/simulator/panels/NashPanel.tsx` (rename header)
 
 ## Pendente
+
 - Validacao visual no browser (localhost:3000/tools/simulador)
 - Integrar rpDeriver nos cenarios (substituir RP manual por derivado)
 - Mais pontos de calibracao empirica para o motor de distorcao

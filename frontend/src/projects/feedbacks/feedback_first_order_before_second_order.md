@@ -9,6 +9,7 @@ Ao derivar EV_fold dinâmico f(t, d_pj, pos), o foco foi colocado nas três dime
 **Why:** A primeira ordem é o que domina em magnitude e frequência. As correções contextuais só são estrategicamente relevantes em situações específicas — nunca substituem o baseline. Inverter a hierarquia distorce a compreensão do mecanismo e subestima o que realmente importa.
 
 **How to apply:** Em qualquer derivação com baseline + correções:
+
 1. Derivar e expor o baseline (primeira ordem) como conteúdo central
 2. Nomear explicitamente que as correções são de segunda ordem
 3. Só então derivar cada correção, com sua magnitude relativa ao baseline como referência

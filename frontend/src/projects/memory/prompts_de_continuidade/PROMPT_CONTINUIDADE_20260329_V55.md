@@ -7,6 +7,7 @@ type: project
 # Prompt de Continuidade V55 — 2026-03-29
 
 ## Commits desta sessão (ordem cronológica)
+
 | Hash | Descrição |
 |------|-----------|
 | `8566e97` | fix: buildInsight threshold usa esperancaRealizadaPct quando R<1 + docs framework PM v2 |
@@ -44,12 +45,14 @@ Cada teorema inclui extensão pós-flop mapeada.
 ## Próximas tarefas (em ordem — não perguntar)
 
 ### 1. EV_fold dinâmico — modelar dimensões isoladas
+
 - t → 0: fold mais caro — derivar como f(t, stack, bb_size)
 - d_pj → 0: EV_fold pode cruzar zero — derivar como f(d_pj, Δprize, P(shorts))
 - pos (UTG + BB iminente): custo marginal esperado
 - Combinar só após cada dimensão estar fechada individualmente
 
 ### 2. Transpor derivações para pós-flop (preparação do motor)
+
 - EV_fold por street: baseline = pot acumulado, não −antes
 - RIO por street: pot entrapment como variável dinâmica
 - Ci por street: recalcular a cada street com equity residual
@@ -57,11 +60,13 @@ Cada teorema inclui extensão pós-flop mapeada.
 - Base: rpDeriver.ts já faz RP por street — extensão natural
 
 ### 3. Motor pós-flop
+
 - Expandir rpDeriver com EV_fold dinâmico por street
 - Novo modo no MasterSimulator: "cenário pós-flop"
 - É a cereja do produto — diferencial competitivo máximo
 
 ### 4. PKO — revisão com Perspectiva como base
+
 - Explicitamente último
 - Modelo atual: `effectiveRp × (1 − pkoValue)` — não captura assimetria de bounty
 

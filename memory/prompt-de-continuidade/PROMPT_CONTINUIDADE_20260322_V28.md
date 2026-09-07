@@ -7,9 +7,11 @@ type: project
 # Continuidade — Sessão 20260322 V28
 
 ## Ultimo commit pendente (mudancas nao commitadas)
+
 Mudancas da sessao atual (Fase C - Mobile Responsive):
 
 ### Arquivos modificados:
+
 1. `frontend/src/components/simulator/simulator.module.css`
    - Novas classes: `.refGrid2Col`, `.calcGrid2Col`, `.matchupGrid2Col`
    - Media query @800px: grids empilham para 1fr, tabs compactam
@@ -27,6 +29,7 @@ Mudancas da sessao atual (Fase C - Mobile Responsive):
 ### TypeScript: compila sem erros
 
 ## Commits sessao anterior (V27)
+
 1. `e06f007` - ReferencialAula12: grid 2-col, fichas BTN equalizadas
 2. `ecc2c3f` - Legenda simetrica grid 3-col
 3. `eac1b93` - pct1 dinamico, threshold TOP-HEAVY
@@ -35,6 +38,7 @@ Mudancas da sessao atual (Fase C - Mobile Responsive):
 6. `96f3531` - NashPanel tooltips portal + fontSize fix
 
 ## O que ja funciona no mobile (Fase C):
+
 - Grids 2-col empilham em telas <=800px
 - Tables ja tinham overflowX auto
 - SVG mesa escala via viewBox
@@ -44,7 +48,9 @@ Mudancas da sessao atual (Fase C - Mobile Responsive):
 - Nenhum fontSize abaixo de 0.58rem em todo o simulador
 
 ## Pendente: Fase A - Refinamento EquityCalculator
+
 O componente funciona mas precisa de:
+
 - Resumo visual: total de fichas, pool total, range de BF
 - Insight ICM vs ChipEV: quem ganha/perde equity na transicao
 - Melhor hierarquia visual nos resultados (barras duplas ja existem mas sem rotulo claro)
@@ -52,6 +58,7 @@ O componente funciona mas precisa de:
 - Engine: `frontend/src/lib/icmEngine.ts` (Malmuth-Harville)
 
 ## Pendente: Fase B - Paineis Interativos
+
 1. **ComparisonRadar** (`panels/ComparisonRadar.tsx`)
    - Usa Recharts RadarChart
    - Campos bluff/defense zerados (pendente: conectar ao NashResult)
@@ -71,6 +78,7 @@ O componente funciona mas precisa de:
    - Lazy load para ambos
 
 ## Estado geral
+
 - Servidor rodando, HTTP 200
 - 20/20 testes passam
 - Teoria ICM consolidada em memoria

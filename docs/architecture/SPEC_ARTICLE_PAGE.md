@@ -1,4 +1,5 @@
 # SPEC: Pagina de Artigo Individual
+>
 > **Autor:** CHICO (atuando como @planner)
 > **Status:** Pronto para Execucao
 > **Alinhamento:** COSMOVISAO.md (Hierarquia Clara, Foco, Didatica Visceral)
@@ -6,23 +7,28 @@
 ---
 
 ## 1. Visao Geral e Roteamento
+
 A pagina `frontend/src/app/blog/[slug]/page.tsx` e o santuario de leitura. Ela recebe o `slug` pela URL, busca o artigo correspondente no banco de dados Prisma e renderiza o conteudo. Se o artigo nao existir, deve retornar um 404 (Not Found).
 
 ## 2. Requisitos de Renderizacao (O Motor de Leitura)
 
 ### 2.1 Tipografia e Estetica
+
 - Utilizar o plugin `@tailwindcss/typography` (conhecido como `prose`).
 - O design deve ser minimalista, fundo escuro (`prose-invert`), com a fonte `Inter` para leitura longa e `Playfair Display` para titulos.
 - Foco absoluto na leitura: sem sidebars poluidas, coluna central com largura maxima otimizada para os olhos (`max-w-3xl`).
 
 ### 2.2 Cabecalho do Artigo
+
 - Titulo em destaque maximo.
 - Metadados sutis abaixo do titulo: Data de Publicacao, Tempo de Leitura (`readTime`) e Badges das `tags`.
 
 ## 3. Renderizacao de Conteudo e "Didatica Visceral"
-O campo `content` no banco de dados guardara conteudo em Markdown/HTML. 
+
+O campo `content` no banco de dados guardara conteudo em Markdown/HTML.
 
 ### 3.1. Integracao do Simulador (O Templo Interativo)
+
 Para atingir a "Didatica Visceral", nossos artigos precisam ter simuladores acoplados organicamente no texto. Como os simuladores legados sao HTML/JS (e o novo sera um componente React), usaremos a seguinte abordagem mista para esta versao inicial:
 
 - O conteudo sera renderizado de forma segura usando uma lib como `react-markdown` ou `html-react-parser`.
@@ -40,4 +46,5 @@ Para atingir a "Didatica Visceral", nossos artigos precisam ter simuladores acop
 5. **Validacao:** Garantir que o design bata com as guidelines esteticas da `COSMOVISAO.md`.
 
 ## 5. Proximos Passos (Fora do Escopo Atual)
+
 - MDX completo (permitindo importar componentes React diretamente no corpo do texto). Por enquanto, strings Markdown com parse no client ou server resolvem a V1 de forma elegante.

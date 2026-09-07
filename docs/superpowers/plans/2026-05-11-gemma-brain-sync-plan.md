@@ -13,6 +13,7 @@
 ### Task 1: Backend Snapshot Support
 
 **Files:**
+
 - Modify: `engine/gemma_server.py`
 
 - [ ] **Step 1: Update `InferenceRequest` schema to include physics snapshot**
@@ -70,6 +71,7 @@ git commit -m "feat(engine): add physics snapshot support to gemma server"
 ### Task 2: Frontend Sync Infrastructure
 
 **Files:**
+
 - Modify: `frontend/src/app/templo/gemma/page.tsx`
 
 - [ ] **Step 1: Import `useSotaSync` and capture state**
@@ -107,6 +109,7 @@ git commit -m "feat(frontend): integrate useSotaSync into Gemma portal"
 ### Task 3: Telemetry Card & History Integration
 
 **Files:**
+
 - Modify: `frontend/src/app/templo/gemma/page.tsx`
 
 - [ ] **Step 1: Update message state to support history with snapshots**
@@ -159,6 +162,7 @@ git commit -m "feat(frontend): implement Telemetry Card and chat history"
 ### Task 4: Integrated Request Dispatch
 
 **Files:**
+
 - Modify: `frontend/src/app/templo/gemma/page.tsx`
 
 - [ ] **Step 1: Capture snapshot and dispatch full payload**

@@ -19,21 +19,25 @@ type: project
 ## O que foi feito
 
 ### Conteúdo ([slug]/page.tsx, biblioteca, icm-masterclass)
+
 - `[slug]/page.tsx`: migrado de Prisma (modelo inexistente) para filesystem `docs/epics/<slug>.md`. Suporta frontmatter YAML e fallback H1. Usa `React.cache`.
 - `biblioteca/page.tsx`: removida dependência Prisma, lista estática de artigos
 - `icm-masterclass/page.tsx + .module.css`: adota LessonHeader/ContentFooter, remove blocos descontinuados
 
 ### Correções TS (zero erros)
+
 - `MasterSimulator.tsx`: `ftPrizes` → `scenario.prizes` (campo nunca existiu)
 - `ResurrectionRiskSimulator.tsx`: `<label>` → `<Label>` Recharts, formatter tipado
 
 ### Motor (`perspectiva.ts`) — teoria nova aplicada
+
 - `EsperancaInput.realizationFactor?: number` (default 1)
 - `EsperancaResult`: `esperancaRealizada`, `esperancaRealizadaPct`, `realizationFactor`
 - `EsperancaResult`: `loseTierShift`, `loseTierDirection`
 - Cálculo: `esperancaRealizada = P(win)×ΔWin×R + P(lose)×ΔLose` (lose não é descontado por R — perda é direta)
 
 ### Painel (`PerspectivePanel.tsx`) — teoria nova + ajustes
+
 - **Fator R slider** [0.5–1.0], cor amber quando R < 0.85
 - **Linha "Perspectiva Realizada"** aparece apenas quando R < 0.99
 - **Fix bug**: fold baseline mostrava `winEquityPct` (equity absoluta pós-fold) → agora mostra `esperanca EV` (delta, consistente com linha de Esperança)
@@ -41,6 +45,7 @@ type: project
 - **`buildInsight` reescrito** com 5 camadas: decisão principal, Fator R (quando relevante), Edge Relativa por tier (contextualiza ferramentas disponíveis), tier shifts (win e lose), externalidade, assimetria
 
 ### Teoria nova registrada — Late Registration ICM
+
 - Documento de mentor desconhecido absorvido, analisado, corrigido (confusão FT removida)
 - Memorizado em: `memory/reference_late_registration_icm_impact.md`
 - Backup no projeto: `docs/research/late_registration_icm_impact.md`
@@ -61,13 +66,16 @@ type: project
 ## Pendências conhecidas
 
 ### Simulador
+
 - PKO: teoria em revisão. Modelo atual = `effectiveRp × (1 − pkoValue)`. Não captura assimetria de bounty nem prêmio positivo por eliminação.
 - Fator R: atualmente apenas display/UX. Não propaga para `buildInsight` threshold (comparação Esperança vs fold usa `esperancaPct` bruta, não `esperancaRealizadaPct`). Decisão intencional por ora — avaliar se faz sentido mudar o threshold também.
 
 ### Teoria (não implementar sem autorização)
+
 - Quantificação do EV_fold(ICM) positivo com payjumps iminentes + late entries
 - FGS expandido com variáveis de iminência de blinds e Table Draw
 - Fator psicológico Ψ como variável bayesiana quantificável
 
 ### Conteúdo
+
 - `frontend/src/app/aulas/[slug]/page.tsx`: lê de `docs/epics/<slug>.md` via filesystem. Nenhum arquivo .md de aula existe ainda nesse formato — rota retorna 404 até conteúdo ser criado.

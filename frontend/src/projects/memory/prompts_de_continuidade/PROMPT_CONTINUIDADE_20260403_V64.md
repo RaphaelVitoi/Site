@@ -7,6 +7,7 @@ type: project
 ## Estado Atual (V64 — 2026-04-03)
 
 ### Commit
+
 Nenhum commit nesta sessão. Mudanças em 4 arquivos de conteúdo + memória.
 
 ### O que foi feito nesta sessão
@@ -45,6 +46,7 @@ Nenhum commit nesta sessão. Mudanças em 4 arquivos de conteúdo + memória.
    - Crédito inline correto em 3 das 4 páginas — padrão profissional
 
 ### Arquivos modificados nesta sessão
+
 - `frontend/src/app/aulas/icm-masterclass/page.tsx` — ΔRP formula + detail
 - `frontend/src/app/aulas/icm-pos-flop/page.tsx` — Risk Advantage label + callout
 - `frontend/src/app/aulas/conceitos-icm/page.tsx` — ΔEquity→ΔPerspectiva
@@ -68,9 +70,11 @@ Nenhum commit nesta sessão. Mudanças em 4 arquivos de conteúdo + memória.
 5. **Theory expandir** — Conteúdo real do framework E/P/E.
 
 ### Fontes de validação externas registradas
+
 - GTO Wizard "MDF vs ICM" (2025) — MDF quebra sob ICM, covering player mais agressivo
 - GTO Wizard "How ICM Impacts Postflop" (2025) — Downward Drift confirmado, small sizing dominante sob ICM
 - O'Kearney & Carter — Downward Drift (conceito original qualitativo)
 
 ### Build
+
 Zero erros. Lint passa.

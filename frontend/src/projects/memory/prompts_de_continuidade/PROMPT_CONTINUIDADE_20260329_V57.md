@@ -7,6 +7,7 @@ type: project
 # Prompt de Continuidade V57 — 2026-03-29
 
 ## Commits desta sessão
+
 | Hash | Descrição |
 |------|-----------|
 | `8566e97` | fix: buildInsight threshold usa esperancaRealizadaPct quando R<1 + docs framework PM v2 |
@@ -35,12 +36,14 @@ Arquivo: `docs/research/validacao_matematica_hipoteses_v1.md`
 ## Contexto PKO e MW (lido — standby)
 
 **PKO** (source: `project_pko_feature_idea.md` + `SPEC_SIMULADOR_ICM_GLOBAL.md` seção 6.3):
+
 - Motor atual: `effectiveRp × (1 − pkoValue)` — não captura assimetria bidirecional
 - SPEC da aula: RP positivo do bounty (cobrir = capturar) + equity drop negativo do ICM, forças opostas simultâneas
 - Revisão futura: modelar as duas forças separadamente antes de combinar, com Perspectiva como base
 - Status: standby — implementar só após motor pós-flop
 
 **MW (multiway)** — não é feature separada, é o `RIO_mw` na equação PM:
+
 - D2+D3 derivam o passivo estrutural; D6 mapeia por street com `N_ativos` como parâmetro dinâmico
 - No motor pós-flop: `RIO_mw_street = P(dominado | board_i, N_ativos) × pot_acumulado_i`
 - Alinha com o propósito do produto: PM como métrica superior ao chipEV e ao ICM EV isolado
@@ -48,6 +51,7 @@ Arquivo: `docs/research/validacao_matematica_hipoteses_v1.md`
 ## Próximas tarefas (em ordem — não perguntar)
 
 ### 1. Motor pós-flop — extensão do rpDeriver.ts
+
 - Adicionar `potAcumulado` como estado por street
 - `EV_fold_street = −potAcumulado_hero`
 - `RIO_mw_street` com `pot_acumulado` como base
@@ -55,9 +59,11 @@ Arquivo: `docs/research/validacao_matematica_hipoteses_v1.md`
 - `Valuation_stack_street` com stack remanescente após cada investimento
 
 ### 2. Novo modo no MasterSimulator: "cenário pós-flop"
+
 - Cereja do produto — diferencial competitivo máximo
 
 ### 3. PKO revisão com Perspectiva como base
+
 - Explicitamente último
 - Modelar RP_bounty e equity_drop_ICM como forças independentes antes de combinar
 

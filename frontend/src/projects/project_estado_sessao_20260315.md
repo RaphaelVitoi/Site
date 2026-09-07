@@ -7,12 +7,14 @@ type: project
 ## Resumo: projeto reorganizado e build validado
 
 ### Build Next.js: PASSA
+
 - Todas as 8 rotas compilam (7 static, 1 dynamic)
 - Prisma schema criado (SQLite local, modelo Post)
 - Prisma CLI e Client alinhados em v5.22
 - Testes inline removidos de icm.ts (import.meta.vitest incompativel sem Vitest)
 
 ### Git: 14 commits na branch main
+
 - Branch renomeado de master para main
 - node_modules removido do tracking
 - .backups/, .next/, dev.db excluidos via .gitignore
@@ -20,6 +22,7 @@ type: project
 - 3 backups leves mantidos (~160KB, registros historicos)
 
 ### Estrutura canonica
+
 - frontend/ - Next.js 16 (fonte de verdade)
 - content/ - Material educacional futuro
 - docs/ - Documentacao
@@ -28,6 +31,7 @@ type: project
 - Raiz: kernel operacional (do.ps1, Agent-TaskManager, nexus CLI)
 
 ### O que foi resolvido nesta sessao (continuacao)
+
 - Build do Next.js testado e corrigido
 - scenarios_toygame.js movido para content/interativo/
 - README.md reescrito com estrutura real
@@ -36,6 +40,7 @@ type: project
 - node_modules removido do git tracking
 
 ### Identidade do sistema
+
 - Chico = GitHub Copilot (Gemini) - GLOBAL_INSTRUCTIONS.md
 - Claude Code (Opus) - .cerebro/CEREBRO.md
 - Triade: Raphael (CEO) + @maverick (Vice Intelectual) + Chico (Administrador)

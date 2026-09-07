@@ -7,6 +7,7 @@ type: project
 ## Estado Atual (V62 — 2026-04-03)
 
 ### Commit
+
 `4e45775` — fix(simulator): corrigir bug potSize e remover audio, refinar tipagem
 
 ### O que foi feito nesta sessão
@@ -26,6 +27,7 @@ type: project
 7. **Framework E/P/E expandido** — Memória atualizada com hierarquia completa: ICM EV → Esperança → Expectativa → Perspectiva. Caso do CL (agressivo por Perspectiva, não ICM EV puro). Caso do river (RP aumentado vs Esperança). FGS em solvers: precário (raciocínio perfeito sobre modelo incompleto).
 
 ### Pipeline de integração verificado
+
 ```
 scenario.sprData.potSize (pote total BB)
   → derivePostFlopRps(potAcumuladoHero = potSize/2, potTotal = potSize)
@@ -44,9 +46,11 @@ scenario.sprData.potSize (pote total BB)
 3. **CSS vars** — NashPanel e demais componentes do simulador devem usar CSS variables do globals.css (--accent-primary, --bg-card, etc.) para que mudanças futuras no site propaguem automaticamente. Raphael pediu isso explicitamente.
 
 ### Build
+
 Zero erros. Lint passa.
 
 ### Fontes absorvidas nesta sessão
+
 - GTO Wizard: "MDF vs ICM: Rethinking Bluffing & Defense Strategies in MTTs"
 - GTO Wizard: "How ICM Impacts Postflop Strategy"
 - Downward Drift: Dara O'Kearney & Barry Carter (livro de ICM / PKO Poker Strategy, D&B Poker 2023)

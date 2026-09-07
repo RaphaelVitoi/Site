@@ -54,6 +54,7 @@
 ### Task 1: Create The Governance Kernel Documents
 
 **Files:**
+
 - Create: `governance/KERNEL.md`
 - Create: `governance/autonomy.yaml`
 - Create: `governance/environment.md`
@@ -250,6 +251,7 @@ git commit -m "docs: add governance kernel and environment sources"
 ### Task 2: Refactor `agents/autonomy.py` To Load Structured Policy
 
 **Files:**
+
 - Modify: `agents/autonomy.py`
 - Test: `tests/test_autonomy_policy.py`
 
@@ -396,6 +398,7 @@ git commit -m "refactor: drive autonomy runtime from structured policy"
 ### Task 3: Reduce Prompt Files Into Thin Adapters
 
 **Files:**
+
 - Modify: `GEMINI.md`
 - Modify: `.cursorules`
 - Modify: `.cerebrorules`
@@ -497,6 +500,7 @@ git commit -m "docs: reduce host prompts to governance adapters"
 ### Task 4: Align Tooling Authority And Quality Gates
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `pyproject.toml`
 - Modify: `requirements.txt`
@@ -567,6 +571,7 @@ git commit -m "build: align governance and quality gate manifests"
 ### Task 5: Review VS Code Residue And Label It Non-Canonical
 
 **Files:**
+
 - Modify: `.vscode/settings.json`
 - Modify: `.vscode/tasks.json`
 - Review: `.vscode/extensions.json`
@@ -630,6 +635,7 @@ git commit -m "chore: mark vscode layer as host-local only"
 ### Task 6: Final Validation And Migration Report
 
 **Files:**
+
 - Review: `governance/KERNEL.md`
 - Review: `governance/autonomy.yaml`
 - Review: `governance/environment.md`

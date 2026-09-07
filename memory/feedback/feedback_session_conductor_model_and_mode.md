@@ -5,6 +5,7 @@ type: feedback
 ---
 
 Cada sessão executada no ecossistema deve ter explicitamente registrado:
+
 1. **Modelo condutor exato (`conductor_model`):** identificação nominal do modelo que operou a sessão (ex.: `gemini-3.8-flash`, `claude-opus-5`, `chatgpt-5.6` ou agente especialista).
 2. **Regime de supervisão (`supervision_mode`):**
    - `assistida`: assistida e arbitrada diretamente por Raphael Vitoi (Tier 0).

@@ -7,6 +7,7 @@ type: project
 ## Estado Atual (V69 — 2026-04-04)
 
 ### Commits da sessão
+
 1. `d9e06a8` — feat(simulator): conectar motor D6 ao PostFlopPanel — 5 métricas + MW slider
 2. `7709f35` — feat(content): expandir icm-pos-flop com Framework D6 — 5 conceitos formais
 3. `228aa34` — fix(motor): corrigir assimetria win/lose na Valuation ICM D6 (stacksLose usava effStack, agora usa disputeAmount = min(potTotal, effStack))
@@ -26,6 +27,7 @@ type: project
 5. **Sitemap**: +3 rotas faltantes. icm-pos-flop promovida 0.7→0.9.
 
 ### Arquivos modificados
+
 - `frontend/src/components/simulator/panels/PostFlopPanel.tsx` — D6 métricas + MW
 - `frontend/src/app/aulas/icm-pos-flop/page.tsx` — Framework D6 educacional
 - `frontend/src/lib/rpDeriver.ts` — fix assimetria disputeAmount
@@ -36,6 +38,7 @@ type: project
 - `frontend/src/app/globals.css` — +--accent-fuchsia
 
 ### Hex residuais conhecidos (não migrados)
+
 - ReferencialAula12.tsx — muitos hex semânticos (#34d399, #c4b5fd, #fca5a5, etc.)
 - MatchupSelector.tsx — cores específicas (#ff0055 Death Zone, #4338ca, #9f1239)
 - RiskGauge.tsx — #ef4444 critical, #ff0055 death zone
@@ -45,10 +48,12 @@ type: project
 - PayoutsPanel.tsx — #b45309
 
 ### Pipeline de próximos passos
+
 1. **Migrar hex residuais restantes** — ReferencialAula12, MatchupSelector, RiskGauge, PmLensPanel (não-Recharts)
 2. **PKO Value** — Feature aprovada, standby
 3. **Validação matemática formal** — Publicar resultados dos 3 cenários de teste D6
 4. **MDF compartilhado MW** — Teoria em memória, implementação após HU funcional
 
 ### Build
+
 Zero erros TS. Lint passa.

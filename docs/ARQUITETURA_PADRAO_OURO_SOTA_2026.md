@@ -62,9 +62,9 @@
 2. **Critério Estrito de Eficiência ($ROI$):** Um modelo mais caro (ex.: Chat GPT 5.6-Sol) só deve ser acionado quando houver comprovação empírica de que seu produto final é significativamente superior ($\Delta_{\text{qualidade}} \ge 25\%$) e justifica o gasto de tokens/créditos.
 3. **Transparência de Output:** Toda resposta em pipeline de alta densidade expõe o modelo selecionado, a justificativa e o ganho verificado em relação ao baseline.
 4. **Matriz de Preferências por Arquitetura & Especialidade:** Todos os modelos da tríade possuem competência irrestrita para qualquer atividade. As preferências operacionais baseiam-se na vocação da arquitetura e no custo:
-   - **Gemini 3.8 Flash & duo 3.5 Flash-Lite / 3.6 Flash:** Orquestração agêntica, context caching massivo e Fast Operations de baixo custo/latência.
-   - **Claude 5 (Sonnet 5 / Opus 5):** Engenharia de código cirúrgica, ASTs, tipagem estrita e formulações matemáticas PMev.
-   - **ChatGPT 5.6 (Terra / Sol):** Raciocínio profundo, auditoria AppSec/segurança, arquitetura macro e problemas de altíssima complexidade.
+   * **Gemini 3.8 Flash & duo 3.5 Flash-Lite / 3.6 Flash:** Orquestração agêntica, context caching massivo e Fast Operations de baixo custo/latência.
+   * **Claude 5 (Sonnet 5 / Opus 5):** Engenharia de código cirúrgica, ASTs, tipagem estrita e formulações matemáticas PMev.
+   * **ChatGPT 5.6 (Terra / Sol):** Raciocínio profundo, auditoria AppSec/segurança, arquitetura macro e problemas de altíssima complexidade.
 
 ---
 
@@ -89,18 +89,22 @@
 ```
 
 ### A. Operacionalização da Economia Generalizada (Lei de Shannon)
+
 * **Background & Manutenção:** Tarefas rotineiras de manutenção, limpeza de logs, sumarização e auditoria em `task_executor.py` são alocadas a modelos ultraleves (`gemini-3.5-flash-lite` / `gemini-3.5-flash`).
 * **Protocolo de Handoff Cognitivo (Clipboard Bridge):** Para tarefas monumentais de arquitetura com `@maverick`, `@architect` ou `@auditor`, o contexto é compilado localmente e transferido para a interface Web do Gemini Advanced (Tier Pro com taxa fixa), alavancando Extended Thinking sem consumir bilhetagem de API.
 
 ### B. Otimização de RAG via Context Caching (~90% Economia & Baixa Latência)
+
 * **Fusão Ontológica:** O corpus estático composto por `CLAUDE.md`, `GLOBAL_INSTRUCTIONS.md`, `COSMOVISAO.md` e `project-context.md` é registrado em cache explícito compartilhado via `llm_api.py`.
 * **Agentes Beneficiados:** `@implementor`, `@verifier`, `@curator` e o motor de execução reduzem o custo de entrada em ~90% e obtêm TTFT quase instantâneo.
 
 ### C. Solvers de Teoria dos Jogos & PMev (trueicm.com & PokerRacional)
+
 * **Verificação Formal com `@validador`:** Orçamento máximo de raciocínio (`/effort high` ou `thinking_level: "high"`) para deduções de subgames multiway, convexidade de risco vs. Chip Leader e estabilização de equilíbrios de Nash.
 * **Inferência Local com `@gemma4`:** Execução de modelos de borda locais (FunctionGemma / pesos on-device) para decisões em tempo real sem latência de rede.
 
 ### D. Desenvolvimento Full-Stack & Ferramental Antigravity
+
 * **Ambiente Integrado:** Antigravity 2.0 (Standalone Daemon), Antigravity CLI e IDE com enfileiramento de background e slash command stacking para refatorações contínuas e sem atrito.
 * **Depuração com DAP/LLDB:** Análise de stack traces, dumps de memória e concorrência multithread em Rust/Python com AST Validation.
 

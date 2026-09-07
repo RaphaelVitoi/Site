@@ -33,6 +33,7 @@ Este projeto evoluiu de um simulador de poker estático para um ecossistema din�
 ## MANDATO DE AUDITORIA SOTA PROATIVA (FRONTEND)
 
 Toda auditoria no frontend deve ser uma intervenção de SOBERANIA:
+
 1. **Tipagem Estrita:** Erradicar `any` e supressões de erro (`@ts-ignore`). Validar contra `tsconfig.audit.json`.
 2. **Higiene de Estado:** Identificar e corrigir vazamentos de memória em Hooks e re-renders desnecessários.
 3. **Segurança UI:** Bloquear `dangerouslySetInnerHTML` sem sanitização e auditar exposição de segredos em variáveis de ambiente expostas (`NEXT_PUBLIC_`).

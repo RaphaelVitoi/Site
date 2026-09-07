@@ -7,6 +7,7 @@ type: project
 ## Estado Atual (V66 — 2026-04-04)
 
 ### Commit
+
 `413c40f` — refactor(simulator): migrar cores hardcoded para CSS variables
 
 ### O que foi feito nesta sessão
@@ -25,14 +26,17 @@ type: project
    - 16 arquivos em `frontend/src/components/simulator/` (panels + ui + root)
 
 ### Issues pendentes
+
 | # | Sev | Item | Status |
 |---|-----|------|--------|
 | 1 | Info | dangerouslySetInnerHTML em TheoryPanel | MONITORAR |
 | 2 | Info | artigos/[slug]/page.tsx sem default export (erro build pré-existente) | MONITORAR |
 
 ### Pipeline de próximos passos
+
 1. **NashPanel.tsx** — Reescrever para Opção B (6 ações). Inputs: chipEvFreqs editável + aggressionFactor. Outputs: center%, spread(±), delta vs ChipEV.
 2. **Produto pós-flop** — Extensão do framework para streets posteriores (validação math primeiro).
 
 ### Build
+
 Compilação OK (10.7s). TypeScript OK no simulador. Erro pré-existente em artigos/[slug]/page (unrelated).

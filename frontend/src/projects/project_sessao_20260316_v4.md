@@ -13,6 +13,7 @@ Sessão de refinamento visual. Último commit: `aa83fee`.
 ## O que foi feito
 
 ### biblioteca/page.tsx
+
 - Cards com `align-items: start` (sem vazio) usando `hub-card` padrão
 - `.article-tag` nas tags
 - Seção "Próximas Adições" (3 cards compactos sem CodeBlock quebrado)
@@ -20,6 +21,7 @@ Sessão de refinamento visual. Último commit: `aa83fee`.
 - `article-nav` no rodapé
 
 ### MasterSimulator — tipografia
+
 - Tool buttons: `0.7rem`, border visível, bg opaco `#1e2245` (fix contraste WCAG)
 - `useScenario.ts`: fix hydration error — localStorage via `useEffect` pós-mount (era no initializer do useState)
 - `gaugeValue`: `clamp(1.4rem,12vw,1.8rem)` → `1.2rem` fixo
@@ -38,14 +40,18 @@ Sessão de refinamento visual. Último commit: `aa83fee`.
 **Problema duplo:**
 
 ### 1. Título errado
+
 O componente exibe `"VAZAMENTO DE RISK PREMIUM (DEFENSOR)"` mas o que está sendo plotado é **SPR (Stack-to-Pot Ratio)**, não Risk Premium. São conceitos distintos:
+
 - SPR = stack efetivo / pot
 - RP = percentual de equidade extra exigida pelo ICM
 
 O título correto seria algo como `"Diluição do SPR por Street"` com subtítulo explicando que SPR menor = maior pressão de ICM = RP mais alto.
 
 ### 2. sprValue = 0.0 no RIVER contradiz a narrativa
+
 Para o cenário `pacto` (O Pacto Silencioso):
+
 ```
 sprData: [
   { name: 'PRE',   potSize: 2.5,  sprValue: 26.0 },  ← correto: 65/2.5 = 26
@@ -54,25 +60,30 @@ sprData: [
   { name: 'RIVER', potSize: 65.0, sprValue: 0.0  },  ← PROBLEMA
 ]
 ```
+
 SPR 0.0 no river = todo o stack no pot = all-in. Mas o Pacto Silencioso descreve exatamente a **evitação** de all-in entre CLs. Contradição narrativa direta.
 
 Para o cenário `pacto`, SPR no river deveria ser algo como `0.3–0.6` (jogo conservador, algo ainda sobra).
 
 ### 3. Todos os cenários têm RIVER = 0.0
+
 Verificar se outros cenários têm o mesmo problema ou se é convenção intencional ("all-in possível por river").
 
 ## O que fazer na próxima sessão
 
 **Prioridade 1 — SprPipeline:**
+
 1. Renomear título: `"Vazamento de Risk Premium"` → `"Diluição do SPR por Street"`
 2. Adicionar legenda/tooltip explicando a relação: SPR baixo → RP alto → ICM pressiona
 3. Corrigir sprValue do RIVER no cenário `pacto`: `0.0` → valor realista (`~0.4`)
 4. Auditar os outros 8 cenários — verificar se o RIVER 0.0 é intencional ou erro
 
 **Prioridade 2 — Páginas restantes:**
+
 - `app/page.tsx` (homepage): hero com inline styles, badges afiliação sem classe
 - `quem-sou/page.tsx`: badges inline, video-wrapper
 - `psicologia-hs/page.tsx`: h2 gradient inline
 
 **Prioridade 3 — Deploy:**
+
 - Pipeline Vercel/Netlify para trueICM.com ainda não configurado

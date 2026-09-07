@@ -7,6 +7,7 @@ type: project
 # Prompt de Continuidade V56 — 2026-03-29
 
 ## Commits desta sessão (ordem cronológica)
+
 | Hash | Descrição |
 |------|-----------|
 | `8566e97` | fix: buildInsight threshold usa esperancaRealizadaPct quando R<1 + docs framework PM v2 |
@@ -57,6 +58,7 @@ EV_fold(t, d_pj, pos) = EV_fold_base(s)
 ## Próximas tarefas (em ordem — não perguntar)
 
 ### 1. Transpor derivações para pós-flop (preparação do motor)
+
 - EV_fold por street: `EV_fold_street = −pot_acumulado_até_street`
 - RIO por street: pot entrapment como variável dinâmica (amplifica RIO em O(N²) por street)
 - Ci por street: recalcular a cada street com equity residual do hero
@@ -65,11 +67,13 @@ EV_fold(t, d_pj, pos) = EV_fold_base(s)
 - Base natural: `rpDeriver.ts` já faz RP diluído por street
 
 ### 2. Motor pós-flop
+
 - Expandir `rpDeriver.ts` com EV_fold dinâmico por street
 - Novo modo no MasterSimulator: "cenário pós-flop"
 - Diferenciacl competitivo máximo do produto
 
 ### 3. PKO — revisão com Perspectiva como base
+
 - Explicitamente último
 - Modelo atual: `effectiveRp × (1 − pkoValue)` — não captura assimetria de bounty
 

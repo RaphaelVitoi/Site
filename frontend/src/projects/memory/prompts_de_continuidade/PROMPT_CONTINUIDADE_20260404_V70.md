@@ -7,6 +7,7 @@ type: project
 ## Estado Atual (V70 — 2026-04-04)
 
 ### Commits da sessão
+
 1. `ac26f3c` — refactor(css): migrar hex residuais para CSS vars em 7 componentes (~55 hex → var())
 2. `55c9fd7` — refactor(css): migrar 143 hex restantes para CSS vars em 31 arquivos
 
@@ -26,18 +27,22 @@ type: project
    - ~16 pages (artigos, aulas, biblioteca, quem-sou, simulador, laboratorio-icm)
 
 ### Hex legítimos restantes (NÃO migráveis)
+
 - **OG/satori** (api/og/route.tsx, opengraph-image.tsx): ~21 hex — satori não suporta CSS vars
 - **Recharts** (PerspectivePanel.tsx): 4 hex — biblioteca externa
 - **console.log** (RiskGauge.tsx): 1 hex — Easter egg
 - **OLD_nexus_perspectiva.ts**: 5 hex — código legado morto
 
 ### MIGRAÇÃO HEX COMPLETA
+
 V66 (~540 hex, 17 arquivos) + V69 (8 arquivos) + V70 (~198 hex, 38 arquivos) = toda a base migrada. Exceções documentadas acima.
 
 ### Pipeline de próximos passos
+
 1. **PKO Value** — Feature aprovada, standby
 2. **Validação matemática formal** — Publicar resultados dos 3 cenários de teste D6
 3. **MDF compartilhado MW** — Teoria em memória, implementação após HU funcional
 
 ### Build
+
 Zero erros TS. Lint passa.

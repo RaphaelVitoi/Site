@@ -7,6 +7,7 @@ type: project
 ## Estado do Site e Simulador (2026-03-21)
 
 ### Contexto
+
 - Site e 100% autoral de Raphael Vitoi sobre poker/ICM
 - Conteudo textual e didatico e de Raphael - teoria original que nao existe na literatura
 - Parte interativa (motor, calculos, outputs) foi placeholder funcional - matematica errada
@@ -14,6 +15,7 @@ type: project
 - Tudo e esboco degradado de algo que nem era versao final
 
 ### Arquitetura (SOLIDA - nao precisa ser repensada)
+
 - 29 arquivos, separacao clara: engine / hooks / ui / panels / orquestrador
 - Fluxo: cenario → nashSolver → gauges/panels (limpo, motor substituivel)
 - 9 cenarios como objetos tipados (theory, exploit, sprData, quiz)
@@ -21,12 +23,14 @@ type: project
 - TypeScript tipado, CSS module 1310 linhas
 
 ### O que funciona bem
+
 - RiskGauge visceral (Death Zone, Predator Zone, audio)
 - SprPipeline como visualizacao de dissipacao (precisa dados reais)
 - RangeMatrix 13x13 interativa com localStorage
 - Estrutura de cenarios extensivel sem refatoracao
 
 ### O que esta ERRADO (parte interativa)
+
 1. Nash Solver: modelo linear com 5 constantes fixas. Nao captura Teto do RP gradual, inversao Parte II, nem Vantagem de Risco
 2. sprData: valores de dissipacao estimados sem rastreabilidade
 3. Quizzes: 1 pergunta por cenario, sem contexto (sizing, street, RP oponente)
@@ -35,6 +39,7 @@ type: project
 6. Death Zone em 40% e corte binario arbitrario - efeito ja opera em 6% nos toy games
 
 ### O que FALTA (demandas da teoria de Raphael)
+
 - Faixas ponderadas em vez de pontos fixos (distribuicao com centro de gravidade)
 - Vantagem de Risco como metrica visivel e computada
 - Especulacao Assimetrica modelada

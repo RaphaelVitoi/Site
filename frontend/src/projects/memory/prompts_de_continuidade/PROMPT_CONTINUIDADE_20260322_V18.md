@@ -7,11 +7,13 @@ type: project
 ## Estado Atual (2026-03-22 - sessao tarde)
 
 ### O que aconteceu nesta sessao
+
 - Alinhamento teorico completo: conservacao de fichas, teto emergente (nao hardcodado), curva concava, aggressionFactor como risco de colisao (nao colisao), HU final = ChipEV (N_remanescentes = 2)
 - Curadoria de features aprovada por Raphael
 - Implementacao parcial do novo motor:
 
 ### Arquivos modificados nesta sessao
+
 - `frontend/src/components/simulator/engine/types.ts` - CONCLUIDO
   - Novas interfaces: ChipEvFreqs, FreqResult, NashResult (Opcao B)
   - defaultChipEvFreqs adicionado ao Scenario
@@ -37,6 +39,7 @@ type: project
   - Botao sidebar com title e type="button" (acessibilidade)
 
 ### PENDENTE - proximo passo critico
+
 1. **NashPanel.tsx** - INCOMPLETO. Ainda tem interface antiga (bluffFreq, defenseFreq, aggressionFactor). Precisa ser reescrito para Opcao B:
    - Input: chipEvFreqs (editavel pelo usuario) + aggressionFactor
    - Output: 6 acoes (ip_check, ip_bet_small, ip_bet_large, oop_call, oop_fold, oop_raise)
@@ -49,6 +52,7 @@ type: project
 3. **Build check** - verificar se compila sem erros
 
 ### Equacao implementada
+
 ```
 freq_ICM(A) = freq_ChipEV(A) + k_A x |deltaRP|^b x sign(deltaRP)
 
@@ -67,11 +71,13 @@ spread = 3 + 0.6 x |deltaRP - 8.5|  (incerteza cresce alem da ancora)
 ```
 
 ### Curadoria de features (aprovada)
+
 - MANTER: ScenarioSelector, ScenarioStage, TheoryPanel, NashPanel (novo), SprPipeline, QuizEngine, EquityCalculator (core Malmuth-Harville)
 - STANDBY: ComparisonRadar, MatchupSelector, PayoutsPanel, RangeMatrix, hand parser
 - ELIMINADOS: AICoachPanel, HandSimulator, AxiomTicker, useAudioFeedback, CodeBlock
 
 ### Alinhamentos teoricos desta sessao
+
 - aggressionFactor: modula RISCO de colisao, nao colisao em si. RP precifica exposicao, nao o evento.
 - HU final = ChipEV: gatilho e N_remanescentes = 2 (nao HU em MTT com outros players na mesa)
 - Sofisticacao: densidade maxima + palavras minimas (minimalismo elegante)
@@ -81,11 +87,13 @@ spread = 3 + 0.6 x |deltaRP - 8.5|  (incerteza cresce alem da ancora)
 - ICM pressure diminui conforme players sao eliminados - nao linear, proporcional a cada player.
 
 ### Git
+
 - Branch: main
 - Nenhum commit feito nesta sessao ainda
 - Arquivos modificados: types.ts, nashSolver.ts, useNashSolver.ts, scenarios.ts, MasterSimulator.tsx
 
 ### Lembretes criticos
+
 - NUNCA reescrever componentes do zero (editar apenas)
 - Conteudo textual e de Raphael - intocavel sem aprovacao
 - Teto de RP: 24% ancora empirica (Raphael nunca viu maior). Nao hardcodar.

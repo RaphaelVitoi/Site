@@ -18,21 +18,25 @@ type: project
 ## O que foi feito
 
 ### Bug crítico corrigido
+
 - `gemini-3.1-pro` e `gemini-3.1-flash` estavam como PRIMEIROS em todas as rotas (system_config.json + agents_manifest.json). Modelos inexistentes (404). Causavam falha garantida antes de chegar nos modelos funcionais.
 - Removidos de: `model_routing.deep_thinking`, `fast_operations`, `coding`, `protect_models`, `DEFAULT_MODEL_HEALTH_GATE`, e `primary_model` de maverick/chico/implementor/securitychief.
 
 ### Melhorias de orquestração
+
 - `llm/routing.py`: scoring Gemini pattern-based (`"gemini" in m and "flash/pro" in m`)
 - `llm/providers.py`: retry em HTTP 5xx transiente (sleep 2s antes de rotacionar chave)
 - `llm/orchestrator.py`: `_compress_context` usa ROUTE_FAILURE_THRESHOLD-1 extras em connection-closed (consistente com _try_provider)
 - `system_config.json`: `deep_thinking` agora tem gemini-2.5-flash como fallback final
 
 ### Hot-reload sem restart
+
 - `task_executor.py`: `_maybe_reload_config()` detecta mudanças por mtime em `data/system_config.json` E `data/agents_manifest.json`
 - `llm/orchestrator.py`: chamado no início de `call_llm_api` a cada tarefa
 - Custo: 1 syscall stat() por chamada LLM
 
 ### Scripts
+
 - `scripts/ops/start_worker.ps1`: novo script com -Force e -Background
 - `Setup-NexusProfile.ps1`: `start-worker` agora proxy para o script com passthrough de params
 - Dashboard regenerado com novas entradas

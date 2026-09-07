@@ -7,19 +7,23 @@
 ---
 
 ## 1. RESUMO EXECUTIVO
+
 Realizada auditoria profunda e saneamento de dependências no diretório `frontend`, focando em integridade estática (TypeScript), linter (ESLint), testes automatizados (Jest) e processo de bundling (Next.js). O ecossistema do frontend foi restaurado com sucesso, atingindo paridade absoluta com as regras de simetria e blindagem.
 
 ## 2. INTERVENÇÕES E RESOLUÇÃO DE DRIFT TÉCNICO
 
 ### 2.1 Instalação e Vinculação de Dependências (NPM Workspaces)
+
 - **Problema:** Ausência de pacotes cruciais de desenvolvimento e tipagens na raiz e no workspace.
 - **Ação:** Executado `npm install` na raiz do monorepo, instalando e vinculando corretamente todos os pacotes definidos nas workspaces de forma limpa.
 
 ### 2.2 Geração dos Tipos do Database (Prisma Client)
+
 - **Problema:** Erro de compilação TypeScript informando que `@prisma/client` não exportava `PrismaClient` devido à falta dos artefatos gerados.
 - **Ação:** Executado `npx prisma generate` dentro do diretório `frontend`, restabelecendo as tipagens do ORM e blindando o DAL de erros estáticos.
 
 ### 2.3 Correção do Caminho de Importação de Teste (Landing Page)
+
 - **Problema:** A suite `src/tests/app/page.test.tsx` estava importando incorretamente o componente `Home` do caminho `../../app/page` (que não continha mais o arquivo físico após reestruturação de rotas).
 - **Ação:** Corrigido o caminho relativo para `../../app/(public)/page` apontando para a localização atual da landing page.
 
@@ -39,6 +43,7 @@ Realizada auditoria profunda e saneamento de dependências no diretório `fronte
 - **Next-Auth & Supabase SSR:** Integração e esquemas de autenticação em `src/proxy.ts` e `src/utils/supabase/` estão devidamente tipados e protegidos contra vazamento de referências e uso inapropriado de `any`.
 
 ## 5. CONCLUSÃO
+
 O frontend do Site foi estabilizado, as dependências foram restabelecidas e todas as validações estáticas e funcionais passaram com louvor. O sistema apresenta entropia zero no ambiente web e está pronto para deploys em produção.
 
 ---

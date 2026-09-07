@@ -1,10 +1,13 @@
 ## Relatorio de Validacao de Dominio
+
 Data: 2026-03-11
 Dominio: Estrategia Avancada de Poker (ICM e Risk Premium)
 Status: APROVADO_COM_CORRECOES
 
 ### Afirmacoes Validadas: [48/50]
+
 ### Erros Encontrados: [2]
+
 ### Erros Corrigidos: [0]
 
 ### Detalhamento

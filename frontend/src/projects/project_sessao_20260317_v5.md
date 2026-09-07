@@ -13,6 +13,7 @@ Sessão de refinamento conceitual profundo. Branch `main`.
 ## O que foi feito
 
 ### SprPipeline — Redesign conceitual
+
 - Campo `sprValue` → `rpValue` em `types.ts`, `scenarios.ts`, `SprPipeline.tsx`
 - Valores são agora RP residual (%) por street: `oopRp × (remaining_stack / eff_stack)`
 - Tab TheoryPanel: `"Diluição SPR"` → `"Dissipação RP"`
@@ -20,10 +21,12 @@ Sessão de refinamento conceitual profundo. Branch `main`.
 - Caption: explica RP exibido = custo de colisão se a decisão ocorrer naquela street
 
 ### Conteúdo educacional atualizado
+
 - `aula-icm`: 2 callouts na Conclusão — Downward Drift (O'Kearney, compressão de ação) + Dissipação de RP (mecanismo que controla intensidade do Drift por street)
 - `leitura-icm`: Seção 3.2 expandida; definição de RP com nota temporal; nota Toy Games; link /tools/icm → /tools/simulador
 
 ### Simulador — labels de precisão
+
 - `RiskGauge`: "R. Premium" → "RP Colisão"
 - `NashPanel`: labels sensibilidade → "RP Colisão OOP/IP +10%" + footnote de contexto
 

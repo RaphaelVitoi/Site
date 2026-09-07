@@ -71,6 +71,7 @@ Sistema de autonomia migrado de 3 modos (off/partial/full) para 4 modos:
 | `full` | Permitida | Todos permitidos | Agencia Total |
 
 ### Uso via CLI
+
 ```powershell
 .\do.ps1 -Autonomy stop     # W0
 .\do.ps1 -Autonomy default  # homeostase

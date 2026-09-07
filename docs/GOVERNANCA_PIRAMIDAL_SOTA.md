@@ -148,6 +148,7 @@ flowchart LR
 ## 5. Invariante Canônica de Commits & Edições Pontuais (M.O. 13.G)
 
 Toda mutação no código fonte, artefatos ou registros deve conter obrigatoriamente:
+
 1. **SHA:** Identificador criptográfico Git do commit correspondente.
 2. **Assinatura:** Autor institucional e Tier hierárquico (ex: `Chico v8.0 GOLD [Tier 1.B]`, `Subagent-Research [Tier 4]`).
 3. **Propósito:** Justificativa funcional explícita, identificando o impacto e os arquivos sob Target Lock.

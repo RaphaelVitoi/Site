@@ -15,10 +15,12 @@ Não é "qual o ICM EV deste pot" mas "dentro do meu referencial (estrutura, pay
 É o que Malmuth-Harville calcula, mas tratado dinamicamente: não como snapshot, mas como função contínua que muda conforme stacks mudam. Minha Perspectiva aumenta quando a dos outros cai (competitivo).
 
 **Esperança Matemática** — o ganho esperado em Perspectiva de uma ação específica.
+
 ```
 Esperança(ação) = P(ganhar) × ΔPerspectiva_ganho
                 + P(perder) × ΔPerspectiva_perda
 ```
+
 A decisão ótima é aquela que maximiza Esperança, não ICM EV do pot isolado.
 
 ---
@@ -36,6 +38,7 @@ O CL não maximiza ICM EV do pot — ele minimiza a probabilidade de que mid-sta
 Player de menor RP paga pre/flop/turn → stack menor → RP tecnicamente maior.
 Análise ingênua: mais cautela. Análise correta: depende de se ganhar o pot
 muda materialmente a Perspectiva. Dois casos:
+
 - Pot ganho muda escalão (ex: short → mid): Esperança domina RP aumentado → pagar
 - Pot ganho não muda escalão (continua vulnerável): RP pode dominar → cautela
 
@@ -93,6 +96,7 @@ conforme pressão ICM aumenta. Descrição qualitativa do fenômeno.
 O salto da descrição qualitativa para a equação com coeficientes calibrados é original.
 
 **Referências de validação:**
+
 - GTO Wizard blog "MDF vs ICM" — confirma que MDF quebra sob ICM, valida Opção B do motor
 - GTO Wizard blog "How ICM Impacts Postflop Strategy" — confirma covering player mais agressivo, downward drift, supressão de large bets (alinha com k_ip_bet_large = -12)
 - O'Kearney & Carter — origem do Downward Drift; deve ser creditado no site onde o conceito aparece

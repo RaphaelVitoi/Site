@@ -1,4 +1,5 @@
 # 🏛️ NEXUS ORCHESTRATOR — SISTEMA SOTA v7.0 GOLD
+>
 > "A excelência não é um ato, mas um hábito. O Estado da Arte é a Cosmovisão executada no seu ápice."
 
 **Governança:** Raphael Vitoi (Tier 0 — Liderança / CEO)  
@@ -35,10 +36,12 @@ C:\Users\rapha\.gemini\Site\
 ## 2. Mapa Operacional e Executivo
 
 ### A. Relação de Governança
+
 - **Raphael Vitoi:** Define a estratégia, arquitetura de sistemas, visão de produto e teoria de decisão (+EV / PMev).
 - **Chico:** Analisa requisitos com rigor matemático, pondera trade-offs técnicos e executa as implementações sem atrito (Zero-Entropy).
 
 ### B. Motores e Cálculos Centrais
+
 - **Equação da Perspectiva Matemática (PMev):**
   $$PM = [(Equity \times R) \times Valuation] - [EV_{fold}(t, d_{pj}, pos) + RIO_{mw}]$$
 - **Validação Automatizada:** `tests/test_vitoi_perspective_engine.py` (95% de cobertura de código).

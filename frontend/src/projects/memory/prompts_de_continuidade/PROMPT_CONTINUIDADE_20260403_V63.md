@@ -7,6 +7,7 @@ type: project
 ## Estado Atual (V63 — 2026-04-03)
 
 ### Commit
+
 `af610d8` — fix(simulator): conectar morphs aos cenários, corrigir Matchup/Radar, limpar alias morto
 
 ### O que foi feito nesta sessão
@@ -56,6 +57,7 @@ type: project
 ### Explicação: por que não usar âncora empírica para todos os cenários
 
 Os **coeficientes K** (calibrados na âncora ΔRP=8.5) SÃO usados em todos os cenários. O que varia são as **frequências ChipEV de entrada** (defaultStreetFreqs). Essas dependem de:
+
 - Posições relativas (BTN vs BB ≠ UTG vs BB)
 - SPR efetivo (shove 12bb ≠ deep 55bb)
 - Board texture
@@ -64,4 +66,5 @@ Os **coeficientes K** (calibrados na âncora ΔRP=8.5) SÃO usados em todos os c
 Para calibrar cada cenário, precisaria rodar cada spot no GTO Wizard. O motor compensa com spread (incerteza proporcional ao desvio da âncora).
 
 ### Build
+
 Zero erros. Lint passa.

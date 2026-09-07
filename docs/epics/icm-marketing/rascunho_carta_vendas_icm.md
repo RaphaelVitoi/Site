@@ -12,10 +12,10 @@ Convido voce a mergulhar no curso "ICM Desvendado: A Ciencia e a Arte da Decisao
 
 Com Raphael, voce nao apenas aprendera a "jogar ICM". Voce aprendera a **pensar ICM**.
 
-*   **Dominio Total:** Desvende os segredos do Independent Chip Model, Risk Premium e a Teoria GTO, com aplicacoes praticas validadas por ferramentas de ponta como DeepSolver e GTOWizard.
-*   **Mente Afiada:** Explore as conexoes entre o poker, a psicologia das decisoes sob pressao (BPD, TDAH) e as dinamicas de poder (D/s como metafora etica), forjando uma compreensao que vai alem das mesas.
-*   **Estrategia Profunda:** Desenvolva uma estrutura de pensamento que o permite nao apenas calcular o EV, mas **sentir o conceito** de valor, risco e recompensa de forma visceral e inteligente.
-*   **Excelencia Radical:** Em um ambiente de honestidade brutal e busca incessante pelo Estado da Arte, Raphael compartilha decadas de experiencia como jogador e psicologo para que voce atinja sua maxima autonomia.
+* **Dominio Total:** Desvende os segredos do Independent Chip Model, Risk Premium e a Teoria GTO, com aplicacoes praticas validadas por ferramentas de ponta como DeepSolver e GTOWizard.
+* **Mente Afiada:** Explore as conexoes entre o poker, a psicologia das decisoes sob pressao (BPD, TDAH) e as dinamicas de poder (D/s como metafora etica), forjando uma compreensao que vai alem das mesas.
+* **Estrategia Profunda:** Desenvolva uma estrutura de pensamento que o permite nao apenas calcular o EV, mas **sentir o conceito** de valor, risco e recompensa de forma visceral e inteligente.
+* **Excelencia Radical:** Em um ambiente de honestidade brutal e busca incessante pelo Estado da Arte, Raphael compartilha decadas de experiencia como jogador e psicologo para que voce atinja sua maxima autonomia.
 
 Este curso e para quem se recusa a aceitar "bom o suficiente". E para aqueles que, como Raphael, buscam a **excelencia em tudo**, entendendo que a beleza de uma decisao esta em sua clareza, logica e impacto.
 

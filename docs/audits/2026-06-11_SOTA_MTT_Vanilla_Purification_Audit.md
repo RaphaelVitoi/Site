@@ -19,6 +19,7 @@ graph TD
 ```
 
 ### 1.1. A Equação Unificada da Perspectiva (PM & PMev)
+
 A **Perspectiva Matemática (PM)** (Layer 4) não é responsável pelo cálculo inicial de RIO ou do EV do Fold (que pertencem às camadas anteriores, notadamente a Layer 3). A Perspectiva Matemática atua como a camada onde encapsulamos a nova métrica. Ela unifica as dimensões estratégica, probabilística, matemática/monetária e preditiva em uma **Análise Preditiva e Precursiva em camadas e galhos profundos da árvore de decisão** (projetando que se Hero joga a ação $X$, ancorado nas probabilidades $a, b, c$, quais serão os outcomes reais das decisões subsequentes $\alpha, \beta, \gamma$ sob a perspectiva dimensional). Envelopa todo o sistema iterativo das camadas anteriores em nós preditivos estruturados para determinar a **probabilidade realística preditiva do melhor outcome possível**. A nível de consolidação, a PM expressa a porcentagem final de equidade do prize pool:
 
 $$\text{PM} = \text{Expectativa} - (\text{RIO}_{\text{mw}} + \text{EV}_{\text{fold\_dynamic}})$$
@@ -38,16 +39,18 @@ $$C_i = \frac{\text{PMev}}{\text{Valuation\_incentivo\_linear\_ICMev}}$$
 Se $C_i < 1.0$, a mão é considerada insolvente estrategicamente, comprovando a ineficiência e obsolescência da visão linear clássica do ICMev estático.
 
 #### Variáveis e Modificadores Estruturais:
-1.  **Fator de Realização ($R$):** Parametriza a capacidade de realizar a equidade bruta pós-flop. Chunks de equidade marginal que sofrem com OOP (Out Of Position) têm $R < 1.0$.
-2.  **Valuation do Stack ($V$):** Mede o peso utilitário do stack no modelo ICM dinâmico (não-linear).
-3.  **Frequência de FGS ($\text{FGS}_{\text{health}}$):** Ponderação de Future Game Simulation que amplifica o risco de ruína caso a saúde do stack nos blinds futuros ($t-3$) esteja deteriorada.
-4.  **Amortização de Edge ($\text{Edge}_{\text{amortized}}$):** Calculada por:
+
+1. **Fator de Realização ($R$):** Parametriza a capacidade de realizar a equidade bruta pós-flop. Chunks de equidade marginal que sofrem com OOP (Out Of Position) têm $R < 1.0$.
+2. **Valuation do Stack ($V$):** Mede o peso utilitário do stack no modelo ICM dinâmico (não-linear).
+3. **Frequência de FGS ($\text{FGS}_{\text{health}}$):** Ponderação de Future Game Simulation que amplifica o risco de ruína caso a saúde do stack nos blinds futuros ($t-3$) esteja deteriorada.
+4. **Amortização de Edge ($\text{Edge}_{\text{amortized}}$):** Calculada por:
     $$\text{Edge}_{\text{amortized}} = \text{Edge}_{\text{base}} \times \frac{\ln(S_{\text{eff}})}{\ln(60)}$$
     Esta formulação logarítmica modela a perda de vantagem do profissional à medida que o stack encolhe. A árvore de decisões colapsa para a Invariância de Nash binária (Push/Fold) em stacks $\le 10\text{bb}$ ($\ln(10)/\ln(60) \approx 0.56$), protegendo o jogador recreativo devido à ausência de decisões pós-flop.
 
 ---
 
 ### 1.2. Teoria do Prospecto Aplicada (VITOI-Kahneman)
+
 As perdas e ganhos em torneios de poker não são lineares em termos de utilidade biológica ou financeira. O backend calcula a utilidade da equidade através da curva do prospecto de Kahneman-Tversky:
 
 $$U(x) = \begin{cases} x^\alpha & \text{se } x \ge 0 \\ -\lambda \cdot |x|^\beta & \text{se } x < 0 \end{cases}$$
@@ -55,72 +58,80 @@ $$U(x) = \begin{cases} x^\alpha & \text{se } x \ge 0 \\ -\lambda \cdot |x|^\beta
 Com parâmetros clássicos de calibração comportamental definidos no core em $\alpha = 0.88$ e $\beta = 0.88$.
 
 #### Dinâmica de Aversão à Perda ($\lambda$):
+
 A aversão à perda não é estática; ela reage termodinamicamente ao tamanho do stack e à iminência de blinds futuros:
 
 $$\lambda = \lambda_{\text{base}} \times \left( \frac{\ln(100)}{\ln(\max(2.718, S_{\text{eff}}))} \right) \times \left( \frac{1}{\max(0.1, \text{FGS}_{\text{health}}^2)} \right)$$
 
-*   **Micro-Stacks ($S_{\text{eff}} \to 0$):** O termo $\frac{\ln(100)}{\ln(S_{\text{eff}})}$ tende ao infinito, elevando $\lambda$ a valores críticos. A aversão ao risco explode, forçando a preservação estrita do capital restante.
-*   **Saúde Crítica do FGS ($\text{FGS}_{\text{health}} \to 0$):** O termo quadrático inverso da saúde do FGS atua como multiplicador punitivo, aumentando drasticamente $\lambda$ se o stack estiver prestes a ser engolido pelos blinds nas próximas mãos.
-*   **Estados Cognitivos (Drifts):**
-    *   `tilt`: $\lambda \to \lambda \times 0.66$ e $\beta = 0.95$ (menor aversão e maior linearidade ao risco, emulando agressão irracional).
-    *   `protecting`: $\lambda \to \lambda \times 1.33$ e $\alpha = 0.75$ (acentua a aversão e reduz o ganho de utilidade por fichas adicionais).
-    *   `bubble` (A bolha clássica): $\lambda \to \lambda \times 2.0$ (dobra a aversão à perda para modelar a penalidade física do ICM antes da faixa de premiação).
+* **Micro-Stacks ($S_{\text{eff}} \to 0$):** O termo $\frac{\ln(100)}{\ln(S_{\text{eff}})}$ tende ao infinito, elevando $\lambda$ a valores críticos. A aversão ao risco explode, forçando a preservação estrita do capital restante.
+* **Saúde Crítica do FGS ($\text{FGS}_{\text{health}} \to 0$):** O termo quadrático inverso da saúde do FGS atua como multiplicador punitivo, aumentando drasticamente $\lambda$ se o stack estiver prestes a ser engolido pelos blinds nas próximas mãos.
+* **Estados Cognitivos (Drifts):**
+  * `tilt`: $\lambda \to \lambda \times 0.66$ e $\beta = 0.95$ (menor aversão e maior linearidade ao risco, emulando agressão irracional).
+  * `protecting`: $\lambda \to \lambda \times 1.33$ e $\alpha = 0.75$ (acentua a aversão e reduz o ganho de utilidade por fichas adicionais).
+  * `bubble` (A bolha clássica): $\lambda \to \lambda \times 2.0$ (dobra a aversão à perda para modelar a penalidade física do ICM antes da faixa de premiação).
 
 ---
 
 ### 1.3. Passivo Estrutural de Colisão (RIO Tension)
-As Reverse Implied Odds (RIO) representam o risco invisível de jogar mãos marginais que, quando ganham, ganham potes pequenos e, quando perdem, perdem potes colossais. 
+
+As Reverse Implied Odds (RIO) representam o risco invisível de jogar mãos marginais que, quando ganham, ganham potes pequenos e, quando perdem, perdem potes colossais.
 
 A tensão de RIO ($T_{\text{rio}}$) é calculada no motor por:
 
 $$T_{\text{rio}} = \frac{\text{Liability}_{\text{base}} \times O_{\text{pp}}^{1.0 + \kappa_{\text{noise}}}}{100} + \text{Entrapment}_{\text{pot}} \times D_{\text{rift}} \times M_{\text{itigation}}$$
 
 Onde:
-1.  **Entrapment do Pote:** Mede a razão de compromisso financeiro sobre o stack do Hero:
+
+1. **Entrapment do Pote:** Mede a razão de compromisso financeiro sobre o stack do Hero:
     $$\text{Entrapment}_{\text{pot}} = \frac{\text{Invested} + \text{BetToCall}}{S_{\text{eff}}} \times (1.0 + \text{Gravity} \times 0.1)$$
-2.  **Downward Drift ($D_{\text{rift}}$):** OOP penaliza a ação com $1.25$ vs. IP com $0.85$.
-3.  **Gravidade do Pote ($\text{Gravity}$):** Medida na escala logarítmica baseada no pote padrão (SRP de $7.5\text{bb}$):
+2. **Downward Drift ($D_{\text{rift}}$):** OOP penaliza a ação com $1.25$ vs. IP com $0.85$.
+3. **Gravidade do Pote ($\text{Gravity}$):** Medida na escala logarítmica baseada no pote padrão (SRP de $7.5\text{bb}$):
     $$\text{Gravity} = \ln\left(\max\left(1.0, \frac{\text{Pot}}{7.5}\right)\right)$$
-4.  **Multiplicador Multiway (Colisão Friccional):** Com mais oponentes ($O_{\text{pp}} = N_{\text{players}} - 1$), o passivo estrutural cresce exponencialmente à taxa de $O_{\text{pp}}^{2 + \kappa_{\text{noise}}}$, de modo que em potes multiway a equidade necessária para defesa é inflada drasticamente devido ao risco de colisão múltipla.
+4. **Multiplicador Multiway (Colisão Friccional):** Com mais oponentes ($O_{\text{pp}} = N_{\text{players}} - 1$), o passivo estrutural cresce exponencialmente à taxa de $O_{\text{pp}}^{2 + \kappa_{\text{noise}}}$, de modo que em potes multiway a equidade necessária para defesa é inflada drasticamente devido ao risco de colisão múltipla.
 
 ---
 
 ### 1.4. Roteamento de Frequência de Ação e Inércia do ICM
+
 No pós-flop, a agressão topologicalmente guiada em [math_sota.py](file:///C:/users/rapha/.gemini/antigravity/worktrees/Site/thorough-backend-code-analysis/engine/math_sota.py#L44-L98) e Rust (`solve_icm_distortion_v2`) atualiza as frequências de Nash (Fold/Call/Raise) aplicando a inércia do pote:
-*   **Agressão Efetiva Amortecida:**
+
+* **Agressão Efetiva Amortecida:**
     $$\text{Agg}_{\text{effective}} = 1.0 + (\text{Agg}_{\text{topological}} - 1.0) \times \left( \frac{1}{1 + \text{Gravity} \times 0.12} \right)$$
     À medida que o pote cresce ($\text{Gravity} \to \infty$), o amortecimento empurra a agressão efetiva de volta para $1.0$, modelando o congelamento da agressão em potes colossais onde os ranges estão excessivamente definidos e comprometidos.
-*   **Penalidade de Drift no Raise:**
+* **Penalidade de Drift no Raise:**
     $$\text{Drift}_{\text{penalty}} = \text{Raise} \times \left( \text{Pressure}_{\text{RP}} \times 0.004(\text{Street}_{\text{idx}} + 1) \times (1.0 + \text{Gravity} \times 0.5) \right)$$
     A pressão das RIO desvia a frequência de Raise para o Call ou Check, escala com a street do pós-flop (Flop=0, Turn=1, River=2) e com o tamanho do pote.
-*   **Teto do Fold no Pote:**
+* **Teto do Fold no Pote:**
     $$\text{Fold}_{\text{max}} = 0.88 - \min\left(0.3, \text{Gravity} \times 0.05\right)$$
     Impede que a simulação sugira frequências absurdas de fold em potes gigantes onde o jogador está matematicamente precificado para o call (pot committed).
 
 ---
 
 ### 1.5. Atualização de Range Posterior (Teorema de Bayes)
+
 A contração de ranges no motor [bayesian_range.py](file:///C:/users/rapha/.gemini/antigravity/worktrees/Site/thorough-backend-code-analysis/engine/bayesian_range.py) processa cada ação observada para ajustar o prior do range oponente:
 
 $$P(\text{Mão}_{r,c} \mid \text{Ação}) = \frac{P(\text{Ação} \mid \text{Mão}_{r,c}) \times P(\text{Mão}_{r,c})}{\sum_{i=1}^{13} \sum_{j=1}^{13} P(\text{Ação} \mid \text{Mão}_{i,j}) \times P(\text{Mão}_{i,j})}$$
 
-*   **Construção do Likelihood:** A matriz de likelihood é povoada mapeando mãos em 5 categorias táticas pós-flop (`top_pair_plus`, `overpair`, `mid_bottom_pair`, `weak_pocket_pair`, `air_or_draw`) calibradas pelas frequências populacionais.
-*   **Drift de Perfil Cognitivo:**
-    *   Se oponente for `nit`, a probabilidade de apostar com "air" (blefe) é cortada: $P_{\text{bet}} \times 0.2$.
-    *   Se oponente for `aggro`, a frequência de blefe é inflada: $\min(1.0, P_{\text{bet}} \times 1.8)$.
-    *   Se for `station` (Calling Station), a frequência de call com pares marginais sobe: $\min(1.0, P_{\text{call}} \times 1.5)$.
+* **Construção do Likelihood:** A matriz de likelihood é povoada mapeando mãos em 5 categorias táticas pós-flop (`top_pair_plus`, `overpair`, `mid_bottom_pair`, `weak_pocket_pair`, `air_or_draw`) calibradas pelas frequências populacionais.
+* **Drift de Perfil Cognitivo:**
+  * Se oponente for `nit`, a probabilidade de apostar com "air" (blefe) é cortada: $P_{\text{bet}} \times 0.2$.
+  * Se oponente for `aggro`, a frequência de blefe é inflada: $\min(1.0, P_{\text{bet}} \times 1.8)$.
+  * Se for `station` (Calling Station), a frequência de call com pares marginais sobe: $\min(1.0, P_{\text{call}} \times 1.5)$.
 
 ---
 
 ### 1.6. O Kernel Rust / WASM (Axioma Lipe Piv)
+
 Escrito em Rust para execução em latência sub-milissegundo via FFI Zero-Copy:
-1.  **Erradicação de Rejection Sampling:** Pré-computa em $O(1)$ os combos válidos na função `precompute_combos` com base no estado do board e cartas mortas, eliminando a rejeição aleatória de mãos inválidas dentro do loop de Monte Carlo.
-2.  **Avaliador Térmico de 7 Cartas:** Utiliza representação bitwise pura de ranks e suits (`evaluate_7cards`) e busca em máscara por straights com deslocamento de bits, alcançando performance extrema em C/Rust.
-3.  **Kappa Mutation (Axioma Lipe Piv):**
+
+1. **Erradicação de Rejection Sampling:** Pré-computa em $O(1)$ os combos válidos na função `precompute_combos` com base no estado do board e cartas mortas, eliminando a rejeição aleatória de mãos inválidas dentro do loop de Monte Carlo.
+2. **Avaliador Térmico de 7 Cartas:** Utiliza representação bitwise pura de ranks e suits (`evaluate_7cards`) e busca em máscara por straights com deslocamento de bits, alcançando performance extrema em C/Rust.
+3. **Kappa Mutation (Axioma Lipe Piv):**
     Quando $\kappa < 1.0$, o motor aplica uma perturbação estocástica na bitmask do range oponente usando um gerador de congruência linear (LCG) rápido:
-    
+
     $$X_{n+1} = (X_n \times 1664525 + 1013904223) \pmod{2^{32}}$$
-    
+
     Se o número pseudo-aleatório gerado for menor que o limiar de ruído ($1.0 - \kappa$), bits de combos de blefe oponentes são ativados via `*byte |= 0b01010101;`, alterando dinamicamente os inputs da simulação Monte Carlo.
 
 ---
@@ -162,6 +173,7 @@ A validação de toda esta engenharia matemática e de infraestrutura é feita a
 ---
 
 ### 2.2. Logs de Resultados Empíricos (Pytest Executado)
+
 O teste de estresse e validação matemática de ponto flutuante compilou o seguinte log:
 
 ```text
@@ -198,9 +210,10 @@ tests/test_task_routing.py::test_routing_map_modelos_conhecidos PASSED   [100%]
 ```
 
 #### Análise de Desempenho e Estabilidade Numérica:
-1.  **Contração de Range (Velocidade):** O teste `test_performance_bayesian_contraction` consolidou 1000 runs com latência média de **$0.060\text{ms}$** por operação de Bayes (limite máximo tolerável: $1\text{ms}$). A contracao provou ser imune a vazamentos de memória ou estouros de heap na RAM.
-2.  **Potes Extremos (Precisão):** O teste `test_numerical_stability_extreme_pots` forçou a distorção do ICM em um pote de **$1.000.000\text{bb}$** (caso que costuma gerar divisões por zero ou desvios em ponto flutuante IEEE 754). A soma das probabilidades resultantes manteve estabilidade total em $1.0000000000$ sob uma tolerância de $10^{-9}$ em Rust e Python.
-3.  **Transacionalidade SQLite:** A concorrência transacional foi validada no teste de duplicação de IDs. O `QueueManager` disparou exceptions de constraint SQL de forma correta e automática no rollback de inserts concorrentes, garantindo integridade transacional ACID.
+
+1. **Contração de Range (Velocidade):** O teste `test_performance_bayesian_contraction` consolidou 1000 runs com latência média de **$0.060\text{ms}$** por operação de Bayes (limite máximo tolerável: $1\text{ms}$). A contracao provou ser imune a vazamentos de memória ou estouros de heap na RAM.
+2. **Potes Extremos (Precisão):** O teste `test_numerical_stability_extreme_pots` forçou a distorção do ICM em um pote de **$1.000.000\text{bb}$** (caso que costuma gerar divisões por zero ou desvios em ponto flutuante IEEE 754). A soma das probabilidades resultantes manteve estabilidade total em $1.0000000000$ sob uma tolerância de $10^{-9}$ em Rust e Python.
+3. **Transacionalidade SQLite:** A concorrência transacional foi validada no teste de duplicação de IDs. O `QueueManager` disparou exceptions de constraint SQL de forma correta e automática no rollback de inserts concorrentes, garantindo integridade transacional ACID.
 
 ---
 *Relatório de engenharia detalhado gerado pelo agente **Chico (Gemini CLI)** sob o protocolo Chico SOTA v7.0 GOLD.*

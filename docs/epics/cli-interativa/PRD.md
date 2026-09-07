@@ -22,4 +22,3 @@ Evoluir o arquivo `do.ps1` (wrapper do Worker) de um mero "dumb pipe" passivo pa
 ## 4. Resultado Esperado
 
 Uma porta de entrada elegante que barra comandos vazios e direciona perfeitamente o pensamento do usuario para a fila SOTA (SQLite).
-

@@ -1,6 +1,6 @@
 {
   "schema_version": "agent-calibration-evidence/v4",
-  "date": "2026-09-05",
+  "date": "2026-09-06",
   "gate_metric": "distinct_sessions_with_feedback",
   "gate_definition": "Sessao = do inicio ao fim de um trabalho; compactacao de contexto NAO encerra sessao. A metrica que autoriza avaliacao e o numero de SESSOES DISTINTAS com feedback, acumulado desde a ultima calibracao e sem prazo de validade. Densidade intra-sessao (varios feedbacks numa mesma sessao) e dado retido, nao gatilho.",
   "evaluated_at_policy": "Gatilho primario: aviso proativo no instante em que o limiar e atingido, se nao houver tarefa em andamento. Lastro: corrida diaria as 23:59 (Register-AgentCalibrationDailyTask.ps1), que registra a evidencia do dia inclusive quando ela e insuficiente.",
@@ -52,15 +52,11 @@
   "sessoes_faltantes": 0,
   "sessoes_com_inicio_inconsistente": [],
   "sessoes_com_densidade_relevante": [],
-  "sessoes_ativas_no_dia": [
-    "01a07276-1d55-7fe0-960b-dad779b641f1",
-    "claude-opus5-site-2026-09-05-fechamento-do-ciclo",
-    "gemini-3.8-flash-site-2026-09-05-nexus-ollama-chat"
-  ],
+  "sessoes_ativas_no_dia": [],
   "feedback_count_acumulado": 14,
   "correcoes_no_ledger": 2,
   "correcoes_aplicadas": 2,
-  "feedback_count_no_dia": 3,
+  "feedback_count_no_dia": 0,
   "feedback_sem_sessao": 0,
   "por_sessao": [
     {
@@ -273,7 +269,7 @@
   "score_mean": 9.13,
   "score_min": 7.5,
   "score_max": 10.0,
-  "score_mean_no_dia": 9.27,
+  "score_mean_no_dia": null,
   "evidence_gate": {
     "metric": "distinct_sessions_with_feedback",
     "minimum_distinct_sessions": 3,
@@ -499,8 +495,36 @@
   ],
   "outlier_evidence": {
     "ledger_path": "C:\\Users\\rapha\\.gemini\\Site\\reports\\agent-calibration\\outlier-evidence-ledger.jsonl",
-    "count": 0,
-    "records": [],
+    "count": 1,
+    "records": [
+      {
+        "schema_version": "agent-calibration-outlier-ledger/v1",
+        "sequence": 4,
+        "record_type": "outlier",
+        "recorded_at": "2026-09-06T00:02:32.4506294-03:00",
+        "previous_hash": "e56cf56562f95bd9d13d6bc0615ea26c24eda686de3d1093c27042ffa672a723",
+        "outlier_id": "512fc3a6-7446-4826-aec8-d71ec5e951b0",
+        "observation": "Auditoria 2026-09-06: prompt agendado exige recorte diario antigo; gerador v4 conta sessoes acumuladas. O universo gerado inclui feedback 48443d06-2119-4ab9-9c36-6ba72d35c056 de scope intrasessao-outlier, correspondente ao outlier b39b7431-fe06-44a3-8973-8ba68ac449fc ainda nao promovido. Integridade hash valida nao resolve divergencia semantica de elegibilidade.",
+        "source_references": [
+          "scripts/ops/New-AgentCalibrationDailyEvidence.ps1",
+          "reports/agent-calibration/feedback-ledger.jsonl",
+          "reports/agent-calibration/outlier-evidence-ledger.jsonl",
+          "automation:calibra-o-di-ria-de-coer-ncia-ag-ntica"
+        ],
+        "metrics": {
+          "feedback_chain_records": 17,
+          "outlier_chain_records_before_append": 4,
+          "sessions_reported": 13,
+          "feedback_reported": 14,
+          "feedback_today": 0,
+          "confirmed_overlap": 1
+        },
+        "origin_hypothesis": "Prompt possivelmente desatualizado e filtro de record_type feedback sem exclusao de scope outlier. Revisao deterministica deve reconciliar autorizacao de janela e elegibilidade por identificador antes do planejamento; nenhuma promocao automatica.",
+        "disposition": "retained-pending-deterministic-review",
+        "pattern_indexed": false,
+        "record_hash": "358c6c7b61110d4e59cc868640d92b396dd948ceb7d5b3eae9229c828c75cfda"
+      }
+    ],
     "disposition": "retained separately; excluded from pattern indexing and calibration sample until deterministic posterior review",
     "automatic_pattern_indexing": false,
     "low_sample_origin_rule": "A low-sample outlier may indicate an origin-specific pattern. Retain it and require deterministic posterior analysis; do not promote it from frequency alone."

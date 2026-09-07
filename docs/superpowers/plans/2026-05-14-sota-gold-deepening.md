@@ -13,6 +13,7 @@
 ### Task 1: Blindagem de Ambiente e Mock de Seguranca (Auth.js)
 
 **Files:**
+
 - Modify: `frontend/src/auth.ts`
 
 - [ ] **Step 1: Implementar validador de segredos e injecao de Mock**
@@ -72,6 +73,7 @@ git commit -m "sec: implement sota gold environment shielding for auth"
 ### Task 2: Unificacao de Versao e Marginal Zone Dinamica (PerspectivePanel)
 
 **Files:**
+
 - Modify: `frontend/src/components/simulator/panels/PerspectivePanel.tsx`
 
 - [ ] **Step 1: Atualizar Identidade Visual e Logica da Marginal Zone**
@@ -120,6 +122,7 @@ git commit -m "feat: upgrade perspective panel to v4.6 gold with dynamic margina
 ### Task 3: Modularizacao da Telemetria WASM
 
 **Files:**
+
 - Modify: `frontend/src/components/simulator/panels/PerspectivePanel.tsx`
 - Import: `WasmTelemetryWidget` de `./WasmTelemetryWidget`
 
