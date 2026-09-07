@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
     [ValidateRange(1, 65535)][int]$ServerPort = 3100,
     [ValidateRange(1, 65535)][int]$CdpPort = 9230,
@@ -57,8 +57,12 @@ function Stop-AuditChrome {
 if (-not (Test-Path -LiteralPath $FrontendRoot -PathType Container)) { throw "Frontend ausente: $FrontendRoot" }
 if (-not (Test-Path -LiteralPath $CollectorPath -PathType Leaf)) { throw "Coletor Lighthouse ausente: $CollectorPath" }
 
-$chromePath = Join-Path ${env:ProgramFiles} 'Google\Chrome Dev\Application\chrome.exe'
-if (-not (Test-Path -LiteralPath $chromePath -PathType Leaf)) { throw "Chrome Dev nao encontrado: $chromePath" }
+$candidateChromePaths = @(
+    (Join-Path ${env:ProgramFiles} 'Google\Chrome Dev\Application\chrome.exe'),
+    (Join-Path ${env:ProgramFiles} 'Google\Chrome\Application\chrome.exe'),
+    (Join-Path ${env:ProgramFiles(x86)} 'Google\Chrome\Application\chrome.exe')
+) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) }
+if ($candidateChromePaths.Count -eq 0) { throw "Nenhum executavel do Chrome ou Chrome Dev encontrado." }
 $node = Get-Command node.exe -ErrorAction Stop
 $npm = Get-Command npm.cmd -ErrorAction SilentlyContinue
 if ($null -eq $npm) { $npm = Get-Command npm -ErrorAction Stop }
@@ -84,20 +88,32 @@ try {
     Wait-ForHttp -Url $ProductionUrl -Description 'Next em modo producao'
 
     New-Item -ItemType Directory -Path $auditProfile -Force | Out-Null
-    Start-Process -FilePath $chromePath -ArgumentList @(
-        '--headless=new',
-        '--remote-debugging-address=127.0.0.1',
-        "--remote-debugging-port=$CdpPort",
-        "--user-data-dir=$auditProfile",
-        '--disable-extensions',
-        '--disable-component-extensions-with-background-pages',
-        '--disable-background-networking',
-        '--disable-sync',
-        '--no-first-run',
-        '--no-default-browser-check',
-        'about:blank'
-    ) -WindowStyle Hidden | Out-Null
-    Wait-ForHttp -Url ("http://127.0.0.1:{0}/json/version" -f $CdpPort) -Description 'CDP do Chrome isolado'
+    $chromeStarted = $false
+    foreach ($candidate in $candidateChromePaths) {
+        try {
+            Start-Process -FilePath $candidate -ArgumentList @(
+                '--headless=new',
+                '--remote-debugging-address=127.0.0.1',
+                "--remote-debugging-port=$CdpPort",
+                "--user-data-dir=$auditProfile",
+                '--disable-extensions',
+                '--disable-component-extensions-with-background-pages',
+                '--disable-background-networking',
+                '--disable-sync',
+                '--no-first-run',
+                '--no-default-browser-check',
+                'about:blank'
+            ) -WindowStyle Hidden | Out-Null
+            Wait-ForHttp -Url ("http://127.0.0.1:{0}/json/version" -f $CdpPort) -Description "CDP do Chrome isolado ($candidate)"
+            $chromeStarted = $true
+            break
+        } catch {
+            Write-Warning "Falha ao iniciar $candidate : $($_.Exception.Message)"
+        }
+    }
+    if (-not $chromeStarted) {
+        throw "Nao foi possivel iniciar nenhuma instancia do Chrome isolado de auditoria."
+    }
 
     & $node.Source $CollectorPath '--url' $ProductionUrl '--port' $CdpPort '--source-root' $FrontendRoot '--output' $ArtifactPath
     if ($LASTEXITCODE -ne 0) { throw "O coletor Lighthouse terminou com codigo $LASTEXITCODE." }
