@@ -135,7 +135,7 @@ class ModelCapability(BaseModel):
     motivo_nao_autorizado: str = ""
 
     # FAIXA DE ACESSO -- o discriminante que preco por token nao captura.
-    # True  = alcancavel por cota de assinatura (Faixa.FLAT_FEE), com custo
+    # True  = alcancavel por cota de assinatura (Faixa.FLAT_FEE / Free Tier), com custo
     #         marginal zero DENTRO da cota; o excedente cai no preco de tabela.
     # False = existe apenas em pay-as-you-go, e todo uso e API_PAGA.
     # Declarado aqui, e nao em `Rota.faixa`, porque e propriedade do MODELO:
@@ -144,13 +144,11 @@ class ModelCapability(BaseModel):
     # este modulo -- por isso o campo e booleano e nao o enum: declarar o tipo
     # aqui inverteria a direcao da dependencia.
     #
-    # ATENCAO AO DEFAULT: `False` aqui significa "nao declarado", e NAO
-    # "confirmado sem cota". Em 2026-09-07 o Tier 0 declarou a faixa de tres
-    # modelos: `gpt-6-astra` (True, unico no registro) e a familia Fable
-    # (False -- e foi essa a razao de saírem; ver MODELOS_RETIRADOS). Para os
-    # demais o campo ainda nao foi levantado, e a refinacao esta DELEGADA ao
-    # Gemini 3.5 Flash-Lite. Nao usar a ausencia como evidencia.
-    cota_por_assinatura: bool = False
+    # LEVANTADO em 2026-09-07 pelo Gemini 3.5 Flash-Lite (delegacao §6):
+    # Modelos Anthropic (Opus 5, Sonnet 5, Opus 4.6, Sonnet 4.6), OpenAI (Sol, Terra, Luna)
+    # e Google (Gemini 3.8/3.7/3.6/3.5/3.5-Lite) possuem faixas de cota de assinatura web /
+    # free tier API. A familia Fable (ver MODELOS_RETIRADOS) e pay-as-you-go exclusivo.
+    cota_por_assinatura: bool = True
 
     #  Anthropic
     # thinking adaptativo e o unico modo suportado na geracao 5.

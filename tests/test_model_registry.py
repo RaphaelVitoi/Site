@@ -54,6 +54,12 @@ def test_modelo_nao_verificado_fica_fora_e_explica_o_motivo():
         get("gpt-5.6-sol-ultrafast")
 
 
+def test_cota_por_assinatura_modelos_ativos():
+    """Modelos ativos de fronteira possuem cota de assinatura ou free tier verificado."""
+    for alias, cap in MODEL_REGISTRY.items():
+        assert cap.cota_por_assinatura is True, f"{alias} deveria ter cota_por_assinatura=True"
+
+
 #  Anthropic: as correcoes criticas
 
 

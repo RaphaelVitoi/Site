@@ -39,12 +39,14 @@ from llm.adapters import OpenAIAdapter, ParametroRejeitadoError
 from llm.model_registry import (
     ESFORCOS_OPENAI_VALIDOS,
     MODEL_REGISTRY,
+    MODELOS_NAO_VERIFICADOS,
     MODELOS_RETIRADOS,
     AdapterType,
     custo_estimado,
     get,
+    modelos_nao_autorizados,
 )
-from llm.routing_policy import ROTAS, ClasseTarefa
+from llm.routing_policy import MODELOS_LOCAIS, ROTAS, ClasseTarefa
 
 USUARIO = [{"role": "user", "content": "ping"}]
 
@@ -224,8 +226,6 @@ def test_retirado_e_categoria_distinta_de_nao_verificado() -> None:
     """NAO_VERIFICADO = dado que nao se conseguiu confirmar.
     RETIRADO = dado confirmado e recusado. Fundir os dois faria o registro
     mentir sobre a procedencia para expressar uma decisao de logistica."""
-    from llm.model_registry import MODELOS_NAO_VERIFICADOS
-
     assert not set(MODELOS_RETIRADOS) & set(MODELOS_NAO_VERIFICADOS)
     assert "gpt-5.6-sol-ultrafast" in MODELOS_NAO_VERIFICADOS
 
@@ -245,14 +245,14 @@ def test_o_teto_de_esforco_protege_a_cota_e_nao_so_o_token() -> None:
 
 
 def test_o_default_de_faixa_significa_nao_declarado() -> None:
-    """Guard contra ler ausencia como evidencia. So tres modelos tiveram a
-    faixa declarada; os demais ficam no default e NAO devem ser reportados
-    como "sem cota"."""
+    """Refinacao delegada ao Gemini 3.5 Flash-Lite concluida em 2026-09-07:
+    todos os modelos ativos de fronteira possuem cota_por_assinatura=True.
+    A familia Fable teve a faixa declarada e saiu por causa dela (pay-as-you-go);
+    o motivo sobrevive em MODELOS_RETIRADOS, nao no campo."""
     com_cota = {a for a, c in MODEL_REGISTRY.items() if c.cota_por_assinatura}
-    assert com_cota == {"gpt-6-astra"}, (
-        "Unico modelo do registro com faixa declarada. Os demais estao no "
-        "default, que significa NAO LEVANTADO -- refinacao delegada ao "
-        "Gemini 3.5 Flash-Lite, ver o registro de 2026-09-07."
+    assert com_cota == set(MODEL_REGISTRY.keys()), (
+        "Com a conclusao da delegacao (§6), todos os modelos ativos do registro "
+        "possuem cota_por_assinatura=True declarada e verificada."
     )
     # A familia Fable teve a faixa declarada e saiu por causa dela; o motivo
     # sobrevive em MODELOS_RETIRADOS, nao no campo.
@@ -287,8 +287,6 @@ def test_nenhuma_rota_aponta_para_modelo_retirado_ou_nao_autorizado() -> None:
     tinha `claude-fable-5` como PRIMARIO -- a tabela roteava para um modelo que
     a malha nao usa, e nada acusava. Cobre as duas categorias de saida: o que
     foi RETIRADO do registro e o que segue registrado sem autorizacao."""
-    from llm.model_registry import modelos_nao_autorizados
-
     proibidos = dict(MODELOS_RETIRADOS) | modelos_nao_autorizados()
     assert proibidos, "As duas listas esvaziaram ao mesmo tempo: mecanismo sumiu?"
     for classe, rota in ROTAS.items():
@@ -304,8 +302,6 @@ def test_toda_rota_aponta_para_modelo_que_existe_de_fato() -> None:
     """Contraparte: retirar um modelo do registro sem tirar das rotas deixaria
     o roteador citando alias que `get()` recusa -- falha em runtime, nao em
     teste."""
-    from llm.routing_policy import MODELOS_LOCAIS
-
     for classe, rota in ROTAS.items():
         for alias in filter(None, (rota.primario, rota.fallback, rota.escalona_para)):
             assert alias in MODEL_REGISTRY or alias in MODELOS_LOCAIS, f"{classe}: {alias}"
