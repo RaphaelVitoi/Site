@@ -164,7 +164,7 @@ fn extract_optimal_task_py(tasks_json: String, scalars_json: String, alpha: f64,
 
 #[cfg(feature = "python")]
 #[pymodule]
-fn nexus_core_rust(_py: Python, m: &PyModule) -> PyResult<()> {
+fn nexus_core_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(extract_optimal_task_py, m)?)?;
     Ok(())
 }
