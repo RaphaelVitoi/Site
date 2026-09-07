@@ -37,10 +37,12 @@ O ecossistema opera sob o padrão **Model Context Protocol (MCP)** para integra�
 Localização: `C:\Users\rapha\.gemini\antigravity\mcp\`
 
 ### A. Navegação, Inspeção & DevTools
+
 1. **`chrome-devtools-mcp`:** Controle direto via CDP (DevTools Protocol), snapshots de DOM, performance traces, screenshots, clique, digitação, emulação e auditoria Lighthouse.
 2. **`MCPBrowser`:** Navegação web headless de alta velocidade com parsing de formulários e execução JS segura.
 
 ### B. Engenharia de Dados, Bancos & Storage
+
 3. **`bigquery`:** Execução SQL, inspeção de datasets, tabelas e analytics federado.
 4. **`cloud-sql`:** Operações DDL/DML, backups, réplicas e instâncias PostgreSQL/MySQL no GCP.
 5. **`mcp-server-neon`:** Gerenciamento serverless de PostgreSQL, branching de bancos, migrações atômicas e tuning de queries.
@@ -52,6 +54,7 @@ Localização: `C:\Users\rapha\.gemini\antigravity\mcp\`
 11. **`google-cloud-firestore`:** Documentos NoSQL, coleções, agregações e índices.
 
 ### C. Infraestrutura Cloud, Containers & Orquestração
+
 12. **`cloudrun`:** Deploy direto de pastas locais, contêineres e inspeção de logs.
 13. **`google-compute-engine`:** Ciclo de vida de VMs, discos, tipos de máquina e snapshots.
 14. **`google-kubernetes-engine`:** Clusters K8s, manifests, eventos, logs e inspeção de pods.
@@ -63,6 +66,7 @@ Localização: `C:\Users\rapha\.gemini\antigravity\mcp\`
 20. **`google-managed-service-for-apache-kafka`:** Clusters Kafka, tópicos, consumer groups e ACLs.
 
 ### D. Conhecimento, Inteligência Artificial & Ferramental de Fronteira
+
 21. **`google-developer-knowledge`:** Injeção contínua da Developer Knowledge API com documentação oficial atualizada do Google.
 22. **`knowledge-catalog`:** Catálogo semântico de entidades e contextos.
 23. **`vertex-ai-search`:** Busca semântica e conversacional sobre repositórios corporativos.
@@ -73,6 +77,7 @@ Localização: `C:\Users\rapha\.gemini\antigravity\mcp\`
 28. **`sequential-thinking`:** Decomposição iterativa e reflexão sequencial profunda.
 
 ### E. Integrações de Produtividade, GitHub & Conectores
+
 29. **`github-mcp-server`:** PRs, issues, commits, forks, reviews e branches via API do GitHub.
 30. **`android-management-api`:** Políticas de dispositivos móveis corporativos.
 31. **`google-home-developer`:** Automações e documentação Google Home.

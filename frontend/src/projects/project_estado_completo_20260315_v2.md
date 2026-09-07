@@ -37,16 +37,19 @@ Raiz:              - do.ps1, Agent-TaskManager.psm1, nexus CLI
 ## O QUE FOI FEITO NESTA SESSAO (3 fases)
 
 ### Fase 1: Build + Cleanup (sessao anterior continuada)
+
 - Build Next.js testado e corrigido (schema.prisma criado, Prisma alinhado em 5.22, inline tests removidos de icm.ts)
 - Git: 17k para 234 arquivos tracked, node_modules removido, .backups limpos, branch master renomeado para main
 - README.md reescrito, .gitignore atualizado
 
 ### Fase 2: Auditoria .cerebro/ (limpeza)
+
 - 420 para 55 arquivos tracked na .cerebro/
 - 336 task_results genericos deletados
 - 18 MDs unicos + 11 obsoletos arquivados em .archive/
 
 ### Fase 3: Auditoria .cerebro/ (correcao integral) - CONCLUIDA
+
 9 correcoes aplicadas:
 
 1. **COSMOVISAO.md** - 4 typos corrigidos (funcionae, cosvoisao, Suira, construcciona)

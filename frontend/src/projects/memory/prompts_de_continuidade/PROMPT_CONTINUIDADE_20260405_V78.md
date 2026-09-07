@@ -34,6 +34,7 @@ type: project
 ### Auditoria Gemini — Arquivos Prioritários
 
 **AUDITADOS E VALIDADOS (esta sessão):**
+
 - `globals.css` — corrigido (ver acima)
 - `QuantumSynthesis.tsx` — 0 problemas. Helpers extraídos, CSS vars, narrativas coerentes
 - `QuizEngine.tsx` — 0 problemas. Blindagem, state, telemetria OK
@@ -42,6 +43,7 @@ type: project
 **NÃO AUDITADOS (pendentes):**
 
 Simulador UI:
+
 - `AnimatedNumber.tsx` — 46 linhas mudaram
 - `SimulatorTour.tsx` — 4 linhas
 - `RiskGauge.tsx` — 2 linhas (provavelmente hex→var)
@@ -52,6 +54,7 @@ Simulador UI:
 - `RangeMatrix.tsx` — 2 linhas
 
 Páginas de conteúdo:
+
 - `layout.tsx`
 - `page.tsx` (home)
 - `page.module.css` (home)
@@ -64,9 +67,11 @@ Páginas de conteúdo:
 - `ICMlaboratory/page.tsx`
 
 Componentes content:
+
 - `ContentFooter.tsx`, `ArticleHeader.tsx`, `LessonHeader.tsx`, `MarkdownRenderer.tsx`, `ReadingProgress.tsx`, `ScrollToTop.tsx`, `ShareButtons.*`, `TableOfContents.tsx`, `AnimatedArticleGrid.tsx`
 
 Lib:
+
 - `logger.ts` — 71 linhas
 - `handParser.ts` — 26 linhas
 - `hrcExport.ts` — 32 linhas
@@ -74,6 +79,7 @@ Lib:
 - `prisma.ts` — 26 linhas
 
 Outros:
+
 - `ErrorBoundary.tsx`, `HeroArticleButton.tsx`, `CodeBlock.tsx`
 - `Dashboard.tsx` (nexus)
 - `icmQuizGenerator.ts`

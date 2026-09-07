@@ -12,21 +12,22 @@ A estrutura de pastas dentro de `frontend/src/app/` seguira o padrao do App Rout
 
 ### 1.1. Rotas Publicas
 
-*   **`/(home)`:**
-    *   **Arquivo:** `frontend/src/app/page.tsx`
-*   **`/blog`:**
-    *   **Arquivo:** `frontend/src/app/blog/page.tsx`
-*   **`/blog/[slug]`:**
-    *   **Arquivo:** `frontend/src/app/blog/[slug]/page.tsx`
-*   **`/categorias`:**
-    *   **Arquivo:** `frontend/src/app/categorias/page.tsx`
-*   **`/categorias/[slug]`:**
-    *   **Arquivo:** `frontend/src/app/categorias/[slug]/page.tsx`
+* **`/(home)`:**
+  * **Arquivo:** `frontend/src/app/page.tsx`
+* **`/blog`:**
+  * **Arquivo:** `frontend/src/app/blog/page.tsx`
+* **`/blog/[slug]`:**
+  * **Arquivo:** `frontend/src/app/blog/[slug]/page.tsx`
+* **`/categorias`:**
+  * **Arquivo:** `frontend/src/app/categorias/page.tsx`
+* **`/categorias/[slug]`:**
+  * **Arquivo:** `frontend/src/app/categorias/[slug]/page.tsx`
 
 ### 1.2. Componentes Reutilizaveis
 
 Os componentes devem ser criados na pasta `frontend/src/components/`.
-*   `Header.tsx`, `Footer.tsx`, `ArticleCard.tsx`, `ArticleHeader.tsx`.
+
+* `Header.tsx`, `Footer.tsx`, `ArticleCard.tsx`, `ArticleHeader.tsx`.
 
 ---
 
@@ -59,7 +60,7 @@ model Post {
 
 ## 3. Plano de Execucao para o @implementor
 
-1.  **Executar Comando:** `cd frontend && npm install prisma @prisma/client`
-2.  **Executar Comando:** `cd frontend && npx prisma init`
-3.  **Materializar Arquivos:** Criar o arquivo `frontend/prisma/schema.prisma` com o schema acima.
-4.  **Materializar Arquivos:** Criar a estrutura de rotas vazias no NextJS.
+1. **Executar Comando:** `cd frontend && npm install prisma @prisma/client`
+2. **Executar Comando:** `cd frontend && npx prisma init`
+3. **Materializar Arquivos:** Criar o arquivo `frontend/prisma/schema.prisma` com o schema acima.
+4. **Materializar Arquivos:** Criar a estrutura de rotas vazias no NextJS.

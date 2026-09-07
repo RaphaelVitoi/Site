@@ -23,7 +23,7 @@ type: project
 
    **AUDITADOS E VALIDADOS:**
    - `MasterSimulator.tsx`: Refatoração correta. Lógica extraída para `useQuantumEngine` hook. Header e nav desacoplados em SimulatorHeader/SimulatorNavigation. Controles espaciais (Ponto Zero, Ante, Sunk Cost, Dead Money) adicionados. Props passadas corretamente a PmLensPanel, PerspectivePanel, PostFlopPanel.
-   - `perspectiva.ts`: kappa (Axioma Lipe Piv) adicionado com regressão Bayesiana. Helpers extraídos (_buildSimulatedStacks, _buildDiagnostico). Fail-fast n>10 (ChipEV fallback). deltaFoldPct adicionado ao result. **FIX APLICADO:** baselineEquity corrigido de `heroCost/potSize` para `heroCost/(potSize+heroCost)` (pot odds correto).
+   - `perspectiva.ts`: kappa (Axioma Lipe Piv) adicionado com regressão Bayesiana. Helpers extraídos (_buildSimulatedStacks,_buildDiagnostico). Fail-fast n>10 (ChipEV fallback). deltaFoldPct adicionado ao result. **FIX APLICADO:** baselineEquity corrigido de `heroCost/potSize` para `heroCost/(potSize+heroCost)` (pot odds correto).
    - `useQuantumEngine.ts`: Hook extraído do MasterSimulator. **FIX APLICADO:** preflopDeadMoney adicionado ao dep array do useMemo de postFlopRps (lint fix).
    - `icm.ts`: Apenas formatação (spacing). Delegação a calculateMapaICM inalterada.
    - `icmEngine.ts`: Barreira termodinâmica n>10 adicionada (ChipEV fallback). Optional chaining em positionProbs. Correto.
@@ -33,7 +33,7 @@ type: project
    - `PmLensPanel.tsx`: Props anteSize/heroInvested/currentPot adicionadas. Cache key expandida. Pot/heroCost dinâmicos. `#fff` → `var(--text-main)`. Correto.
 
    **NÃO AUDITADOS (pendentes para próxima sessão):**
-   
+
    Simulador UI:
    - `QuantumSynthesis.tsx` — Helpers extraídos (getContextualNarrative, getEsperancaMatConfig, getThemeConfig, getGaugeRightColor). Narrativas contextuais adicionadas. Diff grande (~121 linhas mudaram). PRECISA AUDITAR conteúdo das narrativas e coerência com teoria.
    - `QuizEngine.tsx` — 225 linhas mudaram. PRECISA AUDITAR.

@@ -27,6 +27,7 @@ type: project
 ### InfoTooltip component (CSS puro, sem state JS)
 
 Tooltip hover em cada conceito e métrica:
+
 - Expectativa, Perspectiva, Esperança Matemática (seções)
 - Equity atual, Delta se ganhar, Delta se perder
 - Esperança desta ação, EV do fold (baseline), ICM EV puro, Externalidade
@@ -57,6 +58,7 @@ CSS: `.infoWrapper`, `.infoIcon`, `.infoTooltip` em `simulator.module.css`
 ### Memória: hierarquia completa do framework registrada
 
 `project_teoria_icm_perspectiva_esperanca.md` — reescrito com:
+
 - Hierarquia correta: ICM EV → Esperança → Expectativa → Perspectiva
 - Definições precisas de cada camada (semântica distinta de cada uma)
 - MDF monetário/Perspectiva
@@ -65,6 +67,7 @@ CSS: `.infoWrapper`, `.infoIcon`, `.infoTooltip` em `simulator.module.css`
 - Fator psicológico (taxa de "maluquice")
 
 `project_teoria_ev_fold_antes.md` — atualizado com:
+
 - **Correção crítica**: EV fold em ICM pode ser POSITIVO (shorts na mesa = payjumps passivos)
 - Extensão pós-flop (RP côncavo, aprisionamento ao pot)
 - Pot Odds: posição precisa (efeito mínimo teoria, provavelmente prejudicial para elite)
@@ -80,16 +83,19 @@ CSS: `.infoWrapper`, `.infoIcon`, `.infoTooltip` em `simulator.module.css`
 ## Pendências conhecidas
 
 ### Simulador
+
 - PKO: teoria em revisão. Modelo atual = RP × (1 − pkoValue). Não captura assimetria de bounty nem prêmio positivo por eliminação.
 - `MatchupSelector.tsx`: importa `PAYOUTS_10K` — confirmado usado na linha 525 (renderiza lista de payouts). Não é dead import.
 - `FTPlayer.bb`: documentado como "stack em big blinds" no tipo.
 
 ### Teoria (não implementar sem autorização)
+
 - Formalização matemática do EV_fold(ICM) positivo com payjumps iminentes
 - Quantificação do fator psicológico (taxa de "maluquice" como variável bayesiana)
 - FGS expandido com variáveis de Table Draw e iminência de blinds
 
 ### Conteúdo
+
 - Mudanças pré-existentes não commitadas:
   - `frontend/src/app/aulas/icm-masterclass/page.tsx` (+425)
   - `frontend/src/app/aulas/icm-masterclass/page.module.css` (+530)

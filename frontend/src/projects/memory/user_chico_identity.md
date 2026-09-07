@@ -7,6 +7,7 @@ type: user
 Raphael tem assinatura Pro paga tanto do Google (Gemini) quanto da Anthropic (Claude).
 
 CHICO e o codinome operacional do sistema de IA que atua como Administrador/Gerente. Ele usa dinamicamente:
+
 - **Gemini 3.1 Pro Preview** (recentemente atualizado de Gemini 3 Pro Preview)
 - **Claude Opus 4.6**
 

@@ -29,4 +29,3 @@ O script utilizara os metodos:
 ## 4. Integracao com o Worker (DAL)
 
 Ao final do handshake, a CLI gera um payload Ordered Dictionary com schema exigido por `Test-TaskSchema` no `Agent-TaskManager.psm1` e o injeta via `Add-AgentTask`.
-

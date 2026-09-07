@@ -19,9 +19,9 @@ O ecossistema opera de forma cindida e modular em quatro componentes fundamentai
 
 Toda interação com o runtime agêntico é interceptada por três categorias de hooks:
 
-*   **Inspect:** Hooks assíncronos não-bloqueantes para auditoria passiva, telemetria avançada, análise de consumo de tokens e logging contínuo.
-*   **Decide:** Barreira de controle lógica bloqueante. Valida conformidade com políticas de integridade, Limited Scope e segurança antes da execução.
-*   **Transform:** Hooks de transformação de payloads de entrada/saída em trânsito e recuperação estruturada de falhas de runtime.
+* **Inspect:** Hooks assíncronos não-bloqueantes para auditoria passiva, telemetria avançada, análise de consumo de tokens e logging contínuo.
+* **Decide:** Barreira de controle lógica bloqueante. Valida conformidade com políticas de integridade, Limited Scope e segurança antes da execução.
+* **Transform:** Hooks de transformação de payloads de entrada/saída em trânsito e recuperação estruturada de falhas de runtime.
 
 ---
 
@@ -38,10 +38,10 @@ Toda interação com o runtime agêntico é interceptada por três categorias de
 
 ## V. PROTOCOLO DE INFERÊNCIA E ORQUESTRAÇÃO SILENCIOSA
 
-- **Pipeline de Raciocínio Diacrônico:**
+* **Pipeline de Raciocínio Diacrônico:**
   $$\text{Antevisão Semântica} \longrightarrow \text{Análise Recursiva} \longrightarrow \text{Decomposição do Input} \longrightarrow \text{Análise Preditiva} \longrightarrow \text{Dedução Lógica}$$
-- **Execução Silenciosa & Apresentação de Artefatos:** Executar scripts Python, WebSearch, MCPs e ferramentas do sistema internamente em segundo plano. Exibir ao usuário diretamente o produto final (tabelas, artefatos KaTeX/Markdown, matrizes e diffs).
-- **Otimização de Contexto & Caching:** Utilizar cache explícito de contexto e recursos de browser/nano para reduzir latência e custos de I/O em consultas recorrentes.
+* **Execução Silenciosa & Apresentação de Artefatos:** Executar scripts Python, WebSearch, MCPs e ferramentas do sistema internamente em segundo plano. Exibir ao usuário diretamente o produto final (tabelas, artefatos KaTeX/Markdown, matrizes e diffs).
+* **Otimização de Contexto & Caching:** Utilizar cache explícito de contexto e recursos de browser/nano para reduzir latência e custos de I/O em consultas recorrentes.
 
 ---
 
@@ -49,9 +49,9 @@ Toda interação com o runtime agêntico é interceptada por três categorias de
 
 1. **Axioma de Capacidade Universal:** Todos os modelos da tríade possuem competência plena para cumprir todas as funções e demandas do ecossistema. Não existem feudos funcionais ou proibições artificiais.
 2. **Preferências por Arquitetura, Especialidade e Preço:**
-   - **Gemini 3.8 Flash (e 3.5 Flash-Lite duo com 3.6 Flash):** Preferência primária para **Orquestração de Fluxo Agêntico**, coordenação assíncrona, context caching massivo em TPUs e **Fast Operations** com custo marginal mínimo.
-   - **Claude Opus 5 e Claude Sonnet 5:** Preferência primária para **Engenharia de Código Cirúrgica + Modelagem Matemática** (teoria dos jogos PMev, formalismos de Nash, contratos Rust/WASM e tipagem estrita).
-   - **ChatGPT 5.6 (Terra e Luna):** Preferência primária para **Raciocínio Profundo (Deep Reasoning), Auditorias de Segurança AppSec, Arquitetura Macro de Sistemas e Atividades de Altíssima Complexidade Conceitual**.
+   * **Gemini 3.8 Flash (e 3.5 Flash-Lite duo com 3.6 Flash):** Preferência primária para **Orquestração de Fluxo Agêntico**, coordenação assíncrona, context caching massivo em TPUs e **Fast Operations** com custo marginal mínimo.
+   * **Claude Opus 5 e Claude Sonnet 5:** Preferência primária para **Engenharia de Código Cirúrgica + Modelagem Matemática** (teoria dos jogos PMev, formalismos de Nash, contratos Rust/WASM e tipagem estrita).
+   * **ChatGPT 5.6 (Terra e Luna):** Preferência primária para **Raciocínio Profundo (Deep Reasoning), Auditorias de Segurança AppSec, Arquitetura Macro de Sistemas e Atividades de Altíssima Complexidade Conceitual**.
 
 ---
 
@@ -64,6 +64,8 @@ $$\text{Task List (task.md)} \longrightarrow \text{Implementation Plan (implemen
 1. **Indexação Zero-Token:** Todo agente/modelo consulta e aplica as regras do `MODUS_OPERANDI.md` (Seção 10) antes de produzir o primeiro byte de output.
 2. **Diagramação Mermaid Validada:** Proibição estrita de `gantt` e `xychart-beta`. Uso exclusivo de `flowchart TD/LR`, `graph TD/LR`, `stateDiagram-v2`, `sequenceDiagram`, `classDiagram` e `erDiagram` com estilização por `classDef`.
 3. **KaTeX com Blindagem Monetária:** Fórmulas matemáticas com `$..$` e `$$..$$`, e escape mandatório de valores monetários como `\$`.
+4. **Conformidade Markdown à Priori (Zero-Lint):** Cabeçalhos com 1 linha em branco acima/abaixo (`MD022`), listas delimitadas por respiro (`MD032`), blocos cercados tipados (`text`, `bash`, `python`, etc., `MD031`/`MD040`), divisores `---` isolados (`MD003`) e ausência de linhas em branco consecutivas (`MD012`).
+
 ## IX. ENGENHARIA DE CÓDIGO MODERNO & EXECUÇÃO NATIVA (PYTHON 3.12+)
 
 1. **Padrão de Tipagem & Sintaxe:** `from __future__ import annotations` mandatória, uniões por pipe (`A | B`), genéricos embutidos (`list[T]`), schemas Pydantic v2 / Zod e política de Zero-`Any`.
@@ -73,14 +75,12 @@ $$\text{Task List (task.md)} \longrightarrow \text{Implementation Plan (implemen
 ## X. DELEGAÇÃO ASSÍNCRONA EM NUVEM (GOOGLE JULES VIA MCP)
 
 1. **Topologia Trilateral Canônica:**
-   - `C:\Users\rapha`: Monorepo administrativo e gestão de chaves/ambiente (`HKCU:\Environment:JULES_API_KEY`, `GOOGLE_CLOUD_PROJECT`).
-   - `C:\Users\rapha\.gemini`: Raiz multiprojeto canônica, registro de MCP Servers (`mcp_config.json`) e skills globais.
-   - `C:\Users\rapha\.gemini\Site`: Raiz do projeto principal (PMev + Website), consumidor do bridge MCP e despachador de tarefas pesadas.
+   * `C:\Users\rapha`: Monorepo administrativo e gestão de chaves/ambiente (`HKCU:\Environment:JULES_API_KEY`, `GOOGLE_CLOUD_PROJECT`).
+   * `C:\Users\rapha\.gemini`: Raiz multiprojeto canônica, registro de MCP Servers (`mcp_config.json`) e skills globais.
+   * `C:\Users\rapha\.gemini\Site`: Raiz do projeto principal (PMev + Website), consumidor do bridge MCP e despachador de tarefas pesadas.
 2. **Padrão Fire-and-Poll & Invariância de Testes:**
-   - Tarefas de longa duração (simulações Monte Carlo de alta densidade no motor PMev, upgrades de framework, suítes massivas de testes) são despachadas via `engine/jules_bridge.py` ou `.mcp.json` (`google-jules`).
-   - Execução em background não-bloqueante com monitoramento por `jules_get_session_status`, aprovação formal de plano via `jules_approve_plan` e inspeção de patch com `jules_get_diff` antes de qualquer merge no workspace local.
+   * Tarefas de longa duração (simulações Monte Carlo de alta densidade no motor PMev, upgrades de framework, suítes massivas de testes) são despachadas via `engine/jules_bridge.py` ou `.mcp.json` (`google-jules`).
+   * Execução em background não-bloqueante com monitoramento por `jules_get_session_status`, aprovação formal de plano via `jules_approve_plan` e inspeção de patch com `jules_get_diff` antes de qualquer merge no workspace local.
 
 ---
 *Protocolo Site v8.0 GOLD integrado e ativo sob Soberania de Raphael Vitoi.*
-
-

@@ -19,6 +19,7 @@
 > [!NOTE]
 > **Atualização de Modelos de Fronteira no Stitch:**
 > Conforme verificado na interface de produção do Stitch (`stitch.withgoogle.com`), a geração de UI opera com dois tiers:
+>
 > - ⚡ **Speed**: `Gemini 3.5 Flash-Lite` (*rapid collaboration, still good quality*) — menor latência e custo marginal nulo.
 > - ✨ **Balanced (Padrão)**: `Gemini 3.8 Flash` (*balance between speed and high quality*) — alta fidelidade estética e adesão a design systems.
 > - *Nota de Descontinuação:* Os modelos da geração anterior (`Gemini 3 Flash` e `Gemini 3.1 Pro`) foram descontinuados na produção.
@@ -36,6 +37,7 @@
 ## 3. Detalhamento dos Projetos e Telas
 
 ### Projeto `18242753218562483944` — Nexus PMev & Poker Racional UI
+
 - **Nome Canônico:** `projects/18242753218562483944`
 - **Tipo de Projeto:** `PROJECT_DESIGN` | **Origem:** `STITCH`
 - **Última Atualização:** `2026-09-04T23:23:30.776763Z`

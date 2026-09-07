@@ -103,4 +103,3 @@ Um documento `.md` em portugues (pt-BR) que funciona como aula autonoma: um joga
 | Aula ficar longa demais e perder coesao | Media | SPEC define escopo de cada secao. Modulos 1 e 4 sao os mais compactos; Modulos 2 e 3 sao o nucleo e podem ser mais extensos |
 | Checklist de mesa ficar generico ou inaplicavel em tempo real | Media | SPEC prescreve formato e conteudo minimo do checklist. Deve ser testavel mentalmente em <10 segundos por item |
 | Conceitos proprios de Raphael nao ficarem com destaque suficiente | Media | SPEC marca cada conceito proprio como "nomenclatura original" e prescreve formatacao diferenciada (negrito + definicao na primeira aparicao) |
-

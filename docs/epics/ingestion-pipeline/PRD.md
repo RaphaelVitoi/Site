@@ -45,4 +45,3 @@ O "Loop de Friccao Zero". O usuario clica no botao "Copy" da resposta inteira do
 | --------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Corrupcao de Encoding UTF-8 | Alta       | Salvar o clipboard em um arquivo temporario (`dropzone.md`) usando UTF-8 sem BOM antes de chamar o Python. O Python le como UTF-8 e processa. |
 | Ingestao Acidental de Lixo  | Media      | O Regex do `apply_god_mode` exige um formato estrito (`Arquivo: path \n ```...`). Lixo no clipboard sera ignorado silenciosamente.            |
-

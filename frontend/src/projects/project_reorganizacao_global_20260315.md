@@ -82,17 +82,20 @@ Site/
 ## Operacoes executadas nesta sessao
 
 ### 1. SonarQube S2004 (SimuladorICM.tsx)
+
 - `loadScript` e `loadMotorScripts` extraidos para escopo de modulo
 - Nesting reduzido de 5+ para 2 niveis dentro do useEffect
 - Mesmo comportamento funcional (carregamento sequencial apos ApexCharts)
 
 ### 2. OneDrive EPERM (.next/)
+
 - Junction tentado mas incompativel com Turbopack (resolucao de modulos quebra)
 - Solucao final: `prebuild` script no package.json que executa `cmd /c rmdir /s /q .next`
 - next.config.ts criado (vazio, pronto para futuras configs)
 - Usar `npm run build` ao inves de `npx next build`
 
 ### 3. Frontend reorganizado
+
 - 7 componentes movidos para subdiretorios semanticos (layout/, content/, icm/)
 - 5 arquivos mortos removidos: stubs layout/Header+Footer, ui/Button, index.ts vazio, lib/icm.ts duplicata
 - Rota /tools/icm criada (landing e Header linkavam para ela mas nao existia)
@@ -100,6 +103,7 @@ Site/
 - Import do biblioteca/page.tsx: `../../components/CodeBlock` → `@/components/content/CodeBlock`
 
 ### 4. Raiz reorganizada
+
 - 20 scripts movidos da raiz para scripts/ (cli, ops, control, setup)
 - 4 JSONs movidos para data/
 - prisma/ raiz removido (duplicata obsoleta do frontend/prisma/)
@@ -109,6 +113,7 @@ Site/
 - docs/PRD.md → docs/architecture/PRD_TOY_GAMES.md
 
 ### 5. Referencias corrigidas (42 scripts + do.ps1)
+
 - Todos scripts em scripts/*/ usam: `$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path`
 - do.ps1: JSONs apontam para data/, check-cortex para scripts/setup/
 - _env.ps1: adicionados paths Data, Scripts, Frontend
@@ -117,11 +122,14 @@ Site/
 - scripts/init/*.ps1: bug pre-existente de $PSScriptRoot corrigido
 
 ## Build
+
 - Frontend: 10 rotas (/, aula-icm, aula-1-2, biblioteca, leitura-icm, psicologia-hs, psicologia-hs/[slug], quem-sou, tools/icm, _not-found)
 - 0 erros TypeScript, compilacao ~2.5s
 
 ## Acao pendente do usuario
+
 - Rodar `.\scripts\setup\Setup-NexusProfile.ps1` para atualizar aliases no $PROFILE do PowerShell
 
 ## Seguranca (flag)
+
 - _env.ps1 contem API keys hardcoded (GEMINI_API_KEY, ANTHROPIC_API_KEY). Nao mover para git publico.

@@ -24,10 +24,10 @@ graph TD
 
 Este grafo transcende a teoria. Ele esta fisicamente ancorado nas rotinas de infraestrutura do nosso repositorio. Quando o fluxo atinge as camadas de execucao, as seguintes ferramentas cirurgicas sao acionadas:
 
-*   **No [E] - Purga de Extensoes:** Aciona a aniquilacao de IAs redundantes e ruidos no Extension Host.
-    *   `python .\scripts\routines\vitoi_extension_purge.py`
-*   **No [I] - Aplicar watcherExclude:** Aplica a "cegueira seletiva" na IDE, bloqueando o Git e a telemetria de varrerem diretorios de alta densidade (node_modules, .venv, .backups_sota).
-    *   `python .\scripts\routines\vitoi_optimize_vscode.py`
+* **No [E] - Purga de Extensoes:** Aciona a aniquilacao de IAs redundantes e ruidos no Extension Host.
+  * `python .\scripts\routines\vitoi_extension_purge.py`
+* **No [I] - Aplicar watcherExclude:** Aplica a "cegueira seletiva" na IDE, bloqueando o Git e a telemetria de varrerem diretorios de alta densidade (node_modules, .venv, .backups_sota).
+  * `python .\scripts\routines\vitoi_optimize_vscode.py`
 
 ## 3. O Motor de Autopoiese (Auto-Refactor VITOI 3.2)
 

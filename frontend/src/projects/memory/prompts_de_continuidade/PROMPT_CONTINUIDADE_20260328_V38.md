@@ -13,6 +13,7 @@ Sessao continuou do V37. Tarefa principal: **P5 Fase 2 -- LLM Core**.
 ### Problema critico resolvido: estado duplicado
 
 Antes da Fase 2, havia um bug silencioso:
+
 - `llm/budget.py` tinha `KEY_BLOCKLIST = {}`, `GEMINI_MODEL_KEY_BLOCKLIST = {}`, etc.
 - `task_executor.py` tambem tinha `KEY_BLOCKLIST = {}`, `GEMINI_MODEL_KEY_BLOCKLIST = {}`, etc.
 - **Eram dois objetos distintos em memoria.** Circuit breakers so funcionavam no modulo que os modificava.
@@ -90,6 +91,7 @@ llm/budget.py
 ### Padrao lazy import (circular import resolver)
 
 Modulos que dependem de globals ainda em task_executor.py usam:
+
 ```python
 def _get_te():
     import task_executor as te
@@ -102,6 +104,7 @@ nao em module-level. O modulo task_executor ja esta completamente carregado
 quando qualquer funcao LLM e chamada.
 
 Globals acessados via lazy import:
+
 - `_get_te()._c(agent)` -- coloracao de log
 - `_get_te().AGENT_ROUTING_MAP` -- rota por agente
 - `_get_te().DEEP_THINKING_MODELS` -- modelos de raciocinio profundo
@@ -118,12 +121,12 @@ Globals acessados via lazy import:
 
 | Modulo | Conteudo principal | Linhas |
 |--------|-------------------|--------|
-| `llm/session.py` | get_global_http_session, get_api_semaphore, _sync_fallback_request | ~70 |
+| `llm/session.py` | get_global_http_session, get_api_semaphore,_sync_fallback_request | ~70 |
 | `llm/gemini.py` | call_gemini() | ~60 |
 | `llm/anthropic.py` | call_anthropic() | ~35 |
 | `llm/openrouter.py` | call_openrouter() | ~35 |
 | `llm/search.py` | call_perplexity_search, call_tavily_search | ~70 |
-| `llm/routing.py` | _infer_provider_for_model, _reorder_models_for_economy, _inject_openrouter_alternatives, _get_model_recent_health, _apply_model_health_gate | ~130 |
+| `llm/routing.py` | _infer_provider_for_model, _reorder_models_for_economy, _inject_openrouter_alternatives,_get_model_recent_health,_apply_model_health_gate | ~130 |
 | `llm/providers.py` | _try_provider() (logica completa de retry/circuit breaker) | ~160 |
 | `llm/orchestrator.py` | call_llm_api(), _compress_context() | ~130 |
 
@@ -147,6 +150,7 @@ Globals acessados via lazy import:
 - **Apos Fase 2 (V38):** ~1800 linhas (-830 adicionais, -1595 total, -47%)
 
 O que PERMANECE em task_executor.py (nao foi extraido):
+
 - Imports e setup de logging
 - `PID_FILE`, `rag_engine`, `get_rag()`
 - `load_json_config()`

@@ -98,7 +98,7 @@ Este material e para quem:
   - Teoria de Sistemas: mesa como organismo, propriedades emergentes, feedback loops
   - Teoria dos Jogos: Nash sob restricoes de utilidade nao-linear
 
-* e incontaveis outros modulos e sub-modulos!
+- e incontaveis outros modulos e sub-modulos!
 
 ## Bonus Exclusivo
 

@@ -6,6 +6,7 @@
 ---
 
 ## 1. Visao Tecnica
+
 O script `do.ps1` deixara de ser um wrapper passivo para se tornar uma interface conversacional ativa. Ele deve atuar como um **Roteador Heuristico**, interceptando input natural, classificando a intencao via Regex e formatando a saida com a identidade visual "Cyber/Sintetica" definida pelo Maverick.
 
 ---
@@ -26,6 +27,7 @@ O nucleo da inteligencia e um *Hashtable* associativo onde a Chave e o Agente e 
 | **@curator** | `(etica|estetica|tom|texto|copy|revisao text|identidade|visual)` | Refinamento |
 
 ### 2.2 Logica de Resolucao (`Resolve-Intent`)
+
 1. Iterar sobre o mapa.
 2. Se `Input -match Regex`, incrementar score do agente.
 3. Retornar o agente com maior score (ou o primeiro match em caso de empate).
@@ -38,6 +40,7 @@ O nucleo da inteligencia e um *Hashtable* associativo onde a Chave e o Agente e 
 A interface deve abandonar o tom padrao do PowerShell.
 
 ### 3.1 Paleta de Cores (Write-Host)
+
 - **Prompt:** `Cyan` (`[NEXUS] Awaiting Directive >`)
 - **Sistema:** `DarkGray` (Logs internos, IDs)
 - **Maverick/Inovacao:** `Magenta`
@@ -45,7 +48,9 @@ A interface deve abandonar o tom padrao do PowerShell.
 - **Erro/Bloqueio:** `Red`
 
 ### 3.2 Easter Eggs (A Alma)
+
 Ao iniciar o script sem argumentos (modo interativo), gerar um numero aleatorio (1-100).
+
 - Se `rnd <= 5`: Exibir aforismo do Maverick (ex: *"Chaos is just unrecognized order."*) em `DarkMagenta` antes do prompt.
 
 ---
@@ -53,6 +58,7 @@ Ao iniciar o script sem argumentos (modo interativo), gerar um numero aleatorio 
 ## 4. Arquitetura do Script (`do.ps1`)
 
 ### Fluxo de Execucao
+
 1. **Boot:** Carregar `Agent-TaskManager.psm1`.
 2. **Verificacao de Argumentos:**
    - Se `$args[0]` existe -> Processamento direto (Modo Rapido).
@@ -76,12 +82,14 @@ Ao iniciar o script sem argumentos (modo interativo), gerar um numero aleatorio 
 ---
 
 ## 5. Checklist de Seguranca
+
 - [ ] **Sanitizacao:** O input do usuario NUNCA deve ser executado como codigo (Invoke-Expression proibido). Apenas string literal para o JSON.
 - [ ] **Escape:** Aspas no input do usuario devem ser escapadas antes de virar JSON.
 
 ---
 
 ## 6. Casos de Teste
+
 1. Input: "criar um arquivo js" -> Deve sugerir `@implementor`.
 2. Input: "analisar a estrategia" -> Deve sugerir `@maverick`.
 3. Input: (Vazio) -> Deve abrir prompt interativo colorido.

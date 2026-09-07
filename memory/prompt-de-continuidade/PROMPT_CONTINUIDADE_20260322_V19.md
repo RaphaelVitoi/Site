@@ -7,6 +7,7 @@ type: project
 # V19 — 2026-03-22
 
 ## Simulador: FUNCIONAL E LIMPO
+
 - Motor Opção B (6 ações, equação côncava) implementado e testado (20/20)
 - K.ip_check removido (era morto — ip_check é resíduo)
 - Áudio completamente removido (useAudioFeedback.ts deletado, ScenarioStage e RiskGauge limpos)
@@ -15,7 +16,9 @@ type: project
 - EPERM OneDrive resolvido: distDir separado por lifecycle (dev→.next, build→.next-build)
 
 ## Página aula-icm: AUDITADA E CORRIGIDA
+
 Artefatos Gemini corrigidos:
+
 - "Angular Drift" → "Downward Drift"
 - "RP ≥ 2× BF" → "ΔRP — Vantagem de Risco (IP − OOP)"
 - "folds abaixo dos 38%" → removido (sem base, direção errada)
@@ -26,9 +29,11 @@ Artefatos Gemini corrigidos:
 - Rodapé de referências adicionado
 
 ## PRÓXIMA ETAPA: Página Formal dos Conceitos
+
 Rota sugerida: /conceitos-icm ou /framework-icm
 
 Estrutura acordada:
+
 1. RP vs Bubble Factor (BF = 100/(100-RP); por que RP é preferido)
 2. Expectativa Matemática
 3. Perspectiva Matemática + exemplo CL

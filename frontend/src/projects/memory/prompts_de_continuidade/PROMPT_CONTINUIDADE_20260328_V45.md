@@ -24,6 +24,7 @@ type: project
 **Problema**: `queue_manager.py` fazia `from core.config import VALID_AGENTS` -- binding estático que congelava no cold start e nunca recebia atualizações do hot-reload de `task_executor.py`. Risco: após hot-reload, tasks carregadas do DB podiam ter agente normalizado para `@chico` incorretamente.
 
 **Solução implementada**:
+
 - `database/queue_manager.py`: substituído `from core.config import VALID_AGENTS` por `import core.config as _core_config`. Uso: `_core_config.VALID_AGENTS` (atributo de módulo, dinâmico).
 - `task_executor.py`: adicionado `import core.config as _core_config`. Após cada `VALID_AGENTS = list(INTENT_MAP.keys())` (3 pontos: cold start L186, hot-reload manifesto L345, hot-reload fallback L356), sincroniza: `_core_config.VALID_AGENTS = VALID_AGENTS`.
 

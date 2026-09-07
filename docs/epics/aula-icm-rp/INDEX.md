@@ -4,9 +4,9 @@
 
 ---
 
-##  Documentos Ativos
+## Documentos Ativos
 
-### `aula-icm-rp.md` 
+### `aula-icm-rp.md`
 
 - **Status:** Final | Versao 1.0
 - **Autor:** Raphael Vitoi
@@ -16,7 +16,7 @@
 
 ---
 
-##  Documentos Arquivados (Fase de Planejamento)
+## Documentos Arquivados (Fase de Planejamento)
 
 Estes arquivos cumpriram sua funcao no pipeline (pesquisa  prompt  planejamento  especificacao  implementacao) e estao mantidos para rastreabilidade historica:
 
@@ -31,7 +31,7 @@ Estes arquivos cumpriram sua funcao no pipeline (pesquisa  prompt  planejamento 
 
 ---
 
-##  Versoes Adicionais (Modulos Especializados)
+## Versoes Adicionais (Modulos Especializados)
 
 | Arquivo | Descricao | Status |
 |---------|-----------|--------|
@@ -42,7 +42,7 @@ Estes arquivos cumpriram sua funcao no pipeline (pesquisa  prompt  planejamento 
 
 ---
 
-##  Estrutura da Aula (aula-icm-rp.md)
+## Estrutura da Aula (aula-icm-rp.md)
 
 1. **Modulo 1:** O Problema e o Mapa
 2. **Modulo 2:** Risk Premium - Conceitos Fundamentais
@@ -52,10 +52,9 @@ Estes arquivos cumpriram sua funcao no pipeline (pesquisa  prompt  planejamento 
 
 ---
 
-##  Rastreabilidade
+## Rastreabilidade
 
 - **Criadora da aula:** Raphael Vitoi (conteudo original desde 2013)
 - **Pipeline:** @pesquisador  @prompter  @planner  @auditor  @implementor  @validador
 - **Consolidacao:** @pesquisador (2026-03-12)
 - **Backup historico:** `.backups/2026-03-12_auditoria_sistema/`
-

@@ -1,4 +1,5 @@
 # RELATÓRIO OFICIAL DE AUDITORIA DO ECOSSISTEMA
+
 ## Higienização e Reestruturação Sistêmica — Chico SOTA v7.0 GOLD
 
 **Data:** 2026-06-03  
@@ -49,15 +50,18 @@ Auditoria completa e intervenção técnica no ecossistema `.gemini` e `.cerebro
 ### 3.1 Higiene de Armazenamento
 
 #### Backups Redundantes — Site/
+
 ```
 DELETADO: nexus_sota_backup_20260602_160230.zip  →  6.443 MB
 DELETADO: nexus_sota_backup_20260602_180033.zip  →  6.443 MB
 DELETADO: site_backup_SOTA_GOLD.tar.gz           →  5.995 MB
 Total liberado: 18.881 MB (18,44 GB)
 ```
+
 > **Regra estabelecida:** Backups nunca devem residir dentro do monorepo indexado. Usar disco externo ou cloud storage.
 
 #### Logs de Sessão — tmp/
+
 ```
 DELETADO: session-2026-06-02T11-50-*.jsonl  →  1.745,90 MB
 DELETADO: aade7de0-*.jsonl                  →    622,04 MB
@@ -71,13 +75,16 @@ Total liberado: 3.988 MB (3,89 GB)
 ```
 
 #### .venv-wsl — Violação de Fronteira 9P
+
 ```
 DELETADO: .venv-wsl/ (PyTorch + CUDA para Linux em filesystem Windows)
 Total liberado: 5.491 MB (5,36 GB)
 ```
+
 > **Regra estabelecida:** Venvs WSL devem residir exclusivamente em `~/.venv` dentro do filesystem Linux WSL.
 
 #### Ollama Blobs — Deduplicação
+
 ```
 Antes: 4 worktrees × 971 MB = 3.884 MB
 Ação:  1 cópia movida para Site/.ollama/models/blobs/ (central)
@@ -86,6 +93,7 @@ Depois: 1 × 971 MB = 971 MB (centralizado)
 ```
 
 #### Brain TTL — Expurgo Manual
+
 ```
 DELETADO: 7984a23c-... (9,82 dias)
 DELETADO: cdd2ba5b-... (8,47 dias)
@@ -94,6 +102,7 @@ DELETADO: bbbb4722-... (7,89 dias)
 ```
 
 #### History — Hashes Órfãos
+
 ```
 5 diretórios SHA-256 de projetos extintos removidos
 ```
@@ -145,6 +154,7 @@ Dois atalhos de navegação criados em `C:\users\rapha\`:
 | Estado | `Ready` — testado, `LastTaskResult: 0` |
 
 **Tarefas do script (5 fases):**
+
 1. **[0/5] Env Validation** — OLLAMA_MODELS, junctions (auto-heal)
 2. **[1/5] Brain TTL** — expurga sessões > 7 dias (guarda os 3 mais recentes)
 3. **[2/5] tmp/ Cleanup** — remove JSONL > 50 MB
@@ -197,6 +207,7 @@ Dois atalhos de navegação criados em `C:\users\rapha\`:
 | TTL brain automatizado (Task Scheduler) | ✅ |
 
 ### Validação Final (15:43:23 — 2026-06-03)
+
 ```
 [0/5] Env      | issues: nenhum        ✅
 [1/5] Brain    | 0 expiradas           ✅

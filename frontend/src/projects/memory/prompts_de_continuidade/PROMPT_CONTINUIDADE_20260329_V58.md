@@ -7,6 +7,7 @@ type: project
 # Prompt de Continuidade V58 — 2026-03-29
 
 ## Commits desta sessão
+
 | Hash | Descrição |
 |------|-----------|
 | `8566e97` | fix: buildInsight threshold usa esperancaRealizadaPct quando R<1 + docs framework PM v2 |
@@ -47,15 +48,18 @@ Arquivo: `docs/research/validacao_matematica_hipoteses_v1.md`
 ## Próximas tarefas (em ordem — não perguntar)
 
 ### 1. Validação: comparar RP derivado vs valores HRC calibrados
+
 - Cenário "paradoxo": HRC calibrou oopRp=12.9 (PRE). Motor deriva a partir de stacks [40,55].
 - Verificar se os valores derivados por street fazem sentido vs os ilustrativos calibrados
 - Se houver divergência significativa, investigar se é limitação do modelo (potTotal simétrico)
 
 ### 2. NashPanel: exibir EV_fold_street junto ao RP por street
+
 - `postFlopRps.flop.evFoldStreet` já existe — surfaçar na UI
 - Mostrar ao usuário: "foldar aqui custa −Xbb" por street
 
 ### 3. MDF pós-flop HU (quando teoria HU estiver validada)
+
 - Formalizar após validação numérica do motor
 - MW: standby até HU estar funcional
 

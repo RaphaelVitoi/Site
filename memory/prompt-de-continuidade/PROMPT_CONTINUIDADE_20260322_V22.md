@@ -9,10 +9,12 @@ type: project
 ## Concluído nesta sessão (pós V21)
 
 ### Nota metodológica no rodapé do MasterSimulator
+
 - Parágrafo discreto explicando que os valores são estimativas derivadas de um ponto empírico único
 - Texto: "Os valores de Risk Premium e as frequências padrão são estimativas derivadas de um framework teórico calibrado contra um único ponto empírico: 93 nodes HRC vs GTO Wizard (board KJT-2-3, Aula 1.2). Demais cenários são extrapolações didáticas — não outputs de solver."
 
 ### ReferencialAula12.tsx — componente visual completo
+
 - Criado em `frontend/src/components/simulator/ReferencialAula12.tsx`
 - Seção colapsável `<details>/<summary>` com identidade visual do site
 - Conteúdo:
@@ -27,13 +29,16 @@ type: project
   - **Toy Games** tabela teórica TG0–TG7★
 
 ### Posição final na página /tools/simulador
+
 Ordem definitiva:
+
 1. Header: "Geometria do Risco" (h1 + label)
 2. Blocos explicativos (dor / o que resolve / como usar)
 3. `<ReferencialAula12 />` (colapsável)
 4. `<SimuladorICM />` (Motor ICM)
 
 ### Dados do cenário âncora (das imagens reais da Aula 1.2)
+
 - MTT $11 · 126 entradas · Final Table 9 players
 - Board: K♦ J♣ T♠ 2♦ 3♦
 - Stacks: UTG 9.25 · EP 52.24 · MP1 22.08 · MP2 6.88 · HJ 44.16 · CO 24.16 · BU 39.88 · SB 12.73 · BB 53.88 (bb)
@@ -43,10 +48,12 @@ Ordem definitiva:
 - Prêmios: 237.34 / 170.96 / 135.17 / 109.99 / 90.28 / 73.95 / 59.92 / 47.56 / 36.47
 
 ## Estado técnico
+
 - TypeScript: 0 erros
 - Dev server ativo em localhost:3000
 
 ## PENDENTES
+
 - Validação visual: abrir localhost:3000/tools/simulador e verificar posição do referencial
 - Verificar se range grids renderizam corretamente em largura
 - Commit desta sessão

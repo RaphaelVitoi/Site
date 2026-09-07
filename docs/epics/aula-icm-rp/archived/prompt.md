@@ -64,12 +64,14 @@ O material primario de Raphael (`Entendendo o ICM e suas heuristicas.docx`) nao 
 Esta estrutura e orientacao para o @planner -- pode ser ajustada com base na investigacao, mas a progressao logica deve ser mantida.
 
 ### Modulo 1: O Problema e o Mapa
+
 - Por que ICM importa desde a mao 1 (nao so na bubble)
 - O que e Risk Premium: definicao precisa, calculo, intuicao
 - RP vs Bubble Factor: relacao entre as duas metricas
 - Visualizacao concreta: calculadora ICM mostrando valuations de stacks em FT tipica
 
 ### Modulo 2: Toy-Games como Laboratorio [nucleo do material original]
+
 - Justificativa metodologica: por que toy-games sao a ferramenta certa para isolar variaveis
 - Parte I: 5 toy-games com RP progressivo no OOP (RP 0 -> 24)
   - Board 22223, AA/QQ/JJ vs KK, pot 100, unica aposta 100
@@ -80,6 +82,7 @@ Esta estrutura e orientacao para o @planner -- pode ser ajustada com base na inv
 - Conceitos emergentes: Teto do RP, Vantagem/Desvantagem de Risco, Pacto Silencioso, Nash sob ICM
 
 ### Modulo 3: ICM Pos-Flop -- A Fronteira
+
 - Por que o edge real esta no pos-flop (nao mais no pre-flop)
 - Downward Drift: como ICM transforma sizings e acoes ao longo das streets
 - SPR e distribuicao do RP por street
@@ -89,12 +92,14 @@ Esta estrutura e orientacao para o @planner -- pode ser ajustada com base na inv
 - Exercicio guiado: como comparar ChipEV vs ICM side-by-side no GTO Wizard/DeepSolver
 
 ### Modulo 4: Variaveis Contextuais
+
 - Payout structures: flat vs top-heavy e impacto mensuravel no RP (diferenca de 5.7% no RP medio)
 - FGS vs ICM classico: quando o modelo padrao falha e o que usar
 - KO/Bounty tournaments: RP positivo + equity drop negativo (como os dois interagem)
 - CL dynamics: responsabilidade de pressionar vs risco de perder leverage futura
 
 ### Modulo 5: Aplicacao Pratica e Erros Comuns
+
 - Os 10 erros mais comuns do jogador AVG 109-530 com correcoes concretas
 - Heuristicas de mesa: checklist de decisao ICM pos-flop em tempo real
 - Como estruturar sessoes de estudo solo com solvers para treinar ICM pos-flop

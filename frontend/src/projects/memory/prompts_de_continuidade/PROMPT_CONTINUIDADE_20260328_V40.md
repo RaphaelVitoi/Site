@@ -75,6 +75,7 @@ utils/
 ## Pendente
 
 ### Worktree residual (minimo impacto)
+
 `.cerebro/worktrees/agent-ad7cbace` -- deletar:
 `git worktree remove --force .cerebro/worktrees/agent-ad7cbace`
 

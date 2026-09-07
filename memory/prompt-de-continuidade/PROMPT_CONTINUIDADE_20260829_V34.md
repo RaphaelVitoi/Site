@@ -32,6 +32,7 @@ nao_verificado:
 # Continuidade & Handoff - Sessão 2026-08-29 V34
 
 ## 1. Identidade & Governança Suprema
+
 - **Soberania do Ecossistema (Tier 0):** Raphael Vitoi (CEO, Desenvolvedor Multidisciplinar, Idealizador PMev, Dono Patenteado e Árbitro Epistêmico Supremo).
 - **Núcleo Cognitivo Mestre (Tier 1):** Claude 5 Sonnet/Opus · Gemini 3.7 Flash High/Pro · ChatGPT 5.6 Luna/Terra/Sol · Codex · Antigravity 2.0 / IDE / VS Code.
 - **Topologia:** 8 Tiers Canônicos formalizados em `CLAUDE.md` (§7), `MODUS_OPERANDI.md` (§10) e `docs/GOVERNANCA_PIRAMIDAL_SOTA.md`.
@@ -54,24 +55,29 @@ nao_verificado:
 ## 3. Conquistas & Marcos Arquiteturais Alcançados
 
 ### A. Governança Piramidal de 8 Tiers & Invariante M.O. 13.G
+
 - Formalizada a matriz vertical de 8 Tiers: Tier 0 (Raphael Vitoi), Tier 1 (Núcleo Mestre), Tier 2 (Superagentes Nuvem), Tier 3 (19 Agentes + Copilot), Tier 4 (Subagents Dedicados), Tier 5 (Bots / Dependabot), Tier 6 (Modelos Locais / Edge), Tier 7 (Barramento Base / Quality Gate).
 - Regrada a invariante canônica de mutação atômica: $\text{Mutação} = \langle \mathbf{SHA}, \mathbf{Assinatura}, \mathbf{Propósito} \rangle$.
 
 ### B. Motor Universal SOTA Web & CDP Automation (`-Web`)
+
 - Implementado em `engine/sota_web_browse.py` integrando Chrome Dev CDP na porta 9223 (`Chrome/154.0.8025.0`), busca inteligente AI Web Search, Clipboard Handoff e logs estruturados em `logs/web_browsing_audit.jsonl`.
 - CLI Nexus expandido com subcomandos `nexus web query/status/handoff/audit`.
 
 ### C. Resgate do Subagente `generalist`
+
 - Reintegrado como subagente invocável no Antigravity Runtime e na malha Python `core/subagents_mesh.py` associado ao modelo `gemma4:31b-cloud`.
 - Mapeado na política de roteamento `llm/routing_policy.py` e `data/ESTADO_DE_ROTEAMENTO.json` mantendo custo marginal zero.
 
 ### D. Erradicação de Vulnerabilidades (Dependabot)
+
 - Saneamento de 72 vulnerabilidades herdadas em 5 submódulos legados (`skills/exa-mcp-server`, `skills/gemini-cli-jules`, `skills/gemini-cli-security`, `skills/gemini-deep-research`, `skills/gemini-supermemory`).
 - Todos os 25 manifestos do repositório alcançaram `found 0 vulnerabilities`.
 
 ---
 
 ## 4. Estado das Suítes de Teste & Portões
+
 - **Python:** 658/658 testes passando (0 erros, 0 falhas).
 - **Frontend Jest:** 95/95 testes passando (18 suítes).
 - **Quality Gate:** 5/5 fases aprovadas com conformidade total.

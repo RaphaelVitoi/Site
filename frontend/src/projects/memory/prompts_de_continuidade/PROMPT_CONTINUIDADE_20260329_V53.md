@@ -7,6 +7,7 @@ type: project
 # Prompt de Continuidade V53 — 2026-03-29
 
 ## Commits desta sessão
+
 | Hash | Descrição |
 |------|-----------|
 | `8566e97` | fix: buildInsight threshold usa esperancaRealizadaPct quando R<1 + docs framework PM v2 |
@@ -34,6 +35,7 @@ Arquivos modificados: `perspectiva.ts`, `rpDeriver.ts`, `perspectiva.test.ts`, `
 **Hierarquia corrigida:** Esperança(2) → Expectativa(3) → Perspectiva(4)
 
 **O que mudou:**
+
 - Esperança (seção 2): equação usa ΔEquity em vez de ΔPerspectiva (que agora é a síntese); adicionado threshold correto do fold; pipeline completo como callout
 - Expectativa (seção 3): reescrita como preditiva com cadeia futura (SE X, o que muda no FGS e Esperança futura?); exemplo CL encadeado
 - Perspectiva (seção 4): reescrita como síntese definitiva; PM equation formal; propriedade competitiva
@@ -49,9 +51,11 @@ Arquétipo V: "Transferência do Risco" — Open-Shove transfere peso volitivo, 
 ## Pendências
 
 ### Menor — Label no PerspectivePanel
+
 - "Perspectiva Realizada" no painel é tecnicamente "Esperança Realizada (com R)" — aguarda decisão de Raphael sobre nomenclatura definitiva
 
 ### Standby (não implementar sem autorização)
+
 - PKO: revisão com base na Perspectiva como novo paradigma — explicitamente último
 - EV_fold dinâmico f(t, d_pj, pos): matemática não fechada — sem UI, sem implementação
 - MDF em ICM com variáveis monetárias

@@ -7,6 +7,7 @@ type: project
 ## Estado Atual (V68 — 2026-04-04)
 
 ### Commits da sessão (continuação de V67)
+
 1. `d9e06a8` — feat(simulator): conectar motor D6 ao PostFlopPanel — 5 métricas + MW slider
 2. `7709f35` — feat(content): expandir icm-pos-flop com Framework D6 — 5 conceitos formais
 
@@ -29,14 +30,17 @@ type: project
    - Link direto para simulador
 
 ### Arquivos modificados
+
 - `frontend/src/components/simulator/panels/PostFlopPanel.tsx` — D6 métricas + MW slider
 - `frontend/src/app/aulas/icm-pos-flop/page.tsx` — Framework D6 educacional completo
 
 ### Pipeline de próximos passos
+
 1. **Validação matemática** — Testar D6 com cenários conhecidos (HRC FT, toy games) para verificar outputs
 2. **PKO Value** — Feature aprovada, ainda em standby
 3. **MasterSimulator** — Integrar PostFlopPanel como tab/seção do simulador principal
 4. **MDF compartilhado MW** — Teoria formalizada em memória, implementação após teoria HU funcional
 
 ### Build
+
 Zero erros TS. Lint passa.

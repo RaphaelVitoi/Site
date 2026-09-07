@@ -164,10 +164,12 @@ Frequencia de erro emocional/tilt quantificavel por MDA populacional. Quando P(e
 ## "Erro de Ambos"  All-in Mal Calibrado
 
 Se o Vilao paga all-in incorretamente (overcall wide), **o range do atacante tambem estava mal calibrado**. O erro e de ambos:
+
 - **Vilao:** Erro de execucao (call matematico com equidade insuficiente).
 - **Hero:** Erro de antevisao (shove vulneravel a incapacidade de fold do oponente, $f_b$).
 
 ### Dinamica Sistemica (Nao-Soma Zero)
+
 Diferente do ChipEV, em ICM o call incorreto do defensor reduz o ICMev de ambos os jogadores ativos. A equidade financeira de torneio e destruida pela colisao e distribuida passivamente para os **bystanders** (demais jogadores na mesa). Por isso, calibrar ranges exige prever a taxa de erro humana ($f_b$).
 
 ---
@@ -177,6 +179,7 @@ Diferente do ChipEV, em ICM o call incorreto do defensor reduz o ICMev de ambos 
 **Status:** Hipotese a ser validada de forma empirica (nao assumir como dogma absoluto).
 
 ### Enunciado da Hipotese
+
 Em estruturas de torneio padrao (Top-Heavy) e sob apostas sustentaveis pos-flop (como Pot-Size Bet, $B \le P$), o Risk Premium realista de colisao possui um teto de friccao na casa dos $28\%$ ($BF \approx 1.388$). Ao isolarmos a equacao de indiferenca de Nash no River:
 $$E = \frac{BF}{2 + BF} \approx \frac{1.388}{3.388} \approx 41\%$$
 
@@ -215,4 +218,3 @@ Analise: **Recursiva** (passado/padroes) + **Precursiva** (presente/agora  termo
 ## Validacao
 
 Testavel prioritariamente em FTs (controle maximo). ICM existe desde a 1a mao de torneio (campo de 200p, estrutura flat, RP de 1.8%). Progressao: bolha/FT  campo medio  inicio.
-

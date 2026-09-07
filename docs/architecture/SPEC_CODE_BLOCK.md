@@ -39,4 +39,3 @@ interface CodeBlockProps {
 ## 5. Proximos Passos
 
 - Injetar um bloco de teste na pagina inicial da Biblioteca assim que implementado.
-

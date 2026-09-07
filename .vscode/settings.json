@@ -119,7 +119,19 @@
     },
     "[markdown]": {
         "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.markdownlint": "explicit"
+        },
         "editor.wordWrap": "on"
+    },
+    "markdownlint.configFile": "${workspaceFolder}/.markdownlint.json",
+    "markdownlint.ignoreFileName": "${workspaceFolder}/.markdownlintignore",
+    "files.associations": {
+        ".markdownlintignore": "ignore",
+        ".prettierignore": "ignore",
+        ".geminiignore": "ignore",
+        ".ragignore": "ignore"
     },
     "prettier.logLevel": "warn",
     "prettier.requireConfig": true,

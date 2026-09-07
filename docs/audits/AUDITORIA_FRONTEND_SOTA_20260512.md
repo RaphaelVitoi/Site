@@ -7,9 +7,11 @@
 ---
 
 ## 1. Visao Geral da Arquitetura
+
 O frontend esta construido sobre o ecossistema **Next.js 14 (App Router)** com TypeScript estrito. A arquitetura e altamente modular, separando a logica de negocio (Motores Matematicos), gerenciamento de estado (Sincronia Global) e componentes de interface de alta fidelidade.
 
 ### Tech Stack Principal:
+
 - **Core:** Next.js 14.2.4, React 18.3.1
 - **Tipagem:** TypeScript 5.9.3 (Strict Mode)
 - **Estilizacao:** Tailwind CSS 4.3.0 (Glassmorphism SOTA)
@@ -20,10 +22,12 @@ O frontend esta construido sobre o ecossistema **Next.js 14 (App Router)** com T
 ---
 
 ## 2. Auditoria do Motor Matematico (VITOI Core)
+
 O arquivo `src/lib/perspectiva.ts` foi auditado e valida a implementacao da **Equacao Unificada SOTA**:
 `PM = [(Equity * R) * Valuation] - [EV_fold(t, dpj, pos) + RIO_mw]`
 
 ### Pontos Fortes:
+
 - **Integridade de Teoremas:** Cobertura de testes unitarios para os Teoremas D1 a D6 (Laddering, RIO Exponencial, Amortizacao de Edge, etc.).
 - **Fisica Realista:** Implementacao de Realization Factor (R) dinamico baseado em SPR e posicao.
 - **Psicologia:** Inclusao de Curva de Utilidade (Kahneman & Tversky) com pontos de referencia (Tilt, Bubble, Protecting).
@@ -32,7 +36,9 @@ O arquivo `src/lib/perspectiva.ts` foi auditado e valida a implementacao da **Eq
 ---
 
 ## 3. Performance e Otimizacao
+
 O sistema utiliza estrategias avancadas para manter 60fps mesmo em simulacoes complexas:
+
 - **WASM Bridge:** Calculos de equidade binaria (Bitmask O(1)) processados em Rust.
 - **Web Workers:** Isolamento de threads para calculos pesados, evitando o congelamento da UI.
 - **Dynamic Imports:** Componentes pesados (Dashboards, Simuladores) sao carregados via `next/dynamic` com `ssr: false`.
@@ -41,6 +47,7 @@ O sistema utiliza estrategias avancadas para manter 60fps mesmo em simulacoes co
 ---
 
 ## 4. Interface e UX (SOTA Aesthetics)
+
 - **Glassmorphism:** Implementacao consistente de paineis translucidos, blur 3xl e bordas sutis.
 - **Fisica da Mesa Unificada:** O `SotaGlobalSyncProvider` garante que uma alteracao de stack no Simulador Mestre reflita instantaneamente no Laboratorio GTO e nos Artigos Interativos.
 - **Acessibilidade:** Uso de `Readonly` em props e `Shared Layouts` robustos.
@@ -59,6 +66,7 @@ O sistema utiliza estrategias avancadas para manter 60fps mesmo em simulacoes co
 ---
 
 ## Conclusao
+
 O frontend do projeto **Poker Racional / Nexus** atinge o padrao **SOTA Gold**. A implementacao matematica e de nivel academico e a interface reflete a sofisticacao do motor subjacente. O sistema esta estavel, performante e pronto para escalonamento.
 
 **Veredito:** SOBERANO.

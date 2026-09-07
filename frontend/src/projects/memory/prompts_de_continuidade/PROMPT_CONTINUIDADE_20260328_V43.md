@@ -15,11 +15,13 @@ type: project
 ## O que foi feito
 
 ### Worker restart
+
 - Worker reiniciado com `-Force -Background` para carregar fix do VALID_AGENTS da sessão anterior
 - PID antigo: 24268 (rodando desde 09:56). Novo PID: 4752
 - Bug encontrado e corrigido em `start_worker.ps1`: `-RedirectStandardOutput` e `-RedirectStandardError` apontavam para o mesmo arquivo (`$logFile`), causando `InvalidOperationException`. Corrigido com `$logOut` e `$logErr` separados.
 
 ### -TestMode em do.ps1
+
 - Novo parâmetro `[switch]$TestMode` adicionado ao param block
 - Quando `-TestMode` ativo: bloco `if (-not $TestMode)` suprime as definições locais de `Invoke-ContextAssembler` e `Invoke-NexusScript`
 - PowerShell sobe na cadeia de escopo e encontra as versões `global:` (mockadas pelo Pester)
@@ -27,6 +29,7 @@ type: project
 - Fix real (bug PS5.1): `Join-Path $ScriptDirectory '.cerebro' 'CEREBRO.md'` (3 args) incompatível com PS5.1. Corrigido com `$ClaudeDir = Join-Path $ScriptDirectory '.cerebro'` e chamadas de 2 args.
 
 ### do.test.ps1 -- 8/9 verde
+
 - 5 testes antes `-Pending` agora passam:
   - `-Web -Force -TestMode`: Invoke-ContextAssembler + Set-Clipboard interceptados
   - `-Audit 'full' -TestMode`: ParameterFilter `*sota_audit*`

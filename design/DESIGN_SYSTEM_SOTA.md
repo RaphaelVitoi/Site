@@ -9,6 +9,7 @@
 ## 1. Design Tokens & Color Palette
 
 ### Primary & Accent Colors
+
 * **Background Deep (Canvas):** `#090D16` (`slate-950` / Deep Onyx)
 * **Card Surface (Glass):** `rgba(15, 23, 42, 0.75)` with `backdrop-blur-md`
 * **Card Border:** `rgba(212, 175, 55, 0.20)` (Subtle Gold Border)
@@ -21,6 +22,7 @@
 * **Purple Dynamic (Thinking):** `#8B5CF6` (`violet-500`)
 
 ### Text Hierarchy
+
 * **Heading Primary:** `#F8FAFC` (`slate-50`)
 * **Body Secondary:** `#94A3B8` (`slate-400`)
 * **Muted Caption:** `#64748B` (`slate-500`)
@@ -40,6 +42,7 @@
 ## 3. UI Component Archetypes
 
 ### A. The Glassmorphic Metric Card
+
 ```html
 <div class="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-slate-900/70 p-6 backdrop-blur-xl transition-all duration-300 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10">
   <div class="flex items-center justify-between">
@@ -54,6 +57,7 @@
 ```
 
 ### B. The Mathematical Insight Container (KaTeX Ready)
+
 ```html
 <div class="rounded-xl border border-slate-800 bg-slate-950/80 p-5 font-mono text-sm text-slate-200">
   <div class="mb-2 text-xs uppercase tracking-widest text-amber-400">Formalismo Matematico PMev</div>
@@ -64,6 +68,7 @@
 ```
 
 ### C. Action Button (Gold Gradient)
+
 ```html
 <button class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3 text-sm font-bold text-slate-950 shadow-md shadow-amber-500/20 transition-all duration-200 hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/30 active:scale-95">
   Calcular Equidade no Solver
@@ -84,6 +89,7 @@
 ## 5. Stitch Integration Directives
 
 When generating screens for Poker Racional via Stitch:
+
 1. Maintain dark slate backgrounds (`#090D16`) and gold accents (`#D4AF37`).
 2. Encapsulate data tables and matrix heatmaps with rounded glass cards and subtle amber borders.
 3. Reserve dedicated containers for KaTeX mathematical proofs and eCDF charts.

@@ -17,7 +17,9 @@ type: project
 ## O QUE FOI FEITO NESTA SESSAO
 
 ### Perfis de agentes (.cerebro/agents/*.md)
+
 Todos os 18 agentes expandidos de 12 linhas para 35-50 linhas. Novo formato com secoes:
+
 - Modo de Operacao (quando acionar, protocolo entrada/saida)
 - Padrao e Filosofia
 - Anti-Padroes
@@ -25,30 +27,36 @@ Todos os 18 agentes expandidos de 12 linhas para 35-50 linhas. Novo formato com 
 - Proposta Evolutiva
 
 ### MEMORYs reescritas/expandidas (.cerebro/agent-memory/*/MEMORY.md)
+
 - @historian, @planner, @verifier: reescritas do zero (eram templates vazios ou corrompidos)
 - @dispatcher, @bibliotecario: expandidas (1 linha/secao → conteudo real)
 - @sequenciador: corrigida (declaracao de auto-extincao removida — agente permanece ativo)
 
 ### Ecossistema
+
 - HOLOGRAPHIC_ROUTING_PROTOCOL.md: reescrito do zero (estava com codigo Python — corrompido)
   Cobre: principio holografico, pipeline harmonica, memoria individual/coletiva, autopoiese, fractalismo, mapa de comunicacao entre agentes
 - routing_map.json: data corrigida (2023 → 2026)
 - COHERENCE_MANIFEST.md + INDEX_CEREBRO.md: 17 → 18 agentes
 
 ### @sequenciador permanece ativo
+
 Raphael confirmou. Papel distinto do task_executor.py: ele orquestra mecanicamente, o @sequenciador define a inteligencia de ordenacao.
 
 ## PENDENTES DESTA SESSAO (NAO CONCLUIDOS)
 
 ### P1 - CRITICO: Sincronizar routing_patterns
+
 O task_executor.py linha 406 recalcula INTENT_MAP do agents_manifest.json, ignorando intentmap.json.
 O intentmap.json tem patterns mais ricos que o manifesto — esses termos extras estao sendo desperdicados.
 
 **Acao necessaria:**
+
 1. Enriquecer routing_patterns no agents_manifest.json com termos extras do intentmap.json
 2. Sincronizar intentmap.json para ser espelho exato do manifesto (ou deprecar)
 
 Exemplos de enriquecimento necessario:
+
 - @historian manifesto: "relatorio|produtividade|custo|analise de log|historico|performance"
   intentmap tem a mais: "metricas|tendencia|insights|dados"
 - @bibliotecario manifesto: "rag|memori|historic|lembr|chroma|vetor|conhecimento|dados|informacao|contexto"
@@ -60,10 +68,12 @@ Exemplos de enriquecimento necessario:
   intentmap: "test|bug|qa|falha|erro|quebr|repar" (faltam os ultimos 2 no intentmap)
 
 ### P2 - MEDIO: COHERENCE_MANIFEST.md incompleto na contagem
+
 O COHERENCE_MANIFEST diz "17 agentes" em alguns lugares (ja corrigido os principais via sed),
 mas pode ter referencias numericas adicionais. Verificar com grep detalhado.
 
 ### P3 - BAIXO: intentmap.json como fonte de verdade vs. manifesto
+
 Decidir definitivamente: usar intentmap.json como fonte ou deprecar.
 Se manter, task_executor.py linha 406 deve ser alterado para ler do arquivo ao inves de calcular.
 

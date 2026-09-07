@@ -77,4 +77,3 @@ Ola Mundo
 ```
 
 Rodar `.\do.ps1 -Ingest`. Verificar se `teste_ingest.txt` foi materializado corretamente.
-

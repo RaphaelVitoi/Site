@@ -33,11 +33,14 @@
 
 > [!CAUTION]
 > **Por que o relatório anterior estava vazio e as tarefas diárias falhavam:**
+>
 > 1. **Relatório Alienígena no Git:** O arquivo `JULES_REPORT.md` anterior foi incorporado no commit `b36a9ea4` com um template copiado de `robinbakshi007/ollama-direct-custom-agent` (projeto de extensão VS Code alheio), sem qualquer vínculo com a API do Jules.
 > 2. **Falha Sistêmica no Clone da VM do Jules:** Toda noite às ~03:20 UTC, o runner em nuvem do Google Jules inicia uma VM descartável e executa:
+>
 >    ```bash
 >    git clone --depth 1 --shallow-submodules --no-single-branch --recursive https://github.com/RaphaelVitoi/Site -b master /app
 >    ```
+>
 > 3. **Submódulo Quebrado (`skills/exa-mcp-server`):** O commit `fb578584d9bf8df7afc53890c5daabb6956200b7` foi registrado localmente no submódulo, mas **nunca foi (e não pode ser) enviado para o repositório público upstream** (`exa-labs/exa-mcp-server.git`). O GitHub rejeitava o fetch com `upload-pack: not our ref fb578584d9...`, abortando o clone antes do agente Jules rodar.
 > 4. **Bug de Parâmetro no `engine/jules_bridge.py`:** A query `?view=FULL` era rejeitada pela API v1alpha com HTTP 400 Bad Request (sanado nesta sessão).
 
@@ -55,11 +58,13 @@
 ## 4. Detalhamento Técnico das Sessões Rastreadas
 
 ### Sessão `14536923137986406349` — Bolt - Targeted Performance Optimization Agent
+
 - **Status:** `COMPLETED`
 - **Criada em:** `2026-09-05T03:11:18.855522243Z`
 - **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
 - **Link Direto:** https://jules.google.com/session/14536923137986406349
 - **Prompt Original:**
+
   ```text
   You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
   
@@ -78,6 +83,7 @@
   - Making architectural changes
   ... [truncado, 146 linhas no total]
   ```
+
 - **Timeline de Atividades (39 eventos):**
   - `[2026-09-05 03:21:02]` **agent**: `agentMessaged, id`
   - `[2026-09-05 11:44:02]` **user**: `userMessaged, id`
@@ -120,14 +126,17 @@
   - `[2026-09-05 12:28:09]` **agent**: `sessionCompleted, artifacts, id`
 
 ### Sessão `6388626450245619671` — Auditoria de tipagem PEP 585/604 e protocolo pure ASCII
+
 - **Status:** `COMPLETED`
 - **Criada em:** `2026-08-29T17:57:51.220484218Z`
 - **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
 - **Link Direto:** https://jules.google.com/session/6388626450245619671
 - **Prompt Original:**
+
   ```text
   Auditoria de tipagem PEP 585/604 e protocolo pure ASCII
   ```
+
 - **Timeline de Atividades (50 eventos):**
   - `[2026-08-29 18:02:57]` **agent**: `planGenerated, id`
   - `[2026-08-29 18:05:17]` **user**: `planApproved, id`

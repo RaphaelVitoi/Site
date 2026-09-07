@@ -7,6 +7,7 @@ type: project
 ## Estado Atual (2026-03-21)
 
 ### O que aconteceu nesta sessao
+
 - globals.css restaurado (176 → 1781 linhas) e commitado (commit 9743b3e)
 - Raphael enviou material completo da teoria ICM original:
   - Aula 1: teoria fundacional + 8 Toy Games (Piosolver) + Parte I e II
@@ -18,12 +19,14 @@ type: project
 - Confirmado: conteudo textual no site e placeholder degradado pela Gemini. Fonte real e o material que Raphael enviou + material privado
 
 ### Resultado da avaliacao
+
 - **Arquitetura**: solida, nao precisa ser repensada. 29 arquivos bem organizados.
 - **Motor (nashSolver.ts)**: errado. Linear com 5 constantes fixas. Nao captura Teto do RP gradual, inversao Parte II, Vantagem de Risco.
 - **Conteudo textual no site**: remix mal feito dos originais de Raphael pela Gemini. Ele nem leu, integrou pelo visual.
 - **Parte interativa**: placeholder funcional. Matematica errada. Raphael nunca mexeu nisso.
 
 ### Fontes disponiveis para trabalho
+
 1. Teoria fundacional (RP, Vantagem de Risco, esperanca matematica, solvers, antevisao)
 2. 8 Toy Games com dados do Piosolver (Parte I: IP 3% fixo, OOP 0-24%. Parte II: OOP 3% fixo, IP 9-21%)
 3. 93 nodes ChipEV vs ICMev (BTN 38bb vs BB 53bb, RP 21.4% vs 12.9%)
@@ -34,6 +37,7 @@ type: project
 8. Material privado (ainda nao enviado - Raphael tem "outros mil")
 
 ### 9 conceitos originais de Raphael para formalizar
+
 1. Teto do RP (gradual, nao binario)
 2. Vantagem de Risco (subtracao dos RPs como coeficiente de agressividade)
 3. Economia de Perspectiva vs Fichas
@@ -45,17 +49,21 @@ type: project
 9. Faixas ponderadas (distribuicao com centro de gravidade em vez de pontos fixos)
 
 ### Proximo passo
+
 Raphael quer formalizar esses conceitos e injetar no motor do simulador. Comecar por:
+
 - Decidir qual conceito atacar primeiro
 - Coletar dados empiricos dos toy games e dos 93 nodes para calibrar
 - Substituir o motor linear por algo que capture a teoria real
 
 ### Git
+
 - Branch: main
 - Ultimo commit: 9743b3e (restauracao globals.css)
 - Build: OK (verificado nesta sessao, dev server rodando)
 
 ### Lembretes criticos
+
 - NUNCA reescrever componentes do zero (feedback salvo)
 - Conteudo textual e de Raphael - intocavel sem aprovacao
 - Ele quer steelmanning e resistencia intelectual, nao validacao

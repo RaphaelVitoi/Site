@@ -1,6 +1,7 @@
 # DIRETRIZ DE CONTINUIDADE - SESSÃO V26 (UX/UI E VISUALIZAÇÃO DE DADOS SOTA DO MOTOR ICM)
 
 ## 1. O ESTADO DA ARTE ATUAL (O QUE FOI CONSTRUÍDO)
+
 Nesta sessão, realizamos uma revisão profunda de UX, UI e Data Visualization no **Motor ICM** (`ReferencialAula12.tsx` e `MasterSimulator.tsx`), além de integrações vitais de navegação.
 
 - **A Verdade dos Dados (Data Viz):** Corrigimos o gráfico de barras da "Estrutura de Prêmios". Em vez de ancorar a barra do 1º lugar em 100% (o que criava uma falsa ilusão visual de achatamento), ancoramos em 100% do `TOTAL_POOL`. O 1º lugar agora preenche exatos ~18.8% físicos da tela, demonstrando visualmente e factualmente por que a estrutura é classificada como **FLAT**.
@@ -10,11 +11,13 @@ Nesta sessão, realizamos uma revisão profunda de UX, UI e Data Visualization n
 - **Integração do Funil:** Adicionamos o card "Motor ICM" na `page.tsx` (agora com 9 blocos simétricos), o link no Header e um botão "Início" direto na barra superior do `MasterSimulator.tsx`, fechando o ciclo de navegação Aula -> Whitepaper -> Simulador. Corrigimos links externos no `Footer.tsx`.
 
 ## 2. A FILOSOFIA DE DESIGN ESTABELECIDA (MEMÓRIA)
+
 1. **O Paradoxo do Eixo X:** A escala relativa distorce o comportamento humano. A semântica visual deve sempre espelhar a matemática absoluta (fatia do torneio real).
 2. **Downward Drift do Design:** A cura para a compressão de informações não é diminuir a fonte, mas agrupar logicamente (Grids), aumentar whitespace e usar cor semântica.
 3. **Interface Socrática (Micro-copy):** O texto de UI não deve apenas descrever, deve *ensinar a pensar* (ex: "Foge dos extremos (20-24%). Avalie os saltos caso a caso.").
 
 ## 3. ARQUIVOS MODIFICADOS RECENTEMENTE
+
 - `src/components/simulator/ReferencialAula12.tsx` (Refatoração total de matrizes, gráficos, grids e SVGs)
 - `src/components/simulator/MasterSimulator.tsx` (Tipografia do header/footer, botão Início)
 - `src/app/page.tsx` (Adição do card do Motor ICM)
@@ -22,6 +25,7 @@ Nesta sessão, realizamos uma revisão profunda de UX, UI e Data Visualization n
 - `src/components/layout/Footer.tsx` (Correção URL do YouTube)
 
 ## 4. O PRÓXIMO PASSO (BIFURCAÇÃO ESTRATÉGICA)
+
 Escolha a próxima frente de ataque para a nossa IA:
 
 **[OPÇÃO A] Refinamento da Calculadora ICM:**

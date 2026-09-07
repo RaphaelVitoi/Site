@@ -1,4 +1,5 @@
 # CHANGELOG DE AUDITORIA
+
 **Auditado por @auditor** | **Data: 2026-03-08**
 
 | # | Severidade | Localizacao | Problema Encontrado | Correcao Aplicada |
@@ -32,6 +33,7 @@
 ### 1.1 O que existe
 
 **Material primario de Raphael** (`Entendendo o ICM e suas heuristicas.docx`):
+
 - 8 toy-games progressivos no board 22223, AA/QQ/JJ vs KK, pot 100, unica aposta 100
 - Parte I (5 cenarios): RP crescente no OOP (0/0, 3/6, 3/9, 3/18, 3/24)
 - Parte II (3 cenarios): RP invertido (9/3, 18/3, 21/3)
@@ -42,6 +44,7 @@
 - Analise de valuations de stacks com calculadora ICM
 
 **Pesquisa complementar** (`pesquisa.md`):
+
 - 7 artigos do GTO Wizard com dados quantitativos
 - Fontes de Dara O'Kearney e Barry Carter
 - Conexoes interdisciplinares documentadas (Prospect Theory, Teoria de Sistemas, Teoria dos Jogos)
@@ -50,6 +53,7 @@
 - Estrutura de 5 modulos proposta
 
 **Prompt estruturado** (`prompt.md`):
+
 - Publico-alvo definido: jogadores profissionais intermediarios, AVG 109-530
 - Tom e estilo prescritos: voz de Raphael Vitoi
 - 12 criterios de sucesso verificaveis
@@ -91,6 +95,7 @@ Nenhum conflito entre material original e pesquisa. O material de Raphael e as f
 ### 3.1 Secao: Por que ICM importa desde a mao 1
 
 **Conteudo obrigatorio:**
+
 - Abrir com a tese central: o edge em ICM migrou do pre-flop para o pos-flop. Pre-flop ICM ja esta amplamente otimizado; o gap real esta nas decisoes pos-flop.
 - Dado concreto: um MTT de 200 jogadores tem RP de ~1.8% desde a primeira mao. ICM nao "liga" na bubble; ele opera desde o inicio, com efeitos que se acumulam silenciosamente.
 - Dado de custo: jogar ChipEV em spots ICM de bubble/FT custa mais de 10% do buy-in, escalando para mais de 30% em 3-bet pots. Fonte: GTO Wizard, "Theoretical Breakthroughs in ICM".
@@ -103,6 +108,7 @@ Nenhum conflito entre material original e pesquisa. O material de Raphael e as f
 ### 3.2 Secao: Risk Premium -- definicao, calculo, intuicao
 
 **Conteudo obrigatorio:**
+
 - Definicao precisa: RP e a equity adicional que um jogador precisa ter alem do pot odds para justificar um all-in (ou call de all-in) sob ICM. Mede o "custo do risco" imposto pelo ICM.
 - Calculo: RP = (ICM equity necessaria para call) - (pot odds em ChipEV). Exemplo numerico com configuracao de stacks concreta.
 - Fatores que determinam o RP:
@@ -119,6 +125,7 @@ Nenhum conflito entre material original e pesquisa. O material de Raphael e as f
 ### 3.3 Secao: RP vs Bubble Factor
 
 **Conteudo obrigatorio:**
+
 - Bubble Factor e RP medem a mesma pressao com calculos diferentes.
 - Bubble Factor: ratio entre o custo de perder (em $EV) e o beneficio de ganhar. BF de 1.0 = ChipEV. BF > 1.0 = pressao ICM. BF de 2.0 = precisa do dobro da equity para justificar o call.
 - RP e mais intuitivo para internalizacao em tempo real: "preciso de X% a mais de equity alem do pot odds". Bubble Factor exige calculo relativo.
@@ -131,6 +138,7 @@ Nenhum conflito entre material original e pesquisa. O material de Raphael e as f
 ### 3.4 Secao: Valuations de stack -- o que seu stack realmente vale
 
 **Conteudo obrigatorio:**
+
 - Chip leader nao tem equity proporcional ao primeiro premio. Exemplo: CL com 40% das fichas em FT de 6 nao tem 40% do prize pool.
 - Short stack nao tem equity proporcional ao ultimo premio. Exemplo: jogador com 5% das fichas ainda tem equity significativa pelo simples fato de estar vivo.
 - Visualizacao: tabela com configuracao de stacks e valuations ICM correspondentes, mostrando a diferenca entre "% de fichas" e "% do prize pool".
@@ -148,6 +156,7 @@ Nenhum conflito entre material original e pesquisa. O material de Raphael e as f
 ### 4.1 Secao: Justificativa metodologica
 
 **Conteudo obrigatorio:**
+
 - O que sao toy-games: cenarios simplificados que isolam uma unica variavel para estudar seu efeito puro.
 - Por que sao a ferramenta certa: em maos reais, multiplas variaveis operam simultaneamente (posicao, ranges, stacks, payout, equity). Toy-games permitem ver ICM operando sem ruido.
 - Relacao com solvers: solvers sao toy-games sofisticados. Eles resolvem um modelo simplificado da realidade. A critica ao solver nao e que ele erra, e que ele resolve uma equacao estrategica em um modelo especifico, e o jogador que o usa sem entender o modelo trata a saida como verdade absoluta.
@@ -172,6 +181,7 @@ Cinco toy-games em sequencia, cada um com RP crescente no OOP. O @implementor de
 #### Toy-Game 1: ChipEV puro (RP 0/0)
 
 **Dados obrigatorios:**
+
 - RP do IP: 0. RP do OOP: 0.
 - KK como bluffcatcher puro: paga 50% das vezes, conforme MDF (Minimum Defense Frequency).
 - Formula MDF: MDF = 1 - [aposta / (pot + aposta)] = 1 - (100/200) = 0.5 = 50%. OOP deve defender pelo menos 50% do range para nao ser explorado por bluffs.
@@ -184,6 +194,7 @@ Cinco toy-games em sequencia, cada um com RP crescente no OOP. O @implementor de
 #### Toy-Game 2: RP IP 3 / OOP 6
 
 **Dados obrigatorios:**
+
 - IP blefa 4.2 combos (vs 3 em ChipEV). IP blefa MAIS porque OOP tem RP alto e folda mais.
 - OOP folda mais que no cenario ChipEV.
 - Conceito: **Batata Quente** -- OOP nao pode devolver o RP via re-shove (cenario de unica aposta). O RP e unidirecional: OOP absorve o risco inteiro.
@@ -194,6 +205,7 @@ Cinco toy-games em sequencia, cada um com RP crescente no OOP. O @implementor de
 #### Toy-Game 3: RP IP 3 / OOP 9
 
 **Dados obrigatorios:**
+
 - IP blefa 5 combos.
 - OOP NAO folda mais que no cenario anterior (RP 3/6). Este e o ponto critico.
 - Conceito: **Teto do RP** (nomenclatura original de Raphael) -- existe um limite alem do qual aumentar o RP do OOP nao o faz foldar mais. O defensor atingiu o ponto onde foldar mais seria exploitavel demais.
@@ -204,6 +216,7 @@ Cinco toy-games em sequencia, cada um com RP crescente no OOP. O @implementor de
 #### Toy-Game 4: RP IP 3 / OOP 18
 
 **Dados obrigatorios:**
+
 - IP blefa 8 combos (6 value, 8 bluff = range desbalanceado, mais bluffs que value).
 - KK (OOP) ainda paga. Mesmo com range desbalanceado do IP, o OOP esta protegido pelo Teto do RP.
 - A razao: respostas da Teoria dos Jogos em ambientes ICM raramente sao extremas. O equilibrio tende a ajustes graduais, nao a mudancas binarias.
@@ -213,12 +226,14 @@ Cinco toy-games em sequencia, cada um com RP crescente no OOP. O @implementor de
 #### Toy-Game 5: RP IP 3 / OOP 24
 
 **Dados obrigatorios:**
+
 - Mesma logica do TG4. KK paga no limite superior do RP.
 - Confirmacao do Teto do RP: mesmo com RP extremo (24), o defensor nao folda mais que no cenario 3.
 
 **Insight a destacar:** reforco final do Teto do RP. Ponto pedagogico consolidado.
 
 **Conclusao da Parte I (obrigatoria):**
+
 - Resumo do que os 5 TGs demonstram: RP alto no OOP aumenta bluffs do IP, mas ha um teto natural de defesa.
 - Implicacao pratica: overbluffar o CL funciona ate certo ponto. Alem do Teto do RP, o CL para de foldar mais.
 - Conexao com conceito de **RP de ida vs RP de volta em SRP**:
@@ -235,6 +250,7 @@ Tres toy-games com RP alto no IP (o apostador) e baixo no OOP (o defensor). Mesm
 #### Toy-Game 6: RP IP 9 / OOP 3
 
 **Dados obrigatorios:**
+
 - IP blefa ligeiramente acima de ChipEV (poucos combos a mais).
 - OOP com menor RP PAGA MENOS (contra-intuitivo). O defensor com RP baixo folda mais, nao menos.
 - Este resultado e contra-intuitivo e pedagogicamente central.
@@ -242,6 +258,7 @@ Tres toy-games com RP alto no IP (o apostador) e baixo no OOP (o defensor). Mesm
 #### Toy-Game 7: RP IP 18 / OOP 3
 
 **Dados obrigatorios:**
+
 - IP mantem range levemente inclinado a bluff.
 - OOP folda AINDA MAIS que no TG6.
 - A tendencia se acentua: quanto maior o RP do IP (quem aposta), mais o OOP com RP baixo folda.
@@ -249,6 +266,7 @@ Tres toy-games com RP alto no IP (o apostador) e baixo no OOP (o defensor). Mesm
 #### Toy-Game 8: RP IP 21 / OOP 3
 
 **Dados obrigatorios:**
+
 - Mesmo range do IP.
 - OOP folda quase 80%.
 
@@ -263,6 +281,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 5. **Fichas nao se transferem 1:1 em valor.** Parte do valor das fichas transferidas e "distribuida" pela mesa via ICM. O CL ganha fichas mas perde $EV relativo.
 
 **Conclusao da Parte II (obrigatoria):**
+
 - O conceito de **Vantagem de Risco** (covering advantage): cobrir diminui o RP significativamente. O jogador que cobre tem mais liberdade de acao.
 - O conceito de **Desvantagem de Risco**: ser coberto eleva RP. Mas a conclusao contra-intuitiva dos TGs 6-8 mostra que o defensor coberto (OOP com RP baixo) folda mais, nao menos.
 - **Short stacks e RP medio**: stacks a beira da eliminacao elevam o RP medio de todas as stacks intermediarias. A presenca de um short stack muda a dinamica da mesa inteira.
@@ -292,6 +311,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 5.1 Secao: Por que o edge real esta no pos-flop
 
 **Conteudo obrigatorio:**
+
 - Tese: ICM pre-flop (push/fold, open-shove ranges, calling ranges) ja esta amplamente otimizado. Ferramentas como ICMIZER, HRC e GTO Wizard tornaram ICM pre-flop acessivel. O gap de skill entre jogadores no pre-flop ICM e menor do que nunca.
 - O pos-flop ICM e a nova fronteira: fewer players study it, fewer tools solve it well, fewer coaches teach it. O edge esta onde a competicao nao esta olhando.
 - Dado de suporte: GTO Wizard so disponibilizou ICM postflop solving em 2024. Dara O'Kearney lancou "Postflop ICM Simplified" apos isso. O campo e novo.
@@ -300,6 +320,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 5.2 Secao: Downward Drift
 
 **Conteudo obrigatorio:**
+
 - Definicao: **Downward Drift** e a heuristica de que sob pressao ICM, acoes descem um degrau na escala de agressividade. "Big bets viram small bets, small bets viram checks/calls, checks/calls viram folds." (GTO Wizard)
 - Exemplo concreto (fonte: GTO Wizard, "How ICM Impacts Postflop Strategy"):
   - Spot: A8s3r flop, BTN 40BB vs BB 70BB
@@ -317,6 +338,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 5.3 Secao: SPR e distribuicao do RP por street
 
 **Conteudo obrigatorio:**
+
 - Conceito: o RP total de uma mao nao e "gasto" de uma vez. Ele e distribuido ao longo das streets, proporcionalmente ao tamanho relativo do pot em cada street.
 - Relacao com SPR (Stack-to-Pot Ratio): SPR alto = RP distribuido por mais streets = decisoes menos catastroficas individualmente. SPR baixo = RP concentrado = cada decisao carrega peso desproporcional.
 - Implicacao para sizing: manter SPR alto sob ICM e uma estrategia defensiva. Sizings menores preservam SPR e distribuem o RP.
@@ -325,6 +347,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 5.4 Secao: Covering advantage e efeito compounding
 
 **Conteudo obrigatorio:**
+
 - Cobrir o adversario reduz seu RP significativamente (do material original).
 - Efeito compounding (fonte: GTO Wizard): a vantagem de cobrir nao se limita a uma street. Em cada street, o jogador coberto enfrenta a mesma pressao incremental. Ao longo de flop-turn-river, o efeito se acumula.
 - Exemplo: BB cobrindo BTN defende mais agressivamente (mais calls, check-raise 12% vs 10%) porque o risco de eliminacao e unidirecional.
@@ -333,6 +356,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 5.5 Secao: Premium hands check-back
 
 **Conteudo obrigatorio:**
+
 - Cenario paradigmatico (fonte: GTO Wizard, "Mastering Postflop ICM"):
   - No bubble, UTG abre e o solver checa AA inteiro no flop. Em ChipEV, UTG beta AA 100%.
   - Razao: o custo de construir um pot grande com AA (e potencialmente perder) excede o beneficio de extrair valor. A sobrevivencia tem valor ICM positivo que compete com o EV de apostar.
@@ -343,6 +367,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 5.6 Secao: Custo quantificado de jogar ChipEV em spots ICM
 
 **Conteudo obrigatorio:**
+
 - Dado central (fonte: GTO Wizard, "Theoretical Breakthroughs in ICM"): jogar ChipEV contra oponentes ICM-aware em bubble/FT custa mais de 10% do buy-in.
 - Em 3-bet pots, o custo escala para mais de 30%.
 - Contextualizacao: para um jogador de AVG $215, isso significa perder $21.50+ por torneio em spots ICM de FT. Em 3-bet pots, $64.50+.
@@ -352,6 +377,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 5.7 Secao: Exercicio guiado -- ChipEV vs ICM no GTO Wizard/DeepSolver
 
 **Conteudo obrigatorio:**
+
 - Passo a passo para configurar uma comparacao ChipEV vs ICM:
   1. Escolher um spot de FT (sugestao: BTN vs BB, 30bb effective, FT de 6, stacks variados)
   2. Resolver em ChipEV
@@ -374,6 +400,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 6.1 Secao: Payout structures -- flat vs top-heavy
 
 **Conteudo obrigatorio:**
+
 - Dado central (fonte: GTO Wizard, "How Payout Structures Reshape Postflop Strategy"): diferenca de 5.7% no RP medio entre os extremos do espectro de payout.
 - **Flat structures**: RP alto, jogo conservador, ladder climbing valioso. Cada salto de posicao vale proporcionalmente mais. Incentivo forte para sobrevivencia.
   - Efeito no pos-flop: BB leads predominam em boards pareados (maos fortes sao muito mais fortes, incentivo para proteger pots menores).
@@ -385,6 +412,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 6.2 Secao: FGS vs ICM classico
 
 **Conteudo obrigatorio:**
+
 - Definicao: FGS (Future Game Simulation) e uma evolucao do ICM que corrige suas limitacoes:
   - ICM classico assume que todas as fichas serao apostadas em confrontos aleatorios ate um jogador ter todas. Nao considera blinds futuros, posicao na mesa, skill edges.
   - FGS simula o restante do torneio como uma serie de decisoes futuras, considerando blinds crescentes e posicoes.
@@ -398,6 +426,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 6.3 Secao: KO/Bounty tournaments
 
 **Conteudo obrigatorio:**
+
 - A dinamica unica: bounty tournaments criam um incentivo de RP positivo (ganhar fichas para cobrir = capturar bounty) que compete com o RP negativo do ICM.
 - Interacao: RP positivo do bounty + equity drop negativo do ICM. As duas forcas operam simultaneamente em direcoes opostas.
 - Efeito pratico: em KO tournaments, a agressividade e geralmente mais alta que em vanilla tournaments, especialmente quando o jogador pode capturar um bounty significativo.
@@ -406,6 +435,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 6.4 Secao: CL dynamics
 
 **Conteudo obrigatorio:**
+
 - Do material original: o CL tem responsabilidade de pressionar rivais para dificultar que acumulem. Mas cada pot grande que o CL perde tem custo desproporcional (perda de pressao futura, redistribuicao de valor pela mesa).
 - Equilibrio: o CL deve usar sua Vantagem de Risco (cobrir todos) para pressionar, mas dentro dos limites do RP. Overbluffar alem do Teto do RP e "suicidio ICM" do CL.
 - RP do CL diminui com menos jogadores na mesa: com menos jogadores, ha menos catastrofe potencial, e o RP de todos diminui. O CL se beneficia da reducao de jogadores.
@@ -453,6 +483,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 7.3 Secao: Como estruturar sessoes de estudo solo
 
 **Conteudo obrigatorio:**
+
 - Framework de estudo em 4 etapas:
   1. **Selecionar spot**: escolher uma situacao de FT que ocorre com frequencia (ex: BTN vs BB, 25-35bb, FT de 6)
   2. **Resolver em ChipEV**: anotar sizings, frequencias, ranges
@@ -465,6 +496,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 ### 7.4 Secao: Antevisao como framework aplicado
 
 **Conteudo obrigatorio:**
+
 - Retomar o conceito de **Antevisao** (introduzido no Modulo 1, secao 3.1) como framework pratico de decisao.
 - Conectar Antevisao ao checklist da secao 7.2: a Antevisao e o processo mental que o checklist sistematiza.
 - Exemplo: antes de uma mao em FT, o jogador com Antevisao ja mapeou os stacks, identificou quem cobre quem, estimou o RP, e ajustou sua predisposicao para agir antes de ver suas cartas.
@@ -475,16 +507,19 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 **Conteudo obrigatorio -- cada conexao vinculada a um conceito especifico da aula:**
 
 #### Prospect Theory (Kahneman & Tversky, 1979)
+
 - Conexao: a funcao valor assimetrica (perdas pesam ~2x mais que ganhos equivalentes) e isomorfica a regra "fichas perdidas valem mais que fichas ganhas".
 - O que ilumina: ICM nao e uma anomalia ou distorcao -- e a matematizacao de uma assimetria que a psicologia comportamental ja documentou em outros dominios. Loss aversion no poker nao e vies; sob ICM, e estrategia correta.
 - Onde inserir: referenciar no Modulo 1 (secao 3.4, valuations) e aprofundar aqui.
 
 #### Teoria de Sistemas
+
 - Conexao: a mesa como organismo (conceito original de Raphael). Propriedades emergentes: o RP medio da mesa nao e redutivel a nenhum stack individual. Feedback loops: CL pressiona -> stacks medios tightam -> CL acumula -> pressao aumenta (loop positivo).
 - O que ilumina: por que analisar spots isolados e insuficiente. Cada decisao tem efeitos de segunda e terceira ordem na mesa inteira.
 - Onde inserir: referenciar no Modulo 2 (conclusao da Parte II) e aprofundar aqui.
 
 #### Teoria dos Jogos
+
 - Conexao: Nash Equilibrium sob restricoes de utilidade nao-linear. Em cash games, utilidade e linear (1 ficha = 1 unidade de utilidade). Em torneios sob ICM, utilidade e concava (cada ficha adicional vale menos). Isso muda fundamentalmente o equilibrio.
 - O que ilumina: por que ranges sob ICM parecem "subotimos" do ponto de vista ChipEV -- eles sao otimos para uma funcao de utilidade diferente.
 - Onde inserir: referenciar no Modulo 2 (Pacto Silencioso como Nash sob ICM) e aprofundar aqui.
@@ -498,6 +533,7 @@ Por que OOP folda mais quando IP tem RP alto? Cinco razoes interligadas:
 Nao ha documentacao pre-existente no projeto que precise ser atualizada. A aula e um documento novo.
 
 **Arquivos a serem criados:**
+
 - `docs/tasks/aula-icm-rp/aula-icm-rp.md` -- o documento da aula completa
 
 ---

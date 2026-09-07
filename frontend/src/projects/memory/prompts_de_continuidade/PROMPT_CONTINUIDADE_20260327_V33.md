@@ -9,6 +9,7 @@ type: project
 ## O que aconteceu nesta sessao
 
 ### Auditoria completa do projeto (raiz em diante)
+
 Relatorio gerado pelo @auditor cobrindo integridade, correcoes e lixo acumulado.
 
 ### 4 CRITICOS CORRIGIDOS
@@ -22,16 +23,20 @@ Relatorio gerado pelo @auditor cobrindo integridade, correcoes e lixo acumulado.
 4. **C-04: BOM quadruplicado em routing_map.json** - 4 BOMs removidos (12 bytes).
 
 ### page.tsx restaurado (pre-auditoria)
+
 `frontend/src/app/page.tsx` estava com 1883 linhas (conteudo duplicado ~7x). Restaurado do HEAD (272 linhas).
 
 ## ALERTAS PENDENTES (proxima sessao)
 
 ### A-01: node_modules/ orfao na raiz
+
 - Existe `node_modules/` na raiz (fora de `frontend/`). Nao ha `package.json` na raiz.
 - **Acao:** Deletar `node_modules/` da raiz.
 
 ### A-02: 15+ arquivos fantasma na raiz
+
 Arquivos soltos que nao pertencem ali:
+
 - `page.tsx` - duplicata legada de frontend/src/app/tools/icm/page.tsx
 - `icm.ts` - versao legada de frontend/src/lib/icm.ts
 - `DownwardDriftSimulator.tsx` - componente legado
@@ -52,16 +57,20 @@ Arquivos soltos que nao pertencem ali:
 - **Acao:** Mover utilitarios, deletar lixo, arquivar legados.
 
 ### A-03: Diretorio memory/ na raiz com 62 arquivos
+
 - Parece ser o auto-memory do Claude. Verificar se pode ser consolidado/arquivado.
 
 ### A-04: .cerebro/page.tsx fora de lugar
+
 - Arquivo de blog dentro de .cerebro/. Deletar.
 
 ### A-05: Configs Gemini triplicadas
+
 - `settings.json` (raiz), `settings.py` (raiz, extensao errada), `.vscode/settings.json`
 - **Acao:** Consolidar em `.vscode/settings.json`, deletar as da raiz.
 
 ### A-06: _env.example.ps1 staging suspeito
+
 - Git status mostra `MM` (modificado no index E working tree). Verificar se nao ha chaves reais staged.
 
 ## Estado tecnico atual

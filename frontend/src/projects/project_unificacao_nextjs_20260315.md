@@ -7,6 +7,7 @@ type: project
 Site unificado no Next.js (16 + React 19 + Tailwind 4 + Prisma).
 
 **Estrutura canonica pos-reorganizacao:**
+
 - `frontend/` - Projeto Next.js (unica fonte de verdade para o site)
 - `frontend/public/legacy/` - HTMLs originais preservados como referencia
 - `frontend/public/simulador/` - Motor vanilla JS do simulador ICM (Web Components)
@@ -17,6 +18,7 @@ Site unificado no Next.js (16 + React 19 + Tailwind 4 + Prisma).
 - Raiz contem apenas kernel operacional (do.ps1, Agent-TaskManager, nexus CLI)
 
 **Rotas Next.js ativas:**
+
 - `/` - Home (Prisma + Suspense)
 - `/aula-icm` - Masterclass ICM (Server + Client Component para simulador)
 - `/aula-1-2` - Material complementar

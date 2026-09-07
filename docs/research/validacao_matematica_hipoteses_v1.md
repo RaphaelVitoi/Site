@@ -84,7 +84,7 @@ s_atual = [s_h, s_v, , ]    com   0+
 
 O fold nao altera `s_h` nem os shorts  preserva integralmente a trajetoria de laddering passivo. O call, por contraste, expoe `s_h` a risco nao-zero de reducao, o que diminui a probabilidade do hero sobreviver as eliminacoes dos shorts.
 
-Formalmente: como o villain absorve `` (fica maior), a competicao direta herovillain e ligeiramente desfavoravel ao hero no cenario de fold. Mas esse efeito negativo e de segunda ordem quando ` << s_h`. O efeito positivo de primeiro ordem e a preservacao de `P(hero sobrevive aos shorts)`, que e dominante.
+Formalmente: como o villain absorve `` (fica maior), a competicao direta herovillain e ligeiramente desfavoravel ao hero no cenario de fold. Mas esse efeito negativo e de segunda ordem quando `<< s_h`. O efeito positivo de primeiro ordem e a preservacao de `P(hero sobrevive aos shorts)`, que e dominante.
 
 **Condicao suficiente geral:**
 
@@ -320,7 +320,7 @@ Oportunidades_Exploracao(S)  log(S / S_nash)
 
 Portanto, o edge absoluto do jogador superior cresce com `Habilidade  log(S)`.
 
-### Justificativa do denominador 
+### Justificativa do denominador
 
 Com S pequeno, o numero de maos ate o all-in forcado e pequeno. O resultado de cada torneio tem alta variancia porque ha poucos pontos de decisao. O edge por mao e real, mas o desvio padrao dos resultados de torneio supera o edge esperado   domina.
 
@@ -718,7 +718,7 @@ Formalmente, para cada street paga:
  Valuation_pot_ganho = pot_acumulado  [ICM_EV(stack + pot)  ICM_EV(stack)]
 ```
 
-O valor de chamar cada street deve comparar ` Valuation_pot_ganho  P(ganhar)` contra ` Valuation_stack  P(perder)`  nao apenas equity bruta de chips.
+O valor de chamar cada street deve comparar `Valuation_pot_ganho  P(ganhar)` contra `Valuation_stack  P(perder)`  nao apenas equity bruta de chips.
 
 **RP pos-flop:** o RP (Risk Premium) e exclusivo para colisao direta. Nas streets onde nao ha all-in implicito, o RP dilui progressivamente  cada BB investido no pot sem colisao reduz a pressao de eliminacao direta, porque o hero ainda tem stack remanescente. No river com SPR proximo de zero, a decisao converge para chipEV: nao ha mais stack para proteger do ponto de vista de sobrevivencia imediata.
 

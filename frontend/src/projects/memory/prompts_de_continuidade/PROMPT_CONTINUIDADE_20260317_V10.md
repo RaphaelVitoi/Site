@@ -9,6 +9,7 @@ type: project
 ## O que foi feito nesta sessão
 
 ### Frontend (Next.js)
+
 - ✅ SimuladorICM.tsx criado (re-export de MasterSimulator — fix build crítico)
 - ✅ Header/Footer unstaged (não eram deletados, eram movidos para layout/)
 - ✅ opengraph-image.tsx criado (edge function, dark cyber 1200x630)
@@ -18,6 +19,7 @@ type: project
 - ✅ Build: 22 rotas, 0 erros TypeScript, 4.3s
 
 ### Ecossistema NEXUS
+
 - ✅ task_executor.py restaurado na raiz (versão canônica de scripts/ops/)
 - ✅ .cerebro/task_executor.py removido (versão corrompida/truncada)
 - ✅ data/intentmap.json corrigido (@dispatcher adicionado, overlap @maverick/@architect resolvido)
@@ -25,6 +27,7 @@ type: project
 - ✅ .cerebro/COHERENCE_MANIFEST.md consolidado (19 entidades, sem duplicatas)
 
 ### Commits desta sessão
+
 - `316a41a` fix: SimuladorICM re-export
 - `0a16810` feat: deployment package (og-image, security headers, env.example)
 - `6f367b8` fix: consolidação NEXUS (task_executor, intentmap, project-context)
@@ -33,12 +36,14 @@ type: project
 ## Estado Atual do Sistema
 
 ### Frontend
+
 - **Build:** 22 rotas, 0 erros TS, 4.3s (Turbopack)
 - **OG Image:** opengraph-image.tsx (edge function, geração automática)
 - **Segurança:** 5 headers configurados em next.config.ts
 - **Prisma:** schema.prisma existe, dev.db existe, usado em /psicologia-hs/[slug] com fallback defensivo
 
 ### NEXUS
+
 - **task_executor.py** canônico: na raiz, scripts/ops/ (idênticos)
 - **intentmap.json**: 17 agentes mapeados, sem overlap, @dispatcher incluído
 - **project-context.md**: completo, Handoff Log com 2 entradas
@@ -59,14 +64,17 @@ npx vercel
 ```
 
 ## PRIORIDADE 2 — Pendências menores
+
 - Remover Zustand/Recharts do package.json se não usados (bundle overhead)
 - Adicionar @vercel/analytics (após deploy)
 - Testar todas 22 rotas em produção
 
 ## Stack
+
 Next.js 16, React 19, TypeScript 5.9, Tailwind 4, Prisma 5, SQLite, Zustand, Recharts
 
 ## Design System
+
 ```css
 --accent-primary: #6366f1   /* indigo */
 --accent-secondary: #e11d48 /* rose */

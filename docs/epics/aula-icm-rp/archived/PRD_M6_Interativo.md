@@ -20,9 +20,9 @@ O componente deve ser integrado ao final do Modulo 2 do documento `aula-icm-rp.m
 
 ## 3. Historias de Usuario
 
--   **Como estudante da aula,** eu quero poder arrastar um slider que representa o RP do meu oponente e ver um grafico que me mostra o quanto a minha frequencia de bluff deve aumentar, para que eu possa internalizar a relacao entre a pressao que eu aplico e o risco que meu oponente corre.
--   **Como estudante cetico,** eu quero poder replicar o cenario contraintuitivo da "Parte II" dos Toy-Games (onde o agressor tem RP alto) e ver com meus proprios olhos que a defesa do oponente diminui, para que eu acredite no conceito e pare de cometer esse erro.
--   **Como estudante focado,** eu quero uma ferramenta simples que modele *apenas* o cenario dos Toy-Games, sem a distracao de outras variaveis (board, ranges, etc.), para que eu possa focar em dominar uma unica variavel de cada vez.
+- **Como estudante da aula,** eu quero poder arrastar um slider que representa o RP do meu oponente e ver um grafico que me mostra o quanto a minha frequencia de bluff deve aumentar, para que eu possa internalizar a relacao entre a pressao que eu aplico e o risco que meu oponente corre.
+- **Como estudante cetico,** eu quero poder replicar o cenario contraintuitivo da "Parte II" dos Toy-Games (onde o agressor tem RP alto) e ver com meus proprios olhos que a defesa do oponente diminui, para que eu acredite no conceito e pare de cometer esse erro.
+- **Como estudante focado,** eu quero uma ferramenta simples que modele *apenas* o cenario dos Toy-Games, sem a distracao de outras variaveis (board, ranges, etc.), para que eu possa focar em dominar uma unica variavel de cada vez.
 
 ---
 
@@ -50,10 +50,10 @@ O componente deve ser integrado ao final do Modulo 2 do documento `aula-icm-rp.m
 
 ## 5. Fora do Escopo
 
--   **Solver de Poker Completo:** Esta ferramenta nao e e nao deve tentar ser um GTO Wizard ou DeepSolver. Ela apenas ilustra um cenario isolado.
--   **Configuracoes Adicionais:** Nao havera opcoes para mudar o tamanho do pote, o tamanho da aposta, os ranges das maos ou a textura do board.
--   **Armazenamento de Dados:** O estado do componente nao sera salvo. Cada visita comeca com os valores padrao.
--   **Logica de Solver Real:** A logica de calculo sera uma aproximacao ou interpolacao dos resultados dos Toy-Games, nao um calculo de equilibrio em tempo real.
+- **Solver de Poker Completo:** Esta ferramenta nao e e nao deve tentar ser um GTO Wizard ou DeepSolver. Ela apenas ilustra um cenario isolado.
+- **Configuracoes Adicionais:** Nao havera opcoes para mudar o tamanho do pote, o tamanho da aposta, os ranges das maos ou a textura do board.
+- **Armazenamento de Dados:** O estado do componente nao sera salvo. Cada visita comeca com os valores padrao.
+- **Logica de Solver Real:** A logica de calculo sera uma aproximacao ou interpolacao dos resultados dos Toy-Games, nao um calculo de equilibrio em tempo real.
 
 ---
 
@@ -64,5 +64,3 @@ O componente deve ser integrado ao final do Modulo 2 do documento `aula-icm-rp.m
 | A logica simplificada ser imprecisa e ensinar uma heuristica errada. | Alta | A SPEC deve deixar explicito que a logica e uma *interpolacao* dos resultados conhecidos dos Toy-Games, e o proprio componente deve ter uma nota de rodape afirmando seu proposito puramente didatico. |
 | O desenvolvimento do componente atrasar a entrega das outras melhorias. | Media | Definir um escopo minimalista na SPEC, focando apenas no essencial para o ganho pedagogico e usando tecnologias simples (vanilla JS). |
 | A integracao com o documento Markdown se provar tecnicamente complexa. | Baixa | A SPEC deve prever um metodo de fallback simples, como um link para uma pagina separada, caso o "embed" direto falhe. O uso de `<iframe>` e geralmente uma solucao robusta. |
-
-

@@ -7,6 +7,7 @@ type: project
 # Continuidade & Handoff - Sessão 2026-08-23 V33
 
 ## 1. Identidade & Governança
+
 - **Governança Suprema (Tier 0):** Raphael Vitoi (Fundador, CEO PokerRacional, Criador do trueicm.com, Hipótese da Perspectiva Matemática PMev)
 - **Avatar & Administrador (Tier 1):** Chico (Super-Admin / Arquiteto do Sistema SOTA v8.0 GOLD)
 - **Status do Repositório:** 100% Sincronizado (`master` e `fix-antigravity-sync-errors`), 0 erros TS, 344 testes pytest aprovados.
@@ -28,30 +29,36 @@ type: project
 ## 3. O Que Fizemos na Sessão de Hoje
 
 ### A. Calibração de Navegadores & Políticas HKLM
+
 - Mapeamento e separação estrita de ecossistemas de navegadores via políticas em `HKLM\Software\Policies`:
   - **Microsoft Edge & Edge Dev:** Suíte focada em ChatGPT, Copilot, RPA Power Automate, Kami e Editor Microsoft.
   - **Google Chrome & Chrome Dev:** Suíte focada em Gemini, Claude, SciGemini, YouMind, Cloud Captains e uBlock Lite.
 - Resolução do erro de schema em `ExtensionSettings` via injeção correta de `update_url` do Chrome Web Store.
 
 ### B. Diagnóstico & Saneamento de MCPs Offline
+
 - Diagnóstico automatizado de todos os 52 servidores MCP.
 - Remoção de proxies órfãos (`data-agent-kit`, `notebooks`, `visualization`) que causavam `connect ENOENT` e bloqueios de socket no Antigravity IDE.
 
 ### C. Radar Topológico 7D SOTA v8.0 GOLD
+
 - Reconstrução completa de `ComparisonRadar.tsx` e `useRadarCalculations.ts`.
 - Expansão para 7 eixos topológicos: `RP IP`, `RP OOP`, `Assimetria ΔRP`, `MDF Defesa%`, `Bluff Ótimo%`, `SPR Decay%`, `Tensão Topológica Θ`.
 - Adição de camadas duplas de radar SVG (cenário ativo vs comparação) e matriz didática com diretrizes Axioma Lipe Piv.
 
 ### D. Correção do Bug de Viewport Scroll na aba QUANTUM PM
+
 - Localizada a causa do salto violento de tela para o footer ao clicar na aba `QUANTUM PM`: `logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })` em `WasmTelemetryWidget.tsx`.
 - Substituído por rolagem interna restrita ao contêiner (`logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight`), preservando a posição do usuário na tela.
 
 ### E. Limpeza de Envoltórios e Redesign do Painel Gemma
+
 - Eliminação de sombras residuais e bordas duplicadas em `MasterSimulator.tsx`.
 - Remoção de margens parasitas (`mb-8` em `SpatialControls.tsx`, `mb-6` em `GuideToolbar.tsx`, `mt-12` em `TheoryPanel.tsx`).
 - Redesign do cabeçalho de `GemmaAnalysisPanel.tsx`: seletor de modelos compacto e botão full-width `[⚡ INJETAR ANTEVISÃO]` sem cortes de texto.
 
 ### F. Reformulação Total & Estabilização da Matriz 169 (Range Hold'em 13×13)
+
 - **Desclausuramento:** Substituição do grid espremido lateral por grade full-width 13×13 (169 mãos AA–22 totalmente visíveis sem scroll horizontal).
 - **Tipografia:** Correção de bugs de strings LaTeX não renderizadas no subtítulo.
 - **Eliminação do Jitter & Hover Chatter:**
