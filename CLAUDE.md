@@ -113,9 +113,38 @@ Auditado em 2026-08-21. **Não reintroduzir fontes paralelas.**
 | Cadeias de fallback | `data/system_config.json` → `model_routing` | `core/config.py` |
 | Modelo concreto por agente | `llm/routing_policy.py` → `core.config.AGENT_MODEL_MAP` | resolução em `_resolver_modelos` |
 | Capacidade e preço de modelo de fronteira | `llm/model_registry.py` | `llm/adapters.py` |
+| **Teto de esforço autorizado** | `llm/model_registry.py` → `esforcos_autorizados` | `llm/adapters.py:OpenAIAdapter.build` |
+| **Modelo autorizado a rodar aqui** | `llm/model_registry.py` → `autorizado` | `llm/routing_policy.py` → `ROTAS` |
+| **Faixa de acesso do modelo** | `llm/model_registry.py` → `cota_por_assinatura` | `Faixa.FLAT_FEE` em `llm/routing_policy.py` |
 | Modelos locais (Ollama) | `data/ollama_models.json` | `scripts/ops/Ensure-OllamaModels.ps1` |
 
 `data/routing_map.json` é **fallback apenas** — sombreado por `system_config`.
+
+**Capacidade, procedência e autorização são três eixos distintos, e confundi-los
+corrompe os três.** `verification` responde *"este dado é confiável?"*;
+`autorizado` e `MODELOS_RETIRADOS` respondem *"esta malha usa este modelo?"*.
+Um modelo pode ter preço verificado, capacidade líder e ainda assim não ser
+usado — é o caso do `claude-fable-5-1`, 2º melhor disponível, retirado em
+2026-09-07 por **faixa de acesso**. Marcá-lo como "não verificado" seria mentir
+sobre o dado para expressar uma decisão de logística. Daí as três listas serem
+separadas:
+
+| Lista | Significa |
+| :--- | :--- |
+| `MODELOS_NAO_VERIFICADOS` | dado que **não se conseguiu confirmar** |
+| `MODELOS_RETIRADOS` | dado **confirmado e recusado** — fora do registro, com o motivo |
+| `autorizado=False` | no registro, sem permissão de rota |
+
+Do mesmo modo, o `gpt-6-astra` aceita `max` na API e opera só em `low`/`medium`
+aqui: **o que a API aceita e o que esta malha autoriza são dois limites, e o
+segundo mora em `esforcos_autorizados`.**
+
+Todos falham fechado: `OpenAIAdapter.build` recusa esforço acima do teto, `get()`
+devolve erro que **explica a retirada** em vez de um `KeyError` seco, e
+`tests/test_gpt6_astra.py` reprova qualquer rota que aponte para modelo retirado
+ou não autorizado. Até 2026-09-07 a rota `SESSAO_MULTI_DIA` tinha o Fable como
+**primário** — a tabela roteava para um modelo que a malha não usa, e nada
+acusava.
 
 **Documentação não repete valor versionado.** Os 19 `.claude/agents/*.md` são
 **gerados** por `scripts/routines/sync_agents_reality.ps1`; editá-los à mão é
@@ -485,7 +514,13 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 
 - **Tier 0:** Raphael Vitoi (Soberania & Liderança: Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação final de produto)
   - *Companion / Assistente Pessoal do Tier 0:* **Microsoft 365 Copilot** (plano pago da Microsoft 365: assistente pessoal dedicada à rotina diária e produtividade de Raphael, com conhecimento generalista e operação pontual sob demanda, sem integrar a frota autônoma do Tier 3)
-- **Tier 1:** Núcleo Cognitivo Mestre — Tríade de Fronteira (`Gemini 3.8 Flash`, `Claude Opus 5`, `Claude Sonnet 5`, `ChatGPT 5.6 (Terra e Luna)`; superfícies compartilhadas Antigravity IDE e VS Code)
+- **Tier 1:** Núcleo Cognitivo Mestre — **`Chico` em grupo e parceria** (`Claude Opus 5`, `Claude Sonnet 5`, `ChatGPT 5.6 Sol/Terra/Luna`, `Gemini 3.8 Flash`, `Gemini 3.5 Flash-Lite` para operações rápidas e ótimo ROI; superfícies compartilhadas Antigravity IDE e VS Code)
+  - *Atuação pontual mas elevada:* **`ChatGPT 6 Astra`** (`gpt-6-astra`, lançado 2026-09-03) — com folga o melhor modelo em atuação, admitido **apenas em `low` e `medium`**. Tem **as duas faixas** — cota de assinatura e pay-as-you-go —, e dentro da cota o custo marginal é zero. O teto de esforço existe para **preservar a cota**: esforço alto queima cota mais rápido, e o excedente cai no preço cheio de $10/$50. Entra por escalonamento, nunca como primário. A regra é executável, não prosa — ver §3.
+  - *Retirados:* **`Claude Fable 5.1` e `Claude Fable 5`** — 2º e 3º melhores modelos disponíveis, **fora da integração** por decisão do Tier 0 em 2026-09-07. A recusa é de **faixa de acesso**, não de capacidade nem de preço unitário: eles **só existem em pay-as-you-go**. Medido em `claude.com/pricing` — Fable 5 e 5.1 **não entram em nenhum plano de assinatura**; Pro e Max os alcançam apenas por *usage credits*, que é compra de token. Por token eles **empatam** com o Astra em `$10/$50`. Saíram do `MODEL_REGISTRY` e vivem em `MODELOS_RETIRADOS`, que preserva o motivo — `get()` devolve erro que explica a decisão, porque um `KeyError` seco mandaria o próximo a reintroduzi-los.
+
+  > **Os tiers de assinatura empatam em preço, ao contrário do que se supunha.** Medido nas duas fontes em 2026-09-07 — Anthropic: Pro `$20`, Max 5x `$100`, Max 20x `$200`. OpenAI: Plus `$20`, Pro `$100` (5×), Pro `$200` (20×). Não existe tier Anthropic a `$120`, e a OpenAI não é mais barata no tier equivalente. **A assimetria é de cobertura, não de mensalidade:** pelo mesmo valor, a assinatura OpenAI inclui o Astra (teto de mensagens, sem custo extra) e a Anthropic não inclui o Fable. Os valores de assinatura têm **refinação delegada ao `Gemini 3.5 Flash-Lite`** — a fonte da OpenAI respondeu HTTP 403 e os números dela vêm de agregadores.
+
+  - *Disponíveis e fora do Tier 1:* **`Claude Opus 4.6`** e **`Claude Sonnet 4.6`** — podem ser usados, mas **o Tier 1 é Opus 5 e Sonnet 5**. Catalogados como fallback e linha de delegação econômica; **nenhuma rota os usa hoje**, e promovê-los é decisão de política. Duas armadilhas medidas: o Sonnet 5 (`$2/$10`) é **mais barato** que o Sonnet 4.6 (`$3/$15`), então preferir a 4.6 exige razão que não seja preço; e a geração 4.6 **aceita** amostragem legada, ao contrário da 5 — `reject_legacy_sampling=False` neles não é descuido.
 - **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`)
 - **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Modelos Especialistas Qwen Ollama (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`)
 - **Tier 4:** Subagents Dedicados (`generalist` via `gemma4:31b-cloud` / `12b`, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`, task-subagents com Thinking Mode `<|think|>`)

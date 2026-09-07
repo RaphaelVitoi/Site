@@ -235,12 +235,12 @@ def test_construcao_escalona_de_sonnet_para_opus():
 
 
 def test_topo_nao_escalona():
-    for classe in (
-        ClasseTarefa.GOVERNANCA,
-        ClasseTarefa.ESTRATEGIA,
-        ClasseTarefa.RACIOCINIO_PROFUNDO,
-        ClasseTarefa.SESSAO_MULTI_DIA,
-    ):
+    """RACIOCINIO_PROFUNDO e SESSAO_MULTI_DIA sairam desta lista em 2026-09-07:
+    o GPT-6 Astra passou a ser o degrau delas. O invariante nao mudou -- classe
+    de topo nao escalona --, mudou QUAIS classes sao topo, porque surgiu um
+    modelo acima. GOVERNANCA e ESTRATEGIA seguem sem degrau, e OPERACIONAL
+    tambem (por faixa, nao por capacidade)."""
+    for classe in (ClasseTarefa.GOVERNANCA, ClasseTarefa.ESTRATEGIA):
         assert ROTAS[classe].escalona_para is None
 
 
@@ -421,12 +421,25 @@ def test_escalonar_classe_sem_degrau_e_degradacao_declarada():
     primario, e o valor de retorno era byte a byte identico ao do caso normal.
     Silencio indistinguivel de sucesso.
     """
-    for alvo, classe in (("chico", ClasseTarefa.GOVERNANCA), ("planner", ClasseTarefa.RACIOCINIO_PROFUNDO)):
+    # `planner` saiu do par em 2026-09-07: a classe dele (RACIOCINIO_PROFUNDO)
+    # ganhou degrau no GPT-6 Astra e agora escalona DE VERDADE -- deixou de
+    # exercitar o caminho de indisponibilidade. `maverick`/ESTRATEGIA entra no
+    # lugar, preservando os dois casos.
+    for alvo, classe in (("chico", ClasseTarefa.GOVERNANCA), ("maverick", ClasseTarefa.ESTRATEGIA)):
         d = decidir(alvo, escalado=True)
         assert d.origem is Origem.ESCALONAMENTO_INDISPONIVEL
         assert d.modelo == ROTAS[classe].primario
         assert d.degradado, "pedir degrau acima e nao ter e degradacao relativa ao pedido"
         assert "nao declara" in d.motivo
+
+
+def test_planner_agora_escalona_de_verdade_para_o_astra():
+    """A contraparte do ajuste acima: o caminho que `planner` passou a tomar
+    precisa ficar coberto, ou a mudanca teria REMOVIDO cobertura em vez de
+    move-la."""
+    d = decidir("planner", escalado=True)
+    assert d.origem is Origem.ESCALADO
+    assert d.modelo == "gpt-6-astra"
 
 
 def test_fallback_tem_caminho_de_execucao():

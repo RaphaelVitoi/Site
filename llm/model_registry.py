@@ -119,6 +119,39 @@ class ModelCapability(BaseModel):
     verification: VerificationStatus = VerificationStatus.VERIFICADO
     notas: str = ""
 
+    #  Autorizacao -- ortogonal a capacidade
+    # Um modelo pode ser plenamente capaz, ter preco verificado, e ainda assim
+    # nao ser usado aqui. `verification` responde "este dado e confiavel?";
+    # `autorizado` responde "esta malha usa este modelo?". Confundir os dois
+    # levaria a marcar como nao verificado o que foi verificado e recusado.
+    #
+    # ESTADO EM 2026-09-07: nenhum modelo usa `autorizado=False`. Os dois que o
+    # usariam -- a familia Fable -- foram RETIRADOS do registro no mesmo dia, e
+    # por isso vivem em MODELOS_RETIRADOS. O campo fica como barreira para o
+    # caso distinto que ele cobre: modelo que se quer NO catalogo (comparacao
+    # de custo, referencia) e fora de ROTA. A lista estar vazia e declarado de
+    # proposito -- nao confundir mecanismo presente com protecao exercitada.
+    autorizado: bool = True
+    motivo_nao_autorizado: str = ""
+
+    # FAIXA DE ACESSO -- o discriminante que preco por token nao captura.
+    # True  = alcancavel por cota de assinatura (Faixa.FLAT_FEE), com custo
+    #         marginal zero DENTRO da cota; o excedente cai no preco de tabela.
+    # False = existe apenas em pay-as-you-go, e todo uso e API_PAGA.
+    # Declarado aqui, e nao em `Rota.faixa`, porque e propriedade do MODELO:
+    # a rota escolhe a faixa que vai consumir, mas nao inventa acesso que a
+    # assinatura nao da. O enum `Faixa` vive em routing_policy, que importa
+    # este modulo -- por isso o campo e booleano e nao o enum: declarar o tipo
+    # aqui inverteria a direcao da dependencia.
+    #
+    # ATENCAO AO DEFAULT: `False` aqui significa "nao declarado", e NAO
+    # "confirmado sem cota". Em 2026-09-07 o Tier 0 declarou a faixa de tres
+    # modelos: `gpt-6-astra` (True, unico no registro) e a familia Fable
+    # (False -- e foi essa a razao de saírem; ver MODELOS_RETIRADOS). Para os
+    # demais o campo ainda nao foi levantado, e a refinacao esta DELEGADA ao
+    # Gemini 3.5 Flash-Lite. Nao usar a ausencia como evidencia.
+    cota_por_assinatura: bool = False
+
     #  Anthropic
     # thinking adaptativo e o unico modo suportado na geracao 5.
     # budget_tokens NAO existe aqui de proposito: incluir o campo convidaria
@@ -131,8 +164,15 @@ class ModelCapability(BaseModel):
     requires_streaming_above: int | None = None
 
     #  OpenAI
-    reasoning_effort: Literal["none", "low", "medium", "high", "max"] | None = None
+    # 'xhigh' entrou com o GPT-6 Astra (2026-09-03), entre 'high' e 'max'. A
+    # escala anterior nao o tinha; 'ultra' continua fora porque nunca existiu
+    # -- era invencao do estudo de fronteira. Ver CORRECOES_APLICADAS.
+    reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] | None = None
     supports_subagents: bool = False
+
+    # Teto de esforco AUTORIZADO nesta malha, que e coisa diferente do que a
+    # API aceita. Vazio = sem restricao propria; o limite e o da API.
+    esforcos_autorizados: tuple[str, ...] = ()
 
     #  Google
     thinking_level: Literal["minimal", "low", "medium", "high"] | None = None
@@ -154,6 +194,16 @@ class ModelCapability(BaseModel):
             raise ValueError(f"{self.model_name}: Google exige 'thinking_level'.")
         if self.max_output_tokens > self.context_window_in:
             raise ValueError(f"{self.model_name}: saida maior que o contexto.")
+        if self.esforcos_autorizados and self.reasoning_effort not in self.esforcos_autorizados:
+            raise ValueError(
+                f"{self.model_name}: esforco padrao '{self.reasoning_effort}' esta "
+                f"fora do teto autorizado {self.esforcos_autorizados}."
+            )
+        if not self.autorizado and not self.motivo_nao_autorizado:
+            raise ValueError(
+                f"{self.model_name}: modelo nao autorizado exige motivo. Recusa "
+                "sem motivo registrado vira folclore em duas semanas."
+            )
         return self
 
 
@@ -183,34 +233,71 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         model_name="claude-sonnet-5",
         context_window_in=1_000_000,
         max_output_tokens=131_072,  # CORRIGIDO: estudo dizia 65_536
-        price_per_1m_in=3.00,
-        price_per_1m_out=15.00,
+        price_per_1m_in=2.00,  # CORRIGIDO 2026-09-07: estava 3.00
+        price_per_1m_out=10.00,  # CORRIGIDO 2026-09-07: estava 15.00
         thinking_adaptive=True,
         effort="high",
         supports_mid_conversation_system=False,  # nao suportado em Sonnet 5
         requires_streaming_above=16_000,
         verification=VerificationStatus.CORRIGIDO,
         notas=(
-            "Saida corrigida p/ 128k. Preco introdutorio $2/$10 vigente ate "
-            "2026-08-31  reavaliar o roteamento quando expirar."
+            "Saida corrigida p/ 128k. PRECO REAVALIADO em 2026-09-07, como a "
+            "nota anterior mandava: ela dizia que $2/$10 era introdutorio e "
+            "expirava em 2026-08-31. A data passou e o preco corrente E "
+            "$2/$10, sem rotulo de promocao -- $3/$15 e o Sonnet 4.6, nao "
+            "este. O registro cobrava 50% a mais do que a Anthropic cobra."
         ),
     ),
-    "claude-fable-5": ModelCapability(
+    #  ANTHROPIC  Geracao 4.6  disponiveis, FORA do Tier 1
+    # O Tier 0 (2026-09-07) confirmou que Opus 4.6 e Sonnet 4.6 estao
+    # disponiveis e podem ser usados, mas que o Tier 1 se refere ao Opus 5 e ao
+    # Sonnet 5. Ficam aqui como fallback e delegacao economica -- catalogados,
+    # nao promovidos. Nenhuma ROTA os usa hoje; entrar em rota e decisao de
+    # politica do Tier 0.
+    "claude-opus-4-6": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
-        model_name="claude-fable-5",
+        model_name="claude-opus-4-6",
         context_window_in=1_000_000,
         max_output_tokens=131_072,
-        price_per_1m_in=10.00,
-        price_per_1m_out=50.00,
+        price_per_1m_in=5.00,
+        price_per_1m_out=25.00,
+        thinking_adaptive=True,
+        effort="high",  # a escala da 4.6 NAO tem 'xhigh'; ele chegou na 4.7
+        supports_mid_conversation_system=False,
+        requires_streaming_above=16_000,
+        # DIFERENCA REAL DE GERACAO, e nao descuido: a 4.6 ACEITA amostragem
+        # legada, enquanto a geracao 5 devolve 400. Marcar True aqui faria o
+        # adaptador recusar parametro valido.
+        reject_legacy_sampling=False,
+        verification=VerificationStatus.VERIFICADO,
+        notas=(
+            "Verificado em 2026-09-07 (skill claude-api + claude.com/pricing). "
+            "Disponivel, porem FORA do Tier 1 por decisao do Tier 0: o nucleo "
+            "e Opus 5 e Sonnet 5. Utilidade prevista: fallback e delegacao "
+            "economica. `budget_tokens` aqui esta DEPRECIADO mas ainda "
+            "funcional -- escape transitorio, nao padrao para codigo novo."
+        ),
+    ),
+    "claude-sonnet-4-6": ModelCapability(
+        adapter=AdapterType.ANTHROPIC,
+        model_name="claude-sonnet-4-6",
+        context_window_in=1_000_000,
+        max_output_tokens=131_072,
+        price_per_1m_in=3.00,
+        price_per_1m_out=15.00,
         thinking_adaptive=True,
         effort="high",
-        server_side_fallback=True,
-        beta_headers=["server-side-fallback-2026-07-01"],
-        supports_mid_conversation_system=True,
+        supports_mid_conversation_system=False,
         requires_streaming_above=16_000,
+        reject_legacy_sampling=False,
+        verification=VerificationStatus.VERIFICADO,
         notas=(
-            "Thinking sempre ligado: {'type':'disabled'} retorna 400. "
-            "Exige retencao de dados de 30 dias  org com ZDR recebe 400."
+            "Verificado em 2026-09-07. $3/$15 -- ESTE e o modelo que custa "
+            "$3/$15, e nao o Sonnet 5, que custa $2/$10. Foi exatamente essa "
+            "troca que o registro carregava ate hoje. "
+            "Disponivel e fora do Tier 1; candidato a operacoes rapidas e "
+            "delegacao economica. Note que o Sonnet 5 e MAIS BARATO que ele: "
+            "so preferir a 4.6 com razao declarada que nao seja preco."
         ),
     ),
     #  OPENAI  GPT-5.6
@@ -219,11 +306,17 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         model_name="gpt-5.6-sol",
         context_window_in=1_050_000,
         max_output_tokens=131_072,  # CORRIGIDO: estudo dizia 65_536
-        price_per_1m_in=5.00,
-        price_per_1m_out=30.00,
+        price_per_1m_in=4.00,  # CORRIGIDO 2026-09-07: estava 5.00
+        price_per_1m_out=20.00,  # CORRIGIDO 2026-09-07: estava 30.00
         reasoning_effort="max",  # CORRIGIDO: 'ultra' nao existe na escala
         supports_subagents=True,
         verification=VerificationStatus.CORRIGIDO,
+        notas=(
+            "Preco caiu junto com o lancamento do GPT-6 Astra, confirmado "
+            "pelo Tier 0: 'Fez parte do upgrade. Sol ficou mais barato'. A "
+            "queda INVERTE a comparacao de saida com o Opus 5 ($20 contra "
+            "$25) que a rota de GOVERNANCA usava como justificativa."
+        ),
     ),
     "gpt-5.6-terra": ModelCapability(
         adapter=AdapterType.OPENAI,
@@ -320,14 +413,99 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         model_name="gpt-5.6-sol",
         context_window_in=1_050_000,
         max_output_tokens=131_072,
-        price_per_1m_in=5.00,
-        price_per_1m_out=30.00,
+        price_per_1m_in=4.00,  # CORRIGIDO 2026-09-07: estava 5.00
+        price_per_1m_out=20.00,  # CORRIGIDO 2026-09-07: estava 30.00
         reasoning_effort="max",
         supports_subagents=True,
+        verification=VerificationStatus.CORRIGIDO,
+        notas=(
+            "OpenAI Chat GPT 5.6-Sol. Modelo de fronteira analitica e raciocinio "
+            "profundo. ALIAS do mesmo model_name que 'gpt-5.6-sol' -- os dois tem "
+            "que mudar juntos, ou o custo passa a depender de qual nome o "
+            "chamador digitou."
+        ),
+    ),
+    #  OPENAI  GPT-6 (2026-09-03)
+    "gpt-6-astra": ModelCapability(
+        adapter=AdapterType.OPENAI,
+        model_name="gpt-6-astra",
+        context_window_in=1_050_000,
+        # A pagina do Astra escreve "128,000 max output tokens". A familia 5.6
+        # usa 131_072 ("128K"). Sao numeros diferentes e o menor e o seguro:
+        # estourar o teto devolve 400. NAO "harmonizar" com os irmaos.
+        max_output_tokens=128_000,
+        price_per_1m_in=10.00,
+        price_per_1m_out=50.00,
+        reasoning_effort="low",
+        esforcos_autorizados=("low", "medium"),
+        supports_subagents=True,
+        cota_por_assinatura=True,
         verification=VerificationStatus.VERIFICADO,
-        notas="OpenAI Chat GPT 5.6-Sol. Modelo de fronteira analitica e raciocinio profundo.",
+        notas=(
+            "Verificado em 2026-09-07 contra developers.openai.com/api/docs/"
+            "models/gpt-6-astra: 1.05M de janela (922k de entrada maxima), "
+            "128k de saida, corte de conhecimento 2026-04-30, cache de entrada "
+            "a $1. A API aceita ate 'max'; o Tier 0 autorizou SO 'low' e "
+            "'medium'. "
+            "FAIXA DE ACESSO -- o que de fato o separa do Fable: o Astra tem "
+            "as DUAS (cota de assinatura e pay-as-you-go), e o Fable so a "
+            "segunda. Por token os dois empatam em $10/$50; dentro da cota o "
+            "custo marginal do Astra e ZERO, e e por isso que 'mais barato que "
+            "o Fable' e verdade apesar do empate de tabela. "
+            "A cota e por TETO DE MENSAGENS (semanal/mensal nos planos Pro), "
+            "nao por token -- entao o teto low/medium PRESERVA A COTA: esforco "
+            "alto consome o mesmo numero de mensagens gastando muito mais "
+            "raciocinio, e o excedente cai no preco cheio. "
+            "Fast mode DOBRA a tabela ($20/$100). Nao ativar sem decisao "
+            "explicita de custo do Tier 0."
+        ),
     ),
 }
+
+# Escala de esforco da OpenAI. 'xhigh' entrou com o GPT-6 Astra; 'ultra' NUNCA
+# existiu -- era invencao do estudo de fronteira, e a ausencia dele aqui e o
+# que impede a invencao de voltar por uma porta lateral.
+ESFORCOS_OPENAI_VALIDOS: frozenset[str] = frozenset(
+    {"none", "low", "medium", "high", "xhigh", "max"}
+)
+
+
+def modelos_nao_autorizados() -> dict[str, str]:
+    """Alias -> motivo, para os modelos conhecidos que esta malha nao usa.
+
+    Derivado do registro, e nao mantido a mao: uma segunda lista divergiria do
+    campo `autorizado` no primeiro descuido -- que e o defeito que a secao 7 do
+    CLAUDE.md documenta.
+    """
+    return {
+        alias: cap.motivo_nao_autorizado
+        for alias, cap in MODEL_REGISTRY.items()
+        if not cap.autorizado
+    }
+
+
+# RETIRADOS por decisao do Tier 0 -- conhecidos, verificados e fora de uso.
+# Terceira categoria, distinta das outras duas: NAO_VERIFICADOS sao dados que
+# nao se conseguiu confirmar; estes foram confirmados e recusados. Apagar sem
+# deixar rastro faria o proximo a olhar o registro concluir que a Anthropic nao
+# tem modelo de topo -- e reintroduzi-los em duas semanas.
+MODELOS_RETIRADOS: dict[str, str] = {
+    "claude-fable-5": (
+        "Tier 0, 2026-09-07: RETIRADO da integracao. So existe em "
+        "pay-as-you-go -- confirmado em claude.com/pricing: nao entra em plano "
+        "de assinatura, Pro e Max o alcancam apenas por 'usage credits'. "
+        "Terceiro melhor modelo disponivel; a recusa e de FAIXA DE ACESSO, nao "
+        "de capacidade nem de preco unitario ($10/$50, empatado com o Astra)."
+    ),
+    "claude-fable-5-1": (
+        "Tier 0, 2026-09-07: RETIRADO da integracao, pelo mesmo motivo do "
+        "Fable 5. SEGUNDO melhor modelo disponivel, atras so do GPT-6 Astra, "
+        "e ainda assim fora: sem cota de assinatura, cada chamada e compra de "
+        "token. O Astra tem as duas faixas -- e essa assimetria, e nao o preco "
+        "de tabela, e o que separa os dois."
+    ),
+}
+
 
 # Deliberadamente FORA do registro: gpt-5.6-sol-ultrafast.
 # Nao consta na documentacao de modelos da OpenAI. Ver CORRECOES_APLICADAS.
@@ -344,7 +522,9 @@ def get(alias: str) -> ModelCapability:
     """Devolve a capacidade do modelo, ou erro claro se o alias for invalido."""
     if alias not in MODEL_REGISTRY:
         extra = ""
-        if alias in MODELOS_NAO_VERIFICADOS:
+        if alias in MODELOS_RETIRADOS:
+            extra = f" RETIRADO: {MODELOS_RETIRADOS[alias]}"
+        elif alias in MODELOS_NAO_VERIFICADOS:
             extra = f" MOTIVO: {MODELOS_NAO_VERIFICADOS[alias]}"
         raise KeyError(f"Modelo '{alias}' nao esta no registro. Disponiveis: {sorted(MODEL_REGISTRY)}.{extra}")
     return MODEL_REGISTRY[alias]
@@ -363,7 +543,10 @@ __all__ = [
     "ModelCapability",
     "MODEL_REGISTRY",
     "MODELOS_NAO_VERIFICADOS",
+    "MODELOS_RETIRADOS",
+    "ESFORCOS_OPENAI_VALIDOS",
     "CORRECOES_APLICADAS",
     "get",
     "custo_estimado",
+    "modelos_nao_autorizados",
 ]
