@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-07-preludio"
 criado_em: 2026-09-07T18:10:00-03:00
-atualizado_em: 2026-09-07T18:10:00-03:00
+atualizado_em: 2026-09-07T18:35:00-03:00
 classes: [interno, medido, governanca, seguranca, roteamento, agentes-de-nuvem]
 caminhos:
   - llm/model_registry.py
@@ -63,6 +63,10 @@ nao_verificado:
     nao alargar o raio desta alteracao.
   - >-
     Portao de 5 fases: ver o veredito impresso no commit. Nao antecipado aqui.
+  - >-
+    Doze dos 17 findings do Astra: conferi B01 no codigo (fechado nos dois
+    lados) e casei sete contra a descricao do relatorio dele. Os demais nao
+    foram verificados contra o codigo, apenas contra o texto.
 revisoes_de_ancora:
   - registro: auditoria-2026-09-03-trabalho-do-gemini-3-8-flash
     caminhos:
@@ -296,6 +300,53 @@ Nenhuma operação nova. Nenhum commit assinado pela linhagem GPT-6 desde o
 handoff; a branch `claude/auditoria-…-skbogu` (`1395f4cf`, autor `Codex`) está
 no head do baseline, e o `sequence 16` do ledger é anterior. Verificado pelas
 duas superfícies que o handoff mandava olhar — branch e ledger.
+
+### 6.1 CORREÇÃO — o parágrafo acima é verdadeiro e enganoso
+
+**Acrescentado no mesmo dia, depois que o Tier 0 perguntou se eu havia
+conferido a refatoração do Astra. Eu não havia.**
+
+"Nenhuma operação nova *desde o handoff*" é literalmente verdade e responde uma
+pergunta que ninguém fez. Medi **heads de branch**, e head de branch não é
+refatoração. O trabalho do Astra existe, é de 2026-09-05, e são **três
+documentos** com o mesmo `criado_em` e o mesmo commit `d6bace4d`:
+
+| Documento | Papel |
+| :--- | :--- |
+| `AUDITORIA-2026-09-05-global-site-backend-frontend.md` | 17 findings — `B01`–`B09`, `F01`–`F08`, sete P1 |
+| `RELATORIO-2026-09-05-site-moldes-e-aprendizados.md` | a implementação que os fecha |
+| `HANDOFF-2026-09-05-auditoria-site-moldes.md` | o fechamento |
+
+**E errei uma segunda vez, pior que a primeira.** Ao procurar o relatório de
+implementação, busquei por `B0[1-9]|F0[1-8]` e concluí que ele **não
+existia**. O relatório fecha os findings **descrevendo-os**, sem citar os
+códigos. Foi busca por substring em vez de por referência real — o defeito que a
+§4 da raiz nomeia — e produziu uma negativa falsa publicada num registro.
+
+O casamento, medido documento contra documento:
+
+| Finding | Como o relatório o fecha |
+| :--- | :--- |
+| `B01` ranges perdem informação antes do WASM | máscara de 338 B no índice esparso `hi*52+lo` — **confere com o código** |
+| `B02` eliminação perde o prêmio garantido | estado 100/0 recebe 70/30 |
+| `B05` API aceita probabilidade impossível | fold equity em [0,1]; não finitos rejeitados |
+| `F01` contrato hook/worker incompatível | os cinco pedidos cobertos; `undefined` nunca publicado |
+| `F02` fallback Monte Carlo com resultado aparente | `DEMO_FALLBACK`, zero iterações, SE/IC não medidos |
+| `F04` recomputação combinatória síncrona | **7.287 ms → 69–122 ms**, cinco execuções |
+| `F05` controles recortados no viewport móvel | 390 px, larguras e bordas medidas |
+
+**O que ele NÃO fechou, e declarou:** `B04` — a inferência real do TimesFM
+segue não certificada, dito em três âncoras distintas; `B03` — convenções de
+stacks, pote e contrafactuais não foram integralmente revistas; o solver Rust
+multiway continua com avaliação de showdown não implementada, com o tensor
+preservado como scaffold.
+
+**Isto é o padrão que a nota 9.0 descreve, e ele reincidiu dentro da própria
+sessão que o registrou.** A memória `a-negativa-e-o-gatilho` foi escrita há
+horas para proibir exatamente isto, e o gatilho não disparou porque eu estava
+buscando *evidência de existência*, não redigindo uma negativa — e só percebi
+que havia escrito uma quando o Tier 0 disse que ela era falsa. **A regra precisa
+valer também para a busca que precede a frase, e não só para a frase.**
 
 ---
 
