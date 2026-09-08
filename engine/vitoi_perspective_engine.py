@@ -195,6 +195,20 @@ class ProspectRiskEngine:
         return math.exp(edge_discount + pos_bonus)
 
     def evaluate_required_equilibrium_equity(self, raw_pot_odds: float) -> float:
+        """Equidade requerida sob pressao de bolha.
+
+        LIMITE DECLARADO (B06/F07, medido em 2026-09-08). Esta e a grandeza B do
+        par documentado em frontend/src/lib/rpDeriver.ts: `(bf-1)/bf` recomposta
+        por `(a + rp) / (1 + rp)`. Ela nao reproduz a equidade requerida exata,
+        que e `bf*a / (bf*a + 1 - a)`; coincide em bf=2 e diverge ate -11.11
+        pontos percentuais em bf=5 com a=0.5, sempre para MENOS -- ou seja,
+        subestima o preco justamente onde a bolha aperta.
+
+        Mantida sem alteracao de comportamento: trocar a formula desloca numeros
+        que o produto ja exibe, e a escolha entre as duas grandezas e decisao de
+        dominio do Tier 0. A grandeza A, `(bf-1)/(bf+1)`, vive em
+        engine/icm_matrix.py:124 e e exata no all-in even money.
+        """
         bf = self.calculate_dynamic_bubble_factor()
         raw_risk_premium = (bf - 1.0) / bf
         psi = self.calculate_edge_time_modulator()
