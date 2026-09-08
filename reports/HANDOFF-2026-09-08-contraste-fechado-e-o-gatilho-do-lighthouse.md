@@ -11,6 +11,12 @@ caminhos:
   - frontend/src/tests/simulator/contrasteIcmevChipev.test.ts
   - scripts/ops/lighthouse_cwv_audit.mjs
   - reports/cwv/latest_lighthouse_production.json
+referencias_nao_resolviveis:
+  # Sonda de diagnostico nunca versionada, citada aqui justamente por ter sido a
+  # causa medida da terceira expiracao do certificado. Apagada em 2026-09-08 por
+  # decisao do Tier 0, depois de o recorte do fingerprint torna-la inerte para o
+  # portao. O caminho e citado para dizer que sumiu, nao para apontar.
+  - frontend/src/tests/simulator/__d5probe.test.ts
 revisoes_de_ancora:
 - registro: registro-2026-09-04-lighthouse-certificado-e-o-certificado-que-nao-viajava
   caminhos: [reports/cwv/latest_lighthouse_production.json]
@@ -340,6 +346,15 @@ mesma sessão. **A §2 vale como registro da decisão, não como pendência.**
 `.claude/RELATORIOS/INVENTARIO_FERRAMENTAS.md` desaparecer do disco. Terceira
 ocorrência (03/09, 07/09, 08/09), nenhuma commitada, duas hipóteses de mecanismo
 testadas e sem lastro. Restaurado; causa desconhecida.
+
+> **Emenda 2026-09-08, mesmo dia.** O que estava ausente era metade da história.
+> `.claude/RELATORIOS/` foi esvaziado de propósito em `a22df57e` (01/09, 187
+> arquivos, autor `Raphael Vitoi`), e `a1b70698` devolveu só este arquivo — os
+> outros nove ficaram para trás, oito por mérito e um por engano, restaurado
+> hoje em `6745cdcb`. **Isso não explica as três sumidas acima**: nenhum commit
+> posterior apaga o caminho, e elas continuam sem mecanismo. O que muda é o
+> método — eu consultara o git pelo arquivo e nunca pelo diretório. Ver a §6 de
+> `REGISTRO-2026-09-08-auditoria-de-tipagem-e-recorte-do-fingerprint.md`.
 
 ---
 
