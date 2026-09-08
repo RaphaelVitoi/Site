@@ -119,6 +119,23 @@ Isso não é reparo suficiente para a regra: a regra pede worktree disjunta. Fic
 registrado como o que foi — uma sobreposição autorizada e contida, não uma
 sobreposição inofensiva.
 
+> **Emenda de 2026-09-08 — este parágrafo estava errado, e o erro deu origem a uma
+> cláusula.** Ao redigi-lo eu tratei a arbitragem do Tier 0 como *atenuante de uma
+> falta*, quando não havia falta: o árbitro autorizou a operação e **delimitou que
+> não haveria concorrência real** — pontual, assistida, afastada do escopo em que
+> eu operava. Registrar decisão legítima como transgressão tolerada inverte a
+> hierarquia, põe o manual acima do vértice, e produz registro factualmente
+> errado.
+>
+> O M.O. não tinha a cláusula que o submete a quem o escreveu. Passou a ter:
+> **§3.1 Arbitragem soberana**, em `~\.gemini\CLAUDE.md`, com o limite que a
+> impede de virar solvente universal — arbitragem governa **permissão**, nunca
+> **fato medido**. Por isso o que este registro diz sobre o que eu *não* auditei
+> permanece integralmente válido e não é emendado.
+>
+> Registro publicado não se reescreve: o parágrafo acima fica como foi escrito, e
+> a retificação fica aqui, datada.
+
 ---
 
 ## 3. O que medi, e o que não medi
