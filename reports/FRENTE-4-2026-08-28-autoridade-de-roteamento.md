@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-28T11:20-03:00
-atualizado_em: 2026-08-30T20:15-03:00
+atualizado_em: 2026-09-07T22:20-03:00
 commit: 764694a5
 classes: [interno, medido]
 caminhos:
@@ -278,6 +278,32 @@ execução e deixado o prompt mentindo.
 
 Medido depois: **19 de 19 agentes seguem a política** (era 0 de 19), e o caminho
 quente passou a distribuir 5 modelos distintos onde distribuía 2.
+
+> **Revisão de 2026-09-07 — são 6, e a direção importa.** O número acima foi
+> medido em 28/08 e não se reescreve. Nesta data as duas rotas de
+> `Faixa.GRATUITA` trocaram de primário: `VERIFICACAO` passou a
+> `gemini-3.6-flash` e `OPERACIONAL` a `gemini-3.5-flash-lite`, onde antes o
+> `gemini-3.8-flash` cobria as duas sozinho. O caminho quente foi a **6** modelos
+> distintos, e `data/ESTADO_DE_ROTEAMENTO.json` acompanha.
+>
+> O detector desta frente guarda contra **colapso**; a promoção andou no sentido
+> oposto, então ele mudou de valor sem mudar de veredito. As faixas ficaram
+> intactas: 11 gratuita, 7 paga, 1 local, 12 a custo marginal zero, remedidos por
+> execução.
+>
+> A razão é de **adequação à faixa, nunca de capacidade**: na cota livre o 3.8
+> tem teto de 50 RPD e gasta 4k–16k thinking tokens por chamada. Ele segue no
+> `MODEL_REGISTRY`, verificado, e continua fallback de `architect` e
+> `implementor`.
+>
+> E há uma medição que esta frente não tinha feito, diretamente ligada ao
+> parágrafo seguinte: **as duas camadas em série discordavam.**
+> `_score_standard_preference` já pontuava `gemini-3.5` em −4 e `gemini-3.6` em
+> −2, enquanto o `gemini-3.8-flash` cai no genérico `flash` e pontua **3** — pior
+> que os três. A heurística de economia já preferia o duo; era a tabela de
+> `ROTAS` que mandava o 3.8. A promoção alinhou as duas camadas em vez de abrir
+> divergência nova. Registro em
+> `registro-2026-09-07-promocao-do-duo-gemini-na-faixa-gratuita`.
 
 **Por que a política entra como `designated_model` e não como um candidato
 comum:** `llm/routing._score_standard_preference` dá −4 a `gemini-3.5` e 9 aos
