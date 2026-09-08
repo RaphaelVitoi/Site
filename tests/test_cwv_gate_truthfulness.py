@@ -512,3 +512,93 @@ def test_production_lighthouse_runner_declares_browser_isolation_and_cleanup() -
     assert "--disable-gpu" not in source
     assert "latest_lighthouse_production.json" in source
     assert "Remove-Item -LiteralPath $auditProfile" in source
+
+
+def _fingerprint_apos_criar(tmp_path: Path, caminho_relativo: str) -> tuple[str, str]:
+    """Mede o fingerprint antes e depois de criar UM arquivo sob `frontend/`.
+
+    Devolve o par (antes, depois) para que o chamador decida se a mudanca
+    DEVE ou NAO DEVE expirar a certificacao.
+    """
+    source_root = tmp_path / "frontend"
+    source_root.mkdir()
+    (source_root / "page.tsx").write_text("export const title = 'x';\n", encoding="utf-8")
+
+    alvo = source_root / caminho_relativo
+    alvo.parent.mkdir(parents=True, exist_ok=True)
+
+    script = """
+import { fingerprintProductionInputs } from './scripts/ops/lighthouse_cwv_audit.mjs';
+const [root, alvo] = process.argv.slice(1);
+const fs = await import('node:fs/promises');
+const antes = await fingerprintProductionInputs(root);
+await fs.writeFile(alvo, "export const marcador = 'novo';");
+const depois = await fingerprintProductionInputs(root);
+process.stdout.write(JSON.stringify({ antes, depois }));
+"""
+    result = subprocess.run(
+        ["node", "--input-type=module", "-e", script, str(source_root), str(alvo)],
+        cwd=RAIZ,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    valores = json.loads(result.stdout)
+    return valores["antes"], valores["depois"]
+
+
+@pytest.mark.parametrize(
+    "caminho",
+    [
+        "src/lib/foo.test.ts",
+        "src/lib/foo.spec.tsx",
+        "src/components/__tests__/bar.ts",
+        "src/components/__fixtures__/dados.ts",
+        "src/components/__mocks__/servico.ts",
+    ],
+)
+def test_arquivo_de_teste_nao_expira_a_certificacao_lighthouse(tmp_path: Path, caminho: str) -> None:
+    """Codigo de teste nao entra no bundle de producao e nao pode invalidar o TBT.
+
+    MEDICAO QUE ORIGINOU O TESTE, 2026-09-08: em um unico dia a certificacao
+    expirou TRES vezes por arquivo que jamais chegaria a um build. Na terceira,
+    o gatilho foi uma sonda de 1075 bytes que sequer estava versionada -- removida
+    ela, o fingerprint voltava exatamente ao do certificado.
+
+    O custo nao era so o tempo: cada recertificacao deixou um chrome.exe orfao
+    segurando a porta 9230, exigindo intervencao manual antes da execucao seguinte.
+    """
+    antes, depois = _fingerprint_apos_criar(tmp_path, caminho)
+    assert antes == depois, (
+        f"criar {caminho} mudou o fingerprint de producao; "
+        "arquivo de teste nao compoe o bundle e nao deve expirar a certificacao"
+    )
+
+
+@pytest.mark.parametrize(
+    "caminho",
+    [
+        "src/lib/util.ts",
+        "src/app/pagina.tsx",
+        "src/components/testemunho.tsx",
+        "src/components/contest.ts",
+    ],
+)
+def test_codigo_de_producao_continua_expirando_a_certificacao(tmp_path: Path, caminho: str) -> None:
+    """O recorte estreita o gatilho SEM afrouxar a cobertura.
+
+    Este e o guard que impede a exclusao de crescer: qualquer arquivo que possa
+    compor o bundle continua invalidando a certificacao. Os dois ultimos casos
+    sao adversariais de proposito -- `testemunho.tsx` contem "teste" e
+    `contest.ts` contem "test" como SUBSTRING, e nenhum dos dois e arquivo de
+    teste. Casar por substring em vez de por sufixo produziria falso negativo
+    silencioso, que e pior que a recertificacao a mais.
+    """
+    antes, depois = _fingerprint_apos_criar(tmp_path, caminho)
+    assert antes != depois, (
+        f"criar {caminho} NAO mudou o fingerprint; codigo que pode entrar no "
+        "bundle precisa continuar expirando a certificacao"
+    )

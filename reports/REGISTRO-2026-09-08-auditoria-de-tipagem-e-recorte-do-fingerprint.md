@@ -78,6 +78,55 @@ revisoes_de_ancora:
     make_client_timeout apenas MONTA o ClientTimeout com os campos informados, e
     o timeout global segue total=600 / connect=15 / sock_read=300. O
     ceil_threshold=5.0 explicitado e o proprio default do aiohttp.
+- registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
+  caminhos: [tests/test_cwv_gate_truthfulness.py]
+  parecer: >-
+    Ancora a suite de veracidade do gate dentro daquela auditoria de integridade.
+    Nenhum teste existente foi alterado ou removido: os nove novos entraram ao
+    FIM do arquivo, em append puro, e a contagem subiu de 17 para 26 aprovados
+    sem nenhuma reprovacao.
+- registro: auditoria-cwv-lighthouse-2026-09-01
+  caminhos: [scripts/ops/lighthouse_cwv_audit.mjs, tests/test_cwv_gate_truthfulness.py]
+  parecer: >-
+    E a ancora mais proxima: ela fixa que o gate usa a CLI do coletor e jamais
+    uma segunda implementacao do hash. Essa propriedade esta INTACTA -- o
+    algoritmo, a ordem de enumeracao e o formato do digest nao mudaram. O que
+    mudou foi apenas QUAIS ARQUIVOS entram na varredura, e o teste que fixa a
+    propriedade segue no arquivo e segue passando.
+- registro: handoff-2026-09-08-contraste-fechado-e-o-gatilho-do-lighthouse
+  caminhos: [reports/cwv/latest_lighthouse_production.json, scripts/ops/lighthouse_cwv_audit.mjs]
+  parecer: >-
+    E o handoff que ENTREGOU esta analise ao Tier 0 e propos exatamente este
+    recorte na sua secao 2.4. Este commit executa a proposta sob autorizacao
+    explicita; nao a contraria. O certificado foi renovado com o algoritmo novo
+    e o veredito e o mesmo: TBT 0 ms, CLS 0, score 1.0.
+- registro: registro-2026-09-04-lighthouse-certificado-e-o-certificado-que-nao-viajava
+  caminhos: [reports/cwv/latest_lighthouse_production.json]
+  parecer: >-
+    Ancora o certificado para que ele VIAJE, versionado em vez de local. Esta
+    atualizacao preserva isso integralmente: o artefato segue versionado, com o
+    mesmo schema e os mesmos campos obrigatorios. Muda o fingerprint, porque o
+    conjunto varrido encolheu 4.4%.
+- registro: registro-2026-09-07-certificacao-tbt-e-zero-warnings-cwv
+  caminhos: [reports/cwv/latest_lighthouse_production.json]
+  parecer: >-
+    Ancora o certificado pelo TBT zerado e pela ausencia de warnings. As duas
+    propriedades seguem verdadeiras nesta 14a execucao -- TBT 0 ms e gate com
+    zero erros e zero warnings. O recorte nao afrouxa limiar algum: ele so evita
+    exigir nova medicao quando o resultado provadamente nao pode mudar.
+- registro: registro-2026-09-07-procedencia-do-timesfm-e-json-do-cli
+  caminhos: [tests/test_cwv_gate_truthfulness.py]
+  parecer: >-
+    Ancora aquele arquivo de teste pela procedencia do TimesFM e pelo JSON do
+    CLI. Nenhum dos testes que sustentam essas duas coisas foi tocado; os nove
+    novos sao append ao fim e tratam exclusivamente do escopo do fingerprint.
+- registro: registro-2026-09-08-contraste-icmev-chipev-executado
+  caminhos: [reports/cwv/latest_lighthouse_production.json]
+  parecer: >-
+    Ancora o certificado apenas como prova de que o contraste foi verificado sob
+    TBT zerado. A propriedade segue intacta -- TBT 0 ms, exit 0 --, e nenhum dos
+    oito achados do contraste depende de LCP, o unico valor que variou
+    (400.27 -> 417.20 ms, ambos com folga de 5x contra o teto).
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
