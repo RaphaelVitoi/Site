@@ -20,6 +20,7 @@
 
 import {
 	AULA_1_2_PAIRS,
+	MESA_COMPLETA_NO_OPEN,
 	RISK_PREMIUM_DECLARADO,
 } from '@/components/simulator/solver/__fixtures__/aula12Pairs';
 import {
@@ -396,29 +397,56 @@ function fracaoNoMaiorRamo(s: EvidenceScenario): number {
 	return (r[r.length - 1].f / m) * 100;
 }
 
+/**
+ * O no oferece APOSTA LIVRE quando ha `check` disponivel -- e o mesmo
+ * discriminante de `classifyActionNoCenario`: nao se aumenta onde se pode pedir
+ * mesa. Separar aposta de aumento nao e detalhe: o tamanho de um raise esta
+ * ancorado na aposta que ele enfrenta, o de uma bet nao.
+ */
+function ehApostaLivre(s: EvidenceScenario): boolean {
+	return s.actions.some(a => classifyActionNoCenario(a.label, s) === 'bet');
+}
+
 describe('A6 · sob ICM a massa migra para sizings menores', () => {
 	/**
-	 * MECANISMO (Tier 0): quanto maior o ICM, maior o preco MONETARIO da ficha.
-	 * A mesma ameaca em dolares e exercida com menos fichas -- entao o sizing que
-	 * o ChipEV precisa fazer grande, o ICMev faz menor. Escalona.
+	 * MECANISMO (Tier 0): a valoracao da ficha e ASSIMETRICA entre as stacks.
+	 * Quando a stack MAIOR aposta, aquelas fichas valem menos para ela do que
+	 * valerao para a stack menor quando chegarem ao pote. A ameaca e avaliada na
+	 * moeda do defensor, nao na do apostador -- entao a mesma pressao se exerce
+	 * com menos fichas, e o sizing encolhe.
 	 *
-	 * METRICA IMUNE A ESCALA: fracao da massa agressiva no MAIOR ramo. Ela e uma
-	 * razao ENTRE FREQUENCIAS DO MESMO CENARIO, e por isso nao e contaminada
-	 * pelo pote menor nem pela stack menor que o HRC modela -- que sao a
-	 * diferenca de estado ja documentada na fixture, nao o efeito procurado.
+	 * O FENOMENO SO EXISTE DE UM LADO. No ChipEV a ficha vale ficha para
+	 * qualquer stack, entao nao ha assimetria alguma a modelar -- e por isso que
+	 * o GTO Wizard reduz o spot a 40/40 efetivas sem perder nada, e a fixture
+	 * grava exatamente isso em STACKS_EFETIVOS_FLOP. O HRC carrega 52.88/37.88
+	 * porque PRECISA das stacks reais para o ICM. O contraste aqui nao e entre
+	 * duas assimetrias de tamanhos diferentes: e entre AUSENCIA e PRESENCA.
 	 *
-	 * INFORMATIVO exige massa dos dois lados: um no onde ninguem aposta, ou onde
-	 * o maior ramo esta a 0% nos dois regimes, nao tem o que dizer sobre sizing.
+	 * ISTO NAO E A HIPOTESE DE DISTANCIA. A diferenca entre os RPs responde outra
+	 * pergunta: quanto maior ela for, mais agressivo pode ser o lado de RP menor
+	 * e mais seguro deve ser o de RP maior. Sao dois eixos, e A7 mede o que
+	 * acontece quando um unico parametro tenta carregar os dois.
+	 *
+	 * METRICA IMUNE A ESCALA: fracao da massa agressiva no MAIOR ramo -- razao
+	 * ENTRE FREQUENCIAS DO MESMO CENARIO, logo nao contaminada por o HRC operar
+	 * sobre pote e stacks que o GTO Wizard nem representa.
+	 *
+	 * O RECORTE E `bet`, POR DESENHO. Uma versao anterior deste bloco filtrava
+	 * so por massa e por fracao nao-nula, e os nos de raise caiam fora por
+	 * ACIDENTE -- tinham fracao 0 nos dois regimes. O acidente escondia que nos
+	 * raises o efeito NAO aparece, e chega a inverter (A8). Filtro que acerta
+	 * por coincidencia reprova sozinho quando a fixture crescer.
 	 */
 	const informativos = AULA_1_2_PAIRS.filter(p => {
+		if (!ehApostaLivre(p.chipEv)) return false;
 		const c = fracaoNoMaiorRamo(p.chipEv);
 		const m = fracaoNoMaiorRamo(p.icmEv);
 		if (!Number.isFinite(c) || !Number.isFinite(m)) return false;
 		return massaAgressiva(p.chipEv) > 0.5 && (c > 0 || m > 0);
 	});
 
-	it('quatro dos sete pares sao informativos sobre sizing', () => {
-		expect(informativos).toHaveLength(4);
+	it('tres nos de aposta livre sao informativos sobre sizing', () => {
+		expect(informativos).toHaveLength(3);
 	});
 
 	it('a fracao no maior ramo cai em TODOS os pares informativos', () => {
@@ -472,21 +500,32 @@ describe('A6 · sob ICM a massa migra para sizings menores', () => {
 // A7 -- Onde o modelo diverge da evidencia, e por que
 // ---------------------------------------------------------------------------
 
-describe('A7 · o modelo faz o encolhimento depender do SINAL de deltaRp', () => {
+describe('A7 · um unico parametro carrega dois eixos', () => {
 	/**
 	 * `signDelta = Math.sign(deltaRp)` multiplica os moduladores k_small (-3.5)
-	 * e k_large (-12). Com deltaRp POSITIVO o modelo encolhe o sizing, como a
-	 * evidencia manda; com deltaRp NEGATIVO ele o AUMENTA.
+	 * e k_large (-12). Com deltaRp POSITIVO o modelo encolhe o sizing; com
+	 * deltaRp NEGATIVO ele o AUMENTA.
 	 *
-	 * A evidencia nao faz isso: dos quatro nos de aposta, TRES tem deltaRp
-	 * negativo sob o RP declarado, e neles o sizing encolhe do mesmo jeito
-	 * (-48.5pp e -33.7pp de fracao no maior ramo). O encolhimento acompanha o
-	 * REGIME, nao o sinal da diferenca entre os dois jogadores -- coerente com o
-	 * mecanismo de A6, que depende do preco da ficha para QUEM AGE.
+	 * O PROBLEMA NAO E `deltaRp` EXISTIR. Ele modela uma hipotese legitima e
+	 * geral -- a de DISTANCIA: quanto maior a diferenca entre os RPs, mais
+	 * agressivo pode ser o lado de RP menor e mais seguro deve ser o de RP
+	 * maior. Inverter com o sinal e o comportamento CERTO para esse eixo, porque
+	 * trocar quem tem o RP maior realmente troca quem pode pressionar.
+	 *
+	 * O problema e o mesmo parametro governar TAMBEM o encolhimento de sizing,
+	 * que e outro eixo: ele nasce da valoracao assimetrica da ficha entre as
+	 * stacks (A6) e nao inverte quando o sinal inverte. Fundidos num fator so,
+	 * um eixo arrasta o outro.
+	 *
+	 * MEDIDO: dos tres nos de APOSTA LIVRE com massa real, dois tem deltaRp
+	 * negativo sob o RP declarado, e neles a fracao no maior ramo cai -48.5pp e
+	 * -33.7pp -- enquanto o modelo, com o sinal invertido, preve o sizing
+	 * crescer.
 	 *
 	 * ESTE TESTE NAO CORRIGE NADA. Ele fixa a divergencia para que ela seja
 	 * decidida pelo Tier 0 em vez de reaparecer como erro numerico sem nome.
-	 * Se a modelagem mudar, este teste reprova -- e a mudanca fica declarada.
+	 * Se a modelagem separar os dois eixos, este teste reprova -- e a mudanca
+	 * fica declarada.
 	 */
 	const base = {
 		ip_check: 57.3,
@@ -510,5 +549,159 @@ describe('A7 · o modelo faz o encolhimento depender do SINAL de deltaRp', () =>
 
 	it('com deltaRp negativo o modelo AUMENTA o sizing, contra a evidencia', () => {
 		expect(fracPrevista(RP_BB, RP_BTN)).toBeGreaterThan(fracChip);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// A8 -- O encolhimento e fenomeno de APOSTA, nao de AUMENTO
+// ---------------------------------------------------------------------------
+
+describe('A8 · o efeito nao alcanca os nos de raise', () => {
+	/**
+	 * O tamanho de um raise esta ANCORADO na aposta que ele enfrenta; o de uma
+	 * bet nao. Se o encolhimento vem da valoracao assimetrica de quem escolhe
+	 * livremente quanto arriscar, ele nao tem por que se comportar igual onde a
+	 * escolha ja chega restringida -- e, medido, nao se comporta.
+	 *
+	 * O QUE FOI MEDIDO, E NAO E O QUE EU HAVIA AFIRMADO: nos tres nos de raise
+	 * informativos a direcao e MISTA -- dois sobem (+6.9% e +24.5% de medio
+	 * normalizado) e um desce (-34.1%). Escrevi primeiro que "sobem", com dois
+	 * dos tres em vista; o terceiro desmentiu. Fica a afirmacao fraca e
+	 * verdadeira: nos raises NAO ha direcao unilateral.
+	 *
+	 * E E EXATAMENTE POR ISSO QUE O RECORTE IMPORTA. Nos nos de aposta livre a
+	 * direcao e unilateral, 3 de 3 descendo; misturar as duas classes diluiria
+	 * um efeito consistente num agregado sem direcao. Antes de separar por
+	 * classe, A6 passava porque os raises caiam fora do filtro por ACIDENTE --
+	 * fracao no maior ramo 0 nos dois lados --, e a generalizacao "sob ICM a
+	 * massa migra para sizings menores" ficava ampla demais sem que nada
+	 * acusasse.
+	 *
+	 * AMOSTRA DECLARADA: tres nos, com massa agressiva de 6.8%, 1.3% e 0.9%. E
+	 * pouco, e o teste NAO afirma direcao -- afirma a ausencia dela.
+	 */
+	const medioNorm = (s: EvidenceScenario): number => {
+		const r = ramosAgressivos(s);
+		const massa = r.reduce((a, b) => a + b.f, 0);
+		const maior = r[r.length - 1].sz;
+		return r.reduce((a, b) => a + (b.sz / maior) * b.f, 0) / massa;
+	};
+
+	const nosDeRaise = AULA_1_2_PAIRS.filter(
+		p =>
+			!ehApostaLivre(p.chipEv) &&
+			massaAgressiva(p.chipEv) > 0.5 &&
+			massaAgressiva(p.icmEv) > 0,
+	);
+
+	it('os nos de raise informativos sao tres', () => {
+		expect(nosDeRaise).toHaveLength(3);
+	});
+
+	it('neles a direcao e MISTA, ao contrario dos nos de aposta', () => {
+		const subiram = nosDeRaise.filter(
+			p => medioNorm(p.icmEv) > medioNorm(p.chipEv),
+		);
+		expect(subiram.length).toBeGreaterThan(0);
+		expect(subiram.length).toBeLessThan(nosDeRaise.length);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// A9 -- "Nao crescer o pote": a reacao de raise e o sizing minimo
+// ---------------------------------------------------------------------------
+
+describe('A9 · o lado de RP maior evita crescer o pote', () => {
+	/**
+	 * PRINCIPIO (Tier 0): quem tem RP maior reage menos de raise pos-flop, para
+	 * nao crescer o pote -- especialmente com a equidade ainda aberta no turn e
+	 * no river, onde o pote maior sera disputado com fichas que valem mais.
+	 *
+	 * MEDIDO nos tres nos de enfrentamento, em pontos percentuais absolutos --
+	 * que e a leitura honesta quando as bases sao de 1%:
+	 *
+	 *   RP menor (BB, 12.9): +2.5pp   (6.8 -> 9.3)
+	 *   RP maior (BTN, 21.4): -1.2pp  (1.3 -> 0.1, o raise e ABANDONADO)
+	 *   RP maior (BTN, 21.4): +0.2pp  (0.9 -> 1.1, residuo)
+	 *
+	 * O caso forte e o abandono: o unico no em que o RP maior enfrenta um
+	 * check-raise -- maior risco de crescimento de pote -- e o unico em que a
+	 * agressao praticamente desaparece.
+	 *
+	 * AMOSTRA DECLARADA: um no de um lado, dois do outro, um deles em residuo.
+	 * O teste fixa o ABANDONO, que e o fato robusto, e NAO afirma a regra geral,
+	 * que esta amostra nao sustenta.
+	 */
+	const raisePct = (s: EvidenceScenario): number => porClasse(s).raise ?? 0;
+
+	const parVsCheckRaise = AULA_1_2_PAIRS.find(
+		p => (p.source.nodeLabel ?? '').includes('vs XR'),
+	);
+
+	it('o no de enfrentamento a check-raise existe na fixture', () => {
+		expect(parVsCheckRaise).toBeDefined();
+	});
+
+	it('nele o lado de RP maior praticamente abandona o raise', () => {
+		const p = parVsCheckRaise as NonNullable<typeof parVsCheckRaise>;
+		const antes = raisePct(p.chipEv);
+		const depois = raisePct(p.icmEv);
+		expect(antes).toBeGreaterThan(depois);
+		expect(depois).toBeLessThan(antes * 0.25);
+	});
+
+	/**
+	 * COROLARIO: o sizing minimo em alta frequencia. Medido no no de cbet do
+	 * flop, ele salta de 8.7% no ChipEV para 67.5% no ICMev -- fator 7.8x.
+	 *
+	 * E O INCENTIVO E COMUM AOS DOIS LADOS, nao de um deles. A mesa e um
+	 * ORGANISMO (Tier 0): ha stacks curtas prestes a cair, e enquanto elas
+	 * caem, tanto o BU quanto o BB ganham equidade de premiacao de graca.
+	 * Inflar o pote entre si arrisca justamente o que a sobrevivencia alheia
+	 * entregaria sem risco -- e por isso AMBAS as stacks se machucam ao crescer
+	 * o pote, independentemente de qual delas tem o RP maior.
+	 *
+	 * ISTO RESOLVE O QUE EU HAVIA REGISTRADO COMO DIVERGENCIA. Escrevi que
+	 * "sete pares nao separam 'e o RP maior' de 'e quem enfrenta oponente que
+	 * nao aumenta'", lendo a ausencia de discriminante como fraqueza da
+	 * amostra. Ela e o RESULTADO: nao ha discriminante por lado porque o
+	 * incentivo nao vem da relacao entre os dois -- vem da mesa completa. E por
+	 * isso que o encolhimento aparece em 3 de 3 nos de aposta livre com o BB
+	 * agindo em dois e o BTN em um, sem separar por lado (A6).
+	 *
+	 * E O QUE FECHA O CONTRASTE INTEIRO: essa mesa completa e exatamente o que
+	 * o GTO Wizard IGNORA e o HRC carrega -- a fixture o diz literalmente na
+	 * nota de MESA_COMPLETA_NO_OPEN. Mais ramos (A1), sizing menor (A6) e menos
+	 * raise (A9) decorrem todos de haver stacks fora do pote cuja eliminacao
+	 * beneficia os dois que estao dentro dele.
+	 */
+	it('a mesa carrega stacks curtas que o ChipEV ignora', () => {
+		const assentos: number[] = Object.values(MESA_COMPLETA_NO_OPEN.assentos);
+		const efetiva = MESA_COMPLETA_NO_OPEN.efetivaPreOpenBb;
+		const protagonistas = [
+			MESA_COMPLETA_NO_OPEN.assentos.BU,
+			MESA_COMPLETA_NO_OPEN.assentos.BB,
+		];
+
+		// Ha stacks em perigo real, e os dois protagonistas estao acima delas.
+		const curtas = assentos.filter(s => s < efetiva / 2);
+		expect(curtas.length).toBeGreaterThanOrEqual(3);
+		for (const p of protagonistas) {
+			expect(p).toBeGreaterThan(Math.max(...curtas));
+		}
+
+		// E a mesa tem mais assentos do que os dois que o GTO Wizard modela.
+		expect(assentos.length).toBeGreaterThan(2);
+	});
+
+	it('o sizing minimo multiplica sua frequencia sob ICM', () => {
+		const cbetFlop = AULA_1_2_PAIRS.find(p =>
+			(p.source.nodeLabel ?? '').includes('IP action após BB check'),
+		);
+		expect(cbetFlop).toBeDefined();
+		const p = cbetFlop as NonNullable<typeof cbetFlop>;
+		const menorChip = ramosAgressivos(p.chipEv)[0];
+		const menorIcm = ramosAgressivos(p.icmEv)[0];
+		expect(menorIcm.f).toBeGreaterThan(menorChip.f * 3);
 	});
 });
