@@ -4,7 +4,7 @@
 Regras que valem para todos os projetos ficam em `..\CLAUDE.md`, na raiz
 multiprojeto.
 
-**Última revisão:** 2026-09-03 · Corte de Conhecimento: Setembro/2026 · Protocolo Chico SOTA v8.0 GOLD
+**Última revisão:** 2026-09-08 · Corte de Conhecimento: Setembro/2026 · Protocolo Chico SOTA v8.0 GOLD
 
 ---
 
@@ -582,6 +582,13 @@ cognitivos de ponta que operam sob o seu consentimento.
    desta baseline é **Setembro/2026**. Documentos arquiteturais devem ser compulsoriamente
    reavaliados e atualizados pelo Tier 0 / Tríade sempre que novos modelos forem
    incorporados ou quando a infraestrutura técnica evoluir além desse horizonte.
+4. **Esta Lei é subordinada à arbitragem soberana — §3.1 de `..\CLAUDE.md`.**
+   Quando o Tier 0 autoriza uma operação concorrente e **delimita que não haverá
+   concorrência real** — pontual, assistida, afastada do ambiente em que o agente
+   atua —, essa operação é **válida**, e o agente a registra como válida. O texto
+   da cláusula, seu limite (arbitragem governa *permissão*, nunca *fato* medido) e
+   a medição que a originou vivem **apenas** na raiz; aqui há ponteiro e não cópia,
+   pela mesma razão que a §7 deste arquivo documenta no caso do `AGENTS.md`.
 
 **Medição que originou a emenda, 2026-09-02.** O exemplo desta mesma linha
 trazia `Chico v8.0 GOLD [Tier 1.B]` — o grupo ocupando o campo do autor —, e
