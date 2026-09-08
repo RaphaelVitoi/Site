@@ -793,3 +793,57 @@ própria auditoria que o registrou.
   3. *Seletor In-Chat & Hot-Swap de Contexto (10% Retido):* Implementados `/model [tag|#]`, `/switch`, `/compact`, `/new`, `/status` em `scripts/llm_inference/run_inference.py`. Permite alternar modelos sem fechar a sessão, retendo 10% do contexto recente via compactação algorítmica e preservando a persona.
   4. *Correções no Nexus CLI:* Resolvidos bugs em `stats daily-report` (ligado ao `autopoietic_daily_cycle.py`), `calib-forecast`, remoção do `ValidateSet` rígido em `start_model.ps1`, e correção estrita de tipos Pyright em `nexus.py:2336`.
   5. *Qualidade & Testes:* 52/52 testes aprovados em 5.16s (`test_run_inference_contrato.py` e `test_cli_nexus.py`), 30/30 testes em `test_record_index.py`, 0 erros no Pyright e 0 no Ruff.
+
+---
+
+## 6. Fechamento de Sessão & Calibração — 2026-09-08 (PMev: massa de fichas e as duas grandezas de RP)
+
+**Condutor:** `claude-opus-5` · **Regime:** `assistida` · **Nota:** `9.5` (ledger seq. 19)
+
+**Razão da nota (Tier 0):** *leve desvio e gasto exagerado de tempo e tokens em
+questões periféricas, desproporcional ao foco da sessão.* Medido: **2 de 5
+commits** no foco declarado, e o contraste ICMev × ChipEV **não foi executado**
+pela segunda sessão consecutiva.
+
+### Três aprendizados com discriminante
+
+1. **A fonte única pode não ser única.** Corrigi `_buildSimulatedStacks` em
+   `perspectiva.ts` e havia cópia manual literal em `rpDeriver.ts:266`, que
+   sobreviveu. Eu checara o *import* e concluíra que o caminho estava limpo —
+   **import não é consumo, e ausência de import não é ausência do defeito quando
+   o código foi duplicado**.
+   → *Discriminante:* `grep` por **fragmento do corpo** da função, nunca só pelo
+   nome. O nome acha quem chama; o fragmento acha quem copiou.
+
+2. **Um teste pode narrar o defeito como premissa.** O Teorema D5 usava
+   `potSize 1.01, heroCost 1` anotado como *"arrisca 1 para ganhar 0.01"* — mas é
+   aposta even money, e o `0.01` era o **output do bug**. O `BF` ali era
+   `Infinity`, e o teorema "Sem Hard-cap" atestava o clamp que continha o defeito.
+   → *Discriminante:* o número do comentário descreve a **entrada escolhida** ou a
+   **saída observada**? Quando uma correção derruba um teste, medir o cenário
+   antes de julgá-lo frágil.
+
+3. **Medir refuta a própria hipótese, e isso é entrega.** Declarei que o teto de
+   `24` "pode ter deixado de disparar". Errado nas duas direções: no pré-flop
+   nunca esteve contaminado; no pós-flop disparava **sempre**. E a medição achou o
+   que a hipótese não previa — no regime `custo = pote` o ramo de vitória colapsa
+   no baseline e o RP vai a **zero**: o alarme ficava **mudo na aposta de pote**.
+   → Ajustar o threshold teria mexido no número certo pelo motivo errado.
+
+### Governança acrescida
+
+`~\.gemini\CLAUDE.md` **§3.1 — Arbitragem soberana** (canônico, não versionado):
+operação executada ou autorizada pelo Tier 0 é válida mesmo sem cobertura do
+M.O., sobretudo quando ele **delimita** o alcance. Limite que a impede de virar
+solvente: **arbitragem governa permissão, nunca fato medido**. Ponteiro no
+`Site\CLAUDE.md`, item 4 da Lei de Concorrência.
+
+Originou-se de erro meu: registrei operação arbitrada como *"sobreposição
+autorizada e contida"* — arbitragem tratada como atenuante de falta, quando não
+havia falta.
+
+### Regra de economia para a próxima sessão
+
+Periferia obrigatória (âncoras, registros, portões) é para ser **cumprida, não
+elaborada**. A §1.2 proíbe o parecer **genérico** — nunca o **breve**. Parecer
+específico e curto vence parecer específico e longo.
