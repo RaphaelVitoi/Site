@@ -40,6 +40,28 @@ export function extractLighthouseCwv(lhr) {
 
 const NON_PRODUCTION_INPUT_DIRECTORIES = new Set(['.git', '.next', 'coverage', 'node_modules', 'reports']);
 
+/**
+ * Test-only directories. Their contents are compiled by the test runner, never
+ * by `next build`, so they cannot change the production bundle — and therefore
+ * cannot change TBT.
+ *
+ * Verified before excluding them, 2026-09-08: no production module under
+ * `frontend/src` imports from any of these. Excluding a directory that DID feed
+ * the bundle would be worse than the extra recertification, because the
+ * certificate would then silently outlive a real change.
+ */
+const TEST_ONLY_DIRECTORIES = new Set(['__tests__', '__fixtures__', '__mocks__']);
+
+/**
+ * Test-only files, matched by SUFFIX and never by substring.
+ *
+ * `testemunho.tsx` and `contest.ts` are production modules whose names merely
+ * contain "test"; a substring match would drop them from the fingerprint and
+ * let the certificate survive a real bundle change. That failure is silent,
+ * which makes it strictly worse than the recertification it would save.
+ */
+const TEST_ONLY_FILE = /\.(test|spec)\.[cm]?[jt]sx?$/;
+
 async function listProductionInputs(root, directory = root) {
   const entries = await readdir(directory, { withFileTypes: true });
   const sortedEntries = entries.toSorted((left, right) => left.name.localeCompare(right.name));
@@ -47,10 +69,10 @@ async function listProductionInputs(root, directory = root) {
   for (const entry of sortedEntries) {
     const candidate = path.join(directory, entry.name);
     if (entry.isDirectory()) {
-      if (!NON_PRODUCTION_INPUT_DIRECTORIES.has(entry.name)) {
+      if (!NON_PRODUCTION_INPUT_DIRECTORIES.has(entry.name) && !TEST_ONLY_DIRECTORIES.has(entry.name)) {
         files.push(...(await listProductionInputs(root, candidate)));
       }
-    } else if (entry.isFile()) {
+    } else if (entry.isFile() && !TEST_ONLY_FILE.test(entry.name)) {
       files.push(candidate);
     }
   }
@@ -63,6 +85,19 @@ async function listProductionInputs(root, directory = root) {
  * The digest is independent from file timestamp and enumeration order. Symlinks
  * are deliberately excluded by `Dirent.isFile()`/`isDirectory()` so an audit
  * cannot silently certify files that live outside its declared source root.
+ *
+ * SCOPE IS THE BUNDLE, NOT THE DIRECTORY. Test-only files and directories are
+ * excluded because they cannot reach a production build, and a fingerprint that
+ * covers them expires the TBT certificate for changes that provably cannot move
+ * it. Measured 2026-09-08: three expirations in a single day, the last one
+ * caused by a 1075-byte probe that was not even tracked by git — removing it
+ * restored the certificate's fingerprint exactly. Each recertification also left
+ * an orphaned chrome.exe holding port 9230.
+ *
+ * The exclusion narrows the TRIGGER and never the COVERAGE: anything that can
+ * enter the bundle still expires the certificate, which
+ * `test_codigo_de_producao_continua_expirando_a_certificacao` pins with
+ * adversarial names that merely contain "test".
  */
 export async function fingerprintProductionInputs(sourceRoot) {
   const root = path.resolve(sourceRoot);
