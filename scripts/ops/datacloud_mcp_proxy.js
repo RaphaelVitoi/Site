@@ -24,7 +24,7 @@ function getSocketPath(idOrPath) {
   }
   if (process.platform === "win32") {
     // Windows named pipes: formatar canonicamente sem normalizacao do path.join
-    return `\\\\.\\pipe\\datacloud-mcp-${idOrPath}`;
+    return String.raw`\\.\pipe\datacloud-mcp-${idOrPath}`;
   }
   return path.join(os.tmpdir(), `datacloud-mcp-${idOrPath}.sock`);
 }

@@ -10,9 +10,8 @@ Separação Canônica de Responsabilidades Computacionais:
 
 from __future__ import annotations
 
-import json
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Any
 
 from engine.icm_matrix import calculate_malmuth_harville_icm
@@ -115,7 +114,7 @@ class PMevTripartitePipeline:
         invalid_hands: list[str] = []
 
         for hand, weight in range_spec.items():
-            if not (0.0 <= weight <= 1.0):
+            if not 0.0 <= weight <= 1.0:
                 raise ValueError(f"Peso inválido para mão {hand}: {weight}. Deve estar entre 0.0 e 1.0.")
 
             hand = hand.strip()

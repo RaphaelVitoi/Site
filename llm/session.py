@@ -26,6 +26,26 @@ _GLOBAL_HTTP_SESSION_LOCK = None  # Lazy - instanciado sob o event loop ativo
 API_CONCURRENCY_SEMAPHORE = None
 
 
+def make_client_timeout(
+    total: float | None = None,
+    connect: float | None = None,
+    sock_read: float | None = None,
+    sock_connect: float | None = None,
+    ceil_threshold: float = 5.0,
+) -> aiohttp.ClientTimeout:
+    """Instancia ClientTimeout com compatibilidade estrita para type checkers (Pyright/Pylance)."""
+    kwargs: dict[str, Any] = {"ceil_threshold": ceil_threshold}
+    if total is not None:
+        kwargs["total"] = float(total)
+    if connect is not None:
+        kwargs["connect"] = float(connect)
+    if sock_read is not None:
+        kwargs["sock_read"] = float(sock_read)
+    if sock_connect is not None:
+        kwargs["sock_connect"] = float(sock_connect)
+    return aiohttp.ClientTimeout(**kwargs)
+
+
 def get_api_semaphore() -> asyncio.Semaphore:
     """Retorna o semaforo global que limita a concorrencia da API."""
     global API_CONCURRENCY_SEMAPHORE
@@ -65,7 +85,7 @@ async def get_global_http_session() -> aiohttp.ClientSession:
             }
             # SOTA: Timeouts intrinsecos de socket para evitar paralisia I/O (TCP Drop).
             # connect=15s (teto do handshake), sock_read=300s (limite sem receber bytes vivos).
-            global_timeout = aiohttp.ClientTimeout(total=600, connect=15, sock_read=300)
+            global_timeout = make_client_timeout(total=600, connect=15, sock_read=300)
             _GLOBAL_HTTP_SESSION = aiohttp.ClientSession(
                 trust_env=True,
                 connector=connector,
