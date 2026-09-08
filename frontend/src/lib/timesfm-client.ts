@@ -11,8 +11,12 @@ export interface TimesFMForecastItem {
 	mean_prediction: number[];
 	quantile_10: number[];
 	quantile_90: number[];
+	/** Procedencia REAL do numero. Sem pesos carregados, declara a extrapolacao
+	 * analitica -- nunca o id do modelo pretendido, que vive em `intended_model`. */
 	model_used: string;
 	license_tier: string;
+	intended_model?: string;
+	weights_loaded?: boolean;
 }
 
 export interface TimesFMForecastRequestPayload {
@@ -31,6 +35,8 @@ export interface TimesFMForecastResponsePayload {
 	results: Record<string, TimesFMForecastItem>;
 	model_used: string;
 	license_tier: string;
+	intended_model?: string;
+	weights_loaded?: boolean;
 	error?: string;
 }
 

@@ -340,7 +340,19 @@ def test_gate_reports_positive_cwv_human_review_without_turning_it_into_coverage
     assert "[CWV] Observacao humana positiva registrada" in output
     assert "## 1.1 Observacao humana de responsividade" in report
     assert "INP atestado manualmente: 16 ms local / 106 ms p75 de campo." in report
-    assert "TBT permanece sem artefato Lighthouse valido." in report
+    # A procedencia do TBT e declarada nos DOIS ramos do gate (cwv_gate.ps1:1129):
+    # artefato valido -> "TBT certificado pelo Lighthouse: N ms"; invalido ou ausente
+    # -> "TBT permanece sem artefato Lighthouse valido.". Prender a assercao a um dos
+    # ramos fazia este teste alternar conforme o fingerprint de `frontend/`: ele media
+    # o ESTADO do repositorio, nao o contrato. Medido em 2026-09-07, quando a
+    # certificacao do TBT (73b65165) o reprovou sem que nada estivesse errado.
+    # O contrato e outro, e e o que da nome ao teste: o TBT sempre declara de onde
+    # veio, e nunca vem do arbitro humano -- que atestou INP, e so INP.
+    assert (
+        "TBT certificado pelo Lighthouse:" in report
+        or "TBT permanece sem artefato Lighthouse valido." in report
+    ), report
+    assert "TBT atestado manualmente" not in report
     assert "FRAGILE" in report
 
 

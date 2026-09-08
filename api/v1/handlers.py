@@ -1023,8 +1023,10 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
                 status="SUCCESS",
                 forecast_type="multivariate",
                 results=items,
-                model_used=engine.metadata.model_id,
+                model_used=engine.procedencia,
                 license_tier=engine.metadata.license_tier.value,
+                intended_model=engine.metadata.model_id,
+                weights_loaded=engine.weights_loaded,
             )
         else:
             assert req.series is not None
@@ -1038,8 +1040,10 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
                 status="SUCCESS",
                 forecast_type="univariate",
                 results={req.target_name: result.to_item()},
-                model_used=engine.metadata.model_id,
+                model_used=engine.procedencia,
                 license_tier=engine.metadata.license_tier.value,
+                intended_model=engine.metadata.model_id,
+                weights_loaded=engine.weights_loaded,
             )
 
         return web.json_response(resp.model_dump())

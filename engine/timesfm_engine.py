@@ -71,6 +71,17 @@ TIMESFM_CATALOG: dict[str, ModelMetadata] = {
 }
 
 
+# Procedencia declarada quando NENHUM peso do TimesFM foi carregado. `model_used`
+# devolvia o id do Google incondicionalmente -- inclusive no caminho analitico, que
+# e `last_val + trend*step` com bandas `1.28*std*sqrt(step)`. O calculo e legitimo
+# como fallback; o ROTULO e que mentia, e a SS8.3 do CLAUDE.md consome este campo na
+# evidencia de calibracao. A SS3 separa capacidade, procedencia e autorizacao porque
+# confundi-las corrompe as tres. Medido em 2026-09-07 (finding B04 da auditoria do
+# Astra): a evidencia do dia projetava 8.89 -> 8.67 atribuindo a projecao ao Google.
+BACKEND_ANALITICO = "analytic-linear-extrapolation"
+BACKEND_PESOS = "timesfm-weights"
+
+
 @dataclass
 class ForecastResult:
     target_name: str
@@ -81,6 +92,8 @@ class ForecastResult:
     quantile_90: list[float]
     model_used: str
     license_tier: str
+    intended_model: str = ""
+    weights_loaded: bool = False
 
     def to_item(self) -> ForecastItem:
         return ForecastItem(
@@ -92,6 +105,8 @@ class ForecastResult:
             quantile_90=self.quantile_90,
             model_used=self.model_used,
             license_tier=self.license_tier,
+            intended_model=self.intended_model,
+            weights_loaded=self.weights_loaded,
         )
 
 
@@ -106,6 +121,8 @@ class ForecastItem(BaseModel):
     quantile_90: list[float]
     model_used: str
     license_tier: str
+    intended_model: str = ""
+    weights_loaded: bool = False
 
 
 class TimesFMForecastRequest(BaseModel):
@@ -137,6 +154,8 @@ class TimesFMForecastResponse(BaseModel):
     results: dict[str, ForecastItem]
     model_used: str
     license_tier: str
+    intended_model: str = ""
+    weights_loaded: bool = False
     error: str | None = None
 
 
@@ -156,6 +175,26 @@ class TimesFMEngine:
         self.preferred_model_key = preferred_model_key
         self.metadata = self._validate_and_resolve_model(mode, preferred_model_key)
         self._model = None
+
+    @property
+    def weights_loaded(self) -> bool:
+        """Ha pesos do TimesFM carregados? Hoje: nunca -- `_model` fica em None."""
+        return self._model is not None
+
+    @property
+    def inference_backend(self) -> str:
+        return BACKEND_PESOS if self.weights_loaded else BACKEND_ANALITICO
+
+    @property
+    def procedencia(self) -> str:
+        """O que de fato produziu o numero, e nao o que se pretendia usar.
+
+        Com pesos, e o proprio modelo. Sem pesos, e a extrapolacao analitica -- e o
+        id do Google entra como intencao entre parenteses, nunca como autor.
+        """
+        if self.weights_loaded:
+            return self.metadata.model_id
+        return f"{BACKEND_ANALITICO} (sem pesos de {self.metadata.model_id})"
 
     def _validate_and_resolve_model(
         self,
@@ -214,8 +253,10 @@ class TimesFMEngine:
             mean_prediction=mean_pred,
             quantile_10=q10,
             quantile_90=q90,
-            model_used=self.metadata.model_id,
+            model_used=self.procedencia,
             license_tier=self.metadata.license_tier.value,
+            intended_model=self.metadata.model_id,
+            weights_loaded=self.weights_loaded,
         )
 
     def forecast_multivariate(
@@ -289,6 +330,8 @@ class AgentCalibrationForecast(BaseModel):
     risk_of_degradation: float
     model_used: str
     license_tier: str
+    intended_model: str = ""
+    weights_loaded: bool = False
     conductor_model: str | None = None
     notes: str | None = None
 
@@ -316,8 +359,10 @@ def forecast_agent_calibration_trajectory(
             drift_per_session=0.0,
             drift_direction="ESTAVEL",
             risk_of_degradation=0.0,
-            model_used=meta.model_id,
+            model_used=f"{BACKEND_ANALITICO} (sem pesos de {meta.model_id})",
             license_tier=meta.license_tier.value,
+            intended_model=meta.model_id,
+            weights_loaded=False,
             conductor_model=conductor_model,
             notes="TimesFM exige ao menos 4 pontos historicos de feedback para inferencia temporal.",
         )
@@ -380,6 +425,8 @@ def forecast_agent_calibration_trajectory(
         risk_of_degradation=round(degradation_prob, 4),
         model_used=res.model_used,
         license_tier=res.license_tier,
+        intended_model=res.intended_model,
+        weights_loaded=res.weights_loaded,
         conductor_model=conductor_model,
     )
 
