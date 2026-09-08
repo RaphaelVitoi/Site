@@ -88,15 +88,25 @@ describe('calculatePerspectivaVitoi - Validação de Teoremas SOTA (D1 a D6)', (
       calculatePerspectivaVitoi(input);
     }
 
+    // A pressao extrema tem de vir da ESTRUTURA do spot, nao de um defeito de
+    // modelagem. Ate 2026-09-08 este cenario era `potSize: 1.01, heroCost: 1`,
+    // anotado como "arrisca 1 para ganhar 0.01" -- mas 1.01 contra 1 e uma aposta
+    // even money; o "0.01" era o OUTPUT do B03, que engolia o call do hero no ramo
+    // de vitoria. O BF medido ali era literalmente Infinity, e o teorema acabava
+    // atestando o clamp que continha o defeito. Corrigido o B03, o cenario cai
+    // para BF 1.39 e threshEq 0.52, e o teste passaria a nao exercer pressao
+    // alguma. Aqui a pressao e real: arrisca-se 19 para ganhar 1.
     const extremeInput: PerspectivaInput = {
       ...baseInput,
-      potSize: 1.01,
-      heroCost: 1, // Suicidal bet do agressor: arrisca 1 para ganhar 0.01
+      potSize: 1,
+      heroCost: 19, // pot odds cruas de 0.95 -- o preco, sozinho, ja exige quase tudo
       winProb: 0.5,
       investidoAcumulado: 0,
     };
 
     const res = calculatePerspectivaVitoi(extremeInput);
+    // O teorema e a AUSENCIA de hard-cap: o RP sobe organicamente com a pressao e
+    // para abaixo de 1, sem ser grampeado num valor fixo.
     expect(res.threshEq).toBeGreaterThan(0.9);
     expect(res.threshEq).toBeLessThanOrEqual(0.99);
   });

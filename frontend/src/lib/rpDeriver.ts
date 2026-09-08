@@ -8,7 +8,25 @@
  * [+] recommendedSizing enriquecido: combina delta BF (IP vs OOP) + core.riskAdvantage
  * [+] isCeilingReached: adiciona core.riskAdvantage como gatilho de teto (> RP_CEILING)
  * [+] referenceStatus propagado no input do core via StreetState
- * [=] deriveRps(): lógica BF canônica mantida (100×(BF-1)/BF) — didática e rastreável
+ * [=] deriveRps(): mantida a formula 100x(BF-1)/BF -- ver LIMITE DECLARADO abaixo.
+ *
+ * LIMITE DECLARADO (B06/F07, medido em 2026-09-08) -- NAO e a formula canonica.
+ * Convivem no repositorio DUAS grandezas sob o rotulo `RP`, cada uma consistente
+ * entre TypeScript e Python, e nenhuma delas e copia errada da outra:
+ *
+ *   A. (BF-1)/(BF+1)  -- icmMatrix.ts:230 e engine/icm_matrix.py:124
+ *   B. (BF-1)/BF      -- aqui (bfToRp) e engine/vitoi_perspective_engine.py:199
+ *
+ * Medicao: a equidade requerida exata sob ICM e `BF*a / (BF*a + 1 - a)`, com `a`
+ * as pot odds cruas. Na convencao `req = a + RP*(1-a)`, a formula A REPRODUZ o RP
+ * exato para todo BF no all-in even money (a=0.5) -- e portanto nao e arbitraria.
+ * A formula B nao e exata em nenhuma convencao: coincide com a exata apenas em
+ * BF=2 e diverge ate -11.11 pontos percentuais de equidade requerida em BF=5,
+ * a=0.5, SEMPRE subestimando o preco quando o bubble factor e alto.
+ *
+ * A escolha entre nomear as duas grandezas separadamente ou aposentar uma delas
+ * e decisao de dominio do Tier 0, e nada aqui foi trocado por conta propria: a
+ * medicao existe para que a decisao seja informada, nao para antecipa-la.
  * [=] allBfs dual-player preservado (perspectiva core é single-hero; precisamos do delta IP/OOP)
  *
  * @format

@@ -239,7 +239,21 @@ export function classifyTier(stack: number, stacks: number[]): StackTier {
 
 // --- HELPERS DE REDUÇÃO DE ENTROPIA COGNITIVA (SOTA v8.0 GOLD FUSED) ---
 
-function _buildSimulatedStacks(
+/**
+ * Monta os tres ramos terminais preservando a massa de fichas.
+ *
+ * `potSize` e dinheiro JA DESTACADO dos stacks -- a pot odds crua em
+ * `_calculateThresholds` le `heroCost / (potSize + heroCost)`, o que so fecha se
+ * o pote nao contiver o call do hero e nao estiver mais nos stacks. Disso segue
+ * que TODO ramo terminal vale `soma(stacks) + potSize`: alguem recolhe o pote.
+ *
+ * Ate 2026-09-08 apenas o ramo `lose` cumpria isso. O `win` esquecia de devolver
+ * ao hero o proprio call e o `fold` debitava um investimento que ja estava no
+ * pote, o que subestimava `deltaWin` sem tocar `deltaLose` e inflava o Bubble
+ * Factor de +76% a +156% nos cenarios medidos -- sempre no mesmo sentido, o de
+ * exagerar o premio de risco. Contrato fixado em `massaDeFichas.test.ts`.
+ */
+export function buildSimulatedStacks(
 	stacks: number[],
 	heroIdx: number,
 	villainIdx: number,
@@ -247,15 +261,25 @@ function _buildSimulatedStacks(
 	heroCost: number,
 	investidoAcumulado: number,
 ) {
+	const stackHero = stacks[heroIdx] || 0;
+	// Ninguem paga mais do que tem: com stack curto o hero esta all-in por menos, e
+	// e esse valor -- nao o custo nominal -- que muda de maos nos dois lados.
+	const custoEfetivo = Math.max(0, Math.min(stackHero, heroCost));
+
+	// Vitoria: paga o custo efetivo e recolhe o pote MAIS o proprio call de volta.
 	const stacksWin = [...stacks];
-	stacksWin[heroIdx] = Math.max(0, (stacksWin[heroIdx] || 0) - heroCost + potSize);
+	stacksWin[heroIdx] = stackHero - custoEfetivo + potSize + custoEfetivo;
 
+	// Derrota: o custo efetivo sai do hero e entra no vilao, junto com o pote.
 	const stacksLose = [...stacks];
-	stacksLose[heroIdx] = Math.max(0, (stacksLose[heroIdx] || 0) - heroCost);
-	stacksLose[villainIdx] = (stacksLose[villainIdx] || 0) + potSize + heroCost;
+	stacksLose[heroIdx] = stackHero - custoEfetivo;
+	stacksLose[villainIdx] = (stacksLose[villainIdx] || 0) + potSize + custoEfetivo;
 
+	// Desistencia: o vilao recolhe o pote, que JA contem o investido acumulado do
+	// hero. Debitar o hero outra vez seria contar o mesmo investimento duas vezes.
+	void investidoAcumulado;
 	const stacksFold = [...stacks];
-	stacksFold[heroIdx] = Math.max(0, (stacksFold[heroIdx] || 0) - investidoAcumulado);
+	stacksFold[heroIdx] = stackHero;
 	stacksFold[villainIdx] = (stacksFold[villainIdx] || 0) + potSize;
 
 	return { stacksWin, stacksLose, stacksFold };
@@ -266,7 +290,7 @@ function _calculateSnapshot(input: PerspectivaInput, totalPrizes: number) {
 	const current = calculateMapaICM(stacks, prizes);
 	const currentEquity = current.equities[heroIdx] ?? 0;
 	const currentEquityPct = (currentEquity / totalPrizes) * 100;
-	const { stacksWin, stacksLose, stacksFold } = _buildSimulatedStacks(
+	const { stacksWin, stacksLose, stacksFold } = buildSimulatedStacks(
 		stacks,
 		heroIdx,
 		villainIdx,
