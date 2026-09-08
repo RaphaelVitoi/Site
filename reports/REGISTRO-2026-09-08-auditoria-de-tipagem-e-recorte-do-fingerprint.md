@@ -358,6 +358,58 @@ o registro correto quando o mecanismo não foi encontrado.
 
 ---
 
+## 6. Segunda emenda — a pergunta estava errada, não a medição
+
+**Acrescentada em 2026-09-08, depois de o Tier 0 perguntar quem apagou os
+documentos.**
+
+### 6.1 O fato que eu não tinha
+
+`.claude/RELATORIOS/` foi **esvaziado deliberadamente** no commit `a22df57e`
+(2026-09-01, autor `Raphael Vitoi`, *"feat(fusion): unify cerebro into claude
+directory structure"*). Ele apagou **187 arquivos**, dez deles naquele
+diretório. No dia seguinte, `a1b70698` trouxe de volta **um só**: o
+`INVENTARIO_FERRAMENTAS.md`. Os outros nove nunca voltaram.
+
+Oito dos nove eram descartáveis por mérito próprio — entre eles um
+`SUPERSEDED.md` que declarava a própria pasta legada, e um
+`RUNTIME_KEYS_ROUTING_STATUS.md` com dezesseis chaves de prefixo e sufixo
+expostos, cuja remoção foi higiene pela §3 da raiz. O nono,
+`NODELOCKING_B20_ARCHITECTURE.md`, não era: foi restaurado hoje em
+`docs/architecture/` por `6745cdcb`.
+
+### 6.2 O erro foi de pergunta, não de medição
+
+Consultei o git **pelo arquivo** em cada uma das três ocorrências. Nunca o
+consultei **pelo diretório**. Uma linha — `git log --all -- .claude/RELATORIOS/`
+— teria exibido commit, data, autor e mensagem já na primeira vez, em 03/09.
+
+Isso é distinto dos dois defeitos da §5. Lá eu converti inferência em fato e
+datei pela percepção. Aqui a medição estava correta e a conclusão era honesta;
+faltou **ampliar o escopo da consulta** do arquivo para o contêiner dele. Vale
+registrar como método próprio: quando um artefato some, perguntar também o que
+aconteceu com os irmãos.
+
+### 6.3 O que esta emenda NÃO corrige
+
+**As três sumidas continuam sem explicação.** Medido: nenhum commit posterior a
+`a1b70698` apaga o arquivo — `a22df57e` é o único no histórico com
+`--diff-filter=D` sobre esse caminho. Logo `a22df57e` explica o desaparecimento
+dos **nove irmãos**, e não os episódios de 03/09, 07/09 e 08/09, em que o
+arquivo saiu do working tree sem commit algum.
+
+A §5.3 permanece válida: as duas hipóteses de mecanismo seguem sem lastro, e a
+causa dessas três continua **desconhecida e declarada como tal**.
+
+### 6.4 O que muda na prática
+
+O arquivo é **rastreado** (confirmado em `HEAD`). Uma sumida futura aparece como
+` D` no `git status`, a detecção é barata e a restauração por
+`git checkout --` é sem perda. Isso valida o procedimento já usado nas três
+vezes — e retira urgência da causa, sem retirar a pergunta.
+
+---
+
 **Assinatura:** `Claude Opus 5 [Tier 1.B]`
 **Propósito:** estreitar o gatilho de recertificação sem afrouxar cobertura
 alguma, auditar o trabalho pendente de outra linhagem antes de publicá-lo sob a
