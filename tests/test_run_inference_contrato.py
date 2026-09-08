@@ -192,3 +192,58 @@ def test_run_chat_loop_hot_swap_troca_de_modelo():
         assert mock_print.called
 
 
+def test_chico_persona_contem_diretiva_de_formatacao_para_terminal():
+    """Garante que a persona Chico possui a diretiva 6 explicita para terminal puro sem LaTeX cru."""
+    persona = ri.CHICO_PERSONA.format(ollama_tag="gemma4:31b-cloud", theme="Poker")
+    assert "FORMATACAO PARA TERMINAL CLI" in persona
+    assert "LaTeX" in persona
+    assert "EV, cEV, ICM-EV" in persona
+
+
+def test_clean_terminal_output_saneia_latex_e_preserva_legibilidade():
+    """Valida a conversao de expressoes LaTeX matematicas em texto puro legivel para console."""
+    raw_sample = (
+        r"O valor esperado ($\text{EV}$) através de $\text{+cEV}$ e $\text{-ICMev}$. "
+        r"Nash $\text{cEV} \rightarrow$ Nash $\text{ICMev}$. "
+        r"$$\text{cEV} = \sum (\text{Probabilidade}_{\text{resultado}} \times \text{Valor}_{\text{fichas}})$$ "
+        r"```python" + "\n" + r"var = '$code\text{keep}$'" + "\n" + r"```"
+    )
+    cleaned = ri.clean_terminal_output(raw_sample)
+
+    # LaTeX removido do texto normal
+    assert r"\text{EV}" not in cleaned
+    assert "(EV)" in cleaned
+    assert "+cEV" in cleaned
+    assert "-ICM-EV" in cleaned
+    assert "->" in cleaned
+    assert "Soma" in cleaned
+    assert "Probabilidade_resultado x Valor_fichas" in cleaned
+    assert "$$" not in cleaned
+
+    # Blocos de codigo cercados preservados
+    assert "```python\nvar = '$code\\text{keep}$'\n```" in cleaned
+
+
+def test_terminal_stream_filter_descarrega_tokens_sem_latex_cru():
+    """Valida que o buffer de streaming descarrega tokens limpos para o terminal em tempo real."""
+    import io
+
+    captured = io.StringIO()
+    filtro = ri.TerminalStreamFilter(out_stream=captured)
+
+    tokens = [
+        "A ", "meta ", "é ", "(", "$", r"\text", "{", "EV", "}", "$", "=0). ",
+        "Fluxo: ", "$", r"\text{A}", r"\rightarrow", r"\text{B}", "$", "."
+    ]
+    for t in tokens:
+        filtro.write(t)
+    filtro.close()
+
+    out = captured.getvalue()
+    assert r"\text" not in out
+    assert "$" not in out
+    assert "(EV=0)." in out
+    assert "A -> B." in out
+
+
+

@@ -139,12 +139,151 @@ CHICO_PERSONA = (
     "3. Rigor analitico e elegancia argumentativa como propriedade geometrica unica.\n"
     "4. Adapte a complexidade ao nivel do interlocutor (Raphael: AHSD, IQ 136).\n"
     "5. Identifique-se como Chico quando perguntado. Voce e o modelo open-source {ollama_tag}, "
-    "rodando localmente via Ollama no hardware de Raphael Vitoi.\n\n"
+    "rodando localmente via Ollama no hardware de Raphael Vitoi.\n"
+    "6. FORMATACAO PARA TERMINAL CLI (LEITURA CONVERSACIONAL LIMPA):\n"
+    "   - A interface do usuario e um terminal / console de texto puro (sem renderizador grafico LaTeX/KaTeX).\n"
+    "   - E PROIBIDO emitir codigo LaTeX cru ou caracteres quebrados (como `$...$`, `$$...$$`, `\\text(...)`, `\\sum`, `\\rightarrow`, `\\frac`, `\\times`, etc.).\n"
+    "   - Escreva formulas e expressoes matematicas em texto conversacional limpo, ASCII legivel ou notacao direta (ex: EV, cEV, ICM-EV, +cEV, -ICM-EV, Pot Odds, Soma(...), setas '->' ou '→', 'x' para multiplicacao, etc.).\n"
+    "   - Garanta leitura fluida, elegante e perfeitamente legivel na janela do console sem nenhum marcador de codigo matematico quebrado.\n\n"
     "TEMA DA CONVERSA: {theme}\n"
     "Mantenha foco absoluto neste tema. Respostas cirurgicas."
 )
 
 PROXY_URL = "http://127.0.0.1:17043/generate"
+
+
+# ==============================================================================
+# [SOTA] FILTRO DE LIMPEZA VISUAL & SANEAMENTO CONVERSACIONAL PARA TERMINAL CLI
+# ==============================================================================
+
+
+def clean_terminal_output(text: str) -> str:
+    """Sanitiza sintaxe LaTeX e notacoes matematicas para leitura limpa e fluida no terminal CLI."""
+    if not text:
+        return ""
+
+    parts = re.split(r"(```[\s\S]*?```)", text)
+    cleaned_parts: list[str] = []
+
+    for i, part in enumerate(parts):
+        if i % 2 == 1:
+            cleaned_parts.append(part)
+            continue
+
+        t = part
+        # 1. Flechas e direcionadores LaTeX
+        t = re.sub(r"\\xrightarrow\[(.*?)\]\{(.*?)\}", r" -[ \1 | \2 ]-> ", t)
+        t = re.sub(r"\\xrightarrow\{(.*?)\}", r" -[ \1 ]-> ", t)
+        t = re.sub(r"\s*\\(rightarrow|to)\s*", " -> ", t)
+        t = re.sub(r"\s*\\leftarrow\s*", " <- ", t)
+        t = re.sub(r"\s*\\Rightarrow\s*", " => ", t)
+        t = re.sub(r"\s*\\Leftarrow\s*", " <= ", t)
+        t = re.sub(r"\s*\\leftrightarrow\s*", " <-> ", t)
+
+        # 2. Operadores matematicos
+        t = re.sub(r"\\sum\b", "Soma", t)
+        t = re.sub(r"\\prod\b", "Produto", t)
+        t = re.sub(r"\\times\b", "x", t)
+        t = re.sub(r"\\cdot\b", "*", t)
+        t = re.sub(r"\\div\b", "/", t)
+        t = re.sub(r"\\(le|leq)\b", "<=", t)
+        t = re.sub(r"\\(ge|geq)\b", ">=", t)
+        t = re.sub(r"\\neq\b", "!=", t)
+        t = re.sub(r"\\approx\b", "~=", t)
+        t = re.sub(r"\\pm\b", "+/-", t)
+        t = re.sub(r"\\infty\b", "infinito", t)
+
+        # 3. Fracoes
+        for _ in range(3):
+            t = re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}", r"(\1 / \2)", t)
+
+        # 4. Tags de texto LaTeX (\text{...}, \mathrm{...}, etc.)
+        for _ in range(5):
+            t = re.sub(r"\\(text|mathrm|mathbf|textbf|textit)\{([^{}]*)\}", r"\2", t)
+
+        # 5. Subscripts e superscripts em chaves
+        t = re.sub(r"_\{([^{}]+)\}", r"_\1", t)
+        t = re.sub(r"\^\{([^{}]+)\}", r"^\1", t)
+
+        # 6. Delimitadores de equacao display ($$...$$ e \[...\])
+        t = re.sub(r"\$\$([\s\S]*?)\$\$", lambda m: m.group(1).strip(), t)
+        t = re.sub(r"\\\[([\s\S]*?)\\\]", lambda m: m.group(1).strip(), t)
+
+        # 7. Delimitadores inline ($...$ e \(...\))
+        t = re.sub(r"\$([^$\n]+)\$", r"\1", t)
+        t = re.sub(r"\\\((.*?)\\\)", r"\1", t)
+
+        # 8. Limpeza de escapes residuais
+        t = t.replace(r"\{", "{").replace(r"\}", "}")
+
+        # 9. Padronizacao semantica de termos poker/teoria dos jogos
+        t = re.sub(r"\bICMev\b", "ICM-EV", t)
+
+        cleaned_parts.append(t)
+
+    return "".join(cleaned_parts)
+
+
+class TerminalStreamFilter:
+    """Filtro de streaming para terminal: bufferiza tokens quando detecta sintaxe LaTeX e descarrega limpo."""
+
+    def __init__(self, out_stream: Any = None) -> None:
+        self.buffer = ""
+        self.out_stream = out_stream or sys.stdout
+
+    def write(self, chunk: str) -> None:
+        if not chunk:
+            return
+
+        if self.buffer:
+            self.buffer += chunk
+            self._check_flush()
+            return
+
+        if "$" in chunk or "\\" in chunk:
+            idx_dollar = chunk.find("$") if "$" in chunk else len(chunk)
+            idx_bslash = chunk.find("\\") if "\\" in chunk else len(chunk)
+            first_idx = min(idx_dollar, idx_bslash)
+
+            if first_idx > 0:
+                self.out_stream.write(chunk[:first_idx])
+                self.out_stream.flush()
+
+            self.buffer = chunk[first_idx:]
+            self._check_flush()
+        else:
+            self.out_stream.write(chunk)
+            self.out_stream.flush()
+
+    def _check_flush(self) -> None:
+        if self.buffer.startswith("$$") and len(self.buffer) > 4 and "$$" in self.buffer[2:]:
+            self._flush_buffer()
+            return
+        if (
+            self.buffer.startswith("$")
+            and not self.buffer.startswith("$$")
+            and len(self.buffer) > 2
+            and "$" in self.buffer[1:]
+        ):
+            self._flush_buffer()
+            return
+        if self.buffer.startswith("\\") and any(
+            c in self.buffer for c in (" ", "\n", "\t", ",", ".", ";", ":", ")")
+        ):
+            self._flush_buffer()
+            return
+        if "\n" in self.buffer or len(self.buffer) > 160:
+            self._flush_buffer()
+
+    def _flush_buffer(self) -> None:
+        if self.buffer:
+            cleaned = clean_terminal_output(self.buffer)
+            self.out_stream.write(cleaned)
+            self.out_stream.flush()
+            self.buffer = ""
+
+    def close(self) -> None:
+        self._flush_buffer()
 
 
 # ==============================================================================
@@ -193,6 +332,7 @@ def query_ollama_direct(
     )
 
     response_text = ""
+    stream_filter = TerminalStreamFilter()
     try:
         with urllib.request.urlopen(req, timeout=180) as response:
             for line in response:
@@ -202,14 +342,15 @@ def query_ollama_direct(
                     chunk = json.loads(line.decode("utf-8", errors="ignore"))
                     content = chunk.get("message", {}).get("content", "")
                     if content:
-                        print(content, end="", flush=True)
+                        stream_filter.write(content)
                         response_text += content
                 except json.JSONDecodeError:
                     continue
+            stream_filter.close()
             print()
     except Exception as e:
         console.print(f"\n[bold red][ERRO] Falha na comunicacao com Ollama ({resolved_tag}): {e}[/]")
-    return response_text.strip()
+    return clean_terminal_output(response_text).strip()
 
 
 def query_gemma_proxy(
@@ -235,18 +376,20 @@ def query_gemma_proxy(
     req = urllib.request.Request(PROXY_URL, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
 
     response_text = ""
+    stream_filter = TerminalStreamFilter()
     try:
         with urllib.request.urlopen(req, timeout=120) as response:
             for chunk in response:
                 text = chunk.decode("utf-8", errors="ignore")
                 if text:
-                    print(text, end="", flush=True)
+                    stream_filter.write(text)
                     response_text += text
+            stream_filter.close()
             print()
     except Exception as e:
         console.print(f"\n[bold red][ERRO] Proxy offline (porta 17043): {e}[/]")
         console.print(f"[yellow]Execute: `uv run nexus ops start-gemma --model {model_key}`[/]")
-    return response_text.strip()
+    return clean_terminal_output(response_text).strip()
 
 
 # ==============================================================================
