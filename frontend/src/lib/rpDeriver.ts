@@ -32,7 +32,7 @@
  * @format
  */
 
-import { calculateMapaICM, calculatePerspectivaVitoi, type PerspectivaInput, type ReferencePointStatus } from './perspectiva';
+import { buildSimulatedStacks, calculateMapaICM, calculatePerspectivaVitoi, type PerspectivaInput, type ReferencePointStatus } from './perspectiva';
 
 const RP_MIN = 0;
 const RP_MAX = 60;
@@ -263,12 +263,20 @@ export function derivePostFlopRps(
 	const baseline = calculateMapaICM(stacks, prizes);
 	const potSize = potTotal - heroCost;
 
-	const stacksWin = [...stacks];
-	stacksWin[heroIdx] = Math.max(0, (stacks[heroIdx] || 0) - heroCost + potSize);
-
-	const stacksLose = [...stacks];
-	stacksLose[heroIdx] = Math.max(0, (stacks[heroIdx] || 0) - heroCost);
-	stacksLose[villainIdx] = (stacks[villainIdx] || 0) + potSize + heroCost;
+	// B03: ate 2026-09-08 estas seis linhas eram uma COPIA MANUAL do
+	// _buildSimulatedStacks defeituoso de perspectiva.ts, e sobreviveram a correcao
+	// daquele arquivo -- a fonte unica nao era unica. Medido antes de trocar: o RP
+	// daqui saturava em RP_MAX (60) em 3 de 4 cenarios e o teto de 24 disparava nos
+	// 4, ou seja, era alarme permanentemente ligado, que nao discrimina nada.
+	// Agora chama a funcao unica, cujo contrato de massa esta em massaDeFichas.test.ts.
+	const { stacksWin, stacksLose } = buildSimulatedStacks(
+		stacks,
+		heroIdx,
+		villainIdx,
+		potSize,
+		heroCost,
+		potAcumuladoHero,
+	);
 
 	const stacksIpWin = heroIsIp ? stacksWin : stacksLose;
 	const stacksOopWin = heroIsIp ? stacksLose : stacksWin;

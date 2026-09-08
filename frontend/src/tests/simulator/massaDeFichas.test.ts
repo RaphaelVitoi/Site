@@ -56,3 +56,37 @@ describe('B03 — conservacao de massa entre os ramos terminais', () => {
     }
   });
 });
+
+/**
+ * B03 — GUARD DO SEGUNDO SÍTIO
+ *
+ * `derivePostFlopRps` carregava uma COPIA MANUAL da mesma construcao defeituosa,
+ * e sobreviveu a correcao de `perspectiva.ts`: a fonte unica nao era unica.
+ *
+ * O regime mais traicoeiro era `heroCost === potSize` (aposta de pote, pot odds
+ * 0.5): `stack - cost + pot` colapsa em `stack`, o ramo de vitoria virava
+ * IDENTICO ao baseline, o ganho ICM dava zero e o RP era forcado a 0 -- o teto
+ * de risco ficava MUDO no spot mais comum do jogo.
+ *
+ * Estes testes fixam o contrato, nunca um valor de RP: valor se desloca quando o
+ * modelo muda, o colapso do ramo de vitoria nao pode voltar.
+ */
+describe('B03 — o ramo de vitoria nao colapsa no baseline', () => {
+  it('aposta de pote (heroCost === potSize) produz ganho ICM estritamente positivo', () => {
+    const stacks = [40, 30, 20, 10];
+    // potSize = potAcumuladoHero = 10 ; heroCost = potTotal - potAcumuladoHero = 10
+    const { stacksWin } = buildSimulatedStacks(stacks, 0, 1, 10, 10, 0);
+
+    // Sob a construcao antiga isto valia exatamente stacks[0], e o RP colapsava a 0.
+    expect(stacksWin[0]).toBeGreaterThan(stacks[0]);
+    expect(stacksWin[0]).toBeCloseTo(stacks[0] + 10, 6);
+  });
+
+  it('o hero vencedor sempre ganha exatamente o pote, para qualquer pot odds', () => {
+    const stacks = [40, 30, 20, 10];
+    for (const [pot, custo] of [[20, 5], [10, 10], [5, 20], [1, 19], [30, 30]]) {
+      const { stacksWin } = buildSimulatedStacks(stacks, 0, 1, pot, custo, 0);
+      expect(stacksWin[0] - stacks[0]).toBeCloseTo(pot, 6);
+    }
+  });
+});

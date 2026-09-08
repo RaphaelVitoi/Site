@@ -308,6 +308,69 @@ abrir a próxima sessão.
 
 ---
 
+## 6. Emenda de 2026-09-08 — a pendência acima foi medida e fechada
+
+Por determinação do Tier 0, medi o `RP_CEILING_THRESHOLD`. **A hipótese do §5
+estava errada nas duas direções, e a medição achou um defeito maior.**
+
+### 6.1 O threshold não muda. O alimentador é que estava quebrado
+
+`deriveRps` **nunca** passou por `buildSimulatedStacks`: ele monta os
+contrafactuais em soma zero (`+effStack` num jogador, `−effStack` no outro), e a
+massa já se conservava ali. Medido nos quatro cenários, o RP fica entre `1.31` e
+`23.01` — o teto de `24` **nunca dispara**, e encosta sem tocar no caso mais
+apertado. Ele está bem calibrado para este caminho.
+
+### 6.2 A fonte única não era única
+
+[rpDeriver.ts:266](../frontend/src/lib/rpDeriver.ts#L266) carregava uma **cópia
+manual** da mesma construção defeituosa, e **sobreviveu** à correção de
+`perspectiva.ts`. É [[correcao-orfa-nao-alcanca-a-fonte-unica]] na forma inversa:
+não foi a correção que ficou órfã — foi a *fonte* que não era única.
+
+### 6.3 O defeito tinha três regimes, não um
+
+Isto é o que a medição de §2 não tinha alcançado, porque olhou só um regime:
+
+| pot odds | ramo `win` sob a construção antiga | RP |
+| :--- | :--- | ---: |
+| `custo > pote` | o hero **perdia** stack ao vencer | satura em `RP_MAX` = 60 |
+| `custo = pote` | `stack − cost + pot` **colapsa em `stack`** — ramo idêntico ao baseline | **0** |
+| `custo < pote` | ganho subestimado | inflado |
+
+**O regime do meio é o mais grave, e é o mais comum do jogo.** Numa aposta de
+pote — pot odds exatamente `0.5` — o ramo de vitória virava idêntico ao baseline,
+o ganho ICM dava zero, `bf` caía para 1 e o RP era forçado a **zero**. O teto de
+risco ficava **mudo** justo onde deveria falar. Medido: os dois cenários de pot
+odds `0.50` davam `ANTES = 0.0`.
+
+Então a frase do §2 — *"o erro tem sinal fixo: sempre exagera o prêmio de risco"*
+— vale para o `perspectiva.ts`, mas **não** para este segundo sítio, onde o erro
+ora saturava, ora silenciava. A frase original fica como escrita; a correção está
+aqui.
+
+### 6.4 Depois da correção, o teto discrimina
+
+Antes: `60.0` ou `0.0`, saturado ou mudo. Depois: valores intermediários, com o
+teto disparando em 3 de 5 cenários realistas. **Passou a ser um alarme, e não um
+LED aceso.**
+
+`RP_CEILING_THRESHOLD` permanece `24`. Guard em `massaDeFichas.test.ts` fixa que o
+ramo de vitória não pode voltar a colapsar no baseline, para qualquer pot odds.
+
+### 6.5 O que esta emenda mediu e NÃO corrigiu
+
+`oopRp` é **estruturalmente 0** neste caminho, antes e depois. É consistente com a
+semântica de pote destacado — o vilão já perdeu aquele dinheiro ao colocá-lo no
+pote, logo não perde stack quando o hero vence, e o `loss` dele é zero por
+construção. Mas torna `deltaRp = ipRp − 0` degenerado, e o comentário do próprio
+código admite que *"o core é single-hero"* enquanto tenta um delta IP↔OOP.
+
+**Não corrigi**: é mudança de modelagem, não aritmética, e está fora do que foi
+determinado. Fica medido e declarado.
+
+---
+
 **Assinatura:** `Claude Opus 5 [Tier 1.B]`
 **Propósito:** corrigir a modelagem que criava fichas nos ramos terminais e
 contaminava todo Bubble Factor a jusante, restaurar o teorema D5 a testar o que
