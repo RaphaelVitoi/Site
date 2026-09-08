@@ -547,3 +547,56 @@ def test_a_cli_declarada_na_13c_existe(flag):
     """A secao 13.C declara `nexus index --rebuild` e `--suspeitos`."""
     fonte = (RAIZ / "scripts" / "cli" / "nexus.py").read_text(encoding="utf-8")
     assert f'"{flag}"' in fonte, f"a flag {flag} declarada na 13.C nao existe no comando"
+
+
+def test_extensao_longa_nao_e_truncada_pela_alternancia(tmp_path, monkeypatch):
+    """Defeito medido em 2026-09-08, e ele e de ORDEM, nao de lista incompleta.
+
+    `RE_CAMINHO_CITADO` alterna extensoes, e regex alternation casa a PRIMEIRA
+    que servir -- nao a mais longa. Com `json` antes de `jsonl`, a citacao
+    `[.../feedback-ledger.jsonl]` era capturada como `.../feedback-ledger.json`,
+    e o portao acusava referencia morta a um arquivo que ninguem citou. O mesmo
+    valia para `ts` antes de `tsx` e `js` antes de `jsx`.
+
+    O arquivo existe no disco em todos os casos: o unico jeito de reprovar e o
+    detector ter inventado um caminho que o documento nao contem.
+    """
+    (tmp_path / "reports").mkdir()
+    (tmp_path / "dados").mkdir()
+    for nome in ("ledger.jsonl", "comp.tsx", "velho.jsx"):
+        (tmp_path / "dados" / nome).write_text("x", encoding="utf-8")
+
+    # A sintaxe inline de lista YAML e o gatilho: o `[` abre a captura do regex.
+    (tmp_path / "reports" / "R.md").write_text(
+        "caminhos: [dados/ledger.jsonl]\n"
+        "Veja tambem `dados/comp.tsx` e (dados/velho.jsx).\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+
+    achadas = record_gate.referencias_mortas("reports/R.md")
+    assert achadas == [], (
+        "o detector truncou extensao longa e inventou caminho morto: "
+        f"{achadas} -- ordene a alternancia da mais longa para a mais curta"
+    )
+
+
+def test_alternancia_de_extensoes_esta_ordenada_por_comprimento():
+    """Guard estrutural: impede a regressao de voltar por uma extensao NOVA.
+
+    O teste acima cobre os tres casos conhecidos. Este cobre os que ainda nao
+    existem -- quem acrescentar `yamlx` depois de `yaml` reprova aqui, e nao numa
+    sessao futura que perde uma hora atras de um caminho morto inexistente.
+    """
+    import re as _re
+
+    bloco = _re.search(r"\(\?:([a-z0-9|]+)\)", record_gate.RE_CAMINHO_CITADO.pattern)
+    assert bloco, "a forma do regex mudou; reavaliar este guard"
+    exts = bloco.group(1).split("|")
+
+    for i, curta in enumerate(exts):
+        for longa in exts[i + 1 :]:
+            assert not longa.startswith(curta), (
+                f"`{curta}` vem antes de `{longa}` e a alternancia casa a primeira que serve: "
+                f"toda citacao de .{longa} sera truncada em .{curta}"
+            )

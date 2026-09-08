@@ -54,8 +54,16 @@ from scripts.ops.record_index import (  # noqa: E402
 CAMPOS_OBRIGATORIOS = ("id", "tipo", "escopo", "autor", "criado_em", "verificado", "nao_verificado")
 
 # Caminho citado em crase, link markdown ou parenteses.
+# A alternancia vai da extensao MAIS LONGA para a mais curta, e isso nao e
+# estetica: regex alternation casa a PRIMEIRA que serve, nunca a maior. Medido
+# em 2026-09-08 -- com `json` antes de `jsonl`, a citacao
+# `[.../feedback-ledger.jsonl]` era capturada como `.../feedback-ledger.json`, e
+# o portao acusava referencia morta a um arquivo que ninguem citou. O mesmo
+# defeito estava latente em `ts` antes de `tsx` e `js` antes de `jsx`.
+# tests/test_record_index.py guarda a ordem, inclusive contra extensao NOVA
+# acrescentada no lugar errado.
 RE_CAMINHO_CITADO = re.compile(
-    r"[`\(\[]([A-Za-z0-9_][A-Za-z0-9_./\\-]*\.(?:py|ps1|psm1|json|md|ts|tsx|js|jsx|toml|yml|yaml|cmd|sh))"
+    r"[`\(\[]([A-Za-z0-9_][A-Za-z0-9_./\\-]*\.(?:psm1|jsonl|json|yaml|toml|tsx|jsx|ps1|yml|cmd|py|md|ts|js|sh))"
 )
 EXTENSOES_DE_CODIGO = re.compile(r"\.(py|ps1|psm1|js|jsx|ts|tsx|go|rs|rb|java|cs|sh)$")
 
