@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-contraste"
 criado_em: 2026-09-08T20:30:00-03:00
-atualizado_em: 2026-09-08T20:30:00-03:00
+atualizado_em: 2026-09-08T21:05:00-03:00
 classes: [interno, medido, auditoria, correcao, portao]
 caminhos:
   - api/v1/handlers.py
@@ -192,9 +192,19 @@ nao_verificado:
     2026-09-07 (restaurado) e agora --, e nenhuma delas foi commitada: algo apaga
     o arquivo fora do git. Restaurei; a causa segue aberta.
   - >-
-    HOUVE ATIVIDADE CONCORRENTE NA ARVORE DURANTE ESTA SESSAO. A delecao acima
-    ocorreu entre 15:15 (meu commit anterior) e 16:05, e nao fui eu. Nao
-    identifiquei o processo responsavel.
+    CAUSA DA AUSENCIA: DESCONHECIDA. Esta linha AFIRMAVA "houve atividade
+    concorrente na arvore", e a afirmacao foi RETIRADA por evidencia primaria do
+    Tier 0, que declarou que a atividade na arvore era a dele -- lint e aiohttp,
+    exatamente o que foi auditado -- e que ninguem apagou o arquivo. Eu havia
+    convertido inferencia em fato, e tratado o horario da PERCEPCAO (16:05, mtime
+    do diretorio) como horario do EVENTO, que e a distincao que a secao 8.2 exige
+    e eu nao fiz. Ver a secao 5 deste registro.
+  - >-
+    DUAS HIPOTESES DE MECANISMO TESTADAS E AMBAS SEM LASTRO: (a) hook ou script
+    que limpe .claude/ -- nenhum existe, e os quatro settings.json tem `hooks`
+    vazio; (b) ferramenta que gerencie o diretorio -- nao demonstravel, e
+    .claude/RELATORIOS/ contem exatamente UM arquivo versionado. A causa segue
+    aberta, e e a mesma que 2026-09-03 registrou como `cause unknown`.
   - >-
     NAO TOQUEI frontend/src/tests/simulator/__d5probe.test.ts, sonda exploratoria
     de outra linhagem com sete console.log. Ela segue untracked e portanto FORA
@@ -296,10 +306,55 @@ com `git checkout --`; o teste voltou a passar.
 **Nenhuma das três deleções foi commitada** — 03/09 (*"cause unknown"*), 07/09 e
 agora. Algo apaga o arquivo **fora do git**. Restaurei; a causa segue aberta.
 
-### 4.2 Houve atividade concorrente na árvore
+### 4.2 A causa é desconhecida — ver a emenda da §5
 
-A deleção ocorreu entre **15:15** (meu commit anterior) e **16:05**, e não fui
-eu. Não identifiquei o processo. Fica declarado.
+Esta seção afirmava atividade concorrente na árvore. **A afirmação foi retirada**
+por evidência primária do Tier 0: a atividade era a dele, e ninguém apagou o
+arquivo. A causa segue **desconhecida**, como em `2026-09-03`.
+
+---
+
+## 5. Emenda — eu afirmei atividade concorrente, e não tinha como
+
+**Acrescentada no mesmo dia, após evidência primária do Tier 0.**
+
+A §4.2 acima afirmava que *"houve atividade concorrente na árvore"*. **Isso foi
+retirado.** O Tier 0 declarou que a atividade era a dele — correção de lints e o
+trabalho de `aiohttp`, precisamente o que esta auditoria examinou — e que
+**ninguém apagou o arquivo**.
+
+### 5.1 O erro foi meu, e é de método
+
+Dois defeitos, e o segundo é nomeado na própria §8.2:
+
+**Converti inferência em fato.** O que eu tinha medido era *"o arquivo sumiu e
+não fui eu"*. O que escrevi foi *"houve atividade concorrente"* — que é uma
+explicação, não uma observação.
+
+**Tratei o horário da percepção como horário do evento.** Usei o `mtime` do
+diretório (`16:05`) para datar a deleção. A §8.2 exige distinguir *horário do
+evento*, *da percepção*, *da captura* e *do diagnóstico*, e adverte que **uma
+captura tardia jamais pode ser tratada como instante de início sem confirmação
+explícita**. Eu não tinha essa confirmação.
+
+### 5.2 O que permanece medido
+
+O arquivo **estava ausente do disco** e `test_todo_documento_declarado_resolve`
+reprovava; restaurei do índice e o teste voltou a passar. Isso não muda.
+
+O que muda é a **causa**, que passa de "atividade concorrente" para
+**desconhecida** — e é a mesma que `2026-09-03` já havia registrado como
+*`cause unknown`*. Terceira ocorrência, causa nunca determinada.
+
+### 5.3 Duas hipóteses de mecanismo, ambas testadas e sem lastro
+
+| Hipótese | Teste | Resultado |
+| :--- | :--- | :--- |
+| hook ou script limpando `.claude/` | `grep` em `scripts/`, `.husky/`, settings | **nenhum existe**; os quatro `settings.json` têm `hooks` vazio |
+| ferramenta gerenciando o diretório | inspeção do conteúdo | não demonstrável — há **um** arquivo versionado ali |
+
+Não afirmo nenhuma das duas. A causa fica **aberta e declarada como tal**, que é
+o registro correto quando o mecanismo não foi encontrado.
 
 ---
 
