@@ -2,7 +2,7 @@
 Web Handlers -- Endpoints HTTP do micro-servidor SOTA.
 """
 
-# pylint: disable=broad-exception-caught
+# pylint: disable=broad-exception-caught, too-many-lines
 from __future__ import annotations
 
 import asyncio

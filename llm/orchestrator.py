@@ -26,7 +26,7 @@ from llm.routing import (
     _inject_openrouter_alternatives,
     _reorder_models_for_economy,
 )
-from llm.session import get_global_http_session
+from llm.session import get_global_http_session, make_client_timeout
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ async def _try_compress_gemini(
         task=dummy_task,
         manager=manager,
         max_retries=1,  # Compressao deve ser rapida
-        timeout=aiohttp.ClientTimeout(total=60.0, connect=10.0, sock_read=50.0),
+        timeout=make_client_timeout(total=60.0, connect=10.0, sock_read=50.0),
     )
 
     if result and result not in ["SKIP_KEY", "ROUTE_BLOCKED"]:
@@ -132,7 +132,7 @@ async def _try_compress_openrouter(
         task=dummy_task,
         manager=manager,
         max_retries=1,
-        timeout=aiohttp.ClientTimeout(total=60.0, connect=15.0, sock_read=45.0),
+        timeout=make_client_timeout(total=60.0, connect=15.0, sock_read=45.0),
     )
 
     if result and result not in ["SKIP_KEY", "ROUTE_BLOCKED"]:
@@ -250,7 +250,7 @@ async def call_llm_api(
 
     timeout_seconds = te._agent_sla_value(task.agent, "llm_timeout_seconds", 600)
     provider_retries = te._agent_sla_value(task.agent, "provider_retries", 2)
-    request_timeout = aiohttp.ClientTimeout(total=timeout_seconds)
+    request_timeout = make_client_timeout(total=timeout_seconds)
 
     session = await get_global_http_session()
 

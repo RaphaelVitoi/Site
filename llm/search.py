@@ -9,6 +9,7 @@ import os
 
 import aiohttp
 
+from llm.session import make_client_timeout
 from utils.text import enforce_pure_ascii
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ async def call_perplexity_search(
                 url,
                 json=payload,
                 headers=headers,
-                timeout=aiohttp.ClientTimeout(total=45, connect=10, sock_read=35),
+                timeout=make_client_timeout(total=45, connect=10, sock_read=35),
             ) as response:
                 response.raise_for_status()
                 result = await response.json()
@@ -89,7 +90,7 @@ async def call_tavily_search(
             async with session.post(
                 url,
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=30, connect=10, sock_read=20),
+                timeout=make_client_timeout(total=30, connect=10, sock_read=20),
             ) as response:
                 response.raise_for_status()
                 result = await response.json()

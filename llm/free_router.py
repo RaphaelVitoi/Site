@@ -94,7 +94,15 @@ class AtomicQuotaBucket:
                 self._token_allocations[-1] = (last_t, max(0, last_c + diff))
 
     async def release_reservation(self, estimated_tokens: int) -> None:
-        """Estorna a alocação em caso de erro pré-rede ou descarte."""
+        """Estorna a alocação em caso de erro pré-rede ou descarte.
+
+        O estorno é LIFO: `try_acquire` sempre acrescenta exatamente uma entrada,
+        e o `pop()` abaixo remove essa entrada, que já carrega o valor reservado.
+        Por isso `estimated_tokens` não é lido — ele existe por simetria com
+        `try_acquire` e `reconcile`, e recalcular a partir dele duplicaria o
+        estorno.
+        """
+        _ = estimated_tokens
         async with self._lock:
             if self._requests:
                 self._requests.pop()
@@ -227,7 +235,7 @@ class SOTAUnifiedFreeRouter:
                 system_instruction,
                 est_tokens,
                 max_output,
-                thinking_level="low",
+                thinking_level=types.ThinkingLevel.LOW,
             )
             if res:
                 return await self._store_cache(ckey, res)
@@ -262,7 +270,7 @@ class SOTAUnifiedFreeRouter:
         system_instruction: str | None,
         est_tokens: int,
         max_output: int,
-        thinking_level: str | None = None,
+        thinking_level: types.ThinkingLevel | None = None,
     ) -> dict[str, str] | None:
         bucket = self.quotas.get(model_name)
         if not bucket or not await bucket.try_acquire(est_tokens):
