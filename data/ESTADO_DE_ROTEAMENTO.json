@@ -120,7 +120,7 @@
     "agentes_em_AGENT_MODEL_MAP": 19,
     "agentes_em_que_o_caminho_quente_SEGUE_a_politica": 19,
     "agentes_em_que_DIVERGEM": 0,
-    "modelos_distintos_no_caminho_quente": 5,
+    "modelos_distintos_no_caminho_quente": 6,
     "faixa_por_agente": {
       "local": 1,
       "gratuita": 11,
@@ -132,10 +132,30 @@
       "erro era comparar PRECO UNITARIO entre faixas -- exatamente o que a",
       "docstring da politica proibe: 'preco unitario so desempata DENTRO da mesma",
       "faixa'. Medido por faixa: 12 dos 19 agentes ficam em custo marginal zero",
-      "(11 na cota gratuita do gemini-3.7-flash, 1 na frota local), e a superficie",
+      "(11 na cota gratuita da linha Gemini, 1 na frota local), e a superficie",
       "paga sao 7 agentes, nas classes em que o operador declarou que capacidade",
       "de fronteira e necessaria: governanca, estrategia, construcao e raciocinio",
       "profundo."
+    ],
+    "revisao_2026_09_07": [
+      "As FAIXAS nao mudaram -- 11 gratuita, 7 paga, 1 local, 12 a custo marginal",
+      "zero, medidos de novo por execucao. O que mudou foi a CONTAGEM DE MODELOS",
+      "DISTINTOS no caminho quente, de 5 para 6, e a direcao importa: o detector",
+      "guarda contra COLAPSO, e a promocao andou no sentido oposto.",
+      "Ate aqui o gemini-3.8-flash cobria sozinho VERIFICACAO e OPERACIONAL. Ele",
+      "saiu das duas por ADEQUACAO A FAIXA: na cota livre tem teto de 50 RPD e",
+      "gasta 4k-16k thinking tokens por chamada. Entraram gemini-3.6-flash na",
+      "VERIFICACAO (1.500 RPD, sintese e auditoria) e gemini-3.5-flash-lite na",
+      "OPERACIONAL (2.000 RPD, triagem e parsing sub-300 ms).",
+      "O 3.8 NAO foi retirado de nada: segue no MODEL_REGISTRY, verificado, e",
+      "continua fallback de architect e implementor. A recusa e de faixa, nunca",
+      "de capacidade -- os tres eixos da SS3 continuam separados.",
+      "MEDICAO QUE SUSTENTA A PROMOCAO, e que ninguem tinha feito: as duas camadas",
+      "em serie discordavam. llm/routing._score_standard_preference ja pontuava",
+      "gemini-3.5 em -4 e gemini-3.6 em -2, enquanto o gemini-3.8-flash cai no",
+      "generico 'flash' e pontua 3 -- pior que os tres. A heuristica de economia",
+      "ja preferia o duo; a tabela de ROTAS e que mandava o 3.8. A promocao",
+      "alinhou as duas camadas em vez de criar uma divergencia nova."
     ]
   },
   "superficie_subagentes": {

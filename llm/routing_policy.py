@@ -203,31 +203,47 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         modelos_citados=("claude-sonnet-5", "gemini-3.8-flash", "claude-opus-5"),
     ),
     ClasseTarefa.VERIFICACAO: Rota(
-        primario="gemini-3.8-flash",
+        primario="gemini-3.6-flash",
         fallback="gpt-5.6-terra",
         faixa=Faixa.GRATUITA,
         escalona_para="claude-opus-5",
         justificativa=(
-            "Revisao de primeira passagem em faixa gratuita. Escalona so quando o revisor barato sinaliza incerteza."
+            "Revisao de primeira passagem em faixa gratuita. Escalona so quando "
+            "o revisor barato sinaliza incerteza. O PRIMARIO deixou de ser o "
+            "gemini-3.8-flash em 2026-09-07: na faixa GRATUITA ele tem teto de "
+            "50 RPD e gasta 4k-16k thinking tokens por chamada, o que esgota a "
+            "cota em menos de uma hora de trabalho agentico. O 3.6 Flash cobre "
+            "a mesma classe com 1.500 RPD e 1.000.000 TPM por chave. A recusa e "
+            "de ADEQUACAO A FAIXA, nao de capacidade: o 3.8 segue no registro, "
+            "verificado, e continua primario onde a faixa e paga."
         ),
-        ancorado_em="2026-08-27",
-        modelos_citados=("gemini-3.8-flash", "gpt-5.6-terra", "claude-opus-5"),
+        ancorado_em="2026-09-07",
+        modelos_citados=("gemini-3.6-flash", "gpt-5.6-terra", "claude-opus-5"),
     ),
     ClasseTarefa.OPERACIONAL: Rota(
-        primario="gemini-3.8-flash",
+        primario="gemini-3.5-flash-lite",
         fallback="gpt-5.6-luna",
         faixa=Faixa.GRATUITA,
         justificativa=(
-            "Faixa gratuita ANTES de preco unitario. A Luna e mais barata por "
-            "token ($0.20/$1.20) mas nao tem cota livre; o Flash tem. "
-            "COTA LIVRE VENCE PRECO UNITARIO MENOR QUANDO A QUALIDADE NAO "
-            "DISCRIMINA -- e uma regra de desempate DENTRO do custo, aplicavel "
-            "so depois que a analise de custo-beneficio concluiu que a "
-            "qualidade nao e o fator decisivo nesta classe. A Luna fica como "
-            "fallback pago."
+            "Faixa gratuita ANTES de preco unitario -- e aqui os dois eixos "
+            "passaram a apontar junto. O PRIMARIO saiu de gemini-3.8-flash para "
+            "gemini-3.5-flash-lite em 2026-09-07 por adequacao a faixa (o 3.8 "
+            "tem teto de 50 RPD na cota livre e gasta 4k-16k thinking tokens), "
+            "e por adequacao a classe: OPERACIONAL e despacho, organizacao e "
+            "registro -- triagem e parsing, que o Lite entrega em menos de "
+            "300 ms com 2.000 RPD por chave. Gastar raciocinio profundo em "
+            "despacho queima cota sem comprar qualidade.\n\n"
+            "ATENCAO AO QUE ESTA ROTA DEIXOU DE PROVAR. Ate 2026-09-07 ela era o "
+            "exemplo canonico de COTA LIVRE VENCE PRECO UNITARIO MENOR: a Luna "
+            "custava $0.20/$1.20 contra $0.75/$3.75 do 3.8 Flash, e a faixa "
+            "desempatava contra o preco. Com o Lite a $0.15/$0.60 o primario "
+            "passou a ganhar NOS DOIS EIXOS, e a tensao sumiu daqui. A regra de "
+            "desempate segue valendo como governanca -- ela e anterior a esta "
+            "rota e nao depende dela --, mas esta rota nao a exemplifica mais. "
+            "A Luna continua fallback pago."
         ),
-        ancorado_em="2026-08-27",
-        modelos_citados=("gemini-3.8-flash", "gpt-5.6-luna"),
+        ancorado_em="2026-09-07",
+        modelos_citados=("gemini-3.5-flash-lite", "gpt-5.6-luna"),
     ),
     ClasseTarefa.RACIOCINIO_PROFUNDO: Rota(
         primario="gpt-5.6-sol",

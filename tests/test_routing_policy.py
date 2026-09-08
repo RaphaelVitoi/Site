@@ -97,16 +97,31 @@ def test_todo_modelo_roteado_existe_em_algum_registro():
 
 def test_operacional_usa_faixa_gratuita_e_nao_o_menor_preco():
     """Regressao guardada: uma versao anterior roteava operacional para
-    gpt-5.6-luna por ter o menor $/token, ignorando que gemini-3.7-flash tem
-    cota gratuita. Custo marginal zero vence barato."""
+    gpt-5.6-luna por ter o menor $/token, ignorando que a linha Gemini tem cota
+    gratuita. Custo marginal zero vence barato.
+
+    A REGRESSAO PROTEGIDA CONTINUA A MESMA -- a Luna nao volta a ser primaria --,
+    mas o ARGUMENTO mudou em 2026-09-07. Com o gemini-3.8-flash primario, esta
+    rota era o exemplo canonico da tensao: a Luna custava menos por token e ainda
+    assim perdia para a faixa. Promovido o gemini-3.5-flash-lite ($0.15/$0.60), o
+    primario passou a ganhar nos DOIS eixos e a tensao sumiu daqui.
+
+    Por isso o teste deixou de fixar a desigualdade de preco -- que hoje e falsa
+    -- e passou a cobrar as duas coisas que de fato importam: a rota fica na
+    faixa gratuita, e a Luna fica no fallback. A regra de desempate em si vive na
+    governanca, nao neste exemplo."""
     rota = ROTAS[ClasseTarefa.OPERACIONAL]
     assert rota.faixa is Faixa.GRATUITA
-    assert rota.primario == "gemini-3.8-flash"
-    luna = MODEL_REGISTRY["gpt-5.6-luna"]
-    flash = MODEL_REGISTRY["gemini-3.8-flash"]
-    assert luna.price_per_1m_in < flash.price_per_1m_in  # a Luna E mais barata...
-    assert rota.primario != "gpt-5.6-luna"  # ...e ainda assim nao e primaria
+    assert rota.primario == "gemini-3.5-flash-lite"
+    assert rota.primario != "gpt-5.6-luna"
     assert rota.fallback == "gpt-5.6-luna"  # fica como fallback pago
+
+    luna = MODEL_REGISTRY["gpt-5.6-luna"]
+    lite = MODEL_REGISTRY["gemini-3.5-flash-lite"]
+    # O estado NOVO, declarado para que a proxima promocao saiba o que mudou:
+    # o primario nao depende mais do desempate por faixa para se sustentar.
+    assert lite.price_per_1m_in < luna.price_per_1m_in
+    assert lite.price_per_1m_out < luna.price_per_1m_out
 
 
 def test_ordem_de_consumo_respeita_a_economia_generalizada():
@@ -126,12 +141,12 @@ def test_ordem_de_consumo_respeita_a_economia_generalizada():
         ("maverick", "gpt-5.6-sol", "claude-opus-5"),
         ("architect", "claude-sonnet-5", "gemini-3.8-flash"),
         ("implementor", "claude-sonnet-5", "gemini-3.8-flash"),
-        ("auditor", "gemini-3.8-flash", "gpt-5.6-terra"),
-        ("verifier", "gemini-3.8-flash", "gpt-5.6-terra"),
-        ("securitychief", "gemini-3.8-flash", "gpt-5.6-terra"),
-        ("dispatcher", "gemini-3.8-flash", "gpt-5.6-luna"),
-        ("organizador", "gemini-3.8-flash", "gpt-5.6-luna"),
-        ("historian", "gemini-3.8-flash", "gpt-5.6-luna"),
+        ("auditor", "gemini-3.6-flash", "gpt-5.6-terra"),
+        ("verifier", "gemini-3.6-flash", "gpt-5.6-terra"),
+        ("securitychief", "gemini-3.6-flash", "gpt-5.6-terra"),
+        ("dispatcher", "gemini-3.5-flash-lite", "gpt-5.6-luna"),
+        ("organizador", "gemini-3.5-flash-lite", "gpt-5.6-luna"),
+        ("historian", "gemini-3.5-flash-lite", "gpt-5.6-luna"),
     ],
 )
 def test_tabela_do_operador(agente, primario, fallback):
@@ -349,7 +364,7 @@ def test_core_config_expoe_modelo_concreto_por_agente():
     assert len(mapa) == 19, f"esperado 19 agentes resolvidos, veio {len(mapa)}"
     assert len(set(mapa.values())) >= 3, f"roteamento colapsou: {set(mapa.values())}"
     assert mapa["@chico"] == "claude-opus-5"
-    assert mapa["@dispatcher"] == "gemini-3.8-flash"
+    assert mapa["@dispatcher"] == "gemini-3.5-flash-lite"
     assert mapa["@gemma4"] == "gemma4:12b"
 
 
