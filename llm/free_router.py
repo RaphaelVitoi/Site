@@ -199,17 +199,13 @@ class SOTAUnifiedFreeRouter:
 
         # NÍVEL 1: Tarefas Simples (Score 1-2) -> Gemini 3.5 Flash-Lite
         if complexity_score <= 2:
-            res = await self._call_model(
-                "gemini-3.5-flash-lite", prompt, system_instruction, est_tokens, max_output
-            )
+            res = await self._call_model("gemini-3.5-flash-lite", prompt, system_instruction, est_tokens, max_output)
             if res:
                 return await self._store_cache(ckey, res)
 
         # NÍVEL 2: Raciocínio Padrão (Score 3-4) -> Gemini 3.6 Flash
         if complexity_score in (3, 4):
-            res = await self._call_model(
-                "gemini-3.6-flash", prompt, system_instruction, est_tokens, max_output
-            )
+            res = await self._call_model("gemini-3.6-flash", prompt, system_instruction, est_tokens, max_output)
             if res:
                 return await self._store_cache(ckey, res)
             # Degradação graciosa para 3.5 Flash-Lite
@@ -232,9 +228,7 @@ class SOTAUnifiedFreeRouter:
             if res:
                 return await self._store_cache(ckey, res)
             # Fallback 1: Gemini 3.6 Flash
-            res_36 = await self._call_model(
-                "gemini-3.6-flash", prompt, system_instruction, est_tokens, max_output
-            )
+            res_36 = await self._call_model("gemini-3.6-flash", prompt, system_instruction, est_tokens, max_output)
             if res_36:
                 return await self._store_cache(ckey, res_36)
             # Fallback 2: Gemini 3.5 Flash-Lite

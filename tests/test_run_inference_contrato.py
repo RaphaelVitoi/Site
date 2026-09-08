@@ -190,5 +190,3 @@ def test_run_chat_loop_hot_swap_troca_de_modelo():
     ):
         ri._run_chat_loop("gemma4:12b", "Persona SOTA open-source gemma4:12b,", conversa, max_tokens=2048)
         assert mock_print.called
-
-

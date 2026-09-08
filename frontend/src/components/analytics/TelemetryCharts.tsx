@@ -192,16 +192,33 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 	}, [enrichedData, posFilter, stackFilter]);
 
 	// Contagens dinâmicas por categoria de filtro
+	// Optimization: Replaced multiple array filter passes with a single loop
+	// to avoid O(N) array allocations and improve processing time for large datasets.
 	const filterCounts = useMemo(() => {
-		const byPos = (p: string) => enrichedData.filter((d) => d.position === p);
+		let shallow = 0;
+		let mid = 0;
+		let deep = 0;
+		let ip = 0;
+		let oop = 0;
+
+		for (const d of enrichedData) {
+			const stack = d.stackDepthBb ?? 20;
+			if (stack < 15) shallow++;
+			else if (stack <= 35) mid++;
+			else deep++;
+
+			if (d.position === 'IP') ip++;
+			else if (d.position === 'OOP') oop++;
+		}
+
 		return {
 			ALL_STACK: enrichedData.length,
-			SHALLOW: enrichedData.filter((d) => (d.stackDepthBb ?? 20) < 15).length,
-			MID: enrichedData.filter((d) => (d.stackDepthBb ?? 20) >= 15 && (d.stackDepthBb ?? 20) <= 35).length,
-			DEEP: enrichedData.filter((d) => (d.stackDepthBb ?? 20) > 35).length,
+			SHALLOW: shallow,
+			MID: mid,
+			DEEP: deep,
 			ALL_POS: enrichedData.length,
-			IP: byPos('IP').length,
-			OOP: byPos('OOP').length,
+			IP: ip,
+			OOP: oop,
 		};
 	}, [enrichedData]);
 
@@ -266,15 +283,26 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 		];
 
 		const quadrants: QuadrantMetric[] = configs.map((cfg) => {
-			const subset = enrichedData.filter((d) => {
-				if (d.position !== cfg.position) return false;
-				const st = d.stackDepthBb ?? 20;
-				if (cfg.stackRange === 'SHALLOW') return st < 15;
-				if (cfg.stackRange === 'MID') return st >= 15 && st <= 35;
-				return st > 35;
-			});
+			// Optimization: Reduced CPU usage and GC pressure by executing
+			// filtering and reductions in a single pass instead of chaining .filter and .reduce.
+			let count = 0;
+			let correctCount = 0;
+			let totalLoss = 0;
 
-			const count = subset.length;
+			for (const d of enrichedData) {
+				if (d.position !== cfg.position) continue;
+				const st = d.stackDepthBb ?? 20;
+				if (cfg.stackRange === 'SHALLOW' && st >= 15) continue;
+				if (cfg.stackRange === 'MID' && (st < 15 || st > 35)) continue;
+				if (cfg.stackRange === 'DEEP' && st <= 35) continue;
+
+				count++;
+				if (d.isCorrect || (d.evLoss || 0) === 0) {
+					correctCount++;
+				}
+				totalLoss += Math.max(0, d.evLoss || 0);
+			}
+
 			if (count === 0) {
 				return {
 					...cfg,
@@ -285,9 +313,6 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 					severity: 'OPTIMAL',
 				};
 			}
-
-			const correctCount = subset.filter((d) => d.isCorrect || (d.evLoss || 0) === 0).length;
-			const totalLoss = subset.reduce((acc, d) => acc + Math.max(0, d.evLoss || 0), 0);
 			const accuracy = Number(((correctCount / count) * 100).toFixed(1));
 			const meanLoss = Number((totalLoss / count).toFixed(2));
 
