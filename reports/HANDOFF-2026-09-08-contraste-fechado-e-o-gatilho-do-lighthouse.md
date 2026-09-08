@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-contraste"
 criado_em: 2026-09-08T19:20:00-03:00
-atualizado_em: 2026-09-08T19:20:00-03:00
+atualizado_em: 2026-09-08T21:30:00-03:00
 classes: [interno, medido, handoff, pmev, icm, portao]
 caminhos:
   - frontend/src/tests/simulator/contrasteIcmevChipev.test.ts
@@ -103,8 +103,10 @@ verificado:
     a nota "nao equivale a TBT laboratorial".
 nao_verificado:
   - >-
-    NAO ALTEREI o fingerprint nem qualquer arquivo de scripts/ops nesta sessao.
-    A analise esta entregue; a decisao e do Tier 0.
+    SUPERADO PELA SECAO 4: esta linha dizia "NAO ALTEREI o fingerprint... a
+    decisao e do Tier 0". A decisao veio na mesma sessao, autorizando, e o
+    recorte foi implementado por TDD em 4a9867a4. O estado corrente esta em
+    registro-2026-09-08-auditoria-de-tipagem-e-recorte-do-fingerprint.
   - >-
     HA TRABALHO DE OUTRA LINHAGEM NAO COMMITADO NA ARVORE, e eu NAO o auditei
     nem o toquei: sete arquivos modificados por `Gemini 3.8 Flash` em
@@ -268,11 +270,13 @@ linhagens e não é meu para alterar.
 > e 7**, que corrigem o diagnóstico causal e fecham a divergência pelo princípio
 > do organismo de mesa. Nada ali se reaudita.
 >
-> **Primeiro item, se o Tier 0 autorizar:** estreitar o fingerprint do Lighthouse
-> em `scripts/ops/lighthouse_cwv_audit.mjs` para excluir o que não entra no
-> bundle. A medição está na §2 deste handoff — 811 arquivos, 255.68 MB, 4.3% de
-> teste — e a análise já foi entregue. **Não implemente sem a autorização
-> explícita**: é o instrumento que mede o agente, e a §10.3 vale.
+> **O recorte do fingerprint JÁ FOI FEITO — não refaça.** O Tier 0 autorizou
+> ainda nesta sessão, e `4a9867a4` o implementou por TDD: `__tests__`,
+> `__fixtures__`, `__mocks__` e `*.test.*` / `*.spec.*` saíram do fingerprint,
+> 36 de 812 arquivos. O casamento é por **sufixo** e há teste adversarial
+> (`testemunho.tsx`, `contest.ts`) fixando que substring seria falso negativo
+> silencioso. A §2 deste handoff virou registro histórico da decisão; o estado
+> atual está em `registro-2026-09-08-auditoria-de-tipagem-e-recorte-do-fingerprint`.
 >
 > **O que continua aberto e é do Tier 0:** a escolha entre as duas grandezas de
 > RP, e se o defeito de modelagem do `signDelta` deve ser corrigido — sete pares
@@ -306,6 +310,36 @@ linhagens e não é meu para alterar.
 > Nunca altere o `git config` do repositório para isso — é estado compartilhado
 > entre linhagens. O corpo declara Assinatura e Propósito; o campo de autor é o
 > que o GitHub lê.
+
+---
+
+## 4. O que aconteceu DEPOIS deste handoff
+
+Ele foi escrito antes de duas autorizações do Tier 0, e ambas foram executadas na
+mesma sessão. **A §2 vale como registro da decisão, não como pendência.**
+
+| commit | autoria | o que fez |
+| :--- | :--- | :--- |
+| `25e065b0` | **Gemini 3.8 Flash** | tipagem de timeouts e lint, auditada por Claude Opus 5 |
+| `4a9867a4` | Claude Opus 5 | o recorte do fingerprint, por TDD |
+| `47c51136` | Claude Opus 5 | retirada de uma afirmação causal indevida |
+
+**Três correções sobre mim mesmo, todas declaradas:**
+
+1. **Autoria** — `cf8f148e` e `5189cb59` saíram como `Gemini 3.8 Flash` porque o
+   `git config` do repositório carrega a identidade de quem operou por último e
+   eu não verifiquei (§2.5). Corrigido daqui em diante: identidade nomeada na
+   chamada.
+2. **Atribuição causal** — afirmei "atividade concorrente na árvore" quando o que
+   eu tinha medido era "o arquivo sumiu e não fui eu". O Tier 0 esclareceu que a
+   atividade era a dele. Retirado em `47c51136`.
+3. **Datação** — usei o `mtime` do diretório como hora do evento, quando era hora
+   da percepção. É a distinção que a §8.2 exige.
+
+**Segue aberta, e é a única do gênero:** a causa de
+`.claude/RELATORIOS/INVENTARIO_FERRAMENTAS.md` desaparecer do disco. Terceira
+ocorrência (03/09, 07/09, 08/09), nenhuma commitada, duas hipóteses de mecanismo
+testadas e sem lastro. Restaurado; causa desconhecida.
 
 ---
 
