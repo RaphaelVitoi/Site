@@ -3146,7 +3146,12 @@ def test_routing(
         import task_executor
 
         agent, meta = task_executor.intelligent_route_task(description)
-        console.print(json.dumps({"agent": agent, "metadata": meta}, indent=2))
+        # JSON sai por `print`, nunca por `console.print`: o Rich aplica word-wrap
+        # na largura do terminal e interpreta `[...]` como markup, e as duas coisas
+        # corrompem o payload. Medido em 2026-09-07, quando um `model_used` mais
+        # longo passou da largura e partiu a string ao meio -- JSONDecodeError num
+        # consumidor que so pedia `--json`.
+        print(json.dumps({"agent": agent, "metadata": meta}, indent=2))
     except Exception as e:
         # Roteamento quebrado nao pode sair 0. O atalho [6] do dashboard existe
         # justamente para descobrir que a malha semantica parou de funcionar.
@@ -3199,7 +3204,7 @@ def agent_calibration_forecast(
         results = forecast_multimodel_calibration(series_by_model, horizon_sessions=horizon)
         if json_output:
             out_dict = {m: r.model_dump() for m, r in results.items()}
-            console.print(json.dumps(out_dict, indent=2))
+            print(json.dumps(out_dict, indent=2))  # cf. nota em agent-metadata: JSON nao passa pelo Rich
             return
 
         table = Table(
@@ -3245,7 +3250,7 @@ def agent_calibration_forecast(
 
     res = forecast_agent_calibration_trajectory(scores, horizon_sessions=horizon, conductor_model=conductor)
     if json_output:
-        console.print(res.model_dump_json(indent=2))
+        print(res.model_dump_json(indent=2))  # cf. nota em agent-metadata: JSON nao passa pelo Rich
         return
 
     table = Table(

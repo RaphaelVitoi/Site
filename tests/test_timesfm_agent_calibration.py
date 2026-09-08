@@ -39,7 +39,15 @@ def test_forecast_agent_calibration_trajectory_active() -> None:
     assert forecast.conductor_model == "gemini-3.8-flash"
     assert forecast.drift_direction == "EXPANSAO"
     assert forecast.drift_per_session > 0.0
-    assert forecast.model_used == "google/timesfm-2.0-500m-pytorch"
+    # PROCEDENCIA, nao intencao. Sem pesos carregados o numero vem de
+    # `last_val + trend*step`, e `model_used` tem de dizer isso -- o id do Google
+    # e a INTENCAO, e vive em `intended_model`. Ate 2026-09-07 este campo devolvia
+    # o id do Google incondicionalmente (finding B04 da auditoria do Astra), e a
+    # SS8.3 do CLAUDE.md consumia esse rotulo na evidencia de calibracao.
+    assert forecast.weights_loaded is False
+    assert forecast.intended_model == "google/timesfm-2.0-500m-pytorch"
+    assert forecast.model_used.startswith("analytic-linear-extrapolation")
+    assert forecast.model_used != forecast.intended_model
 
     for q10, mean, q90 in zip(forecast.quantile_10, forecast.mean_trajectory, forecast.quantile_90, strict=True):
         assert q10 <= mean <= q90
@@ -159,4 +167,9 @@ def test_new_agent_calibration_daily_evidence_includes_timesfm() -> None:
     assert "timesfm_forecast" in payload
     assert payload["timesfm_forecast"] is not None
     assert payload["timesfm_forecast"]["status"] == "PROJECTION_ACTIVE"
-    assert payload["timesfm_forecast"]["model_used"] == "google/timesfm-2.0-500m-pytorch"
+    forecast = payload["timesfm_forecast"]
+    assert forecast["intended_model"] == "google/timesfm-2.0-500m-pytorch"
+    assert forecast["weights_loaded"] is False
+    # A evidencia de calibracao NAO pode atribuir a projecao ao modelo do Google
+    # enquanto nenhum peso for carregado: e ela que alimenta a hipotese da SS8.3.
+    assert forecast["model_used"].startswith("analytic-linear-extrapolation")

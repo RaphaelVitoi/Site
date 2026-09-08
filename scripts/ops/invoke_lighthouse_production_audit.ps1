@@ -127,7 +127,20 @@ finally {
     if (Test-Path -LiteralPath $auditProfile) {
         $resolvedProfile = [IO.Path]::GetFullPath($auditProfile)
         if ($resolvedProfile.StartsWith($TempRoot, [StringComparison]::OrdinalIgnoreCase) -and (Split-Path -Leaf $resolvedProfile) -like 'sota-lighthouse-audit-*') {
-            Remove-Item -LiteralPath $auditProfile -Recurse -Force
+            # A limpeza do perfil temporario NAO decide o veredito da auditoria.
+            # O Chrome ainda esta encerrando quando este bloco roda e mantem lock
+            # em arquivos de cache; com ErrorActionPreference='Stop' isso derrubava
+            # o exit code de uma auditoria bem-sucedida. Medido em 2026-09-07: o
+            # artefato foi gravado e o fingerprint bateu, e mesmo assim o script
+            # saiu 1 -- quem automatizasse leria como falha e descartaria um
+            # certificado valido. O residuo fica em %TEMP% e e nomeado; deixa-lo
+            # la custa menos do que mentir sobre o resultado da auditoria.
+            try {
+                Remove-Item -LiteralPath $auditProfile -Recurse -Force -ErrorAction Stop
+            }
+            catch {
+                Write-Warning "[Lighthouse] Perfil temporario nao removido (lock do Chrome em encerramento): $resolvedProfile. A auditoria em si nao foi afetada."
+            }
         }
     }
 }
