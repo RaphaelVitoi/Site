@@ -70,10 +70,35 @@ def test_actionlint_enumera_por_git_ls_files(workflow_texto: str):
 def test_lista_vazia_nao_aprova_em_silencio(workflow_texto: str):
     """Sem workflow enumerado, actionlint sairia 0 sem ter medido nada."""
     trecho = _passo_actionlint(workflow_texto)
-    assert 'test -n "$WORKFLOWS"' in trecho, (
+    assert 'test "${#WORKFLOWS[@]}" -gt 0' in trecho, (
         "a guarda contra lista vazia sumiu. Se git ls-files nao devolver nada, "
         "o actionlint recebe zero argumentos e aprova sem medir -- falso verde, "
         "que e pior que a reprovacao honesta."
+    )
+
+
+def test_enumeracao_usa_array_e_nao_string(workflow_texto: str):
+    """MEDIDO EM 2026-09-09: a primeira versao usava `$WORKFLOWS` sem aspas.
+
+    O actionlint roda shellcheck dentro dos blocos `run:` e acusou
+    `SC2086: Double quote to prevent globbing and word splitting`, derrubando o
+    job. E aspas NAO resolvem: `"$WORKFLOWS"` viraria um unico argumento
+    contendo quebras de linha, e o actionlint receberia um nome de arquivo
+    inexistente.
+
+    A forma correta e array, alimentado por `git ls-files -z` com `mapfile -d ''`
+    -- que separa por NUL e portanto sobrevive a espaco em nome de arquivo.
+
+    Nao peguei isso localmente porque validei o COMANDO solto em vez do
+    WORKFLOW. Validar o comando nao e validar o passo.
+    """
+    trecho = _passo_actionlint(workflow_texto)
+    assert "${WORKFLOWS[@]}" in trecho, (
+        "a expansao em array sumiu. Com $WORKFLOWS sem aspas o shellcheck acusa "
+        "SC2086 e o job cai; com aspas simples vira um argumento unico invalido."
+    )
+    assert "git ls-files -z" in trecho and "mapfile -d ''" in trecho, (
+        "a leitura separada por NUL sumiu. Sem ela, nome de arquivo com espaco quebraria a enumeracao em pedacos."
     )
 
 

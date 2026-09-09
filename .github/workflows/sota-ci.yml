@@ -207,11 +207,15 @@ jobs:
       # reprovaria noutra.
       - name: 🔍 Actionlint GitHub Workflows Static Analysis
         run: |
-          WORKFLOWS=$(git ls-files '.github/workflows/*.yml' '.github/workflows/*.yaml')
-          test -n "$WORKFLOWS"   # lista vazia aprovaria sem medir nada
-          echo "Workflows versionados por este repositorio:"
-          echo "$WORKFLOWS"
-          uv run --with actionlint-py actionlint $WORKFLOWS
+          # Array, e nao string: com $WORKFLOWS sem aspas o shellcheck acusa
+          # SC2086 (globbing e word splitting), e COM aspas o conjunto viraria um
+          # unico argumento contendo quebras de linha. mapfile -d '' consome a
+          # saida -z do git, que separa por NUL e portanto sobrevive a espaco em
+          # nome de arquivo.
+          mapfile -d '' -t WORKFLOWS < <(git ls-files -z '.github/workflows/*.yml' '.github/workflows/*.yaml')
+          test "${#WORKFLOWS[@]}" -gt 0   # lista vazia aprovaria sem medir nada
+          printf 'Workflow versionado: %s\n' "${WORKFLOWS[@]}"
+          uv run --with actionlint-py actionlint "${WORKFLOWS[@]}"
 
       - name: 🔒 SOTA Security & CWV Quality Gate Check
         run: |
