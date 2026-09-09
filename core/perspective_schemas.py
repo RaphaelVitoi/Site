@@ -58,14 +58,32 @@ class PerspectiveTreeRequest(BaseModel):
     hero_invested: float = Field(0.0, ge=0.0)
     ev_fold_dynamic: float | None = Field(None, description="EV fold pre-calculado ou derivado")
     position: str = Field("BTN")
-    realization_factor: float = Field(1.0)
-    valuation_stack: float = Field(1.0)
-    edge_base: float = Field(0.05)
-    aggression_factor: float = Field(1.5)
-    base_rio: float = Field(0.0)
-    loss_aversion_base: float = Field(2.25)
+
+    # FINDING B05 (Astra, 2026-09-07, P1): "API de arvore aceita entrada
+    # impossivel". A validacao daquele dia fechou PARCIALMENTE -- fold_equity
+    # ganhou limite -- e registrou que valuation_stack=-1 continuava aceito
+    # aqui enquanto era rejeitado em PerspectiveCalculationRequest.
+    #
+    # MEDIDO EM 2026-09-09 ao fechar: o defeito era MAIOR que o finding. SEIS
+    # campos existem nos dois schemas e tinham limite so no pontual. Os limites
+    # abaixo sao DERIVADOS do schema irmao, um a um -- nenhum foi arbitrado
+    # aqui, e tests/test_perspective_tree_limites.py contraprova cada um
+    # verificando que o pontual de fato rejeita o mesmo valor.
+    realization_factor: float = Field(1.0, ge=0.1, le=2.5)
+    valuation_stack: float = Field(1.0, ge=0.01)
+    edge_base: float = Field(0.05, ge=0.0)
+    aggression_factor: float = Field(1.5, ge=0.0)
+    base_rio: float = Field(0.0, ge=0.0)
+    loss_aversion_base: float = Field(2.25, ge=1.0)
+
+    # SEM PAR NO SCHEMA PONTUAL, e por isso SEM LIMITE -- decisao consciente,
+    # nao esquecimento. Nao ha de onde derivar um teto ou piso para estes dois,
+    # e arbitra-los aqui seria fabricar contrato em vez de propagar o existente.
+    # Se o dominio definir limites, que venham de medicao; o guard falha junto,
+    # de proposito.
     fgs_health: float = Field(1.0)
     rp_opp: float = Field(20.0)
+
     fold_equity: float = Field(0.30, ge=0.0, le=1.0)
 
 
