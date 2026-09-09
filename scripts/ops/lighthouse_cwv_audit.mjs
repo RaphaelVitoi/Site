@@ -62,6 +62,31 @@ const TEST_ONLY_DIRECTORIES = new Set(['__tests__', '__fixtures__', '__mocks__']
  */
 const TEST_ONLY_FILE = /\.(test|spec)\.[cm]?[jt]sx?$/;
 
+/**
+ * Tool-generated declaration files. They feed `tsc`, never the bundle.
+ *
+ * `next-env.d.ts` is written by Next itself and its content records WHICH
+ * COMMAND RAN LAST: `next build` writes `import "./.next/types/..."`, while
+ * `next dev` writes `import "./.next/dev/types/..."`. Nothing in it survives to
+ * runtime — a `.d.ts` declares types, and types are erased at compile time.
+ *
+ * Measured 2026-09-09: the production audit ran at 11:56 with a valid
+ * fingerprint; the dev server came up minutes later, rewrote this single file,
+ * and the certificate expired with LIGHTHOUSE_FINGERPRINT_MISMATCH. The bundle
+ * was byte-identical. Every `npm run dev` after an audit invalidated it, which
+ * made the TBT warning permanent for a file that provably cannot move TBT.
+ *
+ * The same alternation was measured across six consecutive commits that touch
+ * the file, flipping between the two forms with no decision behind any of them.
+ *
+ * This exclusion follows the rule stated above for tests, and its limit too:
+ * excluding an input that DOES feed the bundle would be worse than the extra
+ * recertification, because the certificate would then silently outlive a real
+ * change. That is why this is a single named file and not a `*.d.ts` pattern —
+ * a hand-written declaration file could carry a type that changes emitted code.
+ */
+const TOOL_GENERATED_FILES = new Set(['next-env.d.ts']);
+
 async function listProductionInputs(root, directory = root) {
   const entries = await readdir(directory, { withFileTypes: true });
   const sortedEntries = entries.toSorted((left, right) => left.name.localeCompare(right.name));
@@ -72,7 +97,7 @@ async function listProductionInputs(root, directory = root) {
       if (!NON_PRODUCTION_INPUT_DIRECTORIES.has(entry.name) && !TEST_ONLY_DIRECTORIES.has(entry.name)) {
         files.push(...(await listProductionInputs(root, candidate)));
       }
-    } else if (entry.isFile() && !TEST_ONLY_FILE.test(entry.name)) {
+    } else if (entry.isFile() && !TEST_ONLY_FILE.test(entry.name) && !TOOL_GENERATED_FILES.has(entry.name)) {
       files.push(candidate);
     }
   }
