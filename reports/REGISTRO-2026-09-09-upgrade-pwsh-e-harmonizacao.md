@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-aberturas"
 criado_em: 2026-09-09T05:00:00-03:00
-atualizado_em: 2026-09-09T05:00:00-03:00
+atualizado_em: 2026-09-09T07:40:00-03:00
 classes: [interno, medido, ambiente, powershell]
 caminhos:
   - reports/PLANO-FRENTES-ABERTAS-2026-09-08.md
@@ -58,12 +58,59 @@ verificado:
     no mesmo dia; a v7.6.5 instalada aqui e de 2026-08-14. O aviso do proprio
     PowerShell consulta o GitHub; o winget depende de um manifesto que ainda nao
     foi indexado.
+  - >-
+    CORRECAO DA CONCLUSAO ACIMA, medida na segunda tentativa: o manifesto EXISTIA
+    na origem. O que estava desatualizado era a COPIA LOCAL do indice. Depois de
+    `winget source update`, `winget show --id Microsoft.PowerShell --exact`
+    passou a reportar "Versao: 7.6.6.0". Dizer "o winget ainda nao indexou" foi
+    impreciso -- indice local velho e manifesto ausente na origem sao coisas
+    diferentes, e eu afirmei a segunda.
+  - >-
+    A DUPLICATA DE REGISTRO NAO E BENIGNA -- ELA BLOQUEIA O UPGRADE. Medido apos
+    o source update, `winget list --id Microsoft.PowerShell --exact` devolve
+    "PowerShell / 7.6.6.0" numa entrada e "PowerShell 7.6.5.0-x64 / 7.6.5.0" na
+    outra. A primeira reporta uma versao que o DISCO NAO TEM: pwsh.exe em
+    C:/Program Files/PowerShell/7 continua em 7.6.5, SHA
+    ea554a8f9c6085f54fb2828f7ea286c65c35599f, com LastWriteTime de 2026-08-11
+    23:21:18. Por isso `winget upgrade` responde "Nenhuma atualizacao
+    disponivel": ele compara o registro (7.6.6.0) com a origem (7.6.6.0) e
+    conclui que esta em dia.
+  - >-
+    TRES INSTALACOES REPORTARAM EXITO SEM SUBSTITUIR O BINARIO:
+    `winget install --version 7.6.6.0 --force` desta sessao, uma execucao
+    equivalente do proprio Tier 0 no terminal dele, e ambas com "Hash do
+    instalador verificado com exito" e "Instalado com exito". O disco permaneceu
+    em 7.6.5 nas tres.
+  - >-
+    NAO HA REINICIO PENDENTE: a chave PendingFileRenameOperations em
+    HKLM:SYSTEM/CurrentControlSet/Control/Session Manager NAO existe. O
+    instalador nao agendou a troca para o proximo boot -- ele saiu reportando
+    exito sem substituir nem agendar.
+  - >-
+    NOVE PROCESSOS pwsh.exe EM EXECUCAO seguram o binario, e a identificacao
+    deles muda a decisao: SETE tem o mesmo processo pai (6296) e sao terminais
+    integrados do Antigravity IDE, isto e, a sessao de trabalho do Tier 0; um era
+    o sentinela de delecoes desta sessao (encerrado por mim e religado depois); e
+    um era a propria ferramenta que executava a medicao.
+  - >-
+    MSI OFICIAL BAIXADO E VERIFICADO: PowerShell-7.6.6-win-x64.msi, 113 MB,
+    SHA-256 958838ff55091e1c8705d89efed0cc7e8245a3a6ef6c0ccfae20015227108ad8,
+    obtido da release v7.6.6 em github.com/PowerShell/PowerShell por HTTPS.
+  - >-
+    O CAMINHO QUE RESTAVA FOI RECUSADO PELO TIER 0: a instalacao por msiexec com
+    MSIRESTARTMANAGERCONTROL=Disable -- que faria o Windows Installer agendar a
+    substituicao para o proximo reinicio em vez de pular os arquivos em uso --
+    nao foi autorizada. Ela nao foi executada.
 nao_verificado:
   - >-
-    O UPGRADE NAO FOI EXECUTADO, logo os passos 5, 6, 7 e 8 da Tarefa 11 -- a
-    verificacao do caminho, a revalidacao do portao e da suite, a confirmacao do
-    5.1 e o rollback -- NAO foram executados. Eles seguem validos e esperam a
-    indexacao.
+    O UPGRADE NAO FOI CONCLUIDO. O passo 5 foi executado e devolveu 7.6.5 -- o
+    binario nao mudou. Os passos 6, 7 e 8 nao foram executados, porque
+    revalidar portao e suite contra uma versao que nao mudou nao mede nada.
+    Eles seguem validos e esperam a substituicao efetiva do binario.
+  - >-
+    Nao removi nenhuma das duas chaves de desinstalacao, e nao removeria sem
+    autorizacao: mexer no registro de instalacao e irreversivel sem backup, e a
+    chave que mente e justamente a que o winget usa para decidir upgrades.
   - >-
     Nao instalei o MSI do GitHub, e a recusa e deliberada: ver o corpo.
   - >-
@@ -72,7 +119,7 @@ nao_verificado:
 referencias_nao_resolviveis: []
 ---
 
-# Upgrade do PowerShell: os tres primeiros passos, e por que o quarto nao teve efeito
+# Upgrade do PowerShell: o instalador diz exito, e o disco nao muda
 
 ## O que foi feito
 
@@ -157,6 +204,101 @@ contra o que comparar.
 mecanismo, e um wrapper sem consumidor no fluxo de runtime e o que a secao 4 da
 raiz chama de entropia -- capacidade de fachada. Quando o manifesto for
 indexado, o comando do plano roda como esta.
+
+## EMENDA DE 2026-09-09, SEGUNDA TENTATIVA -- eu estava errado, e o achado e outro
+
+O Tier 0 mandou tentar de novo. A segunda tentativa **refutou a minha
+conclusao** e encontrou um defeito real no ambiente.
+
+### Primeiro erro meu: indice local nao e a origem
+
+Bastou `winget source update`:
+
+```
+Atualizando fonte: winget... Concluido
+winget show --id Microsoft.PowerShell --exact  ->  Versao: 7.6.6.0
+```
+
+O manifesto **existia**. O que estava velho era a **copia local do indice**.
+Escrevi "o winget depende de um manifesto que ainda nao foi indexado" -- afirmei
+ausencia na origem quando o que havia era indice local desatualizado. Sao coisas
+diferentes, e a primeira nao estava medida.
+
+### Segundo erro meu: a duplicata NAO era benigna
+
+Eu havia concluido, no passo 2, que as duas entradas eram "registro duplicado, e
+o upgrade normal resolve". Medido depois do `source update`:
+
+| fonte | versao |
+| :--- | :--- |
+| `winget list`, entrada 1 | **7.6.6.0** |
+| `winget list`, entrada 2 | 7.6.5.0 |
+| `pwsh.exe` no disco | **7.6.5** |
+| `LastWriteTime` do binario | 2026-08-11 23:21:18 -- intocado |
+
+A primeira entrada **reporta uma versao que o disco nao tem**. E e por isso que
+`winget upgrade` responde *"Nenhuma atualizacao disponivel"*: ele compara o
+registro (7.6.6.0) com a origem (7.6.6.0) e conclui, corretamente do ponto de
+vista dele, que esta em dia.
+
+**A duplicata nao e cosmetica: ela mente para o gerenciador e bloqueia o
+upgrade.** Meu parecer anterior de que nao havia nada a fazer ali estava errado.
+
+### O instalador diz exito e nao substitui nada
+
+Tres execucoes -- `winget install --version 7.6.6.0 --force` desta sessao, e uma
+equivalente do proprio Tier 0 no terminal dele -- reportaram:
+
+```
+Hash do instalador verificado com exito
+Iniciando a instalacao do pacote...
+Instalado com exito
+```
+
+E o disco permaneceu em **7.6.5**, mesmo SHA, mesmo `LastWriteTime`.
+
+Nao ha reinicio pendente: `PendingFileRenameOperations` **nao existe** no
+registro. O instalador nao substituiu **nem agendou** -- saiu declarando exito.
+
+### Por que: nove processos seguram o binario, e sete sao seus
+
+| processos `pwsh.exe` | o que sao |
+| ---: | :--- |
+| **7** (pai `6296`) | terminais integrados do **Antigravity IDE** -- a sua sessao |
+| 1 | o sentinela de delecoes que eu subi |
+| 1 | a propria ferramenta que executava a medicao |
+
+Encerrar os sete seria derrubar a sua sessao de trabalho. **Nao fiz, e nao
+faria** -- e o "quebrar algo" que a autorizacao excluia.
+
+### O que ficou pronto, e o que falta
+
+O MSI oficial esta baixado e verificado: `PowerShell-7.6.6-win-x64.msi`, 113 MB,
+SHA-256 `958838ff55091e1c8705d89efed0cc7e8245a3a6ef6c0ccfae20015227108ad8`, da
+release `v7.6.6` no GitHub por HTTPS.
+
+O caminho que restava -- `msiexec` com `MSIRESTARTMANAGERCONTROL=Disable`, que
+faria o Windows Installer **agendar** a troca para o proximo reinicio em vez de
+pular os arquivos em uso -- **foi recusado pelo Tier 0 e nao foi executado**.
+
+Restam tres caminhos, e todos passam por liberar o binario:
+
+1. **Fechar os terminais do Antigravity IDE** e reexecutar o instalador. E o
+   menos invasivo dos tres, e resolve sem reiniciar a maquina.
+2. **Reiniciar a maquina** e instalar antes de abrir o IDE.
+3. **Autorizar o agendamento por `MSIRESTARTMANAGERCONTROL=Disable`**, que troca
+   o binario no proximo boot sem fechar nada agora.
+
+O que **nao** funciona, e ja esta medido tres vezes, e reexecutar o instalador
+com os processos de pe: ele reporta exito e nao faz nada.
+
+### O que a linha de base garante
+
+Os passos 1 a 3 seguem valendos e nao precisam ser refeitos: portao com 0 erros
+e 1 warning, `LCP_MS` 329,61 ms, suite em 1036 passed, e a tarefa
+`NexusSOTA-AgentCalibrationDailyEvaluation` apontando para
+`C:\Program Files\PowerShell\pwsh.exe`. Quando a substituicao ocorrer, os
+passos 5 a 8 tem contra o que comparar.
 
 **Assinatura:** `Claude Opus 5 [Tier 1.B]`
 **Proposito:** executar e registrar os passos 1 a 4 da Tarefa 11, estabelecendo
