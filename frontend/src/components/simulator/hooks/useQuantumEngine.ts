@@ -39,6 +39,23 @@ export interface QuantumEngineParams {
 export type QuantumMetricsResult = InsolvencyMetrics;
 export type QuantumMetricsPayload = InsolvencyPayload;
 
+function toInsolvencyMetrics(matrix: number[]): InsolvencyMetrics | null {
+  if (matrix.length < 5) return null;
+
+  const [winRate, loseRate, tieRate, trueInsolvencyEv, riskIndex] = matrix;
+  if (
+    winRate === undefined ||
+    loseRate === undefined ||
+    tieRate === undefined ||
+    trueInsolvencyEv === undefined ||
+    riskIndex === undefined
+  ) {
+    return null;
+  }
+
+  return { winRate, loseRate, tieRate, trueInsolvencyEv, riskIndex };
+}
+
 export function useQuantumEngine({
   scenario,
   pkoValue = 0,
@@ -116,47 +133,41 @@ export function useQuantumEngine({
     insolvencyWorkerRef.current = worker;
 
     worker.onmessage = (e: MessageEvent<InsolvencyWorkerResponse>) => {
-      if (!e.data || !['MATRIX', 'DISTORTION', 'MULTIWAY_MATRIX'].includes(e.data.type)) return;
+      const response = e.data;
+      if (!['MATRIX', 'DISTORTION', 'MULTIWAY_MATRIX'].includes(response.type)) return;
       // Validação de versão: Ignora resultados de requisições antigas
-      if (e.data.id !== lastRequestIdRef.current[e.data.type]) return;
+      if (response.id !== lastRequestIdRef.current[response.type]) return;
 
-      if (e.data.error) {
-        console.warn('[SotaEcosystem] Entropia de Input (Insolvency WASM):', e.data.error);
-        if (e.data.type === 'MULTIWAY_MATRIX') setIsCalculatingMultiway(false);
-        if (e.data.type === 'MATRIX') setIsCalculatingInsolvency(false);
-      } else if (e.data.type === 'DISTORTION' && e.data.nashResults) {
-        setNashResults(e.data.nashResults);
-      } else if (e.data.type === 'MATRIX' && e.data.matrix) {
-        const m = e.data.matrix;
-        if (m && m.length >= 5) {
-          const [winRate, loseRate, tieRate, trueInsolvencyEv, riskIndex] = m;
-          if (
-            winRate === undefined ||
-            loseRate === undefined ||
-            tieRate === undefined ||
-            trueInsolvencyEv === undefined ||
-            riskIndex === undefined
-          ) {
-            setInsolvencyMatrixData(null);
+      if (response.error) {
+        console.warn('[SotaEcosystem] Entropia de Input (Insolvency WASM):', response.error);
+        switch (response.type) {
+          case 'MULTIWAY_MATRIX':
+            setIsCalculatingMultiway(false);
+            return;
+          case 'MATRIX':
             setIsCalculatingInsolvency(false);
             return;
-          }
-          setInsolvencyMatrixData({
-            winRate,
-            loseRate,
-            tieRate,
-            trueInsolvencyEv,
-            riskIndex,
-          });
-        } else {
-          setInsolvencyMatrixData(null);
+          default:
+            return;
         }
-        setIsCalculatingInsolvency(false);
-      } else if (e.data.type === 'MULTIWAY_MATRIX' && e.data.multiwayResult) {
-        // SOTA: Atualiza a referência de memória invisivelmente para o React.
-        // O Canvas consumirá isto em loop de hardware (requestAnimationFrame).
-        multiwayTensorRef.current = e.data.multiwayResult;
-        setIsCalculatingMultiway(false);
+      }
+
+      switch (response.type) {
+        case 'DISTORTION':
+          if (response.nashResults) setNashResults(response.nashResults);
+          return;
+        case 'MATRIX':
+          if (response.matrix) setInsolvencyMatrixData(toInsolvencyMetrics(response.matrix));
+          setIsCalculatingInsolvency(false);
+          return;
+        case 'MULTIWAY_MATRIX':
+          if (response.multiwayResult) {
+            // SOTA: Atualiza a referência de memória invisivelmente para o React.
+            // O Canvas consumirá isto em loop de hardware (requestAnimationFrame).
+            multiwayTensorRef.current = response.multiwayResult;
+            setIsCalculatingMultiway(false);
+          }
+          return;
       }
     };
 

@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-07-pmev"
 criado_em: 2026-09-07T22:15:00-03:00
-atualizado_em: 2026-09-07T22:15:00-03:00
+atualizado_em: 2026-09-09T11:30:00-03:00
 classes: [interno, medido, procedencia, calibracao, correcao]
 caminhos:
   - engine/timesfm_engine.py
@@ -174,6 +174,11 @@ verificado:
     BOM; preservei esse estado, que e valido nas duas versoes do PowerShell -- a
     SS6.4 existe para o caso nao-ASCII, e introduzir BOM aqui seria mudanca de
     encoding nao pedida.
+  - >-
+    Revisao de ancora em 2026-09-09: o import padrao math foi movido do escopo
+    local para o topo de engine/timesfm_engine.py para satisfazer C0415. O
+    fallback analitico, a procedencia, intended_model e weights_loaded permanecem
+    inalterados.
 nao_verificado:
   - >-
     Nenhum dos outros oito findings abertos do Astra foi tocado. B03, B05, B06,

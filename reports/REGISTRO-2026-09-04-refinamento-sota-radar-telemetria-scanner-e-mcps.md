@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: gemini-3.8-flash
 criado_em: 2026-09-04T19:15:00-03:00
-atualizado_em: 2026-09-04T19:15:00-03:00
+atualizado_em: 2026-09-09T11:30:00-03:00
 classes: [interno, medido, governanca, otimizacao]
 caminhos:
   - frontend/src/components/simulator/MasterSimulator.tsx
@@ -47,6 +47,10 @@ verificado:
   - >-
     Execucao e aprovacao integral das suites de teste (18/18 testes de bridge, 26/26 testes de
     agente e credenciais, 6/6 testes de governanca).
+  - >-
+    Revisao de ancora em 2026-09-09: engine/timesfm_engine.py recebeu somente a
+    relocacao do import padrao math para o topo do modulo; nenhuma formula,
+    resultado de inferencia ou integracao TimesFM deste registro foi alterada.
 nao_verificado:
   - >-
     Execucao sob navegadores headless sem aceleracao de hardware WebGL.

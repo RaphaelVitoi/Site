@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import logging
+import math
 from typing import Literal
 
 import numpy as np
@@ -373,8 +374,6 @@ def forecast_agent_calibration_trajectory(
         horizon=horizon_sessions,
         target_name=f"agent_scores_{conductor_model or 'aggregate'}",
     )
-
-    import math
 
     # O domínio da avaliação do Tier 0 é estritamente limitado no suporte [0.0, 10.0].
     # Nenhum cenário estocástico pode extrapolar a nota máxima (10.0) ou mínima (0.0).
