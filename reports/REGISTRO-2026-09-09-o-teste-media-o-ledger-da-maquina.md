@@ -8,6 +8,7 @@ criado_em: 2026-09-09T03:40:00-03:00
 atualizado_em: 2026-09-09T03:40:00-03:00
 classes: [interno, medido, testes, ci]
 caminhos:
+  - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
   - tests/test_timesfm_agent_calibration.py
 supersede: null
 config_medida:
@@ -67,6 +68,104 @@ nao_verificado:
     Nao verifiquei se outros testes da suite dependem do ledger canonico da
     mesma forma. A busca foi por esta falha especifica, nao uma varredura.
 revisoes_de_ancora:
+  - registro: auditoria-2026-09-03-trabalho-do-gemini-3-8-flash
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Este commit toca o gerador de evidencia em UM ponto: a resolucao do
+      interpretador Python, na linha que decidia se a projecao TimesFM roda, e
+      a separacao do status RUNTIME_UNAVAILABLE de INSUFFICIENT_HISTORY.
+      Medido: o script resolvia o Python so por .venv\Scripts\python.exe, e em
+      Linux caia no ramo `else` reportando falta de HISTORICO quando havia 7
+      pontos e o minimo e 4 -- a causa declarada era falsa. Nada da leitura do
+      ledger, do recorte por sessao, do portao de suficiencia, do tratamento
+      de cultura em datas ou das correcoes aplicadas foi tocado. O achado
+      deste registro segue valido e, se ele consome os campos do forecast,
+      passa a receber a causa correta em vez de uma falsa.
+  - registro: auditoria-2026-09-05-trabalho-assistido-do-gemini-no-ide
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Este commit toca o gerador de evidencia em UM ponto: a resolucao do
+      interpretador Python, na linha que decidia se a projecao TimesFM roda, e
+      a separacao do status RUNTIME_UNAVAILABLE de INSUFFICIENT_HISTORY.
+      Medido: o script resolvia o Python so por .venv\Scripts\python.exe, e em
+      Linux caia no ramo `else` reportando falta de HISTORICO quando havia 7
+      pontos e o minimo e 4 -- a causa declarada era falsa. Nada da leitura do
+      ledger, do recorte por sessao, do portao de suficiencia, do tratamento
+      de cultura em datas ou das correcoes aplicadas foi tocado. O achado
+      deste registro segue valido e, se ele consome os campos do forecast,
+      passa a receber a causa correta em vez de uma falsa.
+  - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Este commit toca o gerador de evidencia em UM ponto: a resolucao do
+      interpretador Python, na linha que decidia se a projecao TimesFM roda, e
+      a separacao do status RUNTIME_UNAVAILABLE de INSUFFICIENT_HISTORY.
+      Medido: o script resolvia o Python so por .venv\Scripts\python.exe, e em
+      Linux caia no ramo `else` reportando falta de HISTORICO quando havia 7
+      pontos e o minimo e 4 -- a causa declarada era falsa. Nada da leitura do
+      ledger, do recorte por sessao, do portao de suficiencia, do tratamento
+      de cultura em datas ou das correcoes aplicadas foi tocado. O achado
+      deste registro segue valido e, se ele consome os campos do forecast,
+      passa a receber a causa correta em vez de uma falsa.
+  - registro: registro-2026-09-02-cultura-invariante-no-gerador-de-evidencia
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Este commit toca o gerador de evidencia em UM ponto: a resolucao do
+      interpretador Python, na linha que decidia se a projecao TimesFM roda, e
+      a separacao do status RUNTIME_UNAVAILABLE de INSUFFICIENT_HISTORY.
+      Medido: o script resolvia o Python so por .venv\Scripts\python.exe, e em
+      Linux caia no ramo `else` reportando falta de HISTORICO quando havia 7
+      pontos e o minimo e 4 -- a causa declarada era falsa. Nada da leitura do
+      ledger, do recorte por sessao, do portao de suficiencia, do tratamento
+      de cultura em datas ou das correcoes aplicadas foi tocado. O achado
+      deste registro segue valido e, se ele consome os campos do forecast,
+      passa a receber a causa correta em vez de uma falsa.
+  - registro: registro-2026-09-02-portao-de-calibracao-por-sessao
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Este commit toca o gerador de evidencia em UM ponto: a resolucao do
+      interpretador Python, na linha que decidia se a projecao TimesFM roda, e
+      a separacao do status RUNTIME_UNAVAILABLE de INSUFFICIENT_HISTORY.
+      Medido: o script resolvia o Python so por .venv\Scripts\python.exe, e em
+      Linux caia no ramo `else` reportando falta de HISTORICO quando havia 7
+      pontos e o minimo e 4 -- a causa declarada era falsa. Nada da leitura do
+      ledger, do recorte por sessao, do portao de suficiencia, do tratamento
+      de cultura em datas ou das correcoes aplicadas foi tocado. O achado
+      deste registro segue valido e, se ele consome os campos do forecast,
+      passa a receber a causa correta em vez de uma falsa.
+  - registro: registro-2026-09-05-fechamento-do-ciclo-de-calibracao
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Este commit toca o gerador de evidencia em UM ponto: a resolucao do
+      interpretador Python, na linha que decidia se a projecao TimesFM roda, e
+      a separacao do status RUNTIME_UNAVAILABLE de INSUFFICIENT_HISTORY.
+      Medido: o script resolvia o Python so por .venv\Scripts\python.exe, e em
+      Linux caia no ramo `else` reportando falta de HISTORICO quando havia 7
+      pontos e o minimo e 4 -- a causa declarada era falsa. Nada da leitura do
+      ledger, do recorte por sessao, do portao de suficiencia, do tratamento
+      de cultura em datas ou das correcoes aplicadas foi tocado. O achado
+      deste registro segue valido e, se ele consome os campos do forecast,
+      passa a receber a causa correta em vez de uma falsa.
+  - registro: agent-calibration-daily-2026-09-02
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Este commit toca o gerador de evidencia em UM ponto: a resolucao do
+      interpretador Python, na linha que decidia se a projecao TimesFM roda, e
+      a separacao do status RUNTIME_UNAVAILABLE de INSUFFICIENT_HISTORY.
+      Medido: o script resolvia o Python so por .venv\Scripts\python.exe, e em
+      Linux caia no ramo `else` reportando falta de HISTORICO quando havia 7
+      pontos e o minimo e 4 -- a causa declarada era falsa. Nada da leitura do
+      ledger, do recorte por sessao, do portao de suficiencia, do tratamento
+      de cultura em datas ou das correcoes aplicadas foi tocado. O achado
+      deste registro segue valido e, se ele consome os campos do forecast,
+      passa a receber a causa correta em vez de uma falsa.
   - registro: registro-2026-09-07-procedencia-do-timesfm-e-json-do-cli
     caminhos:
       - tests/test_timesfm_agent_calibration.py

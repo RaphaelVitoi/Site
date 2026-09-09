@@ -256,8 +256,34 @@ $gateWindowReason = if ($sessoesInconsistentes.Count -gt 0 -and -not $structural
 # estocastica das notas nas proximas sessoes (H=3, correspondente ao limiar do portao).
 # Detecta antecipadamente derivas negativas (downward drift) e risco de degradacao.
 $timesfmForecast = $null
-$pythonExe = Join-Path $repositoryRoot '.venv\Scripts\python.exe'
-if ($scores.Count -ge 4 -and (Test-Path -LiteralPath $pythonExe)) {
+
+# MEDIDO EM 2026-09-09: este script resolvia o Python SO por
+# `.venv\Scripts\python.exe`, caminho que existe apenas no Windows. No runner
+# Linux o Test-Path falhava, a condicao abaixo caia no ramo `else`, e o status
+# saia INSUFFICIENT_HISTORY -- com `available_points` mostrando o historico
+# REAL, que era suficiente.
+#
+# O status MENTIA. Havia 7 pontos e o minimo e 4; o que faltava era o
+# interpretador, nao o historico. E "zero por ausencia de medicao nao e
+# resultado" aplicado a uma metrica de calibracao -- e pior, porque alimentaria
+# a hipotese bayesiana da SS8.3 com uma causa falsa.
+#
+# Duas correcoes, e a segunda importa mais que a primeira:
+#   1. resolver o Python como cwv_gate.ps1:811-821 ja fazia (Windows, POSIX, PATH);
+#   2. separar RUNTIME_UNAVAILABLE de INSUFFICIENT_HISTORY, para que a evidencia
+#      diga qual das duas coisas faltou.
+$venvPyWindows = Join-Path $repositoryRoot '.venv\Scripts\python.exe'
+$venvPyPosix   = Join-Path $repositoryRoot '.venv/bin/python'
+$pythonExe = if (Test-Path -LiteralPath $venvPyWindows) {
+    $venvPyWindows
+} elseif (Test-Path -LiteralPath $venvPyPosix) {
+    $venvPyPosix
+} else {
+    $cmd = Get-Command python.exe, python3, python -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($cmd) { $cmd.Source } else { $null }
+}
+$pythonDisponivel = -not [string]::IsNullOrWhiteSpace($pythonExe)
+if ($scores.Count -ge 4 -and $pythonDisponivel) {
     $scoresJson = ConvertTo-Json -InputObject $scores -Compress
     $env:AGENT_CALIBRATION_SCORES = $scoresJson
     $pyCode = @'
@@ -280,6 +306,17 @@ print(fc.model_dump_json())
             status = 'EXECUTION_ERROR'
             error  = $_.Exception.Message
         }
+    }
+} elseif (-not $pythonDisponivel) {
+    # Distinto de INSUFFICIENT_HISTORY DE PROPOSITO: o historico pode estar
+    # completo e a projecao ainda assim nao ocorrer. Reportar falta de historico
+    # aqui seria descrever a causa errada, e a SS8.3 alimenta hipotese
+    # bayesiana com estes campos.
+    $timesfmForecast = [ordered]@{
+        status           = 'RUNTIME_UNAVAILABLE'
+        required_points  = 4
+        available_points = $scores.Count
+        reason           = 'Nenhum interpretador Python foi encontrado (.venv/Scripts/python.exe, .venv/bin/python, ou python no PATH). O historico NAO e a causa: available_points diz quantos pontos havia.'
     }
 } else {
     $timesfmForecast = [ordered]@{

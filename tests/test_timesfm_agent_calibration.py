@@ -235,10 +235,74 @@ def test_new_agent_calibration_daily_evidence_includes_timesfm(tmp_path: Path) -
     payload = json.loads(result.stdout)
     assert "timesfm_forecast" in payload
     assert payload["timesfm_forecast"] is not None
-    assert payload["timesfm_forecast"]["status"] == "PROJECTION_ACTIVE"
+    # A mensagem carrega o forecast inteiro de proposito. Quando esta asercao
+    # falhou no CI, a saida dizia apenas "assert 'INSUFFICIENT_HISTORY' ==
+    # 'PROJECTION_ACTIVE'" -- e a causa real era outra: o script nao achava o
+    # interpretador Python e reportava falta de historico. Um veredito sem o
+    # payload custou dois ciclos de push para ser diagnosticado.
+    assert payload["timesfm_forecast"]["status"] == "PROJECTION_ACTIVE", (
+        f"forecast completo: {payload['timesfm_forecast']}"
+    )
     forecast = payload["timesfm_forecast"]
     assert forecast["intended_model"] == "google/timesfm-2.0-500m-pytorch"
     assert forecast["weights_loaded"] is False
     # A evidencia de calibracao NAO pode atribuir a projecao ao modelo do Google
     # enquanto nenhum peso for carregado: e ela que alimenta a hipotese da SS8.3.
     assert forecast["model_used"].startswith("analytic-linear-extrapolation")
+
+
+@pytest.mark.skipif(shutil.which("pwsh") is None, reason="pwsh is required for PowerShell daily evidence generator")
+def test_historico_curto_produz_insufficient_history(tmp_path: Path) -> None:
+    """O ramo de historico insuficiente continua existindo e e alcancavel.
+
+    Com 3 pontos -- abaixo dos 4 que a projecao exige -- o status tem de ser
+    INSUFFICIENT_HISTORY, e available_points tem de dizer quantos havia.
+    """
+    ledger = tmp_path / "feedback-ledger.jsonl"
+    outliers = tmp_path / "outlier-evidence-ledger.jsonl"
+    _ledger_hermetico(ledger, [8.0, 9.0, 9.5])
+
+    result = subprocess.run(
+        [
+            "pwsh",
+            "-NoProfile",
+            "-File",
+            str(EVIDENCE_SCRIPT),
+            "-LedgerPath",
+            str(ledger),
+            "-OutlierLedgerPath",
+            str(outliers),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        cwd=str(REPOSITORY_ROOT),
+    )
+    forecast = json.loads(result.stdout)["timesfm_forecast"]
+    assert forecast["status"] == "INSUFFICIENT_HISTORY", f"forecast completo: {forecast}"
+    assert forecast["available_points"] == 3
+    assert forecast["required_points"] == 4
+
+
+def test_falta_de_runtime_nao_se_disfarca_de_falta_de_historico() -> None:
+    r"""MEDIDO EM 2026-09-09: o status mentia quando o Python nao era encontrado.
+
+    O script resolvia o interpretador so por `.venv\Scripts\python.exe`. No
+    runner Linux o Test-Path falhava, a condicao caia no ramo `else` e o status
+    saia INSUFFICIENT_HISTORY -- com available_points mostrando o historico
+    REAL, que era suficiente. Havia 7 pontos e o minimo e 4: o que faltava era
+    o interpretador.
+
+    Isso importa alem do CI. A secao 8.3 do CLAUDE.md alimenta hipotese
+    bayesiana com estes campos, e uma causa falsa ali contamina a analise de
+    deriva. Este guard fixa a distincao entre as duas causas.
+    """
+    texto = EVIDENCE_SCRIPT.read_text(encoding="utf-8-sig")
+    assert "RUNTIME_UNAVAILABLE" in texto, (
+        "o status que distingue falta de interpretador de falta de historico "
+        "sumiu. Sem ele, o script volta a reportar a causa errada."
+    )
+    assert ".venv/bin/python" in texto, (
+        "a resolucao POSIX do Python sumiu; o script volta a so funcionar no "
+        "Windows e a reportar INSUFFICIENT_HISTORY em qualquer outro lugar."
+    )
