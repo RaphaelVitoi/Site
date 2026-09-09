@@ -77,8 +77,9 @@ export function calculateMalmuthHarville(
 
 	// Formata o resultado de saida com as equities calculadas via memoizacao
 	return players.map((p, i) => {
-		const eq = mapaResult.equities.at(i) ?? 0;
-		const winP = mapaResult.positionProbs.at(i)?.at(0) ?? 0;
+		// ⚡ Bolt: [performance improvement] bracket notation is faster than .at()
+		const eq = mapaResult.equities[i] ?? 0;
+		const winP = mapaResult.positionProbs[i]?.[0] ?? 0;
 		return {
 			id: p.id,
 			name: p.name,
