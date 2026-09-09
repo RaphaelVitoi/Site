@@ -6,7 +6,9 @@ multimodel scaling, Nexus CLI command, and PowerShell quantitative support adapt
 
 from __future__ import annotations
 
+import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 import shutil
 import subprocess
@@ -149,19 +151,86 @@ def test_invoke_quantitative_support_timesfm() -> None:
     assert len(payload["output"]["mean_trajectory"]) == 3
 
 
+def _hash_registro(payload: dict) -> str:
+    texto = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(texto.encode("utf-8")).hexdigest()
+
+
+def _ledger_hermetico(caminho: Path, notas: list[float]) -> None:
+    """Escreve um ledger encadeado minimo, aceito por Test-AgentCalibrationLedger.
+
+    MEDIDO EM 2026-09-09: ate aqui este teste rodava o gerador SEM ledger
+    proprio, e portanto media o ledger REAL da maquina. Na minha estacao havia
+    18 pontos de historico e o status vinha PROJECTION_ACTIVE; no runner do CI,
+    onde reports/agent-calibration/feedback-ledger.jsonl NAO e versionado, vinha
+    INSUFFICIENT_HISTORY -- e a asercao quebrava.
+
+    O teste media o ESTADO, nao o contrato. O contrato e: havendo historico
+    suficiente, o gerador projeta. E isso que se verifica agora, com dados que o
+    proprio teste constroi. O script ja expunha -LedgerPath exatamente para
+    isso, e outros testes desta suite ja o usavam.
+    """
+    linhas: list[str] = []
+    anterior = "0" * 64
+    genesis = {
+        "schema_version": "agent-calibration-ledger/v1",
+        "sequence": 0,
+        "record_type": "genesis",
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "previous_hash": anterior,
+        "policy": "append-only hash chain; verify before use",
+    }
+    genesis["record_hash"] = _hash_registro(genesis)
+    linhas.append(json.dumps(genesis, ensure_ascii=False))
+    anterior = genesis["record_hash"]
+
+    for i, nota in enumerate(notas, start=1):
+        registro = {
+            "schema_version": "agent-calibration-ledger/v1",
+            "sequence": i,
+            "record_type": "feedback",
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+            "previous_hash": anterior,
+            "event_id": f"evt-timesfm-{i}",
+            "session_id": f"sessao-timesfm-{i}",
+            "score": nota,
+            "feedback": "registro sintetico do guard do TimesFM",
+            "scope": "handoff",
+        }
+        registro["record_hash"] = _hash_registro(registro)
+        linhas.append(json.dumps(registro, ensure_ascii=False))
+        anterior = registro["record_hash"]
+
+    caminho.write_text("\n".join(linhas) + "\n", encoding="utf-8")
+
+
 @pytest.mark.skipif(shutil.which("pwsh") is None, reason="pwsh is required for PowerShell daily evidence generator")
-def test_new_agent_calibration_daily_evidence_includes_timesfm() -> None:
+def test_new_agent_calibration_daily_evidence_includes_timesfm(tmp_path: Path) -> None:
     """New-AgentCalibrationDailyEvidence.ps1 includes timesfm_forecast by default."""
+    ledger = tmp_path / "feedback-ledger.jsonl"
+    # O ledger de outliers fica AUSENTE de proposito. Test-AgentCalibrationLedger
+    # rejeita arquivo que existe e esta vazio -- "Ledger exists but is empty" --,
+    # enquanto caminho inexistente e tratado como "sem outliers". Medido ao
+    # escrever este guard: criar o arquivo vazio derrubava o script com exit 1.
+    outliers = tmp_path / "outlier-evidence-ledger.jsonl"
+    # Historico suficiente para a projecao: o horizonte do portao e 3 sessoes.
+    _ledger_hermetico(ledger, [8.0, 8.5, 9.0, 9.5, 10.0, 9.0, 9.5])
+
     result = subprocess.run(
         [
             "pwsh",
             "-NoProfile",
             "-File",
             str(EVIDENCE_SCRIPT),
+            "-LedgerPath",
+            str(ledger),
+            "-OutlierLedgerPath",
+            str(outliers),
         ],
         check=True,
         capture_output=True,
         text=True,
+        cwd=str(REPOSITORY_ROOT),
     )
     payload = json.loads(result.stdout)
     assert "timesfm_forecast" in payload
