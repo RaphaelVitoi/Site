@@ -90,6 +90,21 @@ CORRECOES_APLICADAS: dict[str, str] = {
         "assinaturas sozinho; em modo STATELESS voce reenvia os blocos 'thought' "
         "exatamente como recebidos. Nao ha campo include_thoughts documentado."
     ),
+    "google.gemini_36_flash_saida_e_preco": (
+        "CORRIGIDO em 2026-09-08. O registro listava $0.50/$2.50 e saida de 64k. "
+        "A especificacao base oficial documenta limite maximo de saida de 8.192 tokens "
+        "e tabela regular de $0.75/$3.75 por 1M de tokens."
+    ),
+    "google.gemini_37_flash_status": (
+        "PROMOVIDO a VERIFICADO em 2026-09-08. Preco ($0.75/$3.75) e saida (64k) "
+        "confirmados pelo Model Card oficial de lancamento (Agosto/2026)."
+    ),
+    "google.breaking_changes_gemini_3x": (
+        "CONFIRMADO em 2026-09-08. Parametros de amostragem tradicional (temperature, "
+        "top_p, top_k) foram descontinuados/ignorados e penalidades (frequency_penalty, "
+        "presence_penalty) produzem HTTP 400. Requisicoes com trailing role: 'model' "
+        "sao rejeitadas com erro."
+    ),
 }
 
 
@@ -374,7 +389,14 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thinking_level="high",
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
-        notas="Modelo de fronteira da geracao Gemini 3.8 lancado em Setembro/2026. Motor primario do sistema.",
+        notas=(
+            "Modelo de fronteira da geracao Gemini 3.8 lancado em Setembro/2026. "
+            "Motor primario do sistema (90.8% Terminal-Bench, 95.3% GPQA Diamond). "
+            "Preco promocional ($0.75/$3.75) vigente ate 31/12/2026; a partir de "
+            "01/01/2027 a tabela passa a $1.50/$7.50. Suporta thinking_level em "
+            "low, medium e high, alem de thinking_budget. Variante "
+            "gemini-3.8-flash-cyber restrita ao Fairwind Program."
+        ),
     ),
     "gemini-3.7-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
@@ -386,11 +408,12 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         price_per_1m_out=3.75,
         thinking_level="high",
         thought_signature_mode="stateful",
-        verification=VerificationStatus.NAO_VERIFICADO,
+        verification=VerificationStatus.VERIFICADO,
         notas=(
-            "Existencia do modelo e thinking_level VERIFICADOS. Preco e limites "
-            "vieram do estudo e nao foram confirmados na pagina de pricing  "
-            "tratar como estimativa ate conferir."
+            "Verificado em 2026-09-08 contra o Model Card e release oficial de "
+            "Agosto/2026. Preco vigente de $0.75/$3.75 ate 31/12/2026, com "
+            "contexto de 1M e saida de 64k. Suporta thinking_level em low, "
+            "medium e high (sem 'minimal')."
         ),
     ),
     "gemini-3.6-flash": ModelCapability(
@@ -398,13 +421,18 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         model_name="gemini-3.6-flash",
         cota_por_assinatura=True,
         context_window_in=1_048_576,
-        max_output_tokens=65_536,
-        price_per_1m_in=0.50,
-        price_per_1m_out=2.50,
+        max_output_tokens=8_192,  # CORRIGIDO 2026-09-08: especificacao base mantem 8k de saida, nao 64k
+        price_per_1m_in=0.75,     # CORRIGIDO 2026-09-08: tabela regular oficial $0.75/$3.75 (estava $0.50/$2.50)
+        price_per_1m_out=3.75,
         thinking_level="high",
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
-        notas="Circuito de fallback canonico para gemini-3.7-flash em pipelines de extracao JSON estrita.",
+        notas=(
+            "Corrigido em 2026-09-08. Limite de saida mantido na especificacao base "
+            "padrao (8.192 tokens), ao contrario dos modelos 3.7 e 3.8 (64k). "
+            "Preco regular verificado em $0.75/$3.75. Circuito de fallback canonico "
+            "para gemini-3.7-flash em pipelines de extracao JSON estrita."
+        ),
     ),
     "gemini-3.5-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
@@ -430,7 +458,11 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thinking_level="low",
         thought_signature_mode="stateless",
         verification=VerificationStatus.VERIFICADO,
-        notas="Camada 1: Triagem, parsing rapido e borda de baixa latencia.",
+        notas=(
+            "Camada 1: Triagem, parsing rapido e borda de baixa latencia (>200 tok/s). "
+            "Suporta thinking_level em 'minimal' (para extracao JSON ultrarrapida), "
+            "'medium' e 'high' (para subagentes de codigo/shell)."
+        ),
     ),
     "chatgpt-5.6-sol": ModelCapability(
         adapter=AdapterType.OPENAI,
