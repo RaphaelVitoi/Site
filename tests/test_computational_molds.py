@@ -1,4 +1,5 @@
 """Contracts of the instrument, independent of PMev theoretical propositions."""
+
 from itertools import permutations
 
 import pytest
@@ -8,12 +9,15 @@ from core.perspective_schemas import PerspectiveTreeRequest
 from engine.icm_matrix import calculate_malmuth_harville_icm, compute_bubble_factor_matrix
 
 
-@pytest.mark.parametrize("stacks,payouts,expected", [
-    ([100, 0], [70, 30], [70, 30]),
-    ([0, 100], [70, 30], [30, 70]),
-    ([100, 0, 0], [70, 20, 10], [70, 15, 15]),
-    ([50, 50], [], [0, 0]),
-])
+@pytest.mark.parametrize(
+    "stacks,payouts,expected",
+    [
+        ([100, 0], [70, 30], [70, 30]),
+        ([0, 100], [70, 30], [30, 70]),
+        ([100, 0, 0], [70, 20, 10], [70, 15, 15]),
+        ([50, 50], [], [0, 0]),
+    ],
+)
 def test_terminal_and_empty_prizes(stacks, payouts, expected):
     assert calculate_malmuth_harville_icm(stacks, payouts) == pytest.approx(expected)
 
@@ -39,8 +43,10 @@ def test_aggregated_states_match_independent_finish_order_enumeration():
     assert calculate_malmuth_harville_icm(stacks, payouts) == pytest.approx(expected)
 
 
-@pytest.mark.parametrize("field,value", [("fold_equity", 2), ("fold_equity", -0.1),
-    ("valuation_stack", float("inf")), ("edge_base", float("nan"))])
+@pytest.mark.parametrize(
+    "field,value",
+    [("fold_equity", 2), ("fold_equity", -0.1), ("valuation_stack", float("inf")), ("edge_base", float("nan"))],
+)
 def test_tree_rejects_nonfinite_numbers_and_invalid_probabilities(field, value):
     with pytest.raises(ValidationError):
         PerspectiveTreeRequest(**{"equity": 0.6, "pot_size": 10, "stack_eff": 20, field: value})

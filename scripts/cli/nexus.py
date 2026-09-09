@@ -2417,9 +2417,8 @@ async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | 
                 warn_lines = [
                     line
                     for line in linhas
-                    if re.search(r"\bwarn(?:ing)?\b", line, re.IGNORECASE) and not line.strip().startswith(
-                        ("\u2713", "[OK]", "v")
-                    )
+                    if re.search(r"\bwarn(?:ing)?\b", line, re.IGNORECASE)
+                    and not line.strip().startswith(("\u2713", "[OK]", "v"))
                 ]
                 warnings_count = len(warn_lines)
             else:

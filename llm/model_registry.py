@@ -422,7 +422,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         cota_por_assinatura=True,
         context_window_in=1_048_576,
         max_output_tokens=8_192,  # CORRIGIDO 2026-09-08: especificacao base mantem 8k de saida, nao 64k
-        price_per_1m_in=0.75,     # CORRIGIDO 2026-09-08: tabela regular oficial $0.75/$3.75 (estava $0.50/$2.50)
+        price_per_1m_in=0.75,  # CORRIGIDO 2026-09-08: tabela regular oficial $0.75/$3.75 (estava $0.50/$2.50)
         price_per_1m_out=3.75,
         thinking_level="high",
         thought_signature_mode="stateful",
@@ -522,9 +522,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
 # Escala de esforco da OpenAI. 'xhigh' entrou com o GPT-6 Astra; 'ultra' NUNCA
 # existiu -- era invencao do estudo de fronteira, e a ausencia dele aqui e o
 # que impede a invencao de voltar por uma porta lateral.
-ESFORCOS_OPENAI_VALIDOS: frozenset[str] = frozenset(
-    {"none", "low", "medium", "high", "xhigh", "max"}
-)
+ESFORCOS_OPENAI_VALIDOS: frozenset[str] = frozenset({"none", "low", "medium", "high", "xhigh", "max"})
 
 
 def modelos_nao_autorizados() -> dict[str, str]:
@@ -534,11 +532,7 @@ def modelos_nao_autorizados() -> dict[str, str]:
     campo `autorizado` no primeiro descuido -- que e o defeito que a secao 7 do
     CLAUDE.md documenta.
     """
-    return {
-        alias: cap.motivo_nao_autorizado
-        for alias, cap in MODEL_REGISTRY.items()
-        if not cap.autorizado
-    }
+    return {alias: cap.motivo_nao_autorizado for alias, cap in MODEL_REGISTRY.items() if not cap.autorizado}
 
 
 # RETIRADOS por decisao do Tier 0 -- conhecidos, verificados e fora de uso.

@@ -348,10 +348,9 @@ def test_gate_reports_positive_cwv_human_review_without_turning_it_into_coverage
     # certificacao do TBT (73b65165) o reprovou sem que nada estivesse errado.
     # O contrato e outro, e e o que da nome ao teste: o TBT sempre declara de onde
     # veio, e nunca vem do arbitro humano -- que atestou INP, e so INP.
-    assert (
-        "TBT certificado pelo Lighthouse:" in report
-        or "TBT permanece sem artefato Lighthouse valido." in report
-    ), report
+    assert "TBT certificado pelo Lighthouse:" in report or "TBT permanece sem artefato Lighthouse valido." in report, (
+        report
+    )
     assert "TBT atestado manualmente" not in report
     assert "FRAGILE" in report
 

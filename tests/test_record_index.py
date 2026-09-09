@@ -568,8 +568,7 @@ def test_extensao_longa_nao_e_truncada_pela_alternancia(tmp_path, monkeypatch):
 
     # A sintaxe inline de lista YAML e o gatilho: o `[` abre a captura do regex.
     (tmp_path / "reports" / "R.md").write_text(
-        "caminhos: [dados/ledger.jsonl]\n"
-        "Veja tambem `dados/comp.tsx` e (dados/velho.jsx).\n",
+        "caminhos: [dados/ledger.jsonl]\nVeja tambem `dados/comp.tsx` e (dados/velho.jsx).\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
