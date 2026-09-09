@@ -1,0 +1,214 @@
+{
+  "schema_version": "0.1",
+  "relations": [
+    {
+      "id": "BR-BASELINE",
+      "hypotheses": [
+        "PM-FOLD",
+        "PM-CONTINUATION"
+      ],
+      "source": "S15",
+      "pdf_pages": [
+        26,
+        27
+      ],
+      "printed_pages": [
+        "11",
+        "12"
+      ],
+      "relation": "baseline_definition",
+      "summary": "Janda distinguishes equity and EV; fold zero is a node accounting reference. Future action must be modeled."
+    },
+    {
+      "id": "BR-DEFENSE",
+      "hypotheses": [
+        "PM-DEFENSE"
+      ],
+      "source": "S14",
+      "pdf_pages": [
+        110,
+        111
+      ],
+      "relation": "analytical_foundation",
+      "summary": "Half-street payoff matrices and separate indifference equations for betting and calling."
+    },
+    {
+      "id": "BR-DEFENSE-JANDA",
+      "hypotheses": [
+        "PM-DEFENSE",
+        "PM-BELIEFS"
+      ],
+      "source": "S15",
+      "pdf_pages": [
+        15,
+        32,
+        33,
+        38,
+        39,
+        40
+      ],
+      "printed_pages": [
+        "xiii",
+        "17",
+        "18",
+        "23",
+        "24",
+        "25"
+      ],
+      "relation": "conditional_foundation",
+      "summary": "Bluffcatching composition, action frequencies and response to underbluffing must be distinguished."
+    },
+    {
+      "id": "BR-SKILL",
+      "hypotheses": [
+        "PM-TOOLS-EDGE",
+        "PM-CLOCK"
+      ],
+      "source": "S14",
+      "pdf_pages": [
+        312,
+        313,
+        314,
+        315,
+        316
+      ],
+      "relation": "precursor_model_with_domain_limits",
+      "summary": "Recursive skill model, future opportunities and limits of passing thin edges. Doubling-up approximation is not a direct FT payout model."
+    },
+    {
+      "id": "BR-ICM",
+      "hypotheses": [
+        "PM-GLOBAL"
+      ],
+      "source": "S14",
+      "pdf_pages": [
+        324,
+        327,
+        328
+      ],
+      "relation": "baseline_comparison",
+      "summary": "Separate stack-to-prize valuation models and inspect their assumptions; Malmuth-Harville is a specific model."
+    },
+    {
+      "id": "BR-MULTIPLAYER",
+      "hypotheses": [
+        "PM-GLOBAL",
+        "PM-BELIEFS"
+      ],
+      "source": "S14",
+      "pdf_pages": [
+        338,
+        349,
+        350
+      ],
+      "relation": "externalities_and_equilibrium_scope",
+      "summary": "Tournament hand participants are a subsystem; multiplayer equilibrium does not inherit all two-player zero-sum guarantees."
+    },
+    {
+      "id": "BR-POSITION",
+      "hypotheses": [
+        "PM-TOOLS-EDGE",
+        "PM-OPTIONALITY"
+      ],
+      "source": "S15",
+      "pdf_pages": [
+        21,
+        22,
+        23,
+        43
+      ],
+      "printed_pages": [
+        "6",
+        "7",
+        "8",
+        "28"
+      ],
+      "relation": "tools_and_information",
+      "summary": "Position, retained equity and ability to reach later streets depend on stacks and ranges; most discussion assumes 100bb."
+    },
+    {
+      "id": "BR-PRIORS",
+      "hypotheses": [
+        "PM-BELIEFS"
+      ],
+      "source": "S14",
+      "pdf_pages": [
+        34,
+        35
+      ],
+      "relation": "estimation_foundation",
+      "summary": "Distinguish distribution parameters from finite sample estimates and uncertainty."
+    },
+    {
+      "id": "BR-AUTHOR-PRIORITY",
+      "hypotheses": [
+        "PM-TOOLS-EDGE",
+        "PM-CONTINUATION",
+        "PM-RIO"
+      ],
+      "source": "S19",
+      "conversation_indices": [
+        13,
+        17,
+        25,
+        35,
+        41,
+        47,
+        67,
+        77
+      ],
+      "relation": "authorial_qualification",
+      "summary": "Prioritize marginal EV stability, available advantages and conditional reasoning; do not make RIO the central principle."
+    }
+  ],
+  "new_hypothesis": {
+    "id": "PM-MARGINAL-STABILITY",
+    "title": "Estabilidade da decisão sob hipóteses alternativas",
+    "source_refs": [
+      {
+        "source_id": "S19",
+        "conversation_index": 13,
+        "role": "user"
+      },
+      {
+        "source_id": "S19",
+        "conversation_index": 47,
+        "role": "user"
+      },
+      {
+        "source_id": "S19",
+        "conversation_index": 67,
+        "role": "user"
+      }
+    ],
+    "proposed_by": "Chat GPT-6 Astra <noreply@openai.com>",
+    "status": "experimental_specification_not_implemented",
+    "enabled_by_default": false,
+    "inputs": [
+      "fixed_valid_scenario",
+      "same_utility_and_horizon",
+      "explicit_family_of_opponent_policies",
+      "legal_actions"
+    ],
+    "outputs": [
+      "delta_by_action_and_policy",
+      "ranking_reversal_points",
+      "interval_over_tested_assumptions",
+      "missing_inputs"
+    ],
+    "guards": [
+      "Range over assumptions is not a confidence interval.",
+      "Do not force fold merely because EV is uncertain.",
+      "Policy deviation is not a diagnosis of emotion.",
+      "Do not say every best response is the unconstrained game Nash equilibrium."
+    ],
+    "priority": "after_shared_counterfactuals_before_RIO_heuristics"
+  },
+  "priority_update": [
+    "shared_counterfactuals",
+    "bilateral_defense",
+    "marginal_stability_and_available_tools",
+    "clock_and_table_draw",
+    "conditional_multiway_RIO"
+  ]
+}

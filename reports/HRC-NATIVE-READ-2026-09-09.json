@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-09-09T22:15:59.594Z",
+  "hrcJarSha256": "25cf800b46085af762325aefcf0a24184e1b44a53c36a57037b8bb00883fca43",
+  "scope": "Native HRC hand deserialization and structure parser only; no wizard, tree validation, solve or EV certification.",
+  "negativeControlRejected": true,
+  "cases": [
+    {
+      "case": "structure-pko-original",
+      "paidPlaces": 239,
+      "pool": 3360,
+      "originalName": "Bounty Builder $5.50, $6K Gtd",
+      "nativeName": "Bounty Builder USD5.50, USD6K Gtd",
+      "sourceSha256": "b7ddf7c09e52dbd9995a8c656f224d8a46a874c9c99a789303557bb1ad489275"
+    },
+    {
+      "case": "native-mtt-13",
+      "table": 6,
+      "outside": 7,
+      "chips": 378000,
+      "paidPlaces": 23,
+      "exportSha256": "041aa484b8b88b33712defcde21d93ded8702d1843b6b4451face9d63b05f930"
+    },
+    {
+      "case": "synthetic-mtt-123",
+      "table": 8,
+      "outside": 115,
+      "chips": 9123000,
+      "paidPlaces": 23,
+      "exportSha256": "4a0818524d6e1cb07c0ffd2c8092d510e75cc5fef3fd929c33273b127e996064"
+    },
+    {
+      "case": "derived-ft-9",
+      "table": 9,
+      "outside": 0,
+      "chips": 375013,
+      "paidPlaces": 23,
+      "exportSha256": "fa531cabe792ab413019c814e5eb6eeba0d8ff3d7f983bf6ac456ab668afe769"
+    },
+    {
+      "case": "synthetic-gg-hh-3",
+      "table": 3,
+      "outside": 0,
+      "chips": 70000,
+      "paidPlaces": 3,
+      "exportSha256": "1106e68c3b48f18dba63aaa272937e3bec9d4f362d032c071f0b57181da8ea9c"
+    }
+  ]
+}

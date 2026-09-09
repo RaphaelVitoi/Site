@@ -1,0 +1,157 @@
+[0001] ENCICLOPÉDIA MAGNA DA TEORIA DA PERSPECTIVA MATEMÁTICA (PMev) E POKER RACIONAL
+[0002] Tratado Canônico Definitivo e Fechamento Axiomático — Edição Magna (Arco 12/12)Autor: Raphael VitoiData: 19 de agosto de 2026
+[0003] SUMÁRIO GERAL DO TRATADO DEFINITIVO
+[0004] Seção I: Fechamento Axiomático e Fundamentação Ontológica Unificada
+[0005] 1.1 O Princípio da Invariância e Não-Ergodicidade em Jogos de Torneio
+[0006] 1.2 Os Cinco Axiomas Canônicos da Teoria da Perspectiva Matemática (PMev)
+[0007] 1.3 A Família Aninhada Canônica: $\mathcal{M}{\text{ChipEV}} \subset \mathcal{M}{\text{ICM}} \subset \mathcal{M}{\text{FGS}} \subset \mathcal{M}{\text{PMev}}$
+[0008] 1.4 A Decomposição Epistemológica: Representação, Predição e Decisão
+[0009] Seção II: Jogos Estocásticos com Troca de Regime de Markov (Markov Regime-Switching)
+[0010] 2.1 O Espaço de Regimes do Torneio: $\mathcal{R}_t \in {\text{Early}, \text{Mid}, \text{Bolha}, \text{ITM}, \text{FT}, \text{HU}}$
+[0011] 2.2 O Gerador Infinitesimal de Transição de Regime ($\mathbf{Q}_{\text{regime}}$)
+[0012] 2.3 Descontinuidades Estruturais e Comportamento dos Operadores de Bellman em Payjumps
+[0013] 2.4 A Transição de Fase Termodinâmica: Do Regime Convexa de Rebuy ao Colapso Côncavo
+[0014] Seção III: Geometria de Wasserstein-Fisher-Rao no Espaço de Decisões e População
+[0015] 3.1 A Métrica Unificada de Wasserstein-Fisher-Rao ($\text{WFR}$)
+[0016] 3.2 Interpolação entre Transporte de Massa de Fichas e Divergência de Políticas
+[0017] 3.3 A Variedade Riemanniana de Oponentes e a Estabilidade de Equilíbrios $q$-AQRE
+[0018] Seção IV: A Síntese Algébrica e Computacional dos Núcleos Operacionais
+[0019] 4.1 A Geometria do Risco: Risk Premium, Bubble Factor e Risk Advantage ($\Delta RP$)
+[0020] 4.2 A Ponte Janda-Vitoi: Dedução Analítica do Teto do RP e Subversão da MDF
+[0021] 4.3 O Axioma do Valor de Fold e Opcionalidade Contrafactual $\Omega(S_t)$
+[0022] 4.4 A Prova Analítica da Penalidade Quadrática em Potes Multiway ($\text{RIO} \sim \mathcal{O}(n^2)$)
+[0023] 4.5 Álgebra de Bounties em Formatos PKO e Mystery Bounty ($\chi_{\text{hybrid}}$)
+[0024] 4.6 O Teorema da Amortização da Edge por Profundidade de Stack ($\log S_{\text{eff}}$)
+[0025] 4.7 O Operador de Conservação de Valor em Late Registration ($\sum \Delta V_i = -B_{\text{entry}}$)
+[0026] Seção V: O Ledger Mestre Consolidado das 12 Hipóteses Falsificáveis ($H_1$ a $H_{12}$)
+[0027] 5.1 O Sistema Completo de Hipóteses Padrão Ouro
+[0028] 5.2 Protocolos de Falsificação Fora da Amostra (CRPS, Log-Loss, ECE, Regret)
+[0029] 5.3 Governança no GitHub (SOTA v7.0 GOLD CI/CD + SonarQube Cloud)
+[0030] 5.4 O Protocolo de Submissão para Periódicos Científicos de Alto Impacto
+[0031] SEÇÃO I: FECHAMENTO AXIOMÁTICO E FUNDAMENTAÇÃO ONTOLÓGICA UNIFICADA
+[0032] 1.1 Os Cinco Axiomas Canônicos da PMev
+[0033] Axioma 1 (Não-Ergodicidade do Stack): O valor de uma decisão em MTTs não converge para a média do conjunto espacial ($\mathbb{E}{\text{espaço}}$), mas para a taxa de sobrevivência e crescimento do valuation financeiro no tempo contínuo ($\mathbb{E}{\text{tempo}}$).
+[0034] Axioma 2 (Valor Positivo de Continuação do Fold): O fold não possui valor neutro ($EV_{\text{local}} = 0$), mas preserva o estado $S_{\text{fold}}$, cujo valor absoluto de torneio é estritamente positivo ($V(S_{\text{fold}}) > 0$) e governado pela proximidade de payjumps e risco de eliminação de terceiros.
+[0035] Axioma 3 (Aninhamento Estrutural): O modelo clássico de Harville (ICM) é um caso particular recuperável sob horizonte zero e ausência de atrito temporal: $$\mathcal{M}{\text{ChipEV}} \subset \mathcal{M}{\text{ICM}} \subset \mathcal{M}{\text{FGS}} \subset \mathcal{M}{\text{PMev}}$$
+[0036] Axioma 4 (Teto de Risco e Subversão da MDF): A frequência de defesa de bluffcatchers contra ranges polarizados no river é limitada superiormente pelo Teto do Risk Premium ($1 - E^*$), tornando matematicamente inválida a $\text{MDF}_{\text{ChipEV}}$ linear sob alto Bubble Factor.
+[0037] Axioma 5 (Amortização Logarítmica de Edge): A superioridade técnica relativa ($\Delta \text{Skill}$) é amortizada pela poda da árvore de decisões e equidade de showdown em stacks curtos ($S_{\text{eff}} \le 10\text{bb}$).
+[0038]                          A ARQUITETURA AXIOMÁTICA DA PMev
+[0039] ┌─────────────────────────────────────────────────────────────────────────────┐
+[0040] │                    SISTEMA POSG DINÂMICO: S_t = (s_t, p, z_t, h_t, τ_t)    │
+[0041] ├──────────────────────────────────────┬──────────────────────────────────────┤
+[0042] │ 1. Camada Estática (Baseline ICM):   │ 2. Camada Dinâmica (PMev-D):         │
+[0043] │    • Harville / Plackett-Luce        │    • Relógio τ_t (t-3 blinds)        │
+[0044] │    • Payouts e Stacks Globais        │    • Posição Orbital & SPR           │
+[0045] ├──────────────────────────────────────┼──────────────────────────────────────┤
+[0046] │ 3. Camada Institucional (PMev-T):    │ 4. Camada Comportamental (PMev-B):   │
+[0047] │    • Rebalanceamento de Mesas        │    • AQRE com Racionalidade λ_j      │
+[0048] │    • Conservação em Late Reg         │    • Shrinkage Bayesiano / MDA       │
+[0049] ├──────────────────────────────────────┼──────────────────────────────────────┤
+[0050] │ 5. Camada de Trajetória (PMev-O):    │ 6. Supermodelo Total (PMev-F):       │
+[0051] │    • Opcionalidade Contrafactual Ω   │    • Lookahead em Horizonte Finito H │
+[0052] │    • Valor Relativo de Fold          │    • Solução Truncada em Φ = V_ICM   │
+[0053] └──────────────────────────────────────┴──────────────────────────────────────┘
+[0054] SEÇÃO II: JOGOS ESTOCÁSTICOS COM TROCA DE REGIME DE MARKOV
+[0055] 2.1 O Espaço de Regimes do Torneio ($\mathcal{R}_t$)
+[0056] A evolução de um MTT transita por seis regimes discretos:
+[0057] $$\mathcal{R}_t \in { \text{R}_1: \text{Early/Rebuy}, ; \text{R}_2: \text{Middle}, ; \text{R}_3: \text{Bolha}, ; \text{R}_4: \text{ITM/Laddering}, ; \text{R}_5: \text{Mesa Final}, ; \text{R}_6: \text{Heads-Up Final} }$$
+[0058] A transição entre regimes obedece à matriz de intensidade $\mathbf{Q}_{\text{regime}}$:
+[0059] $$\partial_t v(t, s, r) + \mathcal{L}^{(r)} v(t, s, r) + \sum_{r' \neq r} q_{r r'}(\tau_t) \left[ v(t, s, r') - v(t, s, r) \right] = 0$$
+[0060] No Regime $\text{R}_1$ (Rebuy): $U(s)$ é localmente convexa; $BF \approx 1$.
+[0061] No Regime $\text{R}_3$ e $\text{R}_5$ (Bolha e FT): $U(s)$ é hiper-côncava; $BF \gg 1,!5$, forçando o Teto do RP e o Pacto Silencioso.
+[0062] No Regime $\text{R}_6$ (Heads-Up Final): A ausência de terceiros elimina laddering; o sistema colapsa estritamente para o ChipEV linear.
+[0063] SEÇÃO III: GEOMETRIA DE WASSERSTEIN-FISHER-RAO (WFR)
+[0064] A métrica unificada de Wasserstein-Fisher-Rao ($\text{WFR}$) acopla o transporte de massa de fichas no simplex ($\Delta^N$) à divergência de informação no espaço de políticas adversárias ($\mathcal{M}_{\Pi}$):
+[0065] $$d_{\text{WFR}}^2((\mathbf{s}_1, \pi_1), (\mathbf{s}_2, \pi_2)) = \mathcal{W}_2^2(\mathbf{s}1, \mathbf{s}2) + \alpha{\text{Fisher}} \cdot D{\text{Fisher}}^2(\pi_1, \pi_2)$$
+[0066] Essa formulação permite quantificar simultaneamente a velocidade com que o field quebra stacks e o ritmo em que os adversários desviam da estratégia de equilíbrio inexplorável de Nash.
+[0067] SEÇÃO IV: SÍNTESE ALGÉBRICA DOS NÚCLEOS OPERACIONAIS
+[0068] 4.1 Equações Mestras de Decisão da PMev
+[0069] Equação de Indiferença e Teto do RP no River: $$E^*(B, P, BF) = \frac{B \cdot BF}{P + B + B \cdot BF}, \quad \text{MDF}_{\text{PMev}} = \frac{P + B}{P + B + B \cdot BF}$$
+[0070] Valor Relativo de Call vs. Fold: $$EV_{\text{call}} = E \cdot V(S_{\text{win}}) + (1 - E) \cdot V(S_{\text{loss}}) - V(S_{\text{fold}})$$ $$E^* = \frac{V(S_{\text{fold}}) - V(S_{\text{loss}})}{V(S_{\text{win}}) - V(S_{\text{loss}})}$$
+[0071] Opcionalidade Contrafactual do Stack: $$\Omega(S_t) = V^(S_t) - V^{\mathcal{A}{\text{restrito}}}(S_t)$$
+[0072] Penalidade Combinatória Multiway ($\mathcal{O}(n^2)$): $$\mathcal{R}{\text{MW}}(n) = \frac{\mathcal{R}{\text{HU}}}{1 + \kappa_{\text{RIO}} \cdot \binom{n}{2} \cdot \overline{BF}_{\text{mesa}}}$$
+[0073] Subsídio de Bounty em Formatos Híbridos (Mystery PKO): $$q_{\text{req}}^{\text{MPKO}}(t) = \frac{BF}{BF + 1} - \frac{\chi_{\text{hybrid}}(t)}{P + 2B}, \quad \chi_{\text{hybrid}}(t) = \frac{\bar{B}{\text{MB}}(t) + \kappa \cdot b{\text{alvo}}}{\text{Valor Monetário de 1 Chip}}$$
+[0074] Amortização da Edge por Profundidade: $$\text{Edge}(S_{\text{eff}}) = \frac{\Delta \text{Skill}}{\sigma_{\text{variância}}} \cdot \log(S_{\text{eff}})$$
+[0075] Identidade de Conservação em Late Registration: $$\sum_{i \in \text{Incumbentes}} \Delta V_i = -B_{\text{entry}} = -(V_e(S^+) - c)$$
+[0076] SEÇÃO V: O LEDGER MESTRE CONSOLIDADO DAS 12 HIPÓTESES FALSIFICÁVEIS
+[0077] ID
+[0078] Enunciado da Hipótese
+[0079] Baseline
+[0080] Desenho Experimental / Dataset
+[0081] Métrica Chave
+[0082] Critério Estrito de Falsificação
+[0083] $H_1$
+[0084] Superioridade Preditiva OOS
+[0085] $\text{PMev-0}$ / $\text{FGS}$
+[0086] Holdout temporal por eventos independentes
+[0087] CRPS e Log-Loss
+[0088] $\mathbb{E}[\mathcal{L}{\text{PMev-D}}^{\text{OOS}}] \ge \mathbb{E}[\mathcal{L}{\text{ICM}}^{\text{OOS}}]$.
+[0089] $H_2$
+[0090] Mediação do Resíduo de Kim
+[0091] Modelo residual de Kim (2025)
+[0092] Regressão linear hierárquica
+[0093] Coeficiente $\beta_{\text{stack}}$
+[0094] $\beta_{\text{stack}}$ não atenua com $\mathbf{Z}_{\text{PMev}}$ ($p > 0,!05$).
+[0095] $H_3$
+[0096] Erosão Temporal ($t-3$)
+[0097] Solver sem relógio ($\Delta t = \infty$)
+[0098] Solves pareados $S^{(0)}(15\text{m})$ vs. $S^{(1)}(2\text{m})$
+[0099] $\Delta \text{RFI}$ e $\Delta Q(\text{open})$
+[0100] $\Delta Q(\text{open}) \le 0$ na iminência dos blinds.
+[0101] $H_4$
+[0102] Subversão da MDF no River
+[0103] $\text{MDF}_{\text{GTO}} = \frac{P}{P+B}$
+[0104] Solves pareados de river variando payouts
+[0105] Frequência de Defesa vs. $1 - E^*$
+[0106] Defesa converge para MDF ignorando Bubble Factor.
+[0107] $H_5$
+[0108] Amortização da Edge por Stack
+[0109] Modelo de Edge Constante
+[0110] MDA (>10M mãos) por faixas de stack
+[0111] $\Delta \text{ROI}$ e $\Delta \text{bb}/100$
+[0112] $\Delta \text{ROI}(10\text{bb}) \approx \Delta \text{ROI}(100\text{bb})$.
+[0113] $H_6$
+[0114] Exploitabilidade via AQRE
+[0115] Node-lock fixo e Nash
+[0116] Backtesting histórico com split temporal
+[0117] Regret e $EV$ monetário realizado
+[0118] Política AQRE apresenta regret superior ou $EV$ inferior.
+[0119] $H_7$
+[0120] Opcionalidade do SPR
+[0121] $\Omega(s) \equiv 0$
+[0122] Simulação pareada de trajetórias
+[0123] $\Delta V = V^(s) - V^_{\text{restr}}(s)$
+[0124] $\Omega(s) \le 0$ para $S_{\text{eff}} \ge 40\text{bb}$.
+[0125] $H_8$
+[0126] Downward Drift de Sizings
+[0127] Árvores em ChipEV
+[0128] Solves pareados HRC ChipEV vs. ICMev
+[0129] Frequência de bets $\ge 50%$
+[0130] Frequências de apostas $\ge 50%$ não se alteram.
+[0131] $H_9$
+[0132] Conservação em Late Reg
+[0133] Valor nulo de entrada
+[0134] Monte Carlo em Python com seeds fixas
+[0135] $\sum \Delta V_i + B_{\text{entry}}$
+[0136] Desvio diferente de zero além do erro amostral.
+[0137] $H_{10}$
+[0138] Pacto Silencioso em FT
+[0139] Estratégia em ChipEV
+[0140] Solves HRC pré-flop com short stacks
+[0141] Frequência de 3-bet CL vs. Vice
+[0142] Frequência de 3-bet entre líderes inalterada.
+[0143] $H_{11}$
+[0144] Insolvência de Pot Odds
+[0145] Decisão linear por Odds
+[0146] Teste experimental com profissionais
+[0147] Taxa de erro e perda de $EV$
+[0148] Decisões por Odds têm desempenho idêntico à PMev.
+[0149] $H_{12}$
+[0150] Parcimônia Paramétrica
+[0151] $\text{PMev-0}$ e $\text{PMev-D}$
+[0152] Critérios de informação (AIC/BIC)
+[0153] $\Delta \text{AIC}$ e $\Delta \text{BIC}$
+[0154] $\text{BIC}(\text{PMev-F}) > \text{BIC}(\text{PMev-D})$.
+[0155] 6. Governança e Publicação Científica no GitHub
+[0156] O repositório aberto pmev-benchmark (github.com/RaphaelVitoi) integrará os dados anonimizados, scripts de replicação e pipeline de integração contínua (SOTA v7.0 GOLD) com SonarQube Cloud aprovado, preparando a teoria para submissão aos periódicos e conferências de alto impacto internacional (IEEE Transactions on Games, AAAI, ACM Economics and Computation).
+[0157] Tratado Canônico Definitivo da Teoria da Perspectiva Matemática encapsulado no Google Drive.

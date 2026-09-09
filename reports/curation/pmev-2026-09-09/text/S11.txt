@@ -1,0 +1,59 @@
+[0001] The impact of late registration on stack value according to the independent chip model in multi table tournaments
+[0002] Introduction
+[0003] As a tournament organiser I was recently putting together tournament structures for one of my upcoming events and I was looking into some late registration times.
+[0004] Keeping in mind the payout structure of a tournament, the implementation of the Independent Chip Model (ICM) claims that a start stack is worth more later stages of a tournament. For this reason, I thought about optimizing the late registration times to a limit where a starting stack would not get significantly worth more (ICM wise) than buy-in. Personally, I think this is more fair play because of the following reasoning. Since the prize pool remains the same, it implies that if someone registered he/she gets a stack that’s worth more than the initial buy-in. So basically, the stacks of players already in the tournament get worth less every time someone new registered for the tournament. In the end, this extra value in stack ICM-wise indirectly emanates from the early players their money.
+[0005] In this analysis, I tried to illustrate my insights by running some simulations and comparing some results.  Additionally I want to focus attention on late registration and find out the opinion from the poker community regarding this subject.
+[0006] Methodology
+[0007] I was looking for an ICM calculator for big fields but couldn't find one. Therefor I asked a poker friend, who's also a programmer to see if it was possible to write me a program where I could make such calculations.
+[0008] After some research she came up with something and the results are what I thought they would be more or less.
+[0009] The program is written in R (https://en.wikipedia.org/wiki/R_(programming_language))
+[0010] Since it's nearly impossible to use the exact ICM formula (this formula grows exponentially bigger with every new value that needs to be calculated) because you quickly would run out of computer resources, the program makes random simulations of all possible outcomes that can happen.
+[0011] The formula is based on the average stack at that given moment in the tournament and then implements a random factor to determine a possible finishing position. It then makes a certain number of simulations and comes up with an average.
+[0012] Basically something similar what Equilab does when you using a Monte Carlo Emulation.
+[0013] For the samples I used tournaments where I had as much data available as possible. These tournaments also all had a normal payout structure because that is off course essentially in this
+[0014] Results
+[0015] To start of I first compared some results with an existing ICM calculator that uses the proper formula for some random tournaments that were in the final stages.
+[0016] Real ICM results can be found here: https://www.icmpoker.com/icmcalculator/#YiZF
+[0017] Then I used the simulator and got the following results:
+[0018] On the top row you can see how many simulations I ran and you can see that the more simulations that ran the closer we get to the real value (in green). Just like with any solver we will get more accurate results the longer we let the program run.
+[0019] I did it for another tournament as well with these results.
+[0020] So I was quite satisfied and I looked into some bigger tournaments at the time registration closes.
+[0021] Screenshot taken when the last players registered at the time registration closed (25k startstack).
+[0022] The buy-in for this tournament is $530 with $500 effectively going into the prize pool. The average stack at this time was 79.327.
+[0023] I then ran some simulations with the following results.
+[0024] Again on the top you see the number of simulations that ran and below you can find what the ICM value should be for each stack.
+[0025] On the right hand side I focused on the 25.000 stacks, from which we had 3 in play.
+[0026] ‘Min’ is the lowest value of the three, ‘Max’ the highest. ‘Mean’ is the average and ‘Dif’ is the difference between the lowest and the highest result.
+[0027] As you can see the more simulations that are run, the smaller the difference gets. I also put how long it took on my PC to run it and the amount of memory it uses.
+[0028] So we could conclude here that at the time registration closes for this tournament a starting stack is already worth around $581, which is $81 or 16% more than the initial buy-in.
+[0029] I then took a look at live poker tournament where registration remained open until the start of day 2 and had live reporting so I could get some reliable information regarding all numbers.
+[0030] At the end of day 1 there were 170 out of 499 players left and 19 people registered overnight. So 189/518 to start day 2 with 78 places begin paid.
+[0031] The buy-in for this tournament was $5.000 with $4.650 going into the prize pool effectively.
+[0032] On the official chip counts 2 people didn't report their stack and I gave them both so many chips (highlighted in orange) so that the total number of chips in play would be 100% correct.
+[0033] Just as with the previous one, this tournament also had a 25k startstack and since I had 19 of those I was able to compare more results to come to a better conclusion.
+[0034] The average stack at the start of day 2 was 68.519.
+[0035] In this example I could conclude that a startstack is worth around $5.117, which is $467 or 10.0% more than the initial buy-in of $4.650.
+[0036] I finally did a 3rd experiment where I mainly wanted to focus on which players are losing the most money when someone new is entering. This one is from a live tournament with late registration open until day 2. $9400 per buy-in going into the prize pool. The starting stack for this one is 60.000.
+[0037] 90 players bagged (from 173 entrants at that point) and 10 players registered before the start of day 2 for a total of 183 entrants. I had a prize pool before the overnight players registered and one after. In both this and the previous example 15% of the field is paid.
+[0038] We can see here that all players lost about 0.28% of the value of their stack on average. The players with the most chips lost the most absolute value but the percentage seems to be consistent overall.
+[0039] A new entrant his stack is worth around $9.844 in total or $444 more than the buy-in or 4.7%. This is significantly less than the previous example were new entrants would gain an extra 10%
+[0040] The main reason for this is that only half the field is left here and in the previous one this was about 1/3rd.
+[0041] Conclusion
+[0042] I think that in a lot of the scenarios that I ran simulations on registration remained open for too long allowing players to buy-in and immediately having a stack that is worth too much more than their initial buy-in.
+[0043] Each player that's still in the tournament automatically loses money whenever someone enters after the tournament already started.
+[0044] This just isn't fair to the players that are playing the tournament from the start. They're supporting your tournament by being there on time and they get punished for it. They're also usual recreational players trying to have an enjoyable time. In a lot of occasions, both live and online, I've seen big groups of players (usually professional players) registering at the last minute trying to benefit from this system and this is something that just shouldn't be encouraged.
+[0045] With all the re-entry tournaments going on this also means that players that are in a better financial condition to make those re-entries are even getting the extra financial benefit of this and this really creates an unfair environment to a lot of players.
+[0046] I've also seen it from organisers that are leaving  registration open for too long in order to make sure they hit their guarantee which is again very beneficial for those more wealthy players.
+[0047] With having late registration open for a longer time (especially in higher buy-in/small field tournaments) it also gets more clear which players have gathered the most chips. Professional players will take advantage of this and will then game select if they think it’s more worthwhile for them to still register for a tournament. (If the better players have most of the chips they will skip while they will register if most of the chips are with the lesser experienced players)
+[0048] Summary
+[0049] Late registration is open for too long in my opinion in a lot of events
+[0050] Late registration benefits late entrants directly in a financial way
+[0051] Players are getting encouraged to register late with the current state of late entry
+[0052] Players that are playing from the start are getting a huge disadvantage
+[0053] Creates an unfair environment
+[0054] Discussion
+[0055] My biggest question right now is at what time registration should close in a tournament so that the value of a startstack doesn’t become too big?
+[0056] Some people might argue that the playability of your start stack gets limited because of the fewer big blinds you have to play with when you enter late. However when I looked into win rates from players with short stacks on tables with bigger stacks in play these winrates (in BB/100) where very good so in my opinion it's definitely not a disadvantage.
+[0057] Even at the very beginning of a tournament when the first player gets eliminated a startstack is already worth more than a tiny fraction of the initial buy-in but for me that seems too much of a stretch to close registration at that point. As a tournament organiser you want to give some flexibility to your players and cater to their needs but of course you can’t let them benefit financially from it.
+[0058] So what should it be? Maximum 5% more, even less or is 10% not too big of an issue?
+[0059] My personal feeling is that 5% seems reasonable so that it remains fair for everyone which would mean that whenever the average stack is double the startstack registration should be closing but probably some more investigation should be done to come up with even more accurate numbers.

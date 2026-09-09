@@ -1,0 +1,420 @@
+[0001] ANÁLISE CRÍTICA APROFUNDADA
+[0002] PMev, jogadores profissionais de poker e a alegada mudança de paradigma científico
+[0003] Auditoria técnica, econômica, documental e epistemológica do whitepaper e do corpus complementar
+[0004] Objeto da análise
+[0005] Projeto e metodologia atribuídos a Raphael Vitoi. A autoria do projeto é distinta da autoria desta avaliação crítica independente.
+[0006] Corpus examinado
+[0007] Whitepaper/conversa consolidada “Gemini_2026-08-16 (1)”.
+[0008] Tratado técnico sobre Perspectiva Matemática e Geometria do Risco.
+[0009] Manifesto do Poker Racional.
+[0010] Duas análises derivadas de uma mesma aula no Google Meet.
+[0011] Perfil profissional consolidado de Raphael Vitoi.
+[0012] Data de corte: 17 de agosto de 2026 • Idioma: português brasileiro • Escopo: análise documental; não constitui recomendação financeira, jurídica ou de jogo.
+[0013] Parecer executivo
+[0014] Conclusão em uma frase
+[0015] A PMev é hoje uma hipótese de integração estratégica e um programa de pesquisa promissor — especialmente como linguagem pedagógica para ICM pós-flop, adaptação exploratória e gestão de contexto —, mas ainda não constitui uma teoria científica validada nem uma tecnologia demonstrada como superior aos solvers contemporâneos.
+[0016] Os seis arquivos ampliam substancialmente a compreensão do projeto, mas não multiplicam sua força probatória na mesma proporção. Três documentos são consolidações geradas ou organizadas a partir dos demais; duas análises derivam da mesma aula; o Manifesto é normativo; e o Tratado é uma exposição autoral. Portanto, o corpus contém convergência interna, não replicação independente.
+[0017] O ponto forte real é a proposta pedagógica: abandonar a memorização cega de outputs, modelar o oponente, reconhecer a dependência do contexto de torneio e tratar a estratégia como decisão sequencial. O ponto fraco decisivo é a passagem da boa intuição para a reivindicação científica. Fórmulas misturam unidades, alguns conceitos são redefinidos sem precisão e números centrais aparecem sem dados, arquivos de solver, código, intervalos de confiança ou protocolo reproduzível.
+[0018] Dimensão
+[0019] Nota
+[0020] Leitura
+[0021] Problema e proposta de valor
+[0022] 8,0/10
+[0023] Dor real e público claro; narrativa forte.
+[0024] Coerência conceitual
+[0025] 6,0/10
+[0026] Boas intuições, porém sobreposição com teoria já existente.
+[0027] Formalização matemática
+[0028] 3,0/10
+[0029] Erros de conversão, dimensionalidade e definição.
+[0030] Evidência empírica
+[0031] 2,0/10
+[0032] Casos e afirmações sem dados reproduzíveis.
+[0033] Tecnologia PMev
+[0034] 3,5/10
+[0035] Arquitetura e benchmarks não demonstrados.
+[0036] Produto educacional TrueICM
+[0037] 6,0/10
+[0038] Produto público observável; resultados ainda não auditados.
+[0039] Equipe e identidade pública
+[0040] 6,0/10
+[0041] Identidade e carreira parcialmente corroboradas; credenciais científicas limitadas.
+[0042] Roadmap e governança
+[0043] 3,0/10
+[0044] Direções existem; faltam prazos, responsáveis e critérios de aceite.
+[0045] Qualidade editorial
+[0046] 7,0/10
+[0047] Clara e memorável, mas retórica excede a evidência.
+[0048] Credibilidade científica atual
+[0049] 3,0/10
+[0050] Hipótese pré-validação, não mudança de paradigma estabelecida.
+[0051] 1. Método de avaliação e hierarquia das evidências
+[0052] A análise separa quatro objetos que o material frequentemente aproxima: (a) uma filosofia de estudo; (b) uma hipótese matemática; (c) um método de coaching; e (d) um produto digital. Um objeto pode ser útil sem que os demais estejam validados.
+[0053] Grau
+[0054] Tipo de evidência
+[0055] Como foi tratado
+[0056] A
+[0057] Fonte externa primária, dado reproduzível ou documentação oficial
+[0058] Sustenta afirmações factuais dentro do escopo publicado.
+[0059] B
+[0060] Registro primário fornecido, com parâmetros completos
+[0061] Pode sustentar um caso, desde que o arquivo bruto seja acessível e auditável.
+[0062] C
+[0063] Relato autoral, aula resumida, marketing ou perfil autodeclarado
+[0064] Evidência de que a afirmação foi feita; não de que seja verdadeira.
+[0065] D
+[0066] Hipótese, metáfora ou inferência sem teste
+[0067] Promessa a ser operacionalizada e falsificada.
+[0068] E
+[0069] Afirmação contradita por definição padrão, álgebra ou evidência disponível
+[0070] Requer correção antes de integrar o núcleo teórico.
+[0071] 1.1 Independência real do corpus
+[0072] Documento
+[0073] Função
+[0074] Independência probatória
+[0075] D1 — “Aprofunde-se...”
+[0076] Síntese longa da aula, do Tratado e do Manifesto
+[0077] Baixa: compila fontes do próprio ecossistema.
+[0078] D2 — “Gemini_2026...”
+[0079] Histórico/consolidação extensa
+[0080] Baixa: agrega e repete material dos demais arquivos.
+[0081] D3 — Perfil profissional
+[0082] Biografia e consolidações analíticas
+[0083] Baixa a média: majoritariamente autodeclarada.
+[0084] D4 — Notas Gemini/Meet
+[0085] Análise da aula
+[0086] Baixa: deriva da mesma sessão de D1.
+[0087] D5 — Tratado técnico
+[0088] Núcleo de hipóteses e equações
+[0089] Média como fonte primária da tese; baixa como validação.
+[0090] D6 — Manifesto
+[0091] Princípios e método pedagógico
+[0092] Média como declaração doutrinária; não é teste empírico.
+[0093] Limitação material
+[0094] Os documentos citam uma gravação e uma “transcrição oficial” do Meet, com timestamps. Os arquivos brutos não integram o corpus entregue. Assim, as citações da aula foram tratadas como resumos secundários e não como transcrição autenticada.
+[0095] 2. Visão geral, problema e proposta de valor
+[0096] 2.1 Problema identificado
+[0097] A PMev parte de uma crítica correta em sua forma mais moderada: outputs de solver são condicionais ao modelo, às ranges, aos sizings, à função de payoff e ao comportamento presumido dos adversários. Jogadores que copiam frequências sem compreender premissas podem transferir mal uma solução de equilíbrio para fields reais.
+[0098] O projeto pretende cobrir lacunas práticas do estudo de MTTs: contexto de stacks e payjumps, dinâmica futura de blinds, habilidade pós-flop, tendências populacionais, erros individuais, risco de eliminação, valor de preservar opções futuras e objetivos do jogador.
+[0099] 2.2 Proposta central
+[0100] A proposta de valor é uma camada de decisão contextual sobre o baseline GTO/ICM: partir de uma solução de referência, atualizar crenças sobre o field e o oponente, simular estados futuros e escolher a ação que maximiza uma noção ampliada de “perspectiva” — frequentemente associada a chegar ao topo, preservar alavancagem e explorar assimetrias.
+[0101] Em termos científicos mais convencionais, isso se aproxima de decisão sequencial sob incerteza, jogos estocásticos, modelagem bayesiana de oponentes, utilidade dependente do bankroll e otimização multiobjetivo. A integração pode ser valiosa; o rótulo PMev ainda não demonstrou um objeto matemático novo.
+[0102] 2.3 Público-alvo
+[0103] Jogadores de MTT, sobretudo midstakes/high stakes, gigafields, bolhas e mesas finais.
+[0104] Coaches, stables e equipes que revisam decisões exploratórias pós-flop.
+[0105] Jogadores que dominam ranges preflop, mas carecem de um framework para ICM pós-flop.
+[0106] Em menor grau, iniciantes atendidos pelo produto TrueICM; o whitepaper em si pressupõe conhecimento avançado.
+[0107] Avaliação
+[0108] Problema real e relevante. Proposta pedagogicamente diferenciada. Evidência de superioridade decisória: ainda insuficiente.
+[0109] 3. Tecnologia e arquitetura
+[0110] 3.1 O que existe publicamente
+[0111] O site TrueICM apresenta um produto educacional web criado por Raphael Vitoi, com 90 exercícios em cinco módulos, calculadora ICM, glossário, teste de nivelamento, comunidade e tutor de IA. Isso comprova a existência de uma oferta comercial e de uma interface de treinamento; não comprova a existência de um “motor PMev” independente, validado ou superior.
+[0112] Não há, nos arquivos, especificação de backend, linguagem de implementação em produção, esquema de dados, API, versionamento do modelo, política de atualização, algoritmo de busca, teste de exploitability, benchmark de desempenho ou auditoria externa. Menções a Python, Spark, Rust, WebAssembly e agentes são competências/propostas, não arquitetura demonstrada.
+[0113] 3.2 Arquitetura necessária para a tese
+[0114] Para que a PMev seja tecnicamente avaliável, o sistema deveria declarar pelo menos:
+[0115] Estado s: stacks globais, blinds/antes, posição, payouts, bounties, ranges, histórico, tamanho do field e bankroll.
+[0116] Ações a e árvore: sizings permitidos, abstrações e profundidade do horizonte.
+[0117] Políticas dos oponentes π−i e incerteza θ: baseline, node locks e distribuição posterior.
+[0118] Transição T(s′|s,a,π−i,θ): resultados das cartas, ações futuras, mesas quebrando e progressão de blinds.
+[0119] Função terminal U(z): dinheiro, utilidade de bankroll, probabilidade de top 3 ou combinação explicitamente ponderada.
+[0120] Critério de avaliação: EV monetário, crescimento logarítmico, CVaR, probabilidade de ruína ou fronteira de Pareto.
+[0121] Uma formulação mínima seria:
+[0122] Forma recomendada
+[0123] Q(s,a) = E[ U(Z) | s, a, π−i, b(θ) ].  A crença b(θ) é atualizada por Bayes; Z é o resultado terminal do torneio; a transição incorpora ações futuras. Se houver múltiplos objetivos, os pesos devem ser declarados e submetidos a análise de sensibilidade.
+[0124] 3.3 Blockchain, consenso e infraestrutura descentralizada
+[0125] Não há blockchain, protocolo de consenso, smart contract ou componente descentralizado no material. Esses itens são não aplicáveis. A terminologia “tokenomics” não deve ser importada para um produto educacional convencional.
+[0126] 4. Auditoria matemática e conceitual
+[0127] 4.1 Bubble Factor e Risk Premium: erro central de conversão
+[0128] O Tratado utiliza RP = (BF − 1)/BF e associa BF = 1,388 a aproximadamente 28% de prêmio de risco. Essa conversão não coincide com a definição usual de Risk Premium como a equidade adicional exigida sobre o ponto de indiferença ChipEV.
+[0129] Conversão correta no confronto simétrico
+[0130] Equidade ICM exigida = BF/(BF+1).  Risk Premium = BF/(BF+1) − 0,5.  Para BF = 1,388: equidade ≈ 58,12% e RP ≈ 8,12 pontos percentuais — não 28%.
+[0131] Para uma aposta do tamanho do pote, a fórmula apresentada no Tratado, E_min = B·BF/(P+B+B·BF), resulta em 40,96% quando B=P e BF=1,388. O ChipEV requer 33,33%; portanto, o acréscimo do caso é cerca de 7,63 pontos percentuais. A álgebra dessa equação é consistente com a hipótese de penalização linear por BF; o erro está em converter BF em RP e em transformar um exemplo parametrizado em “teto absoluto”.
+[0132] Não existe teto universal de 38%–41%. Se BF cresce, a equidade exigida também cresce. Satélites podem produzir bubble factors muito superiores; a própria documentação pública de GTO Wizard ilustra BF = 5 e equidade exigida de 83,3%.
+[0133] 4.2 “EV_fold ≠ 0” e o risco de dupla contagem
+[0134] Em análise de nós, é comum normalizar o fold como EV incremental zero. O stack residual obviamente conserva valor absoluto de torneio; isso não significa que o fold tenha EV incremental negativo porque blinds, antes e apostas anteriores já são custos irrecuperáveis no instante da decisão.
+[0135] A formulação “desistir entrega o capital investido” pode induzir sunk-cost fallacy. A comparação correta usa apenas consequências futuras de call, raise e fold a partir do mesmo estado. Se o projeto prefere uma escala absoluta, todas as ações devem receber o mesmo valor-base de stack e a fórmula deve evitar contar o investimento passado novamente.
+[0136] 4.3 Diluição do RP ao longo das streets
+[0137] A afirmação moderada é defensável: o estado muda a cada street, portanto pot odds, ranges, distribuição de stacks e equity monetária precisam ser recalculados. Não existe razão para transportar mecanicamente um RP preflop para o river.
+[0138] A afirmação forte — RP tender necessariamente a zero ou tornar-se negativo em torneio regular quando o SPR cai — não foi demonstrada. Dead money pode reduzir a equidade total necessária para um call, mas o Risk Premium, definido como diferença entre a exigência ICM e a ChipEV no mesmo nó, permanece conceitualmente distinto. Em torneios sem bounty, a pressão ICM usual corresponde a BF superior a 1; RP negativo exige outra fonte de valor, como bounty, ou uma definição nova explicitamente formalizada.
+[0139] 4.4 ICM, Prospect Theory e utilidade
+[0140] O ICM não é “fundado na Prospect Theory”. Ele é um modelo de conversão de stacks em probabilidades de colocação/premiação sob hipóteses simplificadoras. A não linearidade entre fichas e dinheiro vem da estrutura de premiação e do modelo de colocação. Prospect Theory é uma teoria descritiva de escolhas humanas, com dependência de referência, aversão à perda e ponderação de probabilidades.
+[0141] Usar Prospect Theory para prever erros de adversários pode ser útil. Usá-la como função normativa do jogador profissional exige justificar por que vieses descritivos deveriam determinar a decisão ótima. Para normatividade, utilidade esperada, crescimento logarítmico, restrições de ruína e medidas de risco são pontos de partida mais transparentes.
+[0142] 4.5 CFR, repetição e não ergodicidade
+[0143] CFR usa iterações computacionais para reduzir arrependimento e aproximar equilíbrio no jogo modelado. Isso não pressupõe que o jogador real encontrará o mesmo spot infinitas vezes. A expectativa é uma avaliação probabilística de uma decisão; pode ser relevante até para um evento único.
+[0144] A não ergodicidade levanta questões legítimas quando crescimento multiplicativo, ruína ou dependência da trajetória importam. Contudo, ela não refuta automaticamente valor esperado ou equilíbrio. Para que seja contribuição PMev, o texto precisa especificar qual variável evolui multiplicativamente, qual média temporal é otimizada e como isso altera a política em comparação com utilidade esperada convencional.
+[0145] 4.6 Multiway e a alegação O(n²)
+[0146] É plausível que a realização de equidade piore e a complexidade estratégica cresça com participantes adicionais. Mas RIO_mw ~ O(n²) aparece sem definição operacional de RIO, domínio, assíntota, dados ou derivação combinatória. Big-O descreve taxa de crescimento de uma função bem definida; aqui funciona como metáfora matemática. Deve ser substituído por uma hipótese mensurável, por exemplo: perda média de realização por número de jogadores, posição, textura e classe de mão.
+[0147] 4.7 Fator Ψ, EDM e fórmula unificada
+[0148] O Tratado define Ψ = f_b·E_r(S) e depois inclui [Ψ·f_b]·E_r(S) na fórmula unificada, o que duplica os fatores e produz f_b²·E_r(S)². Além disso, EDM = |freq_GTO − freq_observada| mede somente desvio absoluto de frequência; sem tamanho amostral, erro-padrão e pooling hierárquico, não distingue tendência real de ruído.
+[0149] A fórmula unificada mistura equity adimensional, retorno, valuation monetário, EV de fold, reverse implied odds, frequência e edge sem compatibilidade de unidades. Antes de calibrar coeficientes, cada termo precisa estar na mesma unidade — preferencialmente utilidade monetária esperada ou valor normalizado — e ter ação, estado e horizonte explícitos.
+[0150] 5. Casos de uso e evidência apresentada
+[0151] 5.1 AKo no Big Blind contra abertura do Button
+[0152] O caso é pedagogicamente forte: compara shove, 3-bet pequeno e call sob a hipótese de um adversário tight e pós-flop subagressivo, enquanto o Hero preserva ferramentas contra uma mesa passiva. Esse é exatamente o tipo de cenário em que opponent modeling pode alterar uma solução de baseline.
+[0153] Porém, a conclusão “75%–80% do valor real do flat vem da inabilidade do adversário” não é reproduzível. Faltam payouts, stacks de todos os jogadores, antes, ranges completos, versão e parâmetros do solver, árvore pós-flop, node locks, distribuição de boards e método de atribuição causal. O número é, no estado atual, estimativa oral.
+[0154] 5.2 Mesa final e “pacto silencioso”
+[0155] A linguagem de “organismo vivo” e “pacto silencioso” traduz uma realidade conhecida: bubble factors são relacionais; big stacks pressionam stacks médios e também têm razões para evitar colisões com o vice-líder. Como ensino, a metáfora é eficaz. Como teoria nova, ela precisa produzir previsões distintas de ICM pós-flop e solvers com distribuição global de stacks.
+[0156] Há ainda inconsistência terminológica em um exemplo do Manifesto: BTN é descrito com RP de 21,4% e BB com 12,9%, mas a diferença é chamada de “Risk Advantage” favorável ao BTN. Maior RP normalmente significa maior restrição, não vantagem, salvo definição específica não apresentada.
+[0157] 5.3 Gigafields e valor das fichas no early game
+[0158] A ideia de buscar alavancagem contra fields fracos pode ser estrategicamente razoável. A formulação de que as fichas iniciais têm valor monetário “virtualmente nulo”, porém, é excessiva e conflitante com o próprio ICM: o stack inicial representa participação no prize pool, e estudos contemporâneos mostram efeitos ICM detectáveis antes da bolha. A questão prática é magnitude e custo de oportunidade, não ausência de valor.
+[0159] 5.4 Matriz de afirmações e evidências
+[0160] Afirmação
+[0161] Grau
+[0162] Parecer
+[0163] Solvers são modelos condicionais e podem ser mal aplicados
+[0164] A
+[0165] Fundamentada; é limitação reconhecida da modelagem.
+[0166] PMev integra contexto futuro e exploração
+[0167] C/D
+[0168] Definida como intenção; ainda sem especificação completa.
+[0169] CFR assume repetição real do mesmo spot
+[0170] E
+[0171] Confunde iteração computacional com ocorrência real.
+[0172] ICM é baseado em Prospect Theory
+[0173] E
+[0174] Genealogia conceitual incorreta.
+[0175] BF 1,388 equivale a RP de 28%
+[0176] E
+[0177] Erro de conversão sob a definição padrão.
+[0178] Teto universal de equidade em 38%–41%
+[0179] D/E
+[0180] Depende de BF e pot odds; não é universal.
+[0181] RP fica negativo por pot entrapment em MTT regular
+[0182] D/E
+[0183] Não demonstrado e mistura dead money com RP.
+[0184] Multiway RIO cresce O(n²)
+[0185] D
+[0186] Sem definição, derivação ou experimento.
+[0187] AKo call supera shove no cenário narrado
+[0188] C/D
+[0189] Possível com node locks; faltam dados reproduzíveis.
+[0190] 75%–80% do EV do call vem do erro adversário
+[0191] D
+[0192] Estimativa sem método de decomposição.
+[0193] MDA exige mais de 100 mil mãos
+[0194] D
+[0195] Limiar arbitrário sem power analysis.
+[0196] TrueICM oferece curso/calculadora/exercícios
+[0197] A
+[0198] Produto publicamente observável.
+[0199] PMev supera solvers comercialmente disponíveis
+[0200] D
+[0201] Sem benchmark comparativo.
+[0202] 6. Modelo econômico e “tokenomics”
+[0203] Não existe token, emissão, queima, vesting, treasury, staking ou alocação on-chain. Tokenomics é não aplicável.
+[0204] O modelo econômico observável é venda de acesso educacional: o site anuncia pagamento único de US$ 29,90 por um ano de acesso. A página lista exercícios, calculadora, glossário, teste, comunidade e tutor de IA. Faltam, no material analisado, métricas de usuários ativos, conversão, retenção, conclusão, satisfação, chargebacks, custo de aquisição, margem, churn após um ano e eficácia de aprendizagem.
+[0205] Implicação para investidores ou parceiros
+[0206] Sem métricas operacionais e sem propriedade intelectual tecnicamente delimitada, não é possível valorar a PMev como ativo tecnológico. O que existe publicamente sustenta melhor a tese de produto educacional inicial do que a de plataforma científica defensável.
+[0207] 7. Equipe, credibilidade e identidade
+[0208] Raphael Vitoi possui identidade pública verificável e histórico visível como educador/jogador de poker. Há presença pública em redes e YouTube; uma matéria de 2021 descreve atuação como jogador, educador, consultor, ex-instrutor da 4bet e diretor de equipe; o site TrueICM o identifica como criador do conteúdo. Isso reduz o risco de um fundador totalmente anônimo.
+[0209] O perfil fornecido também afirma graduação em Psicologia pela UEMG, embaixadas, participação em equipes, domínio de várias tecnologias e criação de projetos. Parte disso é repetida no próprio site, mas continua autodeclarada. Não foram apresentados diploma, currículo acadêmico, ORCID, artigos revisados por pares, repositório científico do PMev, patente, auditoria independente ou carta formal de parceria.
+[0210] Item
+[0211] Status
+[0212] Leitura
+[0213] Identidade real
+[0214] Parcialmente verificada
+[0215] Presença pública consistente e histórico profissional visível.
+[0216] Experiência em poker/educação
+[0217] Corroborada em parte
+[0218] Fontes públicas descrevem atuação desde antes do projeto.
+[0219] Formação em Psicologia
+[0220] Autodeclarada no corpus/site
+[0221] Solicitar comprovação se for material para parceria.
+[0222] Credenciais matemáticas/científicas
+[0223] Não demonstradas
+[0224] Autodidatismo não substitui validação técnica.
+[0225] Parcerias/embaixadas
+[0226] Algumas autodeclaradas
+[0227] Verificar diretamente com as organizações.
+[0228] Equipe técnica do produto
+[0229] Não divulgada
+[0230] Risco de pessoa-chave e baixa transparência operacional.
+[0231] Investidores institucionais
+[0232] Não identificados
+[0233] Nenhuma evidência no corpus.
+[0234] 8. Roadmap, viabilidade e concorrência
+[0235] 8.1 Estado atual e roadmap inferido
+[0236] Concluído ou observável: manifesto, tratado, aulas, narrativa metodológica e produto TrueICM público. Proposto: árvores customizadas em Python/Spark, node locking automatizado, solver ICM multiway com contexto global, modelagem do field e “motor PMev”.
+[0237] Não há roadmap formal com datas, versões, responsáveis, dependências, orçamento, critérios de aceite ou resultados. Atividades de estudo dos alunos são apresentadas como cronograma, mas não substituem um plano de engenharia do produto.
+[0238] 8.2 Concorrência e novidade residual
+[0239] Capacidade
+[0240] Mercado atual
+[0241] Espaço possível para PMev
+[0242] ICM preflop e FGS
+[0243] ICMIZER e HRC já modelam estados futuros/blinds em diferentes graus.
+[0244] Horizonte maior e políticas calibradas, se demonstrados.
+[0245] ICM pós-flop
+[0246] HRC documenta cálculos pós-flop; GTO Wizard oferece soluções/solves ICM.
+[0247] Integração pedagógica e objetivos de bankroll.
+[0248] Multiway
+[0249] GTO Wizard oferece custom 3-way e bunching em certos contextos.
+[0250] ICM multiway completo e 4+ players, se computacionalmente viável.
+[0251] Opponent modeling
+[0252] PioSOLVER e GTO Wizard oferecem node/frequency locking.
+[0253] Atualização bayesiana automatizada e incerteza explícita.
+[0254] MDA/exploit
+[0255] Prática consolidada no ecossistema de solvers.
+[0256] Metodologia causal, shrinkage e calibração out-of-sample.
+[0257] Treinamento
+[0258] Mercado amplo de trainers e cursos.
+[0259] Narrativa coesa de “geometria do risco” e prática interativa.
+[0260] A concorrência não elimina o projeto; ela desloca o ônus da novidade. A PMev precisa mostrar que sua combinação produz previsões, decisões ou aprendizagem melhores do que um pipeline já disponível de ICM + FGS + node locking + MDA + gestão de bankroll.
+[0261] 9. Análise crítica de riscos
+[0262] Risco
+[0263] Severidade
+[0264] Por que importa
+[0265] Mitigação
+[0266] Formalização incorreta
+[0267] Crítica
+[0268] Erros de BF/RP propagam decisões e material didático.
+[0269] Revisão matemática independente e testes unitários.
+[0270] Overclaim científico
+[0271] Alta
+[0272] “Mudança de paradigma” sem validação reduz confiança.
+[0273] Reposicionar como hipótese/programa de pesquisa.
+[0274] Irreprodutibilidade
+[0275] Alta
+[0276] Casos não podem ser auditados ou comparados.
+[0277] Publicar setups, exports, código e seeds.
+[0278] Viés de confirmação
+[0279] Alta
+[0280] Node locks escolhidos após o resultado podem justificar qualquer linha.
+[0281] Pré-registro, holdout e análise de sensibilidade.
+[0282] Dependência de terceiros
+[0283] Média/alta
+[0284] Dados, solvers, Stripe e IA podem mudar preço/acesso.
+[0285] Contratos, abstração de fornecedores e backups.
+[0286] Pessoa-chave
+[0287] Alta
+[0288] Teoria, conteúdo e produto parecem concentrados no fundador.
+[0289] Equipe, documentação e governança.
+[0290] Adoção
+[0291] Média
+[0292] Jogadores avançados exigem evidência; iniciantes podem achar o jargão pesado.
+[0293] Pilotos controlados e trilhas segmentadas.
+[0294] Regulatório/ético
+[0295] Média
+[0296] Produto ligado a jogo deve evitar promessas financeiras e incentivar jogo responsável.
+[0297] Disclaimers, limites de claims e política de responsabilidade.
+[0298] Privacidade
+[0299] Média
+[0300] Históricos de mãos, perfis e dados de alunos podem ser sensíveis.
+[0301] Minimização, consentimento, retenção e segurança.
+[0302] 9.1 Red flags prioritárias
+[0303] Números precisos sem anexos: 28% RP, 38%–41% de teto, 75%–80% de atribuição, 100 mil mãos, 33% de prevalência multiway.
+[0304] Terminologia científica usada como prova retórica: “não ergódico”, “O(n²)”, “vetorização”, “sistema complexo aberto” e “paradigma”.
+[0305] Convergência interna apresentada como validação: aula, tratado e síntese repetem a mesma fonte autoral.
+[0306] Marketing público com estimativas de dinheiro perdido sem metodologia publicada.
+[0307] Ausência de benchmark contra ferramentas que já oferecem ICM pós-flop, multiway e node locking.
+[0308] 10. Qualidade do documento
+[0309] A redação é fluida, memorável e pedagogicamente poderosa. O texto sabe nomear problemas que jogadores reconhecem: dogmatismo de solver, cegueira ao field, aversão a colisões, papel do chip leader e dificuldade pós-flop sob ICM. O Manifesto é o componente mais consistente porque assume natureza normativa.
+[0310] Como whitepaper científico, porém, a linguagem excede a demonstração. Metáforas são elevadas a variáveis, exemplos são tratados como leis e referências aparecem sem ligação entre citação e derivação. A mistura de português, inglês, notação matemática e rótulos proprietários cria aparência de rigor maior do que a auditabilidade efetiva.
+[0311] Critério
+[0312] Avaliação
+[0313] Clareza narrativa
+[0314] Alta: tese e antagonista são fáceis de entender.
+[0315] Profundidade estratégica
+[0316] Média/alta: bons problemas, bons casos, intuições úteis.
+[0317] Profundidade matemática
+[0318] Baixa/média: fórmulas sem definição completa e erros centrais.
+[0319] Referências
+[0320] Média: nomes relevantes; pouca rastreabilidade por claim.
+[0321] Consistência interna
+[0322] Média/baixa: RP, Ψ e “Risk Advantage” apresentam conflitos.
+[0323] Reprodutibilidade
+[0324] Baixa: faltam dados, código e configurações.
+[0325] Proporção entre linguagem e evidência
+[0326] Desequilibrada: tom de descoberta antecede validação.
+[0327] 11. Protocolo de validação recomendado
+[0328] O projeto pode ganhar credibilidade rapidamente se trocar a reivindicação ampla por hipóteses estreitas e falsificáveis.
+[0329] Corrigir o léxico: definir BF, RP, EV absoluto, EV incremental, utilidade, perspectiva, edge e horizonte; publicar um glossário normativo.
+[0330] Congelar uma versão PMev 0.1: estado, ações, transições, políticas adversárias e payoff na mesma unidade.
+[0331] Selecionar três hipóteses: diluição do RP, valor do flat de AKo com adversário subagressivo e penalidade multiway.
+[0332] Publicar cenários completos: payouts, stacks, blinds/antes, ranges, boards, árvores, versões, tolerâncias e seeds.
+[0333] Pré-registrar comparações antes de rodar: baseline GTO/ICM, FGS, node locks e PMev.
+[0334] Separar treino e teste: calibrar oponentes em uma amostra e avaliar em holdout temporal/por stake.
+[0335] Executar ablações: remover uma variável de cada vez para medir contribuição marginal.
+[0336] Reportar incerteza: intervalos de confiança, sensibilidade a ranges e robustez a erro de classificação.
+[0337] Submeter código e matemática a revisão externa; convidar crítico independente e publicar respostas.
+[0338] Medir efeito educacional: teste pré/pós, transferência para mãos inéditas e retenção após 30/90 dias.
+[0339] 11.1 Experimento mínimo para o caso AKo
+[0340] Etapa
+[0341] Especificação mínima
+[0342] Baseline
+[0343] Resolver o spot completo em ICM com todos os stacks e payouts.
+[0344] Modelo adversário
+[0345] Definir intervalos para open, 4-bet, c-bet, barrel e fold; não um único lock.
+[0346] Ações
+[0347] Comparar shove, 3-bet pequeno e flat em mesma unidade monetária.
+[0348] Future game
+[0349] Simular órbitas e mudança de mesa com política explícita.
+[0350] Atribuição
+[0351] Usar ablação/Shapley ou decomposição causal para estimar a parcela de EV.
+[0352] Robustez
+[0353] Encontrar fronteira onde flat deixa de superar shove conforme o adversário melhora.
+[0354] Relato
+[0355] Exportar árvores, ranges, seeds e tabela completa de resultados.
+[0356] 12. Avaliação final
+[0357] Veredito
+[0358] Credível como proposta pedagógica e agenda de investigação; parcialmente credível como produto inicial; não validado como teoria científica nova, motor algorítmico superior ou “mudança de paradigma”.
+[0359] 12.1 Pontos fortes
+[0360] Identifica um problema real: transferência ingênua de soluções model-conditioned para fields heterogêneos.
+[0361] Integra contexto de torneio, opponent modeling, psicologia aplicada e futuras decisões em uma linguagem acessível.
+[0362] Oferece casos pedagógicos memoráveis e um produto público observável.
+[0363] O fundador tem identidade pública e histórico profissional parcialmente corroborado.
+[0364] A agenda de simulação, node locking e validação empírica é tecnicamente executável se estreitada.
+[0365] 12.2 Lacunas que impedem validação
+[0366] Erro de conversão BF/RP e conclusões numéricas derivadas.
+[0367] Confusão entre valor absoluto do stack, EV incremental e sunk costs.
+[0368] Uso impreciso de Prospect Theory, CFR e não ergodicidade.
+[0369] Fórmula PMev sem coerência dimensional ou política de transição explícita.
+[0370] Ausência de dataset, código, solver exports, benchmark e revisão independente.
+[0371] Roadmap sem prazos, governança e critérios de sucesso.
+[0372] A posição racional não é rejeitar a PMev, nem aceitá-la pelo poder da narrativa. É rebaixar temporariamente seu status: de “teoria comprovada” para “hipótese estruturada”. Se as correções matemáticas forem incorporadas e os testes reproduzíveis confirmarem ganhos robustos, a PMev poderá se tornar um framework aplicado relevante. Até lá, seu maior valor é didático e heurístico, não probatório.
+[0373] 13. Checklist de diligência adicional
+[0374] Solicitação
+[0375] Por que é necessária
+[0376] Critério de aprovação
+[0377] Whitepaper técnico versionado
+[0378] Congelar definições e evitar mudança pós-hoc.
+[0379] Versão, changelog e notação consistente.
+[0380] Código/protótipo PMev
+[0381] Verificar se existe motor além do curso.
+[0382] Execução reproduzível e testes.
+[0383] Exports dos casos
+[0384] Auditar AKo, RP e FT.
+[0385] Parâmetros completos e resultados replicáveis.
+[0386] Dataset MDA
+[0387] Avaliar tendências do field.
+[0388] Anonimizado, documentado e com holdout.
+[0389] Currículos e parcerias
+[0390] Validar credenciais e claims.
+[0391] Confirmação direta/documental.
+[0392] Métricas do TrueICM
+[0393] Avaliar tração e eficácia.
+[0394] Usuários, conclusão, aprendizagem e retenção.
+[0395] Revisão matemática externa
+[0396] Corrigir erros antes de ensino em escala.
+[0397] Parecer público e respostas versionadas.
+[0398] Políticas de privacidade/jogo responsável
+[0399] Mitigar risco regulatório e ético.
+[0400] Documentos claros e prática operacional.
+[0401] Referências e rastreabilidade
+[0402] A. Documentos fornecidos
+[0403] D1. “Aprofunde-se de forma abrangente e detalhada no tema...” (DOCX).
+[0404] D2. “Gemini_2026-08-16 (1)” (DOCX).
+[0405] D3. “Perfil Profissional de Raphael Vitoi” (DOCX).
+[0406] D4. “Analise as notas derivadas da Gemini Note Taking...” (DOCX).
+[0407] D5. “A Teoria da Perspectiva Matemática e a Geometria do Risco no Poker Profissional de Alta Performance” — conteúdo localizado no corpus (DOCX).
+[0408] D6. “Manifesto do Poker Racional: Teoria, Lógica e Adaptação Estratégica” (DOCX).
+[0409] B. Fontes externas consultadas
+[0410] TrueICM — produto, autoria e oferta pública
+[0411] GTO Wizard — Bubble Factor e conversão para equidade
+[0412] GTO Wizard — soluções multiway, nodelocking e biblioteca ICM
+[0413] GTO Wizard — definição de Risk Premium
+[0414] HoldemResources — documentação de cálculos pós-flop
+[0415] ICMIZER — Future Game Simulation
+[0416] PioSOLVER — opponent profiling e node locking
+[0417] Zinkevich et al. — Counterfactual Regret Minimization
+[0418] Peters — The ergodicity problem in economics
+[0419] Games Magazine Brasil — perfil profissional público (2021)
+[0420] Nota de escopo: fontes externas foram usadas para checar definições, capacidades concorrentes e elementos públicos de identidade/produto. Afirmações de marketing permanecem classificadas como tais quando não acompanhadas de metodologia auditável.

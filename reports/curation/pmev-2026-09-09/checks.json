@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "scope": "curation_integrity_and_synthetic_identities_only",
+  "checked_at": "2026-09-09T23:28:04.649305+00:00",
+  "original_files_verified": 14,
+  "originals_requested": true,
+  "source_texts_verified": 13,
+  "claims_verified": 14,
+  "source_references_verified": 41,
+  "asset_entries_verified": 118,
+  "synthetic_experiments_verified": 3,
+  "invalid_distributions_rejected": 4,
+  "solver_reproduction": false,
+  "production_integration": false
+}

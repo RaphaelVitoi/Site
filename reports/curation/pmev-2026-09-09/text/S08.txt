@@ -1,0 +1,144 @@
+[0001] Entendendo o ICM e suas heurísticas
+[0002] Aplicando as noções de RP pós flop
+[0003] Comparativos entre pós flop CHIPEV (GTO Wizard) e ICMev (HRC Pós-Flop)
+[0004] Introdução:
+[0005] As árvores de decisão pré-flop são idênticas em termos de inputs e ranges tanto para o HRC quanto para o GTO Wizard. Contudo, existem diferenças significativas em como esses sistemas tratam os dados pós-flop. O HRC pós-flop leva em conta o Bunching Effect dos jogadores que desistiram pré-flop, considerando o impacto dessas cartas no range restante. Por outro lado, o GTO Wizard foca apenas no Bunching Effect entre os dois jogadores ainda ativos na mão.
+[0006] Além disso, o GTO Wizard baseia-se exclusivamente na stack efetiva entre os jogadores envolvidos, enquanto o HRC pós-flop analisa ambas as stacks dos jogadores em ação, assim como as stacks dos jogadores que já desistiram. Isso é crucial para uma avaliação mais precisa do ICMev (Independent Chip Model expected value), já que o contexto das stacks restantes pode afetar significativamente as estratégias ideais.
+[0007] É também possível notar uma tendência de mais "ruídos" ou variações nas análises do GTO Wizard em comparação com o HRC. Isso pode ser atribuído às diferenças na distância para o Nash Equilibrium (e-Nash) nas quais as simulações foram solucionadas. As simulações realizadas pelo HRC geralmente apresentam um e-Nash menor, indicando que elas podem ser mais precisas do ponto de vista operacional do solver.
+[0008] Essas nuances destacam a importância de escolher o sistema apropriado com base nos requisitos específicos de análise e precisão desejados no estudo de situações de jogo no poker.
+[0009] Inputs utilizados
+[0010] MTT Vanilla 11$
+[0011] Field 126 pessoasFinal Table (9 players)
+[0012] Settings da árvore pós flop
+[0013] *Seleção de sizings para ambos os players. Aquilo que não está preenchido (River) vai imitar os inputs da street anterior. Caso o SPR fique em 2.5, usaremos duas sizings (20% e 50%) e o raise será geométrico (2e). Leads de 25% estarão permitidas em todas as streets de todas as linhas, e o All-In vira opção como sizing a partir do SPR 5.
+[0014] Table Draw
+[0015] Risk Premium
+[0016] BU: 21.4%
+[0017] BB: 12.9%
+[0018] Ambos os RPs são bem significativos, porém o RP do BTN é gigantesco e o Risk Advantage (subtração entre ambos os RPs) a favor dele é +8.5%. Essa é a métrica da proporção do quanto ele pode ser agressivo vs o BB de forma geral.
+[0019] Situação: FT
+[0020] BTN opens minirraise
+[0021] SB folds
+[0022] BB calls
+[0023] POT: 5,63 > simétricos aos apresentados pelo HRC.
+[0024] RANGES:  simétricos aos apresentados pelo HRC.LINHAS ESTRATÉGICAS: simétricas aos apresentados pelo HRC
+[0025] SIZINGS: simétricas aos apresentados pelo HRC + Nodelockins extras
+[0026] Stacks pós flop
+[0027] BTN: 38bbs
+[0028] BB: 53bbs
+[0029] RANGES
+[0030] BTN RFI NA
+[0031] 33.6%
+[0032] BB defense
+[0033] Fold: 17.1%
+[0034] Call: 64.4%
+[0035] 3bet small: 3.7%
+[0036] 3bet polar: 6.5%
+[0037] Shove: 8.4%
+[0038] BOARD (até o river)
+[0039] Defendendo do BB
+[0040] CHIP EV
+[0041] 2 Leading (ChipEV) - compare with
+[0042] 3 IP action após BB check
+[0043] 4 BB XR vs b50
+[0044] 5 IP defense vs BB xR
+[0045] 6 BB XR b50 flop, IP calls, and barrel small turn (2d)
+[0046] IP cbets b50 flop, calls XR, and calls small bet turn
+[0047] 8 OOP xR vs b50 b25 turn e goes all in river (3h)
+[0048] IP river calling xR b50 flop, b25 turn e shove river
+[0049] BB xR b50 flop e shove turn (2d)
+[0050] 11 IP calling XR b50 flop e calling shove turn -
+[0051] 12 Nodelock: IP Action após BB Check - compare with
+[0052] 13 BB X-R vs IP cbet size small  - Compare With
+[0053] 14 IP reaction vs XR -  after cbet small flop - compare with
+[0054] 15 BB XR and betting turn after IP calls (2d) - compare with
+[0055] 16 Range de ataque OOP vs IP cbet small
+[0056] 17 Action BB turn after IP calls no XR (2d) compare with
+[0057] 18 Barreling turn OOP vs IP turn
+[0058] 19 Nodelock: Obrigando o IP a cbetar sizing baixa compare with
+[0059] 20 Range de defesa OOP vs IP cbet small
+[0060] 21 Action BB turn after IP calls no XR (2d)
+[0061] 22 BB barreling small turn (2d)
+[0062] IP defense small size turn
+[0063] 24 Nodelock: Obrigando o OOP a cbetar sizing baixa
+[0064] 25 Range de defesa OOP vs IP cbet small
+[0065] Range de defesa IP vs BB xR
+[0066] 27 Nodelockin permitindo somente a sizing de 50%
+[0067] 28 IP reaction vs cbet turn OOP after xR flop (2d) compare with
+[0068] 29 OOP action river after IP calls turn (river 3h) - compare with
+[0069] 30 XR F, bet turn, Raise cbet Turn NA
+[0070] 31 XR flop, bet turn, shove turn
+[0071] 32 Reaction vs barrel 50% turn
+[0072] BB donkbet shove river after x-r NA IP turnRange de call vs donk shove river IP
+[0073] XR flop, X b20 turn
+[0074] Reaction BB vs x turn e bet baixa IP
+[0075] 36 BB Leading
+[0076] 37 OOP shoving river
+[0077] 38 IP calls OOP shove river (3h)
+[0078] ICMev
+[0079] 39 Leading (IcmEV) - Compare with
+[0080] 40 7% de lead: Pode ser ruído ou pode ser a influência do ICM em favor do BB. * Solvar melhor.
+[0081] 41 IP action após BB check - Compare With
+[0082] A frequência mínima de cbets mais elevadas pode estar sendo influenciada por variáveis externas (necessitando de uma análise mais apurada no solver). No entanto, essas estratégias estão sendo mixadas, o que indica que o Valor Esperado (EV) entre uma opção estratégica e outra é equivalente.
+[0083] No contexto específico do ICM desta mesa final, observa-se um aumento substancial na frequência de checks em comparação com a abordagem baseada em "chipEV". Além disso, as apostas com tamanhos maiores migraram quase completamente para uma abordagem de menor sizing.
+[0084] Essa prática de utilizar um sizing pequeno é quase inexistente em cenários baseados exclusivamente em ChipEV.
+[0085] 42 BB X-R vs IP cbet size small - Compare With
+[0086] 43 IP reaction vs XR -  compare with
+[0087] Sticky.
+[0088] 44 BB XR and betting turn after IP calls (2d) - compare with
+[0089] 45 IP reaction vs cbet turn OOP after xR flop (2d) compare with
+[0090] 46 OOP action river after IP calls turn (river 3h) compare with
+[0091] 47 IP reaction river after OOP b50 - compare with
+[0092] 48 OOP reaction after shove river against b50 -
+[0093] 49 IP reaction river after OOP reraises against b50
+[0094] Linha de cbet-call do BB
+[0095] CHIP EV
+[0096] 50 BB leading
+[0097] 51 BB não sai de lead
+[0098] 53 Range de cbet do IP
+[0099] 54 Obrigando o IP a ter somente B20
+[0100] 55 BB reaction after B20
+[0101] 56 IP Second Barrel (2d)
+[0102] 57 BB reaction after IP check back turn (2d)
+[0103] IP facing small bet river B20 (3h)
+[0104] OOP facing reraise NAI river after x-x turn B20
+[0105] 60 IP facing shove river after a reraise NA river (b20)
+[0106] 61 BB double check in until the river, IP action
+[0107] OOP facing B50 after double checking until the river
+[0108] OOP facing 75% after double checkin until de river
+[0109] 64 BB defense after IP b50 turn barrel
+[0110] 65 IP cbets B20 flop, cbets B50 turn, and goes to the river
+[0111] 66 BB action after facing B20 flop, B50 turn and B50 river (3h)
+[0112] 67 BB action after facing B20, B50 turn and b50 River
+[0113] 68 Range de cbet only b50 do IP
+[0114] 69 Range BB de reaction flop vs b50
+[0115] 70 Range de Barrel Turn IP após check range OOP (2d)
+[0116] 71 Range de defesa BB no turn após barrel do IP
+[0117] Range de third barrel do IP após range check do OOP
+[0118] 73 Range de call do OOP no shove river após b50, b75, and shove river.
+[0119] ICMev
+[0120] 74 BB leading
+[0121] 75 IP action after BB check
+[0122] 76 BB facing a small cbet
+[0123] 77 BB action after x-x flop (mostly small sizing)
+[0124] 78 IP defense after x-x flop and OOP bet small turn
+[0125] 79 BB action river after x-x flop and bet small turn
+[0126] 80 IP defense after x-x flop OOP bet small turn and bet small river river
+[0127] 81 IP defense after x-x flop OOP bet small turn and OOP bet large river
+[0128] 82 IP Facing Lead
+[0129] 83 BB x-call flop, lead turn
+[0130] 84 BB x-call flop, leads the turn and barrel the river
+[0131] 12.3.3 BB x-call flop, leads the turn, barrel the river and IP shoves
+[0132] 86 BB Check, IP b50
+[0133] 87 BB x, IP b50, BB xr and IP turn action
+[0134] 88 BB x-c flop, x-x turn, IP action river
+[0135] 89 IP action after x-x turn and facing a small river bet
+[0136] 90 BB reaction against a river raise after x-x turn and b20 river
+[0137] 91 BB reaction vs 2nd Barrel IP (b50)
+[0138] 92 IP barreling river (BB checking range).
+[0139] 13 BB reaction against IP b50% river
+[0140] Conclusões sobre o ICMev:
+[0141] O aumento significativo na frequência de checks e a preferência por sizings menores em comparação com abordagens baseadas em "chipEV" destacam a influência do ICM nas decisões pós-flop.
+[0142] Considerações Finais:
+[0143] O entendimento detalhado do ICM, especialmente nas fases críticas de torneios, é essencial para maximizar as estratégias e adaptar-se às dinâmicas complexas do jogo.
+[0144] Esta revisão visa proporcionar uma leitura mais fluida e organizada, facilitando o entendimento das complexidades do ICM e suas aplicações práticas.
