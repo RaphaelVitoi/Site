@@ -180,7 +180,33 @@ try {
   trace("run-axe");
   await runtimeValue(client, sessionId, axeSource);
   const axe = await runtimeValue(client, sessionId, `(async () => {
-    const report = await axe.run(document);
+    // FRONTEIRA DA EXTENSAO (2026-09-09). axe.run(document) varre o documento
+    // INTEIRO, inclusive o shadow DOM que extensoes de navegador injetam.
+    //
+    // MEDIDO: o axe reportava aria-hidden-focus, com 2 nodes, nos alvos
+    // ["tinamind-app", 'div[data-sentinel="start"]'] e o equivalente "end".
+    // \`git grep\` por "tinamind" e por "data-sentinel" em todo o repositorio
+    // devolve NADA -- o elemento nao existe no codigo versionado. Ele vem das
+    // extensoes do perfil de medicao (SOTA COCKPIT e NANO TAB, declaradas pelo
+    // Tier 0 em 2026-09-09), e o Chrome da 9222 tem 8 targets de extensao.
+    //
+    // POR QUE ISSO IMPORTA ALEM DO WARNING: sem a exclusao, o veredito de a11y
+    // do portao depende de quais extensoes estao instaladas, e o MESMO commit
+    // aprova numa maquina e reprova noutra. E o principio que o
+    // registro-2026-09-01-fronteira-http-e-portao-independente-de-perfil fixou.
+    //
+    // A LISTA E POR NOME, E DE PROPOSITO. Uma versao anterior desta correcao
+    // excluia todo custom element filho direto do body, e o teste a derrubou:
+    // ela removia o next-route-announcer, que e do PROPRIO Next.js e anuncia
+    // mudanca de rota a leitores de tela -- cobertura de a11y real. Nome
+    // explicito nao mascara componente do projeto, e uma extensao nova faz o
+    // warning voltar, que e o comportamento correto: exige nova verificacao.
+    const EXTERNOS = ["tinamind-app"];
+    const presentes = EXTERNOS.filter((tag) => document.querySelector(tag) !== null);
+    const contexto = presentes.length > 0
+      ? { exclude: presentes.map((tag) => [tag]) }
+      : document;
+    const report = await axe.run(contexto);
     const summarize = (items) => items.map((item) => ({
       id: item.id,
       impact: item.impact,
@@ -198,6 +224,10 @@ try {
       incomplete: report.incomplete.length,
       violationDetails: summarize(report.violations),
       incompleteDetails: summarize(report.incomplete),
+      // Cobertura declarada, nunca silenciosa: quais raizes externas estavam
+      // presentes e ficaram fora da varredura. Lista vazia significa que o axe
+      // varreu o documento inteiro.
+      excludedRoots: presentes,
     };
   })()`);
 
