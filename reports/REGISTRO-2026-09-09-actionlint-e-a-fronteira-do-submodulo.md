@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-aberturas"
 criado_em: 2026-09-09T04:40:00-03:00
-atualizado_em: 2026-09-09T04:40:00-03:00
+atualizado_em: 2026-09-09T05:20:00-03:00
 classes: [interno, medido, ci, fronteira]
 caminhos:
   - .github/workflows/sota-ci.yml
@@ -55,6 +55,27 @@ verificado:
   - >-
     SUITE: 1036 passed, 1 skipped, zero warnings. Eram 1032 antes; os 4 novos
     sao a guarda desta fronteira. ruff check e ruff format limpos.
+  - >-
+    SEGUNDA ITERACAO, MEDIDA NO CI: a primeira versao deste passo usava
+    $WORKFLOWS sem aspas e o actionlint -- que roda shellcheck dentro dos blocos
+    run: -- acusou SC2086 "Double quote to prevent globbing and word splitting"
+    na linha 209, derrubando o job de novo.
+  - >-
+    ASPAS NAO RESOLVEM: "$WORKFLOWS" viraria um unico argumento contendo
+    quebras de linha, e o actionlint receberia um nome de arquivo inexistente. A
+    forma correta e array: git ls-files -z alimentando mapfile -d '', que separa
+    por NUL e sobrevive a espaco em nome de arquivo.
+  - >-
+    POR QUE NAO PEGUEI LOCALMENTE NA PRIMEIRA VEZ: validei o COMANDO solto, nao
+    o WORKFLOW. O actionlint so analisa o shell script quando le o arquivo do
+    workflow. Validado agora do jeito certo -- actionlint sobre
+    .github/workflows/sota-ci.yml devolve exit 0 SEM ACHADOS -- e o script foi
+    executado na mao, devolvendo 1 item enumerado, em bash 5.3.15.
+  - >-
+    UMA REGRESSAO MINHA FOI PEGA PELO PROPRIO ACTIONLINT LOCAL: ao corrigir, o
+    escape do printf quebrou o YAML, e actionlint acusou
+    "could not parse as YAML: could not find expected ':'" na linha 218. A
+    correcao foi feita e revalidada antes do commit.
 nao_verificado:
   - >-
     Nao confirmei ainda que o job fica verde no CI: exige o push.
@@ -264,6 +285,50 @@ Restabelecida a fronteira, aquele submodulo deixa de ter consumidor versionado,
 e a recomendacao volta a valer para os seis. **Nada foi removido**: a decisao
 segue sendo do Tier 0, e o registro existe para que ela seja tomada sobre o
 estado atual e nao sobre o anterior.
+
+## Emenda -- a segunda iteracao, e a licao que ela custou
+
+A primeira versao deste passo reprovou no CI de novo, e por um achado
+**legitimo do proprio actionlint**:
+
+```
+.github/workflows/sota-ci.yml:209:9: shellcheck reported issue in this script:
+SC2086:info:5:40: Double quote to prevent globbing and word splitting
+```
+
+Ou seja: a fronteira foi restabelecida e o actionlint voltou a funcionar -- e a
+primeira coisa que ele encontrou foi **o meu codigo**.
+
+**Aspas nao resolvem.** `"$WORKFLOWS"` viraria um argumento unico contendo
+quebras de linha, e o actionlint receberia um nome de arquivo que nao existe. A
+forma correta e array:
+
+```bash
+mapfile -d '' -t WORKFLOWS < <(git ls-files -z '.github/workflows/*.yml' '.github/workflows/*.yaml')
+test "${#WORKFLOWS[@]}" -gt 0
+uv run --with actionlint-py actionlint "${WORKFLOWS[@]}"
+```
+
+O `-z` do git com `mapfile -d ''` separa por NUL, o que sobrevive a espaco em
+nome de arquivo -- coisa que a versao com quebra de linha nao fazia.
+
+### Por que eu nao peguei isso localmente
+
+**Validei o comando solto, e nao o workflow.** Rodei `actionlint` passando o
+caminho enumerado, o que testa se aqueles arquivos estao bem formados. Mas o
+actionlint tambem roda `shellcheck` **dentro dos blocos `run:`** -- e isso so
+acontece quando ele le o arquivo do workflow.
+
+Validar o comando nao e validar o passo. Refeito do jeito certo, `actionlint`
+sobre `.github/workflows/sota-ci.yml` devolve **exit 0, sem achados**, e o
+script foi executado na mao: 1 item enumerado, em bash 5.3.15.
+
+### E uma regressao que o instrumento local pegou
+
+Ao corrigir, o escape do `printf` quebrou o YAML, e o `actionlint` local acusou
+`could not parse as YAML` na linha 218. Foi corrigido e revalidado **antes** do
+commit -- que e exatamente o valor de ter passado a rodar a ferramenta do jeito
+que o CI a roda.
 
 **Assinatura:** `Claude Opus 5 [Tier 1.B]`
 **Proposito:** restabelecer no passo de Actionlint a fronteira do submodulo que
