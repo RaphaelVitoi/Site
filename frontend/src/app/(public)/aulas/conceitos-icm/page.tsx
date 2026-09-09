@@ -167,9 +167,8 @@ export default function ConceitosICM() {
 									Equação de Decisão
 								</h4>
 								<p className="font-mono text-xs text-text-muted mb-0 leading-relaxed">
-									Esperança(ação) = P(ganhar) &times; &Delta;Perspectiva
-									<sub>ganho</sub> + P(perder) &times; &Delta;Perspectiva
-									<sub>perda</sub>
+									Esperança(ação) = P(ganhar) &times; <span>&Delta;Perspectiva<sub>ganho</sub></span>{' '}
+									+ P(perder) &times; <span>&Delta;Perspectiva<sub>perda</sub></span>
 								</p>
 							</div>
 

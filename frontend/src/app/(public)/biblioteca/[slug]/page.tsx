@@ -20,6 +20,28 @@ import { ROUTES } from '@/constants/routes';
 
 type ContentFetchError = Error & { status?: number };
 
+function getCatalogState(status: number | undefined, slug: string | string[] | undefined) {
+	if (status === 401 || status === 403) {
+		return {
+			title: 'Catálogo Protegido',
+			message:
+				'O catálogo dinâmico exige uma sessão autorizada. A publicação pública deste conteúdo ainda não está habilitada.',
+		};
+	}
+
+	if (status === 404) {
+		return {
+			title: 'Artefato Não Publicado',
+			message: `O slug "${slug}" ainda não foi publicado no catálogo dinâmico.`,
+		};
+	}
+
+	return {
+		title: 'Catálogo Indisponível',
+		message: 'Não foi possível consultar o catálogo dinâmico neste momento. Tente novamente mais tarde.',
+	};
+}
+
 const fetcher = async (url: string) => {
 	const response = await fetch(url);
 	if (!response.ok) {
@@ -46,23 +68,7 @@ export default function DynamicArticlePage() {
 
 	if (error || !content || content.error) {
 		const status = (error as ContentFetchError | undefined)?.status;
-		const catalogState =
-			status === 401 || status === 403
-				? {
-						title: 'Catálogo Protegido',
-						message:
-							'O catálogo dinâmico exige uma sessão autorizada. A publicação pública deste conteúdo ainda não está habilitada.',
-					}
-				: status === 404
-					? {
-							title: 'Artefato Não Publicado',
-							message: `O slug "${slug}" ainda não foi publicado no catálogo dinâmico.`,
-						}
-					: {
-							title: 'Catálogo Indisponível',
-							message:
-								'Não foi possível consultar o catálogo dinâmico neste momento. Tente novamente mais tarde.',
-						};
+		const catalogState = getCatalogState(status, slug);
 
 		return (
 			<div className="min-h-screen flex flex-col items-center justify-center bg-bg-base text-accent-danger gap-6">

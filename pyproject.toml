@@ -161,6 +161,7 @@ dev = [
 #   pyasn1       <- pyasn1-modules                    6 advisories
 #   setuptools   <- torch                             2 advisories
 #   torch        <- sentence-transformers             1 advisory
+#   httpx2        <- mcp                               3 advisories
 #
 # Reverificado em 2026-09-02 contra a OSV, os 210 pacotes do uv.lock:
 #   transformers <- sentence-transformers             1 advisory
@@ -177,6 +178,7 @@ constraint-dependencies = [
     "setuptools>=83.0.0",
     "torch>=2.13.0",
     "transformers>=5.10.0",
+    "httpx2>=2.12.0",
 ]
 
 # ==============================================================================

@@ -1,7 +1,8 @@
 ﻿[CmdletBinding()]
 param(
     [ValidateSet('core', 'local-ai', 'research-browser', 'security-aikido', 'performance-ci', 'media-studio')]
-    [string]$Profile = 'core',
+    [Alias('Profile')]
+    [string]$PluginProfile = 'core',
     [switch]$DryRun,
     [switch]$CheckAll
 )
@@ -104,14 +105,14 @@ if ($CheckAll) {
     exit 0
 }
 
-$selected = @($profileConfig.profiles | Where-Object { $_.id -eq $Profile }) | Select-Object -First 1
+$selected = @($profileConfig.profiles | Where-Object { $_.id -eq $PluginProfile }) | Select-Object -First 1
 if ($null -eq $selected) {
-    throw "Perfil não encontrado: $Profile"
+    throw "Perfil não encontrado: $PluginProfile"
 }
 
 $profileFailures = @(Test-ProfileRequirements -ProfileDefinition $selected)
 if ($profileFailures.Count -gt 0) {
-    throw "Perfil '$Profile' não foi ativado: $($profileFailures -join '; ')"
+    throw "Perfil '$PluginProfile' não foi ativado: $($profileFailures -join '; ')"
 }
 
 $enabledIds = New-Object System.Collections.Generic.List[string]

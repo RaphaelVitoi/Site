@@ -93,4 +93,3 @@ O contraste ICMev × ChipEV executado em 2026-09-08 chegou por evidência ao
 comportamento que este documento previu por teoria em março: sizing muito baixa
 em alta frequência é a arma do lado de menor Risk Premium, e nenhum dos dois lados
 quer inflar o pote. O B20 é a formalização disso.
-

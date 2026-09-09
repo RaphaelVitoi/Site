@@ -43,7 +43,7 @@ export default function QuemSouPage() {
         {/* Fibonacci watermark — near invisible */}
         <FibonacciMark />
 
-        <div className="mx-auto max-w-[1040px] px-10">
+        <div className="mx-auto max-w-260 px-10">
           {/* Breadcrumb */}
           <nav
             aria-label="Caminho de navegação"
@@ -62,7 +62,7 @@ export default function QuemSouPage() {
             <div className="mb-8 space-y-5 lg:mb-0 lg:pr-20">
               <div className="mb-5 h-px w-8 bg-[#B09460]" />
               <p className="font-mono text-[0.6rem] tracking-[0.5em] text-[#B09460] uppercase">Especialista em ICM</p>
-              <p className="max-w-[300px] text-[1.1rem] leading-[1.75] font-normal text-[#262423]">
+              <p className="max-w-75 text-[1.1rem] leading-[1.75] font-normal text-[#262423]">
                 Educador, jogador profissional e escritor. Mais de uma década desconstruindo o jogo.
               </p>
             </div>
@@ -82,7 +82,7 @@ export default function QuemSouPage() {
       {/* ════════════════════════════════════════════════════════════
           II. IDENTITY — φ grid with stat orchestra
       ════════════════════════════════════════════════════════════ */}
-      <section className="mx-auto max-w-[1040px] px-10 py-24">
+      <section className="mx-auto max-w-260 px-10 py-24">
         <div className="grid grid-cols-1 items-start gap-0 lg:grid-cols-[38.2%_61.8%]">
           {/* ── Left column ── */}
           <div className="space-y-8 pb-16 lg:pr-20 lg:pb-0">
@@ -110,7 +110,7 @@ export default function QuemSouPage() {
               {['ICM e Risk Premium', 'GTO e Equilíbrio', 'Embaixador GTO Wizard', 'Psicologia (UEMG)'].map((tag) => (
                 <span
                   key={tag}
-                  className="font-body rounded-full border border-[#DED9D2] px-[14px] py-[6px] text-[0.65rem] font-normal tracking-[0.01em] text-[#262423]"
+                  className="font-body rounded-full border border-[#DED9D2] px-3.5 py-1.5 text-[0.65rem] font-normal tracking-[0.01em] text-[#262423]"
                 >
                   {tag}
                 </span>
@@ -191,7 +191,7 @@ export default function QuemSouPage() {
                 href="https://trueicm.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-lg border border-[#DED9D2] bg-transparent px-7 py-[13px] font-mono text-[0.65rem] tracking-[0.3em] text-[#262423] uppercase no-underline transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
+                className="flex items-center gap-3 rounded-lg border border-[#DED9D2] bg-transparent px-7 py-3.25 font-mono text-[0.65rem] tracking-[0.3em] text-[#262423] uppercase no-underline transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
               >
                 TrueICM.com <i className="fa-solid fa-arrow-up-right-from-square text-[0.55rem]" />
               </Link>
@@ -211,16 +211,16 @@ export default function QuemSouPage() {
           <h2 className="font-display text-[clamp(1.8rem,3.5vw,2.6rem)] leading-[1.1] font-black tracking-tight text-[#0D0C0A]">
             A Perspectiva Soberana
           </h2>
-          <p className="max-w-[500px] text-[1.07rem] leading-[1.78] font-normal text-[#262423]">
+          <p className="max-w-125 text-[1.07rem] leading-[1.78] font-normal text-[#262423]">
             Transmissão audiovisual sobre a física do pôquer, solvers e o ecossistema analítico Nexus.
           </p>
 
           {/* Video — gallery frame aesthetic */}
           <div className="relative overflow-hidden rounded border border-[#DED9D2] bg-[#0D0C0A] shadow-[0_8px_64px_rgba(13,12,10,0.12),0_2px_8px_rgba(13,12,10,0.06)]">
-            <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-[#0D0C0A] px-5 py-[14px] font-mono text-[0.52rem] tracking-[0.38em] text-white uppercase">
+            <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-[#0D0C0A] px-5 py-3.5 font-mono text-[0.52rem] tracking-[0.38em] text-white uppercase">
               <div className="flex items-center gap-2">
                 <span
-                  className={`inline-block h-[5px] w-[5px] rounded-full ${isPlaying ? 'bg-white/50' : 'bg-white/15'}`}
+                  className={`inline-block h-1.25 w-1.25 rounded-full ${isPlaying ? 'bg-white/50' : 'bg-white/15'}`}
                 />{' '}
                 raphaelvitoi.mp4
               </div>
@@ -284,11 +284,11 @@ export default function QuemSouPage() {
             <div key={node.title} className="group/node relative">
               {/* Dot */}
               <div
-                className={`absolute top-[5px] left-[-55px] h-[13px] w-[13px] rounded-full bg-[#F5F3EE] transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/node:scale-125 group-hover/node:border-[#B09460] group-hover/node:bg-white ${node.active ? 'border-[1.5px] border-[#B09460]' : 'border border-[#C8C4BC]'}`}
+                className={`absolute top-1.25 -left-13.75 h-3.25 w-3.25 rounded-full bg-[#F5F3EE] transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/node:scale-125 group-hover/node:border-[#B09460] group-hover/node:bg-white ${node.active ? 'border-[1.5px] border-[#B09460]' : 'border border-[#C8C4BC]'}`}
               />
               <div className="space-y-2.5 transition-all duration-500 group-hover/node:translate-x-1.5">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded border border-[#EDE8E1] px-[10px] py-1 font-mono text-[0.62rem] tracking-[0.2em] text-[#B09460]">
+                  <span className="rounded border border-[#EDE8E1] px-2.5 py-1 font-mono text-[0.62rem] tracking-[0.2em] text-[#B09460]">
                     {node.period}
                   </span>
                   <span className="font-mono text-[0.52rem] tracking-[0.38em] text-[#888680] uppercase">
@@ -298,7 +298,7 @@ export default function QuemSouPage() {
                 <h3 className="text-[1.05rem] leading-[1.2] font-bold tracking-[-0.01em] text-[#0D0C0A]">
                   {node.title}
                 </h3>
-                <p className="max-w-[600px] text-[1.05rem] leading-[1.78] font-normal text-[#262423]">{node.desc}</p>
+                <p className="max-w-150 text-[1.05rem] leading-[1.78] font-normal text-[#262423]">{node.desc}</p>
               </div>
             </div>
           ))}
@@ -315,7 +315,7 @@ export default function QuemSouPage() {
         <h2 className="font-display mt-5 mb-5 text-[clamp(1.8rem,3.5vw,2.6rem)] leading-[1.1] font-black tracking-tight text-[#0D0C0A]">
           Pilares Teóricos
         </h2>
-        <p className="mb-14 max-w-[500px] text-[1.07rem] leading-[1.78] font-normal text-[#262423]">
+        <p className="mb-14 max-w-125 text-[1.07rem] leading-[1.78] font-normal text-[#262423]">
           Os axiomas que regem a inteligência preditiva por trás de toda a modelagem estratégica.
         </p>
 
@@ -346,7 +346,7 @@ export default function QuemSouPage() {
               key={p.roman}
               className="cursor-default rounded border border-[#DED9D2] bg-[#FAFAF7] px-8 py-7 transition-all duration-400 ease-in-out hover:border-[#B09460]/40 hover:shadow-[0_4px_32px_rgba(176,148,96,0.08)]"
             >
-              <p className="font-display mb-[14px] text-[0.85rem] font-black tracking-widest text-[#DED9D2]">
+              <p className="font-display mb-3.5 text-[0.85rem] font-black tracking-widest text-[#DED9D2]">
                 {p.roman}
               </p>
               <h4 className="mb-3 text-[0.88rem] font-bold tracking-[0.04em] text-[#0D0C0A] uppercase">{p.title}</h4>
@@ -363,14 +363,14 @@ export default function QuemSouPage() {
 
 function GoldenRule() {
   return (
-    <div className="mx-auto max-w-[1040px] px-10">
+    <div className="mx-auto max-w-260 px-10">
       <div className="h-px bg-[#DED9D2]" />
     </div>
   );
 }
 
 function ClassicalSection({ children, bottom }: { readonly children: React.ReactNode; readonly bottom?: boolean }) {
-  return <section className={`mx-auto max-w-[1040px] px-10 ${bottom ? 'pt-24 pb-32' : 'py-24'}`}>{children}</section>;
+  return <section className={`mx-auto max-w-260 px-10 ${bottom ? 'pt-24 pb-32' : 'py-24'}`}>{children}</section>;
 }
 
 function SectionLabel({ children, left }: { readonly children: React.ReactNode; readonly left?: boolean }) {
@@ -385,7 +385,7 @@ function SectionLabel({ children, left }: { readonly children: React.ReactNode; 
 /** Near-invisible Fibonacci watermark — pure geometry */
 function FibonacciMark() {
   return (
-    <div className="pointer-events-none absolute top-[60px] right-[60px] opacity-[0.055] select-none">
+    <div className="pointer-events-none absolute top-15 right-15 opacity-[0.055] select-none">
       <svg width="320" height="320" viewBox="0 0 320 320" fill="none">
         {/* Fibonacci squares approximation */}
         <rect x="160" y="160" width="160" height="160" stroke="#0D0C0A" strokeWidth="0.6" />
@@ -406,7 +406,7 @@ function FibonacciMark() {
 /** Classical observatory sigil — rings and sweep */
 function ClassicalSigil() {
   return (
-    <div className="group/sigil relative flex aspect-square w-full max-w-[260px] items-center justify-center overflow-hidden rounded border border-[#DED9D2] bg-[#FAFAF7] transition-all duration-700 hover:scale-[1.03] hover:border-[#B09460]/40 hover:shadow-[0_12px_36px_rgba(176,148,96,0.08)]">
+    <div className="group/sigil relative flex aspect-square w-full max-w-65 items-center justify-center overflow-hidden rounded border border-[#DED9D2] bg-[#FAFAF7] transition-all duration-700 hover:scale-[1.03] hover:border-[#B09460]/40 hover:shadow-[0_12px_36px_rgba(176,148,96,0.08)]">
       <svg
         viewBox="0 0 160 160"
         fill="none"
@@ -465,13 +465,13 @@ function ClassicalSigil() {
       ].map((c) => (
         <div
           key={`bracket-${c.top !== undefined ? 't' : 'b'}-${c.left !== undefined ? 'l' : 'r'}`}
-          className={`absolute h-4 w-4 ${c.top ? 'top-[14px]' : ''} ${c.bottom ? 'bottom-[14px]' : ''} ${c.left ? 'left-[14px]' : ''} ${c.right ? 'right-[14px]' : ''} ${c.bt ? 'border-t border-[#B09460]/30' : ''} ${c.bb ? 'border-b border-[#B09460]/30' : ''} ${c.bl ? 'border-l border-[#B09460]/30' : ''} ${c.br ? 'border-r border-[#B09460]/30' : ''}`}
+          className={`absolute h-4 w-4 ${c.top ? 'top-3.5' : ''} ${c.bottom ? 'bottom-3.5' : ''} ${c.left ? 'left-3.5' : ''} ${c.right ? 'right-3.5' : ''} ${c.bt ? 'border-t border-[#B09460]/30' : ''} ${c.bb ? 'border-b border-[#B09460]/30' : ''} ${c.bl ? 'border-l border-[#B09460]/30' : ''} ${c.br ? 'border-r border-[#B09460]/30' : ''}`}
         />
       ))}
 
       {/* Status */}
       <div className="absolute bottom-4 flex items-center gap-1.5 font-mono text-[0.52rem] tracking-[0.32em] text-[#888680] uppercase">
-        <span className="inline-block h-[5px] w-[5px] animate-[pulse_2.5s_ease-in-out_infinite] rounded-full bg-[#7DC3A0]" />{' '}
+        <span className="inline-block h-1.25 w-1.25 animate-[pulse_2.5s_ease-in-out_infinite] rounded-full bg-[#7DC3A0]" />{' '}
         Ativo · Head Coach
       </div>
     </div>
