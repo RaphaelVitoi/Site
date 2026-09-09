@@ -590,18 +590,11 @@ cognitivos de ponta que operam sob o seu consentimento.
    a medição que a originou vivem **apenas** na raiz; aqui há ponteiro e não cópia,
    pela mesma razão que a §7 deste arquivo documenta no caso do `AGENTS.md`.
 
-**Medição que originou a emenda, 2026-09-02.** O exemplo desta mesma linha
-trazia `Chico v8.0 GOLD [Tier 1.B]` — o grupo ocupando o campo do autor —, e
-duas linhas abaixo a seção exige que cada agente seja distinguível. Oito
-registros em `reports/` seguiram o exemplo e estão assinados `chico` ou
-`chico@v8-gold`, sem linhagem: são amostras sem origem identificada, do mesmo
-tipo que o portão de calibração recusa quando falta `session_id`. Os outros 59
-discriminam corretamente, e os doze commits mais recentes assinam
-`Claude Opus 5 <noreply@anthropic.com>` — **prática medida vencendo exemplo
-citado**, que é a §4 da raiz aplicada ao próprio documento.
-
-Os oito registros antigos **não se reescrevem**: histórico publicado não
-retroage. A divergência fica declarada, e o exemplo corrigido impede que cresça.
+**Identificação distinta de agentes.** Cada agente deve ter identificação
+distinta em registros e commits — o grupo nunca ocupa o campo do autor
+individual. Registros publicados não se reescrevem: histórico publicado não
+retroage. As evidências e a auditoria que fundamentam esta regra constam em
+`reports/REGISTRO-2026-09-02-correcao-de-escala-e-timestamp-no-ledger.md`.
 
 ### Identidade de autoria — agente não assina como humano
 
