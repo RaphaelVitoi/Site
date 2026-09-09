@@ -60,20 +60,52 @@ if ($env:SKIP_CWV_GATE -eq '1') {
 
 # CDP Handshake check. O perfil administrativo canonico usa 9223; 9222 fica
 # como compatibilidade para a instancia padrao legada.
+#
+# MEDIDO EM 2026-09-08: responder ao handshake NAO prova que a porta mede. As
+# duas portas respondiam /json/version, e o Chrome da 9223 tinha
+# MainWindowHandle 0, titulo vazio e ZERO targets de tipo `page` -- navegador
+# sem janela de conteudo. Probe no mesmo instante e mesma URL:
+#
+#     9222 -> lcpMs 356,81   longTaskBlockingMs 1137
+#     9223 -> lcpMs null     longTaskBlockingMs null
+#
+# cls, ttfbMs e maxHeapMb mediram nas DUAS. O recorte separa exatamente as
+# metricas que dependem de a pagina estar visivel: LargestContentfulPaint nao e
+# emitido para pagina que inicia oculta, e long task nao ocorre em aba sem
+# renderizacao. Por isso a fase 1 saia NAO MEDIDA e o warning cwv.cobertura era
+# ESTRUTURAL -- reaparecia em todo commit, gastando uma das duas vagas, sem
+# nada de errado com o codigo medido.
+#
+# Uma hipotese anterior -- dev server frio -- foi REFUTADA: com a pagina
+# aquecida e lcpMs de 705,91 ms medido segundos antes, o commit seguinte
+# reproduziu o mesmo warning.
+#
+# A porta descartada e DECLARADA. Descartar em silencio devolveria o defeito
+# por outra porta: o portao mediria pela 9222 sem dizer por que, e a proxima
+# sessao nao saberia por que a fase 1 mede num dia e nao mede no outro.
 $cdpActive = $false
 $cdpPort = $null
+$cdpDescartadas = @()
 foreach ($port in $CdpPorts) {
     try {
         $cdpVer = Invoke-RestMethod -Uri "http://127.0.0.1:$port/json/version" -TimeoutSec 2
-        if ($cdpVer -and $cdpVer.Browser) {
-            $cdpActive = $true
-            $cdpPort = $port
-            Write-Host "[CDP] Active runtime connection on ${port}: $($cdpVer.Browser)" -ForegroundColor Green
-            break
+        if (-not ($cdpVer -and $cdpVer.Browser)) { continue }
+        $alvos = Invoke-RestMethod -Uri "http://127.0.0.1:$port/json/list" -TimeoutSec 2
+        $paginas = @($alvos | Where-Object { $_.type -eq 'page' }).Count
+        if ($paginas -lt 1) {
+            $cdpDescartadas += "${port} (sem pagina visivel)"
+            continue
         }
+        $cdpActive = $true
+        $cdpPort = $port
+        Write-Host "[CDP] Active runtime connection on ${port}: $($cdpVer.Browser) -- $paginas pagina(s)" -ForegroundColor Green
+        break
     } catch {
         continue
     }
+}
+if ($cdpDescartadas.Count -gt 0) {
+    Write-Host "[CDP] Descartadas por nao medirem LCP: $($cdpDescartadas -join ', ')" -ForegroundColor DarkYellow
 }
 if (-not $cdpActive) {
     Write-Host "[CDP] Runtime indisponivel nas portas $($CdpPorts -join ', '). CWV e A11y permanecerao NAO MEDIDOS." -ForegroundColor Yellow
