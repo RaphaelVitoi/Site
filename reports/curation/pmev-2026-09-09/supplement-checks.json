@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "checked_at": "2026-09-09T23:19:58.094576+00:00",
+  "local_pdf_hashes_verified": 2,
+  "drive_snapshot_text_hashes_verified": 5,
+  "bibliographic_relations_verified": 9,
+  "new_candidate_hypotheses": 1,
+  "rp_algebra_comparisons": 16,
+  "synthetic_stability_example": [
+    {
+      "assumed_win_probability": 0.54,
+      "delta_vs_fold": -1.0
+    },
+    {
+      "assumed_win_probability": 0.6,
+      "delta_vs_fold": 2.0
+    },
+    {
+      "assumed_win_probability": 0.66,
+      "delta_vs_fold": 5.0
+    }
+  ],
+  "synthetic_indifference_probability": 0.56,
+  "book_cover_to_cover_reading": false,
+  "solver_reproduction": false,
+  "production_changes": false
+}

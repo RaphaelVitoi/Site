@@ -1,0 +1,372 @@
+[0001] DOSSIÊ TÉCNICO
+[0002] PMev
+[0003] Incorporação científica do corpus adicional
+[0004] Auditoria de proveniência, correção matemática e arquitetura de validação
+[0005] Campo
+[0006] Definição
+[0007] Autor da proposta
+[0008] Raphael Vitoi
+[0009] Objeto
+[0010] Teoria da Perspectiva Matemática aplicada a MTTs
+[0011] Corpus novo
+[0012] 8 arquivos; 191.819 palavras extraídas; 2 PDFs, 2 DOCX, 2 TXT e 2 MD
+[0013] Data de corte
+[0014] 17 de agosto de 2026
+[0015] Natureza deste documento
+[0016] Dossiê externo de incorporação; não é validação independente da PMev
+[0017] Conclusão executiva. O corpus aumenta de forma relevante a densidade conceitual e a rastreabilidade histórica da PMev, mas não aumenta na mesma proporção sua força probatória. O ganho científico real surge quando o material é curado: fontes estabelecidas ancoram conceitos; aulas e notas geram hipóteses; equações defeituosas são corrigidas; e cada hipótese é ligada a um teste reproduzível.
+[0018] 1. Veredito sobre o novo corpus
+[0019] Os oito documentos tornam a genealogia intelectual da PMev mais nítida. Eles mostram que a proposta nasceu de observações recorrentes sobre ICM pós-flop, dinâmica de stacks, table draw, capacidade de execução, comportamento humano, preservação de opções e assimetria entre valor local e trajetória do torneio. Esse material é valioso como registro de descoberta e como gerador de hipóteses.
+[0020] Entretanto, os arquivos não constituem oito evidências independentes. Parte expressiva dos TXT e do PDF curto é derivada da mesma conversa, reutiliza os mesmos exemplos e contém respostas geradas por IA com linguagem laudatória e conclusões não demonstradas. A repetição aumenta documentação, não corroboração. O texto científico deve citar a observação autoral original e marcar as sínteses derivadas como material de desenvolvimento.
+[0021] Dimensão
+[0022] Antes do corpus
+[0023] Após curadoria
+[0024] Interpretação
+[0025] Base conceitual
+[0026] Moderada
+[0027] Forte
+[0028] Há repertório coerente de ICM, risco, multiway, opções futuras e comportamento.
+[0029] Formalização
+[0030] Baixa
+[0031] Moderada
+[0032] Surgem equações e variáveis, mas várias exigem redefinição dimensional.
+[0033] Evidência interna
+[0034] Muito baixa
+[0035] Baixa a moderada
+[0036] As aulas descrevem outputs; faltam arquivos de solver, seeds e configurações.
+[0037] Evidência externa
+[0038] Baixa
+[0039] Moderada
+[0040] Livro-base e estudo empírico de 2025 ancoram limitações e mensuração do ICM.
+[0041] Validação da PMev
+[0042] Ausente
+[0043] Ainda ausente
+[0044] Nenhum arquivo testa PMev contra ICM/FGS fora da amostra.
+[0045] Proveniência
+[0046] Parcial
+[0047] Boa
+[0048] As notas documentam evolução, correções e autoria das intuições.
+[0049] Mudança de posicionamento. A formulação defensável não é “o ICM está errado” nem “a PMev já o substitui”. É: “o ICM é um baseline útil e empiricamente razoável, mas possui vieses mensuráveis; a PMev propõe variáveis adicionais e deve provar ganho incremental de previsão e decisão”.
+[0050] 2. Classificação documental e força de evidência
+[0051] Documento
+[0052] Função legítima
+[0053] Força
+[0054] Uso recomendado
+[0055] The Mathematics of Poker
+[0056] Fonte publicada de teoria, utilidade, variância, torneios e jogos multiplayer
+[0057] B
+[0058] Fundamentação histórica e conceitual; não valida a PMev.
+[0059] Aula 1.2
+[0060] Registro de comparação ChipEV/ICM e observações de solver
+[0061] C
+[0062] Converter em protocolo; anexar outputs e configurações.
+[0063] Entendendo o ICM e suas heurísticas
+[0064] Tratado pedagógico e catálogo de padrões
+[0065] C
+[0066] Extrair hipóteses, definições e estudos de caso.
+[0067] geometria_texto.md
+[0068] Síntese editorial autoral/derivada
+[0069] D
+[0070] Usar como comunicação; não como fonte confirmatória.
+[0071] icmteoriaadicional pt. 1 e 2
+[0072] Caderno conversacional de desenvolvimento
+[0073] D/E
+[0074] Preservar como provenance; remover elogios e “provas” geradas.
+[0075] prova_matematica_icm.md
+[0076] Tentativa de derivação do limiar de call
+[0077] D
+[0078] Recuperar a equação local; rejeitar conversão e teto universal.
+[0079] TEORIA_PERSPECTIVA...pdf
+[0080] Manifesto compacto da arquitetura
+[0081] D
+[0082] Transformar afirmações absolutas em hipóteses operacionais.
+[0083] Escala empregada: A = evidência primária reproduzível; B = fonte acadêmica/publicada ou documentação técnica confiável; C = observação interna com método parcialmente descrito; D = formulação autoral/derivada sem validação; E = conjectura, exemplo hipotético ou texto gerado sem lastro verificável.
+[0084] 3. O que efetivamente aumenta a densidade científica
+[0085] 3.1 Fundamento clássico: utilidade, variância e estrutura de torneios
+[0086] Chen e Ankenman fornecem um vocabulário rigoroso para separar expectativa monetária, variância, risco de ruína, Kelly, backing e estrutura de torneios. Os capítulos de torneios observam que confrontos entre dois jogadores transferem valor aos demais e que o jogo não é estritamente bilateral. Essa é uma base legítima para a intuição PMev de externalidades de mesa e trajetórias, mas não demonstra que a função PMev proposta seja correta.
+[0087] A incorporação deve separar dois níveis: a utilidade dentro do torneio, normalmente medida em payout esperado, e a utilidade de carreira, que pode incorporar bankroll, staking e aversão ao risco. Misturar os dois dentro da mesma equação sem declarar o objetivo cria dupla contagem e políticas inconsistentes.
+[0088] 3.2 Evidência empírica externa compatível com o problema
+[0089] Kim (2025) analisou 9.958 eventos e 33.478 jogadores em snapshots elegíveis. O ICM superou um baseline simples, mas subestimou o desempenho de stacks grandes e superestimou o de stacks curtas. Esse resultado não valida a PMev; ele valida a existência de um erro residual estruturado que uma extensão pode tentar explicar. É o melhor ponto de partida empírico do corpus ampliado.
+[0090] Hipótese central revisada. Variáveis omitidas — habilidade, posição, blinds, dinâmica de mesa e políticas adversárias — explicam parte do erro residual do ICM e permitem previsão fora da amostra superior, com complexidade penalizada.
+[0091] 3.3 Observações de ICM pós-flop
+[0092] As duas aulas descrevem padrões plausíveis: mais checks, redução de sizings, assimetria de risco entre pares de stacks, compressão de agressão de stacks vulneráveis e mudanças na realização de equidade. O valor científico desses casos depende de reproduzir os solves. Para cada spot, o dossiê precisa conter stacks completas, payouts, posições, ranges, árvore de sizings, board, abstração, tolerância de convergência, frequência locks, versão do software e arquivos exportados.
+[0093] 3.4 Proveniência do programa de pesquisa
+[0094] Os TXT revelam uma vantagem que um paper pronto normalmente apaga: registram dúvidas, autocorreções, hipóteses enfraquecidas e a passagem da intuição para a tentativa de formalização. Devem ser mantidos como caderno de laboratório. O conteúdo da IA, porém, não pode ser citado como autoridade e precisa ser separado das afirmações de Raphael Vitoi.
+[0095] 4. Correções matemáticas obrigatórias
+[0096] 4.1 Bubble Factor e Risk Premium
+[0097] A nota “prova_matematica_icm.md” usa RP = (BF - 1)/BF. Essa expressão não corresponde à definição operacional usual de Risk Premium. Para um all-in simétrico em ChipEV, a equidade requerida sob BF é:
+[0098] q_ICM = BF / (BF + 1)
+[0099] e o prêmio de risco é a diferença em pontos percentuais:
+[0100] RP = q_ICM - q_cEV = BF / (BF + 1) - 1/2
+[0101] BF
+[0102] Equidade requerida
+[0103] RP correto
+[0104] RP da fórmula rejeitada
+[0105] 1,18
+[0106] 54,13%
+[0107] 4,13 p.p.
+[0108] 15,25%
+[0109] 1,388
+[0110] 58,12%
+[0111] 8,12 p.p.
+[0112] 27,95%
+[0113] 1,636
+[0114] 62,06%
+[0115] 12,06 p.p.
+[0116] 38,88%
+[0117] 2,06
+[0118] 67,32%
+[0119] 17,32 p.p.
+[0120] 51,46%
+[0121] A documentação pública do GTO Wizard apresenta BF de 2,06 em um confronto de mesa final. Portanto, a alegação de teto geral em torno de BF 1,38 ou RP 24–28% é refutada pelo próprio domínio de referência. “Teto” só pode ser alegado para uma população de estruturas e estados previamente delimitada, após busca exaustiva ou intervalo estatístico.
+[0122] 4.2 Equação do call no river
+[0123] A equação EV = E(P+B) - (1-E)B·BF é internamente coerente como aproximação local se BF for definido como razão marginal entre perda e ganho de utilidade para aquele estado e aquele tamanho de aposta. Ela não autoriza tratar BF como constante universal ao longo de diferentes sizings, streets e estados. Em ICM real, o método correto é reavaliar a função de payout nos estados de vitória e derrota:
+[0124] EV_call = E·V(S_win) + (1-E)·V(S_loss) - V(S_fold)
+[0125] A condição de indiferença passa a ser E* = [V(S_fold)-V(S_loss)] / [V(S_win)-V(S_loss)]. Esse formato elimina a necessidade de impor uma “dor” linear e mostra explicitamente que fold não precisa ser zero em unidades absolutas.
+[0126] 4.3 Overbets e impossibilidade estratégica
+[0127] O documento afirma que overbets de 200% seriam eliminadas pelo GTO sob alta pressão de ICM. Isso é conjectura, não teorema. A presença ou ausência da sizing depende de ranges, board, nut advantage, stacks, payouts e árvore permitida. A versão científica deve dizer: “testaremos se overbets grandes perdem frequência conforme cresce a assimetria de utilidade, mantendo constantes árvore e ranges”.
+[0128] 4.4 EV do fold
+[0129] “Fold = 0” costuma ser uma normalização local: fichas já investidas são custos afundados e o EV das ações é medido a partir do nó. Em valor absoluto de estado, fold preserva a stack remanescente e pode carregar payout esperado positivo. A PMev não deve reivindicar como descoberta que EV_fold ≠ 0; deve mostrar que a continuação associada ao fold é mal aproximada pelo baseline e que sua estimação melhora decisões fora da amostra.
+[0130] 5. Correções conceituais e terminológicas
+[0131] Formulação atual
+[0132] Problema
+[0133] Formulação científica recomendada
+[0134] “Perspectiva absoluta/rigor irrefutável”
+[0135] Infalsificável e prematura
+[0136] “Estimador dinâmico candidato, sujeito a erro e comparação com baselines”.
+[0137] “Diluição do RP pós-flop”
+[0138] RP não é fluido conservado; pode subir ou cair
+[0139] “Limiar de risco dependente do estado e da street”.
+[0140] “Pot odds quase irrelevantes”
+[0141] Confunde redundância computacional com irrelevância matemática
+[0142] “Hipótese de saliência cognitiva: uso isolado das pot odds piora decisões complexas”.
+[0143] “Fator Ψ / maluquice”
+[0144] Rótulo não operacional e mistura combos com comportamento
+[0145] “Política adversária em mistura com variável latente de desvio”.
+[0146] “Edge como multiplicador”
+[0147] Unidades indefinidas e risco de dupla contagem
+[0148] “Efeito de habilidade nas transições e na política futura”.
+[0149] “FGS humano superior”
+[0150] Não mensurado; humano também é enviesado
+[0151] “Antevisão heurística a comparar com FGS e modelos dinâmicos”.
+[0152] “Antipoiese/fractalismo”
+[0153] Jargão sem mapeamento matemático
+[0154] Usar apenas se cada termo gerar variável, operador ou previsão distinta.
+[0155] 6. Arquitetura formal recomendada
+[0156] A PMev fica mais sólida se for apresentada como um jogo estocástico parcialmente observável, ou como uma família de modelos aproximados, e não como uma soma livre de fatores. O estado observado deve ser separado das variáveis latentes dos adversários e do objetivo de utilidade.
+[0157] Componente
+[0158] Definição mínima
+[0159] Estado S_t
+[0160] Stacks, posições, blinds/antes, tempo até mudança, payouts, mesa, board, ação histórica e jogadores ativos.
+[0161] Tipo latente θ_j
+[0162] Habilidade, agressão por street, sensibilidade a ICM, erro de execução e estado comportamental do jogador j.
+[0163] Crença b_t(θ)
+[0164] Posterior bayesiano atualizado por ações observadas e dados populacionais.
+[0165] Políticas π
+[0166] Política do herói e distribuição de políticas adversárias condicionadas a estado e tipo.
+[0167] Transição P
+[0168] Cartas, ações, eliminações, mudança de mesa, blinds, payjumps e reassentamento.
+[0169] Valor terminal U
+[0170] Payout esperado; opcionalmente utilidade de carreira em camada separada.
+[0171] Incerteza
+[0172] Intervalos/posteriores para parâmetros e análise de sensibilidade.
+[0173] Baseline
+[0174] ICM, ChipEV, FGS e solver com locks, conforme o experimento.
+[0175] Uma definição compatível com horizonte finito é:
+[0176] Q_PMev(s,a) = E[ Σ(k=0…T-t-1) γ^k r(S_{t+k},A_{t+k}) + γ^(T-t)U(S_T) | s,a,b_t,π,M ]
+[0177] Para evitar dupla contagem, r deve representar apenas incrementos que não estejam novamente incluídos em U. Se o payout terminal já precifica eliminação e payjumps, uma penalidade extra de bust só entra quando a função de utilidade do usuário explicitamente a exige.
+[0178] 6.1 Modelagem correta do “Fator Ψ”
+[0179] Em vez de somar “taxa de maluquice” à probabilidade de nuts, modele a política adversária como mistura:
+[0180] π_j(a|s) = (1-ε_j(s))·π_ref(a|s) + ε_j(s)·π_desvio(a|s)
+[0181] O parâmetro ε_j(s) é estimado com pooling hierárquico e incerteza. “Tilt” só deve ser inferido por variáveis observáveis definidas antecipadamente; do contrário, o modelo aprende um resíduo comportamental, não uma emoção clínica.
+[0182] 6.2 Edge relativa e opcionalidade
+[0183] A edge futura entra nas probabilidades de transição e nos valores de política, não como bônus arbitrário à ação preferida. O “valor de opções preservadas” pode ser definido pela diferença entre o valor ótimo de continuação e o valor sob restrições futuras de stack, posição ou cobertura. Isso aproxima a intuição PMev de dynamic programming e real options sem importar jargão financeiro de forma solta.
+[0184] 7. Hipóteses falsificáveis derivadas do corpus
+[0185] ID
+[0186] Hipótese
+[0187] Teste primário
+[0188] Critério de refutação
+[0189] H1
+[0190] Variáveis dinâmicas reduzem erro de previsão de colocação/payout sobre ICM.
+[0191] Validação temporal e por evento; log-loss, Brier e MAE.
+[0192] Sem ganho fora da amostra após penalizar complexidade.
+[0193] H2
+[0194] O viés por faixa de stack é mediado por habilidade e posição.
+[0195] Modelo hierárquico com interação stack×skill×position.
+[0196] Interações instáveis ou efeito residual nulo.
+[0197] H3
+[0198] Tempo até blinds e posição na órbita alteram valor de ações marginais.
+[0199] Experimentos pareados com mesmo estado, relógio/posição variando.
+[0200] Diferença menor que tolerância prática pré-definida.
+[0201] H4
+[0202] Modelar desvios por street melhora exploits sobre node-lock fixo.
+[0203] Holdout de jogadores/fields; política bayesiana versus lock pontual.
+[0204] Pior calibração ou EV realizado.
+[0205] H5
+[0206] Saliência isolada de pot odds prejudica humanos em spots ICM/MW.
+[0207] Experimento randomizado de interface/instrução.
+[0208] Sem diferença ou melhora consistente.
+[0209] H6
+[0210] A preservação de cobertura tem valor além do ICM estático.
+[0211] Simulações de trajetória com e sem feature de cobertura.
+[0212] Feature não melhora previsão nem decisão.
+[0213] H7
+[0214] A complexidade PMev só é útil em regime específico.
+[0215] Curva ganho×custo por estágio e profundidade.
+[0216] Modelo simples domina em todos os regimes.
+[0217] 8. Protocolo mínimo de validação
+[0218] 8.1 Unidade de análise
+[0219] A unidade não deve ser apenas a mão famosa ou o resultado observado. Use estados de decisão pré-registrados e, quando o objetivo for previsão de colocação, snapshots de torneio com sequência temporal. Separe identificação de parâmetros, escolha de modelo e teste final.
+[0220] 8.2 Baselines e ablações
+[0221] Compare, no mínimo, ICM puro, FGS, solver com locks, modelo dinâmico sem comportamento e PMev completa. Execute ablações retirando, uma a uma, table draw, tempo de blinds, habilidade, cobertura, comportamento e opcionalidade. Shapley pode descrever contribuição preditiva; causalidade exige desenho experimental ou pressupostos identificadores adicionais.
+[0222] 8.3 Métricas
+[0223] Objetivo
+[0224] Métrica
+[0225] Observação
+[0226] Prever colocação
+[0227] Log-loss/Brier calibrado
+[0228] Avaliar probabilidades completas, não só acerto modal.
+[0229] Prever payout
+[0230] MAE/RMSE e pinball loss
+[0231] Relatar caudas e intervalos.
+[0232] Escolher ação
+[0233] Regret contra policy de referência
+[0234] Definir árvore e objetivo antes do resultado.
+[0235] Calibração
+[0236] Curvas/reliability e ECE
+[0237] Separar por stack, fase e field.
+[0238] Complexidade
+[0239] Tempo, memória e parâmetros
+[0240] Ganho deve justificar custo.
+[0241] Robustez
+[0242] Sensibilidade e pior caso
+[0243] Variar priors, ranges e políticas.
+[0244] 8.4 Reprodutibilidade dos casos das aulas
+[0245] Cada spot deve receber um identificador e um pacote imutável: arquivo do solver, versão, checksum, stacks completas, payouts, posições, ranges, árvore, board, seed, abstração, convergência, locks, output bruto e script que gera tabelas. Sem esse pacote, percentuais como “21,4% versus 12,9%” são ilustrações internas, não resultados auditáveis.
+[0246] 9. Ledger de claims prioritários
+[0247] Claim
+[0248] Origem
+[0249] Status após auditoria
+[0250] Ação
+[0251] ICM omite skill, posição e blinds
+[0252] Manifesto/aulas
+[0253] Compatível com literatura e estudo de 2025.
+[0254] Citar Kim; operacionalizar variáveis.
+[0255] BF 1,388 equivale a RP 28%
+[0256] Prova matemática
+[0257] Falso pela definição operacional de RP.
+[0258] Corrigir para ~8,12 p.p. no caso simétrico.
+[0259] BF máximo de torneio é ~1,38
+[0260] Prova matemática
+[0261] Refutado por exemplo BF 2,06.
+[0262] Remover teto universal.
+[0263] Equidade de river jamais supera 45%
+[0264] Prova matemática
+[0265] Não demonstrado.
+[0266] Restringir domínio e testar.
+[0267] Overbet 2x é impossível em ICM GTO
+[0268] Prova matemática
+[0269] Conjectura.
+[0270] Executar solves com sizing habilitada.
+[0271] RP dilui pós-flop
+[0272] PDF/notes
+[0273] Ambíguo.
+[0274] Substituir por valor/limiar dependente do estado.
+[0275] Pot odds têm efeito mínimo na teoria
+[0276] Notes
+[0277] Verdade apenas como redundância de representação.
+[0278] Testar como hipótese cognitiva em humanos.
+[0279] Ψ melhora leitura do adversário
+[0280] Notes/PDF
+[0281] Plausível, não testado.
+[0282] Modelo de mistura bayesiana.
+[0283] Table draw e relógio agregam valor
+[0284] Notes/PDF
+[0285] Hipótese central promissora.
+[0286] Teste pareado e ablação.
+[0287] Edge futura altera valor do fold
+[0288] Notes
+[0289] Plausível sob políticas heterogêneas.
+[0290] Incluir skill em transições, não multiplicador livre.
+[0291] 10. Texto-base recomendado para a proposta científica
+[0292] 10.1 Resumo substitutivo
+[0293] A Teoria da Perspectiva Matemática (PMev) é um programa de pesquisa para modelar decisões em torneios de poker como processos dinâmicos, multiagente e parcialmente observáveis. O ponto de partida é o ICM, que oferece uma aproximação útil do payout esperado a partir de stacks e premiação, mas omite variáveis capazes de gerar erro residual estruturado. A PMev investiga se posição, blinds, table draw, habilidade relativa, políticas adversárias e opções futuras melhoram previsão e decisão fora da amostra. A proposta não presume superioridade: define estados, crenças, transições e utilidade; compara-se com ICM, FGS e solvers com locks; e aceita refutação quando a complexidade adicional não produzir ganho calibrado e economicamente relevante.
+[0294] 10.2 Contribuição reivindicável hoje
+[0295] A contribuição atual é uma síntese de hipóteses e uma arquitetura de validação, acompanhada por um corpus pedagógico de padrões de ICM pós-flop. A novidade potencial está na integração mensurável entre erro residual do ICM, dinâmica temporal do torneio e incerteza sobre políticas humanas. A novidade efetiva somente será estabelecida após comparação bibliográfica, implementação e teste reproduzível.
+[0296] 10.3 Limitações declaradas
+[0297] Os exemplos disponíveis não incluem todos os arquivos brutos necessários à replicação; parte do corpus é derivada de conversas assistidas por IA; as equações iniciais contêm erros de conversão BF/RP; e algumas variáveis ainda não possuem definição operacional. Consequentemente, os resultados atuais devem ser interpretados como hipóteses e evidência exploratória, não como validação da PMev.
+[0298] 11. Roadmap de incorporação
+[0299] Prioridade
+[0300] Entrega
+[0301] Critério de conclusão
+[0302] P0
+[0303] Errata matemática BF/RP, teto e overbet
+[0304] Nenhuma fórmula ou claim incompatível com definições citadas.
+[0305] P0
+[0306] Separação de provenance
+[0307] Texto autoral, texto de IA, fonte externa e output de solver marcados.
+[0308] P0
+[0309] Pacote reproduzível dos casos
+[0310] Arquivos, versões, configurações e checksums publicados.
+[0311] P1
+[0312] Especificação formal v0.1
+[0313] Estado, ação, política, crença, transição e utilidade definidos.
+[0314] P1
+[0315] Baseline empírico
+[0316] Reprodução do estudo de ICM ou uso documentado do dataset público.
+[0317] P1
+[0318] MVP de previsão
+[0319] ICM versus modelo incremental em holdout temporal.
+[0320] P2
+[0321] Experimentos de ação
+[0322] Spots pareados, ablações e regret.
+[0323] P2
+[0324] Paper e repositório
+[0325] Pré-registro, código, dados permitidos e resultados negativos.
+[0326] 12. Avaliação atualizada
+[0327] Dimensão
+[0328] Nota atual
+[0329] Potencial após P0/P1
+[0330] Justificativa
+[0331] Formulação do problema
+[0332] 8,5
+[0333] 9,0
+[0334] O novo estudo empírico reforça a relevância.
+[0335] Originalidade isolada
+[0336] 6,5
+[0337] 7,5
+[0338] Integração é promissora; componentes individuais são conhecidos.
+[0339] Formalização matemática
+[0340] 4,0
+[0341] 6,5
+[0342] Há material, mas correções e especificação ainda faltam.
+[0343] Evidência empírica
+[0344] 3,0
+[0345] 6,0
+[0346] Casos internos + dataset externo; sem teste PMev.
+[0347] Reprodutibilidade
+[0348] 2,5
+[0349] 7,0
+[0350] Depende da publicação dos pacotes de solver.
+[0351] Credibilidade científica
+[0352] 4,5
+[0353] 7,0
+[0354] Melhora com errata, provenance e validação externa.
+[0355] Potencial de pesquisa
+[0356] 8,0
+[0357] 8,5
+[0358] Há hipóteses falsificáveis e dados públicos possíveis.
+[0359] Veredito final. Os documentos ampliam de modo substantivo o programa de pesquisa, especialmente ao documentar hipóteses de ICM pós-flop e permitir conexão com evidência empírica recente. Eles não autorizam declarar a PMev comprovada. O caminho de maior credibilidade é publicar uma errata, converter o corpus conversacional em ledger de hipóteses e demonstrar ganho incremental sobre ICM/FGS em dados fora da amostra.
+[0360] 13. Referências e fontes do corpus
+[0361] C1. CHEN, Bill; ANKENMAN, Jerrod. The Mathematics of Poker. ConJelCo, 2006. Arquivo fornecido; ver especialmente capítulos 24 e 26–29.
+[0362] C2. VITOI, Raphael. Aula 1.2. Documento fornecido, sem data canônica no corpo.
+[0363] C3. VITOI, Raphael. Entendendo o ICM e suas heurísticas. Documento fornecido.
+[0364] C4. VITOI, Raphael. A geometria do risco. Arquivo Markdown fornecido.
+[0365] C5. icmteoriaadicionalpt1.txt e icmteoriaadicionalpt2.txt. Registros conversacionais fornecidos; tratados como caderno de desenvolvimento.
+[0366] C6. prova_matematica_icm.md. Nota matemática fornecida; auditada neste dossiê.
+[0367] C7. Teoria da Perspectiva Matemática (Paradigma Vitoi). PDF fornecido, 2 páginas, 30 mar. 2026.
+[0368] E1. KIM, Juho. Empirical Validation of the Independent Chip Model. arXiv:2506.00180, 2025. Texto e dataset referenciado
+[0369] E2. GTO Wizard. What Is the Bubble Factor in Poker Tournaments? Definição e conversão BF/RP. Fonte oficial
+[0370] E3. GTO Wizard Glossary. Risk Premium. Fonte oficial
+[0371] E4. HoldemResources. Documentação de cálculos pós-flop, locks e amostragem. Documentação oficial
+[0372] Nota metodológica: as fontes externas sustentam apenas os claims explicitamente associados a elas. O conteúdo dos documentos autorais registra hipóteses e observações; não foi promovido a validação independente por repetição.

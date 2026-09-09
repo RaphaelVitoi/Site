@@ -1,0 +1,76 @@
+[0001] Com base na análise do seu material original — incluindo o Manifesto do Poker Racional: Teoria, Lógica e Adaptação Estratégica, o estudo Entendendo o ICM e suas heurísticas, a Aula 1.2 — Aplicando as noções de RP pós flop e os apontamentos de O Arcabouço Teórico do Poker Racional: Estratégias Avançadas —, foi desenvolvida uma proposta de sistematização conceitual do seu Arcabouço Teórico.
+[0002] Arcabouço Teórico do Poker Racional
+[0003] O modelo busca integrar a fundamentação matemática do jogo à interpretação contextual e à tomada de decisão sob incerteza, dividindo-se em quatro núcleos epistemológicos:
+[0004] Núcleo I: Geometria do Risco & Matemática Utilitária (ICM & Risk Premium)
+[0005] Assimetria de Risco e $EV Monetário: A descontinuidade entre o valor nominal em fichas (ChipEV) e o valor monetário real ($EV). A perda de fichas possui um custo utilitário superior ao ganho equivalente.
+[0006] Risk Premium (RP) e Risk Advantage: O RP atua como a taxa de equidade exigida acima das pot odds para justificar a entrada em um pote. A diferença entre os RPs dos jogadores envolvidos (Risk Advantage) define a margem de agressão estratégica permitida.
+[0007] Downward Drift & Compressão de Sizings: No pós-flop sob ICM, observa-se uma migração sistemática de apostas de tamanho médio/alto para frequências elevadas de check-back e small sizings (ex.: 20% do pote), visando conter o crescimento do pote e preservar a equidade do prizepool.
+[0008] A Responsabilidade da Antevisão: Avaliação da esperança matemática e valorização do stack antes da execução da jogada, evitando colisões que transfiram valor monetário passivamente para terceiros na mesa.
+[0009] Núcleo II: A Ponte Janda-Vitoi & Dinâmicas de Defesa (MDF vs. Teto do RP)
+[0010] Subversão da MDF Clássica: A Frequência Mínima de Defesa tradicional (MDF=1-α), formulada por Matthew Janda para cenários de ChipEV, torna-se inviável em ambientes de alto Risk Premium, onde tentar defender a MDF resulta em destruição de $EV monetário.
+[0011] O Teto do Risk Premium: A frequência de defesa com bluffcatchers contra um range polarizado deixa de ser ditada pelas pot odds e passa a ser limitada pelo "Teto do RP" — o ponto limite em que o risco de eliminação anula o benefício de pegar um blefe.
+[0012] Inversão de Risco e o Paradoxo do Chip Leader: Quando o jogador em posição possui maior RP ou corre o risco de dobrar um rival direto, o defensor em desvantagem de risco é forçado a aumentar suas dobras para não restaurar a equidade de um oponente direto nem alterar a alavancagem da mesa.
+[0013] Núcleo III: Arquitetura Solvógica & Precisão Metodológica
+[0014] Crítica à Stack Efetiva Isolada: Modelos simplificados (ex.: GTO Wizard em ChipEV) avaliam apenas as pilhas ativas na mão, omitindo a influência das pilhas ausentes.
+[0015] Contexto Global de Stacks & Bunching Effect: A utilização do HRC Pós-Flop demonstra como as stacks dos jogadores que deram fold e as cartas descartadas (bunching effect) alteram a densidade dos ranges restantes e as frequências de ação pós-flop.
+[0016] Distância do Equilíbrio de Nash (ϵ-Nash): Soluções operacionais com menor ruído e convergência matemática mais precisa fundamentam as diretrizes estratégicas.
+[0017] Núcleo IV: Decisão Bayesiana, EDM & A Mesa como Organismo Vivo
+[0018] Atualização Bayesiana: Processamento contínuo de novas evidências (textura do bordo, sizings, timing tells) para atualizar a distribuição a priori do intervalo adversário.
+[0019] Expected Deviation Metric (EDM): Mensuração dos desvios populacionais através da análise massiva de dados (MDA) para determinar quando aplicar a linha baseline inexplorável ou desvios exploratórios (node-locking conceitual).
+[0020] A Mesa Final como Organismo Interconectado: A dinâmica entre pilhas de fichas aciona "pactos silenciosos" e ajustes de marcha (changing gears), em que cada evento afeta a avaliação monetária de todos os participantes.
+[0021] Proposta de Estruturação do Manual / Documento Central
+[0022] Para consolidar essa teoria em um material didático e operacional, sugere-se a seguinte divisão em capítulos:
+[0023] Capítulo 1: Fundamentos da Geometria do Risco (ChipEV vs. ICMev, Assimetria, Risk Premium e Antevisão).
+[0024] Capítulo 2: Teoria da Aposta e da Defesa Pós-Flop (A Ponte Janda-Vitoi, Teto do RP e Compressão de Sizings).
+[0025] Capítulo 3: Metodologia e Leitura de Solvers (Bunching Effect, Global Stacks e HRC Pós-Flop).
+[0026] Capítulo 4: Exploração Quantitativa e Inteligência Bayesiana (EDM, MDA, Node-Locking e Leitura de Tells).
+[0027] Capítulo 5: A Mesa Final como Organismo Vivo (Pacto Silencioso, Mudança de Marchas e FGS).
+[0028] Próximos Passos Sugeridos
+[0029] Se desejar dar prosseguimento:
+[0030] Posso elaborar o texto detalhado do Capítulo 1 ou de outro módulo específico.
+[0031] Posso compilar os dados das simulações de toy-games (RPs 3 vs 6, 3 vs 9, 3 vs 18, 3 vs 24) em tabelas explicativas de apoio.
+[0032] A integração da videoaula "Profissionalismo.mp4" adiciona a infraestrutura comportamental, psicológica e operacional ao Arcabouço Teórico do Poker Racional. Ela estabelece que o conhecimento teórico e matemático só gera valor quando sustentado por rigor operacional, gestão de risco e controle disciplinar.
+[0033] Adendo Teórico: A Dimensão Operacional e o Profissionalismo (Profissionalismo.mp4)
+[0034] 1. Os Pilares do Profissionalismo no Poker Racional
+[0035] Gestão de Risco e do Capital (Bankroll Management):
+[0036] O bankroll é tratado como um ativo financeiro de investimento. A tomada de decisão em torneios exige a proteção contra o risco de ruína (Risk of Ruin), alinhando a seleção de buy-ins e a exposição ao risco ao nível de variância dos torneios (MTTs).
+[0037] Eliminação do Viés de Resultado (Anti-Resulting):
+[0038] Separação estrita entre a qualidade do processo decisório e o resultado de curto prazo. Uma jogada com Valor Esperado positivo (EV>0) permanece correta independentemente do outcome da mão.
+[0039] Superação do Automatismo ("Parar de Clicar Botões"):
+[0040] Substituição do comportamento reativo e emocional pela análise deliberada e intencional em cada nó da árvore de decisão.
+[0041] Rotina Metodológica de Estudo e Higiene Decisória:
+[0042] Disciplina contínua de revisão de mãos, análise massiva de dados (MDA) e simulações em solvers de forma ativa, aplicando a Navalha de Occam para manter a execução estratégia simples e aplicável sob pressão de tempo.
+[0043] Tabela Explicativa: Postura Amadora vs. Postura Profissional Racional
+[0044] Eixo Operacional
+[0045] Postura Amadora / Reativa
+[0046] Postura Racional e Profissional (Vitoi)
+[0047] Avaliação de Desempenho
+[0048] Focada em ganhos e perdas imediatos (resulting)
+[0049] Focada na qualidade técnica e no $EV acumulado da decisão
+[0050] Gestão de Bankroll
+[0051] Exposição desequilibrada à variância e subestimativa de downswings
+[0052] Proteção do ativo com dimensionamento rigoroso do risco de ruína
+[0053] Tomada de Decisão
+[0054] Impulsiva, guiada por emoção, tilt ou força absoluta da mão
+[0055] Deliberada, guiada por leitura de ranges, EVmonetário e ICM
+[0056] Uso de Ferramentas
+[0057] Copiar soluções de solvers mecanicamente como dogma
+[0058] Solvers como mapa de referência, ajustados via node-locking e MDA
+[0059] Mental Game
+[0060] Reatividade emocional diante do risco e da eliminação
+[0061] Aceitação estocástica da variância e foco no processo contínuo
+[0062] Arquitetura Consolidada dos 7 Módulos do Arcabouço Teórico
+[0063] Com a integração do módulo de profissionalismo, o sistema do Poker Racional é estruturado em 7 eixos fundamentais:
+[0064] Módulo I: Profissionalismo, Mental Game e Gestão de Capital (Videoaula Profissionalismo.mp4, Atitude Operacional e Proteção do Ativo).
+[0065] Módulo II: Geometria do Risco e $EV Monetário (Assimetria de Risco, Risk Premium, Risk Advantage e Antevisão).
+[0066] Módulo III: Decomposição Analítica de EV e MDF (Videoaula EV e MDF.mp4, A Ponte Janda-Vitoi e Teto do RP).
+[0067] Módulo IV: Engenharia de Ranges e Linhas Pós-Flop (Videoaula Curso 2.mp4, Taxonomia de Texturas, C-Betting e Delay C-Bets).
+[0068] Módulo V: Arquitetura Solvógica e Análise Metodológica (HRC Pós-Flop vs. GTO Wizard, Bunching Effect e Global Stacks).
+[0069] Módulo VI: Decisão Bayesiana e Exploração Sistemática (EDM, MDA, Node-Locking Conceitual e Timing/Sizing Tells).
+[0070] Módulo VII: A Mesa Final como Organismo Vivo (Pacto Silencioso, Changing Gears e Future Game Simulation).
+[0071] Fontes Originais Integradas
+[0072] Videoaulas: Profissionalismo.mp4, Curso 2.mp4 e EV e MDF.mp4 (Raphael Vitoi)
+[0073] Manifesto do Poker Racional: Teoria, Lógica e Adaptação Estratégica
+[0074] Entendendo o ICM e suas heurísticas
+[0075] Aula 1.2 — Aplicando as noções de RP pós flop
+[0076] O Arcabouço Teórico do Poker Racional: Estratégias Avançadas

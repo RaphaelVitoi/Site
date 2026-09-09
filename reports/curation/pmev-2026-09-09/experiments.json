@@ -1,0 +1,144 @@
+{
+  "schema_version": "0.1",
+  "author": "Chat GPT-6 Astra <noreply@openai.com>",
+  "status": "synthetic_analytical_molds_not_solver_outputs",
+  "assumptions": [
+    "Utilities are supplied by the experiment author, not measured from a tournament.",
+    "These matrices do not implement a complete MTT solver or constitute empirical evidence.",
+    "Production integration requires a validated scenario and explicit model adapter."
+  ],
+  "experiments": [
+    {
+      "id": "TOY-DEFENSE",
+      "hypothesis_ids": [
+        "PM-DEFENSE",
+        "PM-RISK-DIRECTION"
+      ],
+      "domain": "Binary river toy: pure value always wins, pure bluff always loses, no ties or raises; checking a bluff returns zero.",
+      "input_origin": "synthetic",
+      "units": "toy_utility",
+      "value_combos": 6,
+      "available_bluff_combos": 12,
+      "variants": [
+        {
+          "id": "linear",
+          "aggressor_gain_on_fold": 100,
+          "aggressor_loss_when_called": 100,
+          "defender_gain_vs_bluff": 200,
+          "defender_loss_vs_value": 100,
+          "expected": {
+            "defense_frequency": 0.5,
+            "bluff_fraction_when_betting": 0.3333333333333333,
+            "bluff_combos_bet": 3
+          }
+        },
+        {
+          "id": "higher_defender_loss",
+          "aggressor_gain_on_fold": 100,
+          "aggressor_loss_when_called": 100,
+          "defender_gain_vs_bluff": 200,
+          "defender_loss_vs_value": 300,
+          "expected": {
+            "defense_frequency": 0.5,
+            "bluff_fraction_when_betting": 0.6,
+            "bluff_combos_bet": 9
+          }
+        }
+      ]
+    },
+    {
+      "id": "TOY-FOLD",
+      "hypothesis_ids": [
+        "PM-CONTINUATION",
+        "PM-FOLD"
+      ],
+      "domain": "One terminal horizon shared by call and fold; future-state values are stipulated, not calibrated.",
+      "input_origin": "synthetic",
+      "units": "stipulated_terminal_money",
+      "current_snapshot": 100,
+      "call": {
+        "probability_win": 0.65,
+        "value_win": 120,
+        "value_loss": 70
+      },
+      "variants": [
+        {
+          "id": "fold_lower_than_snapshot",
+          "fold_outcomes": [
+            {
+              "probability": 0.4,
+              "value": 110
+            },
+            {
+              "probability": 0.6,
+              "value": 90
+            }
+          ],
+          "expected": {
+            "call_value": 102.5,
+            "fold_value": 98,
+            "call_minus_fold": 4.5,
+            "call_threshold": 0.56
+          }
+        },
+        {
+          "id": "fold_higher_than_snapshot",
+          "fold_outcomes": [
+            {
+              "probability": 0.4,
+              "value": 120
+            },
+            {
+              "probability": 0.6,
+              "value": 90
+            }
+          ],
+          "expected": {
+            "call_value": 102.5,
+            "fold_value": 102,
+            "call_minus_fold": 0.5,
+            "call_threshold": 0.64
+          }
+        }
+      ]
+    },
+    {
+      "id": "TOY-ENTRY",
+      "hypothesis_ids": [
+        "PM-ENTRY",
+        "PM-GLOBAL"
+      ],
+      "domain": "Conservation identity over stipulated valuations, not a computed ICM distribution.",
+      "input_origin": "synthetic",
+      "units": "stipulated_terminal_money",
+      "before_incumbents": [
+        60,
+        40
+      ],
+      "after_incumbents": [
+        56,
+        38
+      ],
+      "after_new_players": [
+        26
+      ],
+      "pool_increase": 20,
+      "expected": {
+        "incumbent_delta": -6,
+        "new_player_value": 26,
+        "residual": 0
+      }
+    }
+  ],
+  "diagnostics": {
+    "bf_symmetric": 1.388,
+    "expected_required_equity": 0.5812395309882747,
+    "expected_rp_pp": 8.123953098827474,
+    "source_reported_rp_btn_pp": 21.4,
+    "source_reported_rp_bb_pp": 12.9,
+    "proposed_ra_btn_pp": -8.5,
+    "pot_sized_chipev_call_threshold": 0.3333333333333333,
+    "pot_sized_pure_bluff_defense_frequency": 0.5,
+    "one_minus_call_threshold_is_not_mdf": 0.6666666666666666
+  }
+}

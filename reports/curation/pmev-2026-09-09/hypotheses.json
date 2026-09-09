@@ -1,0 +1,710 @@
+{
+  "schema_version": "0.1",
+  "purpose": "Curated candidate contracts; no executable formulas or production activation.",
+  "claims": [
+    {
+      "id": "PM-CONTINUATION",
+      "title": "Perspectiva como valor de trajetórias",
+      "source_refs": [
+        {
+          "source_id": "S09",
+          "first_block": 12,
+          "last_block": 15
+        },
+        {
+          "source_id": "S05",
+          "first_block": 663,
+          "last_block": 714
+        }
+      ],
+      "curatorial_reading": "A proposta autoral integra estado atual, ferramentas estratégicas e futuros condicionais. Esperança/Expectativa são termos próprios do arcabouço; não três EVs aditivos.",
+      "proposed_translation": "Q(a|S,b,pi,H)=E[sum(r_t)+U(S_H)|S,a,b,pi]. Uma única contabilidade de recompensas; distinguir referência ICM, política e objetivo. Não declarar solução ótima sem solver/critério correspondente.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "valuation",
+      "inputs": [
+        "scenario",
+        "beliefs",
+        "policy",
+        "horizon",
+        "utility",
+        "reward_convention"
+      ],
+      "outputs": [
+        "action_values",
+        "delta_vs_fold",
+        "model_provenance"
+      ],
+      "guards": [
+        "mesmo cenário/unidade/horizonte na comparação",
+        "recuperar baseline com uma transição e terminal ICM",
+        "não somar prêmio terminal e payout já contabilizado"
+      ],
+      "priority": "P0",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-FOLD",
+      "title": "Fold como contrafactual com continuação",
+      "source_refs": [
+        {
+          "source_id": "S09",
+          "first_block": 3,
+          "last_block": 14
+        },
+        {
+          "source_id": "S03",
+          "first_block": 129,
+          "last_block": 136
+        },
+        {
+          "source_id": "S10",
+          "first_block": 171,
+          "last_block": 222
+        }
+      ],
+      "curatorial_reading": "Preservar o insight do valor de esperar por oportunidades/eventos. O sinal depende da referência; fichas já investidas não constituem nova despesa de fold.",
+      "proposed_translation": "Construir estado após fold, incluindo destino do pote e jogadores que continuam; calcular Qfold na mesma política/horizonte das outras ações. Mostrar valor absoluto e delta separadamente.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "transition",
+      "inputs": [
+        "full_stacks",
+        "pot_ownership",
+        "legal_actions",
+        "future_policy",
+        "payouts"
+      ],
+      "outputs": [
+        "fold_state",
+        "fold_value",
+        "relative_action_value"
+      ],
+      "guards": [
+        "conservar fichas",
+        "fold relativo a si mesmo = 0",
+        "translação comum dos valores preserva preferência"
+      ],
+      "priority": "P0",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-DEFENSE",
+      "title": "Indiferença de call e frequência de defesa",
+      "source_refs": [
+        {
+          "source_id": "S07",
+          "first_block": 30,
+          "last_block": 71
+        },
+        {
+          "source_id": "S01",
+          "first_block": 69,
+          "last_block": 70
+        },
+        {
+          "source_id": "S03",
+          "first_block": 97,
+          "last_block": 125
+        }
+      ],
+      "curatorial_reading": "O toy game é valioso para separar risco de quem aposta e risco de quem paga. A identificação MDF=1-equidade mínima não decorre das equações.",
+      "proposed_translation": "Usar duas condições de indiferença: defensor b*=Ldef/(Wdef+Ldef); blefe do agressor d*=Gagg/(Gagg+Lagg). Para call binário geral, q*=(Vfold-Vloss)/(Vwin-Vloss).",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "decision_rule",
+      "inputs": [
+        "payoff_matrix",
+        "ranges",
+        "terminal_states",
+        "action_set"
+      ],
+      "outputs": [
+        "call_threshold",
+        "defense_frequency",
+        "feasibility"
+      ],
+      "guards": [
+        "não confundir probabilidade de ganhar com frequência de ação",
+        "tratar empates e jogos de borda",
+        "não extrapolar a raises/multiway por fórmula HU"
+      ],
+      "priority": "P0",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-RISK-DIRECTION",
+      "title": "RP e vantagem de risco direcionais",
+      "source_refs": [
+        {
+          "source_id": "S08",
+          "first_block": 15,
+          "last_block": 18
+        },
+        {
+          "source_id": "S02",
+          "first_block": 49,
+          "last_block": 55
+        },
+        {
+          "source_id": "S07",
+          "first_block": 21,
+          "last_block": 25
+        }
+      ],
+      "curatorial_reading": "Fonte textual dá BTN21.4 e BB12.9, mas chama +8.5 de vantagem do BTN. A imagem S08/image4 confirma valores por linha; a interpretação favorável permanece inconsistente.",
+      "proposed_translation": "Definir RP_pp=100*(q_utility-q_chip) para os mesmos contrafactuais; RA(hero,villain)=RP_villain-RP_hero como convenção proposta de vantagem de menor RP. Preservar o dado relatado e registrar a transformação.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "diagnostic",
+      "inputs": [
+        "directed_pair",
+        "counterfactuals",
+        "unit",
+        "reference_model"
+      ],
+      "outputs": [
+        "risk_premium_pp",
+        "risk_advantage_pp",
+        "raw_reported_values"
+      ],
+      "guards": [
+        "pp não é percentual relativo",
+        "RA(hero,villain)=-RA(villain,hero)",
+        "não converter índices históricos sem discriminar fórmula"
+      ],
+      "priority": "P0",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-GLOBAL",
+      "title": "Externalidades e contexto completo do field",
+      "source_refs": [
+        {
+          "source_id": "S07",
+          "first_block": 95,
+          "last_block": 112
+        },
+        {
+          "source_id": "S09",
+          "first_block": 12,
+          "last_block": 14
+        },
+        {
+          "source_id": "S08",
+          "first_block": 5,
+          "last_block": 6
+        }
+      ],
+      "curatorial_reading": "A mesa é interdependente; o valor dos espectadores deve aparecer nos contrafactuais. Table draw, distribuição de fichas e bunching têm mecanismos distintos.",
+      "proposed_translation": "Avaliar vetor de payouts esperados de todos os jogadores vivos. Separar prêmio já atribuído do pool remanescente e qualquer modelo de pressão futura.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "transition",
+      "inputs": [
+        "all_remaining_stacks",
+        "remaining_payouts",
+        "awarded_payouts",
+        "selected_table",
+        "participants"
+      ],
+      "outputs": [
+        "player_value_deltas",
+        "spectator_value_deltas",
+        "pool_ledger"
+      ],
+      "guards": [
+        "mesa <=9 PokerStars / <=8 GGPoker",
+        "field sem limite artificial de 12",
+        "toda distribuição faltante fica desconhecida ou assumida explicitamente"
+      ],
+      "priority": "P0",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-DRIFT",
+      "title": "Compressão de sizing e maior check sob condições específicas",
+      "source_refs": [
+        {
+          "source_id": "S08",
+          "first_block": 78,
+          "last_block": 84
+        },
+        {
+          "source_id": "S08",
+          "first_block": 140,
+          "last_block": 144
+        },
+        {
+          "source_id": "S12",
+          "first_block": 7,
+          "last_block": 7
+        }
+      ],
+      "curatorial_reading": "Aula 1.2 oferece família de situações e comparativos, com nodelocks e diferenças declaradas entre solvers. Não atribuir toda diferença exclusivamente ao ICM.",
+      "proposed_translation": "Experimentos com mesmo estado, ranges, árvore e software quando possível; variar utilidade e depois política separadamente; comparar distribuição de sizings e check, incluindo casos de reversão.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "experiment",
+      "inputs": [
+        "board",
+        "action_tree",
+        "ranges",
+        "utility_variant",
+        "solver_settings"
+      ],
+      "outputs": [
+        "sizing_distribution",
+        "check_frequency",
+        "comparison_limitations"
+      ],
+      "guards": [
+        "não fixar 20% como ótimo universal",
+        "diferenças de bunching e árvores ficam visíveis",
+        "ausência de solve permite molde, não frequência inventada"
+      ],
+      "priority": "P1",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-RIO",
+      "title": "Realização, especulação e passivo multiway",
+      "source_refs": [
+        {
+          "source_id": "S10",
+          "first_block": 2,
+          "last_block": 53
+        },
+        {
+          "source_id": "S10",
+          "first_block": 67,
+          "last_block": 149
+        },
+        {
+          "source_id": "S01",
+          "first_block": 72,
+          "last_block": 72
+        }
+      ],
+      "curatorial_reading": "Raphael acrescenta RIO como variável e qualifica os 33% como tendência sem rigor científico. O expoente e a simulação como prova são introduzidos em respostas da IA.",
+      "proposed_translation": "Calcular perdas e ganhos em ramos futuros. Alternativas heurísticas n² e n(n-1)/2 podem ser experimentos explícitos, sem dupla cobrança do mesmo risco já incorporado em Q.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "transition",
+      "inputs": [
+        "conditional_ranges",
+        "board",
+        "legal_future_actions",
+        "pot_and_sidepots",
+        "policy"
+      ],
+      "outputs": [
+        "realized_value",
+        "dominated_outcome_losses",
+        "sensitivity"
+      ],
+      "guards": [
+        "probabilidades normalizadas e exclusivas",
+        "base_rio sem unidade não entra em soma monetária",
+        "não carregar 33% como default populacional"
+      ],
+      "priority": "P1",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-TOOLS-EDGE",
+      "title": "Habilidade condicionada às ferramentas disponíveis",
+      "source_refs": [
+        {
+          "source_id": "S10",
+          "first_block": 301,
+          "last_block": 303
+        },
+        {
+          "source_id": "S10",
+          "first_block": 320,
+          "last_block": 337
+        },
+        {
+          "source_id": "S10",
+          "first_block": 383,
+          "last_block": 408
+        }
+      ],
+      "curatorial_reading": "A hipótese autoral é condicional: stack, adversários e oportunidades restringem exploração. A IA passa de redução de edge a neutralização em 10bb.",
+      "proposed_translation": "Representar conjunto de ações e políticas adversárias por profundidade e posição; medir diferença de valor entre políticas viáveis. Curva log(stack) é variante proposta, não lei nem cutoff físico.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "policy",
+      "inputs": [
+        "legal_action_tree",
+        "stack_depth_bb",
+        "opponent_policy",
+        "hero_policy",
+        "icm_context"
+      ],
+      "outputs": [
+        "policy_value_gap",
+        "available_tools",
+        "sensitivity"
+      ],
+      "guards": [
+        "não impor apenas shove/fold a toda stack10bb",
+        "variância não apaga automaticamente valor esperado",
+        "mesma unidade entre variantes"
+      ],
+      "priority": "P1",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-BELIEFS",
+      "title": "Desvios humanos, informação e atualização",
+      "source_refs": [
+        {
+          "source_id": "S09",
+          "first_block": 15,
+          "last_block": 15
+        },
+        {
+          "source_id": "S09",
+          "first_block": 91,
+          "last_block": 103
+        },
+        {
+          "source_id": "S03",
+          "first_block": 178,
+          "last_block": 183
+        }
+      ],
+      "curatorial_reading": "Investigar erros condicionais ao histórico e ao contexto. A soma P(nuts)+P(tilt) da IA não é uma probabilidade de vitória válida por construção.",
+      "proposed_translation": "Mistura normalizada de políticas pi=(1-epsilon)*pi_ref+epsilon*pi_dev, com epsilon assumido ou estimado e posterior condicionado à ação observada. Taxa de erro não é diagnóstico psicológico.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "policy",
+      "inputs": [
+        "observed_actions",
+        "prior",
+        "likelihood",
+        "sample_size",
+        "policy_variants"
+      ],
+      "outputs": [
+        "posterior",
+        "conditional_action_probabilities",
+        "uncertainty"
+      ],
+      "guards": [
+        "sem contagem dupla de nuts/blefe/erro",
+        "default experimental não é estimativa",
+        "não usar perfil pessoal do autor como coeficiente"
+      ],
+      "priority": "P1",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-CLOCK",
+      "title": "Relógio, órbita e table draw",
+      "source_refs": [
+        {
+          "source_id": "S09",
+          "first_block": 14,
+          "last_block": 14
+        },
+        {
+          "source_id": "S10",
+          "first_block": 181,
+          "last_block": 226
+        }
+      ],
+      "curatorial_reading": "Antevisão incorpora eventos futuros e vizinhança. UTG virar BB não implica pagar SB+BB simultaneamente na mesma mão.",
+      "proposed_translation": "Agenda explícita de blinds/antes, regra por sala, posição e distribuição de duração por mão; transições com destinatários dos pagamentos.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "transition",
+      "inputs": [
+        "blind_schedule",
+        "ante_mode",
+        "button",
+        "seats",
+        "time_to_level",
+        "hand_duration_model"
+      ],
+      "outputs": [
+        "future_states",
+        "orbit_cost",
+        "value_sensitivity"
+      ],
+      "guards": [
+        "tempo em minutos não é número de mãos",
+        "pagamentos por posição e modo de ante",
+        "salto de blind não força monotonicidade universal do range"
+      ],
+      "priority": "P1",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-OPTIONALITY",
+      "title": "Valor das opções futuras",
+      "source_refs": [
+        {
+          "source_id": "S01",
+          "first_block": 71,
+          "last_block": 71
+        },
+        {
+          "source_id": "S05",
+          "first_block": 688,
+          "last_block": 714
+        },
+        {
+          "source_id": "S10",
+          "first_block": 301,
+          "last_block": 303
+        }
+      ],
+      "curatorial_reading": "Preservar oportunidades pode ter valor. Um bônus aditivo arbitrário duplicaria efeitos de políticas futuras.",
+      "proposed_translation": "Omega=V_com_opcoes-V_com_opcoes_restritas, mantendo cenário, utilidade e horizonte e restringindo um conjunto aninhado de ações.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "diagnostic",
+      "inputs": [
+        "nested_action_sets",
+        "same_scenario",
+        "same_utility",
+        "same_horizon"
+      ],
+      "outputs": [
+        "option_value",
+        "policy_changes"
+      ],
+      "guards": [
+        "Omega>=0 somente sob otimização comparável de conjuntos aninhados",
+        "Omega=0 é admissível",
+        "não somar Omega novamente a V_com_opcoes"
+      ],
+      "priority": "P1",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-ENTRY",
+      "title": "Entrada tardia e redistribuição",
+      "source_refs": [
+        {
+          "source_id": "S11",
+          "first_block": 21,
+          "last_block": 39
+        },
+        {
+          "source_id": "S11",
+          "first_block": 55,
+          "last_block": 59
+        },
+        {
+          "source_id": "S05",
+          "first_block": 246,
+          "last_block": 250
+        }
+      ],
+      "curatorial_reading": "O estudo externo recebido contém três exemplos, screenshots e dois stacks imputados. Seus percentuais são relativos à contribuição líquida ao pool; o juízo de justiça é normativo.",
+      "proposed_translation": "Operador de entrada: adicionar stacks e alterar payouts conforme input; identidade sum(deltaV_incumbentes)=deltaPool-sum(V_novos), com ledger de prêmios.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "transition",
+      "inputs": [
+        "before_stacks",
+        "new_stacks",
+        "before_prizes",
+        "after_prizes",
+        "net_pool_contribution"
+      ],
+      "outputs": [
+        "entrant_value",
+        "incumbent_delta",
+        "conservation_residual"
+      ],
+      "guards": [
+        "não confundir buy-in total e contribuição líquida",
+        "não assumir pool constante com novas entradas",
+        "somente contexto/experimento posterior; foco imediato FT"
+      ],
+      "priority": "P1",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-EDUCATION",
+      "title": "Heurística de preço e qualidade de decisão",
+      "source_refs": [
+        {
+          "source_id": "S09",
+          "first_block": 114,
+          "last_block": 142
+        },
+        {
+          "source_id": "S09",
+          "first_block": 204,
+          "last_block": 204
+        },
+        {
+          "source_id": "S10",
+          "first_block": 53,
+          "last_block": 53
+        },
+        {
+          "source_id": "S12",
+          "first_block": 32,
+          "last_block": 76
+        }
+      ],
+      "curatorial_reading": "Preservar a hipótese qualificada de efeito marginal e de risco pedagógico. Redundância informacional do preço em Q não significa ausência de efeito causal do preço na decisão.",
+      "proposed_translation": "Website explica preço, realização e trajetórias juntos; experimento pedagógico separado de ablação matemática. Carreira/mental game têm trilha editorial própria.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "editorial",
+      "inputs": [
+        "audience",
+        "scenario",
+        "explanation_variant"
+      ],
+      "outputs": [
+        "concept_card",
+        "training_task",
+        "feedback"
+      ],
+      "guards": [
+        "não remover pot/call dos inputs",
+        "não inferir vantagem comprovada da exposição pedagógica",
+        "não misturar bankroll com payout sem objetivo explícito"
+      ],
+      "priority": "P1",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    },
+    {
+      "id": "PM-BOUNDARIES",
+      "title": "Outras teorias e objetivos compatíveis",
+      "source_refs": [
+        {
+          "source_id": "S01",
+          "first_block": 65,
+          "last_block": 74
+        },
+        {
+          "source_id": "S03",
+          "first_block": 85,
+          "last_block": 87
+        },
+        {
+          "source_id": "S06",
+          "first_block": 139,
+          "last_block": 149
+        }
+      ],
+      "curatorial_reading": "Teoria do Prospecto, não ergodicidade, WFR e PKO podem contribuir em papéis distintos. Nome sofisticado não define operador.",
+      "proposed_translation": "Plugins de hipóteses com papel valuation/transition/policy/diagnostic e grupos de exclusão; definir objetivo monetário, utilidade de carreira ou previsão comportamental separadamente.",
+      "translation_author": "Chat GPT-6 Astra <noreply@openai.com>",
+      "model_role": "architecture",
+      "inputs": [
+        "model_role",
+        "utility_definition",
+        "units",
+        "parameters",
+        "compatibility"
+      ],
+      "outputs": [
+        "compatible_model_package",
+        "rejected_compositions"
+      ],
+      "guards": [
+        "não multiplicar ICM por aversão à perda para contar o mesmo risco duas vezes",
+        "não converter WFR ou entropia diretamente em dinheiro",
+        "bounty individual desconhecido não é inventado"
+      ],
+      "priority": "P1",
+      "status": {
+        "editorial": "internal_review",
+        "formal": "candidate_specification",
+        "empirical": "not_assessed",
+        "execution": "not_wired"
+      },
+      "coefficients": [],
+      "enabled_by_default": false
+    }
+  ]
+}
