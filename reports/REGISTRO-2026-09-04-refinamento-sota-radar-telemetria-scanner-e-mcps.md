@@ -51,10 +51,23 @@ verificado:
     Revisao de ancora em 2026-09-09: engine/timesfm_engine.py recebeu somente a
     relocacao do import padrao math para o topo do modulo; nenhuma formula,
     resultado de inferencia ou integracao TimesFM deste registro foi alterada.
+  - >-
+    Revisao de ancora em 2026-09-09: MasterSimulator.tsx recebeu somente a
+    reorganizacao semantica da barra de workspaces, com o mesmo estado ativo,
+    os mesmos quatro botoes e os mesmos handlers. O cockpit, a telemetria, o
+    radar, os paines matematicos e seus contratos permanecem inalterados.
 nao_verificado:
   - >-
     Execucao sob navegadores headless sem aceleracao de hardware WebGL.
 revisoes_de_ancora:
+  - registro: registro-2026-09-04-refinamento-sota-radar-telemetria-scanner-e-mcps
+    caminhos: [frontend/src/components/simulator/MasterSimulator.tsx]
+    parecer: >-
+      Revisado e mantido valido. A troca do wrapper por nav, a centralizacao
+      visual e o offset sticky abaixo do header compacto reorganizam apenas o
+      chrome de navegacao. activeWorkspaceTab, getWorkspaceTabMeta, handlers
+      de selecao e o conteudo de Cockpit, Telemetria, Referencial e Lente
+      seguem sem alteracao funcional ou matematica.
   - registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
     caminhos: [frontend/src/components/simulator/ui/BubbleFactorDiagnostic.tsx]
     parecer: >-
