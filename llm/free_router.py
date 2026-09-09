@@ -281,8 +281,11 @@ class SOTAUnifiedFreeRouter:
             cfg_kwargs: dict[str, Any] = {
                 "system_instruction": system_instruction,
                 "max_output_tokens": max_output,
-                "temperature": 0.2,
             }
+            is_gemini_3x = any(v in model_name.lower() for v in ("3.8", "3.7", "3.6", "3.5"))
+            if not is_gemini_3x:
+                cfg_kwargs["temperature"] = 0.2
+
             if thinking_level:
                 cfg_kwargs["thinking_config"] = types.ThinkingConfig(thinking_level=thinking_level)
 

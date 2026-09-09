@@ -28,7 +28,7 @@ from core.config import (
 )
 from core.schemas import Task
 from database.queue_manager import QueueManager
-from llm.adapters import AnthropicAdapter
+from llm.adapters import AnthropicAdapter, GoogleGenAIAdapter
 from utils.env_loader import load_env
 
 # SOTA: Circuit Breaker de Provedores (Impede pingar APIs caidas)
@@ -69,22 +69,33 @@ async def call_gemini(
         api_key = os.environ.get("API_SECRET_TOKEN", "")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     headers = {"Content-Type": CONTENT_TYPE_JSON}
-    data: dict[str, Any] = {
-        "system_instruction": {"parts": [{"text": system_prompt}]},
-        "contents": [{"parts": [{"text": user_prompt}]}],
-    }
-    if response_format:
-        data["generationConfig"] = {
-            "responseMimeType": "application/json",
-            "responseSchema": response_format,
+    mensagens = [{"role": "user", "parts": [{"text": user_prompt}]}]
+    if GoogleGenAIAdapter.e_geracao_atual(model):
+        data = GoogleGenAIAdapter.build_http(
+            model,
+            mensagens,
+            system_instruction=system_prompt,
+            require_json=response_format is not None,
+        )
+        if response_format:
+            data.setdefault("generationConfig", {})["responseSchema"] = response_format
+    else:
+        data = {
+            "system_instruction": {"parts": [{"text": system_prompt}]},
+            "contents": mensagens,
         }
+        if response_format:
+            data["generationConfig"] = {
+                "responseMimeType": "application/json",
+                "responseSchema": response_format,
+            }
 
     async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
         if not response.ok:
             error_text = await response.text()
             raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
         result = await response.json()
-        text = result["candidates"][0]["content"]["parts"][0]["text"]
+        text = GoogleGenAIAdapter.extrair_texto(result)
         usage = result.get("usageMetadata", {})
         return text, usage
 

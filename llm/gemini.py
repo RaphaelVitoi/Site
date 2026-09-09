@@ -1,9 +1,12 @@
 # pylint: disable=missing-module-docstring, broad-exception-caught, logging-fstring-interpolation, try-except-raise, line-too-long
 
+from __future__ import annotations
+
 import asyncio
 import functools
 import json
 import logging
+from typing import Any
 
 import aiohttp
 
@@ -19,8 +22,8 @@ def _normalize_gemini_model(model: str) -> str:
     """Helper SOTA: Normaliza modelos legados e experimentais Gemini para a linha estavel."""
     model_l = model.lower()
 
-    # Suporte nativo para a serie 3.x (Gemini 3.7 Flash / 3.6 Flash / 3.5 Flash-Lite / 3.1 Flash-Lite)
-    if any(v in model_l for v in ("3.7", "3.6", "3.5", "3.1", "3.0")):
+    # Suporte nativo para a serie 3.x (Gemini 3.8 Flash / 3.7 Flash / 3.6 Flash / 3.5 Flash-Lite / 3.1 Flash-Lite)
+    if any(v in model_l for v in ("3.8", "3.7", "3.6", "3.5", "3.1", "3.0")):
         return model
 
     # Suporte nativo para a serie 2.x
@@ -33,25 +36,53 @@ def _normalize_gemini_model(model: str) -> str:
     return model
 
 
-def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bool, **kwargs) -> dict:
+def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bool, **kwargs: Any) -> dict[str, Any]:
     """Constroi a carga util da API absorvendo a prevencao de falhas de chaves Free-Tier e suporte a Thinking."""
     final_user_prompt = f"{system_prompt}\n\n---\n\n{user_prompt}" if system_prompt else user_prompt
-    gen_config = {
-        "temperature": kwargs.get("temperature", 0.2),
+    model_str = str(kwargs.get("model", "")).lower()
+    is_gemini_3x = any(v in model_str for v in ("3.8", "3.7", "3.6", "3.5"))
+
+    gen_config: dict[str, Any] = {
         "maxOutputTokens": kwargs.get("max_tokens", 8192),
     }
+
+    # Gemini 3.x descontinuou amostragem estocastica tradicional (temperature, top_p, top_k).
+    # Parametros de amostragem somente sao injetados em modelos legados.
+    if not is_gemini_3x:
+        gen_config["temperature"] = kwargs.get("temperature", 0.2)
+
     if require_json:
         gen_config["responseMimeType"] = APP_JSON
 
-    # SOTA: Habilita Dynamic Thinking para Gemini 3.7 Flash
-    model_str = str(kwargs.get("model", "")).lower()
-    if "3.7" in model_str or kwargs.get("thinking", False):
-        budget = kwargs.get("thinking_budget", 4096)
+    # SOTA: Habilita Dynamic Thinking / Test-Time Compute para Gemini 3.8 Flash e 3.7 Flash
+    if any(v in model_str for v in ("3.8", "3.7")) or kwargs.get("thinking", False):
+        budget = kwargs.get("thinking_budget")
+        if budget is None and (any(v in model_str for v in ("3.8", "3.7")) or kwargs.get("thinking", False)):
+            budget = 4096
+        thinking_level = kwargs.get("thinking_level")
+        thinking_config: dict[str, Any] = {}
         if budget:
-            gen_config["thinkingConfig"] = {"thinkingBudget": budget}
+            thinking_config["thinkingBudget"] = budget
+        if thinking_level:
+            thinking_config["thinkingLevel"] = str(thinking_level).upper()
+        if thinking_config:
+            gen_config["thinkingConfig"] = thinking_config
+
+    contents = kwargs.get("contents")
+    if contents is None:
+        contents = [{"parts": [{"text": final_user_prompt}]}]
+
+    # Validacao de historico: o ultimo turno nao pode ser model
+    if contents:
+        last_role = contents[-1].get("role") or contents[-1].get("type")
+        if last_role in ("model", "model_output"):
+            raise ValueError(
+                f"Google Gemini 3.x: Requisicoes onde o ultimo elemento contem role '{last_role}' "
+                "sao ativamente rejeitadas com erro HTTP 400. O ultimo turno deve ser do usuario."
+            )
 
     return {
-        "contents": [{"parts": [{"text": final_user_prompt}]}],
+        "contents": contents,
         "generationConfig": gen_config,
     }
 
@@ -70,7 +101,9 @@ async def _execute_native_fallback(
     )
     if status == 200:
         result = json.loads(raw_text)
-        text = result["candidates"][0]["content"]["parts"][0]["text"]
+        parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+        texts = [p.get("text", "") for p in parts if "text" in p and not p.get("thought", False)]
+        text = "".join(texts) if texts else (parts[0].get("text", "") if parts else "")
         usage = result.get("usageMetadata", {})
         return text, usage
     raise RuntimeError(f"HTTP {status} (Fallback Nativo): {raw_text}")
@@ -99,7 +132,9 @@ async def _execute_primary_request(
                 raise RuntimeError(f"HTTP 429: RESOURCE_EXHAUSTED retry_after={retry_delay_s:.0f}s")
             response.raise_for_status()
             result = await response.json()
-            text = result["candidates"][0]["content"]["parts"][0]["text"]
+            parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+            texts = [p.get("text", "") for p in parts if "text" in p and not p.get("thought", False)]
+            text = "".join(texts) if texts else (parts[0].get("text", "") if parts else "")
             usage = result.get("usageMetadata", {})
             return text, usage
     except aiohttp.ClientResponseError as e:

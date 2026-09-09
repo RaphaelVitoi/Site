@@ -23,6 +23,7 @@ from llm.model_registry import (
     MODEL_REGISTRY,
     MODELOS_NAO_VERIFICADOS,
     AdapterType,
+    VerificationStatus,
     custo_estimado,
     get,
 )
@@ -188,6 +189,38 @@ def test_include_thoughts_nao_e_campo_real():
 def test_modo_stateful_nao_reenvia_assinaturas():
     steps = [{"type": "thought", "signature": "abc"}, {"type": "text"}]
     assert GoogleGenAIAdapter.preservar_assinaturas("gemini-3.7-flash", steps) == []
+
+
+def test_gemini_36_flash_limite_de_saida_e_preco():
+    """gemini-3.6-flash possui limite de saida base de 8k e preco regular $0.75/$3.75."""
+    g36 = get("gemini-3.6-flash")
+    assert g36.max_output_tokens == 8_192
+    assert g36.price_per_1m_in == 0.75
+    assert g36.price_per_1m_out == 3.75
+    assert g36.verification == VerificationStatus.VERIFICADO
+
+
+def test_gemini_37_e_38_flash_status_verificado():
+    """gemini-3.7-flash e 3.8-flash sao modelos com status VERIFICADO e 64k de saida."""
+    g37 = get("gemini-3.7-flash")
+    g38 = get("gemini-3.8-flash")
+    assert g37.verification == VerificationStatus.VERIFICADO
+    assert g38.verification == VerificationStatus.VERIFICADO
+    assert g37.max_output_tokens == 65_536
+    assert g38.max_output_tokens == 65_536
+
+
+def test_gemini_38_flash_nao_aceita_minimal():
+    """gemini-3.8-flash aceita low/medium/high, rejeitando 'minimal'."""
+    assert get("gemini-3.8-flash").thinking_level in {"low", "medium", "high"}
+    with pytest.raises(ParametroRejeitadoError, match="minimal"):
+        GoogleGenAIAdapter.build("gemini-3.8-flash", USUARIO, thinking_level="minimal")
+
+
+def test_gemini_35_flash_lite_aceita_minimal():
+    """gemini-3.5-flash-lite aceita 'minimal' para extracao JSON de baixa latencia."""
+    req = GoogleGenAIAdapter.build("gemini-3.5-flash-lite", USUARIO, thinking_level="minimal")
+    assert req["generation_config"]["thinking_level"] == "minimal"
 
 
 #  Cruzados

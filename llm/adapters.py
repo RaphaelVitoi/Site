@@ -339,6 +339,38 @@ class GoogleGenAIAdapter:
     """
 
     @staticmethod
+    def e_geracao_atual(alias: str) -> bool:
+        """Verifica se o alias esta no registro e e um modelo Google Gemini."""
+        try:
+            return get(alias).adapter is AdapterType.GOOGLE
+        except KeyError:
+            return False
+
+    @staticmethod
+    def validar_historico(contents: list[dict[str, Any]]) -> None:
+        """Rejeita historico terminado com role 'model' ou 'model_output' antes da chamada remota."""
+        if not contents:
+            return
+        last = contents[-1]
+        role = last.get("role") or last.get("type")
+        if role in ("model", "model_output"):
+            raise ParametroRejeitadoError(
+                "Google Gemini 3.x: Requisicoes onde o ultimo elemento contem role 'model' "
+                "sao ativamente rejeitadas com erro HTTP 400. O ultimo turno deve ser do usuario."
+            )
+
+    @staticmethod
+    def validar_thinking_level(alias: str, thinking_level: str | None) -> None:
+        """Valida niveis de thinking suportados por variante do Gemini."""
+        if not thinking_level:
+            return
+        level_l = thinking_level.lower()
+        if alias in ("gemini-3.7-flash", "gemini-3.8-flash") and level_l == "minimal":
+            raise ParametroRejeitadoError(
+                f"{alias} nao aceita thinking_level 'minimal'. Use 'low', 'medium' ou 'high'."
+            )
+
+    @staticmethod
     def build(
         alias: str,
         contents: list[dict[str, Any]],
@@ -351,6 +383,8 @@ class GoogleGenAIAdapter:
         cap = get(alias)
         if cap.adapter is not AdapterType.GOOGLE:
             raise ParametroRejeitadoError(f"{alias} nao e um modelo Google.")
+
+        GoogleGenAIAdapter.validar_historico(contents)
 
         req = _sanear(kwargs, cap.model_name)
         req["model"] = cap.model_name
@@ -366,7 +400,13 @@ class GoogleGenAIAdapter:
         # Gestao de Latencia via Thinking Level
         thinking_level = kwargs.get("thinking_level") or gen.get("thinking_level") or cap.thinking_level
         if thinking_level:
+            GoogleGenAIAdapter.validar_thinking_level(alias, thinking_level)
             gen["thinking_level"] = thinking_level
+
+        # Suporte a thinking_budget em kwargs
+        thinking_budget = kwargs.get("thinking_budget") or gen.get("thinking_budget")
+        if thinking_budget:
+            gen.setdefault("thinking_config", {})["thinking_budget"] = thinking_budget
 
         # Controle de Custo por Payload JSON (response_schema / application/json)
         is_json_payload = (
@@ -383,6 +423,71 @@ class GoogleGenAIAdapter:
             req["tools"] = tools
 
         return req
+
+    @classmethod
+    def build_http(
+        cls,
+        alias: str,
+        contents: list[dict[str, Any]],
+        *,
+        system_instruction: str | None = None,
+        max_output_tokens: int | None = None,
+        require_json: bool = False,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Gera payload REST puro para generativelanguage.googleapis.com sem parametros legados."""
+        req = cls.build(alias, contents, max_output_tokens=max_output_tokens, **kwargs)
+        gen = dict(req.get("generation_config", {}))
+        if require_json:
+            gen["responseMimeType"] = "application/json"
+
+        thinking_cfg: dict[str, Any] = {}
+        if "thinking_level" in gen:
+            thinking_cfg["thinkingLevel"] = gen.pop("thinking_level").upper()
+        if "thinking_config" in gen:
+            tc = gen.pop("thinking_config")
+            if "thinking_budget" in tc:
+                thinking_cfg["thinkingBudget"] = tc["thinking_budget"]
+        if "thinking_budget" in kwargs:
+            thinking_cfg["thinkingBudget"] = kwargs["thinking_budget"]
+        if thinking_cfg:
+            gen["thinkingConfig"] = thinking_cfg
+
+        if "max_output_tokens" in gen:
+            gen["maxOutputTokens"] = gen.pop("max_output_tokens")
+
+        payload: dict[str, Any] = {
+            "contents": req["contents"],
+            "generationConfig": gen,
+        }
+        if system_instruction:
+            payload["system_instruction"] = {"parts": [{"text": system_instruction}]}
+        return payload
+
+    @staticmethod
+    def extrair_texto(resposta: Any) -> str:
+        """Extrai partes de texto candidatas, ignorando thought blocks e assinaturas."""
+        candidates = resposta.get("candidates") if isinstance(resposta, dict) else getattr(resposta, "candidates", None)
+        if not candidates:
+            return ""
+        cand0 = candidates[0]
+        content = cand0.get("content") if isinstance(cand0, dict) else getattr(cand0, "content", None)
+        if not content:
+            return ""
+        parts = content.get("parts") if isinstance(content, dict) else getattr(content, "parts", None)
+        textos: list[str] = []
+        for p in parts or []:
+            if isinstance(p, dict):
+                if p.get("thought", False):
+                    continue
+                if "text" in p and p["text"]:
+                    textos.append(p["text"])
+            else:
+                txt = getattr(p, "text", "")
+                is_thought = getattr(p, "thought", False)
+                if txt and not is_thought:
+                    textos.append(txt)
+        return "".join(textos)
 
     @staticmethod
     def preservar_assinaturas(alias: str, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
