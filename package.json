@@ -12,6 +12,7 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath .husky || exit 0",
+    "postinstall": "prisma generate --schema=frontend/prisma/schema.prisma",
     "wasm:build": "node scripts/build-wasm.mjs",
     "dev": "npm run dev --workspace=frontend",
     "build": "npm --workspace frontend run build",
