@@ -25,7 +25,7 @@ const getLesson = cache(async (slug: string) => {
 
 		// Extrai headers (H2 e H3) para a Tabela de Conteúdo
 		const toc: { level: number; text: string; slug: string }[] = [];
-		const tocRegex = /^(##|###)\s+(.+)$/gm;
+		const tocRegex = /^(#{2,3})[^\S\r\n]+([^\r\n]+)$/gm;
 		let tocMatch;
 		while ((tocMatch = tocRegex.exec(body)) !== null) {
 			const marker = tocMatch[1];
@@ -41,7 +41,8 @@ const getLesson = cache(async (slug: string) => {
 				.replaceAll(/[\u0300-\u036f]/g, '') // Remove acentos
 				.replaceAll(/[^\w\s-]/g, '') // Remove pontuações
 				.replaceAll(/[\s_-]+/g, '-') // Transforma espaços em hifens
-				.replaceAll(/^-+|-+$/g, ''); // Limpa hifens sobrando
+				.replaceAll(/^-+/g, '') // Limpa hifens no inicio
+				.replaceAll(/-+$/g, ''); // Limpa hifens no fim
 
 			toc.push({ level, text, slug: headerSlug });
 		}
