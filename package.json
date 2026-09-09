@@ -17,7 +17,7 @@
     "dev": "npm run dev --workspace=frontend",
     "build": "npm --workspace frontend run build",
     "lint": "npm --workspace frontend run lint",
-    "lint:workflows": "uv run --with actionlint-py actionlint .github/workflows/sota-ci.yml skills/gemini-cli-security/.github/workflows/gemini-review.yml",
+    "lint:workflows": "uv run --with actionlint-py actionlint $(git ls-files '.github/workflows/*.yml' '.github/workflows/*.yaml')",
     "lint:md": "npx -p markdownlint-cli markdownlint \"**/*.md\" --ignore-path .markdownlintignore",
     "lint:md:fix": "npx -p markdownlint-cli markdownlint --fix \"**/*.md\" --ignore-path .markdownlintignore",
     "typecheck": "tsc --build frontend/tsconfig.json",
