@@ -26,7 +26,8 @@ except ImportError:
 from aiohttp import web
 from pydantic import BaseModel, ValidationError
 
-from api.v1.keys import BG_TASKS_KEY, MANAGER_KEY, START_TIME_KEY
+from api.v1.keys import AUDIT_ENGINE_KEY, BG_TASKS_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
+from database.lab_manager import LabPersistenceUnavailableError
 
 from core.perspective_schemas import (
     PerspectivaResult,
@@ -304,12 +305,18 @@ async def handle_get_system_status(_request: web.Request) -> web.Response:  # NO
 
 async def handle_get_tournaments(request: web.Request) -> web.Response:
     """Endpoint do Laboratorio de ICM para listar Torneios."""
-    lab_manager = request.app.get("lab_manager")
+    lab_manager = request.app.get(LAB_MANAGER_KEY)
     if not lab_manager:
         return web.json_response({"error": "LabManager nao inicializado"}, status=500)
     try:
         tournaments = await lab_manager.get_tournaments()
         return web.json_response({"status": "SUCCESS", "data": tournaments})
+    except LabPersistenceUnavailableError as err:
+        # 503 e nao 200-vazio: persistencia indisponivel NAO e "zero torneios".
+        return web.json_response(
+            {"status": "ERROR", "error": f"Persistencia do laboratorio indisponivel: {err}"},
+            status=503,
+        )
     except Exception as e:  # noqa: BLE001
         return _internal_error(e, "handle_get_tournaments")
 
@@ -418,7 +425,7 @@ class FrontendLogsRequest(BaseModel):
 
 async def handle_frontend_logs(request: web.Request) -> web.Response:
     """Endpoint para processar logs e eventos vindos do Frontend SOTA."""
-    audit_engine = request.app.get("audit_engine")
+    audit_engine = request.app.get(AUDIT_ENGINE_KEY)
     if not audit_engine:
         return web.json_response({"error": "AuditEngine nao inicializado"}, status=500)
     try:
@@ -925,7 +932,7 @@ async def handle_pmev_heatmap(request: web.Request) -> web.Response:
 
 async def handle_prometheus_metrics(request: web.Request) -> web.Response:
     """Endpoint de telemetria em tempo real no formato Prometheus Text Exposition."""
-    manager = request.app.get("manager")
+    manager = request.app.get(MANAGER_KEY)
     db_metrics: dict[str, Any] = {}
     if manager and hasattr(manager, "get_realtime_metrics"):
         with contextlib.suppress(Exception):

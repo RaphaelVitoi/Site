@@ -15,6 +15,18 @@ import aiosqlite
 logger = logging.getLogger(__name__)
 
 
+class LabPersistenceUnavailableError(RuntimeError):
+    """A persistencia do laboratorio nao respondeu -- banco, schema ou tabela.
+
+    Existe para separar duas coisas que o DAO devolvia identicas: `[]` porque
+    nao ha torneios (dado legitimo) e `[]` porque a tabela nao existe (defeito
+    de configuracao). Medido em 2026-09-09: `Tournament` e `TournamentScenario`
+    estao ausentes do `schema.prisma` E do banco vivo, entao a rota devolvia
+    HTTP 200 SUCCESS com lista vazia -- indistinguivel de um laboratorio sem
+    torneios cadastrados. Erro que se apresenta como sucesso e pior que erro.
+    """
+
+
 class LabManager:
     """
     Gerenciador SOTA para os laboratorios e cenarios de testes quantitativos.
@@ -34,7 +46,7 @@ class LabManager:
                     return [dict(row) for row in rows]
         except sqlite3.OperationalError as err:
             logger.warning("Erro ao acessar Prisma DB (Ja executou 'npx prisma db push'?): %s", err)
-            return []
+            raise LabPersistenceUnavailableError(f"Leitura de Tournament indisponivel: {err}") from err
 
     async def get_scenarios_for_tournament(self, tournament_id: str) -> list[dict[str, str | int]]:
         """Recupera cenarios atrelados a um torneio."""
@@ -49,10 +61,41 @@ class LabManager:
                     return [dict(row) for row in rows]
         except sqlite3.OperationalError as err:
             logger.warning("Erro ao acessar Prisma DB: %s", err)
-            return []
+            raise LabPersistenceUnavailableError(f"Leitura de TournamentScenario indisponivel: {err}") from err
+
+    #: Campos que sao MEDICAO, e por isso nao podem ter default.
+    #:
+    #: Ate 2026-09-09 o metodo preenchia todos eles quando faltavam -- inclusive
+    #: uma origem de solver comercial e equities com quatro casas. Um estudo
+    #: gravado com `{}` ficava indistinguivel, no banco, de uma medicao real.
+    #: `id` e `raw_data` continuam opcionais: um e identidade, o outro e anexo,
+    #: e nenhum dos dois afirma um resultado.
+    CAMPOS_DE_PROCEDENCIA = (
+        "source",
+        "scenario_name",
+        "stack_bb",
+        "bubble_factor",
+        "time_to_blind",
+        "icm_req_equity",
+        "pmev_req_equity",
+        "delta_equity",
+        "hrc_ev_bb",
+        "pmev_ev_bb",
+        "monte_carlo_runs",
+        "delta_combos",
+    )
 
     async def save_pmev_benchmark_study(self, study_data: dict[str, str | float | int]) -> bool:
-        """Persiste um estudo quantitativo de benchmark PMev no banco do laboratorio."""
+        """Persiste um estudo quantitativo de benchmark PMev no banco do laboratorio.
+
+        Recusa a gravacao quando falta qualquer campo de procedencia: um ledger
+        experimental que completa lacunas com defaults deixa de ser evidencia.
+        """
+        ausentes = [campo for campo in self.CAMPOS_DE_PROCEDENCIA if study_data.get(campo) is None]
+        if ausentes:
+            raise ValueError(
+                "Estudo PMev recusado por procedencia incompleta; sem default para: " + ", ".join(ausentes)
+            )
         try:
             async with aiosqlite.connect(self.db_path) as db:
                 await db.execute(
@@ -87,18 +130,18 @@ class LabManager:
                     """,
                     (
                         study_id,
-                        str(study_data.get("source", "HRC Pro v2.4.1")),
-                        str(study_data.get("scenario_name", "Mesa Final MTT SB vs BB")),
-                        float(study_data.get("stack_bb", 18.5)),
-                        float(study_data.get("bubble_factor", 2.45)),
-                        float(study_data.get("time_to_blind", 3.0)),
-                        float(study_data.get("icm_req_equity", 0.4949)),
-                        float(study_data.get("pmev_req_equity", 0.4316)),
-                        float(study_data.get("delta_equity", -0.0633)),
-                        float(study_data.get("hrc_ev_bb", -2.00)),
-                        float(study_data.get("pmev_ev_bb", 0.13)),
-                        int(study_data.get("monte_carlo_runs", 100000)),
-                        float(study_data.get("delta_combos", 778.83)),
+                        str(study_data["source"]),
+                        str(study_data["scenario_name"]),
+                        float(study_data["stack_bb"]),
+                        float(study_data["bubble_factor"]),
+                        float(study_data["time_to_blind"]),
+                        float(study_data["icm_req_equity"]),
+                        float(study_data["pmev_req_equity"]),
+                        float(study_data["delta_equity"]),
+                        float(study_data["hrc_ev_bb"]),
+                        float(study_data["pmev_ev_bb"]),
+                        int(study_data["monte_carlo_runs"]),
+                        float(study_data["delta_combos"]),
                         json.dumps(study_data.get("raw_data", {})),
                     ),
                 )
@@ -120,5 +163,5 @@ class LabManager:
                 ) as cursor:
                     rows = await cursor.fetchall()
                     return [dict(row) for row in rows]
-        except sqlite3.OperationalError:
-            return []
+        except sqlite3.OperationalError as err:
+            raise LabPersistenceUnavailableError(f"Leitura de PmevBenchmarkStudy indisponivel: {err}") from err

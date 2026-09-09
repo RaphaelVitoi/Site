@@ -10,7 +10,7 @@ import aiosqlite
 import pytest
 
 from core.schemas import Task
-from database.lab_manager import LabManager
+from database.lab_manager import LabManager, LabPersistenceUnavailableError
 from database.queue_manager import QueueManager
 
 
@@ -67,16 +67,23 @@ async def test_lab_manager_flow(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.unit
-async def test_lab_manager_operational_error(tmp_path: Path) -> None:
-    """Valida o tratamento de erro operacional no LabManager."""
+async def test_lab_manager_falha_alto_quando_a_tabela_nao_existe(tmp_path: Path) -> None:
+    """Persistencia indisponivel levanta; nao devolve lista vazia.
+
+    Ate 2026-09-09 este teste exigia `== []`, isto e, fixava como contrato
+    justamente o defeito do achado B08: um erro de schema devolvido como
+    sucesso sem torneios. `Tournament` esta ausente do `schema.prisma` e do
+    banco vivo, entao a rota de produto respondia 200/SUCCESS/[] sempre --
+    indistinguivel de um laboratorio vazio.
+    """
     manager = LabManager()
     manager.db_path = tmp_path / "nonexistent.db"
 
-    tournaments = await manager.get_tournaments()
-    assert tournaments == []
+    with pytest.raises(LabPersistenceUnavailableError):
+        await manager.get_tournaments()
 
-    scenarios = await manager.get_scenarios_for_tournament("T1")
-    assert scenarios == []
+    with pytest.raises(LabPersistenceUnavailableError):
+        await manager.get_scenarios_for_tournament("T1")
 
 
 @pytest.mark.asyncio
@@ -362,3 +369,41 @@ async def test_queue_manager_bayesian_health_report() -> None:
         assert key_b_report["is_anomaly"] is True
     finally:
         await manager.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_benchmark_pmev_recusa_procedencia_fabricada(tmp_path: Path) -> None:
+    """Gravar estudo sem os campos medidos nao pode inventar uma origem HRC.
+
+    Achado B08, segunda metade: os defaults do metodo preenchiam
+    `source="HRC Pro v2.4.1"` e metricas como `icm_req_equity=0.4949` quando os
+    campos faltavam. O registro resultante e indistinguivel de uma medicao real
+    feita num solver comercial. A auditoria de 2026-09-05 nao atribui esses
+    numeros a medicao nenhuma.
+    """
+    manager = LabManager()
+    manager.db_path = tmp_path / "lab.db"
+
+    with pytest.raises(ValueError, match="procedencia"):
+        await manager.save_pmev_benchmark_study({"scenario_name": "so o nome"})
+
+    completo: dict[str, str | float | int] = {
+        "source": "PMev v8 GOLD -- execucao local 2026-09-09",
+        "scenario_name": "Mesa Final MTT SB vs BB",
+        "stack_bb": 18.5,
+        "bubble_factor": 2.45,
+        "time_to_blind": 3.0,
+        "icm_req_equity": 0.4949,
+        "pmev_req_equity": 0.4316,
+        "delta_equity": -0.0633,
+        "hrc_ev_bb": -2.0,
+        "pmev_ev_bb": 0.13,
+        "monte_carlo_runs": 100000,
+        "delta_combos": 778.83,
+    }
+    assert await manager.save_pmev_benchmark_study(completo) is True
+
+    estudos = await manager.get_pmev_benchmark_studies()
+    assert len(estudos) == 1
+    assert estudos[0]["source"] == completo["source"]

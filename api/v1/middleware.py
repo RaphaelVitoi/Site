@@ -161,6 +161,43 @@ async def _handle_no_token_auth(request, origin, handler):
     return await handler(request)
 
 
+#: Rotas que a identidade de PRODUTO (JWT do Supabase) pode alcancar.
+#:
+#: Achado B07. Duas credenciais de naturezas diferentes entram pela mesma porta:
+#: o JWT identifica um usuario humano do site; a `API_SECRET_TOKEN` e credencial
+#: de servico e carrega autoridade sobre o host. Ate 2026-09-09 ambas chegavam as
+#: mesmas 29 rotas -- inclusive `/api/files/view`, que le o disco do projeto --
+#: e `user_role`, extraido logo abaixo, nao tinha um unico leitor no backend.
+#:
+#: A faixa e FAIL-CLOSED de proposito: o JWT alcanca so o que esta declarado
+#: aqui, entao rota nova nasce fechada a identidade de produto. O criterio de
+#: inclusao e estreito -- calculo puro sobre a entrada da requisicao e leitura
+#: inocua de saude. Fila, estado global, disco, ingestao, busca e telemetria de
+#: operacao ficam de fora, porque nenhuma delas e sobre o usuario que pergunta.
+ROTAS_DE_PRODUTO: frozenset[str] = frozenset(
+    {
+        "/ping",
+        "/health",
+        "/lab/tournaments",
+        "/predictive-profile",
+        "/api/logs/frontend",
+        "/api/v1/perspective",
+        "/api/v1/perspective/tree",
+        "/api/v1/perspective/import-solver",
+        "/api/v1/perspective/heatmap",
+        "/api/v1/pmev/heatmap",
+        "/api/v1/timesfm/forecast",
+    }
+)
+
+
+def rota_e_de_produto(path: str | None) -> bool:
+    """Responde se a identidade de produto pode alcancar `path`. Sem match, e nao."""
+    if not path:
+        return False
+    return path in ROTAS_DE_PRODUTO or path.rstrip("/") in ROTAS_DE_PRODUTO
+
+
 async def _handle_jwt_token_auth(token: str, request, handler):
     """Verifica um token JWT contra a chave secreta do Supabase."""
     secret = _jwt_secret()
@@ -174,6 +211,19 @@ async def _handle_jwt_token_auth(token: str, request, handler):
         return web.json_response({"error": "Token JWT do Supabase invalido ou expirado."}, status=403)
     request["user_id"] = payload.get("sub")
     request["user_role"] = payload.get("role", "authenticated")
+
+    # A identidade extraida acima passa a ter consumidor: ela DELIMITA o alcance,
+    # em vez de ser lida e descartada.
+    if not rota_e_de_produto(getattr(request, "path", None)):
+        return web.json_response(
+            {
+                "error": (
+                    "Rota de operador: exige credencial de servico, nao identidade de produto. "
+                    "Autoridade sobre o host nao acompanha o login do usuario."
+                )
+            },
+            status=403,
+        )
     return await handler(request)
 
 
