@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-aberturas"
 criado_em: 2026-09-08T22:50:00-03:00
-atualizado_em: 2026-09-08T22:50:00-03:00
+atualizado_em: 2026-09-09T03:55:00-03:00
 classes: [interno, medido, plano, seguranca, processo]
 caminhos:
   - .github/workflows/sota-ci.yml
@@ -81,6 +81,14 @@ verificado:
     ocorrencias estao em .claude/.cache/chroma_db/chroma.sqlite3,
     .codeatlas/state.db, .git/config e .claude/settings.local.json -- e
     git ls-files confirma que nenhum desses esta no indice.
+  - >-
+    EMENDA 2026-09-09: a medicao de consumo dos submodulos foi REFEITA com
+    git grep, que consulta o indice, e a conclusao se inverte para um dos seis.
+    .github/workflows/sota-ci.yml:193 e package.json:20 invocam actionlint sobre
+    skills/gemini-cli-security/.github/workflows/gemini-review.yml, e o arquivo
+    existe. Aquele submodulo TEM consumidor real; remove-lo quebra o CI. Os
+    outros cinco seguem sem consumidor versionado fora de .gitmodules e de
+    documentos de arquitetura.
   - >-
     O plugin superpowers efetivamente carregado nesta sessao veio de
     C:/Users/rapha/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/,
@@ -911,6 +919,29 @@ for s in gemini-cli-jules gemini-cli-security gemini-deep-research gemini-superm
   echo "=== $s"; grep -rl --exclude-dir=.venv --exclude-dir=node_modules --exclude-dir=skills --exclude-dir=.git "skills/$s" . 2>/dev/null | head -3
 done
 ```
+
+**EMENDA DE 2026-09-09 -- ESTA MEDICAO ESTAVA INCOMPLETA E A CONCLUSAO SE
+INVERTE PARA UM DOS SEIS.** O comando acima usa `grep` sobre o DISCO com
+`--exclude-dir`. Refeito com `git grep`, que consulta o INDICE, aparecem
+referencias versionadas que o primeiro nao mostrou:
+
+```bash
+git grep -l "skills/gemini-cli-security" -- ':!skills'
+#  .github/workflows/sota-ci.yml
+#  .gitmodules
+#  docs/architecture/DEPENDENCY_BOUNDARY_INDEX.md
+```
+
+`.github/workflows/sota-ci.yml:193` e `package.json:20` invocam
+`actionlint ... skills/gemini-cli-security/.github/workflows/gemini-review.yml`,
+e o arquivo existe. **`gemini-cli-security` TEM consumidor real: remove-lo
+quebra o CI e o `npm run lint:workflows`.** Os outros cinco aparecem apenas em
+`.gitmodules` e em documentos de arquitetura.
+
+Logo a recomendacao abaixo -- "a remocao fazia sentido em 2026-08-22 e continua
+fazendo" -- **vale para cinco, nao para os seis**. Antes de qualquer remocao,
+refaca a medicao com `git grep`, nao com `grep` de disco: a secao 4 da raiz
+manda verificar referencia real, e o indice e a referencia real.
 
 **Resultado: nenhuma referencia em codigo versionado.** As unicas ocorrencias
 sao artefatos nao rastreados -- `.claude/.cache/chroma_db/chroma.sqlite3`,
