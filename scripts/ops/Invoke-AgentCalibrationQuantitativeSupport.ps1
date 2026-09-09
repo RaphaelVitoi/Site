@@ -111,6 +111,31 @@ param(
     [string]$ConductorModel
 )
 
+function Resolve-ProjectPython {
+    <#
+        MEDIDO EM 2026-09-09: este script resolvia o Python SO por
+        `.venv\Scripts\python.exe`, que existe apenas no Windows. Em runner
+        Linux o `throw` disparava e o script saia com codigo 1, derrubando dois
+        casos de tests/test_timesfm_agent_calibration.py -- que nunca haviam
+        rodado no CI, porque o passo do Ruff reprovava antes deles.
+
+        A secao 8.3 do CLAUDE.md declara pwsh 7+ como runtime padrao, e ele e
+        cross-platform. O padrao abaixo e o mesmo de
+        scripts/ops/cwv_gate.ps1:811-821; aqui ele passa a ser reaproveitado em
+        vez de reinventado.
+    #>
+    param([Parameter(Mandatory = $true)][string]$RepositoryRoot)
+
+    $venvWindows = Join-Path $RepositoryRoot '.venv\Scripts\python.exe'
+    $venvPosix   = Join-Path $RepositoryRoot '.venv/bin/python'
+    if (Test-Path -LiteralPath $venvWindows) { return $venvWindows }
+    if (Test-Path -LiteralPath $venvPosix)   { return $venvPosix }
+    $cmd = Get-Command python.exe, python3, python -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($cmd) { return $cmd.Source }
+    return $null
+}
+
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -266,8 +291,8 @@ console.log(JSON.stringify({ matrix, summary: { cells: matrix.length, minimum: M
 }
 
 if ($PSCmdlet.ParameterSetName -eq 'TimesFm') {
-    $pythonPath = Join-Path $repositoryRoot '.venv\Scripts\python.exe'
-    if (-not (Test-Path -LiteralPath $pythonPath)) { throw 'Project Python runtime (.venv\Scripts\python.exe) was not found.' }
+    $pythonPath = Resolve-ProjectPython -RepositoryRoot $repositoryRoot
+    if (-not $pythonPath) { throw 'Project Python runtime was not found (.venv/Scripts/python.exe, .venv/bin/python, or python on PATH).' }
 
     $numericScores = @()
     if (-not [string]::IsNullOrWhiteSpace($ScoresJson)) {
@@ -361,8 +386,8 @@ foreach ($property in $parsedRegrets.PSObject.Properties) {
     }
 }
 
-$pythonPath = Join-Path $repositoryRoot '.venv\Scripts\python.exe'
-if (-not (Test-Path -LiteralPath $pythonPath)) { throw 'Project Python runtime (.venv\\Scripts\\python.exe) was not found.' }
+$pythonPath = Resolve-ProjectPython -RepositoryRoot $repositoryRoot
+if (-not $pythonPath) { throw 'Project Python runtime was not found (.venv/Scripts/python.exe, .venv/bin/python, or python on PATH).' }
 $env:AGENT_CALIBRATION_REGRETS = $RegretsJson
 $pythonCode = @'
 import json

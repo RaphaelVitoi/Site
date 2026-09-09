@@ -26,6 +26,8 @@ import shutil
 import subprocess
 import time
 
+import sys
+
 import pytest
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -82,7 +84,21 @@ def test_declara_o_limite_do_indicio() -> None:
     assert "INDICIO, nao prova" in fonte
 
 
-@pytest.mark.skipif(PWSH is None, reason="PowerShell ausente do PATH")
+@pytest.mark.skipif(
+    PWSH is None,
+    reason="PowerShell ausente do PATH",
+)
+@pytest.mark.skipif(
+    sys.platform != "win32",
+    reason=(
+        "O sentinela enumera processos por Get-Process e correlaciona delta de CPU "
+        "para nomear suspeitos -- comportamento especifico do Windows. MEDIDO EM "
+        "2026-09-09: o guard existente checava apenas `pwsh no PATH`, e os runners "
+        "Ubuntu do GitHub TEM pwsh, entao o skip nao disparava e o teste falhava. "
+        "O guard media a presenca do interpretador quando a dependencia real e o "
+        "sistema operacional. COBERTURA PERDIDA fora do Windows, nao aprovada."
+    ),
+)
 def test_captura_a_delecao_e_nomeia_suspeitos(tmp_path: Path) -> None:
     """A guarda que importa: a isca some, o registro aparece.
 
