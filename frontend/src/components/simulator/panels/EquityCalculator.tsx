@@ -7,28 +7,31 @@
  * BINDING: [lib/icmEngine.ts, lib/handParser.ts, components/simulator/hooks/*, components/simulator/ui/*]
  */
 
-import { parseHandHistory } from '@/lib/handParser';
-import { downloadHRCJson, generateHRCJson } from '@/lib/hrcExport';
+import { mergeTableEdits, selectAnalysisTable, TABLE_CAPACITY, type PokerRoom } from '@/lib/tournamentContext';
+import { defaultTournamentConditions, resolveTournamentPayouts, validateTournamentChipMass, type TournamentConditions } from '@/lib/tournamentConditions';
+import TournamentConditionsPanel from './TournamentConditionsPanel';
+import TournamentTableImport, { type AppliedTournamentContext } from './TournamentTableImport';
+import { downloadHRCJson } from '@/lib/hrcExport';
+import { generateHRCHandConfig } from '@/lib/hrcFormat';
 import type { ICMPlayer } from '@/lib/icmEngine';
-import { use, useCallback, useDeferredValue, useMemo, useState } from 'react';
+import { use, useCallback, useMemo, useState } from 'react';
 import { SotaWasmContext } from '../SotaContext';
 import { useIcmCalculations } from '../hooks/useIcmCalculations';
 import type { InsolvencyMetrics } from '../hooks/useQuantumEngine';
-import AnimatedNumber from '../ui/AnimatedNumber';
 import { DynamicFoldEquityWidget } from '../ui/DynamicFoldEquityWidget';
 import { GeminiVoicePlayer } from '../ui/GeminiVoicePlayer';
 import { InsolvencyRioPanel } from '../ui/InsolvencyRioPanel';
 import { MonteCarloConvergenceWidget } from '../ui/MonteCarloConvergenceWidget';
 
 const PRESETS = [
-  { label: 'HU (2p)', stacks: [50, 50], prizes: [65, 35] },
-  { label: '3-Way', stacks: [40, 35, 25], prizes: [50, 30, 20] },
+  { label: 'FT MTT · HU', stacks: [50, 50], prizes: [65, 35] },
+  { label: 'FT MTT · 3 restantes', stacks: [40, 35, 25], prizes: [50, 30, 20] },
   {
-    label: 'FT (6p)',
+    label: 'FT MTT · 6 restantes',
     stacks: [30, 25, 20, 12, 8, 5],
     prizes: [35, 25, 18, 12, 7, 3],
   },
-  { label: 'Bolha (4p)', stacks: [45, 25, 18, 12], prizes: [50, 30, 20] },
+  { label: 'Toy MTT · bolha (4 restantes)', stacks: [45, 25, 18, 12], prizes: [50, 30, 20] },
 ];
 
 export default function EquityCalculator() {
@@ -37,9 +40,12 @@ export default function EquityCalculator() {
     { id: '2', name: 'Jogador 2', stack: 55 },
   ]);
   const [prizes, setPrizes] = useState<number[]>([65, 35]);
-  const [handText, setHandText] = useState('');
+  const [exportError, setExportError] = useState<string | null>(null);
   const [showParser, setShowParser] = useState(false);
-  const [parserError, setParserError] = useState<string | null>(null);
+  const [importedContext, setImportedContext] = useState<AppliedTournamentContext | null>(null);
+  const [room, setRoom] = useState<PokerRoom>('PokerStars');
+  const [manualParticipants, setManualParticipants] = useState<string[]>([]);
+  const [conditions, setConditions] = useState<TournamentConditions>(() => defaultTournamentConditions(2, 2));
   const [heroId, setHeroId] = useState<string | null>('1');
 
   const wasmContext = use(SotaWasmContext);
@@ -53,48 +59,65 @@ export default function EquityCalculator() {
 
   const LABELS = {
     title: 'Calculadora Malmuth-Harville',
-    subtitle: 'Aproximação de Equidade por Malha de Combinações',
+    subtitle: 'Equidade ICM da mesa com contexto de MTT',
     hhParser: 'Parser de Hand History',
     processStacks: 'Processar Estrutura de Stacks',
     playerStacks: 'Stacks dos Jogadores',
-    payoutStructure: 'Estrutura de Payouts (%)',
+    payoutStructure: 'Payouts restantes do torneio',
     totalSum: 'Soma Total:',
     equitySummary: 'Resumo de Equidade',
-    bubbleFactorVar: 'Variação Bubble Factor',
-    survivalUrgency: 'Urgência de Sobrevivência',
-    high: 'Alta',
+    bubbleFactorVar: 'Razão ICM / proporcional',
+    survivalUrgency: 'Coerência dos inputs',
+    high: 'Válidos',
     icmInsight: 'ICM Insight SOTA',
     player: 'Jogador',
     stackBb: 'Stack (BB)',
     propPct: 'Prop. (%)',
     icmEqPct: 'ICM Eq (%)',
-    delta: 'Delta',
+    delta: 'Delta (p.p.)',
   } as const;
 
-  const deferredPlayers = useDeferredValue(players);
-  const deferredPrizes = useDeferredValue(prizes);
+  const population = useMemo(() => importedContext ? mergeTableEdits(importedContext.population, players) : players, [importedContext, players]);
+  const selection = useMemo(() => importedContext?.selection ?? { room, playerIds: players.map(p => p.id), participantIds: manualParticipants.filter(id => players.some(p => p.id === id)) }, [importedContext, room, players, manualParticipants]);
+
+  const inputError = useMemo(() => {
+    try {
+      selectAnalysisTable(population, selection);
+      resolveTournamentPayouts(conditions, population.length, prizes);
+      validateTournamentChipMass(conditions, population.map(p => p.stack));
+      return null;
+    } catch (error) { return error instanceof Error ? error.message : 'Inputs incompatíveis.'; }
+  }, [population, selection, conditions, prizes]);
 
   // SOTA v4.2: Orquestração de Cálculo Modularizada
-  const { results, isWorkerCalculating, totalChips, totalPrizes } = useIcmCalculations({
-    players: deferredPlayers,
-    prizes: deferredPrizes,
+  const { results, isWorkerCalculating, totalChips, totalPrizes, metadata, error: calculationError } = useIcmCalculations({
+    players: players,
+    prizes: prizes,
+    population: population,
+    selection, conditions, inputError,
   });
 
-  const isCalculatingICM =
-    players !== deferredPlayers || prizes !== deferredPrizes || isWorkerCalculating;
+  const isCalculatingICM = isWorkerCalculating;
 
   const handleExportHRC = useCallback(() => {
-    const json = generateHRCJson(players, prizes);
-    downloadHRCJson(json, `vitoi_spot_${players.length}p.json`);
-  }, [players, prizes]);
+    if (inputError) return;
+    try {
+      const json = generateHRCHandConfig(population, resolveTournamentPayouts(conditions, population.length, prizes), {
+        selection, conditions, snapshot: importedContext?.snapshot, bigBlind: importedContext?.bigBlind ?? undefined,
+      });
+      downloadHRCJson(json, `pmev_hrc_hand_config_${players.length}p.json`);
+      setExportError(null);
+    } catch (error) { setExportError(error instanceof Error ? error.message : 'Não foi possível exportar.'); }
+  }, [population, prizes, conditions, inputError, selection, importedContext, players.length]);
 
   const { bfRange, bfRangeColor } = useMemo(() => {
     if (results.length < 2 || totalChips === 0)
       return { bfRange: '-', bfRangeColor: 'text-text-darker' };
     const bfs = results.map((r) => {
       const chip = ((players.find((p) => p.id === r.id)?.stack ?? 0) / totalChips) * 100;
-      return chip > 0 ? r.equityPercent / chip : 1;
-    });
+      return chip > 0 ? r.equityPercent / chip : null;
+    }).filter((value): value is number => value !== null);
+    if (!bfs.length) return { bfRange: '—', bfRangeColor: 'text-text-darker' };
     const min = Math.min(...bfs);
     const max = Math.max(...bfs);
     let color = 'text-accent-emerald';
@@ -117,13 +140,15 @@ export default function EquityCalculator() {
       if (delta < maxLoss.delta) maxLoss = { name: r.name, delta };
     }
     if (Math.abs(maxGain.delta) < 0.5 && Math.abs(maxLoss.delta) < 0.5) {
-      return 'Equidade ICM próxima da proporcional — pressão ICM baixa neste spot.';
+      return 'Nesta seleção, as equidades ICM estão a menos de 0,5 ponto percentual da participação proporcional em fichas. Essa diferença não mede o risco de uma decisão.';
     }
-    return `${maxGain.name} ganha +${maxGain.delta.toFixed(1)}% com ICM vs proporcional. ${maxLoss.name} perde ${Math.abs(maxLoss.delta).toFixed(1)}%. Short stacks acumulam equity desproporcional ao risco.`;
+    return `Diferença ICM menos participação em fichas, entre os jogadores selecionados: de ${maxLoss.delta.toFixed(1)} p.p. (${maxLoss.name}) a ${maxGain.delta.toFixed(1)} p.p. (${maxGain.name}). O denominador inclui todos os jogadores restantes.`;
   }, [results, players, totalChips]);
 
   const addPlayer = useCallback(() => {
-    setPlayers((prev) => [
+    if (players.length >= TABLE_CAPACITY[room] || importedContext) return;
+    setConditions(previous => ({ ...previous, remainingPlayers: previous.remainingPlayers + 1 }));
+    setPlayers((prev) => prev.length >= TABLE_CAPACITY[room] || importedContext ? prev : [
       ...prev,
       {
         id: globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}-${prev.length + 1}`,
@@ -131,10 +156,12 @@ export default function EquityCalculator() {
         stack: 20,
       },
     ]);
-  }, []);
+  }, [room, importedContext, players.length]);
 
   const removePlayer = useCallback(
     (id: string) => {
+      setConditions(previous => ({ ...previous, remainingPlayers: previous.remainingPlayers - 1 }));
+      setManualParticipants(previous => previous.filter(item => item !== id));
       setPlayers((prev) => prev.filter((p) => p.id !== id));
       if (heroId === id) setHeroId(null);
     },
@@ -162,6 +189,9 @@ export default function EquityCalculator() {
   }, []);
 
   const loadPreset = useCallback((preset: (typeof PRESETS)[0]) => {
+    setImportedContext(null);
+    setManualParticipants([]);
+    setConditions(defaultTournamentConditions(preset.stacks.length, preset.prizes.length));
     setPlayers(
       preset.stacks.map((stack, i) => ({
         id: String(i + 1),
@@ -173,29 +203,41 @@ export default function EquityCalculator() {
     setHeroId('1');
   }, []);
 
-  const parseHand = useCallback(() => {
-    setParserError(null);
-    try {
-      let parsed = parseHandHistory(handText);
-      if (parsed.length >= 2) {
-        if (parsed.length > 9) parsed = parsed.slice(0, 9);
-        const firstPlayer = parsed[0];
-        if (!firstPlayer) {
-          setParserError('Falha ao identificar o jogador hero.');
-          return;
-        }
-        setPlayers(parsed);
-        setShowParser(false);
-        setHandText('');
-        setHeroId(firstPlayer.id);
-      } else {
-        setParserError('Não foi possível identificar pelo menos 2 jogadores.');
-      }
-    } catch (error: unknown) {
-      console.error('[HandParser] Erro ao decodificar Hand History:', error);
-      setParserError('Falha ao decodificar a Hand History.');
-    }
-  }, [handText]);
+  const applyTournament = useCallback((context: AppliedTournamentContext) => {
+    setImportedContext(context);
+    setRoom(context.selection.room);
+    const byId = new Map(context.population.map(player => [player.id, player]));
+    setPlayers(context.selection.playerIds.map(id => byId.get(id)!));
+    setPrizes(context.prizes);
+    const defaults = defaultTournamentConditions(context.population.length, context.prizes.length);
+    const source = context.snapshot;
+    const unit = source.payoutUnit ?? 'absolute';
+    let paidPlaces = source.paidPlaces ?? defaults.paidPlaces;
+    const poolDefault = context.population.length >= paidPlaces ? (source.totalPrizePool ?? defaults.totalPrizePool)
+      : Math.min(defaults.remainingPrizePool, (source.totalPrizePool ?? defaults.totalPrizePool) / 10);
+    const remainingPool = source.remainingPrizePool ?? (unit === 'absolute' ? context.prizes.reduce((sum, value) => sum + value, 0) : poolDefault);
+    if (source.paidPlaces === undefined && source.totalPrizePool === remainingPool) paidPlaces = context.prizes.length;
+    setConditions({
+      fieldSize: source.totalEntries ?? defaults.fieldSize,
+      remainingPlayers: source.remainingPlayers ?? context.population.length,
+      paidPlaces, remainingPrizePool: remainingPool, payoutUnit: unit,
+      declaredTotalChipsBb: source.declaredTotalChips !== undefined && context.bigBlind ? source.declaredTotalChips / context.bigBlind : undefined,
+      totalPrizePool: source.totalPrizePool ?? (context.population.length >= paidPlaces ? remainingPool : Math.max(defaults.totalPrizePool, remainingPool)),
+    });
+    setHeroId(source.heroId ?? null);
+    setExportError(null);
+    setShowParser(false);
+  }, []);
+
+  const exportContext = () => {
+    downloadHRCJson(JSON.stringify({
+      tournamentType: 'MTT', variant: 'NLHE', totalEntries: conditions.fieldSize, remainingPlayers: conditions.remainingPlayers, paidPlaces: conditions.paidPlaces,
+      totalPrizePool: conditions.totalPrizePool, remainingPrizePool: conditions.remainingPrizePool, payoutUnit: conditions.payoutUnit,
+      room, stackUnit: 'bb', players: population, prizes,
+      source: importedContext?.snapshot ?? { sourceFormat: 'manual' },
+      analysis: { selection, metadata },
+    }, null, 2), 'pmev-contexto-torneio.json');
+  };
 
   return (
     <div className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
@@ -216,11 +258,13 @@ export default function EquityCalculator() {
             onClick={() => setShowParser(!showParser)}
             className={`px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all border ${showParser ? 'bg-accent-indigo text-white border-accent-indigo shadow-lg' : 'bg-black/40 border-white/5 text-text-muted hover:bg-white/5 hover:text-white'}`}
           >
-            <i className="fa-solid fa-code mr-1.5" /> {showParser ? 'Config Manual' : 'Parser HH'}
+            <i className="fa-solid fa-code mr-1.5" /> {showParser ? 'Voltar à mesa' : 'Importar torneio / HH'}
           </button>
           <button
             type="button"
+            title="JSON Hand Config: stacks, blinds e payouts. Abra no HRC para revisar a árvore e iniciar um novo cálculo."
             onClick={handleExportHRC}
+            disabled={inputError !== null}
             className="px-4 py-2 rounded-xl bg-black/40 border border-white/5 text-text-muted text-[0.6rem] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white transition-all"
           >
             <i className="fa-solid fa-file-export mr-1.5" /> Export HRC
@@ -241,33 +285,31 @@ export default function EquityCalculator() {
         ))}
       </div>
 
+      {exportError && <p role="alert" className="text-accent-danger">{exportError}</p>}
+      <TournamentConditionsPanel value={conditions} onChange={setConditions} />
+      <p className="text-xs text-text-muted">Export HRC gera a configuração inicial da mão. Em HHs, o botão determina a ordem das posições; sem botão, a ordem exibida é tratada como UTG até BB (SB/BB no HU). A árvore original é preservada ao reexportar HRC; novos setups usam um molde push/fold editável no HRC.</p>
+      <div className="space-y-3 rounded-xl border border-white/15 p-4 text-sm text-text-light">
+        <label>Sala da bancada
+          <select aria-label="Sala da bancada" value={room} disabled={importedContext !== null}
+            onChange={event => setRoom(event.target.value as PokerRoom)} className="ml-3 rounded-lg bg-bg-panel p-2">
+            <option value="PokerStars">PokerStars — até 9p</option><option value="GGPoker">GGPoker — até 8p</option>
+          </select>
+        </label>
+        <p className="font-semibold">MTT · No-Limit Texas Hold’em · {importedContext ? 'snapshot importado' : 'toy game sintético de etapa final'}</p>
+        <p>Field configurado: {conditions.fieldSize} entradas · restantes: {conditions.remainingPlayers} · stacks recebidos: {population.length} · assentos na mesa: {players.length}.</p>
+        <p>{selection.participantIds.length ? `${selection.participantIds.length} participantes selecionados para a mão.` : 'Mão ainda não definida; exibindo o snapshot de equidade ICM.'}</p>
+
+        {importedContext?.snapshot.declaredTotalChips !== undefined && <p>Fichas totais declaradas no arquivo: {importedContext.snapshot.declaredTotalChips.toLocaleString('pt-BR')} fichas. Soma dos stacks usados no cálculo: {totalChips.toLocaleString('pt-BR')} BB.</p>}
+        <p>A equidade considera todos os stacks e payouts recebidos, incluindo jogadores fora da mesa. Percentuais referem-se ao prize pool restante informado; a mesa não é tratada como um torneio separado.</p>
+        {importedContext?.snapshot.structureSource?.bountyType && <p>Estrutura {importedContext.snapshot.structureSource.name} · {importedContext.snapshot.structureSource.bountyType}. Equidade apenas da premiação por colocação; componente de bounty não calculado. A coleção original pode ser reexportada no painel de importação.</p>}
+        {metadata && <p role="status">{metadata.method === 'malmuth-harville-exact' ? 'ICM exato' : `ICM aproximado · ${metadata.iterations.toLocaleString('pt-BR')} simulações · seed ${metadata.seed}`} · {metadata.populationSize} stacks avaliados</p>}
+        {(inputError || calculationError) && <p role="alert" className="text-accent-danger">{inputError || calculationError}</p>}
+        <button type="button" className="rounded-lg border border-white/20 px-3 py-2" disabled={inputError !== null} onClick={exportContext}>Exportar contexto e seleção</button>
+        {importedContext && <p>Input original preservado no export de contexto. Para trocar assentos ou participantes, abra a importação. Presets iniciam uma nova bancada manual.</p>}
+      </div>
+
       {showParser ? (
-        <div className="space-y-4 animate-sota-in">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent-indigo shadow-[0_0_8px_var(--accent-indigo)]" />
-            <p className="text-[0.65rem] font-black text-text-muted uppercase tracking-[0.2em] m-0">
-              {LABELS.hhParser}
-            </p>
-          </div>
-          <textarea
-            value={handText}
-            onChange={(e) => setHandText(e.target.value)}
-            placeholder="Cole aqui o Hand History do PokerStars, Winamax ou 888poker..."
-            className="w-full h-48 bg-black/40 border border-white/10 rounded-2xl p-5 text-[0.75rem] font-mono text-text-light placeholder:text-text-darker focus:outline-none focus:border-accent-indigo focus:ring-1 focus:ring-accent-indigo/30 transition-all shadow-inner resize-none scrollbar-hide"
-          />
-          {parserError && (
-            <div className="p-4 bg-accent-danger/10 border border-accent-danger/20 rounded-xl text-accent-danger text-xs font-medium">
-              {parserError}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={parseHand}
-            className="w-full py-4 rounded-2xl bg-accent-indigo text-white text-[0.75rem] font-black uppercase tracking-widest hover:bg-indigo-500 shadow-lg shadow-accent-indigo/20 transition-all active:scale-[0.98]"
-          >
-            {LABELS.processStacks}
-          </button>
-        </div>
+        <TournamentTableImport defaultRoom={room} onApply={applyTournament} initialContext={importedContext} />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           <div className="space-y-6">
@@ -281,6 +323,7 @@ export default function EquityCalculator() {
               <button
                 type="button"
                 onClick={addPlayer}
+                disabled={importedContext !== null || players.length >= TABLE_CAPACITY[room]}
                 className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-accent-emerald text-[0.6rem] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
               >
                 <i className="fa-solid fa-plus text-[0.5rem]" /> Jogador
@@ -314,13 +357,17 @@ export default function EquityCalculator() {
                       aria-label="Stack do Jogador"
                       title="Stack do Jogador"
                       placeholder="Stack"
-                      value={p.stack}
-                      onChange={(e) => updateStack(p.id, Number.parseFloat(e.target.value) || 0)}
+                      value={Number.isNaN(p.stack) ? '' : p.stack}
+                      onChange={(e) => updateStack(p.id, e.target.value === '' ? NaN : Number(e.target.value))}
                       className="w-16 bg-transparent border-none text-[0.75rem] font-mono font-black text-right text-white focus:outline-none focus:ring-0"
                     />
                     <span className="text-[0.6rem] text-text-darker font-black uppercase">BB</span>
                   </div>
-                  {players.length > 2 && (
+                  {!importedContext && <label className="text-xs text-text-light">
+                    <input type="checkbox" aria-label={`Na mão: ${p.name}`} checked={manualParticipants.includes(p.id)}
+                      onChange={() => setManualParticipants(previous => previous.includes(p.id) ? previous.filter(id => id !== p.id) : [...previous, p.id])} /> Na mão
+                  </label>}
+                  {!importedContext && players.length > 2 && (
                     <button
                       type="button"
                       onClick={() => removePlayer(p.id)}
@@ -364,8 +411,8 @@ export default function EquityCalculator() {
                     aria-label="Premiação"
                     title="Premiação"
                     placeholder="0"
-                    value={val}
-                    onChange={(e) => updatePrize(i, Number.parseFloat(e.target.value) || 0)}
+                    value={Number.isNaN(val) ? '' : val}
+                    onChange={(e) => updatePrize(i, e.target.value === '' ? NaN : Number(e.target.value))}
                     className="min-w-0 flex-1 bg-black/60 border border-white/5 rounded-lg px-3 py-1.5 text-[0.75rem] font-mono font-black text-right text-accent-emerald focus:outline-none focus:border-accent-emerald shadow-inner"
                   />
                   {i === prizes.length - 1 && prizes.length > 1 && (
@@ -383,18 +430,18 @@ export default function EquityCalculator() {
               ))}
             </div>
             <div
-              className={`mt-4 p-4 rounded-2xl border flex justify-between items-center font-mono tabular-nums ${totalPrizes === 100 ? 'bg-accent-emerald/5 border-accent-emerald/20 text-accent-emerald' : 'bg-accent-amber/5 border-accent-amber/20 text-accent-amber'}`}
+              className={`mt-4 p-4 rounded-2xl border flex justify-between items-center font-mono tabular-nums ${Math.abs(totalPrizes - (conditions.payoutUnit === 'absolute' ? conditions.remainingPrizePool : 100)) < 1e-6 ? 'bg-accent-emerald/5 border-accent-emerald/20 text-accent-emerald' : 'bg-accent-amber/5 border-accent-amber/20 text-accent-amber'}`}
             >
               <span className="text-[0.6rem] font-black uppercase tracking-widest">
                 {LABELS.totalSum}
               </span>
-              <span className="text-[0.8rem] font-black">{totalPrizes.toFixed(1)}%</span>
+              <span className="text-[0.8rem] font-black">{Number.isFinite(totalPrizes) ? totalPrizes.toFixed(1) : '—'} {conditions.payoutUnit === 'percent-remaining-pool' ? '%' : ''}</span>
             </div>
           </div>
         </div>
       )}
 
-      <div className="pt-10 border-t border-white/5 flex flex-col gap-8">
+      {!inputError && !calculationError && <div className="pt-10 border-t border-white/5 flex flex-col gap-8">
         <div className="flex flex-col md:flex-row gap-6">
           <div className="flex-1 p-6 bg-black/40 border border-white/5 rounded-3xl shadow-inner space-y-4">
             <div className="flex justify-between items-center">
@@ -486,13 +533,13 @@ export default function EquityCalculator() {
                       {chipPct.toFixed(1)}%
                     </td>
                     <td className="px-4 py-4 text-right font-mono text-[0.8rem] font-black text-white tabular-nums">
-                      <AnimatedNumber value={r.equityPercent} decimals={2} />%
+                      {r.equityPercent.toFixed(2)}%
                     </td>
                     <td
                       className={`px-4 py-4 text-right font-mono text-[0.75rem] font-black tabular-nums ${delta >= 0 ? 'text-accent-emerald' : 'text-accent-danger'}`}
                     >
                       {delta >= 0 ? '+' : ''}
-                      {delta.toFixed(1)}%
+                      {delta.toFixed(1)} p.p.
                     </td>
                   </tr>
                 );
@@ -502,6 +549,7 @@ export default function EquityCalculator() {
         </div>
 
         <div className="mt-2">
+          <p className="mb-3 text-sm text-text-muted">Ferramentas auxiliares abaixo usam seus próprios inputs de ranges, pote e apostas; não representam a avaliação ICM do torneio acima.</p>
           <MonteCarloConvergenceWidget />
         </div>
 
@@ -527,7 +575,7 @@ export default function EquityCalculator() {
             isCalculating={safeWasmContext?.isCalculatingInsolvency ?? false}
           />
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

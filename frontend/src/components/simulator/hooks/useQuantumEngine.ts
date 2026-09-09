@@ -1,4 +1,5 @@
-import type { InsolvencyPayload, DistortionPayload, MultiwayPayload, NashDistortionResults, InsolvencyMetrics, InsolvencyWorkerRequest, InsolvencyWorkerResponse } from '../workers/insolvencyProtocol';
+import type { InsolvencyPayload, DistortionPayload, MultiwayPayload, NashDistortionResults, InsolvencyMetrics, InsolvencyWorkerRequest } from '../workers/insolvencyProtocol';
+import { readCurrentInsolvencyResponse } from '../workers/insolvencyResponse';
 export type { InsolvencyPayload, DistortionPayload, MultiwayPayload, NashDistortionResults, InsolvencyMetrics } from '../workers/insolvencyProtocol';
 /** @format */
 
@@ -132,11 +133,9 @@ export function useQuantumEngine({
     });
     insolvencyWorkerRef.current = worker;
 
-    worker.onmessage = (e: MessageEvent<InsolvencyWorkerResponse>) => {
-      const response = e.data;
-      if (!['MATRIX', 'DISTORTION', 'MULTIWAY_MATRIX'].includes(response.type)) return;
-      // Validação de versão: Ignora resultados de requisições antigas
-      if (response.id !== lastRequestIdRef.current[response.type]) return;
+    worker.onmessage = (e: MessageEvent<unknown>) => {
+      const response = readCurrentInsolvencyResponse(e.data, lastRequestIdRef.current);
+      if (!response) return;
 
       if (response.error) {
         console.warn('[SotaEcosystem] Entropia de Input (Insolvency WASM):', response.error);

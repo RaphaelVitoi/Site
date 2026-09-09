@@ -1,92 +1,10 @@
-/**
- * IDENTITY: HRC Export Utility
- * PATH: src/lib/hrcExport.ts
- * ROLE: Converter cenários de equidade interna para o formato JSON compatível com o Holdem Resources Calculator (HRC).
- * BINDING: [src/components/simulator/panels/EquityCalculator.tsx]
- * TELEOLOGY: Permitir que o usuário exporte spots complexos para análise profunda no solver HRC, mantendo a interoperabilidade SOTA.
- */
-
 import type { ICMPlayer } from './icmEngine';
+import { generateHRCHandConfig } from './hrcFormat';
 
-export interface HRCConfig {
-	version: string;
-	description: string;
-	equityModel: {
-		type: string;
-		prizes: number[];
-		totalChips: number;
-	};
-	structure: {
-		sb: number;
-		bb: number;
-		ante: number;
-		anteType: string;
-	};
-	players: {
-		name: string;
-		stack: number;
-		bounty: number;
-	}[];
-	treeConfig: {
-		mode: string;
-		preflop: {
-			raiseSizes: string;
-			allowFlatting: boolean;
-			maxActivePlayers: number;
-		};
-	};
-}
-
-/**
- * Converte o estado da calculadora para o formato JSON do HRC.
- *
- * @param players Lista de jogadores e seus stacks (em BB).
- * @param prizes Lista de prêmios (em %).
- * @param pkoWeight Peso do bounty (0-1).
- * @returns String JSON formatada para HRC.
- */
-export function generateHRCJson(
-	players: ICMPlayer[],
-	prizes: number[],
-	pkoWeight: number = 0,
-): string {
-	const totalChips = players.reduce((sum, p) => sum + p.stack, 0);
-
-	// Como os stacks no sistema Vitoi são geralmente em BB,
-	// normalizamos para BB=100 para compatibilidade universal no HRC.
-	const bbValue = 100;
-	const sbValue = 50;
-
-	const hrcConfig: HRCConfig = {
-		version: '3.0',
-		description: `Exported from Vitoi SOTA - ${players.length} Players`,
-		equityModel: {
-			type: pkoWeight > 0 ? 'FGS' : 'ICM', // FGS é preferível em HRC para PKO/MTT complexos
-			prizes: prizes,
-			totalChips: totalChips * bbValue,
-		},
-		structure: {
-			sb: sbValue,
-			bb: bbValue,
-			ante: 0,
-			anteType: 'ANTE_ALL',
-		},
-		players: players.map((p) => ({
-			name: p.name,
-			stack: p.stack * bbValue,
-			bounty: pkoWeight, // No HRC v3, bounty pode ser um valor absoluto ou multiplicador dependendo do setup
-		})),
-		treeConfig: {
-			mode: 'MONTE_CARLO',
-			preflop: {
-				raiseSizes: '2.2bb',
-				allowFlatting: true,
-				maxActivePlayers: 3,
-			},
-		},
-	};
-
-	return JSON.stringify(hrcConfig, null, 2);
+/** Legacy caller adapter. PKO weight is not a per-player bounty configuration. */
+export function generateHRCJson(players: ICMPlayer[], prizes: number[], pkoWeight = 0): string {
+  if (pkoWeight !== 0) throw new Error('Para exportar PKO, são necessários bounties por jogador e um modelo de bounty. O peso exploratório não define esse setup.');
+  return generateHRCHandConfig(players, prizes, { selection: { room: 'PokerStars', playerIds: players.map(p => p.id), participantIds: [] } });
 }
 
 /**

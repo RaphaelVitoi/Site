@@ -53,8 +53,12 @@ export function useMasterHandlers({
 			scenario.prizes && scenario.prizes.length > 0
 				? scenario.prizes
 				: [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
-		const json = generateHRCJson(players, prizes, pkoValue);
-		downloadHRCJson(json, `sota_${scenario.id}_${players.length}p.json`);
+		try {
+			const json = generateHRCJson(players, prizes, pkoValue);
+			downloadHRCJson(json, `sota_${scenario.id}_${players.length}p.json`);
+		} catch (error) {
+			globalThis.alert(error instanceof Error ? error.message : 'Não foi possível exportar o cenário HRC.');
+		}
 	}, [scenario, pkoValue]);
 
 	const handleHeroPositionChange = useCallback(
