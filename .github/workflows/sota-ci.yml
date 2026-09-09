@@ -211,7 +211,7 @@ jobs:
           test -n "$WORKFLOWS"   # lista vazia aprovaria sem medir nada
           echo "Workflows versionados por este repositorio:"
           echo "$WORKFLOWS"
-          uv run --with actionlint-py actionlint $WORKFLOWS
+          echo "$WORKFLOWS" | xargs uv run --with actionlint-py actionlint
 
       - name: 🔒 SOTA Security & CWV Quality Gate Check
         run: |
