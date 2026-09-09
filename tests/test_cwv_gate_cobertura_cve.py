@@ -120,3 +120,67 @@ def test_sem_git_ainda_mede_a_raiz_em_vez_de_aprovar_vazio(gate_texto: str):
     assert "$manifestosNpm.Count -eq 0" in trecho, (
         "o fallback para a raiz sumiu; sem git no PATH a enumeracao volta vazia e o portao aprovaria sem medir nada."
     )
+
+
+# ---------------------------------------------------------------------------
+# COBERTURA PYTHON DA FASE 3 (2026-09-08)
+#
+# Medido: grep por pip-audit, pip_audit, requirements.txt e osv em
+# cwv_gate.ps1 devolvia ZERO ocorrencias. A fase rodava `npm audit --json` e
+# nada alem disso, entao "CVE zero" queria dizer "zero CVEs npm" -- e quatro
+# CVEs abertas em chromadb 1.5.9 passavam em todo commit sem que nada acusasse.
+#
+# O proprio portao ja tinha a frase certa escrita a respeito do npm, na linha
+# 673: "Zero por ausencia de medicao nao e resultado de seguranca." Ele dizia
+# isso do npm e cometia o mesmo erro com o Python.
+#
+# A secao 2 do CLAUDE.md determina `pip_audit -r requirements.txt`, mas nenhum
+# hook, gate ou tarefa o executava: regra sem consumidor, que a secao 4 da raiz
+# chama de entropia.
+# ---------------------------------------------------------------------------
+
+
+def test_fase_cve_audita_a_declaracao_python(gate_texto: str):
+    assert "pip_audit" in gate_texto or "pip-audit" in gate_texto, (
+        "a fase 3 voltou a auditar so o npm. A secao 2 do CLAUDE.md exige "
+        "pip_audit -r requirements.txt, e sem executor a regra nao mede nada."
+    )
+    assert "requirements.txt" in gate_texto, (
+        "a auditoria Python precisa apontar para a DECLARACAO. pip-audit sem -r "
+        "audita o venv instalado, que e outra coisa -- distincao que a secao 2 "
+        "do CLAUDE.md registra por ter escondido um requirements que nao "
+        "resolvia."
+    )
+
+
+def test_aceite_python_e_exigido_e_nao_suprime(gate_texto: str):
+    assert "python_cve_acceptances" in gate_texto, (
+        "o arquivo de aceites sumiu da fase 3. Sem ele, a unica forma de "
+        "commitar com uma CVE sem correcao seria desligar a verificacao."
+    )
+    assert "PY_CVE_ABERTAS" in gate_texto, (
+        "a metrica de CVEs Python nao aceitas sumiu de secRules."
+    )
+
+
+def test_audit_python_falha_fechado(gate_texto: str):
+    """Zero por ausencia de medicao nao e resultado de seguranca."""
+    assert "PY_CVE_AUDIT_EXECUTADO" in gate_texto, (
+        "a linha que declara se o audit Python EXECUTOU sumiu. Sem ela, "
+        "pip_audit indisponivel deixaria a contagem no zero inicial e a fase "
+        "aprovaria sem medir -- exatamente a falha aberta que a fase npm ja "
+        "corrigiu em 2026-08-22."
+    )
+    assert "security.python.execucao" in gate_texto, (
+        "o finding de ERRO para audit Python nao executado sumiu."
+    )
+
+
+def test_aceite_vincula_pacote_e_versao(gate_texto: str):
+    """Aceite solto por ID aceitaria a mesma CVE em outro pacote ou versao."""
+    trecho = gate_texto[gate_texto.find("$pyAceites") :]
+    assert "$($a.package)" in trecho and "$($a.version)" in trecho, (
+        "a chave do aceite deixou de amarrar pacote e versao. Um aceite "
+        "vinculado so ao ID sobreviveria a um upgrade que reintroduzisse o "
+        "problema noutra versao."
+    )
