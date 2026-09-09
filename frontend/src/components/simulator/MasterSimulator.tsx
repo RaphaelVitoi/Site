@@ -677,16 +677,13 @@ export default function MasterSimulator() {
               />
             )}
 
-            {/* Barra de Navegação Mestre */}
-            <div className="bg-slate-950/60 border-b border-white/8 px-4 sm:px-6 py-3 sticky top-16 z-30 backdrop-blur-2xl">
-              <div className="flex flex-wrap items-center justify-between gap-3 max-w-7xl mx-auto">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-accent-indigo animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
-                  <span className="font-mono text-[0.62rem] font-black uppercase tracking-[0.2em] text-white">
-                    Simulador Mestre ICM
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-1 bg-slate-950/60 p-1 rounded-xl border border-white/8 shadow-inner">
+            {/* Espaços de trabalho do simulador — a identidade está na barra de laboratórios acima. */}
+            <nav
+              aria-label="Áreas de trabalho do Simulador Mestre"
+              className="sticky top-[var(--simulator-header-height)] z-30 border-b border-white/8 bg-slate-950/60 px-4 py-2 backdrop-blur-2xl sm:px-6"
+            >
+              <div className="mx-auto flex max-w-7xl justify-center">
+                <div className="flex flex-wrap items-center justify-center gap-1 rounded-xl border border-white/8 bg-slate-950/60 p-1 shadow-inner">
                   {(['laboratorio', 'dashboard', 'referencial', 'lente'] as const).map((tab) => {
                     const isActive = activeWorkspaceTab === tab;
                     const meta = getWorkspaceTabMeta(tab);
@@ -708,7 +705,7 @@ export default function MasterSimulator() {
                   })}
                 </div>
               </div>
-            </div>
+            </nav>
 
             {/* Conteúdo do Workspace Ativo */}
             <div className="w-full flex-1 py-6">

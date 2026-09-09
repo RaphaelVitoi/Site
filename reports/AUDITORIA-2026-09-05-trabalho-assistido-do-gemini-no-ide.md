@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-05-fechamento-do-ciclo"
 criado_em: 2026-09-05T00:00:00-03:00
-atualizado_em: 2026-09-05T00:00:00-03:00
+atualizado_em: 2026-09-09T12:15:00-03:00
 classes: [interno, medido, auditoria-assistida]
 caminhos:
   - api/v1/server.py
@@ -74,6 +74,16 @@ nao_verificado:
     Comportamento em runtime das rotas de telemetria alteradas; nenhuma
     requisicao real foi emitida contra elas.
 revisoes_de_ancora:
+  - registro: auditoria-2026-09-05-trabalho-assistido-do-gemini-no-ide
+    caminhos:
+      - frontend/src/components/ui/layout/Header.tsx
+    parecer: >-
+      A navegacao global continua presente em /simulador; a nova variante apenas
+      reduz sua altura para 65px e omite o CTA que aponta para a propria rota.
+      O Link que recebe foco, seu onKeyDown e a navegacao desktop/mobile que esta
+      auditoria verificou nao foram alterados. A separacao de conteudo passou a
+      consumir tokens de altura declarados, sem mudar destinos, handlers ou
+      contrato de acessibilidade.
   - registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
     caminhos:
       - frontend/src/components/simulator/PmevRangeViewer.tsx

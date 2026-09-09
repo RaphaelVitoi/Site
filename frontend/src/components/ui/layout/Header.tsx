@@ -564,7 +564,10 @@ export const Header: React.FC = () => {
     scaleX,
   } = useHeaderState();
 
-  const headerBgClass = getHeaderBgClass(scrolled, isLightPage);
+  const isSimulatorPage = pathname === ROUTES.SIMULADOR;
+  const headerBgClass = isSimulatorPage
+    ? 'py-3 bg-bg-base/95 backdrop-blur-3xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.35)]'
+    : getHeaderBgClass(scrolled, isLightPage);
 
   const actionButtonClass = isLightPage
     ? 'hidden sm:flex relative group px-7 py-3 rounded-full overflow-hidden bg-light-text-main border border-light-text-main transition-all duration-700 hover:bg-[#2A2825] hover:shadow-[0_4px_20px_rgba(0,0,0,0.15)] active:scale-95'
@@ -579,6 +582,7 @@ export const Header: React.FC = () => {
         />
       )}
       <motion.header
+        id="site-header"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -597,7 +601,7 @@ export const Header: React.FC = () => {
           />
 
           <div className="flex shrink-0 items-center gap-4">
-            <Link href="/simulador" className={actionButtonClass}>
+            {!isSimulatorPage && <Link href="/simulador" className={actionButtonClass}>
               <div
                 className={`absolute inset-0 bg-linear-to-r ${
                   isLightPage ? 'from-transparent via-white/10' : 'from-transparent via-white/20'
@@ -615,7 +619,7 @@ export const Header: React.FC = () => {
               >
                 {HEADER_STRINGS.motorIcm}
               </span>
-            </Link>
+            </Link>}
 
             <button
               type="button"

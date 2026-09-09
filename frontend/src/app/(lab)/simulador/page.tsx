@@ -19,7 +19,7 @@ const MasterSimulatorDynamic = dynamic(
 
 export default function MotorPage() {
 	return (
-		<div className="min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body">
+		<div className="simulator-immersive min-h-screen bg-bg-base pt-3 text-text-bright overflow-x-hidden font-body">
 			{/* Barra compacta de navegação entre laboratórios */}
 			<div className="bg-slate-950/60 border-b border-white/5 backdrop-blur-xl">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
