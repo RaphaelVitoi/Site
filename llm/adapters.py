@@ -264,8 +264,7 @@ class OpenAIAdapter:
         if esforco is not None:
             if esforco not in ESFORCOS_OPENAI_VALIDOS:
                 raise ParametroRejeitadoError(
-                    f"{alias}: esforco '{esforco}' nao existe na escala da OpenAI "
-                    f"{sorted(ESFORCOS_OPENAI_VALIDOS)}."
+                    f"{alias}: esforco '{esforco}' nao existe na escala da OpenAI {sorted(ESFORCOS_OPENAI_VALIDOS)}."
                 )
             if cap.esforcos_autorizados and esforco not in cap.esforcos_autorizados:
                 raise ParametroRejeitadoError(

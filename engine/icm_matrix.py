@@ -44,14 +44,14 @@ def calculate_malmuth_harville_icm(
     zeros = n - len(active)
     prizes = payouts[:n]
     if zeros:
-        terminal_prize = sum(prizes[len(active):]) / zeros
+        terminal_prize = sum(prizes[len(active) :]) / zeros
         for i, stack in enumerate(stacks):
             if stack == 0:
                 ev[i] = terminal_prize
 
     # Cada estado agrega todas as permutacoes do mesmo conjunto de vencedores.
     states = {0: 1.0}
-    for prize in prizes[:len(active)]:
+    for prize in prizes[: len(active)]:
         next_states: dict[int, float] = {}
         for mask, probability in states.items():
             remaining = [i for i in active if not mask & (1 << i)]

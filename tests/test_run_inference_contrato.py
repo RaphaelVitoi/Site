@@ -232,8 +232,24 @@ def test_terminal_stream_filter_descarrega_tokens_sem_latex_cru():
     filtro = ri.TerminalStreamFilter(out_stream=captured)
 
     tokens = [
-        "A ", "meta ", "é ", "(", "$", r"\text", "{", "EV", "}", "$", "=0). ",
-        "Fluxo: ", "$", r"\text{A}", r"\rightarrow", r"\text{B}", "$", "."
+        "A ",
+        "meta ",
+        "é ",
+        "(",
+        "$",
+        r"\text",
+        "{",
+        "EV",
+        "}",
+        "$",
+        "=0). ",
+        "Fluxo: ",
+        "$",
+        r"\text{A}",
+        r"\rightarrow",
+        r"\text{B}",
+        "$",
+        ".",
     ]
     for t in tokens:
         filtro.write(t)
@@ -244,6 +260,3 @@ def test_terminal_stream_filter_descarrega_tokens_sem_latex_cru():
     assert "$" not in out
     assert "(EV=0)." in out
     assert "A -> B." in out
-
-
-
