@@ -556,6 +556,7 @@ $secRules = [ordered]@{
     "CRITICAL_CVE_COUNT" = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Critical severity vulnerabilities" }
     "HIGH_CVE_COUNT"     = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "High severity vulnerabilities" }
     "TOTAL_VULNERABILITY"= @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Total open vulnerabilities across ALL npm manifests in the repository" }
+    "PY_CVE_ABERTAS"     = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Python CVEs in requirements.txt without a recorded acceptance" }
 }
 
 # SEGURANCA (2026-08-22): esta fase FALHAVA ABERTA.
@@ -681,6 +682,81 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     }
 }
 
+# AUDITORIA PYTHON DA DECLARACAO (2026-09-08).
+#
+# Ate aqui a fase rodava `npm audit` e mais nada -- grep por pip-audit,
+# pip_audit, requirements.txt e osv neste arquivo devolvia ZERO ocorrencias. Na
+# pratica "CVE zero" queria dizer "zero CVEs npm", e quatro CVEs abertas em
+# chromadb 1.5.9 passaram em todo commit sem que nada acusasse.
+#
+# A secao 2 do CLAUDE.md ja determinava `pip_audit -r requirements.txt`. Faltava
+# executor: regra sem consumidor e o que a secao 4 da raiz chama de entropia.
+#
+# `-r` NAO e detalhe: pip-audit sem ele audita o venv INSTALADO, nao a
+# declaracao. Essa distincao escondeu por uma sessao inteira um requirements que
+# nao resolvia.
+#
+# FALHA FECHADA, como a fase npm: se o pip_audit nao rodar, isso e ERRO. Zero
+# por ausencia de medicao nao e resultado de seguranca.
+#
+# ACEITE NAO E SUPRESSAO. As quatro CVEs do chromadb nao tem correcao -- 1.5.9 e
+# a ultima no PyPI e o proprio pip-audit devolve fix_versions vazio --, e o vetor
+# das quatro e o servidor HTTP do Chroma, que este projeto nao sobe. Sem um
+# mecanismo de aceite com parecer, a unica forma de commitar seria desligar a
+# verificacao. O formato espelha data/a11y_manual_review_baselines.json, que ja
+# resolvia esse mesmo problema aqui.
+$pyCveErro = $null
+$pyAceites = @()
+$pyAceitesPath = Join-Path $RepoRoot 'data\python_cve_acceptances.json'
+if (Test-Path -LiteralPath $pyAceitesPath -PathType Leaf) {
+    try {
+        $pyAceitesDoc = Get-Content -LiteralPath $pyAceitesPath -Raw -Encoding utf8 | ConvertFrom-Json
+        foreach ($a in @($pyAceitesDoc.acceptances)) {
+            if ($a.status -ne 'accepted') { continue }
+            foreach ($vid in @($a.vulnerability_ids)) {
+                # A chave amarra pacote E versao. Aceite solto por ID
+                # sobreviveria a um upgrade que reintroduzisse o problema.
+                $pyAceites += "$($a.package)|$($a.version)|$vid"
+            }
+        }
+    } catch {
+        $pyCveErro = "arquivo de aceites ilegivel: $($_.Exception.Message)"
+    }
+}
+
+$pyRequirements = Join-Path $RepoRoot 'requirements.txt'
+$pyCveMedido = $false
+$pyNaoAceitas = @()
+if (-not $pyCveErro) {
+    if (-not (Test-Path -LiteralPath $pyRequirements -PathType Leaf)) {
+        $pyCveErro = 'requirements.txt ausente'
+    } else {
+        try {
+            $pyVenv = Join-Path $RepoRoot '.venv\Scripts\python.exe'
+            $pyExe = if (Test-Path -LiteralPath $pyVenv) { $pyVenv } else { 'python' }
+            $pyRaw = (& $pyExe -m pip_audit -r $pyRequirements --format json 2>&1 | Out-String).Trim()
+            $pyFirst = $pyRaw.IndexOf('{')
+            $pyLast = $pyRaw.LastIndexOf('}')
+            if ($pyFirst -lt 0 -or $pyLast -le $pyFirst) {
+                $trecho = $pyRaw.Substring(0, [Math]::Min(120, $pyRaw.Length))
+                $pyCveErro = "pip_audit nao devolveu JSON: $trecho"
+            } else {
+                $pyDoc = $pyRaw.Substring($pyFirst, $pyLast - $pyFirst + 1) | ConvertFrom-Json
+                foreach ($dep in @($pyDoc.dependencies)) {
+                    foreach ($v in @($dep.vulns)) {
+                        $chave = "$($dep.name)|$($dep.version)|$($v.id)"
+                        if ($pyAceites -notcontains $chave) { $pyNaoAceitas += $chave }
+                    }
+                }
+                $secRules["PY_CVE_ABERTAS"].Val = $pyNaoAceitas.Count
+                $pyCveMedido = $true
+            }
+        } catch {
+            $pyCveErro = "excecao ao rodar pip_audit: $($_.Exception.Message)"
+        }
+    }
+}
+
 foreach ($k in $secRules.Keys) {
     $s = $secRules[$k]
     $passed = $s.Val -le $s.Limit
@@ -700,6 +776,16 @@ $execColor  = if ($cveMedido) { "Green" } else { "Red" }
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_AUDIT_EXECUTADO', $(if ($cveMedido) { 'sim' } else { 'NAO' }), 'sim', $execStatus) -ForegroundColor $execColor
 # Cobertura declarada: sem ela, "0 cves" nao diz sobre QUANTOS projetos.
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_MANIFESTOS_AUDITADOS', "$cveManifestos npm", '-', 'INFO') -ForegroundColor DarkGray
+$pyStatus = if ($pyCveMedido) { "[PASS]" } else { "[FAIL]" }
+$pyColor  = if ($pyCveMedido) { "Green" } else { "Red" }
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'PY_CVE_AUDIT_EXECUTADO', $(if ($pyCveMedido) { 'sim' } else { 'NAO' }), 'sim', $pyStatus) -ForegroundColor $pyColor
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'PY_CVE_ACEITAS', "$($pyAceites.Count) aceites", '-', 'INFO') -ForegroundColor DarkGray
+if (-not $pyCveMedido) {
+    Write-Host "   motivo: $pyCveErro" -ForegroundColor Red
+    Add-QualityFinding -Severity 'ERROR' -Component 'security.python.execucao' -Detail 'O audit de CVE Python nao executou.' -Reason "$pyCveErro. Zero por ausencia de medicao nao e resultado de seguranca." -Action 'Corrigir a disponibilidade do pip_audit ou a falha de JSON indicada, executar pip_audit -r requirements.txt com sucesso e somente entao avaliar a contagem.'
+} elseif ($pyNaoAceitas.Count -gt 0) {
+    Add-QualityFinding -Severity 'ERROR' -Component 'security.python.aberta' -Detail "CVE Python sem aceite: $($pyNaoAceitas -join ', ')" -Reason 'A CVE consta na declaracao de requirements.txt e nao ha aceite registrado com parecer.' -Action 'Atualizar a dependencia, ou registrar o aceite em data/python_cve_acceptances.json com vetor, alcance medido, consumo real e autoridade -- nunca suprimir a verificacao.'
+}
 if (-not $cveMedido) {
     Write-Host "   motivo: $cveErro" -ForegroundColor Red
     Add-QualityFinding -Severity 'ERROR' -Component 'security.execucao' -Detail 'O audit de CVE nao executou.' -Reason "$cveErro. Zero por ausencia de medicao nao e resultado de seguranca." -Action 'Corrigir a disponibilidade do npm ou a falha de rede/JSON indicada, executar npm audit com sucesso e somente entao avaliar a contagem de CVEs.'

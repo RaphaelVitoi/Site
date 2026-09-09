@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "proposito": "Aceites de CVE Python sem versao de correcao disponivel. Um aceite e estritamente vinculado ao ID, ao pacote e a versao; qualquer divergencia expira o aceite e devolve o item para revisao. Aceite NAO e supressao: o portao continua contando a CVE e exigindo que ela esteja declarada aqui, com parecer, autoridade e evidencia de alcance.",
+  "acceptances": [
+    {
+      "id": "chromadb-servidor-nao-alcancavel-20260908",
+      "status": "accepted",
+      "accepted_at": "2026-09-08",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "chromadb",
+      "version": "1.5.9",
+      "vulnerability_ids": [
+        "PYSEC-2026-311",
+        "CVE-2026-45830",
+        "CVE-2026-45831",
+        "CVE-2026-45833"
+      ],
+      "evidence": {
+        "vetor": "As quatro sao do servidor HTTP do Chroma: endpoints de tenants e databases, autorizacao entre tenants, e SimpleRBACAuthorizationProvider. A mais grave, PYSEC-2026-311, e pre-autenticacao, CVSS 4.0 AV:N/AC:L/PR:N/UI:N/VC:H/VI:H/VA:H.",
+        "alcance_medido": "Grep em todo o repositorio por HttpClient, chroma run, o cliente HTTP do chromadb e trust_remote_code, em .py/.ps1/.json/.yml, excluindo .venv e node_modules, devolveu UMA ocorrencia: do.ps1:776, que e System.Net.Http.HttpClient do .NET e nada tem com Chroma.",
+        "consumo_real": "Cliente persistente embarcado, em memory_rag.py:208 e scripts/utils/ingest_rag.py:27. requirements.txt:26 ja declarava exatamente isso.",
+        "ausencia_de_correcao": "A API do PyPI devolve 1.5.9 como ultima versao publicada, e o proprio pip-audit devolve fix_versions vazio nas quatro. Nao existe versao para a qual atualizar.",
+        "registro": "reports/AUDITORIA-2026-09-08-o-que-esta-em-aberto-na-malha.md"
+      },
+      "expira_se": "Qualquer uso do servidor HTTP do Chroma for introduzido no repositorio, ou uma versao corrigida for publicada no PyPI.",
+      "revisar_em": "2026-12-08"
+    }
+  ]
+}
