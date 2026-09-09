@@ -188,9 +188,30 @@ jobs:
         with:
           python-version: "3.12"
 
+      # FRONTEIRA DO SUBMODULO (2026-09-09). Ate aqui este passo validava
+      # tambem skills/gemini-cli-security/.github/workflows/gemini-review.yml,
+      # que NAO e versionado por este repositorio: git ls-files --error-unmatch
+      # devolve "did not match any file(s) known to git", porque o caminho esta
+      # dentro do gitlink 2227f3cf. O conteudo pertence a
+      # gemini-cli-extensions/security e muda a cada `git submodule update`.
+      #
+      # MEDIDO: aquele arquivo tem `inputs.additional_context` nao definido nas
+      # linhas 68 e 134, e o actionlint reprovava -- derrubando ESTE job por um
+      # defeito de terceiro que nao podemos corrigir aqui (alteracao local em
+      # submodulo e descartada no proximo update).
+      #
+      # A enumeracao passa a ser por git ls-files, que nunca entra em submodulo.
+      # E o mesmo mecanismo e o mesmo motivo do
+      # registro-2026-09-03-cobertura-cve-e-a-fronteira-do-submodulo, cuja
+      # frase se aplica ao pe da letra: o MESMO commit aprovaria numa maquina e
+      # reprovaria noutra.
       - name: 🔍 Actionlint GitHub Workflows Static Analysis
         run: |
-          uv run --with actionlint-py actionlint .github/workflows/sota-ci.yml skills/gemini-cli-security/.github/workflows/gemini-review.yml
+          WORKFLOWS=$(git ls-files '.github/workflows/*.yml' '.github/workflows/*.yaml')
+          test -n "$WORKFLOWS"   # lista vazia aprovaria sem medir nada
+          echo "Workflows versionados por este repositorio:"
+          echo "$WORKFLOWS"
+          uv run --with actionlint-py actionlint $WORKFLOWS
 
       - name: 🔒 SOTA Security & CWV Quality Gate Check
         run: |
