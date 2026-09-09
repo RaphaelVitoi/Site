@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-aberturas"
 criado_em: 2026-09-08T22:50:00-03:00
-atualizado_em: 2026-09-09T03:55:00-03:00
+atualizado_em: 2026-09-09T04:20:00-03:00
 classes: [interno, medido, plano, seguranca, processo]
 caminhos:
   - .github/workflows/sota-ci.yml
@@ -90,6 +90,15 @@ verificado:
     outros cinco seguem sem consumidor versionado fora de .gitmodules e de
     documentos de arquitetura.
   - >-
+    AMBIENTE POWERSHELL MEDIDO EM 2026-09-09 para a Tarefa 11: pwsh 7.6.5
+    (Core) em C:/Program Files/PowerShell/7/pwsh.exe, instalado por winget
+    (Microsoft.PowerShell); Windows PowerShell 5.1.26100.9278 presente; 53
+    arquivos .ps1 versionados; nenhuma pinagem de versao do pwsh no
+    repositorio. O winget lista DUAS entradas para a mesma instalacao. Cinco
+    tarefas agendadas usam PowerShell, e apenas
+    NexusSOTA-AgentCalibrationDailyEvaluation aponta para o caminho absoluto do
+    pwsh 7; as outras quatro usam powershell.exe.
+  - >-
     O plugin superpowers efetivamente carregado nesta sessao veio de
     C:/Users/rapha/.claude/plugins/cache/claude-plugins-official/superpowers/6.3.0/,
     fora do repositorio. O submodulo skills/superpowers e uma segunda copia sem
@@ -116,6 +125,7 @@ nao_verificado:
 referencias_nao_resolviveis:
   - data/python_cve_acceptances.json
   - tests/test_cwv_gate_porta_cdp.py
+  - reports/REGISTRO-2026-09-09-upgrade-pwsh-e-harmonizacao.md
 ---
 
 # Conclusao das frentes abertas -- plano de implementacao
@@ -138,7 +148,8 @@ cada uma esta dito no lugar.
 
 **Duas referencias declaradas como nao resolviveis.**
 `data/python_cve_acceptances.json` (Tarefa 4) e `tests/test_cwv_gate_porta_cdp.py`
-(Tarefa 3) sao artefatos que este plano **cria** -- citar o que ainda nao
+(Tarefa 3) e `reports/REGISTRO-2026-09-09-upgrade-pwsh-e-harmonizacao.md`
+(Tarefa 11) sao artefatos que este plano **cria** -- citar o que ainda nao
 existe e a natureza de um plano, nao referencia morta. O `record_gate.py`
 reprovou os dois na primeira tentativa, e ele estava certo: quem separa
 "aponta para o vazio" de "vai passar a existir" e a declaracao do autor, nao a
@@ -1065,6 +1076,159 @@ nao rodou, com frontmatter de 13 campos. E a secao 5 do CLAUDE.md, e vale
 tambem para este plano.
 
 ---
+
+## Tarefa 11: upgrade do PowerShell e harmonizacao do ambiente -- GATE TIER 0
+
+**Pedida pelo Tier 0 em 2026-09-09**, a partir do aviso do proprio PowerShell:
+*"PowerShell v7.6.5 is out-of-date. The latest version is v7.6.6."*
+
+**GATE:** o portao de 5 fases, a bateria substituta de compatibilidade 5.1 e uma
+tarefa agendada dependem do interpretador. Trocar a versao do runtime que
+executa o instrumento de medicao nao e ato de agente.
+
+### 11.0 O que ja esta medido
+
+| Item | Medido em 2026-09-09 |
+| :--- | :--- |
+| `pwsh` instalado | **7.6.5**, edicao Core, em `C:\Program Files\PowerShell\7\pwsh.exe` |
+| Origem | **winget**, pacote `Microsoft.PowerShell` |
+| Windows PowerShell | **5.1.26100.9278**, presente |
+| `.ps1` versionados | **53** |
+| Pinagem de versao do pwsh no repositorio | **nenhuma** -- grep por `7.6.5`, `PSVersion -`, `RequiredVersion` e `#requires -version` em `.ps1`, `.json` e `.yml` nao devolve nada |
+
+**Dois achados que mudam o risco, e nenhum deles e hipotetico.**
+
+**(a) O winget lista DUAS entradas para a mesma instalacao:**
+
+```
+PowerShell             Microsoft.PowerShell 7.6.5.0     winget
+PowerShell 7.6.5.0-x64 Microsoft.PowerShell 7.6.5.0     winget
+```
+
+Um upgrade pode atualizar uma e deixar a outra, ou instalar lado a lado.
+**Isso se resolve ANTES do upgrade, nao depois.**
+
+**(b) Uma tarefa agendada aponta para o caminho ABSOLUTO do pwsh 7:**
+
+| Tarefa | Executavel |
+| :--- | :--- |
+| `NexusSOTA-AgentCalibrationDailyEvaluation` | `C:\Program Files\PowerShell\7\pwsh.exe` |
+| `ChromeDev_Memory_Watchdog_SOTA` | `powershell.exe` (5.1) |
+| `Codex_Restart_Once` | `powershell.exe` (5.1) |
+| `SOTA_CDP_AutoStart` | `powershell.exe` (5.1) |
+| `SOTA_Weekly_Maintenance` | `powershell.exe` (5.1) |
+
+O 7.6.6 e atualizacao de patch e mantem o diretorio `\PowerShell\7\`, entao o
+caminho deve sobreviver -- **mas isso e expectativa, nao medicao**, e a
+verificacao esta no passo 5.
+
+### 11.1 Os passos
+
+- [ ] **Passo 1: registrar a linha de base ANTES de tocar em nada**
+
+```powershell
+pwsh -NoProfile -c '$PSVersionTable | ConvertTo-Json' > "$env:TEMP\pwsh-antes.json"
+winget list --id Microsoft.PowerShell 2>&1 | Out-File "$env:TEMP\winget-antes.txt"
+Get-ScheduledTask | Where-Object { $_.Actions.Execute -like '*pwsh*' } | Select-Object TaskName, @{n='exe';e={$_.Actions.Execute}} | ConvertTo-Json | Out-File "$env:TEMP\tarefas-antes.json"
+```
+
+Sem isto nao ha como distinguir o que o upgrade mudou do que ja estava assim --
+que e a diferenca entre medir e supor.
+
+- [ ] **Passo 2: resolver a entrada duplicada do winget ANTES do upgrade**
+
+```powershell
+winget list --id Microsoft.PowerShell --exact
+```
+
+Se as duas entradas apontarem para a mesma instalacao, e registro duplicado e o
+upgrade normal resolve. Se apontarem para instalacoes distintas, **pare**:
+remover uma e ato destrutivo e volta ao Tier 0.
+
+- [ ] **Passo 3: a suite e o portao VERDES antes, para servirem de controle**
+
+```powershell
+.venv\Scripts\python.exe -m pytest -q --no-header
+pwsh -NoProfile -File scripts\ops\cwv_gate.ps1
+```
+
+Anote os numeros. Um portao que ja estava amarelo antes do upgrade nao prova
+nada depois dele.
+
+- [ ] **Passo 4: o upgrade**
+
+```powershell
+winget upgrade --id Microsoft.PowerShell --exact --silent
+```
+
+- [ ] **Passo 5: verificar o que o upgrade fez ao caminho e as tarefas**
+
+```powershell
+pwsh -NoProfile -c '$PSVersionTable.PSVersion.ToString()'
+(Get-Command pwsh).Source
+Test-Path 'C:\Program Files\PowerShell\7\pwsh.exe'
+Get-ScheduledTask -TaskName 'NexusSOTA-AgentCalibrationDailyEvaluation' | Select-Object -ExpandProperty Actions | Select-Object Execute
+```
+
+Esperado: `7.6.6`, o mesmo diretorio, e a tarefa apontando para um executavel
+que existe. **Se o caminho da tarefa deixar de existir, a calibracao diaria para
+em silencio** -- e silencio e a pior classe de falha para um instrumento.
+
+- [ ] **Passo 6: revalidar TUDO que depende do interpretador**
+
+```powershell
+.venv\Scripts\python.exe -m pytest -q --no-header
+pwsh -NoProfile -File scripts\ops\cwv_gate.ps1
+pwsh -NoProfile -File scripts\ops\Test-AgentCalibrationLedger.ps1
+pwsh -NoProfile -File scripts\ops\New-AgentCalibrationDailyEvidence.ps1 | ConvertFrom-Json | Select-Object -ExpandProperty timesfm_forecast
+```
+
+Os numeros tem de bater com os do passo 3. A bateria substituta de
+compatibilidade 5.1 roda dentro do portao e usa o AST do `pwsh` -- **uma versao
+nova do parser pode passar a aceitar ou recusar construtos que antes tratava de
+outro modo**, e e por isso que os 53 `.ps1` precisam do portao inteiro, nao de
+uma amostra.
+
+- [ ] **Passo 7: o 5.1 continua sendo requisito, e isso nao muda**
+
+```powershell
+powershell.exe -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
+```
+
+A secao 1.1 do CLAUDE.md e explicita: o hook e as tarefas agendadas rodam com
+Windows PowerShell 5.1, que **nao tem build para Linux ou macOS e nao tera**.
+Atualizar o `pwsh` 7 nao dispensa o 5.1 nem reduz a exigencia de que todo
+`.ps1` funcione nos dois. Quatro das cinco tarefas agendadas ainda usam
+`powershell.exe`.
+
+- [ ] **Passo 8: rollback declarado, e a condicao que o dispara**
+
+```powershell
+winget install --id Microsoft.PowerShell --version 7.6.5.0 --exact --silent
+```
+
+Dispara se qualquer um ocorrer: a suite reduzir a contagem do passo 3; o portao
+passar de verde a vermelho; a tarefa agendada apontar para caminho inexistente;
+ou a bateria substituta reprovar `.ps1` que antes passava.
+
+- [ ] **Passo 9: registro**
+
+`reports/REGISTRO-2026-09-09-upgrade-pwsh-e-harmonizacao.md`, com frontmatter de
+13 campos, declarando a versao antes e depois, os numeros da suite e do portao
+nos dois momentos, e o que **nao** foi verificado.
+
+### 11.2 O que esta tarefa NAO faz
+
+- **Nao atualiza o Windows PowerShell 5.1.** Ele e componente do sistema
+  operacional, nao pacote, e a secao 1.1 depende dele exatamente como esta.
+- **Nao mexe nas quatro tarefas agendadas que usam `powershell.exe`.** Migra-las
+  para o 7 seria mudanca de comportamento, nao harmonizacao, e nenhuma medicao
+  desta sessao a justifica.
+- **Nao remove instalacao alguma** sem que o passo 2 tenha mostrado que as duas
+  entradas do winget sao a mesma coisa.
+- **Nao atualiza o Python, o Node nem o Rust.** O aviso do Tier 0 era sobre o
+  PowerShell; ampliar o escopo por conta propria e o padrao de desvio de foco
+  que a secao 8.3 mede.
 
 ## Auto-revisao
 
