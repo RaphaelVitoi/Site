@@ -159,7 +159,7 @@ export default function PerspectivePanel({
     });
 
     workerRef.current.onmessage = (e: MessageEvent<SimulatorWorkerResponse | undefined>) => {
-      if (!e.data || e.data.id !== requestIdRef.current) return;
+      if (e.data?.id !== requestIdRef.current) return;
       if (e.data.type === 'WASM_RESULT') {
         setWasmLogs((prev) => [...prev, '> [MODELO] Cenário calculado pelo modelo TypeScript existente.'].slice(-50));
       } else if (e.data.type === 'ERROR') {

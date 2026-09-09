@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-07-preludio"
 criado_em: 2026-09-07T19:05:00-03:00
-atualizado_em: 2026-09-07T19:05:00-03:00
+atualizado_em: 2026-09-09T11:30:00-03:00
 classes: [interno, medido, verificacao-independente, icm, procedencia]
 caminhos:
   - engine/timesfm_engine.py
@@ -49,6 +49,10 @@ verificado:
     F01, F02 e F04 fechados: os cinco pedidos do worker existem com
     MULTIWAY_RIO_RESULT, DEMO_FALLBACK esta no tipo e na UI, e icmMatrix.ts
     declara agregacao por subconjuntos O(n*2^n).
+  - >-
+    Revisao de ancora em 2026-09-09: o import padrao math foi movido do escopo
+    local para o topo de engine/timesfm_engine.py. A reproducao B04, seu
+    veredito historico e os demais findings permanecem inalterados.
 nao_verificado:
   - >-
     F03: humanNoiseFactor existe e e consumido, mas nao verifiquei a fundo se a

@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-07-preludio"
 criado_em: 2026-09-07T19:20:00-03:00
-atualizado_em: 2026-09-07T19:20:00-03:00
+atualizado_em: 2026-09-09T11:32:00-03:00
 classes: [interno, medido, handoff, governanca]
 caminhos:
   - reports/VALIDACAO-2026-09-07-findings-do-astra-contra-o-codigo.md
@@ -39,6 +39,11 @@ verificado:
   - >-
     Tres credenciais em texto claro removidas de cinco manifestos MCP, com
     backup e paridade da SS6.2 preservada.
+  - >-
+    Revisao de ancora em 2026-09-09: a validacao Astra ancorada recebeu apenas
+    o parecer documental da relocacao de import math em engine/timesfm_engine.py.
+    Os 17 findings, seus vereditos e a prioridade direta em PMev deste handoff
+    permanecem inalterados.
 nao_verificado:
   - >-
     O desfecho das duas sessoes do Jules. Elas estavam IN_PROGRESS ao fechar
