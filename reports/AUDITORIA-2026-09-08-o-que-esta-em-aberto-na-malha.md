@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-aberturas"
 criado_em: 2026-09-08T22:05:00-03:00
-atualizado_em: 2026-09-08T22:05:00-03:00
+atualizado_em: 2026-09-08T22:25:00-03:00
 classes: [interno, medido, auditoria, seguranca, processo]
 caminhos:
   - requirements.txt
@@ -97,6 +97,23 @@ verificado:
   - >-
     ACHADOS DO ASTRA: a validacao de 2026-09-07 marca B05 PARCIAL; B07, B08,
     B09 e F06 ABERTOS; F03 e F05 nao conclusivos. Nenhum foi fechado desde.
+  - >-
+    PORTA CDP QUE O GATE USA: cwv_gate.ps1:15 declara CdpPorts 9223 e 9222,
+    nessa ordem, e para na primeira que responde. Ambas estavam ativas; logo o
+    gate mediu pela 9223 nas duas execucoes desta sessao.
+  - >-
+    PROBE NAS DUAS PORTAS, MESMO INSTANTE E MESMA URL: pela 9222, lcpMs
+    356,81 ms e longTaskBlockingMs 1137; pela 9223, lcpMs null e
+    longTaskBlockingMs null. cls, ttfbMs e maxHeapMb mediram nas duas.
+  - >-
+    DIFERENCA ENTRE OS DOIS CHROMES: o processo da 9223 (pid 15148) tem
+    MainWindowHandle 0, MainWindowTitle vazio e ZERO targets de tipo page. O da
+    9222 (pid 32332) tem MainWindowHandle 134112, titulo "Nova guia - Google
+    Chrome" e uma pagina.
+  - >-
+    REFUTACAO DA PRIMEIRA HIPOTESE: aqueci a pagina e medi lcpMs 705,91 ms pela
+    9222 segundos antes de commitar; o commit 24cfe1f3 reproduziu o MESMO
+    warning cwv.cobertura. Dev server frio nao era a causa.
 nao_verificado:
   - >-
     Nao rodei pip-audit sem -r, isto e, contra o venv instalado. O que esta
@@ -295,6 +312,60 @@ auditoria de amplitude e, por construcao, uma varredura larga -- e por isso ela
 foi **pedida** em vez de assumida. Nada aqui foi corrigido por iniciativa
 propria: os quatro itens que pedem acao (secoes 1 a 4) pedem decisao do Tier 0,
 e estao formulados como decisao, nao como plano ja em curso.
+
+## 8. Emenda -- o warning `cwv.cobertura` e estrutural, e eu errei a causa
+
+Esta secao foi acrescentada depois do commit inicial desta auditoria, e comeca
+por uma correcao minha.
+
+**O que eu afirmei e estava errado.** Depois do commit `31dcc05d`, atribui o
+warning `cwv.cobertura` a dev server frio -- o Next compilando a rota na
+primeira navegacao. Gravei essa causa na memoria persistente do fast-path.
+Depois aqueci a pagina, medi `lcpMs` de 705,91 ms pela 9222, e commitei
+`24cfe1f3` segundos depois. **O mesmo warning voltou.** A hipotese era falsa, e
+eu a havia registrado antes de tentar refuta-la.
+
+**A causa real e qual Chrome o portao escolhe.** `cwv_gate.ps1:15` declara
+`$CdpPorts = @(9223, 9222)` e para na primeira que responder. As duas estavam
+ativas, entao o portao mediu **sempre pela 9223** -- e eu havia medido pela
+9222, uma porta que ele nunca usou.
+
+Mesmo instante, mesma URL, so mudando a porta:
+
+| metrica | 9222 | 9223 |
+| :--- | ---: | ---: |
+| `lcpMs` | 356,81 ms | **null** |
+| `longTaskBlockingMs` | 1137 | **null** |
+| `cls` / `ttfbMs` / `maxHeapMb` | medem | medem |
+
+**Por que a 9223 nao mede.** O processo dela (pid 15148) tem
+`MainWindowHandle = 0`, titulo vazio e **zero targets de tipo `page`**: e um
+Chrome sem janela de conteudo. O da 9222 tem janela real e uma pagina.
+
+Falham ali exatamente as duas metricas que dependem de a pagina estar visivel.
+`LargestContentfulPaint` nao e emitido para pagina que inicia oculta, e long
+task nao ocorre em aba sem renderizacao. `CLS`, `TTFB` e heap nao dependem de
+visibilidade -- e por isso medem nas duas portas. O padrao das falhas nao e
+aleatorio: ele separa exatamente as metricas por dependencia de visibilidade,
+e e isso que sustenta a atribuicao.
+
+**Consequencia.** O warning nao e circunstancial: reaparece em **todo** commit
+enquanto a 9223 estiver de pe sem janela, e gasta uma das duas vagas toda vez.
+Um portao que gasta metade da sua tolerancia num achado fixo perde a capacidade
+de sinalizar o achado seguinte.
+
+**Nao corrigi, e ha duas razoes distintas.** Fazer o portao preferir uma porta
+com pagina visivel e alterar o instrumento que mede o agente, o que a secao
+10.3 proibe. Derrubar o Chrome da 9223 e mexer em processo de ambiente
+compartilhado. As duas sao decisao do Tier 0.
+
+**O teste que fecharia a atribuicao** e derrubar a 9223 e rodar o portao: ele
+deveria cair para a 9222 e ficar VERDE. Nao o executei, pela razao acima.
+
+**Nota de metodo.** A memoria `conferir-o-instrumento-antes-da-medicao` ja
+existia e nao me impediu de errar. Ela agora tem um caso a mais: conferir o
+instrumento inclui conferir **em qual porta ele mede**, e nao apenas se a
+medicao responde.
 
 **Assinatura:** `Claude Opus 5 [Tier 1.B]`
 **Proposito:** levantar e medir o que esta em aberto na malha, inclusive o que
