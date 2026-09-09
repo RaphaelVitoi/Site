@@ -1,68 +1,13 @@
-/**
- * IDENTITY: Web Worker de ICM (SOTA)
- * PATH: src/components/simulator/workers/icm.worker.ts
- * ROLE: Desacoplar o cálculo recursivo O(2^N) e Monte Carlo da Main Thread (UI).
- * PRINCIPLE: Fricção Zero & Non-Blocking UI.
- */
+import { processTableIcmRequest } from './icmTableProcessor';
 
-import type { ICMPlayer } from '../../../lib/icmEngine';
-import { calculateMalmuthHarville } from '../../../lib/icmEngine';
-
-// SOTA FIX: Forçar o arquivo a ser tratado como um ES Module estrito
-export const __ICM_WORKER__ = true;
-
-interface IcmMessageData {
-  players: ICMPlayer[];
-  prizes: number[];
-  totalPool?: number;
-  id: string | number;
-}
-
-globalThis.onmessage = (e: MessageEvent<IcmMessageData>) => {
-  const { players, prizes, totalPool, id } = e.data;
-
-  if (id === undefined || !players || !prizes) {
-    console.warn('[SOTA ICM Worker] Invalid payload discarded.');
-    return;
-  }
-
+globalThis.onmessage = (event: MessageEvent<unknown>) => {
   try {
-    // Executa o motor SOTA (Malmuth-Harville ou MCMC dependendo de N)
-    const icmResults = calculateMalmuthHarville(players, prizes, totalPool);
-
-    // SOTA: Fricção Zero (Zero-Copy O(1) Memory Transfer)
-    // Empacotando as 3 métricas matemáticas contínuas (equity, equityPercent, winProb)
-    const hasShared = globalThis.SharedArrayBuffer !== undefined;
-    const buffer = hasShared
-      ? new globalThis.SharedArrayBuffer(icmResults.length * 3 * 8)
-      : new ArrayBuffer(icmResults.length * 3 * 8);
-
-    const f64Results = new Float64Array(buffer);
-
-    icmResults.forEach((res, i) => {
-      if (res) {
-        f64Results.set([res.equity, res.equityPercent, res.winProb], i * 3);
-      }
-    });
-
-    if (hasShared && buffer instanceof globalThis.SharedArrayBuffer) {
-      (globalThis as unknown as Worker).postMessage({
-        id,
-        type: 'ICM_RESULT',
-        payload: f64Results,
-      });
-    } else {
-      (globalThis as unknown as Worker).postMessage({ id, type: 'ICM_RESULT', payload: f64Results }, [buffer]);
-    }
+    const response = processTableIcmRequest(event.data);
+    (globalThis as unknown as Worker).postMessage(response, [response.payload.buffer]);
   } catch (error: unknown) {
-    let errorMessage = 'Erro desconhecido no motor ICM.';
-    if (typeof error === 'string') {
-      errorMessage = error;
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-
-    console.warn('[SOTA ICM Worker] Falha matemática:', errorMessage);
-    (globalThis as unknown as Worker).postMessage({ error: errorMessage, id });
+    const id = typeof event.data === 'object' && event.data !== null && 'id' in event.data ? event.data.id : undefined;
+    (globalThis as unknown as Worker).postMessage({
+      id, error: error instanceof Error ? error.message : 'Falha no cálculo ICM.',
+    });
   }
 };

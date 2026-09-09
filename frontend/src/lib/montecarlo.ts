@@ -7,6 +7,17 @@
 
 export interface MonteCarloConfig {
 	iterations?: number;
+	seed?: number;
+}
+
+function seededRandom(seed: number): () => number {
+	let state = seed >>> 0;
+	return () => {
+		state = (state + 0x6d2b79f5) | 0;
+		let value = Math.imul(state ^ (state >>> 15), 1 | state);
+		value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
+		return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+	};
 }
 
 function pickWinnerWithBusted(
@@ -51,13 +62,14 @@ function pickWinner(
 	availablePlayers: number,
 	isBusted: Uint8Array | null,
 	remainingTotalChips: number,
+	random: () => number,
 ): number {
 	// sonarjs typescript:S2245 — falso positivo por contexto, nao suprimir com
 	// crypto.getRandomValues. Este e o sorteio de vencedor de uma simulacao de
 	// Monte Carlo para ICM: o resultado nao protege nada, nao gera token, nao
 	// deriva chave e nao e observavel por adversario. Trocar por CSPRNG custaria
 	// ordens de grandeza no laco quente sem ganho de seguranca algum.
-	const r = Math.random() * remainingTotalChips; // NOSONAR: PRNG estatístico, sem contexto criptográfico.
+	const r = random() * remainingTotalChips;
 	if (isBusted) {
 		return pickWinnerWithBusted(numPlayers, stacks, isBusted, r);
 	}
@@ -72,6 +84,7 @@ function runSingleMonteCarloIteration(
 	totalChips: number,
 	totalEquity: number[],
 	isBusted: Uint8Array | null,
+	random: () => number,
 ) {
 	let remainingTotalChips = totalChips;
 	let availablePlayers = (1 << numPlayers) - 1; // Bitmask (funciona rápido até 31 jogadores)
@@ -89,6 +102,7 @@ function runSingleMonteCarloIteration(
 			availablePlayers,
 			isBusted,
 			remainingTotalChips,
+			random,
 		);
 
 		// Distribui o prêmio e remove o jogador da pool
@@ -120,7 +134,12 @@ export function calculateIcmMonteCarlo(
 	prizes: number[],
 	config: MonteCarloConfig = {},
 ): number[] {
-	const iterations = config.iterations || 10000;
+	const iterations = config.iterations ?? 10000;
+	if (!Number.isSafeInteger(iterations) || iterations < 1) throw new RangeError('Iterations must be a positive integer');
+	if (config.seed !== undefined && (!Number.isSafeInteger(config.seed) || config.seed < 0 || config.seed > 0xffffffff)) {
+		throw new RangeError('Seed must be an unsigned 32-bit integer');
+	}
+	const random = config.seed === undefined ? Math.random : seededRandom(config.seed);
 	const numPlayers = stacks.length;
 
 	// Se há mais prêmios que jogadores, trunca os prêmios
@@ -137,7 +156,7 @@ export function calculateIcmMonteCarlo(
 	const isBusted = numPlayers > 30 ? new Uint8Array(numPlayers) : null;
 
 	for (let i = 0; i < iterations; i++) {
-		runSingleMonteCarloIteration(numPlayers, stacks, activePrizes, totalChips, totalEquity, isBusted);
+		runSingleMonteCarloIteration(numPlayers, stacks, activePrizes, totalChips, totalEquity, isBusted, random);
 	}
 
 	// Tira a média

@@ -1,0 +1,171 @@
+{
+  "handdata": {
+    "stacks": [
+      1312700,
+      7331500,
+      3109200,
+      980000,
+      6199200,
+      3399400,
+      5600000,
+      1869300,
+      7700000
+    ],
+    "blinds": [
+      140000,
+      70000,
+      17500
+    ],
+    "skipSb": false,
+    "movingBu": true,
+    "anteType": "REGULAR",
+    "straddleType": "OFF"
+  },
+  "eqmodel": {
+    "otherstacks": [],
+    "id": "mtticm",
+    "structure": {
+      "name": "Unnamed",
+      "chips": 378000.0,
+      "prizes": {
+        "1": 237.34,
+        "2": 170.96,
+        "3": 135.17,
+        "4": 109.99,
+        "5": 90.28,
+        "6": 73.95,
+        "7": 59.92,
+        "8": 47.56,
+        "9": 36.47,
+        "10": 26.39,
+        "11": 26.39,
+        "12": 26.39,
+        "13": 26.39,
+        "14": 16.76,
+        "15": 16.76,
+        "16": 16.76,
+        "17": 16.76,
+        "18": 16.76,
+        "19": 16.76,
+        "20": 16.76,
+        "21": 16.76,
+        "22": 16.76,
+        "23": 16.76
+      }
+    }
+  },
+  "treeconfig": {
+    "mode": "ui",
+    "preflop": {
+      "settings": {
+        "ALLOWED_FLATS_PER_RAISE": [
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        "ALLOW_COLD_CALLS": false,
+        "ALLOW_FLATS_CLOSING_ACTION": true,
+        "ALLOW_SB_COMPLETE": true,
+        "PREFLOP_ADD_ALLIN_SPR": -1.0,
+        "PREFLOP_ALLIN_THRESHOLD": 40.0,
+        "SIZES_3BET_BB_VS_OTHER": "3.5x + 1.0x",
+        "SIZES_3BET_BB_VS_SB": "3.0x",
+        "SIZES_3BET_IP": "3.0x + 1.0x",
+        "SIZES_3BET_OOP": "all-in",
+        "SIZES_3BET_SB_VS_BB": "3.0x + 1.0x",
+        "SIZES_3BET_SB_VS_OTHER": "3.5x + 1.0x",
+        "SIZES_4BET_IP": "2.2x, all-in",
+        "SIZES_4BET_OOP": "2.5x, all-in",
+        "SIZES_5BET_IP": "all-in",
+        "SIZES_5BET_OOP": "all-in",
+        "SIZES_OPEN_BB": "3.5bb",
+        "SIZES_OPEN_BB_VS_SB": "3.0bb",
+        "SIZES_OPEN_BU": "2.0bb",
+        "SIZES_OPEN_OTHERS": "2.0bb",
+        "SIZES_OPEN_SB": "2.5bb"
+      },
+      "id": "preflop.settings.general"
+    },
+    "postflop": {
+      "settings": {
+        "POSTFLOP_ADD_ALLIN_SPR": [
+          5.0,
+          5.0
+        ],
+        "POSTFLOP_ADD_FLOP_BET_POT": [
+          [],
+          []
+        ],
+        "POSTFLOP_ADD_FLOP_CBET_POT": [
+          [],
+          []
+        ],
+        "POSTFLOP_ADD_FLOP_DONK_POT": [
+          [],
+          []
+        ],
+        "POSTFLOP_ADD_FLOP_RAISE_POT": [
+          [],
+          []
+        ],
+        "POSTFLOP_ALLOW_DONK": [
+          false,
+          false
+        ],
+        "POSTFLOP_ALLOW_DONK_PREV_AGGRESSION": [
+          true,
+          true
+        ],
+        "POSTFLOP_FORCE_CHECKDOWN_AFTER": [
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "POSTFLOP_GEO": [
+          [
+            66.0
+          ],
+          [
+            66.0
+          ]
+        ]
+      },
+      "id": "postflop.settings.simple"
+    }
+  },
+  "engine": {
+    "type": "montecarlo",
+    "maxactive": 4,
+    "configuration": {
+      "abstractions": [
+        {
+          "street": 0,
+          "buckets": 169
+        },
+        {
+          "street": 1,
+          "buckets": 1024,
+          "id": "22804b04d3732210b3f28dbaee3a59fbe7ab7a573b679ee68c876760aba76b94"
+        },
+        {
+          "street": 2,
+          "buckets": 512,
+          "id": "fc627e2157379cf8847c63d8081334ee8906c4f3ad667c37d99b2ae8b9e6a745"
+        },
+        {
+          "street": 3,
+          "buckets": 256,
+          "id": "41e796828302d1cb95d18663fc2e1eee65f2831c90b26339a814d285003785a1"
+        }
+      ]
+    }
+  }
+}
