@@ -13,7 +13,15 @@
       "RunCommand(uv, **)",
       "RunCommand(bash, **)"
     ],
-    "additionalDirectories": ["C:\\Users\\rapha\\.gemini\\", "C:\\Users\\rapha\\.gemini\\Site\\"]
+    "additionalDirectories": [
+      "C:\\Users\\rapha\\.gemini\\",
+      "C:\\Users\\rapha\\.gemini\\Site\\"
+    ]
+  },
+  "enabledPlugins": {
+    "ralph-loop@claude-plugins-official": false,
+    "neon@claude-plugins-official": true,
+    "zapier@claude-plugins-official": true
   },
   "claudeCode.allowDangerouslySkipPermissions": true
 }
