@@ -5,9 +5,10 @@ escopo: Site
 ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-aberturas"
 criado_em: 2026-09-08T23:45:00-03:00
-atualizado_em: 2026-09-08T23:45:00-03:00
+atualizado_em: 2026-09-09T00:15:00-03:00
 classes: [interno, medido, ci, build]
 caminhos:
+  - .github/workflows/sota-ci.yml
   - frontend/src/lib/engine/generated/vitoi_equity_engine.js
   - frontend/src/lib/engine/generated/vitoi_equity_engine_bg.wasm
   - frontend/public/wasm/vitoi_equity_engine_bg.wasm
@@ -52,6 +53,21 @@ verificado:
     SUITE PYTHON no commit imediatamente anterior desta sessao: 1020 passed,
     1 skipped. Nenhum dos 3 arquivos deste commit e consumido pela suite
     Python.
+  - >-
+    DESFECHO MEDIDO APOS O PUSH: o CI reprovou de novo no mesmo passo, mas o
+    diff MUDOU -- o vitoi_equity_engine.js saiu dele. Sobraram apenas os dois
+    .wasm, com "Binary files ... differ". Isso confirma a bifurcacao: o .js
+    convergiu, e o binario nao e reproduzivel entre Windows e Ubuntu.
+  - >-
+    DECISAO DO TIER 0, 2026-09-08: restringir o git diff --exit-code do CI aos
+    artefatos TEXTUAIS. A alternativa apresentada e recusada foi gerar o .wasm
+    em container Linux tambem localmente, tornando a reprodutibilidade um
+    requisito explicito.
+  - >-
+    O VERIFY TEXTUAL USA CAMINHOS EXPLICITOS, nao glob, e e precedido de tres
+    `test -f`. Um glob que nao casasse devolveria exit 0 e viraria falso verde,
+    que e pior que a cobertura declaradamente reduzida. Simulado localmente:
+    os tres arquivos existem e o diff sai limpo.
 nao_verificado:
   - >-
     Nao esta provado que o .wasm binario gerado nesta maquina Windows e byte a
@@ -83,6 +99,33 @@ revisoes_de_ancora:
       mudanca, e o unico ponto que segue em aberto e o declarado no proprio
       plano, a igualdade byte a byte do .wasm entre plataformas, que so o push
       resolve.
+  - registro: auditoria-2026-09-01-formatacao-ruff-e-ancoras
+    caminhos:
+      - .github/workflows/sota-ci.yml
+    parecer: >-
+      Aquela auditoria ancora o workflow porque tratou do MESMO job Python: ela
+      aplicou ruff format a 50 arquivos justamente para que
+      "toda PR nao nascesse vermelha por divida de formatacao alheia ao proprio
+      diff". Esta emenda opera no mesmo job e nao desfaz nada do que ela fez --
+      os dois comandos de Ruff continuam identicos e na mesma ordem. O que
+      muda e o passo SEGUINTE: o pytest, que naquela epoca nunca chegava a
+      rodar porque o Ruff reprovava antes, passa a ter node instalado e a
+      medir. A auditoria de 01/09 removeu o obstaculo; este commit remove o que
+      estava atras dele.
+  - registro: plano-frentes-abertas-2026-09-08
+    caminhos:
+      - .github/workflows/sota-ci.yml
+    parecer: >-
+      O plano ancora o workflow em duas frentes, e esta emenda toca as duas. Na
+      Tarefa 2 ele previa que, se o CI reprovasse de novo no passo do WASM, a
+      natureza do problema mudaria para reprodutibilidade binaria e a escolha
+      seria do Tier 0 entre restringir o verify aos textuais ou gerar em
+      container; foi o que aconteceu, e a primeira opcao foi a escolhida. Na
+      Tarefa 5 ele previa alterar a ordem de typecheck e build -- isso NAO foi
+      feito aqui de proposito, para que o efeito desta mudanca fique
+      atribuivel; a Tarefa 5 segue aberta e a sua previsao ainda nao pode ser
+      testada, porque o typecheck continua atras de outro passo. O plano nao
+      perde validade em nenhuma das duas.
 referencias_nao_resolviveis: []
 ---
 
@@ -147,6 +190,41 @@ Frontend: **34 suites, 264 testes, VERDE**, zero warnings. As duas marcas do CI
 conferem.
 
 O que **nao** esta provado e que o CI fica verde -- isso e a Tarefa 10 do plano.
+
+## Emenda -- o desfecho, e a cobertura que o Tier 0 aceitou perder
+
+O push confirmou a metade da hipotese e refutou a outra, que era exatamente o
+que o plano tinha previsto como bifurcacao.
+
+**Confirmado:** o `vitoi_equity_engine.js` **saiu do diff** do CI. Os bindings
+textuais convergiram -- o que este commit corrigiu estava certo.
+
+**Refutado:** a esperanca de que o binario tambem convergisse. Sobraram os dois
+`.wasm`, com `Binary files ... differ`. O `wasm-opt` nao produz o mesmo byte em
+Windows e em Ubuntu, e o ciclo de regenerar-e-commitar **nao converge**: cada
+lado produziria o seu, e o CI reprovaria a cada commit feito na outra
+plataforma.
+
+**Decisao do Tier 0:** o `git diff --exit-code` do CI passa a cobrir apenas os
+artefatos textuais. A alternativa avaliada -- gerar o `.wasm` em container
+Linux tambem localmente -- foi recusada.
+
+Isto **e** uma reducao de cobertura, e fica dita como tal: uma mudanca que
+altere somente o binario deixa de ser detectada pelo CI. Nao e um detalhe de
+implementacao escondido num comentario; e o motivo pelo qual a escolha era do
+Tier 0 e nao minha.
+
+**Um cuidado que a implementacao exigiu.** A forma obvia seria um glob:
+
+```bash
+git diff --exit-code -- 'frontend/src/lib/engine/generated/*.js'
+```
+
+Mas um glob que **nao casa nada** devolve exit 0. O passo ficaria verde sem ter
+verificado coisa alguma -- falso verde, que e pior que a cobertura reduzida,
+porque a reducao ao menos esta declarada. A versao em vigor lista os tres
+caminhos explicitamente e os precede de `test -f`, de modo que renomear um
+artefato quebra o passo em vez de silencia-lo.
 
 **Assinatura:** `Claude Opus 5 [Tier 1.B]`
 **Proposito:** registrar a causa medida da metade frontend do CI vermelho e o

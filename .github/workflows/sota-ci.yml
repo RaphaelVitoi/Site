@@ -69,6 +69,26 @@ jobs:
           uv run ruff check .
           uv run ruff format --check .
 
+      # MEDIDO EM 2026-09-08: tests/test_cwv_gate_truthfulness.py invoca
+      # `node scripts/ops/lighthouse_cwv_audit.mjs`, e este job so rodava
+      # `uv sync`. Sem node_modules o extrator nao carrega e 12 testes falham
+      # com ERR_MODULE_NOT_FOUND para o pacote `lighthouse`.
+      #
+      # A falha era PRE-EXISTENTE e ficou seis dias invisivel porque o passo do
+      # Ruff reprovava antes e o pytest nunca chegava a rodar. Instalar node
+      # aqui e o que faz o CI MEDIR o que a maquina local ja media; pular os
+      # testes deixaria a cobertura do extrator existindo so localmente, e a
+      # secao 5 do CLAUDE.md e explicita: verificacao nao executada nao e
+      # verificacao aprovada.
+      - name: 📦 Setup Node (dependencia de teste do extrator Lighthouse)
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: 📦 Install Node dependencies
+        run: npm ci
+
       - name: 🧪 Execute Pytest Suite (239+ Tests)
         run: |
           uv run pytest --cov=engine --cov-fail-under=10
@@ -109,10 +129,28 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🧬 Regenerate and verify WASM bindings
+      # MEDIDO EM 2026-09-08: o .wasm NAO e byte a byte reproduzivel entre
+      # plataformas. Regenerado no Windows com o mesmo wasm-pack 0.15.0 que o
+      # runner instala, o .js converge -- as duas marcas do runner
+      # (expectedResponseType, e o export default reescrito) aparecem iguais --
+      # mas os dois .wasm continuam divergindo. Verificar o binario aqui
+      # reprovava por algo que nenhuma das duas plataformas pode satisfazer ao
+      # mesmo tempo, e o ciclo de regenerar-e-commitar nao converge: cada lado
+      # produz o seu.
+      #
+      # COBERTURA REDUZIDA, E DECLARADA: uma mudanca que altere SO o binario
+      # deixa de ser detectada aqui. Decisao do Tier 0 em 2026-09-08, registrada
+      # em reports/REGISTRO-2026-09-08-bindings-wasm-defasados.md. A alternativa
+      # avaliada foi gerar o .wasm em container Linux tambem localmente.
+      - name: 🧬 Regenerate and verify WASM bindings (textuais)
         run: |
           npm run wasm:build
-          git diff --exit-code -- frontend/src/lib/engine/generated frontend/public/wasm/vitoi_equity_engine_bg.wasm
+          # Caminhos EXPLICITOS, nao glob: um glob que nao casasse devolveria
+          # exit 0 e viraria falso verde, que e pior que a cobertura perdida.
+          test -f frontend/src/lib/engine/generated/vitoi_equity_engine.js
+          test -f frontend/src/lib/engine/generated/vitoi_equity_engine.d.ts
+          test -f frontend/src/lib/engine/generated/vitoi_equity_engine_bg.wasm.d.ts
+          git diff --exit-code --             frontend/src/lib/engine/generated/vitoi_equity_engine.js             frontend/src/lib/engine/generated/vitoi_equity_engine.d.ts             frontend/src/lib/engine/generated/vitoi_equity_engine_bg.wasm.d.ts
 
       - name: 🔍 TypeScript Strict Type Check and production build
         run: |
