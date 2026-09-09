@@ -1068,12 +1068,39 @@ foreach ($arquivo in $staged) {
     }
 }
 
+# FORMATACAO RUFF (2026-09-09). O CI executa `uv run ruff format --check .` e o
+# pre-commit NAO executava -- o portao local e o CI verificavam coisas
+# diferentes, e um commit podia passar num e reprovar no outro sem que nada
+# acusasse. Foi assim que o job Python ficou vermelho por seis dias.
+#
+# MEDIDO NA PROPRIA SESSAO QUE CORRIGIU AQUILO: depois de consertar os 10
+# arquivos, criei um teste novo, nao rodei o formatador nele, e reprovei o CI
+# de novo pelo mesmo motivo. A lacuna documentada mordeu quem a documentou -- e
+# e por isso que ela vira verificacao aqui, e nao anotacao.
+#
+# So conta o que esta em STAGE: reprovar por divida de formatacao alheia ao
+# proprio diff foi o defeito que a auditoria de 2026-09-01 corrigiu, e nao se
+# reintroduz aqui.
+$violFmt = @()
+$pyEmStage = @($staged | Where-Object { $_ -like '*.py' })
+if ($pyEmStage.Count -gt 0) {
+    $ruffExe = Join-Path $RepoRoot '.venv\Scripts\python.exe'
+    if (-not (Test-Path -LiteralPath $ruffExe)) { $ruffExe = 'python' }
+    foreach ($arquivo in $pyEmStage) {
+        $caminhoAbs = Join-Path $RepoRoot $arquivo
+        if (-not (Test-Path -LiteralPath $caminhoAbs)) { continue }
+        $null = & $ruffExe -m ruff format --check --quiet -- $caminhoAbs 2>&1
+        if ($LASTEXITCODE -ne 0) { $violFmt += $arquivo }
+    }
+}
+
 $hygieneRules['StagedFiles']      = @{ Val = $stagedTotal;       Limit = '-';         Desc = 'Arquivos em stage (conteudo ou exclusao)' }
 $hygieneRules['Ps51PorBateria']   = @{ Val = $ps51Parcial.Count;  Limit = '-';         Desc = 'Verificado pela bateria substituta, sem o 5.1 real (INFO)' }
 $hygieneRules['PowerShell51']     = @{ Val = $violPs.Count;      Limit = 0;           Desc = 'Script .ps1 que quebra no interpretador real' }
 $hygieneRules['ForbiddenPaths']   = @{ Val = $violPath.Count;    Limit = 0;           Desc = 'Diretorio de perfil/ferramenta versionado' }
 $hygieneRules['OversizedBlobs']   = @{ Val = $violSize.Count;    Limit = 0;           Desc = "Blob nao-LFS acima de $MaxBlobMb MB" }
 $hygieneRules['UnroutedBinaries'] = @{ Val = $violRoute.Count;   Limit = 0;           Desc = 'Binario sem filter=lfs no .gitattributes' }
+$hygieneRules['RuffFormat']       = @{ Val = $violFmt.Count;     Limit = 0;           Desc = 'Arquivo .py em stage fora do formato do ruff (o CI reprova)' }
 
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'HYGIENE CHECK', 'COUNT', 'LIMIT', 'GATE') -ForegroundColor White
 foreach ($regra in $hygieneRules.Keys) {
@@ -1090,6 +1117,7 @@ foreach ($v in $violSize)  { Write-Host "   - blob grande fora do LFS: $v" -Fore
 foreach ($v in $violRoute) { Write-Host "   - binario sem roteamento LFS: $v" -ForegroundColor Red }
 foreach ($v in $violPs)    { Write-Host "   - PowerShell 5.1: $v" -ForegroundColor Red }
 foreach ($v in $ps51Parcial) { Write-Host "   - PowerShell 5.1 por bateria substituta (sem 5.1 real): $v" -ForegroundColor Yellow }
+foreach ($v in $violFmt)   { Write-Host "   - fora do formato do ruff: $v" -ForegroundColor Red }
 
 if ($violPath.Count -gt 0) {
     Add-QualityFinding -Severity 'ERROR' -Component 'repository.forbidden-paths' -Detail "$($violPath.Count) arquivo(s) sob diretorio de perfil/ferramenta: $($violPath -join '; ')." -Reason 'Estado local de ferramenta foi colocado em stage; ele nao e fonte versionavel do projeto.' -Action 'Retirar esses caminhos do stage e registrar a exclusao em .gitignore, preservando configuracoes compartilhadas fora dos diretorios de runtime.'
@@ -1099,6 +1127,9 @@ if ($violSize.Count -gt 0) {
 }
 if ($violRoute.Count -gt 0) {
     Add-QualityFinding -Severity 'ERROR' -Component 'repository.lfs-routing' -Detail "$($violRoute.Count) binario(s) sem filter=lfs: $($violRoute -join '; ')." -Reason 'A extensao binaria entrou em stage sem o atributo filter=lfs, portanto seria armazenada como blob Git comum.' -Action 'Corrigir .gitattributes com filter=lfs para a extensao ou retirar o binario do commit; depois reindexar o arquivo e rodar o gate novamente.'
+}
+if ($violFmt.Count -gt 0) {
+    Add-QualityFinding -Severity 'ERROR' -Component 'repository.ruff-format' -Detail "$($violFmt.Count) arquivo(s) .py em stage fora do formato do ruff: $($violFmt -join '; ')." -Reason 'O CI executa `uv run ruff format --check .` e reprova o job Python inteiro. Ate 2026-09-09 o pre-commit nao verificava isso, e o portao local e o CI checavam coisas diferentes -- foi assim que o job ficou vermelho por seis dias sem que nada acusasse.' -Action 'Rodar `.venv/Scripts/python.exe -m ruff format .` e reindexar os arquivos indicados. Se a formatacao alterar semantica, isso e o achado -- compare a AST antes e depois em vez de aceitar a mudanca.'
 }
 if ($violPs.Count -gt 0) {
     Add-QualityFinding -Severity 'ERROR' -Component 'repository.powershell51' -Detail "$($violPs.Count) script(s) .ps1 falham no PowerShell 5.1: $($violPs -join '; ')." -Reason 'O hook e tarefas agendadas executam com PowerShell 5.1; arquivo sem BOM UTF-8 com caracteres nao ASCII ou sintaxe invalida falha no interpretador efetivo.' -Action 'Adicionar BOM UTF-8 unico quando houver caracteres nao ASCII ou corrigir a sintaxe indicada; validar novamente com o parser do PowerShell 5.1.'

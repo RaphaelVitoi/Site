@@ -158,9 +158,7 @@ def test_aceite_python_e_exigido_e_nao_suprime(gate_texto: str):
         "o arquivo de aceites sumiu da fase 3. Sem ele, a unica forma de "
         "commitar com uma CVE sem correcao seria desligar a verificacao."
     )
-    assert "PY_CVE_ABERTAS" in gate_texto, (
-        "a metrica de CVEs Python nao aceitas sumiu de secRules."
-    )
+    assert "PY_CVE_ABERTAS" in gate_texto, "a metrica de CVEs Python nao aceitas sumiu de secRules."
 
 
 def test_audit_python_falha_fechado(gate_texto: str):
@@ -171,9 +169,7 @@ def test_audit_python_falha_fechado(gate_texto: str):
         "aprovaria sem medir -- exatamente a falha aberta que a fase npm ja "
         "corrigiu em 2026-08-22."
     )
-    assert "security.python.execucao" in gate_texto, (
-        "o finding de ERRO para audit Python nao executado sumiu."
-    )
+    assert "security.python.execucao" in gate_texto, "o finding de ERRO para audit Python nao executado sumiu."
 
 
 def test_aceite_vincula_pacote_e_versao(gate_texto: str):
