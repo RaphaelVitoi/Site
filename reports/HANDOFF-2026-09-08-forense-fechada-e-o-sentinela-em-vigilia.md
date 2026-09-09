@@ -58,14 +58,31 @@ commits desta etapa.
 | Recurso | Estado |
 | :--- | :--- |
 | Sentinela de delecoes | **ATIVO**, de `scripts/ops/sentinela_delecoes.ps1` |
-| Saida do sentinela | `%TEMP%/sentinela_delecoes.jsonl` -- **1 linha, e ela NAO e evento** |
+| Saida do sentinela | `%TEMP%/sentinela_delecoes.jsonl` -- **2 linhas, e NENHUMA e evento** |
 | Dev server | porta 3000, mantido ligado por instrucao permanente |
 | CDP | 9222 e 9224 ativas; 9230 livre |
 
-**A primeira linha do JSONL e a isca de controle**, nao uma ocorrencia real:
-`logs\__isca_sentinela.tmp`, 6 bytes, 08/09 17:34:46 -- foi a validacao que
-provou que o instrumento captura. **Evento real comeca na linha 2.** Ler a linha 1
-como ocorrencia seria repetir, no instrumento, o erro que ele existe para evitar.
+**As duas primeiras linhas do JSONL sao iscas de controle**, nao ocorrencias
+reais: `logs\__isca_sentinela.tmp` (6 bytes, 08/09 17:34:46) validou a primeira
+subida do sentinela; `logs\__isca_sentinela_2.tmp` (6 bytes, 08/09 21:43:48)
+validou a religada apos o processo morrer. **Evento real comeca na linha 3.** Ler
+qualquer uma das duas como ocorrencia seria repetir, no instrumento, o erro que
+ele existe para evitar.
+
+**Emenda de 08/09 21:43.** Este handoff declarava o sentinela ATIVO com o pid
+46492; medido na sessao seguinte, aquele processo nao existia mais e nenhum
+processo do sentinela rodava. O proprio handoff previu o caso e trouxe o comando
+de religar, que funcionou. Fica o registro de que **a linha ATIVO da tabela era
+verdadeira quando escrita e falsa quando lida** -- estado de runtime nao
+sobrevive ao handoff, e por isso a conferencia por isca abre a sessao em vez de
+fecha-la.
+
+**Uma armadilha medida na religada.** Procurar o processo com
+`Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*sentinela_delecoes*' }`
+devolve um falso positivo: a string procurada esta na linha de comando do proprio
+`pwsh` que executa a consulta. O filtro tem que excluir `$PID` e o texto da
+propria consulta, ou o medidor se ve no espelho e declara ligado o que esta
+morto.
 
 **Se a maquina reiniciou entre as sessoes, o sentinela morreu.** Religar com:
 
