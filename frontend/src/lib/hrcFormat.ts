@@ -4,6 +4,8 @@ import { z } from 'zod';
 import type { TournamentPlayer, TableSelection, TournamentSnapshot } from './tournamentContext';
 import { selectAnalysisTable } from './tournamentContext';
 import { TournamentConditionsSchema, resolveTournamentPayouts, type TournamentConditions } from './tournamentConditions';
+import { validateChipLedger, validatePrizeLedger, type ChipLedger } from './chipLedger';
+import { FieldModelSchema } from './fieldModel';
 
 const positive = z.number().finite().positive();
 const nonnegative = z.number().finite().nonnegative();
@@ -49,6 +51,7 @@ export function normalizeHRCHandConfig(value: unknown) {
   ];
   const prizeData = readHRCPrizes(config.eqmodel.structure.prizes, players.length);
   const bigBlind = config.handdata.blinds[0] / 100;
+  const fieldExtension = z.object({ fieldModel: FieldModelSchema.optional() }).safeParse(config['pmev']);
   let extra: { room?: 'PokerStars' | 'GGPoker'; totalEntries?: number; paidPlaces?: number; totalPrizePool?: number } = {};
   const extension = z.object({ room: z.enum(['PokerStars', 'GGPoker']), conditions: TournamentConditionsSchema }).safeParse(config['pmev']);
   if (extension.success) {
@@ -62,11 +65,15 @@ export function normalizeHRCHandConfig(value: unknown) {
     paidPlaces: prizeData.paidPlaces, totalPrizePool: prizeData.totalPrizePool,
     remainingPrizePool: prizeData.payouts.reduce((sum, v) => sum + v, 0), prizes: prizeData.payouts,
     payoutUnit: 'absolute' as const, suggestedPlayerIds: players.filter(p => p.tableId).map(p => p.id),
-    hrcConfig: config, ...extra,
+    hrcConfig: config, fieldModel: fieldExtension.success && fieldExtension.data.fieldModel ? {
+      ...fieldExtension.data.fieldModel, remainingPlayers: players.length,
+      estimatedPlayerIds: players.filter(p => !p.tableId).map(p => p.id),
+    } : undefined, ...extra,
   };
 }
 
 export interface HRCExportOptions {
+  chipLedger?: ChipLedger;
   selection: TableSelection;
   conditions?: TournamentConditions;
   snapshot?: TournamentSnapshot | undefined;
@@ -75,19 +82,29 @@ export interface HRCExportOptions {
 
 /** Settings only: no strategies or calculated EVs. Native HRC table amounts use cents (x100). */
 export function generateHRCHandConfig(population: TournamentPlayer[], payouts: number[], options: HRCExportOptions): string {
+  const ledger = options.chipLedger ? validateChipLedger(options.chipLedger) : undefined;
+  const rawChips = new Map(ledger?.players.map(p => [p.id, p.chips]));
+  if (ledger && (population.length !== rawChips.size || population.some(p => rawChips.get(p.id)! / ledger.bigBlind !== p.stack))) throw new Error('Exportação diverge das fichas canônicas.');
+  if (ledger && options.conditions) validatePrizeLedger(options.conditions.totalPrizePool, options.conditions.remainingPrizePool, payouts);
   let table = selectAnalysisTable(population, options.selection);
   const source = options.snapshot;
   if (source?.structureSource?.bountyType && !['NONE', 'OFF'].includes(source.structureSource.bountyType.toUpperCase())) {
     throw new Error('Estrutura de bounty preservada. Exporte a coleção original para o HRC; exportar uma configuração PKO completa exige bounties por jogador e modelo próprio.');
   }
-  if (source?.buttonSeat !== undefined && table.every(p => p.seat !== undefined)) {
+  if (ledger) {
+    if (ledger.seatOrder.length !== table.length || ledger.seatOrder.some(id => !table.some(p => p.id === id))) throw new Error('Mesa exportada diverge dos assentos canônicos.');
+    const button = ledger.seatOrder.indexOf(ledger.buttonId);
+    const first = table.length === 2 ? button : (button + 3) % table.length;
+    const order = [...ledger.seatOrder.slice(first), ...ledger.seatOrder.slice(0, first)];
+    table = order.map(id => table.find(p => p.id === id)!);
+  } else if (source?.buttonSeat !== undefined && table.every(p => p.seat !== undefined)) {
     const seats = [...table].sort((a, b) => a.seat! - b.seat!);
     const button = seats.findIndex(p => p.seat === source.buttonSeat);
     if (button < 0) throw new Error('O botão informado não está na mesa selecionada.');
     const first = seats.length === 2 ? button : (button + 3) % seats.length;
     table = [...seats.slice(first), ...seats.slice(0, first)];
   }
-  const bb = options.bigBlind ?? source?.bigBlind ?? 100;
+  const bb = ledger?.bigBlind ?? options.bigBlind ?? source?.bigBlind ?? 100;
   if (!Number.isFinite(bb) || bb <= 0) throw new Error('Big blind inválido para exportação.');
   if (population.some(p => !Number.isFinite(p.stack) || p.stack <= 0)) throw new Error('O setup de mão HRC exige stacks positivos.');
   if (!payouts.length || payouts.length > population.length || payouts.some((p, i) => !Number.isFinite(p) || p <= 0 || (i > 0 && p > payouts[i - 1]!))) throw new Error('Payouts inválidos para exportação HRC.');
@@ -111,20 +128,21 @@ export function generateHRCHandConfig(population: TournamentPlayer[], payouts: n
   };
   const config = {
     handdata: {
-      ...template?.handdata, stacks: table.map(p => cents(p.stack * bb * 100)),
+      ...template?.handdata, stacks: table.map(p => cents((rawChips.get(p.id) ?? p.stack * bb) * 100)),
       blinds: [cents(bb * 100), cents((source?.smallBlind ?? bb / 2) * 100), cents((source?.ante ?? 0) * 100)],
       skipSb: template?.handdata.skipSb ?? false, movingBu: template?.handdata.movingBu ?? true,
       anteType: source?.anteType ?? template?.handdata.anteType ?? 'REGULAR', straddleType: 'OFF',
     },
     eqmodel: {
-      id: 'mtticm', otherstacks: outside.map(p => p.stack * bb).sort((a, b) => b - a),
-      structure: { name: 'MTT - payouts em disputa', chips: population.reduce((sum, p) => sum + p.stack * bb, 0), prizes: prizeMap },
+      id: 'mtticm', otherstacks: outside.map(p => rawChips.get(p.id) ?? p.stack * bb).sort((a, b) => b - a),
+      structure: { name: 'MTT - payouts em disputa', chips: ledger?.total ?? population.reduce((sum, p) => sum + p.stack * bb, 0), prizes: prizeMap },
     },
     treeconfig: template?.treeconfig ?? { mode: 'ui', preflop: { id: 'preflop.settings.general', settings: {
       ALLOWED_FLATS_PER_RAISE: [0, 0, 0, 0, 0], ALLOW_SB_COMPLETE: false, SIZES_OPEN_OTHERS: 'all-in', SIZES_OPEN_BU: 'all-in', SIZES_OPEN_SB: 'all-in',
     } } },
     engine: template?.engine ?? { type: 'montecarlo', maxactive: Math.min(3, table.length) },
     pmev: { kind: 'hand-config-only', conditions: options.conditions, room: options.selection.room,
+      fieldModel: ledger?.fieldModel ?? source?.fieldModel,
       note: 'Setup de mão. Revise posições e árvore no HRC. Payouts anteriores à etapa atual só são preservados quando presentes no arquivo original.',
       players: population, selection: options.selection, stackUnit: 'bb' },
   };

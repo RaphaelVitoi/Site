@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { CounterfactualContextSchema, compareTerminalUtilities, validateCounterfactualContext, COUNTERFACTUAL_MODEL } from './counterfactualExperiment';
 import { calculatePopulationIcm } from './icmEngine';
 import { calculateIcmMonteCarlo } from './montecarlo';
+import { moneyUnits } from './chipLedger';
 
 const transitionSchema = z.object({
   tableStacks: z.array(z.object({ id: z.string(), stack: z.number().finite().nonnegative() }).strict()).min(2).max(9),
@@ -25,7 +26,11 @@ export function evaluateIcmTransitions(raw: unknown) {
   const { context: c } = snapshot;
   const payouts = validateCounterfactualContext(c);
   if (c.population.some(p => p.stack <= 0)) throw new Error('O snapshot inicial deve conter apenas jogadores ainda vivos. Resolva eliminações anteriores antes do experimento.');
-  const initialChips = c.population.reduce((sum, p) => sum + p.stack, 0);
+  const rawChips = new Map(c.chipLedger?.players.map(p => [p.id, p.chips]));
+  const initialPopulation = c.population.map(p => ({ ...p, stack: rawChips.get(p.id) ?? p.stack }));
+  const stackUnit = c.chipLedger ? 'chips' as const : 'bb' as const;
+  const bbScale = c.chipLedger?.bigBlind ?? 1;
+  const initialChips = initialPopulation.reduce((sum, p) => sum + p.stack, 0);
   const initialPool = payouts.reduce((sum, p) => sum + p, 0);
   const tableIds = new Set(c.selection.playerIds);
 
@@ -36,10 +41,11 @@ export function evaluateIcmTransitions(raw: unknown) {
     if (updates.size !== tableIds.size || updates.size !== transition.tableStacks.length || [...updates.keys()].some(id => !tableIds.has(id))) {
       throw new Error(`${action}: informe cada jogador da mesa exatamente uma vez; jogadores externos permanecem no field.`);
     }
-    const population = c.population.map(p => ({ ...p, stack: updates.get(p.id) ?? p.stack }));
+    if (c.chipLedger && transition.tableStacks.some(p => !Number.isSafeInteger(p.stack))) throw new Error(`${action}: stacks devem ser fichas inteiras.`);
+    const population = initialPopulation.map(p => ({ ...p, stack: updates.get(p.id) ?? p.stack }));
     const totalChips = population.reduce((sum, p) => sum + p.stack, 0);
-    if (!Number.isFinite(totalChips) || Math.abs(totalChips - initialChips) > Math.max(1, initialChips) * 1e-9) {
-      throw new Error(`${action}: a transição deve conservar ${initialChips} BB, incluindo o field completo. Não deixe fichas em um pote não distribuído.`);
+    if (!Number.isFinite(totalChips) || (c.chipLedger ? !Number.isSafeInteger(totalChips) || totalChips !== initialChips : Math.abs(totalChips - initialChips) > Math.max(1, initialChips) * 1e-9)) {
+      throw new Error(`${action}: a transição deve conservar ${initialChips} ${stackUnit === 'chips' ? 'fichas' : 'BB'}, incluindo o field completo. Não deixe fichas em um pote não distribuído.`);
     }
     const busted = population.filter(p => p.stack === 0).map(p => p.id);
     const order = transition.eliminationOrder;
@@ -51,11 +57,12 @@ export function evaluateIcmTransitions(raw: unknown) {
     const remainingPayouts = payouts.slice(0, survivors.length);
     const paid = payments.reduce((sum, p) => sum + p.amount, 0);
     const remainingPool = remainingPayouts.reduce((sum, p) => sum + p, 0);
+    if (c.chipLedger && payments.reduce((sum, p) => sum + moneyUnits(p.amount), 0) + remainingPayouts.reduce((sum, p) => sum + moneyUnits(p), 0) !== moneyUnits(c.conditions.remainingPrizePool)) throw new Error('Premiação inconsistente em centavos após liquidação.');
     if (Math.abs(paid + remainingPool - initialPool) > Math.max(1, initialPool) * 1e-9) throw new Error('Premiação inconsistente após liquidação.');
     return { action, population, survivors, payments, remainingPayouts, paid, remainingPool, totalChips };
   });
   // A workload budget, not a population limit. Never truncate stacks or payouts.
-  const initialState: typeof states[number] = { action: 'fold', population: c.population, survivors: c.population,
+  const initialState: typeof states[number] = { action: 'fold', population: initialPopulation, survivors: initialPopulation,
     payments: [], remainingPayouts: payouts, paid: 0, remainingPool: initialPool, totalChips: initialChips };
   const work = [...states, initialState].reduce((sum, s) => sum + (s.survivors.length > 10 ? s.survivors.length * s.remainingPayouts.length * snapshot.iterations : 0), 0);
   if (work > 100_000_000) throw new TransitionCapacityError('Este pedido excede o orçamento de cálculo síncrono. Reduza as amostras; nenhum stack ou payout foi descartado.');
@@ -78,7 +85,7 @@ export function evaluateIcmTransitions(raw: unknown) {
   };
   const baseline = valueState(initialState);
   const initialValues = new Map(baseline.valuations.map(p => [p.id, p.total]));
-  const initialStacks = new Map(c.population.map(p => [p.id, p.stack]));
+  const initialStacks = new Map(initialPopulation.map(p => [p.id, p.stack]));
   const valued = states.map(state => {
     const value = valueState(state);
     const stacksAfter = new Map(state.population.map(p => [p.id, p.stack]));
@@ -88,15 +95,16 @@ export function evaluateIcmTransitions(raw: unknown) {
       const stackAfter = stacksAfter.get(v.id)!;
       return { id: v.id, before, after: v.total, paid: v.paid, remainingEquity: v.remainingEquity,
         delta: v.total - before, stackBefore, stackAfter, unchangedStack: stackBefore === stackAfter,
-        averageValuePerBbBefore: before / stackBefore,
-        averageValuePerBbAfter: stackAfter > 0 ? v.remainingEquity / stackAfter : null };
+        averageValuePerBbBefore: before / stackBefore * bbScale,
+        averageValuePerBbAfter: stackAfter > 0 ? v.remainingEquity / stackAfter * bbScale : null };
     });
     return { ...value, redistribution, totalValuationDelta: redistribution.reduce((sum, p) => sum + p.delta, 0) };
   });
   const [fold, win, loss] = valued;
   const utilities = { fold: fold!.heroValue, win: win!.heroValue, loss: loss!.heroValue };
   return {
-    model: { ...COUNTERFACTUAL_MODEL, id: 'settled-table-icm-binary', version: '1.0.0', hypotheses: [...COUNTERFACTUAL_MODEL.hypotheses, 'PM-GLOBAL'],
+    stackUnit,
+    model: { ...COUNTERFACTUAL_MODEL, id: 'settled-table-icm-binary', version: '1.1.0', hypotheses: [...COUNTERFACTUAL_MODEL.hypotheses, 'PM-GLOBAL'],
       references: [...COUNTERFACTUAL_MODEL.references, { source: 'S07', blocks: [105, 111], hypothesis: 'PM-GLOBAL',
         originalDocument: 'https://docs.google.com/document/d/1S5kufnSM5y15CxDjr_nLi1oQoOvndlV3imDRBl-SxfU/edit' }] },
     snapshot, payouts, unit: 'payout-currency' as const, contextRole: 'full-field-icm-valuation' as const,
