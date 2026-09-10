@@ -3,6 +3,7 @@ import { StructureSourceSchema } from './hrcStructure';
 import { parseHandHistoryDetails } from './handParser';
 import type { ICMPlayer } from './icmEngine';
 import { normalizeHRCHandConfig } from './hrcFormat';
+import { FieldModelSchema } from './fieldModel';
 
 export const TABLE_CAPACITY = { PokerStars: 9, GGPoker: 8 } as const;
 export type PokerRoom = keyof typeof TABLE_CAPACITY;
@@ -11,6 +12,7 @@ export const TournamentPlayerSchema = z.object({
   tableId: z.string().min(1).optional(), seat: z.number().int().positive().optional(),
 });
 const snapshotSchema = z.object({
+  fieldModel: FieldModelSchema.optional(),
   tournamentType: z.literal('MTT').default('MTT'),
   variant: z.literal('NLHE').default('NLHE'),
   declaredTotalChips: z.number().finite().positive().optional(),

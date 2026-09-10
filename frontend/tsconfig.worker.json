@@ -29,6 +29,8 @@
     "src/lib/icmEngine.ts",
     "src/lib/icmMatrix.ts",
     "src/lib/tournamentContext.ts",
+    "src/lib/chipLedger.ts",
+    "src/lib/fieldModel.ts",
     "src/lib/tournamentConditions.ts",
     "src/lib/handParser.ts",
     "src/lib/hrcFormat.ts",

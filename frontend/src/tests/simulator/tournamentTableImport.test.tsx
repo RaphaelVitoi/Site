@@ -7,6 +7,35 @@ import TournamentTableImport from '../../components/simulator/panels/TournamentT
 
 const players = Array.from({ length: 12 }, (_, i) => ({ id: String(i), name: `P${i}`, stack: 100 + i, tableId: i < 9 ? 'FT' : 'Outra', seat: i < 9 ? i + 1 : i - 8 }));
 
+test('structure and HH offer editable field completion with exact mass and tagged estimates', () => {
+  const apply = jest.fn();
+  render(<TournamentTableImport onApply={apply} />);
+  const structure = { name:'/', folders:[], structures:[{ name:'Toy',chips:100000,prizes:{ '1':50,'2':30,'3':20 } }] };
+  fireEvent.change(screen.getByLabelText('JSON de estrutura'), { target:{ value:JSON.stringify(structure) } });
+  fireEvent.change(screen.getByLabelText('Input original'), { target:{ value:ggHand } });
+  fireEvent.change(screen.getByLabelText('Jogadores restantes para estimar o field'), { target:{ value:'5' } });
+  fireEvent.click(screen.getByText('Gerar field estimado e preencher payouts'));
+  fireEvent.click(screen.getByText('Analisar mesa com contexto completo'));
+  const snapshot = apply.mock.calls[0][0].snapshot;
+  expect(snapshot.players).toHaveLength(5);
+  expect(snapshot.players.reduce((sum: number, p: { stack:number }) => sum+p.stack,0)).toBe(100000);
+  expect(snapshot.fieldModel.countOrigin).toBe('user');
+  expect(snapshot.fieldModel.estimatedPlayerIds).toHaveLength(2);
+  expect(snapshot.prizes).toEqual([50,30,20]);
+});
+
+test('HRC modelled stacks are materialized only by explicit action and original settings remain intact', () => {
+  const apply = jest.fn();
+  render(<TournamentTableImport onApply={apply} defaultRoom="PokerStars" />);
+  fireEvent.change(screen.getByLabelText('Input original'), { target:{ value:JSON.stringify(nativeSettings) } });
+  fireEvent.click(screen.getByText('Usar distribuição HRC em fichas inteiras'));
+  fireEvent.click(screen.getByText('Analisar mesa com contexto completo'));
+  const snapshot = apply.mock.calls[0][0].snapshot;
+  expect(snapshot.fieldModel.countOrigin).toBe('imported-scenario');
+  expect(snapshot.fieldModel.originalExternalStacks).toEqual(nativeSettings.eqmodel.otherstacks);
+  expect(snapshot.players.reduce((sum:number,p:{stack:number})=>sum+p.stack,0)).toBe(378000);
+});
+
 test('requires a table and hand selection while preserving all source players and payouts', () => {
   const apply = jest.fn();
   render(<TournamentTableImport onApply={apply} />);

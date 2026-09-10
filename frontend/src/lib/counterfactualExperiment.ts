@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ChipLedgerSchema, validateChipLedger, validatePrizeLedger } from './chipLedger';
 import { TournamentPlayerSchema, selectAnalysisTable } from './tournamentContext';
 import { TournamentConditionsSchema, resolveTournamentPayouts, validateTournamentChipMass } from './tournamentConditions';
 
@@ -17,6 +18,7 @@ export const COUNTERFACTUAL_MODEL = {
 
 const utility = z.number().finite().min(-1e12).max(1e12);
 export const CounterfactualContextSchema = z.object({
+  chipLedger: ChipLedgerSchema.optional(),
   population: z.array(TournamentPlayerSchema).min(2),
   selection: z.object({ room: z.enum(['PokerStars', 'GGPoker']), playerIds: z.array(z.string()), participantIds: z.array(z.string()) }),
   conditions: TournamentConditionsSchema,
@@ -38,8 +40,14 @@ export const CounterfactualRequestSchema = z.object({
 export type CounterfactualRequest = z.infer<typeof CounterfactualRequestSchema>;
 
 export function validateCounterfactualContext(c: CounterfactualRequest['context']) {
+  if (c.chipLedger) {
+    const ledger = validateChipLedger(c.chipLedger);
+    const byId = new Map(ledger.players.map(p => [p.id, p.chips / ledger.bigBlind]));
+    if (byId.size !== c.population.length || c.population.some(p => byId.get(p.id) !== p.stack) || ledger.seatOrder.length !== c.selection.playerIds.length || ledger.seatOrder.some(id => !c.selection.playerIds.includes(id))) throw new Error('A projeção em BB diverge do ledger de fichas ou da mesa.');
+  }
   selectAnalysisTable(c.population, c.selection);
   const payouts = resolveTournamentPayouts(c.conditions, c.population.length, c.prizes);
+  if (c.chipLedger) validatePrizeLedger(c.conditions.totalPrizePool, c.conditions.remainingPrizePool, payouts);
   validateTournamentChipMass(c.conditions, c.population.map(p => p.stack));
   if (!c.selection.playerIds.includes(c.heroId)) throw new Error('Selecione um jogador da mesa para o experimento.');
   if (!c.population.some(p => p.id === c.heroId && p.stack > 0)) throw new Error('O jogador precisa ter fichas para participar do experimento.');
