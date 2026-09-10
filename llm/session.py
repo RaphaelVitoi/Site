@@ -36,13 +36,13 @@ def make_client_timeout(
     """Instancia ClientTimeout com compatibilidade estrita para type checkers (Pyright/Pylance)."""
     kwargs: dict[str, Any] = {"ceil_threshold": ceil_threshold}
     if total is not None:
-        kwargs["total"] = float(total)
+        kwargs["total"] = total
     if connect is not None:
-        kwargs["connect"] = float(connect)
+        kwargs["connect"] = connect
     if sock_read is not None:
-        kwargs["sock_read"] = float(sock_read)
+        kwargs["sock_read"] = sock_read
     if sock_connect is not None:
-        kwargs["sock_connect"] = float(sock_connect)
+        kwargs["sock_connect"] = sock_connect
     return aiohttp.ClientTimeout(**kwargs)
 
 

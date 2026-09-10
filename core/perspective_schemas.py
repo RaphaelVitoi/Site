@@ -5,6 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 SolverType = Literal["deep_solver", "gtowizard", "monker_solver", "hrc_pro", "pio_solver", "auto"]
+ENashUnit = Literal["pct", "pctOfPot", "bb", "bbPer100", "chips"]
 
 
 class PerspectiveCalculationRequest(BaseModel):
@@ -178,7 +179,7 @@ class SolverProvenance(BaseModel):
     build: str | None = None
     engine: str | None = None
     e_nash: float | None = None
-    e_nash_unit: Literal["pct", "pctOfPot", "bb", "bbPer100", "chips"] | None = None
+    e_nash_unit: ENashUnit | None = None
     e_nash_label: str | None = None
 
     def esta_completa(self) -> bool:

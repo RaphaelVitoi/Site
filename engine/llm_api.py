@@ -69,7 +69,8 @@ async def call_gemini(
         api_key = os.environ.get("API_SECRET_TOKEN", "")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     headers = {"Content-Type": CONTENT_TYPE_JSON}
-    mensagens = [{"role": "user", "parts": [{"text": user_prompt}]}]
+    mensagens: list[dict[str, Any]] = [{"role": "user", "parts": [{"text": user_prompt}]}]
+    data: dict[str, Any]
     if GoogleGenAIAdapter.e_geracao_atual(model):
         data = GoogleGenAIAdapter.build_http(
             model,
@@ -80,15 +81,16 @@ async def call_gemini(
         if response_format:
             data.setdefault("generationConfig", {})["responseSchema"] = response_format
     else:
-        data = {
+        legacy_data: dict[str, Any] = {
             "system_instruction": {"parts": [{"text": system_prompt}]},
             "contents": mensagens,
         }
         if response_format:
-            data["generationConfig"] = {
+            legacy_data["generationConfig"] = {
                 "responseMimeType": "application/json",
                 "responseSchema": response_format,
             }
+        data = legacy_data
 
     async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
         if not response.ok:

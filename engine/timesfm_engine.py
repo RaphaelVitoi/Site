@@ -386,7 +386,7 @@ def forecast_agent_calibration_trajectory(
     sigma_est = max(0.15, recent_volatility * math.sqrt(max(1, horizon_sessions) / 3.0))
 
     # Clamping rigoroso no espaço de notas [0.0, 10.0]
-    mean_clamped = [round(max(0.0, min(10.0, float(v))), 2) for v in raw_mean]
+    mean_clamped = [round(max(0.0, min(10.0, v)), 2) for v in raw_mean]
     # Túnel estocástico coerente ancorado na média e desvio padrão do domínio
     q10_clamped = [
         round(max(0.0, min(m, m - 1.28 * sigma_est * math.sqrt(i + 1))), 2) for i, m in enumerate(mean_clamped)

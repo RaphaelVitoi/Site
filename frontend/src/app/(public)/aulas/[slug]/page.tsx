@@ -42,7 +42,7 @@ const getLesson = cache(async (slug: string) => {
 				.replaceAll(/[^\w\s-]/g, '') // Remove pontuações
 				.replaceAll(/[\s_-]+/g, '-') // Transforma espaços em hifens
 				.replaceAll(/^-+/g, '') // Limpa hifens no inicio
-				.replaceAll(/-+$/g, ''); // Limpa hifens no fim
+				.replace(/-$/, ''); // Limpa hifen no fim
 
 			toc.push({ level, text, slug: headerSlug });
 		}

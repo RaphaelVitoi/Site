@@ -761,7 +761,7 @@ async def _cmd_verify_keys(manager: QueueManager):
         with c.status(f"[cyan]Conectando as mentes globais (Pool SOTA, Concorrencia: {CONCURRENCY_LIMIT})...[/]"):
             results = list(await asyncio.gather(*tasks))
 
-        online_count = sum(1 for r in results if "ONLINE" in str(r[2]))
+        online_count = sum(1 for r in results if "ONLINE" in r[2])
         fail_count = len(results) - online_count
         audit_payload: dict = {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -773,9 +773,9 @@ async def _cmd_verify_keys(manager: QueueManager):
                 {
                     "provider": r[0],
                     "masked_key": r[1],
-                    "status": "ONLINE" if "ONLINE" in str(r[2]) else "FALHA",
+                    "status": "ONLINE" if "ONLINE" in r[2] else "FALHA",
                     "detail": r[3],
-                    "latency": str(r[4]).replace("[dim]", "").replace("[/]", ""),
+                    "latency": r[4].replace("[dim]", "").replace("[/]", ""),
                 }
                 for r in results
             ],

@@ -89,8 +89,8 @@ class BenchmarkMetrics:
         c = math.ceil(k)
         if f == c:
             return sorted_lat[int(k)]
-        d0 = sorted_lat[int(f)] * (c - k)
-        d1 = sorted_lat[int(c)] * (k - f)
+        d0 = sorted_lat[f] * (c - k)
+        d1 = sorted_lat[c] * (k - f)
         return d0 + d1
 
 

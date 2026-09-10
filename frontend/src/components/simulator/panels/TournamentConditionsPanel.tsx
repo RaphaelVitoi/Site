@@ -10,6 +10,30 @@ const fields = [
   ['remainingPrizePool', 'Prize pool restante', 'Soma das premiações ainda em disputa. Exclui os valores já pagos aos eliminados.'],
 ] as const;
 
+function getStepValue(key: string, canonicalUnits: boolean): string {
+  if (key.includes('PrizePool')) {
+    return canonicalUnits ? '0.01' : 'any';
+  }
+  if (key === 'declaredTotalChipsBb') {
+    return 'any';
+  }
+  return '1';
+}
+
+function getNumericFieldValue(rawValue: number | undefined): string | number {
+  if (rawValue === undefined || Number.isNaN(rawValue)) {
+    return '';
+  }
+  return rawValue;
+}
+
+function parseFieldValue(key: string, inputValue: string): number | undefined {
+  if (inputValue === '') {
+    return key === 'declaredTotalChipsBb' ? undefined : Number.NaN;
+  }
+  return Number(inputValue);
+}
+
 export default function TournamentConditionsPanel({ value, onChange, canonicalUnits = false }: Readonly<{
   value: TournamentConditions; onChange: (next: TournamentConditions) => void;
   canonicalUnits?: boolean;
@@ -21,12 +45,13 @@ export default function TournamentConditionsPanel({ value, onChange, canonicalUn
       {fields.filter(([key]) => !canonicalUnits || key !== 'declaredTotalChipsBb').map(([key, label, description]) => <label key={key} className="min-w-0" title={description}>
         {label} <span aria-hidden="true">ⓘ</span>
         <input aria-label={label} aria-describedby={`mtt-${key}-hint`} type="number" min={key.includes('PrizePool') || key === 'declaredTotalChipsBb' ? 0 : 1}
-          step={key.includes('PrizePool') ? (canonicalUnits ? '0.01' : 'any') : key === 'declaredTotalChipsBb' ? 'any' : '1'} value={Number.isNaN(value[key]) ? '' : (value[key] ?? '')}
-          onChange={event => onChange({ ...value, [key]: event.target.value === '' ? (key === 'declaredTotalChipsBb' ? undefined : NaN) : Number(event.target.value) })}
+          step={getStepValue(key, canonicalUnits)} value={getNumericFieldValue(value[key])}
+          onChange={event => onChange({ ...value, [key]: parseFieldValue(key, event.target.value) })}
           className="mt-1 w-full rounded-lg border border-white/20 bg-bg-panel p-2" />
         <span id={`mtt-${key}-hint`} className="mt-1 block text-xs text-text-muted">{description}</span>
       </label>)}
-      {!canonicalUnits && <label>Unidade dos payouts
+      {!canonicalUnits && <label className="flex flex-col gap-1">
+        <span>Unidade dos payouts</span>
         <select aria-label="Unidade dos payouts" className="mt-1 w-full rounded-lg border border-white/20 bg-bg-panel p-2" value={value.payoutUnit}
           onChange={event => onChange({ ...value, payoutUnit: event.target.value as TournamentConditions['payoutUnit'] })}>
           <option value="percent-remaining-pool">% do prize pool restante</option>

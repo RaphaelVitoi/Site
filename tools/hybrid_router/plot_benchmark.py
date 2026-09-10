@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     import matplotlib.pyplot as plt
     import numpy as np
     import pandas as pd
-    import seaborn as sns
+    import seaborn as sns  # type: ignore[import-untyped,import-not-found]
 else:
     try:
         import matplotlib
@@ -91,7 +91,7 @@ def generate_synthetic_data(samples: int = 60) -> pd.DataFrame:
                 "target_executed": "GEMINI_37_FLASH_STANDARD",
                 "latency_ms": float(lat),
                 "thinking_tokens": 0,
-                "tokens_evaluated": int(np.random.randint(20, 45)),
+                "tokens_evaluated": np.random.randint(20, 45),
                 "is_success": True,
             }
         )
@@ -101,7 +101,7 @@ def generate_synthetic_data(samples: int = 60) -> pd.DataFrame:
                 "target_executed": "GEMINI_37_FLASH_THINKING",
                 "latency_ms": float(lat),
                 "thinking_tokens": 4096,
-                "tokens_evaluated": int(np.random.randint(45, 80)),
+                "tokens_evaluated": np.random.randint(45, 80),
                 "is_success": True,
             }
         )
@@ -125,8 +125,10 @@ def load_dataset(file_path: str | None) -> pd.DataFrame:
         df = generate_synthetic_data()
 
     if "is_success" in df.columns:
-        filtered = df[df["is_success"]]
-        df = cast(pd.DataFrame, filtered).copy().reset_index(drop=True)
+        # pandas 3.0 nao anota DataFrame.__getitem__; o Pyright infere a uniao
+        # DataFrame | Series | ndarray lendo o corpo. A mascara booleana sempre
+        # devolve DataFrame -- o cast declara isso sem custo em runtime.
+        df = cast("pd.DataFrame", df[df["is_success"]]).copy().reset_index(drop=True)
     return df
 
 
@@ -146,7 +148,7 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
     # 0. HEADER / BANNER DE KPIS EXECUTIVOS
     # -------------------------------------------------------------
     total_reqs = len(df)
-    latency_vals = df["latency_ms"].to_numpy()
+    latency_vals = np.asarray(df["latency_ms"].to_numpy(), dtype=np.float64)
     avg_lat = float(np.mean(latency_vals)) if total_reqs else 0.0
     p50 = float(np.percentile(latency_vals, 50)) if total_reqs else 0.0
     p90 = float(np.percentile(latency_vals, 90)) if total_reqs else 0.0
@@ -240,11 +242,11 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
         color = PALETTE_MAP.get(str(target), "#333333")
         label = TARGET_LABELS.get(str(target), str(target))
 
-        sorted_data = np.sort(subset["latency_ms"])
+        sorted_data = np.sort(np.asarray(subset["latency_ms"], dtype=np.float64))
         yvals = np.arange(1, len(sorted_data) + 1) / len(sorted_data)
         ax2.step(sorted_data, yvals, label=label, color=color, linewidth=2.0, where="post")
 
-    global_sorted = np.sort(df["latency_ms"])
+    global_sorted = np.sort(np.asarray(df["latency_ms"].to_numpy(), dtype=np.float64))
     global_yvals = np.arange(1, len(global_sorted) + 1) / len(global_sorted)
     ax2.step(
         global_sorted,
@@ -307,8 +309,8 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
     # Media movel global para verificar estabilidade temporal
     rolling_mean = df_seq["latency_ms"].rolling(window=max(3, len(df_seq) // 10), min_periods=1).mean()
     ax3.plot(
-        df_seq["request_id"],
-        rolling_mean,
+        np.asarray(df_seq["request_id"]),
+        np.asarray(rolling_mean),
         color=TEXT_PRIMARY,
         linestyle="-",
         linewidth=1.8,
@@ -337,7 +339,7 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
     colors = [PALETTE_MAP.get(str(t), "#333333") for t in target_counts.index]
 
     _, texts, autotexts = ax4.pie(
-        target_counts,
+        target_counts.to_numpy(),
         labels=labels,
         colors=colors,
         autopct="%1.1f%%",

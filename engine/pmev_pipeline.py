@@ -57,7 +57,7 @@ class PMevTripartitePipeline:
     # --------------------------------------------------------------------------
     def normalize_state(self, stacks: list[float], payouts: list[float]) -> TournamentState:
         """Cria o TournamentState validando invariantes determinísticas."""
-        return TournamentState(stacks=tuple(float(s) for s in stacks), payouts=tuple(float(p) for p in payouts))
+        return TournamentState(stacks=tuple(stacks), payouts=tuple(payouts))
 
     # --------------------------------------------------------------------------
     # CAMADA 2: Computação Determinística Local (Zero Tokens)

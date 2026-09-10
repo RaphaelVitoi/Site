@@ -680,7 +680,7 @@ export default function MasterSimulator() {
             {/* Espaços de trabalho do simulador — a identidade está na barra de laboratórios acima. */}
             <nav
               aria-label="Áreas de trabalho do Simulador Mestre"
-              className="sticky top-[var(--simulator-header-height)] z-30 border-b border-white/8 bg-slate-950/60 px-4 py-2 backdrop-blur-2xl sm:px-6"
+              className="sticky top-(--simulator-header-height) z-30 border-b border-white/8 bg-slate-950/60 px-4 py-2 backdrop-blur-2xl sm:px-6"
             >
               <div className="mx-auto flex max-w-7xl justify-center">
                 <div className="flex flex-wrap items-center justify-center gap-1 rounded-xl border border-white/8 bg-slate-950/60 p-1 shadow-inner">

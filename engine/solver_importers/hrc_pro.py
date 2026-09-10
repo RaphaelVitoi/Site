@@ -5,8 +5,8 @@ Importador especializado para Holdem Resources Calculator Pro (HRC Pro).
 
 import json
 import re
-from typing import Any
-from core.perspective_schemas import NormalizedGameTree, SolverNode, SolverProvenance, SolverType
+from typing import Any, cast
+from core.perspective_schemas import ENashUnit, NormalizedGameTree, SolverNode, SolverProvenance, SolverType
 from engine.bayesian_range import RANKS, apply_pmev_range_filter, get_preflop_hand_strength_matrix
 from engine.solver_importers.base import BaseSolverImporter
 
@@ -203,7 +203,7 @@ class HRCProImporter(BaseSolverImporter):
         """
         build: str | None = None
         e_nash: float | None = None
-        unidade: str | None = None
+        unidade: ENashUnit | None = None
         rotulo: str | None = None
 
         if data:
@@ -220,7 +220,7 @@ class HRCProImporter(BaseSolverImporter):
                     break
             declarada = data.get("e_nash_unit") or data.get("ci_unit")
             if isinstance(declarada, str) and declarada in HRCProImporter.UNIDADES_DECLARAVEIS:
-                unidade = declarada
+                unidade = cast(ENashUnit, declarada)
 
         if build is None:
             m = re.search(

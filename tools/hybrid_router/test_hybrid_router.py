@@ -7,11 +7,12 @@ from pathlib import Path
 import sys
 import unittest
 
+from pydantic import JsonValue
+
 _REPO_ROOT = str(Path(__file__).resolve().parents[2])
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-# pylint: disable=wrong-import-position
 from tools.hybrid_router.app import (  # noqa: E402
     ComplexityAnalyzer,
     ExecutionTarget,
@@ -51,7 +52,7 @@ class TestComplexityAnalyzer(unittest.TestCase):
 
     def test_strict_json_schema_routes_to_cloud_standard(self) -> None:
         prompt = "Extraia os dados cadastrais do cliente."
-        schema = {"type": "object", "properties": {"name": {"type": "string"}}}
+        schema: dict[str, JsonValue] = {"type": "object", "properties": {"name": {"type": "string"}}}
         metrics: RouteMetrics = self.analyzer.compute_metrics(prompt, response_schema=schema)
         assert metrics.selected_target == ExecutionTarget.GEMINI_37_FLASH_STANDARD
         assert metrics.requires_strict_json is True

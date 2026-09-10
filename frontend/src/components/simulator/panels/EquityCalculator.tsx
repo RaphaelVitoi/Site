@@ -37,6 +37,12 @@ const PRESETS = [
   { label: 'Toy MTT · bolha (4 restantes)', stacks: [45, 25, 18, 12], prizes: [50, 30, 20] },
 ];
 
+function getCountOriginLabel(origin: string): string {
+  if (origin === 'table-mean-estimate') return 'estimada pela média da mesa';
+  if (origin === 'imported-scenario') return 'preservada do cenário HRC';
+  return 'informada pelo usuário';
+}
+
 export default function EquityCalculator() {
   const [chipPlayers, setChipPlayers] = useState<ICMPlayer[]>([
     { id: '1', name: 'Jogador 1', stack: 40000 },
@@ -262,7 +268,14 @@ export default function EquityCalculator() {
     setBigBlind(blind); setChipTotal(total); setChipPlayers(table);
     setExternalChips(rawPlayers.filter(p => !context.selection.playerIds.includes(p.id)));
     setSeatOrder(table.map(p => p.id));
-    setButtonId(source.buttonSeat !== undefined ? (table.find(p => p.seat === source.buttonSeat)?.id ?? '') : source.sourceFormat === 'hrc-hand-config' ? table[table.length === 2 ? 0 : table.length - 3]!.id : '');
+    let initialButtonId = '';
+    if (source.buttonSeat !== undefined) {
+      initialButtonId = table.find(p => p.seat === source.buttonSeat)?.id ?? '';
+    } else if (source.sourceFormat === 'hrc-hand-config') {
+      const buttonIndex = table.length === 2 ? 0 : table.length - 3;
+      initialButtonId = table[buttonIndex]?.id ?? '';
+    }
+    setButtonId(initialButtonId);
     setPrizes(nextPrizes); setConditions(nextConditions);
     setHeroId(source.heroId ?? null);
     setExportError(null);
@@ -344,8 +357,8 @@ export default function EquityCalculator() {
         <legend>Fichas, posições e representação</legend>
         <p>Inputs em fichas inteiras e valores monetários. Os totais definem o cenário e não mudam ao editar stacks ou payouts. Alterá-los explicitamente configura outro cenário.</p>
         <div className="grid gap-4 sm:grid-cols-3">
-          <label>Total de fichas do torneio<input aria-label="Total de fichas do torneio" title="Montante de referência de todos os jogadores restantes, inclusive outras mesas. Não é recalculado pela edição dos stacks." type="number" min="1" step="1" value={Number.isNaN(chipTotal) ? '' : chipTotal} onChange={e => setChipTotal(e.target.value === '' ? NaN : Number(e.target.value))} className="w-full rounded bg-bg-panel p-2" /></label>
-          <label>Big blind em fichas<input aria-label="Big blind em fichas" type="number" min="1" step="1" value={Number.isNaN(bigBlind) ? '' : bigBlind} onChange={e => setBigBlind(e.target.value === '' ? NaN : Number(e.target.value))} className="w-full rounded bg-bg-panel p-2" /></label>
+          <label>Total de fichas do torneio<input aria-label="Total de fichas do torneio" title="Montante de referência de todos os jogadores restantes, inclusive outras mesas. Não é recalculado pela edição dos stacks." type="number" min="1" step="1" value={Number.isNaN(chipTotal) ? '' : chipTotal} onChange={e => setChipTotal(e.target.value === '' ? Number.NaN : Number(e.target.value))} className="w-full rounded bg-bg-panel p-2" /></label>
+          <label>Big blind em fichas<input aria-label="Big blind em fichas" type="number" min="1" step="1" value={Number.isNaN(bigBlind) ? '' : bigBlind} onChange={e => setBigBlind(e.target.value === '' ? Number.NaN : Number(e.target.value))} className="w-full rounded bg-bg-panel p-2" /></label>
           <label>Botão da mesa<select aria-label="Botão da mesa" value={buttonId} onChange={e => setButtonId(e.target.value)} className="w-full rounded bg-bg-panel p-2"><option value="">Informe o botão</option>{chipPlayers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
         </div>
         <label className="mr-4"><input type="checkbox" checked={showBb} onChange={e => setShowBb(e.target.checked)} /> Exibir BB</label>
@@ -355,9 +368,10 @@ export default function EquityCalculator() {
       </fieldset>
       <p className="text-xs text-text-muted">Posições seguem a ordem circular dos assentos e o botão informado. HH preenche o botão quando disponível; HRC informa a ordem das posições. Presets têm botão sintético editável. Export HRC preserva a árvore original quando disponível; novos setups usam um molde push/fold editável no HRC.</p>
       <div className="space-y-3 rounded-xl border border-white/15 p-4 text-sm text-text-light">
-        <label>Sala da bancada
+        <label className="flex items-center gap-3">
+          <span>Sala da bancada</span>
           <select aria-label="Sala da bancada" value={room} disabled={importedContext !== null}
-            onChange={event => setRoom(event.target.value as PokerRoom)} className="ml-3 rounded-lg bg-bg-panel p-2">
+            onChange={event => setRoom(event.target.value as PokerRoom)} className="rounded-lg bg-bg-panel p-2">
             <option value="PokerStars">PokerStars — até 9p</option><option value="GGPoker">GGPoker — até 8p</option>
           </select>
         </label>
@@ -367,9 +381,9 @@ export default function EquityCalculator() {
 
         {importedContext?.snapshot.declaredTotalChips !== undefined && <p>Fichas totais declaradas no arquivo: {importedContext.snapshot.declaredTotalChips.toLocaleString('pt-BR')} fichas. Soma dos stacks usados no cálculo: {totalChips.toLocaleString('pt-BR')} BB.</p>}
         <p>A equidade considera todos os stacks e payouts recebidos, incluindo jogadores fora da mesa. Percentuais referem-se ao prize pool restante informado; a mesa não é tratada como um torneio separado.</p>
-        {importedContext?.snapshot.fieldModel && <p role="status">Field modelado: {importedContext.snapshot.fieldModel.estimatedPlayerIds.length} stacks externos estimados. Contagem {importedContext.snapshot.fieldModel.countOrigin === 'table-mean-estimate' ? 'estimada pela média da mesa' : importedContext.snapshot.fieldModel.countOrigin === 'imported-scenario' ? 'preservada do cenário HRC' : 'informada pelo usuário'}. O ICM é condicional a essa distribuição; não comprova os stacks reais das outras mesas.</p>}
+        {importedContext?.snapshot.fieldModel && <output className="block">Field modelado: {importedContext.snapshot.fieldModel.estimatedPlayerIds.length} stacks externos estimados. Contagem {getCountOriginLabel(importedContext.snapshot.fieldModel.countOrigin)}. O ICM é condicional a essa distribuição; não comprova os stacks reais das outras mesas.</output>}
         {importedContext?.snapshot.structureSource?.bountyType && <p>Estrutura {importedContext.snapshot.structureSource.name} · {importedContext.snapshot.structureSource.bountyType}. Equidade apenas da premiação por colocação; componente de bounty não calculado. A coleção original pode ser reexportada no painel de importação.</p>}
-        {metadata && <p role="status">{metadata.method === 'malmuth-harville-exact' ? 'ICM exato' : `ICM aproximado · ${metadata.iterations.toLocaleString('pt-BR')} simulações · seed ${metadata.seed}`} · {metadata.populationSize} stacks avaliados</p>}
+        {metadata && <output className="block">{metadata.method === 'malmuth-harville-exact' ? 'ICM exato' : `ICM aproximado · ${metadata.iterations.toLocaleString('pt-BR')} simulações · seed ${metadata.seed}`} · {metadata.populationSize} stacks avaliados</output>}
         {(inputError || calculationError) && <p role="alert" className="text-accent-danger">{inputError || calculationError}</p>}
         <button type="button" className="rounded-lg border border-white/20 px-3 py-2" disabled={inputError !== null} onClick={exportContext}>Exportar contexto e seleção</button>
         {importedContext && <p>Input original preservado no export de contexto. Para trocar assentos ou participantes, abra a importação. Presets iniciam uma nova bancada manual.</p>}
@@ -425,7 +439,7 @@ export default function EquityCalculator() {
                       min="0" step="1"
                       placeholder="Stack"
                       value={Number.isNaN(p.stack) ? '' : p.stack}
-                      onChange={(e) => updateStack(p.id, e.target.value === '' ? NaN : Number(e.target.value))}
+                      onChange={(e) => updateStack(p.id, e.target.value === '' ? Number.NaN : Number(e.target.value))}
                       className="w-16 bg-transparent border-none text-[0.75rem] font-mono font-black text-right text-white focus:outline-none focus:ring-0"
                     />
                     <span className="text-[0.6rem] text-text-darker font-black uppercase">fichas</span>
@@ -482,7 +496,7 @@ export default function EquityCalculator() {
                     min="0" step="0.01"
                     placeholder="0"
                     value={Number.isNaN(val) ? '' : val}
-                    onChange={(e) => updatePrize(i, e.target.value === '' ? NaN : Number(e.target.value))}
+                    onChange={(e) => updatePrize(i, e.target.value === '' ? Number.NaN : Number(e.target.value))}
                     className="min-w-0 flex-1 bg-black/60 border border-white/5 rounded-lg px-3 py-1.5 text-[0.75rem] font-mono font-black text-right text-accent-emerald focus:outline-none focus:border-accent-emerald shadow-inner"
                   />
                   {showPercent && <span className="text-xs">{(val / conditions.remainingPrizePool * 100).toFixed(2)}%</span>}
