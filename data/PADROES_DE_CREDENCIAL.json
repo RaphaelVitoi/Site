@@ -12,7 +12,8 @@
     "Token HuggingFace": "hf_[A-Za-z0-9]{30,}",
     "Token Slack": "xox[baprs]-[A-Za-z0-9-]{10,}",
     "Chave Anthropic": "sk-ant-[A-Za-z0-9_-]{20,}",
-    "Chave privada PEM": "-----BEGIN [A-Z ]*PRIVATE KEY-----"
+    "Chave privada PEM": "-----BEGIN [A-Z ]*PRIVATE KEY-----",
+    "Chave Google (formato AQ)": "AQ\\.[A-Za-z0-9_-]{45,}"
   },
   "_por_que_o_arquivo_nao_se_denuncia": "O padrao PEM contem, literalmente, o texto que ele procura. A saida NAO e isentar este arquivo -- isentar cria ponto cego no unico lugar que descreve os segredos. A saida e uma propriedade do ACHADO: credencial de verdade nao contem metacaractere de regex. O que casar trazendo colchete, chave, asterisco, mais ou contrabarra e PADRAO, nao segredo.",
   "metacaracteres_que_denunciam_um_padrao": [
@@ -30,7 +31,8 @@
     "your_key_here",
     "YOUR_API_KEY",
     "CHANGEME",
-    "REPLACE_ME"
+    "REPLACE_ME",
+    "CHAVE_SINTETICA"
   ],
   "nao_verificado": [
     "Nenhuma chave foi validada contra o provedor. A governanca proibe verificacao que pressuponha chamada real a provedor de LLM, entao FORMA de credencial e o que se mede -- nunca se ela esta viva."

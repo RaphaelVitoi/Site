@@ -95,6 +95,35 @@ def test_o_portao_compara_com_sensibilidade_a_caixa():
     )
 
 
+# Mesma convencao de tests/test_sync_jules_redacao.py: o formato e real, o valor
+# e SINTETICO. Nenhuma credencial real entra num arquivo de teste.
+_CHAVE_SINTETICA_AQ = "AQ.Zz0QQ0" + "Q" * 44
+
+
+def test_o_padrao_google_cobre_o_formato_aq():
+    """A chave `AIza...` nao e o unico formato do Google, e o portao era cego.
+
+    Medido em 2026-09-10: uma chave `AQ.Ab8...` real vivia em texto claro em 11
+    manifestos deste ambiente e nenhum padrao a detectava. O mesmo portao havia
+    bloqueado um commit legitimo por falso positivo em base64 -- ruido alto e
+    cegueira no caso verdadeiro sao o mesmo defeito visto dos dois lados.
+    """
+    fonte = _fonte()
+    padroes = {nome: re.compile(rx) for nome, rx in fonte["padroes"].items()}
+    assert any("AQ" in nome for nome in padroes), "nenhum padrao cobre o formato AQ do Google"
+    aq = padroes["Chave Google (formato AQ)"]
+    assert aq.search(_CHAVE_SINTETICA_AQ)
+    # precisao: nao pode casar base64, hash, url nem placeholder
+    for inocente in (
+        "ccoYy8AiZaHQ3BTkbk7trF04S7ecJ63W6oQ6pO0J3ZUt4p1KV",
+        "a3b9de2f96fc95a8c31d1182697e41908358a7a318b1246ab",
+        "https://stitch.googleapis.com/mcp",
+        "YOUR_API_KEY",
+        _CHAVE_SINTETICA_AQ[:19],
+    ):
+        assert not aq.search(inocente), f"falso positivo em {inocente[:24]}"
+
+
 def test_o_padrao_google_nao_casa_variacao_de_caixa():
     """O falso positivo concreto de 2026-09-10, fixado como regressao."""
     fonte = _fonte()
