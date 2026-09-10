@@ -251,7 +251,7 @@ class AutopoiesisEngine:
             )
 
             # Calculo de Entropia e Status Tri-State
-            entropy = float(total_errors * 1.0 + total_warnings * 0.25)
+            entropy = total_errors * 1.0 + total_warnings * 0.25
             if total_errors == 0 and total_warnings == 0:
                 overall = "SUCESSO (VERDE)"
             elif total_errors == 0 and 1 <= total_warnings <= 2:

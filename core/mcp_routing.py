@@ -41,7 +41,7 @@ class MCPAddonDecision:
         """Converte a decisao para o contrato JSON persistido na fila."""
         return {
             MCP_SELECTED_KEY: list(self.selected),
-            MCP_SCORES_KEY: {str(name): int(score) for name, score in self.scores.items()},
+            MCP_SCORES_KEY: {name: score for name, score in self.scores.items()},
             MCP_REASONS_KEY: list(self.reason_codes),
             MCP_POLICY_KEY: self.policy_mode,
         }

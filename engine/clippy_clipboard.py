@@ -130,7 +130,7 @@ class ClippyClipboard:
 
         if pyperclip is not None:
             try:
-                return str(pyperclip.paste())
+                return pyperclip.paste()
             except Exception:
                 return ""
         return ""

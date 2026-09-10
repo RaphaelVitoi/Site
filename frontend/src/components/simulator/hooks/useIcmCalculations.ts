@@ -27,7 +27,7 @@ export function useIcmCalculations({ players, prizes, population, selection, con
     workerRef.current = worker;
     worker.onmessage = (event: MessageEvent<IcmTableResponse | { id: string; error: string } | null | undefined>) => {
       const response = event.data;
-      if (!response || response.id !== activeJob.current) return;
+      if (response?.id !== activeJob.current) return;
       if ('error' in response) {
         setError(response.error);
         setCalculation(null);

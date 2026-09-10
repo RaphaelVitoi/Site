@@ -40,7 +40,7 @@ def kill_process_on_port(port: int) -> None:
     try:
         for proc in psutil.process_iter(["pid", "name"]):
             try:
-                for conn in proc.connections(kind="inet"):
+                for conn in proc.net_connections(kind="inet"):
                     if conn.laddr and conn.laddr.port == port:
                         print(f"[AVATAR] Encerrando processo {proc.name()} (PID: {proc.pid})")
                         proc.kill()

@@ -3,13 +3,16 @@ Fallback do Dispatcher -- Plano de contingencia quando o @dispatcher nao retorna
 """
 # pylint: disable=protected-access, import-outside-toplevel
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 import json
 import logging
+from typing import Any, TypedDict
 
 import core.runtime as te
 from core.mcp_routing import apply_mcp_addon_routing
-from core.schemas import Task
+from core.schemas import Task, TaskMetadata
 from database.queue_manager import QueueManager
 from utils.heuristics import _calculate_heuristic_score
 from utils.text import enforce_pure_ascii
@@ -25,6 +28,15 @@ AGENT_PLANNER = "@planner"
 AGENT_SECURITYCHIEF = "@securitychief"
 AGENT_VALIDADOR = "@validador"
 AGENT_VERIFIER = "@verifier"
+
+
+class FallbackSpec(TypedDict):
+    """Especificacao estrita de sub-tarefa para a rota de fallback."""
+
+    suffix: str
+    agent: str
+    description: str
+    depends_on: list[int]
 
 
 def _feature_enabled(flag_name: str) -> bool:
@@ -67,7 +79,12 @@ def _heuristic_terms(group_name: str) -> dict[str, int]:
     return {}
 
 
-def _process_conditional_injection(injection: dict, context_blob: str, route_agents: list, reason_codes: list) -> None:
+def _process_conditional_injection(
+    injection: dict[str, Any],
+    context_blob: str,
+    route_agents: list[str],
+    reason_codes: list[str],
+) -> None:
     gate = injection.get("gate")
     heuristic_group = injection.get("heuristic")
     agent_to_inject = injection.get("agent")
@@ -88,7 +105,7 @@ def _process_conditional_injection(injection: dict, context_blob: str, route_age
             reason_codes.append(reason_code)
 
 
-def _get_fallback_route(task: Task) -> tuple[list, list]:
+def _get_fallback_route(task: Task) -> tuple[list[str], list[str]]:
     """Computa a rota de fallback dinamicamente baseada em heuristicas e configuracao."""
     description = enforce_pure_ascii((task.description or "").lower())
     metadata_blob = json.dumps(task.metadata or {}, ensure_ascii=True).lower()
@@ -119,7 +136,7 @@ def _get_fallback_route(task: Task) -> tuple[list, list]:
     return route_agents, reason_codes
 
 
-def _generate_fallback_specs(task_id: str, route_agents: list) -> list:
+def _generate_fallback_specs(task_id: str, route_agents: list[str]) -> list[FallbackSpec]:
     """Gera as especificacoes (prompts e dependencias) para cada etapa da rota de fallback."""
     stage_prompts = {
         AGENT_ARCHITECT: (
@@ -161,40 +178,43 @@ def _generate_fallback_specs(task_id: str, route_agents: list) -> list:
         ),
     }
 
-    fallback_specs = []
+    fallback_specs: list[FallbackSpec] = []
     for idx, agent in enumerate(route_agents, start=1):
         fallback_specs.append(
-            {
-                "suffix": f"SUB-{idx}",
-                "agent": agent,
-                "description": stage_prompts.get(agent, f"Execute a sua etapa para a tarefa base {task_id}."),
-                "depends_on": [idx - 2] if idx > 1 else [],
-            }
+            FallbackSpec(
+                suffix=f"SUB-{idx}",
+                agent=agent,
+                description=stage_prompts.get(agent, f"Execute a sua etapa para a tarefa base {task_id}."),
+                depends_on=[idx - 2] if idx > 1 else [],
+            )
         )
     return fallback_specs
 
 
-async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
+async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager) -> None:
     """
     Orquestrador de Fallback: Isola aquisicao de rota, geracao de specs e enfileiramento.
     Reducao drastica de complexidade ciclica via pipeline de funcoes puras.
     """
     route_agents, reason_codes = _get_fallback_route(task)
     fallback_specs = _generate_fallback_specs(task.id, route_agents)
-    created_ids = []
+    created_ids: list[str] = []
     for spec in fallback_specs:
         sub_id = f"{task.id}-{spec['suffix']}"
         created_ids.append(sub_id)
         if await manager.get_task(sub_id):
             continue
 
-        meta = task.metadata.copy() if task.metadata else {}
-        meta["priority"] = meta.get("priority", "high")
+        meta: TaskMetadata = task.metadata.copy() if task.metadata else {}
+        priority_val = meta.get("priority")
+        meta["priority"] = str(priority_val) if priority_val is not None else "high"
         meta.pop("depends_on", None)
         meta["fallback_route"] = route_agents
         meta["route_selected"] = route_agents
         raw_existing_reasons = meta.get("reason_codes", [])
-        existing_reasons = [str(r) for r in raw_existing_reasons] if isinstance(raw_existing_reasons, list) else []
+        existing_reasons: list[str] = (
+            [str(r) for r in raw_existing_reasons] if isinstance(raw_existing_reasons, list) else []
+        )
         for code in reason_codes:
             if code not in existing_reasons:
                 existing_reasons.append(code)
@@ -213,7 +233,7 @@ async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager):
         )
         await manager.add_task(new_task)
 
-    metadata_patch = {
+    metadata_patch: TaskMetadata = {
         "fallback_route": route_agents,
         "route_selected": route_agents,
         "reason_codes": reason_codes,

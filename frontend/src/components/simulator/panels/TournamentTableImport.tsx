@@ -16,6 +16,7 @@ export interface AppliedTournamentContext {
   bigBlind: number | null;
   prizes: number[];
 }
+
 const fieldClass = 'w-full rounded-lg border border-white/20 bg-bg-panel p-3 text-text-light';
 
 export default function TournamentTableImport({ onApply, initialContext, defaultRoom, mode = 'hh' }: Readonly<{ mode?: 'hh' | 'hrc'; defaultRoom?: PokerRoom; onApply: (context: AppliedTournamentContext) => void; initialContext?: AppliedTournamentContext | null }>) {
@@ -83,7 +84,7 @@ export default function TournamentTableImport({ onApply, initialContext, default
     if (text.trim()) readInput(text);
   }
 
-  function receiveFile(file?: File) {
+  async function receiveFile(file?: File) {
     if (!file) return;
     const revision = ++inputRevision.current;
     setError(null); setSnapshot(null);
@@ -92,16 +93,22 @@ export default function TournamentTableImport({ onApply, initialContext, default
       setError('Escolha HH/JSON de até 5 MB ou cenário .hrcz/.hrcv de até 256 MB.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (revision !== inputRevision.current) return;
-      try {
-        const text = archive && reader.result instanceof ArrayBuffer ? extractHrcSettings(new Uint8Array(reader.result)) : reader.result;
-        if (typeof text === 'string') receiveText(text.replace(/^\uFEFF/, ''));
-      } catch (err) { setError(err instanceof Error ? err.message : 'Cenário HRC inválido.'); }
-    };
-    reader.onerror = () => { if (revision === inputRevision.current) setError('Não foi possível ler o arquivo.'); };
-    if (archive) reader.readAsArrayBuffer(file); else reader.readAsText(file);
+    try {
+      if (archive) {
+        const buffer = await file.arrayBuffer();
+        if (revision !== inputRevision.current) return;
+        const text = extractHrcSettings(new Uint8Array(buffer));
+        receiveText(text.replace(/^\uFEFF/, ''));
+      } else {
+        const text = await file.text();
+        if (revision !== inputRevision.current) return;
+        receiveText(text.replace(/^\uFEFF/, ''));
+      }
+    } catch (err) {
+      if (revision === inputRevision.current) {
+        setError(err instanceof Error ? err.message : 'Não foi possível ler o arquivo.');
+      }
+    }
   }
 
   function chooseStructure(next: HRCStructureSource) {
@@ -124,16 +131,22 @@ export default function TournamentTableImport({ onApply, initialContext, default
     } catch (err) { setError(err instanceof Error ? err.message : 'Estrutura inválida.'); }
   }
 
-  function receiveStructureFile(file?: File) {
+  async function receiveStructureFile(file?: File) {
     if (!file) return;
     const revision = ++structureRevision.current;
     if (file.size > 5 * 1024 * 1024 || !/\.json$/i.test(file.name)) {
       setError('Escolha uma coleção de estruturas JSON de até 5 MB.'); return;
     }
-    const reader = new FileReader();
-    reader.onload = () => { if (revision === structureRevision.current && typeof reader.result === 'string') readStructure(reader.result.replace(/^\uFEFF/, '')); };
-    reader.onerror = () => { if (revision === structureRevision.current) setError('Não foi possível ler a estrutura.'); };
-    reader.readAsText(file);
+    try {
+      const text = await file.text();
+      if (revision === structureRevision.current) {
+        readStructure(text.replace(/^\uFEFF/, ''));
+      }
+    } catch {
+      if (revision === structureRevision.current) {
+        setError('Não foi possível ler a estrutura.');
+      }
+    }
   }
 
   function apply() {
@@ -163,22 +176,25 @@ export default function TournamentTableImport({ onApply, initialContext, default
   return <section aria-label="Importar torneio e selecionar mesa" className="space-y-4 rounded-2xl border border-white/15 p-4 text-sm text-text-light">
     <h4 className="text-lg font-bold">{mode === 'hrc' ? 'Importar cenário HRC' : 'Importar Hand History'}</h4>
     <p>MTT · No-Limit Texas Hold’em. Importe um snapshot dos jogadores restantes do torneio em JSON ou uma única Hand History. A equidade usa todos os stacks recebidos; a mesa analisada será selecionada abaixo.</p>
-    <label className="block">Carregar HH ou configuração HRC
+    <label className="flex flex-col gap-1">
+      <span>Carregar HH ou configuração HRC</span>
       <input aria-label="Carregar HH ou configuração HRC" type="file" accept=".txt,.hh,.json,.hrcz,.hrcv,text/plain,application/json" className={fieldClass}
         onChange={event => { receiveFile(event.target.files?.[0]); event.target.value = ''; }} />
     </label>
     <p>Cole uma HH em inglês do PokerStars/GGPoker ou abra um arquivo. Para HRC, escolha .hrcz/.hrcv ou JSON (Hand Config). A configuração da árvore, stacks, blinds e payouts são lidos do settings.json; estratégias e EVs armazenados nos binários do solver não são executados nesta bancada. Coleções de estruturas podem complementar a HH. Revise os defaults quando faltarem payouts.</p>
     <fieldset className="space-y-3 rounded-lg border border-white/20 p-3">
       <legend>Estrutura do torneio — HRC / fornecedor externo</legend>
-      <label className="block">Carregar estrutura JSON
+      <label className="flex flex-col gap-1">
+        <span>Carregar estrutura JSON</span>
         <input aria-label="Carregar estrutura JSON" type="file" accept=".json,application/json" className={fieldClass}
-          onChange={event => { void receiveStructureFile(event.target.files?.[0]); event.target.value = ''; }} />
+          onChange={event => { receiveStructureFile(event.target.files?.[0]); event.target.value = ''; }} />
       </label>
       <details><summary>Colar JSON de estrutura</summary>
         <textarea aria-label="JSON de estrutura" className={fieldClass} value={structureRaw}
           onChange={event => { structureRevision.current++; setStructureRaw(event.target.value); if (event.target.value.trim()) readStructure(event.target.value); }} />
       </details>
-      {structures.length > 1 && <label>Selecionar estrutura
+      {structures.length > 1 && <label className="flex flex-col gap-1">
+        <span>Selecionar estrutura</span>
         <select aria-label="Selecionar estrutura" className={fieldClass} value={structure?.path ?? ''}
           onChange={event => { const item = structures.find(s => s.path === event.target.value); if (item) chooseStructure(item); }}>
           <option value="" disabled>Escolha o torneio</option>
@@ -186,7 +202,7 @@ export default function TournamentTableImport({ onApply, initialContext, default
         </select>
       </label>}
       {structure && <>
-        <p role="status">{structure.name} · {structure.chips.toLocaleString('pt-BR')} fichas · {structure.fullPrizes.length} posições pagas · pool por colocação {structure.fullPrizes.reduce((sum, value) => sum + value, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.</p>
+        <output className="block">{structure.name} · {structure.chips.toLocaleString('pt-BR')} fichas · {structure.fullPrizes.length} posições pagas · pool por colocação {structure.fullPrizes.reduce((sum, value) => sum + value, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.</output>
         <p>A estrutura preenche fichas e premiação; a HH fornece mesa, stacks e blinds. Field inicial e jogadores restantes continuam dependendo dos inputs. Confira se os arquivos são do mesmo torneio e complete os stacks externos para reconciliar as fichas.</p>
         {structure.bountyType && <p>Formato de bounty: {structure.bountyType} · fator progressivo: {structure.progressiveFactor ?? 'não informado'}. Estes metadados são preservados. A equidade desta bancada considera apenas os prêmios por colocação; bounties por jogador e sua equidade ainda não são calculados.</p>}
         {!snapshot && <p>Estrutura carregada. Importe a HH ou o snapshot de stacks para selecionar a mesa.</p>}
@@ -199,13 +215,14 @@ export default function TournamentTableImport({ onApply, initialContext, default
       <pre className="overflow-x-auto whitespace-pre-wrap text-xs">{'{"room":"PokerStars","stackUnit":"bb","players":[{"id":"a","name":"A","stack":40,"tableId":"FT","seat":1},{"id":"b","name":"B","stack":60,"tableId":"FT","seat":2}],"prizes":[65,35]}'}</pre>
       <p>Exemplo sintético. Este formato não representa um export nativo de solver.</p>
     </details>
-    <label className="block">Input original
+    <label className="flex flex-col gap-1">
+      <span>Input original</span>
       <textarea aria-label="Input original" className={fieldClass + ' min-h-36 font-mono text-xs'} value={raw}
         onChange={event => receiveText(event.target.value)} />
     </label>
     <button type="button" className={fieldClass} onClick={() => readInput()}>Ler contexto do torneio</button>
     {snapshot && <>
-      <p role="status">MTT NLHE · field total: {snapshot.totalEntries ?? 'não informado'} · {snapshot.players.length} stacks preservados. {selected.length} na mesa; {participants.length} participantes da mão.</p>
+      <output className="block">MTT NLHE · field total: {snapshot.totalEntries ?? 'não informado'} · {snapshot.players.length} stacks preservados. {selected.length} na mesa; {participants.length} participantes da mão.</output>
       {snapshot.sourceFormat === 'hand-history' && <p>HH reconhecida: {snapshot.room ?? 'sala não identificada'} · mesa {snapshot.players[0]?.tableId ?? 'não informada'} · SB {snapshot.smallBlind ?? 'não informado'} / BB {snapshot.bigBlind ?? 'não informado'} · ante {snapshot.ante ?? 'não informado'} · botão {snapshot.buttonSeat ?? 'não informado'}. Stacks são os do início da mão; payouts ausentes recebem defaults editáveis.</p>}
       {snapshot.sourceFormat === 'hrc-hand-config' && <p>Configuração HRC reconhecida: stacks, blinds, ante e payouts preenchidos. Configuração da árvore {snapshot.hrcConfig?.['treeconfig'] ? 'preservada para reexportação' : 'não informada no arquivo'}. A mesa veio selecionada; confirme a sala. Estratégias e EVs do solver não são importados como resultados desta bancada.</p>}
       {snapshot.sourceFormat === 'hrc-hand-config' && !snapshot.fieldModel && snapshot.players.some(p => !Number.isInteger(p.stack)) && <div className="space-y-2 rounded border border-amber-500/40 p-3">
@@ -215,25 +232,31 @@ export default function TournamentTableImport({ onApply, initialContext, default
       {inference && <fieldset className="space-y-3 rounded border border-indigo-400/40 p-3">
         <legend>Completar field a partir da estrutura + HH</legend>
         <p>Mesa: {inference.setup.table.length} jogadores / {inference.setup.tableChips.toLocaleString('pt-BR')} fichas. Outras mesas: {inference.setup.externalChips.toLocaleString('pt-BR')} fichas disponíveis.</p>
-        <label>Jogadores restantes (editável)<input aria-label="Jogadores restantes para estimar o field" type="number" min={selected.length} max="10000" step="1" className={fieldClass} value={remainingInput || inference.setup.suggestedCount} onChange={event => setRemainingInput(event.target.value)} /></label>
+        <label className="flex flex-col gap-1">
+          <span>Jogadores restantes (editável)</span>
+          <input aria-label="Jogadores restantes para estimar o field" type="number" min={selected.length} max="10000" step="1" className={fieldClass} value={remainingInput || inference.setup.suggestedCount} onChange={event => setRemainingInput(event.target.value)} />
+        </label>
         <p>Sugestão: total de fichas dividido pela média da mesa, arredondado. Assume mesa representativa; informe a contagem do lobby quando disponível. A sugestão não é uma contagem observada nem tem margem de erro certificada.</p>
         <p>Distribuição externa: quantis dos stacks da mesa, ajustados ao saldo externo e convertidos em fichas inteiras com conservação exata. É uma hipótese editável de cenário, não uma reprodução do algoritmo proprietário do HRC.</p>
         <button type="button" className={fieldClass} onClick={generateField}>Gerar field estimado e preencher payouts</button>
       </fieldset>}
-      {snapshot.fieldModel && <p role="status">Field modelado · {snapshot.fieldModel.remainingPlayers} restantes · {snapshot.fieldModel.estimatedPlayerIds.length} stacks externos derivados · origem da contagem: {snapshot.fieldModel.countOrigin}. Premissas acompanham o contexto exportado e o cálculo.</p>}
+      {snapshot.fieldModel && <output className="block">Field modelado · {snapshot.fieldModel.remainingPlayers} restantes · {snapshot.fieldModel.estimatedPlayerIds.length} stacks externos derivados · origem da contagem: {snapshot.fieldModel.countOrigin}. Premissas acompanham o contexto exportado e o cálculo.</output>}
       {snapshot.declaredTotalChips !== undefined && <p>Total de fichas declarado no input: {snapshot.declaredTotalChips.toLocaleString('pt-BR')} fichas. Este total é do torneio; a HH pode conter apenas uma mesa.</p>}
       {snapshot.fullPrizes && <p>Resumo do torneio: {snapshot.totalEntries ?? 'field não informado'} entradas · {snapshot.paidPlaces} posições pagas · prize pool {snapshot.totalPrizePool?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Estrutura completa preservada; revise quantos jogadores restam nesta etapa.</p>}
       <p>{snapshot.remainingPlayers === undefined ? 'Revise a quantidade de jogadores restantes no contexto do MTT. Uma HH isolada contém apenas os stacks presentes naquela mesa.' : `${snapshot.remainingPlayers} jogadores restantes declarados; snapshot compatível com essa contagem.`}</p>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label>Sala
+        <label className="flex flex-col gap-1">
+          <span>Sala</span>
           <select aria-label="Sala da mesa" className={fieldClass} value={room} onChange={event => setRoom(event.target.value as PokerRoom | '')}>
             <option value="">Selecione a sala</option><option value="PokerStars">PokerStars — até 9p</option><option value="GGPoker">GGPoker — até 8p</option>
           </select>
         </label>
-        {(snapshot.stackUnit === 'chips' || structure) && <label>Big blind em fichas
+        {(snapshot.stackUnit === 'chips' || structure) && <label className="flex flex-col gap-1">
+          <span>Big blind em fichas</span>
           <input aria-label="Big blind em fichas" type="number" min="0" className={fieldClass} value={bigBlind} onChange={event => setBigBlind(event.target.value)} />
         </label>}
-        <label>Mesa registrada no input
+        <label className="flex flex-col gap-1">
+          <span>Mesa registrada no input</span>
           <select aria-label="Mesa registrada no input" className={fieldClass} value={table} onChange={event => {
             const id = event.target.value; setTable(id); setParticipants([]);
             setSelected(id ? snapshot.players.filter(p => p.tableId === id).map(p => p.id) : []);
@@ -241,7 +264,8 @@ export default function TournamentTableImport({ onApply, initialContext, default
             <option value="">Selecionar assentos manualmente</option>{tables.map(id => <option key={id} value={id}>{id}</option>)}
           </select>
         </label>
-        <label>Buscar jogador
+        <label className="flex flex-col gap-1">
+          <span>Buscar jogador</span>
           <input aria-label="Buscar jogador" className={fieldClass} value={search} onChange={event => setSearch(event.target.value)} />
         </label>
       </div>
@@ -256,7 +280,8 @@ export default function TournamentTableImport({ onApply, initialContext, default
             aria-label={`Na mão: ${player.name}`} onChange={() => setParticipants(previous => previous.includes(player.id) ? previous.filter(id => id !== player.id) : [...previous, player.id])} /> Na mão</label>
         </div>)}
       </div>
-      <label className="block">Payouts restantes de todo o torneio
+      <label className="flex flex-col gap-1">
+        <span>Payouts restantes de todo o torneio</span>
         <textarea aria-label="Payouts restantes de todo o torneio" className={fieldClass} value={payouts} onChange={event => setPayouts(event.target.value)} />
       </label>
       <button type="button" className="rounded-xl bg-accent-indigo px-4 py-3 text-white" onClick={apply}>Analisar mesa com contexto completo</button>

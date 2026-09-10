@@ -10,12 +10,36 @@ type Props = { context: CounterfactualRequest['context']; inputError: string | n
 const actions = ['fold', 'win', 'loss'] as const;
 const titles = { fold: 'Após fold', win: 'Call vence', loss: 'Call perde' };
 
+function parseFiniteNumber(value: string) {
+  if (!value.trim() || !Number.isFinite(Number(value))) throw new Error('Preencha números finitos; use ponto decimal e vírgula para separar probabilidades.');
+  return Number(value);
+}
+
+function formatBalanceSummary(balance: { action: typeof actions[number]; valid: boolean; difference: number }) {
+  const title = titles[balance.action];
+  if (!balance.valid) {
+    return `${title}: informe fichas inteiras`;
+  }
+  return `${title}: saldo ${balance.difference} fichas`;
+}
+
+function formatTransitionThreshold(result: IcmTransitionResult): string {
+  if (result.everywhereIndifferent) {
+    return 'Indiferença em toda a grade.';
+  }
+  if (result.threshold === null) {
+    return 'Sem ponto de indiferença no intervalo de 0 a 1.';
+  }
+  const mode = result.approximate ? 'estimada' : 'calculada';
+  return `Indiferença ${mode} em ${(result.threshold * 100).toFixed(2)}%.`;
+}
+
 /** A changed tournament resets transition assumptions; past requests cannot reappear. */
-export default function IcmTransitionPanel(props: Props) {
+export default function IcmTransitionPanel(props: Readonly<Props>) {
   return <TransitionEditor key={`canonical-chips-v1:${JSON.stringify(props.context)}`} {...props} />;
 }
 
-function TransitionEditor({ context, inputError }: Props) {
+function TransitionEditor({ context, inputError }: Readonly<Props>) {
   const rawChips = new Map(context.chipLedger?.players.map(p => [p.id, p.chips]));
   const players = context.population.filter(p => context.selection.playerIds.includes(p.id)).map(p => ({ ...p, stack: rawChips.get(p.id) ?? p.stack }));
   const unit = context.chipLedger ? 'fichas' : 'BB';
@@ -37,24 +61,20 @@ function TransitionEditor({ context, inputError }: Props) {
   const conservationError = context.chipLedger && balances.some(b => !b.valid || b.difference !== 0);
   const result = !inputError && completed?.key === key ? completed.result : null;
   const error = failure?.key === key ? failure.message : null;
-  function number(value: string) {
-    if (!value.trim() || !Number.isFinite(Number(value))) throw new Error('Preencha números finitos; use ponto decimal e vírgula para separar probabilidades.');
-    return Number(value);
-  }
   async function calculate() {
     setPending(true); setFailure(null); setCompleted(null);
     try {
       const branch = (action: typeof actions[number]) => ({
-        tableStacks: players.map(p => ({ id: p.id, stack: number(stacks[p.id]![action]) })),
+        tableStacks: players.map(p => ({ id: p.id, stack: parseFiniteNumber(stacks[p.id]![action]) })),
         eliminationOrder: orders[action].trim() ? orders[action].split(',').map(id => id.trim()) : [],
       });
       const payload: IcmTransitionRequest = { context, origin: edited ? 'user-assumption' : 'identity-default', horizon: 'after-table-settlement',
-        fold: branch('fold'), win: branch('win'), loss: branch('loss'), probabilities: probabilities.split(',').map(number), iterations: number(iterations), seed: 1 };
+        fold: branch('fold'), win: branch('win'), loss: branch('loss'), probabilities: probabilities.split(',').map(parseFiniteNumber), iterations: parseFiniteNumber(iterations), seed: 1 };
       const response = await fetch('/api/sota/icm-transitions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!response.ok) { const body: { error?: string } = await response.json(); throw new Error(body.error ?? 'Falha ao avaliar transições.'); }
       const output: IcmTransitionResult = await response.json();
       setCompleted({ key, result: output });
-    } catch (caught) { setFailure({ key, message: caught instanceof Error ? caught.message : 'Falha no cálculo.' }); }
+    } catch (error_) { setFailure({ key, message: error_ instanceof Error ? error_.message : 'Falha no cálculo.' }); }
     finally { setPending(false); }
   }
   return <section className="rounded-xl border border-white/20 p-4 space-y-4" aria-label="Transições de stacks com ICM">
@@ -65,7 +85,7 @@ function TransitionEditor({ context, inputError }: Props) {
     <div className="overflow-x-auto"><table className="w-full text-left"><caption>Stacks após a transição · {unit}</caption><thead><tr><th>Jogador / posição / ID</th>{actions.map(action => <th key={action}>{titles[action]}</th>)}</tr></thead><tbody>
       {players.map(p => <tr key={p.id}><th>{p.name} · {positions[p.id]} / {p.id}</th>{actions.map(action => <td key={action}><input className="w-24 rounded bg-slate-800 p-2 text-white" aria-label={`${titles[action]}: ${p.name}`} title={`Stack final em ${unit}. Todas as fichas devem permanecer distribuídas entre os jogadores.`} value={stacks[p.id]![action]} onChange={event => { setStacks({ ...stacks, [p.id]: { ...stacks[p.id]!, [action]: event.target.value } }); setEdited(true); }} /></td>)}</tr>)}
     </tbody></table></div>
-    {context.chipLedger && <p role={conservationError ? 'alert' : 'status'}>{balances.map(b => `${titles[b.action]}: ${b.valid ? `saldo ${b.difference} fichas` : 'informe fichas inteiras'}`).join(' · ')}. Cada saldo deve ser zero; stacks externos permanecem fixos.</p>}
+    {context.chipLedger && <p role={conservationError ? 'alert' : 'status'}>{balances.map(formatBalanceSummary).join(' · ')}. Cada saldo deve ser zero; stacks externos permanecem fixos.</p>}
     <div className="grid gap-3 sm:grid-cols-3">{actions.map(action => <label key={action} className="flex flex-col gap-1"><span>Eliminados · {titles[action]}</span><input className="rounded bg-slate-800 p-2 text-white" aria-label={`Eliminados: ${titles[action]}`} title="IDs separados por vírgula, da pior para a melhor colocação. Inclua todos os stacks zerados. Vazio se ninguém sair." value={orders[action]} onChange={event => { setOrders({ ...orders, [action]: event.target.value }); setEdited(true); }} /></label>)}</div>
     <p>Eliminados: informe os IDs da pior para a melhor colocação, conforme a classificação resolvida do torneio. Não inferimos empate nem dividimos prêmios automaticamente.</p>
     <label className="flex flex-col gap-1"><span>Probabilidades de vitória assumidas</span><input className="rounded bg-slate-800 p-2 text-white" aria-label="Probabilidades das transições" value={probabilities} onChange={event => { setProbabilities(event.target.value); setEdited(true); }} /></label>
@@ -77,8 +97,8 @@ function TransitionEditor({ context, inputError }: Props) {
     {result && <div aria-live="polite" className="space-y-3 overflow-x-auto">
       <p>{result.approximate ? 'ICM aproximado por Monte Carlo; diferenças pequenas podem refletir erro amostral. Não há intervalo de confiança calculado.' : 'ICM Malmuth-Harville exato para os estados informados.'} Valores na unidade monetária dos payouts.</p>
       <table className="w-full text-right"><caption>Liquidação e valoração do field</caption><thead><tr><th>Resultado</th><th>Pagamentos</th><th>Pool restante</th><th>Valor do HERO</th><th>Método / amostras</th></tr></thead><tbody>{result.states.map(state => <tr key={state.action}><th>{titles[state.action]}</th><td>{state.paid.toFixed(2)}</td><td>{state.remainingPool.toFixed(2)}</td><td>{state.heroValue.toFixed(2)}</td><td>{state.method.endsWith('exact') ? 'Exato' : `MC / ${state.iterations}`}</td></tr>)}</tbody></table>
-      <table className="w-full text-right"><caption>Comparação condicional · valores monetários</caption><thead><tr><th>Vitória</th><th>Fold</th><th>Call</th><th>Call − fold</th></tr></thead><tbody>{result.rows.map((row, i) => <tr key={i}><td>{(row.probability * 100).toFixed(2)}%</td><td>{row.fold.toFixed(2)}</td><td>{row.call.toFixed(2)}</td><td>{row.delta.toFixed(2)}</td></tr>)}</tbody></table>
-      <p>{result.everywhereIndifferent ? 'Indiferença em toda a grade.' : result.threshold === null ? 'Sem ponto de indiferença no intervalo de 0 a 1.' : `Indiferença ${result.approximate ? 'estimada' : 'calculada'} em ${(result.threshold * 100).toFixed(2)}%.`}</p>
+      <table className="w-full text-right"><caption>Comparação condicional · valores monetários</caption><thead><tr><th>Vitória</th><th>Fold</th><th>Call</th><th>Call − fold</th></tr></thead><tbody>{result.rows.map(row => <tr key={row.probability}><td>{(row.probability * 100).toFixed(2)}%</td><td>{row.fold.toFixed(2)}</td><td>{row.call.toFixed(2)}</td><td>{row.delta.toFixed(2)}</td></tr>)}</tbody></table>
+      <p>{formatTransitionThreshold(result)}</p>
       <p>Prêmios pagos são somados uma única vez à equidade restante. O JSON inclui pagamentos por jogador e colocação, todos os stacks e valores, seed e premissas.</p>
       <h4 className="font-bold">Reavaliação do field · antes e depois</h4>
       <p>Uma stack pode mudar de valuation sem ganhar ou perder fichas. Os deltas incluem prêmios pagos; o total deve se conservar. Valor médio por BB não é valor marginal de uma ficha.</p>

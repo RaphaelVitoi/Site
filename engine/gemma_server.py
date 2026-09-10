@@ -452,7 +452,7 @@ def normalize_model(model_name: str | None) -> str:
     #    diferem em um caractere e sao modelos distintos, um instalado e o outro
     #    nao.
     for alias, tag in OLLAMA_MODEL_MAP.items():
-        if str(tag).lower() == model_name_lower:
+        if tag.lower() == model_name_lower:
             return alias
 
     if "31b" in model_name_lower or "cloud" in model_name_lower:

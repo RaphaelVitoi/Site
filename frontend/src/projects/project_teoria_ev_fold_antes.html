@@ -1,3 +1,106 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:e9bc79065d77f852e08e5c33ca84f88a403d0eac8df869f51245c9be10ae422a
-size 20489
+<span id="mermaid" aria-hidden="true"
+                    data-dark-mode-theme="redux-dark"
+                    data-light-mode-theme="redux"
+                    data-max-text-size="undefined"></span>
+                <span id="markdown-mermaid" aria-hidden="true" data-config="{&quot;darkModeTheme&quot;:&quot;dark&quot;,&quot;lightModeTheme&quot;:&quot;neutral&quot;,&quot;maxTextSize&quot;:50000,&quot;clickDrag&quot;:&quot;alt&quot;,&quot;showControls&quot;:&quot;onHoverOrFocus&quot;,&quot;resizable&quot;:true,&quot;maxHeight&quot;:&quot;&quot;}"></span>
+				<hr>
+<h2 id="name-teoria-ev-do-fold-e-antes--threshold-correto-de-decisãodescription-contribuição-original-de-raphael-ev-do-fold-nunca-é-0-em-chipev-é--antes-em-icm-pode-ser-positivo-threshold--esperança--ev_fold-ev_fold-é-dinâmico-ft-d_pj-pos-rio-multiway-x-bb-defende-pelo-threshold-não-por-pot-oddstype-project">name: Teoria EV do Fold e Antes — Threshold Correto de Decisão
+description: Contribuição original de Raphael: EV do fold nunca é 0 em chipEV (é -antes). Em ICM pode ser POSITIVO. Threshold = Esperança &gt; EV_fold. EV_fold é dinâmico: f(t, d_pj, pos). RIO multiway x². BB defende pelo threshold, não por pot odds.
+type: project</h2>
+<h1 id="teoria-ev-do-fold-e-antes">Teoria EV do Fold e Antes</h1>
+<p><strong>Autoria:</strong> Raphael Vitoi</p>
+<h2 id="teoria-original-ev-do-fold-como-threshold-correto">Teoria Original: EV do Fold como Threshold Correto</h2>
+<h3 id="pré-flop-chipev">Pré-flop (ChipEV)</h3>
+<p>O EV do fold <strong>nunca é 0 em torneios</strong> (exceto cash game sem posição de blind).
+Com antes padrão de 12.5% do BB:</p>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>E</mi><msub><mi>V</mi><mi>f</mi></msub><mi>o</mi><mi>l</mi><mi>d</mi><mo stretchy="false">(</mo><mi>c</mi><mi>h</mi><mi>i</mi><mi>p</mi><mi>E</mi><mi>V</mi><mo stretchy="false">)</mo><mo>=</mo><mo>−</mo><mi>a</mi><mi>n</mi><mi>t</mi><mi>e</mi><mi>s</mi><mo>=</mo><mo>−</mo><mn>0.125</mn><mi>b</mi><mi>b</mi></mrow><annotation encoding="application/x-tex">EV_fold(chipEV) = −antes = −0.125bb
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">d</span><span class="mopen">(</span><span class="mord mathnormal">c</span><span class="mord mathnormal">hi</span><span class="mord mathnormal" style="margin-right:0.05764em;">pE</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6984em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord mathnormal">an</span><span class="mord mathnormal">t</span><span class="mord mathnormal">es</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">0.125</span><span class="mord mathnormal">bb</span></span></span></span></span></p>
+<p>Threshold correto para uma ação ser superior ao fold:</p>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>A</mi><mover accent="true"><mi>c</mi><mo>\c</mo></mover><mover accent="true"><mi>a</mi><mo>~</mo></mover><mi>o</mi><mover accent="true"><mi>e</mi><mo>ˊ</mo></mover><mi>p</mi><mi>r</mi><mi>e</mi><mi>f</mi><mi>e</mi><mi>r</mi><mover accent="true"><mi mathvariant="normal">ı</mi><mo>ˊ</mo></mover><mi>v</mi><mi>e</mi><mi>l</mi><mi>s</mi><mi>s</mi><mi>e</mi><mo>:</mo><mi>E</mi><mi>s</mi><mi>p</mi><mi>e</mi><mi>r</mi><mi>a</mi><mi>n</mi><mover accent="true"><mi>c</mi><mo>\c</mo></mover><mi>a</mi><mo stretchy="false">(</mo><mi>a</mi><mover accent="true"><mi>c</mi><mo>\c</mo></mover><mover accent="true"><mi>a</mi><mo>~</mo></mover><mi>o</mi><mo stretchy="false">)</mo><mo>&gt;</mo><mi>E</mi><msub><mi>V</mi><mi>f</mi></msub><mi>o</mi><mi>l</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">Ação é preferível sse: Esperança(ação) &gt; EV_fold
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">A</span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.75em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">c</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">\c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.25em;"><span></span></span></span></span></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6679em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">a</span></span><span style="top:-3.35em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">~</span></span></span></span></span></span></span><span class="mord mathnormal">o</span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">e</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">ˊ</span></span></span></span></span></span></span><span class="mord mathnormal">p</span><span class="mord mathnormal">re</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal" style="margin-right:0.02778em;">er</span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord latin_fallback">ı</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">ˊ</span></span></span></span></span></span></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">sse</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">:</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="mord mathnormal">s</span><span class="mord mathnormal">p</span><span class="mord mathnormal" style="margin-right:0.02778em;">er</span><span class="mord mathnormal">an</span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.75em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">c</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">\c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.25em;"><span></span></span></span></span></span><span class="mord mathnormal">a</span><span class="mopen">(</span><span class="mord mathnormal">a</span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.75em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">c</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">\c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.25em;"><span></span></span></span></span></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6679em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">a</span></span><span style="top:-3.35em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">~</span></span></span></span></span></span></span><span class="mord mathnormal">o</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">d</span></span></span></span></span></p>
+<p>Exemplo: Esperança do open = −0.10bb &gt; fold −0.125bb → <strong>open é matematicamente correto</strong> mesmo com EV negativo absoluto.</p>
+<h3 id="ev-do-fold-em-icm--pode-ser-positivo">EV do fold em ICM — pode ser POSITIVO</h3>
+<p><strong>CORREÇÃO CRÍTICA:</strong> Em ICM, o EV do fold <strong>não é sempre negativo</strong>. Pode ser positivo.</p>
+<p>Exemplo: tenho 12bbs. CO, BTN, SB, BB têm 5bbs cada. Ao foldar, eu &quot;passo a vez&quot; e potencializo a probabilidade dos shorts caírem antes de mim — payjumps passivos garantidos sem investir nada além do ante. O fold aumenta minha Perspectiva. EV_fold(ICM) nesse cenário é provavelmente <strong>positivo</strong>.</p>
+<p>Isso é evidência de que ICM EV isolado é insuficiente como métrica final — a Perspectiva Matemática captura esse ganho passivo.</p>
+<h3 id="extensão-para-o-pós-flop">Extensão para o pós-flop</h3>
+<p>O EV do fold pós-flop é o valuation que você já investiu nas streets anteriores, não −antes.</p>
+<ul>
+<li>Conforme fichas entram no pot, EV_fold fica mais negativo</li>
+<li>O pot representa valuation compensatória exponencialmente maior do que as fichas individuais investidas</li>
+<li>Quanto mais você paga, mais &quot;aprisionado&quot; fica ao pot (HRC pós-flop confirma esta tendência)</li>
+<li>No river, decisões de call se aproximam do ChipEV porque o RP já foi &quot;precificado&quot; nas streets anteriores</li>
+</ul>
+<p><strong>RP pós-flop é dinâmico e côncavo:</strong> conforme o pot cresce e a stack perde valuation, cada BB em unidade GANHA valuation. O RP foi diluído nas streets (RP é exclusivo para colisão direta). A pressão ICM diminui e aumenta simultaneamente — evidência de que ICM sozinho não serve.</p>
+<h3 id="implicação-para-o-motor">Implicação para o motor</h3>
+<ul>
+<li><code>calculateEsperancaFold</code> retorna o EV do fold no cenário ICM — pode ser positivo</li>
+<li><code>buildInsight</code> deve comparar Esperança da ação vs EV_fold (não vs 0)</li>
+<li>Implementado: <code>foldThreshold = foldResult?.esperancaPct ?? 0</code></li>
+</ul>
+<h3 id="posição-dos-solvers">Posição dos solvers</h3>
+<p>Solvers (GTO Wizard, HRC) <strong>simplificam EV do fold = 0</strong> nos outputs por clareza de interface. Internamente maximizam EV total (threshold correto). A simplificação é pedagógica, não matemática.</p>
+<h3 id="pot-odds--posição-de-raphael">Pot Odds — posição de Raphael</h3>
+<p>Efeito das pot odds na teoria perfeita: <strong>mínimo ou inexistente</strong> (redundante, absorvido pelo EV_fold e pela Perspectiva). Na prática:</p>
+<ul>
+<li><strong>Elite:</strong> provavelmente prejudicial — distrator de Perspectiva que cria pseudo-densidade de decisão</li>
+<li><strong>Iniciante:</strong> utilidade positiva — reduz erros catastróficos de matemática básica</li>
+</ul>
+<p>As <strong>Reverse Implied Odds (RIO)</strong> são o &quot;veneno&quot; das pot odds: incentivam entrada no pot apenas para expor o jogador a perdas maiores ao acertar mão dominada. Implied Odds estão absorvidas no conceito de Especulação dentro do framework Perspectiva.</p>
+<p><strong>Why:</strong> BB defende não porque &quot;está barato&quot; (pot odds), mas porque EV_fold = −1.125bb em chipEV, muito mais negativo que qualquer call defensável. A métrica correta desloca o fundamento da defesa de odds para threshold de fold.</p>
+<hr>
+<h2 id="ev_fold-dinâmico--formalizção-ft-d_pj-pos">EV_fold Dinâmico — Formalizção f(t, d_pj, pos)</h2>
+<p>O baseline de fold não é estático — é uma função de três dimensões contextuais:</p>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>E</mi><msub><mi>V</mi><mi>f</mi></msub><mi>o</mi><mi>l</mi><mi>d</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><msub><mi>d</mi><mi>p</mi></msub><mi>j</mi><mo separator="true">,</mo><mi>p</mi><mi>o</mi><mi>s</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">EV_fold(t, d_pj, pos)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">d</span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">p</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">p</span><span class="mord mathnormal">os</span><span class="mclose">)</span></span></span></span></span></p>
+<ul>
+<li>
+<p><code>t</code> = tempo para salto de blinds. Quando t → 0 (blinds sobem em ~3 min):</p>
+<ul>
+<li>Foldar é <strong>mais caro</strong> — stack preservada perderá 30-50% de poder de compra na próxima órbita</li>
+<li>Perspectiva: mais permissivo para open/call antes do salto</li>
+</ul>
+</li>
+<li>
+<p><code>d_pj</code> = distância para próximo payjump:</p>
+<ul>
+<li>Quando d_pj → 0 (payjump iminente): EV_fold cruza zero e pode ser <strong>positivo</strong></li>
+<li>Sobreviver = capturar payjump sem investir fichas</li>
+<li>Perspectiva: mais conservadora para colisão</li>
+</ul>
+</li>
+<li>
+<p><code>pos</code> = posição futura:</p>
+<ul>
+<li>UTG agora + BB na próxima mão = 1.5bb compulsório iminente</li>
+<li>EV_fold do UTG deve incluir o custo marginal da mão do BB que virá</li>
+<li>Se a stack chegará ao BB &quot;morta&quot; (sem fold equity), o modelo força ação agressiva no UTG mesmo que ICMev puro diga fold marginal</li>
+</ul>
+</li>
+</ul>
+<h3 id="efeito-visual-gemini-python-simulation">Efeito visual (Gemini Python simulation)</h3>
+<p>A simulação mostrou que conforme d_pj → 0, a curva EV_fold cruza o eixo zero (evidência do fold positivo). Conforme t → 0, o EV_fold desce (fold fica mais caro). Os dois efeitos operam independentemente e podem se combinar.</p>
+<hr>
+<h2 id="rio-multiway--passivo-estrutural-exponencial">RIO Multiway — Passivo Estrutural Exponencial</h2>
+<p>Em cenários multiway (~33% das situações pós-open, tendência MDA):</p>
+<ul>
+<li>
+<p>RIO(N) cresce em <strong>O(N²)</strong>: produto de frequência_domínio O(N) × custo_quando_dominado O(N). Pot odds crescem em O(N). A razão dano/incentivo cresce em O(N) — cada player adicional multiplica a distorção. (Afirmação &quot;x²&quot; era imprecisa — não é a probabilidade que cresce quadraticamente, é o produto de dois termos lineares. Derivação formal: <code>validacao_matematica_hipoteses_v1.md</code>)</p>
+</li>
+<li>
+<p>A equação básica do call torna-se:</p>
+<pre><code>EV_call = (Equity × Pot) - (1 - Equity × Investimento) - RIO
+</code></pre>
+</li>
+<li>
+<p>Em ICM, perder um pote por RIO contra stack maior é &quot;suicídio estratégico&quot;: o valuation das fichas perdidas no River &gt; fichas investidas no Flop</p>
+</li>
+</ul>
+<p><strong>A espiral do prejuízo:</strong></p>
+<ol>
+<li>Pot Odds atraem entrada (baixo custo aparente)</li>
+<li>Jogador acerta mão marginal/dominada</li>
+<li>Continua investindo — pot entrapment + RIO</li>
+<li>Perde stack no River — EV_fold catastrófico no final</li>
+</ol>
+<p>&quot;O overcall no River é frequentemente o sintoma; a negligência das RIO no Flop/Turn é a causa.&quot;</p>

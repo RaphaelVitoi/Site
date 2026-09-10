@@ -129,7 +129,7 @@ export default function RootLayout({
 					<SotaGlobalSyncProvider>
 						<JsonLd data={rootSchema} />
 						<Header />
-						<main className="grow pt-[var(--header-height)] flex flex-col relative">{children}</main>
+						<main className="grow pt-(--header-height) flex flex-col relative">{children}</main>
 						<Footer />
 						<ScrollToTop />
 					</SotaGlobalSyncProvider>

@@ -121,8 +121,10 @@ class DeepSolverImporter(BaseSolverImporter):
             for r in range(13):
                 for c in range(13):
                     label = self.get_hand_label(r, c)
-                    val = raw_data.get(label, raw_data.get(label.lower(), 0.0))
-                    matrix[r][c] = round(float(val), 4)
+                    val = raw_data.get(label)
+                    if val is None:
+                        val = raw_data.get(label.lower(), 0.0)
+                    matrix[r][c] = round(float(val) if val is not None else 0.0, 4)
             return matrix
 
         return matrix

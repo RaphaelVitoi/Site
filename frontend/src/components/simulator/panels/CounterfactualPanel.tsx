@@ -4,8 +4,24 @@ import { useState } from 'react';
 import type { CounterfactualRequest, CounterfactualResult } from '@/lib/counterfactualExperiment';
 import { downloadHRCJson } from '@/lib/hrcExport';
 
-type Props = { context: CounterfactualRequest['context']; inputError: string | null };
+type Props = Readonly<{ context: CounterfactualRequest['context']; inputError: string | null }>;
 const defaults = { fold: '98', win: '120', loss: '70', probabilities: '0.54, 0.60, 0.66' };
+
+const COMPARISON_LABELS: Record<'tie' | 'call' | 'fold', string> = {
+  tie: 'Indiferente',
+  call: 'Call maior',
+  fold: 'Fold maior',
+};
+
+function formatThreshold(result: CounterfactualResult): string {
+  if (result.everywhereIndifferent) {
+    return 'Indiferença em todas as probabilidades.';
+  }
+  if (result.threshold === null) {
+    return 'Não há ponto de indiferença entre 0% e 100%.';
+  }
+  return `Indiferença em ${(result.threshold * 100).toFixed(2)}% de vitória.`;
+}
 
 export default function CounterfactualPanel({ context, inputError }: Props) {
   const [values, setValues] = useState(defaults);
@@ -33,7 +49,7 @@ export default function CounterfactualPanel({ context, inputError }: Props) {
       }
       const output: CounterfactualResult = await response.json();
       setCompleted({ key, result: output });
-    } catch (caught) { setFailure({ key, message: caught instanceof Error ? caught.message : 'Falha no experimento.' }); }
+    } catch (error_) { setFailure({ key, message: error_ instanceof Error ? error_.message : 'Falha no experimento.' }); }
     finally { setPending(false); }
   }
 
@@ -59,9 +75,9 @@ export default function CounterfactualPanel({ context, inputError }: Props) {
     {error && <p role="alert">{error}</p>}
     {result && <div aria-live="polite" className="space-y-3 overflow-x-auto">
       <table className="w-full text-right"><caption>Valores esperados · utilidade assumida</caption><thead><tr><th>Probabilidade</th><th>Fold</th><th>Call</th><th>Call − fold</th><th>Comparação</th></tr></thead><tbody>
-        {result.rows.map((row, i) => <tr key={i}><td>{(row.probability * 100).toFixed(2)}%</td><td>{row.fold.toFixed(2)}</td><td>{row.call.toFixed(2)}</td><td>{row.delta.toFixed(2)}</td><td>{row.comparison === 'tie' ? 'Indiferente' : row.comparison === 'call' ? 'Call maior' : 'Fold maior'}</td></tr>)}
+        {result.rows.map((row) => <tr key={row.probability}><td>{(row.probability * 100).toFixed(2)}%</td><td>{row.fold.toFixed(2)}</td><td>{row.call.toFixed(2)}</td><td>{row.delta.toFixed(2)}</td><td>{COMPARISON_LABELS[row.comparison]}</td></tr>)}
       </tbody></table>
-      <p>{result.everywhereIndifferent ? 'Indiferença em todas as probabilidades.' : result.threshold === null ? 'Não há ponto de indiferença entre 0% e 100%.' : `Indiferença em ${(result.threshold * 100).toFixed(2)}% de vitória.`}</p>
+      <p>{formatThreshold(result)}</p>
       <p>Amplitude dos deltas: {result.deltaRange.map(value => value.toFixed(2)).join(' a ')}. Não é intervalo de confiança nem recomendação de equilíbrio.</p>
       <button type="button" className="rounded border px-3 py-2" onClick={() => downloadHRCJson(JSON.stringify(result, null, 2), 'pmev-counterfactual.json')}>Exportar experimento e contexto</button>
     </div>}

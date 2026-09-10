@@ -944,8 +944,8 @@ async def handle_prometheus_metrics(request: web.Request) -> web.Response:
     ram_free_mb = 6400.0
     if psutil is not None:
         with contextlib.suppress(Exception):
-            cpu_load = float(psutil.cpu_percent())
-            ram_free_mb = float(psutil.virtual_memory().available / (1024 * 1024))
+            cpu_load = psutil.cpu_percent()
+            ram_free_mb = psutil.virtual_memory().available / (1024 * 1024)
 
     lines = [
         "# HELP nexus_tasks_total Total de tarefas registradas na fila por status",

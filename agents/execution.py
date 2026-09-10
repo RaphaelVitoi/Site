@@ -3,6 +3,8 @@
 Execution -- Orquestracao central de execucao de tarefas e workflow completo.
 """
 
+from __future__ import annotations
+
 import asyncio
 from datetime import UTC, datetime, timedelta
 import gc
@@ -24,7 +26,7 @@ from agents.dispatcher import (
 from agents.fallback import _create_dispatcher_fallback_plan
 import core.runtime as te
 from core.mcp_routing import MCP_OUTPUT_KEYS, apply_mcp_addon_routing
-from core.schemas import Task
+from core.schemas import Task, TaskMetadata
 from database.queue_manager import QueueManager
 import engine.cognitive as local_engine
 from llm.budget import (
@@ -229,7 +231,7 @@ async def _enqueue_subtasks(
 
     for i, st in enumerate(subtasks):
         sub_id = created_ids[i]
-        meta = task.metadata.copy() if task.metadata else {}
+        meta: TaskMetadata = task.metadata.copy() if task.metadata else {}
         meta["route_selected"] = agents_list
 
         raw_reasons = meta.get("reason_codes", [])
@@ -453,7 +455,7 @@ async def _finish_task_success(
         sync_bg_task.add_done_callback(_BACKGROUND_TASKS.discard)
 
     duration = time.monotonic() - start_time
-    final_metadata: dict[str, dict | list | str | int | float | bool | None] = {
+    final_metadata: TaskMetadata = {
         "workflow_duration_ms": int(duration * 1000),
         "workflow_status": "completed",
     }
