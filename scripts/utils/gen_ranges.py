@@ -1,7 +1,25 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
+from typing import TypedDict
 
 
-def get_grid(pct):
+class Mao(TypedDict):
+    """Registro de forma fixa de uma mao no grid 13x13.
+
+    O dict literal misturava `str` em `type`/`name` com `int` no resto, e o
+    Pyrefly inferia `dict[str, int | str]` -- o que reprova `h["w"]` em
+    aritmetica e `h["r"]` como indice. O TypedDict declara a forma que o
+    registro sempre teve, em vez de silenciar o verificador.
+    """
+
+    name: str
+    w: int
+    r: int
+    c: int
+    type: str
+    v: int
+
+
+def get_grid(pct: float) -> list[list[int]]:
     # Heuristic for poker ranges
     # pct is in [0, 100]
     total_combos = 1326
@@ -12,7 +30,7 @@ def get_grid(pct):
     # Ranking of hands (roughly)
     # Pairs, Suited, Offsuit
     # This is a very basic ranking, but enough for a representative grid
-    hands = []
+    hands: list[Mao] = []
     for i in range(13):
         for j in range(13):
             if i == j:  # Pair
@@ -69,7 +87,7 @@ btn_grid = get_grid(33.6)
 bb_grid = get_grid(82.9)
 
 
-def print_grid(name, grid):
+def print_grid(name: str, grid: list[list[int]]) -> None:
     print(f"export const {name} = [")
     for row in grid:
         print(f"  [{', '.join(map(str, row))}],")

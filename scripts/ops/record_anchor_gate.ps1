@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Portao de Ancora de Registro - M.O. SOTA v8.0 GOLD, secao 13.F.
 
@@ -121,9 +121,17 @@ if ($padroesCredencial.Count -eq 0) {
     exit 1
 }
 
+# `-cmatch` e nao `-match`: o operador padrao do PowerShell IGNORA caixa, e o do
+# Python nao. Os dois liam a mesma fonte de padroes e se comportavam diferente --
+# a duplicata de TEXTO tinha sido eliminada, a de SEMANTICA nao. Medido em
+# 2026-09-10: um trecho base64 do relatorio Lighthouse (`...ccoYy8AiZaHQ3B...`)
+# casou com `AIza[0-9A-Za-z_-]{35}` so por insensibilidade a caixa e bloqueou um
+# commit legitimo. Chave Google real comeca sempre por `AIza` literal, e a
+# `_regra_de_precisao` da fonte pede exatamente isso: portao que cria ruido e
+# portao que sera ignorado.
 foreach ($linha in $adicionadas) {
     foreach ($nome in $padroesCredencial.Keys) {
-        if ($linha -match $padroesCredencial[$nome]) {
+        if ($linha -cmatch $padroesCredencial[$nome]) {
             # O valor NAO e ecoado: relatorio de vazamento nao repete o segredo.
             Add-Erro "Credencial em texto claro detectada ($nome). Revogue a chave e leia de variavel de ambiente."
         }
