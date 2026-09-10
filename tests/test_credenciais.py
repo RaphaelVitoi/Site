@@ -74,6 +74,37 @@ def test_o_portao_powershell_le_a_mesma_fonte():
     assert "$padroesCredencial = @{}" in portao, "o portao voltou a embutir a lista de padroes"
 
 
+def test_o_portao_compara_com_sensibilidade_a_caixa():
+    """Ler a mesma fonte nao basta: os dois lados tem de INTERPRETA-LA igual.
+
+    O `-match` do PowerShell ignora caixa; o `re.compile` do Python nao. Durante
+    2026-09-10 essa divergencia bloqueou um commit legitimo: um trecho base64 do
+    relatorio Lighthouse (`...ccoYy8AiZaHQ3B...`) casou com o padrao de chave
+    Google so por insensibilidade a caixa. Chave Google real comeca sempre por
+    `AIza` literal.
+
+    A duplicata de TEXTO ja tinha sido eliminada pela fonte compartilhada; esta
+    era a duplicata de SEMANTICA, que nenhum teste via.
+    """
+    portao = (RAIZ / "scripts" / "ops" / "record_anchor_gate.ps1").read_text(encoding="utf-8-sig")
+    assert "-cmatch $padroesCredencial" in portao, (
+        "o portao compara credencial com -match (insensivel a caixa); use -cmatch para casar a semantica do lado Python"
+    )
+    assert "-match $padroesCredencial" not in portao.replace("-cmatch $padroesCredencial", ""), (
+        "restou uma comparacao insensivel a caixa contra os padroes de credencial"
+    )
+
+
+def test_o_padrao_google_nao_casa_variacao_de_caixa():
+    """O falso positivo concreto de 2026-09-10, fixado como regressao."""
+    fonte = _fonte()
+    google = re.compile(fonte["padroes"]["Chave Google"])
+    base64_do_lighthouse = "ccoYy8AiZaHQ3BTkbk7trF04S7ecJ63W6oQ6pO0J3ZUt4p1KV"
+    assert not google.search(base64_do_lighthouse), (
+        "o padrao passou a casar variacao de caixa e voltou a produzir falso positivo"
+    )
+
+
 def test_nenhum_arquivo_rastreado_carrega_credencial():
     """A pergunta que nenhum portao fazia: ha credencial NESTE repositorio hoje?"""
     fonte = _fonte()

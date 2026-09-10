@@ -13,14 +13,19 @@
         "PYSEC-2026-311",
         "CVE-2026-45830",
         "CVE-2026-45831",
-        "CVE-2026-45833"
+        "CVE-2026-45833",
+        "PYSEC-2026-3813",
+        "PYSEC-2026-3814",
+        "PYSEC-2026-3815",
+        "CVE-2026-45829"
       ],
       "evidence": {
         "vetor": "As quatro sao do servidor HTTP do Chroma: endpoints de tenants e databases, autorizacao entre tenants, e SimpleRBACAuthorizationProvider. A mais grave, PYSEC-2026-311, e pre-autenticacao, CVSS 4.0 AV:N/AC:L/PR:N/UI:N/VC:H/VI:H/VA:H.",
         "alcance_medido": "Grep em todo o repositorio por HttpClient, chroma run, o cliente HTTP do chromadb e trust_remote_code, em .py/.ps1/.json/.yml, excluindo .venv e node_modules, devolveu UMA ocorrencia: do.ps1:776, que e System.Net.Http.HttpClient do .NET e nada tem com Chroma.",
         "consumo_real": "Cliente persistente embarcado, em memory_rag.py:208 e scripts/utils/ingest_rag.py:27. requirements.txt:26 ja declarava exatamente isso.",
         "ausencia_de_correcao": "A API do PyPI devolve 1.5.9 como ultima versao publicada, e o proprio pip-audit devolve fix_versions vazio nas quatro. Nao existe versao para a qual atualizar.",
-        "registro": "reports/AUDITORIA-2026-09-08-o-que-esta-em-aberto-na-malha.md"
+        "registro": "reports/AUDITORIA-2026-09-08-o-que-esta-em-aberto-na-malha.md",
+        "renumeracao_de_identificadores": "2026-09-10: o auditor passou a emitir PYSEC-2026-3813/3814/3815 no lugar de CVE-2026-45830/45833/45831. Verificado por alias no proprio pip-audit -- sao as MESMAS quatro advisories, mesmo pacote e mesma versao 1.5.9, apenas renumeradas. Nenhuma vulnerabilidade nova entrou. PYSEC-2026-311 mantem o alias CVE-2026-45829. Alcance reverificado na mesma data: apenas chromadb.PersistentClient (embarcado) em memory_rag.py:208 e scripts/utils/ingest_rag.py:28; zero HttpClient do Chroma e zero `chroma run`. A unica ocorrencia de HttpClient continua sendo do.ps1:776, do .NET."
       },
       "expira_se": "Qualquer uso do servidor HTTP do Chroma for introduzido no repositorio, ou uma versao corrigida for publicada no PyPI.",
       "revisar_em": "2026-12-08"

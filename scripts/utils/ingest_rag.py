@@ -4,6 +4,7 @@ import sys
 
 try:
     import chromadb
+    from chromadb.api.types import Metadata
 except ImportError:
     print("[ENTROPIA] chromadb nao instalado. Execute: pip install chromadb")
     sys.exit(1)
@@ -29,7 +30,9 @@ def ingest_research_docs():
 
     documents = []
     ids = []
-    metadatas = []
+    # `list` e invariante: list[dict[str, str]] nao e atribuivel ao parametro
+    # `metadatas` do upsert. Metadata e o alias que o proprio chromadb exporta.
+    metadatas: list[Metadata] = []
 
     for file_path in research_dir.glob("**/*"):
         if file_path.is_file() and file_path.suffix.lower() in [".md", ".txt"]:
