@@ -52,6 +52,15 @@ def test_gate_sem_cdp_declara_cwv_e_a11y_nao_medidos(tmp_path: Path) -> None:
         cwd=RAIZ,
         env=env,
         text=True,
+        # `encoding` explicito e obrigatorio: sem ele o subprocess decodifica com
+        # a codificacao da plataforma. Sob codepage 850 um travessao vindo de
+        # data/cwv_manual_review_records.json estoura a decodificacao NA THREAD
+        # LEITORA, `result.stdout` vira None, e o erro que a suite mostra
+        # (`TypeError: NoneType + str`) fica dois niveis acima do que quebrou.
+        # `errors="replace"` mantem a leitura viva: as asercoes procuram texto
+        # ASCII, e um caractere de substituicao nao as afeta.
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         timeout=45,
         check=False,
@@ -83,6 +92,15 @@ def test_gate_sem_cdp_expoe_motivo_e_acao_para_estado_fragil(tmp_path: Path) -> 
         cwd=RAIZ,
         env=os.environ.copy(),
         text=True,
+        # `encoding` explicito e obrigatorio: sem ele o subprocess decodifica com
+        # a codificacao da plataforma. Sob codepage 850 um travessao vindo de
+        # data/cwv_manual_review_records.json estoura a decodificacao NA THREAD
+        # LEITORA, `result.stdout` vira None, e o erro que a suite mostra
+        # (`TypeError: NoneType + str`) fica dois niveis acima do que quebrou.
+        # `errors="replace"` mantem a leitura viva: as asercoes procuram texto
+        # ASCII, e um caractere de substituicao nao as afeta.
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         timeout=45,
         check=False,
@@ -107,6 +125,15 @@ def test_entrada_python_legada_recusa_certificar_valores_sinteticos() -> None:
         [sys.executable, str(LEGACY_GATE)],
         cwd=RAIZ,
         text=True,
+        # `encoding` explicito e obrigatorio: sem ele o subprocess decodifica com
+        # a codificacao da plataforma. Sob codepage 850 um travessao vindo de
+        # data/cwv_manual_review_records.json estoura a decodificacao NA THREAD
+        # LEITORA, `result.stdout` vira None, e o erro que a suite mostra
+        # (`TypeError: NoneType + str`) fica dois niveis acima do que quebrou.
+        # `errors="replace"` mantem a leitura viva: as asercoes procuram texto
+        # ASCII, e um caractere de substituicao nao as afeta.
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         check=False,
     )
@@ -328,6 +355,15 @@ def test_gate_reports_positive_cwv_human_review_without_turning_it_into_coverage
         cwd=RAIZ,
         env=os.environ.copy(),
         text=True,
+        # `encoding` explicito e obrigatorio: sem ele o subprocess decodifica com
+        # a codificacao da plataforma. Sob codepage 850 um travessao vindo de
+        # data/cwv_manual_review_records.json estoura a decodificacao NA THREAD
+        # LEITORA, `result.stdout` vira None, e o erro que a suite mostra
+        # (`TypeError: NoneType + str`) fica dois niveis acima do que quebrou.
+        # `errors="replace"` mantem a leitura viva: as asercoes procuram texto
+        # ASCII, e um caractere de substituicao nao as afeta.
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         timeout=45,
         check=False,
