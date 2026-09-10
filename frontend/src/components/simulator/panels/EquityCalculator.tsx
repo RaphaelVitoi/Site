@@ -10,6 +10,8 @@
 import { mergeTableEdits, selectAnalysisTable, TABLE_CAPACITY, type PokerRoom } from '@/lib/tournamentContext';
 import { defaultTournamentConditions, resolveTournamentPayouts, validateTournamentChipMass, type TournamentConditions } from '@/lib/tournamentConditions';
 import TournamentConditionsPanel from './TournamentConditionsPanel';
+import CounterfactualPanel from './CounterfactualPanel';
+import IcmTransitionPanel from './IcmTransitionPanel';
 import TournamentTableImport, { type AppliedTournamentContext } from './TournamentTableImport';
 import { downloadHRCJson } from '@/lib/hrcExport';
 import { generateHRCHandConfig } from '@/lib/hrcFormat';
@@ -440,6 +442,9 @@ export default function EquityCalculator() {
           </div>
         </div>
       )}
+
+      <CounterfactualPanel context={{ population, selection, conditions, prizes, heroId: heroId ?? '' }} inputError={inputError} />
+      <IcmTransitionPanel context={{ population, selection, conditions, prizes, heroId: heroId ?? '' }} inputError={inputError} />
 
       {!inputError && !calculationError && <div className="pt-10 border-t border-white/5 flex flex-col gap-8">
         <div className="flex flex-col md:flex-row gap-6">
