@@ -7,6 +7,25 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# GUARDA DE RUNTIME (2026-09-10). ConvertTo-Json serializa diferente no Windows
+# PowerShell 5.1 e no PowerShell 7, e o hash acompanha. Medido nesta data sobre o
+# MESMO arquivo: pwsh 7 devolve {"status":"valid","records":22}; o 5.1 reprova com
+# "Hash mismatch at line 3". A cadeia esta integra -- quem mente e o veredito.
+#
+# Descartada a hipotese obvia: as linhas 2 e 3 tem ZERO bytes nao-ASCII, logo nao
+# e escape de acento. A causa exata da divergencia de serializacao nao foi isolada
+# e fica declarada como nao medida.
+#
+# Recusar e melhor que reprovar: um operador que ve "Hash mismatch" conclui
+# corrupcao de evidencia append-only e pode agir sobre um ledger sadio. A sinopse
+# do gerador promete "5.1 remains compatible"; para ESTE validador a promessa nao
+# se sustenta, e a guarda diz isso em vez de deixar o erro falar por ela.
+if ($PSVersionTable.PSVersion.Major -lt 6) {
+    throw ("Este validador exige PowerShell 7+ (pwsh). No Windows PowerShell 5.1 o " +
+        "ConvertTo-Json produz texto diferente e a cadeia INTEGRA aparece como " +
+        "'Hash mismatch'. Rode: pwsh -File scripts/ops/Test-AgentCalibrationLedger.ps1")
+}
+
 if ([string]::IsNullOrWhiteSpace($LedgerPath)) {
     $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
     $LedgerPath = Join-Path $repositoryRoot 'reports\agent-calibration\feedback-ledger.jsonl'

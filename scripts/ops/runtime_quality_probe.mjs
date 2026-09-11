@@ -156,9 +156,52 @@ try {
 
   trace("navigate");
   const loaded = client.waitFor("Page.loadEventFired", sessionId);
-  await client.send("Page.navigate", { url: targetUrl }, sessionId);
+  const navegacao = await client.send("Page.navigate", { url: targetUrl }, sessionId);
+
+  // CONFIRMAR O QUE FOI MEDIDO (2026-09-10). Page.navigate nao falha quando o
+  // destino esta fora do ar: o Chrome entrega a PROPRIA pagina de erro, e ela e
+  // uma pagina como outra qualquer -- sem <main>, sem landmarks, com meta-viewport
+  // proprio.
+  //
+  // MEDIDO nesta data: com nada escutando em localhost:3000, este portao auditou
+  // a tela ERR_CONNECTION_REFUSED do Chrome e reportou exatamente 3 violacoes de
+  // axe -- landmark-one-main, meta-viewport, region -- alem de LCP de 84 ms e heap
+  // de 1,03 MB, que sao o custo real de renderizar um erro. Reprovou um commit
+  // inocente; pelo mesmo mecanismo aprovaria codigo defeituoso, porque a tela de
+  // erro nao contem o codigo que deveria ser medido.
+  //
+  // O defeito nunca foi escolher a pagina errada -- a sonda navega certo. Era
+  // aceitar qualquer pagina como resposta. Estas tres checagens sao aditivas:
+  // transformam medicao silenciosa de outro documento em falha declarada.
+  if (navegacao?.errorText) {
+    throw new Error(
+      `Navegacao para ${targetUrl} falhou: ${navegacao.errorText}. ` +
+        `Sem o frontend no ar o Chrome entrega a propria pagina de erro, e medi-la ` +
+        `produz metrica e veredito de a11y de um documento que nao e o app.`
+    );
+  }
   await loaded;
   await new Promise((resolve) => setTimeout(resolve, 1_000));
+
+  trace("confirm-identity");
+  const identidade = await runtimeValue(client, sessionId, `(() => ({
+    href: document.location.href,
+    erroChrome: document.querySelector('#main-frame-error') !== null,
+    titulo: document.title,
+  }))()`);
+  if (identidade.erroChrome) {
+    throw new Error(
+      `O documento medido e a pagina de erro do Chrome, nao ${targetUrl} ` +
+        `(titulo: ${identidade.titulo}). Restabeleca o frontend antes de auditar.`
+    );
+  }
+  const obtido = new URL(identidade.href);
+  if (obtido.origin !== target.origin) {
+    throw new Error(
+      `O documento medido esta em ${obtido.origin}, e o alvo declarado e ` +
+        `${target.origin}. Portao que nao confirma o que auditou nao mede nada.`
+    );
+  }
 
   trace("collect-performance");
   const runtime = await runtimeValue(client, sessionId, `(() => {
