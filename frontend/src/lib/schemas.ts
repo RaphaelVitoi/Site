@@ -34,6 +34,8 @@ export const InferenceRequestSchema = z.object({
 	predictive_profile: z.record(z.string(), z.unknown()).optional(),
 	max_tokens: z.number().int().min(1).max(8_192).default(1024),
 	model: z.string().max(128).optional(),
+	images: z.array(z.string()).optional(),
+	think: z.boolean().optional(),
 });
 
 // Schema para entrada do Motor de Perspectiva
