@@ -343,7 +343,7 @@ obsoleta em quatro das cinco linhas**. Corrigida com o estado final:
 | Portao comparava build de dev com limiar de producao | **FECHADO** em `73005a67`, por observabilidade e nao por reducao. O teto de 800 ms continua normativo de producao; o `Desc` do indicador passou a declarar isso e a citar 1078 ms em dev contra 3 ms em producao |
 | Validador do ledger em PowerShell 5.1 | **FECHADO** em `73005a67`. Ele recusa o 5.1 com mensagem que diz o que fazer, em vez de reprovar cadeia integra. A causa da divergencia de `ConvertTo-Json` fica declarada como **nao medida** |
 | Duplicatas em `~/.claude` | **FECHADO** em `90c7900` e `c6b0570` da raiz. 19 scripts soltos removidos com backup; a arvore `Site/` de 8,98 GB removida depois de provado merito zero -- 8 dos 9 nao rastreados byte-identicos ao versionado, e as 34 modificacoes superadas |
-| 15 scripts da raiz sem consumidor | **CONTINUA ABERTO.** Ausencia de invocacao medida; obsolescencia **nao** determinada. E o unico item desta tabela que sobrevive |
+| 15 scripts da raiz sem consumidor | **FECHADO** em `3707802` da raiz, horas depois desta tabela. Decidido por delegacao do Tier 0, julgando pelo **alvo declarado** e nao pelo consumidor: 14 ficam, 1 em quarentena por supersessao medida, nenhum removido. A obsolescencia nao foi confirmada -- foi desmentida. Ver `HANDOFF-2026-09-11-o-alvo-declarado-e-o-objeto-que-o-github-ainda-serve.md` |
 
 **Os tres primeiros exigiram autorizacao explicita do Tier 0**, porque a secao
 10.3 proibe o agente alterar o instrumento que o mede. Concedida em 2026-09-10; as
