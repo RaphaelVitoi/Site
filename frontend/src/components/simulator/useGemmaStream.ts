@@ -28,11 +28,24 @@ async function processSSEStream(
 	}
 }
 
+export interface StreamTelemetry {
+	ttftMs: number | null;
+	speedTokPerSec: number | null;
+	elapsedMs: number | null;
+	estimatedTokens: number;
+}
+
 export function useGemmaStream() {
 	const [streamedText, setStreamedText] = useState<string>('');
 	const [isStreaming, setIsStreaming] = useState<boolean>(false);
 	const [isCompleted, setIsCompleted] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
+	const [telemetry, setTelemetry] = useState<StreamTelemetry>({
+		ttftMs: null,
+		speedTokPerSec: null,
+		elapsedMs: null,
+		estimatedTokens: 0,
+	});
 	const abortControllerRef = useRef<AbortController | null>(null);
 
 	// SOTA: Válvula de Renderização (RAF) - Evita o colapso de VDOM a 60 FPS
@@ -56,6 +69,8 @@ export function useGemmaStream() {
 			targetModel?: string,
 			physicsSnapshot?: PhysicsSnapshot,
 			predictiveProfile?: Record<string, unknown>,
+			images?: string[],
+			think?: boolean,
 		): Promise<string | void> => {
 			setIsStreaming(true);
 
@@ -66,7 +81,16 @@ export function useGemmaStream() {
 			setIsCompleted(false);
 			setStreamedText('');
 			setError(null);
+			setTelemetry({
+				ttftMs: null,
+				speedTokPerSec: null,
+				elapsedMs: null,
+				estimatedTokens: 0,
+			});
 			bufferRef.current = '';
+
+			const t0 = performance.now();
+			let firstTokenTime: number | null = null;
 
 			// SOTA: Sanitização de Prompt - Remove tentativas de manipulação de instrução (jailbreak) com suporte a sufixos
 			const sanitizedPrompt = prompt
@@ -83,6 +107,8 @@ export function useGemmaStream() {
 					model: targetModel,
 					physics_snapshot: physicsSnapshot,
 					predictive_profile: predictiveProfile,
+					images,
+					think,
 				};
 
 				const response = await fetch('/api/v1/gemma', {
@@ -105,6 +131,9 @@ export function useGemmaStream() {
 				}
 
 				await processSSEStream(response.body, (content) => {
+					if (firstTokenTime === null) {
+						firstTokenTime = Math.round(performance.now() - t0);
+					}
 					bufferRef.current += content;
 
 					if (!isBufferingRef.current) {
@@ -116,9 +145,22 @@ export function useGemmaStream() {
 					}
 				});
 				if (rafRef.current) cancelAnimationFrame(rafRef.current);
-				setStreamedText(bufferRef.current);
+				const finalContent = bufferRef.current;
+				setStreamedText(finalContent);
 				setIsCompleted(true);
-				return bufferRef.current;
+
+				const elapsed = Math.round(performance.now() - t0);
+				const estimatedTok = Math.round(finalContent.split(/\s+/).length * 1.3);
+				const speed = elapsed > 0 ? Number(((estimatedTok / (elapsed / 1000))).toFixed(1)) : 0;
+
+				setTelemetry({
+					ttftMs: firstTokenTime,
+					speedTokPerSec: speed,
+					elapsedMs: elapsed,
+					estimatedTokens: estimatedTok,
+				});
+
+				return finalContent;
 			} catch (err: unknown) {
 				if (err instanceof Error && err.name === 'AbortError') {
 					logger.info('Engine:GemmaStream', 'Stream abortado (Cleanup/Cancelamento).');
@@ -157,6 +199,7 @@ export function useGemmaStream() {
 		isStreaming,
 		isCompleted,
 		error,
+		telemetry,
 		generateAnalysis,
 		stopStream,
 	};

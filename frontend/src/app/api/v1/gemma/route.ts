@@ -5,7 +5,8 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-const MAX_REQUEST_BYTES = 64 * 1024;
+// Limite expandido para acomodar payloads multimodais com imagens em Base64 (10 MB)
+const MAX_REQUEST_BYTES = 10 * 1024 * 1024;
 
 async function requireGemmaSession() {
 	const session = await auth();
