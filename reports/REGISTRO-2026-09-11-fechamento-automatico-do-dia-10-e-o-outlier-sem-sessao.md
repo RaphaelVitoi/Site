@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-11T00:03:53-03:00'
-atualizado_em: '2026-09-11T06:27:25-03:00'
+atualizado_em: '2026-09-11T06:36:06-03:00'
 classes: [interno, medido, calibracao]
 verificado:
   - append puro no ledger de outlier -- 1 insercao, 0 remocoes, por git diff --numstat
@@ -17,13 +17,16 @@ verificado:
   - gpt-6-astra e o unico gpt-6 do registro -- logo Codex GPT-6 e inequivoco
   - os dois portoes aprovaram os 9 arquivos desta alteracao
   - serie completa de diarios mapeada -- 4 noites com .json e sem .md
+  - validador oficial do ledger de feedback aprova antes e depois -- 23 e 24 registros
+  - cada correcao e append puro -- 1 insercao, 0 remocoes, por git diff --numstat
+  - gerador aplica as 4 correcoes e a sessao alvo le gpt-5.6-terra no por_sessao
+  - o gerador JA emite conductor_models e supervision_modes por sessao
 nao_verificado:
   - nao existe validador oficial para o ledger de outlier -- conferi a cadeia com script proprio
   - a origem do session_id vazio do feedback 277d4f23 nao foi auditada
   - nao reexecutei o gerador v4 para reproduzir o .json; li o artefato que ele escreveu
   - a automacao das noites de agosto nao foi confirmada -- so o modelo, Terra 5.6
   - nao sei se o portao de suficiencia estava aberto nas quatro noites sem relatorio
-  - conductor_model 'Codex GPT-6' no ledger de feedback fica incorreto e nao corrigido
 caminhos:
   - reports/agent-calibration/daily/2026-09-10.md
   - reports/agent-calibration/daily/2026-08-29.md
@@ -35,10 +38,334 @@ caminhos:
   - reports/agent-calibration/daily/2026-09-08.md
   - reports/agent-calibration/daily/2026-09-10.json
   - reports/agent-calibration/outlier-evidence-ledger.jsonl
+  - reports/agent-calibration/feedback-ledger.jsonl
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
 revisoes_de_ancora:
+  - registro: auditoria-2026-09-01-retrospectiva-prioridade-sessao
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. Ele nao fixa contagem de
+      registros em prosa, logo e imune a append por construcao. Validador
+      oficial aprova antes e depois -- 23 e 24 registros, cadeia valid.
+  - registro: auditoria-2026-09-02-curadoria-mcp-e-processos-residuais
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 5 -- seguem byte a byte onde estavam, porque append nao toca
+      registro anterior. Ele nao fixa contagem de registros em prosa, logo e
+      imune a append por construcao. Validador oficial aprova antes e depois
+      -- 23 e 24 registros, cadeia valid.
+  - registro: auditoria-2026-09-02-retrospectiva-e-observacao-de-calibracao
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 1, 2 -- seguem byte a byte onde estavam, porque append nao toca
+      registro anterior. Ele cita 2, 3 registro(s) no ledger; hoje sao 24.
+      Essa contagem e retrato do momento daquele commit e nao invariante, e
+      a divergencia fica declarada em vez de silenciada, como a regra da
+      casa exige. Validador oficial aprova antes e depois -- 23 e 24
+      registros, cadeia valid.
+  - registro: auditoria-2026-09-08-massa-de-fichas-fonte-nao-unica-e-desvio-de-foco
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 19 -- seguem byte a byte onde estavam, porque append nao toca
+      registro anterior. Ele cita 20 registro(s) no ledger; hoje sao 24.
+      Essa contagem e retrato do momento daquele commit e nao invariante, e
+      a divergencia fica declarada em vez de silenciada, como a regra da
+      casa exige. Validador oficial aprova antes e depois -- 23 e 24
+      registros, cadeia valid.
+  - registro: handoff-2026-09-01-prioridade-pmev-continuacao
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. Ele nao fixa contagem de
+      registros em prosa, logo e imune a append por construcao. Validador
+      oficial aprova antes e depois -- 23 e 24 registros, cadeia valid.
+  - registro: handoff-2026-09-02-curadoria-mcp-quarentena-e-roteamento-lazy
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. Ele nao fixa contagem de
+      registros em prosa, logo e imune a append por construcao. Validador
+      oficial aprova antes e depois -- 23 e 24 registros, cadeia valid.
+  - registro: handoff-2026-09-03-guarda-de-governanca-camada-anthropic-e-cobertura-cve
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 1, 7 -- seguem byte a byte onde estavam, porque append nao toca
+      registro anterior. Ele cita 8 registro(s) no ledger; hoje sao 24. Essa
+      contagem e retrato do momento daquele commit e nao invariante, e a
+      divergencia fica declarada em vez de silenciada, como a regra da casa
+      exige. Validador oficial aprova antes e depois -- 23 e 24 registros,
+      cadeia valid.
+  - registro: handoff-2026-09-03-procedencia-de-solve-e-portao-de-reprodutibilidade
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 1, 5, 7, 8 -- seguem byte a byte onde estavam, porque append nao
+      toca registro anterior. Ele cita 3, 5, 9 registro(s) no ledger; hoje
+      sao 24. Essa contagem e retrato do momento daquele commit e nao
+      invariante, e a divergencia fica declarada em vez de silenciada, como
+      a regra da casa exige. Validador oficial aprova antes e depois -- 23 e
+      24 registros, cadeia valid.
+  - registro: handoff-2026-09-04-pmev-credenciais-e-submodulos
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. Ele nao fixa contagem de
+      registros em prosa, logo e imune a append por construcao. Ele menciona
+      conductor_model como obrigacao de declaracao, nao como valor medido de
+      algum registro; a correcao de um valor nao contraria a obrigacao.
+      Validador oficial aprova antes e depois -- 23 e 24 registros, cadeia
+      valid.
+  - registro: handoff-2026-09-04-refinamento-sota-radar-telemetria-e-mcps-google
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 5, 11, 12 -- seguem byte a byte onde estavam, porque append nao
+      toca registro anterior. Ele cita 13 registro(s) no ledger; hoje sao
+      24. Essa contagem e retrato do momento daquele commit e nao
+      invariante, e a divergencia fica declarada em vez de silenciada, como
+      a regra da casa exige. Validador oficial aprova antes e depois -- 23 e
+      24 registros, cadeia valid.
+  - registro: handoff-2026-09-05-fechamento-do-ciclo-e-regua-do-jules
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. Ele cita 15 registro(s) no
+      ledger; hoje sao 24. Essa contagem e retrato do momento daquele commit
+      e nao invariante, e a divergencia fica declarada em vez de silenciada,
+      como a regra da casa exige. Validador oficial aprova antes e depois --
+      23 e 24 registros, cadeia valid.
+  - registro: handoff-2026-09-07-integracao-astra-e-calibracao-de-procedimento
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. Ele cita 18 registro(s) no
+      ledger; hoje sao 24. Essa contagem e retrato do momento daquele commit
+      e nao invariante, e a divergencia fica declarada em vez de silenciada,
+      como a regra da casa exige. Validador oficial aprova antes e depois --
+      23 e 24 registros, cadeia valid.
+  - registro: handoff-2026-09-07-orquestrador-free-tier-e-calibracao-9-0
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. Ele cita 19 registro(s) no
+      ledger; hoje sao 24. Essa contagem e retrato do momento daquele commit
+      e nao invariante, e a divergencia fica declarada em vez de silenciada,
+      como a regra da casa exige. Validador oficial aprova antes e depois --
+      23 e 24 registros, cadeia valid.
+  - registro: handoff-2026-09-10-raiz-versionada-e-o-portao-que-media-outra-pagina
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 22 -- seguem byte a byte onde estavam, porque append nao toca
+      registro anterior. Ele cita 22 registro(s) no ledger; hoje sao 24.
+      Essa contagem e retrato do momento daquele commit e nao invariante, e
+      a divergencia fica declarada em vez de silenciada, como a regra da
+      casa exige. Ele menciona conductor_model ao registrar a entrada 22,
+      que e de outra sessao e permanece intacta. Validador oficial aprova
+      antes e depois -- 23 e 24 registros, cadeia valid.
+  - registro: registro-2026-09-02-adapters-ligado-ao-caminho-real-anthropic
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 1, 5, 6 -- seguem byte a byte onde estavam, porque append nao toca
+      registro anterior. Ele cita 7 registro(s) no ledger; hoje sao 24. Essa
+      contagem e retrato do momento daquele commit e nao invariante, e a
+      divergencia fica declarada em vez de silenciada, como a regra da casa
+      exige. Validador oficial aprova antes e depois -- 23 e 24 registros,
+      cadeia valid.
+  - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 1, 3, 4 -- seguem byte a byte onde estavam, porque append nao toca
+      registro anterior. Ele cita 5 registro(s) no ledger; hoje sao 24. Essa
+      contagem e retrato do momento daquele commit e nao invariante, e a
+      divergencia fica declarada em vez de silenciada, como a regra da casa
+      exige. E o precedente direto desta operacao: foi ele que estabeleceu
+      corrigir por registro anexado em vez de reescrever, e os meus dois
+      appends seguem esse mesmo mecanismo. Validador oficial aprova antes e
+      depois -- 23 e 24 registros, cadeia valid.
+  - registro: registro-2026-09-03-nota-10-e-outlier-de-aceleracao
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 1, 9 -- seguem byte a byte onde estavam, porque append nao toca
+      registro anterior. Ele cita 9, 10 registro(s) no ledger; hoje sao 24.
+      Essa contagem e retrato do momento daquele commit e nao invariante, e
+      a divergencia fica declarada em vez de silenciada, como a regra da
+      casa exige. Validador oficial aprova antes e depois -- 23 e 24
+      registros, cadeia valid.
+  - registro: registro-2026-09-04-nota-9-5-e-analise-paralela-de-nos
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 1, 5, 12, 13 -- seguem byte a byte onde estavam, porque append nao
+      toca registro anterior. Ele cita 3, 14 registro(s) no ledger; hoje sao
+      24. Essa contagem e retrato do momento daquele commit e nao
+      invariante, e a divergencia fica declarada em vez de silenciada, como
+      a regra da casa exige. Aquele registro declara-se imune a append por
+      nao fixar contagem em prosa, e cita conductor_model como campo exigido
+      -- nao como valor de nenhum registro especifico, logo a correcao de um
+      valor nao o alcanca. Validador oficial aprova antes e depois -- 23 e
+      24 registros, cadeia valid.
+  - registro: registro-2026-09-05-saneamento-nexus-ollama-e-auto-diagnostico
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido. A intersecao com esta alteracao e apenas o
+      ledger de feedback, e nele houve somente append: duas correcoes de
+      campo, sequencias 23 e 24, com 1 insercao e 0 remocoes cada. Conferido
+      por busca no texto: este documento nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da correcao -- logo nenhuma
+      conclusao dele depende do campo corrigido. As sequencias que ele fixa
+      -- 15 -- seguem byte a byte onde estavam, porque append nao toca
+      registro anterior. Ele nao fixa contagem de registros em prosa, logo e
+      imune a append por construcao. Validador oficial aprova antes e depois
+      -- 23 e 24 registros, cadeia valid.
+  - registro: registro-2026-09-08-o-padrao-de-desvio-de-foco
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido, com uma divergencia de contagem declarada. Os
+      pareceres daquele registro afirmam cadeia valid com 21 registros e que as
+      sequencias anteriores seguem byte a byte onde estavam. A segunda afirmacao
+      continua verdadeira: meus dois appends de correcao sao 1 insercao e 0
+      remocoes cada, e as sequencias 0 a 22 nao foram tocadas. A primeira e um
+      retrato do momento daquele commit, nao uma invariante -- o ledger tem hoje
+      24 registros, e pela regra da casa a contagem medida vence a citada, com a
+      divergencia declarada em vez de silenciada. Nada do que aquele registro
+      concluiu depende do total.
+  - registro: registro-2026-09-10-feedback-9-5-multimodal-sota
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido, sem alteracao. Aquele registro declara, ele
+      proprio, que ancora no ledger sem fixar contagem em prosa e que por isso e
+      imune a append por construcao -- reli e confirmei: nenhuma afirmacao dele
+      depende do total de registros. As sequencias que ele cita como intactas, 0
+      a 20, continuam intactas. Meus appends sao correcoes de conductor_model
+      apontando o event_id 0b30eafd, de 2026-09-05, que nao e nenhum dos
+      registros que aquele documento analisa.
+  - registro: agent-calibration-daily-2026-09-02
+    caminhos:
+      - reports/agent-calibration/feedback-ledger.jsonl
+    parecer: >-
+      Revisado e mantido valido, sem alteracao. A tabela da secao (a) daquele
+      diario declara o ledger com 2 registros totais e 1 no dia, retido e
+      insuficiente. Nada disso muda: meus appends corrigem o campo
+      conductor_model do event_id 0b30eafd, cujo registro alvo e a sequencia 16
+      de 2026-09-05 -- posterior aquele dia e fora da janela dele. O acumulado
+      de 02/09 nao alcanca a sequencia 16, logo contagem, densidade e veredito
+      daquele diario permanecem aritmeticamente iguais. Conferido pela data do
+      registro alvo, nao por presuncao de que correcao nao mexe no passado.
   - registro: handoff-2026-09-11-o-alvo-declarado-e-o-objeto-que-o-github-ainda-serve
     caminhos:
       - reports/REGISTRO-2026-09-11-fechamento-automatico-do-dia-10-e-o-outlier-sem-sessao.md
@@ -107,8 +434,8 @@ O que eu media: o frontmatter declarava `autor: Codex GPT-6 (Tier 1)`, o adendo 
 ou modelo, a entrada do ledger de outlier também não, e a mensagem da tarefa das
 00:02 vinha rotulada "Auditoria do Astra".
 
-**Respostas do Tier 0, 2026-09-11, em duas etapas — e a segunda inverteu a
-conclusão da primeira:**
+**Respostas do Tier 0, 2026-09-11, em tres etapas — e cada uma corrigiu a
+leitura anterior. A terceira esta na §4.2 e move a fronteira para 09-09:**
 
 1. *"Automatização do Codex, Astra não estava em sessão."* Concluí que o campo
    estava correto e escrevi isso aqui. **Errado.**
@@ -246,18 +573,61 @@ ser a mesma série de artefato produzida pela mesma tarefa agendada — mas só 
 foi confirmado. Se a automação de agosto era outra, o prefixo desses quatro precisa
 mudar, e só isso.
 
-### 4.2 O ledger de feedback também nomeia o modelo errado — e eu não o toquei
+### 4.2 O ledger, corrigido — e a correção errada que eu tive de superar
 
-`conductor_model` aparece no ledger de feedback com três valores distintos:
-`claude-opus-5`, `gemini-3.8-flash` e **`Codex GPT-6`**. Os dois primeiros são
-identificadores canônicos; o terceiro não é — o canônico é `gpt-6-astra`, e a §8.3
-exige o *"modelo condutor exato"*.
+`conductor_model` aparecia no ledger com três valores: `claude-opus-5`,
+`gemini-3.8-flash` e **`Codex GPT-6`**. Os dois primeiros são canônicos; o terceiro
+não é, e a §8.3 exige o *"modelo condutor exato"*. Um único registro afetado:
+sequência 16, `event_id 0b30eafd-b57f-47dc-bf28-9822a0f36769`, de **2026-09-05**,
+`supervision_mode: assistida`, nota 10,0.
 
-**Não corrigi, e a razão é dupla.** O ledger é **append-only**: a §8.3 manda corrigir
-por `Record-AgentCalibrationCorrection.ps1`, que anexa registro de correção em vez de
-reescrever. E esse ledger é o instrumento que mede o desempenho do agente — anexar
-correção nele por iniciativa própria é precisamente o que a §10.3 reserva ao Tier 0.
-**Fica declarado, não consertado.**
+Autorizado pelo Tier 0 em 2026-09-11, corrigido por
+`Record-AgentCalibrationCorrection.ps1` — nunca por reescrita. **Foram duas
+correções, porque a primeira foi minha e estava errada:**
+
+| Seq | Valor corrigido | Situação |
+| ---: | :--- | :--- |
+| 23 | `gpt-6-astra` | **errada, superada** |
+| 24 | `gpt-5.6-terra` | vigente |
+
+**A causa do meu erro é instrutiva e é circular.** Eu raciocinei: o rótulo diz
+`Codex GPT-6`, `gpt-6-astra` é o único `gpt-6` do registro, o registro é de 09-05 e
+o Astra lançou em 09-03 — logo Astra. **Usei o rótulo sob suspeita como evidência
+para decidir o que o rótulo deveria dizer.** O campo estava errado justamente na
+parte que eu tomei por verdadeira. Só o Tier 0 podia fechar isso, e fechou:
+*"astra de dia 09 até hj; antes disso, 5.6 Terra"* — 09-05 é anterior a 09-09, logo
+Terra.
+
+A mesma fronteira corrigiu três diários que eu já havia marcado como Astra:
+**09-06, 09-07 e 09-08 são `codex@gpt-5.6-terra`**, não Astra. Só o 09-10 é Astra.
+
+**Verificado ponta a ponta:** validador oficial aprova antes e depois (23 → 24
+registros), o diff é `1 inserção / 0 remoções` em cada append, e o gerador aplica
+as correções em ordem de arquivo com `Add-Member -Force`, logo a última vence —
+medido: o `por_sessao` daquela sessão agora lê `conductor_models: ['gpt-5.6-terra']`
+e `correcoes_aplicadas: 4`.
+
+### 4.3 O gerador NÃO precisava de mudança — eu havia afirmado que precisava
+
+Eu havia escrito que *"o pipeline não emite campo de autor por apêndice, nem separa
+automação de modelo"* e pedido autorização para corrigir o gerador. **A segunda
+metade da frase é falsa.** Medido: `New-AgentCalibrationDailyEvidence.ps1` já coleta
+e **já emite**, por sessão, `conductor_models` e `supervision_modes` — exatamente a
+separação que a §8.3 exige.
+
+Eu cheguei à conclusão errada por ter consultado a chave `conductor_model`, no
+singular, no artefato gerado; ela não existe, e a que existe é
+`conductor_models`, no plural, porque uma sessão pode ter mais de um. A resposta
+vazia era do meu nome de chave, não do instrumento. **Quarta ocorrência hoje da
+mesma classe de erro**, e a única em que ela quase virou alteração de um instrumento
+que a §10.3 protege.
+
+Com a autorização em mãos eu **não** alterei o gerador, porque não há o que alterar.
+O que sobra é real e é de outra natureza: o frontmatter do diário tem **um** campo
+`autor` e o arquivo recebe **dois** eventos de autoria quando há adendo. Isso não é
+script — é o passo 7 da instrução da tarefa agendada, que fixa a ordem das seções e
+não prevê atribuição por apêndice. Mudança ali é do Tier 0, e eu não mexo em
+instrução de tarefa.
 
 ## 5. Um vazio declarado
 
