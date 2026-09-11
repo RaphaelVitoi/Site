@@ -37,9 +37,6 @@ import { ScenarioQuickSelector } from './ui/ScenarioQuickSelector';
 const EquityCalculator = dynamic(() => import('./panels/EquityCalculator'), {
   ssr: false,
 });
-const GemmaAnalysisPanel = dynamic(() => import('./GemmaAnalysisPanel').then((m) => m.GemmaAnalysisPanel), {
-  ssr: false,
-});
 const ComparisonRadar = dynamic(() => import('./panels/ComparisonRadar'), {
   ssr: false,
 });
@@ -447,18 +444,6 @@ export default function MasterSimulator() {
                 effectiveIpRp={finalIpRp}
                 effectiveOopRp={finalOopRp}
                 dynamicDeathZone={apiQuantumMetrics?.threshEq ? apiQuantumMetrics.threshEq * 100 : 0}
-              />
-
-              {/* Oráculo Gemma (IA Preditiva) */}
-              <GemmaAnalysisPanel
-                heroPos={heroPosition}
-                villainPos={isIp ? 'OOP' : 'IP'}
-                potSize={safeCurrentPot}
-                heroStack={heroUpdatedStack}
-                villainStack={villainUpdatedStack}
-                heroInvested={safeHeroInvested}
-                riskAdvantage={apiQuantumMetrics?.riskAdvantage ?? 0}
-                bountyPower={0}
               />
 
               {/* Telemetria Quântica do Spot */}

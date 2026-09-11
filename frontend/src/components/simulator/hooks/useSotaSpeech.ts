@@ -24,15 +24,15 @@ function cleanTextForSpeech(raw: string): string {
 		.replace(/```[\s\S]*?```/g, ' [bloco de código omitido] ')
 		.replace(/`([^`]+)`/g, '$1')
 		.replace(/\$\$[\s\S]*?\$\$/g, ' [expressão matemática omitida] ')
-		.replace(/\$([^\$]+)\$/g, '$1')
-		.replace(/^#{1,6}\s+(.*)$/gm, '$1. ')
+		.replace(/\$([^$]+)\$/g, '$1')
+		.replace(/^#{1,6}\s+(\S[^\r\n]*)$/gm, '$1. ')
 		.replace(/\*\*([^*]+)\*\*/g, '$1')
 		.replace(/\*([^*]+)\*\*/g, '$1')
 		.replace(/^[*\-+]\s+/gm, '')
 		.replace(/^>\s+/gm, '')
-		.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+		.replace(/\[([^\][]+)\]\(([^()]+)\)/g, '$1')
 		.replace(/\|[-:\s|]+\|/g, '')
-		.replace(/\|/g, ', ')
+		.replaceAll('|', ', ')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
 }
@@ -40,7 +40,7 @@ function cleanTextForSpeech(raw: string): string {
 function splitIntoSentences(text: string): string[] {
 	if (!text) return [];
 	const matches = text.match(/[^.!?\n]+[.!?\n]*/g);
-	if (!matches || !matches.length) return [text];
+	if (!matches?.length) return [text];
 	return matches.map((s) => s.trim()).filter((s) => s.length > 1 || /[a-zA-Z0-9]/.test(s));
 }
 
@@ -74,7 +74,7 @@ function getEffectiveRate(targetRate: number, voice: SpeechSynthesisVoice | null
 }
 
 export function useSotaSpeech() {
-	const [rate, setRateState] = useState<number>(1.5);
+	const [rate, setRate] = useState<number>(1.5);
 	const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
 	const [isPlaying, setIsPlaying] = useState<boolean>(false);
 	const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -101,7 +101,7 @@ export function useSotaSpeech() {
 		if (!all.length) return;
 
 		const allowed = all.filter((v) => {
-			const lang = (v.lang || '').toLowerCase().replace(/_/g, '-');
+			const lang = (v.lang || '').toLowerCase().replaceAll('_', '-');
 			return lang.startsWith('pt') || lang.startsWith('en');
 		});
 
@@ -196,8 +196,8 @@ export function useSotaSpeech() {
 		synth.speak(utterance);
 	}, []);
 
-	const setRate = useCallback((newRate: number) => {
-		setRateState(newRate);
+	const applyRate = useCallback((newRate: number) => {
+		setRate(newRate);
 		rateRef.current = newRate;
 
 		// Aceleração Instantânea em Tempo Real (In-Flight Acceleration)
@@ -218,8 +218,8 @@ export function useSotaSpeech() {
 		const current = rateRef.current;
 		const idx = rates.findIndex((r) => Math.abs(r - current) < 0.01);
 		const nextIdx = idx >= 0 && idx < rates.length - 1 ? idx + 1 : 0;
-		setRate(rates[nextIdx] ?? 1.5);
-	}, [setRate]);
+		applyRate(rates[nextIdx] ?? 1.5);
+	}, [applyRate]);
 
 	const toggle = useCallback(
 		(messageId: string, text: string) => {
@@ -267,7 +267,7 @@ export function useSotaSpeech() {
 		voices,
 		toggle,
 		stop,
-		setRate,
+		setRate: applyRate,
 		cycleRate,
 		setSelectedVoice,
 	};

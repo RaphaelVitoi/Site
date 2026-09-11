@@ -41,7 +41,7 @@ export const SpatialControls = ({
 	const isMultiway = activePlayers > 2;
 
 	return (
-		<div className="glass-panel p-5 sm:p-7 flex flex-col gap-6 relative animate-sota-in rounded-3xl bg-slate-950/60 border border-white/10 shadow-xl">
+		<div className="glass-panel p-5 sm:p-7 flex flex-col gap-6 relative animate-sota-in rounded-3xl bg-slate-950/60 border border-white/10 shadow-xl overflow-hidden">
 			<div className="flex items-center justify-between border-b border-white/5 pb-3">
 				<div className="flex items-center gap-2.5">
 					<div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_8px_var(--color-accent-indigo)]" />
@@ -71,7 +71,7 @@ export const SpatialControls = ({
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 items-end">
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 items-end">
 
 			<div className="space-y-2.5">
 				<SotaTooltip
@@ -198,15 +198,15 @@ export const SpatialControls = ({
 						FGS / Erosão
 					</label>
 				</SotaTooltip>
-				<div className="flex gap-4 items-center h-11.5">
+				<div className="flex gap-2 items-center h-11.5 min-w-0">
 					<input
 						id="sim-fgs-control"
 						type="range"
 						disabled={isPredictive}
-						className={`flex-1 h-1.5 rounded-full appearance-none transition-opacity ${isPredictive ? 'opacity-20 cursor-not-allowed bg-white/5' : 'bg-white/10 accent-accent-indigo cursor-pointer'}`}
+						className={`flex-1 min-w-0 h-1.5 rounded-full appearance-none transition-opacity ${isPredictive ? 'opacity-20 cursor-not-allowed bg-white/5' : 'bg-white/10 accent-accent-indigo cursor-pointer'}`}
 					/>
 					<span
-						className={`text-[0.7rem] font-mono font-black w-12 text-center tracking-tighter ${isPredictive ? 'text-accent-emerald' : 'text-text-darker'}`}
+						className={`text-[0.62rem] font-mono font-black shrink-0 px-2 py-1 rounded tracking-wider ${isPredictive ? 'text-accent-emerald bg-accent-emerald/10 border border-accent-emerald/20' : 'text-text-darker bg-white/5'}`}
 					>
 						{isPredictive ? 'AUTO' : 'MAN'}
 					</span>

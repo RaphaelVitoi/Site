@@ -21,11 +21,7 @@ export function defaultTournamentConditions(remainingPlayers: number, payoutCoun
   };
 }
 
-/** User parameters define the scenario. Reject contradictions, never fabricate missing stacks. */
-export function resolveTournamentPayouts(conditions: TournamentConditions, stacksCount: number, payouts: number[]): number[] {
-  const parsed = TournamentConditionsSchema.safeParse(conditions);
-  if (!parsed.success) throw new Error('Field, restantes e ITM devem ser inteiros positivos; prize pools devem ser positivos e finitos.');
-  const c = parsed.data;
+function validateTournamentStructure(c: TournamentConditions, stacksCount: number): void {
   if (c.paidPlaces > c.fieldSize) throw new Error('ITM não pode exceder o field total.');
   if (c.remainingPlayers > c.fieldSize) throw new Error('Jogadores restantes não podem exceder o field total.');
   if (c.remainingPlayers !== stacksCount) throw new Error(`Informe os ${c.remainingPlayers} stacks restantes; há ${stacksCount} no contexto.`);
@@ -36,6 +32,14 @@ export function resolveTournamentPayouts(conditions: TournamentConditions, stack
   if (c.remainingPlayers < c.paidPlaces && c.remainingPrizePool === c.totalPrizePool) {
     throw new Error('Com colocações pagas já eliminadas, o pool restante deve ser menor que o total.');
   }
+}
+
+/** User parameters define the scenario. Reject contradictions, never fabricate missing stacks. */
+export function resolveTournamentPayouts(conditions: TournamentConditions, stacksCount: number, payouts: number[]): number[] {
+  const parsed = TournamentConditionsSchema.safeParse(conditions);
+  if (!parsed.success) throw new Error('Field, restantes e ITM devem ser inteiros positivos; prize pools devem ser positivos e finitos.');
+  const c = parsed.data;
+  validateTournamentStructure(c, stacksCount);
   const count = Math.min(c.remainingPlayers, c.paidPlaces);
   if (payouts.length !== count) throw new Error(`Informe ${count} payouts restantes para este field/ITM.`);
   if (payouts.some((value, index) => !Number.isFinite(value) || value <= 0 || (index > 0 && value > payouts[index - 1]!))) {

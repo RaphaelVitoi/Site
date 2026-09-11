@@ -849,12 +849,11 @@ export default function ReferencialAula12() {
                   {matrixData.mBf.map((row, r) => {
                     const playerName = matrixData.mPlayers.at(r) ?? `P${r}`;
                     const playerStack = matrixData.mStacks.at(r);
-                    const isRowActive = r === activeBbIdx;
 
                     return (
                       <tr
                         key={playerName}
-                        className={`border-b border-white/5 transition-colors ${isRowActive ? 'bg-indigo-500/10' : 'hover:bg-white/5'}`}
+                        className="border-b border-white/5 transition-colors hover:bg-white/5"
                       >
                         <td className="sticky left-0 z-20 border-r border-white/10 bg-slate-900 px-6 py-4 text-center shadow-xl">
                           <div className="text-[0.8rem] font-black text-white uppercase">{playerName}</div>
@@ -865,13 +864,12 @@ export default function ReferencialAula12() {
                         {row.map((bf, c) => {
                           const rp = matrixData.mRp.at(r)?.at(c) ?? 0;
                           const gravity = getRpGravityColor(rp);
-                          const isActiveMatch = r === activeBbIdx && c === activeBtnIdx;
                           const columnPlayerName = matrixData.mPlayers.at(c) ?? `P${c}`;
 
                           return (
                             <td
                               key={`${playerName}-${columnPlayerName}`}
-                              className={`px-2 py-4 text-center transition-all ${isActiveMatch ? 'z-10 ring-2 ring-indigo-500 ring-inset' : ''}`}
+                              className="px-2 py-4 text-center transition-all"
                             >
                               {r === c ? (
                                 <div className="mx-auto h-1.5 w-1.5 rounded-full bg-white/10" />

@@ -41,7 +41,7 @@ describe('MonteCarloParallelPool (SOTA v7.0 GOLD)', () => {
 		expect(result.equityPercentage).toBeLessThanOrEqual(100.0);
 		expect(result.stdError).toBeGreaterThanOrEqual(0);
 		expect(result.confidenceInterval95).toHaveLength(2);
-		expect(result.confidenceInterval95?.[0]).toBeLessThanOrEqual(result.confidenceInterval95?.[1]);
+		expect(result.confidenceInterval95![0]).toBeLessThanOrEqual(result.confidenceInterval95![1]);
 		expect(result.simulationId).toMatch(/^sim_/);
 		expect(['SHARED_ARRAY_BUFFER', 'TRANSFERABLE_WORKERS', 'SINGLE_THREAD_FALLBACK']).toContain(result.mode);
 	});

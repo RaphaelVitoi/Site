@@ -80,30 +80,75 @@ export interface HRCExportOptions {
   bigBlind?: number | undefined;
 }
 
-/** Settings only: no strategies or calculated EVs. Native HRC table amounts use cents (x100). */
-export function generateHRCHandConfig(population: TournamentPlayer[], payouts: number[], options: HRCExportOptions): string {
+function validateExportLedger(
+  population: TournamentPlayer[],
+  payouts: number[],
+  options: HRCExportOptions,
+) {
   const ledger = options.chipLedger ? validateChipLedger(options.chipLedger) : undefined;
   const rawChips = new Map(ledger?.players.map(p => [p.id, p.chips]));
-  if (ledger && (population.length !== rawChips.size || population.some(p => rawChips.get(p.id)! / ledger.bigBlind !== p.stack))) throw new Error('Exportação diverge das fichas canônicas.');
-  if (ledger && options.conditions) validatePrizeLedger(options.conditions.totalPrizePool, options.conditions.remainingPrizePool, payouts);
-  let table = selectAnalysisTable(population, options.selection);
+  if (ledger && (population.length !== rawChips.size || population.some(p => rawChips.get(p.id)! / ledger.bigBlind !== p.stack))) {
+    throw new Error('Exportação diverge das fichas canônicas.');
+  }
+  if (ledger && options.conditions) {
+    validatePrizeLedger(options.conditions.totalPrizePool, options.conditions.remainingPrizePool, payouts);
+  }
   const source = options.snapshot;
   if (source?.structureSource?.bountyType && !['NONE', 'OFF'].includes(source.structureSource.bountyType.toUpperCase())) {
     throw new Error('Estrutura de bounty preservada. Exporte a coleção original para o HRC; exportar uma configuração PKO completa exige bounties por jogador e modelo próprio.');
   }
+  return { ledger, rawChips };
+}
+
+function orderTableSeats(
+  table: TournamentPlayer[],
+  ledger: ReturnType<typeof validateChipLedger> | undefined,
+  source: TournamentSnapshot | undefined,
+): TournamentPlayer[] {
   if (ledger) {
-    if (ledger.seatOrder.length !== table.length || ledger.seatOrder.some(id => !table.some(p => p.id === id))) throw new Error('Mesa exportada diverge dos assentos canônicos.');
+    if (ledger.seatOrder.length !== table.length || ledger.seatOrder.some(id => !table.some(p => p.id === id))) {
+      throw new Error('Mesa exportada diverge dos assentos canônicos.');
+    }
     const button = ledger.seatOrder.indexOf(ledger.buttonId);
     const first = table.length === 2 ? button : (button + 3) % table.length;
     const order = [...ledger.seatOrder.slice(first), ...ledger.seatOrder.slice(0, first)];
-    table = order.map(id => table.find(p => p.id === id)!);
-  } else if (source?.buttonSeat !== undefined && table.every(p => p.seat !== undefined)) {
+    return order.map(id => table.find(p => p.id === id)!);
+  }
+  if (source?.buttonSeat !== undefined && table.every(p => p.seat !== undefined)) {
     const seats = [...table].sort((a, b) => a.seat! - b.seat!);
     const button = seats.findIndex(p => p.seat === source.buttonSeat);
     if (button < 0) throw new Error('O botão informado não está na mesa selecionada.');
     const first = seats.length === 2 ? button : (button + 3) % seats.length;
-    table = [...seats.slice(first), ...seats.slice(0, first)];
+    return [...seats.slice(first), ...seats.slice(0, first)];
   }
+  return table;
+}
+
+function buildHrcPrizeMap(
+  payouts: number[],
+  populationLength: number,
+  source?: TournamentSnapshot,
+  template?: HRCHandConfig,
+  conditions?: TournamentConditions,
+): Record<string, number> {
+  const prizeMap: Record<string, number> = {};
+  source?.fullPrizes?.forEach((prize, i) => { prizeMap[String(i + 1)] = prize; });
+  if (template && !source?.fullPrizes) {
+    const originalPrizes = readHRCPrizes(template.eqmodel.structure.prizes, populationLength);
+    const keepHistorical = payouts.length === originalPrizes.payouts.length &&
+      (!conditions || conditions.paidPlaces === originalPrizes.paidPlaces);
+    if (keepHistorical) Object.assign(prizeMap, template.eqmodel.structure.prizes);
+  }
+  payouts.forEach((prize, i) => { prizeMap[String(i + 1)] = prize; });
+  return prizeMap;
+}
+
+/** Settings only: no strategies or calculated EVs. Native HRC table amounts use cents (x100). */
+export function generateHRCHandConfig(population: TournamentPlayer[], payouts: number[], options: HRCExportOptions): string {
+  const { ledger, rawChips } = validateExportLedger(population, payouts, options);
+  const source = options.snapshot;
+  const rawTable = selectAnalysisTable(population, options.selection);
+  const table = orderTableSeats(rawTable, ledger, source);
   const bb = ledger?.bigBlind ?? options.bigBlind ?? source?.bigBlind ?? 100;
   if (!Number.isFinite(bb) || bb <= 0) throw new Error('Big blind inválido para exportação.');
   if (population.some(p => !Number.isFinite(p.stack) || p.stack <= 0)) throw new Error('O setup de mão HRC exige stacks positivos.');
@@ -111,16 +156,7 @@ export function generateHRCHandConfig(population: TournamentPlayer[], payouts: n
   const tableIds = new Set(table.map(p => p.id));
   const outside = population.filter(p => !tableIds.has(p.id));
   const template = source?.hrcConfig ? readHRCHandConfig(source.hrcConfig) : undefined;
-  const prizeMap: Record<string, number> = {};
-  source?.fullPrizes?.forEach((prize, i) => { prizeMap[String(i + 1)] = prize; });
-  // Preserve known historical payouts, then replace the still-live placements.
-  if (template && !source?.fullPrizes) {
-    const originalPrizes = readHRCPrizes(template.eqmodel.structure.prizes, population.length);
-    const keepHistorical = payouts.length === originalPrizes.payouts.length &&
-      (!options.conditions || options.conditions.paidPlaces === originalPrizes.paidPlaces);
-    if (keepHistorical) Object.assign(prizeMap, template.eqmodel.structure.prizes);
-  }
-  payouts.forEach((prize, i) => { prizeMap[String(i + 1)] = prize; });
+  const prizeMap = buildHrcPrizeMap(payouts, population.length, source, template, options.conditions);
   const cents = (value: number) => {
     const rounded = Math.round(value);
     if (!Number.isSafeInteger(rounded) || Math.abs(value - rounded) > 1e-6) throw new Error('A precisão dos stacks/blinds excede a escala de centésimos do HRC. Ajuste os inputs.');

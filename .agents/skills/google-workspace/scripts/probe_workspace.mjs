@@ -1,5 +1,5 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 async function getGoogleAccessToken() {
   const adcPath = path.join(process.env.APPDATA || "", "gcloud", "application_default_credentials.json");
@@ -127,7 +127,9 @@ async function main() {
   console.log("---------------------------------------------------------------\n");
 }
 
-main().catch(err => {
+try {
+  await main();
+} catch (err) {
   console.error("Erro inesperado no probe:", err);
   process.exit(1);
-});
+}

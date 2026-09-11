@@ -25,7 +25,7 @@ test('terminal payouts and HU threshold remain coherent with guaranteed prizes',
 });
 
 test('matrix produces the response consumed by the hook and preserves both ranges', () => {
-  const equity = jest.fn(() => 0.8);
+  const equity = jest.fn((_hero: Uint8Array, _villain: Uint8Array) => 0.8);
   const response = processInsolvencyRequest({ type: 'MATRIX', id: 7,
     heroRange: 'AA', villainRange: 'KK', board: '', rpFactor: 1,
     heroInvested: 5, currentPot: 10, activePlayers: 2, kappa: 1, humanNoiseFactor: 0,

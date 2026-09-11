@@ -51,37 +51,47 @@ export interface TableSelection {
 }
 
 /** The population has no table-size limit. Selection never truncates that input. */
-export function parseTournamentSnapshot(rawInput: string): TournamentSnapshot {
-  let input: unknown;
-  let sourceFormat: TournamentSnapshot['sourceFormat'] = rawInput.trimStart().startsWith('{') ? 'json' : 'hand-history';
-  if (sourceFormat === 'json') {
-    input = JSON.parse(rawInput);
-    if (input && typeof input === 'object' && 'handdata' in input) {
-      input = normalizeHRCHandConfig(input);
-      sourceFormat = 'hrc-hand-config';
+function loadRawTournamentInput(rawInput: string): { input: unknown; sourceFormat: TournamentSnapshot['sourceFormat'] } {
+  const isJson = rawInput.trimStart().startsWith('{');
+  if (isJson) {
+    const parsed = JSON.parse(rawInput);
+    if (parsed && typeof parsed === 'object' && 'handdata' in parsed) {
+      return { input: normalizeHRCHandConfig(parsed), sourceFormat: 'hrc-hand-config' };
     }
-  } else {
-    const hand = parseHandHistoryDetails(rawInput);
-    input = { ...hand, stackUnit: 'chips', suggestedPlayerIds: hand.players.map(p => p.id) };
+    return { input: parsed, sourceFormat: 'json' };
   }
-  const parsed = snapshotSchema.safeParse(input);
-  if (!parsed.success) throw new Error('Input inválido: informe players com id, name e stack, e stackUnit (bb ou chips).');
-  if (new Set(parsed.data.players.map(p => p.id)).size !== parsed.data.players.length) {
+  const hand = parseHandHistoryDetails(rawInput);
+  return {
+    input: { ...hand, stackUnit: 'chips', suggestedPlayerIds: hand.players.map(p => p.id) },
+    sourceFormat: 'hand-history',
+  };
+}
+
+function validateTournamentSnapshotData(data: z.infer<typeof snapshotSchema>): void {
+  if (new Set(data.players.map(p => p.id)).size !== data.players.length) {
     throw new Error('IDs de jogadores repetidos: o snapshot precisa identificar cada jogador uma única vez.');
   }
-  if (parsed.data.remainingPlayers !== undefined && parsed.data.remainingPlayers !== parsed.data.players.length) {
+  if (data.remainingPlayers !== undefined && data.remainingPlayers !== data.players.length) {
     throw new Error('O número de jogadores restantes informado não corresponde aos stacks recebidos. Complete o snapshot.');
   }
-  if (parsed.data.totalEntries !== undefined && parsed.data.totalEntries < parsed.data.players.length) {
+  if (data.totalEntries !== undefined && data.totalEntries < data.players.length) {
     throw new Error('O field total não pode ser menor que o número de jogadores restantes.');
   }
   const occupied = new Set<string>();
-  for (const player of parsed.data.players) {
+  for (const player of data.players) {
     if (player.tableId === undefined || player.seat === undefined) continue;
     const key = JSON.stringify([player.tableId, player.seat]);
     if (occupied.has(key)) throw new Error('Dois jogadores ocupam o mesmo assento na mesma mesa.');
     occupied.add(key);
   }
+}
+
+/** The population has no table-size limit. Selection never truncates that input. */
+export function parseTournamentSnapshot(rawInput: string): TournamentSnapshot {
+  const { input, sourceFormat } = loadRawTournamentInput(rawInput);
+  const parsed = snapshotSchema.safeParse(input);
+  if (!parsed.success) throw new Error('Input inválido: informe players com id, name e stack, e stackUnit (bb ou chips).');
+  validateTournamentSnapshotData(parsed.data);
   return { ...parsed.data, rawInput, sourceFormat };
 }
 

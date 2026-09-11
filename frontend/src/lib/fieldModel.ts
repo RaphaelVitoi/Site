@@ -12,7 +12,12 @@ export type FieldModel = z.infer<typeof FieldModelSchema>;
 /** Largest-remainder apportionment of a declared chip budget; each live player gets >=1 chip. */
 export function allocateWholeChips(weights: number[], total: number): number[] {
   if (!Number.isSafeInteger(total) || total < weights.length || weights.some(w => !Number.isFinite(w) || w <= 0)) throw new Error('Não há fichas inteiras suficientes para os jogadores externos.');
-  if (!weights.length) { if (total) throw new Error('Há fichas externas sem jogadores.'); return []; }
+  if (weights.length === 0) {
+    if (total) {
+      throw new Error('Há fichas externas sem jogadores.');
+    }
+    return [];
+  }
   const mass = weights.reduce((sum, w) => sum + w, 0);
   if (!Number.isFinite(mass)) throw new Error('Distribuição fora da precisão suportada.');
   const quotas = weights.map(w => w / mass * (total - weights.length));
