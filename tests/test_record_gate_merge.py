@@ -13,6 +13,8 @@ carrega obrigacao de ancora.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name,protected-access
+
 import importlib
 from pathlib import Path
 import subprocess
@@ -75,7 +77,7 @@ def _modulo_com_raiz(repo: Path):
         modulo = importlib.reload(modulo)
     finally:
         sys.path.pop(0)
-    modulo.RAIZ = repo
+    setattr(modulo, "RAIZ", repo)
     return modulo
 
 

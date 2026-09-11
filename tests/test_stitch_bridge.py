@@ -5,7 +5,8 @@ Valida a interacao com o servidor Stitch MCP, parsing JSON-RPC e geracao de payl
 
 from __future__ import annotations
 
-import base64
+# pylint: disable=protected-access
+
 import json
 from unittest.mock import MagicMock, patch
 

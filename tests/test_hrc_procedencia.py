@@ -16,6 +16,7 @@ Todos os testes sao hermeticos: nenhuma chamada a provedor, nenhum solver real.
 
 import io
 
+from core.perspective_schemas import SolverProvenance
 from engine.solver_importers.hrc_pro import HRCProImporter
 
 SAMPLE = "data/sample_hrc_export_mtt_bubble.hrc"
@@ -36,6 +37,7 @@ def test_build_e_lido_do_cabecalho_do_export_real():
 def test_o_sample_nao_traz_e_nash_e_isso_e_declarado_nao_suposto():
     raw = io.open(SAMPLE, encoding="utf-8").read()
     proc = _importer().parse_tree(raw).provenance
+    assert proc is not None
     assert proc.e_nash is None
     assert proc.e_nash_unit is None
     assert proc.e_nash_label is None
@@ -47,7 +49,9 @@ def test_hrc_version_do_json_deixa_de_ser_descartada():
     imp = _importer()
     bruto = '{"hrc_version": "3.1.2", "pot": 3.0, "strategy": {"FOLD": 0.4, "ALLIN": 0.6}}'
     assert imp.detect_format(bruto) is True
-    assert imp.parse_tree(bruto).provenance.build == "3.1.2"
+    tree = imp.parse_tree(bruto)
+    assert tree.provenance is not None
+    assert tree.provenance.build == "3.1.2"
 
 
 def test_o_rotulo_do_hrc_e_ci_e_e_preservado():
@@ -142,8 +146,6 @@ def test_engine_e_distinto_do_produto_e_nao_entra_na_completude():
     objeto -- e por isso `engine` e declarado, nunca inferido, e sua ausencia nao
     reprova um solve cujo build e CI ja estao completos.
     """
-    from core.perspective_schemas import SolverProvenance
-
     sem_engine = SolverProvenance(build="v2.4.1", e_nash=0.2, e_nash_unit="bb")
     assert sem_engine.engine is None
     assert sem_engine.esta_completa() is True

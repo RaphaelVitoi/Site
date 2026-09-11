@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+# pylint: disable=protected-access
+
 from datetime import UTC, datetime
 
 import pytest
 
 from agents.context_builder import _inject_mcp_addons
+import core.config as config
 from core.mcp_routing import apply_mcp_addon_routing, resolve_mcp_addons
 from core.schemas import Task
 
@@ -23,8 +26,6 @@ def _task(description: str, metadata: dict | None = None) -> Task:
 
 @pytest.mark.unit
 def test_addons_desejados_estao_habilitados_em_modo_lazy() -> None:
-    import core.config as config
-
     policy = config.MCP_ADDON_ROUTING
     assert policy["enabled"] is True
     assert policy["mode"] == "lazy"
@@ -73,8 +74,8 @@ def test_recalculo_remove_decisao_mcp_obsoleta_da_subtask() -> None:
         "mcp_addon_policy": "lazy",
     }
     routed = apply_mcp_addon_routing("Consultar SQLite local", metadata)
-    assert routed["mcp_addons_selected"] == []
-    assert routed["mcp_addon_scores"] == {}
+    assert not routed["mcp_addons_selected"]
+    assert not routed["mcp_addon_scores"]
 
 
 @pytest.mark.unit

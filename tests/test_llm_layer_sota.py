@@ -1,4 +1,5 @@
 # ruff: noqa: I001
+# pylint: disable=protected-access
 """
 Testes SOTA para a camada LLM (session.py, budget.py, routing.py) do Nexus Orchestrator.
 """
@@ -11,6 +12,7 @@ import urllib.error
 
 import pytest
 
+import core.config
 from core.schemas import Task
 import llm.session as session
 import llm.budget as budget
@@ -20,8 +22,6 @@ import llm.routing as routing
 @pytest.fixture(autouse=True)
 def patch_valid_agents(monkeypatch: pytest.MonkeyPatch) -> None:
     """Garante que os agentes de teste sao validos."""
-    import core.config
-
     monkeypatch.setattr(core.config, "VALID_AGENTS", ["@maverick", "@chico"])
 
 

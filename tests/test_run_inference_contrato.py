@@ -33,6 +33,9 @@ O QUE HA, e o motivo destes testes existirem:
 
 from __future__ import annotations
 
+# pylint: disable=protected-access
+
+import io
 import json
 from unittest.mock import MagicMock, patch
 
@@ -226,8 +229,6 @@ def test_clean_terminal_output_saneia_latex_e_preserva_legibilidade():
 
 def test_terminal_stream_filter_descarrega_tokens_sem_latex_cru():
     """Valida que o buffer de streaming descarrega tokens limpos para o terminal em tempo real."""
-    import io
-
     captured = io.StringIO()
     filtro = ri.TerminalStreamFilter(out_stream=captured)
 

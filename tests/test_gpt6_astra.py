@@ -258,7 +258,7 @@ def test_toda_faixa_e_declarada_e_nenhuma_vem_do_default() -> None:
     quando o valor foi passado ao construtor. Sem esta segunda metade, um
     modelo novo nasceria afirmando ter cota que ninguem levantou -- que e a
     mesma falha de ler ausencia como evidencia, apenas invertida."""
-    assert ModelCapability.model_fields["cota_por_assinatura"].default is False, (
+    assert ModelCapability.model_fields["cota_por_assinatura"].default is False, (  # pylint: disable=unsubscriptable-object
         "O default tem que continuar False = NAO DECLARADO. Inverte-lo faz "
         "modelo novo nascer com faixa que ninguem mediu."
     )

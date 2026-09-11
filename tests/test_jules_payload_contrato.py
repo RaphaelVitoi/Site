@@ -26,11 +26,13 @@ e o portao de aprovacao humana.
 
 from __future__ import annotations
 
+from typing import Any
+
 from engine.jules_bridge import JulesSessionRequest
 
 
-def _payload(**kwargs) -> dict:
-    base = {
+def _payload(**kwargs: Any) -> dict:
+    base: dict[str, Any] = {
         "source": "sources/github/RaphaelVitoi/Site",
         "prompt": "tarefa qualquer",
         "branch": "master",

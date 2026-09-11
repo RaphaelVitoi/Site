@@ -58,6 +58,7 @@ from pathlib import Path
 import pytest
 
 import core.config as cfg
+from core.subagents_mesh import SUBAGENT_MODEL_MAP
 from llm import routing_policy as rp
 from llm.model_registry import MODEL_REGISTRY
 from llm.routing import _infer_provider_for_model, _reorder_models_for_economy
@@ -375,8 +376,6 @@ def test_o_alias_corrigido_do_gemma4_nao_regride(declaracao):
 def test_subagente_e_sempre_custo_zero(declaracao):
     """Invariante do operador, travado onde a autoridade de fato mora. Sem copia
     da tabela: o teste le `SUBAGENT_MODEL_MAP` e exige frota local."""
-    from core.subagents_mesh import SUBAGENT_MODEL_MAP  # noqa: PLC0415
-
     medido = declaracao["superficie_subagentes"]
     assert len(SUBAGENT_MODEL_MAP) == medido["tiers"], PISTA
 
@@ -404,8 +403,6 @@ def test_a_politica_recusa_atribuir_modelo_a_subagente(declaracao):
 def test_a_politica_ainda_classifica_o_subagente(declaracao):
     """Recusar MODELO nao e recusar CLASSE. `SUBAGENTES` continua declarando a
     classe de tarefa de cada tier, que e informacao diferente e legitima."""
-    from core.subagents_mesh import SUBAGENT_MODEL_MAP  # noqa: PLC0415
-
     tiers = {t.value for t in SUBAGENT_MODEL_MAP}
     assert tiers <= set(rp.SUBAGENTES), f"tier sem classe declarada: {sorted(tiers - set(rp.SUBAGENTES))}. {PISTA}"
     assert rp.cobertura()["subagentes"] == declaracao["superficie_subagentes"]["tiers"], PISTA

@@ -31,7 +31,8 @@ def test_heads_up_guaranteed_payout_preserves_equal_gain_and_loss():
 
 
 def test_aggregated_states_match_independent_finish_order_enumeration():
-    stacks, payouts = [57, 29, 11, 3], [70, 20, 10]
+    stacks: list[float] = [57.0, 29.0, 11.0, 3.0]
+    payouts: list[float] = [70.0, 20.0, 10.0]
     expected = [0.0] * len(stacks)
     for order in permutations(range(len(stacks))):
         probability, chips = 1.0, sum(stacks)
@@ -53,4 +54,4 @@ def test_tree_rejects_nonfinite_numbers_and_invalid_probabilities(field, value):
 
 
 def test_provisional_tree_still_accepts_valid_scenario():
-    assert PerspectiveTreeRequest(equity=0.6, pot_size=10, stack_eff=20).fold_equity == 0.3
+    assert PerspectiveTreeRequest.model_validate({"equity": 0.6, "pot_size": 10, "stack_eff": 20}).fold_equity == 0.3

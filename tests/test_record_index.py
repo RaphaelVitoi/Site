@@ -574,7 +574,7 @@ def test_extensao_longa_nao_e_truncada_pela_alternancia(tmp_path, monkeypatch):
     monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
 
     achadas = record_gate.referencias_mortas("reports/R.md")
-    assert achadas == [], (
+    assert not achadas, (
         "o detector truncou extensao longa e inventou caminho morto: "
         f"{achadas} -- ordene a alternancia da mais longa para a mais curta"
     )
@@ -587,9 +587,7 @@ def test_alternancia_de_extensoes_esta_ordenada_por_comprimento():
     existem -- quem acrescentar `yamlx` depois de `yaml` reprova aqui, e nao numa
     sessao futura que perde uma hora atras de um caminho morto inexistente.
     """
-    import re as _re
-
-    bloco = _re.search(r"\(\?:([a-z0-9|]+)\)", record_gate.RE_CAMINHO_CITADO.pattern)
+    bloco = re.search(r"\(\?:([a-z0-9|]+)\)", record_gate.RE_CAMINHO_CITADO.pattern)
     assert bloco, "a forma do regex mudou; reavaliar este guard"
     exts = bloco.group(1).split("|")
 

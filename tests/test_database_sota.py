@@ -2,13 +2,19 @@
 Testes SOTA para os gerenciadores de banco de dados (LabManager e QueueManager) do Nexus Orchestrator.
 """
 
+from __future__ import annotations
+
+# pylint: disable=protected-access
+
 import contextlib
 from datetime import UTC, datetime
+import os
 from pathlib import Path
 
 import aiosqlite
 import pytest
 
+import core.config
 from core.schemas import Task
 from database.lab_manager import LabManager, LabPersistenceUnavailableError
 from database.queue_manager import QueueManager
@@ -17,8 +23,6 @@ from database.queue_manager import QueueManager
 @pytest.fixture(autouse=True)
 def patch_valid_agents(monkeypatch: pytest.MonkeyPatch) -> None:
     """Garante que agentes de teste sao considerados validos pelo Pydantic."""
-    import core.config
-
     monkeypatch.setattr(core.config, "VALID_AGENTS", ["@maverick", "@chico", "@implementor"])
     monkeypatch.setattr(core.config, "PROTECTED_AGENTS_FROM_CLEANUP", ["@maverick", "@chico"])
 
@@ -125,8 +129,6 @@ async def test_queue_manager_in_memory_crud() -> None:
 @pytest.mark.unit
 def test_queue_manager_path_traversal_detection() -> None:
     """Valida a blindagem contra Path Traversal no QueueManager."""
-    import os
-
     manager = QueueManager(queue_path=":memory:")
     manager._is_memory = False
     if os.name == "nt":

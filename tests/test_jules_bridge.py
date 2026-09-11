@@ -15,6 +15,14 @@ from engine.jules_bridge import (
     JulesSessionRequest,
     JulesSessionStatus,
 )
+from engine.jules_mcp_server import (
+    jules_approve_plan,
+    jules_create_session,
+    jules_get_diff,
+    jules_get_session_status,
+    jules_list_sources,
+    start_new_jules_task,
+)
 
 
 def test_jules_session_request_payload() -> None:
@@ -158,15 +166,6 @@ def test_jules_client_list_sources() -> None:
 
 def test_jules_mcp_server_tools() -> None:
     """Valida a execucao e formato das ferramentas do Jules MCP Server."""
-    from engine.jules_mcp_server import (
-        jules_approve_plan,
-        jules_create_session,
-        jules_get_diff,
-        jules_get_session_status,
-        jules_list_sources,
-        start_new_jules_task,
-    )
-
     with (
         patch.object(JulesClient, "create_session") as mock_create,
         patch.object(JulesClient, "get_session_status") as mock_status,
