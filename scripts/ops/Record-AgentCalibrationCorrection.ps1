@@ -37,6 +37,10 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$Reason,
 
+    # Suprir campo que o registro alvo NAO tem. Exige intencao declarada para que
+    # erro de digitacao no nome do campo nao crie dado. Ver comentario na guarda.
+    [switch]$AddMissingField,
+
     [string]$Authority = 'Tier 0 - Raphael Vitoi',
 
     [string]$LedgerPath = ''
@@ -106,10 +110,30 @@ try {
         throw "event_id '$TargetEventId' aparece $($alvo.Count) vezes; ledger ambiguo."
     }
     $registro = $alvo[0]
-    if (-not $registro.PSObject.Properties.Name.Contains($Field)) {
-        throw "O registro alvo nao tem o campo '$Field'."
+    # A guarda abaixo existe para que erro de digitacao no nome do campo NAO crie
+    # um campo novo em silencio -- `conductor_modell` viraria dado. Ela nao foi
+    # removida; ganhou uma porta explicita.
+    #
+    # Motivo medido, 2026-09-11: o Tier 0 determinou que veiculo e modelo do
+    # condutor valem IGUALMENTE. Os registros anteriores a essa decisao nao tem o
+    # campo `conductor_vehicle`, e sem esta porta a unica forma de supri-lo seria
+    # reescrever o ledger -- exatamente o que ele proibe. Suprir campo ausente e
+    # correcao legitima; criar campo por engano nao e. A diferenca entre as duas e
+    # intencao declarada, e e isso que o parametro exige.
+    $campoExiste = $registro.PSObject.Properties.Name.Contains($Field)
+    if (-not $campoExiste -and -not $AddMissingField) {
+        throw ("O registro alvo nao tem o campo '$Field'. Se a intencao e SUPRIR um " +
+            "campo ausente, repita com -AddMissingField; sem isso a ausencia e " +
+            "tratada como erro de digitacao.")
     }
-    $valorAnterior = $registro.$Field
+    if ($campoExiste) {
+        $valorAnterior = $registro.$Field
+    }
+    else {
+        # Ausencia declarada como ausencia, nao como string vazia: o registro de
+        # correcao precisa dizer que nao havia valor, e nao inventar um.
+        $valorAnterior = $null
+    }
 
     $tail = $rows[-1]
     $record = New-HashChainedRecord -Sequence ([int]$tail.sequence + 1) -RecordType 'correction' -RecordedAt ([DateTimeOffset]::Now.ToString('o')) -PreviousHash ([string]$tail.record_hash) -Fields ([ordered]@{

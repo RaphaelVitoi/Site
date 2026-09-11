@@ -421,8 +421,34 @@ dia; passou a ser a sessão.**
 feedbacks de uma sessão declaram o mesmo `session_started_at`; divergência
 denuncia sessão partida. Toda sessão registrada declara obrigatoriamente o
 **modelo condutor exato (`conductor_model`)** (ex.: `gemini-3.8-flash`, `claude-opus-5`,
-`chatgpt-5.6`) e o **regime de supervisão (`supervision_mode`)**: `assistida`
+`gpt-5.6-terra`, `gpt-6-astra`), o **veículo do condutor (`conductor_vehicle`)** — a
+automação ou superfície que executou o modelo (ex.: `codex`, `antigravity`,
+`claude-code`) — e o **regime de supervisão (`supervision_mode`)**: `assistida`
 (assistida e arbitrada diretamente pelo Tier 0) ou `automatizada` (autônoma, background ou CI/CD).
+
+#### Veículo e modelo valem igualmente, e por isso são dois campos
+
+**Decisão do Tier 0 em 2026-09-11.** Até essa data o ledger registrava apenas o
+modelo, e o veículo não tinha campo. O custo apareceu medido, não em tese: o
+registro da sequência 16 dizia `Codex GPT-6` — veículo e modelo fundidos num campo
+só — e ao corrigi-lo para o identificador canônico do modelo, **o veículo foi
+descartado**. Campo que funde dois eixos perde um deles em toda correção.
+
+**É paridade, não hierarquia, porque nenhum dos dois é derivável do outro.** O
+mesmo modelo roda sob veículos diferentes, e o mesmo veículo conduz modelos
+diferentes: a fronteira de 2026-09-09 trocou `gpt-5.6-terra` por `gpt-6-astra`
+**sem** trocar o veículo `codex`. Quem souber só o veículo não sabe o modelo, e
+vice-versa.
+
+Em prosa e em frontmatter a forma composta `veiculo@modelo` já expressa os dois — é
+a convenção que a §7 fixa em `antigravity@gemini-3.8-flash`. Em dado estruturado
+eles são **dois campos**, porque dado estruturado é corrigido campo a campo.
+
+**Registro anterior à decisão não tem o campo, e a ausência aparece como ausência
+— lista vazia, nunca valor inventado.** Suprir o campo em registro histórico é
+correção legítima e passa por `Record-AgentCalibrationCorrection.ps1`
+`-AddMissingField`: a exigência de declarar a intenção existe para que erro de
+digitação no nome do campo não crie dado novo em silêncio.
 
 A métrica que autoriza avaliação é o número de **sessões distintas com
 feedback**, mínimo **três**. Três feedbacks numa mesma sessão **também são

@@ -201,6 +201,15 @@ $porSessao = @($todasAsSessoes | ForEach-Object {
         Where-Object { $_.PSObject.Properties.Name -contains 'supervision_mode' -and -not [string]::IsNullOrWhiteSpace([string]$_.supervision_mode) } |
         ForEach-Object { [string]$_.supervision_mode } |
         Sort-Object -Unique)
+    # Veiculo do condutor, em paridade com o modelo -- decisao do Tier 0 de
+    # 2026-09-11. Coletado igual aos modelos, e emitido ao lado deles: nenhum dos
+    # dois e derivavel do outro, e um campo que fundisse os dois perderia um em
+    # toda correcao. Registros anteriores a esta data nao tem o campo, e a
+    # ausencia aparece como lista vazia em vez de ser inventada.
+    $veiculos = @($daSessao |
+        Where-Object { $_.PSObject.Properties.Name -contains 'conductor_vehicle' -and -not [string]::IsNullOrWhiteSpace([string]$_.conductor_vehicle) } |
+        ForEach-Object { [string]$_.conductor_vehicle } |
+        Sort-Object -Unique)
     [pscustomobject]@{
         session_id            = $sid
         feedback_count        = $daSessao.Count
@@ -214,6 +223,7 @@ $porSessao = @($todasAsSessoes | ForEach-Object {
         session_started_at    = $declarados
         inicio_inconsistente  = ($declarados.Count -gt 1)
         conductor_models      = $modelos
+        conductor_vehicles    = $veiculos
         supervision_modes     = $regimes
     }
 } | Sort-Object -Property feedback_count -Descending)
