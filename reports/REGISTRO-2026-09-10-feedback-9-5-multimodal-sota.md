@@ -5,10 +5,11 @@ escopo: Site
 ecossistema: nexus-sota
 autor: gemini@3.8-flash
 criado_em: 2026-09-10T21:24:00-03:00
-atualizado_em: 2026-09-10T21:24:00-03:00
+atualizado_em: '2026-09-10T21:54:47-03:00'
 classes: [interno, medido, calibracao]
 caminhos:
   - reports/agent-calibration/feedback-ledger.jsonl
+  - frontend/src/app/api/v1/search/route.ts
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
