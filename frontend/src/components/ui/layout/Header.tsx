@@ -56,6 +56,11 @@ const NAV_ITEMS: NavItem[] = [
         href: ROUTES.AULAS.LEITURA_ICM,
         icon: 'fa-book-open-reader',
       },
+      {
+        label: 'Conceitos ICM',
+        href: ROUTES.AULAS.CONCEITOS,
+        icon: 'fa-scale-unbalanced',
+      },
     ],
   },
   {
@@ -274,7 +279,7 @@ const HeaderDesktopNav: React.FC<{
     : 'bg-bg-deep/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-2.5 flex flex-col gap-1 overflow-hidden relative';
 
   return (
-    <nav aria-label="Navegação principal" className="hidden items-center justify-center lg:flex">
+    <nav aria-label="Navegação principal" className="hidden items-center justify-center lg:flex justify-self-center">
       <ul className={menuPillClass}>
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href || Boolean(item.submenu?.some((sub) => pathname === sub.href));
@@ -588,8 +593,8 @@ export const Header: React.FC = () => {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className={`fixed top-0 right-0 left-0 z-50 transition-all duration-500 ${headerBgClass}`}
       >
-        <div className="sota-container flex items-center justify-between gap-6">
-          <div className="shrink-0">
+        <div className="sota-container flex items-center justify-between lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-4">
+          <div className="flex shrink-0 items-center justify-start justify-self-start">
             <HeaderBrand isLightPage={isLightPage} gemmaOnline={gemmaOnline} />
           </div>
 
@@ -600,26 +605,28 @@ export const Header: React.FC = () => {
             setActiveSubmenu={setActiveSubmenu}
           />
 
-          <div className="flex shrink-0 items-center gap-4">
-            {!isSimulatorPage && <Link href="/simulador" className={actionButtonClass}>
-              <div
-                className={`absolute inset-0 bg-linear-to-r ${
-                  isLightPage ? 'from-transparent via-white/10' : 'from-transparent via-white/20'
-                } -translate-x-full to-transparent group-hover:animate-[shimmer_1.5s_infinite]`}
-              />
-              <div
-                className={`absolute inset-0 bg-radial-[at_center_center] ${
-                  isLightPage ? 'from-white/10' : 'from-accent-indigo/20'
-                } to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100`}
-              />
-              <span
-                className={`relative text-[0.7rem] font-black tracking-[0.2em] uppercase transition-colors ${
-                  isLightPage ? 'text-[#FAFAF7]' : 'text-accent-indigo-light group-hover:text-white'
-                }`}
-              >
-                {HEADER_STRINGS.motorIcm}
-              </span>
-            </Link>}
+          <div className="flex shrink-0 items-center justify-end gap-4 justify-self-end">
+            {!isSimulatorPage && (
+              <Link href="/simulador" className={actionButtonClass}>
+                <div
+                  className={`absolute inset-0 bg-linear-to-r ${
+                    isLightPage ? 'from-transparent via-white/10' : 'from-transparent via-white/20'
+                  } -translate-x-full to-transparent group-hover:animate-[shimmer_1.5s_infinite]`}
+                />
+                <div
+                  className={`absolute inset-0 bg-radial-[at_center_center] ${
+                    isLightPage ? 'from-white/10' : 'from-accent-indigo/20'
+                  } to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100`}
+                />
+                <span
+                  className={`relative text-[0.7rem] font-black tracking-[0.2em] uppercase transition-colors ${
+                    isLightPage ? 'text-[#FAFAF7]' : 'text-accent-indigo-light group-hover:text-white'
+                  }`}
+                >
+                  {HEADER_STRINGS.motorIcm}
+                </span>
+              </Link>
+            )}
 
             <button
               type="button"

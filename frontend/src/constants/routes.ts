@@ -18,6 +18,7 @@ export const ROUTES = {
 		GEMMA: '/templo/gemma',
 	},
 	AULAS: {
+		INDEX: '/aulas',
 		MASTERCLASS: '/aulas/icm-masterclass',
 		POS_FLOP: '/aulas/icm-pos-flop',
 		LEITURA_ICM: '/aulas/leitura-icm',

@@ -131,9 +131,7 @@ export function useGemmaStream() {
 				}
 
 				await processSSEStream(response.body, (content) => {
-					if (firstTokenTime === null) {
-						firstTokenTime = Math.round(performance.now() - t0);
-					}
+					firstTokenTime ??= Math.round(performance.now() - t0);
 					bufferRef.current += content;
 
 					if (!isBufferingRef.current) {

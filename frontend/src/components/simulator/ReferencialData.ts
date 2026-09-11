@@ -1,4 +1,4 @@
-﻿/**
+/**
  * IDENTITY: Repositório de Dados Referenciais SOTA v7.0 GOLD
  * PATH: src/components/simulator/ReferencialData.ts
  * ROLE: Constantes e matrizes de calibração purificadas para validação do motor.
@@ -252,8 +252,8 @@ export const BB_ACTION_GRID: RangeCell[][] = [
 		{ raise: 100 },
 		{ raise: 100 },
 		{ raise: 100 },
-		{ fold: 100 },
-		{ fold: 100 },
+		{ shove: 100 },
+		{ shove: 100 },
 		{ shove: 100 },
 		{ shove: 100 },
 		{ call: 100 },

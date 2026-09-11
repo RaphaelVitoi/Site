@@ -7,14 +7,11 @@
  * BINDING: [engine/types.ts, components/simulator/ui/*]
  */
 
-import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 import { motion } from 'framer-motion';
-import { use, useState } from 'react';
-import { SotaMetricsContext } from '../SotaContext';
+import { useState } from 'react';
 import type { ChipEvFreqs, IcmDistortionResult, StreetChipEvFreqs } from '../solver/types';
 import { ActionRow } from '../ui/ActionRow';
 import { SotaTooltip } from '../ui/SotaTooltip';
-import { useGemmaStream } from '../useGemmaStream';
 
 interface NashPanelProps {
   nashFlop: IcmDistortionResult;
@@ -314,24 +311,6 @@ export default function NashPanel({
   const ipRp = isBaseline ? 0 : current.rps.ip;
   const oopRp = isBaseline ? 0 : current.rps.oop;
 
-  const metricsContext = use(SotaMetricsContext);
-  const predictiveProfile = metricsContext?.predictiveProfile;
-
-  const { streamedText, isStreaming, error, generateAnalysis } = useGemmaStream();
-
-  const handleConsultGemma = () => {
-    const riskAdv = metricsContext?.apiQuantumMetrics?.riskAdvantage ?? 0;
-    const prompt = `> SYSTEM: Atue como Arquiteto de Teoria dos Jogos SOTA v7.0 GOLD. Foco na Distorção de Nash e Antevisão Estratégica.
-> DATA: Street: ${current.label} | IP RP: ${ipRp.toFixed(1)}% | OOP RP: ${oopRp.toFixed(1)}% | Risk Advantage: ${riskAdv.toFixed(1)}% | Agressão (Psi): ${safeAggression.toFixed(1)}
-> PROFILE: ${JSON.stringify(predictiveProfile || {})}
-> TASK: Forneça uma análise visceral (máx 200 palavras) explicando o desvio da estratégia GTO pura. Como o Risk Advantage justifica essa topologia de frequências?`;
-    generateAnalysis(prompt, 512, 'auto', undefined, predictiveProfile ?? undefined);
-  };
-
-  const displayContent =
-    streamedText ||
-    'Aguardando pulso neural. Inicie a varredura para extrair o raciocínio GTO subjacente à distorção.';
-
   return (
     <div className="glass-panel bg-bg-panel/80 group/nash animate-sota-in relative flex flex-col gap-12 overflow-hidden rounded-4xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] backdrop-blur-3xl transition-all duration-700">
       <div className="bg-accent-indigo/10 group-hover/nash:bg-accent-indigo/15 pointer-events-none absolute -top-32 -right-32 h-80 w-80 rounded-full blur-[140px] transition-all duration-1000" />
@@ -460,46 +439,6 @@ export default function NashPanel({
         aggressionFactor={safeAggression}
         onAggressionChange={onAggressionChange}
       />
-
-      {/* ORÁCULO DE BORDA (GEMMA 4) - ANÁLISE DE DISTORÇÃO */}
-      <div className="relative z-10 mt-10 border-t border-white/5 pt-12">
-        <div className="mb-10 flex items-center justify-between">
-          <h3 className="flex items-center gap-4 text-[0.9rem] font-black tracking-[0.4em] text-white uppercase">
-            <i className="fa-solid fa-microchip text-accent-indigo" />
-            <span>Análise Preditiva (Gemma Edge)</span>
-          </h3>
-          <button
-            type="button"
-            onClick={handleConsultGemma}
-            disabled={isStreaming}
-            className="bg-accent-indigo/10 hover:bg-accent-indigo/20 text-accent-indigo-light border-accent-indigo/30 flex items-center gap-3 rounded-xl border px-6 py-3 text-[0.7rem] font-black tracking-[0.3em] uppercase transition-all disabled:opacity-50"
-          >
-            {isStreaming ? (
-              <span className="flex items-center gap-3">
-                <i className="fa-solid fa-atom animate-spin" />
-                <span>{LABELS.processing}</span>
-              </span>
-            ) : (
-              <span className="flex items-center gap-3">
-                <i className="fa-solid fa-radar" />
-                <span>{LABELS.injectTelemetry}</span>
-              </span>
-            )}
-          </button>
-        </div>
-
-        <div className="relative overflow-hidden rounded-4xl border border-white/5 bg-black/40 p-10 shadow-inner">
-          <div className="bg-accent-indigo/5 pointer-events-none absolute top-0 right-0 h-48 w-48 rounded-full blur-[80px]" />
-          {error && (
-            <div className="text-accent-danger bg-accent-danger/10 border-accent-danger/20 mb-6 rounded-xl border p-4 text-xs">
-              {error}
-            </div>
-          )}
-          <div className="relative z-10 text-[1rem] leading-relaxed">
-            <SotaMarkdown content={displayContent} />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

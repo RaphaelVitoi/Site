@@ -61,8 +61,13 @@ export function compareTerminalUtilities(a: { win: number; loss: number; fold: n
     const call = probability * a.win + (1 - probability) * a.loss;
     const delta = call - a.fold;
     const tolerance = 1e-12 * Math.max(1, Math.abs(call), Math.abs(a.fold));
-    return { probability, fold: a.fold, call, delta,
-      comparison: Math.abs(delta) <= tolerance ? 'tie' as const : delta > 0 ? 'call' as const : 'fold' as const };
+    let comparison: 'tie' | 'call' | 'fold' = 'fold';
+    if (Math.abs(delta) <= tolerance) {
+      comparison = 'tie';
+    } else if (delta > 0) {
+      comparison = 'call';
+    }
+    return { probability, fold: a.fold, call, delta, comparison };
   });
   const rawThreshold = a.win === a.loss ? null : (a.fold - a.loss) / (a.win - a.loss);
   const threshold = rawThreshold !== null && rawThreshold >= 0 && rawThreshold <= 1 ? rawThreshold : null;

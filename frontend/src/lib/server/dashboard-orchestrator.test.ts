@@ -1,6 +1,6 @@
 jest.mock('server-only', () => ({}));
 
-import { shouldQueryDashboardOrchestrator } from '@/lib/server/dashboard-orchestrator';
+import { shouldQueryDashboardOrchestrator } from './dashboard-orchestrator';
 
 describe('dashboard orchestrator boundary', () => {
 	it('does not query the protected Nexus service without a server relay credential', () => {

@@ -245,7 +245,7 @@ export function classifyTier(stack: number, stacks: number[]): StackTier {
  * `potSize` e dinheiro JA DESTACADO dos stacks -- a pot odds crua em
  * `_calculateThresholds` le `heroCost / (potSize + heroCost)`, o que so fecha se
  * o pote nao contiver o call do hero e nao estiver mais nos stacks. Disso segue
- * que TODO ramo terminal vale `soma(stacks) + potSize`: alguem recolhe o pote.
+ * que todo ramo terminal vale `soma(stacks) + potSize`: alguem recolhe o pote.
  *
  * Ate 2026-09-08 apenas o ramo `lose` cumpria isso. O `win` esquecia de devolver
  * ao hero o proprio call e o `fold` debitava um investimento que ja estava no
@@ -259,7 +259,7 @@ export function buildSimulatedStacks(
 	villainIdx: number,
 	potSize: number,
 	heroCost: number,
-	investidoAcumulado: number,
+	_investidoAcumulado?: number,
 ) {
 	const stackHero = stacks[heroIdx] || 0;
 	// Ninguem paga mais do que tem: com stack curto o hero esta all-in por menos, e
@@ -277,7 +277,6 @@ export function buildSimulatedStacks(
 
 	// Desistencia: o vilao recolhe o pote, que JA contem o investido acumulado do
 	// hero. Debitar o hero outra vez seria contar o mesmo investimento duas vezes.
-	void investidoAcumulado;
 	const stacksFold = [...stacks];
 	stacksFold[heroIdx] = stackHero;
 	stacksFold[villainIdx] = (stacksFold[villainIdx] || 0) + potSize;

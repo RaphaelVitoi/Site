@@ -9,8 +9,12 @@ export async function POST(request: Request) {
   try {
     return NextResponse.json(evaluateCounterfactual(input), { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof ZodError
-      ? 'Informe contexto completo, valores finitos e probabilidades entre 0 e 1.'
-      : error instanceof Error ? error.message : 'Não foi possível avaliar o experimento.' }, { status: 422 });
+    let errorMessage = 'Não foi possível avaliar o experimento.';
+    if (error instanceof ZodError) {
+      errorMessage = 'Informe contexto completo, valores finitos e probabilidades entre 0 e 1.';
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return NextResponse.json({ error: errorMessage }, { status: 422 });
   }
 }
