@@ -34,31 +34,46 @@ Na auditoria de 21/08/2026, os nove submódulos estavam presentes e tinham orige
 
 O detalhe da classificação atual está em [docs/audits/2026-08-21-submodule-classification.md](../audits/2026-08-21-submodule-classification.md).
 
-### Uma das oito alterações locais, classificada em 11/09/2026
+### As oito alterações locais, todas classificadas em 11/09/2026
 
-`skills/exa-mcp-server` era, em 10/09, uma árvore suja em HEAD desanexado com 22
-arquivos modificados e 20 de 158 testes reprovando. Revisada por diff, corrigida e
-**classificada como patch intencional** pela regra 4 acima.
+Em 10/09 havia oito diretórios de `skills/` com árvore suja em HEAD desanexado,
+invisíveis ao `git status` do superprojeto por `ignore = dirty`. Todas foram
+revisadas por diff e classificadas pela regra 4 acima. **Nenhuma era desvio.**
 
-| Fato | Valor |
-| :--- | :--- |
-| Commit do patch | `f3b1349` |
-| Onde vive | `github.com/RaphaelVitoi/exa-mcp-server`, branch `chore/sonarlint-campaign-20260911` |
-| Origem declarada | **inalterada** — `origin` do submódulo segue `exa-labs/exa-mcp-server` |
-| Ponteiro no superprojeto | **inalterado** — `15ffb505`, o HEAD upstream |
+| Submódulo | Natureza medida | Verificação | Branch no fork |
+| :--- | :--- | :--- | :--- |
+| `exa-mcp-server` | 20 achados SonarLint; stub de teste sem `registerTool` reprovava 20 testes | 158/158, tsc 0 | `chore/sonarlint-campaign-20260911` |
+| `Stitch` | escopo OAuth `cloud_platform` → `cloud-platform`; **bug real** | comparação com escopo canônico | `fix/escopo-oauth-cloud-platform` |
+| `gemini-cli-jules` | injeção de script no workflow; `Reflect` removido | tsc paritário, 2/2 | `fix/injecao-no-workflow-e-registro-da-tool` |
+| `gemini-cli-security` | extração de runners em `runPoc`; `vitest.config.ts` próprio | tsc 0; 32/36, **idêntico ao upstream** | `refactor-runners-de-poc-e-fronteira-do-vitest` |
+| `gemini-deep-research` | `node:`, tipagem de mock, supressões estreitas | tsc 0, jest 47/47, eslint limpo | `chore/lint-e-tipagem-de-mock` |
+| `gemini-supermemory` | **remove egress automático de sessão** | build 0; artefato órfão em `dist/` removido | `refactor/remove-egress-automatico-de-sessao` |
+| `superpowers` | `node:`, `exec`, sonda de `dot` que roda no Windows | pytest 19/19, node:test 6/6 | `chore/lint-e-sonda-de-dot-no-windows` |
+| `token-efficiency` | prefixo `node:` | leitura | `chore/prefixo-node-nos-imports` |
 
-**O fork é destino do patch, não nova origem.** Repontar o submódulo criaria
-obrigação permanente de rebase a cada versão upstream, para um pacote que a
-auditoria manda *manter desabilitado até revisão*; e mudaria em silêncio a origem
-declarada na tabela acima, que existe justamente para impedir isso. Vendorizar foi
-recusado pelo mesmo motivo: apagaria a fronteira que este documento mantém, e 473 KB
-de código externo de OAuth e rede passariam a parecer código próprio num repositório
-público.
+`core/vendor/eigen` estava limpo e segue limpo.
+
+**O fork é destino do patch, não nova origem.** Em todos os oito casos, o `origin`
+do submódulo e o ponteiro no superprojeto ficaram **inalterados**. Repontar criaria
+obrigação permanente de rebase a cada versão upstream, para pacotes que a auditoria
+manda *manter desabilitados até revisão*; e mudaria em silêncio a origem declarada
+na tabela acima, que existe justamente para impedir isso. Vendorizar foi recusado
+pelo mesmo motivo: apagaria a fronteira que este documento mantém.
 
 Consequência para quem clonar: `git submodule update --init` traz o upstream sem os
-consertos, **e isso é o esperado**. O patch está pinado e localizável; promovê-lo é
-ato deliberado, não efeito colateral.
+consertos, **e isso é o esperado**. Os patches estão pinados e localizáveis; promovê-los
+é ato deliberado, não efeito colateral.
 
-As outras sete alterações locais seguem sem revisão por diff. Varredura de
-credencial com `data/PADROES_DE_CREDENCIAL.json` nos 88 arquivos rastreados do
-`exa-mcp-server` antes da publicação do fork: zero ocorrências.
+**Dois achados que a revisão produziu e a contagem não mostraria.** No
+`gemini-supermemory`, `src/hooks/session-end.js` enviava um resumo de cada sessão de
+código para a API da Supermemory a cada encerramento; a remoção era necessária, e
+estava *pela metade* — o artefato compilado `dist/hooks/session-end.js` seguia
+versionado com o código de envio dentro. No `gemini-cli-jules`, o workflow
+interpolava `${{ github.event.release.tag_name }}` direto num `run:`, que é o vetor
+clássico de injeção de script em Actions.
+
+Varredura de credencial com `data/PADROES_DE_CREDENCIAL.json` em todos os
+submódulos antes de publicar: uma única ocorrência, em `gemini-cli-security/GEMINI.md`,
+e é **falso positivo por construção** — a documentação da ferramenta lista
+`-----BEGIN RSA PRIVATE KEY` como padrão a detectar. Arquivo intocado e já público
+no upstream.
