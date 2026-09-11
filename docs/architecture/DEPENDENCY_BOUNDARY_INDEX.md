@@ -33,3 +33,32 @@ origem declarada → revisão/pin → diff isolado → permissões e egress → 
 Na auditoria de 21/08/2026, os nove submódulos estavam presentes e tinham origens HTTPS declaradas. Oito diretórios em `skills/` continham alterações locais anteriores que exigem revisão por diff antes de qualquer limpeza. Esta página é o índice de decisão; ela não substitui essa revisão.
 
 O detalhe da classificação atual está em [docs/audits/2026-08-21-submodule-classification.md](../audits/2026-08-21-submodule-classification.md).
+
+### Uma das oito alterações locais, classificada em 11/09/2026
+
+`skills/exa-mcp-server` era, em 10/09, uma árvore suja em HEAD desanexado com 22
+arquivos modificados e 20 de 158 testes reprovando. Revisada por diff, corrigida e
+**classificada como patch intencional** pela regra 4 acima.
+
+| Fato | Valor |
+| :--- | :--- |
+| Commit do patch | `f3b1349` |
+| Onde vive | `github.com/RaphaelVitoi/exa-mcp-server`, branch `chore/sonarlint-campaign-20260911` |
+| Origem declarada | **inalterada** — `origin` do submódulo segue `exa-labs/exa-mcp-server` |
+| Ponteiro no superprojeto | **inalterado** — `15ffb505`, o HEAD upstream |
+
+**O fork é destino do patch, não nova origem.** Repontar o submódulo criaria
+obrigação permanente de rebase a cada versão upstream, para um pacote que a
+auditoria manda *manter desabilitado até revisão*; e mudaria em silêncio a origem
+declarada na tabela acima, que existe justamente para impedir isso. Vendorizar foi
+recusado pelo mesmo motivo: apagaria a fronteira que este documento mantém, e 473 KB
+de código externo de OAuth e rede passariam a parecer código próprio num repositório
+público.
+
+Consequência para quem clonar: `git submodule update --init` traz o upstream sem os
+consertos, **e isso é o esperado**. O patch está pinado e localizável; promovê-lo é
+ato deliberado, não efeito colateral.
+
+As outras sete alterações locais seguem sem revisão por diff. Varredura de
+credencial com `data/PADROES_DE_CREDENCIAL.json` nos 88 arquivos rastreados do
+`exa-mcp-server` antes da publicação do fork: zero ocorrências.
