@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-10T21:57:22-03:00'
-atualizado_em: '2026-09-10T21:57:22-03:00'
+atualizado_em: '2026-09-10T23:24:00-03:00'
 classes: [interno, medido, handoff]
 verificado:
   - portao de ancora e portao de registro aprovados em todos os commits da sessao
@@ -332,15 +332,23 @@ de instruir o modelo a tratar HTML de terceiros como autoritativo, e o link pass
 por allowlist de esquema antes de virar `href`. Detalhe em
 `REGISTRO-2026-09-10-busca-web-como-dado-nao-confiavel.md`.
 
-## 5. O que fica aberto
+## 5. O que ficou aberto, e o que foi fechado depois
 
-| Item | Estado |
+A tabela abaixo foi escrita antes das tres ultimas rodadas da sessao e **estava
+obsoleta em quatro das cinco linhas**. Corrigida com o estado final:
+
+| Item | Estado final |
 | :--- | :--- |
-| Portao audita pagina nao confirmada | **defeito aberto** — deveria falhar se a URL da aba nao casar com o target |
-| Portao compara build de dev com limiar de producao | **defeito aberto** — TTFB de 1078 ms em dev contra 3 ms em producao, 350x. O teto de 800 ms e normativo de producao |
-| Validador do ledger em PowerShell 5.1 | reprova cadeia valida; a promessa de compatibilidade 5.1 nao se sustenta |
-| Duplicatas em `~/.claude` | o `Launch-ChromeSOTA.ps1` de la esta 28 linhas atras, e ha arvore `Site/` duplicada que a secao 2 da raiz proibe. **Nada removido** — exclusao em escopo de usuario exige autorizacao |
-| 15 scripts da raiz sem consumidor | ausencia de invocacao medida; obsolescencia **nao** determinada |
+| Portao auditava pagina nao confirmada | **FECHADO** em `73005a67`. `Page.navigate` nao falha com o destino fora do ar: o Chrome entrega a propria pagina de erro, e era ela que o portao auditava. Tres checagens aditivas: `errorText`, `#main-frame-error`, origem de `location.href` |
+| Portao comparava build de dev com limiar de producao | **FECHADO** em `73005a67`, por observabilidade e nao por reducao. O teto de 800 ms continua normativo de producao; o `Desc` do indicador passou a declarar isso e a citar 1078 ms em dev contra 3 ms em producao |
+| Validador do ledger em PowerShell 5.1 | **FECHADO** em `73005a67`. Ele recusa o 5.1 com mensagem que diz o que fazer, em vez de reprovar cadeia integra. A causa da divergencia de `ConvertTo-Json` fica declarada como **nao medida** |
+| Duplicatas em `~/.claude` | **FECHADO** em `90c7900` e `c6b0570` da raiz. 19 scripts soltos removidos com backup; a arvore `Site/` de 8,98 GB removida depois de provado merito zero -- 8 dos 9 nao rastreados byte-identicos ao versionado, e as 34 modificacoes superadas |
+| 15 scripts da raiz sem consumidor | **CONTINUA ABERTO.** Ausencia de invocacao medida; obsolescencia **nao** determinada. E o unico item desta tabela que sobrevive |
+
+**Os tres primeiros exigiram autorizacao explicita do Tier 0**, porque a secao
+10.3 proibe o agente alterar o instrumento que o mede. Concedida em 2026-09-10; as
+tres correcoes foram mantidas aditivas de proposito, para reverterem por `git
+revert` sem efeito colateral.
 
 ## 6. Feedback da sessao
 
