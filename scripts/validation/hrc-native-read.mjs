@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire, registerHooks } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -20,12 +20,37 @@ if (!fs.existsSync(jar)) throw new Error('This probe is bound to HRC 4.1.0.20260
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
 const sourceRoot = path.join(root, 'frontend/src') + path.sep;
-require.extensions['.ts'] = (module, filename) => {
-  if (!filename.startsWith(sourceRoot)) throw new Error('Only repository frontend TypeScript may be loaded by this probe.');
-  module._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
-  }).outputText, filename);
-};
+// registerHooks no lugar de require.extensions, que o Node deprecou. A guarda de
+// escopo e a razao de existir do hook e continua intacta: so TypeScript do frontend
+// deste repositorio pode ser carregado aqui. Exige Node >= 22.15.
+registerHooks({
+  // require.extensions ensinava tambem o RESOLVEDOR a tentar .ts; o hook load
+  // sozinho nao faz isso, e um import relativo sem extensao (./hrcStructure)
+  // falharia antes de chegar aqui.
+  resolve(specifier, context, nextResolve) {
+    try {
+      return nextResolve(specifier, context);
+    } catch (erro) {
+      if (!specifier.startsWith('.') || !context.parentURL) throw erro;
+      const base = path.resolve(path.dirname(fileURLToPath(context.parentURL)), specifier);
+      const candidato = [base + '.ts', path.join(base, 'index.ts')].find(f => fs.existsSync(f));
+      if (!candidato) throw erro;
+      return { url: pathToFileURL(candidato).href, format: 'commonjs', shortCircuit: true };
+    }
+  },
+  load(url, context, nextLoad) {
+    if (!url.startsWith('file:') || !url.endsWith('.ts')) return nextLoad(url, context);
+    const filename = fileURLToPath(url);
+    if (!filename.startsWith(sourceRoot)) throw new Error('Only repository frontend TypeScript may be loaded by this probe.');
+    return {
+      format: 'commonjs',
+      shortCircuit: true,
+      source: ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+      }).outputText,
+    };
+  },
+});
 const { parseTournamentSnapshot, normalizeTournamentPlayers } = require(path.join(sourceRoot, 'lib/tournamentContext.ts'));
 const { readHRCPrizes } = require(path.join(sourceRoot, 'lib/hrcPrizes.ts'));
 const { generateHRCHandConfig } = require(path.join(sourceRoot, 'lib/hrcFormat.ts'));
