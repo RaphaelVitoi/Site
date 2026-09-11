@@ -43,6 +43,406 @@ config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
 revisoes_de_ancora:
+  - registro: auditoria-2026-09-08-o-que-esta-em-aberto-na-malha
+    caminhos:
+      - frontend/next-env.d.ts
+    parecer: >-
+      Revisado e mantido valido. A mudanca neste caminho e aditiva.
+      Conferido por busca no texto daquele documento: ele nao menciona o
+      event_id 0b30eafd nem a sessao 01a07276, que sao o alvo da supressao
+      de campo, logo nenhuma conclusao dele depende do valor corrigido. Ele
+      cita 21 registro(s); hoje sao 26, e a divergencia fica declarada
+      porque contagem em prosa e retrato do momento, nao invariante. Suite
+      de calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-07-certificacao-tbt-e-zero-warnings-cwv
+    caminhos:
+      - frontend/next-env.d.ts
+    parecer: >-
+      Revisado e mantido valido. A mudanca neste caminho e aditiva.
+      Conferido por busca no texto daquele documento: ele nao menciona o
+      event_id 0b30eafd nem a sessao 01a07276, que sao o alvo da supressao
+      de campo, logo nenhuma conclusao dele depende do valor corrigido.
+      Suite de calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: auditoria-2026-09-01-retrospectiva-prioridade-sessao
+    caminhos:
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no registrador e aditiva: um
+      parametro opcional -ConductorVehicle e o campo conductor_vehicle,
+      gravado apenas quando informado. Nenhuma validacao existente mudou, e
+      registro anterior segue valido sem o campo. Conferido por busca no
+      texto daquele documento: ele nao menciona o event_id 0b30eafd nem a
+      sessao 01a07276, que sao o alvo da supressao de campo, logo nenhuma
+      conclusao dele depende do valor corrigido. Suite de calibracao apos a
+      mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: auditoria-2026-09-03-trabalho-do-gemini-3-8-flash
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Ele cita 12
+      registro(s); hoje sao 26, e a divergencia fica declarada porque
+      contagem em prosa e retrato do momento, nao invariante. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: auditoria-2026-09-03-trabalho-do-gemini-3-8-flash
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no gerador e aditiva: uma coleta
+      nova, conductor_vehicles, emitida ao lado de conductor_models. Nenhuma
+      regra de contagem, o portao de suficiencia, a aplicacao de correcoes e
+      a janela de sessao ficaram intocadas. Conferido por busca no texto
+      daquele documento: ele nao menciona o event_id 0b30eafd nem a sessao
+      01a07276, que sao o alvo da supressao de campo, logo nenhuma conclusao
+      dele depende do valor corrigido. Ele cita 12 registro(s); hoje sao 26,
+      e a divergencia fica declarada porque contagem em prosa e retrato do
+      momento, nao invariante. Suite de calibracao apos a mudanca: 28
+      testes, 0 erros, 0 warnings.
+  - registro: auditoria-2026-09-03-trabalho-do-gemini-3-8-flash
+    caminhos:
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no registrador e aditiva: um
+      parametro opcional -ConductorVehicle e o campo conductor_vehicle,
+      gravado apenas quando informado. Nenhuma validacao existente mudou, e
+      registro anterior segue valido sem o campo. Conferido por busca no
+      texto daquele documento: ele nao menciona o event_id 0b30eafd nem a
+      sessao 01a07276, que sao o alvo da supressao de campo, logo nenhuma
+      conclusao dele depende do valor corrigido. Ele cita 12 registro(s);
+      hoje sao 26, e a divergencia fica declarada porque contagem em prosa e
+      retrato do momento, nao invariante. Suite de calibracao apos a
+      mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: auditoria-2026-09-05-trabalho-assistido-do-gemini-no-ide
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no gerador e aditiva: uma coleta
+      nova, conductor_vehicles, emitida ao lado de conductor_models. Nenhuma
+      regra de contagem, o portao de suficiencia, a aplicacao de correcoes e
+      a janela de sessao ficaram intocadas. Conferido por busca no texto
+      daquele documento: ele nao menciona o event_id 0b30eafd nem a sessao
+      01a07276, que sao o alvo da supressao de campo, logo nenhuma conclusao
+      dele depende do valor corrigido. Suite de calibracao apos a mudanca:
+      28 testes, 0 erros, 0 warnings.
+  - registro: checkpoint-2026-06-14-infrastructure-hardening
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: handoff-2026-08-29-governanca-8tiers-vulnerabilidades-subagents
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: handoff-2026-09-01-prioridade-pmev-continuacao
+    caminhos:
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no registrador e aditiva: um
+      parametro opcional -ConductorVehicle e o campo conductor_vehicle,
+      gravado apenas quando informado. Nenhuma validacao existente mudou, e
+      registro anterior segue valido sem o campo. Conferido por busca no
+      texto daquele documento: ele nao menciona o event_id 0b30eafd nem a
+      sessao 01a07276, que sao o alvo da supressao de campo, logo nenhuma
+      conclusao dele depende do valor corrigido. Suite de calibracao apos a
+      mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-08-29-governanca-piramidal-sota
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-01-ancora-de-merge-e-instrucao-indexada
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Ele cita 5
+      registro(s); hoje sao 26, e a divergencia fica declarada porque
+      contagem em prosa e retrato do momento, nao invariante. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no gerador e aditiva: uma coleta
+      nova, conductor_vehicles, emitida ao lado de conductor_models. Nenhuma
+      regra de contagem, o portao de suficiencia, a aplicacao de correcoes e
+      a janela de sessao ficaram intocadas. Conferido por busca no texto
+      daquele documento: ele nao menciona o event_id 0b30eafd nem a sessao
+      01a07276, que sao o alvo da supressao de campo, logo nenhuma conclusao
+      dele depende do valor corrigido. Ele cita 5 registro(s); hoje sao 26,
+      e a divergencia fica declarada porque contagem em prosa e retrato do
+      momento, nao invariante. Suite de calibracao apos a mudanca: 28
+      testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
+    caminhos:
+      - scripts/ops/Record-AgentCalibrationCorrection.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no script de correcao preserva a
+      guarda que impede campo novo por engano e acrescenta a porta explicita
+      -AddMissingField para suprir campo ausente em registro historico. Sem
+      o parametro, o comportamento e identico ao anterior. Conferido por
+      busca no texto daquele documento: ele nao menciona o event_id 0b30eafd
+      nem a sessao 01a07276, que sao o alvo da supressao de campo, logo
+      nenhuma conclusao dele depende do valor corrigido. Ele cita 5
+      registro(s); hoje sao 26, e a divergencia fica declarada porque
+      contagem em prosa e retrato do momento, nao invariante. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-02-cultura-invariante-no-gerador-de-evidencia
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no gerador e aditiva: uma coleta
+      nova, conductor_vehicles, emitida ao lado de conductor_models. Nenhuma
+      regra de contagem, o portao de suficiencia, a aplicacao de correcoes e
+      a janela de sessao ficaram intocadas. Conferido por busca no texto
+      daquele documento: ele nao menciona o event_id 0b30eafd nem a sessao
+      01a07276, que sao o alvo da supressao de campo, logo nenhuma conclusao
+      dele depende do valor corrigido. Ele cita 3 registro(s); hoje sao 26,
+      e a divergencia fica declarada porque contagem em prosa e retrato do
+      momento, nao invariante. Suite de calibracao apos a mudanca: 28
+      testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-02-portao-de-calibracao-por-sessao
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-02-portao-de-calibracao-por-sessao
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no gerador e aditiva: uma coleta
+      nova, conductor_vehicles, emitida ao lado de conductor_models. Nenhuma
+      regra de contagem, o portao de suficiencia, a aplicacao de correcoes e
+      a janela de sessao ficaram intocadas. Conferido por busca no texto
+      daquele documento: ele nao menciona o event_id 0b30eafd nem a sessao
+      01a07276, que sao o alvo da supressao de campo, logo nenhuma conclusao
+      dele depende do valor corrigido. Suite de calibracao apos a mudanca:
+      28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-02-portao-de-calibracao-por-sessao
+    caminhos:
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no registrador e aditiva: um
+      parametro opcional -ConductorVehicle e o campo conductor_vehicle,
+      gravado apenas quando informado. Nenhuma validacao existente mudou, e
+      registro anterior segue valido sem o campo. Conferido por busca no
+      texto daquele documento: ele nao menciona o event_id 0b30eafd nem a
+      sessao 01a07276, que sao o alvo da supressao de campo, logo nenhuma
+      conclusao dele depende do valor corrigido. Suite de calibracao apos a
+      mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-03-triade-fronteira-chico-e-concorrencia
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-05-fechamento-do-ciclo-de-calibracao
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no gerador e aditiva: uma coleta
+      nova, conductor_vehicles, emitida ao lado de conductor_models. Nenhuma
+      regra de contagem, o portao de suficiencia, a aplicacao de correcoes e
+      a janela de sessao ficaram intocadas. Conferido por busca no texto
+      daquele documento: ele nao menciona o event_id 0b30eafd nem a sessao
+      01a07276, que sao o alvo da supressao de campo, logo nenhuma conclusao
+      dele depende do valor corrigido. Ele cita 14 registro(s); hoje sao 26,
+      e a divergencia fica declarada porque contagem em prosa e retrato do
+      momento, nao invariante. Suite de calibracao apos a mudanca: 28
+      testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-05-regua-para-agente-autonomo-de-nuvem
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-07-integracao-gpt6-astra-e-retirada-do-fable
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-08-arbitragem-soberana-sobre-a-lei-de-concorrencia
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Ele cita 15
+      registro(s); hoje sao 26, e a divergencia fica declarada porque
+      contagem em prosa e retrato do momento, nao invariante. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-09-o-teste-media-o-ledger-da-maquina
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Revisado e mantido valido. A mudanca no gerador e aditiva: uma coleta
+      nova, conductor_vehicles, emitida ao lado de conductor_models. Nenhuma
+      regra de contagem, o portao de suficiencia, a aplicacao de correcoes e
+      a janela de sessao ficaram intocadas. Conferido por busca no texto
+      daquele documento: ele nao menciona o event_id 0b30eafd nem a sessao
+      01a07276, que sao o alvo da supressao de campo, logo nenhuma conclusao
+      dele depende do valor corrigido. Suite de calibracao apos a mudanca:
+      28 testes, 0 erros, 0 warnings.
+  - registro: registro-2026-09-09-saneamento-medicao-datada-identificacao-agentes
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: relatorio-2026-08-29-analise-integral-ecossistema-sota-v8-gold
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: relatorio-2026-08-29-impacto-quantitativo-qualitativo-sota-v8-gold
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado e mantido valido. A mudanca no CLAUDE.md e aditiva: a secao
+      8.3 passou a exigir conductor_vehicle ao lado de conductor_model e do
+      regime de supervisao, e ganhou a subsecao que explica por que sao dois
+      campos. Nenhuma regra foi removida, afrouxada ou renumerada. Conferido
+      por busca no texto daquele documento: ele nao menciona o event_id
+      0b30eafd nem a sessao 01a07276, que sao o alvo da supressao de campo,
+      logo nenhuma conclusao dele depende do valor corrigido. Suite de
+      calibracao apos a mudanca: 28 testes, 0 erros, 0 warnings.
+  - registro: agent-calibration-daily-2026-09-02
+    caminhos:
+      - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
+    parecer: >-
+      Revisado e mantido valido. Aquele diario ancora no gerador porque foi ele
+      que produziu a contagem da secao (a) -- 2 registros totais, 1 no dia,
+      retido e insuficiente. A alteracao no gerador e estritamente ADITIVA: uma
+      coleta nova, conductor_vehicles, emitida ao lado de conductor_models. Nao
+      toquei em nenhuma regra de contagem, no portao de suficiencia, na aplicacao
+      de correcoes nem na janela de sessao. Logo a contagem e o veredito daquele
+      diario sao aritmeticamente os mesmos se o gerador for reexecutado para
+      2026-09-02, e o campo novo apareceria vazio ali, porque nenhum registro
+      daquela data declara veiculo. Conferido pelo diff do gerador e pela suite
+      de calibracao -- 28 testes, 0 erros, 0 warnings.
   - registro: auditoria-2026-09-01-retrospectiva-prioridade-sessao
     caminhos:
       - reports/agent-calibration/feedback-ledger.jsonl
@@ -628,6 +1028,38 @@ O que sobra é real e é de outra natureza: o frontmatter do diário tem **um** 
 script — é o passo 7 da instrução da tarefa agendada, que fixa a ordem das seções e
 não prevê atribuição por apêndice. Mudança ali é do Tier 0, e eu não mexo em
 instrução de tarefa.
+
+### 4.4 Veículo e modelo, em paridade — autorizado e implementado
+
+**Decisão do Tier 0, 2026-09-11:** o condutor declara veículo **e** modelo,
+igualmente. A inconsistência era minha: no diário escrevi `codex@gpt-5.6-terra`, com
+os dois eixos, e na correção do ledger gravei só `gpt-5.6-terra` — **descartando o
+veículo que o valor errado original até carregava.** Campo que funde dois eixos
+perde um deles em toda correção.
+
+Três instrumentos alterados, sob autorização explícita (§10.3):
+
+| Instrumento | Mudança |
+| :--- | :--- |
+| `Register-AgentCalibrationFeedback.ps1` | parâmetro `-ConductorVehicle`, campo `conductor_vehicle` |
+| `New-AgentCalibrationDailyEvidence.ps1` | coleta e emite `conductor_vehicles` ao lado de `conductor_models` |
+| `Record-AgentCalibrationCorrection.ps1` | `-AddMissingField` para suprir campo ausente em registro histórico |
+
+**A guarda de campo ausente não foi removida — ganhou porta explícita.** Ela existe
+para que `conductor_modell` não crie campo em silêncio; suprir ausência é correção
+legítima, criar campo por engano não é, e a diferença entre as duas é **intenção
+declarada**. O registro de correção grava `previous_value: null`: ausência declarada
+como ausência, nunca como string vazia.
+
+**Verificado:** sequência 25 supre `conductor_vehicle: codex` no `event_id 0b30eafd`;
+validador `valid` com 26 registros; `correcoes_aplicadas: 5`; o `por_sessao` daquela
+sessão lê `modelo=[gpt-5.6-terra] veiculo=[codex]` e as demais sessões mostram
+veículo **vazio** — ausência, não invenção. Os três `.ps1` com BOM único, zero LF
+solitário, parser sem erro e nenhum construto exclusivo do PowerShell 7. Suíte de
+calibração: **28 testes, 0 erros, 0 warnings**.
+
+**Paridade é o argumento, não simetria estética:** nenhum dos dois eixos é derivável
+do outro. A fronteira de 09-09 trocou o modelo sem trocar o veículo.
 
 ## 5. Um vazio declarado
 

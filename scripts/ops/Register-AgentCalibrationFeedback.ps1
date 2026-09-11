@@ -32,6 +32,11 @@ param(
     # Modelo exato que conduziu a sessao (ex.: gemini-3.8-flash, claude-opus-5, chatgpt-5.6).
     [string]$ConductorModel = '',
 
+    # Veiculo do condutor -- a automacao ou superficie que executou o modelo.
+    # Vale IGUALMENTE ao modelo, por decisao do Tier 0 em 2026-09-11. Exemplos
+    # medidos nesta malha: codex, antigravity, claude-code.
+    [string]$ConductorVehicle = '',
+
     # Regime de operacao da sessao: assistida (arbitrada pelo Tier 0) ou automatizada.
     [ValidateSet('', 'assistida', 'automatizada')]
     [string]$SupervisionMode = '',
@@ -121,6 +126,23 @@ try {
     }
     if (-not [string]::IsNullOrWhiteSpace($ConductorModel)) {
         $campos['conductor_model'] = $ConductorModel.Trim()
+    }
+    # VEICULO E MODELO SAO DOIS EIXOS, E VALEM IGUALMENTE.
+    #
+    # Decisao do Tier 0 em 2026-09-11. Ate esta data o ledger registrava apenas o
+    # modelo, e o veiculo -- a automacao ou superficie que o conduziu: codex,
+    # antigravity, claude-code -- nao tinha campo. O custo apareceu na pratica: o
+    # registro da sequencia 16 dizia `Codex GPT-6`, que mistura os dois num campo
+    # so, e ao corrigi-lo para o identificador canonico do modelo eu DESCARTEI a
+    # informacao de que a automacao era o Codex. Um campo que funde dois eixos
+    # perde um deles em toda correcao.
+    #
+    # Paridade, nao hierarquia: nenhum dos dois e derivavel do outro. O mesmo
+    # modelo roda sob veiculos diferentes, e o mesmo veiculo conduz modelos
+    # diferentes -- a fronteira Terra/Astra de 2026-09-09 trocou o modelo sem
+    # trocar o veiculo.
+    if (-not [string]::IsNullOrWhiteSpace($ConductorVehicle)) {
+        $campos['conductor_vehicle'] = $ConductorVehicle.Trim()
     }
     if (-not [string]::IsNullOrWhiteSpace($SupervisionMode)) {
         $campos['supervision_mode'] = $SupervisionMode.Trim()
