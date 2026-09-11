@@ -19,6 +19,7 @@ from engine.gemma_server import (
     _build_messages,
     app,
     normalize_model,
+    verify_sota_auth,
 )
 
 client = TestClient(app)
@@ -48,7 +49,6 @@ def test_generate_auth_failure():
 def test_generate_auth_fails_closed_when_server_token_is_missing(monkeypatch: pytest.MonkeyPatch):
     """A proxy must never replace a missing credential with a predictable literal."""
     monkeypatch.setattr("engine.gemma_server.API_SECRET_TOKEN", None)
-    from engine.gemma_server import verify_sota_auth
 
     with pytest.raises(HTTPException) as exc_info:
         verify_sota_auth(None, "any-value", None)  # type: ignore[arg-type]

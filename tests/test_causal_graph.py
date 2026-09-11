@@ -54,12 +54,12 @@ def test_causal_graph_cycle_prevention():
         engine = CausalGraphEngine(db_path=db_path)
 
         # A -> B -> C
-        nA = CausalNode(id="A", label="A", category="THEORY")
-        nB = CausalNode(id="B", label="B", category="THEORY")
-        nC = CausalNode(id="C", label="C", category="THEORY")
-        engine.add_node(nA)
-        engine.add_node(nB)
-        engine.add_node(nC)
+        node_a = CausalNode(id="A", label="A", category="THEORY")
+        node_b = CausalNode(id="B", label="B", category="THEORY")
+        node_c = CausalNode(id="C", label="C", category="THEORY")
+        engine.add_node(node_a)
+        engine.add_node(node_b)
+        engine.add_node(node_c)
 
         engine.add_edge(CausalEdge(source_id="A", target_id="B", relation="CAUSES"))
         engine.add_edge(CausalEdge(source_id="B", target_id="C", relation="CAUSES"))

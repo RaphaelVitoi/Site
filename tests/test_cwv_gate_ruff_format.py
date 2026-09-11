@@ -26,6 +26,8 @@ Este teste nao roda o portao: le o script.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name
+
 from pathlib import Path
 
 import pytest

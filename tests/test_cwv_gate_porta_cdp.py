@@ -31,6 +31,8 @@ frontend de pe.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name
+
 from pathlib import Path
 
 import pytest

@@ -3,17 +3,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-import sys
 import unittest
 
 from pydantic import JsonValue
 
-_REPO_ROOT = str(Path(__file__).resolve().parents[2])
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
-
-from tools.hybrid_router.app import (  # noqa: E402
+from tools.hybrid_router.app import (
     ComplexityAnalyzer,
     ExecutionTarget,
     GenerateRequest,

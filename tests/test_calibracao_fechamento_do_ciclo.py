@@ -31,6 +31,8 @@ distintas. Regra que nao e executavel nao e regra.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name
+
 import hashlib
 import json
 import shutil
@@ -165,7 +167,7 @@ def _calibrar(
     ]
     if extra:
         argumentos += extra
-    return subprocess.run(argumentos, capture_output=True, text=True, cwd=str(RAIZ))
+    return subprocess.run(argumentos, capture_output=True, text=True, cwd=str(RAIZ), check=False)
 
 
 @pytest.fixture()
@@ -204,7 +206,7 @@ def test_calibracao_registrada_zera_a_contagem(cenario) -> None:
 
 def test_feedback_posterior_a_calibracao_volta_a_contar(cenario) -> None:
     """Zerar nao e apagar: o ciclo recomeca, o ledger continua append-only."""
-    dia, ledger, outliers = cenario
+    _, ledger, outliers = cenario
     assert _calibrar(ledger, ["evt-A", "evt-B"]).returncode == 0
 
     registrar = RAIZ / "scripts" / "ops" / "Register-AgentCalibrationFeedback.ps1"
@@ -225,6 +227,7 @@ def test_feedback_posterior_a_calibracao_volta_a_contar(cenario) -> None:
         ],
         capture_output=True,
         text=True,
+        check=False,
         cwd=str(RAIZ),
     )
     assert proc.returncode == 0, proc.stderr

@@ -6,6 +6,8 @@ ROLE: Validação hermética dos contratos de inferência, governança de licen�
 
 from __future__ import annotations
 
+# pylint: disable=protected-access
+
 import json
 
 import pytest

@@ -6,6 +6,8 @@ Verificação: Imunidade a TOCTOU sob rajada assíncrona, cache semântico e com
 
 from __future__ import annotations
 
+# pylint: disable=protected-access
+
 import asyncio
 import pytest
 

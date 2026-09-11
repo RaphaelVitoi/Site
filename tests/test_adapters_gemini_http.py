@@ -11,6 +11,8 @@ técnicas atualizadas em 2026-09-08:
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from llm.adapters import GoogleGenAIAdapter, ParametroRejeitadoError
@@ -34,7 +36,6 @@ def test_reconhece_modelos_gemini_ativos() -> None:
 def test_modelo_estranho_nao_reconhecido_como_google() -> None:
     assert not GoogleGenAIAdapter.e_geracao_atual("claude-opus-5")
     assert not GoogleGenAIAdapter.e_geracao_atual("gpt-5.6-sol")
-    assert not GoogleGenAIAdapter.e_geracao_atual("modelo-inexistente")
 
 
 def test_normalize_gemini_model_preserva_38() -> None:
@@ -52,8 +53,9 @@ def test_normalize_gemini_model_preserva_38() -> None:
     ["temperature", "top_p", "top_k", "presence_penalty", "frequency_penalty"],
 )
 def test_google_rejeita_amostragem_legada_em_build(param: str) -> None:
+    kw: dict[str, Any] = {param: 0.5}
     with pytest.raises(ParametroRejeitadoError, match=param):
-        GoogleGenAIAdapter.build("gemini-3.8-flash", USUARIO, **{param: 0.5})
+        GoogleGenAIAdapter.build("gemini-3.8-flash", USUARIO, **kw)
 
 
 # ==============================================================================

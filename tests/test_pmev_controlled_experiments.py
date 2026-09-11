@@ -1,11 +1,15 @@
 """Gates anti-confusao para H3, H4 e H8."""
 
+from __future__ import annotations
+
+from typing import Any
+
 import pytest
 
 from engine.pmev_controlled_experiments import ControlledExperimentSpec, ExperimentHypothesis
 
 
-def h3_arm(time_to_blind_jump_minutes: int) -> dict[str, object]:
+def h3_arm(time_to_blind_jump_minutes: int) -> dict[str, Any]:
     """Estado minimo para o par de bracos H3."""
 
     return {
@@ -19,7 +23,7 @@ def h3_arm(time_to_blind_jump_minutes: int) -> dict[str, object]:
     }
 
 
-def h8_arm(*, payouts: list[int], utility_model: str) -> dict[str, object]:
+def h8_arm(*, payouts: list[int], utility_model: str) -> dict[str, Any]:
     """Estado minimo para verificar a disciplina de uma intervencao em H8."""
 
     return {

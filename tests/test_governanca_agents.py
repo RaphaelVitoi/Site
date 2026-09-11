@@ -17,6 +17,7 @@ foi incorporada ao CLAUDE.md.
 from __future__ import annotations
 
 import re
+import unicodedata
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -85,7 +86,6 @@ def test_o_diretorio_de_agentes_citado_existe_de_fato():
 
 def test_claude_absorveu_as_diretrizes_de_manutencao():
     """A secao 6 era o unico conteudo real do fork. Perde-la seria descartar o acrescimo."""
-    import unicodedata
 
     def _sem_acento(s: str) -> str:
         return "".join(c for c in unicodedata.normalize("NFD", s.lower()) if unicodedata.category(c) != "Mn")

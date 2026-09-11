@@ -18,14 +18,23 @@ Estes testes exercitam a ROTA REGISTRADA, e nao a tabela de rotas: verificar
 que a rota existe so trocaria 404 por 500, que era exatamente o estado.
 """
 
+from __future__ import annotations
+
+# pylint: disable=redefined-outer-name
+
 import contextlib
-import shutil
+from datetime import UTC, datetime
 from pathlib import Path
+import shutil
 from uuid import uuid4
 
 import pytest
+from aiohttp import web
+from aiohttp.test_utils import TestClient, TestServer
 
 from api.v1 import middleware
+from api.v1.server import create_app
+from core.schemas import Task
 from database.queue_manager import QueueManager
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -41,17 +50,13 @@ def dir_temporario():
         shutil.rmtree(caminho, ignore_errors=True)
 
 
-def _cliente(dir_temporario: Path, monkeypatch, nome_db: str):
+def _cliente(caminho_dir: Path, monkeypatch, nome_db: str):
     """TestClient sobre create_app() no modo local sem token (loopback confiavel)."""
-    from aiohttp.test_utils import TestClient, TestServer
-
-    from api.v1.server import create_app
-
     monkeypatch.setattr(middleware, "API_SECRET_TOKEN", "")
     monkeypatch.setattr(middleware, "SUPABASE_JWT_SECRET", None)
     monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
 
-    manager = QueueManager(queue_path=str(dir_temporario / nome_db))
+    manager = QueueManager(queue_path=str(caminho_dir / nome_db))
     return TestClient(TestServer(create_app(manager)))
 
 
@@ -59,14 +64,13 @@ def _cliente(dir_temporario: Path, monkeypatch, nome_db: str):
 @pytest.mark.unit
 async def test_appkey_e_string_nao_sao_a_mesma_chave() -> None:
     """A premissa do guard, medida e nao suposta: a colisao que se esperava nao existe."""
-    from aiohttp import web
-
     chave = web.AppKey("manager", QueueManager)
     app = web.Application()
-    app[chave] = "instancia"
+    instancia = QueueManager(queue_path=":memory:")
+    app[chave] = instancia
 
     assert app.get("manager") is None
-    assert app.get(chave) == "instancia"
+    assert app.get(chave) is instancia
 
 
 @pytest.mark.asyncio
@@ -108,10 +112,6 @@ async def test_metrics_publica_o_banco_e_nao_zero_silencioso(dir_temporario: Pat
     O discriminante nao pode ser o VALOR (zero tarefas e um estado legitimo),
     entao o teste enfileira uma tarefa real e exige que ela apareca.
     """
-    from datetime import UTC, datetime
-
-    from core.schemas import Task
-
     caminho_db = dir_temporario / "metricas.db"
     manager = QueueManager(queue_path=str(caminho_db))
     await manager.add_task(
@@ -123,10 +123,6 @@ async def test_metrics_publica_o_banco_e_nao_zero_silencioso(dir_temporario: Pat
             timestamp=datetime.now(UTC).isoformat(),
         )
     )
-
-    from aiohttp.test_utils import TestClient, TestServer
-
-    from api.v1.server import create_app
 
     monkeypatch.setattr(middleware, "API_SECRET_TOKEN", "")
     monkeypatch.setattr(middleware, "SUPABASE_JWT_SECRET", None)

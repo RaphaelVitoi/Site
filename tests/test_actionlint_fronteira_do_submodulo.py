@@ -25,6 +25,8 @@ o resultado depender de quais submodulos estao inicializados na maquina.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name
+
 import json
 from pathlib import Path
 

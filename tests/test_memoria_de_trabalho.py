@@ -28,6 +28,8 @@ surgir, o teste falha pedindo que a declaracao seja atualizada no mesmo commit.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name
+
 import ast
 import json
 from pathlib import Path
@@ -51,7 +53,7 @@ def declaracao() -> dict:
 
 
 def _fontes_python() -> list[Path]:
-    return [p for p in RAIZ.rglob("*.py") if not (set(p.parts) & IGNORADOS)]
+    return [p for p in RAIZ.rglob("*.py") if set(p.parts).isdisjoint(IGNORADOS)]
 
 
 def _importadores(modulo: str) -> set[str]:

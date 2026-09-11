@@ -112,6 +112,7 @@ def test_captura_a_delecao_e_nomeia_suspeitos(tmp_path: Path) -> None:
     isca.write_text("isca", encoding="utf-8")
     saida = tmp_path / "saida.jsonl"
 
+    assert PWSH is not None, "PowerShell obrigatorio no Windows"
     processo = subprocess.Popen(  # noqa: S603  # Record-Id: registro-2026-09-08-forense-das-delecoes-e-o-sentinela
         [
             PWSH,

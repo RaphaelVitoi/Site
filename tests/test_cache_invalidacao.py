@@ -13,6 +13,8 @@ hora de janela em que governanca corrigida nao chega ao agente, sem aviso.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name,unused-argument
+
 import os
 from pathlib import Path
 import time

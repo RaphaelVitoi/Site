@@ -24,6 +24,8 @@ Este teste nao roda o portao: le o script. Rodar exigiria npm, rede e Chrome.
 
 from __future__ import annotations
 
+# pylint: disable=redefined-outer-name
+
 import re
 from pathlib import Path
 
