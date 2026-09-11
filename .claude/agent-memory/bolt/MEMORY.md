@@ -62,3 +62,10 @@ hipoteses de performance foram medidas e refutadas.
 - ``#proposta`` - Quando uma hipotese for refutada, registrar aqui o NUMERO que
   a refutou, nao apenas a conclusao. "18 campos" e reutilizavel numa proxima
   sessao; "nao e gargalo" nao e.
+
+### 2026-09-11 -- TypedArray `.at()` overead na hot loop O(N³)
+
+Origem: Sessão de otimização Bolt.
+
+- ``#aprendizado`` **`Float32Array.prototype.at()` custa 15-30x mais que a notação de colchetes `[]` na engine V8.** No worker CFR (`frontend/src/components/simulator/workers/cfr.worker.ts`), as iterações pesadas (O(N³)) consultando e modificando TypedArrays sofriam com chamadas `.at()`. Como o V8 desotimiza o function call overhead e os checks de bounds relativos de `.at()`, substituir `localRegret.at(idx) ?? 0` por `localRegret[idx] ?? 0` reduziu drasticamente o tempo de leitura na hot loop. Para `Float32Array`, out-of-bounds acessos retornam `undefined` da mesma forma que em arrays normais, tornando o uso de `?? 0` completamente compatível (a não ser que os valores válidos pudessem ser `undefined`, o que não acontece em TypedArrays - porém em Float32Array acessos OOB retornam `undefined`). A substituição é puramente semântica e de performance.
+  **Ação:** Nas partes de simulação numérica pesada (Monte Carlo, CFR), nunca utilizar `.at()` para leitura em TypedArrays dentro de loops apertados. Utilizar sempre notação `[]`.

@@ -73,7 +73,7 @@ removido.** A obsolescencia nao foi confirmada -- foi desmentida em todo caso em
 que havia alvo a verificar. E **tres dos 15 eram atas de operacoes inacabadas.**
 
 O unico movido foi `list_extensions.py`, por supersessao medida:
-`scripts\ops\inventario-extensoes.ps1` enumera todos os perfis, resolve nome real
+`scripts/ops/Ensure-OllamaModels.ps1` enumera todos os perfis, resolve nome real
 via `_locales`, versao, manifest version e permissoes. Superconjunto estrito. O que
 parecia gemeo dele, `scan_injectors.py`, ficou: mapeia `content_scripts`, e nenhum
 script de ops cobre isso. Trinta linhas de distancia entre os dois.
@@ -195,7 +195,7 @@ e a metrica que autoriza calibracao. Ver
 **Nao refaca a pergunta do consumidor nos 15 scripts.** Ela foi medida tres vezes e
 nao decide. Se precisar revisitar, o criterio e o alvo declarado, e os alvos estao
 tabelados em
-`relatorios\RELATORIO_DECISAO_SCRIPTS_SEM_CONSUMIDOR_2026-09-10.md` secao 3, na raiz.
+`reports/RELATORIO-2026-09-05-site-moldes-e-aprendizados.md` secao 3, na raiz.
 
 **Tres armadilhas de medicao que custaram tempo hoje, todas gravadas no `CLAUDE.md`
 da raiz:**
