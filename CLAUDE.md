@@ -450,6 +450,38 @@ correção legítima e passa por `Record-AgentCalibrationCorrection.ps1`
 `-AddMissingField`: a exigência de declarar a intenção existe para que erro de
 digitação no nome do campo não crie dado novo em silêncio.
 
+#### Superfície compartilhada não identifica condutor
+
+**`Antigravity IDE` e `Antigravity 2.0` não são a mesma coisa, e confundi-los
+produz conclusão invertida.** Medido em 2026-09-12.
+
+| Nome | O que é | Registra condutor? |
+| :--- | :--- | :--- |
+| **Antigravity 2.0** | o **veículo** `antigravity`, que conduz Gemini | sim |
+| Antigravity IDE | editor compartilhado por todos os modelos **igualmente** | não |
+
+O mesmo vale para o VS Code, e é o motivo pelo qual a §7 os chama de
+*superfícies compartilhadas*: eles hospedam qualquer condutor, logo não são
+evidência de nenhum. `conductor_vehicle` nomeia a automação que **executou o
+modelo** — `codex`, `antigravity`, `claude-code` —, nunca o editor onde a janela
+estava aberta.
+
+**Onde cada um guarda estado, porque foi a troca de um pelo outro que produziu o
+erro:**
+
+- Antigravity 2.0 — `~\.gemini\antigravity\conversations\<id>.db`, um SQLite por
+  conversa. Tabela `steps`, com `status` tipado e `error_details`.
+- Antigravity IDE — `%APPDATA%\Antigravity IDE\User\globalStorage`, com
+  `antigravityUnifiedStateSync.trajectorySummaries`: protobuf de sumário, sem
+  evento de ferramenta.
+
+Medir o segundo para falar do primeiro levou à conclusão de que o veículo não
+instrumentava nada — quando ele instrumenta **melhor que os outros dois**. A
+regra de topologia que o Tier 0 declarou nessa data — Antigravity 2.0 conduz
+Gemini, Codex conduz GPT, Claude Code conduz Opus/Sonnet, e valeu no passado —
+liga veículo à **família**, não à variante: ela deriva o veículo de um modelo já
+gravado, e nunca o inverso a partir do nome da sessão.
+
 A métrica que autoriza avaliação é o número de **sessões distintas com
 feedback**, mínimo **três**. Três feedbacks numa mesma sessão **também são
 dado** — ficam retidos e reportados como densidade —, mas não abrem o portão
@@ -655,6 +687,36 @@ em todo comentário, revisão ou resposta de agente.
 daqui em diante, e a transição fica registrada. Força-push numa branch já
 publicada quebra checkout alheio e âncora de revisão — custo maior que a
 inconsistência que corrigiria.
+
+### A identidade do git é residual — conferir antes de todo commit
+
+`git config user.name` e `user.email` **sobrevivem à sessão que os escreveu**.
+Numa malha em que os condutores se revezam no mesmo repositório, o padrão é
+herdar a identidade de quem operou por último — e o commit sai assinado por um
+agente que não o escreveu, sem que nada acuse.
+
+**Medido duas vezes, e a segunda depois de a primeira estar documentada:**
+
+| Quando | O que saiu | Quem era |
+| :--- | :--- | :--- |
+| 2026-09-10 | commit da sessão Gemini assinado `Codex GPT-5` | identidade residual da sessão Astra anterior |
+| 2026-09-12 | `user.email` ainda `noreply@openai.com` numa sessão Opus 5 | a mesma residual, dois dias depois |
+
+O commit `21ef0373` já narrava o caso e restabelecia a autoria no corpo. Não
+bastou: o corpo corrige o registro, não o campo que o GitHub lê.
+
+**A regra.** Antes de commitar, ler `git config user.name` e `user.email` e
+confirmar que descrevem **o condutor desta sessão**. Divergindo, passar a
+identidade no próprio comando —
+`git -c user.name='<agente>' -c user.email='<noreply do fornecedor>' commit` —
+em vez de alterar a configuração global, que só empurraria a herança para o
+próximo. Um `Co-Authored-By` **não** substitui o campo de autor: ele adiciona
+crédito, não corrige atribuição.
+
+Vale igual para o `committer` quando um agente leva ao portão trabalho de outro:
+autor é quem produziu, committer é quem commitou, e os dois se declaram — a
+forma medida em `29ef243e` é *"Assinatura: `<autor>` via `<committer>` como
+committer"*.
 
 ---
 
