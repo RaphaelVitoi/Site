@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T11:18:04-03:00'
-atualizado_em: '2026-09-12T17:05:24-03:00'
+atualizado_em: '2026-09-12T17:42:44-03:00'
 classes: [interno, medido, calibracao, ci, proveniencia]
 referencias_nao_resolviveis:
   # Este relatorio CITA os dois caminhos para dizer que eles nao resolvem aqui --
@@ -35,6 +35,10 @@ pendencias:
     o_que: Reconciliar o scope do feedback de sequencia 11, hoje inelegivel por falta de fonte de encerramento
     dono: Tier 0
     prazo: 2026-10-12
+  - id: pend-2026-09-12-identidade-do-antigravity
+    o_que: Tornar a SS7 executavel ou dar identidade propria ao antigravity CLI -- ele nao sobrescreve o user.name global e assinou 5 commits do Gemini como Codex GPT-5 so hoje
+    dono: Tier 0
+    prazo: 2026-09-19
   - id: pend-2026-09-12-render-desperdicado
     o_que: Registrar o numero de render desperdicado que a SS10.1 exige para o React.memo de PerspectiveChart
     dono: Tier 0
@@ -70,7 +74,10 @@ verificado:
   - o autoteste do guard apagava a medicao real -- A/B com e sem a fixture, 0 contra 1 warning
   - warning eliminado na origem por encoding utf-8 explicito -- 44 aprovados, zero warnings reais
   - chartData vem de useMemo em usePerspectiveCalculations -- a prop do React.memo E estavel
-  - 812c1c2f saiu assinado Codex GPT-5 numa sessao do Gemini -- identidade residual, terceira vez
+  - CINCO dos seis commits de hoje assinados Codex GPT-5 foram do Gemini 3.8 Flash via antigravity CLI
+  - so 180cc7f4 e Codex de verdade; a unica sessao Codex posterior durou 8 minutos e nao commitou
+  - user.name global e Codex GPT-5, e o CLI do antigravity nao o sobrescreve -- causa medida
+  - 20 commits desde 09-09 carregam o nome Codex GPT-5, contra 2 que dizem Gemini 3.8 Flash
   - prompt do heartbeat ACTIVE e sem recorte diario -- lido em automation.toml
   - outlier 512fc3a6 encerrado na sequencia 8; cadeia de outliers valida em 9 registros
   - sete correcoes de supervision_mode aplicadas -- historicos incompletos de 9 para 2, cadeia valida em 66
@@ -81,6 +88,9 @@ verificado:
   - mecanismo de pendencias com 5 guards; 6 pendencias semeadas, zero orfas
   - os oito patch retirados; os 8 submodulos limpos e commitados no fork, 1 a 2 commits alem do upstream
   - guard novo dos submodulos MORDE -- simulacao com um deles no upstream acusa gemini-supermemory
+  - tres outliers abertos ao fim do dia, mais um registro de evidencia -- eram cinco pela manha
+  - 99da81dc ja estava encerrado por 0b0098e9 antes de hoje -- conferido no ledger
+  - os tres commits do Gemini estao entre 14:16 e 16:41, e eu nao escrevi entre 13:45 e 17:23 -- sem sobreposicao
 nao_verificado:
   - o numero de render desperdicado que a SS10.1 exige nao consta de relatorio que eu tenha lido
   - a corrida do CI sobre o commit desta ultima correcao ainda nao existia quando isto foi escrito
@@ -1113,10 +1123,10 @@ antes de memoizar. Cinco linhas, com `displayName` declarado. O commit está
 correto e a minha ressalva era de classe, não de conteúdo — registro isso com a
 mesma clareza com que registrei a suspeita.
 
-Fica uma observação menor e uma real: a §10.1 pede o número medido de render
-desperdiçado, que não consta de relatório que eu tenha lido; e o commit saiu
-assinado **`Codex GPT-5 <noreply@openai.com>` numa sessão do Gemini** — a
-identidade residual da §7, terceira ocorrência medida em três dias.
+Fica uma observação menor: a §10.1 pede o número medido de render desperdiçado,
+que não consta de relatório que eu tenha lido.
+
+E uma que cresceu muito depois de medida — ver a seção 8.3.
 
 ### Outlier `512fc3a6` — encerrado
 
@@ -1127,7 +1137,10 @@ limite de amostra. E o feedback de scope `intrasessao-outlier`, que o outlier
 apontava como contaminação do universo, é hoje a sequência 10 da auditoria
 histórica, excluída com motivo `completed_handoff_not_declared` — preservada
 como evidência, nunca promovida. Registro de encerramento na sequência 8 do
-ledger de outliers, cadeia válida em 9 registros. **Restam quatro.**
+ledger de outliers, cadeia válida em 9 registros no momento deste append.
+A contagem final do dia está na seção 8.3, e não aqui: uma contagem escrita no
+meio de um documento envelhece antes de ele ser publicado, que é o defeito que
+esta mesma auditoria apontou nos relatórios do Codex.
 
 ## 8.2 Terceira rodada — aprovação em bloco, na ordem 5 → 4 → 3 → 2
 
@@ -1230,6 +1243,84 @@ patch é a fonte paralela de volta.
 Provei que a asserção 1 morde antes de aceitá-la: com um dos oito revertido ao
 upstream em simulação, ela acusa `skills/gemini-supermemory`. Guard que eu não vi
 falhar é o problema que estou consertando.
+
+## 8.3 Verificação de fechamento — e o achado que ela produziu
+
+O Tier 0 pediu, antes da compactação de contexto, uma conferência do que foi
+publicado hoje. Ela achou duas coisas, e a segunda é maior que tudo que veio
+antes dela.
+
+### A contabilidade dos outliers, definitiva
+
+| Estado | Registros |
+| :--- | :--- |
+| **abertos** | `da7ef222`, `b39b7431`, `7e5ca052` |
+| encerrados hoje | `2d55d92a` (seq 9), `512fc3a6` (seq 8) |
+| encerrado antes | `99da81dc`, por `0b0098e9` |
+| evidência retida | `d86cbde0` — mede o `da7ef222`, **não é anomalia nova** |
+
+**Três outliers abertos**, mais um registro de evidência que conta como
+`retained-pending` por disposição e não deve ser lido como um quarto problema.
+Antes de hoje eram cinco.
+
+### Cinco de seis atribuições de autoria de hoje estão erradas
+
+Eu havia registrado que **um** commit saíra assinado `Codex GPT-5` numa sessão do
+Gemini, e chamei de terceira ocorrência. O Tier 0 corrigiu: **os pushes foram do
+Gemini 3.8 Flash via antigravity CLI.** Medido a partir daí:
+
+| Commit | Hora | Assinado | Condutor real |
+| :--- | :--- | :--- | :--- |
+| `180cc7f4` | 09:46 | `Codex GPT-5` | **Codex** — sessão `01a09547`, confirmada no rollout |
+| `0a262e91` | 10:59 | `Codex GPT-5` | **Gemini** |
+| `812c1c2f` | 11:02 | `Codex GPT-5` | **Gemini** |
+| `46ff9da5` | 14:16 | `Codex GPT-5` | **Gemini** |
+| `109ed26d` | 14:26 | `Codex GPT-5` | **Gemini** |
+| `1a5dd0dd` | 16:41 | `Codex GPT-5` | **Gemini** |
+
+A única sessão Codex posterior às 10h durou **oito minutos** — 13:27 a 13:35 — e
+não produziu commit algum. A causa é medida e simples: `user.name` global é
+`Codex GPT-5`, e **o CLI do antigravity não o sobrescreve**.
+
+**Isto não é "mais uma ocorrência" da §7; é a demonstração de que a remediação
+que ela prescreve não alcança este caso.** A §7 manda passar a identidade no
+próprio comando, `git -c user.name=... commit`, em vez de mexer na configuração
+global — e essa instrução pressupõe um condutor que *possa* passá-la. O
+antigravity CLI não passa, então herda, e herdará de novo amanhã.
+
+O tamanho: desde 09-09, **20 commits carregam o nome `Codex GPT-5` e apenas 2
+dizem `Gemini 3.8 Flash`**. Não afirmo quantos dos 20 estão errados — para os
+seis de hoje há testemunho do Tier 0 e medição de sessão; para os anteriores,
+não fui verificar. O que se pode afirmar é que **a proporção não descreve a
+malha**, e que a §7 existe precisamente porque *"uma malha com múltiplos agentes
+que não distingue quem escreveu o quê não consegue auditar a si mesma"*.
+
+**Não alterei a configuração global**, e a razão está na própria §7: mudá-la só
+empurraria a herança para o próximo condutor. A saída — tornar a §7 executável,
+ou dar ao antigravity CLI uma identidade própria — muda contrato e é arbitragem
+do Tier 0. Fica como pendência, com dono.
+
+### Duas correções de rota minhas, registradas
+
+Eu afirmei em relato que os três commits do Gemini tinham entrado **durante** o
+meu trabalho, e invoquei a Lei de Concorrência. **Era falso, e o Tier 0
+corrigiu.** Medido depois: eu não escrevi no repositório entre 13:45 e 17:23, e
+os três estão inteiramente nesse intervalo — serialização correta, sem
+sobreposição.
+
+O erro tem a forma que esta auditoria já nomeou cinco vezes: **li a topologia do
+grafo e afirmei sobre o relógio.** O pai do meu commit ser `1a5dd0dd` prova
+ordem no DAG, não simultaneidade, e o dado que decidia estava a um `--date` de
+distância. Pior que descuido: **acusar outro condutor por inferência é o inverso
+exato da regra que passei o dia aplicando.** A afirmação ficou no relato e não
+chegou a este registro — conferido —, mas está anotada aqui porque teria sido
+lida como fato pela próxima sessão.
+
+A segunda: a frase *"Restam quatro"* na seção 8.1 estava correta quando foi
+escrita e deixou de estar antes da publicação, pelo encerramento seguinte. Foi
+substituída por um ponteiro para a contagem final. **É exatamente o defeito que
+esta auditoria apontou nos relatórios do Codex**, cometido por mim no mesmo
+documento em que o apontei.
 
 ---
 
