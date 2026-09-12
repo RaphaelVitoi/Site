@@ -90,6 +90,15 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+. (Join-Path $PSScriptRoot 'AgentCalibrationProvenance.ps1')
+$provenance = Get-AgentCalibrationProvenance -Record ([pscustomobject]@{
+    session_id = $SessionId; scope = $Scope; conductor_model = $ConductorModel
+    conductor_vehicle = $ConductorVehicle; supervision_mode = $SupervisionMode
+})
+if (-not $provenance.eligible) {
+    throw "Feedback de handoff inelegivel: $($provenance.reasons -join ', '). Nenhum registro foi gravado."
+}
+
 function Get-Sha256Hex {
     param([Parameter(Mandatory)][string]$Text)
     $sha = [System.Security.Cryptography.SHA256]::Create()

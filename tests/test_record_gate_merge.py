@@ -77,7 +77,7 @@ def _modulo_com_raiz(repo: Path):
         modulo = importlib.reload(modulo)
     finally:
         sys.path.pop(0)
-    setattr(modulo, "RAIZ", repo)
+    modulo.RAIZ = repo
     return modulo
 
 

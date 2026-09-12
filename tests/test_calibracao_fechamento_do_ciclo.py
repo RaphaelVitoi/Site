@@ -99,6 +99,9 @@ def _ledger(caminho: Path, feedbacks: list[dict]) -> None:
             "score": fb.get("score", 5),
             "feedback": fb.get("feedback", "texto"),
             "scope": fb.get("scope", "handoff"),
+            "conductor_model": fb.get("conductor_model", "gpt-5.6-terra"),
+            "conductor_vehicle": fb.get("conductor_vehicle", "codex"),
+            "supervision_mode": fb.get("supervision_mode", "assistida"),
         }
         registro["record_hash"] = _hash(registro)
         linhas.append(json.dumps(registro, ensure_ascii=False))
@@ -222,6 +225,12 @@ def test_feedback_posterior_a_calibracao_volta_a_contar(cenario) -> None:
             "sessao posterior a calibracao",
             "-SessionId",
             "sessao-D",
+            "-ConductorModel",
+            "gpt-5.6-terra",
+            "-ConductorVehicle",
+            "codex",
+            "-SupervisionMode",
+            "assistida",
             "-LedgerPath",
             str(ledger),
         ],

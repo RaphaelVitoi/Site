@@ -28,6 +28,14 @@ def test_feedback_ledger_preserves_fractional_score(tmp_path: Path) -> None:
             "7.5",
             "-Feedback",
             "latencia e desalinho de prioridade",
+            "-SessionId",
+            "fixture-session",
+            "-ConductorModel",
+            "gpt-5.6-terra",
+            "-ConductorVehicle",
+            "codex",
+            "-SupervisionMode",
+            "assistida",
             "-LedgerPath",
             str(ledger),
         ],
@@ -61,6 +69,8 @@ def test_feedback_ledger_records_conductor_model_and_supervision_mode(tmp_path: 
             "gemini-3.8-flash-site-2026-09-03",
             "-ConductorModel",
             "gemini-3.8-flash",
+            "-ConductorVehicle",
+            "antigravity",
             "-SupervisionMode",
             "assistida",
             "-LedgerPath",
@@ -76,4 +86,5 @@ def test_feedback_ledger_records_conductor_model_and_supervision_mode(tmp_path: 
 
     assert response["status"] == "appended"
     assert rows[-1]["conductor_model"] == "gemini-3.8-flash"
+    assert rows[-1]["conductor_vehicle"] == "antigravity"
     assert rows[-1]["supervision_mode"] == "assistida"

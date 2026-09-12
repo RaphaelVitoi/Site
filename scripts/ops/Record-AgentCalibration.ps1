@@ -176,6 +176,12 @@ try {
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
     & (Join-Path $PSScriptRoot 'Test-AgentCalibrationLedger.ps1') -LedgerPath $LedgerPath | Out-Null
+    # Refresh the effective/corrected evidence under the writer lock.
+    $evidencia = & $evidenciaScript -LedgerPath $LedgerPath -OutlierLedgerPath $outlierPath | ConvertFrom-Json
+    $portaoAberto = [bool]$evidencia.calibration_planning_permitted
+    if (-not $portaoAberto -and [string]::IsNullOrWhiteSpace($GateOverrideReason)) {
+        throw 'Portao estrutural fechado na reverificacao sob lock.'
+    }
     $rows = @(Get-Content -LiteralPath $LedgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json })
     $feedbacks = @($rows | Where-Object { $_.record_type -eq 'feedback' })
 
@@ -192,7 +198,11 @@ try {
         if ($alvo.Count -gt 1) {
             throw "event_id '$eventId' aparece $($alvo.Count) vezes; ledger ambiguo."
         }
-        $sessoesDeOrigem.Add([string]$alvo[0].session_id)
+        $eligibleTarget = @($evidencia.eligible_feedback | Where-Object event_id -eq $eventId)
+        if ($eligibleTarget.Count -ne 1) {
+            throw "Corroboracao inelegivel (proveniencia, handoff, sessao ou ciclo): '$eventId'."
+        }
+        $sessoesDeOrigem.Add([string]$eligibleTarget[0].session_id)
     }
 
     # INDEPENDENCIA E ORIGEM DISTINTA, nao contagem de registros. Duas notas da
