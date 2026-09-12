@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T06:40:00-03:00'
-atualizado_em: '2026-09-12T07:50:00-03:00'
+atualizado_em: '2026-09-12T07:47:19-03:00'
 classes: [interno, medido, calibracao, preludio]
 verificado:
   - cadeia de feedback valida em toda escrita -- 27 para 55 registros, cauda 03c200e8
@@ -17,11 +17,13 @@ verificado:
   - indice de erro de ferramenta cobre os tres veiculos -- 31 sessoes contra as 5 anteriores
   - Record-AgentCalibration.ps1 sem nenhum invocador, medido com rg --no-ignore --hidden
   - tarefa agendada corrigida por execucao elevada do Tier 0 -- WakeToRun e baterias
+  - os quatro .ps1 revalidados em Windows PowerShell 5.1 REAL (5.1.26100.9444), parse e execucao
+  - os tres que tocam o ledger recusam a 5.1 por decisao de projeto -- falha fechada verificada
+  - caminho feliz reexercido em pwsh 7.6.6 contra caminhos injetados, cadeias de scratch validas
 nao_verificado:
-  - Windows PowerShell 5.1 nos quatro .ps1 alterados -- so AST do pwsh 7 e bateria de bytes
   - o falsificador do outlier da7ef222 continua sem rodar -- falta classificar janela de contexto
   - nenhum dos quatro outliers abertos foi promovido ou descartado -- arbitragem pendente
-  - a divergencia entre prompt diario e regra acumulada segue sem correcao na origem
+  - a divergencia entre prompt diario e regra acumulada segue sem correcao na origem -- a origem NAO esta neste repositorio
   - eficacia comportamental do padrao calibrado -- nao ha ciclo posterior para comparar
 caminhos:
   - CLAUDE.md
@@ -48,6 +50,7 @@ revisoes_de_ancora:
       lado do record_gate.py, que ja e Python. A alteracao no CLAUDE.md e
       aditiva em SS7 e SS8.3.
       Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
+      TERCEIRA REVISAO NO MESMO DIA, e esta ALTERA a SS9 -- territorio direto desta ancora. Entra a SS9.1 por arbitragem do Tier 0: edicao ou intervencao PONTUAL na taxonomia nao gera regra, salvo arbitragem aditiva dele. A tabela de quatro diretorios permanece byte a byte; a subsecao nova governa como se LE uma excecao a ela, nao o que ela determina. E ela e autoaplicavel: a propria SS9.1 entra por arbitragem aditiva, que e o unico caminho que ela reconhece.
   - registro: registro-2026-09-08-o-padrao-de-desvio-de-foco
     caminhos:
       - reports/agent-calibration/feedback-ledger.jsonl
@@ -99,6 +102,7 @@ revisoes_de_ancora:
       entre Antigravity 2.0 e o IDE compartilhado. Nenhuma regra de portao foi
       tocada.
       Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
+      TERCEIRA REVISAO NO MESMO DIA, e ela toca esta ancora de perto sem mudar o que ela decidiu. A SS8.3 ganha a subsecao que declara onde mora o prompt do heartbeat -- na plataforma do Codex, fora do indice do git -- e transcreve o criterio de substituicao. O criterio EXECUTAVEL nao mudou: a unidade segue sendo a sessao distinta, o minimo segue sendo tres e a contagem segue sem expirar. O que entra e a declaracao de que existe um segundo criterio, nao versionado, que diverge deste desde 2026-09-06 no outlier 512fc3a6, e que o record_gate.py nunca poderia cobrar porque so enxerga o indice. Dos dois .ps1 desta ancora, nenhum foi alterado nesta revisao; ambos passaram na revalidacao em 5.1 real.
   - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
     caminhos:
       - CLAUDE.md
@@ -190,6 +194,7 @@ revisoes_de_ancora:
       Revisado e mantido valido. A SS10 nao foi tocada; a alteracao e aditiva em
       SS7 e SS8.3.
       Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
+      TERCEIRA REVISAO NO MESMO DIA, e agora a SS10 e CITADA, nao alterada. A subsecao nova da SS8.3 usa a SS10.5 como precedente: o prompt do cron do Jules mora na plataforma e a regua viaja com o codigo, e a auditoria diaria do Codex esta na mesma situacao. Nenhum item da SS10 muda de texto ou de numeracao; o que muda e que a solucao dela deixa de ser um caso do Jules e passa a ser a forma geral para automacao de fora.
   - registro: registro-2026-09-07-integracao-gpt6-astra-e-retirada-do-fable
     caminhos:
       - CLAUDE.md
@@ -445,6 +450,47 @@ exatamente esse caso em 10/09. Corpo de commit corrige o registro, não o campo
 que o GitHub lê — por isso a regra agora manda conferir antes de commitar e
 passar a identidade no próprio comando.
 
+## Adendo do mesmo dia — a revalidação em 5.1 foi feita, e ela achou algo
+
+O item de `nao_verificado` sobre PowerShell 5.1 estava lá porque a bateria
+substituta não alcança cmdlet inexistente nem recurso de classe do 7 — ambos
+falham em **tempo de execução**, e nenhum parser os pega. O host desta sessão é
+Windows, então a lacuna não era de instrumento: era de não ter rodado.
+
+Rodou, em `5.1.26100.9444`, e a asserção correta **não** é "roda na 5.1":
+
+| Script | O que a 5.1 tem de fazer | Medido |
+| :--- | :--- | :--- |
+| `Register-AgentCalibrationDailyTask.ps1` | rodar — não toca o ledger | `-WhatIf` descreve e sai |
+| `Write-AgentCalibrationDailyEvidence.ps1` | **recusar** | falha fechada |
+| `Register-AgentCalibrationFeedback.ps1` | **recusar** | falha fechada |
+| `Record-AgentCalibrationOutlier.ps1` | **recusar** | falha fechada |
+
+A recusa é o comportamento certo, e é transitiva: os três chamam
+`Test-AgentCalibrationLedger.ps1`, que é o único da família com o portão de
+versão. O `ConvertTo-Json` da 5.1 emite texto diferente, e uma cadeia **íntegra**
+apareceria como `Hash mismatch` — gravar ali corromperia a evidência sem
+corromper um byte de disco. Meu primeiro teste afirmou o oposto e contou as três
+recusas como falha; o teste é que estava errado.
+
+As guardas de argumento correm **antes** do portão de versão, e por isso valem
+na 5.1: `ToolErrors > ToolCalls` barra, par sem `-ToolErrorMethod` barra,
+`-Resolves` de alvo inexistente barra. O caminho feliz foi reexercido em
+`pwsh 7.6.6` contra caminhos injetados, e as duas cadeias de scratch validam.
+
+**O achado.** `Record-AgentCalibrationOutlier.ps1` declarava
+`[string]$MetricsJson = '{}'` — e a validação exige ao menos uma propriedade.
+O default **nunca** podia passar, nas duas versões: a assinatura anunciava um
+parâmetro opcional e o script morria com `MetricsJson must be a JSON object`
+sobre um valor que **é** um objeto JSON. A mensagem culpava a entrada de quem
+chamou. É defeito de 2026-08-30, não desta sessão, e sobreviveu porque os dois
+registros existentes sempre passaram métricas — ninguém nunca exerceu o default.
+
+Corrigido tornando o parâmetro `Mandatory` e removendo o default mentiroso: a
+falha passa a ocorrer na **ligação do parâmetro**, onde o próprio PowerShell
+nomeia o que falta. É a mesma forma dos outros três defeitos deste dia — o
+instrumento que anuncia uma capacidade que não tem.
+
 ## O que fica aberto
 
 Quatro outliers, e eles são **quatro espécies**, não quatro amostras de uma
@@ -457,6 +503,53 @@ determinístico hoje. Não é falta de tempo; é falta de medição.
 Segue sem dono a divergência do `512fc3a6`: o prompt do heartbeat pede recorte
 diário enquanto o código diz `accumulation_never_expires`. Fechei o sintoma
 hoje; a causa é uma linha de prosa, e é do Tier 0.
+
+E agora se sabe **por que** ela sobreviveu seis dias sem dono. O Tier 0 declarou
+em 12/09 que a automação é *scheduled por Codex*: o prompt mora na plataforma
+do Codex e **não é versionado aqui**. Medido — uma varredura completa do
+repositório pelo identificador `calibra-o-di-ria-de-coer-ncia-ag-ntica` devolve
+dois arquivos, o registro do outlier e um diário que o cita; nenhum é o prompt.
+Não havia arquivo a corrigir, e por isso o portão de âncora nunca podia cobrar
+a correção: **o portão só enxerga o que está no índice do git.**
+
+É exatamente a forma da §10.5 — a régua do Jules vive no repositório de
+propósito, porque o prompt do cron dele mora na plataforma. A diferença é que
+lá a assimetria foi declarada, e aqui não era. Está declarada agora, na §8.3,
+com o texto de substituição pronto: a correção é do Tier 0 porque só ele
+alcança o campo, não porque a decisão seja dele.
+
+## A arbitragem aditiva do Tier 0 sobre a taxonomia
+
+Declarada em 12/09 e gravada na **§9.1**: edição ou intervenção **pontual** na
+taxonomia **não gera regra**, salvo por arbitragem aditiva do Tier 0.
+
+A cláusula fecha um caminho de erro que este repositório já percorreu do outro
+lado. A §2.3 da raiz recusa agrupar por parecença — três lançadores de Chrome na
+raiz não eram uma regra sobre lançadores de Chrome, eram três casos. A §9.1 é a
+mesma recusa aplicada ao tempo em vez do espaço: **precedente não é medição**, e
+um caso não vira norma por ter acontecido. Um agente que encontra uma exceção
+tende a lê-la como autorização, e é indução a partir de uma amostra.
+
+Ela é autoaplicável, e isso não é ornamento: a própria §9.1 entra por arbitragem
+aditiva do Tier 0, que é o único caminho que ela reconhece. A tabela dos quatro
+diretórios não mudou um byte — a subseção governa **como se lê uma exceção** a
+ela, não o que ela determina.
+
+## Três âncoras revistas de dezessete, e por quê
+
+Dezessete âncoras deste registro declaram `CLAUDE.md`. Repassar as dezessete
+produziria o **parecer genérico** que a §1.2 chama de pior que nenhum: parece
+revisão sem ser. Revistas as três materialmente tocadas —
+`taxonomia-canonica-de-documentacao-e-relatorios`, cujo território é a própria
+§9; `registro-2026-09-02-portao-de-calibracao-por-sessao`, porque o critério
+divergente é o do portão dela; e `registro-2026-09-05-regua-para-agente-autonomo-de-nuvem`,
+porque a §10.5 passa de caso do Jules a forma geral. As catorze restantes
+continuam válidas pelo parecer que já têm, e dizê-lo é a revisão delas.
+
+O `atualizado_em` publicado marcava `07:50:00`, e o commit que o gravou é de
+`07:24:37` — vinte e seis minutos **à frente**. O campo foi digitado, não lido
+do relógio. É a §2.4 outra vez, na escala de minutos: data escrita num documento
+descreve o documento, não o fato que ele narra. Substituído por valor medido.
 
 ## Nota de método
 
