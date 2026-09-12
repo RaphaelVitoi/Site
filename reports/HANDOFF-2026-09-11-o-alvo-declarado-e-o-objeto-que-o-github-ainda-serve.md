@@ -73,7 +73,7 @@ removido.** A obsolescencia nao foi confirmada -- foi desmentida em todo caso em
 que havia alvo a verificar. E **tres dos 15 eram atas de operacoes inacabadas.**
 
 O unico movido foi `list_extensions.py`, por supersessao medida:
-`scripts\ops\inventario-extensoes.ps1` enumera todos os perfis, resolve nome real
+`scripts/ops/Clear-LighthouseOrfaos.ps1` enumera todos os perfis, resolve nome real
 via `_locales`, versao, manifest version e permissoes. Superconjunto estrito. O que
 parecia gemeo dele, `scan_injectors.py`, ficou: mapeia `content_scripts`, e nenhum
 script de ops cobre isso. Trinta linhas de distancia entre os dois.
@@ -105,7 +105,7 @@ vez pode nao ser um toco.
 ### 2.2 O que fazer, e e do Tier 0
 
 ```
-pwsh -File C:\Users\rapha\.gemini\scripts\ops\New-GitHubGcRequest.ps1 -AbrirNavegador
+pwsh -File scripts/ops/New-GitHubGcRequest.ps1 -AbrirNavegador
 ```
 
 O script **remede antes**: se o remoto ja nao entregar o commit, diz para nao abrir
@@ -195,7 +195,7 @@ e a metrica que autoriza calibracao. Ver
 **Nao refaca a pergunta do consumidor nos 15 scripts.** Ela foi medida tres vezes e
 nao decide. Se precisar revisitar, o criterio e o alvo declarado, e os alvos estao
 tabelados em
-`relatorios\RELATORIO_DECISAO_SCRIPTS_SEM_CONSUMIDOR_2026-09-10.md` secao 3, na raiz.
+`reports/HANDOFF-2026-09-11-o-alvo-declarado-e-o-objeto-que-o-github-ainda-serve.md` secao 3, na raiz.
 
 **Tres armadilhas de medicao que custaram tempo hoje, todas gravadas no `CLAUDE.md`
 da raiz:**
