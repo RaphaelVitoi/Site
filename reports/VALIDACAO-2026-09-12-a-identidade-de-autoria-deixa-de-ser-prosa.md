@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T22:04:11-03:00'
-atualizado_em: '2026-09-12T22:04:11-03:00'
+atualizado_em: '2026-09-12T22:41:07-03:00'
 classes: [interno, medido, proveniencia, portao, governanca]
 caminhos:
   - .husky/commit-msg
@@ -26,6 +26,9 @@ verificado:
   - ausencia de Assinatura avisa e nao bloqueia -- codigo de saida 0 conferido
   - a mensagem de recusa entrega o comando pronto e nomeia a proibicao do config global
   - tests/test_hook_commit_msg.py -- 29 aprovados, contra 22 antes
+  - a identidade residual estava em .git/config LOCAL; a global e Raphael Vitoi, a do Tier 0
+  - local reapontada para Claude Opus 5 por arbitragem do Tier 0; global conferida intacta depois
+  - com a local nova, assinatura do condutor atual passa sem -c e a de outro condutor e recusada
   - tests/test_record_index.py -- 10 aprovados no recorte de pendencia, incluindo o guard novo
   - nenhum dos 22 testes preexistentes do hook regrediu com a alteracao
 nao_verificado:
@@ -200,3 +203,28 @@ Por isso a nova pendência é a decisão, não a implementação: a implementaç
 linha, e já está escrita ao lado do aviso.
 
 **Assinatura:** `Claude Opus 5 [Tier 1.B]` — sessão `claude-opus5-site-2026-09-12-preludio`
+
+## 5. Arbitragem do Tier 0 — a residual é local, e foi reapontada
+
+Registrado por §3.1 da raiz: a operação é **válida**, não exceção tolerada.
+
+Ao mandar mudar a assinatura, o Tier 0 arbitrou o que a §7 desaconselhava em
+prosa. A medição feita antes de executar mostra que a prosa mirava o alvo errado:
+
+| Escopo | Antes | Depois |
+| :--- | :--- | :--- |
+| `.git/config` (local) | `Codex GPT-5 <noreply@openai.com>` | `Claude Opus 5 <noreply@anthropic.com>` |
+| global | `Raphael Vitoi <raphavitoi@gmail.com>` | **intacto** |
+
+**A objeção da §7 era à global, e ela continua de pé.** Apagar a local sem
+substituir seria pior que a residual: faria todo commit de agente sair no e-mail
+pessoal do administrador, que é o incidente de 2026-08-30 em pessoa.
+
+**O que muda o cálculo de risco é o portão desta mesma sessão.** O argumento
+contra reapontar a local era que ela empurra a herança para o próximo condutor
+em silêncio. Com a verificação de coerência, o silêncio acabou: o próximo
+condutor que declarar a própria assinatura sob esta identidade é **barrado**,
+com o comando de correção na tela. Verificado no ato — assinatura `Claude Opus 5`
+passa sem `-c`; `antigravity@gemini-3.8-flash` sob esta local é recusada.
+
+A herança deixou de ser defeito silencioso e virou aviso na cara de quem herdou.

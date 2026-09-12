@@ -868,6 +868,23 @@ autor é quem produziu, committer é quem commitou, e os dois se declaram — a
 forma medida em `29ef243e` é *"Assinatura: `<autor>` via `<committer>` como
 committer"*.
 
+**Onde a residual mora, medido em 2026-09-12 — e não é onde esta seção sugeria.**
+A identidade herdada estava em `.git/config`, **local a este repositório**; a
+global é `Raphael Vitoi`, a do Tier 0. Isso inverte o risco de quem for
+"limpar": apagar a local sem substituir não devolve o repositório a um estado
+neutro, faz **todo commit de agente cair no e-mail pessoal do administrador** —
+exatamente o incidente de 2026-08-30 que esta seção documenta. A local nunca
+fica vazia; ela é **reapontada** para o condutor da vez.
+
+**Reapontamento da local em 2026-09-12, por arbitragem do Tier 0** (§3.1 da
+raiz). A regra acima manda passar a identidade no comando; o Tier 0 arbitrou o
+reapontamento direto da configuração **local**, e a operação é válida — a
+objeção da regra era à **global**, que continua intacta. O que sustenta a
+decisão é o portão abaixo: com ele, identidade defasada passou a **barrar o
+commit** com a correção pronta, em vez de sair mentindo em silêncio. Verificado
+no mesmo ato: assinatura do condutor atual passa sem `-c`; assinatura de outro
+condutor sob esta local é recusada.
+
 ### A regra passou a ser executável — e a ordem das duas metades importa
 
 **Aplicado em 2026-09-12.** Até essa data a §7 inteira era prosa: nada conferia
