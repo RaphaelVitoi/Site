@@ -47,6 +47,7 @@ revisoes_de_ancora:
       reports/agent-calibration/daily e o indice novo entra em scripts/ops ao
       lado do record_gate.py, que ja e Python. A alteracao no CLAUDE.md e
       aditiva em SS7 e SS8.3.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: registro-2026-09-08-o-padrao-de-desvio-de-foco
     caminhos:
       - reports/agent-calibration/feedback-ledger.jsonl
@@ -85,6 +86,7 @@ revisoes_de_ancora:
       identidade residual do git, medida duas vezes -- 10/09 na sessao Gemini e
       12/09 nesta -- porque corpo de commit corrige o registro e nao o campo que
       o GitHub le. Reforca a regra de identificacao distinta em vez de altera-la.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: registro-2026-09-02-portao-de-calibracao-por-sessao
     caminhos:
       - CLAUDE.md
@@ -96,6 +98,7 @@ revisoes_de_ancora:
       tool_calls, tool_errors e tool_error_method, e a SS8.3 ganhou a distincao
       entre Antigravity 2.0 e o IDE compartilhado. Nenhuma regra de portao foi
       tocada.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
     caminhos:
       - CLAUDE.md
@@ -105,6 +108,7 @@ revisoes_de_ancora:
       append-only, correcao por registro que aponta o alvo -- foi o instrumento
       de todas as 30 correcoes desta sessao. Nenhuma nota foi convertida de
       escala e nenhum registro foi reescrito.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: registro-2026-09-03-nota-10-e-outlier-de-aceleracao
     caminhos:
       - reports/agent-calibration/feedback-ledger.jsonl
@@ -164,24 +168,28 @@ revisoes_de_ancora:
     parecer: >-
       Revisado e mantido valido. A alteracao no CLAUDE.md e aditiva e nao toca a
       hierarquia de Tiers nem a invariante de commits que este registro fixou.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: registro-2026-09-01-ancora-de-merge-e-instrucao-indexada
     caminhos:
       - CLAUDE.md
     parecer: >-
       Revisado e mantido valido. Nenhum merge nesta sessao e a regra de ancora
       em merge da SS1.2 nao foi tocada; a alteracao e aditiva em SS7 e SS8.3.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: registro-2026-09-03-triade-fronteira-chico-e-concorrencia
     caminhos:
       - CLAUDE.md
     parecer: >-
       Revisado e mantido valido. Alteracao aditiva; a Lei de Concorrencia e a
       identidade de grupo permanecem como estavam.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: registro-2026-09-05-regua-para-agente-autonomo-de-nuvem
     caminhos:
       - CLAUDE.md
     parecer: >-
       Revisado e mantido valido. A SS10 nao foi tocada; a alteracao e aditiva em
       SS7 e SS8.3.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: registro-2026-09-07-integracao-gpt6-astra-e-retirada-do-fable
     caminhos:
       - CLAUDE.md
@@ -190,6 +198,7 @@ revisoes_de_ancora:
       como este registro a fixou, e foi ela que decidiu que os dois registros
       GPT da serie sao gpt-5.6-terra por data -- 01/09 e 05/09, ambos anteriores
       a 09/09.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: registro-2026-09-08-arbitragem-soberana-sobre-a-lei-de-concorrencia
     caminhos:
       - CLAUDE.md
@@ -198,24 +207,28 @@ revisoes_de_ancora:
       deu por arbitragem soberana do Tier 0, registrada com a autoridade nomeada
       no proprio registro -- que e o que a SS3.1 da raiz exige: a arbitragem
       dispensa a regra, nao o registro.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
     caminhos:
       - CLAUDE.md
     parecer: >-
       Revisado e mantido valido. Alteracao aditiva no CLAUDE.md, sem remocao de
       secao nem mudanca de numeracao.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: relatorio-2026-08-29-analise-integral-ecossistema-sota-v8-gold
     caminhos:
       - CLAUDE.md
     parecer: >-
       Revisado e mantido valido. Alteracao aditiva no CLAUDE.md, sem remocao de
       secao nem mudanca de numeracao.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: relatorio-2026-08-29-impacto-quantitativo-qualitativo-sota-v8-gold
     caminhos:
       - CLAUDE.md
     parecer: >-
       Revisado e mantido valido. Alteracao aditiva no CLAUDE.md, sem remocao de
       secao nem mudanca de numeracao.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: auditoria-2026-09-01-retrospectiva-prioridade-sessao
     caminhos:
       - scripts/ops/Register-AgentCalibrationFeedback.ps1
@@ -238,6 +251,7 @@ revisoes_de_ancora:
       - scripts/ops/Register-AgentCalibrationFeedback.ps1
     parecer: >-
       Revisado e mantido valido: alteracao aditiva no CLAUDE.md -- duas subsecoes novas em SS7 e SS8.3, sem remocao de secao nem mudanca de numeracao; campos aditivos no registrador de feedback -- tool_calls, tool_errors e tool_error_method; nenhum parametro anterior mudou de forma ou de default.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: auditoria-2026-09-08-massa-de-fichas-fonte-nao-unica-e-desvio-de-foco
     caminhos:
       - reports/agent-calibration/feedback-ledger.jsonl
@@ -248,16 +262,19 @@ revisoes_de_ancora:
       - CLAUDE.md
     parecer: >-
       Revisado e mantido valido: alteracao aditiva no CLAUDE.md -- duas subsecoes novas em SS7 e SS8.3, sem remocao de secao nem mudanca de numeracao.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: handoff-2026-08-29-governanca-8tiers-vulnerabilidades-subagents
     caminhos:
       - CLAUDE.md
     parecer: >-
       Revisado e mantido valido: alteracao aditiva no CLAUDE.md -- duas subsecoes novas em SS7 e SS8.3, sem remocao de secao nem mudanca de numeracao.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
     caminhos:
       - CLAUDE.md
     parecer: >-
       Revisado e mantido valido: alteracao aditiva no CLAUDE.md -- duas subsecoes novas em SS7 e SS8.3, sem remocao de secao nem mudanca de numeracao.
+      Revisto de novo no mesmo dia, para a segunda alteracao aditiva do CLAUDE.md: a subsecao de preludio na SS8.3, que fixa o registro que atravessa a compactacao. Sem remocao de secao nem mudanca de numeracao.
   - registro: handoff-2026-09-01-prioridade-pmev-continuacao
     caminhos:
       - reports/agent-calibration/feedback-ledger.jsonl
