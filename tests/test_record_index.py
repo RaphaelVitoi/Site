@@ -664,3 +664,116 @@ def test_o_corpus_resolve_tambem_sem_o_repositorio_irmao(monkeypatch):
         "referencia que so resolve porque a raiz multiprojeto esta no disco ao lado -- "
         "no clone isto reprova:\n  " + "\n  ".join(f"{k}: {v}" for k, v in mortas.items())
     )
+
+
+def _registro_com_pendencia(raiz: Path, nome: str, corpo_fm: str) -> str:
+    """Escreve um registro minimo valido com o bloco de pendencia dado."""
+    (raiz / "reports").mkdir(exist_ok=True)
+    rel = f"reports/{nome}"
+    (raiz / rel).write_text(
+        "---\n"
+        f"id: {nome.lower().removesuffix('.md')}\n"
+        "tipo: relatorio\nescopo: Site\nautor: claude@opus-5\n"
+        "criado_em: 2026-09-12\ncommit: 134013b0\nclasses: [interno]\n"
+        "caminhos:\n  - engine/alvo.py\n"
+        "verificado:\n  - nada\nnao_verificado:\n  - nada\n"
+        f"{corpo_fm}---\n\ncorpo\n",
+        encoding="utf-8",
+    )
+    return rel
+
+
+def test_pendencia_aberta_aparece_e_nao_bloqueia(tmp_path, monkeypatch):
+    """O ponto inteiro do mecanismo: visibilidade sem chantagem.
+
+    Pendencia que impede commit vira pendencia que alguem apaga. O valor esta em
+    ela aparecer na tela que todo condutor ve, nao em segurar o trabalho refem.
+    """
+    rel = _registro_com_pendencia(
+        tmp_path,
+        "COM-PENDENCIA.md",
+        "pendencias:\n  - id: pend-teste-abrir-pr\n    o_que: Abrir o PR upstream\n    dono: Tier 0\n    prazo: 2099-01-01\n",
+    )
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: [rel])
+    monkeypatch.setattr(record_gate, "_git", lambda *a: f"{rel}\n" if a[:1] == ("ls-files",) else "")
+
+    erros, _ = record_gate.verificar()
+    assert not erros, f"pendencia aberta nao pode bloquear: {erros}"
+
+    abertas, orfas = record_gate.coletar_pendencias()
+    assert [i["id"] for i in abertas] == ["pend-teste-abrir-pr"]
+    assert abertas[0]["origem"] == rel
+    assert abertas[0]["vencida"] is False
+    assert orfas == []
+
+
+def test_pendencia_encerra_por_append_e_nunca_por_remocao(tmp_path, monkeypatch):
+    """Registro publicado nao se reescreve -- a mesma regra do ledger.
+
+    A pendencia continua no registro que a criou; quem resolve declara o id num
+    registro NOVO. Assim a trilha guarda quando nasceu e quando fechou, em vez
+    de perder as duas pontas junto com a linha apagada.
+    """
+    origem = _registro_com_pendencia(
+        tmp_path,
+        "ORIGEM.md",
+        "pendencias:\n  - id: pend-teste-fechar\n    o_que: Trocar o regex pela fonte canonica\n    dono: agente\n",
+    )
+    fecho = _registro_com_pendencia(tmp_path, "FECHO.md", "pendencias_resolvidas:\n  - pend-teste-fechar\n")
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: [fecho])
+    monkeypatch.setattr(record_gate, "_git", lambda *a: f"{origem}\n{fecho}\n" if a[:1] == ("ls-files",) else "")
+
+    erros, _ = record_gate.verificar()
+    assert not erros, erros
+    abertas, orfas = record_gate.coletar_pendencias()
+    assert abertas == [], "o append de encerramento nao retirou a pendencia da lista de abertas"
+    assert orfas == []
+    assert "pend-teste-fechar" in (tmp_path / origem).read_text(encoding="utf-8"), (
+        "o registro de origem foi reescrito; encerramento e append, nao remocao"
+    )
+
+
+def test_pendencia_vencida_e_marcada_pela_data(tmp_path, monkeypatch):
+    """Sem prazo nao se distingue guardado de esquecido -- SS2.1 da raiz."""
+    rel = _registro_com_pendencia(
+        tmp_path,
+        "VENCIDA.md",
+        "pendencias:\n  - id: pend-teste-vencida\n    o_que: Decidir o destino dos patches\n    dono: Tier 0\n    prazo: 2026-09-01\n",
+    )
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: [rel])
+    monkeypatch.setattr(record_gate, "_git", lambda *a: f"{rel}\n" if a[:1] == ("ls-files",) else "")
+
+    abertas, _ = record_gate.coletar_pendencias(hoje=date(2026, 9, 12))
+    assert abertas[0]["vencida"] is True
+    abertas_antes, _ = record_gate.coletar_pendencias(hoje=date(2026, 8, 1))
+    assert abertas_antes[0]["vencida"] is False
+
+
+@pytest.mark.parametrize(
+    "bloco,fragmento",
+    [
+        ("pendencias:\n  - id: X\n    o_que: a\n    dono: b\n", "id invalido"),
+        ("pendencias:\n  - id: pend-sem-o-que\n    dono: b\n", "o_que"),
+        ("pendencias:\n  - id: pend-sem-dono\n    o_que: a\n", "dono"),
+        ("pendencias:\n  - id: pend-prazo-ruim\n    o_que: a\n    dono: b\n    prazo: ontem\n", "ISO"),
+        ("pendencias: nao-e-lista\n", "tem de ser uma lista"),
+        ("pendencias_resolvidas:\n  - pend-que-nunca-existiu\n", "nunca foi declarado"),
+    ],
+)
+def test_declaracao_malformada_bloqueia(tmp_path, monkeypatch, bloco, fragmento):
+    """Pendencia aberta nunca bloqueia; declaracao ILEGIVEL bloqueia sempre.
+
+    A distincao e o contrato: o portao nao julga o trabalho pendente, mas se
+    recusa a aceitar uma declaracao que ele nao consegue exibir -- pendencia
+    invisivel e exatamente o defeito que o campo existe para corrigir.
+    """
+    rel = _registro_com_pendencia(tmp_path, "MALFORMADA.md", bloco)
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: [rel])
+    monkeypatch.setattr(record_gate, "_git", lambda *a: f"{rel}\n" if a[:1] == ("ls-files",) else "")
+
+    erros, _ = record_gate.verificar()
+    assert any(fragmento in e for e in erros), f"esperava erro contendo '{fragmento}', veio: {erros}"

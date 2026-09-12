@@ -1,127 +1,73 @@
----
-id: patches-skills-readme
-tipo: registro
-escopo: Site
-ecossistema: gemini-antigravity
-autor: claude@opus-5
-criado_em: 2026-08-28T02:40-03:00
-commit: dc231c69
-classes: [interno, medido]
-config_medida:
-  raiz: ~/.gemini/Site
-  data_da_extracao: 2026-08-28
-  exclusoes_do_patch: [dist/**, build/**, package-lock.json]
-verificado:
-  - cada patch gerado por `git diff` dentro do proprio submodulo
-  - HEAD de cada submodulo conferido contra o gitlink antes da extracao
-  - tamanho e contagem de arquivos de cada patch medidos apos a exclusao
-nao_verificado:
-  - os patches NAO foram reaplicados sobre uma copia limpa. Nao ha prova de
-    que aplicam sem conflito; ha prova de que capturam o diff atual.
-  - o conteudo dos 30 arquivos do patch do exa-mcp-server nao foi lido linha
-    a linha; foi classificado por amostragem.
-  - nenhuma skill foi executada antes ou depois da extracao.
-supersede: null
----
+# `patches/skills/` — o seguro que cumpriu o papel e foi retirado
 
-# Patches dos submódulos de `skills/`
+**Estado em 2026-09-12: não há mais `.patch` aqui, e isso é o desfecho correto.**
 
-## O que é isto
+## Por que existiram
 
-Trabalho local feito **sobre** os submódulos de `skills/`, extraído para cá em
-2026-08-28 porque estava num limbo: modificado na árvore de trabalho, **não
-commitado em lugar nenhum**, e invisível ao `git status`.
+Os oito submódulos de `skills/` declaram `ignore = dirty` no `.gitmodules`.
+Modificação dentro deles **não aparece** no `git status` do superprojeto — árvore
+limpa por instrução, não por fato.
 
-A invisibilidade é por configuração — os 8 submódulos declaram `ignore = dirty`
-no `.gitmodules`, o que instrui o git a não reportar alteração dentro deles.
-Árvore limpa por instrução, não por fato.
+Em **2026-08-28** havia 62 arquivos-fonte modificados nesse limbo, incluindo uma
+correção de *argument injection* do git com teste de regressão. Um
+`git submodule update` de rotina apagaria tudo sem aviso. A resposta foi extrair
+um `.patch` por submódulo: **seguro contra perda de trabalho não commitado**.
 
-**Um `git submodule update` apaga tudo isso sem aviso.** Estes arquivos são o
-seguro.
+## Por que foram retirados
 
-## O que há dentro
+Medido em **2026-09-12**: os oito estão limpos, e todo o trabalho está commitado
+em fork próprio, de 1 a 2 commits além do upstream.
 
-| Patch | Arquivos | Natureza |
-| :--- | ---: | :--- |
-| `gemini-cli-security.patch` | 17 | **Segurança.** Corrige *argument injection* do git (`resolveCommitRevision` rejeita revisão iniciada por `-`, usa `--end-of-options`), adiciona `shell: false` no `spawnSync`, e traz **teste de regressão** provando que `--output=…` como revisão não escreve arquivo |
-| `gemini-cli-jules.patch` | 2 | **Segurança.** Actions pinadas por SHA (supply-chain); `${{ }}` movido de `run:` para `env:` (*script injection*); import de `exec` removido |
-| `exa-mcp-server.patch` | 30 | **Refatoração.** Schemas e formatadores extraídos, tipos fortalecidos, `randomUUID` de `node:crypto` |
-| `superpowers.patch` | 24 | Ajustes e remoções em `skills/*/SKILL.md` |
-| `gemini-deep-research.patch` | 12 | Ajustes de fonte |
-| `gemini-supermemory.patch` | 12 | **Segurança — reclassificado em 2026-09-12.** Remove o hook `SessionEnd` `supermemory-session-saver`, que a cada fim de sessão enviava um resumo do trabalho para a API externa da Supermemory usando `SUPERMEMORY_API_KEY`. Apaga `src/hooks/session-end.js` inteiro e retira a entrada de `hooks/hooks.json`. Os ajustes em `src/lib/*` acompanham a remoção; não são o conteúdo dela |
-| `Stitch.patch` | 2 | Menor |
-| `token-efficiency.patch` | 1 | `fs` → `node:fs` (anti-shadowing) |
+**Não há mais trabalho não commitado a segurar.** Um `.patch` que duplica
+história já publicada é o que a §3 chama de fonte paralela — e fonte paralela
+não diverge se alguém descuidar: ela diverge **por padrão**, porque a cópia não
+tem como saber que o original mudou.
 
-Padrão recorrente em três submódulos: prefixo `node:` nos imports embutidos,
-que impede shadowing por pacote homônimo em `node_modules`.
+Retirados por arbitragem do Tier 0 em 2026-09-12.
 
-## O que foi excluído, e por quê
+## Onde o trabalho está agora
 
-`dist/**`, `build/**` e `package-lock.json`. São **regeneráveis** (`npm run
-build`, `npm install`) e dominavam o volume: o patch do `gemini-supermemory`
-caiu de 1,5 MB para 18 KB só ao tirar o `dist/` bundlado, e o do
-`exa-mcp-server` carregava 5.799 linhas de lockfile.
+Todo fork é de `RaphaelVitoi`. O `.gitmodules` aponta para ele, que é o que um
+clone resolve.
 
-Preservar trabalho significa preservar **fonte**. Artefato de build que entra no
-patch não é preservação, é ruído que torna a revisão impossível.
+| Submódulo | Fork | Gitlink | Branch |
+| :--- | :--- | :--- | :--- |
+| `Stitch` | `stitch` | `454e84a5aaa5` | `fix/escopo-oauth-cloud-platform` |
+| `exa-mcp-server` | `exa-mcp-server` | `f3b1349c9b65` | `chore/sonarlint-campaign-20260911` |
+| `gemini-cli-jules` | `jules` | `9c848a2a0cb3` | `fix/injecao-no-workflow-e-registro-da-tool` |
+| `gemini-cli-security` | `security` | `1d2eef7c19f4` | `refactor-runners-de-poc-e-fronteira-do-vitest` |
+| `gemini-deep-research` | `gemini-cli-deep-research` | `69d39b447a4b` | `chore/lint-e-tipagem-de-mock` |
+| `gemini-supermemory` | `gemini-supermemory` | `1b0ca5a8498c` | `refactor/remove-egress-automatico-de-sessao` |
+| `superpowers` | `superpowers` | `7e880359648e` | `chore/lint-e-sonda-de-dot-no-windows` |
+| `token-efficiency` | `token-efficiency` | `0212f0241683` | `chore/prefixo-node-nos-imports` |
 
-**Consequência declarada:** reaplicar exige `npm install` e `npm run build` no
-submódulo. O `package.json` está incluído; só o lock ficou de fora.
+Os SHAs são os gravados no `HEAD` do superprojeto em 2026-09-12; o guard confirma
+que cada um resolve.
 
-## Como reaplicar
+## A lição, que custou quinze dias
 
-```bash
-cd skills/<nome>
-git apply --check ../../patches/skills/<nome>.patch   # confere antes
-git apply ../../patches/skills/<nome>.patch
-```
+Entre 2026-08-28 e 2026-09-12 o `.gitmodules` apontava para o **upstream**
+enquanto a correção de segurança do `gemini-supermemory` vivia só no disco local.
+Quem clonasse o repositório público recebia o gitlink `035c843d`, que ainda
+carregava o hook de egress. **A máquina estava protegida; o clone, nunca.**
 
-`--check` primeiro: se o submódulo avançou de versão, o patch pode conflitar, e
-é melhor descobrir antes de sujar a árvore.
+Este README já prescrevia, desde o primeiro dia, *"fork próprio por submódulo,
+com o gitlink apontando para ele"*. A recomendação ficou catorze dias parada — não
+por discordância, por invisibilidade: prosa em README de diretório não é lida por
+portão nenhum.
 
-## Isto é seguro, não é solução
+Duas coisas mudaram por causa disso:
 
-Patch versionado protege contra perda. **Não** resolve a divergência: cada
-`git submodule update` continuará exigindo reaplicação manual, e o conflito
-tende a crescer.
+- **`tests/test_patches_skills.py`** deixou de perguntar *"existe patch?"* e passou
+  a perguntar *"o endereço publicado resolve?"*. O guard anterior passava
+  vacuamente desde que os submódulos ficaram limpos, e nunca teria pego a
+  exposição — ele olhava para o lugar errado.
+- **Pendência agora se declara em `pendencias:` no frontmatter**, que o portão de
+  registro lê e exibe em todo commit. Recomendação escrita não é tarefa aberta.
 
-As duas saídas definitivas, em ordem de valor:
+## Se o limbo voltar
 
-1. **PR upstream** para as correções de segurança. Elas valem para os projetos
-   de origem, e upstream aceito **encerra** a divergência em vez de administrá-la.
-2. **Fork próprio** por submódulo, com o gitlink apontando para ele.
-
-Enquanto nenhuma das duas acontecer, `tests/test_patches_skills.py` reprova se
-um submódulo ganhar modificação de fonte sem patch correspondente.
-
-## Estado em 2026-09-12 — a saída 2 estava pela metade
-
-A saída 2 tem **duas** partes, e a redação acima já dizia as duas: *fork
-próprio* **e** *o gitlink apontando para ele*. Em 2026-09-11 os oito forks foram
-criados, o trabalho foi commitado e publicado em branch nomeada nos oito. **O
-gitlink não foi apontado.** O `.gitmodules` continuou declarando upstream, e os
-ponteiros ficaram avançados na árvore de trabalho sem commit.
-
-O custo não foi cosmético. Quem clonasse o `Site` recebia o gitlink **antigo** —
-para o `gemini-supermemory`, o commit `035c843d`, que ainda traz
-`src/hooks/session-end.js` e a entrada `SessionEnd` em `hooks/hooks.json`. **O
-patch protegia a máquina local; ele nunca protegeu o clone.** Fechado em
-2026-09-12: `.gitmodules` repontado para os oito forks e os oito gitlinks
-commitados no mesmo ato, verificado por clone de teste — `session-end.js` não
-existe mais na árvore que o clone materializa.
-
-**Por que a linha do `supermemory` estava errada.** Ela dizia *"Ajustes em
-`src/lib/*`"*, e a tabela foi montada classificando por **contagem de arquivos e
-diretório dominante**, não pelo que a mudança faz. Dos doze arquivos, onze são
-ajustes e um é a remoção de um canal de egress — e é o décimo segundo que
-importa. Classificar por volume faz a única linha de segurança do conjunto
-parecer a mais inócua, que é o oposto do que uma tabela de triagem existe para
-fazer.
-
-**Continua em aberto a saída 1.** Nenhum PR upstream foi aberto para as três
-correções de segurança — `gemini-cli-security`, `gemini-cli-jules` e
-`gemini-supermemory` —, e a própria seção acima as classifica como a saída de
-**maior** valor, porque encerram a divergência em vez de administrá-la. Medido
-em 2026-09-12 com `gh pr list --state all` nos oito repositórios de origem:
-nenhum PR, em nenhum estado. Abrir PR em repositório de terceiro é publicação
-externa e depende de autorização do Tier 0.
+A saída **não** é extrair patch. É commitar no fork e avançar o gitlink — patch
+guarda o trabalho e não o publica, e foi exatamente essa confusão que custou os
+quinze dias. Um `.patch` só é legítimo enquanto houver trabalho não commitado
+correspondente, e o guard cobra isso.

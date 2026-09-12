@@ -862,6 +862,46 @@ tratamento correto é resolver o caso pelo lugar canônico e **registrar a
 exceção como exceção**, jamais replicá-la nem citá-la como autorização. Se ela
 deve valer daqui em diante, quem promove é o Tier 0, e o lugar é este arquivo.
 
+### 9.2 Tarefa aberta se declara onde um portão já olha
+
+**Estabelecido pelo Tier 0 em 2026-09-12, por arbitragem aditiva.**
+
+Uma recomendação escrita em 2026-08-28 dentro de `patches/skills/README.md` —
+criar fork próprio por submódulo e apontar o gitlink para ele — ficou
+**catorze dias** parada. Não por discordância: por invisibilidade. Quinze sessões
+passaram sem que ela aparecesse em lista, relatório ou verificação alguma, e ela
+só andou quando o Tier 0 empurrou. No intervalo, o clone público serviu por
+quinze dias um gitlink que ainda carregava um hook de egress.
+
+**A lição não é escrever noutro lugar; é escrever onde um portão já olha.** Por
+isso a pendência mora no **frontmatter**, que o `record_gate.py` lê em todo
+commit — e não num artefato novo, que nasceria com o mesmo defeito do README.
+
+```yaml
+pendencias:
+  - id: pend-2026-09-12-exemplo    # minúsculas, dígitos e hífen
+    o_que: O que precisa ser feito, em uma frase
+    dono: Tier 0                    # ou o agente, ou o veículo
+    prazo: 2026-10-12               # ISO, opcional
+```
+
+**Encerramento é por append, nunca por remoção.** Quem resolve declara o `id` em
+`pendencias_resolvidas:` num registro **novo**; a pendência permanece no registro
+que a criou. É a mesma regra do ledger — registro publicado não se reescreve — e
+é o que preserva as duas pontas: quando nasceu, quem devia, quando fechou.
+Encerrar id nunca declarado **bloqueia**: fechar o que não existe esconde o que
+existe.
+
+**Pendência aberta não bloqueia commit, e isso é desenho.** Portão que segura
+trabalho refém de pendência ensina o operador a apagar pendência. O valor está em
+ela **aparecer** na tela que todo condutor já vê. O que bloqueia é declaração
+malformada — `id` fora do padrão, `o_que` ou `dono` ausente, prazo que não é data
+—, porque pendência que o portão não consegue exibir é exatamente o defeito que o
+campo existe para corrigir. Guards em `tests/test_record_index.py`.
+
+Prazo é opcional e recomendado, pela §2.1 da raiz: *sem prazo não se distingue
+guardado de esquecido*. O portão marca as vencidas; não as julga.
+
 ---
 
 ## 10. Régua para agente autônomo de nuvem — Jules / `Bolt ⚡`

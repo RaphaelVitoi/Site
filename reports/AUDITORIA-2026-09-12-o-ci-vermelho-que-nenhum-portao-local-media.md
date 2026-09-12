@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T11:18:04-03:00'
-atualizado_em: '2026-09-12T13:23:01-03:00'
+atualizado_em: '2026-09-12T17:05:24-03:00'
 classes: [interno, medido, calibracao, ci, proveniencia]
 referencias_nao_resolviveis:
   # Este relatorio CITA os dois caminhos para dizer que eles nao resolvem aqui --
@@ -14,6 +14,31 @@ referencias_nao_resolviveis:
   # 09-11: moram na raiz multiprojeto, que e outro repositorio.
   - 'scripts\ops\inventario-extensoes.ps1'
   - 'relatorios\RELATORIO_DECISAO_SCRIPTS_SEM_CONSUMIDOR_2026-09-10.md'
+pendencias:
+  - id: pend-2026-09-12-prs-upstream
+    o_que: Abrir os tres PRs upstream das correcoes de submodulo -- branches ja nos forks, corpos redigidos, bloqueado so por o PAT ser fine-grained
+    dono: Tier 0
+    prazo: 2026-10-12
+  - id: pend-2026-09-12-outlier-7e5ca052
+    o_que: Reavaliar o outlier grave apos uma sessao posterior em contexto semelhante -- contramedida escrita nao e contramedida comprovada
+    dono: Tier 0
+    prazo: 2026-10-12
+  - id: pend-2026-09-12-outlier-b39b7431
+    o_que: Decidir promocao ou retencao do outlier POSITIVO de 03-09; descartar por ser positivo enviesaria o corpus so para falhas
+    dono: Tier 0
+    prazo: 2026-10-12
+  - id: pend-2026-09-12-da7ef222-segunda-medicao
+    o_que: Segunda medicao independente da hipotese de aceleracao sob estresse; a primeira a enfraqueceu, 4.1 para 3.1 por cento
+    dono: agente
+    prazo: 2026-11-12
+  - id: pend-2026-09-12-scope-da-sequencia-11
+    o_que: Reconciliar o scope do feedback de sequencia 11, hoje inelegivel por falta de fonte de encerramento
+    dono: Tier 0
+    prazo: 2026-10-12
+  - id: pend-2026-09-12-render-desperdicado
+    o_que: Registrar o numero de render desperdicado que a SS10.1 exige para o React.memo de PerspectiveChart
+    dono: Tier 0
+    prazo: 2026-10-12
 verificado:
   - nota 9.8 do handoff do Codex gravada literal na sequencia 58 -- cadeia valida, 59 registros
   - conductor_model medido no rollout da propria sessao Codex -- gpt-5.6-terra em 52 turn_context
@@ -48,6 +73,14 @@ verificado:
   - 812c1c2f saiu assinado Codex GPT-5 numa sessao do Gemini -- identidade residual, terceira vez
   - prompt do heartbeat ACTIVE e sem recorte diario -- lido em automation.toml
   - outlier 512fc3a6 encerrado na sequencia 8; cadeia de outliers valida em 9 registros
+  - sete correcoes de supervision_mode aplicadas -- historicos incompletos de 9 para 2, cadeia valida em 66
+  - os sete estao entre 01-09 e 03-09, dentro do corte declarado -- conferido antes de aplicar
+  - outlier 2d55d92a encerrado na seq 9; da7ef222 com evidencia retida na seq 10; cadeia valida em 11
+  - trecho posterior ao gatilho mede 3.1 por cento contra 4.1 antes -- ENFRAQUECE a hipotese do da7ef222
+  - b39b7431 lido na integra e NAO descartado -- e outlier positivo com hipotese viva
+  - mecanismo de pendencias com 5 guards; 6 pendencias semeadas, zero orfas
+  - os oito patch retirados; os 8 submodulos limpos e commitados no fork, 1 a 2 commits alem do upstream
+  - guard novo dos submodulos MORDE -- simulacao com um deles no upstream acusa gemini-supermemory
 nao_verificado:
   - o numero de render desperdicado que a SS10.1 exige nao consta de relatorio que eu tenha lido
   - a corrida do CI sobre o commit desta ultima correcao ainda nao existia quando isto foi escrito
@@ -66,6 +99,9 @@ caminhos:
   - tests/test_backend_hardening.py
   - reports/agent-calibration/outlier-evidence-ledger.jsonl
   - llm/model_registry.py
+  - CLAUDE.md
+  - patches/skills/README.md
+  - tests/test_patches_skills.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
@@ -75,6 +111,229 @@ config_medida:
   ultimo_ci_verde: ac1332b2
   commits_vermelhos_seguidos: 9
 revisoes_de_ancora:
+  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+    caminhos:
+      - 'CLAUDE.md'
+      - 'scripts/ops/record_gate.py'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO, com a taxonomia ESTENDIDA e nada
+      reclassificado. Os quatro diretorios canonicos, seus papeis e seus
+      padroes de nome seguem identicos; a SS9.2 acrescenta um CAMPO ao
+      frontmatter, nao um lugar novo -- exatamente para nao criar um artefato
+      paralelo, que e o defeito que os catorze dias expuseram. No portao, a
+      checagem de pendencia nasce ao lado das existentes e nenhuma delas mudou
+      de criterio.
+  - registro: auditoria-2026-09-03-trabalho-do-gemini-3-8-flash
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. Aquela auditoria cobrou modelo e supervisao
+      como dado obrigatorio; a declaracao em bloco de hoje supre
+      supervision_mode em sete registros do periodo que ela examinou,
+      inclusive o da sessao Gemini de 02-09. Nenhuma nota, modelo ou conector
+      foi alterado, e nada foi deduzido: o Tier 0 declarou o que presenciou.
+  - registro: auditoria-2026-09-12-a-tarefa-que-ficou-em-aberto-e-a-memoria-de-curto-prazo
+    caminhos:
+      - 'patches/skills/README.md'
+      - 'tests/test_patches_skills.py'
+    parecer: >-
+      REVISADO E CUMPRIDO. Aquela auditoria mediu os catorze dias, apontou que
+      os oito patch haviam mudado de natureza -- de seguro contra perda para
+      instantaneo historico -- e registrou que o guard passava vacuamente. As
+      duas coisas foram resolvidas aqui: os patch sairam porque nao ha mais
+      trabalho nao commitado a segurar, e o guard trocou a pergunta 'existe
+      patch' pela pergunta 'o endereco publicado resolve', que e a que teria
+      fechado os quinze dias de exposicao. O diagnostico dela permanece
+      integro; o que muda e que deixou de ser diagnostico.
+  - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A SS9.2 nao toca o contrato de proveniencia:
+      nao acrescenta, remove ou reinterpreta campo algum do ledger, e o portao
+      de elegibilidade continua exatamente como ele o deixou. Pendencia e
+      sobre trabalho a fazer; proveniencia e sobre origem de dado ja
+      registrado.
+  - registro: checkpoint-2026-06-14-infrastructure-hardening
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. Nenhum controle de infraestrutura daquele
+      checkpoint e alcancado: a adicao e uma clausula de taxonomia documental,
+      sem efeito sobre superficie de execucao, permissao ou rede.
+  - registro: handoff-2026-08-29-governanca-8tiers-vulnerabilidades-subagents
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A hierarquia de oito Tiers e a atribuicao de
+      subagentes nao mudam. A SS9.2 acrescenta um campo com DONO declarado, o
+      que reforca aquela hierarquia em vez de a diluir: pendencia sem dono e
+      observacao, e foi assim que uma recomendacao ficou catorze dias sem que
+      ninguem se reconhecesse responsavel por ela.
+  - registro: handoff-2026-08-29-quatro-pendencias-e-o-que-elas-eram
+    caminhos:
+      - 'scripts/ops/record_gate.py'
+    parecer: >-
+      REVISADO, MANTIDO VALIDO E COM IRONIA UTIL. Aquele handoff rastreou
+      quatro pendencias em PROSA, que e precisamente a forma que os catorze
+      dias mostraram ser insuficiente. O mecanismo novo lhes daria id, dono e
+      prazo, e as exibiria em todo commit. Nenhuma verificacao que ele ancorou
+      foi alterada: a coleta de pendencia e adicional e nao bloqueante.
+  - registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A malha agentica auditada e a trava de LFS
+      nao sao tocadas por uma clausula de taxonomia documental.
+  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A SS8.3 que ele reconciliou permanece
+      intacta, inclusive o texto do heartbeat. A SS9.2 e vizinha e
+      independente: pendencia e trabalho por fazer, calibracao e evidencia ja
+      produzida, e nenhuma le o campo da outra.
+  - registro: interludio-2026-08-28-concorrencia-e-isolamento
+    caminhos:
+      - 'scripts/ops/record_gate.py'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A coleta de pendencia e leitura de
+      frontmatter de arquivos ja rastreados, sem processo concorrente, sem
+      lock e sem escrita -- nao cria superficie de concorrencia nenhuma sobre
+      o que aquele interludio isolou.
+  - registro: plano-2b-painel-de-estado
+    caminhos:
+      - 'scripts/ops/record_gate.py'
+    parecer: >-
+      REVISADO E DIRETAMENTE SERVIDO. O painel de estado quer saber o que a
+      malha tem em aberto; ate hoje o portao sabia dizer o que foi verificado
+      e nao o que falta fazer. A secao de pendencias e uma fonte estruturada
+      para exatamente esse painel, com id, dono, prazo e origem por item.
+  - registro: registro-2026-08-29-governanca-piramidal-sota
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A governanca piramidal nao muda; a clausula
+      nova e promovida por arbitragem aditiva do Tier 0, que e o canal que
+      aquele registro estabelece para regra nova.
+  - registro: registro-2026-08-29-o-portao-le-o-indice
+    caminhos:
+      - 'scripts/ops/record_gate.py'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. O portao continua lendo o indice canonico
+      para raizes de escopo e para tudo o que aquele registro fixou. A coleta
+      de pendencia usa `git ls-files` sobre docs e reports, o mesmo alcance
+      que o portao ja emprega para ancora, sem introduzir uma segunda nocao de
+      corpus.
+  - registro: registro-2026-09-01-ancora-de-merge-e-instrucao-indexada
+    caminhos:
+      - 'CLAUDE.md'
+      - 'scripts/ops/record_gate.py'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. `caminhos_herdados_de_merge` nao foi tocada e
+      a subtracao em merge continua igual. A pendencia nao participa da logica
+      de ancora: e uma leitura separada, que nao entra em `tocados` nem em
+      `revisoes_aceitas`.
+  - registro: registro-2026-09-01-resolucao-de-skill-e-referencia-por-ponto-de-partida
+    caminhos:
+      - 'scripts/ops/record_gate.py'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A resolucao de referencia por ponto de
+      partida declarado nao e alterada; a adicao nao resolve caminho algum --
+      le campos declarativos do frontmatter e os exibe.
+  - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E APLICADO NO MESMO COMMIT. A regra de ler o relogio em vez de
+      digitar a data foi seguida aqui: `atualizado_em` desta auditoria veio
+      medido, e os prazos das seis pendencias sao datas ISO validadas pelo
+      portao -- prazo malformado bloqueia.
+  - registro: registro-2026-09-02-portao-de-calibracao-por-sessao
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. O minimo de tres sessoes distintas e a
+      unidade de contagem nao mudam. As sete correcoes de supervision_mode de
+      hoje afetam elegibilidade HISTORICA e nao o limiar: o ciclo corrente
+      segue com duas sessoes elegiveis e o portao, corretamente, fechado.
+  - registro: registro-2026-09-03-triade-fronteira-chico-e-concorrencia
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A triade e a lei de concorrencia nao sao
+      alcancadas. Vale notar que o campo `dono` da pendencia aceita agente,
+      veiculo ou Tier 0, o que preserva a distincao entre grupo e individuo
+      que aquele registro fixou.
+  - registro: registro-2026-09-05-regua-para-agente-autonomo-de-nuvem
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A regua do Jules continua exigindo medicao
+      antes de otimizar e ordenacao em vez de pergunta. A SS9.2 e
+      complementar: ela da endereco durave a uma tarefa que atravessa sessoes,
+      que e justamente o que uma sessao de nuvem nao consegue carregar
+      consigo.
+  - registro: registro-2026-09-07-integracao-gpt6-astra-e-retirada-do-fable
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. Nem o registro de modelos nem os tetos de
+      esforco sao tocados pela clausula de pendencia.
+  - registro: registro-2026-09-08-alternancia-de-extensoes-no-portao-de-registro
+    caminhos:
+      - 'scripts/ops/record_gate.py'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A alternancia .ts/.tsx e .js/.jsx vive em
+      `referencias_mortas`, que nao foi tocada. A adicao e um bloco proprio,
+      posterior a todas as verificacoes existentes.
+  - registro: registro-2026-09-08-arbitragem-soberana-sobre-a-lei-de-concorrencia
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E EXERCIDO. A clausula da SS9.2 entra por arbitragem aditiva,
+      que e o mecanismo que aquele registro descreve. E o limite dele foi
+      respeitado hoje num caso concreto: a aprovacao em bloco cobria descartar
+      o outlier b39b7431, e a leitura integral mostrou que ele e um outlier
+      POSITIVO. Arbitragem governa permissao, nao fato -- a recomendacao
+      aprovada nao foi executada, e a razao esta registrada.
+  - registro: registro-2026-09-09-saneamento-medicao-datada-identificacao-agentes
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A identificacao medida de agentes segue; o
+      campo `dono` da pendencia nomeia responsavel por tarefa e nao substitui
+      a identificacao de autoria, que continua vindo do commit e do registro.
+  - registro: registro-2026-09-12-preludio-o-instrumento-que-sabia-abrir-e-nao-fechar
+    caminhos:
+      - 'CLAUDE.md'
+      - 'patches/skills/README.md'
+    parecer: >-
+      REVISADO E CONCLUIDO NO QUE ELE DEIXOU ABERTO. O preludio reclassificou
+      o patch do supermemory de 'ajustes' para 'seguranca' e registrou que a
+      saida 1 -- os PRs upstream -- seguia aberta. Ela continua aberta e agora
+      tem id, dono e prazo, em vez de viver em prosa. O README daquela
+      reclassificacao e reescrito para registrar fork, gitlink e branch por
+      skill; a narrativa do preludio nao e alterada.
+  - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A harmonizacao v8 GOLD nao e reaberta por uma
+      clausula de taxonomia documental.
+  - registro: relatorio-2026-08-29-analise-integral-ecossistema-sota-v8-gold
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. O escopo do ecossistema analisado nao muda; a
+      adicao e local a SS9 e nao altera nenhuma das camadas que ele descreve.
+  - registro: relatorio-2026-08-29-impacto-quantitativo-qualitativo-sota-v8-gold
+    caminhos:
+      - 'CLAUDE.md'
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. As metricas de impacto daquele corte
+      permanecem descritivas do momento em que foram tomadas; nada aqui as
+      recalcula.
   - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
     caminhos:
       - reports/agent-calibration/feedback-ledger.jsonl
@@ -869,6 +1128,108 @@ apontava como contaminação do universo, é hoje a sequência 10 da auditoria
 histórica, excluída com motivo `completed_handoff_not_declared` — preservada
 como evidência, nunca promovida. Registro de encerramento na sequência 8 do
 ledger de outliers, cadeia válida em 9 registros. **Restam quatro.**
+
+## 8.2 Terceira rodada — aprovação em bloco, na ordem 5 → 4 → 3 → 2
+
+### 5 — Os sete registros sem `supervision_mode`
+
+Declaração em bloco do Tier 0: **todas as sessões até 2026-09-03 foram
+assistidas**. Conferido antes de aplicar que os sete estão dentro do corte — de
+01/09 a 03/09 — e nenhum registro fora dele foi tocado. Sete correções
+append, sequências 59–65, cadeia válida em 66.
+
+A distinção que autoriza isto: a §3.1 diz que arbitragem governa *permissão* e
+não *fato* — mas aqui **o Tier 0 é a fonte primária do fato**. Ele arbitrou as
+sessões pessoalmente. Declarar o que se presenciou é testemunho, não inferência.
+O que seria ilegítimo é o agente deduzir supervisão a partir do modelo, do editor
+ou da presença de nota humana, e é isso que o portão recusa.
+
+**Históricos incompletos: 9 → 2.** Os dois que restam são de escopo, não de
+supervisão: a sequência 10 é `intrasessao-outlier` e a 11 tem `scope: sessao` sem
+fonte de encerramento localizada.
+
+### 4 — Os outliers
+
+| Outlier | Ação | Por quê |
+| :--- | :--- | :--- |
+| `2d55d92a` | **encerrado**, seq 9 | não havia revisão pendente: a determinação já fora tomada **e** executada — `decisao-tier0:2026-09-03T20:40`, e a execução é a *ausência* de registro de feedback, verificada |
+| `da7ef222` | evidência retida, seq 10 | medição dirigida à hipótese; **sem** `-Resolves` e **sem** `-Authority`, porque o próprio script recusa autoridade sem fechamento: retenção é medição, não decisão |
+| `b39b7431` | **não descartado** | ver abaixo |
+| `7e5ca052` | mantido aberto | conflito de interesse declarado: é meu, é de hoje |
+
+**A medição do `da7ef222` contraria a minha própria recomendação, e é isso que a
+torna valiosa.** A hipótese prevê degradação sob contexto de segurança ou erro
+próprio. Esta sessão teve os dois ao mesmo tempo. Medido: até o handoff, 271
+chamadas e 11 erros — 4,1%; sessão completa, 728 e 25 — 3,4%; **o trecho
+posterior ao gatilho, 457 chamadas e 14 erros — 3,1%**. Sob exatamente a condição
+que a hipótese prevê como degradante, a taxa caiu.
+
+Não conta como uma das duas confirmações independentes, e não deve ser lida como
+refutação: uma sessão, sem controle, sem cegamento. Fica registrada porque **o
+viés de só anexar o que confirma é o mecanismo que transforma hipótese em
+crença.** Nota adicional: a evidência de 09-03 que originou a hipótese está
+confundida por degradação de infraestrutura, conforme a própria determinação do
+`2d55d92a`.
+
+**Por que não descartei o `b39b7431`, tendo recomendado descartá-lo.** Recomendei
+com base numa linha de resumo. Ao lê-lo inteiro, ele é um outlier **positivo**:
+53/53 testes, execução estendida sem degradação, com hipótese viva e testável
+sobre homeostase sob verificação empírica contínua. Outlier não é sinônimo de
+defeito — a §8.3 diz *"evidência retida, não erro descartável"*. Descartar o
+único ponto positivo de um corpus feito de falhas enviesaria tudo o que vier
+depois. Executar uma recomendação aprovada que eu descobri estar errada seria
+inverter a §3.1: **arbitragem governa permissão, não fato.**
+
+### 3 — Registro de tarefa aberta entre sessões
+
+Campo `pendencias:` no frontmatter, lido e exibido pelo `record_gate.py` em todo
+commit. Codificado na §9.2, por arbitragem aditiva.
+
+Três propriedades, e cada uma responde a uma parte do defeito dos catorze dias:
+
+- **mora onde um portão já olha** — não num artefato novo, que nasceria com o
+  mesmo defeito do README;
+- **encerra por append**, nunca por remoção — a pendência fica no registro que a
+  criou, e quem resolve declara o `id` num registro novo. Encerrar id nunca
+  declarado bloqueia: fechar o que não existe esconde o que existe;
+- **não bloqueia** — portão que segura trabalho refém de pendência ensina o
+  operador a apagar pendência. O que bloqueia é declaração **malformada**, porque
+  pendência que o portão não exibe é o defeito que o campo existe para corrigir.
+
+Seis pendências semeadas, com dono e prazo. Guards em `tests/test_record_index.py`
+cobrem os cinco casos: aberta não bloqueia, encerra por append sem reescrever a
+origem, vencida é marcada pela data, malformada bloqueia em seis formas, e
+`pendencias_resolvidas` órfã bloqueia.
+
+### 2 — Os oito `.patch`
+
+Retirados. A medição que decide: **os oito submódulos estão limpos e todo o
+trabalho está commitado em fork, 1 a 2 commits além do upstream.** O seguro não
+tem mais risco a segurar, e um `.patch` que duplica história publicada é fonte
+paralela — ela não diverge se alguém descuidar, diverge **por padrão**.
+
+O `patches/skills/README.md` passou a registrar fork, gitlink e branch por skill:
+ponteiro verificável no lugar de 640 KB que ninguém reconcilia.
+
+**E o guard mudou de pergunta.** Ele perguntava *"existe patch?"* e passava
+vacuamente desde que os submódulos ficaram limpos — mas, pior, **nunca teria
+pego o defeito que de fato aconteceu**. Olhava para o lugar errado: a pergunta
+não era se havia patch, era se **o endereço publicado resolve**. Agora são três
+asserções com conteúdo, e a primeira roda **sem submódulo materializado**, que é
+o caso do CI:
+
+1. todo submódulo de `skills/` aponta para o fork no `.gitmodules` — é esta que
+   teria fechado os quinze dias no dia em que nasceram;
+2. o gitlink gravado resolve para um commit que existe no submódulo;
+3. fonte modificada não fica sem commit — e a remediação agora é **commitar no
+   fork**, não extrair patch: patch guarda o trabalho e não o publica.
+
+Um quarto exige que todo `.patch` presente tenha objeto — submódulo limpo com
+patch é a fonte paralela de volta.
+
+Provei que a asserção 1 morde antes de aceitá-la: com um dos oito revertido ao
+upstream em simulação, ela acusa `skills/gemini-supermemory`. Guard que eu não vi
+falhar é o problema que estou consertando.
 
 ---
 

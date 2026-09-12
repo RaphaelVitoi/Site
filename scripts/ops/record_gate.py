@@ -406,6 +406,78 @@ def referencias_mortas(rel: str) -> list[str]:
     return mortas
 
 
+RE_ID_PENDENCIA = re.compile(r"^[a-z0-9][a-z0-9-]{4,79}$")
+
+
+def _pendencias_de(fm: dict) -> list[dict]:
+    itens = fm.get("pendencias") or []
+    return [i for i in itens if isinstance(i, dict)] if isinstance(itens, list) else []
+
+
+def _resolvidas_de(fm: dict) -> list[str]:
+    itens = fm.get("pendencias_resolvidas") or []
+    if isinstance(itens, str):
+        itens = [itens]
+    return [str(i) for i in itens] if isinstance(itens, list) else []
+
+
+def coletar_pendencias(hoje: date | None = None) -> tuple[list[dict], list[str]]:
+    """Tarefas declaradas e ainda nao encerradas, varrendo o corpus inteiro.
+
+    MEDIDO EM 2026-09-12, e esta e a origem da funcao. Uma recomendacao escrita
+    em 2026-08-28 dentro de `patches/skills/README.md` -- criar fork proprio por
+    submodulo e apontar o gitlink para ele -- ficou CATORZE DIAS parada. Nao por
+    discordancia: por invisibilidade. Prosa em README de diretorio nao e lida por
+    portao nenhum, e quinze sessoes passaram sem que ela aparecesse em lista,
+    relatorio ou verificacao alguma. Ela so andou quando o Tier 0 empurrou.
+
+    A licao nao foi "escrever noutro lugar", foi escrever ONDE UM PORTAO JA OLHA.
+    Dai a pendencia morar no frontmatter, que o portao ja le em todo commit.
+
+    ENCERRAMENTO E POR APPEND, nunca por remocao. Quem resolve declara o id em
+    `pendencias_resolvidas:` num registro NOVO; a pendencia continua no registro
+    que a criou, porque registro publicado nao se reescreve -- a mesma regra do
+    ledger. Assim a trilha guarda quando nasceu, quem devia e quando fechou.
+
+    NAO BLOQUEIA. Pendencia que impede commit vira pendencia que alguem apaga; o
+    valor esta em ela APARECER na tela que todo condutor ve. O que bloqueia e
+    declaracao malformada, porque ai o portao nao consegue nem exibi-la.
+    """
+    hoje = hoje or date.today()
+    declaradas: dict[str, dict] = {}
+    resolvidas: set[str] = set()
+    for rel in _git("ls-files", "docs/*.md", "reports/*.md").splitlines():
+        if not rel.strip():
+            continue
+        texto = texto_como_vai_ao_commit(rel)
+        if not texto:
+            continue
+        fm, _ = ler_frontmatter_de_texto(texto)
+        if not fm:
+            continue
+        for item in _pendencias_de(fm):
+            pid = str(item.get("id") or "")
+            if pid and pid not in declaradas:
+                declaradas[pid] = {**item, "origem": rel}
+        resolvidas.update(_resolvidas_de(fm))
+
+    abertas = []
+    for pid, item in declaradas.items():
+        if pid in resolvidas:
+            continue
+        prazo = str(item.get("prazo") or "")
+        vencida = False
+        if prazo:
+            try:
+                vencida = date.fromisoformat(prazo) < hoje
+            except ValueError:
+                vencida = False
+        abertas.append({**item, "vencida": vencida})
+    abertas.sort(key=lambda i: (not i["vencida"], str(i.get("prazo") or "9999-12-31"), i["id"]))
+    orfas = sorted(resolvidas - set(declaradas))
+    return abertas, orfas
+
+
 def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
     """Devolve (erros, avisos)."""
     hoje = hoje or date.today()
@@ -612,6 +684,50 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
                         "A governanca proibe ampliar ACL/CORS/firewall -- nao ha excecao por registro."
                     )
 
+    # --- G8. pendencia declarada tem de ser LEGIVEL --------------------------
+    # Existir pendencia aberta nunca bloqueia -- ver coletar_pendencias. O que
+    # bloqueia e declaracao que o portao nao consegue exibir, porque pendencia
+    # invisivel e exatamente o defeito que o campo existe para corrigir.
+    for rel in registros_em_stage:
+        texto = texto_como_vai_ao_commit(rel)
+        if not texto or not texto.startswith("---"):
+            continue
+        fm, _ = ler_frontmatter_de_texto(texto)
+        if not fm:
+            continue
+        bruto = fm.get("pendencias")
+        if bruto is not None and not isinstance(bruto, list):
+            erros.append(f"{rel}: `pendencias` tem de ser uma lista de itens, nao {type(bruto).__name__}.")
+            continue
+        for indice, item in enumerate(bruto or []):
+            onde = f"{rel}: pendencias[{indice}]"
+            if not isinstance(item, dict):
+                erros.append(f"{onde} tem de ser um mapa com id, o_que e dono.")
+                continue
+            pid = str(item.get("id") or "").strip()
+            if not RE_ID_PENDENCIA.match(pid):
+                erros.append(f"{onde}.id invalido: '{pid}'. Use minusculas, digitos e hifen, de 5 a 80 caracteres.")
+            for campo in ("o_que", "dono"):
+                if not str(item.get(campo) or "").strip():
+                    erros.append(f"{onde}.{campo} e obrigatorio: pendencia sem {campo} e observacao, nao tarefa.")
+            prazo = str(item.get("prazo") or "").strip()
+            if prazo:
+                try:
+                    date.fromisoformat(prazo)
+                except ValueError:
+                    erros.append(f"{onde}.prazo tem de ser uma data ISO YYYY-MM-DD, e veio '{prazo}'.")
+        cru_resolvidas = fm.get("pendencias_resolvidas")
+        if cru_resolvidas is not None and not isinstance(cru_resolvidas, (list, str)):
+            erros.append(f"{rel}: `pendencias_resolvidas` tem de ser uma lista de ids.")
+
+    _, orfas = coletar_pendencias(hoje)
+    if orfas:
+        erros.append(
+            "pendencias_resolvidas aponta id que nunca foi declarado: "
+            + ", ".join(orfas)
+            + ". Encerrar o que nao existe esconde o que existe."
+        )
+
     return erros, avisos
 
 
@@ -637,8 +753,26 @@ def main() -> int:
         print("\nNao contorne. A governanca proibe bypass: investigue o achado.\n")
         return 1
 
-    print(f"\nAPROVADO. Registros e origens integros em {len(arquivos_em_stage())} arquivo(s) em stage.\n")
+    print(f"\nAPROVADO. Registros e origens integros em {len(arquivos_em_stage())} arquivo(s) em stage.")
+    _imprimir_pendencias()
     return 0
+
+
+def _imprimir_pendencias() -> None:
+    """Exibe as tarefas abertas. Nao decide nada -- so impede que sumam."""
+    abertas, _ = coletar_pendencias()
+    if not abertas:
+        print("\n[PENDENCIAS] Nenhuma tarefa aberta declarada no corpus.\n")
+        return
+    vencidas = sum(1 for i in abertas if i["vencida"])
+    print(f"\n[PENDENCIAS] {len(abertas)} aberta(s), {vencidas} vencida(s). Nao bloqueiam o commit.")
+    for i in abertas:
+        marca = "VENCIDA" if i["vencida"] else "aberta "
+        prazo = str(i.get("prazo") or "sem prazo")
+        print(f"   {marca} | {prazo} | {i['dono']} | {i['id']}")
+        print(f"             {i['o_que']}")
+        print(f"             declarada em {i['origem']}")
+    print("   Encerrar: declare o id em `pendencias_resolvidas:` num registro NOVO.\n")
 
 
 if __name__ == "__main__":
