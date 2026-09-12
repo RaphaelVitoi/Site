@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T06:40:00-03:00'
-atualizado_em: '2026-09-12T06:40:00-03:00'
+atualizado_em: '2026-09-12T07:25:00-03:00'
 classes: [interno, medido, calibracao, preludio]
 verificado:
   - cadeia de feedback valida em toda escrita -- 27 para 55 registros, cauda 03c200e8
@@ -318,9 +318,17 @@ revisoes_de_ancora:
 
 # Registro — prelúdio: o instrumento que sabia abrir e não sabia fechar
 
-Sessão sem nota por decisão do Tier 0 em 2026-09-12: **prelúdio**. Ausência de
-nota não é zero, não entra em média e não se compara a sessão nenhuma. A
-avaliação fica para depois.
+**Prelúdio: a sessão ainda não acabou.** Declarado pelo Tier 0 em 2026-09-12.
+
+Prelúdio **não** é sessão sem nota. A nota vem quando a sessão terminar; este
+registro é um corte intermediário, publicado para que o trabalho já medido tenha
+lastro antes do fim. Não confundir com o caso de `2d55d92a`, onde o Tier 0
+determinou ausência de avaliação — ali não haverá nota; aqui ela apenas ainda
+não chegou.
+
+Consequência prática: a sessão `claude-opus5-site-2026-09-12-preludio` continua
+aberta, e §8.3 é explícita em que compactação de contexto **não** encerra sessão.
+O feedback, quando vier, declara este mesmo `session_id` e entra uma vez só.
 
 ## O que se pediu, e o que a pergunta revelou
 
