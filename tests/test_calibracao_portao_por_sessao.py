@@ -75,6 +75,9 @@ def _ledger(caminho: Path, feedbacks: list[dict]) -> None:
             "score": fb.get("score", 5),
             "feedback": fb.get("feedback", "texto"),
             "scope": fb.get("scope", "handoff"),
+            "conductor_model": fb.get("conductor_model", "gpt-5.6-terra"),
+            "conductor_vehicle": fb.get("conductor_vehicle", "codex"),
+            "supervision_mode": fb.get("supervision_mode", "assistida"),
         }
         if "session_started_at" in fb:
             registro["session_started_at"] = fb["session_started_at"]
@@ -126,6 +129,31 @@ def test_tres_sessoes_com_um_feedback_cada_abrem_o_portao(tmp_path: Path) -> Non
     r = _avaliar(tmp_path, feedbacks, dia)
 
     assert r["gate_metric"] == "distinct_sessions_with_feedback"
+    assert r["sessoes_com_feedback_count"] == 3
+    assert r["calibration_planning_permitted"] is True
+
+
+def test_tres_feedbacks_em_duas_sessoes_nao_abrem_o_portao(tmp_path: Path) -> None:
+    """O antigo prompt externo nao pode substituir tres sessoes por densidade."""
+    dia = "2026-09-11"
+    feedbacks = [
+        {"session_id": "sessao-A", "recorded_at": _instante(dia, "09:00:00")},
+        {"session_id": "sessao-A", "recorded_at": _instante(dia, "10:00:00")},
+        {"session_id": "sessao-B", "recorded_at": _instante(dia, "13:00:00")},
+    ]
+    r = _avaliar(tmp_path, feedbacks, dia)
+
+    assert r["feedback_count_acumulado"] == 3
+    assert r["sessoes_com_feedback_count"] == 2
+    assert r["calibration_planning_permitted"] is False
+
+
+def test_dia_vazio_preserva_portao_aberto_por_tres_sessoes(tmp_path: Path) -> None:
+    """A data do relatorio nao e uma janela de expiracao da amostra."""
+    feedbacks = [{"session_id": f"sessao-{n}", "recorded_at": _instante("2026-09-11", f"1{n}:00:00")} for n in range(3)]
+    r = _avaliar(tmp_path, feedbacks, "2026-09-12")
+
+    assert r["feedback_count_no_dia"] == 0
     assert r["sessoes_com_feedback_count"] == 3
     assert r["calibration_planning_permitted"] is True
 

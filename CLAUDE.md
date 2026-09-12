@@ -543,6 +543,25 @@ instrução explícita do administrador, e consta do relatório.
 
 #### Quando avaliar — aviso proativo, com lastro diário
 
+**Proveniência executável do feedback (2026-09-12).** O escritor recusa novos
+feedbacks sem `session_id`, declaração de handoff, `conductor_model`,
+`conductor_vehicle` e `supervision_mode` (`assistida` ou `automatizada`).
+`AgentCalibrationProvenance.ps1` é a validação compartilhada pelo escritor e
+gerador: GPT/ChatGPT → `codex`; Claude → `claude-code`; Gemini → `antigravity`
+(runtime Antigravity 2.0, nunca a IDE compartilhada). A checagem compara campos
+independentes, não os preenche; família/versão desconhecida exige arbitragem,
+não mapeamento inventado. Validação sintática não prova a origem real declarada.
+Escopos `handoff` e o legado `handoff-session-YYYY-MM-DD` declaram encerramento;
+escopo descritivo antigo exige fonte de handoff e correção append-only explícita,
+nunca interpretação automática de prelúdio/interlúdio como encerramento.
+O gerador aplica correções antes de avaliar, retém os originais no ledger e
+expõe `eligible_feedback`, `excluded_feedback` com motivos e
+`historical_provenance_audit`. Apenas os elegíveis do ciclo podem abrir o portão
+ou corroborar uma calibração; o registrador de calibração confere essa lista
+inclusive sob exceção de limiar. Estatísticas históricas continuam identificadas
+como históricas, não como amostra elegível. A idade de um registro não o exclui:
+campos supridos por arbitragem documentada contam em seu estado efetivo.
+
 O gatilho primário é **proativo e sem hora marcada**: ao perceber que o limiar
 foi atingido, o agente **avisa** e propõe a calibração assistida, desde que
 **não haja tarefa em andamento** — calibração não interrompe trabalho.
@@ -581,8 +600,23 @@ O texto de substituição é uma linha:
 > Avalie o **acumulado** de sessões distintas com feedback desde a última
 > calibração registrada — mínimo três, sem recorte por dia. Dia sem sessão é
 > dia sem avaliação, nunca dia que apaga evidência. Se
-> `calibration_planning_permitted` vier `true`, o portão está aberto: reporte
-> o acumulado, não `dados insuficientes`.
+> `calibration_planning_permitted` vier `true`, o portão **estrutural** está
+> aberto: reporte o acumulado, sem declarar insuficiência por dia vazio.
+> O planejamento ainda exige as duas confirmações independentes do mesmo
+> padrão descritas acima; se faltarem, declare essa insuficiência específica.
+
+**Reconciliação aplicada em 2026-09-12.** A automação Codex
+`calibra-o-di-ria-de-coer-ncia-ag-ntica` foi atualizada pela ferramenta da
+plataforma e relida no armazenamento local
+`~/.codex/automations/calibra-o-di-ria-de-coer-ncia-ag-ntica/automation.toml`.
+Preserva execução diária às 23:59, estado ativo e tarefa destinatária.
+O prompt exige três sessões distintas acumuladas, separa suficiência estrutural
+de corroboração e exige PowerShell 7+ para validar as cadeias. Mantém feedback
+apenas no handoff, decimais sem arredondamento e prelúdio/interlúdio sob o mesmo
+`session_id`; arbitragem aditiva não é um quarto momento. Não autoriza alteração
+automática de capacidades, commit ou push. Os guards cobrem explicitamente
+três feedbacks em duas sessões (fechado) e dia vazio com três sessões acumuladas
+(estruturalmente aberto). Não houve mudança do limiar executável.
 
 **A regra que fica, e ela vale para toda automação de fora.** Critério de
 decisão que mora fora do repositório é **fonte paralela** — a §3 nomeia isso, e

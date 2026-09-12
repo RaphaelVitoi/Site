@@ -62,7 +62,11 @@ def test_gate_sem_cdp_declara_cwv_e_a11y_nao_medidos(tmp_path: Path) -> None:
         encoding="utf-8",
         errors="replace",
         capture_output=True,
-        timeout=45,
+        # O processo prova o comportamento do gate completo: alem de simular
+        # ausencia de CDP, ele preserva as fases reais de CVE e SRI. Em hosts
+        # Windows essas auditorias podem ultrapassar 45 s sem indicar falha;
+        # 90 s cobre a execucao observada sem ocultar timeout genuino.
+        timeout=90,
         check=False,
     )
 
@@ -102,7 +106,9 @@ def test_gate_sem_cdp_expoe_motivo_e_acao_para_estado_fragil(tmp_path: Path) -> 
         encoding="utf-8",
         errors="replace",
         capture_output=True,
-        timeout=45,
+        # Mesmo contrato do primeiro caso: nao reduza o gate para testar sua
+        # propria incerteza de CWV/A11y.
+        timeout=90,
         check=False,
     )
 

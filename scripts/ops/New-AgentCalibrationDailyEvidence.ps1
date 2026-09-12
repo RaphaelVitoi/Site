@@ -3,7 +3,7 @@
     Produces deterministic daily evidence for the scheduled calibration analysis.
     Interpretation and behavioural changes remain the responsibility of the
     scheduled review; this script does not fabricate recommendations. PowerShell
-    7+ is the default runtime; 5.1 remains compatible.
+    7+ is required for ledger-chain validation in this workflow.
 #>
 [CmdletBinding()]
 param(
@@ -11,21 +11,13 @@ param(
 
     # JANELA DE CONTAGEM E MOMENTO DE AVALIACAO SAO COISAS DIFERENTES.
     #
-    # Ate 2026-09-02 os dois eram o dia: o limiar exigia tres feedbacks no
-    # mesmo dia, em duas ou mais sessoes distintas. Por decisao do Tier 0 nesta
-    # data:
-    #   - a janela de CONTAGEM passou a ser a SESSAO -- tres feedbacks na mesma
-    #     sessao;
-    #   - o momento da AVALIACAO continua diario, as 23:59, agendado por
-    #     Register-AgentCalibrationDailyTask.ps1.
-    #
-    # A exigencia de duas sessoes distintas caiu porque e insatisfazivel sob
-    # contagem por sessao. Nao foi afrouxamento: foi consequencia aritmetica de
-    # trocar a janela, e esta declarada em vez de silenciada.
-    #
-    # A corrida das 23:59 avalia o dia inteiro agrupando por sessao, e o portao
-    # abre quando QUALQUER sessao daquele dia alcanca o minimo. -SessionId
-    # restringe a analise a uma sessao especifica.
+    # CLAUDE.md SS8.3: minimo de tres sessoes DISTINTAS com feedback de handoff,
+    # acumuladas desde a ultima calibracao registrada (corte por sequence).
+    # -Date identifica o relatorio; dia vazio nao apaga o acumulado.
+    # Densidade intra-sessao nao abre o portao. Duas corroboracoes independentes
+    # do mesmo padrao continuam sendo verificacao do auditor, nao deste booleano.
+    # Preludio e interludio preservam session_id; nao geram feedback de handoff.
+    # -SessionId restringe a analise a uma sessao especifica, nao a rotina diaria.
     [string]$SessionId = '',
 
     # Metrica do portao: sessoes DISTINTAS com feedback, acumuladas.
@@ -46,6 +38,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'AgentCalibrationProvenance.ps1')
 
 # ARMADILHA DE CULTURA -- nao remover esta indirecao.
 #
@@ -236,6 +229,25 @@ $porSessao = @($todasAsSessoes | ForEach-Object {
 # calibracao com evidencia de uma so origem. Sessao inconsistente nao conta.
 $sessoesInconsistentes = @($porSessao | Where-Object { $_.inicio_inconsistente } | ForEach-Object { $_.session_id })
 $sessoesValidas = @($porSessao | Where-Object { -not $_.inicio_inconsistente } | ForEach-Object { $_.session_id })
+$eligibility = @($universo | ForEach-Object {
+    $validation = Get-AgentCalibrationProvenance -Record $_
+    $reasons = @($validation.reasons)
+    if ([string]$_.session_id -in $sessoesInconsistentes) { $reasons += 'inconsistent:session_started_at' }
+    [pscustomobject]@{
+        event_id = $_.event_id; session_id = $_.session_id
+        eligible = ($reasons.Count -eq 0); reasons = $reasons
+    }
+})
+$eligibleFeedback = @($eligibility | Where-Object eligible)
+$excludedFeedback = @($eligibility | Where-Object { -not $_.eligible })
+$historicalProvenance = @($allFeedback | ForEach-Object {
+    $validation = Get-AgentCalibrationProvenance -Record $_
+    [pscustomobject]@{
+        event_id = $_.event_id; sequence = $_.sequence; session_id = $_.session_id
+        provenance_complete = $validation.eligible; reasons = @($validation.reasons)
+    }
+})
+$sessoesValidas = @($eligibleFeedback | ForEach-Object session_id | Sort-Object -Unique)
 $sessoesComDensidade = @($porSessao | Where-Object { $_.densidade_relevante } | ForEach-Object { $_.session_id })
 $feedbackSemSessao = @($universo | Where-Object { [string]::IsNullOrWhiteSpace([string]$_.session_id) }).Count
 
@@ -353,6 +365,13 @@ print(fc.model_dump_json())
     sessoes_com_densidade_relevante = $sessoesComDensidade
     sessoes_ativas_no_dia          = $sessoesAtivasNoDia
     feedback_count_acumulado       = $universo.Count
+    eligible_feedback_count        = $eligibleFeedback.Count
+    eligible_feedback              = $eligibleFeedback
+    excluded_feedback_count        = $excludedFeedback.Count
+    excluded_feedback              = $excludedFeedback
+    historical_provenance_audit     = $historicalProvenance
+    historical_excluded_count       = @($historicalProvenance | Where-Object { -not $_.provenance_complete }).Count
+    provenance_policy              = 'Incomplete historical evidence is retained in records, excluded from structural gate and corroboration. Scope must explicitly declare handoff; model, connector and supervision are independent required fields. Score statistics describe retained history, not an eligible calibration sample.'
     correcoes_no_ledger            = $correcoes.Count
     correcoes_aplicadas            = $correcoesAplicadas
     feedback_count_no_dia          = $recordsDoDia.Count
