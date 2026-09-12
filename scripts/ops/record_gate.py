@@ -733,7 +733,13 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
 
 def main() -> int:
     if not arquivos_em_stage():
+        # MEDIDO EM 2026-09-12, logo depois de a SS9.2 entrar em vigor. A lista de
+        # pendencias morava DEPOIS deste retorno, entao o comando que o proprio
+        # CLAUDE.md manda rodar ao comecar o trabalho -- quando, por definicao, nada
+        # esta em stage -- devolvia "Nada em stage" e escondia as tarefas abertas.
+        # Era a invisibilidade da SS9.2 reencenada no instrumento que a corrige.
         print("[REGISTRO] Nada em stage. Nada a verificar.")
+        _imprimir_pendencias()
         return 0
 
     erros, avisos = verificar()

@@ -23,6 +23,7 @@ teste e a forma mais silenciosa disso -- o lado esquecido continua aprovando.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -146,4 +147,91 @@ def test_so_a_primeira_linha_decide(tmp_path):
 def test_comentarios_do_editor_sao_ignorados(tmp_path):
     """`git commit` sem -m entrega o arquivo com as linhas `#` do template."""
     r = _rodar("# comentario do git\nfeat(x): assunto depois do comentario\n", tmp_path)
+    assert r.returncode == 0, f"{r.stdout}{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# IDENTIDADE DE AUTORIA -- a metade da SS7 que nao era executavel.
+#
+# Medido em 2026-09-12: dos seis commits daquele dia rotulados `Codex GPT-5`,
+# CINCO eram do Gemini 3.8 Flash via Antigravity CLI, e havia uma unica entrada
+# GPT. O rotulo estava errado em cinco de seis, e nada acusava -- a identidade
+# do git e residual, sobrevive a sessao que a escreveu, e o veiculo que herdou
+# nao a sobrescreve no comando.
+#
+# O autor entra por AMBIENTE, nao pela configuracao da maquina: `git var` honra
+# GIT_AUTHOR_NAME, e sem isso o teste mediria a config de quem esta rodando --
+# passaria ou falharia conforme o dia, que e o oposto de guard.
+
+
+def _rodar_com_autor(mensagem: str, autor: str, tmp_path) -> subprocess.CompletedProcess:
+    assert SH is not None
+    arquivo = tmp_path / "COMMIT_EDITMSG"
+    arquivo.write_text(mensagem, encoding="utf-8")
+    ambiente = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": autor,
+        "GIT_AUTHOR_EMAIL": "noreply@exemplo.invalid",
+    }
+    return subprocess.run(
+        [SH, str(HOOK), str(arquivo)],
+        cwd=RAIZ,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+        env=ambiente,
+    )
+
+
+COERENTES = [
+    ("Claude Opus 5", "Assinatura: Claude Opus 5 [Tier 1.B] -- sessao s1"),
+    # A forma composta veiculo@modelo da SS7 e o nome do campo de autor sao a
+    # MESMA identidade em duas convencoes. Comparacao literal reprovaria as duas.
+    ("Gemini 3.8 Flash", "Assinatura: antigravity@gemini-3.8-flash -- sessao s2"),
+    ("ChatGPT 5.6", "Assinatura: ChatGPT 5.6 [Tier 1.B]"),
+    # Autor e committer distintos: o campo de autor e de quem PRODUZIU.
+    ("Gemini 3.8 Flash", "Assinatura: Gemini 3.8 Flash via Claude Opus 5 como committer"),
+]
+
+
+@pytest.mark.parametrize("autor,linha", COERENTES)
+def test_autor_que_concorda_com_a_assinatura_passa(autor, linha, tmp_path):
+    r = _rodar_com_autor(f"feat(x): assunto\n\n{linha}\n", autor, tmp_path)
+    assert r.returncode == 0, f"reprovou identidade coerente:\n{r.stdout}{r.stderr}"
+
+
+def test_o_caso_medido_em_12_09_seria_barrado(tmp_path):
+    """O commit do Gemini que saiu assinado `Codex GPT-5`, cinco vezes num dia."""
+    r = _rodar_com_autor(
+        "feat(theory): assunto\n\nAssinatura: antigravity@gemini-3.8-flash -- sessao s2\n",
+        "Codex GPT-5",
+        tmp_path,
+    )
+    assert r.returncode != 0, "identidade residual voltou a passar"
+    saida = r.stdout + r.stderr
+    assert "nao concorda" in saida, saida
+    # A mensagem tem de entregar a correcao pronta. Regra que so acusa empurra o
+    # operador para o `git config` global, que a SS7 proibe justamente por
+    # empurrar a heranca para o proximo condutor.
+    assert "git -c user.name=" in saida, saida
+    assert "global" in saida, saida
+
+
+def test_ausencia_de_assinatura_avisa_e_nao_bloqueia(tmp_path):
+    """Bloquear aqui atingiria o Tier 0 commitando a mao, que nao e agente.
+
+    E o hook nao consegue separar os dois sem confiar num campo que o proprio
+    agente escolhe -- confiar nele daria ao agente o botao de se isentar.
+    Promover a bloqueio e reducao material, e cabe ao Tier 0.
+    """
+    r = _rodar_com_autor("feat(x): sem assinatura nenhuma\n", "Codex GPT-5", tmp_path)
+    assert r.returncode == 0, "aviso virou bloqueio sem decisao do Tier 0"
+    assert "AVISO" in r.stdout + r.stderr, f"{r.stdout}{r.stderr}"
+
+
+def test_merge_nao_precisa_declarar_identidade(tmp_path):
+    """Mensagem gerada pelo git nao tem corpo de agente, e nao deve ganhar um."""
+    r = _rodar_com_autor("Merge branch 'master'\n", "Codex GPT-5", tmp_path)
     assert r.returncode == 0, f"{r.stdout}{r.stderr}"

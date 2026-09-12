@@ -708,6 +708,28 @@ def test_pendencia_aberta_aparece_e_nao_bloqueia(tmp_path, monkeypatch):
     assert orfas == []
 
 
+def test_pendencia_aparece_mesmo_sem_nada_em_stage(tmp_path, monkeypatch, capsys):
+    """O comando que a SS9.2 manda rodar ao COMECAR o trabalho -- e ai nada esta em stage.
+
+    Medido em 2026-09-12: a impressao morava depois do retorno antecipado de
+    `main()`, entao o condutor que seguia o CLAUDE.md a risca via "Nada em stage"
+    e nenhuma tarefa. A pendencia so aparecia para quem ja estava commitando algo,
+    que e justamente quem nao precisa da lista.
+    """
+    rel = _registro_com_pendencia(
+        tmp_path,
+        "COM-PENDENCIA.md",
+        "pendencias:\n  - id: pend-teste-sem-stage\n    o_que: Aparecer com stage vazio\n    dono: Tier 0\n    prazo: 2099-01-01\n",
+    )
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: [])
+    monkeypatch.setattr(record_gate, "_git", lambda *a: f"{rel}\n" if a[:1] == ("ls-files",) else "")
+
+    assert record_gate.main() == 0, "stage vazio nunca bloqueia"
+    saida = capsys.readouterr().out
+    assert "pend-teste-sem-stage" in saida, f"a lista de trabalho tem de aparecer:\n{saida}"
+
+
 def test_pendencia_encerra_por_append_e_nunca_por_remocao(tmp_path, monkeypatch):
     """Registro publicado nao se reescreve -- a mesma regra do ledger.
 
