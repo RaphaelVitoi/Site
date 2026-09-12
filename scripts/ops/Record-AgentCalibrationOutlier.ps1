@@ -17,7 +17,17 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$SourceRefsJson,
 
-    [string]$MetricsJson = '{}',
+    # Obrigatorio, e a ausencia de default e deliberada. Ate 2026-09-12 este
+    # parametro tinha default '{}' -- que a validacao abaixo SEMPRE recusava,
+    # por exigir ao menos uma propriedade. A assinatura anunciava opcional e o
+    # script morria com 'MetricsJson must be a JSON object' sobre um valor que
+    # E um objeto JSON: a mensagem culpava a entrada de quem chamou, quando o
+    # defeito era o default. Medido na revalidacao em PowerShell 5.1 real.
+    # Mandatory faz a falha ocorrer na LIGACAO do parametro, onde o proprio
+    # PowerShell nomeia o que falta.
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string]$MetricsJson,
 
     [string]$OriginHypothesis = '',
 
@@ -76,7 +86,7 @@ if ($sourceRefs.Count -eq 0 -or @($sourceRefs | Where-Object { -not [string]::Is
     throw 'SourceRefsJson must contain one or more non-empty source references.'
 }
 if ($null -eq $metrics -or $metrics.GetType().FullName -ne 'System.Management.Automation.PSCustomObject' -or ($metrics.PSObject.Properties | Measure-Object).Count -eq 0) {
-    throw 'MetricsJson must be a JSON object.'
+    throw 'MetricsJson must be a JSON object with at least one measured field -- an outlier without metrics is not retained evidence.'
 }
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path

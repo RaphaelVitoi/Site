@@ -556,6 +556,43 @@ quando insuficiente, para que exista trilha dos dias em que nada abriu.
 por dia, deixar densidade intra-sessão abrir o portão, ou fizer evidência
 expirar.
 
+#### O prompt do heartbeat não é versionado, e é por isso que ele diverge
+
+A auditoria diária de coerência agêntica é **agendada pelo Codex**, e o prompt
+dela mora **na plataforma do Codex** — não neste repositório. Declarado pelo
+Tier 0 em 2026-09-12 e medido no mesmo dia: uma varredura completa pelo
+identificador da automação devolve o registro do outlier e um diário que o
+cita, e nenhum prompt.
+
+**A consequência não é administrativa, é de portão.** `record_gate.py` coleta
+caminhos com `git diff --cached`: ele só cobra revisão do que está no índice.
+Um critério que vive fora do índice não tem âncora, não tem parecer e não tem
+quem o cobre — e diverge do código sem que nada acuse. Foi o que aconteceu com
+o `512fc3a6`, aberto em 2026-09-06 e ainda em pé.
+
+**A divergência concreta, para quem for corrigi-la.** O prompt pede recorte
+**diário**; a regra executável conta **sessões distintas acumuladas**, e a §8.3
+é explícita em que a contagem *não expira* e só reinicia após uma calibração
+registrada. Com as duas em vigor ao mesmo tempo, a auditoria conclui `dados
+insuficientes` enquanto o próprio JSON anexo traz
+`calibration_planning_permitted: true`. Aconteceu em 09-10 e de novo em 09-12.
+O texto de substituição é uma linha:
+
+> Avalie o **acumulado** de sessões distintas com feedback desde a última
+> calibração registrada — mínimo três, sem recorte por dia. Dia sem sessão é
+> dia sem avaliação, nunca dia que apaga evidência. Se
+> `calibration_planning_permitted` vier `true`, o portão está aberto: reporte
+> o acumulado, não `dados insuficientes`.
+
+**A regra que fica, e ela vale para toda automação de fora.** Critério de
+decisão que mora fora do repositório é **fonte paralela** — a §3 nomeia isso, e
+aqui ela ganha a variante mais difícil de ver, porque a fonte paralela não está
+num arquivo que se possa comparar. Onde não for possível trazer o critério para
+dentro, o `CLAUDE.md` declara **onde ele mora e o que ele diz**, para que a
+divergência seja visível a quem lê o código. É a mesma solução que a §10.5 dá
+ao cron do Jules, cujo prompt também vive na plataforma: *a régua viaja com o
+código*.
+
 Microcalibração não pode otimizar uma métrica isolada se puder degradar outra
 métrica, a finalidade principal da tarefa, autonomia operacional ou
 integridade factual. O ciclo não ajusta pesos internos de modelo, permissões,
@@ -765,6 +802,31 @@ O repositório estabelece uma separação formal e estrita de responsabilidades 
 | **`docs/`** | Documentação permanente, arquitetura viva, manuais, especificações e formalismos matemáticos. | `docs/architecture/*.md`<br>`docs/specs/*.md`<br>`docs/guides/*.md`<br>`docs/math/*.md` | Documentos Markdown com referências e âncoras canônicas |
 | **`.claude/agent-memory/`** | Memória episódica e contextual viva consumida pelo runtime dos agentes e pelo RAG. | `.claude/agent-memory/<agente>/MEMORY.md`<br>`.claude/agent-memory/chico/HANDOFF_LATEST.md` | Estrutura de tópicos semânticos e aprendizados consolidados |
 | **`data/`** | Catálogos estruturados, esquemas e configurações de sistema em formato serializado. | `system_config.json`<br>`routing_map.json`<br>`agents_manifest.json`<br>`SYSTEM_OPERATIONS_MANIFEST.json` | JSON formatado e tipado |
+
+### 9.1 Edição pontual na taxonomia não gera regra
+
+**Estabelecido pelo Tier 0 em 2026-09-12.** Edições e intervenções **pontuais**
+na taxonomia — um arquivo posto fora do lugar canônico, um nome que foge do
+padrão, um campo suprido à mão, um artefato aberto numa pasta que não é a dele —
+**não criam regra**. Elas resolvem o caso e morrem ali.
+
+**A exceção é única: arbitragem aditiva do Tier 0.** Só ela promove o caso
+concreto a regra, e quando promove, o faz **acrescentando** — a taxonomia da
+tabela acima não encolhe por uso, não se reinterpreta por precedente e não muda
+de significado porque alguém precisou de uma exceção uma vez.
+
+**Por que a cláusula existe.** Um agente que encontra uma exceção no repositório
+tende a lê-la como padrão — foi feito assim, logo pode. É indução a partir de
+uma amostra, e é o mesmo defeito que a §2.3 da raiz combate ao recusar
+agrupamento por parecença: três lançadores de Chrome na raiz não eram uma regra
+sobre lançadores de Chrome, eram três casos. Aqui vale o inverso do que a §4 da
+raiz pede para medição — **precedente não é medição**, e um caso não vira norma
+por ter acontecido.
+
+**Na prática, para o agente:** ao topar com um artefato fora da taxonomia, o
+tratamento correto é resolver o caso pelo lugar canônico e **registrar a
+exceção como exceção**, jamais replicá-la nem citá-la como autorização. Se ela
+deve valer daqui em diante, quem promove é o Tier 0, e o lugar é este arquivo.
 
 ---
 
