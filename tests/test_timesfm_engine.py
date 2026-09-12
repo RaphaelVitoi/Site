@@ -21,6 +21,8 @@ from engine.timesfm_engine import (
     TimesFMEngine,
     TimesFMGovernanceError,
     forecast_bankroll_trajectory,
+    forecast_cfr_convergence,
+    forecast_opponent_drift,
     forecast_pmev_risk_dynamics,
 )
 
@@ -260,3 +262,50 @@ def test_timesfm_domain_function_pmev_dynamics():
     assert "Divida_RIO" in res
     assert "Pressao_ICM" in res
     assert len(res["Fator_Psi"].mean_prediction) == 5
+
+
+def test_timesfm_domain_function_cfr_convergence():
+    """Valida a funcao de dominio forecast_cfr_convergence com decaimento estocastico."""
+    # 1. Historico insuficiente (< 4)
+    insuf = forecast_cfr_convergence(regret_history=[0.5, 0.4])
+    assert insuf.status == "INSUFFICIENT_HISTORY"
+    assert insuf.early_stopping_recommended is False
+
+    # 2. Ja convergido
+    conv = forecast_cfr_convergence(regret_history=[0.05, 0.02, 0.005, 0.0005], target_epsilon=0.001)
+    assert conv.status == "CONVERGED"
+    assert conv.early_stopping_recommended is True
+    assert conv.estimated_iterations_to_target == 0
+
+    # 3. Decaimento ativo rumo a convergencia
+    decay = forecast_cfr_convergence(
+        regret_history=[0.10, 0.07, 0.04, 0.02],
+        horizon_iterations=8,
+        target_epsilon=0.005,
+    )
+    assert decay.status in ("CONVERGING", "PLATEAU_DETECTED")
+    assert len(decay.mean_trajectory) == 8
+    assert len(decay.quantile_10) == 8
+    assert len(decay.quantile_90) == 8
+    assert decay.early_stopping_recommended is True
+    assert decay.estimated_iterations_to_target > 0
+
+
+def test_timesfm_domain_function_opponent_drift():
+    """Valida a funcao de dominio forecast_opponent_drift contra benchmark canonico."""
+    # 1. Historico insuficiente
+    insuf = forecast_opponent_drift(history_frequencies=[0.25, 0.28])
+    assert insuf.status == "INSUFFICIENT_HISTORY"
+
+    # 2. Deriva expansiva detectada vs benchmark GTO Janda (MDF = 0.5)
+    drift = forecast_opponent_drift(
+        history_frequencies=[0.30, 0.35, 0.42, 0.65],
+        horizon_hands=6,
+        canonical_benchmark=0.50,
+        metric_name="vpip",
+    )
+    assert drift.status == "DRIFTING"
+    assert drift.drift_direction == "EXPANSAO"
+    assert len(drift.mean_trajectory) == 6
+    assert drift.divergence_from_canonical >= 0.0
+    assert isinstance(drift.exploitative_adjustment_recommended, bool)

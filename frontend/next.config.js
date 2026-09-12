@@ -2,6 +2,7 @@ const path = require('node:path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: ['192.168.2.162', 'localhost', '127.0.0.1'],
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true, // SOTA: Native Gzip/Brotli compression in production and edge

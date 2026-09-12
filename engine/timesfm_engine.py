@@ -447,3 +447,217 @@ def forecast_multimodel_calibration(
         )
         for model, scores in series_by_model.items()
     }
+
+
+class CfrConvergenceForecast(BaseModel):
+    """Projecao estocastica de convergencia e decaimento de explorabilidade no CFR+."""
+
+    status: Literal["CONVERGED", "CONVERGING", "PLATEAU_DETECTED", "INSUFFICIENT_HISTORY"]
+    current_exploitability: float
+    target_epsilon: float
+    estimated_iterations_to_target: int
+    mean_trajectory: list[float]
+    quantile_10: list[float]
+    quantile_90: list[float]
+    early_stopping_recommended: bool
+    model_used: str
+    license_tier: str
+    intended_model: str = ""
+    weights_loaded: bool = False
+    notes: str | None = None
+
+
+def forecast_cfr_convergence(
+    regret_history: list[float],
+    horizon_iterations: int = 10,
+    target_epsilon: float = 0.001,
+    mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
+    preferred_model_key: str = "timesfm-2.0-500m",
+) -> CfrConvergenceForecast:
+    """Projeta a trajetoria de decaimento do arrependimento medio ou explorabilidade no CFR+.
+
+    Permite Early Stopping Preditivo quando a explorabilidade projetada atinge target_epsilon
+    ou quando a variacao entre iteracoes indica convergencia assintotica ou platô.
+    """
+    if len(regret_history) < 4:
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG["timesfm-2.0-500m"])
+        return CfrConvergenceForecast(
+            status="INSUFFICIENT_HISTORY",
+            current_exploitability=float(regret_history[-1]) if regret_history else 1.0,
+            target_epsilon=target_epsilon,
+            estimated_iterations_to_target=-1,
+            mean_trajectory=[],
+            quantile_10=[],
+            quantile_90=[],
+            early_stopping_recommended=False,
+            model_used=f"{BACKEND_ANALITICO} (sem pesos de {meta.model_id})",
+            license_tier=meta.license_tier.value,
+            intended_model=meta.model_id,
+            weights_loaded=False,
+            notes="TimesFM exige ao menos 4 pontos historicos de regret para inferencia.",
+        )
+
+    current_val = float(regret_history[-1])
+    if current_val <= target_epsilon:
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG["timesfm-2.0-500m"])
+        return CfrConvergenceForecast(
+            status="CONVERGED",
+            current_exploitability=current_val,
+            target_epsilon=target_epsilon,
+            estimated_iterations_to_target=0,
+            mean_trajectory=[current_val] * horizon_iterations,
+            quantile_10=[current_val] * horizon_iterations,
+            quantile_90=[current_val] * horizon_iterations,
+            early_stopping_recommended=True,
+            model_used=f"{BACKEND_ANALITICO} (sem pesos de {meta.model_id})",
+            license_tier=meta.license_tier.value,
+            intended_model=meta.model_id,
+            weights_loaded=False,
+            notes="Convergencia ja alcancada antes do horizonte projetado.",
+        )
+
+    engine = TimesFMEngine(mode=mode, preferred_model_key=preferred_model_key)
+    res = engine.forecast_univariate(
+        series=regret_history,
+        horizon=horizon_iterations,
+        target_name="cfr_exploitability_decay",
+    )
+
+    # Clamping do decaimento em valores nao-negativos
+    mean_clamped = [round(max(0.0, float(v)), 6) for v in res.mean_prediction]
+    q10_clamped = [round(max(0.0, float(v)), 6) for v in res.quantile_10]
+    q90_clamped = [round(max(0.0, float(v)), 6) for v in res.quantile_90]
+
+    # Deteccao de passos ate a meta de epsilon
+    steps_to_target = -1
+    for step_idx, val in enumerate(mean_clamped):
+        if val <= target_epsilon:
+            steps_to_target = step_idx + 1
+            break
+
+    # Deteccao de platô assintotico
+    recent_diffs = np.diff(regret_history[-min(len(regret_history), 5) :])
+    mean_abs_slope = float(np.mean(np.abs(recent_diffs))) if len(recent_diffs) > 0 else 0.0
+
+    if steps_to_target > 0:
+        status: Literal["CONVERGED", "CONVERGING", "PLATEAU_DETECTED", "INSUFFICIENT_HISTORY"] = "CONVERGING"
+        early_stop = True
+    elif mean_abs_slope < 1e-6:
+        status = "PLATEAU_DETECTED"
+        early_stop = True
+    else:
+        status = "CONVERGING"
+        early_stop = False
+
+    return CfrConvergenceForecast(
+        status=status,
+        current_exploitability=current_val,
+        target_epsilon=target_epsilon,
+        estimated_iterations_to_target=steps_to_target,
+        mean_trajectory=mean_clamped,
+        quantile_10=q10_clamped,
+        quantile_90=q90_clamped,
+        early_stopping_recommended=early_stop,
+        model_used=res.model_used,
+        license_tier=res.license_tier,
+        intended_model=res.intended_model,
+        weights_loaded=res.weights_loaded,
+    )
+
+
+class OpponentDriftForecast(BaseModel):
+    """Projecao estocastica de deriva de frequencias de oponentes vs limiares GTO."""
+
+    status: Literal["DRIFTING", "STABLE", "INSUFFICIENT_HISTORY"]
+    metric_name: str
+    history_points: int
+    horizon_hands: int
+    current_value: float
+    mean_trajectory: list[float]
+    quantile_10: list[float]
+    quantile_90: list[float]
+    drift_direction: Literal["EXPANSAO", "ESTAVEL", "DOWNWARD_DRIFT"]
+    canonical_benchmark: float
+    divergence_from_canonical: float
+    exploitative_adjustment_recommended: bool
+    model_used: str
+    license_tier: str
+    intended_model: str = ""
+    weights_loaded: bool = False
+    notes: str | None = None
+
+
+def forecast_opponent_drift(
+    history_frequencies: list[float],
+    horizon_hands: int = 10,
+    canonical_benchmark: float = 0.5,
+    metric_name: str = "vpip",
+    mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
+    preferred_model_key: str = "timesfm-2.0-500m",
+) -> OpponentDriftForecast:
+    """Projeta a deriva de tendencias do vilao (VPIP, 3-bet, fold to c-bet) vs limiares GTO."""
+    if len(history_frequencies) < 4:
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG["timesfm-2.0-500m"])
+        return OpponentDriftForecast(
+            status="INSUFFICIENT_HISTORY",
+            metric_name=metric_name,
+            history_points=len(history_frequencies),
+            horizon_hands=horizon_hands,
+            current_value=float(history_frequencies[-1]) if history_frequencies else 0.0,
+            mean_trajectory=[],
+            quantile_10=[],
+            quantile_90=[],
+            drift_direction="ESTAVEL",
+            canonical_benchmark=canonical_benchmark,
+            divergence_from_canonical=0.0,
+            exploitative_adjustment_recommended=False,
+            model_used=f"{BACKEND_ANALITICO} (sem pesos de {meta.model_id})",
+            license_tier=meta.license_tier.value,
+            intended_model=meta.model_id,
+            weights_loaded=False,
+            notes="TimesFM exige ao menos 4 observacoes de frequencia para projecao.",
+        )
+
+    engine = TimesFMEngine(mode=mode, preferred_model_key=preferred_model_key)
+    res = engine.forecast_univariate(
+        series=history_frequencies,
+        horizon=horizon_hands,
+        target_name=f"opponent_{metric_name}",
+    )
+
+    mean_clamped = [round(max(0.0, min(1.0, float(v))), 4) for v in res.mean_prediction]
+    q10_clamped = [round(max(0.0, min(1.0, float(v))), 4) for v in res.quantile_10]
+    q90_clamped = [round(max(0.0, min(1.0, float(v))), 4) for v in res.quantile_90]
+
+    current_val = float(history_frequencies[-1])
+    final_mean = mean_clamped[-1]
+    drift = (final_mean - current_val) / max(1, horizon_hands)
+
+    if drift > 0.01:
+        direction: Literal["EXPANSAO", "ESTAVEL", "DOWNWARD_DRIFT"] = "EXPANSAO"
+    elif drift < -0.01:
+        direction = "DOWNWARD_DRIFT"
+    else:
+        direction = "ESTAVEL"
+
+    divergence = abs(final_mean - canonical_benchmark)
+    is_exploitable = divergence > 0.08
+
+    return OpponentDriftForecast(
+        status="DRIFTING" if direction != "ESTAVEL" else "STABLE",
+        metric_name=metric_name,
+        history_points=len(history_frequencies),
+        horizon_hands=horizon_hands,
+        current_value=round(current_val, 4),
+        mean_trajectory=mean_clamped,
+        quantile_10=q10_clamped,
+        quantile_90=q90_clamped,
+        drift_direction=direction,
+        canonical_benchmark=canonical_benchmark,
+        divergence_from_canonical=round(divergence, 4),
+        exploitative_adjustment_recommended=is_exploitable,
+        model_used=res.model_used,
+        license_tier=res.license_tier,
+        intended_model=res.intended_model,
+        weights_loaded=res.weights_loaded,
+    )

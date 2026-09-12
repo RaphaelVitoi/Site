@@ -33,6 +33,11 @@ from api.v1.handlers import (
     handle_ask_oracle,
     handle_bucket_op,
     handle_calculate_perspective,
+    handle_canonical_akq,
+    handle_canonical_bluff_ratios,
+    handle_canonical_clairvoyance,
+    handle_canonical_geometric_sizing,
+    handle_canonical_janda_mdf,
     handle_claudico_translate_action,
     handle_deepstack_resolve,
     handle_frontend_logs,
@@ -133,6 +138,11 @@ def create_app(manager: QueueManager) -> web.Application:
             web.post("/api/v1/game-theory/deepstack/resolve", handle_deepstack_resolve),
             web.post("/api/v1/game-theory/rebel/pbs/evaluate", handle_rebel_pbs_evaluate),
             web.post("/api/v1/game-theory/claudico/translate-action", handle_claudico_translate_action),
+            web.post("/api/v1/canonical/clairvoyance/solve", handle_canonical_clairvoyance),
+            web.post("/api/v1/canonical/akq/solve", handle_canonical_akq),
+            web.post("/api/v1/canonical/janda/mdf", handle_canonical_janda_mdf),
+            web.post("/api/v1/canonical/janda/geometric-sizing", handle_canonical_geometric_sizing),
+            web.post("/api/v1/canonical/janda/bluff-ratios", handle_canonical_bluff_ratios),
         ]
     )
     return app
