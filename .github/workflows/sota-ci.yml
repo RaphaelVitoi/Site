@@ -2,6 +2,19 @@
 name: SOTA v8.0 GOLD CI/CD Pipeline
 
 
+# MEDIDO EM 2026-09-12. Ate esta data o `paths-ignore` isentava '**/*.md',
+# 'docs/**' e 'reports/**' -- e a suite contem um teste,
+# test_o_corpus_prescritivo_nao_tem_referencia_morta, cujo OBJETO de verificacao
+# sao exatamente esses arquivos. A consequencia nao e teorica: um commit que so
+# mexe em relatorio introduzia a quebra sem disparar corrida nenhuma, e o
+# vermelho aparecia no PROXIMO commit que tocasse codigo, atribuido a quem nao o
+# causou. Foi assim que o CI ficou vermelho por nove commits e dois dias, com
+# tres condutores diferentes publicando por cima, e o primeiro vermelho
+# (2ce819a7) e um commit de calibracao que herdou divida de um commit anterior
+# so-documentacao. Isentar de verificacao o que a verificacao mede e uma lacuna
+# fechada, nao uma economia.
+#
+# Ficam isentos apenas arquivos que NENHUM teste le como conteudo.
 on:
   push:
     branches:
@@ -9,9 +22,6 @@ on:
       - main
       - fix-antigravity-sync-errors
     paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'reports/**'
       - '.gitignore'
       - '.gitattributes'
       - '.editorconfig'
@@ -21,13 +31,13 @@ on:
       - master
       - main
     paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'reports/**'
       - '.gitignore'
       - '.gitattributes'
       - '.editorconfig'
       - 'LICENSE'
+  # Sem disparo manual, um commit so-documentacao nao tinha COMO ser verificado
+  # pelo CI -- nem quando corrigia o que o proprio CI acusava.
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

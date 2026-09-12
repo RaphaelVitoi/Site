@@ -30,7 +30,15 @@ def write_feedback(path, **overrides):
     for key, value in fields.items():
         if value is not None:
             args.extend([f"-{key}", value])
-    return subprocess.run(args, capture_output=True, text=True, check=False)
+    # `encoding` e `errors` explicitos, pelo mesmo motivo ja documentado em
+    # tests/test_cwv_gate_truthfulness.py e no registro de 2026-09-10 sobre o
+    # encoding que matava a thread leitora. Sem eles, `text=True` decodifica a
+    # saida do pwsh com a codificacao do console -- e a mensagem de erro em
+    # portugues traz bytes que nao sao UTF-8 validos. A thread `_readerthread`
+    # do subprocess levanta UnicodeDecodeError, o pytest converte isso em
+    # PytestUnhandledThreadExceptionWarning, e a suite passa a carregar um
+    # warning que nao tem nada a ver com o que ela afere. Medido em 2026-09-12.
+    return subprocess.run(args, capture_output=True, text=True, check=False, encoding="utf-8", errors="replace")
 
 
 @pytest.mark.parametrize("field", ["ConductorModel", "ConductorVehicle", "SupervisionMode", "SessionId"])

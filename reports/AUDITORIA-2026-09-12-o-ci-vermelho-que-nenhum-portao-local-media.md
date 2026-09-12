@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T11:18:04-03:00'
-atualizado_em: '2026-09-12T12:45:38-03:00'
+atualizado_em: '2026-09-12T13:23:01-03:00'
 classes: [interno, medido, calibracao, ci, proveniencia]
 referencias_nao_resolviveis:
   # Este relatorio CITA os dois caminhos para dizer que eles nao resolvem aqui --
@@ -41,11 +41,17 @@ verificado:
   - sota-ci.yml declara paths-ignore para reports e md, e nao tem workflow_dispatch -- lido no arquivo
   - o primeiro commit vermelho 2ce819a7 tocou scripts e herdou divida de um commit so-documentacao
   - guard novo em tests/test_record_index.py -- 33 aprovados no arquivo, incluindo ele
+  - paths-ignore agora isenta so 4 arquivos que teste nenhum le; workflow_dispatch acrescentado
+  - o autoteste do guard apagava a medicao real -- A/B com e sem a fixture, 0 contra 1 warning
+  - warning eliminado na origem por encoding utf-8 explicito -- 44 aprovados, zero warnings reais
+  - chartData vem de useMemo em usePerspectiveCalculations -- a prop do React.memo E estavel
+  - 812c1c2f saiu assinado Codex GPT-5 numa sessao do Gemini -- identidade residual, terceira vez
+  - prompt do heartbeat ACTIVE e sem recorte diario -- lido em automation.toml
+  - outlier 512fc3a6 encerrado na sequencia 8; cadeia de outliers valida em 9 registros
 nao_verificado:
-  - nao abri o diff de 812c1c2f -- a observacao sobre React.memo e de classe, nao de conteudo
+  - o numero de render desperdicado que a SS10.1 exige nao consta de relatorio que eu tenha lido
   - a corrida do CI sobre o commit desta ultima correcao ainda nao existia quando isto foi escrito
   - regime de supervisao dos sete registros historicos continua sem fonte especifica
-  - a causa de o contador do guard reportar zero warnings na suite integral e um no teste isolado
 caminhos:
   - reports/agent-calibration/feedback-ledger.jsonl
   - reports/HANDOFF-2026-09-11-o-alvo-declarado-e-o-objeto-que-o-github-ainda-serve.md
@@ -57,6 +63,8 @@ caminhos:
   - .github/workflows/sota-ci.yml
   - tests/test_agent_calibration_provenance.py
   - .husky/pre-push
+  - tests/test_backend_hardening.py
+  - reports/agent-calibration/outlier-evidence-ledger.jsonl
   - llm/model_registry.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
@@ -83,6 +91,89 @@ revisoes_de_ancora:
       canonica, alem de deixar de emitir motivo duplicado para campo em branco;
       nenhum registro antes elegivel deixou de ser, e a invariante dos 16
       modelos canonicos e agora guardada por teste no arquivo que ele criou.
+  - registro: auditoria-2026-09-01-formatacao-ruff-e-ancoras
+    caminhos: ['.github/workflows/sota-ci.yml']
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A checagem de formatacao do ruff que aquela
+      auditoria ancorou continua no mesmo job, com o mesmo comando. So o gatilho
+      mudou -- ela passa a rodar tambem nos commits que antes eram isentados.
+  - registro: handoff-2026-09-09-ci-verde-e-as-seis-causas
+    caminhos: ['.github/workflows/sota-ci.yml']
+    parecer: >-
+      REVISADO, MANTIDO VALIDO E ESTENDIDO. Aquele handoff nomeou seis causas de
+      CI vermelho e as fechou. Nenhuma delas e reaberta aqui: os jobs sao os
+      mesmos. O que se acrescenta e uma SETIMA causa, de outra natureza -- nao
+      um passo que falha, e sim um gatilho que nao dispara. O paths-ignore
+      isentava justamente os arquivos que a suite verifica, entao a quebra
+      entrava sem corrida e o vermelho aparecia no commit seguinte de codigo.
+      Uma causa que aquele handoff nao tinha como ver, porque ela nao aparece
+      em job nenhum.
+  - registro: plano-frentes-abertas-2026-09-08
+    caminhos: ['.github/workflows/sota-ci.yml']
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. As frentes que o plano acompanha nao mudam de
+      estado por esta alteracao de gatilho; o workflow continua com os mesmos
+      tres jobs e as mesmas condicoes de aprovacao.
+  - registro: registro-2026-09-01-fronteira-http-e-portao-independente-de-perfil
+    caminhos: [tests/test_backend_hardening.py]
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. Os testes de fronteira HTTP e de portao
+      independente de perfil nao sao tocados: a alteracao adiciona uma fixture
+      de isolamento ao autoteste do SotaGuardState e um guard contra a remocao
+      dela. Nenhuma assercao existente muda -- o que muda e que o estado real do
+      guard deixa de ser apagado no meio da suite.
+  - registro: handoff-2026-09-03-sessao-outlier-infraestrutura
+    caminhos: [reports/agent-calibration/outlier-evidence-ledger.jsonl]
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. Os outliers de infraestrutura daquela sessao
+      permanecem abertos e intactos; o append e um encerramento dirigido ao
+      512fc3a6 por -Resolves, e nao alcanca nenhum outro registro.
+  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
+    caminhos: [reports/agent-calibration/outlier-evidence-ledger.jsonl]
+    parecer: >-
+      REVISADO E COMPLETADO. Aquele handoff validou a cadeia de outliers em 8
+      registros e deixou o 512fc3a6 em aberto; ele fechou o primeiro componente
+      -- o prompt do heartbeat -- e o segundo sem nomea-lo, ao excluir o
+      feedback de scope intrasessao-outlier do universo elegivel. O encerramento
+      registrado aqui apenas reconhece o que o trabalho dele produziu.
+  - registro: registro-2026-09-03-nota-10-e-outlier-de-aceleracao
+    caminhos: [reports/agent-calibration/outlier-evidence-ledger.jsonl]
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. O outlier de aceleracao continua aberto e sua
+      evidencia intacta. O feedback de scope intrasessao-outlier que ele
+      originou permanece no ledger de feedback, agora explicitamente inelegivel
+      -- preservado como evidencia, nunca promovido a handoff.
+  - registro: registro-2026-09-08-bindings-wasm-defasados
+    caminhos: ['.github/workflows/sota-ci.yml']
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. O achado dos bindings WASM defasados depende do
+      que o workflow EXECUTA, e nenhum passo, versao de toolchain ou etapa de
+      build foi alterado. So o gatilho mudou: o CI deixa de ignorar os arquivos
+      que a suite verifica, e ganha disparo manual. A cobertura que aquele
+      registro ancorou passa a rodar em MAIS commits, nunca em menos.
+  - registro: registro-2026-09-09-actionlint-e-a-fronteira-do-submodulo
+    caminhos: ['.github/workflows/sota-ci.yml']
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A fronteira do submodulo que aquele registro
+      fixou -- actionlint enumera por git ls-files e nao valida workflow de
+      submodulo -- nao e tocada: os jobs, seus passos e o escopo de enumeracao
+      permanecem identicos. A mudanca e so de GATILHO: paths-ignore deixa de
+      isentar os arquivos que a propria suite verifica, e workflow_dispatch
+      passa a existir. Um workflow que roda mais vezes nao afrouxa nada.
+  - registro: registro-2026-09-11-fechamento-automatico-do-dia-10-e-o-outlier-sem-sessao
+    caminhos: [reports/agent-calibration/outlier-evidence-ledger.jsonl]
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. O outlier sem sessao daquele registro continua
+      separado e intacto; o append de hoje e um registro de ENCERRAMENTO do
+      512fc3a6, com -Resolves e disposition resolved, e nao reescreve nem
+      reclassifica nenhum outlier anterior. A cadeia segue valida, agora em 9.
+  - registro: registro-2026-09-12-preludio-o-instrumento-que-sabia-abrir-e-nao-fechar
+    caminhos: [reports/agent-calibration/outlier-evidence-ledger.jsonl]
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. O outlier grave 7e5ca052, registrado naquele
+      preludio, permanece ABERTO e nao foi tocado -- encerrar um outlier nao
+      encerra os demais. O que fecha aqui e o 512fc3a6, cujos dois componentes
+      foram verificados na fonte.
   - registro: registro-2026-09-01-resolucao-de-skill-e-referencia-por-ponto-de-partida
     caminhos: [tests/test_record_index.py]
     parecer: >-
@@ -712,6 +803,72 @@ contou na suíte inteira. Um contador que acerta no pequeno e zera no grande é
 pior que um que erra sempre: o carimbo `Homeostase Total` é exatamente o que
 ninguém vai reauditar. Não mexi no instrumento — é o que a §10.3 item 3 proíbe
 ao agente, e a correção depende de entender por que o hook não dispara ali.
+
+---
+
+## 8.1 Segunda rodada — os abertos, delegados e autorizados
+
+O Tier 0 delegou e autorizou os itens que a seção 9 listava. Resolvidos:
+
+### O `paths-ignore` que isentava o que a verificação mede
+
+Retirados `**/*.md`, `docs/**` e `reports/**`. Ficam isentos só arquivos que
+nenhum teste lê como conteúdo — `.gitignore`, `.gitattributes`, `.editorconfig`,
+`LICENSE`. Acrescentado `workflow_dispatch`, sem o qual um commit
+só-documentação **não tinha como ser verificado pelo CI nem quando corrigia o
+que o próprio CI acusava** — foi literalmente o caso hoje.
+
+### O contador de warnings: o autoteste apagava a medição
+
+Causa localizada e é limpa. `tests/test_backend_hardening.py::test_sota_guard_blocks_on_errors_or_excess_warnings`
+manipula o estado **global** do `SotaGuardState` e terminava chamando `reset()`,
+que limpa `errors`, `warnings_list` e `skips`. Como ele roda no meio da suíte,
+apagava os warnings **reais** registrados antes dele.
+
+Demonstrado por A/B, mesmos nove testes e o mesmo warning do pytest:
+
+| | o guard diz | carimbo |
+| :--- | :--- | :--- |
+| sem a fixture | `Total de Warnings: 0` | `SUCESSO (VERDE) — Homeostase Total` |
+| com a fixture | `Total de Warnings: 1` | `FRAGIL (AMARELO)` |
+
+**O instrumento se autotestava destruindo a própria medição**, e o resultado era
+o verde mais caro que existe: o que ninguém reaudita. Corrigido por fixture que
+salva e restaura — nenhuma asserção do autoteste mudou. Guard novo impede a
+regressão, que não produziria falha e sim verde.
+
+E o warning em si foi eliminado na origem: `subprocess.run(..., text=True)` sem
+`encoding` decodifica a saída do pwsh pela codificação do console, e a mensagem
+de erro em português traz bytes que não são UTF-8 — a thread leitora levanta
+`UnicodeDecodeError`. É a mesma classe do registro de 2026-09-10 sobre o
+encoding que matava a thread leitora, e a mesma correção que
+`test_cwv_gate_truthfulness.py` já aplicava. Agora são **zero warnings, e o zero
+é verdadeiro** — antes ele era um zero apagado.
+
+### O commit `812c1c2f` do Gemini — a suspeita não se confirmou
+
+Abri o diff. `PerspectiveChart` recebe uma única prop, `chartData`, e ela vem de
+`usePerspectiveCalculations`, onde é construída dentro de um `useMemo`. **A
+referência é estável**, que é exatamente a pré-condição que a §10.3 item 2 exige
+antes de memoizar. Cinco linhas, com `displayName` declarado. O commit está
+correto e a minha ressalva era de classe, não de conteúdo — registro isso com a
+mesma clareza com que registrei a suspeita.
+
+Fica uma observação menor e uma real: a §10.1 pede o número medido de render
+desperdiçado, que não consta de relatório que eu tenha lido; e o commit saiu
+assinado **`Codex GPT-5 <noreply@openai.com>` numa sessão do Gemini** — a
+identidade residual da §7, terceira ocorrência medida em três dias.
+
+### Outlier `512fc3a6` — encerrado
+
+Os dois componentes verificados na fonte, não presumidos. O prompt do heartbeat
+está `ACTIVE` e exige sessões distintas **acumuladas desde a última calibração
+registrada, delimitada por `sequence`**, com zero menções a recorte por dia como
+limite de amostra. E o feedback de scope `intrasessao-outlier`, que o outlier
+apontava como contaminação do universo, é hoje a sequência 10 da auditoria
+histórica, excluída com motivo `completed_handoff_not_declared` — preservada
+como evidência, nunca promovida. Registro de encerramento na sequência 8 do
+ledger de outliers, cadeia válida em 9 registros. **Restam quatro.**
 
 ---
 
