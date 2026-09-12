@@ -42,4 +42,82 @@ if [ "$msg_len" -gt 100 ]; then
     exit 1
 fi
 
+# ---------------------------------------------------------------------------
+# IDENTIDADE DE AUTORIA -- a SS7 vira executavel aqui.
+#
+# MEDIDO EM 2026-09-12. A SS7 exige que todo commit de agente declare a
+# Assinatura no corpo, e que o campo de autor -- o unico que o GitHub le --
+# identifique o agente. Nenhuma das duas metades era verificada:
+#
+#   - 16 dos 40 commits mais recentes NAO tinham linha `Assinatura:`;
+#   - 5 dos 6 commits de 12/09 assinados `Codex GPT-5` eram do Gemini 3.8 Flash
+#     via Antigravity CLI, que herda a identidade residual do condutor anterior
+#     e nao a sobrescreve no comando.
+#
+# O desenho obvio -- comparar corpo com campo de autor -- nao pegaria NENHUM
+# dos cinco: os tres commits do Gemini daquele dia nao tinham corpo a comparar.
+# Por isso a exigencia da Assinatura vem PRIMEIRO; ela e o que torna a
+# comparacao possivel. Uma regra so vale o que a outra habilita.
+#
+# O hook NAO adivinha quem esta conduzindo, e nao pode: o condutor declara, e o
+# portao cobra que o campo de autor concorde com a declaracao. Tambem nao mexe
+# em `git config` global -- a propria SS7 diz que isso so empurra a heranca para
+# o proximo condutor. A correcao e por comando, e a mensagem abaixo a entrega
+# pronta.
+assinatura=$(sed '/^#/d' "$commit_msg_file" | grep -i '^Assinatura:' | head -n 1)
+
+if [ -z "$assinatura" ]; then
+    # AVISA, nao bloqueia -- e a escada da SS8.2 aplicada com honestidade sobre o
+    # alcance. Bloquear aqui atingiria tambem o Tier 0 commitando a mao, que nao e
+    # agente e nao deve satisfazer regra de agente; e o hook nao tem como
+    # distinguir os dois sem confiar num campo que o proprio agente escolhe --
+    # confiar nele daria ao agente o botao de se isentar. Promover isto a bloqueio
+    # e reducao material, e cabe ao Tier 0.
+    echo "[COMMIT-MSG AVISO] Sem linha 'Assinatura:'. A SS7 do CLAUDE.md a exige em commit de agente."
+    echo "   O GitHub liga o commit a um perfil pelo E-MAIL do autor, nao pelo nome nem pelo corpo."
+    echo "   Sem a assinatura, a malha nao audita quem escreveu o que -- e o portao abaixo,"
+    echo "   que compara autor com assinatura, fica sem o que comparar."
+    echo "   Formato: Assinatura: <agente> [Tier X] -- sessao <session_id>"
+    exit 0
+fi
+
+# Nome declarado: o que vem antes de ' [', ' -- ' ou ' via '. Normalizado para
+# so letras e digitos minusculos, porque 'antigravity@gemini-3.8-flash' e
+# 'Gemini 3.8 Flash' sao a MESMA identidade escrita em duas convencoes -- a
+# composta veiculo@modelo da SS7, e o nome que vai no campo de autor.
+_normalizar() {
+    printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9'
+}
+
+declarado=$(printf '%s' "$assinatura" | sed 's/^[Aa]ssinatura:[[:space:]]*//' | sed 's/ \[.*//; s/ -- .*//; s/ via .*//')
+autor=$(git var GIT_AUTHOR_IDENT 2>/dev/null | sed 's/ <.*//')
+
+n_decl=$(_normalizar "$declarado")
+n_autor=$(_normalizar "$autor")
+
+if [ -n "$n_decl" ] && [ -n "$n_autor" ]; then
+    case "$n_decl" in
+        *"$n_autor"*) ;;
+        *)
+            case "$n_autor" in
+                *"$n_decl"*) ;;
+                *)
+                    echo "[COMMIT-MSG REJEITADO] O campo de autor nao concorda com a Assinatura declarada."
+                    echo "   Assinatura diz: '$declarado'"
+                    echo "   git dira:       '$autor'"
+                    echo ""
+                    echo "   Identidade do git e RESIDUAL: sobrevive a sessao que a escreveu, e numa malha"
+                    echo "   em que os condutores se revezam o padrao e herdar a de quem operou por ultimo."
+                    echo "   Foi assim que 5 commits do Gemini sairam assinados 'Codex GPT-5' em 12/09."
+                    echo ""
+                    echo "   Passe a identidade NO COMANDO -- nao altere a configuracao global,"
+                    echo "   que so empurraria a heranca para o proximo condutor:"
+                    echo "     git -c user.name='$declarado' -c user.email='<noreply do fornecedor>' commit ..."
+                    exit 1
+                    ;;
+            esac
+            ;;
+    esac
+fi
+
 exit 0

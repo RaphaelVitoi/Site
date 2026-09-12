@@ -868,6 +868,37 @@ autor é quem produziu, committer é quem commitou, e os dois se declaram — a
 forma medida em `29ef243e` é *"Assinatura: `<autor>` via `<committer>` como
 committer"*.
 
+### A regra passou a ser executável — e a ordem das duas metades importa
+
+**Aplicado em 2026-09-12.** Até essa data a §7 inteira era prosa: nada conferia
+a Assinatura, nada conferia o campo de autor. O `commit-msg` agora faz as duas
+coisas, e a diferença entre elas é deliberada.
+
+| Verificação | Efeito | Por quê |
+| :--- | :--- | :--- |
+| Autor **diverge** da Assinatura declarada | **bloqueia** | evidência exata; zero falso positivo medido |
+| Sem linha `Assinatura:` | **avisa** | a mesma exigência atingiria o Tier 0 commitando à mão |
+
+**O portão não adivinha o condutor, e não pode.** Ele compara o que o condutor
+**declarou** com o campo que o GitHub lê, e a mensagem de recusa entrega o
+comando pronto — `git -c user.name=... commit` —, nunca o `git config` global,
+que a regra acima já explica por que só empurra a herança adiante. A comparação
+é normalizada, porque `antigravity@gemini-3.8-flash` e `Gemini 3.8 Flash` são a
+mesma identidade em duas convenções desta casa; comparação literal reprovaria as
+duas.
+
+**Por que a exigência da Assinatura vem antes, e é o que dá valor à outra.** O
+desenho óbvio — comparar corpo com campo de autor — não teria pego **nenhum** dos
+cinco commits errados de 12/09: eles não tinham corpo a comparar. Medido no mesmo
+dia: 16 dos 40 commits mais recentes não traziam a linha. Uma regra vale o que a
+outra habilita, e verificar a segunda sem a primeira é verificar o vazio.
+
+**Promover o aviso a bloqueio é decisão do Tier 0, não do agente.** É redução
+material pela escada da §8.2 da raiz, e o hook não consegue separar agente de
+humano sem confiar num campo que o próprio agente escolhe — confiar nele daria
+ao agente o botão de se isentar. Guards em `tests/test_hook_commit_msg.py`,
+incluindo o caso real de 12/09.
+
 ---
 
 ## 9. Taxonomia Canônica de Relatórios, Auditorias, Handoffs e Documentação
