@@ -38,12 +38,28 @@ npm run sota:audit
 # -- e portao caro e portao que alguem contorna. O push e a fronteira de
 # PUBLICACAO: e onde a SS10.6(c) ja exige que o portao seja real, e onde o CI
 # seria, de outro modo, o primeiro a saber.
+# `--basetemp` NAO e conveniencia: e o que torna esta etapa determinista.
+#
+# MEDIDO na primeira execucao real deste hook, em 2026-09-12: ele BARROU o push
+# sem nenhum teste ter reprovado. A raiz temporaria compartilhada
+# (%TEMP%\pytest-of-rapha) continha `pytest-current`, um symlink de diretorio
+# MORTO -- alvo ja removido. No Windows, `Path.unlink()` sobre symlink de
+# diretorio devolve WinError 5, entao `cleanup_dead_symlinks` explodia no
+# sessionfinish, o pytest saia com codigo nao-zero e o `set -e` acima abortava o
+# push. Falha fechada e o comportamento certo; a causa e que era errada. O
+# artefato reaparece toda vez que uma corrida e interrompida, e nem `rmdir`
+# consegue remove-lo enquanto o SO o mantem travado -- logo o portao nao pode
+# depender daquela raiz. Aqui ele tem a sua, curta e propria.
+#
+# `.pytest_tmp/` ja consta do .gitignore (linha 130). Caminho CURTO tambem
+# importa: com uma raiz longa, os testes que criam repositorios git temporarios
+# estouram o limite de caminho do Windows e falham com WinError 267.
 if command -v uv >/dev/null 2>&1; then
-    uv run --no-sync pytest -q
+    uv run --no-sync pytest -q --basetemp=.pytest_tmp
 elif [ -x ".venv/Scripts/python.exe" ]; then
-    .venv/Scripts/python.exe -m pytest -q
+    .venv/Scripts/python.exe -m pytest -q --basetemp=.pytest_tmp
 elif [ -x ".venv/bin/python" ]; then
-    .venv/bin/python -m pytest -q
+    .venv/bin/python -m pytest -q --basetemp=.pytest_tmp
 else
-    python -m pytest -q
+    python -m pytest -q --basetemp=.pytest_tmp
 fi

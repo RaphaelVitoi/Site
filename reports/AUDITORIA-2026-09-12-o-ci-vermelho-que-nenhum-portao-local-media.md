@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T11:18:04-03:00'
-atualizado_em: '2026-09-12T11:18:04-03:00'
+atualizado_em: '2026-09-12T11:55:55-03:00'
 classes: [interno, medido, calibracao, ci, proveniencia]
 verificado:
   - nota 9.8 do handoff do Codex gravada literal na sequencia 58 -- cadeia valida, 59 registros
@@ -25,11 +25,12 @@ verificado:
   - ruff format e ruff check aprovados no arquivo de teste alterado
   - suite integral 1124 aprovados 1 pulado exit 0, com basetemp curto
   - o unico warning e pre-existente -- medido por A/B com git stash da alteracao
+  - o pre-push novo foi exercido de ponta a ponta e barrou o push -- falha fechada, causa de ambiente
+  - pytest-current e symlink morto e nem os.rmdir o remove -- WinError 5, medido
 nao_verificado:
   - nao abri o diff de 812c1c2f -- a observacao sobre React.memo e de classe, nao de conteudo
   - a corrida do CI sobre o commit desta correcao ainda nao existia quando isto foi escrito
   - regime de supervisao dos sete registros historicos continua sem fonte especifica
-  - o pre-push novo nao foi exercido de ponta a ponta antes deste registro ser escrito
   - a causa de o contador do guard reportar zero warnings na suite integral e um no teste isolado
 caminhos:
   - reports/agent-calibration/feedback-ledger.jsonl
@@ -533,6 +534,33 @@ dos 16, a recusa de `gpt-9.9-inexistente` e congêneres, e a ausência de motivo
 duplicado.
 
 ---
+
+### O portão novo barrou o primeiro push, e estava certo em barrar
+
+A primeira execução real do `pre-push` **bloqueou a publicação sem que um único
+teste tivesse reprovado.** O portão de 5 fases aprovou — 0 erros, 2 warnings,
+teto 2 — e a suíte morreu no `sessionfinish`, não em asserção.
+
+Causa: a raiz temporária compartilhada, `%TEMP%\pytest-of-rapha`, contém
+`pytest-current`, um **symlink de diretório morto** — `islink` verdadeiro,
+`isdir` falso, alvo já removido. No Windows, `Path.unlink()` sobre symlink de
+diretório devolve `WinError 5`, então `cleanup_dead_symlinks` explode no
+encerramento, o pytest sai com código não-zero, e o `set -e` aborta o push.
+Medido: nem `os.rmdir`, que é a chamada correta para symlink de diretório no
+Windows, consegue removê-lo — o SO o mantém travado. E ele reaparece toda vez
+que uma corrida é interrompida.
+
+**Falha fechada é o comportamento certo; a causa é que estava errada.** Um
+portão que barra por artefato de ambiente treina o operador a desconfiar dele, e
+desconfiança de portão é o primeiro passo para o contorno que a §1 proíbe. A
+correção não afrouxa nada: o hook passou a usar `--basetemp=.pytest_tmp`, raiz
+**própria e curta** — própria para não herdar lixo de outra corrida, curta
+porque com raiz longa os testes que criam repositórios git temporários estouram
+o limite de caminho do Windows e falham com `WinError 267`, que foi exatamente o
+que produziu as nove falhas fantasma da seção 6.
+
+O remoto permaneceu em `812c1c2f` durante todo o episódio: nada foi publicado
+por um portão que não aprovou.
 
 ### O contador de warnings do guard divergiu do pytest, e isso é achado
 
