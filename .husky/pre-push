@@ -51,24 +51,24 @@ npm run sota:audit
 # consegue remove-lo enquanto o SO o mantem travado -- logo o portao nao pode
 # depender daquela raiz. Aqui ele tem a sua, curta e propria.
 #
-# A raiz tem de ser CURTA e FORA da arvore do repositorio, e as duas condicoes
-# custaram uma tentativa cada:
+# UM comando, e ele decide se precisa medir. `scripts/ops/suite_verde.py` roda a
+# suite quando o estado mudou e se recusa a REPETIR uma medicao ja feita sobre a
+# mesma arvore -- arvore limpa mais HEAD ja verificado verde nao remede, qualquer
+# sujeira mede. Ele tambem centraliza a raiz temporaria, que precisa ser curta e
+# FORA da arvore, e as duas condicoes custaram uma tentativa cada em 2026-09-12:
+# raiz longa estoura o limite de caminho do Windows (WinError 267) nos testes que
+# criam repositorios git temporarios, e raiz DENTRO da arvore reprovou tres deles,
+# incluindo, com ironia exata, test_nao_inventa_repositorio_onde_nao_ha.
 #
-#   - curta, porque com raiz longa os testes que criam repositorios git
-#     temporarios estouram o limite de caminho do Windows (WinError 267);
-#   - fora do repositorio, porque colocando-a DENTRO -- `.pytest_tmp`, ignorada
-#     pelo git e ainda assim presente no disco -- tres testes reprovaram na
-#     tentativa de 2026-09-12: os dois de deteccao de referencia em
-#     test_record_index.py e, com ironia exata, test_suite_isolada.py::
-#     test_nao_inventa_repositorio_onde_nao_ha. Repositorio de teste criado
-#     dentro da arvore E um repositorio onde nao deveria haver um.
-BASETEMP="${TEMP:-${TMPDIR:-/tmp}}/pt-sota"
+# O mesmo comando serve a QUALQUER condutor, antes de commitar:
+#     python scripts/ops/suite_verde.py
+# Quem o rodar e nao mexer em nada depois passa por aqui em segundos.
 if command -v uv >/dev/null 2>&1; then
-    uv run --no-sync pytest -q --basetemp="$BASETEMP"
+    uv run --no-sync python scripts/ops/suite_verde.py
 elif [ -x ".venv/Scripts/python.exe" ]; then
-    .venv/Scripts/python.exe -m pytest -q --basetemp="$BASETEMP"
+    .venv/Scripts/python.exe scripts/ops/suite_verde.py
 elif [ -x ".venv/bin/python" ]; then
-    .venv/bin/python -m pytest -q --basetemp="$BASETEMP"
+    .venv/bin/python scripts/ops/suite_verde.py
 else
-    python -m pytest -q --basetemp="$BASETEMP"
+    python scripts/ops/suite_verde.py
 fi

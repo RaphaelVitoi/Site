@@ -58,6 +58,50 @@ parâmetro que não existe na 5.1, e recurso de classe do 7 — falham em *tempo
 execução*, e nenhum parser os pega. Antes de release, e para qualquer `.ps1` que
 seja hook ou tarefa agendada, revalide em host Windows.
 
+### 1.1.1 O caminho de menos demora — vale para todo condutor
+
+**Um comando, e ele decide se precisa medir:**
+
+```bash
+python scripts/ops/suite_verde.py
+```
+
+Rode-o **antes de commitar**. O `pre-push` chama exatamente o mesmo comando; se
+nada mudou entre um e outro, ele passa em segundos em vez de repetir oito
+minutos. Não há segunda forma certa, e não há forma errada que passe.
+
+**A regra inteira cabe numa linha, e é igual para Claude Code, Codex,
+Antigravity e Jules:**
+
+> mesmo **conteúdo** já verificado verde → não remede.
+> Conteúdo diferente → mede.
+
+**Isto não pula verificação.** Ele se recusa a *repetir* uma medição já feita
+sobre exatamente o mesmo estado — o que mudou, mede. Falha nunca vira marcador, e
+apaga o anterior: um verde vencido é pior que nenhum. O marcador vive em
+`.git/sota-suite-verde`, por clone, nunca versionado. **O CI não usa este
+caminho** — lá a suíte roda sempre, do zero.
+
+**A chave é a árvore de conteúdo, não o commit**, e é isso que faz medir-antes-de-
+commitar valer para o push. O primeiro desenho chaveava por `HEAD`; commitar muda
+o `HEAD` e invalidaria o cache, embora o conteúdo testado seja o mesmo — o commit
+só registra a árvore que já estava no disco. Medido: a árvore devolvida antes do
+commit é idêntica à que o commit passa a ter.
+
+**Motivo medido, 2026-09-12.** O `pre-push` passou a rodar a suíte integral, e o
+condutor tipicamente já a rodava à mão antes de commitar: duas medições idênticas
+sobre a mesma árvore, por publicação. O custo apareceu como *"quase uma hora para
+commit e push"*, e metade dele não media nada de novo.
+
+**Uma armadilha desta base, resolvida dentro do script.** Os oito submódulos de
+`skills/` declaram `ignore = dirty`, então o `git status` **padrão** não mostra
+fonte modificada dentro deles — árvore limpa por instrução, não por fato — e a
+suíte lê o estado dos submódulos. A checagem usa `--ignore-submodules=none`; sem
+isso o cache diria verde sobre uma árvore que mudou onde ele não olhou.
+
+`python scripts/ops/suite_verde.py invalidate` descarta o marcador quando você
+quiser forçar a medição.
+
 ### 1.2 Âncoras num merge — obrigação é do que a resolução decidiu
 
 O portão de registro (`scripts/ops/record_gate.py`) coleta caminhos com
