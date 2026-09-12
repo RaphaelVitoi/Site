@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T06:40:00-03:00'
-atualizado_em: '2026-09-12T07:25:00-03:00'
+atualizado_em: '2026-09-12T07:40:00-03:00'
 classes: [interno, medido, calibracao, preludio]
 verificado:
   - cadeia de feedback valida em toda escrita -- 27 para 55 registros, cauda 03c200e8
