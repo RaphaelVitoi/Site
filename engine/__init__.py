@@ -31,6 +31,23 @@ from .math_sota import (
     calculate_rio_tension,
     solve_icm_distortion_v2,
 )
+from .canonical_poker_theory import (
+    ChenAKQGameSolver,
+    ChenClairvoyanceSolver,
+    ChenIndifferenceCalculator,
+    JandaGeometricBetSizing,
+    JandaMDFCalculator,
+    JandaStreetBluffValueRatio,
+)
+from .timesfm_engine import (
+    CfrConvergenceForecast,
+    OpponentDriftForecast,
+    TimesFMEngine,
+    forecast_bankroll_trajectory,
+    forecast_cfr_convergence,
+    forecast_opponent_drift,
+    forecast_pmev_risk_dynamics,
+)
 
 __all__ = [
     "solve_icm_distortion_v2",
@@ -57,4 +74,17 @@ __all__ = [
     "GrowingTreeCFRSolver",
     "PublicBeliefState",
     "Street",
+    "ChenClairvoyanceSolver",
+    "ChenAKQGameSolver",
+    "ChenIndifferenceCalculator",
+    "JandaMDFCalculator",
+    "JandaGeometricBetSizing",
+    "JandaStreetBluffValueRatio",
+    "TimesFMEngine",
+    "CfrConvergenceForecast",
+    "OpponentDriftForecast",
+    "forecast_cfr_convergence",
+    "forecast_opponent_drift",
+    "forecast_bankroll_trajectory",
+    "forecast_pmev_risk_dynamics",
 ]

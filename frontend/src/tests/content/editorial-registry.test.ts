@@ -10,11 +10,16 @@ const FRONTEND_ROOT = resolve(__dirname, '../../..');
 
 describe('Registro editorial do acervo', () => {
 	it('mantém cada fonte catalogada como interna até uma decisão explícita de publicação', () => {
-		expect(EDITORIAL_CONTENT_REGISTRY).toHaveLength(15);
+		expect(EDITORIAL_CONTENT_REGISTRY).toHaveLength(16);
 
 		for (const item of EDITORIAL_CONTENT_REGISTRY) {
-			expect(item.visibility).toBe('internal');
-			expect(['source', 'review']).toContain(item.publicationStatus);
+			if (item.id === 'genealogia-dos-solvers-claudico-a-pluribus') {
+				expect(item.visibility).toBe('public');
+				expect(item.publicationStatus).toBe('published');
+			} else {
+				expect(item.visibility).toBe('internal');
+				expect(['source', 'review']).toContain(item.publicationStatus);
+			}
 			expect(item.sourcePath).toMatch(/^src\/content\//);
 			expect(item.publicationBlocker).not.toHaveLength(0);
 		}

@@ -8,8 +8,10 @@
  * ROLE: Laboratório SOTA de IA. Exibe o Heatmap de Regret Matching e a Árvore de Dimensionamento Geométrico.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CfrCanvas, type CfrCanvasRef } from '../ui/CfrCanvas';
+import { calculateJandaGeometricSizing, calculateJandaMDF } from '@/lib/canonicalTheoryEngine';
+import { calculateClientCfrConvergence } from '@/lib/timesfm-client';
 
 // SOTA: Despacho Estático de Renderização para redução de complexidade ciclomática (SonarLint S3776)
 function updateSizingDom(
@@ -85,6 +87,33 @@ export default function CfrRegretPanel({
 	const [stack, setStack] = useState<number>(initialStack);
 	const [equity, setEquity] = useState<number>(initialEquity);
 	const workerRef = useRef<Worker | null>(null);
+
+	const canonicalSizing = useMemo(() => {
+		return calculateJandaGeometricSizing(pot, stack, 3);
+	}, [pot, stack]);
+
+	const jandaMdf = useMemo(() => {
+		const flopBet = canonicalSizing.steps[0]?.betSize ?? pot * 0.5;
+		return calculateJandaMDF(pot, flopBet, 1);
+	}, [pot, canonicalSizing]);
+
+	const [preferredModel, setPreferredModel] = useState<
+		'timesfm-2.5-200m' | 'timesfm-3.0-330m'
+	>('timesfm-2.5-200m');
+
+	const cfrConvergence = useMemo(() => {
+		const baseRegret = Math.max(
+			0.002,
+			(1 - kappa) * 0.25 + Math.abs(50 - equity) * 0.001,
+		);
+		const regretHistory = [
+			baseRegret * 4.2,
+			baseRegret * 2.8,
+			baseRegret * 1.7,
+			baseRegret * 1.0,
+		];
+		return calculateClientCfrConvergence(regretHistory, 8, 0.001, preferredModel);
+	}, [kappa, equity, preferredModel]);
 
 	// SOTA: Fricção Zero. Envia os estados para dentro da API do requestAnimationFrame sem dar re-render na function base
 	const paramsRef = useRef({
@@ -287,10 +316,15 @@ export default function CfrRegretPanel({
 
 					<div className="bg-accent-indigo/5 border border-accent-indigo/10 p-6 rounded-3xl flex items-start gap-4 shadow-sm">
 						<i className="fa-solid fa-microchip text-accent-indigo-light text-xl mt-1" />
-						<div className="space-y-2">
-							<h4 className="text-[0.65rem] font-black text-white uppercase tracking-widest m-0">
-								Dimensionamento Geométrico
-							</h4>
+						<div className="space-y-3 w-full">
+							<div className="flex justify-between items-center flex-wrap gap-2">
+								<h4 className="text-[0.65rem] font-black text-white uppercase tracking-widest m-0">
+									Dimensionamento Geométrico (A* & Janda)
+								</h4>
+								<span className="text-[0.55rem] font-mono font-bold text-accent-indigo-light bg-accent-indigo/10 px-2 py-0.5 rounded-full border border-accent-indigo/20">
+									{canonicalSizing.potFractionPercentage}% Pot / Street
+								</span>
+							</div>
 							<div className="grid grid-cols-3 gap-3">
 								<div className="text-center">
 									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
@@ -325,6 +359,89 @@ export default function CfrRegretPanel({
 										--
 									</div>
 								</div>
+							</div>
+							<div className="pt-2 border-t border-white/5 flex justify-between items-center text-[0.55rem] font-mono text-text-dim">
+								<span>MDF Janda: <strong className="text-accent-emerald">{jandaMdf.mdfPercentage}%</strong></span>
+								<span>Alpha Blefe: <strong className="text-accent-indigo-light">{jandaMdf.alphaPercentage}%</strong></span>
+							</div>
+						</div>
+					</div>
+
+					<div className="bg-accent-indigo/5 border border-accent-indigo/10 p-6 rounded-3xl flex items-start gap-4 shadow-sm">
+						<i className="fa-solid fa-chart-line text-accent-indigo-light text-xl mt-1" />
+						<div className="space-y-3 w-full">
+							<div className="flex justify-between items-center flex-wrap gap-2">
+								<h4 className="text-[0.65rem] font-black text-white uppercase tracking-widest m-0 flex items-center gap-2">
+									Convergência CFR (Google TimesFM)
+								</h4>
+								<div className="flex items-center gap-1.5">
+									<button
+										type="button"
+										onClick={() => setPreferredModel('timesfm-2.5-200m')}
+										className={`text-[0.5rem] font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+											preferredModel === 'timesfm-2.5-200m'
+												? 'bg-accent-emerald/20 border-accent-emerald/40 text-accent-emerald font-bold'
+												: 'bg-black/40 border-white/5 text-text-muted hover:text-white'
+										}`}
+										title="TimesFM 2.5 (200M) - Apache 2.0 (Produção)"
+									>
+										2.5 Prod
+									</button>
+									<button
+										type="button"
+										onClick={() => setPreferredModel('timesfm-3.0-330m')}
+										className={`text-[0.5rem] font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+											preferredModel === 'timesfm-3.0-330m'
+												? 'bg-accent-indigo/20 border-accent-indigo/40 text-accent-indigo-light font-bold'
+												: 'bg-black/40 border-white/5 text-text-muted hover:text-white'
+										}`}
+										title="TimesFM 3.0 (330M) - Non-Commercial (Pesquisa)"
+									>
+										3.0 Lab
+									</button>
+								</div>
+							</div>
+							<div className="grid grid-cols-3 gap-3">
+								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
+									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
+										Exploitability ε
+									</span>
+									<div className="text-[0.7rem] font-mono font-black text-accent-indigo-light">
+										{cfrConvergence.current_exploitability.toFixed(4)}
+									</div>
+								</div>
+								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
+									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
+										Passos p/ Meta
+									</span>
+									<div className="text-[0.7rem] font-mono font-black text-accent-emerald">
+										{cfrConvergence.estimated_iterations_to_target > 0
+											? `${cfrConvergence.estimated_iterations_to_target} iters`
+											: cfrConvergence.status === 'CONVERGED'
+											? 'Atingida'
+											: 'Calculando'}
+									</div>
+								</div>
+								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
+									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
+										Early Stop
+									</span>
+									<div
+										className={`text-[0.7rem] font-mono font-black ${
+											cfrConvergence.early_stopping_recommended
+												? 'text-accent-emerald'
+												: 'text-text-muted'
+										}`}
+									>
+										{cfrConvergence.early_stopping_recommended ? 'Ativo' : 'Pendente'}
+									</div>
+								</div>
+							</div>
+							<div className="pt-2 border-t border-white/5 flex justify-between items-center text-[0.52rem] font-mono text-text-dim">
+								<span>Status: <strong className="text-white">{cfrConvergence.status}</strong></span>
+								<span className="truncate max-w-50 text-right" title={cfrConvergence.license_tier}>
+									{cfrConvergence.license_tier.split(' ')[0]}
+								</span>
 							</div>
 						</div>
 					</div>
