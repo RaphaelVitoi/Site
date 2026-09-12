@@ -6,8 +6,9 @@
  * ROLE: Unificar a interface laboratorial eliminando código esquizofrênico legado.
  */
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import CfrRegretPanel from '@/components/simulator/panels/CfrRegretPanel';
+import PluribusMultiwayPanel from '@/components/simulator/panels/PluribusMultiwayPanel';
 import BayesianBeliefPanel from '@/components/simulator/panels/BayesianBeliefPanel';
 import PredictiveProfilePanel from '@/components/simulator/panels/PredictiveProfilePanel';
 
@@ -22,15 +23,55 @@ function GtoCfrContentInner({
 	initialStack = 40,
 	initialEquity = 55,
 }: Readonly<GtoCfrContentProps>) {
+	const [solverMode, setSolverMode] = useState<'heads_up' | 'multiway'>('heads_up');
+
 	return (
-		<main className="sota-container mt-12 space-y-16 animate-sota-in pb-24">
-			{/* SEÇÃO 1: CFR REGRET MATCHING (WASM SOTA) */}
+		<main className="sota-container mt-8 space-y-14 animate-sota-in pb-24">
+			{/* SELETOR DE MODO DO SOLVER */}
+			<div className="flex justify-center">
+				<div className="inline-flex p-1.5 rounded-2xl bg-slate-950/80 border border-white/10 backdrop-blur-xl shadow-2xl gap-2">
+					<button
+						type="button"
+						onClick={() => setSolverMode('heads_up')}
+						className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[0.65rem] font-mono font-black uppercase tracking-wider transition-all ${
+							solverMode === 'heads_up'
+								? 'bg-accent-indigo text-white shadow-[0_0_15px_rgba(99,102,241,0.35)]'
+								: 'text-text-dim hover:text-white hover:bg-white/5'
+						}`}
+					>
+						<i className="fa-solid fa-user-group text-xs" />
+						Heads-Up CFR+ (2-Way)
+					</button>
+
+					<button
+						type="button"
+						onClick={() => setSolverMode('multiway')}
+						className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[0.65rem] font-mono font-black uppercase tracking-wider transition-all ${
+							solverMode === 'multiway'
+								? 'bg-accent-emerald text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.35)]'
+								: 'text-text-dim hover:text-white hover:bg-white/5'
+						}`}
+					>
+						<i className="fa-solid fa-users text-xs" />
+						Multiway PMev (Pluribus 6-Max)
+						<span className="text-[0.5rem] font-sans px-1.5 py-0.2 rounded-full bg-white/20 text-white font-bold">
+							SOTA
+						</span>
+					</button>
+				</div>
+			</div>
+
+			{/* SEÇÃO 1: MOTOR DE JOGO (HEADS-UP CFR+ OU PLURIBUS MULTIWAY) */}
 			<div className="w-full">
-				<CfrRegretPanel
-					initialPot={initialPot}
-					initialStack={initialStack}
-					initialEquity={initialEquity}
-				/>
+				{solverMode === 'heads_up' ? (
+					<CfrRegretPanel
+						initialPot={initialPot}
+						initialStack={initialStack}
+						initialEquity={initialEquity}
+					/>
+				) : (
+					<PluribusMultiwayPanel />
+				)}
 			</div>
 
 			{/* SEÇÃO 2: PERFIL E BAYES */}

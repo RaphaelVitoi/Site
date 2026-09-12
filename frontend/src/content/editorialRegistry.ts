@@ -59,6 +59,18 @@ export const EDITORIAL_CONTENT_REGISTRY = [
 			'Curadoria de referências e rotulagem explícita entre proposta autoral, evidência de código e validação independente.',
 	},
 	{
+		id: 'genealogia-dos-solvers-claudico-a-pluribus',
+		title: 'De Claudico a Pluribus: A Genealogia dos Solvers e a Fronteira do PMev',
+		sourcePath: 'src/content/artigos/genealogia-dos-solvers-claudico-a-pluribus.md',
+		publicationStatus: 'review',
+		visibility: 'internal',
+		claimBoundary: 'authorial-framework',
+		relatedPublicRoute: ROUTES.LIBRARY.ESTADO_DA_ARTE,
+		relationToPublicRoute: 'conceptual',
+		publicationBlocker:
+			'Validação da notação do Passivo Estrutural Multiway (PMev) com fontes quantitativas antes de mover status para ready.',
+	},
+	{
 		id: 'icm-toy-game-simulator-html',
 		title: 'Protótipo HTML — ICM Toy Game Simulator',
 		sourcePath: 'src/content/interativo/icm_toy_game_simulator.html',
