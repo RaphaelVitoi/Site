@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T06:40:00-03:00'
-atualizado_em: '2026-09-12T08:03:59-03:00'
+atualizado_em: '2026-09-12T08:19:19-03:00'
 classes: [interno, medido, calibracao, preludio]
 verificado:
   - cadeia de feedback valida em toda escrita -- 27 para 55 registros, cauda 03c200e8
@@ -638,6 +638,18 @@ O `atualizado_em` publicado marcava `07:50:00`, e o commit que o gravou é de
 `07:24:37` — vinte e seis minutos **à frente**. O campo foi digitado, não lido
 do relógio. É a §2.4 outra vez, na escala de minutos: data escrita num documento
 descreve o documento, não o fato que ele narra. Substituído por valor medido.
+
+## A nota chegou — o prelúdio se fecha no handoff
+
+**9.0**, sequência 55 do ledger, cadeia válida em 56 registros. Como a §8.3
+estabelece, a nota mora no handoff e este documento era o corte intermediário:
+ele não era sessão sem nota, era sessão inacabada, e agora acabou.
+
+O comentário qualitativo do Tier 0 trouxe dois fatos que este registro **não**
+tinha: o intervalo de catorze dias entre recomendar o fork e fazê-lo, e a
+correção de que as skills não estão mais *dirty*. Os dois estão medidos em
+`reports/AUDITORIA-2026-09-12-a-tarefa-que-ficou-em-aberto-e-a-memoria-de-curto-prazo.md`,
+que é o registro de encerramento desta sessão e declara o mesmo `session_id`.
 
 ## Nota de método
 
