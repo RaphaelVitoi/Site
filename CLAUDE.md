@@ -426,33 +426,40 @@ automação ou superfície que executou o modelo (ex.: `codex`, `antigravity`,
 `claude-code`) — e o **regime de supervisão (`supervision_mode`)**: `assistida`
 (assistida e arbitrada diretamente pelo Tier 0) ou `automatizada` (autônoma, background ou CI/CD).
 
-#### Prelúdio — o registro que atravessa a compactação
+#### Os três momentos de uma sessão — prelúdio, interlúdio, handoff
 
-**Prelúdio é sessão inacabada, não sessão sem nota.** Estabelecido pelo Tier 0
-em 2026-09-12.
+Estabelecido pelo Tier 0 em 2026-09-12. A regra acima diz que compactação não
+encerra sessão; faltava nomear os artefatos que a sessão produz ao longo do
+caminho, e **qual deles carrega a nota**.
 
-A regra acima diz que compactação não encerra sessão. Faltava o artefato que a
-faz atravessar: um trabalho longo pode ter medido muita coisa antes de a janela
-comprimir, e essa medição precisa de lastro **antes** do fim — senão ela
-depende da memória de um contexto que está prestes a ser resumido. O prelúdio é
-esse corte intermediário. Existe principalmente por causa dos *compacts*, e
-secundariamente para edição pontual.
-
-| | Prelúdio | Sessão sem avaliação |
+| Momento | Quando | O que é |
 | :--- | :--- | :--- |
-| Exemplo | este registro de 12/09 | outlier `2d55d92a`, 03/09 |
-| A nota | ainda não chegou | não virá, por decisão do Tier 0 |
-| Na média | entra, quando vier | nunca entra |
+| **Prelúdio** | início, sujeito a *compacts* | a sessão **ainda não acabou**. Dá lastro ao que já foi medido antes que a janela comprima. |
+| **Interlúdio** | pausa no meio | operação **arbitrária e não correlata** ao propósito da sessão, ou operação **emergencial**. |
+| **Handoff** | encerramento | o protocolo de handoff — e é **nele** que reside o feedback. |
 
-Confundir os dois inverte o tratamento da média nas duas pontas, e foi o erro
-cometido no primeiro prelúdio: ele importou a fórmula do `2d55d92a` — *"ausência
-de nota não é zero"* —, que descreve uma decisão definitiva, para um caso em que
-a avaliação apenas ainda não ocorreu.
+**A nota mora no handoff, e só nele.** Quantitativa de `0` a `10`, com decimais
+— `9.3/10` é `9.3`, e a §8.3 já proíbe arredondar ou converter escala. E
+qualitativa: o árbitro comenta a sessão, os erros e os desvios. O comentário
+**não é obrigatório, e é importantíssimo** — é dele que saem os padrões que a
+calibração depois corrobora; as seis corroborações do padrão de desvio de foco
+são todas texto livre do Tier 0, nenhuma é número.
 
-**Consequência operacional.** O prelúdio declara o `session_id` da sessão viva e
-não abre uma nova. Quando o feedback vier, ele declara **o mesmo** `session_id`
-e entra uma vez só — dois registros com ids diferentes para um trabalho só é
-exatamente a sessão partida que o portão recusa.
+**Prelúdio não é sessão sem nota.** A nota ainda não chegou, e chegará no
+handoff. Não confundir com o caso de `2d55d92a`, em que o Tier 0 determinou
+ausência de avaliação: ali não haverá nota e o registro fica fora da média para
+sempre. Confundir os dois inverte o tratamento da média nas duas pontas — foi o
+erro cometido no primeiro prelúdio, que importou a fórmula *"ausência de nota
+não é zero"* de uma decisão definitiva para um caso apenas inacabado.
+
+**O interlúdio existe para não contaminar o eixo.** Operação emergencial ou
+alheia ao propósito da sessão acontece, e registrá-la no meio do relatório da
+sessão faria parecer desvio de foco o que foi desvio autorizado. Ele separa as
+duas coisas — e é a contrapartida documental do padrão que a calibração de
+12/09 registrou: periferia se despacha, não se delibera.
+
+**Os três declaram o mesmo `session_id`.** Nenhum abre sessão nova. Dois ids
+para um trabalho só é exatamente a sessão partida que o portão recusa.
 
 #### Veículo e modelo valem igualmente, e por isso são dois campos
 
