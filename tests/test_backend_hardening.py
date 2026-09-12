@@ -435,8 +435,35 @@ def test_client_components_do_not_import_server_telemetry_module() -> None:
     assert frontend_src.is_dir()
 
 
+@pytest.fixture
+def _estado_do_guard_preservado():
+    """Devolve ao guard, ao fim do teste, a medicao real que ele ja tinha.
+
+    MEDIDO EM 2026-09-12. O autoteste abaixo manipula o estado GLOBAL do
+    SotaGuardState e terminava chamando `reset()`. Como ele roda no meio da
+    suite, isso APAGAVA os warnings reais registrados antes dele: a corrida
+    integral fechou com `1 warning` pelo pytest e `Total de Warnings: 0` pelo
+    guard, carimbando "Homeostase Total". O instrumento se autotestava
+    destruindo a propria medicao -- e verde por dado apagado e o mais caro que
+    existe, porque e exatamente o que ninguem reaudita.
+
+    A SS6.2 chama esse contador de "a fonte, e e honesta". Ele e honesto sobre o
+    que guarda; o defeito era o que deixava de guardar. Nenhuma assercao do
+    teste muda: o que muda e que o estado real volta ao lugar depois.
+    """
+    from tests.conftest import SotaGuardState
+
+    erros = list(SotaGuardState.errors)
+    warns = list(SotaGuardState.warnings_list)
+    skips = list(SotaGuardState.skips)
+    yield
+    SotaGuardState.errors = erros
+    SotaGuardState.warnings_list = warns
+    SotaGuardState.skips = skips
+
+
 @pytest.mark.unit
-def test_sota_guard_blocks_on_errors_or_excess_warnings() -> None:
+def test_sota_guard_blocks_on_errors_or_excess_warnings(_estado_do_guard_preservado) -> None:
     """Valida o comportamento estrito do SOTA Guard: Tri-State (SUCESSO, FRAGIL, FALHOU)."""
     from tests.conftest import SotaGuardState, pytest_sessionfinish
 
@@ -566,3 +593,19 @@ def test_o_motor_de_rag_declarado_e_o_instalado():
     if lancedb_instalado:
         return  # se um dia for instalado de fato, esta guarda perde o objeto
     assert not ofensores, "codigo afirma LanceDB e `lancedb` nao esta instalado:\n" + "\n".join(ofensores)
+
+
+def test_o_autoteste_do_guard_declara_a_preservacao_de_estado() -> None:
+    """Guard contra a regressao exata de 2026-09-12.
+
+    Se alguem remover a fixture, o autoteste volta a apagar a medicao real da
+    suite e o relatorio final volta a dizer zero warning havendo warning. O
+    defeito nao produz falha: produz VERDE, que e o que o torna caro.
+    """
+    import inspect
+
+    parametros = inspect.signature(test_sota_guard_blocks_on_errors_or_excess_warnings).parameters
+    assert "_estado_do_guard_preservado" in parametros, (
+        "o autoteste do SotaGuardState precisa da fixture que salva e restaura o "
+        "estado global; sem ela ele apaga os warnings reais ja registrados pela suite"
+    )
