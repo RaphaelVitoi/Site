@@ -62,13 +62,12 @@ export const EDITORIAL_CONTENT_REGISTRY = [
 		id: 'genealogia-dos-solvers-claudico-a-pluribus',
 		title: 'De Claudico a Pluribus: A Genealogia dos Solvers e a Fronteira do PMev',
 		sourcePath: 'src/content/artigos/genealogia-dos-solvers-claudico-a-pluribus.md',
-		publicationStatus: 'review',
-		visibility: 'internal',
+		publicationStatus: 'published',
+		visibility: 'public',
 		claimBoundary: 'authorial-framework',
-		relatedPublicRoute: ROUTES.LIBRARY.ESTADO_DA_ARTE,
+		relatedPublicRoute: ROUTES.LIBRARY.GENEALOGIA_SOLVERS,
 		relationToPublicRoute: 'conceptual',
-		publicationBlocker:
-			'Validação da notação do Passivo Estrutural Multiway (PMev) com fontes quantitativas antes de mover status para ready.',
+		publicationBlocker: 'Nenhum. Publicado e integrado com página dedicada na Biblioteca SOTA.',
 	},
 	{
 		id: 'icm-toy-game-simulator-html',
