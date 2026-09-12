@@ -41,6 +41,7 @@ const LIBRARY_CATEGORIES: LibraryCategory[] = [
 			{ title: 'Estado da Arte GOLD', slug: 'estado-da-arte', desc: 'A arquitetura epistemológica e técnica do ecossistema.' },
 			{ title: 'Protocolo Smart Sniper', slug: 'smart-sniper', desc: 'Detecção cirúrgica de assimetrias e exploração máxima.' },
 			{ title: 'Validação Smart Sniper', slug: 'validacao-smart-sniper', desc: 'Evidências empíricas e calibração de dados ao vivo.' },
+			{ title: 'De Claudico a Pluribus', slug: 'genealogia-dos-solvers-claudico-a-pluribus', desc: 'Genealogia dos solvers, continual resolving e passivo multiway do PMev.' },
 		],
 	},
 	{

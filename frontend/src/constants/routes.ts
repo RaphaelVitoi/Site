@@ -51,5 +51,6 @@ export const ROUTES = {
 		ESTADO_DA_ARTE: '/biblioteca/estado-da-arte',
 		SMART_SNIPER: '/biblioteca/smart-sniper',
 		VALIDACAO_SMART_SNIPER: '/biblioteca/validacao-smart-sniper',
+		GENEALOGIA_SOLVERS: '/biblioteca/genealogia-dos-solvers-claudico-a-pluribus',
 	},
 };
