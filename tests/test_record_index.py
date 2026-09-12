@@ -19,6 +19,7 @@ from datetime import date
 from pathlib import Path
 
 # pylint: disable=protected-access,wrong-import-position,fixme
+import os
 import re
 import subprocess
 import sys
@@ -597,3 +598,69 @@ def test_alternancia_de_extensoes_esta_ordenada_por_comprimento():
                 f"`{curta}` vem antes de `{longa}` e a alternancia casa a primeira que serve: "
                 f"toda citacao de .{longa} sera truncada em .{curta}"
             )
+
+
+class _RaizSemIrmao(os.PathLike):
+    """A mesma raiz, sem repositorio irmao ao lado -- e o que um clone ve."""
+
+    def __init__(self, raiz: Path) -> None:
+        self._raiz = raiz
+        # Caminho que nunca existe: substitui `RAIZ.parent` na resolucao.
+        self._sem_irmao = raiz / ".venv" / "__sem_irmao__"
+
+    def __fspath__(self) -> str:
+        return os.fspath(self._raiz)
+
+    def __truediv__(self, outro):
+        return self._raiz / outro
+
+    def __str__(self) -> str:
+        return str(self._raiz)
+
+    @property
+    def parent(self):
+        return self._sem_irmao
+
+    @property
+    def name(self) -> str:
+        return self._raiz.name
+
+
+def test_o_corpus_resolve_tambem_sem_o_repositorio_irmao(monkeypatch):
+    """O teste acima aprova por VIZINHANCA, e este fecha essa porta.
+
+    `referencias_mortas` resolve cada citacao contra tres raizes, e a terceira e
+    `RAIZ.parent` -- a raiz multiprojeto. Nesta maquina o `Site` mora dentro
+    dela, entao um caminho do repositorio IRMAO resolve: nao porque este
+    repositorio o tenha, mas porque o irmao esta no disco ao lado. Num clone de
+    CI nao ha irmao, e o mesmo endereco morre.
+
+    A busca no pai existe de proposito, para registro multiprojeto que enderaca
+    de cima -- nao e defeito. O efeito colateral e que o veredito depende da
+    topologia do disco de quem roda, e na direcao pior: local aprova, publicacao
+    reprova.
+
+    MEDIDO EM 2026-09-12, e foi o que custou nove commits vermelhos entre 09-11
+    09:56 e 09-12 15:15. O corpus tinha zero referencias mortas nesta maquina e
+    duas no CI, no mesmo commit. Pior: o workflow declara `paths-ignore` para
+    `reports/**` e `**/*.md`, entao o commit que INTRODUZ a referencia morta num
+    relatorio nao dispara corrida nenhuma -- o vermelho aparece no proximo
+    commit que toca codigo, atribuido a quem nao o causou.
+
+    A saida correta ja existia e e independente de maquina: declarar o caminho
+    em `referencias_nao_resolviveis`, que e o campo que separa citar-para-apontar
+    de citar-para-dizer-que-sumiu.
+    """
+    monkeypatch.setattr(record_gate, "RAIZ", _RaizSemIrmao(RAIZ))
+    saida = subprocess.run(["git", "ls-files", "*.md"], cwd=RAIZ, capture_output=True, text=True, check=False)
+    mortas = {
+        rel: m
+        for rel in saida.stdout.splitlines()
+        if rel.strip() and record_gate._e_prescritivo(rel)
+        for m in [record_gate.referencias_mortas(rel)]
+        if m
+    }
+    assert not mortas, (
+        "referencia que so resolve porque a raiz multiprojeto esta no disco ao lado -- "
+        "no clone isto reprova:\n  " + "\n  ".join(f"{k}: {v}" for k, v in mortas.items())
+    )

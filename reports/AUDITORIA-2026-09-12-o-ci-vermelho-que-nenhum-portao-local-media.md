@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T11:18:04-03:00'
-atualizado_em: '2026-09-12T12:23:11-03:00'
+atualizado_em: '2026-09-12T12:45:38-03:00'
 classes: [interno, medido, calibracao, ci, proveniencia]
 referencias_nao_resolviveis:
   # Este relatorio CITA os dois caminhos para dizer que eles nao resolvem aqui --
@@ -38,6 +38,9 @@ verificado:
   - referencias_mortas resolve contra RAIZ.parent, a raiz multiprojeto -- aprova aqui e reprova no clone
   - este relatorio foi reprovado pelo CI por citar os caminhos que diagnostica; declarado e corrigido
   - varredura EQUIVALENTE A CLONE com RAIZ.parent neutralizado -- 210 prescritivos, zero mortas
+  - sota-ci.yml declara paths-ignore para reports e md, e nao tem workflow_dispatch -- lido no arquivo
+  - o primeiro commit vermelho 2ce819a7 tocou scripts e herdou divida de um commit so-documentacao
+  - guard novo em tests/test_record_index.py -- 33 aprovados no arquivo, incluindo ele
 nao_verificado:
   - nao abri o diff de 812c1c2f -- a observacao sobre React.memo e de classe, nao de conteudo
   - a corrida do CI sobre o commit desta ultima correcao ainda nao existia quando isto foi escrito
@@ -51,6 +54,7 @@ caminhos:
   - scripts/ops/AgentCalibrationProvenance.ps1
   - scripts/ops/record_gate.py
   - tests/test_record_index.py
+  - .github/workflows/sota-ci.yml
   - tests/test_agent_calibration_provenance.py
   - .husky/pre-push
   - llm/model_registry.py
@@ -79,6 +83,39 @@ revisoes_de_ancora:
       canonica, alem de deixar de emitir motivo duplicado para campo em branco;
       nenhum registro antes elegivel deixou de ser, e a invariante dos 16
       modelos canonicos e agora guardada por teste no arquivo que ele criou.
+  - registro: registro-2026-09-01-resolucao-de-skill-e-referencia-por-ponto-de-partida
+    caminhos: [tests/test_record_index.py]
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. Aquele registro fixou que referencia se resolve
+      a partir de um PONTO DE PARTIDA declarado, e o teste novo e a aplicacao
+      literal disso: mede o que resolve tomando o repositorio como ponto de
+      partida, em vez de aceitar o que resolve porque a raiz irma esta ao lado.
+      Nenhuma regra de resolucao existente foi alterada.
+  - registro: registro-2026-09-05-fechamento-do-ciclo-de-calibracao
+    caminhos: [tests/test_record_index.py]
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. O fechamento de ciclo nao depende de nada que
+      este teste toque; a adicao e um caso novo no mesmo arquivo, sem alterar os
+      guards de indice ou de portao que aquele registro ancorou.
+  - registro: registro-2026-09-08-alternancia-de-extensoes-no-portao-de-registro
+    caminhos: [tests/test_record_index.py]
+    parecer: >-
+      REVISADO E MANTIDO VALIDO. A alternancia de extensoes -- .ts que tambem
+      aceita .tsx, .js que aceita .jsx -- continua sendo exercida pelos testes
+      que ele ancorou, e o caso novo a percorre igual: ele reusa
+      `referencias_mortas` inteira, mudando apenas UMA das tres raizes de busca.
+      A cobertura daquela regra nao encolheu.
+  - registro: registro-2026-09-08-ruff-format-e-o-ci-vermelho
+    caminhos: [tests/test_record_index.py]
+    parecer: >-
+      REVISADO, MANTIDO VALIDO E DIRETAMENTE CONFIRMADO. Aquele registro tratou
+      de um CI vermelho por seis dias porque o portao local e o CI checavam
+      COISAS DIFERENTES -- o formato do ruff so era cobrado la. O achado de hoje
+      e a mesma forma noutra verificacao: o detector de referencia morta resolve
+      contra a raiz multiprojeto e aprova aqui o que reprova no clone. A adicao
+      e um teste novo, sem tocar nos que ele ancorou: refaz a varredura com a
+      raiz irma neutralizada, para que local e CI passem a medir a mesma coisa.
+      Nenhuma assercao existente foi alterada; os 33 testes do arquivo passam.
   - registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
     caminhos: ['.husky/pre-push']
     parecer: >-
@@ -422,6 +459,34 @@ diferença entre medir o próprio disco e medir o que o repositório entrega.
 **Esta auditoria caiu na própria armadilha que descreve.** Ao narrar os dois
 caminhos mortos, ela os citou — e o CI a reprovou por isso, enquanto aqui ela
 passava. Corrigido pela mesma declaração.
+
+### A causa-raiz: o CI ignora exatamente os arquivos que o teste valida
+
+`sota-ci.yml` declara `paths-ignore` para `**/*.md`, `docs/**` e **`reports/**`**.
+E o teste que reprovou é `test_o_corpus_prescritivo_nao_tem_referencia_morta`,
+cujo objeto de verificação é justamente `reports/*.md`.
+
+**Um commit que só mexe em relatório introduz a quebra e não dispara corrida
+alguma.** O vermelho aparece no commit *seguinte* que toca código — atribuído a
+quem não o causou. Foi exatamente a sequência: o relatório de 09-11 nasceu num
+commit de documentação, o CI o ignorou, e o primeiro vermelho, `2ce819a7`, é um
+commit de calibração que mexeu em `scripts/ops/*.ps1` e herdou a dívida alheia.
+
+Não há `workflow_dispatch` no workflow, logo a corrida também não pode ser
+pedida à mão. Um commit somente-documentação **não tem como ser verificado pelo
+CI**, nem quando conserta o que o CI acusa.
+
+**E isto revela um limite do portão que instalei nesta mesma sessão.** O
+`pre-push` roda a suíte inteira, mas a suíte inteira contém o teste que aprova
+por vizinhança — logo ele daria verde para a classe de defeito que motivou o
+portão. Portão que não pega o defeito que o originou é falsa garantia.
+
+Fechado por guard, e o guard é aditivo: `test_o_corpus_resolve_tambem_sem_o_
+repositorio_irmao` refaz a varredura com `RAIZ.parent` apontado para caminho
+inexistente. Agora a suíte local reprova o que o clone reprovaria, e o
+`pre-push` passa a valer para esta classe. Nada foi alterado no detector — a
+busca no pai continua onde estava, porque ela existe por um motivo legítimo; o
+que mudou é que passou a existir uma medição que não depende dela.
 
 ### Por que nenhum portão local acusou, e essa é a parte que importa
 
