@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T11:18:04-03:00'
-atualizado_em: '2026-09-12T17:42:44-03:00'
+atualizado_em: '2026-09-12T18:04:51-03:00'
 classes: [interno, medido, calibracao, ci, proveniencia]
 referencias_nao_resolviveis:
   # Este relatorio CITA os dois caminhos para dizer que eles nao resolvem aqui --
@@ -91,6 +91,8 @@ verificado:
   - tres outliers abertos ao fim do dia, mais um registro de evidencia -- eram cinco pela manha
   - 99da81dc ja estava encerrado por 0b0098e9 antes de hoje -- conferido no ledger
   - os tres commits do Gemini estao entre 14:16 e 16:41, e eu nao escrevi entre 13:45 e 17:23 -- sem sobreposicao
+  - a arvore devolvida por git stash create e IDENTICA a que o commit passa a ter -- medido e guardado por teste
+  - 13 guards do cache aprovados, incluindo o hermetico da invariante da chave
 nao_verificado:
   - o numero de render desperdicado que a SS10.1 exige nao consta de relatorio que eu tenha lido
   - a corrida do CI sobre o commit desta ultima correcao ainda nao existia quando isto foi escrito
@@ -106,6 +108,8 @@ caminhos:
   - .github/workflows/sota-ci.yml
   - tests/test_agent_calibration_provenance.py
   - .husky/pre-push
+  - scripts/ops/suite_verde.py
+  - tests/test_suite_verde.py
   - tests/test_backend_hardening.py
   - reports/agent-calibration/outlier-evidence-ledger.jsonl
   - llm/model_registry.py
@@ -486,6 +490,10 @@ revisoes_de_ancora:
       o codigo de saida do hook era o do ultimo comando, defeito latente porque
       so havia uma verificacao bloqueante -- e acrescenta a suite Python depois
       do portao de qualidade. A ordem preserva LFS primeiro, como ele definiu.
+      Numa terceira rodada do mesmo dia, a chamada direta ao pytest deu lugar a
+      scripts/ops/suite_verde.py, que decide se precisa medir: mesma cobertura,
+      sem repetir medicao ja feita sobre o mesmo conteudo. Ha guard contra o hook
+      voltar a chamar pytest direto, para que exista UM caminho e nao dois.
   - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
     caminhos:
       - reports/agent-calibration/feedback-ledger.jsonl
@@ -1321,6 +1329,54 @@ escrita e deixou de estar antes da publicação, pelo encerramento seguinte. Foi
 substituída por um ponteiro para a contagem final. **É exatamente o defeito que
 esta auditoria apontou nos relatórios do Codex**, cometido por mim no mesmo
 documento em que o apontei.
+
+---
+
+## 8.4 O cache do pre-push, e o desenho que eu errei primeiro
+
+O Tier 0 aprovou o cache por SHA e pediu que fosse **horizontal** -- que qualquer
+modelo achasse o caminho de menos demora sem errar e sem retrabalho. Isso mudou o
+desenho: nao pode ser um truque do hook, tem de ser **um comando unico** com
+regra em governanca.
+
+```bash
+python scripts/ops/suite_verde.py
+```
+
+O `pre-push` chama exatamente esse comando. Um caminho so -- e ha guard contra o
+hook voltar a chamar `pytest` direto, porque duas formas de medir a mesma coisa e
+fonte paralela, e aqui ela custaria justamente o ganho.
+
+**O primeiro desenho nao entregava ganho nenhum, e so vi ao verificar.** Eu
+chaveei o cache por `HEAD`. Mas commitar muda o `HEAD`, e o padrao real e medir
+antes de commitar -- entao o marcador estaria invalidado exatamente quando o push
+fosse usa-lo. O conteudo testado, porem, e o mesmo: **o commit apenas registra a
+arvore que ja estava no disco.**
+
+`git stash create` devolve um objeto com a arvore do estado atual sem tocar no
+disco, no indice ou na lista de stashes. Com a arvore como chave, a medicao feita
+antes do commit continua valendo depois dele. Medido: a arvore de conteudo e
+**bit a bit** a que o commit passa a ter, e um teste hermetico guarda a
+invariante.
+
+**Tres decisoes de corretude**, porque cada uma e um jeito de servir verde vencido:
+
+- **`--ignore-submodules=none`** -- os oito submodulos declaram `ignore = dirty`,
+  entao o `git status` padrao nao mostra fonte modificada dentro deles, e a suite
+  le o estado deles. Sem a flag, o cache diria verde sobre uma arvore que mudou
+  onde ele nao olhou.
+- **Nao rastreado torna o estado nao cacheavel** -- `git stash create` nao o
+  representa; um `.py` novo em tests/ muda o resultado e nao entra na arvore.
+- **Falha apaga o marcador anterior** -- um verde que descreve outro estado e
+  pior que nenhum verde.
+
+**Dois defeitos meus, achados pelos proprios testes que eu escrevia.** O primeiro
+contava cada arquivo nao rastreado duas vezes, porque somei `ls-files --others`
+a um `git status --porcelain` que ja os entrega como `??`. O segundo foi um teste
+da invariante que media o repositorio real e reprovou por haver um arquivo nao
+rastreado no momento -- resultado que depende do estado de trabalho de quem roda
+nao e assercao, e guard de cache flaky e pior que guard ausente. Refeito
+hermetico, num repositorio temporario.
 
 ---
 
