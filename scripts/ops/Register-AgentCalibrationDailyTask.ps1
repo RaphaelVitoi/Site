@@ -87,6 +87,18 @@ $argumentList = @(
     'Bypass'
     '-File'
     ('"{0}"' -f $writerScript)
+    # -BackfillMissing: sem ele, um gatilho perdido nao volta.
+    #
+    # Medido em 2026-09-12. A tarefa nasceu com StartWhenAvailable, WakeToRun
+    # desligado e DisallowStartIfOnBatteries ligado. Com a maquina indisponivel
+    # as 23:59 o gatilho nao dispara; o catch-up roda depois e lia o RELOGIO DA
+    # RECUPERACAO -- gravando o dia da recuperacao, nao o dia perdido. O
+    # gatilho de 09-11 nao disparou, a recuperacao rodou em 09-12 as 05:32, e
+    # `2026-09-11.json` simplesmente nunca existiu.
+    #
+    # A falha nao aparece em metrica nenhuma: LastTaskResult 0, MissedRuns 0,
+    # tarefa Ready. A recuperacao teve exito -- no dia errado.
+    '-BackfillMissing'
 ) -join ' '
 
 $plano = [ordered]@{
@@ -115,7 +127,18 @@ if (-not $temScheduledTask) {
 if ($PSCmdlet.ShouldProcess($TaskName, "registrar tarefa diaria as $Time")) {
     $action = New-ScheduledTaskAction -Execute $interpreter -Argument $argumentList -WorkingDirectory $repositoryRoot
     $trigger = New-ScheduledTaskTrigger -Daily -At $Time
-    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopOnIdleEnd -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
+    # WakeToRun e as duas clausulas de bateria atacam a MESMA falha por outro
+    # lado: fazer a captura acontecer no proprio dia, em vez de depender da
+    # recuperacao. -BackfillMissing e a rede; isto e o piso.
+    #
+    # Os defaults de New-ScheduledTaskSettingsSet trazem
+    # DisallowStartIfOnBatteries e StopIfGoingOnBatteries LIGADOS -- ninguem os
+    # configurou, e sao eles que impedem a corrida das 23:59 num portatil fora
+    # da tomada. O script tem teto de 15 minutos e so le ledger e escreve um
+    # JSON; nao ha consumo que justifique perder o lastro do dia.
+    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopOnIdleEnd -WakeToRun -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
+    $settings.DisallowStartIfOnBatteries = $false
+    $settings.StopIfGoingOnBatteries = $false
     Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings -Description 'Avaliacao diaria de calibracao agentica do Nexus SOTA. Portao conta por sessao; avaliacao roda as 23:59.' -Force | Out-Null
     $plano['status'] = 'REGISTRADO'
 }
