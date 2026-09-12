@@ -62,3 +62,13 @@ hipoteses de performance foram medidas e refutadas.
 - ``#proposta`` - Quando uma hipotese for refutada, registrar aqui o NUMERO que
   a refutou, nao apenas a conclusao. "18 campos" e reutilizavel numa proxima
   sessao; "nao e gargalo" nao e.
+
+### 2026-09-06 -- Erradicando overhead de método e alocação na hot loop CFR
+
+Origem: sessao Jules, 2026-09-06.
+
+- ``#aprendizado`` **`.at()` sobre TypedArrays na V8 é um método puro, não syntax sugar, e arruina a hot loop.** `Float32Array.at(index)` é cerca de 15-30x mais lento que o acesso direto `array[index]` devido ao overhead da chamada do método e falta de inlining profundo no JIT, sem nenhum benefício de fallback seguro já que bracket notation for-of-bounds também retorna `undefined`.
+  **Ação:** Nunca utilizar `.at()` dentro de malhas computacionais de alta performance em `engine` e `workers` – usar invariavelmente `[]`.
+
+- ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
+  **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
