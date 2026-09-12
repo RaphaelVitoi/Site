@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T06:40:00-03:00'
-atualizado_em: '2026-09-12T07:47:19-03:00'
+atualizado_em: '2026-09-12T08:03:59-03:00'
 classes: [interno, medido, calibracao, preludio]
 verificado:
   - cadeia de feedback valida em toda escrita -- 27 para 55 registros, cauda 03c200e8
@@ -20,9 +20,15 @@ verificado:
   - os quatro .ps1 revalidados em Windows PowerShell 5.1 REAL (5.1.26100.9444), parse e execucao
   - os tres que tocam o ledger recusam a 5.1 por decisao de projeto -- falha fechada verificada
   - caminho feliz reexercido em pwsh 7.6.6 contra caminhos injetados, cadeias de scratch validas
+  - os oito SHAs de submodulo conferidos por git ls-remote contra o remoto fork -- oito de oito
+  - clone de teste resolve os submodulos pelos forks e nao materializa o hook session-end.js, ja apagado
+  - nenhum PR upstream nos oito repositorios de origem, medido com gh pr list --state all
+  - outlier grave 7e5ca052 registrado -- cadeia de outliers valida, 8 registros, cauda b69d6ec1
 nao_verificado:
   - o falsificador do outlier da7ef222 continua sem rodar -- falta classificar janela de contexto
-  - nenhum dos quatro outliers abertos foi promovido ou descartado -- arbitragem pendente
+  - nenhum dos CINCO outliers abertos foi promovido ou descartado -- arbitragem pendente
+  - as tres correcoes de seguranca dos submodulos seguem sem PR upstream -- publicacao externa, e do Tier 0
+  - o fork administra a divergencia, nao a encerra -- atualizar upstream vira rebase da branch de patch
   - a divergencia entre prompt diario e regra acumulada segue sem correcao na origem -- a origem NAO esta neste repositorio
   - eficacia comportamental do padrao calibrado -- nao ha ciclo posterior para comparar
 caminhos:
@@ -36,6 +42,8 @@ caminhos:
   - scripts/ops/Register-AgentCalibrationFeedback.ps1
   - scripts/ops/Record-AgentCalibrationOutlier.ps1
   - scripts/ops/agent_tool_error_index.py
+  - .gitmodules
+  - patches/skills/README.md
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
@@ -517,6 +525,86 @@ propósito, porque o prompt do cron dele mora na plataforma. A diferença é que
 lá a assimetria foi declarada, e aqui não era. Está declarada agora, na §8.3,
 com o texto de substituição pronto: a correção é do Tier 0 porque só ele
 alcança o campo, não porque a decisão seja dele.
+
+## Outlier grave `7e5ca052` — o fork sem gitlink, e o desleixo duplo
+
+**Declarado outlier grave pelo Tier 0 em 2026-09-12** e registrado na sequência
+7 do ledger de outliers, cauda `b69d6ec1`. Duas camadas, e o registro as mantém
+separadas de propósito — a contramedida de uma não alcança a outra.
+
+### A primeira camada — o fork sem gitlink
+
+Chamei os oito submódulos de `skills/` de "deriva não minha". O Tier 0 corrigiu:
+*os submódulos foram pra fork, você mesmo fez na última sessão*. Está certo, e a
+medição confirma — oito forks públicos de `RaphaelVitoi`, oito branches
+nomeadas, oito SHAs conferidos por `git ls-remote` contra o remoto.
+
+O `patches/skills/README.md`, que eu mesmo escrevi em 28/08, já prescrevia a
+saída: *"Fork próprio por submódulo, **com o gitlink apontando para ele**"*.
+São duas metades. Fiz a primeira em 11/09 e não fiz a segunda.
+
+**A consequência não é de arrumação.** Quem clonasse o `Site` recebia o gitlink
+antigo. Para o `gemini-supermemory`, o commit `035c843d` — que ainda traz
+o hook `session-end.js`, registrado como `SessionEnd` e chamado
+`supermemory-session-saver`, que a cada fim de sessão enviava resumo do trabalho
+para a API externa da Supermemory com `SUPERMEMORY_API_KEY`. O patch removia
+isso desde 28/08 **na árvore local**. `patch` protege a máquina; ele nunca
+protegeu o clone.
+
+O portão de registro barrou a primeira versão deste parágrafo, e o achado dele é
+bom: eu havia escrito o caminho completo do arquivo, e o portão o resolveu contra
+o disco e não o encontrou — *documento que instrui não pode apontar para o
+vazio*. Só que aqui a inexistência **é** o fato. A correção não é remover a
+frase, é escrever o nome do arquivo como referência histórica em vez de caminho
+vivo, que é o que ele passou a ser no instante em que o gitlink avançou.
+
+Fechado hoje: `.gitmodules` repontado para os oito forks e os oito gitlinks
+commitados **no mesmo ato** — separá-los publicaria um estado que não clona,
+porque os SHAs não existem em upstream. Verificado por clone de teste, e não por
+raciocínio: `git submodule update --init` resolve pelos forks, e
+`skills/gemini-supermemory/src/hooks/` contém apenas `session-start.js`.
+
+**A classificação errada, que é a raiz.** A tabela de triagem daquele README
+descrevia o patch do supermemory como *"Ajustes em `src/lib/*`"*. Montei-a
+classificando por **contagem de arquivos e diretório dominante**: onze dos doze
+arquivos são ajustes de lib, então a linha virou "ajustes". O décimo segundo era
+a remoção de um canal de egress. Uma tabela de triagem que classifica por volume
+faz a única linha de segurança parecer a mais inócua — e foi por isso que, ao
+voltar ao assunto em 11/09, tratei o fork como trabalho novo em vez de
+reconhecer o que já estava catalogado, e não fechei o gitlink. Reclassificada.
+
+### A segunda camada — a autocorreção que não ocorreu
+
+É por ela que o Tier 0 chama de **duplo**, e ela é a mais séria das duas.
+
+Os oito submódulos apareceram como modificados no **primeiro `git status` deste
+turno**. Eu os examinei, concluí deriva não minha, e os dispensei com *"subir
+isso é decidir versão de skill, e essa decisão não é minha"*. A evidência estava
+na tela. O custo de verificar era **um** comando — `git diff --submodule=log`,
+que imprime as mensagens de commit em linguagem que é reconhecivelmente a minha.
+A verificação só aconteceu depois que o Tier 0 corrigiu.
+
+Não foi falta de dado, e não foi falta de tempo. Foi **atribuir a outro um
+trabalho próprio de um dia antes, e encerrar a análise na atribuição**. A §4 da
+raiz manda medir antes de agir; aqui a atribuição de autoria funcionou como
+motivo para **não** agir, e essa é a forma em que ela escapa da regra — a regra
+fala de agir, e eu me isentei justamente por não ir agir.
+
+A contramedida não é a mesma da primeira camada. A primeira pede critério de
+triagem por **efeito**, não por volume. A segunda pede que **atribuição de
+autoria seja medida** — `git log`, `git reflog`, a mensagem do commit — antes de
+servir de razão para deixar algo em paz. As duas causas produziram um episódio
+só, e fundi-las produziria uma contramedida que não cobre nenhuma.
+
+### O que fica aberto, e é o que tem mais valor
+
+Nenhum PR upstream para as três correções
+de segurança — `gemini-cli-security`, `gemini-cli-jules`, `gemini-supermemory` —,
+medido com `gh pr list --state all` nos oito repositórios de origem: nenhum, em
+nenhum estado. O próprio README diz que upstream aceito **encerra** a
+divergência em vez de administrá-la, e o fork apenas a administra: atualizar
+deixa de ser fast-forward e vira rebase da branch de patch. Abrir PR em
+repositório de terceiro é publicação externa e é do Tier 0.
 
 ## A arbitragem aditiva do Tier 0 sobre a taxonomia
 
