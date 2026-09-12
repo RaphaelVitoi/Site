@@ -426,6 +426,34 @@ automação ou superfície que executou o modelo (ex.: `codex`, `antigravity`,
 `claude-code`) — e o **regime de supervisão (`supervision_mode`)**: `assistida`
 (assistida e arbitrada diretamente pelo Tier 0) ou `automatizada` (autônoma, background ou CI/CD).
 
+#### Prelúdio — o registro que atravessa a compactação
+
+**Prelúdio é sessão inacabada, não sessão sem nota.** Estabelecido pelo Tier 0
+em 2026-09-12.
+
+A regra acima diz que compactação não encerra sessão. Faltava o artefato que a
+faz atravessar: um trabalho longo pode ter medido muita coisa antes de a janela
+comprimir, e essa medição precisa de lastro **antes** do fim — senão ela
+depende da memória de um contexto que está prestes a ser resumido. O prelúdio é
+esse corte intermediário. Existe principalmente por causa dos *compacts*, e
+secundariamente para edição pontual.
+
+| | Prelúdio | Sessão sem avaliação |
+| :--- | :--- | :--- |
+| Exemplo | este registro de 12/09 | outlier `2d55d92a`, 03/09 |
+| A nota | ainda não chegou | não virá, por decisão do Tier 0 |
+| Na média | entra, quando vier | nunca entra |
+
+Confundir os dois inverte o tratamento da média nas duas pontas, e foi o erro
+cometido no primeiro prelúdio: ele importou a fórmula do `2d55d92a` — *"ausência
+de nota não é zero"* —, que descreve uma decisão definitiva, para um caso em que
+a avaliação apenas ainda não ocorreu.
+
+**Consequência operacional.** O prelúdio declara o `session_id` da sessão viva e
+não abre uma nova. Quando o feedback vier, ele declara **o mesmo** `session_id`
+e entra uma vez só — dois registros com ids diferentes para um trabalho só é
+exatamente a sessão partida que o portão recusa.
+
 #### Veículo e modelo valem igualmente, e por isso são dois campos
 
 **Decisão do Tier 0 em 2026-09-11.** Até essa data o ledger registrava apenas o
