@@ -125,3 +125,67 @@ def test_append_only_correction_restores_effective_eligibility(tmp_path):
     assert evidence["eligible_feedback_count"] == 3
     assert evidence["calibration_planning_permitted"] is True
     assert _calibrar(ledger, ["evt-A", "evt-B"]).returncode == 0
+
+
+def _canonicos() -> list[str]:
+    """Le a fonte unica, nunca uma copia. Se ela mudar, o teste muda junto."""
+    from llm.model_registry import MODEL_REGISTRY, MODELOS_RETIRADOS
+
+    return sorted(set(MODEL_REGISTRY) | set(MODELOS_RETIRADOS))
+
+
+_VEICULO_POR_FAMILIA = {"gpt": "codex", "chatgpt": "codex", "claude": "claude-code", "gemini": "antigravity"}
+
+
+@pytest.mark.parametrize("model", _canonicos())
+def test_todo_modelo_canonico_resolve_para_um_veiculo(tmp_path, model):
+    """As duas camadas tem de concordar sobre o que EXISTE.
+
+    A sintaxe diz a familia; o conjunto canonico diz a existencia. Um modelo que
+    o registry conhece e a regex recusa e divergencia entre as duas, nao decisao:
+    foi assim que `claude-fable-5-1` -- retirado, porem real -- saia como
+    `unknown_or_nonexact` ate 2026-09-12.
+    """
+    ledger = tmp_path / "feedback-ledger.jsonl"
+    vehicle = _VEICULO_POR_FAMILIA[model.split("-")[0]]
+    result = write_feedback(ledger, ConductorModel=model, ConductorVehicle=vehicle)
+    assert result.returncode == 0, f"{model} -> {vehicle}: {result.stderr}"
+
+
+@pytest.mark.parametrize("model", ["gpt-9.9-inexistente", "claude-opus-99", "gemini-9.9-flash"])
+def test_sintaxe_valida_nao_prova_existencia(tmp_path, model):
+    """Ate 2026-09-12 estes tres passavam: a validacao so olhava a forma do nome.
+
+    Nenhum esta em MODEL_REGISTRY nem em MODELOS_RETIRADOS. Aceitar um modelo
+    inexistente grava proveniencia que parece verificada e nao e.
+    """
+    ledger = tmp_path / "feedback-ledger.jsonl"
+    vehicle = _VEICULO_POR_FAMILIA[model.split("-")[0]]
+    result = write_feedback(ledger, ConductorModel=model, ConductorVehicle=vehicle)
+    assert result.returncode != 0
+    assert not ledger.exists()
+
+
+def test_campo_ausente_nao_e_reportado_tambem_como_invalido(tmp_path):
+    """Ausente e ausente. Ate 2026-09-12 um campo vazio saia com os dois motivos.
+
+    A duplicata nao mudava elegibilidade, mas inflava qualquer contagem agregada
+    de motivos -- e contagem inflada e a materia-prima de conclusao errada.
+    """
+    script = (
+        f". '{OPS / 'AgentCalibrationProvenance.ps1'}'; "
+        "$r = [pscustomobject]@{session_id='';scope='';conductor_model='';"
+        "conductor_vehicle='';supervision_mode=''}; "
+        "(Get-AgentCalibrationProvenance -Record $r).reasons -join ','"
+    )
+    saida = subprocess.run(
+        ["pwsh", "-NoProfile", "-NonInteractive", "-Command", script],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert saida.returncode == 0, saida.stderr
+    motivos = [m for m in saida.stdout.strip().split(",") if m]
+    assert motivos == sorted(set(motivos), key=motivos.index), f"motivo duplicado: {motivos}"
+    assert "missing:supervision_mode" in motivos
+    assert "invalid:supervision_mode" not in motivos

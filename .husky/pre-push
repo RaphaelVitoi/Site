@@ -1,8 +1,49 @@
 #!/bin/sh
-# Git LFS verification
+# Portao de pre-push — Protocolo Chico SOTA v8.0 GOLD
+#
+# `set -e` e obrigatorio aqui, pela mesma razao documentada no pre-commit: sem
+# ele o codigo de saida do hook e o do ULTIMO comando, e acrescentar uma
+# verificacao ao fim faria a anterior deixar de bloquear silenciosamente.
+# Ate 2026-09-12 este arquivo NAO o declarava, e tinha uma so verificacao real
+# no fim -- o defeito estava latente, esperando a proxima linha.
+set -e
+
+# 1. Git LFS.
 if command -v git-lfs >/dev/null 2>&1; then
     git lfs pre-push "$@"
 fi
 
+# 2. Portao de qualidade de 5 fases.
 npm run sota:audit
 
+# 3. Suite Python.
+#
+# MEDIDO EM 2026-09-12, e e a razao de esta etapa existir. O CI ficou vermelho
+# em NOVE commits seguidos, de 09-11 09:56 a 09-12 14:04, com tres condutores
+# diferentes publicando por cima -- causa unica, um teste, e nenhum portao local
+# capaz de ve-la. O motivo era estrutural, nao descuido:
+#
+#   - o record_gate so varre o STAGE, por desenho, para nao reprovar divida
+#     preexistente. O arquivo culpado nunca mais entrou em stage;
+#   - o teste que varre a arvore INTEIRA (test_o_corpus_prescritivo_nao_tem_
+#     referencia_morta) so existia no CI;
+#   - `npm test` mede o workspace de FRONTEND. "381 testes passando" era
+#     verdade, e sobre outra suite -- a Python tem mais de mil.
+#
+# A SS6.1 exige suite inteiramente verde e a SS6.2 diz que "o pre-commit e o CI
+# rejeitam"; sem esta etapa, a metade local dessa frase nao existia.
+#
+# Por que no PRE-PUSH e nao no pre-commit: a suite leva cerca de seis minutos.
+# No pre-commit ela seria paga varias vezes por hora e o portao viraria estorvo
+# -- e portao caro e portao que alguem contorna. O push e a fronteira de
+# PUBLICACAO: e onde a SS10.6(c) ja exige que o portao seja real, e onde o CI
+# seria, de outro modo, o primeiro a saber.
+if command -v uv >/dev/null 2>&1; then
+    uv run --no-sync pytest -q
+elif [ -x ".venv/Scripts/python.exe" ]; then
+    .venv/Scripts/python.exe -m pytest -q
+elif [ -x ".venv/bin/python" ]; then
+    .venv/bin/python -m pytest -q
+else
+    python -m pytest -q
+fi

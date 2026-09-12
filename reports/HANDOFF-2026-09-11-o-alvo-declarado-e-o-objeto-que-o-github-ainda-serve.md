@@ -23,6 +23,16 @@ nao_verificado:
 caminhos:
   - reports/HANDOFF-2026-09-10-raiz-versionada-e-o-portao-que-media-outra-pagina.md
   - reports/REGISTRO-2026-09-11-fechamento-automatico-do-dia-10-e-o-outlier-sem-sessao.md
+referencias_nao_resolviveis:
+  # Declarado em 2026-09-12. Os dois existem, e nao aqui: moram na RAIZ
+  # multiprojeto (`~\.gemini`), que e outro repositorio -- privado, por decisao
+  # da secao 2.2 da raiz. Deste clone eles sao inverificaveis sem serem
+  # inexistentes, e a prosa da secao 3 ja dizia "na raiz" -- o detector nao le
+  # prosa. Ficaram sem declaracao e o CI reprovou por nove commits, de 09-11
+  # 09:56 a 09-12 14:04, sem que portao local nenhum acusasse: o pre-commit so
+  # varre o stage, e este arquivo nunca mais entrou em stage.
+  - 'scripts\ops\inventario-extensoes.ps1'
+  - 'relatorios\RELATORIO_DECISAO_SCRIPTS_SEM_CONSUMIDOR_2026-09-10.md'
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
