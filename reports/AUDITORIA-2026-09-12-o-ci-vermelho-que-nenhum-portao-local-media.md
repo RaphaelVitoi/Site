@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T11:18:04-03:00'
-atualizado_em: '2026-09-12T11:55:55-03:00'
+atualizado_em: '2026-09-12T12:05:50-03:00'
 classes: [interno, medido, calibracao, ci, proveniencia]
 verificado:
   - nota 9.8 do handoff do Codex gravada literal na sequencia 58 -- cadeia valida, 59 registros
@@ -27,6 +27,7 @@ verificado:
   - o unico warning e pre-existente -- medido por A/B com git stash da alteracao
   - o pre-push novo foi exercido de ponta a ponta e barrou o push -- falha fechada, causa de ambiente
   - pytest-current e symlink morto e nem os.rmdir o remove -- WinError 5, medido
+  - basetemp dentro da arvore reprova 3 testes; fora e curto, os tres passam -- medido nas duas formas
 nao_verificado:
   - nao abri o diff de 812c1c2f -- a observacao sobre React.memo e de classe, nao de conteudo
   - a corrida do CI sobre o commit desta correcao ainda nao existia quando isto foi escrito
@@ -552,15 +553,28 @@ que uma corrida é interrompida.
 
 **Falha fechada é o comportamento certo; a causa é que estava errada.** Um
 portão que barra por artefato de ambiente treina o operador a desconfiar dele, e
-desconfiança de portão é o primeiro passo para o contorno que a §1 proíbe. A
-correção não afrouxa nada: o hook passou a usar `--basetemp=.pytest_tmp`, raiz
-**própria e curta** — própria para não herdar lixo de outra corrida, curta
-porque com raiz longa os testes que criam repositórios git temporários estouram
-o limite de caminho do Windows e falham com `WinError 267`, que foi exatamente o
-que produziu as nove falhas fantasma da seção 6.
+desconfiança de portão é o primeiro passo para o contorno que a §1 proíbe.
 
-O remoto permaneceu em `812c1c2f` durante todo o episódio: nada foi publicado
-por um portão que não aprovou.
+A correção não afrouxa nada — mas **a primeira tentativa dela estava errada, e o
+portão pegou isso também.** Apontei o `--basetemp` para `.pytest_tmp`, dentro da
+árvore do repositório. O push seguinte reprovou com **3 failed, 1122 passed**, e
+os três são precisamente os testes que criam repositórios git temporários: os
+dois detectores de referência em `test_record_index.py` e — com ironia exata —
+`test_suite_isolada.py::test_nao_inventa_repositorio_onde_nao_ha`. **Repositório
+de teste criado dentro da árvore é um repositório onde não deveria haver um.**
+Estar no `.gitignore` não o tira do disco; ignorar para versionar e ignorar para
+enxergar são decisões diferentes, que é a mesma lição da §4 da raiz.
+
+A raiz precisa de **duas** propriedades, e cada uma custou uma tentativa: curta,
+senão os mesmos testes estouram o limite de caminho do Windows com `WinError
+267` — o que produziu as nove falhas fantasma da seção 6 —, e **fora** da árvore.
+O hook usa `${TEMP:-${TMPDIR:-/tmp}}/pt-sota`, que satisfaz as duas em Windows e
+em POSIX. Verificado nos três testes: passam.
+
+O remoto permaneceu em `812c1c2f` durante todo o episódio, nas duas tentativas:
+nada foi publicado por um portão que não aprovou. **O portão que instalei para
+pegar o que ninguém pegava pegou dois defeitos meus antes de deixar passar
+qualquer coisa** — inclusive um defeito nele próprio.
 
 ### O contador de warnings do guard divergiu do pytest, e isso é achado
 
