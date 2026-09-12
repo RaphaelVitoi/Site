@@ -33,6 +33,8 @@ from api.v1.handlers import (
     handle_ask_oracle,
     handle_bucket_op,
     handle_calculate_perspective,
+    handle_claudico_translate_action,
+    handle_deepstack_resolve,
     handle_frontend_logs,
     handle_get_db_summary,
     handle_get_key_health_summary,
@@ -46,10 +48,12 @@ from api.v1.handlers import (
     handle_import_solver_tree,
     handle_list_files,
     handle_ping,
+    handle_pluribus_solve,
     handle_pmev_heatmap,
     handle_prometheus_metrics,
     handle_rag_ingest,
     handle_rag_query,
+    handle_rebel_pbs_evaluate,
     handle_set_state,
     handle_simulate_perspective_tree,
     handle_timesfm_forecast,
@@ -125,6 +129,10 @@ def create_app(manager: QueueManager) -> web.Application:
             web.post("/api/v1/pmev/heatmap", handle_pmev_heatmap),
             web.post("/api/v1/perspective/heatmap", handle_pmev_heatmap),
             web.post("/api/v1/timesfm/forecast", handle_timesfm_forecast),
+            web.post("/api/v1/game-theory/pluribus/solve", handle_pluribus_solve),
+            web.post("/api/v1/game-theory/deepstack/resolve", handle_deepstack_resolve),
+            web.post("/api/v1/game-theory/rebel/pbs/evaluate", handle_rebel_pbs_evaluate),
+            web.post("/api/v1/game-theory/claudico/translate-action", handle_claudico_translate_action),
         ]
     )
     return app

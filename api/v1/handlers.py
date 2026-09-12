@@ -10,6 +10,7 @@ import base64
 import contextlib
 import json
 import logging
+import math
 import os
 from pathlib import Path
 import re
@@ -29,6 +30,16 @@ from pydantic import BaseModel, ValidationError
 from api.v1.keys import AUDIT_ENGINE_KEY, BG_TASKS_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
 from database.lab_manager import LabPersistenceUnavailableError
 
+from core.game_theory_schemas import (
+    ClaudicoTranslateRequest,
+    ClaudicoTranslateResponse,
+    DeepStackResolveRequest,
+    DeepStackResolveResponse,
+    PluribusSolveRequest,
+    PluribusSolveResponse,
+    RebelPbsEvaluateRequest,
+    RebelPbsEvaluateResponse,
+)
 from core.perspective_schemas import (
     PerspectivaResult,
     PerspectiveCalculationRequest,
@@ -41,6 +52,15 @@ from core.perspective_schemas import (
 import core.runtime as _te
 from core.schemas import RAGQuery, Task
 from engine.bayesian_range import calculate_pmev_call_threshold
+from engine.game_theory_solvers import (
+    ClaudicoActionTranslator,
+    ContinualResolvingEngine,
+    DeepStackSubgame,
+    PluribusDepthLimitedSolver,
+    PluribusMultiwayState,
+    PublicBeliefState,
+    Street,
+)
 from engine.solver_importers import UniversalSolverImporter
 from engine.solver_importers.deep_solver import DeepSolverImporter
 from engine.timesfm_engine import (
@@ -928,6 +948,177 @@ async def handle_pmev_heatmap(request: web.Request) -> web.Response:
         return web.json_response({"error": str(ve), "status": "ERROR"}, status=400)
     except Exception as e:
         return _internal_error(e, "handle_pmev_heatmap", status="ERROR")
+
+
+async def handle_pluribus_solve(request: web.Request) -> web.Response:
+    """Resolve uma decisao multiway com horizonte finito e passivo quadratico PMev."""
+    t_start = time.perf_counter()
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response({"status": "ERROR", "error": "Invalid JSON body"}, status=400)
+
+    try:
+        req = PluribusSolveRequest.model_validate(data)
+    except ValidationError as ve:
+        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
+
+    def _execute_pluribus() -> dict[str, Any]:
+        state = PluribusMultiwayState(
+            pot=req.state.pot,
+            num_players=req.state.num_players,
+            street=Street(req.state.street.value),
+            active_stacks=req.state.active_stacks,
+            lambda_factor=req.state.lambda_factor,
+        )
+        solver = PluribusDepthLimitedSolver(state)
+        return solver.solve_depth_limited(
+            equity=req.equity,
+            hero_position=req.hero_position,
+            depth_streets=req.depth_streets,
+            iterations=req.iterations,
+        )
+
+    try:
+        solve_result = await asyncio.to_thread(_execute_pluribus)
+        elapsed_ms = round((time.perf_counter() - t_start) * 1000, 2)
+
+        resp = PluribusSolveResponse(
+            status="SUCCESS",
+            optimal_action=solve_result["optimal_action"],
+            strategy=solve_result["strategy"],
+            structural_liability=round(float(solve_result["structural_liability"]), 4),
+            effective_equity=round(float(solve_result["effective_equity"]), 4),
+            depth_streets=solve_result["depth_streets"],
+            iterations_run=req.iterations,
+            execution_time_ms=elapsed_ms,
+        )
+        return web.json_response(resp.model_dump())
+    except Exception as e:
+        return _internal_error(e, "handle_pluribus_solve", status="ERROR")
+
+
+async def handle_deepstack_resolve(request: web.Request) -> web.Response:
+    """Executa o Continual Resolving no estilo DeepStack ancorado em Gadget Bounds."""
+    t_start = time.perf_counter()
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response({"status": "ERROR", "error": "Invalid JSON body"}, status=400)
+
+    try:
+        req = DeepStackResolveRequest.model_validate(data)
+    except ValidationError as ve:
+        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
+
+    def _execute_deepstack() -> tuple[dict[str, float], dict[str, dict[str, float]], dict[str, float]]:
+        subgame = DeepStackSubgame(
+            street=Street(req.street.value),
+            pot=req.pot,
+            ranges_ip=req.ranges_ip,
+            ranges_oop=req.ranges_oop,
+            opponent_cfvs=req.opponent_cfvs,
+        )
+        gadget_bounds = subgame.compute_gadget_game_bounds()
+        raw_strategy = ContinualResolvingEngine.resolve_subgame(subgame, iterations=req.iterations)
+
+        actions = ["CHECK", "BET_HALF_POT", "BET_POT", "ALL_IN"]
+        agg_freqs: dict[str, float] = {a: 0.0 for a in actions}
+        total_weight = sum(req.ranges_ip.values())
+        if total_weight > 1e-9:
+            for hand, strat in raw_strategy.items():
+                hand_prob = req.ranges_ip.get(hand, 0.0) / total_weight
+                for a, prob in strat.items():
+                    agg_freqs[a] += prob * hand_prob
+        else:
+            agg_freqs = {a: 1.0 / len(actions) for a in actions}
+
+        return gadget_bounds, raw_strategy, {k: round(v, 4) for k, v in agg_freqs.items()}
+
+    try:
+        gadget_bounds, strategy, agg_freqs = await asyncio.to_thread(_execute_deepstack)
+        elapsed_ms = round((time.perf_counter() - t_start) * 1000, 2)
+
+        resp = DeepStackResolveResponse(
+            status="SUCCESS",
+            street=req.street,
+            pot=req.pot,
+            gadget_game_bounds={k: round(v, 4) for k, v in gadget_bounds.items()},
+            strategy=strategy,
+            aggregated_action_frequencies=agg_freqs,
+            iterations_run=req.iterations,
+            execution_time_ms=elapsed_ms,
+        )
+        return web.json_response(resp.model_dump())
+    except Exception as e:
+        return _internal_error(e, "handle_deepstack_resolve", status="ERROR")
+
+
+async def handle_rebel_pbs_evaluate(request: web.Request) -> web.Response:
+    """Avalia o Public Belief State (PBS) computando entropias de range."""
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response({"status": "ERROR", "error": "Invalid JSON body"}, status=400)
+
+    try:
+        req = RebelPbsEvaluateRequest.model_validate(data)
+    except ValidationError as ve:
+        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
+
+    try:
+        pbs = PublicBeliefState.from_ranges(
+            board=req.board,
+            pot=req.pot,
+            hero_range=req.hero_range,
+            villain_range=req.villain_range,
+        )
+
+        h_total = sum(req.hero_range.values())
+        v_total = sum(req.villain_range.values())
+        is_valid = math.isclose(h_total, 1.0, abs_tol=0.05) and math.isclose(v_total, 1.0, abs_tol=0.05)
+
+        alert = None
+        if pbs.villain_range_entropy < 1.0 and len(req.villain_range) > 3:
+            alert = "ALERTA: Range do adversario altamente polarizado (entropia < 1.0 bit)."
+
+        resp = RebelPbsEvaluateResponse(
+            status="SUCCESS",
+            board=pbs.board,
+            pot=pbs.pot,
+            hero_range_entropy=round(pbs.hero_range_entropy, 4),
+            villain_range_entropy=round(pbs.villain_range_entropy, 4),
+            is_terminal=pbs.is_terminal,
+            board_card_count=len(pbs.board),
+            normalized_ranges_valid=is_valid,
+            entropy_delta_alert=alert,
+        )
+        return web.json_response(resp.model_dump())
+    except Exception as e:
+        return _internal_error(e, "handle_rebel_pbs_evaluate", status="ERROR")
+
+
+async def handle_claudico_translate_action(request: web.Request) -> web.Response:
+    """Mapeia uma aposta fora da arvore para as opcoes discretas vizinhas."""
+    try:
+        data = await request.json()
+        req = ClaudicoTranslateRequest.model_validate(data)
+
+        mapping = ClaudicoActionTranslator.pseudo_harmonic_mapping(
+            actual_bet=req.actual_bet,
+            allowed_bets=req.allowed_bets,
+            pot_size=req.pot_size,
+        )
+        resp = ClaudicoTranslateResponse(
+            status="SUCCESS",
+            mapped_distribution={k: round(v, 4) for k, v in mapping.items()},
+            target_bet=req.actual_bet,
+        )
+        return web.json_response(resp.model_dump())
+    except ValidationError as ve:
+        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
+    except Exception as e:
+        return _internal_error(e, "handle_claudico_translate_action", status="ERROR")
 
 
 async def handle_prometheus_metrics(request: web.Request) -> web.Response:

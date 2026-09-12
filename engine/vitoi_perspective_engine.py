@@ -278,13 +278,30 @@ class VitoiPerspectiveEngine:
         return round(ev_fold, 4)
 
     @staticmethod
-    def calculate_structural_liability(multiway_opponents: int, base_rio: float) -> float:
-        """
-        O Passivo Estrutural de Colisao. Em Multiway, as Reverse Implied Odds
-        crescem em coeficiente exponencial (x^2).
+    def calculate_structural_liability(
+        multiway_opponents: int,
+        base_rio: float,
+        pot: float | None = None,
+        lambda_factor: float = 2.25,
+    ) -> float:
+        """O Passivo Estrutural de Colisao.
+
+        Em Multiway, as Reverse Implied Odds crescem em coeficiente exponencial (x^2).
+        Quando o pote e fornecido, utiliza a formulacao de PluribusMultiwayState (PMev SOTA).
         """
         if multiway_opponents <= 1:
             return base_rio
+        if pot is not None and pot > 0:
+            from engine.game_theory_solvers import PluribusMultiwayState, Street
+
+            state = PluribusMultiwayState(
+                pot=pot,
+                num_players=multiway_opponents + 1,
+                street=Street.FLOP,
+                active_stacks=[pot] * (multiway_opponents + 1),
+                lambda_factor=lambda_factor,
+            )
+            return round(state.compute_multiway_structural_liability() + base_rio, 4)
         return round(base_rio * math.pow(multiway_opponents, 2), 4)
 
     @staticmethod
