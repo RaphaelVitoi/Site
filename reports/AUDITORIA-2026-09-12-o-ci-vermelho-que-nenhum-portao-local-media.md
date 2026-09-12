@@ -5,8 +5,15 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T11:18:04-03:00'
-atualizado_em: '2026-09-12T12:05:50-03:00'
+atualizado_em: '2026-09-12T12:23:11-03:00'
 classes: [interno, medido, calibracao, ci, proveniencia]
+referencias_nao_resolviveis:
+  # Este relatorio CITA os dois caminhos para dizer que eles nao resolvem aqui --
+  # e o detector nao distingue citar para apontar de citar para diagnosticar, o
+  # que a docstring dele ja previa. Declarados pelo mesmo motivo do relatorio de
+  # 09-11: moram na raiz multiprojeto, que e outro repositorio.
+  - 'scripts\ops\inventario-extensoes.ps1'
+  - 'relatorios\RELATORIO_DECISAO_SCRIPTS_SEM_CONSUMIDOR_2026-09-10.md'
 verificado:
   - nota 9.8 do handoff do Codex gravada literal na sequencia 58 -- cadeia valida, 59 registros
   - conductor_model medido no rollout da propria sessao Codex -- gpt-5.6-terra em 52 turn_context
@@ -28,9 +35,12 @@ verificado:
   - o pre-push novo foi exercido de ponta a ponta e barrou o push -- falha fechada, causa de ambiente
   - pytest-current e symlink morto e nem os.rmdir o remove -- WinError 5, medido
   - basetemp dentro da arvore reprova 3 testes; fora e curto, os tres passam -- medido nas duas formas
+  - referencias_mortas resolve contra RAIZ.parent, a raiz multiprojeto -- aprova aqui e reprova no clone
+  - este relatorio foi reprovado pelo CI por citar os caminhos que diagnostica; declarado e corrigido
+  - varredura EQUIVALENTE A CLONE com RAIZ.parent neutralizado -- 210 prescritivos, zero mortas
 nao_verificado:
   - nao abri o diff de 812c1c2f -- a observacao sobre React.memo e de classe, nao de conteudo
-  - a corrida do CI sobre o commit desta correcao ainda nao existia quando isto foi escrito
+  - a corrida do CI sobre o commit desta ultima correcao ainda nao existia quando isto foi escrito
   - regime de supervisao dos sete registros historicos continua sem fonte especifica
   - a causa de o contador do guard reportar zero warnings na suite integral e um no teste isolado
 caminhos:
@@ -371,6 +381,47 @@ que é **meu**, e cita dois caminhos:
 
 **Os dois existem — na raiz multiprojeto, que é outro repositório.** A própria
 prosa da seção 3 diz *"na raiz"*. O detector não lê prosa.
+
+### O mecanismo exato, medido depois que o CI reprovou este próprio relatório
+
+A primeira redação desta auditoria dizia que o portão local "só varre o stage".
+É verdade e é insuficiente: **mesmo varrendo a árvore inteira, aqui dá zero.**
+Medido — `referencias_mortas` sobre todo o corpus prescritivo devolve `{}` nesta
+máquina e acusa dois caminhos no CI, no mesmo commit.
+
+A causa está numa linha de `record_gate.py`:
+
+```python
+achou = any((raiz / var).exists() for var in variantes
+            for raiz in (RAIZ, caminho.parent, RAIZ.parent))
+```
+
+**`RAIZ.parent` é `~\.gemini`, a raiz multiprojeto.** Nesta máquina o `Site` mora
+dentro dela, então o relatório de decisão dos scripts sem consumidor resolve —
+não porque este repositório o tenha, mas porque o repositório *irmão* está no
+disco ao lado. Num clone de CI não há irmão, e o mesmo endereço morre.
+
+Não é bug de implementação: a busca no pai existe de propósito, para registros
+multiprojeto que endereçam a partir de cima. O efeito colateral é que **o
+veredito depende da topologia do disco de quem roda.** Verificação que aprova por
+acidente de vizinhança é a §4 da raiz outra vez — *ferramenta que mede o escopo
+que enxerga, não o escopo real* —, e aqui ela aprova o que o clone reprova, que é
+a direção pior das duas: o local diz verde e a publicação diz vermelho.
+
+O corolário prático já estava escrito no próprio detector, e é a saída correta:
+onde a forma não separa citar-para-apontar de citar-para-dizer-que-sumiu, quem
+separa é a **declaração do autor**. `referencias_nao_resolviveis` é
+independente de máquina, e é por isso que o conserto funciona nos dois lados.
+
+**O método que fecha o ciclo, e ele é reutilizável.** Verificar aqui não prova
+nada, porque aqui passa por vizinhança. Antes de publicar, rodei a varredura
+com `RAIZ.parent` apontado para um diretório inexistente — o que reproduz o
+clone exatamente: **210 documentos prescritivos, zero referências mortas.** É a
+diferença entre medir o próprio disco e medir o que o repositório entrega.
+
+**Esta auditoria caiu na própria armadilha que descreve.** Ao narrar os dois
+caminhos mortos, ela os citou — e o CI a reprovou por isso, enquanto aqui ela
+passava. Corrigido pela mesma declaração.
 
 ### Por que nenhum portão local acusou, e essa é a parte que importa
 
