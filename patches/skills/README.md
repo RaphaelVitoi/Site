@@ -48,7 +48,7 @@ seguro.
 | `exa-mcp-server.patch` | 30 | **Refatoração.** Schemas e formatadores extraídos, tipos fortalecidos, `randomUUID` de `node:crypto` |
 | `superpowers.patch` | 24 | Ajustes e remoções em `skills/*/SKILL.md` |
 | `gemini-deep-research.patch` | 12 | Ajustes de fonte |
-| `gemini-supermemory.patch` | 12 | Ajustes em `src/lib/*` |
+| `gemini-supermemory.patch` | 12 | **Segurança — reclassificado em 2026-09-12.** Remove o hook `SessionEnd` `supermemory-session-saver`, que a cada fim de sessão enviava um resumo do trabalho para a API externa da Supermemory usando `SUPERMEMORY_API_KEY`. Apaga `src/hooks/session-end.js` inteiro e retira a entrada de `hooks/hooks.json`. Os ajustes em `src/lib/*` acompanham a remoção; não são o conteúdo dela |
 | `Stitch.patch` | 2 | Menor |
 | `token-efficiency.patch` | 1 | `fs` → `node:fs` (anti-shadowing) |
 
@@ -93,3 +93,35 @@ As duas saídas definitivas, em ordem de valor:
 
 Enquanto nenhuma das duas acontecer, `tests/test_patches_skills.py` reprova se
 um submódulo ganhar modificação de fonte sem patch correspondente.
+
+## Estado em 2026-09-12 — a saída 2 estava pela metade
+
+A saída 2 tem **duas** partes, e a redação acima já dizia as duas: *fork
+próprio* **e** *o gitlink apontando para ele*. Em 2026-09-11 os oito forks foram
+criados, o trabalho foi commitado e publicado em branch nomeada nos oito. **O
+gitlink não foi apontado.** O `.gitmodules` continuou declarando upstream, e os
+ponteiros ficaram avançados na árvore de trabalho sem commit.
+
+O custo não foi cosmético. Quem clonasse o `Site` recebia o gitlink **antigo** —
+para o `gemini-supermemory`, o commit `035c843d`, que ainda traz
+`src/hooks/session-end.js` e a entrada `SessionEnd` em `hooks/hooks.json`. **O
+patch protegia a máquina local; ele nunca protegeu o clone.** Fechado em
+2026-09-12: `.gitmodules` repontado para os oito forks e os oito gitlinks
+commitados no mesmo ato, verificado por clone de teste — `session-end.js` não
+existe mais na árvore que o clone materializa.
+
+**Por que a linha do `supermemory` estava errada.** Ela dizia *"Ajustes em
+`src/lib/*`"*, e a tabela foi montada classificando por **contagem de arquivos e
+diretório dominante**, não pelo que a mudança faz. Dos doze arquivos, onze são
+ajustes e um é a remoção de um canal de egress — e é o décimo segundo que
+importa. Classificar por volume faz a única linha de segurança do conjunto
+parecer a mais inócua, que é o oposto do que uma tabela de triagem existe para
+fazer.
+
+**Continua em aberto a saída 1.** Nenhum PR upstream foi aberto para as três
+correções de segurança — `gemini-cli-security`, `gemini-cli-jules` e
+`gemini-supermemory` —, e a própria seção acima as classifica como a saída de
+**maior** valor, porque encerram a divergência em vez de administrá-la. Medido
+em 2026-09-12 com `gh pr list --state all` nos oito repositórios de origem:
+nenhum PR, em nenhum estado. Abrir PR em repositório de terceiro é publicação
+externa e depende de autorização do Tier 0.
