@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-12T11:18:04-03:00'
-atualizado_em: '2026-09-12T18:04:51-03:00'
+atualizado_em: '2026-09-12T18:45:23-03:00'
 classes: [interno, medido, calibracao, ci, proveniencia]
 referencias_nao_resolviveis:
   # Este relatorio CITA os dois caminhos para dizer que eles nao resolvem aqui --
@@ -93,6 +93,9 @@ verificado:
   - os tres commits do Gemini estao entre 14:16 e 16:41, e eu nao escrevi entre 13:45 e 17:23 -- sem sobreposicao
   - a arvore devolvida por git stash create e IDENTICA a que o commit passa a ter -- medido e guardado por teste
   - 13 guards do cache aprovados, incluindo o hermetico da invariante da chave
+  - handoff 9.0 do trabalho pos-encerramento na sequencia 66, literal -- cadeia valida em 67
+  - 3 feedbacks elegiveis em 2 sessoes distintas; o portao segue fechado, corretamente
+  - sessao medida em 800 chamadas e 25 erros, 3.1 por cento, contra 4.1 no primeiro corte
 nao_verificado:
   - o numero de render desperdicado que a SS10.1 exige nao consta de relatorio que eu tenha lido
   - a corrida do CI sobre o commit desta ultima correcao ainda nao existia quando isto foi escrito
@@ -1377,6 +1380,40 @@ da invariante que media o repositorio real e reprovou por haver um arquivo nao
 rastreado no momento -- resultado que depende do estado de trabalho de quem roda
 nao e assercao, e guard de cache flaky e pior que guard ausente. Refeito
 hermetico, num repositorio temporario.
+
+---
+
+## 8.5 Fecho — a segunda nota do dia, e o que ela cobra
+
+**9.0**, sequência 66, cadeia válida em 67 registros. Mesma sessão do handoff da
+manhã, portanto **densidade intrassessão**: três feedbacks elegíveis em **duas**
+sessões distintas, e o portão de calibração segue fechado. Funcionou como a §8.3
+desenhou — uma origem só não é recorrência, e a segunda nota não inflou o limiar.
+
+Medição: **800 chamadas, 25 erros, 3,1%**, contra 4,1% no corte da manhã.
+
+O comentário do Tier 0 aponta três coisas, e nenhuma delas é sobre estar errado:
+
+> *"Falta ainda um pouco de olhar horizontal e sistêmico, antevisão e a nossa
+> sofisticada economia de Shannon. Fora o consistente problema de redundância de
+> erros ou instruções já antecipadas e memorizadas."*
+
+**A crítica se confirma no próprio ato de registrá-la.** Ao conferir o efeito
+desta nota no portão, chamei `subprocess.run` sem `encoding` e quebrei em
+`UnicodeDecodeError` — o defeito exato que eu havia corrigido horas antes em
+`tests/test_agent_calibration_provenance.py`, com comentário citando o registro
+de 2026-09-10 sobre a mesma classe. Corrigir num arquivo e repetir no comando
+seguinte é precisamente a redundância de erro já antecipado.
+
+**Olhar horizontal** foi o que faltou em cada um dos consertos de hoje: o
+`pre-push` nasceu sem raiz temporária própria, a raiz nasceu dentro da árvore, o
+cache nasceu chaveado por `HEAD`. Três desenhos, três correções, e nas três o
+defeito era previsível a partir do que a própria base já documentava. **Antevisão
+teria custado uma leitura; a falta dela custou três ciclos de publicação.**
+
+E economia de Shannon é o inverso do que fiz em volume: relatórios longos onde
+uma tabela decidia, e a mesma medição repetida em prosa depois de já estar no
+`verificado`. O sinal estava lá; o ruído foi meu.
 
 ---
 
