@@ -35,6 +35,78 @@
           "call_ev": 56.625,
           "raise_ev": 36.3
         }
+      },
+      {
+        "id": "four-handed-short-stack-flop",
+        "input": {
+          "pot": 80.0,
+          "num_players": 4,
+          "active_stacks": [22.0, 55.0, 90.0, 120.0],
+          "lambda_factor": 1.75,
+          "equity": 0.62,
+          "hero_position": "UTG",
+          "street": "flop",
+          "depth_streets": 3,
+          "iterations": 17
+        },
+        "expected": {
+          "effective_stack": 22.0,
+          "stack_to_pot_ratio": 0.275,
+          "call_cost": 22.0,
+          "raise_cost": 22.0,
+          "future_streets": 2,
+          "horizon_liability": 11.2,
+          "call_ev": -27.6,
+          "raise_ev": -89.2
+        }
+      },
+      {
+        "id": "three-handed-neutral-mp-turn",
+        "input": {
+          "pot": 60.0,
+          "num_players": 3,
+          "active_stacks": [95.0, 110.0, 75.0],
+          "lambda_factor": 2.25,
+          "equity": 0.58,
+          "hero_position": "MP",
+          "street": "turn",
+          "depth_streets": 2,
+          "iterations": 41
+        },
+        "expected": {
+          "effective_stack": 75.0,
+          "stack_to_pot_ratio": 1.25,
+          "call_cost": 30.0,
+          "raise_cost": 60.0,
+          "future_streets": 1,
+          "horizon_liability": 2.025,
+          "call_ev": -16.9125,
+          "raise_ev": -53.625
+        }
+      },
+      {
+        "id": "heads-up-river-zero-horizon",
+        "input": {
+          "pot": 120.0,
+          "num_players": 2,
+          "active_stacks": [240.0, 180.0],
+          "lambda_factor": 2.25,
+          "equity": 0.54,
+          "hero_position": "BB",
+          "street": "river",
+          "depth_streets": 1,
+          "iterations": 9
+        },
+        "expected": {
+          "effective_stack": 180.0,
+          "stack_to_pot_ratio": 1.5,
+          "call_cost": 60.0,
+          "raise_cost": 120.0,
+          "future_streets": 0,
+          "horizon_liability": 0.0,
+          "call_ev": 25.536,
+          "raise_ev": 22.56
+        }
       }
     ],
     "chen_indifference": [

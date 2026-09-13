@@ -1,7 +1,7 @@
 /**
  * IDENTITY: Pluribus Multiway Engine & PMev Synthesis SOTA v7.0 GOLD
  * PATH: src/lib/pluribusMultiwayEngine.ts
- * ROLE: Resolução e compensação de passivo estrutural multiway (3 a 6 jogadores)
+ * ROLE: Resolução e compensação de passivo estrutural multiway (2 a 10 jogadores)
  *       inspirada no Pluribus (Science 2019) e formalismo PMev VITOI.
  */
 
@@ -11,7 +11,7 @@ export type TableStreet = 'preflop' | 'flop' | 'turn' | 'river';
 
 export interface PluribusStateConfig {
 	pot: number;
-	numPlayers: number; // 2 a 6
+	numPlayers: number; // 2 a 10
 	heroPosition: TablePosition;
 	nominalEquity: number; // [0.0 - 1.0]
 	activeStacks: number[];
@@ -154,6 +154,9 @@ export function solvePluribusMultiway(config: PluribusStateConfig): PluribusSolv
 	}
 	if (!Number.isFinite(lambdaFactor) || lambdaFactor < 0) {
 		throw new RangeError('lambdaFactor must be finite and non-negative');
+	}
+	if (!['BTN', 'CO', 'MP', 'UTG', 'SB', 'BB'].includes(heroPosition)) {
+		throw new RangeError('heroPosition must be BTN, CO, MP, UTG, SB, or BB');
 	}
 	const maximumDepth: Record<TableStreet, number> = { preflop: 4, flop: 3, turn: 2, river: 1 };
 	if (!Number.isInteger(depthStreets) || depthStreets < 1 || depthStreets > maximumDepth[street]) {

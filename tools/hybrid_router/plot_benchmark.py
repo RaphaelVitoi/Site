@@ -206,8 +206,9 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
         count = len(subset)
         pct = (count / total_reqs) * 100.0
 
+        latency_distribution = np.asarray(subset["latency_ms"], dtype=np.float64)
         sns.histplot(
-            subset["latency_ms"],
+            x=latency_distribution,
             kde=True,
             stat="density",
             color=color,

@@ -3,18 +3,26 @@
 /**
  * IDENTITY: Painel Pluribus Multiway Solver & PMev Synthesis (SOTA v7.0 GOLD)
  * PATH: src/components/simulator/panels/PluribusMultiwayPanel.tsx
- * ROLE: Simular subjogos multiway de 3 a 6 jogadores com horizonte finito e compensação N^2 do PMev.
+ * ROLE: Simular subjogos multiway de 2 a 6 jogadores com horizonte finito e compensação N^2 do PMev.
  */
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getEngineCapability } from '@/lib/engineCapabilities';
-import { executePluribusLocally } from '@/lib/engineExecutionGateway';
+import {
+	executePluribusEngine,
+	executePluribusLocally,
+	type EngineExecutionEnvelope,
+} from '@/lib/engineExecutionGateway';
 import {
 	type PluribusAction,
+	type PluribusSolveOutput,
+	type PluribusStateConfig,
 	type TablePosition,
 } from '@/lib/pluribusMultiwayEngine';
+import { createPluribusBrowserWasmExecutor } from '@/lib/pluribusWasmRuntime.browser';
 
 const PLURIBUS_CAPABILITY = getEngineCapability('pluribus-multiway-adapter');
+const PLURIBUS_WASM_EXECUTOR = createPluribusBrowserWasmExecutor();
 
 export default function PluribusMultiwayPanel() {
 	const [numPlayers, setNumPlayers] = useState<number>(4);
@@ -25,8 +33,8 @@ export default function PluribusMultiwayPanel() {
 	const [nominalEquity, setNominalEquity] = useState<number>(65); // [0 - 100%]
 	const [lambdaFactor, setLambdaFactor] = useState<number>(2.25);
 
-	const execution = useMemo(() => {
-		return executePluribusLocally({
+	const input = useMemo<PluribusStateConfig>(
+		() => ({
 			pot,
 			numPlayers,
 			heroPosition,
@@ -36,8 +44,30 @@ export default function PluribusMultiwayPanel() {
 			depthStreets,
 			lambdaFactor,
 			iterations: 80,
+		}),
+		[pot, numPlayers, heroPosition, nominalEquity, effectiveStack, depthStreets, lambdaFactor],
+	);
+	const inputKey = JSON.stringify(input);
+	const localExecution = useMemo(() => executePluribusLocally(input), [input]);
+	const [wasmExecution, setWasmExecution] = useState<{
+		inputKey: string;
+		execution: EngineExecutionEnvelope<PluribusSolveOutput>;
+	} | null>(null);
+
+	useEffect(() => {
+		let active = true;
+		void executePluribusEngine(
+			{ input, preferredRuntimes: ['wasm', 'typescript'] },
+			{ wasm: PLURIBUS_WASM_EXECUTOR },
+		).then((execution) => {
+			if (active) setWasmExecution({ inputKey, execution });
 		});
-	}, [pot, numPlayers, heroPosition, nominalEquity, effectiveStack, depthStreets, lambdaFactor]);
+		return () => {
+			active = false;
+		};
+	}, [input, inputKey]);
+
+	const execution = wasmExecution?.inputKey === inputKey ? wasmExecution.execution : localExecution;
 	const solveResult = execution.result;
 
 	const actionColors: Record<PluribusAction, { bg: string; text: string; bar: string }> = {
@@ -74,6 +104,7 @@ export default function PluribusMultiwayPanel() {
 						</h4>
 						<span className="text-[0.55rem] font-mono px-2 py-0.5 rounded-full bg-accent-emerald/10 border border-accent-emerald/20 text-accent-emerald-light uppercase">
 							Runtime: {execution.runtimeUsed}
+							{execution.fallbackUsed ? ' fallback' : ''}
 						</span>
 					</div>
 					<p className="m-0 mt-2 text-[0.65rem] text-text-dim font-medium uppercase tracking-wider">

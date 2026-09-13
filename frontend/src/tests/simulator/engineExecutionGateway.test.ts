@@ -64,6 +64,17 @@ describe('engineExecutionGateway', () => {
 		});
 	});
 
+	it('preserves string failures emitted across the WASM boundary', async () => {
+		await expect(
+			executePluribusEngine(
+				{ input: INPUT, preferredRuntimes: ['wasm'] },
+				{ wasm: async () => Promise.reject('invalid wasm input') },
+			),
+		).rejects.toMatchObject<Partial<EngineExecutionError>>({
+			attempts: [{ runtime: 'wasm', status: 'failed', reason: 'invalid wasm input' }],
+		});
+	});
+
 	it('wraps direct local execution in the same provenance envelope', () => {
 		const envelope = executePluribusLocally(INPUT);
 

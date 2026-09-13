@@ -28,6 +28,8 @@ describe('engine capability contract', () => {
 			]),
 		);
 		expect(capability.reserved_parameters).toEqual([]);
+		expect(capability.runtimes).toContain('wasm');
+		expect(capability.consumer_paths).toContain('wasm-equity/lib.rs');
 		expect(capability.safe_label).toBe('Adaptador multiway PMev inspirado em Pluribus');
 	});
 
