@@ -112,12 +112,40 @@ if [ -n "$n_decl" ] && [ -n "$n_autor" ]; then
                     echo ""
                     echo "   Passe a identidade NO COMANDO -- nao altere a configuracao global,"
                     echo "   que so empurraria a heranca para o proximo condutor:"
-                    echo "     git -c user.name='$declarado' -c user.email='<noreply do fornecedor>' commit ..."
+                    echo "     git -c user.name='<nome canonico>' -c user.email='<noreply>' commit ..."
+                    echo "   Os pares canonicos estao em data/agent_identities.json."
                     exit 1
                     ;;
             esac
             ;;
     esac
+fi
+
+# Autor fora do catalogo canonico: AVISA.
+#
+# MEDIDO EM 2026-09-12: o repositorio acumulou VINTE grafias de autor para cerca
+# de cinco agentes -- 'Claude' e 'Claude Opus 5', 'Codex', 'Codex GPT-5' e
+# 'Codex [Tier 1.B]', 'Gemini 3.8 Flash' e 'Gemini 3.8 Flash High'. Havia ate
+# 'Chico SOTA v8.0 GOLD', que e o GRUPO no campo do autor individual.
+#
+# A checagem de coerencia acima nao pega isso: ela compara autor com assinatura,
+# e as duas erram juntas quando o condutor escreve a mesma grafia nas duas. Por
+# isso a fonte e um catalogo, e nao a propria mensagem.
+#
+# O grep e por nome exato entre aspas: casar por substring aceitaria 'Claude'
+# dentro de 'Claude Opus 5' e derrotaria o proposito, que e distinguir variantes.
+# `-F` NAO e zelo: sem ele, 'google-labs-jules[bot]' e uma EXPRESSAO, e `[bot]` vira
+# classe de caracteres -- casa b, o ou t, nunca o colchete literal. O guard pegou
+# isso na primeira execucao, e e o mesmo genero de defeito que o cabecalho de
+# tests/test_hook_commit_msg.py documenta sobre colchetes em POSIX.
+CATALOGO="data/agent_identities.json"
+if [ -n "$autor" ] && [ -f "$CATALOGO" ]; then
+    if ! grep -qF "\"nome\": \"$autor\"" "$CATALOGO"; then
+        echo "[COMMIT-MSG AVISO] Autor '$autor' nao esta em $CATALOGO."
+        echo "   Variante nova de um agente conhecido divide o historico dele em dois nomes,"
+        echo "   e nenhuma medicao por autor volta a fechar. Use o nome canonico, ou"
+        echo "   acrescente a identidade ao catalogo no mesmo commit se ela for nova."
+    fi
 fi
 
 exit 0
