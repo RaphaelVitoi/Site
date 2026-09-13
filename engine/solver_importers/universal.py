@@ -3,8 +3,12 @@
 Orquestrador e importador universal com auto-deteccao de formato e conversao para PMev.
 """
 
+from __future__ import annotations
+
 from typing import Any, Sequence
+
 from core.perspective_schemas import NormalizedGameTree, PerspectivaResult, SolverImportResponse, SolverType
+from engine.game_theory_solvers import ClaudicoActionTranslator
 from engine.solver_importers.base import BaseSolverImporter
 from engine.solver_importers.deep_solver import DeepSolverImporter
 from engine.solver_importers.gtowizard import GTOWizardImporter
@@ -37,8 +41,6 @@ class UniversalSolverImporter:
         pot_size: float,
     ) -> dict[float, float]:
         """Traduz apostas continuas off-tree para os nos discretos da arvore via Claudico pseudo-harmonic mapping."""
-        from engine.game_theory_solvers import ClaudicoActionTranslator
-
         return ClaudicoActionTranslator.pseudo_harmonic_mapping(actual_bet, allowed_bets, pot_size)
 
     def detect_solver_type(self, raw_content: str) -> SolverType:

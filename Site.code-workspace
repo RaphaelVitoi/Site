@@ -183,5 +183,8 @@
       "build/QuantumTensorEngine.sln",
       "core/tensor_engine/build/QuantumTensorEngine.sln",
     ],
+    "java.project.exclusionFilters": [
+      "**/scripts/validation/**",
+    ],
   },
 }

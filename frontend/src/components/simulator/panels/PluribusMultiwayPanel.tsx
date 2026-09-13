@@ -221,9 +221,9 @@ export default function PluribusMultiwayPanel() {
 				{/* LADO ESQUERDO: POSIÇÃO & POTE */}
 				<div className="space-y-6">
 					<div>
-						<label className="text-[0.6rem] font-mono text-text-muted uppercase tracking-wider block mb-2">
+						<span className="text-[0.6rem] font-mono text-text-muted uppercase tracking-wider block mb-2">
 							Posição do Hero
-						</label>
+						</span>
 						<div className="grid grid-cols-6 gap-2">
 							{positions.map((pos) => (
 								<button
