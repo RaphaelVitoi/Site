@@ -628,7 +628,42 @@ if ($manifestosNpm.Count -eq 0 -and (Test-Path (Join-Path $RepoRoot 'package-loc
 }
 $cveManifestos = $manifestosNpm.Count
 
-if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+# CACHE POR CONTEUDO (2026-09-13). A fase custava ~20 s por commit e so muda quando
+# um lockfile, o requirements.txt ou os aceites mudam -- ou quando sai advisory novo,
+# por isso o TTL. Chave = hash dos insumos. So medicao COMPLETA (npm e Python) vira
+# cache; falha nunca. Mora em .git/, por clone: o CI, clone novo, sempre mede.
+$cveCacheTtlHoras = 24
+$cveCacheHit = $false
+$cveCacheIdade = 0
+$cveCache = $null
+$cveCacheChave = $null
+$cveCachePath = Join-Path $RepoRoot '.git\sota-cve-cache.json'
+if (Test-Path -LiteralPath (Join-Path $RepoRoot '.git') -PathType Container) {
+    try {
+        $insumosCve = @($lockfilesRastreados | Where-Object { $_ }) + @('requirements.txt', 'data/python_cve_acceptances.json')
+        $cveCacheChave = (@(foreach ($rel in $insumosCve) {
+            $abs = Join-Path $RepoRoot $rel
+            if (Test-Path -LiteralPath $abs -PathType Leaf) { "$rel=" + (Get-FileHash -LiteralPath $abs -Algorithm SHA256).Hash } else { "$rel=ausente" }
+        }) -join ';')
+        if (Test-Path -LiteralPath $cveCachePath -PathType Leaf) {
+            $lido = Get-Content -LiteralPath $cveCachePath -Raw -Encoding utf8 | ConvertFrom-Json
+            $cveCacheIdade = ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - [int64]$lido.medido_em_unix) / 3600.0
+            if ($lido.contrato -eq 1 -and $lido.chave -eq $cveCacheChave -and $cveCacheIdade -ge 0 -and $cveCacheIdade -lt $cveCacheTtlHoras) {
+                $cveCache = $lido
+                $cveCacheHit = $true
+            }
+        }
+    } catch {
+        $cveCacheHit = $false
+    }
+}
+
+if ($cveCacheHit) {
+    $secRules["CRITICAL_CVE_COUNT"].Val = [int]$cveCache.npm_critico
+    $secRules["HIGH_CVE_COUNT"].Val     = [int]$cveCache.npm_alto
+    $secRules["TOTAL_VULNERABILITY"].Val= [int]$cveCache.npm_total
+    $cveMedido = $true
+} elseif (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     $cveErro = 'npm nao foi encontrado no PATH'
 } elseif ($cveManifestos -eq 0) {
     $cveErro = 'nenhum package-lock.json encontrado no repositorio'
@@ -727,7 +762,11 @@ if (Test-Path -LiteralPath $pyAceitesPath -PathType Leaf) {
 $pyRequirements = Join-Path $RepoRoot 'requirements.txt'
 $pyCveMedido = $false
 $pyNaoAceitas = @()
-if (-not $pyCveErro) {
+if ($cveCacheHit) {
+    $pyNaoAceitas = @($cveCache.py_nao_aceitas | Where-Object { $_ })
+    $secRules["PY_CVE_ABERTAS"].Val = $pyNaoAceitas.Count
+    $pyCveMedido = $true
+} elseif (-not $pyCveErro) {
     if (-not (Test-Path -LiteralPath $pyRequirements -PathType Leaf)) {
         $pyCveErro = 'requirements.txt ausente'
     } else {
@@ -757,6 +796,20 @@ if (-not $pyCveErro) {
     }
 }
 
+if (-not $cveCacheHit -and $cveMedido -and $pyCveMedido -and $cveCacheChave) {
+    try {
+        [ordered]@{
+            contrato       = 1
+            chave          = $cveCacheChave
+            medido_em_unix = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+            npm_critico    = $secRules["CRITICAL_CVE_COUNT"].Val
+            npm_alto       = $secRules["HIGH_CVE_COUNT"].Val
+            npm_total      = $secRules["TOTAL_VULNERABILITY"].Val
+            py_nao_aceitas = @($pyNaoAceitas)
+        } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $cveCachePath -Encoding utf8
+    } catch { }
+}
+
 foreach ($k in $secRules.Keys) {
     $s = $secRules[$k]
     $passed = $s.Val -le $s.Limit
@@ -776,6 +829,8 @@ $execColor  = if ($cveMedido) { "Green" } else { "Red" }
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_AUDIT_EXECUTADO', $(if ($cveMedido) { 'sim' } else { 'NAO' }), 'sim', $execStatus) -ForegroundColor $execColor
 # Cobertura declarada: sem ela, "0 cves" nao diz sobre QUANTOS projetos.
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_MANIFESTOS_AUDITADOS', "$cveManifestos npm", '-', 'INFO') -ForegroundColor DarkGray
+$cveOrigem = if ($cveCacheHit) { 'cache {0:N1}h' -f $cveCacheIdade } else { 'medido agora' }
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_ORIGEM', $cveOrigem, "< $($cveCacheTtlHoras)h", 'INFO') -ForegroundColor DarkGray
 $pyStatus = if ($pyCveMedido) { "[PASS]" } else { "[FAIL]" }
 $pyColor  = if ($pyCveMedido) { "Green" } else { "Red" }
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'PY_CVE_AUDIT_EXECUTADO', $(if ($pyCveMedido) { 'sim' } else { 'NAO' }), 'sim', $pyStatus) -ForegroundColor $pyColor
