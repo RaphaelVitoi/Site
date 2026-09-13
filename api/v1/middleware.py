@@ -174,29 +174,48 @@ async def _handle_no_token_auth(request, origin, handler):
 #: inclusao e estreito -- calculo puro sobre a entrada da requisicao e leitura
 #: inocua de saude. Fila, estado global, disco, ingestao, busca e telemetria de
 #: operacao ficam de fora, porque nenhuma delas e sobre o usuario que pergunta.
-ROTAS_DE_PRODUTO: frozenset[str] = frozenset(
-    {
-        "/ping",
-        "/health",
-        "/lab/tournaments",
-        "/predictive-profile",
-        "/api/logs/frontend",
-        "/api/v1/perspective",
-        "/api/v1/perspective/tree",
-        "/api/v1/perspective/import-solver",
-        "/api/v1/perspective/heatmap",
-        "/api/v1/pmev/heatmap",
-        "/api/v1/timesfm/forecast",
-        "/api/v1/engine-capabilities",
-    }
-)
+POLITICA_ROTAS_DE_PRODUTO: dict[str, frozenset[str]] = {
+    "/ping": frozenset({"GET"}),
+    "/health": frozenset({"GET"}),
+    "/lab/tournaments": frozenset({"GET"}),
+    "/predictive-profile": frozenset({"GET"}),
+    "/api/logs/frontend": frozenset({"POST"}),
+    "/api/v1/perspective": frozenset({"POST"}),
+    "/api/v1/perspective/tree": frozenset({"POST"}),
+    "/api/v1/perspective/import-solver": frozenset({"POST"}),
+    "/api/v1/perspective/heatmap": frozenset({"POST"}),
+    "/api/v1/pmev/heatmap": frozenset({"POST"}),
+    "/api/v1/timesfm/forecast": frozenset({"POST"}),
+    "/api/v1/engine-capabilities": frozenset({"GET"}),
+    "/api/v1/game-theory/pluribus/solve": frozenset({"POST"}),
+    "/api/v1/game-theory/deepstack/resolve": frozenset({"POST"}),
+    "/api/v1/game-theory/rebel/pbs/evaluate": frozenset({"POST"}),
+    "/api/v1/game-theory/claudico/translate-action": frozenset({"POST"}),
+    "/api/v1/canonical/clairvoyance/solve": frozenset({"POST"}),
+    "/api/v1/canonical/akq/solve": frozenset({"POST"}),
+    "/api/v1/canonical/janda/mdf": frozenset({"POST"}),
+    "/api/v1/canonical/janda/geometric-sizing": frozenset({"POST"}),
+    "/api/v1/canonical/janda/bluff-ratios": frozenset({"POST"}),
+}
+
+# Compatibilidade nominal com os registros e consumidores da politica original.
+ROTAS_DE_PRODUTO: frozenset[str] = frozenset(POLITICA_ROTAS_DE_PRODUTO)
 
 
-def rota_e_de_produto(path: str | None) -> bool:
-    """Responde se a identidade de produto pode alcancar `path`. Sem match, e nao."""
+def rota_e_de_produto(path: str | None, method: str | None = None) -> bool:
+    """Valida a capacidade de produto pela dupla exata ``path x metodo``.
+
+    Sem ``method`` preserva a consulta estrutural por path. O middleware sempre
+    fornece o metodo, impedindo que uma identidade de produto promova GET a POST
+    (ou o inverso) apenas porque ambos compartilham o mesmo caminho.
+    """
     if not path:
         return False
-    return path in ROTAS_DE_PRODUTO or path.rstrip("/") in ROTAS_DE_PRODUTO
+    normalized_path = path.rstrip("/") or "/"
+    allowed_methods = POLITICA_ROTAS_DE_PRODUTO.get(normalized_path)
+    if allowed_methods is None:
+        return False
+    return method is None or method.upper() in allowed_methods
 
 
 async def _handle_jwt_token_auth(token: str, request, handler):
@@ -215,7 +234,10 @@ async def _handle_jwt_token_auth(token: str, request, handler):
 
     # A identidade extraida acima passa a ter consumidor: ela DELIMITA o alcance,
     # em vez de ser lida e descartada.
-    if not rota_e_de_produto(getattr(request, "path", None)):
+    if not rota_e_de_produto(
+        getattr(request, "path", None),
+        getattr(request, "method", None),
+    ):
         return web.json_response(
             {
                 "error": (

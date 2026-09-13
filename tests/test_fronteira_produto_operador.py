@@ -23,6 +23,7 @@ import base64
 import hashlib
 import hmac
 import json
+from pathlib import Path
 from typing import cast
 
 import pytest
@@ -103,18 +104,27 @@ async def test_jwt_de_produto_nao_alcanca_rota_de_operador(path: str, method: st
 @pytest.mark.asyncio
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "path",
+    ("path", "method"),
     [
-        "/api/v1/perspective",
-        "/api/v1/perspective/tree",
-        "/api/v1/timesfm/forecast",
-        "/api/v1/engine-capabilities",
-        "/health",
+        ("/api/v1/perspective", "POST"),
+        ("/api/v1/perspective/tree", "POST"),
+        ("/api/v1/timesfm/forecast", "POST"),
+        ("/api/v1/engine-capabilities", "GET"),
+        ("/api/v1/game-theory/pluribus/solve", "POST"),
+        ("/api/v1/game-theory/deepstack/resolve", "POST"),
+        ("/api/v1/game-theory/rebel/pbs/evaluate", "POST"),
+        ("/api/v1/game-theory/claudico/translate-action", "POST"),
+        ("/api/v1/canonical/clairvoyance/solve", "POST"),
+        ("/api/v1/canonical/akq/solve", "POST"),
+        ("/api/v1/canonical/janda/mdf", "POST"),
+        ("/api/v1/canonical/janda/geometric-sizing", "POST"),
+        ("/api/v1/canonical/janda/bluff-ratios", "POST"),
+        ("/health", "GET"),
     ],
 )
-async def test_jwt_de_produto_alcanca_rota_de_produto(path: str, monkeypatch) -> None:
+async def test_jwt_de_produto_alcanca_rota_de_produto(path: str, method: str, monkeypatch) -> None:
     """A contraprova de escopo: a faixa nao pode ser larga a ponto de fechar o produto."""
-    resposta = await _resposta(path, monkeypatch, "POST")
+    resposta = await _resposta(path, monkeypatch, method)
 
     assert resposta.status == 200, f"{path} e rota de produto e foi recusada"
     assert "ALCANCOU O HANDLER" in (resposta.text or "")
@@ -125,3 +135,31 @@ async def test_jwt_de_produto_alcanca_rota_de_produto(path: str, monkeypatch) ->
 async def test_faixa_de_produto_e_fail_closed() -> None:
     """Rota nao declarada nasce fechada ao JWT -- o default protege o que ainda nao existe."""
     assert not middleware.rota_e_de_produto("/rota/que/ainda/nao/existe")
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_politica_de_produto_rejeita_metodo_nao_declarado(monkeypatch) -> None:
+    """Identidade e path nao bastam: a capacidade autorizada inclui o metodo HTTP."""
+    resposta = await _resposta("/api/v1/game-theory/pluribus/solve", monkeypatch, "GET")
+
+    assert resposta.status == 403
+    assert "operador" in (resposta.text or "").lower()
+
+
+@pytest.mark.unit
+def test_rotas_backend_do_manifesto_tem_capacidade_post_de_produto() -> None:
+    """Toda engine HTTP declarada e pura deve permanecer alcancavel pelo produto."""
+    manifest_path = Path(__file__).resolve().parents[1] / "data" / "engine_capabilities.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    backend_routes = {
+        route
+        for capability in manifest["capabilities"]
+        for route in capability["api_routes"]
+        if route.startswith("/api/v1/")
+    }
+
+    assert backend_routes
+    assert backend_routes <= middleware.ROTAS_DE_PRODUTO
+    for route in backend_routes:
+        assert middleware.POLITICA_ROTAS_DE_PRODUTO[route] == frozenset({"POST"})

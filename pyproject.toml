@@ -117,6 +117,7 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.0",
+    "pip-audit>=2.10.1",
     "httpx>=0.28.0",
 ]
 
@@ -129,6 +130,7 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.0",
+    "pip-audit>=2.10.1",
     "httpx>=0.28.0",
     "pytest-watcher>=0.6.3",
     "cmake>=4.4.2",
