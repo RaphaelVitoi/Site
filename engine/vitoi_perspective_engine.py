@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Final, Sequence
 
+from engine.game_theory_solvers import PluribusMultiwayState, Street
+
 EPSILON: Final[float] = 1e-12
 DEFAULT_ALPHA: Final[float] = 0.88
 DEFAULT_BETA: Final[float] = 0.88
@@ -292,8 +294,6 @@ class VitoiPerspectiveEngine:
         if multiway_opponents <= 1:
             return base_rio
         if pot is not None and pot > 0:
-            from engine.game_theory_solvers import PluribusMultiwayState, Street
-
             state = PluribusMultiwayState(
                 pot=pot,
                 num_players=multiway_opponents + 1,

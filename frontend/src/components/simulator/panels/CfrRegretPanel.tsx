@@ -115,6 +115,16 @@ export default function CfrRegretPanel({
 		return calculateClientCfrConvergence(regretHistory, 8, 0.001, preferredModel);
 	}, [kappa, equity, preferredModel]);
 
+	const stepsToTarget = useMemo(() => {
+		if (cfrConvergence.estimated_iterations_to_target > 0) {
+			return `${cfrConvergence.estimated_iterations_to_target} iters`;
+		}
+		if (cfrConvergence.status === 'CONVERGED') {
+			return 'Atingida';
+		}
+		return 'Calculando';
+	}, [cfrConvergence.estimated_iterations_to_target, cfrConvergence.status]);
+
 	// SOTA: Fricção Zero. Envia os estados para dentro da API do requestAnimationFrame sem dar re-render na function base
 	const paramsRef = useRef({
 		kappa: 0.85,
@@ -415,11 +425,7 @@ export default function CfrRegretPanel({
 										Passos p/ Meta
 									</span>
 									<div className="text-[0.7rem] font-mono font-black text-accent-emerald">
-										{cfrConvergence.estimated_iterations_to_target > 0
-											? `${cfrConvergence.estimated_iterations_to_target} iters`
-											: cfrConvergence.status === 'CONVERGED'
-											? 'Atingida'
-											: 'Calculando'}
+										{stepsToTarget}
 									</div>
 								</div>
 								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">

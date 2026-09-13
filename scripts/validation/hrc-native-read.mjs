@@ -30,11 +30,11 @@ registerHooks({
   resolve(specifier, context, nextResolve) {
     try {
       return nextResolve(specifier, context);
-    } catch (erro) {
-      if (!specifier.startsWith('.') || !context.parentURL) throw erro;
+    } catch (error_) {
+      if (!specifier.startsWith('.') || !context.parentURL) throw error_;
       const base = path.resolve(path.dirname(fileURLToPath(context.parentURL)), specifier);
       const candidato = [base + '.ts', path.join(base, 'index.ts')].find(f => fs.existsSync(f));
-      if (!candidato) throw erro;
+      if (!candidato) throw error_;
       return { url: pathToFileURL(candidato).href, format: 'commonjs', shortCircuit: true };
     }
   },

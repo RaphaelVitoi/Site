@@ -420,5 +420,8 @@
     "ollamaDirectCustomAgent.debugMode": true,
     "ollamaDirectCustomAgent.cloudAutoRotateAccounts": true,
     "ollamaDirectCustomAgent.assistantAutoLaunch": true,
-    "claudeCode.disableLoginPrompt": true
+    "claudeCode.disableLoginPrompt": true,
+    "java.project.exclusionFilters": [
+        "**/scripts/validation/**"
+    ]
 }

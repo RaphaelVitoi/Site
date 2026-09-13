@@ -25,7 +25,7 @@ const getLesson = cache(async (slug: string) => {
 
 		// Extrai headers (H2 e H3) para a Tabela de Conteúdo
 		const toc: { level: number; text: string; slug: string }[] = [];
-		const tocRegex = /^(#{2,3})[^\S\r\n]+([^\r\n]+)$/gm;
+		const tocRegex = /^(#{2,3})[ \t]+(\S[^\r\n]*)$/gm;
 		let tocMatch;
 		while ((tocMatch = tocRegex.exec(body)) !== null) {
 			const marker = tocMatch[1];
