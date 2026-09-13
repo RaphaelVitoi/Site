@@ -7,30 +7,38 @@
  */
 
 import { useState, useMemo } from 'react';
+import { getEngineCapability } from '@/lib/engineCapabilities';
+import { executePluribusLocally } from '@/lib/engineExecutionGateway';
 import {
-	solvePluribusMultiway,
 	type PluribusAction,
 	type TablePosition,
 } from '@/lib/pluribusMultiwayEngine';
+
+const PLURIBUS_CAPABILITY = getEngineCapability('pluribus-multiway-adapter');
 
 export default function PluribusMultiwayPanel() {
 	const [numPlayers, setNumPlayers] = useState<number>(4);
 	const [heroPosition, setHeroPosition] = useState<TablePosition>('BTN');
 	const [pot, setPot] = useState<number>(100);
+	const [effectiveStack, setEffectiveStack] = useState<number>(100);
+	const [depthStreets, setDepthStreets] = useState<number>(1);
 	const [nominalEquity, setNominalEquity] = useState<number>(65); // [0 - 100%]
 	const [lambdaFactor, setLambdaFactor] = useState<number>(2.25);
 
-	const solveResult = useMemo(() => {
-		return solvePluribusMultiway({
+	const execution = useMemo(() => {
+		return executePluribusLocally({
 			pot,
 			numPlayers,
 			heroPosition,
 			nominalEquity: nominalEquity / 100,
-			activeStacks: Array.from({ length: numPlayers }, () => 100),
+			activeStacks: Array.from({ length: numPlayers }, () => effectiveStack),
+			street: 'flop',
+			depthStreets,
 			lambdaFactor,
 			iterations: 80,
 		});
-	}, [pot, numPlayers, heroPosition, nominalEquity, lambdaFactor]);
+	}, [pot, numPlayers, heroPosition, nominalEquity, effectiveStack, depthStreets, lambdaFactor]);
+	const solveResult = execution.result;
 
 	const actionColors: Record<PluribusAction, { bg: string; text: string; bar: string }> = {
 		FOLD: {
@@ -62,14 +70,14 @@ export default function PluribusMultiwayPanel() {
 					<div className="flex items-center gap-3">
 						<div className="w-2.5 h-2.5 rounded-full bg-accent-emerald shadow-[0_0_10px_var(--accent-emerald)] animate-pulse" />
 						<h4 className="text-[0.75rem] font-black text-accent-emerald uppercase tracking-[0.2em] m-0">
-							Multiway Depth-Limited CFR+ (Pluribus &middot; Science 2019)
+							Aproximação multiway de horizonte finito
 						</h4>
 						<span className="text-[0.55rem] font-mono px-2 py-0.5 rounded-full bg-accent-emerald/10 border border-accent-emerald/20 text-accent-emerald-light uppercase">
-							PMev Synthesis
+							Runtime: {execution.runtimeUsed}
 						</span>
 					</div>
 					<p className="m-0 mt-2 text-[0.65rem] text-text-dim font-medium uppercase tracking-wider">
-						Resolução de potes multiway (3 a 6-Max) &middot; Decomposição do Passivo de Colisão $O(k^2)$
+						Molde inspirado em Pluribus &middot; Passivo estrutural PMev O(k²)
 					</p>
 				</div>
 
@@ -125,7 +133,7 @@ export default function PluribusMultiwayPanel() {
 
 				<div className="bg-black/40 p-4 rounded-3xl border border-white/5">
 					<div className="text-[0.55rem] font-mono text-text-dim uppercase tracking-wider mb-1">
-						Ação Ótima Convergida
+						Ação preferida pelo molde atual
 					</div>
 					<div
 						className={`text-xl font-black font-mono ${
@@ -135,19 +143,20 @@ export default function PluribusMultiwayPanel() {
 						{solveResult.optimalAction}
 					</div>
 					<div className="text-[0.5rem] font-mono text-text-darker mt-1">
-						Freq: {(solveResult.strategy[solveResult.optimalAction] * 100).toFixed(1)}% (Nash)
+						Freq. aproximada por regret matching:{' '}
+						{(solveResult.strategy[solveResult.optimalAction] * 100).toFixed(1)}%
 					</div>
 				</div>
 
 				<div className="bg-black/40 p-4 rounded-3xl border border-white/5">
 					<div className="text-[0.55rem] font-mono text-text-dim uppercase tracking-wider mb-1">
-						Colisão de Stacks
+						Stack efetivo / SPR
 					</div>
 					<div className="text-xl font-black font-mono text-accent-indigo-light">
-						{solveResult.kOpponents} oponentes
+						{solveResult.effectiveStack.toFixed(0)} bb / {solveResult.stackToPotRatio.toFixed(2)}
 					</div>
 					<div className="text-[0.5rem] font-mono text-text-darker mt-1">
-						Fator $k^2 - 1$: {solveResult.kOpponents ** 2 - 1}x
+						{solveResult.kOpponents} oponentes &middot; horizonte {solveResult.depthStreets} street(s)
 					</div>
 				</div>
 			</div>
@@ -202,7 +211,7 @@ export default function PluribusMultiwayPanel() {
 									</span>
 									{isOptimal && (
 										<span className="text-[0.45rem] font-mono uppercase px-1.5 py-0.5 rounded-full bg-white/10 text-white">
-											Ótima
+											Preferida
 										</span>
 									)}
 								</div>
@@ -257,6 +266,22 @@ export default function PluribusMultiwayPanel() {
 							className="w-full accent-accent-emerald cursor-pointer"
 						/>
 					</div>
+
+					<div>
+						<div className="flex justify-between text-[0.6rem] font-mono text-text-muted uppercase tracking-wider mb-2">
+							<span>Stack efetivo</span>
+							<span className="text-white font-bold">{effectiveStack} bb</span>
+						</div>
+						<input
+							type="range"
+							min="5"
+							max="300"
+							step="5"
+							value={effectiveStack}
+							onChange={(e) => setEffectiveStack(Number(e.target.value))}
+							className="w-full accent-accent-indigo cursor-pointer"
+						/>
+					</div>
 				</div>
 
 				{/* LADO DIREITO: EQUIDADE & FATOR LAMBDA */}
@@ -275,6 +300,29 @@ export default function PluribusMultiwayPanel() {
 							onChange={(e) => setNominalEquity(Number(e.target.value))}
 							className="w-full accent-accent-emerald cursor-pointer"
 						/>
+					</div>
+
+					<div>
+						<div className="flex justify-between text-[0.6rem] font-mono text-text-muted uppercase tracking-wider mb-2">
+							<span>Horizonte no flop</span>
+							<span className="text-white font-bold">{depthStreets} street(s)</span>
+						</div>
+						<div className="grid grid-cols-3 gap-2">
+							{[1, 2, 3].map((depth) => (
+								<button
+									type="button"
+									key={depth}
+									onClick={() => setDepthStreets(depth)}
+									className={`py-2 text-[0.65rem] font-mono font-black rounded-xl border transition-all ${
+										depthStreets === depth
+											? 'bg-accent-indigo/20 border-accent-indigo text-white'
+											: 'bg-white/5 border-white/5 text-text-dim hover:text-white'
+									}`}
+								>
+									{depth}
+								</button>
+							))}
+						</div>
 					</div>
 
 					<div>
@@ -299,10 +347,10 @@ export default function PluribusMultiwayPanel() {
 			<div className="p-4 bg-accent-emerald/5 border border-accent-emerald/10 rounded-2xl flex items-start gap-3">
 				<i className="fa-solid fa-microchip text-accent-emerald text-xs mt-1" />
 				<div className="text-[0.6rem] text-text-muted leading-relaxed font-medium">
-					<span className="text-white font-bold">Por que o Pluribus venceu os humanos em 6-max:</span> Em
-					vez de resolver a árvore de ponta a ponta (o que exigiria supercomputadores proibitivos), ele
-					trunca os ramos pós-flop em horizontes finitos (*depth-limited*). O PMev VITOI complementa essa
-					busca subtraindo o passivo estocástico de múltiplos oponentes ($\Lambda \propto k^2$).
+					<span className="text-white font-bold">{PLURIBUS_CAPABILITY.safe_label}:</span>{' '}
+					Este molde não executa o sistema Pluribus nem uma árvore futura explícita. O menor stack ativo
+					limita o capital exposto; streets adicionais aplicam uma heurística determinística de exposição
+					residual e passivo PMev multiway (Λ ∝ k²). Inputs, unidade e horizonte permanecem visíveis.
 				</div>
 			</div>
 		</div>

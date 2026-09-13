@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0.0",
+  "governance": "Raphael Vitoi",
+  "units": "big-blinds",
+  "absolute_tolerance": 0.0001,
+  "scenarios": {
+    "pmev_multiway_liability": [
+      {
+        "id": "four-handed-pot-100",
+        "input": { "pot": 100.0, "num_players": 4, "lambda_factor": 2.25 },
+        "expected": { "structural_liability": 90.0 }
+      }
+    ],
+    "pluribus_horizon_heuristic": [
+      {
+        "id": "three-handed-flop-two-future-streets",
+        "input": {
+          "pot": 100.0,
+          "num_players": 3,
+          "active_stacks": [200.0, 160.0, 180.0],
+          "lambda_factor": 2.25,
+          "equity": 0.85,
+          "hero_position": "BTN",
+          "street": "flop",
+          "depth_streets": 3,
+          "iterations": 30
+        },
+        "expected": {
+          "effective_stack": 160.0,
+          "stack_to_pot_ratio": 1.6,
+          "call_cost": 50.0,
+          "raise_cost": 100.0,
+          "future_streets": 2,
+          "horizon_liability": 6.75,
+          "call_ev": 56.625,
+          "raise_ev": 36.3
+        }
+      }
+    ],
+    "chen_indifference": [
+      {
+        "id": "half-pot-bet",
+        "input": { "pot": 100.0, "bet": 50.0 },
+        "expected": {
+          "alpha": 0.3333,
+          "defense_frequency": 0.6667,
+          "game_value": 8.3333
+        }
+      }
+    ],
+    "janda_mdf": [
+      {
+        "id": "half-pot-two-defenders",
+        "input": { "pot": 100.0, "bet": 50.0, "num_defenders": 2 },
+        "expected": {
+          "alpha": 0.3333,
+          "mdf": 0.6667,
+          "individual_mdf": 0.4226
+        }
+      }
+    ],
+    "janda_geometric_sizing": [
+      {
+        "id": "spr-ten-three-streets",
+        "input": { "pot": 10.0, "effective_stack": 100.0, "num_streets": 3 },
+        "expected": { "pot_fraction_percentage": 87.95, "final_stack": 0.0 }
+      }
+    ],
+    "janda_bluff_ratios": [
+      {
+        "id": "pot-sized-bet",
+        "input": { "bet_fraction_of_pot": 1.0 },
+        "expected": {
+          "river_bluff_to_value_ratio": 0.5,
+          "turn_bluff_to_value_ratio": 1.25,
+          "flop_bluff_to_value_ratio": 2.375
+        }
+      }
+    ]
+  }
+}

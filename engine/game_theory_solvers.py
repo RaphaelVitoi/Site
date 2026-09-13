@@ -258,6 +258,18 @@ class PluribusMultiwayState:
     active_stacks: list[float]
     lambda_factor: float = 2.25
 
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.pot) or self.pot <= 0:
+            raise ValueError("pot must be finite and positive")
+        if self.num_players < 2:
+            raise ValueError("num_players must be at least 2")
+        if len(self.active_stacks) != self.num_players:
+            raise ValueError("active_stacks length must equal num_players")
+        if any(not math.isfinite(stack) or stack <= 0 for stack in self.active_stacks):
+            raise ValueError("active_stacks must contain only finite positive values")
+        if not math.isfinite(self.lambda_factor) or self.lambda_factor < 0:
+            raise ValueError("lambda_factor must be finite and non-negative")
+
     def compute_multiway_structural_liability(self) -> float:
         r"""Calcula a penalidade de passivo estrutural multiway N^2 do formalismo PMev.
 
@@ -282,7 +294,20 @@ class PluribusDepthLimitedSolver:
         depth_streets: int = 1,
         iterations: int = 50,
     ) -> dict[str, Any]:
-        """Resolve a decisao multiway combinando horizonte finito e compensacao PMev."""
+        """Aproxima a decisao sob capital efetivo e horizonte finito declarado."""
+        maximum_depth = {
+            Street.PREFLOP: 4,
+            Street.FLOP: 3,
+            Street.TURN: 2,
+            Street.RIVER: 1,
+        }[self.state.street]
+        if not math.isfinite(equity) or not 0.0 <= equity <= 1.0:
+            raise ValueError("equity must be finite and between 0 and 1")
+        if depth_streets < 1 or depth_streets > maximum_depth:
+            raise ValueError(f"depth_streets must be between 1 and {maximum_depth} on {self.state.street.value}")
+        if iterations < 1:
+            raise ValueError("iterations must be positive")
+
         liability = self.state.compute_multiway_structural_liability()
         pos_multiplier = 1.15 if hero_position in ["BTN", "CO"] else 0.88
 
@@ -292,14 +317,39 @@ class PluribusDepthLimitedSolver:
         actions = ["FOLD", "CALL", "RAISE_POT"]
         cfr_engine = CFRPlusEngine(actions)
 
-        # Simulacao de iteracoes de self-play
-        for _ in range(max(1, iterations)):
-            call_ev = (effective_equity * self.state.pot) - ((1.0 - effective_equity) * (self.state.pot * 0.5))
-            raise_ev = (
-                (effective_equity * self.state.pot * 1.5) - ((1.0 - effective_equity) * self.state.pot) - liability
-            )
-            fold_ev = 0.0
+        effective_stack = min(self.state.active_stacks)
+        stack_to_pot_ratio = effective_stack / self.state.pot
+        call_cost = min(self.state.pot * 0.5, effective_stack)
+        raise_cost = min(self.state.pot, effective_stack)
+        future_streets = depth_streets - 1
+        call_future_exposure = min(
+            max(effective_stack - call_cost, 0.0),
+            self.state.pot * 0.25 * future_streets,
+        )
+        raise_future_exposure = min(
+            max(effective_stack - raise_cost, 0.0),
+            self.state.pot * 0.5 * future_streets,
+        )
+        horizon_liability = liability * 0.1 * future_streets
+        future_edge = (2.0 * effective_equity) - 1.0
 
+        call_ev = (
+            (effective_equity * self.state.pot)
+            - ((1.0 - effective_equity) * call_cost)
+            + (future_edge * call_future_exposure)
+            - (horizon_liability * 0.5)
+        )
+        raise_ev = (
+            (effective_equity * self.state.pot * 1.5)
+            - ((1.0 - effective_equity) * raise_cost)
+            - liability
+            + (future_edge * raise_future_exposure)
+            - horizon_liability
+        )
+        fold_ev = 0.0
+
+        # Simulacao de iteracoes de self-play
+        for _ in range(iterations):
             node_ev = (fold_ev + call_ev + raise_ev) / 3.0
             cfr_engine.update_regrets({"FOLD": fold_ev, "CALL": call_ev, "RAISE_POT": raise_ev}, node_ev)
 
@@ -311,7 +361,16 @@ class PluribusDepthLimitedSolver:
             "optimal_action": best_action,
             "structural_liability": liability,
             "effective_equity": effective_equity,
+            "pos_multiplier": pos_multiplier,
+            "k_opponents": self.state.num_players - 1,
             "depth_streets": depth_streets,
+            "future_streets": future_streets,
+            "effective_stack": effective_stack,
+            "stack_to_pot_ratio": stack_to_pot_ratio,
+            "call_cost": call_cost,
+            "raise_cost": raise_cost,
+            "horizon_liability": horizon_liability,
+            "action_evs": {"FOLD": fold_ev, "CALL": call_ev, "RAISE_POT": raise_ev},
         }
 
 

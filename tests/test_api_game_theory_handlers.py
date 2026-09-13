@@ -64,7 +64,17 @@ async def test_handle_pluribus_solve_success():
     assert "optimal_action" in data
     assert math.isclose(data["structural_liability"], 90.0)
     assert data["iterations_run"] == 50
+    assert data["effective_stack"] == 100.0
+    assert data["stack_to_pot_ratio"] == 1.0
+    assert data["call_cost"] == 50.0
+    assert data["raise_cost"] == 100.0
+    assert data["future_streets"] == 0
+    assert data["horizon_liability"] == 0.0
+    assert set(data["action_evs"]) == {"FOLD", "CALL", "RAISE_POT"}
     assert data["execution_time_ms"] > 0
+    assert data["execution_provenance"]["engine_id"] == "pluribus-multiway-adapter"
+    assert data["execution_provenance"]["implementation_level"] == "heuristic"
+    assert data["execution_provenance"]["runtime_used"] == "python"
     total_prob = sum(data["strategy"].values())
     assert math.isclose(total_prob, 1.0, abs_tol=1e-3)
 
@@ -83,6 +93,37 @@ async def test_handle_pluribus_solve_validation_error():
 
     resp = await handle_pluribus_solve(req)
     assert resp.status == 400
+
+
+@pytest.mark.asyncio
+async def test_handle_pluribus_rejects_stack_mismatch_before_execution():
+    app = web.Application()
+    payload = {
+        "state": {
+            "pot": 100.0,
+            "num_players": 3,
+            "street": "flop",
+            "active_stacks": [100.0, 100.0],
+            "lambda_factor": 2.25,
+        },
+        "equity": 0.75,
+        "hero_position": "BTN",
+        "depth_streets": 1,
+        "iterations": 50,
+    }
+    req = make_mocked_request(
+        "POST",
+        "/api/v1/game-theory/pluribus/solve",
+        headers={"Content-Type": "application/json"},
+        app=app,
+    )
+    req._read_bytes = json.dumps(payload).encode("utf-8")
+
+    resp = await handle_pluribus_solve(req)
+
+    assert resp.status == 400
+    assert resp.text is not None
+    assert "active_stacks" in json.loads(resp.text)["error"]
 
 
 @pytest.mark.asyncio

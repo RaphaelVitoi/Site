@@ -104,7 +104,13 @@ async def test_jwt_de_produto_nao_alcanca_rota_de_operador(path: str, method: st
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "path",
-    ["/api/v1/perspective", "/api/v1/perspective/tree", "/api/v1/timesfm/forecast", "/health"],
+    [
+        "/api/v1/perspective",
+        "/api/v1/perspective/tree",
+        "/api/v1/timesfm/forecast",
+        "/api/v1/engine-capabilities",
+        "/health",
+    ],
 )
 async def test_jwt_de_produto_alcanca_rota_de_produto(path: str, monkeypatch) -> None:
     """A contraprova de escopo: a faixa nao pode ser larga a ponto de fechar o produto."""

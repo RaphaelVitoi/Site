@@ -67,4 +67,14 @@ describe('canonicalTheoryEngine', () => {
 			expect(res.flopBluffPercentage).toBe(70.37);
 		});
 	});
+
+	test.each([
+		['MDF pot', () => calculateJandaMDF(0, 1)],
+		['MDF defenders', () => calculateJandaMDF(1, 1, 0)],
+		['geometric stack', () => calculateJandaGeometricSizing(1, 0, 3)],
+		['Chen bet', () => calculateChenIndifference(1, Number.NaN)],
+		['bluff fraction', () => calculateJandaBluffValueRatios(-1)],
+	])('rejeita input impossível em %s', (_name, execute) => {
+		expect(execute).toThrow(RangeError);
+	});
 });

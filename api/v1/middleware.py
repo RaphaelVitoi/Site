@@ -187,6 +187,7 @@ ROTAS_DE_PRODUTO: frozenset[str] = frozenset(
         "/api/v1/perspective/heatmap",
         "/api/v1/pmev/heatmap",
         "/api/v1/timesfm/forecast",
+        "/api/v1/engine-capabilities",
     }
 )
 

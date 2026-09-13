@@ -60,8 +60,21 @@ export interface JandaBluffRatioOutput {
 	flopBluffPercentage: number;
 }
 
-const EPSILON = 1e-12;
 const STREET_NAMES = ['Flop', 'Turn', 'River', 'River+1'];
+
+function requirePositive(name: string, value: number): number {
+	if (!Number.isFinite(value) || value <= 0) {
+		throw new RangeError(`${name} must be a finite positive number`);
+	}
+	return value;
+}
+
+function requirePositiveInteger(name: string, value: number): number {
+	if (!Number.isInteger(value) || value < 1) {
+		throw new RangeError(`${name} must be a positive integer`);
+	}
+	return value;
+}
 
 /**
  * Calcula a Minimum Defense Frequency (MDF) de Matthew Janda (Partes 1 & 12).
@@ -71,9 +84,9 @@ export function calculateJandaMDF(
 	bet: number,
 	numDefenders: number = 1,
 ): JandaMDFOutput {
-	const p = Math.max(EPSILON, pot);
-	const b = Math.max(EPSILON, bet);
-	const k = Math.max(1, numDefenders);
+	const p = requirePositive('pot', pot);
+	const b = requirePositive('bet', bet);
+	const k = requirePositiveInteger('numDefenders', numDefenders);
 
 	const alpha = b / (p + b);
 	const mdf = p / (p + b);
@@ -101,9 +114,9 @@ export function calculateJandaGeometricSizing(
 	effectiveStack: number,
 	numStreets: number = 3,
 ): JandaGeometricSizingOutput {
-	const p = Math.max(EPSILON, pot);
-	const s = Math.max(EPSILON, effectiveStack);
-	const n = Math.max(1, numStreets);
+	const p = requirePositive('pot', pot);
+	const s = requirePositive('effectiveStack', effectiveStack);
+	const n = requirePositiveInteger('numStreets', numStreets);
 
 	const targetFinalPot = p + 2 * s;
 	const growthFactor = targetFinalPot / p;
@@ -148,8 +161,8 @@ export function calculateJandaGeometricSizing(
  * Ponto de Indiferenca e Solucao Analitica de Chen & Ankenman (Cap. 11).
  */
 export function calculateChenIndifference(pot: number, bet: number): ChenIndifferenceOutput {
-	const p = Math.max(EPSILON, pot);
-	const b = Math.max(EPSILON, bet);
+	const p = requirePositive('pot', pot);
+	const b = requirePositive('bet', bet);
 
 	const alpha = b / (p + b);
 	const defenderCallFrequency = p / (p + b);
@@ -170,7 +183,7 @@ export function calculateChenIndifference(pot: number, bet: number): ChenIndiffe
  * Razao de Blefes para Valor por Rua de Janda (Parte 5).
  */
 export function calculateJandaBluffValueRatios(betFraction: number): JandaBluffRatioOutput {
-	const f = Math.max(0.01, betFraction);
+	const f = requirePositive('betFraction', betFraction);
 	const alpha = f / (1 + f);
 
 	const rRiver = alpha;

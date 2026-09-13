@@ -79,5 +79,68 @@ describe('pluribusMultiwayEngine', () => {
 			expect(result.optimalAction).toBe('FOLD');
 			expect(result.strategy.FOLD).toBeGreaterThan(0.55);
 		});
+
+		it('makes active stacks causal by capping action costs', () => {
+			const common = {
+				pot: 100,
+				numPlayers: 3,
+				heroPosition: 'BTN' as const,
+				nominalEquity: 0.85,
+				iterations: 50,
+			};
+			const deep = solvePluribusMultiway({ ...common, activeStacks: [100, 120, 140] });
+			const shallow = solvePluribusMultiway({ ...common, activeStacks: [30, 120, 140] });
+
+			expect(deep.effectiveStack).toBe(100);
+			expect(shallow.effectiveStack).toBe(30);
+			expect(deep.callCost).toBe(50);
+			expect(shallow.callCost).toBe(30);
+			expect(deep.raiseCost).toBe(100);
+			expect(shallow.raiseCost).toBe(30);
+			expect(deep.evs).not.toEqual(shallow.evs);
+		});
+
+		it('makes depth causal through future exposure and liability', () => {
+			const common = {
+				pot: 100,
+				numPlayers: 3,
+				heroPosition: 'BTN' as const,
+				nominalEquity: 0.85,
+				activeStacks: [200, 160, 180],
+				street: 'flop' as const,
+			};
+			const oneStreet = solvePluribusMultiway({ ...common, depthStreets: 1 });
+			const threeStreets = solvePluribusMultiway({ ...common, depthStreets: 3 });
+
+			expect(oneStreet.futureStreets).toBe(0);
+			expect(oneStreet.horizonLiability).toBe(0);
+			expect(threeStreets.futureStreets).toBe(2);
+			expect(threeStreets.horizonLiability).toBeGreaterThan(0);
+			expect(oneStreet.evs).not.toEqual(threeStreets.evs);
+		});
+
+		it('rejects impossible stack vectors and horizons', () => {
+			expect(() =>
+				solvePluribusMultiway({
+					pot: 100,
+					numPlayers: 3,
+					heroPosition: 'BTN',
+					nominalEquity: 0.5,
+					activeStacks: [100, 100],
+				}),
+			).toThrow('activeStacks');
+
+			expect(() =>
+				solvePluribusMultiway({
+					pot: 100,
+					numPlayers: 2,
+					heroPosition: 'BTN',
+					nominalEquity: 0.5,
+					activeStacks: [100, 100],
+					street: 'river',
+					depthStreets: 2,
+				}),
+			).toThrow('depthStreets');
+		});
 	});
 });

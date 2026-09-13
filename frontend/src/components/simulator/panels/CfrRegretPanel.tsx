@@ -11,7 +11,29 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CfrCanvas, type CfrCanvasRef } from '../ui/CfrCanvas';
 import { calculateJandaGeometricSizing, calculateJandaMDF } from '@/lib/canonicalTheoryEngine';
-import { calculateClientCfrConvergence } from '@/lib/timesfm-client';
+import {
+	appendCfrRegretSample,
+	type CfrRegretDiagnostic,
+} from '@/lib/cfrDiagnostics';
+import { getEngineCapability } from '@/lib/engineCapabilities';
+import {
+	calculateClientCfrConvergence,
+	forecastCfrConvergence,
+	type CfrConvergenceForecastPayload,
+} from '@/lib/timesfm-client';
+
+const TIMESFM_CAPABILITY = getEngineCapability('timesfm-forecast');
+const WORKER_STATUS_LABEL = {
+	starting: 'iniciando',
+	active: 'ativo',
+	error: 'indisponível',
+} as const;
+
+interface CfrWorkerMessage {
+	matrix?: Float32Array;
+	diagnostic?: CfrRegretDiagnostic;
+	error?: string;
+}
 
 // SOTA: Despacho Estático de Renderização para redução de complexidade ciclomática (SonarLint S3776)
 function updateSizingDom(
@@ -87,6 +109,7 @@ export default function CfrRegretPanel({
 	const [stack, setStack] = useState<number>(initialStack);
 	const [equity, setEquity] = useState<number>(initialEquity);
 	const workerRef = useRef<Worker | null>(null);
+	const [workerStatus, setWorkerStatus] = useState<'starting' | 'active' | 'error'>('starting');
 
 	const canonicalSizing = useMemo(() => {
 		return calculateJandaGeometricSizing(pot, stack, 3);
@@ -100,20 +123,21 @@ export default function CfrRegretPanel({
 	const [preferredModel, setPreferredModel] = useState<
 		'timesfm-2.5-200m' | 'timesfm-3.0-330m'
 	>('timesfm-2.5-200m');
+	const [regretSamples, setRegretSamples] = useState<CfrRegretDiagnostic[]>([]);
+	const [cfrConvergence, setCfrConvergence] = useState<CfrConvergenceForecastPayload>(() =>
+		calculateClientCfrConvergence([], 8, 0.001, preferredModel),
+	);
 
-	const cfrConvergence = useMemo(() => {
-		const baseRegret = Math.max(
-			0.002,
-			(1 - kappa) * 0.25 + Math.abs(50 - equity) * 0.001,
-		);
-		const regretHistory = [
-			baseRegret * 4.2,
-			baseRegret * 2.8,
-			baseRegret * 1.7,
-			baseRegret * 1.0,
-		];
-		return calculateClientCfrConvergence(regretHistory, 8, 0.001, preferredModel);
-	}, [kappa, equity, preferredModel]);
+	useEffect(() => {
+		let cancelled = false;
+		const measuredHistory = regretSamples.map(({ value }) => value);
+		void forecastCfrConvergence(measuredHistory, 8, 0.001, preferredModel).then((forecast) => {
+			if (!cancelled) setCfrConvergence(forecast);
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [preferredModel, regretSamples]);
 
 	const stepsToTarget = useMemo(() => {
 		if (cfrConvergence.estimated_iterations_to_target > 0) {
@@ -151,9 +175,13 @@ export default function CfrRegretPanel({
 		let animId: number;
 		let isWorkerBusy = false; // SOTA Guard: Previne asfixia do Worker e Event Loop Flooding (Garante 60fps fluídos)
 
-		workerRef.current.onmessage = (e: MessageEvent) => {
+		workerRef.current.onmessage = (e: MessageEvent<CfrWorkerMessage>) => {
 			isWorkerBusy = false;
-			const { matrix } = e.data;
+			setWorkerStatus('active');
+			const { matrix, diagnostic } = e.data;
+			if (diagnostic) {
+				setRegretSamples((history) => appendCfrRegretSample(history, diagnostic));
+			}
 			if (!matrix) return; // SOTA Guard: Ignora pacotes paralelos do worker (ex: cfr_strategy) para evitar null-pointers e asfixia do Error Overlay
 
 			// Renderização Fricção Zero (Injeção Direta WebGPU)
@@ -178,6 +206,10 @@ export default function CfrRegretPanel({
 			}
 
 			updateSizingDom(path, paramsRef.current);
+		};
+		workerRef.current.onerror = () => {
+			isWorkerBusy = false;
+			setWorkerStatus('error');
 		};
 
 		const loop = () => {
@@ -220,7 +252,8 @@ export default function CfrRegretPanel({
 				</div>
 				<div className="text-[0.6rem] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl border border-accent-indigo/20 bg-accent-indigo/5 text-accent-indigo-light shadow-lg flex items-center gap-2">
 					<div className="w-1.5 h-1.5 rounded-full bg-accent-indigo animate-pulse" />
-					Neural Engine Active
+					CFR Worker {WORKER_STATUS_LABEL[workerStatus]} ·{' '}
+					{cfrConvergence.fallback_used ? 'forecast fallback' : 'TimesFM ativo'}
 				</div>
 			</div>
 
@@ -298,8 +331,12 @@ export default function CfrRegretPanel({
 									id="cfr-pot-size"
 									aria-label="Pot Size (BB)"
 									type="number"
+									min="0.01"
 									value={pot}
-									onChange={(e) => setPot(Number.parseFloat(e.target.value) || 0)}
+									onChange={(e) => {
+										const nextPot = Number.parseFloat(e.target.value);
+										if (Number.isFinite(nextPot) && nextPot > 0) setPot(nextPot);
+									}}
 									className="w-full bg-transparent border-none text-[0.85rem] font-mono font-black text-white focus:outline-none focus:ring-0"
 								/>
 							</div>
@@ -314,10 +351,12 @@ export default function CfrRegretPanel({
 									id="cfr-eff-stack"
 									aria-label="Eff. Stack (BB)"
 									type="number"
+									min="0.01"
 									value={stack}
-									onChange={(e) =>
-										setStack(Number.parseFloat(e.target.value) || 0)
-									}
+									onChange={(e) => {
+										const nextStack = Number.parseFloat(e.target.value);
+										if (Number.isFinite(nextStack) && nextStack > 0) setStack(nextStack);
+									}}
 									className="w-full bg-transparent border-none text-[0.85rem] font-mono font-black text-white focus:outline-none focus:ring-0"
 								/>
 							</div>
@@ -382,7 +421,7 @@ export default function CfrRegretPanel({
 						<div className="space-y-3 w-full">
 							<div className="flex justify-between items-center flex-wrap gap-2">
 								<h4 className="text-[0.65rem] font-black text-white uppercase tracking-widest m-0 flex items-center gap-2">
-									Convergência CFR (Google TimesFM)
+									Projeção de convergência CFR
 								</h4>
 								<div className="flex items-center gap-1.5">
 									<button
@@ -393,9 +432,9 @@ export default function CfrRegretPanel({
 												? 'bg-accent-emerald/20 border-accent-emerald/40 text-accent-emerald font-bold'
 												: 'bg-black/40 border-white/5 text-text-muted hover:text-white'
 										}`}
-										title="TimesFM 2.5 (200M) - Apache 2.0 (Produção)"
+										title="TimesFM 2.5 pretendido; a execução efetiva aparece abaixo"
 									>
-										2.5 Prod
+										2.5 Alvo
 									</button>
 									<button
 										type="button"
@@ -405,16 +444,16 @@ export default function CfrRegretPanel({
 												? 'bg-accent-indigo/20 border-accent-indigo/40 text-accent-indigo-light font-bold'
 												: 'bg-black/40 border-white/5 text-text-muted hover:text-white'
 										}`}
-										title="TimesFM 3.0 (330M) - Non-Commercial (Pesquisa)"
+										title="TimesFM 3.0 pretendido; a execução efetiva aparece abaixo"
 									>
-										3.0 Lab
+										3.0 Alvo
 									</button>
 								</div>
 							</div>
 							<div className="grid grid-cols-3 gap-3">
 								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
 									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
-										Exploitability ε
+										Regret médio+ ε*
 									</span>
 									<div className="text-[0.7rem] font-mono font-black text-accent-indigo-light">
 										{cfrConvergence.current_exploitability.toFixed(4)}
@@ -422,7 +461,7 @@ export default function CfrRegretPanel({
 								</div>
 								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
 									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
-										Passos p/ Meta
+										Horizonte p/ Meta
 									</span>
 									<div className="text-[0.7rem] font-mono font-black text-accent-emerald">
 										{stepsToTarget}
@@ -449,6 +488,12 @@ export default function CfrRegretPanel({
 									{cfrConvergence.license_tier.split(' ')[0]}
 								</span>
 							</div>
+							<p
+								className="m-0 text-[0.5rem] leading-relaxed text-text-darker"
+								title={TIMESFM_CAPABILITY.limitations.join('; ')}
+							>
+								Executado: {cfrConvergence.model_used}. O seletor define o modelo pretendido.
+							</p>
 						</div>
 					</div>
 				</div>

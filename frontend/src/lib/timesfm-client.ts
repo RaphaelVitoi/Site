@@ -71,6 +71,11 @@ export interface CfrConvergenceForecastPayload {
 	early_stopping_recommended: boolean;
 	model_used: string;
 	license_tier: string;
+	intended_model: string;
+	weights_loaded: boolean;
+	fallback_used: boolean;
+	source_metric: 'mean-positive-regret-proxy';
+	fallback_reason?: string;
 }
 
 /**
@@ -101,6 +106,10 @@ export function calculateClientCfrConvergence(
 			early_stopping_recommended: false,
 			model_used: `analytic-linear-extrapolation (sem pesos de google/${preferredModel})`,
 			license_tier: license,
+			intended_model: `google/${preferredModel}`,
+			weights_loaded: false,
+			fallback_used: true,
+			source_metric: 'mean-positive-regret-proxy',
 		};
 	}
 
@@ -117,6 +126,10 @@ export function calculateClientCfrConvergence(
 			early_stopping_recommended: true,
 			model_used: `analytic-linear-extrapolation (sem pesos de google/${preferredModel})`,
 			license_tier: license,
+			intended_model: `google/${preferredModel}`,
+			weights_loaded: false,
+			fallback_used: true,
+			source_metric: 'mean-positive-regret-proxy',
 		};
 	}
 
@@ -167,6 +180,86 @@ export function calculateClientCfrConvergence(
 		early_stopping_recommended: earlyStop,
 		model_used: `analytic-linear-extrapolation (sem pesos de google/${preferredModel})`,
 		license_tier: license,
+		intended_model: `google/${preferredModel}`,
+		weights_loaded: false,
+		fallback_used: true,
+		source_metric: 'mean-positive-regret-proxy',
 	};
+}
+
+function convergenceFromForecast(
+	regretHistory: number[],
+	forecast: TimesFMForecastResponsePayload,
+	targetEpsilon: number,
+): CfrConvergenceForecastPayload {
+	const item = forecast.results['cfr_mean_positive_regret'];
+	if (!item) {
+		throw new Error('TimesFM response omitted cfr_mean_positive_regret');
+	}
+	const current = regretHistory.at(-1) ?? 1;
+	const stepsToTarget = item.mean_prediction.findIndex((value) => value <= targetEpsilon);
+	const firstPrediction = item.mean_prediction[0] ?? current;
+	const lastPrediction = item.mean_prediction.at(-1) ?? current;
+	const plateau = Math.abs(lastPrediction - firstPrediction) < 1e-6;
+	const status =
+		current <= targetEpsilon
+			? 'CONVERGED'
+			: plateau
+				? 'PLATEAU_DETECTED'
+				: 'CONVERGING';
+
+	return {
+		status,
+		current_exploitability: current,
+		target_epsilon: targetEpsilon,
+		estimated_iterations_to_target: current <= targetEpsilon ? 0 : stepsToTarget < 0 ? -1 : stepsToTarget + 1,
+		mean_trajectory: item.mean_prediction,
+		quantile_10: item.quantile_10,
+		quantile_90: item.quantile_90,
+		early_stopping_recommended: current <= targetEpsilon || stepsToTarget >= 0 || plateau,
+		model_used: item.model_used || forecast.model_used,
+		license_tier: item.license_tier || forecast.license_tier,
+		intended_model: item.intended_model || forecast.intended_model || '',
+		weights_loaded: item.weights_loaded ?? forecast.weights_loaded ?? false,
+		fallback_used: !(item.weights_loaded ?? forecast.weights_loaded ?? false),
+		source_metric: 'mean-positive-regret-proxy',
+	};
+}
+
+/** Executa o gateway TimesFM e regride explicitamente ao fallback local. */
+export async function forecastCfrConvergence(
+	regretHistory: number[],
+	horizonIterations = 8,
+	targetEpsilon = 0.001,
+	preferredModel: 'timesfm-2.0-500m' | 'timesfm-2.5-200m' | 'timesfm-3.0-330m' = 'timesfm-2.5-200m',
+): Promise<CfrConvergenceForecastPayload> {
+	if (regretHistory.length < 4) {
+		return calculateClientCfrConvergence(
+			regretHistory,
+			horizonIterations,
+			targetEpsilon,
+			preferredModel,
+		);
+	}
+	try {
+		const forecast = await fetchTimesFMForecast({
+			series: regretHistory,
+			horizon: horizonIterations,
+			target_name: 'cfr_mean_positive_regret',
+			preferred_model_key: preferredModel,
+			mode: preferredModel === 'timesfm-3.0-330m' ? 'research_benchmark' : 'commercial_production',
+		});
+		return convergenceFromForecast(regretHistory, forecast, targetEpsilon);
+	} catch (error) {
+		return {
+			...calculateClientCfrConvergence(
+				regretHistory,
+				horizonIterations,
+				targetEpsilon,
+				preferredModel,
+			),
+			fallback_reason: error instanceof Error ? error.message : 'TimesFM gateway unavailable',
+		};
+	}
 }
 
