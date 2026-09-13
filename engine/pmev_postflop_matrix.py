@@ -36,16 +36,17 @@ CANONICAL_PAYOUTS: Final[tuple[float, ...]] = (
 )
 
 __all__ = [
+    "CANONICAL_BB_RP",
     "CANONICAL_BB_STACK_BB",
+    "CANONICAL_BTN_RP",
     "CANONICAL_BTN_STACK_BB",
+    "CANONICAL_DELTA_RP",
     "CANONICAL_PAYOUTS",
     "CANONICAL_POT_BB",
-    "CANONICAL_BTN_RP",
-    "CANONICAL_BB_RP",
-    "CANONICAL_DELTA_RP",
+    "PostflopActionFrequencies",
     "PostflopControlDimensions",
-    "simulate_postflop_matrix_aula_1_2",
-    "compute_multivariate_hypergeometric_bunching",
+    "calculate_hypergeometric_bunching_factor",
+    "create_canonical_postflop_scenario",
 ]
 
 
@@ -158,3 +159,8 @@ def create_canonical_postflop_scenario(
         confidence_interval=bounds,
         provenance=provenance,
     )
+
+
+# Aliases canonicos de compatibilidade
+simulate_postflop_matrix_aula_1_2 = create_canonical_postflop_scenario
+compute_multivariate_hypergeometric_bunching = calculate_hypergeometric_bunching_factor
