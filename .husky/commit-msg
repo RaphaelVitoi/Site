@@ -67,18 +67,25 @@ fi
 assinatura=$(sed '/^#/d' "$commit_msg_file" | grep -i '^Assinatura:' | head -n 1)
 
 if [ -z "$assinatura" ]; then
-    # AVISA, nao bloqueia -- e a escada da SS8.2 aplicada com honestidade sobre o
-    # alcance. Bloquear aqui atingiria tambem o Tier 0 commitando a mao, que nao e
-    # agente e nao deve satisfazer regra de agente; e o hook nao tem como
-    # distinguir os dois sem confiar num campo que o proprio agente escolhe --
-    # confiar nele daria ao agente o botao de se isentar. Promover isto a bloqueio
-    # e reducao material, e cabe ao Tier 0.
-    echo "[COMMIT-MSG AVISO] Sem linha 'Assinatura:'. A SS7 do CLAUDE.md a exige em commit de agente."
-    echo "   O GitHub liga o commit a um perfil pelo E-MAIL do autor, nao pelo nome nem pelo corpo."
-    echo "   Sem a assinatura, a malha nao audita quem escreveu o que -- e o portao abaixo,"
-    echo "   que compara autor com assinatura, fica sem o que comparar."
-    echo "   Formato: Assinatura: <agente> [Tier X] -- sessao <session_id>"
-    exit 0
+    # BLOQUEIA. Nasceu como aviso em 2026-09-12 porque promover a bloqueio e
+    # reducao material pela escada da SS8.2 e atinge tambem o Tier 0 commitando a
+    # mao -- o hook nao separa agente de humano sem confiar num campo que o
+    # proprio agente escolhe, e confiar nele daria ao agente o botao de se
+    # isentar. O Tier 0 autorizou a promocao no mesmo dia, e ela vale para todos,
+    # inclusive para ele: e o preco de a regra nao ter excecao que o agente possa
+    # invocar.
+    echo "[COMMIT-MSG REJEITADO] Sem linha 'Assinatura:'. A SS7 do CLAUDE.md a exige."
+    echo "   O GitHub liga o commit a um perfil pelo E-MAIL do autor, nao pelo nome nem"
+    echo "   pelo corpo. Sem a assinatura a malha nao audita quem escreveu o que, e a"
+    echo "   checagem de coerencia abaixo fica sem o que comparar -- foi assim que 5"
+    echo "   commits do Gemini sairam assinados 'Codex GPT-5' em 12/09, sem nada acusar."
+    echo ""
+    echo "   Acrescente ao corpo:"
+    echo "     Assinatura: <agente> [Tier X] -- sessao <session_id>"
+    echo "     Proposito: <razao tecnica e escopo protegido>"
+    echo ""
+    echo "   Os nomes canonicos estao em data/agent_identities.json."
+    exit 1
 fi
 
 # Nome declarado: o que vem antes de ' [', ' -- ' ou ' via '. Normalizado para

@@ -885,6 +885,27 @@ commit** com a correção pronta, em vez de sair mentindo em silêncio. Verifica
 no mesmo ato: assinatura do condutor atual passa sem `-c`; assinatura de outro
 condutor sob esta local é recusada.
 
+### O catálogo de identidades é `data/agent_identities.json`, e este arquivo não o copia
+
+**Determinado pelo Tier 0 em 2026-09-12:** o **Antigravity CLI conduz o
+`Gemini 3.8 Flash`** — veículo `antigravity`, e-mail `noreply@google.com`, forma
+composta `antigravity@gemini-3.8-flash` em prosa.
+
+Os pares canônicos — nome de autor, e-mail, veículo, modelo — vivem em
+`data/agent_identities.json`, que é a **fonte única**. Este arquivo aponta e não
+repete, pela mesma razão que a §7 abaixo documenta no caso do `AGENTS.md`.
+
+**Motivo medido:** o repositório acumulou **vinte grafias de autor** para cerca de
+cinco agentes — `Claude` e `Claude Opus 5`, `Codex`, `Codex GPT-5` e
+`Codex [Tier 1.B]`, `Gemini 3.8 Flash` e `Gemini 3.8 Flash High` — e
+`Chico SOTA v8.0 GOLD`, que é o **grupo** ocupando o campo do autor individual,
+exatamente o que esta seção proíbe em texto. Variante nova divide o histórico de
+um agente em dois nomes, e nenhuma medição por autor volta a fechar.
+
+O `commit-msg` avisa quando o autor não está no catálogo. **Avisa, não bloqueia:**
+identidade nova é legítima, e o remédio é acrescentá-la ao catálogo no mesmo
+commit.
+
 ### A regra passou a ser executável — e a ordem das duas metades importa
 
 **Aplicado em 2026-09-12.** Até essa data a §7 inteira era prosa: nada conferia
@@ -894,7 +915,8 @@ coisas, e a diferença entre elas é deliberada.
 | Verificação | Efeito | Por quê |
 | :--- | :--- | :--- |
 | Autor **diverge** da Assinatura declarada | **bloqueia** | evidência exata; zero falso positivo medido |
-| Sem linha `Assinatura:` | **avisa** | a mesma exigência atingiria o Tier 0 commitando à mão |
+| Sem linha `Assinatura:` | **bloqueia** | promovido de aviso por autorização do Tier 0 em 2026-09-12 |
+| Autor fora de `data/agent_identities.json` | **avisa** | identidade nova é legítima; o remédio é catalogá-la |
 
 **O portão não adivinha o condutor, e não pode.** Ele compara o que o condutor
 **declarou** com o campo que o GitHub lê, e a mensagem de recusa entrega o
@@ -910,10 +932,12 @@ cinco commits errados de 12/09: eles não tinham corpo a comparar. Medido no mes
 dia: 16 dos 40 commits mais recentes não traziam a linha. Uma regra vale o que a
 outra habilita, e verificar a segunda sem a primeira é verificar o vazio.
 
-**Promover o aviso a bloqueio é decisão do Tier 0, não do agente.** É redução
-material pela escada da §8.2 da raiz, e o hook não consegue separar agente de
-humano sem confiar num campo que o próprio agente escolhe — confiar nele daria
-ao agente o botão de se isentar. Guards em `tests/test_hook_commit_msg.py`,
+**A promoção do aviso a bloqueio foi autorizada pelo Tier 0 em 2026-09-12**, no
+mesmo dia em que o aviso nasceu. Ela é redução material pela escada da §8.2 da
+raiz, e o custo foi pesado antes: atinge também o Tier 0 commitando à mão, porque
+o hook não separa agente de humano sem confiar num campo que o próprio agente
+escolhe — e confiar nele daria ao agente o botão de se isentar. **A regra não tem
+exceção invocável, e esse é o preço.** Guards em `tests/test_hook_commit_msg.py`,
 incluindo o caso real de 12/09.
 
 ---

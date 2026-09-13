@@ -61,17 +61,21 @@ pytestmark = pytest.mark.skipif(
 
 
 def _rodar(mensagem: str, tmp_path) -> subprocess.CompletedProcess:
-    assert SH is not None
-    arquivo = tmp_path / "COMMIT_EDITMSG"
-    arquivo.write_text(mensagem, encoding="utf-8")
-    return subprocess.run(
-        [SH, str(HOOK), str(arquivo)],
-        cwd=RAIZ,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
+    """Exercita a REGRA DE ASSUNTO, e so ela.
+
+    Desde 2026-09-12 o hook tambem exige a linha `Assinatura:` e confere que o
+    campo de autor concorda com ela. Estes casos foram escritos para medir o
+    padrao Conventional Commits; sem a assinatura eles passariam a reprovar por
+    OUTRO motivo, e um teste que reprova pelo motivo errado nao mede nada -- e a
+    mesma armadilha que o cabecalho deste arquivo descreve.
+
+    A assinatura entra aqui, e o autor vai por AMBIENTE: depender da config da
+    maquina faria o resultado mudar conforme quem roda.
+    """
+    return _rodar_com_autor(
+        f"{mensagem}\n\nAssinatura: Claude Opus 5 [Tier 1.B] -- sessao teste\n",
+        "Claude Opus 5",
+        tmp_path,
     )
 
 
@@ -220,16 +224,21 @@ def test_o_caso_medido_em_12_09_seria_barrado(tmp_path):
     assert "global" in saida, saida
 
 
-def test_ausencia_de_assinatura_avisa_e_nao_bloqueia(tmp_path):
-    """Bloquear aqui atingiria o Tier 0 commitando a mao, que nao e agente.
+def test_ausencia_de_assinatura_bloqueia(tmp_path):
+    """Nasceu aviso e virou bloqueio por autorizacao do Tier 0 em 2026-09-12.
 
-    E o hook nao consegue separar os dois sem confiar num campo que o proprio
-    agente escolhe -- confiar nele daria ao agente o botao de se isentar.
-    Promover a bloqueio e reducao material, e cabe ao Tier 0.
+    Bloquear atinge tambem o Tier 0 commitando a mao, e isso foi pesado antes: o
+    hook nao separa agente de humano sem confiar num campo que o proprio agente
+    escolhe, e confiar nele daria ao agente o botao de se isentar. A regra vale
+    para todos, e esse e o preco de nao ter excecao invocavel.
     """
     r = _rodar_com_autor("feat(x): sem assinatura nenhuma\n", "Codex GPT-5", tmp_path)
-    assert r.returncode == 0, "aviso virou bloqueio sem decisao do Tier 0"
-    assert "AVISO" in r.stdout + r.stderr, f"{r.stdout}{r.stderr}"
+    assert r.returncode != 0, "a ausencia de Assinatura voltou a passar"
+    saida = r.stdout + r.stderr
+    assert "COMMIT-MSG REJEITADO" in saida, saida
+    # A recusa tem de entregar o formato; regra que so acusa vira regra contornada.
+    assert "Assinatura: <agente>" in saida, saida
+    assert "agent_identities.json" in saida, saida
 
 
 def test_merge_nao_precisa_declarar_identidade(tmp_path):

@@ -175,10 +175,26 @@ export default function BayesianBeliefPanel({
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10">
-				{/* GRID 13x13 DE HEATMAP BAYESIANO */}
-				<div className="w-full flex justify-center py-2 overflow-x-auto scrollbar-hide">
-					<div className="min-w-140 max-w-2xl w-full grid grid-cols-13 gap-px bg-white/5 p-px rounded-3xl overflow-hidden border border-white/10 shadow-3xl">
+			{/* A sidebar de 300px so entra ao lado quando o PAINEL comporta as duas
+			    colunas -- e quem decide isso e a largura dele, nunca a da janela. Medido
+			    em 2026-09-12: a 1600px de viewport, `xl:` ja estava ativo e mesmo assim
+			    sobravam 404px para a matriz, porque o painel inteiro tem ~744px dentro do
+			    `lg:col-span-7`. Breakpoint de viewport respondia a pergunta errada.
+			    Abaixo de 56rem de PAINEL a sidebar empilha, e o heatmap -- que e o
+			    conteudo principal -- fica com a largura toda. */}
+			<div className="@container/split grid grid-cols-1 @[56rem]/split:grid-cols-[minmax(0,1fr)_300px] gap-10">
+				{/* GRID 13x13 DE HEATMAP BAYESIANO
+				    MEDIDO EM 2026-09-12, a 1600px de viewport: coluna disponivel 384px,
+				    grade 549px, transbordo 165px. A causa era `min-w-140` (35rem = 560px)
+				    dentro de um contentor de 384px -- e o corte era INVISIVEL, porque o
+				    pai somava `justify-center` a `overflow-x-auto scrollbar-hide`: a
+				    grade era aparada dos dois lados e a barra que denunciaria isso ficava
+				    escondida. AA e AKs sumiam sem nenhum sinal.
+				    A largura minima saiu. A grade agora e fluida e o `@container` faz a
+				    tipografia acompanhar a CELULA, nao a viewport -- que e a unidade que
+				    de fato decide legibilidade aqui. */}
+				<div className="@container/grade w-full py-2">
+					<div className="mx-auto w-full max-w-2xl grid grid-cols-13 gap-px bg-white/5 p-px rounded-xl overflow-hidden border border-white/10 shadow-3xl">
 						{RANKS.map((r1, i) => (
 							<React.Fragment key={`row-${r1}`}>
 								{RANKS.map((r2, j) => {
@@ -201,7 +217,10 @@ export default function BayesianBeliefPanel({
 									return (
 										<div
 											key={hand}
-											className={`aspect-square flex flex-col items-center justify-center text-[0.55rem] font-black font-mono transition-all duration-500 border ${bgClass}`}
+											// 13 colunas: cada celula ocupa ~7.7cqw. O rotulo em 2.1cqw
+											// fica proporcional a ela em qualquer largura, com piso
+											// legivel e teto que impede a fonte de inchar no XL.
+											className={`aspect-square flex flex-col items-center justify-center text-[clamp(0.42rem,2.1cqw,0.78rem)] leading-none font-black font-mono transition-all duration-500 border ${bgClass}`}
 											title={`${hand} - Crença: ${(handVal * 100).toFixed(4)}%`}
 										>
 											<span
@@ -212,7 +231,7 @@ export default function BayesianBeliefPanel({
 												{hand}
 											</span>
 											{intensity > 5 && (
-												<span className="text-[0.4rem] opacity-60 mt-0.5">
+												<span className="text-[clamp(0.34rem,1.5cqw,0.55rem)] leading-none opacity-60 mt-0.5">
 													{Math.round(intensity)}%
 												</span>
 											)}
