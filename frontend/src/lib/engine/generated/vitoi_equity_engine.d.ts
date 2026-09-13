@@ -53,6 +53,12 @@ export function solve_icm_distortion_zerocopy(payload: Float64Array): Float64Arr
  */
 export function solve_insolvency_matrix_binary(villain_mask: Uint8Array, board: string, rp_factor: number, hero_invested: number, current_pot: number, active_players: number, iterations: number, seed: number, kappa: number): Array<unknown>;
 
+/**
+ * ABI WASM do adaptador heuristico multiway. Posicoes: BTN=0, CO=1, MP=2,
+ * UTG=3, SB=4, BB=5. Streets: preflop=0, flop=1, turn=2, river=3.
+ */
+export function solve_pluribus_multiway_adapter_wasm(pot: number, num_players: number, active_stacks: Float64Array, lambda_factor: number, nominal_equity: number, hero_position: number, street: number, depth_streets: number, iterations: number): Float64Array;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
@@ -66,11 +72,13 @@ export interface InitOutput {
     readonly solve_icm_distortion_v2: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => unknown;
     readonly solve_icm_distortion_zerocopy: (a: number, b: number) => unknown;
     readonly solve_insolvency_matrix_binary: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => unknown;
+    readonly solve_pluribus_multiway_adapter_wasm: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;
     readonly __externref_table_alloc: () => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
+    readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_start: () => void;
 }
 

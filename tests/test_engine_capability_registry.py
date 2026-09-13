@@ -49,6 +49,8 @@ def test_pluribus_e_timesfm_declaram_a_capacidade_real() -> None:
     assert "active_stacks" in pluribus.causal_parameters
     assert "depth_streets" in pluribus.causal_parameters
     assert pluribus.reserved_parameters == []
+    assert "wasm" in pluribus.runtimes
+    assert "wasm-equity/lib.rs" in pluribus.consumer_paths
     assert "full-solver" not in pluribus.claims_allowed
     assert timesfm.implementation_level is ImplementationLevel.ADAPTER
     assert timesfm.runtime_availability == "runtime-dependent"

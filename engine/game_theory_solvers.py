@@ -261,8 +261,8 @@ class PluribusMultiwayState:
     def __post_init__(self) -> None:
         if not math.isfinite(self.pot) or self.pot <= 0:
             raise ValueError("pot must be finite and positive")
-        if self.num_players < 2:
-            raise ValueError("num_players must be at least 2")
+        if self.num_players < 2 or self.num_players > 10:
+            raise ValueError("num_players must be between 2 and 10")
         if len(self.active_stacks) != self.num_players:
             raise ValueError("active_stacks length must equal num_players")
         if any(not math.isfinite(stack) or stack <= 0 for stack in self.active_stacks):
@@ -309,7 +309,17 @@ class PluribusDepthLimitedSolver:
             raise ValueError("iterations must be positive")
 
         liability = self.state.compute_multiway_structural_liability()
-        pos_multiplier = 1.15 if hero_position in ["BTN", "CO"] else 0.88
+        position_multipliers = {
+            "BTN": 1.15,
+            "CO": 1.15,
+            "MP": 1.0,
+            "UTG": 0.88,
+            "SB": 0.88,
+            "BB": 0.88,
+        }
+        if hero_position not in position_multipliers:
+            raise ValueError("hero_position must be BTN, CO, MP, UTG, SB, or BB")
+        pos_multiplier = position_multipliers[hero_position]
 
         # Modulacao de equidade ajustada por multiway e posicao
         effective_equity = max(0.0, min(1.0, (equity * pos_multiplier) - (liability / max(1.0, self.state.pot))))

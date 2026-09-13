@@ -150,6 +150,30 @@ export function solve_insolvency_matrix_binary(villain_mask, board, rp_factor, h
     const ret = wasm.solve_insolvency_matrix_binary(ptr0, len0, ptr1, len1, rp_factor, hero_invested, current_pot, active_players, iterations, seed, kappa);
     return ret;
 }
+
+/**
+ * ABI WASM do adaptador heuristico multiway. Posicoes: BTN=0, CO=1, MP=2,
+ * UTG=3, SB=4, BB=5. Streets: preflop=0, flop=1, turn=2, river=3.
+ * @param {number} pot
+ * @param {number} num_players
+ * @param {Float64Array} active_stacks
+ * @param {number} lambda_factor
+ * @param {number} nominal_equity
+ * @param {number} hero_position
+ * @param {number} street
+ * @param {number} depth_streets
+ * @param {number} iterations
+ * @returns {Float64Array}
+ */
+export function solve_pluribus_multiway_adapter_wasm(pot, num_players, active_stacks, lambda_factor, nominal_equity, hero_position, street, depth_streets, iterations) {
+    const ptr0 = passArrayF64ToWasm0(active_stacks, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.solve_pluribus_multiway_adapter_wasm(pot, num_players, ptr0, len0, lambda_factor, nominal_equity, hero_position, street, depth_streets, iterations);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
@@ -179,6 +203,10 @@ function __wbg_get_imports() {
         },
         __wbg_new_310879b66b6e95e1: function() {
             const ret = new Array();
+            return ret;
+        },
+        __wbg_new_from_slice_02962bf7778cf945: function(arg0, arg1) {
+            const ret = new Float64Array(getArrayF64FromWasm0(arg0, arg1));
             return ret;
         },
         __wbg_new_with_length_1278c16a5c5b497f: function(arg0) {
@@ -293,6 +321,11 @@ function debugString(val) {
     return className;
 }
 
+function getArrayF64FromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    return getFloat64ArrayMemory0().subarray(ptr / 8, ptr / 8 + len);
+}
+
 let cachedDataViewMemory0 = null;
 function getDataViewMemory0() {
     if (cachedDataViewMemory0 === null || cachedDataViewMemory0.buffer.detached === true || (cachedDataViewMemory0.buffer.detached === undefined && cachedDataViewMemory0.buffer !== wasm.memory.buffer)) {
@@ -383,6 +416,12 @@ function passStringToWasm0(arg, malloc, realloc) {
 
     WASM_VECTOR_LEN = offset;
     return ptr;
+}
+
+function takeFromExternrefTable0(idx) {
+    const value = wasm.__wbindgen_externrefs.get(idx);
+    wasm.__externref_table_dealloc(idx);
+    return value;
 }
 
 let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });

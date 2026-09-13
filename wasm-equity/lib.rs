@@ -9,6 +9,185 @@ const INV_LN_60: f64 = 0.24423939986381665;
 const INV_7_5: f64 = 0.13333333333333333;
 const INV_15: f64 = 0.06666666666666667;
 const INV_100: f64 = 0.01;
+const PLURIBUS_OUTPUT_LEN: usize = 19;
+
+#[inline(always)]
+fn round_four(value: f64) -> f64 {
+    (value * 10_000.0).round() / 10_000.0
+}
+
+/// Kernel deterministico do adaptador multiway inspirado em Pluribus.
+///
+/// Isto NAO implementa blueprint self-play, busca de subjogo em tempo real ou
+/// uma arvore extensiva. Ele porta para Rust/WASM o mesmo molde heuristico que
+/// ja existe em Python e TypeScript para permitir paridade e fallback medidos.
+fn solve_pluribus_multiway_core(
+    pot: f64,
+    num_players: u32,
+    active_stacks: &[f64],
+    lambda_factor: f64,
+    nominal_equity: f64,
+    hero_position: u32,
+    street: u32,
+    depth_streets: u32,
+    iterations: u32,
+) -> Result<[f64; PLURIBUS_OUTPUT_LEN], &'static str> {
+    if !pot.is_finite() || pot <= 0.0 {
+        return Err("pot must be finite and positive");
+    }
+    if !(2..=10).contains(&num_players) {
+        return Err("num_players must be between 2 and 10");
+    }
+    if active_stacks.len() != num_players as usize {
+        return Err("active_stacks length must equal num_players");
+    }
+    if active_stacks
+        .iter()
+        .any(|stack| !stack.is_finite() || *stack <= 0.0)
+    {
+        return Err("active_stacks must contain only finite positive values");
+    }
+    if !lambda_factor.is_finite() || lambda_factor < 0.0 {
+        return Err("lambda_factor must be finite and non-negative");
+    }
+    if !nominal_equity.is_finite() || !(0.0..=1.0).contains(&nominal_equity) {
+        return Err("nominal_equity must be finite and between 0 and 1");
+    }
+    if hero_position > 5 {
+        return Err("hero_position code must be between 0 and 5");
+    }
+    let maximum_depth = match street {
+        0 => 4,
+        1 => 3,
+        2 => 2,
+        3 => 1,
+        _ => return Err("street code must be between 0 and 3"),
+    };
+    if depth_streets == 0 || depth_streets > maximum_depth {
+        return Err("depth_streets exceeds the selected street horizon");
+    }
+    if iterations == 0 {
+        return Err("iterations must be positive");
+    }
+
+    let k_opponents = (num_players - 1).max(1);
+    let structural_liability = if k_opponents <= 1 {
+        0.0
+    } else {
+        round_four(lambda_factor * ((k_opponents * k_opponents - 1) as f64) * (pot * 0.05))
+    };
+    let pos_multiplier = match hero_position {
+        0 | 1 => 1.15,
+        3..=5 => 0.88,
+        _ => 1.0,
+    };
+    let penalty_fraction = structural_liability / pot.max(1.0);
+    let effective_equity = (nominal_equity * pos_multiplier - penalty_fraction).clamp(0.0, 1.0);
+    let effective_stack = active_stacks.iter().copied().fold(f64::INFINITY, f64::min);
+    let stack_to_pot_ratio = effective_stack / pot;
+    let call_cost = (pot * 0.5).min(effective_stack);
+    let raise_cost = pot.min(effective_stack);
+    let future_streets = depth_streets - 1;
+    let call_future_exposure = (effective_stack - call_cost)
+        .max(0.0)
+        .min(pot * 0.25 * future_streets as f64);
+    let raise_future_exposure = (effective_stack - raise_cost)
+        .max(0.0)
+        .min(pot * 0.5 * future_streets as f64);
+    let horizon_liability = structural_liability * 0.1 * future_streets as f64;
+    let future_edge = 2.0 * effective_equity - 1.0;
+    let utilities = [
+        0.0,
+        effective_equity * pot - (1.0 - effective_equity) * call_cost
+            + future_edge * call_future_exposure
+            - horizon_liability * 0.5,
+        effective_equity * pot * 1.5 - (1.0 - effective_equity) * raise_cost - structural_liability
+            + future_edge * raise_future_exposure
+            - horizon_liability,
+    ];
+
+    let mut cumulative_regrets = [0.0_f64; 3];
+    let mut strategy_sum = [0.0_f64; 3];
+    for iteration in 1..=iterations {
+        let positive_total: f64 = cumulative_regrets
+            .iter()
+            .map(|regret| regret.max(0.0))
+            .sum();
+        let strategy = if positive_total > 1e-12 {
+            cumulative_regrets.map(|regret| regret.max(0.0) / positive_total)
+        } else {
+            [1.0 / 3.0; 3]
+        };
+        let node_ev = (utilities[0] + utilities[1] + utilities[2]) / 3.0;
+        for action in 0..3 {
+            cumulative_regrets[action] =
+                (cumulative_regrets[action] + utilities[action] - node_ev).max(0.0);
+            strategy_sum[action] += iteration as f64 * strategy[action];
+        }
+    }
+    let strategy_total: f64 = strategy_sum.iter().sum();
+    let strategy = if strategy_total > 1e-12 {
+        strategy_sum.map(|value| value / strategy_total)
+    } else {
+        [1.0 / 3.0; 3]
+    };
+    let optimal_action = strategy
+        .iter()
+        .enumerate()
+        .max_by(|left, right| left.1.total_cmp(right.1))
+        .map_or(0, |(index, _)| index) as f64;
+
+    Ok([
+        round_four(strategy[0]),
+        round_four(strategy[1]),
+        round_four(strategy[2]),
+        optimal_action,
+        structural_liability,
+        round_four(effective_equity),
+        pos_multiplier,
+        k_opponents as f64,
+        iterations as f64,
+        depth_streets as f64,
+        round_four(effective_stack),
+        round_four(stack_to_pot_ratio),
+        round_four(call_cost),
+        round_four(raise_cost),
+        future_streets as f64,
+        round_four(horizon_liability),
+        0.0,
+        round_four(utilities[1]),
+        round_four(utilities[2]),
+    ])
+}
+
+/// ABI WASM do adaptador heuristico multiway. Posicoes: BTN=0, CO=1, MP=2,
+/// UTG=3, SB=4, BB=5. Streets: preflop=0, flop=1, turn=2, river=3.
+#[wasm_bindgen]
+pub fn solve_pluribus_multiway_adapter_wasm(
+    pot: f64,
+    num_players: u32,
+    active_stacks: &[f64],
+    lambda_factor: f64,
+    nominal_equity: f64,
+    hero_position: u32,
+    street: u32,
+    depth_streets: u32,
+    iterations: u32,
+) -> Result<js_sys::Float64Array, JsValue> {
+    let output = solve_pluribus_multiway_core(
+        pot,
+        num_players,
+        active_stacks,
+        lambda_factor,
+        nominal_equity,
+        hero_position,
+        street,
+        depth_streets,
+        iterations,
+    )
+    .map_err(JsValue::from_str)?;
+    Ok(js_sys::Float64Array::from(output.as_slice()))
+}
 
 /// SOTA: XorShift64* PRNG.
 /// Aniquila viés de amostragem na bolha do ICM e previne exaustão de ciclo (2^64-1).
@@ -378,7 +557,12 @@ fn calculate_bayesian_win_prob(prior_equity: f64, action_strength: f64, range_de
 
 /// SOTA v7.0 GOLD: Curva de Utilidade (Kahneman/VITOI)
 #[inline(always)]
-fn calculate_utility_ev(raw_ev: f64, stack_eff: f64, fgs_health: f64, reference_status: u32) -> f64 {
+fn calculate_utility_ev(
+    raw_ev: f64,
+    stack_eff: f64,
+    fgs_health: f64,
+    reference_status: u32,
+) -> f64 {
     if raw_ev.is_nan() || raw_ev.is_infinite() {
         return 0.0;
     }
@@ -391,15 +575,18 @@ fn calculate_utility_ev(raw_ev: f64, stack_eff: f64, fgs_health: f64, reference_
 
     // reference_status: 0 = baseline, 1 = tilt, 2 = protecting, 3 = bubble
     match reference_status {
-        1 => { // tilt
+        1 => {
+            // tilt
             lambda_val = lambda_val * 0.66;
             beta = 0.95;
         }
-        2 => { // protecting
+        2 => {
+            // protecting
             lambda_val = lambda_val * 1.33;
             alpha = 0.75;
         }
-        3 => { // bubble
+        3 => {
+            // bubble
             lambda_val = lambda_val * 2.0;
         }
         _ => {} // baseline / default
@@ -471,7 +658,8 @@ pub fn calculate_perspectiva_vitoi_wasm(
 
     // 5. Prospect Theory Logic
     let base_delta_lose = delta_lose_pct * (1.0 / fgs_health.max(0.1));
-    let prospect_delta_lose = calculate_utility_ev(base_delta_lose, stack_eff, fgs_health, reference_status);
+    let prospect_delta_lose =
+        calculate_utility_ev(base_delta_lose, stack_eff, fgs_health, reference_status);
 
     // 6. A EQUAÇÃO UNIFICADA
     let valuation = 1.0; // Baseline
@@ -935,5 +1123,39 @@ pub fn free_range_buffer(ptr: *mut f64, size: usize) {
     unsafe {
         // Reconstrói o Vec a partir do ponteiro e deixa ele sair de escopo (Drop = Free)
         let _ = Vec::from_raw_parts(ptr, 0, size);
+    }
+}
+
+#[cfg(test)]
+mod pluribus_adapter_tests {
+    use super::*;
+
+    #[test]
+    fn shared_flop_scenario_matches_the_cross_runtime_contract() {
+        let output =
+            solve_pluribus_multiway_core(100.0, 3, &[200.0, 160.0, 180.0], 2.25, 0.85, 0, 1, 3, 30)
+                .expect("the canonical scenario must be valid");
+
+        assert_eq!(output[4], 33.75);
+        assert_eq!(output[10], 160.0);
+        assert_eq!(output[11], 1.6);
+        assert_eq!(output[12], 50.0);
+        assert_eq!(output[13], 100.0);
+        assert_eq!(output[14], 2.0);
+        assert_eq!(output[15], 6.75);
+        assert_eq!(output[17], 56.625);
+        assert_eq!(output[18], 36.3);
+    }
+
+    #[test]
+    fn rejects_impossible_stack_and_horizon_inputs() {
+        assert_eq!(
+            solve_pluribus_multiway_core(100.0, 3, &[100.0, 100.0], 2.25, 0.5, 0, 1, 1, 10),
+            Err("active_stacks length must equal num_players")
+        );
+        assert_eq!(
+            solve_pluribus_multiway_core(100.0, 3, &[100.0, 100.0, 100.0], 2.25, 0.5, 0, 3, 2, 10,),
+            Err("depth_streets exceeds the selected street horizon")
+        );
     }
 }

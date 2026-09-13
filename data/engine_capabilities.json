@@ -70,7 +70,7 @@
       "family": "adapter",
       "implementation_level": "heuristic",
       "runtime_availability": "code-available",
-      "runtimes": ["python", "typescript"],
+      "runtimes": ["python", "typescript", "wasm"],
       "source_lineage": ["Pluribus", "CFR+", "PMev"],
       "safe_label": "Adaptador multiway PMev inspirado em Pluribus",
       "claims_allowed": ["depth-limited-interface", "heuristic-action-preference", "pmev-liability-integration"],
@@ -101,7 +101,9 @@
       ],
       "consumer_paths": [
         "api/v1/handlers.py",
-        "frontend/src/components/simulator/panels/PluribusMultiwayPanel.tsx"
+        "frontend/src/components/simulator/panels/PluribusMultiwayPanel.tsx",
+        "frontend/src/lib/pluribusWasmAdapter.ts",
+        "wasm-equity/lib.rs"
       ],
       "api_routes": ["/api/v1/game-theory/pluribus/solve"],
       "fallback_engine_id": "pmev-multiway-structural-v0"
@@ -181,7 +183,7 @@
       "units": ["big-blinds-or-chips", "probability", "utility"],
       "provenance_requirements": ["engine_id", "implementation_level", "source_lineage", "units"],
       "assumptions": ["canonical-toy-game-rules"],
-      "limitations": ["canonical-game-scope-not-a-general-poker-solver", "cross-runtime-parity-suite-pending"],
+      "limitations": ["canonical-game-scope-not-a-general-poker-solver", "parity-bounded-to-declared-shared-corpus"],
       "consumer_paths": ["api/v1/handlers.py", "frontend/src/lib/canonicalTheoryEngine.ts"],
       "api_routes": ["/api/v1/canonical/clairvoyance/solve", "/api/v1/canonical/akq/solve"],
       "fallback_engine_id": null
@@ -201,7 +203,7 @@
       "units": ["big-blinds-or-chips", "probability", "pot-fraction"],
       "provenance_requirements": ["engine_id", "implementation_level", "source_lineage", "units"],
       "assumptions": ["canonical-poker-theory-formulas"],
-      "limitations": ["formula-domain-only", "cross-runtime-parity-suite-pending"],
+      "limitations": ["formula-domain-only", "parity-bounded-to-declared-shared-corpus"],
       "consumer_paths": ["api/v1/handlers.py", "frontend/src/components/simulator/panels/CfrRegretPanel.tsx"],
       "api_routes": [
         "/api/v1/canonical/janda/mdf",
