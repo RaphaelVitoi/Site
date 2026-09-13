@@ -3,7 +3,10 @@
  * PATH: src/tests/simulator/timesfmConvergence.test.ts
  */
 
-import { calculateClientCfrConvergence } from '../../lib/timesfm-client';
+import {
+	calculateClientCfrConvergence,
+	forecastCfrConvergence,
+} from '../../lib/timesfm-client';
 
 describe('calculateClientCfrConvergence', () => {
 	test('devolve INSUFFICIENT_HISTORY se houver menos de 4 pontos', () => {
@@ -39,5 +42,43 @@ describe('calculateClientCfrConvergence', () => {
 			'timesfm-3.0-330m',
 		);
 		expect(res.license_tier).toContain('Non-Commercial');
+	});
+
+	test('gateway preserva a proveniencia devolvida pelo backend', async () => {
+		const originalFetch = globalThis.fetch;
+		const fetchMock = jest.fn().mockResolvedValueOnce({
+			ok: true,
+			json: async () => ({
+					status: 'SUCCESS',
+					forecast_type: 'univariate',
+					results: {
+						cfr_mean_positive_regret: {
+							target_name: 'cfr_mean_positive_regret',
+							history_length: 4,
+							forecast_horizon: 3,
+							mean_prediction: [0.03, 0.02, 0.01],
+							quantile_10: [0.02, 0.01, 0.005],
+							quantile_90: [0.04, 0.03, 0.02],
+							model_used: 'google/timesfm-test',
+							license_tier: 'Apache 2.0',
+							intended_model: 'google/timesfm-test',
+							weights_loaded: true,
+						},
+					},
+					model_used: 'google/timesfm-test',
+					license_tier: 'Apache 2.0',
+					intended_model: 'google/timesfm-test',
+					weights_loaded: true,
+				}),
+		});
+		Object.defineProperty(globalThis, 'fetch', { configurable: true, value: fetchMock });
+
+		const result = await forecastCfrConvergence([0.08, 0.06, 0.05, 0.04], 3, 0.001);
+
+		expect(result.model_used).toBe('google/timesfm-test');
+		expect(result.weights_loaded).toBe(true);
+		expect(result.fallback_used).toBe(false);
+		expect(result.source_metric).toBe('mean-positive-regret-proxy');
+		Object.defineProperty(globalThis, 'fetch', { configurable: true, value: originalFetch });
 	});
 });

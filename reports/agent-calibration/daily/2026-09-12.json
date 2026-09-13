@@ -7,33 +7,319 @@
   "session_filter": "",
   "ultima_calibracao": "2026-09-12T06:11:41.0000000-03:00",
   "timesfm_forecast": {
-    "status": "INSUFFICIENT_HISTORY",
-    "required_points": 4,
-    "available_points": 0,
-    "reason": "TimesFM exige ao menos 4 pontos historicos de feedback para projecao estocastica."
+    "status": "PROJECTION_ACTIVE",
+    "history_points": 4,
+    "horizon_sessions": 3,
+    "mean_trajectory": [
+      9.0,
+      9.0,
+      9.0
+    ],
+    "quantile_10": [
+      8.56,
+      8.37,
+      8.23
+    ],
+    "quantile_90": [
+      9.44,
+      9.63,
+      9.77
+    ],
+    "drift_per_session": 0.0,
+    "drift_direction": "ESTAVEL",
+    "risk_of_degradation": 0.0745,
+    "model_used": "analytic-linear-extrapolation (sem pesos de google/timesfm-2.0-500m-pytorch)",
+    "license_tier": "Apache 2.0 (Permissivo / Comercial)",
+    "intended_model": "google/timesfm-2.0-500m-pytorch",
+    "weights_loaded": false,
+    "conductor_model": null,
+    "notes": null
   },
-  "sessoes_com_feedback": [],
-  "sessoes_com_feedback_count": 0,
-  "sessoes_faltantes": 3,
+  "sessoes_com_feedback": [
+    "01a09547-c8df-7641-87b5-83723b4b645d",
+    "claude-opus5-site-2026-09-12-preludio"
+  ],
+  "sessoes_com_feedback_count": 2,
+  "sessoes_faltantes": 1,
   "sessoes_com_inicio_inconsistente": [],
-  "sessoes_com_densidade_relevante": [],
-  "sessoes_ativas_no_dia": [],
-  "feedback_count_acumulado": 0,
-  "correcoes_no_ledger": 32,
-  "correcoes_aplicadas": 32,
-  "feedback_count_no_dia": 0,
+  "sessoes_com_densidade_relevante": [
+    "claude-opus5-site-2026-09-12-preludio"
+  ],
+  "sessoes_ativas_no_dia": [
+    "01a09547-c8df-7641-87b5-83723b4b645d",
+    "claude-opus5-site-2026-09-12-preludio"
+  ],
+  "feedback_count_acumulado": 4,
+  "eligible_feedback_count": 4,
+  "eligible_feedback": [
+    {
+      "event_id": "19deef69-53f2-4676-884f-b0d14570781a",
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "eligible": true,
+      "reasons": []
+    },
+    {
+      "event_id": "f381ed8b-5bee-4498-a1fb-540314ecb0f1",
+      "session_id": "01a09547-c8df-7641-87b5-83723b4b645d",
+      "eligible": true,
+      "reasons": []
+    },
+    {
+      "event_id": "3aa96c94-65e0-4b79-bc8f-613c0acd2049",
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "eligible": true,
+      "reasons": []
+    },
+    {
+      "event_id": "7dccd2ab-9c74-4a47-ac6a-b3e678cec13f",
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "eligible": true,
+      "reasons": []
+    }
+  ],
+  "excluded_feedback_count": 0,
+  "excluded_feedback": [],
+  "historical_provenance_audit": [
+    {
+      "event_id": "c2c4cb6f-f864-4be5-9d77-bc8e28d51dfa",
+      "sequence": 1,
+      "session_id": "codex-site-2026-09-01-prioridade",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "dcf7d9d2-eec7-4ce8-9f6c-b5c4f69a7933",
+      "sequence": 2,
+      "session_id": "claude-opus5-site-2026-09-02-integridade",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "ca8346a2-bea7-4930-a562-277bba6b77d3",
+      "sequence": 3,
+      "session_id": "claude-opus5-site-2026-09-02-pmev",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "15b9a610-70d5-449e-8192-bf1ad3b09565",
+      "sequence": 5,
+      "session_id": "gemini-flash-site-2026-09-02-mcp-curation",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "06a2ae1d-0330-40fe-8b3b-33012e682772",
+      "sequence": 7,
+      "session_id": "claude-opus5-site-2026-09-02-guarda",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "55e7caae-f0ca-4702-a890-e299213c78c3",
+      "sequence": 8,
+      "session_id": "claude-opus5-site-2026-09-03-procedencia",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "701d6e3c-7daf-4c2d-b3c6-16624946aada",
+      "sequence": 9,
+      "session_id": "claude-opus5-site-2026-09-03-procedencia",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "48443d06-2119-4ab9-9c36-6ba72d35c056",
+      "sequence": 10,
+      "session_id": "gemini-3.8-flash-site-2026-09-03-saneamento",
+      "provenance_complete": false,
+      "reasons": [
+        "completed_handoff_not_declared"
+      ]
+    },
+    {
+      "event_id": "2b589f4c-f59e-451a-9e44-ba7d1cc1ef5c",
+      "sequence": 11,
+      "session_id": "2026-09-03-sota-v8-gold-governance",
+      "provenance_complete": false,
+      "reasons": [
+        "completed_handoff_not_declared"
+      ]
+    },
+    {
+      "event_id": "92d8d9f0-b4a8-46be-8ba8-1ac744215d94",
+      "sequence": 12,
+      "session_id": "gemini-3.8-flash-site-2026-09-04-refinamento-sota",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "f5672732-d12b-42b9-a677-07d5070bca76",
+      "sequence": 13,
+      "session_id": "claude-opus5-site-2026-09-04-credenciais-e-submodulos",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "fb4f444f-9021-47c0-9c44-807bc6e70381",
+      "sequence": 14,
+      "session_id": "claude-opus5-site-2026-09-05-fechamento-do-ciclo",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "6356f1e5-de70-4af8-bfa5-5cbc52274905",
+      "sequence": 15,
+      "session_id": "gemini-3.8-flash-site-2026-09-05-nexus-ollama-chat",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "0b30eafd-b57f-47dc-bf28-9822a0f36769",
+      "sequence": 16,
+      "session_id": "01a07276-1d55-7fe0-960b-dad779b641f1",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "c133f342-0ca1-45ec-9dbf-6403b57896ce",
+      "sequence": 17,
+      "session_id": "claude-opus5-site-2026-09-07-astra",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "c6179ef9-527e-4790-a848-a92baf8991d5",
+      "sequence": 18,
+      "session_id": "gemini-3.8-flash-site-2026-09-07-api-keys-free",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "c649f81b-3775-40b1-9d6e-6d041be20d1a",
+      "sequence": 19,
+      "session_id": "claude-opus5-site-2026-09-08-pmev",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "97b5c71a-c223-4a09-b728-16f04f54552d",
+      "sequence": 20,
+      "session_id": "claude-opus5-site-2026-09-08-contraste",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "277d4f23-4cd7-4400-8995-aee97905b500",
+      "sequence": 21,
+      "session_id": "gemini-3.8-flash-site-2026-09-10-multimodal-sota",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "6d4a8598-627d-44d5-9f63-29c6412aecfa",
+      "sequence": 22,
+      "session_id": "claude-opus5-raiz-e-site-2026-09-10",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "2d217894-15f9-4693-a861-19cf96568cea",
+      "sequence": 26,
+      "session_id": "gemini-3.8-flash-site-2026-09-11-teoria-sota",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "19deef69-53f2-4676-884f-b0d14570781a",
+      "sequence": 55,
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "f381ed8b-5bee-4498-a1fb-540314ecb0f1",
+      "sequence": 58,
+      "session_id": "01a09547-c8df-7641-87b5-83723b4b645d",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "3aa96c94-65e0-4b79-bc8f-613c0acd2049",
+      "sequence": 66,
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "7dccd2ab-9c74-4a47-ac6a-b3e678cec13f",
+      "sequence": 67,
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "provenance_complete": true,
+      "reasons": []
+    }
+  ],
+  "historical_excluded_count": 2,
+  "provenance_policy": "Incomplete historical evidence is retained in records, excluded from structural gate and corroboration. Scope must explicitly declare handoff; model, connector and supervision are independent required fields. Score statistics describe retained history, not an eligible calibration sample.",
+  "correcoes_no_ledger": 41,
+  "correcoes_aplicadas": 41,
+  "feedback_count_no_dia": 4,
   "feedback_sem_sessao": 0,
-  "por_sessao": [],
-  "score_mean": null,
-  "score_min": null,
-  "score_max": null,
-  "score_mean_no_dia": null,
+  "por_sessao": [
+    {
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "feedback_count": 3,
+      "densidade_relevante": true,
+      "primeiro_feedback": "2026-09-12T08:18:18.0000000-03:00",
+      "ultimo_feedback": "2026-09-12T23:26:19.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/12/2026 05:56:54"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "claude-opus-5"
+      ],
+      "conductor_vehicles": [
+        "claude-code"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    },
+    {
+      "session_id": "01a09547-c8df-7641-87b5-83723b4b645d",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-12T11:08:23.0000000-03:00",
+      "ultimo_feedback": "2026-09-12T11:08:23.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/12/2026 08:01:44"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gpt-5.6-terra"
+      ],
+      "conductor_vehicles": [
+        "codex"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    }
+  ],
+  "score_mean": 9.2,
+  "score_min": 9.0,
+  "score_max": 9.8,
+  "score_mean_no_dia": 9.2,
   "evidence_gate": {
     "metric": "distinct_sessions_with_feedback",
     "minimum_distinct_sessions": 3,
     "minimum_feedback_records": 3,
     "structural_gate_passed": false,
-    "reason": "0 de 3 sessoes com feedback; faltam 3. A contagem e acumulativa e NAO expira -- dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. Registro literal exigido enquanto isso: dados insuficientes -- nenhuma calibracao planejada.",
+    "reason": "2 de 3 sessoes com feedback; faltam 1. A contagem e acumulativa e NAO expira -- dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. Registro literal exigido enquanto isso: dados insuficientes -- nenhuma calibracao planejada.",
     "intra_session_density_is_data_not_trigger": "Tres feedbacks numa mesma sessao e evidencia forte e fica registrada, mas nao autoriza calibracao por si: a metrica e a contagem de sessoes distintas.",
     "accumulation_never_expires": "Dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. O ledger e append-only e a contagem so reinicia apos uma calibracao registrada.",
     "unsessioned_feedback_ignored": "Feedback sem session_id nao conta para nenhuma sessao: amostra sem origem identificada nao abre portao.",
@@ -41,10 +327,91 @@
     "pattern_confirmation_required": "At least two independently corroborating feedback records must identify the same operational pattern. The reviewer must cite both records or report insufficiency."
   },
   "calibration_planning_permitted": false,
-  "records": [],
+  "records": [
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 55,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-12T08:18:18.4940445-03:00",
+      "previous_hash": "03c200e8f6f0db0d49fa245e31011a915ab9e6139ea741797010cdc9df69f0b7",
+      "event_id": "19deef69-53f2-4676-884f-b0d14570781a",
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "score": 9.0,
+      "feedback": "A sessao foi otima, menos o desleixo inicial. O outro desleixo e retroativo, e nao se justificaria em uma sessao posterior. Outro apontamento: perceba o tempo em que as skills foram recomendadas ao fork e quando elas de fato foram feitas, por intervencao minha. Uma tarefa em aberto, em algum momento, foi esquecida, e isso e erro de nos dois. Outro ponto: as skills nao estao mais dirty -- em limpagem de lint o Gemini acabou envolvendo-as na limpeza, e elas estao limpas tanto quanto possiveis, e voce tinha ciencia memorizada disso. Ou seja, ha uma recomendacao minha agora de que ambos, eu e voce, nos atentemos a memoria de curto-medio prazo.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-12T05:56:54-03:00",
+      "conductor_model": "claude-opus-5",
+      "conductor_vehicle": "claude-code",
+      "supervision_mode": "assistida",
+      "tool_calls": 271,
+      "tool_errors": 11,
+      "tool_error_method": "is_error",
+      "record_hash": "ff2940276622e1080b659a370c7c29f43345323b3b96ea4b51132b635ab8c870"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 58,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-12T11:08:23.5542644-03:00",
+      "previous_hash": "11824d7d37249b1bd4a9fee801cce4561029c74337e2fa3fd0ab0698a364b76f",
+      "event_id": "f381ed8b-5bee-4498-a1fb-540314ecb0f1",
+      "session_id": "01a09547-c8df-7641-87b5-83723b4b645d",
+      "score": 9.8,
+      "feedback": "É, protocolo de handoff, feedback dez... nada acrescentar, você só esqueceu... feedback na verdade nove vírgula oito... você esqueceu de conferir a minha arbitragem já feita e entender como situação aberta na questão dos... dos ledgers não verificados, sem procedência, etc... Faça um relatório sobre o que você fez... dentro desse relatório tem que ter o processo, o que você aprendeu, qual foram os marcos, né, quais foram os desafios e a conclusão do estado atual, da do projeto versus o inicial, antes do começo da sessão, certo? E é isso.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-12T08:01:44-03:00",
+      "conductor_model": "gpt-5.6-terra",
+      "conductor_vehicle": "codex",
+      "supervision_mode": "assistida",
+      "tool_calls": 109,
+      "tool_errors": 2,
+      "tool_error_method": "sentinela",
+      "record_hash": "bacfb9c3c4f4a050de4472d9e2b7e25e79b66da6fe445d4caa94ec47f90a72d3"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 66,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-12T18:44:17.9898647-03:00",
+      "previous_hash": "ac21953526e4d22816f3e08b46225e3c442be91f64a89cbdb8db506a4fae0a07",
+      "event_id": "3aa96c94-65e0-4b79-bc8f-613c0acd2049",
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "score": 9.0,
+      "feedback": "Acho que falta ainda um pouco de olhar horizontal e sistemico, antevisao e a nossa sofisticada economia de shannon. Fora o consistente problema de redundancia de erros ou instrucoes ja antecipadas e memorizadas.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-12T05:56:54-03:00",
+      "conductor_model": "claude-opus-5",
+      "conductor_vehicle": "claude-code",
+      "supervision_mode": "assistida",
+      "tool_calls": 800,
+      "tool_errors": 25,
+      "tool_error_method": "is_error",
+      "record_hash": "9ed92a9f2566ec0efc6bfdad98eb82c155981e1ee0ea8ff6b3b0ef193c33917b"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 67,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-12T23:26:19.0850045-03:00",
+      "previous_hash": "9ed92a9f2566ec0efc6bfdad98eb82c155981e1ee0ea8ff6b3b0ef193c33917b",
+      "event_id": "7dccd2ab-9c74-4a47-ac6a-b3e678cec13f",
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "score": 9.0,
+      "feedback": "Menor periferia, mais horizontalidade.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-12T05:56:54-03:00",
+      "conductor_model": "claude-opus-5",
+      "conductor_vehicle": "claude-code",
+      "supervision_mode": "assistida",
+      "tool_calls": 1328,
+      "tool_errors": 40,
+      "tool_error_method": "is_error",
+      "record_hash": "897805b8fbcb1011944c79c9375e67e94c2d7d77e435a0547cac42d79b096e3d"
+    }
+  ],
   "outlier_evidence": {
     "ledger_path": "C:\\Users\\rapha\\.gemini\\Site\\reports\\agent-calibration\\outlier-evidence-ledger.jsonl",
-    "count": 1,
+    "count": 5,
     "records": [
       {
         "schema_version": "agent-calibration-outlier-ledger/v1",
@@ -79,6 +446,137 @@
         "resolves_sequence": 5,
         "authority": "Tier 0 - Raphael Vitoi (arbitragem soberana, CLAUDE.md raiz SS3.1)",
         "record_hash": "2ed1a4f97558583e6e2df7ca09c2a5ef973aa8731bdba8e7c9d1963676b7406f"
+      },
+      {
+        "schema_version": "agent-calibration-outlier-ledger/v1",
+        "sequence": 7,
+        "record_type": "outlier",
+        "recorded_at": "2026-09-12T08:03:07.1121835-03:00",
+        "previous_hash": "2ed1a4f97558583e6e2df7ca09c2a5ef973aa8731bdba8e7c9d1963676b7406f",
+        "outlier_id": "7e5ca052-18c3-460d-ab56-37a036de01b0",
+        "observation": "OUTLIER GRAVE, declarado pelo Tier 0 em 2026-09-12. Desleixo DUPLO na relacao do Site com skills/gemini-supermemory.\n\nPRIMEIRA CAMADA -- a omissao. Em 2026-08-28 o proprio agente extraiu patches/skills/gemini-supermemory.patch,\nque remove o hook SessionEnd supermemory-session-saver: a cada fim de sessao ele enviava resumo do trabalho para\na API externa da Supermemory com SUPERMEMORY_API_KEY. O patch protege a arvore LOCAL. O gitlink do superprojeto\ncontinuou apontando 035c843d, commit upstream de 2026-03-20 que TRAZ src/hooks/session-end.js e a entrada em\nhooks/hooks.json -- ou seja, quem clonasse o Site publico recebia a versao com o canal de egress. Quinze dias,\nde 2026-08-28 a 2026-09-12. O README do proprio diretorio de patches prescrevia a saida em duas metades --\nfork proprio E gitlink apontando para ele. Em 2026-09-11 os oito forks foram criados, commitados e publicados;\no gitlink nao foi apontado. Metade feita.\n\nSEGUNDA CAMADA -- a autocorrecao que nao ocorreu, e e por ela que o Tier 0 chama de duplo. Em 2026-09-12, DENTRO\ndesta sessao, os oito submodulos apareceram como modificados no primeiro git status do turno. O agente os examinou,\nconcluiu deriva nao propria e os dispensou com a frase subir isso e decidir versao de skill, e essa decisao nao e\nminha. A evidencia estava na tela, o custo de verificar era um git diff --submodule=log, e a verificacao so ocorreu\ndepois que o Tier 0 corrigiu: os submodulos foram pra fork, voce mesmo fez na ultima sessao. Nao foi falta de dado.\nFoi atribuir a outro um trabalho proprio de ha um dia, e encerrar a analise na atribuicao.\n\nCAUSA MEDIDA DA PRIMEIRA CAMADA. A tabela de triagem em patches/skills/README.md classificava aquele patch como\nAjustes em src/lib/*. Ela foi montada por CONTAGEM DE ARQUIVOS E DIRETORIO DOMINANTE: onze dos doze arquivos sao\najustes de lib, e o decimo segundo era a remocao do canal de egress. Triagem por volume faz a unica linha de\nseguranca do conjunto parecer a mais inocua -- o oposto do que uma tabela de triagem existe para fazer. Foi essa\nlinha que, relida em 11/09, fez o fork parecer trabalho novo em vez de conclusao de trabalho ja catalogado.\n\nFECHADO EM 2026-09-12 quanto ao sintoma: .gitmodules repontado para os oito forks publicos de RaphaelVitoi e os\noito gitlinks commitados no MESMO ato -- separa-los publicaria estado que nao clona, porque os SHAs nao existem\nem upstream. Verificado por clone de teste, nao por raciocinio: git submodule update --init resolve pelos forks e\nskills/gemini-supermemory/src/hooks/ contem apenas session-start.js. Linha do README reclassificada como Seguranca.\n\nNAO FECHADO. Nenhum PR upstream para as tres correcoes de seguranca (gemini-cli-security, gemini-cli-jules,\ngemini-supermemory), medido com gh pr list --state all nos oito repositorios de origem: nenhum, em nenhum estado.\nO README classifica upstream como a saida de MAIOR valor porque encerra a divergencia; o fork apenas a administra.",
+        "source_references": [
+          "patches/skills/README.md",
+          "patches/skills/gemini-supermemory.patch",
+          ".gitmodules",
+          "skills/gemini-supermemory",
+          "reports/REGISTRO-2026-09-12-preludio-o-instrumento-que-sabia-abrir-e-nao-fechar.md",
+          "tests/test_patches_skills.py"
+        ],
+        "metrics": {
+          "submodulos_com_fork_sem_gitlink": 8,
+          "dias_com_gitlink_servindo_o_hook_de_egress": 15,
+          "dias_entre_o_fork_e_o_gitlink": 1,
+          "data_do_patch_local": "2026-08-28",
+          "data_dos_forks": "2026-09-11",
+          "data_do_fechamento": "2026-09-12",
+          "gitlink_antigo_do_supermemory": "035c843d",
+          "data_do_commit_do_gitlink_antigo": "2026-03-20",
+          "arquivos_no_patch": 12,
+          "arquivos_de_seguranca_no_patch": 1,
+          "correcoes_de_seguranca_sem_pr_upstream": 3,
+          "prs_upstream_abertos_medidos": 0,
+          "ocasioes_de_dispensa_na_propria_sessao": 1,
+          "submodulos_com_ignore_dirty": 9
+        },
+        "origin_hypothesis": "Hipotese de origem: triagem por VOLUME em vez de por EFEITO. A tabela do README classificou por contagem de arquivos e diretorio dominante, e a unica linha de seguranca virou a mais inocua da tabela. A segunda camada tem origem distinta e nao deve ser fundida com esta: atribuicao precipitada de autoria -- deriva nao minha -- encerrou a analise antes da medicao de um comando. Duas causas, um episodio. Revisao deterministica posterior deve tratar separadamente, porque a contramedida de uma nao alcanca a outra: a primeira pede criterio de triagem por efeito, a segunda pede que atribuicao de autoria seja MEDIDA (git log/reflog) antes de servir de motivo para nao agir.",
+        "disposition": "retained-pending-deterministic-review",
+        "pattern_indexed": false,
+        "record_hash": "b69d6ec16b6f6d5181975e94152788ca5a2209a2e8288d4957edebe9a8ed18a7"
+      },
+      {
+        "schema_version": "agent-calibration-outlier-ledger/v1",
+        "sequence": 8,
+        "record_type": "outlier",
+        "recorded_at": "2026-09-12T13:22:10.0602024-03:00",
+        "previous_hash": "b69d6ec16b6f6d5181975e94152788ca5a2209a2e8288d4957edebe9a8ed18a7",
+        "outlier_id": "d77bf7c3-38ac-46f3-8bcd-e1f74ee3c127",
+        "observation": "Encerramento do outlier 512fc3a6 (2026-09-06). Ele tinha DOIS componentes e ambos estao fechados, medidos em 2026-09-12. Componente 1, prompt do heartbeat exigia recorte diario contra um gerador que conta sessoes acumuladas: reconciliado pelo Codex na plataforma e verificado na fonte -- ~/.codex/automations/calibra-o-di-ria-de-coer-ncia-ag-ntica/automation.toml esta ACTIVE, o texto exige sessoes distintas acumuladas desde a ultima calibracao registrada, delimitada por sequence, e nao ha mais nenhuma mencao a recorte por dia como limite de amostra; o texto tambem separa suficiencia estrutural de corroboracao. Componente 2, que o relatorio de reconciliacao nao chegou a nomear: o universo gerado incluia o feedback 48443d06-2119-4ab9-9c36-6ba72d35c056, de scope intrasessao-outlier, correspondente ao outlier b39b7431 ainda nao promovido. O portao de proveniencia instalado em 2026-09-12 o exclui explicitamente, com motivo completed_handoff_not_declared, e ele aparece na auditoria historica como sequencia 10 -- preservado como evidencia, nunca promovido a handoff. A divergencia semantica de elegibilidade que o outlier apontava deixou de existir nas duas pontas.",
+        "source_references": [
+          "automation:calibra-o-di-ria-de-coer-ncia-ag-ntica",
+          "CLAUDE.md",
+          "scripts/ops/AgentCalibrationProvenance.ps1",
+          "scripts/ops/New-AgentCalibrationDailyEvidence.ps1",
+          "reports/agent-calibration/feedback-ledger.jsonl",
+          "reports/HANDOFF-2026-09-12-reconciliacao-calibracao-e-proveniencia.md",
+          "reports/AUDITORIA-2026-09-12-o-ci-vermelho-que-nenhum-portao-local-media.md"
+        ],
+        "metrics": {
+          "minimo_do_portao": 3,
+          "outlier_chain_records_before_append": 8,
+          "prompt_mencoes_a_acumulado": 1,
+          "sessoes_elegiveis_no_ciclo": 2,
+          "prompt_mencoes_a_recorte_diario": 0,
+          "sequencia_do_feedback_excluido": 10,
+          "feedback_chain_records": 59
+        },
+        "origin_hypothesis": "Confirmada a hipotese original: prompt desatualizado somado a filtro de record_type sem exclusao de scope de outlier. As duas causas foram atacadas na fonte, nao contornadas.",
+        "disposition": "resolved",
+        "pattern_indexed": false,
+        "resolves": "512fc3a6-7446-4826-aec8-d71ec5e951b0",
+        "resolves_sequence": 4,
+        "authority": "Tier 0 - Raphael Vitoi; delegacao e autorizacao explicitas em 2026-09-12",
+        "record_hash": "ab1ef6730983ae5198801f69b0c9226fc9e08165bc0db89066a528c0d0758d9c"
+      },
+      {
+        "schema_version": "agent-calibration-outlier-ledger/v1",
+        "sequence": 9,
+        "record_type": "outlier",
+        "recorded_at": "2026-09-12T16:55:10.9375423-03:00",
+        "previous_hash": "ab1ef6730983ae5198801f69b0c9226fc9e08165bc0db89066a528c0d0758d9c",
+        "outlier_id": "6d9a2cce-11e5-4a8f-9168-f7cfea23be3f",
+        "observation": "Encerramento de 2d55d92a. A disposicao dizia retained-pending-deterministic-review, mas nao havia revisao pendente: a determinacao ja fora tomada E executada. As proprias referencias do registro trazem decisao-tier0:2026-09-03T20:40-03:00 -- sem nota e sem feedback para esta sessao --, e a execucao dessa decisao e a AUSENCIA de registro de feedback para a sessao, verificavel e verificada: nenhum evento de feedback a referencia, entao ela nao entra em media, densidade ou limiar por construcao, e nao por filtro. A evidencia permanece retida e integra; o que se encerra e a espera. O Tier 0 atribuiu a degradacao daquela sessao a instabilidade dos servidores da Anthropic em 2026-09-03, e nao ao modelo -- fato que tambem importa ao da7ef222, porque significa que a evidencia de 09-03 para aquela hipotese esta confundida por infraestrutura.",
+        "source_references": [
+          "outlier:2d55d92a",
+          "decisao-tier0:2026-09-03T20:40-03:00",
+          "reports/agent-calibration/feedback-ledger.jsonl",
+          "reports/AUDITORIA-2026-09-03-trabalho-do-gemini-3-8-flash.md"
+        ],
+        "metrics": {
+          "registros_de_feedback_no_ledger": 66,
+          "outliers_antes_do_append": 9,
+          "feedbacks_que_referenciam_a_sessao": 0
+        },
+        "origin_hypothesis": "Nenhuma hipotese aberta: a sessao foi classificada por decisao explicita e a classificacao esta em vigor no dado.",
+        "disposition": "resolved",
+        "pattern_indexed": false,
+        "resolves": "2d55d92a-a198-45a7-b489-c860ff8dfbcb",
+        "resolves_sequence": 3,
+        "authority": "Tier 0 - Raphael Vitoi; aprovacao em bloco de 2026-09-12",
+        "record_hash": "e41a18ece1eeaf188e7222e79bdcb5e5e0076fb6c06428ee290d312e1203a5d6"
+      },
+      {
+        "schema_version": "agent-calibration-outlier-ledger/v1",
+        "sequence": 10,
+        "record_type": "outlier",
+        "recorded_at": "2026-09-12T16:55:11.0043868-03:00",
+        "previous_hash": "e41a18ece1eeaf188e7222e79bdcb5e5e0076fb6c06428ee290d312e1203a5d6",
+        "outlier_id": "d86cbde0-4c79-4694-9646-b7d5dea7ca82",
+        "observation": "Medicao dirigida a hipotese do outlier da7ef222 -- aceleracao do agente sob contexto de seguranca ou de erro proprio, com aumento de erros e desvios. A sessao claude-opus5-site-2026-09-12-preludio e um caso quase ideal para testa-la: teve os dois contextos ao mesmo tempo, um outlier GRAVE declarado pelo Tier 0 sobre descuido do proprio agente (7e5ca052) e uma exposicao de egress em submodulo. A hipotese preve degradacao no trecho posterior a esse gatilho. MEDIDO, e o resultado e o oposto: ate o handoff, 271 chamadas com 11 erros, 4.1 por cento; sessao completa, 728 chamadas com 25 erros, 3.4 por cento. O trecho POSTERIOR ao gatilho -- 457 chamadas e 14 erros -- deu 3.1 por cento, ABAIXO do trecho anterior. Sob exatamente a condicao que a hipotese preve como degradante, a taxa caiu. Isto NAO e corroboracao e nao deve ser contado como uma das duas confirmacoes independentes que a promocao exige. E evidencia contraria, de uma sessao so, sem controle e sem cegamento -- fraca como refutacao pela mesma razao que seria fraca como confirmacao. Vale registrada porque o vies de so anexar o que confirma e o mecanismo que transforma hipotese em crenca. Nota adicional: a evidencia de 09-03 que originou a hipotese esta confundida por degradacao de infraestrutura, conforme a determinacao registrada em 2d55d92a.",
+        "source_references": [
+          "outlier:da7ef222-3ad3-40a9-a053-84b70e97b542",
+          "outlier:7e5ca052",
+          "scripts/ops/agent_tool_error_index.py",
+          "reports/AUDITORIA-2026-09-12-o-ci-vermelho-que-nenhum-portao-local-media.md",
+          "session:claude-opus5-site-2026-09-12-preludio"
+        ],
+        "metrics": {
+          "chamadas_ate_o_handoff": 271,
+          "taxa_trecho_posterior_pct": 3.1,
+          "erros_ate_o_handoff": 11,
+          "chamadas_sessao_completa": 728,
+          "erros_trecho_posterior": 14,
+          "erros_sessao_completa": 25,
+          "taxa_sessao_completa_pct": 3.4,
+          "sessoes_na_amostra": 1,
+          "metodo": "is_error",
+          "taxa_ate_o_handoff_pct": 4.1,
+          "chamadas_trecho_posterior": 457
+        },
+        "origin_hypothesis": "A hipotese de aceleracao sob estresse preve piora no trecho posterior ao gatilho. Medida numa sessao com os dois contextos presentes, a taxa caiu de 4.1 para 3.1 por cento. Falsificador declarado: se em duas sessoes independentes com gatilho a taxa posterior nao superar a anterior, a hipotese deve ser retirada em vez de mantida em espera indefinida.",
+        "disposition": "retained-pending-deterministic-review",
+        "pattern_indexed": false,
+        "record_hash": "05d10b06bc0b67c7ad3be58698ece5151ddfaeac70189be3f363cfacaff3e19a"
       }
     ],
     "disposition": "retained separately; excluded from pattern indexing and calibration sample until deterministic posterior review",

@@ -13,12 +13,14 @@ let regretSum: Float32Array | null = null;
 let strategySum: Float32Array | null = null;
 let currentStrategy: Float32Array | null = null;
 let lastScenarioHash: string | null = null;
+let iterationCount = 0;
 
 interface CfrConfig {
   nodes: number;
   pot: number;
   stack: number;
   kappa: number;
+  equity: number;
 }
 
 function computeNodeCfr(
@@ -29,7 +31,7 @@ function computeNodeCfr(
   currentStrategy: Float32Array,
   renderMatrix: Float32Array,
 ) {
-  const { nodes, pot, stack, kappa } = config;
+  const { nodes, pot, stack, kappa, equity } = config;
   const row = Math.floor(i / nodes);
   const col = i % nodes;
 
@@ -37,7 +39,8 @@ function computeNodeCfr(
   const rank1 = 1 - row / nodes;
   const rank2 = 1 - col / nodes;
   const isSuited = col > row;
-  const handStrength = (rank1 + rank2) / 2 + (isSuited ? 0.05 : 0);
+  const gridStrength = (rank1 + rank2) / 2 + (isSuited ? 0.05 : 0);
+  const handStrength = Math.min(1, Math.max(0, gridStrength * 0.65 + (equity / 100) * 0.35));
 
   // 1. Utilities (Cálculo de Expectativa)
   const evFold = 0;
@@ -87,10 +90,11 @@ interface CfrMessageData {
   pot: number;
   stack: number;
   kappa: number;
+  equity: number;
 }
 
 globalThis.onmessage = (e: MessageEvent<CfrMessageData>) => {
-  const { id, nodes, pot, stack, kappa } = e.data;
+  const { id, nodes, pot, stack, kappa, equity } = e.data;
 
   if (!id || typeof nodes !== 'number' || typeof pot !== 'number') {
     console.warn('[SOTA CFR Worker] Invalid payload discarded.', e.data);
@@ -99,7 +103,7 @@ globalThis.onmessage = (e: MessageEvent<CfrMessageData>) => {
 
   try {
     const totalNodes = nodes * nodes;
-    const currentScenarioHash = `${nodes}-${pot}-${stack}-${kappa}`;
+    const currentScenarioHash = `${nodes}-${pot}-${stack}-${equity}-${kappa}`;
 
     // Alocação Contígua Estrita & Reset de Cenário
     if (regretSum?.length !== totalNodes * ACTIONS || lastScenarioHash !== currentScenarioHash) {
@@ -107,6 +111,7 @@ globalThis.onmessage = (e: MessageEvent<CfrMessageData>) => {
       strategySum = new Float32Array(totalNodes * ACTIONS);
       currentStrategy = new Float32Array(totalNodes * ACTIONS);
       lastScenarioHash = currentScenarioHash;
+      iterationCount = 0;
     }
 
     // SOTA: O renderMatrix DEVE ser instanciado novo a cada iteração, pois sua posse (ownership) será transferida ao host
@@ -115,12 +120,38 @@ globalThis.onmessage = (e: MessageEvent<CfrMessageData>) => {
     if (regretSum && strategySum && currentStrategy) {
       // Iteração CFR Pura
       for (let i = 0; i < totalNodes; i++) {
-        computeNodeCfr(i, { nodes, pot, stack, kappa }, regretSum, strategySum, currentStrategy, renderMatrix);
+        computeNodeCfr(
+          i,
+          { nodes, pot, stack, kappa, equity },
+          regretSum,
+          strategySum,
+          currentStrategy,
+          renderMatrix,
+        );
       }
     }
 
+    iterationCount += 1;
+    let positiveRegretTotal = 0;
+    for (const regret of regretSum ?? []) {
+      positiveRegretTotal += Math.max(0, regret);
+    }
+    const regretScale = Math.max(Math.abs(pot), Math.abs(stack), 1);
+    const meanPositiveRegret = positiveRegretTotal / Math.max(1, regretSum?.length ?? 0) / regretScale;
+
     // SOTA FIX: Transferência O(1) via Zero-Copy (Transferable Objects)
-    (globalThis as unknown as Worker).postMessage({ id, matrix: renderMatrix }, [renderMatrix.buffer]);
+    (globalThis as unknown as Worker).postMessage(
+      {
+        id,
+        matrix: renderMatrix,
+        diagnostic: {
+          iteration: iterationCount,
+          metric: 'mean-positive-regret-proxy',
+          value: meanPositiveRegret,
+        },
+      },
+      [renderMatrix.buffer],
+    );
   } catch (error: unknown) {
     let errorMessage = 'Erro desconhecido no motor CFR puro.';
     if (error instanceof Error) errorMessage = error.message;

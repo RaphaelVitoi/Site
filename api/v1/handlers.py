@@ -65,6 +65,7 @@ from core.perspective_schemas import (
 import core.runtime as _te
 from core.schemas import RAGQuery, Task
 from engine.bayesian_range import calculate_pmev_call_threshold
+from engine.capability_registry import load_engine_capability_manifest
 from engine.canonical_poker_theory import (
     ChenAKQGameSolver,
     ChenClairvoyanceSolver,
@@ -117,6 +118,38 @@ def _internal_error(exc: BaseException, contexto: str, **extra: Any) -> web.Resp
         **extra,
     }
     return web.json_response(payload, status=500)
+
+
+def _with_execution_provenance(
+    payload: dict[str, Any],
+    engine_id: str,
+    *,
+    runtime_used: str = "python",
+    model_used: str | None = None,
+    intended_model: str | None = None,
+    weights_loaded: bool = False,
+    fallback_used: bool = False,
+) -> dict[str, Any]:
+    """Anexa identidade executada; o nome da linhagem nunca substitui a prova."""
+    manifest = load_engine_capability_manifest()
+    selected = next((item for item in manifest.capabilities if item.engine_id == engine_id), None)
+    if selected is None:
+        raise KeyError(f"unknown engine capability: {engine_id}")
+    return {
+        **payload,
+        "execution_provenance": {
+            "engine_id": selected.engine_id,
+            "implementation_level": selected.implementation_level.value,
+            "runtime_used": runtime_used,
+            "model_used": model_used or selected.engine_id,
+            "intended_model": intended_model,
+            "weights_loaded": weights_loaded,
+            "fallback_used": fallback_used,
+            "assumptions": selected.assumptions,
+            "limitations": selected.limitations,
+            "units": selected.units,
+        },
+    }
 
 
 def _get_bg_tasks(app: web.Application) -> set[asyncio.Task[Any]]:
@@ -1009,11 +1042,20 @@ async def handle_pluribus_solve(request: web.Request) -> web.Response:
             strategy=solve_result["strategy"],
             structural_liability=round(float(solve_result["structural_liability"]), 4),
             effective_equity=round(float(solve_result["effective_equity"]), 4),
+            pos_multiplier=round(float(solve_result["pos_multiplier"]), 4),
+            k_opponents=solve_result["k_opponents"],
             depth_streets=solve_result["depth_streets"],
+            future_streets=solve_result["future_streets"],
+            effective_stack=round(float(solve_result["effective_stack"]), 4),
+            stack_to_pot_ratio=round(float(solve_result["stack_to_pot_ratio"]), 4),
+            call_cost=round(float(solve_result["call_cost"]), 4),
+            raise_cost=round(float(solve_result["raise_cost"]), 4),
+            horizon_liability=round(float(solve_result["horizon_liability"]), 4),
+            action_evs={key: round(float(value), 4) for key, value in solve_result["action_evs"].items()},
             iterations_run=req.iterations,
             execution_time_ms=elapsed_ms,
         )
-        return web.json_response(resp.model_dump())
+        return web.json_response(_with_execution_provenance(resp.model_dump(), "pluribus-multiway-adapter"))
     except Exception as e:
         return _internal_error(e, "handle_pluribus_solve", status="ERROR")
 
@@ -1069,7 +1111,7 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
             iterations_run=req.iterations,
             execution_time_ms=elapsed_ms,
         )
-        return web.json_response(resp.model_dump())
+        return web.json_response(_with_execution_provenance(resp.model_dump(), "deepstack-continual-resolving-adapter"))
     except Exception as e:
         return _internal_error(e, "handle_deepstack_resolve", status="ERROR")
 
@@ -1113,7 +1155,7 @@ async def handle_rebel_pbs_evaluate(request: web.Request) -> web.Response:
             normalized_ranges_valid=is_valid,
             entropy_delta_alert=alert,
         )
-        return web.json_response(resp.model_dump())
+        return web.json_response(_with_execution_provenance(resp.model_dump(), "rebel-pbs-adapter"))
     except Exception as e:
         return _internal_error(e, "handle_rebel_pbs_evaluate", status="ERROR")
 
@@ -1134,7 +1176,7 @@ async def handle_claudico_translate_action(request: web.Request) -> web.Response
             mapped_distribution={k: round(v, 4) for k, v in mapping.items()},
             target_bet=req.actual_bet,
         )
-        return web.json_response(resp.model_dump())
+        return web.json_response(_with_execution_provenance(resp.model_dump(), "claudico-action-translator"))
     except ValidationError as ve:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
     except Exception as e:
@@ -1158,7 +1200,7 @@ async def handle_canonical_clairvoyance(request: web.Request) -> web.Response:
             game_value_player_x=sol.game_value_player_x,
             bluff_to_value_ratio=sol.bluff_to_value_ratio,
         )
-        return web.json_response(resp.model_dump())
+        return web.json_response(_with_execution_provenance(resp.model_dump(), "chen-ankenman-analytic"))
     except ValidationError as ve:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
     except Exception as e:
@@ -1183,7 +1225,7 @@ async def handle_canonical_akq(request: web.Request) -> web.Response:
             villain_fold_queen_freq=sol.villain_fold_queen_freq,
             game_value_hero=sol.game_value_hero,
         )
-        return web.json_response(resp.model_dump())
+        return web.json_response(_with_execution_provenance(resp.model_dump(), "chen-ankenman-analytic"))
     except ValidationError as ve:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
     except Exception as e:
@@ -1208,7 +1250,7 @@ async def handle_canonical_janda_mdf(request: web.Request) -> web.Response:
             num_defenders=res.num_defenders,
             individual_mdf=res.individual_mdf,
         )
-        return web.json_response(resp.model_dump())
+        return web.json_response(_with_execution_provenance(resp.model_dump(), "janda-analytic"))
     except ValidationError as ve:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
     except Exception as e:
@@ -1246,7 +1288,7 @@ async def handle_canonical_geometric_sizing(request: web.Request) -> web.Respons
                 for s in res.steps
             ],
         )
-        return web.json_response(resp.model_dump())
+        return web.json_response(_with_execution_provenance(resp.model_dump(), "janda-analytic"))
     except ValidationError as ve:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
     except Exception as e:
@@ -1270,11 +1312,26 @@ async def handle_canonical_bluff_ratios(request: web.Request) -> web.Response:
             flop_bluff_to_value_ratio=res.flop_bluff_to_value_ratio,
             flop_bluff_percentage=res.flop_bluff_percentage,
         )
-        return web.json_response(resp.model_dump())
+        return web.json_response(_with_execution_provenance(resp.model_dump(), "janda-analytic"))
     except ValidationError as ve:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
     except Exception as e:
         return _internal_error(e, "handle_canonical_bluff_ratios", status="ERROR")
+
+
+async def handle_engine_capabilities(_request: web.Request) -> web.Response:
+    """Publica o contrato estatico sem alegar que houve probe de runtime."""
+    try:
+        manifest = load_engine_capability_manifest()
+        return web.json_response(
+            {
+                "status": "SUCCESS",
+                "runtime_probe_performed": False,
+                "manifest": manifest.model_dump(mode="json"),
+            }
+        )
+    except Exception as exc:
+        return _internal_error(exc, "handle_engine_capabilities", status="ERROR")
 
 
 async def handle_prometheus_metrics(request: web.Request) -> web.Response:
@@ -1400,7 +1457,16 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
                 weights_loaded=engine.weights_loaded,
             )
 
-        return web.json_response(resp.model_dump())
+        return web.json_response(
+            _with_execution_provenance(
+                resp.model_dump(),
+                "timesfm-forecast",
+                model_used=engine.procedencia,
+                intended_model=engine.metadata.model_id,
+                weights_loaded=engine.weights_loaded,
+                fallback_used=not engine.weights_loaded,
+            )
+        )
 
     except TimesFMGovernanceError as ge:
         logger.warning("TimesFM Violacao de Governanca: %s", ge)

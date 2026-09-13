@@ -23,7 +23,24 @@ import math
 from dataclasses import dataclass
 from typing import Final
 
-EPSILON: Final[float] = 1e-12
+
+def _require_positive(name: str, value: float) -> float:
+    """Rejeita grandezas impossiveis em vez de fabricar epsilon silencioso."""
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError(f"{name} must be a finite positive number")
+    return float(value)
+
+
+def _require_positive_integer(name: str, value: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
+def _require_probability(name: str, value: float) -> float:
+    if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+        raise ValueError(f"{name} must be a finite probability in [0, 1]")
+    return float(value)
 
 
 # ==============================================================================
@@ -67,8 +84,8 @@ class ChenClairvoyanceSolver:
         Para a aposta com todo o range de valor viavel, o valor do jogo para X e:
         $$V(X) = \frac{B^2}{2(P + B)}$$
         """
-        p = max(EPSILON, pot)
-        b = max(EPSILON, bet)
+        p = _require_positive("pot", pot)
+        b = _require_positive("bet", bet)
 
         alpha = b / (p + b)
         defense_freq = p / (p + b)
@@ -134,8 +151,8 @@ class ChenAKQGameSolver:
         Valor do jogo para Hero (em potes normais):
         $$V(\text{Hero}) = \frac{B}{6 \cdot (P + B)} \cdot B = \frac{B^2}{6(P + B)}$$
         """
-        p = max(EPSILON, pot)
-        b = max(EPSILON, bet)
+        p = _require_positive("pot", pot)
+        b = _require_positive("bet", bet)
 
         alpha = b / (p + b)
         call_king_freq = p / (p + b)
@@ -191,13 +208,18 @@ class ChenIndifferenceCalculator:
         $$EV(\text{Call}) = p_{\text{bluff}} \cdot (\text{Pot} + \text{Bet}) - (1 - p_{\text{bluff}}) \cdot \text{Bet}$$
         $$EV(\text{Fold}) = 0$$
         """
+        p = _require_positive("pot", pot)
+        b = _require_positive("bet", bet)
+        defender_probability = _require_probability("defender_call_prob", defender_call_prob)
+        bluff_probability = _require_probability("bluffer_bluff_prob", bluffer_bluff_prob)
+
         # EV do blefe para o atacante
-        ev_bluff = ((1.0 - defender_call_prob) * pot) - (defender_call_prob * bet)
+        ev_bluff = ((1.0 - defender_probability) * p) - (defender_probability * b)
         ev_check = 0.0
 
         # EV do call para o defensor com bluffcatcher
         # bluffer_bluff_prob representa a fracao de blefes no range total de aposta: P(Blefe | Aposta)
-        ev_call = (bluffer_bluff_prob * (pot + bet)) - ((1.0 - bluffer_bluff_prob) * bet)
+        ev_call = (bluff_probability * (p + b)) - ((1.0 - bluff_probability) * b)
         ev_fold = 0.0
 
         margin_bluff = abs(ev_bluff - ev_check)
@@ -248,9 +270,9 @@ class JandaMDFCalculator:
         $$\text{MDF}_{\text{ind}} = 1 - \alpha^{1/k}$$
         onde $k$ e o numero de defensores ativos.
         """
-        p = max(EPSILON, pot)
-        b = max(EPSILON, bet)
-        k = max(1, num_defenders)
+        p = _require_positive("pot", pot)
+        b = _require_positive("bet", bet)
+        k = _require_positive_integer("num_defenders", num_defenders)
 
         alpha = b / (p + b)
         mdf = p / (p + b)
@@ -316,9 +338,9 @@ class JandaGeometricBetSizing:
 
         $$(1 + 2r)^n = \frac{P + 2S}{P} \implies r = \frac{1}{2} \left[ \left(\frac{P + 2S}{P}\right)^{1/n} - 1 \right]$$
         """
-        p = max(EPSILON, pot)
-        s = max(EPSILON, effective_stack)
-        n = max(1, num_streets)
+        p = _require_positive("pot", pot)
+        s = _require_positive("effective_stack", effective_stack)
+        n = _require_positive_integer("num_streets", num_streets)
 
         target_pot = p + (2.0 * s)
         growth_factor = target_pot / p
@@ -395,7 +417,7 @@ class JandaStreetBluffValueRatio:
         No Flop (3 streets de valor):
         $$\text{Ratio}_{\text{flop}} = (1 + \alpha)^3 - 1$$
         """
-        f = max(0.01, bet_fraction)
+        f = _require_positive("bet_fraction", bet_fraction)
         alpha = f / (1.0 + f)
 
         # River

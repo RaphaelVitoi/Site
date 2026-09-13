@@ -9,6 +9,8 @@ Valida integracao e corretude matematica dos motores:
 """
 
 import math
+
+import pytest
 from engine.game_theory_solvers import (
     CFRPlusEngine,
     ClaudicoActionTranslator,
@@ -119,6 +121,75 @@ def test_pluribus_depth_limited_multiway_pmev():
     assert "optimal_action" in result
     assert result["structural_liability"] == 90.0
     assert math.isclose(sum(result["strategy"].values()), 1.0)
+
+
+def test_pluribus_active_stacks_governam_custos_e_evs():
+    """O menor stack ativo limita o capital exposto pelo molde."""
+    deep = PluribusDepthLimitedSolver(
+        PluribusMultiwayState(
+            pot=100.0,
+            num_players=3,
+            street=Street.FLOP,
+            active_stacks=[100.0, 120.0, 140.0],
+        )
+    ).solve_depth_limited(equity=0.85, hero_position="BTN")
+    shallow = PluribusDepthLimitedSolver(
+        PluribusMultiwayState(
+            pot=100.0,
+            num_players=3,
+            street=Street.FLOP,
+            active_stacks=[30.0, 120.0, 140.0],
+        )
+    ).solve_depth_limited(equity=0.85, hero_position="BTN")
+
+    assert deep["effective_stack"] == 100.0
+    assert shallow["effective_stack"] == 30.0
+    assert deep["call_cost"] == 50.0
+    assert shallow["call_cost"] == 30.0
+    assert deep["raise_cost"] == 100.0
+    assert shallow["raise_cost"] == 30.0
+    assert deep["action_evs"] != shallow["action_evs"]
+
+
+def test_pluribus_depth_governa_exposicao_futura():
+    """Horizonte maior produz exposição e passivo futuros explícitos."""
+    solver = PluribusDepthLimitedSolver(
+        PluribusMultiwayState(
+            pot=100.0,
+            num_players=3,
+            street=Street.FLOP,
+            active_stacks=[200.0, 160.0, 180.0],
+        )
+    )
+    one_street = solver.solve_depth_limited(equity=0.85, hero_position="BTN", depth_streets=1)
+    three_streets = solver.solve_depth_limited(equity=0.85, hero_position="BTN", depth_streets=3)
+
+    assert one_street["future_streets"] == 0
+    assert one_street["horizon_liability"] == 0.0
+    assert three_streets["future_streets"] == 2
+    assert three_streets["horizon_liability"] > 0.0
+    assert one_street["action_evs"] != three_streets["action_evs"]
+
+
+def test_pluribus_rejeita_estado_e_horizonte_impossiveis():
+    with pytest.raises(ValueError, match="active_stacks"):
+        PluribusMultiwayState(
+            pot=100.0,
+            num_players=3,
+            street=Street.FLOP,
+            active_stacks=[100.0, 100.0],
+        )
+
+    river_solver = PluribusDepthLimitedSolver(
+        PluribusMultiwayState(
+            pot=100.0,
+            num_players=2,
+            street=Street.RIVER,
+            active_stacks=[100.0, 100.0],
+        )
+    )
+    with pytest.raises(ValueError, match="depth_streets"):
+        river_solver.solve_depth_limited(equity=0.5, hero_position="BTN", depth_streets=2)
 
 
 def test_alphago_puct_perspective_selector():

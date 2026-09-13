@@ -7,6 +7,7 @@
 
 export type PluribusAction = 'FOLD' | 'CALL' | 'RAISE';
 export type TablePosition = 'BTN' | 'CO' | 'MP' | 'UTG' | 'SB' | 'BB';
+export type TableStreet = 'preflop' | 'flop' | 'turn' | 'river';
 
 export interface PluribusStateConfig {
 	pot: number;
@@ -14,6 +15,7 @@ export interface PluribusStateConfig {
 	heroPosition: TablePosition;
 	nominalEquity: number; // [0.0 - 1.0]
 	activeStacks: number[];
+	street?: TableStreet; // Padrão: flop
 	lambdaFactor?: number; // Padrão: 2.25
 	depthStreets?: number; // Padrão: 1
 	iterations?: number; // Padrão: 60
@@ -29,6 +31,12 @@ export interface PluribusSolveOutput {
 	iterations: number;
 	depthStreets: number;
 	evs: Record<PluribusAction, number>;
+	effectiveStack: number;
+	stackToPotRatio: number;
+	callCost: number;
+	raiseCost: number;
+	futureStreets: number;
+	horizonLiability: number;
 }
 
 const EPSILON = 1e-12;
@@ -126,9 +134,34 @@ export function solvePluribusMultiway(config: PluribusStateConfig): PluribusSolv
 		heroPosition,
 		nominalEquity,
 		lambdaFactor = 2.25,
+		street = 'flop',
 		depthStreets = 1,
 		iterations = 60,
 	} = config;
+
+	if (!Number.isFinite(pot) || pot <= 0) throw new RangeError('pot must be finite and positive');
+	if (!Number.isInteger(numPlayers) || numPlayers < 2 || numPlayers > 10) {
+		throw new RangeError('numPlayers must be an integer between 2 and 10');
+	}
+	if (config.activeStacks.length !== numPlayers) {
+		throw new RangeError('activeStacks length must equal numPlayers');
+	}
+	if (config.activeStacks.some((stack) => !Number.isFinite(stack) || stack <= 0)) {
+		throw new RangeError('activeStacks must contain only finite positive values');
+	}
+	if (!Number.isFinite(nominalEquity) || nominalEquity < 0 || nominalEquity > 1) {
+		throw new RangeError('nominalEquity must be finite and between 0 and 1');
+	}
+	if (!Number.isFinite(lambdaFactor) || lambdaFactor < 0) {
+		throw new RangeError('lambdaFactor must be finite and non-negative');
+	}
+	const maximumDepth: Record<TableStreet, number> = { preflop: 4, flop: 3, turn: 2, river: 1 };
+	if (!Number.isInteger(depthStreets) || depthStreets < 1 || depthStreets > maximumDepth[street]) {
+		throw new RangeError(`depthStreets must be between 1 and ${maximumDepth[street]} on ${street}`);
+	}
+	if (!Number.isInteger(iterations) || iterations < 1) {
+		throw new RangeError('iterations must be a positive integer');
+	}
 
 	const kOpponents = Math.max(1, numPlayers - 1);
 	const structuralLiability = computeMultiwayStructuralLiability(pot, numPlayers, lambdaFactor);
@@ -149,21 +182,38 @@ export function solvePluribusMultiway(config: PluribusStateConfig): PluribusSolv
 
 	const actions: PluribusAction[] = ['FOLD', 'CALL', 'RAISE'];
 	const cfrEngine = new CFRPlusEngine(actions);
+	const effectiveStack = Math.min(...config.activeStacks);
+	const stackToPotRatio = effectiveStack / pot;
+	const callCost = Math.min(pot * 0.5, effectiveStack);
+	const raiseCost = Math.min(pot, effectiveStack);
+	const futureStreets = depthStreets - 1;
+	const callFutureExposure = Math.min(
+		Math.max(effectiveStack - callCost, 0),
+		pot * 0.25 * futureStreets,
+	);
+	const raiseFutureExposure = Math.min(
+		Math.max(effectiveStack - raiseCost, 0),
+		pot * 0.5 * futureStreets,
+	);
+	const horizonLiability = structuralLiability * 0.1 * futureStreets;
+	const futureEdge = 2 * effectiveEquity - 1;
 
-	let finalCallEv = 0;
-	let finalRaiseEv = 0;
+	const finalCallEv =
+		effectiveEquity * pot -
+		(1 - effectiveEquity) * callCost +
+		futureEdge * callFutureExposure -
+		horizonLiability * 0.5;
+	const finalRaiseEv =
+		effectiveEquity * pot * 1.5 -
+		(1 - effectiveEquity) * raiseCost -
+		structuralLiability +
+		futureEdge * raiseFutureExposure -
+		horizonLiability;
 	const foldEv = 0;
 
 	// Auto-jogo de iterações de CFR+
 	const iters = Math.max(1, iterations);
 	for (let i = 0; i < iters; i++) {
-		finalCallEv =
-			effectiveEquity * pot - (1 - effectiveEquity) * (pot * 0.5);
-		finalRaiseEv =
-			effectiveEquity * pot * 1.5 -
-			(1 - effectiveEquity) * pot -
-			structuralLiability;
-
 		const nodeEv = (foldEv + finalCallEv + finalRaiseEv) / 3;
 		cfrEngine.updateRegrets(
 			{ FOLD: foldEv, CALL: finalCallEv, RAISE: finalRaiseEv },
@@ -196,10 +246,16 @@ export function solvePluribusMultiway(config: PluribusStateConfig): PluribusSolv
 		kOpponents,
 		iterations: iters,
 		depthStreets,
+		effectiveStack: Number(effectiveStack.toFixed(4)),
+		stackToPotRatio: Number(stackToPotRatio.toFixed(4)),
+		callCost: Number(callCost.toFixed(4)),
+		raiseCost: Number(raiseCost.toFixed(4)),
+		futureStreets,
+		horizonLiability: Number(horizonLiability.toFixed(4)),
 		evs: {
 			FOLD: 0,
-			CALL: Number(finalCallEv.toFixed(2)),
-			RAISE: Number(finalRaiseEv.toFixed(2)),
+			CALL: Number(finalCallEv.toFixed(4)),
+			RAISE: Number(finalRaiseEv.toFixed(4)),
 		},
 	};
 }

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class StreetEnum(StrEnum):
@@ -32,8 +32,16 @@ class PluribusMultiwayStateSchema(BaseModel):
     pot: float = Field(..., ge=0.1, description="Tamanho do pote em big blinds ou fichas.")
     num_players: int = Field(..., ge=2, le=10, description="Numero total de jogadores ativos na mao.")
     street: StreetEnum = Field(StreetEnum.FLOP, description="Rua atual do subjogo.")
-    active_stacks: list[float] = Field(..., min_length=2, description="Stacks ativos dos jogadores na mao.")
+    active_stacks: list[float] = Field(..., min_length=2, description="Stacks ativos finitos e positivos.")
     lambda_factor: float = Field(2.25, ge=1.0, le=5.0, description="Fator de aversao a risco PMev multiway.")
+
+    @model_validator(mode="after")
+    def validate_active_stacks(self) -> PluribusMultiwayStateSchema:
+        if len(self.active_stacks) != self.num_players:
+            raise ValueError("active_stacks length must equal num_players")
+        if any(stack <= 0 for stack in self.active_stacks):
+            raise ValueError("active_stacks must contain only positive values")
+        return self
 
 
 class PluribusSolveRequest(BaseModel):
@@ -44,8 +52,20 @@ class PluribusSolveRequest(BaseModel):
     state: PluribusMultiwayStateSchema = Field(..., description="Estado multiway do jogo.")
     equity: float = Field(..., ge=0.0, le=1.0, description="Equidade nominal do Hero [0.0 - 1.0].")
     hero_position: str = Field("BTN", description="Posicao do Hero (ex: BTN, CO, MP, UTG, SB, BB).")
-    depth_streets: int = Field(1, ge=1, le=3, description="Profundidade do horizonte de busca em streets.")
+    depth_streets: int = Field(1, ge=1, le=4, description="Profundidade do horizonte de busca em streets.")
     iterations: int = Field(50, ge=1, le=1000, description="Numero de iteracoes do self-play CFR+.")
+
+    @model_validator(mode="after")
+    def validate_street_horizon(self) -> PluribusSolveRequest:
+        maximum_depth = {
+            StreetEnum.PREFLOP: 4,
+            StreetEnum.FLOP: 3,
+            StreetEnum.TURN: 2,
+            StreetEnum.RIVER: 1,
+        }[self.state.street]
+        if self.depth_streets > maximum_depth:
+            raise ValueError(f"depth_streets must be between 1 and {maximum_depth} on {self.state.street.value}")
+        return self
 
 
 class PluribusSolveResponse(BaseModel):
@@ -54,11 +74,20 @@ class PluribusSolveResponse(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)
 
     status: Literal["SUCCESS", "ERROR"] = "SUCCESS"
-    optimal_action: str = Field(..., description="Acao otima convergida (FOLD, CALL, RAISE_POT).")
+    optimal_action: str = Field(..., description="Acao preferida pela aproximacao (FOLD, CALL, RAISE_POT).")
     strategy: dict[str, float] = Field(..., description="Distribuicao de probabilidade sobre as acoes validas.")
     structural_liability: float = Field(..., description="Passivo estrutural multiway N^2 deduzido do EV.")
     effective_equity: float = Field(..., description="Equidade efetiva corrigida por posicao e passivo multiway.")
+    pos_multiplier: float = Field(..., description="Multiplicador posicional aplicado a equidade nominal.")
+    k_opponents: int = Field(..., description="Numero de oponentes ativos.")
     depth_streets: int = Field(..., description="Profundidade simulada.")
+    future_streets: int = Field(..., description="Ruas futuras incorporadas pela aproximacao de horizonte.")
+    effective_stack: float = Field(..., description="Menor stack ativo, na mesma unidade do pote.")
+    stack_to_pot_ratio: float = Field(..., description="Razao entre stack efetivo e pote.")
+    call_cost: float = Field(..., description="Capital efetivo exposto no call.")
+    raise_cost: float = Field(..., description="Capital efetivo exposto no raise.")
+    horizon_liability: float = Field(..., description="Passivo adicional da aproximacao de horizonte.")
+    action_evs: dict[str, float] = Field(..., description="EV deterministico aproximado por acao.")
     iterations_run: int = Field(..., description="Iteracoes de CFR+ executadas.")
     execution_time_ms: float = Field(..., description="Tempo de calculo em milissegundos.")
     error: str | None = None

@@ -151,6 +151,12 @@ async def test_timesfm_api_handler_univariate_success():
     assert data["forecast_type"] == "univariate"
     assert "ev_loss_decay" in data["results"]
     assert len(data["results"]["ev_loss_decay"]["mean_prediction"]) == 5
+    provenance = data["execution_provenance"]
+    assert provenance["engine_id"] == "timesfm-forecast"
+    assert provenance["implementation_level"] == "adapter"
+    assert provenance["model_used"] == data["model_used"]
+    assert provenance["weights_loaded"] == data["weights_loaded"]
+    assert provenance["fallback_used"] is (not data["weights_loaded"])
 
 
 @pytest.mark.asyncio

@@ -9,6 +9,7 @@ Valida os resultados diretamente contra as solucoes exatas das obras:
 from __future__ import annotations
 
 import math
+import pytest
 from engine.canonical_poker_theory import (
     ChenAKQGameSolver,
     ChenClairvoyanceSolver,
@@ -209,3 +210,22 @@ def test_cfr_plus_convergence_to_chen_analytical_equilibrium():
     avg_strat = cfr.get_average_strategy()
     assert avg_strat["CALL"] > 0.95
     assert avg_strat["FOLD"] < 0.05
+
+
+@pytest.mark.parametrize(
+    ("call", "kwargs"),
+    [
+        (ChenClairvoyanceSolver.solve, {"pot": 0.0, "bet": 1.0}),
+        (ChenAKQGameSolver.solve, {"pot": 1.0, "bet": -1.0}),
+        (JandaMDFCalculator.calculate_mdf, {"pot": 1.0, "bet": 1.0, "num_defenders": 0}),
+        (
+            JandaGeometricBetSizing.calculate_geometric_sizing,
+            {"pot": 1.0, "effective_stack": 0.0, "num_streets": 3},
+        ),
+        (JandaStreetBluffValueRatio.calculate_ratios, {"bet_fraction": float("nan")}),
+    ],
+)
+def test_canonical_engines_reject_impossible_inputs(call, kwargs):
+    """Contrato direto deve falhar alto, igual aos schemas HTTP."""
+    with pytest.raises(ValueError):
+        call(**kwargs)
