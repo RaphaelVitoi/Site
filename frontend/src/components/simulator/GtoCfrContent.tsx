@@ -40,7 +40,7 @@ function GtoCfrContentInner({
 						}`}
 					>
 						<i className="fa-solid fa-user-group text-xs" />
-						Heads-Up CFR+ (2-Way)
+						<span>Heads-Up CFR+ (2-Way)</span>
 					</button>
 
 					<button
@@ -53,7 +53,7 @@ function GtoCfrContentInner({
 						}`}
 					>
 						<i className="fa-solid fa-users text-xs" />
-						Multiway PMev (Pluribus 6-Max)
+						<span>Multiway PMev (Pluribus 6-Max)</span>
 						<span className="text-[0.5rem] font-sans px-1.5 py-0.2 rounded-full bg-white/20 text-white font-bold">
 							SOTA
 						</span>
@@ -114,8 +114,8 @@ export function GtoCfrContent({
 		<Suspense
 			fallback={
 				<div className="sota-container mt-16 text-center text-accent-indigo font-mono text-[0.7rem] uppercase tracking-widest animate-pulse flex flex-col items-center gap-4">
-					<i className="fa-solid fa-atom text-2xl animate-spin" /> Sincronizando
-					Telemetria Quântica...
+					<i className="fa-solid fa-atom text-2xl animate-spin" />
+					<span>Sincronizando Telemetria Quântica...</span>
 				</div>
 			}
 		>

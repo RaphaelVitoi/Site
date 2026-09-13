@@ -108,7 +108,7 @@ class Bounds:
             raise ValueError("Bounds requer valores finitos.")
         if self.lower > self.upper:
             raise ValueError(f"Limite inferior ({self.lower}) nao pode exceder o superior ({self.upper}).")
-        if not (0.0 < self.confidence_level <= 1.0):
+        if not 0.0 < self.confidence_level <= 1.0:
             raise ValueError(f"Nivel de confianca deve estar em (0, 1], recebido: {self.confidence_level}.")
 
 
