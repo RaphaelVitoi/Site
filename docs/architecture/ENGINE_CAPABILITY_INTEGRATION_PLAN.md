@@ -46,8 +46,8 @@ ela apenas não recebe o nível `full-solver` antes de realizar essa capacidade.
 | P1.1 | Corpus compartilhado de cenários | P0 | fixtures únicas para Python/TypeScript | iniciada: seis famílias |
 | P1.2 | Paridade cruzada | P1.1 | resultados dentro de tolerância declarada | iniciada: Python e TypeScript verdes, inclusive stacks/horizonte |
 | P1.3 | Parâmetros causais | P1.1 | stacks e profundidade governam a engine ou seguem reservados | concluída no adaptador Pluribus: capital e horizonte causais |
-| P1.4 | Gateway unificado local/API/WASM | P0.6 | seleção e fallback testados ponta a ponta | iniciada: TypeScript local e HTTP autenticado; executor WASM ausente |
-| P2.1 | Fronteira de autenticação por capacidade | P1.4 | cada rota classificada por risco e identidade | pendente |
+| P1.4 | Gateway unificado local/API/WASM | P0.6 | seleção e fallback testados ponta a ponta | iniciada: TypeScript local e HTTP autenticado alcançável; executor WASM Pluribus ausente |
+| P2.1 | Fronteira de autenticação por capacidade | P1.4 | cada rota classificada por risco e identidade | concluída: cálculo puro liberado por rota e método; operador permanece fechado |
 | P2.2 | Auditoria visual e acessibilidade | P1.4 | desktop, tablet, mobile, A11y e CWV medidos | pendente |
 | P3.1 | Field HRC externo | P1 | dez `otherstacks`, massa e unidades reconciliados | pendente |
 | P3.2 | Framework PMev denso | P1 + P3.1 | implementação plugável e baseline comparável | pendente |
@@ -103,3 +103,23 @@ O incremento iniciado em 2026-09-13 não altera a formulação definitiva da PMe
 não promove adaptadores a solvers completos e não estabiliza outputs provisórios.
 Ele cria a infraestrutura para que novos frameworks substituam ou componham os
 moldes existentes com proveniência, paridade e rollback observáveis.
+
+## 8. Continuação de 2026-09-13 — CI e fronteira de capacidades
+
+O primeiro push revelou no Linux estrito um uso por ponto sobre
+`Record<string, unknown>` que o typecheck local também reproduziu depois da
+consulta ao CI. A correção preserva `noPropertyAccessFromIndexSignature`: o
+validador passou a usar indexação explícita, sem afrouxar o compilador.
+
+A mesma auditoria encontrou uma integração incompleta em P1.4: o executor HTTP
+do gateway enviava JWT de produto para a rota Pluribus, mas a política de
+autorização ainda classificava todas as novas rotas matemáticas como rotas de
+operador. P2.1 passa a declarar a dupla exata `path × método`. As rotas de
+Pluribus, DeepStack, ReBeL, Claudico, Chen/Ankenman e Janda aceitam apenas `POST`
+de produto; descoberta de capacidades aceita apenas `GET`; disco, fila,
+ingestão, estado global e oráculo continuam fora da faixa.
+
+Isso conclui a fronteira de identidade sem fingir a conclusão de P1.4: existe
+WASM real para Monte Carlo de equidade, mas não há executor WASM semanticamente
+equivalente ao adaptador Pluribus. Ele não será ligado sob o mesmo nome até que
+implemente o mesmo contrato e passe pelo corpus de paridade.

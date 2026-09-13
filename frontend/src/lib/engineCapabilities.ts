@@ -56,10 +56,10 @@ function isEngineCapability(value: unknown): value is EngineCapability {
 	if (typeof value !== 'object' || value === null) return false;
 	const capability = value as Record<string, unknown>;
 	return (
-		typeof capability.engine_id === 'string' &&
-		typeof capability.display_name === 'string' &&
-		isOneOf(capability.family, ['pmev', 'cfr', 'canonical', 'forecast', 'adapter']) &&
-		isOneOf(capability.implementation_level, [
+		typeof capability['engine_id'] === 'string' &&
+		typeof capability['display_name'] === 'string' &&
+		isOneOf(capability['family'], ['pmev', 'cfr', 'canonical', 'forecast', 'adapter']) &&
+		isOneOf(capability['implementation_level'], [
 			'analytic',
 			'heuristic',
 			'adapter',
@@ -68,24 +68,25 @@ function isEngineCapability(value: unknown): value is EngineCapability {
 			'full-solver',
 			'primitive',
 		]) &&
-		isOneOf(capability.runtime_availability, [
+		isOneOf(capability['runtime_availability'], [
 			'code-available',
 			'runtime-dependent',
 			'external-dependency',
 		]) &&
-		isStringArray(capability.runtimes) &&
-		isStringArray(capability.source_lineage) &&
-		typeof capability.safe_label === 'string' &&
-		isStringArray(capability.claims_allowed) &&
-		isStringArray(capability.causal_parameters) &&
-		isStringArray(capability.reserved_parameters) &&
-		isStringArray(capability.units) &&
-		isStringArray(capability.provenance_requirements) &&
-		isStringArray(capability.assumptions) &&
-		isStringArray(capability.limitations) &&
-		isStringArray(capability.consumer_paths) &&
-		isStringArray(capability.api_routes) &&
-		(capability.fallback_engine_id === null || typeof capability.fallback_engine_id === 'string')
+		isStringArray(capability['runtimes']) &&
+		isStringArray(capability['source_lineage']) &&
+		typeof capability['safe_label'] === 'string' &&
+		isStringArray(capability['claims_allowed']) &&
+		isStringArray(capability['causal_parameters']) &&
+		isStringArray(capability['reserved_parameters']) &&
+		isStringArray(capability['units']) &&
+		isStringArray(capability['provenance_requirements']) &&
+		isStringArray(capability['assumptions']) &&
+		isStringArray(capability['limitations']) &&
+		isStringArray(capability['consumer_paths']) &&
+		isStringArray(capability['api_routes']) &&
+		(capability['fallback_engine_id'] === null ||
+			typeof capability['fallback_engine_id'] === 'string')
 	);
 }
 
@@ -95,18 +96,18 @@ export function parseEngineCapabilityManifest(value: unknown): EngineCapabilityM
 	}
 	const manifest = value as Record<string, unknown>;
 	if (
-		typeof manifest.manifest_version !== 'string' ||
-		typeof manifest.governance !== 'string' ||
-		typeof manifest.updated_at !== 'string' ||
-		typeof manifest.runtime_probe_required !== 'boolean' ||
-		!isStringArray(manifest.provenance_fields) ||
-		!Array.isArray(manifest.capabilities) ||
-		!manifest.capabilities.every(isEngineCapability)
+		typeof manifest['manifest_version'] !== 'string' ||
+		typeof manifest['governance'] !== 'string' ||
+		typeof manifest['updated_at'] !== 'string' ||
+		typeof manifest['runtime_probe_required'] !== 'boolean' ||
+		!isStringArray(manifest['provenance_fields']) ||
+		!Array.isArray(manifest['capabilities']) ||
+		!manifest['capabilities'].every(isEngineCapability)
 	) {
 		throw new Error('Invalid engine capability manifest');
 	}
 
-	const capabilities = manifest.capabilities;
+	const capabilities = manifest['capabilities'];
 	const ids = capabilities.map(({ engine_id }) => engine_id);
 	if (new Set(ids).size !== ids.length) {
 		throw new Error('Engine capability manifest contains duplicate ids');
