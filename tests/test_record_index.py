@@ -287,9 +287,10 @@ def test_o_portao_cobra_ancora_declarada(tmp_path, monkeypatch):
     """
     (tmp_path / "reports").mkdir()
     registro = tmp_path / "reports" / "ANCORADO.md"
+    # Registro VIGENTE: sem commit declarado e sem classe interna, nenhum motivo de suspeita.
     registro.write_text(
         "---\nid: ancorado\ntipo: relatorio\nescopo: Site\nautor: claude@opus-5\n"
-        "criado_em: 2026-08-28\ncommit: b635c067\nclasses: [interno]\n"
+        "criado_em: 2026-08-28\n"
         "caminhos:\n  - engine/alvo.py\n"
         "verificado:\n  - nada\nnao_verificado:\n  - nada\n---\n\ncorpo\n",
         encoding="utf-8",
@@ -307,6 +308,56 @@ def test_o_portao_cobra_ancora_declarada(tmp_path, monkeypatch):
     monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: ["engine/alvo.py", "reports/ANCORADO.md"])
     erros, _ = record_gate.verificar()
     assert not any("ANCORADO.md" in e for e in erros), f"registro revisado junto foi acusado assim mesmo: {erros}"
+
+
+def _ancorado(raiz: Path, extra: str) -> None:
+    (raiz / "reports").mkdir(exist_ok=True)
+    (raiz / "reports" / "ANCORADO.md").write_text(
+        "---\nid: ancorado\ntipo: relatorio\nescopo: Site\nautor: claude@opus-5\n"
+        f"criado_em: 2026-08-28\n{extra}"
+        "caminhos:\n  - engine/alvo.py\n"
+        "verificado:\n  - nada\nnao_verificado:\n  - nada\n---\n\ncorpo\n",
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        "commit: b635c067\nclasses: [interno]\n",  # commit que nao existe neste repositorio
+        "classes: [interno]\n",  # classe interna sem ancora de commit
+    ],
+)
+def test_ancora_de_registro_suspeito_avisa_e_nao_bloqueia(tmp_path, monkeypatch, extra):
+    """G2 so bloqueia VIGENTE (Tier 0, 2026-09-13). Registro SUSPEITO vira aviso."""
+    _ancorado(tmp_path, extra)
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: ["engine/alvo.py"])
+    monkeypatch.setattr(record_gate, "_git", lambda *a: "reports/ANCORADO.md\n" if a[:1] == ("ls-files",) else "")
+    erros, avisos = record_gate.verificar()
+    assert not any("ANCORADO.md" in e for e in erros), erros
+    assert any("ANCORADO.md" in a and "SUSPEITO" in a and "engine/alvo.py" in a for a in avisos), avisos
+
+
+def test_ancora_de_registro_obsoleto_avisa_e_nao_bloqueia(tmp_path, monkeypatch):
+    """Registro aposentado por `supersede` de outro tambem nao bloqueia."""
+    _ancorado(tmp_path, "")
+    (tmp_path / "reports" / "NOVO.md").write_text(
+        "---\nid: novo\ntipo: relatorio\nescopo: Site\nautor: claude@opus-5\n"
+        "criado_em: 2026-09-13\nsupersede: ancorado\n"
+        "verificado:\n  - nada\nnao_verificado:\n  - nada\n---\n\ncorpo\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: ["engine/alvo.py"])
+    monkeypatch.setattr(
+        record_gate,
+        "_git",
+        lambda *a: "reports/ANCORADO.md\nreports/NOVO.md\n" if a[:1] == ("ls-files",) else "",
+    )
+    erros, avisos = record_gate.verificar()
+    assert not any("ANCORADO.md" in e for e in erros), erros
+    assert any("ANCORADO.md" in a and "OBSOLETO" in a for a in avisos), avisos
 
 
 def test_reconciliacao_central_de_ancora_exige_registro_caminho_e_parecer(tmp_path, monkeypatch):

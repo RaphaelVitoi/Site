@@ -45,7 +45,10 @@ if str(RAIZ) not in sys.path:
     sys.path.insert(0, str(RAIZ))
 
 from scripts.ops.record_index import (  # noqa: E402
+    VIGENTE,
+    avaliar_registro,
     conferir_config_medida,
+    estado_de,
     ler_frontmatter_de_texto,
     resolvedores_de_ambiente,
     ttl_vencido,
@@ -653,6 +656,16 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
             continue
         revisoes_aceitas.setdefault(registro_id, set()).update(caminhos_revisados)
 
+    # G2 so BLOQUEIA registro VIGENTE (Tier 0, 2026-09-13). SUSPEITO e OBSOLETO ja
+    # nao sao fonte confiavel pelo proprio indice: viram AVISO. Medido antes: 34
+    # revisoes obrigatorias num dia, 1 delas sobre registro VIGENTE.
+    aposentados: set[str] = set()
+    for _rel, fm_ap in registros_lidos:
+        sup = fm_ap.get("supersede")
+        for item in sup if isinstance(sup, list) else [sup]:
+            if item and str(item).lower() not in {"null", "none"}:
+                aposentados.add(str(item).strip())
+
     for rel, fm in registros_lidos:
         if fm.get("supersede") and str(fm.get("supersede")).lower() not in {"null", "none"}:
             continue
@@ -666,6 +679,12 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
         if atingidos and rel not in tocados:
             pendentes = sorted(set(atingidos) - revisoes_aceitas.get(doc_id, set()))
             if not pendentes:
+                continue
+            motivos, ancestral, _ = avaliar_registro(fm, RAIZ, hoje, ambiente)
+            estado = estado_de(motivos, ancestral, doc_id in aposentados)
+            if estado != VIGENTE:
+                motivo = motivos[0] if motivos else "superseded por registro mais novo"
+                avisos.append(f"{rel} ({estado}, {motivo}) ancora {pendentes}. Nao bloqueia: registro nao vigente.")
                 continue
             erros.append(
                 f"{rel} declara ancora em {pendentes} e esses caminhos mudaram neste commit, "
