@@ -32,12 +32,12 @@ clone resolve.
 
 | Submódulo | Fork | Gitlink | Branch |
 | :--- | :--- | :--- | :--- |
-| `Stitch` | `stitch` | `454e84a5aaa5` | `fix/escopo-oauth-cloud-platform` |
+| `Stitch` | `stitch` | `7abb7b2f395c` | `fix/escopo-oauth-cloud-platform` |
 | `exa-mcp-server` | `exa-mcp-server` | `f3b1349c9b65` | `chore/sonarlint-campaign-20260911` |
-| `gemini-cli-jules` | `jules` | `9c848a2a0cb3` | `fix/injecao-no-workflow-e-registro-da-tool` |
+| `gemini-cli-jules` | `jules` | `09bef22d4af9` | `fix/injecao-no-workflow-e-registro-da-tool` |
 | `gemini-cli-security` | `security` | `1d2eef7c19f4` | `refactor-runners-de-poc-e-fronteira-do-vitest` |
 | `gemini-deep-research` | `gemini-cli-deep-research` | `69d39b447a4b` | `chore/lint-e-tipagem-de-mock` |
-| `gemini-supermemory` | `gemini-supermemory` | `1b0ca5a8498c` | `refactor/remove-egress-automatico-de-sessao` |
+| `gemini-supermemory` | `gemini-supermemory` | `6094ae21ebd8` | `refactor/remove-egress-automatico-de-sessao` |
 | `superpowers` | `superpowers` | `7e880359648e` | `chore/lint-e-sonda-de-dot-no-windows` |
 | `token-efficiency` | `token-efficiency` | `0212f0241683` | `chore/prefixo-node-nos-imports` |
 
