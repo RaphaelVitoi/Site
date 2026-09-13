@@ -107,6 +107,37 @@ def texto_como_vai_ao_commit(rel: str) -> str | None:
     return caminho.read_text(encoding="utf-8-sig", errors="ignore")
 
 
+def textos_do_indice(rels: list[str]) -> dict[str, str | None]:
+    """Mesma leitura de `texto_como_vai_ao_commit`, para N caminhos num unico processo git.
+
+    Um `git show` por arquivo custava ~56 ms no Windows: 368 chamadas eram 20 s de 24 s.
+    """
+    if not rels:
+        return {}
+    entrada = "".join(f":{rel}\n" for rel in rels).encode("utf-8")
+    r = subprocess.run(["git", "cat-file", "--batch"], cwd=RAIZ, input=entrada, capture_output=True, check=False)
+    if r.returncode != 0:
+        return {rel: texto_como_vai_ao_commit(rel) for rel in rels}
+    dados, pos, textos = r.stdout, 0, {}
+    for rel in rels:
+        fim = dados.index(b"\n", pos)
+        cabecalho = dados[pos:fim].decode("utf-8", errors="replace")
+        pos = fim + 1
+        if cabecalho.endswith(" missing"):
+            textos[rel] = texto_como_vai_ao_commit(rel)  # fora do indice: cai para a arvore
+            continue
+        tamanho = int(cabecalho.rsplit(" ", 1)[1])
+        textos[rel] = dados[pos : pos + tamanho].decode("utf-8-sig", errors="ignore")
+        pos += tamanho + 1
+    return textos
+
+
+def _corpus_do_indice() -> list[tuple[str, str]]:
+    """(caminho, texto) de docs/*.md e reports/*.md, lidos do indice num unico processo."""
+    rels = [rel for rel in _git("ls-files", "docs/*.md", "reports/*.md").splitlines() if rel.strip()]
+    return [(rel, texto) for rel, texto in textos_do_indice(rels).items() if texto]
+
+
 def arquivos_em_stage() -> list[str]:
     saida = _git("diff", "--cached", "--name-only", "--diff-filter=ACM")
     return [linha for linha in saida.splitlines() if linha.strip()]
@@ -446,12 +477,7 @@ def coletar_pendencias(hoje: date | None = None) -> tuple[list[dict], list[str]]
     hoje = hoje or date.today()
     declaradas: dict[str, dict] = {}
     resolvidas: set[str] = set()
-    for rel in _git("ls-files", "docs/*.md", "reports/*.md").splitlines():
-        if not rel.strip():
-            continue
-        texto = texto_como_vai_ao_commit(rel)
-        if not texto:
-            continue
+    for rel, texto in _corpus_do_indice():
         fm, _ = ler_frontmatter_de_texto(texto)
         if not fm:
             continue
@@ -599,12 +625,7 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
 
     registros_por_id: dict[str, tuple[str, dict]] = {}
     registros_lidos: list[tuple[str, dict]] = []
-    for rel in _git("ls-files", "docs/*.md", "reports/*.md").splitlines():
-        if not rel.strip():
-            continue
-        texto = texto_como_vai_ao_commit(rel)
-        if not texto:
-            continue
+    for rel, texto in _corpus_do_indice():
         fm, _ = ler_frontmatter_de_texto(texto)
         if not fm:
             continue
