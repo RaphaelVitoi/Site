@@ -10,6 +10,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 from math import isfinite
+from typing import Generic, TypeVar
+
+T = TypeVar("T")
 
 
 class PMevTier(StrEnum):
@@ -81,3 +84,96 @@ class PMevConfiguration:
             and not self.beliefs_enabled
             and not self.optionality_enabled
         )
+
+
+class Unit(StrEnum):
+    """Unidades fisicas e economicas estritas do arcabouco PMev."""
+
+    TOURNAMENT_DOLLARS = "TournamentDollars"
+    CHIPS = "Chips"
+    PROBABILITY = "Probability"
+    DIMENSIONLESS = "Dimensionless"
+
+
+@dataclass(frozen=True, slots=True)
+class Bounds:
+    """Limites de intervalo de confianca estatistico."""
+
+    lower: float
+    upper: float
+    confidence_level: float = 0.95
+
+    def __post_init__(self) -> None:
+        if not isfinite(self.lower) or not isfinite(self.upper) or not isfinite(self.confidence_level):
+            raise ValueError("Bounds requer valores finitos.")
+        if self.lower > self.upper:
+            raise ValueError(f"Limite inferior ({self.lower}) nao pode exceder o superior ({self.upper}).")
+        if not (0.0 < self.confidence_level <= 1.0):
+            raise ValueError(f"Nivel de confianca deve estar em (0, 1], recebido: {self.confidence_level}.")
+
+
+@dataclass(frozen=True, slots=True)
+class Provenance:
+    """Rastreabilidade e proveniencia deterministica de calculo/solver."""
+
+    engine_version: str
+    solver_id: str
+    seed: int | None = None
+    iterations: int | None = None
+    nash_distance_epsilon: float | None = None
+
+    def __post_init__(self) -> None:
+        if not self.engine_version.strip():
+            raise ValueError("Provenance requer engine_version nao vazia.")
+        if not self.solver_id.strip():
+            raise ValueError("Provenance requer solver_id nao vazio.")
+        if self.nash_distance_epsilon is not None and self.nash_distance_epsilon < 0:
+            raise ValueError("Distancia de Nash epsilon nao pode ser negativa.")
+
+
+@dataclass(frozen=True, slots=True)
+class Measured(Generic[T]):
+    """Contrato estrutural de grandeza mensuravel com incerteza e proveniencia.
+
+    Garante interoperabilidade e paridade de schema entre Python, TypeScript e WASM.
+    """
+
+    value: T
+    unit: Unit
+    is_valid: bool = True
+    standard_error: float = 0.0
+    confidence_interval: Bounds | None = None
+    provenance: Provenance | None = None
+
+    def __post_init__(self) -> None:
+        if not isfinite(self.standard_error) or self.standard_error < 0:
+            raise ValueError("Erro padrao deve ser finito e nao negativo.")
+
+
+@dataclass(frozen=True, slots=True)
+class AbsorptionState:
+    """Representacao formal de estado terminal na barreira absorvente.
+
+    Modela o particionamento exato de Bellman com payout ja garantido na
+    eliminacao (k-esima colocacao), sem dupla contagem de ruina.
+    """
+
+    place: int
+    payout: float
+    terminal: bool = True
+
+    def __post_init__(self) -> None:
+        if self.place < 1:
+            raise ValueError(f"Colocacao de eliminacao invalida: {self.place}.")
+        if not isfinite(self.payout) or self.payout < 0:
+            raise ValueError(f"Payout de absorcao invalido: {self.payout}.")
+
+
+class InsufficientDataCalibrationError(RuntimeError):
+    """Excecao formal para tentativa de calibracao antes de existir amostra elegivel.
+
+    Estado literal de governanca: DADOS INSUFICIENTES — NENHUMA CALIBRACAO PLANEJADA.
+    """
+
+    def __init__(self, message: str = "DADOS INSUFICIENTES — NENHUMA CALIBRACAO PLANEJADA") -> None:
+        super().__init__(message)

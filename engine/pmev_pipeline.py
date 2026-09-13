@@ -14,8 +14,19 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
+from numpy.typing import NDArray
+
 from engine.icm_matrix import calculate_malmuth_harville_icm
-from engine.pmev_spec import TournamentState
+from engine.pmev_operators import (
+    OperatorF1Baseline,
+    OperatorF2Temporal,
+    OperatorF3Behavioral,
+    OperatorF4Absorption,
+    OperatorF5Functional,
+    PMevCompositionResult,
+)
+from engine.pmev_spec import AbsorptionState, Measured, TournamentState
 from llm.free_router import SOTAUnifiedFreeRouter
 
 logger = logging.getLogger(__name__)
@@ -193,3 +204,100 @@ class PMevTripartitePipeline:
             provider=response.get("provider", "unknown"),
             model=response.get("model", "unknown"),
         )
+
+
+class PMevCompositionalPipeline:
+    """Pipeline composicional refutavel de seis operadores (f1 a f5).
+
+    Garante:
+    1. Contracao espectral rho(J_global) <= 1.0.
+    2. Particionamento exato de Bellman na barreira absorvente sem dupla contagem.
+    3. Suporte a ablacao camada por camada para quantificacao de residuos.
+    """
+
+    def __init__(
+        self,
+        risk_aversion: float = 0.88,
+        regularization_lambda: float = 0.1,
+    ) -> None:
+        self.risk_aversion = risk_aversion
+        self.reg_lambda = regularization_lambda
+
+    def evaluate(
+        self,
+        state: TournamentState,
+        time_to_blind_minutes: float = 15.0,
+        orbit_cost_bb: float = 2.5,
+        p_ruin_vector: tuple[float, ...] | None = None,
+        absorption_states: tuple[AbsorptionState, ...] | None = None,
+        initial_covariance: NDArray[np.float64] | None = None,
+    ) -> Measured[PMevCompositionResult]:
+        """Executa a cadeia compositiva f1 -> f2 -> f3 -> f4 -> f5 com proveniencia e bounds."""
+        stacks_arr = np.array(state.stacks, dtype=np.float64)
+        n = len(stacks_arr)
+
+        if p_ruin_vector is None:
+            p_ruin_vector = tuple(0.0 for _ in range(n))
+        if absorption_states is None:
+            absorption_states = tuple(
+                AbsorptionState(place=i + 1, payout=state.payouts[min(i, len(state.payouts) - 1)]) for i in range(n)
+            )
+
+        f1 = OperatorF1Baseline(payouts=state.payouts)
+        f2 = OperatorF2Temporal(
+            time_to_blind_jump_minutes=time_to_blind_minutes,
+            orbit_cost_bb=orbit_cost_bb,
+        )
+        f3 = OperatorF3Behavioral(
+            risk_aversion_factor=self.risk_aversion,
+            regularization_lambda=self.reg_lambda,
+        )
+        f4 = OperatorF4Absorption(
+            p_ruin_vector=p_ruin_vector,
+            absorption_states=absorption_states,
+        )
+        f5 = OperatorF5Functional(operators=(f1, f2, f3, f4))
+
+        return f5.evaluate_chain(
+            initial_stacks=stacks_arr,
+            initial_covariance=initial_covariance,
+        )
+
+    def evaluate_ablation(
+        self,
+        state: TournamentState,
+        disabled_operators: frozenset[str] = frozenset(),
+        time_to_blind_minutes: float = 15.0,
+        orbit_cost_bb: float = 2.5,
+    ) -> dict[str, Any]:
+        """Executa ablacao estrutural desativando operadores especificos (ex: f2, f3, f4)."""
+        stacks_arr = np.array(state.stacks, dtype=np.float64)
+        f1 = OperatorF1Baseline(payouts=state.payouts)
+        x = f1.forward(stacks_arr)
+        trace: dict[str, list[float]] = {"f1_icm": [float(v) for v in x]}
+
+        if "f2" not in disabled_operators:
+            f2 = OperatorF2Temporal(time_to_blind_minutes, orbit_cost_bb)
+            x = f2.forward(x)
+            trace["f2_temporal"] = [float(v) for v in x]
+
+        if "f3" not in disabled_operators:
+            f3 = OperatorF3Behavioral(self.risk_aversion, self.reg_lambda)
+            x = f3.forward(x)
+            trace["f3_behavioral"] = [float(v) for v in x]
+
+        if "f4" not in disabled_operators:
+            n = len(stacks_arr)
+            p_ruin = tuple(0.05 for _ in range(n))
+            abs_states = tuple(
+                AbsorptionState(place=i + 1, payout=state.payouts[min(i, len(state.payouts) - 1)]) for i in range(n)
+            )
+            f4 = OperatorF4Absorption(p_ruin, abs_states)
+            x = f4.forward(x)
+            trace["f4_absorption"] = [float(v) for v in x]
+
+        return {
+            "final_vector": [float(v) for v in x],
+            "trace": trace,
+            "disabled_operators": sorted(disabled_operators),
+        }
