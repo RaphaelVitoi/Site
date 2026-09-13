@@ -384,7 +384,8 @@
       "sota-consciousness-memory-rag",
       "literature-search-arxiv",
       "literature-search-europepmc",
-      "google-workspace"
+      "google-workspace",
+      "poker-pmev-knowledge-engine"
     ],
     "specialized_scripts": [
       "memory_rag.py",

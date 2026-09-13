@@ -12,6 +12,7 @@ ChromaDB, Embeddings, Busca Vetorial, Semantic Chunking, Reranking Hibrido, WebS
 - `literature-search-arxiv`
 - `literature-search-europepmc`
 - `google-workspace`
+- `poker-pmev-knowledge-engine`
 
 ## Scripts & Ferramentas Integradas
 - `memory_rag.py`

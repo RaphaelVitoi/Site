@@ -6,7 +6,7 @@ author: "@gemma4"
 
 # De Claudico a Pluribus: A Genealogia dos Solvers e a Fronteira do PMev
 
-A evolução da inteligência artificial em jogos de informação imperfeita redefiniu as fronteiras da Teoria dos Jogos. Esta evolução não trata apenas do ganho de *winrate*, mas da epistemologia matemática subjacente ao *Poker Racional*: como modelamos arrependimento, como resolvemos subjogos locais sem colapsar a estratégia global, e como avaliamos a assimetria multiway (PMev). 
+A evolução da inteligência artificial em jogos de informação imperfeita redefiniu as fronteiras da Teoria dos Jogos. Esta evolução não trata apenas do ganho de *winrate*, mas da epistemologia matemática subjacente ao *Poker Racional*: como modelamos arrependimento, como resolvemos subjogos locais sem colapsar a estratégia global, e como avaliamos a assimetria multiway (PMev).
 
 Abaixo, traçamos a genealogia canônica da superação do No-Limit Hold'em, culminando nas arquiteturas generalistas modernas.
 
@@ -32,7 +32,7 @@ Apesar da proeza teórica, Claudico perdeu margem para os humanos por ser incapa
 O grande divisor de águas veio em 2017 com o DeepStack (Universidade de Alberta), o primeiro agente a derrotar profissionais humanos em HUNL de forma conclusiva. Ele eliminou a necessidade de abstrair todo o jogo antes da partida.
 
 * **Continual Resolving:** Em vez de usar uma árvore estática global, o DeepStack computa o equilíbrio de Nash do subjogo atual em tempo real. Cada decisão resolve apenas as ações futuras próximas.
-* **Avaliação Heurística via Redes Neurais:** Nas folhas do subjogo local, o DeepStack utilizava uma rede neural profunda para estimar o valor dos *Public Belief States* (crenças públicas). 
+* **Avaliação Heurística via Redes Neurais:** Nas folhas do subjogo local, o DeepStack utilizava uma rede neural profunda para estimar o valor dos *Public Belief States* (crenças públicas).
 * **Limites do Gadget Game:** A técnica utilizava um *Gadget Game* para garantir que o oponente não pudesse explorar o *resolving* local. No entanto, o custo computacional tornava a execução lenta e vulnerável a certas distorções de *Counterfactual Regret*.
 
 ## 3. Libratus (Science 2018): CFR+ e Subgame Safety
