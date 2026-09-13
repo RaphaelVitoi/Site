@@ -37,11 +37,11 @@ class CompositionalOperator(Protocol):
 
     def forward(self, input_vector: NDArray[np.float64]) -> NDArray[np.float64]:
         """Calcula o mapeamento direto f_k(x)."""
-        ...
+        raise NotImplementedError
 
     def jacobian(self, input_vector: NDArray[np.float64]) -> NDArray[np.float64]:
         """Calcula ou aproxima o Jacobiano J_f_k(x) = df_k / dx."""
-        ...
+        raise NotImplementedError
 
 
 def spectral_radius(matrix: NDArray[np.float64]) -> float:

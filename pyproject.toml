@@ -58,7 +58,7 @@ dependencies = [
     "onnxruntime>=1.20.0",
     "sentence-transformers>=3.3.0",
     # ── CLIENTES LLM ──────────────────────────────────────────────────
-    "google-genai>=1.2.0",
+    "google-genai>=2.23.0",
     "openai>=1.58.0",
     "anthropic>=0.42.0",
     "httpx>=0.28.0",
@@ -112,26 +112,28 @@ packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "work
 
 # Instalado com: uv sync --extra dev
 dev = [
-    "ruff>=0.16.3",
+    "ruff>=0.16.7",
     "pylint>=4.0.7",
-    "pyright>=1.1.411",
+    "pyright>=1.1.414",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.0",
+    "pytest-xdist>=3.8.0",
     "pip-audit>=2.10.1",
     "httpx>=0.28.0",
 ]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.16.3",
+    "ruff>=0.16.7",
     "pylint>=4.0.7",
-    "pyright>=1.1.411",
+    "pyright>=1.1.414",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.0",
+    "pytest-xdist>=3.8.0",
     "pip-audit>=2.10.1",
     "httpx>=0.28.0",
     "pytest-watcher>=0.6.3",

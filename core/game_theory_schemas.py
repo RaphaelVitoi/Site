@@ -57,6 +57,7 @@ class PluribusSolveRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_street_horizon(self) -> PluribusSolveRequest:
+        # pylint: disable=no-member
         maximum_depth = {
             StreetEnum.PREFLOP: 4,
             StreetEnum.FLOP: 3,

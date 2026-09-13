@@ -1,0 +1,23 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/app/**/{page,layout,route,template,default,loading,error,not-found}.{ts,tsx}",
+    "src/**/__tests__/**/*.{ts,tsx}",
+    "src/**/*.test.{ts,tsx}",
+    "src/lib/index.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": [
+    "server-only",
+    "eslint-config-next",
+    "prettier-plugin-tailwindcss",
+    "tailwindcss",
+    "@tailwindcss/typography",
+    "axe-core",
+    "typescript-eslint",
+    "@next/eslint-plugin-next",
+    "eslint-plugin-react",
+    "eslint-plugin-react-hooks"
+  ]
+}
