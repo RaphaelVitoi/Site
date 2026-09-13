@@ -23,6 +23,7 @@ teste e a forma mais silenciosa disso -- o lado esquecido continua aprovando.
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 import shutil
@@ -235,3 +236,68 @@ def test_merge_nao_precisa_declarar_identidade(tmp_path):
     """Mensagem gerada pelo git nao tem corpo de agente, e nao deve ganhar um."""
     r = _rodar_com_autor("Merge branch 'master'\n", "Codex GPT-5", tmp_path)
     assert r.returncode == 0, f"{r.stdout}{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# CATALOGO CANONICO DE IDENTIDADE -- data/agent_identities.json.
+#
+# Medido em 2026-09-12: VINTE grafias de autor para cerca de cinco agentes. A
+# checagem de coerencia nao alcanca isso, porque autor e assinatura erram juntos
+# quando o condutor escreve a mesma variante nos dois. A fonte tem de ser externa
+# a mensagem, e e por isso que existe catalogo.
+
+CATALOGO = RAIZ / "data" / "agent_identities.json"
+
+
+def _nomes_canonicos() -> set[str]:
+    """Lido da fonte, nunca copiado -- catalogo copiado em teste diverge por padrao."""
+    dados = json.loads(CATALOGO.read_text(encoding="utf-8"))
+    return {i["nome"] for i in dados["canonicas"]}
+
+
+def test_a_identidade_do_antigravity_esta_no_catalogo():
+    """Determinada pelo Tier 0 em 2026-09-12: o CLI conduz o Gemini 3.8 Flash."""
+    dados = json.loads(CATALOGO.read_text(encoding="utf-8"))
+    gemini = [i for i in dados["canonicas"] if i["nome"] == "Gemini 3.8 Flash"]
+    assert gemini, "a identidade determinada pelo Tier 0 saiu do catalogo"
+    assert gemini[0]["veiculo"] == "antigravity"
+    assert gemini[0]["email"] == "noreply@google.com"
+
+
+def test_nenhuma_identidade_canonica_usa_e_mail_de_humano():
+    """O incidente de 2026-08-30 em forma de guard."""
+    dados = json.loads(CATALOGO.read_text(encoding="utf-8"))
+    for item in dados["canonicas"]:
+        email = item["email"]
+        assert email.startswith("noreply@") or "users.noreply.github.com" in email, (
+            f"{item['nome']} usa um e-mail que pode resolver para perfil humano: {email}"
+        )
+
+
+@pytest.mark.parametrize("nome", sorted(_nomes_canonicos()))
+def test_todo_nome_do_catalogo_passa_sem_aviso(nome, tmp_path):
+    r = _rodar_com_autor(f"feat(x): assunto\n\nAssinatura: {nome}\n", nome, tmp_path)
+    assert r.returncode == 0, f"{r.stdout}{r.stderr}"
+    assert "nao esta em" not in r.stdout + r.stderr, f"canonico avisado: {r.stdout}{r.stderr}"
+
+
+@pytest.mark.parametrize(
+    "nome",
+    [
+        # As duas grafias abaixo EXISTEM no historico deste repositorio.
+        "Chico SOTA v8.0 GOLD",  # o grupo no campo do autor individual
+        "Gemini 3.8 Flash High",  # variante que divide o historico do agente em dois
+    ],
+)
+def test_variante_fora_do_catalogo_avisa_sem_bloquear(nome, tmp_path):
+    r = _rodar_com_autor(f"feat(x): assunto\n\nAssinatura: {nome}\n", nome, tmp_path)
+    assert r.returncode == 0, "o aviso de catalogo nunca bloqueia"
+    assert "nao esta em" in r.stdout + r.stderr, f"variante passou calada:\n{r.stdout}{r.stderr}"
+
+
+def test_o_aviso_casa_por_nome_exato_e_nao_por_substring(tmp_path):
+    """'Claude' esta dentro de 'Claude Opus 5'. Casar por substring aceitaria a
+    variante curta e derrotaria o proposito, que e justamente distinguir as duas."""
+    assert "Claude" not in _nomes_canonicos(), "o catalogo nao deve trazer a forma curta"
+    r = _rodar_com_autor("feat(x): assunto\n\nAssinatura: Claude\n", "Claude", tmp_path)
+    assert "nao esta em" in r.stdout + r.stderr, f"substring aceita:\n{r.stdout}{r.stderr}"

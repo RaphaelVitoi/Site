@@ -1,0 +1,78 @@
+{
+  "$comentario": [
+    "FONTE UNICA da identidade de autoria de agente. A SS7 do CLAUDE.md aponta para",
+    "este arquivo e nao copia os valores -- copia de tabela de governanca diverge por",
+    "padrao, e a SS7 documenta o caso do AGENTS.md em que dois dias de coexistencia",
+    "produziram duas mentiras.",
+    "",
+    "MOTIVO MEDIDO, 2026-09-12: o repositorio acumulou VINTE grafias de autor para",
+    "cerca de cinco agentes -- 'Claude' e 'Claude Opus 5', 'Codex', 'Codex GPT-5' e",
+    "'Codex [Tier 1.B]', 'Gemini 3.8 Flash' e 'Gemini 3.8 Flash High'. Havia inclusive",
+    "'Chico SOTA v8.0 GOLD', que e o GRUPO ocupando o campo do autor individual, o que",
+    "a SS7 proibe em texto.",
+    "",
+    "O e-mail nunca resolve para perfil humano: e a regra da SS7, e o incidente de",
+    "2026-08-30 e o que ela evita. Quem le isto para escolher identidade tambem deve",
+    "ler a linha 'veiculo': ela e o que a SS8.3 grava em conductor_vehicle, e nao se",
+    "deriva do editor onde a janela estava aberta.",
+    "",
+    "Consumidores: .husky/commit-msg (avisa quando o autor nao esta aqui) e",
+    "tests/test_identidades_de_agente.py."
+  ],
+  "canonicas": [
+    {
+      "nome": "Claude Opus 5",
+      "email": "noreply@anthropic.com",
+      "veiculo": "claude-code",
+      "modelo": "claude-opus-5"
+    },
+    {
+      "nome": "Claude Sonnet 5",
+      "email": "noreply@anthropic.com",
+      "veiculo": "claude-code",
+      "modelo": "claude-sonnet-5"
+    },
+    {
+      "nome": "Gemini 3.8 Flash",
+      "email": "noreply@google.com",
+      "veiculo": "antigravity",
+      "modelo": "gemini-3.8-flash",
+      "nota": "Determinado pelo Tier 0 em 2026-09-12: o Antigravity CLI conduz o Gemini 3.8 Flash, e e esta a identidade que ele passa no commit. Forma composta equivalente em prosa: antigravity@gemini-3.8-flash."
+    },
+    {
+      "nome": "Gemini 3.5 Flash-Lite",
+      "email": "noreply@google.com",
+      "veiculo": "antigravity",
+      "modelo": "gemini-3.5-flash-lite"
+    },
+    {
+      "nome": "Codex GPT-5.6",
+      "email": "noreply@openai.com",
+      "veiculo": "codex",
+      "modelo": "gpt-5.6-terra"
+    },
+    {
+      "nome": "Codex GPT-6 Astra",
+      "email": "noreply@openai.com",
+      "veiculo": "codex",
+      "modelo": "gpt-6-astra"
+    },
+    {
+      "nome": "google-labs-jules[bot]",
+      "email": "161369871+google-labs-jules[bot]@users.noreply.github.com",
+      "veiculo": "jules",
+      "modelo": "indeterminado",
+      "nota": "A SS10.6(b) mede que este campo NAO e configuravel: vem da integracao GitHub App, que commita sob a conta que autorizou a instalacao. Consta aqui como fato, nao como escolha -- por isso o rodape de atribuicao no corpo e obrigatorio."
+    }
+  ],
+  "nunca": [
+    {
+      "padrao": "Chico",
+      "porque": "Chico e o grupo. A SS7 e explicita: o grupo nunca ocupa o campo do autor individual."
+    },
+    {
+      "padrao": "qualquer e-mail que resolva para perfil humano",
+      "porque": "O GitHub liga o commit ao perfil pelo e-mail. Agente assinando com e-mail de humano produz atribuicao falsa na interface, e o corpo que a desmente so e lido por quem abre o commit."
+    }
+  ]
+}
