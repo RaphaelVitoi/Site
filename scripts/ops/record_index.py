@@ -214,6 +214,46 @@ def _ancestral(sha: str, raiz: Path) -> bool | None:
     return _git("merge-base", "--is-ancestor", sha, "HEAD", cwd=raiz).returncode == 0
 
 
+def avaliar_registro(
+    fm: dict[str, Any], raiz: Path, hoje: date, ambiente: dict[str, Any]
+) -> tuple[list[str], bool | None, list[str]]:
+    """(motivos, commit_e_ancestral_do_head, config_nao_conferivel) de UM registro.
+
+    Regra unica: o indice e o G2 do record_gate usam esta funcao. Duas copias da
+    regra divergiriam em silencio.
+    """
+    motivos: list[str] = []
+    classes = fm.get("classes") or []
+    if isinstance(classes, str):
+        classes = [classes]
+
+    sha = str(fm.get("commit") or "").strip()
+    ancestral: bool | None = None
+    if sha and sha.lower() not in {"null", "none"}:
+        ancestral = _ancestral(sha, raiz)
+        if ancestral is None:
+            motivos.append(f"commit declarado ({sha}) nao existe neste repositorio")
+        elif ancestral is False:
+            motivos.append(f"commit declarado ({sha}) nao e ancestral do HEAD")
+    elif "interno" in classes:
+        motivos.append("classe interna sem ancora de commit")
+
+    motivo_ttl = ttl_vencido(fm, hoje)
+    if motivo_ttl:
+        motivos.append(motivo_ttl)
+
+    divergencias, nao_conferiveis = conferir_config_medida(fm.get("config_medida"), ambiente)
+    motivos.extend(f"config_medida divergente -- {d}" for d in divergencias)
+    return motivos, ancestral, nao_conferiveis
+
+
+def estado_de(motivos: list[str], ancestral: bool | None, aposentado: bool) -> str:
+    """OBSOLETO se aposentado ou fora da historia do HEAD; SUSPEITO se ha motivo; senao VIGENTE."""
+    if ancestral is False or aposentado:
+        return OBSOLETO
+    return SUSPEITO if motivos else VIGENTE
+
+
 def caminhos_citados(corpo: str, raiz: Path) -> list[str]:
     """Pistas para o autor, nunca ancora. So entra caminho que EXISTE."""
     achados = {m.group(1) for m in _RE_CAMINHO.finditer(corpo)}
@@ -240,28 +280,11 @@ def construir(raiz: Path = RAIZ, hoje: date | None = None) -> dict[str, Any]:
             sem_frontmatter.append(rel)
             continue
 
-        motivos: list[str] = []
         classes = fm.get("classes") or []
         if isinstance(classes, str):
             classes = [classes]
-
         sha = str(fm.get("commit") or "").strip()
-        ancestral: bool | None = None
-        if sha and sha.lower() not in {"null", "none"}:
-            ancestral = _ancestral(sha, raiz)
-            if ancestral is None:
-                motivos.append(f"commit declarado ({sha}) nao existe neste repositorio")
-            elif ancestral is False:
-                motivos.append(f"commit declarado ({sha}) nao e ancestral do HEAD")
-        elif "interno" in classes:
-            motivos.append("classe interna sem ancora de commit")
-
-        motivo_ttl = ttl_vencido(fm, hoje)
-        if motivo_ttl:
-            motivos.append(motivo_ttl)
-
-        divergencias, nao_conferiveis = conferir_config_medida(fm.get("config_medida"), ambiente)
-        motivos.extend(f"config_medida divergente -- {d}" for d in divergencias)
+        motivos, ancestral, nao_conferiveis = avaliar_registro(fm, raiz, hoje, ambiente)
 
         declarados = fm.get("caminhos") or []
         if isinstance(declarados, str):
@@ -301,8 +324,7 @@ def construir(raiz: Path = RAIZ, hoje: date | None = None) -> dict[str, Any]:
     for r in brutos:
         if r["id"] in aposentados:
             r["motivos"].append("superseded por registro mais novo")
-        obsoleto = (r["commit_e_ancestral_do_head"] is False) or (r["id"] in aposentados)
-        r["estado"] = OBSOLETO if obsoleto else (SUSPEITO if r["motivos"] else VIGENTE)
+        r["estado"] = estado_de(r["motivos"], r["commit_e_ancestral_do_head"], r["id"] in aposentados)
 
     registros = sorted(brutos, key=lambda r: (r["estado"], r["arquivo"]))
     totais = {
