@@ -259,25 +259,22 @@ As 12 hipóteses da Enciclopédia Magna possuem pontos candidatos de articulaç�
 
 ---
 
-## 8. Adendo: Varredura Especializada Multi-Disco (C:, D:, E:, F:, G:)
+## 8. Adendo: Varredura Multi-Disco (conteúdo retirado do repositório público)
 
-Em cumprimento à diretriz executiva, realizou-se a varredura profunda em todas as unidades de armazenamento locais e virtuais montadas no sistema (C:, D:, E:, F:, G:), totalizando **143.702 itens relevantes** catalogados:
+Esta seção listava, por unidade (C:, D:, E:, F:, G:), caminhos, nomes de arquivos e
+acervos pessoais: solves, masterclasses, cursos, bibliotecas de ranges e um banco de
+anotações de jogadores. O `Site` é público, e inventário de ambiente é material de
+reconhecimento. Por decisão do Tier 0 em 2026-09-13, o detalhe saiu da árvore versionada.
 
-### Distribuição Quantitativa por Unidade de Armazenamento
-
-| Unidade | Volume Mapeado | Principais Destaques Encontrados | Papel no Arcabouço PMev |
-| :--- | :--- | :--- | :--- |
-| **D:\** | 7.287 itens | 632 sem lead.cfr (23,27 GB), deepsolver comparasion.cfr (19,09 GB), AULAO VOCE NAO SABE JOGAR POKER RAPHAEL VITOI.mp4 (620 MB), 
-otes.RaphaVitoi.xml (5,3 MB de player profiling) e pasta Solver work\ICM pio sims BS x MS | **Bancada de Solvers Pesados & Masterclass Autoral** |
-| **E:\** | 2.360 itens | Pasta ICM sims\, Biblioteca\Acervo\Akkari Team Avançado (413 vídeos/PDFs), MonkerSolver nodelocks BB (arquivos de 4,29 GB), centenas de e-books e papers acadêmicos (incluindo Freakonomics *The Role of Skill Versus Luck in Poker*) | **Acervo Acadêmico & Cursos Completos** |
-| **F:\** | 131.646 itens | **102.700 arquivos .rng** de ranges do time Hermiones, templates de árvores pré-flop .cfr SB vs BB (15bb a 40bb), instalação e árvores de MonkerSolver | **Super-Biblioteca de Ranges & Monker** |
-| **C:\** | 2.003 itens | Repositório Site/engine/, docs/research/pmev/enciclopedia/ (os 10 Arcos, Tratado Teórico em 10 volumes e PDF do Paradigma Vitoi) e banco SQLite pmev_knowledge.db | **Núcleo de Engenharia & Consulta Rápida** |
-| **G:\** | 406 itens | Ponto de montagem virtual do Google Drive Desktop para sincronização direta sob demanda | **Cache Virtual de Nuvem** |
-
-### Destaque dos Super-Solves Locais:
-* **Solves Gigantescos de Mesa Final e Pós-Flop:** Identificação de arquivos CFR unitários de mais de 23 GB em D:\Solver work, além da árvore HRC de 10,95 GB (BOLHA BTN 40 BB 55 posflop.hrcz) no OneDrive.
-* **Anotações de Jogadores Reais:** `D:\notes.RaphaVitoi.xml` (5,3 MB, segundo o inventário de origem) é uma fonte candidata para estimar tendências de field (MDA) e parametrizar AQRE. O arquivo exige contrato de privacidade, amostragem, unidade e validação antes de qualquer calibração.
-* **Acervo Hermiones:** Mais de 102.700 matrizes de range prontas (.rng) para consulta e validação contra as soluções teóricas da PMev.
+* Total agregado declarado pela varredura de origem: 143.702 itens relevantes.
+* As âncoras estão preservadas localmente em
+  `.agents/skills/poker-pmev-knowledge-engine/local/anchors.json`, ignorado pelo git.
+* O histórico remoto anterior a esta correção não foi reescrito: reescrever não remove
+  objetos servidos por SHA e quebraria 16 branches e 10 PRs abertos
+  (`reports/REGISTRO-2026-09-13-verificacoes-drive-aula12-hh-e-privacidade.md`).
+* Medido na mesma data: o save `BOLHA BTN 40 BB 55 posflop.hrcz` **não** é o spot da
+  Aula 1.2 (8 assentos com stacks de 16 a 55 bb e 18 jogadores fora da mesa, contra os
+  9 assentos do Table Draw) e não traz versão nem indicador de convergência.
 
 ---
 
