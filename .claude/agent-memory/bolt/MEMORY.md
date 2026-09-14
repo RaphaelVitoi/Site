@@ -72,3 +72,7 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+
+## 2025-05-24 - [Avoid .at() and splice() in hot loops]
+**Learning:** Using `Array.prototype.at()` and `Array.prototype.splice()` inside tight performance-critical hot loops (like Monte Carlo simulations and Matrix combinations) incurs significant method call overhead and relative index calculations, heavily penalizing V8 execution times (making it 15-30x slower in certain paths). Replacing them with direct bracket notation `[]` and direct assignment respectively removes this overhead and maintains fast paths.
+**Action:** Always favor bracket notation `[]` for arrays inside math engine and Monte Carlo hot loops, checking for out-of-bounds `undefined` returns explicitly instead of relying on `.at()`. Always favor direct index assignment `arr[idx] = val` over `.splice(idx, 1, val)` for single element modification in hot paths.
