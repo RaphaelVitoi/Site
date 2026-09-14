@@ -63,7 +63,7 @@ madrugada.
 | Instância BlueStacks `Pie64` (a usada é a `Tiramisu64`) | 22,6 GB |
 | `npm cache`, `pip`, Temp, lixeira, caches de sistema | ~26 GB |
 | OneDrive marcado só-nuvem, exceto o `.hrcz` do PMev | ~50 GB |
-| `Monker_HotRuns` movido para `F:\MonkerSolver\HotRuns` | 120 GB |
+| `Monker_HotRuns` movido para `%MONKERSOLVER_HOME%\HotRuns` | 120 GB |
 
 Nada de dado foi apagado — só cache, redundância e um emulador. Os 120 GB do
 Monker e os 48,7 GB de `F:\Meu Drive` foram **movidos**, não removidos.

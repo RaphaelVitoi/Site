@@ -386,4 +386,4 @@ function Invoke-NexusAsk {
 Set-Alias ask Invoke-NexusAsk
 # === END NEXUS SYSTEM ENVIRONMENT ===
 function pio { & 'F:\Meu Drive\PioSOLVER-edge.exe' @args }
-function monker { & 'F:\MonkerSolver\MonkerSolver.exe' @args }
+function monker { & (Join-Path $env:MONKERSOLVER_HOME 'MonkerSolver.exe') @args }

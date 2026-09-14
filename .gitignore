@@ -210,3 +210,6 @@ reports/agent-calibration/*.lock
 # fica registrada aqui em vez de silenciada.
 .codex/config.toml
 .claude/settings.local.json.bak-*
+
+# Transcricoes de subagente nunca entram no repositorio publico (2026-09-13).
+frontend/src/projects/subagents/

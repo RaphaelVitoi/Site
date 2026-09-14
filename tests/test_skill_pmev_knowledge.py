@@ -174,6 +174,37 @@ def test_inventario_de_discos_pessoais_nao_volta_a_nenhum_arquivo_versionado():
     assert r.returncode == 1 and not r.stdout.strip(), f"inventario pessoal em arquivo versionado: {r.stdout.split()}"
 
 
+def test_caminhos_pessoais_antigos_nao_voltam_ao_repositorio():
+    """OneDrive com nome de usuario e F:\\MonkerSolver sairam de 12 arquivos e de 16 transcricoes em 2026-09-13.
+
+    Caminho portatil usa %OneDrive% ou %MONKERSOLVER_HOME%. Transcricao de subagente nao entra.
+    """
+    r = subprocess.run(
+        [
+            "git",
+            "grep",
+            "-I",
+            "-l",
+            "-i",
+            "-E",
+            r"rapha[\\/]+onedrive|F:[\\/]+MonkerSolver",
+            "--",
+            ".",
+            ":!tests/test_skill_pmev_knowledge.py",
+        ],
+        cwd=RAIZ,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    assert r.returncode == 1 and not r.stdout.strip(), f"caminho pessoal em arquivo versionado: {r.stdout.split()}"
+    versionadas = subprocess.run(
+        ["git", "ls-files", "frontend/src/projects/subagents"], cwd=RAIZ, capture_output=True, text=True, check=True
+    ).stdout.split()
+    assert not versionadas, f"transcricao de subagente versionada: {versionadas}"
+
+
 NODE = shutil.which("node")
 
 

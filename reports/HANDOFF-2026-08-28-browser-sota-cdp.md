@@ -86,7 +86,7 @@ foi encenada, removida ou reescrita neste handoff.
 
 ## Artefatos externos, recuperação e integridade
 
-Diretório operacional: `C:\Users\rapha\OneDrive\Documentos\Browser-Audits\2026-08-28-sota-browser-audit`.
+Diretório operacional: `%OneDrive%\Documentos\Browser-Audits\2026-08-28-sota-browser-audit`.
 
 | Artefato | Função |
 |---|---|

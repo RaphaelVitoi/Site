@@ -57,7 +57,7 @@ Dependencia consultada na documentacao primaria:
 https://github.com/101arrowz/fflate
 
 Arquivo real verificado:
-C:/Users/rapha/OneDrive/PANTS/Pantoja/Semi FT e Mid Resteal/SemiFT Resteal BU 30 BB 15.hrcz
+%OneDrive%/PANTS/Pantoja/Semi FT e Mid Resteal/SemiFT Resteal BU 30 BB 15.hrcz
 
 Esse e o arquivo apontado pelo registro anterior; nao se afirma que foi
 reencontrado no Google Drive nesta rodada. O extrator novo le sua configuracao
