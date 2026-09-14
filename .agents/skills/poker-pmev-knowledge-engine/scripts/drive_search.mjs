@@ -1,50 +1,26 @@
-import fs from "node:fs";
-import path from "node:path";
+// Busca no Google Drive v3. Uso: node drive_search.mjs "termo" [maxResults 1-100]
+import { EXIT, SkillError, escapeDriveQuery, getGoogleAccessToken, run } from "./drive_common.mjs";
 
-async function getGoogleAccessToken() {
-  const adcPath = path.join(process.env.APPDATA || "", "gcloud", "application_default_credentials.json");
-  if (!fs.existsSync(adcPath)) {
-    throw new Error(`ADC não encontrado em: ${adcPath}`);
+await run(async () => {
+  const termo = process.argv[2];
+  const limite = Number.parseInt(process.argv[3] ?? "15", 10);
+  if (!termo || !termo.trim()) throw new SkillError('uso: node drive_search.mjs "termo" [maxResults 1-100]', EXIT.USAGE);
+  if (!Number.isInteger(limite) || limite < 1 || limite > 100) {
+    throw new SkillError("maxResults deve ser inteiro entre 1 e 100", EXIT.USAGE);
   }
-  const adc = JSON.parse(fs.readFileSync(adcPath, "utf8"));
-  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: adc.client_id,
-      client_secret: adc.client_secret,
-      refresh_token: adc.refresh_token,
-      grant_type: "refresh_token"
-    })
-  });
-  if (!tokenRes.ok) throw new Error(`Falha OAuth2: ${await tokenRes.text()}`);
-  const data = await tokenRes.json();
-  return data.access_token;
-}
 
-async function search(queryTerm, pageSize = 20) {
   const token = await getGoogleAccessToken();
-  const q = `trashed = false and (name contains '${queryTerm}' or fullText contains '${queryTerm}')`;
-  const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&pageSize=${pageSize}&fields=files(id,name,mimeType,size,modifiedTime,webViewLink)&spaces=drive`;
-  
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if (!res.ok) throw new Error(`Erro na busca Drive: ${await res.text()}`);
-  const data = await res.json();
-  return data.files || [];
-}
+  const literal = escapeDriveQuery(termo);
+  const q = `trashed = false and (name contains '${literal}' or fullText contains '${literal}')`;
+  const url =
+    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&pageSize=${limite}` +
+    "&fields=files(id,name,mimeType,size,modifiedTime,webViewLink)&spaces=drive";
+  const resposta = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!resposta.ok) throw new SkillError(`busca no Drive falhou: HTTP ${resposta.status}`, EXIT.REMOTE);
+  const arquivos = (await resposta.json()).files || [];
 
-const term = process.argv[2] || "PMev";
-const limit = Number.parseInt(process.argv[3] || "15", 10);
-
-try {
-  const files = await search(term, limit);
-  console.log(`\n=== RESULTADOS DA BUSCA GOOGLE DRIVE: "${term}" (${files.length} itens) ===\n`);
-  for (const f of files) {
-    console.log(`- [${f.mimeType}] ${f.name}`);
-    console.log(`  ID: ${f.id} | Link: ${f.webViewLink}\n`);
+  console.log(`${arquivos.length} resultado(s) para "${termo}"`);
+  for (const f of arquivos) {
+    console.log(`- [${f.mimeType}] ${f.name}\n  ID: ${f.id} | ${f.webViewLink}`);
   }
-} catch (error) {
-  console.error(error);
-}
+});

@@ -1,108 +1,80 @@
 ---
 name: poker-pmev-knowledge-engine
-description: Official Gold-Standard Multimodal Knowledge, Curation, and Research Engine for Poker and PMev. Orchestrates Google Drive API v3 (ADC), local OneDrive, and workspace filetrees to search, download, read, modify, and analyze documents (PDF, DOCX, PPTX, Google Docs/Sheets), video masterclasses, and solver files (.hrcz, .cfr, .rng) for zero-latency optimal retrieval.
+description: Busca, download e leitura de material de Poker e PMev (Google Drive via ADC, arquivos locais) com indice SQLite FTS5 enderecado por conteudo. Le PDF, DOCX, PPTX, XLSX, texto, saves HRC (.hrcz) e metadados de video. Escrita restrita a docs/research/pmev/ e scratch/.
 license: Apache-2.0
 metadata:
-  version: v1.0.0
+  version: v1.1.0
   publisher: raphavitoi
 ---
 
-# Poker & PMev Multimodal Knowledge Engine (`poker-pmev-knowledge-engine`)
+# Poker & PMev Knowledge Engine (`poker-pmev-knowledge-engine`)
 
-> **Padrão-Ouro de Pesquisa, Extração, Leitura Universal e Curadoria Contínua de Poker & PMev**  
-> Unifica Google Drive (API v3 via ADC), Microsoft OneDrive e Repositório Local sob governança Chico SOTA v8.0 GOLD.
+Quatro verbos, cada um com um script. Nada aqui calibra a PMev nem valida hipótese: a
+skill encontra, baixa, lê e indexa material. O que ela promete é o que os scripts fazem,
+e `tests/test_skill_pmev_knowledge.py` reprova se as duas coisas divergirem.
 
----
+## 1. Comandos
 
-## 1. Visão Geral & Topologia Omnichannel
+| Verbo | Comando |
+| :--- | :--- |
+| Buscar no Drive | `node scripts/drive_search.mjs "termo" [maxResults 1-100]` |
+| Baixar do Drive | `node scripts/drive_fetch.mjs <FILE_ID> [DESTINO]` |
+| Ler arquivo local | `.venv/Scripts/python.exe scripts/universal_reader.py <ARQUIVO> [--max-chars N]` |
+| Indexar e buscar | `.venv/Scripts/python.exe scripts/curate_index.py --build` ou `--search "termo"` |
 
-A skill `poker-pmev-knowledge-engine` fornece automação completa e de latência mínima para os seis verbos operacionais:
-1. **Pesquisar:** Varredura em tempo real no Google Drive (API v3) e OneDrive local (15.700+ itens).
-2. **Baixar / Sincronizar:** Exportação textual de Google Docs, extração de Sheets e download de binários.
-3. **Adicionar / Indexar:** Ingestão estruturada para `docs/research/pmev/` com banco SQLite local e cache hash SHA-256.
-4. **Ler:** Leitura universal multi-formato (`.docx`, `.pdf`, `.pptx`, `.xlsx`, `.md`, `.txt`, `.hrcz`, `.cfr`).
-5. **Modificar / Sintetizar:** Curadoria, geração de relatórios canônicos, cross-references e reconciliação de hipóteses PMev ($H_1$ a $H_{12}$).
-6. **Assistir / Multimídia:** Mapeamento de aulas gravadas (Akkari Team, Bencb, Ole Schemion, Lipe PIV, CNC), extração de áudio e telemetria de transcrições.
+## 2. Códigos de saída
 
-```mermaid
-flowchart TD
-    classDef main fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef source fill:#0f172a,stroke:#64748b,stroke-width:1px,color:#e2e8f0;
-    classDef engine fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef output fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+Falha nunca sai com 0. Mensagens de erro vão para o stderr, no formato `ERRO <código>: ...`.
 
-    subgraph Fontes Omnichannel
-        GD["Google Drive API v3<br/>(OAuth / ADC)"] :::source
-        OD["OneDrive Local<br/>(C:\\Users\\rapha\\OneDrive)"] :::source
-        WS["Workspace Site<br/>(docs/research/pmev)"] :::source
-    end
+| Código | Significado |
+| ---: | :--- |
+| 0 | sucesso |
+| 1 | arquivo ou índice inexistente |
+| 2 | extensão sem extrator |
+| 3 | erro de extração (no build, ao menos um documento falhou e ficou registrado) |
+| 4 | dependência ausente (`pypdf`, `python-docx`, `openpyxl`, `ffprobe`) |
+| 5 | destino de escrita fora das raízes permitidas |
+| 6 | uso ou configuração inválida (argumento, ADC ausente, âncoras malformadas) |
+| 7 | falha remota (OAuth ou API do Drive) |
 
-    subgraph Motor de Execução
-        SE["scripts/drive_search.mjs<br/>Busca Rápida Drive"] :::engine
-        FE["scripts/drive_fetch.mjs<br/>Download & Export"] :::engine
-        UR["scripts/universal_reader.py<br/>Leitor PDF / DOCX / PPTX"] :::engine
-        CI["scripts/curate_index.py<br/>Indexador & Cache SQLite"] :::engine
-    end
+## 3. Formatos com extrator
 
-    subgraph Consumo & Síntese
-        DB[("Cache SQLite & Índices<br/>pmev_knowledge.db")] :::main
-        MD["Artefatos & Relatórios<br/>Markdown SOTA & KaTeX"] :::output
-    end
-
-    GD --> SE --> FE --> CI
-    OD --> UR --> CI
-    WS --> UR --> CI
-    CI --> DB --> MD
-```
-
----
-
-## 2. Instruções de Execução Rápida
-
-### 2.1 Pesquisa Instantânea no Google Drive
-Para buscar qualquer tópico ou arquivo no Google Drive via token ADC silencioso:
-```bash
-node scripts/drive_search.mjs "termo de busca" [maxResults]
-```
-
-### 2.2 Download e Exportação de Arquivos do Drive
-Para exportar Docs para texto limpo, baixar PDFs ou DOCX para o diretório local:
-```bash
-node scripts/drive_fetch.mjs <FILE_ID> [CAMINHO_DESTINO]
-```
-
-### 2.3 Leitura Universal de Arquivos Locais (PDF, DOCX, PPTX, XLSX)
-Para inspecionar e extrair texto completo ou sumários de qualquer arquivo local (incluindo OneDrive hidratado):
-```bash
-.venv/Scripts/python.exe scripts/universal_reader.py "C:\caminho\do\arquivo.ext" [--max-chars N]
-```
-
-### 2.4 Atualização do Índice e Cache SQLite
-Para indexar todos os arquivos baixados e do OneDrive em um banco de consulta ultra-rápido (<10ms):
-```bash
-.venv/Scripts/python.exe scripts/curate_index.py --build
-```
-
----
-
-## 3. Matriz de Formatos e Extratores Nativos
-
-| Extensão | Ferramenta / Biblioteca | Modo de Leitura |
+| Extensões | Extrator | O que sai |
 | :--- | :--- | :--- |
-| **Google Doc** | Google Drive API `/export?mimeType=text/plain` | Texto limpo puro sem markup pesado |
-| **Google Sheet** | Google Drive API `/export?mimeType=text/csv` ou Sheets API | Matriz CSV ou ranges de células |
-| **.pdf** | `pypdf.PdfReader` (Python 3.12+) | Extração página a página e contagem de tokens |
-| **.docx** | `python-docx` (`docx.Document`) | Parágrafos e tabelas estruturadas |
-| **.pptx** | `zipfile` + `xml.etree.ElementTree` | Varredura de slides XML e caixas de texto |
-| **.xlsx / .ods**| `openpyxl` / `csv` | Abas, colunas, frequências de ranges |
-| **.hrcz / .cfr** | Leitor de cabeçalho binário | Stacks efetivos, árvore pré-flop, tamanho da simulação |
-| **.mp4 / .m4a** | `ffmpeg` / Metadados nativos | Duração, resolução, extração de canal de áudio |
+| `.pdf` | `pypdf` | texto página a página |
+| `.docx` | `python-docx` | parágrafos e tabelas |
+| `.pptx`, `.pptm` | `zipfile` + XML | texto por slide |
+| `.xlsx`, `.xlsm` | `openpyxl` (somente leitura) | linhas por aba, separadas por tabulação |
+| `.txt`, `.md`, `.json`, `.csv` | leitura UTF-8 | texto |
+| `.hrcz` | `zipfile` | lista de entradas e `settings.json`; a árvore do solve não é lida |
+| `.mp4`, `.m4a` | `ffprobe` | duração, formato e fluxos; áudio não é transcrito |
 
----
+Google Docs e Sheets são exportados pelo `drive_fetch.mjs` como `text/plain` e `text/csv`.
+`.doc`, `.ods` e `.cfr` **não** têm extrator e saem com código 2.
 
-## 4. Diretrizes de Governança Chico SOTA v8.0 GOLD
+## 4. Cache endereçado por conteúdo
 
-1. **Target Lock & Limited Scope:** O motor de pesquisa opera de forma não-destrutiva. Downloads e exports residem estritamente em `docs/research/pmev/` e `scratch/`.
-2. **Cache-First:** Antes de fazer chamadas repetidas à API do Drive, consultar `pmev_knowledge.db` ou os arquivos já sincronizados em `docs/research/pmev/enciclopedia/`.
-3. **Escaping KaTeX:** Todas as formulações de valor monetário devem escapar o cifrão como `\$` para garantir renderização perfeita no visual engine.
-4. **Relatórios Conformes:** Qualquer nova adição ao acervo deve ser documentada com ID unívoco do arquivo, data, hash SHA-256 e referência cruzada às hipóteses $H_1$ a $H_{12}$.
+O índice (`docs/research/pmev/pmev_knowledge.db`, ignorado pelo git; outro caminho só
+via `PMEV_KNOWLEDGE_DB`, e ainda dentro das raízes de escrita) guarda o SHA-256 dos bytes
+de cada documento. No rebuild, conteúdo com o mesmo hash não é reextraído; conteúdo
+alterado é. Documento cuja extração falhou é tentado de novo a cada build até passar.
+
+Âncoras externas maiores que 256 MB são indexadas sem hash, por metadado declarado.
+
+## 5. Raízes de escrita
+
+A skill só grava em `docs/research/pmev/` e `scratch/`. Caminhos relativos resolvem a
+partir da raiz do repositório, nunca do diretório atual. `drive_fetch.mjs` valida o
+destino antes de qualquer chamada de rede, e `../` que escape da raiz é recusado.
+
+## 6. Privacidade
+
+- O repositório `Site` é público. Inventário de discos, pastas e arquivos pessoais
+  **não é versionado**: vive em `local/anchors.json`, ignorado pelo git. Sem esse
+  arquivo, o build indexa só o workspace.
+- O ADC é lido de `%APPDATA%\gcloud\application_default_credentials.json`; nenhum valor
+  dele nem o token de acesso é impresso.
+- O termo de busca é escapado antes de entrar na consulta do Drive.
+
+Formato de `local/anchors.json`: lista de objetos com `path`, `title`, `description`,
+`origin` e `category`; `ext` e `size_bytes` são opcionais.

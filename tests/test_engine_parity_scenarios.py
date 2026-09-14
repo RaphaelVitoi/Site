@@ -13,6 +13,9 @@ from engine.canonical_poker_theory import (
     JandaStreetBluffValueRatio,
 )
 from engine.game_theory_solvers import PluribusDepthLimitedSolver, PluribusMultiwayState, Street
+from engine.icm_matrix import calculate_malmuth_harville_icm
+from engine.pmev_aula12_evidence import load_aula12_pairs
+from engine.pmev_scenario import Read
 
 SCENARIOS_PATH = Path(__file__).resolve().parents[1] / "data" / "engine_parity_scenarios.json"
 
@@ -128,3 +131,27 @@ def test_python_obedece_corpus_compartilhado_de_paridade() -> None:
             bluff["expected"]["flop_bluff_to_value_ratio"],
             abs_tol=tolerance,
         ), bluff["id"]
+
+
+def test_python_obedece_icm_e_reprodutibilidade_do_corpus() -> None:
+    """ICM e o baseline de toda reducao PMev; a Aula 1.2 e a unica evidencia transcrita. Tolerancia propria."""
+    corpus = _corpus()
+    tolerancias = corpus["family_tolerances"]
+
+    for icm in corpus["scenarios"]["icm_malmuth_harville"]:
+        atual = calculate_malmuth_harville_icm(icm["input"]["stacks"], icm["input"]["payouts"])
+        esperado = icm["expected"]["equities"]
+        assert len(atual) == len(esperado), icm["id"]
+        for a, e in zip(atual, esperado, strict=True):
+            assert math.isclose(a, e, abs_tol=tolerancias["icm_malmuth_harville"]), icm["id"]
+
+    pares = {par.key: par for par in load_aula12_pairs()}
+    for caso in corpus["scenarios"]["aula12_reproducibility"]:
+        par, esperado = pares[caso["input"]["pair"]], caso["expected"]
+        avaliacao = par.contract.assess_reproducibility()
+        assert avaliacao.reproducible is esperado["reproducible"], caso["id"]
+        assert avaliacao.missing_chip_ev == esperado["missing_chip_ev"], caso["id"]
+        assert avaliacao.missing_icm_ev == esperado["missing_icm_ev"], caso["id"]
+        for lado, chave in ((par.chip_ev, "frequency_sum_chip_ev"), (par.icm_ev, "frequency_sum_icm_ev")):
+            soma = sum(a.frequency_pct.value for a in lado.actions if isinstance(a.frequency_pct, Read))
+            assert math.isclose(soma, esperado[chave], abs_tol=tolerancias["aula12_reproducibility"]), caso["id"]

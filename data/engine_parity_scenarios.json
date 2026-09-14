@@ -148,6 +148,265 @@
           "flop_bluff_to_value_ratio": 2.375
         }
       }
+    ],
+    "icm_malmuth_harville": [
+      {
+        "id": "tres-jogadores-tres-premios",
+        "input": {
+          "stacks": [
+            5000.0,
+            3000.0,
+            2000.0
+          ],
+          "payouts": [
+            100.0,
+            60.0,
+            40.0
+          ]
+        },
+        "expected": {
+          "equities": [
+            76.78571428571429,
+            65.5,
+            57.714285714285715
+          ]
+        }
+      },
+      {
+        "id": "quatro-jogadores-tres-premios",
+        "input": {
+          "stacks": [
+            40.0,
+            30.0,
+            20.0,
+            10.0
+          ],
+          "payouts": [
+            50.0,
+            30.0,
+            20.0
+          ]
+        },
+        "expected": {
+          "equities": [
+            33.6031746031746,
+            29.488095238095237,
+            23.587301587301592,
+            13.321428571428571
+          ]
+        }
+      },
+      {
+        "id": "stack-zero-e-estado-terminal",
+        "input": {
+          "stacks": [
+            60.0,
+            40.0,
+            0.0
+          ],
+          "payouts": [
+            70.0,
+            20.0,
+            10.0
+          ]
+        },
+        "expected": {
+          "equities": [
+            50.0,
+            40.0,
+            10.0
+          ]
+        }
+      },
+      {
+        "id": "premio-unico-coincide-com-chipev",
+        "input": {
+          "stacks": [
+            52.24,
+            9.25,
+            22.08,
+            6.88,
+            44.16
+          ],
+          "payouts": [
+            100.0
+          ]
+        },
+        "expected": {
+          "equities": [
+            38.80840947923632,
+            6.871703439566154,
+            16.40294183195899,
+            5.111061585320556,
+            32.80588366391798
+          ]
+        }
+      },
+      {
+        "id": "mesa-final-aula-1-2",
+        "input": {
+          "stacks": [
+            9.25,
+            52.24,
+            22.08,
+            6.88,
+            44.16,
+            24.16,
+            39.88,
+            12.73,
+            53.88
+          ],
+          "payouts": [
+            237.34,
+            170.96,
+            135.17,
+            109.99,
+            90.28,
+            73.95,
+            59.92,
+            47.56,
+            36.47
+          ]
+        },
+        "expected": {
+          "equities": [
+            71.13344936745831,
+            140.03986558433058,
+            101.03563440495071,
+            63.40181007590728,
+            131.8623804682377,
+            104.7241870316794,
+            127.01293842339811,
+            80.86347307859376,
+            141.5662615654443
+          ]
+        }
+      }
+    ],
+    "aula12_reproducibility": [
+      {
+        "id": "PAR_1_BB_LEADING",
+        "input": {
+          "pair": "PAR_1_BB_LEADING"
+        },
+        "expected": {
+          "reproducible": false,
+          "missing_chip_ev": [
+            "provenance"
+          ],
+          "missing_icm_ev": [
+            "provenance"
+          ],
+          "frequency_sum_chip_ev": 100.0,
+          "frequency_sum_icm_ev": 100.0
+        }
+      },
+      {
+        "id": "PAR_2_IP_APOS_CHECK",
+        "input": {
+          "pair": "PAR_2_IP_APOS_CHECK"
+        },
+        "expected": {
+          "reproducible": false,
+          "missing_chip_ev": [
+            "provenance"
+          ],
+          "missing_icm_ev": [
+            "provenance"
+          ],
+          "frequency_sum_chip_ev": 100.1,
+          "frequency_sum_icm_ev": 100.0
+        }
+      },
+      {
+        "id": "PAR_7_BB_VS_CBET_SMALL",
+        "input": {
+          "pair": "PAR_7_BB_VS_CBET_SMALL"
+        },
+        "expected": {
+          "reproducible": false,
+          "missing_chip_ev": [
+            "provenance"
+          ],
+          "missing_icm_ev": [
+            "provenance"
+          ],
+          "frequency_sum_chip_ev": 99.9,
+          "frequency_sum_icm_ev": 100.0
+        }
+      },
+      {
+        "id": "PAR_5_IP_VS_XR_FLOP",
+        "input": {
+          "pair": "PAR_5_IP_VS_XR_FLOP"
+        },
+        "expected": {
+          "reproducible": false,
+          "missing_chip_ev": [
+            "provenance"
+          ],
+          "missing_icm_ev": [
+            "provenance"
+          ],
+          "frequency_sum_chip_ev": 100.0,
+          "frequency_sum_icm_ev": 100.0
+        }
+      },
+      {
+        "id": "PAR_6_BB_TURN_APOS_CALL",
+        "input": {
+          "pair": "PAR_6_BB_TURN_APOS_CALL"
+        },
+        "expected": {
+          "reproducible": false,
+          "missing_chip_ev": [
+            "provenance"
+          ],
+          "missing_icm_ev": [
+            "provenance"
+          ],
+          "frequency_sum_chip_ev": 100.1,
+          "frequency_sum_icm_ev": 100.0
+        }
+      },
+      {
+        "id": "PAR_3_IP_VS_CBET_TURN",
+        "input": {
+          "pair": "PAR_3_IP_VS_CBET_TURN"
+        },
+        "expected": {
+          "reproducible": false,
+          "missing_chip_ev": [
+            "provenance"
+          ],
+          "missing_icm_ev": [
+            "provenance"
+          ],
+          "frequency_sum_chip_ev": 100.0,
+          "frequency_sum_icm_ev": 100.0
+        }
+      },
+      {
+        "id": "PAR_4_OOP_RIVER",
+        "input": {
+          "pair": "PAR_4_OOP_RIVER"
+        },
+        "expected": {
+          "reproducible": false,
+          "missing_chip_ev": [
+            "provenance"
+          ],
+          "missing_icm_ev": [
+            "provenance"
+          ],
+          "frequency_sum_chip_ev": 100.0,
+          "frequency_sum_icm_ev": 100.1
+        }
+      }
     ]
+  },
+  "family_tolerances": {
+    "icm_malmuth_harville": 1e-09,
+    "aula12_reproducibility": 1e-09
   }
 }

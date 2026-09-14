@@ -3552,18 +3552,20 @@ def triad_plan(objective: str = typer.Argument(..., help="Objetivo funcional da 
 
 @triad_app.command("run")
 def triad_run(objective: str = typer.Argument(..., help="Objetivo funcional a executar")):
-    """Executa a esteira unificada da Triade com telemetria e validacao."""
+    """Planeja a esteira da Triade e reporta o que foi executado. Sem recibo, nada foi."""
     from engine.sota_triad_mesh import SotaTriadOrchestrator
 
     orchestrator = SotaTriadOrchestrator()
     console.print(f"\n[bold green]>>> Iniciando esteira SOTA Triad Mesh para:[/] [white]{objective}[/]\n")
     report = orchestrator.execute_triad_dag(objective)
 
-    console.print("[bold green][+][/] [cyan]Exa:[/] Contexto neural e formulas sintetizadas.")
-    console.print("[bold green][+][/] [cyan]Stitch:[/] Especificacoes e tokens visuais validados.")
-    console.print("[bold green][+][/] [cyan]Jules:[/] Especificacao de tarefa cloud despachada.")
+    for pilar, status in (("Exa", report.exa_status), ("Stitch", report.stitch_status), ("Jules", report.jules_status)):
+        console.print(f"[cyan]{pilar}:[/] {status}")
+    veredito = (
+        "[bold green]VERIFICADO[/]" if report.verified else "[bold yellow]NAO VERIFICADO (sem recibos de execucao)[/]"
+    )
     console.print(
-        f"\n[bold gold1]Convergencia:[/] {report.convergence_rate * 100:.0f}% em {report.total_latency_seconds:.4f}s | [bold green]Status: VERIFICADO[/]\n"
+        f"\n[bold gold1]Convergencia:[/] {report.convergence_rate * 100:.0f}% em {report.total_latency_seconds:.4f}s | Status: {veredito}\n"
     )
 
 

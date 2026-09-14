@@ -50,6 +50,18 @@ def spectral_radius(matrix: NDArray[np.float64]) -> float:
     return float(np.max(np.abs(eigenvalues)))
 
 
+def tangent_spectral_radius(matrix: NDArray[np.float64]) -> float:
+    """Raio espectral no subespaco de redistribuicao (perturbacoes de soma zero).
+
+    Camadas T$ -> T$ que conservam o prize pool tem autovalor 1 na direcao do total, logo
+    rho(J) < 1 e impossivel para elas. O que se mede e se amplificam ou contraem a
+    REDISTRIBUICAO entre jogadores: rho(P J P), com P o projetor de soma zero.
+    """
+    n = matrix.shape[0]
+    projetor = np.eye(n, dtype=np.float64) - np.full((n, n), 1.0 / n)
+    return spectral_radius(projetor @ matrix @ projetor)
+
+
 # ==============================================================================
 # OPERADOR f1: Normalizacao de Estado & Baseline ICMev Contrativo (Malmuth-Harville)
 # ==============================================================================
@@ -163,14 +175,25 @@ class OperatorF3Behavioral:
     ou projecao baricentrica para garantir rigorosamente que rho(J_hat_3) <= 1.0.
     """
 
-    def __init__(self, risk_aversion_factor: float = 0.88, regularization_lambda: float = 0.1) -> None:
+    def __init__(
+        self,
+        risk_aversion_factor: float = 0.88,
+        regularization_lambda: float = 0.1,
+        dirichlet_alpha: float = 1.0,
+    ) -> None:
+        # dirichlet_alpha era 1.0 fixo dentro de forward: sem elemento neutro, a cadeia
+        # nunca reduzia ao ICM (desvio medido de 5 a 22 T$). Com alpha 0 e aversao 1,
+        # f3 e a identidade. Ver engine/pmev_baselines.py.
+        if not math.isfinite(dirichlet_alpha) or dirichlet_alpha < 0:
+            raise ValueError(f"dirichlet_alpha deve ser finito e nao negativo, recebido {dirichlet_alpha}.")
         self.risk_aversion = risk_aversion_factor
         self.reg_lambda = max(1e-6, regularization_lambda)
+        self.dirichlet_alpha = dirichlet_alpha
 
     def forward(self, expected_vector: NDArray[np.float64]) -> NDArray[np.float64]:
         """Aplica modulacao quantal / prospectiva com prior Dirichlet."""
         n = len(expected_vector)
-        dirichlet_alpha = 1.0
+        dirichlet_alpha = self.dirichlet_alpha
         total_expected = float(np.sum(expected_vector))
 
         if total_expected <= 0:
@@ -204,7 +227,10 @@ class OperatorF3Behavioral:
     def jacobian(self, expected_vector: NDArray[np.float64]) -> NDArray[np.float64]:
         """Calcula o Jacobiano regularizado por Tikhonov: J_hat_3 = J3 * (I + lambda J3^T J3)^(-1).
 
-        Garante que o raio espectral rho(J_hat_3) <= 1.0.
+        NAO E A DERIVADA DE f3, e nao deve propagar incerteza: medido em 2026-09-13, subestimou
+        o erro padrao do heroi em ~4% contra Monte Carlo, e declarou rho 0,909 onde o real e 1,0.
+        A regularizacao e o reescalamento agem sobre a matriz, nao sobre o operador. f5 usa
+        `raw_jacobian`.
         """
         j_raw = self.raw_jacobian(expected_vector)
         n = j_raw.shape[0]
@@ -316,10 +342,10 @@ class OperatorF5Functional:
         x4 = self.f4.forward(x3)
         y = np.copy(x4)
 
-        # 2. Backward / Jacobian Pass
+        # 2. Derivadas REAIS de cada camada (f3: raw_jacobian, nunca a matriz regularizada)
         j1 = self.f1.jacobian(initial_stacks)
         j2 = self.f2.jacobian(x1)
-        j3 = self.f3.jacobian(x2)
+        j3 = self.f3.raw_jacobian(x2)
         j4 = self.f4.jacobian(x3)
         j5 = np.eye(n, dtype=np.float64)
 
@@ -328,9 +354,11 @@ class OperatorF5Functional:
         # 3. Propagacao da Covariancia: Sigma_y = J_global * Sigma_x * J_global^T
         sigma_y = j_global @ initial_covariance @ j_global.T
 
-        # 4. Auditoria Espectral
-        rho = spectral_radius(j_global)
-        is_contractive = rho <= 1.0
+        # 4. Auditoria espectral bem posta: so as camadas T$ -> T$ (J1 leva fichas a T$ e seu
+        # raio muda com a unidade das stacks) e so no subespaco de redistribuicao. Tolerancia
+        # de diferencas finitas: a identidade mede ~1,00004.
+        rho = tangent_spectral_radius(j5 @ j4 @ j3 @ j2)
+        is_contractive = rho <= 1.0 + 1e-3
 
         hero_var = float(sigma_y[0, 0])
         hero_se = math.sqrt(max(0.0, hero_var))
@@ -350,11 +378,10 @@ class OperatorF5Functional:
             },
         )
 
+        # Cadeia deterministica: nao ha solver, iteracoes nem distancia de Nash a declarar.
         provenance = Provenance(
             engine_version=ENGINE_VERSION,
             solver_id=DEFAULT_SOLVER_ID,
-            iterations=1,
-            nash_distance_epsilon=0.001,
         )
 
         bounds = Bounds(

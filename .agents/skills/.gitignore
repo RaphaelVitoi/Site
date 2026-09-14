@@ -9,4 +9,5 @@ lookml-pop-guidelines/
 supabase/
 supabase-postgres-best-practices/
 skills-lock.json
-
+# Inventario pessoal de discos da skill de conhecimento: nunca versionar.
+poker-pmev-knowledge-engine/local/

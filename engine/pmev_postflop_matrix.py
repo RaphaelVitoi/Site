@@ -1,41 +1,47 @@
-"""Harness de replicacao e controle da matriz pos-flop da Aula 1.2 (Raphael Vitoi).
+"""Drift de sizing pos-flop da Aula 1.2 (Raphael Vitoi), medido sobre valores lidos.
 
-Formalismo: Raphael Vitoi — Ecossistema Nexus SOTA v8.0 GOLD.
-Auditoria Integrada: Sol (Codex) x Hermes.
+CORRECAO DE 2026-09-13, por aprovacao do Tier 0. A versao anterior declarava
+frequencias de acao (0.482, 0.285, 0.141, 0.072, 0.020), solver
+`HRC-Pro-2.14-Build-97`, seed, 50000 iteracoes, e-Nash 0.08 e checksum
+verificado. Nenhum desses valores existe na fonte, no ledger ou no fixture, e
+os payouts divergiam do ledger em 7 de 9 posicoes.
 
-Modela o cenario canonico do board Kd Jc Ts (BTN 38 bb vs BB 53 bb, pote 5.63 bb, Delta RP = +8.5 p.p.)
-e estabelece as 5 dimensoes de controle necessarias para transicionar dos 7 pares locais para os
-97 nos pareados do corpus autoral.
+ESTE MODULO NAO TEM NUMERO DE EVIDENCIA PROPRIO. O par vem de
+`engine.pmev_aula12_evidence`, que le o espelho do fixture curado
+(`aula12Pairs.ts`); aqui so se mede sizing sobre ele.
+
+O QUE ISTO NAO AUTORIZA: o par e VALIDO (somas de frequencia fecham) e NAO e
+REPRODUTIVEL (build e e-Nash fora do recorte). Nao e calibracao.
 """
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
+from math import isfinite
 from typing import Final
 
-from engine.pmev_spec import Bounds, Measured, Provenance, Unit
+from engine.pmev_aula12_evidence import (
+    AULA_1_2_SHA256,
+    CANONICAL_PAYOUTS,
+    FREQUENCY_SUM_TOLERANCE_PCT,
+    EvidenceSide,
+    pair_by_key,
+)
+from engine.pmev_scenario import EvidencePairContract, Read, ScenarioContract
+from engine.pmev_spec import Measured, Provenance, Unit
 
-# Parametros Estruturais da Aula 1.2 (Mesa Final 9-Max Vanilla $11)
+# Cenario-ancora, literal de docs/research/pmev/AULA_1_2_EVIDENCE_LEDGER.md.
 CANONICAL_POT_BB: Final[float] = 5.63
 CANONICAL_BTN_STACK_BB: Final[float] = 38.0
 CANONICAL_BB_STACK_BB: Final[float] = 53.0
 CANONICAL_BTN_RP: Final[float] = 0.214
 CANONICAL_BB_RP: Final[float] = 0.129
-CANONICAL_DELTA_RP: Final[float] = CANONICAL_BTN_RP - CANONICAL_BB_RP  # +0.085 (+8.5 p.p.)
-CANONICAL_PAYOUTS: Final[tuple[float, ...]] = (
-    237.34,
-    173.50,
-    128.25,
-    95.40,
-    71.20,
-    53.80,
-    41.50,
-    37.20,
-    36.47,
-)
+CANONICAL_DELTA_RP: Final[float] = CANONICAL_BTN_RP - CANONICAL_BB_RP  # +8.5 p.p.
+
+PAR_2_KEY: Final[str] = "PAR_2_IP_APOS_CHECK"
 
 __all__ = [
+    "AULA_1_2_SHA256",
     "CANONICAL_BB_RP",
     "CANONICAL_BB_STACK_BB",
     "CANONICAL_BTN_RP",
@@ -43,124 +49,135 @@ __all__ = [
     "CANONICAL_DELTA_RP",
     "CANONICAL_PAYOUTS",
     "CANONICAL_POT_BB",
-    "PostflopActionFrequencies",
-    "PostflopControlDimensions",
-    "calculate_hypergeometric_bunching_factor",
+    "FREQUENCY_SUM_TOLERANCE_PCT",
+    "PAR_2_KEY",
+    "PostflopEvidencePair",
+    "RegimeNode",
+    "SizingBranch",
+    "aula_1_2_par_2",
     "create_canonical_postflop_scenario",
 ]
 
 
 @dataclass(frozen=True, slots=True)
-class PostflopControlDimensions:
-    """As 5 dimensoes de controle necessarias para reproducibilidade dos 97 nos."""
+class SizingBranch:
+    """Ramo de aposta como a captura o exibe: sizing em bb e frequencia em pontos percentuais."""
 
-    epsilon_nash_pct: float
-    multivariate_bunching_enabled: bool
-    multi_sizing_continuous: bool
-    unit_typed: bool
-    solver_checksum_verified: bool
+    label: str
+    sizing_bb: float
+    frequency_pct: float
 
-    @property
-    def is_eligible_for_promotion(self) -> bool:
-        """Determina se um no bruto pode ser promovido a EvidencePair homologado."""
-        return (
-            self.epsilon_nash_pct <= 0.1
-            and self.multivariate_bunching_enabled
-            and self.multi_sizing_continuous
-            and self.unit_typed
-            and self.solver_checksum_verified
-        )
+    def __post_init__(self) -> None:
+        if not isfinite(self.sizing_bb) or self.sizing_bb <= 0:
+            raise ValueError(f"Sizing de {self.label} deve ser finito e positivo.")
+        if not isfinite(self.frequency_pct) or not 0.0 <= self.frequency_pct <= 100.0:
+            raise ValueError(f"Frequencia de {self.label} deve estar em [0, 100].")
 
 
 @dataclass(frozen=True, slots=True)
-class PostflopActionFrequencies:
-    """Frequencias relativas de acoes do solver no flop Kd Jc Ts."""
+class RegimeNode:
+    """Um lado do par: cenario declarado, acoes passivas e ramos de aposta, sem normalizar."""
 
-    check_freq: float
-    bet_25_pct_lead: float
-    bet_33_pct: float
-    bet_75_pct: float
-    all_in_geometric: float
+    scenario: ScenarioContract
+    passive_actions: tuple[tuple[str, float], ...]
+    bets: tuple[SizingBranch, ...]
+
+    def __post_init__(self) -> None:
+        if not self.bets:
+            raise ValueError("RegimeNode exige ao menos um ramo de aposta para medir sizing.")
+
+    @classmethod
+    def from_side(cls, lado: EvidenceSide) -> RegimeNode:
+        """Separa passivas de apostas pela presenca de sizing. Leitura ilegivel recusa a medida."""
+        passivas: list[tuple[str, float]] = []
+        apostas: list[SizingBranch] = []
+        for acao in lado.actions:
+            if not isinstance(acao.frequency_pct, Read):
+                raise ValueError(f"{acao.label}: frequencia ilegivel, sizing medio nao se calcula.")
+            if acao.sizing_bb is None:
+                passivas.append((acao.label, acao.frequency_pct.value))
+            elif isinstance(acao.sizing_bb, Read):
+                apostas.append(SizingBranch(acao.label, acao.sizing_bb.value, acao.frequency_pct.value))
+            else:
+                raise ValueError(f"{acao.label}: sizing ilegivel, sizing medio nao se calcula.")
+        return cls(scenario=lado.scenario, passive_actions=tuple(passivas), bets=tuple(apostas))
 
     @property
-    def total_frequency(self) -> float:
-        return self.check_freq + self.bet_25_pct_lead + self.bet_33_pct + self.bet_75_pct + self.all_in_geometric
+    def frequency_sum_pct(self) -> float:
+        return sum(pct for _, pct in self.passive_actions) + sum(b.frequency_pct for b in self.bets)
+
+    @property
+    def aggressive_mass_pct(self) -> float:
+        return sum(b.frequency_pct for b in self.bets)
+
+    @property
+    def weighted_mean_sizing_bb(self) -> float:
+        massa = self.aggressive_mass_pct
+        if massa <= 0:
+            raise ValueError("Sem massa agressiva o sizing medio nao existe.")
+        return sum(b.sizing_bb * b.frequency_pct for b in self.bets) / massa
+
+    @property
+    def largest_mass_sizing_bb(self) -> float:
+        return max(self.bets, key=lambda b: b.frequency_pct).sizing_bb
+
+
+@dataclass(frozen=True, slots=True)
+class PostflopEvidencePair:
+    contract: EvidencePairContract
+    board: str
+    pot_bb: float
+    chip_ev: RegimeNode
+    icm_ev: RegimeNode
+
+    def __post_init__(self) -> None:
+        if self.chip_ev.scenario is not self.contract.chip_ev or self.icm_ev.scenario is not self.contract.icm_ev:
+            raise ValueError("Os nos devem carregar os mesmos cenarios declarados no contrato do par.")
+
+    @property
+    def frequency_sums_close(self) -> bool:
+        return all(
+            abs(no.frequency_sum_pct - 100.0) <= FREQUENCY_SUM_TOLERANCE_PCT for no in (self.chip_ev, self.icm_ev)
+        )
 
     @property
     def is_downward_drift_active(self) -> bool:
-        """Verifica se ocorre o Downward Sizing Drift (migracao para sizings menores de 25% e 33%)."""
-        small_bets = self.bet_25_pct_lead + self.bet_33_pct
-        large_bets = self.bet_75_pct + self.all_in_geometric
-        return small_bets > large_bets
-
-
-def calculate_hypergeometric_bunching_factor(
-    removed_high_cards: int = 4,
-    deck_remaining: int = 47,
-    sample_folds: int = 14,
-) -> float:
-    """Calcula a modulacao hipergeometrica da densidade de cartas residuais apos 7 folds previos.
-
-    Quando 7 jogadores foldam no 9-max, maos contendo cartas baixas/desconectadas sao descartadas
-    com maior probabilidade, elevando a proporcao de cartas de valor nos ranges restantes.
-    """
-    if deck_remaining <= 0 or sample_folds <= 0:
-        return 1.0
-    # Modulacao relativa da densidade de broadways remanescentes
-    base_prob = (16.0 - removed_high_cards) / deck_remaining
-    # Correcao condicional sobre os 7 folds
-    conditional_shift = 1.0 + (0.025 * (sample_folds / 14.0))
-    return round(base_prob * conditional_shift, 4)
-
-
-def create_canonical_postflop_scenario(
-    controls: PostflopControlDimensions | None = None,
-) -> Measured[PostflopActionFrequencies]:
-    """Gera o cenario auditavel da Aula 1.2 com rastreamento estrito de proveniencia."""
-    if controls is None:
-        controls = PostflopControlDimensions(
-            epsilon_nash_pct=0.08,
-            multivariate_bunching_enabled=True,
-            multi_sizing_continuous=True,
-            unit_typed=True,
-            solver_checksum_verified=True,
+        """ICMev desloca a massa agressiva para sizings menores: media ponderada E ramo dominante caem."""
+        return (
+            self.icm_ev.weighted_mean_sizing_bb < self.chip_ev.weighted_mean_sizing_bb
+            and self.icm_ev.largest_mass_sizing_bb < self.chip_ev.largest_mass_sizing_bb
         )
 
-    # Distribuicao observada na Aula 1.2 (HRC vs GTO Wizard)
-    frequencies = PostflopActionFrequencies(
-        check_freq=0.482,
-        bet_25_pct_lead=0.285,
-        bet_33_pct=0.141,
-        bet_75_pct=0.072,
-        all_in_geometric=0.020,
+
+def aula_1_2_par_2() -> PostflopEvidencePair:
+    """PAR 2: BTN (IP) age apos o check do BB no flop Kd Jc Ts. Nos 3 (ChipEV) e 41 (ICMev)."""
+    par = pair_by_key(PAR_2_KEY)
+    if not isinstance(par.board, Read) or not isinstance(par.pot_bb, Read):
+        raise ValueError(f"{PAR_2_KEY}: board e pote precisam estar lidos para medir sizing.")
+    return PostflopEvidencePair(
+        contract=par.contract,
+        board=str(par.board.value),
+        pot_bb=par.pot_bb.value,
+        chip_ev=RegimeNode.from_side(par.chip_ev),
+        icm_ev=RegimeNode.from_side(par.icm_ev),
     )
 
-    provenance = Provenance(
-        engine_version="Aula1.2-HRC-GTO-Wizard-v8",
-        solver_id="HRC-Pro-2.14-Build-97",
-        seed=4294967295,
-        iterations=50000,
-        nash_distance_epsilon=controls.epsilon_nash_pct,
-    )
 
-    # Incerteza amostral na frequencia principal (lead 25%)
-    se = math.sqrt((frequencies.bet_25_pct_lead * (1.0 - frequencies.bet_25_pct_lead)) / 50000)
-    bounds = Bounds(
-        lower=frequencies.bet_25_pct_lead - (1.96 * se),
-        upper=frequencies.bet_25_pct_lead + (1.96 * se),
-        confidence_level=0.95,
-    )
+def create_canonical_postflop_scenario() -> Measured[PostflopEvidencePair]:
+    """Par 2 da Aula 1.2 como grandeza medida.
 
+    `is_valid` diz se a transcricao fecha (somas de frequencia dentro da
+    tolerancia). Reprodutibilidade e outra pergunta, respondida por
+    `value.contract.assess_reproducibility()`, e hoje e `False`.
+    Frequencias em pontos percentuais: a unidade e adimensional, nao probabilidade.
+    """
+    pair = aula_1_2_par_2()
     return Measured(
-        value=frequencies,
-        unit=Unit.PROBABILITY,
-        is_valid=controls.is_eligible_for_promotion,
-        standard_error=se,
-        confidence_interval=bounds,
-        provenance=provenance,
+        value=pair,
+        unit=Unit.DIMENSIONLESS,
+        is_valid=pair.frequency_sums_close,
+        provenance=Provenance(
+            engine_version=f"Aula 1.2.docx sha256:{AULA_1_2_SHA256}",
+            solver_id="GTO Wizard (ChipEV) x HRC (ICMev), build nao lido",
+        ),
     )
-
-
-# Aliases canonicos de compatibilidade
-simulate_postflop_matrix_aula_1_2 = create_canonical_postflop_scenario
-compute_multivariate_hypergeometric_bunching = calculate_hypergeometric_bunching_factor
