@@ -71,6 +71,21 @@ if [ -n "$autor" ] && [ -f "$CATALOGO" ]; then
         echo "[COMMIT-MSG AVISO] autor '$autor' nao esta em $CATALOGO."
         echo "   corrigir: use o nome canonico do catalogo, ou acrescente a identidade nova a ele no mesmo commit."
     fi
+
+    # Aviso, nao bloqueio: so o NUMERO do Tier, porque a subdivisao (1.A, 1.B) nao
+    # tem definicao canonica. index() casa texto literal, como o grep -F acima.
+    tier_decl=$(printf '%s' "$assinatura" | sed -n 's/.*\[Tier \([0-9][0-9]*\).*/\1/p')
+    if [ -n "$tier_decl" ]; then
+        tier_cat=$(awk -v alvo="\"nome\": \"$autor\"" '
+            index($0, alvo) { achou = 1; next }
+            achou && /"tier":/ { gsub(/[^0-9]/, ""); print; exit }
+            achou && /^ *}/ { exit }
+        ' "$CATALOGO")
+        if [ -n "$tier_cat" ] && [ "$tier_decl" != "$tier_cat" ]; then
+            echo "[COMMIT-MSG AVISO] a Assinatura declara Tier $tier_decl, mas $CATALOGO registra '$autor' no Tier $tier_cat."
+            echo "   corrigir: 'Assinatura: $autor [Tier $tier_cat] -- sessao <session_id>'   (Tiers: CLAUDE.md SS7)"
+        fi
+    fi
 fi
 
 exit 0

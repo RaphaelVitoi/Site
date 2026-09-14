@@ -926,6 +926,7 @@ coisas, e a diferença entre elas é deliberada.
 | Autor **diverge** da Assinatura declarada | **bloqueia** | evidência exata; zero falso positivo medido |
 | Sem linha `Assinatura:` | **bloqueia** | promovido de aviso por autorização do Tier 0 em 2026-09-12 |
 | Autor fora de `data/agent_identities.json` | **avisa** | identidade nova é legítima; o remédio é catalogá-la |
+| Tier da Assinatura diverge do `tier` do catálogo | **avisa** | só o número é conferido: a subdivisão (1.A, 1.B) não tem definição canônica. Medido em 2026-09-14: dois commits do Gemini 3.8 Flash assinaram `[Tier 2]` e nada acusou |
 
 **O portão não adivinha o condutor, e não pode.** Ele compara o que o condutor
 **declarou** com o campo que o GitHub lê, e a mensagem de recusa entrega o

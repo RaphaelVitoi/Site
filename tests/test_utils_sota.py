@@ -14,7 +14,7 @@ from utils.cache import SOTACache
 from utils.harmonizer import SOTAHarmonizer
 from utils.resources import ResourceGuard
 from utils.storage import SOTABucketing
-from utils.text import enforce_pure_ascii
+from utils.text import caracteres_sem_transliteracao, enforce_pure_ascii
 
 # ==============================================================================
 # utils/text.py  enforce_pure_ascii
@@ -33,11 +33,25 @@ from utils.text import enforce_pure_ascii
         ("\U0001f600 poker", " poker"),  # emoji: destruido pelo NFKD+ASCII
         ("\u2014separador\u2026", "-separador..."),  # dash/ellipsis curados
         ("\u201cquoted\u201d", '"quoted"'),  # aspas tipograficas curadas
+        # Simbolos semanticos: antes de 2026-09-14 sumiam, e "regra != fato" virava "regra  fato".
+        ("regra \u2260 fato", "regra != fato"),
+        ("\u00a77 \u2192 \u00a78", "SS7 -> SS8"),
+        ("3 \u00d7 6 \u2264 18 \u2265 1", "3 x 6 <= 18 >= 1"),
+        ("\u2705\ufe0f ok \u274c", "[OK] ok [X]"),
     ],
 )
 def test_enforce_pure_ascii(raw: str, expected: str) -> None:
     """Valida a purificacao ASCII para todos os ramos de substituicao."""
     assert enforce_pure_ascii(raw) == expected
+
+
+@pytest.mark.unit
+def test_descarte_sem_transliteracao_e_declarado_e_acento_nao_conta() -> None:
+    """O que some inteiro e contado; o acento, perda aceita pela Blindagem ASCII, nao."""
+    texto = "a\u00e7\u00e3o \u2192 \U0001f600\U0001f600 \u2603"
+    assert caracteres_sem_transliteracao(texto) == {"\U0001f600": 2, "\u2603": 1}
+    assert caracteres_sem_transliteracao("a\u00e7\u00e3o \u00a7 \u2260") == {}
+    assert caracteres_sem_transliteracao("") == {}
 
 
 @pytest.mark.unit
