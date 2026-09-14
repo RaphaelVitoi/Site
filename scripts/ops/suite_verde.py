@@ -53,6 +53,11 @@ Medido em 2026-09-13, nesta forma exata: 1231 verdes em 140 s, contra ~420 s em
 serie. O CI segue em serie e com cobertura -- e la que dependencia de ordem entre
 testes aparece. Passe `-n 0` para medir em serie aqui.
 
+SAIDA CURTA: o pyproject liga `log_cli`, que imprime uma linha por teste. No
+pre-push isso chegou a 235 KB -- cerca de 70 mil tokens no contexto de quem faz
+push, para dizer "passou". Aqui roda com `-o log_cli=false`: falha continua
+saindo inteira, sucesso sai em pontos e no sumario.
+
 ONDE O MARCADOR MORA: `.git/sota-suite-verde`, que e por clone, nunca versionado,
 e some num clone novo -- que e o comportamento certo, porque a medicao vale para
 ESTA maquina e nao para o repositorio. O CI nao usa este caminho: la a suite roda
@@ -159,10 +164,15 @@ def paralelismo(extra: list[str]) -> list[str]:
     return ["-n", "auto"] if _tem_xdist() else []
 
 
+def silencio(extra: list[str]) -> list[str]:
+    """`-o log_cli=false`, salvo se quem chamou ja decidiu sobre log_cli."""
+    return [] if any("log_cli" in a for a in extra) else ["-o", "log_cli=false"]
+
+
 def rodar_suite(extra: list[str]) -> int:
     """Executa a suite e, se verde E a arvore continuar limpa, grava o marcador."""
     base = "C:/Users/rapha/AppData/Local/Temp/pt-sota" if sys.platform == "win32" else "/tmp/pt-sota"
-    cmd = [sys.executable, "-m", "pytest", "-q", f"--basetemp={base}", *paralelismo(extra), *extra]
+    cmd = [sys.executable, "-m", "pytest", "-q", f"--basetemp={base}", *paralelismo(extra), *silencio(extra), *extra]
     print(f"[SUITE] medindo -- {' '.join(cmd[2:])}", flush=True)
     r = subprocess.run(cmd, cwd=str(RAIZ), check=False)
     if r.returncode != 0:
