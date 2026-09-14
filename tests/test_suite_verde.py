@@ -10,7 +10,6 @@ from __future__ import annotations
 import importlib.util
 import json
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -21,6 +20,8 @@ ORIGEM = RAIZ / "scripts" / "ops" / "suite_verde.py"
 
 def _modulo():
     spec = importlib.util.spec_from_file_location("suite_verde", ORIGEM)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Nao foi possivel carregar spec de {ORIGEM}")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod

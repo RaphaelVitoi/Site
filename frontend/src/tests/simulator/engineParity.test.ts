@@ -7,7 +7,12 @@ import {
 	calculateJandaGeometricSizing,
 	calculateJandaMDF,
 } from '../../lib/canonicalTheoryEngine';
-import { computeMultiwayStructuralLiability, solvePluribusMultiway } from '../../lib/pluribusMultiwayEngine';
+import {
+	computeMultiwayStructuralLiability,
+	solvePluribusMultiway,
+	type TablePosition,
+	type TableStreet,
+} from '../../lib/pluribusMultiwayEngine';
 import { calculateMalmuthHarville } from '../../lib/icmMatrix';
 import { AULA_1_2_PAIRS } from '../../components/simulator/solver/__fixtures__/aula12Pairs';
 import {
@@ -37,8 +42,8 @@ describe('shared Python and TypeScript engine parity corpus', () => {
 				activeStacks: scenario.input.active_stacks,
 				lambdaFactor: scenario.input.lambda_factor,
 				nominalEquity: scenario.input.equity,
-				heroPosition: scenario.input.hero_position,
-				street: scenario.input.street,
+				heroPosition: scenario.input.hero_position as TablePosition,
+				street: scenario.input.street as TableStreet,
 				depthStreets: scenario.input.depth_streets,
 				iterations: scenario.input.iterations,
 			});

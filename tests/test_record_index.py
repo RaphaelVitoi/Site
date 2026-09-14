@@ -376,7 +376,7 @@ def test_jsonl_que_so_cresceu_no_fim_avisa_e_nao_bloqueia(tmp_path, monkeypatch)
     monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
     monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: ["reports/ledger.jsonl"])
     monkeypatch.setattr(record_gate, "_git", lambda *a: "reports/ANCORADO.md\n" if a[:1] == ("ls-files",) else "")
-    monkeypatch.setattr(record_gate, "jsonl_que_so_cresceram", lambda rels: set(rels))
+    monkeypatch.setattr(record_gate, "jsonl_que_so_cresceram", set)
     erros, avisos = record_gate.verificar()
     assert not any("ANCORADO.md" in e for e in erros), erros
     assert any("ANCORADO.md" in a and "no fim" in a for a in avisos), avisos
@@ -857,8 +857,8 @@ def test_pendencia_encerra_por_append_e_nunca_por_remocao(tmp_path, monkeypatch)
     erros, _ = record_gate.verificar()
     assert not erros, erros
     abertas, orfas = record_gate.coletar_pendencias()
-    assert abertas == [], "o append de encerramento nao retirou a pendencia da lista de abertas"
-    assert orfas == []
+    assert not abertas, "o append de encerramento nao retirou a pendencia da lista de abertas"
+    assert not orfas
     assert "pend-teste-fechar" in (tmp_path / origem).read_text(encoding="utf-8"), (
         "o registro de origem foi reescrito; encerramento e append, nao remocao"
     )

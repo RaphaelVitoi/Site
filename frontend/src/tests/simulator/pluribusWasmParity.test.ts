@@ -3,7 +3,12 @@
 import { TextDecoder, TextEncoder } from 'node:util';
 import parityCorpus from '../../../../data/engine_parity_scenarios.json';
 import { executePluribusEngine } from '../../lib/engineExecutionGateway';
-import { solvePluribusMultiway, type PluribusStateConfig } from '../../lib/pluribusMultiwayEngine';
+import {
+	solvePluribusMultiway,
+	type PluribusStateConfig,
+	type TablePosition,
+	type TableStreet,
+} from '../../lib/pluribusMultiwayEngine';
 
 Object.assign(globalThis, { TextDecoder, TextEncoder });
 
@@ -23,8 +28,8 @@ describe('real Pluribus adapter WASM parity', () => {
 				activeStacks: scenario.input.active_stacks,
 				lambdaFactor: scenario.input.lambda_factor,
 				nominalEquity: scenario.input.equity,
-				heroPosition: scenario.input.hero_position as PluribusStateConfig['heroPosition'],
-				street: scenario.input.street as PluribusStateConfig['street'],
+				heroPosition: scenario.input.hero_position as TablePosition,
+				street: scenario.input.street as TableStreet,
 				depthStreets: scenario.input.depth_streets,
 				iterations: scenario.input.iterations,
 			};
