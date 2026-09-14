@@ -180,6 +180,17 @@ def test_escolha_explicita_de_quem_chama_vence(monkeypatch, tmp_path, extra):
     assert "auto" not in cmd, cmd
 
 
+def test_pre_push_nao_imprime_uma_linha_por_teste(monkeypatch, tmp_path):
+    """log_cli ligado levou a saida do push a 235 KB, ~70 mil tokens, para dizer que passou."""
+    cmd = _comando_da_suite(monkeypatch, tmp_path, [], tem_xdist=True)
+    assert cmd[cmd.index("-o") + 1] == "log_cli=false", cmd
+
+
+def test_quem_chama_pode_religar_o_log(monkeypatch, tmp_path):
+    cmd = _comando_da_suite(monkeypatch, tmp_path, ["-o", "log_cli=true"], tem_xdist=True)
+    assert "log_cli=false" not in cmd, cmd
+
+
 @pytest.mark.parametrize("acao", ["check", "ensure", "run", "invalidate"])
 def test_as_quatro_acoes_estao_documentadas_no_cabecalho(acao):
     """Horizontalidade: outro condutor tem de achar o caminho lendo o arquivo."""
