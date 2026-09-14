@@ -32,7 +32,7 @@ export function resolveWriteTarget(target, roots = WRITE_ROOTS) {
 
 /** Literal de string da sintaxe de consulta do Drive v3: escapa barra invertida e aspas simples. */
 export function escapeDriveQuery(term) {
-  return String(term).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+  return String(term).replaceAll("\\", String.raw`\\`).replaceAll("'", String.raw`\'`);
 }
 
 export function isValidFileId(id) {
@@ -65,9 +65,9 @@ export async function run(principal) {
   try {
     await principal();
     process.exitCode = EXIT.OK;
-  } catch (erro) {
-    const codigo = erro instanceof SkillError ? erro.exitCode : EXIT.REMOTE;
-    console.error(`ERRO ${codigo}: ${erro.message}`);
+  } catch (error_) {
+    const codigo = error_ instanceof SkillError ? error_.exitCode : EXIT.REMOTE;
+    console.error(`ERRO ${codigo}: ${error_.message}`);
     process.exitCode = codigo;
   }
 }

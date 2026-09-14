@@ -1,8 +1,14 @@
 const path = require('node:path');
 
+const allowedDevOrigins = [
+  'localhost',
+  '127.0.0.1',
+  ...(process.env.ALLOWED_DEV_ORIGINS ? process.env.ALLOWED_DEV_ORIGINS.split(',').map((s) => s.trim()) : []),
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ['192.168.2.162', 'localhost', '127.0.0.1'],
+  allowedDevOrigins,
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true, // SOTA: Native Gzip/Brotli compression in production and edge

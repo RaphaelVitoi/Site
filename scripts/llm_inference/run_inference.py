@@ -411,7 +411,7 @@ def _compact_conversation(
                 content = re.sub(r"open-source [^,]+,", f"open-source {new_model_tag},", content)
             system_msgs.append({"role": "system", "content": content})
         else:
-            dialogue_msgs.append(dict(msg))
+            dialogue_msgs.append(msg.copy())
 
     if not dialogue_msgs:
         return list(system_msgs)

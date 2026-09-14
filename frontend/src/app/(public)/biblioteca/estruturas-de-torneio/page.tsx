@@ -9,7 +9,7 @@ import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 
-const content = `
+const content = String.raw`
 # 📊 Classificação de Estruturas de Prêmios (Framework VITOI)
 
 O entendimento estrutural das premiações ajuda a organizar adaptações de ICM, desde que a curva completa e o estado da mesa estejam declarados. Os templates abaixo são didáticos: não substituem a leitura do vetor de payouts nem a análise do confronto efetivo.
@@ -20,19 +20,19 @@ O entendimento estrutural das premiações ajuda a organizar adaptações de ICM
 
 O percentual do 1º lugar deve ser calculado sobre o **Prize Pool Total** do torneio, não sobre a soma parcial dos prêmios in-the-money (ITM). Ele é um sinal inicial, não a classificação completa da estrutura.
 
-$$ \\%_{1st} = \\frac{Prêmio_{1st}}{TOTAL\\_POOL} $$
+$$ \%_{1st} = \frac{Prêmio_{1st}}{TOTAL\_POOL} $$
 
 ---
 
 ## 2. Templates operacionais
 
 ### A. TOP-HEAVY (▲)
-- **Sinal inicial:** 1º lugar $\\geq$ 25% do pool total.
+- **Sinal inicial:** 1º lugar $\geq$ 25% do pool total.
 - **Leitura necessária:** confirmar se a concentração dos primeiros saltos e o restante da curva sustentam a classificação.
 - **Limite:** BF e pressão ICM devem ser calculados por confronto; não são propriedades fixas do rótulo.
 
 ### B. FLAT (▬)
-- **Sinal inicial:** 1º lugar $\\leq$ 18% do pool total.
+- **Sinal inicial:** 1º lugar $\leq$ 18% do pool total.
 - **Leitura necessária:** avaliar distribuição efetiva de posições e ITM.
 - **Limite:** a curva flat não transforma um MTT em ChipEV puro; continua sendo necessário medir ICM no spot.
 

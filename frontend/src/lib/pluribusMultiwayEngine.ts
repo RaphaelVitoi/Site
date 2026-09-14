@@ -48,8 +48,8 @@ const EPSILON = 1e-12;
  */
 export class CFRPlusEngine {
 	private readonly actions: PluribusAction[];
-	private cumulativeRegrets: Record<PluribusAction, number>;
-	private strategySum: Record<PluribusAction, number>;
+	private readonly cumulativeRegrets: Record<PluribusAction, number>;
+	private readonly strategySum: Record<PluribusAction, number>;
 	private iteration: number = 0;
 
 	constructor(actions: PluribusAction[]) {
@@ -170,11 +170,12 @@ export function solvePluribusMultiway(config: PluribusStateConfig): PluribusSolv
 	const structuralLiability = computeMultiwayStructuralLiability(pot, numPlayers, lambdaFactor);
 
 	// Multiplicador de realização posicional
-	const posMultiplier = ['BTN', 'CO'].includes(heroPosition)
-		? 1.15
-		: ['SB', 'BB', 'UTG'].includes(heroPosition)
-			? 0.88
-			: 1.0;
+	let posMultiplier = 1.0;
+	if (['BTN', 'CO'].includes(heroPosition)) {
+		posMultiplier = 1.15;
+	} else if (['SB', 'BB', 'UTG'].includes(heroPosition)) {
+		posMultiplier = 0.88;
+	}
 
 	// Equidade efetiva comprimida pela penalidade de passivo multiway
 	const penaltyFraction = structuralLiability / Math.max(1, pot);

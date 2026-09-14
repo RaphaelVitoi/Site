@@ -88,6 +88,11 @@ _SEM_ENASH = Unreadable("sem e-Nash lido, a unidade nao descreve nada")
 _SEED_NAO_DECLARADA = Unreadable("seed nao declarada pela fonte")
 
 
+def _read_value(reading: Read[T]) -> T:
+    """Extrai o valor de um Read garantido por isinstance."""
+    return reading.value
+
+
 @dataclass(frozen=True, slots=True)
 class SolverProvenance:
     """O que separa transcricao de medicao.
@@ -105,12 +110,20 @@ class SolverProvenance:
     def __post_init__(self) -> None:
         if not self.solver.strip():
             raise ValueError("SolverProvenance exige o nome do solver.")
-        if isinstance(self.build, Read) and not str(self.build.value).strip():
-            raise ValueError("Build lido nao pode ser vazio; use Unreadable.")
-        if isinstance(self.e_nash, Read) and (not isfinite(self.e_nash.value) or self.e_nash.value < 0):
-            raise ValueError(f"e-Nash lido deve ser finito e nao negativo, recebido {self.e_nash.value}.")
-        if isinstance(self.seed, Read) and self.seed.value < 0:
-            raise ValueError("Seed lida nao pode ser negativa.")
+        build = self.build
+        if isinstance(build, Read):
+            if not str(_read_value(build)).strip():
+                raise ValueError("Build lido nao pode ser vazio; use Unreadable.")
+        e_nash = self.e_nash
+        if isinstance(e_nash, Read):
+            val_e_nash = _read_value(e_nash)
+            if not isfinite(val_e_nash) or val_e_nash < 0:
+                raise ValueError(f"e-Nash lido deve ser finito e nao negativo, recebido {val_e_nash}.")
+        seed = self.seed
+        if isinstance(seed, Read):
+            val_seed = _read_value(seed)
+            if val_seed < 0:
+                raise ValueError("Seed lida nao pode ser negativa.")
 
     def missing_fields(self) -> list[str]:
         """Mesmos nomes de `camposDeProcedenciaFaltando` no TypeScript."""
@@ -132,8 +145,11 @@ class Seat:
     def __post_init__(self) -> None:
         if not self.seat_id.strip():
             raise ValueError("Seat exige identificador.")
-        if isinstance(self.stack, Read) and (not isfinite(self.stack.value) or self.stack.value < 0):
-            raise ValueError(f"Stack lida de {self.seat_id} deve ser finita e nao negativa.")
+        stack = self.stack
+        if isinstance(stack, Read):
+            val_stack = _read_value(stack)
+            if not isfinite(val_stack) or val_stack < 0:
+                raise ValueError(f"Stack lida de {self.seat_id} deve ser finita e nao negativa.")
 
 
 @dataclass(frozen=True, slots=True)

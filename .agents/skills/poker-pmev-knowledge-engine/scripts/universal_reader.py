@@ -15,8 +15,9 @@ import shutil
 import subprocess
 import sys
 import zipfile
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from pathlib import Path
+from typing import Any
 
 from defusedxml import ElementTree  # XML de .pptx vem de terceiros: sem entidades externas nem expansao
 
@@ -97,7 +98,11 @@ def _xlsx(path: Path, max_chars: int) -> str:
     try:
         for aba in livro.worksheets:
             saida.append(f"--- ABA {aba.title} ---")
-            for linha in aba.iter_rows(values_only=True):
+            iter_rows = getattr(aba, "iter_rows", None)
+            if not callable(iter_rows):
+                continue
+            rows: Iterable[Any] = iter_rows(values_only=True)
+            for linha in rows:
                 texto = "\t".join("" if v is None else str(v) for v in linha)
                 saida.append(texto)
                 total += len(texto)
