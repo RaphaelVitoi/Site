@@ -2972,32 +2972,66 @@ def list_and_run_scripts(
 # ==========================================
 
 
-def _coletar_fontes_handoff(claude_dir: Path, agent: str) -> tuple[list[str], list[str]]:
+def _coletar_fontes_handoff(claude_dir: Path, agent: str) -> tuple[list[str], list[str], int]:
     """Coleta fontes de governanca e memoria para o handoff.
 
-    Retorna (context_parts, ausentes). Ausencia declarada, nao silenciosa.
-    Medido em 2026-08-27: 3 dos 4 arquivos nao existiam e o handoff saia
-    com um quarto da carga anunciada dizendo "persistido com sucesso".
+    Retorna (context_parts, ausentes, total_fontes). Ausencia declarada, nao silenciosa.
+    Busca os documentos canonicos com fallback multicamada para absorver a estrutura
+    pos-fusao (.claude/GOVERNANCA, .claude/ARQUITETURA) e raizes multiprojeto/Site.
     """
-    files_to_inject = {
-        "MODUS OPERANDI v8.0 GOLD": BASE_DIR.parent / "MODUS_OPERANDI.md",
-        "INSTRUCOES GLOBAIS": BASE_DIR / "GLOBAL_INSTRUCTIONS.md",
-        "COSMOVISAO": claude_dir / "COSMOVISAO.md",
-        "INVARIANTES ARQUITETURAIS": claude_dir / "ARCHITECTURAL_INVARIANTS.md",
+    governance_sources: dict[str, list[Path]] = {
+        "MODUS OPERANDI v8.0 GOLD": [
+            BASE_DIR.parent / "MODUS_OPERANDI.md",
+            BASE_DIR / "MODUS_OPERANDI.md",
+        ],
+        "INSTRUCOES GLOBAIS": [
+            claude_dir / "GOVERNANCA" / "GLOBAL_INSTRUCTIONS.md",
+            BASE_DIR / "GLOBAL_INSTRUCTIONS.md",
+            claude_dir / "GLOBAL_INSTRUCTIONS.md",
+        ],
+        "COSMOVISAO": [
+            claude_dir / "GOVERNANCA" / "COSMOVISAO.md",
+            BASE_DIR.parent / "COSMOVISAO_MALHA_SOTA_v8_GOLD.md",
+            claude_dir / "COSMOVISAO.md",
+        ],
+        "INVARIANTES ARQUITETURAIS": [
+            claude_dir / "ARQUITETURA" / "ARCHITECTURAL_INVARIANTS.md",
+            claude_dir / "ARCHITECTURAL_INVARIANTS.md",
+            BASE_DIR / "ARCHITECTURAL_INVARIANTS.md",
+        ],
+        "GOVERNANCA CANONICA (CLAUDE.md)": [
+            BASE_DIR / "CLAUDE.md",
+            BASE_DIR.parent / "CLAUDE.md",
+        ],
+        "MASTER PROTOCOL GEMINI SOTA (GEMINI.md)": [
+            BASE_DIR / "GEMINI.md",
+            BASE_DIR.parent / "GEMINI.md",
+        ],
     }
     context: list[str] = []
     ausentes: list[str] = []
-    notepad_file = BASE_DIR / "memory" / "notepad_active.md"
-    if notepad_file.exists() and notepad_file.stat().st_size > 0:
-        files_to_inject["WORKING SCRATCHPAD (NOTEPAD MEMORY)"] = notepad_file
+    total_fontes = len(governance_sources)
 
-    for title, path in files_to_inject.items():
-        if path.exists():
+    for title, candidates in governance_sources.items():
+        resolved_path = next((p for p in candidates if p.exists()), None)
+        if resolved_path:
+            from utils.text import enforce_pure_ascii
+
+            raw_text = resolved_path.read_text(encoding="utf-8", errors="ignore")
+            purified = enforce_pure_ascii(raw_text)
             context.append(
-                f"\n=================================================================\n## {title}\n=================================================================\n{path.read_text(encoding='utf-8', errors='ignore')}"
+                f"\n=================================================================\n## {title}\n=================================================================\n{purified}"
             )
         else:
-            ausentes.append(f"{title} ({path})")
+            ausentes.append(f"{title} ({candidates[0]})")
+
+    notepad_file = BASE_DIR / "memory" / "notepad_active.md"
+    if notepad_file.exists() and notepad_file.stat().st_size > 0:
+        from utils.text import enforce_pure_ascii
+
+        context.append(
+            f"\n=================================================================\n## WORKING SCRATCHPAD (NOTEPAD MEMORY)\n=================================================================\n{enforce_pure_ascii(notepad_file.read_text(encoding='utf-8', errors='ignore'))}"
+        )
 
     agent_profile_path = claude_dir / "AGENTS" / f"{agent}.md"
     if not agent_profile_path.exists():
@@ -3008,16 +3042,23 @@ def _coletar_fontes_handoff(claude_dir: Path, agent: str) -> tuple[list[str], li
         (f"MEMORIA SIMBIOTICA: {agent}", claude_dir / "agent-memory" / agent / "MEMORY.md"),
     ]:
         if path.exists():
+            from utils.text import enforce_pure_ascii
+
             context.append(
-                f"\n=================================================================\n## {label}\n=================================================================\n{path.read_text(encoding='utf-8', errors='ignore')}"
+                f"\n=================================================================\n## {label}\n=================================================================\n{enforce_pure_ascii(path.read_text(encoding='utf-8', errors='ignore'))}"
             )
 
-    return context, ausentes
+    return context, ausentes, total_fontes
 
 
-def _reportar_handoff(handoff_output_file: Path, ausentes: list[str], handoff_text: str) -> bool:
+def _reportar_handoff(
+    handoff_output_file: Path,
+    ausentes: list[str],
+    handoff_text: str,
+    total_fontes: int = 6,
+) -> bool:
     """Imprime resumo do handoff e copia para clipboard via Clippy com fallback multicamada."""
-    total = 4  # fontes de governanca (files_to_inject tem 4 chaves)
+    total = total_fontes
     if ausentes:
         console.print(
             f"[bold yellow] Handoff PARCIAL:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/] "
@@ -3057,7 +3098,7 @@ def execute_handoff(
     console.print(f"\n[bold cyan]=== [PROTOCOLO DE HANDOFF COGNITIVO SOTA v8.0 GOLD ({mode_desc})] ===[/]\n")
 
     claude_dir = BASE_DIR / ".claude" if (BASE_DIR / ".claude").exists() else BASE_DIR / ".cerebro"
-    context, ausentes = _coletar_fontes_handoff(claude_dir, agent)
+    context, ausentes, total_fontes = _coletar_fontes_handoff(claude_dir, agent)
 
     if not context:
         console.print("[bold red][FALHA] Nenhuma fonte de contexto encontrada. Handoff vazio NAO sera gravado.[/]")
@@ -3065,12 +3106,14 @@ def execute_handoff(
             console.print(f"  [red]-> ausente:[/] {a}")
         raise typer.Exit(1)
 
-    handoff_text = "\n".join(context)
+    from utils.text import enforce_pure_ascii
+
+    handoff_text = enforce_pure_ascii("\n".join(context))
     handoff_output_file = claude_dir / "agent-memory" / agent / "HANDOFF_LATEST.md"
     handoff_output_file.parent.mkdir(parents=True, exist_ok=True)
-    handoff_output_file.write_text(handoff_text, encoding="utf-8")
+    handoff_output_file.write_text(handoff_text, encoding="ascii", errors="ignore")
 
-    copiado = _reportar_handoff(handoff_output_file, ausentes, handoff_text)
+    copiado = _reportar_handoff(handoff_output_file, ausentes, handoff_text, total_fontes=total_fontes)
     console.print("\n[bold cyan]======================== FIM DO HANDOFF ========================[/]\n")
     return copiado
 
@@ -3093,7 +3136,9 @@ def execute_clippy_copy(
             raise typer.Exit(1)
         return
 
-    content = handoff_file.read_text(encoding="utf-8")
+    from utils.text import enforce_pure_ascii
+
+    content = enforce_pure_ascii(handoff_file.read_text(encoding="utf-8", errors="ignore"))
     from engine.clippy_clipboard import ClippyClipboard
 
     if ClippyClipboard.copy(content):

@@ -512,24 +512,30 @@ if ($Web -or $Ola) {
         }
 
         # 1. Base Arquitetural e Governanca
-        $globalInstrPath = Join-Path $ClaudeDir 'GLOBAL_INSTRUCTIONS.md'
-        if (-not (Test-Path -LiteralPath $globalInstrPath)) { $globalInstrPath = Join-Path $ScriptDirectory '.cerebro\governance\GLOBAL_INSTRUCTIONS.md' }
+        $globalInstrPath = Join-Path $ClaudeDir 'GOVERNANCA\GLOBAL_INSTRUCTIONS.md'
+        if (-not (Test-Path -LiteralPath $globalInstrPath)) { $globalInstrPath = Join-Path $ClaudeDir 'GLOBAL_INSTRUCTIONS.md' }
         if (-not (Test-Path -LiteralPath $globalInstrPath)) { $globalInstrPath = Join-Path $ScriptDirectory 'GLOBAL_INSTRUCTIONS.md' }
         &$InjectFile 'INSTRUCOES GLOBAIS' $globalInstrPath
-        &$InjectFile 'MODUS OPERANDI v8.0 GOLD' (Join-Path $ScriptDirectory 'MODUS_OPERANDI.md')
 
-        $cosmovisaoPath = Join-Path $ClaudeDir 'COSMOVISAO.md'
-        if (-not (Test-Path -LiteralPath $cosmovisaoPath)) { $cosmovisaoPath = Join-Path $ScriptDirectory '.cerebro\philosophy\COSMOVISAO.md' }
+        $moPath = Join-Path (Split-Path $ScriptDirectory -Parent) 'MODUS_OPERANDI.md'
+        if (-not (Test-Path -LiteralPath $moPath)) { $moPath = Join-Path $ScriptDirectory 'MODUS_OPERANDI.md' }
+        &$InjectFile 'MODUS OPERANDI v8.0 GOLD' $moPath
+
+        $cosmovisaoPath = Join-Path $ClaudeDir 'GOVERNANCA\COSMOVISAO.md'
+        if (-not (Test-Path -LiteralPath $cosmovisaoPath)) { $cosmovisaoPath = Join-Path (Split-Path $ScriptDirectory -Parent) 'COSMOVISAO_MALHA_SOTA_v8_GOLD.md' }
+        if (-not (Test-Path -LiteralPath $cosmovisaoPath)) { $cosmovisaoPath = Join-Path $ClaudeDir 'COSMOVISAO.md' }
         &$InjectFile 'COSMOVISAO (FILOSOFIA)' $cosmovisaoPath
 
-        $invariantsPath = Join-Path $ClaudeDir 'ARCHITECTURAL_INVARIANTS.md'
-        if (-not (Test-Path -LiteralPath $invariantsPath)) { $invariantsPath = Join-Path $ScriptDirectory '.cerebro\architecture\ARCHITECTURAL_INVARIANTS.md' }
+        $invariantsPath = Join-Path $ClaudeDir 'ARQUITETURA\ARCHITECTURAL_INVARIANTS.md'
+        if (-not (Test-Path -LiteralPath $invariantsPath)) { $invariantsPath = Join-Path $ClaudeDir 'ARCHITECTURAL_INVARIANTS.md' }
         &$InjectFile 'INVARIANTES ARQUITETURAIS' $invariantsPath
 
-        &$InjectFile 'PROTOCOLO GEMINI SOTA' (Join-Path $ScriptDirectory 'GEMINI.md')
+        $geminiPath = Join-Path $ScriptDirectory 'GEMINI.md'
+        if (-not (Test-Path -LiteralPath $geminiPath)) { $geminiPath = Join-Path (Split-Path $ScriptDirectory -Parent) 'GEMINI.md' }
+        &$InjectFile 'PROTOCOLO GEMINI SOTA' $geminiPath
 
-        $claudePath = Join-Path $ClaudeDir 'CLAUDE.md'
-        if (-not (Test-Path -LiteralPath $claudePath)) { $claudePath = Join-Path $ScriptDirectory 'CLAUDE.md' }
+        $claudePath = Join-Path $ScriptDirectory 'CLAUDE.md'
+        if (-not (Test-Path -LiteralPath $claudePath)) { $claudePath = Join-Path (Split-Path $ScriptDirectory -Parent) 'CLAUDE.md' }
         &$InjectFile 'IDENTIDADE SOTA' $claudePath
 
         # 2. Working Scratchpad (NotepadMemory)

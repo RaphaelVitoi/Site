@@ -2,7 +2,7 @@
 
 > "A perfeicao nao e alcancada quando nao ha mais nada a adicionar, mas quando nao ha mais nada a retirar." - Antoine de Saint-Exupery (Shannon Entropy Limit)
 
-**Última revisão:** 2026-09-01 · Protocolo Chico SOTA v8.0 GOLD
+**Ultima revisao:** 2026-09-01 - Protocolo Chico SOTA v8.0 GOLD
 
 Estes principios sao inegociaveis. Qualquer desvio e considerado falha de integridade sistemica.
 
