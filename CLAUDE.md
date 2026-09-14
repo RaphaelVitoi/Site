@@ -742,6 +742,9 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 - **Tier 6:** Modelos Locais, Edge AI & Aceleração Numérica (`Ollama: gemma4:31b-cloud, gemma4:12b, gemma4:e4b/e2b, kimi-k2.7-code:cloud`, `Gemini Nano`, `C++ SIMD`)
 - **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)
 
+> **A Primazia da Base e a Sustentação Fractal dos Tiers:** A função primordial da malha é absorver o trabalho massivo de contexto, testes herméticos, reconciliação de documentação, refatoração cirúrgica e linting determinístico, blindando a energia cognitiva e o tempo de Raphael Vitoi (Tier 0) para que ele se concentre exclusivamente no que ninguém mais pode fazer: a criação conceitual, a matemática do PMev, a estratégia de mercado e as decisões soberanas de produto.
+> Esse princípio é válido **tier após tier**: os tiers da base da pirâmide (Tiers 7 a 3) são **tão ou mais importantes** que os do topo. Eles cumprem as funções rotineiras diárias de alta frequência, liberam energia e tempo, e organizam o **palco limpo** para que os tiers acima consigam desempenhar seu foco no máximo de sua capacidade e delegar com confiança, potencializando a todos. O fluxo cibernético corre do topo para a base (intenção, arquitetura, governança) e da base para o todo (estabilidade mecânica, ausência de ruído, sustentação e prontidão operacional), num loop infinito de potencialização mútua ($\text{Topo} \longrightarrow \text{Base} \longrightarrow \text{Todo} \longrightarrow \infty$).
+
 **Invariante de Commits e Mutações:**
 
 Todo commit e registro deve declarar sinteticamente:

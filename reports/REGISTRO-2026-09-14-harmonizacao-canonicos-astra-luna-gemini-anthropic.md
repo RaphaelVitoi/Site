@@ -76,6 +76,7 @@ Insercao formal e harmonizacao dos modelos de fronteira e opcionais nos document
 - **Anthropic:** Nucleo de codigo centrado no Claude Opus 5, catalogando formalmente como opcionais e fallovers: Claude Sonnet 5, Claude Haiku 4.5 (fast operations opcional), Claude Opus 4.8, 4.7, 4.6 e Claude Sonnet 4.6.
 - **Familia Gemini (Orquestracao, Design, Curadoria e Docs):** Gemini 3.8 Flash como primario de orquestracao agentica e context caching (com fallover para Gemini 3.7 Flash). Em articulacao direta com o agente Stitch e o trio de superagentes (Exa-Stitch-Jules), consolidado como preferencia mandatoria para DESIGN, BRAINSTORM, PLANEJAMENTO, CURADORIA e custodia/criacao de DOCUMENTACOES.
 - **Fast Operations, Linting e Limpeza:** Gemini 3.5 Flash-Lite (*fast operations* / fastopp, fallover Gemini 3.6 Flash) como primario para triagem deterministica, Linting e Limpeza (formatacao, sanitizacao e higiene com custo marginal minimo). Fallbacks para linting/limpeza: modelos em nuvem (`gemini-3.6-flash`, `gpt-5.6-luna`) ou modelos locais via Ollama (`qwen-code-surgical`, `qwen2.5-coder`).
+- **Sustentacao Fractal dos Tiers & O Palco Limpo:** Canonizacao da lei de absorcao de entropia e preparo do palco limpo pelos tiers da base (Tiers 7 a 3), tao ou mais importantes que os do topo, liberando tempo e foco para que as camadas superiores e o Tier 0 desempenhem o maximo de sua capacidade, num loop cibernetico perpetuo Topo -> Base -> Todo -> Infinito.
 
 ## 2. Documentos Reconciliados e Saneados
 
