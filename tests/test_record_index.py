@@ -360,6 +360,62 @@ def test_ancora_de_registro_obsoleto_avisa_e_nao_bloqueia(tmp_path, monkeypatch)
     assert any("ANCORADO.md" in a and "OBSOLETO" in a for a in avisos), avisos
 
 
+def _ancorado_em(raiz: Path, caminho: str) -> None:
+    (raiz / "reports").mkdir(exist_ok=True)
+    (raiz / "reports" / "ANCORADO.md").write_text(
+        "---\nid: ancorado\ntipo: relatorio\nescopo: Site\nautor: claude@opus-5\n"
+        f"criado_em: 2026-08-28\ncaminhos:\n  - {caminho}\n"
+        "verificado:\n  - nada\nnao_verificado:\n  - nada\n---\n\ncorpo\n",
+        encoding="utf-8",
+    )
+
+
+def test_jsonl_que_so_cresceu_no_fim_avisa_e_nao_bloqueia(tmp_path, monkeypatch):
+    """Append em `.jsonl` preserva o atestado (Tier 0, 2026-09-13): 423 revisoes por 32 appends."""
+    _ancorado_em(tmp_path, "reports/ledger.jsonl")
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: ["reports/ledger.jsonl"])
+    monkeypatch.setattr(record_gate, "_git", lambda *a: "reports/ANCORADO.md\n" if a[:1] == ("ls-files",) else "")
+    monkeypatch.setattr(record_gate, "jsonl_que_so_cresceram", lambda rels: set(rels))
+    erros, avisos = record_gate.verificar()
+    assert not any("ANCORADO.md" in e for e in erros), erros
+    assert any("ANCORADO.md" in a and "no fim" in a for a in avisos), avisos
+
+
+def test_jsonl_reescrito_continua_bloqueando(tmp_path, monkeypatch):
+    """Linha antiga alterada ou removida desmente o atestado: G2 cobra como antes."""
+    _ancorado_em(tmp_path, "reports/ledger.jsonl")
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: ["reports/ledger.jsonl"])
+    monkeypatch.setattr(record_gate, "_git", lambda *a: "reports/ANCORADO.md\n" if a[:1] == ("ls-files",) else "")
+    monkeypatch.setattr(record_gate, "jsonl_que_so_cresceram", lambda rels: set())
+    erros, _ = record_gate.verificar()
+    assert any("ANCORADO.md" in e and "ledger.jsonl" in e for e in erros), erros
+
+
+def test_deteccao_de_crescimento_so_no_fim_em_repositorio_real(tmp_path, monkeypatch):
+    """A funcao em si, contra git de verdade: prefixo intacto, reescrita, e codigo."""
+
+    def g(*args: str) -> None:
+        subprocess.run(["git", *args], cwd=tmp_path, capture_output=True, check=True)
+
+    g("init", "-q")
+    g("config", "user.email", "t@t")
+    g("config", "user.name", "t")
+    (tmp_path / "cresce.jsonl").write_bytes(b'{"seq":0}\n')
+    (tmp_path / "reescrito.jsonl").write_bytes(b'{"seq":0}\n')
+    (tmp_path / "codigo.py").write_bytes(b"def f():\n    return 1\n")
+    g("add", "-A")
+    g("commit", "-qm", "base")
+    (tmp_path / "cresce.jsonl").write_bytes(b'{"seq":0}\n{"seq":1}\n')
+    (tmp_path / "reescrito.jsonl").write_bytes(b'{"seq":9}\n{"seq":1}\n')
+    (tmp_path / "codigo.py").write_bytes(b"def f():\n    return 1\ndef f():\n    return 2\n")
+    g("add", "-A")
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    crescidos = record_gate.jsonl_que_so_cresceram(["cresce.jsonl", "reescrito.jsonl", "codigo.py", "novo.jsonl"])
+    assert crescidos == {"cresce.jsonl"}, crescidos
+
+
 def test_reconciliacao_central_de_ancora_exige_registro_caminho_e_parecer(tmp_path, monkeypatch):
     """Um auditor central evita reescrita historica sem criar dispensa generica."""
     (tmp_path / "reports").mkdir()

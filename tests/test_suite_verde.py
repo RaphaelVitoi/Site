@@ -154,6 +154,32 @@ def test_suite_reprovada_apaga_o_marcador(monkeypatch, tmp_path):
     assert not marcador.exists(), "a reprovacao deixou o marcador anterior no lugar"
 
 
+def _comando_da_suite(monkeypatch, tmp_path, extra: list[str], tem_xdist: bool) -> list[str]:
+    visto: list[list[str]] = []
+    monkeypatch.setattr(sv, "MARCADOR", tmp_path / "marca")
+    monkeypatch.setattr(sv, "_tem_xdist", lambda: tem_xdist)
+    monkeypatch.setattr(sv.subprocess, "run", lambda cmd, **k: visto.append(cmd) or subprocess.CompletedProcess(cmd, 1))
+    sv.rodar_suite(extra)
+    return visto[0]
+
+
+def test_suite_usa_todos_os_nucleos_quando_ha_xdist(monkeypatch, tmp_path):
+    """Medido em 2026-09-13: 140 s com `-n auto` contra ~420 s em serie."""
+    cmd = _comando_da_suite(monkeypatch, tmp_path, [], tem_xdist=True)
+    assert cmd[cmd.index("-n") + 1] == "auto", cmd
+
+
+def test_suite_sem_xdist_roda_em_serie(monkeypatch, tmp_path):
+    """Clone sem o extra dev nao pode quebrar por flag desconhecida."""
+    assert "-n" not in _comando_da_suite(monkeypatch, tmp_path, [], tem_xdist=False)
+
+
+@pytest.mark.parametrize("extra", [["-n", "0"], ["-n4"], ["-p", "no:xdist"]])
+def test_escolha_explicita_de_quem_chama_vence(monkeypatch, tmp_path, extra):
+    cmd = _comando_da_suite(monkeypatch, tmp_path, extra, tem_xdist=True)
+    assert "auto" not in cmd, cmd
+
+
 @pytest.mark.parametrize("acao", ["check", "ensure", "run", "invalidate"])
 def test_as_quatro_acoes_estao_documentadas_no_cabecalho(acao):
     """Horizontalidade: outro condutor tem de achar o caminho lendo o arquivo."""

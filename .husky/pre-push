@@ -4,7 +4,7 @@
 # O portao de qualidade (npm run sota:audit) NAO roda aqui: ja rodou no pre-commit de cada
 # commit e roda de novo no CI. Repeti-lo no push custava 26-42 s sem medir nada novo.
 #
-# suite_verde.py so mede se o CONTEUDO mudou desde o ultimo verde (~6 min quando mede).
+# suite_verde.py so mede se o CONTEUDO mudou desde o ultimo verde (~2,5 min quando mede, em todos os nucleos).
 # Rode antes de commitar para o push sair em segundos:  python scripts/ops/suite_verde.py
 set -e
 

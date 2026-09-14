@@ -135,6 +135,43 @@ def textos_do_indice(rels: list[str]) -> dict[str, str | None]:
     return textos
 
 
+def jsonl_que_so_cresceram(rels: list[str]) -> set[str]:
+    """`.jsonl` cujo conteudo no HEAD e prefixo byte a byte do conteudo em stage.
+
+    Cada linha de um `.jsonl` e um registro independente: anexar linhas no fim nao
+    altera nenhuma das anteriores, e o que um registro atestou sobre elas continua
+    intacto. Medido em 2026-09-13: os 32 commits que tocaram o feedback-ledger foram
+    TODOS so adicao, e custaram 423 revisoes_de_ancora.
+
+    So `.jsonl`, de proposito. Em codigo, anexar no fim pode redefinir o que veio
+    antes -- um `def` repetido no fim de um `.py` substitui o primeiro.
+    """
+    rels = [rel for rel in rels if rel.endswith(".jsonl")]
+    if not rels:
+        return set()
+    entrada = "".join(f"HEAD:{rel}\n:{rel}\n" for rel in rels).encode("utf-8")
+    r = subprocess.run(["git", "cat-file", "--batch"], cwd=RAIZ, input=entrada, capture_output=True, check=False)
+    if r.returncode != 0:
+        return set()
+    dados, pos, blobs = r.stdout, 0, []
+    for _ in range(2 * len(rels)):
+        fim = dados.index(b"\n", pos)
+        cabecalho = dados[pos:fim].decode("utf-8", errors="replace")
+        pos = fim + 1
+        if cabecalho.endswith(" missing"):
+            blobs.append(None)
+            continue
+        tamanho = int(cabecalho.rsplit(" ", 1)[1])
+        blobs.append(dados[pos : pos + tamanho])
+        pos += tamanho + 1
+    crescidos: set[str] = set()
+    for i, rel in enumerate(rels):
+        antes, depois = blobs[2 * i], blobs[2 * i + 1]
+        if antes is not None and depois is not None and len(depois) > len(antes) and depois.startswith(antes):
+            crescidos.add(rel)
+    return crescidos
+
+
 def _corpus_do_indice() -> list[tuple[str, str]]:
     """(caminho, texto) de docs/*.md e reports/*.md, lidos do indice num unico processo."""
     rels = [rel for rel in _git("ls-files", "docs/*.md", "reports/*.md").splitlines() if rel.strip()]
@@ -666,6 +703,12 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
             if item and str(item).lower() not in {"null", "none"}:
                 aposentados.add(str(item).strip())
 
+    ancorados: set[str] = set()
+    for _rel, fm_anc in registros_lidos:
+        dec = fm_anc.get("caminhos") or []
+        ancorados.update(str(c) for c in ([dec] if isinstance(dec, str) else dec))
+    so_cresceram = jsonl_que_so_cresceram(sorted(ancorados & tocados))
+
     for rel, fm in registros_lidos:
         if fm.get("supersede") and str(fm.get("supersede")).lower() not in {"null", "none"}:
             continue
@@ -680,6 +723,14 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
             pendentes = sorted(set(atingidos) - revisoes_aceitas.get(doc_id, set()))
             if not pendentes:
                 continue
+            crescidos = [p for p in pendentes if p in so_cresceram]
+            if crescidos:
+                avisos.append(
+                    f"{rel} ancora {crescidos}: so ganharam linhas no fim. Nao bloqueia: o atestado segue intacto."
+                )
+                pendentes = [p for p in pendentes if p not in so_cresceram]
+                if not pendentes:
+                    continue
             motivos, ancestral, _ = avaliar_registro(fm, RAIZ, hoje, ambiente)
             estado = estado_de(motivos, ancestral, doc_id in aposentados)
             if estado != VIGENTE:
