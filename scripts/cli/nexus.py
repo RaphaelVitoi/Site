@@ -2978,6 +2978,9 @@ def _coletar_fontes_handoff(claude_dir: Path, agent: str) -> tuple[list[str], li
     Retorna (context_parts, ausentes, total_fontes). Ausencia declarada, nao silenciosa.
     Busca os documentos canonicos com fallback multicamada para absorver a estrutura
     pos-fusao (.claude/GOVERNANCA, .claude/ARQUITETURA) e raizes multiprojeto/Site.
+
+    As partes voltam CRUAS. A purificacao ASCII acontece uma vez, em
+    `execute_handoff`, que precisa do texto original para medir o que se perde.
     """
     governance_sources: dict[str, list[Path]] = {
         "MODUS OPERANDI v8.0 GOLD": [
@@ -3015,22 +3018,16 @@ def _coletar_fontes_handoff(claude_dir: Path, agent: str) -> tuple[list[str], li
     for title, candidates in governance_sources.items():
         resolved_path = next((p for p in candidates if p.exists()), None)
         if resolved_path:
-            from utils.text import enforce_pure_ascii
-
-            raw_text = resolved_path.read_text(encoding="utf-8", errors="ignore")
-            purified = enforce_pure_ascii(raw_text)
             context.append(
-                f"\n=================================================================\n## {title}\n=================================================================\n{purified}"
+                f"\n=================================================================\n## {title}\n=================================================================\n{resolved_path.read_text(encoding='utf-8', errors='replace')}"
             )
         else:
             ausentes.append(f"{title} ({candidates[0]})")
 
     notepad_file = BASE_DIR / "memory" / "notepad_active.md"
     if notepad_file.exists() and notepad_file.stat().st_size > 0:
-        from utils.text import enforce_pure_ascii
-
         context.append(
-            f"\n=================================================================\n## WORKING SCRATCHPAD (NOTEPAD MEMORY)\n=================================================================\n{enforce_pure_ascii(notepad_file.read_text(encoding='utf-8', errors='ignore'))}"
+            f"\n=================================================================\n## WORKING SCRATCHPAD (NOTEPAD MEMORY)\n=================================================================\n{notepad_file.read_text(encoding='utf-8', errors='replace')}"
         )
 
     agent_profile_path = claude_dir / "AGENTS" / f"{agent}.md"
@@ -3042,10 +3039,8 @@ def _coletar_fontes_handoff(claude_dir: Path, agent: str) -> tuple[list[str], li
         (f"MEMORIA SIMBIOTICA: {agent}", claude_dir / "agent-memory" / agent / "MEMORY.md"),
     ]:
         if path.exists():
-            from utils.text import enforce_pure_ascii
-
             context.append(
-                f"\n=================================================================\n## {label}\n=================================================================\n{enforce_pure_ascii(path.read_text(encoding='utf-8', errors='ignore'))}"
+                f"\n=================================================================\n## {label}\n=================================================================\n{path.read_text(encoding='utf-8', errors='replace')}"
             )
 
     return context, ausentes, total_fontes
@@ -3056,9 +3051,19 @@ def _reportar_handoff(
     ausentes: list[str],
     handoff_text: str,
     total_fontes: int = 6,
+    descartes: dict[str, int] | None = None,
 ) -> bool:
     """Imprime resumo do handoff e copia para clipboard via Clippy com fallback multicamada."""
     total = total_fontes
+    if descartes:
+        # Codigo de ponto, nao o glifo: o console desta malha e ASCII (Blindagem ASCII).
+        amostra = ", ".join(
+            f"U+{ord(c):04X} x{n}" for c, n in sorted(descartes.items(), key=lambda item: -item[1])[:10]
+        )
+        console.print(
+            f"[bold yellow] Handoff com perda:[/] [yellow]{sum(descartes.values())} caractere(s) sem equivalente "
+            f"ASCII descartado(s), {len(descartes)} distinto(s): {amostra}[/]"
+        )
     if ausentes:
         console.print(
             f"[bold yellow] Handoff PARCIAL:[/] [white]{handoff_output_file.relative_to(BASE_DIR)}[/] "
@@ -3106,14 +3111,20 @@ def execute_handoff(
             console.print(f"  [red]-> ausente:[/] {a}")
         raise typer.Exit(1)
 
-    from utils.text import enforce_pure_ascii
+    from utils.text import caracteres_sem_transliteracao, enforce_pure_ascii
 
-    handoff_text = enforce_pure_ascii("\n".join(context))
+    texto_cru = "\n".join(context)
+    descartes = caracteres_sem_transliteracao(texto_cru)
+    handoff_text = enforce_pure_ascii(texto_cru)
     handoff_output_file = claude_dir / "agent-memory" / agent / "HANDOFF_LATEST.md"
     handoff_output_file.parent.mkdir(parents=True, exist_ok=True)
-    handoff_output_file.write_text(handoff_text, encoding="ascii", errors="ignore")
+    # Estrito de proposito: o texto ja e ASCII, e se deixar de ser a gravacao
+    # tem de falhar alto. `errors="ignore"` aqui apagaria sem registro.
+    handoff_output_file.write_text(handoff_text, encoding="ascii")
 
-    copiado = _reportar_handoff(handoff_output_file, ausentes, handoff_text, total_fontes=total_fontes)
+    copiado = _reportar_handoff(
+        handoff_output_file, ausentes, handoff_text, total_fontes=total_fontes, descartes=descartes
+    )
     console.print("\n[bold cyan]======================== FIM DO HANDOFF ========================[/]\n")
     return copiado
 

@@ -84,6 +84,34 @@ def test_nexus_clippy_command_success():
         mock_copy.assert_called_once_with("# Handoff Mock Content")
 
 
+def test_handoff_translitera_simbolos_e_declara_o_que_descarta(tmp_path):
+    """Medido em 2026-09-14: o handoff gravava com `errors="ignore"` e apagava
+    simbolos sem aviso -- "regra != fato" chegava ao proximo agente como
+    "regra  fato". O arquivo continua ASCII (Blindagem ASCII); o que muda e que
+    o simbolo semantico sobrevive e o que se perde aparece no console."""
+    import scripts.cli.nexus as nexus
+
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / "CLAUDE.md").write_text(
+        "Regra \u00a77: regra \u2260 fato \u2192 medir. Marca \U0001f600.\n", encoding="utf-8"
+    )
+    console_falso = MagicMock()
+    with (
+        patch.object(nexus, "BASE_DIR", tmp_path),
+        patch.object(nexus, "console", console_falso),
+        patch("engine.clippy_clipboard.ClippyClipboard.copy", return_value=True),
+    ):
+        assert nexus.execute_handoff(web=False, agent="chico") is True
+
+    gravado = (tmp_path / ".claude" / "agent-memory" / "chico" / "HANDOFF_LATEST.md").read_bytes()
+    assert all(b < 128 for b in gravado)
+    assert b"Regra SS7: regra != fato -> medir." in gravado
+
+    saida = " ".join(str(c.args[0]) for c in console_falso.print.call_args_list if c.args)
+    assert "Handoff com perda" in saida, saida
+    assert "U+1F600 x1" in saida, saida
+
+
 def test_nexus_clippy_command_failure():
     with (
         patch.object(Path, "exists", return_value=True),

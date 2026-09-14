@@ -39,10 +39,7 @@ class ClippyClipboard:
             return False
 
         if pure_ascii:
-            try:
-                text = enforce_pure_ascii(text)
-            except Exception as e:
-                logger.debug("[CLIPPY] Falha ao sanitizar para pure ASCII: %s", e)
+            text = enforce_pure_ascii(text)
 
         # 1. Metodo primario: PowerShell Set-Clipboard nativo (Windows)
         if sys.platform == "win32":

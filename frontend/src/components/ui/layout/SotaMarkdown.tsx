@@ -138,7 +138,7 @@ const markdownComponents: Components = {
     if (isEmbeddableMediaUrl(href)) {
       return (
         <div className="group my-14 aspect-video overflow-hidden rounded-4xl border border-white/10 bg-black/40 shadow-[0_40px_80px_rgba(0,0,0,0.7)]">
-          <ReactPlayer url={href} width="100%" height="100%" controls />
+          <ReactPlayer src={href} width="100%" height="100%" controls />
         </div>
       );
     }

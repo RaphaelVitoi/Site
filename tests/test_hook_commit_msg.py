@@ -304,6 +304,42 @@ def test_variante_fora_do_catalogo_avisa_sem_bloquear(nome, tmp_path):
     assert "nao esta em" in r.stdout + r.stderr, f"variante passou calada:\n{r.stdout}{r.stderr}"
 
 
+def test_toda_identidade_do_catalogo_declara_tier():
+    """Sem `tier` o aviso de divergencia de Tier fica mudo para aquele autor."""
+    dados = json.loads(CATALOGO.read_text(encoding="utf-8"))
+    for item in dados["canonicas"]:
+        assert str(item.get("tier", "")).isdigit(), f"{item['nome']} sem tier numerico"
+
+
+def test_o_tier_errado_medido_em_14_09_avisa_sem_bloquear(tmp_path):
+    """Dois commits do Gemini 3.8 Flash assinaram [Tier 2], reservado a Jules/Exa/Stitch/Devin."""
+    r = _rodar_com_autor(
+        "chore(config): assunto\n\nAssinatura: Gemini 3.8 Flash [Tier 2] -- sessao s\n",
+        "Gemini 3.8 Flash",
+        tmp_path,
+    )
+    saida = r.stdout + r.stderr
+    assert r.returncode == 0, f"o aviso de Tier nunca bloqueia:\n{saida}"
+    assert "declara Tier 2" in saida and "no Tier 1" in saida, saida
+
+
+@pytest.mark.parametrize(
+    "autor,linha",
+    [
+        ("Gemini 3.8 Flash", "Assinatura: Gemini 3.8 Flash [Tier 1.A] -- sessao s"),
+        ("Claude Opus 5", "Assinatura: Claude Opus 5 [Tier 1.B] -- sessao s"),
+        # Sem [Tier]: nada a conferir, nada a avisar.
+        ("Gemini 3.8 Flash", "Assinatura: antigravity@gemini-3.8-flash -- sessao s"),
+        ("google-labs-jules[bot]", "Assinatura: google-labs-jules[bot] [Tier 2] via Jules -- sessao s"),
+    ],
+)
+def test_tier_coerente_nao_avisa(autor, linha, tmp_path):
+    r = _rodar_com_autor(f"feat(x): assunto\n\n{linha}\n", autor, tmp_path)
+    saida = r.stdout + r.stderr
+    assert r.returncode == 0, saida
+    assert "declara Tier" not in saida, saida
+
+
 def test_o_aviso_casa_por_nome_exato_e_nao_por_substring(tmp_path):
     """'Claude' esta dentro de 'Claude Opus 5'. Casar por substring aceitaria a
     variante curta e derrotaria o proposito, que e justamente distinguir as duas."""
