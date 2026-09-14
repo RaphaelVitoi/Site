@@ -160,6 +160,20 @@ def test_inventario_pessoal_nao_e_versionado_na_skill():
     assert ignorado.returncode == 0, "local/anchors.json precisa ser ignorado pelo git"
 
 
+def test_inventario_de_discos_pessoais_nao_volta_a_nenhum_arquivo_versionado():
+    """Medido em 2026-09-13: o teste acima olhava so a skill, e o mesmo inventario seguia num registro.
+
+    Marcadores do inventario de 2026-09-13 (discos D:, E:, F:). O repositorio e publico.
+    """
+    marcadores = ["notes.RaphaVitoi", "Solver work", "ICM pio sims", "Biblioteca\\Acervo", "F:\\Hermiones"]
+    argumentos = ["git", "grep", "-I", "-l", "-F"]
+    for marcador in marcadores:
+        argumentos += ["-e", marcador]
+    argumentos += ["--", ".", ":!tests/test_skill_pmev_knowledge.py"]
+    r = subprocess.run(argumentos, cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", check=False)
+    assert r.returncode == 1 and not r.stdout.strip(), f"inventario pessoal em arquivo versionado: {r.stdout.split()}"
+
+
 NODE = shutil.which("node")
 
 
