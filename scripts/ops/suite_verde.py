@@ -48,6 +48,11 @@ TRES DECISOES DE CORRETUDE, porque cada uma tem uma armadilha conhecida nesta ba
 3. Falha nunca vira marcador, e apaga o anterior. Um verde vencido, descrevendo
    outro estado, e pior que nenhum verde.
 
+TODOS OS NUCLEOS: com o pytest-xdist instalado, a suite roda com `-n auto`.
+Medido em 2026-09-13, nesta forma exata: 1231 verdes em 140 s, contra ~420 s em
+serie. O CI segue em serie e com cobertura -- e la que dependencia de ordem entre
+testes aparece. Passe `-n 0` para medir em serie aqui.
+
 ONDE O MARCADOR MORA: `.git/sota-suite-verde`, que e por clone, nunca versionado,
 e some num clone novo -- que e o comportamento certo, porque a medicao vale para
 ESTA maquina e nao para o repositorio. O CI nao usa este caminho: la a suite roda
@@ -56,6 +61,7 @@ sempre, do zero.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -142,10 +148,21 @@ def cache_valido() -> tuple[bool, str]:
     return True, f"conteudo {arvore[:8]} ja medido verde em {m.get('em')}"
 
 
+def _tem_xdist() -> bool:
+    return importlib.util.find_spec("xdist") is not None
+
+
+def paralelismo(extra: list[str]) -> list[str]:
+    """`-n auto` se o xdist existe e quem chamou nao escolheu (`-n ...` ou `-p no:xdist`)."""
+    if any(a.startswith("-n") or a == "no:xdist" for a in extra):
+        return []
+    return ["-n", "auto"] if _tem_xdist() else []
+
+
 def rodar_suite(extra: list[str]) -> int:
     """Executa a suite e, se verde E a arvore continuar limpa, grava o marcador."""
     base = "C:/Users/rapha/AppData/Local/Temp/pt-sota" if sys.platform == "win32" else "/tmp/pt-sota"
-    cmd = [sys.executable, "-m", "pytest", "-q", f"--basetemp={base}", *extra]
+    cmd = [sys.executable, "-m", "pytest", "-q", f"--basetemp={base}", *paralelismo(extra), *extra]
     print(f"[SUITE] medindo -- {' '.join(cmd[2:])}", flush=True)
     r = subprocess.run(cmd, cwd=str(RAIZ), check=False)
     if r.returncode != 0:
