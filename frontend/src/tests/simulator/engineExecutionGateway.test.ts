@@ -86,35 +86,33 @@ describe('engineExecutionGateway', () => {
 	});
 
 	it('executes the authenticated HTTP adapter and maps its explicit contract', async () => {
-		const fetchMock = jest.fn(async () =>
-			Promise.resolve({
-				ok: true,
-				status: 200,
-				json: async () => ({
-					status: 'SUCCESS',
-					optimal_action: 'CALL',
-					strategy: { FOLD: 0.1, CALL: 0.8, RAISE_POT: 0.1 },
-					structural_liability: 33.75,
-					effective_equity: 0.64,
-					pos_multiplier: 1.15,
-					k_opponents: 2,
-					depth_streets: 2,
-					future_streets: 1,
-					effective_stack: 100,
-					stack_to_pot_ratio: 1,
-					call_cost: 50,
-					raise_cost: 100,
-					horizon_liability: 3.375,
-					action_evs: { FOLD: 0, CALL: 51.8125, RAISE_POT: 39.675 },
-					iterations_run: 30,
-				}),
-			}) as Response,
-		);
+		const fetchMock = jest.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => ({
+			ok: true,
+			status: 200,
+			json: async () => ({
+				status: 'SUCCESS',
+				optimal_action: 'CALL',
+				strategy: { FOLD: 0.1, CALL: 0.8, RAISE_POT: 0.1 },
+				structural_liability: 33.75,
+				effective_equity: 0.64,
+				pos_multiplier: 1.15,
+				k_opponents: 2,
+				depth_streets: 2,
+				future_streets: 1,
+				effective_stack: 100,
+				stack_to_pot_ratio: 1,
+				call_cost: 50,
+				raise_cost: 100,
+				horizon_liability: 3.375,
+				action_evs: { FOLD: 0, CALL: 51.8125, RAISE_POT: 39.675 },
+				iterations_run: 30,
+			}),
+		} as unknown as Response));
 		const executor = createPluribusApiExecutor('jwt-token', fetchMock);
 		const result = await executor(INPUT);
 
 		expect(fetchMock).toHaveBeenCalledTimes(1);
-		const [url, init] = fetchMock.mock.calls[0];
+		const [url, init] = fetchMock.mock.calls[0]!;
 		expect(String(url)).toContain('/api/v1/game-theory/pluribus/solve');
 		expect(init?.headers).toMatchObject({ Authorization: 'Bearer jwt-token' });
 		expect(JSON.parse(String(init?.body))).toMatchObject({

@@ -81,7 +81,7 @@ def test_fallbacks_permanece_no_corpo():
 
 def test_modelo_sem_beta_nao_inventa_header():
     corpo, headers = AnthropicAdapter.build_http("claude-sonnet-5", [{"role": "user", "content": "oi"}])
-    assert headers == {}
+    assert not headers
     assert "betas" not in corpo
 
 
@@ -179,7 +179,7 @@ def test_montagem_legada_preserva_temperature():
     corpo, headers = _montar(LEGADO, "sistema", "usuario", {})
     assert corpo["temperature"] == 0.2
     assert corpo["max_tokens"] == 8192
-    assert headers == {}
+    assert not headers
 
 
 def test_max_tokens_acima_do_teto_de_streaming_falha_local():

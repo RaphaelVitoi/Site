@@ -209,6 +209,8 @@ NODE = shutil.which("node")
 
 
 def _node(tmp_path: Path, *args: str) -> subprocess.CompletedProcess:
+    if not NODE:
+        raise RuntimeError("node ausente")
     ambiente = {"APPDATA": str(tmp_path / "sem_adc"), "PATH": str(Path(NODE).parent), "SystemRoot": "C:\\Windows"}
     return subprocess.run([NODE, *args], capture_output=True, text=True, encoding="utf-8", env=ambiente, check=False)
 

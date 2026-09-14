@@ -423,5 +423,10 @@
     "claudeCode.disableLoginPrompt": true,
     "java.project.exclusionFilters": [
         "**/scripts/validation/**"
-    ]
+    ],
+    "java.import.exclusions": [
+        "**/scripts/validation/**"
+    ],
+    "java.errors.incompleteClasspath.severity": "ignore",
+    "sonarlint.exclusions": "**/scripts/validation/**"
 }

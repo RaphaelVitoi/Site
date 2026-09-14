@@ -17,12 +17,11 @@ import sys
 import zipfile
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from defusedxml import ElementTree  # XML de .pptx vem de terceiros: sem entidades externas nem expansao
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from knowledge_common import ExitCode  # noqa: E402
+from knowledge_common import ExitCode
 
 try:
     import pypdf
@@ -67,7 +66,7 @@ def _pdf(path: Path, max_chars: int) -> str:
     return "\n\n".join(partes)
 
 
-def _docx(path: Path, max_chars: int) -> str:
+def _docx(path: Path, _max_chars: int) -> str:
     if docx is None:
         raise MissingDependencyError("python-docx")
     documento = docx.Document(str(path))
@@ -78,7 +77,7 @@ def _docx(path: Path, max_chars: int) -> str:
     return "\n".join(linhas)
 
 
-def _pptx(path: Path, max_chars: int) -> str:
+def _pptx(path: Path, _max_chars: int) -> str:
     with zipfile.ZipFile(path) as pacote:
         slides = sorted(n for n in pacote.namelist() if n.startswith("ppt/slides/slide") and n.endswith(".xml"))
         saida = []
@@ -101,7 +100,7 @@ def _xlsx(path: Path, max_chars: int) -> str:
             iter_rows = getattr(aba, "iter_rows", None)
             if not callable(iter_rows):
                 continue
-            rows: Iterable[Any] = iter_rows(values_only=True)
+            rows = cast(Iterable[Iterable[Any]], iter_rows(values_only=True))
             for linha in rows:
                 texto = "\t".join("" if v is None else str(v) for v in linha)
                 saida.append(texto)
@@ -113,11 +112,11 @@ def _xlsx(path: Path, max_chars: int) -> str:
     return "\n".join(saida)
 
 
-def _texto(path: Path, max_chars: int) -> str:
+def _texto(path: Path, _max_chars: int) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
 
 
-def _hrcz(path: Path, max_chars: int) -> str:
+def _hrcz(path: Path, _max_chars: int) -> str:
     """Save do HRC e um zip: lista as entradas e le `settings.json` quando existir. Nao le a arvore."""
     with zipfile.ZipFile(path) as pacote:
         entradas = pacote.infolist()
@@ -130,7 +129,7 @@ def _hrcz(path: Path, max_chars: int) -> str:
     return "\n".join(saida)
 
 
-def _midia(path: Path, max_chars: int) -> str:
+def _midia(path: Path, _max_chars: int) -> str:
     """Metadados por ffprobe: duracao e fluxos. Nao transcreve audio."""
     ffprobe = shutil.which("ffprobe")
     if ffprobe is None:

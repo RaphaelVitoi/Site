@@ -23,8 +23,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from knowledge_common import (  # noqa: E402
+from knowledge_common import (
     LOCAL_ANCHORS,
     MAX_HASH_BYTES,
     REPO_ROOT,
@@ -34,7 +33,7 @@ from knowledge_common import (  # noqa: E402
     default_db_path,
     resolve_write_path,
 )
-from universal_reader import (  # noqa: E402
+from universal_reader import (
     SUPPORTED_EXTENSIONS,
     ExtractionError,
     MissingDependencyError,

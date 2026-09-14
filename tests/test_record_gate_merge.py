@@ -77,7 +77,7 @@ def _modulo_com_raiz(repo: Path):
         modulo = importlib.reload(modulo)
     finally:
         sys.path.pop(0)
-    modulo.RAIZ = repo
+    modulo.RAIZ = repo  # pyright: ignore[reportAttributeAccessIssue]
     return modulo
 
 

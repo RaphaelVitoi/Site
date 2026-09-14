@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from llm.model_registry import MODEL_REGISTRY, MODELOS_RETIRADOS
 from tests.test_calibracao_fechamento_do_ciclo import _avaliar, _calibrar, _ledger, _tres_sessoes
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -137,8 +138,6 @@ def test_append_only_correction_restores_effective_eligibility(tmp_path):
 
 def _canonicos() -> list[str]:
     """Le a fonte unica, nunca uma copia. Se ela mudar, o teste muda junto."""
-    from llm.model_registry import MODEL_REGISTRY, MODELOS_RETIRADOS
-
     return sorted(set(MODEL_REGISTRY) | set(MODELOS_RETIRADOS))
 
 
@@ -174,7 +173,7 @@ def test_sintaxe_valida_nao_prova_existencia(tmp_path, model):
     assert not ledger.exists()
 
 
-def test_campo_ausente_nao_e_reportado_tambem_como_invalido(tmp_path):
+def test_campo_ausente_nao_e_reportado_tambem_como_invalido():
     """Ausente e ausente. Ate 2026-09-12 um campo vazio saia com os dois motivos.
 
     A duplicata nao mudava elegibilidade, mas inflava qualquer contagem agregada

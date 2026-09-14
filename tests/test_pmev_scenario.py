@@ -61,14 +61,14 @@ def test_campos_faltando_usam_os_nomes_do_contrato_typescript():
     assert _proveniencia(False).missing_fields() == ["build", "eNash"]
     sem_unidade = SolverProvenance(solver="HRC", build=Read("4.1"), e_nash=Read(0.3))
     assert sem_unidade.missing_fields() == ["eNashUnit"]
-    assert _proveniencia(True).missing_fields() == []
+    assert not _proveniencia(True).missing_fields()
 
 
 def test_par_so_e_reproduzivel_com_os_dois_lados_completos():
     assert _par(True, True).assess_reproducibility().reproducible is True
     parcial = _par(True, False).assess_reproducibility()
     assert parcial.reproducible is False
-    assert parcial.missing_chip_ev == [] and parcial.missing_icm_ev == ["build", "eNash"]
+    assert not parcial.missing_chip_ev and parcial.missing_icm_ev == ["build", "eNash"]
     assert count_reproducible_pairs([_par(False, False), _par(True, True), _par(True, False)]) == 1
 
 
