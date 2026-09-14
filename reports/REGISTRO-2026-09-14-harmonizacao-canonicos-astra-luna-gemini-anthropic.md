@@ -66,11 +66,16 @@ revisoes_de_ancora:
 ## 1. Contexto e Demanda
 
 Insercao formal e harmonizacao dos modelos de fronteira e opcionais nos documentos canonicos do ecossistema:
+
+- **O Coletivo CHICO & Ausencia de Escopo Limitado:** Como grupo, o coletivo vivo da malha de modelos de fronteira e **CHICO**. Nao ha escopo limitado de capacidade tecnica entre modelos equivalentes em Tier -- nao existem feudos funcionais nem proibicoes artificiais. Ha preferencias operacionais. Modelos equivalentes em tier, na ausencia, indisponibilidade ou esgotamento de um, podem e devem assumir o trabalho de outro sem quebra de continuidade.
+- **Primarios de Reasoning:** ChatGPT 5.6 Sol e Claude Opus 5 como primarios conjuntos de Reasoning Analitico Profundo (Deep Reasoning / Max Thinking) e deducao formal matematica.
+- **Primario de Governanca e Codigo:** Claude Opus 5 detem a autoridade primaria para Governanca (regras, contratos de malha, integridade piramidal, reconciliacao de ancoras e portoes) e Engenharia Cirurgica de Codigo.
+- **Pesquisa, Estudo e Arquitetura:** ChatGPT 5.6 Terra (`gpt-5.6-terra`) atua como preferencia primaria para Pesquisa, Estudo e Arquitetura macro de sistemas.
 - **ChatGPT 6 Astra (`gpt-6-astra`):** Topo da malha, modelo mais potente, acionado em momentos pontuais de alto reasoning complexo (esforco limitado a low/medium para protecao de cota flat-fee).
 - **ChatGPT 5.6 Luna (`gpt-5.6-luna`):** Modelo de fast operations opcional da familia ChatGPT 5.6.
 - **Anthropic:** Nucleo de codigo centrado no Claude Opus 5, catalogando formalmente como opcionais e fallovers: Claude Sonnet 5, Claude Haiku 4.5 (fast operations opcional), Claude Opus 4.8, 4.7, 4.6 e Claude Sonnet 4.6.
-- **Familia Gemini:** Gemini 3.8 Flash como primario de orquestracao agentica e context caching (com fallover para Gemini 3.7 Flash), formando duo com Gemini 3.5 Flash-Lite (fastopp, com fallover para Gemini 3.6 Flash).
-- **Dominios Estruturais do Gemini 3.8 Flash:** Em articulacao direta com o agente Stitch e o trio de superagentes (Exa-Stitch-Jules), consolidado como preferencia mandatoria para DESIGN, BRAINSTORM, PLANEJAMENTO, CURADORIA e custodia/criacao de DOCUMENTACOES.
+- **Familia Gemini (Orquestracao, Design, Curadoria e Docs):** Gemini 3.8 Flash como primario de orquestracao agentica e context caching (com fallover para Gemini 3.7 Flash). Em articulacao direta com o agente Stitch e o trio de superagentes (Exa-Stitch-Jules), consolidado como preferencia mandatoria para DESIGN, BRAINSTORM, PLANEJAMENTO, CURADORIA e custodia/criacao de DOCUMENTACOES.
+- **Fast Operations, Linting e Limpeza:** Gemini 3.5 Flash-Lite (*fast operations* / fastopp, fallover Gemini 3.6 Flash) como primario para triagem deterministica, Linting e Limpeza (formatacao, sanitizacao e higiene com custo marginal minimo). Fallbacks para linting/limpeza: modelos em nuvem (`gemini-3.6-flash`, `gpt-5.6-luna`) ou modelos locais via Ollama (`qwen-code-surgical`, `qwen2.5-coder`).
 
 ## 2. Documentos Reconciliados e Saneados
 
