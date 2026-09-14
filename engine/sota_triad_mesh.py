@@ -158,6 +158,35 @@ class TriadMeshReport:
         }
 
 
+TRIAD_PILLARS: tuple[str, ...] = ("exa", "stitch", "jules")
+
+
+@dataclasses.dataclass(frozen=True)
+class PhaseReceipt:
+    """Evidence that a pillar actually ran. Without a receipt, the pillar did not run.
+
+    Until 2026-09-13 execute_triad_dag returned SUCCESS, convergence_rate=1.0 and
+    verified=True for every objective while executing nothing: the method only plans.
+    A success claim now needs a receipt naming its evidence (session id, run id or
+    artifact path); a success receipt without evidence is rejected.
+    """
+
+    succeeded: bool
+    evidence: str
+
+    def __post_init__(self) -> None:
+        if self.succeeded and not self.evidence.strip():
+            raise ValueError("A successful receipt must name its evidence (session id, run id or artifact).")
+
+
+def _status_from_receipt(receipt: PhaseReceipt | None) -> str:
+    if receipt is None:
+        return "NOT_EXECUTED (plan only, no receipt)"
+    if receipt.succeeded:
+        return f"SUCCESS (evidence: {receipt.evidence})"
+    return f"FAILED (evidence: {receipt.evidence.strip() or 'none given'})"
+
+
 class ExaKnowledgeBridge:
     """Constructs high-density neural queries and extracts structured math context."""
 
@@ -352,8 +381,13 @@ class SotaTriadOrchestrator:
             ],
         }
 
-    def execute_triad_dag(self, objective: str) -> TriadMeshReport:
-        t0 = time.time()
+    def execute_triad_dag(
+        self,
+        objective: str,
+        receipts: Mapping[str, PhaseReceipt] | None = None,
+    ) -> TriadMeshReport:
+        """Plan the DAG and report what the receipts prove. No receipt, no execution."""
+        t0 = time.perf_counter()
         logger.info("[TRIAD] Initiating DAG for objective: %s", objective)
 
         plan = self.plan_triad_workflow(objective)
@@ -361,15 +395,21 @@ class SotaTriadOrchestrator:
         phase_count = len(dag_phases) if isinstance(dag_phases, list) else 0
         logger.info("[TRIAD] DAG Planned with %d phases", phase_count)
 
-        elapsed = time.time() - t0
+        received = dict(receipts or {})
+        unknown = sorted(set(received) - set(TRIAD_PILLARS))
+        if unknown:
+            raise ValueError(f"Unknown triad pillar(s) in receipts: {unknown}. Expected {list(TRIAD_PILLARS)}.")
+        succeeded = sum(1 for pillar in TRIAD_PILLARS if (r := received.get(pillar)) is not None and r.succeeded)
+
+        elapsed = time.perf_counter() - t0
         return TriadMeshReport(
             objective=objective,
-            exa_status="SUCCESS (Context Synthesized)",
-            stitch_status="SUCCESS (Design System Tokens Enforced)",
-            jules_status="READY (Async Task Spec Generated)",
-            convergence_rate=1.0,
-            total_latency_seconds=round(elapsed, 4),
-            verified=True,
+            exa_status=_status_from_receipt(received.get("exa")),
+            stitch_status=_status_from_receipt(received.get("stitch")),
+            jules_status=_status_from_receipt(received.get("jules")),
+            convergence_rate=succeeded / len(TRIAD_PILLARS),
+            total_latency_seconds=round(elapsed, 6),
+            verified=succeeded == len(TRIAD_PILLARS),
         )
 
 

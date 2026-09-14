@@ -1,0 +1,94 @@
+{
+  "descricao": "Snapshot do modelo aditivo vigente (engine/math_sota.py::compute_quantum_metrics). Registra o comportamento atual como baseline versionado; nao afirma correcao teorica. tests/test_pmev_baselines.py reprova se a heuristica mudar sem nova versao.",
+  "versao": "math_sota.compute_quantum_metrics@v7.0",
+  "casos": [
+    {
+      "nome": "heads_up_sem_bounty",
+      "entrada": {
+        "current_equity_pct": 55.0,
+        "delta_win_pct": 12.0,
+        "delta_lose_pct": -10.0,
+        "dynamic_ev_fold": 0.5,
+        "realization_factor": 1.0,
+        "fgs_health": 1.0,
+        "active_players": 2,
+        "hero_invested": 5.0,
+        "current_pot": 12.0,
+        "stack_eff": 40.0
+      },
+      "saida": {
+        "esperanca": -1.4601776025996083,
+        "expectativa": -0.9601776025996083,
+        "perspectiva": -1.4601776025996083,
+        "risk_advantage": 0.0,
+        "advantage_multiplier": 1.0,
+        "rio_mw": 0.0,
+        "thresh_eq": 0.6789572190276235,
+        "pot_odds": 0.29411764705882354,
+        "ci": 0.933042598968868,
+        "is_solvent": false,
+        "is_actionable": false
+      }
+    },
+    {
+      "nome": "multiway_quatro_com_ruido",
+      "entrada": {
+        "current_equity_pct": 38.0,
+        "delta_win_pct": 20.0,
+        "delta_lose_pct": -14.0,
+        "dynamic_ev_fold": 1.2,
+        "realization_factor": 0.85,
+        "fgs_health": 0.8,
+        "active_players": 4,
+        "hero_invested": 6.0,
+        "current_pot": 18.0,
+        "stack_eff": 25.0,
+        "human_noise_factor": 0.3
+      },
+      "saida": {
+        "esperanca": -31.898709646212353,
+        "expectativa": -28.480065647139256,
+        "perspectiva": -31.898709646212353,
+        "risk_advantage": 0.0,
+        "advantage_multiplier": 1.0,
+        "rio_mw": 2.218643999073096,
+        "thresh_eq": 0.9005359733668671,
+        "pot_odds": 0.25,
+        "ci": 0.515600841420397,
+        "is_solvent": false,
+        "is_actionable": false
+      }
+    },
+    {
+      "nome": "pko_com_assimetria_de_rp",
+      "entrada": {
+        "current_equity_pct": 47.0,
+        "delta_win_pct": 15.0,
+        "delta_lose_pct": -15.0,
+        "dynamic_ev_fold": 0.0,
+        "realization_factor": 0.9,
+        "fgs_health": 1.0,
+        "active_players": 3,
+        "hero_invested": 8.0,
+        "current_pot": 20.0,
+        "stack_eff": 38.0,
+        "bounty_value": 4.0,
+        "hero_rp": 21.4,
+        "villain_rp": 12.9
+      },
+      "saida": {
+        "esperanca": -6.270266679454595,
+        "expectativa": -5.453961970313321,
+        "perspectiva": -6.270266679454595,
+        "risk_advantage": -6.499999999999998,
+        "advantage_multiplier": 0.935,
+        "rio_mw": 0.8163047091412742,
+        "thresh_eq": 0.6936103961232795,
+        "pot_odds": 0.2857142857142857,
+        "ci": 0.8021314278406292,
+        "is_solvent": false,
+        "is_actionable": false
+      }
+    }
+  ]
+}

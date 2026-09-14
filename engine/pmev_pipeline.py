@@ -219,9 +219,11 @@ class PMevCompositionalPipeline:
         self,
         risk_aversion: float = 0.88,
         regularization_lambda: float = 0.1,
+        dirichlet_alpha: float = 1.0,
     ) -> None:
         self.risk_aversion = risk_aversion
         self.reg_lambda = regularization_lambda
+        self.dirichlet_alpha = dirichlet_alpha
 
     def evaluate(
         self,
@@ -238,10 +240,19 @@ class PMevCompositionalPipeline:
 
         if p_ruin_vector is None:
             p_ruin_vector = tuple(0.0 for _ in range(n))
-        if absorption_states is None:
-            absorption_states = tuple(
-                AbsorptionState(place=i + 1, payout=state.payouts[min(i, len(state.payouts) - 1)]) for i in range(n)
+        if any(p > 0 for p in p_ruin_vector):
+            # Medido em 2026-09-13: f4 recebe aqui a equidade INCONDICIONAL, que ja embute a
+            # chance de quebrar. Com ruina positiva a cadeia a contava duas vezes (86,27 contra
+            # 106,23 T$ exatos). Ramos materializados: pmev_composition.all_in_branch_values.
+            raise ValueError(
+                "f4 com ruina positiva exige valor de continuacao CONDICIONAL a sobreviver; esta cadeia "
+                "entrega equidade incondicional. Use pmev_composition.all_in_branch_values."
             )
+        if absorption_states is None:
+            # Quem quebra agora termina em n-esimo. O default antigo dava ao jogador i o premio
+            # da posicao i, e a ruina elevava o heroi de 127,01 para 160,11 T$.
+            terminal = state.payouts[n - 1] if len(state.payouts) >= n else 0.0
+            absorption_states = tuple(AbsorptionState(place=n, payout=terminal) for _ in range(n))
 
         f1 = OperatorF1Baseline(payouts=state.payouts)
         f2 = OperatorF2Temporal(
@@ -251,6 +262,7 @@ class PMevCompositionalPipeline:
         f3 = OperatorF3Behavioral(
             risk_aversion_factor=self.risk_aversion,
             regularization_lambda=self.reg_lambda,
+            dirichlet_alpha=self.dirichlet_alpha,
         )
         f4 = OperatorF4Absorption(
             p_ruin_vector=p_ruin_vector,
@@ -282,19 +294,16 @@ class PMevCompositionalPipeline:
             trace["f2_temporal"] = [float(v) for v in x]
 
         if "f3" not in disabled_operators:
-            f3 = OperatorF3Behavioral(self.risk_aversion, self.reg_lambda)
+            f3 = OperatorF3Behavioral(self.risk_aversion, self.reg_lambda, self.dirichlet_alpha)
             x = f3.forward(x)
             trace["f3_behavioral"] = [float(v) for v in x]
 
         if "f4" not in disabled_operators:
-            n = len(stacks_arr)
-            p_ruin = tuple(0.05 for _ in range(n))
-            abs_states = tuple(
-                AbsorptionState(place=i + 1, payout=state.payouts[min(i, len(state.payouts) - 1)]) for i in range(n)
+            # A ablacao antiga aplicava ruina 0,05 sobre a equidade incondicional (dupla contagem)
+            # com payout terminal por indice. Absorcao exige ramos materializados.
+            raise ValueError(
+                "f4 nao entra na ablacao sem estados de ramo; desative-o ou use pmev_composition.all_in_branch_values."
             )
-            f4 = OperatorF4Absorption(p_ruin, abs_states)
-            x = f4.forward(x)
-            trace["f4_absorption"] = [float(v) for v in x]
 
         return {
             "final_vector": [float(v) for v in x],

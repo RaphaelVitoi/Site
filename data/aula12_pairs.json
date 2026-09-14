@@ -1,0 +1,1128 @@
+{
+  "descricao": "Espelho JSON dos sete pares transcritos da Aula 1.2 para consumo do motor Python. Fonte curada: frontend/src/components/simulator/solver/__fixtures__/aula12Pairs.ts. frontend/src/tests/simulator/aula12PairsJson.test.ts reprova se divergirem. Nao editar a mao.",
+  "geradoDe": "frontend/src/components/simulator/solver/__fixtures__/aula12Pairs.ts",
+  "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+  "atribuicaoAmbiguaNodelock": [
+    "PAR_5_IP_VS_XR_FLOP",
+    "PAR_6_BB_TURN_APOS_CALL",
+    "PAR_7_BB_VS_CBET_SMALL"
+  ],
+  "pares": [
+    {
+      "chave": "PAR_1_BB_LEADING",
+      "par": {
+        "source": {
+          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "figureIndex": 7,
+          "nodeLabel": "2 Leading (ChipEV) / 39 Leading (IcmEV)"
+        },
+        "context": {
+          "street": "flop",
+          "board": {
+            "kind": "read",
+            "value": "Kd Jc Ts"
+          },
+          "potBb": {
+            "kind": "read",
+            "value": 5.63
+          },
+          "players": [
+            {
+              "id": "BB",
+              "position": "OOP",
+              "stackBb": {
+                "kind": "read",
+                "value": 40
+              }
+            },
+            {
+              "id": "BTN",
+              "position": "IP",
+              "stackBb": {
+                "kind": "read",
+                "value": 40
+              }
+            }
+          ]
+        },
+        "chipEv": {
+          "regime": "chipEV",
+          "solver": "GTO Wizard",
+          "totalCombos": {
+            "kind": "read",
+            "value": 752.8
+          },
+          "actions": [
+            {
+              "label": "Check",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 100
+              },
+              "combos": {
+                "kind": "read",
+                "value": 752.61
+              }
+            },
+            {
+              "label": "Bet 1.4 (25%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 1.4
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0
+              },
+              "combos": {
+                "kind": "read",
+                "value": 0.22
+              }
+            }
+          ]
+        },
+        "icmEv": {
+          "regime": "icmEV",
+          "solver": "HRC",
+          "totalCombos": {
+            "kind": "unreadable",
+            "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+          },
+          "actions": [
+            {
+              "label": "folds",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "checks",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 94.3
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "bets 1.41bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 1.41
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 5.7
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "chave": "PAR_2_IP_APOS_CHECK",
+      "par": {
+        "source": {
+          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "figureIndex": 8,
+          "nodeLabel": "3 IP action após BB check / 41 IP action após BB check"
+        },
+        "context": {
+          "street": "flop",
+          "board": {
+            "kind": "read",
+            "value": "Kd Jc Ts"
+          },
+          "potBb": {
+            "kind": "read",
+            "value": 5.63
+          },
+          "players": [
+            {
+              "id": "BB",
+              "position": "OOP",
+              "stackBb": {
+                "kind": "read",
+                "value": 40
+              }
+            },
+            {
+              "id": "BTN",
+              "position": "IP",
+              "stackBb": {
+                "kind": "read",
+                "value": 40
+              }
+            }
+          ]
+        },
+        "chipEv": {
+          "regime": "chipEV",
+          "solver": "GTO Wizard",
+          "totalCombos": {
+            "kind": "read",
+            "value": 370.9
+          },
+          "actions": [
+            {
+              "label": "Check",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 2.3
+              },
+              "combos": {
+                "kind": "read",
+                "value": 8.38
+              }
+            },
+            {
+              "label": "Bet 1.1 (20%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 1.1
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 8.7
+              },
+              "combos": {
+                "kind": "read",
+                "value": 32.14
+              }
+            },
+            {
+              "label": "Bet 2.8 (50%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 2.8
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 82.5
+              },
+              "combos": {
+                "kind": "read",
+                "value": 306.02
+              }
+            },
+            {
+              "label": "Bet 4.2 (75%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 4.2
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 6.6
+              },
+              "combos": {
+                "kind": "read",
+                "value": 24.4
+              }
+            }
+          ]
+        },
+        "icmEv": {
+          "regime": "icmEV",
+          "solver": "HRC",
+          "totalCombos": {
+            "kind": "unreadable",
+            "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+          },
+          "actions": [
+            {
+              "label": "folds",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "checks",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 23.6
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "bets 1.13bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 1.13
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 67.5
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "bets 2.81bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 2.81
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 7.5
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "bets 4.22bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 4.22
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 1.4
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "chave": "PAR_7_BB_VS_CBET_SMALL",
+      "par": {
+        "source": {
+          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "figureIndex": 18,
+          "nodeLabel": "13 BB X-R vs IP cbet size small / 42 idem (ATRIBUIÇÃO AMBÍGUA: image7.png tem 4 inserções; todas do MESMO nó, mas em blocos de nodelock possivelmente distintos)"
+        },
+        "context": {
+          "street": "flop",
+          "board": {
+            "kind": "read",
+            "value": "Kd Jc Ts"
+          },
+          "potBb": {
+            "kind": "read",
+            "value": 6.73
+          },
+          "players": [
+            {
+              "id": "BB",
+              "position": "OOP",
+              "stackBb": {
+                "kind": "read",
+                "value": 40
+              }
+            },
+            {
+              "id": "BTN",
+              "position": "IP",
+              "stackBb": {
+                "kind": "read",
+                "value": 38.9
+              }
+            }
+          ]
+        },
+        "chipEv": {
+          "regime": "chipEV",
+          "solver": "GTO Wizard",
+          "totalCombos": {
+            "kind": "read",
+            "value": 752.7
+          },
+          "actions": [
+            {
+              "label": "Fold",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 35.7
+              },
+              "combos": {
+                "kind": "read",
+                "value": 268.83
+              }
+            },
+            {
+              "label": "Call",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 57.4
+              },
+              "combos": {
+                "kind": "read",
+                "value": 432.38
+              }
+            },
+            {
+              "label": "Raise 5 (50%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 5
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 6.8
+              },
+              "combos": {
+                "kind": "read",
+                "value": 51.52
+              }
+            },
+            {
+              "label": "Allin 40 (497%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 40
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0
+              },
+              "combos": {
+                "kind": "read",
+                "value": 0
+              }
+            }
+          ]
+        },
+        "icmEv": {
+          "regime": "icmEV",
+          "solver": "HRC",
+          "totalCombos": {
+            "kind": "unreadable",
+            "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+          },
+          "actions": [
+            {
+              "label": "folds",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 42.6
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "calls",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 48.1
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "raises 5.06bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 5.06
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 9.3
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "raises 37.88bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 37.88
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "chave": "PAR_5_IP_VS_XR_FLOP",
+      "par": {
+        "source": {
+          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "figureIndex": 19,
+          "nodeLabel": "14 IP reaction vs XR after cbet small flop / 43 IP reaction vs XR (ATRIBUIÇÃO AMBÍGUA: image55.png também legendada `Range de defesa IP vs BB xR`)"
+        },
+        "context": {
+          "street": "flop",
+          "board": {
+            "kind": "read",
+            "value": "Kd Jc Ts"
+          },
+          "potBb": {
+            "kind": "read",
+            "value": 11.73
+          },
+          "players": [
+            {
+              "id": "BB",
+              "position": "OOP",
+              "stackBb": {
+                "kind": "read",
+                "value": 35
+              }
+            },
+            {
+              "id": "BTN",
+              "position": "IP",
+              "stackBb": {
+                "kind": "read",
+                "value": 38.9
+              }
+            }
+          ]
+        },
+        "chipEv": {
+          "regime": "chipEV",
+          "solver": "GTO Wizard",
+          "totalCombos": {
+            "kind": "read",
+            "value": 370.9
+          },
+          "actions": [
+            {
+              "label": "Fold",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 30.5
+              },
+              "combos": {
+                "kind": "read",
+                "value": 113.13
+              }
+            },
+            {
+              "label": "Call",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 68.2
+              },
+              "combos": {
+                "kind": "read",
+                "value": 252.95
+              }
+            },
+            {
+              "label": "Raise 12.8 (50%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 12.8
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 1.3
+              },
+              "combos": {
+                "kind": "read",
+                "value": 4.82
+              }
+            },
+            {
+              "label": "Allin 40 (224%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 40
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0
+              },
+              "combos": {
+                "kind": "read",
+                "value": 0.01
+              }
+            }
+          ]
+        },
+        "icmEv": {
+          "regime": "icmEV",
+          "solver": "HRC",
+          "totalCombos": {
+            "kind": "unreadable",
+            "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+          },
+          "actions": [
+            {
+              "label": "folds",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 36
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "calls",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 63.9
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "raises 15.09bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 15.09
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0.1
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "raises 37.88bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 37.88
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "chave": "PAR_6_BB_TURN_APOS_CALL",
+      "par": {
+        "source": {
+          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "figureIndex": 20,
+          "nodeLabel": "15 BB XR and betting turn after IP calls (2d) / 44 idem (ATRIBUIÇÃO AMBÍGUA: image45.png também legendada `21 Action BB turn after IP calls no XR (2d)`)"
+        },
+        "context": {
+          "street": "turn",
+          "board": {
+            "kind": "read",
+            "value": "Kd Jc Ts 2d"
+          },
+          "potBb": {
+            "kind": "read",
+            "value": 15.63
+          },
+          "players": [
+            {
+              "id": "BB",
+              "position": "OOP",
+              "stackBb": {
+                "kind": "read",
+                "value": 35
+              }
+            },
+            {
+              "id": "BTN",
+              "position": "IP",
+              "stackBb": {
+                "kind": "read",
+                "value": 35
+              }
+            }
+          ]
+        },
+        "chipEv": {
+          "regime": "chipEV",
+          "solver": "GTO Wizard",
+          "totalCombos": {
+            "kind": "read",
+            "value": 49.5
+          },
+          "actions": [
+            {
+              "label": "Check",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 57.4
+              },
+              "combos": {
+                "kind": "read",
+                "value": 28.38
+              }
+            },
+            {
+              "label": "Bet 3.9 (25%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 3.9
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 18.9
+              },
+              "combos": {
+                "kind": "read",
+                "value": 9.33
+              }
+            },
+            {
+              "label": "Allin 35 (224%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 35
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 23.8
+              },
+              "combos": {
+                "kind": "read",
+                "value": 11.76
+              }
+            }
+          ]
+        },
+        "icmEv": {
+          "regime": "icmEV",
+          "solver": "HRC",
+          "totalCombos": {
+            "kind": "unreadable",
+            "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+          },
+          "actions": [
+            {
+              "label": "folds",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "checks",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 42
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "bets 3.15bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 3.15
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 11
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "bets 7.88bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 7.88
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 42.8
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "bets 32.81bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 32.81
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 4.2
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "chave": "PAR_3_IP_VS_CBET_TURN",
+      "par": {
+        "source": {
+          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "figureIndex": 33,
+          "nodeLabel": "28 IP reaction vs cbet turn OOP after xR flop (2d) / 45 idem"
+        },
+        "context": {
+          "street": "turn",
+          "board": {
+            "kind": "read",
+            "value": "Kd Jc Ts 2d"
+          },
+          "potBb": {
+            "kind": "read",
+            "value": 23.43
+          },
+          "players": [
+            {
+              "id": "BB",
+              "position": "OOP",
+              "stackBb": {
+                "kind": "read",
+                "value": 27.2
+              }
+            },
+            {
+              "id": "BTN",
+              "position": "IP",
+              "stackBb": {
+                "kind": "read",
+                "value": 35
+              }
+            }
+          ]
+        },
+        "chipEv": {
+          "regime": "chipEV",
+          "solver": "GTO Wizard",
+          "totalCombos": {
+            "kind": "read",
+            "value": 252
+          },
+          "actions": [
+            {
+              "label": "Fold",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 24.3
+              },
+              "combos": {
+                "kind": "read",
+                "value": 61.32
+              }
+            },
+            {
+              "label": "Call",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 74.8
+              },
+              "combos": {
+                "kind": "read",
+                "value": 188.36
+              }
+            },
+            {
+              "label": "Raise 23.4 (50%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 23.4
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0
+              },
+              "combos": {
+                "kind": "read",
+                "value": 0.01
+              }
+            },
+            {
+              "label": "Allin 35 (87%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 35
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0.9
+              },
+              "combos": {
+                "kind": "read",
+                "value": 2.27
+              }
+            }
+          ]
+        },
+        "icmEv": {
+          "regime": "icmEV",
+          "solver": "HRC",
+          "totalCombos": {
+            "kind": "unreadable",
+            "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+          },
+          "actions": [
+            {
+              "label": "folds",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 28.3
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "calls",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 70.6
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "raises 17.44bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 17.44
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0.8
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "raises 32.81bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 32.81
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0.3
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "chave": "PAR_4_OOP_RIVER",
+      "par": {
+        "source": {
+          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "figureIndex": 34,
+          "nodeLabel": "29 OOP action river after IP calls turn (river 3h) / 46 idem"
+        },
+        "context": {
+          "street": "river",
+          "board": {
+            "kind": "read",
+            "value": "Kd Jc Ts 2d 3h"
+          },
+          "potBb": {
+            "kind": "read",
+            "value": 31.23
+          },
+          "players": [
+            {
+              "id": "BB",
+              "position": "OOP",
+              "stackBb": {
+                "kind": "read",
+                "value": 27.2
+              }
+            },
+            {
+              "id": "BTN",
+              "position": "IP",
+              "stackBb": {
+                "kind": "read",
+                "value": 27.2
+              }
+            }
+          ]
+        },
+        "chipEv": {
+          "regime": "chipEV",
+          "solver": "GTO Wizard",
+          "totalCombos": {
+            "kind": "read",
+            "value": 27.8
+          },
+          "actions": [
+            {
+              "label": "Check",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 33.7
+              },
+              "combos": {
+                "kind": "read",
+                "value": 9.38
+              }
+            },
+            {
+              "label": "Bet 7.8 (25%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 7.8
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 0.2
+              },
+              "combos": {
+                "kind": "read",
+                "value": 0.05
+              }
+            },
+            {
+              "label": "Allin 27.2 (87%)",
+              "sizingBb": {
+                "kind": "read",
+                "value": 27.2
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 66.1
+              },
+              "combos": {
+                "kind": "read",
+                "value": 18.39
+              }
+            }
+          ]
+        },
+        "icmEv": {
+          "regime": "icmEV",
+          "solver": "HRC",
+          "totalCombos": {
+            "kind": "unreadable",
+            "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+          },
+          "actions": [
+            {
+              "label": "checks",
+              "frequencyPct": {
+                "kind": "read",
+                "value": 30.7
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "bets 6.30bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 6.3
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 1.1
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "bets 15.75bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 15.75
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 22.5
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            },
+            {
+              "label": "bets 24.94bb",
+              "sizingBb": {
+                "kind": "read",
+                "value": 24.94
+              },
+              "frequencyPct": {
+                "kind": "read",
+                "value": 45.8
+              },
+              "combos": {
+                "kind": "unreadable",
+                "reason": "recorte da captura (painel Quick Graph/Range) não inclui os combos; o HRC os expõe em outro painel"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

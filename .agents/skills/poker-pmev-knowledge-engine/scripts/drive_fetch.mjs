@@ -1,80 +1,36 @@
+// Download/exportacao do Google Drive v3. Uso: node drive_fetch.mjs <FILE_ID> [DESTINO]
+// DESTINO precisa estar em docs/research/pmev/ ou scratch/; e validado antes de qualquer rede.
 import fs from "node:fs";
 import path from "node:path";
+import { EXIT, SkillError, getGoogleAccessToken, isValidFileId, resolveWriteTarget, run } from "./drive_common.mjs";
 
-async function getGoogleAccessToken() {
-  const adcPath = path.join(process.env.APPDATA || "", "gcloud", "application_default_credentials.json");
-  if (!fs.existsSync(adcPath)) {
-    throw new Error(`ADC não encontrado em: ${adcPath}`);
-  }
-  const adc = JSON.parse(fs.readFileSync(adcPath, "utf8"));
-  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: adc.client_id,
-      client_secret: adc.client_secret,
-      refresh_token: adc.refresh_token,
-      grant_type: "refresh_token"
-    })
-  });
-  if (!tokenRes.ok) throw new Error(`Falha OAuth2: ${await tokenRes.text()}`);
-  const data = await tokenRes.json();
-  return data.access_token;
-}
+await run(async () => {
+  const fileId = process.argv[2];
+  if (!isValidFileId(fileId)) throw new SkillError("uso: node drive_fetch.mjs <FILE_ID> [DESTINO]", EXIT.USAGE);
+  const destino = process.argv[3] ? resolveWriteTarget(process.argv[3]) : null;
 
-async function fetchFile(fileId, outPath = null) {
   const token = await getGoogleAccessToken();
-  const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if (!metaRes.ok) throw new Error(`Erro ao obter metadados: ${await metaRes.text()}`);
-  const meta = await metaRes.json();
+  const cabecalho = { headers: { Authorization: `Bearer ${token}` } };
+  const base = `https://www.googleapis.com/drive/v3/files/${fileId}`;
+  const meta = await fetch(`${base}?fields=id,name,mimeType,size`, cabecalho);
+  if (meta.status === 404) throw new SkillError(`arquivo ${fileId} nao encontrado no Drive`, EXIT.NOT_FOUND);
+  if (!meta.ok) throw new SkillError(`metadados falharam: HTTP ${meta.status}`, EXIT.REMOTE);
+  const { name, mimeType } = await meta.json();
 
-  let contentUrl;
-  const isDoc = meta.mimeType === "application/vnd.google-apps.document";
-  const isSheet = meta.mimeType === "application/vnd.google-apps.spreadsheet";
+  const exportacao = {
+    "application/vnd.google-apps.document": "text/plain",
+    "application/vnd.google-apps.spreadsheet": "text/csv",
+  }[mimeType];
+  const url = exportacao ? `${base}/export?mimeType=${encodeURIComponent(exportacao)}` : `${base}?alt=media`;
+  const conteudo = await fetch(url, cabecalho);
+  if (!conteudo.ok) throw new SkillError(`download falhou: HTTP ${conteudo.status}`, EXIT.REMOTE);
 
-  if (isDoc) {
-    contentUrl = `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`;
-  } else if (isSheet) {
-    contentUrl = `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/csv`;
-  } else {
-    contentUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+  const bytes = Buffer.from(await conteudo.arrayBuffer());
+  if (!destino) {
+    console.log(exportacao ? bytes.toString("utf8").slice(0, 2000) : `${name}: ${bytes.length} bytes (sem destino, nada gravado)`);
+    return;
   }
-
-  const res = await fetch(contentUrl, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if (!res.ok) throw new Error(`Erro ao baixar conteúdo: ${await res.text()}`);
-
-  if (isDoc || isSheet) {
-    const text = await res.text();
-    if (outPath) {
-      fs.writeFileSync(outPath, text, "utf8");
-      console.log(`Salvo em ${outPath} (${text.length} caracteres)`);
-    } else {
-      console.log(text.slice(0, 2000));
-    }
-  } else {
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (outPath) {
-      fs.writeFileSync(outPath, buf);
-      console.log(`Binário salvo em ${outPath} (${buf.length} bytes)`);
-    } else {
-      console.log(`Binário baixado: ${meta.name} (${buf.length} bytes)`);
-    }
-  }
-}
-
-const fileId = process.argv[2];
-const out = process.argv[3];
-if (!fileId) {
-  console.log("Uso: node drive_fetch.mjs <FILE_ID> [CAMINHO_DESTINO]");
-  process.exit(1);
-}
-
-try {
-  await fetchFile(fileId, out);
-} catch (error) {
-  console.error(error);
-}
+  fs.mkdirSync(path.dirname(destino), { recursive: true });
+  fs.writeFileSync(destino, bytes);
+  console.log(`gravado ${destino} (${bytes.length} bytes)`);
+});

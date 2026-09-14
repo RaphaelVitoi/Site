@@ -14,6 +14,7 @@ from engine.sota_triad_mesh import (
     ExaQueryRequest,
     ExaResearchResult,
     JulesCloudBridge,
+    PhaseReceipt,
     SotaTriadOrchestrator,
     StitchDesignBridge,
     StitchScreenRequest,
@@ -103,12 +104,41 @@ class TestSotaTriadMesh(unittest.TestCase):
         self.assertEqual(dag_phases[2]["agent"], "Google Jules (Cloud VM)")
         self.assertEqual(dag_phases[3]["agent"], "Antigravity 2.0 (Local Gate)")
 
-    def test_triad_orchestrator_dag_execution(self) -> None:
+    def test_triad_dag_without_receipts_is_not_verified(self) -> None:
+        """Negative test: planning is not execution. It used to report verified=True."""
         report = self.orchestrator.execute_triad_dag("Validacao de Teoremas de Vitoi")
         self.assertIsInstance(report, TriadMeshReport)
+        self.assertFalse(report.verified)
+        self.assertEqual(report.convergence_rate, 0.0)
+        for status in (report.exa_status, report.stitch_status, report.jules_status):
+            self.assertTrue(status.startswith("NOT_EXECUTED"), status)
+        self.assertGreaterEqual(report.total_latency_seconds, 0)
+
+    def test_triad_dag_verified_only_with_three_success_receipts(self) -> None:
+        receipts = {p: PhaseReceipt(succeeded=True, evidence=f"run-{p}-001") for p in ("exa", "stitch", "jules")}
+        report = self.orchestrator.execute_triad_dag("objective", receipts=receipts)
         self.assertTrue(report.verified)
         self.assertEqual(report.convergence_rate, 1.0)
-        self.assertGreater(report.total_latency_seconds, 0)
+        self.assertIn("run-exa-001", report.exa_status)
+
+    def test_triad_dag_partial_receipts_report_partial_convergence(self) -> None:
+        receipts = {
+            "exa": PhaseReceipt(succeeded=True, evidence="exa-session-7"),
+            "jules": PhaseReceipt(succeeded=False, evidence="HTTP 500"),
+        }
+        report = self.orchestrator.execute_triad_dag("objective", receipts=receipts)
+        self.assertFalse(report.verified)
+        self.assertAlmostEqual(report.convergence_rate, 1 / 3)
+        self.assertTrue(report.jules_status.startswith("FAILED"))
+        self.assertTrue(report.stitch_status.startswith("NOT_EXECUTED"))
+
+    def test_success_receipt_without_evidence_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            PhaseReceipt(succeeded=True, evidence="   ")
+
+    def test_unknown_pillar_receipt_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            self.orchestrator.execute_triad_dag("objective", receipts={"devin": PhaseReceipt(True, "x")})
 
     def test_pure_ascii_in_triad_files(self) -> None:
         triad_file = ROOT_DIR / "engine" / "sota_triad_mesh.py"

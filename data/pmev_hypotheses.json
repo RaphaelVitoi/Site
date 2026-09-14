@@ -1,0 +1,140 @@
+{
+  "descricao": "Fonte unica das hipoteses falsificaveis H1-H12 da PMev. A tabela da secao 3 de docs/research/pmev/ARQUITETURA_ESTRATEGICA_ARCABOUCO_PMEV.md e gerada daqui por engine/pmev_hypotheses.py. Implementar uma formula nao muda estado_evidencia.",
+  "hipoteses": [
+    {
+      "id": "H1",
+      "enunciado": "Superioridade Preditiva OOS",
+      "baseline": "$\\text{PMev-0}$ / $\\text{FGS}$",
+      "criterio_falsificacao": "$\\mathbb{E}[\\mathcal{L}_{\\text{PMev-D}}^{\\text{OOS}}] \\ge \\mathbb{E}[\\mathcal{L}_{\\text{ICM}}^{\\text{OOS}}]$",
+      "onde_testar": "`pmev_pipeline.py`",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [
+        "engine/pmev_pipeline.py"
+      ],
+      "nota": "Pipeline composicional existe e reduz ao ICM com parametros neutros; o baseline FGS nao esta implementado, e nenhuma avaliacao fora da amostra foi executada."
+    },
+    {
+      "id": "H2",
+      "enunciado": "Mediação do Resíduo de Kim",
+      "baseline": "Modelo Kim (2025)",
+      "criterio_falsificacao": "$\\beta_{\\text{stack}}$ não atenua com $\\mathbf{Z}_{\\text{PMev}}$ ($p > 0,05$)",
+      "onde_testar": "Regressão OLS local",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [],
+      "nota": "Nenhuma implementação nem dado; hipótese apenas enunciada."
+    },
+    {
+      "id": "H3",
+      "enunciado": "Erosão Temporal ($t-3$)",
+      "baseline": "Solver estático",
+      "criterio_falsificacao": "$\\Delta Q(\\text{open}) \\le 0$ na iminência dos blinds",
+      "onde_testar": "`pmev_spec.py`",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [],
+      "nota": "Nenhuma implementação nem dado; hipótese apenas enunciada."
+    },
+    {
+      "id": "H4",
+      "enunciado": "Subversão de MDF no River",
+      "baseline": "$\\text{MDF} = \\frac{P}{P+B}$",
+      "criterio_falsificacao": "Defesa converge para MDF tradicional",
+      "onde_testar": "`pmev_controlled_experiments.py`",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [
+        "engine/pmev_falsification.py"
+      ],
+      "nota": "Fórmula implementada e testada contra ela mesma; nenhum dado confrontado."
+    },
+    {
+      "id": "H5",
+      "enunciado": "Amortização de Edge por Stack",
+      "baseline": "Edge Constante",
+      "criterio_falsificacao": "$\\Delta \\text{ROI}(10\\text{bb}) \\approx \\Delta \\text{ROI}(100\\text{bb})$",
+      "onde_testar": "Análise MDA",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [],
+      "nota": "Nenhuma implementação nem dado; hipótese apenas enunciada."
+    },
+    {
+      "id": "H6",
+      "enunciado": "Exploitabilidade via AQRE",
+      "baseline": "Nash Inexplorável",
+      "criterio_falsificacao": "Política AQRE apresenta regret superior",
+      "onde_testar": "Estimador Bayesiano",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [],
+      "nota": "Nenhuma implementação nem dado; hipótese apenas enunciada."
+    },
+    {
+      "id": "H7",
+      "enunciado": "Opcionalidade do SPR $\\Omega(s)$",
+      "baseline": "$\\Omega(s) \\equiv 0$",
+      "criterio_falsificacao": "$\\Omega(s) \\le 0$ para $S_{\\text{eff}} \\ge 40\\text{bb}$",
+      "onde_testar": "`pmev_spec.py`",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [
+        "engine/pmev_falsification.py"
+      ],
+      "nota": "Fórmula implementada e testada contra ela mesma; nenhum dado confrontado. Limiares de 20 a 25 bb fixados no código, sem fonte."
+    },
+    {
+      "id": "H8",
+      "enunciado": "Downward Drift de Sizings",
+      "baseline": "Árvores ChipEV",
+      "criterio_falsificacao": "Frequência de apostas $\\ge 50\\%$ inalterada",
+      "onde_testar": "`pmev_controlled_experiments.py`",
+      "estado_evidencia": "evidencia_transcrita_nao_reproduzivel",
+      "implementacoes": [
+        "engine/pmev_postflop_matrix.py",
+        "frontend/src/tests/simulator/contrasteIcmevChipev.test.ts"
+      ],
+      "nota": "Direção observada no par 2 da Aula 1.2 e no contraste de 2026-09-08 (3 de 3 nós); 0 de 7 pares reproduzíveis."
+    },
+    {
+      "id": "H9",
+      "enunciado": "Conservação em Late Reg",
+      "baseline": "Valor Nulo",
+      "criterio_falsificacao": "$\\sum \\Delta V_i + B_{\\text{entry}} \\neq 0$",
+      "onde_testar": "`pmev_late_registration.py`",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [
+        "engine/pmev_falsification.py",
+        "engine/pmev_late_registration.py"
+      ],
+      "nota": "Fórmula implementada e testada contra ela mesma; nenhum dado confrontado."
+    },
+    {
+      "id": "H10",
+      "enunciado": "Pacto Silencioso em FT",
+      "baseline": "ChipEV",
+      "criterio_falsificacao": "Frequência de 3-bet CL vs Vice inalterada",
+      "onde_testar": "Aula 1.2 (HRC 9-Max)",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [],
+      "nota": "Nenhuma implementação nem dado; hipótese apenas enunciada."
+    },
+    {
+      "id": "H11",
+      "enunciado": "Insolvência de Pot Odds",
+      "baseline": "Decisão Linear",
+      "criterio_falsificacao": "Decisões por Odds têm desempenho idêntico",
+      "onde_testar": "Estudo cego com pros",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [],
+      "nota": "Nenhuma implementação nem dado; hipótese apenas enunciada."
+    },
+    {
+      "id": "H12",
+      "enunciado": "Parcimônia Paramétrica",
+      "baseline": "$\\text{PMev-0}$ / $\\text{PMev-D}$",
+      "criterio_falsificacao": "$\\text{BIC}(\\text{PMev-F}) > \\text{BIC}(\\text{PMev-D})$",
+      "onde_testar": "`pmev_pipeline.py`",
+      "estado_evidencia": "sem_evidencia",
+      "implementacoes": [
+        "engine/pmev_falsification.py",
+        "engine/pmev_pipeline.py"
+      ],
+      "nota": "Fórmula implementada e testada contra ela mesma; nenhum dado confrontado."
+    }
+  ]
+}

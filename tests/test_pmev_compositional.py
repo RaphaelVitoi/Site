@@ -6,6 +6,8 @@ Auditoria Integrada: Sol (Codex) x Hermes.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -25,8 +27,8 @@ from engine.pmev_operators import (
 from engine.pmev_pipeline import PMevCompositionalPipeline
 from engine.pmev_postflop_matrix import (
     CANONICAL_DELTA_RP,
-    PostflopControlDimensions,
-    calculate_hypergeometric_bunching_factor,
+    CANONICAL_PAYOUTS,
+    aula_1_2_par_2,
     create_canonical_postflop_scenario,
 )
 from engine.pmev_spec import (
@@ -35,6 +37,9 @@ from engine.pmev_spec import (
     TournamentState,
     Unit,
 )
+
+
+RAIZ = Path(__file__).resolve().parents[1]
 
 
 # ==============================================================================
@@ -75,7 +80,7 @@ def test_fase_0_ablation_without_extensions_equals_icm() -> None:
 
 def test_fase_1_spectral_contraction_condition_holds() -> None:
     """Verifica que o Jacobiano global do pipeline e contrativo (rho(J_global) <= 1.0)."""
-    state = TournamentState(stacks=(38.0, 53.0, 25.0, 15.0), payouts=(237.34, 173.50, 128.25, 95.40))
+    state = TournamentState(stacks=(38.0, 53.0, 25.0, 15.0), payouts=CANONICAL_PAYOUTS[:4])
     pipeline = PMevCompositionalPipeline(risk_aversion=0.88, regularization_lambda=0.1)
 
     measured = pipeline.evaluate(state)
@@ -199,35 +204,31 @@ def test_fase_3_h12_bic_parsimony_penalizes_overfitting() -> None:
 # ==============================================================================
 
 
-def test_aula_1_2_postflop_matrix_downward_sizing_drift() -> None:
-    """Verifica que o cenario da Aula 1.2 detecta ativacao de Downward Sizing Drift."""
-    controls = PostflopControlDimensions(
-        epsilon_nash_pct=0.05,
-        multivariate_bunching_enabled=True,
-        multi_sizing_continuous=True,
-        unit_typed=True,
-        solver_checksum_verified=True,
-    )
-    assert controls.is_eligible_for_promotion is True
-
-    measured = create_canonical_postflop_scenario(controls)
-    assert measured.is_valid is True
-    assert measured.unit is Unit.PROBABILITY
-
-    freqs = measured.value
-    assert freqs.is_downward_drift_active is True
+def test_aula_1_2_par_2_mostra_drift_de_sizing_com_valores_lidos() -> None:
+    """Drift medido nas capturas: sizing medio ponderado 2.74 -> 1.35 bb, ramo dominante 2.8 -> 1.13 bb."""
+    measured = create_canonical_postflop_scenario()
+    par = measured.value
+    assert measured.is_valid is True, "as somas de frequencia da transcricao deveriam fechar"
+    assert measured.unit is Unit.DIMENSIONLESS
+    assert par.is_downward_drift_active is True
+    assert abs(par.chip_ev.weighted_mean_sizing_bb - 2.7433) < 1e-3
+    assert abs(par.icm_ev.weighted_mean_sizing_bb - 1.3516) < 1e-3
     assert abs(CANONICAL_DELTA_RP - 0.085) < 1e-9
 
 
-def test_multivariate_hypergeometric_bunching_factor() -> None:
-    """Verifica modulacao positiva na densidade residual de cartas altas apos 7 folds."""
-    factor = calculate_hypergeometric_bunching_factor(
-        removed_high_cards=4,
-        deck_remaining=47,
-        sample_folds=14,
-    )
-    assert factor > 0.0
-    assert isinstance(factor, float)
+def test_aula_1_2_par_2_e_valido_mas_nao_reproduzivel() -> None:
+    """Espelha countReproduciblePairs(AULA_1_2_PAIRS) = 0 no TypeScript. Nao e calibracao."""
+    avaliacao = aula_1_2_par_2().contract.assess_reproducibility()
+    assert avaliacao.reproducible is False
+    assert avaliacao.missing_chip_ev == ["provenance"]
+    assert avaliacao.missing_icm_ev == ["provenance"]
+
+
+def test_payouts_sao_os_do_ledger_da_aula_1_2() -> None:
+    ledger = (RAIZ / "docs/research/pmev/AULA_1_2_EVIDENCE_LEDGER.md").read_text(encoding="utf-8")
+    linha = next(ln for ln in ledger.splitlines() if ln.startswith("| Payouts da FT |"))
+    lidos = tuple(float(v.strip().replace(",", ".")) for v in linha.split("|")[2].split(";"))
+    assert lidos == CANONICAL_PAYOUTS
 
 
 # ==============================================================================

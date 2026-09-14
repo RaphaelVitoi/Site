@@ -8,6 +8,13 @@ import {
 	calculateJandaMDF,
 } from '../../lib/canonicalTheoryEngine';
 import { computeMultiwayStructuralLiability, solvePluribusMultiway } from '../../lib/pluribusMultiwayEngine';
+import { calculateMalmuthHarville } from '../../lib/icmMatrix';
+import { AULA_1_2_PAIRS } from '../../components/simulator/solver/__fixtures__/aula12Pairs';
+import {
+	assessReproducibility,
+	isRead,
+	type EvidenceScenario,
+} from '../../components/simulator/solver/evidenceContract';
 
 describe('shared Python and TypeScript engine parity corpus', () => {
 	it('matches every shared canonical scenario within the declared tolerance', () => {
@@ -97,5 +104,35 @@ describe('shared Python and TypeScript engine parity corpus', () => {
 				digits,
 			);
 		}
+	});
+
+	it('matches the ICM baseline and the Aula 1.2 reproducibility of the Python reference', () => {
+		const { scenarios, family_tolerances: tolerances } = parityCorpus;
+		const digitsFor = (tolerance: number) => Math.max(0, Math.ceil(-Math.log10(tolerance)));
+
+		for (const scenario of scenarios.icm_malmuth_harville) {
+			const result = calculateMalmuthHarville(scenario.input.stacks, scenario.input.payouts);
+			expect(result).toHaveLength(scenario.expected.equities.length);
+			scenario.expected.equities.forEach((expected, i) => {
+				expect(result[i]).toBeCloseTo(expected, digitsFor(tolerances.icm_malmuth_harville));
+			});
+		}
+
+		const exported = AULA_1_2_PAIRS;
+		const frequencySum = (side: EvidenceScenario) =>
+			side.actions.reduce((sum, action) => sum + (isRead(action.frequencyPct) ? action.frequencyPct.value : 0), 0);
+		const keys = scenarios.aula12_reproducibility.map(scenario => scenario.input.pair);
+		expect(keys).toHaveLength(exported.length);
+		scenarios.aula12_reproducibility.forEach((scenario, i) => {
+			const pair = exported[i];
+			if (!pair) throw new Error(`par ausente no fixture: ${scenario.id}`);
+			const assessment = assessReproducibility(pair);
+			expect(assessment.reproducible).toBe(scenario.expected.reproducible);
+			expect(assessment.missing.chipEv).toEqual(scenario.expected.missing_chip_ev);
+			expect(assessment.missing.icmEv).toEqual(scenario.expected.missing_icm_ev);
+			const digits = digitsFor(tolerances.aula12_reproducibility);
+			expect(frequencySum(pair.chipEv)).toBeCloseTo(scenario.expected.frequency_sum_chip_ev, digits);
+			expect(frequencySum(pair.icmEv)).toBeCloseTo(scenario.expected.frequency_sum_icm_ev, digits);
+		});
 	});
 });

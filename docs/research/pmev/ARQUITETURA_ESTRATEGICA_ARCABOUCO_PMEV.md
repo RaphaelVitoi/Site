@@ -88,26 +88,30 @@ A partir dos manuscritos fundamentais [`Site/docs/research/materials/icmteoriaad
 
 ## 3. O Ledger Mestre das 12 Hipóteses Falsificáveis ($H_1$ a $H_{12}$)
 
-| Hipótese | Enunciado | Baseline | Critério Estrito de Falsificação | Módulo Python Local |
-| :--- | :--- | :--- | :--- | :--- |
-| **$H_1$** | Superioridade Preditiva OOS | $\text{PMev-0}$ / $\text{FGS}$ | $\mathbb{E}[\mathcal{L}_{\text{PMev-D}}^{\text{OOS}}] \ge \mathbb{E}[\mathcal{L}_{\text{ICM}}^{\text{OOS}}]$ | `pmev_pipeline.py` |
-| **$H_2$** | Mediação do Resíduo de Kim | Modelo Kim (2025) | $\beta_{\text{stack}}$ não atenua com $\mathbf{Z}_{\text{PMev}}$ ($p > 0,05$) | Regressão OLS local |
-| **$H_3$** | Erosão Temporal ($t-3$) | Solver estático | $\Delta Q(\text{open}) \le 0$ na iminência dos blinds | `pmev_spec.py` |
-| **$H_4$** | Subversão de MDF no River | $\text{MDF} = \frac{P}{P+B}$ | Defesa converge para MDF tradicional | `pmev_controlled_experiments.py` |
-| **$H_5$** | Amortização de Edge por Stack | Edge Constante | $\Delta \text{ROI}(10\text{bb}) \approx \Delta \text{ROI}(100\text{bb})$ | Análise MDA |
-| **$H_6$** | Exploitabilidade via AQRE | Nash Inexplorável | Política AQRE apresenta regret superior | Estimador Bayesiano |
-| **$H_7$** | Opcionalidade do SPR $\Omega(s)$ | $\Omega(s) \equiv 0$ | $\Omega(s) \le 0$ para $S_{\text{eff}} \ge 40\text{bb}$ | `pmev_spec.py` |
-| **$H_8$** | Downward Drift de Sizings | Árvores ChipEV | Frequência de apostas $\ge 50\%$ inalterada | `pmev_controlled_experiments.py` |
-| **$H_9$** | Conservação em Late Reg | Valor Nulo | $\sum \Delta V_i + B_{\text{entry}} \neq 0$ | `pmev_late_registration.py` |
-| **$H_{10}$** | Pacto Silencioso em FT | ChipEV | Frequência de 3-bet CL vs Vice inalterada | Aula 1.2 (HRC 9-Max) |
-| **$H_{11}$** | Insolvência de Pot Odds | Decisão Linear | Decisões por Odds têm desempenho idêntico | Estudo cego com pros |
-| **$H_{12}$** | Parcimônia Paramétrica | $\text{PMev-0}$ / $\text{PMev-D}$ | $\text{BIC}(\text{PMev-F}) > \text{BIC}(\text{PMev-D})$ | `pmev_pipeline.py` |
+<!-- pmev-hypotheses:begin (gerado de data/pmev_hypotheses.json; nao editar a mao) -->
+
+| Hipótese | Enunciado | Baseline | Critério Estrito de Falsificação | Módulo Python Local | Evidência |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **$H_1$** | Superioridade Preditiva OOS | $\text{PMev-0}$ / $\text{FGS}$ | $\mathbb{E}[\mathcal{L}_{\text{PMev-D}}^{\text{OOS}}] \ge \mathbb{E}[\mathcal{L}_{\text{ICM}}^{\text{OOS}}]$ | `pmev_pipeline.py` | sem evidência |
+| **$H_2$** | Mediação do Resíduo de Kim | Modelo Kim (2025) | $\beta_{\text{stack}}$ não atenua com $\mathbf{Z}_{\text{PMev}}$ ($p > 0,05$) | Regressão OLS local | sem evidência |
+| **$H_3$** | Erosão Temporal ($t-3$) | Solver estático | $\Delta Q(\text{open}) \le 0$ na iminência dos blinds | `pmev_spec.py` | sem evidência |
+| **$H_4$** | Subversão de MDF no River | $\text{MDF} = \frac{P}{P+B}$ | Defesa converge para MDF tradicional | `pmev_controlled_experiments.py` | sem evidência |
+| **$H_5$** | Amortização de Edge por Stack | Edge Constante | $\Delta \text{ROI}(10\text{bb}) \approx \Delta \text{ROI}(100\text{bb})$ | Análise MDA | sem evidência |
+| **$H_6$** | Exploitabilidade via AQRE | Nash Inexplorável | Política AQRE apresenta regret superior | Estimador Bayesiano | sem evidência |
+| **$H_7$** | Opcionalidade do SPR $\Omega(s)$ | $\Omega(s) \equiv 0$ | $\Omega(s) \le 0$ para $S_{\text{eff}} \ge 40\text{bb}$ | `pmev_spec.py` | sem evidência |
+| **$H_8$** | Downward Drift de Sizings | Árvores ChipEV | Frequência de apostas $\ge 50\%$ inalterada | `pmev_controlled_experiments.py` | transcrita, não reproduzível |
+| **$H_9$** | Conservação em Late Reg | Valor Nulo | $\sum \Delta V_i + B_{\text{entry}} \neq 0$ | `pmev_late_registration.py` | sem evidência |
+| **$H_{10}$** | Pacto Silencioso em FT | ChipEV | Frequência de 3-bet CL vs Vice inalterada | Aula 1.2 (HRC 9-Max) | sem evidência |
+| **$H_{11}$** | Insolvência de Pot Odds | Decisão Linear | Decisões por Odds têm desempenho idêntico | Estudo cego com pros | sem evidência |
+| **$H_{12}$** | Parcimônia Paramétrica | $\text{PMev-0}$ / $\text{PMev-D}$ | $\text{BIC}(\text{PMev-F}) > \text{BIC}(\text{PMev-D})$ | `pmev_pipeline.py` | sem evidência |
+
+<!-- pmev-hypotheses:end -->
 
 ---
 
 ## 4. Arcabouço Computacional Refutável e Contrato Compositivo PMev (Sol × Hermes)
 
-A consolidação do Ecossistema Nexus SOTA v8.0 GOLD estabelece a transição da PMev de hipótese conceitual para arcabouço computacional refutável, condicionando a validade da cadeia compositiva à contração do Jacobiano global e à estrita eliminação da dupla contagem na barreira absorvente.
+A consolidação do Ecossistema Nexus SOTA v8.0 GOLD estabelece a transição da PMev de hipótese conceitual para arcabouço computacional refutável, condicionando a validade da cadeia compositiva à estabilidade medida da redistribuição entre jogadores (§4.1) e à estrita eliminação da dupla contagem na barreira absorvente.
 
 A cadeia autoral de seis operadores:
 
@@ -121,45 +125,54 @@ A cadeia compositiva de seis operadores opera como um sistema dinâmico não lin
 
 $$\Sigma_y \approx J_{\text{global}} \Sigma_x J_{\text{global}}^\top, \quad \text{onde} \quad J_{\text{global}} = \prod_{k=1}^5 J_{f_k} = J_{f_5} J_{f_4} J_{f_3} J_{f_2} J_{f_1}$$
 
-Para evitar a divergência assintótica do erro amostral ou de parametrização ao longo do pipeline, impõe-se a restrição de contração espectral:
+A covariância usa a **derivada real** de cada operador. Uma matriz regularizada que não é a derivada muda o número reportado sem mudar o operador, e subestima a incerteza.
 
-$$\rho(J_{\text{global}}) \le \prod_{k=1}^5 \Vert{}J_{f_k}\Vert{}_2 \le 1$$
+**Correção de 2026-09-13, medida na mesa final da Aula 1.2.** A versão anterior desta seção impunha $\rho(J_{\text{global}}) \le \prod_{k} \Vert J_{f_k} \Vert_2 \le 1$. O critério é mal posto por duas razões:
 
-Se qualquer operador intermediário (notadamente $f_3 \to f_4$, na transição entre estimativa de densidade bayesiana de ranges e cálculo de trajetória) possuir raio espectral $\rho(J_{f_k}) > 1$, o erro residual amplifica-se exponencialmente, invalidando as inferências a jusante.
+1. **Unidade.** $f_1$ leva fichas a T\$, e o raio de $J_{f_1}$ depende da unidade das stacks: $3{,}32$ com stacks em bb e $0{,}033$ com as mesmas stacks multiplicadas por 100. Um critério que muda com a unidade não mede estabilidade.
+2. **Conservação.** As camadas T\$ → T\$ que conservam o prize pool satisfazem $\mathbf{1}^\top J = \mathbf{1}^\top$. Têm autovalor 1, logo $\rho(J) \ge 1$ por construção, e a contração estrita é impossível para elas.
+
+O que se mede é o raio da **redistribuição** entre jogadores, só nas camadas T\$ → T\$, com $P = I - \tfrac{1}{n}\mathbf{1}\mathbf{1}^\top$ o projetor de soma zero:
+
+$$\rho_\perp = \rho\left(P \, J_{f_4} J_{f_3} J_{f_2} \, P\right)$$
+
+Ele não depende da unidade das stacks e é informativo: $\rho_\perp \approx 0{,}45$ no default, em que $f_3$ contrai a redistribuição, e $\rho_\perp = 1$ na parametrização neutra, em que a cadeia é a identidade. $\rho_\perp > 1$ indica camada que amplifica diferenças entre jogadores, e é reportado, não imposto.
+
+O Jacobiano regularizado de $f_3$ declarava $\rho = 0{,}909$ onde o real é $1{,}0$ e subestimou em cerca de 4% o erro padrão do herói contra Monte Carlo; com a derivada real, a diferença para Monte Carlo foi de 0,7%. Implementação em `engine/pmev_composition.py` e `tangent_spectral_radius` de `engine/pmev_operators.py`.
 
 ```text
 [Estado Normalizado x]
        │
        ▼
    ┌───────┐
-   │  f_1  │ ──► ChipEV / ICMev Baseline (J_1: Contrativo)
+   │  f_1  │ ──► ChipEV / ICMev Baseline (J_1: fichas → T$, fora do critério)
    └───────┘
        │
        ▼
    ┌───────┐
-   │  f_2  │ ──► Projeção Temporal / Markov R1-R6 (J_2: Isométrico)
+   │  f_2  │ ──► Projeção Temporal / Markov R1-R6 (J_2: conserva o pool)
    └───────┘
        │
        ▼
    ┌───────┐
-   │  f_3  │ ──► Política Comportamental / AQRE (J_3: Potencial Expansor) ──► Trava: Regularização Dirichlet
+   │  f_3  │ ──► Política Comportamental / AQRE (J_3: conserva o pool; ρ⊥ ≈ 0,45 no default)
    └───────┘
        │
        ▼
    ┌───────┐
-   │  f_4  │ ──► Absorção Estocástica & Barreira (J_4: Contrativo condicional)
+   │  f_4  │ ──► Absorção Estocástica & Barreira (J_4: exige continuação condicional à sobrevivência)
    └───────┘
        │
        ▼
    ┌───────┐
-   │  f_5  │ ──► Funcional PMev com Incerteza (J_5: Mapeamento em L^p)
+   │  f_5  │ ──► Funcional PMev com Incerteza (J_5: identidade + covariância)
    └───────┘
        │
        ▼
 [Measured<T>: Decisão + Covariância Σ_y]
 ```
 
-A estabilidade exige regularização de Tikhonov ou projeção baricêntrica de Fisher-Rao nos operadores $f_3$ e $f_4$, limitando a sensibilidade local às perturbações dos ranges adversários.
+Regularizar a matriz jacobiana não estabiliza o operador. Se uma camada amplificar a redistribuição ($\rho_\perp > 1$), a correção é no próprio operador (em $f_3$, o prior Dirichlet, hoje o parâmetro `dirichlet_alpha`), e a mudança precisa aparecer na ablação. Em $f_4$, a ruína só entra com valor de continuação condicional à sobrevivência; sobre a equidade incondicional ela é contada duas vezes (86,27 contra 106,23 T\$ exatos num all-in do BU).
 
 ### 4.2 Protocolo de Fechamento da Matriz Pós-Flop (Aula 1.2)
 
