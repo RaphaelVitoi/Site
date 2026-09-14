@@ -24,7 +24,7 @@ verificado:
   - sequencia 11 descarta da7ef222; sequencia 12 descarta b39b7431
   - cadeia validada em pwsh 7 -- 13 registros, cauda 77dfbc29115a46538eddbf24f4eb055229034740da5d7c714456ceca81f5f967
 nao_verificado:
-  - o efeito no relatorio diario -- o prompt da automacao foi alterado em 2026-09-14 com autorizacao do Tier 0 (assinar Gemini 3.8 Flash e citar so outliers sem resolves posterior), e so o relatorio de 14/09 mostra se ela obedece
+  - o efeito no relatorio diario -- o prompt da automacao foi alterado em 2026-09-14 com autorizacao do Tier 0 (assinar GPT-5.6 Terra e citar so outliers sem resolves posterior; a primeira versao dizia Gemini 3.8 Flash por engano, corrigido no mesmo dia), e so o relatorio de 14/09 mostra se ela obedece
 ---
 
 # Outliers inválidos descartados
