@@ -12,7 +12,7 @@ import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { ROUTES } from '@/constants/routes';
 import { SITE_CONFIG } from '@/constants/site';
 
-const content = `
+const content = String.raw`
 # A Insolvência das Pot Odds
 ### O Veneno mascarado pelo Preço Barato
 
@@ -54,7 +54,7 @@ O solver protege o jogador fraco ao simplificar o jogo conforme as stacks diminu
 
 Definimos a saúde de uma decisão pela razão entre a utilidade real (Perspectiva) e o incentivo das odds:
 
-$$C_i = \\frac{Perspectiva}{Pot\\_Odds}$$
+$$C_i = \frac{Perspectiva}{Pot\_Odds}$$
 
 Se **$C_i < 1$**, as pot odds mentem. Conforme o número de jogadores no pote aumenta, o $C_i$ mergulha para território negativo, indicando que o call é destrutivo para a saúde do stack e para o FGS (Future Game Simulation).
 

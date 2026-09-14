@@ -9,7 +9,7 @@ export type GemmaRelayConfig =
  * aceita: o navegador nunca recebe a credencial do processo de inferencia.
  */
 export function resolveGemmaRelayConfig(
-	environment: NodeJS.ProcessEnv = process.env,
+	environment: Partial<NodeJS.ProcessEnv> = process.env,
 ): GemmaRelayConfig {
 	const apiSecret = environment['API_SECRET_TOKEN'];
 	if (!apiSecret) {

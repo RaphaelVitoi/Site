@@ -19,19 +19,24 @@ export interface TimesFMForecastItem {
 	weights_loaded?: boolean;
 }
 
+export type TimesFMLicenseMode = 'commercial_production' | 'research_benchmark';
+export type TimesFMPresetModelKey = 'timesfm-2.0-500m' | 'timesfm-2.5-200m' | 'timesfm-3.0-330m';
+export type TimesFMStatus = 'SUCCESS' | 'ERROR' | 'FORBIDDEN';
+export type TimesFMForecastType = 'univariate' | 'multivariate';
+
 export interface TimesFMForecastRequestPayload {
 	series?: number[];
 	series_dict?: Record<string, number[]>;
 	horizon?: number;
 	frequency_indicator?: number;
 	target_name?: string;
-	mode?: 'commercial_production' | 'research_benchmark';
-	preferred_model_key?: 'timesfm-2.0-500m' | 'timesfm-2.5-200m' | 'timesfm-3.0-330m';
+	mode?: TimesFMLicenseMode;
+	preferred_model_key?: TimesFMPresetModelKey;
 }
 
 export interface TimesFMForecastResponsePayload {
-	status: 'SUCCESS' | 'ERROR' | 'FORBIDDEN';
-	forecast_type: 'univariate' | 'multivariate';
+	status: TimesFMStatus;
+	forecast_type: TimesFMForecastType;
 	results: Record<string, TimesFMForecastItem>;
 	model_used: string;
 	license_tier: string;
@@ -120,9 +125,9 @@ export function calculateClientCfrConvergence(
 			current_exploitability: currentVal,
 			target_epsilon: targetEpsilon,
 			estimated_iterations_to_target: 0,
-			mean_trajectory: Array(horizonIterations).fill(currentVal),
-			quantile_10: Array(horizonIterations).fill(currentVal),
-			quantile_90: Array(horizonIterations).fill(currentVal),
+			mean_trajectory: new Array(horizonIterations).fill(currentVal),
+			quantile_10: new Array(horizonIterations).fill(currentVal),
+			quantile_90: new Array(horizonIterations).fill(currentVal),
 			early_stopping_recommended: true,
 			model_used: `analytic-linear-extrapolation (sem pesos de google/${preferredModel})`,
 			license_tier: license,
@@ -166,8 +171,10 @@ export function calculateClientCfrConvergence(
 	const absTrend = Math.abs(trend);
 	const isPlateau = absTrend < 1e-6;
 	const earlyStop = stepsToTarget > 0 || isPlateau;
-	const status =
-		stepsToTarget > 0 ? 'CONVERGING' : isPlateau ? 'PLATEAU_DETECTED' : 'CONVERGING';
+	let status: 'CONVERGING' | 'PLATEAU_DETECTED' = 'CONVERGING';
+	if (isPlateau && stepsToTarget <= 0) {
+		status = 'PLATEAU_DETECTED';
+	}
 
 	return {
 		status,
@@ -201,18 +208,25 @@ function convergenceFromForecast(
 	const firstPrediction = item.mean_prediction[0] ?? current;
 	const lastPrediction = item.mean_prediction.at(-1) ?? current;
 	const plateau = Math.abs(lastPrediction - firstPrediction) < 1e-6;
-	const status =
-		current <= targetEpsilon
-			? 'CONVERGED'
-			: plateau
-				? 'PLATEAU_DETECTED'
-				: 'CONVERGING';
+	let status: 'CONVERGED' | 'PLATEAU_DETECTED' | 'CONVERGING' = 'CONVERGING';
+	if (current <= targetEpsilon) {
+		status = 'CONVERGED';
+	} else if (plateau) {
+		status = 'PLATEAU_DETECTED';
+	}
+
+	let estimatedIterations = -1;
+	if (current <= targetEpsilon) {
+		estimatedIterations = 0;
+	} else if (stepsToTarget >= 0) {
+		estimatedIterations = stepsToTarget + 1;
+	}
 
 	return {
 		status,
 		current_exploitability: current,
 		target_epsilon: targetEpsilon,
-		estimated_iterations_to_target: current <= targetEpsilon ? 0 : stepsToTarget < 0 ? -1 : stepsToTarget + 1,
+		estimated_iterations_to_target: estimatedIterations,
 		mean_trajectory: item.mean_prediction,
 		quantile_10: item.quantile_10,
 		quantile_90: item.quantile_90,

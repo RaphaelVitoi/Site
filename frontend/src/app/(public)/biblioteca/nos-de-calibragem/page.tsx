@@ -9,7 +9,7 @@ import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 
-const content = `
+const content = String.raw`
 # 🔍 Registro de Reprodução: 93 Nodes (SOTA v6)
 
 > **Estado de evidência:** acervo de calibração em curadoria. O registro indica
@@ -21,10 +21,10 @@ const content = `
 ## 1. O Cenário Âncora
 
 - **Mesa:** Final Table (9 jogadores restantes).
-- **Agressor no exemplo:** BTN (38bb - $RP = 21.4\\%$).
-- **Defensor no exemplo:** BB (53bb - $RP = 12.9\\%$).
-- **ΔRP(BTN→BB):** $12.9\\% - 21.4\\% = -8.5$ p.p.; a Vantagem de Risco está com o BB, que possui menor RP.
-- **Estrutura de Prêmios:** FLAT ($1^{st} = 18.8\\%$).
+- **Agressor no exemplo:** BTN (38bb - $RP = 21.4\%$).
+- **Defensor no exemplo:** BB (53bb - $RP = 12.9\%$).
+- **ΔRP(BTN→BB):** $12.9\% - 21.4\% = -8.5$ p.p.; a Vantagem de Risco está com o BB, que possui menor RP.
+- **Estrutura de Prêmios:** FLAT ($1^{st} = 18.8\%$).
 
 ---
 

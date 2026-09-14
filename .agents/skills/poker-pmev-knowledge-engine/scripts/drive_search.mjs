@@ -4,7 +4,7 @@ import { EXIT, SkillError, escapeDriveQuery, getGoogleAccessToken, run } from ".
 await run(async () => {
   const termo = process.argv[2];
   const limite = Number.parseInt(process.argv[3] ?? "15", 10);
-  if (!termo || !termo.trim()) throw new SkillError('uso: node drive_search.mjs "termo" [maxResults 1-100]', EXIT.USAGE);
+  if (!termo?.trim()) throw new SkillError('uso: node drive_search.mjs "termo" [maxResults 1-100]', EXIT.USAGE);
   if (!Number.isInteger(limite) || limite < 1 || limite > 100) {
     throw new SkillError("maxResults deve ser inteiro entre 1 e 100", EXIT.USAGE);
   }

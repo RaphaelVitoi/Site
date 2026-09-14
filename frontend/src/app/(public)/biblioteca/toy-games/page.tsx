@@ -10,7 +10,7 @@ import PostFlopPanel from '@/components/simulator/panels/PostFlopPanel';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 
-const content = `
+const content = String.raw`
 # Laboratório Toy Games (Paradigma VITOI)
 
 No **Paradigma VITOI**, reduzimos a complexidade sistêmica a **Toy Games** — abstrações cirúrgicas que expõem as invariâncias matemáticas do equilíbrio. Aqui, o foco não é apenas GTO, mas a exploração das assimetrias de risco e o colapso das defesas sob pressão de ICM.
@@ -23,7 +23,7 @@ No **Paradigma VITOI**, reduzimos a complexidade sistêmica a **Toy Games** — 
 O limite mecânico de defesa imposto pelo Risk Premium. Não é binário (como a "Death Zone" em 40%) - é gradual e já opera em níveis baixos como 6%. O defensor (OOP) defende até onde o RP permite, e não pelo MDF clássico. No "Teto", qualquer desvio adicional de defesa pioraria seu EV monetário, permitindo que o agressor expanda blefes impunemente.
 
 ### B. Vantagem de Risco (Risk Advantage)
-Em um confronto direcional entre agressor (A) e defensor (D), a assimetria é expressa como $\\Delta RP_{A\\to D} = RP_{defensor} - RP_{agressor}$. Quando o resultado é positivo, o agressor possui o menor RP e, portanto, a **Vantagem de Risco** naquele confronto. A unidade é ponto percentual (p.p.) da diferença entre os RPs dentro da leitura ICMev/RP do spot.
+Em um confronto direcional entre agressor (A) e defensor (D), a assimetria é expressa como $\Delta RP_{A\to D} = RP_{defensor} - RP_{agressor}$. Quando o resultado é positivo, o agressor possui o menor RP e, portanto, a **Vantagem de Risco** naquele confronto. A unidade é ponto percentual (p.p.) da diferença entre os RPs dentro da leitura ICMev/RP do spot.
 
 Essa diferença não é um conversor linear de agressividade. Ela informa a direção e a gravidade relativa da pressão; estrutura de payouts, stacks efetivos, pote, posição, ranges e jogadores remanescentes determinam a transformação concreta em frequência e sizing. A Vantagem de Risco pertence ao jogador com menor RP, não a um rótulo fixo como “Hero”.
 

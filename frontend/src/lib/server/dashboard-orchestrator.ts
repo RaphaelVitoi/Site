@@ -6,7 +6,7 @@ import 'server-only';
  * unauthenticated request and presenting fallback values as live telemetry.
  */
 export function shouldQueryDashboardOrchestrator(
-	environment: NodeJS.ProcessEnv = process.env,
+	environment: Partial<NodeJS.ProcessEnv> = process.env,
 ): boolean {
 	return Boolean(environment['API_SECRET_TOKEN']?.trim());
 }

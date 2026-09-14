@@ -121,7 +121,13 @@ export function computePublicBeliefState(
 		if (prob > maxV * 0.05) {
 			const isPair = hand.length === 2;
 			const isSuited = hand.endsWith('s');
-			activeCombos += isPair ? 6 : isSuited ? 4 : 12;
+			if (isPair) {
+				activeCombos += 6;
+			} else if (isSuited) {
+				activeCombos += 4;
+			} else {
+				activeCombos += 12;
+			}
 		}
 	}
 
@@ -142,88 +148,97 @@ export type TacticalActionType =
 	| 'bluff_polar'
 	| 'call_condensed';
 
+type BoardTexture = 'dry' | 'wet' | 'paired' | 'monotone';
+
+interface HandFeatures {
+	hand: string;
+	isPair: boolean;
+	isHighPair: boolean;
+	hasAce: boolean;
+	hasKingOrQueen: boolean;
+	isSuited: boolean;
+}
+
+function extractHandFeatures(hand: string): HandFeatures {
+	return {
+		hand,
+		isPair: hand.length === 2,
+		isHighPair: ['AA', 'KK', 'QQ', 'JJ', 'TT'].includes(hand),
+		hasAce: hand.includes('A'),
+		hasKingOrQueen: hand.includes('K') || hand.includes('Q'),
+		isSuited: hand.endsWith('s'),
+	};
+}
+
+function computeCbetLikelihood(f: HandFeatures, texture: BoardTexture): number {
+	if (texture === 'dry') {
+		if (f.hasAce || f.hasKingOrQueen || f.isHighPair) return 0.9;
+		if (f.isPair) return 0.75;
+		return 0.55;
+	}
+	if (texture === 'wet' || texture === 'monotone') {
+		return f.isHighPair || (f.isSuited && (f.hasAce || f.hasKingOrQueen)) ? 0.85 : 0.35;
+	}
+	return f.isPair ? 0.8 : 0.45;
+}
+
+function computeCheckRaiseLikelihood(f: HandFeatures, texture: BoardTexture): number {
+	if (f.isHighPair || f.hand === 'AKs' || f.hand === 'A5s' || f.hand === 'A4s') return 0.95;
+	if (['77', '88', '99', 'KTs', 'QTs'].includes(f.hand)) return 0.05;
+	if (texture === 'wet' && f.isSuited && (f.hasAce || f.hasKingOrQueen)) return 0.8;
+	return 0.15;
+}
+
+function computeBarrelHeavyLikelihood(f: HandFeatures, texture: BoardTexture): number {
+	if (f.isHighPair || f.hand === 'AKs' || f.hand === 'AQs') return 0.92;
+	if (texture === 'monotone' && f.isSuited) return 0.85;
+	if (f.isPair) return 0.4;
+	return 0.1;
+}
+
+function computeBluffPolarLikelihood(f: HandFeatures): number {
+	if (f.isHighPair || f.hand === 'AKs') return 0.98;
+	if (f.hasAce && f.hand.endsWith('o') && !f.hasKingOrQueen) return 0.75;
+	return 0.08;
+}
+
+const CALL_CONDENSED_HANDS = new Set(['JJ', 'TT', '99', '88', 'AQo', 'AJo', 'KQo', 'QJs', 'JTs']);
+
+function computeCallCondensedLikelihood(f: HandFeatures): number {
+	if (CALL_CONDENSED_HANDS.has(f.hand)) return 0.95;
+	if (f.isHighPair) return 0.25;
+	return 0.2;
+}
+
+function evaluateTacticalProbability(
+	f: HandFeatures,
+	texture: BoardTexture,
+	actionType: TacticalActionType,
+): number {
+	switch (actionType) {
+		case 'cbet_small': return computeCbetLikelihood(f, texture);
+		case 'check_raise': return computeCheckRaiseLikelihood(f, texture);
+		case 'barrel_heavy': return computeBarrelHeavyLikelihood(f, texture);
+		case 'bluff_polar': return computeBluffPolarLikelihood(f);
+		case 'call_condensed': return computeCallCondensedLikelihood(f);
+	}
+}
+
 /**
  * Gera distribuicao de verossimilhanca P(Acao | Mao) sensivel a textura do bordo
  * inspirada no subsistema Claudico (Potential-Aware) e modelagem de ranges SOTA.
  */
 export function generateTextureAwareLikelihood(
-	texture: 'dry' | 'wet' | 'paired' | 'monotone',
+	texture: BoardTexture,
 	actionType: TacticalActionType,
 ): ActionLikelihood {
 	const likelihood: ActionLikelihood = {};
 	const uniform = generateUniformBelief();
 
 	for (const hand of Object.keys(uniform)) {
-		const isPair = hand.length === 2;
-		const isHighPair = ['AA', 'KK', 'QQ', 'JJ', 'TT'].includes(hand);
-		const hasAce = hand.includes('A');
-		const hasKingOrQueen = hand.includes('K') || hand.includes('Q');
-		const isSuited = hand.endsWith('s');
-
-		let p = 0.5;
-
-		switch (actionType) {
-			case 'cbet_small':
-				// Range amplo e mergido em bordo seco; mais seletivo em bordo molhado
-				if (texture === 'dry') {
-					p = hasAce || hasKingOrQueen || isHighPair ? 0.9 : isPair ? 0.75 : 0.55;
-				} else if (texture === 'wet' || texture === 'monotone') {
-					p = isHighPair || (isSuited && (hasAce || hasKingOrQueen)) ? 0.85 : 0.35;
-				} else {
-					p = isPair ? 0.8 : 0.45;
-				}
-				break;
-
-			case 'check_raise':
-				// Polarizado: monstros + semi-blefes fortes, sem pares medios
-				if (isHighPair || hand === 'AKs' || hand === 'A5s' || hand === 'A4s') {
-					p = 0.95;
-				} else if (['77', '88', '99', 'KTs', 'QTs'].includes(hand)) {
-					p = 0.05; // Pares medios dao check-call, raramente check-raise
-				} else if (texture === 'wet' && isSuited && (hasAce || hasKingOrQueen)) {
-					p = 0.8; // Combo draws / flush draws
-				} else {
-					p = 0.15;
-				}
-				break;
-
-			case 'barrel_heavy':
-				// Continuacao agressiva de valor concentrado e draws de alta equidade
-				if (isHighPair || hand === 'AKs' || hand === 'AQs') {
-					p = 0.92;
-				} else if (texture === 'monotone' && isSuited) {
-					p = 0.85;
-				} else if (isPair) {
-					p = 0.4;
-				} else {
-					p = 0.1;
-				}
-				break;
-
-			case 'bluff_polar':
-				// Polarizacao maxima: topo absoluto ou ar puro com blockers
-				if (isHighPair || hand === 'AKs') {
-					p = 0.98;
-				} else if (hasAce && hand.endsWith('o') && !hasKingOrQueen) {
-					p = 0.75; // Blocker de As puro
-				} else {
-					p = 0.08;
-				}
-				break;
-
-			case 'call_condensed':
-				// Range concentrado em forca media (bluff catchers)
-				if (['JJ', 'TT', '99', '88', 'AQo', 'AJo', 'KQo', 'QJs', 'JTs'].includes(hand)) {
-					p = 0.95;
-				} else if (isHighPair) {
-					p = 0.25; // Pares de topo preferem re-raise/all-in
-				} else {
-					p = 0.2;
-				}
-				break;
-		}
-
-		Reflect.set(likelihood, hand, Math.max(0.01, Math.min(0.99, p)));
+		const features = extractHandFeatures(hand);
+		const rawP = evaluateTacticalProbability(features, texture, actionType);
+		Reflect.set(likelihood, hand, Math.max(0.01, Math.min(0.99, rawP)));
 	}
 
 	return likelihood;
