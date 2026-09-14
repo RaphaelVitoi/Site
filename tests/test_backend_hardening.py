@@ -34,7 +34,7 @@ from api.v1 import middleware
 from core.schemas import Task
 from database.queue_manager import QueueManager
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT: Path = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture

@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
 
 from api.v1.handlers import handle_engine_capabilities
+from api.v1.server import create_app
+from database.queue_manager import QueueManager
 from engine.capability_registry import (
     ImplementationLevel,
     get_engine_capability,
     load_engine_capability_manifest,
 )
-from database.queue_manager import QueueManager
 
 
 def test_manifesto_tem_ids_unicos_e_parametros_sem_sobreposicao() -> None:
@@ -71,9 +73,7 @@ async def test_endpoint_publica_manifesto_sem_converter_configuracao_em_runtime(
     assert payload["manifest"]["capabilities"]
 
 
-def test_endpoint_de_capacidades_esta_registrado_na_aplicacao(tmp_path) -> None:
-    from api.v1.server import create_app
-
+def test_endpoint_de_capacidades_esta_registrado_na_aplicacao(tmp_path: Path) -> None:
     app = create_app(QueueManager(queue_path=str(tmp_path / "capabilities.db")))
     routes = {(route.method, route.resource.canonical) for route in app.router.routes() if route.resource}
 

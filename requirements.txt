@@ -1,7 +1,7 @@
 # ==============================================================================
 # NEXUS ORCHESTRATOR — requirements.txt (Runtime Only)
 # Fonte canônica: pyproject.toml  |  Lock file: uv.lock
-# Sincronizado para SOTA v7.0 GOLD
+# Sincronizado para SOTA v8.0 GOLD
 # ==============================================================================
 
 # ── NUCLEO ASSINCRONO ─────────────────────────────────────────────────────────
@@ -21,50 +21,63 @@ pandas>=2.2.0
 scikit-learn>=1.6.0
 scipy>=1.15.0
 
+# ── VISUALIZACAO GRAFICA & TELEMETRIA ────────────────────────────────────────
+matplotlib>=3.9.0
+seaborn>=0.13.0
+
 # ── RAG & MEMORIA VETORIAL ───────────────────────────────────────────────────
 # SEGURANCA: PYSEC-2026-311 sem correcao upstream ate 1.5.9. Nao explorada
 # porque so usamos chromadb.PersistentClient (embarcado, sem servidor).
 # NAO migrar para HttpClient / `chroma run` sem reavaliar a advisory.
 chromadb>=0.6.0
+lancedb>=0.17.0
+pyarrow>=18.0.0
 onnxruntime>=1.20.0
 sentence-transformers>=3.3.0
 
-# ── CLIENTES LLM ─────────────────────────────────────────────────────────────
+# ── CLIENTES LLM & MCP ───────────────────────────────────────────────────────
 google-genai>=2.23.0
 openai>=1.58.0
 anthropic>=0.42.0
 httpx>=0.28.0
+mcp>=2.0.0
 
 # ── INGESTAO DE DOCUMENTOS ───────────────────────────────────────────────────
 pypdf>=6.16.0,<7.0.0
-python-docx>=1.2.0
-openpyxl>=3.1.5
+python-docx>=1.2.0,<2.0.0
+openpyxl>=3.1.5,<4.0.0
 Pillow>=12.3.0
+defusedxml>=0.7.1
 
-# ── MULTIMIDIA ───────────────────────────────────────────────────────────────
+# ── MULTIMIDIA & VOZ ─────────────────────────────────────────────────────────
 # moviepy REMOVIDO em 2026-08-21. Motivo: exige pillow<12.0, o que tornava o
 # requirements.txt INSTALAVEL apenas com Pillow 11.x - versao que carrega 10
 # vulnerabilidades (PYSEC-2026-2253/2255/2256/3451/3453/3454/3493/3494/3495/
 # 3496), todas corrigidas em 12.3.0. moviepy 2.2.1 e a ultima versao publicada
 # e nenhuma levanta esse teto. Verificado: ZERO imports no codigo - so aparecia
 # em declaracoes de dependencia. Removendo, Pillow>=12.3.0 resolve.
-opencv-python-headless>=4.13.0
+opencv-python-headless>=4.13.0,<5.0.0
+edge-tts>=7.2.8
+
+# ── NATIVE C++ BINDINGS & CLIPBOARD ──────────────────────────────────────────
+nanobind>=2.15.0
+pyperclip>=1.11.0
 
 # ── UTILITARIOS ──────────────────────────────────────────────────────────────
 regex>=2026.5.0
-requests>=2.34.0
-PyYAML>=6.0.2
-tqdm>=4.67.0
-rich>=15.0.0
-python-dateutil>=2.9.0
-tenacity>=9.1.0
+requests>=2.34.0,<3.0.0
+PyYAML>=6.0.2,<7.0.0
+tqdm>=4.67.0,<5.0.0
+rich>=15.0.0,<16.0.0
+python-dateutil>=2.9.0,<3.0.0
+tenacity>=9.1.0,<10.0.0
 
 # ── FILESYSTEM & CLOUD ───────────────────────────────────────────────────────
-watchdog>=6.0.0
-watchfiles>=1.2.0
-cloudpathlib>=0.24.0
+watchdog>=6.0.0,<7.0.0
+watchfiles>=1.2.0,<2.0.0
+cloudpathlib>=0.24.0,<1.0.0
 
 # ── INFRA & MONITORAMENTO ────────────────────────────────────────────────────
-psutil>=7.2.0
+psutil>=7.2.0,<8.0.0
 loguru>=0.7.3
 typer>=0.25.1
