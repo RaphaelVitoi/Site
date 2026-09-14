@@ -49,9 +49,10 @@ Toda interação com o runtime agêntico é interceptada por três categorias de
 
 1. **Axioma de Capacidade Universal:** Todos os modelos da tríade possuem competência plena para cumprir todas as funções e demandas do ecossistema. Não existem feudos funcionais ou proibições artificiais.
 2. **Preferências por Arquitetura, Especialidade e Preço:**
-   * **Gemini 3.8 Flash (e 3.5 Flash-Lite duo com 3.6 Flash):** Preferência primária para **Orquestração de Fluxo Agêntico**, coordenação assíncrona, context caching massivo em TPUs e **Fast Operations** com custo marginal mínimo.
-   * **Claude Opus 5 e Claude Sonnet 5:** Preferência primária para **Engenharia de Código Cirúrgica + Modelagem Matemática** (teoria dos jogos PMev, formalismos de Nash, contratos Rust/WASM e tipagem estrita).
-   * **ChatGPT 5.6 (Terra e Luna):** Preferência primária para **Raciocínio Profundo (Deep Reasoning), Auditorias de Segurança AppSec, Arquitetura Macro de Sistemas e Atividades de Altíssima Complexidade Conceitual**.
+   * **ChatGPT 6 Astra:** O modelo mais potente da malha, acionado pontualmente em momentos de alto reasoning complexo (teto de esforço admitido estritamente em `low`/`medium` para preservação da cota de assinatura flat-fee).
+   * **ChatGPT 5.6 (Terra, Sol e Luna):** Terra e Sol como preferência primária para **Raciocínio Profundo (Deep Reasoning), Auditorias de Segurança AppSec, Arquitetura Macro de Sistemas e Atividades de Altíssima Complexidade Conceitual**; **ChatGPT 5.6 Luna** opera como fast operations opcional.
+   * **Claude Opus 5 (Primário) & Opcionais/Fallovers Anthropic:** Claude Opus 5 como preferência primária para **Engenharia de Código Cirúrgica + Modelagem Matemática** (teoria dos jogos PMev, formalismos de Nash, contratos Rust/WASM e tipagem estrita). Opcionais e fallovers catalogados: **Claude Sonnet 5** (parceiro opcional de engenharia), **Claude Haiku 4.5** (fast operations opcional), e fallovers **Claude Opus 4.8**, **Claude Opus 4.7**, **Claude Opus 4.6** e **Claude Sonnet 4.6** (todos opcionais catalogados).
+   * **Gemini 3.8 Flash (com fallover para 3.7 Flash) & Gemini 3.5 Flash-Lite (fastopp, com fallover para 3.6 Flash):** Gemini 3.8 Flash como primário para **Orquestração de Fluxo Agêntico**, coordenação assíncrona e context caching massivo em TPUs. Em articulação direta com o agente externo **Stitch** e o trio **(Exa-Stitch-Jules)**, detém a preferência canônica para **DESIGN, BRAINSTORM, PLANEJAMENTO e CURADORIA**, além da responsabilidade pela **preservação, conservação, atualização e criação de documentações** em todo o ecossistema. O Gemini 3.5 Flash-Lite atua como duo para **Fast Operations** com custo marginal mínimo.
 
 ---
 

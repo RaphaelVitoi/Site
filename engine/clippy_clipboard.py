@@ -12,6 +12,8 @@ import subprocess
 import sys
 from typing import Final
 
+from utils.text import enforce_pure_ascii
+
 try:
     import pyperclip  # type: ignore
 except ImportError:
@@ -30,11 +32,17 @@ class ClippyClipboard:
     """Mecanismo universal SOTA para manipulacao da Area de Transferencia."""
 
     @classmethod
-    def copy(cls, text: str) -> bool:
-        """Copia texto para a Area de Transferencia com fallback multicamada."""
+    def copy(cls, text: str, pure_ascii: bool = True) -> bool:
+        """Copia texto para a Area de Transferencia com fallback multicamada e Pure ASCII."""
         if not text:
             logger.warning("[CLIPPY] Tentativa de copiar texto vazio abortada.")
             return False
+
+        if pure_ascii:
+            try:
+                text = enforce_pure_ascii(text)
+            except Exception as e:
+                logger.debug("[CLIPPY] Falha ao sanitizar para pure ASCII: %s", e)
 
         # 1. Metodo primario: PowerShell Set-Clipboard nativo (Windows)
         if sys.platform == "win32":
@@ -160,18 +168,18 @@ class ClippyClipboard:
             "2. ARQUIVOS MODIFICADOS / ADICIONADOS:",
         ]
         for f in files_modified:
-            lines.append(f"  • {f}")
+            lines.append(f"  - {f}")
 
         lines.extend(
             [
                 "--------------------------------------------------------------------------------",
-                f"3. ESTADO DA BATERIA DE TESTES & HOMEOSTASE:\n  • {test_status}",
+                f"3. ESTADO DA BATERIA DE TESTES & HOMEOSTASE:\n  - {test_status}",
                 "--------------------------------------------------------------------------------",
                 "4. DECISOES ARQUITETURAIS & MODELOS:",
             ]
         )
         for d in decisions:
-            lines.append(f"  • {d}")
+            lines.append(f"  - {d}")
 
         lines.extend(
             [
