@@ -9,6 +9,8 @@
       "RunCommand(python, **)",
       "RunCommand(git, **)",
       "RunCommand(gemini, **)",
+      "RunCommand(antigravity, **)",
+      "RunCommand(agy, **)",
       "RunCommand(wsl, **)",
       "RunCommand(uv, **)",
       "RunCommand(bash, **)"

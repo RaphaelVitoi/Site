@@ -20,14 +20,12 @@
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,
     "files.autoSave": "onFocusChange",
-    // ── NUCLEO DE INTELIGENCIA (GEMINI) ─────────────────────────
-    "gemini-cli.approvalMode": "auto_edit",
-    "gemini-cli.model": "gemini-3.8-flash",
-    "geminicodeassist.outlines.automaticOutlineGeneration": false,
-    "geminicodeassist.inlineSuggestions.nextEditPredictions": true,
-    "geminicodeassist.verboseLogging": false,
-    "geminicodeassist.agentDebugMode": false,
-    "geminicodeassist.rules": "Excelência SOTA: Proibida a artificialização. Priorizar lógica, ciência e SteelManning Protocol. Blindagem ASCII no Backend.",
+    // ── NUCLEO DE INTELIGENCIA (ANTIGRAVITY CLI & CLAUDE CODE) ──
+    "antigravity.approvalMode": "auto_edit",
+    "antigravity.model": "gemini-3.8-flash",
+    "claudeCode.preferredLocation": "panel",
+    "claudeCode.focusView": true,
+    "claudeCode.disableLoginPrompt": true,
     // ── PARIDADE BACKEND (RUFF & RUNTIME SOTA) ──────────────────
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
     "python.languageServer": "Default",
@@ -138,9 +136,9 @@
       "PowerShell": {
         "source": "PowerShell",
       },
-      "Gemini-SOTA": {
+      "Antigravity-SOTA": {
         "path": "pwsh.exe",
-        "args": ["-NoProfile", "-NoExit", "-Command", "gemini --approval-mode auto_edit"],
+        "args": ["-NoProfile", "-NoExit", "-Command", "antigravity --mode accept-edits"],
       },
     },
     // ── ESTETICA & ORGANIZACAO ──────────────────────────────────
@@ -170,8 +168,7 @@
     "cloudcode.gke.showExplorer": true,
     "cloudcode.secretManager.showExplorer": true,
     "cloudcode.yaml.schemaValidation": true,
-    "claudeCode.preferredLocation": "panel",
-    "claudeCode.focusView": true,
+
     "autoDocstring.docstringFormat": "google",
     "autoDocstring.startOnNewLine": true,
     "autoDocstring.includeExtendedSummary": true,
