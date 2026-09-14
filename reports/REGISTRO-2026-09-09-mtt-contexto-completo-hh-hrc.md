@@ -188,7 +188,7 @@ O formato esparso de payouts foi conferido contra o arquivo e a
 [orientacao oficial sobre prize jumps](https://www.holdemresources.net/blog/2020-02-hrc-update/).
 
 A origem local da fixture e:
-C:/Users/rapha/OneDrive/PANTS/Pantoja/Semi FT e Mid Resteal/SemiFT Resteal BU 30 BB 15.hrcz,
+%OneDrive%/PANTS/Pantoja/Semi FT e Mid Resteal/SemiFT Resteal BU 30 BB 15.hrcz,
 entrada settings.json. Nenhum state.json, EV ou estrategia foi promovido a
 resultado da bancada. A fixture e dado de interoperabilidade, nao calibracao.
 

@@ -5,7 +5,7 @@
   "local_pdfs": [
     {
       "id": "S14",
-      "path": "C:/Users/rapha/OneDrive/Maths/The_Mathematics_of_Poker.pdf",
+      "path": "%OneDrive%/Maths/The_Mathematics_of_Poker.pdf",
       "sha256": "a5903c8c2eabefbafaba4936aaa811bcd4d92db64c74201c8549bb5fcb8f5ef9",
       "reading_scope": "structural_and_targeted_sections_not_cover_to_cover",
       "pdf_pages_consulted": [

@@ -18,11 +18,11 @@
 
 ### 1.2 Materiais Complementares
 
-- **deepsolver.docx** (`C:\users\rapha\OneDrive\Documentos\deepsolver.docx`)
+- **deepsolver.docx** (`%OneDrive%\Documentos\deepsolver.docx`)
   - Tutorial transcrito do DeepSolver (Smart Tree, nodelocking, estrategias GTO)
   - Relevancia: demonstra ferramentas de solver que complementam o estudo de ICM pos-flop
 
-- **Selouan - ICM.docx.url** (`C:\users\rapha\OneDrive\Documentos\Selouan - ICM.docx.url`)
+- **Selouan - ICM.docx.url** (`%OneDrive%\Documentos\Selouan - ICM.docx.url`)
   - Link para OneDrive com material do Selouan sobre ICM (inacessivel diretamente)
 
 ### 1.3 Materiais de Contexto (Bodog Desktop)

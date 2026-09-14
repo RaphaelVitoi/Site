@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -66,7 +67,7 @@ def verify(originals: bool) -> dict:
         if originals:
             paths = [source["path"], *source.get("byte_identical_aliases", [])]
             for original in paths:
-                require(digest(Path(original)) == source["sha256"], f"Original digest: {original}")
+                require(digest(Path(os.path.expandvars(original))) == source["sha256"], f"Original digest: {original}")
                 original_count += 1
         if "same_extracted_text_as" in source:
             other = sources[source["same_extracted_text_as"]]

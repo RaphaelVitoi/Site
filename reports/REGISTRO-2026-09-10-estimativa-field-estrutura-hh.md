@@ -67,7 +67,7 @@ e stacks ativos. Nao publica formula nem taxa de erro da estimativa de contagem.
 A alta precisao do modelo ICM para uma populacao dada nao certifica, por si,
 a precisao de inferir essa populacao a partir de uma unica mesa.
 
-Saves locais, pasta C:/Users/rapha/OneDrive/PANTS/Pantoja/Semi FT e Mid Resteal:
+Saves locais, pasta %OneDrive%/PANTS/Pantoja/Semi FT e Mid Resteal:
 
 | Arquivo | Mesa | Externos | Restantes no save | Fichas da mesa | Total | Total / media da mesa |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
