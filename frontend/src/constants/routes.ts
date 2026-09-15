@@ -52,5 +52,6 @@ export const ROUTES = {
 		SMART_SNIPER: '/biblioteca/smart-sniper',
 		VALIDACAO_SMART_SNIPER: '/biblioteca/validacao-smart-sniper',
 		GENEALOGIA_SOLVERS: '/biblioteca/genealogia-dos-solvers-claudico-a-pluribus',
+		ICM_MESA_REAL: '/biblioteca/icm-contra-a-mesa-real',
 	},
 };

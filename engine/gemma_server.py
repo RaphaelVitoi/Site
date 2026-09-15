@@ -15,7 +15,8 @@ import sys
 import time
 import uuid
 from pathlib import Path
-from typing import Annotated, Any, TypedDict
+from typing import Annotated, Any
+from typing_extensions import TypedDict
 
 # SOTA: Garantir que o root do projeto esteja no sys.path para execucao direta
 PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
