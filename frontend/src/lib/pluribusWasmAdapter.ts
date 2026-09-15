@@ -6,17 +6,31 @@ import type {
 	TableStreet,
 } from '@/lib/pluribusMultiwayEngine';
 
-export type PluribusWasmKernel = (
-	pot: number,
-	numPlayers: number,
-	activeStacks: Float64Array,
-	lambdaFactor: number,
-	nominalEquity: number,
-	heroPosition: number,
-	street: number,
-	depthStreets: number,
-	iterations: number,
-) => Float64Array;
+/** Parâmetros de configuração passados ao kernel Pluribus WASM. */
+export interface PluribusWasmKernelOptions {
+	pot: number;
+	numPlayers: number;
+	activeStacks: Float64Array;
+	lambdaFactor: number;
+	nominalEquity: number;
+	heroPosition: number;
+	street: number;
+	depthStreets: number;
+	iterations: number;
+}
+
+/** Tipo público do kernel: recebe um objeto de opções e retorna o buffer WASM. */
+export type PluribusWasmKernel = (options: PluribusWasmKernelOptions) => Float64Array;
+
+/**
+ * Adapta um kernel raw posicional (ABI Rust/WASM) para a interface de opções pública.
+ * Use esta função nos runtimes para converter `solve_pluribus_multiway_adapter_wasm`.
+ */
+export function wrapPluribusWasmKernel(
+	raw: (...args: [number, number, Float64Array, number, number, number, number, number, number]) => Float64Array,
+): PluribusWasmKernel {
+	return (o) => raw(o.pot, o.numPlayers, o.activeStacks, o.lambdaFactor, o.nominalEquity, o.heroPosition, o.street, o.depthStreets, o.iterations);
+}
 
 const POSITION_CODE: Record<TablePosition, number> = {
 	BTN: 0,
@@ -57,17 +71,17 @@ export function executePluribusWasmKernel(
 	if (streetCode === undefined) {
 		throw new RangeError('street must be preflop, flop, turn, or river');
 	}
-	const output = kernel(
-		input.pot,
-		input.numPlayers,
-		new Float64Array(input.activeStacks),
-		input.lambdaFactor ?? 2.25,
-		input.nominalEquity,
-		heroPositionCode,
-		streetCode,
-		input.depthStreets ?? 1,
-		input.iterations ?? 60,
-	);
+	const output = kernel({
+		pot: input.pot,
+		numPlayers: input.numPlayers,
+		activeStacks: new Float64Array(input.activeStacks),
+		lambdaFactor: input.lambdaFactor ?? 2.25,
+		nominalEquity: input.nominalEquity,
+		heroPosition: heroPositionCode,
+		street: streetCode,
+		depthStreets: input.depthStreets ?? 1,
+		iterations: input.iterations ?? 60,
+	});
 	if (output.length !== OUTPUT_LENGTH) {
 		throw new Error(`Pluribus WASM returned ${output.length} values; expected ${OUTPUT_LENGTH}`);
 	}

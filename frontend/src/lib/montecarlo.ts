@@ -6,8 +6,18 @@
  */
 
 export interface MonteCarloConfig {
-	iterations?: number;
-	seed?: number;
+	iterations?: number | undefined;
+	seed?: number | undefined;
+}
+
+export interface MonteCarloIcmResult {
+	/** Equity monetária média por jogador (mesma unidade de `prizes`). */
+	equities: number[];
+	/** Erro padrão de Bernoulli por slot: √(p·(1-p)/N). */
+	stdErrorPerPlayer: number[];
+	/** Seed utilizado (reprodutibilidade auditável). */
+	seed: number | null;
+	iterations: number;
 }
 
 function seededRandom(seed: number): () => number {
@@ -127,13 +137,13 @@ function runSingleMonteCarloIteration(
  * @param stacks Array com os stacks dos jogadores
  * @param prizes Array com a estrutura de premiação
  * @param config Configurações de iteração (default: 10000 para velocidade web)
- * @returns Array de Equities monetárias para cada jogador
+ * @returns `MonteCarloIcmResult` com equities, stdErrorPerPlayer, seed e iterations.
  */
 export function calculateIcmMonteCarlo(
 	stacks: number[],
 	prizes: number[],
 	config: MonteCarloConfig = {},
-): number[] {
+): MonteCarloIcmResult {
 	const iterations = config.iterations ?? 10000;
 	if (!Number.isSafeInteger(iterations) || iterations < 1) throw new RangeError('Iterations must be a positive integer');
 	if (config.seed !== undefined && (!Number.isSafeInteger(config.seed) || config.seed < 0 || config.seed > 0xffffffff)) {
@@ -149,16 +159,27 @@ export function calculateIcmMonteCarlo(
 	// Se todos os stacks são 0, ou não há prêmios
 	const totalChips = stacks.reduce((a, b) => a + b, 0);
 	if (totalChips <= 0 || activePrizes.length === 0) {
-		return totalEquity;
+		return { equities: totalEquity, stdErrorPerPlayer: totalEquity.map(() => 0), seed: config.seed ?? null, iterations: 0 };
 	}
 
-	// Aloca o buffer de segurança apenas uma vez se N > 30
+	// N > 30: bitmask JS de 32 bits não comporta — usa Uint8Array alocada uma vez.
 	const isBusted = numPlayers > 30 ? new Uint8Array(numPlayers) : null;
+	if (numPlayers > 30 && !isBusted) {
+		throw new RangeError(`Monte Carlo ICM: numPlayers=${numPlayers} requer isBusted=Uint8Array para N > 30.`);
+	}
 
 	for (let i = 0; i < iterations; i++) {
 		runSingleMonteCarloIteration(numPlayers, stacks, activePrizes, totalChips, totalEquity, isBusted, random);
 	}
 
-	// Tira a média
-	return totalEquity.map((e) => e / iterations);
+	// Média e erro padrão por slot (escalado pela premiação total ativa)
+	const totalActivePrize = activePrizes.reduce((a, b) => a + b, 0);
+	const equities = totalEquity.map((e) => e / iterations);
+	const stdErrorPerPlayer = equities.map((eq) => {
+		if (totalActivePrize <= 0) return 0;
+		const p = Math.max(0, Math.min(1, eq / totalActivePrize));
+		return Number((totalActivePrize * Math.sqrt((p * (1 - p)) / Math.max(iterations, 1))).toFixed(4));
+	});
+
+	return { equities, stdErrorPerPlayer, seed: config.seed ?? null, iterations };
 }

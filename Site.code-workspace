@@ -39,23 +39,7 @@
       },
     ],
     "python.terminal.activateEnvironment": true,
-    "python.analysis.typeCheckingMode": "standard",
     "python.analysis.diagnosticMode": "workspace",
-    "python.analysis.autoSearchPaths": true,
-    "python.analysis.extraPaths": [
-      "${workspaceFolder}",
-      "${workspaceFolder}/scripts",
-      "${workspaceFolder}/engine",
-      "${workspaceFolder}/core",
-      "${workspaceFolder}/utils",
-      "${workspaceFolder}/database",
-      "${workspaceFolder}/worker",
-      "${workspaceFolder}/monitoring",
-      "${workspaceFolder}/api",
-      "${workspaceFolder}/llm",
-      "${workspaceFolder}/governance",
-      "${workspaceFolder}/conductor",
-    ],
     "python.analysis.inlayHints.functionReturnTypes": true,
     "python.analysis.inlayHints.variableTypes": true,
     "python.analysis.inlayHints.parameterNames": true,
@@ -63,7 +47,9 @@
     "python.analysis.indexing": true,
     "python.envFile": "${workspaceFolder}/.env",
     "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": ["tests"],
+    "python.testing.pytestArgs": [
+      "tests"
+    ],
     "python.testing.unittestEnabled": false,
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "[python]": {
@@ -74,8 +60,12 @@
       },
       "editor.formatOnSave": true,
     },
-    "ruff.path": ["${workspaceFolder}/.venv/Scripts/ruff.exe"],
-    "ruff.interpreter": ["${workspaceFolder}/.venv/Scripts/python.exe"],
+    "ruff.path": [
+      "${workspaceFolder}/.venv/Scripts/ruff.exe"
+    ],
+    "ruff.interpreter": [
+      "${workspaceFolder}/.venv/Scripts/python.exe"
+    ],
     "ruff.configuration": "${workspaceFolder}/pyproject.toml",
     "ruff.nativeServer": "on",
     "ruff.importStrategy": "fromEnvironment",
@@ -94,7 +84,12 @@
         "changeProcessCWD": true,
       },
     ],
-    "tailwindCSS.experimental.classRegex": [["@theme\\s*{([^}]*)}", "--color-([^\\s:]*)"]],
+    "tailwindCSS.experimental.classRegex": [
+      [
+        "@theme\\s*{([^}]*)}",
+        "--color-([^\\s:]*)"
+      ]
+    ],
     "rust-analyzer.server.path": "C:\\Users\\rapha\\.cargo\\bin\\rust-analyzer.exe",
     "rust-analyzer.check.command": "clippy",
     "rust-analyzer.cargo.allTargets": true,
@@ -138,11 +133,16 @@
       },
       "Antigravity-SOTA": {
         "path": "pwsh.exe",
-        "args": ["-NoProfile", "-NoExit", "-Command", "antigravity --mode accept-edits"],
+        "args": [
+          "-NoProfile",
+          "-NoExit",
+          "-Command",
+          "antigravity --mode accept-edits"
+        ],
       },
     },
     // ── ESTETICA & ORGANIZACAO ──────────────────────────────────
-    "workbench.iconTheme": "office-material-icon-theme",
+    "workbench.iconTheme": "vs-seti",
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
       "package.json": "package-lock.json, turbo.json, tsconfig.base.json, .prettierrc, .eslintrc*",
@@ -159,7 +159,11 @@
     "securecoder.rules.i18n": "off",
     "securecoder.rules.internationalization": "off",
     "securecoder.rules.jsx-not-internationalized": "off",
-    "securecoder.disabledRules": ["jsx-not-internationalized", "i18n", "internationalization"],
+    "securecoder.disabledRules": [
+      "jsx-not-internationalized",
+      "i18n",
+      "internationalization"
+    ],
     "google.cloud.project": "original-498419",
     "google.cloud.billingQuotaProject": "original-498419",
     "cloudcode.enableTelemetry": false,
@@ -168,7 +172,6 @@
     "cloudcode.gke.showExplorer": true,
     "cloudcode.secretManager.showExplorer": true,
     "cloudcode.yaml.schemaValidation": true,
-
     "autoDocstring.docstringFormat": "google",
     "autoDocstring.startOnNewLine": true,
     "autoDocstring.includeExtendedSummary": true,

@@ -157,6 +157,7 @@ prisma/.env
 .eslintcache
 .prettiercache
 .tsbuildinfo
+**/.threat-composer/
 
 # 9. SISTEMA & RUIDO (DESKTOP/VSC) ─────────────────────────────────────────────
 .DS_Store
@@ -166,6 +167,7 @@ desktop.ini
 *.swp
 *.swo
 *~
+*.session.sql
 .continue/
 .vscode/*
 !.vscode/settings.json

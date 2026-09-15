@@ -104,7 +104,7 @@ export function calculateMapaICM(stacks: number[], prizes: number[]): MapaICMRes
 	// SOTA: Monte Carlo Fallback para evitar explosão combinatória (O(2^N))
 	if (n > 10) {
 		const totalChips = stacks.reduce((s, v) => s + v, 0);
-		const equities = calculateIcmMonteCarlo(stacks, prizes, {
+		const { equities } = calculateIcmMonteCarlo(stacks, prizes, {
 			iterations: 20000,
 		});
 

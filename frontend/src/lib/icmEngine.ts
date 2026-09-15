@@ -19,7 +19,11 @@ export interface IcmMethod {
 }
 
 /** The population is the tournament, not the selected table. No ChipEV substitution. */
-export function calculatePopulationIcm(players: ICMPlayer[], prizes: number[]): { results: ICMResult[]; metadata: IcmMethod } {
+export function calculatePopulationIcm(
+  players: ICMPlayer[],
+  prizes: number[],
+  config: { seed?: number; iterations?: number } = {},
+): { results: ICMResult[]; metadata: IcmMethod } {
   const stacks = players.map(p => p.stack);
   if ([...stacks, ...prizes].some(v => !Number.isFinite(v) || v < 0)) {
     throw new RangeError('Stacks e prêmios devem ser finitos e não negativos.');
@@ -31,13 +35,16 @@ export function calculatePopulationIcm(players: ICMPlayer[], prizes: number[]): 
   if (!Number.isFinite(totalChips) || !Number.isFinite(totalPrizes)) throw new RangeError('Somas fora do intervalo numérico.');
   const live = players.filter(p => p.stack > 0);
   const exact = live.length <= 10;
-  const iterations = exact || totalPrizes === 0 ? 0 : 20000;
-  const seed = iterations ? 1 : null;
+  const iterations = exact || totalPrizes === 0 ? 0 : (config.iterations ?? 20000);
+  const seed = iterations
+    ? (config.seed ?? 1)
+    : null;
   let equities: number[];
   if (exact) {
     equities = exactIcm(stacks, prizes);
   } else {
-    const sampled = calculateIcmMonteCarlo(live.map(p => p.stack), prizes.slice(0, live.length), { iterations: iterations || 1, seed: 1 });
+    const result = calculateIcmMonteCarlo(live.map(p => p.stack), prizes.slice(0, live.length), { iterations: iterations || 1, seed: seed ?? 1 });
+    const sampled = result.equities;
     const zeroCount = players.length - live.length;
     // Same terminal convention as the exact kernel: unknown elimination order shares bottom payouts.
     const terminal = zeroCount ? prizes.slice(live.length).reduce((sum, value) => sum + value, 0) / zeroCount : 0;

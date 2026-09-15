@@ -3,6 +3,7 @@ import initWasm, {
 } from '@/lib/engine/generated/vitoi_equity_engine';
 import {
 	executePluribusWasmKernel,
+	wrapPluribusWasmKernel,
 	type PluribusWasmKernel,
 } from '@/lib/pluribusWasmAdapter';
 import type { PluribusExecutor } from '@/lib/engineExecutionGateway';
@@ -11,7 +12,7 @@ let initialization: Promise<PluribusWasmKernel> | undefined;
 
 function initializePluribusWasm(): Promise<PluribusWasmKernel> {
 	initialization ??= initWasm('/wasm/vitoi_equity_engine_bg.wasm').then(
-		() => solve_pluribus_multiway_adapter_wasm,
+		() => wrapPluribusWasmKernel(solve_pluribus_multiway_adapter_wasm),
 	);
 	return initialization;
 }

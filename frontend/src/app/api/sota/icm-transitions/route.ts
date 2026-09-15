@@ -20,7 +20,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'JSON inválido.' }, { status: 400 });
   }
   try {
-    return NextResponse.json(evaluateIcmTransitions(input), { headers: { 'Cache-Control': 'no-store' } });
+    const result = await evaluateIcmTransitions(input);
+    return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     const code = error instanceof TransitionCapacityError ? 'capacity' : 'invalid-input';
     return NextResponse.json({ code, error: getErrorMessage(error) }, { status: 422 });
