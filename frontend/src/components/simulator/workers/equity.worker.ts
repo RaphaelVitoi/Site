@@ -89,7 +89,8 @@ self.onmessage = async (e: MessageEvent<EquityWorkerRequest>) => {
 		if (sharedBuffer) {
 			const floatView = new Float64Array(sharedBuffer);
 			if (workerIndex >= 0 && workerIndex < floatView.length) {
-				floatView.set([equity], workerIndex);
+				// SOTA BOLT: Direct index assignment instead of .set([]) avoids array allocation
+				floatView[workerIndex] = equity;
 			}
 		}
 

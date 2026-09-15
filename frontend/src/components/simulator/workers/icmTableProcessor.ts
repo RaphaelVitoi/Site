@@ -33,7 +33,11 @@ export function processTableIcmRequest(data: unknown): IcmTableResponse {
   const payload = new Float64Array(table.length * 3);
   table.forEach((player, i) => {
     const result = byId.get(player.id)!;
-    payload.set([result.equity, result.equityPercent, result.winProb], i * 3);
+    // SOTA BOLT: Unrolling `.set([a, b, c])` into flat index assignments to avoid micro-array heap allocations and GC pauses inside the hot loop.
+    const offset = i * 3;
+    payload[offset] = result.equity;
+    payload[offset + 1] = result.equityPercent;
+    payload[offset + 2] = result.winProb;
   });
   return { id, type: 'ICM_RESULT', playerIds: table.map(player => player.id), payload, metadata };
 }
