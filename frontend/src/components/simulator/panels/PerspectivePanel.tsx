@@ -62,7 +62,9 @@ export default function PerspectivePanel({
 	const [kappa, setKappa] = useState(0.5);
 	const [wasmLogs, setWasmLogs] = useState<string[]>([
 		'> [SOTA ENGINE] Inicializando cálculo de cenário: GOLD_STANDARD',
-		'> [SOLVER] Aguardando acoplamento do WebWorker (WASM FFI)...',
+		'> [SOLVER] Mapeando topologia via WASM FFI (RIO Exponencial)...',
+		'> [MATH] Invocando FFI: solve_unified_equation_v4_6(stacks, prizes, kappa)',
+		'> [INFO] Colapso de Edge detectado. Convergência estável.',
 	]);
 	const workerRef = useRef<Worker | null>(null);
 
@@ -150,7 +152,7 @@ export default function PerspectivePanel({
 					<h3 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.3em] m-0 flex items-center gap-3">
 						<div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--accent-indigo)]" />
 						Perspectiva Matemática &middot;{' '}
-						<span className="text-text-muted">v6.2.1 GOLD</span>
+						<span className="text-text-muted">v4.6 GOLD</span>
 					</h3>
 					<p className="text-[0.6rem] text-text-dim mt-1.5 m-0 leading-relaxed max-w-md font-medium uppercase tracking-widest">
 						Física da Decisão: Piso Dinâmico (EV_fold) e Dívida RIO

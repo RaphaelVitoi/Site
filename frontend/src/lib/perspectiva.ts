@@ -92,7 +92,7 @@ export interface PerspectivaInput {
 	spr?: number;
 	investidoAcumulado?: number;
 	blindCost?: number;
-	referenceStatus?: ReferencePointStatus; // [v8.0] Estado de referência para Teoria do Prospecto
+	referenceStatus?: ReferencePointStatus | undefined; // [v8.0] Estado de referência para Teoria do Prospecto
 }
 
 // === MOTOR ICM (Malmuth-Harville / Monte Carlo Estocástico) ===
