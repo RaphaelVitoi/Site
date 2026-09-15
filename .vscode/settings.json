@@ -405,15 +405,17 @@
     "sonarlint.exclusions": "**/scripts/validation/**",
     "sqltools.connections": [
         {
-            "ssh": "Disabled",
-            "previewLimit": 50,
+            "name": "Site (PostgreSQL Local)",
+            "group": "PokerRacional",
+            "driver": "PostgreSQL",
             "server": "localhost",
             "port": 5432,
-            "driver": "PostgreSQL",
-            "name": "Site",
-            "group": "PokerRacional",
-            "database": "5222",
-            "username": "Rapha"
+            "database": "postgres",
+            "username": "postgres",
+            "askForPassword": false,
+            "connectionTimeout": 15,
+            "previewLimit": 50,
+            "ssh": "Disabled"
         }
     ]
 }
