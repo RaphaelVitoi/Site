@@ -27,6 +27,9 @@ target/
 wasm-equity/target/
 core/nexus-core-rust/target/
 frontend/.next/
+# Gerado por `next dev`/`next build`/`next typegen`, e diferente em cada um (.next/dev/types x
+# .next/types): versionado, alternava sozinho a cada comando. O CI o gera com `next typegen`.
+frontend/next-env.d.ts
 frontend/.turbo/
 frontend/.next-build/
 frontend/dist-workers/
