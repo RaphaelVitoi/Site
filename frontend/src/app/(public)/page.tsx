@@ -19,6 +19,7 @@ export default function Home() {
   const [activeModule, setActiveModule] = useState<number>(0);
   const [videoReady, setVideoReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const moduleButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -90,12 +91,27 @@ export default function Home() {
     },
   ];
 
+  const handleModuleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Home' && event.key !== 'End') return;
+
+    event.preventDefault();
+    let nextIndex: number;
+    if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = modules.length - 1;
+    else {
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+      nextIndex = (index + direction + modules.length) % modules.length;
+    }
+    setActiveModule(nextIndex);
+    moduleButtonRefs.current[nextIndex]?.focus();
+  };
+
   return (
-    <div className="light-page font-body min-h-screen overflow-x-hidden text-[#1C1B1A]">
+    <div data-surface="editorial" className="light-page font-body min-h-screen overflow-x-hidden text-[#1C1B1A]">
       {/* ════════════════════════════════════════════════════════════
           HERO — Classical Mastpiece
       ════════════════════════════════════════════════════════════ */}
-      <section className="relative flex flex-col items-center overflow-hidden px-6 pt-52 pb-36 text-center">
+      <section className="relative flex flex-col items-center overflow-hidden px-6 pt-32 pb-20 text-center sm:pt-40 sm:pb-24 lg:pt-52 lg:pb-36">
         {/* Subtle Fibonacci watermark in background */}
         <div className="pointer-events-none absolute top-10 right-10 opacity-[0.03] select-none">
           <svg width="450" height="450" viewBox="0 0 320 320" fill="none">
@@ -107,7 +123,7 @@ export default function Home() {
         </div>
 
         {/* Eyebrow */}
-        <div className="mb-12 flex items-center gap-5 opacity-75">
+        <div className="mb-8 flex items-center gap-5 opacity-75 sm:mb-12">
           <div className="h-px w-8.5 bg-[#1C1B1A]" />
           <span className="font-mono text-[0.6rem] tracking-[0.55em] text-[#1C1B1A] uppercase">
             Poker Racional · Risk Premium Edition
@@ -116,7 +132,7 @@ export default function Home() {
         </div>
 
         {/* Monumental Pacioli Logo */}
-        <div className="relative mb-14 flex items-center justify-center">
+        <div className="relative mb-10 flex items-center justify-center sm:mb-14">
           <svg
             width="120"
             height="120"
@@ -150,7 +166,7 @@ export default function Home() {
         </p>
 
         {/* Tertiary line */}
-        <p className="mb-14 font-mono text-[0.62rem] tracking-[0.45em] text-[#625f5a] uppercase">
+        <p className="mb-10 font-mono text-[0.62rem] tracking-[0.45em] text-[#625f5a] uppercase sm:mb-14">
           ICM Pós-Flop · Downward Drift · Risk Premium
         </p>
 
@@ -365,12 +381,21 @@ export default function Home() {
 
           <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[38.2%_61.8%]">
             {/* Index list */}
-            <div className="flex flex-col gap-2">
+            <div role="tablist" aria-label="Módulos da ementa" className="flex flex-col gap-2">
               {modules.map((m, idx) => (
                 <button
                   key={m.num}
                   type="button"
+                  id={`module-tab-${m.num}`}
+                  role="tab"
+                  aria-selected={activeModule === idx}
+                  aria-controls={`module-panel-${m.num}`}
+                  tabIndex={activeModule === idx ? 0 : -1}
+                  ref={(element) => {
+                    moduleButtonRefs.current[idx] = element;
+                  }}
                   onClick={() => setActiveModule(idx)}
+                  onKeyDown={(event) => handleModuleKeyDown(event, idx)}
                   className={`flex items-center justify-between rounded border px-5 py-4 text-left font-mono text-[0.66rem] tracking-[0.12em] transition-all duration-300 ${
                     activeModule === idx
                       ? 'border-[#0D0C0A] bg-[#0D0C0A] text-[#F5F3EE]'
@@ -384,7 +409,12 @@ export default function Home() {
             </div>
 
             {/* Content Detail Panel */}
-            <div className="flex min-h-85 flex-col justify-between rounded-xl border border-[#DED9D2] bg-[#FAFAF7] p-8 shadow-[0_4px_20px_rgba(13,12,10,0.02)] lg:p-10">
+            <div
+              id={`module-panel-${modules[activeModule]?.num ?? 1}`}
+              role="tabpanel"
+              aria-labelledby={`module-tab-${modules[activeModule]?.num ?? 1}`}
+              className="flex min-h-85 flex-col justify-between rounded-xl border border-[#DED9D2] bg-[#FAFAF7] p-8 shadow-[0_4px_20px_rgba(13,12,10,0.02)] lg:p-10"
+            >
               {(() => {
                 const currentModule = modules[activeModule];
                 if (!currentModule) return null;

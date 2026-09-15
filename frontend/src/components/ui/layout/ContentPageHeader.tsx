@@ -2,118 +2,110 @@
  * IDENTITY: SOTA Content Header SOTA v7.0 GOLD
  * PATH: src/components/ui/layout/ContentPageHeader.tsx
  * ROLE: Prover identidade visual, título e apresentação consistente para páginas de conteúdo.
- * AESTHETIC: SOTA Gold Standard (Glows, Shimmer, Depth Layers).
+ * AESTHETIC: SOTA Gold Standard (hierarquia sólida, contraste e profundidade contida).
  * ARCHITECTURE: Server Component puro sem mismatch de hidratação.
  */
 
 import Link from 'next/link';
 
 interface ContentPageHeaderProps {
-	title: string;
-	subtitle?: string;
-	category?: string;
-	icon?: string;
+  title: string;
+  subtitle?: string;
+  category?: string;
+  icon?: string;
 }
 
 export function ContentPageHeader({
-	title,
-	subtitle,
-	category,
-	icon = 'fa-book-open',
+  title,
+  subtitle,
+  category,
+  icon = 'fa-book-open',
 }: Readonly<ContentPageHeaderProps>) {
-	return (
-		<header
-			suppressHydrationWarning
-			className="relative w-full overflow-hidden border-b border-white/5 bg-bg-deep/40 backdrop-blur-3xl pt-10 sm:pt-14 pb-12 sm:pb-16 group/header"
-		>
-			{/* Camadas de Profundidade Gold */}
-			<div className="absolute -top-32 -right-32 w-80 h-80 bg-accent-indigo/10 blur-[120px] rounded-full pointer-events-none group-hover/header:bg-accent-indigo/15 transition-all duration-1000" />
-			<div className="absolute -bottom-32 -left-32 w-80 h-80 bg-accent-emerald/5 blur-[120px] rounded-full pointer-events-none" />
+  return (
+    <header
+      suppressHydrationWarning
+      className="bg-bg-deep/40 group/header relative w-full overflow-hidden border-b border-white/5 pt-10 pb-12 backdrop-blur-3xl sm:pt-14 sm:pb-16"
+    >
+      {/* Camadas de Profundidade Gold */}
+      <div className="bg-accent-indigo/10 group-hover/header:bg-accent-indigo/15 pointer-events-none absolute -top-32 -right-32 h-80 w-80 rounded-full blur-[120px] transition-all duration-1000" />
+      <div className="bg-accent-emerald/5 pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full blur-[120px]" />
 
-			<div className="sota-container relative z-10 animate-sota-in">
-				<div className="flex flex-col gap-10">
-					{/* Breadcrumb SOTA High-Fidelity */}
-					<nav aria-label="Caminho de navegação" className="flex items-center gap-4 text-[0.6rem] font-black uppercase tracking-[0.3em] text-white/70">
-						<Link
-							href="/"
-							className="hover:text-accent-indigo-light transition-colors flex items-center gap-2"
-						>
-							<i className="fa-solid fa-house text-[0.55rem]" /> Home
-						</Link>
-						<i className="fa-solid fa-chevron-right text-[0.45rem] text-white/50" />
-						{category && (
-							<>
-								<Link
-									href="/biblioteca"
-									className="hover:text-accent-indigo-light transition-colors"
-								>
-									{category}
-								</Link>
-								<i className="fa-solid fa-chevron-right text-[0.45rem] text-white/50" />
-							</>
-						)}
-						<span className="text-white/70 truncate max-w-50">{title}</span>
-					</nav>
+      <div className="sota-container animate-sota-in relative z-10">
+        <div className="flex flex-col gap-10">
+          {/* Breadcrumb SOTA High-Fidelity */}
+          <nav
+            aria-label="Caminho de navegação"
+            className="flex items-center gap-4 text-[0.6rem] font-black tracking-[0.3em] text-white/70 uppercase"
+          >
+            <Link href="/" className="hover:text-accent-indigo-light flex items-center gap-2 transition-colors">
+              <i className="fa-solid fa-house text-[0.55rem]" /> Home
+            </Link>
+            <i className="fa-solid fa-chevron-right text-[0.45rem] text-white/50" />
+            {category && (
+              <>
+                <Link href="/biblioteca" className="hover:text-accent-indigo-light transition-colors">
+                  {category}
+                </Link>
+                <i className="fa-solid fa-chevron-right text-[0.45rem] text-white/50" />
+              </>
+            )}
+            <span className="max-w-50 truncate text-white/70">{title}</span>
+          </nav>
 
-					<div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12">
-						<div className="space-y-6 max-w-4xl">
-							<div className="flex items-center gap-5">
-								<div className="w-14 h-14 rounded-2xl bg-accent-indigo/10 border border-accent-indigo/20 flex items-center justify-center text-accent-indigo shadow-2xl relative overflow-hidden transition-transform duration-300 hover:scale-105">
-									<div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent pointer-events-none" />
-									<i className={`fa-solid ${icon} text-2xl`} />
-								</div>
-								{category && (
-									<div className="flex flex-col gap-1">
-										<span className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[0.55rem] font-black text-text-muted uppercase tracking-[0.4em] w-fit shadow-inner">
-											{category}
-										</span>
-										<div className="flex gap-1.5 pl-1 opacity-20">
-											<div className="w-1 h-1 rounded-full bg-accent-indigo" />
-											<div className="w-1 h-1 rounded-full bg-accent-indigo" />
-											<div className="w-1 h-1 rounded-full bg-accent-indigo" />
-										</div>
-									</div>
-								)}
-							</div>
+          <div className="flex flex-col justify-between gap-12 lg:flex-row lg:items-end">
+            <div className="max-w-4xl space-y-6">
+              <div className="flex items-center gap-5">
+                <div className="bg-accent-indigo/10 border-accent-indigo/20 text-accent-indigo relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border shadow-2xl transition-transform duration-300 hover:scale-105">
+                  <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-white/10 to-transparent" />
+                  <i className={`fa-solid ${icon} text-2xl`} />
+                </div>
+                {category && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-text-muted w-fit rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-[0.55rem] font-black tracking-[0.4em] uppercase shadow-inner">
+                      {category}
+                    </span>
+                    <div className="flex gap-1.5 pl-1 opacity-20">
+                      <div className="bg-accent-indigo h-1 w-1 rounded-full" />
+                      <div className="bg-accent-indigo h-1 w-1 rounded-full" />
+                      <div className="bg-accent-indigo h-1 w-1 rounded-full" />
+                    </div>
+                  </div>
+                )}
+              </div>
 
-							<h1 className="text-5xl md:text-7xl font-black text-gradient-sota tracking-tighter leading-[0.95] drop-shadow-2xl">
-								{title}
-							</h1>
+              <h1 className="sota-page-title sota-page-title--hero">{title}</h1>
 
-							{subtitle && (
-								<div className="relative group/subtitle">
-									<div className="absolute top-0 left-0 w-1 h-full bg-accent-indigo/40 rounded-full group-hover/subtitle:bg-accent-indigo transition-colors" />
-									<p className="text-lg md:text-xl text-text-muted font-medium leading-loose max-w-3xl pl-8 m-0 italic py-1">
-										{subtitle}
-									</p>
-								</div>
-							)}
-						</div>
+              {subtitle && (
+                <div className="group/subtitle relative">
+                  <div className="bg-accent-indigo/40 group-hover/subtitle:bg-accent-indigo absolute top-0 left-0 h-full w-1 rounded-full transition-colors" />
+                  <p className="text-text-muted m-0 max-w-3xl py-1 pl-8 text-lg leading-loose font-medium italic md:text-xl">
+                    {subtitle}
+                  </p>
+                </div>
+              )}
+            </div>
 
-						<div className="hidden xl:block">
-							<div className="text-right space-y-3 transition-all duration-700">
-								<div className="space-y-1">
-									<span className="text-[0.65rem] font-black uppercase tracking-[0.4em] text-white/80 block">
-										Paradigma VITOI
-									</span>
-									<span className="text-[0.5rem] font-mono font-black uppercase tracking-[0.5em] text-accent-indigo-light">
-										Quantum Intelligence
-									</span>
-								</div>
-								<div className="h-px w-32 bg-linear-to-l from-accent-indigo/40 to-transparent ml-auto" />
-								<div className="flex justify-end gap-4 text-white/60">
-									<i className="fa-solid fa-microchip text-[0.6rem]" />
-									<i className="fa-solid fa-dna text-[0.6rem]" />
-									<i className="fa-solid fa-satellite-dish text-[0.6rem]" />
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			{/* Shimmer Border SOTA */}
-			<div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-white/10 to-transparent shadow-[0_0_20px_rgba(255,255,255,0.05)]" />
-		</header>
-	);
+            <div className="hidden xl:block">
+              <div className="space-y-3 text-right transition-all duration-700">
+                <div className="space-y-1">
+                  <span className="block text-[0.65rem] font-black tracking-[0.4em] text-white/80 uppercase">
+                    Paradigma VITOI
+                  </span>
+                  <span className="text-accent-indigo-light font-mono text-[0.5rem] font-black tracking-[0.5em] uppercase">
+                    Quantum Intelligence
+                  </span>
+                </div>
+                <div className="from-accent-indigo/40 ml-auto h-px w-32 bg-linear-to-l to-transparent" />
+                <div className="flex justify-end gap-4 text-white/60">
+                  <i className="fa-solid fa-microchip text-[0.6rem]" />
+                  <i className="fa-solid fa-dna text-[0.6rem]" />
+                  <i className="fa-solid fa-satellite-dish text-[0.6rem]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
 }

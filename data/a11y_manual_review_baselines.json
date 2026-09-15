@@ -6,15 +6,19 @@
       "id": "a11y-color-contrast-downward-drift-20260901",
       "status": "approved",
       "decision": "positive",
-      "reviewed_at": "2026-09-01",
+      "reviewed_at": "2026-09-15",
       "reviewer_authority": "Tier 0 — Raphael Vitoi",
       "rule_id": "color-contrast",
       "target_url": "http://localhost:3000/",
       "source": {
         "path": "frontend/src/app/(public)/page.tsx",
-        "sha256": "647f9d6ba0dff8a7ad09421559877a4bf325a5b6003cf75f57009857c2d9e2b4"
+        "sha256": "84cf48c58467dd38d70fdfc359bc27679dc6995c94455ce281cfb8d74a5b1716"
       },
-      "targets": ["text[x=\"15\"]", "text[x=\"310\"]", "text[x=\"185.39999999999998\"]"],
+      "targets": [
+        "text[x=\"15\"]",
+        "text[x=\"310\"]",
+        "text[x=\"185.39999999999998\"]"
+      ],
       "evidence": {
         "automated_report": "reports/cwv/cwv_report_20260901_030113.md",
         "reason_for_incomplete": "axe-core nao determina automaticamente fundos de dois textos em SVG com gradientes e de um texto sobreposto por geometria SVG.",

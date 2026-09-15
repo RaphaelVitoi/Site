@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { ROUTES } from '@/constants/routes';
 import { SITE_CONFIG } from '@/constants/site';
+import BrandMark from '@/components/ui/layout/BrandMark';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   return (
     <footer
       id="contato"
-      className="bg-bg-deep group/footer relative z-10 overflow-hidden border-t border-white/5 pt-32 pb-16"
+      className="group/footer bg-bg-deep relative z-10 overflow-hidden border-t border-white/5 pt-24 pb-12 sm:pt-28 sm:pb-14"
     >
       {/* SOTA: Geometria Técnica de Fundo (Grid Cibernético) */}
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.02)_1px,transparent_1px)] mask-[radial-gradient(ellipse_at_bottom,black_40%,transparent_100%)] bg-size-[40px_40px] opacity-60" />
@@ -15,30 +16,16 @@ export default function Footer() {
 
       <div className="sota-container bg-bg-deep relative z-10 flex flex-col items-center justify-center text-center">
         {/* Branding/Logo (SOTA Gold Style) */}
-        <div className="mb-16 flex flex-col items-center">
-          <Link href={ROUTES.HOME} className="group relative mb-8 flex flex-col items-center gap-6 focus:outline-none">
-            <div className="group-hover:border-accent-indigo/40 relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-[2.5rem] border border-white/10 bg-black/40 shadow-[0_0_50px_rgba(255,255,255,0.02)] backdrop-blur-md transition-all duration-1000 group-hover:rotate-360 group-hover:shadow-[0_0_80px_rgba(99,102,241,0.15)]">
-              <div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="relative z-10 text-white"
-              >
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="0.8" strokeLinejoin="round" />
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="0.8" strokeLinejoin="round" />
-                <path d="M2 7V17" stroke="currentColor" strokeWidth="0.8" strokeLinejoin="round" />
-                <path d="M22 7V17" stroke="currentColor" strokeWidth="0.8" strokeLinejoin="round" />
-                <path d="M12 12V22" stroke="currentColor" strokeWidth="0.8" strokeLinejoin="round" />
-              </svg>
+        <div className="mb-12 flex flex-col items-center sm:mb-14">
+          <Link href={ROUTES.HOME} className="group relative mb-7 flex flex-col items-center gap-5 focus:outline-none">
+            <div className="group-hover:border-accent-indigo/40 group-hover:text-accent-indigo-light relative flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-black/30 text-white shadow-[0_0_30px_rgba(255,255,255,0.03)] backdrop-blur-md transition-all duration-500">
+              <BrandMark size={34} className="transition-transform duration-500 group-hover:scale-105" />
             </div>
             <div className="flex flex-col items-center justify-center">
-              <span className="text-4xl leading-none font-black tracking-tighter text-white">
+              <span className="text-[clamp(1.75rem,4vw,2.5rem)] leading-none font-black tracking-tighter text-white">
                 POKER <span className="text-text-muted ml-1.5 font-light tracking-[0.3em]">RACIONAL</span>
               </span>
-              <span className="text-accent-indigo-light group-hover:text-glow-indigo mt-4 text-[0.7rem] leading-none font-black tracking-[0.5em] uppercase transition-all duration-500">
+              <span className="text-accent-indigo-light mt-3 text-[0.62rem] leading-none font-black tracking-[0.42em] uppercase">
                 A Geometria do Risco
               </span>
             </div>

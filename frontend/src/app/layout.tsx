@@ -17,124 +17,118 @@ import { Inter, JetBrains_Mono, Montserrat, Playfair_Display, EB_Garamond } from
 import './globals.css';
 
 const inter = Inter({
-	subsets: ['latin'],
-	variable: '--font-inter',
-	display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
 });
 
 const jetbrainsMono = JetBrains_Mono({
-	subsets: ['latin'],
-	variable: '--font-mono',
-	display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
 });
 
 const montserrat = Montserrat({
-	subsets: ['latin'],
-	variable: '--font-heading',
-	display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-heading',
+  display: 'swap',
 });
 
 const playfair = Playfair_Display({
-	subsets: ['latin'],
-	variable: '--font-playfair',
-	display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  display: 'swap',
 });
 
 const ebGaramond = EB_Garamond({
-	subsets: ['latin'],
-	variable: '--font-garamond',
-	display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-garamond',
+  display: 'swap',
 });
 
 const rootSchema = {
-	'@context': 'https://schema.org',
-	'@graph': [
-		{
-			'@type': 'Person',
-			'@id': 'https://www.pokerracional.com/#person',
-			name: 'Raphael Vitoi',
-			jobTitle: 'Estrategista de Poker e Arquiteto de Sistemas Complexos',
-			description:
-				'Especialista em ICM Pós-Flop e Teoria dos Jogos. Criador do framework de Perspectiva Matemática.',
-			url: 'https://www.pokerracional.com',
-			sameAs: [
-				'https://www.instagram.com/raphaelvitoi/',
-				'https://www.twitch.tv/RaphaelVitoiPoker',
-				'https://www.youtube.com/@RaphaelVitoiPoker',
-			],
-		},
-		{
-			'@type': 'WebSite',
-			'@id': 'https://www.pokerracional.com/#website',
-			url: 'https://www.pokerracional.com',
-			name: 'Raphael Vitoi | Nexus',
-			description:
-				'A Nova Fronteira do Edge: Inteligência SOTA, ICM Pós-Flop e Risk Premium.',
-			publisher: { '@id': 'https://www.pokerracional.com/#person' },
-		},
-	],
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Person',
+      '@id': 'https://www.pokerracional.com/#person',
+      name: 'Raphael Vitoi',
+      jobTitle: 'Estrategista de Poker e Arquiteto de Sistemas Complexos',
+      description: 'Especialista em ICM Pós-Flop e Teoria dos Jogos. Criador do framework de Perspectiva Matemática.',
+      url: 'https://www.pokerracional.com',
+      sameAs: [
+        'https://www.instagram.com/raphaelvitoi/',
+        'https://www.twitch.tv/RaphaelVitoiPoker',
+        'https://www.youtube.com/@RaphaelVitoiPoker',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://www.pokerracional.com/#website',
+      url: 'https://www.pokerracional.com',
+      name: 'Raphael Vitoi | Nexus',
+      description: 'A Nova Fronteira do Edge: Inteligência SOTA, ICM Pós-Flop e Risk Premium.',
+      publisher: { '@id': 'https://www.pokerracional.com/#person' },
+    },
+  ],
 };
 
 export const metadata: Metadata = {
-	title: {
-		default: 'Raphael Vitoi | Nexus - SOTA v7.0 GOLD',
-		template: '%s | Raphael Vitoi',
-	},
-	description:
-		'A Geometria do Risco: ICM Pós-Flop, Risk Premium e a Fronteira SOTA v7.0 GOLD do Edge no Poker.',
-	metadataBase: new URL('https://www.pokerracional.com'),
-	icons: {
-		icon: [
-			{ url: '/favicon.svg', type: 'image/svg+xml' },
-			{ url: '/favicon.ico', sizes: '48x48 32x32 16x16', type: 'image/x-icon' },
-		],
-		shortcut: '/favicon.ico',
-		apple: '/favicon.svg',
-	},
-	openGraph: {
-		type: 'website',
-		locale: 'pt_BR',
-		url: 'https://www.pokerracional.com',
-		siteName: 'PokerRacional.com',
-		title: 'Raphael Vitoi | Nexus - Inteligência SOTA v7.0 GOLD',
-		description:
-			'A Geometria do Risco: ICM Pós-Flop e o Paradigma da Perspectiva Matemática SOTA GOLD.',
-	},
-	twitter: {
-		card: 'summary_large_image',
-		title: 'Raphael Vitoi | Nexus - SOTA v7.0 GOLD',
-		description: 'A Nova Fronteira do Edge no Poker: ICM Pós-Flop e Inteligência Quantum GOLD.',
-		creator: '@raphaelvitoi',
-	},
+  title: {
+    default: 'Raphael Vitoi | Nexus - SOTA v7.0 GOLD',
+    template: '%s | Raphael Vitoi',
+  },
+  description: 'A Geometria do Risco: ICM Pós-Flop, Risk Premium e a Fronteira SOTA v7.0 GOLD do Edge no Poker.',
+  metadataBase: new URL('https://www.pokerracional.com'),
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    url: 'https://www.pokerracional.com',
+    siteName: 'PokerRacional.com',
+    title: 'Raphael Vitoi | Nexus - Inteligência SOTA v7.0 GOLD',
+    description: 'A Geometria do Risco: ICM Pós-Flop e o Paradigma da Perspectiva Matemática SOTA GOLD.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Raphael Vitoi | Nexus - SOTA v7.0 GOLD',
+    description: 'A Nova Fronteira do Edge no Poker: ICM Pós-Flop e Inteligência Quantum GOLD.',
+    creator: '@raphaelvitoi',
+  },
 };
 
 export default function RootLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	return (
-		<html
-			lang="pt-BR"
-			className="scroll-smooth overflow-x-hidden"
-			data-scroll-behavior="smooth"
-			suppressHydrationWarning
-		>
-			<body
-				className={`${inter.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${playfair.variable} ${ebGaramond.variable} font-body antialiased bg-bg-base text-text-main flex flex-col min-h-screen selection:bg-accent-indigo/30 selection:text-text-bright overflow-x-hidden w-full max-w-full`}
-				suppressHydrationWarning
-			>
-				<AuthProvider>
-					<SotaBackground />
-					<SotaGlobalSyncProvider>
-						<JsonLd data={rootSchema} />
-						<Header />
-						<main className="grow pt-(--header-height) flex flex-col relative">{children}</main>
-						<Footer />
-						<ScrollToTop />
-					</SotaGlobalSyncProvider>
-				</AuthProvider>
-			</body>
-		</html>
-	);
+  return (
+    <html
+      lang="pt-BR"
+      className="overflow-x-hidden scroll-smooth"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
+      <body
+        data-surface="laboratory"
+        className={`${inter.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${playfair.variable} ${ebGaramond.variable} font-body bg-bg-base text-text-main selection:bg-accent-indigo/30 selection:text-text-bright flex min-h-screen w-full max-w-full flex-col overflow-x-hidden antialiased`}
+        suppressHydrationWarning
+      >
+        <AuthProvider>
+          <SotaBackground />
+          <SotaGlobalSyncProvider>
+            <JsonLd data={rootSchema} />
+            <Header />
+            <main className="relative flex grow flex-col pt-(--header-height)">{children}</main>
+            <Footer />
+            <ScrollToTop />
+          </SotaGlobalSyncProvider>
+        </AuthProvider>
+      </body>
+    </html>
+  );
 }
