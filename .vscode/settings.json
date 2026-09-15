@@ -402,5 +402,18 @@
         "**/scripts/validation/**"
     ],
     "java.errors.incompleteClasspath.severity": "ignore",
-    "sonarlint.exclusions": "**/scripts/validation/**"
+    "sonarlint.exclusions": "**/scripts/validation/**",
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "Site",
+            "group": "PokerRacional",
+            "database": "5222",
+            "username": "Rapha"
+        }
+    ]
 }

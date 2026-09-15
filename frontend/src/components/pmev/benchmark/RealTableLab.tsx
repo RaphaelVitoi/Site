@@ -38,6 +38,19 @@ export default function RealTableLab({ structures }: Readonly<RealTableLabProps>
 		const pool = sample.premios.reduce((s, x) => s + x, 0);
 		const normalized = structure.vencedor_leva_tudo;
 		const probabilities = placeProbabilities(sample.stacks, sample.heroi);
+		const players = sample.stacks.map((stack, seatIndex) => ({
+			seatKey: `${structure.id}-s${sampleIndex}-seat-${seatIndex + 1}`,
+			seatNumber: seatIndex + 1,
+			isHero: seatIndex === sample.heroi,
+			stack,
+			chipEv: sample.chip_ev[seatIndex] ?? 0,
+			icmEv: sample.icm_ev[seatIndex] ?? 0,
+		}));
+		const placeChances = probabilities.map((p, idx) => ({
+			placeKey: `${structure.id}-s${sampleIndex}-place-${idx + 1}`,
+			place: idx + 1,
+			probability: p,
+		}));
 		return {
 			probabilities,
 			// A barra mais alta ocupa a altura toda: a comparação entre lugares é o que se lê.
@@ -46,8 +59,10 @@ export default function RealTableLab({ structures }: Readonly<RealTableLabProps>
 			biggest: Math.max(...sample.stacks),
 			normalized,
 			scale: normalized && pool > 0 ? 1 / pool : 1,
+			players,
+			placeChances,
 		};
-	}, [structure, sample]);
+	}, [structure, sample, sampleIndex]);
 
 	if (!structure || !sample || !view) return null;
 
@@ -65,6 +80,10 @@ export default function RealTableLab({ structures }: Readonly<RealTableLabProps>
 	const paid = Math.min(structure.fracoes_premio.length, sample.stacks.length);
 	const prize = sample.premios[sample.lugar_final - 1] ?? 0;
 	const titleId = `${baseId}-titulo`;
+	const prizeDetail = prize > 0 ? `, com ${money(prize * view.scale, view.normalized)}` : ', fora do dinheiro';
+	const outcomeText = revealed
+		? `Terminou em ${ordinal(sample.lugar_final)}${prizeDetail}. O ICM dava ${pct(heroProbability)} para esse lugar.`
+		: 'O desfecho fica escondido até você pedir. Primeiro a previsão, depois a realidade.';
 
 	return (
 		<section aria-labelledby={titleId} className={styles['lab']}>
@@ -108,55 +127,53 @@ export default function RealTableLab({ structures }: Readonly<RealTableLabProps>
 						ICM
 					</span>
 				</div>
-				{sample.stacks.map((stack, i) => {
-					const isHero = i === sample.heroi;
-					return (
-						<div role="row" key={i} className={cx(styles['row'], isHero && styles['rowHero'])}>
-							<span role="cell" className={styles['who']}>
-								{isHero ? 'Dono das mãos' : `Assento ${i + 1}`}
+				{view.players.map((player) => (
+					<div role="row" key={player.seatKey} className={cx(styles['row'], player.isHero && styles['rowHero'])}>
+						<span role="cell" className={styles['who']}>
+							{player.isHero ? 'Dono das mãos' : `Assento ${player.seatNumber}`}
+						</span>
+						<span role="cell" className={styles['stack']}>
+							<span className={styles['track']} aria-hidden="true">
+								<span className={styles['bar']} style={{ inlineSize: `${(player.stack / view.biggest) * 100}%` }} />
 							</span>
-							<span role="cell" className={styles['stack']}>
-								<span className={styles['track']} aria-hidden="true">
-									<span className={styles['bar']} style={{ inlineSize: `${(stack / view.biggest) * 100}%` }} />
-								</span>
-								<span className={styles['stackLabel']}>
-									{stack.toLocaleString('pt-BR')} <span className={styles['share']}>{pct(stack / view.total)}</span>
-								</span>
+							<span className={styles['stackLabel']}>
+								{player.stack.toLocaleString('pt-BR')}{' '}
+								<span className={styles['share']}>{pct(player.stack / view.total)}</span>
 							</span>
-							<span role="cell" className={styles['moneyChip']}>
-								{money((sample.chip_ev[i] ?? 0) * view.scale, view.normalized)}
-							</span>
-							<span role="cell" className={styles['moneyIcm']}>
-								{money((sample.icm_ev[i] ?? 0) * view.scale, view.normalized)}
-							</span>
-						</div>
-					);
-				})}
+						</span>
+						<span role="cell" className={styles['moneyChip']}>
+							{money(player.chipEv * view.scale, view.normalized)}
+						</span>
+						<span role="cell" className={styles['moneyIcm']}>
+							{money(player.icmEv * view.scale, view.normalized)}
+						</span>
+					</div>
+				))}
 			</div>
 
 			<figure className={styles['places']}>
 				<figcaption>Chance de o dono das mãos terminar em cada lugar, segundo o ICM. Em verde, os lugares pagos.</figcaption>
 				<ol className={styles['placeBars']}>
-					{view.probabilities.map((p, k) => (
+					{view.placeChances.map((item) => (
 						<li
-							key={k}
+							key={item.placeKey}
 							className={cx(
 								styles['place'],
-								k < paid && styles['placePaid'],
-								revealed && k + 1 === sample.lugar_final && styles['placeActual'],
+								item.place <= paid && styles['placePaid'],
+								revealed && item.place === sample.lugar_final && styles['placeActual'],
 							)}
-							aria-label={`${ordinal(k + 1)} lugar: ${pct(p)}`}
+							aria-label={`${ordinal(item.place)} lugar: ${pct(item.probability)}`}
 						>
 							<span className={styles['placePct']} aria-hidden="true">
-								{pct(p)}
+								{pct(item.probability)}
 							</span>
 							<span
 								className={styles['placeFill']}
-								style={{ blockSize: `${Math.max((p / view.maxProbability) * 100, 2)}%` }}
+								style={{ blockSize: `${Math.max((item.probability / view.maxProbability) * 100, 2)}%` }}
 								aria-hidden="true"
 							/>
 							<span className={styles['placeLabel']} aria-hidden="true">
-								{ordinal(k + 1)}
+								{ordinal(item.place)}
 							</span>
 						</li>
 					))}
@@ -173,9 +190,7 @@ export default function RealTableLab({ structures }: Readonly<RealTableLabProps>
 			</div>
 
 			<p aria-live="polite" className={styles['outcome']}>
-				{revealed
-					? `Terminou em ${ordinal(sample.lugar_final)}${prize > 0 ? `, com ${money(prize * view.scale, view.normalized)}` : ', fora do dinheiro'}. O ICM dava ${pct(heroProbability)} para esse lugar.`
-					: 'O desfecho fica escondido até você pedir. Primeiro a previsão, depois a realidade.'}
+				{outcomeText}
 			</p>
 		</section>
 	);
