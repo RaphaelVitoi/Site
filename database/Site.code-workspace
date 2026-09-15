@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"windsurfPyright.analysis.useTypingExtensions": true,
+		"windsurfPyright.analysis.typeCheckingMode": "standard",
+		"windsurfPyright.analysis.inlayHints.variableTypes": true,
+		"windsurfPyright.analysis.inlayHints.genericTypes": true,
+		"windsurfPyright.analysis.inlayHints.functionReturnTypes": true,
+		"windsurfPyright.analysis.inlayHints.callArgumentNamesMatching": true,
+		"windsurfPyright.analysis.inlayHints.callArgumentNames": true,
+		"artizo.remote.ssh.mirrorExtensions": true
+	}
+}
