@@ -61,7 +61,7 @@
       "id": "606055ae-d594-4422-8861-1a9c8afe74fd",
       "numericId": 5,
       "content": "Restricao estrita dos servicos locais (CDP, FastMCP) a interface loopback (127.0.0.1) com validacao de origem.",
-      "status": "mitigationResolved"
+      "status": "mitigationIdentified"
     }
   ],
   "assumptionLinks": [
@@ -74,11 +74,6 @@
       "type": "Threat",
       "assumptionId": "cc68e84a-9d2b-49ae-bfe3-13cedbbfdc37",
       "linkedId": "cea16d7f-66ca-4b34-b9aa-604b71143a8c"
-    },
-    {
-      "type": "Threat",
-      "assumptionId": "fa32f094-738f-4ede-9637-e52a85d39b54",
-      "linkedId": "9096fe75-2e0c-48f7-a957-ec1b4c27c561"
     },
     {
       "type": "Threat",

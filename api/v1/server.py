@@ -5,6 +5,7 @@ Web Server -- Micro-servidor SOTA (aiohttp) com routing e ciclo de vida.
 # pylint: disable=broad-exception-caught, import-outside-toplevel
 import asyncio
 import logging
+import os
 import time
 
 from aiohttp import web
@@ -78,6 +79,17 @@ from api.v1.middleware import (
 logger = logging.getLogger(__name__)
 
 
+async def handle_root(_request: web.Request) -> web.Response:
+    """Endpoint de saude e identificacao na raiz para probes e orquestradores de nuvem."""
+    return web.json_response(
+        {
+            "status": "ok",
+            "service": "nexus-backend",
+            "timestamp": time.time(),
+        }
+    )
+
+
 async def handle_predictive_profile(_request: web.Request) -> web.Response:
     """Endpoint Proxy para expor o perfil preditivo ao front-end."""
     from predictive_forest import PredictiveForestEngine  # noqa: PLC0415
@@ -107,6 +119,7 @@ def create_app(manager: QueueManager) -> web.Application:
     app[START_TIME_KEY] = time.time()
     app.add_routes(
         [
+            web.get("/", handle_root),
             web.get("/ping", handle_ping),
             web.get("/metrics", handle_prometheus_metrics),
             web.get("/db-summary", handle_get_db_summary),
@@ -152,20 +165,30 @@ def create_app(manager: QueueManager) -> web.Application:
 
 async def start_api_server(manager: QueueManager, port: int = 17042):
     """Inicializa, configura rotas e executa o servidor web SOTA na porta especificada."""
+    env_port = os.environ.get("PORT")
+    bind_port = int(env_port) if env_port and env_port.isdigit() else port
+    default_host = (
+        "0.0.0.0"  # noqa: S104, RECORD-ID: NET-SOTA-001 - Bind em todas as interfaces mandatorio em containers Cloud Run/Docker
+        if (os.environ.get("K_SERVICE") or os.environ.get("DOCKER_CONTAINER"))
+        else "127.0.0.1"
+    )
+    bind_host = os.environ.get("HOST", default_host)
+
     app = create_app(manager)
 
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, "127.0.0.1", port, reuse_address=True, backlog=4096)
+    site = web.TCPSite(runner, bind_host, bind_port, reuse_address=True, backlog=4096)
     try:
         await site.start()
-        logger.info("Micro-Servidor SOTA API (aiohttp) escutando em http://127.0.0.1:%d", port)
+        logger.info("Micro-Servidor SOTA API (aiohttp) escutando em http://%s:%d", bind_host, bind_port)
         # Roda indefinidamente
         await asyncio.Event().wait()
     except OSError as e:
         logger.exception(
-            "Falha ao iniciar o Micro-Servidor SOTA na porta %d: %s. (A porta pode estar em uso)",
-            port,
+            "Falha ao iniciar o Micro-Servidor SOTA em %s:%d: %s. (A porta pode estar em uso)",
+            bind_host,
+            bind_port,
             e,
         )
         raise

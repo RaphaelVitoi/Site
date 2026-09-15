@@ -142,16 +142,17 @@ def _format_display_id(task_id: str) -> str:
     return task_id
 
 
-async def _process_task_error(e: Exception, task: Task, manager: QueueManager, sem: asyncio.Semaphore) -> bool:
+async def _process_task_error(e: Exception, task: Task, manager: QueueManager, safe_release: Any = None) -> None:
     error_str = str(e).lower()
     error_class = type(e).__name__
 
     if error_class == "APIKeysExhaustedError" or "exhaust" in error_str:
         yield_time = task_exec.global_yield_manager.apply_exhaustion_yield(task)
-        sem.release()
+        if callable(safe_release):
+            safe_release()
         await asyncio.sleep(yield_time)
         await manager.update_task_status(task.id, "pending")
-        return True
+        return
 
     if any(
         k in error_str
@@ -165,10 +166,11 @@ async def _process_task_error(e: Exception, task: Task, manager: QueueManager, s
         ]
     ):
         yield_time = await task_exec.global_yield_manager.apply_yield(task, manager)
-        sem.release()
+        if callable(safe_release):
+            safe_release()
         await asyncio.sleep(yield_time)
         await manager.update_task_status(task.id, "pending")
-        return True
+        return
 
     logger.error(
         "[[%s]%s] Falha catastrofica: %s",
@@ -176,20 +178,25 @@ async def _process_task_error(e: Exception, task: Task, manager: QueueManager, s
         task.agent,
         e,
     )
-    return False
 
 
 async def _task_wrapper(task: Task, manager: QueueManager, sem: asyncio.Semaphore) -> None:
     released = False
+
+    def _safe_release() -> None:
+        nonlocal released
+        if not released:
+            released = True
+            sem.release()
+
     try:
         await execute_task_workflow(task, manager)
         if hasattr(task_exec, "global_yield_manager"):
             await task_exec.global_yield_manager.clear_yield(task.id)
     except Exception as e:  # noqa: BLE001
-        released = await _process_task_error(e, task, manager, sem)
+        await _process_task_error(e, task, manager, _safe_release)
     finally:
-        if not released:
-            sem.release()
+        _safe_release()
 
 
 async def _handle_deadlock(pending_tasks: list[Task], manager: QueueManager) -> None:
@@ -212,7 +219,7 @@ async def _handle_deadlock(pending_tasks: list[Task], manager: QueueManager) -> 
 async def _dispatch_optimal_task(
     manager: QueueManager, semaphore: asyncio.Semaphore, running_tasks: set[asyncio.Future[Any]]
 ) -> None:
-    """Extrai e despacha a tarefa de maior utilidade usando o Grafo Topologico CPU."""
+    """Extrai e despacha a tarefa de maior utilidade usando o Grafo Topologico CPU com Claim Atomico."""
     pending_tasks = await manager.get_tasks(status="pending")
     if not pending_tasks:
         semaphore.release()
@@ -223,6 +230,13 @@ async def _dispatch_optimal_task(
     task = await loop.run_in_executor(None, UniversalArbitrator.extract_optimal_task, pending_tasks) if loop else None
 
     if task:
+        claimed = await manager.claim_task(task.id)
+        if not claimed:
+            # Outro worker ou processo concorrente ja reivindicou a tarefa
+            semaphore.release()
+            await asyncio.sleep(0.1)
+            return
+
         display_id = _format_display_id(task.id)
         logger.info(
             "[bold magenta][>] ESPACO DE ENTRADA VITAL REQUISITADO:[/] [%s]%s[/] (ID: %s)",
@@ -230,7 +244,6 @@ async def _dispatch_optimal_task(
             task.agent,
             display_id,
         )
-        await manager.update_task_status(task.id, "running")
 
         future = asyncio.create_task(_task_wrapper(task, manager, semaphore))
         running_tasks.add(future)
@@ -337,7 +350,11 @@ async def start_worker(manager: QueueManager | None = None) -> None:
                 _update_terminal_status(counts, len(running_tasks), status_line)
 
                 await semaphore.acquire()
-                await _dispatch_optimal_task(manager, semaphore, running_tasks)
+                try:
+                    await _dispatch_optimal_task(manager, semaphore, running_tasks)
+                except Exception:
+                    semaphore.release()
+                    raise
             except Exception:  # noqa: BLE001
                 logger.exception("[bold red]FATAL[/] Arritmia no loop central do worker")
                 await asyncio.sleep(5)

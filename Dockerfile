@@ -36,18 +36,21 @@ COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Materialização SOTA do código-fonte (Imutável, protegido contra modificação por non-root)
+COPY api ./api
 COPY core ./core
+COPY data ./data
+COPY database ./database
 COPY engine ./engine
 COPY llm ./llm
 COPY math ./math
 COPY utils ./utils
 COPY worker ./worker
-COPY app.py system_config.json pyproject.toml ./
+COPY pyproject.toml ./
 
 USER appuser
 
 # Healthcheck SOTA
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD curl -f http://localhost:8080/ || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
 # Boot do Master Core
 CMD ["python", "core/runtime.py"]

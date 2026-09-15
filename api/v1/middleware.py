@@ -18,7 +18,30 @@ from llm.budget import API_SECRET_TOKEN
 # SOTA: Estado do Rate Limiter (IP -> {count, window_start})
 RATE_LIMIT_WINDOW = 60
 MAX_REQUESTS_PER_WINDOW = 300
-_ip_blocks = {}
+MAX_TRACKED_IPS = 5000
+_ip_blocks: dict[str, dict[str, float | int]] = {}
+_last_purge_time = 0.0
+
+
+def _purge_expired_ips(now: float, force: bool = False) -> None:
+    """Eviccao periodica de IPs inativos para aniquilar memory leaks sob trafego continuo."""
+    global _last_purge_time  # pylint: disable=global-statement
+    if not force and now - _last_purge_time < RATE_LIMIT_WINDOW and len(_ip_blocks) < MAX_TRACKED_IPS:
+        return
+    _last_purge_time = now
+    cutoff = now - RATE_LIMIT_WINDOW
+    expired = [ip for ip, data in _ip_blocks.items() if float(data["start_time"]) < cutoff]
+    for ip in expired:
+        _ip_blocks.pop(ip, None)
+    if len(_ip_blocks) > MAX_TRACKED_IPS:
+        sorted_ips = sorted(_ip_blocks.items(), key=lambda item: float(item[1]["start_time"]))
+        to_remove = len(_ip_blocks) - MAX_TRACKED_IPS
+        for ip, _ in sorted_ips[:to_remove]:
+            _ip_blocks.pop(ip, None)
+
+
+PUBLIC_PROBE_ROUTES: frozenset[str] = frozenset({"/", "/ping", "/health"})
+
 DEFAULT_TRUSTED_ORIGINS = (
     "http://127.0.0.1:3000",
     "http://localhost:3000",
@@ -112,8 +135,8 @@ def verify_hs256_jwt(token: str, secret: str) -> dict | None:
         # 4. Janela temporal (exp / nbf / iat)
         now = time.time()
         exp = payload.get("exp")
-        if exp is not None and now > float(exp) + JWT_CLOCK_SKEW_SECONDS:
-            return None  # Token expirado
+        if exp is None or now > float(exp) + JWT_CLOCK_SKEW_SECONDS:
+            return None  # Token sem expiracao declarada ou expirado
         nbf = payload.get("nbf")
         if nbf is not None and now < float(nbf) - JWT_CLOCK_SKEW_SECONDS:
             return None  # Token ainda nao valido
@@ -175,6 +198,7 @@ async def _handle_no_token_auth(request, origin, handler):
 #: inocua de saude. Fila, estado global, disco, ingestao, busca e telemetria de
 #: operacao ficam de fora, porque nenhuma delas e sobre o usuario que pergunta.
 POLITICA_ROTAS_DE_PRODUTO: dict[str, frozenset[str]] = {
+    "/": frozenset({"GET"}),
     "/ping": frozenset({"GET"}),
     "/health": frozenset({"GET"}),
     "/lab/tournaments": frozenset({"GET"}),
@@ -253,17 +277,24 @@ async def _handle_jwt_token_auth(token: str, request, handler):
 @web.middleware
 async def rate_limit_middleware(request, handler):
     """Aplica limite de requisicoes por IP na janela de tempo definida."""
-    ip = request.remote or "127.0.0.1"
+    remote_ip = request.remote or "127.0.0.1"
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded and _is_loopback(remote_ip):
+        ip = forwarded.split(",")[0].strip()
+    else:
+        ip = remote_ip
+
     current_time = time.time()
+    _purge_expired_ips(current_time)
 
     record = _ip_blocks.get(ip, {"count": 0, "start_time": current_time})
-    if current_time - record["start_time"] > RATE_LIMIT_WINDOW:
+    if current_time - float(record["start_time"]) > RATE_LIMIT_WINDOW:
         record = {"count": 0, "start_time": current_time}
 
-    record["count"] += 1
+    record["count"] = int(record["count"]) + 1
     _ip_blocks[ip] = record
 
-    if record["count"] > MAX_REQUESTS_PER_WINDOW:
+    if int(record["count"]) > MAX_REQUESTS_PER_WINDOW:
         return web.json_response({"error": "Rate limit excedido. Defesa de entropia ativada."}, status=429)
 
     return await handler(request)
@@ -272,7 +303,7 @@ async def rate_limit_middleware(request, handler):
 @web.middleware
 async def auth_middleware(request, handler):
     """Verifica tokens de autorizacao e aplica validacao de origem."""
-    if request.method == "OPTIONS":
+    if request.method == "OPTIONS" or (request.method == "GET" and request.path in PUBLIC_PROBE_ROUTES):
         return await handler(request)
 
     origin = request.headers.get("Origin")

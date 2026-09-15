@@ -609,3 +609,80 @@ def test_o_autoteste_do_guard_declara_a_preservacao_de_estado() -> None:
         "o autoteste do SotaGuardState precisa da fixture que salva e restaura o "
         "estado global; sem ela ele apaga os warnings reais ja registrados pela suite"
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_claim_task_garante_reserva_atomica_e_sem_duplicidade(mock_queue_manager) -> None:
+    """Verifica que claim_task reserva a tarefa atomicamente e recusa claims concorrentes."""
+    manager = mock_queue_manager
+    task = Task(
+        id=f"T-CLAIM-{uuid4().hex[:8]}",
+        description="Teste claim",
+        status="pending",
+        agent="@chico",
+        timestamp=datetime.now(UTC).isoformat(),
+    )
+    await manager.add_task(task)
+
+    # Primeiro claim deve suceder
+    sucesso_1 = await manager.claim_task(task.id)
+    assert sucesso_1 is True
+
+    # Tarefa agora e 'running'
+    t_running = await manager.get_task(task.id)
+    assert t_running is not None
+    assert t_running.status == "running"
+
+    # Segundo claim concorrente deve falhar (retornar False)
+    sucesso_2 = await manager.claim_task(task.id)
+    assert sucesso_2 is False
+
+
+@pytest.mark.unit
+def test_rate_limiter_purga_ips_expirados_e_previne_memory_leak(monkeypatch) -> None:
+    """Verifica se _purge_expired_ips aniquila registros defasados de IP da memoria."""
+    from api.v1.middleware import _ip_blocks, _purge_expired_ips
+
+    _ip_blocks.clear()
+    agora = time.time()
+    # Insere 2 IPs obsoletos e 1 recente
+    _ip_blocks["192.168.1.10"] = {"count": 5, "start_time": agora - 120}
+    _ip_blocks["192.168.1.20"] = {"count": 2, "start_time": agora - 75}
+    _ip_blocks["192.168.1.30"] = {"count": 1, "start_time": agora - 10}
+
+    _purge_expired_ips(agora, force=True)
+
+    assert "192.168.1.10" not in _ip_blocks
+    assert "192.168.1.20" not in _ip_blocks
+    assert "192.168.1.30" in _ip_blocks
+
+
+@pytest.mark.unit
+def test_jwt_rejeita_token_sem_exp_declarado() -> None:
+    """Tokens sem exp devem ser rejeitados para impedir credenciais perpétuas."""
+    segredo = "segredo-de-teste"
+    token_sem_exp = _jwt({"alg": "HS256"}, {"sub": "u1", "role": "authenticated"}, segredo)
+    assert middleware.verify_hs256_jwt(token_sem_exp, segredo) is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_rota_raiz_responde_ok_e_esta_na_politica_de_produto(mock_queue_manager) -> None:
+    """A rota raiz / deve responder OK para probes de nuvem e constar na politica de rotas de produto."""
+    from api.v1.server import create_app
+    from aiohttp.test_utils import TestClient, TestServer
+
+    assert middleware.rota_e_de_produto("/", "GET") is True
+
+    app = create_app(mock_queue_manager)
+    client = TestClient(TestServer(app))
+    await client.start_server()
+    try:
+        resp = await client.get("/")
+        assert resp.status == 200
+        data = await resp.json()
+        assert data.get("status") == "ok"
+        assert data.get("service") == "nexus-backend"
+    finally:
+        await client.close()

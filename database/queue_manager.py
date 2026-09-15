@@ -429,6 +429,20 @@ class QueueManager:
                     return dict(zip(col_names, row, strict=False))
         return {}
 
+    async def claim_task(self, task_id: str) -> bool:
+        """
+        Reserva atomicamente uma tarefa para execucao exclusiva (CAS: Compare-And-Swap).
+        Retorna True se a tarefa estava 'pending' e foi promovida para 'running';
+        Retorna False se ja foi reivindicada por outro worker concorrente.
+        """
+        async with self._get_async_db() as db:
+            cursor = await db.execute(
+                "UPDATE tasks SET status = 'running' WHERE id = ? AND status = 'pending'",
+                (task_id,),
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
     async def update_task_status(self, task_id: str, new_status: str) -> None:
         """Transicao de estado autonoma com timestamping automatico."""
         completed_at = datetime.now(UTC).isoformat() if new_status in ["completed", "failed"] else None
