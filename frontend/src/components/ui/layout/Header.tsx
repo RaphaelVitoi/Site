@@ -1,6 +1,7 @@
 'use client';
 
 import { ROUTES } from '@/constants/routes';
+import BrandMark from '@/components/ui/layout/BrandMark';
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -42,9 +43,14 @@ function getHeaderBgClass(scrolled: boolean, isLightPage: boolean): string {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    label: 'Geometria',
-    href: ROUTES.AULAS.MASTERCLASS,
+    label: 'Aulas',
+    href: ROUTES.AULAS.INDEX,
     submenu: [
+      {
+        label: 'Mapa de Aulas',
+        href: ROUTES.AULAS.INDEX,
+        icon: 'fa-compass',
+      },
       {
         label: 'Masterclass',
         href: ROUTES.AULAS.MASTERCLASS,
@@ -64,6 +70,32 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    label: 'Motores',
+    href: ROUTES.SIMULADOR,
+    submenu: [
+      {
+        label: 'Simulador Mestre',
+        href: ROUTES.SIMULADOR,
+        icon: 'fa-calculator',
+      },
+      {
+        label: 'Distorções ICM',
+        href: ROUTES.SIMULADOR_DISTORCOES,
+        icon: 'fa-atom',
+      },
+      {
+        label: 'Laboratório GTO / CFR',
+        href: ROUTES.SIMULADOR_GTO,
+        icon: 'fa-network-wired',
+      },
+      {
+        label: 'Quiz de Estratégia',
+        href: ROUTES.QUIZ,
+        icon: 'fa-circle-question',
+      },
+    ],
+  },
+  {
     label: 'Biblioteca',
     href: ROUTES.BIBLIOTECA,
     submenu: [
@@ -77,11 +109,16 @@ const NAV_ITEMS: NavItem[] = [
         href: ROUTES.LIBRARY.SMART_SNIPER,
         icon: 'fa-crosshairs',
       },
+      {
+        label: 'Estado da Arte',
+        href: ROUTES.LIBRARY.ESTADO_DA_ARTE,
+        icon: 'fa-layer-group',
+      },
       { label: 'Todos Artefatos', href: ROUTES.BIBLIOTECA, icon: 'fa-atom' },
     ],
   },
   {
-    label: 'Templo',
+    label: 'Inteligência',
     href: ROUTES.TEMPLO.ANALYTICS,
     submenu: [
       {
@@ -101,10 +138,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const HEADER_STRINGS = {
   motorIcm: 'Simulador Mestre',
-  motorDistorcoes: 'Motor de Distorções',
-  labCfr: 'Laboratório CFR',
   author: 'O Autor',
-  intelligenceSection: 'Inteligência',
   brandTitle: 'POKER',
   brandSubtitle: 'RACIONAL',
   tagline: 'Nexus · SOTA v7.0 GOLD',
@@ -195,33 +229,12 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
             isLightPage ? 'from-black/5' : 'from-white/10'
           } to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100`}
         />
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className={`relative z-10 transition-transform duration-700 group-hover:scale-110 ${
+        <BrandMark
+          size={20}
+          className={`relative z-10 transition-transform duration-500 group-hover:scale-105 ${
             isLightPage ? 'text-light-text-main' : 'text-white'
           }`}
-        >
-          <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="0.8" />
-          <polygon points="12,1.5 22.5,12 12,22.5 1.5,12" stroke="currentColor" strokeWidth="0.8" />
-          <rect
-            x="4.2"
-            y="4.2"
-            width="15.6"
-            height="15.6"
-            stroke="currentColor"
-            strokeWidth="0.6"
-            strokeOpacity="0.7"
-          />
-          <line x1="12" y1="1" x2="12" y2="23" stroke="currentColor" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
-          <line x1="1" y1="12" x2="23" y2="12" stroke="currentColor" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
-          <line x1="4.2" y1="4.2" x2="19.8" y2="19.8" stroke="currentColor" strokeWidth="0.3" strokeOpacity="0.4" />
-          <line x1="19.8" y1="4.2" x2="4.2" y2="19.8" stroke="currentColor" strokeWidth="0.3" strokeOpacity="0.4" />
-          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-        </svg>
+        />
       </div>
       <div className="flex flex-col justify-center">
         <div className="flex items-center gap-2">
@@ -279,10 +292,13 @@ const HeaderDesktopNav: React.FC<{
     : 'bg-bg-deep/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-2.5 flex flex-col gap-1 overflow-hidden relative';
 
   return (
-    <nav aria-label="Navegação principal" className="hidden items-center justify-center lg:flex justify-self-center">
+    <nav aria-label="Navegação principal" className="hidden items-center justify-center justify-self-center lg:flex">
       <ul className={menuPillClass}>
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href || Boolean(item.submenu?.some((sub) => pathname === sub.href));
+          const isActive =
+            pathname === item.href ||
+            pathname.startsWith(`${item.href}/`) ||
+            Boolean(item.submenu?.some((sub) => pathname === sub.href));
 
           return (
             <li
@@ -307,7 +323,7 @@ const HeaderDesktopNav: React.FC<{
                     }
                   }
                 }}
-                className={`relative z-10 flex items-center gap-2 px-6 py-2.5 text-[0.65rem] font-black tracking-[0.2em] whitespace-nowrap uppercase transition-all duration-300 ${getNavLinkClass(isLightPage, isActive)}`}
+                className={`relative z-10 flex items-center gap-2 px-4 py-2.5 text-[0.62rem] font-black tracking-[0.16em] whitespace-nowrap uppercase transition-all duration-300 ${getNavLinkClass(isLightPage, isActive)}`}
               >
                 {item.label}
                 {item.submenu && (
@@ -330,7 +346,7 @@ const HeaderDesktopNav: React.FC<{
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="pointer-events-auto absolute top-full left-1/2 z-50 w-56 -translate-x-1/2 pt-4"
+                    className="pointer-events-auto absolute top-full left-1/2 z-50 w-64 -translate-x-1/2 pt-4"
                   >
                     <div className={submenuCardClass}>
                       <div
@@ -356,7 +372,7 @@ const HeaderDesktopNav: React.FC<{
                             <i
                               className={`fa-solid ${sub.icon} ${
                                 isLightPage
-                                  ? 'text-xs text-light-text-muted group-hover/sub:text-light-text-accent'
+                                  ? 'text-light-text-muted group-hover/sub:text-light-text-accent text-xs'
                                   : 'text-text-muted group-hover/sub:text-accent-indigo-light text-xs'
                               }`}
                             />
@@ -407,16 +423,14 @@ const HeaderMobileDrawer: React.FC<{
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={`fixed top-0 right-0 bottom-0 z-50 flex w-[85vw] max-w-sm flex-col overflow-y-auto border-l px-8 pt-24 pb-8 shadow-2xl transition-colors duration-300 lg:hidden ${
-              isLightPage
-                ? 'border-light-border bg-light-surface'
-                : 'bg-bg-deep border-white/10'
+              isLightPage ? 'border-light-border bg-light-surface' : 'bg-bg-deep border-white/10'
             }`}
           >
             <button
               type="button"
               className={`absolute top-6 right-6 flex h-10 w-10 items-center justify-center rounded-xl transition-all focus:outline-none ${
                 isLightPage
-                  ? 'border border-black/10 bg-black/5 text-light-text-muted hover:bg-black/10 hover:text-light-text-main'
+                  ? 'text-light-text-muted hover:text-light-text-main border border-black/10 bg-black/5 hover:bg-black/10'
                   : 'text-text-muted border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white'
               }`}
               onClick={onClose}
@@ -479,68 +493,12 @@ const HeaderMobileDrawer: React.FC<{
               ))}
             </div>
 
-            <div className="mt-8 flex flex-col gap-3">
-              <span
-                className={`border-b pb-2 text-[0.65rem] font-black tracking-[0.25em] uppercase ${
-                  isLightPage ? 'border-black/5 text-[#B09460]' : 'text-accent-rose border-white/5'
-                }`}
-              >
-                {HEADER_STRINGS.intelligenceSection}
-              </span>
-              <Link
-                href="/simulador"
-                onClick={onClose}
-                className={`flex items-center gap-4 py-1 pl-2 text-sm font-bold transition-colors ${
-                  isLightPage
-                    ? 'text-light-text-muted hover:text-light-text-main'
-                    : 'text-text-main hover:text-white'
-                }`}
-              >
-                <i
-                  className={`fa-solid fa-calculator w-5 ${
-                    isLightPage ? 'text-[#B09460]/70' : 'text-accent-indigo/70'
-                  }`}
-                />
-                <span>{HEADER_STRINGS.motorIcm}</span>
-              </Link>
-              <Link
-                href="/simulador/distorcoes"
-                onClick={onClose}
-                className={`flex items-center gap-4 py-1 pl-2 text-sm font-bold transition-colors ${
-                  isLightPage
-                    ? 'text-light-text-muted hover:text-light-text-main'
-                    : 'text-text-main hover:text-white'
-                }`}
-              >
-                <i className={`fa-solid fa-atom w-5 ${isLightPage ? 'text-[#B09460]/70' : 'text-accent-rose/70'}`} />
-                <span>{HEADER_STRINGS.motorDistorcoes}</span>
-              </Link>
-              <Link
-                href="/simulador/gto-cfr"
-                onClick={onClose}
-                className={`flex items-center gap-4 py-1 pl-2 text-sm font-bold transition-colors ${
-                  isLightPage
-                    ? 'text-light-text-muted hover:text-light-text-main'
-                    : 'text-text-main hover:text-white'
-                }`}
-              >
-                <i
-                  className={`fa-solid fa-network-wired w-5 ${
-                    isLightPage ? 'text-[#B09460]/70' : 'text-accent-emerald/70'
-                  }`}
-                />
-                <span>{HEADER_STRINGS.labCfr}</span>
-              </Link>
-            </div>
-
             <div className={`mt-auto border-t pt-8 ${isLightPage ? 'border-black/5' : 'border-white/5'}`}>
               <Link
                 href="/quem-sou"
                 onClick={onClose}
                 className={`flex items-center gap-4 text-xs font-black tracking-widest uppercase transition-colors ${
-                  isLightPage
-                    ? 'text-light-text-muted hover:text-light-text-main'
-                    : 'text-text-muted hover:text-white'
+                  isLightPage ? 'text-light-text-muted hover:text-light-text-main' : 'text-text-muted hover:text-white'
                 }`}
               >
                 <i className={`fa-solid fa-user-astronaut ${isLightPage ? 'text-[#B09460]' : 'text-accent-indigo'}`} />{' '}
@@ -593,7 +551,7 @@ export const Header: React.FC = () => {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className={`fixed top-0 right-0 left-0 z-50 transition-all duration-500 ${headerBgClass}`}
       >
-        <div className="sota-container flex items-center justify-between lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-4">
+        <div className="sota-container flex items-center justify-between gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <div className="flex shrink-0 items-center justify-start justify-self-start">
             <HeaderBrand isLightPage={isLightPage} gemmaOnline={gemmaOnline} />
           </div>
@@ -608,16 +566,6 @@ export const Header: React.FC = () => {
           <div className="flex shrink-0 items-center justify-end gap-4 justify-self-end">
             {!isSimulatorPage && (
               <Link href="/simulador" className={actionButtonClass}>
-                <div
-                  className={`absolute inset-0 bg-linear-to-r ${
-                    isLightPage ? 'from-transparent via-white/10' : 'from-transparent via-white/20'
-                  } -translate-x-full to-transparent group-hover:animate-[shimmer_1.5s_infinite]`}
-                />
-                <div
-                  className={`absolute inset-0 bg-radial-[at_center_center] ${
-                    isLightPage ? 'from-white/10' : 'from-accent-indigo/20'
-                  } to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100`}
-                />
                 <span
                   className={`relative text-[0.7rem] font-black tracking-[0.2em] uppercase transition-colors ${
                     isLightPage ? 'text-[#FAFAF7]' : 'text-accent-indigo-light group-hover:text-white'
@@ -632,7 +580,7 @@ export const Header: React.FC = () => {
               type="button"
               className={`flex h-11 w-11 items-center justify-center rounded-xl transition-all focus:outline-none lg:hidden ${
                 isLightPage
-                  ? 'border border-black/10 bg-black/5 text-light-text-muted hover:bg-black/10 hover:text-light-text-main'
+                  ? 'text-light-text-muted hover:text-light-text-main border border-black/10 bg-black/5 hover:bg-black/10'
                   : 'text-text-muted border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white'
               }`}
               onClick={() => setMobileOpen(true)}

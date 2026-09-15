@@ -194,9 +194,32 @@ body:has(.simulator-immersive) main.grow {
 
   /* Destaque de Texto Metálico/Quântico */
   .text-gradient-sota {
-    @apply bg-linear-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent;
-    background-size: 200% auto;
-    animation: textShimmer 4s linear infinite;
+    color: var(--color-text-bright);
+  }
+
+  .sota-header-kicker {
+    @apply text-text-muted flex items-center justify-center gap-3 font-mono text-[0.62rem] font-black tracking-[0.32em] uppercase;
+  }
+
+  .sota-header-marker {
+    @apply bg-accent-indigo h-1.5 w-1.5 shrink-0 rounded-full;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+  }
+
+  .sota-header-step {
+    @apply border-accent-indigo/30 bg-accent-indigo/10 text-accent-indigo-light rounded-md border px-2 py-1;
+  }
+
+  .sota-page-title {
+    @apply font-heading text-text-bright m-0 text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.05] font-black tracking-[-0.035em];
+  }
+
+  .sota-page-title--hero {
+    @apply text-[clamp(2.75rem,7vw,5rem)] leading-[0.98];
+  }
+
+  .sota-page-title--lesson {
+    @apply text-4xl uppercase sm:text-6xl;
   }
 
   @keyframes textShimmer {
@@ -380,6 +403,12 @@ body:has(.simulator-immersive) main.grow {
    Use class="light-page" on the root div of those pages.
    ──────────────────────────────────────────────────────────────────────── */
 .light-page {
+  --surface-canvas: var(--color-light-canvas);
+  --surface-panel: var(--color-light-surface);
+  --surface-ink: var(--color-light-text-main);
+  --surface-muted: var(--color-light-text-muted);
+  --surface-accent: var(--color-light-text-accent);
+  --surface-border: var(--color-light-border);
   background: var(--color-light-canvas) !important;
   color: var(--color-light-text-main) !important;
   font-family: var(--font-garamond), Georgia, serif !important;
