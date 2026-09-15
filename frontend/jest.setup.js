@@ -29,3 +29,4 @@ if (typeof Blob !== 'undefined' && !Blob.prototype.arrayBuffer) {
 if (typeof File !== 'undefined' && !File.prototype.arrayBuffer) {
   File.prototype.arrayBuffer = Blob.prototype.arrayBuffer;
 }
+

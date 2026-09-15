@@ -15,6 +15,7 @@ function resolveClientBase(): string {
 function resolveServerBase(): string {
 	return trimTrailingSlash(
 		process.env['NEXUS_API_BASE'] ||
+			process.env['BACKEND_API_URL'] ||
 			process.env['NEXT_PUBLIC_NEXUS_API_BASE'] ||
 			process.env['NEXT_PUBLIC_API_BASE'] ||
 			DEFAULT_NEXUS_API_BASE,

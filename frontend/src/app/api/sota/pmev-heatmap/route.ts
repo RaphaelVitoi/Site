@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { buildNexusServerUrl } from '@/lib/api-contract';
 
 /**
  * IDENTITY: SOTA PMev Range Heatmap Proxy API
@@ -9,7 +10,7 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
 	try {
 		const body = await req.json();
-		const backendUrl = process.env['BACKEND_API_URL'] || 'http://127.0.0.1:17042';
+		const targetUrl = buildNexusServerUrl('/api/v1/pmev/heatmap');
 		const apiSecret = process.env['API_SECRET_TOKEN'] || 'sota-v6-dummy-secret';
 
 		const headers: Record<string, string> = {
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
 			headers['Authorization'] = `Bearer ${apiSecret}`;
 		}
 
-		const resp = await fetch(`${backendUrl}/api/v1/pmev/heatmap`, {
+		const resp = await fetch(targetUrl, {
 			method: 'POST',
 			headers,
 			body: JSON.stringify(body),
