@@ -15,6 +15,7 @@ from database.queue_manager import QueueManager
 
 try:
     from monitoring.audit_engine import AuditEngine  # type: ignore
+    from monitoring.otel_config import setup_otel
 except Exception:  # noqa: BLE001 - fallback de resiliencia para ambientes sem modulo opcional
 
     class AuditEngine:
@@ -27,6 +28,10 @@ except Exception:  # noqa: BLE001 - fallback de resiliencia para ambientes sem m
             """Processamento emulando operacao assincrona (noop)."""
             _ = events
             await asyncio.sleep(0)
+
+    def setup_otel() -> bool:
+        """Fallback mock para setup_otel."""
+        return False
 
 
 from api.v1.handlers import (
@@ -81,13 +86,11 @@ logger = logging.getLogger(__name__)
 
 async def handle_root(_request: web.Request) -> web.Response:
     """Endpoint de saude e identificacao na raiz para probes e orquestradores de nuvem."""
-    return web.json_response(
-        {
-            "status": "ok",
-            "service": "nexus-backend",
-            "timestamp": time.time(),
-        }
-    )
+    return web.json_response({
+        "status": "ok",
+        "service": "nexus-backend",
+        "timestamp": time.time(),
+    })
 
 
 async def handle_predictive_profile(_request: web.Request) -> web.Response:
@@ -117,54 +120,54 @@ def create_app(manager: QueueManager) -> web.Application:
     app[LAB_MANAGER_KEY] = LabManager()  # Instancia o DAO do Laboratorio SOTA
     app[AUDIT_ENGINE_KEY] = AuditEngine(manager)  # Instancia o Motor de Auditoria SOTA
     app[START_TIME_KEY] = time.time()
-    app.add_routes(
-        [
-            web.get("/", handle_root),
-            web.get("/ping", handle_ping),
-            web.get("/metrics", handle_prometheus_metrics),
-            web.get("/db-summary", handle_get_db_summary),
-            web.get("/health", handle_health),
-            web.post("/add", handle_add_task),
-            web.get("/status", handle_get_status),
-            web.get("/key-health-summary", handle_get_key_health_summary),
-            web.get("/task-result", handle_get_task_result),
-            web.get("/state", handle_get_state),
-            web.post("/state", handle_set_state),
-            web.post("/ask-oracle", handle_ask_oracle),
-            web.get("/system-status", handle_get_system_status),
-            web.get("/lab/tournaments", handle_get_tournaments),
-            web.post("/api/logs/frontend", handle_frontend_logs),
-            web.post("/ingest", handle_rag_ingest),
-            web.get("/predictive-profile", handle_predictive_profile),  # type: ignore
-            web.get("/resources", handle_get_resource_usage),
-            web.post("/rag/query", handle_rag_query),
-            web.post("/buckets", handle_bucket_op),
-            web.get("/api/files/list", handle_list_files),
-            web.get("/api/files/view", handle_view_file),
-            web.get("/api/web-search", handle_web_search),
-            web.post("/api/v1/perspective", handle_calculate_perspective),
-            web.post("/api/v1/perspective/tree", handle_simulate_perspective_tree),
-            web.post("/api/v1/perspective/import-solver", handle_import_solver_tree),
-            web.post("/api/v1/pmev/heatmap", handle_pmev_heatmap),
-            web.post("/api/v1/perspective/heatmap", handle_pmev_heatmap),
-            web.post("/api/v1/timesfm/forecast", handle_timesfm_forecast),
-            web.get("/api/v1/engine-capabilities", handle_engine_capabilities),
-            web.post("/api/v1/game-theory/pluribus/solve", handle_pluribus_solve),
-            web.post("/api/v1/game-theory/deepstack/resolve", handle_deepstack_resolve),
-            web.post("/api/v1/game-theory/rebel/pbs/evaluate", handle_rebel_pbs_evaluate),
-            web.post("/api/v1/game-theory/claudico/translate-action", handle_claudico_translate_action),
-            web.post("/api/v1/canonical/clairvoyance/solve", handle_canonical_clairvoyance),
-            web.post("/api/v1/canonical/akq/solve", handle_canonical_akq),
-            web.post("/api/v1/canonical/janda/mdf", handle_canonical_janda_mdf),
-            web.post("/api/v1/canonical/janda/geometric-sizing", handle_canonical_geometric_sizing),
-            web.post("/api/v1/canonical/janda/bluff-ratios", handle_canonical_bluff_ratios),
-        ]
-    )
+    app.add_routes([
+        web.get("/", handle_root),
+        web.get("/ping", handle_ping),
+        web.get("/metrics", handle_prometheus_metrics),
+        web.get("/db-summary", handle_get_db_summary),
+        web.get("/health", handle_health),
+        web.post("/add", handle_add_task),
+        web.get("/status", handle_get_status),
+        web.get("/key-health-summary", handle_get_key_health_summary),
+        web.get("/task-result", handle_get_task_result),
+        web.get("/state", handle_get_state),
+        web.post("/state", handle_set_state),
+        web.post("/ask-oracle", handle_ask_oracle),
+        web.get("/system-status", handle_get_system_status),
+        web.get("/lab/tournaments", handle_get_tournaments),
+        web.post("/api/logs/frontend", handle_frontend_logs),
+        web.post("/ingest", handle_rag_ingest),
+        web.get("/predictive-profile", handle_predictive_profile),  # type: ignore
+        web.get("/resources", handle_get_resource_usage),
+        web.post("/rag/query", handle_rag_query),
+        web.post("/buckets", handle_bucket_op),
+        web.get("/api/files/list", handle_list_files),
+        web.get("/api/files/view", handle_view_file),
+        web.get("/api/web-search", handle_web_search),
+        web.post("/api/v1/perspective", handle_calculate_perspective),
+        web.post("/api/v1/perspective/tree", handle_simulate_perspective_tree),
+        web.post("/api/v1/perspective/import-solver", handle_import_solver_tree),
+        web.post("/api/v1/pmev/heatmap", handle_pmev_heatmap),
+        web.post("/api/v1/perspective/heatmap", handle_pmev_heatmap),
+        web.post("/api/v1/timesfm/forecast", handle_timesfm_forecast),
+        web.get("/api/v1/engine-capabilities", handle_engine_capabilities),
+        web.post("/api/v1/game-theory/pluribus/solve", handle_pluribus_solve),
+        web.post("/api/v1/game-theory/deepstack/resolve", handle_deepstack_resolve),
+        web.post("/api/v1/game-theory/rebel/pbs/evaluate", handle_rebel_pbs_evaluate),
+        web.post("/api/v1/game-theory/claudico/translate-action", handle_claudico_translate_action),
+        web.post("/api/v1/canonical/clairvoyance/solve", handle_canonical_clairvoyance),
+        web.post("/api/v1/canonical/akq/solve", handle_canonical_akq),
+        web.post("/api/v1/canonical/janda/mdf", handle_canonical_janda_mdf),
+        web.post("/api/v1/canonical/janda/geometric-sizing", handle_canonical_geometric_sizing),
+        web.post("/api/v1/canonical/janda/bluff-ratios", handle_canonical_bluff_ratios),
+    ])
     return app
 
 
 async def start_api_server(manager: QueueManager, port: int = 17042):
     """Inicializa, configura rotas e executa o servidor web SOTA na porta especificada."""
+    # SOTA: Ativa a Observabilidade antes de qualquer outra operação do servidor
+    setup_otel()
     env_port = os.environ.get("PORT")
     bind_port = int(env_port) if env_port and env_port.isdigit() else port
     default_host = (

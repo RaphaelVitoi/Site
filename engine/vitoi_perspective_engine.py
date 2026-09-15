@@ -16,9 +16,11 @@ DEFAULT_ALPHA: Final[float] = 0.88
 DEFAULT_BETA: Final[float] = 0.88
 DEFAULT_LAMBDA: Final[float] = 2.25
 
-type StackVector = list[float]
-type PayoutVector = list[float]
-type PlayerIndex = int
+# SOTA: Type Alias for StackVector (Compatible with Python 3.11)
+# SOTA: Type Alias for StackVector (Compatible with Python 3.11)
+StackVector = list[float]
+PayoutVector = list[float]
+PlayerIndex = int
 
 
 # ==============================================================================
