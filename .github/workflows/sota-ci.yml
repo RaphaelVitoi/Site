@@ -164,6 +164,8 @@ jobs:
 
       - name: 🔍 TypeScript Strict Type Check and production build
         run: |
+          # next-env.d.ts nao e versionado; o typecheck roda antes do build e precisa dele.
+          npm exec --workspace frontend -- next typegen
           npm run typecheck
           npm run build
 
