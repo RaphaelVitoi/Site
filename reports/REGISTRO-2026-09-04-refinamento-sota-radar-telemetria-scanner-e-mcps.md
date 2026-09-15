@@ -14,7 +14,6 @@ caminhos:
   - frontend/src/components/simulator/DashboardSOTA.tsx
   - frontend/src/components/simulator/InsolvencyMatrix.tsx
   - frontend/src/components/simulator/ui/SelectBtn.tsx
-  - frontend/src/components/simulator/ui/BubbleFactorDiagnostic.tsx
   - frontend/src/app/api/v1/telemetry/route.ts
   - engine/jules_bridge.py
   - engine/stitch_bridge.py
@@ -68,15 +67,9 @@ revisoes_de_ancora:
       chrome de navegacao. activeWorkspaceTab, getWorkspaceTabMeta, handlers
       de selecao e o conteudo de Cockpit, Telemetria, Referencial e Lente
       seguem sem alteracao funcional ou matematica.
-  - registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
-    caminhos: [frontend/src/components/simulator/ui/BubbleFactorDiagnostic.tsx]
-    parecer: >-
-      Revisado e mantido valido. O componente BubbleFactorDiagnostic recebeu
-      ajustes finos de tipagem e integracao de layout sem alterar os invariantes
-      matematicos de Bubble Factor auditados no registro original.
   - registro: registro-2026-09-02-tensor-portavel-e-varredura-fora-de-python
     caminhos: [frontend/src/app/api/v1/telemetry/route.ts]
-    parecer: >-
+    parecer: >
       Revisado e mantido valido. A rota de telemetria teve tipagem e rotas
       saneadas para compatibilidade de schema com o novo payload do radar,
       preservando integralmente a integracao com o motor de tensores portaveis.
@@ -93,6 +86,5 @@ abrangendo:
 - Integracao e governanca das novas capacidades Google (Jules Cloud, Stitch MCP e MCP Toolbox for Databases).
 
 ## 2. Reconciliacao de Ancoras
-Os arquivos `frontend/src/components/simulator/ui/BubbleFactorDiagnostic.tsx` e
-`frontend/src/app/api/v1/telemetry/route.ts` foram devidamente reconciliados mantendo
+O arquivo `frontend/src/app/api/v1/telemetry/route.ts` foi devidamente reconciliado mantendo
 a integridade estrita das auditorias anteriores.
