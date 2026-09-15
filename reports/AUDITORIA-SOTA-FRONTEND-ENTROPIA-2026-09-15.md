@@ -32,7 +32,6 @@ Removidos pacotes declarados no `package.json` mas não consumidos no código:
 
 ### 2.3 Preservação de Componentes Críticos
 Após verificação de strings e buscas globais, os seguintes itens foram mantidos apesar do alerta de entropia:
-- `icmQuizGenerator.ts`: Consumido por `SimulatorQuizWidget.tsx`.
 - `useMounted.ts`: Essencial para evitar erros de hidratação no Next.js.
 
 ## 3. VALIDAÇÃO de INTEGRIDADE

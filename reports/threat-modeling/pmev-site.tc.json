@@ -105,91 +105,32 @@
   ],
   "threats": [
     {
-      "id": "e02519ca-a868-42cd-8aeb-0feda3273da5",
-      "numericId": 1,
+      "id": "e4832920-2aed-4d87-9bce-49ea3a07ec2c",
+      "numericId": 5,
       "metadata": [
         {
           "key": "STRIDE",
           "value": [
-            "T"
+            "S"
           ]
         },
         {
           "key": "Priority",
-          "value": "High"
+          "value": "Medium"
         }
       ],
-      "threatSource": "Participante adversario ou cliente modificado",
-      "prerequisites": "com acesso local ao bundle WASM ou chamadas diretas a API do solver",
-      "threatAction": "injetar estados de memoria adulterados ou manipular sementes pseudo-aleatorias",
-      "threatImpact": "corromper a acuracia do equilibrio de Nash e gerar vantagens desleais nos calculos",
+      "threatSource": "Processo local hostil ou injecao de comando",
+      "prerequisites": "com porta ou pipe MCP exposto sem autenticacao mutua",
+      "threatAction": "enviar comandos para o bridge de ferramentas se passando pelo orquestrador",
+      "threatImpact": "execucao indevida de operacoes com privilegios do agente",
       "impactedGoal": [
-        "integridade",
-        "confiabilidade"
+        "integridade"
       ],
       "impactedAssets": [
-        "motor de simulacao PMev",
-        "resultados do solver"
+        "barramento MCP",
+        "workspace local"
       ],
-      "statement": "Um participante adversario ou cliente modificado com acesso local ao bundle WASM ou chamadas diretas a API do solver can injetar estados de memoria adulterados ou manipular sementes pseudo-aleatorias, which leads to corromper a acuracia do equilibrio de Nash e gerar vantagens desleais nos calculos, negatively impacting motor de simulacao PMev.",
-      "status": "threatIdentified"
-    },
-    {
-      "id": "382096e1-2d9f-4aa7-8e7b-d92f894c6648",
-      "numericId": 2,
-      "metadata": [
-        {
-          "key": "STRIDE",
-          "value": [
-            "D"
-          ]
-        },
-        {
-          "key": "Priority",
-          "value": "High"
-        }
-      ],
-      "threatSource": "Usuario nao-autenticado ou malicioso",
-      "prerequisites": "com acesso aos endpoints publicos de simulacao",
-      "threatAction": "disparar centenas de simulacoes simultaneas de alta densidade sem rate limiting",
-      "threatImpact": "esgotar memoria e ciclos de CPU dos workers, degradando telemetria em tempo real",
-      "impactedGoal": [
-        "disponibilidade"
-      ],
-      "impactedAssets": [
-        "pool de workers FastAPI",
-        "servidores de telemetria"
-      ],
-      "statement": "Um usuario nao-autenticado ou malicioso com acesso aos endpoints publicos de simulacao can disparar centenas de simulacoes simultaneas de alta densidade sem rate limiting, which leads to esgotar memoria e ciclos de CPU dos workers, degradando telemetria em tempo real, resulting in reduced disponibilidade of pool de workers FastAPI.",
-      "status": "threatIdentified"
-    },
-    {
-      "id": "9096fe75-2e0c-48f7-a957-ec1b4c27c561",
-      "numericId": 3,
-      "metadata": [
-        {
-          "key": "STRIDE",
-          "value": [
-            "I"
-          ]
-        },
-        {
-          "key": "Priority",
-          "value": "High"
-        }
-      ],
-      "threatSource": "Observador externo ou atacante de rede",
-      "prerequisites": "com intercepcao de trafego ou canal realtime mal configurado",
-      "threatAction": "capturar pacotes WebSocket ou streams de telemetria sem token de autorizacao",
-      "threatImpact": "expor formulacoes matematicas de risco proprietarias e maos privadas dos usuarios",
-      "impactedGoal": [
-        "confidencialidade"
-      ],
-      "impactedAssets": [
-        "historico de maos",
-        "pesos heuristicos PMev"
-      ],
-      "statement": "Um observador externo ou atacante de rede com intercepcao de trafego ou canal realtime mal configurado can capturar pacotes WebSocket ou streams de telemetria sem token de autorizacao, which leads to expor formulacoes matematicas de risco proprietarias e maos privadas dos usuarios, negatively impacting historico de maos.",
+      "statement": "Um processo local hostil ou injecao de comando com porta ou pipe MCP exposto sem autenticacao mutua can enviar comandos para o bridge de ferramentas se passando pelo orquestrador, which leads to execucao indevida de operacoes com privilegios do agente, negatively impacting workspace local.",
       "status": "threatIdentified"
     },
     {
@@ -223,32 +164,91 @@
       "status": "threatIdentified"
     },
     {
-      "id": "e4832920-2aed-4d87-9bce-49ea3a07ec2c",
-      "numericId": 5,
+      "id": "9096fe75-2e0c-48f7-a957-ec1b4c27c561",
+      "numericId": 3,
       "metadata": [
         {
           "key": "STRIDE",
           "value": [
-            "S"
+            "I"
           ]
         },
         {
           "key": "Priority",
-          "value": "Medium"
+          "value": "High"
         }
       ],
-      "threatSource": "Processo local hostil ou injecao de comando",
-      "prerequisites": "com porta ou pipe MCP exposto sem autenticacao mutua",
-      "threatAction": "enviar comandos para o bridge de ferramentas se passando pelo orquestrador",
-      "threatImpact": "execucao indevida de operacoes com privilegios do agente",
+      "threatSource": "Observador externo ou atacante de rede",
+      "prerequisites": "com intercepcao de trafego ou canal realtime mal configurado",
+      "threatAction": "capturar pacotes WebSocket ou streams de telemetria sem token de autorizacao",
+      "threatImpact": "expor formulacoes matematicas de risco proprietarias e maos privadas dos usuarios",
       "impactedGoal": [
-        "integridade"
+        "confidencialidade"
       ],
       "impactedAssets": [
-        "barramento MCP",
-        "workspace local"
+        "historico de maos",
+        "pesos heuristicos PMev"
       ],
-      "statement": "Um processo local hostil ou injecao de comando com porta ou pipe MCP exposto sem autenticacao mutua can enviar comandos para o bridge de ferramentas se passando pelo orquestrador, which leads to execucao indevida de operacoes com privilegios do agente, negatively impacting workspace local.",
+      "statement": "Um observador externo ou atacante de rede com intercepcao de trafego ou canal realtime mal configurado can capturar pacotes WebSocket ou streams de telemetria sem token de autorizacao, which leads to expor formulacoes matematicas de risco proprietarias e maos privadas dos usuarios, negatively impacting historico de maos.",
+      "status": "threatIdentified"
+    },
+    {
+      "id": "382096e1-2d9f-4aa7-8e7b-d92f894c6648",
+      "numericId": 2,
+      "metadata": [
+        {
+          "key": "STRIDE",
+          "value": [
+            "D"
+          ]
+        },
+        {
+          "key": "Priority",
+          "value": "High"
+        }
+      ],
+      "threatSource": "Usuario nao-autenticado ou malicioso",
+      "prerequisites": "com acesso aos endpoints publicos de simulacao",
+      "threatAction": "disparar centenas de simulacoes simultaneas de alta densidade sem rate limiting",
+      "threatImpact": "esgotar memoria e ciclos de CPU dos workers, degradando telemetria em tempo real",
+      "impactedGoal": [
+        "disponibilidade"
+      ],
+      "impactedAssets": [
+        "pool de workers FastAPI",
+        "servidores de telemetria"
+      ],
+      "statement": "Um usuario nao-autenticado ou malicioso com acesso aos endpoints publicos de simulacao can disparar centenas de simulacoes simultaneas de alta densidade sem rate limiting, which leads to esgotar memoria e ciclos de CPU dos workers, degradando telemetria em tempo real, resulting in reduced disponibilidade of pool de workers FastAPI.",
+      "status": "threatIdentified"
+    },
+    {
+      "id": "e02519ca-a868-42cd-8aeb-0feda3273da5",
+      "numericId": 1,
+      "metadata": [
+        {
+          "key": "STRIDE",
+          "value": [
+            "T"
+          ]
+        },
+        {
+          "key": "Priority",
+          "value": "High"
+        }
+      ],
+      "threatSource": "Participante adversario ou cliente modificado",
+      "prerequisites": "com acesso local ao bundle WASM ou chamadas diretas a API do solver",
+      "threatAction": "injetar estados de memoria adulterados ou manipular sementes pseudo-aleatorias",
+      "threatImpact": "corromper a acuracia do equilibrio de Nash e gerar vantagens desleais nos calculos",
+      "impactedGoal": [
+        "integridade",
+        "confiabilidade"
+      ],
+      "impactedAssets": [
+        "motor de simulacao PMev",
+        "resultados do solver"
+      ],
+      "statement": "Um participante adversario ou cliente modificado com acesso local ao bundle WASM ou chamadas diretas a API do solver can injetar estados de memoria adulterados ou manipular sementes pseudo-aleatorias, which leads to corromper a acuracia do equilibrio de Nash e gerar vantagens desleais nos calculos, negatively impacting motor de simulacao PMev.",
       "status": "threatIdentified"
     }
   ]

@@ -437,8 +437,8 @@ class QueueManager:
         """
         async with self._get_async_db() as db:
             cursor = await db.execute(
-                "UPDATE tasks SET status = 'running' WHERE id = ? AND status = 'pending'",
-                (task_id,),
+                "UPDATE tasks SET status = 'running', timestamp = ? WHERE id = ? AND status = 'pending'",
+                (datetime.now(UTC).isoformat(), task_id),
             )
             await db.commit()
             return cursor.rowcount > 0

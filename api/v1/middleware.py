@@ -134,12 +134,28 @@ def verify_hs256_jwt(token: str, secret: str) -> dict | None:
 
         # 4. Janela temporal (exp / nbf / iat)
         now = time.time()
-        exp = payload.get("exp")
-        if exp is None or now > float(exp) + JWT_CLOCK_SKEW_SECONDS:
-            return None  # Token sem expiracao declarada ou expirado
+        for claim_name in ("exp", "nbf", "iat"):
+            val = payload.get(claim_name)
+            if val is None:
+                if claim_name == "exp":
+                    return None  # Token sem expiracao declarada ou expirado
+                continue
+            try:
+                # Garante que o valor e um numero finito (evita NaN/Inf)
+                fval = float(val)
+                if not (float("-inf") < fval < float("inf")):
+                    return None
+            except (ValueError, TypeError):
+                return None
+
+        exp = float(payload["exp"])
+        if now > exp + JWT_CLOCK_SKEW_SECONDS:
+            return None  # Expirado
+
         nbf = payload.get("nbf")
         if nbf is not None and now < float(nbf) - JWT_CLOCK_SKEW_SECONDS:
             return None  # Token ainda nao valido
+
         iat = payload.get("iat")
         if iat is not None and now < float(iat) - JWT_CLOCK_SKEW_SECONDS:
             return None  # Emitido no futuro

@@ -11,15 +11,19 @@ interface ErrorProps {
 
 export default function AppError({ error, reset }: ErrorProps) {
 	useEffect(() => {
-		logTelemetryEvent({
-			category: 'error',
-			componentName: 'AppRouterErrorBoundary',
-			metadata: {
-				message: error.message,
-				stack: error.stack,
-				digest: error.digest,
-			},
-		});
+		try {
+			logTelemetryEvent({
+				category: 'error',
+				componentName: 'AppRouterErrorBoundary',
+				metadata: {
+					message: error.message,
+					stack: error.stack,
+					digest: error.digest,
+				},
+			});
+		} catch (e) {
+			console.error('[SOTA SENSOR] Telemetry failure in AppRouterErrorBoundary:', e);
+		}
 		console.error('[SOTA SENSOR] Uncaught runtime exception intercepted:', error);
 	}, [error]);
 
