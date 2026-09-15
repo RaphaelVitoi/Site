@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { CounterfactualContextSchema, compareTerminalUtilities, validateCounterfactualContext, COUNTERFACTUAL_MODEL } from './counterfactualExperiment';
 import { calculatePopulationIcm } from './icmEngine';
-import { calculateIcmMonteCarlo } from './montecarlo';
+import { icmWorkerPool } from './icmWorkerPool';
 import { moneyUnits } from './chipLedger';
 
 const transitionSchema = z.object({
@@ -21,7 +21,7 @@ export const IcmTransitionRequestSchema = z.object({
 export type IcmTransitionRequest = z.infer<typeof IcmTransitionRequestSchema>;
 export class TransitionCapacityError extends Error {}
 
-export function evaluateIcmTransitions(raw: unknown) {
+export async function evaluateIcmTransitions(raw: unknown) {
   const snapshot = IcmTransitionRequestSchema.parse(raw);
   const { context: c } = snapshot;
   const payouts = validateCounterfactualContext(c);
@@ -67,15 +67,33 @@ export function evaluateIcmTransitions(raw: unknown) {
   const work = [...states, initialState].reduce((sum, s) => sum + (s.survivors.length > 10 ? s.survivors.length * s.remainingPayouts.length * snapshot.iterations : 0), 0);
   if (work > 100_000_000) throw new TransitionCapacityError('Este pedido excede o orçamento de cálculo síncrono. Reduza as amostras; nenhum stack ou payout foi descartado.');
 
-  const valueState = (state: typeof states[number]) => {
+  const valueState = async (state: typeof states[number]) => {
     const exact = state.survivors.length <= 10;
-    const equities = exact
-      ? calculatePopulationIcm(state.survivors, state.remainingPayouts).results.map(r => r.equity)
-      : calculateIcmMonteCarlo(state.survivors.map(p => p.stack), state.remainingPayouts, { iterations: snapshot.iterations, seed: snapshot.seed });
+    let equities: number[];
+    let stdErrorPerPlayer: number[] = [];
+    if (exact) {
+      equities = calculatePopulationIcm(state.survivors, state.remainingPayouts).results.map(r => r.equity);
+      stdErrorPerPlayer = equities.map(() => 0);
+    } else {
+      const res = await icmWorkerPool.calculateIcm({
+        stacks: state.survivors.map(p => p.stack),
+        prizes: state.remainingPayouts,
+        iterations: snapshot.iterations,
+        seed: snapshot.seed,
+      });
+      equities = res.equities;
+      stdErrorPerPlayer = res.stdErrorPerPlayer;
+    }
     const byId = new Map(state.survivors.map((p, i) => [p.id, equities[i]!]));
+    const seById = new Map(state.survivors.map((p, i) => [p.id, stdErrorPerPlayer[i] ?? 0]));
     const paymentById = new Map(state.payments.map(p => [p.id, p.amount]));
-    const valuations = state.population.map(p => ({ id: p.id, paid: paymentById.get(p.id) ?? 0, remainingEquity: byId.get(p.id) ?? 0,
-      total: (paymentById.get(p.id) ?? 0) + (byId.get(p.id) ?? 0) }));
+    const valuations = state.population.map(p => ({
+      id: p.id,
+      paid: paymentById.get(p.id) ?? 0,
+      remainingEquity: byId.get(p.id) ?? 0,
+      stdError: seById.get(p.id) ?? 0,
+      total: (paymentById.get(p.id) ?? 0) + (byId.get(p.id) ?? 0),
+    }));
     const totalValue = valuations.reduce((sum, v) => sum + v.total, 0);
     if (!Number.isFinite(totalValue) || Math.abs(totalValue - initialPool) > Math.max(1, initialPool) * 1e-7) throw new Error('A valoração não conservou a premiação.');
     return { ...state, valuations, heroValue: valuations.find(p => p.id === c.heroId)!.total,
@@ -83,11 +101,11 @@ export function evaluateIcmTransitions(raw: unknown) {
       iterations: exact ? 0 : snapshot.iterations, seed: exact ? null : snapshot.seed,
       totalValue, accountingResidual: totalValue - initialPool };
   };
-  const baseline = valueState(initialState);
+  const baseline = await valueState(initialState);
   const initialValues = new Map(baseline.valuations.map(p => [p.id, p.total]));
   const initialStacks = new Map(initialPopulation.map(p => [p.id, p.stack]));
-  const valued = states.map(state => {
-    const value = valueState(state);
+  const valued = await Promise.all(states.map(async state => {
+    const value = await valueState(state);
     const stacksAfter = new Map(state.population.map(p => [p.id, p.stack]));
     const redistribution = value.valuations.map(v => {
       const before = initialValues.get(v.id)!;
@@ -99,7 +117,7 @@ export function evaluateIcmTransitions(raw: unknown) {
         averageValuePerBbAfter: stackAfter > 0 ? v.remainingEquity / stackAfter * bbScale : null };
     });
     return { ...value, redistribution, totalValuationDelta: redistribution.reduce((sum, p) => sum + p.delta, 0) };
-  });
+  }));
   const [fold, win, loss] = valued;
   const utilities = { fold: fold!.heroValue, win: win!.heroValue, loss: loss!.heroValue };
   return {
@@ -117,4 +135,4 @@ export function evaluateIcmTransitions(raw: unknown) {
       'Monte Carlo, quando usado, aproxima o ICM; seed reproduzível não certifica convergência. Sem intervalo de confiança para o delta.'],
   };
 }
-export type IcmTransitionResult = ReturnType<typeof evaluateIcmTransitions>;
+export type IcmTransitionResult = Awaited<ReturnType<typeof evaluateIcmTransitions>>;

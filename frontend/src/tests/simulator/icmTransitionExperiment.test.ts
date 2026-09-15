@@ -11,8 +11,8 @@ function fixture(): IcmTransitionRequest {
     loss: { tableStacks: [{ id: 'a', stack: 0 }, { id: 'b', stack: 20 }], eliminationOrder: ['a'] } };
 }
 
-test('pays the eliminated player once, values the whole field and derives the 4/7 threshold', () => {
-  const result = evaluateIcmTransitions(fixture());
+test('pays the eliminated player once, values the whole field and derives the 4/7 threshold', async () => {
+  const result = await evaluateIcmTransitions(fixture());
   expect(result.threshold).toBeCloseTo(4 / 7);
   expect(result.utilities.fold).toBeCloseTo(10000 / 3);
   expect(result.utilities.win).toBeCloseTo(13000 / 3);
@@ -35,67 +35,69 @@ test('pays the eliminated player once, values the whole field and derives the 4/
   expect(result.states[1]!.redistribution.find(p => p.id === 'b')!.averageValuePerBbAfter).toBeNull();
 });
 
-test('multiple eliminations require exact resolved ranking, not payout sharing', () => {
+test('multiple eliminations require exact resolved ranking, not payout sharing', async () => {
   const input = fixture(); input.context.selection.playerIds.push('c');
   const branch = { tableStacks: [{ id: 'a', stack: 30 }, { id: 'b', stack: 0 }, { id: 'c', stack: 0 }], eliminationOrder: ['b', 'c'] };
   input.fold = branch; input.win = branch; input.loss = branch;
-  const r = evaluateIcmTransitions(input);
+  const r = await evaluateIcmTransitions(input);
   expect(r.states[0]!.payments).toEqual([{ id: 'b', place: 3, amount: 2000 }, { id: 'c', place: 2, amount: 3000 }]);
   expect(r.utilities.fold).toBe(5000);
   input.fold.eliminationOrder = [];
-  expect(() => evaluateIcmTransitions(input)).toThrow('ordem');
+  await expect(evaluateIcmTransitions(input)).rejects.toThrow('ordem');
 });
 
-test('unpaid eliminations remove players but no prize money', () => {
+test('unpaid eliminations remove players but no prize money', async () => {
   const input = fixture(); input.context.conditions = defaultTournamentConditions(3, 2); input.context.prizes = [65, 35];
-  const r = evaluateIcmTransitions(input);
+  const r = await evaluateIcmTransitions(input);
   expect(r.states[1]!.payments).toEqual([{ id: 'b', place: 3, amount: 0 }]);
   expect(r.states[1]!.remainingPool).toBe(100000);
 });
 
-test.each(['fold', 'win', 'loss'] as const)('rejects chip creation in %s before valuation', action => {
+test.each(['fold', 'win', 'loss'] as const)('rejects chip creation in %s before valuation', async action => {
   const input = fixture(); input[action].tableStacks[0]!.stack += 1;
-  expect(() => evaluateIcmTransitions(input)).toThrow('conservar');
+  await expect(evaluateIcmTransitions(input)).rejects.toThrow('conservar');
 });
 
-test('refuses external stack edits, duplicate IDs and impossible rankings', () => {
+test('refuses external stack edits, duplicate IDs and impossible rankings', async () => {
   const input = fixture(); input.fold.tableStacks[0]!.id = 'c';
-  expect(() => evaluateIcmTransitions(input)).toThrow('jogador da mesa');
+  await expect(evaluateIcmTransitions(input)).rejects.toThrow('jogador da mesa');
   input.fold.tableStacks[0]!.id = 'b';
-  expect(() => evaluateIcmTransitions(input)).toThrow('exatamente uma vez');
+  await expect(evaluateIcmTransitions(input)).rejects.toThrow('exatamente uma vez');
   input.fold.tableStacks[0]!.id = 'a'; input.win.eliminationOrder = ['a'];
-  expect(() => evaluateIcmTransitions(input)).toThrow('ordem');
+  await expect(evaluateIcmTransitions(input)).rejects.toThrow('ordem');
 });
 
-test('Monte Carlo preserves 115 external stacks and declares approximation and reproducible seed', () => {
+test('Monte Carlo preserves 115 external stacks and declares approximation and reproducible seed', async () => {
   const input = fixture();
   input.context.population = input.context.population.slice(0, 2).concat(Array.from({ length: 115 }, (_, i) => ({ id: `x${i}`, name: `X${i}`, stack: 10 })));
   input.context.conditions = defaultTournamentConditions(117, 2); input.context.prizes = [65, 35];
-  const result = evaluateIcmTransitions(input);
+  const result = await evaluateIcmTransitions(input);
   expect(result.approximate).toBe(true);
   expect(result.states[1]!.population).toHaveLength(117);
   expect(result.states[1]!.survivors).toHaveLength(116);
   expect(result.states[1]!.seed).toBe(1);
   expect(result.states[1]!.totalValue).toBeCloseTo(100000);
-  expect(evaluateIcmTransitions(input).rows).toEqual(result.rows);
+  const secondRun = await evaluateIcmTransitions(input);
+  expect(secondRun.rows).toEqual(result.rows);
 });
 
-test('work budget rejects excess cost without a population cutoff or truncation', () => {
+test('work budget rejects excess cost without a population cutoff or truncation', async () => {
   const input = fixture();
   input.context.population.push(...Array.from({ length: 2000 }, (_, i) => ({ id: `x${i}`, name: `X${i}`, stack: 10 })));
   input.context.conditions = defaultTournamentConditions(2003, 3); input.iterations = 20000;
-  expect(() => evaluateIcmTransitions(input)).toThrow(TransitionCapacityError);
+  await expect(evaluateIcmTransitions(input)).rejects.toThrow(TransitionCapacityError);
 });
 
-test('hero elimination and remaining equity cannot be credited together', () => {
-  const r = evaluateIcmTransitions(fixture());
-  expect(r.states[2]!.valuations.find(p => p.id === 'a')).toEqual({ id: 'a', paid: 2000, remainingEquity: 0, total: 2000 });
+test('hero elimination and remaining equity cannot be credited together', async () => {
+  const r = await evaluateIcmTransitions(fixture());
+  expect(r.states[2]!.valuations.find(p => p.id === 'a')).toEqual({ id: 'a', paid: 2000, remainingEquity: 0, stdError: 0, total: 2000 });
 });
 
-test('a stack transfer without elimination revalues an unchanged third stack', () => {
+test('a stack transfer without elimination revalues an unchanged third stack', async () => {
   const input = fixture();
   input.win = { tableStacks: [{ id: 'a', stack: 15 }, { id: 'b', stack: 5 }], eliminationOrder: [] };
-  const state = evaluateIcmTransitions(input).states[1]!;
+  const evaluated = await evaluateIcmTransitions(input);
+  const state = evaluated.states[1]!;
   const observer = state.redistribution.find(p => p.id === 'c')!;
   expect(observer.unchangedStack).toBe(true);
   expect(observer.after).toBeCloseTo(3400);

@@ -4,7 +4,10 @@ import initWasm, {
 	initSync,
 	solve_pluribus_multiway_adapter_wasm,
 } from '@/lib/engine/generated/vitoi_equity_engine';
-import { executePluribusWasmKernel } from '@/lib/pluribusWasmAdapter';
+import {
+	executePluribusWasmKernel,
+	wrapPluribusWasmKernel,
+} from '@/lib/pluribusWasmAdapter';
 import type { PluribusExecutor } from '@/lib/engineExecutionGateway';
 
 let initialization: Promise<void> | undefined;
@@ -38,6 +41,6 @@ function initializePluribusWasm(): Promise<void> {
 export function createPluribusNodeWasmExecutor(): PluribusExecutor {
 	return async (input) => {
 		await initializePluribusWasm();
-		return executePluribusWasmKernel(solve_pluribus_multiway_adapter_wasm, input);
+		return executePluribusWasmKernel(wrapPluribusWasmKernel(solve_pluribus_multiway_adapter_wasm), input);
 	};
 }

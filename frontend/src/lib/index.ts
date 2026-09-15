@@ -20,3 +20,4 @@ export {
 	type PairwiseMatchupDetail,
 } from './icmMatrix';
 export * from './holdemEquities';
+export * from './icmWorkerPool';

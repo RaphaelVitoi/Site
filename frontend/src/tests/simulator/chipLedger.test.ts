@@ -34,8 +34,8 @@ function request(): IcmTransitionRequest {
     win: { tableStacks: [{ id: 'a', stack: 95000 }, { id: 'b', stack: 0 }], eliminationOrder: ['b'] },
     loss: { tableStacks: [{ id: 'a', stack: 0 }, { id: 'b', stack: 95000 }], eliminationOrder: ['a'] } };
 }
-test('settled transitions conserve physical chips, external stacks and paid plus remaining money', () => {
-  const result = evaluateIcmTransitions(request());
+test('settled transitions conserve physical chips, external stacks and paid plus remaining money', async () => {
+  const result = await evaluateIcmTransitions(request());
   expect(result.stackUnit).toBe('chips');
   for (const state of result.states) {
     expect(state.totalChips).toBe(100000);
@@ -46,7 +46,7 @@ test('settled transitions conserve physical chips, external stacks and paid plus
   expect(row.averageValuePerBbBefore).toBeCloseTo(row.before / 20.25);
   for (const change of [-1, 1, 0.5]) {
     const input = request(); input.win.tableStacks[0]!.stack += change;
-    expect(() => evaluateIcmTransitions(input)).toThrow();
+    await expect(evaluateIcmTransitions(input)).rejects.toThrow();
   }
 });
 test('HRC export keeps raw chips, payouts and HU button ordering through reimport', () => {

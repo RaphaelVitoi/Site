@@ -59,7 +59,8 @@ function parseTournamentSummary(text: string, playersCount: number): TournamentS
     totalPrizePool: pool ? amount(pool[1]!) : undefined,
     declaredTotalChips: chips ? amount(chips[1]!) : undefined,
   };
-  const paid = [...text.matchAll(/^\s*(\d+): [^,\r\n]+, (?:[$€£])([\d,.]+)(?: USD| EUR| GBP)?(?: \([\d.]+%\))?\s*$/gm)];
+  // Sufixo literal: elimina backtracking — suporta USD/EUR/GBP e percentual opcionais.
+  const paid = [...text.matchAll(/^[ \t]*(\d+): [^,\r\n]+, [$€£]([\d,.]+)(?: (?:USD|EUR|GBP))?(?: \([\d.]+%\))?$/gm)];
   const positions = paid.map(m => Number(m[1]));
   const fullPrizes = paid.map(m => amount(m[2]!));
   const sum = fullPrizes.reduce((total, value) => total + value, 0);
@@ -83,6 +84,33 @@ function parseTournamentSummary(text: string, playersCount: number): TournamentS
   return summary;
 }
 
+function resolveBlinds(
+  header: string | undefined,
+  raw: string,
+): { bigBlind: number | undefined; smallBlind: number | undefined } {
+  const blinds = header ? /\((?:[$€£]?)([\d,.]+)\/(?:[$€£]?)([\d,.]+)/.exec(header) : null;
+  const posted = /: posts big blind (?:[$€£]?)([\d,.]+)/.exec(raw);
+  const small = /: posts small blind (?:[$€£]?)([\d,.]+)/.exec(raw);
+  let bigBlind: number | undefined;
+  if (blinds) {
+    bigBlind = amount(blinds[2]!);
+  } else if (posted) {
+    bigBlind = amount(posted[1]!);
+  }
+  let smallBlind: number | undefined;
+  if (blinds) {
+    smallBlind = amount(blinds[1]!);
+  } else if (small) {
+    smallBlind = amount(small[1]!);
+  }
+  return { bigBlind, smallBlind };
+}
+
+function resolveHero(raw: string, players: ParsedHandHistory['players']): string | undefined {
+  const hero = /^Dealt to (.+?) \[/m.exec(raw);
+  return hero ? players.find(p => p.name === hero[1])?.id : undefined;
+}
+
 /** Parse the opening snapshot only. Summary winnings are never starting stacks. */
 export function parseHandHistoryDetails(raw: string): ParsedHandHistory {
   const headers = raw.match(/^(?:PokerStars (?:Hand|Game) #|Poker Hand #|GGPoker Hand #).*/gm) ?? [];
@@ -103,11 +131,6 @@ export function parseHandHistoryDetails(raw: string): ParsedHandHistory {
   const opening = raw.split(/\*\*\* (?:HOLE CARDS|SUMMARY|FLOP|PRE-FLOP) \*\*\*/)[0]!;
   const players = parseSeats(opening, table?.[1]);
 
-  const blinds = header ? /\((?:[$€£]?)([\d,.]+)\/(?:[$€£]?)([\d,.]+)/.exec(header) : null;
-  const posted = /: posts big blind (?:[$€£]?)([\d,.]+)/.exec(raw);
-  const small = /: posts small blind (?:[$€£]?)([\d,.]+)/.exec(raw);
-  const ante = /: posts (?:the )?ante (?:[$€£]?)([\d,.]+)/.exec(raw);
-  const hero = /^Dealt to (.+?) \[/m.exec(raw);
   const tournamentId = /(?:Tournament|Torneio) #([\w-]+)/i.exec(header ?? '')?.[1];
   const summaryHeader = /^PokerStars Tournament #(\w+)/m.exec(raw);
 
@@ -117,19 +140,8 @@ export function parseHandHistoryDetails(raw: string): ParsedHandHistory {
     summary = parseTournamentSummary(raw.slice(summaryHeader.index), players.length);
   }
 
-  let bigBlind: number | undefined;
-  if (blinds) {
-    bigBlind = amount(blinds[2]!);
-  } else if (posted) {
-    bigBlind = amount(posted[1]!);
-  }
-
-  let smallBlind: number | undefined;
-  if (blinds) {
-    smallBlind = amount(blinds[1]!);
-  } else if (small) {
-    smallBlind = amount(small[1]!);
-  }
+  const { bigBlind, smallBlind } = resolveBlinds(header, raw);
+  const ante = /: posts (?:the )?ante (?:[$€£]?)([\d,.]+)/.exec(raw);
 
   return {
     ...summary,
@@ -137,12 +149,12 @@ export function parseHandHistoryDetails(raw: string): ParsedHandHistory {
     room,
     tableId: table?.[1],
     buttonSeat: table?.[3] ? Number(table[3]) : undefined,
-    tournamentId: /(?:Tournament|Torneio) #([\w-]+)/i.exec(header ?? '')?.[1],
+    tournamentId,
     handId: /(?:Hand|Game) #([\w-]+)/.exec(header ?? '')?.[1],
     bigBlind,
     smallBlind,
     ante: ante ? amount(ante[1]!) : undefined,
-    heroId: hero ? players.find(p => p.name === hero[1])?.id : undefined,
+    heroId: resolveHero(raw, players),
   };
 }
 

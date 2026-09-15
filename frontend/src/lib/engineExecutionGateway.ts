@@ -67,14 +67,14 @@ function failureReason(error: unknown): string {
 
 function apiNumber(value: unknown, field: string): number {
 	if (typeof value !== 'number' || !Number.isFinite(value)) {
-		throw new Error(`Pluribus API response has invalid ${field}`);
+		throw new TypeError(`Pluribus API response has invalid ${field}`);
 	}
 	return value;
 }
 
 function apiRecord(value: unknown, field: string): Record<string, unknown> {
 	if (!value || typeof value !== 'object' || Array.isArray(value)) {
-		throw new Error(`Pluribus API response has invalid ${field}`);
+		throw new TypeError(`Pluribus API response has invalid ${field}`);
 	}
 	return value as Record<string, unknown>;
 }
