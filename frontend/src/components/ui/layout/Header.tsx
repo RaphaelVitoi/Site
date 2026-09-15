@@ -546,7 +546,7 @@ export const Header: React.FC = () => {
       )}
       <motion.header
         id="site-header"
-        initial={{ y: -100 }}
+        initial={false}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className={`fixed top-0 right-0 left-0 z-50 transition-all duration-500 ${headerBgClass}`}

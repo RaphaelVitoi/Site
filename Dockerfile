@@ -38,8 +38,15 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Materialização SOTA do código-fonte (Imutável, protegido contra modificação por non-root)
 COPY api ./api
 COPY core ./core
+<<<<<<< ours
 COPY data ./data
 COPY database ./database
+||||||| base
+=======
+COPY api ./api
+COPY database ./database
+COPY data ./data
+>>>>>>> theirs
 COPY engine ./engine
 COPY llm ./llm
 COPY math ./math

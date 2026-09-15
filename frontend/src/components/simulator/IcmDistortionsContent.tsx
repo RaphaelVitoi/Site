@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { ErrorBoundary } from '@/components/analytics/ErrorBoundary';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { ROUTES } from '@/constants/routes';
+import SotaPerspectiveMesh from '@/components/ui/visuals/SotaPerspectiveMesh';
 
 const BubbleFactorMatrix = dynamic(
 	() => import('@/components/simulator/BubbleFactorMatrix').then((m) => m.BubbleFactorMatrix),
@@ -177,7 +178,23 @@ export function IcmDistortionsContent() {
 						<div className="flex items-center gap-3">
 							<div className="w-2 h-2 rounded-full bg-accent-indigo" />
 							<h3 className="text-sm font-black uppercase tracking-[0.2em] text-accent-indigo-light m-0">
-								1. Matriz N-Dimensional de Bubble Factor
+								1. Topografia de Risco PMev (SOTA Mesh)
+							</h3>
+						</div>
+						<ErrorBoundary>
+							<SotaPerspectiveMesh 
+								equity={matchupSync.ipRp / 100} 
+								realization={1.0} 
+								valuationStack={1.0} 
+							/>
+						</ErrorBoundary>
+					</section>
+
+					<section className="space-y-4">
+						<div className="flex items-center gap-3">
+							<div className="w-2 h-2 rounded-full bg-accent-indigo" />
+							<h3 className="text-sm font-black uppercase tracking-[0.2em] text-accent-indigo-light m-0">
+								2. Matriz N-Dimensional de Bubble Factor
 							</h3>
 						</div>
 						<ErrorBoundary>
@@ -189,7 +206,7 @@ export function IcmDistortionsContent() {
 						<div className="flex items-center gap-3">
 							<div className="w-2 h-2 rounded-full bg-accent-rose" />
 							<h3 className="text-sm font-black uppercase tracking-[0.2em] text-accent-rose-light m-0">
-								2. Profiler de Distorção de Nash em Tempo Real
+								3. Profiler de Distorção de Nash em Tempo Real
 							</h3>
 						</div>
 						<ErrorBoundary>
@@ -205,13 +222,13 @@ export function IcmDistortionsContent() {
 						<div className="flex items-center gap-3">
 							<div className="w-2 h-2 rounded-full bg-accent-emerald" />
 							<h3 className="text-sm font-black uppercase tracking-[0.2em] text-accent-emerald-light m-0">
-								3. Distribuição de Ranges & Downward Drift
+								4. Distribuição de Ranges & Downward Drift
 							</h3>
 						</div>
 						<ErrorBoundary>
 							<RangeMatrixDynamic
 								ipRp={matchupSync.ipRp ?? 13.5}
-								oopRp={matchupSync.oopRp ?? 31.8}
+								toopRp={matchupSync.oopRp ?? 31.8}
 								scenarioId="mtt-final-table"
 							/>
 						</ErrorBoundary>
@@ -244,7 +261,7 @@ export function IcmDistortionsContent() {
 					<ErrorBoundary>
 						<RangeMatrixDynamic
 							ipRp={matchupSync.ipRp ?? 13.5}
-							oopRp={matchupSync.oopRp ?? 31.8}
+							toopRp={matchupSync.oopRp ?? 31.8}
 							scenarioId="mtt-final-table"
 						/>
 					</ErrorBoundary>

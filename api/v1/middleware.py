@@ -293,6 +293,10 @@ async def _handle_jwt_token_auth(token: str, request, handler):
 @web.middleware
 async def rate_limit_middleware(request, handler):
     """Aplica limite de requisicoes por IP na janela de tempo definida."""
+    # SOTA: Short-circuit para probes de saude e ping para reduzir overhead de telemetria e TTFB.
+    if request.method == "GET" and request.path in PUBLIC_PROBE_ROUTES:
+        return await handler(request)
+
     remote_ip = request.remote or "127.0.0.1"
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded and _is_loopback(remote_ip):
@@ -371,23 +375,26 @@ async def cookie_middleware(request, handler):
     return response
 
 
+# SOTA: Cache de Headers de Isolamento (Zero-Copy)
+SOTA_ISOLATION_HEADERS = {
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "require-corp",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+}
+
 @web.middleware
 async def security_headers_middleware(request, handler):
     """
     SOTA: Injeta cabecalhos de isolamento de origem para habilitar SharedArrayBuffer e WebGPU.
-    Essencial para a performance Zero-Copy do motor matematico WASM.
+    Utiliza cache de headers para aniquilar alocacoes redundantes.
     """
     try:
         response = await handler(request)
-        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-        response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
-        # Hardening Adicional
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
+        response.headers.update(SOTA_ISOLATION_HEADERS)
         return response
     except web.HTTPException as ex:
-        ex.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-        ex.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+        ex.headers.update(SOTA_ISOLATION_HEADERS)
         raise
 
 
