@@ -72,3 +72,6 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+## 2025-09-15 - [Avoid .set() on TypedArrays inside Hot Loops]
+**Learning:** Using `typedArray.set([a, b, c], index)` inside hot loops (like Monte Carlo simulations, range parsers, and population evaluators) severely degrades performance. It implicitly allocates temporary heap micro-arrays for `[a, b, c]` during execution, triggering significant Garbage Collection (GC) churn and breaking out of JS JIT array assignment optimizations. This causes V8 execution to pause, impacting critical path performance metrics on the Monte Carlo Web Worker engines.
+**Action:** Always unroll `.set([])` operations into flat, explicit bracket notation index assignments (e.g. `arr[idx] = a; arr[idx + 1] = b; arr[idx + 2] = c;`) inside performance-critical Web Workers and hot loops dealing with TypedArrays.
