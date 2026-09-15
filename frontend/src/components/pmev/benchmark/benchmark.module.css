@@ -139,8 +139,9 @@
 }
 
 .rowHero {
+	--row-hero-line: color-mix(in oklab, var(--reality) 22%, transparent);
 	background: color-mix(in oklab, var(--reality) 7%, transparent);
-	outline: 1px solid color-mix(in oklab, var(--reality) 22%, transparent);
+	outline: 1px solid var(--row-hero-line);
 }
 
 .who {
@@ -189,17 +190,17 @@
 	color: var(--color-text-dim);
 }
 
-.money {
+.money,
+.moneyChip,
+.moneyIcm {
 	text-align: end;
 }
 
 .moneyChip {
-	composes: money;
 	color: var(--chip);
 }
 
 .moneyIcm {
-	composes: money;
 	color: var(--icm);
 	font-weight: 600;
 }
