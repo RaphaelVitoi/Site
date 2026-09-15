@@ -1,0 +1,379 @@
+{
+  "descricao": "Estruturas canonicas de premio PokerStars medidas em resumos PokerTracker 4 com estrutura completa, e as familias de maos que as herdam. Gerado por medicao; so numeros, nenhum nome de jogador. Consumidor: engine/pmev_hh_canon.py.",
+  "medido_em": "2026-09-14",
+  "fontes": "hand histories PokerStars da Drive e da base local DB Duckriver; os arquivos nao sao versionados",
+  "estruturas": [
+    {
+      "id": "ps-stt-9p-9.20-0.80",
+      "buyin": "$9.20+$0.80",
+      "table_max": 9,
+      "field": 9,
+      "starting_stack": 1500,
+      "payout_fractions": [
+        0.5,
+        0.3,
+        0.19999999999999998
+      ],
+      "reference_prize_pool": 82.8,
+      "observed_prize_pools": [
+        82.8
+      ],
+      "winner_take_all": false,
+      "canonical_tournaments": [
+        "3591617800",
+        "3593835473",
+        "3597707418",
+        "3598133155",
+        "3598573679",
+        "3601912750",
+        "3605244976",
+        "3608888050",
+        "3609609227"
+      ],
+      "blind_levels": {
+        "1": [
+          10,
+          20,
+          3
+        ],
+        "2": [
+          15,
+          30,
+          4
+        ],
+        "3": [
+          25,
+          50,
+          6
+        ],
+        "4": [
+          40,
+          80,
+          10
+        ],
+        "5": [
+          60,
+          120,
+          15
+        ],
+        "6": [
+          80,
+          160,
+          20
+        ],
+        "7": [
+          100,
+          200,
+          25
+        ],
+        "8": [
+          150,
+          300,
+          25
+        ],
+        "9": [
+          200,
+          400,
+          25
+        ],
+        "10": [
+          300,
+          600,
+          50
+        ]
+      },
+      "medicao": {
+        "torneios_da_familia": 191,
+        "maos_da_familia": 8991,
+        "estados_de_field_completo": 8991,
+        "torneios_com_stack_inicial_medido": 187,
+        "torneios_com_o_stack_inicial_canonico": 187,
+        "jogadores_vivos_nos_estados_completos": {
+          "2": 631,
+          "3": 648,
+          "4": 982,
+          "5": 847,
+          "6": 929,
+          "7": 1278,
+          "8": 1613,
+          "9": 2063
+        }
+      }
+    },
+    {
+      "id": "ps-spin-3p-0.46-0.04",
+      "buyin": "$0.46+$0.04",
+      "table_max": 3,
+      "field": 3,
+      "starting_stack": 500,
+      "payout_fractions": [
+        1.0
+      ],
+      "reference_prize_pool": 1.25,
+      "observed_prize_pools": [
+        1.0,
+        1.5
+      ],
+      "winner_take_all": true,
+      "canonical_tournaments": [
+        "3731447788",
+        "3731447811",
+        "3731447849",
+        "3731447883",
+        "3731447893",
+        "3734327837",
+        "3735283984",
+        "3735701131",
+        "3741376800"
+      ],
+      "blind_levels": {
+        "1": [
+          10,
+          20,
+          0
+        ],
+        "2": [
+          15,
+          30,
+          0
+        ],
+        "3": [
+          20,
+          40,
+          0
+        ],
+        "4": [
+          30,
+          60,
+          0
+        ],
+        "5": [
+          40,
+          80,
+          0
+        ],
+        "6": [
+          50,
+          100,
+          0
+        ],
+        "7": [
+          60,
+          120,
+          0
+        ]
+      },
+      "medicao": {
+        "torneios_da_familia": 202,
+        "maos_da_familia": 2254,
+        "estados_de_field_completo": 2254,
+        "torneios_com_stack_inicial_medido": 176,
+        "torneios_com_o_stack_inicial_canonico": 176,
+        "jogadores_vivos_nos_estados_completos": {
+          "2": 1135,
+          "3": 1119
+        }
+      }
+    },
+    {
+      "id": "ps-mtt-45p-0.91-0.09",
+      "buyin": "$0.91+$0.09",
+      "table_max": 9,
+      "field": 45,
+      "starting_stack": 1500,
+      "payout_fractions": [
+        0.31062271062271063,
+        0.22368742368742367,
+        0.16117216117216115,
+        0.11623931623931623,
+        0.084004884004884,
+        0.060561660561660555,
+        0.04371184371184371
+      ],
+      "reference_prize_pool": 40.95,
+      "observed_prize_pools": [
+        40.95
+      ],
+      "winner_take_all": false,
+      "canonical_tournaments": [
+        "3730121989",
+        "3733895187",
+        "3737120137",
+        "3737152826",
+        "3737658785",
+        "3740607801"
+      ],
+      "blind_levels": {
+        "1": [
+          10,
+          20,
+          3
+        ],
+        "2": [
+          15,
+          30,
+          4
+        ],
+        "3": [
+          25,
+          50,
+          6
+        ],
+        "4": [
+          40,
+          80,
+          10
+        ],
+        "5": [
+          60,
+          120,
+          15
+        ],
+        "6": [
+          80,
+          160,
+          20
+        ],
+        "7": [
+          100,
+          200,
+          25
+        ],
+        "8": [
+          150,
+          300,
+          25
+        ],
+        "9": [
+          200,
+          400,
+          25
+        ],
+        "10": [
+          300,
+          600,
+          50
+        ],
+        "11": [
+          400,
+          800,
+          50
+        ],
+        "12": [
+          500,
+          1000,
+          60
+        ],
+        "13": [
+          600,
+          1200,
+          75
+        ],
+        "14": [
+          800,
+          1600,
+          75
+        ],
+        "15": [
+          1000,
+          2000,
+          100
+        ]
+      },
+      "medicao": {
+        "torneios_da_familia": 415,
+        "maos_da_familia": 27162,
+        "estados_de_field_completo": 4515,
+        "torneios_com_stack_inicial_medido": 84,
+        "torneios_com_o_stack_inicial_canonico": 84,
+        "jogadores_vivos_nos_estados_completos": {
+          "2": 383,
+          "3": 600,
+          "4": 533,
+          "5": 615,
+          "6": 362,
+          "7": 499,
+          "8": 767,
+          "9": 756
+        }
+      }
+    },
+    {
+      "id": "ps-spin-3p-3.68-0.32",
+      "buyin": "$3.68+$0.32",
+      "table_max": 3,
+      "field": 3,
+      "starting_stack": 500,
+      "payout_fractions": [
+        1.0
+      ],
+      "reference_prize_pool": 8.0,
+      "observed_prize_pools": [
+        8.0
+      ],
+      "winner_take_all": true,
+      "canonical_tournaments": [
+        "3733121799",
+        "3734329004"
+      ],
+      "blind_levels": {
+        "1": [
+          10,
+          20,
+          0
+        ],
+        "2": [
+          15,
+          30,
+          0
+        ],
+        "3": [
+          20,
+          40,
+          0
+        ],
+        "4": [
+          30,
+          60,
+          0
+        ],
+        "5": [
+          40,
+          80,
+          0
+        ],
+        "6": [
+          50,
+          100,
+          0
+        ],
+        "7": [
+          60,
+          120,
+          0
+        ]
+      },
+      "medicao": {
+        "torneios_da_familia": 5,
+        "maos_da_familia": 126,
+        "estados_de_field_completo": 126,
+        "torneios_com_stack_inicial_medido": 1,
+        "torneios_com_o_stack_inicial_canonico": 1,
+        "jogadores_vivos_nos_estados_completos": {
+          "2": 83,
+          "3": 43
+        }
+      }
+    }
+  ],
+  "excluidas": [
+    {
+      "buyin": "$23.50+$1.50",
+      "table_max": 3,
+      "canonicos": [
+        "3713960584"
+      ],
+      "motivo": "nenhuma primeira mao de nivel I com stacks iguais -- stack inicial nao medido"
+    }
+  ]
+}
