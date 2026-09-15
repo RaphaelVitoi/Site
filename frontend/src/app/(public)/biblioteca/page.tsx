@@ -54,6 +54,7 @@ const LIBRARY_CATEGORIES: LibraryCategory[] = [
 			{ title: 'Downward Drift & Compressão', slug: 'downward-drift-sota', desc: 'A transformação dimensional de sizings pós-flop.', isLab: true },
 			{ title: 'Geometria do Risco', slug: 'geometria-do-risco', desc: 'Relação vetorial entre Risk Premium e Bubble Factor.' },
 			{ title: 'Entendendo o ICM e Heurísticas', slug: 'entendendo-o-icm-e-suas-heuristicas', desc: 'Modelagem de stacks e equidade não-linear.' },
+			{ title: 'O ICM contra a mesa real', slug: 'icm-contra-a-mesa-real', desc: 'Quinze mil estados de torneios reais testam o ICM contra as fichas.', isLab: true },
 			{ title: 'Heurística ICM Pós-Flop', slug: 'heuristica-icm-pos-flop-aula', desc: 'A tomada de decisão além dos solvers pré-flop.' },
 			{ title: 'Motor de Diluição', slug: 'motor-diluicao', desc: 'Diluição de equidade e preservação de torneio.' },
 			{ title: 'Teto Equidade River ICM', slug: 'teto-equidade-river-icm', desc: 'Limites assintóticos de aposta na última street.' },

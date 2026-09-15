@@ -1,0 +1,593 @@
+/*
+ * Benchmark ICM x mesa real.
+ * Linguagem: caderno de campo sobre mesa escura. Prosa em serifa (EB Garamond), dados em
+ * Inter com algarismos tabulares. Três cores com significado fixo em toda a página:
+ * esmeralda = ICM, ouro = fichas (ChipEV), branco = o que de fato aconteceu.
+ */
+
+.page {
+	--icm: var(--color-accent-emerald-light);
+	--chip: var(--color-accent-gold);
+	--uniform: var(--color-text-darker);
+	--reality: var(--color-text-bright);
+	--caveat: var(--color-accent-rose-light);
+	--line: color-mix(in oklab, var(--color-text-main) 14%, transparent);
+	--surface: color-mix(in oklab, var(--color-bg-deep) 70%, transparent);
+	padding-block: clamp(2.5rem, 6vw, 5rem) 6rem;
+}
+
+.column {
+	max-inline-size: 68ch;
+}
+
+.wide {
+	max-inline-size: 72rem;
+}
+
+.prose {
+	font-family: var(--font-garamond), Georgia, serif;
+	font-size: clamp(1.125rem, 1.05rem + 0.3vw, 1.3rem);
+	line-height: 1.8;
+	color: var(--color-text-main);
+}
+
+.prose p + p {
+	margin-block-start: 1.1em;
+}
+
+.prose strong {
+	color: var(--color-text-bright);
+	font-weight: 600;
+}
+
+.sectionTitle {
+	font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+	font-weight: 800;
+	font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem);
+	line-height: 1.15;
+	letter-spacing: -0.01em;
+	color: var(--color-text-bright);
+	margin-block: 4.5rem 1.25rem;
+}
+
+.icm {
+	color: var(--icm);
+}
+
+.chip {
+	color: var(--chip);
+}
+
+.num {
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Laboratório ─────────────────────────────────────────────────────────── */
+
+.lab {
+	margin-block: 2.5rem;
+	padding: clamp(1.25rem, 3vw, 2.5rem);
+	border: 1px solid var(--line);
+	border-radius: 1.5rem;
+	background:
+		radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--icm) 7%, transparent), transparent 60%),
+		var(--surface);
+}
+
+.labHead {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1rem 2rem;
+}
+
+.labTitle {
+	font-family: var(--font-garamond), Georgia, serif;
+	font-style: italic;
+	font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.75rem);
+	color: var(--color-text-bright);
+}
+
+.formats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.format {
+	padding: 0.45rem 0.9rem;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	font-size: 0.85rem;
+	color: var(--color-text-muted);
+	background: transparent;
+	cursor: pointer;
+}
+
+.format[aria-checked='true'] {
+	color: var(--color-bg-deep);
+	background: var(--reality);
+	border-color: var(--reality);
+	font-weight: 600;
+}
+
+.context {
+	margin-block: 1.25rem 1.5rem;
+	color: var(--color-text-muted);
+	max-inline-size: 68ch;
+}
+
+.table {
+	display: grid;
+	gap: 0.35rem;
+}
+
+.row {
+	display: grid;
+	grid-template-columns: minmax(7.5rem, 1fr) minmax(8rem, 2.4fr) minmax(6rem, 1fr) minmax(6rem, 1fr);
+	align-items: center;
+	gap: 1rem;
+	padding: 0.45rem 0.75rem;
+	border-radius: 0.6rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.rowHead {
+	font-size: 0.8rem;
+	color: var(--color-text-dim);
+}
+
+.rowHero {
+	background: color-mix(in oklab, var(--reality) 7%, transparent);
+	outline: 1px solid color-mix(in oklab, var(--reality) 22%, transparent);
+}
+
+.who {
+	color: var(--color-text-muted);
+}
+
+.rowHero .who {
+	color: var(--reality);
+	font-weight: 600;
+}
+
+.stack {
+	display: grid;
+	grid-template-columns: minmax(3rem, 1fr) auto;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.track {
+	display: block;
+	block-size: 1.1rem;
+}
+
+.bar {
+	display: block;
+	block-size: 100%;
+	border-radius: 0.3rem;
+	background: repeating-linear-gradient(
+		90deg,
+		color-mix(in oklab, var(--chip) 55%, transparent) 0 0.45rem,
+		color-mix(in oklab, var(--chip) 30%, transparent) 0.45rem 0.55rem
+	);
+}
+
+.stackLabel {
+	min-inline-size: 7.5rem;
+	font-size: 0.9rem;
+	color: var(--color-text-bright);
+	white-space: nowrap;
+}
+
+.share {
+	display: inline-block;
+	min-inline-size: 3.2rem;
+	text-align: end;
+	color: var(--color-text-dim);
+}
+
+.money {
+	text-align: end;
+}
+
+.moneyChip {
+	composes: money;
+	color: var(--chip);
+}
+
+.moneyIcm {
+	composes: money;
+	color: var(--icm);
+	font-weight: 600;
+}
+
+.places {
+	margin-block-start: 2rem;
+}
+
+.places figcaption {
+	font-size: 0.9rem;
+	color: var(--color-text-muted);
+	margin-block-end: 0.75rem;
+}
+
+.placeBars {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(0, 1fr);
+	gap: 0.4rem;
+	block-size: 9rem;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.place {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+	border-block-end: 1px solid var(--line);
+}
+
+.placeFill {
+	flex: none;
+	inline-size: 100%;
+	border-radius: 0.35rem 0.35rem 0 0;
+	background: color-mix(in oklab, var(--uniform) 45%, transparent);
+	transition: background-color 400ms ease;
+}
+
+.placePaid .placeFill {
+	background: color-mix(in oklab, var(--icm) 60%, transparent);
+}
+
+.placeActual .placeFill {
+	background: var(--reality);
+	box-shadow: 0 0 1.5rem color-mix(in oklab, var(--reality) 45%, transparent);
+}
+
+.placePct {
+	margin-block-end: 0.3rem;
+	font-size: 0.72rem;
+	white-space: nowrap;
+	color: var(--color-text-dim);
+	font-variant-numeric: tabular-nums;
+}
+
+.placeLabel {
+	position: absolute;
+	inset-block-end: -1.5rem;
+	font-size: 0.8rem;
+	color: var(--color-text-muted);
+}
+
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-block-start: 2.75rem;
+}
+
+.reveal,
+.next {
+	padding: 0.7rem 1.2rem;
+	border-radius: 0.75rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.reveal {
+	color: var(--color-bg-deep);
+	background: var(--reality);
+	border: 1px solid var(--reality);
+}
+
+.reveal:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.next {
+	color: var(--color-text-bright);
+	background: transparent;
+	border: 1px solid var(--line);
+}
+
+.outcome {
+	margin-block-start: 1.25rem;
+	min-block-size: 3.2em;
+	font-family: var(--font-garamond), Georgia, serif;
+	font-size: 1.2rem;
+	color: var(--color-text-bright);
+}
+
+.format:focus-visible,
+.reveal:focus-visible,
+.next:focus-visible {
+	outline: 2px solid var(--icm);
+	outline-offset: 3px;
+}
+
+/* ── Funil ───────────────────────────────────────────────────────────────── */
+
+.pipeline {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+	gap: 0;
+	margin-block: 1.5rem 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: passo;
+}
+
+.step {
+	counter-increment: passo;
+	padding: 1.25rem 1.25rem 1.25rem 0;
+	border-block-start: 2px solid var(--line);
+}
+
+.step::before {
+	content: counter(passo);
+	display: block;
+	font-size: 0.85rem;
+	color: var(--color-text-dim);
+	margin-block-end: 0.5rem;
+}
+
+.stepValue {
+	display: block;
+	font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.4rem);
+	font-weight: 800;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-bright);
+	line-height: 1.1;
+}
+
+.stepLabel {
+	display: block;
+	margin-block-start: 0.4rem;
+	color: var(--color-text-muted);
+	font-size: 0.95rem;
+	max-inline-size: 26ch;
+}
+
+.stepLast {
+	border-block-start-color: var(--reality);
+}
+
+/* ── Gráficos ────────────────────────────────────────────────────────────── */
+
+.charts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+	gap: 2.5rem 3rem;
+	margin-block-start: 1.5rem;
+}
+
+.forest,
+.curve {
+	margin: 0;
+}
+
+.caption {
+	display: grid;
+	gap: 0.35rem;
+	margin-block-end: 0.75rem;
+	font-size: 0.92rem;
+	color: var(--color-text-muted);
+}
+
+.caption strong {
+	font-size: 1.05rem;
+	color: var(--color-text-bright);
+}
+
+.svg {
+	inline-size: 100%;
+	block-size: auto;
+	overflow: visible;
+	font-family: var(--font-body);
+}
+
+.svg text {
+	fill: var(--color-text-dim);
+	font-size: 11px;
+}
+
+.grid line {
+	stroke: var(--line);
+}
+
+.sides {
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-block-start: 0.25rem;
+	margin-inline-start: 41%;
+	font-size: 0.78rem;
+	color: var(--color-text-dim);
+}
+
+.zero {
+	stroke: var(--color-text-dim);
+	stroke-dasharray: 3 4;
+}
+
+.forestLabel {
+	fill: var(--color-text-main) !important;
+	font-size: 13px !important;
+}
+
+.ci {
+	stroke: var(--uniform);
+	stroke-width: 3;
+	stroke-linecap: round;
+}
+
+.point {
+	fill: var(--uniform);
+}
+
+.resolved .ci {
+	stroke: var(--icm);
+}
+
+.resolved .point {
+	fill: var(--icm);
+}
+
+.diagonal {
+	stroke: var(--chip);
+	stroke-dasharray: 5 5;
+	stroke-width: 1.5;
+}
+
+.curveLine {
+	fill: none;
+	stroke: var(--icm);
+	stroke-width: 2;
+}
+
+.curveDot {
+	fill: color-mix(in oklab, var(--icm) 70%, transparent);
+	stroke: var(--color-bg-deep);
+	stroke-width: 1.5;
+}
+
+.reality .curveLine {
+	stroke: var(--reality);
+}
+
+.reality .curveDot {
+	fill: color-mix(in oklab, var(--reality) 80%, transparent);
+}
+
+.reality .diagonal {
+	stroke: var(--icm);
+}
+
+/* ── Limites e molde ─────────────────────────────────────────────────────── */
+
+.limits {
+	display: grid;
+	gap: 1rem;
+	padding: 0;
+	list-style: none;
+}
+
+.limits li {
+	padding-inline-start: 1rem;
+	border-inline-start: 2px solid var(--caveat);
+}
+
+.mold {
+	display: grid;
+	gap: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: molde;
+}
+
+.moldStep {
+	counter-increment: molde;
+	display: grid;
+	grid-template-columns: 2.25rem 1fr;
+	gap: 0.25rem 1rem;
+	padding-block: 1rem;
+	border-block-end: 1px solid var(--line);
+}
+
+.moldStep::before {
+	content: counter(molde);
+	grid-row: span 2;
+	font-weight: 800;
+	color: var(--color-text-dim);
+	font-variant-numeric: tabular-nums;
+}
+
+.moldTitle {
+	color: var(--color-text-bright);
+	font-weight: 600;
+}
+
+.moldText {
+	color: var(--color-text-muted);
+}
+
+.moldText code {
+	font-family: var(--font-mono);
+	font-size: 0.85em;
+	color: var(--color-text-main);
+}
+
+.provenance {
+	margin-block-start: 1.5rem;
+	font-size: 0.85rem;
+	color: var(--color-text-dim);
+	overflow-wrap: anywhere;
+}
+
+.legend {
+	display: none;
+	gap: 1rem;
+	margin-block-end: 0.5rem;
+	font-size: 0.85rem;
+}
+
+@media (max-width: 40rem) {
+	/* Sem cabeçalho de colunas no celular, a cor precisa dizer qual valor é qual. */
+	.legend {
+		display: flex;
+	}
+
+	/* O gráfico de floresta (560 de largura) encolhe com a tela; o texto dele cresce na mesma
+	   proporção. A curva (320) já cabe quase em escala 1 e fica com o tamanho normal. */
+	.forest .svg text {
+		font-size: 16px;
+	}
+
+	.forestLabel {
+		font-size: 17px !important;
+	}
+
+	/* Nome e os dois valores na primeira linha; as fichas ocupam a segunda, inteira. */
+	.row {
+		grid-template-columns: 1fr auto auto;
+		grid-template-areas:
+			'who chip icm'
+			'stack stack stack';
+		row-gap: 0.35rem;
+		column-gap: 0.75rem;
+	}
+
+	.rowHead {
+		display: none;
+	}
+
+	.who {
+		grid-area: who;
+	}
+
+	.stack {
+		grid-area: stack;
+	}
+
+	.moneyChip {
+		grid-area: chip;
+	}
+
+	.moneyIcm {
+		grid-area: icm;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.placeFill {
+		transition: none;
+	}
+}
