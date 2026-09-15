@@ -72,50 +72,50 @@ def format_markdown_report(data: dict[str, Any]) -> str:
     total_screens = data.get("total_screens", 0)
 
     lines: list[str] = []
-    lines.append("# Google Cloud Stitch MCP — Relatório de Governança e Ativos de UI")
+    lines.append("# Google Cloud Stitch MCP -- Relatorio de Governanca e Ativos de UI")
     lines.append("")
-    lines.append("> **Repositório Monitorado:** `RaphaelVitoi/Site`")
-    lines.append("> **Governança:** Protocolo Master Chico SOTA v8.0 GOLD · Tríade Stitch, Exa & Jules")
-    lines.append(f"> **Data de Atualização:** `{now_utc}`")
+    lines.append("> **Repositorio Monitorado:** `RaphaelVitoi/Site`")
+    lines.append("> **Governanca:** Protocolo Master Chico SOTA v8.0 GOLD * Triade Stitch, Exa & Jules")
+    lines.append(f"> **Data de Atualizacao:** `{now_utc}`")
     lines.append("> **Origem dos Dados:** Google Cloud Stitch MCP (`https://stitch.googleapis.com/mcp`)")
     lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## 1. Resumo Executivo do Servidor Stitch MCP")
     lines.append("")
-    lines.append("| Dimensão | Valor | Status Operacional |")
+    lines.append("| Dimensao | Valor | Status Operacional |")
     lines.append("| :--- | :--- | :--- |")
-    lines.append(f"| **Projetos Stitch Ativos** | `{total_proj}` | ✅ Conectado e Operacional |")
-    lines.append(f"| **Telas Cadastradas** | `{total_screens}` | 🎨 Em expansão contínua |")
+    lines.append(f"| **Projetos Stitch Ativos** | `{total_proj}` |  Conectado e Operacional |")
+    lines.append(f"| **Telas Cadastradas** | `{total_screens}` |  Em expansao continua |")
     lines.append(
-        "| **Modelos Suportados** | `Gemini 3.8 Flash` (Balanced - Padrão) & `Gemini 3.5 Flash-Lite` (Speed) | SOTA visual duo ativo no Stitch |"
+        "| **Modelos Suportados** | `Gemini 3.8 Flash` (Balanced - Padrao) & `Gemini 3.5 Flash-Lite` (Speed) | SOTA visual duo ativo no Stitch |"
     )
-    lines.append("| **Integração Frontend** | Tailwind CSS 4 + Next.js 16 | Tokens sincronizados em `globals.css` |")
+    lines.append("| **Integracao Frontend** | Tailwind CSS 4 + Next.js 16 | Tokens sincronizados em `globals.css` |")
     lines.append("")
     lines.append("> [!NOTE]")
-    lines.append("> **Atualização de Modelos de Fronteira no Stitch:**")
+    lines.append("> **Atualizacao de Modelos de Fronteira no Stitch:**")
     lines.append(
-        "> Conforme verificado na interface de produção do Stitch (`stitch.withgoogle.com`), a geração de UI opera com dois tiers:"
+        "> Conforme verificado na interface de producao do Stitch (`stitch.withgoogle.com`), a geracao de UI opera com dois tiers:"
     )
     lines.append(
-        "> - ⚡ **Speed**: `Gemini 3.5 Flash-Lite` (*rapid collaboration, still good quality*) — menor latência e custo marginal nulo."
+        "> -  **Speed**: `Gemini 3.5 Flash-Lite` (*rapid collaboration, still good quality*) -- menor latencia e custo marginal nulo."
     )
     lines.append(
-        "> - ✨ **Balanced (Padrão)**: `Gemini 3.8 Flash` (*balance between speed and high quality*) — alta fidelidade estética e adesão a design systems."
+        "> -  **Balanced (Padrao)**: `Gemini 3.8 Flash` (*balance between speed and high quality*) -- alta fidelidade estetica e adesao a design systems."
     )
     lines.append(
-        "> - *Nota de Descontinuação:* Os modelos da geração anterior (`Gemini 3 Flash` e `Gemini 3.1 Pro`) foram descontinuados na produção."
+        "> - *Nota de Descontinuacao:* Os modelos da geracao anterior (`Gemini 3 Flash` e `Gemini 3.1 Pro`) foram descontinuados na producao."
     )
     lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## 2. Projetos Registrados no Google Stitch")
     lines.append("")
-    lines.append("| ID do Projeto | Título | Visibilidade | Telas | Design Systems | Criado em (UTC) |")
+    lines.append("| ID do Projeto | Titulo | Visibilidade | Telas | Design Systems | Criado em (UTC) |")
     lines.append("| :--- | :--- | :--- | :--- | :--- | :--- |")
 
     if not projects:
-        lines.append("| — | *Nenhum projeto encontrado* | — | — | — | — |")
+        lines.append("| -- | *Nenhum projeto encontrado* | -- | -- | -- | -- |")
     else:
         for p in projects:
             pid = p["id"]
@@ -135,20 +135,20 @@ def format_markdown_report(data: dict[str, Any]) -> str:
     for p in projects:
         pid = p["id"]
         title = p["title"]
-        lines.append(f"### Projeto `{pid}` — {title}")
-        lines.append(f"- **Nome Canônico:** `{p['name']}`")
+        lines.append(f"### Projeto `{pid}` -- {title}")
+        lines.append(f"- **Nome Canonico:** `{p['name']}`")
         lines.append(f"- **Tipo de Projeto:** `{p['project_type']}` | **Origem:** `{p['origin']}`")
-        lines.append(f"- **Última Atualização:** `{p.get('update_time', 'N/A')}`")
-        lines.append(f"- **Permissão / Papel:** `{p.get('metadata', {}).get('userRole', 'OWNER')}`")
+        lines.append(f"- **Ultima Atualizacao:** `{p.get('update_time', 'N/A')}`")
+        lines.append(f"- **Permissao / Papel:** `{p.get('metadata', {}).get('userRole', 'OWNER')}`")
 
         screens = p.get("screens", [])
         if not screens:
             lines.append("- **Telas Cadastradas:** *Nenhuma tela gerada no momento.*")
         else:
-            lines.append(f"- **Inventário de Telas ({len(screens)}):**")
+            lines.append(f"- **Inventario de Telas ({len(screens)}):**")
             for sc in screens:
                 sc_name = sc.get("name", "")
-                sc_title = sc.get("title", "Sem título")
+                sc_title = sc.get("title", "Sem titulo")
                 dev_type = sc.get("deviceType", "DESKTOP")
                 lines.append(f"  - `{sc_name}`: **{sc_title}** (`{dev_type}`)")
 
@@ -167,8 +167,8 @@ def format_markdown_report(data: dict[str, Any]) -> str:
                     if isinstance(theme, dict):
                         custom_color = str(theme.get("customColor", custom_color))
                         font = str(theme.get("font", font))
-                lines.append(f"  - 🎨 **{display_name}** (`{ds_name}`)")
-                lines.append(f"    - Tipografia: `{font}` / `JetBrains Mono` | Acento Primário: `{custom_color}`")
+                lines.append(f"  -  **{display_name}** (`{ds_name}`)")
+                lines.append(f"    - Tipografia: `{font}` / `JetBrains Mono` | Acento Primario: `{custom_color}`")
                 lines.append(
                     "    - Filosofia Visual: *Dark Obsidian Glassmorphism*, bordas com brilho de 1px e contraste WCAG AAA."
                 )
@@ -177,18 +177,18 @@ def format_markdown_report(data: dict[str, Any]) -> str:
 
     lines.append("---")
     lines.append("")
-    lines.append("## 4. Esteira de Prototipagem & Playbook Stitch → Next.js")
+    lines.append("## 4. Esteira de Prototipagem & Playbook Stitch - Next.js")
     lines.append("")
     lines.append("```mermaid")
     lines.append("flowchart TD")
     lines.append(
-        '    Prompt["📝 Prompt Conceitual / Teoria PMev"] --> Stitch["✨ Stitch MCP (generate_screen_from_text)"]'
+        '    Prompt[" Prompt Conceitual / Teoria PMev"] --> Stitch[" Stitch MCP (generate_screen_from_text)"]'
     )
-    lines.append('    Stitch --> Variants["🔀 Geração de Variantes (generate_variants)"]')
-    lines.append('    Variants --> Screen["🖥️ get_screen (HTML/Tailwind Assets)"]')
-    lines.append('    Screen --> TokenAlign["🎨 Alinhamento de Tokens com globals.css"]')
-    lines.append('    TokenAlign --> Components["🧩 Componentes Modulares (frontend/src/components/)"]')
-    lines.append('    Components --> QGate["🛡️ Quality Gate & CWV (cwv_gate.ps1)"]')
+    lines.append('    Stitch --> Variants[" Geracao de Variantes (generate_variants)"]')
+    lines.append('    Variants --> Screen[" get_screen (HTML/Tailwind Assets)"]')
+    lines.append('    Screen --> TokenAlign[" Alinhamento de Tokens com globals.css"]')
+    lines.append('    TokenAlign --> Components[" Componentes Modulares (frontend/src/components/)"]')
+    lines.append('    Components --> QGate[" Quality Gate & CWV (cwv_gate.ps1)"]')
     lines.append("")
     lines.append("    classDef stitch fill:#1a2332,stroke:#ec4899,stroke-width:2px,color:#fff;")
     lines.append("    classDef next fill:#111927,stroke:#3b82f6,stroke-width:2px,color:#fff;")
@@ -221,7 +221,7 @@ def format_markdown_report(data: dict[str, Any]) -> str:
     lines.append("```")
     lines.append("")
     lines.append("---")
-    lines.append("*Relatório emitido pelo Sincronizador de UI Google Cloud Stitch — Protocolo Chico SOTA v8.0 GOLD*")
+    lines.append("*Relatorio emitido pelo Sincronizador de UI Google Cloud Stitch -- Protocolo Chico SOTA v8.0 GOLD*")
 
     return "\n".join(lines) + "\n"
 

@@ -584,7 +584,7 @@ def test_fallback_model_do_manifesto_resolve_em_algum_registro():
     Medido em 2026-08-30, junto com A1: assim como `skills` e `routing_pattern`,
     este campo **nao tem consumidor de producao**. As cadeias de fallback que o
     sistema realmente usa vivem em `data/system_config.json -> model_routing` e
-    em `Rota.fallback` desta politica (CLAUDE.md §3). O unico leitor de
+    em `Rota.fallback` desta politica (CLAUDE.md SS3). O unico leitor de
     `fallback_model` era uma assercao de forma -- que ele existe e nao e vazio --
     nunca de que o nome designa um modelo real.
 

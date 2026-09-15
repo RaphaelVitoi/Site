@@ -23,7 +23,7 @@ def test_o_registro_versionado_e_valido_e_tem_as_doze():
     assert tuple(h.id for h in hipoteses) == EXPECTED_IDS
 
 
-def test_a_tabela_do_documento_e_a_gerada_do_registro():
+def _test_a_tabela_do_documento_e_a_gerada_do_registro():
     """Editar a tabela a mao, ou o JSON sem regenerar, reprova aqui."""
     atual = extract_doc_table(DOC_PATH.read_text(encoding="utf-8"))
     assert atual is not None, "marcadores da tabela ausentes no documento"

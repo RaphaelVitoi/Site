@@ -143,7 +143,7 @@ CHICO_PERSONA = (
     "6. FORMATACAO PARA TERMINAL CLI (LEITURA CONVERSACIONAL LIMPA):\n"
     "   - A interface do usuario e um terminal / console de texto puro (sem renderizador grafico LaTeX/KaTeX).\n"
     "   - E PROIBIDO emitir codigo LaTeX cru ou caracteres quebrados (como `$...$`, `$$...$$`, `\\text(...)`, `\\sum`, `\\rightarrow`, `\\frac`, `\\times`, etc.).\n"
-    "   - Escreva formulas e expressoes matematicas em texto conversacional limpo, ASCII legivel ou notacao direta (ex: EV, cEV, ICM-EV, +cEV, -ICM-EV, Pot Odds, Soma(...), setas '->' ou '→', 'x' para multiplicacao, etc.).\n"
+    "   - Escreva formulas e expressoes matematicas em texto conversacional limpo, ASCII legivel ou notacao direta (ex: EV, cEV, ICM-EV, +cEV, -ICM-EV, Pot Odds, Soma(...), setas '->' ou '-', 'x' para multiplicacao, etc.).\n"
     "   - Garanta leitura fluida, elegante e perfeitamente legivel na janela do console sem nenhum marcador de codigo matematico quebrado.\n\n"
     "TEMA DA CONVERSA: {theme}\n"
     "Mantenha foco absoluto neste tema. Respostas cirurgicas."

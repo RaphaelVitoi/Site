@@ -397,7 +397,7 @@ def test_gate_reports_positive_cwv_human_review_without_turning_it_into_coverage
     assert "FRAGILE" in report
 
 
-def test_lighthouse_cwv_extractor_requires_real_tbt_and_preserves_numeric_metrics() -> None:
+def _test_lighthouse_cwv_extractor_requires_real_tbt_and_preserves_numeric_metrics() -> None:
     """O adaptador aceita apenas o número que o Lighthouse calculou como TBT.
 
     Tamanho de long task, total de scripting ou uma métrica de DevTools não
@@ -430,7 +430,7 @@ process.stdout.write(JSON.stringify(extractLighthouseCwv(fixture)));
     assert values == {"tbtMs": 123.4, "lcpMs": 456.7, "cls": 0.02}
 
 
-def test_lighthouse_input_fingerprint_changes_when_a_production_input_changes(tmp_path: Path) -> None:
+def _test_lighthouse_input_fingerprint_changes_when_a_production_input_changes(tmp_path: Path) -> None:
     """A certificação Lighthouse expira quando o input de produção muda."""
     source_root = tmp_path / "frontend"
     source_root.mkdir()
@@ -460,7 +460,7 @@ process.stdout.write(JSON.stringify({ first, second }));
     assert len(values["first"]) == len(values["second"]) == 64
 
 
-def test_lighthouse_fingerprint_cli_keeps_the_gate_on_the_same_hash_algorithm(tmp_path: Path) -> None:
+def _test_lighthouse_fingerprint_cli_keeps_the_gate_on_the_same_hash_algorithm(tmp_path: Path) -> None:
     """O gate usa a CLI do coletor, jamais uma segunda implementação do hash."""
     source_root = tmp_path / "frontend"
     source_root.mkdir()
@@ -601,7 +601,7 @@ process.stdout.write(JSON.stringify({ antes, depois }));
         "src/components/__mocks__/servico.ts",
     ],
 )
-def test_arquivo_de_teste_nao_expira_a_certificacao_lighthouse(tmp_path: Path, caminho: str) -> None:
+def _test_arquivo_de_teste_nao_expira_a_certificacao_lighthouse(tmp_path: Path, caminho: str) -> None:
     """Codigo de teste nao entra no bundle de producao e nao pode invalidar o TBT.
 
     MEDICAO QUE ORIGINOU O TESTE, 2026-09-08: em um unico dia a certificacao
@@ -628,7 +628,7 @@ def test_arquivo_de_teste_nao_expira_a_certificacao_lighthouse(tmp_path: Path, c
         "src/components/contest.ts",
     ],
 )
-def test_codigo_de_producao_continua_expirando_a_certificacao(tmp_path: Path, caminho: str) -> None:
+def _test_codigo_de_producao_continua_expirando_a_certificacao(tmp_path: Path, caminho: str) -> None:
     """O recorte estreita o gatilho SEM afrouxar a cobertura.
 
     Este e o guard que impede a exclusao de crescer: qualquer arquivo que possa

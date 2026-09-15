@@ -1,7 +1,7 @@
-"""Suíte de Testes de Estresse e Concorrência para Free Tier Gateway e PMev Pipeline.
+"""Suite de Testes de Estresse e Concorrencia para Free Tier Gateway e PMev Pipeline.
 
 Protocolo Chico SOTA v8.0 GOLD.
-Verificação: Imunidade a TOCTOU sob rajada assíncrona, cache semântico e combinatória PMev.
+Verificacao: Imunidade a TOCTOU sob rajada assincrona, cache semantico e combinatoria PMev.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from llm.free_router import AtomicQuotaBucket, SOTAUnifiedFreeRouter
 
 @pytest.mark.asyncio
 async def test_atomic_quota_bucket_anti_toctou_concurrency() -> None:
-    """Verifica que 50 chamadas assíncronas simultâneas não ultrapassam o teto de RPM/TPM."""
+    """Verifica que 50 chamadas assincronas simultaneas nao ultrapassam o teto de RPM/TPM."""
     bucket = AtomicQuotaBucket(rpm_limit=10, tpm_limit=50_000, rpd_limit=20)
 
     tasks = [bucket.try_acquire(estimated_tokens=4_000) for _ in range(50)]
@@ -38,7 +38,7 @@ async def test_atomic_quota_bucket_anti_toctou_concurrency() -> None:
 
 @pytest.mark.asyncio
 async def test_atomic_quota_bucket_reconciliation_and_release() -> None:
-    """Testa reconciliação pós-chamada e estorno de alocação."""
+    """Testa reconciliacao pos-chamada e estorno de alocacao."""
     bucket = AtomicQuotaBucket(rpm_limit=5, tpm_limit=20_000, rpd_limit=10)
 
     assert await bucket.try_acquire(estimated_tokens=5_000) is True
@@ -77,12 +77,12 @@ def test_free_router_multi_key_scaling() -> None:
 
 @pytest.mark.asyncio
 async def test_free_router_local_cache_deduplication() -> None:
-    """Verifica que consultas idênticas são atendidas pelo cache SHA-256 local com 0 tokens de API."""
+    """Verifica que consultas identicas sao atendidas pelo cache SHA-256 local com 0 tokens de API."""
     router = SOTAUnifiedFreeRouter(google_api_keys=["mock-key"])
     ckey = router._cache_key("teste prompt duplicado", "sys instruction")
     await router._store_cache(ckey, {"output": "Resposta cacheada perfeitamente"})
 
-    # Segunda chamada com os mesmos parâmetros deve vir diretamente do cache local
+    # Segunda chamada com os mesmos parametros deve vir diretamente do cache local
     res = await router.execute_by_complexity("teste prompt duplicado", "sys instruction", complexity_score=2)
     assert res["provider"] == "local-cache"
     assert res["model"] == "sha256-deduplicated"
@@ -90,7 +90,7 @@ async def test_free_router_local_cache_deduplication() -> None:
 
 
 def test_token_demand_calculation() -> None:
-    """Verifica que a demanda de tokens é calculada dinamicamente sem números mágicos."""
+    """Verifica que a demanda de tokens e calculada dinamicamente sem numeros magicos."""
     prompt = "A" * 1000  # 1000 chars / 2.5 = 400 tokens de input
     est_score_1, max_out_1 = SOTAUnifiedFreeRouter.calculate_token_demand(prompt, complexity_score=1)
     assert est_score_1 == 400 + 1024
@@ -102,7 +102,7 @@ def test_token_demand_calculation() -> None:
 
 
 def test_pmev_range_matrix_combinatorics() -> None:
-    """Valida a integridade combinatória exata de 1326 combos Texas Hold'em na Camada 2 local."""
+    """Valida a integridade combinatoria exata de 1326 combos Texas Hold'em na Camada 2 local."""
     # AA (6) + KK (6) + AKs (4) + AKo (12 * 0.5 = 6) = 22 combos ponderados
     range_spec = {"AA": 1.0, "KK": 1.0, "AKs": 1.0, "AKo": 0.5}
     res = PMevTripartitePipeline.validate_range_matrix(range_spec)
@@ -112,18 +112,18 @@ def test_pmev_range_matrix_combinatorics() -> None:
     # 22 / 1326 * 100 = ~1.66%
     assert res["range_coverage_pct"] == 1.66
 
-    # Rejeição de mãos malformadas
-    with pytest.raises(ValueError, match="Formato de mão inválido"):
+    # Rejeicao de maos malformadas
+    with pytest.raises(ValueError, match="Formato de mao invalido"):
         PMevTripartitePipeline.validate_range_matrix({"AKx": 1.0})
 
-    # Rejeição de pesos inválidos
-    with pytest.raises(ValueError, match="Peso inválido"):
+    # Rejeicao de pesos invalidos
+    with pytest.raises(ValueError, match="Peso invalido"):
         PMevTripartitePipeline.validate_range_matrix({"AA": 1.5})
 
 
 @pytest.mark.asyncio
 async def test_pmev_tripartite_pipeline_local_deterministic() -> None:
-    """Valida a integridade matemática da Camada 2 (cálculo de Malmuth-Harville e Bubble Factor)."""
+    """Valida a integridade matematica da Camada 2 (calculo de Malmuth-Harville e Bubble Factor)."""
     pipeline = PMevTripartitePipeline()
 
     state = pipeline.normalize_state([5000.0, 3000.0, 2000.0], [500.0, 300.0, 200.0])

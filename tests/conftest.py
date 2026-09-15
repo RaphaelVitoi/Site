@@ -197,7 +197,7 @@ def pytest_collectreport(report: Any) -> None:
 
     O exit code continuava 2, entao o CI nunca passou em falso e o pre-commit
     nunca foi furado -- o estrago era no VEREDITO IMPRESSO, que e exatamente o
-    que a §5 do CLAUDE.md manda o agente declarar. Um agente obediente repassava
+    que a SS5 do CLAUDE.md manda o agente declarar. Um agente obediente repassava
     "verde" sobre uma bateria que nao existiu.
 
     A causa era de superficie, nao de logica: `pytest_runtest_logreport` so ve a

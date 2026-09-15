@@ -49,7 +49,7 @@ def run_python_script(script_rel_path: str, *args: str) -> tuple[int, str]:
 
 
 def run_pytest(test_files: list[str]) -> tuple[int, str]:
-    """Executa suíte de testes pontual sem poluir logs."""
+    """Executa suite de testes pontual sem poluir logs."""
     python_bin = BASE_DIR / ".venv" / "Scripts" / "python.exe"
     if not python_bin.exists():
         python_bin = Path(sys.executable)
@@ -70,7 +70,7 @@ def run_pytest(test_files: list[str]) -> tuple[int, str]:
 
 
 def execute_autopoietic_cycle() -> dict[str, Any]:
-    """Executa em série estrita o ciclo diário não-concorrente."""
+    """Executa em serie estrita o ciclo diario nao-concorrente."""
     start_time = time.monotonic()
     now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -93,7 +93,7 @@ def execute_autopoietic_cycle() -> dict[str, Any]:
     if not stitch_ok and out_stitch:
         logger.warning("     %s", out_stitch)
 
-    # 3. Fase Homeostase & Testes Unitários de Integração
+    # 3. Fase Homeostase & Testes Unitarios de Integracao
     logger.info("[FASE 3/3] Validando Homeostase das Pontes e Governanca...")
     test_targets = [
         "tests/test_stitch_bridge.py",
@@ -143,8 +143,8 @@ def execute_autopoietic_cycle() -> dict[str, Any]:
 
 def main() -> None:
     """Ponto de entrada."""
-    parser = argparse.ArgumentParser(description="Executa ciclo diário autopoiético do ecossistema.")
-    parser.add_argument("--json", action="store_true", help="Emite o sumário estruturado em JSON")
+    parser = argparse.ArgumentParser(description="Executa ciclo diario autopoietico do ecossistema.")
+    parser.add_argument("--json", action="store_true", help="Emite o sumario estruturado em JSON")
     args = parser.parse_args()
 
     summary = execute_autopoietic_cycle()

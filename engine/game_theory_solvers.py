@@ -2,11 +2,11 @@
 # ruff: noqa: N806, N815
 """Modulo Unificado de Teoria dos Jogos SOTA (Claudico, DeepStack, Libratus, Pluribus & PMev).
 
-Integra os principios algoritmicos fundamentais dos solvers canônicos:
+Integra os principios algoritmicos fundamentais dos solvers canonicos:
 1. Claudico: Potential-Aware Card Abstraction e Pseudo-Harmonic Action Translation.
 2. DeepStack: Continual Resolving e Leaf Value Estimation via Gadget Game.
 3. Libratus: CFR+, Nested Subgame Solving e Reach Subgame Safety.
-4. Pluribus: Depth-Limited Multiway MCCFR e Decomposicao Quadrática de Passivo Multiway.
+4. Pluribus: Depth-Limited Multiway MCCFR e Decomposicao Quadratica de Passivo Multiway.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ EPSILON: Final[float] = 1e-12
 
 
 class Street(StrEnum):
-    """Ruas de uma mão de Texas Hold'em."""
+    """Ruas de uma mao de Texas Hold'em."""
 
     PREFLOP = "preflop"
     FLOP = "flop"
@@ -94,7 +94,7 @@ class ClaudicoActionTranslator:
         allowed_bets: Sequence[float],
         pot_size: float,
     ) -> dict[float, float]:
-        r"""Mapeia uma aposta fora da arvore para uma distribuicao de probabilidade sobre os nós validos.
+        r"""Mapeia uma aposta fora da arvore para uma distribuicao de probabilidade sobre os nos validos.
 
         Utiliza a relacao harmonica:
         $$w_1 = \frac{B_2 - B}{B_2 - B_1} \cdot \frac{B_1 + \text{Pot}}{B + \text{Pot}}$$
@@ -391,7 +391,7 @@ class PluribusDepthLimitedSolver:
 
 @dataclass(slots=True)
 class PUCTNode:
-    """Nó da arvore MCTS/PUCT com estatisticas de visita e valor."""
+    """No da arvore MCTS/PUCT com estatisticas de visita e valor."""
 
     action: str
     prior_probability: float  # P(s, a)
@@ -468,7 +468,7 @@ class PUCTPerspectiveSelector:
 
 @dataclass(slots=True)
 class GrowingTreeNode:
-    """Nó assimetrico do Growing-Tree CFR com expansao dinamica."""
+    """No assimetrico do Growing-Tree CFR com expansao dinamica."""
 
     node_id: str
     street: Street
@@ -487,11 +487,11 @@ class GrowingTreeCFRSolver:
         self.root = GrowingTreeNode(node_id="root", street=Street.PREFLOP, pot=10.0)
 
     def step_sample(self, node: GrowingTreeNode, street_actions: Sequence[str]) -> str:
-        """Amostra uma trajetoria e expande o nó assimetricamente quando atinge o limiar."""
+        """Amostra uma trajetoria e expande o no assimetricamente quando atinge o limiar."""
         node.visit_count += 1
 
         if not node.is_expanded and node.visit_count >= self.expansion_threshold:
-            # Expande o nó em tempo real
+            # Expande o no em tempo real
             node.is_expanded = True
             for a in street_actions:
                 child_id = f"{node.node_id}_{a.lower()}"
