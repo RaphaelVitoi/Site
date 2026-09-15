@@ -1,6 +1,6 @@
 """Operadores composicionais do arcabouco PMev (f1 a f5).
 
-Formalismo: Raphael Vitoi — Ecossistema Nexus SOTA v8.0 GOLD.
+Formalismo: Raphael Vitoi -- Ecossistema Nexus SOTA v8.0 GOLD.
 Auditoria Integrada: Sol (Codex) x Hermes.
 
 A cadeia compositiva de seis operadores:

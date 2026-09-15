@@ -1,4 +1,4 @@
-"""Indice SQLite FTS5 da skill, com cache endereçado por conteudo e falha explicita.
+"""Indice SQLite FTS5 da skill, com cache enderecado por conteudo e falha explicita.
 
 O que mudou em 2026-09-13, medido antes:
 - a chave era `origem:caminho` e nao havia hash algum, embora o manifesto prometesse
@@ -6,7 +6,7 @@ O que mudou em 2026-09-13, medido antes:
   e reextraido, conteudo diferente e.
 - `except Exception: pass` escondia falha de extracao. Agora ela fica gravada na linha
   (`extraction_error`) e o build sai com codigo 3.
-- caminhos absolutos fixos e o inventario de discos pessoais saíram do codigo versionado.
+- caminhos absolutos fixos e o inventario de discos pessoais sairam do codigo versionado.
   Ancoras externas vem de `local/anchors.json`, ignorado pelo git.
 
 Codigos: 0 ok | 1 indice inexistente na busca | 3 build com falha de extracao

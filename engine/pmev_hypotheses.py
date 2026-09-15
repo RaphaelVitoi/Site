@@ -48,9 +48,9 @@ class EvidenceState(StrEnum):
 
 
 _ROTULO: Final[dict[EvidenceState, str]] = {
-    EvidenceState.NONE: "sem evidência",
-    EvidenceState.TRANSCRIBED: "transcrita, não reproduzível",
-    EvidenceState.REPRODUCIBLE: "reproduzível",
+    EvidenceState.NONE: "sem evidencia",
+    EvidenceState.TRANSCRIBED: "transcrita, nao reproduzivel",
+    EvidenceState.REPRODUCIBLE: "reproduzivel",
 }
 
 _CAMPOS_TEXTO: Final[tuple[str, ...]] = ("enunciado", "baseline", "criterio_falsificacao", "onde_testar", "nota")
@@ -121,7 +121,7 @@ def _celula_id(hid: str) -> str:
 
 def render_markdown_table(hipoteses: tuple[Hypothesis, ...]) -> str:
     linhas = [
-        "| Hipótese | Enunciado | Baseline | Critério Estrito de Falsificação | Módulo Python Local | Evidência |",
+        "| Hipotese | Enunciado | Baseline | Criterio Estrito de Falsificacao | Modulo Python Local | Evidencia |",
         "| :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
     for h in hipoteses:

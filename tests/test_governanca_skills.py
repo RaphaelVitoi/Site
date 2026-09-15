@@ -31,7 +31,7 @@ Um nome declarado resolve de duas maneiras, e so duas:
 1. **Skill local** -- diretorio VERSIONADO com `SKILL.md` sob uma das
    `raizes_locais` de `data/skills_registry.json`. E DESCOBERTA por varredura,
    nunca listada no registro: repetir em JSON o que ja esta em disco criaria a
-   segunda copia que a §7 do CLAUDE.md proibe, e ela divergiria como o
+   segunda copia que a SS7 do CLAUDE.md proibe, e ela divergiria como o
    `AGENTS.md` divergiu. Diretorio coberto pelo `.gitignore` nao conta: ele e
    instalacao de plugin numa maquina, nao conteudo deste repositorio, e tratar
    presenca em disco como resolucao faz a guarda medir o perfil do operador em
@@ -48,7 +48,7 @@ resolucao declarada ou nao entra.
 
 Nao afirma que uma skill `nao-verificada` existe na maquina do operador. Nao da
 para verificar isso a partir do repositorio, e ausencia de observacao nao e
-prova de ausencia (§8.2) -- por isso nenhuma declaracao foi removida do
+prova de ausencia (SS8.2) -- por isso nenhuma declaracao foi removida do
 manifesto quando o registro foi criado. O que a guarda garante e que toda
 afirmacao de capacidade tenha um lugar unico onde seu status esta escrito, em
 vez de estar implicita em 19 documentos gerados.
@@ -189,7 +189,7 @@ def test_registro_de_externas_nao_acumula_entrada_morta():
 
 def test_skill_local_e_externa_nao_disputam_o_mesmo_nome():
     """Duas fontes para o mesmo nome e ambiguidade de resolucao -- o problema
-    que a §3 do CLAUDE.md trata como fonte unica por decisao."""
+    que a SS3 do CLAUDE.md trata como fonte unica por decisao."""
     colisao = sorted(set(_skills_locais()) & _externas())
 
     assert not colisao, (

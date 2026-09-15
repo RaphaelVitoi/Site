@@ -150,52 +150,52 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     lines: list[str] = []
     lines.append("# Google Jules Cloud Telemetry & Task Execution Report")
     lines.append("")
-    lines.append("> **Repositório Monitorado:** `RaphaelVitoi/Site`")
-    lines.append("> **Governança:** Protocolo Master Chico SOTA v8.0 GOLD (Seção X — Jules Cloud MCP Bridge)")
-    lines.append(f"> **Data de Atualização:** `{now_utc}`")
+    lines.append("> **Repositorio Monitorado:** `RaphaelVitoi/Site`")
+    lines.append("> **Governanca:** Protocolo Master Chico SOTA v8.0 GOLD (Secao X -- Jules Cloud MCP Bridge)")
+    lines.append(f"> **Data de Atualizacao:** `{now_utc}`")
     lines.append("> **Origem dos Dados:** Google Jules API v1alpha (`https://jules.googleapis.com/v1alpha`)")
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("## 1. Resumo Executivo das Sessões em Nuvem")
+    lines.append("## 1. Resumo Executivo das Sessoes em Nuvem")
     lines.append("")
-    lines.append("| Métrica | Valor | Status Operacional |")
+    lines.append("| Metrica | Valor | Status Operacional |")
     lines.append("| :--- | :--- | :--- |")
-    lines.append(f"| **Total de Sessões Registradas** | `{total}` | Base de telemetria completa |")
-    lines.append(f"| **Sessões Concluídas com Sucesso** | `{completed}` | ✅ Execução com artefatos |")
-    lines.append(f"| **Sessões com Falha de Execução** | `{failed}` | ⚠️ Diagnóstico detalhado abaixo |")
-    lines.append(f"| **Sessões Ativas no Momento** | `{in_progress}` | 💤 Standby |")
-    lines.append("| **Plano Ativo** | `Jules in Pro` | Cota: 100 sessões/dia (1/100 consumida) |")
-    lines.append("| **Cron Noturno Automatizado** | Ativo (~03:15–03:25 UTC) | Persona `Bolt ⚡` |")
+    lines.append(f"| **Total de Sessoes Registradas** | `{total}` | Base de telemetria completa |")
+    lines.append(f"| **Sessoes Concluidas com Sucesso** | `{completed}` |  Execucao com artefatos |")
+    lines.append(f"| **Sessoes com Falha de Execucao** | `{failed}` |  Diagnostico detalhado abaixo |")
+    lines.append(f"| **Sessoes Ativas no Momento** | `{in_progress}` |  Standby |")
+    lines.append("| **Plano Ativo** | `Jules in Pro` | Cota: 100 sessoes/dia (1/100 consumida) |")
+    lines.append("| **Cron Noturno Automatizado** | Ativo (~03:15-03:25 UTC) | Persona `Bolt ` |")
     lines.append("")
     lines.append("> [!NOTE]")
-    lines.append("> **Modelo: a escolha é na UI, não pelo portão MCP.**")
+    lines.append("> **Modelo: a escolha e na UI, nao pelo portao MCP.**")
     lines.append(">")
     lines.append(
-        "> O seletor de modelo do Jules existe e é do operador, mas vive nas preferências da plataforma (`jules.google.com/settings/general`) — mesmo padrão do Stitch."
+        "> O seletor de modelo do Jules existe e e do operador, mas vive nas preferencias da plataforma (`jules.google.com/settings/general`) -- mesmo padrao do Stitch."
     )
     lines.append(
-        "> Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam parâmetro de modelo, então nenhuma automática daqui o roteia (medido em 2026-09-04)."
+        "> Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam parametro de modelo, entao nenhuma automatica daqui o roteia (medido em 2026-09-04)."
     )
     lines.append(
-        "> Este relatório deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instrução que não alcança mecanismo é promessa ao operador."
+        "> Este relatorio deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instrucao que nao alcanca mecanismo e promessa ao operador."
     )
     lines.append(">")
     lines.append(
-        "> **Subscrição**: `Jules in Pro`, autorizando até 100 sessões concorrentes/diárias na nuvem da Google."
+        "> **Subscricao**: `Jules in Pro`, autorizando ate 100 sessoes concorrentes/diarias na nuvem da Google."
     )
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("## 2. Diagnóstico de Causa-Raiz das Falhas Diárias")
+    lines.append("## 2. Diagnostico de Causa-Raiz das Falhas Diarias")
     lines.append("")
     lines.append("> [!CAUTION]")
-    lines.append("> **Por que o relatório anterior estava vazio e as tarefas diárias falhavam:**")
+    lines.append("> **Por que o relatorio anterior estava vazio e as tarefas diarias falhavam:**")
     lines.append(
-        "> 1. **Relatório Alienígena no Git:** O arquivo `JULES_REPORT.md` anterior foi incorporado no commit `b36a9ea4` com um template copiado de `robinbakshi007/ollama-direct-custom-agent` (projeto de extensão VS Code alheio), sem qualquer vínculo com a API do Jules."
+        "> 1. **Relatorio Alienigena no Git:** O arquivo `JULES_REPORT.md` anterior foi incorporado no commit `b36a9ea4` com um template copiado de `robinbakshi007/ollama-direct-custom-agent` (projeto de extensao VS Code alheio), sem qualquer vinculo com a API do Jules."
     )
     lines.append(
-        "> 2. **Falha Sistêmica no Clone da VM do Jules:** Toda noite às ~03:20 UTC, o runner em nuvem do Google Jules inicia uma VM descartável e executa:"
+        "> 2. **Falha Sistemica no Clone da VM do Jules:** Toda noite as ~03:20 UTC, o runner em nuvem do Google Jules inicia uma VM descartavel e executa:"
     )
     lines.append(">    ```bash")
     lines.append(
@@ -203,18 +203,18 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     )
     lines.append(">    ```")
     lines.append(
-        "> 3. **Submódulo Quebrado (`skills/exa-mcp-server`):** O commit `fb578584d9bf8df7afc53890c5daabb6956200b7` foi registrado localmente no submódulo, mas **nunca foi (e não pode ser) enviado para o repositório público upstream** (`exa-labs/exa-mcp-server.git`). O GitHub rejeitava o fetch com `upload-pack: not our ref fb578584d9...`, abortando o clone antes do agente Jules rodar."
+        "> 3. **Submodulo Quebrado (`skills/exa-mcp-server`):** O commit `fb578584d9bf8df7afc53890c5daabb6956200b7` foi registrado localmente no submodulo, mas **nunca foi (e nao pode ser) enviado para o repositorio publico upstream** (`exa-labs/exa-mcp-server.git`). O GitHub rejeitava o fetch com `upload-pack: not our ref fb578584d9...`, abortando o clone antes do agente Jules rodar."
     )
     lines.append(
-        "> 4. **Bug de Parâmetro no `engine/jules_bridge.py`:** A query `?view=FULL` era rejeitada pela API v1alpha com HTTP 400 Bad Request (sanado nesta sessão)."
+        "> 4. **Bug de Parametro no `engine/jules_bridge.py`:** A query `?view=FULL` era rejeitada pela API v1alpha com HTTP 400 Bad Request (sanado nesta sessao)."
     )
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("## 3. Histórico Consolidado de Sessões no Google Jules")
+    lines.append("## 3. Historico Consolidado de Sessoes no Google Jules")
     lines.append("")
     lines.append(
-        "| ID da Sessão | Data (UTC) | Persona / Prompt | Branch | Status | Atividades | Observação / Causa da Falha |"
+        "| ID da Sessao | Data (UTC) | Persona / Prompt | Branch | Status | Atividades | Observacao / Causa da Falha |"
     )
     lines.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
 
@@ -226,7 +226,7 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
         if len(title) > 55:
             title = title[:52] + "..."
         branch = s["branch"]
-        state_badge = "✅ COMPLETED" if s["state"] == "COMPLETED" else f"❌ {s['state']}"
+        state_badge = " COMPLETED" if s["state"] == "COMPLETED" else f" {s['state']}"
         acts_count = s["activities_count"]
 
         fail = s["failure_reason"]
@@ -237,9 +237,9 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
             else:
                 obs = f"`{fail[:80]}`"
         elif s["state"] == "COMPLETED":
-            obs = "Execução bem-sucedida"
+            obs = "Execucao bem-sucedida"
         else:
-            obs = "—"
+            obs = "--"
 
         lines.append(
             f"| [{sid}](https://jules.google.com/session/{sid}) | `{created}` | **{title}** | `{branch}` | {state_badge} | `{acts_count}` | {obs} |"
@@ -248,15 +248,15 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("## 4. Detalhamento Técnico das Sessões Rastreadas")
+    lines.append("## 4. Detalhamento Tecnico das Sessoes Rastreadas")
     lines.append("")
 
     for s in sessions:
         sid = s["id"]
-        lines.append(f"### Sessão `{sid}` — {s['title']}")
+        lines.append(f"### Sessao `{sid}` -- {s['title']}")
         lines.append(f"- **Status:** `{s['state']}`")
         lines.append(f"- **Criada em:** `{s['create_time']}`")
-        lines.append(f"- **Branch:** `{s['branch']}` | **Repositório:** `{s['source']}`")
+        lines.append(f"- **Branch:** `{s['branch']}` | **Repositorio:** `{s['source']}`")
         lines.append(f"- **Link Direto:** https://jules.google.com/session/{sid}")
         lines.append("- **Prompt Original:**")
         lines.append("  ```text")
@@ -284,26 +284,26 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
 
     lines.append("---")
     lines.append("")
-    lines.append("## 5. Plano de Resolução e Próximos Passos")
+    lines.append("## 5. Plano de Resolucao e Proximos Passos")
     lines.append("")
-    lines.append("1. **Normalização do Submódulo `skills/exa-mcp-server`:**")
+    lines.append("1. **Normalizacao do Submodulo `skills/exa-mcp-server`:**")
     lines.append(
-        "   - Realinhar o ponteiro gitlink do submódulo para `15ffb50519e719dc791cdc750ce5ed1934c0a1ed` (HEAD canônico do `origin/main`)."
+        "   - Realinhar o ponteiro gitlink do submodulo para `15ffb50519e719dc791cdc750ce5ed1934c0a1ed` (HEAD canonico do `origin/main`)."
     )
     lines.append(
-        "   - Manter as customizações locais do pacote isoladas ou arquivadas sem poluir o commit tracked pelo repositório pai."
+        "   - Manter as customizacoes locais do pacote isoladas ou arquivadas sem poluir o commit tracked pelo repositorio pai."
     )
-    lines.append("2. **Sincronização Contínua do `JULES_REPORT.md`:**")
+    lines.append("2. **Sincronizacao Continua do `JULES_REPORT.md`:**")
     lines.append(
-        "   - Executar `python scripts/ops/sync_jules_report.py --write` para regenerar este relatório automaticamente via cron ou pré-commit."
+        "   - Executar `python scripts/ops/sync_jules_report.py --write` para regenerar este relatorio automaticamente via cron ou pre-commit."
     )
     lines.append("3. **Disparo de Teste de Sanidade na Nuvem:**")
     lines.append(
-        "   - Criar uma nova sessão via `engine/jules_bridge.py` com o submódulo normalizado para verificar se a VM do Jules conclui o clone sem erros."
+        "   - Criar uma nova sessao via `engine/jules_bridge.py` com o submodulo normalizado para verificar se a VM do Jules conclui o clone sem erros."
     )
     lines.append("")
     lines.append("---")
-    lines.append("*Relatório emitido pelo Sincronizador de Telemetria Google Jules — Protocolo Chico SOTA v8.0 GOLD*")
+    lines.append("*Relatorio emitido pelo Sincronizador de Telemetria Google Jules -- Protocolo Chico SOTA v8.0 GOLD*")
 
     return "\n".join(lines) + "\n"
 

@@ -51,7 +51,7 @@ def test_claudico_pseudo_harmonic_mapping():
     allowed_bets = [10.0, 20.0, 50.0]
     pot_size = 20.0
 
-    # Aposta exata no nó
+    # Aposta exata no no
     mapping_exact = ClaudicoActionTranslator.pseudo_harmonic_mapping(20.0, allowed_bets, pot_size)
     assert math.isclose(mapping_exact.get(20.0, 0.0), 1.0)
 
@@ -152,7 +152,7 @@ def test_pluribus_active_stacks_governam_custos_e_evs():
 
 
 def test_pluribus_depth_governa_exposicao_futura():
-    """Horizonte maior produz exposição e passivo futuros explícitos."""
+    """Horizonte maior produz exposicao e passivo futuros explicitos."""
     solver = PluribusDepthLimitedSolver(
         PluribusMultiwayState(
             pot=100.0,
@@ -211,7 +211,7 @@ def test_alphago_puct_perspective_selector():
 
 
 def test_student_of_games_gt_cfr_solver():
-    """Valida a expansao assimétrica da arvore no Growing-Tree CFR."""
+    """Valida a expansao assimetrica da arvore no Growing-Tree CFR."""
     solver = GrowingTreeCFRSolver(expansion_threshold=5)
     root = solver.root
     actions = ["CHECK", "BET"]

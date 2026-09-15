@@ -183,7 +183,7 @@ def test_janda_bluff_value_ratios():
 
 
 # ==============================================================================
-# 3. TESTE DE CONVERGÊNCIA: CFR+ VERSUS SOLUÇÃO ANALÍTICA DE CHEN
+# 3. TESTE DE CONVERGENCIA: CFR+ VERSUS SOLUCAO ANALITICA DE CHEN
 # ==============================================================================
 
 
