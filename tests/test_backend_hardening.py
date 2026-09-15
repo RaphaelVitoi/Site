@@ -640,7 +640,7 @@ async def test_claim_task_garante_reserva_atomica_e_sem_duplicidade(mock_queue_m
 
 
 @pytest.mark.unit
-def test_rate_limiter_purga_ips_expirados_e_previne_memory_leak(_monkeypatch) -> None:
+def test_rate_limiter_purga_ips_expirados_e_previne_memory_leak(monkeypatch) -> None:
     """Verifica se _purge_expired_ips aniquila registros defasados de IP da memoria."""
     from api.v1.middleware import _ip_blocks, _purge_expired_ips
 
