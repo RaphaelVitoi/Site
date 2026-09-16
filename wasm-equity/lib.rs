@@ -566,6 +566,7 @@ fn calculate_utility_ev(
     if raw_ev.is_nan() || raw_ev.is_infinite() {
         return 0.0;
     }
+    #[allow(clippy::approx_constant)] // piso calibrado em 2.718; trocar por E muda a saida publicada
     let safe_stack = stack_eff.max(2.718);
     let stack_modifier = LN_100 / safe_stack.ln();
     let fgs_modifier = 1.0 / (fgs_health * fgs_health).max(0.1);
@@ -631,6 +632,7 @@ pub fn calculate_perspectiva_core(
     let advantage_multiplier = 1.0 + (risk_advantage * INV_100);
 
     // 2. Amortização de Edge
+    #[allow(clippy::approx_constant)] // piso calibrado em 2.718; trocar por E muda a saida publicada
     let safe_stack_edge = stack_eff.max(2.718);
     let edge_scale = (safe_stack_edge.ln() * INV_LN_60) * advantage_multiplier;
     let amortized_edge = edge_base * edge_scale;
@@ -1039,10 +1041,115 @@ fn draw_multiway_combo(rng: &mut u64, cdf: &[f64; 1326], total_mass: f64) -> (u8
     index_to_cards(low)
 }
 
+/// Equidade multiway por Monte Carlo com avaliacao real de maos.
+///
+/// Ate 2026-09-16 este kernel sorteava os combos, rejeitava colisoes e nunca avaliava
+/// mao nenhuma: `wins` ficava em zero e o worker rotulava a saida como `scaffold`. Agora
+/// cada iteracao valida completa o board, avalia as sete cartas de cada jogador e divide
+/// o pote entre os empatados. Devolve (equidades, abortou_por_colisao).
+///
+/// `ranges` tem `num_players * 1326` pesos nao negativos, na ordem de `COMBO_LUT`.
+/// Combos que colidem com o board recebem massa zero antes do sorteio.
+pub fn multiway_equity_core(
+    ranges: &[f64],
+    num_players: usize,
+    board_mask: u64,
+    target_iterations: u32,
+    seed: u32,
+) -> Result<(Vec<f64>, bool), &'static str> {
+    if !(2..=9).contains(&num_players) {
+        return Err("multiway exige de 2 a 9 jogadores");
+    }
+    if ranges.len() != num_players * 1326 {
+        return Err("ranges deve ter num_players * 1326 pesos");
+    }
+    if board_mask >> 52 != 0 || board_mask.count_ones() > 5 {
+        return Err("board_mask deve ter no maximo 5 cartas validas");
+    }
+
+    let board_known: Vec<u8> = (0..52u8).filter(|c| board_mask & (1u64 << c) != 0).collect();
+    let mut player_cdfs = vec![[0.0f64; 1326]; num_players];
+    let mut player_total_mass = vec![0.0f64; num_players];
+    for p in 0..num_players {
+        let mut acc = 0.0;
+        for c in 0..1326 {
+            let (c1, c2) = COMBO_LUT[c];
+            if board_mask & ((1u64 << c1) | (1u64 << c2)) == 0 {
+                acc += ranges[p * 1326 + c].max(0.0);
+            }
+            player_cdfs[p][c] = acc;
+        }
+        if acc <= 1e-12 {
+            return Err("um jogador ficou sem combo possivel com este board");
+        }
+        player_total_mass[p] = acc;
+    }
+
+    let mut wins = vec![0.0f64; num_players];
+    let mut rng_state = (seed as u64) | ((seed as u64) << 32);
+    let mut valid_iterations = 0u32;
+    let mut consecutive_collisions = 0u32;
+    let mut aborted = false;
+    let mut hands = [(0u8, 0u8); 9];
+    let mut powers = [0u32; 9];
+
+    'mc_loop: while valid_iterations < target_iterations {
+        let mut dead = board_mask;
+        for p in 0..num_players {
+            let combo = draw_multiway_combo(&mut rng_state, &player_cdfs[p], player_total_mass[p]);
+            let combo_mask = (1u64 << combo.0) | (1u64 << combo.1);
+            if dead & combo_mask != 0 {
+                consecutive_collisions += 1;
+                if consecutive_collisions > 256 {
+                    aborted = true;
+                    break 'mc_loop;
+                }
+                continue 'mc_loop;
+            }
+            dead |= combo_mask;
+            hands[p] = combo;
+        }
+        consecutive_collisions = 0;
+        valid_iterations += 1;
+
+        let mut board = [0u8; 5];
+        for (i, slot) in board.iter_mut().enumerate() {
+            *slot = match board_known.get(i) {
+                Some(&card) => card,
+                None => draw_card(&mut rng_state, &mut dead),
+            };
+        }
+
+        let mut best = 0u32;
+        let mut tied = 0u32;
+        for p in 0..num_players {
+            let (h1, h2) = hands[p];
+            let power = evaluate_7cards(&[h1, h2, board[0], board[1], board[2], board[3], board[4]]);
+            powers[p] = power;
+            if power > best {
+                best = power;
+                tied = 1;
+            } else if power == best {
+                tied += 1;
+            }
+        }
+        let share = 1.0 / tied as f64;
+        for p in 0..num_players {
+            if powers[p] == best {
+                wins[p] += share;
+            }
+        }
+    }
+
+    let divisor = (valid_iterations as f64).max(1.0);
+    Ok((wins.iter().map(|w| w / divisor).collect(), aborted))
+}
+
 /// SOTA: FFI Zero-Copy Pointer Input Multiway
-/// O ecossistema React/WebWorker deposita a matriz probabilística diretamente na memória partilhada.
-/// Fricção zero. Aniquila o Gargalo de Serialização JSON no ambiente Multiway.
+/// O ecossistema React/WebWorker deposita a matriz probabilistica diretamente na memoria partilhada.
+/// Saida: `num_players` equidades seguidas de 1.0 se o disjuntor de colisao abortou, 0.0 se nao.
 #[wasm_bindgen]
+#[allow(clippy::not_unsafe_ptr_arg_deref)] // FFI wasm-bindgen: o ponteiro vem de alloc_range_buffer
 pub fn calculate_multiway_equity_zerocopy(
     ranges_ptr: *const f64, // Ponteiro RAM direto da matriz Float64Array
     num_players: usize,
@@ -1050,97 +1157,20 @@ pub fn calculate_multiway_equity_zerocopy(
     target_iterations: u32,
     seed: u32,
 ) -> js_sys::Float64Array {
-    // [GUARD] Interrogação de Inconsistência Teórica
-    if num_players < 2 || num_players > 9 {
-        panic!("[ENTROPIA FATAL] Multiway simulador exige matriz entre 2 a 9 nós topológicos.");
+    if !(2..=9).contains(&num_players) {
+        panic!("[ENTROPIA FATAL] Multiway simulador exige matriz entre 2 a 9 nos topologicos.");
     }
-
-    #[allow(unused_mut)]
-    let mut wins = vec![0.0; num_players];
-    let mut rng_state = (seed as u64) | ((seed as u64) << 32);
-
-    // ========================================================================
-    // SOTA SETUP PHASE: O(P * 1326) - Pré-computação da CDF e Board Blockers
-    // ========================================================================
-    let mut player_cdfs = vec![[0.0; 1326]; num_players];
-    let mut player_total_mass = vec![0.0; num_players];
-
-    for p in 0..num_players {
-        let mut acc = 0.0;
-        for c in 0..1326 {
-            let (c1, c2) = COMBO_LUT[c];
-            let combo_mask = (1u64 << c1) | (1u64 << c2);
-
-            // Se a carta colide com o board, a massa torna-se 0.0 automaticamente
-            if (board_mask & combo_mask) == 0 {
-                unsafe {
-                    acc += *ranges_ptr.add((p * 1326) + c);
-                }
-            }
-            player_cdfs[p][c] = acc;
-        }
-        player_total_mass[p] = acc;
-    }
-    // ========================================================================
-
-    let mut valid_iterations = 0;
-    let mut consecutive_collisions = 0;
-
-    // SOTA: Loop stocástico com Rejeição Global para expurgar Deal-Order Bias
-    'mc_loop: while valid_iterations < target_iterations {
-        let mut iteration_mask = board_mask;
-        // Array prealocado atrelado à stack (evita vazamento em Heap/Garbage Collection)
-        #[allow(unused_mut, unused_variables, unused_assignments)]
-        let mut drawn_cards = [0u8; 18];
-
-        for p in 0..num_players {
-            let combo = draw_multiway_combo(&mut rng_state, &player_cdfs[p], player_total_mass[p]);
-            let combo_mask = (1u64 << combo.0) | (1u64 << combo.1);
-
-            // [COLISÃO BITWISE O(1)]
-            if (iteration_mask & combo_mask) != 0 {
-                consecutive_collisions += 1;
-
-                // Disjuntor Entrópico SOTA:
-                // Evita que a Thread WebAssembly asfixie a interface caso os ranges
-                // projetem impossibilidade combinatória.
-                if consecutive_collisions > 256 {
-                    break 'mc_loop;
-                }
-
-                // REJEIÇÃO GLOBAL: Aborta toda a iteração da mão. Protege a Invariância Bayesiana.
-                continue 'mc_loop;
-            }
-
-            iteration_mask |= combo_mask;
-            drawn_cards[p * 2] = combo.0;
-            drawn_cards[p * 2 + 1] = combo.1;
-        }
-
-        // Iteração cristalina alcançada. Reset da pressão termodinâmica.
-        consecutive_collisions = 0;
-        valid_iterations += 1;
-
-        // ->> Aqui entraria a avaliação real (ex: board stochástico e evaluate_7cards)
-        // ->> wins[p] += 1.0 (ou rate de empate);
-    }
-
-    // SOTA: A Ponte de Volta com Tensor Tail (OOB Telemetry)
-    // Aloca num_players + 1 para comportar os metadados na cauda (tail)
-    let out_array = js_sys::Float64Array::new_with_length((num_players + 1) as u32);
-    for p in 0..num_players {
-        let eq = wins[p] / (valid_iterations as f64).max(1.0);
-        out_array.set_index(p as u32, eq);
-    }
-
-    // OOB Telemetry: 1.0 indica Aborto Termodinâmico, 0.0 indica pureza estatística
-    let abort_flag = if consecutive_collisions > 256 {
-        1.0
-    } else {
-        0.0
+    // SAFETY: o chamador aloca `num_players * 1326` f64 com alloc_range_buffer e os preenche.
+    let ranges = unsafe { std::slice::from_raw_parts(ranges_ptr, num_players * 1326) };
+    let (equities, aborted) = match multiway_equity_core(ranges, num_players, board_mask, target_iterations, seed) {
+        Ok(saida) => saida,
+        Err(motivo) => panic!("[ENTROPIA FATAL] {motivo}"),
     };
-    out_array.set_index(num_players as u32, abort_flag);
-
+    let out_array = js_sys::Float64Array::new_with_length((num_players + 1) as u32);
+    for (p, eq) in equities.iter().enumerate() {
+        out_array.set_index(p as u32, *eq);
+    }
+    out_array.set_index(num_players as u32, if aborted { 1.0 } else { 0.0 });
     out_array
 }
 
@@ -1165,6 +1195,7 @@ pub fn alloc_range_buffer(size: usize) -> *mut f64 {
 
 /// Libera a memória previamente alocada. Mandatório no ciclo de vida (useEffect) do React.
 #[wasm_bindgen]
+#[allow(clippy::not_unsafe_ptr_arg_deref)] // FFI wasm-bindgen: libera o que alloc_range_buffer entregou
 pub fn free_range_buffer(ptr: *mut f64, size: usize) {
     unsafe {
         // Reconstrói o Vec a partir do ponteiro e deixa ele sair de escopo (Drop = Free)
@@ -1203,5 +1234,69 @@ mod pluribus_adapter_tests {
             solve_pluribus_multiway_core(100.0, 3, &[100.0, 100.0, 100.0], 2.25, 0.5, 0, 3, 2, 10,),
             Err("depth_streets exceeds the selected street horizon")
         );
+    }
+}
+
+#[cfg(test)]
+mod multiway_equity_tests {
+    use super::*;
+
+    fn card(rank: u8, suit: u8) -> u8 {
+        (rank << 2) | suit
+    }
+
+    fn range_de(combos: &[(u8, u8)]) -> Vec<f64> {
+        let mut r = vec![0.0; 1326];
+        for &(a, b) in combos {
+            let idx = COMBO_LUT
+                .iter()
+                .position(|&(x, y)| (x, y) == (a, b) || (x, y) == (b, a))
+                .expect("combo existe na LUT");
+            r[idx] = 1.0;
+        }
+        r
+    }
+
+    #[test]
+    fn aa_contra_72o_fica_perto_da_equidade_conhecida() {
+        // AsAh x 7d2c: equidade exata tabelada ~87,6% para os ases.
+        let mut ranges = range_de(&[(card(12, 0), card(12, 1))]);
+        ranges.extend(range_de(&[(card(5, 2), card(0, 3))]));
+        let (eq, abortou) = multiway_equity_core(&ranges, 2, 0, 200_000, 7).unwrap();
+        assert!(!abortou);
+        assert!((eq[0] - 0.876).abs() < 0.01, "AA x 72o deu {}", eq[0]);
+        assert!((eq[0] + eq[1] - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn ranges_identicos_dividem_a_equidade_por_igual() {
+        let uniforme = vec![1.0; 1326];
+        let ranges: Vec<f64> = (0..4).flat_map(|_| uniforme.clone()).collect();
+        let (eq, abortou) = multiway_equity_core(&ranges, 4, 0, 100_000, 11).unwrap();
+        assert!(!abortou);
+        assert!((eq.iter().sum::<f64>() - 1.0).abs() < 1e-9);
+        for e in eq {
+            assert!((e - 0.25).abs() < 0.01, "equidade {e} longe de 1/4");
+        }
+    }
+
+    #[test]
+    fn board_completo_e_deterministico_e_empate_divide() {
+        // Board Ah Kh Qh Jh Th: royal na mesa, todos empatam.
+        let board = [card(12, 1), card(11, 1), card(10, 1), card(9, 1), card(8, 1)]
+            .iter()
+            .fold(0u64, |m, &c| m | (1u64 << c));
+        let mut ranges = range_de(&[(card(0, 0), card(1, 0))]);
+        ranges.extend(range_de(&[(card(2, 2), card(3, 3))]));
+        let (eq, _) = multiway_equity_core(&ranges, 2, board, 1_000, 3).unwrap();
+        assert!((eq[0] - 0.5).abs() < 1e-9 && (eq[1] - 0.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn rejeita_entrada_impossivel() {
+        assert!(multiway_equity_core(&[1.0; 1326], 1, 0, 10, 1).is_err());
+        assert!(multiway_equity_core(&[1.0; 1326], 2, 0, 10, 1).is_err());
+        assert!(multiway_equity_core(&vec![0.0; 2652], 2, 0, 10, 1).is_err());
+        assert!(multiway_equity_core(&vec![1.0; 2652], 2, 0b111111, 10, 1).is_err());
     }
 }

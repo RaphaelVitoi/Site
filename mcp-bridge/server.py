@@ -48,12 +48,29 @@ TASK_EXECUTOR = BASE_DIR / "task_executor.py"
 PYTHON_EXE = BASE_DIR / ".venv" / "Scripts" / "python.exe"
 
 
+# O PowerShell aceita estes quatro como prefixo de parametro (hifen, meia-risca,
+# travessao, barra horizontal). Medido em 2026-09-16: description "-Obliterate:C:/x"
+# chegava ao do.ps1 como -Obliterate, que apaga o caminho; "\u2014Execute:cmd" rodava cmd.
+# O separador "--" nao serve: com -File ele quebra a chamada.
+PREFIXOS_DE_PARAMETRO = ("-", "\u2013", "\u2014", "\u2015")
+
+
+def descricao_vira_parametro(description: str) -> bool:
+    """True se o PowerShell leria a descricao como nome de parametro do do.ps1."""
+    return description.startswith(PREFIXOS_DE_PARAMETRO)
+
+
 @mcp.tool()
 def execute_sota_task(description: str, agent: str = "@dispatcher") -> str:
     """Executa uma tarefa atraves do engine SOTA Task Executor."""
     # SOTA Guard: Blindagem contra Argument Injection no PowerShell
     if not re.match(r"^@[a-zA-Z0-9_-]+$", agent):
         return "Erro de Seguranca: O agente deve iniciar com '@' e conter apenas caracteres alfanumericos."
+    if descricao_vira_parametro(description):
+        return (
+            "Erro de Seguranca: a descricao nao pode comecar com traco; o PowerShell a leria "
+            "como parametro do do.ps1 (ex.: -Execute, -Obliterate)."
+        )
 
     try:
         # Chama o do.ps1 que enfileira a tarefa via HTTP ou DAL

@@ -1,141 +1,379 @@
 {
   "schema": 1,
   "applicationInfo": {
-    "name": "PMev &amp; Site Architecture",
-    "description": "Plataforma SOTA de Teoria dos Jogos (PMev) para Poker MTTs, motor de simulacao estocastica Monte Carlo, solver Rust/WASM e aplicacao web integrada."
+    "name": "PMev & Site Architecture",
+    "description": "### Escopo\n\nSite publico de teoria dos jogos aplicada a poker MTT (PMev), com motor de calculo em Rust/WASM no navegador, backend Python de calculo e uma malha local de agentes (MCP, LLMs locais).\n\n### Regra deste arquivo\n\nCada premissa e mitigacao cita evidencia no repositorio em `custom:evidencia`. `tests/test_threat_model_sincronia.py` reprova se um caminho citado deixar de existir ou se uma mitigacao marcada como resolvida nao citar teste. Medido contra o codigo em 2026-09-16; o que nao foi medido esta marcado como nao verificado."
   },
   "architecture": {
-    "description": "Arquitetura composta por Frontend Next.js 16 / React 19, Motor de Calculo Hibrido (Python 3.12+ FastAPI e Rust/WASM), Banco de Dados PostgreSQL/Supabase com RLS estrito, e barramento de agentes/MCP."
+    "description": "### Componentes medidos\n\n- **Frontend**: Next.js 16.3.5 / React 19.3, deploy em Cloud Run (`cloudbuild.yaml`, porta 3000). Autenticacao por NextAuth 5 beta; Supabase usado **apenas** para OAuth (`exchangeCodeForSession`, `getUser`) -- nenhuma tabela, RPC ou canal Realtime do Supabase e consumido pelo codigo.\n- **Rotas de API do Next** (`frontend/src/app/api`): `v1/gemma`, `v1/rag`, `v1/profile`, `v1/telemetry`, `v1/predictive`, `v1/search` exigem sessao. As rotas `sota/*` e `v1/content` sao publicas; `sota/pmev-heatmap` e `sota/timesfm-forecast` repassam o corpo ao backend com a credencial de servico.\n- **Backend de calculo**: aiohttp (`api/v1/server.py`, porta 17042), nao FastAPI. Bind 127.0.0.1 fora de conteiner. Middlewares: CORS por lista de origens, rate limit por IP (300/60 s), autenticacao dupla -- JWT HS256 do Supabase limitado a `POLITICA_ROTAS_DE_PRODUTO`, e `API_SECRET_TOKEN` de servico com alcance total.\n- **Motor WASM** (`wasm-equity/`): calculo no navegador do proprio usuario; nenhum resultado do cliente e reenviado como verdade ao servidor.\n- **Persistencia**: SQLite local (`database/queue_manager.py`, `database/lab_manager.py`) e ChromaDB embarcado. Nao ha PostgreSQL gerenciado nem politica RLS no repositorio.\n- **Malha local de agentes**: servidores MCP `nexus-bridge` e `google-jules` em transporte **stdio** (`.mcp.json`); `gemma_server` FastAPI em 127.0.0.1:17043; Ollama em 11434; CDP em 9223/9224.\n\n### Fora deste modelo\n\nSupply chain de dependencias (coberta pela fase 3 do `cwv_gate.ps1` e pelo `pip-audit`) e segredos no historico git (coberto pelo portao de ancora e `data/PADROES_DE_CREDENCIAL.json`)."
   },
   "dataflow": {
-    "description": "Fluxo de dados entre cliente (browser), engine de calculo local/WASM, chamadas assincronas de simulacao, persistencia segura no Supabase e auditoria append-only em ledgers."
+    "description": "### Fluxos\n\n1. Navegador -> Next (Cloud Run) -> paginas e rotas `api/*`.\n2. Rotas `api/*` do Next -> backend 17042 com `Authorization: Bearer <API_SECRET_TOKEN>` ou JWT do usuario.\n3. Navegador -> WASM local: calculo sem ida ao servidor.\n4. Editor/agente -> servidores MCP por stdio -> `powershell -File do.ps1` e APIs de nuvem (Jules, Stitch).\n5. Agentes locais -> Ollama 11434 e gemma_server 17043.\n\n### Fronteiras de confianca\n\n- Internet -> Next: toda entrada e nao confiavel.\n- Next -> backend: o Next carrega credencial de servico; rota publica do Next que repassa corpo vira deputado confuso.\n- Conteudo lido por LLM -> chamada de tool MCP: texto externo pode induzir argumentos (prompt injection).\n- Rede local -> portas que escutam em todas as interfaces."
   },
   "assumptions": [
     {
-      "id": "9d7f05bd-dbd9-41c5-af0b-76afb1bffd56",
+      "id": "dd6736af-f66d-5ee3-800b-1015250f116b",
       "numericId": 1,
-      "content": "Modulos nativos WASM/Rust executam em sandbox de memoria segura no runtime do cliente e servidor."
-    },
-    {
-      "id": "cc68e84a-9d2b-49ae-bfe3-13cedbbfdc37",
-      "numericId": 2,
-      "content": "Politicas de Row Level Security (RLS) no PostgreSQL/Supabase isolam estritamente sessoes e dados multi-tenant."
-    },
-    {
-      "id": "fa32f094-738f-4ede-9637-e52a85d39b54",
-      "numericId": 3,
-      "content": "Todas as chaves de API, credenciais e tokens de servico sao mantidos em variaveis de ambiente e nunca expostos no bundle do cliente."
+      "content": "Os servidores MCP do projeto (nexus-bridge, google-jules) usam transporte stdio; nenhum abre porta TCP nem pipe nomeado. Medido em .mcp.json e em mcp.run()/server.run(transport=stdio).",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            ".mcp.json",
+            "mcp-bridge/server.py",
+            "engine/jules_mcp_server.py"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
     },
     {
       "id": "26dc3d33-0940-4825-92a0-6f6893a9b20f",
+      "numericId": 2,
+      "content": "CDP (9223/9224), gemma_server (17043) e o backend fora de conteiner (17042) escutam so em 127.0.0.1. Medido com Get-NetTCPConnection em 2026-09-16; o Ollama (11434) NAO cumpre esta premissa.",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "engine/gemma_server.py",
+            "api/v1/server.py"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "8bd18115-22bf-540f-88c7-cf4f40b165b7",
+      "numericId": 3,
+      "content": "O Supabase e usado apenas para autenticacao; o codigo nao le nem grava tabela, RPC ou canal Realtime. Substitui a premissa antiga de RLS estrito, que descrevia um banco inexistente no repositorio.",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "frontend/src/utils/supabase/server.ts",
+            "frontend/src/app/(auth)/callback/route.ts"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "fa32f094-738f-4ede-9637-e52a85d39b54",
       "numericId": 4,
-      "content": "Portas locais de depuracao CDP (9222/9223) e sockets MCP estao restritos estritamente ao loopback (localhost)."
+      "content": "Credenciais de servico (API_SECRET_TOKEN, SUPABASE_JWT_SECRET, AUTH_SECRET) so existem no servidor; as variaveis NEXT_PUBLIC_ medidas sao URLs e a chave anon do Supabase.",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "frontend/src/app/api/sota/pmev-heatmap/route.ts",
+            "api/v1/middleware.py"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "9d7f05bd-dbd9-41c5-af0b-76afb1bffd56",
+      "numericId": 5,
+      "content": "O motor WASM roda no navegador do proprio usuario e o servidor nao aceita resultado calculado no cliente como verdade. Nao verificado por varredura completa das rotas de telemetria.",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "wasm-equity/lib.rs",
+            "frontend/src/lib/engine/generated/vitoi_equity_engine.js"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
     }
   ],
   "mitigations": [
     {
-      "id": "b9a40dd2-6a87-4ae1-b262-4293e91bd4b4",
+      "id": "e2a83df9-ee0b-51cf-868f-e81bdb61dc60",
       "numericId": 1,
-      "content": "Verificacao e validacao estrita no servidor dos calculos criticos realizados no cliente com checagem deterministica de sementes.",
-      "status": "mitigationResolved"
+      "content": "execute_sota_task recusa descricao que comece com hifen, meia-risca, travessao ou barra horizontal antes do subprocess; contraprova contra o parser real do PowerShell.",
+      "status": "mitigationResolved",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "mcp-bridge/server.py",
+            "tests/test_mcp_bridge_injecao_de_argumento.py",
+            "reports/REGISTRO-2026-09-16-injecao-de-argumento-no-mcp-bridge.md"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "f4ed262e-7009-5f6b-8402-5e7445927001",
+      "numericId": 2,
+      "content": "JWT HS256 com algoritmo fixo, exp obrigatorio e alcance fail-closed em POLITICA_ROTAS_DE_PRODUTO; rota nova nasce fechada a identidade de produto.",
+      "status": "mitigationResolved",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "api/v1/middleware.py",
+            "tests/test_fronteira_produto_operador.py",
+            "tests/test_backend_hardening.py"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
     },
     {
       "id": "707ed129-93d4-46a3-8fba-cd8784c4f745",
-      "numericId": 2,
-      "content": "Rate limiting por IP e token de usuario com teto rigido de profundidade e nos em arvores de decisao Monte Carlo (schemas Pydantic).",
-      "status": "mitigationResolved"
-    },
-    {
-      "id": "08fe1133-247d-44d0-9b00-cd64f0bf2dc4",
       "numericId": 3,
-      "content": "Canais Supabase Realtime protegidos por JWT e TLS 1.3 ponta a ponta com mascaramento de informacao privada em transito.",
-      "status": "mitigationResolved"
+      "content": "Rate limit por IP (300 req/60 s, teto de 5000 IPs rastreados) e corpo limitado ao padrao de 1 MiB do aiohttp. Parcial: atras do proxy do Next todos os usuarios caem no mesmo bucket, o IP do servidor Next.",
+      "status": "mitigationInProgress",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "api/v1/middleware.py",
+            "tests/test_backend_hardening.py"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
     },
     {
-      "id": "93204386-6fcf-4613-a837-a89a89952761",
+      "id": "896a210a-4095-5ad3-a3a1-f98399772847",
       "numericId": 4,
-      "content": "Auditoria de Row Level Security (RLS) com testes automatizados pytest e proibicao de bypass de chaves de servico no frontend.",
-      "status": "mitigationResolved"
+      "content": "Rotas sota/pmev-heatmap e sota/timesfm-forecast exigem sessao, nao carregam credencial literal e respondem 503 sem tocar o backend quando a credencial falta ou o backend cai; o cliente TimesFM limita chamadas (2 s) e espera 30 s apos falha.",
+      "status": "mitigationResolved",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "frontend/src/lib/server/nexus-proxy.ts",
+            "frontend/src/tests/api/proxy-routes.test.ts",
+            "frontend/src/lib/timesfm-client.ts",
+            "frontend/src/tests/simulator/timesfmConvergence.test.ts"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
     },
     {
-      "id": "606055ae-d594-4422-8861-1a9c8afe74fd",
+      "id": "fa588507-b551-526c-8327-dd51f33d63c1",
       "numericId": 5,
-      "content": "Restricao estrita dos servicos locais (CDP, FastMCP) a interface loopback (127.0.0.1) com validacao de origem.",
-      "status": "mitigationIdentified"
+      "content": "Ollama restrito a 127.0.0.1: exposicao a rede desligada no app (expose=0) em 2026-09-16, medido Listening on 127.0.0.1:11434. Configuracao da estacao, fora do repositorio: nao ha teste que a prove.",
+      "status": "mitigationInProgress",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "reports/REGISTRO-2026-09-16-injecao-de-argumento-no-mcp-bridge.md"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "4ffea1e1-1bfa-569a-b37f-0ecc36eee774",
+      "numericId": 6,
+      "content": "Guards reprovam caminho pessoal e inventario pessoal em arquivo versionado; o destino dos 125 arquivos de memoria em frontend/src/projects segue em pend-2026-09-13-frontend-src-projects.",
+      "status": "mitigationInProgress",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "tests/test_skill_pmev_knowledge.py",
+            "reports/HANDOFF-2026-09-13-auditoria-portoes-pmev-e-privacidade.md"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "b9a40dd2-6a87-4ae1-b262-4293e91bd4b4",
+      "numericId": 7,
+      "content": "Nenhum fluxo servidor deve aceitar resultado de calculo do cliente como fonte de verdade; se algum passar a aceitar, recalcular no backend. Hoje nao ha consumidor desse tipo medido.",
+      "status": "mitigationIdentified",
+      "metadata": [
+        {
+          "key": "custom:evidencia",
+          "value": [
+            "wasm-equity/lib.rs"
+          ]
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ]
     }
   ],
   "assumptionLinks": [
     {
       "type": "Threat",
-      "assumptionId": "9d7f05bd-dbd9-41c5-af0b-76afb1bffd56",
-      "linkedId": "e02519ca-a868-42cd-8aeb-0feda3273da5"
+      "assumptionId": "dd6736af-f66d-5ee3-800b-1015250f116b",
+      "linkedId": "e4832920-2aed-4d87-9bce-49ea3a07ec2c"
     },
     {
       "type": "Threat",
-      "assumptionId": "cc68e84a-9d2b-49ae-bfe3-13cedbbfdc37",
+      "assumptionId": "fa32f094-738f-4ede-9637-e52a85d39b54",
+      "linkedId": "6bd1841c-3038-5765-8570-855591de7667"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "8bd18115-22bf-540f-88c7-cf4f40b165b7",
       "linkedId": "cea16d7f-66ca-4b34-b9aa-604b71143a8c"
     },
     {
       "type": "Threat",
       "assumptionId": "26dc3d33-0940-4825-92a0-6f6893a9b20f",
-      "linkedId": "e4832920-2aed-4d87-9bce-49ea3a07ec2c"
+      "linkedId": "0125aa62-1ea3-5210-93d3-418a02b3528f"
+    },
+    {
+      "type": "Threat",
+      "assumptionId": "9d7f05bd-dbd9-41c5-af0b-76afb1bffd56",
+      "linkedId": "e02519ca-a868-42cd-8aeb-0feda3273da5"
     }
   ],
   "mitigationLinks": [
     {
-      "mitigationId": "b9a40dd2-6a87-4ae1-b262-4293e91bd4b4",
-      "linkedId": "e02519ca-a868-42cd-8aeb-0feda3273da5"
+      "mitigationId": "e2a83df9-ee0b-51cf-868f-e81bdb61dc60",
+      "linkedId": "e4832920-2aed-4d87-9bce-49ea3a07ec2c"
+    },
+    {
+      "mitigationId": "896a210a-4095-5ad3-a3a1-f98399772847",
+      "linkedId": "6bd1841c-3038-5765-8570-855591de7667"
+    },
+    {
+      "mitigationId": "707ed129-93d4-46a3-8fba-cd8784c4f745",
+      "linkedId": "6bd1841c-3038-5765-8570-855591de7667"
+    },
+    {
+      "mitigationId": "f4ed262e-7009-5f6b-8402-5e7445927001",
+      "linkedId": "cea16d7f-66ca-4b34-b9aa-604b71143a8c"
     },
     {
       "mitigationId": "707ed129-93d4-46a3-8fba-cd8784c4f745",
       "linkedId": "382096e1-2d9f-4aa7-8e7b-d92f894c6648"
     },
     {
-      "mitigationId": "08fe1133-247d-44d0-9b00-cd64f0bf2dc4",
+      "mitigationId": "fa588507-b551-526c-8327-dd51f33d63c1",
+      "linkedId": "0125aa62-1ea3-5210-93d3-418a02b3528f"
+    },
+    {
+      "mitigationId": "4ffea1e1-1bfa-569a-b37f-0ecc36eee774",
       "linkedId": "9096fe75-2e0c-48f7-a957-ec1b4c27c561"
     },
     {
-      "mitigationId": "93204386-6fcf-4613-a837-a89a89952761",
-      "linkedId": "cea16d7f-66ca-4b34-b9aa-604b71143a8c"
-    },
-    {
-      "mitigationId": "606055ae-d594-4422-8861-1a9c8afe74fd",
-      "linkedId": "e4832920-2aed-4d87-9bce-49ea3a07ec2c"
+      "mitigationId": "b9a40dd2-6a87-4ae1-b262-4293e91bd4b4",
+      "linkedId": "e02519ca-a868-42cd-8aeb-0feda3273da5"
     }
   ],
   "threats": [
     {
       "id": "e4832920-2aed-4d87-9bce-49ea3a07ec2c",
-      "numericId": 5,
+      "numericId": 1,
       "metadata": [
         {
           "key": "STRIDE",
           "value": [
-            "S"
+            "E",
+            "T"
           ]
         },
         {
           "key": "Priority",
-          "value": "Medium"
+          "value": "High"
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
         }
       ],
-      "threatSource": "Processo local hostil ou injecao de comando",
-      "prerequisites": "com porta ou pipe MCP exposto sem autenticacao mutua",
-      "threatAction": "enviar comandos para o bridge de ferramentas se passando pelo orquestrador",
-      "threatImpact": "execucao indevida de operacoes com privilegios do agente",
+      "threatSource": "conteudo externo lido por um agente LLM",
+      "prerequisites": "com acesso a uma sessao que chama a tool execute_sota_task do nexus-bridge",
+      "threatAction": "induzir uma descricao iniciada por traco que o PowerShell le como parametro do do.ps1",
+      "threatImpact": "apagar caminhos (-Obliterate) ou executar comandos (-Execute) com os privilegios do agente",
       "impactedGoal": [
-        "integridade"
+        "integridade",
+        "disponibilidade"
       ],
       "impactedAssets": [
-        "barramento MCP",
-        "workspace local"
+        "workspace local",
+        "malha MCP"
       ],
-      "statement": "Um processo local hostil ou injecao de comando com porta ou pipe MCP exposto sem autenticacao mutua can enviar comandos para o bridge de ferramentas se passando pelo orquestrador, which leads to execucao indevida de operacoes com privilegios do agente, negatively impacting workspace local.",
-      "status": "threatIdentified"
+      "statement": "A conteudo externo lido por um agente LLM com acesso a uma sessao que chama a tool execute_sota_task do nexus-bridge can induzir uma descricao iniciada por traco que o PowerShell le como parametro do do.ps1, which leads to apagar caminhos (-Obliterate) ou executar comandos (-Execute) com os privilegios do agente, resulting in reduced integridade, disponibilidade of workspace local, malha MCP",
+      "status": "threatResolved"
+    },
+    {
+      "id": "6bd1841c-3038-5765-8570-855591de7667",
+      "numericId": 2,
+      "metadata": [
+        {
+          "key": "STRIDE",
+          "value": [
+            "E",
+            "D"
+          ]
+        },
+        {
+          "key": "Priority",
+          "value": "High"
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ],
+      "threatSource": "usuario anonimo da internet",
+      "prerequisites": "com acesso as rotas publicas sota/pmev-heatmap ou sota/timesfm-forecast do Next",
+      "threatAction": "enviar corpos arbitrarios que o Next repassa ao backend assinados com a credencial de servico",
+      "threatImpact": "consumir o limite de requisicoes compartilhado e a CPU do backend em nome do servico",
+      "impactedGoal": [
+        "disponibilidade"
+      ],
+      "impactedAssets": [
+        "backend de calculo",
+        "credencial de servico"
+      ],
+      "statement": "An usuario anonimo da internet com acesso as rotas publicas sota/pmev-heatmap ou sota/timesfm-forecast do Next can enviar corpos arbitrarios que o Next repassa ao backend assinados com a credencial de servico, which leads to consumir o limite de requisicoes compartilhado e a CPU do backend em nome do servico, resulting in reduced disponibilidade of backend de calculo, credencial de servico",
+      "status": "threatResolved"
     },
     {
       "id": "cea16d7f-66ca-4b34-b9aa-604b71143a8c",
-      "numericId": 4,
+      "numericId": 3,
       "metadata": [
         {
           "key": "STRIDE",
@@ -145,27 +383,98 @@
         },
         {
           "key": "Priority",
-          "value": "High"
+          "value": "Medium"
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
         }
       ],
-      "threatSource": "Usuario com sessao de baixa permissao",
-      "prerequisites": "com posse de token JWT de autenticacao valido",
-      "threatAction": "explorar parametros mal sanitizados para burlar restricoes RLS",
-      "threatImpact": "acesso nao-autorizado a historico financeiro, bankroll ou relatorios de calibracao",
+      "threatSource": "usuario autenticado do site",
+      "prerequisites": "com um JWT valido do Supabase",
+      "threatAction": "chamar rotas de operador do backend, como leitura de arquivos, fila e estado global",
+      "threatImpact": "ler o disco do projeto ou alterar estado do host com identidade de produto",
       "impactedGoal": [
-        "integridade",
-        "confidencialidade"
+        "confidencialidade",
+        "integridade"
       ],
       "impactedAssets": [
-        "banco de dados PostgreSQL",
-        "politicas RLS"
+        "backend de calculo",
+        "arquivos do projeto"
       ],
-      "statement": "Um usuario com sessao de baixa permissao com posse de token JWT de autenticacao valido can explorar parametros mal sanitizados para burlar restricoes RLS, which leads to acesso nao-autorizado a historico financeiro, bankroll ou relatorios de calibracao, negatively impacting banco de dados PostgreSQL.",
+      "statement": "An usuario autenticado do site com um JWT valido do Supabase can chamar rotas de operador do backend, como leitura de arquivos, fila e estado global, which leads to ler o disco do projeto ou alterar estado do host com identidade de produto, resulting in reduced confidencialidade, integridade of backend de calculo, arquivos do projeto",
+      "status": "threatResolved"
+    },
+    {
+      "id": "382096e1-2d9f-4aa7-8e7b-d92f894c6648",
+      "numericId": 4,
+      "metadata": [
+        {
+          "key": "STRIDE",
+          "value": [
+            "D"
+          ]
+        },
+        {
+          "key": "Priority",
+          "value": "Medium"
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ],
+      "threatSource": "usuario autenticado ou cliente automatizado",
+      "prerequisites": "com acesso as rotas de calculo de produto",
+      "threatAction": "disparar solves multiway e arvores de perspectiva em rajada",
+      "threatImpact": "esgotar CPU do backend e degradar a resposta para os demais usuarios",
+      "impactedGoal": [
+        "disponibilidade"
+      ],
+      "impactedAssets": [
+        "backend de calculo"
+      ],
+      "statement": "An usuario autenticado ou cliente automatizado com acesso as rotas de calculo de produto can disparar solves multiway e arvores de perspectiva em rajada, which leads to esgotar CPU do backend e degradar a resposta para os demais usuarios, resulting in reduced disponibilidade of backend de calculo",
+      "status": "threatIdentified"
+    },
+    {
+      "id": "0125aa62-1ea3-5210-93d3-418a02b3528f",
+      "numericId": 5,
+      "metadata": [
+        {
+          "key": "STRIDE",
+          "value": [
+            "I",
+            "E"
+          ]
+        },
+        {
+          "key": "Priority",
+          "value": "Medium"
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
+        }
+      ],
+      "threatSource": "dispositivo na mesma rede local",
+      "prerequisites": "com rota ate a porta 11434 da estacao",
+      "threatAction": "usar a API do Ollama sem autenticacao",
+      "threatImpact": "consumir GPU e CPU da estacao e baixar ou apagar modelos locais",
+      "impactedGoal": [
+        "disponibilidade",
+        "integridade"
+      ],
+      "impactedAssets": [
+        "estacao de desenvolvimento",
+        "modelos locais"
+      ],
+      "statement": "A dispositivo na mesma rede local com rota ate a porta 11434 da estacao can usar a API do Ollama sem autenticacao, which leads to consumir GPU e CPU da estacao e baixar ou apagar modelos locais, resulting in reduced disponibilidade, integridade of estacao de desenvolvimento, modelos locais",
       "status": "threatIdentified"
     },
     {
       "id": "9096fe75-2e0c-48f7-a957-ec1b4c27c561",
-      "numericId": 3,
+      "numericId": 6,
       "metadata": [
         {
           "key": "STRIDE",
@@ -176,54 +485,29 @@
         {
           "key": "Priority",
           "value": "High"
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
         }
       ],
-      "threatSource": "Observador externo ou atacante de rede",
-      "prerequisites": "com intercepcao de trafego ou canal realtime mal configurado",
-      "threatAction": "capturar pacotes WebSocket ou streams de telemetria sem token de autorizacao",
-      "threatImpact": "expor formulacoes matematicas de risco proprietarias e maos privadas dos usuarios",
+      "threatSource": "qualquer pessoa com acesso ao repositorio publico",
+      "prerequisites": "",
+      "threatAction": "ler dados pessoais versionados por descuido, como memorias de agente e inventario de ambiente",
+      "threatImpact": "exposicao de dados pessoais do operador e material de reconhecimento do ambiente",
       "impactedGoal": [
         "confidencialidade"
       ],
       "impactedAssets": [
-        "historico de maos",
-        "pesos heuristicos PMev"
+        "memoria de agentes",
+        "dados pessoais do operador"
       ],
-      "statement": "Um observador externo ou atacante de rede com intercepcao de trafego ou canal realtime mal configurado can capturar pacotes WebSocket ou streams de telemetria sem token de autorizacao, which leads to expor formulacoes matematicas de risco proprietarias e maos privadas dos usuarios, negatively impacting historico de maos.",
-      "status": "threatIdentified"
-    },
-    {
-      "id": "382096e1-2d9f-4aa7-8e7b-d92f894c6648",
-      "numericId": 2,
-      "metadata": [
-        {
-          "key": "STRIDE",
-          "value": [
-            "D"
-          ]
-        },
-        {
-          "key": "Priority",
-          "value": "High"
-        }
-      ],
-      "threatSource": "Usuario nao-autenticado ou malicioso",
-      "prerequisites": "com acesso aos endpoints publicos de simulacao",
-      "threatAction": "disparar centenas de simulacoes simultaneas de alta densidade sem rate limiting",
-      "threatImpact": "esgotar memoria e ciclos de CPU dos workers, degradando telemetria em tempo real",
-      "impactedGoal": [
-        "disponibilidade"
-      ],
-      "impactedAssets": [
-        "pool de workers FastAPI",
-        "servidores de telemetria"
-      ],
-      "statement": "Um usuario nao-autenticado ou malicioso com acesso aos endpoints publicos de simulacao can disparar centenas de simulacoes simultaneas de alta densidade sem rate limiting, which leads to esgotar memoria e ciclos de CPU dos workers, degradando telemetria em tempo real, resulting in reduced disponibilidade of pool de workers FastAPI.",
+      "statement": "A qualquer pessoa com acesso ao repositorio publico can ler dados pessoais versionados por descuido, como memorias de agente e inventario de ambiente, which leads to exposicao de dados pessoais do operador e material de reconhecimento do ambiente, resulting in reduced confidencialidade of memoria de agentes, dados pessoais do operador",
       "status": "threatIdentified"
     },
     {
       "id": "e02519ca-a868-42cd-8aeb-0feda3273da5",
-      "numericId": 1,
+      "numericId": 7,
       "metadata": [
         {
           "key": "STRIDE",
@@ -233,22 +517,24 @@
         },
         {
           "key": "Priority",
-          "value": "High"
+          "value": "Low"
+        },
+        {
+          "key": "custom:medido_em",
+          "value": "2026-09-16"
         }
       ],
-      "threatSource": "Participante adversario ou cliente modificado",
-      "prerequisites": "com acesso local ao bundle WASM ou chamadas diretas a API do solver",
-      "threatAction": "injetar estados de memoria adulterados ou manipular sementes pseudo-aleatorias",
-      "threatImpact": "corromper a acuracia do equilibrio de Nash e gerar vantagens desleais nos calculos",
+      "threatSource": "usuario com cliente modificado",
+      "prerequisites": "com acesso ao bundle WASM no proprio navegador",
+      "threatAction": "alterar entradas ou memoria do motor de calculo local",
+      "threatImpact": "resultados incorretos exibidos apenas para o proprio usuario",
       "impactedGoal": [
-        "integridade",
-        "confiabilidade"
+        "integridade"
       ],
       "impactedAssets": [
-        "motor de simulacao PMev",
-        "resultados do solver"
+        "resultados do motor PMev"
       ],
-      "statement": "Um participante adversario ou cliente modificado com acesso local ao bundle WASM ou chamadas diretas a API do solver can injetar estados de memoria adulterados ou manipular sementes pseudo-aleatorias, which leads to corromper a acuracia do equilibrio de Nash e gerar vantagens desleais nos calculos, negatively impacting motor de simulacao PMev.",
+      "statement": "An usuario com cliente modificado com acesso ao bundle WASM no proprio navegador can alterar entradas ou memoria do motor de calculo local, which leads to resultados incorretos exibidos apenas para o proprio usuario, resulting in reduced integridade of resultados do motor PMev",
       "status": "threatIdentified"
     }
   ]

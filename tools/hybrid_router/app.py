@@ -225,9 +225,14 @@ class ComplexityAnalyzer:
 class LocalLlamaVulkanClient:
     """Cliente HTTP com conexao assincrona persistente para llama.cpp."""
 
-    def __init__(self, endpoint_url: str = "http://127.0.0.1:8080/v1") -> None:
+    def __init__(self, endpoint_url: str = "http://127.0.0.1:8080/v1", probe_ttl_s: float = 5.0) -> None:
         self.endpoint_url = endpoint_url.rstrip("/")
         self._client: httpx.AsyncClient | None = None
+        # Medido em 2026-09-16: com o llama.cpp fora do ar, a sonda custava ~520 ms POR
+        # requisicao roteada ao local (connect de 0.5 s ao porto recusado no Windows) antes
+        # do failover. O resultado da sonda vale por probe_ttl_s; 0 desliga o cache.
+        self.probe_ttl_s = probe_ttl_s
+        self._probe_cache: tuple[float, bool] | None = None
 
     async def start(self) -> None:
         self._client = httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=5.0))
@@ -239,14 +244,23 @@ class LocalLlamaVulkanClient:
     async def is_available(self) -> bool:
         if not self._client:
             return False
+        agora = time.monotonic()
+        if self._probe_cache and agora - self._probe_cache[0] < self.probe_ttl_s:
+            return self._probe_cache[1]
         try:
             res = await self._client.get(
                 f"{self.endpoint_url}/models",
                 timeout=httpx.Timeout(1.0, connect=0.5),
             )
-            return res.status_code == 200
+            disponivel = res.status_code == 200
         except httpx.RequestError:
-            return False
+            disponivel = False
+        self._probe_cache = (time.monotonic(), disponivel)
+        return disponivel
+
+    def invalidate_probe(self) -> None:
+        """Descarta o resultado em cache; chamado quando a geracao local falha."""
+        self._probe_cache = None
 
     async def generate(self, prompt: str, system_instruction: str = "") -> str:
         if not self._client:
@@ -382,6 +396,7 @@ class HybridOrchestrator:
                     )
                 except Exception as err:
                     sys.stderr.write(f"[FAILOVER LOCAL->CLOUD] Erro de inferencia local: {err}\n")
+                    self.local.invalidate_probe()
 
             # Fallback para nuvem em caso de indisponibilidade
             target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
@@ -433,7 +448,10 @@ class HybridOrchestrator:
 # 5. LIFESPAN E APLICACAO FASTAPI
 # =====================================================================
 
-local_llama_client = LocalLlamaVulkanClient(endpoint_url=os.getenv("LOCAL_LLAMA_URL", "http://127.0.0.1:8080/v1"))
+local_llama_client = LocalLlamaVulkanClient(
+    endpoint_url=os.getenv("LOCAL_LLAMA_URL", "http://127.0.0.1:8080/v1"),
+    probe_ttl_s=float(os.getenv("LOCAL_PROBE_TTL_S", "5.0")),
+)
 gemini_cloud_client = GeminiCloudClient(
     api_key=os.getenv("GEMINI_API_KEY"),
     model_id=os.getenv("GEMINI_MODEL_ID", "gemini-2.5-flash"),
@@ -508,5 +526,6 @@ if __name__ == "__main__":
     import uvicorn
 
     port = int(os.getenv("PORT", "8000"))
-    host = os.getenv("HOST", "0.0.0.0")  # noqa: S104 # nosec B104
+    # Padrao loopback: em conteiner, HOST=0.0.0.0 vem do compose/Dockerfile.
+    host = os.getenv("HOST", "127.0.0.1")
     uvicorn.run("app:app", host=host, port=port, reload=False, log_level="info")

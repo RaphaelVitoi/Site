@@ -5,6 +5,11 @@
 tools:
   - name: "hybrid_router"
     version: "2.0.0"
+    # Descontinuado em 2026-09-16 (registro-2026-09-16-benchmarks-medidos-e-nao-declarados):
+    # sem consumidor no fluxo real e com nomenclatura de modelo propria, fora de
+    # llm/model_registry.py, que e a fonte unica de roteamento (CLAUDE.md, secao 3).
+    status: "descontinuado"
+    substituto: "llm/routing_policy.py + llm/model_registry.py"
     description: "Gateway de inferência híbrida inteligente entre Vulkan Local (llama.cpp) e Google Gemini 3.7 Flash Cloud."
     path: "tools/hybrid_router"
     entrypoint: "app:app"

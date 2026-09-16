@@ -56,11 +56,11 @@ test('distortion returns all three streets in the consumer format', () => {
   expect(Object.keys(result.nashResults!)).toEqual(['flop', 'turn', 'river']);
 });
 
-test('multiway retains its scaffold identity and rejects malformed memory input', () => {
+test('multiway is a working model now that the kernel evaluates hands, and rejects malformed memory input', () => {
   const request = { type: 'MULTIWAY_MATRIX' as const, id: 4, numPlayers: 2,
     rangesData: new Float64Array(2652).fill(1), boardMask: 0, targetIterations: 10 };
   const multiway = jest.fn(() => new Float64Array([0, 0, 0]));
-  expect(processInsolvencyRequest(request, { equity: jest.fn(), multiway }).outputKind).toBe('scaffold');
+  expect(processInsolvencyRequest(request, { equity: jest.fn(), multiway }).outputKind).toBe('working-model');
   expect(() => processInsolvencyRequest({ ...request, rangesData: new Float64Array(10) },
     { equity: jest.fn(), multiway })).toThrow(RangeError);
   expect(multiway).toHaveBeenCalledTimes(1);

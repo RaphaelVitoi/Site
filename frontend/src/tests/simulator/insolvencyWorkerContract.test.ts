@@ -49,5 +49,5 @@ test('failed WASM requests preserve their type and id so consumers can clear pen
   await expect(dispatchSimulatorMessage({ type: 'MATRIX', id: 12 }, unavailableKernels))
     .resolves.toMatchObject({ type: 'MATRIX', id: 12, error: 'WASM unavailable' });
   await expect(dispatchSimulatorMessage({ type: 'MULTIWAY_MATRIX', id: 13 }, unavailableKernels))
-    .resolves.toMatchObject({ type: 'MULTIWAY_MATRIX', id: 13, outputKind: 'scaffold', error: 'WASM unavailable' });
+    .resolves.toMatchObject({ type: 'MULTIWAY_MATRIX', id: 13, outputKind: 'working-model', error: 'WASM unavailable' });
 });

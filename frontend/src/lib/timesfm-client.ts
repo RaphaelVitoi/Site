@@ -240,6 +240,23 @@ function convergenceFromForecast(
 	};
 }
 
+/**
+ * Limite de chamadas ao gateway. Medido em 2026-09-16: o painel CFR pede uma previsao a cada
+ * amostra do worker, varias por segundo; com o backend fora do ar o log do Next registrou
+ * centenas de POST 500 seguidos. Entre chamadas o painel usa o fallback analitico local.
+ */
+export const GATEWAY_INTERVALO_MINIMO_MS = 2_000;
+export const GATEWAY_ESPERA_APOS_FALHA_MS = 30_000;
+
+let proximaChamadaRemotaEm = 0;
+let chamadaEmVoo = false;
+
+/** Zera o estado do limitador; so para testes. */
+export function reiniciarLimitadorTimesFM(): void {
+	proximaChamadaRemotaEm = 0;
+	chamadaEmVoo = false;
+}
+
 /** Executa o gateway TimesFM e regride explicitamente ao fallback local. */
 export async function forecastCfrConvergence(
 	regretHistory: number[],
@@ -255,6 +272,15 @@ export async function forecastCfrConvergence(
 			preferredModel,
 		);
 	}
+	const agora = Date.now();
+	if (chamadaEmVoo || agora < proximaChamadaRemotaEm) {
+		return {
+			...calculateClientCfrConvergence(regretHistory, horizonIterations, targetEpsilon, preferredModel),
+			fallback_reason: 'gateway TimesFM em espera (limite de chamadas)',
+		};
+	}
+	chamadaEmVoo = true;
+	proximaChamadaRemotaEm = agora + GATEWAY_INTERVALO_MINIMO_MS;
 	try {
 		const forecast = await fetchTimesFMForecast({
 			series: regretHistory,
@@ -265,6 +291,7 @@ export async function forecastCfrConvergence(
 		});
 		return convergenceFromForecast(regretHistory, forecast, targetEpsilon);
 	} catch (error) {
+		proximaChamadaRemotaEm = Date.now() + GATEWAY_ESPERA_APOS_FALHA_MS;
 		return {
 			...calculateClientCfrConvergence(
 				regretHistory,
@@ -274,6 +301,8 @@ export async function forecastCfrConvergence(
 			),
 			fallback_reason: error instanceof Error ? error.message : 'TimesFM gateway unavailable',
 		};
+	} finally {
+		chamadaEmVoo = false;
 	}
 }
 

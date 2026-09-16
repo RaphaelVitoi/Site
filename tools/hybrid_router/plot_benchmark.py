@@ -110,26 +110,48 @@ def generate_synthetic_data(samples: int = 60) -> pd.DataFrame:
     return pd.DataFrame(records).sample(frac=1.0, random_state=42).reset_index(drop=True)
 
 
-def load_dataset(file_path: str | None) -> pd.DataFrame:
+def load_dataset(file_path: str | None, permitir_sintetico: bool = False) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Carrega resultados e devolve (sucessos, metadados de origem).
+
+    Ate 2026-09-16 um arquivo ausente virava, em silencio, dados sinteticos com cara de
+    medicao -- e o benchmark_results.json versionado era exatamente essa saida. Agora o
+    sintetico so existe com --sintetico, e a origem viaja com o grafico.
+    """
+    meta: dict[str, Any] = {"origem": "arquivo", "modo": "desconhecido"}
     if file_path and os.path.exists(file_path):
         if file_path.endswith(".json"):
             with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
+            if isinstance(data, dict):
+                meta["modo"] = data.get("modo", "desconhecido")
+                meta["gerado_em"] = data.get("gerado_em")
+                data = data.get("resultados", [])
             df = pd.DataFrame(data)
         elif file_path.endswith(".csv"):
             df = pd.read_csv(file_path)
         else:
             raise ValueError("Formato nao suportado. Utilize .json ou .csv")
-    else:
-        print("[AVISO] Dataset nao encontrado. Gerando dados sinteticos de alta fidelidade...")
+    elif permitir_sintetico:
+        print("[AVISO] Gerando dados SINTETICOS por pedido explicito (--sintetico). Nao e medicao.")
         df = generate_synthetic_data()
+        meta = {"origem": "sintetico", "modo": "sintetico"}
+    else:
+        raise SystemExit(
+            f"[ERRO] Dataset nao encontrado: {file_path}. Rode benchmark.py ou passe --sintetico para um preview rotulado."
+        )
+
+    if meta["modo"] == "desconhecido" and "simulado" in df.columns:
+        simulados = [bool(v) for v in df["simulado"].tolist()]
+        meta["modo"] = "simulado" if all(simulados) else ("real" if not any(simulados) else "misto")
+    meta["total"] = len(df)
 
     if "is_success" in df.columns:
         # pandas 3.0 nao anota DataFrame.__getitem__; o Pyright infere a uniao
         # DataFrame | Series | ndarray lendo o corpo. A mascara booleana sempre
         # devolve DataFrame -- o cast declara isso sem custo em runtime.
         df = cast("pd.DataFrame", df[df["is_success"]]).copy().reset_index(drop=True)
-    return df
+    meta["sucesso"] = len(df)
+    return df, meta
 
 
 # =====================================================================
@@ -137,7 +159,41 @@ def load_dataset(file_path: str | None) -> pd.DataFrame:
 # =====================================================================
 
 
-def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_report.png") -> None:
+def _carimbar_origem(fig: Any, meta: dict[str, Any]) -> None:
+    """Marca d'agua quando os dados nao sao medicao real; sem ela o PNG circula como se fosse."""
+    avisos = {
+        "sintetico": "DADOS SINTETICOS -- NAO E MEDICAO",
+        "simulado": "INFERENCIA SIMULADA -- mede so a orquestracao",
+        "misto": "PARTE SIMULADA -- nao comparar com medicao real",
+        "desconhecido": "ORIGEM NAO DECLARADA -- nao tratar como medicao",
+    }
+    aviso = avisos.get(str(meta.get("modo")))
+    if aviso:
+        fig.text(
+            0.5,
+            0.5,
+            aviso,
+            fontsize=46,
+            fontweight="bold",
+            color="#B91C1C",
+            alpha=0.18,
+            ha="center",
+            va="center",
+            rotation=22,
+        )
+
+
+def _carimbar_e_salvar(fig: Any, meta: dict[str, Any], output_image: str) -> None:
+    _carimbar_origem(fig, meta)
+    plt.savefig(output_image, dpi=300, facecolor=THEME_BG, edgecolor="none", bbox_inches="tight")
+    plt.close()
+    print(f"\n[SUCESSO] Dashboard exportado (modo {meta.get('modo')}) em: {os.path.abspath(output_image)}")
+
+
+def plot_distributions(
+    df: pd.DataFrame, output_image: str = "benchmark_latency_report.png", meta: dict[str, Any] | None = None
+) -> None:
+    meta = meta or {"modo": "desconhecido", "total": len(df), "sucesso": len(df)}
     sns.set_theme(style="whitegrid", font="sans-serif")
 
     # Criacao do Canvas Master com Banner Superior e 4 Paineis
@@ -168,7 +224,8 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
     fig.text(
         0.06,
         0.932,
-        "Protocolo Chico SOTA v8.0 GOLD * Arquitetura Google Gemini 3.7 Flash & Llama.cpp Vulkan Edge",
+        f"Roteamento local (llama.cpp) x nuvem (Gemini)  *  modo: {str(meta.get('modo', 'desconhecido')).upper()}"
+        + (f"  *  gerado em {meta['gerado_em']}" if meta.get("gerado_em") else ""),
         fontsize=11,
         color=TEXT_MUTED,
         ha="left",
@@ -176,7 +233,7 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
 
     # Cards de Metricas no Topo Direito
     kpi_text = (
-        f"Requisicoes: {total_reqs} (100% Sucesso)  |  "
+        f"Requisicoes: {meta.get('sucesso', total_reqs)}/{meta.get('total', total_reqs)} com sucesso  |  "
         f"Latencia Media: {avg_lat:.1f}ms  |  "
         f"Mediana p50: {p50:.1f}ms  |  "
         f"Cauda p99: {p99:.1f}ms  |  "
@@ -368,9 +425,7 @@ def plot_distributions(df: pd.DataFrame, output_image: str = "benchmark_latency_
     )
 
     # Salvamento de Alta Resolucao
-    plt.savefig(output_image, dpi=300, facecolor=THEME_BG, edgecolor="none", bbox_inches="tight")
-    plt.close()
-    print(f"\n[SUCESSO] Dashboard SOTA Gold exportado com alta resolucao em: {os.path.abspath(output_image)}")
+    _carimbar_e_salvar(fig, meta, output_image)
 
 
 def _load_env_file(env_path: str | None = None) -> None:
@@ -436,10 +491,11 @@ def main() -> None:
         "--output", "-o", type=str, default="benchmark_latency_report.png", help="Arquivo de imagem (.png)."
     )
     parser.add_argument("--no-open", action="store_true", help="Nao abre a imagem automaticamente na tela.")
+    parser.add_argument("--sintetico", action="store_true", help="Sem dataset, gera preview SINTETICO rotulado.")
     args = parser.parse_args()
 
-    df = load_dataset(args.input)
-    plot_distributions(df, output_image=args.output)
+    df, meta = load_dataset(args.input, permitir_sintetico=args.sintetico)
+    plot_distributions(df, output_image=args.output, meta=meta)
 
     if not args.no_open and os.path.exists(args.output):
         open_image(args.output)

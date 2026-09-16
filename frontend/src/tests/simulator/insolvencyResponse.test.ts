@@ -56,6 +56,6 @@ test('preserves correlated failures so the hook can clear the correct pending st
 test('rejects missing distortion streets and nonfinite or untyped multiway tensors', () => {
   expect(readCurrentInsolvencyResponse({ type: 'DISTORTION', id: 7, outputKind: 'working-model', nashResults: {} }, ids)).toBeNull();
   for (const multiwayResult of [[0, 0], new Float64Array([NaN])]) {
-    expect(readCurrentInsolvencyResponse({ type: 'MULTIWAY_MATRIX', id: 2, outputKind: 'scaffold', multiwayResult }, ids)).toBeNull();
+    expect(readCurrentInsolvencyResponse({ type: 'MULTIWAY_MATRIX', id: 2, outputKind: 'working-model', multiwayResult }, ids)).toBeNull();
   }
 });

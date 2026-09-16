@@ -1,15 +1,34 @@
-# ruff: noqa: D100, D103, T201, BLE001, E402, I001
+# ruff: noqa: T201, E402
 # pylint: disable=wrong-import-position
-"""Benchmark Unificado SOTA v7.0 GOLD - Ecossistema Nexus & Motores de Inferencia."""
+"""Benchmark unificado do ecossistema: medido, com escopo declarado e veredito derivado.
 
+Reescrito em 2026-09-16. A versao anterior imprimia como telemetria o texto fixo
+"~5.2 GB VRAM GPU (-ngl 26)", declarava "Vulkan GPU Acceleration Active" pela existencia
+de uma DLL, filtrava a saida do benchmark WASM por palavras sem acento que o script nao
+escrevia mais, e terminava sempre em "CONCLUIDO COM SUCESSO". Agora:
+
+1. motores Python: aquecimento, varias amostras, mediana;
+2. WASM: consome o JSON de scripts/benchmark_wasm_quantum.mjs --json;
+3. llama.cpp: inventario -- e so inventario, com a versao lida do proprio binario;
+4. Ollama: modelos locais x nuvem; latencia so com --inferencia MODELO (carrega o modelo).
+
+Uso:
+    .venv/Scripts/python.exe scripts/benchmark_sota_suite.py [--amostras N] [--inferencia MODELO] [--json]
+"""
+
+from __future__ import annotations
+
+import argparse
+from collections.abc import Callable
 import json
+from pathlib import Path
+import statistics
 import subprocess
 import sys
 import time
+from typing import Any
 import urllib.request
-from pathlib import Path
 
-# Adiciona a raiz do projeto ao path
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
@@ -17,215 +36,225 @@ if str(PROJECT_ROOT) not in sys.path:
 import psutil
 
 from engine.icm_matrix import calculate_malmuth_harville_icm
-from engine.math_sota import (
-    calculate_geometric_sizing,
-    calculate_perspectiva_vitoi_v7,
-    calculate_rio_risk_v2,
-)
+from engine.math_sota import calculate_geometric_sizing, calculate_perspectiva_vitoi_v7, calculate_rio_risk_v2
 from engine.vitoi_perspective_engine import VitoiPerspectiveEngine
 
+OLLAMA = "http://127.0.0.1:11434"
 
-def run_benchmark_mathematics():
-    """Benchmark 1: Motores Matematicos, ICM e Teoria dos Prospectos (+EV)."""
-    print("\n" + "=" * 75)
-    print("  [BENCHMARK 1/4] MOTOR MATEMATICO & PERSPECTIVA VITOI SOTA")
-    print("=" * 75)
 
-    # 1. ICM Malmuth-Harville Solves
+def medir(trabalho: Callable[[], object], repeticoes: int, amostras: int) -> dict[str, float]:
+    """Aquece, depois mede `amostras` lotes de `repeticoes` chamadas. Devolve ops/s pela mediana."""
+    for _ in range(max(1, repeticoes // 10)):
+        trabalho()
+    tempos = []
+    for _ in range(amostras):
+        t0 = time.perf_counter()
+        for _ in range(repeticoes):
+            trabalho()
+        tempos.append(time.perf_counter() - t0)
+    mediana = statistics.median(tempos)
+    return {
+        "repeticoes": repeticoes,
+        "amostras": amostras,
+        "mediana_s": mediana,
+        "min_s": min(tempos),
+        "max_s": max(tempos),
+        "ops_por_s": repeticoes / mediana if mediana > 0 else 0.0,
+    }
+
+
+def benchmark_python(amostras: int) -> list[dict[str, Any]]:
     stacks = [100.0, 75.0, 50.0, 25.0, 15.0, 10.0]
     payouts = [500.0, 300.0, 200.0]
+    casos: list[tuple[str, Callable[[], object], int]] = [
+        ("icm_malmuth_harville_6j_3premios", lambda: calculate_malmuth_harville_icm(stacks, payouts), 2_000),
+        (
+            "perspectiva_vitoi_v7",
+            lambda: calculate_perspectiva_vitoi_v7(
+                current_equity_pct=45.0,
+                delta_win_pct=12.5,
+                delta_lose_pct=8.0,
+                dynamic_ev_fold=0.0,
+                realization_factor=1.0,
+                fgs_health=1.0,
+                active_players=3,
+                hero_invested=2.5,
+                current_pot=7.5,
+                stack_eff=25.0,
+            ),
+            10_000,
+        ),
+        (
+            "geometric_sizing",
+            lambda: calculate_geometric_sizing(current_pot=6.5, target_pot=100.0, remaining_streets=3),
+            20_000,
+        ),
+        (
+            "decision_tree",
+            lambda: VitoiPerspectiveEngine.simulate_decision_tree(
+                equity=0.45,
+                pot_size=12.0,
+                stack_eff=30.0,
+                active_players=3,
+                street_idx=1,
+                hero_invested=3.0,
+                ev_fold_dynamic=-1.5,
+                structural_liability=4.5,
+                valuation_stack=30.0,
+                amortized_edge=1.2,
+                aggression_factor=1.4,
+                realization_factor=1.0,
+            ),
+            500,
+        ),
+        (
+            "rio_risk_v2",
+            lambda: calculate_rio_risk_v2(
+                hero_invested=5.0, current_pot=10.0, hero_raw_stack=40.0, hero_position="OOP", active_players=4
+            ),
+            5_000,
+        ),
+    ]
+    resultados = []
+    for nome, trabalho, repeticoes in casos:
+        r = medir(trabalho, repeticoes, amostras)
+        resultados.append({"caso": nome, **r})
+        print(
+            f"   {nome:<36} {r['ops_por_s']:>14,.0f} ops/s   "
+            f"(mediana de {amostras}, faixa {repeticoes / r['max_s']:,.0f}..{repeticoes / r['min_s']:,.0f})"
+        )
+    return resultados
 
-    n_icm_iterations = 25000
-    t0 = time.perf_counter()
-    for _ in range(n_icm_iterations):
-        _ = calculate_malmuth_harville_icm(stacks, payouts)
-    t_icm = time.perf_counter() - t0
-    icm_rate = n_icm_iterations / t_icm
-    print(
-        f"   ICM Matrix (6-max, 3 payouts):  {n_icm_iterations:,} resolucoes em {t_icm:.3f}s -> {icm_rate:,.0f} solves/s"
+
+def benchmark_wasm(amostras: int) -> dict[str, Any]:
+    script = PROJECT_ROOT / "scripts" / "benchmark_wasm_quantum.mjs"
+    proc = subprocess.run(  # noqa: S603, S607  # Record-Id: registro-2026-09-16-benchmarks-medidos-e-nao-declarados
+        ["node", str(script), "--json", "--amostras", str(amostras)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=300,
+        check=False,
     )
-
-    # 2. Perspectiva Matematica Vitoi v7 & Quantum Metrics
-    n_pm_iterations = 50000
-    t0 = time.perf_counter()
-    for _ in range(n_pm_iterations):
-        _ = calculate_perspectiva_vitoi_v7(
-            current_equity_pct=45.0,
-            delta_win_pct=12.5,
-            delta_lose_pct=8.0,
-            dynamic_ev_fold=0.0,
-            realization_factor=1.0,
-            fgs_health=1.0,
-            active_players=3,
-            hero_invested=2.5,
-            current_pot=7.5,
-            stack_eff=25.0,
-        )
-    t_pm = time.perf_counter() - t0
-    pm_rate = n_pm_iterations / t_pm
-    print(f"   Perspectiva Vitoi v7 (Quantum):  {n_pm_iterations:,} tensores em {t_pm:.3f}s -> {pm_rate:,.0f} eval/s")
-
-    # 3. Geometric Sizing & Street Growth (Bellman)
-    n_geom = 100000
-    t0 = time.perf_counter()
-    for _ in range(n_geom):
-        _ = calculate_geometric_sizing(current_pot=6.5, target_pot=100.0, remaining_streets=3)
-    t_geom = time.perf_counter() - t0
-    geom_rate = n_geom / t_geom
-    print(f"   Geometric Sizing (Bellman Opt):  {n_geom:,} calculos em {t_geom:.3f}s -> {geom_rate:,.0f} ops/s")
-
-    # 4. Vitoi Perspective Engine Utility & Decision Tree
-    n_vitoi = 20000
-    t0 = time.perf_counter()
-    for _ in range(n_vitoi):
-        _ = VitoiPerspectiveEngine.calculate_utility(x=15.0, loss_aversion=2.25)
-        _ = VitoiPerspectiveEngine.calculate_dynamic_ev_fold(
-            base_antes=1.5,
-            time_to_blind_minutes=2.0,
-            payjump_proximity_factor=0.8,
-            position="BB",
-        )
-        _ = VitoiPerspectiveEngine.calculate_structural_liability(multiway_opponents=3, base_rio=2.5)
-        _ = VitoiPerspectiveEngine.calculate_edge_amortization(
-            stack_depth_bb=35.0, edge_base=1.2, aggression_factor=1.5
-        )
-    t_vitoi = time.perf_counter() - t0
-    vitoi_rate = (n_vitoi * 4) / t_vitoi
-    print(
-        f"   Vitoi Perspective Engine (4 ops): {n_vitoi * 4:,} avaliacoes em {t_vitoi:.3f}s -> {vitoi_rate:,.0f} ops/s"
-    )
-
-    # 5. Recursive Decision Tree Simulation
-    n_tree = 5000
-    t0 = time.perf_counter()
-    for _ in range(n_tree):
-        _ = VitoiPerspectiveEngine.simulate_decision_tree(
-            equity=0.45,
-            pot_size=12.0,
-            stack_eff=30.0,
-            active_players=3,
-            street_idx=1,
-            hero_invested=3.0,
-            ev_fold_dynamic=-1.5,
-            structural_liability=4.5,
-            valuation_stack=30.0,
-            amortized_edge=1.2,
-            aggression_factor=1.4,
-            realization_factor=1.0,
-        )
-    t_tree = time.perf_counter() - t0
-    tree_rate = n_tree / t_tree
-    print(f"   Vitoi Decision Tree (Markov/Tree): {n_tree:,} arvores em {t_tree:.3f}s -> {tree_rate:,.0f} trees/s")
-
-    # 5. RIO Stress & Risk Calculations
-    n_rio = 25000
-    t0 = time.perf_counter()
-    for _ in range(n_rio):
-        _ = calculate_rio_risk_v2(
-            hero_invested=5.0, current_pot=10.0, hero_raw_stack=40.0, hero_position="OOP", active_players=4
-        )
-    t_rio = time.perf_counter() - t0
-    rio_rate = n_rio / t_rio
-    print(f"   RIO Tensor Dynamic Risk:         {n_rio:,} calculos em {t_rio:.3f}s -> {rio_rate:,.0f} ops/s")
+    linha_json = next((ln for ln in proc.stdout.splitlines() if ln.startswith("{")), None)
+    if linha_json is None:
+        erro = (proc.stderr or proc.stdout).strip().splitlines()[-1:] or ["sem saida"]
+        print(f"   [FALHOU] benchmark WASM nao devolveu JSON: {erro[0]}")
+        return {"veredito": "FALHOU", "falhas": [f"sem JSON: {erro[0]}"], "casos": []}
+    relatorio = json.loads(linha_json)
+    for caso in relatorio["casos"]:
+        rotulo = caso["caso"] + (f" {caso['board']} k={caso['kappa']}" if caso["caso"] == "monte_carlo" else "")
+        escopo = f"  [{caso['escopo']}]" if "escopo" in caso else ""
+        print(f"   {rotulo:<36} {caso['taxa_por_s']:>14,.0f} /s   mediana {caso['mediana_ms']:.2f} ms{escopo}")
+    mem = relatorio["memoria_wasm_bytes"]
+    print(f"   memoria linear WASM: {mem['inicial']:,} -> {mem['final']:,} bytes; veredito {relatorio['veredito']}")
+    for falha in relatorio["falhas"]:
+        print(f"   [FALHOU] {falha}")
+    return relatorio
 
 
-def run_benchmark_wasm():
-    """Benchmark 2: Motor WASM Quantum Node.js."""
-    print("\n" + "=" * 75)
-    print("  [BENCHMARK 2/4] QUANTUM WASM ACCELERATION BENCHMARK")
-    print("=" * 75)
-    wasm_bench_path = PROJECT_ROOT / "scripts" / "benchmark_wasm_quantum.mjs"
-    if wasm_bench_path.exists():
-        cmd = ["node", str(wasm_bench_path)]
+def inventario_llama_cpp() -> dict[str, Any]:
+    pasta = PROJECT_ROOT / "engine" / "llama_cpp"
+    exes = sorted(p.name for p in pasta.glob("*.exe"))
+    dlls = sorted(p.name for p in pasta.glob("*.dll"))
+    versao = None
+    cli = pasta / "llama-cli.exe"
+    if cli.exists():
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=True)
-            for line in res.stdout.strip().splitlines():
-                if (
-                    "PASSED" in line
-                    or "it/s" in line
-                    or "Memoria" in line
-                    or "Speedup" in line
-                    or "Total de Operacoes" in line
-                ):
-                    print(f"   {line.strip()}")
-        except Exception as e:
-            print(f"  [AVISO] Erro na execucao do benchmark WASM: {e}")
-    else:
-        print("  [AVISO] Arquivo benchmark_wasm_quantum.mjs nao localizado.")
+            proc = subprocess.run(  # noqa: S603  # Record-Id: registro-2026-09-16-benchmarks-medidos-e-nao-declarados
+                [str(cli), "--version"], capture_output=True, text=True, timeout=15, check=False
+            )
+            saida = (proc.stdout + proc.stderr).strip().splitlines()
+            versao = next((ln for ln in saida if "version" in ln.lower()), saida[0] if saida else None)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            versao = f"nao executou: {exc}"
+    backends = [d for d in dlls if d.startswith("ggml-")]
+    print(f"   {len(exes)} executaveis, {len(dlls)} DLLs; backends ggml presentes: {', '.join(backends) or 'nenhum'}")
+    print(f"   llama-cli --version: {versao}")
+    print("   (presenca de DLL nao prova aceleracao em uso; isto e inventario, nao benchmark)")
+    return {"executaveis": exes, "dlls": dlls, "llama_cli_versao": versao}
 
 
-def run_benchmark_llama_cpp():
-    """Benchmark 3: Auditoria de Binarios Nativos engine/llama_cpp."""
-    print("\n" + "=" * 75)
-    print("  [BENCHMARK 3/4] C++ NATIVE ENGINE & VULKAN DISPATCHER")
-    print("=" * 75)
-    llama_dir = PROJECT_ROOT / "engine" / "llama_cpp"
-    binaries = list(llama_dir.glob("*.exe"))
-    dlls = list(llama_dir.glob("*.dll"))
-
-    print(f"   Binarios Compilados Detectados: {len(binaries)} executaveis")
-    for b in binaries[:4]:
-        size_kb = b.stat().st_size / 1024
-        print(f"    - {b.name:<28} ({size_kb:,.1f} KB)")
-
-    print(f"   Bibliotecas Compartilhadas (.dll): {len(dlls)} modulos")
-    vulkan_dll = llama_dir / "ggml-vulkan.dll"
-    if vulkan_dll.exists():
-        vulkan_mb = vulkan_dll.stat().st_size / (1024 * 1024)
-        print(f"    - ggml-vulkan.dll:           {vulkan_mb:.2f} MB (Vulkan GPU Acceleration Active)")
-    zen4_dll = llama_dir / "ggml-cpu-zen4.dll"
-    if zen4_dll.exists():
-        print("    - ggml-cpu-zen4.dll:         AVX-512 Optimized CPU Engine Active")
-    alder_dll = llama_dir / "ggml-cpu-alderlake.dll"
-    if alder_dll.exists():
-        print("    - ggml-cpu-alderlake.dll:     Hybrid Arch / AVX2 CPU Engine Active")
-
-
-def run_benchmark_inference():
-    """Benchmark 4: Latencia e Throughput do Motor Gemma 4 Local."""
-    print("\n" + "=" * 75)
-    print("  [BENCHMARK 4/4] INFERENCIA LOCAL SOTA (GEMMA 4 12B & E4B)")
-    print("=" * 75)
-
-    # Inspecao do daemon Ollama
+def benchmark_ollama(modelo: str | None) -> dict[str, Any]:
+    resultado: dict[str, Any] = {}
     try:
-        req = urllib.request.Request("http://127.0.0.1:11434/api/tags")
-        with urllib.request.urlopen(req, timeout=5) as resp:  # nosec B310 # noqa: S310 -- Record-Id: auditoria-2026-08-31-saneamento-linters-e-estabilizacao-core-e-api
-            data = json.loads(resp.read().decode())
-            models = [m["name"] for m in data.get("models", [])]
-            print(f"   Modelos Ativos no Daemon Ollama: {', '.join(models)}")
-    except Exception as e:
-        print(f"   Status do Daemon Ollama: {e}")
+        with urllib.request.urlopen(f"{OLLAMA}/api/tags", timeout=5) as resp:  # noqa: S310  # Record-Id: registro-2026-09-16-benchmarks-medidos-e-nao-declarados
+            nomes = [m["name"] for m in json.loads(resp.read().decode()).get("models", [])]
+    except OSError as exc:
+        print(f"   Ollama indisponivel: {exc}")
+        return {"disponivel": False, "erro": str(exc)}
+    nuvem = [n for n in nomes if "cloud" in n]
+    locais = [n for n in nomes if "cloud" not in n]
+    resultado.update({"disponivel": True, "locais": locais, "nuvem": nuvem})
+    print(f"   {len(locais)} modelos locais, {len(nuvem)} de nuvem (os de nuvem nao usam a GPU desta maquina)")
 
-    # Telemetria de Memoria Atual do Sistema
     mem = psutil.virtual_memory()
-    total_gb = mem.total / (1024**3)
-    used_gb = mem.used / (1024**3)
-    available_gb = mem.available / (1024**3)
-    print(
-        f"   Telemetria de RAM Host: Total: {total_gb:.1f} GB | Usada: {used_gb:.1f} GB | Disponivel: {available_gb:.1f} GB ({mem.percent}% utilizada)"
+    print(f"   RAM do host: {mem.total / 1024**3:.1f} GB, {mem.percent}% em uso")
+
+    if not modelo:
+        print("   latencia nao medida: use --inferencia MODELO (carrega o modelo na memoria)")
+        return resultado
+    corpo = json.dumps(
+        {
+            "model": modelo,
+            "prompt": "Responda apenas: ok",
+            "stream": False,
+            "options": {"num_predict": 16, "temperature": 0},
+        }
+    ).encode()
+    req = urllib.request.Request(  # noqa: S310  # Record-Id: registro-2026-09-16-benchmarks-medidos-e-nao-declarados
+        f"{OLLAMA}/api/generate", data=corpo, headers={"Content-Type": "application/json"}
     )
-    print("   Fatiamento Termodinamico: ~5.2 GB VRAM GPU (-ngl 26) + ~3.5 GB System RAM (MMAP/OpenMP)")
+    t0 = time.perf_counter()
+    with urllib.request.urlopen(req, timeout=600) as resp:  # noqa: S310  # Record-Id: registro-2026-09-16-benchmarks-medidos-e-nao-declarados
+        dados = json.loads(resp.read().decode())
+    parede = time.perf_counter() - t0
+    ns = 1e9
+    eval_s = dados.get("eval_duration", 0) / ns
+    medida = {
+        "modelo": modelo,
+        "parede_s": parede,
+        "carga_s": dados.get("load_duration", 0) / ns,
+        "prompt_tokens": dados.get("prompt_eval_count"),
+        "tokens_gerados": dados.get("eval_count"),
+        "tokens_por_s": (dados.get("eval_count", 0) / eval_s) if eval_s else None,
+    }
+    resultado["inferencia"] = medida
+    print(
+        f"   {modelo}: parede {parede:.2f} s, carga {medida['carga_s']:.2f} s, "
+        f"{medida['tokens_gerados']} tokens a {medida['tokens_por_s'] or 0:.1f} tok/s"
+    )
+    return resultado
 
 
-def main():
-    """Ponto de entrada do benchmark unificado."""
-    print("\n" + "#" * 75)
-    print("  CHICO SOTA v7.0 GOLD - FULL ECOSYSTEM UNIFIED BENCHMARK")
-    print("  Data/Hora: " + time.strftime("%Y-%m-%d %H:%M:%S"))
-    print("#" * 75)
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Benchmark unificado do ecossistema, medido.")
+    parser.add_argument("--amostras", type=int, default=5)
+    parser.add_argument("--inferencia", metavar="MODELO", default=None)
+    parser.add_argument("--json", action="store_true", help="imprime tambem o relatorio consolidado em JSON")
+    args = parser.parse_args()
+    amostras = max(3, args.amostras)
 
-    t_start = time.perf_counter()
-    run_benchmark_mathematics()
-    run_benchmark_wasm()
-    run_benchmark_llama_cpp()
-    run_benchmark_inference()
-    t_total = time.perf_counter() - t_start
+    inicio = time.perf_counter()
+    secoes: list[tuple[str, Callable[[], Any]]] = [
+        ("motores Python", lambda: benchmark_python(amostras)),
+        ("motor WASM", lambda: benchmark_wasm(amostras)),
+        ("inventario llama.cpp", inventario_llama_cpp),
+        ("Ollama", lambda: benchmark_ollama(args.inferencia)),
+    ]
+    relatorio: dict[str, Any] = {"gerado_em": time.strftime("%Y-%m-%dT%H:%M:%S"), "amostras": amostras}
+    for i, (titulo, secao) in enumerate(secoes, 1):
+        print(f"\n[{i}/{len(secoes)}] {titulo}")
+        relatorio[titulo] = secao()
 
-    print("\n" + "=" * 75)
-    print(f"  [BENCHMARK CONCLUIDO COM SUCESSO] Tempo Total de Execucao: {t_total:.2f}s")
-    print("=" * 75 + "\n")
+    falhas = list(relatorio["motor WASM"].get("falhas", []))
+    relatorio["falhas"] = falhas
+    relatorio["veredito"] = "OK" if not falhas else "FALHOU"
+    print(f"\nVeredito: {relatorio['veredito']} em {time.perf_counter() - inicio:.1f} s")
+    if args.json:
+        print(json.dumps(relatorio, ensure_ascii=True, default=str))
+    return 0 if not falhas else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

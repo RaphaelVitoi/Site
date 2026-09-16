@@ -28,6 +28,8 @@ class BenchmarkConfig:
     output_json_file: str = "benchmark_results.json"
 
 
+MARCA_SIMULACAO = "[SIMULACAO SOTA]"
+
 PAYLOAD_POOL: list[dict[str, Any]] = [
     {
         "description": "Baixa Densidade (Candidato a Llama Local)",
@@ -62,6 +64,9 @@ class RequestResult:
     tokens_evaluated: int
     is_success: bool
     error_message: str | None = None
+    # O app devolve "[SIMULACAO SOTA]" quando SIMULATE_INFERENCE esta ligado e nao ha nuvem;
+    # sem este campo, latencia de sleep saia no mesmo JSON que latencia de inferencia.
+    simulado: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -115,6 +120,7 @@ async def send_request(
                     thinking_tokens=data.get("thinking_tokens_used", 0),
                     tokens_evaluated=data.get("tokens_evaluated", 0),
                     is_success=True,
+                    simulado=str(data.get("content", "")).startswith(MARCA_SIMULACAO),
                 )
             return RequestResult(
                 status_code=response.status_code,
@@ -138,11 +144,28 @@ async def send_request(
             )
 
 
-def export_results_to_json(results: list[RequestResult], filepath: str) -> None:
-    serializable_data = [r.to_dict() for r in results]
+def modo_da_execucao(results: list[RequestResult]) -> str:
+    """real, simulado ou misto -- decidido pelas respostas, nunca pela configuracao."""
+    sucessos = [r for r in results if r.is_success]
+    if not sucessos:
+        return "sem_sucesso"
+    simulados = sum(r.simulado for r in sucessos)
+    if simulados == len(sucessos):
+        return "simulado"
+    return "real" if simulados == 0 else "misto"
+
+
+def export_results_to_json(results: list[RequestResult], filepath: str, config: BenchmarkConfig) -> None:
+    envelope = {
+        "schema": 1,
+        "gerado_em": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "modo": modo_da_execucao(results),
+        "config": asdict(config),
+        "resultados": [r.to_dict() for r in results],
+    }
     with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(serializable_data, f, indent=2, ensure_ascii=False)
-    print(f"\n[EXPORTACAO] {len(serializable_data)} registros salvos em: {os.path.abspath(filepath)}")
+        json.dump(envelope, f, indent=2, ensure_ascii=False)
+    print(f"\n[EXPORTACAO] {len(results)} registros (modo {envelope['modo']}) salvos em: {os.path.abspath(filepath)}")
 
 
 async def run_benchmark(config: BenchmarkConfig) -> BenchmarkMetrics:
@@ -190,7 +213,7 @@ async def run_benchmark(config: BenchmarkConfig) -> BenchmarkMetrics:
         elif r.error_message:
             metrics.errors.append(r.error_message)
 
-    export_results_to_json(results, config.output_json_file)
+    export_results_to_json(results, config.output_json_file, config)
     return metrics
 
 
@@ -202,6 +225,7 @@ def display_report(metrics: BenchmarkMetrics) -> None:
     print("=" * 75)
     print("                RELATORIO DE DESEMPENHO E CONCORRENCIA                ")
     print("=" * 75)
+    print(f"Modo:                       {modo_da_execucao(metrics.raw_results).upper()}")
     print(f"Tempo Total de Execucao:    {metrics.total_time_seconds:.2f} s")
     print(f"Taxa de Throughput (RPS):   {metrics.rps:.2f} req/s")
     print(f"Requisicoes Totais:         {metrics.total_requests}")

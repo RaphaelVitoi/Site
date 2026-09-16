@@ -6,7 +6,47 @@
 import {
 	calculateClientCfrConvergence,
 	forecastCfrConvergence,
+	GATEWAY_ESPERA_APOS_FALHA_MS,
+	GATEWAY_INTERVALO_MINIMO_MS,
+	reiniciarLimitadorTimesFM,
 } from '../../lib/timesfm-client';
+
+beforeEach(() => reiniciarLimitadorTimesFM());
+
+describe('limitador do gateway TimesFM', () => {
+	const historico = [0.08, 0.06, 0.05, 0.04];
+	const originalFetch = globalThis.fetch;
+	afterEach(() => {
+		jest.useRealTimers();
+		Object.defineProperty(globalThis, 'fetch', { configurable: true, value: originalFetch });
+	});
+
+	test('rajada de amostras dispara uma chamada remota, nao uma por amostra', async () => {
+		const fetchMock = jest.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+		Object.defineProperty(globalThis, 'fetch', { configurable: true, value: fetchMock });
+
+		const resultados = [];
+		for (let i = 0; i < 200; i++) resultados.push(await forecastCfrConvergence(historico, 3, 0.001));
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(resultados.every((r) => r.fallback_used)).toBe(true);
+	});
+
+	test('falha abre espera longa; sucesso so respeita o intervalo minimo', async () => {
+		jest.useFakeTimers({ now: 1_000_000 });
+		const fetchMock = jest.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+		Object.defineProperty(globalThis, 'fetch', { configurable: true, value: fetchMock });
+
+		await forecastCfrConvergence(historico, 3, 0.001);
+		jest.setSystemTime(1_000_000 + GATEWAY_INTERVALO_MINIMO_MS + 1);
+		await forecastCfrConvergence(historico, 3, 0.001);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+
+		jest.setSystemTime(1_000_000 + GATEWAY_ESPERA_APOS_FALHA_MS + 1);
+		await forecastCfrConvergence(historico, 3, 0.001);
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+});
 
 describe('calculateClientCfrConvergence', () => {
 	test('devolve INSUFFICIENT_HISTORY se houver menos de 4 pontos', () => {
