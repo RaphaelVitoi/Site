@@ -374,7 +374,7 @@ export function maskToBytes(mask: bigint): Uint8Array {
 	const bytes = new Uint8Array(RANGE_MASK_BYTE_LENGTH);
 	let temp = mask;
 	for (let i = 0; i < RANGE_MASK_BYTE_LENGTH; i++) {
-		bytes.set([Number(temp & BigInt(0xff))], i);
+		bytes[i] = Number(temp & BigInt(0xff));
 		temp >>= BigInt(8);
 	}
 	return bytes;

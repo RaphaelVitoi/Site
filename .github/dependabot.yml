@@ -15,9 +15,12 @@ updates:
       python-dependencies:
         patterns:
           - "*"
+        update-types: ["minor", "patch"]
     ignore:
       - dependency-name: "chromadb"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "opencv-python-headless"
+        update-types: ["version-update:semver-major"]
 
   # Frontend & monorepo dependencies (npm / package.json workspaces)
   - package-ecosystem: "npm"
@@ -33,6 +36,7 @@ updates:
       frontend-dependencies:
         patterns:
           - "*"
+        update-types: ["minor", "patch"]
 
   # GitHub Actions CI/CD workflows
   - package-ecosystem: "github-actions"
