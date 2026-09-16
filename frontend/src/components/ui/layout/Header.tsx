@@ -225,46 +225,46 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
     <Link href="/" className="group relative flex items-center gap-3 focus:outline-none">
       <div className={logoContainerClass}>
         <div
-          className={`absolute inset-0 bg-gradient-to-br ${
+          className={`absolute inset-0 bg-linear-to-br ${
             isLightPage ? 'from-black/5' : 'from-white/10'
           } to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100`}
         />
         <BrandMark
-          className={`relative z-10 transition-transform duration-700 group-hover:scale-110 ${
-            isLightPage ? 'text-[#B09460]' : 'text-accent-indigo'
+          size={20}
+          className={`relative z-10 transition-transform duration-500 group-hover:scale-105 ${
+            isLightPage ? 'text-light-text-main' : 'text-white'
           }`}
-          size={24}
         />
       </div>
-
-      <div className="flex flex-col">
+      <div className="flex flex-col justify-center">
         <div className="flex items-center gap-2">
           <span
-            className={`font-heading text-sm font-extrabold tracking-tight transition-colors ${
-              isLightPage ? 'text-light-text-main group-hover:text-light-text-accent' : 'text-text-bright group-hover:text-white'
-            }`}
+            className={`text-[1.2rem] font-black tracking-tighter ${
+              isLightPage ? 'text-light-text-main' : 'text-white'
+            } leading-none transition-all duration-500`}
           >
-            {HEADER_STRINGS.brandTitle} <span className={isLightPage ? 'text-[#B09460]' : 'text-accent-indigo'}>{HEADER_STRINGS.brandSubtitle}</span>
-          </span>
-
-          <div
-            className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 border ${
-              gemmaOnline
-                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                : 'border-white/10 bg-white/5 text-text-dim'
-            }`}
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${gemmaOnline ? 'bg-emerald-400 animate-pulse' : 'bg-text-dim/40'}`} />
-            <span className="text-[0.55rem] font-bold uppercase tracking-wider">
-              {gemmaOnline ? HEADER_STRINGS.oracleOnline : HEADER_STRINGS.oracleOffline}
+            {HEADER_STRINGS.brandTitle}{' '}
+            <span
+              className={`font-light ${
+                isLightPage ? 'text-light-text-muted' : 'text-text-muted'
+              } ml-0.5 tracking-[0.2em] transition-colors duration-500`}
+            >
+              {HEADER_STRINGS.brandSubtitle}
             </span>
-          </div>
+          </span>
+          <div
+            className={`h-1.5 w-1.5 rounded-full ${
+              gemmaOnline
+                ? 'bg-accent-emerald animate-pulse shadow-[0_0_12px_var(--color-accent-emerald)]'
+                : 'bg-rose-500/40'
+            }`}
+            title={gemmaOnline ? HEADER_STRINGS.oracleOnline : HEADER_STRINGS.oracleOffline}
+          />
         </div>
-
         <span
-          className={`text-[0.6rem] font-medium tracking-wider uppercase transition-colors ${
-            isLightPage ? 'text-light-text-muted' : 'text-text-muted'
-          }`}
+          className={`text-[0.55rem] font-black tracking-[0.4em] uppercase ${
+            isLightPage ? 'text-light-text-accent' : 'text-accent-indigo-light'
+          } mt-2 leading-none transition-all duration-500`}
         >
           {HEADER_STRINGS.tagline}
         </span>
@@ -297,7 +297,7 @@ const HeaderDesktopNav: React.FC<{
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href ||
-            (item.href !== '/' && pathname.startsWith(`${item.href}/`)) ||
+            pathname.startsWith(`${item.href}/`) ||
             Boolean(item.submenu?.some((sub) => pathname === sub.href));
 
           return (
@@ -350,7 +350,7 @@ const HeaderDesktopNav: React.FC<{
                   >
                     <div className={submenuCardClass}>
                       <div
-                        className={`absolute inset-0 bg-gradient-to-br ${
+                        className={`absolute inset-0 bg-linear-to-br ${
                           isLightPage ? 'from-[#B09460]/5' : 'from-accent-indigo/5'
                         } pointer-events-none to-transparent`}
                       />
