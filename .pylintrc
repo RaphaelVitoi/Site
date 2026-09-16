@@ -3,7 +3,8 @@ ignore=.git,.venv,node_modules,.next,frontend
 load-plugins=pylint.extensions.docparams
 
 [MESSAGES CONTROL]
-disable=C0114,C0115,C0116,C0301,W0718,W1203,R0903,R0917,R0801,R0401,R0904,R0913,R0914
+# C1803: `assert f() == []` confere tipo E vazio; `not f()` aceitaria None e enfraqueceria a assercao.
+disable=C0114,C0115,C0116,C0301,W0718,W1203,R0903,R0917,R0801,R0401,R0904,R0913,R0914,C1803
 
 [REPORTS]
 output-format=colorized

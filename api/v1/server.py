@@ -10,25 +10,6 @@ import time
 
 from aiohttp import web
 
-from database.lab_manager import LabManager
-from database.queue_manager import QueueManager
-
-try:
-    from monitoring.audit_engine import AuditEngine  # type: ignore
-except Exception:  # noqa: BLE001 - fallback de resiliencia para ambientes sem modulo opcional
-
-    class AuditEngine:
-        """Fallback mock para o Motor de Auditoria."""
-
-        def __init__(self, manager):
-            self.manager = manager
-
-        async def process_frontend_events(self, events):
-            """Processamento emulando operacao assincrona (noop)."""
-            _ = events
-            await asyncio.sleep(0)
-
-
 from api.v1.handlers import (
     handle_add_task,
     handle_ask_oracle,
@@ -75,6 +56,24 @@ from api.v1.middleware import (
     rate_limit_middleware,
     security_headers_middleware,
 )
+from database.lab_manager import LabManager
+from database.queue_manager import QueueManager
+
+try:
+    from monitoring.audit_engine import AuditEngine  # type: ignore
+except Exception:  # noqa: BLE001 - fallback de resiliencia para ambientes sem modulo opcional
+
+    class AuditEngine:
+        """Fallback mock para o Motor de Auditoria."""
+
+        def __init__(self, manager):
+            self.manager = manager
+
+        async def process_frontend_events(self, events):
+            """Processamento emulando operacao assincrona (noop)."""
+            _ = events
+            await asyncio.sleep(0)
+
 
 logger = logging.getLogger(__name__)
 
@@ -152,11 +151,17 @@ def create_app(manager: QueueManager) -> web.Application:
             web.post("/api/v1/game-theory/pluribus/solve", handle_pluribus_solve),
             web.post("/api/v1/game-theory/deepstack/resolve", handle_deepstack_resolve),
             web.post("/api/v1/game-theory/rebel/pbs/evaluate", handle_rebel_pbs_evaluate),
-            web.post("/api/v1/game-theory/claudico/translate-action", handle_claudico_translate_action),
+            web.post(
+                "/api/v1/game-theory/claudico/translate-action",
+                handle_claudico_translate_action,
+            ),
             web.post("/api/v1/canonical/clairvoyance/solve", handle_canonical_clairvoyance),
             web.post("/api/v1/canonical/akq/solve", handle_canonical_akq),
             web.post("/api/v1/canonical/janda/mdf", handle_canonical_janda_mdf),
-            web.post("/api/v1/canonical/janda/geometric-sizing", handle_canonical_geometric_sizing),
+            web.post(
+                "/api/v1/canonical/janda/geometric-sizing",
+                handle_canonical_geometric_sizing,
+            ),
             web.post("/api/v1/canonical/janda/bluff-ratios", handle_canonical_bluff_ratios),
         ]
     )
@@ -165,11 +170,12 @@ def create_app(manager: QueueManager) -> web.Application:
 
 async def start_api_server(manager: QueueManager, port: int = 17042):
     """Inicializa, configura rotas e executa o servidor web SOTA na porta especificada."""
-    env_port = os.environ.get("PORT")
+    is_container = bool(os.environ.get("K_SERVICE") or os.environ.get("DOCKER_CONTAINER"))
+    env_port = os.environ.get("NEXUS_PORT") or (os.environ.get("PORT") if is_container else None)
     bind_port = int(env_port) if env_port and env_port.isdigit() else port
     default_host = (
         "0.0.0.0"  # noqa: S104, RECORD-ID: NET-SOTA-001 - Bind em todas as interfaces mandatorio em containers Cloud Run/Docker
-        if (os.environ.get("K_SERVICE") or os.environ.get("DOCKER_CONTAINER"))
+        if is_container
         else "127.0.0.1"
     )
     bind_host = os.environ.get("HOST", default_host)
@@ -181,15 +187,18 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
     site = web.TCPSite(runner, bind_host, bind_port, reuse_address=True, backlog=4096)
     try:
         await site.start()
-        logger.info("Micro-Servidor SOTA API (aiohttp) escutando em http://%s:%d", bind_host, bind_port)
-        # Roda indefinidamente
-        await asyncio.Event().wait()
-    except OSError as e:
-        logger.exception(
-            "Falha ao iniciar o Micro-Servidor SOTA em %s:%d: %s. (A porta pode estar em uso)",
+        logger.info(
+            "Micro-Servidor SOTA API (aiohttp) escutando em http://%s:%d",
             bind_host,
             bind_port,
-            e,
+        )
+        # Roda indefinidamente
+        await asyncio.Event().wait()
+    except OSError:
+        logger.exception(
+            "Falha ao iniciar o Micro-Servidor SOTA em %s:%d. (A porta pode estar em uso)",
+            bind_host,
+            bind_port,
         )
         raise
     finally:

@@ -1,7 +1,6 @@
 {
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
     "python.languageServer": "Default",
-    "pyrefly.lspPath": "C:\\Users\\rapha\\.antigravity-ide\\extensions\\meta.pyrefly-1.2.0-win32-x64\\bin\\pyrefly.exe",
     "python.terminal.activateEnvironment": true,
     "python.analysis.diagnosticMode": "workspace",
     "python.analysis.inlayHints.functionReturnTypes": true,
@@ -22,7 +21,7 @@
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    "python.testing.autoTestDiscoverOnSaveEnabled": false,
     "editor.formatOnSave": true,
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
@@ -55,6 +54,28 @@
         "**/reports/**": true,
         "**/coverage/**": true
     },
+    "git.repositoryScanIgnoredFolders": [
+        "node_modules",
+        ".venv",
+        ".next",
+        ".pytest_cache",
+        ".ruff_cache",
+        "target"
+    ],
+    "tailwindCSS.files.exclude": [
+        "**/.git/**",
+        "**/node_modules/**",
+        "**/.hg/**",
+        "**/.svn/**",
+        "**/.venv/**",
+        "**/.next/**",
+        "**/target/**",
+        "**/core/vendor/**",
+        "**/worker/Java/**",
+        "**/reports/**",
+        "**/.trunk/**",
+        "skills/**"
+    ],
     "files.exclude": {
         "**/__pycache__": true,
         "**/.pytest_cache": true,
@@ -110,8 +131,7 @@
         },
         "editor.wordWrap": "on"
     },
-    "markdownlint.configFile": "${workspaceFolder}/.markdownlint.json",
-    "markdownlint.ignoreFileName": "${workspaceFolder}/.markdownlintignore",
+    "markdownlint.ignoreFileName": ".markdownlintignore",
     "files.associations": {
         ".markdownlintignore": "ignore",
         ".prettierignore": "ignore",
@@ -134,7 +154,6 @@
         "typescript",
         "typescriptreact"
     ],
-    "rust-analyzer.server.path": "C:\\Users\\rapha\\.cargo\\bin\\rust-analyzer.exe",
     "rust-analyzer.check.command": "clippy",
     "rust-analyzer.cargo.allTargets": true,
     "rust-analyzer.procMacro.enable": true,
@@ -427,5 +446,9 @@
     "chat.tools.terminal.outputCompaction": true,
     "chat.tools.terminal.outputDeltas": true,
     "aws.sagemaker.studio.spaces.enableIdentityFiltering": true,
-    "aws.samcli.enableCodeLenses": true
+    "aws.samcli.enableCodeLenses": true,
+    "lldb-dap.captureSessionLogs": true,
+    "quarto.render.renderOnSave": true,
+    "python.globalModuleInstallation": true,
+    "python.useEnvironmentsExtension": true
 }

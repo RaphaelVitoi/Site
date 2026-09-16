@@ -20,9 +20,11 @@ RAIZ = Path(__file__).resolve().parents[2]
 if str(RAIZ) not in sys.path:
     sys.path.insert(0, str(RAIZ))
 
+# pylint: disable=wrong-import-position
 from engine.pmev_benchmark_publico import build_public_dataset  # noqa: E402
 from engine.pmev_hh_benchmark import HeroObservation, hero_observations  # noqa: E402
 from engine.pmev_hh_canon import is_complete_field, load_structures, match_structure, parse_pokerstars_hands  # noqa: E402
+# pylint: enable=wrong-import-position
 
 DESTINO_PADRAO = RAIZ / "data" / "pmev_benchmark_icm_chipev.v1.json"
 

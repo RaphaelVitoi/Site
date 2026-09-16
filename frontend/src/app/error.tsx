@@ -9,7 +9,7 @@ interface ErrorProps {
 	reset: () => void;
 }
 
-export default function AppError({ error, reset }: ErrorProps) {
+export default function AppError({ error, reset }: Readonly<ErrorProps>) {
 	useEffect(() => {
 		try {
 			logTelemetryEvent({
@@ -52,14 +52,14 @@ export default function AppError({ error, reset }: ErrorProps) {
 						className="bg-accent-indigo hover:bg-accent-indigo-light inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-accent-indigo/50"
 					>
 						<i className="fa-solid fa-rotate-right" aria-hidden="true" />
-						Recalibrar Execução
+						<span>Recalibrar Execução</span>
 					</button>
 					<Link
 						href="/"
 						className="border-border-subtle text-text-main hover:bg-bg-elevated hover:text-text-bright inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-medium transition-colors"
 					>
 						<i className="fa-solid fa-house" aria-hidden="true" />
-						Retornar ao Início
+						<span>Retornar ao Início</span>
 					</Link>
 				</div>
 			</div>

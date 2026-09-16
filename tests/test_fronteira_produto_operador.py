@@ -23,6 +23,7 @@ import base64
 import hashlib
 import hmac
 import json
+import time
 from pathlib import Path
 from typing import cast
 
@@ -40,7 +41,7 @@ def _jwt_de_produto(secret: str = SEGREDO, role: str = "authenticated") -> str:
     def seg(data: dict) -> str:
         return base64.urlsafe_b64encode(json.dumps(data, separators=(",", ":")).encode()).decode().rstrip("=")
 
-    entrada = f"{seg({'alg': 'HS256', 'typ': 'JWT'})}.{seg({'sub': 'usuario-do-produto', 'role': role})}"
+    entrada = f"{seg({'alg': 'HS256', 'typ': 'JWT'})}.{seg({'sub': 'usuario-do-produto', 'role': role, 'exp': int(time.time()) + 3600})}"
     assinatura = hmac.new(secret.encode(), entrada.encode(), hashlib.sha256).digest()
     return f"{entrada}.{base64.urlsafe_b64encode(assinatura).decode().rstrip('=')}"
 

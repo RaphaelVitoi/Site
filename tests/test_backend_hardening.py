@@ -642,9 +642,10 @@ async def test_claim_task_garante_reserva_atomica_e_sem_duplicidade(mock_queue_m
 @pytest.mark.unit
 def test_rate_limiter_purga_ips_expirados_e_previne_memory_leak(monkeypatch) -> None:
     """Verifica se _purge_expired_ips aniquila registros defasados de IP da memoria."""
-    from api.v1.middleware import _ip_blocks, _purge_expired_ips
+    from api.v1.middleware import _purge_expired_ips
 
-    _ip_blocks.clear()
+    _ip_blocks: dict[str, dict[str, float | int]] = {}
+    monkeypatch.setattr(middleware, "_ip_blocks", _ip_blocks)
     agora = time.time()
     # Insere 2 IPs obsoletos e 1 recente
     _ip_blocks["192.168.1.10"] = {"count": 5, "start_time": agora - 120}

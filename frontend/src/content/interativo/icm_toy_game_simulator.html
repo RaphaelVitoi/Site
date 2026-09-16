@@ -1,3 +1,1270 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:b77197a9c3d6545ce68819aaa18507e3c850cb3df056344c5a1dcdae0b6ebe86
-size 70157
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometria do Risco | Masterclass Elite (State of the Art)</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"
+        integrity="sha384-kKz8MvUeIqN1aK1uX/GzQ/9o9+jFxyXU2Vb25a3hP6L8o4eR0F4iG12i/1A4kR1A"
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700;800&family=Great+Vibes&display=swap');
+
+        :root {
+            --bg-base: #020617;
+            --bg-panel: #0f172a;
+            --accent-sky: #0ea5e9;
+            --accent-rose: #e11d48;
+            --accent-indigo: #6366f1;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: #f8fafc;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.05), transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.05), transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        .glass-panel {
+            background-color: rgba(15, 23, 42, 0.75);
+            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .data-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .bar-transition {
+            transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+                filter: blur(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+                filter: blur(0);
+            }
+        }
+
+        .animate-fade-up {
+            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.4));
+            }
+
+            50% {
+                filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.8));
+            }
+        }
+
+        .pulse-glow {
+            animation: pulseGlow 3s infinite;
+        }
+
+        /* Scenario Selector */
+        .scenario-btn {
+            width: 100%;
+            text-align: left;
+            padding: 14px 18px;
+            border-radius: 14px;
+            background-color: #0f172a;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scenario-btn:hover {
+            background-color: #1e293b;
+            transform: translateX(6px);
+            color: #f8fafc;
+        }
+
+        .scenario-btn.active {
+            background-color: #1e293b;
+            background-image: linear-gradient(90deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.05));
+            border-left: 3px solid #818cf8;
+            border-top: 1px solid rgba(99, 102, 241, 0.2);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            color: #fff;
+            box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.05);
+            transform: translateX(6px);
+        }
+
+        .scenario-btn .icon-box {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #020617;
+            color: #ffffff;
+            font-size: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            z-index: 2;
+            position: relative;
+        }
+
+        .scenario-btn.active .icon-box {
+            background: #4f46e5;
+            color: white;
+            border-color: #818cf8;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Gauges */
+        .circular-chart {
+            display: block;
+            margin: 0 auto;
+            max-width: 140px;
+            max-height: 140px;
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: rgba(30, 41, 59, 0.8);
+            stroke-width: 2.5;
+        }
+
+        .circle {
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            transition: stroke-dasharray 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .circle.sky {
+            stroke: #0ea5e9;
+            filter: drop-shadow(0 0 8px rgba(14, 165, 233, 0.6));
+        }
+
+        .circle.rose {
+            stroke: #e11d48;
+            filter: drop-shadow(0 0 8px rgba(225, 29, 72, 0.6));
+        }
+
+        /* Tabs */
+        .action-tab {
+            flex: 1;
+            padding: 18px 0;
+            text-align: center;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 11px;
+            color: #94a3b8;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(15, 23, 42, 0.4);
+        }
+
+        .action-tab:hover {
+            color: #cbd5e1;
+            background: rgba(30, 41, 59, 0.4);
+        }
+
+        .action-tab.active {
+            color: #fff;
+            background: transparent;
+        }
+
+        .action-tab[data-target="theory"].active {
+            border-color: var(--accent-sky);
+            color: var(--accent-sky);
+        }
+
+        .action-tab[data-target="exploit"].active {
+            border-color: var(--accent-indigo);
+            color: var(--accent-indigo);
+        }
+
+        .action-tab[data-target="quiz"].active {
+            border-color: var(--accent-amber);
+            color: var(--accent-amber);
+        }
+
+        .action-tab[data-target="dilution"].active {
+            border-color: var(--accent-rose);
+            color: var(--accent-rose);
+        }
+
+        .action-tab[data-target="telemetry"].active {
+            border-color: var(--accent-emerald);
+            color: var(--accent-emerald);
+        }
+
+        .content-panel {
+            display: none;
+            padding: 35px;
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .content-panel.active {
+            display: block;
+        }
+
+        /* Quiz */
+        .quiz-option {
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 18px 24px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .quiz-option:hover {
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.1);
+        }
+
+        .quiz-option.wrong {
+            background: rgba(225, 29, 72, 0.15);
+            border-color: rgba(225, 29, 72, 0.5);
+        }
+
+        .quiz-option.disabled {
+            pointer-events: none;
+            opacity: 0.4;
+            filter: grayscale(1);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .signature-text {
+            font-family: 'Great Vibes', cursive;
+            font-size: 3rem;
+            color: #020617;
+            background: linear-gradient(120deg, #e0e7ff 0%, #93c5fd 30%, #6366f1 70%, #4338ca 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transform: rotate(-3deg);
+            display: inline-block;
+            text-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Ticker Axiomas */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 8px 0;
+        }
+
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 30s linear infinite;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: #818cf8;
+        }
+
+        @keyframes ticker {
+            0% {
+                transform: translateX(100vw);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* Dilution Pipeline visualizer */
+        .pipeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            margin: 40px 0;
+            padding: 0 20px;
+        }
+
+        .pipeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1;
+            transform: translateY(-50%);
+        }
+
+        .pipeline-node {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #0f172a;
+            border: 2px solid #334155;
+            transition: all 0.5s ease;
+        }
+
+        .pipeline-node.active {
+            border-color: #f43f5e;
+            box-shadow: 0 0 20px rgba(225, 29, 72, 0.4);
+            background: rgba(225, 29, 72, 0.1);
+        }
+    </style>
+</head>
+
+<body class="p-0 md:p-8 flex flex-col items-center">
+
+    <!-- AXIOM TICKER -->
+    <div class="ticker-wrap absolute top-0 left-0 z-50">
+        <div class="ticker">
+            <span class="mx-8"><i class="fa-solid fa-bolt mr-2"></i> A responsabilidade na FT é realizar o EV monetário,
+                não provar coragem.</span>
+            <span class="mx-8"><i class="fa-solid fa-bolt mr-2"></i> A diferença de RP entre jogadores é a sua Vantagem
+                ou Desvantagem de Risco.</span>
+            <span class="mx-8"><i class="fa-solid fa-bolt mr-2"></i> O pós-flop no ICM foca-se em extração cirúrgica sem
+                pulverizar alavancagem.</span>
+            <span class="mx-8"><i class="fa-solid fa-bolt mr-2"></i> Acumular fichas nunca é negativo, o problema é
+                arriscá-las sem recompensa.</span>
+        </div>
+    </div>
+
+    <div class="w-full max-w-350 flex flex-col gap-8 mt-12">
+
+        <!-- HEADER -->
+        <header class="text-center mb-2 pt-4">
+            <div
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-4">
+                <div class="w-2 h-2 rounded-full bg-indigo-400 pulse-glow"></div>
+                <span class="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Motor de Inferência
+                    Ativo</span>
+            </div>
+            <h1 class="text-5xl md:text-6xl font-black tracking-tighter mb-3">
+                A Geometria do <span
+                    class="text-transparent bg-clip-text bg-linear-to-r from-rose-400 to-indigo-500">Risco</span>
+            </h1>
+            <p class="text-slate-400 text-sm font-bold uppercase tracking-[0.3em]">
+                Masterclass de Teoria dos Jogos | Arquitetura V48
+            </p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start px-4 md:px-0">
+
+            <!-- LEFT MENU: Scenario Selection -->
+            <aside class="lg:col-span-4 flex flex-col gap-6">
+
+                <div class="glass-panel p-6 max-h-212.5 flex flex-col">
+                    <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+                        <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest">Matrizes Clínicas</h2>
+                        <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded font-bold">10
+                            Cenários</span>
+                    </div>
+
+                    <div class="space-y-3 overflow-y-auto pr-2 pb-4 max-h-162.5" id="scenario-list">
+                        <!-- Botões injetados via JS -->
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- RIGHT STAGE: Visualizer & Interaction -->
+            <main class="lg:col-span-8 flex flex-col gap-6">
+
+                <!-- THE STAGE (Top Panel - VS Visualizer) -->
+                <div class="glass-panel p-8 md:p-10 relative">
+                    <div
+                        class="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 rounded-full filter blur-[100px] pointer-events-none">
+                    </div>
+                    <div
+                        class="absolute bottom-0 left-0 w-64 h-64 bg-rose-500/10 rounded-full filter blur-[100px] pointer-events-none">
+                    </div>
+
+                    <div class="flex justify-between items-start border-b border-slate-800 pb-6 mb-8 relative z-10">
+                        <div>
+                            <span
+                                class="text-[10px] font-black text-slate-400 bg-slate-800/50 px-3 py-1.5 rounded-md uppercase tracking-widest border border-slate-700/50"
+                                id="stage-env">Contexto</span>
+                            <h2 class="text-3xl md:text-4xl font-black text-white mt-4 tracking-tight gradient-text"
+                                id="stage-title">Título</h2>
+                        </div>
+                        <div class="text-right hidden sm:flex flex-col items-end">
+                            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Veredito
+                                do Solver</span>
+                            <div id="verdict-badge"
+                                class="px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest border transition-all duration-500">
+                                --
+                            </div>
+                        </div>
+                        <div class="action-tab shrink-0 px-4" data-target="telemetry">
+                            <i class="fa-solid fa-server mr-2 opacity-70"></i> Telemetria SOTA
+                        </div>
+                    </div>
+
+                    <!-- VS Battle Visualization -->
+                    <div class="flex items-center justify-between px-2 md:px-12 relative z-10">
+
+                        <!-- Agressor (IP/Hero) -->
+                        <div class="flex flex-col items-center flex-1">
+                            <div class="text-center mb-4">
+                                <span
+                                    class="text-[11px] font-black text-sky-400 uppercase tracking-widest block mb-2">Agressor
+                                    (Ida)</span>
+                                <span class="text-2xl font-black text-white block mb-1" id="ip-pos">BTN</span>
+                                <span
+                                    class="data-mono text-sm text-slate-400 font-medium bg-slate-900/50 px-2 py-0.5 rounded border border-slate-800"
+                                    id="ip-stack">40.2 bb</span>
+                            </div>
+
+                            <div class="relative w-28 h-28 md:w-36 md:h-36">
+                                <svg viewBox="0 0 36 36" class="circular-chart">
+                                    <path class="circle-bg"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path class="circle sky" id="ip-rp-svg" stroke-dasharray="0, 100"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span class="data-mono text-2xl md:text-3xl font-black text-white"
+                                        id="ip-rp-txt">0%</span>
+                                    <span
+                                        class="text-[8px] md:text-[9px] font-bold text-sky-400 uppercase tracking-widest mt-1">R.
+                                        Premium</span>
+                                </div>
+                            </div>
+
+                            <!-- Morphologic Tag (Short Didactic Text) -->
+                            <div class="mt-6 text-center">
+                                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Morfologia
+                                    de Range</p>
+                                <span
+                                    class="text-xs font-bold text-sky-300 bg-sky-950/30 px-3 py-1.5 rounded-lg border border-sky-500/20 block"
+                                    id="ip-morph">Polarizado</span>
+                            </div>
+                        </div>
+
+                        <!-- VS Logo -->
+                        <div class="shrink-0 px-4 md:px-6 flex flex-col items-center">
+                            <div
+                                class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-slate-400 font-black italic text-lg md:text-xl shadow-lg">
+                                VS
+                            </div>
+                            <div class="w-px h-20 md:h-24 bg-linear-to-b from-slate-700 to-transparent mt-4"></div>
+                        </div>
+
+                        <!-- Defensor (OOP/Villain) -->
+                        <div class="flex flex-col items-center flex-1">
+                            <div class="text-center mb-4">
+                                <span
+                                    class="text-[11px] font-black text-rose-400 uppercase tracking-widest block mb-2">Defensor
+                                    (Volta)</span>
+                                <span class="text-2xl font-black text-white block mb-1" id="oop-pos">BB</span>
+                                <span
+                                    class="data-mono text-sm text-slate-400 font-medium bg-slate-900/50 px-2 py-0.5 rounded border border-slate-800"
+                                    id="oop-stack">54.4 bb</span>
+                            </div>
+
+                            <div class="relative w-28 h-28 md:w-36 md:h-36">
+                                <svg viewBox="0 0 36 36" class="circular-chart">
+                                    <path class="circle-bg"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path class="circle rose" id="oop-rp-svg" stroke-dasharray="0, 100"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span class="data-mono text-2xl md:text-3xl font-black text-white"
+                                        id="oop-rp-txt">0%</span>
+                                    <span
+                                        class="text-[8px] md:text-[9px] font-bold text-rose-400 uppercase tracking-widest mt-1">R.
+                                        Premium</span>
+                                </div>
+                            </div>
+
+                            <!-- Morphologic Tag -->
+                            <div class="mt-6 text-center">
+                                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Morfologia
+                                    de Range</p>
+                                <span
+                                    class="text-xs font-bold text-rose-300 bg-rose-950/30 px-3 py-1.5 rounded-lg border border-rose-500/20 block"
+                                    id="oop-morph">Condensado</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- DYNAMIC FREQUENCIES PANEL -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Alpha / Bluff -->
+                    <div class="glass-panel p-6 border-t-4 border-t-sky-500 hover:border-t-sky-400 transition-colors">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="space-y-1">
+                                <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Teto de
+                                    Agressão</h3>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">Frequência Ótima de Bluff</p>
+                            </div>
+                            <span id="del-bluff"
+                                class="data-mono text-xs font-bold px-2 py-1 rounded bg-slate-800 border border-slate-700">-0.0%</span>
+                        </div>
+                        <div>
+                            <div class="flex items-baseline gap-2 mb-2">
+                                <span id="out-bluff"
+                                    class="data-mono text-5xl font-black text-white tracking-tighter">33.3</span>
+                                <span class="text-xl font-bold text-sky-400">%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mt-4 shadow-inner">
+                                <div id="bar-bluff" class="h-full bg-sky-500 bar-transition w-[33.3%]"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MDF / Defense -->
+                    <div class="glass-panel p-6 border-t-4 border-t-rose-500 hover:border-t-rose-400 transition-colors">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="space-y-1">
+                                <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Ponto de
+                                    Ruptura</h3>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">Limiar de Indiferença (Call)
+                                </p>
+                            </div>
+                            <span id="del-defense"
+                                class="data-mono text-xs font-bold px-2 py-1 rounded bg-slate-800 border border-slate-700">-0.0%</span>
+                        </div>
+                        <div>
+                            <div class="flex items-baseline gap-2 mb-2">
+                                <span id="out-defense"
+                                    class="data-mono text-5xl font-black text-white tracking-tighter">50.0</span>
+                                <span class="text-xl font-bold text-rose-400">%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mt-4 shadow-inner">
+                                <div id="bar-defense" class="h-full bg-rose-500 bar-transition w-[50%]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INTERACTIVE PANELS -->
+                <div class="glass-panel flex flex-col min-h-100">
+                    <!-- Panel Navigation -->
+                    <div class="flex border-b border-slate-800 overflow-x-auto hide-scroll">
+                        <div class="action-tab active shrink-0 px-4" data-target="theory">
+                            <i class="fa-solid fa-book-open mr-2 opacity-70"></i> Fundamento Teórico
+                        </div>
+                        <div class="action-tab shrink-0 px-4" data-target="dilution">
+                            <i class="fa-solid fa-water mr-2 opacity-70"></i> Diluição SPR
+                        </div>
+                        <div class="action-tab shrink-0 px-4" data-target="exploit">
+                            <i class="fa-solid fa-crosshairs mr-2 opacity-70"></i> Vetor de Exploit
+                        </div>
+                        <div class="action-tab shrink-0 px-4" data-target="quiz">
+                            <i class="fa-solid fa-brain mr-2 opacity-70"></i> Prova Analítica
+                        </div>
+                    </div>
+
+                    <!-- Panel Content: Theory -->
+                    <div id="theory" class="content-panel active"></div>
+
+                    <!-- Panel Content: SPR Dilution (THE INNOVATION) -->
+                    <div id="dilution" class="content-panel">
+                        <h3 class="text-white font-bold text-xl mb-2 tracking-tight">O Motor de Diluição (Elasticidade
+                            Pós-Flop)</h3>
+                        <p class="text-slate-400 text-[14px] leading-relaxed mb-8">O maior erro na análise de ICM é
+                            aplicar o Risk Premium do Pré-Flop (All-in Direto) nas <em>streets</em> subsequentes. À
+                            medida que o pote cresce e a sua stack remanescente diminui, o <strong>Custo
+                                Utilitário</strong> altera-se. A aversão ao risco cai porque você já está
+                            financeiramente comprometido na mão.</p>
+
+                        <div class="bg-slate-900/60 border border-slate-800 p-8 rounded-2xl relative">
+                            <h4
+                                class="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-6 absolute top-4 left-6">
+                                Vazamento de Risk Premium (Defensor)</h4>
+
+                            <div class="pipeline mt-4">
+                                <div class="pipeline-node active" id="node-pre">
+                                    <span class="text-xs font-bold text-slate-300 mb-1">PRE</span>
+                                    <span class="data-mono text-sm font-black text-rose-400" id="dil-pre">0%</span>
+                                </div>
+                                <div class="pipeline-node" id="node-flop">
+                                    <span class="text-xs font-bold text-slate-400 mb-1">FLOP</span>
+                                    <span class="data-mono text-sm font-black text-rose-400 opacity-70"
+                                        id="dil-flop">0%</span>
+                                </div>
+                                <div class="pipeline-node" id="node-turn">
+                                    <span class="text-xs font-bold text-slate-500 mb-1">TURN</span>
+                                    <span class="data-mono text-sm font-black text-rose-400 opacity-50"
+                                        id="dil-turn">0%</span>
+                                </div>
+                                <div class="pipeline-node" id="node-river">
+                                    <span class="text-xs font-bold text-slate-600 mb-1">RIVER</span>
+                                    <span class="data-mono text-sm font-black text-rose-400 opacity-30"
+                                        id="dil-river">0%</span>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-slate-500 font-medium text-center italic mt-6 border-t border-slate-800 pt-4"
+                                id="dilution-axiom">
+                                "Ao chegar no river com SPR menor que 1, a matemática força o jogador a reverter grande
+                                parte da sua decisão para ChipEV clássico."
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Panel Content: Exploit -->
+                    <div id="exploit" class="content-panel"></div>
+
+                    <!-- Panel Content: Quiz -->
+                    <div id="quiz" class="content-panel"></div>
+
+                    <!-- Panel Content: Telemetry (Observability) -->
+                    <div id="telemetry" class="content-panel">
+                        <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+                            <h3 class="text-white font-bold text-xl tracking-tight"><i
+                                    class="fa-solid fa-microchip text-emerald-400 mr-2"></i> Motor de Observabilidade
+                            </h3>
+                            <span
+                                class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded font-mono uppercase tracking-widest border border-emerald-500/30">Live
+                                Metrics</span>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                                <div class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Compute
+                                    Latency</div>
+                                <div class="data-mono text-emerald-400 text-2xl font-black" id="obs-latency">0ms</div>
+                            </div>
+                            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                                <div class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Nodes
+                                    Evaluated</div>
+                                <div class="data-mono text-sky-400 text-2xl font-black" id="obs-nodes">0</div>
+                            </div>
+                            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                                <div class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Nash
+                                    Convergence</div>
+                                <div class="data-mono text-fuchsia-400 text-2xl font-black">99.9%</div>
+                            </div>
+                            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                                <div class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">RP Delta
+                                    (Δ)</div>
+                                <div class="data-mono text-rose-400 text-2xl font-black" id="obs-delta">0.0</div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-950 rounded-xl border border-slate-800 p-5 font-mono text-xs text-slate-400 h-48 overflow-y-auto leading-relaxed shadow-inner"
+                            id="obs-logs">
+                        </div>
+                    </div>
+
+                </div>
+
+            </main>
+        </div>
+
+        <footer class="text-center pb-12 pt-8 flex flex-col items-center">
+            <div class="w-16 h-1 bg-linear-to-r from-transparent via-indigo-500/50 to-transparent mb-6"></div>
+            <div class="signature-text">Raphael Vitoi</div>
+            <p class="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-bold mt-2">Architecture & Theory</p>
+        </footer>
+    </div>
+
+    <script>
+        // The 10 Masterclass Clinical Scenarios (State of the Art Architecture)
+        const DATABASE = [
+            {
+                id: "paradoxo",
+                title: "O Paradoxo do Valuation",
+                env: "Estrutura Padrão (Mid vs Big)",
+                icon: "⚖️",
+                verdict: { label: "Agressão Estrangulada", class: "text-rose-400 border-rose-500/30" },
+                ip: { pos: "BTN", stack: "40 bb", rp: 21.4, morph: "Inelástico (Valor Estrito)" },
+                oop: { pos: "BB (CL)", stack: "55 bb", rp: 12.9, morph: "Defensivo Condensado" },
+                theory: `
+                    <h3 class="text-white font-bold text-xl mb-4 tracking-tight">O Instinto Traído pela Matemática</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4 text-[15px]">O senso comum dita que o BTN com 40bb possui conforto suficiente para oprimir a mesa. Contudo, o HRC revela o pesadelo: o "RP de ida" do BTN é quase o dobro do "RP de volta" do BB.</p>
+                    <p class="text-slate-300 leading-relaxed mb-6 text-[15px]"><strong>Porquê?</strong> O BB sobrevive a um <em>all-in</em>. Já o BTN, se errar um <em>hero-bluff</em>, é aniquilado para o pó absoluto, perdendo instantaneamente o <em>laddering</em> contra todos os <em>shorts</em> da mesa. A capacidade do BTN de blefar é <strong>estrangulada</strong> pela necessidade da Esperança Matemática.</p>
+                `,
+                exploit: `
+                    <h3 class="text-indigo-400 font-bold text-xl mb-4 tracking-tight">A Falsa Liberdade</h3>
+                    <p class="text-slate-300 leading-relaxed mb-5 text-[15px]">Se você é o BTN, a sua "Desvantagem de Risco" é a sua algema. Tentar usar força bruta contra a única stack capaz de o eliminar é rasgar <em>EV</em>.</p>
+                    <ul class="space-y-4">
+                        <li class="flex gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                            <span class="text-indigo-500 text-lg mt-0.5"><i class="fa-solid fa-lock"></i></span>
+                            <div>
+                                <strong class="text-white block mb-1">Puxar o Freio de Mão</strong>
+                                <span class="text-sm text-slate-400">Contraia severamente os seus bluffs. Aceite que a equidade natural exigida para engajar num pote deste calibre é altíssima.</span>
+                            </div>
+                        </li>
+                    </ul>
+                `,
+                quiz: {
+                    q: "Por que o BTN (40bb), tendo uma stack gigante, sofre uma punição utilitária (RP) muito maior que o BB (55bb)?",
+                    opts: [
+                        { isCorrect: true, text: "Porque perder o all-in destrói o BTN, retirando sua alavancagem e garantias de payjump. O BB, porém, sobrevive ao golpe." },
+                        { isCorrect: false, text: "Porque estar em posição (IP) gera uma penalidade padrão no solver para compensar a realização de equidade pós-flop." },
+                        { isCorrect: false, text: "A premissa está errada. O BTN tem um RP menor porque ele domina o range do BB." }
+                    ],
+                    exp: "A Assimetria de Dor: O BTN põe em risco a sua sobrevivência. O BB arrisca apenas a liderança."
+                }
+            },
+            {
+                id: "pacto",
+                title: "O Pacto Silencioso",
+                env: "Colisão de Gigantes",
+                icon: "🤝",
+                verdict: { label: "Evitação de Ruína", class: "text-indigo-400 border-indigo-500/30" },
+                ip: { pos: "Vice CL", stack: "65 bb", rp: 24.5, morph: "Linear Especulativo" },
+                oop: { pos: "CL", stack: "70 bb", rp: 23.5, morph: "Flat Call Massivo" },
+                theory: `
+                    <h3 class="text-white font-bold text-xl mb-4 tracking-tight">A Mútua Destruição Assegurada</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4 text-[15px]">Dois gigantes colidem. É essencial notar que esta dinâmica ocorre <strong>quase estritamente entre os dois CLs ou duas stacks grandes e similares</strong>. A destruição mútua é o pior cenário possível. As fichas perdidas viram <em>payjumps</em> grátis aos inativos.</p>
+                    <p class="text-slate-300 leading-relaxed mb-6 text-[15px]">Ocorre um <strong>Pacto Silencioso</strong>. A agressão letal (3-bet) colapsa. Os <em>ranges</em> de <em>flat call</em> inflam absurdamente, incluindo o topo. O objetivo é avaliar <em>implied odds</em> no pós-flop sem o risco de um suicídio pré-flop.</p>
+                `,
+                exploit: `
+                    <h3 class="text-indigo-400 font-bold text-xl mb-4 tracking-tight">Punindo o Ego Alheio</h3>
+                    <p class="text-slate-300 leading-relaxed mb-5 text-[15px]">O GTO dita passividade. Contudo, se o seu adversário sente que deve "mandar na mesa" e opta por inflacionar o pote pré-flop com mãos marginais, ele comete um erro de ICM letal.</p>
+                    <ul class="space-y-4">
+                        <li class="flex gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                            <span class="text-indigo-500 text-lg mt-0.5"><i class="fa-solid fa-shield-cat"></i></span>
+                            <div>
+                                <strong class="text-white block mb-1">Negação de Ação Barata</strong>
+                                <span class="text-sm text-slate-400">Jogue impiedosamente polarizado. Negue a ele o showdown pacífico pós-agressão. Se for para o chão, vá com o topo.</span>
+                            </div>
+                        </li>
+                    </ul>
+                `,
+                quiz: {
+                    q: "Como as frequências reconfiguram o jogo pré-flop num 'Pacto Silencioso'?",
+                    opts: [
+                        { isCorrect: true, text: "A 3-bet encolhe a um mínimo polarizado, e o flat call infla massivamente para especular sem explodir o SPR." },
+                        { isCorrect: false, text: "Eles entram em modo push/fold agressivo para submeter psicologicamente a mesa." },
+                        { isCorrect: false, text: "Eles foldam quase 100% das mãos um contra o outro." }
+                    ],
+                    exp: "O choque direto aniquila a Esperança Matemática. Transfere-se a decisão para o pós-flop onde o risco inicial é menor."
+                }
+            },
+            {
+                id: "batata",
+                title: "O Efeito Batata Quente",
+                env: "A Dinâmica do Shove",
+                icon: "🔥",
+                verdict: { label: "Transferência de Fardo", class: "text-amber-400 border-amber-500/30" },
+                ip: { pos: "UTG (Shove)", stack: "25 bb", rp: 15, morph: "Polar Máximo" },
+                oop: { pos: "BB (Call)", stack: "20 bb", rp: 19.5, morph: "Bluffcatcher Rígido" },
+                theory: `
+                    <h3 class="text-white font-bold text-xl mb-4 tracking-tight">O Peso de Agir Primeiro</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4 text-[15px]">Quando o UTG faz um <em>open-shove</em> direto, ele altera organicamente a utilidade da mão. Ele atirou a "Batata Quente" do ICM para o colo da mesa.</p>
+                    <p class="text-slate-300 leading-relaxed mb-6 text-[15px]">O agressor não só impõe o seu Risk Premium, como acopla a ele a <strong>Fold Equity</strong>. O BB já não tem como "devolver" essa pressão (re-shovar). Com um <em>range</em> defensivo condensado, o BB atinge o seu limite de dor e é forçado a um <em>overfold</em> drástico.</p>
+                `,
+                exploit: `
+                    <h3 class="text-indigo-400 font-bold text-xl mb-4 tracking-tight">Abusar da Paralisia</h3>
+                    <p class="text-slate-300 leading-relaxed mb-5 text-[15px]">Se você é o Agressor, a arma primária é entender que o "Efeito Batata Quente" impede que stacks médios reajam com a cadência exigida pelo ChipEV.</p>
+                    <ul class="space-y-4">
+                        <li class="flex gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                            <span class="text-indigo-500 text-lg mt-0.5"><i class="fa-solid fa-fire-flame-curved"></i></span>
+                            <div>
+                                <strong class="text-white block mb-1">Expandir Zonas de Shove</strong>
+                                <span class="text-sm text-slate-400">Contra adversários aterrorizados pela bolha, alargue os shoves (aumente o Alpha) nos spots onde a transferência da pressão é letal para eles.</span>
+                            </div>
+                        </li>
+                    </ul>
+                `,
+                quiz: {
+                    q: "O que caracteriza o 'Efeito Batata Quente' na aplicação de um shove em ICM?",
+                    opts: [
+                        { isCorrect: true, text: "O agressor impõe o seu RP somado à Fold Equity, removendo do defensor a capacidade de reagir e forçando a dor letal de um call definitivo." },
+                        { isCorrect: false, text: "É a situação em que os blinds rodam muito rápido na mesa, forçando a ação." },
+                        { isCorrect: false, text: "Ocorre quando o pote sofre re-shoves múltiplos, ignorando as odds." }
+                    ],
+                    exp: "O agressor transfere a totalidade do fardo da decisão para o oponente, negando a realização de equidade pós-flop."
+                }
+            },
+            {
+                id: "agonia",
+                title: "Agonia do Bluffcatcher",
+                env: "Teto do MDF (Condensado vs Polar)",
+                icon: "💔",
+                verdict: { label: "MDF Quebrado", class: "text-sky-400 border-sky-500/30" },
+                ip: { pos: "CL (Pot Bet)", stack: "80 bb", rp: 4.5, morph: "Polar Extremado" },
+                oop: { pos: "Mid (Call)", stack: "30 bb", rp: 22, morph: "Condensado Sangrante" },
+                theory: `
+                    <h3 class="text-white font-bold text-xl mb-4 tracking-tight">O Colapso do MDF</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4 text-[15px]">A ilusão do MDF (Minimum Defense Frequency) morre aqui. O CL faz uma aposta Pot-Size. O Mid-stack tem um <em>bluffcatcher</em> puro. Em ChipEV, defenderia metade das vezes.</p>
+                    <p class="text-slate-300 leading-relaxed mb-6 text-[15px]">No ICM, um range estritamente condensado contra um range polar com <strong>Vantagem de Risco</strong> gera dissipação de equidade absurda. A pressão de 22% obriga o Mid a "quebrar" a matemática e foldar mãos médias mecanicamente (Teto do RP).</p>
+                `,
+                exploit: `
+                    <h3 class="text-indigo-400 font-bold text-xl mb-4 tracking-tight">O Massacre Pós-Flop</h3>
+                    <p class="text-slate-300 leading-relaxed mb-5 text-[15px]">O solver não só autoriza, como exige que o CL abuse dessa falha estrutural do range defensivo.</p>
+                    <ul class="space-y-4">
+                        <li class="flex gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                            <span class="text-indigo-500 text-lg mt-0.5"><i class="fa-solid fa-skull"></i></span>
+                            <div>
+                                <strong class="text-white block mb-1">Overbluff Sistemático</strong>
+                                <span class="text-sm text-slate-400">Sabendo que o <em>bluffcatcher</em> não suporta o peso financeiro da eliminação contínua nas streets, expanda os bluffs e aplique <em>triple barrels</em> levianos.</span>
+                            </div>
+                        </li>
+                    </ul>
+                `,
+                quiz: {
+                    q: "Por que o jogador com alto RP não consegue defender a sua porção de MDF teórica num post-flop contra o CL?",
+                    opts: [
+                        { isCorrect: true, text: "Porque um range condensado (mãos médias) não consegue reter equidade suficiente ao longo das streets para cobrir o altíssimo custo (RP) de eliminação." },
+                        { isCorrect: false, text: "Porque os bluffcatchers perdem equidade bruta nas mesas finais." },
+                        { isCorrect: false, text: "Porque o agressor sempre terá a melhor mão no longo prazo em dinâmicas de ICM." }
+                    ],
+                    exp: "A relação de recompensa não fecha. A dor financeira suplanta largamente o lucro teórico de apanhar o blefe."
+                }
+            },
+            {
+                id: "lama",
+                title: "Guerra na Lama",
+                env: "Micro vs Micro (Escada)",
+                icon: "⚔️",
+                verdict: { label: "Fome de Laddering", class: "text-emerald-400 border-emerald-500/30" },
+                ip: { pos: "Micro", stack: "12 bb", rp: 8.5, morph: "Push Estendido" },
+                oop: { pos: "Micro", stack: "10 bb", rp: 7.5, morph: "Call Seletivo" },
+                theory: `
+                    <h3 class="text-white font-bold text-xl mb-4 tracking-tight">O Minitorneio de Sobrevivência</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4 text-[15px]">Com gigantes monopolizando as fichas, os <em>shorts</em> jogam na lama. A probabilidade matemática de qualquer um deles cravar o torneio é nula.</p>
+                    <p class="text-slate-300 leading-relaxed mb-6 text-[15px]">O instinto grita "ChipEV puro!". Falso. A abundância de outros shorts eleva drasticamente o <strong>EV do Fold</strong>. Cruzar os braços garante <em>laddering</em> à medida que os outros caem. A sobrevida passiva vale dólares, exigindo um prêmio de risco moderado (~8%) para justificar a abdicação dessa garantia.</p>
+                `,
+                exploit: `
+                    <h3 class="text-indigo-400 font-bold text-xl mb-4 tracking-tight">Quebrando a Paralisia</h3>
+                    <p class="text-slate-300 leading-relaxed mb-5 text-[15px]">Muitos amadores entram em "paralisia de ICM", foldando mãos sólidas à espera de saltos de premiação.</p>
+                    <ul class="space-y-4">
+                        <li class="flex gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                            <span class="text-indigo-500 text-lg mt-0.5"><i class="fa-solid fa-angles-up"></i></span>
+                            <div>
+                                <strong class="text-white block mb-1">Aumente a Variância</strong>
+                                <span class="text-sm text-slate-400">Se o vilão sofre de aversão cega ao risco para garantir um payjump (overfold), a matemática exige que você roube os blinds para construir uma base para o pódio real.</span>
+                            </div>
+                        </li>
+                    </ul>
+                `,
+                quiz: {
+                    q: "Por que o Risk Premium entre dois micro-stacks não desce para o zero absoluto (ChipEV)?",
+                    opts: [
+                        { isCorrect: true, text: "Porque o EV de não fazer nada (fold) é positivo. A chance de 'laddering' garantida pela morte alheia requer que a sua agressão compense essa diferença financeira." },
+                        { isCorrect: false, text: "Porque os líderes forçam uma bolha secundária que dobra o RP de toda a mesa." },
+                        { isCorrect: false, text: "Micro-stacks não sofrem ICM, o RP é sempre nulo. A afirmação é inválida." }
+                    ],
+                    exp: "Cada vizinho à beira da morte é um payjump virtual garantido no seu bolso. Renunciar a esse assento seguro exige um prémio matemático."
+                }
+            },
+            {
+                id: "ameaca",
+                title: "A Ameaça Orgânica",
+                env: "Dominância Absoluta (God Mode)",
+                icon: "👑",
+                verdict: { label: "Criação de Monstros", class: "text-fuchsia-400 border-fuchsia-500/30" },
+                ip: { pos: "God Mode (CL)", stack: "90 bb", rp: 12, morph: "Polar Controlado" },
+                oop: { pos: "Vice", stack: "25 bb", rp: 21, morph: "Inelástico Defensivo" },
+                theory: `
+                    <h3 class="text-white font-bold text-xl mb-4 tracking-tight">O Limite do God Mode</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4 text-[15px]">O CL (90bb) ataca o Vice (25bb). O CL é imune à eliminação; a teoria linear diria que ele tem RP 0% e pode esmagar o *board*.</p>
+                    <p class="text-slate-300 leading-relaxed mb-6 text-[15px]">Mas o torneio é orgânico. A <strong>Elasticidade do Bubble Factor</strong> intervém. Se o CL aplicar <em>hero-bluffs</em> arrogantes e dobrar o Vice, este salta para 50bb+. <strong>O CL acaba de armar o único rival capaz de usurpar o seu império.</strong> O solver impõe ~12% de RP à liderança, blindando o jogador contra o erro de criar o próprio carrasco.</p>
+                `,
+                exploit: `
+                    <h3 class="text-indigo-400 font-bold text-xl mb-4 tracking-tight">Abater o Inelástico</h3>
+                    <p class="text-slate-300 leading-relaxed mb-5 text-[15px]">O Vice (OOP) sofre uma pressão letal de 21%. O seu range de reação deveria ser cirúrgico. Se ele for um jogador *inelástico* que não entende o perigo...</p>
+                    <ul class="space-y-4">
+                        <li class="flex gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                            <span class="text-indigo-500 text-lg mt-0.5"><i class="fa-solid fa-ban"></i></span>
+                            <div>
+                                <strong class="text-white block mb-1">Morte da Fold Equity</strong>
+                                <span class="text-sm text-slate-400">Expurgue os overbluffs. A fold equity não atua sobre quem joga puramente pelas cartas ignorando a morte. Mude a marcha inteiramente para Thin Value.</span>
+                            </div>
+                        </li>
+                    </ul>
+                `,
+                quiz: {
+                    q: "Sendo imune à eliminação direta, por que o Chip Leader colossal sofre uma punição utilitária considerável contra o 2º classificado?",
+                    opts: [
+                        { isCorrect: true, text: "Para defender a Hegemonia. Dobrar o Vice cria uma ameaça orgânica à liderança, mudando o balanço de poder da mesa inteira." },
+                        { isCorrect: false, text: "Porque o HRC impõe que stacks acima de 80bb tenham taxação de risco extra para simular o rake." },
+                        { isCorrect: false, text: "Para evitar collusion explícito na plataforma." }
+                    ],
+                    exp: "O ICM não dita apenas a morte, dita a 'Esperança Matemática' global de chegar à vitória. Dobrar o seu maior rival destrói ativamente a sua maior vantagem no jogo."
+                }
+            },
+            {
+                id: "chipev",
+                title: "O Vácuo Matemático",
+                env: "Sem Payjumps (ChipEV Puro)",
+                icon: "⚙️",
+                verdict: { label: "MDF Perfeito", class: "text-slate-400 border-slate-500/30" },
+                ip: { pos: "Qualquer IP", stack: "100 bb", rp: 0, morph: "Polar Perfeito" },
+                oop: { pos: "Qualquer OOP", stack: "100 bb", rp: 0, morph: "Defesa Base" },
+                theory: `
+                    <h3 class="text-white font-bold text-xl mb-4 tracking-tight">O Equilíbrio Linear</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4 text-[15px]">Início de torneio ou Cash Game. Não há ICM. A utilidade das fichas é estritamente linear: 1 ficha vale 1 ficha.</p>
+                    <p class="text-slate-300 leading-relaxed mb-6 text-[15px]">O Nash Equilibrium atua como um relógio suíço. Contra uma aposta do tamanho do pote, o <strong>Alpha</strong> dita exatos 33.3% de bluffs. O <strong>MDF</strong> repousa em perfeitos 50.0%. A matemática não sofre deformações emocionais ou utilitárias.</p>
+                `,
+                exploit: `
+                    <h3 class="text-indigo-400 font-bold text-xl mb-4 tracking-tight">O Jogo Mecânico</h3>
+                    <p class="text-slate-300 leading-relaxed mb-5 text-[15px]">Sem a proteção (ou o freio) das bolhas de prémios, a exploração baseia-se em punir desvios de frequência estritos.</p>
+                    <ul class="space-y-4">
+                        <li class="flex gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                            <span class="text-indigo-500 text-lg mt-0.5"><i class="fa-solid fa-bullseye"></i></span>
+                            <div>
+                                <strong class="text-white block mb-1">Punição Imediata</strong>
+                                <span class="text-sm text-slate-400">Se o oponente folda acima dos 50%, overbluff imprime dinheiro. Se ele paga mais do que deve, limite os bluffs a 0 e expanda as apostas de valor thin. A punição é direta.</span>
+                            </div>
+                        </li>
+                    </ul>
+                `,
+                quiz: {
+                    q: "Por que num vácuo matemático (ChipEV) o desvio da frequência de bluff (Alpha) é punido imediatamente por um GTO perfeito?",
+                    opts: [
+                        { isCorrect: true, text: "Porque sem a âncora letal do ICM a forçar o 'overfold', a defesa pagará exatamente conforme as pot odds. Blefar além cede EV automático." },
+                        { isCorrect: false, text: "Porque o GTO sempre descobre as nossas cartas com base em padrões de sizes." },
+                        { isCorrect: false, text: "Porque a agressão em ChipEV só é rentável com underbets." }
+                    ],
+                    exp: "Sem a dor assimétrica de um torneio, as odds matemáticas governam absolutas. Tudo o que fuja da linha é capturado pela mecânica do Defensor."
+                }
+            }
+        ];
+
+        // System Core
+        let currentId = "paradoxo";
+        let isAnimating = false;
+
+        // Animação de Contadores (Business Intelligence Vibe)
+        function animateValue(id, start, end, duration, formatStr = "%") {
+            if (start === end) { setTxt(id, end.toFixed(1) + formatStr); return; }
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                // Ease out cubic
+                const ease = 1 - Math.pow(1 - progress, 3);
+                const current = start + (end - start) * ease;
+                setTxt(id, current.toFixed(1) + formatStr);
+                if (progress < 1) {
+                    globalThis.requestAnimationFrame(step);
+                }
+            };
+            globalThis.requestAnimationFrame(step);
+        }
+
+        function calculateBF(rp) {
+            if (rp >= 100) return "∞";
+            if (rp === 0) return "1";
+            return (100 / (100 - rp)).toFixed(2);
+        }
+
+        function solveNashDynamics(ip_rp, oop_rp) {
+            let defense = 50 - (oop_rp * 1.4) + (ip_rp * 0.3);
+            let bluff = 33.3 + (oop_rp * 1.1) - (ip_rp * 0.8);
+
+            defense = Math.max(0, Math.min(100, defense));
+            bluff = Math.max(0, Math.min(100, bluff));
+            if (ip_rp === 0 && oop_rp === 0) { bluff = 33.3; defense = 50; }
+            return { bluff, defense };
+        }
+
+        // Funções Null-Safe
+        function setTxt(id, txt) { const el = document.getElementById(id); if (el) el.innerText = txt; }
+        function setHtml(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setCls(id, cls) { const el = document.getElementById(id); if (el) el.className = cls; }
+        function setWidth(id, w) { const el = document.getElementById(id); if (el) el.style.width = w; }
+        function setDash(id, val) { const el = document.getElementById(id); if (el) el.style.strokeDasharray = val; }
+
+        function init() {
+            const list = document.getElementById('scenario-list');
+            if (list) {
+                list.innerHTML = "";
+                DATABASE.forEach(sc => {
+                    const btn = document.createElement('button');
+                    btn.className = `scenario-btn ${sc.id === currentId ? 'active' : ''}`;
+                    btn.dataset.id = sc.id;
+                    btn.onclick = () => loadScenario(sc.id);
+                    btn.innerHTML = `
+                        <div class="icon-box shadow-md">${sc.icon}</div>
+                        <div class="flex flex-col text-left w-full pr-2">
+                            <span class="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5">${sc.env}</span>
+                            <span class="text-[13px] font-bold text-white tracking-wide">${sc.title}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-slate-600 opacity-50 text-xs ml-auto"></i>
+                    `;
+                    list.appendChild(btn);
+                });
+            }
+
+            loadScenario(currentId, true);
+            setupTabs();
+        }
+
+        function loadScenario(id, initialLoad = false) {
+            if (isAnimating && !initialLoad) return;
+            isAnimating = true;
+
+            const oldData = DATABASE.find(s => s.id === currentId);
+            currentId = id;
+            const data = DATABASE.find(s => s.id === id);
+            if (!data) return;
+
+            document.querySelectorAll('.scenario-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.id === id) btn.classList.add('active');
+            });
+
+            setTxt('stage-env', data.env);
+            setTxt('stage-title', data.title);
+
+            if (data.verdict) {
+                setTxt('verdict-badge', data.verdict.label);
+                setCls('verdict-badge', `px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all duration-300 bg-slate-900 ${data.verdict.class}`);
+            }
+
+            // Texts
+            setTxt('ip-pos', data.ip.pos);
+            setTxt('ip-stack', data.ip.stack);
+            setTxt('ip-morph', data.ip.morph);
+            setTxt('ip-bf-txt', calculateBF(data.ip.rp));
+
+            setTxt('oop-pos', data.oop.pos);
+            setTxt('oop-stack', data.oop.stack);
+            setTxt('oop-morph', data.oop.morph);
+            setTxt('oop-bf-txt', calculateBF(data.oop.rp));
+
+            // Run Core Math
+            const { bluff, defense } = solveNashDynamics(data.ip.rp, data.oop.rp);
+            const oldMath = initialLoad ? { bluff: 0, defense: 0, ipRp: 0, oopRp: 0 } : solveNashDynamics(oldData.ip.rp, oldData.oop.rp);
+
+            // Animate Numbers
+            animateValue('ip-rp-txt', initialLoad ? 0 : oldData.ip.rp, data.ip.rp, 800, "");
+            animateValue('oop-rp-txt', initialLoad ? 0 : oldData.oop.rp, data.oop.rp, 800, "");
+            animateValue('out-bluff', oldMath.bluff, bluff, 800, "");
+            animateValue('out-defense', oldMath.defense, defense, 800, "");
+
+            setWidth('bar-bluff', `${bluff}%`);
+            const dB = bluff - 33.3;
+            let bluffClass = 'bg-slate-800 border-slate-700 text-slate-400';
+            if (dB > 0) bluffClass = 'text-sky-400 bg-sky-500/10 border-sky-500/20';
+            else if (dB < 0) bluffClass = 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+            setTxt('del-bluff', `${dB > 0 ? '+' : ''}${dB.toFixed(1)}% vs cEV`);
+            setCls('del-bluff', `data-mono text-xs font-bold px-2 py-1 rounded border ${bluffClass}`);
+
+            setWidth('bar-defense', `${defense}%`);
+            const dD = defense - 50;
+            let defClass = 'bg-slate-800 border-slate-700 text-slate-400';
+            if (dD > 0) defClass = 'text-sky-400 bg-sky-500/10 border-sky-500/20';
+            else if (dD < 0) defClass = 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+            setTxt('del-defense', `${dD > 0 ? '+' : ''}${dD.toFixed(1)}% vs cEV`);
+            setCls('del-defense', `data-mono text-xs font-bold px-2 py-1 rounded border ${defClass}`);
+
+            // Gauges
+            setTimeout(() => {
+                const ipFill = Math.min(100, (data.ip.rp / 26) * 100);
+                setDash('ip-rp-svg', `${ipFill}, 100`);
+                const oopFill = Math.min(100, (data.oop.rp / 26) * 100);
+                setDash('oop-rp-svg', `${oopFill}, 100`);
+            }, 50);
+
+            // Inject Data
+            setHtml('theory', data.theory);
+            setHtml('exploit', data.exploit);
+            renderQuiz(data.quiz);
+
+            // Dilution logic
+            const flp = Math.max(0, data.oop.rp * 0.7);
+            const trn = Math.max(0, data.oop.rp * 0.4);
+            const rvr = Math.max(0, data.oop.rp * 0.15);
+            setTxt('dil-pre', data.oop.rp.toFixed(1) + "%");
+            setTxt('dil-flop', flp.toFixed(1) + "%");
+            setTxt('dil-turn', trn.toFixed(1) + "%");
+            setTxt('dil-river', rvr.toFixed(1) + "%");
+
+            // Telemetry Injection
+            const deltaRp = Math.abs(data.ip.rp - data.oop.rp).toFixed(1);
+            setTxt('obs-delta', `Δ ${deltaRp}%`);
+            setTxt('obs-latency', Math.floor(Math.random() * 15 + 8) + 'ms (simulado)'); // NOSONAR - valor ilustrativo, nao medido
+            setTxt('obs-nodes', Math.floor(Math.random() * 40000 + 12000).toLocaleString('en-US') + ' (simulado)'); // NOSONAR - valor ilustrativo, nao medido
+
+            const logContent = `> [SOTA ENGINE] Inicializando cálculo de cenário: ${data.id.toUpperCase()}
+> [PARAMS] IP RP: ${data.ip.rp.toFixed(1)}% | OOP RP: ${data.oop.rp.toFixed(1)}%
+> [SOLVER] Mapeando topologia da árvore de decisão...
+> [MATH] Computando Equilíbrio de Nash...
+> [MATH] Bluff Ótimo: ${bluff.toFixed(2)}% | Call Ótimo: ${defense.toFixed(2)}%
+> [DILUTION] Computando tensores de diluição SPR pós-flop...
+> [INFO] Convergência atingida em O(1). Fricção zero.`;
+            setHtml('obs-logs', logContent.replaceAll('\n', '<br><span class="text-emerald-500/50 font-bold">~</span> '));
+
+            document.querySelectorAll('.content-panel').forEach(p => {
+                if (p.classList.contains('active')) {
+                    p.classList.remove('animate-fade-up');
+                    p.getBoundingClientRect();
+                    p.classList.add('animate-fade-up');
+                }
+            });
+
+            setTimeout(() => { isAnimating = false; }, 800);
+        }
+
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.action-tab');
+            const panels = document.querySelectorAll('.content-panel');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    panels.forEach(p => p.classList.remove('active'));
+
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.target).classList.add('active');
+
+                    const targetPanel = document.getElementById(tab.dataset.target);
+                    targetPanel.classList.remove('animate-fade-up');
+                    targetPanel.getBoundingClientRect();
+                    targetPanel.classList.add('animate-fade-up');
+                });
+            });
+        }
+
+        function renderQuiz(quizData) {
+            const container = document.getElementById('quiz');
+            let opts = [...quizData.opts];
+
+            for (let i = opts.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1)); // NOSONAR - embaralhar alternativas do quiz nao e uso de seguranca
+                [opts[i], opts[j]] = [opts[j], opts[i]];
+            }
+
+            let html = `
+                <div class="quiz-block">
+                    <p class="text-slate-200 font-medium text-lg leading-relaxed mb-6">${quizData.q}</p>
+                    <div class="space-y-4" id="quiz-options">
+            `;
+
+            opts.forEach(opt => {
+                html += `
+                    <div class="quiz-option" onclick="handleQuiz(this, ${opt.isCorrect})" data-correct="${opt.isCorrect}">
+                        <div class="w-6 h-6 shrink-0 rounded border border-slate-600 flex items-center justify-center mt-0.5 icon-box text-xs bg-slate-900 shadow-inner"></div>
+                        <span class="text-slate-300 text-[15px] font-medium leading-relaxed">${opt.text}</span>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                    <div id="quiz-explanation" class="hidden mt-8 bg-indigo-950/40 border border-indigo-500/30 p-6 rounded-xl relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500"></div>
+                        <h4 class="text-indigo-400 font-black text-xs uppercase tracking-widest mb-3">Auditoria Lógica</h4>
+                        <p class="text-slate-300 text-[15px] leading-relaxed">${quizData.exp}</p>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        globalThis.handleQuiz = function (el, isCorrect) {
+            const container = el.closest('#quiz-options');
+            if (container.classList.contains('answered')) return;
+            container.classList.add('answered');
+
+            const options = container.querySelectorAll('.quiz-option');
+            options.forEach(opt => {
+                opt.classList.add('disabled');
+                if (opt.dataset.correct === "true" && !isCorrect) {
+                    opt.classList.remove('disabled');
+                    opt.classList.add('correct');
+                    opt.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
+                }
+            });
+
+            el.classList.remove('disabled');
+            if (isCorrect) {
+                el.classList.add('correct');
+                el.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
+            } else {
+                el.classList.add('wrong');
+                el.querySelector('.icon-box').innerHTML = '<i class="fa-solid fa-xmark text-rose-400"></i>';
+            }
+
+            const exp = document.getElementById('quiz-explanation');
+            exp.classList.remove('hidden');
+            exp.classList.add('animate-fade-up');
+        }
+
+        globalThis.onload = init;
+    </script>
+</body>
+
+</html>
