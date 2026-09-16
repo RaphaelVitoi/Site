@@ -68,7 +68,7 @@ export function SotaHeatmapCanvas({ tensorRef, width = 260, height = 260 }: Read
         for (let c1 = 1; c1 < 52; c1++) {
           for (let c2 = 0; c2 < c1; c2++) {
             // Acesso à memória Fricção Zero
-            const prob = tensor.at(comboIndex) ?? 0;
+            const prob = tensor[comboIndex] ?? 0;
             const color = getSotaColor(prob);
 
             // Mapeamento [x, y] = [c1, c2] e simetria [c2, c1]
@@ -169,17 +169,17 @@ export function SotaHeatmapCanvas({ tensorRef, width = 260, height = 260 }: Read
       const c2 = Math.min(mapped_c_row, mapped_c_col);
       const comboIndex = (c1 * (c1 - 1)) / 2 + c2;
 
-      const prob = tensorRef.current.at(comboIndex) ?? 0;
+      const prob = tensorRef.current[comboIndex] ?? 0;
 
       // Decodificador de Naipes O(1)
-      const r1 = RANKS.at(c1 >> 2) ?? '2';
+      const r1 = RANKS[c1 >> 2] ?? '2';
       const s1 = c1 & 3;
-      const r2 = RANKS.at(c2 >> 2) ?? '2';
+      const r2 = RANKS[c2 >> 2] ?? '2';
       const s2 = c2 & 3;
-      const suit1 = SUITS.at(s1) ?? '♠';
-      const suit2 = SUITS.at(s2) ?? '♠';
-      const suitColor1 = SUIT_COLORS.at(s1) ?? 'text-slate-400';
-      const suitColor2 = SUIT_COLORS.at(s2) ?? 'text-slate-400';
+      const suit1 = SUITS[s1] ?? '♠';
+      const suit2 = SUITS[s2] ?? '♠';
+      const suitColor1 = SUIT_COLORS[s1] ?? 'text-slate-400';
+      const suitColor2 = SUIT_COLORS[s2] ?? 'text-slate-400';
 
       const tooltipEl = tooltipRef.current;
       tooltipEl.replaceChildren();
