@@ -16,10 +16,10 @@ auditoria justamente porque o portao dizia APROVADO.
 from __future__ import annotations
 
 from datetime import date
-from pathlib import Path
 
 # pylint: disable=protected-access,wrong-import-position,fixme
 import os
+from pathlib import Path
 import re
 import subprocess
 import sys
@@ -829,7 +829,7 @@ def test_pendencia_aparece_mesmo_sem_nada_em_stage(tmp_path, monkeypatch, capsys
         "pendencias:\n  - id: pend-teste-sem-stage\n    o_que: Aparecer com stage vazio\n    dono: Tier 0\n    prazo: 2099-01-01\n",
     )
     monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
-    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: [])
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", list)
     monkeypatch.setattr(record_gate, "_git", lambda *a: f"{rel}\n" if a[:1] == ("ls-files",) else "")
 
     assert record_gate.main() == 0, "stage vazio nunca bloqueia"
@@ -882,7 +882,7 @@ def test_pendencia_vencida_e_marcada_pela_data(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "bloco,fragmento",
+    ("bloco", "fragmento"),
     [
         ("pendencias:\n  - id: X\n    o_que: a\n    dono: b\n", "id invalido"),
         ("pendencias:\n  - id: pend-sem-o-que\n    dono: b\n", "o_que"),

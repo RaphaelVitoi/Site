@@ -32,9 +32,9 @@ from __future__ import annotations
 
 import hashlib
 import os
+from pathlib import Path
 import re
 import unicodedata
-from pathlib import Path
 
 import pytest
 
@@ -108,7 +108,8 @@ def test_o_ponteiro_continua_ponteiro():
 def test_o_ponteiro_aponta_para_o_canonico():
     texto = _sem_acento(_exigir(PONTEIRO, "ponteiro de escopo de usuario"))
     assert "ponteiro" in texto, "o arquivo de escopo de usuario nao se declara ponteiro"
-    assert ".gemini" in texto and "claude.md" in texto, "o ponteiro perdeu a referencia ao canonico da raiz"
+    assert ".gemini" in texto, "o ponteiro perdeu a referencia ao canonico da raiz"
+    assert "claude.md" in texto, "o ponteiro perdeu a referencia ao canonico da raiz"
 
 
 def test_as_duas_clausulas_anti_fork_seguem_escritas():

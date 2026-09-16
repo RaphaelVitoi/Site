@@ -166,7 +166,7 @@ def collect_telemetry() -> dict:
             )
             now_ts = datetime.now(UTC)
             for r in cur.fetchall():
-                t_dict: dict[str, Any] = {k: r[k] for k in r.keys()}
+                t_dict: dict[str, Any] = {k: r[k] for k in r.keys()}  # noqa: SIM118 - sqlite3.Row itera valores, nao chaves
                 elapsed_sec = 0.0
                 if t_dict.get("timestamp"):
                     try:
@@ -201,7 +201,7 @@ def collect_telemetry() -> dict:
                 """
             )
             for r in cur.fetchall():
-                t_dict: dict[str, Any] = {k: r[k] for k in r.keys()}
+                t_dict: dict[str, Any] = {k: r[k] for k in r.keys()}  # noqa: SIM118 - sqlite3.Row itera valores, nao chaves
                 status_code, status_label = classify_task_status(t_dict["status"], t_dict.get("metadata"))
                 last_5_tasks.append(
                     {
@@ -227,7 +227,7 @@ def collect_telemetry() -> dict:
                 """
             )
             for r in cur.fetchall():
-                t_dict: dict[str, Any] = {k: r[k] for k in r.keys()}
+                t_dict: dict[str, Any] = {k: r[k] for k in r.keys()}  # noqa: SIM118 - sqlite3.Row itera valores, nao chaves
                 forecast_tasks.append(
                     {
                         "id": t_dict.get("id"),

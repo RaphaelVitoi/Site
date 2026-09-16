@@ -8,9 +8,9 @@ RaphaelVitoi/Site, gerando o JULES_REPORT.md fidedigno e lastreado em dados reai
 from __future__ import annotations
 
 import argparse
-import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+import re
 from typing import Any, Final
 
 from engine.jules_bridge import JulesClient
@@ -140,7 +140,7 @@ def fetch_all_sessions_and_activities() -> list[dict[str, Any]]:
 
 def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     """Formata os dados consolidados do Google Jules no padrao SOTA Markdown."""
-    now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    now_utc = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     total = len(sessions)
     completed = sum(1 for s in sessions if s["state"] == "COMPLETED")
@@ -278,7 +278,7 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
             for act in s["activities"]:
                 orig = act.get("originator", "SYSTEM")
                 act_time = act.get("createTime", "")[:19].replace("T", " ")
-                act_type = [k for k in act.keys() if k not in ("name", "createTime", "originator")]
+                act_type = [k for k in act if k not in ("name", "createTime", "originator")]
                 lines.append(f"  - `[{act_time}]` **{orig}**: `{', '.join(act_type)}`")
         lines.append("")
 

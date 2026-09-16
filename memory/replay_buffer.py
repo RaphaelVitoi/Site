@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import threading
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 import numpy as np
 
@@ -42,8 +42,7 @@ class SumTree:
             return idx
         if s <= self.tree[left]:
             return self._retrieve(left, s)
-        else:
-            return self._retrieve(right, s - self.tree[left])
+        return self._retrieve(right, s - self.tree[left])
 
     def total(self) -> float:
         return self.tree[0]
@@ -80,7 +79,7 @@ class PrioritizedReplayMemory:
         alpha: float = 0.6,
         beta: float = 0.4,
         beta_increment: float = 0.001,
-        seed: Optional[int] = None,
+        seed: int | None = None,
     ):
         self.tree = SumTree(capacity)
         self.capacity = capacity
@@ -92,7 +91,7 @@ class PrioritizedReplayMemory:
         self._rng = np.random.default_rng(seed)
 
     def push(
-        self, state: Any, action: Any, reward: float, next_state: Any, done: bool, info: Optional[dict[str, Any]] = None
+        self, state: Any, action: Any, reward: float, next_state: Any, done: bool, info: dict[str, Any] | None = None
     ):
         """Armazena uma transicao de agente com prioridade maxima inicial."""
         transition = Transition(state, action, reward, next_state, done, info or {})

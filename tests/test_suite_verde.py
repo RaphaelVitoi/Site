@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import subprocess
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -61,7 +61,8 @@ def test_a_chave_e_a_arvore_de_conteudo_e_nao_o_commit(tmp_path):
     stash = g("stash", "create")
     arvore_do_conteudo = g("rev-parse", f"{stash}^{{tree}}")
     arvore_do_indice = g("write-tree")
-    assert arvore_do_conteudo and arvore_do_indice
+    assert arvore_do_conteudo
+    assert arvore_do_indice
     assert arvore_do_conteudo == arvore_do_indice, (
         "a arvore do conteudo difere da que o commit teria; o cache nao sobreviveria ao commit"
     )

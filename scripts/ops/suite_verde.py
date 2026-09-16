@@ -66,12 +66,12 @@ sempre, do zero.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import importlib.util
 import json
+from pathlib import Path
 import subprocess
 import sys
-from datetime import datetime, timezone
-from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[2]
 MARCADOR = RAIZ / ".git" / "sota-suite-verde"
@@ -171,7 +171,7 @@ def silencio(extra: list[str]) -> list[str]:
 
 def rodar_suite(extra: list[str]) -> int:
     """Executa a suite e, se verde E a arvore continuar limpa, grava o marcador."""
-    base = "C:/Users/rapha/AppData/Local/Temp/pt-sota" if sys.platform == "win32" else "/tmp/pt-sota"
+    base = "C:/Users/rapha/AppData/Local/Temp/pt-sota" if sys.platform == "win32" else "/tmp/pt-sota"  # noqa: S108 - basetemp do pytest, recriado a cada corrida  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
     cmd = [sys.executable, "-m", "pytest", "-q", f"--basetemp={base}", *paralelismo(extra), *silencio(extra), *extra]
     print(f"[SUITE] medindo -- {' '.join(cmd[2:])}", flush=True)
     r = subprocess.run(cmd, cwd=str(RAIZ), check=False)
@@ -192,7 +192,7 @@ def rodar_suite(extra: list[str]) -> int:
                 "contrato": VERSAO_DO_CONTRATO,
                 "arvore": arvore,
                 "head_na_medicao": _git("rev-parse", "HEAD").strip(),
-                "em": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
+                "em": datetime.now(UTC).astimezone().isoformat(timespec="seconds"),
             },
             ensure_ascii=False,
         ),

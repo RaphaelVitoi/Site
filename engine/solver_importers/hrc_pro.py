@@ -3,9 +3,11 @@
 Importador especializado para Holdem Resources Calculator Pro (HRC Pro).
 """
 
+import contextlib
 import json
 import re
 from typing import Any, cast
+
 from core.perspective_schemas import ENashUnit, NormalizedGameTree, SolverNode, SolverProvenance, SolverType
 from engine.bayesian_range import RANKS, apply_pmev_range_filter, get_preflop_hand_strength_matrix
 from engine.solver_importers.base import BaseSolverImporter
@@ -34,7 +36,11 @@ class HRCProImporter(BaseSolverImporter):
                 pass
         return False
 
-    def parse_tree(self, raw_content: str, tournament_context: dict[str, Any] | None = None) -> NormalizedGameTree:
+    def parse_tree(
+        self,
+        raw_content: str,
+        tournament_context: dict[str, Any] | None = None,  # noqa: ARG002 - contrato de BaseSolverImporter
+    ) -> NormalizedGameTree:
         """Processa ranges de push/fold e calculos de ICM do HRC Pro."""
         trimmed = raw_content.strip()
         nodes_dict: dict[str, SolverNode] = {}
@@ -90,10 +96,8 @@ class HRCProImporter(BaseSolverImporter):
                 st_matches = re.findall(r"([A-Z]+)\s*:\s*([\d\.]+)\s*bb", line_str, re.IGNORECASE)
                 if st_matches:
                     for pos_name, stack_val in st_matches:
-                        try:
+                        with contextlib.suppress(ValueError):
                             stacks[pos_name.upper()] = float(stack_val)
-                        except ValueError:
-                            pass
 
             if not strategy:
                 strategy = {"FOLD": 0.45, "ALLIN": 0.55}
@@ -267,10 +271,8 @@ class HRCProImporter(BaseSolverImporter):
         if isinstance(raw_data, str):
             raw_text = raw_data.strip()
             if raw_text.startswith("{") and raw_text.endswith("}"):
-                try:
+                with contextlib.suppress(Exception):
                     raw_data = json.loads(raw_text)
-                except Exception:
-                    pass
 
         if isinstance(raw_data, str):
             for r in range(13):

@@ -97,7 +97,7 @@ def test_field_completo_e_medido_pela_soma_das_fichas():
 def test_premios_em_disputa_sao_os_melhores_lugares_restantes():
     assert remaining_payouts(STT9, 9, 82.8) == pytest.approx((41.4, 24.84, 16.56))
     assert remaining_payouts(STT9, 2, 82.8) == pytest.approx((41.4, 24.84))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="jogadores vivos fora de"):
         remaining_payouts(STT9, 10, 82.8)
 
 
@@ -112,7 +112,8 @@ def test_cenario_icm_declara_o_que_a_hand_history_nao_revela():
     assert cenario.regime is Regime.ICM_EV
     assert isinstance(cenario.payouts, Read)
     assert cenario.payouts.value == pytest.approx((41.4, 24.84, 16.56))
-    assert isinstance(cenario.ranges, Unreadable) and isinstance(cenario.agent_policy, Unreadable)
+    assert isinstance(cenario.ranges, Unreadable)
+    assert isinstance(cenario.agent_policy, Unreadable)
 
 
 def _estados_reais() -> list:
@@ -129,7 +130,7 @@ def _estados_reais() -> list:
 
 def test_gerador_so_ancora_em_estado_real_completo_e_coerente():
     assert CoherentStateGenerator(STT9, _estados_reais(), seed=1).anchors == 2
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="nenhum estado real completo"):
         CoherentStateGenerator(STT9, [], seed=1)
 
 
@@ -145,7 +146,8 @@ def test_gerador_e_deterministico_por_semente_e_declara_a_origem():
     a = [s.stacks for s in itertools.islice(CoherentStateGenerator(STT9, _estados_reais(), seed=3), 50)]
     b = [s.stacks for s in itertools.islice(CoherentStateGenerator(STT9, _estados_reais(), seed=3), 50)]
     c = [s.stacks for s in itertools.islice(CoherentStateGenerator(STT9, _estados_reais(), seed=4), 50)]
-    assert a == b and a != c
+    assert a == b
+    assert a != c
     reais = {h.fingerprint for h in _estados_reais()}
     assert next(iter(CoherentStateGenerator(STT9, _estados_reais(), seed=3))).source_fingerprint in reais
 
@@ -171,4 +173,5 @@ def test_catalogo_versionado_e_coerente_e_so_tem_numeros():
         icm = calculate_malmuth_harville_icm([float(e.starting_stack)] * min(e.field, e.table_max), premios)
         assert sum(icm) == pytest.approx(sum(premios))
     bruto = json.loads(STRUCTURES_PATH.read_text(encoding="utf-8"))
-    assert "Player" not in json.dumps(bruto) and "Seat " not in json.dumps(bruto)
+    assert "Player" not in json.dumps(bruto)
+    assert "Seat " not in json.dumps(bruto)

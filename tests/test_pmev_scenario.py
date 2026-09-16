@@ -68,7 +68,8 @@ def test_par_so_e_reproduzivel_com_os_dois_lados_completos():
     assert _par(True, True).assess_reproducibility().reproducible is True
     parcial = _par(True, False).assess_reproducibility()
     assert parcial.reproducible is False
-    assert not parcial.missing_chip_ev and parcial.missing_icm_ev == ["build", "eNash"]
+    assert not parcial.missing_chip_ev
+    assert parcial.missing_icm_ev == ["build", "eNash"]
     assert count_reproducible_pairs([_par(False, False), _par(True, True), _par(True, False)]) == 1
 
 
@@ -94,7 +95,7 @@ def test_chipev_nao_aceita_payouts_e_icmev_os_exige():
     ],
 )
 def test_estado_impossivel_falha_fechado(extra):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011 - parametrizado: cada caso falha com mensagem propria
         _cenario(Regime.ICM_EV, **extra)
 
 

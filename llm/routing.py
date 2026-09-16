@@ -4,9 +4,9 @@ Responsible for heuristic routing, model scoring, and health gating.
 """
 
 # pylint: disable=protected-access
+from datetime import UTC, datetime, timedelta
 import logging
 import sqlite3
-from datetime import UTC, datetime, timedelta
 
 import core.runtime as te
 from core.schemas import Task

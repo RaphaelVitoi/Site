@@ -10,8 +10,8 @@ from pathlib import Path
 import time
 
 from agents.prompts import get_agent_system_prompt
-import core.runtime as te
 from core.mcp_routing import mcp_addon_prompt_data, resolve_mcp_addons
+import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (

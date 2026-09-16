@@ -21,12 +21,11 @@ andou de 2156 para 2172 nesta mesma semana.
 from __future__ import annotations
 
 # pylint: disable=protected-access
-
 import asyncio
 import json
 import os
-import subprocess
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -296,4 +295,6 @@ def test_a_regra_reconhece_mais_de_uma_grafia_de_chave_de_contexto():
     """
     chaves = _indice()["chaves_de_contexto_do_manifesto"]["conhecidas"]
     assert len(chaves) >= 3, f"o indice voltou a conhecer poucas grafias: {chaves}"
-    assert "contextFileName" in chaves and "context" in chaves and "contextPath" in chaves
+    assert "contextFileName" in chaves
+    assert "context" in chaves
+    assert "contextPath" in chaves

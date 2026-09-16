@@ -11,8 +11,8 @@ Garante contracao espectral rho(J_global) <= 1 e barreira absorvente sem dupla c
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
+import math
 from typing import Protocol, runtime_checkable
 
 import numpy as np

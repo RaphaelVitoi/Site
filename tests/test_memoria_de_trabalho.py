@@ -29,7 +29,6 @@ surgir, o teste falha pedindo que a declaracao seja atualizada no mesmo commit.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name
-
 import ast
 import json
 from pathlib import Path
@@ -65,11 +64,10 @@ def _importadores(modulo: str) -> set[str]:
         except SyntaxError:
             continue
         for no in ast.walk(arvore):
-            if isinstance(no, ast.ImportFrom) and no.module and no.module.startswith(modulo):
+            if (isinstance(no, ast.ImportFrom) and no.module and no.module.startswith(modulo)) or (
+                isinstance(no, ast.Import) and any(a.name.startswith(modulo) for a in no.names)
+            ):
                 achados.add(p.relative_to(RAIZ).as_posix())
-            elif isinstance(no, ast.Import):
-                if any(a.name.startswith(modulo) for a in no.names):
-                    achados.add(p.relative_to(RAIZ).as_posix())
     achados.discard(Path(__file__).relative_to(RAIZ).as_posix())
     return achados
 
@@ -119,7 +117,7 @@ def test_nao_existe_laco_de_reforco_que_justifique_o_replay_buffer():
     achados = {}
     for p in _fontes_python():
         rel = p.relative_to(RAIZ).as_posix()
-        if rel.startswith("memory/") or rel.startswith("tests/"):
+        if rel.startswith(("memory/", "tests/")):
             continue
         texto = p.read_text(encoding="utf-8", errors="ignore").lower()
         presentes = [s for s in sinais if s in texto]
@@ -148,7 +146,8 @@ def test_o_estado_do_notepad_ainda_e_a_fixture_do_smoke_test():
         for no in ast.walk(ast.parse(fixture))
         if isinstance(no, ast.Constant) and isinstance(no.value, str) and no.value in blocos
     }
-    assert blocos and blocos <= chaves_da_fixture, (
+    assert blocos
+    assert blocos <= chaves_da_fixture, (
         f"o estado do notepad deixou de ser so a fixture: blocos {sorted(blocos)}, "
         f"na fixture {sorted(chaves_da_fixture)}. Algo passou a escrever ali. {PISTA}"
     )

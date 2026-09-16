@@ -1,5 +1,6 @@
 """Dashboard interativo SOTA para o ecossistema de Avatares - Poker Racional."""
 
+from datetime import UTC, datetime
 import json
 import logging
 import os
@@ -8,7 +9,8 @@ import sqlite3
 import subprocess  # noqa: S404
 import sys
 import time
-from datetime import UTC, datetime
+
+logger = logging.getLogger(__name__)
 
 #
 # PALETTE ANSI  Pure ASCII labels, rich ANSI color
@@ -138,17 +140,17 @@ def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tu
         s == "completed" and (meta.get("soft_failure") or meta.get("last_error_class"))
     ):
         return "completa_falhou", f"{C_YELLOW}[OK/AVISO]{C_RESET}", "Completa mas falhou (Soft-Fail)"
-    elif s == "review_required" or (s == "completed" and (meta.get("review_required") or meta.get("requires_review"))):
+    if s == "review_required" or (s == "completed" and (meta.get("review_required") or meta.get("requires_review"))):
         return "completa_revisao", f"{C_CYAN}[OK/REV]{C_RESET}  ", "Completa mas requer revisao"
-    elif s in ("failed", "error"):
+    if s in ("failed", "error"):
         return "failed", f"{C_RED}[FAILED]{C_RESET}  ", "Falha Dura (Erro de Execucao)"
-    elif s in ("suspended", "paused", "holding"):
+    if s in ("suspended", "paused", "holding"):
         return "suspensa", f"{C_MAGENTA}[SUSPENSA]{C_RESET}", "Suspensa / Aguardando"
-    elif s in ("pending", "queued", "triggered", "forecasted"):
+    if s in ("pending", "queued", "triggered", "forecasted"):
         return "prevista_engatilhada", f"{C_BLUE}[FILA]{C_RESET}     ", "Prevista e Engatilhada (Fila)"
-    elif s == "completed":
+    if s == "completed":
         return "completed", f"{C_GREEN}[OK]{C_RESET}       ", "Concluida com Sucesso"
-    elif s == "running":
+    if s == "running":
         return "running", f"{C_YELLOW}[RUN]{C_RESET}      ", "Em Execucao (RUNNING)"
     return "unknown", f"{C_WHITE}[{s[:6]}]{C_RESET}   ", s.capitalize()
 
@@ -311,7 +313,7 @@ def get_db_snapshot() -> dict:
 
         conn.close()
     except Exception as e:
-        logging.warning("Could not get DB snapshot for dashboard: %s", e)
+        logger.warning("Could not get DB snapshot for dashboard: %s", e)
     return snap
 
 

@@ -5,9 +5,10 @@ Validacao de DAG, deteccao estrita de ciclos e bootstrap de axiomas PMev.
 
 from pathlib import Path
 import tempfile
+
 import pytest
 
-from core.causal_graph import CausalGraphEngine, CausalNode, CausalEdge
+from core.causal_graph import CausalEdge, CausalGraphEngine, CausalNode
 
 
 def test_causal_graph_node_crud():

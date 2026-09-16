@@ -4,9 +4,9 @@
 import os
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+import pytest
 
 # Setup inicial para evitar colapso de ambiente ausente durante o spawn do app
 os.environ["API_SECRET_TOKEN"] = "test-token-sota-gold"  # noqa: S105

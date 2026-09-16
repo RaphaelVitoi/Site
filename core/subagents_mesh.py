@@ -8,18 +8,18 @@ Protocolo Chico SOTA v8.0 GOLD  Governanca: Raphael Vitoi.
 from __future__ import annotations
 
 import asyncio
-import logging
-import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
+import logging
+import re
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 import core.config as cfg
 from core.schemas import Task
-from core.sota_context_engine import context_cache, hook_bus, HookContext, HookType
+from core.sota_context_engine import HookContext, HookType, context_cache, hook_bus
 
 logger = logging.getLogger(__name__)
 

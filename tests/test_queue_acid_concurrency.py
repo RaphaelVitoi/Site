@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name
-
 import asyncio
-import uuid
 from datetime import UTC, datetime
 from pathlib import Path
+import uuid
+
 import pytest
+
 from core.schemas import Task
 from database.queue_manager import QueueManager
 

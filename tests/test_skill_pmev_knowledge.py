@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import importlib
 import json
+from pathlib import Path
 import re
 import shutil
 import sqlite3
 import subprocess
 import sys
 import zipfile
-from pathlib import Path
 
 import pytest
 
@@ -52,7 +52,9 @@ def test_codigos_de_saida_do_manifesto_sao_os_do_codigo():
 
 def test_arquivo_inexistente_sai_com_1(tmp_path):
     r = _ler(tmp_path / "nao_existe.pdf")
-    assert r.returncode == ExitCode.NOT_FOUND and "ERRO 1" in r.stderr and not r.stdout.strip()
+    assert r.returncode == ExitCode.NOT_FOUND
+    assert "ERRO 1" in r.stderr
+    assert not r.stdout.strip()
 
 
 @pytest.mark.parametrize("extensao", [".cfr", ".doc", ".ods"])
@@ -66,7 +68,8 @@ def test_pdf_corrompido_sai_com_3_e_nao_imprime_erro_como_conteudo(tmp_path):
     alvo = tmp_path / "quebrado.pdf"
     alvo.write_bytes(b"isto nao e um pdf")
     r = _ler(alvo)
-    assert r.returncode == ExitCode.EXTRACTION_ERROR and not r.stdout.strip()
+    assert r.returncode == ExitCode.EXTRACTION_ERROR
+    assert not r.stdout.strip()
 
 
 def test_xlsx_e_hrcz_sao_lidos_de_verdade(tmp_path):
@@ -80,7 +83,9 @@ def test_xlsx_e_hrcz_sao_lidos_de_verdade(tmp_path):
         pacote.writestr("settings.json", json.dumps({"structure": {"chips": 378000}}))
         pacote.writestr("tree.bin", b"\x00" * 16)
     saida = _ler(tmp_path / "spot.hrcz")
-    assert saida.returncode == ExitCode.OK and "378000" in saida.stdout and "tree.bin" in saida.stdout
+    assert saida.returncode == ExitCode.OK
+    assert "378000" in saida.stdout
+    assert "tree.bin" in saida.stdout
 
 
 def test_raizes_de_escrita_recusam_fora_e_travessia(tmp_path):
@@ -114,7 +119,8 @@ def test_build_usa_cache_por_conteudo_e_registra_falha(tmp_path):
         linha = conn.execute(
             "SELECT extraction_error, content_sha256 FROM documents WHERE path='quebrado.pdf'"
         ).fetchone()
-    assert linha[0] and len(linha[1]) == 64
+    assert linha[0]
+    assert len(linha[1]) == 64
     assert [r[0] for r in curate_index.search_index(db, "Harville")] == ["b.txt"]
 
 
@@ -171,7 +177,8 @@ def test_inventario_de_discos_pessoais_nao_volta_a_nenhum_arquivo_versionado():
         argumentos += ["-e", marcador]
     argumentos += ["--", ".", ":!tests/test_skill_pmev_knowledge.py"]
     r = subprocess.run(argumentos, cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", check=False)
-    assert r.returncode == 1 and not r.stdout.strip(), f"inventario pessoal em arquivo versionado: {r.stdout.split()}"
+    assert not r.stdout.strip(), f"inventario pessoal em arquivo versionado: {r.stdout.split()}"
+    assert r.returncode == 1, f"inventario pessoal em arquivo versionado: {r.stdout.split()}"
 
 
 def test_caminhos_pessoais_antigos_nao_voltam_ao_repositorio():
@@ -198,7 +205,8 @@ def test_caminhos_pessoais_antigos_nao_voltam_ao_repositorio():
         encoding="utf-8",
         check=False,
     )
-    assert r.returncode == 1 and not r.stdout.strip(), f"caminho pessoal em arquivo versionado: {r.stdout.split()}"
+    assert not r.stdout.strip(), f"caminho pessoal em arquivo versionado: {r.stdout.split()}"
+    assert r.returncode == 1, f"caminho pessoal em arquivo versionado: {r.stdout.split()}"
     versionadas = subprocess.run(
         ["git", "ls-files", "frontend/src/projects/subagents"], cwd=RAIZ, capture_output=True, text=True, check=True
     ).stdout.split()
@@ -226,7 +234,8 @@ def test_drive_fetch_recusa_destino_fora_das_raizes_antes_da_rede(tmp_path):
 @pytest.mark.skipif(NODE is None, reason="node ausente")
 def test_drive_search_sem_adc_falha_com_codigo_de_configuracao(tmp_path):
     r = _node(tmp_path, str(SCRIPTS / "drive_search.mjs"), "PMev", "3")
-    assert r.returncode == ExitCode.USAGE and "ADC" in r.stderr
+    assert r.returncode == ExitCode.USAGE
+    assert "ADC" in r.stderr
 
 
 @pytest.mark.skipif(NODE is None, reason="node ausente")

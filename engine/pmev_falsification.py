@@ -12,12 +12,11 @@ Implementa os testes algoritmicos formais para as quatro fronteiras criticas:
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
+import math
 
 from engine.icm_matrix import calculate_malmuth_harville_icm
 from engine.pmev_spec import TournamentState
-
 
 # ==============================================================================
 # H4: SUBVERSAO DO MDF NO RIVER
@@ -68,10 +67,7 @@ def evaluate_river_defense_mdf(
     numerator = pot - (delta_rp_def * (pot + bet))
     denominator = (pot + bet) * (1.0 - delta_rp_def)
 
-    if denominator <= 0:
-        mdf_pmev = 0.0
-    else:
-        mdf_pmev = max(0.0, min(1.0, numerator / denominator))
+    mdf_pmev = 0.0 if denominator <= 0 else max(0.0, min(1.0, numerator / denominator))
 
     s_eff_val = s_eff if s_eff is not None else bet
     spr_ratio = s_eff_val / pot

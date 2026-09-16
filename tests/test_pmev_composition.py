@@ -139,5 +139,5 @@ def test_proveniencia_da_cadeia_nao_declara_solver_que_nao_rodou():
     [{"hero": 0, "villain": 0, "p_hero_wins": 0.5}, {"hero": 0, "villain": 1, "p_hero_wins": 1.2}],
 )
 def test_ramos_recusam_entrada_impossivel(erro):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011 - parametrizado: cada caso falha com mensagem propria
         all_in_branch_values(MESA, **erro)

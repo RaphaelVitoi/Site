@@ -16,7 +16,7 @@ def main() -> None:
 
     print("Enviando requisicao...")
     try:
-        with urllib.request.urlopen(req) as resp:
+        with urllib.request.urlopen(req) as resp:  # noqa: S310 - URL literal do Ollama local  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
             for line_bytes in resp:
                 line = line_bytes.decode("utf-8", errors="ignore").strip()
                 if line:

@@ -276,7 +276,7 @@ def test_export_pmev_benchmark(tmp_path: Path) -> None:
         stacks=[15.0, 40.0],
         bfs=[1.8, 2.6],
     )
-    with open(p_json, "r", encoding="utf-8") as f:
+    with open(p_json, encoding="utf-8") as f:
         data = json.load(f)
     assert data["benchmark_version"] == "PMev_3.2_SOTA"
     assert len(data["rows"]) == 8  # 2 stacks * 2 bfs * 2 positions

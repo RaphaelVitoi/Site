@@ -6,6 +6,7 @@ Chico Protocol v8.0 GOLD - Pyramidal Governance & Universal Web Tooling.
 from __future__ import annotations
 
 from pathlib import Path
+
 import pytest
 
 from engine.sota_web_browse import (
@@ -107,3 +108,26 @@ class TestSotaWebBrowseEngine:
         health = bridge.check_health()
         assert "online" in health
         assert isinstance(health["online"], bool)
+
+    @pytest.mark.asyncio
+    async def test_cdp_fetch_rejects_non_http_schemes(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # urllib abriria file: localmente; o modo CDP_BROWSER explicito aceita qualquer texto.
+        bridge = CDPBrowserBridge()
+        fetched: list[str] = []
+        monkeypatch.setattr(bridge, "get_active_port", lambda: 9222)
+        monkeypatch.setattr(
+            CDPBrowserBridge,
+            "_sync_fetch",
+            staticmethod(lambda req, _t: fetched.append(req.full_url) or "<title>ok</title>"),
+        )
+
+        for url in ("file:///C:/Windows/win.ini", "ftp://example.com/x", " FILE:///etc/passwd"):
+            result = await bridge.fetch_page_content(url)
+            assert "Esquema de URL recusado" in str(result.get("error"))
+        assert fetched == []
+
+        # Contraprova: http e https continuam chegando ao fetch.
+        for url in ("https://web.dev/vitals", "HTTP://example.com"):
+            result = await bridge.fetch_page_content(url)
+            assert result.get("title") == "ok"
+        assert fetched == ["https://web.dev/vitals", "HTTP://example.com"]

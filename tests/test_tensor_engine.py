@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 """SOTA Test Suite for C++ SIMD Quantum Tensor Engine Bridge.
 
 Direct pytest mapping of the high-performance AVX2/nanobind tensor bridge.
 Protocolo Chico SOTA v8.0 GOLD.
 """
 
-import sys
 from pathlib import Path
+import sys
 from typing import Any
+
 import numpy as np
 import pytest
 

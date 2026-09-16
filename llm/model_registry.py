@@ -16,7 +16,7 @@ Verificado em 2026-08-21 contra:
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
@@ -108,13 +108,13 @@ CORRECOES_APLICADAS: dict[str, str] = {
 }
 
 
-class AdapterType(str, Enum):
+class AdapterType(StrEnum):
     ANTHROPIC = "AnthropicAdapter"
     OPENAI = "OpenAIAdapter"
     GOOGLE = "GoogleGenAIAdapter"
 
 
-class VerificationStatus(str, Enum):
+class VerificationStatus(StrEnum):
     """Procedencia do dado. Nunca tratar INFERIDO como se fosse VERIFICADO."""
 
     VERIFICADO = "verificado"  # confirmado em doc autoritativa

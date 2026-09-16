@@ -6,13 +6,13 @@ migracoes de repositorio e geracao de testes em background para VMs isoladas do 
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 import logging
 import os
+from typing import Final
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
-from typing import Final
 
 logger = logging.getLogger(__name__)
 

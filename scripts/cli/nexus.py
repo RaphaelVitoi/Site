@@ -737,7 +737,7 @@ def _build_calibration_panel() -> Panel:
 
     if ledger_path.exists():
         try:
-            with open(ledger_path, "r", encoding="utf-8") as f:
+            with open(ledger_path, encoding="utf-8") as f:
                 for line in f:
                     line_str = line.strip()
                     if not line_str:
@@ -2285,20 +2285,19 @@ def _ensure_active_model(model: str, wait_proxy: bool = False) -> None:
             "[bold red][AVISO] O servico Ollama (porta 11434) esta offline! Certifique-se de que o Ollama esta rodando localmente.[/]"
         )
 
-    if wait_proxy or not _is_port_open(11434):
-        if not _is_port_open(17043):
-            console.print("[yellow][AVISO] Proxy Inferencia offline. Iniciando proxy...[/]")
-            start_gemma(force=True, model=model)
+    if (wait_proxy or not _is_port_open(11434)) and not _is_port_open(17043):
+        console.print("[yellow][AVISO] Proxy Inferencia offline. Iniciando proxy...[/]")
+        start_gemma(force=True, model=model)
 
-            # Aguarda a porta do proxy (17043) estar pronta
-            console.print("[cyan]Aguardando inicializacao do proxy de inferencia (porta 17043)...[/cyan]")
-            for _ in range(40):
-                if _is_port_open(17043):
-                    break
-                time.sleep(0.5)
-            else:
-                console.print("[bold red][FALHA] Proxy de inferencia nao respondeu em 20s (porta 17043).[/]")
-                raise typer.Exit(1)
+        # Aguarda a porta do proxy (17043) estar pronta
+        console.print("[cyan]Aguardando inicializacao do proxy de inferencia (porta 17043)...[/cyan]")
+        for _ in range(40):
+            if _is_port_open(17043):
+                break
+            time.sleep(0.5)
+        else:
+            console.print("[bold red][FALHA] Proxy de inferencia nao respondeu em 20s (porta 17043).[/]")
+            raise typer.Exit(1)
 
 
 @app.command("chat")
@@ -3239,7 +3238,7 @@ def agent_calibration_forecast(
     scores: list[float] = []
     series_by_model: dict[str, list[float]] = {}
 
-    with open(ledger_path, "r", encoding="utf-8") as f:
+    with open(ledger_path, encoding="utf-8") as f:
         for line in f:
             line_str = line.strip()
             if not line_str:

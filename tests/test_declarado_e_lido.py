@@ -25,10 +25,9 @@ muda por decisao registrada.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name,global-statement
-
 import ast
-import json
 from collections.abc import Mapping
+import json
 from pathlib import Path
 
 import pytest
@@ -91,9 +90,15 @@ def _nomes_lidos(arvore: ast.AST) -> set[str]:
             lidos.add(no.id)
         elif isinstance(no, ast.Attribute) and isinstance(no.ctx, ast.Load):
             lidos.add(no.attr)
-        elif isinstance(no, ast.Call) and isinstance(no.func, ast.Name) and no.func.id == "getattr":
-            if len(no.args) > 1 and isinstance(no.args[1], ast.Constant) and isinstance(no.args[1].value, str):
-                lidos.add(no.args[1].value)
+        elif (
+            isinstance(no, ast.Call)
+            and isinstance(no.func, ast.Name)
+            and no.func.id == "getattr"
+            and len(no.args) > 1
+            and isinstance(no.args[1], ast.Constant)
+            and isinstance(no.args[1].value, str)
+        ):
+            lidos.add(no.args[1].value)
     return lidos
 
 

@@ -14,9 +14,9 @@ async def call_gemma_local(
     model: str,
     system_prompt: str,
     user_prompt: str,
-    key: str,  # pylint: disable=unused-argument # NOSONAR
-    timeout: aiohttp.ClientTimeout | None = None,  # NOSONAR
-    require_json: bool = False,  # pylint: disable=unused-argument # NOSONAR
+    key: str,  # noqa: ARG001 - assinatura comum dos adaptadores  # pylint: disable=unused-argument # NOSONAR
+    timeout: aiohttp.ClientTimeout | None = None,  # noqa: ASYNC109 - repassado ao aiohttp  # NOSONAR
+    require_json: bool = False,  # noqa: ARG001 - assinatura comum dos adaptadores  # pylint: disable=unused-argument # NOSONAR
     **kwargs: Any,
 ) -> tuple[str, dict[str, Any]]:
     """

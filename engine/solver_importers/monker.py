@@ -3,9 +3,11 @@
 Importador especializado para Monker Solver (Multiway & Preflop/Postflop Trees).
 """
 
+import contextlib
 import json
 import re
 from typing import Any
+
 from core.perspective_schemas import NormalizedGameTree, SolverNode, SolverType
 from engine.solver_importers.base import BaseSolverImporter
 
@@ -22,9 +24,10 @@ class MonkerSolverImporter(BaseSolverImporter):
         if "monker" in lowered:
             return True
         # Formato de arvore texto do Monker
-        if "[player" in lowered or "node_" in lowered:
-            if re.search(r"\[player\s+\w+", lowered) or re.search(r"\bnode_\d+\s*:", lowered):
-                return True
+        if ("[player" in lowered or "node_" in lowered) and (
+            re.search(r"\[player\s+\w+", lowered) or re.search(r"\bnode_\d+\s*:", lowered)
+        ):
+            return True
         if trimmed.startswith("{") and trimmed.endswith("}"):
             try:
                 data = json.loads(trimmed)
@@ -79,10 +82,8 @@ class MonkerSolverImporter(BaseSolverImporter):
                 act_name = parts[0].strip()
                 if act_name.upper() not in ["PLAYER", "POT", "NODE"] and not act_name.startswith("["):
                     s_act = self.sanitize_action_name(act_name)
-                    try:
+                    with contextlib.suppress(ValueError):
                         strategy[s_act] = float(parts[1].strip())
-                    except ValueError:
-                        pass
 
     def _process_text_line(
         self, line_str: str, strategy: dict[str, float], player: str, pot: float
@@ -129,7 +130,11 @@ class MonkerSolverImporter(BaseSolverImporter):
         )
         return {"root": node}
 
-    def parse_tree(self, raw_content: str, tournament_context: dict[str, Any] | None = None) -> NormalizedGameTree:
+    def parse_tree(
+        self,
+        raw_content: str,
+        tournament_context: dict[str, Any] | None = None,  # noqa: ARG002 - contrato de BaseSolverImporter
+    ) -> NormalizedGameTree:
         """Processa arvores multiway do Monker Solver."""
         trimmed = raw_content.strip()
         default_stacks: dict[str, float] = {"BTN": 100.0, "SB": 100.0, "BB": 100.0}

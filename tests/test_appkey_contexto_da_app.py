@@ -21,16 +21,15 @@ que a rota existe so trocaria 404 por 500, que era exatamente o estado.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name
-
 import contextlib
 from datetime import UTC, datetime
 from pathlib import Path
 import shutil
 from uuid import uuid4
 
-import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
+import pytest
 
 from api.v1 import middleware
 from api.v1.server import create_app

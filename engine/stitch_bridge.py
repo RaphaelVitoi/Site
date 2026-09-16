@@ -87,6 +87,8 @@ class StitchClient:
         base_url: str = STITCH_MCP_URL,
         timeout: float = 30.0,
     ) -> None:
+        if not base_url.startswith("https://"):
+            raise ValueError("StitchClient exige base_url https: urlopen tambem abriria file: e esquemas custom.")
         self._api_key = api_key or os.getenv("STITCH_API_KEY", "")
         self._base_url = base_url
         self._timeout = timeout

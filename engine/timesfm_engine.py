@@ -11,7 +11,7 @@ GOVERNANCE:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 import logging
 import math
 from typing import Literal
@@ -22,13 +22,13 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger("nexus.timesfm")
 
 
-class LicenseTier(str, Enum):
+class LicenseTier(StrEnum):
     APACHE_2_COMMERCIAL = "Apache 2.0 (Permissivo / Comercial)"
     NON_COMMERCIAL_V1 = "TimesFM Non-Commercial License v1.0 (Apenas Pesquisa)"
     BIGQUERY_ML_MANAGED = "Google Cloud BigQuery ML Managed Enterprise (AI.FORECAST)"
 
 
-class ExecutionMode(str, Enum):
+class ExecutionMode(StrEnum):
     COMMERCIAL_PRODUCTION = "commercial_production"
     RESEARCH_BENCHMARK = "research_benchmark"
     CLOUD_BIGQUERY_ML = "cloud_bigquery_ml"

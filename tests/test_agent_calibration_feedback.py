@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import shutil
 import subprocess
-from pathlib import Path
 
 import pytest
-
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 WRITER = REPOSITORY_ROOT / "scripts" / "ops" / "Register-AgentCalibrationFeedback.ps1"

@@ -18,16 +18,16 @@ Marcadores: unit (sem I/O externo), integration (requer servicos).
 import asyncio
 import base64
 import contextlib
-import shutil
-import time
 from datetime import UTC, datetime
 from pathlib import Path
+import shutil
+import time
 from types import SimpleNamespace
 from typing import cast
 from uuid import uuid4
 
-import pytest
 from aiohttp import web
+import pytest
 
 from agents.context_builder import _inject_task_docs  # type: ignore
 from api.v1 import middleware
@@ -463,7 +463,9 @@ def _estado_do_guard_preservado():
 
 
 @pytest.mark.unit
-def test_sota_guard_blocks_on_errors_or_excess_warnings(_estado_do_guard_preservado) -> None:
+def test_sota_guard_blocks_on_errors_or_excess_warnings(
+    _estado_do_guard_preservado,  # noqa: PT019 - o guard abaixo le a assinatura para provar a fixture
+) -> None:
     """Valida o comportamento estrito do SOTA Guard: Tri-State (SUCESSO, FRAGIL, FALHOU)."""
     from tests.conftest import SotaGuardState, pytest_sessionfinish
 
@@ -671,8 +673,9 @@ def test_jwt_rejeita_token_sem_exp_declarado() -> None:
 @pytest.mark.unit
 async def test_rota_raiz_responde_ok_e_esta_na_politica_de_produto(mock_queue_manager) -> None:
     """A rota raiz / deve responder OK para probes de nuvem e constar na politica de rotas de produto."""
-    from api.v1.server import create_app
     from aiohttp.test_utils import TestClient, TestServer
+
+    from api.v1.server import create_app
 
     assert middleware.rota_e_de_produto("/", "GET") is True
 

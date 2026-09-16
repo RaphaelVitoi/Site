@@ -19,8 +19,8 @@ Nada e inferido do conteudo das capturas.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
+import json
 from math import isfinite
 from pathlib import Path
 from typing import Final

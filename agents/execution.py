@@ -24,8 +24,8 @@ from agents.dispatcher import (
     _retry_dispatcher_schema_once,
 )
 from agents.fallback import _create_dispatcher_fallback_plan
-import core.runtime as te
 from core.mcp_routing import MCP_OUTPUT_KEYS, apply_mcp_addon_routing
+import core.runtime as te
 from core.schemas import Task, TaskMetadata
 from database.queue_manager import QueueManager
 import engine.cognitive as local_engine

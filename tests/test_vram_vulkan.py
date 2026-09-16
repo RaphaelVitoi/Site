@@ -26,7 +26,7 @@ arvore isolada e em CI sem GPU.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name,protected-access
-
+import contextlib
 import importlib.util
 import json
 from pathlib import Path
@@ -41,12 +41,11 @@ RAIZ = Path(__file__).resolve().parent.parent
 def nx():
     """Carrega nexus.py como modulo, sem disparar o app do typer."""
     spec = importlib.util.spec_from_file_location("nexus_sob_teste", RAIZ / "scripts" / "cli" / "nexus.py")
-    assert spec and spec.loader
+    assert spec
+    assert spec.loader
     modulo = importlib.util.module_from_spec(spec)
-    try:
+    with contextlib.suppress(SystemExit):  # typer pode sair no import em algumas versoes
         spec.loader.exec_module(modulo)
-    except SystemExit:  # pragma: no cover - typer pode sair no import em algumas versoes
-        pass
     vars(modulo)["_VRAM_TOTAL_VULKAN"] = None
     vars(modulo)["_VRAM_PS_CACHE"] = None
     return modulo

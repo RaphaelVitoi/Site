@@ -65,13 +65,14 @@ def test_chipev_e_icm_divergem_com_premiacao_escalonada():
 
 @pytest.mark.parametrize("entrada", [([1.0, float("nan")], [1.0]), ([-1.0, 2.0], [1.0]), ([1.0], [float("inf")])])
 def test_chipev_recusa_entrada_impossivel(entrada):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011 - parametrizado: cada caso falha com mensagem propria
         chip_ev_dollars(*entrada)
 
 
 def test_fgs_fica_declarado_ausente_e_nao_resolve():
     fgs = next(b for b in BASELINES if b.id == "fgs")
-    assert fgs.estado is BaselineState.NOT_IMPLEMENTED and fgs.implementacao is None
+    assert fgs.estado is BaselineState.NOT_IMPLEMENTED
+    assert fgs.implementacao is None
     with pytest.raises(LookupError):
         resolve_implementation(fgs)
 

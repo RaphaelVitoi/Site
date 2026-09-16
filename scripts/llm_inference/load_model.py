@@ -9,7 +9,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from utils.env_loader import load_env
+from utils.env_loader import load_env  # noqa: E402 - depende do sys.path acima
 
 ENV_KEYS = load_env()
 

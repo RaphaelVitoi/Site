@@ -95,7 +95,7 @@ def discover_ollama_models() -> list[dict[str, Any]]:
     url = "http://127.0.0.1:11434/api/tags"
     try:
         req = urllib.request.Request(url, headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=3) as resp:
+        with urllib.request.urlopen(req, timeout=3) as resp:  # noqa: S310 - Ollama em loopback fixo  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
             data = json.loads(resp.read().decode("utf-8"))
             raw_models = data.get("models", [])
             models_list = []
@@ -332,7 +332,7 @@ def query_ollama_direct(
     response_text = ""
     stream_filter = TerminalStreamFilter()
     try:
-        with urllib.request.urlopen(req, timeout=180) as response:
+        with urllib.request.urlopen(req, timeout=180) as response:  # noqa: S310 - Ollama em loopback fixo  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
             for line in response:
                 if not line:
                     continue
@@ -376,7 +376,7 @@ def query_gemma_proxy(
     response_text = ""
     stream_filter = TerminalStreamFilter()
     try:
-        with urllib.request.urlopen(req, timeout=120) as response:
+        with urllib.request.urlopen(req, timeout=120) as response:  # noqa: S310 - PROXY_URL em loopback fixo  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
             for chunk in response:
                 text = chunk.decode("utf-8", errors="ignore")
                 if text:

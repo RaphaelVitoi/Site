@@ -41,12 +41,12 @@ por frase, e a comparacao com baseline e o que prova isso.
 
 from __future__ import annotations
 
-# pylint: disable=redefined-outer-name,protected-access
+from pathlib import Path
 
+# pylint: disable=redefined-outer-name,protected-access
 import re
 import statistics
 import warnings
-from pathlib import Path
 
 import pytest
 

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
+import re
 
 
 def test_intentmap_covers_all_agents():
@@ -29,7 +29,8 @@ def test_aphorisms_exist_and_not_empty():
     assert isinstance(aphorisms, list)
     assert len(aphorisms) >= 5
     for a in aphorisms:
-        assert isinstance(a, str) and len(a) > 0
+        assert isinstance(a, str)
+        assert len(a) > 0
 
 
 def test_resolve_intent_heuristics():

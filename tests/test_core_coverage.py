@@ -3,17 +3,17 @@ Testes SOTA para os componentes core do Nexus Orchestrator (config, arbitrator, 
 """
 # pylint: disable=protected-access
 
+from datetime import UTC, datetime
 import json
 import logging
-from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from core.arbitrator import UniversalArbitrator
 import core.config as config
 import core.runtime as runtime
-from core.arbitrator import UniversalArbitrator
 from core.schemas import Task
 
 

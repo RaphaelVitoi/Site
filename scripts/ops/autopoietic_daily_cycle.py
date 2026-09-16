@@ -7,7 +7,7 @@ assegurando homeostase, governanca SOTA, atualizacao de telemetria e mensuracao 
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import json
 import logging
 from pathlib import Path
@@ -72,7 +72,7 @@ def run_pytest(test_files: list[str]) -> tuple[int, str]:
 def execute_autopoietic_cycle() -> dict[str, Any]:
     """Executa em série estrita o ciclo diário não-concorrente."""
     start_time = time.monotonic()
-    now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    now_utc = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     logger.info("=== INICIANDO CICLO DIARIO AUTOPOIETICO SOTA v8.0 GOLD ===")
     logger.info("Horario: %s | Repositorio: RaphaelVitoi/Site", now_utc)

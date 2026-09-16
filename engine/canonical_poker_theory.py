@@ -19,8 +19,8 @@ Protocolo Chico SOTA v8.0 GOLD -- Tipagem Estrita PEP 585/604 & Zero-Any.
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
+import math
 from typing import Final
 
 
@@ -277,11 +277,8 @@ class JandaMDFCalculator:
         alpha = b / (p + b)
         mdf = p / (p + b)
 
-        if k == 1:
-            ind_mdf = mdf
-        else:
-            # Formula de responsabilidade compartilhada da Parte 12
-            ind_mdf = 1.0 - math.pow(alpha, 1.0 / k)
+        # Com k > 1, formula de responsabilidade compartilhada da Parte 12
+        ind_mdf = mdf if k == 1 else 1.0 - math.pow(alpha, 1.0 / k)
 
         return JandaMDFResult(
             pot=p,

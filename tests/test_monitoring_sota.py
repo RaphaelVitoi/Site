@@ -3,8 +3,8 @@ Testes SOTA para os modulos de telemetria, auditoria e watchdog do Nexus Orchest
 """
 
 import base64
-import json
 from datetime import UTC, datetime
+import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 

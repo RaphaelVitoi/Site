@@ -2,15 +2,15 @@
 
 from itertools import permutations
 
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from core.perspective_schemas import PerspectiveTreeRequest
 from engine.icm_matrix import calculate_malmuth_harville_icm, compute_bubble_factor_matrix
 
 
 @pytest.mark.parametrize(
-    "stacks,payouts,expected",
+    ("stacks", "payouts", "expected"),
     [
         ([100, 0], [70, 30], [70, 30]),
         ([0, 100], [70, 30], [30, 70]),
@@ -45,7 +45,7 @@ def test_aggregated_states_match_independent_finish_order_enumeration():
 
 
 @pytest.mark.parametrize(
-    "field,value",
+    ("field", "value"),
     [("fold_equity", 2), ("fold_equity", -0.1), ("valuation_stack", float("inf")), ("edge_base", float("nan"))],
 )
 def test_tree_rejects_nonfinite_numbers_and_invalid_probabilities(field, value):

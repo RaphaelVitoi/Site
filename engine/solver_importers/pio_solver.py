@@ -3,9 +3,11 @@
 Importador especializado para PioSolver (CFR Text Dumps & Node Strategy).
 """
 
+import contextlib
 import json
 import re
 from typing import Any
+
 from core.perspective_schemas import NormalizedGameTree, SolverNode, SolverType
 from engine.solver_importers.base import BaseSolverImporter
 
@@ -93,18 +95,14 @@ class PioSolverImporter(BaseSolverImporter):
         if lowered.startswith(("strategy:", "frequencies:")):
             freq_part = re.sub(r"^(strategy|frequencies):\s*", "", l_str, flags=re.IGNORECASE)
             for f in re.split(r"[,\s]+", freq_part):
-                try:
+                with contextlib.suppress(ValueError):
                     frequencies.append(float(f))
-                except ValueError:
-                    pass
 
         if lowered.startswith("ev:"):
             ev_part = re.sub(r"^ev:\s*", "", l_str, flags=re.IGNORECASE)
             for e in re.split(r"[,\s]+", ev_part):
-                try:
+                with contextlib.suppress(ValueError):
                     ev_list.append(float(e))
-                except ValueError:
-                    pass
 
     def _build_text_node(
         self,
@@ -156,7 +154,11 @@ class PioSolverImporter(BaseSolverImporter):
         node = self._build_text_node(player, pot, board, actions, frequencies, ev_list)
         return {"root": node}, board
 
-    def parse_tree(self, raw_content: str, tournament_context: dict[str, Any] | None = None) -> NormalizedGameTree:
+    def parse_tree(
+        self,
+        raw_content: str,
+        tournament_context: dict[str, Any] | None = None,  # noqa: ARG002 - contrato de BaseSolverImporter
+    ) -> NormalizedGameTree:
         """Processa text dumps e arvores do PioSolver."""
         trimmed = raw_content.strip()
         starting_pot = 100.0

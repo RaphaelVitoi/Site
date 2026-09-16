@@ -26,13 +26,13 @@ locais e o catalogo de estruturas, que so tem numeros.
 
 from __future__ import annotations
 
-import hashlib
-import json
-import random
-import re
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
+import hashlib
+import json
 from pathlib import Path
+import random
+import re
 from typing import Final
 
 from engine.icm_matrix import calculate_malmuth_harville_icm
@@ -285,7 +285,7 @@ class CoherentStateGenerator:
         self.structure = structure
         self.seed = seed
         self.concentration = concentration
-        self._rng = random.Random(seed)
+        self._rng = random.Random(seed)  # noqa: S311 - amostragem reprodutivel por seed, nao criptografia  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
         self._reais = [
             h
             for h in real_states

@@ -17,7 +17,6 @@ le output pega isso  so a que compara cardinalidade.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name
-
 import datetime
 from pathlib import Path
 
@@ -116,15 +115,15 @@ def _bloco(texto: str) -> dict[str, str]:
 
 
 def _frontmatter_de_exemplo(**over: object) -> str:
-    base: dict[str, object] = dict(
-        agora=datetime.datetime(2026, 8, 27, 15, 30),
-        mes_ano="2026_08",
-        status_camadas={"m1": {"status": "OK"}, "m2": {"status": "OK"}},
-        mo_status={"a.md": {"existe": True}, "b.md": {"existe": True}},
-        suspeitas={},
-        cob={"agentes": 19, "subagentes": 13},
-        n_agentes_resolvidos=19,
-    )
+    base: dict[str, object] = {
+        "agora": datetime.datetime(2026, 8, 27, 15, 30),
+        "mes_ano": "2026_08",
+        "status_camadas": {"m1": {"status": "OK"}, "m2": {"status": "OK"}},
+        "mo_status": {"a.md": {"existe": True}, "b.md": {"existe": True}},
+        "suspeitas": {},
+        "cob": {"agentes": 19, "subagentes": 13},
+        "n_agentes_resolvidos": 19,
+    }
     base.update(over)
     return _frontmatter(
         agora=base["agora"],  # type: ignore[arg-type]
@@ -148,8 +147,10 @@ def test_classe_externa_traz_fontes_e_ttl():
     texto = _frontmatter_de_exemplo()
     chaves = _bloco(texto)
     assert "externo" in chaves["classes"]
-    assert "fontes" in chaves and "ttl_dias" in chaves
-    assert "medido" in chaves["classes"] and "config_medida" in chaves
+    assert "fontes" in chaves
+    assert "ttl_dias" in chaves
+    assert "medido" in chaves["classes"]
+    assert "config_medida" in chaves
 
 
 def test_nao_verificado_nunca_sai_vazio():

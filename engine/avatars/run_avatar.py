@@ -154,7 +154,7 @@ def load_persona_memory(persona_name: str, max_turns: int = 6) -> str:
     if not os.path.exists(path):
         return ""
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             history = json.load(f)
         if not history:
             return ""
@@ -180,7 +180,7 @@ def save_persona_turn(persona_name: str, user_prompt: str, assistant_response: s
     try:
         history = []
         if os.path.exists(path):
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 history = json.load(f)
         history.append({"role": "user", "content": user_prompt, "timestamp": time.time()})
         history.append({"role": "assistant", "content": assistant_response, "timestamp": time.time()})

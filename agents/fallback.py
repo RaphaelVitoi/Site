@@ -10,8 +10,8 @@ import json
 import logging
 from typing import Any, TypedDict
 
-import core.runtime as te
 from core.mcp_routing import apply_mcp_addon_routing
+import core.runtime as te
 from core.schemas import Task, TaskMetadata
 from database.queue_manager import QueueManager
 from utils.heuristics import _calculate_heuristic_score

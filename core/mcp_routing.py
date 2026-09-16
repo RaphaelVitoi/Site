@@ -41,7 +41,7 @@ class MCPAddonDecision:
         """Converte a decisao para o contrato JSON persistido na fila."""
         return {
             MCP_SELECTED_KEY: list(self.selected),
-            MCP_SCORES_KEY: {name: score for name, score in self.scores.items()},
+            MCP_SCORES_KEY: dict(self.scores),
             MCP_REASONS_KEY: list(self.reason_codes),
             MCP_POLICY_KEY: self.policy_mode,
         }
@@ -53,7 +53,7 @@ def _configured_policy(policy: Mapping[str, Any] | None = None) -> Mapping[str, 
 
     try:
         # Import tardio evita acoplamento circular no cold-start do core.
-        import core.config as config  # pylint: disable=import-outside-toplevel
+        from core import config  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
         configured = getattr(config, "MCP_ADDON_ROUTING", {})
     except (ImportError, AttributeError):
@@ -174,7 +174,7 @@ def resolve_mcp_addons(
             _contains_term(text, term) for term in _normalise_term_list(raw_rule.get("blocked_terms"))
         )
         minimum_words = max(0, _safe_int(raw_rule.get("minimum_words"), 0))
-        long_task = minimum_words > 0 and len(text.split()) >= minimum_words
+        long_task = len(text.split()) >= minimum_words > 0
 
         if blocked and not is_explicit:
             continue

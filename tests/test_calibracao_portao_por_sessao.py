@@ -21,12 +21,12 @@ Estes testes existem porque regra que nao e executavel nao e regra.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 import hashlib
 import json
+from pathlib import Path
 import shutil
 import subprocess
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 import pytest
 
@@ -55,7 +55,7 @@ def _ledger(caminho: Path, feedbacks: list[dict]) -> None:
         "schema_version": "agent-calibration-ledger/v1",
         "sequence": 0,
         "record_type": "genesis",
-        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "recorded_at": datetime.now(UTC).isoformat(),
         "previous_hash": anterior,
         "policy": "append-only hash chain; verify before use",
     }

@@ -1,9 +1,9 @@
 # pylint: disable=missing-module-docstring, logging-fstring-interpolation, invalid-name, line-too-long
 
 import asyncio
+from datetime import UTC, datetime
 import json
 import logging
-from datetime import UTC, datetime
 from pathlib import Path
 
 from utils.text import enforce_pure_ascii

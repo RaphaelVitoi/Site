@@ -14,8 +14,10 @@ import pytest
 from engine.avatars.run_avatar import (
     assemble_context,
     clean_text_to_ascii,
-    main as run_main,
     query_multimodal_cli,
+)
+from engine.avatars.run_avatar import (
+    main as run_main,
 )
 
 

@@ -3,11 +3,12 @@
 
 from __future__ import annotations
 
-import math
-import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
+import math
 from pathlib import Path
-from typing import Any, Final, Sequence
+import sys
+from typing import Any, Final
 
 from engine.game_theory_solvers import PluribusMultiwayState, Street
 
@@ -74,7 +75,7 @@ class DynamicFoldEngine:
 
         for j in range(n):
             for k in range(j + 1, n):
-                if j == hero_idx or k == hero_idx:
+                if hero_idx in (j, k):
                     continue
 
                 stack_j = self._state.stacks[j]

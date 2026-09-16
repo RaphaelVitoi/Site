@@ -201,7 +201,7 @@ COERENTES = [
 ]
 
 
-@pytest.mark.parametrize("autor,linha", COERENTES)
+@pytest.mark.parametrize(("autor", "linha"), COERENTES)
 def test_autor_que_concorda_com_a_assinatura_passa(autor, linha, tmp_path):
     r = _rodar_com_autor(f"feat(x): assunto\n\n{linha}\n", autor, tmp_path)
     assert r.returncode == 0, f"reprovou identidade coerente:\n{r.stdout}{r.stderr}"
@@ -320,11 +320,12 @@ def test_o_tier_errado_medido_em_14_09_avisa_sem_bloquear(tmp_path):
     )
     saida = r.stdout + r.stderr
     assert r.returncode == 0, f"o aviso de Tier nunca bloqueia:\n{saida}"
-    assert "declara Tier 2" in saida and "no Tier 1" in saida, saida
+    assert "declara Tier 2" in saida, saida
+    assert "no Tier 1" in saida, saida
 
 
 @pytest.mark.parametrize(
-    "autor,linha",
+    ("autor", "linha"),
     [
         ("Gemini 3.8 Flash", "Assinatura: Gemini 3.8 Flash [Tier 1.A] -- sessao s"),
         ("Claude Opus 5", "Assinatura: Claude Opus 5 [Tier 1.B] -- sessao s"),

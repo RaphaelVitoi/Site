@@ -295,10 +295,7 @@ async def rate_limit_middleware(request, handler):
     """Aplica limite de requisicoes por IP na janela de tempo definida."""
     remote_ip = request.remote or "127.0.0.1"
     forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded and _is_loopback(remote_ip):
-        ip = forwarded.split(",")[0].strip()
-    else:
-        ip = remote_ip
+    ip = forwarded.split(",")[0].strip() if forwarded and _is_loopback(remote_ip) else remote_ip
 
     current_time = time.time()
     _purge_expired_ips(current_time)

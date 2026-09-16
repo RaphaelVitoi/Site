@@ -7,8 +7,8 @@ Protocolo Chico SOTA v8.0 GOLD -- Validacao Estrita (allow_inf_nan=False).
 from __future__ import annotations
 
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field
 
+from pydantic import BaseModel, ConfigDict, Field
 
 # ==============================================================================
 # 1. CHEN & ANKENMAN SCHEMAS (The Mathematics of Poker)

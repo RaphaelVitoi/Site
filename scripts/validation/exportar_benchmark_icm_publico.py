@@ -10,10 +10,10 @@ engine/pmev_benchmark_publico.py, gravado em data/, de onde o frontend o importa
 from __future__ import annotations
 
 import argparse
-import json
-import sys
 from datetime import date
+import json
 from pathlib import Path
+import sys
 from typing import Any
 
 RAIZ = Path(__file__).resolve().parents[2]
@@ -23,7 +23,13 @@ if str(RAIZ) not in sys.path:
 # pylint: disable=wrong-import-position
 from engine.pmev_benchmark_publico import build_public_dataset  # noqa: E402
 from engine.pmev_hh_benchmark import HeroObservation, hero_observations  # noqa: E402
-from engine.pmev_hh_canon import is_complete_field, load_structures, match_structure, parse_pokerstars_hands  # noqa: E402
+from engine.pmev_hh_canon import (  # noqa: E402
+    is_complete_field,
+    load_structures,
+    match_structure,
+    parse_pokerstars_hands,
+)
+
 # pylint: enable=wrong-import-position
 
 DESTINO_PADRAO = RAIZ / "data" / "pmev_benchmark_icm_chipev.v1.json"

@@ -7,12 +7,11 @@ ROLE: Validação hermética dos contratos de inferência, governança de licen�
 from __future__ import annotations
 
 # pylint: disable=protected-access
-
 import json
 
-import pytest
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
+import pytest
 
 from api.v1.handlers import handle_timesfm_forecast
 from engine.timesfm_engine import (

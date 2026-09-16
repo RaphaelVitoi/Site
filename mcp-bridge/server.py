@@ -5,9 +5,9 @@
 from __future__ import annotations
 
 import importlib
+from pathlib import Path
 import re
 import subprocess
-from pathlib import Path
 from typing import Any
 
 FastMCP: Any = None
@@ -99,7 +99,7 @@ def list_sota_tasks() -> str:
 def delegate_pmev_to_jules(prompt: str, source: str = "sources/github/RaphaelVitoi/Site", branch: str = "main") -> str:
     """Delega simulacoes intensivas de Teoria dos Jogos PMev ou refatoracoes de grande porte para o Google Jules."""
     try:
-        from engine.jules_bridge import JulesClient, JulesSessionRequest
+        from engine.jules_bridge import JulesClient, JulesSessionRequest  # noqa: PLC0415 - falha vira resposta da tool
 
         client = JulesClient()
         if not client.is_configured:
@@ -115,7 +115,7 @@ def delegate_pmev_to_jules(prompt: str, source: str = "sources/github/RaphaelVit
 def get_jules_task_status(session_id: str) -> str:
     """Consulta o status e o progresso de uma sessao em execucao no Google Jules."""
     try:
-        from engine.jules_bridge import JulesClient
+        from engine.jules_bridge import JulesClient  # noqa: PLC0415 - falha vira resposta da tool
 
         client = JulesClient()
         status = client.get_session_status(session_id)

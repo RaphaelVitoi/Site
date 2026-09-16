@@ -1,9 +1,9 @@
 """Provenance enforcement uses temporary chains, never production evidence."""
 
 import json
+from pathlib import Path
 import shutil
 import subprocess
-from pathlib import Path
 
 import pytest
 
@@ -16,16 +16,16 @@ pytestmark = pytest.mark.skipif(shutil.which("pwsh") is None, reason="pwsh requi
 
 
 def write_feedback(path, **overrides):
-    fields = dict(
-        Score="8.5",
-        Feedback="fixture",
-        SessionId="fixture-session",
-        ConductorModel="gpt-5.6-terra",
-        ConductorVehicle="codex",
-        SupervisionMode="assistida",
-        Scope="handoff",
-        LedgerPath=str(path),
-    )
+    fields = {
+        "Score": "8.5",
+        "Feedback": "fixture",
+        "SessionId": "fixture-session",
+        "ConductorModel": "gpt-5.6-terra",
+        "ConductorVehicle": "codex",
+        "SupervisionMode": "assistida",
+        "Scope": "handoff",
+        "LedgerPath": str(path),
+    }
     fields.update(overrides)
     args = ["pwsh", "-NoProfile", "-NonInteractive", "-File", str(OPS / "Register-AgentCalibrationFeedback.ps1")]
     for key, value in fields.items():
@@ -52,7 +52,8 @@ def test_missing_provenance_rejected_before_writing(tmp_path, field, value):
 
 
 @pytest.mark.parametrize(
-    "model,vehicle", [("gpt-5.6-terra", "codex"), ("claude-opus-5", "claude-code"), ("gemini-3.8-flash", "antigravity")]
+    ("model", "vehicle"),
+    [("gpt-5.6-terra", "codex"), ("claude-opus-5", "claude-code"), ("gemini-3.8-flash", "antigravity")],
 )
 def test_known_connectors_are_recorded_independently(tmp_path, model, vehicle):
     ledger = tmp_path / "feedback-ledger.jsonl"
@@ -65,13 +66,13 @@ def test_known_connectors_are_recorded_independently(tmp_path, model, vehicle):
 @pytest.mark.parametrize(
     "overrides",
     [
-        dict(ConductorVehicle="Antigravity IDE"),
-        dict(ConductorVehicle="antigravity"),
-        dict(ConductorModel="GPT"),
-        dict(ConductorModel="unknown-1"),
-        dict(Scope="preludio"),
-        dict(Scope="interludio"),
-        dict(Scope="intrasessao-outlier"),
+        {"ConductorVehicle": "Antigravity IDE"},
+        {"ConductorVehicle": "antigravity"},
+        {"ConductorModel": "GPT"},
+        {"ConductorModel": "unknown-1"},
+        {"Scope": "preludio"},
+        {"Scope": "interludio"},
+        {"Scope": "intrasessao-outlier"},
     ],
 )
 def test_unknown_mismatch_or_nonhandoff_rejected(tmp_path, overrides):

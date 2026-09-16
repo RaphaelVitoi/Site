@@ -4,8 +4,8 @@ Implementa o Nexo Bellman-Shannon para Poker de Alta Performance.
 Autor: Chico (Avatar do Sistema) sob mandato de Raphael Vitoi.
 """
 
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Final, Protocol, runtime_checkable
 
 import numpy as np

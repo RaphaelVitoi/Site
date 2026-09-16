@@ -1260,7 +1260,7 @@ def _cli_ai_simulate(argv: list, _manager: QueueManager) -> None:
         print(f"Subcomando AI desconhecido: {subcmd}")
 
 
-def _cli_voice(argv: list, manager: QueueManager) -> None:
+def _cli_voice(argv: list, manager: QueueManager) -> None:  # noqa: ARG001 - contrato comum dos handlers _cli_*
     from scripts.cli.nexus_voice import speak_text
 
     text = (

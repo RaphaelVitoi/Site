@@ -1,18 +1,18 @@
 """Modulo de gerenciamento da fila de tarefas SOTA (Queue Manager)."""  # pylint: disable=line-too-long, import-outside-toplevel, too-many-lines
 
 import asyncio
+from collections.abc import Iterable
 import contextlib
+from datetime import UTC, datetime, timedelta
 import gc
 import json
 import logging
 import os
+from pathlib import Path
 import re
 import sqlite3
-import uuid
-from collections.abc import Iterable
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from typing import Any
+import uuid
 
 import aiosqlite
 
@@ -421,12 +421,11 @@ class QueueManager:
 
     async def get_realtime_metrics(self) -> dict[str, Any]:
         """Recupera metricas consolidadas em tempo real a partir da SQL View."""
-        async with self._get_async_db() as db:
-            async with db.execute("SELECT * FROM v_nexus_realtime_metrics") as cursor:
-                row = await cursor.fetchone()
-                if row and cursor.description:
-                    col_names = [d[0] for d in cursor.description]
-                    return dict(zip(col_names, row, strict=False))
+        async with self._get_async_db() as db, db.execute("SELECT * FROM v_nexus_realtime_metrics") as cursor:
+            row = await cursor.fetchone()
+            if row and cursor.description:
+                col_names = [d[0] for d in cursor.description]
+                return dict(zip(col_names, row, strict=False))
         return {}
 
     async def claim_task(self, task_id: str) -> bool:

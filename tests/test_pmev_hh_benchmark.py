@@ -103,5 +103,5 @@ def test_benchmark_agrega_com_bootstrap_por_torneio_e_recusa_vazio():
     for m in (rel.brier_lugar, rel.logloss_lugar, rel.brier_itm, rel.erro2_premio):
         assert m.diferenca == pytest.approx(m.modelo - m.referencia)
         assert m.ic95[0] <= m.ic95[1]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="benchmark sem observacoes"):
         run_benchmark([], STT3)

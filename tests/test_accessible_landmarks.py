@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parent.parent
 HEADER = ROOT / "frontend" / "src" / "components" / "ui" / "layout" / "Header.tsx"
 FOOTER = ROOT / "frontend" / "src" / "components" / "ui" / "layout" / "Footer.tsx"

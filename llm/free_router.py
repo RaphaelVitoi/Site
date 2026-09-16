@@ -14,16 +14,16 @@ Adaptação para limites de cotas gratuitas com:
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 import hashlib
 import logging
 import time
-from dataclasses import dataclass
 from typing import Any, Literal
 
-import httpx
 from google import genai
 from google.genai import types
 from google.genai.errors import APIError
+import httpx
 
 from llm.budget import GEMINI_FLASH_KEYS, GEMINI_KEYS, OPENROUTER_KEYS
 

@@ -1,7 +1,7 @@
 # pylint: disable=c-extension-no-member, no-member, import-outside-toplevel
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import numpy as np
 from rich.console import Console
@@ -12,7 +12,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 console = Console()
 
 
-def numpy_icm_distortion(fold, call, raise_, ip_rp, oop_rp, pot, topologic_aggression, active_players, street_idx):  # pylint: disable=unused-argument
+def numpy_icm_distortion(
+    fold,
+    call,  # noqa: ARG001 - espelha a assinatura do kernel C++
+    raise_,
+    ip_rp,
+    oop_rp,
+    pot,
+    topologic_aggression,
+    active_players,
+    street_idx,
+):  # pylint: disable=unused-argument
     # SOTA: Type casting estrito para float32 garantindo Isometria Absoluta com o AVX2 do C++
     inv_7_5 = np.float32(1.0 / 7.5)
     gravity = np.maximum(np.log(pot * inv_7_5), np.float32(0.0)).astype(np.float32)
@@ -56,7 +66,7 @@ def run_benchmark():
     console.print("[bold magenta]=== BENCHMARK SOTA: NUMPY vs C++ SIMD (ZERO-COPY) ===[/]")
 
     try:
-        import core.quantum_tensor_engine as qte  # type: ignore # pylint: disable=import-error,no-member,c-extension-no-member
+        import core.quantum_tensor_engine as qte  # noqa: PLC0415 - extensao C++ opcional  # type: ignore # pylint: disable=import-error,no-member,c-extension-no-member
     except ImportError as e:
         console.print(f"[bold red][ENTROPIA] Falha ao importar o motor C++: {e}[/]")
         console.print("[dim]Execute '.\\do.ps1 -CompileTensor' na raiz para forjar o binario.[/]")

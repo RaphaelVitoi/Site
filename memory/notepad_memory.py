@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import threading
 import time
-from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class MemoryBlock:
     def __init__(
-        self, key: str, title: str, content: str, tags: Optional[list[str]] = None, ttl_seconds: Optional[int] = None
+        self, key: str, title: str, content: str, tags: list[str] | None = None, ttl_seconds: int | None = None
     ):
         self.key = key
         self.title = title
@@ -36,7 +36,7 @@ class MemoryBlock:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MemoryBlock":
+    def from_dict(cls, data: dict[str, Any]) -> MemoryBlock:
         block = cls(
             key=data["key"],
             title=data["title"],
@@ -55,7 +55,7 @@ class NotepadMemory:
     Permite compartilhamento de estado, hipoteses, planos de acao e checkpointing entre subagentes.
     """
 
-    def __init__(self, storage_path: Optional[Path] = None):
+    def __init__(self, storage_path: Path | None = None):
         self.storage_path = storage_path or (Path(__file__).parent / "notepad_state.json")
         self.markdown_path = self.storage_path.parent / "notepad_active.md"
         self._blocks: dict[str, MemoryBlock] = {}
@@ -87,7 +87,7 @@ class NotepadMemory:
             self.markdown_path.write_text(self.render_markdown(), encoding="utf-8")
 
     def write_block(
-        self, key: str, title: str, content: str, tags: Optional[list[str]] = None, ttl_seconds: Optional[int] = None
+        self, key: str, title: str, content: str, tags: list[str] | None = None, ttl_seconds: int | None = None
     ) -> MemoryBlock:
         with self._lock:
             if key in self._blocks:
@@ -103,7 +103,7 @@ class NotepadMemory:
             self.flush()
             return block
 
-    def read_block(self, key: str) -> Optional[MemoryBlock]:
+    def read_block(self, key: str) -> MemoryBlock | None:
         with self._lock:
             block = self._blocks.get(key)
             if block and block.is_expired():
@@ -120,7 +120,7 @@ class NotepadMemory:
                 return True
             return False
 
-    def list_blocks(self, tag_filter: Optional[str] = None) -> list[MemoryBlock]:
+    def list_blocks(self, tag_filter: str | None = None) -> list[MemoryBlock]:
         with self._lock:
             self._evict_expired_internal()
             blocks = list(self._blocks.values())

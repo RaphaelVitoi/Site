@@ -6,9 +6,9 @@ multimodel scaling, Nexus CLI command, and PowerShell quantitative support adapt
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import hashlib
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 import shutil
 import subprocess
@@ -176,7 +176,7 @@ def _ledger_hermetico(caminho: Path, notas: list[float]) -> None:
         "schema_version": "agent-calibration-ledger/v1",
         "sequence": 0,
         "record_type": "genesis",
-        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "recorded_at": datetime.now(UTC).isoformat(),
         "previous_hash": anterior,
         "policy": "append-only hash chain; verify before use",
     }
@@ -189,7 +189,7 @@ def _ledger_hermetico(caminho: Path, notas: list[float]) -> None:
             "schema_version": "agent-calibration-ledger/v1",
             "sequence": i,
             "record_type": "feedback",
-            "recorded_at": datetime.now(timezone.utc).isoformat(),
+            "recorded_at": datetime.now(UTC).isoformat(),
             "previous_hash": anterior,
             "event_id": f"evt-timesfm-{i}",
             "session_id": f"sessao-timesfm-{i}",

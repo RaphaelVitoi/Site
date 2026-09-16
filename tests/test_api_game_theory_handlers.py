@@ -13,9 +13,9 @@ from __future__ import annotations
 import json
 import math
 
-import pytest
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
+import pytest
 
 from api.v1.handlers import (
     handle_canonical_akq,

@@ -28,6 +28,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from memory_rag import MARCADOR_SUPERADO, MemoryRAG
 
 RAIZ = Path(__file__).resolve().parent.parent

@@ -48,12 +48,11 @@ computado, nao.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name
-
 import ast
 import inspect
 import json
-import re
 from pathlib import Path
+import re
 
 import pytest
 

@@ -31,14 +31,14 @@ distintas. Regra que nao e executavel nao e regra.
 
 from __future__ import annotations
 
-# pylint: disable=redefined-outer-name
+from datetime import UTC, datetime
 
+# pylint: disable=redefined-outer-name
 import hashlib
 import json
+from pathlib import Path
 import shutil
 import subprocess
-from datetime import datetime, timezone
-from pathlib import Path
 
 import pytest
 
@@ -79,7 +79,7 @@ def _ledger(caminho: Path, feedbacks: list[dict]) -> None:
         "schema_version": "agent-calibration-ledger/v1",
         "sequence": 0,
         "record_type": "genesis",
-        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "recorded_at": datetime.now(UTC).isoformat(),
         "previous_hash": anterior,
         "policy": "append-only hash chain; verify before use",
     }
@@ -173,7 +173,7 @@ def _calibrar(
     return subprocess.run(argumentos, capture_output=True, text=True, cwd=str(RAIZ), check=False)
 
 
-@pytest.fixture()
+@pytest.fixture
 def cenario(tmp_path: Path):
     """Tres sessoes distintas num dia: portao aberto, pronto para fechar."""
     dia = "2026-09-21"

@@ -3,6 +3,14 @@ SOTA ENGINE -- Motores de Inteligencia, Matematica e Linguagem.
 """
 
 from .bayesian_range import build_likelihood_matrix, update_posterior
+from .canonical_poker_theory import (
+    ChenAKQGameSolver,
+    ChenClairvoyanceSolver,
+    ChenIndifferenceCalculator,
+    JandaGeometricBetSizing,
+    JandaMDFCalculator,
+    JandaStreetBluffValueRatio,
+)
 from .cognitive import (
     apply_god_mode,
     get_agent_system_prompt,
@@ -30,14 +38,6 @@ from .math_sota import (
     calculate_geometric_sizing,
     calculate_rio_tension,
     solve_icm_distortion_v2,
-)
-from .canonical_poker_theory import (
-    ChenAKQGameSolver,
-    ChenClairvoyanceSolver,
-    ChenIndifferenceCalculator,
-    JandaGeometricBetSizing,
-    JandaMDFCalculator,
-    JandaStreetBluffValueRatio,
 )
 from .timesfm_engine import (
     CfrConvergenceForecast,

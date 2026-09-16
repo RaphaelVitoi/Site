@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 import json
-import uuid
 from pathlib import Path
 from unittest.mock import patch
+import uuid
 
 import pytest
 
@@ -186,11 +186,16 @@ def test_all_19_agents_manifest_integrity():
         assert agent_id in manifest, f"Agente @{agent_id} ausente no manifesto"
         data = manifest[agent_id]
 
-        assert "primary_model" in data and bool(data["primary_model"]), f"@{agent_id} sem primary_model"
-        assert "fallback_model" in data and bool(data["fallback_model"]), f"@{agent_id} sem fallback_model"
-        assert "tier" in data and bool(data["tier"]), f"@{agent_id} sem tier"
-        assert "memory_affinity" in data and bool(data["memory_affinity"]), f"@{agent_id} sem memory_affinity"
-        assert "skills" in data and isinstance(data["skills"], list), f"@{agent_id} sem lista de skills"
+        assert "primary_model" in data, f"@{agent_id} sem primary_model"
+        assert bool(data["primary_model"]), f"@{agent_id} sem primary_model"
+        assert "fallback_model" in data, f"@{agent_id} sem fallback_model"
+        assert bool(data["fallback_model"]), f"@{agent_id} sem fallback_model"
+        assert "tier" in data, f"@{agent_id} sem tier"
+        assert bool(data["tier"]), f"@{agent_id} sem tier"
+        assert "memory_affinity" in data, f"@{agent_id} sem memory_affinity"
+        assert bool(data["memory_affinity"]), f"@{agent_id} sem memory_affinity"
+        assert "skills" in data, f"@{agent_id} sem lista de skills"
+        assert isinstance(data["skills"], list), f"@{agent_id} sem lista de skills"
 
 
 # =========================================================================
