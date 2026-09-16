@@ -30,7 +30,7 @@
       "description": "Scripts críticos para integridade do sistema, auditoria de segurança, compilação de assets e verificação de Core Web Vitals.",
       "thematic_criteria": [
         "Auditoria criptográfica SHA-512 e SRI com zero falhas",
-        "Taxa de compressão Brotli/Gzip > 70% com mandate <15KB",
+        "Compressao medida por asset; nada gravado em public/ por padrao",
         "Aprovação nas 5 fases do CWV Gate sem violações"
       ],
       "scripts": {
@@ -44,7 +44,7 @@
         "scripts/ops/brotli_compressor.mjs": {
           "utility": "UTIL",
           "runtime": "Node.js",
-          "description": "Pré-compactador estático de assets em Brotli (q=11) e Gzip (lvl=9) com mandate <15KB.",
+          "description": "Mede Brotli (q=11) e Gzip (lvl=9) dos assets estaticos; --gravar escreve .br/.gz, que o Next standalone nao serve.",
           "command": "node scripts/ops/brotli_compressor.mjs",
           "sla_seconds": 5.0
         },

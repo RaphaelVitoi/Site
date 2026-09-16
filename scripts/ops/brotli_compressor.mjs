@@ -1,7 +1,16 @@
 #!/usr/bin/env node
 /**
- * SOTA Static Brotli & Gzip Pre-Compression Engine (v7.0 GOLD)
- * Chico Protocol - Zero-Friction Asset Delivery
+ * Medidor de compressao Brotli (q=11) e Gzip (lvl=9) dos assets estaticos.
+ *
+ * Medido em 2026-09-16: o script gravava .br/.gz ao lado de cada asset em frontend/public e
+ * .next/static, mas nada os serve -- o `server.js` standalone do Next comprime sob demanda
+ * (`compress: true`) e ignora irmaos pre-comprimidos. O resultado era arquivo morto na imagem
+ * Docker, arvore git suja a cada Quality Gate, um robots.txt.gz versionado defasado desde
+ * 2026-09-15 e um vitoi_equity_engine_bg.wasm.br que servia o WASM ANTERIOR ao rebuild. O
+ * "[PASS] verified" e o "<15KB Mandate" eram texto fixo: nada era verificado.
+ *
+ * Agora o padrao e MEDIR (nao grava nada). `--gravar` mantem a geracao para um host que sirva
+ * .br/.gz -- quem ligar isso assume regerar a cada build.
  */
 
 import fs from 'node:fs';
@@ -49,6 +58,8 @@ function getFiles(dir, fileList = []) {
   return fileList;
 }
 
+const GRAVAR = process.argv.includes('--gravar');
+
 export async function compressAllStaticAssets() {
   console.log('\n======================================================================');
   console.log('[SOTA COMPRESSION ENGINE] Static Brotli (q=11) & Gzip (lvl=9) Compressor');
@@ -73,8 +84,7 @@ export async function compressAllStaticAssets() {
 
       // 1. Gzip Compression (Level 9)
       const gz = zlib.gzipSync(raw, { level: 9 });
-      const gzPath = assertSafePath(`${safeFilePath}.gz`);
-      fs.writeFileSync(gzPath, gz);
+      if (GRAVAR) fs.writeFileSync(assertSafePath(`${safeFilePath}.gz`), gz);
       totalGzBytes += gz.length;
 
       // 2. Brotli Compression (Quality 11, Text/Generic Mode)
@@ -87,8 +97,7 @@ export async function compressAllStaticAssets() {
             : zlib.constants.BROTLI_MODE_TEXT,
         },
       });
-      const brPath = assertSafePath(`${safeFilePath}.br`);
-      fs.writeFileSync(brPath, br);
+      if (GRAVAR) fs.writeFileSync(assertSafePath(`${safeFilePath}.br`), br);
       totalBrBytes += br.length;
 
       processedCount++;
@@ -130,14 +139,11 @@ export async function compressAllStaticAssets() {
   console.log(`Raw Total:     ${totalRawKb} KB`);
   console.log(`Gzip (lvl 9):  ${totalGzKb} KB (${(((totalRawBytes - totalGzBytes) / (totalRawBytes || 1)) * 100).toFixed(1)}% reduction)`);
   console.log(`Brotli (q 11): ${totalBrKb} KB (${totalReduction}% reduction)`);
-  console.log('\n[PASS] All core matrix and application payloads are pre-compressed and verified.\n');
-  console.log('================================================================================');
-  console.log('========= SOTA QUALITY & INTEGRITY GUARD — PROTOCOLO CHICO v8.0 GOLD (BROTLI) ==========');
-  console.log('• Total de Erros:    0 (Teto Maximo Permitido: 0 | Peso: CRITICO)');
-  console.log('• Total de Warnings: 0 (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)');
-  console.log('• Status da Bateria: [SUCESSO (VERDE)] Pre-compressao Brotli/Gzip 100% concluida.');
-  console.log('================================================================================\n');
-
+  console.log(
+    GRAVAR
+      ? '\n[GRAVADO] .br/.gz escritos ao lado dos assets. Nada no Next standalone os serve: regere a cada build.'
+      : '\n[MEDIDO] Nenhum arquivo gravado. O Next comprime sob demanda; use --gravar so para host que sirva .br/.gz.'
+  );
   return true;
 }
 

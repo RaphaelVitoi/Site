@@ -2596,7 +2596,7 @@ def verify_integrity(
 
 @ops_app.command("compress")
 def compress_static_assets():
-    """Executa a Pre-Compactacao Estatica Brotli (q=11) e Gzip (lvl=9) dos Assets."""
+    """Mede a compressao Brotli (q=11) e Gzip (lvl=9) dos assets; nao grava nada (use o .mjs com --gravar)."""
     script_path = BASE_DIR / "scripts" / "ops" / "brotli_compressor.mjs"
     if script_path.exists():
         node_cmd = shutil.which("node") or "node"
@@ -2657,7 +2657,7 @@ async def quality_gate():
         ),
         ("Build (frontend Next.js)", [npm_cmd, "run", "build"], BASE_DIR, build_env),
         (
-            "Pre-Compressao Estatica Brotli/Gzip (<15KB Mandate)",
+            "Medicao de Compressao Brotli/Gzip (sem gravar em public/)",
             [node_cmd, str(BASE_DIR / "scripts" / "ops" / "brotli_compressor.mjs")],
             BASE_DIR,
             None,
