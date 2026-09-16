@@ -80,7 +80,7 @@ def test_parser_le_numeros_e_ante_so_do_bloco_da_propria_mao():
 
 
 def test_numeral_romano_composto():
-    (mao,) = parse_pokerstars_hands(_mao(3, "12", "$9.20+$0.80", "XIV", 800, 1600, 9, [1500] * 9))
+    (mao,) = list(parse_pokerstars_hands(_mao(3, "12", "$9.20+$0.80", "XIV", 800, 1600, 9, [1500] * 9)))
     assert mao.level == 14
 
 

@@ -20,14 +20,14 @@ export default function NotFound() {
 						className="bg-accent-indigo hover:bg-accent-indigo-light inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all"
 					>
 						<i className="fa-solid fa-house" aria-hidden="true" />
-						Página Principal
+						<span>Página Principal</span>
 					</Link>
 					<Link
 						href="/simulador"
 						className="border-border-subtle text-text-main hover:bg-bg-elevated hover:text-text-bright inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-medium transition-colors"
 					>
 						<i className="fa-solid fa-microchip" aria-hidden="true" />
-						Simulador SOTA
+						<span>Simulador SOTA</span>
 					</Link>
 				</div>
 			</div>

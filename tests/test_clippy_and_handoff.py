@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 from typer.testing import CliRunner
 
 from engine.clippy_clipboard import ClippyClipboard
+from scripts.cli import nexus
 from scripts.cli.nexus import app
 from scripts.ops.git_sota_workflow import GitSotaWorkflow
 
@@ -89,8 +90,6 @@ def test_handoff_translitera_simbolos_e_declara_o_que_descarta(tmp_path):
     simbolos sem aviso -- "regra != fato" chegava ao proximo agente como
     "regra  fato". O arquivo continua ASCII (Blindagem ASCII); o que muda e que
     o simbolo semantico sobrevive e o que se perde aparece no console."""
-    import scripts.cli.nexus as nexus
-
     (tmp_path / ".claude").mkdir()
     (tmp_path / "CLAUDE.md").write_text(
         "Regra \u00a77: regra \u2260 fato \u2192 medir. Marca \U0001f600.\n", encoding="utf-8"
