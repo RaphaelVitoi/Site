@@ -11,7 +11,7 @@ import type { PluribusExecutor } from '@/lib/engineExecutionGateway';
 let initialization: Promise<PluribusWasmKernel> | undefined;
 
 function initializePluribusWasm(): Promise<PluribusWasmKernel> {
-	initialization ??= initWasm('/wasm/vitoi_equity_engine_bg.wasm').then(
+	initialization ??= initWasm({ module_or_path: '/wasm/vitoi_equity_engine_bg.wasm' }).then(
 		() => wrapPluribusWasmKernel(solve_pluribus_multiway_adapter_wasm),
 	);
 	return initialization;

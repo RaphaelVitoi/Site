@@ -165,7 +165,8 @@ function useHeaderState() {
     restDelta: 0.001,
   });
 
-  const shouldCheckGemma = Boolean(session) || pathname.startsWith('/templo');
+  // /api/v1/gemma exige sessao: sem ela a sonda so produz 401 a cada 30 s.
+  const shouldCheckGemma = Boolean(session);
 
   useEffect(() => {
     if (!shouldCheckGemma) {
