@@ -51,7 +51,8 @@ export function processInsolvencyRequest(
         request.rangesData.some((weight) => !Number.isFinite(weight) || weight < 0)) {
         throw new RangeError('Invalid multiway range tensor');
       }
-      return { ...base, type: request.type, id: request.id, outputKind: 'scaffold', multiwayResult: kernels.multiway(request) };
+      // Desde 2026-09-16 o kernel avalia maos (multiway_equity_core); a saida deixou de ser scaffold.
+      return { ...base, type: request.type, id: request.id, multiwayResult: kernels.multiway(request) };
     case 'MULTIWAY_RIO': {
       const { maxPlayers, sprLevels, baseTension } = request;
       if (!Number.isInteger(maxPlayers) || maxPlayers < 1 || maxPlayers > 9 ||
@@ -104,8 +105,7 @@ export async function dispatchSimulatorMessage(
   } catch (error: unknown) {
     const detail = error instanceof Error ? error.message : String(error);
     if (request && (request.type === 'MATRIX' || request.type === 'DISTORTION' || request.type === 'MULTIWAY_MATRIX')) {
-      return { type: request.type, id: request.id, error: detail,
-        outputKind: request.type === 'MULTIWAY_MATRIX' ? 'scaffold' : 'working-model' };
+      return { type: request.type, id: request.id, error: detail, outputKind: 'working-model' };
     }
     return { type: 'ERROR', ...(request?.id === undefined ? {} : { id: request.id }), error: detail, outputKind: 'working-model' };
   }

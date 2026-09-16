@@ -5,12 +5,14 @@ from __future__ import annotations
 
 import unittest
 
+import httpx
 from pydantic import JsonValue
 
 from tools.hybrid_router.app import (
     ComplexityAnalyzer,
     ExecutionTarget,
     GenerateRequest,
+    LocalLlamaVulkanClient,
     RouteMetrics,
 )
 
@@ -69,6 +71,44 @@ class TestComplexityAnalyzer(unittest.TestCase):
         )
         assert req.prompt == "Teste de prompt estruturado"
         assert req.thinking_budget_override == 2048
+
+
+class TestSondaDoLlamaLocal(unittest.IsolatedAsyncioTestCase):
+    """A sonda do llama.cpp custava ~520 ms por requisicao com o local fora do ar (medido em 2026-09-16)."""
+
+    async def test_resultado_da_sonda_e_reusado_dentro_do_ttl(self) -> None:
+        cliente = LocalLlamaVulkanClient(endpoint_url="http://127.0.0.1:9/v1", probe_ttl_s=60.0)
+        chamadas = 0
+
+        class _ClienteFalso:
+            async def get(self, *_a, **_k):
+                nonlocal chamadas
+                chamadas += 1
+                raise httpx.ConnectError("recusado")
+
+        cliente._client = _ClienteFalso()  # type: ignore[assignment]  # pylint: disable=protected-access
+        for _ in range(5):
+            assert await cliente.is_available() is False
+        assert chamadas == 1
+
+        cliente.invalidate_probe()
+        assert await cliente.is_available() is False
+        assert chamadas == 2
+
+    async def test_ttl_zero_desliga_o_cache(self) -> None:
+        cliente = LocalLlamaVulkanClient(endpoint_url="http://127.0.0.1:9/v1", probe_ttl_s=0.0)
+        chamadas = 0
+
+        class _ClienteFalso:
+            async def get(self, *_a, **_k):
+                nonlocal chamadas
+                chamadas += 1
+                raise httpx.ConnectError("recusado")
+
+        cliente._client = _ClienteFalso()  # type: ignore[assignment]  # pylint: disable=protected-access
+        for _ in range(3):
+            await cliente.is_available()
+        assert chamadas == 3
 
 
 if __name__ == "__main__":

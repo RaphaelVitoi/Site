@@ -1,5 +1,10 @@
 # Hybrid Edge/Cloud LLM Router SOTA (v2.0)
 
+> **DESCONTINUADO em 2026-09-16.** Nenhum fluxo do Site consome este servico, e ele roteia modelos por
+> nomenclatura propria (`GEMINI_37_FLASH`, `gemini-2.5-flash`) fora de `llm/model_registry.py`, que e a fonte
+> unica de roteamento (CLAUDE.md, secao 3). O codigo permanece porque registros publicados citam seus caminhos
+> e porque os testes seguem verdes; **nao integrar nada novo aqui**. Roteamento real: `llm/routing_policy.py`.
+
 > Microserviço inteligente de alto desempenho para roteamento dinâmico entre **llama.cpp (Vulkan Edge)** e **Google Gemini 3.7 Flash (Cloud)** sob o Protocolo Chico SOTA v8.0 GOLD.
 
 ---
@@ -51,7 +56,15 @@ Graças ao arquivo de configuração persistente [`.env`](file:///C:/Users/rapha
 
 ```powershell
 & "C:\Users\rapha\.gemini\Site\.venv\Scripts\python.exe" "C:\Users\rapha\.gemini\Site\tools\hybrid_router\plot_benchmark.py"
+ --input benchmark_results.json
 ```
+
+Sem `--input` valido o script recusa: dados sinteticos so com `--sintetico`, e o grafico sai carimbado.
+Os testes ficam em `test_hybrid_router.py`; `tests/test_hybrid_router_coleta.py` os traz para a suite integral.
+
+> **Modo simulado.** Com `SIMULATE_INFERENCE=true` e sem chave de nuvem, a latencia inclui um `sleep` fixo
+> (450 ms padrao, 1200 ms thinking). O JSON grava `"modo": "simulado"` e o grafico sai com marca d'agua: o numero
+> mede so a orquestracao do router, nunca inferencia.
 
 ---
 

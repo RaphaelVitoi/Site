@@ -146,22 +146,22 @@
       "name": "Benchmarks de Performance & SIMD C++/WASM",
       "description": "Métricas de aceleração termodinâmica, throughput e vetorização matemática.",
       "thematic_criteria": [
-        "Aceleração termodinâmica estritamente > 1.0x sobre baseline",
-        "Paridade numérica exata (Zero-Copy / Symmetry Matched)",
-        "Zero memory leaks em buffers de alta densidade"
+        "Medicao com aquecimento, varias amostras e mediana; nunca numero de uma rodada so",
+        "Veredito derivado das checagens, nunca texto fixo",
+        "Escopo declarado: scaffold, simulado ou inventario nao se apresentam como medicao"
       ],
       "scripts": {
         "scripts/benchmark_sota_suite.py": {
           "utility": "UTIL",
           "runtime": "Python 3.14",
-          "description": "Suíte completa de benchmark de hardware, CPU, memória e throughput de inferência.",
+          "description": "Benchmark unificado: motores Python (mediana), motor WASM via JSON, inventario do llama.cpp e Ollama; latencia de inferencia so com --inferencia MODELO.",
           "command": "python scripts/benchmark_sota_suite.py",
           "sla_seconds": 10.0
         },
         "scripts/benchmark_wasm_quantum.mjs": {
           "utility": "UTIL",
           "runtime": "Node.js",
-          "description": "Benchmark de aceleração quântica e vetorização SIMD em WebAssembly.",
+          "description": "Benchmark do motor Rust/WASM com aquecimento e mediana; --json para consumo pela suite. O multiway e scaffold e mede so amostragem.",
           "command": "node scripts/benchmark_wasm_quantum.mjs",
           "sla_seconds": 5.0
         },

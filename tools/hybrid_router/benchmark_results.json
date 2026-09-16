@@ -1,92 +1,615 @@
-[
-  {
-    "status_code": 200,
-    "latency_ms": 965.9518000007665,
-    "target_executed": "GEMINI_37_FLASH_STANDARD",
-    "thinking_tokens": 0,
-    "tokens_evaluated": 24,
-    "is_success": true,
-    "error_message": null
+{
+  "schema": 1,
+  "gerado_em": "2026-09-16T19:21:55",
+  "modo": "simulado",
+  "config": {
+    "base_url": "http://127.0.0.1:8000",
+    "endpoint": "/v1/chat/generate",
+    "total_requests": 60,
+    "concurrency": 10,
+    "timeout_seconds": 60.0,
+    "output_json_file": "benchmark_results.json"
   },
-  {
-    "status_code": 200,
-    "latency_ms": 1214.1388000000006,
-    "target_executed": "GEMINI_37_FLASH_THINKING",
-    "thinking_tokens": 4096,
-    "tokens_evaluated": 53,
-    "is_success": true,
-    "error_message": null
-  },
-  {
-    "status_code": 200,
-    "latency_ms": 971.1893999992753,
-    "target_executed": "GEMINI_37_FLASH_STANDARD",
-    "thinking_tokens": 0,
-    "tokens_evaluated": 35,
-    "is_success": true,
-    "error_message": null
-  },
-  {
-    "status_code": 200,
-    "latency_ms": 958.4630000008474,
-    "target_executed": "GEMINI_37_FLASH_STANDARD",
-    "thinking_tokens": 0,
-    "tokens_evaluated": 24,
-    "is_success": true,
-    "error_message": null
-  },
-  {
-    "status_code": 200,
-    "latency_ms": 1205.739099999846,
-    "target_executed": "GEMINI_37_FLASH_THINKING",
-    "thinking_tokens": 4096,
-    "tokens_evaluated": 53,
-    "is_success": true,
-    "error_message": null
-  },
-  {
-    "status_code": 200,
-    "latency_ms": 970.1425000002928,
-    "target_executed": "GEMINI_37_FLASH_STANDARD",
-    "thinking_tokens": 0,
-    "tokens_evaluated": 35,
-    "is_success": true,
-    "error_message": null
-  },
-  {
-    "status_code": 200,
-    "latency_ms": 976.9829999986541,
-    "target_executed": "GEMINI_37_FLASH_STANDARD",
-    "thinking_tokens": 0,
-    "tokens_evaluated": 24,
-    "is_success": true,
-    "error_message": null
-  },
-  {
-    "status_code": 200,
-    "latency_ms": 1212.6535000006697,
-    "target_executed": "GEMINI_37_FLASH_THINKING",
-    "thinking_tokens": 4096,
-    "tokens_evaluated": 53,
-    "is_success": true,
-    "error_message": null
-  },
-  {
-    "status_code": 200,
-    "latency_ms": 969.0536999987671,
-    "target_executed": "GEMINI_37_FLASH_STANDARD",
-    "thinking_tokens": 0,
-    "tokens_evaluated": 35,
-    "is_success": true,
-    "error_message": null
-  },
-  {
-    "status_code": 200,
-    "latency_ms": 968.1208999991213,
-    "target_executed": "GEMINI_37_FLASH_STANDARD",
-    "thinking_tokens": 0,
-    "tokens_evaluated": 24,
-    "is_success": true,
-    "error_message": null
-  }
-]
+  "resultados": [
+    {
+      "status_code": 200,
+      "latency_ms": 456.19130000068253,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1225.0449000002845,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 477.063299999827,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 476.9956000000093,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1224.653500000386,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 476.7469999997047,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 476.6916999997193,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1224.2862000002788,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 475.93979999965086,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 476.6292999993311,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1215.3698000001896,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 467.20340000047145,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 466.9582000005903,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1210.1669000003312,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 466.16869999979826,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 466.3747999993575,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1209.5828999999867,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 468.98549999968964,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 468.7514999995983,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1214.3102,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 468.3383000001413,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 462.5175000001036,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1217.9286999999022,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 462.3050999998668,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 465.05770000021585,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1203.465600000527,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 464.5378000004712,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 456.57289999962813,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1215.892399999575,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 455.5513000004794,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 455.46680000006745,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1215.1453999995283,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 453.73360000030516,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 453.52829999956157,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1210.8363000006648,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 459.2579999998634,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 458.95870000003924,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1210.4778000002625,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 459.90119999987655,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 459.77640000000974,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1210.6300000004921,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 455.79149999957735,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 455.5494999995062,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1205.2137999999104,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 467.0444999992469,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 467.01519999987795,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1216.5073999995002,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 466.10320000036154,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 453.28539999991335,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1202.4696999997104,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 454.7677999998996,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 454.48360000045795,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1208.1850000004124,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 453.870199999983,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 453.67480000004434,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1206.3720999994985,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 466.2215999996988,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 467.3774000002595,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 24,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 1205.2512999998726,
+      "target_executed": "GEMINI_37_FLASH_THINKING",
+      "thinking_tokens": 4096,
+      "tokens_evaluated": 53,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    },
+    {
+      "status_code": 200,
+      "latency_ms": 453.2539000001634,
+      "target_executed": "GEMINI_37_FLASH_STANDARD",
+      "thinking_tokens": 0,
+      "tokens_evaluated": 35,
+      "is_success": true,
+      "error_message": null,
+      "simulado": true
+    }
+  ]
+}

@@ -59,7 +59,7 @@ export type InsolvencyWorkerRequest =
 export interface InsolvencyWorkerResponse {
   type: InsolvencyWorkerRequest['type'];
   id: number;
-  outputKind: 'working-model' | 'scaffold';
+  outputKind: 'working-model';
   error?: string;
   nashResults?: NashDistortionResults;
   matrix?: number[];

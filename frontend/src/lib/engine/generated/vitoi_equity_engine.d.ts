@@ -17,8 +17,8 @@ export function calculate_equity_monte_carlo_binary(hero_mask: Uint8Array, villa
 
 /**
  * SOTA: FFI Zero-Copy Pointer Input Multiway
- * O ecossistema React/WebWorker deposita a matriz probabilística diretamente na memória partilhada.
- * Fricção zero. Aniquila o Gargalo de Serialização JSON no ambiente Multiway.
+ * O ecossistema React/WebWorker deposita a matriz probabilistica diretamente na memoria partilhada.
+ * Saida: `num_players` equidades seguidas de 1.0 se o disjuntor de colisao abortou, 0.0 se nao.
  */
 export function calculate_multiway_equity_zerocopy(ranges_ptr: number, num_players: number, board_mask: bigint, target_iterations: number, seed: number): Float64Array;
 

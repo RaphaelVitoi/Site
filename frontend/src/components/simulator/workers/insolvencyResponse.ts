@@ -17,7 +17,7 @@ const distortion = z.object({
 const envelope = z.object({
   type: z.enum(['MATRIX', 'DISTORTION', 'MULTIWAY_MATRIX']),
   id: z.number().int().nonnegative().safe(),
-  outputKind: z.enum(['working-model', 'scaffold']),
+  outputKind: z.literal('working-model'),
 });
 const responseSchema = z.union([
   envelope.extend({ error: z.string().min(1) }),

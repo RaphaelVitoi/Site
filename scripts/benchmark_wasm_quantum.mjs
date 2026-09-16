@@ -1,7 +1,25 @@
+/**
+ * Benchmark do motor Rust/WASM (wasm-equity), medido e nao declarado.
+ *
+ * Reescrito em 2026-09-16. A versao anterior tinha tres defeitos que produziam numero
+ * sem medicao por tras:
+ * - o multiway lia um buffer alocado e nunca preenchido; o disjuntor disparava nas 10
+ *   rodadas e o "throughput" de 528 milhoes it/s media o atalho de saida;
+ * - "Isolamento Zero-Leak" vinha do heap do JavaScript, que nao enxerga a memoria do WASM;
+ * - "ESTAVEL / NOMINAL" era texto fixo, impresso com ou sem falha.
+ * Agora: aquecimento antes de medir, varias amostras por caso (mediana, min, max),
+ * memoria linear do WASM antes e depois, e veredito derivado das checagens.
+ *
+ * O multiway (caso 4) avalia maos desde 2026-09-16; com ranges uniformes cada jogador deve ficar perto de 1/N.
+ *
+ * Uso:  node scripts/benchmark_wasm_quantum.mjs [--json] [--amostras N]
+ * --json imprime so o JSON; e o formato que scripts/benchmark_sota_suite.py consome.
+ */
+
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import initWasm, {
+import {
   calculate_equity_monte_carlo_binary,
   calculate_perspectiva_vitoi_wasm,
   solve_icm_distortion_v2,
@@ -11,239 +29,145 @@ import initWasm, {
   initSync,
 } from '../frontend/src/lib/engine/generated/vitoi_equity_engine.js';
 
-const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const wasmPath = path.join(
-  repositoryRoot,
-  'frontend',
-  'src',
-  'lib',
-  'engine',
-  'generated',
-  'vitoi_equity_engine_bg.wasm'
-);
+const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const WASM = path.join(RAIZ, 'frontend', 'src', 'lib', 'engine', 'generated', 'vitoi_equity_engine_bg.wasm');
+const COMBOS = 1326;
 
-function formatNumber(num) {
-  return new Intl.NumberFormat('en-US').format(num);
+const args = process.argv.slice(2);
+const SO_JSON = args.includes('--json');
+const idxAmostras = args.indexOf('--amostras');
+const AMOSTRAS = idxAmostras >= 0 ? Math.max(3, Number(args[idxAmostras + 1]) || 7) : 7;
+
+const log = (...linhas) => {
+  if (!SO_JSON) console.log(...linhas);
+};
+
+function estatistica(tempos) {
+  const ordenados = [...tempos].sort((a, b) => a - b);
+  const meio = Math.floor(ordenados.length / 2);
+  const mediana = ordenados.length % 2 ? ordenados[meio] : (ordenados[meio - 1] + ordenados[meio]) / 2;
+  return { mediana_ms: mediana, min_ms: ordenados[0], max_ms: ordenados.at(-1), amostras: ordenados.length };
 }
 
-function formatDuration(ms) {
-  if (ms < 1) return `${(ms * 1000).toFixed(2)} µs`;
-  if (ms < 1000) return `${ms.toFixed(2)} ms`;
-  return `${(ms / 1000).toFixed(3)} s`;
-}
-
-async function bootstrap() {
-  const wasmBytes = readFileSync(wasmPath);
-  try {
-    initSync({ module: new WebAssembly.Module(wasmBytes) });
-  } catch {
-    await initWasm(wasmBytes.buffer);
+/** Aquece o JIT e o WASM, depois mede `AMOSTRAS` execucoes do mesmo trabalho. */
+function medir(trabalho) {
+  trabalho();
+  trabalho();
+  const tempos = [];
+  let resultado;
+  for (let i = 0; i < AMOSTRAS; i++) {
+    const t0 = performance.now();
+    resultado = trabalho();
+    tempos.push(performance.now() - t0);
   }
+  return { ...estatistica(tempos), resultado };
 }
 
-function createRangeMask(topPercentage = 0.2) {
-  const mask = new Uint8Array(166);
-  const totalCombos = Math.floor(1326 * topPercentage);
-  for (let i = 0; i < totalCombos; i++) {
-    const byteIdx = Math.floor(i / 8);
-    const bitIdx = i % 8;
-    mask[byteIdx] |= 1 << bitIdx;
-  }
+/** Mascara com os N primeiros combos pela ORDEM DO INDICE -- nao e top N% por forca de mao. */
+function mascaraPrimeirosCombos(fracao) {
+  const mask = new Uint8Array(Math.ceil(COMBOS / 8));
+  const total = Math.floor(COMBOS * fracao);
+  for (let i = 0; i < total; i++) mask[i >> 3] |= 1 << (i % 8);
   return mask;
 }
 
-async function runBenchmarks() {
-  await bootstrap();
+const porSegundo = (operacoes, ms) => Math.round(operacoes / (ms / 1000));
 
-  console.log('='.repeat(85));
-  console.log('⚡ SOTA QUANTUM ENGINE: BENCHMARK DE CARGA EM RUST / WEBASSEMBLY');
-  console.log('   Módulos: Monte Carlo, Perspectiva Vitoi, Distorção Quântica & Multiway Zero-Copy');
-  console.log('='.repeat(85));
+function run() {
+  const exportsWasm = initSync({ module: new WebAssembly.Module(readFileSync(WASM)) });
+  const memoriaInicial = exportsWasm.memory.buffer.byteLength;
+  const falhas = [];
+  const casos = [];
 
-  const initialMemory = process.memoryUsage().heapUsed;
+  log('='.repeat(78));
+  log('BENCHMARK DO MOTOR RUST/WASM -- mediana de', AMOSTRAS, 'amostras apos aquecimento');
+  log('='.repeat(78));
 
-  // --------------------------------------------------------------------------
-  // BENCHMARK 1: Monte Carlo Equity Engine (Heads-Up Range vs Range)
-  // --------------------------------------------------------------------------
-  console.log('\n[1/4] BENCHMARK: Monte Carlo Equity Simulator (Range vs Range)');
-  console.log('-'.repeat(85));
-  console.log(
-    `${'Iterações'.padEnd(14)} | ${'Board'.padEnd(14)} | ${'Kappa (κ)'.padEnd(10)} | ${'Equidade'.padEnd(10)} | ${'Tempo'.padEnd(12)} | ${'Taxa (iters/s)'}`
-  );
-  console.log('-'.repeat(85));
-
-  const heroMask = createRangeMask(0.15); // Top 15% (TT+, AJs+, KQs, AKo)
-  const villainMask = createRangeMask(0.35); // Top 35% (Wider range)
-
-  const mcConfigs = [
-    { iters: 10_000, board: '', kappa: 1.0, label: 'Preflop GTO' },
-    { iters: 50_000, board: 'AhKd7c', kappa: 1.0, label: 'Flop GTO' },
-    { iters: 100_000, board: 'AhKd7c2s', kappa: 1.0, label: 'Turn GTO' },
-    { iters: 250_000, board: 'AhKd7c2s9h', kappa: 1.0, label: 'River GTO' },
-    { iters: 500_000, board: 'AhKd7c', kappa: 0.85, label: 'Flop Bayesian κ=0.85' },
-    { iters: 1_000_000, board: 'AhKd7c', kappa: 0.70, label: 'Flop Bayesian κ=0.70' },
-  ];
-
-  let totalMcIters = 0;
-  const startMcTotal = performance.now();
-
-  for (const cfg of mcConfigs) {
-    const t0 = performance.now();
-    const equity = calculate_equity_monte_carlo_binary(
-      heroMask,
-      villainMask,
-      cfg.board,
-      cfg.iters,
-      42,
-      cfg.kappa
-    );
-    const t1 = performance.now();
-    const dt = t1 - t0;
-    const itersPerSec = (cfg.iters / (dt / 1000));
-    totalMcIters += cfg.iters;
-
-    console.log(
-      `${formatNumber(cfg.iters).padEnd(14)} | ${(cfg.board || 'PREFLOP').padEnd(14)} | ${cfg.kappa.toFixed(2).padEnd(10)} | ${(equity * 100).toFixed(2).concat('%').padEnd(10)} | ${formatDuration(dt).padEnd(12)} | ${formatNumber(Math.round(itersPerSec))} it/s`
-    );
+  // 1. Monte Carlo de equidade range x range
+  const heroi = mascaraPrimeirosCombos(0.15);
+  const vilao = mascaraPrimeirosCombos(0.35);
+  log('\n[1/4] Monte Carlo range x range (ranges = primeiros 15% e 35% dos combos por indice)');
+  for (const cfg of [
+    { iters: 50_000, board: '', kappa: 1.0 },
+    { iters: 50_000, board: 'AhKd7c', kappa: 1.0 },
+    { iters: 50_000, board: 'AhKd7c2s9h', kappa: 1.0 },
+    { iters: 50_000, board: 'AhKd7c', kappa: 0.7 },
+  ]) {
+    const m = medir(() => calculate_equity_monte_carlo_binary(heroi, vilao, cfg.board, cfg.iters, 42, cfg.kappa));
+    const equidade = m.resultado;
+    if (!Number.isFinite(equidade) || equidade < 0 || equidade > 1) falhas.push(`monte carlo ${cfg.board}: equidade ${equidade}`);
+    const taxa = porSegundo(cfg.iters, m.mediana_ms);
+    casos.push({ caso: 'monte_carlo', board: cfg.board || 'preflop', kappa: cfg.kappa, iteracoes: cfg.iters, equidade, taxa_por_s: taxa, ...m, resultado: undefined });
+    log(`  ${(cfg.board || 'preflop').padEnd(12)} k=${cfg.kappa.toFixed(2)}  equidade ${(equidade * 100).toFixed(2)}%  mediana ${m.mediana_ms.toFixed(2)} ms  [${m.min_ms.toFixed(2)}..${m.max_ms.toFixed(2)}]  ${taxa.toLocaleString('pt-BR')} it/s`);
   }
 
-  const dtMcTotal = performance.now() - startMcTotal;
-  console.log(`\n  >> Total Monte Carlo: ${formatNumber(totalMcIters)} iterações em ${formatDuration(dtMcTotal)} (Média: ${formatNumber(Math.round(totalMcIters / (dtMcTotal / 1000)))} it/s)`);
-
-  // --------------------------------------------------------------------------
-  // BENCHMARK 2: Perspectiva Matemática SOTA v7.0 GOLD (Kahneman-Vitoi Utility)
-  // --------------------------------------------------------------------------
-  console.log('\n[2/4] BENCHMARK: Perspectiva Matemática VITOI (O(1) Analytical Tensor)');
-  console.log('-'.repeat(85));
-
-  const PERSPECTIVA_BATCH_SIZE = 500_000;
-  console.log(`Executando batch de carga massiva: ${formatNumber(PERSPECTIVA_BATCH_SIZE)} chamadas de decisão multivariável...`);
-
-  const tStartPerspectiva = performance.now();
-  let dummyChecksum = 0;
-
-  for (let i = 0; i < PERSPECTIVA_BATCH_SIZE; i++) {
-    const activePlayers = (i % 8) + 2;
-    const referenceStatus = i % 4; // 0=baseline, 1=tilt, 2=protecting, 3=bubble
-    const res = calculate_perspectiva_vitoi_wasm(
-      0.48 + (i % 20) * 0.01,
-      0.52,
-      -0.48,
-      -1.2,
-      0.88,
-      0.95,
-      activePlayers,
-      5.0,
-      25.0,
-      40.0,
-      12.0,
-      14.0,
-      0.0,
-      1.1,
-      0.05,
-      referenceStatus
-    );
-    dummyChecksum += res[0];
-  }
-
-  const dtPerspectiva = performance.now() - tStartPerspectiva;
-  const opsPerSecPerspectiva = PERSPECTIVA_BATCH_SIZE / (dtPerspectiva / 1000);
-  const latencyPerCall = (dtPerspectiva / PERSPECTIVA_BATCH_SIZE) * 1000;
-
-  console.log(`  >> ${formatNumber(PERSPECTIVA_BATCH_SIZE)} avaliações analíticas concluídas em ${formatDuration(dtPerspectiva)}`);
-  console.log(`  >> Throughput: ${formatNumber(Math.round(opsPerSecPerspectiva))} decisões/seg`);
-  console.log(`  >> Latência unitária média: ${latencyPerCall.toFixed(3)} µs / decisão`);
-
-  // --------------------------------------------------------------------------
-  // BENCHMARK 3: Quantum ICM Distortion & Downward Drift (v2)
-  // --------------------------------------------------------------------------
-  console.log('\n[3/4] BENCHMARK: Solucionador de Distorção Quântica ICM (Nash Drift)');
-  console.log('-'.repeat(85));
-
-  const ICM_BATCH_SIZE = 250_000;
-  console.log(`Executando ${formatNumber(ICM_BATCH_SIZE)} resoluções de distorção ICM (Nash Curvature)...`);
-
-  const tStartIcm = performance.now();
-  for (let i = 0; i < ICM_BATCH_SIZE; i++) {
-    const players = (i % 7) + 2;
-    const pot = 10.0 + (i % 50);
-    const street = i % 4;
-    solve_icm_distortion_v2(
-      15.0,
-      18.0,
-      1.25,
-      players,
-      pot,
-      street,
-      0.45,
-      0.25
-    );
-  }
-  const dtIcm = performance.now() - tStartIcm;
-  const opsPerSecIcm = ICM_BATCH_SIZE / (dtIcm / 1000);
-
-  console.log(`  >> ${formatNumber(ICM_BATCH_SIZE)} matrizes de distorção ICM resolvidas em ${formatDuration(dtIcm)}`);
-  console.log(`  >> Throughput: ${formatNumber(Math.round(opsPerSecIcm))} solves/seg`);
-  console.log(`  >> Latência unitária média: ${((dtIcm / ICM_BATCH_SIZE) * 1000).toFixed(3)} µs / solve`);
-
-  // --------------------------------------------------------------------------
-  // BENCHMARK 4: Zero-Copy Shared Memory Bridge & Multiway Stress
-  // --------------------------------------------------------------------------
-  console.log('\n[4/4] BENCHMARK: Zero-Copy Shared Memory Multiway Engine & Heap Stability');
-  console.log('-'.repeat(85));
-
-  const MULTIWAY_PLAYERS = 6;
-  const MULTIWAY_COMBOS_TOTAL = MULTIWAY_PLAYERS * 1326;
-  const ptr = alloc_range_buffer(MULTIWAY_COMBOS_TOTAL);
-
-  console.log(`Buffer contíguo alocado na RAM do WASM (Ponteiro: 0x${ptr.toString(16)}, ${MULTIWAY_COMBOS_TOTAL} floats)...`);
-
-  const MULTIWAY_RUNS = 10;
-  const ITERS_PER_MULTIWAY = 50_000;
-  const tStartMultiway = performance.now();
-
-  for (let r = 0; r < MULTIWAY_RUNS; r++) {
-    const res = calculate_multiway_equity_zerocopy(
-      ptr,
-      MULTIWAY_PLAYERS,
-      0n,
-      ITERS_PER_MULTIWAY,
-      12345 + r
-    );
-    if (res[MULTIWAY_PLAYERS] === 1.0) {
-      console.warn('  [Disjuntor Termodinâmico Ativado]');
+  // 2. Perspectiva (funcao analitica O(1))
+  const LOTE_PERSPECTIVA = 200_000;
+  const perspectiva = medir(() => {
+    let soma = 0;
+    for (let i = 0; i < LOTE_PERSPECTIVA; i++) {
+      soma += calculate_perspectiva_vitoi_wasm(0.48 + (i % 20) * 0.01, 0.52, -0.48, -1.2, 0.88, 0.95, (i % 8) + 2, 5, 25, 40, 12, 14, 0, 1.1, 0.05, i % 4)[0];
     }
+    return soma;
+  });
+  if (!Number.isFinite(perspectiva.resultado)) falhas.push('perspectiva: soma nao finita');
+  casos.push({ caso: 'perspectiva', chamadas: LOTE_PERSPECTIVA, checksum: perspectiva.resultado, taxa_por_s: porSegundo(LOTE_PERSPECTIVA, perspectiva.mediana_ms), ...perspectiva, resultado: undefined });
+  log(`\n[2/4] Perspectiva: ${LOTE_PERSPECTIVA.toLocaleString('pt-BR')} chamadas, mediana ${perspectiva.mediana_ms.toFixed(2)} ms, ${porSegundo(LOTE_PERSPECTIVA, perspectiva.mediana_ms).toLocaleString('pt-BR')} chamadas/s, checksum ${perspectiva.resultado.toFixed(6)}`);
+
+  // 3. Distorcao ICM
+  const LOTE_ICM = 200_000;
+  const icm = medir(() => {
+    for (let i = 0; i < LOTE_ICM; i++) solve_icm_distortion_v2(15, 18, 1.25, (i % 7) + 2, 10 + (i % 50), i % 4, 0.45, 0.25);
+    return LOTE_ICM;
+  });
+  casos.push({ caso: 'icm_distortion_v2', chamadas: LOTE_ICM, taxa_por_s: porSegundo(LOTE_ICM, icm.mediana_ms), ...icm, resultado: undefined });
+  log(`\n[3/4] Distorcao ICM: ${LOTE_ICM.toLocaleString('pt-BR')} chamadas, mediana ${icm.mediana_ms.toFixed(2)} ms, ${porSegundo(LOTE_ICM, icm.mediana_ms).toLocaleString('pt-BR')} chamadas/s`);
+
+  // 4. Multiway zero-copy com ranges preenchidos
+  const JOGADORES = 6;
+  const ITERS_MULTIWAY = 20_000;
+  const total = JOGADORES * COMBOS;
+  const ptr = alloc_range_buffer(total);
+  // Peso uniforme em todo combo: trabalho real, sem o atalho do disjuntor.
+  new Float64Array(exportsWasm.memory.buffer, ptr, total).fill(1);
+  let disjuntor = 0;
+  const multiway = medir(() => {
+    const res = calculate_multiway_equity_zerocopy(ptr, JOGADORES, 0n, ITERS_MULTIWAY, 12345);
+    if (res[JOGADORES] === 1) disjuntor++;
+    return Array.from(res).slice(0, JOGADORES);
+  });
+  free_range_buffer(ptr, total);
+  const somaEquidades = multiway.resultado.reduce((s, x) => s + x, 0);
+  if (disjuntor > 0) falhas.push(`multiway: disjuntor disparou em ${disjuntor} execucoes`);
+  if (Math.abs(somaEquidades - 1) > 1e-6) falhas.push(`multiway: equidades somam ${somaEquidades.toFixed(6)}, nao 1`);
+  const esperado = 1 / JOGADORES;
+  const desvio = Math.max(...multiway.resultado.map((e) => Math.abs(e - esperado)));
+  // Ranges uniformes e simetricos: cada jogador tende a 1/N. Tolerancia folgada para 20 mil iteracoes.
+  if (desvio > 0.02) falhas.push(`multiway: ranges identicos com desvio ${desvio.toFixed(4)} de 1/${JOGADORES}`);
+  casos.push({ caso: 'multiway_zerocopy', desvio_max_de_1_n: desvio, jogadores: JOGADORES, iteracoes: ITERS_MULTIWAY, equidades: multiway.resultado, disjuntor, taxa_por_s: porSegundo(ITERS_MULTIWAY, multiway.mediana_ms), ...multiway, resultado: undefined });
+  log(`\n[4/4] Multiway ${JOGADORES} jogadores, ranges uniformes: ${ITERS_MULTIWAY.toLocaleString('pt-BR')} it, mediana ${multiway.mediana_ms.toFixed(2)} ms, ${porSegundo(ITERS_MULTIWAY, multiway.mediana_ms).toLocaleString('pt-BR')} it/s, soma ${somaEquidades.toFixed(4)}, desvio max de 1/N ${desvio.toFixed(4)}, disjuntor ${disjuntor}x`);
+
+  const memoriaFinal = exportsWasm.memory.buffer.byteLength;
+  const relatorio = {
+    gerado_em: new Date().toISOString(),
+    node: process.version,
+    amostras_por_caso: AMOSTRAS,
+    memoria_wasm_bytes: { inicial: memoriaInicial, final: memoriaFinal, crescimento: memoriaFinal - memoriaInicial },
+    casos,
+    falhas,
+    veredito: falhas.length === 0 ? 'OK' : 'FALHOU',
+  };
+
+  if (SO_JSON) {
+    console.log(JSON.stringify(relatorio));
+  } else {
+    log('\n' + '='.repeat(78));
+    log(`Memoria linear do WASM: ${memoriaInicial.toLocaleString('pt-BR')} -> ${memoriaFinal.toLocaleString('pt-BR')} bytes`);
+    const detalhe = falhas.length ? ' -- ' + falhas.join('; ') : '';
+    log(`Veredito: ${relatorio.veredito}${detalhe}`);
+    log('='.repeat(78));
   }
-
-  const dtMultiway = performance.now() - tStartMultiway;
-  free_range_buffer(ptr, MULTIWAY_COMBOS_TOTAL);
-  console.log(`Buffer de memória liberado (Drop = Free).`);
-
-  const totalMultiwayIters = MULTIWAY_RUNS * ITERS_PER_MULTIWAY;
-  console.log(`  >> Multiway (${MULTIWAY_PLAYERS} jogadores): ${formatNumber(totalMultiwayIters)} iterações em ${formatDuration(dtMultiway)}`);
-  console.log(`  >> Throughput Multiway: ${formatNumber(Math.round(totalMultiwayIters / (dtMultiway / 1000)))} it/s`);
-
-  // --------------------------------------------------------------------------
-  // AUDITORIA FINAL DE MEMÓRIA E ESTABILIDADE
-  // --------------------------------------------------------------------------
-  const finalMemory = process.memoryUsage().heapUsed;
-  const memoryDeltaMB = (finalMemory - initialMemory) / (1024 * 1024);
-
-  console.log('\n' + '='.repeat(85));
-  console.log('📊 RELATÓRIO CONSOLIDADO DO BENCHMARK SOTA');
-  console.log('='.repeat(85));
-  console.log(`• Total de Operações Combinatórias: > ${formatNumber(totalMcIters + PERSPECTIVA_BATCH_SIZE + ICM_BATCH_SIZE + totalMultiwayIters)}`);
-  console.log(`• Throughput Médio Monte Carlo:    ${formatNumber(Math.round(totalMcIters / (dtMcTotal / 1000)))} iterações / segundo`);
-  console.log(`• Throughput Perspectiva Analítica: ${formatNumber(Math.round(opsPerSecPerspectiva))} decisões / segundo`);
-  console.log(`• Throughput Distorção ICM:        ${formatNumber(Math.round(opsPerSecIcm))} matrizes / segundo`);
-  console.log(`• Variação de Heap JS (Delta):     ${memoryDeltaMB >= 0 ? '+' : ''}${memoryDeltaMB.toFixed(3)} MB (Isolamento Zero-Leak)`);
-  console.log(`• Status do Disjuntor Termodinâmico: ESTÁVEL / NOMINAL ✅`);
-  console.log('='.repeat(85));
+  if (falhas.length) process.exitCode = 1;
 }
 
-try {
-  await runBenchmarks();
-} catch (err) {
-  console.error('[FATAL] Erro na execução do benchmark:', err);
-  process.exit(1);
-}
+run();
