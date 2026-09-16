@@ -1,7 +1,7 @@
 """
 IDENTITY: Test Suite para o TimesFM Engine e Handlers REST da API v1.
 PATH: tests/test_timesfm_engine.py
-ROLE: Validação hermética dos contratos de inferência, governança de licença e endpoints HTTP.
+ROLE: Validacao hermetica dos contratos de inferencia, governanca de licenca e endpoints HTTP.
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ def test_timesfm_engine_initialization_commercial_blocked():
             mode=ExecutionMode.COMMERCIAL_PRODUCTION,
             preferred_model_key="timesfm-3.0-330m",
         )
-    assert "VIOLAÇÃO DE LICENÇA" in str(exc_info.value)
+    assert "VIOLA\u00c7\u00c3O DE LICEN\u00c7A" in str(exc_info.value)
     assert "TimesFM Non-Commercial License v1.0" in str(exc_info.value)
 
 
@@ -219,7 +219,7 @@ async def test_timesfm_api_handler_governance_block_403():
 
     data = json.loads(resp.text)
     assert data["status"] == "FORBIDDEN"
-    assert "VIOLAÇÃO DE LICENÇA" in data["error"]
+    assert "VIOLA\u00c7\u00c3O DE LICEN\u00c7A" in data["error"]
 
 
 @pytest.mark.asyncio

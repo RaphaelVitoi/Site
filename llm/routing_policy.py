@@ -10,7 +10,7 @@ linha dizia "6 niveis"; o enum ja tinha 15, e os nove faltantes -- entre eles
 Tier 4 -- estavam fora da contagem escrita havia tempo indeterminado. A
 contagem de agentes sobrevive porque uma invariante a guarda; a de subagentes
 nao tinha guarda nenhuma, entao envelheceu em silencio. Documentacao nao repete
-valor versionado (§3): aponte para o enum, que e a fonte.
+valor versionado (SS3): aponte para o enum, que e a fonte.
 
 ## Ordem de precedencia das decisoes
 
@@ -21,13 +21,13 @@ valor versionado (§3): aponte para o enum, que e a fonte.
    modulo roteava Tier 3 operacional para `gpt-5.6-luna` por ter o menor
    $/token  e estava errada: `gemini-3.7-flash` tem cota gratuita e a Luna
    nao. Preco unitario so desempata DENTRO da mesma faixa.
-2. **Assimetria de capacidade e Preferências por Arquitetura / Especialidade / Preço.**
-   Todos os modelos de fronteira podem cumprir todas as funções (Axioma de Capacidade
-   Universal sem feudos). A distribuição reflete preferência estratégica por arquitetura,
-   especialidade nativa e preço:
-   - Gemini (3.8 Flash & duo 3.5 Flash-Lite / 3.6 Flash): Orquestração do fluxo agêntico e Fast Operations;
-   - Claude 5 (Sonnet 5 / Opus 5): Engenharia de código cirúrgica e modelagem matemática / PMev;
-   - ChatGPT 5.6 (Terra / Sol): Raciocínio profundo, segurança / AppSec, arquitetura macro e alta complexidade.
+2. **Assimetria de capacidade e Preferencias por Arquitetura / Especialidade / Preco.**
+   Todos os modelos de fronteira podem cumprir todas as funcoes (Axioma de Capacidade
+   Universal sem feudos). A distribuicao reflete preferencia estrategica por arquitetura,
+   especialidade nativa e preco:
+   - Gemini (3.8 Flash & duo 3.5 Flash-Lite / 3.6 Flash): Orquestracao do fluxo agentico e Fast Operations;
+   - Claude 5 (Sonnet 5 / Opus 5): Engenharia de codigo cirurgica e modelagem matematica / PMev;
+   - ChatGPT 5.6 (Terra / Sol): Raciocinio profundo, seguranca / AppSec, arquitetura macro e alta complexidade.
 
 ## Conflito conhecido entre a tabela e o manifesto
 

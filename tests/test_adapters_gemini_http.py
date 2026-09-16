@@ -1,12 +1,12 @@
 """Guarda do caminho HTTP Google Gemini ligado ao `llm/adapters.py`.
 
-Verifica a conformidade dos modelos da família Gemini 3.x com as diretrizes
-técnicas atualizadas em 2026-09-08:
-  - Eliminação de amostragem tradicional (temperature, top_p, top_k) e rejeição de penalidades;
-  - Rejeição de histórico de conversa com trailing role 'model';
-  - Validação estrita de thinking_level por variante (minimal permitido apenas em 3.5 Flash-Lite);
-  - Montagem cirúrgica de payloads REST v1beta sem parâmetros obsoletos;
-  - Extração de texto resiliente contra blocos de pensamento (thought blocks).
+Verifica a conformidade dos modelos da familia Gemini 3.x com as diretrizes
+tecnicas atualizadas em 2026-09-08:
+  - Eliminacao de amostragem tradicional (temperature, top_p, top_k) e rejeicao de penalidades;
+  - Rejeicao de historico de conversa com trailing role 'model';
+  - Validacao estrita de thinking_level por variante (minimal permitido apenas em 3.5 Flash-Lite);
+  - Montagem cirurgica de payloads REST v1beta sem parametros obsoletos;
+  - Extracao de texto resiliente contra blocos de pensamento (thought blocks).
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ USUARIO = [{"role": "user", "parts": [{"text": "ping"}]}]
 
 
 # ==============================================================================
-# 1. Reconhecimento de Geração e Normalização
+# 1. Reconhecimento de Geracao e Normalizacao
 # ==============================================================================
 
 
@@ -44,7 +44,7 @@ def test_normalize_gemini_model_preserva_38() -> None:
 
 
 # ==============================================================================
-# 2. Rejeição de Amostragem Legada e Penalidades (HTTP 400 Prevention)
+# 2. Rejeicao de Amostragem Legada e Penalidades (HTTP 400 Prevention)
 # ==============================================================================
 
 
@@ -59,7 +59,7 @@ def test_google_rejeita_amostragem_legada_em_build(param: str) -> None:
 
 
 # ==============================================================================
-# 3. Validação de Histórico sem Trailing Role Model
+# 3. Validacao de Historico sem Trailing Role Model
 # ==============================================================================
 
 
@@ -132,7 +132,7 @@ def test_build_http_gemini_36_flash_respeita_teto_8k() -> None:
         USUARIO,
         max_output_tokens=65_536,  # Tenta pedir 64k
     )
-    # Deve ser limitado pela capacidade máxima real de 8k
+    # Deve ser limitado pela capacidade maxima real de 8k
     assert payload["generationConfig"]["maxOutputTokens"] == 8_192
 
 
@@ -146,7 +146,7 @@ def test_build_gemini_payload_omite_temperature_em_3x() -> None:
 
 
 # ==============================================================================
-# 5. Extração Resiliente de Texto
+# 5. Extracao Resiliente de Texto
 # ==============================================================================
 
 

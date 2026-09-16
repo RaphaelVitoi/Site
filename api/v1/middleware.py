@@ -7,6 +7,7 @@ import base64
 import hashlib
 import hmac
 import json
+import math
 import os
 import secrets
 import time
@@ -20,7 +21,7 @@ RATE_LIMIT_WINDOW = 60
 MAX_REQUESTS_PER_WINDOW = 300
 MAX_TRACKED_IPS = 5000
 _ip_blocks: dict[str, dict[str, float | int]] = {}
-_last_purge_time = 0.0
+_last_purge_time = 0.0  # pylint: disable=invalid-name  # estado mutavel do modulo, nao constante
 
 
 def _purge_expired_ips(now: float, force: bool = False) -> None:
@@ -143,7 +144,7 @@ def verify_hs256_jwt(token: str, secret: str) -> dict | None:
             try:
                 # Garante que o valor e um numero finito (evita NaN/Inf)
                 fval = float(val)
-                if not (float("-inf") < fval < float("inf")):
+                if not math.isfinite(fval):
                     return None
             except (ValueError, TypeError):
                 return None

@@ -132,7 +132,7 @@ class AKQGameSolution:
 
 
 class ChenAKQGameSolver:
-    """Solucionador analitico para o Jogo AKQ Canônico."""
+    """Solucionador analitico para o Jogo AKQ Canonico."""
 
     @staticmethod
     def solve(pot: float, bet: float = 1.0) -> AKQGameSolution:

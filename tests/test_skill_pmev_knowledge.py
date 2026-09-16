@@ -45,7 +45,7 @@ def test_tabela_de_formatos_do_manifesto_e_exatamente_a_dos_extratores():
 
 def test_codigos_de_saida_do_manifesto_sao_os_do_codigo():
     texto = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-    secao = texto.split("## 2. Códigos de saída", 1)[1].split("\n## ", 1)[0]
+    secao = texto.split("## 2. C\u00f3digos de sa\u00edda", 1)[1].split("\n## ", 1)[0]
     declarados = {int(m) for m in re.findall(r"^\|\s+(\d+)\s+\|", secao, flags=re.M)}
     assert declarados == {int(c) for c in ExitCode}
 

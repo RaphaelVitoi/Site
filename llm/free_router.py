@@ -1,14 +1,14 @@
-"""Orquestrador de Inferência para Tiers Gratuitos (Free Tier Gateway).
+"""Orquestrador de Inferencia para Tiers Gratuitos (Free Tier Gateway).
 
 Protocolo Chico SOTA v8.0 GOLD.
-Governança: `RULE[user_global]` e `Site/CLAUDE.md`.
+Governanca: `RULE[user_global]` e `Site/CLAUDE.md`.
 
-Adaptação para limites de cotas gratuitas com:
-  1. Token Bucket Atômico com reserva preventiva anti-TOCTOU e sincronia UTC;
-  2. Roteamento multinível por complexidade (3.5 Lite -> 3.6 Flash -> 3.7 Flash Low -> OpenRouter);
-  3. Cache semântico local (Deduplicação SHA-256 em memória/SQLite);
+Adaptacao para limites de cotas gratuitas com:
+  1. Token Bucket Atomico com reserva preventiva anti-TOCTOU e sincronia UTC;
+  2. Roteamento multinivel por complexidade (3.5 Lite -> 3.6 Flash -> 3.7 Flash Low -> OpenRouter);
+  3. Cache semantico local (Deduplicacao SHA-256 em memoria/SQLite);
   4. Consumo direto do pool multi-chave (`GEMINI_FLASH_KEYS`, `GEMINI_KEYS` de `llm.budget`);
-  5. Desacoplamento estrito de pré-commit e computação combinatória local.
+  5. Desacoplamento estrito de pre-commit e computacao combinatoria local.
 """
 
 from __future__ import annotations
@@ -41,9 +41,9 @@ class BucketMetrics:
 
 
 class AtomicQuotaBucket:
-    """Token Bucket Atômico com reserva preventiva e janela deslizante em O(1).
+    """Token Bucket Atomico com reserva preventiva e janela deslizante em O(1).
 
-    Elimina condições de corrida (TOCTOU) e sincroniza a renovação diária com UTC.
+    Elimina condicoes de corrida (TOCTOU) e sincroniza a renovacao diaria com UTC.
     """
 
     def __init__(self, rpm_limit: int, tpm_limit: int, rpd_limit: int) -> None:
@@ -68,7 +68,7 @@ class AtomicQuotaBucket:
         self._token_allocations = [(t, c) for t, c in self._token_allocations if t > cutoff]
 
     async def try_acquire(self, estimated_tokens: int) -> bool:
-        """Reserva atômica de cota antes do disparo à rede."""
+        """Reserva atomica de cota antes do disparo a rede."""
         async with self._lock:
             now = time.monotonic()
             self._slide_window(now)
@@ -94,11 +94,11 @@ class AtomicQuotaBucket:
                 self._token_allocations[-1] = (last_t, max(0, last_c + diff))
 
     async def release_reservation(self, estimated_tokens: int) -> None:
-        """Estorna a alocação em caso de erro pré-rede ou descarte.
+        """Estorna a alocacao em caso de erro pre-rede ou descarte.
 
-        O estorno é LIFO: `try_acquire` sempre acrescenta exatamente uma entrada,
-        e o `pop()` abaixo remove essa entrada, que já carrega o valor reservado.
-        Por isso `estimated_tokens` não é lido — ele existe por simetria com
+        O estorno e LIFO: `try_acquire` sempre acrescenta exatamente uma entrada,
+        e o `pop()` abaixo remove essa entrada, que ja carrega o valor reservado.
+        Por isso `estimated_tokens` nao e lido -- ele existe por simetria com
         `try_acquire` e `reconcile`, e recalcular a partir dele duplicaria o
         estorno.
         """
@@ -111,7 +111,7 @@ class AtomicQuotaBucket:
             self._daily_count = max(0, self._daily_count - 1)
 
     async def get_metrics(self) -> BucketMetrics:
-        """Retorna snapshot instantâneo do estado de cota."""
+        """Retorna snapshot instantaneo do estado de cota."""
         async with self._lock:
             now = time.monotonic()
             self._slide_window(now)
@@ -127,7 +127,7 @@ class AtomicQuotaBucket:
 
 
 class SOTAUnifiedFreeRouter:
-    """Orquestrador Canônico de APIs Gratuitas para o Ecossistema Site & Antigravity."""
+    """Orquestrador Canonico de APIs Gratuitas para o Ecossistema Site & Antigravity."""
 
     def __init__(
         self,
@@ -146,7 +146,7 @@ class SOTAUnifiedFreeRouter:
         self._local_cache: dict[str, str] = {}
         self._cache_lock = asyncio.Lock()
 
-        # Multiplicação linear de capacidade pelo pool multi-chave
+        # Multiplicacao linear de capacidade pelo pool multi-chave
         pool_size = max(1, len(keys))
         self.quotas: dict[str, AtomicQuotaBucket] = {
             "gemini-3.7-flash": AtomicQuotaBucket(
@@ -173,7 +173,7 @@ class SOTAUnifiedFreeRouter:
 
     @staticmethod
     def calculate_token_demand(prompt: str, complexity_score: int = 1) -> tuple[int, int]:
-        """Calcula a demanda preditiva eliminando números mágicos hardcoded."""
+        """Calcula a demanda preditiva eliminando numeros magicos hardcoded."""
         input_tokens = int(len(prompt) / 2.5)
         output_margin = 1024 if complexity_score <= 2 else (2048 if complexity_score <= 4 else 4096)
         return input_tokens + output_margin, output_margin
@@ -205,25 +205,25 @@ class SOTAUnifiedFreeRouter:
 
         est_tokens, max_output = self.calculate_token_demand(prompt, complexity_score)
 
-        # NÍVEL 1: Tarefas Simples (Score 1-2) -> Gemini 3.5 Flash-Lite
+        # NIVEL 1: Tarefas Simples (Score 1-2) -> Gemini 3.5 Flash-Lite
         if complexity_score <= 2:
             res = await self._call_model("gemini-3.5-flash-lite", prompt, system_instruction, est_tokens, max_output)
             if res:
                 return await self._store_cache(ckey, res)
 
-        # NÍVEL 2: Raciocínio Padrão (Score 3-4) -> Gemini 3.6 Flash
+        # NIVEL 2: Raciocinio Padrao (Score 3-4) -> Gemini 3.6 Flash
         if complexity_score in (3, 4):
             res = await self._call_model("gemini-3.6-flash", prompt, system_instruction, est_tokens, max_output)
             if res:
                 return await self._store_cache(ckey, res)
-            # Degradação graciosa para 3.5 Flash-Lite
+            # Degradacao graciosa para 3.5 Flash-Lite
             res_lite = await self._call_model(
                 "gemini-3.5-flash-lite", prompt, system_instruction, est_tokens, max_output
             )
             if res_lite:
                 return await self._store_cache(ckey, res_lite)
 
-        # NÍVEL 3: Raciocínio Teórico Profundo (Score 5) -> Gemini 3.7 Flash Low-Effort
+        # NIVEL 3: Raciocinio Teorico Profundo (Score 5) -> Gemini 3.7 Flash Low-Effort
         if complexity_score >= 5:
             res = await self._call_model(
                 "gemini-3.7-flash",
@@ -246,7 +246,7 @@ class SOTAUnifiedFreeRouter:
             if res_lite:
                 return await self._store_cache(ckey, res_lite)
 
-        # NÍVEL 4: Contingência Externa (OpenRouter Free Tier)
+        # NIVEL 4: Contingencia Externa (OpenRouter Free Tier)
         if self.openrouter_keys:
             res_op = await self._call_openrouter(prompt, system_instruction)
             return await self._store_cache(ckey, res_op)

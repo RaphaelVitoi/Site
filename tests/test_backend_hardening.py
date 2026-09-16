@@ -663,7 +663,7 @@ def test_rate_limiter_purga_ips_expirados_e_previne_memory_leak(monkeypatch) -> 
 
 @pytest.mark.unit
 def test_jwt_rejeita_token_sem_exp_declarado() -> None:
-    """Tokens sem exp devem ser rejeitados para impedir credenciais perpétuas."""
+    """Tokens sem exp devem ser rejeitados para impedir credenciais perpetuas."""
     segredo = "segredo-de-teste"
     token_sem_exp = _jwt({"alg": "HS256"}, {"sub": "u1", "role": "authenticated"}, segredo)
     assert middleware.verify_hs256_jwt(token_sem_exp, segredo) is None

@@ -47,10 +47,7 @@
       "type": "lldb-dap",
       "request": "launch",
       "program": "${workspaceFolder}/wasm-equity/target/debug/vitoi_engine_cli.exe",
-      "args": [
-        "--features",
-        "debug_assertions"
-      ],
+      "args": [],
       "cwd": "${workspaceFolder}/wasm-equity",
       "stopOnEntry": false,
       "initCommands": [
