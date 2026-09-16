@@ -150,7 +150,7 @@ def test_entrada_python_legada_recusa_certificar_valores_sinteticos() -> None:
 
 
 def test_gate_separa_observacoes_runtime_de_limites_laboratoriais_e_revisao_manual() -> None:
-    """Long tasks e itens inconclusivos não podem virar falhas normativas por nome errado."""
+    """Long tasks e itens inconclusivos nao podem virar falhas normativas por nome errado."""
     source = GATE.read_text(encoding="utf-8-sig")
 
     assert '"OBSERVED_EVENT_LATENCY_MS"' in source
@@ -285,7 +285,7 @@ def test_axe_manual_review_baseline_is_explicit_and_hash_bound_to_the_svg_source
     review = baseline["reviews"][0]
     assert review["status"] == "approved"
     assert review["rule_id"] == "color-contrast"
-    assert review["reviewer_authority"] == "Tier 0 — Raphael Vitoi"
+    assert review["reviewer_authority"] == "Tier 0 \u2014 Raphael Vitoi"
     assert review["source"]["path"] == "frontend/src/app/(public)/page.tsx"
     assert review["source"]["sha256"] == hashlib.sha256(HOME_PAGE.read_bytes()).hexdigest()
     assert review["targets"] == [
@@ -313,7 +313,7 @@ def test_cwv_human_review_preserves_positive_observation_without_fabricating_inp
     assert record["schema_version"] == "1.0"
     review = record["reviews"][0]
     assert review["status"] == "positive_observation"
-    assert review["reviewer_authority"] == "Tier 0 — Raphael Vitoi"
+    assert review["reviewer_authority"] == "Tier 0 \u2014 Raphael Vitoi"
     assert {observation["dimension"] for observation in review["observations"]} == {
         "input_delay",
         "processing_duration",
@@ -397,10 +397,10 @@ def test_gate_reports_positive_cwv_human_review_without_turning_it_into_coverage
 
 
 def test_lighthouse_cwv_extractor_requires_real_tbt_and_preserves_numeric_metrics() -> None:
-    """O adaptador aceita apenas o número que o Lighthouse calculou como TBT.
+    """O adaptador aceita apenas o numero que o Lighthouse calculou como TBT.
 
-    Tamanho de long task, total de scripting ou uma métrica de DevTools não
-    substituem este campo: o artefato precisa manter a proveniência Lighthouse.
+    Tamanho de long task, total de scripting ou uma metrica de DevTools nao
+    substituem este campo: o artefato precisa manter a proveniencia Lighthouse.
     """
     fixture = {
         "audits": {
@@ -430,7 +430,7 @@ process.stdout.write(JSON.stringify(extractLighthouseCwv(fixture)));
 
 
 def test_lighthouse_input_fingerprint_changes_when_a_production_input_changes(tmp_path: Path) -> None:
-    """A certificação Lighthouse expira quando o input de produção muda."""
+    """A certificacao Lighthouse expira quando o input de producao muda."""
     source_root = tmp_path / "frontend"
     source_root.mkdir()
     source = source_root / "page.tsx"
@@ -460,7 +460,7 @@ process.stdout.write(JSON.stringify({ first, second }));
 
 
 def test_lighthouse_fingerprint_cli_keeps_the_gate_on_the_same_hash_algorithm(tmp_path: Path) -> None:
-    """O gate usa a CLI do coletor, jamais uma segunda implementação do hash."""
+    """O gate usa a CLI do coletor, jamais uma segunda implementacao do hash."""
     source_root = tmp_path / "frontend"
     source_root.mkdir()
     (source_root / "page.tsx").write_text("export const title = 'SOTA';\n", encoding="utf-8")
@@ -481,7 +481,7 @@ def test_lighthouse_fingerprint_cli_keeps_the_gate_on_the_same_hash_algorithm(tm
 
 @pytest.mark.skipif(shutil.which("powershell") is None, reason="PowerShell 5.1 ausente do PATH")
 def test_gate_reads_only_a_hash_bound_lighthouse_tbt_artifact(tmp_path: Path) -> None:
-    """Um TBT de produção válido aparece, sem transformar CWV runtime ausente em verde."""
+    """Um TBT de producao valido aparece, sem transformar CWV runtime ausente em verde."""
     fingerprint_result = subprocess.run(
         ["node", str(LIGHTHOUSE_CWV_AUDIT), "--fingerprint", "--source-root", str(RAIZ / "frontend")],
         cwd=RAIZ,

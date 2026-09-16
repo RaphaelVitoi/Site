@@ -1,6 +1,6 @@
 """Bancada de testes formais para a rearquitetura composicional PMev (Fases 0 a 4).
 
-Formalismo: Raphael Vitoi — Ecossistema Nexus SOTA v8.0 GOLD.
+Formalismo: Raphael Vitoi -- Ecossistema Nexus SOTA v8.0 GOLD.
 Auditoria Integrada: Sol (Codex) x Hermes.
 """
 
@@ -177,7 +177,7 @@ def test_fase_3_h9_late_registration_utility_non_conservation() -> None:
 
 def test_fase_3_h12_bic_parsimony_penalizes_overfitting() -> None:
     """Verifica teste de parcimonia BIC para rejeitar acrescimo abusivo de graus de liberdade."""
-    # Cenário onde ganho de verossimilhança é insuficiente contra a penalização paramétrica
+    # Cenario onde ganho de verossimilhanca e insuficiente contra a penalizacao parametrica
     res_rejected = evaluate_bic_parsimony(
         log_lik_d=500.0,
         log_lik_f=502.0,  # Ganho de apenas 4.0 em 2*delta_ln(L)
@@ -187,7 +187,7 @@ def test_fase_3_h12_bic_parsimony_penalizes_overfitting() -> None:
     )
     assert res_rejected.is_expansion_admissible is False
 
-    # Cenário onde ganho supera com folga a penalização
+    # Cenario onde ganho supera com folga a penalizacao
     res_approved = evaluate_bic_parsimony(
         log_lik_d=500.0,
         log_lik_f=560.0,  # Ganho de 120.0
@@ -240,4 +240,4 @@ def test_fase_4_calibration_raises_insufficient_data_error() -> None:
     with pytest.raises(InsufficientDataCalibrationError) as exc_info:
         raise InsufficientDataCalibrationError()
 
-    assert "DADOS INSUFICIENTES — NENHUMA CALIBRACAO PLANEJADA" in str(exc_info.value)
+    assert "DADOS INSUFICIENTES \u2014 NENHUMA CALIBRACAO PLANEJADA" in str(exc_info.value)

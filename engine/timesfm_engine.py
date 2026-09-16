@@ -1,10 +1,10 @@
 """
 IDENTITY: TimesFM Governance & Time-Series Inference Engine (Google Research)
 PATH: engine/timesfm_engine.py
-ROLE: Interface de alta fidelidade para previsão de séries temporais estocásticas (Bankroll, EV, RIO, Fator Psi).
+ROLE: Interface de alta fidelidade para previsao de series temporais estocasticas (Bankroll, EV, RIO, Fator Psi).
 GOVERNANCE:
-  - TimesFM 2.0 / 2.5 (500M / 200M): Licença Apache 2.0. Liberado para Produção Comercial e SaaS.
-  - TimesFM 3.0 (330M): Licença timesfm-non-commercial-license-v1.0. Estritamente restrito a Pesquisa / Não Comercial.
+  - TimesFM 2.0 / 2.5 (500M / 200M): Licenca Apache 2.0. Liberado para Producao Comercial e SaaS.
+  - TimesFM 3.0 (330M): Licenca timesfm-non-commercial-license-v1.0. Estritamente restrito a Pesquisa / Nao Comercial.
   - Enterprise Scaling: Google Cloud BigQuery ML (AI.FORECAST).
 """
 
@@ -161,11 +161,11 @@ class TimesFMForecastResponse(BaseModel):
 
 
 class TimesFMGovernanceError(PermissionError):
-    """Lançado quando uma tentativa de deploy comercial viola a licença do TimesFM 3.0."""
+    """Lancado quando uma tentativa de deploy comercial viola a licenca do TimesFM 3.0."""
 
 
 class TimesFMEngine:
-    """Motor unificado de governança e inferência para modelos TimesFM."""
+    """Motor unificado de governanca e inferencia para modelos TimesFM."""
 
     def __init__(
         self,
@@ -203,20 +203,20 @@ class TimesFMEngine:
         model_key: str,
     ) -> ModelMetadata:
         if model_key not in TIMESFM_CATALOG:
-            raise ValueError(f"Modelo desconhecido: '{model_key}'. Opções: {list(TIMESFM_CATALOG.keys())}")
+            raise ValueError(f"Modelo desconhecido: '{model_key}'. Op\u00e7\u00f5es: {list(TIMESFM_CATALOG.keys())}")
 
         meta = TIMESFM_CATALOG[model_key]
 
         if mode == ExecutionMode.COMMERCIAL_PRODUCTION and not meta.is_commercial_allowed:
             raise TimesFMGovernanceError(
-                f"VIOLAÇÃO DE LICENÇA: O modelo '{model_key}' está sob '{meta.license_tier.value}'. "
-                "O Google proíbe expressamente o uso de pesos do TimesFM 3.0 em ambientes comerciais ou de produção. "
-                "Para produção comercial, utilize 'timesfm-2.0-500m' / 'timesfm-2.5-200m' (Apache 2.0) "
-                "ou utilize o serviço gerenciado Google Cloud BigQuery ML (AI.FORECAST)."
+                f"VIOLA\u00c7\u00c3O DE LICEN\u00c7A: O modelo '{model_key}' est\u00e1 sob '{meta.license_tier.value}'. "
+                "O Google pro\u00edbe expressamente o uso de pesos do TimesFM 3.0 em ambientes comerciais ou de produ\u00e7\u00e3o. "
+                "Para produ\u00e7\u00e3o comercial, utilize 'timesfm-2.0-500m' / 'timesfm-2.5-200m' (Apache 2.0) "
+                "ou utilize o servi\u00e7o gerenciado Google Cloud BigQuery ML (AI.FORECAST)."
             )
 
         logger.debug(
-            "TimesFM Inicializado | Modo: %s | Modelo: %s | Licença: %s",
+            "TimesFM Inicializado | Modo: %s | Modelo: %s | Licen\u00e7a: %s",
             mode.value,
             meta.model_id,
             meta.license_tier.value,
@@ -230,13 +230,13 @@ class TimesFMEngine:
         frequency_indicator: int = 0,
         target_name: str = "metric",
     ) -> ForecastResult:
-        """Executa previsão univariada (série temporal única, e.g. variância de EV ou Bankroll)."""
+        """Executa previsao univariada (serie temporal unica, e.g. variancia de EV ou Bankroll)."""
         _ = frequency_indicator
         history = np.asarray(series, dtype=np.float32)
         if len(history) < 4:
-            raise ValueError("A série histórica deve possuir ao menos 4 pontos para inferência.")
+            raise ValueError("A s\u00e9rie hist\u00f3rica deve possuir ao menos 4 pontos para infer\u00eancia.")
 
-        # Simulação analítica com decaimento/drift bayesiano para fallback zero-token ou inferência direta
+        # Simulacao analitica com decaimento/drift bayesiano para fallback zero-token ou inferencia direta
         last_val = float(history[-1])
         window = min(len(history), 10)
         trend = float(np.mean(np.diff(history[-window:]))) if len(history) >= 2 else 0.0
@@ -265,7 +265,7 @@ class TimesFMEngine:
         series_dict: dict[str, list[float]],
         horizon: int = 12,
     ) -> dict[str, ForecastResult]:
-        """Executa previsão multivariada (múltiplas séries correlacionadas, e.g. Fator Psi + RIO + Pressão)."""
+        """Executa previsao multivariada (multiplas series correlacionadas, e.g. Fator Psi + RIO + Pressao)."""
         results: dict[str, ForecastResult] = {}
         for name, series in series_dict.items():
             results[name] = self.forecast_univariate(
@@ -375,19 +375,19 @@ def forecast_agent_calibration_trajectory(
         target_name=f"agent_scores_{conductor_model or 'aggregate'}",
     )
 
-    # O domínio da avaliação do Tier 0 é estritamente limitado no suporte [0.0, 10.0].
-    # Nenhum cenário estocástico pode extrapolar a nota máxima (10.0) ou mínima (0.0).
+    # O dominio da avaliacao do Tier 0 e estritamente limitado no suporte [0.0, 10.0].
+    # Nenhum cenario estocastico pode extrapolar a nota maxima (10.0) ou minima (0.0).
     raw_mean = res.mean_prediction
 
-    # Estimativa de dispersão fiel à volatilidade recente de avaliações do Tier 0
+    # Estimativa de dispersao fiel a volatilidade recente de avaliacoes do Tier 0
     recent_volatility = (
         float(np.std(history_scores[-6:])) if len(history_scores) >= 6 else float(np.std(history_scores))
     )
     sigma_est = max(0.15, recent_volatility * math.sqrt(max(1, horizon_sessions) / 3.0))
 
-    # Clamping rigoroso no espaço de notas [0.0, 10.0]
+    # Clamping rigoroso no espaco de notas [0.0, 10.0]
     mean_clamped = [round(max(0.0, min(10.0, v)), 2) for v in raw_mean]
-    # Túnel estocástico coerente ancorado na média e desvio padrão do domínio
+    # Tunel estocastico coerente ancorado na media e desvio padrao do dominio
     q10_clamped = [
         round(max(0.0, min(m, m - 1.28 * sigma_est * math.sqrt(i + 1))), 2) for i, m in enumerate(mean_clamped)
     ]
@@ -405,7 +405,7 @@ def forecast_agent_calibration_trajectory(
     else:
         direction = "ESTAVEL"
 
-    # Probabilidade analítica de cauda gaussiana abaixo do limiar de excelência do portão (8.5)
+    # Probabilidade analitica de cauda gaussiana abaixo do limiar de excelencia do portao (8.5)
     critical_threshold = 8.5
     final_clamped_mean = mean_clamped[-1]
     z_score = (critical_threshold - final_clamped_mean) / sigma_est
@@ -477,7 +477,7 @@ def forecast_cfr_convergence(
     """Projeta a trajetoria de decaimento do arrependimento medio ou explorabilidade no CFR+.
 
     Permite Early Stopping Preditivo quando a explorabilidade projetada atinge target_epsilon
-    ou quando a variacao entre iteracoes indica convergencia assintotica ou platô.
+    ou quando a variacao entre iteracoes indica convergencia assintotica ou plato.
     """
     if len(regret_history) < 4:
         meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG["timesfm-2.0-500m"])
@@ -535,7 +535,7 @@ def forecast_cfr_convergence(
             steps_to_target = step_idx + 1
             break
 
-    # Deteccao de platô assintotico
+    # Deteccao de plato assintotico
     recent_diffs = np.diff(regret_history[-min(len(regret_history), 5) :])
     mean_abs_slope = float(np.mean(np.abs(recent_diffs))) if len(recent_diffs) > 0 else 0.0
 

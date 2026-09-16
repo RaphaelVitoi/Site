@@ -66,13 +66,13 @@ export interface InitOutput {
     readonly alloc_range_buffer: (a: number) => number;
     readonly calculate_equity_monte_carlo_binary: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => number;
     readonly calculate_multiway_equity_zerocopy: (a: number, b: number, c: bigint, d: number, e: number) => unknown;
-    readonly calculate_perspectiva_vitoi_wasm: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number) => unknown;
     readonly free_range_buffer: (a: number, b: number) => void;
     readonly solve_icm_distortion_binary: (a: number, b: number, c: number, d: number, e: unknown) => unknown;
     readonly solve_icm_distortion_v2: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => unknown;
     readonly solve_icm_distortion_zerocopy: (a: number, b: number) => unknown;
     readonly solve_insolvency_matrix_binary: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => unknown;
     readonly solve_pluribus_multiway_adapter_wasm: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number, number];
+    readonly calculate_perspectiva_vitoi_wasm: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number) => unknown;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

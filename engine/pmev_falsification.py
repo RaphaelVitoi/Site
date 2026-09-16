@@ -1,6 +1,6 @@
 """Motor analitico de falsificacao empirica e testes de fronteira PMev.
 
-Formalismo: Raphael Vitoi — Ecossistema Nexus SOTA v8.0 GOLD.
+Formalismo: Raphael Vitoi -- Ecossistema Nexus SOTA v8.0 GOLD.
 Auditoria Integrada: Sol (Codex) x Hermes.
 
 Implementa os testes algoritmicos formais para as quatro fronteiras criticas:

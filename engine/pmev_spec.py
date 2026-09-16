@@ -169,8 +169,8 @@ class AbsorptionState:
 class InsufficientDataCalibrationError(RuntimeError):
     """Excecao formal para tentativa de calibracao antes de existir amostra elegivel.
 
-    Estado literal de governanca: DADOS INSUFICIENTES — NENHUMA CALIBRACAO PLANEJADA.
+    Estado literal de governanca: DADOS INSUFICIENTES -- NENHUMA CALIBRACAO PLANEJADA.
     """
 
-    def __init__(self, message: str = "DADOS INSUFICIENTES — NENHUMA CALIBRACAO PLANEJADA") -> None:
+    def __init__(self, message: str = "DADOS INSUFICIENTES \u2014 NENHUMA CALIBRACAO PLANEJADA") -> None:
         super().__init__(message)

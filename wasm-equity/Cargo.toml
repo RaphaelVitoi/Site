@@ -8,6 +8,12 @@ description = "SOTA WebAssembly Poker Equity & Insolvency Engine (Vitoi Ecosyste
 crate-type = ["cdylib", "rlib"]
 path = "lib.rs"
 
+# CLI nativa para depuracao LLDB. cli.rs fica fora de src/bin, entao o cargo nao a
+# descobre sozinho; sem esta entrada `--bin vitoi_engine_cli` nao existia.
+[[bin]]
+name = "vitoi_engine_cli"
+path = "cli.rs"
+
 [dependencies]
 wasm-bindgen = "0.2.84"
 js-sys = "0.3.61"

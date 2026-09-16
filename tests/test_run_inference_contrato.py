@@ -108,7 +108,7 @@ def test_compact_conversation_preserva_persona_e_reduz_a_dez_porcento():
     assert compactada[0]["content"] == "Persona SOTA Chico"
     # Compact marker inserido
     assert "[COMPACT SOTA]" in compactada[1]["content"]
-    # Retém ~10% de 20 msgs (2 mensagens mais recentes)
+    # Retem ~10% de 20 msgs (2 mensagens mais recentes)
     dialogos = [m for m in compactada if m["role"] in ("user", "assistant")]
     assert len(dialogos) == 2
     assert dialogos[0]["content"] == "Mensagem 18"
@@ -205,7 +205,9 @@ def test_chico_persona_contem_diretiva_de_formatacao_para_terminal():
 def test_clean_terminal_output_saneia_latex_e_preserva_legibilidade():
     """Valida a conversao de expressoes LaTeX matematicas em texto puro legivel para console."""
     raw_sample = (
-        r"O valor esperado ($\text{EV}$) através de $\text{+cEV}$ e $\text{-ICMev}$. "
+        r"O valor esperado ($\text{EV}$) atrav"
+        "\u00e9"
+        r"s de $\text{+cEV}$ e $\text{-ICMev}$. "
         r"Nash $\text{cEV} \rightarrow$ Nash $\text{ICMev}$. "
         r"$$\text{cEV} = \sum (\text{Probabilidade}_{\text{resultado}} \times \text{Valor}_{\text{fichas}})$$ "
         r"```python" + "\n" + r"var = '$code\text{keep}$'" + "\n" + r"```"
@@ -234,7 +236,7 @@ def test_terminal_stream_filter_descarrega_tokens_sem_latex_cru():
     tokens = [
         "A ",
         "meta ",
-        "é ",
+        "\u00e9 ",
         "(",
         "$",
         r"\text",

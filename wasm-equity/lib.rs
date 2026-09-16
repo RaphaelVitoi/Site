@@ -599,9 +599,14 @@ fn calculate_utility_ev(
     }
 }
 
-/// Interface FFI para Perspectiva Matemática SOTA v7.0 GOLD
-#[wasm_bindgen]
-pub fn calculate_perspectiva_vitoi_wasm(
+/// Nucleo nativo da Perspectiva Matematica, sem js_sys: roda fora do navegador.
+///
+/// `vitoi_engine_cli` (depuracao LLDB) chama este nucleo diretamente; `js_sys::Float64Array`
+/// entra em panico fora de wasm32, entao a interface FFI abaixo so copia o resultado.
+/// Ordem do retorno: perspectiva, expectativa, risk_advantage, rio_mw, thresh_eq, ci,
+/// amortized_edge, bayesian_win_prob em pontos percentuais.
+#[allow(clippy::too_many_arguments)]
+pub fn calculate_perspectiva_core(
     current_equity_pct: f64,
     delta_win_pct: f64,
     delta_lose_pct: f64,
@@ -618,7 +623,7 @@ pub fn calculate_perspectiva_vitoi_wasm(
     edge_base: f64,
     human_noise_factor: f64,
     reference_status: u32,
-) -> js_sys::Float64Array {
+) -> [f64; 8] {
     // 1. Bounty Offset & Risk Advantage
     let bounty_rp_offset = (bounty_value / current_pot.max(1.0)) * 10.0;
     let effective_hero_rp = (hero_rp - bounty_rp_offset).max(0.01);
@@ -688,18 +693,59 @@ pub fn calculate_perspectiva_vitoi_wasm(
         1.5
     };
 
-    // Retorno via JS Float64Array para Fricção Zero O(1)
-    let out_array = js_sys::Float64Array::new_with_length(8);
-    out_array.set_index(0, perspectiva);
-    out_array.set_index(1, expectativa);
-    out_array.set_index(2, risk_advantage);
-    out_array.set_index(3, rio_mw);
-    out_array.set_index(4, thresh_eq);
-    out_array.set_index(5, ci);
-    out_array.set_index(6, amortized_edge);
-    out_array.set_index(7, bayesian_win_prob * 100.0);
+    [
+        perspectiva,
+        expectativa,
+        risk_advantage,
+        rio_mw,
+        thresh_eq,
+        ci,
+        amortized_edge,
+        bayesian_win_prob * 100.0,
+    ]
+}
 
-    out_array
+/// Interface FFI para Perspectiva Matemática SOTA v7.0 GOLD
+#[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
+pub fn calculate_perspectiva_vitoi_wasm(
+    current_equity_pct: f64,
+    delta_win_pct: f64,
+    delta_lose_pct: f64,
+    dynamic_ev_fold: f64,
+    realization_factor: f64,
+    fgs_health: f64,
+    active_players: u32,
+    _hero_invested: f64,
+    current_pot: f64,
+    stack_eff: f64,
+    hero_rp: f64,
+    villain_rp: f64,
+    bounty_value: f64,
+    edge_base: f64,
+    human_noise_factor: f64,
+    reference_status: u32,
+) -> js_sys::Float64Array {
+    let out = calculate_perspectiva_core(
+        current_equity_pct,
+        delta_win_pct,
+        delta_lose_pct,
+        dynamic_ev_fold,
+        realization_factor,
+        fgs_health,
+        active_players,
+        _hero_invested,
+        current_pot,
+        stack_eff,
+        hero_rp,
+        villain_rp,
+        bounty_value,
+        edge_base,
+        human_noise_factor,
+        reference_status,
+    );
+    // Retorno via JS Float64Array para Fricção Zero O(1)
+    js_sys::Float64Array::from(&out[..])
 }
 
 /// Interface FFI para Matriz de Insolvência

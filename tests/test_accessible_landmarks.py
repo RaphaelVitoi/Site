@@ -1,4 +1,4 @@
-"""Contratos mínimos para landmarks públicos do layout global."""
+"""Contratos minimos para landmarks publicos do layout global."""
 
 from __future__ import annotations
 
@@ -14,5 +14,5 @@ def test_landmarks_de_navegacao_possuem_nomes_distintos() -> None:
     header = HEADER.read_text(encoding="utf-8")
     footer = FOOTER.read_text(encoding="utf-8")
 
-    assert 'aria-label="Navegação principal"' in header
-    assert 'aria-label="Navegação de atalhos"' in footer
+    assert 'aria-label="Navega\u00e7\u00e3o principal"' in header
+    assert 'aria-label="Navega\u00e7\u00e3o de atalhos"' in footer

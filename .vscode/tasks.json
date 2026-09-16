@@ -10,9 +10,7 @@
         "--manifest-path",
         "${workspaceFolder}/wasm-equity/Cargo.toml",
         "--bin",
-        "vitoi_engine_cli",
-        "--features",
-        "debug_assertions"
+        "vitoi_engine_cli"
       ],
       "group": {
         "kind": "build",
