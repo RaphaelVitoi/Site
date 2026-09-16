@@ -39,9 +39,9 @@ function pickWinnerWithBusted(
 	let cumulative = 0;
 	let lastActiveIdx = -1;
 	for (let playerIdx = 0; playerIdx < numPlayers; playerIdx++) {
-		if (isBusted.at(playerIdx) === 0) {
+		if (isBusted[playerIdx] === 0) {
 			lastActiveIdx = playerIdx;
-			cumulative += stacks.at(playerIdx) ?? 0;
+			cumulative += stacks[playerIdx] ?? 0;
 			if (r <= cumulative) return playerIdx;
 		}
 	}
@@ -59,7 +59,7 @@ function pickWinnerWithMask(
 	for (let playerIdx = 0; playerIdx < numPlayers; playerIdx++) {
 		if ((availablePlayers & (1 << playerIdx)) !== 0) {
 			lastActiveIdx = playerIdx;
-			cumulative += stacks.at(playerIdx) ?? 0;
+			cumulative += stacks[playerIdx] ?? 0;
 			if (r <= cumulative) return playerIdx;
 		}
 	}

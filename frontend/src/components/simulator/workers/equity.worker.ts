@@ -89,7 +89,7 @@ self.onmessage = async (e: MessageEvent<EquityWorkerRequest>) => {
 		if (sharedBuffer) {
 			const floatView = new Float64Array(sharedBuffer);
 			if (workerIndex >= 0 && workerIndex < floatView.length) {
-				floatView.set([equity], workerIndex);
+				floatView[workerIndex] = equity;
 			}
 		}
 
