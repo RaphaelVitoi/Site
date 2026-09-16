@@ -6,3 +6,8 @@ coverage/
 .env.local
 prisma/*.db-shm
 prisma/*.db-wal
+
+# Pre-comprimidos derivados: o server.js standalone comprime sob demanda e nao os serve.
+# Versionados ficavam defasados (robots.txt.gz de 2026-08-21). Ver scripts/ops/brotli_compressor.mjs.
+public/**/*.br
+public/**/*.gz
