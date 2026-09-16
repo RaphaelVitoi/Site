@@ -17,9 +17,9 @@ A saida e deterministica: mesma amostra, mesma semente e mesma data geram o mesm
 
 from __future__ import annotations
 
-import hashlib
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
+import hashlib
 from statistics import fmean
 from typing import Any, Final
 

@@ -26,7 +26,6 @@ o resultado depender de quais submodulos estao inicializados na maquina.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name
-
 import json
 from pathlib import Path
 
@@ -99,7 +98,8 @@ def test_enumeracao_usa_array_e_nao_string(workflow_texto: str):
         "a expansao em array sumiu. Com $WORKFLOWS sem aspas o shellcheck acusa "
         "SC2086 e o job cai; com aspas simples vira um argumento unico invalido."
     )
-    assert "git ls-files -z" in trecho and "mapfile -d ''" in trecho, (
+    assert "git ls-files -z" in trecho
+    assert "mapfile -d ''" in trecho, (
         "a leitura separada por NUL sumiu. Sem ela, nome de arquivo com espaco quebraria a enumeracao em pedacos."
     )
 

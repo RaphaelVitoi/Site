@@ -24,10 +24,10 @@ Este teste nao roda o portao: le o script. Rodar exigiria npm, rede e Chrome.
 
 from __future__ import annotations
 
-# pylint: disable=redefined-outer-name
-
-import re
 from pathlib import Path
+
+# pylint: disable=redefined-outer-name
+import re
 
 import pytest
 
@@ -177,7 +177,8 @@ def test_audit_python_falha_fechado(gate_texto: str):
 def test_aceite_vincula_pacote_e_versao(gate_texto: str):
     """Aceite solto por ID aceitaria a mesma CVE em outro pacote ou versao."""
     trecho = gate_texto[gate_texto.find("$pyAceites") :]
-    assert "$($a.package)" in trecho and "$($a.version)" in trecho, (
+    assert "$($a.package)" in trecho
+    assert "$($a.version)" in trecho, (
         "a chave do aceite deixou de amarrar pacote e versao. Um aceite "
         "vinculado so ao ID sobreviveria a um upgrade que reintroduzisse o "
         "problema noutra versao."

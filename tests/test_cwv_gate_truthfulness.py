@@ -10,14 +10,13 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
 import pytest
-
 
 RAIZ = Path(__file__).resolve().parent.parent
 GATE = RAIZ / "scripts" / "ops" / "cwv_gate.ps1"
@@ -538,7 +537,8 @@ def test_gate_reads_only_a_hash_bound_lighthouse_tbt_artifact(tmp_path: Path) ->
     assert result.returncode == 0, result.stdout + result.stderr
     assert report_path.is_file(), result.stdout + result.stderr
     report = report_path.read_text(encoding="utf-8")
-    assert "TBT_MS" in report and "99 ms" in report
+    assert "TBT_MS" in report
+    assert "99 ms" in report
     assert "FRAGILE" in report
 
 

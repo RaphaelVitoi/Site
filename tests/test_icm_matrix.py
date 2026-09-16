@@ -2,6 +2,7 @@
 """Testes de integridade matematica para o motor ICM e Bubble Factor Matrix SOTA v7.0 GOLD."""
 
 import pytest
+
 from engine.icm_matrix import calculate_malmuth_harville_icm, compute_bubble_factor_matrix
 
 

@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
+import pytest
 
 from api.v1.handlers import handle_engine_capabilities
 from api.v1.server import create_app

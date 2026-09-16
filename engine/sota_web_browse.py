@@ -8,16 +8,16 @@ automated context-grounding based on Agent Tier authority.
 from __future__ import annotations
 
 import asyncio
-import json
-import logging
-import re
-import time
-import urllib.request
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import Enum
+from enum import Enum, StrEnum
+import json
+import logging
 from pathlib import Path
+import re
+import time
 from typing import Final
+import urllib.request
 
 from engine.clippy_clipboard import ClippyClipboard
 
@@ -30,11 +30,13 @@ LOGS_DIR: Final[Path] = BASE_DIR / "logs"
 AUDIT_LOG_FILE: Final[Path] = LOGS_DIR / "web_browsing_audit.jsonl"
 CDP_ADMIN_PORT: Final[int] = 9223
 CDP_STANDARD_PORT: Final[int] = 9222
+# urllib abre file: e esquemas custom; o modo CDP_BROWSER explicito aceita qualquer texto.
+ALLOWED_FETCH_SCHEMES: Final[tuple[str, ...]] = ("http://", "https://")
 
 _CDP_LOCK = asyncio.Lock()
 
 
-class WebBrowseMode(str, Enum):
+class WebBrowseMode(StrEnum):
     AUTO_DETECT = "auto_detect"
     CDP_BROWSER = "cdp_browser"
     AI_SEARCH = "ai_search"
@@ -93,7 +95,7 @@ class TierPolicyEngine:
         if request.mode != WebBrowseMode.AUTO_DETECT:
             return request.mode
         q = request.query_or_url.strip()
-        if q.startswith("http://") or q.startswith("https://"):
+        if q.startswith(("http://", "https://")):
             return WebBrowseMode.CDP_BROWSER
         if request.target_llm or "handoff" in q.lower():
             return WebBrowseMode.CLIPBOARD_HANDOFF
@@ -110,8 +112,8 @@ class CDPBrowserBridge:
     def get_active_port(self) -> int | None:
         for port in (self.admin_port, self.standard_port):
             try:
-                req = urllib.request.Request(f"http://127.0.0.1:{port}/json/version")
-                with urllib.request.urlopen(req, timeout=1.0) as resp:
+                req = urllib.request.Request(f"http://127.0.0.1:{port}/json/version")  # noqa: S310 - loopback fixo  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
+                with urllib.request.urlopen(req, timeout=1.0) as resp:  # noqa: S310 - loopback fixo  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
                     if resp.status == 200:
                         return port
             except Exception:
@@ -123,8 +125,8 @@ class CDPBrowserBridge:
         if not port:
             return {"online": False, "port": None, "engine": "Unavailable"}
         try:
-            req = urllib.request.Request(f"http://127.0.0.1:{port}/json/version")
-            with urllib.request.urlopen(req, timeout=1.5) as resp:
+            req = urllib.request.Request(f"http://127.0.0.1:{port}/json/version")  # noqa: S310 - loopback fixo  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
+            with urllib.request.urlopen(req, timeout=1.5) as resp:  # noqa: S310 - loopback fixo  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
                 data = json.loads(resp.read().decode("utf-8"))
                 return {
                     "online": True,
@@ -136,6 +138,8 @@ class CDPBrowserBridge:
             return {"online": False, "port": port, "error": str(e)}
 
     async def fetch_page_content(self, url: str, timeout_sec: float = 10.0) -> dict[str, str | None]:
+        if not url.strip().lower().startswith(ALLOWED_FETCH_SCHEMES):
+            return {"error": "Esquema de URL recusado: somente http:// e https://", "url": url}
         port = self.get_active_port()
         if not port:
             return {"error": "Nenhuma instancia do Google Chrome Dev (CDP) ativa nas portas 9222/9223"}
@@ -143,7 +147,7 @@ class CDPBrowserBridge:
         async with _CDP_LOCK:
             # Safe HTTP fetch via Chrome Dev endpoint / fallback to direct content parser
             try:
-                req = urllib.request.Request(
+                req = urllib.request.Request(  # noqa: S310 - esquema validado acima  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
                     url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) SOTA/8.0"}
                 )
                 loop = asyncio.get_running_loop()
@@ -160,7 +164,7 @@ class CDPBrowserBridge:
 
     @staticmethod
     def _sync_fetch(req: urllib.request.Request, timeout_sec: float) -> str:
-        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:  # noqa: S310 - so chamado apos validar esquema  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
             raw = resp.read()
             return raw.decode("utf-8", errors="replace")
 

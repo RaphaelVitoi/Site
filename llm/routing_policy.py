@@ -41,11 +41,11 @@ que voce reconcilie o manifesto quando quiser, em vez de a divergencia sumir.
 
 from __future__ import annotations
 
-import json
-import logging
 from dataclasses import dataclass
 from datetime import date
-from enum import Enum
+from enum import Enum, StrEnum
+import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -91,7 +91,7 @@ def custo(alias: str, tokens_in: int, tokens_out: int) -> float:
     return custo_estimado(alias, tokens_in, tokens_out)
 
 
-class ClasseTarefa(str, Enum):
+class ClasseTarefa(StrEnum):
     GOVERNANCA = "governanca"  # mediacao, decisao final
     ESTRATEGIA = "estrategia"  # mentoria, analise de risco
     CONSTRUCAO = "construcao"  # escrita de codigo multi-arquivo
@@ -109,7 +109,7 @@ class TierAgente(int, Enum):
     SUBAGENTE = 4
 
 
-class Faixa(str, Enum):
+class Faixa(StrEnum):
     """Ordem de alocacao. Menor valor = consumir primeiro."""
 
     LOCAL = "local"  # 0 custo marginal, sem rede
@@ -363,7 +363,7 @@ CONFLITOS_MANIFESTO: dict[str, str] = {
 }
 
 
-class Origem(str, Enum):
+class Origem(StrEnum):
     """De qual degrau da rota o modelo veio.
 
     Existe porque `str` nao carrega essa informacao: quem recebia so o alias

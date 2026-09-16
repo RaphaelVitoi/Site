@@ -17,13 +17,10 @@ segundo significado:
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from enum import StrEnum
 from math import isfinite
-from typing import Generic, TypeVar
-
-T = TypeVar("T")
+import re
 
 __all__ = [
     "ENashUnit",
@@ -42,7 +39,7 @@ __all__ = [
 
 
 @dataclass(frozen=True, slots=True)
-class Read(Generic[T]):
+class Read[T]:
     """Valor efetivamente lido da fonte."""
 
     value: T
@@ -88,7 +85,7 @@ _SEM_ENASH = Unreadable("sem e-Nash lido, a unidade nao descreve nada")
 _SEED_NAO_DECLARADA = Unreadable("seed nao declarada pela fonte")
 
 
-def _read_value(reading: Read[T]) -> T:
+def _read_value[T](reading: Read[T]) -> T:
     """Extrai o valor de um Read garantido por isinstance."""
     return reading.value
 
@@ -111,9 +108,8 @@ class SolverProvenance:
         if not self.solver.strip():
             raise ValueError("SolverProvenance exige o nome do solver.")
         build = self.build
-        if isinstance(build, Read):
-            if not str(_read_value(build)).strip():
-                raise ValueError("Build lido nao pode ser vazio; use Unreadable.")
+        if isinstance(build, Read) and not str(_read_value(build)).strip():
+            raise ValueError("Build lido nao pode ser vazio; use Unreadable.")
         e_nash = self.e_nash
         if isinstance(e_nash, Read):
             val_e_nash = _read_value(e_nash)

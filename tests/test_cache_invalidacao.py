@@ -14,7 +14,6 @@ hora de janela em que governanca corrigida nao chega ao agente, sem aviso.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name,unused-argument
-
 import os
 from pathlib import Path
 import time
@@ -61,7 +60,8 @@ def test_chave_muda_quando_o_arquivo_muda(tmp_path: Path) -> None:
     depois = _chave_de_arquivo(str(alvo))
 
     assert antes != depois, "chave identica para conteudos diferentes: a edicao seria invisivel"
-    assert str(alvo) in antes and str(alvo) in depois, "a chave tem de continuar enderecando o caminho"
+    assert str(alvo) in antes, "a chave tem de continuar enderecando o caminho"
+    assert str(alvo) in depois, "a chave tem de continuar enderecando o caminho"
 
 
 @pytest.mark.unit

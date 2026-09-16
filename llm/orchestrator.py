@@ -1,9 +1,9 @@
 # pylint: disable=missing-module-docstring, broad-exception-caught, logging-fstring-interpolation, protected-access, line-too-long, invalid-name
 
-import logging
-import time
 from collections.abc import Callable
 from datetime import UTC, datetime
+import logging
+import time
 
 import aiohttp
 
@@ -11,9 +11,9 @@ import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
+    ANTHROPIC_KEYS,
     COMPRESSION_CIRCUIT_BREAKER,
     OPENROUTER_KEYS,
-    ANTHROPIC_KEYS,
     APIKeysExhaustedError,
     _gemini_key_pool_for_model,
     _is_route_blocked,

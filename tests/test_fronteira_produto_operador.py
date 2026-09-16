@@ -23,12 +23,12 @@ import base64
 import hashlib
 import hmac
 import json
-import time
 from pathlib import Path
+import time
 from typing import cast
 
-import pytest
 from aiohttp import web
+import pytest
 
 from api.v1 import middleware
 

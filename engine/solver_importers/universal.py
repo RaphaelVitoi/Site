@@ -5,7 +5,8 @@ Orquestrador e importador universal com auto-deteccao de formato e conversao par
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from core.perspective_schemas import NormalizedGameTree, PerspectivaResult, SolverImportResponse, SolverType
 from engine.game_theory_solvers import ClaudicoActionTranslator

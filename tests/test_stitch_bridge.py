@@ -6,7 +6,6 @@ Valida a interacao com o servidor Stitch MCP, parsing JSON-RPC e geracao de payl
 from __future__ import annotations
 
 # pylint: disable=protected-access
-
 import json
 from unittest.mock import MagicMock, patch
 
@@ -272,3 +271,11 @@ def test_stitch_client_jsonrpc_error_handling() -> None:
         client = StitchClient(api_key="fake-key")
         with pytest.raises(RuntimeError, match="Erro no Stitch MCP"):
             client.list_screens("missing-id")
+
+
+@pytest.mark.parametrize("base_url", ["http://stitch.googleapis.com/mcp", "file:///C:/x", ""])
+def test_stitch_client_rejects_non_https_base_url(base_url: str) -> None:
+    """urlopen abriria file: e esquemas custom; a base injetavel precisa ser https."""
+    with pytest.raises(ValueError, match="https"):
+        StitchClient(api_key="k", base_url=base_url)
+    assert StitchClient(api_key="k")._base_url.startswith("https://")

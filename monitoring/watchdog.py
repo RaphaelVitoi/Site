@@ -3,9 +3,9 @@ Watchdog -- Supervisao Ativa 24/7 SOTA (Monitoramento Preditivo de Latencia e En
 """
 
 import asyncio
+from datetime import UTC, datetime
 import json
 import logging
-from datetime import UTC, datetime
 
 from core.schemas import Task
 from database.queue_manager import QueueManager

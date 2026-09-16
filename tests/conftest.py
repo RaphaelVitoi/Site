@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Optional
+from typing import Any
+
 import pytest
 
 
@@ -33,10 +34,7 @@ class SotaTestLogFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         msg = str(record.getMessage())
-        for pattern in self.SILENCED_PATTERNS:
-            if pattern in msg:
-                return False
-        return True
+        return all(pattern not in msg for pattern in self.SILENCED_PATTERNS)
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -91,7 +89,7 @@ class SotaGuardState:
         cls.skips.clear()
 
     @classmethod
-    def extract_component(cls, nodeid: Optional[str], filename: Optional[str]) -> str:
+    def extract_component(cls, nodeid: str | None, filename: str | None) -> str:
         if nodeid:
             parts = nodeid.replace("tests/", "").replace("tests\\", "").split("::")
             return parts[0].replace("test_", "").replace(".py", "")
@@ -120,10 +118,9 @@ class SotaGuardState:
         total_warnings = len(cls.warnings_list)
         if total_errors == 0 and total_warnings == 0:
             return "SUCESSO", "green"
-        elif total_errors == 0 and 1 <= total_warnings <= 2:
+        if total_errors == 0 and 1 <= total_warnings <= 2:
             return "FRAGIL", "yellow"
-        else:
-            return "FALHOU", "red"
+        return "FALHOU", "red"
 
 
 def pytest_configure(config: Any) -> None:

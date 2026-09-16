@@ -28,8 +28,8 @@ isso esta DECLARADO em vez de silenciado.
 
 from __future__ import annotations
 
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from core.perspective_schemas import (
     PerspectiveCalculationRequest,

@@ -5,13 +5,15 @@ Protocolo Chico SOTA v8.0 GOLD  Governanca: Raphael Vitoi.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import StrEnum
 import hashlib
 import json
 import logging
 import time
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, TypeVar
+
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -24,7 +26,7 @@ T = TypeVar("T", bound=BaseModel)
 # ==============================================================================
 
 
-class CacheTier(str, Enum):
+class CacheTier(StrEnum):
     VRAM_HOT = "VRAM_HOT"  # Memoria GPU bloqueada / Zero-Latency
     CACHE_EPHEMERAL = "CACHE_LRU"  # RAM recuperavel / Evictavel sob pressao
     RAM_COLD = "RAM_COLD"  # Disco / SQLite / Cold Storage
@@ -215,7 +217,7 @@ class PromptStructureOptimizer:
 # ==============================================================================
 
 
-class HookType(str, Enum):
+class HookType(StrEnum):
     INSPECT = "INSPECT"  # Nao-bloqueante: telemetria, profiling, token audit
     DECIDE = "DECIDE"  # Bloqueante: Target Lock, seguranca, permissoes
     TRANSFORM = "TRANSFORM"  # Mutacao: normalizacao de schemas, sanitizacao ASCII
@@ -228,7 +230,7 @@ class HookContext:
     payload: dict[str, Any]
     metadata: dict[str, Any] = field(default_factory=dict)
     approved: bool = True
-    rejection_reason: Optional[str] = None
+    rejection_reason: str | None = None
 
 
 class SotaHookBus:

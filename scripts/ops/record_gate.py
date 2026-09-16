@@ -23,6 +23,7 @@ divida preexistente e portao que se desliga na primeira semana.
 
 from __future__ import annotations
 
+import contextlib
 from datetime import date
 
 # pylint: disable=wrong-import-position
@@ -373,10 +374,8 @@ def _grafias_a_partir_da_raiz(limpo: str, documento: Path) -> list[str]:
     lido como referencia morta por causa do ponto de partida, nao por ausencia.
     """
     grafias = [limpo]
-    try:
+    with contextlib.suppress(ValueError):
         grafias.append((documento.parent / limpo).resolve().relative_to(RAIZ).as_posix())
-    except ValueError:
-        pass
     return grafias
 
 

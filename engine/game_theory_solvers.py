@@ -11,10 +11,11 @@ Integra os principios algoritmicos fundamentais dos solvers canônicos:
 
 from __future__ import annotations
 
-import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Final, Sequence
+import math
+from typing import Any, Final
 
 EPSILON: Final[float] = 1e-12
 
@@ -178,7 +179,7 @@ class ContinualResolvingEngine:
                 # Mao forte/defensiva contra-valor alto: polariza entre Bet Pot e Check
                 base_strat = {"CHECK": 0.40, "BET_HALF_POT": 0.10, "BET_POT": 0.45, "ALL_IN": 0.05}
             else:
-                base_strat = {a: 1.0 / num_actions for a in actions}
+                base_strat = dict.fromkeys(actions, 1.0 / num_actions)
 
             # Refinamento por iteracoes
             if iterations > 1:
@@ -206,8 +207,8 @@ class CFRPlusEngine:
 
     def __init__(self, actions: Sequence[str]) -> None:
         self.actions: list[str] = list(actions)
-        self.cumulative_regrets: dict[str, float] = {a: 0.0 for a in actions}
-        self.strategy_sum: dict[str, float] = {a: 0.0 for a in actions}
+        self.cumulative_regrets: dict[str, float] = dict.fromkeys(actions, 0.0)
+        self.strategy_sum: dict[str, float] = dict.fromkeys(actions, 0.0)
         self.iteration: int = 0
 
     def get_current_strategy(self) -> dict[str, float]:
@@ -219,7 +220,7 @@ class CFRPlusEngine:
             return {a: r / total for a, r in positive_regrets.items()}
 
         uniform = 1.0 / len(self.actions)
-        return {a: uniform for a in self.actions}
+        return dict.fromkeys(self.actions, uniform)
 
     def update_regrets(self, action_utilities: dict[str, float], node_ev: float) -> None:
         """Atualiza os arrependimentos acumulados com thresholding R+."""
@@ -240,7 +241,7 @@ class CFRPlusEngine:
         if total > EPSILON:
             return {a: s / total for a, s in self.strategy_sum.items()}
         uniform = 1.0 / len(self.actions)
-        return {a: uniform for a in self.actions}
+        return dict.fromkeys(self.actions, uniform)
 
 
 # ==============================================================================

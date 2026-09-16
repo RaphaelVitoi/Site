@@ -18,9 +18,9 @@ credencial em arquivo rastreado. As unicas materializadas em disco estao em
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import re
 import subprocess
-from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 FONTE = RAIZ / "data" / "PADROES_DE_CREDENCIAL.json"

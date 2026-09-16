@@ -9,14 +9,14 @@ ASCII-pure. Zero-Any. Typed under PEP 585/604.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 import dataclasses
 import json
 import logging
+from pathlib import Path
 import re
 import subprocess
 import time
-from pathlib import Path
-from typing import Mapping, Sequence
 
 logger = logging.getLogger("sota_triad_mesh")
 

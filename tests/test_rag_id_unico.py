@@ -32,7 +32,6 @@ repositorio mudar de lugar.
 from __future__ import annotations
 
 # pylint: disable=import-outside-toplevel
-
 import ast
 import collections
 import json
@@ -61,7 +60,8 @@ def _alvos_do_manifesto() -> set[Path]:
     ini = fonte.index("ignore_dirs = {") + len("ignore_dirs = ")
     fim = fonte.index("}", ini) + 1
     ignore_dirs = ast.literal_eval(fonte[ini:fim])
-    assert isinstance(ignore_dirs, set) and ignore_dirs, "ignore_dirs deixou de ser um set literal"
+    assert isinstance(ignore_dirs, set), "ignore_dirs deixou de ser um set literal"
+    assert ignore_dirs, "ignore_dirs deixou de ser um set literal"
     subarvores = [Path("reports") / "cwv", Path("reports") / "coverage", Path(".claude") / ".ARQUIVE"]
 
     manifesto = json.loads(MANIFESTO.read_text(encoding="utf-8"))
@@ -163,7 +163,7 @@ def test_o_id_nao_e_mais_derivado_so_do_nome():
 
 
 @pytest.mark.parametrize(
-    "caminho_a,caminho_b",
+    ("caminho_a", "caminho_b"),
     [
         (".claude/AGENTS/chico.md", ".claude/agent-memory/chico/MEMORY.md"),
         ("docs/epics/ingestion-pipeline/SPEC.md", "docs/epics/cli-interativa/SPEC.md"),

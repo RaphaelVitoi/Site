@@ -16,9 +16,9 @@ foi incorporada ao CLAUDE.md.
 
 from __future__ import annotations
 
+from pathlib import Path
 import re
 import unicodedata
-from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 AGENTS = RAIZ / "AGENTS.md"

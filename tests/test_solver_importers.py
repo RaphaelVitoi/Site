@@ -5,6 +5,7 @@ DeepSolver, GTOWizard, Monker Solver, HRC Pro e PioSolver.
 """
 
 import json
+
 from engine.solver_importers import (
     DeepSolverImporter,
     GTOWizardImporter,

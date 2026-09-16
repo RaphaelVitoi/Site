@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import ast
 import json
-import re
 from pathlib import Path
+import re
 
 RAIZ = Path(__file__).resolve().parents[1]
 MANIFESTO = RAIZ / "data" / "agents_manifest.json"

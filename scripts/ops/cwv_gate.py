@@ -32,7 +32,7 @@ def get_live_metrics(cdp_port: int = 9222) -> dict:
     try:
         endpoint = f"http://127.0.0.1:{cdp_port}/json/version"
         req = urllib.request.Request(endpoint, headers={"User-Agent": "Nexus-CWV-Gate/1.0"})
-        with urllib.request.urlopen(req, timeout=1.5) as resp:
+        with urllib.request.urlopen(req, timeout=1.5) as resp:  # noqa: S310 - CDP em loopback fixo  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
             data = json.loads(resp.read().decode())
             return {"active": True, "browser": data.get("Browser", "Unknown")}
     except Exception:

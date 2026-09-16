@@ -39,10 +39,10 @@ from llm.adapters import OpenAIAdapter, ParametroRejeitadoError
 from llm.model_registry import (
     ESFORCOS_OPENAI_VALIDOS,
     MODEL_REGISTRY,
-    ModelCapability,
     MODELOS_NAO_VERIFICADOS,
     MODELOS_RETIRADOS,
     AdapterType,
+    ModelCapability,
     custo_estimado,
     get,
     modelos_nao_autorizados,

@@ -73,6 +73,7 @@
         "**/core/vendor/**",
         "**/worker/Java/**",
         "**/reports/**",
+        "**/docs/**",
         "**/.trunk/**",
         "skills/**"
     ],
@@ -313,7 +314,8 @@
     "ruff.configuration": "${workspaceFolder}/pyproject.toml",
     "ruff.nativeServer": "on",
     "ruff.importStrategy": "fromEnvironment",
-    "ruff.format.preview": true,
+    "ruff.lint.preview": false,
+    "ruff.format.preview": false,
     "ruff.codeAction.disableRuleComment": {
         "enable": false
     },

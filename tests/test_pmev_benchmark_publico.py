@@ -115,5 +115,5 @@ def test_spin_publica_icm_igual_a_chipev():
 
 
 def test_sem_nenhuma_observacao_recusa():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="nenhuma estrutura com observacao"):
         build_public_dataset({}, {"x": STT3}, generated_at="2026-09-14")

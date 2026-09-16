@@ -3,7 +3,6 @@
 
 import math
 
-
 # SOTA v7.0 GOLD: Precomputed Mathematical Constants for O(1) Latency Optimization
 LN_100 = 4.605170185988092
 LN_60 = 4.0943445622221

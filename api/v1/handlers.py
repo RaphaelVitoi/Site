@@ -28,8 +28,6 @@ from aiohttp import web
 from pydantic import BaseModel, ValidationError
 
 from api.v1.keys import AUDIT_ENGINE_KEY, BG_TASKS_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
-from database.lab_manager import LabPersistenceUnavailableError
-
 from core.canonical_theory_schemas import (
     ChenAKQGameRequest,
     ChenAKQGameResponse,
@@ -64,8 +62,8 @@ from core.perspective_schemas import (
 )
 import core.runtime as _te
 from core.schemas import RAGQuery, Task
+from database.lab_manager import LabPersistenceUnavailableError
 from engine.bayesian_range import calculate_pmev_call_threshold
-from engine.capability_registry import load_engine_capability_manifest
 from engine.canonical_poker_theory import (
     ChenAKQGameSolver,
     ChenClairvoyanceSolver,
@@ -73,6 +71,7 @@ from engine.canonical_poker_theory import (
     JandaMDFCalculator,
     JandaStreetBluffValueRatio,
 )
+from engine.capability_registry import load_engine_capability_manifest
 from engine.game_theory_solvers import (
     ClaudicoActionTranslator,
     ContinualResolvingEngine,
@@ -1085,7 +1084,7 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
         raw_strategy = ContinualResolvingEngine.resolve_subgame(subgame, iterations=req.iterations)
 
         actions = ["CHECK", "BET_HALF_POT", "BET_POT", "ALL_IN"]
-        agg_freqs: dict[str, float] = {a: 0.0 for a in actions}
+        agg_freqs: dict[str, float] = dict.fromkeys(actions, 0.0)
         total_weight = sum(req.ranges_ip.values())
         if total_weight > 1e-9:
             for hand, strat in raw_strategy.items():

@@ -8,9 +8,8 @@ arquivo adicionado; apenas a validacao de ancora e exclusiva de `docs/` e
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
-
+import re
 
 RAIZ = Path(__file__).resolve().parent.parent
 GATE = RAIZ / "scripts" / "ops" / "record_anchor_gate.ps1"

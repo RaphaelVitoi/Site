@@ -14,7 +14,7 @@ rotulo nativo e guardado junto com o numero.
 Todos os testes sao hermeticos: nenhuma chamada a provedor, nenhum solver real.
 """
 
-import io
+from pathlib import Path
 
 from core.perspective_schemas import SolverProvenance
 from engine.solver_importers.hrc_pro import HRCProImporter
@@ -28,14 +28,14 @@ def _importer() -> HRCProImporter:
 
 def test_build_e_lido_do_cabecalho_do_export_real():
     """A versao esta na PRIMEIRA linha do export; antes era descartada."""
-    raw = io.open(SAMPLE, encoding="utf-8").read()
+    raw = Path(SAMPLE).read_text(encoding="utf-8")
     tree = _importer().parse_tree(raw)
     assert tree.provenance is not None
     assert tree.provenance.build == "v2.4.1"
 
 
 def test_o_sample_nao_traz_e_nash_e_isso_e_declarado_nao_suposto():
-    raw = io.open(SAMPLE, encoding="utf-8").read()
+    raw = Path(SAMPLE).read_text(encoding="utf-8")
     proc = _importer().parse_tree(raw).provenance
     assert proc is not None
     assert proc.e_nash is None

@@ -17,8 +17,8 @@ Typer (EXIT=2, "No such command"). O posicional 0 do do.ps1 e $Description.
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
+import re
 
 import pytest
 import typer.main

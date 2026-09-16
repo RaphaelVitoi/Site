@@ -14,11 +14,10 @@ isso: nada aqui pode escrever no repositorio de origem.
 from __future__ import annotations
 
 # pylint: disable=wrong-import-position
-
 import json
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 if str(RAIZ) not in sys.path:
@@ -39,7 +38,8 @@ def test_nao_inventa_repositorio_onde_nao_ha(tmp_path):
 
 def test_descobre_a_suite_deste_projeto():
     comando = suite_isolada.comando_padrao(RAIZ)
-    assert comando and "pytest" in " ".join(comando)
+    assert comando
+    assert "pytest" in " ".join(comando)
 
 
 def test_nao_adivinha_suite_onde_nao_ha_convencao(tmp_path):
@@ -73,7 +73,8 @@ def test_o_worktree_recebe_nome_unico_por_execucao():
     """Nome com pid e relogio: duas execucoes simultaneas nao colidem, e o nome
     diz quem criou o diretorio quando alguem esquece um `--manter` para tras."""
     fonte = Path(suite_isolada.__file__).read_text(encoding="utf-8")
-    assert "os.getpid()" in fonte and "time.time()" in fonte
+    assert "os.getpid()" in fonte
+    assert "time.time()" in fonte
 
 
 def test_esta_ligado_ao_nexus_test():

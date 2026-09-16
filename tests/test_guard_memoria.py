@@ -26,11 +26,10 @@ Desconhecido tem de ser distinguivel de folgado.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name,protected-access,import-outside-toplevel,unused-argument
-
 import importlib.util
 import json
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -42,7 +41,8 @@ RAIZ = Path(__file__).resolve().parent.parent
 def nx():
     nome = "nexus_guard_sob_teste"
     spec = importlib.util.spec_from_file_location(nome, RAIZ / "scripts" / "cli" / "nexus.py")
-    assert spec and spec.loader
+    assert spec
+    assert spec.loader
     m = importlib.util.module_from_spec(spec)
     sys.modules[nome] = m
     try:
@@ -127,7 +127,8 @@ def test_o_intervalo_encolhe_conforme_a_pressao_sobe(nx):
     meio = nx._intervalo_adaptativo(_leitura(0.5))
     apertado = nx._intervalo_adaptativo(_leitura(1.0))
     assert folgado > meio > apertado, f"nao e monotonico: {folgado}, {meio}, {apertado}"
-    assert apertado >= 15 and folgado <= 600
+    assert apertado >= 15
+    assert folgado <= 600
 
 
 def test_sem_medidor_nenhum_o_intervalo_vai_ao_maximo(nx):
@@ -296,7 +297,8 @@ def test_a_acao_de_commit_nao_e_trim_de_working_set(nx):
 def test_a_camada_de_ram_declara_que_e_a_folgada(tetos):
     """Sem isto, alguem le teto 98% e conclui que a RAM e o sinal principal."""
     cuidados = " ".join(tetos["ram"]["cuidado_declarado"]).lower()
-    assert "folgada" in cuidados and "commit" in cuidados
+    assert "folgada" in cuidados
+    assert "commit" in cuidados
 
 
 def test_o_ritmo_segue_a_camada_pressionada_e_nao_a_folgada(nx, tetos):
@@ -339,7 +341,8 @@ def test_com_pressao_de_commit_a_periodica_age(nx):
     with patch.object(nx, "_commit_charge_pct", return_value=(88.0, 66.0, 75.0)):
         agir, motivo = nx._pressao_justifica_higienizacao()
     assert agir is True
-    assert "88.0%" in motivo and "piso" in motivo, motivo
+    assert "88.0%" in motivo, motivo
+    assert "piso" in motivo, motivo
 
 
 def test_sem_medidor_de_commit_a_periodica_suspende_em_vez_de_agir(nx):
@@ -372,7 +375,7 @@ def test_a_decisao_nao_le_virtual_memory_percent(nx):
 
 def test_o_piso_preditivo_fica_abaixo_do_teto_declarado_de_commit(nx, tetos):
     """Piso acima do teto seria portao que so abre depois de o vermelho acender."""
-    assert nx._PISO_PREDITIVO_COMMIT_PCT < float(tetos["commit"]["teto_pct"])
+    assert float(tetos["commit"]["teto_pct"]) > nx._PISO_PREDITIVO_COMMIT_PCT
 
 
 # ---------------------------------------------------------------------------

@@ -3,8 +3,8 @@ Telemetria e Auditoria -- Toast notifications e economic log.
 """
 
 import asyncio
-import logging
 from datetime import UTC, datetime
+import logging
 
 from core.config import PATH_AUDIT_LOGS
 from core.schemas import Task

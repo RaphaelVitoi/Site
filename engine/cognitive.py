@@ -1,12 +1,12 @@
 # ruff: noqa: D100, D101, D103, BLE001, G004, PLW0603, PLW0621, ASYNC240
 # pylint: disable=global-statement, import-outside-toplevel
 
+from datetime import UTC, datetime
 import json
 import logging
 import os
-import re
-from datetime import UTC, datetime
 from pathlib import Path
+import re
 
 import aiofiles
 

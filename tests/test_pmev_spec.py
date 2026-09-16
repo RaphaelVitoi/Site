@@ -22,7 +22,7 @@ def test_tournament_state_rejects_invalid_mass() -> None:
         TournamentState(stacks=(100.0, 100.0), payouts=(0.0,))
 
 
-@pytest.mark.parametrize("non_finite", (float("nan"), float("inf"), float("-inf")))
+@pytest.mark.parametrize("non_finite", [float("nan"), float("inf"), float("-inf")])
 def test_tournament_state_rejects_non_finite_financial_inputs(non_finite: float) -> None:
     with pytest.raises(ValueError, match="finitos"):
         TournamentState(stacks=(non_finite, 100.0), payouts=(100.0,))
@@ -88,7 +88,7 @@ def test_h9_rejects_a_changed_payout_cardinality() -> None:
         )
 
 
-@pytest.mark.parametrize("non_finite", (float("nan"), float("inf"), float("-inf")))
+@pytest.mark.parametrize("non_finite", [float("nan"), float("inf"), float("-inf")])
 def test_h9_rejects_non_finite_transition_inputs(non_finite: float) -> None:
     before = TournamentState(stacks=(50.0, 50.0), payouts=(100.0,))
 

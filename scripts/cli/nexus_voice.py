@@ -159,7 +159,7 @@ async def async_speak_text(
     # ser independentes, e some se `antigravity` for movido ou renomeado.
     # Agora: variavel de ambiente primeiro, e o proprio projeto como padrao.
     temp_dir = Path(os.environ.get("SOTA_VOICE_TMP") or (PROJECT_ROOT / ".cache" / "voice"))
-    temp_dir.mkdir(parents=True, exist_ok=True)
+    temp_dir.mkdir(parents=True, exist_ok=True)  # noqa: ASYNC240 - uma vez por comando de CLI
 
     out_path = Path(output_file) if output_file else temp_dir / "sota_voice_output.mp3"
 

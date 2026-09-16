@@ -68,5 +68,6 @@ if __name__ == "__main__":
     idx = binary_search_length_lex(sorted_domains, TARGET_DOMAIN)
     print(f"Lista Ordenada: {sorted_domains}")
     print(f"Index de '{TARGET_DOMAIN}': {idx} (Item encontrado: {sorted_domains[idx]})")
-    assert idx >= 0 and sorted_domains[idx] == TARGET_DOMAIN
+    assert idx >= 0
+    assert sorted_domains[idx] == TARGET_DOMAIN
     print("SOTA Binary Engine Python: 100% Validado.")

@@ -17,9 +17,9 @@ entrada, nao simulacao de jogo futuro. Esta ausencia fica declarada, nao preench
 
 from __future__ import annotations
 
-import importlib
 from dataclasses import dataclass
 from enum import StrEnum
+import importlib
 from math import isfinite
 from pathlib import Path
 from typing import Final

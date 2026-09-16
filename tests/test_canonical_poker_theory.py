@@ -9,7 +9,9 @@ Valida os resultados diretamente contra as solucoes exatas das obras:
 from __future__ import annotations
 
 import math
+
 import pytest
+
 from engine.canonical_poker_theory import (
     ChenAKQGameSolver,
     ChenClairvoyanceSolver,
@@ -19,7 +21,6 @@ from engine.canonical_poker_theory import (
     JandaStreetBluffValueRatio,
 )
 from engine.game_theory_solvers import CFRPlusEngine
-
 
 # ==============================================================================
 # 1. TESTES CHEN & ANKENMAN (The Mathematics of Poker)
@@ -227,5 +228,5 @@ def test_cfr_plus_convergence_to_chen_analytical_equilibrium():
 )
 def test_canonical_engines_reject_impossible_inputs(call, kwargs):
     """Contrato direto deve falhar alto, igual aos schemas HTTP."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011 - parametrizado: cada caso falha com mensagem propria
         call(**kwargs)

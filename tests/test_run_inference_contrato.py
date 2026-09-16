@@ -34,7 +34,6 @@ O QUE HA, e o motivo destes testes existirem:
 from __future__ import annotations
 
 # pylint: disable=protected-access
-
 import io
 import json
 from unittest.mock import MagicMock, patch

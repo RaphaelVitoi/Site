@@ -3,11 +3,11 @@ Motor de Leitura Bayesiana de Ranges (SOTA).
 Calcula a contracao dos ranges oponentes aplicando o Teorema de Bayes a cada acao observada.
 """
 
-from typing import Any
-import math  # Refresh IDE
 import csv
 import json
+import math  # Refresh IDE
 from pathlib import Path
+from typing import Any
 
 RANKS = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
 

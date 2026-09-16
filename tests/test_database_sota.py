@@ -5,7 +5,6 @@ Testes SOTA para os gerenciadores de banco de dados (LabManager e QueueManager) 
 from __future__ import annotations
 
 # pylint: disable=protected-access
-
 import contextlib
 from datetime import UTC, datetime
 import os

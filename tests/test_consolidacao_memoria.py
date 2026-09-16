@@ -25,10 +25,9 @@ em comum, entao entrada > saida e deduplicacao esperada, nao perda.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name
-
 import importlib.util
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -47,7 +46,8 @@ def mod():
     """
     nome = "consolidar_sob_teste"
     spec = importlib.util.spec_from_file_location(nome, SCRIPT)
-    assert spec and spec.loader
+    assert spec
+    assert spec.loader
     m = importlib.util.module_from_spec(spec)
     sys.modules[nome] = m
     try:

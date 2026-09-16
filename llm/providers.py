@@ -5,15 +5,15 @@ This module abstracts LLM routing and calling strategies to decouple
 API requests from resilience and circuit breaker logic.
 """
 
+from abc import ABC, abstractmethod
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass
 import logging
 import os
 import re
 import secrets
 import time
-from abc import ABC, abstractmethod
-from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any, cast
 
 import aiohttp

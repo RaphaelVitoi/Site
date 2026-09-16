@@ -11,9 +11,9 @@ import asyncio
 import json
 import socket
 import ssl
+from typing import Any
 import urllib.error
 import urllib.request
-from typing import Any
 
 import aiohttp
 import certifi

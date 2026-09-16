@@ -5,10 +5,11 @@ Pipeline: Nexus Core / Chico SOTA v8.0 GOLD
 """
 
 import asyncio
-import time
 from dataclasses import dataclass, field
 from enum import Enum
+import time
 from typing import Any
+
 import aiohttp
 import pytest
 
@@ -84,7 +85,7 @@ class StressTestCircuitBreaker:
                 self.metrics.latencies_ms.append(latency)
                 self.metrics.success_count += 1
                 return "vulkan_success"
-            except Exception:
+            except Exception:  # noqa: S110 - simulacao: a queda da camada segue para o breaker  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
                 pass
 
         # Disparo do Circuit Breaker na Camada 1
@@ -98,7 +99,7 @@ class StressTestCircuitBreaker:
             self.metrics.latencies_ms.append(latency)
             self.metrics.success_count += 1
             return "ollama_success"
-        except Exception:
+        except Exception:  # noqa: S110 - simulacao: a queda da camada segue para a nuvem  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
             pass
 
         # Camada 3: Fallback Nuvem (Gemini / Gemma API)

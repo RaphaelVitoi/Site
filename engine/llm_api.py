@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import logging
-import os
-import time
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
+import logging
+import os
+import time
 from typing import Any
 
 import aiohttp

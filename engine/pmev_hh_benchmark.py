@@ -23,12 +23,12 @@ torneio sao correlacionados, e o intervalo e bootstrap por TORNEIO, nunca por ma
 
 from __future__ import annotations
 
-import math
-import random
-import re
 from collections import defaultdict
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
+import math
+import random
+import re
 from statistics import fmean
 from typing import Final
 
@@ -188,7 +188,7 @@ def run_benchmark(
     notas = [score_observation(o, structure) for o in observations]
     if not notas:
         raise ValueError("benchmark sem observacoes: nada medido nao e resultado.")
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # noqa: S311 - bootstrap reprodutivel por seed, nao criptografia  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
     metricas: dict[str, dict[str, list[tuple[float, float]]]] = defaultdict(lambda: defaultdict(list))
     for n in notas:
         metricas["brier"][n.tournament_id].append((n.brier_icm, n.brier_uniforme))

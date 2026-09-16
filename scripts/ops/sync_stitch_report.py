@@ -8,7 +8,7 @@ gerando o STITCH_REPORT.md fidedigno, lastreado em dados reais e sincronizado co
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import logging
 from pathlib import Path
 from typing import Any, Final
@@ -66,7 +66,7 @@ def fetch_all_stitch_data() -> dict[str, Any]:
 
 def format_markdown_report(data: dict[str, Any]) -> str:
     """Formata os dados do Stitch no padrao SOTA Markdown."""
-    now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    now_utc = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     projects = data.get("projects", [])
     total_proj = data.get("total_projects", 0)
     total_screens = data.get("total_screens", 0)

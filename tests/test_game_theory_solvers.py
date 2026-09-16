@@ -11,6 +11,7 @@ Valida integracao e corretude matematica dos motores:
 import math
 
 import pytest
+
 from engine.game_theory_solvers import (
     CFRPlusEngine,
     ClaudicoActionTranslator,
@@ -57,7 +58,8 @@ def test_claudico_pseudo_harmonic_mapping():
 
     # Aposta intermediaria (15.0 entre 10 e 20)
     mapping_inter = ClaudicoActionTranslator.pseudo_harmonic_mapping(15.0, allowed_bets, pot_size)
-    assert 10.0 in mapping_inter and 20.0 in mapping_inter
+    assert 10.0 in mapping_inter
+    assert 20.0 in mapping_inter
     assert math.isclose(sum(mapping_inter.values()), 1.0)
     assert mapping_inter[10.0] > 0.0
     assert mapping_inter[20.0] > 0.0
@@ -74,7 +76,8 @@ def test_deepstack_continual_resolving():
     )
 
     bounds = subgame.compute_gadget_game_bounds()
-    assert "QQ" in bounds and "JJ" in bounds
+    assert "QQ" in bounds
+    assert "JJ" in bounds
     assert bounds["QQ"] > 0.0
 
     strategy = ContinualResolvingEngine.resolve_subgame(subgame, iterations=50)

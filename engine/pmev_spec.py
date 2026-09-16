@@ -10,9 +10,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 from math import isfinite
-from typing import Generic, TypeVar
-
-T = TypeVar("T")
 
 
 class PMevTier(StrEnum):
@@ -132,7 +129,7 @@ class Provenance:
 
 
 @dataclass(frozen=True, slots=True)
-class Measured(Generic[T]):
+class Measured[T]:
     """Contrato estrutural de grandeza mensuravel com incerteza e proveniencia.
 
     Garante interoperabilidade e paridade de schema entre Python, TypeScript e WASM.

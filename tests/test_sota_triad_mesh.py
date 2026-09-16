@@ -6,8 +6,10 @@ ASCII-pure. Typed under PEP 585/604.
 
 from __future__ import annotations
 
-import unittest
 from pathlib import Path
+import unittest
+
+import pytest
 
 from engine.sota_triad_mesh import (
     ExaKnowledgeBridge,
@@ -33,11 +35,11 @@ class TestSotaTriadMesh(unittest.TestCase):
     def test_exa_knowledge_bridge_builds_game_theory_query(self) -> None:
         topic = "ICM dynamic bubble factor in multiway pots"
         req = ExaKnowledgeBridge.build_game_theory_query(topic, math_density="high")
-        self.assertIsInstance(req, ExaQueryRequest)
-        self.assertEqual(req.topic, topic)
-        self.assertTrue(req.require_latex)
-        self.assertIn("CFR+", req.query_string)
-        self.assertIn("arxiv.org", req.domain_filters)
+        assert isinstance(req, ExaQueryRequest)
+        assert req.topic == topic
+        assert req.require_latex
+        assert "CFR+" in req.query_string
+        assert "arxiv.org" in req.domain_filters
 
     def test_exa_knowledge_bridge_extracts_latex_and_citations(self) -> None:
         sample_text = (
@@ -46,29 +48,29 @@ class TestSotaTriadMesh(unittest.TestCase):
             "See https://arxiv.org/abs/2301.00000 and https://trueicm.com/docs for details."
         )
         res = ExaKnowledgeBridge.parse_research_context(sample_text, topic="PMev")
-        self.assertIsInstance(res, ExaResearchResult)
-        self.assertEqual(res.topic, "PMev")
-        self.assertEqual(len(res.extracted_formulas), 2)
-        self.assertIn("PMev(\\sigma) = \\int \\mathcal{V}(x) dx", res.extracted_formulas)
-        self.assertIn("\\Delta \\leq 0.05", res.extracted_formulas)
-        self.assertEqual(len(res.citations), 2)
-        self.assertIn("https://arxiv.org/abs/2301.00000", res.citations)
+        assert isinstance(res, ExaResearchResult)
+        assert res.topic == "PMev"
+        assert len(res.extracted_formulas) == 2
+        assert "PMev(\\sigma) = \\int \\mathcal{V}(x) dx" in res.extracted_formulas
+        assert "\\Delta \\leq 0.05" in res.extracted_formulas
+        assert len(res.citations) == 2
+        assert "https://arxiv.org/abs/2301.00000" in res.citations
 
     def test_stitch_design_bridge_screen_prompt_generation(self) -> None:
         req = StitchDesignBridge.build_screen_prompt("PMev Heatmap Simulator")
-        self.assertIsInstance(req, StitchScreenRequest)
-        self.assertEqual(req.screen_name, "PMev Heatmap Simulator")
-        self.assertIn("#090D16", req.prompt)
-        self.assertIn("#D4AF37", req.prompt)
-        self.assertIn("WCAG AAA", req.prompt)
+        assert isinstance(req, StitchScreenRequest)
+        assert req.screen_name == "PMev Heatmap Simulator"
+        assert "#090D16" in req.prompt
+        assert "#D4AF37" in req.prompt
+        assert "WCAG AAA" in req.prompt
 
     def test_stitch_extract_tailwind_classes(self) -> None:
         markup = '<div className="bg-slate-950 text-amber-400 p-6 flex flex-col"><button class="rounded-xl px-4 py-2"></button></div>'
         classes = StitchDesignBridge.extract_tailwind_classes(markup)
-        self.assertIn("bg-slate-950", classes)
-        self.assertIn("text-amber-400", classes)
-        self.assertIn("rounded-xl", classes)
-        self.assertIn("flex-col", classes)
+        assert "bg-slate-950" in classes
+        assert "text-amber-400" in classes
+        assert "rounded-xl" in classes
+        assert "flex-col" in classes
 
     def test_jules_cloud_bridge_patch_metrics_parsing(self) -> None:
         sample_diff = (
@@ -84,42 +86,42 @@ class TestSotaTriadMesh(unittest.TestCase):
             "+test_assertion\n"
         )
         metrics = JulesCloudBridge.parse_patch_metrics(sample_diff)
-        self.assertEqual(metrics["files_count"], 2)
-        self.assertEqual(metrics["insertions"], 3)
-        self.assertEqual(metrics["deletions"], 1)
+        assert metrics["files_count"] == 2
+        assert metrics["insertions"] == 3
+        assert metrics["deletions"] == 1
         files = metrics["files"]
         assert isinstance(files, list)
-        self.assertIn("engine/core.py", files)
-        self.assertIn("tests/test_core.py", files)
+        assert "engine/core.py" in files
+        assert "tests/test_core.py" in files
 
     def test_triad_orchestrator_planning_and_dag_generation(self) -> None:
         plan = self.orchestrator.plan_triad_workflow("Simulador de Equidade Flop PMev")
-        self.assertIn("objective", plan)
+        assert "objective" in plan
         dag_phases = plan["dag_phases"]
-        self.assertIsInstance(dag_phases, list)
         assert isinstance(dag_phases, list)
-        self.assertEqual(len(dag_phases), 4)
-        self.assertEqual(dag_phases[0]["agent"], "Exa (Neural Research)")
-        self.assertEqual(dag_phases[1]["agent"], "Stitch (Generative UI)")
-        self.assertEqual(dag_phases[2]["agent"], "Google Jules (Cloud VM)")
-        self.assertEqual(dag_phases[3]["agent"], "Antigravity 2.0 (Local Gate)")
+        assert isinstance(dag_phases, list)
+        assert len(dag_phases) == 4
+        assert dag_phases[0]["agent"] == "Exa (Neural Research)"
+        assert dag_phases[1]["agent"] == "Stitch (Generative UI)"
+        assert dag_phases[2]["agent"] == "Google Jules (Cloud VM)"
+        assert dag_phases[3]["agent"] == "Antigravity 2.0 (Local Gate)"
 
     def test_triad_dag_without_receipts_is_not_verified(self) -> None:
         """Negative test: planning is not execution. It used to report verified=True."""
         report = self.orchestrator.execute_triad_dag("Validacao de Teoremas de Vitoi")
-        self.assertIsInstance(report, TriadMeshReport)
-        self.assertFalse(report.verified)
-        self.assertEqual(report.convergence_rate, 0.0)
+        assert isinstance(report, TriadMeshReport)
+        assert not report.verified
+        assert report.convergence_rate == 0.0
         for status in (report.exa_status, report.stitch_status, report.jules_status):
-            self.assertTrue(status.startswith("NOT_EXECUTED"), status)
-        self.assertGreaterEqual(report.total_latency_seconds, 0)
+            assert status.startswith("NOT_EXECUTED"), status
+        assert report.total_latency_seconds >= 0
 
     def test_triad_dag_verified_only_with_three_success_receipts(self) -> None:
         receipts = {p: PhaseReceipt(succeeded=True, evidence=f"run-{p}-001") for p in ("exa", "stitch", "jules")}
         report = self.orchestrator.execute_triad_dag("objective", receipts=receipts)
-        self.assertTrue(report.verified)
-        self.assertEqual(report.convergence_rate, 1.0)
-        self.assertIn("run-exa-001", report.exa_status)
+        assert report.verified
+        assert report.convergence_rate == 1.0
+        assert "run-exa-001" in report.exa_status
 
     def test_triad_dag_partial_receipts_report_partial_convergence(self) -> None:
         receipts = {
@@ -127,26 +129,26 @@ class TestSotaTriadMesh(unittest.TestCase):
             "jules": PhaseReceipt(succeeded=False, evidence="HTTP 500"),
         }
         report = self.orchestrator.execute_triad_dag("objective", receipts=receipts)
-        self.assertFalse(report.verified)
-        self.assertAlmostEqual(report.convergence_rate, 1 / 3)
-        self.assertTrue(report.jules_status.startswith("FAILED"))
-        self.assertTrue(report.stitch_status.startswith("NOT_EXECUTED"))
+        assert not report.verified
+        assert report.convergence_rate == pytest.approx(1 / 3)
+        assert report.jules_status.startswith("FAILED")
+        assert report.stitch_status.startswith("NOT_EXECUTED")
 
     def test_success_receipt_without_evidence_is_rejected(self) -> None:
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="must name its evidence"):
             PhaseReceipt(succeeded=True, evidence="   ")
 
     def test_unknown_pillar_receipt_is_rejected(self) -> None:
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Unknown triad pillar"):
             self.orchestrator.execute_triad_dag("objective", receipts={"devin": PhaseReceipt(True, "x")})
 
     def test_pure_ascii_in_triad_files(self) -> None:
         triad_file = ROOT_DIR / "engine" / "sota_triad_mesh.py"
         test_file = ROOT_DIR / "tests" / "test_sota_triad_mesh.py"
         for p in [triad_file, test_file]:
-            self.assertTrue(p.is_file(), f"File {p} does not exist")
+            assert p.is_file(), f"File {p} does not exist"
             text = p.read_text(encoding="utf-8")
-            self.assertTrue(all(ord(c) < 128 for c in text), f"Non-ASCII character in {p}")
+            assert all(ord(c) < 128 for c in text), f"Non-ASCII character in {p}"
 
 
 if __name__ == "__main__":

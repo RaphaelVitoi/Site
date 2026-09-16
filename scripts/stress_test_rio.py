@@ -2,10 +2,9 @@
 Script de stress test para avaliar a metrica de RIO (Reverse Implied Odds) em diferentes cenarios.
 """
 
+import math
 import os
 import sys
-
-import math
 
 # Adiciona o diretorio atual ao path para importar o motor
 sys.path.append(os.getcwd())

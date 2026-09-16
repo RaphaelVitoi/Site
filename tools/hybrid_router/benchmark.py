@@ -75,7 +75,7 @@ class BenchmarkMetrics:
     total_time_seconds: float
     rps: float
     latencies: list[float] = field(default_factory=list)
-    targets_count: dict[str, int] = field(default_factory=lambda: {})
+    targets_count: dict[str, int] = field(default_factory=dict)
     total_thinking_tokens: int = 0
     errors: list[str] = field(default_factory=list)
     raw_results: list[RequestResult] = field(default_factory=list)
