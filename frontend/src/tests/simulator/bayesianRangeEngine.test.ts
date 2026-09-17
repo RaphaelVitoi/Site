@@ -7,6 +7,8 @@ import {
 	calculateShannonEntropy,
 	computePublicBeliefState,
 	generateTextureAwareLikelihood,
+	getSolverNodeData,
+	computeSplitGradient,
 } from '../../lib/bayesianRangeEngine';
 
 describe('bayesianRangeEngine', () => {
@@ -132,5 +134,68 @@ describe('bayesianRangeEngine', () => {
 			expect(likelihood['88']).toBeLessThan(0.2); // Pares médios sem draw não dão check-raise
 		});
 	});
+
+	describe('computeSplitGradient', () => {
+		it('should generate solid color for a single action', () => {
+			const gradient = computeSplitGradient([{ name: 'Check', label: 'Check', pct: 100, color: '#4ade80' }]);
+			expect(gradient).toBe('#4ade80');
+		});
+
+		it('should generate linear-gradient with sharp stops for Nash mixed strategies', () => {
+			const gradient = computeSplitGradient([
+				{ name: 'Raise', label: 'Raise', pct: 35, color: '#fb7185' },
+				{ name: 'Call', label: 'Call', pct: 65, color: '#4ade80' },
+			]);
+			expect(gradient).toBe('linear-gradient(to right, #fb7185 0.0%, #fb7185 35.0%, #4ade80 35.0%, #4ade80 100.0%)');
+		});
+	});
+
+	describe('getSolverNodeData (Aula 1.2 Canônica)', () => {
+		it('should reflect 100% check for TT-66 on ICMev Flop C-Bet and high bet on ChipEV', () => {
+			const icmData = getSolverNodeData('aula1_2', 'cbet_small', 'icm');
+			expect(icmData.actor).toBe('BTN');
+			expect(icmData.combos['TT'].localFreq).toBe(0);
+			expect(icmData.combos['99'].localFreq).toBe(0);
+			expect(icmData.combos['55'].localFreq).toBe(100);
+			expect(icmData.combos['72o'].arrived).toBe(false); // Não abriu pré-flop
+
+			const chipevData = getSolverNodeData('aula1_2', 'cbet_small', 'chipev');
+			expect(chipevData.combos['TT'].localFreq).toBeGreaterThan(90);
+			expect(chipevData.combos['99'].localFreq).toBeGreaterThan(90);
+		});
+
+		it('should reflect Nash Indifference for AQs in BB Check-Raise node', () => {
+			const xrData = getSolverNodeData('aula1_2', 'check_raise', 'icm');
+			expect(xrData.actor).toBe('BB');
+			expect(xrData.combos['AQs'].isIndifferent).toBe(true);
+			expect(xrData.combos['AQs'].actions.length).toBe(2);
+			expect(xrData.combos['AQs'].localFreq).toBe(35); // 35% raise
+			expect(xrData.combos['99'].arrived).toBe(false); // 99 foldou ou não deu XR
+		});
+
+		it('should filter out >80% of the range on Turn 2d barrel node', () => {
+			const turnData = getSolverNodeData('aula1_2', 'barrel_heavy', 'icm');
+			expect(turnData.actor).toBe('BB');
+			expect(turnData.streetName).toBe('Turn');
+			expect(turnData.activeCombosCount).toBeLessThan(55);
+			expect(turnData.combos['AQs'].arrived).toBe(true);
+			expect(turnData.combos['Q4s'].localFreq).toBe(80); // 73% bet50 + 7% shove
+			expect(turnData.combos['72o'].arrived).toBe(false);
+			expect(turnData.combos['AKo'].arrived).toBe(false);
+		});
+
+		it('should severely shrink the range on River 3h Call Bluff Catcher node to ~15 combos', () => {
+			const callData = getSolverNodeData('aula1_2', 'call_condensed', 'icm');
+			expect(callData.actor).toBe('BTN');
+			expect(callData.streetName).toBe('River');
+			expect(callData.activeCombosCount).toBe(15);
+			expect(callData.combos['AQs'].localFreq).toBe(100); // 100% call
+			expect(callData.combos['TT'].localFreq).toBe(93); // 93% call
+			expect(callData.combos['TT'].isIndifferent).toBe(true);
+			expect(callData.combos['JJ'].localFreq).toBe(82); // 82% call
+			expect(callData.combos['AKo'].arrived).toBe(false); // Filtrado
+		});
+	});
 });
+
 
