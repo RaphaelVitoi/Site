@@ -406,7 +406,7 @@ async def process_agent_task(task: Task, manager: QueueManager):
         await f.write(f"# Resposta: {task.id} ({task.agent})\n\n{response_text}")
 
     # Aplicacao do God Mode (Soberania de Acao)
-    await apply_god_mode(response_text, manager)
+    await apply_god_mode(response_text, manager, task.agent)
 
     if task.agent == DISPATCHER_AGENT:
         await _process_dispatcher_result(task, manager, response_text)

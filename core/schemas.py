@@ -88,8 +88,10 @@ class SOTAMetrics(BaseModel):
 class RAGQuery(BaseModel):
     """Schema para consultas RAG (Retrieval Augmented Generation)."""
 
-    query: str
-    top_k: int = 5
+    # BK-18 (auditoria 2026-09-16): query e top_k nao tinham limite. top_k vira
+    # n_results da busca vetorial, e a query entra na chave de cache.
+    query: str = Field(..., min_length=1, max_length=4000)
+    top_k: int = Field(5, ge=1, le=50)
     threshold: float = 0.75
     metadata_filter: dict[str, dict | list | str | int | float | bool | None] | None = None
 
