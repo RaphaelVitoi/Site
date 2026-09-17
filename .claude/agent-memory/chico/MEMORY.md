@@ -256,3 +256,14 @@ própria auditoria que o registrou.
   4. *Correções no Nexus CLI:* Resolvidos bugs em `stats daily-report` (ligado ao `autopoietic_daily_cycle.py`), `calib-forecast`, remoção do `ValidateSet` rígido em `start_model.ps1`, e correção estrita de tipos Pyright em `nexus.py:2336`.
   5. *Qualidade & Testes:* 52/52 testes aprovados em 5.16s (`test_run_inference_contrato.py` e `test_cli_nexus.py`), 30/30 testes em `test_record_index.py`, 0 erros no Pyright e 0 no Ruff.
 
+---
+
+## 6. Fechamento de Sessão & Calibração — 2026-09-16 (Blindagem Turbopack e Antevisão de PRs)
+
+- **Feedback Humano Literal:** `9.5/10` (registrado no `reports/agent-calibration/feedback-ledger.jsonl`, sequência 76).
+  - *Avaliação do Tier 0:* "Feedback: 9.5/10 -> Motivo: pelo -0,5 = Inaptidão de antevisão e análise de PRS antes de merge/comitt e push e a necessidade de ser relembrado disso."
+  - *Ação Corretiva Memorizada:* Proibição estrita de automação cega de PRs de dependência. Toda proposta de merge deve ser precedida de antevisão minuciosa de breaking changes (como a rejeição do Zod 4 no PR #61), verificação de lockfile desync, e simulação em runtime.
+- **Entregas Técnicas Consolidadas:**
+  1. *Blindagem Turbopack de Ativos Estáticos:* Adição de `transpilePackages: ['@fortawesome/fontawesome-free']` no `frontend/next.config.js` e espelhamento físico em `frontend/public/webfonts/`, eliminando permanentemente a falha de resolução relativa em modo de desenvolvimento.
+  2. *Build de Produção e Qualidade:* `npm --workspace=frontend run build` compilando 62/62 rotas estáticas em 1.46s (sucesso 100%).
+  3. *Bateria de Testes Jest:* 63 test suites e 455 testes executados com 0 erros e 0 warnings (100% verde).
