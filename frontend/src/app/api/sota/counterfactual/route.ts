@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { evaluateCounterfactual } from '@/lib/counterfactualExperiment';
+import { mensagemDeErroDeDominio } from '@/lib/server/domain-error-message';
 
 export async function POST(request: Request) {
   let input: unknown;
@@ -9,12 +10,9 @@ export async function POST(request: Request) {
   try {
     return NextResponse.json(evaluateCounterfactual(input), { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    let errorMessage = 'Não foi possível avaliar o experimento.';
-    if (error instanceof ZodError) {
-      errorMessage = 'Informe contexto completo, valores finitos e probabilidades entre 0 e 1.';
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-    }
+    const errorMessage = error instanceof ZodError
+      ? 'Informe contexto completo, valores finitos e probabilidades entre 0 e 1.'
+      : mensagemDeErroDeDominio(error, 'Não foi possível avaliar o experimento.');
     return NextResponse.json({ error: errorMessage }, { status: 422 });
   }
 }

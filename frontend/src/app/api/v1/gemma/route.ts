@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { InferenceRequestSchema } from '@/lib/schemas';
 import { resolveGemmaRelayConfig } from '@/lib/server/gemma-relay';
+import { CorpoExcedeLimiteError, lerCorpoComLimite } from '@/lib/server/limited-body';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -40,15 +41,13 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: 'Acesso Negado: Sessao SOTA exigida.' }, { status: 401 });
 	}
 
-	const declaredLength = Number(request.headers.get('content-length') ?? 0);
-	if (!Number.isFinite(declaredLength) || declaredLength > MAX_REQUEST_BYTES) {
-		return NextResponse.json({ error: 'Payload de inferencia excede o limite permitido.' }, { status: 413 });
-	}
-
 	let payload: unknown;
 	try {
-		payload = await request.json();
-	} catch {
+		payload = JSON.parse(await lerCorpoComLimite(request, MAX_REQUEST_BYTES));
+	} catch (error) {
+		if (error instanceof CorpoExcedeLimiteError) {
+			return NextResponse.json({ error: 'Payload de inferencia excede o limite permitido.' }, { status: 413 });
+		}
 		return NextResponse.json({ error: 'Payload de inferencia invalido.' }, { status: 400 });
 	}
 

@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { encaminharAoNexus } from '@/lib/server/nexus-proxy';
+import { encaminharAoNexus, identificadorDoVisitante } from '@/lib/server/nexus-proxy';
 
 const comSessao = () => Promise.resolve({ user: { id: 'u1' } });
 const semSessao = () => Promise.resolve(null);
@@ -64,7 +64,21 @@ describe('Proxy autenticado das rotas SOTA', () => {
 		globalThis.fetch = jest.fn().mockRejectedValue(new Error('ECONNREFUSED'));
 		const res = await encaminharAoNexus(pedido(), '/api/v1/timesfm/forecast', { obterSessao: comSessao, rotulo: 'TimesFM' });
 		expect(res.status).toBe(503);
-		expect(await res.json()).toEqual({ status: 'ERROR', error: 'TimesFM: ECONNREFUSED' });
+		const corpo = await res.json();
+		expect(corpo).toEqual({ status: 'ERROR', error: 'TimesFM: backend inalcançável.' });
+		expect(JSON.stringify(corpo)).not.toContain('ECONNREFUSED');
+	});
+
+	it('identifica o visitante ao backend por hash opaco, distinto por usuário (BK-06)', async () => {
+		globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) });
+		await encaminharAoNexus(pedido(), '/api/v1/timesfm/forecast', { obterSessao: comSessao, rotulo: 'TimesFM' });
+
+		const enviado = (globalThis.fetch as jest.Mock).mock.calls[0][1].headers['X-Nexus-Client-Id'];
+		expect(enviado).toMatch(/^[0-9a-f]{32}$/);
+		expect(enviado).not.toContain('u1');
+		expect(identificadorDoVisitante({ user: { id: 'u2' } })).not.toBe(enviado);
+		expect(identificadorDoVisitante({ user: {} })).toBeNull();
+		expect(identificadorDoVisitante(null)).toBeNull();
 	});
 
 	it('as rotas não carregam mais o literal de credencial', () => {
