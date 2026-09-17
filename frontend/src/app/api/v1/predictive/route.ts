@@ -26,9 +26,15 @@ export async function GET() {
     const timeoutId = setTimeout(() => controller.abort(), 800); // SOTA Fallback: Falha rapida em 800ms
     try {
       const { buildNexusServerUrl } = await import('@/lib/api-contract');
+      // BK-13 (auditoria 2026-09-16): sem Authorization o backend responde 401 sempre que
+      // API_SECRET_TOKEN existe, e esta integração nunca executava — só o fallback.
+      const nexusHeaders: Record<string, string> = {};
+      const credencial = process.env['API_SECRET_TOKEN'];
+      if (credencial) nexusHeaders['Authorization'] = `Bearer ${credencial}`;
       const localRes = await fetch(buildNexusServerUrl('/predictive-profile'), {
         signal: controller.signal,
         cache: 'no-store',
+        headers: nexusHeaders,
       });
       clearTimeout(timeoutId);
       if (localRes.ok) {
