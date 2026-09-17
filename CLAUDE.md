@@ -270,19 +270,18 @@ plugin que a contradigam não têm precedência.
 ### 8.0 Contexto e instrução default — qualquer agente
 
 Todo agente, independentemente de identidade, Tier ou função, recebe por
-padrão somente o núcleo abaixo e este contexto de governança. O núcleo de oito
-skills é a configuração default, não uma lista fechada de capacidade.
+padrão o núcleo compartilhado e este contexto de governança.
 
-| Núcleo default | Função transversal |
-| :--- | :--- |
-| `superpowers` | Planejamento, TDD, debugging e coordenação |
-| `modern-web-guidance` | Web, APIs nativas, acessibilidade e compatibilidade |
-| `typescript-lsp` | Diagnóstico estrutural TypeScript/JavaScript |
-| `playwright` | Smoke/E2E e evidência visual |
-| `claude-security` | Threat model e revisão de segurança de código |
-| `code-review` | Revisão final, confiança e limites de publicação |
-| `frontend-design` | Direção visual, UX e sistema de design |
-| `plugin-dev` | Skills, plugins, hooks, MCPs e manifests |
+**A lista não mora aqui.** Desde 2026-09-17 a fonte única de MCPs, plugins e
+hooks de todos os hospedeiros é `~\.gemini\nucleo\nucleo_compartilhado.json`,
+e as configurações nativas de cada hospedeiro são **geradas** por
+`~\.gemini\scripts\ops\sincronizar_nucleo.py` — ver §7 da raiz. Documento não
+repete valor versionado: prosa com lista de plugins foi exatamente o que
+divergiu (o escopo de usuário chegou a 50 plugins contra o núcleo declarado).
+
+A tabela de contrato operacional abaixo descreve **o papel** de cada camada,
+não o que está habilitado; quem habilita é o núcleo. `playwright` e
+`chrome-devtools` migraram de plugin para MCP compartilhado no mesmo ato.
 
 Todas as demais skills, plugins e perfis são **OPCIONAIS**. O agente pode,
 conforme a função e a tarefa concreta:
@@ -328,40 +327,20 @@ Regras de composição:
 
 ### 8.1 Perfis especializados — opcionais e selecionáveis
 
-O núcleo default acima permanece em `enabledPlugins` globalmente. Capacidades
-adicionais são **OPCIONAIS** e não entram no carregamento padrão. O seletor
-`scripts/ops/Set-ClaudePluginProfile.ps1` pode ativar, trocar ou combinar perfis
-quando a função exigir; a regra de exclusividade é uma proteção default contra
-truncamento e sobrecarga, não uma proibição absoluta. Combinações maiores
-exigem justificativa operacional e verificação dos pré-requisitos.
+**O mecanismo de perfis foi aposentado em 2026-09-17, por arbitragem do Tier 0.**
+Os antigos perfis locais e seus scripts de alternância eram
+uma segunda fonte de verdade sobre plugins, e existiam para ligar capacidades que
+o Tier 0 declarou não usar — `hyperframes` (3,19 GB em cache), `codspeed`,
+`browser-use`, `amd-skills`, `42crunch`, `vercel`. Todos foram desinstalados.
 
-| Perfil | Plugin | Uso permitido | Pré-requisito inegociável |
-| :--- | :--- | :--- | :--- |
-| `local-ai` | `amd-skills` | Ollama/DirectML local, integração e análise de trace | `ollama list` funcional; serving ROCm/Instinct somente após capability check. |
-| `research-browser` | `browser-use` | Pesquisa, extração e automação de browser em perfil independente | `uvx`, Python 3.12 e Ollama; versão 0.13.8 pinada; modelo local via endpoint OpenAI-compatível; sem Browser Use Cloud nem perfil pessoal. |
-| `security-aikido` | `aikido` | SAST e secrets sob demanda em mudanças sensíveis | `AIKIDO_API_KEY` presente no processo; sem token, falha fechado. |
-| `performance-ci` | `codspeed` | Benchmark e regressão de performance no CI | Host Linux e `CI`; nunca habilitar no runtime Windows local. |
-| `media-studio` | `hyperframes` | Vídeo/legendas/motion em staging | Node disponível; publicação externa continua manual. |
+Capacidade nova entra pelo núcleo (`~\.gemini\nucleo\nucleo_compartilhado.json`),
+com o mesmo critério dos demais: compartilhada por padrão, exclusiva só quando
+for individual e necessária na arquitetura de um hospedeiro, por ordem ou por
+mérito, com o motivo declarado e o consumidor real apontado.
 
-`endor-labs-agent-kit` fica bloqueado até que o plugin filho esteja instalado e
-tenha `endorctl`, credenciais e namespace autorizados. `remember` permanece
-desabilitado: há somente um escritor automático de memória. `datahub-skills` e
-`desktop-commander` permanecem excluídos por inadequação de plataforma e
-superfície de privilégio, respectivamente.
-
-Regras adicionais:
-
-1. `browser-use` usa perfil, downloads e artefatos dedicados sob
-   `C:\Users\rapha\.claude\browser-use-site-sandbox`, mas preserva navegação
-   pública, extensões de automação e modo agente por Ollama local. Ele não
-   anexa ao Chrome pessoal nem usa Browser Use Cloud. `playwright` valida o
-   `Site`; eles não controlam o mesmo perfil de browser nem executam em paralelo.
-2. `aikido` e Endor, quando provisionado, rodam depois de mudanças de
-   dependência/segurança e antes de `code-review`; scans não aplicam correções.
-3. `codspeed` recebe somente benchmarks com baseline; nunca decide otimização
-   por heurística sem medição.
-4. `hyperframes` recebe artefatos aprovados em staging depois de direção visual
-   e evidência Playwright; não autentica nem publica.
+`remember` permanece desabilitado: há somente um escritor automático de memória.
+`datahub-skills` e `desktop-commander` seguem fora, o segundo por superfície de
+privilégio; `endor-labs-agent-kit` nunca teve o plugin filho instalado.
 
 ### 8.1.1 Hooks de integração — default seguro
 
