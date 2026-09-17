@@ -277,6 +277,9 @@ export function GtoCfrSimulator() {
 							{archetype}
 						</span>
 					</div>
+					<p className="text-[0.55rem] font-mono text-text-dim leading-relaxed relative z-10 -mt-3">
+						Perfil ilustrativo (VPIP {villainStats.vpip} · PFR {villainStats.pfr} · AF {villainStats.agg}); não é dado medido de um vilão real.
+					</p>
 
 					<div className="flex-1 flex flex-col justify-center items-center py-8 bg-black/40 rounded-2xl border border-white/5 shadow-inner group-hover:border-accent-emerald/20 transition-colors duration-500 relative z-10">
 						<span className="text-[0.6rem] font-black uppercase tracking-[0.3em] text-text-darker mb-2">
