@@ -218,3 +218,9 @@ reports/agent-calibration/*.lock
 
 # Transcricoes de subagente nunca entram no repositorio publico (2026-09-13).
 frontend/src/projects/subagents/
+
+# Front Matter CMS banco de dados local e cache
+.frontmatter/
+
+# Skills arquivadas de extensoes
+.agents/skills_archive/

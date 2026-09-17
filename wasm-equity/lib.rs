@@ -21,6 +21,7 @@ fn round_four(value: f64) -> f64 {
 /// Isto NAO implementa blueprint self-play, busca de subjogo em tempo real ou
 /// uma arvore extensiva. Ele porta para Rust/WASM o mesmo molde heuristico que
 /// ja existe em Python e TypeScript para permitir paridade e fallback medidos.
+#[allow(clippy::too_many_arguments)]
 fn solve_pluribus_multiway_core(
     pot: f64,
     num_players: u32,
@@ -163,6 +164,7 @@ fn solve_pluribus_multiway_core(
 /// ABI WASM do adaptador heuristico multiway. Posicoes: BTN=0, CO=1, MP=2,
 /// UTG=3, SB=4, BB=5. Streets: preflop=0, flop=1, turn=2, river=3.
 #[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
 pub fn solve_pluribus_multiway_adapter_wasm(
     pot: f64,
     num_players: u32,
@@ -389,8 +391,8 @@ fn evaluate_7cards(cards: &[u8; 7]) -> u32 {
     }
 
     let mut flush_suit = 4;
-    for s in 0..4 {
-        if suits[s] >= 5 {
+    for (s, &count) in suits.iter().enumerate() {
+        if count >= 5 {
             flush_suit = s;
             break;
         }
@@ -578,17 +580,17 @@ fn calculate_utility_ev(
     match reference_status {
         1 => {
             // tilt
-            lambda_val = lambda_val * 0.66;
+            lambda_val *= 0.66;
             beta = 0.95;
         }
         2 => {
             // protecting
-            lambda_val = lambda_val * 1.33;
+            lambda_val *= 1.33;
             alpha = 0.75;
         }
         3 => {
             // bubble
-            lambda_val = lambda_val * 2.0;
+            lambda_val *= 2.0;
         }
         _ => {} // baseline / default
     }
@@ -752,6 +754,7 @@ pub fn calculate_perspectiva_vitoi_wasm(
 
 /// Interface FFI para Matriz de Insolvência
 #[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
 pub fn solve_insolvency_matrix_binary(
     villain_mask: &[u8],
     board: &str,
@@ -823,7 +826,7 @@ pub fn solve_icm_distortion_zerocopy(payload: &[f64]) -> js_sys::Float64Array {
     let mut new_raise = (raise + raise_shift).max(0.0);
 
     let fold_shift = fold * (pressure * 0.012) + (raise - new_raise).max(0.0);
-    let mut new_fold = (fold + fold_shift).max(0.0).min(1.0);
+    let mut new_fold = (fold + fold_shift).clamp(0.0, 1.0);
 
     let mut new_call = (1.0 - new_fold - new_raise).max(0.0);
     let total = new_fold + new_call + new_raise;
@@ -848,6 +851,7 @@ pub fn solve_icm_distortion_zerocopy(payload: &[f64]) -> js_sys::Float64Array {
 /// SOTA v4.2: Topologic Aggression 2.0 (Gravidade do Pote)
 /// Implementa a inércia estratégica e o Downward Drift dinâmico.
 #[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
 pub fn solve_icm_distortion_v2(
     ip_rp: f64,
     oop_rp: f64,
@@ -947,7 +951,7 @@ pub fn solve_icm_distortion_binary(
     let mut new_raise = (raise + raise_shift).max(0.0);
 
     let fold_shift = fold * (pressure * 0.012) + (raise - new_raise).max(0.0);
-    let mut new_fold = (fold + fold_shift).max(0.0).min(1.0);
+    let mut new_fold = (fold + fold_shift).clamp(0.0, 1.0);
 
     let mut new_call = (1.0 - new_fold - new_raise).max(0.0);
     let total = new_fold + new_call + new_raise;
@@ -985,9 +989,9 @@ pub fn solve_icm_distortion_binary(
     result.into()
 }
 
-/// ========================================================================
-/// SOTA v7.0 GOLD: MULTIWAY QUANTUM KERNEL (ZERO-COPY)
-/// ========================================================================
+// ========================================================================
+// SOTA v7.0 GOLD: MULTIWAY QUANTUM KERNEL (ZERO-COPY)
+// ========================================================================
 
 // SOTA LUT (Look-Up Table) de Combos
 // Em produção, garanta que a ordem (0..1326) enviada pelo Python bata exatamente com esta tradução.
@@ -1174,9 +1178,9 @@ pub fn calculate_multiway_equity_zerocopy(
     out_array
 }
 
-/// ========================================================================
-/// SOTA MEMORY BRIDGE: ZERO-COPY ALLOCATION
-/// ========================================================================
+// ========================================================================
+// SOTA MEMORY BRIDGE: ZERO-COPY ALLOCATION
+// ========================================================================
 
 /// Aloca um buffer contíguo no Heap do WASM e devolve o ponteiro bruto ao JS.
 /// Garante que o React deposite o array de ranges sem overflow.
