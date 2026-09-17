@@ -42,8 +42,8 @@ interface SotaSyncContextType {
 
 const SotaSyncContext = createContext<SotaSyncContextType | null>(null);
 
-const POSICOES: ReadonlyArray<SotaPhysicsState['position']> = ['IP', 'OOP', 'BB', 'SB'];
-const STATUS: ReadonlyArray<SotaPhysicsState['referenceStatus']> = ['baseline', 'tilt', 'protecting', 'bubble'];
+const POSICOES: ReadonlySet<unknown> = new Set<SotaPhysicsState['position']>(['IP', 'OOP', 'BB', 'SB']);
+const STATUS: ReadonlySet<unknown> = new Set<SotaPhysicsState['referenceStatus']>(['baseline', 'tilt', 'protecting', 'bubble']);
 const numeroFinito = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 /** Recusa estado salvo com forma de outra versão do schema, em vez de propagá-lo como válido. */
@@ -54,8 +54,8 @@ export function isSotaPhysicsState(valor: unknown): valor is SotaPhysicsState {
 		numeroFinito(v['heroStack']) &&
 		numeroFinito(v['pot']) &&
 		numeroFinito(v['heroInvested']) &&
-		POSICOES.includes(v['position'] as SotaPhysicsState['position']) &&
-		STATUS.includes(v['referenceStatus'] as SotaPhysicsState['referenceStatus']) &&
+		POSICOES.has(v['position']) &&
+		STATUS.has(v['referenceStatus']) &&
 		Array.isArray(v['prizes']) &&
 		v['prizes'].every(numeroFinito)
 	);

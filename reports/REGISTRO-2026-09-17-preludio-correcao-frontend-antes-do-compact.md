@@ -72,7 +72,7 @@ Ajustes feitos depois da validação no Chrome:
 Testes novos:
 
 - `frontend/src/tests/simulator/sotaSyncHydration.test.tsx`
-- `frontend/src/components/analytics/SniperAdvisor.test.tsx`
+- `frontend/src/tests/analytics/SniperAdvisor.test.tsx`
 - `frontend/src/tests/lab/gemmaDictationCleanup.test.tsx`
 - `frontend/src/lib/telemetry-client.test.ts`
 - `frontend/src/tests/library/sotaMarkdownMermaid.test.tsx`

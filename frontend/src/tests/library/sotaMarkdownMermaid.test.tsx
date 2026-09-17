@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 
 const renderMermaid = jest.fn();
@@ -12,7 +13,7 @@ jest.mock('react-markdown', () => ({
 	default: ({ children, components }: { children: string; components: { code: (p: object) => unknown } }) => {
 		const bloco = /```mermaid\n([\s\S]*?)```/.exec(children);
 		return bloco
-			? (components.code({ className: 'language-mermaid', children: bloco[1] }) as JSX.Element)
+			? (components.code({ className: 'language-mermaid', children: bloco[1] }) as ReactElement)
 			: <p>{children}</p>;
 	},
 }));

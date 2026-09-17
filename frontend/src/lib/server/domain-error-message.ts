@@ -16,6 +16,6 @@ export function mensagemDeErroDeDominio(
 ): string {
 	if (!(error instanceof Error)) return fallback;
 	const classe = Object.getPrototypeOf(error)?.constructor;
-	if (classe === Error || permitidas.some((c) => classe === c)) return error.message;
+	if (classe === Error || permitidas.includes(classe)) return error.message;
 	return fallback;
 }

@@ -1044,6 +1044,14 @@
         function setCls(id, cls) { const el = document.getElementById(id); if (el) el.className = cls; }
         function setWidth(id, w) { const el = document.getElementById(id); if (el) el.style.width = w; }
         function setDash(id, val) { const el = document.getElementById(id); if (el) el.style.strokeDasharray = val; }
+        function safeRandom() {
+            if (typeof globalThis.crypto?.getRandomValues === 'function') {
+                const buf = new Uint32Array(1);
+                globalThis.crypto.getRandomValues(buf);
+                return buf[0] / 0x100000000;
+            }
+            return 0.5;
+        }
 
         function init() {
             const list = document.getElementById('scenario-list');
@@ -1154,8 +1162,8 @@
             // Telemetry Injection
             const deltaRp = Math.abs(data.ip.rp - data.oop.rp).toFixed(1);
             setTxt('obs-delta', `Δ ${deltaRp}%`);
-            setTxt('obs-latency', Math.floor(Math.random() * 15 + 8) + 'ms (simulado)'); // NOSONAR - valor ilustrativo, nao medido
-            setTxt('obs-nodes', Math.floor(Math.random() * 40000 + 12000).toLocaleString('en-US') + ' (simulado)'); // NOSONAR - valor ilustrativo, nao medido
+            setTxt('obs-latency', Math.floor(safeRandom() * 15 + 8) + 'ms (simulado)');
+            setTxt('obs-nodes', Math.floor(safeRandom() * 40000 + 12000).toLocaleString('en-US') + ' (simulado)');
 
             const logContent = `> [SOTA ENGINE] Inicializando cálculo de cenário: ${data.id.toUpperCase()}
 > [PARAMS] IP RP: ${data.ip.rp.toFixed(1)}% | OOP RP: ${data.oop.rp.toFixed(1)}%
@@ -1202,7 +1210,7 @@
             let opts = [...quizData.opts];
 
             for (let i = opts.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1)); // NOSONAR - embaralhar alternativas do quiz nao e uso de seguranca
+                const j = Math.floor(safeRandom() * (i + 1));
                 [opts[i], opts[j]] = [opts[j], opts[i]];
             }
 
