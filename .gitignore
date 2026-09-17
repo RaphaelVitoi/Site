@@ -79,6 +79,10 @@ queue/tasks.db
 
 # 5. LOGS, TELEMETRIA & ARTEFATOS TEMPORARIOS ─────────────────────────────────
 logs/
+# `logs/` e nome solto: em 2026-09-17 casou com a ROTA Next `app/api/v1/logs/frontend`
+# e a deixou fora do commit 9506d144, com o logger ja apontando para ela. Segmento
+# de rota do App Router e codigo, nunca artefato de log.
+!frontend/src/app/**/logs/
 *.log
 temp/
 temp_media/
