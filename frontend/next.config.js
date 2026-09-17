@@ -14,6 +14,7 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true, // SOTA: Native Gzip/Brotli compression in production and edge
   devIndicators: false,
+  transpilePackages: ['@fortawesome/fontawesome-free'],
   turbopack: {
     root: path.resolve(__dirname, '..'),
   },
